@@ -171,11 +171,22 @@ void VDirect3DDrawer::PrecacheTexture(VTexture* Tex)
 void VDirect3DDrawer::SetTexture(VTexture* Tex, int CMap)
 {
 	guard(VDirect3DDrawer::SetTexture);
-	RenderDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, magfilter);
-	RenderDevice->SetSamplerState(0, D3DSAMP_MINFILTER, minfilter);
-	RenderDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, mipfilter);
-
+	if (RenderDevice)
+	{
+		RenderDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, magfilter);
+		RenderDevice->SetSamplerState(0, D3DSAMP_MINFILTER, minfilter);
+		if (Tex->Type == TEXTYPE_WallPatch || Tex->Type == TEXTYPE_Wall ||
+			Tex->Type == TEXTYPE_Flat)
+		{
+			RenderDevice->SetSamplerState(1, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
+		}
+		else
+		{
+			RenderDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, mipfilter);
+		}
+	}
 	SetSpriteLump(Tex, NULL, CMap);
+
 	if (RenderDevice)
 	{
 		RenderDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
@@ -243,9 +254,19 @@ void VDirect3DDrawer::SetPic(VTexture* Tex, VTextureTranslation* Trans,
 	int CMap)
 {
 	guard(VDirect3DDrawer::SetPic);
-	RenderDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, magfilter);
-	RenderDevice->SetSamplerState(0, D3DSAMP_MINFILTER, minfilter);
-	RenderDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, mipfilter);
+	if (RenderDevice)
+	{
+		RenderDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, magfilter);
+		RenderDevice->SetSamplerState(0, D3DSAMP_MINFILTER, minfilter);
+		if (Tex->Type == TEXTYPE_Skin || Tex->Type == TEXTYPE_FontChar)
+		{
+			RenderDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, mipfilter);
+		}
+		else
+		{
+			RenderDevice->SetSamplerState(1, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
+		}
+	}
 
 	SetSpriteLump(Tex, Trans, CMap);
 	unguard;
@@ -388,10 +409,6 @@ LPDIRECT3DTEXTURE9 VDirect3DDrawer::UploadTexture(int width, int height, const r
 	vuint8					*stackbuf = (vuint8 *)Z_Malloc(256 * 128 * 4);
 	LPDIRECT3DTEXTURE9		surf;
 	UINT					level;
-
-	RenderDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, magfilter);
-	RenderDevice->SetSamplerState(0, D3DSAMP_MINFILTER, minfilter);
-	RenderDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, mipfilter);
 
 	w = ToPowerOf2(width);
 	if (w > maxTexSize)
