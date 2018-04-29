@@ -1399,7 +1399,7 @@ INLINE void set_mul(FM_OPL *OPL,int slot,int v)
 }
 
 /* set ksl & tl */
-INLINE void set_ksl_tl(FM_OPL *OPL,int slot,int v)
+static INLINE void set_ksl_tl(FM_OPL *OPL,int slot,int v)
 {
 	OPL_CH   *CH   = &OPL->P_CH[slot/2];
 	OPL_SLOT *SLOT = &CH->SLOT[slot&1];
