@@ -497,10 +497,10 @@ set(SERVER_WIN32_SOURCES
 #
 #---------------------------------------
 
-add_custom_target( revision_check ALL
-	COMMAND updaterevision ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/svnrev.h
-	WORKING_DIRECTORY ${UPDATEREVISION_EXE}
-	DEPENDS updaterevision )
+### add_custom_target( revision_check ALL
+### 	COMMAND updaterevision ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/svnrev.h
+### 	WORKING_DIRECTORY ${UPDATEREVISION_EXE}
+### 	DEPENDS updaterevision )
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 

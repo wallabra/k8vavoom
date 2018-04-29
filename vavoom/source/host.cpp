@@ -29,7 +29,7 @@
 #include "network.h"
 #include "cl_local.h"
 #include "ui.h"
-#include "svnrev.h"
+//#include "svnrev.h"
 #include <time.h>
 
 // MACROS ------------------------------------------------------------------
@@ -548,7 +548,7 @@ void Host_Error(const char *error, ...)
 
 COMMAND(Version)
 {
-	GCon->Log("VAVOOM version " VERSION_TEXT" (r" SVN_REVISION_STRING ").");
+	GCon->Log("VAVOOM version " VERSION_TEXT".");
 	GCon->Log("Compiled "__DATE__" "__TIME__".");
 }
 
