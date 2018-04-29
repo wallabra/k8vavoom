@@ -10,7 +10,7 @@ add_subdirectory(glvis)
 add_subdirectory(master)
 add_subdirectory(updaterevision)
 add_subdirectory(vcc)
-add_subdirectory(vlaunch)
+#add_subdirectory(vlaunch)
 add_subdirectory(vlumpy)
 
 # EXTRA_DIST = \
