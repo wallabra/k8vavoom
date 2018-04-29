@@ -428,7 +428,7 @@ public:
 	}
 	~VFileReader()
 	{
-		fclose(File);
+		if (File) fclose(File);
 	}
 
 	//	Stream interface.

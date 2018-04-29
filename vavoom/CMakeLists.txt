@@ -3,6 +3,15 @@ project(vavoom)
 #set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-terminate" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-terminate" )
 
+IF( NOT CMAKE_BUILD_TYPE )
+  SET( CMAKE_BUILD_TYPE Debug CACHE STRING
+    "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."
+  FORCE )
+ENDIF()
+
+#set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0" )
+#set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0" )
+
 option(ENABLE_ZONE_DEBUG "Enable memory allocation debuging")
 
 cmake_minimum_required(VERSION 2.4)
