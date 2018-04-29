@@ -339,7 +339,7 @@ int main(int argc, char** argv)
 {
 	try
 	{
-		printf("Vavoom dedicated server "VERSION_TEXT"\n");
+		printf("Vavoom dedicated server " VERSION_TEXT "\n");
 
 		GArgs.Init(argc, argv);
 
