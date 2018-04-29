@@ -45,7 +45,7 @@ struct VDehFlag
 {
 	int				Which;
 	const char*		Name;
-	int				Mask;
+	unsigned int				Mask;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
