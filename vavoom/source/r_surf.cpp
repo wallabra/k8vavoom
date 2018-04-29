@@ -2451,7 +2451,7 @@ void VRenderLevelShared::UpdateFakeFlats(sector_t* sec)
 	}
 
 //	float refflorz = s->floor.GetPointZ(viewx, viewy);
-	float refceilz = s ? s->ceiling.GetPointZ(vieworg) : NULL;
+	float refceilz = s ? s->ceiling.GetPointZ(vieworg) : 0; // k8: was `NULL` -- wtf?!
 //	float orgflorz = sec->floor.GetPointZ(viewx, viewy);
 	float orgceilz = sec->ceiling.GetPointZ(vieworg);
 
