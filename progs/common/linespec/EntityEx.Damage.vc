@@ -36,6 +36,12 @@
 //
 //==========================================================================
 
+void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bool NoArmor, TVec hitp) {
+  print("THP:(%f,%f,%f); dmg=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, NameToStr(DmgType));
+  //print("THP:(%f,%f,%f); dmg=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, NameToStr(StrToName("FUCK!")));
+  Damage(inflictor, source, damage, DmgType, NoArmor);
+}
+
 final void Damage(EntityEx inflictor, EntityEx source, int damage,
 	optional name DmgType, optional bool NoArmor)
 {

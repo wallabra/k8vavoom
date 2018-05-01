@@ -631,7 +631,13 @@ final int LineAttack(TVec Dir, float Distance, int LADamage,
 			{
 				NoArmor = true;
 			}
-			th.Damage(self, self, LADamage, DmgType, NoArmor);
+			if (bIsPlayer) {
+				TVec thp;
+				thp = hit_point-th.Origin;
+				th.DamageEx(self, self, LADamage, DmgType, NoArmor, thp);
+			} else {
+				th.Damage(self, self, LADamage, DmgType, NoArmor);
+			}
 		}
 
 		// don't go any farther
