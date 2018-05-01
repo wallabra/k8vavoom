@@ -286,6 +286,7 @@ public:
 	DECLARE_FUNCTION(itof)
 	DECLARE_FUNCTION(ftoi)
 	DECLARE_FUNCTION(StrToName)
+	DECLARE_FUNCTION(NameToStr)
 
 	//	Console command functions
 	DECLARE_FUNCTION(Cmd_CheckParm)

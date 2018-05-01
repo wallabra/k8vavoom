@@ -950,6 +950,12 @@ IMPLEMENT_FUNCTION(VObject, StrToName)
 	RET_NAME(VName(*str));
 }
 
+IMPLEMENT_FUNCTION(VObject, NameToStr)
+{
+	P_GET_NAME(Name);
+	RET_STR(*Name);
+}
+
 //==========================================================================
 //
 //	Console command functions
