@@ -409,10 +409,10 @@ void VOpenGLDrawer::UploadTexture(int width, int height, const rgba_t* data)
 	}
 	if (w != width || h != height)
 	{
-		/* must rescale image to get "top" mipmap texture image */
-		VTexture::ResampleTexture(width, height, (vuint8*)data, w, h, image, multisampling_sample);
 		/* Smooth transparent edges */
 		VTexture::SmoothEdges(image, w, h, image);
+		/* must rescale image to get "top" mipmap texture image */
+		VTexture::ResampleTexture(width, height, (vuint8*)data, w, h, image, multisampling_sample);
 	}
 	else
 	{
