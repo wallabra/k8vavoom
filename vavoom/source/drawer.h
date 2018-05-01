@@ -216,7 +216,6 @@ public:
 enum
 {
 	DRAWER_OpenGL,
-	DRAWER_Direct3D,
 
 	DRAWER_MAX
 };

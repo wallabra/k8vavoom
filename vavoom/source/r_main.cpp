@@ -109,8 +109,6 @@ static TArray<VTextureTranslation*>	CachedTranslations;
 // if true, load all graphics at start
 VCvarI					precache("precache", "1", CVAR_Archive);
 
-static VCvarI			_driver("_driver", "0", CVAR_Rom);
-
 static VCvarI			r_level_renderer("r_level_renderer", "0", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
@@ -1430,7 +1428,6 @@ void V_Init()
 	}
 	if (DIdx == -1)
 		Sys_Error("No drawers are available");
-	_driver = DIdx;
 	GCon->Logf(NAME_Init, "Selected %s", DrawerList[DIdx]->Description);
 	//	Create drawer.
 	Drawer = DrawerList[DIdx]->Creator();

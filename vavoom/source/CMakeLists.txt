@@ -341,11 +341,6 @@ set(MAIN_CDAUDIO_BSD_SOURCES
 
 #-- Windows --
 set(MAIN_WIN32_SOURCES
-	d3d_draw.cpp
-	d3d_local.h
-	d3d_main.cpp
-	d3d_poly.cpp
-	d3d_tex.cpp
 	eax.h
 	in_win32.cpp
 	net_winsock.cpp
