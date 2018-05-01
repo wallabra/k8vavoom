@@ -1,16 +1,27 @@
 project(vavoom)
 
-#set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-terminate" )
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-terminate" )
-
 IF( NOT CMAKE_BUILD_TYPE )
   SET( CMAKE_BUILD_TYPE Debug CACHE STRING
-    "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."
+    "Choose the type of build, options are: Debug Release."
   FORCE )
 ENDIF()
 
-#set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0" )
-#set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++98" )
+
+## #set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-terminate" )
+## set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-terminate" )
+
+set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g" )
+set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g" )
+
+set( CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2" )
+set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2" )
+
+## message(STATUS "BUILD: ${CMAKE_BUILD_TYPE}")
+## message(STATUS "cflags  : ${CMAKE_C_FLAGS}")
+## message(STATUS "cxxflags: ${CMAKE_CXX_FLAGS}")
+## message(STATUS "cflags  (dbg): ${CMAKE_C_FLAGS_DEBUG}")
+## message(STATUS "cxxflags(dbg): ${CMAKE_CXX_FLAGS_DEBUG}")
 
 option(ENABLE_ZONE_DEBUG "Enable memory allocation debuging")
 
