@@ -487,8 +487,7 @@ static void DoPrint(const char *buf)
 	int			wlen;
 
 #ifndef _WIN32
-	if (!graphics_started)
-		printf("%s", buf);
+	//k8: done in `Serialize()` if (!graphics_started) printf("%s", buf);
 #endif
 
 	ch = buf;
@@ -564,6 +563,7 @@ static void DoPrint(const char *buf)
 void FConsoleDevice::Serialise(const char* V, EName Event)
 {
 	dprintf("%s: %s\n", VName::SafeString(Event), *VStr(V).RemoveColours());
+	printf("%s: %s\n", VName::SafeString(Event), *VStr(V).RemoveColours()); //k8
 	if (Event == NAME_Dev && !developer)
 	{
 		return;
