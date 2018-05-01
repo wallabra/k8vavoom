@@ -196,9 +196,6 @@ For Windows you need:
       * FLAC (http://flac.sourceforge.net/)
       * libmodplug (http://modplug-xmms.sourceforge.net/)
 
-  You can also compile with MSVC 2008, you will find the workspace and project
- files in the 'msvc' subdirectory.
-
 ==============================================================================
 3.4 Timidity patches
 ==============================================================================
