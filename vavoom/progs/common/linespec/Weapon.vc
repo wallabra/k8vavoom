@@ -518,6 +518,17 @@ state GetAltAttackState(bool Hold)
 
 //==========================================================================
 //
+//	GetReloadState
+//
+//==========================================================================
+
+state GetReloadState()
+{
+	return FindState('Reload');
+}
+
+//==========================================================================
+//
 //  CheckAmmo
 //
 //  Returns true if there is enough mana to shoot.  If not, selects the

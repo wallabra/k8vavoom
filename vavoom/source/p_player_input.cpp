@@ -172,6 +172,7 @@ BUTTON(Attack)
 BUTTON(Use)
 BUTTON(Jump)
 BUTTON(AltAttack)
+BUTTON(Reload)
 BUTTON(Button5)
 BUTTON(Button6)
 BUTTON(Button7)
@@ -654,6 +655,11 @@ void VBasePlayer::HandleInput()
 	if (KeyAltAttack.KeyState())
 	{
 		Buttons |= BT_ALT_ATTACK;
+	}
+
+	if (KeyReload.KeyState())
+	{
+		Buttons |= BT_RELOAD;
 	}
 
 	if (KeyButton5.KeyState())

@@ -600,6 +600,24 @@ final void A_WeaponReady(optional int Flags)
 				return;
 			}
 		}
+		else if (Player.Buttons & BT_ALT_ATTACK && Wpn.FindState('AltFire') && !(Flags & 8))
+		{
+			if (!Player.bAttackDown || !Wpn.bNoAutoFire)
+			{
+				Player.bAttackDown = true;
+				PlayerEx(Player).AltFireWeapon();
+				return;
+			}
+		}
+		else if (Player.Buttons & BT_RELOAD && Wpn.FindState('Reload') && (Flags & 64) != 0)
+		{
+			if (!Player.bAttackDown)
+			{
+				Player.bAttackDown = true;
+				PlayerEx(Player).ReloadWeapon();
+				return;
+			}
+		}
 		else
 		{
 			Player.bAttackDown = false;
