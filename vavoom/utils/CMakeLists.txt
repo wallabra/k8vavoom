@@ -1,4 +1,4 @@
-option(ENABLE_LAUNCHER "Build launcher" ON)
+option(ENABLE_LAUNCHER "Build launcher" OFF)
 option(ENABLE_MASTER "Build master server" OFF)
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
@@ -10,7 +10,7 @@ add_subdirectory(glvis)
 add_subdirectory(master)
 #add_subdirectory(updaterevision)
 add_subdirectory(vcc)
-#add_subdirectory(vlaunch)
+add_subdirectory(vlaunch)
 add_subdirectory(vlumpy)
 
 # EXTRA_DIST = \
