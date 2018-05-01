@@ -358,9 +358,6 @@ void Host_Frame()
 
 	try
 	{
-		//	Keep the random time dependent
-		rand();
-
 		//	Decide the simulation time
 		if (!FilterTime())
 		{
