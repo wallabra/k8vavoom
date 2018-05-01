@@ -616,10 +616,12 @@ bool VViewClipper::ClipIsBBoxVisible(float* BBox, bool shadowslight, const TVec&
 	else
 #endif
 	{
+		/*k8: this glitches E1M2
 		if (D1 < 0.0 && D2 < 0.0)
 		{
 			return false;
 		}
+		*/
 
 		// There might be a better method of doing this, but
 		// this one works for now...
