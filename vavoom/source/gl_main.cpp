@@ -89,6 +89,7 @@ void VOpenGLDrawer::InitResolution()
 	GCon->Logf(NAME_Init, "GL_RENDERER: %s", glGetString(GL_RENDERER));
 	GCon->Logf(NAME_Init, "GL_VERSION: %s", glGetString (GL_VERSION));
 
+	/*
 	GCon->Log(NAME_Init, "GL_EXTENSIONS:");
 	TArray<VStr> Exts;
 	VStr((char*)glGetString(GL_EXTENSIONS)).Split(' ', Exts);
@@ -96,6 +97,7 @@ void VOpenGLDrawer::InitResolution()
 	{
 		GCon->Log(NAME_Init, VStr("- ") + Exts[i]);
 	}
+	*/
 
 	// Check the maximum texture size.
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
