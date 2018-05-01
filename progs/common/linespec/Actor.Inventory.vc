@@ -262,7 +262,7 @@ final void A_Punch()
 	aimAngles.yaw = AngleMod360(aimAngles.yaw + (Random() -
 		Random()) * 45.0 / 8.0);
 	AimTarget = AimLineAttack(dir, aimAngles, MELEERANGE);
-	LineAttack(dir, MELEERANGE, damage, BulletPuff);
+	LineAttack(dir, MELEERANGE, damage, BulletPuff,,,'Fist');
 
 	// turn to face target
 	if (AimTarget)

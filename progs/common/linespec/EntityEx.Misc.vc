@@ -3307,7 +3307,7 @@ final void SpawnDirt(float radius)
 //
 //===========================================================================
 
-final void GunShot(int accurate, TVec dir)
+final void GunShot(int accurate, TVec dir, name DmgType)
 {
 	int damage;
 
@@ -3324,7 +3324,7 @@ final void GunShot(int accurate, TVec dir)
 
 	damage = 5 * (P_Random() % 3 + 1);
 
-	LineAttack(dir, MISSILERANGE, damage, BulletPuff);
+	LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,DmgType);
 }
 
 //===========================================================================

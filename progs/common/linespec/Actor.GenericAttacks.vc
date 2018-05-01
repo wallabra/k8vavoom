@@ -425,7 +425,7 @@ final void A_BulletAttack()
 		TVec dir = aimDir;
 		VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
 		int damage = ((P_Random() % 5) + 1) * 3;
-		LineAttack(dir, MISSILERANGE, damage, BulletPuff);
+		LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet');
 	}
 }
 
@@ -643,7 +643,9 @@ final void decorate_A_Explode(optional int damage, optional int distance,
 			// Comparing the results of a test wad with Eternity, it seems
 			// A_NailBomb does not aim
 			//AimLineAttack (self, Ang, MISSILERANGE), 
-			LineAttack (Ang, MISSILERANGE, 0, naildamage, 'None', BulletPuff);
+			//LineAttack (Ang, MISSILERANGE, 0, naildamage,,,'Nail');
+			//LineAttack (Ang, MISSILERANGE, 0, naildamage, 'None', BulletPuff);
+			LineAttack (Ang, MISSILERANGE, naildamage, BulletPuff,,,'Nail');
 		}
 	}
 

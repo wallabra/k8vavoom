@@ -1480,7 +1480,7 @@ final void A_FirePistol()
 	PlaySound('weapons/pistol', CHAN_WEAPON);
 
 	Aim(dir, 16.0 * 64.0);
-	GunShot(Accurate, dir);
+	GunShot(Accurate, dir, 'Bullet');
 }
 
 //===========================================================================
@@ -1516,7 +1516,7 @@ final void A_FireShotgun()
 	Aim(dir, 16.0 * 64.0);
 	for (i = 0; i < 7; i++)
 	{
-		GunShot(false, dir);
+		GunShot(false, dir, 'Shell');
 	}
 }
 
@@ -1561,7 +1561,7 @@ final void A_FireShotgun2()
 		rot.roll = 0.0;
 		dir = RotateDirectionVector(aimDir, rot);
 		damage = 5 * (P_Random() % 3 + 1);
-		LineAttack(dir, MISSILERANGE, damage, BulletPuff);
+		LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Shell');
 	}
 }
 
@@ -1637,7 +1637,7 @@ final void A_FireCGun()
 	SetState(MeleeState);
 
 	Aim(dir, 16.0 * 64.0);
-	GunShot(!PlayerEx(Player).Refire, dir);
+	GunShot(!PlayerEx(Player).Refire, dir, 'Bullet');
 }
 
 //===========================================================================

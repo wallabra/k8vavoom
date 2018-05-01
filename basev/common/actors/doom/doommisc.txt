@@ -37,6 +37,7 @@ actor BulletPuff
 	Alpha 0.5
 	VSpeed 1
 	Mass 5
+	DamageType Bullet
 	+NoBlockmap
 	+NoGravity
 	+AllowParticles

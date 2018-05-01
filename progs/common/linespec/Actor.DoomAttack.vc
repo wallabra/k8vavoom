@@ -54,7 +54,7 @@ final void A_PosAttack()
 
 	damage = ((P_Random() % 5) + 1) * 3;
 
-	LineAttack(dir, MISSILERANGE, damage, BulletPuff);
+	LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet');
 }
 
 //==========================================================================
@@ -115,7 +115,7 @@ final void DoSPosAttack()
 		dir = aimDir;
 		VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
 		damage = ((P_Random() % 5) + 1) * 3;
-		LineAttack(dir, MISSILERANGE, damage, BulletPuff);
+		LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Shell'); //k8:FIXME: Mastermind guy should use 'Bullet' here
 	}
 }
 
@@ -149,7 +149,7 @@ final void A_CPosAttack()
 	AimLineAttack(dir, Angles, MISSILERANGE);
 	VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
 	damage = ((P_Random() % 5) + 1) * 3;
-	LineAttack(dir, MISSILERANGE, damage, BulletPuff);
+	LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet');
 }
 
 //==========================================================================
@@ -1117,7 +1117,7 @@ final void A_M_Saw()
 
 		// use meleerange + 1 se the puff doesn't skip the flash
 		AimTarget = AimLineAttack(dir, aimAng, MELEERANGE + 0.00001);
-		LineAttack(dir, MELEERANGE + 0.00001, damage, BulletPuff);
+		LineAttack(dir, MELEERANGE + 0.00001, damage, BulletPuff,,,'Chainsaw');
 
 		if (!AimTarget)
 		{
