@@ -1,8 +1,7 @@
 add_subdirectory(gme)
 add_subdirectory(timidity)
 
-option(WITH_ALLEGRO "Use Allegro library")
-option(WITH_SDL "Use SDL library")
+option(WITH_SDL "Use SDL library" ON)
 option(WITH_OPENGL "Use OpenGL library" ON)
 option(WITH_OPENAL "Use OpenAL library" ON)
 option(WITH_VORBIS "Enable Vorbis support" ON)
@@ -307,18 +306,6 @@ set(MAIN_FLAC_SOURCES
 	snd_flac.cpp
 )
 
-#-- Linux with Allegro --
-set(MAIN_UNIX_ALLEGRO_SOURCES
-	in_alleg.cpp
-	net_udp.cpp
-	snd_allegro.cpp
-	snd_allegromusic.cpp
-	sys_lin.cpp
-)
-set(MAIN_OPENGL_UNIX_ALLEGRO_SOURCES
-	gl_agl.cpp
-)
-
 #-- Linux with SDL --
 set(MAIN_UNIX_SDL_SOURCES
 	in_sdl.cpp
@@ -543,73 +530,17 @@ if(WIN32)
 	endif(WITH_OPENAL)
 else(WIN32)
 	# ---------------- Other *NIX platforms ----------------
-	if(NOT DEFINED ALLEGRO_CONFIG)
-		set(ALLEGRO_CONFIG allegro-config)
-	endif(NOT DEFINED ALLEGRO_CONFIG)
-
-	if(WITH_ALLEGRO)
-		find_program(ALLEGRO_CONFIG_EXECUTABLE ${ALLEGRO_CONFIG})
-		if(NOT ALLEGRO_CONFIG_EXECUTABLE)
-			message(FATAL_ERROR "Cannot find Allegro instalation")
-		endif(NOT ALLEGRO_CONFIG_EXECUTABLE)
-		set(ALLEGRO_FOUND TRUE)
-	elseif(WITH_SDL)
+	if(WITH_SDL)
 		find_package(SDL REQUIRED)
-	else(WITH_ALLEGRO)
-		find_package(SDL)
-		if(NOT SDL_FOUND)
-			find_program(ALLEGRO_CONFIG_EXECUTABLE ${ALLEGRO_CONFIG})
-			if(ALLEGRO_CONFIG_EXECUTABLE)
-				set(ALLEGRO_FOUND TRUE)
-			endif(ALLEGRO_CONFIG_EXECUTABLE)
-		endif(NOT SDL_FOUND)
-	endif(WITH_ALLEGRO)
+	endif(WITH_SDL)
 
-	if(ALLEGRO_FOUND)
-		message(STATUS "Using Allegro")
-		# run the allegro-config program to get cxxflags
-		exec_program(sh
-			ARGS "${ALLEGRO_CONFIG_EXECUTABLE} --cflags"
-			OUTPUT_VARIABLE ALLEGRO_CXX_FLAGS
-			RETURN_VALUE RET)
-		if(RET EQUAL 0)
-			# parse definitions from cxxflags
-			string(REGEX MATCHALL "-D.*[^ ;]+" ALLEGRO_DEFINITIONS ${ALLEGRO_CXX_FLAGS})
-			# drop -D* from CXXFLAGS
-			string(REGEX REPLACE "-D[^ ;]*" "" ALLEGRO_CXX_FLAGS ${ALLEGRO_CXX_FLAGS})
-			# parse incdirs from cxxflags, drop -I prefix
-			string(REGEX MATCHALL "-I.*[^ ;]+" ALLEGRO_INCLUDE_DIRS ${ALLEGRO_CXX_FLAGS})
-			string(REGEX REPLACE "-I" "" ALLEGRO_INCLUDE_DIRS "${ALLEGRO_CXX_FLAGS}")
-			# convert space to semicolons for list
-			string(REGEX REPLACE " " ";" ALLEGRO_INCLUDE_DIRS "${ALLEGRO_INCLUDE_DIRS}")
-		endif(RET EQUAL 0)
-
-		# run the allegro-config program to get the libs
-		exec_program(sh
-			ARGS "${ALLEGRO_CONFIG_EXECUTABLE} --libs"
-			OUTPUT_VARIABLE ALLEGRO_LIBRARIES
-			RETURN_VALUE RET)
-		if(RET EQUAL 0)
-			string(REGEX REPLACE " " ";" ALLEGRO_LIBRARIES "${ALLEGRO_LIBRARIES}")
-			# extract linkdirs (-L) for rpath (i.e., LINK_DIRECTORIES)
-			string(REGEX MATCHALL "-L[^ ;]+" ALLEGRO_LIBRARY_DIRS "${ALLEGRO_LIBRARIES}")
-			string(REGEX REPLACE "-L" "" ALLEGRO_LIBRARY_DIRS "${ALLEGRO_LIBRARY_DIRS}")
-			# convert space to semicolons for list
-			STRING(REGEX REPLACE " " ";" ALLEGRO_LIBRARY_DIRS "${ALLEGRO_LIBRARY_DIRS}")
-		endif(RET EQUAL 0)
-
-		include_directories(${ALLEGRO_INCLUDE_DIRS})
-		set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_UNIX_ALLEGRO_SOURCES})
-		set(MAIN_LIBS ${ALLEGRO_LIBRARIES} ${MAIN_LIBS})
-	elseif(SDL_FOUND)
+	if(SDL_FOUND)
 		message(STATUS "Using SDL")
 		find_package(SDL_mixer REQUIRED)
 		include_directories(${SDL_INCLUDE_DIR})
 		set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_UNIX_SDL_SOURCES})
 		set(MAIN_LIBS ${SDLMIXER_LIBRARY} ${SDL_LIBRARY} ${MAIN_LIBS})
-	else(ALLEGRO_FOUND)
-		message(FATAL_ERROR "Vavoom requires Allegro or SDL to compile")
-	endif(ALLEGRO_FOUND)
+	endif(SDL_FOUND)
 
 	find_path(LINUX_CDROM_INCLUDE_DIR linux/cdrom.h)
 	if(LINUX_CDROM_INCLUDE_DIR)
@@ -630,21 +561,7 @@ else(WIN32)
 			include_directories(${OPENGL_INCLUDE_DIR})
 			set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_SOURCES})
 			set(MAIN_LIBS ${OPENGL_gl_LIBRARY} ${MAIN_LIBS})
-
-			if(ALLEGRO_FOUND)
-				find_path(ALLEGGL_INCLUDE_DIR alleggl.h)
-				if(NOT ALLEGGL_INCLUDE_DIR)
-					message(FATAL_ERROR "Vavoom requires AllegroGL to use OpenGL")
-				endif(NOT ALLEGGL_INCLUDE_DIR)
-				find_library(AGL_LIBRARY NAMES agl)
-				if(NOT AGL_LIBRARY)
-					message(FATAL_ERROR "Vavoom requires AllegroGL to use OpenGL")
-				endif(NOT AGL_LIBRARY)
-				set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_UNIX_ALLEGRO_SOURCES})
-				set(MAIN_LIBS ${AGL_LIBRARY} ${OPENGL_glu_LIBRARY} ${MAIN_LIBS})
-			else(ALLEGRO_FOUND)
-				set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_UNIX_SDL_SOURCES})
-			endif(ALLEGRO_FOUND)
+			set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_UNIX_SDL_SOURCES})
 		endif(OPENGL_FOUND)
 	endif(WITH_OPENGL)
 
