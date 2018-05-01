@@ -116,7 +116,7 @@ actor EntitySecond : SpectralMonster
 	PainChance 255
 	MinMissileChance 150
 	RenderStyle Translucent
-	Alpha 0.25
+	Alpha 0.35 //0.25
 	+Shadow
 	+NoGravity
 	+LookAllAround

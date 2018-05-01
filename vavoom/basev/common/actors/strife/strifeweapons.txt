@@ -331,7 +331,7 @@ actor RocketTrail
 {
 	ConversationID 51, -1, -1
 	RenderStyle Translucent
-	Alpha 0.25
+	Alpha 0.35 //0.25
 	+NoBlockmap
 	+NoGravity
 	SeeSound "misc/missileinflight"
