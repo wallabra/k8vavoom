@@ -249,6 +249,10 @@ void Cheat_God()
 {
 }
 
+void Cheat_Buddha()
+{
+}
+
 void Cheat_NoClip()
 {
 }

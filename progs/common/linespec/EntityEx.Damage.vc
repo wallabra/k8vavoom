@@ -633,6 +633,7 @@ final void Damage(EntityEx inflictor, EntityEx source, int damage,
 		{
 			Player.Health = 0;
 		}
+		if (Player.Health < 1 && (PlayerEx(Player).Cheats & PlayerEx::CF_BUDDHA)) Player.Health = 1;
 		PlayerEx(Player).Attacker = source;
 		PlayerEx(Player).DamageFlash += itof(damage) / 35.0;	// add damage after armor / invuln
 		if (PlayerEx(Player).DamageFlash > 3.0)
@@ -646,6 +647,7 @@ final void Damage(EntityEx inflictor, EntityEx source, int damage,
 
 	// do the damage    
 	Health -= damage;
+	if (bIsPlayer && Health < 1 && (PlayerEx(Player).Cheats & PlayerEx::CF_BUDDHA)) Health = 1;
 	if (Health <= 0)
 	{
 		// Death
@@ -1228,12 +1230,14 @@ final void PoisonDamage(EntityEx inflictor, EntityEx source, int damage,
 	{
 		Player.Health = 0;
 	}
+	if (Player.Health < 1 && (PlayerEx(Player).Cheats & PlayerEx::CF_BUDDHA)) Player.Health = 1;
 	PlayerEx(Player).Attacker = source;
 
 	//
 	// do the damage
 	//
 	Health -= damage;
+	if (bIsPlayer && Health < 1 && (PlayerEx(Player).Cheats & PlayerEx::CF_BUDDHA)) Health = 1;
 	if (Health <= 0)
 	{
 		// Death

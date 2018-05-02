@@ -37,7 +37,8 @@ enum
 	CF_FRIGHTENING		= 1 << 3,		// Scare monsters away.
 	CF_DOUBLEFIRINGSPEED= 1 << 4,		// Player owns a double firing speed artifact
 	CF_HIGHJUMP			= 1 << 5,		// Player owns a high jump artifact
-	CF_TIMEFREEZE		= 1 << 6		// Player owns a time freeze artifact
+	CF_TIMEFREEZE		= 1 << 6,		// Player owns a time freeze artifact
+	CF_BUDDHA			= 1 << 7		// Normal play, but never looses last 1% of health
 };
 
 const float USERANGE		= 64.0;
@@ -3693,6 +3694,17 @@ final void Cheat_God()
 			cprint("GOD MODE OFF");
 		}
 	}
+}
+
+//==========================================================================
+//
+//  Cheat_Buddha
+//
+//==========================================================================
+
+final void Cheat_Buddha () {
+  Cheats ^= CF_BUDDHA;
+  if (Cheats&CF_BUDDHA) cprint("Buddha Mode On"); else cprint("Buddha Mode Off");
 }
 
 //==========================================================================
