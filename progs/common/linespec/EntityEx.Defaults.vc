@@ -26,6 +26,7 @@
 defaultproperties
 {
 	Health = 1000;
+	InitialHealth = 1000;
 	ReactionCount = 8;
 	Radius = 20.0;
 	Height = 16.0;

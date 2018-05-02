@@ -30,6 +30,7 @@ void OnMapSpawn(mthing_t * mthing)
 {
 	float l;
 
+	InitialHealth = Health;
 	Destroy();
 	if (!mthing->arg1)
 		l = 200.0;

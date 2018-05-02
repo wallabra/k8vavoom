@@ -237,6 +237,7 @@ class VEntity : public VThinker
 	vuint32			EntityFlags;
 
 	int				Health;
+	int				InitialHealth;
 
 	// For movement checking.
 	float			Radius;

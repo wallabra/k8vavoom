@@ -1217,6 +1217,8 @@ final void FaceMovementDirection()
 
 void OnMapSpawn(mthing_t* mthing)
 {
+	InitialHealth = Health;
+
 	if (IsFast())
 	{
 		ReactionCount = 0;
