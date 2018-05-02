@@ -761,11 +761,15 @@ void TestForWindowEffect(linedef_t *L)
 
   float_g back_dist = 999999.0;
   sector_t * back_open = NULL;
+#if DEBUG_WINDOW_FX
   int back_line = -1;
+#endif
 
   float_g front_dist = 999999.0;
   sector_t * front_open = NULL;
+#if DEBUG_WINDOW_FX
   int front_line = -1;
+#endif
 
   for (i=0; i < num_linedefs; i++)
   {
@@ -832,7 +836,9 @@ void TestForWindowEffect(linedef_t *L)
       {
         front_dist = dist;
         front_open = hit_side ? hit_side->sector : NULL;
+#if DEBUG_WINDOW_FX
         front_line = i;
+#endif
       }
     }
     else
@@ -841,7 +847,9 @@ void TestForWindowEffect(linedef_t *L)
       {
         back_dist = dist;
         back_open = hit_side ? hit_side->sector : NULL;
+#if DEBUG_WINDOW_FX
         back_line = i;
+#endif
       }
     }
   }

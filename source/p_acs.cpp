@@ -4287,7 +4287,7 @@ int VAcs::RunScript(float DeltaTime)
 
 		ACSVM_CASE(PCD_TakeActorInventory)
 			{
-				int searcher = -1;
+				//int searcher = -1;
 				for (VEntity* mobj = Level->FindMobjFromTID(sp[-3], NULL);
 					mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj))
 				{
@@ -4893,7 +4893,7 @@ int VAcs::RunScript(float DeltaTime)
 		ACSVM_CASE(PCD_MorphActor)
 			if (sp[-7])
 			{
-				int searcher = -1;
+				//int searcher = -1;
 				int Res = 0;
 				for (VEntity* Ent = Level->FindMobjFromTID(sp[-7], NULL);
 					Ent; Ent = Level->FindMobjFromTID(sp[-7], Ent))
@@ -4920,7 +4920,7 @@ int VAcs::RunScript(float DeltaTime)
 		ACSVM_CASE(PCD_UnmorphActor)
 			if (sp[-2])
 			{
-				int searcher = -1;
+				//int searcher = -1;
 				int Res = 0;
 				for (VEntity* Ent = Level->FindMobjFromTID(sp[-2], NULL);
 					Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent))

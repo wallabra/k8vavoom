@@ -136,7 +136,7 @@ bool VNetObjectsMap::SerialiseName(VStream& Strm, VName& Name)
 	{
 		vuint32 NameIndex;
 		Strm.SerialiseInt(NameIndex, NameLookup.Num() + 1);
-		if (NameIndex == NameLookup.Num())
+		if ((vint32)NameIndex == NameLookup.Num())
 		{
 			Name = NAME_None;
 		}
@@ -151,7 +151,7 @@ bool VNetObjectsMap::SerialiseName(VStream& Strm, VName& Name)
 		vuint32 NameIndex = Name.GetIndex() < NameMap.Num() ?
 			NameMap[Name.GetIndex()] : NameLookup.Num();
 		Strm.SerialiseInt(NameIndex, NameLookup.Num() + 1);
-		return NameIndex != NameLookup.Num();
+		return (vint32)NameIndex != NameLookup.Num();
 	}
 	unguard;
 }

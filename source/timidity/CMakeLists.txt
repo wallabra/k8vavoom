@@ -1,3 +1,6 @@
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w" )
+
 add_library(timidity STATIC
 	common.cpp
 	dls1.h

@@ -399,7 +399,7 @@ void VCommand::ExecuteString(const VStr& Acmd, ECmdSource src,
 	{
 		//	Verify that it's a valid keyconf command.
 		bool Found = false;
-		for (int i = 0; i < ARRAY_COUNT(KeyConfCommands); i++)
+		for (unsigned i = 0; i < ARRAY_COUNT(KeyConfCommands); i++)
 		{
 			if (!Args[0].ICmp(KeyConfCommands[i]))
 			{

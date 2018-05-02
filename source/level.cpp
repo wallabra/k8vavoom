@@ -1268,6 +1268,7 @@ IMPLEMENT_FUNCTION(VLevel, AddExtraFloor)
 	P_GET_PTR(sector_t, dst);
 	P_GET_PTR(line_t, line);
 	P_GET_SELF;
+	(void)Self;
 	RET_PTR(AddExtraFloor(line, dst));
 }
 
@@ -1275,6 +1276,7 @@ IMPLEMENT_FUNCTION(VLevel, SwapPlanes)
 {
 	P_GET_PTR(sector_t, s);
 	P_GET_SELF;
+	(void)Self;
 	SwapPlanes(s);
 }
 
@@ -1300,6 +1302,8 @@ IMPLEMENT_FUNCTION(VLevel, SetHeightSector)
 	P_GET_PTR(sector_t, SrcSector);
 	P_GET_PTR(sector_t, Sector);
 	P_GET_SELF;
+	(void)Flags;
+	(void)SrcSector;
 	if (Self->RenderData)
 	{
 		Self->RenderData->SetupFakeFloors(Sector);

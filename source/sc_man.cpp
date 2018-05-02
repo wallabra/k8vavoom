@@ -89,10 +89,10 @@ VScriptParser::VScriptParser(const VStr& name, VStream* Strm)
 , Crossed(false)
 , QuotedString(false)
 , ScriptName(name)
+, SrcIdx(-1)
 , AlreadyGot(false)
 , CMode(false)
 , Escape(true)
-, SrcIdx(-1)
 {
 	guard(VScriptParser::VScriptParser);
 	ScriptSize = Strm->TotalSize();

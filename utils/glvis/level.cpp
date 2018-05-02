@@ -55,6 +55,7 @@ namespace VavoomUtils {
 //
 //==========================================================================
 
+/*
 static void *GLVisMalloc(size_t size)
 {
 	if (!size)
@@ -70,6 +71,7 @@ static void *GLVisMalloc(size_t size)
 	memset(ptr, 0, size);
 	return ptr;
 }
+*/
 
 //==========================================================================
 //
@@ -77,11 +79,13 @@ static void *GLVisMalloc(size_t size)
 //
 //==========================================================================
 
+/*
 static void GLVisFree(void *ptr)
 {
 	Z_Free(ptr);
 	ptr = NULL;
 }
+*/
 
 //==========================================================================
 //

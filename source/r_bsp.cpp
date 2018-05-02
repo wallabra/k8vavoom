@@ -234,7 +234,7 @@ void VRenderLevelShared::DrawSurfaces(surface_t* InSurfs, texinfo_t *texinfo,
 	}
 	bool IsStack = SkyBox && SkyBox->eventSkyBoxGetAlways();
 	if (texinfo->Tex == GTextureManager[skyflatnum] ||
-		IsStack && CheckSkyBoxAlways)
+		(IsStack && CheckSkyBoxAlways)) //k8: i hope that the parens are right here
 	{
 		VSky* Sky = NULL;
 		if (!SkyBox && r_sub->sector->Sky & SKY_FROM_SIDE)

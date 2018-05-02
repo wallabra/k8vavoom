@@ -106,7 +106,9 @@ private:
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+#ifdef ZONE_DEBUG
 static void Z_MemDebugDump();
+#endif
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -115,7 +117,9 @@ static void Z_MemDebugDump();
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static TMemZone		mainzone;
+#ifdef ZONE_DEBUG
 static MemDebug_t*	MemDebug;
+#endif
 
 // CODE --------------------------------------------------------------------
 

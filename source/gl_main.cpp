@@ -1069,7 +1069,7 @@ void VOpenGLDrawer::ReadBackScreen(int Width, int Height, rgba_t* Dest)
 void VOpenGLDrawer::SetFade(vuint32 NewFade)
 {
 	guard(VOpenGLDrawer::SetFade);
-	if (CurrentFade == NewFade)
+	if ((vuint32)CurrentFade == NewFade)
 	{
 		return;
 	}

@@ -222,16 +222,17 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
 			float sina1 = msin(a1);
 			float cosa1 = mcos(a1);
 
-			s.surf.verts[0] = TVec(cosa0 * vradius, sina0 * vradius, bheight);
-			s.surf.verts[1] = TVec(cosa0 * tradius, sina0 * tradius, theight);
-			s.surf.verts[2] = TVec(cosa1 * tradius, sina1 * tradius, theight);
-			s.surf.verts[3] = TVec(cosa1 * vradius, sina1 * vradius, bheight);
+			TVec* surfverts = &s.surf.verts[0]; //k8: cache it, and silence compiler warnings
+			surfverts[0] = TVec(cosa0 * vradius, sina0 * vradius, bheight);
+			surfverts[1] = TVec(cosa0 * tradius, sina0 * tradius, theight);
+			surfverts[2] = TVec(cosa1 * tradius, sina1 * tradius, theight);
+			surfverts[3] = TVec(cosa1 * vradius, sina1 * vradius, bheight);
 
-			TVec hdir = j < VDIVS / 2 ? s.surf.verts[3] - s.surf.verts[0] :
-				s.surf.verts[2] - s.surf.verts[1];
-			TVec vdir = s.surf.verts[0] - s.surf.verts[1];
+			TVec hdir = j < VDIVS / 2 ? surfverts[3] - surfverts[0] :
+				surfverts[2] - surfverts[1];
+			TVec vdir = surfverts[0] - surfverts[1];
 			TVec normal = Normalise(CrossProduct(vdir, hdir));
-			s.plane.Set(normal, DotProduct(s.surf.verts[1], normal));
+			s.plane.Set(normal, DotProduct(surfverts[1], normal));
 
 			s.texinfo.saxis = hdir * (1024 / HDIVS / DotProduct(hdir, hdir));
 			float tk = skyh / RADIUS;
@@ -252,16 +253,16 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
 				s.columnOffset1 = -s.columnOffset1;
 				s.columnOffset2 = -s.columnOffset2;
 
-				mins = DotProduct(s.surf.verts[j < VDIVS / 2 ? 3 : 2],
+				mins = DotProduct(surfverts[j < VDIVS / 2 ? 3 : 2],
 					s.texinfo.saxis) + s.texinfo.soffs;
-				maxs = DotProduct(s.surf.verts[j < VDIVS / 2 ? 0 : 1],
+				maxs = DotProduct(surfverts[j < VDIVS / 2 ? 0 : 1],
 					s.texinfo.saxis) + s.texinfo.soffs;
 			}
 			else
 			{
-				mins = DotProduct(s.surf.verts[j < VDIVS / 2 ? 0 : 1],
+				mins = DotProduct(surfverts[j < VDIVS / 2 ? 0 : 1],
 					s.texinfo.saxis) + s.texinfo.soffs;
-				maxs = DotProduct(s.surf.verts[j < VDIVS / 2 ? 3 : 2],
+				maxs = DotProduct(surfverts[j < VDIVS / 2 ? 3 : 2],
 					s.texinfo.saxis) + s.texinfo.soffs;
 			}
 
@@ -270,8 +271,8 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
 			s.surf.texturemins[0] = bmins * 16;
 			s.surf.extents[0] = (bmaxs - bmins) * 16;
 			//s.surf.extents[0] = 256;
-			mins = DotProduct(s.surf.verts[1], s.texinfo.taxis) + s.texinfo.toffs;
-			maxs = DotProduct(s.surf.verts[0], s.texinfo.taxis) + s.texinfo.toffs;
+			mins = DotProduct(surfverts[1], s.texinfo.taxis) + s.texinfo.toffs;
+			maxs = DotProduct(surfverts[0], s.texinfo.taxis) + s.texinfo.toffs;
 			bmins = (int)floor(mins / 16);
 			bmaxs = (int)ceil(maxs / 16);
 			s.surf.texturemins[1] = bmins * 16;

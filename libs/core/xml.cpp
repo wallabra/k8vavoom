@@ -658,11 +658,11 @@ VStr VXmlDocument::HandleReferences(const VStr& AStr)
 		if (Ret[i] == '&')
 		{
 			int EndPos = i + 1;
-			while (EndPos < Ret.Length() && Ret[EndPos] != ';')
+			while (EndPos < int(Ret.Length()) && Ret[EndPos] != ';')
 			{
 				EndPos++;
 			}
-			if (EndPos >= Ret.Length())
+			if (EndPos >= int(Ret.Length()))
 			{
 				Error("Unterminated character or entity reference");
 			}

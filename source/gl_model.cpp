@@ -352,13 +352,13 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
 			(light & 255) / 255.0, Alpha);
 
 		p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
-		if (Alpha < 1.0 && !ForceDepthUse || AllowTransparency)
+		if (Alpha < 1.0 && !ForceDepthUse || AllowTransparency) //k8: dunno. really.
 		{
 			glDepthMask(GL_FALSE);
 		}
 		p_glDrawRangeElementsEXT(GL_TRIANGLES, 0, Mdl->STVerts.Num() - 1,
 			Mdl->Tris.Num() * 3, GL_UNSIGNED_SHORT, 0);
-		if (Alpha < 1.0 && !ForceDepthUse || AllowTransparency)
+		if (Alpha < 1.0 && !ForceDepthUse || AllowTransparency) //k8: dunno. really.
 		{
 			glDepthMask(GL_TRUE);
 		}

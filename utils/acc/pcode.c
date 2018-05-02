@@ -1394,10 +1394,10 @@ void PC_AddScript(int inNumber, int argCount)
 void PC_SetScriptVarCount(int inNumber, int varCount)
 {
 	int i;
-	U_BYTE type;
+	//U_BYTE type;
 	U_WORD number;
 
-	type = (inNumber & 65535) / 1000;
+	//type = (inNumber & 65535) / 1000;
 	number = (inNumber & 65535) % 1000;
 
 	for(i = 0; i < pc_ScriptCount; i++)

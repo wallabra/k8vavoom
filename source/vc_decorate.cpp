@@ -283,7 +283,7 @@ static void ParseDecorateDef(VXmlDocument& Doc)
 			}
 			else if (PN->Name == "prop_int_unsupported")
 			{
-				VPropDef& P = Lst.NewProp(PROP_IntUnsupported, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_IntUnsupported, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_bit_index")
 			{
@@ -353,7 +353,7 @@ static void ParseDecorateDef(VXmlDocument& Doc)
 			}
 			else if (PN->Name == "prop_string_unsupported")
 			{
-				VPropDef& P = Lst.NewProp(PROP_StrUnsupported, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_StrUnsupported, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_class")
 			{
@@ -386,11 +386,11 @@ static void ParseDecorateDef(VXmlDocument& Doc)
 			}
 			else if (PN->Name == "prop_game")
 			{
-				VPropDef& P = Lst.NewProp(PROP_Game, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_Game, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_spawn_id")
 			{
-				VPropDef& P = Lst.NewProp(PROP_SpawnId, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_SpawnId, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_conversation_id")
 			{
@@ -404,7 +404,7 @@ static void ParseDecorateDef(VXmlDocument& Doc)
 			}
 			else if (PN->Name == "prop_damage_factor")
 			{
-				VPropDef& P = Lst.NewProp(PROP_DamageFactor, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_DamageFactor, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_missile_damage")
 			{
@@ -440,35 +440,35 @@ static void ParseDecorateDef(VXmlDocument& Doc)
 			}
 			else if (PN->Name == "prop_stencil_colour")
 			{
-				VPropDef& P = Lst.NewProp(PROP_StencilColour, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_StencilColour, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_monster")
 			{
-				VPropDef& P = Lst.NewProp(PROP_Monster, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_Monster, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_projectile")
 			{
-				VPropDef& P = Lst.NewProp(PROP_Projectile, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_Projectile, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_bouncetype")
 			{
-				VPropDef& P = Lst.NewProp(PROP_BounceType, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_BounceType, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_clear_flags")
 			{
-				VPropDef& P = Lst.NewProp(PROP_ClearFlags, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_ClearFlags, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_drop_item")
 			{
-				VPropDef& P = Lst.NewProp(PROP_DropItem, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_DropItem, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_states")
 			{
-				VPropDef& P = Lst.NewProp(PROP_States, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_States, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_skip_super")
 			{
-				VPropDef& P = Lst.NewProp(PROP_SkipSuper, PN);
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_SkipSuper, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_args")
 			{
@@ -520,7 +520,7 @@ static void ParseDecorateDef(VXmlDocument& Doc)
 			}
 			else if (PN->Name == "flag_unsupported")
 			{
-				VFlagDef& F = Lst.NewFlag(FLAG_Unsupported, PN);
+				/*VFlagDef& F =*/(void)Lst.NewFlag(FLAG_Unsupported, PN); //k8: dunno
 			}
 			else if (PN->Name == "flag_byte")
 			{
@@ -844,7 +844,7 @@ static float GetClassFieldFloat(VClass* Class, VName FieldName)
 //
 //==========================================================================
 
-static TVec GetClassFieldVec(VClass* Class, VName FieldName)
+__attribute__((unused)) static TVec GetClassFieldVec(VClass* Class, VName FieldName)
 {
 	guard(GetClassFieldVec);
 	VField* F = Class->FindFieldChecked(FieldName);
@@ -987,7 +987,7 @@ static void SetClassFieldStr(VClass* Class, VName FieldName,
 //
 //==========================================================================
 
-static void SetClassFieldVec(VClass* Class, VName FieldName,
+__attribute__((unused)) static void SetClassFieldVec(VClass* Class, VName FieldName,
 	const TVec& Value)
 {
 	guard(SetClassFieldVec);
@@ -1002,7 +1002,7 @@ static void SetClassFieldVec(VClass* Class, VName FieldName,
 //
 //==========================================================================
 
-static void SetFieldByte(VObject* Obj, VName FieldName, vuint8 Value)
+__attribute__((unused)) static void SetFieldByte(VObject* Obj, VName FieldName, vuint8 Value)
 {
 	guard(SetFieldByte);
 	VField* F = Obj->GetClass()->FindFieldChecked(FieldName);
@@ -1016,7 +1016,7 @@ static void SetFieldByte(VObject* Obj, VName FieldName, vuint8 Value)
 //
 //==========================================================================
 
-static void SetFieldFloat(VObject* Obj, VName FieldName, float Value,
+__attribute__((unused)) static void SetFieldFloat(VObject* Obj, VName FieldName, float Value,
 	int Idx = 0)
 {
 	guard(SetFieldFloat);
@@ -1031,7 +1031,7 @@ static void SetFieldFloat(VObject* Obj, VName FieldName, float Value,
 //
 //==========================================================================
 
-static void SetFieldBool(VObject* Obj, VName FieldName, int Value)
+__attribute__((unused)) static void SetFieldBool(VObject* Obj, VName FieldName, int Value)
 {
 	guard(SetFieldBool);
 	VField* F = Obj->GetClass()->FindFieldChecked(FieldName);
@@ -1045,7 +1045,7 @@ static void SetFieldBool(VObject* Obj, VName FieldName, int Value)
 //
 //==========================================================================
 
-static void SetFieldName(VObject* Obj, VName FieldName, VName Value)
+__attribute__((unused)) static void SetFieldName(VObject* Obj, VName FieldName, VName Value)
 {
 	guard(SetFieldName);
 	VField* F = Obj->GetClass()->FindFieldChecked(FieldName);
@@ -1059,7 +1059,7 @@ static void SetFieldName(VObject* Obj, VName FieldName, VName Value)
 //
 //==========================================================================
 
-static void SetFieldClass(VObject* Obj, VName FieldName, VClass* Value)
+__attribute__((unused)) static void SetFieldClass(VObject* Obj, VName FieldName, VClass* Value)
 {
 	guard(SetFieldClass);
 	VField* F = Obj->GetClass()->FindFieldChecked(FieldName);

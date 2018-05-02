@@ -65,8 +65,8 @@ VDemoPlaybackNetConnection::VDemoPlaybackNetConnection(VNetContext* AContext,
 	VBasePlayer* AOwner, VStream* AStrm, bool ATimeDemo)
 : VNetConnection(NULL, AContext, AOwner)
 , NextPacketTime(0)
-, Strm(AStrm)
 , bTimeDemo(ATimeDemo)
+, Strm(AStrm)
 {
 	AutoAck = true;
 	*Strm << NextPacketTime;

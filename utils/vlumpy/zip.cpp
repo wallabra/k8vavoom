@@ -184,7 +184,7 @@ local void init_linkedlist(linkedlist_data* ll)
 	ll->first_block = ll->last_block = NULL;
 }
 
-local void free_linkedlist(linkedlist_data* ll)
+__attribute((unused)) local void free_linkedlist(linkedlist_data* ll)
 {
 	free_datablock(ll->first_block);
 	ll->first_block = ll->last_block = NULL;

@@ -1160,7 +1160,7 @@ int VFont::SplitText(const VStr& Text, TArray<VSplitLine>& Lines,
 		else if (WordStart && c > ' ')
 		{
 			const char* SPtr2 = SPtr;
-			const char* PChar2 = PChar;
+			//const char* PChar2 = PChar;
 			int c2 = c;
 			int NewW = CurW;
 			while (c2 > ' ' || c2 == TEXT_COLOUR_ESCAPE)
@@ -1169,7 +1169,7 @@ int VFont::SplitText(const VStr& Text, TArray<VSplitLine>& Lines,
 				{
 					NewW += GetCharWidth(c2);
 				}
-				PChar2 = SPtr2;
+				//PChar2 = SPtr2;
 				c2 = VStr::GetChar(SPtr2);
 				//	Check for colour escape.
 				if (c2 == TEXT_COLOUR_ESCAPE)

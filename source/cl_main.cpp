@@ -744,6 +744,7 @@ COMMAND(Record)
 		Conn->ObjMap->SetUpClassLookup();
 		VObjectMapChannel* Chan = (VObjectMapChannel*)Conn->CreateChannel(
 			CHANNEL_ObjectMap, -1);
+		(void)Chan; //k8:???
 		while (!Conn->ObjMapSent)
 		{
 			Conn->Tick();

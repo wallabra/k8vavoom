@@ -45,7 +45,7 @@ namespace VavoomUtils {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int		empty_ptr;
+//static int		empty_ptr;
 
 // CODE --------------------------------------------------------------------
 

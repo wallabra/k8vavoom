@@ -265,7 +265,7 @@ VExpression* VDotField::IntResolve(VEmitContext& ec, bool AssignTarget)
 	}
 	else if (op->Type.Type == TYPE_DynamicArray)
 	{
-		VFieldType type = op->Type;
+		//VFieldType type = op->Type;
 		op->Flags &= ~FIELD_ReadOnly;
 		op->RequestAddressOf();
 		if (FieldName == NAME_Num)

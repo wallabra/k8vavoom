@@ -431,7 +431,7 @@ void VUdmfParser::ParseLineDef(const mapInfo_t& MInfo)
 	{
 		L.L.flags |= ML_WRAP_MIDTEX;
 	}
-	bool HavePassUse = false;
+	//bool HavePassUse = false;
 
 	sc.Expect("{");
 	while (!sc.Check("}"))
@@ -525,7 +525,7 @@ void VUdmfParser::ParseLineDef(const mapInfo_t& MInfo)
 			{
 				if (bExtended)
 				{
-					HavePassUse = CheckBool();
+					/*HavePassUse =*/(void)CheckBool(); //k8: dunno
 				}
 				else
 				{

@@ -2097,6 +2097,7 @@ void VParser::ParseClass()
 	int ClassAttr = TModifiers::ClassAttr(TModifiers::Check(
 		TModifiers::Parse(Lex), TModifiers::Native | TModifiers::Abstract,
 		Lex.Location));
+	(void)ClassAttr; //k8: don't even ask me!
 	do
 	{
 		if (Lex.Check(TK_MobjInfo))

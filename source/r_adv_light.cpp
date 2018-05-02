@@ -423,8 +423,8 @@ void VAdvancedRenderLevel::RenderShadowLine(drawseg_t* dseg)
 		return;
 	}
 
-	line_t *linedef = line->linedef;
-	side_t *sidedef = line->sidedef;
+	//line_t *linedef = line->linedef;
+	//side_t *sidedef = line->sidedef;
 
 	if (!line->backsector)
 	{
@@ -755,8 +755,8 @@ void VAdvancedRenderLevel::RenderLightLine(drawseg_t* dseg)
 		return;
 	}
 
-	line_t *linedef = line->linedef;
-	side_t *sidedef = line->sidedef;
+	//line_t *linedef = line->linedef;
+	//side_t *sidedef = line->sidedef;
 
 	if (!line->backsector)
 	{

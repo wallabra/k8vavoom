@@ -122,11 +122,11 @@ VTexture::VTexture()
 , SScale(1)
 , TScale(1)
 , TextureTranslation(0)
+, SourceLump(-1)
 , DriverData(0)
 , Pixels8Bit(0)
 , HiResTexture(0)
 , Pixels8BitValid(false)
-, SourceLump(-1)
 {
 }
 

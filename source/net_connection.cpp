@@ -68,11 +68,11 @@ VNetConnection::VNetConnection(VSocketPublic* ANetCon, VNetContext* AContext,
 , AckSequence(0)
 , UnreliableSendSequence(0)
 , UnreliableReceiveSequence(0)
+, ObjMapSent(false)
+, LevelInfoSent(false)
 , UpdatePvs(NULL)
 , UpdatePvsSize(0)
 , LeafPvs(NULL)
-, ObjMapSent(false)
-, LevelInfoSent(false)
 {
 	memset(Channels, 0, sizeof(Channels));
 	memset(InSequence, 0, sizeof(InSequence));
