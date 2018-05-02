@@ -597,40 +597,42 @@ final void A_WeaponReady(optional int Flags)
 
 	if (!(Flags & 12))
 	{
+		if (Player.Buttons & BT_RELOAD) Player.bReloadQueued = true;
 		// Check for fire.
-		if (Player.Buttons & BT_ATTACK && !(Flags & 4))
+		if (Player.bReloadQueued && !Player.bAttackDown && (Flags & 64) != 0 && Wpn.FindState('Reload'))
+		{
+			Player.bAttackDown = true;
+			Player.bReloadQueued = false;
+			PlayerEx(Player).ReloadWeapon();
+			return;
+		}
+		if ((Player.Buttons & BT_ATTACK) && !(Flags & 4))
 		{
 			if (!Player.bAttackDown || !Wpn.bNoAutoFire)
 			{
 				Player.bAttackDown = true;
+				Player.bReloadQueued = false;
 				PlayerEx(Player).FireWeapon();
 				return;
 			}
 		}
-		else if (Player.Buttons & BT_ALT_ATTACK && Wpn.FindState('AltFire') && !(Flags & 8))
+		else if ((Player.Buttons & BT_ALT_ATTACK) && !(Flags & 8) && Wpn.FindState('AltFire'))
 		{
 			if (!Player.bAttackDown || !Wpn.bNoAutoFire)
 			{
 				Player.bAttackDown = true;
+				Player.bReloadQueued = false;
 				PlayerEx(Player).AltFireWeapon();
 				return;
 			}
 		}
-		else if (Player.Buttons & BT_ALT_ATTACK && Wpn.FindState('AltFire') && !(Flags & 8))
+		else if (Player.Buttons & BT_ALT_ATTACK && !(Flags & 8) && Wpn.FindState('AltFire'))
 		{
 			if (!Player.bAttackDown || !Wpn.bNoAutoFire)
 			{
 				Player.bAttackDown = true;
+				Player.bReloadQueued = false;
 				PlayerEx(Player).AltFireWeapon();
-				return;
-			}
-		}
-		else if (Player.Buttons & BT_RELOAD && Wpn.FindState('Reload') && (Flags & 64) != 0)
-		{
-			if (!Player.bAttackDown)
-			{
-				Player.bAttackDown = true;
-				PlayerEx(Player).ReloadWeapon();
 				return;
 			}
 		}
@@ -638,6 +640,8 @@ final void A_WeaponReady(optional int Flags)
 		{
 			Player.bAttackDown = false;
 		}
+	} else {
+		Player.bReloadQueued = false;
 	}
 
 	if (!Wpn.bDontBob || !(Flags & 1))

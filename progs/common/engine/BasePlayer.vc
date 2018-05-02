@@ -60,6 +60,7 @@ readonly bool			bSpawned;
 readonly bool			bIsBot;
 bool					bFixAngle;
 bool					bAttackDown;			// True if button down last tic.
+bool					bReloadQueued;			// True if "reload" was pressed
 bool					bUseDown;
 bool					bDidSecret;				// True if secret level has been done.
 readonly private bool	bCentreing;
@@ -142,7 +143,7 @@ replication
 		Health, Frags, Deaths, ExtraLight, FixedColourmap, CShift,
 		PSpriteSY, KillCount, ItemCount, SecretCount, ViewStates,
 		ClientNum, WorldTimer, MO, Camera, bAutomapRevealed,
-		bAutomapShowThings, SoundEnvironment, bAttackDown;
+		bAutomapShowThings, SoundEnvironment, bAttackDown, bReloadQueued;
 
 	unreliable if (!bIsClient)
 		ClientStartSound, ClientStopSound, ClientSetViewOrg;

@@ -2635,6 +2635,7 @@ void PlayerReborn()
 	//  Set initial data
 	bUseDown = true;	// don't do anything immediately
 	bAttackDown = true;
+	bReloadQueued = false;
 	PlayerState = PST_LIVE;
 	Health = GetRebornHealth();
 	LocalQuakeHappening = 0;
