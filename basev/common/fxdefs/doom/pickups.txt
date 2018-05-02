@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 pointlight HealthBonus
 {
-	colour 0 0 0.7
+	colour 0 0 0.9
 	radius 86
 	offset 0 0 1
 }
@@ -40,7 +40,7 @@ class BlueArmor
 //------------------------------------------------------------------------------
 pointlight ArmorBonus
 {
-	colour 0.2 0.4 0.2
+	colour 0.2 0.6 0.2
 	radius 86
 	offset 0 0 1
 }

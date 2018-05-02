@@ -129,7 +129,8 @@ pointlight BurningBarrel
 {
 	colour 1 1 0
 	radius 140
-	offset 0 0 16
+	//offset 0 0 16
+	offset 0 0 24
 }
 
 class BurningBarrel
@@ -210,28 +211,28 @@ class EvilEye
 //------------------------------------------------------------------------------
 pointlight ExplosiveBarrel_X1
 {
-	colour 0.8 0.35 0
+	colour 0.8 0.65 0
 	radius 320
 	offset 0 0 24
 }
 
 pointlight ExplosiveBarrel_X2
 {
-	colour 0.8 0.35 0
+	colour 0.8 0.65 0
 	radius 240
 	offset 0 0 24
 }
 
 pointlight ExplosiveBarrel_X3
 {
-	colour 0.8 0.35 0
+	colour 0.8 0.65 0
 	radius 160
 	offset 0 0 24
 }
 
 pointlight ExplosiveBarrel_X4
 {
-	colour 0.8 0.35 0
+	colour 0.8 0.65 0
 	radius 80
 	offset 0 0 24
 }
@@ -250,8 +251,26 @@ particleeffect ExplosiveBarrel
 	ramp 4
 }
 
+pointlight ExplosiveBarrel_N0
+{
+	colour 0.2 0.8 0
+	radius 86
+	offset 0 0 24
+}
+
+pointlight ExplosiveBarrel_N1
+{
+	colour 0.2 0.9 0
+	radius 96
+	offset 0 0 24
+}
+
 class ExplosiveBarrel
 {
+	//static_light ExplosiveBarrel_N0
+	frame BAR1A { light ExplosiveBarrel_N0 }
+	frame BAR1B { light ExplosiveBarrel_N1 }
+	// explosion
 	frame BEXPC { light ExplosiveBarrel_X1 particles ExplosiveBarrel }
 	frame BEXPC { light ExplosiveBarrel_X2 }
 	frame BEXPD { light ExplosiveBarrel_X3 }
