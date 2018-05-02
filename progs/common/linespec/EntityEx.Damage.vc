@@ -272,7 +272,8 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
       if (showMessage && plr.k8HSShowCriticals) {
         //inflictor.A_PrintBold(messageText, 1.5);
         //inflictor.A_Log(messageText);
-        print("CRITICAL: %s", messageText);
+        //print("CRITICAL: %s", messageText);
+        inflictor.Player.centreprint(messageText);
       } else {
         //print("  CRIT: %d / %d", damage, dodmg);
       }
