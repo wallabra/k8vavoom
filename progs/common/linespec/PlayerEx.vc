@@ -146,6 +146,9 @@ name			MapsVisited[MAX_MAPS_VISITED];
 float			FOV;			// current Field Of Vision
 float			DesiredFOV;		// desired Field Of Vision
 
+bool k8ElvenGifted;
+
+
 replication
 {
 	reliable if (!bIsClient)
@@ -2571,7 +2574,8 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
 	}
 
   // elven gifts
-  if (ftoi(GetCvarF('k8ElvenGift')) != 0) {
+  if (!k8ElvenGifted && ftoi(GetCvarF('k8ElvenGift')) != 0) {
+    k8ElvenGifted = true; // gifts should be given only once
     if (AddElvenGift('Shotgun')) AddElvenGift('ShellBox');
     if (AddElvenGift('BDW_Rifle')) { int f; for (f = 9; f > 0; --f) AddElvenGift('Clip'); }
     ClientHudMessage("ELVEN GIFT", 'SmallFont', 0, 123666, CR_OLIVE, "",
@@ -3956,4 +3960,5 @@ void PlayerUnmorphed()
 defaultproperties
 {
 	InvSize = 6;
+	k8ElvenGifted = false;
 }
