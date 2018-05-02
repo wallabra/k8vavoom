@@ -992,7 +992,16 @@ bool VReturn::Resolve(VEmitContext& ec)
 	bool Ret = true;
 	if (Expr)
 	{
-		Expr = Expr->Resolve(ec);
+		VExpression* re;
+		if (ec.FuncRetType.Type == TYPE_Float) {
+			re = Expr->ResolveFloat(ec);
+		} else {
+			re = Expr->Resolve(ec);
+		}
+		if (!re) delete Expr;
+		Expr = re;
+		//Expr = Expr->Resolve(ec);
+
 		if (ec.FuncRetType.Type == TYPE_Void)
 		{
 			ParseError(Loc, "void function cannot return a value.");
