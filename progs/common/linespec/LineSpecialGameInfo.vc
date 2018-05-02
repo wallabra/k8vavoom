@@ -147,6 +147,8 @@ void Init()
 	CreateCvar('k8HSFastKillArchVileDamage', "120", CVAR_ARCHIVE);
 
 	CreateCvar('k8AmmoKing', "1", CVAR_ARCHIVE);
+
+	CreateCvar('k8ElvenGift', "1", CVAR_ARCHIVE);
 }
 
 //==========================================================================

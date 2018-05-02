@@ -2569,7 +2569,27 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
 		Level.XLevel.StartTypedACScripts(Level::SCRIPT_Respawn, 0, 0, 0, MO,
 			true, false);
 	}
+
+  // elven gifts
+  if (ftoi(GetCvarF('k8ElvenGift')) != 0) {
+    if (AddElvenGift('Shotgun')) AddElvenGift('ShellBox');
+    if (AddElvenGift('BDW_Rifle')) { int f; for (f = 9; f > 0; --f) AddElvenGift('Clip'); }
+    ClientHudMessage("ELVEN GIFT", 'SmallFont', 0, 123666, CR_OLIVE, "",
+      0.5, 0.45, 0, 0,
+      1.5, 0.0, 0.0);
+  }
 }
+
+final bool AddElvenGift (name Klass) {
+  if (FindClass(Klass)) {
+    Actor act = Level.Spawn(FindClass(Klass));
+    act.TouchSpecial(EntityEx(MO));
+    return true;
+  } else {
+    return false;
+  }
+}
+
 
 //===========================================================================
 //
