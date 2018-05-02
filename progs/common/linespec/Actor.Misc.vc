@@ -562,15 +562,20 @@ final void A_WeaponReady(optional int Flags)
 {
 	float angle;
 
+	if (k8InWeaponReady) return; // don't recurse
+
 	if (!bIsPlayer)
 	{
 		return;
 	}
+
 	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 	if (!Wpn)
 	{
 		return;
 	}
+
+	k8InWeaponReady = true;
 
 	// get out of attack state
 	if (StateIsInSequence(State, MissileState) ||
@@ -591,6 +596,7 @@ final void A_WeaponReady(optional int Flags)
 		if (PlayerEx(Player).PendingWeapon || Player.MO.Health <= 0)
 		{
 			Player.SetViewState(ps_weapon, Wpn.GetDownState());
+			k8InWeaponReady = false;
 			return;
 		}
 	}
@@ -604,6 +610,7 @@ final void A_WeaponReady(optional int Flags)
 			Player.bAttackDown = true;
 			Player.bReloadQueued = false;
 			PlayerEx(Player).ReloadWeapon();
+			k8InWeaponReady = false;
 			return;
 		}
 		if ((Player.Buttons & BT_ATTACK) && !(Flags & 4))
@@ -613,6 +620,7 @@ final void A_WeaponReady(optional int Flags)
 				Player.bAttackDown = true;
 				Player.bReloadQueued = false;
 				PlayerEx(Player).FireWeapon();
+				k8InWeaponReady = false;
 				return;
 			}
 		}
@@ -623,6 +631,7 @@ final void A_WeaponReady(optional int Flags)
 				Player.bAttackDown = true;
 				Player.bReloadQueued = false;
 				PlayerEx(Player).AltFireWeapon();
+				k8InWeaponReady = false;
 				return;
 			}
 		}
@@ -633,6 +642,7 @@ final void A_WeaponReady(optional int Flags)
 				Player.bAttackDown = true;
 				Player.bReloadQueued = false;
 				PlayerEx(Player).AltFireWeapon();
+				k8InWeaponReady = false;
 				return;
 			}
 		}
@@ -657,6 +667,8 @@ final void A_WeaponReady(optional int Flags)
 		Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP +
 			PlayerEx(Player).Bob * sin(angle);
 	}
+
+	k8InWeaponReady = false;
 }
 
 // This function replaces calls to A_WeaponReady in other codepointers.

@@ -49,4 +49,6 @@ defaultproperties
 	BloodType = Blood;
 	BloodSplatterType = BloodSplatter;
 	AxeBloodType = AxeBlood;
+
+	k8InWeaponReady = false;
 }
