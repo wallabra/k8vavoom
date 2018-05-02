@@ -131,15 +131,9 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   }
 
   // calc distance
-  float mult = 1.1;
-  /*
-  CVar multcv = CVar.FindCVar('k8HSDistMult');
-  if (multcv) {
-    mult = multcv.GetFloat();
-    if (mult < 0.1) mult = 1.1;
-    if (mult > 4) mult = 4;
-  }
-  */
+  float mult = plr.k8HSDistMult;
+  if (mult < 0.1) mult = 1.1;
+  if (mult > 4) mult = 4;
 
   float len = 10000;
   if (headshot) {
@@ -170,8 +164,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     bool debugCrits = false; //k8CheckBoolCVar('k8HSDebugCrits', debugme);
     int dodmg = damage; //*2 baron of hell and other Big Things
     int smallHealth = 50; // baron of hell and other Big Things
-    //FIXME!
-    int critChance = ftoi(Random()*100);
+    int critChance = int(Random()*100);
 
     //TODO: int tick = gametic;
     //int tick = k8hsLastHitTick+1;
