@@ -221,37 +221,37 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
     bool showMessage = false;
     string messageText = "";
-    //int messageColor = Font.CR_YELLOW;
+    int messageColor = CR_YELLOW;
 
     if (critChance >= 95) {
       dodmg *= 10;
       if (debugCrits) print("*Critx10; d=%d", dodmg);
       messageText = "CRITICAL x10!";
-      //messageColor = Font.CR_YELLOW;
+      messageColor = CR_YELLOW;
       showMessage = true;
     } else if (critChance >= 85) {
       dodmg *= 7;
       if (debugCrits) print("*Critx7; d=%d", dodmg);
       messageText = "CRITICAL x7!";
-      //messageColor = Font.CR_ORANGE;
+      messageColor = CR_ORANGE;
       showMessage = true;
     } else if (critChance >= 75) {
       dodmg *= 3;
       if (debugCrits) print("*Critx3; d=%d", dodmg);
       messageText = "CRITICAL x3!";
-      //messageColor = Font.CR_RED;
+      messageColor = CR_RED;
       showMessage = true;
     } else if (critChance >= 55) {
       dodmg *= 2;
       if (debugCrits) print("*Critx2; d=%d", dodmg);
       messageText = "CRITICAL x2!";
-      //messageColor = Font.CR_RED;
+      messageColor = CR_RED;
       //showMessage = true;
     } else if (critChance > 10) {
       dodmg += dodmg/2; // *1.5
       if (debugCrits) print("*Critx1.5; d=%d", dodmg);
       messageText = "CRITICAL x1.5!";
-      //messageColor = Font.CR_RED;
+      messageColor = CR_RED;
       //showMessage = true;
     }
 
@@ -273,7 +273,15 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
         //inflictor.A_PrintBold(messageText, 1.5);
         //inflictor.A_Log(messageText);
         //print("CRITICAL: %s", messageText);
-        inflictor.Player.centreprint(messageText);
+        //inflictor.Player.centreprint(messageText);
+        inflictor.Player.ClientHudMessage(messageText, 'SmallFont', 0, 123666, messageColor, "",
+          0.5, 0.45, 0, 0,
+          1.5, 0.0, 0.0);
+        /*
+        native void ClientHudMessage(string Message, name Font, int Type, int Id,
+        	int Colour, string ColourName, float x, float y, int HudWidth,
+        	int HudHeight, float HoldTime, float Time1, float Time2);
+        */
       } else {
         //print("  CRIT: %d / %d", damage, dodmg);
       }
