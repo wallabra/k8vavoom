@@ -210,6 +210,13 @@ VScalarToFloat::VScalarToFloat(VExpression* AOp)
 : VExpression(AOp->Loc)
 , op(AOp)
 {
+	// convert it in-place
+	if (op && op->IsIntConst()) {
+		//printf("*** IN-PLACE CONVERSION OF %d\n", op->GetIntConst());
+		VExpression* lit = new VFloatLiteral((float)op->GetIntConst(), op->Loc);
+		delete op;
+		op = lit; // op is resolved here, but literal resolves to itself, so it is ok
+	}
 	Type = TYPE_Float;
 }
 
@@ -234,7 +241,7 @@ VScalarToFloat::~VScalarToFloat()
 //
 //==========================================================================
 
-VExpression* VScalarToFloat::DoResolve(VEmitContext&)
+VExpression* VScalarToFloat::DoResolve(VEmitContext& ec)
 {
 	return this;
 }
@@ -254,6 +261,9 @@ void VScalarToFloat::Emit(VEmitContext& ec)
 	case TYPE_Byte:
 	case TYPE_Bool:
 		ec.AddStatement(OPC_IntToFloat);
+		break;
+	case TYPE_Float: // it was converted in-place
+		//if (op->IsFloatConst()) printf("*** XXX: IN-PLACE CONVERSION OF %f\n", op->GetFloatConst());
 		break;
 	default:
 		ParseError(Loc, "Internal compiler error (VScalarToFloat::Emit)");
