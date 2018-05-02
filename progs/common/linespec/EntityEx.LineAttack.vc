@@ -428,7 +428,7 @@ final bool ShootCheckPlanes(sector_t* sec, TVec linestart, TVec lineend,
 
 final int LineAttack(TVec Dir, float Distance, int LADamage,
 	class<EntityEx> PuffType, optional bool NoAttackGhosts,
-	optional TVec* OutHitPoint, optional name DmgType)
+	optional TVec* OutHitPoint, optional name DmgType, optional bool secondary)
 {
 	TVec			Dst;
 	intercept_t*	in;
@@ -634,7 +634,7 @@ final int LineAttack(TVec Dir, float Distance, int LADamage,
 			if (bIsPlayer) {
 				TVec thp;
 				thp = hit_point-th.Origin;
-				th.DamageEx(self, self, LADamage, DmgType, NoArmor, thp);
+				th.DamageEx(self, self, LADamage, DmgType, NoArmor, thp, secondary);
 			} else {
 				th.Damage(self, self, LADamage, DmgType, NoArmor);
 			}

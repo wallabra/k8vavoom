@@ -75,6 +75,29 @@ int				DamageScreenColour;
 //	Maximal health.
 int				MaxHealth;
 
+// K8 Headshots Variables
+int k8hsCount; //k8
+
+// enable headshots
+bool k8HSEnabled;
+// distance multiplier (the more -- the less headshot chance on big distances)
+float k8HSDistMult;
+
+// announce critical messages
+bool k8HSShowCriticals;
+// disable criticals?
+bool k8HSNoCriticals;
+
+// fastkill/instakill some annoying monsters
+bool k8HSFastKillAnnoyingMonsters;
+  // instakill Pain Elementals
+  bool k8HSInstaKillPainElementals;
+  // instakill Lost Souls
+  bool k8HSInstaKillLostSouls;
+  // how mush damage should be inflicted to Arch-Vile
+  int k8HSFastKillArchVileDamage;
+
+
 //==========================================================================
 //
 //	ShouldDropItems
@@ -307,4 +330,14 @@ defaultproperties
 	bWindThrust = true;
 	bTelestomp = true;
 	bNoBlockMonst = true;
+
+  k8HSEnabled = true;
+  k8HSDistMult = 1.1;
+  bool k8HSShowCriticals = true;
+  bool k8HSNoCriticals = false;
+
+  bool k8HSFastKillAnnoyingMonsters = false;
+  bool k8HSInstaKillPainElementals = true;
+  bool k8HSInstaKillLostSouls = true;
+  int k8HSFastKillArchVileDamage = 200;
 }

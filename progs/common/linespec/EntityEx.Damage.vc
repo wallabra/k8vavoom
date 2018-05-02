@@ -23,6 +23,349 @@
 //**
 //**************************************************************************
 
+// this script will be called before hitscan line damage is done
+// you can return new damage, or <= 0 to prevent any hitscan damage.
+// note that poisoned puffs will still inflict damage to victim.
+// also note that preventing victim from taking any damage will not "awake" it.
+final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name damageType, bool secondary) {
+  // is it from player?
+  if (!inflictor) return damage;
+  if (!inflictor.bIsPlayer) return damage;
+
+  bool debugme = false; //k8CheckBoolCVar('k8HSDEBUG', false);
+
+  /*
+  if (debugme) {
+    print("Line Damage to %s: inflictor=%s; hitpos=(%g,%g,%g); damage=%d; damageType=%s; locpos=(%g,%g,%g); height=%g; radius=%g; Health=%d",
+      GetClassName(), inflictor.GetClassName(), hitpos.x, hitpos.y, hitpos.z, damage, damageType,
+      hitpos.x-Pos.x, hitpos.y-Pos.y, hitpos.z-Pos.z,
+      Height, Radius, Health
+    );
+  }
+  */
+
+  // is it to alive monster?
+  //if (!bIsMonster || Health < 1) return damage;
+  // is this monster dormant?
+  //if (bDormant) return damage;
+  // is this monster friendly?
+  //if (bFriendly)) return damage;
+  // is this monster invulnerable?
+  //if (bInvulnerable) return damage;
+  // is this monster non-shootable?
+  //if (bNonShootable) return damage;
+
+  if (damageType != 'Bullet' &&
+      damageType != 'Shell' &&
+      damageType != 'BDW_Bullet' &&
+      damageType != 'BDW_Shell'
+     )
+  {
+    return damage;
+  }
+
+
+  print("ME: %s; inf: %s", NameToStr(GetClassName(self.Class)), NameToStr(GetClassName(GetClassReplacee(inflictor.Class))));
+
+  PlayerPawn plr = PlayerPawn(inflictor);
+  //if (!plr) { print("FROM PLAYER!"); return damage; }
+
+  if (!plr.k8HSEnabled) return damage;
+
+  //if (k8CheckBoolCVar('k8HSShowKnownDamage', debugme)) print("K8HS: damage type '%s', damage=%d", damageType, damage);
+
+  bool fastkills = plr.k8HSFastKillAnnoyingMonsters;
+
+  int fastdamage = 0;
+
+  int vicHealth = Health; // current health
+  //TODO: int vicSpHealth = SpawnHealth(); // spawning health (i.e. full health for monsters)
+  int vicSpHealth = Health;
+
+  //if (debugme) print("vicSpHealth=%d; vicHealth=%d", vicSpHealth, vicHealth);
+
+  if (vicSpHealth < 1 || vicHealth < 1) return damage; // something is very wrong with this monster!
+
+  //int vicMass = Mass;
+  float vicRadius = Radius;
+  float vicHgt = Height;
+
+  // kill certain monsters in one shot
+  /*
+  if (fastkills) {
+    if (self is 'PainElemental') {
+      if (k8CheckBoolCVar('k8HSInstaKillPainElementals', false)) fastdamage = vicHealth+10;
+    } else if (self is 'LostSoul') {
+      if (k8CheckBoolCVar('k8HSInstaKillLostSouls', false)) fastdamage = vicHealth+10;
+      fastdamage = vicHealth+10;
+    }
+    if (fastdamage > 0) return fastdamage;
+  }
+  */
+
+  float hithgt = hitpos.z; //-Pos.z;
+  float fromtop = vicHgt-hithgt;
+  if (debugme) print("  hithgt=%d; fromtop=%d", hithgt, fromtop);
+  //Log(s:"  name=", s:vicName, s:"; z=", d:vicZ, s:"; hgt=", d:vicHgt, s:"; hithgt=", d:hithgt, s:"; fromtop=", d:fromtop);
+  //Log(s:"    mass=", d:vicMass, s:"; health=", d:vicHealth, s:"; sphealth=", d:vicSpHealth, s:"; radius=", d:vicRadius);
+  //Log(s:"    damage=", d:damage, s:"; vicDamage=", d:vicDamage);
+
+  bool headshot = false;
+  bool showHeadshots = false; //k8CheckBoolCVar('k8HSShowHeadshots', debugme);
+
+
+  if (vicHgt <= 56.0) {
+    // humans, archvile, cacodemon, demon, imp, lost soul, pain elemental, revenant
+    headshot = (fromtop <= 14.0);
+    if (headshot && showHeadshots) print("HS56: TAN");
+  } else if (vicHgt <= 64.0) {
+    // arachnotron(64)
+    // bruiser(64)
+    /*
+    if (self is 'Arachnotron') {
+      headshot = (fromtop <= 18);
+      if (debugme) print("*******ARACHNO!");
+    } else*/ {
+      headshot = (fromtop <= 15.0);
+    }
+    if (headshot && showHeadshots) print("HS64: TAN");
+  } else {
+    // cyberdemon(110)
+    // mastermind(100)
+    // keen(72)
+    headshot = (fromtop <= 20.0);
+    if (headshot && showHeadshots) print("HSBIG: TAN");
+  }
+
+  // calc distance
+  float mult = 1.1;
+  /*
+  CVar multcv = CVar.FindCVar('k8HSDistMult');
+  if (multcv) {
+    mult = multcv.GetFloat();
+    if (mult < 0.1) mult = 1.1;
+    if (mult > 4) mult = 4;
+  }
+  */
+
+  float len = 10000.0;
+  if (headshot) {
+    //len = Distance2D(inflictor)*mult;
+    len = sqrt((self.Origin.x-inflictor.Origin.x)*(self.Origin.x-inflictor.Origin.x)+(self.Origin.y-inflictor.Origin.y)*(self.Origin.y-inflictor.Origin.y));
+    if (debugme) print("K8HS: len=%f", len);
+    // 600: E1M1, from entry to top of the stairs
+  } else {
+    /*
+    if (debugme) {
+      len = Distance2D(inflictor)*mult;
+      print("K8HS!!: len=%d", len);
+      len = 10000;
+    }
+    */
+  }
+
+  // head shot
+  if (headshot) {
+    if (showHeadshots) {
+      //Log(s:"K8HS: Headshot! ", s:vicName, s:"; vicHgt=", d:vicHgt, s:"; fromtop=", d:fromtop, s:"; mass=", d:vicMass, s:"; radius=", d:vicRadius, s:"; len=", d:len);
+      //print("K8HS: Headshot! %s; vicHgt=%d; fromtop=%d; mass=%d; radius=%d; len=%d", GetClassName(), vicHgt, fromtop, vicMass, vicRadius, len);
+    }
+    bool debugCrits = false; //k8CheckBoolCVar('k8HSDebugCrits', debugme);
+    int dodmg = damage; //*2 baron of hell and other Big Things
+    int smallHealth = 50; // baron of hell and other Big Things
+    //FIXME!
+    int critChance = ftoi(Random()*100.0);
+
+    //TODO: int tick = gametic;
+    //int tick = k8hsLastHitTick+1;
+
+    //if (debugme) print("K8HS: len=%d; critChance=%d; lasttick=%d; tick=%d; hscount=%d", len, critChance, k8hsLastHitTick, tick, k8hsCount);
+    // shotgun, etc -- multiple hitscans per one tick?
+    if (secondary) {
+      // very rarely, shotgun can do double criticals
+      ++plr.k8hsCount;
+      if (plr.k8hsCount == 1) {
+        // first hitscan
+      } else if (plr.k8hsCount == 2) {
+        // second hitscan; 1.25 damage sometimes
+        critChance = 1;
+        if (Random()*100.0 > 75.0) {
+          dodmg += dodmg/4;
+          if (debugCrits) print("*Critx1.25 (2); d=%d", dodmg);
+        }
+      } else {
+        // third and other hitscans; 1.25 damage sometimes
+        critChance = 1;
+        if (Random()*100.0 > 80.0) {
+          dodmg += dodmg/4;
+          if (debugCrits) print("*Critx1.25 (3); d=%d", dodmg);
+        }
+      }
+    } else {
+      plr.k8hsCount = 0;
+    }
+
+    if (critChance > 13 && plr.k8HSNoCriticals) critChance = 13;
+
+    int oldcc = critChance;
+         if (len > 800.0) { if (critChance >= 75 && Random()*100.0 > 10.0) critChance = 13; }
+    else if (len > 400.0) { if (critChance >= 75 && Random()*100.0 > 40.0) critChance = 13; }
+    else if (len > 300.0) { if (critChance >= 75 && Random()*100.0 > 50.0) critChance = 13; }
+    else if (len > 200.0) { if (critChance >= 75 && Random()*100.0 > 70.0) critChance = 13; }
+    else if (len < 90.0) {
+           if (plr.k8hsCount <= 2) critChance += 42;
+      else if (plr.k8hsCount >= 8) critChance += 10;
+      else critChance += (8-plr.k8hsCount)*9;
+    }
+    if (debugme) print("oldcc=%d; critChance=%d; len=%d", oldcc, critChance, len);
+
+    //HudMessage(s:"CRITICAL\nSHOT!"; HUDMSG_FADEOUT|HUDMSG_LOG, 0, CR_RED, 1.5, 0.5, 3.0, 2.0);
+    //showMessage = true;
+
+    bool showMessage = false;
+    string messageText = "";
+    //int messageColor = Font.CR_YELLOW;
+
+    if (critChance >= 95) {
+      dodmg *= 10;
+      if (debugCrits) print("*Critx10; d=%d", dodmg);
+      messageText = "CRITICAL x10!";
+      //messageColor = Font.CR_YELLOW;
+      showMessage = true;
+    } else if (critChance >= 85) {
+      dodmg *= 7;
+      if (debugCrits) print("*Critx7; d=%d", dodmg);
+      messageText = "CRITICAL x7!";
+      //messageColor = Font.CR_ORANGE;
+      showMessage = true;
+    } else if (critChance >= 75) {
+      dodmg *= 3;
+      if (debugCrits) print("*Critx3; d=%d", dodmg);
+      messageText = "CRITICAL x3!";
+      //messageColor = Font.CR_RED;
+      showMessage = true;
+    } else if (critChance >= 55) {
+      dodmg *= 2;
+      if (debugCrits) print("*Critx2; d=%d", dodmg);
+      //messageText = "CRITICAL x2!";
+      //messageColor = Font.CR_RED;
+      //showMessage = true;
+    } else if (critChance > 10) {
+      dodmg += dodmg/2; // *1.5
+      if (debugCrits) print("*Critx1.5; d=%d", dodmg);
+      //messageText = "CRITICAL x1.5!";
+      //messageColor = Font.CR_RED;
+      //showMessage = true;
+    }
+
+    //if (debugCrits) print("%d: critChance=%d; damage=%d; dodmg=%d", tick, critChance, damage, dodmg);
+
+    if (vicSpHealth < 100) {
+      // humans, imps, ...
+      //dodmg = (damage <= 10 ? damage*4 : damage*3);
+      smallHealth = vicSpHealth/10;
+    } else if (vicSpHealth < 1000) {
+      // demons, cacodemons, ...
+      //dodmg = (damage <= 10 ? damage*3 : damage*2);
+      smallHealth = vicSpHealth/10;
+      if (smallHealth < 12) smallHealth = 12;
+    }
+
+    if (dodmg) {
+      if (showMessage && plr.k8HSShowCriticals) {
+        //inflictor.A_PrintBold(messageText, 1.5);
+        //inflictor.A_Log(messageText);
+        print("CRITICAL: %s", messageText);
+      }
+
+      if (fastkills) {
+        /*
+        if (self is 'Archvile') {
+          fastdamage = 200;
+          let avcv = CVar.FindCVar('k8HSFastKillArchVileDamage');
+          if (avcv) fastdamage = avcv.GetInt();
+          if (fastdamage > 0 && dodmg < fastdamage) {
+            //Log(s:"Archvile superdamage: old=", d:dodmg, s:"; new=", d:fastdamage, s:"; health=", d:vicHealth);
+            dodmg = fastdamage;
+          }
+        }
+        */
+      }
+      // if we will left victim with very small health, kill it instead
+      bool instakill = false;
+      if (vicHealth-dodmg <= smallHealth) dodmg = vicHealth;
+      int xdmg = dodmg;
+      if (vicHealth <= dodmg) {
+        // instakill, gore (fe, 'cause +1)
+        instakill = true;
+        dodmg = Health+5;
+      }
+      // preventing normal damage will prevent monster alerting too, heh
+
+      // ketchup spawn
+      if (instakill) {
+        /*
+        bool doSpray = k8CheckBoolCVar('k8HSHeadKillBloodSpray', true);
+
+        Name bloodClassName = 'K8Gore_Blood_Transient';
+        Name mistClassName = 'K8Gore_BloodmistBig_Transient';
+        Name poolClassName = 'K8Gore_GrowingBloodPool';
+
+        class<Actor> bloodClass = bloodClassName;
+
+        if (bloodClass) {
+          // HellKnight is a kind of Hell Baron
+          if (self is 'BaronOfHell') {
+            bloodClassName = 'K8Gore_Blood_Transient_Green';
+            mistClassName = 'K8Gore_BloodmistBig_Transient_Green';
+            poolClassName = 'K8Gore_GrowingBloodPool_Green';
+            class<Actor> bc = bloodClassName;
+            if (bc) bloodClass = bc;
+          } else if (self is 'Cacodemon') {
+            bloodClassName = 'K8Gore_Blood_Transient_Blue';
+            mistClassName = 'K8Gore_BloodmistBig_Transient_Blue';
+            poolClassName = 'K8Gore_GrowingBloodPool_Blue';
+            class<Actor> bc = bloodClassName;
+            if (bc) bloodClass = bc;
+          }
+
+          if (doSpray) {
+            int bcc = 8;
+            CVar bcccv = CVar.FindCVar('k8HSHeadKillBloodCount');
+            if (bcccv) bcc = bcccv.GetInt();
+            if (bcc > 0) {
+              bcc += random[K8HeadShots](-6, 6);
+              if (bcc < 8) bcc = 8;
+              if (bcc > 64) bcc = 64;
+            }
+            Vector3 spos;
+            while (bcc > 0) {
+              --bcc;
+              spos.x = Pos.x+(random[K8HeadShots](-25, 25)/10.0);
+              spos.y = Pos.y+(random[K8HeadShots](-25, 25)/10.0);
+              spos.z = Pos.z+Height+(random[K8HeadShots](-14, 14)/10.0);
+              Spawn(bloodClass, spos);
+            }
+          }
+
+          class<Actor> poolClass = poolClassName;
+          if (poolClass && k8CheckBoolCVar('k8HSSpawnBloodPool', true)) Spawn(poolClass, Pos);
+
+          //class<Actor> mistClass = mistClassName;
+          //if (mistClass) Spawn(mistClass, Pos);
+        }
+        */
+
+        Health = 1;
+        dodmg = 2;
+      }
+
+      return dodmg;
+    }
+  }
+}
+
+
 //==========================================================================
 //
 //	Damage
@@ -36,8 +379,9 @@
 //
 //==========================================================================
 
-void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bool NoArmor, TVec hitp) {
-  print("THP:(%f,%f,%f); dmg=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, NameToStr(DmgType));
+void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bool NoArmor, TVec hitp, bool secondary) {
+  int newdmg = K8onBeforeLineDamage(inflictor, hitp, damage, DmgType, secondary);
+  print("THP:(%f,%f,%f); dmg=%d; new=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, newdmg, NameToStr(DmgType));
   //print("THP:(%f,%f,%f); dmg=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, NameToStr(StrToName("FUCK!")));
   Damage(inflictor, source, damage, DmgType, NoArmor);
 }
