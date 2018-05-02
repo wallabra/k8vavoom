@@ -145,6 +145,8 @@ void Init()
 	CreateCvar('k8HSInstaKillPainElementals', "1", CVAR_ARCHIVE);
 	CreateCvar('k8HSInstaKillLostSouls', "1", CVAR_ARCHIVE);
 	CreateCvar('k8HSFastKillArchVileDamage', "120", CVAR_ARCHIVE);
+
+	CreateCvar('k8AmmoKing', "1", CVAR_ARCHIVE);
 }
 
 //==========================================================================

@@ -305,14 +305,14 @@ final Ammo AddAmmo(EntityEx Toucher, class<Ammo> AmmoType, int count)
 		AmmoItem.AttachToOwner(Toucher);
 		AmmoItem.Amount = count;
 	}
-	else if (AmmoItem.Amount < AmmoItem.MaxAmount)
+	else if (AmmoItem.Amount < AmmoItem./*MaxAmount*/k8GetAmmoKingMax())
 	{
 		AmmoItem.Amount += count;
 	}
 
-	if (AmmoItem.Amount > AmmoItem.MaxAmount)
+	if (AmmoItem.Amount > AmmoItem./*MaxAmount*/k8GetAmmoKingMax())
 	{
-		AmmoItem.Amount = AmmoItem.MaxAmount;
+		AmmoItem.Amount = AmmoItem./*MaxAmount*/k8GetAmmoKingMax();
 	}
 	return AmmoItem;
 }
@@ -331,7 +331,7 @@ final bool AddExistingAmmo(Ammo AmmoItem, int count)
 	{
 		return false;
 	}
-	if (AmmoItem.Amount == AmmoItem.MaxAmount)
+	if (AmmoItem.Amount == AmmoItem./*MaxAmount*/k8GetAmmoKingMax())
 	{
 		return false;
 	}
@@ -344,9 +344,9 @@ final bool AddExistingAmmo(Ammo AmmoItem, int count)
 
 	oldammo = AmmoItem.Amount;
 	AmmoItem.Amount += count;
-	if (AmmoItem.Amount > AmmoItem.MaxAmount)
+	if (AmmoItem.Amount > AmmoItem./*MaxAmount*/k8GetAmmoKingMax())
 	{
-		AmmoItem.Amount = AmmoItem.MaxAmount;
+		AmmoItem.Amount = AmmoItem./*MaxAmount*/k8GetAmmoKingMax();
 	}
 
 	if (oldammo <= 0 && AmmoItem.Owner.Player)

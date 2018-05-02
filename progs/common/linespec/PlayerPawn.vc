@@ -359,7 +359,7 @@ defaultproperties
 	bTelestomp = true;
 	bNoBlockMonst = true;
 
-  k8HSEnabled = true;
+  k8HSEnabled = false;
   k8HSDistMult = 1.1;
   k8HSShowCriticals = true;
   k8HSNoCriticals = false;

@@ -47,6 +47,22 @@ final class<Ammo> GetParentAmmo()
 	return class<Ammo>(Ret);
 }
 
+final int k8GetAmmoKingMax () {
+  bool enabled = (ftoi(GetCvarF('k8AmmoKing')) != 0);
+  if (!enabled) return MaxAmount;
+
+  int max = 666;
+
+  if (GetClassName(Class) == 'BDW_RifleClip' || GetClassName(Class) == 'BDW_ShotgunShell' ||
+      GetClassName(GetClassReplacee(Class)) == 'Clip' || GetClassName(GetClassReplacee(Class)) == 'Shell')
+  {
+    bool crits = (ftoi(GetCvarF('k8HSEnabled')) != 0);
+    if (crits) max = 444;
+  }
+
+  return max;
+}
+
 //==========================================================================
 //
 //	HandlePickup
@@ -58,7 +74,7 @@ bool HandlePickup(Inventory Item)
 	if (Item.Class == Class ||
 		(Ammo(Item) && Ammo(Item).GetParentAmmo() == Class))
 	{
-		if (Amount == MaxAmount)
+		if (Amount == /*MaxAmount*/k8GetAmmoKingMax())
 		{
 			//	We're full.
 			return true;
@@ -75,9 +91,9 @@ bool HandlePickup(Inventory Item)
 		int oldammo = Amount;
 
 		Amount += ReceiveAmount;
-		if (Amount > MaxAmount)
+		if (Amount > /*MaxAmount*/k8GetAmmoKingMax())
 		{
-			Amount = MaxAmount;
+			Amount = /*MaxAmount*/k8GetAmmoKingMax();
 		}
 
 		//	If non zero ammo, don't change up weapons,
