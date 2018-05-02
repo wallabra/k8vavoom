@@ -171,7 +171,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     int dodmg = damage; //*2 baron of hell and other Big Things
     int smallHealth = 50; // baron of hell and other Big Things
     //FIXME!
-    int critChance = ftoi(Random()*100.0);
+    int critChance = ftoi(Random()*100);
 
     //TODO: int tick = gametic;
     //int tick = k8hsLastHitTick+1;
@@ -193,7 +193,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
       } else {
         // third and other hitscans; 1.25 damage sometimes
         critChance = 1;
-        if (Random()*100.0 > 80.0) {
+        if (Random()*100.0 > 80) {
           dodmg += dodmg/4;
           if (debugCrits) print("*Critx1.25 (3); d=%d", dodmg);
         }
@@ -205,11 +205,11 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     if (critChance > 13 && plr.k8HSNoCriticals) critChance = 13;
 
     int oldcc = critChance;
-         if (len > 800.0) { if (critChance >= 75 && Random()*100.0 > 10.0) critChance = 13; }
-    else if (len > 400.0) { if (critChance >= 75 && Random()*100.0 > 40.0) critChance = 13; }
-    else if (len > 300.0) { if (critChance >= 75 && Random()*100.0 > 50.0) critChance = 13; }
-    else if (len > 200.0) { if (critChance >= 75 && Random()*100.0 > 70.0) critChance = 13; }
-    else if (len < 90.0) {
+         if (len > 800) { if (critChance >= 75 && Random()*100 > 10) critChance = 13; }
+    else if (len > 400) { if (critChance >= 75 && Random()*100 > 40) critChance = 13; }
+    else if (len > 300) { if (critChance >= 75 && Random()*100 > 50) critChance = 13; }
+    else if (len > 200) { if (critChance >= 75 && Random()*100 > 70) critChance = 13; }
+    else if (len < 90) {
            if (plr.k8hsCount <= 2) critChance += 42;
       else if (plr.k8hsCount >= 8) critChance += 10;
       else critChance += (8-plr.k8hsCount)*9;
