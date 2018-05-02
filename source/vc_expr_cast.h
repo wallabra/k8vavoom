@@ -76,6 +76,23 @@ public:
 
 //==========================================================================
 //
+//	VScalarToFloat
+//
+//==========================================================================
+
+class VScalarToFloat : public VExpression
+{
+public:
+	VExpression*		op;
+
+	VScalarToFloat(VExpression* AOp);
+	~VScalarToFloat();
+	VExpression* DoResolve(VEmitContext&);
+	void Emit(VEmitContext&);
+};
+
+//==========================================================================
+//
 //	VDynamicCast
 //
 //==========================================================================

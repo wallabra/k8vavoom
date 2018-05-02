@@ -93,10 +93,21 @@ VAssignment::~VAssignment()
 
 VExpression* VAssignment::DoResolve(VEmitContext& ec)
 {
-	if (op1)
+	if (op1) {
 		op1 = op1->ResolveAssignmentTarget(ec);
-	if (op2)
-		op2 = op2->Resolve(ec);
+	}
+
+	if (op2) {
+		VExpression* re;
+		if (op1->Type.Type == TYPE_Float) {
+			re = op2->ResolveFloat(ec);
+		} else {
+			re = op2->Resolve(ec);
+		}
+		if (!re) delete op2;
+		op2 = re;
+	}
+
 	if (!op1 || !op2)
 	{
 		delete this;

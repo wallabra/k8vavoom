@@ -130,6 +130,37 @@ VExpression* VExpression::ResolveBoolean(VEmitContext& ec)
 
 //==========================================================================
 //
+//	VExpression::ResolveFloat
+//
+//==========================================================================
+
+VExpression* VExpression::ResolveFloat(VEmitContext& ec)
+{
+	VExpression* e = Resolve(ec);
+	if (!e) return NULL;
+
+	switch (e->Type.Type)
+	{
+	case TYPE_Int:
+	case TYPE_Byte:
+	case TYPE_Bool:
+		e = new VScalarToFloat(e);
+		break;
+
+	case TYPE_Float:
+		break;
+
+	default:
+		ParseError(Loc, "Expression type mismatch, float expression expected");
+		delete e;
+		e = NULL;
+	}
+
+	return e;
+}
+
+//==========================================================================
+//
 //	VExpression::ResolveAsType
 //
 //==========================================================================

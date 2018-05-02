@@ -202,6 +202,66 @@ void VPointerToBool::Emit(VEmitContext& ec)
 
 //==========================================================================
 //
+//	VScalarToFloat::VScalarToFloat
+//
+//==========================================================================
+
+VScalarToFloat::VScalarToFloat(VExpression* AOp)
+: VExpression(AOp->Loc)
+, op(AOp)
+{
+	Type = TYPE_Float;
+}
+
+//==========================================================================
+//
+//	VScalarToFloat::~VScalarToFloat
+//
+//==========================================================================
+
+VScalarToFloat::~VScalarToFloat()
+{
+	if (op)
+	{
+		delete op;
+		op = NULL;
+	}
+}
+
+//==========================================================================
+//
+//	VScalarToFloat::DoResolve
+//
+//==========================================================================
+
+VExpression* VScalarToFloat::DoResolve(VEmitContext&)
+{
+	return this;
+}
+
+//==========================================================================
+//
+//	VScalarToFloat::Emit
+//
+//==========================================================================
+
+void VScalarToFloat::Emit(VEmitContext& ec)
+{
+	op->Emit(ec);
+	switch (op->Type.Type)
+	{
+	case TYPE_Int:
+	case TYPE_Byte:
+	case TYPE_Bool:
+		ec.AddStatement(OPC_IntToFloat);
+		break;
+	default:
+		ParseError(Loc, "Internal compiler error (VScalarToFloat::Emit)");
+	}
+}
+
+//==========================================================================
+//
 //	VDynamicCast::VDynamicCast
 //
 //==========================================================================
