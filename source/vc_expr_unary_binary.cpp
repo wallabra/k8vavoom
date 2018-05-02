@@ -451,6 +451,27 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
 		return NULL;
 	}
 
+	// coerce both to floats
+	//k8:FIXME: simplify this!
+
+	// if op1 is `float` or `vector`, and op2 is integral -> coerce op2
+	if ((op1->Type.Type == TYPE_Float || op1->Type.Type == TYPE_Vector) &&
+	    (op2->Type.Type == TYPE_Int || op2->Type.Type == TYPE_Byte))
+	{
+		//printf("*** OP1 require float, and OP2 is integral: COERCING OP2\n");
+		op2 = op2->CoerceToFloat();
+		if (!op2) { delete this; return NULL; }
+	}
+
+	// if op2 is `float` or `vector`, and op1 is integral -> coerce op1
+	if ((op2->Type.Type == TYPE_Float || op2->Type.Type == TYPE_Vector) &&
+	    (op1->Type.Type == TYPE_Int || op1->Type.Type == TYPE_Byte))
+	{
+		//printf("*** OP2 require float, and OP1 is integral: COERCING OP1\n");
+		op1 = op1->CoerceToFloat();
+		if (!op1) { delete this; return NULL; }
+	}
+
 	if (ec.Package->Name == NAME_decorate)
 	{
 		if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Float)

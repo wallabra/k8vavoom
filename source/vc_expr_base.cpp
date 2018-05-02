@@ -161,6 +161,22 @@ VExpression* VExpression::ResolveFloat(VEmitContext& ec)
 
 //==========================================================================
 //
+//	VExpression::CoerceToFloat
+//
+// Expression MUST be already resolved here.
+//
+//==========================================================================
+VExpression* VExpression::CoerceToFloat()
+{
+	if (Type.Type == TYPE_Float) return this; // nothing to do
+	if (Type.Type == TYPE_Int || Type.Type == TYPE_Byte) return new VScalarToFloat(this);
+	ParseError(Loc, "Expression type mismatch, float expression expected");
+	delete this; //k8: `delete this`? oops
+	return NULL;
+}
+
+//==========================================================================
+//
 //	VExpression::ResolveAsType
 //
 //==========================================================================

@@ -45,6 +45,7 @@ public:
 	VExpression* Resolve(VEmitContext&);
 	VExpression* ResolveBoolean(VEmitContext&);
 	VExpression* ResolveFloat(VEmitContext&);
+	VExpression* CoerceToFloat(); // expression MUST be already resolved
 	virtual VTypeExpr* ResolveAsType(VEmitContext&);
 	virtual VExpression* ResolveAssignmentTarget(VEmitContext&);
 	virtual VExpression* ResolveIterator(VEmitContext&);
