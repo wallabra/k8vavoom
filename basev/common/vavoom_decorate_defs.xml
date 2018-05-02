@@ -345,6 +345,7 @@
 		<flag name="KeepDepleted" property="bKeepDepleted" />
 		<flag name="IgnoreSkill" property="bIgnoreSkill" />
 		<flag name="AdditiveTime" property="bAdditiveTime" />
+		<flag name="NoAutoAim" property="bNoAutoaim" />
 		<flag_unsupported name="AlwaysActivate" /> <!-- From SkulTag ? -->
 	</class>
 
@@ -428,7 +429,7 @@
 		<flag name="BFG" property="bBotBfg" />
 		<flag name="CheatNotWeapon" property="bCheatNotWeapon" />
 		<flag name="No_Auto_Switch" property="bNoAutoSwitch" />
-		<flag_unsupported name="NoAutoAim" />
+		<flag name="NoAutoAim" property="bNoAutoaim" />
 		<!-- SkulTag Specific weapon flags -->
 		<flag_unsupported name="Allow_With_Respawn_Ivul" />
 		<flag_unsupported name="NoLMS" />

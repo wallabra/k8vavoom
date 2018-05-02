@@ -85,6 +85,8 @@ bool				bCreateCopyMoved;
 //	Powerup failed to activate.
 bool				bInitEffectFailed;
 
+bool				bNoAutoaim;
+
 replication
 {
 	reliable if (Role == ROLE_Authority && bNetOwner)
@@ -1291,12 +1293,14 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
 
 	SetState(MeleeState);
 
+	bool noAAim = false;
 	if (Wpn)
 	{
 		PlaySound(Wpn.AttackSound, CHAN_WEAPON);
+		noAAim = Wpn.bNoAutoaim;
 	}
 
-	Aim(aimDir, 16.0 * 64.0);
+	Aim(aimDir, 16.0 * 64.0,, noAAim);
 
 	if ((NumBullets == 1 && !PlayerEx(Player).Refire) || NumBullets == 0)
 	{
@@ -1457,6 +1461,7 @@ final void A_FirePistol()
 	TVec dir;
 	bool Accurate;
 
+	bool noAAim = false;
 	if (bIsPlayer)
 	{
 		Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -1468,6 +1473,7 @@ final void A_FirePistol()
 			}
 
 			Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+			noAAim = Wpn.bNoAutoaim;
 		}
 		SetState(MeleeState);
 		Accurate = !PlayerEx(Player).Refire;
@@ -1479,7 +1485,7 @@ final void A_FirePistol()
 
 	PlaySound('weapons/pistol', CHAN_WEAPON);
 
-	Aim(dir, 16.0 * 64.0);
+	Aim(dir, 16.0 * 64.0,, noAAim);
 	GunShot(Accurate, dir, 'Bullet', false);
 }
 
@@ -1503,6 +1509,7 @@ final void A_FireShotgun()
 	PlaySound('weapons/shotgf', CHAN_WEAPON);
 	SetState(MeleeState);
 
+	bool noAAim = false;
 	if (Wpn)
 	{
 		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
@@ -1511,9 +1518,10 @@ final void A_FireShotgun()
 		}
 
 		Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+		noAAim = Wpn.bNoAutoaim;
 	}
 
-	Aim(dir, 16.0 * 64.0);
+	Aim(dir, 16.0 * 64.0,, noAAim);
 	for (i = 0; i < 7; i++)
 	{
 		GunShot(false, dir, 'Shell', (i != 0));
@@ -1543,6 +1551,7 @@ final void A_FireShotgun2()
 	PlaySound('weapons/sshotf', CHAN_WEAPON);
 	SetState(MeleeState);
 
+	bool noAAim = false;
 	if (Wpn)
 	{
 		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 2))
@@ -1551,9 +1560,10 @@ final void A_FireShotgun2()
 		}
 
 		Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+		noAAim = Wpn.bNoAutoaim;
 	}
 
-	Aim(aimDir, 16.0 * 64.0);
+	Aim(aimDir, 16.0 * 64.0,, noAAim);
 	for (i = 0; i < 20; i++)
 	{
 		rot.pitch = (Random() - Random()) * 45.0 / 8.0;
@@ -1617,6 +1627,7 @@ final void A_FireCGun()
 
 	PlaySound('weapons/chngun', CHAN_WEAPON);
 
+	bool noAAim = false;
 	if (Wpn)
 	{
 		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
@@ -1632,11 +1643,12 @@ final void A_FireCGun()
 		{
 			Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
 		}
+		noAAim = Wpn.bNoAutoaim;
 	}
 
 	SetState(MeleeState);
 
-	Aim(dir, 16.0 * 64.0);
+	Aim(dir, 16.0 * 64.0,, noAAim);
 	GunShot(!PlayerEx(Player).Refire, dir, 'Bullet', false);
 }
 
@@ -1885,4 +1897,5 @@ defaultproperties
 	PickupMessage = "You got a pickup";
 	PickupSound = 'misc/i_pkup';
 	UseSound = 'misc/invuse';
+	bNoAutoaim = false;
 }

@@ -215,11 +215,17 @@ final EntityEx AimLineAttack(out TVec OutDir, TAVec angles, float distance)
 //
 //===========================================================================
 
-final EntityEx Aim(out TVec OutDir, float distance, optional float yaw)
+final EntityEx Aim(out TVec OutDir, float distance, optional float yaw, optional bool noAutoaim)
 {
 	TAVec		ang;
 	TVec		dir;
 	EntityEx	LineTarget;
+
+	bool aaim = bIsPlayer && PlayerEx(Player).bAutoAim;
+	if (specified_noAutoaim) {
+		//print("AIM<%s>: noaa=%s", NameToStr(GetClassName(self.Class)), (noAutoaim ? "tan" : "ona"));
+		if (noAutoaim) aaim = false;
+	}
 
 	// see which target is to be aimed at
 	ang = Angles;
@@ -227,7 +233,7 @@ final EntityEx Aim(out TVec OutDir, float distance, optional float yaw)
 	{
 		ang.yaw = yaw;
 	}
-	if (bIsPlayer && !PlayerEx(Player).bAutoAim)
+	if (bIsPlayer && /*!PlayerEx(Player).bAutoAim*/!aaim)
 	{
 		AngleVector(&ang, &dir);
 		OutDir = dir;
@@ -252,7 +258,7 @@ final EntityEx Aim(out TVec OutDir, float distance, optional float yaw)
 		}
 	}
 
-	if (!bIsPlayer || PlayerEx(Player).bAutoAim)
+	if (!bIsPlayer || aaim/*PlayerEx(Player).bAutoAim*/)
 	{
 		OutDir = dir;
 	}
