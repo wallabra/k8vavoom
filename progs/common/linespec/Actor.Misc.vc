@@ -535,6 +535,22 @@ final void A_ItBurnsItBurns()
 
 //==========================================================================
 //
+//  A_SetPitch
+//
+//==========================================================================
+
+final void A_SetPitch (float newpitch) {
+  if (newpitch < 0.0) newpitch += 360.0;
+  newpitch = AngleMod360(newpitch);
+  if (newpitch > 90.0) newpitch -= 360.0;
+  //print("oldpitch=%f; newpitch=%f", Angles.pitch, newpitch);
+  Angles.pitch = newpitch;
+  //Angles.pitch = -10.0;
+}
+
+
+//==========================================================================
+//
 //  A_WeaponReady
 //
 //  The player can fire the weapon or change to another weapon at this time.
