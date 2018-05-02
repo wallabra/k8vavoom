@@ -141,7 +141,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   }
   */
 
-  float len = 10000.0;
+  float len = 10000;
   if (headshot) {
     //len = Distance2D(inflictor)*mult;
     len = sqrt((self.Origin.x-inflictor.Origin.x)*(self.Origin.x-inflictor.Origin.x)+(self.Origin.y-inflictor.Origin.y)*(self.Origin.y-inflictor.Origin.y));

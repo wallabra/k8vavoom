@@ -105,7 +105,7 @@ VExpression* VUnary::DoResolve(VEmitContext& ec)
 		Type = op->Type;
 		if (op->Type.Type != TYPE_Int && op->Type.Type != TYPE_Float)
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 			delete this;
 			return NULL;
 		}
@@ -132,7 +132,7 @@ VExpression* VUnary::DoResolve(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 			delete this;
 			return NULL;
 		}
@@ -145,7 +145,7 @@ VExpression* VUnary::DoResolve(VEmitContext& ec)
 	case BitInvert:
 		if (op->Type.Type != TYPE_Int)
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 			delete this;
 			return NULL;
 		}
@@ -320,7 +320,7 @@ VExpression* VUnaryMutator::DoResolve(VEmitContext& ec)
 
 	if (op->Type.Type != TYPE_Int)
 	{
-		ParseError(Loc, "Expression type mistmatch");
+		ParseError(Loc, "Expression type mismatch");
 		delete this;
 		return NULL;
 	}
@@ -489,7 +489,7 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 			delete this;
 			return NULL;
 		}
@@ -513,7 +513,7 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 			delete this;
 			return NULL;
 		}
@@ -533,7 +533,7 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 			delete this;
 			return NULL;
 		}
@@ -550,7 +550,7 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 			delete this;
 			return NULL;
 		}
@@ -562,7 +562,7 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
 		if (!(op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) &&
 			!(op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float))
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 			delete this;
 			return NULL;
 		}
@@ -579,7 +579,7 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
 			!(op1->Type.Type == TYPE_State && op2->Type.Type == TYPE_State) &&
 			!(op1->Type.Type == TYPE_Reference && op2->Type.Type == TYPE_Reference))
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 			delete this;
 			return NULL;
 		}

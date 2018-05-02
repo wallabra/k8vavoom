@@ -527,7 +527,7 @@ void VFieldType::CheckMatch(TLocation l, const VFieldType& Other) const
 			}
 		return;
 	}
-	ParseError(l, "Type mistmatch, types %s and %s are not compatible %d %d",
+	ParseError(l, "Type mismatch, types %s and %s are not compatible %d %d",
 		*GetName(), *Other.GetName(), Type, Other.Type);
 	unguard;
 }

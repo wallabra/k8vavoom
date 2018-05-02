@@ -72,7 +72,7 @@ static const char* ErrorNames[NUM_ERRORS] =
 	"Function redeclared.",
 	"Missing ']'.",
 	"Invalid operation with array",
-	"Expression type mistmatch",
+	"Expression type mismatch",
 };
 
 // CODE --------------------------------------------------------------------

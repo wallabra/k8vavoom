@@ -220,7 +220,7 @@ void VAssignment::Emit(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 		}
 		break;
 
@@ -243,7 +243,7 @@ void VAssignment::Emit(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 		}
 		break;
 
@@ -266,7 +266,7 @@ void VAssignment::Emit(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 		}
 		break;
 
@@ -289,7 +289,7 @@ void VAssignment::Emit(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 		}
 		break;
 
@@ -312,7 +312,7 @@ void VAssignment::Emit(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 		}
 		break;
 
@@ -327,7 +327,7 @@ void VAssignment::Emit(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 		}
 		break;
 
@@ -342,7 +342,7 @@ void VAssignment::Emit(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 		}
 		break;
 
@@ -362,7 +362,7 @@ void VAssignment::Emit(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 		}
 		break;
 
@@ -377,7 +377,7 @@ void VAssignment::Emit(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 		}
 		break;
 
@@ -392,7 +392,7 @@ void VAssignment::Emit(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 		}
 		break;
 
@@ -407,7 +407,7 @@ void VAssignment::Emit(VEmitContext& ec)
 		}
 		else
 		{
-			ParseError(Loc, "Expression type mistmatch");
+			ParseError(Loc, "Expression type mismatch");
 		}
 		break;
 	}

@@ -120,19 +120,19 @@ VExpression* VVector::DoResolve(VEmitContext& ec)
 
 	if (op1->Type.Type != TYPE_Float)
 	{
-		ParseError(Loc, "Expression type mistmatch, vector param 1 is not a float");
+		ParseError(Loc, "Expression type mismatch, vector param 1 is not a float");
 		delete this;
 		return NULL;
 	}
 	if (op2->Type.Type != TYPE_Float)
 	{
-		ParseError(Loc, "Expression type mistmatch, vector param 2 is not a float");
+		ParseError(Loc, "Expression type mismatch, vector param 2 is not a float");
 		delete this;
 		return NULL;
 	}
 	if (op3->Type.Type != TYPE_Float)
 	{
-		ParseError(Loc, "Expression type mistmatch, vector param 3 is not a float");
+		ParseError(Loc, "Expression type mismatch, vector param 3 is not a float");
 		delete this;
 		return NULL;
 	}
