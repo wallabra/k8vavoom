@@ -135,6 +135,16 @@ void Init()
 	// This one is only used in Hexen for now, but it could come in
 	// handy for other games if needed
 	CreateCvar('alternate_monster_attacks', "0", CVAR_ARCHIVE);
+
+	CreateCvar('k8HSEnabled', "1", CVAR_ARCHIVE);
+	CreateCvar('k8HSDistMult', "1.1", CVAR_ARCHIVE);
+	CreateCvar('k8HSShowCriticals', "1", CVAR_ARCHIVE);
+	CreateCvar('k8HSNoCriticals', "0", CVAR_ARCHIVE);
+
+	CreateCvar('k8HSFastKillAnnoyingMonsters', "1", CVAR_ARCHIVE);
+	CreateCvar('k8HSInstaKillPainElementals', "1", CVAR_ARCHIVE);
+	CreateCvar('k8HSInstaKillLostSouls', "1", CVAR_ARCHIVE);
+	CreateCvar('k8HSFastKillArchVileDamage', "120", CVAR_ARCHIVE);
 }
 
 //==========================================================================

@@ -301,6 +301,34 @@ int UnmorphActor(Entity Activator, int Force)
 	return 0;
 }
 
+
+void OnMapSpawn (mthing_t* mthing) {
+  ::OnMapSpawn(mthing);
+
+  k8HSEnabled = ftoi(GetCvarF('k8HSEnabled')) != 0;
+  k8HSDistMult = GetCvarF('k8HSDistMult');
+  k8HSShowCriticals = ftoi(GetCvarF('k8HSShowCriticals')) != 0;
+  k8HSNoCriticals = ftoi(GetCvarF('k8HSNoCriticals')) != 0;
+
+  k8HSFastKillAnnoyingMonsters = ftoi(GetCvarF('k8HSFastKillAnnoyingMonsters')) != 0;
+  k8HSInstaKillPainElementals = ftoi(GetCvarF('k8HSInstaKillPainElementals')) != 0;
+  k8HSInstaKillLostSouls = ftoi(GetCvarF('k8HSInstaKillLostSouls')) != 0;
+  k8HSFastKillArchVileDamage = ftoi(GetCvarF('k8HSFastKillArchVileDamage'));
+
+  /*
+  print("k8HSEnabled: %s", (k8HSEnabled ? "tan" : "ona"));
+  print("k8HSDistMult: %f", k8HSDistMult);
+  print("k8HSShowCriticals: %s", (k8HSShowCriticals ? "tan" : "ona"));
+  print("k8HSNoCriticals: %s", (k8HSNoCriticals ? "tan" : "ona"));
+
+  print("k8HSFastKillAnnoyingMonsters: %s", (k8HSFastKillAnnoyingMonsters ? "tan" : "ona"));
+  print("k8HSInstaKillPainElementals: %s", (k8HSInstaKillPainElementals ? "tan" : "ona"));
+  print("k8HSInstaKillLostSouls: %s", (k8HSInstaKillLostSouls ? "tan" : "ona"));
+  print("k8HSDistMult: %d", k8HSFastKillArchVileDamage);
+  */
+}
+
+
 defaultproperties
 {
 	Health = 100;
