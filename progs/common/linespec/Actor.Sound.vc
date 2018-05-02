@@ -33,9 +33,11 @@
 //
 //==========================================================================
 
-final void A_PlaySound(string Sound)
+final void A_PlaySound(string Sound, optional int chan)
 {
-	PlaySound(StrToName(Sound), CHAN_BODY);
+	if (!specified_chan) chan = CHAN_BODY;
+	if (chan < 0 || chan > 7) chan = CHAN_AUTO;
+	PlaySound(StrToName(Sound), chan);
 }
 
 //==========================================================================
