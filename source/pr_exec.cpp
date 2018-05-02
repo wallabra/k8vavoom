@@ -41,6 +41,17 @@
 # define CHECK_STACK_UNDERFLOW
 # define CHECK_FOR_EMPTY_STACK
 
+//#define VMEXEC_RUNDUMP
+
+#ifdef VMEXEC_RUNDUMP
+static int k8edIndent = 0;
+
+static void printIndent () { for (int f = k8edIndent; f > 0; --f) fputc(' ', stdout); }
+static void enterIndent () { ++k8edIndent; }
+static void leaveIndent () { if (--k8edIndent < 0) *(int*)0 = 0; }
+#endif
+
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -185,6 +196,9 @@ static void RunFunction(VMethod *func)
 
 	ip = func->Statements.Ptr();
 
+#ifdef VMEXEC_RUNDUMP
+  enterIndent(); printIndent(); printf("ENTERING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack));
+#endif
 	//
 	//	The main function loop
 	//
@@ -314,6 +328,9 @@ func_loop:
 				delete Tmp;
 				Tmp = NULL;
 			}
+			#ifdef VMEXEC_RUNDUMP
+			printIndent(); printf("LEAVING VC FUNCTION `%s` (RETx); sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+			#endif
 			return;
 
 		PR_VM_CASE(OPC_ReturnL)
@@ -327,6 +344,9 @@ func_loop:
 				delete Tmp;
 				Tmp = NULL;
 			}
+			#ifdef VMEXEC_RUNDUMP
+			printIndent(); printf("LEAVING VC FUNCTION `%s` (RETL); sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+			#endif
 			return;
 
 		PR_VM_CASE(OPC_ReturnV)
@@ -342,6 +362,9 @@ func_loop:
 				delete Tmp;
 				Tmp = NULL;
 			}
+			#ifdef VMEXEC_RUNDUMP
+			printIndent(); printf("LEAVING VC FUNCTION `%s` (RETV); sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+			#endif
 			return;
 
 		PR_VM_CASE(OPC_GotoB)
@@ -1892,6 +1915,9 @@ VStack VObject::ExecuteFunction(VMethod *func)
 	ret.p = NULL;
 	//	Run function
 	prev_func = current_func;
+	#ifdef VMEXEC_RUNDUMP
+	enterIndent(); printIndent(); printf("***ENTERING `%s` (RETx); sp=%d (MAX:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK);
+	#endif
 	RunFunction(func);
 	current_func = prev_func;
 
@@ -1901,6 +1927,9 @@ VStack VObject::ExecuteFunction(VMethod *func)
 		--pr_stackPtr;
 		ret = *pr_stackPtr;
 	}
+	#ifdef VMEXEC_RUNDUMP
+	printIndent(); printf("***LEAVING `%s` (RETx); sp=%d, (MAX:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK); leaveIndent();
+	#endif
 
 #ifdef CHECK_FOR_EMPTY_STACK
 	//	After executing base function stack must be empty
@@ -1908,6 +1937,9 @@ VStack VObject::ExecuteFunction(VMethod *func)
 	{
 		Sys_Error("ExecuteFunction: Stack is not empty after executing function:\n%s\nstack = %p, oldsp = %p",
 			*func->Name, pr_stack, pr_stackPtr);
+		#ifdef VMEXEC_RUNDUMP
+		*(int*)0 = 0;
+		#endif
 	}
 #endif
 
@@ -1916,6 +1948,9 @@ VStack VObject::ExecuteFunction(VMethod *func)
 	if (pr_stack[0].i != STACK_ID)
 	{
 		Sys_Error("ExecuteFunction: Stack underflow in %s", *func->Name);
+		#ifdef VMEXEC_RUNDUMP
+		*(int*)0 = 0;
+		#endif
 	}
 #endif
 
@@ -1924,6 +1959,9 @@ VStack VObject::ExecuteFunction(VMethod *func)
 	if (pr_stack[MAX_PROG_STACK - 1].i != STACK_ID)
 	{
 		Sys_Error("ExecuteFunction: Stack overflow in %s", *func->Name);
+		#ifdef VMEXEC_RUNDUMP
+		*(int*)0 = 0;
+		#endif
 	}
 #endif
 

@@ -250,8 +250,14 @@ bool VEntity::SetState(VState* InState)
 {
 	guard(VEntity::SetState);
 	VState *st = InState;
+	int watchcatCount = 1024;
 	do
 	{
+		if (--watchcatCount <= 0) {
+			//k8: FIXME!
+			GCon->Logf("ERROR: WatchCat interrupted `VEntity::SetState`!");
+			break;
+		}
 		if (!st)
 		{
 			// Remove mobj
@@ -275,7 +281,9 @@ bool VEntity::SetState(VState* InState)
 			EntityFlags &= ~EF_UseDispState;
 		}
 		State = st;
+		//printf("0: CALLING GetStateTime; StateTime=%f\n", StateTime);
 		StateTime = eventGetStateTime(st, st->Time);
+		//printf("1: GetStateTime called; StateTime=%f\n", StateTime);
 		EntityFlags &= ~EF_FullBright;
 
 		// Modified handling.
