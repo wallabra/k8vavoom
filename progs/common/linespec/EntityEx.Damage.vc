@@ -65,7 +65,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   }
 
 
-  print("ME: %s; inf: %s", NameToStr(GetClassName(self.Class)), NameToStr(GetClassName(GetClassReplacee(inflictor.Class))));
+  if (debugme) print("ME: %s; inf: %s", NameToStr(GetClassName(self.Class)), NameToStr(GetClassName(GetClassReplacee(inflictor.Class))));
 
   PlayerPawn plr = PlayerPawn(inflictor);
   //if (!plr) { print("FROM PLAYER!"); return damage; }
@@ -80,9 +80,9 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
   int vicHealth = Health; // current health
   //TODO: int vicSpHealth = SpawnHealth(); // spawning health (i.e. full health for monsters)
-  int vicSpHealth = Health;
+  int vicSpHealth = InitialHealth;
 
-  //if (debugme) print("vicSpHealth=%d; vicHealth=%d", vicSpHealth, vicHealth);
+  if (debugme) print("vicSpHealth=%d; vicHealth=%d", vicSpHealth, vicHealth);
 
   if (vicSpHealth < 1 || vicHealth < 1) return damage; // something is very wrong with this monster!
 
@@ -91,28 +91,22 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   float vicHgt = Height;
 
   // kill certain monsters in one shot
-  /*
   if (fastkills) {
-    if (self is 'PainElemental') {
-      if (k8CheckBoolCVar('k8HSInstaKillPainElementals', false)) fastdamage = vicHealth+10;
-    } else if (self is 'LostSoul') {
-      if (k8CheckBoolCVar('k8HSInstaKillLostSouls', false)) fastdamage = vicHealth+10;
+    if (GetClassName(GetClassReplacee(self.Class)) == 'PainElemental') {
+      if (plr.k8HSInstaKillPainElementals) fastdamage = vicHealth+10;
+    } else if (GetClassName(GetClassReplacee(self.Class)) == 'LostSoul') {
+      if (plr.k8HSInstaKillLostSouls) fastdamage = vicHealth+10;
       fastdamage = vicHealth+10;
     }
     if (fastdamage > 0) return fastdamage;
   }
-  */
 
   float hithgt = hitpos.z; //-Pos.z;
   float fromtop = vicHgt-hithgt;
-  if (debugme) print("  hithgt=%d; fromtop=%d", hithgt, fromtop);
-  //Log(s:"  name=", s:vicName, s:"; z=", d:vicZ, s:"; hgt=", d:vicHgt, s:"; hithgt=", d:hithgt, s:"; fromtop=", d:fromtop);
-  //Log(s:"    mass=", d:vicMass, s:"; health=", d:vicHealth, s:"; sphealth=", d:vicSpHealth, s:"; radius=", d:vicRadius);
-  //Log(s:"    damage=", d:damage, s:"; vicDamage=", d:vicDamage);
+  if (debugme) print("  hithgt=%f; fromtop=%f", hithgt, fromtop);
 
   bool headshot = false;
   bool showHeadshots = false; //k8CheckBoolCVar('k8HSShowHeadshots', debugme);
-
 
   if (vicHgt <= 56.0) {
     // humans, archvile, cacodemon, demon, imp, lost soul, pain elemental, revenant
@@ -121,11 +115,10 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   } else if (vicHgt <= 64.0) {
     // arachnotron(64)
     // bruiser(64)
-    /*
-    if (self is 'Arachnotron') {
-      headshot = (fromtop <= 18);
+    if (GetClassName(GetClassReplacee(self.Class)) == 'Arachnotron') {
+      headshot = (fromtop <= 18.0);
       if (debugme) print("*******ARACHNO!");
-    } else*/ {
+    } else {
       headshot = (fromtop <= 15.0);
     }
     if (headshot && showHeadshots) print("HS64: TAN");
@@ -152,9 +145,13 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   if (headshot) {
     //len = Distance2D(inflictor)*mult;
     len = sqrt((self.Origin.x-inflictor.Origin.x)*(self.Origin.x-inflictor.Origin.x)+(self.Origin.y-inflictor.Origin.y)*(self.Origin.y-inflictor.Origin.y));
-    if (debugme) print("K8HS: len=%f", len);
+    //if (debugme) print("K8HS: len=%f", len);
     // 600: E1M1, from entry to top of the stairs
   } else {
+    /*
+    len = sqrt((self.Origin.x-inflictor.Origin.x)*(self.Origin.x-inflictor.Origin.x)+(self.Origin.y-inflictor.Origin.y)*(self.Origin.y-inflictor.Origin.y));
+    if (debugme) print("K8HSX: len=%f", len);
+    */
     /*
     if (debugme) {
       len = Distance2D(inflictor)*mult;
@@ -179,7 +176,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     //TODO: int tick = gametic;
     //int tick = k8hsLastHitTick+1;
 
-    //if (debugme) print("K8HS: len=%d; critChance=%d; lasttick=%d; tick=%d; hscount=%d", len, critChance, k8hsLastHitTick, tick, k8hsCount);
+    if (debugme) print("K8HS: len=%f; critChance=%d; hscount=%d", len, critChance, plr.k8hsCount);
     // shotgun, etc -- multiple hitscans per one tick?
     if (secondary) {
       // very rarely, shotgun can do double criticals
@@ -217,7 +214,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
       else if (plr.k8hsCount >= 8) critChance += 10;
       else critChance += (8-plr.k8hsCount)*9;
     }
-    if (debugme) print("oldcc=%d; critChance=%d; len=%d", oldcc, critChance, len);
+    if (debugme) print("oldcc=%d; critChance=%d; len=%f", oldcc, critChance, len);
 
     //HudMessage(s:"CRITICAL\nSHOT!"; HUDMSG_FADEOUT|HUDMSG_LOG, 0, CR_RED, 1.5, 0.5, 3.0, 2.0);
     //showMessage = true;
@@ -247,18 +244,18 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     } else if (critChance >= 55) {
       dodmg *= 2;
       if (debugCrits) print("*Critx2; d=%d", dodmg);
-      //messageText = "CRITICAL x2!";
+      messageText = "CRITICAL x2!";
       //messageColor = Font.CR_RED;
       //showMessage = true;
     } else if (critChance > 10) {
       dodmg += dodmg/2; // *1.5
       if (debugCrits) print("*Critx1.5; d=%d", dodmg);
-      //messageText = "CRITICAL x1.5!";
+      messageText = "CRITICAL x1.5!";
       //messageColor = Font.CR_RED;
       //showMessage = true;
     }
 
-    //if (debugCrits) print("%d: critChance=%d; damage=%d; dodmg=%d", tick, critChance, damage, dodmg);
+    if (debugCrits) print("  critChance=%d; damage=%d; dodmg=%d", critChance, damage, dodmg);
 
     if (vicSpHealth < 100) {
       // humans, imps, ...
@@ -276,20 +273,19 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
         //inflictor.A_PrintBold(messageText, 1.5);
         //inflictor.A_Log(messageText);
         print("CRITICAL: %s", messageText);
+      } else {
+        //print("  CRIT: %d / %d", damage, dodmg);
       }
 
       if (fastkills) {
-        /*
-        if (self is 'Archvile') {
+        if (GetClassName(GetClassReplacee(self.Class)) == 'Archvile') {
           fastdamage = 200;
-          let avcv = CVar.FindCVar('k8HSFastKillArchVileDamage');
-          if (avcv) fastdamage = avcv.GetInt();
+          if (plr.k8HSFastKillArchVileDamage >= 1) fastdamage = plr.k8HSFastKillArchVileDamage;
           if (fastdamage > 0 && dodmg < fastdamage) {
             //Log(s:"Archvile superdamage: old=", d:dodmg, s:"; new=", d:fastdamage, s:"; health=", d:vicHealth);
             dodmg = fastdamage;
           }
         }
-        */
       }
       // if we will left victim with very small health, kill it instead
       bool instakill = false;
@@ -299,6 +295,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
         // instakill, gore (fe, 'cause +1)
         instakill = true;
         dodmg = Health+5;
+        if (debugCrits) print("  INSTAKILL");
       }
       // preventing normal damage will prevent monster alerting too, heh
 
@@ -363,6 +360,8 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
       return dodmg;
     }
   }
+
+  return damage;
 }
 
 
@@ -381,9 +380,9 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
 void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bool NoArmor, TVec hitp, bool secondary) {
   int newdmg = K8onBeforeLineDamage(inflictor, hitp, damage, DmgType, secondary);
-  print("THP:(%f,%f,%f); dmg=%d; new=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, newdmg, NameToStr(DmgType));
+  //print("THP(%s):(%f,%f,%f); dmg=%d; new=%d; type='%s'", (secondary ? "2" : "1"), hitp.x, hitp.y, hitp.z, damage, newdmg, NameToStr(DmgType));
   //print("THP:(%f,%f,%f); dmg=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, NameToStr(StrToName("FUCK!")));
-  Damage(inflictor, source, damage, DmgType, NoArmor);
+  Damage(inflictor, source, /*damage*/newdmg, DmgType, NoArmor);
 }
 
 final void Damage(EntityEx inflictor, EntityEx source, int damage,

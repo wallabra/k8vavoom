@@ -333,11 +333,11 @@ defaultproperties
 
   k8HSEnabled = true;
   k8HSDistMult = 1.1;
-  bool k8HSShowCriticals = true;
-  bool k8HSNoCriticals = false;
+  k8HSShowCriticals = true;
+  k8HSNoCriticals = false;
 
-  bool k8HSFastKillAnnoyingMonsters = false;
-  bool k8HSInstaKillPainElementals = true;
-  bool k8HSInstaKillLostSouls = true;
-  int k8HSFastKillArchVileDamage = 200;
+  k8HSFastKillAnnoyingMonsters = false;
+  k8HSInstaKillPainElementals = true;
+  k8HSInstaKillLostSouls = true;
+  k8HSFastKillArchVileDamage = 200;
 }
