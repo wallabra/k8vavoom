@@ -476,19 +476,27 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
 	{
 		if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Float)
 		{
+			/*
 			VExpression* TmpArgs[1];
 			TmpArgs[0] = op1;
 			op1 = new VInvocation(NULL, ec.SelfClass->FindMethodChecked(
 				"itof"), NULL, false, false, op1->Loc, 1, TmpArgs);
 			op1 = op1->Resolve(ec);
+			*/
+			op1 = (new VScalarToFloat(op1))->Resolve(ec);
+			if (!op1) { delete this; return NULL; } // oops
 		}
 		else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Int)
 		{
+			/*
 			VExpression* TmpArgs[1];
 			TmpArgs[0] = op2;
 			op2 = new VInvocation(NULL, ec.SelfClass->FindMethodChecked(
 				"itof"), NULL, false, false, op2->Loc, 1, TmpArgs);
 			op2 = op2->Resolve(ec);
+			*/
+			op2 = (new VScalarToFloat(op2))->Resolve(ec);
+			if (!op2) { delete this; return NULL; } // oops
 		}
 	}
 

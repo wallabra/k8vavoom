@@ -353,6 +353,28 @@ VExpression* VParser::ParseExpressionPriority0()
 		return new VDynamicClassCast(ClassName, Expr, l);
 	}
 
+	// int(val) --> convert bool/int/float to int
+	case TK_Int:
+	{
+		Lex.NextToken();
+		Lex.Expect(TK_LParen);
+		VExpression* op = ParseExpressionPriority13(); //k8:???
+		if (!op) ParseError(l, "Expression expected");
+		Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+		return new VScalarToInt(op);
+	}
+
+	// float(val) --> convert bool/int/float to float
+	case TK_Float:
+	{
+		Lex.NextToken();
+		Lex.Expect(TK_LParen);
+		VExpression* op = ParseExpressionPriority13(); //k8:???
+		if (!op) ParseError(l, "Expression expected");
+		Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+		return new VScalarToFloat(op);
+	}
+
 	default:
 		break;
 	}

@@ -243,6 +243,29 @@ VScalarToFloat::~VScalarToFloat()
 
 VExpression* VScalarToFloat::DoResolve(VEmitContext& ec)
 {
+	//printf("VScalarToFloat::DoResolve!\n");
+	if (!op) return NULL;
+	op = op->Resolve(ec);
+	if (!op) { delete this; return NULL; }
+	switch (op->Type.Type)
+	{
+	case TYPE_Int:
+	case TYPE_Byte:
+	case TYPE_Bool:
+		if (op->IsIntConst()) {
+			VExpression* lit = new VFloatLiteral((float)op->GetIntConst(), op->Loc);
+			delete op;
+			op = lit->Resolve(ec); // just in case
+			if (!op) { delete this; return NULL; }
+		}
+		break;
+	case TYPE_Float:
+		break;
+	default:
+		ParseError(Loc, "cannot convert type to `float`");
+		delete this;
+		return NULL;
+	}
 	return this;
 }
 
@@ -262,11 +285,103 @@ void VScalarToFloat::Emit(VEmitContext& ec)
 	case TYPE_Bool:
 		ec.AddStatement(OPC_IntToFloat);
 		break;
-	case TYPE_Float: // it was converted in-place
-		//if (op->IsFloatConst()) printf("*** XXX: IN-PLACE CONVERSION OF %f\n", op->GetFloatConst());
+	case TYPE_Float: // nothing to do
 		break;
 	default:
 		ParseError(Loc, "Internal compiler error (VScalarToFloat::Emit)");
+	}
+}
+
+//==========================================================================
+//
+//	VScalarToInt::VScalarToInt
+//
+//==========================================================================
+
+VScalarToInt::VScalarToInt(VExpression* AOp)
+: VExpression(AOp->Loc)
+, op(AOp)
+{
+	// convert it in-place
+	if (op && op->IsFloatConst()) {
+		VExpression* lit = new VIntLiteral((vint32)op->GetFloatConst(), op->Loc);
+		delete op;
+		op = lit; // op is resolved here, but literal resolves to itself, so it is ok
+	}
+	Type = TYPE_Int;
+}
+
+//==========================================================================
+//
+//	VScalarToInt::~VScalarToInt
+//
+//==========================================================================
+
+VScalarToInt::~VScalarToInt()
+{
+	if (op)
+	{
+		delete op;
+		op = NULL;
+	}
+}
+
+//==========================================================================
+//
+//	VScalarToInt::DoResolve
+//
+//==========================================================================
+
+VExpression* VScalarToInt::DoResolve(VEmitContext& ec)
+{
+	//printf("VScalarToInt::DoResolve!\n");
+	if (!op) return NULL;
+	op = op->Resolve(ec);
+	if (!op) { delete this; return NULL; }
+	switch (op->Type.Type)
+	{
+	case TYPE_Int:
+	case TYPE_Byte:
+	case TYPE_Bool:
+		break;
+	case TYPE_Float:
+		if (op->IsFloatConst()) {
+			VExpression* lit = new VIntLiteral((vint32)op->GetFloatConst(), op->Loc);
+			delete op;
+			op = lit->Resolve(ec); // just in case
+			if (!op) { delete this; return NULL; }
+		}
+		break;
+	default:
+		ParseError(Loc, "cannot convert type to `int`");
+		delete this;
+		return NULL;
+	}
+	return this;
+}
+
+//==========================================================================
+//
+//	VScalarToInt::Emit
+//
+//==========================================================================
+
+void VScalarToInt::Emit(VEmitContext& ec)
+{
+	op->Emit(ec);
+	switch (op->Type.Type)
+	{
+	case TYPE_Int:
+	case TYPE_Byte:
+	case TYPE_Bool:
+		// nothing to do
+		break;
+	case TYPE_Float:
+		ec.AddStatement(OPC_FloatToInt);
+		break;
+	default:
+		ParseError(Loc, "Internal compiler error (VScalarToInt::Emit)");
+		return;
 	}
 }
 

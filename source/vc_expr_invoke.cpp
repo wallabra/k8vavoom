@@ -708,12 +708,15 @@ void VInvocation::CheckParams(VEmitContext& ec)
 						}
 						else if (Args[i]->Type.Type == TYPE_Float)
 						{
+							/*
 							VExpression* TmpArgs[1];
 							TmpArgs[0] = Args[i];
 							Args[i] = new VInvocation(NULL,
 								ec.SelfClass->FindMethodChecked("ftoi"), NULL,
 								false, false, Args[i]->Loc, 1, TmpArgs);
 							Args[i] = Args[i]->Resolve(ec);
+							*/
+							Args[i] = (new VScalarToInt(Args[i]))->Resolve(ec);
 						}
 						break;
 
@@ -729,12 +732,15 @@ void VInvocation::CheckParams(VEmitContext& ec)
 						}
 						else if (Args[i]->Type.Type == TYPE_Int)
 						{
+							/*
 							VExpression* TmpArgs[1];
 							TmpArgs[0] = Args[i];
 							Args[i] = new VInvocation(NULL,
 								ec.SelfClass->FindMethodChecked("itof"), NULL,
 								false, false, Args[i]->Loc, 1, TmpArgs);
 							Args[i] = Args[i]->Resolve(ec);
+							*/
+							Args[i] = (new VScalarToFloat(Args[i]))->Resolve(ec);
 						}
 						break;
 					}

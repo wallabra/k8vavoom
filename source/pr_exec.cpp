@@ -154,6 +154,7 @@ static void RunFunction(VMethod *func)
 	VStack*		local_vars;
 	VScriptIterator*	ActiveIterators = NULL;
 	float ftemp;
+	vint32 itemp;
 
 	guard(RunFunction);
 	current_func = func;
@@ -1631,6 +1632,12 @@ func_loop:
 			ip++;
 			ftemp = (float)sp[-1].i;
 			sp[-1].f = ftemp;
+			PR_VM_BREAK;
+
+		PR_VM_CASE(OPC_FloatToInt)
+			ip++;
+			itemp = (vint32)sp[-1].f;
+			sp[-1].i = itemp;
 			PR_VM_BREAK;
 
 		PR_VM_CASE(OPC_ClearPointedStr)

@@ -93,6 +93,23 @@ public:
 
 //==========================================================================
 //
+//	VScalarToInt
+//
+//==========================================================================
+
+class VScalarToInt : public VExpression
+{
+public:
+	VExpression*		op;
+
+	VScalarToInt(VExpression* AOp);
+	~VScalarToInt();
+	VExpression* DoResolve(VEmitContext&);
+	void Emit(VEmitContext&);
+};
+
+//==========================================================================
+//
 //	VDynamicCast
 //
 //==========================================================================

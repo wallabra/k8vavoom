@@ -291,6 +291,7 @@ enum
 	DECLARE_OPC(PtrNotEquals, None),
 	DECLARE_OPC(PtrToBool, None),
 	DECLARE_OPC(IntToFloat, None),
+	DECLARE_OPC(FloatToInt, None),
 
 	//	Cleanup of local variables.
 	DECLARE_OPC(ClearPointedStr, None),
