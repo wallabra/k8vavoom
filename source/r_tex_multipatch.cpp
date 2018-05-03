@@ -150,7 +150,7 @@ VMultiPatchTexture::VMultiPatchTexture(VStream& Strm, int DirectoryIndex,
 	// for Doom and Strife
 	if (!VStr::NICmp(*Name, "sky", 3) && Height == 128)
 	{
-		if (Patches[0].Tex->GetHeight() > Height)
+		if (Patches[0].Tex && Patches[0].Tex->GetHeight() > Height)
 		{
 			Height = Patches[0].Tex->GetHeight();
 		}
