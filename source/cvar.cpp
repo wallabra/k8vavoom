@@ -331,6 +331,21 @@ void VCvar::Init()
 	unguard;
 }
 
+
+void VCvar::dumpHashStats () {
+  vuint32 bkused = 0, maxchain = 0;
+  for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+    VCvar *cvar = cvhBuckets[bkn];
+    if (!cvar) continue;
+    ++bkused;
+    vuint32 chlen = 0;
+    for (; cvar; cvar = cvar->nextInBucket) ++chlen;
+    if (chlen > maxchain) maxchain = chlen;
+  }
+  printf("CVAR statistics: %u buckets used, %u items in longest chain\n", bkused, maxchain);
+}
+
+
 //==========================================================================
 //
 //	VCvar::Shutdown
@@ -340,6 +355,7 @@ void VCvar::Init()
 void VCvar::Shutdown()
 {
 	guard(VCvar::Shutdown);
+	dumpHashStats();
 	for (VCvar* var = Variables; var;)
 	{
 		VCvar* Next = var->Next;

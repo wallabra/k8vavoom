@@ -88,6 +88,7 @@ public:
 	friend class TCmdCvarList;
 
 private:
+	static void dumpHashStats ();
 	void insertIntoList ();
 	VCvar *insertIntoHash ();
 	void DoSet(const VStr& value);
