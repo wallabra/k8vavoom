@@ -496,7 +496,8 @@ IMPLEMENT_FUNCTION(VObject, CreateCvar)
 	P_GET_INT(flags);
 	P_GET_STR(def);
 	P_GET_NAME(name);
-	new VCvar(*name, def, flags);
+	//new VCvar(*name, def, flags);
+	VCvar::CreateNew(*name, def, flags);
 }
 
 IMPLEMENT_FUNCTION(VObject, GetCvar)

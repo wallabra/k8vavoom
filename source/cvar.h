@@ -52,6 +52,8 @@ protected:
 	float		FloatValue;			//	atof(string)
 	VCvar*		Next;				//	For linked list if variables
 	VStr		LatchedString;		//	For CVAR_Latch variables
+	VCvar* nextInBucket; // next cvar in this bucket
+	vuint32 lnhash; // hash of lo-cased variable name
 
 public:
 	VCvar(const char* AName, const char* ADefault, int AFlags = 0);
@@ -64,6 +66,9 @@ public:
 
 	static void Init();
 	static void Shutdown();
+
+	static bool HasVar(const char* var_name);
+	static void CreateNew(const char* var_name, const VStr& ADefault, int AFlags);
 
 	static int GetInt(const char* var_name);
 	static float GetFloat(const char* var_name);
@@ -83,6 +88,8 @@ public:
 	friend class TCmdCvarList;
 
 private:
+	void insertIntoList ();
+	VCvar *insertIntoHash ();
 	void DoSet(const VStr& value);
 
 	static VCvar*	Variables;

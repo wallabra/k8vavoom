@@ -49,7 +49,24 @@ VCvar*	VCvar::Variables = NULL;
 bool	VCvar::Initialised = false;
 bool	VCvar::Cheating;
 
+#define CVAR_HASH_SIZE  (8192)
+static VCvar* cvhBuckets[CVAR_HASH_SIZE] = {NULL};
+
+
 // CODE --------------------------------------------------------------------
+
+static vuint32 djbhash (const char *s) {
+  vuint32 hash = 5381;
+  if (s) {
+    for (; *s; ++s) {
+      vuint32 ch = (vuint32)(*s&0xff);
+      if (ch >= 'A' && ch <= 'Z') ch += 32; // poor man's tolower
+      hash = ((hash<<5)+hash)+ch;
+    }
+  }
+  return hash;
+}
+
 
 //==========================================================================
 //
@@ -61,32 +78,17 @@ VCvar::VCvar(const char* AName, const char* ADefault, int AFlags)
 : Name(AName)
 , DefaultString(ADefault)
 , Flags(AFlags)
+, Next(NULL)
+, nextInBucket(NULL)
 {
 	guard(VCvar::VCvar);
-	VCvar *prev = NULL;
-	for (VCvar *var = Variables; var; var = var->Next)
-	{
-		if (VStr::ICmp(var->Name, Name) < 0)
-		{
-			prev = var;
-		}
+
+	if (Name && Name[0]) {
+		insertIntoHash(); // insert into hash (this leaks on duplicate vars)
+		insertIntoList(); // insert into linked list
+		if (Initialised) Register();
 	}
 
-	if (prev)
-	{
-		Next = prev->Next;
-		prev->Next = this;
-	}
-	else
-	{
-		Next = Variables;
-		Variables = this;
-	}
-
-	if (Initialised)
-	{
-		Register();
-	}
 	unguard;
 }
 
@@ -99,36 +101,77 @@ VCvar::VCvar(const char* AName, const char* ADefault, int AFlags)
 VCvar::VCvar(const char* AName, const VStr& ADefault, int AFlags)
 : Name(AName)
 , Flags(AFlags | CVAR_Delete)
+, Next(NULL)
+, nextInBucket(NULL)
 {
 	guard(VCvar::VCvar);
 	char* Tmp = new char[ADefault.Length() + 1];
 	VStr::Cpy(Tmp, *ADefault);
 	DefaultString = Tmp;
 
-	VCvar *prev = NULL;
-	for (VCvar *var = Variables; var; var = var->Next)
-	{
-		if (VStr::ICmp(var->Name, Name) < 0)
-		{
-			prev = var;
-		}
+	if (Name && Name[0]) {
+		insertIntoHash(); // insert into hash (this leaks on duplicate vars)
+		insertIntoList(); // insert into linked list
+		check(Initialised);
+		Register();
 	}
 
-	if (prev)
-	{
-		Next = prev->Next;
-		prev->Next = this;
-	}
-	else
-	{
-		Next = Variables;
-		Variables = this;
-	}
-
-	check(Initialised);
-	Register();
 	unguard;
 }
+
+
+// returns replaced cvar, or NULL
+VCvar *VCvar::insertIntoHash () {
+  if (!this->Name || !this->Name[0]) return NULL;
+  vuint32 nhash = djbhash(this->Name);
+  this->lnhash = nhash;
+  VCvar* prev = NULL;
+  for (VCvar* cvar = cvhBuckets[nhash%CVAR_HASH_SIZE]; cvar; prev = cvar, cvar = cvar->nextInBucket) {
+    if (cvar->lnhash == nhash && !VStr::ICmp(this->Name, cvar->Name)) {
+      // replace it
+      if (prev) {
+        prev->nextInBucket = this;
+      } else {
+        cvhBuckets[nhash%CVAR_HASH_SIZE] = this;
+      }
+      this->nextInBucket = cvar->nextInBucket;
+      return cvar;
+    }
+  }
+  // new one
+  this->nextInBucket = cvhBuckets[nhash%CVAR_HASH_SIZE];
+  cvhBuckets[nhash%CVAR_HASH_SIZE] = this;
+  return NULL;
+}
+
+
+// insert into sorted list
+void VCvar::insertIntoList () {
+  if (!Name || !Name[0]) return;
+
+  while (Variables && VStr::ICmp(Variables->Name, Name) == 0) Variables = Variables->Next;
+
+  VCvar *prev = NULL;
+  for (VCvar *var = Variables; var; var = var->Next) {
+    if (VStr::ICmp(var->Name, Name) < 0) {
+      prev = var;
+      VCvar *cont = prev->Next;
+      if (cont && VStr::ICmp(cont->Name, Name) == 0) {
+        while (cont && VStr::ICmp(cont->Name, Name) == 0) cont = cont->Next;
+        prev->Next = cont;
+      }
+    }
+  }
+
+  if (prev) {
+    Next = prev->Next;
+    prev->Next = this;
+  } else {
+    Next = Variables;
+    Variables = this;
+  }
+}
+
 
 //==========================================================================
 //
@@ -358,6 +401,27 @@ void VCvar::SetCheating(bool new_state)
 	unguard;
 }
 
+
+bool VCvar::HasVar (const char* var_name) {
+  return (FindVariable(var_name) != NULL);
+}
+
+
+void VCvar::CreateNew (const char* var_name, const VStr& ADefault, int AFlags) {
+  VCvar* cvar = FindVariable(var_name);
+  if (!cvar) {
+    new VCvar(var_name, ADefault, AFlags|CVAR_Delete);
+  } else {
+    char* Tmp = new char[ADefault.Length() + 1];
+    VStr::Cpy(Tmp, *ADefault);
+    cvar->DoSet(ADefault);
+    delete[] const_cast<char*>(cvar->DefaultString);
+    cvar->DefaultString = Tmp;
+    cvar->Flags = AFlags/*|CVAR_Delete*/;
+  }
+}
+
+
 //==========================================================================
 //
 //  VCvar::FindVariable
@@ -367,12 +431,20 @@ void VCvar::SetCheating(bool new_state)
 VCvar* VCvar::FindVariable(const char* name)
 {
 	guard(VCvar::FindVariable);
+	/*
 	for (VCvar* cvar = Variables; cvar; cvar = cvar->Next)
 	{
 		if (!VStr::ICmp(name, cvar->Name))
 		{
 			return cvar;
 		}
+	}
+	return NULL;
+	*/
+	if (!name || name[0] == 0) return NULL;
+	vuint32 nhash = djbhash(name);
+	for (VCvar *cvar = cvhBuckets[nhash%CVAR_HASH_SIZE]; cvar; cvar = cvar->nextInBucket) {
+		if (cvar->lnhash == nhash && !VStr::ICmp(name, cvar->Name)) return cvar;
 	}
 	return NULL;
 	unguard;
