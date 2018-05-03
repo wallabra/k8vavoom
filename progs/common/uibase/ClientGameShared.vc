@@ -36,6 +36,10 @@ enum
 	MB_EndGame
 };
 
+const int MAX_SAVED_CHOICES = 256; // way too many
+name savedChoices[MAX_SAVED_CHOICES];
+int savedChoicesIdx[MAX_SAVED_CHOICES];
+
 const int MAX_MENU_STACK	= 32;
 
 StatusBarShared			GSBar;
@@ -83,14 +87,24 @@ name					DefaultFinaleType;
 //
 //==========================================================================
 
-final MenuScreen SpawnMenu(class<MenuScreen> CID)
-{
-	MenuScreen m;
+final MenuScreen SpawnMenu (class<MenuScreen> CID) {
+  MenuScreen m;
+  int i;
 
-	m = MenuScreen(GRoot.NewChild(CID));
-	m.ClGame = self;
-	m.CreateMenu();
-	return m;
+  m = MenuScreen(GRoot.NewChild(CID));
+  m.ClGame = self;
+  m.CreateMenu();
+
+  for (i = 0; i < MAX_SAVED_CHOICES; ++i) {
+    if (savedChoicesIdx[i] >= 0) {
+      if (savedChoices[i] == GetClassName(CID)) {
+        m.SetSavedChoice(savedChoicesIdx[i]);
+        break;
+      }
+    }
+  }
+
+  return m;
 }
 
 //**************************************************************************
@@ -153,39 +167,66 @@ final void PushMenuScreen(MenuScreen menu)
 
 //==========================================================================
 //
+//  SaveMenuChoice
+//
+//==========================================================================
+
+final void SaveMenuChoice (MenuScreen menu) {
+  if (!menu) return;
+  // save choice
+  // TODO: better strategy to reuse slots
+  if (menu) {
+    int firstFree = -1;
+    bool found = false;
+    int i;
+    for (i = 0; i < MAX_SAVED_CHOICES; ++i) {
+      if (savedChoicesIdx[i] >= 0) {
+        if (savedChoices[i] == GetClassName(menu.Class)) {
+          savedChoicesIdx[i] = menu.GetChoiceForSaving();
+          found = true;
+          break;
+        }
+      } else {
+        // we found first unused item
+        firstFree = i;
+        break;
+      }
+    }
+    // if not found, try to use a free slot
+    if (!found && firstFree >= 0) {
+      savedChoices[firstFree] = GetClassName(menu.Class);
+      savedChoicesIdx[firstFree] = menu.GetChoiceForSaving();
+    }
+    // here we should expel one of the used slots, but...
+  }
+}
+
+//==========================================================================
+//
 //  PopMenu
 //
 //==========================================================================
 
-final void PopMenu()
-{
-	MenuScreen menu = menu_stack[menu_sp - 1];
-	menu_sp--;
+final void PopMenu () {
+  MenuScreen menu = menu_stack[menu_sp - 1];
+  --menu_sp;
 
-	if (menu_sp < 0)
-		FatalError("PopMenu: menu stack underflow");
+  if (menu_sp < 0) FatalError("PopMenu: menu stack underflow");
 
-	menu_stack[menu_sp].Destroy();
-	if (menu_sp)
-	{
-		if (menu)
-		{
-			LocalSound(menu.DeactivateSound);
-		}
-		CurrentMenuScreen = menu_stack[menu_sp - 1];
-		CurrentMenuScreen.Show();
-		CurrentMenuScreen.Raise();
-		CurrentMenuScreen.SetFocus();
-	}
-	else
-	{
-		if (menu)
-		{
-			LocalSound(menu.ClearMenusSound);
-		}
-		CurrentMenuScreen = none;
-		GRoot.SetMouse(false);
-	}
+  SaveMenuChoice(menu);
+
+  menu_stack[menu_sp].Destroy();
+  if (menu_sp) {
+    if (menu) LocalSound(menu.DeactivateSound);
+    CurrentMenuScreen = menu_stack[menu_sp - 1];
+    CurrentMenuScreen.Show();
+    CurrentMenuScreen.Raise();
+    CurrentMenuScreen.SetFocus();
+  } else {
+    if (menu) LocalSound(menu.ClearMenusSound);
+    CurrentMenuScreen = none;
+    GRoot.SetMouse(false);
+  }
 }
 
 //==========================================================================
@@ -200,6 +241,7 @@ final void ForceMenuOff()
 
 	for (i = 0; i < menu_sp; i++)
 	{
+		SaveMenuChoice(menu_stack[i]);
 		menu_stack[i].Destroy();
 	}
 	menu_sp = 0;
@@ -502,4 +544,9 @@ void SharewareResponse(int key)
 
 defaultproperties
 {
+  int i;
+  for (i = 0; i < MAX_SAVED_CHOICES; ++i) {
+    savedChoices[i] = '';
+    savedChoicesIdx[i] = -1;
+  }
 }

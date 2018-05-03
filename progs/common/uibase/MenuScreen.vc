@@ -191,6 +191,34 @@ void SetDefaultChoice()
 
 //==========================================================================
 //
+// GetChoiceForSaving
+//
+//==========================================================================
+
+int GetChoiceForSaving () {
+  return CursorPos;
+}
+
+//==========================================================================
+//
+// SetSavedChoice
+//
+// Should be called after menu is fully created, and default choice set.
+//
+//==========================================================================
+
+void SetSavedChoice (int idx) {
+  if (idx < 0 || idx >= NumItems || CursorPos == idx) return;
+
+  if (Items[idx].Focusable && Items[idx].Enabled) {
+    CursorPrev = -1;
+    CursorPos = idx;
+    CursorMoved();
+  }
+}
+
+//==========================================================================
+//
 //	CyclePrevChoice
 //
 //==========================================================================
