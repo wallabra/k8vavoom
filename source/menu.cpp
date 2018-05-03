@@ -86,13 +86,9 @@ void MN_Init()
 //
 //==========================================================================
 
-void MN_ActivateMenu()
-{
-    // intro might call this repeatedly
-    if (!MN_Active())
-	{
-		GClGame->eventSetMenu("Main");
-	}
+void MN_ActivateMenu () {
+  // intro might call this repeatedly
+  if (!MN_Active()) GClGame->eventSetMenu("Main");
 }
 
 //==========================================================================
