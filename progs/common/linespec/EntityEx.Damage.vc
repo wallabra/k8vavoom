@@ -52,7 +52,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     return damage;
   }
 
-  if (!GetCvar('k8HSEnabled')) return damage;
+  if (!GetCvarB('k8HSEnabled')) return damage;
 
   bool debugme = GetCvarB('k8HSDEBUG');
 
