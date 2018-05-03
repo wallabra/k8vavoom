@@ -52,9 +52,9 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     return damage;
   }
 
-  if (!(int(GetCvarF('k8HSEnabled')) != 0)) return damage;
+  if (!GetCvar('k8HSEnabled')) return damage;
 
-  bool debugme = (int(GetCvarF('k8HSDEBUG')) != 0);
+  bool debugme = GetCvarB('k8HSDEBUG');
 
   if (debugme) print("ME: %s; inf: %s", NameToStr(GetClassName(self.Class)), NameToStr(GetClassName(GetClassReplacee(inflictor.Class))));
 
@@ -62,7 +62,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
   //if (k8CheckBoolCVar('k8HSShowKnownDamage', debugme)) print("K8HS: damage type '%s', damage=%d", damageType, damage);
 
-  bool fastkills = (int(GetCvarF('k8HSFastKillAnnoyingMonsters')) != 0);
+  bool fastkills = GetCvarB('k8HSFastKillAnnoyingMonsters');
 
   int fastdamage = 0;
 
@@ -80,9 +80,9 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   // kill certain monsters in one shot
   if (fastkills) {
     if (GetClassName(GetClassReplacee(self.Class)) == 'PainElemental') {
-      if ((int(GetCvarF('k8HSInstaKillPainElementals')) != 0)) fastdamage = vicHealth+10;
+      if (GetCvarB('k8HSInstaKillPainElementals')) fastdamage = vicHealth+10;
     } else if (GetClassName(GetClassReplacee(self.Class)) == 'LostSoul') {
-      if ((int(GetCvarF('k8HSInstaKillLostSouls')) != 0)) fastdamage = vicHealth+10;
+      if (GetCvarB('k8HSInstaKillLostSouls')) fastdamage = vicHealth+10;
       fastdamage = vicHealth+10;
     }
     if (fastdamage > 0) return fastdamage;
@@ -94,7 +94,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
   bool headshot = false;
   bool showHeadshots = false;
-  if (debugme) showHeadshots = (int(GetCvarF('k8HSShowHeadshots')) != 0);
+  if (debugme) showHeadshots = GetCvarB('k8HSShowHeadshots');
 
   if (vicHgt <= 56.0) {
     // humans, archvile, cacodemon, demon, imp, lost soul, pain elemental, revenant
@@ -139,7 +139,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
       print("K8HS: Headshot! %s; vicHgt=%f; fromtop=%f; radius=%f; len=%f", NameToStr(GetClassName(Class)), vicHgt, fromtop, vicRadius, len);
     }
     bool debugCrits = false;
-    if (debugme) debugCrits = (int(GetCvarF('k8HSDebugCrits')) != 0);
+    if (debugme) debugCrits = GetCvarB('k8HSDebugCrits');
     int dodmg = damage; //*2 baron of hell and other Big Things
     int smallHealth = 50; // baron of hell and other Big Things
     int critChance = int(Random()*100);
@@ -173,7 +173,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
       plr.k8hsCount = 0;
     }
 
-    if (critChance > 13 && (int(GetCvarF('k8HSNoCriticals')) != 0)) critChance = 13;
+    if (critChance > 13 && GetCvarB('k8HSNoCriticals')) critChance = 13;
 
     int oldcc = critChance;
          if (len > 800) { if (critChance >= 75 && Random()*100 > 10) critChance = 13; }
@@ -238,7 +238,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     }
 
     if (dodmg) {
-      if (showMessage && (int(GetCvarF('k8HSShowCriticals')) != 0)) {
+      if (showMessage && GetCvarB('k8HSShowCriticals')) {
         inflictor.Player.ClientHudMessage(messageText, 'smallfont', 0, 123666, messageColor, "",
           0.5, 0.45, 0, 0,
           1.5, 0.0, 0.0);
@@ -251,7 +251,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
       if (fastkills) {
         if (GetClassName(GetClassReplacee(self.Class)) == 'Archvile') {
-          fastdamage = int(GetCvarF('k8HSFastKillArchVileDamage'));
+          fastdamage = GetCvar('k8HSFastKillArchVileDamage');
           if (fastdamage > 0 && dodmg < fastdamage) {
             //Log(s:"Archvile superdamage: old=", d:dodmg, s:"; new=", d:fastdamage, s:"; health=", d:vicHealth);
             dodmg = fastdamage;

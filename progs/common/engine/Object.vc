@@ -451,6 +451,8 @@ native static final void SetCvarF(name Name, float value);
 native static final string GetCvarS(name Name);
 //  Set cvar string value
 native static final void SetCvarS(name Name, string value);
+//  Read boolean value (k8 TODO: this is more reliable than `GetCvar()`; i should fix codebase to use this)
+native static final bool GetCvarB(name Name);
 
 //
 //  Math functions
