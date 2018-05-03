@@ -229,7 +229,7 @@ VMultiPatchTexture::VMultiPatchTexture(VScriptParser* sc, int AType)
 					TEXTYPE_WallPatch, false, false);
 				if (Tex < 0)
 				{
-					int LumpNum = W_CheckNumForFileName(sc->String);
+					int LumpNum = W_CheckNumForTextureFileName(sc->String);
 					if (LumpNum >= 0)
 					{
 						Tex = GTextureManager.FindTextureByLumpNum(LumpNum);

@@ -334,6 +334,46 @@ int W_CheckNumForFileName(VStr Name)
 
 //==========================================================================
 //
+//  W_CheckNumForTextureFileName
+//
+//  Returns -1 if name not found.
+//
+//==========================================================================
+
+static int tryWithExtension (VStr name, const char *ext) {
+  guard(tryWithExtension);
+  if (ext && *ext) name = name+ext;
+  for (int wi = SearchPaths.Num()-1; wi >= 0; --wi) {
+    int i = SearchPaths[wi]->CheckNumForFileName(name);
+    if (i >= 0) return MAKE_HANDLE(wi, i);
+  }
+  return -1;
+  unguard;
+}
+
+
+int W_CheckNumForTextureFileName(VStr Name) {
+  guard(W_CheckNumForTextureFileName);
+
+  int res = -1;
+
+  if ((res = tryWithExtension(Name, NULL)) >= 0) return res;
+
+  // try "textures/..."
+  Name = VStr("textures/")+Name;
+  if ((res = tryWithExtension(Name, NULL)) >= 0) return res;
+  // various other image extensions
+  if ((res = tryWithExtension(Name, ".png")) >= 0) return res;
+  if ((res = tryWithExtension(Name, ".jpg")) >= 0) return res;
+  if ((res = tryWithExtension(Name, ".tga")) >= 0) return res;
+  if ((res = tryWithExtension(Name, ".lmp")) >= 0) return res;
+
+  return -1;
+  unguard;
+}
+
+//==========================================================================
+//
 //	W_GetNumForFileName
 //
 //	Calls W_CheckNumForFileName, but bombs out if not found.
