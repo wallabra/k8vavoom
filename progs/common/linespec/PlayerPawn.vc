@@ -78,25 +78,6 @@ int				MaxHealth;
 // K8 Headshots Variables
 int k8hsCount; //k8
 
-// enable headshots
-bool k8HSEnabled;
-// distance multiplier (the more -- the less headshot chance on big distances)
-float k8HSDistMult;
-
-// announce critical messages
-bool k8HSShowCriticals;
-// disable criticals?
-bool k8HSNoCriticals;
-
-// fastkill/instakill some annoying monsters
-bool k8HSFastKillAnnoyingMonsters;
-  // instakill Pain Elementals
-  bool k8HSInstaKillPainElementals;
-  // instakill Lost Souls
-  bool k8HSInstaKillLostSouls;
-  // how mush damage should be inflicted to Arch-Vile
-  int k8HSFastKillArchVileDamage;
-
 
 //==========================================================================
 //
@@ -301,49 +282,6 @@ int UnmorphActor(Entity Activator, int Force)
 	return 0;
 }
 
-/*
-void ClientTick (float deltaTime) {
-  ::ClientTick(deltaTime);
-
-  k8HSEnabled = ftoi(GetCvarF('k8HSEnabled')) != 0;
-  k8HSDistMult = GetCvarF('k8HSDistMult');
-  k8HSShowCriticals = ftoi(GetCvarF('k8HSShowCriticals')) != 0;
-  k8HSNoCriticals = ftoi(GetCvarF('k8HSNoCriticals')) != 0;
-
-  k8HSFastKillAnnoyingMonsters = ftoi(GetCvarF('k8HSFastKillAnnoyingMonsters')) != 0;
-  k8HSInstaKillPainElementals = ftoi(GetCvarF('k8HSInstaKillPainElementals')) != 0;
-  k8HSInstaKillLostSouls = ftoi(GetCvarF('k8HSInstaKillLostSouls')) != 0;
-  k8HSFastKillArchVileDamage = ftoi(GetCvarF('k8HSFastKillArchVileDamage'));
-}
-*/
-
-void OnMapSpawn (mthing_t* mthing) {
-  ::OnMapSpawn(mthing);
-
-  k8HSEnabled = ftoi(GetCvarF('k8HSEnabled')) != 0;
-  k8HSDistMult = GetCvarF('k8HSDistMult');
-  k8HSShowCriticals = ftoi(GetCvarF('k8HSShowCriticals')) != 0;
-  k8HSNoCriticals = ftoi(GetCvarF('k8HSNoCriticals')) != 0;
-
-  k8HSFastKillAnnoyingMonsters = ftoi(GetCvarF('k8HSFastKillAnnoyingMonsters')) != 0;
-  k8HSInstaKillPainElementals = ftoi(GetCvarF('k8HSInstaKillPainElementals')) != 0;
-  k8HSInstaKillLostSouls = ftoi(GetCvarF('k8HSInstaKillLostSouls')) != 0;
-  k8HSFastKillArchVileDamage = ftoi(GetCvarF('k8HSFastKillArchVileDamage'));
-
-  /*
-  print("k8HSEnabled: %s", (k8HSEnabled ? "tan" : "ona"));
-  print("k8HSDistMult: %f", k8HSDistMult);
-  print("k8HSShowCriticals: %s", (k8HSShowCriticals ? "tan" : "ona"));
-  print("k8HSNoCriticals: %s", (k8HSNoCriticals ? "tan" : "ona"));
-
-  print("k8HSFastKillAnnoyingMonsters: %s", (k8HSFastKillAnnoyingMonsters ? "tan" : "ona"));
-  print("k8HSInstaKillPainElementals: %s", (k8HSInstaKillPainElementals ? "tan" : "ona"));
-  print("k8HSInstaKillLostSouls: %s", (k8HSInstaKillLostSouls ? "tan" : "ona"));
-  print("k8HSDistMult: %d", k8HSFastKillArchVileDamage);
-  */
-}
-
-
 defaultproperties
 {
 	Health = 100;
@@ -373,14 +311,5 @@ defaultproperties
 	bWindThrust = true;
 	bTelestomp = true;
 	bNoBlockMonst = true;
-
-  k8HSEnabled = false;
-  k8HSDistMult = 1.1;
-  k8HSShowCriticals = true;
-  k8HSNoCriticals = false;
-
-  k8HSFastKillAnnoyingMonsters = false;
-  k8HSInstaKillPainElementals = true;
-  k8HSInstaKillLostSouls = true;
-  k8HSFastKillArchVileDamage = 200;
+	k8hsCount = 0;
 }

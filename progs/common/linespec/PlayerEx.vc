@@ -2575,7 +2575,7 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
 	}
 
   // elven gifts
-  if (!k8ElvenGifted && ftoi(GetCvarF('k8ElvenGift')) != 0) {
+  if (!k8ElvenGifted && int(GetCvarF('k8ElvenGift')) != 0) {
     k8ElvenGifted = true; // gifts should be given only once
     if (AddElvenGift('Shotgun')) AddElvenGift('ShellBox');
     if (AddElvenGift('BDW_Rifle')) { int f; for (f = 9; f > 0; --f) AddElvenGift('Clip'); }

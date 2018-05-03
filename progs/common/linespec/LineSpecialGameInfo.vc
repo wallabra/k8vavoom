@@ -136,14 +136,31 @@ void Init()
 	// handy for other games if needed
 	CreateCvar('alternate_monster_attacks', "0", CVAR_ARCHIVE);
 
+	// debug headshots?
+	CreateCvar('k8HSDEBUG', "0", 0);
+
+	// show headshots calculation? (doesn't matter if debug is off)
+	CreateCvar('k8HSShowHeadshots', "1", 0);
+
+	// show criticals calculation? (doesn't matter if debug is off)
+	CreateCvar('k8HSDebugCrits', "1", 0);
+
+	// enable headshots?
 	CreateCvar('k8HSEnabled', "1", CVAR_ARCHIVE);
+	// distance multiplier (the more -- the less headshot chance on big distances)
 	CreateCvar('k8HSDistMult', "1.1", CVAR_ARCHIVE);
+	// announce critical messages
 	CreateCvar('k8HSShowCriticals', "1", CVAR_ARCHIVE);
+	// disable criticals?
 	CreateCvar('k8HSNoCriticals', "0", CVAR_ARCHIVE);
 
+	// fastkill/instakill some annoying monsters?
 	CreateCvar('k8HSFastKillAnnoyingMonsters', "1", CVAR_ARCHIVE);
+	// instakill Pain Elementals?
 	CreateCvar('k8HSInstaKillPainElementals', "1", CVAR_ARCHIVE);
+	// instakill Lost Souls?
 	CreateCvar('k8HSInstaKillLostSouls', "1", CVAR_ARCHIVE);
+	// how mush damage should be inflicted to Arch-Vile?
 	CreateCvar('k8HSFastKillArchVileDamage', "120", CVAR_ARCHIVE);
 
 	CreateCvar('k8AmmoKing', "1", CVAR_ARCHIVE);

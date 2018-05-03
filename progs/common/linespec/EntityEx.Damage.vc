@@ -32,18 +32,6 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   if (!inflictor) return damage;
   if (!inflictor.bIsPlayer) return damage;
 
-  bool debugme = false; //k8CheckBoolCVar('k8HSDEBUG', false);
-
-  /*
-  if (debugme) {
-    print("Line Damage to %s: inflictor=%s; hitpos=(%g,%g,%g); damage=%d; damageType=%s; locpos=(%g,%g,%g); height=%g; radius=%g; Health=%d",
-      GetClassName(), inflictor.GetClassName(), hitpos.x, hitpos.y, hitpos.z, damage, damageType,
-      hitpos.x-Pos.x, hitpos.y-Pos.y, hitpos.z-Pos.z,
-      Height, Radius, Health
-    );
-  }
-  */
-
   // is it to alive monster?
   //if (!bIsMonster || Health < 1) return damage;
   // is this monster dormant?
@@ -64,23 +52,22 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     return damage;
   }
 
+  if (!(int(GetCvarF('k8HSEnabled')) != 0)) return damage;
+
+  bool debugme = (int(GetCvarF('k8HSDEBUG')) != 0);
 
   if (debugme) print("ME: %s; inf: %s", NameToStr(GetClassName(self.Class)), NameToStr(GetClassName(GetClassReplacee(inflictor.Class))));
 
   PlayerPawn plr = PlayerPawn(inflictor);
-  //if (!plr) { print("FROM PLAYER!"); return damage; }
-
-  if (!plr.k8HSEnabled) return damage;
 
   //if (k8CheckBoolCVar('k8HSShowKnownDamage', debugme)) print("K8HS: damage type '%s', damage=%d", damageType, damage);
 
-  bool fastkills = plr.k8HSFastKillAnnoyingMonsters;
+  bool fastkills = (int(GetCvarF('k8HSFastKillAnnoyingMonsters')) != 0);
 
   int fastdamage = 0;
 
   int vicHealth = Health; // current health
-  //TODO: int vicSpHealth = SpawnHealth(); // spawning health (i.e. full health for monsters)
-  int vicSpHealth = InitialHealth;
+  int vicSpHealth = InitialHealth; // spawning health (i.e. full health for monsters)
 
   if (debugme) print("vicSpHealth=%d; vicHealth=%d", vicSpHealth, vicHealth);
 
@@ -93,9 +80,9 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   // kill certain monsters in one shot
   if (fastkills) {
     if (GetClassName(GetClassReplacee(self.Class)) == 'PainElemental') {
-      if (plr.k8HSInstaKillPainElementals) fastdamage = vicHealth+10;
+      if ((int(GetCvarF('k8HSInstaKillPainElementals')) != 0)) fastdamage = vicHealth+10;
     } else if (GetClassName(GetClassReplacee(self.Class)) == 'LostSoul') {
-      if (plr.k8HSInstaKillLostSouls) fastdamage = vicHealth+10;
+      if ((int(GetCvarF('k8HSInstaKillLostSouls')) != 0)) fastdamage = vicHealth+10;
       fastdamage = vicHealth+10;
     }
     if (fastdamage > 0) return fastdamage;
@@ -106,7 +93,8 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   if (debugme) print("  hithgt=%f; fromtop=%f", hithgt, fromtop);
 
   bool headshot = false;
-  bool showHeadshots = false; //k8CheckBoolCVar('k8HSShowHeadshots', debugme);
+  bool showHeadshots = false;
+  if (debugme) showHeadshots = (int(GetCvarF('k8HSShowHeadshots')) != 0);
 
   if (vicHgt <= 56.0) {
     // humans, archvile, cacodemon, demon, imp, lost soul, pain elemental, revenant
@@ -131,7 +119,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   }
 
   // calc distance
-  float mult = plr.k8HSDistMult;
+  float mult = GetCvarF('k8HSDistMult');
   if (mult < 0.1) mult = 1.1;
   if (mult > 4) mult = 4;
 
@@ -139,29 +127,19 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   if (headshot) {
     //len = Distance2D(inflictor)*mult;
     len = sqrt((self.Origin.x-inflictor.Origin.x)*(self.Origin.x-inflictor.Origin.x)+(self.Origin.y-inflictor.Origin.y)*(self.Origin.y-inflictor.Origin.y));
-    //if (debugme) print("K8HS: len=%f", len);
     // 600: E1M1, from entry to top of the stairs
-  } else {
-    /*
-    len = sqrt((self.Origin.x-inflictor.Origin.x)*(self.Origin.x-inflictor.Origin.x)+(self.Origin.y-inflictor.Origin.y)*(self.Origin.y-inflictor.Origin.y));
-    if (debugme) print("K8HSX: len=%f", len);
-    */
-    /*
-    if (debugme) {
-      len = Distance2D(inflictor)*mult;
-      print("K8HS!!: len=%d", len);
-      len = 10000;
-    }
-    */
+    if (debugme) print("K8HS: len=%f; multlen=%f", len, len*mult);
+    len *= mult;
   }
 
   // head shot
   if (headshot) {
     if (showHeadshots) {
       //Log(s:"K8HS: Headshot! ", s:vicName, s:"; vicHgt=", d:vicHgt, s:"; fromtop=", d:fromtop, s:"; mass=", d:vicMass, s:"; radius=", d:vicRadius, s:"; len=", d:len);
-      //print("K8HS: Headshot! %s; vicHgt=%d; fromtop=%d; mass=%d; radius=%d; len=%d", GetClassName(), vicHgt, fromtop, vicMass, vicRadius, len);
+      print("K8HS: Headshot! %s; vicHgt=%f; fromtop=%f; radius=%f; len=%f", NameToStr(GetClassName(Class)), vicHgt, fromtop, vicRadius, len);
     }
-    bool debugCrits = false; //k8CheckBoolCVar('k8HSDebugCrits', debugme);
+    bool debugCrits = false;
+    if (debugme) debugCrits = (int(GetCvarF('k8HSDebugCrits')) != 0);
     int dodmg = damage; //*2 baron of hell and other Big Things
     int smallHealth = 50; // baron of hell and other Big Things
     int critChance = int(Random()*100);
@@ -195,7 +173,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
       plr.k8hsCount = 0;
     }
 
-    if (critChance > 13 && plr.k8HSNoCriticals) critChance = 13;
+    if (critChance > 13 && (int(GetCvarF('k8HSNoCriticals')) != 0)) critChance = 13;
 
     int oldcc = critChance;
          if (len > 800) { if (critChance >= 75 && Random()*100 > 10) critChance = 13; }
@@ -209,9 +187,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     }
     if (debugme) print("oldcc=%d; critChance=%d; len=%f", oldcc, critChance, len);
 
-    //HudMessage(s:"CRITICAL\nSHOT!"; HUDMSG_FADEOUT|HUDMSG_LOG, 0, CR_RED, 1.5, 0.5, 3.0, 2.0);
-    //showMessage = true;
-
+    // create message
     bool showMessage = false;
     string messageText = "";
     int messageColor = CR_YELLOW;
@@ -262,11 +238,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
     }
 
     if (dodmg) {
-      if (showMessage && plr.k8HSShowCriticals) {
-        //inflictor.A_PrintBold(messageText, 1.5);
-        //inflictor.A_Log(messageText);
-        //print("CRITICAL: %s", messageText);
-        //inflictor.Player.centreprint(messageText);
+      if (showMessage && (int(GetCvarF('k8HSShowCriticals')) != 0)) {
         inflictor.Player.ClientHudMessage(messageText, 'smallfont', 0, 123666, messageColor, "",
           0.5, 0.45, 0, 0,
           1.5, 0.0, 0.0);
@@ -275,14 +247,11 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
         	int Colour, string ColourName, float x, float y, int HudWidth,
         	int HudHeight, float HoldTime, float Time1, float Time2);
         */
-      } else {
-        //print("  CRIT: %d / %d", damage, dodmg);
       }
 
       if (fastkills) {
         if (GetClassName(GetClassReplacee(self.Class)) == 'Archvile') {
-          fastdamage = 200;
-          if (plr.k8HSFastKillArchVileDamage >= 1) fastdamage = plr.k8HSFastKillArchVileDamage;
+          fastdamage = int(GetCvarF('k8HSFastKillArchVileDamage'));
           if (fastdamage > 0 && dodmg < fastdamage) {
             //Log(s:"Archvile superdamage: old=", d:dodmg, s:"; new=", d:fastdamage, s:"; health=", d:vicHealth);
             dodmg = fastdamage;
