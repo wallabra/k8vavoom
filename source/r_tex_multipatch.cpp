@@ -548,6 +548,7 @@ vuint8* VMultiPatchTexture::GetPixels()
 	// switch to 32 bit mode.
 	for (int i = 0; i < PatchCount; i++)
 	{
+		if (!Patches[i].Tex) continue;
 		Patches[i].Tex->GetPixels();
 		if (Patches[i].Tex->Format != TEXFMT_8)
 		{
