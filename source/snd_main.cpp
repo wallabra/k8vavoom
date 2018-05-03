@@ -136,9 +136,6 @@ private:
 	int					MapCDTrack;
 	float				MusicVolumeFactor;
 
-	//	Wether we should use CD music
-	bool				CDMusic;
-
 	//	Stream music player
 	bool				MusicEnabled;
 	bool				StreamPlaying;
@@ -167,7 +164,6 @@ private:
 	static VCvarF		snd_music_volume;
 	static VCvarI		snd_swap_stereo;
 	static VCvarI		snd_channels;
-	static VCvarI		snd_cd_music;
 	static VCvarI		snd_external_music;
 	static VCvarF		snd_eax_distance_unit;
 
@@ -209,7 +205,6 @@ VCvarF				VAudio::snd_sfx_volume("snd_sfx_volume", "0.5", CVAR_Archive);
 VCvarF				VAudio::snd_music_volume("snd_music_volume", "0.5", CVAR_Archive);
 VCvarI				VAudio::snd_swap_stereo("snd_swap_stereo", "0", CVAR_Archive);
 VCvarI				VAudio::snd_channels("snd_channels", "128", CVAR_Archive);
-VCvarI				VAudio::snd_cd_music("snd_use_cd_music", "0", CVAR_Archive);
 VCvarI				VAudio::snd_external_music("snd_external_music", "1", CVAR_Archive);
 VCvarF				VAudio::snd_eax_distance_unit("snd_eax_distance_unit", "32.0", CVAR_Archive);
 
@@ -251,7 +246,6 @@ VAudio::VAudio()
 , MaxSoundDist(0)
 , MapSong(NAME_None)
 , MapCDTrack(0)
-, CDMusic(false)
 , MusicEnabled(true)
 , StreamPlaying(false)
 , StreamMusicPlayer(NULL)
@@ -999,20 +993,10 @@ void VAudio::UpdateSfx()
 void VAudio::StartSong(VName song, int track, bool loop)
 {
 	guard(VAudio::StartSong);
-	if (CDMusic)
-	{
-		if (loop)
-			GCmdBuf << "CD Loop " << VStr(track) << "\n";
-		else
-			GCmdBuf << "CD Play " << VStr(track) << "\n";
-	}
+	if (loop)
+		GCmdBuf << "Music Loop " << *song << "\n";
 	else
-	{
-		if (loop)
-			GCmdBuf << "Music Loop " << *song << "\n";
-		else
-			GCmdBuf << "Music Play " << *song << "\n";
-	}
+		GCmdBuf << "Music Play " << *song << "\n";
 	unguard;
 }
 
@@ -1025,14 +1009,7 @@ void VAudio::StartSong(VName song, int track, bool loop)
 void VAudio::PauseSound()
 {
 	guard(VAudio::PauseSound);
-	if (CDMusic)
-	{
-		GCmdBuf << "CD Pause\n";
-	}
-	else
-	{
-		GCmdBuf << "Music Pause\n";
-	}
+	GCmdBuf << "Music Pause\n";
 	unguard;
 }
 
@@ -1045,14 +1022,7 @@ void VAudio::PauseSound()
 void VAudio::ResumeSound()
 {
 	guard(VAudio::ResumeSound);
-	if (CDMusic)
-	{
-		GCmdBuf << "CD resume\n";
-	}
-	else
-	{
-		GCmdBuf << "Music resume\n";
-	}
+	GCmdBuf << "Music resume\n";
 	unguard;
 }
 
@@ -1129,20 +1099,6 @@ void VAudio::UpdateSounds()
 	if (snd_music_volume > 1.0)
 	{
 		snd_music_volume = 1.0;
-	}
-
-	//	Check for CD music change.
-	if (snd_cd_music && !CDMusic)
-	{
-		GCmdBuf << "Music Stop\n";
-		CDMusic = true;
-		StartMusic();
-	}
-	if (!snd_cd_music && CDMusic)
-	{
-		GCmdBuf << "CD Stop\n";
-		CDMusic = false;
-		StartMusic();
 	}
 
 	// Update any Sequences

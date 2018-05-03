@@ -322,20 +322,11 @@ set(MAIN_OPENGL_UNIX_SDL_SOURCES
 	gl_sdl.cpp
 )
 
-#-- CD audio drivers for various UNIX platforms --
-set(MAIN_CDAUDIO_LINUX_SOURCES
-	snd_audiocd_linux.cpp
-)
-set(MAIN_CDAUDIO_BSD_SOURCES
-	snd_audiocd_bsd.cpp
-)
-
 #-- Windows --
 set(MAIN_WIN32_SOURCES
 	eax.h
 	in_win32.cpp
 	net_winsock.cpp
-	snd_audiocd_win32.cpp
 	snd_win32.cpp
 	snd_win32music.cpp
 	sys_win.cpp
@@ -545,18 +536,6 @@ else(WIN32)
 		set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_UNIX_SDL_SOURCES})
 		set(MAIN_LIBS ${SDLMIXER_LIBRARY} ${SDL_LIBRARY} ${MAIN_LIBS})
 	endif(SDL_FOUND)
-
-	find_path(LINUX_CDROM_INCLUDE_DIR linux/cdrom.h)
-	if(LINUX_CDROM_INCLUDE_DIR)
-		message(STATUS "Using LINUX CD-ROM API")
-		set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_CDAUDIO_LINUX_SOURCES})
-	else(LINUX_CDROM_INCLUDE_DIR)
-		find_path(BSD_CDIO_INCLUDE_DIR sys/cdio.h)
-		if(BSD_CDIO_INCLUDE_DIR)
-			message(STATUS "Using BSD CD-ROM API")
-			set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_CDAUDIO_BSD_SOURCES})
-		endif(BSD_CDIO_INCLUDE_DIR)
-	endif(LINUX_CDROM_INCLUDE_DIR)
 
 	if(WITH_OPENGL)
 		find_package(OpenGL)
