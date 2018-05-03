@@ -1,6 +1,3 @@
-add_subdirectory(gme)
-add_subdirectory(timidity)
-
 option(WITH_SDL "Use SDL library" ON)
 option(WITH_OPENGL "Use OpenGL library" ON)
 option(WITH_OPENAL "Use OpenAL library" ON)
@@ -9,6 +6,14 @@ option(WITH_LIBMAD "Enable MP3 support" ON)
 option(WITH_MIKMOD "Enable MikMod support" ON)
 option(WITH_MODPLUG "Enable ModPlug support" ON)
 option(WITH_FLAC "Enable FLAC support" ON)
+option(WITH_GME "Enable built-in GME support" OFF)
+
+if(WITH_GME)
+  message(STATUS "GME enabled")
+  add_subdirectory(gme)
+endif(WITH_GME)
+
+add_subdirectory(timidity)
 
 option(ENABLE_CLIENT "Build client executable" ON)
 option(ENABLE_SERVER "Build dedicated server executable" ON)
@@ -174,7 +179,6 @@ set(MAIN_COMMON_SOURCES
 	server.h
 	snd_data.cpp
 	snd_local.h
-	snd_gme.cpp
 	snd_main.cpp
 	snd_qmus2mid.cpp
 	snd_reverbs.cpp
@@ -716,6 +720,13 @@ if(WITH_FLAC)
 		message(STATUS "Could NOT find FLAC libraries")
 	endif(FLAC_INCLUDE_DIR AND FLAC_LIBRARY AND FLACPP_LIBRARY)
 endif(WITH_FLAC)
+
+
+if(WITH_GME)
+  add_subdirectory(gme)
+  set(MAIN_SOURCES ${MAIN_SOURCES} snd_gme.cpp)
+endif(WITH_GME)
+
 
 add_executable(vavoom ${MAIN_SOURCES})
 if(ENABLE_WRAPPERS)
