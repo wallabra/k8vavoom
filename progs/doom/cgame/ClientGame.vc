@@ -347,6 +347,7 @@ void SetMenu(string Name)
 
 void menu_quit()
 {
+	if (!GetCvarB('menu_quit_prompt')) { CmdBuf_AddText("Quit\n"); return; }
 	LocalSound('misc/chat');
 	MessageBoxStartMessage(va("%s\n\n(press y to quit)",
 			endmsg[P_Random() % NUM_END_MESSAGES]), MB_Quit, true);

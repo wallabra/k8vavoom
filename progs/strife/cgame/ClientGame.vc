@@ -344,6 +344,7 @@ void SetMenu(string Name)
 
 void menu_quit()
 {
+	if (!GetCvarB('menu_quit_prompt')) { CmdBuf_AddText("Quit\n"); return; }
 	MessageBoxStartMessage("Do you really want to leave?\n\n(press y to quit)",
 		MB_Quit, true);
 }

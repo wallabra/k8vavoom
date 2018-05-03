@@ -340,6 +340,7 @@ void SetMenu(string Name)
 
 void menu_quit()
 {
+	if (!GetCvarB('menu_quit_prompt')) { CmdBuf_AddText("Quit\n"); return; }
 	LocalSound('misc/chat');
 	MessageBoxStartMessage("ARE YOU SURE YOU WANT TO QUIT?", MB_Quit, true);
 }

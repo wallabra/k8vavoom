@@ -127,6 +127,8 @@ float			DehExplosionAlpha;
 
 void Init()
 {
+	CreateCvar('menu_quit_prompt', "1", CVAR_ARCHIVE);
+
 	CreateCvar('monster_backing', "0", CVAR_ARCHIVE);
 	CreateCvar('addrocketexplosion', "0", CVAR_ARCHIVE);
 	CreateCvar('damage_thrust', "1", CVAR_ARCHIVE);
