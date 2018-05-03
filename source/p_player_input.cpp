@@ -123,38 +123,38 @@ static int		joyymove;
 
 static int		impulse_cmd;
 
-static VCvarI	allways_run("allways_run", "1", CVAR_Archive);
-static VCvarI	artiskip("artiskip", "1", CVAR_Archive);	// whether shift-enter skips an artifact
+static VCvarI	allways_run("allways_run", "1", "Always run?", CVAR_Archive);
+static VCvarI	artiskip("artiskip", "1", "Should Shift+Enter skip an artifact?", CVAR_Archive); // whether shift-enter skips an artifact
 
-static VCvarF	cl_forwardspeed("cl_forwardspeed", "200", CVAR_Archive);
-static VCvarF	cl_backspeed("cl_backspeed", "200", CVAR_Archive);
-static VCvarF	cl_sidespeed("cl_sidespeed", "200", CVAR_Archive);
-static VCvarF	cl_flyspeed("cl_flyspeed", "80", CVAR_Archive);
+static VCvarF	cl_forwardspeed("cl_forwardspeed", "200", "Forward speed.", CVAR_Archive);
+static VCvarF	cl_backspeed("cl_backspeed", "200", "Backward speed.", CVAR_Archive);
+static VCvarF	cl_sidespeed("cl_sidespeed", "200", "Sidestepping speed.", CVAR_Archive);
+static VCvarF	cl_flyspeed("cl_flyspeed", "80", "Flying speed.", CVAR_Archive);
 
-static VCvarF	cl_movespeedkey("cl_movespeedkey", "2.0", CVAR_Archive);
+static VCvarF	cl_movespeedkey("cl_movespeedkey", "2.0", "Running multiplier.", CVAR_Archive);
 
-static VCvarF	cl_yawspeed("cl_yawspeed", "140", CVAR_Archive);
-static VCvarF	cl_pitchspeed("cl_pitchspeed", "150", CVAR_Archive);
-static VCvarF	cl_pitchdriftspeed("cl_pitchdriftspeed", "270", CVAR_Archive);
+static VCvarF	cl_yawspeed("cl_yawspeed", "140", "Yaw speed.", CVAR_Archive);
+static VCvarF	cl_pitchspeed("cl_pitchspeed", "150", "Pitch speed.", CVAR_Archive);
+static VCvarF	cl_pitchdriftspeed("cl_pitchdriftspeed", "270", "Pitch drifting speed.", CVAR_Archive);
 
-static VCvarF	cl_anglespeedkey("cl_anglespeedkey", "1.5", CVAR_Archive);
+static VCvarF	cl_anglespeedkey("cl_anglespeedkey", "1.5", "Fast turning multiplier.", CVAR_Archive);
 
-static VCvarF	cl_deathroll("cl_deathroll", "75", CVAR_Archive);
-static VCvarF	cl_deathrollspeed("cl_deathrollspeed", "80", CVAR_Archive);
+static VCvarF	cl_deathroll("cl_deathroll", "75", "Deathroll amount.", CVAR_Archive);
+static VCvarF	cl_deathrollspeed("cl_deathrollspeed", "80", "Deathroll speed.", CVAR_Archive);
 
-static VCvarF	mouse_x_sensitivity("mouse_x_sensitivity", "5.0", CVAR_Archive);
-static VCvarF	mouse_y_sensitivity("mouse_y_sensitivity", "5.0", CVAR_Archive);
-static VCvarI	mouse_look("mouse_look", "1", CVAR_Archive);
-static VCvarI	invert_mouse("invert_mouse", "0", CVAR_Archive);
-static VCvarI	lookstrafe("lookstrafe", "0", CVAR_Archive);
-static VCvarI	lookspring("lookspring", "0", CVAR_Archive);
+static VCvarF	mouse_x_sensitivity("mouse_x_sensitivity", "5.0", "Horizontal mouse sensitivity.", CVAR_Archive);
+static VCvarF	mouse_y_sensitivity("mouse_y_sensitivity", "5.0", "Vertical mouse sensitivity.", CVAR_Archive);
+static VCvarI	mouse_look("mouse_look", "1", "Allow mouselook?", CVAR_Archive);
+static VCvarI	invert_mouse("invert_mouse", "0", "Invert mouse?", CVAR_Archive);
+static VCvarI	lookstrafe("lookstrafe", "0", "Allow lookstrafe?", CVAR_Archive);
+static VCvarI	lookspring("lookspring", "0", "Allow lookspring?", CVAR_Archive);
 
-static VCvarF	m_yaw("m_yaw", "0.022", CVAR_Archive);
-static VCvarF	m_pitch("m_pitch", "0.022", CVAR_Archive);
-static VCvarF	m_forward("m_forward", "1.0", CVAR_Archive);
-static VCvarF	m_side("m_side", "0.8", CVAR_Archive);
+static VCvarF	m_yaw("m_yaw", "0.022", "Mouse yaw speed.", CVAR_Archive);
+static VCvarF	m_pitch("m_pitch", "0.022", "Mouse pitch speed.", CVAR_Archive);
+static VCvarF	m_forward("m_forward", "1.0", "Mouse forward speed.", CVAR_Archive);
+static VCvarF	m_side("m_side", "0.8", "Mouse sidestepping speed.", CVAR_Archive);
 
-static VCvarF	joy_yaw("joy_yaw", "140", CVAR_Archive);
+static VCvarF	joy_yaw("joy_yaw", "140", "Joystick yaw speed.", CVAR_Archive);
 
 BUTTON(Forward)
 BUTTON(Backward)

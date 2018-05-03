@@ -44,6 +44,7 @@ class VCvar
 protected:
 	const char*	Name;				//	Variable's name
 	const char*	DefaultString;		//	Default value
+	const char* HelpString; // this *can* be owned, but as we never deleting cvar objects, it doesn't matter
 	bool defstrOwned; // `true` if `DefaultString` is owned and should be deleted
 	VStr		StringValue;		//	Current value
 	int			Flags;				//	CVAR_ flags
@@ -55,25 +56,29 @@ protected:
 	vuint32 lnhash; // hash of lo-cased variable name
 
 public:
-	VCvar(const char* AName, const char* ADefault, int AFlags = 0);
-	VCvar(const char* AName, const VStr& ADefault, int AFlags = 0);
+	VCvar(const char* AName, const char* ADefault, const char *AHelp, int AFlags = 0);
+	VCvar(const char* AName, const VStr& ADefault, const VStr& AHelp, int AFlags = 0);
 	void Register();
 	void Set(int value);
 	void Set(float value);
 	void Set(const VStr& value);
 	bool IsModified();
 
+	inline const char *GetName () const { return Name; }
+	inline const char *GetHelp () const { return (HelpString ? HelpString : "no help yet."); }
+
 	static void Init();
 	static void Shutdown();
 
 	static bool HasVar(const char* var_name);
-	static void CreateNew(const char* var_name, const VStr& ADefault, int AFlags);
+	static void CreateNew(const char* var_name, const VStr& ADefault, const VStr& AHelp, int AFlags);
 
 	static int GetInt(const char* var_name);
 	static float GetFloat(const char* var_name);
 	static bool GetBool(const char* var_name);
 	static const char* GetCharp(const char* var_name);
 	static VStr GetString(const char* var_name);
+	static const char* GetHelp(const char* var_name); // returns NULL if there is no such cvar
 
 	static void Set(const char* var_name, int value);
 	static void Set(const char* var_name, float value);
@@ -84,6 +89,8 @@ public:
 
 	static void Unlatch();
 	static void SetCheating(bool);
+
+	static VCvar* FindVariable(const char* name);
 
 	friend class TCmdCvarList;
 
@@ -98,16 +105,14 @@ private:
 
 	static bool		Initialised;
 	static bool		Cheating;
-
-	static VCvar* FindVariable(const char* name);
 };
 
 //	Cvar, that can be used as int variable
 class VCvarI : public VCvar
 {
 public:
-	VCvarI(const char* AName, const char* ADefault, int AFlags = 0)
-		: VCvar(AName, ADefault, AFlags)
+	VCvarI(const char* AName, const char* ADefault, const char *AHelp, int AFlags = 0)
+		: VCvar(AName, ADefault, AHelp, AFlags)
 	{
 	}
 
@@ -127,8 +132,8 @@ public:
 class VCvarF : public VCvar
 {
 public:
-	VCvarF(const char* AName, const char* ADefault, int AFlags = 0)
-		: VCvar(AName, ADefault, AFlags)
+	VCvarF(const char* AName, const char* ADefault, const char *AHelp, int AFlags = 0)
+		: VCvar(AName, ADefault, AHelp, AFlags)
 	{
 	}
 
@@ -148,8 +153,8 @@ public:
 class VCvarS : public VCvar
 {
 public:
-	VCvarS(const char* AName, const char* ADefault, int AFlags = 0)
-		: VCvar(AName, ADefault, AFlags)
+	VCvarS(const char* AName, const char* ADefault, const char *AHelp, int AFlags = 0)
+		: VCvar(AName, ADefault, AHelp, AFlags)
 	{
 	}
 

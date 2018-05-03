@@ -83,8 +83,8 @@ static HANDLE		tevent;
 
 static bool			ActiveApp, Minimized;
 
-static VCvarI		win_priority("win_priority", "0", CVAR_Archive);
-static VCvarI		win_sys_keys("win_sys_keys", "1", CVAR_Archive);
+static VCvarI		win_priority("win_priority", "0", "shitdoze.", CVAR_Archive);
+static VCvarI		win_sys_keys("win_sys_keys", "1", "shitdoze.", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 

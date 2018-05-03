@@ -91,8 +91,8 @@ static int				c_history_current;
 
 static float			cons_h = 0;
 
-static VCvarF			con_height("con_height", "240", CVAR_Archive);
-static VCvarF			con_speed("con_speed", "480", CVAR_Archive);
+static VCvarF			con_height("con_height", "240", "Console height.", CVAR_Archive);
+static VCvarF			con_speed("con_speed", "6666", "Console sliding speed.", CVAR_Archive);
 
 //	Autocomplete
 static int				c_autocompleteIndex = -1;

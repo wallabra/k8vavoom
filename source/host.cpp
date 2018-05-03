@@ -58,9 +58,9 @@ void Host_Quit();
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 #ifdef DEVELOPER
-VCvarI			developer("developer", "1", CVAR_Archive);
+VCvarI			developer("developer", "1", "Developer (debug) mode?", CVAR_Archive);
 #else
-VCvarI			developer("developer", "0", CVAR_Archive);
+VCvarI			developer("developer", "0", "Developer (debug) mode?", CVAR_Archive);
 #endif
 
 int				host_frametics;
@@ -89,20 +89,20 @@ static VDedLog	DedLog;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static VCvarF	host_framerate("framerate", "0");
+static VCvarF	host_framerate("framerate", "0", "Framerate limit.");
 
 static double	last_time;
 
-static VCvarI	respawnparm("RespawnMonsters", "0");	// checkparm of -respawn
-static VCvarI	randomclass("RandomClass", "0");		// checkparm of -randclass
-static VCvarI	fastparm("Fast", "0");					// checkparm of -fast
+static VCvarI	respawnparm("RespawnMonsters", "0", "Respawn monsters?");	// checkparm of -respawn
+static VCvarI	randomclass("RandomClass", "0", "Random player class?");		// checkparm of -randclass
+static VCvarI	fastparm("Fast", "0", "Fast monsters?");					// checkparm of -fast
 
-static VCvarI	show_time("show_time", "0");
+static VCvarI	show_time("show_time", "0", "Show current time?");
 
-static VCvarS	configfile("configfile", "config.cfg", CVAR_Archive);
+static VCvarS	configfile("configfile", "config.cfg", "Config file name.", CVAR_Archive);
 
 static char		CurrentLanguage[4];
-static VCvarS	Language("language", "en", CVAR_Archive);
+static VCvarS	Language("language", "en", "Game language.", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 

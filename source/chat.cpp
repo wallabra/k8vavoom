@@ -47,16 +47,16 @@ bool					chatmodeon;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static TILine			w_chat;
-static VCvarS ChatMacro0("Chatmacro0", "No", CVAR_Archive);
-static VCvarS ChatMacro1("Chatmacro1", "I'm ready to kick butt!", CVAR_Archive);
-static VCvarS ChatMacro2("Chatmacro2", "I'm OK.", CVAR_Archive);
-static VCvarS ChatMacro3("Chatmacro3", "I'm not looking too good!", CVAR_Archive);
-static VCvarS ChatMacro4("Chatmacro4", "Help!", CVAR_Archive);
-static VCvarS ChatMacro5("Chatmacro5", "You suck!", CVAR_Archive);
-static VCvarS ChatMacro6("Chatmacro6", "Next time, scumbag...", CVAR_Archive);
-static VCvarS ChatMacro7("Chatmacro7", "Come here!", CVAR_Archive);
-static VCvarS ChatMacro8("Chatmacro8", "I'll take care of it.", CVAR_Archive);
-static VCvarS ChatMacro9("Chatmacro9", "Yes", CVAR_Archive);
+static VCvarS ChatMacro0("Chatmacro0", "No", "Chat macro #0.", CVAR_Archive);
+static VCvarS ChatMacro1("Chatmacro1", "I'm ready to kick butt!", "Chat macro #1.", CVAR_Archive);
+static VCvarS ChatMacro2("Chatmacro2", "I'm OK.", "Chat macro #2.", CVAR_Archive);
+static VCvarS ChatMacro3("Chatmacro3", "I'm not looking too good!", "Chat macro #3.", CVAR_Archive);
+static VCvarS ChatMacro4("Chatmacro4", "Help!", "Chat macro #4.", CVAR_Archive);
+static VCvarS ChatMacro5("Chatmacro5", "You suck!", "Chat macro #5.", CVAR_Archive);
+static VCvarS ChatMacro6("Chatmacro6", "Next time, scumbag...", "Chat macro #6.", CVAR_Archive);
+static VCvarS ChatMacro7("Chatmacro7", "Come here!", "Chat macro #7.", CVAR_Archive);
+static VCvarS ChatMacro8("Chatmacro8", "I'll take care of it.", "Chat macro #8.", CVAR_Archive);
+static VCvarS ChatMacro9("Chatmacro9", "Yes", "Chat macro #9.", CVAR_Archive);
 static VCvarS *chat_macros[10] =
 {
     &ChatMacro0,

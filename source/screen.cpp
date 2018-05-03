@@ -158,22 +158,22 @@ static int		setwidth;
 static int		setheight;
 static int		setbpp;
 
-static VCvarF	menu_darkening("menu_darkening", "0.5", CVAR_Archive);
-static VCvarI	draw_pause("draw_pause", "1");
+static VCvarF	menu_darkening("menu_darkening", "0.5", "Screen darkening for active menus.", CVAR_Archive);
+static VCvarI	draw_pause("draw_pause", "1", "Draw \"paused\" text?");
 
-static VCvarI	screen_width("screen_width", "0", CVAR_Archive);
-static VCvarI	screen_height("screen_height", "0", CVAR_Archive);
-static VCvarI	screen_bpp("screen_bpp", "0", CVAR_Archive);
-static VCvarI	screen_windowed("screen_windowed", "0", CVAR_Archive);
-static VCvarI	brightness("brightness", "0", CVAR_Archive);
+static VCvarI	screen_width("screen_width", "0", "Custom screen width", CVAR_Archive);
+static VCvarI	screen_height("screen_height", "0", "Custom screen height", CVAR_Archive);
+static VCvarI	screen_bpp("screen_bpp", "0", "Custom screen BPP", CVAR_Archive);
+static VCvarI	screen_windowed("screen_windowed", "1", "Use windowed mode?", CVAR_Archive);
+static VCvarI	brightness("brightness", "0", "Brightness.", CVAR_Archive);
 
-static VCvarI	draw_fps("draw_fps", "0", CVAR_Archive);
+static VCvarI	draw_fps("draw_fps", "0", "Draw FPS counter?", CVAR_Archive);
 static double	fps_start = 0.0;
 static double	ms = 0.0;
 static int		fps_frames = 0;
 static int		show_fps = 0;
 
-static VCvarI	draw_cycles("draw_cycles", "0", CVAR_Archive);
+static VCvarI	draw_cycles("draw_cycles", "0", "Draw cycles counter?", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 
@@ -183,7 +183,7 @@ static VCvarI	draw_cycles("draw_cycles", "0", CVAR_Archive);
 //
 //**************************************************************************
 
-static VCvarS screenshot_type("screenshot_type", "png", CVAR_Archive);
+static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type.", CVAR_Archive);
 
 void WriteTGA(char* filename, void* data, int width, int height, int bpp,
 	bool bot2top);

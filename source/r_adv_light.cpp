@@ -48,11 +48,11 @@ extern VCvarI				r_darken;
 
 static subsector_t*		r_sub;
 static sec_region_t*	r_region;
-VCvarF					r_lights_radius("r_lights_radius", "4096", CVAR_Archive);
-VCvarI                  r_max_model_lights("r_max_model_lights", "32", CVAR_Archive);
-VCvarI                  r_max_model_shadows("r_max_model_shadows", "2", CVAR_Archive);
-VCvarI                  r_max_lights("r_max_lights", "64", CVAR_Archive);
-VCvarI                  r_max_shadows("r_max_shadows", "64", CVAR_Archive);
+VCvarF					r_lights_radius("r_lights_radius", "4096", "Maximum light radius.", CVAR_Archive);
+VCvarI					r_max_model_lights("r_max_model_lights", "32", "Maximum model lights.", CVAR_Archive);
+VCvarI					r_max_model_shadows("r_max_model_shadows", "2", "Maximum model shadows.", CVAR_Archive);
+VCvarI					r_max_lights("r_max_lights", "64", "Maximum lights.", CVAR_Archive);
+VCvarI					r_max_shadows("r_max_shadows", "64", "Maximum shadows.", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 

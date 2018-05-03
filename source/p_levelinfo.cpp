@@ -42,27 +42,27 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-VCvarI	compat_shorttex("compat_shorttex", "0", 0);
-VCvarI	compat_stairs("compat_stairs", "0", 0);
-VCvarI	compat_limitpain("compat_limitpain", "0", 0);
-VCvarI	compat_nopassover("compat_nopassover", "0", 0);
-VCvarI	compat_notossdrops("compat_notossdrops", "0", 0);
-VCvarI	compat_useblocking("compat_useblocking", "0", 0);
-VCvarI	compat_nodoorlight("compat_nodoorlight", "0", 0);
-VCvarI	compat_ravenscroll("compat_ravenscroll", "0", 0);
-VCvarI	compat_soundtarget("compat_soundtarget", "0", 0);
-VCvarI	compat_dehhealth("compat_dehhealth", "0", 0);
-VCvarI	compat_trace("compat_trace", "0", 0);
-VCvarI	compat_dropoff("compat_dropoff", "0", 0);
-VCvarI	compat_boomscroll("compat_boomscroll", "0", 0);
-VCvarI	compat_invisibility("compat_invisibility", "0", 0);
+VCvarI	compat_shorttex("compat_shorttex", "0", "Compatibility: shorttex", 0);
+VCvarI	compat_stairs("compat_stairs", "0", "Compatibility: stairs", 0);
+VCvarI	compat_limitpain("compat_limitpain", "0", "Compatibility: limitpain", 0);
+VCvarI	compat_nopassover("compat_nopassover", "0", "Compatibility: nopassover", 0);
+VCvarI	compat_notossdrops("compat_notossdrops", "0", "Compatibility: notossdrops", 0);
+VCvarI	compat_useblocking("compat_useblocking", "0", "Compatibility: useblocking", 0);
+VCvarI	compat_nodoorlight("compat_nodoorlight", "0", "Compatibility: nodoorlight", 0);
+VCvarI	compat_ravenscroll("compat_ravenscroll", "0", "Compatibility: ravenscroll", 0);
+VCvarI	compat_soundtarget("compat_soundtarget", "0", "Compatibility: soundtarget", 0);
+VCvarI	compat_dehhealth("compat_dehhealth", "0", "Compatibility: dehhealth", 0);
+VCvarI	compat_trace("compat_trace", "0", "Compatibility: trace", 0);
+VCvarI	compat_dropoff("compat_dropoff", "0", "Compatibility: dropoff", 0);
+VCvarI	compat_boomscroll("compat_boomscroll", "0", "Compatibility: boomscroll", 0);
+VCvarI	compat_invisibility("compat_invisibility", "0", "Compatibility: invisibility", 0);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 IMPLEMENT_CLASS(V, LevelInfo)
 
-static VCvarF	sv_gravity("sv_gravity", "800.0", CVAR_ServerInfo);
-static VCvarF	sv_aircontrol("sv_aircontrol", "0.00390625", CVAR_ServerInfo);
+static VCvarF	sv_gravity("sv_gravity", "800.0", "Gravity value.", CVAR_ServerInfo);
+static VCvarF	sv_aircontrol("sv_aircontrol", "0.00390625", "Air control value.", CVAR_ServerInfo);
 
 // CODE --------------------------------------------------------------------
 

@@ -46,9 +46,9 @@ int pic_brdr_br;
 
 void RootWindowCreated()
 {
-	CreateCvar('sb_show_weapons', "0", 0);
-	CreateCvar('sb_show_keys', "0", 0);
-	CreateCvar('sb_show_objectives', "0", 0);
+	CreateCvar('sb_show_weapons', "0", "Show Strife Weapons", 0);
+	CreateCvar('sb_show_keys', "0", "Show Strife Keys", 0);
+	CreateCvar('sb_show_objectives', "0", "Show Strife Objectives", 0);
 
 	GTitle = TitleScreen(GRoot.NewChild(TitleScreen));
 	GSBar = StatusBarScreen(GRoot.NewChild(StatusBarScreen));

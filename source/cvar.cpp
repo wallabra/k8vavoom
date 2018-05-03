@@ -73,9 +73,10 @@ static vuint32 djbhash (const char *s) {
 //
 //==========================================================================
 
-VCvar::VCvar(const char* AName, const char* ADefault, int AFlags)
+VCvar::VCvar(const char* AName, const char* ADefault, const char *AHelp, int AFlags)
 : Name(AName)
 , DefaultString(ADefault)
+, HelpString(AHelp)
 , defstrOwned(false)
 , Flags(AFlags)
 , IntValue(0)
@@ -86,6 +87,8 @@ VCvar::VCvar(const char* AName, const char* ADefault, int AFlags)
 	guard(VCvar::VCvar);
 
 	if (!DefaultString) DefaultString = ""; // 'cause why not?
+
+	if (!HelpString || !HelpString[0]) HelpString = "no help yet (FIXME!)";
 
 	if (Name && Name[0]) {
 		insertIntoHash(); // insert into hash (this leaks on duplicate vars)
@@ -101,8 +104,10 @@ VCvar::VCvar(const char* AName, const char* ADefault, int AFlags)
 //
 //==========================================================================
 
-VCvar::VCvar(const char* AName, const VStr& ADefault, int AFlags)
+VCvar::VCvar(const char* AName, const VStr& ADefault, const VStr& AHelp, int AFlags)
 : Name(AName)
+, HelpString("no help yet")
+, defstrOwned(true)
 , Flags(AFlags)
 , IntValue(0)
 , FloatValue(0)
@@ -111,10 +116,15 @@ VCvar::VCvar(const char* AName, const VStr& ADefault, int AFlags)
 {
 	guard(VCvar::VCvar);
 
-	defstrOwned = true;
-	char* Tmp = new char[ADefault.Length() + 1];
+	char* Tmp = new char[ADefault.Length()+1];
 	VStr::Cpy(Tmp, *ADefault);
 	DefaultString = Tmp;
+
+	if (AHelp.Length() > 0) {
+		Tmp = new char[AHelp.Length()+1];
+		VStr::Cpy(Tmp, *AHelp);
+		HelpString = Tmp;
+	}
 
 	if (Name && Name[0]) {
 		insertIntoHash(); // insert into hash (this leaks on duplicate vars)
@@ -244,18 +254,38 @@ static bool xstrcmpCI (const char* s, const char *pat) {
 }
 
 
+static bool convertInt (const char *s, int *outv) {
+  bool neg = false;
+  *outv = 0;
+  if (!s || !s[0]) return false;
+  while (*s && *s <= ' ') ++s;
+  if (*s == '+') ++s; else if (*s == '-') { neg = true; ++s; }
+  if (!s[0]) return false;
+  while (*s) {
+    char ch = *s++;
+    if (ch < '0' || ch > '9') { *outv = 0; return false; }
+    *outv = (*outv)*10+ch-'0';
+  }
+  while (*s && *s <= ' ') ++s;
+  if (*s) { *outv = 0; return false; }
+  if (neg) *outv = -(*outv);
+  return true;
+}
+
+
 void VCvar::DoSet(const VStr& AValue)
 {
 	guard(VCvar::DoSet);
 
 	StringValue = AValue;
-	IntValue = superatoi(*StringValue);
+	//IntValue = superatoi(*StringValue);
+	bool validInt = convertInt(*StringValue, &IntValue);
 	FloatValue = atof(*StringValue);
 
 	// interpret boolean
-	if (IntValue != 0) {
+	if (validInt) {
 		// easy
-		BoolValue = true;
+		BoolValue = (IntValue != 0);
 	} else {
 		// check various strings
 		BoolValue =
@@ -439,18 +469,28 @@ bool VCvar::HasVar (const char* var_name) {
 //
 //==========================================================================
 
-void VCvar::CreateNew (const char* var_name, const VStr& ADefault, int AFlags) {
+void VCvar::CreateNew (const char* var_name, const VStr& ADefault, const VStr& AHelp, int AFlags) {
   VCvar* cvar = FindVariable(var_name);
   if (!cvar) {
-    new VCvar(var_name, ADefault, AFlags);
+    new VCvar(var_name, ADefault, AHelp, AFlags);
   } else {
     // delete old default value if necessary
     if (cvar->defstrOwned) delete[] const_cast<char*>(cvar->DefaultString);
     // set new default value
-    char* Tmp = new char[ADefault.Length() + 1];
-    VStr::Cpy(Tmp, *ADefault);
-    cvar->DefaultString = Tmp;
-    cvar->defstrOwned = true;
+    {
+      char* Tmp = new char[ADefault.Length() + 1];
+      VStr::Cpy(Tmp, *ADefault);
+      cvar->DefaultString = Tmp;
+      cvar->defstrOwned = true;
+    }
+    // set new help value
+    if (AHelp.Length() > 0) {
+      char* Tmp = new char[AHelp.Length() + 1];
+      VStr::Cpy(Tmp, *AHelp);
+      cvar->HelpString = Tmp;
+    } else {
+      cvar->HelpString = "no help yet";
+    }
     // update flags
     cvar->Flags = AFlags;
   }
@@ -546,6 +586,21 @@ VStr VCvar::GetString(const char* var_name)
 
 //==========================================================================
 //
+//  VCvar::GetHelp
+//
+//==========================================================================
+
+const char *VCvar::GetHelp(const char* var_name)
+{
+	guard(VCvar::GetHelp);
+	VCvar* var = FindVariable(var_name);
+	if (!var) return NULL;
+	return var->HelpString;
+	unguard;
+}
+
+//==========================================================================
+//
 //  VCvar::Set
 //
 //==========================================================================
@@ -604,39 +659,40 @@ void VCvar::Set(const char* var_name, const VStr& value)
 //
 //==========================================================================
 
-bool VCvar::Command(const TArray<VStr>& Args)
-{
-	guard(VCvar::Command);
-	VCvar* cvar = FindVariable(*Args[0]);
-	if (!cvar)
-	{
-		return false;
-	}
+bool VCvar::Command (const TArray<VStr>& Args) {
+  guard(VCvar::Command);
+  VCvar* cvar = FindVariable(*Args[0]);
+  if (!cvar) return false;
 
-	// perform a variable print or set
-	if (Args.Num() == 1)
-	{
-		GCon->Log(VStr(cvar->Name) + " is \"" + cvar->StringValue + "\"");
-		if (cvar->Flags & CVAR_Latch && cvar->LatchedString.IsNotEmpty())
-			GCon->Log(VStr("Latched \"") + cvar->LatchedString + "\"");
-	}
-	else
-	{
-		if (cvar->Flags & CVAR_Rom)
-		{
-			GCon->Logf("%s is read-only", cvar->Name);
-		}
-		else if (cvar->Flags & CVAR_Init && host_initialised)
-		{
-			GCon->Logf("%s can be set only from command-line", cvar->Name);
-		}
-		else
-		{
-			cvar->Set(Args[1]);
-		}
-	}
-	return true;
-	unguard;
+  bool needHelp = false;
+  if (Args.Num() == 2) {
+    for (const char *s = *(Args[1]); *s; ++s) {
+      if (*s == ' ') continue;
+      if (*s == '?') { needHelp = true; continue; }
+      needHelp = false;
+      break;
+    }
+  }
+
+  // perform a variable print or set
+  if (Args.Num() == 1) {
+    GCon->Log(VStr(cvar->Name) + " is \"" + cvar->StringValue + "\"");
+    if (cvar->Flags & CVAR_Latch && cvar->LatchedString.IsNotEmpty()) {
+      GCon->Log(VStr("Latched \"") + cvar->LatchedString + "\"");
+    }
+  } else if (needHelp) {
+    GCon->Logf("%s: %s", cvar->GetName(), cvar->GetHelp());
+  } else {
+    if (cvar->Flags & CVAR_Rom) {
+      GCon->Logf("%s is read-only", cvar->Name);
+    } else if (cvar->Flags & CVAR_Init && host_initialised) {
+      GCon->Logf("%s can be set only from command-line", cvar->Name);
+    } else {
+      cvar->Set(Args[1]);
+    }
+  }
+  return true;
+  unguard;
 }
 
 //==========================================================================
@@ -744,5 +800,29 @@ COMMAND(CvarList) {
   }
   GCon->Logf("%u variables.", count);
   delete[] list;
+  unguard;
+}
+
+//==========================================================================
+//
+// COMMAND whatis
+//
+// Show short description for a cvar.
+//
+//==========================================================================
+
+COMMAND(WhatIs) {
+  guard(COMMAND WhatIs);
+  if (Args.Num() != 2) {
+    GCon->Logf("Show short cvar description.");
+    GCon->Logf("usage: whatis varname");
+  } else {
+    VCvar* cvar = VCvar::FindVariable(*(Args[1]));
+    if (cvar) {
+      GCon->Logf("%s: %s", cvar->GetName(), cvar->GetHelp());
+    } else {
+      GCon->Logf("Unknown cvar: '%s'", *(Args[1]));
+    }
+  }
   unguard;
 }

@@ -59,7 +59,7 @@ struct VJpegClientData
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static VCvarI			jpeg_quality("jpeg_quality", "80", CVAR_Archive);
+static VCvarI			jpeg_quality("jpeg_quality", "80", "Jpeg screenshot quality.", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 

@@ -109,14 +109,14 @@ IMPLEMENT_SOUND_DEVICE(VDirectSoundDevice, SNDDRV_Default, "Default",
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static VCvarF		snd_3d_distance_unit("snd_3d_distance_unit", "32.0", CVAR_Archive);
-static VCvarF		snd_3d_doppler_factor("snd_3d_doppler_factor", "1.0", CVAR_Archive);
-static VCvarF		snd_3d_rolloff_factor("snd_3d_rolloff_factor", "1.0", CVAR_Archive);
-static VCvarF		snd_3d_min_distance("snd_3d_min_distance", "64.0", CVAR_Archive);
-static VCvarF		snd_3d_max_distance("snd_3d_max_distance", "2024.0", CVAR_Archive);
-static VCvarI		snd_speaker_type("snd_speaker_type", "2", CVAR_Archive);
-static VCvarI		snd_mix_frequency("snd_mix_frequency", "2", CVAR_Archive);
-static VCvarI		eax_environment("eax_environment", "0");
+static VCvarF		snd_3d_distance_unit("snd_3d_distance_unit", "32.0", "Shitdoze sound parameter.", CVAR_Archive);
+static VCvarF		snd_3d_doppler_factor("snd_3d_doppler_factor", "1.0", "Shitdoze sound parameter.", CVAR_Archive);
+static VCvarF		snd_3d_rolloff_factor("snd_3d_rolloff_factor", "1.0", "Shitdoze sound parameter.", CVAR_Archive);
+static VCvarF		snd_3d_min_distance("snd_3d_min_distance", "64.0", "Shitdoze sound parameter.", CVAR_Archive);
+static VCvarF		snd_3d_max_distance("snd_3d_max_distance", "2024.0", "Shitdoze sound parameter.", CVAR_Archive);
+static VCvarI		snd_speaker_type("snd_speaker_type", "2", "Shitdoze sound parameter.", CVAR_Archive);
+static VCvarI		snd_mix_frequency("snd_mix_frequency", "2", "Shitdoze sound parameter.", CVAR_Archive);
+static VCvarI		eax_environment("eax_environment", "0", "Shitdoze sound parameter.");
 
 static const DWORD	speaker_type[] = { DSSPEAKER_HEADPHONE, DSSPEAKER_MONO, DSSPEAKER_STEREO, 
                                        DSSPEAKER_SURROUND, DSSPEAKER_5POINT1_BACK, DSSPEAKER_7POINT1_WIDE };

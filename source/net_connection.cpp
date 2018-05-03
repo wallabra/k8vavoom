@@ -44,7 +44,7 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static VCvarF		net_test_loss("net_test_loss", "0");
+static VCvarF		net_test_loss("net_test_loss", "0", "Test packet loss code?");
 
 // CODE --------------------------------------------------------------------
 

@@ -61,21 +61,21 @@ TClipPlane				view_clipplanes[5];
 
 int						r_visframecount;
 
-VCvarI					r_fog("r_fog", "0");
-VCvarI					r_fog_test("r_fog_test", "0");
-VCvarF					r_fog_r("r_fog_r", "0.5");
-VCvarF					r_fog_g("r_fog_g", "0.5");
-VCvarF					r_fog_b("r_fog_b", "0.5");
-VCvarF					r_fog_start("r_fog_start", "1.0");
-VCvarF					r_fog_end("r_fog_end", "2048.0");
-VCvarF					r_fog_density("r_fog_density", "0.5");
+VCvarI					r_fog("r_fog", "0", "Fog mode.");
+VCvarI					r_fog_test("r_fog_test", "0", "Is fog testing enabled?");
+VCvarF					r_fog_r("r_fog_r", "0.5", "Fog color: red component.");
+VCvarF					r_fog_g("r_fog_g", "0.5", "Fog color: green component.");
+VCvarF					r_fog_b("r_fog_b", "0.5", "Fog color: blue component.");
+VCvarF					r_fog_start("r_fog_start", "1.0", "Fog start distance.");
+VCvarF					r_fog_end("r_fog_end", "2048.0", "Fog end distance.");
+VCvarF					r_fog_density("r_fog_density", "0.5", "Fog density.");
 
-VCvarI					aspect_ratio("r_aspect_ratio", "1", CVAR_Archive);
-VCvarI					r_interpolate_frames("r_interpolate_frames", "1", CVAR_Archive);
-VCvarI					r_vsync("r_vsync", "1", CVAR_Archive);
-VCvarI					r_fade_light("r_fade_light", "0", CVAR_Archive);
-VCvarF					r_fade_factor("r_fade_factor", "4.0", CVAR_Archive);
-VCvarF					r_sky_bright_factor("r_sky_bright_factor", "1.0", CVAR_Archive);
+VCvarI					aspect_ratio("r_aspect_ratio", "1", "Aspect ratio correction mode.", CVAR_Archive);
+VCvarI					r_interpolate_frames("r_interpolate_frames", "1", "Use frame interpolation for smoother rendering?", CVAR_Archive);
+VCvarI					r_vsync("r_vsync", "1", "VSync mode.", CVAR_Archive);
+VCvarI					r_fade_light("r_fade_light", "0", "Fade lights?", CVAR_Archive);
+VCvarF					r_fade_factor("r_fade_factor", "4.0", "Fade actor lights?", CVAR_Archive);
+VCvarF					r_sky_bright_factor("r_sky_bright_factor", "1.0", "Skybright actor factor.", CVAR_Archive);
 
 extern VCvarF			r_lights_radius;
 
@@ -92,11 +92,11 @@ bool					MirrorClip;
 
 static FDrawerDesc		*DrawerList[DRAWER_MAX];
 
-VCvarI					screen_size("screen_size", "10", CVAR_Archive);
+VCvarI					screen_size("screen_size", "10", "Screen size.", CVAR_Archive);
 bool					set_resolutioon_needed = true;
 
 // Angles in the SCREENWIDTH wide window.
-VCvarF					fov("fov", "90");
+VCvarF					fov("fov", "90", "Field of vision.");
 
 TVec					clip_base[4];
 
@@ -107,9 +107,9 @@ VTextureTranslation*	PlayerTranslations[MAXPLAYERS + 1];
 static TArray<VTextureTranslation*>	CachedTranslations;
 
 // if true, load all graphics at start
-VCvarI					precache("precache", "1", CVAR_Archive);
+VCvarI					precache("precache", "1", "Load all graphics at startup (instead of on-demand)?", CVAR_Archive);
 
-static VCvarI			r_level_renderer("r_level_renderer", "0", CVAR_Archive);
+static VCvarI			r_level_renderer("r_level_renderer", "0", "Level renderer type.", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 
@@ -592,11 +592,11 @@ void VRenderLevelShared::TransformFrustum()
 //
 //==========================================================================
 
-VCvarI			r_chasecam("r_chasecam", "0", CVAR_Archive);
-VCvarF			r_chase_dist("r_chase_dist", "32.0", CVAR_Archive);
-VCvarF			r_chase_up("r_chase_up", "128.0", CVAR_Archive);
-VCvarF			r_chase_right("r_chase_right", "0", CVAR_Archive);
-VCvarI			r_chase_front("r_chase_front", "0", CVAR_Archive);
+VCvarI			r_chasecam("r_chasecam", "0", "Chasecam mode.", CVAR_Archive);
+VCvarF			r_chase_dist("r_chase_dist", "32.0", "Chasecam distance.", CVAR_Archive);
+VCvarF			r_chase_up("r_chase_up", "128.0", "Chasecam position: up.", CVAR_Archive);
+VCvarF			r_chase_right("r_chase_right", "0", "Chasecam position: right.", CVAR_Archive);
+VCvarI			r_chase_front("r_chase_front", "0", "Chasecam position: front.", CVAR_Archive);
 
 void VRenderLevelShared::SetupFrame()
 {

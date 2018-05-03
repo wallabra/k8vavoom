@@ -54,15 +54,15 @@ vuint32				blockaddlightsg[18 * 18];
 vuint32				blockaddlightsb[18 * 18];
 
 byte				light_remap[256];
-VCvarI				r_darken("r_darken", "0", CVAR_Archive);
-VCvarI				r_ambient("r_ambient", "0");
+VCvarI				r_darken("r_darken", "0", "Allow \"darken\" lights?", CVAR_Archive);
+VCvarI				r_ambient("r_ambient", "0", "Ambient light.");
 int					light_mem;
-VCvarI				r_extrasamples("r_extrasamples", "0", CVAR_Archive);
-VCvarI				r_dynamic("r_dynamic", "1", CVAR_Archive);
-VCvarI				r_dynamic_clip("r_dynamic_clip", "0", CVAR_Archive);
-VCvarI				r_static_lights("r_static_lights", "1", CVAR_Archive);
-VCvarI				r_static_add("r_static_add", "0", CVAR_Archive);
-VCvarF				r_specular("r_specular", "0.1", CVAR_Archive);
+VCvarI				r_extrasamples("r_extrasamples", "0", "Something for lights rendering.", CVAR_Archive);
+VCvarI				r_dynamic("r_dynamic", "1", "Allow dynamic lights?", CVAR_Archive);
+VCvarI				r_dynamic_clip("r_dynamic_clip", "1", "Clip dynamic lights?", CVAR_Archive);
+VCvarI				r_static_lights("r_static_lights", "1", "Allow static lights?", CVAR_Archive);
+VCvarI				r_static_add("r_static_add", "0", "Additive static lights?", CVAR_Archive);
+VCvarF				r_specular("r_specular", "0.1", "Specular light.", CVAR_Archive);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

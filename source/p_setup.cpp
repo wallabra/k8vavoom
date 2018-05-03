@@ -98,10 +98,10 @@ enum
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static VCvarI strict_level_errors("strict_level_errors", "1");
-static VCvarI build_blockmap("build_blockmap", "0", CVAR_Archive);
-static VCvarI build_gwa("build_gwa", "0", CVAR_Archive);
-static VCvarI show_level_load_times("show_level_load_times", "0", CVAR_Archive);
+static VCvarI strict_level_errors("strict_level_errors", "1", "Strict level errors mode?");
+static VCvarI build_blockmap("build_blockmap", "0", "Build blockmap?", CVAR_Archive);
+static VCvarI build_gwa("build_gwa", "0", "Build GWA?", CVAR_Archive);
+static VCvarI show_level_load_times("show_level_load_times", "0", "Show loading times?", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 

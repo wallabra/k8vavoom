@@ -55,7 +55,7 @@ static subregion_t*		r_subregion;
 static sec_region_t*	r_region;
 static bool				MirrorClipSegs;
 
-static VCvarI			r_maxmirrors("r_maxmirrors", "4", CVAR_Archive);
+static VCvarI			r_maxmirrors("r_maxmirrors", "4", "Maximum allowed mirrors.", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 

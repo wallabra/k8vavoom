@@ -159,23 +159,23 @@ static vuint32	GridColour;
 static vuint32	ThingColour;
 static vuint32	PlayerColour;
 
-static VCvarS	am_colour_wall("am_colour_wall", "d0 b0 85", CVAR_Archive);
-static VCvarS	am_colour_tswall("am_colour_tswall", "61 64 5f", CVAR_Archive);
-static VCvarS	am_colour_fdwall("am_colour_fdwall", "a0 6c 40", CVAR_Archive);
-static VCvarS	am_colour_cdwall("am_colour_cdwall", "94 94 ac", CVAR_Archive);
-static VCvarS	am_colour_exwall("am_colour_exwall", "7b 4b 27", CVAR_Archive);
-static VCvarS	am_colour_secretwall("am_colour_secretwall", "00 00 00", CVAR_Archive);
-static VCvarS	am_colour_power("am_colour_power", "7d 83 79", CVAR_Archive);
-static VCvarS	am_colour_grid("am_colour_grid", "4d 9d 42", CVAR_Archive);
-static VCvarS	am_colour_thing("am_colour_thing", "2d 2d 2d", CVAR_Archive);
-static VCvarS	am_colour_player("am_colour_player", "e6 e6 e6", CVAR_Archive);
+static VCvarS	am_colour_wall("am_colour_wall", "d0 b0 85", "Automap color: walls.", CVAR_Archive);
+static VCvarS	am_colour_tswall("am_colour_tswall", "61 64 5f", "Automap color: ts-walls.", CVAR_Archive);
+static VCvarS	am_colour_fdwall("am_colour_fdwall", "a0 6c 40", "Automap color: fd-walls.", CVAR_Archive);
+static VCvarS	am_colour_cdwall("am_colour_cdwall", "94 94 ac", "Automap color: cd-walls.", CVAR_Archive);
+static VCvarS	am_colour_exwall("am_colour_exwall", "7b 4b 27", "Automap color: ex-walls.", CVAR_Archive);
+static VCvarS	am_colour_secretwall("am_colour_secretwall", "00 00 00", "Automap color: secret walls.", CVAR_Archive);
+static VCvarS	am_colour_power("am_colour_power", "7d 83 79", "Automap color: powerup.", CVAR_Archive);
+static VCvarS	am_colour_grid("am_colour_grid", "4d 9d 42", "Automap color: grid.", CVAR_Archive);
+static VCvarS	am_colour_thing("am_colour_thing", "2d 2d 2d", "Automap color: thing.", CVAR_Archive);
+static VCvarS	am_colour_player("am_colour_player", "e6 e6 e6", "Automap color: player.", CVAR_Archive);
 
-static VCvarI	am_player_arrow("am_player_arrow", "1", CVAR_Archive);
-static VCvarI	followplayer("followplayer", "1", CVAR_Archive); // specifies whether to follow the player around
-static VCvarI	am_rotate("am_rotate", "0", CVAR_Archive);
-static VCvarI	ShowStats("ShowStats", "0", CVAR_Archive);
+static VCvarI	am_player_arrow("am_player_arrow", "1", "Draw player arrow on automap?", CVAR_Archive);
+static VCvarI	followplayer("followplayer", "1", "Should automap follow player?", CVAR_Archive); // specifies whether to follow the player around
+static VCvarI	am_rotate("am_rotate", "0", "Should automap rotate?", CVAR_Archive);
+static VCvarI	ShowStats("ShowStats", "0", "Show stats on automap?", CVAR_Archive);
 
-static VCvarI	am_cheating("am_cheating", "0", CVAR_Cheat);
+static VCvarI	am_cheating("am_cheating", "0", "Oops! Automap cheats!", CVAR_Cheat);
 
 static int		grid = 0;
 

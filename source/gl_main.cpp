@@ -45,19 +45,19 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-VCvarI VOpenGLDrawer::tex_linear("gl_tex_linear", "2", CVAR_Archive);
-VCvarI VOpenGLDrawer::sprite_tex_linear("gl_sprite_tex_linear", "2", CVAR_Archive);
-VCvarI VOpenGLDrawer::clear("gl_clear", "0", CVAR_Archive);
-VCvarI VOpenGLDrawer::blend_sprites("gl_blend_sprites", "0", CVAR_Archive);
-VCvarI VOpenGLDrawer::ext_multitexture("gl_ext_multitexture", "1", CVAR_Archive);
-VCvarI VOpenGLDrawer::ext_point_parameters("gl_ext_point_parameters", "0", CVAR_Archive);
-VCvarI VOpenGLDrawer::ext_anisotropy("gl_ext_anisotropy", "1", CVAR_Archive);
-VCvarI VOpenGLDrawer::ext_shaders("gl_ext_shaders", "1", CVAR_Archive);
-VCvarI VOpenGLDrawer::ext_vertex_buffer_objects("gl_ext_vertex_buffer_objects", "1", CVAR_Archive);
-VCvarF VOpenGLDrawer::maxdist("gl_maxdist", "8192.0", CVAR_Archive);
-VCvarI VOpenGLDrawer::model_lighting("gl_model_lighting", "0", CVAR_Archive);
-VCvarI VOpenGLDrawer::specular_highlights("gl_specular_highlights", "1", CVAR_Archive);
-VCvarI VOpenGLDrawer::multisampling_sample("gl_multisampling_sample", "2", CVAR_Archive);
+VCvarI VOpenGLDrawer::tex_linear("gl_tex_linear", "2", "Texture interpolation mode.", CVAR_Archive);
+VCvarI VOpenGLDrawer::sprite_tex_linear("gl_sprite_tex_linear", "2", "Sprite interpolation mode.", CVAR_Archive);
+VCvarI VOpenGLDrawer::clear("gl_clear", "0", "Clear screen before rendering new frame?", CVAR_Archive);
+VCvarI VOpenGLDrawer::blend_sprites("gl_blend_sprites", "0", "Alpha-blend sprites?", CVAR_Archive);
+VCvarI VOpenGLDrawer::ext_multitexture("gl_ext_multitexture", "1", "Use OpenGL multitexturing extension (if present)?", CVAR_Archive);
+VCvarI VOpenGLDrawer::ext_point_parameters("gl_ext_point_parameters", "0", "Use OpenGL ext_point_parameters extension (if present)?", CVAR_Archive);
+VCvarI VOpenGLDrawer::ext_anisotropy("gl_ext_anisotropy", "1", "Use OpenGL anisotropy extension (if present)?", CVAR_Archive);
+VCvarI VOpenGLDrawer::ext_shaders("gl_ext_shaders", "1", "Use OpenGL shaders (if possible)?", CVAR_Archive);
+VCvarI VOpenGLDrawer::ext_vertex_buffer_objects("gl_ext_vertex_buffer_objects", "1", "Use OpenGL VBO extension (if present)?", CVAR_Archive);
+VCvarF VOpenGLDrawer::maxdist("gl_maxdist", "8192.0", "Max view distance (too big values will cause z-buffer issues.", CVAR_Archive);
+VCvarI VOpenGLDrawer::model_lighting("gl_model_lighting", "0", "Light models?", CVAR_Archive);
+VCvarI VOpenGLDrawer::specular_highlights("gl_specular_highlights", "1", "Specular highlights type.", CVAR_Archive);
+VCvarI VOpenGLDrawer::multisampling_sample("gl_multisampling_sample", "2", "Multisampling mode.", CVAR_Archive);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

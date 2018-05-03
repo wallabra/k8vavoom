@@ -46,7 +46,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-VCvarI				r_draw_particles("r_draw_particles", "1", CVAR_Archive);
+VCvarI				r_draw_particles("r_draw_particles", "1", "Draw particles?", CVAR_Archive);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

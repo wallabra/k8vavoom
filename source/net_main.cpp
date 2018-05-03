@@ -98,8 +98,8 @@ private:
 
 VNetworkPublic*	GNet;
 
-VCvarS			VNetworkLocal::HostName("hostname", "UNNAMED");
-VCvarF			VNetworkPublic::MessageTimeOut("net_messagetimeout", "300");
+VCvarS			VNetworkLocal::HostName("hostname", "UNNAMED", "Name of this host.");
+VCvarF			VNetworkPublic::MessageTimeOut("net_messagetimeout", "300", "Network timeout value in milliseconds.");
 
 VNetDriver*		VNetworkLocal::Drivers[MAX_NET_DRIVERS];
 int				VNetworkLocal::NumDrivers = 0;
