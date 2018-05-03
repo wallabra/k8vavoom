@@ -34,8 +34,6 @@ enum
 	CVAR_Rom		= 0x0020,	//	Display only, cannot be set by user at all
 	CVAR_Cheat		= 0x0040,	//	Can not be changed if cheats are disabled
 	CVAR_Modified	= 0x0080,	//	Set each time the cvar is changed
-
-	CVAR_Delete		= 0x8000,	//	Delete variable on exit.
 };
 
 //
@@ -46,12 +44,12 @@ class VCvar
 protected:
 	const char*	Name;				//	Variable's name
 	const char*	DefaultString;		//	Default value
+	bool defstrOwned; // `true` if `DefaultString` is owned and should be deleted
 	VStr		StringValue;		//	Current value
 	int			Flags;				//	CVAR_ flags
 	int			IntValue;			//	atoi(string)
 	float		FloatValue;			//	atof(string)
 	bool		BoolValue;			//	interprets various "true" strings
-	VCvar*		Next;				//	For linked list if variables
 	VStr		LatchedString;		//	For CVAR_Latch variables
 	VCvar* nextInBucket; // next cvar in this bucket
 	vuint32 lnhash; // hash of lo-cased variable name
@@ -82,7 +80,7 @@ public:
 	static void Set(const char* var_name, const VStr& value);
 
 	static bool Command(const TArray<VStr>& Args);
-	static void WriteVariables(FILE* f);
+	static void WriteVariablesToFile(FILE* f);
 
 	static void Unlatch();
 	static void SetCheating(bool);
@@ -91,11 +89,13 @@ public:
 
 private:
 	static void dumpHashStats ();
+	static vuint32 countCVars ();
+	static VCvar** getSortedList (); // contains `countCVars()` elements, must be `delete[]`d
+
 	void insertIntoList ();
 	VCvar *insertIntoHash ();
 	void DoSet(const VStr& value);
 
-	static VCvar*	Variables;
 	static bool		Initialised;
 	static bool		Cheating;
 

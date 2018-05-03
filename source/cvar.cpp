@@ -45,11 +45,10 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-VCvar*	VCvar::Variables = NULL;
 bool	VCvar::Initialised = false;
 bool	VCvar::Cheating;
 
-#define CVAR_HASH_SIZE  (8192)
+#define CVAR_HASH_SIZE  (512)
 static VCvar* cvhBuckets[CVAR_HASH_SIZE] = {NULL};
 
 
@@ -77,18 +76,19 @@ static vuint32 djbhash (const char *s) {
 VCvar::VCvar(const char* AName, const char* ADefault, int AFlags)
 : Name(AName)
 , DefaultString(ADefault)
+, defstrOwned(false)
 , Flags(AFlags)
 , IntValue(0)
 , FloatValue(0)
 , BoolValue(false)
-, Next(NULL)
 , nextInBucket(NULL)
 {
 	guard(VCvar::VCvar);
 
+	if (!DefaultString) DefaultString = ""; // 'cause why not?
+
 	if (Name && Name[0]) {
 		insertIntoHash(); // insert into hash (this leaks on duplicate vars)
-		insertIntoList(); // insert into linked list
 		if (Initialised) Register();
 	}
 
@@ -103,21 +103,21 @@ VCvar::VCvar(const char* AName, const char* ADefault, int AFlags)
 
 VCvar::VCvar(const char* AName, const VStr& ADefault, int AFlags)
 : Name(AName)
-, Flags(AFlags | CVAR_Delete)
+, Flags(AFlags)
 , IntValue(0)
 , FloatValue(0)
 , BoolValue(false)
-, Next(NULL)
 , nextInBucket(NULL)
 {
 	guard(VCvar::VCvar);
+
+	defstrOwned = true;
 	char* Tmp = new char[ADefault.Length() + 1];
 	VStr::Cpy(Tmp, *ADefault);
 	DefaultString = Tmp;
 
 	if (Name && Name[0]) {
 		insertIntoHash(); // insert into hash (this leaks on duplicate vars)
-		insertIntoList(); // insert into linked list
 		check(Initialised);
 		Register();
 	}
@@ -148,34 +148,6 @@ VCvar *VCvar::insertIntoHash () {
   this->nextInBucket = cvhBuckets[nhash%CVAR_HASH_SIZE];
   cvhBuckets[nhash%CVAR_HASH_SIZE] = this;
   return NULL;
-}
-
-
-// insert into sorted list
-void VCvar::insertIntoList () {
-  if (!Name || !Name[0]) return;
-
-  while (Variables && VStr::ICmp(Variables->Name, Name) == 0) Variables = Variables->Next;
-
-  VCvar *prev = NULL;
-  for (VCvar *var = Variables; var; var = var->Next) {
-    if (VStr::ICmp(var->Name, Name) < 0) {
-      prev = var;
-      VCvar *cont = prev->Next;
-      if (cont && VStr::ICmp(cont->Name, Name) == 0) {
-        while (cont && VStr::ICmp(cont->Name, Name) == 0) cont = cont->Next;
-        prev->Next = cont;
-      }
-    }
-  }
-
-  if (prev) {
-    Next = prev->Next;
-    prev->Next = this;
-  } else {
-    Next = Variables;
-    Variables = this;
-  }
 }
 
 
@@ -275,6 +247,7 @@ static bool xstrcmpCI (const char* s, const char *pat) {
 void VCvar::DoSet(const VStr& AValue)
 {
 	guard(VCvar::DoSet);
+
 	StringValue = AValue;
 	IntValue = superatoi(*StringValue);
 	FloatValue = atof(*StringValue);
@@ -360,9 +333,10 @@ bool VCvar::IsModified()
 void VCvar::Init()
 {
 	guard(VCvar::Init);
-	for (VCvar *var = Variables; var; var = var->Next)
-	{
-		var->Register();
+	for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+		for (VCvar* cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+			cvar->Register();
+		}
 	}
 	Initialised = true;
 	unguard;
@@ -387,25 +361,22 @@ void VCvar::dumpHashStats () {
 //
 //	VCvar::Shutdown
 //
+// This is called only once on egine shutdown, so don't bother with deletion
+//
 //==========================================================================
 
 void VCvar::Shutdown()
 {
 	guard(VCvar::Shutdown);
 	dumpHashStats();
-	for (VCvar* var = Variables; var;)
-	{
-		VCvar* Next = var->Next;
-		var->StringValue.Clean();
-		var->LatchedString.Clean();
-		if (var->Flags & CVAR_Delete)
-		{
-			delete[] const_cast<char*>(var->DefaultString);
-			var->DefaultString = NULL;
-			delete var;
-			var = NULL;
+	for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+		for (VCvar* cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+			// free default value
+			if (cvar->defstrOwned) {
+				delete[] const_cast<char*>(cvar->DefaultString);
+				cvar->DefaultString = ""; // set to some sensible value
+			}
 		}
-		var = Next;
 	}
 	Initialised = false;
 	unguard;
@@ -420,12 +391,13 @@ void VCvar::Shutdown()
 void VCvar::Unlatch()
 {
 	guard(VCvar::Unlatch);
-	for (VCvar* cvar = Variables; cvar; cvar = cvar->Next)
-	{
-		if (cvar->LatchedString.IsNotEmpty())
-		{
-			cvar->DoSet(cvar->LatchedString);
-			cvar->LatchedString.Clean();
+	for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+		for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+			if (cvar->LatchedString.IsNotEmpty())
+			{
+				cvar->DoSet(cvar->LatchedString);
+				cvar->LatchedString.Clean();
+			}
 		}
 	}
 	unguard;
@@ -441,39 +413,48 @@ void VCvar::SetCheating(bool new_state)
 {
 	guard(VCvar::SetCheating);
 	Cheating = new_state;
-	if (!Cheating)
-	{
-		for (VCvar *cvar = Variables; cvar; cvar = cvar->Next)
-		{
-			if (cvar->Flags & CVAR_Cheat)
-			{
-				cvar->DoSet(cvar->DefaultString);
+	if (!Cheating) {
+		for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+			for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+				if (cvar->Flags&CVAR_Cheat) cvar->DoSet(cvar->DefaultString);
 			}
 		}
 	}
 	unguard;
 }
 
+//==========================================================================
+//
+// VCvar::HasVar
+//
+//==========================================================================
 
 bool VCvar::HasVar (const char* var_name) {
   return (FindVariable(var_name) != NULL);
 }
 
+//==========================================================================
+//
+// VCvar::CreateNew
+//
+//==========================================================================
 
 void VCvar::CreateNew (const char* var_name, const VStr& ADefault, int AFlags) {
   VCvar* cvar = FindVariable(var_name);
   if (!cvar) {
-    new VCvar(var_name, ADefault, AFlags|CVAR_Delete);
+    new VCvar(var_name, ADefault, AFlags);
   } else {
+    // delete old default value if necessary
+    if (cvar->defstrOwned) delete[] const_cast<char*>(cvar->DefaultString);
+    // set new default value
     char* Tmp = new char[ADefault.Length() + 1];
     VStr::Cpy(Tmp, *ADefault);
-    cvar->DoSet(ADefault);
-    delete[] const_cast<char*>(cvar->DefaultString);
     cvar->DefaultString = Tmp;
-    cvar->Flags = AFlags/*|CVAR_Delete*/;
+    cvar->defstrOwned = true;
+    // update flags
+    cvar->Flags = AFlags;
   }
 }
-
 
 //==========================================================================
 //
@@ -503,9 +484,7 @@ int VCvar::GetInt(const char* var_name)
 {
 	guard(VCvar::GetInt);
 	VCvar* var = FindVariable(var_name);
-	if (!var)
-		return 0;
-	return var->IntValue;
+	return (var ? var->IntValue : 0);
 	unguard;
 }
 
@@ -519,9 +498,7 @@ float VCvar::GetFloat(const char* var_name)
 {
 	guard(VCvar::GetFloat);
 	VCvar* var = FindVariable(var_name);
-	if (!var)
-		return 0;
-	return var->FloatValue;
+	return (var ? var->FloatValue : 0.0f);
 	unguard;
 }
 
@@ -548,11 +525,7 @@ const char* VCvar::GetCharp(const char* var_name)
 {
 	guard(VCvar::GetCharp);
 	VCvar* var = FindVariable(var_name);
-	if (!var)
-	{
-		return "";
-	}
-	return *var->StringValue;
+	return (var ? *var->StringValue : "");
 	unguard;
 }
 
@@ -566,10 +539,7 @@ VStr VCvar::GetString(const char* var_name)
 {
 	guard(VCvar::GetString);
 	VCvar* var = FindVariable(var_name);
-	if (!var)
-	{
-		return VStr();
-	}
+	if (!var) return VStr();
 	return var->StringValue;
 	unguard;
 }
@@ -671,38 +641,108 @@ bool VCvar::Command(const TArray<VStr>& Args)
 
 //==========================================================================
 //
-//	VCvar::WriteVariables
+// VCvar::countCVars
 //
 //==========================================================================
 
-void VCvar::WriteVariables(FILE* f)
-{
-	guard(VCvar::WriteVariables);
-	for (VCvar* cvar = Variables; cvar; cvar = cvar->Next)
-	{
-		if (cvar->Flags & CVAR_Archive)
-		{
-			fprintf(f, "%s\t\t\"%s\"\n", cvar->Name, *cvar->StringValue);
-		}
-	}
-	unguard;
+vuint32 VCvar::countCVars () {
+  guard(VCvar::countCVars);
+  vuint32 count = 0;
+  for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+    for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+      ++count;
+    }
+  }
+  return count;
+  unguard;
 }
 
 //==========================================================================
 //
-//	COMMAND CvarList
+// VCvar::getSortedList
+//
+// Contains `countCVars()` elements, must be `delete[]`d.
+// Can return `NULL`.
+//
+//==========================================================================
+VCvar** VCvar::getSortedList () {
+  guard(VCvar::getSortedList);
+
+  vuint32 count = countCVars();
+  if (count == 0) return NULL;
+
+  // allocate array
+  VCvar** list = new VCvar*[count];
+
+  // fill it
+  count = 0; // reuse counter, why not?
+  for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+    for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+      list[count++] = cvar;
+    }
+  }
+
+  // sort it (yes, i know, bubble sort sux. idc.)
+  if (count > 1) {
+    // straight from wikipedia, lol
+    vuint32 n = count;
+    do {
+      vuint32 newn = 0;
+      for (vuint32 i = 1; i < n; ++i) {
+        if (VStr::ICmp(list[i-1]->Name, list[i]->Name) > 0) {
+          VCvar* tmp = list[i];
+          list[i] = list[i-1];
+          list[i-1] = tmp;
+          newn = i;
+        }
+      }
+      n = newn;
+    } while (n != 0);
+  }
+
+  return list;
+  unguard;
+}
+
+//==========================================================================
+//
+// VCvar::WriteVariablesToFile
+//
+// We don't care about ordering here
 //
 //==========================================================================
 
-COMMAND(CvarList)
-{
-	guard(COMMAND CvarList);
-	int count = 0;
-	for (VCvar *cvar = VCvar::Variables; cvar; cvar = cvar->Next)
-	{
-		GCon->Log(VStr(cvar->Name) + " - \"" + cvar->StringValue + "\"");
-		count++;
-	}
-	GCon->Logf("%d variables.", count);
-	unguard;
+void VCvar::WriteVariablesToFile (FILE* f) {
+  guard(VCvar::WriteVariables);
+  if (!f) return;
+  vuint32 count = countCVars();
+  VCvar** list = getSortedList();
+  for (vuint32 n = 0; n < count; ++n) {
+    VCvar* cvar = list[n];
+    if (cvar->Flags & CVAR_Archive) fprintf(f, "%s\t\t\"%s\"\n", cvar->Name, *cvar->StringValue);
+  }
+  delete[] list;
+  unguard;
+}
+
+//==========================================================================
+//
+// COMMAND CvarList
+//
+// This is slightly more complicated, as we want nicely sorted list.
+// It can be fairly slow, we don't care.
+//
+//==========================================================================
+
+COMMAND(CvarList) {
+  guard(COMMAND CvarList);
+  vuint32 count = VCvar::countCVars();
+  VCvar** list = VCvar::getSortedList();
+  for (vuint32 n = 0; n < count; ++n) {
+    VCvar* cvar = list[n];
+    GCon->Log(VStr(cvar->Name) + " - \"" + cvar->StringValue + "\"");
+  }
+  GCon->Logf("%u variables.", count);
+  delete[] list;
+  unguard;
 }

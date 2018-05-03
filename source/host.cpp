@@ -589,7 +589,7 @@ void Host_SaveConfiguration()
 	fprintf(f, "//\n// Aliases\n//\n");
 	VCommand::WriteAlias(f);
 	fprintf(f, "//\n// Variables\n//\n");
-	VCvar::WriteVariables(f);
+	VCvar::WriteVariablesToFile(f);
 
 	fclose(f);
 }
