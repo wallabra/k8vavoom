@@ -128,8 +128,11 @@ VMultiPatchTexture::VMultiPatchTexture(VStream& Strm, int DirectoryIndex,
 		if (PatchIdx < 0 || PatchIdx >= NumPatchLookup)
 		{
 			Sys_Error("InitTextures: Bad patch index in texture %s", *Name);
+			patch->Tex = NULL;
+		} else
+		{
+			patch->Tex = PatchLookup[PatchIdx];
 		}
-		patch->Tex = PatchLookup[PatchIdx];
 		if (!patch->Tex)
 		{
 			GCon->Logf("InitTextures: Missing patch in texture %s", *Name);
