@@ -50,6 +50,7 @@ protected:
 	int			Flags;				//	CVAR_ flags
 	int			IntValue;			//	atoi(string)
 	float		FloatValue;			//	atof(string)
+	bool		BoolValue;			//	interprets various "true" strings
 	VCvar*		Next;				//	For linked list if variables
 	VStr		LatchedString;		//	For CVAR_Latch variables
 	VCvar* nextInBucket; // next cvar in this bucket
@@ -72,6 +73,7 @@ public:
 
 	static int GetInt(const char* var_name);
 	static float GetFloat(const char* var_name);
+	static bool GetBool(const char* var_name);
 	static const char* GetCharp(const char* var_name);
 	static VStr GetString(const char* var_name);
 

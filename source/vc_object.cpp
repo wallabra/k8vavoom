@@ -539,6 +539,13 @@ IMPLEMENT_FUNCTION(VObject, SetCvarS)
 	VCvar::Set(*name, value);
 }
 
+IMPLEMENT_FUNCTION(VObject, GetCvarB)
+{
+	P_GET_NAME(name);
+	RET_BOOL(VCvar::GetBool(*name));
+}
+
+
 //**************************************************************************
 //
 //	Math functions

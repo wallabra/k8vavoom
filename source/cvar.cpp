@@ -78,6 +78,9 @@ VCvar::VCvar(const char* AName, const char* ADefault, int AFlags)
 : Name(AName)
 , DefaultString(ADefault)
 , Flags(AFlags)
+, IntValue(0)
+, FloatValue(0)
+, BoolValue(false)
 , Next(NULL)
 , nextInBucket(NULL)
 {
@@ -101,6 +104,9 @@ VCvar::VCvar(const char* AName, const char* ADefault, int AFlags)
 VCvar::VCvar(const char* AName, const VStr& ADefault, int AFlags)
 : Name(AName)
 , Flags(AFlags | CVAR_Delete)
+, IntValue(0)
+, FloatValue(0)
+, BoolValue(false)
 , Next(NULL)
 , nextInBucket(NULL)
 {
@@ -248,12 +254,43 @@ void VCvar::Set(const VStr& AValue)
 //
 //==========================================================================
 
+static bool xstrcmpCI (const char* s, const char *pat) {
+  if (!s || !pat || !s[0] || !pat[0]) return false;
+  while (*s && *s <= ' ') ++s;
+  while (*s && *pat) {
+    char c0 = *s++;
+    char c1 = *pat++;
+    if (c0 != c1) {
+      if (c0 >= 'A' && c0 <= 'Z') c0 += 32; // poor man's tolower
+      if (c1 >= 'A' && c1 <= 'Z') c1 += 32; // poor man's tolower
+      if (c0 != c1) return false;
+    }
+  }
+  if (*pat || *s > ' ') return false;
+  while (*s && *s <= ' ') ++s;
+  return (s[0] == 0);
+}
+
+
 void VCvar::DoSet(const VStr& AValue)
 {
 	guard(VCvar::DoSet);
 	StringValue = AValue;
 	IntValue = superatoi(*StringValue);
 	FloatValue = atof(*StringValue);
+
+	// interpret boolean
+	if (IntValue != 0) {
+		// easy
+		BoolValue = true;
+	} else {
+		// check various strings
+		BoolValue =
+		  xstrcmpCI(*StringValue, "true") ||
+		  xstrcmpCI(*StringValue, "on") ||
+		  xstrcmpCI(*StringValue, "tan") ||
+		  xstrcmpCI(*StringValue, "yes");
+	}
 
 #ifdef CLIENT
 	if (Flags & CVAR_UserInfo)
@@ -447,16 +484,6 @@ void VCvar::CreateNew (const char* var_name, const VStr& ADefault, int AFlags) {
 VCvar* VCvar::FindVariable(const char* name)
 {
 	guard(VCvar::FindVariable);
-	/*
-	for (VCvar* cvar = Variables; cvar; cvar = cvar->Next)
-	{
-		if (!VStr::ICmp(name, cvar->Name))
-		{
-			return cvar;
-		}
-	}
-	return NULL;
-	*/
 	if (!name || name[0] == 0) return NULL;
 	vuint32 nhash = djbhash(name);
 	for (VCvar *cvar = cvhBuckets[nhash%CVAR_HASH_SIZE]; cvar; cvar = cvar->nextInBucket) {
@@ -495,6 +522,19 @@ float VCvar::GetFloat(const char* var_name)
 	if (!var)
 		return 0;
 	return var->FloatValue;
+	unguard;
+}
+
+//==========================================================================
+//
+//  VCvar::GetBool
+//
+//==========================================================================
+
+bool VCvar::GetBool (const char* var_name) {
+	guard(VCvar::GetBool);
+	VCvar* var = FindVariable(var_name);
+	return (var ? var->BoolValue : false);
 	unguard;
 }
 
