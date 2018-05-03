@@ -2579,7 +2579,7 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
     k8ElvenGifted = true; // gifts should be given only once
     if (AddElvenGift('Shotgun')) AddElvenGift('ShellBox');
     if (AddElvenGift('BDW_Rifle')) { int f; for (f = 9; f > 0; --f) AddElvenGift('Clip'); }
-    ClientHudMessage("ELVEN GIFT", 'SmallFont', 0, 123666, CR_OLIVE, "",
+    ClientHudMessage("ELVEN GIFT", 'smallfont', 0, 123666, CR_OLIVE, "",
       0.5, 0.45, 0, 0,
       1.5, 0.0, 0.0);
   }
