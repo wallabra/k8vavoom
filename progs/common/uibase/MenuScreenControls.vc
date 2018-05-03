@@ -25,7 +25,9 @@
 
 class MenuScreenControls : MenuScreen;
 
-MenuControlKey Controls[15];
+const int MAX_MENU_CONTROL_ITEMS = 18;
+
+MenuControlKey Controls[MAX_MENU_CONTROL_ITEMS];
 int NumControls;
 
 // We'll create some arrays here for special controls
@@ -133,6 +135,8 @@ void GenerateArrays()
 void AddControl(string Text, string CommandOn, string CommandOff)
 {
 	MenuControlKey newCtl;
+
+	if (NumControls >= MAX_MENU_CONTROL_ITEMS) FatalError("Too many items in `MenuScreenControls`");
 
 	newCtl = MenuControlKey(NewChild(MenuControlKey));
 	newCtl.SetOrigin(ChoicesStartX, ChoicesStartY + NumControls * 10);
