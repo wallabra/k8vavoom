@@ -522,6 +522,7 @@ int main(int argc,char** argv)
 		{
 			Sys_Error("SDL_InitSubSystem(): %s\n",SDL_GetError());
 		}
+		SDL_WM_SetCaption("VaVoom", "VaVoom");
 
 		//	Install signal handlers
 		signal(SIGABRT, signal_handler);
