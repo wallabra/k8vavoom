@@ -71,7 +71,7 @@ VCvarI			r_draw_psprites("r_draw_psprites", "1", "Draw psprites?", CVAR_Archive)
 VCvarI			r_models("r_models", "1", "Allow models?", CVAR_Archive);
 VCvarI			r_hide_models("r_hide_models", "0", "Hide models?", CVAR_Archive);
 VCvarI			r_view_models("r_view_models", "1", "View models?", CVAR_Archive);
-VCvarI			r_model_shadows("r_model_shadows", "1", "Draw model shadows?", CVAR_Archive);
+VCvarI			r_model_shadows("r_model_shadows", "0", "Draw model shadows?", CVAR_Archive);
 VCvarI			r_model_light("r_model_light", "1", "Draw model light?", CVAR_Archive);
 VCvarI			r_sort_sprites("r_sort_sprites", "0", "Sprite sorting.");
 VCvarI			r_fix_sprite_offsets("r_fix_sprite_offsets", "1", "Fix sprite offsets?", CVAR_Archive);
