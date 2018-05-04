@@ -1047,6 +1047,8 @@ VStatement* VParser::ParseStatement()
 
 	case TK_For:
 	{
+		// to hide inline `for` variable declarations, wrap it into compound statement
+		bool needCompound = false;
 		Lex.NextToken();
 		VFor* For = new VFor(l);
 		Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
@@ -1060,6 +1062,7 @@ VStatement* VParser::ParseStatement()
 			case TK_String:
 			case TK_Auto:
 				{
+					needCompound = true; // wrap it
 					VExpression* TypeExpr = ParseType();
 					do {
 						VLocalDecl* Decl = ParseLocalVar(TypeExpr, true);
@@ -1092,7 +1095,14 @@ VStatement* VParser::ParseStatement()
 		Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
 		VStatement* Statement = ParseStatement();
 		For->Statement = Statement;
-		return For;
+		// wrap statement if necessary
+		if (needCompound) {
+			VCompound* Comp = new VCompound(For->Loc);
+			Comp->Statements.Append(For);
+			return Comp;
+		} else {
+			return For;
+		}
 	}
 
 	case TK_Foreach:
