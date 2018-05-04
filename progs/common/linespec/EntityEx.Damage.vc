@@ -23,6 +23,17 @@
 //**
 //**************************************************************************
 
+/*
+final int booboo () {
+  print("  booboo");
+  switch (42) {
+    case 1: break; return 42;
+    default: return 42;
+  }
+  //return 42;
+}
+*/
+
 // this script will be called before hitscan line damage is done
 // you can return new damage, or <= 0 to prevent any hitscan damage.
 // note that poisoned puffs will still inflict damage to victim.
@@ -54,11 +65,21 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
   if (!GetCvarB('k8HSEnabled')) return damage;
 
-  bool debugme = GetCvarB('k8HSDEBUG');
+  /*bool*/auto debugme = GetCvarB('k8HSDEBUG');
 
   if (debugme) print("ME: %s; inf: %s", NameToStr(GetClassName(self.Class)), NameToStr(GetClassName(GetClassReplacee(inflictor.Class))));
 
   PlayerPawn plr = PlayerPawn(inflictor);
+
+  /*
+  sector_t ss;
+  auto atest = &ss;
+  */
+  /*
+  print("goo");
+  auto a = booboo();
+  print("zoo");
+  */
 
   //if (k8CheckBoolCVar('k8HSShowKnownDamage', debugme)) print("K8HS: damage type '%s', damage=%d", damageType, damage);
 
