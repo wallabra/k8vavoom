@@ -129,7 +129,7 @@ void VLocalDecl::Declare(VEmitContext& ec)
 			if (!e.Value) {
 				ParseError(e.Loc, "Cannot resolve type for identifier %s", *e.Name);
 			} else {
-				fprintf(stderr, "*** automaitc type resolved to `%s`\n", *(e.Value->Type.GetName()));
+				//fprintf(stderr, "*** automatic type resolved to `%s`\n", *(e.Value->Type.GetName()));
 				delete e.TypeExpr; // delete old `automatic` type
 				e.TypeExpr = new VTypeExpr(e.Value->Type, e.Value->Loc);
 				dbgDump = false;
