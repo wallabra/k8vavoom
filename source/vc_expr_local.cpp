@@ -125,13 +125,16 @@ void VLocalDecl::Declare(VEmitContext& ec)
 		if (e.TypeExpr->Type.Type == TYPE_Automatic) {
 			if (!e.Value) { fprintf(stderr, "VC INTERNAL COMPILER ERROR: automatic type without initializer!\n"); *(int*)0 = 0; }
 			// resolve type
+			TLocation loc = e.Value->Loc;
 			e.Value = e.Value->Resolve(ec);
 			if (!e.Value) {
 				ParseError(e.Loc, "Cannot resolve type for identifier %s", *e.Name);
+				delete e.TypeExpr; // delete old `automatic` type
+				e.TypeExpr = new VTypeExpr(TYPE_Void, loc);
 			} else {
 				//fprintf(stderr, "*** automatic type resolved to `%s`\n", *(e.Value->Type.GetName()));
 				delete e.TypeExpr; // delete old `automatic` type
-				e.TypeExpr = new VTypeExpr(e.Value->Type, e.Value->Loc);
+				e.TypeExpr = new VTypeExpr(e.Value->Type, loc);
 				dbgDump = false;
 			}
 		}
