@@ -47,17 +47,21 @@ final class<Ammo> GetParentAmmo()
 	return class<Ammo>(Ret);
 }
 
+//==========================================================================
+//
+// k8GetAmmoKingMax
+//
+//==========================================================================
+
 final int k8GetAmmoKingMax () {
-  bool enabled = (ftoi(GetCvarF('k8AmmoKing')) != 0);
-  if (!enabled) return MaxAmount;
+  if (!GetCvarB('k8AmmoKing')) return MaxAmount;
 
   int max = 666;
 
   if (GetClassName(Class) == 'BDW_RifleClip' || GetClassName(Class) == 'BDW_ShotgunShell' ||
       GetClassName(GetClassReplacee(Class)) == 'Clip' || GetClassName(GetClassReplacee(Class)) == 'Shell')
   {
-    bool crits = (ftoi(GetCvarF('k8HSEnabled')) != 0);
-    if (crits) max = 444;
+    if (GetCvarB('k8HSEnabled')) max = 444; // headshots ARE powerful!
   }
 
   return max;
