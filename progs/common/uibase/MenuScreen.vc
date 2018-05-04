@@ -65,8 +65,7 @@ void CreateMenu () {
 void OnChildAdded (Widget Child) {
   if (MenuChoice(Child) && !MenuChoice_BackButton(Child)) {
     if (Items.Num > 128) FatalError("Too many menu items");
-    Items.Num = Items.Num+1;
-    Items[Items.Num-1] = MenuChoice(Child);
+    Items[Items.Length] = MenuChoice(Child);
   }
   ::OnChildAdded(Child);
 }

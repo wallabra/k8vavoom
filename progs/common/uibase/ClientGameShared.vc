@@ -177,10 +177,8 @@ final void SaveMenuChoice (MenuScreen menu) {
     }
     // if not found, append it
     if (!found) {
-      savedChoices.Length = savedChoices.Length+1;
-      savedChoices[savedChoices.Length-1] = GetClassName(menu.Class);
-      savedChoicesIdx.Length = savedChoicesIdx.Length+1;
-      savedChoicesIdx[savedChoicesIdx.Length-1] = menu.GetChoiceForSaving();
+      savedChoices[savedChoices.Length] = GetClassName(menu.Class);
+      savedChoicesIdx[savedChoicesIdx.Length] = menu.GetChoiceForSaving();
     }
   }
 }
