@@ -365,6 +365,13 @@ void VMethod::Emit()
 		return;
 	}
 
+	if (ReturnTypeExpr && ReturnTypeExpr->Type.Type != TYPE_Void) {
+		if (!Statement->IsEndsWithReturn()) {
+			ParseError(Loc, "Missing `return` in one of the pathes of function `%s`", *GetFullName());
+			return;
+		}
+	}
+
 	VEmitContext ec(this);
 
 	ec.LocalDefs.Clear();

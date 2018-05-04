@@ -33,6 +33,12 @@ public:
 	virtual bool Resolve(VEmitContext&) = 0;
 	virtual void DoEmit(VEmitContext&) = 0;
 	void Emit(VEmitContext&);
+	virtual bool IsBreak () { return false; }
+	virtual bool IsContinue () { return false; }
+	virtual bool IsReturn () { return false; }
+	virtual bool IsCase () { return false; }
+	virtual bool IsDefault () { return false; }
+	virtual bool IsEndsWithReturn () { return false; }
 };
 
 class VEmptyStatement : public VStatement
@@ -41,6 +47,7 @@ public:
 	VEmptyStatement(const TLocation&);
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsEndsWithReturn () { return false; }
 };
 
 class VIf : public VStatement
@@ -55,6 +62,12 @@ public:
 	~VIf();
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsEndsWithReturn () {
+		if (TrueStatement && FalseStatement) return (TrueStatement->IsEndsWithReturn() && FalseStatement->IsEndsWithReturn());
+		if (TrueStatement) return TrueStatement->IsEndsWithReturn();
+		if (FalseStatement) return FalseStatement->IsEndsWithReturn();
+		return false;
+	}
 };
 
 class VWhile : public VStatement
@@ -67,6 +80,7 @@ public:
 	~VWhile();
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsEndsWithReturn () { return (Statement && Statement->IsEndsWithReturn()); }
 };
 
 class VDo : public VStatement
@@ -79,6 +93,7 @@ public:
 	~VDo();
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsEndsWithReturn () { return (Statement && Statement->IsEndsWithReturn()); }
 };
 
 class VFor : public VStatement
@@ -93,6 +108,7 @@ public:
 	~VFor();
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsEndsWithReturn () { return (Statement && Statement->IsEndsWithReturn()); }
 };
 
 class VForeach : public VStatement
@@ -105,6 +121,7 @@ public:
 	~VForeach();
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsEndsWithReturn () { return (Statement && Statement->IsEndsWithReturn()); }
 };
 
 class VSwitch : public VStatement
@@ -126,6 +143,38 @@ public:
 	~VSwitch();
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsEndsWithReturn () {
+		if (Statements.Num() == 0) return false;
+		bool defautSeen = false;
+		bool returnSeen = false;
+		bool breakSeen = false;
+		bool statementSeen = false;
+		for (int n = 0; n < Statements.Num(); ++n) {
+			if (!Statements[n]) return false;
+			// `case` or `default`?
+			if (Statements[n]->IsCase() || Statements[n]->IsDefault()) {
+				if (!returnSeen && statementSeen) return false; // oops
+				if (Statements[n]->IsDefault()) defautSeen = true;
+				breakSeen = false;
+				statementSeen = true;
+				returnSeen = false;
+				continue;
+			}
+			if (breakSeen) continue;
+			statementSeen = true;
+			if (Statements[n]->IsBreak() || Statements[n]->IsContinue()) {
+				// `break`
+				if (!returnSeen) return false;
+				breakSeen = true;
+			} else {
+				// normal statement
+				if (!returnSeen) returnSeen = Statements[n]->IsEndsWithReturn();
+			}
+		}
+		if (!statementSeen) return false; // just in case
+		// without `default` it may fallthru
+		return (returnSeen && defautSeen);
+	}
 };
 
 class VSwitchCase : public VStatement
@@ -140,6 +189,7 @@ public:
 	~VSwitchCase();
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsCase () { return true; }
 };
 
 class VSwitchDefault : public VStatement
@@ -150,6 +200,7 @@ public:
 	VSwitchDefault(VSwitch*, const TLocation&);
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsDefault () { return true; }
 };
 
 class VBreak : public VStatement
@@ -158,6 +209,7 @@ public:
 	VBreak(const TLocation&);
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsBreak () { return true; }
 };
 
 class VContinue : public VStatement
@@ -166,6 +218,7 @@ public:
 	VContinue(const TLocation&);
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsContinue () { return true; }
 };
 
 class VReturn : public VStatement
@@ -178,6 +231,8 @@ public:
 	~VReturn();
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsReturn () { return true; }
+	virtual bool IsEndsWithReturn () { return true; }
 };
 
 class VExpressionStatement : public VStatement
@@ -211,5 +266,13 @@ public:
 	~VCompound();
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
+	virtual bool IsEndsWithReturn () {
+		for (int n = 0; n < Statements.Num(); ++n) {
+			if (!Statements[n]) continue;
+			if (Statements[n]->IsEndsWithReturn()) return true;
+			if (Statements[n]->IsBreak() || Statements[n]->IsContinue()) break;
+		}
+		return false;
+	}
 };
 
