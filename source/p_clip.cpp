@@ -55,6 +55,9 @@ struct VViewClipper::VClipNode
 extern VCvarF r_lights_radius;
 #endif
 
+static VCvarI clip_bsp("clip_bsp", "1", "Clip geometry behind some BSP nodes?"/*, CVAR_Archive*/);
+static VCvarI clip_enabled("clip_enabled", "1", "Do geometry cliping optimizations?"/*, CVAR_Archive*/);
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -491,6 +494,8 @@ bool VViewClipper::ClipIsBBoxVisible(float* BBox, bool shadowslight, const TVec&
 		return true;
 	}
 
+	if (!clip_enabled) return true;
+
 	if (BBox[0] <= Origin.x && BBox[3] >= Origin.x &&
 		BBox[1] <= Origin.y && BBox[4] >= Origin.y)
 	{
@@ -649,10 +654,11 @@ bool VViewClipper::ClipCheckRegion(subregion_t* region, subsector_t* sub, bool s
 	const TVec& CurrLightPos, float CurrLightRadius)
 {
 	guard(VViewClipper::ClipCheckRegion);
-	if (!ClipHead)
-	{
-		return true;
-	}
+
+	if (!ClipHead) return true;
+
+	if (!clip_enabled) return true;
+
 	vint32 count = sub->numlines;
 	drawseg_t *ds = region->lines;
 
@@ -789,7 +795,7 @@ bool VViewClipper::ClipCheckRegion(subregion_t* region, subsector_t* sub, bool s
 					//
 
 					// A line without top texture isn't a door
-					if (ds->seg->sidedef->TopTexture != -1)
+					if (ds->seg->sidedef->TopTexture != -1 && clip_bsp)
 					{
 						float frontcz1 = ds->seg->linedef->frontsector->ceiling.GetPointZ(v1);
 						float frontcz2 = ds->seg->linedef->frontsector->ceiling.GetPointZ(v2);
@@ -815,7 +821,7 @@ bool VViewClipper::ClipCheckRegion(subregion_t* region, subsector_t* sub, bool s
 					//
 
 					// A line without bottom texture isn't an elevator/plat
-					if (ds->seg->sidedef->BottomTexture != -1)
+					if (ds->seg->sidedef->BottomTexture != -1 && clip_bsp)
 					{
 						float frontcz1 = ds->seg->linedef->frontsector->ceiling.GetPointZ(v1);
 						float frontcz2 = ds->seg->linedef->frontsector->ceiling.GetPointZ(v2);
@@ -841,7 +847,7 @@ bool VViewClipper::ClipCheckRegion(subregion_t* region, subsector_t* sub, bool s
 					//
 
 					// A line without mid texture isn't a polyobj door
-					if (ds->seg->sidedef->MidTexture != -1)
+					if (ds->seg->sidedef->MidTexture != -1 && clip_bsp)
 					{
 						float frontcz1 = ds->seg->linedef->frontsector->ceiling.GetPointZ(v1);
 						float frontcz2 = ds->seg->linedef->frontsector->ceiling.GetPointZ(v2);
@@ -926,6 +932,8 @@ bool VViewClipper::ClipCheckSubsector(subsector_t* Sub, bool shadowslight, const
 	{
 		return true;
 	}
+
+	if (!clip_enabled) return true;
 
 	for (int i = 0; i < Sub->numlines; i++)
 	{
@@ -1078,7 +1086,7 @@ bool VViewClipper::ClipCheckSubsector(subsector_t* Sub, bool shadowslight, const
 				//
 
 				// A line without top texture isn't a door
-				if (line->sidedef->TopTexture != -1)
+				if (line->sidedef->TopTexture != -1 && clip_bsp)
 				{
 					float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(v1);
 					float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(v2);
@@ -1103,7 +1111,7 @@ bool VViewClipper::ClipCheckSubsector(subsector_t* Sub, bool shadowslight, const
 				//
 
 				// A line without bottom texture isn't an elevator/plat
-				if (line->sidedef->BottomTexture != -1)
+				if (line->sidedef->BottomTexture != -1 && clip_bsp)
 				{
 					float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(v1);
 					float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(v2);
@@ -1128,7 +1136,7 @@ bool VViewClipper::ClipCheckSubsector(subsector_t* Sub, bool shadowslight, const
 				//
 
 				// A line without mid texture isn't a polyobj door
-				if (line->sidedef->MidTexture != -1)
+				if (line->sidedef->MidTexture != -1 && clip_bsp)
 				{
 					float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(v1);
 					float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(v2);
@@ -1166,6 +1174,7 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t* Sub, bool shadowslight, TPl
 	const TVec& CurrLightPos, float CurrLightRadius)
 {
 	guard(VViewClipper::ClipAddSubsectorSegs);
+	if (!clip_enabled) return;
 	for (int i = 0; i < Sub->numlines; i++)
 	{
 		seg_t* line = &Level->Segs[Sub->firstline + i];
