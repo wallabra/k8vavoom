@@ -127,6 +127,8 @@ float			DehExplosionAlpha;
 
 void Init()
 {
+	CreateCvar('movebob', "0.25", "Player movement bobbing.", CVAR_ARCHIVE);
+
 	CreateCvar('menu_quit_prompt', "1", "Show quit prompt on menu quit?", CVAR_ARCHIVE);
 
 	CreateCvar('monster_backing', "0", "Should monsters back away from melee attacker?", CVAR_ARCHIVE);

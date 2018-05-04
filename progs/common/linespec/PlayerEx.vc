@@ -202,18 +202,19 @@ final void ThrustPlayer(float angle, float move, float deltaTime)
 final void CalcHeight(float deltaTime)
 {
 	float angle;
-	float bob;
+	float bob = GetCvarF('movebob');
 
-	// Regular movement bobbing
-	// (needs to be calculated for gun swing even if not on ground)
-	Bob = MO.Velocity.x * MO.Velocity.x + MO.Velocity.y * MO.Velocity.y;
-	Bob /= 4.0 * 35.0 * 35.0;
-	if (Bob > MAXBOB)
-		Bob = MAXBOB;
-
-	if (MO.bFly && !onground)
-	{
-		Bob = 0.5;
+	if (bob > 0) {
+		// Regular movement bobbing
+		// (needs to be calculated for gun swing even if not on ground)
+		if (MO.bFly && !onground) {
+			Bob = 0.5;
+		} else {
+			if (bob > 1) bob = 1;
+			Bob = MO.Velocity.x * MO.Velocity.x + MO.Velocity.y * MO.Velocity.y;
+			Bob /= (1.0/bob) * 35.0 * 35.0;
+			if (Bob > MAXBOB) Bob = MAXBOB;
+		}
 	}
 
 	angle = 180.0 * 35.0 / 10.0 * Level.XLevel.Time;
