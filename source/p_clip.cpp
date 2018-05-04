@@ -729,6 +729,7 @@ bool VViewClipper::ClipCheckRegion(subregion_t* region, subsector_t* sub, bool s
 		else
 #endif
 		{
+			//k8: dunno, seems to be the same bug as above?
 			if (D1 <= 0.0 && D2 <= 0.0)
 			{
 				ds++;
