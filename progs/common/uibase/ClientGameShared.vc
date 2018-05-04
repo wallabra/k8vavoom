@@ -36,9 +36,8 @@ enum
 	MB_EndGame
 };
 
-const int MAX_SAVED_CHOICES = 256; // way too many
-name savedChoices[MAX_SAVED_CHOICES];
-int savedChoicesIdx[MAX_SAVED_CHOICES];
+array<name> savedChoices;
+array<int> savedChoicesIdx;
 
 const int MAX_MENU_STACK	= 32;
 
@@ -88,22 +87,15 @@ name					DefaultFinaleType;
 //==========================================================================
 
 final MenuScreen SpawnMenu (class<MenuScreen> CID) {
-  MenuScreen m;
-  int i;
-
-  m = MenuScreen(GRoot.NewChild(CID));
+  MenuScreen m = MenuScreen(GRoot.NewChild(CID));
   m.ClGame = self;
   m.CreateMenu();
-
-  for (i = 0; i < MAX_SAVED_CHOICES; ++i) {
-    if (savedChoicesIdx[i] >= 0) {
-      if (savedChoices[i] == GetClassName(CID)) {
-        m.SetSavedChoice(savedChoicesIdx[i]);
-        break;
-      }
+  for (int i = 0; i < savedChoices.Num; ++i) {
+    if (savedChoices[i] == GetClassName(CID)) {
+      m.SetSavedChoice(savedChoicesIdx[i]);
+      break;
     }
   }
-
   return m;
 }
 
@@ -174,30 +166,22 @@ final void PushMenuScreen(MenuScreen menu)
 final void SaveMenuChoice (MenuScreen menu) {
   if (!menu) return;
   // save choice
-  // TODO: better strategy to reuse slots
   if (menu) {
-    int firstFree = -1;
     bool found = false;
-    int i;
-    for (i = 0; i < MAX_SAVED_CHOICES; ++i) {
-      if (savedChoicesIdx[i] >= 0) {
-        if (savedChoices[i] == GetClassName(menu.Class)) {
-          savedChoicesIdx[i] = menu.GetChoiceForSaving();
-          found = true;
-          break;
-        }
-      } else {
-        // we found first unused item
-        firstFree = i;
+    for (int i = 0; i < savedChoices.Num; ++i) {
+      if (savedChoices[i] == GetClassName(menu.Class)) {
+        savedChoicesIdx[i] = menu.GetChoiceForSaving();
+        found = true;
         break;
       }
     }
-    // if not found, try to use a free slot
-    if (!found && firstFree >= 0) {
-      savedChoices[firstFree] = GetClassName(menu.Class);
-      savedChoicesIdx[firstFree] = menu.GetChoiceForSaving();
+    // if not found, append it
+    if (!found) {
+      savedChoices.Length = savedChoices.Length+1;
+      savedChoices[savedChoices.Length-1] = GetClassName(menu.Class);
+      savedChoicesIdx.Length = savedChoicesIdx.Length+1;
+      savedChoicesIdx[savedChoicesIdx.Length-1] = menu.GetChoiceForSaving();
     }
-    // here we should expel one of the used slots, but...
   }
 }
 
@@ -544,9 +528,4 @@ void SharewareResponse(int key)
 
 defaultproperties
 {
-  int i;
-  for (i = 0; i < MAX_SAVED_CHOICES; ++i) {
-    savedChoices[i] = '';
-    savedChoicesIdx[i] = -1;
-  }
 }
