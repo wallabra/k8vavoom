@@ -27,7 +27,7 @@ class MenuScreenControls2 : MenuScreenControls;
 
 void CreateControlKeyChoices()
 {
-	AddControl("Reload", "+Reload", "-Reload");
+	AddControl("Reload", "impulse 56", "");
 	AddControl("Fly up", "+FlyUp", "-FlyUp");
 	AddControl("Fly down", "+FlyDown", "-FlyDown");
 	AddControl("Centre flight", "+FlyCentre", "-FlyCentre");

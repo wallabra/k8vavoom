@@ -30,6 +30,17 @@
 class Actor : EntityEx
 	abstract;
 
+// Flags for A_WeaponReady
+enum {
+  WRF_NOBOB = 1,
+  WRF_NOSWITCH = 2,
+  WRF_NOPRIMARY = 4,
+  WRF_NOSECONDARY = 8,
+  WRF_NOFIRE = 12,
+  WRF_ALLOWRELOAD = 64
+};
+
+
 //==========================================================================
 //
 //	Destroyed
@@ -560,8 +571,6 @@ final void A_SetPitch (float newpitch) {
 
 final void A_WeaponReady(optional int Flags)
 {
-	float angle;
-
 	if (k8InWeaponReady) return; // don't recurse
 
 	if (!bIsPlayer)
@@ -572,6 +581,7 @@ final void A_WeaponReady(optional int Flags)
 	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 	if (!Wpn)
 	{
+		Player.bReloadQueued = false;
 		return;
 	}
 
@@ -590,22 +600,23 @@ final void A_WeaponReady(optional int Flags)
 		PlaySound(Wpn.ReadySound, CHAN_WEAPON);
 	}
 
-	if (!(Flags & 2))
+	if (!(Flags & WRF_NOSWITCH))
 	{
 		// Put the weapon away if the player has a pending weapon or has died.
 		if (PlayerEx(Player).PendingWeapon || Player.MO.Health <= 0)
 		{
 			Player.SetViewState(ps_weapon, Wpn.GetDownState());
 			k8InWeaponReady = false;
+			Player.bReloadQueued = false;
 			return;
 		}
 	}
 
-	if (!(Flags & 12))
+	if (!(Flags & WRF_NOFIRE))
 	{
-		if (Player.Buttons & BT_RELOAD) Player.bReloadQueued = true;
-		// Check for fire.
-		if (Player.bReloadQueued && !Player.bAttackDown && (Flags & 64) != 0 && Wpn.FindState('Reload'))
+		if (Player.Buttons & BT_ATTACK) Player.bReloadQueued = false;
+		// Check for reload.
+		if ((Flags & WRF_ALLOWRELOAD) != 0 && Player.bReloadQueued && /*!Player.bAttackDown &&*/ !(Player.Buttons & BT_ATTACK) && Wpn.FindState('Reload'))
 		{
 			Player.bAttackDown = true;
 			Player.bReloadQueued = false;
@@ -613,7 +624,8 @@ final void A_WeaponReady(optional int Flags)
 			k8InWeaponReady = false;
 			return;
 		}
-		if ((Player.Buttons & BT_ATTACK) && !(Flags & 4))
+		// Check for fire.
+		if (!(Flags & WRF_NOPRIMARY) && (Player.Buttons & BT_ATTACK))
 		{
 			if (!Player.bAttackDown || !Wpn.bNoAutoFire)
 			{
@@ -624,18 +636,7 @@ final void A_WeaponReady(optional int Flags)
 				return;
 			}
 		}
-		else if ((Player.Buttons & BT_ALT_ATTACK) && !(Flags & 8) && Wpn.FindState('AltFire'))
-		{
-			if (!Player.bAttackDown || !Wpn.bNoAutoFire)
-			{
-				Player.bAttackDown = true;
-				Player.bReloadQueued = false;
-				PlayerEx(Player).AltFireWeapon();
-				k8InWeaponReady = false;
-				return;
-			}
-		}
-		else if (Player.Buttons & BT_ALT_ATTACK && !(Flags & 8) && Wpn.FindState('AltFire'))
+		else if (!(Flags & WRF_NOSECONDARY) && (Player.Buttons & BT_ALT_ATTACK) && Wpn.FindState('AltFire'))
 		{
 			if (!Player.bAttackDown || !Wpn.bNoAutoFire)
 			{
@@ -650,22 +651,15 @@ final void A_WeaponReady(optional int Flags)
 		{
 			Player.bAttackDown = false;
 		}
-	} else {
-		Player.bReloadQueued = false;
 	}
 
-	if (!Wpn.bDontBob || !(Flags & 1))
+	if (!(Flags & WRF_NOBOB) || !Wpn.bDontBob)
 	{
 		// bob the weapon based on movement speed
-		angle = AngleMod360(180.0 * XLevel.Time);
-		Player.ViewStates[ps_weapon].SX = 1.0 + PlayerEx(Player).Bob *
-			cos(angle);
-		if (angle >= 180.0)
-		{
-			angle -= 180.0;
-		}
-		Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP +
-			PlayerEx(Player).Bob * sin(angle);
+		float angle = AngleMod360(180.0 * XLevel.Time);
+		Player.ViewStates[ps_weapon].SX = 1.0+PlayerEx(Player).Bob*cos(angle);
+		if (angle >= 180.0) angle -= 180.0;
+		Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP+PlayerEx(Player).Bob*sin(angle);
 	}
 
 	k8InWeaponReady = false;

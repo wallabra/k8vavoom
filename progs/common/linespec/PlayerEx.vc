@@ -986,6 +986,8 @@ void MovePsprites(float deltaTime)
 
 void FireWeapon()
 {
+	bReloadQueued = false;
+
 	if (!ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, true))
 	{
 		return;
@@ -1008,6 +1010,8 @@ void FireWeapon()
 
 void AltFireWeapon()
 {
+	bReloadQueued = false;
+
 	if (!ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, true))
 	{
 		return;
@@ -1030,6 +1034,7 @@ void AltFireWeapon()
 
 void ReloadWeapon()
 {
+	bReloadQueued = false;
 	state rst = ReadyWeapon.GetReloadState();
 	if (!rst) return;
 	SetViewState(ps_weapon, rst);
@@ -1046,6 +1051,7 @@ void ReloadWeapon()
 
 final void ChangeWeapon(int newweapon)
 {
+	bReloadQueued = false;
 	if (MorphTime)
 	{
 		return;
@@ -1070,6 +1076,7 @@ final void ChangeWeapon(int newweapon)
 
 final void PrevWeapon()
 {
+	bReloadQueued = false;
 	if (MorphTime)
 	{
 		return;
@@ -1089,6 +1096,7 @@ final void PrevWeapon()
 
 final void NextWeapon()
 {
+	bReloadQueued = false;
 	if (MorphTime)
 	{
 		return;

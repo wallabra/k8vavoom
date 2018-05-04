@@ -78,7 +78,6 @@ enum
 	BT_USE			= 2,		// Use button, to open doors, activate switches.
 	BT_JUMP			= 4,
 	BT_ALT_ATTACK	= 8,
-	BT_RELOAD	= 16,
 };
 
 struct VViewState

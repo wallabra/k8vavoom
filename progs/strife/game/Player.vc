@@ -121,6 +121,10 @@ void PlayerImpulse()
 	{
 		NextWeapon();
 	}
+	else if (impulse == 56)
+	{
+		bReloadQueued = true;
+	}
 	else if (impulse >= 200 && impulse <= 205)
 	{
 		LineSpecialLevelInfo(Level).ConChoiceImpulse(impulse - 200);
