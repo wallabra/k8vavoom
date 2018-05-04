@@ -72,7 +72,7 @@ VCvarF					r_fog_density("r_fog_density", "0.5", "Fog density.");
 
 VCvarI					aspect_ratio("r_aspect_ratio", "1", "Aspect ratio correction mode.", CVAR_Archive);
 VCvarI					r_interpolate_frames("r_interpolate_frames", "1", "Use frame interpolation for smoother rendering?", CVAR_Archive);
-VCvarI					r_vsync("r_vsync", "1", "VSync mode.", CVAR_Archive);
+VCvarI					r_vsync("r_vsync", "0", "VSync mode.", CVAR_Archive);
 VCvarI					r_fade_light("r_fade_light", "0", "Fade lights?", CVAR_Archive);
 VCvarF					r_fade_factor("r_fade_factor", "4.0", "Fade actor lights?", CVAR_Archive);
 VCvarF					r_sky_bright_factor("r_sky_bright_factor", "1.0", "Skybright actor factor.", CVAR_Archive);
@@ -92,7 +92,7 @@ bool					MirrorClip;
 
 static FDrawerDesc		*DrawerList[DRAWER_MAX];
 
-VCvarI					screen_size("screen_size", "10", "Screen size.", CVAR_Archive);
+VCvarI					screen_size("screen_size", "11", "Screen size.", CVAR_Archive);
 bool					set_resolutioon_needed = true;
 
 // Angles in the SCREENWIDTH wide window.
@@ -109,7 +109,7 @@ static TArray<VTextureTranslation*>	CachedTranslations;
 // if true, load all graphics at start
 VCvarI					precache("precache", "1", "Load all graphics at startup (instead of on-demand)?", CVAR_Archive);
 
-static VCvarI			r_level_renderer("r_level_renderer", "0", "Level renderer type.", CVAR_Archive);
+static VCvarI			r_level_renderer("r_level_renderer", "2", "Level renderer type.", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 

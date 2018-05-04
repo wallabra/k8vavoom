@@ -83,7 +83,7 @@ static bool		mapteleport_issued;
 static VCvarI	TimeLimit("TimeLimit", "0", "TimeLimit mode?");
 static VCvarI	DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo);
 static VCvarI	NoMonsters("NoMonsters", "0", "NoMonsters mode?");
-static VCvarI	Skill("Skill", "2", "Skill level.");
+static VCvarI	Skill("Skill", "3", "Skill level.");
 static VCvarI	sv_cheats("sv_cheats", "0", "Allow cheats in network game?", CVAR_ServerInfo | CVAR_Latch);
 static VCvarI	split_frame("split_frame", "1", "Splitframe mode?", CVAR_Archive);
 static VCvarI	sv_maxmove("sv_maxmove", "400", "Maximum allowed network movement.", CVAR_Archive);

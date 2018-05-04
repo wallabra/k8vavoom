@@ -117,13 +117,13 @@ enum
 // mouse values are used once
 static float	mousex;
 static float	mousey;
-// joystick values are repeated 
+// joystick values are repeated
 static int		joyxmove;
 static int		joyymove;
 
 static int		impulse_cmd;
 
-static VCvarI	allways_run("allways_run", "1", "Always run?", CVAR_Archive);
+static VCvarI	allways_run("allways_run", "0", "Always run?", CVAR_Archive);
 static VCvarI	artiskip("artiskip", "1", "Should Shift+Enter skip an artifact?", CVAR_Archive); // whether shift-enter skips an artifact
 
 static VCvarF	cl_forwardspeed("cl_forwardspeed", "200", "Forward speed.", CVAR_Archive);
@@ -142,8 +142,8 @@ static VCvarF	cl_anglespeedkey("cl_anglespeedkey", "1.5", "Fast turning multipli
 static VCvarF	cl_deathroll("cl_deathroll", "75", "Deathroll amount.", CVAR_Archive);
 static VCvarF	cl_deathrollspeed("cl_deathrollspeed", "80", "Deathroll speed.", CVAR_Archive);
 
-static VCvarF	mouse_x_sensitivity("mouse_x_sensitivity", "5.0", "Horizontal mouse sensitivity.", CVAR_Archive);
-static VCvarF	mouse_y_sensitivity("mouse_y_sensitivity", "5.0", "Vertical mouse sensitivity.", CVAR_Archive);
+static VCvarF	mouse_x_sensitivity("mouse_x_sensitivity", "3.5", "Horizontal mouse sensitivity.", CVAR_Archive);
+static VCvarF	mouse_y_sensitivity("mouse_y_sensitivity", "4.5", "Vertical mouse sensitivity.", CVAR_Archive);
 static VCvarI	mouse_look("mouse_look", "1", "Allow mouselook?", CVAR_Archive);
 static VCvarI	invert_mouse("invert_mouse", "0", "Invert mouse?", CVAR_Archive);
 static VCvarI	lookstrafe("lookstrafe", "0", "Allow lookstrafe?", CVAR_Archive);

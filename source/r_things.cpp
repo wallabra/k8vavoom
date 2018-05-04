@@ -78,8 +78,8 @@ VCvarI			r_fix_sprite_offsets("r_fix_sprite_offsets", "1", "Fix sprite offsets?"
 VCvarI			r_sprite_fix_delta("r_sprite_fix_delta", "-3", "Sprite offset amount.", CVAR_Archive);
 VCvarI			r_drawfuzz("r_drawfuzz", "0", "Draw fuzz effect?", CVAR_Archive);
 VCvarF			transsouls("transsouls", "1.0", "Translucent Lost Souls?", CVAR_Archive);
-VCvarI			croshair("croshair", "0", "Crosshair type.", CVAR_Archive);
-VCvarF			croshair_alpha("croshair_alpha", "1", "Crosshair opacity.", CVAR_Archive);
+VCvarI			croshair("croshair", "2", "Crosshair type.", CVAR_Archive);
+VCvarF			croshair_alpha("croshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 
