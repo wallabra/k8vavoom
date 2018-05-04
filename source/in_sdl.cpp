@@ -47,6 +47,7 @@ public:
 private:
 	int				mouse;
 	bool			winactive;
+	bool			firsttime;
 
 	int				mouse_oldx;
 	int				mouse_oldy;
@@ -147,6 +148,7 @@ const vuint8 VSdlInputDevice::sym2key[SDLK_LAST] =
 VSdlInputDevice::VSdlInputDevice()
 : mouse(0)
 , winactive(true)
+, firsttime(true)
 , mouse_oldx(0)
 , mouse_oldy(0)
 , joystick(NULL)
@@ -224,6 +226,10 @@ void VSdlInputDevice::ReadInput()
 	SDL_PumpEvents();
 	while (SDL_PollEvent(&ev))
 	{
+		if (firsttime) {
+			firsttime = false;
+			if (mouse) SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
+		}
 		switch (ev.type)
 		{
 		case SDL_KEYDOWN:
