@@ -251,8 +251,6 @@ void AttachToOwner(EntityEx NewOwner)
 	Ammo2 = AddAmmo(NewOwner, AmmoType2, AmmoGive2);
 	SisterWeapon = AddWeapon(SisterWeaponType);
 
-	if (Owner.Player) Owner.Player.bReloadQueued = false;
-
 	if (Owner.Player && !bNoAutoSwitch && GetCvarB('wpn_autoswitch'))
 	{
 		//	Doom and Strife always switch to a new weapon, Heretic and Hexen
