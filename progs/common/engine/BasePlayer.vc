@@ -243,6 +243,7 @@ void UseInventory(string Inv)
 
 bool CheckDoubleFiringSpeed()
 {
+  return false;
 }
 
 void Cheat_God()
