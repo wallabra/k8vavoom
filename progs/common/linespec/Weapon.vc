@@ -253,7 +253,7 @@ void AttachToOwner(EntityEx NewOwner)
 
 	if (Owner.Player) Owner.Player.bReloadQueued = false;
 
-	if (Owner.Player && !bNoAutoSwitch)
+	if (Owner.Player && !bNoAutoSwitch && GetCvarB('wpn_autoswitch'))
 	{
 		//	Doom and Strife always switch to a new weapon, Heretic and Hexen
 		// only switch to more powerful weapons, always check for ammo.

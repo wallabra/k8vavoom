@@ -139,6 +139,7 @@ void Init()
 	// This one is only used in Hexen for now, but it could come in
 	// handy for other games if needed
 	CreateCvar('alternate_monster_attacks', "0", "Alternate monster attacks in Hexen?", CVAR_ARCHIVE);
+	CreateCvar('wpn_autoswitch', "0", "Should we autoswitch to new weapon?", CVAR_ARCHIVE);
 
 	// debug headshots?
 	CreateCvar('k8HSDEBUG', "0", "Show headshots debug messages?", 0);
