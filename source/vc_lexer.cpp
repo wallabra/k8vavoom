@@ -1108,6 +1108,10 @@ void VLexer::ProcessLetterToken(bool CheckKeywords)
 		{
 			Token = TK_Array;
 		}
+		else if (s[1] == 'u' && s[2] == 't' && s[3] == 'o' && s[4] == 0)
+		{
+			Token = TK_Auto;
+		}
 		break;
 
 	case 'b':
