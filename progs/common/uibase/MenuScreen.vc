@@ -115,8 +115,7 @@ void SetDefaultChoice () {
   CursorPrev = 0;
 
   // force first available item to have focus
-  int i;
-  for (i = 0; i < Items.Num; ++i) {
+  for (int i = 0; i < Items.Num; ++i) {
     if (Items[i].Focusable && Items[i].Enabled && !MenuChoice_BackButton(Items[i])) {
       CursorPrev = -1;
       CursorPos = i;
