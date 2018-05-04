@@ -195,6 +195,7 @@ void VOpenGLDrawer::SetTexture(VTexture* Tex, int CMap)
 	{
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipfilter);
 	}
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
 	
 
 	SetSpriteLump(Tex, NULL, CMap);

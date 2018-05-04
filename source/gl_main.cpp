@@ -47,6 +47,7 @@
 
 VCvarI VOpenGLDrawer::tex_linear("gl_tex_linear", "0", "Texture interpolation mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::sprite_tex_linear("gl_sprite_tex_linear", "0", "Sprite interpolation mode.", CVAR_Archive);
+VCvarI VOpenGLDrawer::gl_texture_filter_anisotropic("gl_texture_filter_anisotropic", "4", "Texture anisotropic filtering.", CVAR_Archive);
 VCvarI VOpenGLDrawer::clear("gl_clear", "0", "Clear screen before rendering new frame?", CVAR_Archive);
 VCvarI VOpenGLDrawer::blend_sprites("gl_blend_sprites", "0", "Alpha-blend sprites?", CVAR_Archive);
 VCvarI VOpenGLDrawer::ext_multitexture("gl_ext_multitexture", "1", "Use OpenGL multitexturing extension (if present)?", CVAR_Archive);

@@ -669,6 +669,7 @@ protected:
 	//
 	static VCvarI tex_linear;
 	static VCvarI sprite_tex_linear;
+	static VCvarI gl_texture_filter_anisotropic;
 	static VCvarI clear;
 	static VCvarI blend_sprites;
 	static VCvarI ext_multitexture;
