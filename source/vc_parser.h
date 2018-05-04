@@ -33,7 +33,7 @@ private:
 	VExpression* ParseDotMethodCall(VExpression*, VName, TLocation);
 	VExpression* ParseBaseMethodCall(VName, TLocation);
 	VExpression* ParseMethodCallOrCast(VName, TLocation);
-	VLocalDecl* ParseLocalVar(VExpression* TypeExpr);
+	VLocalDecl* ParseLocalVar(VExpression* TypeExpr, bool requireInit=false);
 	VExpression* ParseExpressionPriority0();
 	VExpression* ParseExpressionPriority1();
 	VExpression* ParseExpressionPriority2();

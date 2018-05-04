@@ -133,7 +133,7 @@ VExpression* VParser::ParseMethodCallOrCast(VName Name, TLocation Loc)
 //
 //==========================================================================
 
-VLocalDecl* VParser::ParseLocalVar(VExpression* TypeExpr)
+VLocalDecl* VParser::ParseLocalVar(VExpression* TypeExpr, bool requireInit)
 {
 	guard(VParser::ParseLocalVar);
 	VLocalDecl* Decl = new VLocalDecl(Lex.Location);
@@ -156,6 +156,11 @@ VLocalDecl* VParser::ParseLocalVar(VExpression* TypeExpr)
 		e.Loc = Lex.Location;
 		e.Name = Lex.Name;
 		Lex.NextToken();
+
+		if (requireInit && Lex.Token != TK_Assign) {
+			ParseError(Lex.Location, "Initializer required");
+			continue;
+		}
 
 		if (Lex.Check(TK_LBracket))
 		{
@@ -1045,15 +1050,33 @@ VStatement* VParser::ParseStatement()
 		Lex.NextToken();
 		VFor* For = new VFor(l);
 		Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
-		do
-		{
-			VExpression* Expr = ParseExpression();
-			if (!Expr)
-			{
+		// allow local declaration here
+		switch (Lex.Token) {
+			case TK_Bool:
+			case TK_Byte:
+			case TK_Float:
+			case TK_Int:
+			case TK_Name:
+			case TK_String:
+			case TK_Auto:
+				{
+					VExpression* TypeExpr = ParseType();
+					do {
+						VLocalDecl* Decl = ParseLocalVar(TypeExpr, true);
+						if (!Decl) break;
+						For->InitExpr.Append(new VDropResult(Decl));
+					} while (Lex.Check(TK_Comma));
+				}
 				break;
-			}
-			For->InitExpr.Append(new VDropResult(Expr));
-		} while (Lex.Check(TK_Comma));
+			default:
+				do {
+					VExpression* Expr = ParseExpression();
+					if (!Expr) break;
+					For->InitExpr.Append(new VDropResult(Expr));
+				} while (Lex.Check(TK_Comma));
+				break;
+		}
+
 		Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
 		For->CondExpr = ParseExpression();
 		Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
