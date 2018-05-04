@@ -329,11 +329,18 @@ VExpression* VSingleName::ResolveAssignmentTarget(VEmitContext& ec)
 VTypeExpr* VSingleName::ResolveAsType(VEmitContext& ec)
 {
 	Type = VMemberBase::StaticFindType(ec.SelfClass, Name);
+
 	if (Type.Type == TYPE_Unknown)
 	{
 		ParseError(Loc, "Invalid identifier, bad type name %s", *Name);
 		delete this;
 		return NULL;
+	}
+
+	if (Type.Type == TYPE_Automatic)
+	{
+		fprintf(stderr, "VC INTERNAL COMPILER ERROR: unresolved automatic type (1)!\n");
+		*(int*)0 = 0;
 	}
 
 	VTypeExpr* e = new VTypeExpr(Type, Loc);
@@ -437,11 +444,18 @@ VTypeExpr* VDoubleName::ResolveAsType(VEmitContext&)
 	}
 
 	Type = VMemberBase::StaticFindType(Class, Name2);
+
 	if (Type.Type == TYPE_Unknown)
 	{
 		ParseError(Loc, "Invalid identifier, bad type name %s::%s", *Name1, *Name2);
 		delete this;
 		return NULL;
+	}
+
+	if (Type.Type == TYPE_Automatic)
+	{
+		fprintf(stderr, "VC INTERNAL COMPILER ERROR: unresolved automatic type (2)!\n");
+		*(int*)0 = 0;
 	}
 
 	VTypeExpr* e = new VTypeExpr(Type, Loc);

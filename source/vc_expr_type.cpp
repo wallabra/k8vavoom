@@ -97,6 +97,12 @@ VTypeExpr* VTypeExpr::ResolveAsType(VEmitContext&)
 		return NULL;
 	}
 
+	if (Type.Type == TYPE_Automatic)
+	{
+		fprintf(stderr, "VC INTERNAL COMPILER ERROR: unresolved automatic type (0)!\n");
+		*(int*)0 = 0;
+	}
+
 	if (Type.Type == TYPE_Class && MetaClassName != NAME_None)
 	{
 		Type.Class = VMemberBase::StaticFindClass(MetaClassName);

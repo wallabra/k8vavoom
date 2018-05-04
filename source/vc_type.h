@@ -48,6 +48,7 @@ enum EType
 	TYPE_Array,
 	TYPE_DynamicArray,
 	TYPE_Unknown,
+	TYPE_Automatic, // this is valid only for variable declarations, and will be resolved to actual type
 
 	NUM_BASIC_TYPES
 };

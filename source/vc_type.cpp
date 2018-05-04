@@ -587,6 +587,8 @@ VStr VFieldType::GetName() const
 		return GetArrayInnerType().GetName() + "[]";
 	case TYPE_DynamicArray:
 		return VStr("array<") + GetArrayInnerType().GetName() + ">";
+	case TYPE_Automatic:
+		return "auto";
 	default:
 		return "unknown";
 	}

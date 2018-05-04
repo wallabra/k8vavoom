@@ -119,13 +119,33 @@ void VLocalDecl::Declare(VEmitContext& ec)
 			ParseError(e.Loc, "Redefined identifier %s", *e.Name);
 		}
 
+		bool dbgDump = false;
+
+		// resolve automatic type
+		if (e.TypeExpr->Type.Type == TYPE_Automatic) {
+			if (!e.Value) { fprintf(stderr, "VC INTERNAL COMPILER ERROR: automatic type without initializer!\n"); *(int*)0 = 0; }
+			// resolve type
+			e.Value = e.Value->Resolve(ec);
+			if (!e.Value) {
+				ParseError(e.Loc, "Cannot resolve type for identifier %s", *e.Name);
+			} else {
+				fprintf(stderr, "*** automaitc type resolved to `%s`\n", *(e.Value->Type.GetName()));
+				delete e.TypeExpr; // delete old `automatic` type
+				e.TypeExpr = new VTypeExpr(e.Value->Type, e.Value->Loc);
+				dbgDump = false;
+			}
+		}
+
 		e.TypeExpr = e.TypeExpr->ResolveAsType(ec);
+		if (dbgDump) fprintf(stderr, "003\n");
 		if (e.TypeExpr == NULL)
 		{
 			continue;
 		}
+		if (dbgDump) fprintf(stderr, "003-1 (%s)\n", *(e.TypeExpr->Type.GetName()));
+
 		VFieldType Type = e.TypeExpr->Type;
-		if (Type.Type == TYPE_Void)
+		if (Type.Type == TYPE_Void || Type.Type == TYPE_Automatic)
 		{
 			ParseError(e.TypeExpr->Loc, "Bad variable type");
 		}
@@ -137,15 +157,18 @@ void VLocalDecl::Declare(VEmitContext& ec)
 		L.Visible = false;
 		L.ParamFlags = 0;
 
-		//  Initialisation
-		if (e.Value)
-		{
-			VExpression* op1 = new VLocalVar(ec.LocalDefs.Num() - 1, e.Loc);
+		// resolve initialisation
+		if (e.Value) {
+			if (dbgDump) fprintf(stderr, "004\n");
+			VExpression* op1 = new VLocalVar(ec.LocalDefs.Num()-1, e.Loc);
 			e.Value = new VAssignment(VAssignment::Assign, op1, e.Value, e.Loc);
+			if (dbgDump) fprintf(stderr, "005\n");
 			e.Value = e.Value->Resolve(ec);
+			if (dbgDump) fprintf(stderr, "006\n");
 		}
 
 		L.Visible = true;
+		if (dbgDump) fprintf(stderr, "007\n");
 
 		ec.localsofs += Type.GetStackSize() / 4;
 		if (ec.localsofs > 1024)

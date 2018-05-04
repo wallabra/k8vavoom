@@ -159,6 +159,12 @@ VLocalDecl* VParser::ParseLocalVar(VExpression* TypeExpr)
 
 		if (Lex.Check(TK_LBracket))
 		{
+			// arrays cannot be initialized (it seems), so they cannot be automatic
+			if (TypeExpr->Type.Type == TYPE_Automatic)
+			{
+				ParseError(Lex.Location, "Automatic variable requires initializer");
+				continue;
+			}
 			TLocation SLoc = Lex.Location;
 			VExpression* SE = ParseExpression();
 			Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
@@ -168,6 +174,15 @@ VLocalDecl* VParser::ParseLocalVar(VExpression* TypeExpr)
 		else if (Lex.Check(TK_Assign))
 		{
 			e.Value = ParseExpressionPriority13();
+		}
+		else
+		{
+			// automatic type cannot be declared without initializer
+			if (TypeExpr->Type.Type == TYPE_Automatic)
+			{
+				ParseError(Lex.Location, "Automatic variable requires initializer");
+				continue;
+			}
 		}
 		Decl->Vars.Append(e);
 	} while (Lex.Check(TK_Comma));
@@ -1141,6 +1156,7 @@ VStatement* VParser::ParseStatement()
 	case TK_String:
 	case TK_Void:
 	case TK_Array:
+	case TK_Auto:
 	{
 		VExpression* TypeExpr = ParseType();
 		VLocalDecl* Decl = ParseLocalVar(TypeExpr);
@@ -1208,6 +1224,10 @@ VExpression* VParser::ParseType()
 	case TK_Void:
 		Lex.NextToken();
 		return new VTypeExpr(TYPE_Void, l);
+
+	case TK_Auto:
+		Lex.NextToken();
+		return new VTypeExpr(TYPE_Automatic, l);
 
 	case TK_Int:
 		Lex.NextToken();
