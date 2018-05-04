@@ -25,191 +25,116 @@
 
 class MenuScreen : Widget;
 
-const int MAX_MENU_ITEMS		= 32;
+ClientGameShared ClGame;
 
-ClientGameShared		ClGame;
+array<MenuChoice> Items;
+int CursorPos;
+int CursorPrev;
 
-MenuChoice				Items[MAX_MENU_ITEMS];
-int						NumItems;
-int						CursorPos;
-int						CursorPrev;
+int ChoicesStartX;
+int ChoicesStartY;
 
-int						ChoicesStartX;
-int						ChoicesStartY;
+class<Widget> SelectorType;
+Widget Selector;
 
-class<Widget>			SelectorType;
-Widget					Selector;
+string Title;
+int TitleX;
+int TitleY;
 
-string					Title;
-int						TitleX;
-int						TitleY;
+name ActivateSound;
+name DeactivateSound;
+name ClearMenusSound;
 
-name					ActivateSound;
-name					DeactivateSound;
-name					ClearMenusSound;
 
-//==========================================================================
-//
-//	CreateMenu
-//
-//==========================================================================
-
-void CreateMenu()
-{
-	CreateTitle();
-	DrawBackButton();
-	CreateChoices();
-	CreateSelector();
-	SetDefaultChoice();
+// ////////////////////////////////////////////////////////////////////////// //
+//k8: is this necessary?
+void OnDestroy () {
+  Items.Num = 0;
 }
 
-//==========================================================================
-//
-//	OnChildAdded
-//
-//==========================================================================
 
-void OnChildAdded(Widget Child)
-{
-	if (MenuChoice(Child) && !MenuChoice_BackButton(Child))
-	{
-		if (NumItems >= MAX_MENU_ITEMS)
-		{
-			FatalError("Too many menu items");
-		}
-		Items[NumItems++] = MenuChoice(Child);
-	}
-	::OnChildAdded(Child);
+void CreateMenu () {
+  CreateTitle();
+  DrawBackButton();
+  CreateChoices();
+  CreateSelector();
+  SetDefaultChoice();
 }
 
-//==========================================================================
-//
-//	CreateTitle
-//
-//==========================================================================
 
-void CreateTitle()
-{
-	MenuTitleText newTitle;
-
-	if (Title)
-	{
-		newTitle = MenuTitleText(NewChild(MenuTitleText));
-		newTitle.Text = Title;
-		newTitle.SetOrigin(TitleX, TitleY);
-	}
+void OnChildAdded (Widget Child) {
+  if (MenuChoice(Child) && !MenuChoice_BackButton(Child)) {
+    if (Items.Num > 128) FatalError("Too many menu items");
+    Items.Num = Items.Num+1;
+    Items[Items.Num-1] = MenuChoice(Child);
+  }
+  ::OnChildAdded(Child);
 }
 
-//==========================================================================
-//
-//	DrawBackButton
-//
-//==========================================================================
 
-void DrawBackButton()
-{
-	//  Draw the back button on the top left corner of the menu screen
-	MenuChoice_BackButton	BackButton;
-
-	BackButton =  MenuChoice_BackButton(NewChild(MenuChoice_BackButton));
-	BackButton.SetOrigin(Width - 20, 1);
+void CreateTitle () {
+  if (Title) {
+    MenuTitleText newTitle = MenuTitleText(NewChild(MenuTitleText));
+    newTitle.Text = Title;
+    newTitle.SetOrigin(TitleX, TitleY);
+  }
 }
 
-//==========================================================================
-//
-//	CreateChoices
-//
-//==========================================================================
 
-void CreateChoices()
-{
+void DrawBackButton () {
+  // Draw the back button on the top left corner of the menu screen
+  MenuChoice_BackButton BackButton = MenuChoice_BackButton(NewChild(MenuChoice_BackButton));
+  BackButton.SetOrigin(Width-20, 1);
 }
 
-//==========================================================================
-//
-//	CreateSelector
-//
-//==========================================================================
 
-void CreateSelector()
-{
-	if (SelectorType)
-	{
-		Selector = NewChild(SelectorType);
-	}
+void CreateChoices () {
 }
 
-//==========================================================================
-//
-//	CursorMoved
-//
-//==========================================================================
 
-void CursorMoved()
-{
-	if (CursorPrev == CursorPos || MenuChoice_BackButton(Items[CursorPos]))
-		return;
-
-	if (CursorPos >= 0 && CursorPos < NumItems)
-	{
-		SetCurrentFocusChild(Items[CursorPos]);
-	}
-
-	if (Selector)
-	{
-		Selector.SetOrigin(Items[CursorPos].X + Items[CursorPos].CursorXOffs,
-			Items[CursorPos].Y + Items[CursorPos].CursorYOffs);
-	}
+void CreateSelector () {
+  if (SelectorType) Selector = NewChild(SelectorType);
 }
 
-//==========================================================================
-//
-//	SetDefaultChoice
-//
-//==========================================================================
 
-void SetDefaultChoice()
-{
-	int i;
+void CursorMoved () {
+  if (Items.Num == 0) return;
+  if (CursorPos < 0) CursorPos = Items.Num-1; else if (CursorPos >= Items.Num) CursorPos = 0;
 
-	// default cursor position
-	CursorPos = 0;
-	CursorPrev = 0;
+  if (CursorPrev == CursorPos || MenuChoice_BackButton(Items[CursorPos])) return;
 
-	// force first available item to have focus
-	for (i = 0; i < NumItems; i++)
-	{
-		if (Items[i].Focusable && Items[i].Enabled && !MenuChoice_BackButton(Items[i]))
-		{
-			CursorPrev = -1;
-			CursorPos = i;
-			CursorMoved();
-			break;
-		}
-	}
+  if (CursorPos >= 0 && CursorPos < Items.Num) SetCurrentFocusChild(Items[CursorPos]);
+
+  if (Selector) Selector.SetOrigin(Items[CursorPos].X+Items[CursorPos].CursorXOffs, Items[CursorPos].Y+Items[CursorPos].CursorYOffs);
 }
 
-//==========================================================================
-//
-// GetChoiceForSaving
-//
-//==========================================================================
+
+void SetDefaultChoice () {
+  // default cursor position
+  CursorPos = 0;
+  CursorPrev = 0;
+
+  // force first available item to have focus
+  int i;
+  for (i = 0; i < Items.Num; ++i) {
+    if (Items[i].Focusable && Items[i].Enabled && !MenuChoice_BackButton(Items[i])) {
+      CursorPrev = -1;
+      CursorPos = i;
+      CursorMoved();
+      break;
+    }
+  }
+}
+
 
 int GetChoiceForSaving () {
   return CursorPos;
 }
 
-//==========================================================================
-//
-// SetSavedChoice
-//
-// Should be called after menu is fully created, and default choice set.
-//
-//==========================================================================
 
+// should be called after menu is fully created, and default choice set
 void SetSavedChoice (int idx) {
-  if (idx < 0 || idx >= NumItems || CursorPos == idx) return;
-
+  if (idx < 0 || idx >= Items.Num || CursorPos == idx) return;
   if (Items[idx].Focusable && Items[idx].Enabled) {
     CursorPrev = -1;
     CursorPos = idx;
@@ -217,104 +142,71 @@ void SetSavedChoice (int idx) {
   }
 }
 
-//==========================================================================
-//
-//	CyclePrevChoice
-//
-//==========================================================================
 
-void CyclePrevChoice()
-{
-	CursorPrev = CursorPos;
-	do
-	{
-		if (!CursorPos)
-			CursorPos = NumItems - 1;
-		else
-			CursorPos--;
-	}
-	while ((!Items[CursorPos].Focusable || !Items[CursorPos].Enabled) &&
-		!MenuChoice_BackButton(Items[CursorPos]) && CursorPrev != CursorPos);
-	CursorMoved();
+void CyclePrevChoice () {
+  if (Items.Num < 2) return;
+  CursorPrev = CursorPos;
+  do {
+    if (!CursorPos) CursorPos = Items.Num-1; else --CursorPos;
+  } while ((!Items[CursorPos].Focusable || !Items[CursorPos].Enabled) && !MenuChoice_BackButton(Items[CursorPos]) && CursorPrev != CursorPos);
+  CursorMoved();
 }
 
-//==========================================================================
-//
-//	CycleNextChoice
-//
-//==========================================================================
 
-void CycleNextChoice()
-{
-	CursorPrev = CursorPos;
-	do
-	{
-		if (CursorPos == NumItems - 1)
-			CursorPos = 0;
-		else
-			CursorPos++;
-	}
-	while ((!Items[CursorPos].Focusable || !Items[CursorPos].Enabled) &&
-		!MenuChoice_BackButton(Items[CursorPos]) && CursorPrev != CursorPos);
-	CursorMoved();
+void CycleNextChoice () {
+  if (Items.Num < 2) return;
+  CursorPrev = CursorPos;
+  do {
+    if (CursorPos == Items.Num - 1) CursorPos = 0; else ++CursorPos;
+  } while ((!Items[CursorPos].Focusable || !Items[CursorPos].Enabled) && !MenuChoice_BackButton(Items[CursorPos]) && CursorPrev != CursorPos);
+  CursorMoved();
 }
 
-//==========================================================================
-//
-//	OnKeyDown
-//
-//==========================================================================
 
-bool OnKeyDown(int key)
-{
-	switch (key)
-	{
-	case K_DOWNARROW:
-	case K_MWHEELDOWN:
-		CycleNextChoice();
-		LocalSound('menu/cursor');
-		return true;
+bool OnKeyDown (int key) {
+  switch (key) {
+    case K_DOWNARROW:
+    case K_MWHEELDOWN:
+      if (Items.Num > 1) {
+        CycleNextChoice();
+        LocalSound('menu/cursor');
+      }
+      return true;
 
-	case K_UPARROW:
-	case K_MWHEELUP:
-		CyclePrevChoice();
-		LocalSound('menu/cursor');
-		return true;
+    case K_UPARROW:
+    case K_MWHEELUP:
+      if (Items.Num > 1) {
+        CyclePrevChoice();
+        LocalSound('menu/cursor');
+      }
+      return true;
 
-	case K_ESCAPE:
-	case K_MOUSE2:
-		ClGame.PopMenu();
-		return true;
-	}
-
-	return false;
+    case K_ESCAPE:
+    case K_MOUSE2:
+      ClGame.PopMenu();
+      return true;
+  }
+  return false;
 }
 
-//==========================================================================
-//
-//	OnDraw
-//
-//  Fade all the screen buffer, so that the menu is more readable,
-// especially now that we use the small hudfont in the menus...
-//
-//==========================================================================
 
-void OnDraw()
-{
-	ShadeRect(0, 0, 640, 480, GetCvarF('menu_darkening'));
+// fade all the screen buffer, so that the menu is more readable,
+// especially now that we use the small hudfont in the menus
+void OnDraw () {
+  ShadeRect(0, 0, 640, 480, GetCvarF('menu_darkening'));
 }
 
-defaultproperties
-{
-	X = 160;
-	Y = 140;
-	Width = 320;
-	Height = 200;
-	TitleX = 160;
-	TitleY = 24;
-	Focusable = true;
 
-	ActivateSound = 'menu/activate';
-	DeactivateSound = 'menu/backup';
-	ClearMenusSound = 'menu/clear';
+defaultproperties {
+  X = 160;
+  Y = 140;
+  Width = 320;
+  Height = 200;
+  TitleX = 160;
+  TitleY = 24;
+  Focusable = true;
+
+  ActivateSound = 'menu/activate';
+  DeactivateSound = 'menu/backup';
+  ClearMenusSound = 'menu/clear';
 }
