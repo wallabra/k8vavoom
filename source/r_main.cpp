@@ -109,7 +109,7 @@ static TArray<VTextureTranslation*>	CachedTranslations;
 // if true, load all graphics at start
 VCvarI					precache("precache", "1", "Load all graphics at startup (instead of on-demand)?", CVAR_Archive);
 
-static VCvarI			r_level_renderer("r_level_renderer", "2", "Level renderer type (0:auto; 1:normal; 2:advanced).", CVAR_Archive);
+static VCvarI			r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:normal; 2:advanced).", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 
