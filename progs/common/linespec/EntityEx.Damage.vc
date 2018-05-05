@@ -293,57 +293,65 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
       // ketchup spawn
       if (instakill) {
-        /*
-        bool doSpray = k8CheckBoolCVar('k8HSHeadKillBloodSpray', true);
+        bool doSpray = GetCvarB('k8HSHeadKillBloodSpray');
 
+        /*
         Name bloodClassName = 'K8Gore_Blood_Transient';
         Name mistClassName = 'K8Gore_BloodmistBig_Transient';
         Name poolClassName = 'K8Gore_GrowingBloodPool';
-
         class<Actor> bloodClass = bloodClassName;
+        */
 
-        if (bloodClass) {
+        if (doSpray) {
           // HellKnight is a kind of Hell Baron
-          if (self is 'BaronOfHell') {
+          bool restoreRedBlood = true;
+          name bloodClassName;
+          name poolClassName;
+
+          if (GetClassName(GetClassReplacee(self.Class)) == 'BaronOfHell') {
             bloodClassName = 'K8Gore_Blood_Transient_Green';
-            mistClassName = 'K8Gore_BloodmistBig_Transient_Green';
+            //mistClassName = 'K8Gore_BloodmistBig_Transient_Green';
             poolClassName = 'K8Gore_GrowingBloodPool_Green';
-            class<Actor> bc = bloodClassName;
-            if (bc) bloodClass = bc;
-          } else if (self is 'Cacodemon') {
+            restoreRedBlood = (!FindClass(bloodClassName) || !FindClass(poolClassName));
+          } else if (GetClassName(GetClassReplacee(self.Class)) == 'Cacodemon') {
             bloodClassName = 'K8Gore_Blood_Transient_Blue';
-            mistClassName = 'K8Gore_BloodmistBig_Transient_Blue';
+            //mistClassName = 'K8Gore_BloodmistBig_Transient_Blue';
             poolClassName = 'K8Gore_GrowingBloodPool_Blue';
-            class<Actor> bc = bloodClassName;
-            if (bc) bloodClass = bc;
+            restoreRedBlood = (!FindClass(bloodClassName) || !FindClass(poolClassName));
           }
 
-          if (doSpray) {
-            int bcc = 8;
-            CVar bcccv = CVar.FindCVar('k8HSHeadKillBloodCount');
-            if (bcccv) bcc = bcccv.GetInt();
+          if (restoreRedBlood) {
+            bloodClassName = 'K8Gore_Blood_Transient';
+            poolClassName = 'K8Gore_GrowingBloodPool';
+          }
+
+          class<Actor> bloodClass = class<Actor>(FindClass(bloodClassName));
+
+          if (bloodClass) {
+            int bcc = int(GetCvarF('k8HSHeadKillBloodCount'));
             if (bcc > 0) {
-              bcc += random[K8HeadShots](-6, 6);
+              bcc += int(Random()*13-6); // -6..6
               if (bcc < 8) bcc = 8;
               if (bcc > 64) bcc = 64;
             }
-            Vector3 spos;
-            while (bcc > 0) {
-              --bcc;
-              spos.x = Pos.x+(random[K8HeadShots](-25, 25)/10.0);
-              spos.y = Pos.y+(random[K8HeadShots](-25, 25)/10.0);
-              spos.z = Pos.z+Height+(random[K8HeadShots](-14, 14)/10.0);
-              Spawn(bloodClass, spos);
+
+            TVec spos;
+            for (; bcc > 0; --bcc) {
+              spos.x = Origin.x+((Random()*51-25)/10.0);
+              spos.y = Origin.y+((Random()*51-25)/10.0);
+              spos.z = Origin.z+Height+((Random()*29-14)/10.0);
+              Level.Spawn(bloodClass, spos); // optional TAVec AAngles, optional mthing_t* mthing, optional bool AllowReplace
             }
           }
 
-          class<Actor> poolClass = poolClassName;
-          if (poolClass && k8CheckBoolCVar('k8HSSpawnBloodPool', true)) Spawn(poolClass, Pos);
+          if (GetCvarB('k8HSHeadKillBloodPool')) {
+            class<Actor> poolClass = class<Actor>(FindClass(poolClassName));
+            if (poolClass) Level.Spawn(poolClass, Origin);
+          }
 
           //class<Actor> mistClass = mistClassName;
           //if (mistClass) Spawn(mistClass, Pos);
         }
-        */
 
         Health = 1;
         dodmg = 2;

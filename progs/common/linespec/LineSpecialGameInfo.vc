@@ -168,6 +168,10 @@ void Init()
 	// how mush damage should be inflicted to Arch-Vile?
 	CreateCvar('k8HSFastKillArchVileDamage', "120", "Amount of damage dealt for fast-killing ArchViles.", CVAR_ARCHIVE);
 
+	CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill?", CVAR_ARCHIVE);
+	CreateCvar('k8HSHeadKillBloodCount', "8", "How much blood to spray on instakill?", CVAR_ARCHIVE);
+	CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill?", CVAR_ARCHIVE);
+
 	CreateCvar('k8AmmoKing', "1", "Enable Ammo King mode?", CVAR_ARCHIVE);
 
 	CreateCvar('k8ElvenGift', "1", "Start game with some Elven Gifts", CVAR_ARCHIVE);
