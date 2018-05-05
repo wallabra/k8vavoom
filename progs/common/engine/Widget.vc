@@ -61,6 +61,9 @@ private readonly Widget			NextWidget;
 //	Position of the widget in the parent widget.
 private int						PosX;
 private int						PosY;
+//	Offset for children.
+private int						OfsX;
+private int						OfsY;
 //	Size of the child area of the widget.
 private int						SizeWidth;
 private int						SizeHeight;
@@ -137,6 +140,20 @@ int Y
 	get { return PosY; }
 	set { SetY(value); }
 	default PosY;
+}
+
+int ChildrenOfsX
+{
+	get { return OfsX; }
+	set { SetOfsX(value); }
+	default OfsX;
+}
+
+int ChildrenOfsY
+{
+	get { return OfsY; }
+	set { SetOfsY(value); }
+	default OfsY;
 }
 
 int Width
@@ -225,6 +242,8 @@ native final void MoveAfter(Widget Other);
 native final void SetPos(int NewX, int NewY);
 native final void SetX(int NewX);
 native final void SetY(int NewY);
+native final void SetOfsX(int NewX);
+native final void SetOfsY(int NewY);
 native final void SetSize(int NewWidth, int NewHeight);
 native final void SetWidth(int NewWidth);
 native final void SetHeight(int NewHeight);
