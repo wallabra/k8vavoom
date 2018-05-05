@@ -4151,6 +4151,7 @@ void ProcessDecorateScripts()
 	{
 		if (W_LumpName(Lump) == NAME_decorate)
 		{
+			GCon->Logf("Parsing decorate script '%s'...", *W_FullLumpName(Lump));
 			ParseDecorate(new VScriptParser(*W_LumpName(Lump),
 				W_CreateLumpReaderNum(Lump)), ClassFixups);
 		}

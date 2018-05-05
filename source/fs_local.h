@@ -62,8 +62,8 @@ public:
 	virtual void BuildGLNodes(VSearchPath*) = 0;
 	virtual void BuildPVS(VSearchPath*) = 0;
 	virtual VStream* CreateLumpReaderNum(int) = 0;
-	virtual void RenameSprites(const TArray<VSpriteRename>&,
-		const TArray<VLumpRename>&) = 0;
+	virtual void RenameSprites(const TArray<VSpriteRename>&, const TArray<VLumpRename>&) = 0;
+	virtual VStr GetPrefix () = 0; // for logging
 };
 
 //==========================================================================
@@ -94,6 +94,7 @@ public:
 	VStream* CreateLumpReaderNum(int);
 	void RenameSprites(const TArray<VSpriteRename>&,
 		const TArray<VLumpRename>&);
+	virtual VStr GetPrefix () { return Path; }
 };
 
 //==========================================================================
@@ -135,6 +136,7 @@ public:
 	VStream* CreateLumpReaderNum(int);
 	void RenameSprites(const TArray<VSpriteRename>&,
 		const TArray<VLumpRename>&);
+	virtual VStr GetPrefix () { return Name; }
 };
 
 //==========================================================================
@@ -176,6 +178,7 @@ public:
 	void BuildPVS(VSearchPath*);
 
 	void ListWadFiles(TArray<VStr>&);
+	virtual VStr GetPrefix () { return ZipFileName; }
 };
 
 //==========================================================================

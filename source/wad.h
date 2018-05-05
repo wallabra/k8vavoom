@@ -68,6 +68,7 @@ int W_FindLumpByFileNameWithExts(VStr BaseName, const char** Exts);
 
 int W_LumpLength(int lump);
 VName W_LumpName(int lump);
+VStr W_FullLumpName(int lump);
 int W_LumpFile(int lump);
 
 void W_ReadFromLump(int lump, void *dest, int pos, int size);
