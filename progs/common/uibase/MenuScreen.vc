@@ -28,6 +28,9 @@ class MenuScreen : Widget;
 ClientGameShared ClGame;
 
 array<MenuChoice> Items;
+
+bool MenuScrollable;
+int OfsYPrev;
 int CursorPos;
 int CursorPrev;
 
@@ -81,7 +84,7 @@ void CreateTitle () {
 
 
 void DrawBackButton () {
-  // Draw the back button on the top left corner of the menu screen
+  // draw the back button on the top left corner of the menu screen
   MenuChoice_BackButton BackButton = MenuChoice_BackButton(NewChild(MenuChoice_BackButton));
   BackButton.SetOrigin(Width-20, 1);
 }
@@ -96,20 +99,66 @@ void CreateSelector () {
 }
 
 
+final int CalcTotalHeight () {
+  int res = 0;
+  for (int n = 0; n < Items.Length; ++n) {
+    int e = Items[n].Y+Items[n].Height;
+    if (res < e) res = e;
+  }
+  return res;
+}
+
+
+final int GetItemYS (int idx) {
+  if (idx < 0) return 0;
+  if (idx >= Items.Length) return CalcTotalHeight();
+  return Items[idx].Y;
+}
+
+
+final int GetItemYE (int idx) {
+  if (idx < 0) return 0;
+  if (idx >= Items.Length) return CalcTotalHeight();
+  return Items[idx].Y+Items[idx].Height;
+}
+
+
+final int GetItemYH (int idx) {
+  if (idx < 0) return 0;
+  if (idx >= Items.Length) return 0;
+  return Items[idx].Height;
+}
+
+
+final void FixTopIndex () {
+  if (Items.Num == 0) return;
+  if (Items.Num == 1) { CursorPos = 0; ChildrenOfsY = 0; return; }
+  if (!MenuScrollable) { ChildrenOfsY = 0; return; }
+  if (CursorPos < 0) CursorPos = Items.Num-1; else if (CursorPos >= Items.Num) CursorPos = 0;
+  int th = CalcTotalHeight();
+  int ys = GetItemYS(CursorPos);
+  int ye = GetItemYE(CursorPos);
+  //print("Menu <%s>; ofs=%d; ys=%d; ye=%d; th=%d; height=%d", NameToStr(GetClassName(Class)), ChildrenOfsY, ys, ye, th, Height);
+       if (ys+ChildrenOfsY < ChoicesStartY) ChildrenOfsY = -ys+ChoicesStartY;
+  else if (ye+ChildrenOfsY > Height) ChildrenOfsY = -(ye-Height);
+}
+
+
 void CursorMoved () {
   if (Items.Num == 0) return;
-  if (CursorPos < 0) CursorPos = Items.Num-1; else if (CursorPos >= Items.Num) CursorPos = 0;
-
-  if (CursorPrev == CursorPos || MenuChoice_BackButton(Items[CursorPos])) return;
-
+  FixTopIndex();
+  if ((CursorPrev == CursorPos && ChildrenOfsY == OfsYPrev) || MenuChoice_BackButton(Items[CursorPos])) return;
   if (CursorPos >= 0 && CursorPos < Items.Num) SetCurrentFocusChild(Items[CursorPos]);
-
   if (Selector) Selector.SetOrigin(Items[CursorPos].X+Items[CursorPos].CursorXOffs, Items[CursorPos].Y+Items[CursorPos].CursorYOffs);
+  CursorPrev = CursorPos;
+  OfsYPrev = ChildrenOfsY;
 }
 
 
 void SetDefaultChoice () {
   // default cursor position
+  ChildrenOfsY = 0;
+  OfsYPrev = 0;
   CursorPos = 0;
   CursorPrev = 0;
 
@@ -126,16 +175,19 @@ void SetDefaultChoice () {
 
 
 int GetChoiceForSaving () {
-  return CursorPos;
+  return (CursorPos+(-ChildrenOfsY)*10000);
 }
 
 
 // should be called after menu is fully created, and default choice set
-void SetSavedChoice (int idx) {
+void SetSavedChoice (int saval) {
+  int idx = saval%10000;
+  int top = saval/10000;
   if (idx < 0 || idx >= Items.Num || CursorPos == idx) return;
   if (Items[idx].Focusable && Items[idx].Enabled) {
     CursorPrev = -1;
     CursorPos = idx;
+    ChildrenOfsY = -top;
     CursorMoved();
   }
 }
@@ -161,9 +213,39 @@ void CycleNextChoice () {
 }
 
 
+void DoHome () {
+  if (Items.Num < 2) return;
+  CursorPrev = CursorPos;
+  for (CursorPos = 0; CursorPos < Items.Length; ++CursorPos) {
+    if (Items[CursorPos].Focusable && Items[CursorPos].Enabled && !MenuChoice_BackButton(Items[CursorPos])) break;
+  }
+  CursorMoved();
+}
+
+
+void DoEnd () {
+  if (Items.Num < 2) return;
+  CursorPrev = CursorPos;
+  for (CursorPos = Items.Length-1; CursorPos >= 0; --CursorPos) {
+    if (Items[CursorPos].Focusable && Items[CursorPos].Enabled && !MenuChoice_BackButton(Items[CursorPos])) break;
+  }
+  CursorMoved();
+}
+
+
 bool OnKeyDown (int key) {
   switch (key) {
+    case K_UPARROW:
+    case K_PAD8:
+    case K_MWHEELUP:
+      if (Items.Num > 1) {
+        CyclePrevChoice();
+        LocalSound('menu/cursor');
+      }
+      return true;
+
     case K_DOWNARROW:
+    case K_PAD2:
     case K_MWHEELDOWN:
       if (Items.Num > 1) {
         CycleNextChoice();
@@ -171,10 +253,18 @@ bool OnKeyDown (int key) {
       }
       return true;
 
-    case K_UPARROW:
-    case K_MWHEELUP:
+    case K_HOME:
+    case K_PAD7:
       if (Items.Num > 1) {
-        CyclePrevChoice();
+        DoHome();
+        LocalSound('menu/cursor');
+      }
+      return true;
+
+    case K_END:
+    case K_PAD1:
+      if (Items.Num > 1) {
+        DoEnd();
         LocalSound('menu/cursor');
       }
       return true;
@@ -203,6 +293,7 @@ defaultproperties {
   TitleX = 160;
   TitleY = 24;
   Focusable = true;
+  MenuScrollable = false;
 
   ActivateSound = 'menu/activate';
   DeactivateSound = 'menu/backup';
