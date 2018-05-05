@@ -736,11 +736,13 @@ bool VViewClipper::ClipCheckRegion(subregion_t* region, subsector_t* sub, bool s
 #endif
 		{
 			//k8: dunno, seems to be the same bug as above?
+			/*
 			if (D1 <= 0.0 && D2 <= 0.0)
 			{
 				ds++;
 				continue;
 			}
+			*/
 		}
 
 		if(!ds->seg->backsector)
@@ -1006,10 +1008,13 @@ bool VViewClipper::ClipCheckSubsector(subsector_t* Sub, bool shadowslight, const
 		else
 #endif
 		{
+			//k8: dunno, seems to be the same bug as above?
+			/*
 			if (D1 < 0.0 && D2 < 0.0)
 			{
 				continue;
 			}
+			*/
 		}
 
 		if(!line->backsector)
