@@ -374,7 +374,9 @@ void VLevel::LoadMap(VName AMapName)
 	}
 	else if (UseComprGLNodes)
 	{
-		LoadCompressedGLNodes(CompressedGLNodesLump);
+		if (!LoadCompressedGLNodes(CompressedGLNodesLump)) {
+			BuildNodes();
+		}
 	}
 	else
 	{
@@ -764,6 +766,7 @@ void VLevel::CreateSides()
 			{
 				GCon->Logf("Bad WAD: Line %d is two-sided but has no TWO-SIDED "
 					"flag set", i);
+				Line->flags |= ML_TWOSIDED; //k8: we need to set this, or clipper will glitch
 			}
 			NumNewSides++;
 		}
@@ -1410,8 +1413,9 @@ void VLevel::LoadPVS(int Lump)
 //
 //==========================================================================
 
-void VLevel::LoadCompressedGLNodes(int Lump)
+bool VLevel::LoadCompressedGLNodes(int Lump)
 {
+	return false; //k8:FIXME: dunno, this seems to read some shit in one of my test maps; will investigate it later
 	guard(VLevel::LoadCompressedGLNodes);
 	VStream* BaseStrm = W_CreateLumpReaderNum(Lump);
 	//	Skip header.
