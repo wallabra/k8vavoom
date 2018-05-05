@@ -112,6 +112,8 @@ bool OnKeyDown(int key)
 
 void OnMouseClick(int X, int Y)
 {
+	SetFocus();
+
 	if (bEnteringText)
 	{
 		bEnteringText = false;

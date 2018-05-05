@@ -176,6 +176,8 @@ void OnMouseClick(int X, int Y)
 {
 	int newValue;
 
+	SetFocus();
+
 	if (Value < EnumNames.Num - 1)
 		newValue = Value + 1;
 	else
@@ -190,6 +192,8 @@ void OnMouseClick(int X, int Y)
 void OnRMouseClick(int X, int Y)
 {
 	int newValue;
+
+	SetFocus();
 
 	if (Value > 0)
 		newValue = Value - 1;

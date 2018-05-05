@@ -63,8 +63,8 @@ void OnFocusReceived()
 
 void OnMouseEnter()
 {
-	SetFocus();
-	LocalSound('menu/cursor');
+	//SetFocus();
+	//LocalSound('menu/cursor');
 }
 
 defaultproperties

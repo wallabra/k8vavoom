@@ -67,6 +67,7 @@ bool OnKeyDown(int key)
 
 void OnMouseClick(int X, int Y)
 {
+	SetFocus();
 	ActivateEvent();
 	LocalSound(ActivateSound);
 }

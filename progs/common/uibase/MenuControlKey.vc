@@ -110,6 +110,7 @@ bool OnKeyDown(int key)
 
 void OnMouseClick(int X, int Y)
 {
+	SetFocus();
 	GetClGame().CurrentCtl = self;
 	GetClGame().MessageBoxStartMessage("Press new key\n\nESC to cancel",
 		ClientGameShared::MB_Control, false);

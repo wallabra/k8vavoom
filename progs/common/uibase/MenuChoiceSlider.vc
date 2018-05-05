@@ -175,6 +175,8 @@ void OnMouseClick(int X, int Y)
 {
 	float newValue;
 
+	SetFocus();
+
 	newValue = Value - ValueDelta;
 	if (newValue < MinValue)
 	{
@@ -190,6 +192,8 @@ void OnMouseClick(int X, int Y)
 void OnRMouseClick(int X, int Y)
 {
 	float newValue;
+
+	SetFocus();
 
 	newValue = Value + ValueDelta;
 	if (newValue > MaxValue)
