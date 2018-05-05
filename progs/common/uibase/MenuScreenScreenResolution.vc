@@ -68,6 +68,7 @@ void CreateChoices()
 	Width.CursorXOffs = -10;
 	Width.Text = "Width";
 	Width.Value = GetCvarS('screen_width');
+	Width.DisableSlotRendering();
 	ChoicesStartY += Width.Height;
 
 	Height = MenuInputLine(NewChild(MenuInputLine));
@@ -75,6 +76,7 @@ void CreateChoices()
 	Height.CursorXOffs = -10;
 	Height.Text = "Height";
 	Height.Value = GetCvarS('screen_height');
+	Height.DisableSlotRendering();
 	ChoicesStartY += Height.Height;
 
 	Depth = MenuChoiceEnum(NewChild(MenuChoiceEnum));

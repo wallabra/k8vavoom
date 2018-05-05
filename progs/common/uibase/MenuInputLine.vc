@@ -32,6 +32,13 @@ string	EnterText;
 
 delegate void ValueChanged(Object Sender);
 
+void DisableSlotRendering () {
+  if (DrawSlotPic) {
+    DrawSlotPic = false;
+    Height = 20;
+  }
+}
+
 void OnCreate()
 {
 	::OnCreate();
@@ -51,9 +58,9 @@ void OnDraw()
 	SetTextAlign(hleft, vtop);
 	DrawText(0, 0, Text, IsFocus() ? CR_YELLOW : CR_WHITE);
 	if (bEnteringText)
-		DrawSlot(12, EnterText, true);
+		DrawSlot(12-(DrawSlotPic ? 0 : 7), EnterText, true);
 	else
-		DrawSlot(12, Value, false);
+		DrawSlot(12-(DrawSlotPic ? 0 : 7), Value, false);
 }
 
 bool OnKeyDown(int key)
