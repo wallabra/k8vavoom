@@ -60,6 +60,9 @@ private:
 	//	Position of the widget in the parent widget.
 	int					PosX;
 	int					PosY;
+	//	Offset for children.
+	int					OfsX;
+	int					OfsY;
 	//	Size of the child area of the widget.
 	int					SizeWidth;
 	int					SizeHeight;
@@ -153,6 +156,14 @@ public:
 	{
 		SetPos(PosX, NewY);
 	}
+	void SetOfsX(int NewX)
+	{
+		if (OfsX != NewX) { OfsX = NewX; SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY); }
+	}
+	void SetOfsY(int NewY)
+	{
+		if (OfsY != NewY) { OfsY = NewY; SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY); }
+	}
 	void SetSize(int NewWidth, int NewHeight)
 	{
 		SetConfiguration(PosX, PosY, NewWidth, NewHeight, SizeScaleX,
@@ -168,8 +179,7 @@ public:
 	}
 	void SetScale(float NewScaleX, float NewScaleY)
 	{
-		SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, NewScaleX,
-			NewScaleY);
+		SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, NewScaleX, NewScaleY);
 	}
 	void SetConfiguration(int, int, int, int, float = 1.0, float = 1.0);
 
@@ -424,6 +434,8 @@ public:
 	DECLARE_FUNCTION(SetPos)
 	DECLARE_FUNCTION(SetX)
 	DECLARE_FUNCTION(SetY)
+	DECLARE_FUNCTION(SetOfsX)
+	DECLARE_FUNCTION(SetOfsY)
 	DECLARE_FUNCTION(SetSize)
 	DECLARE_FUNCTION(SetWidth)
 	DECLARE_FUNCTION(SetHeight)
