@@ -45,11 +45,13 @@ void CreateChoices()
 	Btn.Activated = ActivateControls;
 	currentY += Btn.Height;
 
+	/*
 	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
 	Btn.SetOrigin(ChoicesStartX, currentY);
 	Btn.Text = "Controls 2";
 	Btn.Activated = ActivateControls2;
 	currentY += Btn.Height;
+	*/
 
 	// Add "Special Controls" for MODs if keyconf lump is present
 	// and it has an "addkeysection" command
@@ -136,10 +138,12 @@ void ActivateControls(Object Sender)
 //
 //==========================================================================
 
+/*
 void ActivateControls2(Object Sender)
 {
 	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenControls2));
 }
+*/
 
 //==========================================================================
 //

@@ -294,11 +294,13 @@ void SetMenu(string Name)
 		PushMenuScreen(SpawnMenu(MenuScreenControls));
 		return;
 	}
+	/*
 	if (!stricmp(Name, "Controls2"))
 	{
 		PushMenuScreen(SpawnMenu(MenuScreenControls2));
 		return;
 	}
+	*/
 	if (!stricmp(Name, "Mouse"))
 	{
 		PushMenuScreen(SpawnMenu(MenuScreenMouseOptions));
