@@ -136,6 +136,7 @@ bool VSdlOpenGLDrawer::SetResolution(int AWidth, int AHeight, int ABPP,
 #if SDL_MINOR_VERSION > 2 || (SDL_MINOR_VERSION == 2 && SDL_PATCHLEVEL >= 10)
 	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
 #endif
+	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
 	// Everything is fine, set some globals and finish
 	ScreenWidth = Width;
