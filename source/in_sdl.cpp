@@ -228,7 +228,10 @@ void VSdlInputDevice::ReadInput()
 	{
 		if (firsttime) {
 			firsttime = false;
-			if (mouse) SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
+			if (mouse) {
+				//SDL_WM_GrabInput(SDL_GRAB_ON);
+				SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
+			}
 		}
 		switch (ev.type)
 		{
@@ -288,7 +291,10 @@ void VSdlInputDevice::ReadInput()
 		case SDL_ACTIVEEVENT:
 			if (mouse && !winactive && ev.active.gain)
 			{
+				//SDL_WM_GrabInput(SDL_GRAB_ON);
 				SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
+			} else if (mouse && winactive && !ev.active.gain) {
+				//SDL_WM_GrabInput(SDL_GRAB_OFF);
 			}
 			winactive = (ev.active.gain != 0);
 			break;
