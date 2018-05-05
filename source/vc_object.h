@@ -169,6 +169,7 @@ public:
 	static int GetObjectsCount();
 
 	static VStack ExecuteFunction(VMethod*);
+	static void VMDumpCallStack ();
 	static void DumpProfile();
 
 	// Functions.

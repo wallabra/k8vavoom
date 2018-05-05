@@ -135,6 +135,7 @@ VMethod::~VMethod()
 #ifndef IN_VCC
 static void PF_Fixme()
 {
+	VObject::VMDumpCallStack();
 	Sys_Error("unimplemented bulitin");
 }
 #endif
