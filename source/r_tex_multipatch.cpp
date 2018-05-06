@@ -258,6 +258,8 @@ VMultiPatchTexture::VMultiPatchTexture(VScriptParser* sc, int AType)
 				{
 					GCon->Logf("Unknown patch '%s' in texture '%s'",
 						*sc->String, *Name);
+					int LumpNum = W_CheckNumForTextureFileName("-noflat-");
+					if (LumpNum >= 0) Tex = GTextureManager.AddTexture(CreateTexture(TEXTYPE_WallPatch, LumpNum));
 					P.Tex = NULL;
 				}
 				else
