@@ -1,59 +1,41 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "network.h"
 #include "sv_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-bool	VCvar::Initialised = false;
-bool	VCvar::Cheating;
+bool VCvar::Initialised = false;
+bool VCvar::Cheating;
 
 #define CVAR_HASH_SIZE  (512)
 static VCvar* cvhBuckets[CVAR_HASH_SIZE] = {NULL};
 
 
-// CODE --------------------------------------------------------------------
-
+// ////////////////////////////////////////////////////////////////////////// //
 static vuint32 djbhash (const char *s) {
   vuint32 hash = 5381;
   if (s) {
@@ -66,175 +48,6 @@ static vuint32 djbhash (const char *s) {
   return hash;
 }
 
-
-//==========================================================================
-//
-//  VCvar::VCvar
-//
-//==========================================================================
-
-VCvar::VCvar(const char* AName, const char* ADefault, const char *AHelp, int AFlags)
-: Name(AName)
-, DefaultString(ADefault)
-, HelpString(AHelp)
-, defstrOwned(false)
-, Flags(AFlags)
-, IntValue(0)
-, FloatValue(0)
-, BoolValue(false)
-, nextInBucket(NULL)
-{
-	guard(VCvar::VCvar);
-
-	if (!DefaultString) DefaultString = ""; // 'cause why not?
-
-	if (!HelpString || !HelpString[0]) HelpString = "no help yet (FIXME!)";
-
-	if (Name && Name[0]) {
-		insertIntoHash(); // insert into hash (this leaks on duplicate vars)
-		if (Initialised) Register();
-	}
-
-	unguard;
-}
-
-//==========================================================================
-//
-//  VCvar::VCvar
-//
-//==========================================================================
-
-VCvar::VCvar(const char* AName, const VStr& ADefault, const VStr& AHelp, int AFlags)
-: Name(AName)
-, HelpString("no help yet")
-, defstrOwned(true)
-, Flags(AFlags)
-, IntValue(0)
-, FloatValue(0)
-, BoolValue(false)
-, nextInBucket(NULL)
-{
-	guard(VCvar::VCvar);
-
-	char* Tmp = new char[ADefault.Length()+1];
-	VStr::Cpy(Tmp, *ADefault);
-	DefaultString = Tmp;
-
-	if (AHelp.Length() > 0) {
-		Tmp = new char[AHelp.Length()+1];
-		VStr::Cpy(Tmp, *AHelp);
-		HelpString = Tmp;
-	}
-
-	if (Name && Name[0]) {
-		insertIntoHash(); // insert into hash (this leaks on duplicate vars)
-		check(Initialised);
-		Register();
-	}
-
-	unguard;
-}
-
-
-// returns replaced cvar, or NULL
-VCvar *VCvar::insertIntoHash () {
-  if (!this->Name || !this->Name[0]) return NULL;
-  vuint32 nhash = djbhash(this->Name);
-  this->lnhash = nhash;
-  VCvar* prev = NULL;
-  for (VCvar* cvar = cvhBuckets[nhash%CVAR_HASH_SIZE]; cvar; prev = cvar, cvar = cvar->nextInBucket) {
-    if (cvar->lnhash == nhash && !VStr::ICmp(this->Name, cvar->Name)) {
-      // replace it
-      if (prev) {
-        prev->nextInBucket = this;
-      } else {
-        cvhBuckets[nhash%CVAR_HASH_SIZE] = this;
-      }
-      this->nextInBucket = cvar->nextInBucket;
-      return cvar;
-    }
-  }
-  // new one
-  this->nextInBucket = cvhBuckets[nhash%CVAR_HASH_SIZE];
-  cvhBuckets[nhash%CVAR_HASH_SIZE] = this;
-  return NULL;
-}
-
-
-//==========================================================================
-//
-//  VCvar::Register
-//
-//==========================================================================
-
-void VCvar::Register()
-{
-	guard(VCvar::Register);
-	VCommand::AddToAutoComplete(Name);
-	DoSet(DefaultString);
-	unguard;
-}
-
-//==========================================================================
-//
-//  VCvar::Set
-//
-//==========================================================================
-
-void VCvar::Set(int value)
-{
-	guard(VCvar::Set);
-	Set(VStr(value));
-	unguard;
-}
-
-//==========================================================================
-//
-//  VCvar::Set
-//
-//==========================================================================
-
-void VCvar::Set(float value)
-{
-	guard(VCvar::Set);
-	Set(VStr(value));
-	unguard;
-}
-
-//==========================================================================
-//
-//  VCvar::Set
-//
-//==========================================================================
-
-void VCvar::Set(const VStr& AValue)
-{
-	guard(VCvar::Set);
-	if (Flags & CVAR_Latch)
-	{
-		LatchedString = AValue;
-		return;
-	}
-
-	if (Flags & CVAR_Cheat && !Cheating)
-	{
-		GCon->Log(VStr(Name) + " cannot be changed while cheating is disabled");
-		return;
-	}
-
-	DoSet(AValue);
-
-	Flags |= CVAR_Modified;
-	unguard;
-}
-
-//==========================================================================
-//
-//	VCvar::DoSet
-//
-//	Does the actual value assignement
-//
-//==========================================================================
 
 static bool xstrcmpCI (const char* s, const char *pat) {
   if (!s || !pat || !s[0] || !pat[0]) return false;
@@ -273,103 +86,223 @@ static bool convertInt (const char *s, int *outv) {
 }
 
 
-void VCvar::DoSet(const VStr& AValue)
+// ////////////////////////////////////////////////////////////////////////// //
+VCvar::VCvar(const char* AName, const char* ADefault, const char *AHelp, int AFlags)
+: Name(AName)
+, DefaultString(ADefault)
+, HelpString(AHelp)
+, defstrOwned(false)
+, Flags(AFlags)
+, IntValue(0)
+, FloatValue(0)
+, BoolValue(false)
+, nextInBucket(NULL)
 {
-	guard(VCvar::DoSet);
+  guard(VCvar::VCvar);
 
-	StringValue = AValue;
-	//IntValue = superatoi(*StringValue);
-	bool validInt = convertInt(*StringValue, &IntValue);
-	FloatValue = atof(*StringValue);
+  if (!DefaultString) DefaultString = ""; // 'cause why not?
 
-	// interpret boolean
-	if (validInt) {
-		// easy
-		BoolValue = (IntValue != 0);
-	} else {
-		// check various strings
-		BoolValue =
-		  xstrcmpCI(*StringValue, "true") ||
-		  xstrcmpCI(*StringValue, "on") ||
-		  xstrcmpCI(*StringValue, "tan") ||
-		  xstrcmpCI(*StringValue, "yes");
-	}
+  if (!HelpString || !HelpString[0]) HelpString = "no help yet (FIXME!)";
+
+  if (Name && Name[0]) {
+    insertIntoHash(); // insert into hash (this leaks on duplicate vars)
+    if (Initialised) Register();
+  }
+
+  unguard;
+}
+
+
+VCvar::VCvar(const char* AName, const VStr& ADefault, const VStr& AHelp, int AFlags)
+: Name(AName)
+, HelpString("no help yet")
+, defstrOwned(true)
+, Flags(AFlags)
+, IntValue(0)
+, FloatValue(0)
+, BoolValue(false)
+, nextInBucket(NULL)
+{
+  guard(VCvar::VCvar);
+
+  char* Tmp = new char[ADefault.Length()+1];
+  VStr::Cpy(Tmp, *ADefault);
+  DefaultString = Tmp;
+
+  if (AHelp.Length() > 0) {
+    Tmp = new char[AHelp.Length()+1];
+    VStr::Cpy(Tmp, *AHelp);
+    HelpString = Tmp;
+  }
+
+  if (Name && Name[0]) {
+    insertIntoHash(); // insert into hash (this leaks on duplicate vars)
+    check(Initialised);
+    Register();
+  }
+
+  unguard;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// returns replaced cvar, or NULL
+VCvar *VCvar::insertIntoHash () {
+  if (!this->Name || !this->Name[0]) return NULL;
+  vuint32 nhash = djbhash(this->Name);
+  this->lnhash = nhash;
+  VCvar* prev = NULL;
+  for (VCvar* cvar = cvhBuckets[nhash%CVAR_HASH_SIZE]; cvar; prev = cvar, cvar = cvar->nextInBucket) {
+    if (cvar->lnhash == nhash && !VStr::ICmp(this->Name, cvar->Name)) {
+      // replace it
+      if (prev) {
+        prev->nextInBucket = this;
+      } else {
+        cvhBuckets[nhash%CVAR_HASH_SIZE] = this;
+      }
+      this->nextInBucket = cvar->nextInBucket;
+      return cvar;
+    }
+  }
+  // new one
+  this->nextInBucket = cvhBuckets[nhash%CVAR_HASH_SIZE];
+  cvhBuckets[nhash%CVAR_HASH_SIZE] = this;
+  return NULL;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void VCvar::Register()
+{
+  guard(VCvar::Register);
+  VCommand::AddToAutoComplete(Name);
+  DoSet(DefaultString);
+  unguard;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void VCvar::Set (int value) {
+  guard(VCvar::Set);
+  Set(VStr(value));
+  unguard;
+}
+
+
+void VCvar::Set (float value) {
+  guard(VCvar::Set);
+  Set(VStr(value));
+  unguard;
+}
+
+
+void VCvar::Set (const VStr& AValue) {
+  guard(VCvar::Set);
+  if (Flags & CVAR_Latch) {
+    LatchedString = AValue;
+    return;
+  }
+
+  if (Flags & CVAR_Cheat && !Cheating) {
+    GCon->Log(VStr(Name)+" cannot be changed while cheating is disabled");
+    return;
+  }
+
+  DoSet(AValue);
+
+  Flags |= CVAR_Modified;
+  unguard;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// does the actual value assignement
+void VCvar::DoSet (const VStr& AValue) {
+  guard(VCvar::DoSet);
+
+  StringValue = AValue;
+  //IntValue = superatoi(*StringValue);
+  bool validInt = convertInt(*StringValue, &IntValue);
+  FloatValue = atof(*StringValue);
+
+  // interpret boolean
+  if (validInt) {
+    // easy
+    BoolValue = (IntValue != 0);
+  } else {
+    // check various strings
+    BoolValue =
+      xstrcmpCI(*StringValue, "true") ||
+      xstrcmpCI(*StringValue, "on") ||
+      xstrcmpCI(*StringValue, "tan") ||
+      xstrcmpCI(*StringValue, "yes");
+  }
 
 #ifdef CLIENT
-	if (Flags & CVAR_UserInfo)
-	{
-		Info_SetValueForKey(cls.userinfo, Name, *StringValue);
-		if (cl)
-		{
-			if (GGameInfo->NetMode == NM_TitleMap ||
-				GGameInfo->NetMode == NM_Standalone ||
-				GGameInfo->NetMode == NM_ListenServer)
-			{
-				VCommand::ExecuteString(VStr("setinfo \"") + Name + "\" \"" +
-					StringValue + "\"\n", VCommand::SRC_Client, cl);
-			}
-			else if (cl->Net)
-			{
-				cl->Net->SendCommand(VStr("setinfo \"") + Name + "\" \"" +
-					StringValue + "\"\n");
-			}
-		}
-	}
+  if (Flags & CVAR_UserInfo)
+  {
+    Info_SetValueForKey(cls.userinfo, Name, *StringValue);
+    if (cl)
+    {
+      if (GGameInfo->NetMode == NM_TitleMap ||
+        GGameInfo->NetMode == NM_Standalone ||
+        GGameInfo->NetMode == NM_ListenServer)
+      {
+        VCommand::ExecuteString(VStr("setinfo \"") + Name + "\" \"" +
+          StringValue + "\"\n", VCommand::SRC_Client, cl);
+      }
+      else if (cl->Net)
+      {
+        cl->Net->SendCommand(VStr("setinfo \"") + Name + "\" \"" +
+          StringValue + "\"\n");
+      }
+    }
+  }
 #endif
 
 #ifdef SERVER
-	if (Flags & CVAR_ServerInfo)
-	{
-		Info_SetValueForKey(svs.serverinfo, Name, *StringValue);
-		if (GGameInfo && GGameInfo->NetMode != NM_None &&
-			GGameInfo->NetMode != NM_Client)
-		{
-			for (int i = 0; i < MAXPLAYERS; i++)
-			{
-				if (GGameInfo->Players[i])
-				{
-					GGameInfo->Players[i]->eventClientSetServerInfo(
-						Name, StringValue);
-				}
-			}
-		}
-	}
+  if (Flags & CVAR_ServerInfo)
+  {
+    Info_SetValueForKey(svs.serverinfo, Name, *StringValue);
+    if (GGameInfo && GGameInfo->NetMode != NM_None &&
+      GGameInfo->NetMode != NM_Client)
+    {
+      for (int i = 0; i < MAXPLAYERS; i++)
+      {
+        if (GGameInfo->Players[i])
+        {
+          GGameInfo->Players[i]->eventClientSetServerInfo(
+            Name, StringValue);
+        }
+      }
+    }
+  }
 #endif
-	unguard;
+  unguard;
 }
 
-//==========================================================================
-//
-//	VCvar::IsModified
-//
-//==========================================================================
 
-bool VCvar::IsModified()
-{
-	guard(VCvar::IsModified);
-	bool ret = !!(Flags & CVAR_Modified);
-	//	Clear modified flag.
-	Flags &= ~CVAR_Modified;
-	return ret;
-	unguard;
+// ////////////////////////////////////////////////////////////////////////// //
+bool VCvar::IsModified () {
+  guard(VCvar::IsModified);
+  bool ret = !!(Flags & CVAR_Modified);
+  // clear modified flag
+  Flags &= ~CVAR_Modified;
+  return ret;
+  unguard;
 }
 
-//==========================================================================
-//
-//	VCvar::Init
-//
-//==========================================================================
 
-void VCvar::Init()
-{
-	guard(VCvar::Init);
-	for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
-		for (VCvar* cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
-			cvar->Register();
-		}
-	}
-	Initialised = true;
-	unguard;
+// ////////////////////////////////////////////////////////////////////////// //
+void VCvar::Init () {
+  guard(VCvar::Init);
+  for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+    for (VCvar* cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+      cvar->Register();
+    }
+  }
+  Initialised = true;
+  unguard;
 }
 
 
@@ -387,88 +320,56 @@ void VCvar::dumpHashStats () {
 }
 
 
-//==========================================================================
-//
-//	VCvar::Shutdown
-//
-// This is called only once on egine shutdown, so don't bother with deletion
-//
-//==========================================================================
-
-void VCvar::Shutdown()
-{
-	guard(VCvar::Shutdown);
-	dumpHashStats();
-	for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
-		for (VCvar* cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
-			// free default value
-			if (cvar->defstrOwned) {
-				delete[] const_cast<char*>(cvar->DefaultString);
-				cvar->DefaultString = ""; // set to some sensible value
-			}
-		}
-	}
-	Initialised = false;
-	unguard;
+// ////////////////////////////////////////////////////////////////////////// //
+// this is called only once on egine shutdown, so don't bother with deletion
+void VCvar::Shutdown () {
+  guard(VCvar::Shutdown);
+  dumpHashStats();
+  for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+    for (VCvar* cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+      // free default value
+      if (cvar->defstrOwned) {
+        delete[] const_cast<char*>(cvar->DefaultString);
+        cvar->DefaultString = ""; // set to some sensible value
+      }
+    }
+  }
+  Initialised = false;
+  unguard;
 }
 
-//==========================================================================
-//
-//	VCvar::Unlatch
-//
-//==========================================================================
 
-void VCvar::Unlatch()
-{
-	guard(VCvar::Unlatch);
-	for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
-		for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
-			if (cvar->LatchedString.IsNotEmpty())
-			{
-				cvar->DoSet(cvar->LatchedString);
-				cvar->LatchedString.Clean();
-			}
-		}
-	}
-	unguard;
+// ////////////////////////////////////////////////////////////////////////// //
+void VCvar::Unlatch () {
+  guard(VCvar::Unlatch);
+  for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+    for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+      if (cvar->LatchedString.IsNotEmpty()) {
+        cvar->DoSet(cvar->LatchedString);
+        cvar->LatchedString.Clean();
+      }
+    }
+  }
+  unguard;
 }
 
-//==========================================================================
-//
-//	VCvar::SetCheating
-//
-//==========================================================================
 
-void VCvar::SetCheating(bool new_state)
-{
-	guard(VCvar::SetCheating);
-	Cheating = new_state;
-	if (!Cheating) {
-		for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
-			for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
-				if (cvar->Flags&CVAR_Cheat) cvar->DoSet(cvar->DefaultString);
-			}
-		}
-	}
-	unguard;
+// ////////////////////////////////////////////////////////////////////////// //
+void VCvar::SetCheating (bool new_state) {
+  guard(VCvar::SetCheating);
+  Cheating = new_state;
+  if (!Cheating) {
+    for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+      for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+        if (cvar->Flags&CVAR_Cheat) cvar->DoSet(cvar->DefaultString);
+      }
+    }
+  }
+  unguard;
 }
 
-//==========================================================================
-//
-// VCvar::HasVar
-//
-//==========================================================================
 
-bool VCvar::HasVar (const char* var_name) {
-  return (FindVariable(var_name) != NULL);
-}
-
-//==========================================================================
-//
-// VCvar::CreateNew
-//
-//==========================================================================
-
+// ////////////////////////////////////////////////////////////////////////// //
 void VCvar::CreateNew (const char* var_name, const VStr& ADefault, const VStr& AHelp, int AFlags) {
   VCvar* cvar = FindVariable(var_name);
   if (!cvar) {
@@ -496,169 +397,106 @@ void VCvar::CreateNew (const char* var_name, const VStr& ADefault, const VStr& A
   }
 }
 
-//==========================================================================
-//
-//  VCvar::FindVariable
-//
-//==========================================================================
 
-VCvar* VCvar::FindVariable(const char* name)
-{
-	guard(VCvar::FindVariable);
-	if (!name || name[0] == 0) return NULL;
-	vuint32 nhash = djbhash(name);
-	for (VCvar *cvar = cvhBuckets[nhash%CVAR_HASH_SIZE]; cvar; cvar = cvar->nextInBucket) {
-		if (cvar->lnhash == nhash && !VStr::ICmp(name, cvar->Name)) return cvar;
-	}
-	return NULL;
-	unguard;
+// ////////////////////////////////////////////////////////////////////////// //
+bool VCvar::HasVar (const char* var_name) {
+  return (FindVariable(var_name) != NULL);
 }
 
-//==========================================================================
-//
-//  VCvar::GetInt
-//
-//==========================================================================
 
-int VCvar::GetInt(const char* var_name)
-{
-	guard(VCvar::GetInt);
-	VCvar* var = FindVariable(var_name);
-	return (var ? var->IntValue : 0);
-	unguard;
+VCvar* VCvar::FindVariable (const char* name) {
+  guard(VCvar::FindVariable);
+  if (!name || name[0] == 0) return NULL;
+  vuint32 nhash = djbhash(name);
+  for (VCvar *cvar = cvhBuckets[nhash%CVAR_HASH_SIZE]; cvar; cvar = cvar->nextInBucket) {
+    if (cvar->lnhash == nhash && !VStr::ICmp(name, cvar->Name)) return cvar;
+  }
+  return NULL;
+  unguard;
 }
 
-//==========================================================================
-//
-//  VCvar::GetFloat
-//
-//==========================================================================
 
-float VCvar::GetFloat(const char* var_name)
-{
-	guard(VCvar::GetFloat);
-	VCvar* var = FindVariable(var_name);
-	return (var ? var->FloatValue : 0.0f);
-	unguard;
+// ////////////////////////////////////////////////////////////////////////// //
+int VCvar::GetInt (const char* var_name) {
+  guard(VCvar::GetInt);
+  VCvar* var = FindVariable(var_name);
+  return (var ? var->IntValue : 0);
+  unguard;
 }
 
-//==========================================================================
-//
-//  VCvar::GetBool
-//
-//==========================================================================
+
+float VCvar::GetFloat (const char* var_name) {
+  guard(VCvar::GetFloat);
+  VCvar* var = FindVariable(var_name);
+  return (var ? var->FloatValue : 0.0f);
+  unguard;
+}
+
 
 bool VCvar::GetBool (const char* var_name) {
-	guard(VCvar::GetBool);
-	VCvar* var = FindVariable(var_name);
-	return (var ? var->BoolValue : false);
-	unguard;
+  guard(VCvar::GetBool);
+  VCvar* var = FindVariable(var_name);
+  return (var ? var->BoolValue : false);
+  unguard;
 }
 
-//==========================================================================
-//
-//  GetCharp
-//
-//==========================================================================
 
-const char* VCvar::GetCharp(const char* var_name)
-{
-	guard(VCvar::GetCharp);
-	VCvar* var = FindVariable(var_name);
-	return (var ? *var->StringValue : "");
-	unguard;
+const char* VCvar::GetCharp (const char* var_name) {
+  guard(VCvar::GetCharp);
+  VCvar* var = FindVariable(var_name);
+  return (var ? *var->StringValue : "");
+  unguard;
 }
 
-//==========================================================================
-//
-//  VCvar::GetString
-//
-//==========================================================================
 
-VStr VCvar::GetString(const char* var_name)
-{
-	guard(VCvar::GetString);
-	VCvar* var = FindVariable(var_name);
-	if (!var) return VStr();
-	return var->StringValue;
-	unguard;
+VStr VCvar::GetString (const char* var_name) {
+  guard(VCvar::GetString);
+  VCvar* var = FindVariable(var_name);
+  if (!var) return VStr();
+  return var->StringValue;
+  unguard;
 }
 
-//==========================================================================
-//
-//  VCvar::GetHelp
-//
-//==========================================================================
 
-const char *VCvar::GetHelp(const char* var_name)
-{
-	guard(VCvar::GetHelp);
-	VCvar* var = FindVariable(var_name);
-	if (!var) return NULL;
-	return var->HelpString;
-	unguard;
+// ////////////////////////////////////////////////////////////////////////// //
+const char *VCvar::GetHelp (const char* var_name) {
+  guard(VCvar::GetHelp);
+  VCvar* var = FindVariable(var_name);
+  if (!var) return NULL;
+  return var->HelpString;
+  unguard;
 }
 
-//==========================================================================
-//
-//  VCvar::Set
-//
-//==========================================================================
 
-void VCvar::Set(const char* var_name, int value)
-{
-	guard(VCvar::Set);
-	VCvar* var = FindVariable(var_name);
-	if (!var)
-	{
-		Sys_Error("Cvar_Set: variable %s not found\n", var_name);
-	}
-	var->Set(value);
-	unguard;
+// ////////////////////////////////////////////////////////////////////////// //
+void VCvar::Set (const char* var_name, int value) {
+  guard(VCvar::Set);
+  VCvar* var = FindVariable(var_name);
+  if (!var) Sys_Error("Cvar_Set: variable %s not found\n", var_name);
+  var->Set(value);
+  unguard;
 }
 
-//==========================================================================
-//
-//  VCvar::Set
-//
-//==========================================================================
 
-void VCvar::Set(const char* var_name, float value)
-{
-	guard(VCvar::Set);
-	VCvar* var = FindVariable(var_name);
-	if (!var)
-	{
-		Sys_Error("Cvar_Set: variable %s not found\n", var_name);
-	}
-	var->Set(value);
-	unguard;
+void VCvar::Set (const char* var_name, float value) {
+  guard(VCvar::Set);
+  VCvar* var = FindVariable(var_name);
+  if (!var) Sys_Error("Cvar_Set: variable %s not found\n", var_name);
+  var->Set(value);
+  unguard;
 }
 
-//==========================================================================
-//
-//  VCvar::Set
-//
-//==========================================================================
 
-void VCvar::Set(const char* var_name, const VStr& value)
-{
-	guard(VCvar::Set);
-	VCvar* var = FindVariable(var_name);
-	if (!var)
-	{
-		Sys_Error("Cvar_SetString: variable %s not found\n", var_name);
-	}
-	var->Set(value);
-	unguard;
+void VCvar::Set (const char* var_name, const VStr& value) {
+  guard(VCvar::Set);
+  VCvar* var = FindVariable(var_name);
+  if (!var) Sys_Error("Cvar_SetString: variable %s not found\n", var_name);
+  var->Set(value);
+  unguard;
 }
 
-//==========================================================================
-//
-//	VCvar::Command
-//
-//==========================================================================
 
+// ////////////////////////////////////////////////////////////////////////// //
 bool VCvar::Command (const TArray<VStr>& Args) {
   guard(VCvar::Command);
   VCvar* cvar = FindVariable(*Args[0]);
@@ -695,12 +533,8 @@ bool VCvar::Command (const TArray<VStr>& Args) {
   unguard;
 }
 
-//==========================================================================
-//
-// VCvar::countCVars
-//
-//==========================================================================
 
+// ////////////////////////////////////////////////////////////////////////// //
 vuint32 VCvar::countCVars () {
   guard(VCvar::countCVars);
   vuint32 count = 0;
@@ -713,14 +547,10 @@ vuint32 VCvar::countCVars () {
   unguard;
 }
 
-//==========================================================================
-//
-// VCvar::getSortedList
-//
-// Contains `countCVars()` elements, must be `delete[]`d.
-// Can return `NULL`.
-//
-//==========================================================================
+
+// ////////////////////////////////////////////////////////////////////////// //
+// contains `countCVars()` elements, must be `delete[]`d.
+// can return `NULL`.
 VCvar** VCvar::getSortedList () {
   guard(VCvar::getSortedList);
 
@@ -760,14 +590,8 @@ VCvar** VCvar::getSortedList () {
   unguard;
 }
 
-//==========================================================================
-//
-// VCvar::WriteVariablesToFile
-//
-// We don't care about ordering here
-//
-//==========================================================================
 
+// ////////////////////////////////////////////////////////////////////////// //
 void VCvar::WriteVariablesToFile (FILE* f) {
   guard(VCvar::WriteVariables);
   if (!f) return;
@@ -781,15 +605,12 @@ void VCvar::WriteVariablesToFile (FILE* f) {
   unguard;
 }
 
-//==========================================================================
-//
+
+// ////////////////////////////////////////////////////////////////////////// //
 // COMMAND CvarList
 //
 // This is slightly more complicated, as we want nicely sorted list.
 // It can be fairly slow, we don't care.
-//
-//==========================================================================
-
 COMMAND(CvarList) {
   guard(COMMAND CvarList);
   vuint32 count = VCvar::countCVars();
@@ -803,14 +624,11 @@ COMMAND(CvarList) {
   unguard;
 }
 
-//==========================================================================
-//
+
+// ////////////////////////////////////////////////////////////////////////// //
 // COMMAND whatis
 //
 // Show short description for a cvar.
-//
-//==========================================================================
-
 COMMAND(WhatIs) {
   guard(COMMAND WhatIs);
   if (Args.Num() != 2) {
