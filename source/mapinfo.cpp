@@ -303,16 +303,19 @@ static void DoCompatFlag(VScriptParser* sc, mapInfo_t* info, int Flag)
 static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 {
 	guard(ParseMapCommon);
+	bool newFormat = sc->Check("{");
 	// Process optional tokens
 	while (1)
 	{
 		if (sc->Check("levelnum"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			info->LevelNum = sc->Number;
 		}
 		else if (sc->Check("cluster"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			info->Cluster = sc->Number;
 			if (P_GetClusterDef(info->Cluster) == &DefaultClusterDef)
@@ -335,43 +338,61 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		}
 		else if (sc->Check("warptrans"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			info->WarpTrans = sc->Number;
 		}
 		else if (sc->Check("next"))
 		{
+			if (newFormat) sc->Expect("=");
 			info->NextMap = ParseNextMapName(sc, HexenMode);
 		}
 		else if (sc->Check("secret") || sc->Check("secretnext"))
 		{
+			if (newFormat) sc->Expect("=");
 			info->SecretMap = ParseNextMapName(sc, HexenMode);
 		}
 		else if (sc->Check("sky1"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
-			info->Sky1Texture = GTextureManager.NumForName(
-				sc->Name8, TEXTYPE_Wall, true, false);
-			sc->ExpectFloat();
-			if (HexenMode)
-			{
-				sc->Float /= 256.0;
+			info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+			if (newFormat) {
+				if (sc->Check(",")) {
+					sc->ExpectFloat();
+						if (HexenMode) sc->Float /= 256.0;
+						info->Sky1ScrollDelta = sc->Float * 35.0;
+				} else {
+					info->Sky1ScrollDelta = 0;
+				}
+			} else {
+				sc->ExpectFloat();
+				if (HexenMode) sc->Float /= 256.0;
+				info->Sky1ScrollDelta = sc->Float * 35.0;
 			}
-			info->Sky1ScrollDelta = sc->Float * 35.0;
 		}
 		else if (sc->Check("sky2"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
-			info->Sky2Texture = GTextureManager.NumForName(
-				sc->Name8, TEXTYPE_Wall, true, false);
-			sc->ExpectFloat();
-			if (HexenMode)
-			{
-				sc->Float /= 256.0;
+			info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+			if (newFormat) {
+				if (sc->Check(",")) {
+					sc->ExpectFloat();
+						if (HexenMode) sc->Float /= 256.0;
+						info->Sky1ScrollDelta = sc->Float * 35.0;
+				} else {
+					info->Sky1ScrollDelta = 0;
+				}
+			} else {
+				sc->ExpectFloat();
+				if (HexenMode) sc->Float /= 256.0;
+				info->Sky2ScrollDelta = sc->Float * 35.0;
 			}
-			info->Sky2ScrollDelta = sc->Float * 35.0;
 		}
 		else if (sc->Check("skybox"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectString();
 			info->SkyBox = *sc->String;
 		}
@@ -389,36 +410,43 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		}
 		else if (sc->Check("fadetable"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 			info->FadeTable = sc->Name8;
 		}
 		else if (sc->Check("fade"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectString();
 			info->Fade = M_ParseColour(sc->String);
 		}
 		else if (sc->Check("outsidefog"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectString();
 			info->OutsideFog = M_ParseColour(sc->String);
 		}
 		else if (sc->Check("music"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 			info->SongLump = sc->Name8;
 		}
 		else if (sc->Check("cdtrack"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			info->CDTrack = sc->Number;
 		}
 		else if (sc->Check("gravity"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			info->Gravity = (float)sc->Number;
 		}
 		else if (sc->Check("aircontrol"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectFloat();
 			info->AirControl = sc->Float;
 		}
@@ -452,8 +480,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		}
 		else if (sc->Check("specialaction_exitlevel"))
 		{
-			info->Flags &= ~(MAPINFOF_SpecialActionOpenDoor |
-				MAPINFOF_SpecialActionLowerFloor);
+			info->Flags &= ~(MAPINFOF_SpecialActionOpenDoor | MAPINFOF_SpecialActionLowerFloor);
 		}
 		else if (sc->Check("specialaction_opendoor"))
 		{
@@ -479,16 +506,19 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		}
 		else if (sc->Check("titlepatch"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 			info->TitlePatch = sc->Name8;
 		}
 		else if (sc->Check("par"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			info->ParTime = sc->Number;
 		}
 		else if (sc->Check("sucktime"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			info->SuckTime = sc->Number;
 		}
@@ -506,27 +536,23 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		}
 		else if (sc->Check("fallingdamage"))
 		{
-			info->Flags &= ~(MAPINFOF_OldFallingDamage |
-				MAPINFOF_StrifeFallingDamage);
+			info->Flags &= ~(MAPINFOF_OldFallingDamage | MAPINFOF_StrifeFallingDamage);
 			info->Flags |= MAPINFOF_FallingDamage;
 		}
 		else if (sc->Check("oldfallingdamage") ||
 			sc->Check("forcefallingdamage"))
 		{
-			info->Flags &= ~(MAPINFOF_FallingDamage |
-				MAPINFOF_StrifeFallingDamage);
+			info->Flags &= ~(MAPINFOF_FallingDamage | MAPINFOF_StrifeFallingDamage);
 			info->Flags |= MAPINFOF_OldFallingDamage;
 		}
 		else if (sc->Check("strifefallingdamage"))
 		{
-			info->Flags &= ~(MAPINFOF_OldFallingDamage |
-				MAPINFOF_FallingDamage);
+			info->Flags &= ~(MAPINFOF_OldFallingDamage | MAPINFOF_FallingDamage);
 			info->Flags |= MAPINFOF_StrifeFallingDamage;
 		}
 		else if (sc->Check("nofallingdamage"))
 		{
-			info->Flags &= ~(MAPINFOF_OldFallingDamage |
-				MAPINFOF_StrifeFallingDamage | MAPINFOF_FallingDamage);
+			info->Flags &= ~(MAPINFOF_OldFallingDamage | MAPINFOF_StrifeFallingDamage | MAPINFOF_FallingDamage);
 		}
 		else if (sc->Check("monsterfallingdamage"))
 		{
@@ -664,11 +690,13 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		}
 		else if (sc->Check("vertwallshade"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			info->VertWallShade = MID(-128, sc->Number, 127);
 		}
 		else if (sc->Check("horizwallshade"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			info->HorizWallShade = MID(-128, sc->Number, 127);
 		}
@@ -686,6 +714,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		}
 		else if (sc->Check("specialaction"))
 		{
+			if (newFormat) sc->Expect("=");
 			VMapSpecialAction& A = info->SpecialActions.Alloc();
 			sc->SetCMode(true);
 			sc->ExpectString();
@@ -715,6 +744,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		}
 		else if (sc->Check("redirect"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectString();
 			info->RedirectType = *sc->String.ToLower();
 			info->RedirectMap = ParseNextMapName(sc, HexenMode);
@@ -731,46 +761,55 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		}
 		else if (sc->Check("interpic") || sc->Check("exitpic"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 			info->ExitPic = *sc->String.ToLower();
 		}
 		else if (sc->Check("enterpic"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 			info->EnterPic = *sc->String.ToLower();
 		}
 		else if (sc->Check("intermusic"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectString();
 			info->InterMusic = *sc->String.ToLower();
 		}
 		else if (sc->Check("cd_start_track"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			cd_NonLevelTracks[CD_STARTTRACK] = sc->Number;
 		}
 		else if (sc->Check("cd_end1_track"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			cd_NonLevelTracks[CD_END1TRACK] = sc->Number;
 		}
 		else if (sc->Check("cd_end2_track"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			cd_NonLevelTracks[CD_END2TRACK] = sc->Number;
 		}
 		else if (sc->Check("cd_end3_track"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			cd_NonLevelTracks[CD_END3TRACK] = sc->Number;
 		}
 		else if (sc->Check("cd_intermission_track"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			cd_NonLevelTracks[CD_INTERTRACK] = sc->Number;
 		}
 		else if (sc->Check("cd_title_track"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			cd_NonLevelTracks[CD_TITLETRACK] = sc->Number;
 		}
@@ -778,6 +817,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		else if (sc->Check("cdid"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand cdid");
+			if (newFormat) sc->Expect("=");
 			sc->ExpectString();
 		}
 		else if (sc->Check("noinventorybar"))
@@ -787,21 +827,25 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		else if (sc->Check("airsupply"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand airsupply");
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 		}
 		else if (sc->Check("sndseq"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand sndseq");
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 		}
 		else if (sc->Check("sndinfo"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand sndinfo");
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 		}
 		else if (sc->Check("soundinfo"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand soundinfo");
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 		}
 		else if (sc->Check("allowcrouch"))
@@ -819,11 +863,13 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		else if (sc->Check("bordertexture"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand bordertexture");
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 		}
 		else if (sc->Check("f1"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand f1");
+			if (newFormat) sc->Expect("=");
 			sc->ExpectString();
 		}
 		else if (sc->Check("allowrespawn"))
@@ -833,21 +879,25 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		else if (sc->Check("teamdamage"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand teamdamage");
+			if (newFormat) sc->Expect("=");
 			sc->ExpectFloat();
 		}
 		else if (sc->Check("fogdensity"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand fogdensity");
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 		}
 		else if (sc->Check("outsidefogdensity"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand outsidefogdensity");
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 		}
 		else if (sc->Check("skyfog"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand skyfog");
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 		}
 		else if (sc->Check("teamplayon"))
@@ -869,6 +919,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		else if (sc->Check("translator"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand translator");
+			if (newFormat) sc->Expect("=");
 			sc->ExpectString();
 		}
 		else if (sc->Check("unfreezesingleplayerconversations"))
@@ -877,6 +928,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		}
 		else
 		{
+			if (newFormat) sc->Expect("}");
 			break;
 		}
 	}
@@ -1068,6 +1120,7 @@ static void ParseClusterDef(VScriptParser* sc)
 	CDef->CDTrack = 0;
 	CDef->CDId = 0;
 
+	bool newFormat = sc->Check("{");
 	while (1)
 	{
 		if (sc->Check("hub"))
@@ -1076,14 +1129,17 @@ static void ParseClusterDef(VScriptParser* sc)
 		}
 		else if (sc->Check("entertext"))
 		{
+			if (newFormat) sc->Expect("=");
 			if (sc->Check("lookup"))
 			{
+				if (newFormat) sc->Expect(",");
 				CDef->Flags |= CLUSTERF_LookupEnterText;
 				sc->ExpectString();
 				CDef->EnterText = sc->String.ToLower();
 			}
 			else
 			{
+				if (newFormat) sc->Expect(",");
 				CDef->Flags &= ~CLUSTERF_LookupEnterText;
 				sc->ExpectString();
 				CDef->EnterText = sc->String;
@@ -1095,14 +1151,17 @@ static void ParseClusterDef(VScriptParser* sc)
 		}
 		else if (sc->Check("exittext"))
 		{
+			if (newFormat) sc->Expect("=");
 			if (sc->Check("lookup"))
 			{
+				if (newFormat) sc->Expect(",");
 				CDef->Flags |= CLUSTERF_LookupExitText;
 				sc->ExpectString();
 				CDef->ExitText = sc->String.ToLower();
 			}
 			else
 			{
+				if (newFormat) sc->Expect(",");
 				CDef->Flags &= ~CLUSTERF_LookupExitText;
 				sc->ExpectString();
 				CDef->ExitText = sc->String;
@@ -1114,39 +1173,47 @@ static void ParseClusterDef(VScriptParser* sc)
 		}
 		else if (sc->Check("flat"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 			CDef->Flat = sc->Name8;
 			CDef->Flags &= ~CLUSTERF_FinalePic;
 		}
 		else if (sc->Check("pic"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 			CDef->Flat = sc->Name8;
 			CDef->Flags |= CLUSTERF_FinalePic;
 		}
 		else if (sc->Check("music"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 			CDef->Music = sc->Name8;
 		}
 		else if (sc->Check("cdtrack"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			CDef->CDTrack = sc->Number;
 		}
 		else if (sc->Check("cdid"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectNumber();
 			CDef->CDId = sc->Number;
 		}
 		else if (sc->Check("name"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->Check("lookup");
+			if (newFormat) sc->Expect(",");
 			sc->ExpectString();
 			GCon->Logf("Unimplemented MAPINFO cluster comand name");
 		}
 		else
 		{
+			if (newFormat) sc->Expect("}");
 			break;
 		}
 	}
