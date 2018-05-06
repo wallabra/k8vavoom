@@ -81,7 +81,7 @@ static int		RebornPosition;	// Position indicator for cooperative net-play rebor
 static bool		mapteleport_issued;
 
 static VCvarB	TimeLimit("TimeLimit", false, "TimeLimit mode?");
-static VCvarB	DeathMatch("DeathMatch", false, "DeathMatch mode.", CVAR_ServerInfo);
+static VCvarI	DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo);
 static VCvarB	NoMonsters("NoMonsters", false, "NoMonsters mode?");
 static VCvarI	Skill("Skill", "3", "Skill level.");
 static VCvarB	sv_cheats("sv_cheats", false, "Allow cheats in network game?", CVAR_ServerInfo | CVAR_Latch);
