@@ -167,7 +167,8 @@ static VCvarI	screen_bpp("screen_bpp", "0", "Custom screen BPP", CVAR_Archive);
 static VCvarB	screen_windowed("screen_windowed", true, "Use windowed mode?", CVAR_Archive);
 static VCvarI	brightness("brightness", "0", "Brightness.", CVAR_Archive);
 
-static VCvarB	draw_fps("draw_fps", false, "Draw FPS counter?", CVAR_Archive);
+static VCvarI	draw_fps("draw_fps", "0", "Draw FPS counter?", CVAR_Archive);
+static VCvarI	draw_fps_posx("draw_fps_posx", "0", "FPS counter position (<0:left; 0:center; >0:right)", CVAR_Archive);
 static double	fps_start = 0.0;
 static double	ms = 0.0;
 static int		fps_frames = 0;
@@ -295,11 +296,20 @@ static void DrawFPS()
 		}
 
 		T_SetFont(SmallFont);
-		T_SetAlign(hright, vtop);
-		T_DrawText(VirtualWidth - 2, 0, va("%d fps", show_fps), CR_UNTRANSLATED);
+		if (draw_fps_posx < 0) {
+			T_SetAlign(hright, vtop);
+			T_DrawText(7*8, 0, va("%d fps", show_fps), CR_UNTRANSLATED);
+		} else if (draw_fps_posx == 0) {
+			T_SetAlign(hcentre, vtop);
+			T_DrawText(VirtualWidth/2, 0, va("%02d fps", show_fps), CR_UNTRANSLATED); //FIXME
+		} else {
+			T_SetAlign(hright, vtop);
+			T_DrawText(VirtualWidth-2, 0, va("%02d fps", show_fps), CR_UNTRANSLATED);
+		}
 		if (draw_fps == 2)
 		{
-			T_DrawText(VirtualWidth - 2, 12, va("%.2f ms ", ms), CR_UNTRANSLATED);
+			T_SetAlign(hright, vtop);
+			T_DrawText(VirtualWidth-2, 12, va("%.2f ms ", ms), CR_UNTRANSLATED);
 		}
 	}
 	unguard;
