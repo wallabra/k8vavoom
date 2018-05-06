@@ -27,6 +27,7 @@
 //**
 //**************************************************************************
 
+#ifdef USE_ZONE_ALLOCATOR
 //#define ZONE_DEBUG		1
 
 void Z_Shutdown();
@@ -112,3 +113,13 @@ inline void operator delete[](void* Ptr)
 }
 
 #endif
+
+#else // USE_ZONE_ALLOCATOR
+
+extern void Z_Shutdown ();
+
+extern void* Z_Malloc (int size);
+extern void* Z_Calloc (int size);
+extern void Z_Free (void* ptr);
+
+#endif // USE_ZONE_ALLOCATOR

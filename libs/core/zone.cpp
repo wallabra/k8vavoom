@@ -33,6 +33,8 @@
 
 #include "core.h"
 
+#ifdef USE_ZONE_ALLOCATOR
+
 // MACROS ------------------------------------------------------------------
 
 #define SMALLID				0x22
@@ -522,3 +524,35 @@ void Z_Free(void* ptr)
 }
 
 #endif
+
+#else // USE_ZONE_ALLOCATOR
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+void Z_Shutdown () {
+}
+
+
+void* Z_Malloc (int size) {
+  void *res = malloc(size > 0 ? size : size+1);
+  if (!res) { fprintf(stdout, "FATAL: out of memory!\n"); *(int*)0 = 0; }
+  return res;
+}
+
+
+void* Z_Calloc (int size) {
+  void *res = malloc(size > 0 ? size : size+1);
+  if (!res) { fprintf(stdout, "FATAL: out of memory!\n"); *(int*)0 = 0; }
+  memset(res, 0, size > 0 ? size : size+1);
+  return res;
+}
+
+
+void Z_Free(void* ptr) {
+  if (ptr) free(ptr);
+}
+
+
+#endif // USE_ZONE_ALLOCATOR
