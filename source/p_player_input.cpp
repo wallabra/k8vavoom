@@ -765,6 +765,8 @@ int VBasePlayer::AcsGetInput(int InputType)
 			InputType == MODINPUT_OLDBUTTONS)
 		{
 			Btn = OldButtons;
+			//k8: hack for DooM:ONE
+			Btn &= ~BT_USE;
 		}
 		else
 		{
