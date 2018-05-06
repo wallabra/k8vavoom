@@ -373,7 +373,7 @@ void VCvar::dumpHashStats () {
     for (; cvar; cvar = cvar->nextInBucket) ++chlen;
     if (chlen > maxchain) maxchain = chlen;
   }
-  printf("CVAR statistics: %u buckets used, %u items in longest chain\n", bkused, maxchain);
+  GCon->Logf("CVAR statistics: %u buckets used, %u items in longest chain", bkused, maxchain);
 }
 
 
