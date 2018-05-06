@@ -479,8 +479,11 @@ void R_InstallSprite(const char *name, int index)
 			{
 				if (sprtemp[frame].lump[rotation] == -1)
 				{
-					Sys_Error("R_InstallSprite: Sprite %s frame %c "
-							"is missing rotations", spritename, frame + 'A');
+					if (GArgs.CheckParm("-sprloose")) {
+						GCon->Logf("R_InstallSprite: Sprite %s frame %c is missing rotations", spritename, frame+'A');
+					} else {
+						Sys_Error("R_InstallSprite: Sprite %s frame %c is missing rotations", spritename, frame+'A');
+					}
 				}
 			}
 			break;
