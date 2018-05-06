@@ -53,4 +53,6 @@
 #include "matrix.h"		//	Matrices
 #include "xml.h"		//	XML file parsing
 
+#include "hash.h"
+
 #endif
