@@ -60,28 +60,28 @@ enum
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern VCvarI		r_chasecam;
+extern VCvarB		r_chasecam;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-extern VCvarI			r_draw_mobjs;
-extern VCvarI			r_draw_psprites;
-extern VCvarI			r_models;
-extern VCvarI			r_hide_models;
-extern VCvarI			r_view_models;
-extern VCvarI			r_model_shadows;
-extern VCvarI			r_model_light;
-extern VCvarI			r_sort_sprites;
-extern VCvarI			r_fix_sprite_offsets;
+extern VCvarB			r_draw_mobjs;
+extern VCvarB			r_draw_psprites;
+extern VCvarB			r_models;
+extern VCvarB			r_hide_models;
+extern VCvarB			r_view_models;
+extern VCvarB			r_model_shadows;
+extern VCvarB			r_model_light;
+extern VCvarB			r_sort_sprites;
+extern VCvarB			r_fix_sprite_offsets;
 extern VCvarI			r_sprite_fix_delta;
-extern VCvarI			r_drawfuzz;
+extern VCvarB			r_drawfuzz;
 extern VCvarF			transsouls;
 extern VCvarI			croshair;
 extern VCvarF			croshair_alpha;
-extern VCvarI           r_max_model_lights;
-extern VCvarI           r_max_model_shadows;
+extern VCvarI			r_max_model_lights;
+extern VCvarI			r_max_model_shadows;
 
 
 // CODE --------------------------------------------------------------------

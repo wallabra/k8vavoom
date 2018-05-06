@@ -50,7 +50,7 @@ IMPLEMENT_CLASS(V, BasePlayer)
 
 static VCvarF			notify_time("notify_time", "5", "Notification timeout.", CVAR_Archive);
 static VCvarF			centre_msg_time("centre_message_time", "7", "Centered message timeout.", CVAR_Archive);
-static VCvarI			msg_echo("msg_echo", "1", "Echo messages?", CVAR_Archive);
+static VCvarB			msg_echo("msg_echo", true, "Echo messages?", CVAR_Archive);
 static VCvarI			font_colour("font_colour", "11", "Font color.", CVAR_Archive);
 static VCvarI			font_colour2("font_colour2", "11", "Secondary font color.", CVAR_Archive);
 

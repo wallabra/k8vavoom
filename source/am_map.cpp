@@ -170,10 +170,10 @@ static VCvarS	am_colour_grid("am_colour_grid", "4d 9d 42", "Automap color: grid.
 static VCvarS	am_colour_thing("am_colour_thing", "2d 2d 2d", "Automap color: thing.", CVAR_Archive);
 static VCvarS	am_colour_player("am_colour_player", "e6 e6 e6", "Automap color: player.", CVAR_Archive);
 
-static VCvarI	am_player_arrow("am_player_arrow", "1", "Draw player arrow on automap?", CVAR_Archive);
-static VCvarI	followplayer("followplayer", "1", "Should automap follow player?", CVAR_Archive); // specifies whether to follow the player around
-static VCvarI	am_rotate("am_rotate", "0", "Should automap rotate?", CVAR_Archive);
-static VCvarI	ShowStats("ShowStats", "0", "Show stats on automap?", CVAR_Archive);
+static VCvarB	am_player_arrow("am_player_arrow", true, "Draw player arrow on automap?", CVAR_Archive);
+static VCvarB	followplayer("followplayer", true, "Should automap follow player?", CVAR_Archive); // specifies whether to follow the player around
+static VCvarB	am_rotate("am_rotate", false, "Should automap rotate?", CVAR_Archive);
+static VCvarB	ShowStats("ShowStats", false, "Show stats on automap?", CVAR_Archive);
 
 static VCvarI	am_cheating("am_cheating", "0", "Oops! Automap cheats!", CVAR_Cheat);
 

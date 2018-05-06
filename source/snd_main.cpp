@@ -162,9 +162,9 @@ private:
 	//	Console variables
 	static VCvarF		snd_sfx_volume;
 	static VCvarF		snd_music_volume;
-	static VCvarI		snd_swap_stereo;
+	static VCvarB		snd_swap_stereo;
 	static VCvarI		snd_channels;
-	static VCvarI		snd_external_music;
+	static VCvarB		snd_external_music;
 	static VCvarF		snd_eax_distance_unit;
 
 	//	Friends
@@ -203,18 +203,18 @@ VAudioPublic*		GAudio;
 
 VCvarF				VAudio::snd_sfx_volume("snd_sfx_volume", "0.5", "Sound effects volume.", CVAR_Archive);
 VCvarF				VAudio::snd_music_volume("snd_music_volume", "0.5", "Music volume", CVAR_Archive);
-VCvarI				VAudio::snd_swap_stereo("snd_swap_stereo", "0", "Swap stereo channels?", CVAR_Archive);
+VCvarB				VAudio::snd_swap_stereo("snd_swap_stereo", false, "Swap stereo channels?", CVAR_Archive);
 VCvarI				VAudio::snd_channels("snd_channels", "128", "Number of sound channels.", CVAR_Archive);
-VCvarI				VAudio::snd_external_music("snd_external_music", "1", "Allow external music remapping?", CVAR_Archive);
+VCvarB				VAudio::snd_external_music("snd_external_music", true, "Allow external music remapping?", CVAR_Archive);
 VCvarF				VAudio::snd_eax_distance_unit("snd_eax_distance_unit", "32.0", "EAX distance unit.", CVAR_Archive);
 
 //  Public CVars
 #if defined(DJGPP) || defined(_WIN32)
-VCvarI				snd_mid_player("snd_mid_player", "0", "Allow MIDI?", CVAR_Archive);
+VCvarB				snd_mid_player("snd_mid_player", false, "Allow MIDI?", CVAR_Archive);
 #else
-VCvarI				snd_mid_player("snd_mid_player", "1", "Allow MIDI?", CVAR_Archive);
+VCvarB				snd_mid_player("snd_mid_player", true, "Allow MIDI?", CVAR_Archive);
 #endif
-VCvarI				snd_mod_player("snd_mod_player", "1", "Allow music modules?", CVAR_Archive);
+VCvarB				snd_mod_player("snd_mod_player", true, "Allow music modules?", CVAR_Archive);
 
 FAudioCodecDesc*	FAudioCodecDesc::List;
 

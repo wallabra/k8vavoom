@@ -60,23 +60,23 @@ enum
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern VCvarI		r_chasecam;
+extern VCvarB		r_chasecam;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-VCvarI			r_draw_mobjs("r_draw_mobjs", "1", "Draw mobjs?", CVAR_Archive);
-VCvarI			r_draw_psprites("r_draw_psprites", "1", "Draw psprites?", CVAR_Archive);
-VCvarI			r_models("r_models", "1", "Allow models?", CVAR_Archive);
-VCvarI			r_hide_models("r_hide_models", "0", "Hide models?", CVAR_Archive);
-VCvarI			r_view_models("r_view_models", "1", "View models?", CVAR_Archive);
-VCvarI			r_model_shadows("r_model_shadows", "0", "Draw model shadows?", CVAR_Archive);
-VCvarI			r_model_light("r_model_light", "1", "Draw model light?", CVAR_Archive);
-VCvarI			r_sort_sprites("r_sort_sprites", "0", "Sprite sorting.");
-VCvarI			r_fix_sprite_offsets("r_fix_sprite_offsets", "1", "Fix sprite offsets?", CVAR_Archive);
+VCvarB			r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", CVAR_Archive);
+VCvarB			r_draw_psprites("r_draw_psprites", true, "Draw psprites?", CVAR_Archive);
+VCvarB			r_models("r_models", true, "Allow models?", CVAR_Archive);
+VCvarB			r_hide_models("r_hide_models", false, "Hide models?", CVAR_Archive);
+VCvarB			r_view_models("r_view_models", true, "View models?", CVAR_Archive);
+VCvarB			r_model_shadows("r_model_shadows", false, "Draw model shadows?", CVAR_Archive);
+VCvarB			r_model_light("r_model_light", true, "Draw model light?", CVAR_Archive);
+VCvarB			r_sort_sprites("r_sort_sprites", false, "Sprite sorting.");
+VCvarB			r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite offsets?", CVAR_Archive);
 VCvarI			r_sprite_fix_delta("r_sprite_fix_delta", "-3", "Sprite offset amount.", CVAR_Archive);
-VCvarI			r_drawfuzz("r_drawfuzz", "0", "Draw fuzz effect?", CVAR_Archive);
+VCvarB			r_drawfuzz("r_drawfuzz", false, "Draw fuzz effect?", CVAR_Archive);
 VCvarF			transsouls("transsouls", "1.0", "Translucent Lost Souls?", CVAR_Archive);
 VCvarI			croshair("croshair", "2", "Crosshair type.", CVAR_Archive);
 VCvarF			croshair_alpha("croshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);

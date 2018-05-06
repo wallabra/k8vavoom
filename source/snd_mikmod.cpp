@@ -129,12 +129,12 @@ MDRIVER			VMikModAudioCodec::Driver =
 	VC_VoiceRealVolume
 };
 
-static VCvarI	s_mikmod_hqmixer("snd_mikmod_hqmixer", "0", "MikMod: use HQ mixer?", CVAR_Archive);
-static VCvarI	s_mikmod_float("snd_mikmod_float", "0", "MikMod: use floating point?", CVAR_Archive);
-static VCvarI	s_mikmod_surround("snd_mikmod_surround", "0", "MikMod: allow surround?", CVAR_Archive);
-static VCvarI	s_mikmod_interpolation("snd_mikmod_interpolation", "0", "MikMod: interpolation.", CVAR_Archive);
-static VCvarI	s_mikmod_reverse_stereo("snd_mikmod_reverse_stereo", "0", "MikMod: reverse stereo?", CVAR_Archive);
-static VCvarI	s_mikmod_lowpass("snd_mikmod_lowpass", "0", "MikMod: lowpass filter?", CVAR_Archive);
+static VCvarB	s_mikmod_hqmixer("snd_mikmod_hqmixer", true, "MikMod: use HQ mixer?", CVAR_Archive);
+static VCvarB	s_mikmod_float("snd_mikmod_float", true, "MikMod: use floating point?", CVAR_Archive);
+static VCvarB	s_mikmod_surround("snd_mikmod_surround", false, "MikMod: allow surround?", CVAR_Archive);
+static VCvarB	s_mikmod_interpolation("snd_mikmod_interpolation", true, "MikMod: interpolation.", CVAR_Archive);
+static VCvarB	s_mikmod_reverse_stereo("snd_mikmod_reverse_stereo", false, "MikMod: reverse stereo?", CVAR_Archive);
+static VCvarB	s_mikmod_lowpass("snd_mikmod_lowpass", true, "MikMod: lowpass filter?", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 

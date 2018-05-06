@@ -42,7 +42,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-extern VCvarI				r_darken;
+extern VCvarB				r_darken;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

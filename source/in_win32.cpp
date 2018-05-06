@@ -476,7 +476,7 @@ DIDATAFORMAT	VDirectInputDevice::df_Joystick =
 	VDirectInputDevice::rgodf_Joy,	// and here they are
 };
 
-static VCvarI				m_filter("m_filter", "1", "Filter input?", CVAR_Archive);
+static VCvarB				m_filter("m_filter", true, "Filter input?", CVAR_Archive);
 
 static VDirectInputDevice*	CurrentDevice;
 

@@ -115,7 +115,7 @@ public:
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern VCvarI	compat_nopassover;
+extern VCvarB	compat_nopassover;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 

@@ -79,8 +79,8 @@ static float bary2;
 static float barborderw;
 static float barborderh;
 
-static VCvarI glvis_fast("glvis_fast", "1", "GLVIS: fast mode?", CVAR_Archive);
-static VCvarI glvis_noreject("glvis_noreject", "1", "GLVIS: don't build reject table?", CVAR_Archive);
+static VCvarB glvis_fast("glvis_fast", true, "GLVIS: fast mode?", CVAR_Archive);
+static VCvarB glvis_noreject("glvis_noreject", true, "GLVIS: don't build reject table?", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 

@@ -596,14 +596,14 @@ extern int      		screenblocks;
 extern int				r_visframecount;
 
 extern byte				light_remap[256];
-extern VCvarI			r_darken;
-extern VCvarI			r_dynamic;
-extern VCvarI			r_static_lights;
+extern VCvarB			r_darken;
+extern VCvarB			r_dynamic;
+extern VCvarB			r_static_lights;
 
 extern refdef_t			refdef;
 
 extern VCvarI			aspect_ratio;
-extern VCvarI			r_interpolate_frames;
+extern VCvarB			r_interpolate_frames;
 
 extern VTextureTranslation**		TranslationTables;
 extern int							NumTranslationTables;

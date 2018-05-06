@@ -287,6 +287,6 @@ public:
 	vuint8* GetPixels();
 };
 
-extern VCvarI			r_hirestex;
+extern VCvarB			r_hirestex;
 
 #endif

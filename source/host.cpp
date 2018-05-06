@@ -58,9 +58,9 @@ void Host_Quit();
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 #ifdef DEVELOPER
-VCvarI			developer("developer", "1", "Developer (debug) mode?", CVAR_Archive);
+VCvarB			developer("developer", true, "Developer (debug) mode?", CVAR_Archive);
 #else
-VCvarI			developer("developer", "0", "Developer (debug) mode?", CVAR_Archive);
+VCvarB			developer("developer", false, "Developer (debug) mode?", CVAR_Archive);
 #endif
 
 int				host_frametics;
@@ -93,11 +93,11 @@ static VCvarF	host_framerate("framerate", "0", "Framerate limit.");
 
 static double	last_time;
 
-static VCvarI	respawnparm("RespawnMonsters", "0", "Respawn monsters?");	// checkparm of -respawn
-static VCvarI	randomclass("RandomClass", "0", "Random player class?");		// checkparm of -randclass
-static VCvarI	fastparm("Fast", "0", "Fast monsters?");					// checkparm of -fast
+static VCvarB	respawnparm("RespawnMonsters", false, "Respawn monsters?");	// checkparm of -respawn
+static VCvarB	randomclass("RandomClass", false, "Random player class?");		// checkparm of -randclass
+static VCvarB	fastparm("Fast", false, "Fast monsters?");					// checkparm of -fast
 
-static VCvarI	show_time("show_time", "0", "Show current time?");
+static VCvarB	show_time("show_time", false, "Show current time?");
 
 static VCvarS	configfile("configfile", "config.cfg", "Config file name.", CVAR_Archive);
 
@@ -244,7 +244,7 @@ static void Host_GetConsoleCommands()
 //
 //==========================================================================
 
-extern VCvarI real_time;
+extern VCvarB real_time;
 
 static bool FilterTime()
 {

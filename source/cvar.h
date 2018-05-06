@@ -134,7 +134,7 @@ public:
 // Cvar, that can be used as bool variable
 class VCvarB : public VCvar {
 public:
-  VCvarB (const char* AName, bool ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, (ADefault ? "tan" : "ona"), AHelp, AFlags) {}
+  VCvarB (const char* AName, bool ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, (ADefault ? "1" : "0"), AHelp, AFlags) {}
 
   inline operator bool () const { return BoolValue; }
   inline VCvarB &operator = (bool v) { Set(v ? 1 : 0); return *this; }

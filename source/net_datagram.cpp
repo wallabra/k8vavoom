@@ -167,7 +167,7 @@ extern TArray<VStr>	wadfiles;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static VCvarI			UseMaster("use_master", "0", "Use master server?", CVAR_Archive);
+static VCvarB			UseMaster("use_master", false, "Use master server?", CVAR_Archive);
 static VCvarS			MasterSrv("master_srv", "ketmar.no-ip.org", "Master server domain name.", CVAR_Archive);
 
 static VDatagramDriver	Impl;

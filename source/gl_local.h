@@ -670,16 +670,16 @@ protected:
 	static VCvarI tex_linear;
 	static VCvarI sprite_tex_linear;
 	static VCvarI gl_texture_filter_anisotropic;
-	static VCvarI clear;
-	static VCvarI blend_sprites;
-	static VCvarI ext_multitexture;
-	static VCvarI ext_point_parameters;
-	static VCvarI ext_anisotropy;
-	static VCvarI ext_shaders;
-	static VCvarI ext_vertex_buffer_objects;
+	static VCvarB clear;
+	static VCvarB blend_sprites;
+	static VCvarB ext_multitexture;
+	static VCvarB ext_point_parameters;
+	static VCvarB ext_anisotropy;
+	static VCvarB ext_shaders;
+	static VCvarB ext_vertex_buffer_objects;
 	static VCvarF maxdist;
-	static VCvarI model_lighting;
-	static VCvarI specular_highlights;
+	static VCvarB model_lighting;
+	static VCvarB specular_highlights;
 	static VCvarI multisampling_sample;
 
 	//	Extensions

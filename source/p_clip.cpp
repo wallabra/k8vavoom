@@ -55,8 +55,8 @@ struct VViewClipper::VClipNode
 extern VCvarF r_lights_radius;
 #endif
 
-static VCvarI clip_bsp("clip_bsp", "1", "Clip geometry behind some BSP nodes?"/*, CVAR_Archive*/);
-static VCvarI clip_enabled("clip_enabled", "1", "Do geometry cliping optimizations?"/*, CVAR_Archive*/);
+static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?"/*, CVAR_Archive*/);
+static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?"/*, CVAR_Archive*/);
 
 // CODE --------------------------------------------------------------------
 

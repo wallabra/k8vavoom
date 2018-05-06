@@ -47,7 +47,7 @@ static void G_DoCompleted();
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-VCvarI			real_time("real_time", "1", "Run server in real time?");
+VCvarB			real_time("real_time", true, "Run server in real time?");
 
 server_t		sv;
 server_static_t	svs;
@@ -80,12 +80,12 @@ static int		RebornPosition;	// Position indicator for cooperative net-play rebor
 
 static bool		mapteleport_issued;
 
-static VCvarI	TimeLimit("TimeLimit", "0", "TimeLimit mode?");
-static VCvarI	DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo);
-static VCvarI	NoMonsters("NoMonsters", "0", "NoMonsters mode?");
+static VCvarB	TimeLimit("TimeLimit", false, "TimeLimit mode?");
+static VCvarB	DeathMatch("DeathMatch", false, "DeathMatch mode.", CVAR_ServerInfo);
+static VCvarB	NoMonsters("NoMonsters", false, "NoMonsters mode?");
 static VCvarI	Skill("Skill", "3", "Skill level.");
-static VCvarI	sv_cheats("sv_cheats", "0", "Allow cheats in network game?", CVAR_ServerInfo | CVAR_Latch);
-static VCvarI	split_frame("split_frame", "1", "Splitframe mode?", CVAR_Archive);
+static VCvarB	sv_cheats("sv_cheats", false, "Allow cheats in network game?", CVAR_ServerInfo | CVAR_Latch);
+static VCvarB	split_frame("split_frame", true, "Splitframe mode?", CVAR_Archive);
 static VCvarI	sv_maxmove("sv_maxmove", "400", "Maximum allowed network movement.", CVAR_Archive);
 static VCvarF	master_heartbeat_time("master_heartbeat_time", "300", "Master server heartbit interval.", CVAR_Archive);
 

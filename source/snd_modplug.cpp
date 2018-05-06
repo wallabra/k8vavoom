@@ -67,12 +67,12 @@ public:
 
 IMPLEMENT_AUDIO_CODEC(VModPlugAudioCodec, "ModPlug");
 
-static VCvarI	s_modplug_hqmixer("snd_modplug_hqmixer", "0", "ModPlug parameter.", CVAR_Archive);
-static VCvarI	s_modplug_oversampling("snd_modplug_oversampling", "1", "ModPlug parameter.", CVAR_Archive);
-static VCvarI	s_modplug_noise_reduction("snd_modplug_noise_reduction", "0", "ModPlug parameter.", CVAR_Archive);
-static VCvarI	s_modplug_reverb("snd_modplug_reverb", "0", "ModPlug parameter.", CVAR_Archive);
-static VCvarI	s_modplug_megabass("snd_modplug_megabass", "0", "ModPlug parameter.", CVAR_Archive);
-static VCvarI	s_modplug_surround("snd_modplug_surround", "1", "ModPlug parameter.", CVAR_Archive);
+static VCvarB	s_modplug_hqmixer("snd_modplug_hqmixer", true, "ModPlug parameter.", CVAR_Archive);
+static VCvarB	s_modplug_oversampling("snd_modplug_oversampling", true, "ModPlug parameter.", CVAR_Archive);
+static VCvarB	s_modplug_noise_reduction("snd_modplug_noise_reduction", true, "ModPlug parameter.", CVAR_Archive);
+static VCvarB	s_modplug_reverb("snd_modplug_reverb", false, "ModPlug parameter.", CVAR_Archive);
+static VCvarB	s_modplug_megabass("snd_modplug_megabass", false, "ModPlug parameter.", CVAR_Archive);
+static VCvarB	s_modplug_surround("snd_modplug_surround", false, "ModPlug parameter.", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 

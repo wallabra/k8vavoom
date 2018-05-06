@@ -208,7 +208,7 @@ extern TVec				viewright;
 extern TVec				viewup;
 extern TAVec			viewangles;
 
-extern VCvarI			r_fog;
+extern VCvarB			r_fog;
 extern VCvarF			r_fog_r;
 extern VCvarF			r_fog_g;
 extern VCvarF			r_fog_b;
@@ -216,9 +216,9 @@ extern VCvarF			r_fog_start;
 extern VCvarF			r_fog_end;
 extern VCvarF			r_fog_density;
 
-extern VCvarI			r_vsync;
+extern VCvarB			r_vsync;
 
-extern VCvarI			r_fade_light;
+extern VCvarB			r_fade_light;
 extern VCvarF			r_fade_factor;
 
 extern VCvarF			r_sky_bright_factor;

@@ -61,8 +61,8 @@ TClipPlane				view_clipplanes[5];
 
 int						r_visframecount;
 
-VCvarI					r_fog("r_fog", "0", "Fog mode.");
-VCvarI					r_fog_test("r_fog_test", "0", "Is fog testing enabled?");
+VCvarB					r_fog("r_fog", false, "Fog mode.");
+VCvarB					r_fog_test("r_fog_test", false, "Is fog testing enabled?");
 VCvarF					r_fog_r("r_fog_r", "0.5", "Fog color: red component.");
 VCvarF					r_fog_g("r_fog_g", "0.5", "Fog color: green component.");
 VCvarF					r_fog_b("r_fog_b", "0.5", "Fog color: blue component.");
@@ -71,9 +71,9 @@ VCvarF					r_fog_end("r_fog_end", "2048.0", "Fog end distance.");
 VCvarF					r_fog_density("r_fog_density", "0.5", "Fog density.");
 
 VCvarI					aspect_ratio("r_aspect_ratio", "1", "Aspect ratio correction mode.", CVAR_Archive);
-VCvarI					r_interpolate_frames("r_interpolate_frames", "1", "Use frame interpolation for smoother rendering?", CVAR_Archive);
-VCvarI					r_vsync("r_vsync", "0", "VSync mode.", CVAR_Archive);
-VCvarI					r_fade_light("r_fade_light", "0", "Fade lights?", CVAR_Archive);
+VCvarB					r_interpolate_frames("r_interpolate_frames", true, "Use frame interpolation for smoother rendering?", CVAR_Archive);
+VCvarB					r_vsync("r_vsync", false, "VSync mode.", CVAR_Archive);
+VCvarB					r_fade_light("r_fade_light", "0", "Fade lights?", CVAR_Archive);
 VCvarF					r_fade_factor("r_fade_factor", "4.0", "Fade actor lights?", CVAR_Archive);
 VCvarF					r_sky_bright_factor("r_sky_bright_factor", "1.0", "Skybright actor factor.", CVAR_Archive);
 
@@ -107,7 +107,7 @@ VTextureTranslation*	PlayerTranslations[MAXPLAYERS + 1];
 static TArray<VTextureTranslation*>	CachedTranslations;
 
 // if true, load all graphics at start
-VCvarI					precache("precache", "1", "Load all graphics at startup (instead of on-demand)?", CVAR_Archive);
+VCvarB					precache("precache", true, "Load all graphics at startup (instead of on-demand)?", CVAR_Archive);
 
 static VCvarI			r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:normal; 2:advanced).", CVAR_Archive);
 
@@ -592,7 +592,7 @@ void VRenderLevelShared::TransformFrustum()
 //
 //==========================================================================
 
-VCvarI			r_chasecam("r_chasecam", "0", "Chasecam mode.", CVAR_Archive);
+VCvarB			r_chasecam("r_chasecam", false, "Chasecam mode.", CVAR_Archive);
 VCvarF			r_chase_dist("r_chase_dist", "32.0", "Chasecam distance.", CVAR_Archive);
 VCvarF			r_chase_up("r_chase_up", "128.0", "Chasecam position: up.", CVAR_Archive);
 VCvarF			r_chase_right("r_chase_right", "0", "Chasecam position: right.", CVAR_Archive);

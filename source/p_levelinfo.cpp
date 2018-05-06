@@ -42,20 +42,20 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-VCvarI	compat_shorttex("compat_shorttex", "0", "Compatibility: shorttex", 0);
-VCvarI	compat_stairs("compat_stairs", "0", "Compatibility: stairs", 0);
-VCvarI	compat_limitpain("compat_limitpain", "0", "Compatibility: limitpain", 0);
-VCvarI	compat_nopassover("compat_nopassover", "0", "Compatibility: nopassover", 0);
-VCvarI	compat_notossdrops("compat_notossdrops", "0", "Compatibility: notossdrops", 0);
-VCvarI	compat_useblocking("compat_useblocking", "0", "Compatibility: useblocking", 0);
-VCvarI	compat_nodoorlight("compat_nodoorlight", "0", "Compatibility: nodoorlight", 0);
-VCvarI	compat_ravenscroll("compat_ravenscroll", "0", "Compatibility: ravenscroll", 0);
-VCvarI	compat_soundtarget("compat_soundtarget", "0", "Compatibility: soundtarget", 0);
-VCvarI	compat_dehhealth("compat_dehhealth", "0", "Compatibility: dehhealth", 0);
-VCvarI	compat_trace("compat_trace", "0", "Compatibility: trace", 0);
-VCvarI	compat_dropoff("compat_dropoff", "0", "Compatibility: dropoff", 0);
-VCvarI	compat_boomscroll("compat_boomscroll", "0", "Compatibility: boomscroll", 0);
-VCvarI	compat_invisibility("compat_invisibility", "0", "Compatibility: invisibility", 0);
+VCvarB	compat_shorttex("compat_shorttex", false, "Compatibility: shorttex", 0);
+VCvarB	compat_stairs("compat_stairs", false, "Compatibility: stairs", 0);
+VCvarB	compat_limitpain("compat_limitpain", false, "Compatibility: limitpain", 0);
+VCvarB	compat_nopassover("compat_nopassover", false, "Compatibility: nopassover", 0);
+VCvarB	compat_notossdrops("compat_notossdrops", false, "Compatibility: notossdrops", 0);
+VCvarB	compat_useblocking("compat_useblocking", false, "Compatibility: useblocking", 0);
+VCvarB	compat_nodoorlight("compat_nodoorlight", false, "Compatibility: nodoorlight", 0);
+VCvarB	compat_ravenscroll("compat_ravenscroll", false, "Compatibility: ravenscroll", 0);
+VCvarB	compat_soundtarget("compat_soundtarget", false, "Compatibility: soundtarget", 0);
+VCvarB	compat_dehhealth("compat_dehhealth", false, "Compatibility: dehhealth", 0);
+VCvarB	compat_trace("compat_trace", false, "Compatibility: trace", 0);
+VCvarB	compat_dropoff("compat_dropoff", false, "Compatibility: dropoff", 0);
+VCvarB	compat_boomscroll("compat_boomscroll", false, "Compatibility: boomscroll", 0);
+VCvarB	compat_invisibility("compat_invisibility", false, "Compatibility: invisibility", 0);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

@@ -58,7 +58,7 @@ struct VDehFlag
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-VCvarI			Infighting("infighting", "0", "Allow infighting for all monster types?", CVAR_ServerInfo);
+VCvarB			Infighting("infighting", false, "Allow infighting for all monster types?", CVAR_ServerInfo);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

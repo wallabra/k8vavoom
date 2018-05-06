@@ -118,7 +118,7 @@ int					skyflatnum;			// sky mapping
 //	Switches
 TArray<TSwitch*>	Switches;
 
-VCvarI				r_hirestex("r_hirestex", "1", "Allow high-resolution texture replacements?", CVAR_Archive);
+VCvarB				r_hirestex("r_hirestex", true, "Allow high-resolution texture replacements?", CVAR_Archive);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

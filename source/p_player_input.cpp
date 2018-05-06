@@ -123,8 +123,8 @@ static int		joyymove;
 
 static int		impulse_cmd;
 
-static VCvarI	allways_run("allways_run", "0", "Always run?", CVAR_Archive);
-static VCvarI	artiskip("artiskip", "1", "Should Shift+Enter skip an artifact?", CVAR_Archive); // whether shift-enter skips an artifact
+static VCvarB	allways_run("allways_run", false, "Always run?", CVAR_Archive);
+static VCvarB	artiskip("artiskip", true, "Should Shift+Enter skip an artifact?", CVAR_Archive); // whether shift-enter skips an artifact
 
 static VCvarF	cl_forwardspeed("cl_forwardspeed", "200", "Forward speed.", CVAR_Archive);
 static VCvarF	cl_backspeed("cl_backspeed", "200", "Backward speed.", CVAR_Archive);
@@ -144,10 +144,10 @@ static VCvarF	cl_deathrollspeed("cl_deathrollspeed", "80", "Deathroll speed.", C
 
 static VCvarF	mouse_x_sensitivity("mouse_x_sensitivity", "5.0", "Horizontal mouse sensitivity.", CVAR_Archive);
 static VCvarF	mouse_y_sensitivity("mouse_y_sensitivity", "5.0", "Vertical mouse sensitivity.", CVAR_Archive);
-static VCvarI	mouse_look("mouse_look", "1", "Allow mouselook?", CVAR_Archive);
-static VCvarI	invert_mouse("invert_mouse", "0", "Invert mouse?", CVAR_Archive);
-static VCvarI	lookstrafe("lookstrafe", "0", "Allow lookstrafe?", CVAR_Archive);
-static VCvarI	lookspring("lookspring", "0", "Allow lookspring?", CVAR_Archive);
+static VCvarB	mouse_look("mouse_look", true, "Allow mouselook?", CVAR_Archive);
+static VCvarB	invert_mouse("invert_mouse", false, "Invert mouse?", CVAR_Archive);
+static VCvarB	lookstrafe("lookstrafe", false, "Allow lookstrafe?", CVAR_Archive);
+static VCvarB	lookspring("lookspring", false, "Allow lookspring?", CVAR_Archive);
 
 static VCvarF	m_yaw("m_yaw", "0.022", "Mouse yaw speed.", CVAR_Archive);
 static VCvarF	m_pitch("m_pitch", "0.022", "Mouse pitch speed.", CVAR_Archive);

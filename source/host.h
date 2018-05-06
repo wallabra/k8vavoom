@@ -43,7 +43,7 @@ bool Host_StartTitleMap();
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
-extern VCvarI		developer;
+extern VCvarB		developer;
 
 extern bool			host_initialised;
 extern bool			host_request_exit;
