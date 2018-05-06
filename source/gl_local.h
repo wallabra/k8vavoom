@@ -561,6 +561,7 @@ protected:
 	GLhandleARB				SurfPartProgram;
 	GLint					SurfPartTexCoordLoc;
 	GLint					SurfPartLightValLoc;
+	GLint					SurfPartSmoothParticleLoc;
 
 	GLhandleARB				ShadowsAmbientProgram;
 	GLint					ShadowsAmbientLightLoc;
@@ -681,6 +682,7 @@ protected:
 	static VCvarB model_lighting;
 	static VCvarB specular_highlights;
 	static VCvarI multisampling_sample;
+	static VCvarB gl_smooth_particles;
 
 	//	Extensions
 	bool CheckExtension(const char*);

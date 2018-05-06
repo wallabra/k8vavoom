@@ -59,6 +59,7 @@ VCvarF VOpenGLDrawer::maxdist("gl_maxdist", "8192.0", "Max view distance (too bi
 VCvarB VOpenGLDrawer::model_lighting("gl_model_lighting", true, "Light models?", CVAR_Archive);
 VCvarB VOpenGLDrawer::specular_highlights("gl_specular_highlights", true, "Specular highlights type.", CVAR_Archive);
 VCvarI VOpenGLDrawer::multisampling_sample("gl_multisampling_sample", "1", "Multisampling mode.", CVAR_Archive);
+VCvarB VOpenGLDrawer::gl_smooth_particles("gl_smooth_particles", false, "Draw smooth particles?", CVAR_Archive);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -554,6 +555,7 @@ void VOpenGLDrawer::InitResolution()
 		SurfPartProgram = CreateProgram(VertexShader, FragmentShader);
 		SurfPartTexCoordLoc = p_glGetAttribLocationARB(SurfPartProgram, "TexCoord");
 		SurfPartLightValLoc = p_glGetAttribLocationARB(SurfPartProgram, "LightVal");
+		SurfPartSmoothParticleLoc = p_glGetUniformLocationARB(SurfPartProgram, "SmoothParticle");
 
 		VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_ambient.vs");
 		FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_ambient.fs");

@@ -1543,6 +1543,7 @@ void VOpenGLDrawer::StartParticles()
 	if (HaveShaders)
 	{
 		p_glUseProgramObjectARB(SurfPartProgram);
+		p_glUniform1iARB(SurfPartSmoothParticleLoc, gl_smooth_particles);
 		glBegin(GL_QUADS);
 	}
 	else
