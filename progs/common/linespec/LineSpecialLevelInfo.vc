@@ -1729,12 +1729,14 @@ final int EV_DoDonut(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 		secnum = XLevel.FindSectorFromTag(Arg1, secnum))
 	{
 		s1 = &XLevel.Sectors[secnum];	// s1 is pillar's sector
+		if (!s1) { print("!!!EV_DoDonut: s3 is null"); continue; } //k8: just in case
 
 		// ALREADY MOVING?  IF SO, KEEP GOING...
 		if (s1->FloorData)
 			continue;
 
 		s2 = getNextSector(s1->lines[0], s1);	// s2 is pool's sector
+		if (!s2) { print("!!!EV_DoDonut: s3 is null"); continue; } //k8: just in case
 		rtn = 1;
 
 		// find a two sided line around the pool whose other side isn't the pillar
@@ -1744,6 +1746,7 @@ final int EV_DoDonut(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 				(s2->lines[i]->backsector == s1))
 				continue;
 			s3 = s2->lines[i]->backsector;
+			if (!s3) { print("!!!EV_DoDonut: s3 is null"); continue; } //k8: just in case
 
 			//  Spawn rising slime
 			Floor = Spawn(FloorMover);
