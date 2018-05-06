@@ -6,7 +6,7 @@ episode map01
 name "No Rest for the Living"
 
 //------------------------------------------------------
-map map01 lookup nhustr_3
+map map01 lookup nhustr_1
 titlepatch nwilv00
 next map02
 secretnext map09
@@ -16,7 +16,7 @@ par 75
 sucktime 1
 music d_messag
 
-map map02 lookup nhustr_3
+map map02 lookup nhustr_2
 titlepatch nwilv01
 next map03
 secretnext map09

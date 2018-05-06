@@ -211,6 +211,17 @@ thustr_30 = "level 30: last call";
 thustr_31 = "level 31: pharaoh";
 thustr_32 = "level 32: caribbean";
 
+//	NERVE level names
+nhustr_1 = "level 1: the earth base";
+nhustr_2 = "level 2: the pain labs";
+nhustr_3 = "level 3: canyon of the dead";
+nhustr_4 = "level 4: hell mountain";
+nhustr_5 = "level 5: vivisection";
+nhustr_6 = "level 6: inferno of blood";
+nhustr_7 = "level 7: baron's banquet";
+nhustr_8 = "level 8: tomb of malevolence";
+nhustr_9 = "level 9: march of the demons";
+
 //	Doom finale texts
 e1text =
 	"Once you beat the big badasses and\n"
