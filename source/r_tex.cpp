@@ -126,6 +126,9 @@ static TArray<animDef_t>	AnimDefs;
 static TArray<frameDef_t>	FrameDefs;
 static TArray<VAnimDoorDef>	AnimDoorDefs;
 
+static TStrSet patchesWarned;
+
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -472,23 +475,19 @@ int VTextureManager::AddPatch(VName Name, int Type, bool Silent)
 	guard(VTextureManager::AddPatch);
 	//	Find the lump number.
 	int LumpNum = W_CheckNumForName(Name, WADNS_Graphics);
-	if (LumpNum < 0)
-		LumpNum = W_CheckNumForName(Name, WADNS_Sprites);
-	if (LumpNum < 0)
-	{
-		if (!Silent)
-		{
-			GCon->Logf("VTextureManager::AddPatch: Pic %s not found", *Name);
+	if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Sprites);
+	if (LumpNum < 0) {
+		if (!Silent) {
+			if (!patchesWarned.put(*Name)) {
+				GCon->Logf("VTextureManager::AddPatch: Pic %s not found", *Name);
+			}
 		}
 		return -1;
 	}
 
 	//	Check if it's already registered.
 	int i = CheckNumForName(Name, Type);
-	if (i >= 0)
-	{
-		return i;
-	}
+	if (i >= 0) return i;
 
 	//	Create new patch texture.
 	return AddTexture(VTexture::CreateTexture(Type, LumpNum));
