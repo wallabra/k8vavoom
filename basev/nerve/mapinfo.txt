@@ -1,0 +1,104 @@
+//------------------------------------------------------
+//  Episode definition
+clearepisodes
+
+episode map01
+name "No Rest for the Living"
+
+//------------------------------------------------------
+map map01 lookup nhustr_3
+titlepatch nwilv00
+next map02
+secretnext map09
+sky1 sky1 0
+cluster 11
+par 75
+sucktime 1
+music d_messag
+
+map map02 lookup nhustr_3
+titlepatch nwilv01
+next map03
+secretnext map09
+sky1 sky1 0
+cluster 11
+par 105
+sucktime 1
+music d_ddtblu
+
+map map03 lookup nhustr_3
+titlepatch nwilv02
+next map04
+secretnext map09
+sky1 sky1 0
+cluster 11
+par 120
+sucktime 1
+music d_doom
+
+map map04 lookup nhustr_4
+titlepatch nwilv03
+next map05
+secretnext map09
+sky1 sky1 0
+cluster 11
+par 105
+sucktime 1
+music d_shawn
+
+map map05 lookup nhustr_5
+titlepatch nwilv04
+next map06
+secretnext map09
+sky1 sky1 0
+cluster 11
+par 210
+sucktime 1
+music d_in_cit
+
+map map06 lookup nhustr_6
+titlepatch nwilv05
+next map07
+secretnext map09
+sky1 sky1 0
+cluster 11
+par 105
+sucktime 1
+music d_the_da
+
+map map07 lookup nhustr_7
+titlepatch nwilv06
+next map08
+secretnext map09
+sky1 sky1 0
+cluster 11
+par 165
+sucktime 1
+map07special
+music d_in_cit
+
+map map08 lookup nhustr_8
+titlepatch nwilv07
+next endgamec
+secretnext endgamec
+sky1 sky1 0
+cluster 11
+par 105
+sucktime 1
+music d_shawn
+
+map map09 lookup nhustr_9
+titlepatch nwilv08
+next map05
+secretnext map05
+sky1 sky1 0
+cluster 11
+par 135
+sucktime 1
+music d_ddtblu
+
+;------------------------------------------------------
+clusterdef 11
+exittext lookup nervetext
+flat slime16
+music d_read_m

@@ -78,3 +78,10 @@ iwad strife1.wad
 addfile voices.wad
 param -strife
 end
+
+// No Rest for the Living
+game basev/nerve
+iwad doom2.wad
+addfile nerve.wad
+param -nerve
+end
