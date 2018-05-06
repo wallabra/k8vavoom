@@ -298,6 +298,9 @@ void VSdlInputDevice::ReadInput()
 			}
 			winactive = (ev.active.gain != 0);
 			break;
+		case SDL_QUIT:
+			GCmdBuf << "Quit\n";
+			break;
 		default:
 			break;
 		}
