@@ -81,16 +81,15 @@ class VSoundSeqNode;
 //
 struct sfxinfo_t
 {
-	VName	TagName; // Name, by whitch sound is recognised in script
-	int		LumpNum; // lump number of sfx
-	bool	nfwarned; // "not found" warning already printed? (don't spam console with those)
+	VName	TagName;		// Name, by whitch sound is recognised in script
+	int		LumpNum;        // lump number of sfx
 
-	int		Priority; // Higher priority takes precendence
-	int 	NumChannels; // total number of channels a sound type may occupy
+	int		Priority;		// Higher priority takes precendence
+	int 	NumChannels;	// total number of channels a sound type may occupy
 	float	ChangePitch;
 	int		UseCount;
 	int		Link;
-	int*	Sounds; // For random sounds, Link is count.
+	int*	Sounds;			// For random sounds, Link is count.
 
 	bool	bRandomHeader;
 	bool	bPlayerReserve;

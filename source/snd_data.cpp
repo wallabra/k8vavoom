@@ -888,29 +888,29 @@ bool VSoundManager::LoadSound(int sound_id)
 		int Lump = S_sfx[sound_id].LumpNum;
 		if (S_sfx[sound_id].LumpNum < 0)
 		{
-			if (!S_sfx[sound_id].nfwarned) {
-				GCon->Logf(NAME_Dev, "Sound %s lump not found", *S_sfx[sound_id].TagName);
-			} else {
-				S_sfx[sound_id].nfwarned = true;
-			}
+			GCon->Logf(NAME_Dev, "Sound %s lump not found",
+				*S_sfx[sound_id].TagName);
 			return false;
 		}
-		int FileLump = W_FindLumpByFileNameWithExts(va("sound/%s", *W_LumpName(Lump)), Exts);
-		if (Lump < FileLump) Lump = FileLump;
+		int FileLump = W_FindLumpByFileNameWithExts(va("sound/%s",
+			*W_LumpName(Lump)), Exts);
+		if (Lump < FileLump)
+		{
+			Lump = FileLump;
+		}
 		VStream* Strm = W_CreateLumpReaderNum(Lump);
 
-		for (VSampleLoader* Ldr = VSampleLoader::List; Ldr && !S_sfx[sound_id].Data; Ldr = Ldr->Next) {
+		for (VSampleLoader* Ldr = VSampleLoader::List;
+			Ldr && !S_sfx[sound_id].Data; Ldr = Ldr->Next)
+		{
 			Ldr->Load(S_sfx[sound_id], *Strm);
 		}
 		delete Strm;
 		Strm = NULL;
-
-		if (!S_sfx[sound_id].Data) {
-			if (!S_sfx[sound_id].nfwarned) {
-				GCon->Logf(NAME_Dev, "Failed to load sound %s", *S_sfx[sound_id].TagName);
-			} else {
-				S_sfx[sound_id].nfwarned = true;
-			}
+		if (!S_sfx[sound_id].Data)
+		{
+			GCon->Logf(NAME_Dev, "Failed to load sound %s",
+				*S_sfx[sound_id].TagName);
 			return false;
 		}
 	}
