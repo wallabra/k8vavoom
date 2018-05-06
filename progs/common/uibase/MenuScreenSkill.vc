@@ -82,6 +82,7 @@ void SetDefaultChoice()
 	::SetDefaultChoice();
 	CycleNextChoice();
 	CycleNextChoice();
+	CycleNextChoice();
 }
 
 //==========================================================================
