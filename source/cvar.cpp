@@ -74,6 +74,7 @@ static bool convertInt (const char *s, int *outv) {
   while (*s && *s <= ' ') ++s;
   if (*s == '+') ++s; else if (*s == '-') { neg = true; ++s; }
   if (!s[0]) return false;
+  if (s[0] < '0' || s[0] > '9') return false;
   while (*s) {
     char ch = *s++;
     if (ch < '0' || ch > '9') { *outv = 0; return false; }
@@ -81,6 +82,55 @@ static bool convertInt (const char *s, int *outv) {
   }
   while (*s && *s <= ' ') ++s;
   if (*s) { *outv = 0; return false; }
+  if (neg) *outv = -(*outv);
+  return true;
+}
+
+
+static bool convertFloat (const char* s, float *outv) {
+  *outv = 0.0f;
+  if (!s || !s[0]) return false;
+  while (*s && *s <= ' ') ++s;
+  bool neg = (s[0] == '-');
+  if (s[0] == '+' || s[0] == '-') ++s;
+  if (!s[0]) return false;
+  // int part
+  bool wasNum = false;
+  if (s[0] >= '0' && s[0] <= '9') {
+    wasNum = true;
+    while (s[0] >= '0' && s[0] <= '9') *outv = (*outv)*10+(*s++)-'0';
+  }
+  // fractional part
+  if (s[0] == '.') {
+    ++s;
+    if (s[0] >= '0' && s[0] <= '9') {
+      wasNum = true;
+      float v = 0, div = 1.0f;
+      while (s[0] >= '0' && s[0] <= '9') {
+        div *= 10.0f;
+        v = v*10+(*s++)-'0';
+      }
+      *outv += v/div;
+    }
+  }
+  // 'e' part
+  if (wasNum && (s[0] == 'e' || s[0] == 'E')) {
+    ++s;
+    bool negexp = (s[0] == '-');
+    if (s[0] == '-' || s[0] == '+') ++s;
+    if (s[0] < '0' || s[0] > '9') { *outv = 0; return false; }
+    int exp = 0;
+    while (s[0] >= '0' && s[0] <= '9') exp = exp*10+(*s++)-'0';
+    while (exp != 0) {
+      if (negexp) *outv /= 10.0f; else *outv *= 10.0f;
+      --exp;
+    }
+  }
+  // skip trailing 'f', if any
+  if (wasNum && s[0] == 'f') ++s;
+  // trailing spaces
+  while (*s && *s <= ' ') ++s;
+  if (*s || !wasNum) { *outv = 0; return false; }
   if (neg) *outv = -(*outv);
   return true;
 }
@@ -223,10 +273,13 @@ void VCvar::DoSet (const VStr& AValue) {
   StringValue = AValue;
   //IntValue = superatoi(*StringValue);
   bool validInt = convertInt(*StringValue, &IntValue);
-  FloatValue = atof(*StringValue);
+  bool validFloat = convertFloat(*StringValue, &FloatValue);
 
   // interpret boolean
-  if (validInt) {
+  if (validFloat) {
+    // easy
+    BoolValue = (FloatValue != 0);
+  } else if (validInt) {
     // easy
     BoolValue = (IntValue != 0);
   } else {
@@ -236,7 +289,11 @@ void VCvar::DoSet (const VStr& AValue) {
       xstrcmpCI(*StringValue, "on") ||
       xstrcmpCI(*StringValue, "tan") ||
       xstrcmpCI(*StringValue, "yes");
+    IntValue = (BoolValue ? 1 : 0);
+    FloatValue = IntValue;
+    //fprintf(stderr, "CVAR: badint; str=<%s>; b=%d; i=%d; f=%f\n", *StringValue, (BoolValue ? 1 : 0), IntValue, FloatValue);
   }
+  if (!validInt && validFloat) IntValue = (int)FloatValue;
 
 #ifdef CLIENT
   if (Flags & CVAR_UserInfo)
