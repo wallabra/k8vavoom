@@ -927,6 +927,7 @@ actor ZBarrel 8100
 	Radius 15
 	Height 32
 	+Solid
+	+Pushable
 	states
 	{
 	Spawn:

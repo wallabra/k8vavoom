@@ -189,6 +189,7 @@ actor Barrel 44
 	Radius 12
 	Height 32
 	+Solid
+	+Pushable
 	states
 	{
 	Spawn:

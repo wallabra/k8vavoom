@@ -553,6 +553,7 @@ Actor BurningBarrel 70
 	Radius 16
 	Height 32
 	+Solid
+	+Pushable
 	states
 	{
 	Spawn:
