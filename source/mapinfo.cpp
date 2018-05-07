@@ -346,6 +346,15 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		{
 			if (newFormat) sc->Expect("=");
 			info->NextMap = ParseNextMapName(sc, HexenMode);
+			// hack for "complete"
+			if (sc->Check("{")) {
+				info->NextMap = "endgamec";
+				for (;;) {
+					if (sc->AtEnd()) { sc->Error("'}' not found"); break; }
+					if (sc->Check("}")) break;
+					sc->GetString();
+				}
+			}
 		}
 		else if (sc->Check("secret") || sc->Check("secretnext"))
 		{
@@ -922,6 +931,14 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 			if (newFormat) sc->Expect("=");
 			sc->ExpectString();
 		}
+		else if (sc->Check("resethealth"))
+		{
+			sc->Message("WARNING: ignored ResetHealth");
+		}
+		else if (sc->Check("resetinventory"))
+		{
+			sc->Message("WARNING: ignored ResetInventory");
+		}
 		else if (sc->Check("unfreezesingleplayerconversations"))
 		{
 			GCon->Logf("Unimplemented MAPINFO comand unfreezesingleplayerconversations");
@@ -1280,12 +1297,15 @@ static void ParseEpisodeDef(VScriptParser* sc)
 		EDef->TeaserName = sc->Name8;
 	}
 
+	bool newFormat = sc->Check("{");
 	while (1)
 	{
 		if (sc->Check("name"))
 		{
+			if (newFormat) sc->Expect("=");
 			if (sc->Check("lookup"))
 			{
+				if (newFormat) sc->Expect(",");
 				EDef->Flags |= EPISODEF_LookupText;
 				sc->ExpectString();
 				EDef->Text = sc->String.ToLower();
@@ -1299,11 +1319,13 @@ static void ParseEpisodeDef(VScriptParser* sc)
 		}
 		else if (sc->Check("picname"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 			EDef->PicName = sc->Name8;
 		}
 		else if (sc->Check("key"))
 		{
+			if (newFormat) sc->Expect("=");
 			sc->ExpectString();
 			EDef->Key = sc->String.ToLower();
 		}
@@ -1317,6 +1339,7 @@ static void ParseEpisodeDef(VScriptParser* sc)
 		}
 		else
 		{
+			if (newFormat) sc->Expect("}");
 			break;
 		}
 	}
@@ -1541,6 +1564,10 @@ static void ParseMapInfo(VScriptParser* sc)
 			{
 				ParseClusterDef(sc);
 			}
+			else if (sc->Check("cluster"))
+			{
+				ParseClusterDef(sc);
+			}
 			else if (sc->Check("episode"))
 			{
 				ParseEpisodeDef(sc);
@@ -1567,6 +1594,7 @@ static void ParseMapInfo(VScriptParser* sc)
 						error = true;
 						break;
 					}
+					GCon->Logf("Including '%s'...", *sc->String);
 					scstack[scsp++] = sc;
 					sc = new VScriptParser(*sc->String, W_CreateLumpReaderNum(lmp));
 					//ParseMapInfo(new VScriptParser(*sc->String, W_CreateLumpReaderNum(lmp)));
@@ -1574,6 +1602,15 @@ static void ParseMapInfo(VScriptParser* sc)
 					sc->Error(va("mapinfo include '%s' not found", *sc->String));
 					error = true;
 					break;
+				}
+			}
+			// hack for "complete"
+			else if (sc->Check("gameinfo")) {
+				sc->Expect("{");
+				for (;;) {
+					if (sc->AtEnd()) { sc->Error("'}' not found"); break; }
+					if (sc->Check("}")) break;
+					sc->GetString();
 				}
 			}
 			else
@@ -1588,6 +1625,7 @@ static void ParseMapInfo(VScriptParser* sc)
 			break;
 		}
 		if (scsp == 0) break;
+		GCon->Logf("Finished included '%s'", *sc->GetLoc().GetSource());
 		delete sc;
 		sc = scstack[--scsp];
 	}
