@@ -963,6 +963,33 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 	unguard;
 }
 
+
+static void ParseNameOrLookup (VScriptParser* sc, vuint32 lookupFlag, VStr* name, vuint32* flags) {
+  if (sc->Check("lookup")) {
+    sc->Check(",");
+    *flags |= lookupFlag;
+    sc->ExpectString();
+    *name = sc->String.ToLower();
+  } else {
+    sc->ExpectString();
+    if (sc->String.Length() > 1 && sc->String[0] == '$') {
+      *flags |= lookupFlag;
+      *name = VStr(*sc->String+1).ToLower();
+    } else {
+      *flags &= ~lookupFlag;
+      *name = sc->String;
+    }
+  }
+}
+
+static void ParseNameOrLookup (VScriptParser* sc, vint32 lookupFlag, VStr* name, vint32* flags) {
+  vuint32 lf = (vuint32)lookupFlag;
+  vuint32 flg = (vuint32)*flags;
+  ParseNameOrLookup(sc, lf, name, &flg);
+  *flags = (vint32)flg;
+}
+
+
 //==========================================================================
 //
 //	ParseMap
@@ -1051,6 +1078,8 @@ static void ParseMap(VScriptParser* sc, bool& HexenMode, mapInfo_t& Default)
 	}
 
 	// Map name must follow the number
+	ParseNameOrLookup(sc, MAPINFOF_LookupName, &info->Name, &info->Flags);
+	/*
 	if (sc->Check("lookup"))
 	{
 		info->Flags |= MAPINFOF_LookupName;
@@ -1063,6 +1092,7 @@ static void ParseMap(VScriptParser* sc, bool& HexenMode, mapInfo_t& Default)
 		sc->ExpectString();
 		info->Name = sc->String;
 	}
+	*/
 
 	//	Set song lump name from SNDINFO script
 	for (int i = 0; i < MapSongList.Num(); i++)
@@ -1147,6 +1177,7 @@ static void ParseClusterDef(VScriptParser* sc)
 		else if (sc->Check("entertext"))
 		{
 			if (newFormat) sc->Expect("=");
+			/*
 			if (sc->Check("lookup"))
 			{
 				if (newFormat) sc->Expect(",");
@@ -1161,6 +1192,8 @@ static void ParseClusterDef(VScriptParser* sc)
 				sc->ExpectString();
 				CDef->EnterText = sc->String;
 			}
+			*/
+			ParseNameOrLookup(sc, CLUSTERF_LookupEnterText, &CDef->EnterText, &CDef->Flags);
 		}
 		else if (sc->Check("entertextislump"))
 		{
@@ -1169,6 +1202,7 @@ static void ParseClusterDef(VScriptParser* sc)
 		else if (sc->Check("exittext"))
 		{
 			if (newFormat) sc->Expect("=");
+			/*
 			if (sc->Check("lookup"))
 			{
 				if (newFormat) sc->Expect(",");
@@ -1183,6 +1217,8 @@ static void ParseClusterDef(VScriptParser* sc)
 				sc->ExpectString();
 				CDef->ExitText = sc->String;
 			}
+			*/
+			ParseNameOrLookup(sc, CLUSTERF_LookupExitText, &CDef->ExitText, &CDef->Flags);
 		}
 		else if (sc->Check("exittextislump"))
 		{
@@ -1223,8 +1259,9 @@ static void ParseClusterDef(VScriptParser* sc)
 		else if (sc->Check("name"))
 		{
 			if (newFormat) sc->Expect("=");
-			sc->Check("lookup");
-			if (newFormat) sc->Expect(",");
+			if (sc->Check("lookup")) {
+				if (newFormat) sc->Expect(",");
+			}
 			sc->ExpectString();
 			GCon->Logf("Unimplemented MAPINFO cluster comand name");
 		}
@@ -1303,6 +1340,7 @@ static void ParseEpisodeDef(VScriptParser* sc)
 		if (sc->Check("name"))
 		{
 			if (newFormat) sc->Expect("=");
+			/*
 			if (sc->Check("lookup"))
 			{
 				if (newFormat) sc->Expect(",");
@@ -1312,10 +1350,17 @@ static void ParseEpisodeDef(VScriptParser* sc)
 			}
 			else
 			{
-				EDef->Flags &= ~EPISODEF_LookupText;
 				sc->ExpectString();
-				EDef->Text = sc->String;
+				if (sc->String.Length() > 0 && sc->String[0] == '$') {
+					EDef->Flags |= EPISODEF_LookupText;
+					EDef->Text = VStr(*sc->String+1);
+				} else {
+					EDef->Flags &= ~EPISODEF_LookupText;
+					EDef->Text = sc->String;
+				}
 			}
+			*/
+			ParseNameOrLookup(sc, EPISODEF_LookupText, &EDef->Text, &EDef->Flags);
 		}
 		else if (sc->Check("picname"))
 		{
