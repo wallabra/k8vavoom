@@ -27,7 +27,7 @@ actor PainElemental 71
 	Missile:
 		PAIN DE 5 A_FaceTarget
 		PAIN F 5 Bright A_FaceTarget
-		PAIN F 0 Bright A_PainAttack
+		PAIN F 0 Bright //A_PainAttack
 		Goto See
 	Pain:
 		PAIN G 6
