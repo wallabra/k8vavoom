@@ -303,7 +303,13 @@ static void ParseBase(const VStr& name)
 				{
 					IWadIndex = SearchPaths.Num();
 					VStr MainWadPath = FindMainWad(fl_mainwad);
-					W_AddFile(MainWadPath, fl_savedir, G.FixVoices);
+					//GCon->Logf("MAIN WAD(0): '%s'", *MainWadPath);
+					VStr ext = MainWadPath.ExtractFileExtension().ToLower();
+					if (ext == "pk3" || ext == "zip") {
+						AddZipFile(MainWadPath);
+					} else {
+						W_AddFile(MainWadPath, fl_savedir, G.FixVoices);
+					}
 					bIwadAdded = true;
 				}
 				for (int j = 0; j < G.AddFiles.Num(); j++)
@@ -329,7 +335,13 @@ static void ParseBase(const VStr& name)
 			if (!bIwadAdded)
 			{
 				IWadIndex = SearchPaths.Num();
-				W_AddFile(MainWadPath, fl_savedir, G.FixVoices);
+				//GCon->Logf("MAIN WAD(1): '%s'", *MainWadPath);
+				VStr ext = MainWadPath.ExtractFileExtension().ToLower();
+				if (ext == "pk3" || ext == "zip") {
+					AddZipFile(MainWadPath);
+				} else {
+					W_AddFile(MainWadPath, fl_savedir, G.FixVoices);
+				}
 				bIwadAdded = true;
 			}
 			for (int j = 0; j < G.AddFiles.Num(); j++)

@@ -453,10 +453,10 @@ int VZipFile::CheckNumForName(VName LumpName, EWadNamespace NS)
 int VZipFile::CheckNumForFileName(VStr Name)
 {
 	guard(VZipFile::CheckNumForFileName);
-	VStr CheckName = Name.ToLower();
+	//VStr CheckName = Name.ToLower();
 	for (int i = NumFiles - 1; i >= 0; i--)
 	{
-		if (Files[i].Name == CheckName)
+		if (Files[i].Name.ICmp(Name) == 0)
 		{
 			return i;
 		}

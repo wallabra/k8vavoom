@@ -249,6 +249,7 @@ void W_BuildPVS(int lump, int gllump)
 int W_CheckNumForName(VName Name, EWadNamespace NS)
 {
 	guard(W_CheckNumForName);
+
 	for (int wi = SearchPaths.Num() - 1; wi >= 0; wi--)
 	{
 		int i = SearchPaths[wi]->CheckNumForName(Name, NS);
@@ -256,6 +257,14 @@ int W_CheckNumForName(VName Name, EWadNamespace NS)
 		{
 			return MAKE_HANDLE(wi, i);
 		}
+	}
+
+	// k8: try "name.lmp"
+	VStr xname = VStr(*Name)+".lmp";
+	//!!!printf("looking for '%s'...\n", *xname);
+	for (int wi = SearchPaths.Num()-1; wi >= 0; --wi) {
+		int i = SearchPaths[wi]->CheckNumForFileName(xname);
+		if (i >= 0) return MAKE_HANDLE(wi, i);
 	}
 
 	// Not found.
