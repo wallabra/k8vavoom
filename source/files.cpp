@@ -67,6 +67,7 @@ TArray<VStr>			wadfiles;
 static bool				bIwadAdded;
 static TArray<VStr>		IWadDirs;
 static int				IWadIndex;
+static VCvarS game_name("game_name", "unknown", "The Name Of The Game.", CVAR_Rom);
 
 // CODE --------------------------------------------------------------------
 
@@ -507,6 +508,7 @@ void FL_Init()
 
 	if (p)
 	{
+		game_name = p;
 		SetupGameDir(p);
 	}
 	else
