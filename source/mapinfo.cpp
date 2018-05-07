@@ -1510,52 +1510,86 @@ static void ParseSkillDef(VScriptParser* sc)
 
 static void ParseMapInfo(VScriptParser* sc)
 {
+	const unsigned int MaxStack = 64;
 	guard(ParseMapInfo);
 	bool HexenMode = false;
+	VScriptParser* scstack[MaxStack];
+	unsigned int scsp = 0;
+	bool error = false;
 
 	//	Set up default map info.
 	mapInfo_t Default;
 	SetMapDefaults(Default);
 
-	while (!sc->AtEnd())
-	{
-		if (sc->Check("map"))
+	for (;;) {
+		while (!sc->AtEnd())
 		{
-			ParseMap(sc, HexenMode, Default);
+			if (sc->Check("map"))
+			{
+				ParseMap(sc, HexenMode, Default);
+			}
+			else if (sc->Check("defaultmap"))
+			{
+				SetMapDefaults(Default);
+				ParseMapCommon(sc, &Default, HexenMode);
+			}
+			else if (sc->Check("adddefaultmap"))
+			{
+				ParseMapCommon(sc, &Default, HexenMode);
+			}
+			else if (sc->Check("clusterdef"))
+			{
+				ParseClusterDef(sc);
+			}
+			else if (sc->Check("episode"))
+			{
+				ParseEpisodeDef(sc);
+			}
+			else if (sc->Check("clearepisodes"))
+			{
+				EpisodeDefs.Clear();
+			}
+			else if (sc->Check("skill"))
+			{
+				ParseSkillDef(sc);
+			}
+			else if (sc->Check("clearskills"))
+			{
+				SkillDefs.Clear();
+			}
+			else if (sc->Check("include"))
+			{
+				sc->ExpectString();
+				int lmp = W_CheckNumForFileName(sc->String);
+				if (lmp >= 0) {
+					if (scsp >= MaxStack) {
+						sc->Error(va("mapinfo include nesting too deep"));
+						error = true;
+						break;
+					}
+					scstack[scsp++] = sc;
+					sc = new VScriptParser(*sc->String, W_CreateLumpReaderNum(lmp));
+					//ParseMapInfo(new VScriptParser(*sc->String, W_CreateLumpReaderNum(lmp)));
+				} else {
+					sc->Error(va("mapinfo include '%s' not found", *sc->String));
+					error = true;
+					break;
+				}
+			}
+			else
+			{
+				sc->Error(va("Invalid command %s", *sc->String));
+				error = true;
+				break;
+			}
 		}
-		else if (sc->Check("defaultmap"))
-		{
-			SetMapDefaults(Default);
-			ParseMapCommon(sc, &Default, HexenMode);
+		if (error) {
+			while (scsp > 0) { delete sc; sc = scstack[--scsp]; }
+			break;
 		}
-		else if (sc->Check("adddefaultmap"))
-		{
-			ParseMapCommon(sc, &Default, HexenMode);
-		}
-		else if (sc->Check("clusterdef"))
-		{
-			ParseClusterDef(sc);
-		}
-		else if (sc->Check("episode"))
-		{
-			ParseEpisodeDef(sc);
-		}
-		else if (sc->Check("clearepisodes"))
-		{
-			EpisodeDefs.Clear();
-		}
-		else if (sc->Check("skill"))
-		{
-			ParseSkillDef(sc);
-		}
-		else if (sc->Check("clearskills"))
-		{
-			SkillDefs.Clear();
-		}
-		else
-		{
-			sc->Error(va("Invalid command %s", *sc->String));
-		}
+		if (scsp == 0) break;
+		delete sc;
+		sc = scstack[--scsp];
 	}
 	delete sc;
 	sc = NULL;
