@@ -414,13 +414,47 @@ void VScriptParser::ExpectString()
 //	VScriptParser::ExpectName8
 //
 //==========================================================================
+struct TKeyValS {
+  const char *key;
+  const char *value;
+};
+
+static const TKeyValS CompleteNameHacks[] = {
+  {"$bgflatE1", "FLOOR4_8" },
+  {"$bgflatE2", "SFLR6_1" },
+  {"$bgflatE3", "MFLR8_4" },
+  {"$bgflatE4", "MFLR8_3" },
+  {"$bgflat06", "SLIME16" },
+  {"$bgflat11", "RROCK14" },
+  {"$bgflat20", "RROCK07" },
+  {"$bgflat30", "RROCK17" },
+  {"$bgflat15", "RROCK13" },
+  {"$bgflat31", "RROCK19" },
+  {"$bgcastcall", "BOSSBACK" },
+  { NULL, NULL },
+};
 
 void VScriptParser::ExpectName8()
 {
 	guard(VScriptParser::ExpectName8);
 	ExpectString();
+
+	// "complete" hacks
+	if (String.Length() > 1 && String[0] == '$') {
+		if (strncmp(*String, "$MUSIC_", 7) == 0) {
+			VStr nn = VStr("d_")+VStr(*String+7).ToLower();
+			GCon->Logf("HACK: Converted name '%s' to '%s'", *String, *nn);
+			String = nn;
+		} else {
+			for (const TKeyValS *ts = CompleteNameHacks; ts->key; ++ts) {
+				if (String.ICmp(ts->key) == 0) { String = VStr(ts->value); break; }
+			}
+		}
+	}
+
 	if (String.Length() > 8)
 	{
+		GCon->Logf("Name '%s' is too long", *String);
 		Error("Name is too long");
 	}
 	Name8 = VName(*String, VName::AddLower8);
