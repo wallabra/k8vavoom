@@ -25,11 +25,9 @@
 
 class MenuScreenHelp : MenuScreen;
 
-MenuStaticBitmap	Pic;
-#ifndef DOOM2
-int					NumPages;
-int					CurPage;
-#endif
+MenuStaticBitmap Pic;
+int NumPages;
+int CurPage;
 
 //==========================================================================
 //
@@ -39,24 +37,15 @@ int					CurPage;
 
 void CreateChoices()
 {
-#ifndef DOOM2
-	if (WadLumpPresent('e4m1'))
-	{
+	if (!IsAnyDoom2) {
+		NumPages = (WadLumpPresent('e4m1') ? 1 : 2);
+	} else {
 		NumPages = 1;
 	}
-	else
-	{
-		NumPages = 2;
-	}
 	CurPage = 0;
-#endif
 
 	Pic = NewChild(MenuStaticBitmap);
-#ifdef DOOM2
-	Pic.SetPic('help');
-#else
-	Pic.SetPic('help1');
-#endif
+	if (IsAnyDoom2) Pic.SetPic('help'); else Pic.SetPic('help1');
 }
 
 //==========================================================================
@@ -68,19 +57,13 @@ void CreateChoices()
 bool OnKeyDown(int key)
 {
 	LocalSound('menu/clear');
-#ifdef DOOM2
-	ClGame.ForceMenuOff();
-#else
-	CurPage++;
-	if (key == K_ESCAPE || CurPage >= NumPages)
-	{
+	//ClGame.ForceMenuOff(); // for one page
+	++CurPage;
+	if (key == K_ESCAPE || CurPage >= NumPages) {
 		ClGame.ForceMenuOff();
-	}
-	else
-	{
+	} else {
 		Pic.SetPic('help2');
 	}
-#endif
 	return true;
 }
 

@@ -74,12 +74,10 @@ void CreateChoices()
 	btn = MenuBigTextButton(NewChild(MenuBigTextButton));
 	btn.SetPos(ChoicesStartX, currentY);
 	btn.Text = "Help";
-#ifndef DOOM2
-	if (!WadLumpPresent('e2m1'))
-	{
-		btn.Text = "Read This!";
+	if (!IsAnyDoom2) {
+		// shareware?
+		if (!WadLumpPresent('e2m1')) btn.Text = "Read This!";
 	}
-#endif
 	btn.Activated = ActivateHelp;
 	currentY += btn.Height;
 

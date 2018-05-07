@@ -115,14 +115,11 @@ int bstar;
 // used for general timing
 float cnt;
 
-#ifndef DOOM2
-
 int im_episode;
 int im_map;
 int im_nextepisode;
 int im_nextmap;
 
-#endif
 
 IntermissionBackground		Background;
 
@@ -146,10 +143,10 @@ void Start()
 		Background.ScaleY = itof(Height) / itof(Background.Height);
 	}
 
-#ifndef DOOM2
-	FindEpisodeAndMap(ClGame.im.LeaveMap, &im_episode, &im_map);
-	FindEpisodeAndMap(ClGame.im.EnterMap, &im_nextepisode, &im_nextmap);
-#endif
+	if (!IsAnyDoom2) {
+		FindEpisodeAndMap(ClGame.im.LeaveMap, &im_episode, &im_map);
+		FindEpisodeAndMap(ClGame.im.EnterMap, &im_nextepisode, &im_nextmap);
+	}
 
 	IM_InitAnimatedBack();
 
@@ -185,17 +182,17 @@ void Start()
 		else
 		{
 #ifdef FIXME
-#ifdef DOOM2
-			S_StartSong("D_DM2INT", P_GetCDIntermissionTrack(), true);
+			if (IsAnyDoom2) {
+				S_StartSong("D_DM2INT", P_GetCDIntermissionTrack(), true);
+			} else {
+				S_StartSong("D_INTER", P_GetCDIntermissionTrack(), true);
+			}
 #else
-			S_StartSong("D_INTER", P_GetCDIntermissionTrack(), true);
-#endif
-#else
-#ifdef DOOM2
-			CmdBuf_AddText("music loop D_DM2INT\n");
-#else
-			CmdBuf_AddText("music loop D_INTER\n");
-#endif
+			if (IsAnyDoom2) {
+				CmdBuf_AddText("music loop D_DM2INT\n");
+			} else {
+				CmdBuf_AddText("music loop D_INTER\n");
+			}
 #endif
 		}
 	}
@@ -205,7 +202,6 @@ void Start()
 	}
 }
 
-#ifndef DOOM2
 //==========================================================================
 //
 //  FindEpisodeAndMap
@@ -232,7 +228,6 @@ void FindEpisodeAndMap(name Name, int *epi, int *map)
 	*epi = 4;
 	*map = 1;
 }
-#endif
 
 //==========================================================================
 //
@@ -258,11 +253,9 @@ void Tick(float DeltaTime)
 			IM_UpdateSingleStats(DeltaTime);
 		break;
 
-#ifndef DOOM2
 	case IMS_NextLoc:
-		IM_UpdateNextLoc(DeltaTime);
+		if (!IsAnyDoom2) IM_UpdateNextLoc(DeltaTime);
 		break;
-#endif
 
 	case IMS_NoState:
 		IM_UpdateNoState(DeltaTime);
@@ -304,11 +297,9 @@ void OnPostDraw()
 		}
 		break;
 
-#ifndef DOOM2
 	case IMS_NextLoc:
-		IM_DrawNextLoc();
+		if (!IsAnyDoom2) IM_DrawNextLoc();
 		break;
-#endif
 
 	case IMS_NoState:
 		IM_DrawNoState();
@@ -340,18 +331,18 @@ void IM_InitAnimatedBack()
 	name BgPic = interstate ? ClGame.im.ExitPic : ClGame.im.EnterPic;
 	if (!BgPic)
 	{
-#ifdef DOOM2
-		BgPic = 'interpic';
-#else
-		if (im_episode > 3)
-		{
+		if (IsAnyDoom2) {
 			BgPic = 'interpic';
+		} else {
+			if (im_episode > 3)
+			{
+				BgPic = 'interpic';
+			}
+			else
+			{
+				BgPic = StrToName(va("$in_epi%d", im_episode));
+			}
 		}
-		else
-		{
-			BgPic = StrToName(va("$in_epi%d", im_episode));
-		}
-#endif
 	}
 	Background.Init(BgPic, interstate ?
 		IntermissionBackground::STATE_NextLoc :
@@ -659,11 +650,11 @@ void IM_UpdateSingleStats(float DeltaTime)
 		{
 			LocalSound('weapons/shotgr');
 
-#ifdef DOOM2
-			IM_InitNoState();
-#else
-			IM_InitNextLoc();
-#endif
+			if (IsAnyDoom2) {
+				IM_InitNoState();
+			} else {
+				IM_InitNextLoc();
+			}
 		}
 	}
 	else if (sp_state & 1)
@@ -888,11 +879,11 @@ void IM_UpdateCooperativeStats(float DeltaTime)
 		if (ClGame.skipintermission)
 		{
 			LocalSound('weapons/shotgr');
-#ifdef DOOM2
-			IM_InitNoState();
-#else
-			IM_InitNextLoc();
-#endif
+			if (IsAnyDoom2) {
+				IM_InitNoState();
+			} else {
+				IM_InitNextLoc();
+			}
 		}
 	}
 	else if (ng_state & 1)
@@ -1041,11 +1032,11 @@ void IM_UpdateDeathmatchStats(float DeltaTime)
 		{
 			LocalSound('misc/gibbed');
 
-#ifdef DOOM2
-			IM_InitNoState();
-#else
-			IM_InitNextLoc();
-#endif
+			if (IsAnyDoom2) {
+				IM_InitNoState();
+			} else {
+				IM_InitNextLoc();
+			}
 		}
 	}
 	else if (dm_state & 1)
@@ -1058,8 +1049,6 @@ void IM_UpdateDeathmatchStats(float DeltaTime)
 		}
 	}
 }
-
-#ifndef DOOM2
 
 //==========================================================================
 //
@@ -1101,8 +1090,6 @@ void IM_UpdateNextLoc(float DeltaTime)
 		IM_InitNoState();
 }
 
-#endif
-
 //==========================================================================
 //
 //  IM_InitNoState
@@ -1124,15 +1111,15 @@ void IM_InitNoState()
 
 void IM_DrawNoState()
 {
-#ifdef DOOM2
-	// draws which level you are entering..
-	if (ClGame.im.LeaveMap != 'map30')
-	{
-		IM_DrawEL();
+	if (IsAnyDoom2) {
+		// draws which level you are entering..
+		if (ClGame.im.LeaveMap != 'map30')
+		{
+			IM_DrawEL();
+		}
+	} else {
+		IM_DrawNextLoc();
 	}
-#else
-	IM_DrawNextLoc();
-#endif
 }
 
 //==========================================================================
@@ -1212,19 +1199,19 @@ void IM_InitText()
 	}
 	else
 	{
-#ifdef DOOM2
+		if (IsAnyDoom2) {
 #ifdef FIXME
-		S_StartSong("d_read_m", P_GetCDEnd1Track(), true);
+			S_StartSong("d_read_m", P_GetCDEnd1Track(), true);
 #else
-		CmdBuf_AddText("music loop d_read_m\n");
+			CmdBuf_AddText("music loop d_read_m\n");
 #endif
-#else
+		} else {
 #ifdef FIXME
-		S_StartSong("D_VICTOR", P_GetCDEnd1Track(), true);
+			S_StartSong("D_VICTOR", P_GetCDEnd1Track(), true);
 #else
-		CmdBuf_AddText("music loop D_VICTOR\n");
+			CmdBuf_AddText("music loop D_VICTOR\n");
 #endif
-#endif
+		}
 	}
 }
 

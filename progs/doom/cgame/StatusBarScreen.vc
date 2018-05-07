@@ -356,11 +356,11 @@ void SB_DrawMainBar()
 
 	// draw something in the blank spaces
 	// check which version of Doom we are playing
-#ifdef DOOM2
-	FillRectWithFlat(0, 448, 640, 32, 'grnrock');
-#else
-	FillRectWithFlat(0, 448, 640, 32, 'floor7_2');
-#endif
+	if (IsAnyDoom2) {
+		FillRectWithFlat(0, 448, 640, 32, 'grnrock');
+	} else {
+		FillRectWithFlat(0, 448, 640, 32, 'floor7_2');
+	}
 
 	//  background
 	DrawPic(ST_BGX, ST_BGY, pic_bar);

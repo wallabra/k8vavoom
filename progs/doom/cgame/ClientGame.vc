@@ -446,11 +446,11 @@ void DrawBorder(int x, int y, int w, int h)
 
 void DrawViewBorder(int x, int y, int w, int h)
 {
-#ifdef DOOM2
-	GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'grnrock');
-#else
-	GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'floor7_2');
-#endif
+	if (IsAnyDoom2) {
+		GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'grnrock');
+	} else {
+		GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'floor7_2');
+	}
 	DrawBorder(x, y, w, h);
 }
 
@@ -463,29 +463,29 @@ defaultproperties
 	BigSelectorAnimSpeed = 4;
 	BigSelectorAnimFrames[0] = 'm_skull1';
 	BigSelectorAnimFrames[1] = 'm_skull2';
-#ifndef DOOM2
-	DefaultFinaleMusic = 'd_victor';
-	DefaultFinaleType = 'EndGamePic1';
-	quitsounds[0] = '*death';
-	quitsounds[1] = 'demon/pain';
-	quitsounds[2] = 'grunt/pain';
-	quitsounds[3] = 'misc/gibbed';
-	quitsounds[4] = 'misc/teleport';
-	quitsounds[5] = 'grunt/sight1';
-	quitsounds[6] = 'grunt/sight3';
-	quitsounds[7] = 'demon/melee';
-#else
-	DefaultFinaleMusic = 'd_read_m';
-	DefaultFinaleType = 'EndGameCast';
-	quitsounds[0] = 'vile/active';
-	quitsounds[1] = 'misc/p_pkup';
-	quitsounds[2] = 'brain/cube';
-	quitsounds[3] = 'misc/gibbed';
-	quitsounds[4] = 'skeleton/swing';
-	quitsounds[5] = 'knight/death';
-	quitsounds[6] = 'baby/active';
-	quitsounds[7] = 'demon/melee';
-#endif
+	if (!IsAnyDoom2) {
+		DefaultFinaleMusic = 'd_victor';
+		DefaultFinaleType = 'EndGamePic1';
+		quitsounds[0] = '*death';
+		quitsounds[1] = 'demon/pain';
+		quitsounds[2] = 'grunt/pain';
+		quitsounds[3] = 'misc/gibbed';
+		quitsounds[4] = 'misc/teleport';
+		quitsounds[5] = 'grunt/sight1';
+		quitsounds[6] = 'grunt/sight3';
+		quitsounds[7] = 'demon/melee';
+	} else {
+		DefaultFinaleMusic = 'd_read_m';
+		DefaultFinaleType = 'EndGameCast';
+		quitsounds[0] = 'vile/active';
+		quitsounds[1] = 'misc/p_pkup';
+		quitsounds[2] = 'brain/cube';
+		quitsounds[3] = 'misc/gibbed';
+		quitsounds[4] = 'skeleton/swing';
+		quitsounds[5] = 'knight/death';
+		quitsounds[6] = 'baby/active';
+		quitsounds[7] = 'demon/melee';
+	}
 	endmsg[0] = "are you sure you want to\nquit this great game?";
 	endmsg[1] = "please don\'t leave, there\'s more\ndemons to toast!";
 	endmsg[2] = "let\'s beat it -- this is turning\ninto a bloodbath!";

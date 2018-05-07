@@ -49,26 +49,28 @@ void AdvanceDemo()
 	}
 
 	demosequence++;
-#ifndef DOOM2
-	if (WadLumpPresent('e4m1'))
-		demosequence %= 7;
-	else
-#endif
+	if (!IsAnyDoom2) {
+		if (WadLumpPresent('e4m1'))
+			demosequence %= 7;
+		else
+			demosequence %= 6;
+	} else {
 		demosequence %= 6;
+	}
 
 	switch (demosequence)
 	{
 	case 0:
 		page_pic = R_RegisterPic('titlepic');
-#ifndef DOOM2
-		pagetime = 170.0 / 35.0;
-//      S_StartSong("D_INTRO", P_GetCDTitleTrack(), false);
-		CmdBuf_AddText("music play d_intro\n");
-#else
-		pagetime = 11.0;
-//      S_StartSong("D_DM2TTL", P_GetCDTitleTrack(), false);
-		CmdBuf_AddText("music play d_dm2ttl\n");
-#endif
+		if (!IsAnyDoom2) {
+			pagetime = 170.0 / 35.0;
+			//S_StartSong("D_INTRO", P_GetCDTitleTrack(), false);
+			CmdBuf_AddText("music play d_intro\n");
+		} else {
+			pagetime = 11.0;
+			//S_StartSong("D_DM2TTL", P_GetCDTitleTrack(), false);
+			CmdBuf_AddText("music play d_dm2ttl\n");
+		}
 		break;
 
 	case 1:
@@ -85,33 +87,33 @@ void AdvanceDemo()
 		break;
 
 	case 4:
-#ifndef DOOM2
-		pagetime = 200.0 / 35.0;
-		if (WadLumpPresent('e4m1'))
-		{
-			page_pic = R_RegisterPic('credit');
+		if (!IsAnyDoom2) {
+			pagetime = 200.0 / 35.0;
+			if (WadLumpPresent('e4m1'))
+			{
+				page_pic = R_RegisterPic('credit');
+			}
+			else
+			{
+				page_pic = R_RegisterPic('help2');
+			}
+		} else {
+			pagetime = 11.0;
+			page_pic = R_RegisterPic('titlepic');
+			CmdBuf_AddText("music play d_dm2ttl\n");
 		}
-		else
-		{
-			page_pic = R_RegisterPic('help2');
-		}
-#else
-		pagetime = 11.0;
-		page_pic = R_RegisterPic('titlepic');
-		CmdBuf_AddText("music play d_dm2ttl\n");
-#endif
 		break;
 
 	case 5:
 		CmdBuf_AddText("PlayDemo demo3\n");
 		break;
 
-#ifndef DOOM2
 		// THE DEFINITIVE DOOM Special Edition demo
 	case 6:
-		CmdBuf_AddText("PlayDemo demo4\n");
+		if (!IsAnyDoom2) {
+			CmdBuf_AddText("PlayDemo demo4\n");
+		}
 		break;
-#endif
 	}
 }
 
@@ -123,11 +125,7 @@ void AdvanceDemo()
 
 void ForceTitle()
 {
-#ifndef DOOM2
-	pagetime = 5.0;
-#else
-	pagetime = 11.0;
-#endif
+	pagetime = (!IsAnyDoom2 ? 5.0 : 11.0);
 	page_pic = R_RegisterPic('titlepic');
 }
 

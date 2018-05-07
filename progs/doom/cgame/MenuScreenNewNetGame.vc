@@ -30,9 +30,7 @@ MenuChoiceEnum		Monsters;
 MenuChoiceEnum		DeathMatch;
 MenuChoiceEnum		Skill;
 MenuChoiceEnum		TimeLimit;
-#ifndef DOOM2
 MenuChoiceEnum		Episode;
-#endif
 MenuChoiceEnum		Level;
 
 void CreateChoices()
@@ -101,23 +99,23 @@ void CreateChoices()
 	TimeLimit.AddItem("60");
 	ChoicesStartY += TimeLimit.Height;
 
-#ifndef DOOM2
-	Episode = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-	Episode.SetOrigin(ChoicesStartX, ChoicesStartY);
-	Episode.Text = "Episode";
-	Episode.AddItem("Knee - Deep in the Dead");
-	if (WadLumpPresent('e2m1'))
-	{
-		Episode.AddItem("The Shores of Hell");
-		Episode.AddItem("Inferno");
-		if (WadLumpPresent('e4m1'))
+	if (!IsAnyDoom2) {
+		Episode = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+		Episode.SetOrigin(ChoicesStartX, ChoicesStartY);
+		Episode.Text = "Episode";
+		Episode.AddItem("Knee - Deep in the Dead");
+		if (WadLumpPresent('e2m1'))
 		{
-			Episode.AddItem("Thy Flesh Consumed");
+			Episode.AddItem("The Shores of Hell");
+			Episode.AddItem("Inferno");
+			if (WadLumpPresent('e4m1'))
+			{
+				Episode.AddItem("Thy Flesh Consumed");
+			}
 		}
+		Episode.ValueChanging = ChangedEpisode;
+		ChoicesStartY += Episode.Height;
 	}
-	Episode.ValueChanging = ChangedEpisode;
-	ChoicesStartY += Episode.Height;
-#endif
 
 	Level = MenuChoiceEnum(NewChild(MenuChoiceEnum));
 	Level.SetOrigin(ChoicesStartX, ChoicesStartY);
@@ -125,22 +123,30 @@ void CreateChoices()
 	Level.Text = "Level";
 	ChoicesStartY += Level.Height;
 
-#ifndef DOOM2
 	InitMapList(0);
-#else
-	InitMapList();
-#endif
 }
 
-#ifndef DOOM2
-void InitMapList(int epi)
-{
-	int i;
-
-	for (i = 0; i < 9; i++)
-	{
-		Level.EnumNames[i] = P_GetMapName(epi * 9 + i);
+void InitMapList (int epi) {
+	if (!IsAnyDoom2) {
+		// doom1
+		for (int i = 0; i < 9; ++i) Level.EnumNames[i] = P_GetMapName(epi * 9 + i);
+	} else {
+		// doom2
+#ifdef FIXME
+		int count = 0;
+		for (int i = 1; i <= 99; ++i) {
+			int map = P_TranslateMap(i);
+			if (map != -1) {
+				Level.EnumNames[count] = P_GetMapName(map);
+				count++;
+			}
+		}
+		Level.MaxValue = count;
+		return;
+#else
+		for (int i = 0; i < 32; ++i) Level.EnumNames[i] = P_GetMapName(i);
 	}
+#endif
 	Level.Value = 0;
 }
 
@@ -150,34 +156,6 @@ bool ChangedEpisode(Object Sender, int newValue)
 	return true;
 }
 
-#else
-void InitMapList()
-{
-	int i;
-#ifdef FIXME
-	int count = 0;
-
-	for (i = 1; i <= 99; i++)
-	{
-		int map = P_TranslateMap(i);
-
-		if (map != -1)
-		{
-			Level.EnumNames[count] = P_GetMapName(map);
-			count++;
-		}
-	}
-	Level.MaxValue = count;
-#else
-	for (i = 0; i < 32; i++)
-	{
-		Level.EnumNames[i] = P_GetMapName(i);
-	}
-#endif
-	Level.Value = 0;
-}
-#endif
-
 void ActivateStartNewGame(Object Sender)
 {
 	CmdBuf_AddText("Disconnect\n");
@@ -186,14 +164,14 @@ void ActivateStartNewGame(Object Sender)
 	CmdBuf_AddText("DeathMatch %d\n", DeathMatch.Value);
 	CmdBuf_AddText("TimeLimit %d\n", TimeLimit.Value * 5);
 	CmdBuf_AddText("Skill %d\n", Skill.Value);
-#ifdef DOOM2
-	if (Level.Value + 1 < 10)
-		CmdBuf_AddText("Map MAP0%d\n", Level.Value + 1);
-	else
-		CmdBuf_AddText("Map MAP%d\n", Level.Value + 1);
-#else
-	CmdBuf_AddText("Map E%dM%d\n", Episode.Value + 1, Level.Value + 1);
-#endif
+	if (IsAnyDoom2) {
+		if (Level.Value + 1 < 10)
+			CmdBuf_AddText("Map MAP0%d\n", Level.Value + 1);
+		else
+			CmdBuf_AddText("Map MAP%d\n", Level.Value + 1);
+	} else {
+		CmdBuf_AddText("Map E%dM%d\n", Episode.Value + 1, Level.Value + 1);
+	}
 }
 
 defaultproperties
