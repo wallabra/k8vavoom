@@ -276,6 +276,7 @@ static void ParseBase(const VStr& name)
 			if (dst.ParmFound)
 			{
 				select_game = true;
+				game_name = (*sc->String)+1;
 			}
 		}
 		if (sc->Check("fixvoices"))
