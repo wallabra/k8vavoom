@@ -1716,6 +1716,35 @@ func_loop:
 			}
 			PR_VM_BREAK;
 
+#define STRCMPOP(cmpop) \
+	{ \
+		ip++; \
+		int cmp = ((VStr*)&sp[-2].p)->Cmp(*((VStr*)&sp[-1].p)); \
+		((VStr*)&sp[-2].p)->Clean(); \
+		((VStr*)&sp[-1].p)->Clean(); \
+		sp -= 1; \
+		sp[-1].i = (cmp cmpop 0); \
+	}
+
+		PR_VM_CASE(OPC_StrEquals)
+			STRCMPOP(==)
+			PR_VM_BREAK;
+		PR_VM_CASE(OPC_StrNotEquals)
+			STRCMPOP(!=)
+			PR_VM_BREAK;
+		PR_VM_CASE(OPC_StrLess)
+			STRCMPOP(<)
+			PR_VM_BREAK;
+		PR_VM_CASE(OPC_StrLessEqu)
+			STRCMPOP(<=)
+			PR_VM_BREAK;
+		PR_VM_CASE(OPC_StrGreat)
+			STRCMPOP(>)
+			PR_VM_BREAK;
+		PR_VM_CASE(OPC_StrGreatEqu)
+			STRCMPOP(>=)
+			PR_VM_BREAK;
+
 		PR_VM_CASE(OPC_AssignStrDrop)
 			ip++;
 			*(VStr*)sp[-2].p = *(VStr*)&sp[-1].p;

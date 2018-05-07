@@ -282,6 +282,12 @@ enum
 
 	//	String operators
 	DECLARE_OPC(StrToBool, None),
+	DECLARE_OPC(StrEquals, None),
+	DECLARE_OPC(StrNotEquals, None),
+	DECLARE_OPC(StrLess, None),
+	DECLARE_OPC(StrLessEqu, None),
+	DECLARE_OPC(StrGreat, None),
+	DECLARE_OPC(StrGreatEqu, None),
 
 	//	String assignment operators
 	DECLARE_OPC(AssignStrDrop, None),

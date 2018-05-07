@@ -589,7 +589,8 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
 	case Greater:
 	case GreaterEquals:
 		if (!(op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) &&
-			!(op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float))
+		    !(op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) &&
+		    !(op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String))
 		{
 			ParseError(Loc, "Expression type mismatch");
 			delete this;
@@ -600,13 +601,14 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
 	case Equals:
 	case NotEquals:
 		if (!(op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) &&
-			!(op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) &&
-			!(op1->Type.Type == TYPE_Name && op2->Type.Type == TYPE_Name) &&
-			!(op1->Type.Type == TYPE_Pointer && op2->Type.Type == TYPE_Pointer) &&
-			!(op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) &&
-			!(op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) &&
-			!(op1->Type.Type == TYPE_State && op2->Type.Type == TYPE_State) &&
-			!(op1->Type.Type == TYPE_Reference && op2->Type.Type == TYPE_Reference))
+		    !(op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) &&
+		    !(op1->Type.Type == TYPE_Name && op2->Type.Type == TYPE_Name) &&
+		    !(op1->Type.Type == TYPE_Pointer && op2->Type.Type == TYPE_Pointer) &&
+		    !(op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) &&
+		    !(op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) &&
+		    !(op1->Type.Type == TYPE_State && op2->Type.Type == TYPE_State) &&
+		    !(op1->Type.Type == TYPE_Reference && op2->Type.Type == TYPE_Reference) &&
+		    !(op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String))
 		{
 			ParseError(Loc, "Expression type mismatch");
 			delete this;
@@ -860,6 +862,10 @@ void VBinary::Emit(VEmitContext& ec)
 		{
 			ec.AddStatement(OPC_FLess);
 		}
+		else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String)
+		{
+			ec.AddStatement(OPC_StrLess);
+		}
 		break;
 
 	case LessEquals:
@@ -870,6 +876,10 @@ void VBinary::Emit(VEmitContext& ec)
 		else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float)
 		{
 			ec.AddStatement(OPC_FLessEquals);
+		}
+		else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String)
+		{
+			ec.AddStatement(OPC_StrLessEqu);
 		}
 		break;
 
@@ -882,6 +892,10 @@ void VBinary::Emit(VEmitContext& ec)
 		{
 			ec.AddStatement(OPC_FGreater);
 		}
+		else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String)
+		{
+			ec.AddStatement(OPC_StrGreat);
+		}
 		break;
 
 	case GreaterEquals:
@@ -892,6 +906,10 @@ void VBinary::Emit(VEmitContext& ec)
 		else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float)
 		{
 			ec.AddStatement(OPC_FGreaterEquals);
+		}
+		else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String)
+		{
+			ec.AddStatement(OPC_StrGreatEqu);
 		}
 		break;
 
@@ -928,6 +946,10 @@ void VBinary::Emit(VEmitContext& ec)
 		{
 			ec.AddStatement(OPC_PtrEquals);
 		}
+		else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String)
+		{
+			ec.AddStatement(OPC_StrEquals);
+		}
 		break;
 
 	case NotEquals:
@@ -962,6 +984,10 @@ void VBinary::Emit(VEmitContext& ec)
 		else if (op1->Type.Type == TYPE_Reference && op2->Type.Type == TYPE_Reference)
 		{
 			ec.AddStatement(OPC_PtrNotEquals);
+		}
+		else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String)
+		{
+			ec.AddStatement(OPC_StrNotEquals);
 		}
 		break;
 
