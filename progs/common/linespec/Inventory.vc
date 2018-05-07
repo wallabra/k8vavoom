@@ -917,14 +917,14 @@ final void A_ReFire()
 		!PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
 	{
 		PlayerEx(Player).Refire++;
-		PlayerEx(Player).FireWeapon();
+		if (!k8InWeaponReady) PlayerEx(Player).FireWeapon();
 	}
 	else if (Wpn.FireMode == Weapon::FIRE_Secondary &&
 		(Player.Buttons & BT_ALT_ATTACK) &&
 		!PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
 	{
 		PlayerEx(Player).Refire++;
-		PlayerEx(Player).AltFireWeapon();
+		if (!k8InWeaponReady) PlayerEx(Player).AltFireWeapon();
 	}
 	else
 	{

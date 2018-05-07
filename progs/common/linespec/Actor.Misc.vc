@@ -37,6 +37,7 @@ enum {
   WRF_NOPRIMARY = 4,
   WRF_NOSECONDARY = 8,
   WRF_NOFIRE = 12,
+  WRF_ALLOWREFIRE = 32,
   WRF_ALLOWRELOAD = 64
 };
 
@@ -582,6 +583,7 @@ final void A_WeaponReady(optional int Flags)
 	if (!Wpn)
 	{
 		Player.bReloadQueued = false;
+		PlayerEx(Player).Refire = 0;
 		return;
 	}
 
@@ -614,9 +616,10 @@ final void A_WeaponReady(optional int Flags)
 
 	if (!(Flags & WRF_NOFIRE))
 	{
-		if (Player.Buttons & BT_ATTACK) Player.bReloadQueued = false;
+		bool attackDown = ((Player.Buttons&BT_ATTACK) != 0);
+		if (attackDown) Player.bReloadQueued = false;
 		// Check for reload.
-		if ((Flags & WRF_ALLOWRELOAD) != 0 && Player.bReloadQueued && /*!Player.bAttackDown &&*/ !(Player.Buttons & BT_ATTACK) && Wpn.FindState('Reload'))
+		if ((Flags & WRF_ALLOWRELOAD) != 0 && Player.bReloadQueued && /*!Player.bAttackDown &&*/ !attackDown && Wpn.FindState('Reload'))
 		{
 			Player.bAttackDown = true;
 			Player.bReloadQueued = false;
@@ -625,10 +628,11 @@ final void A_WeaponReady(optional int Flags)
 			return;
 		}
 		// Check for fire.
-		if (!(Flags & WRF_NOPRIMARY) && (Player.Buttons & BT_ATTACK))
+		if (attackDown && (Flags&WRF_NOPRIMARY) == 0)
 		{
-			if (!Player.bAttackDown || !Wpn.bNoAutoFire)
+			if (((Flags&WRF_ALLOWREFIRE) != 0 || !Player.bAttackDown) || !Wpn.bNoAutoFire)
 			{
+				if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
 				Player.bAttackDown = true;
 				Player.bReloadQueued = false;
 				PlayerEx(Player).FireWeapon();
@@ -636,10 +640,11 @@ final void A_WeaponReady(optional int Flags)
 				return;
 			}
 		}
-		else if (!(Flags & WRF_NOSECONDARY) && (Player.Buttons & BT_ALT_ATTACK) && Wpn.FindState('AltFire'))
+		else if ((Flags&WRF_NOSECONDARY) == 0 && (Player.Buttons&BT_ALT_ATTACK) != 0 && Wpn.FindState('AltFire'))
 		{
-			if (!Player.bAttackDown || !Wpn.bNoAutoFire)
+			if (((Flags&WRF_ALLOWREFIRE) != 0 || !Player.bAttackDown) || !Wpn.bNoAutoFire)
 			{
+				if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
 				Player.bAttackDown = true;
 				Player.bReloadQueued = false;
 				PlayerEx(Player).AltFireWeapon();
