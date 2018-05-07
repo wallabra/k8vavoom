@@ -85,3 +85,9 @@ iwad doom2.wad
 addfile nerve.wad
 param -nerve
 end
+
+// Doom:Complete
+game basev/complete
+iwad complete.pk3
+param -complete
+end

@@ -456,6 +456,7 @@ final void SetPClass(int PClass)
 	MenuPClass = PClass;
 	SkillClassName = va("%n", class<PlayerPawn>(Game.PlayerClasses[
 		PClass]).default.SpawnClass);
+	print("EPISODES: %d", P_GetNumEpisodes());
 	if (P_GetNumEpisodes() > 1)
 	{
 		PushMenuScreen(SpawnMenu(MenuScreenEpisode));

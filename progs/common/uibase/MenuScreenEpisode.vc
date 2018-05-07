@@ -90,4 +90,5 @@ defaultproperties
 	ChoicesStartY = 40;
 	SelectorType = MenuSelector_Big;
 	Title = "WHICH EPISODE?";
+	MenuScrollable = true;
 }
