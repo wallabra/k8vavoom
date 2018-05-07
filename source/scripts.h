@@ -64,6 +64,7 @@ public:
 	void Message(const char*);
 	void Error(const char*);
 	TLocation GetLoc();
+	inline const VStr &GetScriptName () const { return ScriptName; }
 
 private:
 	VStr		ScriptName;
