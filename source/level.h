@@ -331,6 +331,10 @@ private:
 	void LoadACScripts(int);
 	void LoadTextMap(int, const mapInfo_t&);
 
+	void FixDeepWaters ();
+	void FixDeepWater (line_t *line, vint32 lidx);
+	int IsDeepWater (line_t *line);
+
 	//	Map loading helpers.
 	int FindGLNodes(VName) const;
 	int TexNumForName(const char*, int, bool = false) const;

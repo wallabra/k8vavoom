@@ -2409,6 +2409,8 @@ void VRenderLevelShared::UpdateFakeFlats(sector_t* sec)
 		(s && vieworg.z <= s->floor.GetPointZ(vieworg));
 	bool doorunderwater = false;
 	bool diffTex = !!(s && s->SectorFlags & sector_t::SF_ClipFakePlanes);
+	//diffTex = true;
+	//printf("  diffTex=%d\n", (diffTex ? 1 : 0));
 
 	// Replace sector being drawn with a copy to be hacked
 	fakefloor_t* ff = sec->fakefloors;
@@ -2419,7 +2421,11 @@ void VRenderLevelShared::UpdateFakeFlats(sector_t* sec)
 	// Replace floor and ceiling height with control sector's heights.
 	if (diffTex)
 	{
-		if (CopyPlaneIfValid(&ff->floorplane, &s->floor, &sec->ceiling))
+		if (sec->SectorFlags&sector_t::SF_FakeFloorOnly) {
+			ff->floorplane.normal = s->floor.normal;
+			ff->floorplane.dist = s->floor.dist;
+		}
+		else if (CopyPlaneIfValid(&ff->floorplane, &s->floor, &sec->ceiling))
 		{
 			ff->floorplane.pic = s->floor.pic;
 		}
@@ -2654,13 +2660,21 @@ void VRenderLevel::UpdateWorld(const refdef_t* rd, const VViewClipper* Range)
 		ViewClip.ClipToRanges(*Range);
 	}
 
+	//printf("VRenderLevel::UpdateWorld: ENTERED\n");
 	//	Update fake sectors.
 	for (int i = 0; i < Level->NumSectors; i++)
 	{
-		if (Level->Sectors[i].heightsec &&
-			!(Level->Sectors[i].heightsec->SectorFlags & sector_t::SF_IgnoreHeightSec))
+		sector_t* sec = &Level->Sectors[i];
+		if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec))
 		{
-			UpdateFakeFlats(&Level->Sectors[i]);
+			if (sec->SectorFlags&sector_t::SF_FakeFloorOnly) {
+				// check height
+				//if (sec->
+			}
+			//printf("VRenderLevel::UpdateWorld: SECTOR #%d\n", i);
+			//sec->SectorFlags |= sector_t::SF_FakeFloorOnly/*|sector_t::SF_ClipFakePlanes*/;
+			//sec->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
+			UpdateFakeFlats(sec);
 		}
 	}
 
@@ -2691,10 +2705,13 @@ void VAdvancedRenderLevel::UpdateWorld(const refdef_t* rd, const VViewClipper* R
 	//	Update fake sectors.
 	for (int i = 0; i < Level->NumSectors; i++)
 	{
-		if (Level->Sectors[i].heightsec &&
-			!(Level->Sectors[i].heightsec->SectorFlags & sector_t::SF_IgnoreHeightSec))
+		sector_t* sec = &Level->Sectors[i];
+		if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec))
 		{
-			UpdateFakeFlats(&Level->Sectors[i]);
+			//printf("VAdvancedRenderLevel::UpdateWorld: SECTOR #%d\n", i);
+			//sec->SectorFlags |= sector_t::SF_FakeFloorOnly/*|sector_t::SF_ClipFakePlanes*/;
+			//sec->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
+			UpdateFakeFlats(sec);
 		}
 	}
 

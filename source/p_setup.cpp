@@ -365,6 +365,7 @@ void VLevel::LoadMap(VName AMapName)
 	}
 	double Lines2Time = -Sys_Time();
 	FinaliseLines();
+	FixDeepWaters();
 	Lines2Time += Sys_Time();
 
 	double NodesTime = -Sys_Time();
@@ -2592,4 +2593,112 @@ void VLevel::FloodZone(sector_t* Sec, int Zone)
 		}
 	}
 	unguard;
+}
+
+
+//==========================================================================
+//
+// VLevel::FixDeepWaters
+//
+//==========================================================================
+
+// -1: self-referenced; 1: "simple"
+int VLevel::IsDeepWater (line_t *line) {
+  if (!line || !line->frontsector || !line->backsector) return 0;
+  if (line->backsector->heightsec) return 0; // already processed
+  if (line->sidenum[0] < 0 || line->sidenum[1] < 0) return 0;
+  // ignore sloped floors
+  if (line->frontsector->floor.minz != line->frontsector->floor.maxz) return 0;
+  if (line->backsector->floor.minz != line->backsector->floor.maxz) return 0;
+  // back sidedef should have no texture
+  if (Sides[line->sidenum[1]].BottomTexture != 0) return 0;
+  if (Sides[line->sidenum[1]].TopTexture != 0) return 0;
+  if (Sides[line->sidenum[1]].MidTexture != 0) return 0;
+  // self-referenced?
+  if (line->frontsector == line->backsector) return -1;
+  // it should be lower than front
+  if (line->frontsector->floor.minz <= line->backsector->floor.minz) return 0;
+  // yeah
+  return 1;
+}
+
+
+void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
+  if (!line->backsector) return;
+  if (line->backsector->heightsec) return; // already processed
+
+  int type = IsDeepWater(line);
+  if (type == 0) return; // not a deep water
+
+/*
+  if (lidx == 627 || lidx == 619) {
+    line->backsector->heightsec = &InLevel.Sectors[97]; //InLevel.Lines[613].frontsector;
+    line->backsector->bIgnoreHeightSec = false;
+    line->backsector->bFakeFloorOnly = true;
+    line->backsector->bNoFakeLight = true;
+    line->backsector->bClipFakePlanes = true;
+    return;
+  }
+*/
+
+  /*
+  if (lidx == 616 && line->backsector) {
+    print("*** %d", (line->frontsector == InLevel.Lines[619].backsector ? 999 : 0));
+  }
+  if (lidx == 619) {
+    print("#619: btex(u,m,l)=(%d,%d,%d) %d %d",
+      InLevel.Sides[line->sidenum[1]].TopTexture,
+      InLevel.Sides[line->sidenum[1]].MidTexture,
+      InLevel.Sides[line->sidenum[1]].BottomTexture,
+      (IsDeepWater(InLevel, line) ? 1 : 0),
+      (line->frontsector == line->backsector ? 666 : 0)
+    );
+
+    print("line #%d: frontfloor=(%f,%f); backfloor=(%f,%f); ftex(u,m,l)=(%d,%d,%d); btex(u,m,l)=(%d,%d,%d);", lidx,
+      line->frontsector->floor.minz, line->frontsector->floor.maxz,
+      line->backsector->floor.minz, line->backsector->floor.maxz,
+      InLevel.Sides[line->sidenum[0]].TopTexture,
+      InLevel.Sides[line->sidenum[0]].MidTexture,
+      InLevel.Sides[line->sidenum[0]].BottomTexture,
+      InLevel.Sides[line->sidenum[1]].TopTexture,
+      InLevel.Sides[line->sidenum[1]].MidTexture,
+      InLevel.Sides[line->sidenum[1]].BottomTexture
+    );
+  }
+  */
+
+  /*
+  print("line #%d: frontfloor=(%f,%f); backfloor=(%f,%f); ftex(u,m,l)=(%d,%d,%d); btex(u,m,l)=(%d,%d,%d);", lidx,
+    line->frontsector->floor.minz, line->frontsector->floor.maxz,
+    line->backsector->floor.minz, line->backsector->floor.maxz,
+    InLevel.Sides[line->sidenum[0]].TopTexture,
+    InLevel.Sides[line->sidenum[0]].MidTexture,
+    InLevel.Sides[line->sidenum[0]].BottomTexture,
+    InLevel.Sides[line->sidenum[1]].TopTexture,
+    InLevel.Sides[line->sidenum[1]].MidTexture,
+    InLevel.Sides[line->sidenum[1]].BottomTexture
+  );
+  */
+  if (type > 0) {
+    // mark as deep water
+    printf("*** DEEP WATER; LINEDEF #%d\n", lidx);
+    /*
+    line->backsector->bIgnoreHeightSec = false;
+    line->backsector->bFakeFloorOnly = true;
+    line->backsector->bNoFakeLight = true;
+    line->backsector->bClipFakePlanes = true;
+    line->backsector->heightsec = line->frontsector;
+    */
+    line->backsector->heightsec = line->frontsector;
+    line->backsector->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
+    line->backsector->SectorFlags |= sector_t::SF_FakeFloorOnly;
+    line->backsector->heightsec->SectorFlags |= sector_t::SF_FakeFloorOnly|sector_t::SF_ClipFakePlanes|sector_t::SF_NoFakeLight;
+  } else {
+    printf("SELF-REFERENCED, LINEDEF #%d\n", lidx);
+  }
+}
+
+
+void VLevel::FixDeepWaters () {
+  for (vint32 lidx = 0; lidx < NumLines; ++lidx) FixDeepWater(&Lines[lidx], lidx);
 }
