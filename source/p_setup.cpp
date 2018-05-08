@@ -2615,8 +2615,8 @@ int VLevel::IsDeepWater (line_t *line) {
   if (line->backsector->floor.minz != line->backsector->floor.maxz) return 0;
   // back sidedef should have no texture
   if (Sides[line->sidenum[1]].BottomTexture != 0) return 0;
-  if (Sides[line->sidenum[1]].TopTexture != 0) return 0;
-  if (Sides[line->sidenum[1]].MidTexture != 0) return 0;
+  //if (Sides[line->sidenum[1]].TopTexture != 0) return 0;
+  //if (Sides[line->sidenum[1]].MidTexture != 0) return 0;
   // self-referenced?
   if (line->frontsector == line->backsector) return -1;
   // it should be lower than front
