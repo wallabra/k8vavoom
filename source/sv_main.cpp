@@ -49,6 +49,9 @@ static void G_DoCompleted();
 
 VCvarB			real_time("real_time", true, "Run server in real time?");
 
+static VCvarB			sv_ignore_nojump("sv_ignore_nojump", true, "Ignore \"nojump\" flag in MAPINFO?");
+static VCvarB			sv_ignore_nomlook("sv_ignore_nomlook", true, "Ignore \"nofreelook\" flag in MAPINFO?");
+
 server_t		sv;
 server_static_t	svs;
 
@@ -396,11 +399,11 @@ void SV_RunClients()
 				Player->SideMove = -sv_maxmove;
 			}
 			//	Check for disabled freelook and jumping
-			if (GLevelInfo->LevelInfoFlags & VLevelInfo::LIF_NoFreelook)
+			if ((GLevelInfo->LevelInfoFlags & VLevelInfo::LIF_NoFreelook) && !sv_ignore_nomlook)
 			{
 				Player->ViewAngles.pitch = 0;
 			}
-			if (GLevelInfo->LevelInfoFlags & VLevelInfo::LIF_NoJump)
+			if ((GLevelInfo->LevelInfoFlags & VLevelInfo::LIF_NoJump) && !sv_ignore_nojump)
 			{
 				Player->Buttons &= ~BT_JUMP;
 			}
