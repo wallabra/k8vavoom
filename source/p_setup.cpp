@@ -28,6 +28,8 @@
 //**
 //**************************************************************************
 
+#define DEBUG_DEEP_WATERS
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "gamedefs.h"
@@ -365,7 +367,6 @@ void VLevel::LoadMap(VName AMapName)
 	}
 	double Lines2Time = -Sys_Time();
 	FinaliseLines();
-	FixDeepWaters();
 	Lines2Time += Sys_Time();
 
 	double NodesTime = -Sys_Time();
@@ -410,6 +411,8 @@ void VLevel::LoadMap(VName AMapName)
 	double FloodZonesTime = -Sys_Time();
 	FloodZones();
 	FloodZonesTime += Sys_Time();
+
+	FixDeepWaters();
 
 	double ConvTime = -Sys_Time();
 	//	Load conversations.
@@ -2623,6 +2626,52 @@ int VLevel::IsDeepWater (line_t *line) {
 }
 
 
+bool VLevel::IsOuterSectorFor (sector_t *sec, sector_t *insec) {
+  if (!sec || !insec) return false;
+  for (subsector_t *ss = sec->subsectors; ss; ss = ss->seclink) {
+    for (int f = 0; f < ss->numlines; ++f) {
+      side_t *sd = Segs[ss->firstline+f].sidedef;
+      if (!sd) continue;
+      if (sd->Sector == insec) return true;
+    }
+  }
+  return false;
+}
+
+
+// -1: oops
+int VLevel::FindOuterSectorFor (sector_t *insec) {
+  if (!insec) return -1;
+#ifdef DEBUG_DEEP_WATERS
+  printf(" ck %d sectors (%u)...\n", NumSectors, insec-Sectors);
+#endif
+  for (vint32 sn = 0; sn < NumSectors; ++sn) {
+    sector_t *sec = &Sectors[sn];
+    if (sec == insec) continue;
+    if (sec->linecount == 0) continue; // just in case
+    //printf("  checking %d (%d)...\n", sn, sec->linecount);
+    if (!IsOuterSectorFor(sec, insec)) continue;
+    if (sec->heightsec) {
+#ifdef DEBUG_DEEP_WATERS
+      printf("   OK %d (redirect to %u)...\n", sn, sec->heightsec-Sectors);
+#endif
+      return (int)(sec->heightsec-Sectors);
+    }
+    if (IsDeepWater(sec->lines[0])) {
+#ifdef DEBUG_DEEP_WATERS
+      printf("   DEEPWATER RECURSE %d!\n", sn);
+#endif
+      return FindOuterSectorFor(sec);
+    }
+#ifdef DEBUG_DEEP_WATERS
+    printf("   OK %d...\n", sn);
+#endif
+    return sn; // i found her!
+  }
+  return -1;
+}
+
+
 void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
   if (!line->backsector) return;
   if (line->backsector->heightsec) return; // already processed
@@ -2630,80 +2679,27 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
   int type = IsDeepWater(line);
   if (type == 0) return; // not a deep water
 
-/*
-  if (lidx == 627 || lidx == 619) {
-    line->backsector->heightsec = &InLevel.Sectors[97]; //InLevel.Lines[613].frontsector;
-    line->backsector->bIgnoreHeightSec = false;
-    line->backsector->bFakeFloorOnly = true;
-    line->backsector->bNoFakeLight = true;
-    line->backsector->bClipFakePlanes = true;
-    return;
-  }
-*/
-
-  /*
-  if (lidx == 616 && line->backsector) {
-    print("*** %d", (line->frontsector == InLevel.Lines[619].backsector ? 999 : 0));
-  }
-  if (lidx == 619) {
-    print("#619: btex(u,m,l)=(%d,%d,%d) %d %d",
-      InLevel.Sides[line->sidenum[1]].TopTexture,
-      InLevel.Sides[line->sidenum[1]].MidTexture,
-      InLevel.Sides[line->sidenum[1]].BottomTexture,
-      (IsDeepWater(InLevel, line) ? 1 : 0),
-      (line->frontsector == line->backsector ? 666 : 0)
-    );
-
-    print("line #%d: frontfloor=(%f,%f); backfloor=(%f,%f); ftex(u,m,l)=(%d,%d,%d); btex(u,m,l)=(%d,%d,%d);", lidx,
-      line->frontsector->floor.minz, line->frontsector->floor.maxz,
-      line->backsector->floor.minz, line->backsector->floor.maxz,
-      InLevel.Sides[line->sidenum[0]].TopTexture,
-      InLevel.Sides[line->sidenum[0]].MidTexture,
-      InLevel.Sides[line->sidenum[0]].BottomTexture,
-      InLevel.Sides[line->sidenum[1]].TopTexture,
-      InLevel.Sides[line->sidenum[1]].MidTexture,
-      InLevel.Sides[line->sidenum[1]].BottomTexture
-    );
-  }
-  */
-
-  /*
-  print("line #%d: frontfloor=(%f,%f); backfloor=(%f,%f); ftex(u,m,l)=(%d,%d,%d); btex(u,m,l)=(%d,%d,%d);", lidx,
-    line->frontsector->floor.minz, line->frontsector->floor.maxz,
-    line->backsector->floor.minz, line->backsector->floor.maxz,
-    InLevel.Sides[line->sidenum[0]].TopTexture,
-    InLevel.Sides[line->sidenum[0]].MidTexture,
-    InLevel.Sides[line->sidenum[0]].BottomTexture,
-    InLevel.Sides[line->sidenum[1]].TopTexture,
-    InLevel.Sides[line->sidenum[1]].MidTexture,
-    InLevel.Sides[line->sidenum[1]].BottomTexture
-  );
-  */
   if (type > 0) {
     // mark as deep water
+#ifdef DEBUG_DEEP_WATERS
     printf("*** DEEP WATER; LINEDEF #%d\n", lidx);
-    /*
-    line->backsector->bIgnoreHeightSec = false;
-    line->backsector->bFakeFloorOnly = true;
-    line->backsector->bNoFakeLight = true;
-    line->backsector->bClipFakePlanes = true;
+#endif
     line->backsector->heightsec = line->frontsector;
-    */
-    line->backsector->heightsec = line->frontsector;
-    //line->backsector->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
-    //line->backsector->SectorFlags |= sector_t::SF_FakeFloorOnly;
-    //!!!line->backsector->heightsec->SectorFlags |= sector_t::SF_FakeFloorOnly|sector_t::SF_ClipFakePlanes|sector_t::SF_NoFakeLight;
     line->backsector->heightsec->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
     line->backsector->heightsec->SectorFlags |= sector_t::SF_FakeFloorOnly|sector_t::SF_NoFakeLight;
   } else {
-    printf("SELF-REFERENCED, LINEDEF #%d\n", lidx);
-    /*
-    line->backsector->heightsec = line->frontsector;
-    //line->backsector->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
-    line->backsector->SectorFlags |= sector_t::SF_FakeFloorOnly;
-    line->backsector->heightsec->SectorFlags |= sector_t::SF_FakeFloorOnly|sector_t::SF_ClipFakePlanes|sector_t::SF_NoFakeLight;
-    line->backsector->SectorFlags |= sector_t::SF_SelfReferencingFix;
-    */
+#ifdef DEBUG_DEEP_WATERS
+    printf("SELF-REFERENCED, LINEDEF #%d; sec=%u\n", lidx, line->backsector-Sectors);
+#endif
+    int osec = FindOuterSectorFor(line->backsector);
+#ifdef DEBUG_DEEP_WATERS
+    printf("  *** outersec=%d\n", osec);
+#endif
+    if (osec != -1 && osec != (int)(line->backsector-Sectors)) {
+      line->backsector->heightsec = &Sectors[osec];
+      line->backsector->heightsec->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
+      line->backsector->heightsec->SectorFlags |= sector_t::SF_FakeFloorOnly|sector_t::SF_NoFakeLight;
+    }
   }
 }
 

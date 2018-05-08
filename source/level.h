@@ -334,6 +334,8 @@ private:
 	void FixDeepWaters ();
 	void FixDeepWater (line_t *line, vint32 lidx);
 	int IsDeepWater (line_t *line);
+	bool IsOuterSectorFor (sector_t *sec, sector_t *insec);
+	int FindOuterSectorFor (sector_t *insec); // -1: oops
 
 	//	Map loading helpers.
 	int FindGLNodes(VName) const;

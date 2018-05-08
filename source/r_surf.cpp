@@ -2654,25 +2654,12 @@ void VRenderLevel::UpdateWorld(const refdef_t* rd, const VViewClipper* Range)
 		ViewClip.ClipToRanges(*Range);
 	}
 
-	//printf("VRenderLevel::UpdateWorld: ENTERED\n");
 	//	Update fake sectors.
 	for (int i = 0; i < Level->NumSectors; i++)
 	{
 		sector_t* sec = &Level->Sectors[i];
 		if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec))
 		{
-			if (sec->SectorFlags&sector_t::SF_FakeFloorOnly) {
-				// check height
-				//if (sec->
-			}
-			printf("VRenderLevel::UpdateWorld: SECTOR #%d (0x%04x)\n", i, sec->SectorFlags);
-			//sec->SectorFlags |= sector_t::SF_FakeFloorOnly/*|sector_t::SF_ClipFakePlanes*/;
-			//sec->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
-			if (sec->SectorFlags&sector_t::SF_SelfReferencingFix) {
-				printf("sec=%p; vls=%p\n", sec, r_viewleaf->sector);
-				sec->heightsec = r_viewleaf->sector;
-				sec->SectorFlags &= ~sector_t::SF_SelfReferencingFix;
-			}
 			UpdateFakeFlats(sec);
 		}
 	}
@@ -2707,9 +2694,6 @@ void VAdvancedRenderLevel::UpdateWorld(const refdef_t* rd, const VViewClipper* R
 		sector_t* sec = &Level->Sectors[i];
 		if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec))
 		{
-			//printf("VAdvancedRenderLevel::UpdateWorld: SECTOR #%d\n", i);
-			//sec->SectorFlags |= sector_t::SF_FakeFloorOnly/*|sector_t::SF_ClipFakePlanes*/;
-			//sec->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
 			UpdateFakeFlats(sec);
 		}
 	}
