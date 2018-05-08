@@ -194,7 +194,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
       plr.k8hsCount = 0;
     }
 
-    if (critChance > 13 && GetCvarB('k8HSNoCriticals')) critChance = 13;
+    if (critChance > 13 && !GetCvarB('k8HSCriticals')) critChance = 13;
 
     int oldcc = critChance;
          if (len > 800) { if (critChance >= 75 && Random()*100 > 10) critChance = 13; }

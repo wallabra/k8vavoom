@@ -157,7 +157,7 @@ void Init()
 	// announce critical messages
 	CreateCvar('k8HSShowCriticals', "1", "Announce critical shots?", CVAR_ARCHIVE);
 	// disable criticals?
-	CreateCvar('k8HSNoCriticals', "0", "Disable critical shots?", CVAR_ARCHIVE);
+	CreateCvar('k8HSCriticals', "1", "Enable critical shots?", CVAR_ARCHIVE);
 
 	// fastkill/instakill some annoying monsters?
 	CreateCvar('k8HSFastKillAnnoyingMonsters', "1", "Fastkill some annoying monsters?", CVAR_ARCHIVE);

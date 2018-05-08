@@ -116,6 +116,12 @@ void CreateChoices()
 
 	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
 	Btn.SetOrigin(ChoicesStartX, currentY);
+	Btn.Text = "Misc options";
+	Btn.Activated = ActivateMiscOpt;
+	currentY += Btn.Height;
+
+	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+	Btn.SetOrigin(ChoicesStartX, currentY);
 	Btn.Text = "Go to console";
 	Btn.Activated = ActivateConsole;
 	currentY += Btn.Height;
@@ -209,6 +215,17 @@ void ActivateSoundOpt(Object Sender)
 void ActivateGameplayOpt(Object Sender)
 {
 	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenGameplayOptions));
+}
+
+//==========================================================================
+//
+//	ActivateMiscOpt
+//
+//==========================================================================
+
+void ActivateMiscOpt(Object Sender)
+{
+	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenMiscOptions));
 }
 
 //==========================================================================
