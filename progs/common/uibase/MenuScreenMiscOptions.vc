@@ -111,6 +111,20 @@ void CreateChoices () {
   Enum.ValueChanging = ChangeAutoSwitch;
   currentY += Enum.Height;
 
+  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
+  Enum.SetOrigin(ChoicesStartX, currentY);
+  Enum.Text = "Ignore 'nojump'";
+  Enum.SetInitialValue(GetCvar('sv_ignore_nojump'));
+  Enum.ValueChanging = ChangeIgnoreNojump;
+  currentY += Enum.Height;
+
+  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
+  Enum.SetOrigin(ChoicesStartX, currentY);
+  Enum.Text = "Ignore 'nofreelook'";
+  Enum.SetInitialValue(GetCvar('sv_ignore_nomlook'));
+  Enum.ValueChanging = ChangeIgnoreNomlook;
+  currentY += Enum.Height;
+
   Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
   Slider.SetOrigin(ChoicesStartX, currentY);
   Slider.Text = "Bobbing";
@@ -270,6 +284,9 @@ bool ChangeQuitPrompt (Object Sender, int newValue) { SetCvar('menu_quit_prompt'
 bool ChangeAutoAim (Object Sender, int newValue) { SetCvar('autoaim', newValue); return true; }
 bool ChangeAutoSwitch (Object Sender, int newValue) { SetCvar('wpn_autoswitch', newValue); return true; }
 bool ChangeBobbing (Object Sender, float newValue) { SetCvarF('movebob', newValue); return true; }
+
+bool ChangeIgnoreNojump (Object Sender, int newValue) { SetCvar('sv_ignore_nojump', newValue); return true; }
+bool ChangeIgnoreNomlook (Object Sender, int newValue) { SetCvar('sv_ignore_nomlook', newValue); return true; }
 
 bool ChangeHSEnabled (Object Sender, int newValue) { SetCvar('k8HSEnabled', newValue); return true; }
 bool ChangeCriticals (Object Sender, int newValue) { SetCvar('k8HSCriticals', newValue); return true; }
