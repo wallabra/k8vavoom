@@ -2690,11 +2690,20 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
     line->backsector->heightsec = line->frontsector;
     */
     line->backsector->heightsec = line->frontsector;
-    line->backsector->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
-    line->backsector->SectorFlags |= sector_t::SF_FakeFloorOnly;
-    line->backsector->heightsec->SectorFlags |= sector_t::SF_FakeFloorOnly|sector_t::SF_ClipFakePlanes|sector_t::SF_NoFakeLight;
+    //line->backsector->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
+    //line->backsector->SectorFlags |= sector_t::SF_FakeFloorOnly;
+    //!!!line->backsector->heightsec->SectorFlags |= sector_t::SF_FakeFloorOnly|sector_t::SF_ClipFakePlanes|sector_t::SF_NoFakeLight;
+    line->backsector->heightsec->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
+    line->backsector->heightsec->SectorFlags |= sector_t::SF_FakeFloorOnly|sector_t::SF_NoFakeLight;
   } else {
     printf("SELF-REFERENCED, LINEDEF #%d\n", lidx);
+    /*
+    line->backsector->heightsec = line->frontsector;
+    //line->backsector->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
+    line->backsector->SectorFlags |= sector_t::SF_FakeFloorOnly;
+    line->backsector->heightsec->SectorFlags |= sector_t::SF_FakeFloorOnly|sector_t::SF_ClipFakePlanes|sector_t::SF_NoFakeLight;
+    line->backsector->SectorFlags |= sector_t::SF_SelfReferencingFix;
+    */
   }
 }
 

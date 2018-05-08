@@ -2409,8 +2409,6 @@ void VRenderLevelShared::UpdateFakeFlats(sector_t* sec)
 		(s && vieworg.z <= s->floor.GetPointZ(vieworg));
 	bool doorunderwater = false;
 	bool diffTex = !!(s && s->SectorFlags & sector_t::SF_ClipFakePlanes);
-	//diffTex = true;
-	//printf("  diffTex=%d\n", (diffTex ? 1 : 0));
 
 	// Replace sector being drawn with a copy to be hacked
 	fakefloor_t* ff = sec->fakefloors;
@@ -2421,11 +2419,7 @@ void VRenderLevelShared::UpdateFakeFlats(sector_t* sec)
 	// Replace floor and ceiling height with control sector's heights.
 	if (diffTex)
 	{
-		if (sec->SectorFlags&sector_t::SF_FakeFloorOnly) {
-			ff->floorplane.normal = s->floor.normal;
-			ff->floorplane.dist = s->floor.dist;
-		}
-		else if (CopyPlaneIfValid(&ff->floorplane, &s->floor, &sec->ceiling))
+		if (CopyPlaneIfValid(&ff->floorplane, &s->floor, &sec->ceiling))
 		{
 			ff->floorplane.pic = s->floor.pic;
 		}
@@ -2671,9 +2665,14 @@ void VRenderLevel::UpdateWorld(const refdef_t* rd, const VViewClipper* Range)
 				// check height
 				//if (sec->
 			}
-			//printf("VRenderLevel::UpdateWorld: SECTOR #%d\n", i);
+			printf("VRenderLevel::UpdateWorld: SECTOR #%d (0x%04x)\n", i, sec->SectorFlags);
 			//sec->SectorFlags |= sector_t::SF_FakeFloorOnly/*|sector_t::SF_ClipFakePlanes*/;
 			//sec->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
+			if (sec->SectorFlags&sector_t::SF_SelfReferencingFix) {
+				printf("sec=%p; vls=%p\n", sec, r_viewleaf->sector);
+				sec->heightsec = r_viewleaf->sector;
+				sec->SectorFlags &= ~sector_t::SF_SelfReferencingFix;
+			}
 			UpdateFakeFlats(sec);
 		}
 	}
