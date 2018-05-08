@@ -422,6 +422,8 @@ final void A_PainAttack()
 
 final void decorate_A_PainAttack(optional class<Actor> SpawnType)
 {
+	if (!GetCvarB('k8ElvenPaine')) return;
+
 	if (!Target)
 	{
 		return;
