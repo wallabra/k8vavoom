@@ -65,6 +65,8 @@ public:
 	void Error(const char*);
 	TLocation GetLoc();
 	inline const VStr &GetScriptName () const { return ScriptName; }
+	inline bool IsCMode () const { return CMode; }
+	inline bool IsEscape () const { return Escape; }
 
 private:
 	VStr		ScriptName;

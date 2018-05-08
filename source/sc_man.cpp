@@ -370,14 +370,14 @@ bool VScriptParser::GetString()
 	else
 	{
 		//	Special single-character tokens
-		if (strchr("{}|=,", *ScriptPtr))
+		if (strchr("{}|=", *ScriptPtr))
 		{
 			String += *ScriptPtr++;
 		}
 		else
 		{
 			//	Normal string
-			while (*ScriptPtr > 32 && !strchr("{}|=,;\"", *ScriptPtr) &&
+			while (*ScriptPtr > 32 && !strchr("{}|=;\"", *ScriptPtr) &&
 				(ScriptPtr[0] != '/' || ScriptPtr[1] != '/') &&
 				(ScriptPtr[0] != '/' || ScriptPtr[1] != '*'))
 			{

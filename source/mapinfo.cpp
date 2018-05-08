@@ -304,6 +304,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 {
 	guard(ParseMapCommon);
 	bool newFormat = sc->Check("{");
+	if (newFormat) sc->SetCMode(true);
 	// Process optional tokens
 	while (1)
 	{
@@ -749,7 +750,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 				sc->ExpectNumber();
 				A.Args[i] = sc->Number;
 			}
-			sc->SetCMode(false);
+			if (!newFormat) sc->SetCMode(false);
 		}
 		else if (sc->Check("redirect"))
 		{
@@ -949,6 +950,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 			break;
 		}
 	}
+	if (newFormat) sc->SetCMode(false);
 
 	//	Second sky defaults to first sky
 	if (info->Sky2Texture == GTextureManager.DefaultTexture)
@@ -966,7 +968,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 
 static void ParseNameOrLookup (VScriptParser* sc, vuint32 lookupFlag, VStr* name, vuint32* flags) {
   if (sc->Check("lookup")) {
-    sc->Check(",");
+    if (sc->IsCMode()) sc->Check(",");
     *flags |= lookupFlag;
     sc->ExpectString();
     *name = sc->String.ToLower();
@@ -1168,6 +1170,7 @@ static void ParseClusterDef(VScriptParser* sc)
 	CDef->CDId = 0;
 
 	bool newFormat = sc->Check("{");
+	if (newFormat) sc->SetCMode(true);
 	while (1)
 	{
 		if (sc->Check("hub"))
@@ -1271,6 +1274,7 @@ static void ParseClusterDef(VScriptParser* sc)
 			break;
 		}
 	}
+	if (newFormat) sc->SetCMode(false);
 
 	//	Make sure text lump names are in lower case.
 	if (CDef->Flags & CLUSTERF_EnterTextIsLump)
@@ -1335,6 +1339,7 @@ static void ParseEpisodeDef(VScriptParser* sc)
 	}
 
 	bool newFormat = sc->Check("{");
+	if (newFormat) sc->SetCMode(true);
 	while (1)
 	{
 		if (sc->Check("name"))
@@ -1388,6 +1393,7 @@ static void ParseEpisodeDef(VScriptParser* sc)
 			break;
 		}
 	}
+	if (newFormat) sc->SetCMode(false);
 	unguard;
 }
 
