@@ -2451,7 +2451,7 @@ void VRenderLevelShared::UpdateFakeFlats(sector_t* sec)
 	}
 	else
 	{
-		if (s)
+		if (s && !(s->SectorFlags & sector_t::SF_FakeCeilingOnly))
 		{
 			ff->floorplane.normal = s->floor.normal;
 			ff->floorplane.dist = s->floor.dist;
@@ -2479,7 +2479,7 @@ void VRenderLevelShared::UpdateFakeFlats(sector_t* sec)
 //	float orgflorz = sec->floor.GetPointZ(viewx, viewy);
 	float orgceilz = sec->ceiling.GetPointZ(vieworg);
 
-#if 1
+#if 0
 	// [RH] Allow viewing underwater areas through doors/windows that
 	// are underwater but not in a water sector themselves.
 	// Only works if you cannot see the top surface of any deep water

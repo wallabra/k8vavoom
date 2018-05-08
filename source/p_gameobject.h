@@ -415,7 +415,8 @@ struct sector_t
 		SF_IgnoreHeightSec	= 0x0040,	//	heightsec is only for triggering sector actions
 		SF_UnderWater		= 0x0080,	//	Sector is underwater
 		SF_Silent			= 0x0100,	//	Actors don't make noise in this sector.
-		SF_NoFallingDamage	= 0x0200	//	No falling damage in this sector.
+		SF_NoFallingDamage	= 0x0200,	//	No falling damage in this sector.
+		SF_FakeCeilingOnly	= 0x0400,	//	When used as heightsec in R_FakeFlat, only copies ceiling
 	};
 	vuint32			SectorFlags;
 
