@@ -132,6 +132,29 @@ public:
 //
 //==========================================================================
 
+struct ResDirInfo {
+  const char *pfx;
+  EWadNamespace wadns;
+};
+
+
+static const ResDirInfo resdirs[] = {
+  { "sprites/", WADNS_Sprites },
+  { "flats/", WADNS_Flats },
+  { "colormaps/", WADNS_ColourMaps },
+  { "acs/", WADNS_ACSLibrary },
+  { "textures/", WADNS_NewTextures },
+  { "voices/", WADNS_Voices },
+  { "hires/", WADNS_HiResTextures },
+  { "patches/", WADNS_Patches },
+  { "graphics/", WADNS_Graphics },
+  { "sounds/", WADNS_Sounds },
+  { "music/", WADNS_Music },
+  { NULL, WADNS_ZipSpecial },
+};
+
+
+
 VZipFile::VZipFile(const VStr& zipfile)
 : ZipFileName(zipfile)
 , Files(NULL)
@@ -189,6 +212,8 @@ VZipFile::VZipFile(const VStr& zipfile)
 
 	Files = new VZipFileInfo[NumFiles];
 
+	bool canHasPrefix = true;
+
 	//	Set the current file of the zipfile to the first file.
 	vuint32 pos_in_central_dir = offset_central_dir;
 	for (int i = 0; i < NumFiles; i++)
@@ -235,6 +260,15 @@ VZipFile::VZipFile(const VStr& zipfile)
 		delete[] filename_inzip;
 		filename_inzip = NULL;
 
+		if (canHasPrefix && Files[i].Name.IndexOf('/') == -1) canHasPrefix = false;
+
+		if (canHasPrefix) {
+			for (const ResDirInfo *di = resdirs; di->pfx; ++di) {
+				if (Files[i].Name.StartsWith(di->pfx)) { canHasPrefix = false; break; }
+			}
+		}
+
+		/*
 		//	Set up lump name for WAD-like access.
 		VStr LumpName = Files[i].Name.ExtractFileName().StripExtension();
 
@@ -272,10 +306,63 @@ VZipFile::VZipFile(const VStr& zipfile)
 
 		//	Final lump name;
 		Files[i].LumpName = VName(*LumpName, VName::AddLower8);
+		*/
 
 		//	Set the current file of the zipfile to the next file.
-		pos_in_central_dir += SIZECENTRALDIRITEM + file_info.size_filename +
-			size_file_extra + size_file_comment;
+		pos_in_central_dir += SIZECENTRALDIRITEM+file_info.size_filename+size_file_extra+size_file_comment;
+	}
+
+	// find and remove common prefix
+	if (canHasPrefix && NumFiles > 0) {
+		VStr xpfx = Files[0].Name;
+		int sli = xpfx.IndexOf('/');
+		if (sli > 0) {
+			xpfx = VStr(xpfx, 0, sli+1); // extract prefix
+			for (int i = 0; i < NumFiles; ++i) {
+				if (!Files[i].Name.StartsWith(xpfx)) { canHasPrefix = false; break; }
+			}
+			if (canHasPrefix) {
+				// remove prefix
+				for (int i = 0; i < NumFiles; ++i) {
+					Files[i].Name = VStr(Files[i].Name, sli+1, Files[i].Name.Length()-sli-1);
+					//printf("new: <%s>\n", *Files[i].Name);
+				}
+			}
+		}
+	}
+
+	// build lump names
+	for (int i = 0; i < NumFiles; ++i) {
+		if (Files[i].Name.Length() > 0) {
+			//	Set up lump name for WAD-like access.
+			VStr LumpName = Files[i].Name.ExtractFileName().StripExtension();
+
+			// Map some directories to WAD namespaces.
+			if (Files[i].Name.IndexOf('/') == -1) {
+				Files[i].LumpNamespace = WADNS_Global;
+			} else {
+				Files[i].LumpNamespace = -1;
+				for (const ResDirInfo *di = resdirs; di->pfx; ++di) {
+					if (Files[i].Name.StartsWith(di->pfx)) { Files[i].LumpNamespace = di->wadns; break; }
+				}
+			}
+
+			// Anything from other directories won't be accessed as lump.
+			if (Files[i].LumpNamespace == -1) LumpName = VStr();
+
+			// For sprites \ is a valid frame character but is not allowed to
+			// be in a file name, so we do a little mapping here.
+			if (Files[i].LumpNamespace == WADNS_Sprites) {
+				for (size_t ni = 0; ni < LumpName.Length(); ++ni) {
+					if (LumpName[ni] == '^') LumpName[ni] = '\\';
+				}
+			}
+
+			// Final lump name;
+			Files[i].LumpName = VName(*LumpName, VName::AddLower8);
+		} else {
+			Files[i].LumpName = VName("", VName::AddLower8);
+		}
 	}
 
 	//	Sort files alphabetically.
