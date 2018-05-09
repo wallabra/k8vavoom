@@ -43,6 +43,8 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static VCvarB glsw_report_verts("glsw_report_verts", false, "Report number of shadow volume vertices?", 0);
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -630,6 +632,8 @@ void VOpenGLDrawer::BeginShadowVolumesPass()
 //
 //==========================================================================
 
+static int swcount = 0;
+
 void VOpenGLDrawer::BeginLightShadowVolumes()
 {
 	guard(VOpenGLDrawer::BeginLightShadowVolumes);
@@ -647,6 +651,20 @@ void VOpenGLDrawer::BeginLightShadowVolumes()
 	p_glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP);
 
 	p_glUseProgramObjectARB(SurfZBufProgram);
+	swcount = 0;
+	unguard;
+}
+
+//==========================================================================
+//
+//	VOpenGLDrawer::EndLightShadowVolumes
+//
+//==========================================================================
+
+void VOpenGLDrawer::EndLightShadowVolumes()
+{
+	guard(VOpenGLDrawer::EndLightShadowVolumes);
+	if (glsw_report_verts) GCon->Logf("swcount=%d", swcount);
 	unguard;
 }
 
@@ -673,6 +691,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume(surface_t *surf, TVec& LightPos, f
 		return;
 	}
 	v.SetNum(surf->count);
+
+  swcount += surf->count*4;
 
 	for (i = 0; i < surf->count; i++)
 	{
@@ -704,6 +724,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume(surface_t *surf, TVec& LightPos, f
 	glVertex(surf->verts[0]);
 	glVertex(v[0]);
 	glEnd();
+
 	unguard;
 }
 

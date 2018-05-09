@@ -370,6 +370,7 @@ public:
 	void DrawWorldAmbientPass();
 	void BeginShadowVolumesPass();
 	void BeginLightShadowVolumes();
+	void EndLightShadowVolumes();
 	void RenderSurfaceShadowVolume(surface_t *, TVec&, float, bool);
 	void BeginLightPass(TVec&, float, vuint32);
 	void DrawSurfaceLight(surface_t*, TVec&, float, bool);

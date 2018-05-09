@@ -1048,6 +1048,7 @@ void VAdvancedRenderLevel::RenderLightShadows(const refdef_t* RD,
 	RenderShadowBSPNode(Level->NumNodes - 1, dummy_bbox, LimitLights);
 	Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
 	RenderMobjsShadow();
+	Drawer->EndLightShadowVolumes();
 
 	ResetMobjsLightCount();
 
