@@ -103,3 +103,10 @@ const int STYLE_SoulTrans			= 3;	// Draw translucent with amount in r_transsouls
 const int STYLE_OptFuzzy			= 4;	// Draw as fuzzy or translucent, based on user preference
 const int STYLE_Translucent			= 64;	// Draw translucent
 const int STYLE_Add				= 65;	// Draw additive
+
+// A_PlaySound constants
+const int CHAN_AUTO = 0;
+const int CHAN_VOICE = 1;
+const int CHAN_WEAPON = 2;
+const int CHAN_ITEM = 3;
+const int CHAN_BODY = 4;
