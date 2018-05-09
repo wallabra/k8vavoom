@@ -120,27 +120,29 @@ void VLevel::LoadMap(VName AMapName)
 	int lumpnum;
 	VName MapLumpName;
 
+	printf("****MAP: <%s>\n", *AMapName);
 	double TotalTime = -Sys_Time();
 	double InitTime = -Sys_Time();
 	MapName = AMapName;
-	//	If working with a devlopment map, reload it.
-	VStr aux_file_name = va("maps/%s.wad", *MapName);
-	if (FL_FileExists(aux_file_name))
-	{
-		lumpnum = W_OpenAuxiliary(aux_file_name);
-		MapLumpName = W_LumpName(lumpnum);
-		AuxiliaryMap = true;
-	}
-	else
-	{
-		//	Find map and GL nodes.
-		MapLumpName = MapName;
-		lumpnum = W_CheckNumForName(MapName);
-		if (lumpnum < 0)
-		{
-			Host_Error("Map %s not found\n", *MapName);
+	// If working with a devlopment map, reload it.
+	// k8: nope, it doesn't work this way: it looks for "maps/xxx.wad" in zips,
+	//     and "complete.pk3" takes precedence over any pwads
+	//     so let's do it in a backwards way
+	// Find map and GL nodes.
+	lumpnum = W_CheckNumForName(MapName);
+	MapLumpName = MapName;
+	// If there is no map lump, try map wad.
+	if (lumpnum < 0) {
+		// Check if map wad is here.
+		VStr aux_file_name = va("maps/%s.wad", *MapName);
+		if (FL_FileExists(aux_file_name)) {
+			// Apped map wad to list of wads (it will be deleted later).
+			lumpnum = W_OpenAuxiliary(aux_file_name);
+			MapLumpName = W_LumpName(lumpnum);
+			AuxiliaryMap = true;
 		}
 	}
+	if (lumpnum < 0) Host_Error("Map %s not found\n", *MapName);
 
 	int gl_lumpnum = -100;
 	int ThingsLump = -1;
