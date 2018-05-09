@@ -59,6 +59,7 @@ enum
 	PROP_Int,
 	PROP_IntConst,
 	PROP_IntUnsupported,
+	PROP_IntIdUnsupported,
 	PROP_BitIndex,
 	PROP_Float,
 	PROP_Speed,
@@ -284,6 +285,10 @@ static void ParseDecorateDef(VXmlDocument& Doc)
 			else if (PN->Name == "prop_int_unsupported")
 			{
 				/*VPropDef& P =*/(void)Lst.NewProp(PROP_IntUnsupported, PN); //k8: dunno
+			}
+			else if (PN->Name == "prop_int_id_unsupported")
+			{
+				/*VPropDef& P =*/(void)Lst.NewProp(PROP_IntIdUnsupported, PN); //k8: dunno
 			}
 			else if (PN->Name == "prop_bit_index")
 			{
@@ -2484,6 +2489,19 @@ static void ParseActor(VScriptParser* sc, TArray<VClassFixup>& ClassFixups)
 					//FIXME
 					sc->CheckNumberWithSign();
 					GCon->Logf("Property %s in %s is not yet supported", *Prop, Class->GetName());
+					break;
+				case PROP_IntIdUnsupported:
+					//FIXME
+					{
+						bool oldcm = sc->IsCMode();
+						sc->SetCMode(true);
+						sc->CheckNumberWithSign();
+						sc->Expect(",");
+						sc->ExpectIdentifier();
+						if (sc->Check(",")) sc->ExpectIdentifier();
+						sc->SetCMode(oldcm);
+						GCon->Logf("Property %s in %s is not yet supported", *Prop, Class->GetName());
+					}
 					break;
 				case PROP_BitIndex:
 					sc->ExpectNumber();
