@@ -1843,10 +1843,10 @@ void R_AnimateSurfaces()
 		}
 		else
 		{
-			for (i = 0; i < ad.NumFrames; i++)
+			for (int fn = 0; fn < ad.NumFrames; ++fn)
 			{
-				GTextureManager[ad.Index + i]->TextureTranslation =
-					ad.Index + (ad.CurrentFrame + i) % ad.NumFrames;
+				GTextureManager[ad.Index + fn]->TextureTranslation =
+					ad.Index + (ad.CurrentFrame + fn) % ad.NumFrames;
 			}
 		}
 	}
