@@ -321,12 +321,12 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
             restoreRedBlood = (!FindClass(bloodClassName) || !FindClass(poolClassName));
           }
           */
-          if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') {
+          if (self.BloodType && GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') {
             bloodClassName = 'K8Gore_Blood_Transient_Green';
             //mistClassName = 'K8Gore_BloodmistBig_Transient_Green';
             poolClassName = 'K8Gore_GrowingBloodPool_Green';
             restoreRedBlood = (!FindClass(bloodClassName) || !FindClass(poolClassName));
-          } else if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') {
+          } else if (self.BloodType && GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') {
             bloodClassName = 'K8Gore_Blood_Transient_Blue';
             //mistClassName = 'K8Gore_BloodmistBig_Transient_Blue';
             poolClassName = 'K8Gore_GrowingBloodPool_Blue';
