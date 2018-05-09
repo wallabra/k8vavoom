@@ -537,6 +537,10 @@ void FL_Init()
 #endif
 	}
 
+	if (GArgs.CheckParm("-bdw") != 0) {
+		AddGameDir("basev/mods/bdw");
+	}
+
 	int fp = GArgs.CheckParm("-file");
 	if (fp)
 	{

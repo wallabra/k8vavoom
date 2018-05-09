@@ -1,0 +1,11 @@
+ACTOR BDW_PlayerMuzzle {
+  Speed 0
+  PROJECTILE
+  +NOCLIP
+  +NOGRAVITY
+  States {
+    Spawn:
+      PLMZ A 2 BRIGHT
+      Stop
+  }
+}

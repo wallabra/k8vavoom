@@ -1,0 +1,3 @@
+object BDW_PlayerMuzzle {
+  frame PLMZ { light BDWHUEHU }
+}

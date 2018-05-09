@@ -1,0 +1,5 @@
+// Bullet puff
+object BDW_HitPuff {
+  frame PUFFA { light BDWBPUF1 }
+  frame PUFFB { light BDWBPUF2 }
+}

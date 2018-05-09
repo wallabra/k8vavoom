@@ -1,0 +1,36 @@
+weapons/bdw_rifle/shot      bdwrshot
+weapons/bdw_rifle/shotfast  bdwrsfst
+weapons/bdw_rifle/clipin    bdwrclpn
+weapons/bdw_rifle/empty     bdwrempt
+weapons/bdw_rifle/reload    bdwrreld
+
+weapons/bdw_shotgun/sgfire   bdwsshot
+weapons/bdw_shotgun/sgpump   bdwspump
+weapons/bdw_shotgun/shellin  bdwsshin
+
+
+weapons/largemagdrop1       dsaounc1
+weapons/largemagdrop2       dsaounc2
+weapons/largemagdrop3       dsaounc3
+weapons/largemagdrop4       dsaounc4
+$random weapons/largemagdrop  { weapons/largemagdrop1 weapons/largemagdrop2 weapons/largemagdrop3 weapons/largemagdrop4 }
+
+$volume weapons/largemagdrop 0.5
+
+
+weapons/casing1  dscasin1
+weapons/casing2  dscasin2
+weapons/casing3  dscasin3
+$random weapons/casing  { weapons/casing2 weapons/casing3 }
+$limit weapons/casing   5
+
+
+$volume  weapons/casing2 0.7
+//k8: not yet:$rolloff weapons/casing 100 600
+
+
+weapons/shell1  dsshell1
+weapons/shell2  dsshell2
+weapons/shell3  dsshell3
+$random weapons/shell  {weapons/shell1 weapons/shell2 weapons/shell3}
+$limit weapons/shell   5

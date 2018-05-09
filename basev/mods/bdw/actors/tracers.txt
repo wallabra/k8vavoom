@@ -1,0 +1,27 @@
+Actor BDW_Tracer : FastProjectile {
+  Projectile
+  +RANDOMIZE
+  +FORCEXYBILLBOARD
+  +DONTSPLASH
+  //+BLOODSPLATTER
+  +NOEXTREMEDEATH
+  Damage 0
+  Radius 2
+  Height 2
+  Speed 140
+  RenderStyle ADD
+  Alpha 0.9
+  Scale .15
+  States {
+    Spawn:
+      TRAC A 1 BRIGHT
+      Loop
+
+    Death:
+      Stop
+
+    XDeath:
+      TNT1 A 0
+      Stop
+  }
+}

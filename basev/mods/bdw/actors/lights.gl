@@ -1,0 +1,20 @@
+// Bullet puff
+flickerlight BDWBPUF1 {
+  color 0.5 0.5 0.0
+  size 6
+  secondarySize 8
+  chance 0.8
+}
+
+flickerlight BDWBPUF2 {
+  color 0.5 0.5 0.0
+  size 3
+  secondarySize 4
+  chance 0.8
+}
+
+
+pointlight BDWHUEHU {
+  color 0.5 0.4 0
+  size 48
+}
