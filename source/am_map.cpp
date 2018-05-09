@@ -143,9 +143,11 @@ struct mline_t
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-bool		automapactive = false;
+int automapactive = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static VCvarB am_overlay("am_overlay", false, "Show automap in overlay mode?", CVAR_Archive);
 
 // Automap colours
 static vuint32	WallColour;
@@ -546,7 +548,8 @@ static bool AM_clearMarks()
 
 static void AM_initVariables()
 {
-	automapactive = true;
+
+	automapactive = (am_overlay ? -1 : 1);
 
 	f_oldloc.x = 99999.0;
 
@@ -630,7 +633,7 @@ static void AM_LevelInit()
 
 void AM_Stop()
 {
-	automapactive = false;
+	automapactive = 0;
 	stopped = true;
 }
 
@@ -705,7 +708,7 @@ bool AM_Responder(event_t* ev)
 	{
 		if (ev->type == ev_keydown && ev->data1 == AM_STARTKEY)
 		{
-			AM_Start();
+			if (automapactive) AM_Stop(); else AM_Start();
 			rc = true;
 		}
 	}
@@ -1037,11 +1040,11 @@ static void AM_clearFB()
 	}
 
 	//blit the automap background to the screen.
-	for (int y = mapystart - mapheight; y < AM_H; y += mapheight)
-	{
-		for (int x = mapxstart - AM_W; x < AM_W; x += 320)
-		{
-			R_DrawPic(x, y, mappic);
+	if (automapactive > 0) {
+		for (int y = mapystart - mapheight; y < AM_H; y += mapheight) {
+			for (int x = mapxstart - AM_W; x < AM_W; x += 320) {
+				R_DrawPic(x, y, mappic);
+			}
 		}
 	}
 }

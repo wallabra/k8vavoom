@@ -527,14 +527,8 @@ void SCR_Update()
 		switch (GClGame->intermission)
 		{
 		case 0:
-			if (automapactive)
-			{
-				AM_Drawer();
-			}
-			else
-			{
-				R_RenderPlayerView();
-			}
+			if (automapactive <= 0) R_RenderPlayerView();
+			if (automapactive) AM_Drawer();
 			if (GGameInfo->NetMode != NM_TitleMap)
 			{
 				CT_Drawer();

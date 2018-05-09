@@ -41,4 +41,4 @@ void AM_Stop();
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
-extern bool 		automapactive;	// In AutoMap mode?
+extern int automapactive; // In AutoMap mode? 0: no; 1: normal; -1: overlay

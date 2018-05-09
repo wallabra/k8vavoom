@@ -107,7 +107,7 @@ bool SB_Responder(event_t *)
 void SB_Drawer()
 {
 	//	Update widget visibility
-	GClGame->eventStatusBarDrawer(automapactive ? SB_VIEW_AUTOMAP :
+	GClGame->eventStatusBarDrawer(automapactive > 0 ? SB_VIEW_AUTOMAP :
 		refdef.height == ScreenHeight ? SB_VIEW_FULLSCREEN : SB_VIEW_NORMAL);
 }
 
