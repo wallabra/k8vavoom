@@ -107,6 +107,7 @@ VMultiPatchTexture::VMultiPatchTexture(VStream& Strm, int DirectoryIndex,
 	memset(Patches, 0, sizeof(VTexPatch) * PatchCount);
 
 	//	Read patches.
+	bool warned = false;
 	VTexPatch* patch = Patches;
 	for (int i = 0; i < PatchCount; i++, patch++)
 	{
@@ -127,7 +128,8 @@ VMultiPatchTexture::VMultiPatchTexture(VStream& Strm, int DirectoryIndex,
 		vint16 PatchIdx = Streamer<vint16>(Strm);
 		if (PatchIdx < 0 || PatchIdx >= NumPatchLookup)
 		{
-			Sys_Error("InitTextures: Bad patch index in texture %s", *Name);
+			//Sys_Error("InitTextures: Bad patch index in texture %s (%d/%d)", *Name, PatchIdx, NumPatchLookup-1);
+			if (!warned) { warned = true; GCon->Logf("InitTextures: Bad patch index in texture %s (%d/%d)", *Name, PatchIdx, NumPatchLookup-1); }
 			patch->Tex = NULL;
 		} else
 		{
@@ -135,7 +137,7 @@ VMultiPatchTexture::VMultiPatchTexture(VStream& Strm, int DirectoryIndex,
 		}
 		if (!patch->Tex)
 		{
-			GCon->Logf("InitTextures: Missing patch in texture %s", *Name);
+			if (!warned) { warned = true; GCon->Logf("InitTextures: Missing patch in texture %s (%d/%d)", *Name, PatchIdx, NumPatchLookup-1); }
 			i--;
 			PatchCount--;
 			patch--;
@@ -247,10 +249,10 @@ VMultiPatchTexture::VMultiPatchTexture(VScriptParser* sc, int AType)
 					else if (sc->String.Length() <= 8)
 					{
 						LumpNum = W_CheckNumForName(PatchName, WADNS_Patches);
+						if (LumpNum < 0) LumpNum = W_CheckNumForTextureFileName(*PatchName);
 						if (LumpNum >= 0)
 						{
-							Tex = GTextureManager.AddTexture(CreateTexture(
-								TEXTYPE_WallPatch, LumpNum));
+							Tex = GTextureManager.AddTexture(CreateTexture(TEXTYPE_WallPatch, LumpNum));
 						}
 					}
 				}

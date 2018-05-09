@@ -337,6 +337,8 @@ int VTextureManager::CheckNumForName(VName Name, int Type, bool bOverload,
 //
 //==========================================================================
 
+static TStrSet numForNameWarned;
+
 int	VTextureManager::NumForName(VName Name, int Type, bool bOverload,
 	bool bCheckAny)
 {
@@ -344,7 +346,7 @@ int	VTextureManager::NumForName(VName Name, int Type, bool bOverload,
 	int i = CheckNumForName(Name, Type, bOverload, bCheckAny);
 	if (i == -1)
 	{
-		GCon->Logf("VTextureManager::NumForName: %s not found", *Name);
+		if (!numForNameWarned.put(*Name)) GCon->Logf("VTextureManager::NumForName: %s not found", *Name);
 		i = DefaultTexture;
 	}
 	return i;
@@ -476,6 +478,7 @@ int VTextureManager::AddPatch(VName Name, int Type, bool Silent)
 	//	Find the lump number.
 	int LumpNum = W_CheckNumForName(Name, WADNS_Graphics);
 	if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Sprites);
+	if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Global);
 	if (LumpNum < 0) {
 		if (!Silent) {
 			if (!patchesWarned.put(*Name)) {
@@ -507,6 +510,8 @@ int VTextureManager::AddRawWithPal(VName Name, VName PalName)
 {
 	guard(VTextureManager::AddRawWithPal);
 	int LumpNum = W_CheckNumForName(Name, WADNS_Graphics);
+	if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Sprites);
+	if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Global);
 	if (LumpNum < 0)
 	{
 		GCon->Logf("VTextureManager::AddRawWithPal: %s not found", *Name);
@@ -653,10 +658,8 @@ void VTextureManager::AddTexturesLump(int NamesLump, int TexLump,
 		//	Get wad lump number.
 		int LNum = W_CheckNumForName(PatchName, WADNS_Patches);
 		//	Sprites also can be used as patches.
-		if (LNum < 0)
-		{
-			LNum = W_CheckNumForName(PatchName, WADNS_Sprites);
-		}
+		if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Sprites);
+		if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Global); // just in case
 
 		//	Add it to textures.
 		if (LNum < 0)

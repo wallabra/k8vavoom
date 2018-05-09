@@ -120,7 +120,6 @@ void VLevel::LoadMap(VName AMapName)
 	int lumpnum;
 	VName MapLumpName;
 
-	printf("****MAP: <%s>\n", *AMapName);
 	double TotalTime = -Sys_Time();
 	double InitTime = -Sys_Time();
 	MapName = AMapName;
@@ -2064,6 +2063,8 @@ void VLevel::LoadACScripts(int Lump)
 //
 //==========================================================================
 
+static TStrSet texNumForNameWarned;
+
 int VLevel::TexNumForName(const char *name, int Type, bool CMap) const
 {
 	guard(VLevel::TexNumForName);
@@ -2071,11 +2072,8 @@ int VLevel::TexNumForName(const char *name, int Type, bool CMap) const
 	int i = GTextureManager.CheckNumForName(Name, Type, true, true);
 	if (i == -1)
 	{
-		if (CMap)
-		{
-			return 0;
-		}
-		GCon->Logf("FTNumForName: %s not found", *Name);
+		if (CMap) return 0;
+		if (!texNumForNameWarned.put(*Name)) GCon->Logf("FTNumForName: %s not found", *Name);
 		return GTextureManager.DefaultTexture;
 	}
 	return i;
