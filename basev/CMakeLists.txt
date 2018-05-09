@@ -13,4 +13,6 @@ add_subdirectory(plutonia)
 add_subdirectory(strife)
 add_subdirectory(tnt)
 
+add_subdirectory(mods)
+
 install(FILES games.txt DESTINATION ${DATADIR}/basev)

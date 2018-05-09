@@ -503,6 +503,10 @@ void FL_Init()
 
 	AddGameDir("basev/common");
 
+	if (GArgs.CheckParm("-nogore") == 0) {
+		AddGameDir("basev/mods/gore");
+	}
+
 	p = GArgs.CheckValue("-iwad");
 	if (p)
 	{
