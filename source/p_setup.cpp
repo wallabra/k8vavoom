@@ -100,7 +100,8 @@ enum
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?");
+static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?", 0);
+static VCvarB deepwater_hacks("deepwater_hacks", true, "Apply DeepWater hacks? (not working right yet)", 0);
 static VCvarB build_blockmap("build_blockmap", false, "Build blockmap?", CVAR_Archive);
 static VCvarB build_gwa("build_gwa", false, "Build GWA?", CVAR_Archive);
 static VCvarB show_level_load_times("show_level_load_times", false, "Show loading times?", CVAR_Archive);
@@ -2601,6 +2602,27 @@ void VLevel::FloodZone(sector_t* Sec, int Zone)
 
 //==========================================================================
 //
+// VLevel::IsDeepOk
+//
+// all lines should have the same front/back
+//
+//==========================================================================
+
+bool VLevel::IsDeepOk (sector_t* sec) {
+  if (!sec || sec->linecount < 1) return false;
+  for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
+    line_t* ld = sec->lines[lidx];
+    if (!ld) return false; // just in case
+    if (!ld->frontsector || !ld->backsector) return false;
+    if (ld->frontsector != sec->lines[0]->frontsector) return false;
+    if (ld->backsector != sec->lines[0]->backsector) return false;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
 // VLevel::FixDeepWaters
 //
 //==========================================================================
@@ -2692,8 +2714,10 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
       if (line->backsector->heightsec) return; // already processed
       hs = (line->backsector->heightsec = line->frontsector);
     } else {
-      if (line->frontsector->heightsec) return; // already processed
-      hs = (line->frontsector->heightsec = line->backsector);
+      //if (line->frontsector->heightsec) return; // already processed
+      //hs = (line->frontsector->heightsec = line->backsector);
+      if (line->backsector->heightsec) return; // already processed
+      hs = (line->backsector->heightsec = line->frontsector);
     }
 #ifdef DEBUG_DEEP_WATERS
     printf("*** DEEP WATER; LINEDEF #%d; type=%d\n", lidx, type);
@@ -2728,23 +2752,18 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
 
 
 void VLevel::FixDeepWaters () {
-  /*
-  for (vint32 lidx = 0; lidx < NumLines; ++lidx) {
-    line_t *line = &Lines[lidx];
-    if (line->frontsector && line->backsector &&
-        line->frontsector->floor.minz == line->frontsector->floor.maxz &&
-        line->frontsector->ceiling.minz == line->frontsector->ceiling.maxz &&
-        line->frontsector->floor.minz == line->frontsector->ceiling.minz)
-    {
-      printf("FOUND SECTOR WITH NO HEIGHT!\n");
-      line->frontsector->heightsec = line->backsector;
-      line->frontsector->heightsec->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
-      line->frontsector->heightsec->SectorFlags &= ~sector_t::SF_FakeFloorOnly;
-      //line->frontsector->heightsec->SectorFlags |= sector_t::SF_ClipFakePlanes;
-    }
-    //FixDeepWater(line, lidx);
+  if (!deepwater_hacks) {
+    GCon->Logf("DeepWater detection skipped.");
+    return;
   }
-  */
+  //for (vint32 lidx = 0; lidx < NumLines; ++lidx) FixDeepWater(&Lines[lidx], lidx);
 
-  for (vint32 lidx = 0; lidx < NumLines; ++lidx) FixDeepWater(&Lines[lidx], lidx);
+  for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
+    sector_t *sec = &Sectors[sidx];
+    if (!IsDeepOk(sec)) continue;
+    for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
+      line_t* ld = sec->lines[lidx];
+      FixDeepWater(ld, (int)(ld-Lines));
+    }
+  }
 }

@@ -336,6 +336,7 @@ private:
 	int IsDeepWater (line_t *line);
 	bool IsOuterSectorFor (sector_t *sec, sector_t *insec);
 	int FindOuterSectorFor (sector_t *insec); // -1: oops
+	bool IsDeepOk (sector_t *sec); // all lines should have the same front/back
 
 	//	Map loading helpers.
 	int FindGLNodes(VName) const;
