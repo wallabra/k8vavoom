@@ -2610,15 +2610,20 @@ void VLevel::FloodZone(sector_t* Sec, int Zone)
 
 bool VLevel::IsDeepOk (sector_t* sec) {
   if (!sec || sec->linecount < 2) return false;
-  int dwt = IsDeepWater(sec->lines[0]);
+  int dwt = 0, xidx = -1;
+  for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
+    dwt = IsDeepWater(sec->lines[lidx]);
+    if (dwt != 0) { xidx = lidx; break; }
+  }
   if (!dwt) return false;
   for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
     line_t* ld = sec->lines[lidx];
     if (!ld) return false; // just in case
-    if (!ld->frontsector || !ld->backsector) return false;
-    if (ld->frontsector != sec->lines[0]->frontsector) return false;
-    if (ld->backsector != sec->lines[0]->backsector) return false;
-    if (IsDeepWater(sec->lines[lidx]) != dwt) return false;
+    int xdwt = IsDeepWater(sec->lines[lidx]);
+    if (!xdwt) continue;
+    if (xdwt != dwt) return false;
+    if (ld->frontsector != sec->lines[xidx]->frontsector) return false;
+    if (ld->backsector != sec->lines[xidx]->backsector) return false;
   }
   return true;
 }
