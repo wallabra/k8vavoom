@@ -19,4 +19,4 @@ add_executable(vlumpy
 )
 target_link_libraries(vlumpy core ${ZLIB_LIBRARY})
 set_target_properties(vlumpy PROPERTIES OUTPUT_NAME ../bin/vlumpy)
-add_dependencies(vlumpy core)
+add_dependencies(vlumpy core lzma)
