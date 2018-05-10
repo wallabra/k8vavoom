@@ -1450,7 +1450,7 @@ surfcache_t* VRenderLevel::AllocBlock(int width, int height)
 		}
 	}
 
-	Sys_Error("overflow");
+	Sys_Error("Surface cache overflow");
 	return NULL;
 	unguard;
 }
