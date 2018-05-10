@@ -1,5 +1,9 @@
 project(vavoom)
 
+option(ENABLE_SIGNAL_HANDLER "Intercept system signals" OFF)
+option(ENABLE_ZONE_DEBUG "Enable memory allocation debuging" OFF)
+
+
 IF( NOT CMAKE_BUILD_TYPE )
   SET( CMAKE_BUILD_TYPE Debug CACHE STRING
     "Choose the type of build, options are: Debug Release."
@@ -17,19 +21,21 @@ set( UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-strict-overflow" )
 set( UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fwrapv" )
 set( UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wall -Wno-frame-address" )
 
+if(ENABLE_SIGNAL_HANDLER)
+	set( UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-frame-address" )
+endif(ENABLE_SIGNAL_HANDLER)
+
 set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g ${UNFUCK_GCC_FLAGS}" )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g ${UNFUCK_GCC_FLAGS} -Wno-c++11-compat" )
+set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g ${UNFUCK_GCC_FLAGS}" )
 
 set( CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2 ${UNFUCK_GCC_FLAGS}" )
-set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 ${UNFUCK_GCC_FLAGS} -Wno-c++11-compat" )
+set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 ${UNFUCK_GCC_FLAGS}" )
 
 ## message(STATUS "BUILD: ${CMAKE_BUILD_TYPE}")
 ## message(STATUS "cflags  : ${CMAKE_C_FLAGS}")
 ## message(STATUS "cxxflags: ${CMAKE_CXX_FLAGS}")
 ## message(STATUS "cflags  (dbg): ${CMAKE_C_FLAGS_DEBUG}")
 ## message(STATUS "cxxflags(dbg): ${CMAKE_CXX_FLAGS_DEBUG}")
-
-option(ENABLE_ZONE_DEBUG "Enable memory allocation debuging")
 
 cmake_minimum_required(VERSION 2.4)
 if(COMMAND cmake_policy)
@@ -49,7 +55,13 @@ endif(NOT DEFINED BINDIR)
 
 if(ENABLE_ZONE_DEBUG)
 	add_definitions(-DZONE_DEBUG=1)
+	 message(STATUS "BUILD: Using Zone Debug")
 endif(ENABLE_ZONE_DEBUG)
+
+if(ENABLE_SIGNAL_HANDLER)
+	add_definitions(-DUSE_SIGNAL_HANDLER=1)
+	 message(STATUS "BUILD: Using Signal Handler")
+endif(ENABLE_SIGNAL_HANDLER)
 
 #
 #  **** Check for zlib ****

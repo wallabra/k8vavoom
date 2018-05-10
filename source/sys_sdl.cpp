@@ -309,6 +309,8 @@ void Sys_Quit(const char* EndText)
 //
 //==========================================================================
 
+#ifdef USE_SIGNAL_HANDLER
+
 #define MAX_STACK_ADDR 40
 
 // __builtin_return_address needs a constant, so this cannot be in a loop
@@ -408,6 +410,8 @@ static void stack_trace()
 	}
 }
 
+#endif
+
 //==========================================================================
 //
 //	Sys_ConsoleInput
@@ -447,6 +451,8 @@ char *Sys_ConsoleInput()
 // 	Shuts down system, on error signal
 //
 //==========================================================================
+
+#ifdef USE_SIGNAL_HANDLER
 
 static void signal_handler(int s)
 {
@@ -503,6 +509,8 @@ static void signal_handler(int s)
 #endif
 }
 
+#endif
+
 //==========================================================================
 //
 //	main
@@ -524,6 +532,7 @@ int main(int argc,char** argv)
 		}
 		SDL_WM_SetCaption("VaVoom", "VaVoom");
 
+#ifdef USE_SIGNAL_HANDLER
 		//	Install signal handlers
 		signal(SIGABRT, signal_handler);
 		signal(SIGFPE,  signal_handler);
@@ -533,6 +542,7 @@ int main(int argc,char** argv)
 		signal(SIGINT,  signal_handler);
 		signal(SIGKILL, signal_handler);
 		signal(SIGQUIT, signal_handler);
+#endif
 
 		Host_Init();
 
