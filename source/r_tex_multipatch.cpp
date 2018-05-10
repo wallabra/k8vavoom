@@ -489,7 +489,7 @@ VMultiPatchTexture::VMultiPatchTexture(VScriptParser* sc, int AType)
 //
 //==========================================================================
 
-VMultiPatchTexture::~VMultiPatchTexture()
+VMultiPatchTexture::~VMultiPatchTexture() noexcept(false)
 {
 	guard(VMultiPatchTexture::~VMultiPatchTexture);
 	if (Patches)

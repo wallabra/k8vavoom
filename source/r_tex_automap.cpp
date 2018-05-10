@@ -86,7 +86,7 @@ VAutopageTexture::VAutopageTexture(int ALumpNum)
 //
 //==========================================================================
 
-VAutopageTexture::~VAutopageTexture()
+VAutopageTexture::~VAutopageTexture() noexcept(false)
 {
 	guard(VAutopageTexture::~VAutopageTexture);
 	if (Pixels)

@@ -68,7 +68,7 @@ public:
 	TArray<seq_info_t>	SeqInfo;
 
 	VSoundManager();
-	~VSoundManager();
+	~VSoundManager() noexcept(false);
 	void Init();
 	int GetSoundID(VName);
 	int GetSoundID(const char*);

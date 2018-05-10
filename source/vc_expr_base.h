@@ -40,7 +40,7 @@ public:
 	TLocation	Loc;
 
 	VExpression(const TLocation&);
-	virtual ~VExpression();
+	virtual ~VExpression() noexcept(false);
 	virtual VExpression* DoResolve(VEmitContext&) = 0;
 	VExpression* Resolve(VEmitContext&);
 	VExpression* ResolveBoolean(VEmitContext&);

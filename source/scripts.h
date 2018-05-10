@@ -27,7 +27,7 @@ class VScriptParser
 {
 public:
 	VScriptParser(const VStr&, VStream*);
-	~VScriptParser();
+	~VScriptParser() noexcept(false);
 
 	int 		Line;
 	bool		End;

@@ -103,7 +103,7 @@ private:
 
 public:
 	VZipFileReader(VStream*, vuint32, const VZipFileInfo&, FOutputDevice*);
-	~VZipFileReader();
+	virtual ~VZipFileReader() noexcept(false);
 	void Serialise(void*, int);
 	void Seek(int);
 	int Tell();
@@ -376,7 +376,7 @@ VZipFile::VZipFile(const VStr& zipfile)
 //
 //==========================================================================
 
-VZipFile::~VZipFile()
+VZipFile::~VZipFile() noexcept(false)
 {
 	guard(VZipFile::~VZipFile);
 	Close();
@@ -790,7 +790,7 @@ VZipFileReader::VZipFileReader(VStream* InStream, vuint32 BytesBeforeZipFile,
 //
 //==========================================================================
 
-VZipFileReader::~VZipFileReader()
+VZipFileReader::~VZipFileReader() noexcept(false)
 {
 	guard(VZipFileReader::~VZipFileReader);
 	Close();

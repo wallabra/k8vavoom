@@ -52,7 +52,7 @@ public:
 	static VTexture* Create(VStream&, int);
 
 	VPatchTexture(int, int, int, int, int);
-	~VPatchTexture();
+	virtual ~VPatchTexture() noexcept(false);
 	vuint8* GetPixels();
 	void Unload();
 };
@@ -100,7 +100,7 @@ private:
 public:
 	VMultiPatchTexture(VStream&, int, VTexture**, int, int, bool);
 	VMultiPatchTexture(VScriptParser*, int);
-	~VMultiPatchTexture();
+	virtual ~VMultiPatchTexture() noexcept(false);
 	void SetFrontSkyLayer();
 	vuint8* GetPixels();
 	void Unload();
@@ -118,7 +118,7 @@ public:
 	static VTexture* Create(VStream&, int);
 
 	VFlatTexture(int);
-	~VFlatTexture();
+	virtual ~VFlatTexture() noexcept(false);
 	vuint8* GetPixels();
 	void Unload();
 };
@@ -137,7 +137,7 @@ public:
 	static VTexture* Create(VStream&, int);
 
 	VRawPicTexture(int, int);
-	~VRawPicTexture();
+	virtual ~VRawPicTexture() noexcept(false);
 	vuint8* GetPixels();
 	rgba_t* GetPalette();
 	void Unload();
@@ -155,7 +155,7 @@ public:
 	static VTexture* Create(VStream&, int);
 
 	VAutopageTexture(int);
-	~VAutopageTexture();
+	virtual ~VAutopageTexture() noexcept(false);
 	vuint8* GetPixels();
 	void Unload();
 };
@@ -174,7 +174,7 @@ public:
 	static VTexture* Create(VStream&, int);
 
 	VImgzTexture(int, int, int, int, int);
-	~VImgzTexture();
+	virtual ~VImgzTexture() noexcept(false);
 	vuint8* GetPixels();
 	void Unload();
 };
@@ -192,7 +192,7 @@ public:
 	static VTexture* Create(VStream&, int);
 
 	VPcxTexture(int, struct pcx_t&);
-	~VPcxTexture();
+	virtual ~VPcxTexture() noexcept(false);
 	vuint8* GetPixels();
 	rgba_t* GetPalette();
 	void Unload();
@@ -211,7 +211,7 @@ public:
 	static VTexture* Create(VStream&, int);
 
 	VTgaTexture(int, struct tgaHeader_t&);
-	~VTgaTexture();
+	virtual ~VTgaTexture() noexcept(false);
 	vuint8* GetPixels();
 	rgba_t* GetPalette();
 	void Unload();
@@ -229,7 +229,7 @@ public:
 	static VTexture* Create(VStream&, int);
 
 	VPngTexture(int, int, int, int, int);
-	~VPngTexture();
+	virtual ~VPngTexture() noexcept(false);
 	vuint8* GetPixels();
 	void Unload();
 };
@@ -245,7 +245,7 @@ public:
 	static VTexture* Create(VStream&, int);
 
 	VJpegTexture(int, int, int);
-	~VJpegTexture();
+	virtual ~VJpegTexture() noexcept(false);
 	vuint8* GetPixels();
 	void Unload();
 };
@@ -268,7 +268,7 @@ protected:
 
 public:
 	VWarpTexture(VTexture*);
-	~VWarpTexture();
+	virtual ~VWarpTexture() noexcept(false);
 	void SetFrontSkyLayer();
 	bool CheckModified();
 	vuint8* GetPixels();

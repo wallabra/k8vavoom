@@ -278,7 +278,7 @@ public:
 	VClass(VName, VMemberBase*, TLocation);
 	VClass(ENativeConstructor, size_t ASize, vuint32 AClassFlags,
 		VClass *AParent, EName AName, void(*ACtor)());
-	~VClass();
+	virtual ~VClass() noexcept(false);
 
 	// Systemwide functions.
 	static VClass* FindClass(const char *);

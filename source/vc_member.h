@@ -75,7 +75,7 @@ public:
 
 	//	Srtuctors.
 	VMemberBase(vuint8, VName, VMemberBase*, TLocation);
-	virtual ~VMemberBase();
+	virtual ~VMemberBase() noexcept(false);
 
 	//	Accessors.
 	const char *GetName() const

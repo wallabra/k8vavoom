@@ -76,7 +76,7 @@ VChannel::VChannel(VNetConnection* AConnection, EChannelType AType,
 //
 //==========================================================================
 
-VChannel::~VChannel()
+VChannel::~VChannel() noexcept(false)
 {
 	guard(VChannel::~VChannel);
 	for (VMessageIn* Msg = InMsg; Msg; )

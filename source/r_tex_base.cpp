@@ -136,7 +136,7 @@ VTexture::VTexture()
 //
 //==========================================================================
 
-VTexture::~VTexture()
+VTexture::~VTexture() noexcept(false)
 {
 	if (Pixels8Bit)
 	{

@@ -65,7 +65,7 @@ VExpression::VExpression(const TLocation& ALoc)
 //
 //==========================================================================
 
-VExpression::~VExpression()
+VExpression::~VExpression() noexcept(false)
 {
 }
 

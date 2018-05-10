@@ -37,7 +37,7 @@ public:
 	VExpression*	Args[VMethod::MAX_PARAMS + 1];
 
 	VBaseInvocation(VName, int, VExpression**, const TLocation&);
-	~VBaseInvocation();
+	virtual ~VBaseInvocation() noexcept(false);
 	VExpression* DoResolve(VEmitContext&);
 	void Emit(VEmitContext&);
 };
@@ -105,7 +105,7 @@ public:
 	VInvocation(VExpression* ASelfExpr, VMethod* AFunc, VField* ADelegateField,
 		bool AHaveSelf, bool ABaseCall, const TLocation& ALoc, int ANumArgs,
 		VExpression** AArgs);
-	~VInvocation();
+	virtual ~VInvocation() noexcept(false);
 	VExpression* DoResolve(VEmitContext&);
 	void Emit(VEmitContext&);
 	void CheckParams(VEmitContext&);

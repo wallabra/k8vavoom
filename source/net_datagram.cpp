@@ -82,7 +82,7 @@ public:
 	, LanSocket(0)
 	, Invalid(false)
 	{}
-	~VDatagramSocket();
+	virtual ~VDatagramSocket() noexcept(false);
 
 	int GetMessage(TArray<vuint8>&);
 	int SendMessage(vuint8*, vuint32);
@@ -1051,7 +1051,7 @@ void VDatagramDriver::Shutdown()
 //
 //==========================================================================
 
-VDatagramSocket::~VDatagramSocket()
+VDatagramSocket::~VDatagramSocket() noexcept(false)
 {
 	guard(VDatagramSocket::~VDatagramSocket);
 	LanDriver->CloseSocket(LanSocket);

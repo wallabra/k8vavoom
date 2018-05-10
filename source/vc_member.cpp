@@ -110,7 +110,7 @@ VMemberBase::VMemberBase(vuint8 AMemberType, VName AName, VMemberBase* AOuter,
 //
 //==========================================================================
 
-VMemberBase::~VMemberBase()
+VMemberBase::~VMemberBase() noexcept(false)
 {
 }
 

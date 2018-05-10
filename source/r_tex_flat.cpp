@@ -95,7 +95,7 @@ VFlatTexture::VFlatTexture(int InLumpNum)
 //
 //==========================================================================
 
-VFlatTexture::~VFlatTexture()
+VFlatTexture::~VFlatTexture() noexcept(false)
 {
 	guard(VFlatTexture::~VFlatTexture);
 	if (Pixels)

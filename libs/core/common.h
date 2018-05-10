@@ -114,7 +114,7 @@ enum ENoInit { E_NoInit };
 class VInterface
 {
 public:
-	virtual ~VInterface();
+	virtual ~VInterface() noexcept(false);
 };
 
 //==========================================================================

@@ -79,7 +79,7 @@ VViewClipper::VViewClipper()
 //
 //==========================================================================
 
-VViewClipper::~VViewClipper()
+VViewClipper::~VViewClipper() noexcept(false)
 {
 	guard(VViewClipper::~VViewClipper);
 	ClearClipNodes(TVec(), NULL);

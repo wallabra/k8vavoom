@@ -78,7 +78,7 @@ VWarpTexture::VWarpTexture(VTexture* ASrcTex)
 //
 //==========================================================================
 
-VWarpTexture::~VWarpTexture()
+VWarpTexture::~VWarpTexture() noexcept(false)
 {
 	guard(VWarpTexture::~VWarpTexture);
 	if (Pixels)

@@ -135,7 +135,7 @@ VPatchTexture::VPatchTexture(int ALumpNum, int AWidth, int AHeight,
 //
 //==========================================================================
 
-VPatchTexture::~VPatchTexture()
+VPatchTexture::~VPatchTexture() noexcept(false)
 {
 	guard(VPatchTexture::~VPatchTexture);
 	if (Pixels)

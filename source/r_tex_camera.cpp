@@ -71,7 +71,7 @@ VCameraTexture::VCameraTexture(VName AName, int AWidth, int AHeight)
 //
 //==========================================================================
 
-VCameraTexture::~VCameraTexture()
+VCameraTexture::~VCameraTexture() noexcept(false)
 {
 	guard(VCameraTexture::~VCameraTexture);
 	if (Pixels)

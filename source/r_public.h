@@ -221,7 +221,7 @@ protected:
 
 public:
 	VTexture();
-	virtual ~VTexture();
+	virtual ~VTexture() noexcept(false);
 
 	static VTexture* CreateTexture(int, int);
 

@@ -6,7 +6,7 @@ IF( NOT CMAKE_BUILD_TYPE )
   FORCE )
 ENDIF()
 
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++98" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14" )
 
 set( UNFUCK_GCC_FLAGS "" )
 

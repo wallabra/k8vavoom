@@ -167,7 +167,7 @@ VJpegTexture::VJpegTexture(int ALumpNum, int AWidth, int AHeight)
 //
 //==========================================================================
 
-VJpegTexture::~VJpegTexture()
+VJpegTexture::~VJpegTexture() noexcept(false)
 {
 	guard(VJpegTexture::~VJpegTexture);
 	if (Pixels)

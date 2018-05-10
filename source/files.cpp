@@ -685,7 +685,7 @@ public:
 		bLoading = false;
 		unguard;
 	}
-	~VStreamFileWriter()
+	virtual ~VStreamFileWriter() noexcept(false)
 	{
 		guard(VStreamFileWriter::~VStreamFileWriter);
 		if (File)
@@ -792,7 +792,7 @@ VStreamFileReader::VStreamFileReader(FILE* InFile, FOutputDevice *InError)
 	bLoading = true;
 	unguard;
 }
-VStreamFileReader::~VStreamFileReader()
+VStreamFileReader::~VStreamFileReader() noexcept(false)
 {
 	guard(VStreamFileReader::~VStreamFileReader);
 	if (File)

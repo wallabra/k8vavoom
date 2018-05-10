@@ -131,7 +131,7 @@ VRawPicTexture::VRawPicTexture(int ALumpNum, int APalLumpNum)
 //
 //==========================================================================
 
-VRawPicTexture::~VRawPicTexture()
+VRawPicTexture::~VRawPicTexture() noexcept(false)
 {
 	guard(VRawPicTexture::~VRawPicTexture);
 	if (Pixels)

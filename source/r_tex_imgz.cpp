@@ -103,7 +103,7 @@ VImgzTexture::VImgzTexture(int ALumpNum, int AWidth, int AHeight,
 //
 //==========================================================================
 
-VImgzTexture::~VImgzTexture()
+VImgzTexture::~VImgzTexture() noexcept(false)
 {
 	guard(VImgzTexture::~VImgzTexture);
 	if (Pixels)

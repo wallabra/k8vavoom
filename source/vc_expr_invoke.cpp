@@ -71,7 +71,7 @@ VBaseInvocation::VBaseInvocation(VName AName, int ANumArgs, VExpression** AArgs,
 //
 //==========================================================================
 
-VBaseInvocation::~VBaseInvocation()
+VBaseInvocation::~VBaseInvocation() noexcept(false)
 {
 	guard(VBaseInvocation::~VBaseInvocation);
 	for (int i = 0; i < NumArgs; i++)
@@ -488,7 +488,7 @@ VInvocation::VInvocation(VExpression* ASelfExpr, VMethod* AFunc, VField* ADelega
 //
 //==========================================================================
 
-VInvocation::~VInvocation()
+VInvocation::~VInvocation() noexcept(false)
 {
 	guard(VInvocation::~VInvocation);
 	if (SelfExpr)

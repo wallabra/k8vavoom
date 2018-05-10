@@ -155,7 +155,7 @@ VClass::VClass(ENativeConstructor, size_t ASize, vuint32 AClassFlags,
 //
 //==========================================================================
 
-VClass::~VClass()
+VClass::~VClass() noexcept(false)
 {
 	guard(VClass::~VClass);
 	if (GameExpr)

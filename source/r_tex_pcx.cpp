@@ -147,7 +147,7 @@ VPcxTexture::VPcxTexture(int ALumpNum, pcx_t& Hdr)
 //
 //==========================================================================
 
-VPcxTexture::~VPcxTexture()
+VPcxTexture::~VPcxTexture() noexcept(false)
 {
 	guard(VPcxTexture::~VPcxTexture);
 	if (Pixels)

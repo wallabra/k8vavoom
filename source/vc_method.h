@@ -122,7 +122,7 @@ public:
 	TLocation		Loc;
 
 	VMethodParam();
-	~VMethodParam();
+	virtual ~VMethodParam() noexcept(false);
 };
 
 //==========================================================================
@@ -164,7 +164,7 @@ public:
 	VMethod*				NextNetMethod;
 
 	VMethod(VName, VMemberBase*, TLocation);
-	~VMethod();
+	virtual ~VMethod() noexcept(false);
 
 	void Serialise(VStream&);
 	bool Define();

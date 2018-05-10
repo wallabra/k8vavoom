@@ -48,6 +48,7 @@ public:
 		size_t				DataSize;
 
 		FStream(VStream& InStream);
+		//virtual ~FStream () noexcept(false) {}
 		void StrmWrite(const FLAC__int32* const Buf[], size_t Offs,
 			size_t Len);
 
@@ -85,7 +86,7 @@ public:
 		size_t				StrmSize;
 
 		FStream(VStream* InStream);
-		~FStream();
+		virtual ~FStream();
 		void StrmWrite(const FLAC__int32* const Buf[], size_t Offs,
 			size_t Len);
 
@@ -323,7 +324,7 @@ VFlacAudioCodec::VFlacAudioCodec(FStream* InStream)
 //
 //==========================================================================
 
-VFlacAudioCodec::~VFlacAudioCodec()
+VFlacAudioCodec::~VFlacAudioCodec() noexcept(false)
 {
 	guard(VFlacAudioCodec::~VFlacAudioCodec);
 	delete Stream;
@@ -429,7 +430,7 @@ VFlacAudioCodec::FStream::FStream(VStream* InStream)
 
 VFlacAudioCodec::FStream::~FStream()
 {
-	guard(VFlacAudioCodec::FStream::~FStream);
+	//guard(VFlacAudioCodec::FStream::~FStream);
 	if (PoolSize > 0 && SamplePool[0] != NULL)
 	{
 		Z_Free(SamplePool[0]);
@@ -438,7 +439,7 @@ VFlacAudioCodec::FStream::~FStream()
 		delete Strm;
 		Strm = NULL;
 	}
-	unguard;
+	//unguard;
 }
 
 //==========================================================================

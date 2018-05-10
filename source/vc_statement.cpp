@@ -61,7 +61,7 @@ VStatement::VStatement(const TLocation& ALoc)
 //
 //==========================================================================
 
-VStatement::~VStatement()
+VStatement::~VStatement() noexcept(false)
 {}
 
 //==========================================================================
@@ -1077,7 +1077,7 @@ VExpressionStatement::VExpressionStatement(VExpression* AExpr)
 //
 //==========================================================================
 
-VExpressionStatement::~VExpressionStatement()
+VExpressionStatement::~VExpressionStatement() noexcept(false)
 {
 	if (Expr)
 	{

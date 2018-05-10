@@ -119,7 +119,7 @@ VScriptParser::VScriptParser(const VStr& name, VStream* Strm)
 //
 //==========================================================================
 
-VScriptParser::~VScriptParser()
+VScriptParser::~VScriptParser() noexcept(false)
 {
 	guard(VScriptParser::~VScriptParser);
 	delete[] ScriptBuffer;

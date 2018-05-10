@@ -165,7 +165,7 @@ VPngTexture::VPngTexture(int ALumpNum, int AWidth, int AHeight, int ASOffset,
 //
 //==========================================================================
 
-VPngTexture::~VPngTexture()
+VPngTexture::~VPngTexture() noexcept(false)
 {
 	guard(VPngTexture::~VPngTexture);
 	if (Pixels)

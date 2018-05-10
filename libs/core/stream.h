@@ -44,7 +44,7 @@ public:
 	: bLoading(false)
 	, bError(false)
 	{}
-	virtual ~VStream();
+	virtual ~VStream() noexcept(false);
 
 	//	Status requests.
 	bool IsLoading()

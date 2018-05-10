@@ -51,6 +51,6 @@
 //
 //==========================================================================
 
-VInterface::~VInterface()
+VInterface::~VInterface() noexcept(false)
 {
 }

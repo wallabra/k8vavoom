@@ -66,7 +66,7 @@ VXmlNode::VXmlNode()
 //
 //==========================================================================
 
-VXmlNode::~VXmlNode()
+VXmlNode::~VXmlNode() noexcept(false)
 {
 	guard(VXmlNode::~VXmlNode);
 	while (FirstChild)

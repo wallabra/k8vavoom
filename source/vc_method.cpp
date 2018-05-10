@@ -65,7 +65,7 @@ VMethodParam::VMethodParam()
 //
 //==========================================================================
 
-VMethodParam::~VMethodParam()
+VMethodParam::~VMethodParam() noexcept(false)
 {
 	guard(VMethodParam::~VMethodParam);
 	if (TypeExpr)
@@ -110,7 +110,7 @@ VMethod::VMethod(VName AName, VMemberBase* AOuter, TLocation ALoc)
 //
 //==========================================================================
 
-VMethod::~VMethod()
+VMethod::~VMethod() noexcept(false)
 {
 	guard(VMethod::~VMethod);
 	if (ReturnTypeExpr)

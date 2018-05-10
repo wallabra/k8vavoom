@@ -29,7 +29,7 @@ public:
 	TLocation		Loc;
 
 	VStatement(const TLocation&);
-	virtual ~VStatement();
+	virtual ~VStatement() noexcept(false);
 	virtual bool Resolve(VEmitContext&) = 0;
 	virtual void DoEmit(VEmitContext&) = 0;
 	void Emit(VEmitContext&);
@@ -241,7 +241,7 @@ public:
 	VExpression*		Expr;
 
 	VExpressionStatement(VExpression*);
-	~VExpressionStatement();
+	virtual ~VExpressionStatement() noexcept(false);
 	bool Resolve(VEmitContext&);
 	void DoEmit(VEmitContext&);
 };

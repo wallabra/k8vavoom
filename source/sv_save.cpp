@@ -115,7 +115,7 @@ public:
 	{
 		bLoading = true;
 	}
-	~VSaveLoaderStream()
+	virtual ~VSaveLoaderStream() noexcept(false)
 	{
 		delete Stream;
 		Stream = NULL;

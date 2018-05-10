@@ -83,7 +83,7 @@ VSoundManager::VSoundManager()
 //
 //==========================================================================
 
-VSoundManager::~VSoundManager()
+VSoundManager::~VSoundManager() noexcept(false)
 {
 	guard(VSoundManager::~VSoundManager);
 	for (int i = 0; i < S_sfx.Num(); i++)

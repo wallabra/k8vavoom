@@ -53,7 +53,7 @@ public:
 	VNetDriver*		Driver;
 
 	VSocket(VNetDriver*);
-	~VSocket();
+	virtual ~VSocket() noexcept(false);
 };
 
 struct VNetPollProcedure

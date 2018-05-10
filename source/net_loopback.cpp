@@ -47,7 +47,7 @@ public:
 	: VSocket(Drv)
 	, OtherSock(NULL)
 	{}
-	~VLoopbackSocket();
+	virtual ~VLoopbackSocket() noexcept(false);
 
 	int GetMessage(TArray<vuint8>&);
 	int SendMessage(vuint8*, vuint32);
@@ -284,7 +284,7 @@ void VLoopbackDriver::Shutdown()
 //
 //==========================================================================
 
-VLoopbackSocket::~VLoopbackSocket()
+VLoopbackSocket::~VLoopbackSocket() noexcept(false)
 {
 	guard(VLoopbackSocket::~VLoopbackSocket);
 	if (OtherSock)
