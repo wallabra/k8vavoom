@@ -2597,9 +2597,16 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
 final bool AddElvenGift (name Klass) {
   if (FindClass(Klass)) {
     Actor act = Level.Spawn(FindClass(Klass));
-    if (Klass == 'BDW_Rifle') Weapon(act).AmmoGive2 = 31;
-    else if (Klass == 'BDW_Shotgun' || (Klass == 'Shotgun' && FindClass('BDW_Shotgun'))) Weapon(act).AmmoGive2 = 8;
+    if (Klass == 'BDW_Rifle') {
+      Weapon(act).AmmoGive2 = 31;
+      PendingWeapon = Weapon(act);
+    } else if (Klass == 'BDW_Shotgun' || (Klass == 'Shotgun' && FindClass('BDW_Shotgun'))) {
+      Weapon(act).AmmoGive2 = 8;
+    }
     act.TouchSpecial(EntityEx(MO));
+    if (Klass == 'BDW_Rifle' && ReadyWeapon && ReadyWeapon.bWimpyWeapon && (!PendingWeapon || PendingWeapon.bWimpyWeapon)) {
+      PendingWeapon = Weapon(act);
+    }
     return true;
   } else {
     return false;
