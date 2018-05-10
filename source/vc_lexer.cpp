@@ -348,6 +348,7 @@ void VLexer::PopSource()
 
 void VLexer::NextToken()
 {
+	if (!Src) { NewLine = false; Token = TK_EOF; return; }
 	NewLine = Src->NewLine;
 	do
 	{
