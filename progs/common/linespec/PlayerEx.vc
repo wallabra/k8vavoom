@@ -2588,9 +2588,9 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
     k8ElvenGifted = true; // gifts should be given only once
     if (AddElvenGift('Shotgun')) AddElvenGift('ShellBox');
     if (AddElvenGift('BDW_Rifle')) { int f; for (f = 9; f > 0; --f) AddElvenGift('Clip'); }
-    ClientHudMessage("ELVEN GIFT", 'smallfont', 0, 123666, CR_OLIVE, "",
+    ClientHudMessage("ELVEN GIFT", 'smallfont', 0, 123666, CR_ORANGE, "",
       0.5, 0.45, 0, 0,
-      1.5, 0.0, 0.0);
+      2.5, 0.0, 0.0);
   }
 }
 
@@ -2603,7 +2603,7 @@ final bool AddElvenGift (name Klass) {
     } else if (Klass == 'BDW_Shotgun' || (Klass == 'Shotgun' && FindClass('BDW_Shotgun'))) {
       Weapon(act).AmmoGive2 = 8;
     }
-    act.TouchSpecial(EntityEx(MO));
+    act.TouchSpecial(EntityEx(MO), true);
     if (Klass == 'BDW_Rifle' && ReadyWeapon && ReadyWeapon.bWimpyWeapon && (!PendingWeapon || PendingWeapon.bWimpyWeapon)) {
       PendingWeapon = Weapon(act);
     }

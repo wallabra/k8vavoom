@@ -4143,7 +4143,7 @@ bool IsServant()
 	return false;
 }
 
-void TouchSpecial(EntityEx Toucher)
+void TouchSpecial(EntityEx Toucher, optional bool noflash)
 {
 }
 

@@ -220,7 +220,7 @@ void DetachedFromOwner()
 //
 //==========================================================================
 
-final void TouchSpecial(EntityEx Toucher)
+final void TouchSpecial(EntityEx Toucher, optional bool noflash)
 {
 	if (!Toucher.bPickUp)
 	{
@@ -245,7 +245,7 @@ final void TouchSpecial(EntityEx Toucher)
 		return;
 	}
 
-	if (!bQuiet)
+	if (!bQuiet && (!specified_noflash || !noflash))
 	{
 		if (Toucher.bIsPlayer)
 		{
