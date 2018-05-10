@@ -101,7 +101,7 @@ int GetRebornHealth()
 
 void GotAmmo(Ammo NewAmmo)
 {
-	if (ReadyWeapon.bWimpyWeapon)
+	if (ReadyWeapon.bWimpyWeapon && !ReadyWeapon.bNoAutoSwitch && GetCvarB('wpn_autoswitch'))
 	{
 		Weapon Best = BestWeapon(class<Ammo>(NewAmmo.Class));
 		if (Best && Best.SelectionOrder < ReadyWeapon.SelectionOrder)
