@@ -686,7 +686,7 @@ void VInvocation::CheckParams(VEmitContext& ec)
 			{
 				if (!(Func->ParamFlags[i] & FPARM_Optional))
 				{
-					ParseError(Loc, "Bad expresion");
+					ParseError(Loc, "Cannot omit non-optional argument");
 				}
 				argsize += Func->ParamTypes[i].GetStackSize();
 			}
@@ -770,9 +770,12 @@ void VInvocation::CheckParams(VEmitContext& ec)
 		}
 		else if (!Args[i])
 		{
-			if (!Args[i]->Type.Equals(Func->ParamTypes[i]))
-			{
-				ParseError(Loc, "Bad expresion");
+			if (Func->Flags&FUNC_VarArgs) {
+				ParseError(Loc, "Cannot omit arguments for vararg function");
+			} else if (i >= Func->NumParams) {
+				ParseError(Loc, "Cannot omit extra arguments for vararg function");
+			} else {
+				ParseError(Loc, "Cannot omit argument (for some reason)");
 			}
 		}
 		else
