@@ -839,10 +839,10 @@ struct subsector_t
 	int			__VisFrame;
 	int			__SkyVisFrame;
 
-	sector_t* deepref;
+	sector_t* __deepref;
 
-	int			dlightbits;
-	int				dlightframe;
+	int			__dlightbits;
+	int				__dlightframe;
 
 	void*		__regions;
 };
