@@ -517,6 +517,8 @@ struct seg_t : public TPlane
 	sector_t	*frontsector;
 	sector_t	*backsector;
 
+	seg_t *partner; // from glnodes
+
 	//	Side of line (for light calculations)
 	int			side;
 

@@ -366,6 +366,25 @@ static void CopySegs(VLevel* Level, vertex_t* GLVertexes)
 	for (int i = 0; i < Level->NumSegs; i++, li++)
 	{
 		glbsp_seg_t* SrcSeg = SrcSegs[i];
+		li->partner = nullptr;
+
+		// assign partner (we need it for self-referencing deep water)
+		if (SrcSeg->partner) {
+			int pidx = SrcSeg->partner->index;
+			if (pidx < 0 || pidx >= num_segs) {
+				GCon->Logf("GLBSP: invalid partner index (0)");
+			} else {
+				for (int psi = 0; psi < Level->NumSegs; ++psi) {
+					if (SrcSegs[psi] == LookupSeg(pidx)) {
+						li->partner = &Level->Segs[psi];
+						break;
+					}
+				}
+				if (!li->partner) {
+					GCon->Logf("GLBSP: invalid partner index (1)");
+				}
+			}
+		}
 
 		if (SrcSeg->start->index & IS_GL_VERTEX)
 		{

@@ -1154,11 +1154,11 @@ void VLevel::LoadGLSegs(int Lump, int NumBaseVerts)
 		vuint32 v2num;
 		vint16 linedef;	// -1 for minisegs
 		vint16 side;
+		vint16 partner;	// -1 on one-sided walls
 
 		if (Format < 3)
 		{
 			vuint16 v1, v2;
-			vint16 partner;	// -1 on one-sided walls
 			*Strm << v1 << v2 << linedef << side << partner;
 			v1num = v1;
 			v2num = v2;
@@ -1167,7 +1167,6 @@ void VLevel::LoadGLSegs(int Lump, int NumBaseVerts)
 		{
 			vuint32 v1, v2;
 			vint16 flags;
-			vint32 partner;	// -1 on one-sided walls
 			*Strm << v1 << v2 << linedef << flags << partner;
 			v1num = v1;
 			v2num = v2;
@@ -1225,7 +1224,8 @@ void VLevel::LoadGLSegs(int Lump, int NumBaseVerts)
 			li->side = side;
 		}
 
-		//	Partner is not used
+		//	Assign partner (we need it for self-referencing deep water)
+		li->partner = (partner >= 0 && partner < NumSegs ? &Segs[partner] : nullptr);
 
 		//	Calc seg's plane params
 		CalcSeg(li);
@@ -1507,6 +1507,9 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
 			Host_Error("Bad vertex index %d", v1);
 		}
 		li->v1 = &Vertexes[v1];
+
+		//	Assign partner (we need it for self-referencing deep water)
+		li->partner = (partner >= 0 && partner < NumSegs ? &Segs[partner] : nullptr);
 
 		if (linedef != 0xffff)
 		{
