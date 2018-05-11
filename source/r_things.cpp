@@ -593,7 +593,7 @@ void VRenderLevelShared::RenderThing(VEntity* mobj, ERenderPass Pass)
 		break;
 
 	case STYLE_Fuzzy:
-		Alpha = 0.1;
+		Alpha = FUZZY_ALPHA;
 		break;
 
 	case STYLE_Add:
@@ -898,7 +898,7 @@ void VRenderLevelShared::DrawPlayerSprites()
 		break;
 
 	case STYLE_Fuzzy:
-		Alpha = 0.1;
+		Alpha = FUZZY_ALPHA;
 		break;
 
 	case STYLE_Add:

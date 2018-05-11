@@ -119,7 +119,7 @@ void VAdvancedRenderLevel::RenderThingAmbient(VEntity* mobj)
 		break;
 
 	case STYLE_Fuzzy:
-		Alpha = 0.1;
+		Alpha = FUZZY_ALPHA;
 		break;
 
 	case STYLE_Add:
@@ -249,7 +249,7 @@ void VAdvancedRenderLevel::RenderThingTextures(VEntity* mobj)
 		break;
 
 	case STYLE_Fuzzy:
-		Alpha = 0.1;
+		Alpha = FUZZY_ALPHA;
 		break;
 
 	case STYLE_Add:
@@ -389,7 +389,7 @@ void VAdvancedRenderLevel::RenderThingLight(VEntity* mobj)
 		break;
 
 	case STYLE_Fuzzy:
-		Alpha = 0.1;
+		Alpha = FUZZY_ALPHA;
 		break;
 
 	case STYLE_Add:
@@ -550,7 +550,7 @@ void VAdvancedRenderLevel::RenderThingShadow(VEntity* mobj)
 		break;
 
 	case STYLE_Fuzzy:
-		Alpha = 0.1;
+		Alpha = FUZZY_ALPHA;
 		break;
 
 	case STYLE_Add:
@@ -657,7 +657,7 @@ void VAdvancedRenderLevel::RenderThingFog(VEntity* mobj)
 		break;
 
 	case STYLE_Fuzzy:
-		Alpha = 0.1;
+		Alpha = FUZZY_ALPHA;
 		break;
 
 	case STYLE_Add:
