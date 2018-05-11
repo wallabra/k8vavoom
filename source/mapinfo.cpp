@@ -367,21 +367,19 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 			info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+			info->Sky1ScrollDelta = 0;
 			if (newFormat) {
-				if (sc->Check(",")) {
+				if (!sc->IsAtEol()) {
+					sc->Check(",");
 					sc->ExpectFloat();
-						if (HexenMode) sc->Float /= 256.0;
-						info->Sky1ScrollDelta = sc->Float * 35.0;
-				} else {
-					info->Sky1ScrollDelta = 0;
+					if (HexenMode) sc->Float /= 256.0;
+					info->Sky1ScrollDelta = sc->Float * 35.0;
 				}
 			} else {
 				if (!sc->IsAtEol()) {
 					sc->ExpectFloat();
 					if (HexenMode) sc->Float /= 256.0;
 					info->Sky1ScrollDelta = sc->Float * 35.0;
-				} else {
-					info->Sky1ScrollDelta = 0;
 				}
 			}
 		}
@@ -390,21 +388,19 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 			if (newFormat) sc->Expect("=");
 			sc->ExpectName8();
 			info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+			info->Sky2ScrollDelta = 0;
 			if (newFormat) {
-				if (sc->Check(",")) {
+				if (!sc->IsAtEol()) {
+					sc->Check(",");
 					sc->ExpectFloat();
-						if (HexenMode) sc->Float /= 256.0;
-						info->Sky1ScrollDelta = sc->Float * 35.0;
-				} else {
-					info->Sky1ScrollDelta = 0;
+					if (HexenMode) sc->Float /= 256.0;
+					info->Sky1ScrollDelta = sc->Float * 35.0;
 				}
 			} else {
 				if (!sc->IsAtEol()) {
 					sc->ExpectFloat();
 					if (HexenMode) sc->Float /= 256.0;
 					info->Sky2ScrollDelta = sc->Float * 35.0;
-				} else {
-					info->Sky2ScrollDelta = 0;
 				}
 			}
 		}
