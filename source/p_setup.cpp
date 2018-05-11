@@ -374,11 +374,13 @@ void VLevel::LoadMap(VName AMapName)
 	double NodesTime = -Sys_Time();
 	if (NeedNodesBuild)
 	{
+		GCon->Logf("rebuilding GL nodes...");
 		BuildNodes();
 	}
 	else if (UseComprGLNodes)
 	{
 		if (!LoadCompressedGLNodes(CompressedGLNodesLump)) {
+			GCon->Logf("rebuilding GL nodes...");
 			BuildNodes();
 		}
 	}
@@ -2644,7 +2646,7 @@ void VLevel::FixSelfRefDeepWater () {
 
       if (self_subs[j] != 1) continue;
 #ifdef DEBUG_DEEP_WATERS
-      fprintf(stderr, "Subsector [%d] sec %d --> %d\n", j, (int)(sub->sector-Sectors), self_subs[j]);
+      GCon->Logf("Subsector [%d] sec %d --> %d", j, (int)(sub->sector-Sectors), self_subs[j]);
 #endif
       seg_t *Xseg = 0;
 
@@ -2656,7 +2658,7 @@ void VLevel::FixSelfRefDeepWater () {
 
         int k = (int)(back_sub-Subsectors);
 #ifdef DEBUG_DEEP_WATERS
-        fprintf(stderr, "  Seg [%d] back_sub %d (back_sect %d)\n", (int)(seg-Segs), k, (int)(back_sub->sector-Sectors));
+        GCon->Logf("  Seg [%d] back_sub %d (back_sect %d)", (int)(seg-Segs), k, (int)(back_sub->sector-Sectors));
 #endif
         if (self_subs[k]&2) {
           if (!Xseg) Xseg = seg;
@@ -2669,7 +2671,7 @@ void VLevel::FixSelfRefDeepWater () {
         if (!Xback_sub) { GCon->Logf("INTERNAL ERROR IN GLBSP LOADER: BACK SUBSECTOR IS NOT SET!"); return; }
         sub->deepref = (Xback_sub->deepref ? Xback_sub->deepref : Xback_sub->sector);
 #ifdef DEBUG_DEEP_WATERS
-        fprintf(stderr, "  Updating (from seg %d) --> SEC %d\n", (int)(Xseg-Segs), (int)(sub->deepref-Sectors));
+        GCon->Logf("  Updating (from seg %d) --> SEC %d", (int)(Xseg-Segs), (int)(sub->deepref-Sectors));
 #endif
         self_subs[j] = 3;
 
@@ -2778,7 +2780,7 @@ bool VLevel::IsOuterSectorFor (sector_t *sec, sector_t *insec) {
 int VLevel::FindOuterSectorFor (sector_t *insec) {
   if (!insec) return -1;
 #ifdef DEBUG_DEEP_WATERS
-  printf(" ck %d sectors (%u)...\n", NumSectors, insec-Sectors);
+  GCon->Logf(" ck %d sectors (%u)...", NumSectors, insec-Sectors);
 #endif
   for (vint32 sn = 0; sn < NumSectors; ++sn) {
     sector_t *sec = &Sectors[sn];
@@ -2788,18 +2790,18 @@ int VLevel::FindOuterSectorFor (sector_t *insec) {
     if (!IsOuterSectorFor(sec, insec)) continue;
     if (sec->heightsec) {
 #ifdef DEBUG_DEEP_WATERS
-      printf("   OK %d (redirect to %u)...\n", sn, sec->heightsec-Sectors);
+      GCon->Logf("   OK %d (redirect to %u)...", sn, sec->heightsec-Sectors);
 #endif
       return (int)(sec->heightsec-Sectors);
     }
     if (IsDeepWater(sec->lines[0])) {
 #ifdef DEBUG_DEEP_WATERS
-      printf("   DEEPWATER RECURSE %d!\n", sn);
+      GCon->Logf("   DEEPWATER RECURSE %d!", sn);
 #endif
       return FindOuterSectorFor(sec);
     }
 #ifdef DEBUG_DEEP_WATERS
-    printf("   OK %d...\n", sn);
+    GCon->Logf("   OK %d...", sn);
 #endif
     return sn; // i found her!
   }
@@ -2825,7 +2827,7 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
       hs = (line->frontsector->heightsec = line->backsector);
     }
 #ifdef DEBUG_DEEP_WATERS
-    printf("*** DEEP WATER; LINEDEF #%d; type=%d\n", lidx, type);
+    GCon->Logf("*** DEEP WATER; LINEDEF #%d; type=%d", lidx, type);
 #endif
     hs->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
     hs->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
@@ -2840,11 +2842,11 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
     }
   } else {
 #ifdef DEBUG_DEEP_WATERS
-    printf("SELF-REFERENCED, LINEDEF #%d; sec=%u\n", lidx, line->backsector-Sectors);
+    GCon->Logf("SELF-REFERENCED, LINEDEF #%d; sec=%u", lidx, line->backsector-Sectors);
 #endif
     int osec = FindOuterSectorFor(line->backsector);
 #ifdef DEBUG_DEEP_WATERS
-    printf("  *** outersec=%d\n", osec);
+    GCon->Logf("  *** outersec=%d", osec);
 #endif
     if (osec != -1 && osec != (int)(line->backsector-Sectors)) {
       line->backsector->heightsec = &Sectors[osec];
@@ -2871,7 +2873,7 @@ void VLevel::FixDeepWaters () {
     sector_t *sec = &Sectors[sidx];
     if (!IsDeepOk(sec)) continue;
 #ifdef DEBUG_DEEP_WATERS
-    printf("DWSEC=%d\n", sidx);
+    GCon->Logf("DWSEC=%d", sidx);
 #endif
     for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
       line_t* ld = sec->lines[lidx];
