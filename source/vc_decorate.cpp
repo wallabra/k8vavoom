@@ -2070,6 +2070,13 @@ static bool ParseStates(VScriptParser* sc, VClass* Class,
 				continue;
 			}
 
+			//	Check for other parameters
+			if (!sc->String.ICmp("Fast") || !sc->String.ICmp("CanRaise") || !sc->String.ICmp("NoDelay") || !sc->String.ICmp("Slow"))
+			{
+				GCon->Logf("unsupported DECORATE state keyword: '%s'", *sc->String);
+				continue;
+			}
+
 			//	Check for offsets.
 			if (!sc->String.ICmp("Offset"))
 			{
