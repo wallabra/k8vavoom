@@ -2635,23 +2635,26 @@ bool VLevel::IsDeepOk (sector_t* sec) {
 //
 //==========================================================================
 
-// -1: self-referenced; 1: "simple"
+// -1: self-referenced; bits: 0: normal, back floor; 1: normal, front ceiling
 int VLevel::IsDeepWater (line_t *line) {
+  // should have both sectors
   if (!line || !line->frontsector || !line->backsector) return 0;
+  // should not be already processed
   if (line->backsector->heightsec) return 0; // already processed
+  // should have both sides
   if (line->sidenum[0] < 0 || line->sidenum[1] < 0) return 0;
   // ignore sloped floors
   if (line->frontsector->floor.minz != line->frontsector->floor.maxz) return 0;
   if (line->backsector->floor.minz != line->backsector->floor.maxz) return 0;
   int res = 0;
-  // back sidedef should have no texture
+  // floor: back sidedef should have no texture
   if (Sides[line->sidenum[1]].BottomTexture == 0) {
     // self-referenced?
     if (line->frontsector == line->backsector) return -1;
     // it should be lower than front
     if (line->frontsector->floor.minz > line->backsector->floor.minz) res |= 1;
   }
-  // back sidedef should have no texture
+  // ceiling: front sidedef should have no texture
   if (Sides[line->sidenum[1]].TopTexture == 0) {
     // self-referenced?
     if (line->frontsector == line->backsector) return -1;
@@ -2722,10 +2725,8 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
       if (line->backsector->heightsec) return; // already processed
       hs = (line->backsector->heightsec = line->frontsector);
     } else {
-      //if (line->frontsector->heightsec) return; // already processed
-      //hs = (line->frontsector->heightsec = line->backsector);
-      if (line->backsector->heightsec) return; // already processed
-      hs = (line->backsector->heightsec = line->frontsector);
+      if (line->frontsector->heightsec) return; // already processed
+      hs = (line->frontsector->heightsec = line->backsector);
     }
 #ifdef DEBUG_DEEP_WATERS
     printf("*** DEEP WATER; LINEDEF #%d; type=%d\n", lidx, type);
@@ -2769,6 +2770,9 @@ void VLevel::FixDeepWaters () {
   for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
     sector_t *sec = &Sectors[sidx];
     if (!IsDeepOk(sec)) continue;
+#ifdef DEBUG_DEEP_WATERS
+    printf("DWSEC=%d\n", sidx);
+#endif
     for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
       line_t* ld = sec->lines[lidx];
       FixDeepWater(ld, (int)(ld-Lines));
