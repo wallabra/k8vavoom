@@ -195,10 +195,10 @@ VMultiPatchTexture::VMultiPatchTexture(VScriptParser* sc, int AType)
 		{
 			if (sc->Check("offset"))
 			{
-				sc->ExpectNumber();
+				sc->ExpectNumberWithSign();
 				SOffset = sc->Number;
 				sc->Expect(",");
-				sc->ExpectNumber();
+				sc->ExpectNumberWithSign();
 				TOffset = sc->Number;
 			}
 			else if (sc->Check("xscale"))
