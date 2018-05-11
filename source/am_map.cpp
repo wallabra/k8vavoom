@@ -147,7 +147,7 @@ int automapactive = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static VCvarB am_overlay("am_overlay", false, "Show automap in overlay mode?", CVAR_Archive);
+static VCvarB am_overlay("am_overlay", true, "Show automap in overlay mode?", CVAR_Archive);
 
 // Automap colours
 static vuint32	WallColour;
@@ -166,10 +166,11 @@ static VCvarS	am_colour_tswall("am_colour_tswall", "61 64 5f", "Automap color: t
 static VCvarS	am_colour_fdwall("am_colour_fdwall", "a0 6c 40", "Automap color: fd-walls.", CVAR_Archive);
 static VCvarS	am_colour_cdwall("am_colour_cdwall", "94 94 ac", "Automap color: cd-walls.", CVAR_Archive);
 static VCvarS	am_colour_exwall("am_colour_exwall", "7b 4b 27", "Automap color: ex-walls.", CVAR_Archive);
-static VCvarS	am_colour_secretwall("am_colour_secretwall", "00 00 00", "Automap color: secret walls.", CVAR_Archive);
-static VCvarS	am_colour_power("am_colour_power", "7d 83 79", "Automap color: powerup.", CVAR_Archive);
+static VCvarS	am_colour_secretwall("am_colour_secretwall", "ff 7f 00", "Automap color: secret walls.", CVAR_Archive);
+//static VCvarS	am_colour_power("am_colour_power", "7d 83 79", "Automap color: autorevealed walls.", CVAR_Archive);
+static VCvarS	am_colour_power("am_colour_power", "2f 4f 9f", "Automap color: autorevealed walls.", CVAR_Archive);
 static VCvarS	am_colour_grid("am_colour_grid", "4d 9d 42", "Automap color: grid.", CVAR_Archive);
-static VCvarS	am_colour_thing("am_colour_thing", "2d 2d 2d", "Automap color: thing.", CVAR_Archive);
+static VCvarS	am_colour_thing("am_colour_thing", "cf 4f 00", "Automap color: thing.", CVAR_Archive);
 static VCvarS	am_colour_player("am_colour_player", "e6 e6 e6", "Automap color: player.", CVAR_Archive);
 
 static VCvarB	am_player_arrow("am_player_arrow", true, "Draw player arrow on automap?", CVAR_Archive);
