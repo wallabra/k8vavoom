@@ -144,13 +144,21 @@ static void GLBSP_Draw(void)
 //
 //==========================================================================
 
+static void stripNL (char *str) {
+  if (!str) return;
+  auto slen = strlen(str);
+  while (slen > 0 && (str[slen-1] == '\n' || str[slen-1] == '\r')) str[--slen] = '\0';
+}
+
+
 static void GLBSP_PrintMsg(const char *str, ...)
 {
 	va_list args;
 
 	va_start(args, str);
-	vsprintf(message_buf, str, args);
+	vsnprintf(message_buf, sizeof(message_buf), str, args);
 	va_end(args);
+	stripNL(message_buf);
 
 	GCon->Logf("GB: %s", message_buf);
 }
@@ -168,8 +176,9 @@ static void GLBSP_FatalError(const char *str, ...)
 	va_list args;
 
 	va_start(args, str);
-	vsprintf(message_buf, str, args);
+	vsnprintf(message_buf, sizeof(message_buf), str, args);
 	va_end(args);
+	stripNL(message_buf);
 
 	Sys_Error("Builing nodes failed: %s\n", message_buf);
 }
