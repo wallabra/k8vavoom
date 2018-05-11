@@ -63,7 +63,7 @@
 #define AM_ZOOMOUTKEY	'-'
 #define AM_ENDKEY		K_TAB
 #define AM_GOBIGKEY		'0'
-#define AM_FOLLOWKEY	'f'
+#define AM_FOLLOWKEY	'h'
 #define AM_GRIDKEY		'g'
 #define AM_MARKKEY		'm'
 #define AM_CLEARMARKKEY	'c'
