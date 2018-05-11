@@ -40,6 +40,7 @@ public:
 	double 		Float;
 
 	bool IsText();
+	bool IsAtEol();
 	void SetCMode(bool);
 	void SetEscape(bool);
 	bool AtEnd();

@@ -376,9 +376,13 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 					info->Sky1ScrollDelta = 0;
 				}
 			} else {
-				sc->ExpectFloat();
-				if (HexenMode) sc->Float /= 256.0;
-				info->Sky1ScrollDelta = sc->Float * 35.0;
+				if (!sc->IsAtEol()) {
+					sc->ExpectFloat();
+					if (HexenMode) sc->Float /= 256.0;
+					info->Sky1ScrollDelta = sc->Float * 35.0;
+				} else {
+					info->Sky1ScrollDelta = 0;
+				}
 			}
 		}
 		else if (sc->Check("sky2"))
@@ -395,9 +399,13 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 					info->Sky1ScrollDelta = 0;
 				}
 			} else {
-				sc->ExpectFloat();
-				if (HexenMode) sc->Float /= 256.0;
-				info->Sky2ScrollDelta = sc->Float * 35.0;
+				if (!sc->IsAtEol()) {
+					sc->ExpectFloat();
+					if (HexenMode) sc->Float /= 256.0;
+					info->Sky2ScrollDelta = sc->Float * 35.0;
+				} else {
+					info->Sky2ScrollDelta = 0;
+				}
 			}
 		}
 		else if (sc->Check("skybox"))
