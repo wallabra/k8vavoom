@@ -332,12 +332,10 @@ private:
 	void LoadTextMap(int, const mapInfo_t&);
 
 	void FixDeepWaters ();
-	void FixDeepWater (line_t *line, vint32 lidx);
-	int IsDeepWater (line_t *line);
-	bool IsOuterSectorFor (sector_t *sec, sector_t *insec);
-	int FindOuterSectorFor (sector_t *insec); // -1: oops
-	bool IsDeepOk (sector_t *sec); // all lines should have the same front/back
 	void FixSelfRefDeepWater (); // called from `FixDeepWaters`
+	void FixDeepWater (line_t *line, vint32 lidx);
+	bool IsDeepOk (sector_t *sec); // all lines should have the same front/back
+	int IsDeepWater (line_t *line);
 
 	//	Map loading helpers.
 	int FindGLNodes(VName) const;

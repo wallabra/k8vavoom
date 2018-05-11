@@ -2612,7 +2612,7 @@ void VLevel::FloodZone(sector_t* Sec, int Zone)
 //
 // VLevel::FixSelfRefDeepWater
 //
-// This code is taken from Hyper3dge
+// This code was taken from Hyper3dge
 //
 //==========================================================================
 void VLevel::FixSelfRefDeepWater () {
@@ -2699,6 +2699,40 @@ void VLevel::FixSelfRefDeepWater () {
 
 //==========================================================================
 //
+// VLevel::IsDeepWater
+//
+//==========================================================================
+
+// bits: 0: normal, back floor; 1: normal, front ceiling
+int VLevel::IsDeepWater (line_t *line) {
+  // should have both sectors
+  if (!line || !line->frontsector || !line->backsector) return 0;
+  // should not be self-referencing
+  if (line->frontsector == line->backsector) return 0;
+  // should have both sides
+  if (line->sidenum[0] < 0 || line->sidenum[1] < 0) return 0;
+  // ignore sloped floors
+  if (line->frontsector->floor.minz != line->frontsector->floor.maxz) return 0;
+  if (line->backsector->floor.minz != line->backsector->floor.maxz) return 0;
+
+  int res = 0;
+  // floor: back sidedef should have no texture
+  if (Sides[line->sidenum[1]].BottomTexture == 0 && !line->backsector->heightsec) {
+    // it should be lower than front
+    if (line->frontsector->floor.minz > line->backsector->floor.minz) res |= 1;
+  }
+  // ceiling: front sidedef should have no texture
+  if (Sides[line->sidenum[1]].TopTexture == 0 && !line->frontsector->heightsec) {
+    // it should be upper than front
+    if (line->frontsector->ceiling.minz < line->backsector->ceiling.minz) res |= 2;
+  }
+
+  // done
+  return res;
+}
+
+//==========================================================================
+//
 // VLevel::IsDeepOk
 //
 // all lines should have the same front/back
@@ -2722,138 +2756,43 @@ bool VLevel::IsDeepOk (sector_t* sec) {
     if (ld->frontsector != sec->lines[xidx]->frontsector) return false;
     if (ld->backsector != sec->lines[xidx]->backsector) return false;
   }
-  return (dwt > 0);
+  return true;
 }
-
 
 //==========================================================================
 //
-// VLevel::FixDeepWaters
+// VLevel::FixDeepWater
 //
 //==========================================================================
-
-// -1: self-referenced; bits: 0: normal, back floor; 1: normal, front ceiling
-int VLevel::IsDeepWater (line_t *line) {
-  // should have both sectors
-  if (!line || !line->frontsector || !line->backsector) return 0;
-  // should not be already processed
-  if (line->backsector->heightsec) return 0; // already processed
-  // should have both sides
-  if (line->sidenum[0] < 0 || line->sidenum[1] < 0) return 0;
-  // ignore sloped floors
-  if (line->frontsector->floor.minz != line->frontsector->floor.maxz) return 0;
-  if (line->backsector->floor.minz != line->backsector->floor.maxz) return 0;
-  int res = 0;
-  // floor: back sidedef should have no texture
-  if (Sides[line->sidenum[1]].BottomTexture == 0) {
-    // self-referenced?
-    if (line->frontsector == line->backsector) return -1;
-    // it should be lower than front
-    if (line->frontsector->floor.minz > line->backsector->floor.minz) res |= 1;
-  }
-  // ceiling: front sidedef should have no texture
-  if (Sides[line->sidenum[1]].TopTexture == 0) {
-    // self-referenced?
-    if (line->frontsector == line->backsector) return -1;
-    // it should be upper than front
-    if (line->frontsector->ceiling.minz < line->backsector->ceiling.minz) res |= 2;
-  }
-  // yeah
-  return res;
-}
-
-
-bool VLevel::IsOuterSectorFor (sector_t *sec, sector_t *insec) {
-  if (!sec || !insec) return false;
-  for (subsector_t *ss = sec->subsectors; ss; ss = ss->seclink) {
-    for (int f = 0; f < ss->numlines; ++f) {
-      side_t *sd = Segs[ss->firstline+f].sidedef;
-      if (!sd) continue;
-      if (sd->Sector == insec) return true;
-    }
-  }
-  return false;
-}
-
-
-// -1: oops
-int VLevel::FindOuterSectorFor (sector_t *insec) {
-  if (!insec) return -1;
-#ifdef DEBUG_DEEP_WATERS
-  GCon->Logf(" ck %d sectors (%u)...", NumSectors, insec-Sectors);
-#endif
-  for (vint32 sn = 0; sn < NumSectors; ++sn) {
-    sector_t *sec = &Sectors[sn];
-    if (sec == insec) continue;
-    if (sec->linecount == 0) continue; // just in case
-    //printf("  checking %d (%d)...\n", sn, sec->linecount);
-    if (!IsOuterSectorFor(sec, insec)) continue;
-    if (sec->heightsec) {
-#ifdef DEBUG_DEEP_WATERS
-      GCon->Logf("   OK %d (redirect to %u)...", sn, sec->heightsec-Sectors);
-#endif
-      return (int)(sec->heightsec-Sectors);
-    }
-    if (IsDeepWater(sec->lines[0])) {
-#ifdef DEBUG_DEEP_WATERS
-      GCon->Logf("   DEEPWATER RECURSE %d!", sn);
-#endif
-      return FindOuterSectorFor(sec);
-    }
-#ifdef DEBUG_DEEP_WATERS
-    GCon->Logf("   OK %d...", sn);
-#endif
-    return sn; // i found her!
-  }
-  return -1;
-}
-
 
 void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
   if (!line->frontsector || !line->backsector) return;
 
   int type = IsDeepWater(line);
   if (type == 0) return; // not a deep water
-  if (type < 0) return;
 
-  if (type > 0) {
-    // mark as deep water
-    sector_t *hs;
-    if (type != 2) {
-      if (line->backsector->heightsec) return; // already processed
-      hs = (line->backsector->heightsec = line->frontsector);
-    } else {
-      if (line->frontsector->heightsec) return; // already processed
-      hs = (line->frontsector->heightsec = line->backsector);
-    }
-#ifdef DEBUG_DEEP_WATERS
-    GCon->Logf("*** DEEP WATER; LINEDEF #%d; type=%d", lidx, type);
-#endif
-    hs->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
-    hs->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
-    hs->SectorFlags &= ~sector_t::SF_FakeFloorOnly;
-    hs->SectorFlags &= ~sector_t::SF_FakeCeilingOnly;
-    //hs->SectorFlags |= sector_t::SF_NoFakeLight;
-    if (type == 1) {
-      hs->SectorFlags |= sector_t::SF_FakeFloorOnly;
-    } else if (type == 2) {
-      hs->SectorFlags |= sector_t::SF_FakeCeilingOnly;
-      //hs->SectorFlags |= sector_t::SF_ClipFakePlanes;
-    }
+  // mark as deep water
+  sector_t *hs;
+  if (type != 2) {
+    if (line->backsector->heightsec) return; // already processed
+    hs = (line->backsector->heightsec = line->frontsector);
   } else {
+    if (line->frontsector->heightsec) return; // already processed
+    hs = (line->frontsector->heightsec = line->backsector);
+  }
 #ifdef DEBUG_DEEP_WATERS
-    GCon->Logf("SELF-REFERENCED, LINEDEF #%d; sec=%u", lidx, line->backsector-Sectors);
+  GCon->Logf("*** DEEP WATER; LINEDEF #%d; type=%d", lidx, type);
 #endif
-    int osec = FindOuterSectorFor(line->backsector);
-#ifdef DEBUG_DEEP_WATERS
-    GCon->Logf("  *** outersec=%d", osec);
-#endif
-    if (osec != -1 && osec != (int)(line->backsector-Sectors)) {
-      line->backsector->heightsec = &Sectors[osec];
-      line->backsector->heightsec->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
-      line->backsector->heightsec->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
-      line->backsector->heightsec->SectorFlags |= sector_t::SF_FakeFloorOnly|sector_t::SF_NoFakeLight;
-    }
+  hs->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
+  hs->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
+  hs->SectorFlags &= ~sector_t::SF_FakeFloorOnly;
+  hs->SectorFlags &= ~sector_t::SF_FakeCeilingOnly;
+  //hs->SectorFlags |= sector_t::SF_NoFakeLight;
+  if (type == 1) {
+    hs->SectorFlags |= sector_t::SF_FakeFloorOnly;
+  } else if (type == 2) {
+    hs->SectorFlags |= sector_t::SF_FakeCeilingOnly;
+    //hs->SectorFlags |= sector_t::SF_ClipFakePlanes;
   }
 }
 
@@ -2867,7 +2806,6 @@ void VLevel::FixDeepWaters () {
   }
 
   FixSelfRefDeepWater();
-  //for (vint32 lidx = 0; lidx < NumLines; ++lidx) FixDeepWater(&Lines[lidx], lidx);
 
   for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
     sector_t *sec = &Sectors[sidx];
