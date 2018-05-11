@@ -135,40 +135,33 @@ static void AddGameDir(const VStr& basedir, const VStr& dir)
 {
 	guard(AddGameDir);
 	//	First add all .pk3 files in that directory.
-	if (Sys_OpenDir(basedir + "/" + dir))
-	{
+	if (Sys_OpenDir(basedir+"/"+dir)) {
 		TArray<VStr> ZipFiles;
-		for (VStr test = Sys_ReadDir(); test.IsNotEmpty(); test = Sys_ReadDir())
-		{
+		for (VStr test = Sys_ReadDir(); test.IsNotEmpty(); test = Sys_ReadDir()) {
 			VStr ext = test.ExtractFileExtension().ToLower();
-			if (ext == "pk3")
-				ZipFiles.Append(test);
+			if (ext == "pk3") ZipFiles.Append(test);
 		}
 		Sys_CloseDir();
 		qsort(ZipFiles.Ptr(), ZipFiles.Num(), sizeof(VStr), cmpfunc);
-		for (int i = 0; i < ZipFiles.Num(); i++)
-		{
-			AddZipFile(basedir + "/" + dir + "/" + ZipFiles[i]);
+		for (int i = 0; i < ZipFiles.Num(); ++i) {
+			AddZipFile(basedir+"/"+dir+"/"+ZipFiles[i]);
 		}
 	}
 
 	//	Then add wad##.wad files.
 	VStr gwadir;
-	if (fl_savedir.IsNotEmpty() && basedir != fl_savedir)
-	{
-		gwadir = fl_savedir + "/" + dir;
+	if (fl_savedir.IsNotEmpty() && basedir != fl_savedir) {
+		gwadir = fl_savedir+"/"+dir;
 	}
 
-	for (int i = 0; i < 1024; i++)
-	{
-		VStr buf = basedir + "/" + dir + "/wad" + i + ".wad";
-		if (!Sys_FileExists(buf))
-			break;
+	for (int i = 0; i < 1024; ++i) {
+		VStr buf = basedir+"/"+dir+"/wad"+i+".wad";
+		if (!Sys_FileExists(buf)) break;
 		W_AddFile(buf, gwadir, false);
 	}
 
 	//	Finally add directory itself.
-	VFilesDir* info = new VFilesDir(basedir + "/" + dir);
+	VFilesDir* info = new VFilesDir(basedir+"/"+dir);
 	SearchPaths.Append(info);
 	unguard;
 }
