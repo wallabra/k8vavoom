@@ -166,6 +166,29 @@ static const ResDirInfo resdirs[] = {
 };
 
 
+// takes ownership
+VZipFile::VZipFile (VStream* fstream)
+: ZipFileName("<memory>")
+, Files(NULL)
+, NumFiles(0)
+{
+	guard(VZipFile::VZipFile);
+	OpenArchive(fstream);
+	unguard;
+}
+
+
+// takes ownership
+VZipFile::VZipFile (VStream* fstream, const VStr& name)
+: ZipFileName(name)
+, Files(NULL)
+, NumFiles(0)
+{
+	guard(VZipFile::VZipFile);
+	OpenArchive(fstream);
+	unguard;
+}
+
 
 VZipFile::VZipFile(const VStr& zipfile)
 : ZipFileName(zipfile)
@@ -174,8 +197,34 @@ VZipFile::VZipFile(const VStr& zipfile)
 {
 	guard(VZipFile::VZipFile);
 	GCon->Logf(NAME_Init, "Adding %s", *ZipFileName);
+	auto fstream = FL_OpenSysFileRead(ZipFileName);
+	check(fstream);
+	OpenArchive(fstream);
+	unguard;
+}
 
-	FileStream = FL_OpenSysFileRead(ZipFileName);
+//==========================================================================
+//
+//	VZipFile::~VZipFile
+//
+//==========================================================================
+
+VZipFile::~VZipFile() noexcept(false)
+{
+	guard(VZipFile::~VZipFile);
+	Close();
+	unguard;
+}
+
+//==========================================================================
+//
+//	VZipFile::VZipFile
+//
+//==========================================================================
+
+void VZipFile::OpenArchive (VStream* fstream) {
+	guard(VZipFile::OpenArchive);
+	FileStream = fstream;
 	check(FileStream);
 
 	vuint32 central_pos = SearchCentralDir();
@@ -379,19 +428,6 @@ VZipFile::VZipFile(const VStr& zipfile)
 
 	//	Sort files alphabetically.
 	qsort(Files, NumFiles, sizeof(VZipFileInfo), FileCmpFunc);
-	unguard;
-}
-
-//==========================================================================
-//
-//	VZipFile::~VZipFile
-//
-//==========================================================================
-
-VZipFile::~VZipFile() noexcept(false)
-{
-	guard(VZipFile::~VZipFile);
-	Close();
 	unguard;
 }
 
@@ -709,20 +745,34 @@ void VZipFile::BuildPVS(VSearchPath*)
 //
 //==========================================================================
 
-void VZipFile::ListWadFiles(TArray<VStr>& List)
-{
-	guard(VZipFile::ListWadFiles);
-	for (int i = 0; i < NumFiles; i++)
-	{
-		//	Only .wad files.
-		if (!Files[i].Name.EndsWith(".wad"))
-			continue;
-		//	Don't add WAD files in subdirectories
-		if (Files[i].Name.IndexOf('/') != -1)
-			continue;
-		List.Append(Files[i].Name);
-	}
-	unguard;
+void VZipFile::ListWadFiles (TArray<VStr>& List) {
+  guard(VZipFile::ListWadFiles);
+  for (int i = 0; i < NumFiles; ++i) {
+    // Only .wad files.
+    if (!Files[i].Name.EndsWith(".wad")) continue;
+    // Don't add WAD files in subdirectories
+    if (Files[i].Name.IndexOf('/') != -1) continue;
+    List.Append(Files[i].Name);
+  }
+  unguard;
+}
+
+//==========================================================================
+//
+//	VZipFile::ListPk3Files
+//
+//==========================================================================
+
+void VZipFile::ListPk3Files (TArray<VStr>& List) {
+  guard(VZipFile::ListPk3Files);
+  for (int i = 0; i < NumFiles; ++i) {
+    // Only .pk3 files.
+    if (!Files[i].Name.EndsWith(".pk3")) continue;
+    // Don't add pk3 files in subdirectories
+    if (Files[i].Name.IndexOf('/') != -1) continue;
+    List.Append(Files[i].Name);
+  }
+  unguard;
 }
 
 //==========================================================================

@@ -77,22 +77,18 @@ static VCvarS game_name("game_name", "unknown", "The Name Of The Game.", CVAR_Ro
 //
 //==========================================================================
 
-static void AddZipFile(VStr ZipName)
-{
-	//	Add ZIP file.
-	VZipFile* Zip = new VZipFile(ZipName);
+static void AddZipFile (VStr ZipName, VZipFile* Zip, bool allowpk3) {
 	SearchPaths.Append(Zip);
 
-	//	Add all WAD files in the root of the ZIP file.
+	// Add all WAD files in the root of the ZIP file.
 	TArray<VStr> Wads;
 	Zip->ListWadFiles(Wads);
-	for (int i = 0; i < Wads.Num(); i++)
-	{
-		VStr GwaName = Wads[i].StripExtension() + ".gwa";
+	for (int i = 0; i < Wads.Num(); ++i) {
+		VStr GwaName = Wads[i].StripExtension()+".gwa";
 		VStream* WadStrm = Zip->OpenFileRead(Wads[i]);
 		VStream* GwaStrm = Zip->OpenFileRead(GwaName);
 
-		//	Decompress WAD and GWA files into a memory stream since
+		// Decompress WAD and GWA files into a memory stream since
 		// reading from ZIP will be very slow.
 		size_t Len = WadStrm->TotalSize();
 		vuint8* Buf = new vuint8[Len];
@@ -103,8 +99,7 @@ static void AddZipFile(VStr ZipName)
 		delete[] Buf;
 		Buf = NULL;
 
-		if (GwaStrm)
-		{
+		if (GwaStrm) {
 			Len = GwaStrm->TotalSize();
 			Buf = new vuint8[Len];
 			GwaStrm->Serialise(Buf, Len);
@@ -115,9 +110,40 @@ static void AddZipFile(VStr ZipName)
 			Buf = NULL;
 		}
 
-		W_AddFileFromZip(ZipName + ":" + Wads[i], WadStrm,
-			ZipName + ":" + GwaName, GwaStrm);
+		W_AddFileFromZip(ZipName+":"+Wads[i], WadStrm, ZipName+":"+GwaName, GwaStrm);
 	}
+
+	if (!allowpk3) return;
+
+	// Add all pk3 files in the root of the ZIP file.
+	TArray<VStr> pk3s;
+	Zip->ListPk3Files(pk3s);
+	for (int i = 0; i < pk3s.Num(); ++i) {
+		VStream* ZipStrm = Zip->OpenFileRead(pk3s[i]);
+
+		// Decompress file into a memory stream since
+		// reading from ZIP will be very slow.
+		size_t Len = ZipStrm->TotalSize();
+		vuint8* Buf = new vuint8[Len];
+		ZipStrm->Serialise(Buf, Len);
+		delete ZipStrm;
+		ZipStrm = NULL;
+
+		ZipStrm = new VMemoryStream(Buf, Len);
+		delete[] Buf;
+		Buf = NULL;
+
+		GCon->Logf("Adding nested pk3 '%s:%s'...", *ZipName, *pk3s[i]);
+		VZipFile* pk3 = new VZipFile(ZipStrm, ZipName+":"+pk3s[i]);
+		AddZipFile(ZipName+":"+pk3s[i], pk3, false);
+	}
+}
+
+
+static void AddZipFile (VStr ZipName) {
+	//	Add ZIP file.
+	VZipFile* Zip = new VZipFile(ZipName);
+	AddZipFile(ZipName, Zip, true);
 }
 
 //==========================================================================

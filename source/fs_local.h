@@ -134,8 +134,7 @@ public:
 	bool FileExists(const VStr&);
 	VStream* OpenFileRead(const VStr&);
 	VStream* CreateLumpReaderNum(int);
-	void RenameSprites(const TArray<VSpriteRename>&,
-		const TArray<VLumpRename>&);
+	void RenameSprites(const TArray<VSpriteRename>&, const TArray<VLumpRename>&);
 	virtual VStr GetPrefix () { return Name; }
 };
 
@@ -157,9 +156,12 @@ private:
 
 	vuint32 SearchCentralDir();
 	static int FileCmpFunc(const void*, const void*);
+	void OpenArchive (VStream* fstream);
 
 public:
 	VZipFile(const VStr&);
+	VZipFile(VStream* fstream); // takes ownership
+	VZipFile(VStream* fstream, const VStr& name); // takes ownership
 	virtual ~VZipFile() noexcept(false);
 	bool FileExists(const VStr&);
 	VStream* OpenFileRead(const VStr&);
@@ -171,13 +173,14 @@ public:
 	VName LumpName(int);
 	int IterateNS(int, EWadNamespace);
 	VStream* CreateLumpReaderNum(int);
-	void RenameSprites(const TArray<VSpriteRename>&,
-		const TArray<VLumpRename>&);
+	void RenameSprites(const TArray<VSpriteRename>&, const TArray<VLumpRename>&);
 
 	void BuildGLNodes(VSearchPath*);
 	void BuildPVS(VSearchPath*);
 
 	void ListWadFiles(TArray<VStr>&);
+	void ListPk3Files(TArray<VStr>&);
+
 	virtual VStr GetPrefix () { return ZipFileName; }
 };
 
