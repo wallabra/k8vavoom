@@ -2633,12 +2633,11 @@ void VLevel::FixSelfRefDeepWater () {
     }
   }
 
-  int count;
   int pass = 0;
 
   do {
     ++pass;
-    count = 0;
+    int count = 0;
 
     for (int j = 0; j < NumSubsectors; ++j) {
       subsector_t *sub = &Subsectors[j];
@@ -2678,13 +2677,16 @@ void VLevel::FixSelfRefDeepWater () {
         ++count;
       }
     }
-  } while (count > 0 && pass < 100);
+
+    if (count == 0) break;
+  } while (pass < 100);
 
   for (int i = 0; i < NumSubsectors; ++i) {
     subsector_t* sub = &Subsectors[i];
     sector_t* hs = sub->deepref;
     if (!hs) continue;
-    while (hs->deepref) hs = hs->deepref;
+    //while (hs->deepref && hs->deepref != sub->deepref) hs = hs->deepref;
+    //if (hs->deepref == sub->deepref) hs = sub->deepref;
     sector_t* ss = sub->sector;
     if (!ss) { GCon->Logf("WTF(0)?!"); continue; }
     if (ss->deepref) {
