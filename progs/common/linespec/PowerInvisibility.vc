@@ -92,7 +92,7 @@ void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
 		(ftoi(4.0 * EffectTime) & 1))
 	{
 		OutRenderStyle = STYLE_OptFuzzy;
-		OutAlpha = 0.2;
+		OutAlpha = 0.4;
 	}
 	if (Inventory)
 	{

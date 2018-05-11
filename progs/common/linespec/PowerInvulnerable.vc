@@ -287,7 +287,7 @@ void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
 		{
 			//	Don't fully hide weapon
 			OutRenderStyle = STYLE_Translucent;
-			OutAlpha = 0.25;
+			OutAlpha = 0.4;
 		}
 	}
 	if (Inventory)
