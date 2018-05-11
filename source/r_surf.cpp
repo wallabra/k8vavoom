@@ -1974,7 +1974,7 @@ void VRenderLevelShared::CreateWorldSurfaces()
 	//	Set up fake floors.
 	for (i = 0; i < Level->NumSectors; i++)
 	{
-		if (Level->Sectors[i].heightsec)
+		if (Level->Sectors[i].heightsec || Level->Sectors[i].deepref)
 		{
 			SetupFakeFloors(&Level->Sectors[i]);
 		}
@@ -2636,6 +2636,35 @@ void VRenderLevelShared::UpdateFakeFlats(sector_t* sec)
 
 //==========================================================================
 //
+// VRenderLevelShared::UpdateDeepWater
+//
+//==========================================================================
+
+void VRenderLevelShared::UpdateDeepWater (sector_t* sec) {
+  guard(VRenderLevelShared::UpdateFakeFlats);
+
+  if (!sec) return; // just in case
+  const sector_t *s = sec->deepref;
+
+  if (!s) return; // just in case
+
+  // Replace sector being drawn with a copy to be hacked
+  fakefloor_t* ff = sec->fakefloors;
+  ff->floorplane = sec->floor;
+  ff->ceilplane = sec->ceiling;
+  ff->params = sec->params;
+
+  ff->floorplane.normal = s->floor.normal;
+  ff->floorplane.dist = s->floor.dist;
+
+  //ff->ceilplane.normal = s->ceiling.normal;
+  //->ceilplane.dist = s->ceiling.dist;
+
+  unguard;
+}
+
+//==========================================================================
+//
 //	VRenderLevel::UpdateWorld
 //
 //==========================================================================
@@ -2658,7 +2687,9 @@ void VRenderLevel::UpdateWorld(const refdef_t* rd, const VViewClipper* Range)
 	for (int i = 0; i < Level->NumSectors; i++)
 	{
 		sector_t* sec = &Level->Sectors[i];
-		if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec))
+		if (sec->deepref) {
+			UpdateDeepWater(sec);
+		} else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec))
 		{
 			UpdateFakeFlats(sec);
 		}
@@ -2692,7 +2723,9 @@ void VAdvancedRenderLevel::UpdateWorld(const refdef_t* rd, const VViewClipper* R
 	for (int i = 0; i < Level->NumSectors; i++)
 	{
 		sector_t* sec = &Level->Sectors[i];
-		if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec))
+		if (sec->deepref) {
+			UpdateDeepWater(sec);
+		} else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec))
 		{
 			UpdateFakeFlats(sec);
 		}
@@ -2711,11 +2744,10 @@ void VAdvancedRenderLevel::UpdateWorld(const refdef_t* rd, const VViewClipper* R
 void VRenderLevelShared::SetupFakeFloors(sector_t* Sec)
 {
 	guard(VRenderLevelShared::SetupFakeFloors);
-	sector_t* HeightSec = Sec->heightsec;
 
-	if (HeightSec->SectorFlags & sector_t::SF_IgnoreHeightSec)
-	{
-		return;
+	if (!Sec->deepref) {
+		sector_t* HeightSec = Sec->heightsec;
+		if (HeightSec->SectorFlags & sector_t::SF_IgnoreHeightSec) return;
 	}
 
 	Sec->fakefloors = new fakefloor_t;

@@ -726,6 +726,8 @@ struct sector_t
 	sec_region_t*	topregion;	//  Highest region
 	sec_region_t*	botregion;	//  Lowest region
 
+	sector_t	*deepref; // deep water hack
+
 	int				special;
 	int				tag;
 	int				HashFirst;
@@ -836,6 +838,12 @@ struct subsector_t
 	void*		__parent;
 	int			__VisFrame;
 	int			__SkyVisFrame;
+
+	sector_t* deepref;
+
+	int			dlightbits;
+	int				dlightframe;
+
 	void*		__regions;
 };
 

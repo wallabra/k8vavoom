@@ -367,6 +367,7 @@ static void CopySegs(VLevel* Level, vertex_t* GLVertexes)
 	{
 		glbsp_seg_t* SrcSeg = SrcSegs[i];
 		li->partner = nullptr;
+		li->front_sub = nullptr;
 
 		// assign partner (we need it for self-referencing deep water)
 		if (SrcSeg->partner) {
@@ -467,11 +468,17 @@ static void CopySubsectors(VLevel* Level)
 				break;
 			}
 		}
+		for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
 		if (!ss->sector)
 		{
 			Host_Error("Subsector %d without sector", i);
 		}
 	}
+	int setcount = Level->NumSegs;
+	for (int f = 0; f < Level->NumSegs; ++f) {
+		if (!Level->Segs[f].front_sub) { GCon->Logf("Seg %d: front_sub is not set!", f); --setcount; }
+	}
+	if (setcount != Level->NumSegs) GCon->Logf("WARNING: %d of %d segs has no front_sub!", Level->NumSegs-setcount);
 	unguard;
 }
 

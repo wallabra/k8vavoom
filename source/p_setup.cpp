@@ -486,30 +486,30 @@ void VLevel::LoadMap(VName AMapName)
 	}
 
 	TotalTime += Sys_Time();
-	if (show_level_load_times)
+	if (true || show_level_load_times)
 	{
 		GCon->Logf("-------");
-		GCon->Logf("Level loadded in %f", TotalTime);
-		GCon->Logf("Initialisation   %f", InitTime);
+		//GCon->Logf("Level loadded in %f", TotalTime);
+		//GCon->Logf("Initialisation   %f", InitTime);
 		GCon->Logf("Node build       %f", NodeBuildTime);
-		GCon->Logf("Vertexes         %f", VertexTime);
-		GCon->Logf("Sectors          %f", SectorsTime);
-		GCon->Logf("Lines            %f", LinesTime);
-		GCon->Logf("Things           %f", ThingsTime);
-		GCon->Logf("Translation      %f", TranslTime);
-		GCon->Logf("Sides            %f", SidesTime);
-		GCon->Logf("Lines 2          %f", Lines2Time);
+		//GCon->Logf("Vertexes         %f", VertexTime);
+		//GCon->Logf("Sectors          %f", SectorsTime);
+		//GCon->Logf("Lines            %f", LinesTime);
+		//GCon->Logf("Things           %f", ThingsTime);
+		//GCon->Logf("Translation      %f", TranslTime);
+		//GCon->Logf("Sides            %f", SidesTime);
+		//GCon->Logf("Lines 2          %f", Lines2Time);
 		GCon->Logf("Nodes            %f", NodesTime);
-		GCon->Logf("Block map        %f", BlockMapTime);
+		//GCon->Logf("Block map        %f", BlockMapTime);
 		GCon->Logf("Reject           %f", RejectTime);
-		GCon->Logf("ACS              %f", AcsTime);
-		GCon->Logf("Group lines      %f", GroupLinesTime);
-		GCon->Logf("Flood zones      %f", FloodZonesTime);
-		GCon->Logf("Conversations    %f", ConvTime);
-		GCon->Logf("Spawn world      %f", SpawnWorldTime);
-		GCon->Logf("Polyobjs         %f", InitPolysTime);
-		GCon->Logf("Sector minmaxs   %f", MinMaxTime);
-		GCon->Logf("Wall shades      %f", WallShadesTime);
+		//GCon->Logf("ACS              %f", AcsTime);
+		//GCon->Logf("Group lines      %f", GroupLinesTime);
+		//GCon->Logf("Flood zones      %f", FloodZonesTime);
+		//GCon->Logf("Conversations    %f", ConvTime);
+		//GCon->Logf("Spawn world      %f", SpawnWorldTime);
+		//GCon->Logf("Polyobjs         %f", InitPolysTime);
+		//GCon->Logf("Sector minmaxs   %f", MinMaxTime);
+		//GCon->Logf("Wall shades      %f", WallShadesTime);
 		GCon->Logf("");
 	}
 	unguard;
@@ -1312,10 +1312,14 @@ void VLevel::LoadSubsectors(int Lump)
 				break;
 			}
 		}
+		for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
 		if (!ss->sector)
 		{
 			Host_Error("Subsector %d without sector", i);
 		}
+	}
+	for (int f = 0; f < NumSegs; ++f) {
+		if (!Segs[f].front_sub) GCon->Logf("Seg %d: front_sub is not set!", f);
 	}
 	delete Strm;
 	Strm = NULL;
@@ -1509,7 +1513,7 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
 		li->v1 = &Vertexes[v1];
 
 		//	Assign partner (we need it for self-referencing deep water)
-		li->partner = (partner >= 0 && partner < NumSegs ? &Segs[partner] : nullptr);
+		li->partner = (partner < (unsigned)NumSegs ? &Segs[partner] : nullptr);
 
 		if (linedef != 0xffff)
 		{
@@ -2602,6 +2606,94 @@ void VLevel::FloodZone(sector_t* Sec, int Zone)
 	unguard;
 }
 
+//==========================================================================
+//
+// VLevel::FixSelfRefDeepWater
+//
+// This code is taken from Hyper3dge
+//
+//==========================================================================
+void VLevel::FixSelfRefDeepWater () {
+  vuint8 *self_subs = new vuint8[NumSubsectors];
+  memset(self_subs, 0, NumSubsectors);
+
+  for (int i = 0; i < NumSegs; ++i) {
+    const seg_t *seg = &Segs[i];
+
+    //if (seg->miniseg) continue;
+    if (!seg->linedef) continue; //k8: miniseg check (i think)
+    if (!seg->front_sub) { GCon->Logf("INTERNAL ERROR IN GLBSP LOADER: FRONT SUBSECTOR IS NOT SET!"); return; }
+
+    if (seg->linedef->backsector && seg->linedef->frontsector == seg->linedef->backsector) {
+      self_subs[seg->front_sub-Subsectors] |= 1;
+    } else {
+      self_subs[seg->front_sub-Subsectors] |= 2;
+    }
+  }
+
+  int count;
+  int pass = 0;
+
+  do {
+    ++pass;
+    count = 0;
+
+    for (int j = 0; j < NumSubsectors; ++j) {
+      subsector_t *sub = &Subsectors[j];
+      seg_t *seg;
+
+      if (self_subs[j] != 1) continue;
+#ifdef DEBUG_DEEP_WATERS
+      fprintf(stderr, "Subsector [%d] sec %d --> %d\n", j, (int)(sub->sector-Sectors), self_subs[j]);
+#endif
+      seg_t *Xseg = 0;
+
+      for (int ssi = 0; ssi < sub->numlines; ++ssi) {
+        // this is how back_sub set
+        seg = &Segs[sub->firstline+ssi];
+        subsector_t *back_sub = (seg->partner ? seg->partner->front_sub : nullptr);
+        if (!back_sub) { GCon->Logf("INTERNAL ERROR IN GLBSP LOADER: BACK SUBSECTOR IS NOT SET!"); return; }
+
+        int k = (int)(back_sub-Subsectors);
+#ifdef DEBUG_DEEP_WATERS
+        fprintf(stderr, "  Seg [%d] back_sub %d (back_sect %d)\n", (int)(seg-Segs), k, (int)(back_sub->sector-Sectors));
+#endif
+        if (self_subs[k]&2) {
+          if (!Xseg) Xseg = seg;
+        }
+      }
+
+      if (Xseg) {
+        //sub->deep_ref = Xseg->back_sub->deep_ref ? Xseg->back_sub->deep_ref : Xseg->back_sub->sector;
+        subsector_t *Xback_sub = (Xseg->partner ? Xseg->partner->front_sub : nullptr);
+        if (!Xback_sub) { GCon->Logf("INTERNAL ERROR IN GLBSP LOADER: BACK SUBSECTOR IS NOT SET!"); return; }
+        sub->deepref = (Xback_sub->deepref ? Xback_sub->deepref : Xback_sub->sector);
+#ifdef DEBUG_DEEP_WATERS
+        fprintf(stderr, "  Updating (from seg %d) --> SEC %d\n", (int)(Xseg-Segs), (int)(sub->deepref-Sectors));
+#endif
+        self_subs[j] = 3;
+
+        ++count;
+      }
+    }
+  } while (count > 0 && pass < 100);
+
+  for (int i = 0; i < NumSubsectors; ++i) {
+    subsector_t* sub = &Subsectors[i];
+    sector_t* hs = sub->deepref;
+    if (!hs) continue;
+    while (hs->deepref) hs = hs->deepref;
+    sector_t* ss = sub->sector;
+    if (!ss) { GCon->Logf("WTF(0)?!"); continue; }
+    if (ss->deepref) {
+      if (ss->deepref != hs) { GCon->Logf("WTF(1) %d : %d?!", (int)(hs-Sectors), (int)(ss->deepref-Sectors)); continue; }
+    } else {
+      ss->deepref = hs;
+    }
+  }
+
+  delete[] self_subs;
+}
 
 //==========================================================================
 //
@@ -2628,7 +2720,7 @@ bool VLevel::IsDeepOk (sector_t* sec) {
     if (ld->frontsector != sec->lines[xidx]->frontsector) return false;
     if (ld->backsector != sec->lines[xidx]->backsector) return false;
   }
-  return true;
+  return (dwt > 0);
 }
 
 
@@ -2720,6 +2812,7 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
 
   int type = IsDeepWater(line);
   if (type == 0) return; // not a deep water
+  if (type < 0) return;
 
   if (type > 0) {
     // mark as deep water
@@ -2764,10 +2857,14 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
 
 
 void VLevel::FixDeepWaters () {
+  for (vint32 sidx = 0; sidx < NumSectors; ++sidx) Sectors[sidx].deepref = nullptr;
+
   if (!deepwater_hacks) {
     GCon->Logf("DeepWater detection skipped.");
     return;
   }
+
+  FixSelfRefDeepWater();
   //for (vint32 lidx = 0; lidx < NumLines; ++lidx) FixDeepWater(&Lines[lidx], lidx);
 
   for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {

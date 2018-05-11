@@ -405,6 +405,7 @@ protected:
 	bool CopyPlaneIfValid(sec_plane_t*, const sec_plane_t*,
 		const sec_plane_t*);
 	void UpdateFakeFlats(sector_t*);
+	void UpdateDeepWater(sector_t*);
 	void FreeSurfaces(surface_t*);
 	void FreeSegParts(segpart_t*);
 

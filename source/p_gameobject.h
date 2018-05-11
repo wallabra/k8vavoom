@@ -369,6 +369,8 @@ struct sector_t
 	sec_region_t	*topregion;	//	Highest region
 	sec_region_t	*botregion;	//	Lowest region
 
+	sector_t	*deepref; // deep water hack
+
 	int				special;
 	int				tag;
 	int				HashFirst;
@@ -518,6 +520,7 @@ struct seg_t : public TPlane
 	sector_t	*backsector;
 
 	seg_t *partner; // from glnodes
+	struct subsector_t *front_sub; // front subsector (we need this for self-referencing deep water)
 
 	//	Side of line (for light calculations)
 	int			side;
@@ -565,6 +568,8 @@ struct subsector_t
 	node_t*			parent;
 	int				VisFrame;
 	int				SkyVisFrame;
+
+	sector_t* deepref;
 
 	vuint32			dlightbits;
 	int				dlightframe;
