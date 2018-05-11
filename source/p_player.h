@@ -112,6 +112,7 @@ class VBasePlayer : public VGameObject
 		PF_IsClient				= 0x0100,	// Player on client side
 		PF_AutomapRevealed		= 0x0200,
 		PF_AutomapShowThings	= 0x0400,
+		PF_ReloadQueued	= 0x0800,
 	};
 	vuint32			PlayerFlags;
 

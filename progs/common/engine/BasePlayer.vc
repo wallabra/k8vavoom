@@ -60,13 +60,13 @@ readonly bool			bSpawned;
 readonly bool			bIsBot;
 bool					bFixAngle;
 bool					bAttackDown;			// True if button down last tic.
-bool					bReloadQueued;			// True if "reload" was pressed
 bool					bUseDown;
 bool					bDidSecret;				// True if secret level has been done.
 readonly private bool	bCentreing;
 readonly bool			bIsClient;				// Player on client side
 bool					bAutomapRevealed;
 bool					bAutomapShowThings;
+bool					bReloadQueued;			// True if "reload" was pressed
 
 native readonly private void* Net;
 
