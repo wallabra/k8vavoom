@@ -249,11 +249,11 @@ void Cheat_Gimme()
 	// Powers
 	if (Cmd_CheckParm("Powers"))
 		i1 |= GIMME_POWERS;
-	if (Cmd_CheckParm("Invulnerability"))
+	if (Cmd_CheckParm("Invulnerability") || Cmd_CheckParm("Invul"))
 		i1 |= GIMME_INVULNERABILITY;
 	if (Cmd_CheckParm("Bersek"))
 		i1 |= GIMME_STRENGTH;
-	if (Cmd_CheckParm("Invisibility"))
+	if (Cmd_CheckParm("Invisibility") || Cmd_CheckParm("Invis"))
 		i1 |= GIMME_INVISIBILITY;
 	if (Cmd_CheckParm("Suit"))
 		i1 |= GIMME_IRONFEET;
