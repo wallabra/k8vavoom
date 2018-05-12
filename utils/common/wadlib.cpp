@@ -76,8 +76,7 @@ void TIWadFile::Open(const char* filename)
 		// Homebrew levels?
 		if (strncmp(header.identification, "PWAD", 4))
 		{
-			throw WadLibError(va("Wad file %s doesn't have IWAD or PWAD id",
-				filename));
+			throw WadLibError(va("Wad file %s doesn't have IWAD or PWAD id", filename));
 		}
 	}
 	strcpy(wadid, header.identification);

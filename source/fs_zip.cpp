@@ -89,7 +89,7 @@ class VZipFileReader : public VStream
 {
 private:
 	//enum { UNZ_BUFSIZE = 16384 };
-	enum { UNZ_BUFSIZE = 1024*1024 };
+	enum { UNZ_BUFSIZE = 65536 };
 
 	VStream*			FileStream;		//	Source stream of the zipfile
 	const VZipFileInfo&	Info;			//	Info about the file we are reading
