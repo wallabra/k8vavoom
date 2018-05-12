@@ -257,3 +257,37 @@ final void A_JumpIfTargetInLOS(state Label, optional float Fov)
 		DoJump(Label);
 	}
 }
+
+//==========================================================================
+//
+//  A_JumpIfCVarTrue
+//
+//==========================================================================
+
+final void A_JumpIfCVarTrue (string cvar, state Label) {
+  name cvn = StrToName(cvar);
+  if (CvarExists(cvn)) {
+    if (GetCvarB(cvn)) DoJump(Label);
+  }
+  // State jumps should not affect state chain results.
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+}
+
+//==========================================================================
+//
+//  A_JumpIfCVarFalse
+//
+//==========================================================================
+
+final void A_JumpIfCVarFalse (string cvar, state Label) {
+  name cvn = StrToName(cvar);
+  if (CvarExists(cvn)) {
+    //print("A_JumpIfCVarFalse: cvar is '%s', value is %s", cvar, (GetCvarB(cvn) ? "true" : "false"));
+    if (!GetCvarB(cvn)) DoJump(Label);
+  } else {
+    //print("A_JumpIfCVarFalse: cvar '%s' NOT FOUND!", cvar);
+    DoJump(Label);
+  }
+  // State jumps should not affect state chain results.
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+}

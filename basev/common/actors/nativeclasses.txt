@@ -128,6 +128,8 @@ class Actor extends Thinker
 	action native A_JumpIfInventory(class<Actor> itemtype, eval int amount, state label);
 	action native A_JumpIfInTargetInventory(class<Actor> itemtype, eval int amount, state label);
 	action native A_JumpIfTargetInLOS(state label, optional float fov);
+	action native A_JumpIfCVarTrue(string cvar, state label);
+	action native A_JumpIfCVarFalse(string cvar, state label);
 
 	//
 	//	Flags and appearance
