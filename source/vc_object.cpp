@@ -491,6 +491,12 @@ IMPLEMENT_FUNCTION(VObject, FatalError)
 //
 //**************************************************************************
 
+IMPLEMENT_FUNCTION(VObject, CvarExists)
+{
+	P_GET_NAME(name);
+	RET_BOOL(VCvar::HasVar(*name));
+}
+
 IMPLEMENT_FUNCTION(VObject, CreateCvar)
 {
 	P_GET_INT(flags);

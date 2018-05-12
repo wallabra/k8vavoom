@@ -212,6 +212,7 @@ public:
 	DECLARE_FUNCTION(FatalError)
 
 	//	Cvar functions
+	DECLARE_FUNCTION(CvarExists)
 	DECLARE_FUNCTION(CreateCvar)
 	DECLARE_FUNCTION(GetCvar)
 	DECLARE_FUNCTION(SetCvar)
