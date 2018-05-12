@@ -3,6 +3,25 @@ project(vavoom)
 option(ENABLE_SIGNAL_HANDLER "Intercept system signals" OFF)
 option(ENABLE_ZONE_DEBUG "Enable memory allocation debuging" OFF)
 
+#option(ENABLE_LAUNCHER "Build launcher" OFF)
+#option(ENABLE_MASTER "Build master server" OFF)
+
+option(WITH_SDL "Use SDL library" ON)
+option(WITH_OPENGL "Use OpenGL library" ON)
+option(WITH_OPENAL "Use OpenAL library" ON)
+option(WITH_VORBIS "Enable Vorbis support" ON)
+option(WITH_LIBMAD "Enable MP3 support" ON)
+option(WITH_MIKMOD "Enable MikMod support" ON)
+option(WITH_MODPLUG "Enable ModPlug support" ON)
+option(WITH_FLAC "Enable FLAC support" ON)
+option(WITH_GME "Enable built-in GME support" OFF)
+
+option(ENABLE_CLIENT "Build client executable" ON)
+option(ENABLE_SERVER "Build dedicated server executable" ON)
+if(UNIX)
+option(ENABLE_WRAPPERS "Enable creation of wrapper scripts" ON)
+endif(UNIX)
+
 
 IF( NOT CMAKE_BUILD_TYPE )
   SET( CMAKE_BUILD_TYPE Debug CACHE STRING

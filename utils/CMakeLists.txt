@@ -1,5 +1,4 @@
-option(ENABLE_LAUNCHER "Build launcher" OFF)
-option(ENABLE_MASTER "Build master server" OFF)
+# options "ENABLE_LAUNCHER" and "ENABLE_MASTER" were moved to main cmake file
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 

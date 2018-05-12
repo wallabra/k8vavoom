@@ -1,26 +1,3 @@
-option(WITH_SDL "Use SDL library" ON)
-option(WITH_OPENGL "Use OpenGL library" ON)
-option(WITH_OPENAL "Use OpenAL library" ON)
-option(WITH_VORBIS "Enable Vorbis support" ON)
-option(WITH_LIBMAD "Enable MP3 support" ON)
-option(WITH_MIKMOD "Enable MikMod support" ON)
-option(WITH_MODPLUG "Enable ModPlug support" ON)
-option(WITH_FLAC "Enable FLAC support" ON)
-option(WITH_GME "Enable built-in GME support" OFF)
-
-if(WITH_GME)
-  message(STATUS "GME enabled")
-  add_subdirectory(gme)
-endif(WITH_GME)
-
-add_subdirectory(timidity)
-
-option(ENABLE_CLIENT "Build client executable" ON)
-option(ENABLE_SERVER "Build dedicated server executable" ON)
-if(UNIX)
-option(ENABLE_WRAPPERS "Enable creation of wrapper scripts" ON)
-endif(UNIX)
-
 #---------------------------------------
 #
 #	VaVoom C compiler sources
@@ -116,6 +93,8 @@ set(TEXTURELIB_SOURCES
 )
 
 set(RENDERBASE_SOURCES
+	render/anorm_dots.h
+	render/anorms.h
 	render/fmd2defs.h
 	render/r_local.h
 	render/r_public.h
@@ -252,8 +231,6 @@ set(FILESYS_SOURCES
 #-- Common files --
 set(MAIN_COMMON_SOURCES
 	am_map.cpp
-	anorm_dots.h
-	anorms.h
 	automap.h
 	build.h
 	chat.cpp
@@ -404,6 +381,7 @@ set(MAIN_OPENGL_WIN32_SOURCES
 
 include_directories( .
 	vc
+	../libs
 	${SYSTEM_SOURCES_DIR}
 )
 
