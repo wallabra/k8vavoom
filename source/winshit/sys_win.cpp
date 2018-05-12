@@ -26,7 +26,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #define INITGUID
-#include "winlocal.h"
+#include "winshit/winlocal.h"
 #include <objbase.h>
 #include <mmsystem.h>
 #include "gamedefs.h"
@@ -42,7 +42,7 @@
 #include <dinput.h>
 #include <ddraw.h>
 #include <dsound.h>
-#include "eax.h"
+#include "winshit/sound/eax.h"
 
 // MACROS ------------------------------------------------------------------
 

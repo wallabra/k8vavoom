@@ -25,7 +25,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "winlocal.h"
+#include "winshit/winlocal.h"
 #include <errno.h>
 #include "gamedefs.h"
 #include "net_local.h"

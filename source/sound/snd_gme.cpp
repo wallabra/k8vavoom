@@ -26,7 +26,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef _WIN32
-#include "winlocal.h"
+#include "winshit/winlocal.h"
 #endif
 #include "gme/src/Music_Emu.h"
 

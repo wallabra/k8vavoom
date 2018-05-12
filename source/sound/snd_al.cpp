@@ -24,7 +24,7 @@
 //**************************************************************************
 
 #ifdef _WIN32
-#include "winlocal.h"
+#include "winshit/winlocal.h"
 #else
 #define INITGUID
 #endif
@@ -34,7 +34,7 @@
 #ifndef OPENAL
 #define OPENAL
 #endif
-#include "eax.h"
+#include "sound/eax.h"
 
 #include "gamedefs.h"
 #include "snd_local.h"

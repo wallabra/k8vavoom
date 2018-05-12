@@ -26,9 +26,9 @@
 // HEADER FILES ------------------------------------------------------------
 
 #define DIRECTSOUND_VERSION		0x0900
-#include "winlocal.h"
+#include "winshit/winlocal.h"
 #include <dsound.h>
-#include "eax.h"
+#include "winshit/sound/eax.h"
 
 #include "gamedefs.h"
 #include "snd_local.h"

@@ -385,20 +385,21 @@ set(MAIN_OPENGL_UNIX_SDL_SOURCES
 
 #-- Windows --
 set(MAIN_WIN32_SOURCES
-	eax.h
-	in_win32.cpp
-	net/net_winsock.cpp
-	sound/snd_win32.cpp
-	sound/snd_win32music.cpp
-	sys_win.cpp
-	vavoom.ico
-	vavoom_2.ico
-	vavoom_3.ico
-	vavoom.rc
-	winlocal.h
+	winshit/sound/eax.h
+	winshit/in_win32.cpp
+	winshit/net/net_winsock.cpp
+	winshit/sound/snd_win32.cpp
+	winshit/sound/snd_win32music.cpp
+	winshit/sys_win.cpp
+	winshit/res/vavoom.ico
+	winshit/res/vavoom_2.ico
+	winshit/res/vavoom_3.ico
+	winshit/res/vavoom.rc
+	winshit/winlocal.h
 )
+
 set(MAIN_OPENGL_WIN32_SOURCES
-	render/hwgl/gl_win32.cpp
+	winshit/render/hwgl/gl_win32.cpp
 )
 
 include_directories( .
@@ -468,9 +469,9 @@ set(SERVER_UNIX_SOURCES
 )
 
 set(SERVER_WIN32_SOURCES
-	net/net_winsock.cpp
-	sys_wind.cpp
-	vavoom.rc
+	winshit/net/net_winsock.cpp
+	winshit/sys_wind.cpp
+	winshit/res/vavoom.rc
 )
 
 #---------------------------------------
@@ -510,8 +511,8 @@ if(WIN32)
 	#  CMake doesn't support automatic building of resource files so
 	# we must add a custom command and add object files to the list
 	# of source files
-	set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/vavoom.rc)
-	set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/vavoom.o)
+	set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
+	set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom.o)
 	add_custom_command(OUTPUT ${RC_OBJ}
 		DEPENDS ${RC_SRC}
 		COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
@@ -729,15 +730,14 @@ install(TARGETS vavoom DESTINATION ${BINDIR})
 #
 #	Icon
 #
-install(FILES vavoom.png DESTINATION ${DATADIR})
+install(FILES ../res/vavoom.png DESTINATION ${DATADIR})
 
 if(ENABLE_WRAPPERS)
 	file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/vavoom
 "#!/bin/sh
 # Needed to make symlinks/shortcuts work.
 # the binaries must run with correct working directory
-\"${CMAKE_INSTALL_PREFIX}/${BINDIR}/vavoom.bin\" $* -basedir \"${CMAKE_INSTALL_PREFIX}/${DATADIR}\" ${IWADDIR}
-exit $?
+exec \"${CMAKE_INSTALL_PREFIX}/${BINDIR}/vavoom.bin\" $* -basedir \"${CMAKE_INSTALL_PREFIX}/${DATADIR}\" ${IWADDIR}
 ")
 	install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/vavoom DESTINATION ${BINDIR})
 endif(ENABLE_WRAPPERS)
@@ -758,8 +758,8 @@ if(WIN32)
 	#  CMake doesn't support automatic building of resource files so
 	# we must add a custom command and add object files to the list
 	# of source files
-	set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/vavoom.rc)
-	set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/vavoom_sv.o)
+	set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
+	set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom_sv.o)
 	add_custom_command(OUTPUT ${RC_OBJ}
 		DEPENDS ${RC_SRC}
 		COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
@@ -786,8 +786,7 @@ if(ENABLE_WRAPPERS)
 "#!/bin/sh
 # Needed to make symlinks/shortcuts work.
 # the binaries must run with correct working directory
-\"${CMAKE_INSTALL_PREFIX}/${BINDIR}/vavoom-dedicated.bin\" $* -basedir \"${CMAKE_INSTALL_PREFIX}/${DATADIR}\" ${IWADDIR}
-exit $?
+exec \"${CMAKE_INSTALL_PREFIX}/${BINDIR}/vavoom-dedicated.bin\" $* -basedir \"${CMAKE_INSTALL_PREFIX}/${DATADIR}\" ${IWADDIR}
 ")
 	install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/vavoom-dedicated DESTINATION ${BINDIR})
 endif(ENABLE_WRAPPERS)
