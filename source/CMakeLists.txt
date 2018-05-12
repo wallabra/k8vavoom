@@ -116,6 +116,7 @@ set(TEXTURELIB_SOURCES
 )
 
 set(RENDERBASE_SOURCES
+	render/fmd2defs.h
 	render/r_local.h
 	render/r_public.h
 	render/r_shared.h
@@ -273,7 +274,6 @@ set(MAIN_COMMON_SOURCES
 	drawer.h
 	finale.cpp
 	finale.h
-	fmd2defs.h
 	${FILESYS_SOURCES}
 	gamedefs.h
 	host.cpp
