@@ -45,7 +45,7 @@ VStatementInfo StatementInfo[NUM_OPCODES] =
 {
 #define DECLARE_OPC(name, args)		{ #name, OPCARGS_##args, 0}
 #define OPCODE_INFO
-#include "progdefs.h"
+#include "../progdefs.h"
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------

@@ -26,7 +26,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef IN_VCC
-#include "../utils/vcc/vcc.h"
+#include "../../utils/vcc/vcc.h"
 #else
 #include "gamedefs.h"
 #endif

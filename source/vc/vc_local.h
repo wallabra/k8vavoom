@@ -27,11 +27,11 @@
 #define __vc_local_h__
 
 #ifdef IN_VCC
-#include "../utils/vcc/vcc.h"
+#include "../../utils/vcc/vcc.h"
 #else
 
 #include "gamedefs.h"
-#include "progdefs.h"
+#include "../progdefs.h"
 
 #include "vc_emit_context.h"
 #include "vc_expr_base.h"

@@ -23,6 +23,78 @@ endif(UNIX)
 
 #---------------------------------------
 #
+#	VaVoom C compiler sources
+#
+#---------------------------------------
+set(VCCLIB_SOURCES
+	vc/vc_class.cpp
+	vc/vc_class.h
+	vc/vc_constant.cpp
+	vc/vc_constant.h
+	vc/vc_decorate.cpp
+	vc/vc_decorate.h
+	vc/vc_dehacked.cpp
+	vc/vc_dehacked.h
+	vc/vc_emit_context.cpp
+	vc/vc_emit_context.h
+	vc/vc_error.cpp
+	vc/vc_error.h
+	vc/vc_expr_array.cpp
+	vc/vc_expr_array.h
+	vc/vc_expr_assign.cpp
+	vc/vc_expr_assign.h
+	vc/vc_expr_base.cpp
+	vc/vc_expr_base.h
+	vc/vc_expr_cast.cpp
+	vc/vc_expr_cast.h
+	vc/vc_expr_field.cpp
+	vc/vc_expr_field.h
+	vc/vc_expr_invoke.cpp
+	vc/vc_expr_invoke.h
+	vc/vc_expr_literal.cpp
+	vc/vc_expr_literal.h
+	vc/vc_expr_local.cpp
+	vc/vc_expr_local.h
+	vc/vc_expr_misc.cpp
+	vc/vc_expr_misc.h
+	vc/vc_expr_type.cpp
+	vc/vc_expr_type.h
+	vc/vc_expr_unary_binary.cpp
+	vc/vc_expr_unary_binary.h
+	vc/vc_field.cpp
+	vc/vc_field.h
+	vc/vc_lexer.cpp
+	vc/vc_lexer.h
+	vc/vc_local.h
+	vc/vc_location.cpp
+	vc/vc_location.h
+	vc/vc_member.cpp
+	vc/vc_member.h
+	vc/vc_method.cpp
+	vc/vc_method.h
+	vc/vc_modifiers.cpp
+	vc/vc_modifiers.h
+	vc/vc_object.cpp
+	vc/vc_object.h
+	vc/vc_package.cpp
+	vc/vc_package.h
+	vc/vc_parser.cpp
+	vc/vc_parser.h
+	vc/vc_property.cpp
+	vc/vc_property.h
+	vc/vc_state.cpp
+	vc/vc_state.h
+	vc/vc_statement.cpp
+	vc/vc_statement.h
+	vc/vc_struct.cpp
+	vc/vc_struct.h
+	vc/vc_type.cpp
+	vc/vc_type.h
+)
+
+
+#---------------------------------------
+#
 #	Main executable sources
 #
 #---------------------------------------
@@ -201,68 +273,7 @@ set(MAIN_COMMON_SOURCES
 	ui_root.h
 	ui_widget.cpp
 	ui_widget.h
-	vc_class.cpp
-	vc_class.h
-	vc_constant.cpp
-	vc_constant.h
-	vc_decorate.cpp
-	vc_decorate.h
-	vc_dehacked.cpp
-	vc_dehacked.h
-	vc_emit_context.cpp
-	vc_emit_context.h
-	vc_error.cpp
-	vc_error.h
-	vc_expr_array.cpp
-	vc_expr_array.h
-	vc_expr_assign.cpp
-	vc_expr_assign.h
-	vc_expr_base.cpp
-	vc_expr_base.h
-	vc_expr_cast.cpp
-	vc_expr_cast.h
-	vc_expr_field.cpp
-	vc_expr_field.h
-	vc_expr_invoke.cpp
-	vc_expr_invoke.h
-	vc_expr_literal.cpp
-	vc_expr_literal.h
-	vc_expr_local.cpp
-	vc_expr_local.h
-	vc_expr_misc.cpp
-	vc_expr_misc.h
-	vc_expr_type.cpp
-	vc_expr_type.h
-	vc_expr_unary_binary.cpp
-	vc_expr_unary_binary.h
-	vc_field.cpp
-	vc_field.h
-	vc_lexer.cpp
-	vc_lexer.h
-	vc_location.cpp
-	vc_location.h
-	vc_member.cpp
-	vc_member.h
-	vc_method.cpp
-	vc_method.h
-	vc_modifiers.cpp
-	vc_modifiers.h
-	vc_object.cpp
-	vc_object.h
-	vc_package.cpp
-	vc_package.h
-	vc_parser.cpp
-	vc_parser.h
-	vc_property.cpp
-	vc_property.h
-	vc_state.cpp
-	vc_state.h
-	vc_statement.cpp
-	vc_statement.h
-	vc_struct.cpp
-	vc_struct.h
-	vc_type.cpp
-	vc_type.h
+	${VCCLIB_SOURCES}
 	video.h
 	wad.cpp
 	wad.h
@@ -338,6 +349,11 @@ set(MAIN_WIN32_SOURCES
 )
 set(MAIN_OPENGL_WIN32_SOURCES
 	gl_win32.cpp
+)
+
+include_directories( .
+	vc
+	${SYSTEM_SOURCES_DIR}
 )
 
 #---------------------------------------
@@ -422,37 +438,7 @@ set(SERVER_COMMON_SOURCES
 	sv_main.cpp
 	sv_save.cpp
 	sv_world.cpp
-	vc_class.cpp
-	vc_constant.cpp
-	vc_decorate.cpp
-	vc_dehacked.cpp
-	vc_emit_context.cpp
-	vc_error.cpp
-	vc_expr_array.cpp
-	vc_expr_assign.cpp
-	vc_expr_base.cpp
-	vc_expr_cast.cpp
-	vc_expr_field.cpp
-	vc_expr_invoke.cpp
-	vc_expr_literal.cpp
-	vc_expr_local.cpp
-	vc_expr_misc.cpp
-	vc_expr_type.cpp
-	vc_expr_unary_binary.cpp
-	vc_field.cpp
-	vc_lexer.cpp
-	vc_location.cpp
-	vc_member.cpp
-	vc_method.cpp
-	vc_modifiers.cpp
-	vc_object.cpp
-	vc_package.cpp
-	vc_parser.cpp
-	vc_property.cpp
-	vc_state.cpp
-	vc_statement.cpp
-	vc_struct.cpp
-	vc_type.cpp
+	${VCCLIB_SOURCES}
 	wad.cpp
 	zipstream.cpp
 )
