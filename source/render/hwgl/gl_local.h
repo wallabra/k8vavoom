@@ -39,7 +39,7 @@
 
 #include "gamedefs.h"
 #include "cl_local.h"
-#include "r_shared.h"
+#include "render/r_shared.h"
 
 // MACROS ------------------------------------------------------------------
 

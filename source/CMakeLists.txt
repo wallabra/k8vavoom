@@ -115,6 +115,25 @@ set(TEXTURELIB_SOURCES
 	textures/r_tex_warp.cpp
 )
 
+set(RENDERBASE_SOURCES
+	render/r_local.h
+	render/r_public.h
+	render/r_shared.h
+	render/r_adv_light.cpp
+	render/r_adv_things.cpp
+	render/r_bsp.cpp
+	render/r_data.cpp
+	render/r_data.cpp
+	render/r_light.cpp
+	render/r_main.cpp
+	render/r_model.cpp
+	render/r_particle.cpp
+	render/r_portal.cpp
+	render/r_sky.cpp
+	render/r_surf.cpp
+	render/r_things.cpp
+)
+
 #---------------------------------------
 #
 #	UI library (widgets) sources
@@ -306,22 +325,8 @@ set(MAIN_COMMON_SOURCES
 	pr_exec.cpp
 	progdefs.h
 	progs.h
-	r_adv_light.cpp
-	r_adv_things.cpp
-	r_bsp.cpp
-	r_data.cpp
-	r_light.cpp
-	r_local.h
-	r_main.cpp
-	r_model.cpp
-	r_particle.cpp
-	r_portal.cpp
-	r_public.h
-	r_shared.h
-	r_sky.cpp
-	r_surf.cpp
+	${RENDERBASE_SOURCES}
 	${TEXTURELIB_SOURCES}
-	r_things.cpp
 	save.h
 	sbar.cpp
 	sbar.h
@@ -349,12 +354,12 @@ set(MAIN_COMMON_SOURCES
 
 #-- Common OpenGL files --
 set(MAIN_OPENGL_SOURCES
-	gl_draw.cpp
-	gl_local.h
-	gl_main.cpp
-	gl_model.cpp
-	gl_poly.cpp
-	gl_tex.cpp
+	render/hwgl/gl_local.h
+	render/hwgl/gl_draw.cpp
+	render/hwgl/gl_main.cpp
+	render/hwgl/gl_model.cpp
+	render/hwgl/gl_poly.cpp
+	render/hwgl/gl_tex.cpp
 )
 
 #-- Linux with SDL --
@@ -366,7 +371,7 @@ set(MAIN_UNIX_SDL_SOURCES
 	sys_sdl.cpp
 )
 set(MAIN_OPENGL_UNIX_SDL_SOURCES
-	gl_sdl.cpp
+	render/hwgl/gl_sdl.cpp
 )
 
 #-- Windows --
@@ -384,7 +389,7 @@ set(MAIN_WIN32_SOURCES
 	winlocal.h
 )
 set(MAIN_OPENGL_WIN32_SOURCES
-	gl_win32.cpp
+	render/hwgl/gl_win32.cpp
 )
 
 include_directories( .
@@ -440,7 +445,6 @@ set(SERVER_COMMON_SOURCES
 	p_worldinfo.cpp
 	pr_cmds.cpp
 	pr_exec.cpp
-	r_data.cpp
 	${TEXTURELIB_SOURCES}
 	sound/snd_data.cpp
 	sound/snd_reverbs.cpp

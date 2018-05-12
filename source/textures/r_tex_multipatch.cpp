@@ -27,7 +27,7 @@
 
 #include "gamedefs.h"
 #include "r_tex.h"
-#include "r_local.h"
+#include "render/r_local.h"
 
 // MACROS ------------------------------------------------------------------
 

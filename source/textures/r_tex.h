@@ -27,7 +27,7 @@
 #define _R_TEX_H
 
 #include "drawer.h"
-#include "r_shared.h"
+#include "render/r_shared.h"
 
 //
 //	A dummy texture.

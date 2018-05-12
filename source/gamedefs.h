@@ -68,7 +68,7 @@
 #include "mapinfo.h"
 #include "lockdefs.h"
 #include "host.h"
-#include "r_public.h"
+#include "render/r_public.h"
 #include "text.h"
 #include "sound/sound.h"
 #include "menu.h"
