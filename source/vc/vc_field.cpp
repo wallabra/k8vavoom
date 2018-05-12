@@ -27,7 +27,7 @@
 
 #include "vc_local.h"
 #ifndef IN_VCC
-#include "network.h"
+#include "net/network.h"
 #endif
 
 // MACROS ------------------------------------------------------------------

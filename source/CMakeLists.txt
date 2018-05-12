@@ -178,6 +178,31 @@ set(MAIN_FLAC_SOURCES
 	sound/snd_flac.cpp
 )
 
+#---------------------------------------
+#
+#	network subsystem sources
+#
+#---------------------------------------
+set(NETSUB_SOURCES
+	net/network.h
+	net/net_channel.cpp
+	net/net_channel_control.cpp
+	net/net_channel_level.cpp
+	net/net_channel_object_map.cpp
+	net/net_channel_player.cpp
+	net/net_channel_thinker.cpp
+	net/net_connection.cpp
+	net/net_context.cpp
+	net/net_datagram.cpp
+	net/net_demo.cpp
+	net/net_local.h
+	net/net_loopback.cpp
+	net/net_main.cpp
+	net/net_message.cpp
+	net/net_message.h
+	net/net_object_map.cpp
+)
+
 
 #---------------------------------------
 #
@@ -243,23 +268,7 @@ set(MAIN_COMMON_SOURCES
 	menu.h
 	misc.cpp
 	misc.h
-	net_channel.cpp
-	net_channel_control.cpp
-	net_channel_level.cpp
-	net_channel_object_map.cpp
-	net_channel_player.cpp
-	net_channel_thinker.cpp
-	net_connection.cpp
-	net_context.cpp
-	net_datagram.cpp
-	net_demo.cpp
-	net_local.h
-	net_loopback.cpp
-	net_main.cpp
-	net_message.cpp
-	net_message.h
-	net_object_map.cpp
-	network.h
+	${NETSUB_SOURCES}
 	p_acs.cpp
 	p_acs.h
 	p_clip.cpp
@@ -351,7 +360,7 @@ set(MAIN_OPENGL_SOURCES
 #-- Linux with SDL --
 set(MAIN_UNIX_SDL_SOURCES
 	in_sdl.cpp
-	net_udp.cpp
+	net/net_udp.cpp
 	sound/snd_sdl.cpp
 	sound/snd_sdlmusic.cpp
 	sys_sdl.cpp
@@ -364,7 +373,7 @@ set(MAIN_OPENGL_UNIX_SDL_SOURCES
 set(MAIN_WIN32_SOURCES
 	eax.h
 	in_win32.cpp
-	net_winsock.cpp
+	net/net_winsock.cpp
 	sound/snd_win32.cpp
 	sound/snd_win32music.cpp
 	sys_win.cpp
@@ -406,20 +415,7 @@ set(SERVER_COMMON_SOURCES
 	mapinfo.cpp
 	maths.cpp
 	misc.cpp
-	net_channel.cpp
-	net_channel_control.cpp
-	net_channel_level.cpp
-	net_channel_object_map.cpp
-	net_channel_player.cpp
-	net_channel_thinker.cpp
-	net_connection.cpp
-	net_context.cpp
-	net_datagram.cpp
-	net_demo.cpp
-	net_loopback.cpp
-	net_main.cpp
-	net_message.cpp
-	net_object_map.cpp
+	${NETSUB_SOURCES}
 	p_acs.cpp
 	p_clip.cpp
 	p_entity.cpp
@@ -458,12 +454,12 @@ set(SERVER_COMMON_SOURCES
 )
 
 set(SERVER_UNIX_SOURCES
-	net_udp.cpp
+	net/net_udp.cpp
 	sys_bsd.cpp
 )
 
 set(SERVER_WIN32_SOURCES
-	net_winsock.cpp
+	net/net_winsock.cpp
 	sys_wind.cpp
 	vavoom.rc
 )

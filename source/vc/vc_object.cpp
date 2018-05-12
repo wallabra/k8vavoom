@@ -24,7 +24,7 @@
 //**************************************************************************
 
 #include "gamedefs.h"
-#include "network.h"
+#include "net/network.h"
 
 // Register a class at startup time.
 VClass VObject::PrivateStaticClass
