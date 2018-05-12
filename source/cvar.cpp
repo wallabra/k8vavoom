@@ -27,6 +27,7 @@
 #include "net/network.h"
 #include "sv_local.h"
 
+#define USE_SIMPLE_HASHFN
 
 bool VCvar::Initialised = false;
 bool VCvar::Cheating;
@@ -36,17 +37,41 @@ static VCvar* cvhBuckets[CVAR_HASH_SIZE] = {NULL};
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static vuint32 djbhash (const char *s) {
+#ifdef USE_SIMPLE_HASHFN
+// djb
+static vuint32 cvnamehash (const char *buf) {
   vuint32 hash = 5381;
+  const vuint8 *s = (const vuint8 *)buf;
   if (s) {
     for (; *s; ++s) {
-      vuint32 ch = (vuint32)(*s&0xff);
+      vuint32 ch = *s&0xff;
       if (ch >= 'A' && ch <= 'Z') ch += 32; // poor man's tolower
       hash = ((hash<<5)+hash)+ch;
     }
   }
   return hash;
 }
+
+#else
+
+// fnv
+static inline vuint32 cvnamehashBuf (const void *buf, unsigned int len) {
+  // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
+  vuint32 hash = 2166136261U; // fnv offset basis
+  const vuint8 *s = (const vuint8 *)buf;
+  while (len-- > 0) {
+    hash ^= *s++;
+    hash *= 16777619U; // 32-bit fnv prime
+  }
+  return hash;
+}
+
+
+static inline vuint32 cvnamehash (const char *buf) {
+  if (!buf) return 0;
+  return cvnamehashBuf(buf, strlen(buf));
+}
+#endif
 
 
 static bool xstrcmpCI (const char* s, const char *pat) {
@@ -199,7 +224,7 @@ VCvar::VCvar(const char* AName, const VStr& ADefault, const VStr& AHelp, int AFl
 // returns replaced cvar, or NULL
 VCvar *VCvar::insertIntoHash () {
   if (!this->Name || !this->Name[0]) return NULL;
-  vuint32 nhash = djbhash(this->Name);
+  vuint32 nhash = cvnamehash(this->Name);
   this->lnhash = nhash;
   VCvar* prev = NULL;
   for (VCvar* cvar = cvhBuckets[nhash%CVAR_HASH_SIZE]; cvar; prev = cvar, cvar = cvar->nextInBucket) {
@@ -464,7 +489,7 @@ bool VCvar::HasVar (const char* var_name) {
 VCvar* VCvar::FindVariable (const char* name) {
   guard(VCvar::FindVariable);
   if (!name || name[0] == 0) return NULL;
-  vuint32 nhash = djbhash(name);
+  vuint32 nhash = cvnamehash(name);
   for (VCvar *cvar = cvhBuckets[nhash%CVAR_HASH_SIZE]; cvar; cvar = cvar->nextInBucket) {
     if (cvar->lnhash == nhash && !VStr::ICmp(name, cvar->Name)) return cvar;
   }
