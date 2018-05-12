@@ -92,6 +92,29 @@ set(VCCLIB_SOURCES
 	vc/vc_type.h
 )
 
+#---------------------------------------
+#
+#	Texture loader and manager sources
+#
+#---------------------------------------
+set(TEXTURELIB_SOURCES
+	textures/r_tex.cpp
+	textures/r_tex.h
+	textures/r_tex_automap.cpp
+	textures/r_tex_base.cpp
+	textures/r_tex_camera.cpp
+	textures/r_tex_flat.cpp
+	textures/r_tex_imgz.cpp
+	textures/r_tex_jpeg.cpp
+	textures/r_tex_multipatch.cpp
+	textures/r_tex_patch.cpp
+	textures/r_tex_pcx.cpp
+	textures/r_tex_png.cpp
+	textures/r_tex_raw.cpp
+	textures/r_tex_tga.cpp
+	textures/r_tex_warp.cpp
+)
+
 
 #---------------------------------------
 #
@@ -225,21 +248,7 @@ set(MAIN_COMMON_SOURCES
 	r_shared.h
 	r_sky.cpp
 	r_surf.cpp
-	r_tex.cpp
-	r_tex.h
-	r_tex_automap.cpp
-	r_tex_base.cpp
-	r_tex_camera.cpp
-	r_tex_flat.cpp
-	r_tex_imgz.cpp
-	r_tex_jpeg.cpp
-	r_tex_multipatch.cpp
-	r_tex_patch.cpp
-	r_tex_pcx.cpp
-	r_tex_png.cpp
-	r_tex_raw.cpp
-	r_tex_tga.cpp
-	r_tex_warp.cpp
+	${TEXTURELIB_SOURCES}
 	r_things.cpp
 	save.h
 	sbar.cpp
@@ -418,20 +427,7 @@ set(SERVER_COMMON_SOURCES
 	pr_cmds.cpp
 	pr_exec.cpp
 	r_data.cpp
-	r_tex.cpp
-	r_tex_automap.cpp
-	r_tex_base.cpp
-	r_tex_camera.cpp
-	r_tex_flat.cpp
-	r_tex_imgz.cpp
-	r_tex_jpeg.cpp
-	r_tex_multipatch.cpp
-	r_tex_patch.cpp
-	r_tex_pcx.cpp
-	r_tex_png.cpp
-	r_tex_raw.cpp
-	r_tex_tga.cpp
-	r_tex_warp.cpp
+	${TEXTURELIB_SOURCES}
 	snd_data.cpp
 	snd_reverbs.cpp
 	sc_man.cpp

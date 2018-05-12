@@ -26,7 +26,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "gamedefs.h"
-#include "r_tex.h"
+#include "textures/r_tex.h"
 #include "ui.h"
 
 // MACROS ------------------------------------------------------------------
