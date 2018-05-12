@@ -133,6 +133,54 @@ set(UIWIDGETS_SOURCES
 
 #---------------------------------------
 #
+#	sound subsystem sources
+#
+#---------------------------------------
+set(SOUNDSYS_SOURCES
+	sound/sound.h
+	sound/snd_data.cpp
+	sound/snd_local.h
+	sound/snd_main.cpp
+	sound/snd_qmus2mid.cpp
+	sound/snd_reverbs.cpp
+	sound/snd_streamplayer.cpp
+	sound/snd_timidity.cpp
+	sound/snd_wav.cpp
+)
+
+#-- OpenAL files --
+set(MAIN_OPENAL_SOURCES
+	sound/snd_al.cpp
+)
+
+#-- Vorbis files --
+set(MAIN_VORBIS_SOURCES
+	sound/snd_vorbis.cpp
+)
+
+#-- MP3 files --
+set(MAIN_MP3_SOURCES
+	sound/snd_mp3.cpp
+)
+
+#-- MikMod files --
+set(MAIN_MIKMOD_SOURCES
+	sound/snd_mikmod.cpp
+)
+
+#-- ModPlug files --
+set(MAIN_MODPLUG_SOURCES
+	sound/snd_modplug.cpp
+)
+
+#-- FLAC files --
+set(MAIN_FLAC_SOURCES
+	sound/snd_flac.cpp
+)
+
+
+#---------------------------------------
+#
 #	Main executable sources
 #
 #---------------------------------------
@@ -273,15 +321,7 @@ set(MAIN_COMMON_SOURCES
 	screen.h
 	scripts.h
 	server.h
-	snd_data.cpp
-	snd_local.h
-	snd_main.cpp
-	snd_qmus2mid.cpp
-	snd_reverbs.cpp
-	snd_streamplayer.cpp
-	snd_timidity.cpp
-	snd_wav.cpp
-	sound.h
+	${SOUNDSYS_SOURCES}
 	sv_local.h
 	sv_main.cpp
 	sv_save.cpp
@@ -308,42 +348,12 @@ set(MAIN_OPENGL_SOURCES
 	gl_tex.cpp
 )
 
-#-- OpenAL files --
-set(MAIN_OPENAL_SOURCES
-	snd_al.cpp
-)
-
-#-- Vorbis files --
-set(MAIN_VORBIS_SOURCES
-	snd_vorbis.cpp
-)
-
-#-- MP3 files --
-set(MAIN_MP3_SOURCES
-	snd_mp3.cpp
-)
-
-#-- MikMod files --
-set(MAIN_MIKMOD_SOURCES
-	snd_mikmod.cpp
-)
-
-#-- ModPlug files --
-set(MAIN_MODPLUG_SOURCES
-	snd_modplug.cpp
-)
-
-#-- FLAC files --
-set(MAIN_FLAC_SOURCES
-	snd_flac.cpp
-)
-
 #-- Linux with SDL --
 set(MAIN_UNIX_SDL_SOURCES
 	in_sdl.cpp
 	net_udp.cpp
-	snd_sdl.cpp
-	snd_sdlmusic.cpp
+	sound/snd_sdl.cpp
+	sound/snd_sdlmusic.cpp
 	sys_sdl.cpp
 )
 set(MAIN_OPENGL_UNIX_SDL_SOURCES
@@ -355,8 +365,8 @@ set(MAIN_WIN32_SOURCES
 	eax.h
 	in_win32.cpp
 	net_winsock.cpp
-	snd_win32.cpp
-	snd_win32music.cpp
+	sound/snd_win32.cpp
+	sound/snd_win32music.cpp
 	sys_win.cpp
 	vavoom.ico
 	vavoom_2.ico
@@ -436,8 +446,8 @@ set(SERVER_COMMON_SOURCES
 	pr_exec.cpp
 	r_data.cpp
 	${TEXTURELIB_SOURCES}
-	snd_data.cpp
-	snd_reverbs.cpp
+	sound/snd_data.cpp
+	sound/snd_reverbs.cpp
 	sc_man.cpp
 	sv_main.cpp
 	sv_save.cpp
@@ -693,7 +703,7 @@ endif(WITH_FLAC)
 
 if(WITH_GME)
   add_subdirectory(gme)
-  set(MAIN_SOURCES ${MAIN_SOURCES} snd_gme.cpp)
+  set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_gme.cpp)
 endif(WITH_GME)
 
 
