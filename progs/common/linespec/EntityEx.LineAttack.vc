@@ -324,9 +324,11 @@ final EntityEx AimEx(out TVec OutDir, float Range, float AngleInc,
 //
 //  ShootHitPlane
 //
+//  This spawn poofs for floor/ceiling.
+//
 //==========================================================================
 
-final bool ShootHitPlane(sec_plane_t* plane, TVec linestart, TVec lineend,
+final bool ShootHitPlane(sector_t* sec, line_t* li, sec_plane_t* plane, TVec linestart, TVec lineend,
 	float range, class<EntityEx> PuffType, TVec* OutHitPoint)
 {
 	float	org_dist;
@@ -369,6 +371,7 @@ final bool ShootHitPlane(sec_plane_t* plane, TVec linestart, TVec lineend,
 	lineend += 4.0 * plane->normal;
 
 	// Spawn bullet puffs.
+	//SpawnPuff(lineend, range, PuffType, false, sec, li); //k8: we can't do decals on non-walls yet
 	SpawnPuff(lineend, range, PuffType, false);
 
 	if (OutHitPoint)
@@ -386,7 +389,7 @@ final bool ShootHitPlane(sec_plane_t* plane, TVec linestart, TVec lineend,
 //
 //==========================================================================
 
-final bool ShootCheckPlanes(sector_t* sec, TVec linestart, TVec lineend,
+final bool ShootCheckPlanes(sector_t* sec, optional line_t* li, TVec linestart, TVec lineend,
 	float range, class<EntityEx> PuffType, TVec* OutHitPoint)
 {
 	sec_region_t *reg;
@@ -395,13 +398,13 @@ final bool ShootCheckPlanes(sector_t* sec, TVec linestart, TVec lineend,
 	startreg = PointInRegion(sec, linestart);
 	for (reg = startreg; reg; reg = reg->next)
 	{
-		if (!ShootHitPlane(reg->floor, linestart, lineend, range, PuffType,
+		if (!ShootHitPlane(sec, li, reg->floor, linestart, lineend, range, PuffType,
 			OutHitPoint))
 		{
 			//  Hit floor
 			return false;
 		}
-		if (!ShootHitPlane(reg->ceiling, linestart, lineend, range, PuffType,
+		if (!ShootHitPlane(sec, li, reg->ceiling, linestart, lineend, range, PuffType,
 			OutHitPoint))
 		{
 			//  Hit ceiling
@@ -410,13 +413,13 @@ final bool ShootCheckPlanes(sector_t* sec, TVec linestart, TVec lineend,
 	}
 	for (reg = startreg->prev; reg; reg = reg->prev)
 	{
-		if (!ShootHitPlane(reg->floor, linestart, lineend, range, PuffType,
+		if (!ShootHitPlane(sec, li, reg->floor, linestart, lineend, range, PuffType,
 			OutHitPoint))
 		{
 			//  Hit floor
 			return false;
 		}
-		if (!ShootHitPlane(reg->ceiling, linestart, lineend, range, PuffType,
+		if (!ShootHitPlane(sec, li, reg->ceiling, linestart, lineend, range, PuffType,
 			OutHitPoint))
 		{
 			//  Hit ceiling
@@ -458,7 +461,7 @@ final int LineAttack(TVec Dir, float Distance, int LADamage,
 	foreach PathTraverse(in, Origin.x, Origin.y, Dst.x, Dst.y,
 		PT_ADDLINES | PT_ADDTHINGS)
 	{
-		TVec		hit_point;
+		TVec		hit_point, real_hit_point;
 		line_t*		li;
 		EntityEx	th;
 
@@ -480,7 +483,7 @@ final int LineAttack(TVec Dir, float Distance, int LADamage,
 			LineEnd = hit_point;
 
 			//  Check for shooting floor or ceiling
-			if (!ShootCheckPlanes(sec, LineStart, LineEnd, Distance, PuffType,
+			if (!ShootCheckPlanes(sec, li, LineStart, LineEnd, Distance, PuffType,
 				OutHitPoint))
 			{
 				return false;
@@ -554,10 +557,11 @@ final int LineAttack(TVec Dir, float Distance, int LADamage,
 			//  Hit line
 
 			// position a bit closer
+			real_hit_point = hit_point;
 			hit_point -= 4.0 * Dir;
 
 			// Spawn bullet puffs.
-			SpawnPuff(hit_point, Distance, PuffType, false);
+			SpawnPuff(hit_point, Distance, PuffType, false, sec, li, real_hit_point);
 
 			// don't go any farther
 			return false;
@@ -650,7 +654,7 @@ final int LineAttack(TVec Dir, float Distance, int LADamage,
 		return false;
 	}
 	LineEnd = Dst;
-	if (!ShootCheckPlanes(XLevel.PointInSector(Dst), LineStart, LineEnd,
+	if (!ShootCheckPlanes(XLevel.PointInSector(Dst),, LineStart, LineEnd,
 		Distance, PuffType, OutHitPoint))
 	{
 		return false;

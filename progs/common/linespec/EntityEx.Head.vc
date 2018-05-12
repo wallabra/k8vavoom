@@ -467,6 +467,8 @@ float			JumpVelZ;
 
 float			JumpTime;
 
+name	DecalType;
+
 bool k8InWeaponReady; // otherwise recursive calls to it may overflow stack
 
 replication

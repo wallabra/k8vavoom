@@ -2175,7 +2175,7 @@ final bool GiveBody(int num)
 //==========================================================================
 
 final void SpawnPuff(TVec Org, float Range, class<EntityEx> PuffType,
-	bool HitThing)
+	bool HitThing, optional sector_t* sec, optional line_t* li, optional TVec realOrg)
 {
 	int i, c;
 	EntityEx puff;
@@ -2193,6 +2193,12 @@ final void SpawnPuff(TVec Org, float Range, class<EntityEx> PuffType,
 						LineSpecialLevelInfo::pt_explode2, Org, 0.0, vector(32.0, 32.0, 32.0),
 						0.5, 10.0, 40.0, RGB(c, c, c), 0.8, 0.0);
 		}
+	}
+
+	//k8:TODO: this should be strictly client-side
+	if (sec && li && PuffType.default.DecalType) {
+		if (!specified_realOrg) realOrg = Org;
+		SpawnDecal(realOrg, PuffType.default.DecalType, sec, li);
 	}
 
 	Org.z += (Random() - Random()) * 4.0;
@@ -3864,6 +3870,8 @@ void RespawnResetFlags()
 	bAlwaysFast = default.bAlwaysFast;
 	bNeverFast = default.bNeverFast;
 	bCanUseWalls = default.bCanUseWalls;
+
+	DecalType = default.DecalType;
 }
 
 //==========================================================================
@@ -4249,4 +4257,27 @@ float decorate_momy
 float decorate_momz
 {
 	get { return Velocity.z / 35.0; }
+}
+
+
+//==========================================================================
+//
+//  SpawnDecal
+//
+//==========================================================================
+
+final void SpawnDecal (TVec org, name dectype, sector_t* sec, line_t* li) {
+  if (!dectype || !sec || !li) return; // just in case
+
+  // calculate `dist` -- distance from wall start
+  TVec *v1, *v2;
+  if (li->frontsector == sec) { v1 = li->v1; v2 = li->v2; } else { v1 = li->v2; v2 = li->v1; }
+  float dx = v2->x-v1->x;
+  float dy = v2->y-v1->y;
+  float dist = 0; // distance from wall start
+       if (fabs(dx) > fabs(dy)) dist = (org.x-v1->x)/dx;
+  else if (dy != 0) dist = (org.y-v1->y)/dy;
+  else dist = 0;
+
+  print("Want to spawn decal '%s' (%s); dist=%f", NameToStr(dectype), (li->frontsector == sec ? "front" : "back"), dist);
 }
