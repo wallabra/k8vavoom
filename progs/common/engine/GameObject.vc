@@ -802,6 +802,36 @@ struct sector_t
 };
 
 //
+// LineSeg
+//
+
+struct seg_t : TPlane
+{
+	TVec	*v1;
+	TVec	*v2;
+
+	float		offset;
+	float		length;
+
+	side_t		*sidedef;
+	line_t		*linedef;
+
+	// Sector references.
+	// Could be retrieved from linedef, too.
+	// backsector is NULL for one sided lines
+	sector_t	*frontsector;
+	sector_t	*backsector;
+
+	seg_t *partner; // from glnodes
+	subsector_t *front_sub; // front subsector (we need this for self-referencing deep water)
+
+	//	Side of line (for light calculations)
+	int			side;
+
+	void/*drawseg_t*/	*drawsegs;
+};
+
+//
 //  Polyobj data
 //
 struct polyobj_t
@@ -820,6 +850,22 @@ struct polyobj_t
 	int				seqType;
 	subsector_t*	__subsector;
 	Thinker			SpecialData;	// pointer a thinker, if the poly is moving
+};
+
+//
+// SubRegion
+//
+
+struct subregion_t
+{
+	sec_region_t*	secregion;
+	subregion_t*	next;
+	sec_plane_t*	floorplane;
+	sec_plane_t*	ceilplane;
+	void/*sec_surface_t*/*	floor;
+	void/*sec_surface_t*/*	ceil;
+	int				count;
+	void/*drawseg_t*/*		lines;
 };
 
 //
@@ -844,7 +890,7 @@ struct subsector_t
 	int			__dlightbits;
 	int				__dlightframe;
 
-	void*		__regions;
+	subregion_t*		__regions;
 };
 
 //

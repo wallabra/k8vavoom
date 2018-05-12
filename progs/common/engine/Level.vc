@@ -77,14 +77,14 @@ native readonly side_t*			Sides;
 native readonly int				NumLines;
 native readonly line_t*			Lines;
 
-native readonly private int		NumSegs;
-native readonly private void*	Segs;
+native readonly int		NumSegs;
+native readonly seg_t*	Segs;
 
-native readonly private int		NumSubsectors;
-native readonly private void*	Subsectors;
+native readonly int		NumSubsectors;
+native readonly subsector_t*	Subsectors;
 
 native readonly private int		NumNodes;
-native readonly private void*	Nodes;
+native readonly private void/*node_t*/*	Nodes;
 
 native readonly private void*	VisData;
 native readonly private void*	NoVis;
