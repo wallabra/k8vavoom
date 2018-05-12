@@ -222,6 +222,23 @@ set(NETSUB_SOURCES
 	net/net_object_map.cpp
 )
 
+#---------------------------------------
+#
+#	file subsystem sources
+#
+#---------------------------------------
+set(FILESYS_SOURCES
+	filesys/fwaddefs.h
+	filesys/fs_local.h
+	filesys/fs_dir.cpp
+	filesys/fs_wad.cpp
+	filesys/fs_zip.cpp
+	filesys/files.cpp
+	filesys/files.h
+	filesys/wad.cpp
+	filesys/wad.h
+)
+
 
 #---------------------------------------
 #
@@ -252,16 +269,10 @@ set(MAIN_COMMON_SOURCES
 	debug.cpp
 	debug.h
 	drawer.h
-	files.cpp
-	files.h
 	finale.cpp
 	finale.h
 	fmd2defs.h
-	fs_local.h
-	fs_dir.cpp
-	fs_wad.cpp
-	fs_zip.cpp
-	fwaddefs.h
+	${FILESYS_SOURCES}
 	gamedefs.h
 	host.cpp
 	host.h
@@ -346,8 +357,6 @@ set(MAIN_COMMON_SOURCES
 	${UIWIDGETS_SOURCES}
 	${VCCLIB_SOURCES}
 	video.h
-	wad.cpp
-	wad.h
 	zipstream.cpp
 	zipstream.h
 )
@@ -408,10 +417,7 @@ set(SERVER_COMMON_SOURCES
 	cmd.cpp
 	cvar.cpp
 	debug.cpp
-	files.cpp
-	fs_dir.cpp
-	fs_wad.cpp
-	fs_zip.cpp
+	${FILESYS_SOURCES}
 	host.cpp
 	infostr.cpp
 	language.cpp
@@ -453,7 +459,6 @@ set(SERVER_COMMON_SOURCES
 	sv_save.cpp
 	sv_world.cpp
 	${VCCLIB_SOURCES}
-	wad.cpp
 	zipstream.cpp
 )
 

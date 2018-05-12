@@ -41,8 +41,8 @@
 #include "infostr.h"	//	Info strings
 #include "debug.h"		//	Debug file
 #include "system.h"		//	System specific routines
-#include "files.h"		//	File I/O routines
-#include "wad.h"		//	WAD file I/O routines
+#include "filesys/files.h"		//	File I/O routines
+#include "filesys/wad.h"		//	WAD file I/O routines
 #include "progs.h"		//	Progs
 #include "vc_location.h"
 #include "vc_type.h"

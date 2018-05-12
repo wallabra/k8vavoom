@@ -30,7 +30,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "gamedefs.h"
-#include "fwaddefs.h"
+#include "filesys/fwaddefs.h"
 extern "C" {
 #define vertex_t		glbsp_vertex_t
 #define sector_t		glbsp_sector_t
