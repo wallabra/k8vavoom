@@ -883,6 +883,55 @@ line_t* VLevel::FindLine(int lineTag, int* searchPosition)
 
 //==========================================================================
 //
+//	VLevel::AddDecal
+//
+//==========================================================================
+
+void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li) {
+  if (!sec || !li) return; // just in case
+
+  // calculate `dist` -- distance from wall start
+  //int sidenum = 0;
+  vertex_t* v1;
+  vertex_t* v2;
+
+  if (li->frontsector == sec) {
+    v1 = li->v1;
+    v2 = li->v2;
+  } else {
+    /*sidenum = 1;*/
+    v1 = li->v2;
+    v2 = li->v1;
+  }
+
+  float dx = v2->x-v1->x;
+  float dy = v2->y-v1->y;
+  float dist = 0; // distance from wall start
+       if (fabs(dx) > fabs(dy)) dist = (org.x-v1->x)/dx;
+  else if (dy != 0) dist = (org.y-v1->y)/dy;
+  else dist = 0;
+
+  TVec lv1 = *v1, lv2 = *v2;
+  lv1.z = 0;
+  lv2.z = 0;
+  float linelen = Length(lv2-lv1);
+  float segdist = dist*linelen;
+
+  GCon->Logf("Want to spawn decal '%s' (%s); dist=%f (linelen=%f)", *dectype, (li->frontsector == sec ? "front" : "back"), dist, linelen);
+
+  // find seg for this decal
+  for (int sidx = 0; sidx < NumSegs; ++sidx) {
+    seg_t *seg = &Segs[sidx];
+    if (seg->linedef == li && seg->frontsector == sec) {
+      if (segdist >= seg->offset && segdist < seg->offset+seg->length) {
+        GCon->Logf("  found seg #%d (segdist=%f; seg=%f:%f)", sidx, segdist, seg->offset, seg->offset+seg->length);
+      }
+    }
+  }
+}
+
+//==========================================================================
+//
 //  CalcLine
 //
 //==========================================================================
@@ -1332,4 +1381,15 @@ IMPLEMENT_FUNCTION(VLevel, SetBodyQueueTrans)
 	P_GET_INT(Slot);
 	P_GET_SELF;
 	RET_INT(Self->SetBodyQueueTrans(Slot, Trans));
+}
+
+//native final void AddDecal (TVec org, name dectype, sector_t *sec, line_t *li);
+IMPLEMENT_FUNCTION(VLevel, AddDecal)
+{
+	P_GET_PTR(line_t, li);
+	P_GET_PTR(sector_t, sec);
+	P_GET_NAME(dectype);
+	P_GET_VEC(org);
+	P_GET_SELF;
+	Self->AddDecal(org, dectype, sec, li);
 }

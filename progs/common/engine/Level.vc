@@ -205,6 +205,13 @@ native final void StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
 
 native final int SetBodyQueueTrans(int Slot, int Transl);
 
+//
+//  Decal functions
+//
+
+native final void AddDecal (TVec org, name dectype, sector_t *sec, line_t *li);
+
+
 defaultproperties
 {
 }

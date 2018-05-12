@@ -31,9 +31,12 @@
 //==========================================================================
 
 final void SpawnDecal (TVec org, name dectype, sector_t* sec, line_t* li) {
-  if (!dectype || !sec || !li) return; // just in case
+  if (!dectype || !sec || !li || !XLevel) return; // just in case
   if (!GetCvarB('k8DecalTest')) return;
 
+  XLevel.AddDecal(org, dectype, sec, li);
+
+  /*
   // calculate `dist` -- distance from wall start
   int sidenum = 0;
   TVec *v1, *v2;
@@ -62,4 +65,5 @@ final void SpawnDecal (TVec org, name dectype, sector_t* sec, line_t* li) {
       }
     }
   }
+  */
 }

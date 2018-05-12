@@ -378,6 +378,8 @@ private:
 
 	int SetBodyQueueTrans(int, int);
 
+	void AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li);
+
 	DECLARE_FUNCTION(PointInSector)
 	DECLARE_FUNCTION(TraceLine)
 	DECLARE_FUNCTION(ChangeSector)
@@ -410,6 +412,8 @@ private:
 	DECLARE_FUNCTION(StartTypedACScripts)
 
 	DECLARE_FUNCTION(SetBodyQueueTrans)
+
+	DECLARE_FUNCTION(AddDecal)
 };
 
 void CalcLine(line_t *line);
