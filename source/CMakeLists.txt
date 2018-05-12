@@ -237,6 +237,8 @@ set(FILESYS_SOURCES
 	filesys/files.h
 	filesys/wad.cpp
 	filesys/wad.h
+	filesys/zipstream.cpp
+	filesys/zipstream.h
 )
 
 
@@ -357,8 +359,6 @@ set(MAIN_COMMON_SOURCES
 	${UIWIDGETS_SOURCES}
 	${VCCLIB_SOURCES}
 	video.h
-	zipstream.cpp
-	zipstream.h
 )
 
 #-- Common OpenGL files --
@@ -460,7 +460,6 @@ set(SERVER_COMMON_SOURCES
 	sv_save.cpp
 	sv_world.cpp
 	${VCCLIB_SOURCES}
-	zipstream.cpp
 )
 
 set(SERVER_UNIX_SOURCES

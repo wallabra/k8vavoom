@@ -33,7 +33,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "gamedefs.h"
-#include "zipstream.h"
+#include "filesys/zipstream.h"
 #ifdef SERVER
 #include "sv_local.h"
 #endif
