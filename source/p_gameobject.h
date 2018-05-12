@@ -45,9 +45,11 @@ struct drawseg_t;
 struct sec_surface_t;
 struct subregion_t;
 
+struct decal_t;
+
 class	VThinker;
-class		VLevelInfo;
-class		VEntity;
+class	VLevelInfo;
+class	VEntity;
 class	VBasePlayer;
 class	VWorldInfo;
 class	VGameInfo;
@@ -526,6 +528,7 @@ struct seg_t : public TPlane
 	int			side;
 
 	drawseg_t	*drawsegs;
+	decal_t	*decals;
 };
 
 //==========================================================================

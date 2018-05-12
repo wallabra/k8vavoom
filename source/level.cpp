@@ -30,6 +30,7 @@
 #ifdef CLIENT
 #include "cl_local.h"
 #endif
+#include "render/r_local.h" // for decals
 
 // MACROS ------------------------------------------------------------------
 
@@ -504,6 +505,17 @@ void VLevel::Destroy()
 		Sectors[0].lines = NULL;
 	}
 
+	if (Segs && NumSegs) {
+		for (int f = 0; f < NumSegs; ++f) {
+			decal_t* decal = Segs[f].decals;
+			while (decal) {
+				decal_t* c = decal;
+				decal = c->next;
+				delete c;
+			}
+		}
+	}
+
 	delete[] Vertexes;
 	Vertexes = NULL;
 	delete[] Sectors;
@@ -925,6 +937,19 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
     if (seg->linedef == li && seg->frontsector == sec) {
       if (segdist >= seg->offset && segdist < seg->offset+seg->length) {
         GCon->Logf("  found seg #%d (segdist=%f; seg=%f:%f)", sidx, segdist, seg->offset, seg->offset+seg->length);
+        decal_t* decal = new decal_t;
+        memset(decal, 0, sizeof(decal_t));
+        decal_t* cdec = seg->decals;
+        if (cdec) {
+          while (cdec->next) cdec = cdec->next;
+          cdec->next = decal;
+        } else {
+          seg->decals = cdec;
+        }
+        decal->seg = seg;
+        decal->texture = -1;
+        decal->xofs = segdist-seg->offset;
+        decal->zofs = (sec->floor.minz+sec->ceiling.maxz)/2.0f;
       }
     }
   }

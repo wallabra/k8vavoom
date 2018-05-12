@@ -128,6 +128,15 @@ struct sky_t
 	texinfo_t		texinfo;
 };
 
+struct decal_t
+{
+	decal_t* next; // in this seg
+	seg_t* seg;
+	int texture;
+	float xofs; // from seg start
+	float zofs;
+};
+
 class VSky
 {
 public:
