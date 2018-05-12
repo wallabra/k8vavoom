@@ -57,6 +57,7 @@ extern VCvarF r_lights_radius;
 
 static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?"/*, CVAR_Archive*/);
 static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?"/*, CVAR_Archive*/);
+static VCvarB clip_trans_hack("clip_trans_hack", true, "Do translucent clipping hack?"/*, CVAR_Archive*/);
 
 // CODE --------------------------------------------------------------------
 
@@ -1402,7 +1403,7 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t* Sub, bool shadowslight, TPl
 			}
 		}
 
-		if (line->linedef->alpha < 1.0) continue; //k8: skip translucent walls (for now)
+		if (clip_trans_hack && line->linedef->alpha < 1.0) continue; //k8: skip translucent walls (for now)
 		// 2-sided line, determine if it can be skipped
 		if (line->backsector)
 		{
@@ -1522,14 +1523,22 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t* Sub, bool shadowslight, TPl
 		}
 		//k8: this is hack for boom translucency
 		//    midtexture 0 *SHOULD* mean "transparent", but let's play safe
-		if (line->linedef && line->frontsector && line->backsector && line->sidedef->MidTexture <= 0) {
+		if (clip_trans_hack && line->linedef && line->frontsector && line->backsector && line->sidedef->MidTexture <= 0) {
 			// ok, we can possibly see thru it, now check the OPPOSITE sector ceiling and floor heights
 			const sector_t* ops = (line->side ? line->frontsector : line->backsector);
 			// ceiling is higher than the floor?
 			if (ops->ceiling.minz > ops->floor.maxz) {
-				//printf("!!! SKIPPED 2-SIDED LINE W/O MIDTEX (%d); side=%d; origz=%f!\n", line->sidedef->LineNum, line->side, Origin.z);
-				//printf("  (f,c)=(%f:%f,%f:%f)\n", ops->floor.minz, ops->floor.maxz, ops->ceiling.minz, ops->ceiling.maxz);
-				continue;
+				// check if that sector has any translucent walls
+				bool hasTrans = false;
+				int lcount = ops->linecount;
+				for (int lidx = 0; lidx < lcount; ++lidx) if (ops->lines[lidx]->alpha < 1.0) { hasTrans = true; break; }
+				if (hasTrans) {
+					//printf("!!! SKIPPED 2-SIDED LINE W/O MIDTEX (%d); side=%d; origz=%f!\n", line->sidedef->LineNum, line->side, Origin.z);
+					//printf("  (f,c)=(%f:%f,%f:%f)\n", ops->floor.minz, ops->floor.maxz, ops->ceiling.minz, ops->ceiling.maxz);
+					continue;
+				} else {
+					//printf("!!! ALLOWED 2-SIDED LINE W/O MIDTEX (%d); side=%d; origz=%f!\n", line->sidedef->LineNum, line->side, Origin.z);
+				}
 			}
 		}
 		AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));
