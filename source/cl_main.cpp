@@ -28,7 +28,7 @@
 #include "gamedefs.h"
 #include "network.h"
 #include "cl_local.h"
-#include "ui.h"
+#include "ui/ui.h"
 #include "sv_local.h"
 
 // MACROS ------------------------------------------------------------------

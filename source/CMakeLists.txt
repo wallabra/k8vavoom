@@ -115,6 +115,21 @@ set(TEXTURELIB_SOURCES
 	textures/r_tex_warp.cpp
 )
 
+#---------------------------------------
+#
+#	UI library (widgets) sources
+#
+#---------------------------------------
+set(UIWIDGETS_SOURCES
+	ui/ui.h
+	ui/ui_actor.cpp
+	ui/ui_font.cpp
+	ui/ui_font.h
+	ui/ui_root.cpp
+	ui/ui_root.h
+	ui/ui_widget.cpp
+	ui/ui_widget.h
+)
 
 #---------------------------------------
 #
@@ -274,14 +289,7 @@ set(MAIN_COMMON_SOURCES
 	system.h
 	text.cpp
 	text.h
-	ui.h
-	ui_actor.cpp
-	ui_font.cpp
-	ui_font.h
-	ui_root.cpp
-	ui_root.h
-	ui_widget.cpp
-	ui_widget.h
+	${UIWIDGETS_SOURCES}
 	${VCCLIB_SOURCES}
 	video.h
 	wad.cpp
