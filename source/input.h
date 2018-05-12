@@ -158,6 +158,7 @@ class VInputDevice : public VInterface
 public:
 	//	VInputDevice interface.
 	virtual void ReadInput() = 0;
+	virtual void RegrabMouse () = 0; // called by UI when mouse cursor is turned off
 
 	//	Implemented in corresponding system module.
 	static VInputDevice* CreateDevice();
@@ -199,6 +200,8 @@ public:
 
 	virtual int KeyNumForName(const VStr& Name) = 0;
 	virtual VStr KeyNameForNum(int KeyNr) = 0;
+
+	virtual void RegrabMouse () = 0; // called by UI when mouse cursor is turned off
 
 	static VInputPublic* Create();
 };

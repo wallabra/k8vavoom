@@ -137,6 +137,7 @@ final void PushMenuScreen(MenuScreen menu)
 
 	menu_stack[menu_sp++] = menu;
 
+	SetCvar('ui_active', 1);
 	if (!CurrentMenuScreen)
 	{
 /*		if (cl.paused)
@@ -146,7 +147,7 @@ final void PushMenuScreen(MenuScreen menu)
 		C_ClearNotify();*/
 		CmdBuf_AddText("HideConsole\n");
 		LocalSound(menu.ActivateSound);
-		GRoot.SetMouse(true);
+		if (GetCvarB('ui_mouse')) GRoot.SetMouse(true);
 	}
 	else
 	{
@@ -207,6 +208,7 @@ final void PopMenu () {
   } else {
     if (menu) LocalSound(menu.ClearMenusSound);
     CurrentMenuScreen = none;
+    SetCvar('ui_active', 0);
     GRoot.SetMouse(false);
   }
 }
@@ -228,6 +230,7 @@ final void ForceMenuOff()
 	}
 	menu_sp = 0;
 	CurrentMenuScreen = none;
+	SetCvar('ui_active', 0);
 	GRoot.SetMouse(false);
 }
 

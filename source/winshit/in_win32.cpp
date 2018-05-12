@@ -42,6 +42,7 @@ public:
 
 	void ReadInput();
 	void SetActiveWindow(HWND window);
+	void RegrabMouse (); // called by UI when mouse cursor is turned off
 
 private:
 	LPDIRECTINPUT8			DInput;
@@ -476,7 +477,9 @@ DIDATAFORMAT	VDirectInputDevice::df_Joystick =
 	VDirectInputDevice::rgodf_Joy,	// and here they are
 };
 
-static VCvarB				m_filter("m_filter", true, "Filter input?", CVAR_Archive);
+static VCvarB m_filter("m_filter", true, "Filter input?", CVAR_Archive);
+static VCvarB ui_mouse("ui_mouse", false, "Allow using mouse in UI?", CVAR_Archive);
+static VCvarB ui_active("ui_active", false, "Is UI active (used to stop mouse warping if \"ui_mouse\" is false)?", 0);
 
 static VDirectInputDevice*	CurrentDevice;
 
@@ -981,6 +984,16 @@ int VDirectInputDevice::JoystickEnumCallback(LPCDIDEVICEINSTANCE pdinst)
 
 	joystick_started = true;
 	return DIENUM_STOP;
+}
+
+//==========================================================================
+//
+//  VDirectInputDevice::RegrabMouse
+//
+//	Called by UI when mouse cursor is turned off.
+//
+//==========================================================================
+void VDirectInputDevice::RegrabMouse () {
 }
 
 //==========================================================================

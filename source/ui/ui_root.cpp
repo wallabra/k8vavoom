@@ -187,6 +187,7 @@ void VRootWidget::SetMouse(bool MouseOn)
 		RootFlags |= RWF_MouseEnabled;
 	else
 		RootFlags &= ~RWF_MouseEnabled;
+	if (!MouseOn && GInput) GInput->RegrabMouse();
 	unguard;
 }
 

@@ -70,6 +70,8 @@ public:
 	int KeyNumForName(const VStr& Name);
 	VStr KeyNameForNum(int KeyNr);
 
+	void RegrabMouse (); // called by UI when mouse cursor is turned off
+
 private:
 	enum { MAXEVENTS = 64 };
 
@@ -667,6 +669,18 @@ VStr VInput::KeyNameForNum(int KeyNr)
 	else
 		return VStr();
 	unguard;
+}
+
+//==========================================================================
+//
+//	VInput::RegrabMouse
+//
+//	Called by UI when mouse cursor is turned off
+//
+//==========================================================================
+
+void VInput::RegrabMouse () {
+	if (Device) Device->RegrabMouse();
 }
 
 //==========================================================================

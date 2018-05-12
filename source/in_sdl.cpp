@@ -43,11 +43,13 @@ public:
 	~VSdlInputDevice();
 
 	void ReadInput();
+	void RegrabMouse (); // called by UI when mouse cursor is turned off
 
 private:
 	int				mouse;
 	bool			winactive;
 	bool			firsttime;
+	bool			uiwasactive;
 
 	int				mouse_oldx;
 	int				mouse_oldy;
@@ -79,6 +81,8 @@ private:
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 static VCvarB m_filter("m_filter", true, "Filter input?", CVAR_Archive);
+static VCvarB ui_mouse("ui_mouse", false, "Allow using mouse in UI?", CVAR_Archive);
+static VCvarB ui_active("ui_active", false, "Is UI active (used to stop mouse warping if \"ui_mouse\" is false)?", 0);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -149,6 +153,7 @@ VSdlInputDevice::VSdlInputDevice()
 : mouse(0)
 , winactive(true)
 , firsttime(true)
+, uiwasactive(false)
 , mouse_oldx(0)
 , mouse_oldy(0)
 , joystick(NULL)
@@ -206,6 +211,21 @@ VSdlInputDevice::~VSdlInputDevice()
 
 //==========================================================================
 //
+//  VSdlInputDevice::RegrabMouse
+//
+//	Called by UI when mouse cursor is turned off.
+//
+//==========================================================================
+void VSdlInputDevice::RegrabMouse () {
+	//fprintf(stderr, "*** REGRAB *** (%d:%d)\n", (int)mouse, (int)winactive);
+	//FIXME: ignore winactive here, 'cause when mouse is off-window, it may be `false`
+	if (mouse /*&& winactive*/) {
+		SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
+	}
+}
+
+//==========================================================================
+//
 //  VSdlInputDevice::ReadInput
 //
 //	Reads input from the input devices.
@@ -255,21 +275,15 @@ void VSdlInputDevice::ReadInput()
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
 			vev.type = (ev.button.state == SDL_PRESSED) ? ev_keydown : ev_keyup;
-			if (ev.button.button == SDL_BUTTON_LEFT)
-				vev.data1 = K_MOUSE1;
-			else if (ev.button.button == SDL_BUTTON_RIGHT)
-				vev.data1 = K_MOUSE2;
-			else if (ev.button.button == SDL_BUTTON_MIDDLE)
-				vev.data1 = K_MOUSE3;
-			else if (ev.button.button == SDL_BUTTON_WHEELUP)
-				vev.data1 = K_MWHEELUP;
-			else if (ev.button.button == SDL_BUTTON_WHEELDOWN)
-				vev.data1 = K_MWHEELDOWN;
-			else
-				break;
+			     if (ev.button.button == SDL_BUTTON_LEFT) vev.data1 = K_MOUSE1;
+			else if (ev.button.button == SDL_BUTTON_RIGHT) vev.data1 = K_MOUSE2;
+			else if (ev.button.button == SDL_BUTTON_MIDDLE) vev.data1 = K_MOUSE3;
+			else if (ev.button.button == SDL_BUTTON_WHEELUP) vev.data1 = K_MWHEELUP;
+			else if (ev.button.button == SDL_BUTTON_WHEELDOWN) vev.data1 = K_MWHEELDOWN;
+			else break;
 			vev.data2 = 0;
 			vev.data3 = 0;
-			GInput->PostEvent(&vev);
+			if (ui_mouse || !ui_active) GInput->PostEvent(&vev);
 			break;
 		case SDL_JOYAXISMOTION:
 			normal_value = ev.jaxis.value * 127 / 32767;
@@ -292,7 +306,7 @@ void VSdlInputDevice::ReadInput()
 			if (mouse && !winactive && ev.active.gain)
 			{
 				//SDL_WM_GrabInput(SDL_GRAB_ON);
-				SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
+				if (!ui_active || ui_mouse) SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
 			} else if (mouse && winactive && !ev.active.gain) {
 				//SDL_WM_GrabInput(SDL_GRAB_OFF);
 			}
@@ -309,13 +323,21 @@ void VSdlInputDevice::ReadInput()
 	//	Read mouse separately
 	if (mouse && winactive)
 	{
-		SDL_GetMouseState(&mouse_x, &mouse_y);
-		vev.type = ev_mouse;
-		vev.data1 = 0;
-		vev.data2 = mouse_x - ScreenWidth / 2;
-		vev.data3 = ScreenHeight / 2 - mouse_y;
-		GInput->PostEvent(&vev);
-		SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
+		if (!ui_active || ui_mouse) {
+			uiwasactive = ui_active;
+			SDL_GetMouseState(&mouse_x, &mouse_y);
+			vev.type = ev_mouse;
+			vev.data1 = 0;
+			vev.data2 = mouse_x - ScreenWidth / 2;
+			vev.data3 = ScreenHeight / 2 - mouse_y;
+			if (vev.data2 != 0 || vev.data3 != 0) {
+				GInput->PostEvent(&vev);
+				SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
+			}
+		} else if (ui_active != uiwasactive) {
+			uiwasactive = ui_active;
+			if (!ui_active) SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
+		}
 #if 0
 		SDL_GetRelativeMouseState(&rel_x, &rel_y);
 		vev.type = ev_mouse;

@@ -83,6 +83,14 @@ void CreateChoices()
 	Enum.Text = "Look strafe";
 	Enum.SetInitialValue(GetCvar('lookstrafe'));
 	Enum.ValueChanging = ChangeLookStrafe;
+	currentY += Enum.Height;
+
+	Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
+	Enum.SetOrigin(ChoicesStartX, currentY);
+	Enum.Text = "Allow mouse in UI";
+	Enum.SetInitialValue(GetCvar('ui_mouse'));
+	Enum.ValueChanging = ChangeUIMouse;
+	currentY += Enum.Height;
 }
 
 //==========================================================================
@@ -154,6 +162,18 @@ bool ChangeLookSpring(Object Sender, int newValue)
 bool ChangeLookStrafe(Object Sender, int newValue)
 {
 	SetCvar('lookstrafe', newValue);
+	return true;
+}
+
+//==========================================================================
+//
+//	ChangeUIMouse
+//
+//==========================================================================
+
+bool ChangeUIMouse(Object Sender, int newValue)
+{
+	SetCvar('ui_mouse', newValue);
 	return true;
 }
 
