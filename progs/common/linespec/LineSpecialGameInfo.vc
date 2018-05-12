@@ -177,6 +177,8 @@ void Init()
 	CreateCvar('k8ElvenGift', "1", "Start game with some Elven Gifts", CVAR_ARCHIVE);
 
 	CreateCvar('k8ElvenPaine', "0", "Allow Pain Elemental attacks", CVAR_ARCHIVE);
+
+	CreateCvar('k8BerserkSwitch', "1", "Switch to fist when Berserker Pack taken", CVAR_ARCHIVE);
 }
 
 //==========================================================================
