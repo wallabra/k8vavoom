@@ -1402,9 +1402,11 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t* Sub, bool shadowslight, TPl
 			}
 		}
 
+		if (line->linedef->alpha < 1.0) continue; //k8: skip translucent walls (for now)
 		// 2-sided line, determine if it can be skipped
 		if (line->backsector)
 		{
+
 			TVec v1 = *line->linedef->v1;
 			TVec v2 = *line->linedef->v2;
 
@@ -1516,6 +1518,18 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t* Sub, bool shadowslight, TPl
 			else if (Dist2 > 0.0 && Dist1 <= 0.0)
 			{
 				v1 = v2 + (v1 - v2) * Dist2 / (Dist2 - Dist1);
+			}
+		}
+		//k8: this is hack for boom translucency
+		//    midtexture 0 *SHOULD* mean "transparent", but let's play safe
+		if (line->linedef && line->frontsector && line->backsector && line->sidedef->MidTexture <= 0) {
+			// ok, we can possibly see thru it, now check the OPPOSITE sector ceiling and floor heights
+			const sector_t* ops = (line->side ? line->frontsector : line->backsector);
+			// ceiling is higher than the floor?
+			if (ops->ceiling.minz > ops->floor.maxz) {
+				//printf("!!! SKIPPED 2-SIDED LINE W/O MIDTEX (%d); side=%d; origz=%f!\n", line->sidedef->LineNum, line->side, Origin.z);
+				//printf("  (f,c)=(%f:%f,%f:%f)\n", ops->floor.minz, ops->floor.maxz, ops->ceiling.minz, ops->ceiling.maxz);
+				continue;
 			}
 		}
 		AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));
