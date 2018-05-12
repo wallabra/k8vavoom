@@ -11,23 +11,25 @@ Actor BDW_EmptyClipSpawn {
 }
 
 
+// alas, we have to put it onto blockmap, or VaVoom won't move the object with lifts
 Actor BDW_EmptyClip {
   Height 12
   Radius 9
   Speed 4
   Scale 1.01
   +DOOMBOUNCE
-  - NOGRAVITY
+  -NOGRAVITY
   +WINDTHRUST
   +CLIENTSIDEONLY
   +MOVEWITHSECTOR
   +MISSILE
-  +NOBLOCKMAP
+  -NOBLOCKMAP
   -DROPOFF
   +NOTELEPORT
   +FORCEXYBILLBOARD
   +NOTDMATCH
   +GHOST
+  -NoLiftDrop
   Mass 1
   //k8: not yet:SeeSound "weapons/largemagdrop"
   SeeSound "weapons/largemagdrop1"
@@ -66,18 +68,19 @@ Actor BDW_RifleCaseSpawn {
 }
 
 
+// alas, we have to put it onto blockmap, or VaVoom won't move the object with lifts
 Actor BDW_EmptyBrass {
   Height 2
   Radius 2
   Speed 8
   Scale 0.15
   +DOOMBOUNCE
-  - NOGRAVITY
+  -NOGRAVITY
   +WINDTHRUST
   +CLIENTSIDEONLY
   +MOVEWITHSECTOR
   +MISSILE
-  +NOBLOCKMAP
+  -NOBLOCKMAP
   -DROPOFF
   +NOTELEPORT
   +FORCEXYBILLBOARD
@@ -87,6 +90,7 @@ Actor BDW_EmptyBrass {
   //+CANBOUNCEWATER
   +FLOORCLIP
   +THRUACTORS
+  -NoLiftDrop
   Mass 4
   BounceFactor 0.3
   //k8: not yet:SeeSound "weapons/casing"
@@ -186,18 +190,19 @@ Actor BDW_ShotCaseSpawn : BDW_RifleCaseSpawn {
 }
 
 
+// alas, we have to put it onto blockmap, or VaVoom won't move the object with lifts
 Actor BDW_ShotgunCasing {
   Height 12
   Radius 9
   Speed 6
   Scale 0.15
   +DOOMBOUNCE
-  - NOGRAVITY
+  -NOGRAVITY
   +WINDTHRUST
   +CLIENTSIDEONLY
   +MOVEWITHSECTOR
   +MISSILE
-  +NOBLOCKMAP
+  -NOBLOCKMAP
   -DROPOFF
   +NOTELEPORT
   +FORCEXYBILLBOARD
@@ -205,6 +210,7 @@ Actor BDW_ShotgunCasing {
   +GHOST
   //+CANBOUNCEWATER
   //+DONTSPLASH
+  -NoLiftDrop
   Mass 1
   BounceFactor 0.3
   SeeSound "weapons/shell"
