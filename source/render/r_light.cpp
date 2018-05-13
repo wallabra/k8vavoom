@@ -1450,7 +1450,8 @@ surfcache_t* VRenderLevel::AllocBlock(int width, int height)
 		}
 	}
 
-	Sys_Error("Surface cache overflow");
+	//Sys_Error("Surface cache overflow");
+	GCon->Logf("ERROR! ERROR! ERROR! Surface cache overflow!");
 	return NULL;
 	unguard;
 }
@@ -1594,6 +1595,8 @@ void VRenderLevel::CacheSurface(surface_t *surface)
 	if (!cache)     // if a texture just animated, don't reallocate it
 	{
 		cache = AllocBlock(smax, tmax);
+		// in rare case of surface cache overflow, just skip the light
+		if (!cache) return; // alas
 		surface->CacheSurf = cache;
 		cache->owner = &surface->CacheSurf;
 		cache->surf = surface;
