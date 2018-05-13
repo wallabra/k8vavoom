@@ -76,6 +76,7 @@ VOpenGLDrawer::VOpenGLDrawer()
 , lastgamma(0)
 , CurrentFade(0)
 {
+  MaxTextureUnits = 1;
 }
 
 //==========================================================================
@@ -122,7 +123,8 @@ void VOpenGLDrawer::InitResolution()
 			HaveMultiTexture = true;
 			GLint tmp;
 			glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &tmp);
-			GCon->Logf("Max texture units: %d", tmp);
+			GCon->Logf(NAME_Init, "Max texture units: %d", tmp);
+			if (tmp > 1) MaxTextureUnits = tmp;
 		}
 		else
 		{
@@ -283,6 +285,7 @@ void VOpenGLDrawer::InitResolution()
 			GCon->Logf(NAME_Init, "Shading language version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION_ARB));
 			glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
 			GCon->Logf(NAME_Init, "Max texture image units: %d", tmp);
+			if (tmp > 1) MaxTextureUnits = tmp; // this is number of texture *samplers*, but it is ok for our shaders case
 			glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &tmp);
 			GCon->Logf(NAME_Init, "Max vertex uniform components: %d", tmp);
 			glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &tmp);
@@ -412,10 +415,7 @@ void VOpenGLDrawer::InitResolution()
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);	// Black Background
 	glClearDepth(1.0);					// Depth Buffer Setup
-	if (HaveStencil)
-	{
-		glClearStencil(0);
-	}
+	glClearStencil(0);
 
 	glClear(GL_COLOR_BUFFER_BIT);
 	Update();
@@ -710,7 +710,7 @@ bool VOpenGLDrawer::CheckExtension(const char *ext)
 
 bool VOpenGLDrawer::SupportsAdvancedRendering()
 {
-	return HaveStencil && HaveStencilWrap && p_glStencilFuncSeparate &&
+	return HaveStencilWrap && p_glStencilFuncSeparate &&
 		HaveShaders && HaveVertexBufferObject && HaveDrawRangeElements;
 }
 
@@ -867,11 +867,7 @@ void VOpenGLDrawer::SetupView(VRenderLevelDrawer* ARLev, const refdef_t *rd)
 
 	glViewport(rd->x, ScreenHeight - rd->height - rd->y, rd->width, rd->height);
 
-	glClear(GL_DEPTH_BUFFER_BIT);
-	if (HaveStencil)
-	{
-		glClear(GL_STENCIL_BUFFER_BIT);
-	}
+	glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 	glMatrixMode(GL_PROJECTION);		// Select The Projection Matrix
 	VMatrix4 ProjMat = VMatrix4::Identity;

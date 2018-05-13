@@ -464,6 +464,8 @@ protected:
 	bool					HaveVertexBufferObject;
 	bool					HaveDrawRangeElements;
 
+	int MaxTextureUnits;
+
 	TArray<GLhandleARB>		CreatedShaderObjects;
 	TArray<VMeshModel*>		UploadedModels;
 

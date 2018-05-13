@@ -115,14 +115,12 @@ public:
 class VDrawer
 {
 public:
-	bool				HaveStencil;
 	bool				HaveMultiTexture;
 
 	VRenderLevelDrawer*	RendLev;
 
 	VDrawer()
-	: HaveStencil(false)
-	, HaveMultiTexture(false)
+	: HaveMultiTexture(false)
 	, RendLev(NULL)
 	{}
 	virtual ~VDrawer()

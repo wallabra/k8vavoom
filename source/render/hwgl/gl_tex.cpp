@@ -86,9 +86,9 @@ void VOpenGLDrawer::GenerateTextures()
 	VTexture::SmoothEdges((vuint8 *)pbuf, 8, 8, (vuint8 *)pbuf);
 	glBindTexture(GL_TEXTURE_2D, particle_texture);
 	//	Set up texture anisotropic filtering.
-	if (max_anisotropy > 1.0)
-	{
-		glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(max_anisotropy));
+	if (max_anisotropy > 1.0) {
+		//glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(max_anisotropy));
+		glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(gl_texture_filter_anisotropic < 0 ? 0 : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic));
 	}
 	glTexImage2D(GL_TEXTURE_2D, 0, 4, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, pbuf);
 
@@ -195,8 +195,10 @@ void VOpenGLDrawer::SetTexture(VTexture* Tex, int CMap)
 	{
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipfilter);
 	}
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
-	
+	if (max_anisotropy > 1.0) {
+		//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
+		glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(gl_texture_filter_anisotropic < 0 ? 0 : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic));
+	}
 
 	SetSpriteLump(Tex, NULL, CMap);
 	unguard;
@@ -349,7 +351,8 @@ void VOpenGLDrawer::GenerateTexture(VTexture* Tex, GLuint* pHandle,
 	//	Set up texture anisotropic filtering.
 	if (max_anisotropy > 1.0)
 	{
-		glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), max_anisotropy);
+		//glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), max_anisotropy);
+		glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(gl_texture_filter_anisotropic < 0 ? 0 : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic));
 	}
 	unguard;
 }

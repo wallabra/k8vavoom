@@ -115,26 +115,26 @@ bool VSdlOpenGLDrawer::SetResolution(int AWidth, int AHeight, int ABPP,
 		flags |= SDL_FULLSCREEN;
 	}
 
-	HaveStencil = true;
-
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+	//k8: require OpenGL 2.1, sorry; non-shader renderer will be removed soon
+	//    will be done on SDL2 transition
+	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+
 	hw_screen = SDL_SetVideoMode(Width, Height, BPP, flags);
-	if (!hw_screen)
-	{
-		//	Try without stencil.
-		HaveStencil = false;
-		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
-		hw_screen = SDL_SetVideoMode(Width, Height, BPP, flags);
-		if (hw_screen == NULL)
-		{
-			return false;
-		}
+	if (!hw_screen) {
+		// alas
+		GCon->Logf("ALAS: cannot initialize OpenGL 2.1 with stencil buffer.");
+		return false;
 	}
-	if (HaveStencil)
-	{
-		GCon->Logf(NAME_Init, "Stencil buffer available");
-	}
+
 	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
 	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 

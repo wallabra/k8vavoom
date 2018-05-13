@@ -359,21 +359,6 @@ void VRenderLevelShared::DrawSurfaces(seg_t* seg, surface_t* InSurfs, texinfo_t 
 					false, 0, 0, TVec(), 0, TVec(), TVec(), TVec());
 			}
 
-			if (!Drawer->HaveStencil)
-			{
-				if (PortalLevel == 0)
-				{
-					world_surf_t& S = WorldSurfs.Alloc();
-					S.Surf = surfs;
-					S.Type = 1;
-					surfs->decals = nullptr;
-				}
-				else
-				{
-					QueueSkyPortal(surfs);
-				}
-			}
-
 			surfs = surfs->next;
 		} while (surfs);
 		return;
@@ -566,7 +551,7 @@ void VRenderLevelShared::RenderMirror(drawseg_t* dseg)
 	guard(VRenderLevelShared::RenderMirror);
 	seg_t* Seg = dseg->seg;
 
-	if (Drawer->HaveStencil && MirrorLevel < r_maxmirrors)
+	if (MirrorLevel < r_maxmirrors)
 	{
 		VPortal* Portal = NULL;
 		for (int i = 0; i < Portals.Num(); i++)
@@ -769,8 +754,7 @@ void VRenderLevelShared::RenderSecSurface(sec_surface_t* ssurf,
 		return;
 	}
 
-	if (plane.MirrorAlpha < 1.0 && Drawer->HaveStencil &&
-		MirrorLevel < r_maxmirrors)
+	if (plane.MirrorAlpha < 1.0 && MirrorLevel < r_maxmirrors)
 	{
 		VPortal* Portal = NULL;
 		for (int i = 0; i < Portals.Num(); i++)
@@ -1103,14 +1087,11 @@ void VRenderLevelShared::RenderPortals()
 {
 	guard(VRenderLevelShared::RenderPortals);
 	PortalLevel++;
-	if (Drawer->HaveStencil)
+	for (int i = 0; i < Portals.Num(); i++)
 	{
-		for (int i = 0; i < Portals.Num(); i++)
+		if (Portals[i] && Portals[i]->Level == PortalLevel)
 		{
-			if (Portals[i] && Portals[i]->Level == PortalLevel)
-			{
-				Portals[i]->Draw(true);
-			}
+			Portals[i]->Draw(true);
 		}
 	}
 	for (int i = 0; i < Portals.Num(); i++)
