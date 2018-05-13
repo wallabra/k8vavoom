@@ -289,18 +289,15 @@ surface_t* VRenderLevel::SubdivideFace(surface_t* InF, const TVec &axis,
 {
 	guard(VRenderLevel::SubdivideFace);
 	surface_t* f = InF;
-	int i;
 	float dot;
 	float mins = 99999.0;
 	float maxs = -99999.0;
 
-	for (i = 0; i < f->count; i++)
+	for (int i = 0; i < f->count; ++i)
 	{
 		dot = DotProduct(f->verts[i], axis);
-		if (dot < mins)
-			mins = dot;
-		if (dot > maxs)
-			maxs = dot;
+		if (dot < mins) mins = dot;
+		if (dot > maxs) maxs = dot;
 	}
 
 	if (maxs - mins <= subdivide_size)
@@ -329,16 +326,13 @@ surface_t* VRenderLevel::SubdivideFace(surface_t* InF, const TVec &axis,
 	float dots[MAXSPLITVERTS + 1];
 	int sides[MAXSPLITVERTS + 1];
 
-	for (i = 0; i < f->count; i++)
+	for (int i = 0; i < f->count; ++i)
 	{
 		dot = DotProduct(f->verts[i], plane.normal) - plane.dist;
 		dots[i] = dot;
-		if (dot < -ON_EPSILON)
-			sides[i] = -1;
-		else if (dot > ON_EPSILON)
-			sides[i] = 1;
-		else
-			sides[i] = 0;
+		     if (dot < -ON_EPSILON) sides[i] = -1;
+		else if (dot > ON_EPSILON) sides[i] = 1;
+		else sides[i] = 0;
 	}
 	dots[f->count] = dots[0];
 	sides[f->count] = sides[0];
@@ -348,7 +342,7 @@ surface_t* VRenderLevel::SubdivideFace(surface_t* InF, const TVec &axis,
 	int count1 = 0;
 	int count2 = 0;
 
-	for (i = 0; i < f->count; i++)
+	for (int i = 0; i < f->count; ++i)
 	{
 		if (sides[i] == 0)
 		{
@@ -378,12 +372,9 @@ surface_t* VRenderLevel::SubdivideFace(surface_t* InF, const TVec &axis,
 		for (int j = 0; j < 3; j++)
 		{
 			// avoid round off error when possible
-			if (plane.normal[j] == 1)
-				mid[j] = plane.dist;
-			else if (plane.normal[j] == -1)
-				mid[j] = -plane.dist;
-			else
-				mid[j] = p1[j] + dot * (p2[j] - p1[j]);
+			     if (plane.normal[j] == 1) mid[j] = plane.dist;
+			else if (plane.normal[j] == -1) mid[j] = -plane.dist;
+			else mid[j] = p1[j] + dot * (p2[j] - p1[j]);
 		}
 
 		verts1[count1++] = mid;
@@ -393,13 +384,11 @@ surface_t* VRenderLevel::SubdivideFace(surface_t* InF, const TVec &axis,
 	surface_t *next = f->next;
 	Z_Free(f);
 
-	surface_t *back = (surface_t*)Z_Calloc(sizeof(surface_t) +
-		(count2 - 1) * sizeof(TVec));
+	surface_t *back = (surface_t*)Z_Calloc(sizeof(surface_t) + (count2 - 1) * sizeof(TVec));
 	back->count = count2;
 	memcpy(back->verts, verts2, count2 * sizeof(TVec));
 
-	surface_t *front = (surface_t*)Z_Calloc(sizeof(surface_t) +
-		(count1 - 1) * sizeof(TVec));
+	surface_t *front = (surface_t*)Z_Calloc(sizeof(surface_t) + (count1 - 1) * sizeof(TVec));
 	front->count = count1;
 	memcpy(front->verts, verts1, count1 * sizeof(TVec));
 
@@ -958,8 +947,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t* dseg, seg_t *seg)
 		else if (linedef->flags & ML_DONTPEGTOP)
 		{
 			// top of texture at top of top region
-			sp->texinfo.toffs =
-				r_sub->sector->topregion->ceiling->TexZ;
+			sp->texinfo.toffs = r_sub->sector->topregion->ceiling->TexZ;
 		}
 		else
 		{

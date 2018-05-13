@@ -116,7 +116,9 @@ bool VSdlOpenGLDrawer::SetResolution(int AWidth, int AHeight, int ABPP,
 	}
 
 	HaveStencil = true;
+
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
 	hw_screen = SDL_SetVideoMode(Width, Height, BPP, flags);
 	if (!hw_screen)
 	{
@@ -133,9 +135,7 @@ bool VSdlOpenGLDrawer::SetResolution(int AWidth, int AHeight, int ABPP,
 	{
 		GCon->Logf(NAME_Init, "Stencil buffer available");
 	}
-#if SDL_MINOR_VERSION > 2 || (SDL_MINOR_VERSION == 2 && SDL_PATCHLEVEL >= 10)
 	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
-#endif
 	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
 	// Everything is fine, set some globals and finish

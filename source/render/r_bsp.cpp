@@ -59,6 +59,22 @@ static VCvarI			r_maxmirrors("r_maxmirrors", "4", "Maximum allowed mirrors.", CV
 
 // CODE --------------------------------------------------------------------
 
+static void addDecalsToSurf (surface_t* surf, seg_t* seg) {
+  if (!surf) return;
+  surf->decals = nullptr;
+  if (seg && seg->decals) {
+    // append decals
+    //printf("queuing surface with decals!\n");
+    decal_t* last = nullptr;
+    for (decal_t* dc = seg->decals; dc; dc = dc->next) {
+      if (last) last->surfnext = dc; else surf->decals = dc;
+      last = dc;
+    }
+    if (last) last->surfnext = nullptr;
+  }
+}
+
+
 //==========================================================================
 //
 //	VRenderLevelShared::SetUpFrustumIndexes
@@ -94,22 +110,23 @@ void VRenderLevelShared::SetUpFrustumIndexes()
 //
 //==========================================================================
 
-void VRenderLevel::QueueWorldSurface(surface_t* surf)
+void VRenderLevel::QueueWorldSurface(seg_t* seg, surface_t* surf)
 {
 	guard(VRenderLevel::QueueWorldSurface);
-	bool lightmaped = surf->lightmap != NULL ||
-		surf->dlightframe == r_dlightframecount;
+	bool lightmaped = (surf->lightmap != NULL || surf->dlightframe == r_dlightframecount);
+	surf->decals = nullptr;
 
 	if (lightmaped)
 	{
 		CacheSurface(surf);
 		if (Drawer->HaveMultiTexture)
 		{
+			addDecalsToSurf(surf, seg);
 			return;
 		}
 	}
 
-	QueueSimpleSurf(surf);
+	QueueSimpleSurf(seg, surf);
 	unguard;
 }
 
@@ -119,10 +136,10 @@ void VRenderLevel::QueueWorldSurface(surface_t* surf)
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::QueueWorldSurface(surface_t* surf)
+void VAdvancedRenderLevel::QueueWorldSurface(seg_t* seg, surface_t* surf)
 {
 	guard(VAdvancedRenderLevel::QueueWorldSurface);
-	QueueSimpleSurf(surf);
+	QueueSimpleSurf(seg, surf);
 	unguard;
 }
 
@@ -132,7 +149,7 @@ void VAdvancedRenderLevel::QueueWorldSurface(surface_t* surf)
 //
 //==========================================================================
 
-void VRenderLevelShared::QueueSimpleSurf(surface_t* surf)
+void VRenderLevelShared::QueueSimpleSurf(seg_t* seg, surface_t* surf)
 {
 	guard(VRenderLevelShared::QueueSimpleSurf);
 	if (SimpleSurfsTail)
@@ -146,6 +163,7 @@ void VRenderLevelShared::QueueSimpleSurf(surface_t* surf)
 		SimpleSurfsTail = surf;
 	}
 	surf->DrawNext = NULL;
+	addDecalsToSurf(surf, seg);
 	unguard;
 }
 
@@ -201,7 +219,7 @@ void VRenderLevelShared::QueueHorizonPortal(surface_t* surf)
 //
 //==========================================================================
 
-void VRenderLevelShared::DrawSurfaces(surface_t* InSurfs, texinfo_t *texinfo,
+void VRenderLevelShared::DrawSurfaces(seg_t* seg, surface_t* InSurfs, texinfo_t *texinfo,
 	VEntity* SkyBox, int LightSourceSector, int SideLight, bool AbsSideLight,
 	bool CheckSkyBoxAlways)
 {
@@ -348,6 +366,7 @@ void VRenderLevelShared::DrawSurfaces(surface_t* InSurfs, texinfo_t *texinfo,
 					world_surf_t& S = WorldSurfs.Alloc();
 					S.Surf = surfs;
 					S.Type = 1;
+					surfs->decals = nullptr;
 				}
 				else
 				{
@@ -358,7 +377,7 @@ void VRenderLevelShared::DrawSurfaces(surface_t* InSurfs, texinfo_t *texinfo,
 			surfs = surfs->next;
 		} while (surfs);
 		return;
-	}
+	} // done skybox rendering
 
 	do
 	{
@@ -380,10 +399,11 @@ void VRenderLevelShared::DrawSurfaces(surface_t* InSurfs, texinfo_t *texinfo,
 				world_surf_t& S = WorldSurfs.Alloc();
 				S.Surf = surfs;
 				S.Type = 0;
+				addDecalsToSurf(surfs, seg);
 			}
 			else
 			{
-				QueueWorldSurface(surfs);
+				QueueWorldSurface(seg, surfs);
 			}
 		}
 		else
@@ -445,18 +465,19 @@ void VRenderLevelShared::RenderHorizon(drawseg_t* dseg)
 		Surf->Light = (lLev << 24) | LightParams->LightColour;
 		Surf->Fade = Fade;
 		Surf->count = 4;
-		Surf->verts[0] = *Seg->v1;
-		Surf->verts[0].z = MAX(BotZ, HorizonZ);
-		Surf->verts[1] = *Seg->v1;
-		Surf->verts[1].z = TopZ;
-		Surf->verts[2] = *Seg->v2;
-		Surf->verts[2].z = TopZ;
-		Surf->verts[3] = *Seg->v2;
-		Surf->verts[3].z = MAX(BotZ, HorizonZ);
+		TVec* svs = &Surf->verts[0];
+		svs[0] = *Seg->v1;
+		svs[0].z = MAX(BotZ, HorizonZ);
+		svs[1] = *Seg->v1;
+		svs[1].z = TopZ;
+		svs[2] = *Seg->v2;
+		svs[2].z = TopZ;
+		svs[3] = *Seg->v2;
+		svs[3].z = MAX(BotZ, HorizonZ);
 		if (Ceil->secplane->pic == skyflatnum)
 		{
 			//	If it's a sky, render it as a regular sky surface.
-			DrawSurfaces(Surf, &Ceil->texinfo, r_region->ceiling->SkyBox, -1,
+			DrawSurfaces(nullptr, Surf, &Ceil->texinfo, r_region->ceiling->SkyBox, -1,
 				Seg->sidedef->Light, !!(Seg->sidedef->Flags & SDF_ABSLIGHT),
 				false);
 		}
@@ -467,6 +488,7 @@ void VRenderLevelShared::RenderHorizon(drawseg_t* dseg)
 				world_surf_t& S = WorldSurfs.Alloc();
 				S.Surf = Surf;
 				S.Type = 2;
+				Surf->decals = nullptr;
 			}
 			else
 			{
@@ -499,18 +521,19 @@ void VRenderLevelShared::RenderHorizon(drawseg_t* dseg)
 		Surf->Light = (lLev << 24) | LightParams->LightColour;
 		Surf->Fade = Fade;
 		Surf->count = 4;
-		Surf->verts[0] = *Seg->v1;
-		Surf->verts[0].z = BotZ;
-		Surf->verts[1] = *Seg->v1;
-		Surf->verts[1].z = MIN(TopZ, HorizonZ);
-		Surf->verts[2] = *Seg->v2;
-		Surf->verts[2].z = MIN(TopZ, HorizonZ);
-		Surf->verts[3] = *Seg->v2;
-		Surf->verts[3].z = BotZ;
+		TVec* svs = &Surf->verts[0];
+		svs[0] = *Seg->v1;
+		svs[0].z = BotZ;
+		svs[1] = *Seg->v1;
+		svs[1].z = MIN(TopZ, HorizonZ);
+		svs[2] = *Seg->v2;
+		svs[2].z = MIN(TopZ, HorizonZ);
+		svs[3] = *Seg->v2;
+		svs[3].z = BotZ;
 		if (Floor->secplane->pic == skyflatnum)
 		{
 			//	If it's a sky, render it as a regular sky surface.
-			DrawSurfaces(Surf, &Floor->texinfo, r_region->floor->SkyBox, -1,
+			DrawSurfaces(nullptr, Surf, &Floor->texinfo, r_region->floor->SkyBox, -1,
 				Seg->sidedef->Light, !!(Seg->sidedef->Flags & SDF_ABSLIGHT),
 				false);
 		}
@@ -521,6 +544,7 @@ void VRenderLevelShared::RenderHorizon(drawseg_t* dseg)
 				world_surf_t& S = WorldSurfs.Alloc();
 				S.Surf = Surf;
 				S.Type = 2;
+				Surf->decals = nullptr;
 			}
 			else
 			{
@@ -568,7 +592,7 @@ void VRenderLevelShared::RenderMirror(drawseg_t* dseg)
 	}
 	else
 	{
-		DrawSurfaces(dseg->mid->surfs, &dseg->mid->texinfo,
+		DrawSurfaces(Seg, dseg->mid->surfs, &dseg->mid->texinfo,
 			r_region->ceiling->SkyBox, -1, Seg->sidedef->Light,
 			!!(Seg->sidedef->Flags & SDF_ABSLIGHT), false);
 	}
@@ -690,32 +714,32 @@ void VRenderLevelShared::RenderLine(drawseg_t* dseg)
 		}
 		else
 		{
-			DrawSurfaces(dseg->mid->surfs, &dseg->mid->texinfo,
+			DrawSurfaces(line, dseg->mid->surfs, &dseg->mid->texinfo,
 				r_region->ceiling->SkyBox, -1, sidedef->Light,
 				!!(sidedef->Flags & SDF_ABSLIGHT), false);
 		}
-		DrawSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo,
+		DrawSurfaces(nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
 			r_region->ceiling->SkyBox, -1, sidedef->Light,
 			!!(sidedef->Flags & SDF_ABSLIGHT), false);
 	}
 	else
 	{
 		// two sided line
-		DrawSurfaces(dseg->top->surfs, &dseg->top->texinfo,
+		DrawSurfaces(line, dseg->top->surfs, &dseg->top->texinfo,
 			r_region->ceiling->SkyBox, -1, sidedef->Light,
 			!!(sidedef->Flags & SDF_ABSLIGHT), false);
-		DrawSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo,
+		DrawSurfaces(nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
 			r_region->ceiling->SkyBox, -1, sidedef->Light,
 			!!(sidedef->Flags & SDF_ABSLIGHT), false);
-		DrawSurfaces(dseg->bot->surfs, &dseg->bot->texinfo,
+		DrawSurfaces(line, dseg->bot->surfs, &dseg->bot->texinfo,
 			r_region->ceiling->SkyBox, -1, sidedef->Light,
 			!!(sidedef->Flags & SDF_ABSLIGHT), false);
-		DrawSurfaces(dseg->mid->surfs, &dseg->mid->texinfo,
+		DrawSurfaces(line, dseg->mid->surfs, &dseg->mid->texinfo,
 			r_region->ceiling->SkyBox, -1, sidedef->Light,
 			!!(sidedef->Flags & SDF_ABSLIGHT), false);
 		for (segpart_t *sp = dseg->extra; sp; sp = sp->next)
 		{
-			DrawSurfaces(sp->surfs, &sp->texinfo, r_region->ceiling->SkyBox,
+			DrawSurfaces(line, sp->surfs, &sp->texinfo, r_region->ceiling->SkyBox,
 				-1, sidedef->Light, !!(sidedef->Flags & SDF_ABSLIGHT), false);
 		}
 	}
@@ -777,7 +801,7 @@ void VRenderLevelShared::RenderSecSurface(sec_surface_t* ssurf,
 		ssurf->texinfo.Alpha = plane.MirrorAlpha;
 	}
 
-	DrawSurfaces(ssurf->surfs, &ssurf->texinfo, SkyBox,
+	DrawSurfaces(nullptr, ssurf->surfs, &ssurf->texinfo, SkyBox,
 		plane.LightSourceSector, 0, false, true);
 	unguard;
 }
@@ -799,8 +823,7 @@ void VRenderLevelShared::RenderSubRegion(subregion_t* region)
 	seg_t**			polySeg;
 	float			d;
 
-	d = DotProduct(vieworg, region->floor->secplane->normal) -
-		region->floor->secplane->dist;
+	d = DotProduct(vieworg, region->floor->secplane->normal)-region->floor->secplane->dist;
 	if (region->next && d <= 0.0)
 	{
 		if (!ViewClip.ClipCheckRegion(region->next, r_sub, false))
@@ -1050,7 +1073,11 @@ void VRenderLevelShared::RenderBspWorld(const refdef_t* rd, const VViewClipper* 
 			switch (WorldSurfs[i].Type)
 			{
 			case 0:
-				QueueWorldSurface(WorldSurfs[i].Surf);
+				{
+					seg_t* dcseg = (WorldSurfs[i].Surf->decals ? WorldSurfs[i].Surf->decals->seg : nullptr);
+					//if (dcseg) printf("world surface! %p\n", dcseg);
+					QueueWorldSurface(dcseg, WorldSurfs[i].Surf);
+				}
 				break;
 			case 1:
 				QueueSkyPortal(WorldSurfs[i].Surf);

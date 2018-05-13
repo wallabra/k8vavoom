@@ -100,6 +100,7 @@ struct surface_t
 	short			texturemins[2];
 	short			extents[2];
 	surfcache_t*	CacheSurf;
+	struct decal_t*	decals; // linked with `->surfnext`
 	TVec			verts[1];
 };
 

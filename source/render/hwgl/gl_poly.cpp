@@ -73,7 +73,7 @@ void VOpenGLDrawer::WorldDrawing()
 		return;
 	}
 
-	int			lb, i;
+	//int			lb, i;
 	surfcache_t	*cache;
 	GLfloat		s, t;
 	GLfloat		lights, lightt;
@@ -110,10 +110,7 @@ void VOpenGLDrawer::WorldDrawing()
 			}
 
 			glBegin(GL_POLYGON);
-			for (i = 0; i < surf->count; i++)
-			{
-				glVertex(surf->verts[i]);
-			}
+			for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
 			glEnd();
 		}
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -131,11 +128,12 @@ void VOpenGLDrawer::WorldDrawing()
 				continue;
 			}
 
+			//if (surf->decals) printf("SURFACE WITH DECALS! (WorldDrawing:0)\n");
+
 			texinfo_t* tex = surf->texinfo;
 			SetTexture(tex->Tex, tex->ColourMap);
 
-			if (surf->lightmap != NULL ||
-				surf->dlightframe == r_dlightframecount)
+			if (surf->lightmap != NULL || surf->dlightframe == r_dlightframecount)
 			{
 				glColor4f(1, 1, 1, 1);
 			}
@@ -149,7 +147,7 @@ void VOpenGLDrawer::WorldDrawing()
 			SetFade(surf->Fade);
 
 			glBegin(GL_POLYGON);
-			for (i = 0; i < surf->count; i++)
+			for (int i = 0; i < surf->count; ++i)
 			{
 				glTexCoord2f((DotProduct(surf->verts[i], tex->saxis) + tex->soffs) * tex_iw,
 					(DotProduct(surf->verts[i], tex->taxis) + tex->toffs) * tex_ih);
@@ -168,7 +166,7 @@ void VOpenGLDrawer::WorldDrawing()
 		SelectTexture(0);
 		glColor4f(1, 1, 1, 1);
 
-		for (lb = 0; lb < NUM_BLOCK_SURFS; lb++)
+		for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb)
 		{
 			if (!RendLev->light_chain[lb])
 			{
@@ -201,14 +199,12 @@ void VOpenGLDrawer::WorldDrawing()
 				SetTexture(tex->Tex, tex->ColourMap);
 				SetFade(surf->Fade);
 				glBegin(GL_POLYGON);
-				for (i = 0; i < surf->count; i++)
+				for (int i = 0; i < surf->count; ++i)
 				{
 					s = DotProduct(surf->verts[i], tex->saxis) + tex->soffs;
 					t = DotProduct(surf->verts[i], tex->taxis) + tex->toffs;
-					lights = (s - surf->texturemins[0] +
-						cache->s * 16 + 8) / (BLOCK_WIDTH * 16);
-					lightt = (t - surf->texturemins[1] +
-						cache->t * 16 + 8) / (BLOCK_HEIGHT * 16);
+					lights = (s - surf->texturemins[0] + cache->s * 16 + 8) / (BLOCK_WIDTH * 16);
+					lightt = (t - surf->texturemins[1] + cache->t * 16 + 8) / (BLOCK_HEIGHT * 16);
 					MultiTexCoord(0, s * tex_iw, t * tex_ih);
 					MultiTexCoord(1, lights, lightt);
 					glVertex(surf->verts[i]);
@@ -229,7 +225,7 @@ void VOpenGLDrawer::WorldDrawing()
 		glEnable(GL_BLEND);
 		glColor4f(1, 1, 1, 1);
 
-		for (lb = 0; lb < NUM_BLOCK_SURFS; lb++)
+		for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb)
 		{
 			if (!RendLev->light_chain[lb])
 			{
@@ -259,12 +255,10 @@ void VOpenGLDrawer::WorldDrawing()
 
 				SetFade(surf->Fade);
 				glBegin(GL_POLYGON);
-				for (i = 0; i < surf->count; i++)
+				for (int i = 0; i < surf->count; ++i)
 				{
-					s = (DotProduct(surf->verts[i], tex->saxis) + tex->soffs -
-						surf->texturemins[0] + cache->s * 16 + 8) / (BLOCK_WIDTH * 16);
-					t = (DotProduct(surf->verts[i], tex->taxis) + tex->toffs -
-						surf->texturemins[1] + cache->t * 16 + 8) / (BLOCK_HEIGHT * 16);
+					s = (DotProduct(surf->verts[i], tex->saxis) + tex->soffs - surf->texturemins[0] + cache->s * 16 + 8) / (BLOCK_WIDTH * 16);
+					t = (DotProduct(surf->verts[i], tex->taxis) + tex->toffs - surf->texturemins[1] + cache->t * 16 + 8) / (BLOCK_HEIGHT * 16);
 					glTexCoord2f(s, t);
 					glVertex(surf->verts[i]);
 				}
@@ -288,7 +282,7 @@ void VOpenGLDrawer::WorldDrawing()
 		glColor4f(1, 1, 1, 1);
 		SetFade(0);
 
-		for (lb = 0; lb < NUM_BLOCK_SURFS; lb++)
+		for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb)
 		{
 			if (!RendLev->add_chain[lb])
 			{
@@ -317,12 +311,10 @@ void VOpenGLDrawer::WorldDrawing()
 				tex = surf->texinfo;
 
 				glBegin(GL_POLYGON);
-				for (i = 0; i < surf->count; i++)
+				for (int i = 0; i < surf->count; ++i)
 				{
-					s = (DotProduct(surf->verts[i], tex->saxis) + tex->soffs -
-						surf->texturemins[0] + cache->s * 16 + 8) / (BLOCK_WIDTH * 16);
-					t = (DotProduct(surf->verts[i], tex->taxis) + tex->toffs -
-						surf->texturemins[1] + cache->t * 16 + 8) / (BLOCK_HEIGHT * 16);
+					s = (DotProduct(surf->verts[i], tex->saxis) + tex->soffs - surf->texturemins[0] + cache->s * 16 + 8) / (BLOCK_WIDTH * 16);
+					t = (DotProduct(surf->verts[i], tex->taxis) + tex->toffs - surf->texturemins[1] + cache->t * 16 + 8) / (BLOCK_HEIGHT * 16);
 					glTexCoord2f(s, t);
 					glVertex(surf->verts[i]);
 				}
@@ -389,7 +381,7 @@ void VOpenGLDrawer::WorldDrawingShaders()
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
 
-	//	Draw surfaces.
+	//	Draw surfaces without lightmaps.
 	if (RendLev->SimpleSurfsHead)
 	{
 		p_glUseProgramObjectARB(SurfSimpleProgram);
@@ -403,6 +395,8 @@ void VOpenGLDrawer::WorldDrawingShaders()
 				//	Viewer is in back side or on plane
 				continue;
 			}
+
+			//if (surf->decals) printf("SURFACE WITH DECALS! (WorldDrawingShaders:simple)\n");
 
 			texinfo_t* tex = surf->texinfo;
 			SetTexture(tex->Tex, tex->ColourMap);
@@ -450,6 +444,7 @@ void VOpenGLDrawer::WorldDrawingShaders()
 	p_glUniform1iARB(SurfLightmapSpecularMapLoc, 2);
 	p_glUniform1iARB(SurfLightmapFogTypeLoc, r_fog & 3);
 
+	//	Draw surfaces with lightmaps.
 	for (int lb = 0; lb < NUM_BLOCK_SURFS; lb++)
 	{
 		if (!RendLev->light_chain[lb])
@@ -490,6 +485,9 @@ void VOpenGLDrawer::WorldDrawingShaders()
 				//	Viewer is in back side or on plane
 				continue;
 			}
+
+			//if (surf->decals) printf("SURFACE WITH DECALS! (WorldDrawingShaders:lightmaps)\n");
+
 			tex = surf->texinfo;
 			SetTexture(tex->Tex, tex->ColourMap);
 
@@ -586,6 +584,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass()
 			//	Viewer is in back side or on plane
 			continue;
 		}
+
 		texinfo_t* tex = surf->texinfo;
 		SetTexture(tex->Tex, tex->ColourMap);
 		p_glUniform3fvARB(ShadowsAmbientSAxisLoc, 1, &tex->saxis.x);
@@ -824,6 +823,9 @@ void VOpenGLDrawer::DrawWorldTexturesPass()
 			//	Viewer is in back side or on plane
 			continue;
 		}
+
+		// this is for advanced renderer only
+		//if (surf->decals) printf("SURFACE WITH DECALS! (DrawWorldTexturesPass:0)\n");
 
 		texinfo_t* tex = surf->texinfo;
 		SetTexture(tex->Tex, tex->ColourMap);

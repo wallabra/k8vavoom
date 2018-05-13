@@ -112,7 +112,7 @@ struct fakefloor_t
 
 struct skysurface_t : surface_t
 {
-	TVec			__verts[3];
+	TVec			__verts[3]; // so we have 4 of 'em here
 };
 
 struct sky_t
@@ -136,6 +136,7 @@ struct decal_t
 	float xofs; // from seg start
 	float zofs;
 	VName decalname;
+	decal_t* surfnext; // next decal on this surface
 };
 
 class VSky
@@ -359,7 +360,7 @@ protected:
 	virtual void InitSurfs(surface_t*, texinfo_t*, TPlane*, subsector_t*) = 0;
 	virtual surface_t* SubdivideFace(surface_t*, const TVec&, const TVec*) = 0;
 	virtual surface_t* SubdivideSeg(surface_t*, const TVec&, const TVec*) = 0;
-	virtual void QueueWorldSurface(surface_t*) = 0;
+	virtual void QueueWorldSurface(seg_t*, surface_t*) = 0;
 	virtual void FreeSurfCache(surfcache_t*);
 
 	//	General
@@ -386,10 +387,10 @@ protected:
 
 	//	World BSP rendering
 	void SetUpFrustumIndexes();
-	void QueueSimpleSurf(surface_t*);
+	void QueueSimpleSurf(seg_t*, surface_t*);
 	void QueueSkyPortal(surface_t*);
 	void QueueHorizonPortal(surface_t*);
-	void DrawSurfaces(surface_t*, texinfo_t*, VEntity*, int, int, bool, bool);
+	void DrawSurfaces(seg_t*, surface_t*, texinfo_t*, VEntity*, int, int, bool, bool);
 	void RenderHorizon(drawseg_t*);
 	void RenderMirror(drawseg_t*);
 	void RenderLine(drawseg_t*);
@@ -503,7 +504,7 @@ private:
 	void CacheSurface(surface_t*);
 
 	//	World BSP rendering
-	void QueueWorldSurface(surface_t*);
+	void QueueWorldSurface(seg_t*, surface_t*);
 	void RenderWorld(const refdef_t*, const VViewClipper*);
 
 public:
@@ -539,7 +540,7 @@ private:
 	vuint32 LightPointAmbient(const TVec &p);
 
 	//	World BSP rendering
-	void QueueWorldSurface(surface_t*);
+	void QueueWorldSurface(seg_t*, surface_t*);
 	void RenderWorld(const refdef_t*, const VViewClipper*);
 
 	void BuildLightVis(int bspnum, float* bbox);
