@@ -8,29 +8,29 @@ varying vec3 VPos;
 
 void main ()
 {
-	float DistToView;
+  float DistToView;
 
-	DistToView = sqrt(dot (VertToView, VertToView));
+  DistToView = sqrt(dot (VertToView, VertToView));
 
-	if ((DistToView < 0.0))
-	{
-		discard;
-	};
-	float DistVPosL;
+  if ((DistToView < 0.0))
+  {
+    discard;
+  };
+  float DistVPosL;
 
-	DistVPosL = sqrt(dot (VPosL, VPosL));
+  DistVPosL = sqrt(dot (VPosL, VPosL));
 
-	if ((DistVPosL < -(LightRadius)))
-	{
-		discard;
-	};
-	float DistVPos;
+  if ((DistVPosL < -(LightRadius)))
+  {
+    discard;
+  };
+  float DistVPos;
 
-	DistVPos = sqrt(dot (VPos, VPos));
+  DistVPos = sqrt(dot (VPos, VPos));
 
-	if ((DistVPos < 0.0))
-	{
-		discard;
-	};
-	gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+  if ((DistVPos < 0.0))
+  {
+    discard;
+  };
+  gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
 }

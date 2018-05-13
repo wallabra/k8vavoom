@@ -7,14 +7,14 @@ varying vec2 TextureCoordinate;
 
 void main ()
 {
-	vec4 TexColour;
+  vec4 TexColour;
 
-	TexColour = texture2D (Texture, TextureCoordinate);
+  TexColour = texture2D (Texture, TextureCoordinate);
 
-	if ((TexColour.w <= 0.1))
-	{
-		discard;
-	};
+  if ((TexColour.w <= 0.1))
+  {
+    discard;
+  };
 
-	gl_FragColor = Light;
+  gl_FragColor = Light;
 }

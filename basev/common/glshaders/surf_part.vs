@@ -8,12 +8,12 @@ varying vec2 TextureCoordinate;
 
 void main ()
 {
-	//	Transforming The Vertex
-	gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  //  Transforming The Vertex
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
 
-	//	Pass light
-	Light = LightVal;
+  //  Pass light
+  Light = LightVal;
 
-	//	Pass texture coordinates.
-	TextureCoordinate = TexCoord;
+  //  Pass texture coordinates.
+  TextureCoordinate = TexCoord;
 }

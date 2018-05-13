@@ -14,12 +14,12 @@ varying vec2 TextureCoordinate;
 
 void main ()
 {
-	vec4 Vert;
+  vec4 Vert;
 
-	Vert = mix (gl_Vertex, Vert2, Inter);
-	gl_Position = (gl_ModelViewProjectionMatrix * Vert);
-	VertToView = (ViewOrigin - Vert.xyz);
-	VPos = (ViewOrigin - gl_Position.xyz);
-	Light = LightVal;
-	TextureCoordinate = TexCoord;
+  Vert = mix (gl_Vertex, Vert2, Inter);
+  gl_Position = (gl_ModelViewProjectionMatrix * Vert);
+  VertToView = (ViewOrigin - Vert.xyz);
+  VPos = (ViewOrigin - gl_Position.xyz);
+  Light = LightVal;
+  TextureCoordinate = TexCoord;
 }

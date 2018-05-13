@@ -16,31 +16,31 @@ varying vec2 LightmapCoordinate;
 
 void main ()
 {
-	gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
-	float s;
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  float s;
 
-	s = (dot (gl_Vertex.xyz, SAxis) + SOffs);
-	float t;
+  s = (dot (gl_Vertex.xyz, SAxis) + SOffs);
+  float t;
 
-	t = (dot (gl_Vertex.xyz, TAxis) + TOffs);
-	vec2 st;
+  t = (dot (gl_Vertex.xyz, TAxis) + TOffs);
+  vec2 st;
 
-	st.x = (s * TexIW);
-	st.y = (t * TexIH);
+  st.x = (s * TexIW);
+  st.y = (t * TexIH);
 
-	TextureCoordinate = st;
-	vec2 lightst;
+  TextureCoordinate = st;
+  vec2 lightst;
 
-	lightst.x = (((
-		(s - TexMinS)
-		+ 
-		(CacheS * 16.0)
-		) + 8.0) / 2048.0);
-	lightst.y = (((
-		(t - TexMinT)
-		+ 
-		(CacheT * 16.0)
-		) + 8.0) / 2048.0);
+  lightst.x = (((
+    (s - TexMinS)
+    +
+    (CacheS * 16.0)
+    ) + 8.0) / 2048.0);
+  lightst.y = (((
+    (t - TexMinT)
+    +
+    (CacheT * 16.0)
+    ) + 8.0) / 2048.0);
 
-	LightmapCoordinate = lightst;
+  LightmapCoordinate = lightst;
 }

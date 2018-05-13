@@ -19,18 +19,18 @@ varying float Dist;
 
 void main ()
 {
-	vec4 Vert;
+  vec4 Vert;
 
-	Vert.xyz = (mix (gl_Vertex, Vert2, Inter) * ModelToWorldMat).xyz;
-	Vert.w = 1.0;
-	gl_Position = (gl_ModelViewProjectionMatrix * Vert);
-	Normal = (NormalToWorldMat * mix (VertNormal, Vert2Normal, Inter));
-	float SurfDist;
+  Vert.xyz = (mix (gl_Vertex, Vert2, Inter) * ModelToWorldMat).xyz;
+  Vert.w = 1.0;
+  gl_Position = (gl_ModelViewProjectionMatrix * Vert);
+  Normal = (NormalToWorldMat * mix (VertNormal, Vert2Normal, Inter));
+  float SurfDist;
 
-	SurfDist = dot (Normal, Vert.xyz);
-	PlaneDist = SurfDist;
-	Dist = (dot (ViewOrigin, Normal) - SurfDist);
-	VertToView = (ViewOrigin - Vert.xyz);
-	VPos = (ViewOrigin - gl_Position.xyz);
-	TextureCoordinate = TexCoord;
+  SurfDist = dot (Normal, Vert.xyz);
+  PlaneDist = SurfDist;
+  Dist = (dot (ViewOrigin, Normal) - SurfDist);
+  VertToView = (ViewOrigin - Vert.xyz);
+  VPos = (ViewOrigin - gl_Position.xyz);
+  TextureCoordinate = TexCoord;
 }

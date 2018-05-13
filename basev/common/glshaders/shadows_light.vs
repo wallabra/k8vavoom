@@ -21,26 +21,26 @@ varying vec2 TextureCoordinate;
 
 void main ()
 {
-	//	Transforming The Vertex
-	gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  //  Transforming The Vertex
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
 
-	//	Calculate texture coordinates.
-	vec2 ts;
+  //  Calculate texture coordinates.
+  vec2 ts;
 
-	ts.x = ((dot (gl_Vertex.xyz, SAxis) + SOffs) * TexIW);
-	ts.y = ((dot (gl_Vertex.xyz, TAxis) + TOffs) * TexIH);
-	
-	TextureCoordinate = ts;
+  ts.x = ((dot (gl_Vertex.xyz, SAxis) + SOffs) * TexIW);
+  ts.y = ((dot (gl_Vertex.xyz, TAxis) + TOffs) * TexIH);
 
-	Normal = SurfNormal;
-	float LightDist;
-	float ViewDist;
+  TextureCoordinate = ts;
 
-	LightDist = dot (LightPos, SurfNormal);
-	ViewDist = dot(ViewOrigin, SurfNormal);
-	Dist = (LightDist - SurfDist);
-	VDist = (ViewDist - SurfDist);
+  Normal = SurfNormal;
+  float LightDist;
+  float ViewDist;
 
-	VertToLight = (LightPos - gl_Vertex.xyz);
-	VertToView = (ViewOrigin - gl_Vertex.xyz);
+  LightDist = dot (LightPos, SurfNormal);
+  ViewDist = dot(ViewOrigin, SurfNormal);
+  Dist = (LightDist - SurfDist);
+  VDist = (ViewDist - SurfDist);
+
+  VertToLight = (LightPos - gl_Vertex.xyz);
+  VertToView = (ViewOrigin - gl_Vertex.xyz);
 }

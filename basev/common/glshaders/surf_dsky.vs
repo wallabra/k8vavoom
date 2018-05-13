@@ -8,10 +8,10 @@ varying vec2 Texture2Coordinate;
 
 void main ()
 {
-	//	Transforming The Vertex
-	gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  //  Transforming The Vertex
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
 
-	//	Pass texture coordinates.
-	TextureCoordinate = TexCoord;
-	Texture2Coordinate = TexCoord2;
+  //  Pass texture coordinates.
+  TextureCoordinate = TexCoord;
+  Texture2Coordinate = TexCoord2;
 }
