@@ -117,6 +117,76 @@ void VLevel::Serialise(VStream& Strm)
 	side_t* si;
 
 	//
+	//	Decals
+	//
+
+	if (Segs && NumSegs) {
+		vuint32 sgc = (vuint32)NumSegs;
+		vuint32 dctotal = 0;
+		char namebuf[64];
+		if (Strm.IsLoading()) {
+			// load decals
+			sgc = 0;
+			Strm << sgc; // just to be sure
+			if (sgc != (vuint32)NumSegs) Host_Error("Level load: invalid number of segs");
+			for (int f = 0; f < NumSegs; ++f) {
+				// count decals
+				vuint32 dcount = 0;
+				decal_t* decal = Segs[f].decals;
+				while (decal) {
+					decal_t* c = decal;
+					decal = c->next;
+					delete c;
+				}
+				Segs[f].decals = nullptr;
+				// load decal count for this seg
+				Strm << dcount;
+				decal = nullptr; // previous
+				while (dcount-- > 0) {
+					decal_t* dc = new decal_t;
+					memset(dc, 0, sizeof(decal_t));
+					if (decal) decal->next = dc; else Segs[f].decals = dc;
+					dc->seg = &Segs[f];
+					Strm << dc->texture;
+					Strm << dc->xofs;
+					Strm << dc->zofs;
+					// load decal type
+					memset(namebuf, 0, sizeof(namebuf));
+					vuint32 namelen = 0;
+					Strm << namelen;
+					if (namelen == 0 || namelen > 63) Host_Error("Level load: invalid decal name length");
+					Strm.Serialise(namebuf, namelen);
+					dc->decalname = VName(namebuf);
+					decal = dc;
+					++dctotal;
+				}
+			}
+			GCon->Logf("%u decals loaded", dctotal);
+		} else {
+			// save decals
+			Strm << sgc; // just to be sure
+			for (int f = 0; f < NumSegs; ++f) {
+				// count decals
+				vuint32 dcount = 0;
+				for (decal_t* decal = Segs[f].decals; decal; decal = decal->next) ++dcount;
+				Strm << dcount;
+				for (decal_t* decal = Segs[f].decals; decal; decal = decal->next) {
+					Strm << decal->texture;
+					Strm << decal->xofs;
+					Strm << decal->zofs;
+					vuint32 namelen = (vuint32)strlen(*decal->decalname);
+					if (namelen == 0 || namelen > 63) Sys_Error("Level save: invalid decal name length");
+					Strm << namelen;
+					memcpy(namebuf, *decal->decalname, namelen);
+					Strm.Serialise(namebuf, namelen);
+					++dctotal;
+				}
+			}
+			GCon->Logf("%u decals saved", dctotal);
+		}
+	}
+
+	//
 	//	Sectors
 	//
 	guard(VLevel::Serialise::Sectors);
@@ -900,7 +970,7 @@ line_t* VLevel::FindLine(int lineTag, int* searchPosition)
 //==========================================================================
 
 void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li) {
-  if (!sec || !li) return; // just in case
+  if (!sec || !li || dectype == NAME_none) return; // just in case
 
   // calculate `dist` -- distance from wall start
   //int sidenum = 0;
@@ -944,12 +1014,13 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
           while (cdec->next) cdec = cdec->next;
           cdec->next = decal;
         } else {
-          seg->decals = cdec;
+          seg->decals = decal;
         }
         decal->seg = seg;
         decal->texture = -1;
         decal->xofs = segdist-seg->offset;
         decal->zofs = (sec->floor.minz+sec->ceiling.maxz)/2.0f;
+        decal->decalname = dectype;
       }
     }
   }

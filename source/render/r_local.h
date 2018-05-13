@@ -135,6 +135,7 @@ struct decal_t
 	int texture;
 	float xofs; // from seg start
 	float zofs;
+	VName decalname;
 };
 
 class VSky
