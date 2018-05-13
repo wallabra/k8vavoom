@@ -353,6 +353,19 @@ progs/uibase/StatusBarShared.vc					@CMAKE_SOURCE_DIR@/progs/common/uibase/Statu
 
 //	Graphics
 graphics/mc_arrow.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/mc_arrow.png
+graphics/bsplat1.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat1.png
+graphics/bsplat2.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat2.png
+graphics/bsplat3.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat3.png
+graphics/bsplat4.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat4.png
+graphics/bsplat5.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat5.png
+graphics/bsplat6.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat6.png
+graphics/bsplat7.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat7.png
+graphics/chip1.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/chip1.png
+graphics/chip2.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/chip2.png
+graphics/chip3.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/chip3.png
+graphics/chip4.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/chip4.png
+graphics/chip5.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/chip5.png
+graphics/cursor.png	@CMAKE_CURRENT_SOURCE_DIR@/graphics/cursor.png
 
 //	Default texture
 textures/-noflat-.png	@CMAKE_CURRENT_SOURCE_DIR@/textures/-noflat-.png

@@ -181,7 +181,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
 		fxdefs/strife/decorations.txt
 		fxdefs/strife/monsters.txt
 		fxdefs/strife/weapons.txt
-		graphics/mc_arrow.png
+		graphics/*.png
 		sounds/dsempty.lmp
 		sounds/dsquake.flac
 		sounds/icebrk1a.flac
