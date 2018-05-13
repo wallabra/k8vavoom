@@ -11,15 +11,16 @@ uniform float TexIH;
 
 varying vec2 TextureCoordinate;
 
+
 void main () {
-  // Transforming The Vertex
-  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  // transforming the vertex
+  gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
 
-  // Calculate texture coordinates.
-  vec2 st;
-
-  st.x = ((dot (gl_Vertex.xyz, SAxis) + SOffs) * TexIW);
-  st.y = ((dot (gl_Vertex.xyz, TAxis) + TOffs) * TexIH);
+  // calculate texture coordinates
+  vec2 st = vec2(
+    (dot(gl_Vertex.xyz, SAxis)+SOffs)*TexIW,
+    (dot(gl_Vertex.xyz, TAxis)+TOffs)*TexIH
+  );
 
   TextureCoordinate = st;
 }
