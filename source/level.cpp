@@ -157,6 +157,7 @@ void VLevel::Serialise(VStream& Strm)
 					if (namelen == 0 || namelen > 63) Host_Error("Level load: invalid decal name length");
 					Strm.Serialise(namebuf, namelen);
 					dc->decalname = VName(namebuf);
+					dc->texture = GTextureManager.AddPatch(VName("CHIP3", VName::AddLower8), TEXTYPE_Pic);
 					decal = dc;
 					++dctotal;
 				}
@@ -1018,6 +1019,8 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
         }
         decal->seg = seg;
         decal->texture = -1;
+        decal->texture = GTextureManager.AddPatch(VName("CHIP3", VName::AddLower8), TEXTYPE_Pic);
+        //R_DrawPic(320, cy, handle, croshair_alpha);
         decal->xofs = segdist-seg->offset;
         decal->zofs = (sec->floor.minz+sec->ceiling.maxz)/2.0f;
         decal->decalname = dectype;
