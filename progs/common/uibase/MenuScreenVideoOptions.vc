@@ -73,7 +73,7 @@ void CreateChoices()
 	Enum.AddItem("Cross");
 	Enum.AddItem("Angle");
 	Enum.AddItem("Dot");
-	Enum.SetInitialValue(GetCvar('croshair'));
+	Enum.SetInitialValue(GetCvar('crosshair'));
 	Enum.ValueChanging = ChangeCrosshair;
 	currentY += Enum.Height;
 
@@ -81,7 +81,7 @@ void CreateChoices()
 	Slider.SetOrigin(ChoicesStartX, currentY);
 	Slider.Text = "Crosshair Transparency";
 	Slider.ValueDelta = 0.1;
-	Slider.SetInitialValue(GetCvarF('croshair_alpha'));
+	Slider.SetInitialValue(GetCvarF('crosshair_alpha'));
 	Slider.ValueChanging = ChangeCrosshairAlpha;
 	currentY += Slider.Height;
 
@@ -197,7 +197,7 @@ bool ChangeDarkening(Object Sender, float newValue)
 
 bool ChangeCrosshair(Object Sender, int newValue)
 {
-	SetCvar('croshair', newValue);
+	SetCvar('crosshair', newValue);
 	return true;
 }
 
@@ -209,7 +209,7 @@ bool ChangeCrosshair(Object Sender, int newValue)
 
 bool ChangeCrosshairAlpha(Object Sender, float newValue)
 {
-	SetCvarF('croshair_alpha', newValue);
+	SetCvarF('crosshair_alpha', newValue);
 	return true;
 }
 

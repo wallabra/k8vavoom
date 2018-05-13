@@ -1004,10 +1004,10 @@ void VRenderLevelShared::RenderPlayerView()
 
 	Drawer->EndView();
 
-	// Draw croshair
+	// Draw crosshair
 	if (cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap)
 	{
-		DrawCroshair();
+		DrawCrosshair();
 	}
 	unguard;
 }

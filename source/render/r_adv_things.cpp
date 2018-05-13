@@ -78,8 +78,8 @@ extern VCvarB			r_fix_sprite_offsets;
 extern VCvarI			r_sprite_fix_delta;
 extern VCvarB			r_drawfuzz;
 extern VCvarF			transsouls;
-extern VCvarI			croshair;
-extern VCvarF			croshair_alpha;
+extern VCvarI			crosshair;
+extern VCvarF			crosshair_alpha;
 extern VCvarI			r_max_model_lights;
 extern VCvarI			r_max_model_shadows;
 

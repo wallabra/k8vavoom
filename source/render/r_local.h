@@ -448,7 +448,7 @@ protected:
 	void RenderPSprite(VViewState*, float, vuint32, vuint32, float, bool);
 	bool RenderViewModel(VViewState*, vuint32, vuint32, float, bool);
 	void DrawPlayerSprites();
-	void DrawCroshair();
+	void DrawCrosshair();
 
 public:
 	particle_t* NewParticle();

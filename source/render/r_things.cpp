@@ -78,8 +78,8 @@ VCvarB			r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite offsets?
 VCvarI			r_sprite_fix_delta("r_sprite_fix_delta", "-3", "Sprite offset amount.", CVAR_Archive);
 VCvarB			r_drawfuzz("r_drawfuzz", false, "Draw fuzz effect?", CVAR_Archive);
 VCvarF			transsouls("transsouls", "1.0", "Translucent Lost Souls?", CVAR_Archive);
-VCvarI			croshair("croshair", "2", "Crosshair type.", CVAR_Archive);
-VCvarF			croshair_alpha("croshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);
+VCvarI			crosshair("crosshair", "2", "Crosshair type (0-2).", CVAR_Archive);
+VCvarF			crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 
@@ -942,17 +942,17 @@ void VRenderLevelShared::DrawPlayerSprites()
 
 //==========================================================================
 //
-//	VRenderLevelShared::DrawCroshair
+//	VRenderLevelShared::DrawCrosshair
 //
 //==========================================================================
 
-void VRenderLevelShared::DrawCroshair()
+void VRenderLevelShared::DrawCrosshair()
 {
-	guard(VRenderLevelShared::DrawCroshair);
-	if (croshair)
+	guard(VRenderLevelShared::DrawCrosshair);
+	if (crosshair)
 	{
-		if (croshair_alpha < 0.0)	croshair_alpha = 0.0;
-		if (croshair_alpha > 1.0)	croshair_alpha = 1.0;
+		if (crosshair_alpha < 0.0)	crosshair_alpha = 0.0;
+		if (crosshair_alpha > 1.0)	crosshair_alpha = 1.0;
 
 		int			cy;
 		if (screenblocks < 11)
@@ -960,8 +960,8 @@ void VRenderLevelShared::DrawCroshair()
 		else
 			cy = 240;
 		int handle = GTextureManager.AddPatch(VName(va("CROSHAI%i",
-			(int)croshair), VName::AddLower8), TEXTYPE_Pic);
-		R_DrawPic(320, cy, handle, croshair_alpha);
+			(int)crosshair), VName::AddLower8), TEXTYPE_Pic);
+		R_DrawPic(320, cy, handle, crosshair_alpha);
 	}
 	unguard;
 }
