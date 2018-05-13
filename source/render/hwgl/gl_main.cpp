@@ -50,11 +50,11 @@ VCvarI VOpenGLDrawer::sprite_tex_linear("gl_sprite_tex_linear", "0", "Sprite int
 VCvarI VOpenGLDrawer::gl_texture_filter_anisotropic("gl_texture_filter_anisotropic", "4", "Texture anisotropic filtering.", CVAR_Archive);
 VCvarB VOpenGLDrawer::clear("gl_clear", false, "Clear screen before rendering new frame?", CVAR_Archive);
 VCvarB VOpenGLDrawer::blend_sprites("gl_blend_sprites", false, "Alpha-blend sprites?", CVAR_Archive);
-VCvarB VOpenGLDrawer::ext_multitexture("gl_ext_multitexture", true, "Use OpenGL multitexturing extension (if present)?", CVAR_Archive);
-VCvarB VOpenGLDrawer::ext_point_parameters("gl_ext_point_parameters", false, "Use OpenGL ext_point_parameters extension (if present)?", CVAR_Archive);
-VCvarB VOpenGLDrawer::ext_anisotropy("gl_ext_anisotropy", true, "Use OpenGL anisotropy extension (if present)?", CVAR_Archive);
-VCvarB VOpenGLDrawer::ext_shaders("gl_ext_shaders", true, "Use OpenGL shaders (if possible)?", CVAR_Archive);
-VCvarB VOpenGLDrawer::ext_vertex_buffer_objects("gl_ext_vertex_buffer_objects", true, "Use OpenGL VBO extension (if present)?", CVAR_Archive);
+VCvarB VOpenGLDrawer::ext_multitexture("gl_ext_multitexture", true, "Use OpenGL multitexturing extension (if present)?", 0);
+VCvarB VOpenGLDrawer::ext_point_parameters("gl_ext_point_parameters", false, "Use OpenGL ext_point_parameters extension (if present)?", 0);
+VCvarB VOpenGLDrawer::ext_anisotropy("gl_ext_anisotropy", true, "Use OpenGL anisotropy extension (if present)?", 0);
+VCvarB VOpenGLDrawer::ext_shaders("gl_ext_shaders", true, "Use OpenGL shaders (if possible)?", 0);
+VCvarB VOpenGLDrawer::ext_vertex_buffer_objects("gl_ext_vertex_buffer_objects", true, "Use OpenGL VBO extension (if present)?", 0);
 VCvarF VOpenGLDrawer::maxdist("gl_maxdist", "8192.0", "Max view distance (too big values will cause z-buffer issues.", CVAR_Archive);
 VCvarB VOpenGLDrawer::model_lighting("gl_model_lighting", true, "Light models?", CVAR_Archive);
 VCvarB VOpenGLDrawer::specular_highlights("gl_specular_highlights", true, "Specular highlights type.", CVAR_Archive);
