@@ -40,6 +40,7 @@ public:
 	void Init();
 	bool SetResolution(int, int, int, bool);
 	void* GetExtFuncPtr(const char*);
+	bool SetAdaptiveSwap ();
 	void Update();
 	void Shutdown();
 };
@@ -158,6 +159,38 @@ void* VSdlOpenGLDrawer::GetExtFuncPtr(const char* name)
 	guard(VSdlOpenGLDrawer::GetExtFuncPtr);
 	return SDL_GL_GetProcAddress(name);
 	unguard;
+}
+
+//==========================================================================
+//
+//	VSdlOpenGLDrawer::GetExtFuncPtr
+//
+//==========================================================================
+
+enum { GLX_LATE_SWAPS_TEAR_EXT = 0x20F3 };
+
+typedef const char *(APIENTRY* glXQueryExtensionsString)(void* dpy, int screen);
+typedef void (APIENTRY* glXSwapIntervalEXT) (void* dpy, /*GLXDrawable*/long drawable, int interval); //64bit?
+typedef void* (APIENTRY* glXGetCurrentDisplay) ();
+typedef long (APIENTRY* glXGetCurrentDrawable) ();
+
+bool VSdlOpenGLDrawer::SetAdaptiveSwap () {
+  guard(VSdlOpenGLDrawer::SetAdaptiveSwap);
+
+  if (!HaveTearControl) return false;
+
+  glXGetCurrentDisplay getdpy = (glXGetCurrentDisplay)GetExtFuncPtr("glXGetCurrentDisplay");
+  if (!getdpy) return false;
+  glXGetCurrentDrawable getdrw = (glXGetCurrentDrawable)GetExtFuncPtr("glXGetCurrentDrawable");
+  if (!getdrw) return false;
+
+  glXSwapIntervalEXT swapie = (glXSwapIntervalEXT)GetExtFuncPtr("glXSwapIntervalEXT");
+  if (!swapie) return false;
+
+  swapie(getdpy(), getdrw(), -1);
+  return true;
+
+  unguard;
 }
 
 //==========================================================================

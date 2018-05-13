@@ -463,6 +463,7 @@ protected:
 	bool					HaveStencilWrap;
 	bool					HaveVertexBufferObject;
 	bool					HaveDrawRangeElements;
+	bool					HaveTearControl;
 
 	int MaxTextureUnits;
 
@@ -686,10 +687,14 @@ protected:
 	static VCvarB specular_highlights;
 	static VCvarI multisampling_sample;
 	static VCvarB gl_smooth_particles;
+	static VCvarB gl_dump_vendor;
+	static VCvarB gl_dump_extensions;
 
 	//	Extensions
 	bool CheckExtension(const char*);
+	bool CheckGLXExtension(const char*);
 	virtual void* GetExtFuncPtr(const char*) = 0;
+	virtual bool SetAdaptiveSwap () = 0;
 
 	void SetFade(vuint32 NewFade);
 

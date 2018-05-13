@@ -61,6 +61,9 @@ VCvarB VOpenGLDrawer::specular_highlights("gl_specular_highlights", true, "Specu
 VCvarI VOpenGLDrawer::multisampling_sample("gl_multisampling_sample", "1", "Multisampling mode.", CVAR_Archive);
 VCvarB VOpenGLDrawer::gl_smooth_particles("gl_smooth_particles", false, "Draw smooth particles?", CVAR_Archive);
 
+VCvarB VOpenGLDrawer::gl_dump_vendor("gl_dump_vendor", false, "Dump OpenGL vendor?", 0);
+VCvarB VOpenGLDrawer::gl_dump_extensions("gl_dump_extensions", false, "Dump available OpenGL extensions?", 0);
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -77,6 +80,7 @@ VOpenGLDrawer::VOpenGLDrawer()
 , CurrentFade(0)
 {
   MaxTextureUnits = 1;
+  HaveTearControl = false;
 }
 
 //==========================================================================
@@ -88,23 +92,35 @@ VOpenGLDrawer::VOpenGLDrawer()
 void VOpenGLDrawer::InitResolution()
 {
 	guard(VOpenGLDrawer::InitResolution);
-	GCon->Logf(NAME_Init, "GL_VENDOR: %s", glGetString(GL_VENDOR));
-	GCon->Logf(NAME_Init, "GL_RENDERER: %s", glGetString(GL_RENDERER));
-	GCon->Logf(NAME_Init, "GL_VERSION: %s", glGetString (GL_VERSION));
-
-	/*
-	GCon->Log(NAME_Init, "GL_EXTENSIONS:");
-	TArray<VStr> Exts;
-	VStr((char*)glGetString(GL_EXTENSIONS)).Split(' ', Exts);
-	for (int i = 0; i < Exts.Num(); i++)
-	{
-		GCon->Log(NAME_Init, VStr("- ") + Exts[i]);
+	if (gl_dump_vendor) {
+		GCon->Logf(NAME_Init, "GL_VENDOR: %s", glGetString(GL_VENDOR));
+		GCon->Logf(NAME_Init, "GL_RENDERER: %s", glGetString(GL_RENDERER));
+		GCon->Logf(NAME_Init, "GL_VERSION: %s", glGetString (GL_VERSION));
 	}
-	*/
+
+	if (gl_dump_extensions) {
+		GCon->Log(NAME_Init, "GL_EXTENSIONS:");
+		TArray<VStr> Exts;
+		VStr((char*)glGetString(GL_EXTENSIONS)).Split(' ', Exts);
+		for (int i = 0; i < Exts.Num(); ++i) GCon->Log(NAME_Init, VStr("- ") + Exts[i]);
+	}
 
 	// Check the maximum texture size.
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
 	GCon->Logf(NAME_Init, "Maximum texture size: %d", maxTexSize);
+
+	/*
+	if (CheckExtension("ARB_get_proc_address")) {
+		GCon->Logf("OpenGL \"ARB_get_proc_address\" extension found");
+	}
+	*/
+
+	HaveTearControl = false;
+	if (CheckGLXExtension("GLX_EXT_swap_control_tear")) {
+		GCon->Logf(NAME_Init, "OpenGL tear control extension found");
+		HaveTearControl = true;
+		if (r_vsync && SetAdaptiveSwap()) GCon->Logf(NAME_Init, "GLX: Turned on adaptive swap");
+	}
 
 #define _(x)	p_##x = x##_t(GetExtFuncPtr(#x)); if (!p_##x) found = false
 
@@ -171,8 +187,7 @@ void VOpenGLDrawer::InitResolution()
 	}
 
 	//	Clamp to edge extension
-	if (CheckExtension("GL_SGIS_texture_edge_clamp") ||
-		CheckExtension("GL_EXT_texture_edge_clamp"))
+	if (CheckExtension("GL_SGIS_texture_edge_clamp") || CheckExtension("GL_EXT_texture_edge_clamp"))
 	{
 		GCon->Log(NAME_Init, "Clamp to edge extension found.");
 		ClampToEdge = GL_CLAMP_TO_EDGE_SGIS;
@@ -689,6 +704,7 @@ void VOpenGLDrawer::InitResolution()
 bool VOpenGLDrawer::CheckExtension(const char *ext)
 {
 	guard(VOpenGLDrawer::CheckExtension);
+	if (!ext || !ext[0]) return false;
 	TArray<VStr> Exts;
 	VStr((char*)glGetString(GL_EXTENSIONS)).Split(' ', Exts);
 	for (int i = 0; i < Exts.Num(); i++)
@@ -698,6 +714,44 @@ bool VOpenGLDrawer::CheckExtension(const char *ext)
 			return true;
 		}
 	}
+	return false;
+	unguard;
+}
+
+//==========================================================================
+//
+//	VOpenGLDrawer::CheckGLXExtension
+//
+//==========================================================================
+
+typedef const char *(APIENTRY* glXQueryExtensionsString)(void* dpy, int screen);
+typedef void* (APIENTRY* glXGetCurrentDisplay) ();
+typedef long (APIENTRY* glXGetCurrentDrawable) ();
+
+bool VOpenGLDrawer::CheckGLXExtension(const char *ext)
+{
+	guard(VOpenGLDrawer::CheckGLXExtension);
+	if (!ext || !ext[0]) return false;
+
+	glXQueryExtensionsString gextstr = (glXQueryExtensionsString)GetExtFuncPtr("glXQueryExtensionsString");
+	if (!gextstr) return false;
+	glXGetCurrentDisplay getdpy = (glXGetCurrentDisplay)GetExtFuncPtr("glXGetCurrentDisplay");
+	if (!getdpy) return false;
+	if (!getdpy()) return false;
+	glXGetCurrentDrawable getdrw = (glXGetCurrentDrawable)GetExtFuncPtr("glXGetCurrentDrawable");
+	if (!getdrw) return false;
+	if (!getdrw()) return false;
+
+	/*
+	GCon->Logf("dpy is %p", getdpy());
+	GCon->Logf("drw is %d", (int)getdrw());
+	GCon->Logf("extlist is %s", (int)gextstr(getdpy(), 0));
+	*/
+
+	TArray<VStr> Exts;
+	VStr((char*)(gextstr(getdpy(), 0))).Split(' ', Exts);
+	//for (int i = 0; i < Exts.Num(); ++i) GCon->Logf("GLX EXTENSION: %s", *Exts[i]);
+	for (int i = 0; i < Exts.Num(); ++i) if (Exts[i] == ext) return true;
 	return false;
 	unguard;
 }
