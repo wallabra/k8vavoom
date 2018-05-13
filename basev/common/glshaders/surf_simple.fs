@@ -1,4 +1,6 @@
-#version 110
+#version 120
+
+// fragment shader for simple (non-lightmapped) surfaces
 
 uniform sampler2D Texture;
 uniform vec4 Light;

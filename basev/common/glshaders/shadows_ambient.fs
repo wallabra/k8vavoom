@@ -1,4 +1,4 @@
-#version 110
+#version 120
 
 uniform vec4 Light;
 uniform sampler2D Texture;

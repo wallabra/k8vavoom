@@ -1,4 +1,4 @@
-#version 110
+#version 120
 
 uniform vec3 SAxis;
 uniform vec3 TAxis;

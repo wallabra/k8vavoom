@@ -1,4 +1,4 @@
-#version 110
+#version 120
 
 uniform vec3 LightColour;
 uniform float LightRadius;

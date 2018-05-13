@@ -1,4 +1,6 @@
-#version 110
+#version 120
+
+// vertex shader for simple (non-lightmapped) surfaces
 
 uniform vec3 SAxis;
 uniform vec3 TAxis;
@@ -9,12 +11,11 @@ uniform float TexIH;
 
 varying vec2 TextureCoordinate;
 
-void main ()
-{
-  //  Transforming The Vertex
+void main () {
+  // Transforming The Vertex
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
 
-  //  Calculate texture coordinates.
+  // Calculate texture coordinates.
   vec2 st;
 
   st.x = ((dot (gl_Vertex.xyz, SAxis) + SOffs) * TexIW);

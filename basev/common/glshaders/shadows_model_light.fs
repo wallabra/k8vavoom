@@ -1,4 +1,5 @@
-#version 110
+#version 120
+
 uniform sampler2D Texture;
 uniform vec3 LightColour;
 uniform float LightRadius;

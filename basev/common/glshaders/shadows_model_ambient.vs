@@ -1,4 +1,5 @@
-#version 110
+#version 120
+
 uniform mat4 ModelToWorldMat;
 uniform mat3 NormalToWorldMat;
 uniform vec3 ViewOrigin;

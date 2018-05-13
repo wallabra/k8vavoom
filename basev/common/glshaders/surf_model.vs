@@ -1,4 +1,4 @@
-#version 110
+#version 120
 
 uniform vec3 ViewOrigin;
 uniform float Inter;

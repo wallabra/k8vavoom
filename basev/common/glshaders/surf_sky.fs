@@ -1,4 +1,4 @@
-#version 110
+#version 120
 
 uniform sampler2D Texture;
 uniform float Brightness;

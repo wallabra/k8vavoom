@@ -1,4 +1,4 @@
-#version 110
+#version 120
 
 uniform int FogType;
 uniform vec4 FogColour;

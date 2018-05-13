@@ -1,4 +1,4 @@
-#version 110
+#version 120
 
 uniform vec4 FogColour;
 uniform sampler2D Texture;
