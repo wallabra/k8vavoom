@@ -342,59 +342,35 @@ void VOpenGLDrawer::WorldDrawingShaders()
 	surface_t	*surf;
 	texinfo_t	*tex;
 
-	//	First draw horizons.
-	if (RendLev->HorizonPortalsHead)
-	{
-		for (surf = RendLev->HorizonPortalsHead; surf; surf = surf->DrawNext)
-		{
-			if (surf->plane->PointOnSide(vieworg))
-			{
-				//	Viewer is in back side or on plane
-				continue;
-			}
-
+	// first draw horizons
+	if (RendLev->HorizonPortalsHead) {
+		for (surf = RendLev->HorizonPortalsHead; surf; surf = surf->DrawNext) {
+			if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
 			DoHorizonPolygon(surf);
 		}
 	}
 
-	//	For sky areas we just write to the depth buffer to prevent drawing
-	// polygons behind the sky.
-	if (RendLev->SkyPortalsHead)
-	{
+	// for sky areas we just write to the depth buffer to prevent drawing polygons behind the sky
+	if (RendLev->SkyPortalsHead) {
 		p_glUseProgramObjectARB(SurfZBufProgram);
 		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-		for (surf = RendLev->SkyPortalsHead; surf; surf = surf->DrawNext)
-		{
-			if (surf->plane->PointOnSide(vieworg))
-			{
-				//	Viewer is in back side or on plane
-				continue;
-			}
-
+		for (surf = RendLev->SkyPortalsHead; surf; surf = surf->DrawNext) {
+			if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
 			glBegin(GL_POLYGON);
-			for (int i = 0; i < surf->count; i++)
-			{
-				glVertex(surf->verts[i]);
-			}
+			for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
 			glEnd();
 		}
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
 
-	//	Draw surfaces without lightmaps.
-	if (RendLev->SimpleSurfsHead)
-	{
+	// draw surfaces without lightmaps
+	if (RendLev->SimpleSurfsHead) {
 		p_glUseProgramObjectARB(SurfSimpleProgram);
 		p_glUniform1iARB(SurfSimpleTextureLoc, 0);
 		p_glUniform1iARB(SurfSimpleFogTypeLoc, r_fog & 3);
 
-		for (surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext)
-		{
-			if (surf->plane->PointOnSide(vieworg))
-			{
-				//	Viewer is in back side or on plane
-				continue;
-			}
+		for (surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
+			if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
 
 			//if (surf->decals) printf("SURFACE WITH DECALS! (WorldDrawingShaders:simple)\n");
 
@@ -408,32 +384,20 @@ void VOpenGLDrawer::WorldDrawingShaders()
 			p_glUniform1fARB(SurfSimpleTOffsLoc, tex->toffs);
 			p_glUniform1fARB(SurfSimpleTexIHLoc, tex_ih);
 
-			float lev = float(surf->Light >> 24) / 255.0;
-			p_glUniform4fARB(SurfSimpleLightLoc,
-				((surf->Light >> 16) & 255) * lev / 255.0,
-				((surf->Light >> 8) & 255) * lev / 255.0,
-				(surf->Light & 255) * lev / 255.0, 1.0);
-			if (surf->Fade)
-			{
+			float lev = (float)(surf->Light>>24)/255.0f;
+			p_glUniform4fARB(SurfSimpleLightLoc, ((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+			if (surf->Fade) {
 				p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_TRUE);
-				p_glUniform4fARB(SurfSimpleFogColourLoc,
-					((surf->Fade >> 16) & 255) / 255.0,
-					((surf->Fade >> 8) & 255) / 255.0,
-					(surf->Fade & 255) / 255.0, 1.0);
-				p_glUniform1fARB(SurfSimpleFogDensityLoc, surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density);
-				p_glUniform1fARB(SurfSimpleFogStartLoc, surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start);
-				p_glUniform1fARB(SurfSimpleFogEndLoc, surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end);
-			}
-			else
-			{
+				p_glUniform4fARB(SurfSimpleFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
+				p_glUniform1fARB(SurfSimpleFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
+				p_glUniform1fARB(SurfSimpleFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
+				p_glUniform1fARB(SurfSimpleFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end));
+			} else {
 				p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_FALSE);
 			}
 
 			glBegin(GL_POLYGON);
-			for (int i = 0; i < surf->count; i++)
-			{
-				glVertex(surf->verts[i]);
-			}
+			for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
 			glEnd();
 		}
 	}
@@ -444,23 +408,18 @@ void VOpenGLDrawer::WorldDrawingShaders()
 	p_glUniform1iARB(SurfLightmapSpecularMapLoc, 2);
 	p_glUniform1iARB(SurfLightmapFogTypeLoc, r_fog & 3);
 
-	//	Draw surfaces with lightmaps.
-	for (int lb = 0; lb < NUM_BLOCK_SURFS; lb++)
-	{
-		if (!RendLev->light_chain[lb])
-		{
-			continue;
-		}
+	// draw surfaces with lightmaps
+	for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb) {
+		if (!RendLev->light_chain[lb]) continue;
 
 		SelectTexture(1);
 		glBindTexture(GL_TEXTURE_2D, lmap_id[lb]);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		if (RendLev->block_changed[lb])
-		{
+
+		if (RendLev->block_changed[lb]) {
 			RendLev->block_changed[lb] = false;
-			glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT,
-				0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->light_block[lb]);
+			glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->light_block[lb]);
 			RendLev->add_changed[lb] = true;
 		}
 
@@ -468,23 +427,17 @@ void VOpenGLDrawer::WorldDrawingShaders()
 		glBindTexture(GL_TEXTURE_2D, addmap_id[lb]);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		if (RendLev->add_changed[lb])
-		{
+
+		if (RendLev->add_changed[lb]) {
 			RendLev->add_changed[lb] = false;
-			glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT,
-				0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->add_block[lb]);
+			glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->add_block[lb]);
 		}
 
 		SelectTexture(0);
 
-		for (cache = RendLev->light_chain[lb]; cache; cache = cache->chain)
-		{
+		for (cache = RendLev->light_chain[lb]; cache; cache = cache->chain) {
 			surf = cache->surf;
-			if (surf->plane->PointOnSide(vieworg))
-			{
-				//	Viewer is in back side or on plane
-				continue;
-			}
+			if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
 
 			//if (surf->decals) printf("SURFACE WITH DECALS! (WorldDrawingShaders:lightmaps)\n");
 
@@ -502,27 +455,18 @@ void VOpenGLDrawer::WorldDrawingShaders()
 			p_glUniform1fARB(SurfLightmapCacheSLoc, cache->s);
 			p_glUniform1fARB(SurfLightmapCacheTLoc, cache->t);
 
-			if (surf->Fade)
-			{
+			if (surf->Fade) {
 				p_glUniform1iARB(SurfLightmapFogEnabledLoc, GL_TRUE);
-				p_glUniform4fARB(SurfLightmapFogColourLoc,
-					((surf->Fade >> 16) & 255) / 255.0,
-					((surf->Fade >> 8) & 255) / 255.0,
-					(surf->Fade & 255) / 255.0, 1.0);
-				p_glUniform1fARB(SurfLightmapFogDensityLoc, surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density);
-				p_glUniform1fARB(SurfLightmapFogStartLoc, surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start);
-				p_glUniform1fARB(SurfLightmapFogEndLoc, surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end);
-			}
-			else
-			{
+				p_glUniform4fARB(SurfLightmapFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
+				p_glUniform1fARB(SurfLightmapFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
+				p_glUniform1fARB(SurfLightmapFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
+				p_glUniform1fARB(SurfLightmapFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end));
+			} else {
 				p_glUniform1iARB(SurfLightmapFogEnabledLoc, GL_FALSE);
 			}
 
 			glBegin(GL_POLYGON);
-			for (int i = 0; i < surf->count; i++)
-			{
-				glVertex(surf->verts[i]);
-			}
+			for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
 			glEnd();
 		}
 	}
