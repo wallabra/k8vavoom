@@ -382,6 +382,21 @@ void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   if (!surf->decals) return; // nothing to do
   if (!surf->plane) { fprintf(stderr, "FUCK! NO SURFACE PLANE!\n"); return; }
 
+  if (lmap) {
+    p_glUseProgramObjectARB(SurfSimpleProgram);
+    float lev = (float)(surf->Light>>24)/255.0f;
+    p_glUniform4fARB(SurfSimpleLightLoc, ((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+    if (surf->Fade) {
+      p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_TRUE);
+      p_glUniform4fARB(SurfSimpleFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
+      p_glUniform1fARB(SurfSimpleFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
+      p_glUniform1fARB(SurfSimpleFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
+      p_glUniform1fARB(SurfSimpleFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end));
+    } else {
+      p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_FALSE);
+    }
+  }
+
   texinfo_t *tex = surf->texinfo;
 
   //glEnable(GL_POLYGON_OFFSET_FILL);
@@ -395,7 +410,7 @@ void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   //glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR);
-  //glEnable(GL_BLEND);
+  glEnable(GL_BLEND);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
 
@@ -428,7 +443,7 @@ void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     }
 #endif
 
-    if (!lmap) {
+    /*if (!lmap)*/ {
       // no lightmaps
       p_glUniform3fvARB(SurfSimpleSAxisLoc, 1, &s.x/*&tex->saxis.x*/);
       p_glUniform1fARB(SurfSimpleSOffsLoc, dtex->SOffset);
@@ -436,15 +451,15 @@ void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
       p_glUniform3fvARB(SurfSimpleTAxisLoc, 1, &t.x/*&tex->taxis.x*/);
       p_glUniform1fARB(SurfSimpleTOffsLoc, dtex->TOffset);
       p_glUniform1fARB(SurfSimpleTexIHLoc, dtex->Height);
-    } else {
+    }/* else {
       // lightmapped
-      p_glUniform3fvARB(SurfLightmapSAxisLoc, 1, &s.x/*&tex->saxis.x*/);
+      p_glUniform3fvARB(SurfLightmapSAxisLoc, 1, &s.x/ *&tex->saxis.x* /);
       p_glUniform1fARB(SurfLightmapSOffsLoc, dtex->SOffset);
       p_glUniform1fARB(SurfLightmapTexIWLoc, dtex->Width);
-      p_glUniform3fvARB(SurfLightmapTAxisLoc, 1, &t.x/*&tex->taxis.x*/);
+      p_glUniform3fvARB(SurfLightmapTAxisLoc, 1, &t.x/ *&tex->taxis.x* /);
       p_glUniform1fARB(SurfLightmapTOffsLoc, dtex->TOffset);
       p_glUniform1fARB(SurfLightmapTexIHLoc, dtex->Height);
-    }
+    }*/
 
     /*
     if (lmap) {
@@ -502,6 +517,10 @@ void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   //glPolygonOffset(0.0f, 0.0f);
   //glDisable(GL_POLYGON_OFFSET_FILL);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  if (lmap) {
+    p_glUseProgramObjectARB(SurfLightmapProgram);
+  }
 }
 
 //==========================================================================
