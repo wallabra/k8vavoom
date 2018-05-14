@@ -21,10 +21,10 @@ void main () {
   vec4 TexColour;
 
   TexColour = (texture2D(Texture, TextureCoordinate)*Light);
+  if (TexColour.a < 0.1) discard;
+
   //TexColour = (texture2D(Texture, gl_TexCoord[0].xy)*Light);
   //FinalColour_1 = TexColour;
-
-  //if (TexColour.a < 0.1) discard;
 
   float lumi = 0.2126*TexColour.r+0.7152*TexColour.g+0.0722*TexColour.b*SplatColour.a;
   if (lumi < 0.1) discard;
