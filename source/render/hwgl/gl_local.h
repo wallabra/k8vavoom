@@ -429,6 +429,15 @@ public:
 	//	Advanced drawing.
 	bool SupportsAdvancedRendering();
 
+private:
+	vuint8 decalStcVal;
+	bool decalUsedStencil;
+
+	void RenderShaderDecalsStart ();
+	void RenderShaderDecalsEnd ();
+	void RenderPrepareShaderDecals (surface_t *surf, bool lmap);
+	void RenderFinishShaderDecals (surface_t *surf, bool lmap);
+
 protected:
 	enum { M_INFINITY	= 8000 };
 
