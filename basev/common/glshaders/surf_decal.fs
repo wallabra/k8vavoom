@@ -4,6 +4,7 @@
 
 uniform sampler2D Texture;
 uniform vec4 Light;
+uniform vec4 SplatColour;
 uniform bool FogEnabled;
 uniform int FogType;
 uniform vec4 FogColour;
@@ -21,9 +22,15 @@ void main () {
 
   TexColour = (texture2D(Texture, TextureCoordinate)*Light);
   //TexColour = (texture2D(Texture, gl_TexCoord[0].xy)*Light);
-  FinalColour_1 = TexColour;
+  //FinalColour_1 = TexColour;
 
-  if (TexColour.w < 0.1) discard;
+  //if (TexColour.a < 0.1) discard;
+
+  float lumi = 0.2126*TexColour.r+0.7152*TexColour.g+0.0722*TexColour.b*SplatColour.a;
+  if (lumi < 0.1) discard;
+
+  FinalColour_1.rgb = SplatColour.rgb;
+  FinalColour_1.a = lumi;
 
   /*
   if (FogEnabled) {

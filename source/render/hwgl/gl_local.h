@@ -497,6 +497,7 @@ protected:
 	GLhandleARB				SurfDecalProgram;
 	GLint					SurfDecalIsLightmap;
 	GLint					SurfDecalTextureLoc;
+	GLint					SurfDecalSplatColourLoc;
 	GLint					SurfDecalLightLoc;
 	GLint					SurfDecalFogEnabledLoc;
 	GLint					SurfDecalFogTypeLoc;

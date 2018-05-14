@@ -481,6 +481,7 @@ void VOpenGLDrawer::InitResolution()
 		SurfDecalProgram = CreateProgram(VertexShader, FragmentShader);
 		SurfDecalIsLightmap = p_glGetUniformLocationARB(SurfDecalProgram, "IsLightmap");
 		SurfDecalTextureLoc = p_glGetUniformLocationARB(SurfDecalProgram, "Texture");
+		SurfDecalSplatColourLoc = p_glGetUniformLocationARB(SurfDecalProgram, "SplatColour");
 		SurfDecalLightLoc = p_glGetUniformLocationARB(SurfDecalProgram, "Light");
 		SurfDecalFogEnabledLoc = p_glGetUniformLocationARB(SurfDecalProgram, "FogEnabled");
 		SurfDecalFogTypeLoc = p_glGetUniformLocationARB(SurfDecalProgram, "FogType");
