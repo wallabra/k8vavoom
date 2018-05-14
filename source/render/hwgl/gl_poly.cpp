@@ -398,7 +398,8 @@ void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   texinfo_t *tex = surf->texinfo;
 
   //glEnable(GL_POLYGON_OFFSET_FILL);
-  //glPolygonOffset(-4.0f, 1.0f);
+  //glPolygonOffset(4.0f, 1.0f);
+
   glDepthMask(GL_FALSE);
   glEnable(GL_STENCIL_TEST);
   glStencilFunc(GL_EQUAL, decalStcVal, 0xff);
@@ -501,9 +502,15 @@ void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     */
     glBegin(GL_QUADS);
       glVertex3f(v0.x, v0.y, dc->org.z-14.0f);
-      glVertex3f(v0.x, v2.y, dc->org.z+14.0f);
+      glVertex3f(v0.x, v0.y, dc->org.z+14.0f);
       glVertex3f(v2.x, v2.y, dc->org.z+14.0f);
-      glVertex3f(v2.x, v0.y, dc->org.z-14.0f);
+      glVertex3f(v2.x, v2.y, dc->org.z-14.0f);
+      /*
+      glVertex3f(lv1.x, lv1.y, dc->org.z-14.0f);
+      glVertex3f(lv2.x, lv2.y, dc->org.z-14.0f);
+      glVertex3f(lv2.x, lv2.y, dc->org.z+14.0f);
+      glVertex3f(lv1.x, lv1.y, dc->org.z+14.0f);
+      */
     glEnd();
   }
 
@@ -512,8 +519,10 @@ void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   glDisable(GL_BLEND);
   glDisable(GL_STENCIL_TEST);
   glDepthMask(GL_TRUE);
+
   //glPolygonOffset(0.0f, 0.0f);
   //glDisable(GL_POLYGON_OFFSET_FILL);
+
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   if (lmap) {
