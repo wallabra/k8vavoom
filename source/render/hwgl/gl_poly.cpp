@@ -376,24 +376,36 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf, bool lmap) {
 //
 //==========================================================================
 
-void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
-  if (!surf->dcseg || !surf->dcseg->decals) return; // nothing to do
-  if (!surf->plane) { fprintf(stderr, "FUCK! NO SURFACE PLANE!\n"); return; }
+bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
+  if (!surf->dcseg || !surf->dcseg->decals) return false; // nothing to do
+  if (!surf->plane) { fprintf(stderr, "FUCK! NO SURFACE PLANE!\n"); return false; }
 
   if (lmap) {
-    p_glUseProgramObjectARB(SurfSimpleProgram);
-    float lev = (float)(surf->Light>>24)/255.0f;
-    p_glUniform4fARB(SurfSimpleLightLoc, ((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
-    if (surf->Fade) {
-      p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_TRUE);
-      p_glUniform4fARB(SurfSimpleFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
-      p_glUniform1fARB(SurfSimpleFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
-      p_glUniform1fARB(SurfSimpleFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
-      p_glUniform1fARB(SurfSimpleFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end));
-    } else {
-      p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_FALSE);
-    }
+    SelectTexture(1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    SelectTexture(2);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    SelectTexture(0);
   }
+
+  p_glUseProgramObjectARB(SurfDecalProgram);
+  p_glUniform1iARB(SurfDecalFogEnabledLoc, (lmap ? GL_TRUE : GL_FALSE));
+  p_glUniform1iARB(SurfDecalTextureLoc, 0);
+  p_glUniform1iARB(SurfDecalFogTypeLoc, r_fog & 3);
+  float lev = (float)(surf->Light>>24)/255.0f;
+  lev = 1.0;
+  p_glUniform4fARB(SurfDecalLightLoc, ((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+  if (surf->Fade) {
+    p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_TRUE);
+    p_glUniform4fARB(SurfDecalFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
+    p_glUniform1fARB(SurfDecalFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
+    p_glUniform1fARB(SurfDecalFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
+    p_glUniform1fARB(SurfDecalFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end));
+  } else {
+    p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_FALSE);
+  }
+  //p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_FALSE);
+  glColor4f(1, 1, 1, 1);
 
   texinfo_t *tex = surf->texinfo;
 
@@ -419,7 +431,7 @@ void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     if (dc->texture < 0) continue;
     auto dtex = GTextureManager[dc->texture];
     if (!dtex) continue;
-    if (dtex->Width < 1 || dtex->Height < 1) return; // invisible picture
+    if (dtex->Width < 1 || dtex->Height < 1) continue; // invisible picture
 
     // todo: [st]scale
     SetTexture(dtex, tex->ColourMap);
@@ -444,12 +456,12 @@ void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
 
     /*if (!lmap)*/ {
       // no lightmaps
-      p_glUniform3fvARB(SurfSimpleSAxisLoc, 1, &s.x/*&tex->saxis.x*/);
-      p_glUniform1fARB(SurfSimpleSOffsLoc, dtex->SOffset);
-      p_glUniform1fARB(SurfSimpleTexIWLoc, dtex->Width);
-      p_glUniform3fvARB(SurfSimpleTAxisLoc, 1, &t.x/*&tex->taxis.x*/);
-      p_glUniform1fARB(SurfSimpleTOffsLoc, dtex->TOffset);
-      p_glUniform1fARB(SurfSimpleTexIHLoc, dtex->Height);
+      p_glUniform3fvARB(SurfDecalSAxisLoc, 1, &s.x/*&tex->saxis.x*/);
+      p_glUniform1fARB(SurfDecalSOffsLoc, dtex->SOffset);
+      p_glUniform1fARB(SurfDecalTexIWLoc, dtex->Width);
+      p_glUniform3fvARB(SurfDecalTAxisLoc, 1, &t.x/*&tex->taxis.x*/);
+      p_glUniform1fARB(SurfDecalTOffsLoc, dtex->TOffset);
+      p_glUniform1fARB(SurfDecalTexIHLoc, dtex->Height);
     }/* else {
       // lightmapped
       p_glUniform3fvARB(SurfLightmapSAxisLoc, 1, &s.x/ *&tex->saxis.x* /);
@@ -527,7 +539,11 @@ void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
 
   if (lmap) {
     p_glUseProgramObjectARB(SurfLightmapProgram);
+  } else {
+    p_glUseProgramObjectARB(SurfSimpleProgram);
   }
+
+  return true;
 }
 
 //==========================================================================
@@ -678,7 +694,15 @@ void VOpenGLDrawer::WorldDrawingShaders()
 			glEnd();
 
 			// draw decals
-			if (surf->dcseg && surf->dcseg->decals) RenderFinishShaderDecals(surf, true);
+			if (surf->dcseg && surf->dcseg->decals) {
+				if (RenderFinishShaderDecals(surf, true)) {
+					SelectTexture(1);
+					glBindTexture(GL_TEXTURE_2D, lmap_id[lb]);
+					SelectTexture(2);
+					glBindTexture(GL_TEXTURE_2D, addmap_id[lb]);
+					SelectTexture(0);
+				}
+			}
 		}
 	}
 

@@ -476,6 +476,25 @@ void VOpenGLDrawer::InitResolution()
 		FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_zbuf.fs");
 		SurfZBufProgram = CreateProgram(VertexShader, FragmentShader);
 
+		VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_decal.vs");
+		FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal.fs");
+		SurfDecalProgram = CreateProgram(VertexShader, FragmentShader);
+		SurfDecalIsLightmap = p_glGetUniformLocationARB(SurfDecalProgram, "IsLightmap");
+		SurfDecalSAxisLoc = p_glGetUniformLocationARB(SurfDecalProgram, "SAxis");
+		SurfDecalTAxisLoc = p_glGetUniformLocationARB(SurfDecalProgram, "TAxis");
+		SurfDecalSOffsLoc = p_glGetUniformLocationARB(SurfDecalProgram, "SOffs");
+		SurfDecalTOffsLoc = p_glGetUniformLocationARB(SurfDecalProgram, "TOffs");
+		SurfDecalTexIWLoc = p_glGetUniformLocationARB(SurfDecalProgram, "TexIW");
+		SurfDecalTexIHLoc = p_glGetUniformLocationARB(SurfDecalProgram, "TexIH");
+		SurfDecalTextureLoc = p_glGetUniformLocationARB(SurfDecalProgram, "Texture");
+		SurfDecalLightLoc = p_glGetUniformLocationARB(SurfDecalProgram, "Light");
+		SurfDecalFogEnabledLoc = p_glGetUniformLocationARB(SurfDecalProgram, "FogEnabled");
+		SurfDecalFogTypeLoc = p_glGetUniformLocationARB(SurfDecalProgram, "FogType");
+		SurfDecalFogColourLoc = p_glGetUniformLocationARB(SurfDecalProgram, "FogColour");
+		SurfDecalFogDensityLoc = p_glGetUniformLocationARB(SurfDecalProgram, "FogDensity");
+		SurfDecalFogStartLoc = p_glGetUniformLocationARB(SurfDecalProgram, "FogStart");
+		SurfDecalFogEndLoc = p_glGetUniformLocationARB(SurfDecalProgram, "FogEnd");
+
 		VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_simple.vs");
 		FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_simple.fs");
 		SurfSimpleProgram = CreateProgram(VertexShader, FragmentShader);
