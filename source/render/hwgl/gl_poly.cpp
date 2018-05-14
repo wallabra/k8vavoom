@@ -695,6 +695,8 @@ void VOpenGLDrawer::DrawWorldAmbientPass()
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
 
+	RenderShaderDecalsStart();
+
 	p_glUseProgramObjectARB(ShadowsAmbientProgram);
 	p_glUniform1iARB(ShadowsAmbientTextureLoc, 0);
 	for (surface_t* surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext)
@@ -719,13 +721,24 @@ void VOpenGLDrawer::DrawWorldAmbientPass()
 			((surf->Light >> 16) & 255) * lev / 255.0,
 			((surf->Light >> 8) & 255) * lev / 255.0,
 			(surf->Light & 255) * lev / 255.0, 1.0);
+
+		// fill stencil buffer for decals
+		if (surf->dcseg && surf->dcseg->decals) RenderPrepareShaderDecals(surf, true);
+
 		glBegin(GL_POLYGON);
-		for (int i = 0; i < surf->count; i++)
-		{
-			glVertex(surf->verts[i]);
-		}
+		for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
 		glEnd();
+
+		// draw decals
+		if (surf->dcseg && surf->dcseg->decals) {
+			if (RenderFinishShaderDecals(surf, false)) {
+				p_glUseProgramObjectARB(ShadowsAmbientProgram);
+			}
+		}
 	}
+
+	RenderShaderDecalsEnd();
+
 	unguard;
 }
 
