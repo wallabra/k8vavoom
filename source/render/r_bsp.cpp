@@ -59,22 +59,6 @@ static VCvarI			r_maxmirrors("r_maxmirrors", "4", "Maximum allowed mirrors.", CV
 
 // CODE --------------------------------------------------------------------
 
-static void addDecalsToSurf (surface_t* surf, seg_t* seg) {
-  if (!surf) return;
-  surf->decals = nullptr;
-  if (seg && seg->decals) {
-    // append decals
-    //printf("queuing surface with decals!\n");
-    decal_t* last = nullptr;
-    for (decal_t* dc = seg->decals; dc; dc = dc->next) {
-      if (last) last->surfnext = dc; else surf->decals = dc;
-      last = dc;
-    }
-    if (last) last->surfnext = nullptr;
-  }
-}
-
-
 //==========================================================================
 //
 //	VRenderLevelShared::SetUpFrustumIndexes
@@ -114,14 +98,13 @@ void VRenderLevel::QueueWorldSurface(seg_t* seg, surface_t* surf)
 {
 	guard(VRenderLevel::QueueWorldSurface);
 	bool lightmaped = (surf->lightmap != NULL || surf->dlightframe == r_dlightframecount);
-	surf->decals = nullptr;
+	surf->dcseg = seg;
 
 	if (lightmaped)
 	{
 		CacheSurface(surf);
 		if (Drawer->HaveMultiTexture)
 		{
-			addDecalsToSurf(surf, seg);
 			return;
 		}
 	}
@@ -152,6 +135,7 @@ void VAdvancedRenderLevel::QueueWorldSurface(seg_t* seg, surface_t* surf)
 void VRenderLevelShared::QueueSimpleSurf(seg_t* seg, surface_t* surf)
 {
 	guard(VRenderLevelShared::QueueSimpleSurf);
+	surf->dcseg = seg;
 	if (SimpleSurfsTail)
 	{
 		SimpleSurfsTail->DrawNext = surf;
@@ -163,7 +147,6 @@ void VRenderLevelShared::QueueSimpleSurf(seg_t* seg, surface_t* surf)
 		SimpleSurfsTail = surf;
 	}
 	surf->DrawNext = NULL;
-	addDecalsToSurf(surf, seg);
 	unguard;
 }
 
@@ -176,6 +159,7 @@ void VRenderLevelShared::QueueSimpleSurf(seg_t* seg, surface_t* surf)
 void VRenderLevelShared::QueueSkyPortal(surface_t* surf)
 {
 	guard(VRenderLevelShared::QueueSkyPortal);
+	surf->dcseg = nullptr;
 	if (SkyPortalsTail)
 	{
 		SkyPortalsTail->DrawNext = surf;
@@ -199,6 +183,7 @@ void VRenderLevelShared::QueueSkyPortal(surface_t* surf)
 void VRenderLevelShared::QueueHorizonPortal(surface_t* surf)
 {
 	guard(VRenderLevelShared::QueueHorizonPortal);
+	surf->dcseg = nullptr;
 	if (HorizonPortalsTail)
 	{
 		HorizonPortalsTail->DrawNext = surf;
@@ -354,6 +339,7 @@ void VRenderLevelShared::DrawSurfaces(seg_t* seg, surface_t* InSurfs, texinfo_t 
 				surfs->Fade = Fade;
 				surfs->dlightframe = r_sub->dlightframe;
 				surfs->dlightbits = r_sub->dlightbits;
+				surfs->dcseg = nullptr;
 				DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
 					0, SkyBox->eventSkyBoxGetPlaneAlpha(), false, 0,
 					false, 0, 0, TVec(), 0, TVec(), TVec(), TVec());
@@ -384,7 +370,7 @@ void VRenderLevelShared::DrawSurfaces(seg_t* seg, surface_t* InSurfs, texinfo_t 
 				world_surf_t& S = WorldSurfs.Alloc();
 				S.Surf = surfs;
 				S.Type = 0;
-				addDecalsToSurf(surfs, seg);
+				surfs->dcseg = seg;
 			}
 			else
 			{
@@ -393,6 +379,7 @@ void VRenderLevelShared::DrawSurfaces(seg_t* seg, surface_t* InSurfs, texinfo_t 
 		}
 		else
 		{
+			surfs->dcseg = nullptr;
 			DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
 				0, texinfo->Alpha, texinfo->Additive, 0, false, 0, 0,
 				TVec(), 0, TVec(), TVec(), TVec());
@@ -473,7 +460,7 @@ void VRenderLevelShared::RenderHorizon(drawseg_t* dseg)
 				world_surf_t& S = WorldSurfs.Alloc();
 				S.Surf = Surf;
 				S.Type = 2;
-				Surf->decals = nullptr;
+				Surf->dcseg = nullptr;
 			}
 			else
 			{
@@ -529,7 +516,7 @@ void VRenderLevelShared::RenderHorizon(drawseg_t* dseg)
 				world_surf_t& S = WorldSurfs.Alloc();
 				S.Surf = Surf;
 				S.Type = 2;
-				Surf->decals = nullptr;
+				Surf->dcseg = nullptr;
 			}
 			else
 			{
@@ -1058,7 +1045,7 @@ void VRenderLevelShared::RenderBspWorld(const refdef_t* rd, const VViewClipper* 
 			{
 			case 0:
 				{
-					seg_t* dcseg = (WorldSurfs[i].Surf->decals ? WorldSurfs[i].Surf->decals->seg : nullptr);
+					seg_t* dcseg = (WorldSurfs[i].Surf->dcseg ? WorldSurfs[i].Surf->dcseg : nullptr);
 					//if (dcseg) printf("world surface! %p\n", dcseg);
 					QueueWorldSurface(dcseg, WorldSurfs[i].Surf);
 				}

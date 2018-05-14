@@ -137,7 +137,6 @@ struct decal_t
 	float xdist; // normalized
 	float linelen;
 	VName decalname;
-	decal_t* surfnext; // next decal on this surface
 };
 
 class VSky

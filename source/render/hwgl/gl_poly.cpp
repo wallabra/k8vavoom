@@ -130,8 +130,6 @@ void VOpenGLDrawer::WorldDrawing()
 				continue;
 			}
 
-			//if (surf->decals) printf("SURFACE WITH DECALS! (WorldDrawing:0)\n");
-
 			texinfo_t* tex = surf->texinfo;
 			SetTexture(tex->Tex, tex->ColourMap);
 
@@ -363,7 +361,7 @@ void VOpenGLDrawer::RenderShaderDecalsEnd () {
 //==========================================================================
 
 void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf, bool lmap) {
-  if (!surf->decals) return; // nothing to do
+  if (!surf->dcseg || !surf->dcseg->decals) return; // nothing to do
 
   if (++decalStcVal == 0) { glClear(GL_STENCIL_BUFFER_BIT); decalStcVal = 1; } // it wrapped, so clear stencil buffer
   glEnable(GL_STENCIL_TEST);
@@ -379,7 +377,7 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf, bool lmap) {
 //==========================================================================
 
 void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
-  if (!surf->decals) return; // nothing to do
+  if (!surf->dcseg || !surf->dcseg->decals) return; // nothing to do
   if (!surf->plane) { fprintf(stderr, "FUCK! NO SURFACE PLANE!\n"); return; }
 
   if (lmap) {
@@ -416,7 +414,7 @@ void VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
 
   //glDisable(GL_STENCIL_TEST);
 
-  for (decal_t* dc = surf->decals; dc; dc = dc->surfnext) {
+  for (decal_t* dc = surf->dcseg->decals; dc; dc = dc->next) {
     if (dc->texture < 0) continue;
     auto dtex = GTextureManager[dc->texture];
     if (!dtex) continue;
@@ -567,7 +565,6 @@ void VOpenGLDrawer::WorldDrawingShaders()
 
 		for (surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
 			if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
-			//if (surf->decals) continue;
 
 			texinfo_t* tex = surf->texinfo;
 			SetTexture(tex->Tex, tex->ColourMap);
@@ -592,14 +589,14 @@ void VOpenGLDrawer::WorldDrawingShaders()
 			}
 
 			// fill stencil buffer for decals
-			if (surf->decals) RenderPrepareShaderDecals(surf, false);
+			if (surf->dcseg && surf->dcseg->decals) RenderPrepareShaderDecals(surf, false);
 
 			glBegin(GL_POLYGON);
 			for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
 			glEnd();
 
 			// draw decals
-			if (surf->decals) RenderFinishShaderDecals(surf, false);
+			if (surf->dcseg && surf->dcseg->decals) RenderFinishShaderDecals(surf, false);
 		}
 	}
 
@@ -640,8 +637,6 @@ void VOpenGLDrawer::WorldDrawingShaders()
 			surf = cache->surf;
 			if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
 
-			//if (surf->decals) printf("SURFACE WITH DECALS! (WorldDrawingShaders:lightmaps)\n");
-
 			tex = surf->texinfo;
 			SetTexture(tex->Tex, tex->ColourMap);
 
@@ -667,14 +662,14 @@ void VOpenGLDrawer::WorldDrawingShaders()
 			}
 
 			// fill stencil buffer for decals
-			if (surf->decals) RenderPrepareShaderDecals(surf, true);
+			if (surf->dcseg && surf->dcseg->decals) RenderPrepareShaderDecals(surf, true);
 
 			glBegin(GL_POLYGON);
 			for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
 			glEnd();
 
 			// draw decals
-			if (surf->decals) RenderFinishShaderDecals(surf, true);
+			if (surf->dcseg && surf->dcseg->decals) RenderFinishShaderDecals(surf, true);
 		}
 	}
 
@@ -979,7 +974,6 @@ void VOpenGLDrawer::DrawWorldTexturesPass()
 		}
 
 		// this is for advanced renderer only
-		//if (surf->decals) printf("SURFACE WITH DECALS! (DrawWorldTexturesPass:0)\n");
 
 		texinfo_t* tex = surf->texinfo;
 		SetTexture(tex->Tex, tex->ColourMap);
