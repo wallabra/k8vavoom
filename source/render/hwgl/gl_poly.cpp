@@ -27,6 +27,8 @@
 
 #include "gl_local.h"
 
+#include "render/r_local.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -363,6 +365,9 @@ void VOpenGLDrawer::WorldDrawingShaders()
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
 
+	// for decals
+	vuint8 nextstc = 255; // next value for stencil buffer (clear on the first use, and clear on each wrap)
+
 	// draw surfaces without lightmaps
 	if (RendLev->SimpleSurfsHead) {
 		p_glUseProgramObjectARB(SurfSimpleProgram);
@@ -371,8 +376,7 @@ void VOpenGLDrawer::WorldDrawingShaders()
 
 		for (surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
 			if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
-
-			//if (surf->decals) printf("SURFACE WITH DECALS! (WorldDrawingShaders:simple)\n");
+			//if (surf->decals) continue;
 
 			texinfo_t* tex = surf->texinfo;
 			SetTexture(tex->Tex, tex->ColourMap);
@@ -396,11 +400,109 @@ void VOpenGLDrawer::WorldDrawingShaders()
 				p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_FALSE);
 			}
 
+			// fill stencil buffer for decals
+			if (surf->decals) {
+				if (++nextstc == 0) { glClear(GL_STENCIL_BUFFER_BIT); nextstc = 1; }// it wrapped, so clear stencil buffer
+				glEnable(GL_STENCIL_TEST);
+				glStencilFunc(GL_ALWAYS, nextstc, 0xff);
+				glStencilOp(GL_KEEP, GL_KEEP, /*GL_INCR*/GL_REPLACE);
+			}
+
 			glBegin(GL_POLYGON);
 			for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
 			glEnd();
+
+			// draw decals
+			if (surf->decals) {
+				//glEnable(GL_POLYGON_OFFSET_FILL);
+				//glPolygonOffset(-4.0f, 1.0f);
+				glDepthMask(GL_FALSE);
+				glEnable(GL_STENCIL_TEST);
+				glStencilFunc(GL_EQUAL, nextstc, 0xff);
+				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+				//glStencilFunc(GL_ALWAYS, 0x0, 0xff);
+				//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				//glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+				//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR);
+				glEnable(GL_BLEND);
+				glDisable(GL_DEPTH_TEST);
+				glDisable(GL_CULL_FACE);
+
+				//glDisable(GL_STENCIL_TEST);
+
+				for (decal_t* dc = surf->decals; dc; dc = dc->surfnext) {
+					if (dc->texture < 0) continue;
+					auto dtex = GTextureManager[dc->texture];
+					if (!dtex) continue;
+					if (dtex->Width < 1 || dtex->Height < 1) return; // invisible picture
+
+					// todo: [st]scale
+					SetTexture(dtex, tex->ColourMap);
+					p_glUniform3fvARB(SurfSimpleSAxisLoc, 1, &tex->saxis.x);
+					p_glUniform1fARB(SurfSimpleSOffsLoc, dtex->SOffset);
+					p_glUniform1fARB(SurfSimpleTexIWLoc, dtex->Width);
+					p_glUniform3fvARB(SurfSimpleTAxisLoc, 1, &tex->taxis.x);
+					p_glUniform1fARB(SurfSimpleTOffsLoc, dtex->TOffset);
+					p_glUniform1fARB(SurfSimpleTexIHLoc, dtex->Height);
+
+					/*
+					fprintf(stderr, "===\n");
+					fprintf(stderr, "org:(%f,%f,%f); ldef:(%f,%f)-(%f,%f); xdist=%f", dc->org.x, dc->org.y, dc->org.z, dc->seg->linedef->v1->x, dc->seg->linedef->v1->y, dc->seg->linedef->v2->x, dc->seg->linedef->v2->y, dc->xdist);
+					*/
+					TVec lv1, lv2;
+					lv1 = *(dc->seg->side ? dc->seg->linedef->v2 : dc->seg->linedef->v1);
+					lv2 = *(dc->seg->side ? dc->seg->linedef->v1 : dc->seg->linedef->v2);
+					/*
+					for (int i = 0; i < surf->count; ++i) {
+						fprintf(stderr, "#%d: sv=(%f,%f,%f); org=(%f,%f,%f); xofs=%f; side=%d; x1=%f; x2=%f\n", i, surf->verts[i].x, surf->verts[i].y, surf->verts[i].z, dc->org.x, dc->org.y, dc->org.z, dc->xofs, dc->seg->side, dc->seg->v1->x, dc->seg->v2->x);
+					}
+					*/
+					/*
+					glBegin(GL_POLYGON);
+					for (int i = 0; i < surf->count; ++i) {
+						glVertex3f(
+						  surf->verts[i].x+dc->xofs, //(dc->seg->side ? dc->xofs : -dc->xofs),
+						  surf->verts[i].y,
+						  surf->verts[i].z+dc->zofs
+						);
+					}
+					*/
+					//TVec sdir = (*dc->seg->v2)-(*dc->seg->v1);
+					//sdir.z = 0.0f;
+					//sdir = Normalise(sdir);
+					//TVec v0 = dc->org-14.0f*sdir;
+					//TVec v2 = dc->org+14.0f*sdir;
+					TVec v0 = lv1+((lv2-lv1)/dc->linelen)*(dc->xdist*dc->linelen-14.0f);
+					TVec v2 = lv1+((lv2-lv1)/dc->linelen)*(dc->xdist*dc->linelen+14.0f);
+					/*
+					fprintf(stderr, "  (%f,%f,%f)\n  (%f,%f,%f)\n  (%f, %f, %f)\n  (%f, %f, %f)\n",
+					  v0.x, v0.y, dc->org.z-14.0f,
+					  v0.x, v2.y, dc->org.z+14.0f,
+					  v2.x, v2.y, dc->org.z+14.0f,
+					  v2.x, v0.y, dc->org.z-14.0f
+					);
+					*/
+					glBegin(GL_QUADS);
+						glVertex3f(v0.x, v0.y, dc->org.z-14.0f);
+						glVertex3f(v0.x, v2.y, dc->org.z+14.0f);
+						glVertex3f(v2.x, v2.y, dc->org.z+14.0f);
+						glVertex3f(v2.x, v0.y, dc->org.z-14.0f);
+					glEnd();
+				}
+
+				glEnable(GL_CULL_FACE);
+				glEnable(GL_DEPTH_TEST);
+				glDisable(GL_BLEND);
+				glDisable(GL_STENCIL_TEST);
+				glDepthMask(GL_TRUE);
+				//glPolygonOffset(0.0f, 0.0f);
+				//glDisable(GL_POLYGON_OFFSET_FILL);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			}
 		}
 	}
+	glClear(GL_STENCIL_BUFFER_BIT);
 
 	p_glUseProgramObjectARB(SurfLightmapProgram);
 	p_glUniform1iARB(SurfLightmapTextureLoc, 0);

@@ -133,8 +133,9 @@ struct decal_t
 	decal_t* next; // in this seg
 	seg_t* seg;
 	int texture;
-	float xofs; // from seg start
-	float zofs;
+	TVec org;
+	float xdist; // normalized
+	float linelen;
 	VName decalname;
 	decal_t* surfnext; // next decal on this surface
 };

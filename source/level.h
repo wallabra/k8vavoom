@@ -357,6 +357,9 @@ private:
 	void FloodZones();
 	void FloodZone(sector_t*, int);
 
+	// dir<0: previous; dir>0: next
+	line_t* FindAdjacentLine (line_t* srcline, int side, int dir);
+
 	//	Loader of the Strife conversations.
 	void LoadRogueConScript(VName, int, FRogueConSpeech*&, int&) const;
 
@@ -378,7 +381,7 @@ private:
 
 	int SetBodyQueueTrans(int, int);
 
-	void AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li);
+	void AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li, int prevdir=0);
 
 	DECLARE_FUNCTION(PointInSector)
 	DECLARE_FUNCTION(TraceLine)
