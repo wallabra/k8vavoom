@@ -378,7 +378,6 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf, bool lmap) {
 
 bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   if (!surf->dcseg || !surf->dcseg->decals) return false; // nothing to do
-  if (!surf->plane) { fprintf(stderr, "FUCK! NO SURFACE PLANE!\n"); return false; }
 
   if (lmap) {
     SelectTexture(1);
@@ -389,11 +388,11 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   }
 
   p_glUseProgramObjectARB(SurfDecalProgram);
-  p_glUniform1iARB(SurfDecalFogEnabledLoc, (lmap ? GL_TRUE : GL_FALSE));
+  p_glUniform1iARB(SurfDecalIsLightmap, (lmap ? GL_TRUE : GL_FALSE));
   p_glUniform1iARB(SurfDecalTextureLoc, 0);
-  p_glUniform1iARB(SurfDecalFogTypeLoc, r_fog & 3);
+  p_glUniform1iARB(SurfDecalFogTypeLoc, r_fog&3);
   float lev = (float)(surf->Light>>24)/255.0f;
-  lev = 1.0;
+  //lev = 1.0;
   p_glUniform4fARB(SurfDecalLightLoc, ((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
   if (surf->Fade) {
     p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_TRUE);
@@ -404,8 +403,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   } else {
     p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_FALSE);
   }
-  //p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_FALSE);
-  glColor4f(1, 1, 1, 1);
+  //glColor4f(1, 1, 1, 1); // just in case
 
   texinfo_t *tex = surf->texinfo;
 
@@ -416,12 +414,14 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   glEnable(GL_STENCIL_TEST);
   glStencilFunc(GL_EQUAL, decalStcVal, 0xff);
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+  glEnable(GL_BLEND);
   //glStencilFunc(GL_ALWAYS, 0x0, 0xff);
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   //glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR);
-  glEnable(GL_BLEND);
+
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
 
@@ -433,44 +433,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     if (!dtex) continue;
     if (dtex->Width < 1 || dtex->Height < 1) continue; // invisible picture
 
-    // todo: [st]scale
     SetTexture(dtex, tex->ColourMap);
-
-    TVec s = TVec(1, 0, 0), t = TVec(0, 1, 0);
-    TPlane* splane = surf->plane;
-    //fprintf(stderr, "pnorm=(%f,%f,%f)\n", splane->normal.x, splane->normal.y, splane->normal.z);
-
-    // only wals came here, so... (walls has zero normal.z)
-    t = TVec(0, 0, -1)*1/*TextureTScale(Tex)*/*1/*splane->YScale*/;
-    s = Normalise(CrossProduct(splane->normal, tex->taxis))*1/*TextureSScale(dtex)*/*1/*splane->XScale*/;
-
-#if 0
-    if (fabs(splane->normal.z) > 0.1) {
-      s = TVec(mcos(splane->BaseAngle-splane->Angle), msin(splane->BaseAngle-splane->Angle), 0)*1/*TextureSScale(dtex)*/*splane->XScale;
-      t = TVec(msin(splane->BaseAngle-splane->Angle), -mcos(splane->BaseAngle-splane->Angle), 0)*1/*TextureTScale(dtex)*/*splane->YScale;
-    } else {
-      t = TVec(0, 0, -1)*1/*TextureTScale(Tex)*/*splane->YScale;
-      s = Normalise(CrossProduct(splane->normal, tex->taxis))*1/*TextureSScale(dtex)*/*splane->XScale;
-    }
-#endif
-
-    /*if (!lmap)*/ {
-      // no lightmaps
-      p_glUniform3fvARB(SurfDecalSAxisLoc, 1, &s.x/*&tex->saxis.x*/);
-      p_glUniform1fARB(SurfDecalSOffsLoc, dtex->SOffset);
-      p_glUniform1fARB(SurfDecalTexIWLoc, dtex->Width);
-      p_glUniform3fvARB(SurfDecalTAxisLoc, 1, &t.x/*&tex->taxis.x*/);
-      p_glUniform1fARB(SurfDecalTOffsLoc, dtex->TOffset);
-      p_glUniform1fARB(SurfDecalTexIHLoc, dtex->Height);
-    }/* else {
-      // lightmapped
-      p_glUniform3fvARB(SurfLightmapSAxisLoc, 1, &s.x/ *&tex->saxis.x* /);
-      p_glUniform1fARB(SurfLightmapSOffsLoc, dtex->SOffset);
-      p_glUniform1fARB(SurfLightmapTexIWLoc, dtex->Width);
-      p_glUniform3fvARB(SurfLightmapTAxisLoc, 1, &t.x/ *&tex->taxis.x* /);
-      p_glUniform1fARB(SurfLightmapTOffsLoc, dtex->TOffset);
-      p_glUniform1fARB(SurfLightmapTexIHLoc, dtex->Height);
-    }*/
 
     /*
     if (lmap) {
@@ -482,47 +445,15 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     TVec lv1, lv2;
     lv1 = *(dc->seg->side ? dc->seg->linedef->v2 : dc->seg->linedef->v1);
     lv2 = *(dc->seg->side ? dc->seg->linedef->v1 : dc->seg->linedef->v2);
-    /*
-    for (int i = 0; i < surf->count; ++i) {
-      fprintf(stderr, "#%d: sv=(%f,%f,%f); org=(%f,%f,%f); xofs=%f; side=%d; x1=%f; x2=%f\n", i, surf->verts[i].x, surf->verts[i].y, surf->verts[i].z, dc->org.x, dc->org.y, dc->org.z, dc->xofs, dc->seg->side, dc->seg->v1->x, dc->seg->v2->x);
-    }
-    */
-    /*
-    glBegin(GL_POLYGON);
-    for (int i = 0; i < surf->count; ++i) {
-      glVertex3f(
-        surf->verts[i].x+dc->xofs, //(dc->seg->side ? dc->xofs : -dc->xofs),
-        surf->verts[i].y,
-        surf->verts[i].z+dc->zofs
-      );
-    }
-    */
-    //TVec sdir = (*dc->seg->v2)-(*dc->seg->v1);
-    //sdir.z = 0.0f;
-    //sdir = Normalise(sdir);
-    //TVec v0 = dc->org-14.0f*sdir;
-    //TVec v2 = dc->org+14.0f*sdir;
+
     TVec v0 = lv1+((lv2-lv1)/dc->linelen)*(dc->xdist*dc->linelen-14.0f);
     TVec v2 = lv1+((lv2-lv1)/dc->linelen)*(dc->xdist*dc->linelen+14.0f);
-    /*
-    fprintf(stderr, "  (%f,%f,%f)\n  (%f,%f,%f)\n  (%f, %f, %f)\n  (%f, %f, %f)\n",
-      v0.x, v0.y, dc->org.z-14.0f,
-      v0.x, v2.y, dc->org.z+14.0f,
-      v2.x, v2.y, dc->org.z+14.0f,
-      v2.x, v0.y, dc->org.z-14.0f
-    );
-    */
+
     glBegin(GL_QUADS);
-      glVertex3f(v0.x, v0.y, dc->org.z-14.0f);
-      glVertex3f(v0.x, v0.y, dc->org.z+14.0f);
-      glVertex3f(v2.x, v2.y, dc->org.z+14.0f);
-      glVertex3f(v2.x, v2.y, dc->org.z-14.0f);
-      /*
-      glVertex3f(lv1.x, lv1.y, dc->org.z-14.0f);
-      glVertex3f(lv2.x, lv2.y, dc->org.z-14.0f);
-      glVertex3f(lv2.x, lv2.y, dc->org.z+14.0f);
-      glVertex3f(lv1.x, lv1.y, dc->org.z+14.0f);
-      */
+      glTexCoord2f(0.0f, 0.0f); glVertex3f(v0.x, v0.y, dc->org.z-14.0f);
+      glTexCoord2f(0.0f, 1.0f); glVertex3f(v0.x, v0.y, dc->org.z+14.0f);
+      glTexCoord2f(1.0f, 1.0f); glVertex3f(v2.x, v2.y, dc->org.z+14.0f);
+      glTexCoord2f(1.0f, 0.0f); glVertex3f(v2.x, v2.y, dc->org.z-14.0f);
     glEnd();
   }
 

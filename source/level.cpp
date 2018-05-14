@@ -123,7 +123,7 @@ static void DecalIO (VStream& Strm, decal_t *dc) {
 		memset(namebuf, 0, sizeof(namebuf));
 		Strm.Serialise(namebuf, namelen);
 		dc->decalname = VName(namebuf);
-		dc->texture = GTextureManager.AddPatch(VName("CHIP3", VName::AddLower8), TEXTYPE_Pic);
+		dc->texture = GTextureManager.AddPatch(VName("BSPLAT2", VName::AddLower8), TEXTYPE_Pic);
 	} else {
 		namelen = (vuint32)strlen(*dc->decalname);
 		if (namelen == 0 || namelen > 63) Sys_Error("Level save: invalid decal name length");
@@ -1050,7 +1050,7 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
 
   GCon->Logf("Want to spawn decal '%s' (%s); dist=%f (linelen=%f)", *dectype, (li->frontsector == sec ? "front" : "back"), dist, linelen);
 
-  int tex = GTextureManager.AddPatch(VName("CHIP3", VName::AddLower8), TEXTYPE_Pic);
+  int tex = GTextureManager.AddPatch(VName("BSPLAT2", VName::AddLower8), TEXTYPE_Pic);
   if (tex < 0) return; // no decal gfx, nothing to do
 
   // get picture size, so we can spread it over segs and linedefs

@@ -20,10 +20,12 @@ void main () {
   vec4 TexColour;
 
   TexColour = (texture2D(Texture, TextureCoordinate)*Light);
+  //TexColour = (texture2D(Texture, gl_TexCoord[0].xy)*Light);
   FinalColour_1 = TexColour;
 
   if (TexColour.w < 0.1) discard;
 
+  /*
   if (FogEnabled) {
     float FogFactor_3;
 
@@ -43,6 +45,15 @@ void main () {
     float FogFactor = clamp((ClampFactor-0.1)/0.9, 0.0, 1.0);
     FinalColour_1 = mix(FogColour, TexColour, FogFactor*FogFactor*(3.0-(2.0*FogFactor)));
   }
+  */
 
   gl_FragColor = FinalColour_1;
+  /*
+  //gl_FragColor.r = gl_TexCoord[0].x;
+  //gl_FragColor.g = gl_TexCoord[0].y;
+  gl_FragColor.r = TextureCoordinate.x;
+  gl_FragColor.g = TextureCoordinate.y;
+  gl_FragColor.b = 0;
+  gl_FragColor.a = 1;
+  */
 }
