@@ -17,7 +17,7 @@ option(WITH_FLAC "Enable FLAC support" ON)
 option(WITH_GME "Enable built-in GME support" OFF)
 
 option(ENABLE_CLIENT "Build client executable" ON)
-option(ENABLE_SERVER "Build dedicated server executable" ON)
+option(ENABLE_SERVER "Build dedicated server executable" OFF)
 if(UNIX)
 option(ENABLE_WRAPPERS "Enable creation of wrapper scripts" ON)
 endif(UNIX)
