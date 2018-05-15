@@ -393,15 +393,9 @@ void VOpenGLDrawer::UploadTexture(int width, int height, const rgba_t* data)
 	vuint8*	stackbuf = (vuint8 *)Z_Malloc(256 * 128 * 4);
 
 	w = ToPowerOf2(width);
-	if (w > maxTexSize)
-	{
-		w = maxTexSize;
-	}
+	if (w > maxTexSize) w = maxTexSize;
 	h = ToPowerOf2(height);
-	if (h > maxTexSize)
-	{
-		h = maxTexSize;
-	}
+	if (h > maxTexSize) h = maxTexSize;
 
 	if (w * h * 4 <= int(sizeof(stackbuf)))
 	{
@@ -414,7 +408,7 @@ void VOpenGLDrawer::UploadTexture(int width, int height, const rgba_t* data)
 	if (w != width || h != height)
 	{
 		/* Smooth transparent edges */
-		VTexture::SmoothEdges(image, w, h, image);
+		VTexture::SmoothEdges((vuint8*)data, width, height, (vuint8*)data);
 		/* must rescale image to get "top" mipmap texture image */
 		VTexture::ResampleTexture(width, height, (vuint8*)data, w, h, image, multisampling_sample);
 	}
@@ -428,18 +422,12 @@ void VOpenGLDrawer::UploadTexture(int width, int height, const rgba_t* data)
 	for (level = 1; w > 1 || h > 1; level++)
 	{
 		VTexture::MipMap(w, h, image);
-		if (w > 1)
-			w >>= 1;
-		if (h > 1)
-			h >>= 1;
-		glTexImage2D(GL_TEXTURE_2D, level, 4, w, h, 0, GL_RGBA,
-			GL_UNSIGNED_BYTE, image);
+		if (w > 1) w >>= 1;
+		if (h > 1) h >>= 1;
+		glTexImage2D(GL_TEXTURE_2D, level, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 	}
 
-	if (image != stackbuf)
-	{
-		Z_Free(image);
-	}
+	if (image != stackbuf) Z_Free(image);
 	Z_Free(stackbuf);
 	unguard;
 }
