@@ -65,8 +65,7 @@ void Tick(float DeltaTime)
 		{
 			if (changexy)
 			{
-				if (!TryMoveEx(&tmtrace, vector(Origin.x + xfrac,
-					Origin.y + yfrac, Origin.z), true))
+				if (!TryMoveEx(&tmtrace, vector(Origin.x+xfrac, Origin.y+yfrac, Origin.z), true))
 				{
 					// Blocked move
 					if (tmtrace.BlockingMobj)
@@ -75,7 +74,8 @@ void Tick(float DeltaTime)
 					}
 					else
 					{
-						ExplodeMissile(none);
+						// Hit the wall
+						ExplodeMissile(none, tmtrace.BlockingLine);
 					}
 					return;
 				}
@@ -86,6 +86,7 @@ void Tick(float DeltaTime)
 				// Hit the floor
 				Origin.z = FloorZ;
 				HitFloorType();
+				//!print("FLOOR HIT! '%s'", NameToStr(GetClassName(Class)));
 				ExplodeMissile(none);
 				return;
 			}

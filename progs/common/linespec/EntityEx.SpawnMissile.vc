@@ -92,8 +92,7 @@ final bool CheckMissileSpawn()
 				Level.TotalKills--;
 			}
 			//	Don't explode missiles on horizon lines.
-			if (tmtrace.BlockingLine && tmtrace.BlockingLine->special ==
-				LNSPEC_LineHorizon)
+			if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon)
 			{
 				Destroy();
 			}
@@ -113,7 +112,7 @@ final bool CheckMissileSpawn()
 //
 //==========================================================================
 
-final bool ExplodeMissile(EntityEx Victim)
+final bool ExplodeMissile(EntityEx Victim, optional line_t *line)
 {
 	if (bExploCount)
 	{
@@ -121,6 +120,13 @@ final bool ExplodeMissile(EntityEx Victim)
 		{
 			return false;
 		}
+	}
+
+	//k8:TODO: this should be strictly client-side
+	if (line && DecalType) {
+		// the only case we can have a blocking line is the line without backsector
+		// (dunno why, this is how it is done in the source code)
+		if (line->frontsector) SpawnDecal(Origin, DecalType, line->frontsector, line);
 	}
 
 	Velocity = vector(0.0, 0.0, 0.0);

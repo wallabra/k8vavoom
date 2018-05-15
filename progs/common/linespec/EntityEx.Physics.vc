@@ -618,7 +618,7 @@ final void HitLine(tmtrace_t* tmtrace, float StepVelScale)
 			}
 			return;
 		}
-		ExplodeMissile(none);
+		ExplodeMissile(none, tmtrace->BlockingLine);
 	}
 	else if (bSlide)
 	{
@@ -772,6 +772,7 @@ final bool HitFloor()
 			return false;
 		}
 		HitFloorType();
+		//!print("FLOOR HIT (1)! '%s'", NameToStr(GetClassName(Class)));
 		ExplodeMissile(none);
 		return false;
 	}
@@ -873,6 +874,7 @@ final bool HitCeiling()
 			}
 			return false;
 		}
+		//!print("CEILING HIT (1)! '%s'", NameToStr(GetClassName(Class)));
 		ExplodeMissile(none);
 		return false;
 	}
