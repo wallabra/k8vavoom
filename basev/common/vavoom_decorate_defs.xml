@@ -316,6 +316,7 @@
 		<prop_int_unsupported name="LimitedToTeam" />
 		<prop_int_unsupported name="VisibleToTeam" />		
 		<prop_int_unsupported name="LimitedToPlayerClass" />
+		<flag_unsupported name="RelativeToFloor" />
 	</class>
 
 	<class name="Inventory">
@@ -434,6 +435,7 @@
 		<!-- SkulTag Specific weapon flags -->
 		<flag_unsupported name="Allow_With_Respawn_Ivul" />
 		<flag_unsupported name="NoLMS" />
+		<prop_string_unsupported name="Weapon.PreferredSkin" />
 	</class>
 
 	<class name="WeaponPiece">
