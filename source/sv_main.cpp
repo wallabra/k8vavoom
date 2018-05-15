@@ -119,6 +119,8 @@ void SV_Init()
 
 	ProcessDecorateScripts();
 
+	ProcessDecalDefs();
+
 	ProcessDehackedFiles();
 
 	for (i = 0; i < VClass::GSpriteNames.Num(); i++)

@@ -73,10 +73,15 @@ public:
   VDecalDef () : next(nullptr), animname(NAME_none), name(NAME_none), pic(NAME_none), scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0), fuzzy(false), fullbright(false), animator(nullptr) { shade[0] = shade[1] = shade[2] = shade[3] = 0; }
   ~VDecalDef ();
 
+public:
+  static VDecalDef *find (const VStr& aname);
+  static VDecalDef *find (const VName& aname);
+
 private:
   static VDecalDef* listHead;
 
   friend void ParseDecalDef (VScriptParser* sc);
+  friend void ProcessDecalDefs ();
 };
 
 
@@ -90,6 +95,8 @@ private:
   static void addToList (VDecalGroup* dg);
   static void removeFromList (VDecalGroup* dg);
 
+  void fixup ();
+
 public:
   // name is not parsed yet
   bool parse (VScriptParser* sc);
@@ -98,16 +105,21 @@ public:
   // decaldef properties
   VName name;
   TArray<VName> nameList;
-  TArray<VDecalDef *> list;
+  TArray<VDecalDef *> list; // can contain less items than `nameList`
 
 public:
   VDecalGroup () : next(nullptr), name(NAME_none), nameList(), list() {}
   ~VDecalGroup () {}
 
+public:
+  static VDecalGroup *find (const VStr& aname);
+  static VDecalGroup *find (const VName& aname);
+
 private:
   static VDecalGroup* listHead;
 
   friend void ParseDecalDef (VScriptParser* sc);
+  friend void ProcessDecalDefs ();
 };
 
 
@@ -120,6 +132,9 @@ private:
 private:
   static void addToList (VDecalAnim* anim);
   static void removeFromList (VDecalAnim* anim);
+
+protected:
+  virtual void fixup ();
 
 public:
   virtual bool parse (VScriptParser* sc) = 0;
@@ -137,10 +152,15 @@ public:
 
   virtual void animate (decal_t* decal) = 0;
 
+public:
+  static VDecalAnim *find (const VStr& aname);
+  static VDecalAnim *find (const VName& aname);
+
 private:
   static VDecalAnim* listHead;
 
   friend void ParseDecalDef (VScriptParser* sc);
+  friend void ProcessDecalDefs ();
 };
 
 
@@ -163,6 +183,7 @@ public:
   virtual void animate (decal_t* decal) override;
 
   friend void ParseDecalDef (VScriptParser* sc);
+  friend void ProcessDecalDefs ();
 };
 
 
@@ -186,6 +207,7 @@ public:
   virtual void animate (decal_t* decal) override;
 
   friend void ParseDecalDef (VScriptParser* sc);
+  friend void ProcessDecalDefs ();
 };
 
 
@@ -209,6 +231,7 @@ public:
   virtual void animate (decal_t* decal) override;
 
   friend void ParseDecalDef (VScriptParser* sc);
+  friend void ProcessDecalDefs ();
 };
 
 
@@ -232,6 +255,7 @@ public:
   virtual void animate (decal_t* decal) override;
 
   friend void ParseDecalDef (VScriptParser* sc);
+  friend void ProcessDecalDefs ();
 };
 
 
@@ -240,7 +264,10 @@ class VDecalAnimCombiner : public VDecalAnim {
 public:
   // animator properties
   TArray<VName> nameList;
-  TArray<VDecalAnim *> list;
+  TArray<VDecalAnim *> list; // can contain less items than `nameList`
+
+protected:
+  virtual void fixup () override;
 
 public:
   virtual bool parse (VScriptParser* sc) override;
@@ -255,8 +282,11 @@ public:
   virtual void animate (decal_t* decal) override;
 
   friend void ParseDecalDef (VScriptParser* sc);
+  friend void ProcessDecalDefs ();
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 void ParseDecalDef (VScriptParser* sc);
+
+void ProcessDecalDefs ();

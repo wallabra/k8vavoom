@@ -64,6 +64,16 @@ static bool parseHexRGB (const VStr& str, float clr[]) {
 // ////////////////////////////////////////////////////////////////////////// //
 void VDecalDef::addToList (VDecalDef* dc) {
   if (!dc) return;
+  if (dc->name == NAME_none) { delete dc; return; }
+  // remove old definition
+  for (auto it = listHead, prev = (VDecalDef *)nullptr; it; prev = it, it = it->next) {
+    if (it->name == dc->name) {
+      if (prev) prev->next = it->next; else listHead = it->next;
+      delete it;
+      break;
+    }
+  }
+  // insert new one
   dc->next = listHead;
   listHead = dc;
 }
@@ -80,6 +90,20 @@ void VDecalDef::removeFromList (VDecalDef* dc) {
 }
 
 
+VDecalDef *VDecalDef::find (const VStr& aname) {
+  VName xn = VName(*aname, VName::Find);
+  if (xn == NAME_none) return nullptr;
+  return find(xn);
+}
+
+VDecalDef *VDecalDef::find (const VName& aname) {
+  for (auto it = listHead; it; it = it->next) {
+    if (it->name == aname) return it;
+  }
+  return nullptr;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 VDecalDef::~VDecalDef () {
   removeFromList(this);
@@ -90,7 +114,7 @@ VDecalDef::~VDecalDef () {
 bool VDecalDef::parse (VScriptParser* sc) {
   guard(VDecalDef::parse);
 
-  sc->SetCMode(true);
+  sc->SetCMode(false);
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal name"); return false; }
   name = VName(*sc->String);
@@ -112,8 +136,8 @@ bool VDecalDef::parse (VScriptParser* sc) {
       continue;
     }
 
-    if (sc->Check("xscale")) { sc->ExpectFloat(); scaleX = sc->Float; continue; }
-    if (sc->Check("yscale")) { sc->ExpectFloat(); scaleY = sc->Float; continue; }
+    if (sc->Check("x-scale")) { sc->ExpectFloat(); scaleX = sc->Float; continue; }
+    if (sc->Check("y-scale")) { sc->ExpectFloat(); scaleY = sc->Float; continue; }
 
     if (sc->Check("flipx")) { flipX = FlipAlways; continue; }
     if (sc->Check("flipy")) { flipY = FlipAlways; continue; }
@@ -145,6 +169,16 @@ bool VDecalDef::parse (VScriptParser* sc) {
 // ////////////////////////////////////////////////////////////////////////// //
 void VDecalGroup::addToList (VDecalGroup* dg) {
   if (!dg) return;
+  if (dg->name == NAME_none) { delete dg; return; }
+  // remove old definition
+  for (auto it = listHead, prev = (VDecalGroup *)nullptr; it; prev = it, it = it->next) {
+    if (it->name == dg->name) {
+      if (prev) prev->next = it->next; else listHead = it->next;
+      delete it;
+      break;
+    }
+  }
+  // insert new one
   dg->next = listHead;
   listHead = dg;
 }
@@ -161,7 +195,29 @@ void VDecalGroup::removeFromList (VDecalGroup* dg) {
 }
 
 
+VDecalGroup *VDecalGroup::find (const VStr& aname) {
+  VName xn = VName(*aname, VName::Find);
+  if (xn == NAME_none) return nullptr;
+  return find(xn);
+}
+
+VDecalGroup *VDecalGroup::find (const VName& aname) {
+  for (auto it = listHead; it; it = it->next) {
+    if (it->name == aname) return it;
+  }
+  return nullptr;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
+void VDecalGroup::fixup () {
+  for (int f = 0; f < nameList.Num(); ++f) {
+    auto it = VDecalDef::find(nameList[f]);
+    if (it) list.Append(it); else GCon->Logf("WARNING: decalgroup '%s' contains unknown decal '%s'!", *name, *nameList[f]);
+  }
+}
+
+
 // name is not parsed yet
 bool VDecalGroup::parse (VScriptParser* sc) {
   guard(VDecalGroup::parse);
@@ -191,6 +247,16 @@ bool VDecalGroup::parse (VScriptParser* sc) {
 // ////////////////////////////////////////////////////////////////////////// //
 void VDecalAnim::addToList (VDecalAnim* anim) {
   if (!anim) return;
+  if (anim->name == NAME_none) { delete anim; return; }
+  // remove old definition
+  for (auto it = listHead, prev = (VDecalAnim *)nullptr; it; prev = it, it = it->next) {
+    if (it->name == anim->name) {
+      if (prev) prev->next = it->next; else listHead = it->next;
+      delete it;
+      break;
+    }
+  }
+  // insert new one
   anim->next = listHead;
   listHead = anim;
 }
@@ -207,10 +273,28 @@ void VDecalAnim::removeFromList (VDecalAnim* anim) {
 }
 
 
+VDecalAnim *VDecalAnim::find (const VStr& aname) {
+  VName xn = VName(*aname, VName::Find);
+  if (xn == NAME_none) return nullptr;
+  return find(xn);
+}
+
+VDecalAnim *VDecalAnim::find (const VName& aname) {
+  for (auto it = listHead; it; it = it->next) {
+    if (it->name == aname) return it;
+  }
+  return nullptr;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // base decal animator class
 VDecalAnim::~VDecalAnim () {
   removeFromList(this);
+}
+
+
+void VDecalAnim::fixup () {
 }
 
 
@@ -400,6 +484,14 @@ VDecalAnimCombiner::~VDecalAnimCombiner () {
 }
 
 
+void VDecalAnimCombiner::fixup () {
+  for (int f = 0; f < nameList.Num(); ++f) {
+    auto it = VDecalAnim::find(nameList[f]);
+    if (it) list.Append(it); else GCon->Logf("WARNING: animgroup '%s' contains unknown anim '%s'!", *name, *nameList[f]);
+  }
+}
+
+
 VDecalAnim* VDecalAnimCombiner::clone () {
   VDecalAnimCombiner* res = new VDecalAnimCombiner();
   for (int f = 0; f < nameList.Num(); ++f) res->nameList.Append(nameList[f]);
@@ -550,6 +642,27 @@ void ParseDecalDef (VScriptParser* sc) {
 
   delete sc;
 
+  unguard;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void ProcessDecalDefs () {
+  guard(ProcessDecalDefs);
+
+  GCon->Logf(NAME_Init, "Parsing DECAL definitions");
+
+  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
+    if (W_LumpName(Lump) == NAME_decaldef) {
+      GCon->Logf("Parsing decal definition script '%s'...", *W_FullLumpName(Lump));
+      ParseDecalDef(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)));
+    }
+  }
+
+  for (auto it = VDecalGroup::listHead; it; it = it->next) it->fixup();
+  for (auto it = VDecalAnim::listHead; it; it = it->next) it->fixup();
+
+  TLocation::ClearSourceFiles();
   unguard;
 }
 
