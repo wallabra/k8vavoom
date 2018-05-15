@@ -273,6 +273,8 @@ class VEntity : public VThinker
 	//	Owner entity of inventory item
 	VEntity*		Owner;
 
+	VName DecalName;
+
 	static int FIndex_OnMapSpawn;
 	static int FIndex_BeginPlay;
 	static int FIndex_Destroyed;

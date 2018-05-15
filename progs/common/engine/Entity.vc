@@ -331,6 +331,8 @@ name			SoundGender;
 	//	Owner entity of inventory item
 Entity			Owner;
 
+name DecalName;
+
 replication
 {
 	reliable if (Role == ROLE_Authority)

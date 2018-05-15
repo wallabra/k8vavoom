@@ -55,7 +55,7 @@
 		<prop_translation name="Translation" property="Translation" />
 		<prop_blood_colour name="BloodColor" />
 		<prop_blood_type name="BloodType" />
-		<prop_string_unsupported name="Decal" />
+		<prop_name name="Decal" property="DecalName" />
 		<prop_stencil_colour name="StencilColor" />
 		<!--  Obituaries -->
 		<prop_string name="Obituary" property="Obituary" />
