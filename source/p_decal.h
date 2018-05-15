@@ -74,8 +74,8 @@ public:
   ~VDecalDef ();
 
 public:
-  static VDecalDef *find (const VStr& aname);
-  static VDecalDef *find (const VName& aname);
+  static VDecalDef* find (const VStr& aname);
+  static VDecalDef* find (const VName& aname);
 
 private:
   static VDecalDef* listHead;
@@ -104,16 +104,16 @@ public:
 public:
   // decaldef properties
   VName name;
-  TArray<VName> nameList;
-  TArray<VDecalDef *> list; // can contain less items than `nameList`
+  TArray<VName> nameList; // can be empty in cloned/loaded object
+  TArray<VDecalDef*> list; // can contain less items than `nameList`
 
 public:
   VDecalGroup () : next(nullptr), name(NAME_none), nameList(), list() {}
   ~VDecalGroup () {}
 
 public:
-  static VDecalGroup *find (const VStr& aname);
-  static VDecalGroup *find (const VName& aname);
+  static VDecalGroup* find (const VStr& aname);
+  static VDecalGroup* find (const VName& aname);
 
 private:
   static VDecalGroup* listHead;
@@ -126,6 +126,9 @@ private:
 // ////////////////////////////////////////////////////////////////////////// //
 // base decal animator class
 class VDecalAnim {
+public:
+  enum { TypeId = 0 };
+
 private:
   VDecalAnim* next; // animDefHead
 
@@ -134,6 +137,8 @@ private:
   static void removeFromList (VDecalAnim* anim);
 
 protected:
+  virtual vuint8 getTypeId () const { return VDecalAnim::TypeId; }
+  virtual void doIO (VStream& Strm) = 0;
   virtual void fixup ();
 
 public:
@@ -152,9 +157,11 @@ public:
 
   virtual void animate (decal_t* decal) = 0;
 
+  static void Serialise (VStream& Strm, VDecalAnim*& aptr);
+
 public:
-  static VDecalAnim *find (const VStr& aname);
-  static VDecalAnim *find (const VName& aname);
+  static VDecalAnim* find (const VStr& aname);
+  static VDecalAnim* find (const VName& aname);
 
 private:
   static VDecalAnim* listHead;
@@ -167,8 +174,15 @@ private:
 // ////////////////////////////////////////////////////////////////////////// //
 class VDecalAnimFader : public VDecalAnim {
 public:
+  enum { TypeId = 1 };
+
+public:
   // animator properties
   float startTime, actionTime; // in seconds
+
+protected:
+  virtual vuint8 getTypeId () const override { return VDecalAnimFader::TypeId; }
+  virtual void doIO (VStream& Strm) override;
 
 public:
   virtual bool parse (VScriptParser* sc) override;
@@ -190,9 +204,16 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VDecalAnimStretcher : public VDecalAnim {
 public:
+  enum { TypeId = 2 };
+
+public:
   // animator properties
   float goalX, goalY;
   float startTime, actionTime; // in seconds
+
+protected:
+  virtual vuint8 getTypeId () const override { return VDecalAnimStretcher::TypeId; }
+  virtual void doIO (VStream& Strm) override;
 
 public:
   virtual bool parse (VScriptParser* sc) override;
@@ -214,9 +235,16 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VDecalAnimSlider : public VDecalAnim {
 public:
+  enum { TypeId = 3 };
+
+public:
   // animator properties
   float distX, distY;
   float startTime, actionTime; // in seconds
+
+protected:
+  virtual vuint8 getTypeId () const override { return VDecalAnimSlider::TypeId; }
+  virtual void doIO (VStream& Strm) override;
 
 public:
   virtual bool parse (VScriptParser* sc) override;
@@ -238,9 +266,16 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VDecalAnimColorChanger : public VDecalAnim {
 public:
+  enum { TypeId = 4 };
+
+public:
   // animator properties
   float dest[3];
   float startTime, actionTime; // in seconds
+
+protected:
+  virtual vuint8 getTypeId () const override { return VDecalAnimColorChanger::TypeId; }
+  virtual void doIO (VStream& Strm) override;
 
 public:
   virtual bool parse (VScriptParser* sc) override;
@@ -262,9 +297,19 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VDecalAnimCombiner : public VDecalAnim {
 public:
+  enum { TypeId = 5 };
+
+private:
+  bool mIsCloned;
+
+protected:
+  virtual vuint8 getTypeId () const override { return VDecalAnimCombiner::TypeId; }
+  virtual void doIO (VStream& Strm) override;
+
+public:
   // animator properties
-  TArray<VName> nameList;
-  TArray<VDecalAnim *> list; // can contain less items than `nameList`
+  TArray<VName> nameList; // can be empty in cloned/loaded object
+  TArray<VDecalAnim*> list; // can contain less items than `nameList`
 
 protected:
   virtual void fixup () override;
@@ -273,7 +318,7 @@ public:
   virtual bool parse (VScriptParser* sc) override;
 
 public:
-  VDecalAnimCombiner () : VDecalAnim(), nameList(), list() {}
+  VDecalAnimCombiner () : VDecalAnim(), mIsCloned(false), nameList(), list() {}
   virtual ~VDecalAnimCombiner ();
 
   // this does deep clone, so we can attach it to the actual decal object

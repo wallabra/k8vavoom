@@ -132,11 +132,23 @@ struct decal_t
 {
 	decal_t* next; // in this seg
 	seg_t* seg;
+	VName decalname; // this can be used to remove excessive decals in the future
 	int texture;
 	TVec org;
 	float xdist; // normalized
-	float linelen;
-	VName decalname;
+	float linelen; // so we don't have to recalculate it in renderer
+	float shade[4]; // [3]: mix coeff [0..1]; 0 means "original color", 1 means "use shade color"
+	float ofsX, ofsY; // for animators
+	float shiftX; // for spreaded decals, in pixels
+	float lenX; // for spreaded decals, in pixels
+	float origScaleX, origScaleY; // for animators
+	float scaleX, scaleY;
+	int flipX, flipY; // FlipXXX constant
+	float alpha; // decal alpha
+	float addAlpha; // alpha for additive translucency (not supported yet)
+	int fuzzy; // bool: draw decal with "fuzzy" effect (not supported yet)
+	int fullbright; // bool
+	VDecalAnim* animator; // decal animator (can be nullptr)
 };
 
 class VSky

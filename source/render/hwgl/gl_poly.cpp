@@ -391,23 +391,6 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   p_glUniform1iARB(SurfDecalIsLightmap, (lmap ? GL_TRUE : GL_FALSE));
   p_glUniform1iARB(SurfDecalTextureLoc, 0);
   p_glUniform1iARB(SurfDecalFogTypeLoc, r_fog&3);
-  float lev = (float)(surf->Light>>24)/255.0f;
-  //lev = 1.0;
-  p_glUniform4fARB(SurfDecalLightLoc, ((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
-  if (surf->Fade) {
-    p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_TRUE);
-    p_glUniform4fARB(SurfDecalFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
-    p_glUniform1fARB(SurfDecalFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
-    p_glUniform1fARB(SurfDecalFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
-    p_glUniform1fARB(SurfDecalFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end));
-  } else {
-    p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_FALSE);
-  }
-
-  //glColor3f(1, 0, 0); // just in case
-  p_glUniform4fARB(SurfDecalSplatColourLoc, 1, 0, 0, 1);
-  p_glUniform1fARB(SurfDecalSplatAlphaLoc, 1.0);
-
   texinfo_t *tex = surf->texinfo;
 
   //glEnable(GL_POLYGON_OFFSET_FILL);
@@ -432,21 +415,34 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
 
   for (decal_t* dc = surf->dcseg->decals; dc; dc = dc->next) {
     if (dc->texture < 0) continue;
+    if (dc->scaleX <= 0 || dc->scaleY <= 0) continue;
+
     auto dtex = GTextureManager[dc->texture];
     if (!dtex) continue;
     if (dtex->Width < 1 || dtex->Height < 1) continue; // invisible picture
 
-    SetTexture(dtex, tex->ColourMap);
+    //FIXME: this should use origScale to get starting position
+    float txw2 = dtex->Width*dc->scaleX*0.5;
+    float txh2 = dtex->Height*dc->scaleY*0.5;
+    if (txw2 < 1 || txh2 < 1) continue;
 
-    /*
-    if (lmap) {
-      fprintf(stderr, "===\n");
-      fprintf(stderr, "org:(%f,%f,%f); ldef:(%f,%f)-(%f,%f); xdist=%f\n", dc->org.x, dc->org.y, dc->org.z, dc->seg->linedef->v1->x, dc->seg->linedef->v1->y, dc->seg->linedef->v2->x, dc->seg->linedef->v2->y, dc->xdist);
+    float lev = (dc->fullbright ? 1.0f : (float)(surf->Light>>24)/255.0f);
+    p_glUniform4fARB(SurfDecalLightLoc, ((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+    if (surf->Fade && !dc->fullbright) {
+      p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_TRUE);
+      p_glUniform4fARB(SurfDecalFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
+      p_glUniform1fARB(SurfDecalFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
+      p_glUniform1fARB(SurfDecalFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
+      p_glUniform1fARB(SurfDecalFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end));
+    } else {
+      p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_FALSE);
     }
-    */
 
-    float txw2 = dtex->Width*0.5f;
-    float txh2 = dtex->Height*0.5f;
+    //glColor3f(1, 0, 0); // just in case
+    p_glUniform4fARB(SurfDecalSplatColourLoc, dc->shade[0], dc->shade[1], dc->shade[2], dc->shade[3]);
+    p_glUniform1fARB(SurfDecalSplatAlphaLoc, dc->alpha);
+
+    SetTexture(dtex, tex->ColourMap);
 
     TVec lv1, lv2;
     lv1 = *(dc->seg->side ? dc->seg->linedef->v2 : dc->seg->linedef->v1);
@@ -455,11 +451,16 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     TVec v0 = lv1+((lv2-lv1)/dc->linelen)*(dc->xdist*dc->linelen-txw2);
     TVec v2 = lv1+((lv2-lv1)/dc->linelen)*(dc->xdist*dc->linelen+txw2);
 
+    float texx0 = (dc->flipX ? 1.0f : 0.0f);
+    float texx1 = (dc->flipX ? 0.0f : 1.0f);
+    float texy0 = (dc->flipY ? 1.0f : 0.0f);
+    float texy1 = (dc->flipY ? 0.0f : 1.0f);
+
     glBegin(GL_QUADS);
-      glTexCoord2f(0.0f, 0.0f); glVertex3f(v0.x, v0.y, dc->org.z-txh2);
-      glTexCoord2f(0.0f, 1.0f); glVertex3f(v0.x, v0.y, dc->org.z+txh2);
-      glTexCoord2f(1.0f, 1.0f); glVertex3f(v2.x, v2.y, dc->org.z+txh2);
-      glTexCoord2f(1.0f, 0.0f); glVertex3f(v2.x, v2.y, dc->org.z-txh2);
+      glTexCoord2f(texx0, texy0); glVertex3f(v0.x, v0.y, dc->org.z-txh2);
+      glTexCoord2f(texx0, texy1); glVertex3f(v0.x, v0.y, dc->org.z+txh2);
+      glTexCoord2f(texx1, texy1); glVertex3f(v2.x, v2.y, dc->org.z+txh2);
+      glTexCoord2f(texx1, texy0); glVertex3f(v2.x, v2.y, dc->org.z-txh2);
     glEnd();
   }
 

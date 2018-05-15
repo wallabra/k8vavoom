@@ -32,6 +32,8 @@
 // mapblocks are used to check movement against lines and things
 #define MapBlock(x)		((int)floor(x) >> 7)
 
+class VDecalDef;
+
 //==========================================================================
 //
 //	Structures for level network replication
@@ -383,7 +385,9 @@ private:
 
 	int SetBodyQueueTrans(int, int);
 
-	void AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li, int prevdir=0);
+	void AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li);
+	// called by `AddDecal()`
+	void AddOneDecal (TVec org, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir=0, int flipx=-1, int flipy=-1, float shiftx=0, float lenx=-1);
 
 	DECLARE_FUNCTION(PointInSector)
 	DECLARE_FUNCTION(TraceLine)

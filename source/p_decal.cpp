@@ -311,6 +311,14 @@ VDecalAnim* VDecalAnimFader::clone () {
 }
 
 
+void VDecalAnimFader::doIO (VStream& Strm) {
+  guard(VDecalAnimFader::doIO);
+  Strm << startTime;
+  Strm << actionTime;
+  unguard;
+}
+
+
 void VDecalAnimFader::animate (decal_t* decal) {
 }
 
@@ -352,6 +360,16 @@ VDecalAnim* VDecalAnimStretcher::clone () {
   res->startTime = startTime;
   res->actionTime = actionTime;
   return res;
+}
+
+
+void VDecalAnimStretcher::doIO (VStream& Strm) {
+  guard(VDecalAnimStretcher::doIO);
+  Strm << goalX;
+  Strm << goalY;
+  Strm << startTime;
+  Strm << actionTime;
+  unguard;
 }
 
 
@@ -397,6 +415,16 @@ VDecalAnim* VDecalAnimSlider::clone () {
   res->startTime = startTime;
   res->actionTime = actionTime;
   return res;
+}
+
+
+void VDecalAnimSlider::doIO (VStream& Strm) {
+  guard(VDecalAnimSlider::doIO);
+  Strm << distX;
+  Strm << distY;
+  Strm << startTime;
+  Strm << actionTime;
+  unguard;
 }
 
 
@@ -446,6 +474,17 @@ VDecalAnim* VDecalAnimColorChanger::clone () {
 }
 
 
+void VDecalAnimColorChanger::doIO (VStream& Strm) {
+  guard(VDecalAnimColorChanger::doIO);
+  Strm << dest[0];
+  Strm << dest[1];
+  Strm << dest[2];
+  Strm << startTime;
+  Strm << actionTime;
+  unguard;
+}
+
+
 void VDecalAnimColorChanger::animate (decal_t* decal) {
 }
 
@@ -481,6 +520,9 @@ bool VDecalAnimColorChanger::parse (VScriptParser* sc) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 VDecalAnimCombiner::~VDecalAnimCombiner () {
+  if (mIsCloned) {
+    for (int f = 0; f < list.Num(); ++f) delete list[f];
+  }
 }
 
 
@@ -494,9 +536,27 @@ void VDecalAnimCombiner::fixup () {
 
 VDecalAnim* VDecalAnimCombiner::clone () {
   VDecalAnimCombiner* res = new VDecalAnimCombiner();
+  res->mIsCloned = true;
   for (int f = 0; f < nameList.Num(); ++f) res->nameList.Append(nameList[f]);
-  for (int f = 0; f < list.Num(); ++f) res->list.Append(list[f]);
+  for (int f = 0; f < list.Num(); ++f) res->list.Append(list[f]->clone());
   return res;
+}
+
+
+void VDecalAnimCombiner::doIO (VStream& Strm) {
+  guard(VDecalAnimCombiner::doIO);
+  int len = 0;
+  if (Strm.IsLoading()) {
+    Strm << len;
+    if (len < 0 || len > 65535) Host_Error("Level load: invalid number of animations in animcombiner");
+    list.SetNum(len);
+    for (int f = 0; f < list.Num(); ++f) list[f] = nullptr;
+  } else {
+    len = list.Num();
+    Strm << len;
+  }
+  for (int f = 0; f < list.Num(); ++f) VDecalAnim::Serialise(Strm, list[f]);
+  unguard;
 }
 
 
@@ -524,6 +584,35 @@ bool VDecalAnimCombiner::parse (VScriptParser* sc) {
   }
 
   return false;
+  unguard;
+}
+
+
+void VDecalAnim::Serialise (VStream& Strm, VDecalAnim*& aptr) {
+  guard(VDecalAnim::Serialise);
+  // animator
+  if (Strm.IsLoading()) {
+    // load animator
+    vuint8 type = 0;
+    Strm << type;
+    switch (type) {
+      case 0: aptr = nullptr; return;
+      case VDecalAnimFader::TypeId: aptr = new VDecalAnimFader(); break;
+      case VDecalAnimStretcher::TypeId: aptr = new VDecalAnimStretcher(); break;
+      case VDecalAnimSlider::TypeId: aptr = new VDecalAnimSlider(); break;
+      case VDecalAnimColorChanger::TypeId: aptr = new VDecalAnimColorChanger(); break;
+      case VDecalAnimCombiner::TypeId: aptr = new VDecalAnimCombiner(); break;
+      default: Host_Error("Level load: unknown decal animator type");
+    }
+    aptr->doIO(Strm);
+  } else {
+    // save animator
+    vuint8 type = 0;
+    if (!aptr) { Strm << type; return; }
+    type = aptr->getTypeId();
+    Strm << type;
+    aptr->doIO(Strm);
+  }
   unguard;
 }
 

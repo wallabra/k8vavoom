@@ -104,7 +104,7 @@ byte *VLevel::LeafPVS(const subsector_t *ss) const
 
 //==========================================================================
 //
-//	VLevel::Serialise
+//	DecalIO
 //
 //==========================================================================
 
@@ -112,11 +112,6 @@ static void DecalIO (VStream& Strm, decal_t *dc) {
 	if (!dc) return;
 	char namebuf[64];
 	vuint32 namelen = 0;
-	Strm << dc->org.x;
-	Strm << dc->org.y;
-	Strm << dc->org.z;
-	Strm << dc->xdist;
-	Strm << dc->linelen;
 	if (Strm.IsLoading()) {
 		Strm << namelen;
 		if (namelen == 0 || namelen > 63) Host_Error("Level load: invalid decal name length");
@@ -131,7 +126,37 @@ static void DecalIO (VStream& Strm, decal_t *dc) {
 		memcpy(namebuf, *dc->decalname, namelen);
 		Strm.Serialise(namebuf, namelen);
 	}
+	Strm << dc->org.x;
+	Strm << dc->org.y;
+	Strm << dc->org.z;
+	Strm << dc->xdist;
+	Strm << dc->linelen;
+	Strm << dc->shade[0];
+	Strm << dc->shade[1];
+	Strm << dc->shade[2];
+	Strm << dc->shade[3];
+	Strm << dc->ofsX;
+	Strm << dc->ofsY;
+	Strm << dc->shiftX;
+	Strm << dc->lenX;
+	Strm << dc->origScaleX;
+	Strm << dc->origScaleY;
+	Strm << dc->scaleX;
+	Strm << dc->scaleY;
+	Strm << dc->flipX;
+	Strm << dc->flipY;
+	Strm << dc->alpha;
+	Strm << dc->addAlpha;
+	Strm << dc->fuzzy;
+	Strm << dc->fullbright;
+	VDecalAnim::Serialise(Strm, dc->animator);
 }
+
+//==========================================================================
+//
+//	VLevel::Serialise
+//
+//==========================================================================
 
 void VLevel::Serialise(VStream& Strm)
 {
@@ -1014,12 +1039,27 @@ line_t* VLevel::FindAdjacentLine (line_t* srcline, int side, int dir) {
 
 //==========================================================================
 //
-// VLevel::AddDecal
+// VLevel::AddOneDecal
 //
 //==========================================================================
 
-void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li, int prevdir) {
-  if (!sec || !li || dectype == NAME_none) return; // just in case
+void VLevel::AddOneDecal (TVec org, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, int flipx, int flipy, float shiftx, float lenx) {
+  if (!dec || !sec || !li) return;
+
+  if (dec->scaleX <= 0 || dec->scaleY <= 0) return;
+  if (dec->alpha <= 0.1) return;
+
+  int tex = GTextureManager.AddPatch(dec->pic, TEXTYPE_Pic);
+  if (tex < 0) return; // no decal gfx, nothing to do
+
+  // get picture size, so we can spread it over segs and linedefs
+  picinfo_t tinf;
+  GTextureManager.GetTextureInfo(tex, &tinf);
+  if (tinf.width < 1 || tinf.height < 1) return; // invisible picture
+
+  // setup flips
+  if (flipx < 0) flipx = (dec->flipX == VDecalDef::FlipRandom ? (Random() < 0.5 ? VDecalDef::FlipNone : VDecalDef::FlipAlways) : dec->flipX);
+  if (flipy < 0) flipy = (dec->flipY == VDecalDef::FlipRandom ? (Random() < 0.5 ? VDecalDef::FlipNone : VDecalDef::FlipAlways) : dec->flipY);
 
   // calculate `dist` -- distance from wall start
   int sidenum = 0;
@@ -1048,32 +1088,20 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
   float linelen = Length(lv2-lv1);
   float segdist = dist*linelen;
 
-  GCon->Logf("Want to spawn decal '%s' (%s); dist=%f (linelen=%f)", *dectype, (li->frontsector == sec ? "front" : "back"), dist, linelen);
+  GCon->Logf("Want to spawn decal '%s' (%s); pic=<%s>; dist=%f (linelen=%f)", *dec->name, (li->frontsector == sec ? "front" : "back"), *dec->pic, dist, linelen);
 
-  int tex = GTextureManager.AddPatch(VName("BSPLAT2", VName::AddLower8), TEXTYPE_Pic);
-  if (tex < 0) return; // no decal gfx, nothing to do
-
-  // get picture size, so we can spread it over segs and linedefs
-  picinfo_t tinf;
-  GTextureManager.GetTextureInfo(tex, &tinf);
-  if (tinf.width < 1 || tinf.height < 1) return; // invisible picture
-
-  /*
-  float segd0 = segdist-tinf.width/2;
+  float segd0 = segdist-tinf.width/2.0f;
   float segd1 = segd0+tinf.width;
-  */
-  // for debugging
-  float segd0 = segdist-14;
-  float segd1 = segd0+14*2;
 
   if (segd1 <= 0 || segd0 >= linelen) return; // out of linedef
 
-  // find segs for this decal (there may be several)
+  // find segs for this decal (there may be several segs)
   for (int sidx = 0; sidx < NumSegs; ++sidx) {
     seg_t *seg = &Segs[sidx];
     if (seg->linedef == li && seg->frontsector == sec) {
       if (segd0 >= seg->offset+seg->length || segd1 < seg->offset) continue;
       GCon->Logf("  found seg #%d (segd=%f:%f; seg=%f:%f)", sidx, segd0, segd1, seg->offset, seg->offset+seg->length);
+      // create decals
       decal_t* decal = new decal_t;
       memset(decal, 0, sizeof(decal_t));
       decal_t* cdec = seg->decals;
@@ -1084,11 +1112,28 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
         seg->decals = decal;
       }
       decal->seg = seg;
+      decal->decalname = dec->name;
+      decal->texture = tex;
       decal->org = org;
       decal->xdist = dist;
       decal->linelen = linelen;
-      decal->texture = tex;
-      decal->decalname = dectype;
+      decal->shade[0] = dec->shade[0];
+      decal->shade[1] = dec->shade[1];
+      decal->shade[2] = dec->shade[2];
+      decal->shade[3] = dec->shade[3];
+      decal->ofsX = 0;
+      decal->ofsY = 0;
+      decal->shiftX = shiftx;
+      decal->lenX = (lenx < 0 ? tinf.width : lenx);
+      decal->scaleX = decal->origScaleX = dec->scaleX;
+      decal->scaleY = decal->origScaleY = dec->scaleY;
+      decal->flipX = flipx;
+      decal->flipY = flipy;
+      decal->alpha = dec->alpha;
+      decal->addAlpha = dec->addAlpha;
+      decal->fuzzy = dec->fuzzy;
+      decal->fullbright = dec->fullbright;
+      decal->animator = (dec->animator ? dec->animator->clone() : nullptr);
     }
   }
 
@@ -1105,7 +1150,7 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
     line_t* spline = FindAdjacentLine(li, sidenum, -1);
     if (spline) {
       GCon->Logf("  WANT LEFT SPREAD, found linedef");
-      AddDecal(org, dectype, sec, spline, -1);
+      AddOneDecal(org, dec, sec, spline, -1, flipx, flipy, shiftx, lenx);
     } else {
       GCon->Logf("  WANT LEFT SPREAD, but no left line found");
     }
@@ -1116,11 +1161,32 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
     line_t* spline = FindAdjacentLine(li, sidenum, 1);
     if (spline) {
       GCon->Logf("  WANT RIGHT SPREAD, found linedef");
-      AddDecal(org, dectype, sec, spline, 1);
+      AddOneDecal(org, dec, sec, spline, 1, flipx, flipy, shiftx, lenx);
     } else {
       GCon->Logf("  WANT RIGHT SPREAD, but no left line found");
     }
   }
+}
+
+//==========================================================================
+//
+// VLevel::AddDecal
+//
+//==========================================================================
+
+void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li) {
+  if (!sec || !li || dectype == NAME_none) return; // just in case
+
+  // first, try decal group
+  VDecalGroup *dgrp = VDecalGroup::find(dectype);
+  if (dgrp) {
+    for (int f = 0; f < dgrp->list.Num(); ++f) AddOneDecal(org, dgrp->list[f], sec, li);
+    return;
+  }
+
+  // no group, try lone decal
+  VDecalDef *dec = VDecalDef::find(dectype);
+  if (dec) AddOneDecal(org, dec, sec, li);
 }
 
 //==========================================================================
