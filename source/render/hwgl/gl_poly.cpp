@@ -394,7 +394,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   texinfo_t *tex = surf->texinfo;
 
   //glEnable(GL_POLYGON_OFFSET_FILL);
-  //glPolygonOffset(4.0f, 1.0f);
+  //glPolygonOffset(-4.0f, -1.0f);
 
   glDepthMask(GL_FALSE);
   glEnable(GL_STENCIL_TEST);
@@ -402,7 +402,6 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
   glEnable(GL_BLEND);
-  //glStencilFunc(GL_ALWAYS, 0x0, 0xff);
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   //glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -411,7 +410,10 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
 
+  //glEnable(GL_DEPTH_TEST);
+
   //glDisable(GL_STENCIL_TEST);
+  //glDisable(GL_BLEND);
 
   for (decal_t* dc = surf->dcseg->decals; dc; dc = dc->next) {
     if (dc->texture < 0) continue;
@@ -427,7 +429,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     if (txw2 < 1 || txh2 < 1) continue;
 
     float lev = (dc->fullbright ? 1.0f : (float)(surf->Light>>24)/255.0f);
-    p_glUniform4fARB(SurfDecalLightLoc, ((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+    p_glUniform4fARB(SurfDecalLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
     if (surf->Fade && !dc->fullbright) {
       p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_TRUE);
       p_glUniform4fARB(SurfDecalFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);

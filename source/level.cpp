@@ -1169,6 +1169,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
   //        be used, but another linedef from another sector with such texture
   //        is ok.
 
+  /*
   // left spread?
   if (segd0 < 0 && prevdir <= 0) {
     line_t* spline = FindAdjacentLine(li, sidenum, -1);
@@ -1190,6 +1191,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
       GCon->Logf("  WANT RIGHT SPREAD, but no left line found");
     }
   }
+  */
 }
 
 //==========================================================================
