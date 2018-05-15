@@ -1,5 +1,6 @@
 decal BDW_BulletDecal {
   pic BULDE1
+  //pic bsplnew3
   x-scale 0.5
   y-scale 0.5
   translucent 0.9
