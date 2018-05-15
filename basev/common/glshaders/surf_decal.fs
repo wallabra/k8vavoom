@@ -23,19 +23,25 @@ void main () {
 
   if (SplatAlpha <= 0.0) discard;
 
-  TexColour = (texture2D(Texture, TextureCoordinate)*Light);
+  TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < 0.1) discard;
 
-  //TexColour = (texture2D(Texture, gl_TexCoord[0].xy)*Light);
-  //FinalColour_1 = TexColour;
-
-  float lumi = 0.2126*TexColour.r+0.7152*TexColour.g+0.0722*TexColour.b;
+  float lumi = min(0.2126*TexColour.r+0.7152*TexColour.g+0.0722*TexColour.b, 1.0);
   if (lumi < 0.1) discard;
 
   FinalColour_1.r = clamp(TexColour.r*(1.0-SplatColour.a)+SplatColour.r*SplatColour.a, 0.0, 1.0);
   FinalColour_1.g = clamp(TexColour.g*(1.0-SplatColour.a)+SplatColour.g*SplatColour.a, 0.0, 1.0);
   FinalColour_1.b = clamp(TexColour.b*(1.0-SplatColour.a)+SplatColour.b*SplatColour.a, 0.0, 1.0);
   FinalColour_1.a = min(lumi*SplatAlpha, 1.0);
+  if (FinalColour_1.a < 0.1) discard;
+
+  FinalColour_1.r = clamp(FinalColour_1.r*Light.r*Light.a, 0.0, 1.0);
+  FinalColour_1.g = clamp(FinalColour_1.g*Light.g*Light.a, 0.0, 1.0);
+  FinalColour_1.b = clamp(FinalColour_1.b*Light.b*Light.a, 0.0, 1.0);
+
+  //FinalColour_1.r = clamp(FinalColour_1.r*Light.r, 0.0, 1.0);
+  //FinalColour_1.g = clamp(FinalColour_1.g*Light.g, 0.0, 1.0);
+  //FinalColour_1.b = clamp(FinalColour_1.b*Light.b, 0.0, 1.0);
 
   if (FogEnabled) {
     float FogFactor_3;
@@ -50,12 +56,13 @@ void main () {
       FogFactor_3 = (FogEnd-z)/(FogEnd-FogStart);
     }
 
-    float ClampFactor = clamp(FogFactor_3, 0.0, 1.0);
-    FogFactor_3 = ClampFactor;
+    FogFactor_3 = clamp(FogFactor_3, 0.0, 1.0);
 
-    float FogFactor = clamp((ClampFactor-0.1)/0.9, 0.0, 1.0);
+    float FogFactor = clamp((FogFactor_3-0.1)/0.9, 0.0, 1.0);
     FinalColour_1 = mix(FogColour, FinalColour_1, FogFactor*FogFactor*(3.0-(2.0*FogFactor)));
   }
+
+  //FinalColour_1 = vec4(1, 0, 0, 1);
 
   gl_FragColor = FinalColour_1;
 }

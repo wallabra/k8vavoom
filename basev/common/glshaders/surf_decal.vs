@@ -17,17 +17,5 @@ void main () {
   // transforming the vertex
   gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
 
-  // calculate texture coordinates
-  /*
-  vec2 st = vec2(
-    (dot(gl_Vertex.xyz, SAxis)+SOffs)*TexIW,
-    (dot(gl_Vertex.xyz, TAxis)+TOffs)*TexIH
-  );
-  TextureCoordinate = st;
-  */
-
-  //  Pass texture coordinates.
-  //TextureCoordinate = TexCoord;
-
   TextureCoordinate = gl_MultiTexCoord0.xy;
 }
