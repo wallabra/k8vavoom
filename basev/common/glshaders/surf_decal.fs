@@ -4,7 +4,7 @@
 
 uniform sampler2D Texture;
 uniform vec4 Light;
-uniform vec4 SplatColour;
+uniform vec4 SplatColour; // do recolor if .a is not zero
 uniform bool FogEnabled;
 uniform int FogType;
 uniform vec4 FogColour;
@@ -29,7 +29,10 @@ void main () {
   float lumi = 0.2126*TexColour.r+0.7152*TexColour.g+0.0722*TexColour.b*SplatColour.a;
   if (lumi < 0.1) discard;
 
-  FinalColour_1.rgb = SplatColour.rgb;
+  //FinalColour_1.rgb = SplatColour.rgb;
+  FinalColour_1.r = TexColour.r*(1.0-SplatColour.a)+SplatColour.r*SplatColour.a;
+  FinalColour_1.g = TexColour.g*(1.0-SplatColour.a)+SplatColour.g*SplatColour.a;
+  FinalColour_1.b = TexColour.b*(1.0-SplatColour.a)+SplatColour.b*SplatColour.a;
   FinalColour_1.a = lumi;
 
   /*
