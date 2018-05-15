@@ -1592,8 +1592,8 @@ static void ParseSkillDef(VScriptParser* sc)
 
 static void ParseMapInfo(VScriptParser* sc)
 {
-	const unsigned int MaxStack = 64;
 	guard(ParseMapInfo);
+	const unsigned int MaxStack = 64;
 	bool HexenMode = false;
 	VScriptParser* scstack[MaxStack];
 	unsigned int scsp = 0;

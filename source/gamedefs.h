@@ -80,6 +80,7 @@
 #include "save.h"
 #include "server.h"
 #include "p_clip.h"
+#include "p_decal.h"
 #include "p_worldinfo.h"
 #include "p_thinker.h"
 #include "p_levelinfo.h"

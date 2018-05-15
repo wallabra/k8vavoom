@@ -282,6 +282,8 @@ set(MAIN_COMMON_SOURCES
 	p_acs.h
 	p_clip.cpp
 	p_clip.h
+	p_decal.cpp
+	p_decal.h
 	p_entity.cpp
 	p_entity.h
 	p_entity_sight.cpp
