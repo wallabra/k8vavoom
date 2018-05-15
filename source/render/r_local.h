@@ -132,7 +132,7 @@ struct decal_t
 {
 	decal_t* next; // in this seg
 	seg_t* seg;
-	VName decalname; // this can be used to remove excessive decals in the future
+	VName picname;
 	int texture;
 	TVec org;
 	float xdist; // normalized

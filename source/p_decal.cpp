@@ -1,4 +1,4 @@
-//**************************************************************************
+//****.**********************************************************************
 //**
 //**  ##   ##    ##    ##   ##   ####     ####   ###     ###
 //**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
@@ -153,7 +153,12 @@ bool VDecalDef::parse (VScriptParser* sc) {
     if (sc->Check("fuzzy")) { fuzzy = true; continue; }
     if (sc->Check("fullbright")) { fullbright = true; continue; }
 
-    if (sc->Check("lowerdecal")) { sc->Error("'lowerdecal' property is not implemented"); return false; }
+    if (sc->Check("lowerdecal")) {
+      sc->ExpectString();
+      if (sc->String.Length() == 0) { sc->Error("invalid lower decal name"); return false; }
+      lowername = VName(*sc->String);
+      continue;
+    }
 
     if (sc->Check("animator")) { sc->ExpectString(); animname = VName(*sc->String); continue; }
 
@@ -213,7 +218,7 @@ VDecalGroup *VDecalGroup::find (const VName& aname) {
 void VDecalGroup::fixup () {
   for (int f = 0; f < nameList.Num(); ++f) {
     auto it = VDecalDef::find(nameList[f]);
-    if (it) list.Append(it); else GCon->Logf("WARNING: decalgroup '%s' contains unknown decal '%s'!", *name, *nameList[f]);
+    if (it) list.Append(it); else GCon->Logf(NAME_Init, "WARNING: decalgroup '%s' contains unknown decal '%s'!", *name, *nameList[f]);
   }
 }
 
@@ -444,8 +449,8 @@ bool VDecalAnimSlider::parse (VScriptParser* sc) {
   while (!sc->AtEnd()) {
     if (sc->Check("}")) return true;
 
-    if (sc->Check("distx")) { sc->ExpectFloat(); distX = sc->Float; continue; }
-    if (sc->Check("disty")) { sc->ExpectFloat(); distY = sc->Float; continue; }
+    if (sc->Check("distx")) { sc->ExpectFloatWithSign(); distX = sc->Float; continue; }
+    if (sc->Check("disty")) { sc->ExpectFloatWithSign(); distY = sc->Float; continue; }
     if (sc->Check("slidestart")) { sc->ExpectFloat(); startTime = sc->Float; continue; }
     if (sc->Check("slidetime")) { sc->ExpectFloat(); actionTime = sc->Float; continue; }
 
@@ -529,7 +534,7 @@ VDecalAnimCombiner::~VDecalAnimCombiner () {
 void VDecalAnimCombiner::fixup () {
   for (int f = 0; f < nameList.Num(); ++f) {
     auto it = VDecalAnim::find(nameList[f]);
-    if (it) list.Append(it); else GCon->Logf("WARNING: animgroup '%s' contains unknown anim '%s'!", *name, *nameList[f]);
+    if (it) list.Append(it); else GCon->Logf(NAME_Init, "WARNING: animgroup '%s' contains unknown anim '%s'!", *name, *nameList[f]);
   }
 }
 
@@ -639,7 +644,7 @@ void ParseDecalDef (VScriptParser* sc) {
             error = true;
             break;
           }
-          GCon->Logf("Including '%s'...", *sc->String);
+          GCon->Logf(NAME_Init, "Including '%s'...", *sc->String);
           scstack[scsp++] = sc;
           sc = new VScriptParser(*sc->String, W_CreateLumpReaderNum(lmp));
         } else {
@@ -724,7 +729,7 @@ void ParseDecalDef (VScriptParser* sc) {
       break;
     }
     if (scsp == 0) break;
-    GCon->Logf("Finished included '%s'", *sc->GetLoc().GetSource());
+    GCon->Logf(NAME_Init, "Finished included '%s'", *sc->GetLoc().GetSource());
     delete sc;
     sc = scstack[--scsp];
   }
@@ -742,8 +747,9 @@ void ProcessDecalDefs () {
   GCon->Logf(NAME_Init, "Parsing DECAL definitions");
 
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
+    //fprintf(stderr, "<%s>\n", *W_LumpName(Lump));
     if (W_LumpName(Lump) == NAME_decaldef) {
-      GCon->Logf("Parsing decal definition script '%s'...", *W_FullLumpName(Lump));
+      GCon->Logf(NAME_Init, "Parsing decal definition script '%s'...", *W_FullLumpName(Lump));
       ParseDecalDef(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
   }
@@ -754,21 +760,3 @@ void ProcessDecalDefs () {
   TLocation::ClearSourceFiles();
   unguard;
 }
-
-
-/*
-void ParseWarning(TLocation l, const char *text, ...)
-{
-  char Buffer[2048];
-  va_list argPtr;
-
-  va_start(argPtr, text);
-  vsprintf(Buffer, text, argPtr);
-  va_end(argPtr);
-#ifdef IN_VCC
-  fprintf(stderr, "%s:%d: warning: %s\n", *l.GetSource(), l.GetLine(), Buffer);
-#else
-  GCon->Logf("%s:%d: warning: %s", *l.GetSource(), l.GetLine(), Buffer);
-#endif
-}
-*/

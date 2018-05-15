@@ -65,12 +65,13 @@ public:
   float addAlpha; // alpha for additive translucency (not supported yet)
   bool fuzzy; // draw decal with "fuzzy" effect (not supported yet)
   bool fullbright;
+  VName lowername;
   VDecalAnim* animator; // decal animator (can be nullptr)
   // this is used in animators
   //float ofsX, ofsY;
 
 public:
-  VDecalDef () : next(nullptr), animname(NAME_none), name(NAME_none), pic(NAME_none), scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0), fuzzy(false), fullbright(false), animator(nullptr) { shade[0] = shade[1] = shade[2] = shade[3] = 0; }
+  VDecalDef () : next(nullptr), animname(NAME_none), name(NAME_none), pic(NAME_none), scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0), fuzzy(false), fullbright(false), lowername(NAME_none), animator(nullptr) { shade[0] = shade[1] = shade[2] = shade[3] = 0; }
   ~VDecalDef ();
 
 public:
