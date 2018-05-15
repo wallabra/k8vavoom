@@ -178,7 +178,7 @@
 		<flag name="Invisible" property="bInvisible" />
 		<flag name="Shadow" property="bShadow" />
 		<flag name="NoBlood" property="bNoBlood" />
-		<flag_unsupported name="NoBloodDecals" />
+		<flag name="NoBloodDecals" property="bNoBloodDecals" />
 		<flag name="Stealth" property="bStealth" />
 		<flag name="FloorClip" property="bFloorClip" />
 		<flag name="SpawnFloat" property="bSpawnFloat" />

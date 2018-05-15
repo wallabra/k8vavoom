@@ -158,6 +158,7 @@ bool bSpawnCeiling;		// Hang from ceiling instead of floor.
 bool bPickUp;			//  For players to pick up items.
 bool bDropped;			//  Dropped by a demon, not level spawned.
 bool bNoBlood;			//  Don't bleed when shot (use puff).
+bool bNoBloodDecals;			//  Don't spawn blood decals (k8:FIXME: dunno)
 bool bInFloat;			//  Floating to a height for a move, don't.
 						//  Auto float to target's height.
 bool bSkullFly;			//  Skull in flight.
