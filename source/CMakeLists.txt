@@ -431,6 +431,7 @@ set(SERVER_COMMON_SOURCES
 	pr_cmds.cpp
 	pr_exec.cpp
 	${TEXTURELIB_SOURCES}
+	render/r_data.cpp
 	sound/snd_data.cpp
 	sound/snd_reverbs.cpp
 	sc_man.cpp
