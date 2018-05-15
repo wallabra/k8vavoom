@@ -498,6 +498,7 @@ protected:
 	GLint					SurfDecalIsLightmap;
 	GLint					SurfDecalTextureLoc;
 	GLint					SurfDecalSplatColourLoc;
+	GLint					SurfDecalSplatAlphaLoc;
 	GLint					SurfDecalLightLoc;
 	GLint					SurfDecalFogEnabledLoc;
 	GLint					SurfDecalFogTypeLoc;

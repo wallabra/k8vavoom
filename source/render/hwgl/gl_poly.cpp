@@ -406,6 +406,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
 
   //glColor3f(1, 0, 0); // just in case
   p_glUniform4fARB(SurfDecalSplatColourLoc, 1, 0, 0, 1);
+  p_glUniform1fARB(SurfDecalSplatAlphaLoc, 1.0);
 
   texinfo_t *tex = surf->texinfo;
 

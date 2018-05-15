@@ -263,6 +263,8 @@ class VLevel : public VGameObject
 
 	int					NextSoundOriginID;
 
+	// the following fields are not in .vc
+
 	void Serialise(VStream& Strm);
 	void ClearReferences();
 	void Destroy();
