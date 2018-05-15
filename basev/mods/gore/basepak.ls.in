@@ -108,6 +108,27 @@ sprites/gore/xdt3h0		@CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/xdt3h0.png
 sprites/gore/xdt5b0		@CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/xdt5b0.png
 sprites/gore/xdt5o0		@CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/xdt5o0.png
 
+graphics/decals/bbplnew.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplnew.png
+graphics/decals/bbplnew2.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplnew2.png
+graphics/decals/bbplnew3.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplnew3.png
+graphics/decals/bbplnew4.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplnew4.png
+graphics/decals/bbplnew5.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplnew5.png
+graphics/decals/bgplnew.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bgplnew.png
+graphics/decals/bgplnew2.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bgplnew2.png
+graphics/decals/bgplnew3.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bgplnew3.png
+graphics/decals/bgplnew4.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bgplnew4.png
+graphics/decals/bgplnew5.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bgplnew5.png
+graphics/decals/bsplbig1		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bsplbig1
+graphics/decals/bsplbig2		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bsplbig2
+graphics/decals/bsplbig3		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bsplbig3
+graphics/decals/bsplnew.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bsplnew.png
+graphics/decals/bsplnew2.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bsplnew2.png
+graphics/decals/bsplnew3.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bsplnew3.png
+graphics/decals/bsplnew4.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bsplnew4.png
+graphics/decals/bsplnew5.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bsplnew5.png
+graphics/decals/bsplnew7.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bsplnew7.png
+graphics/decals/bsplnew8.png		@CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bsplnew8.png
+
 
 //	Sounds
 sounds/gore/bloddrop.ogg		@CMAKE_CURRENT_SOURCE_DIR@/sounds/gore/bloddrop.ogg
@@ -159,4 +180,5 @@ blood.red.transient.txt		@CMAKE_CURRENT_SOURCE_DIR@/blood.red.transient.txt
 blood.red.txt		@CMAKE_CURRENT_SOURCE_DIR@/blood.red.txt
 blood.underwater.txt		@CMAKE_CURRENT_SOURCE_DIR@/blood.underwater.txt
 decorate.txt		@CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
+decaldef.brutalbloodsplats.txt		@CMAKE_CURRENT_SOURCE_DIR@/decaldef.brutalbloodsplats.txt
 sndinfo.txt		@CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
