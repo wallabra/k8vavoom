@@ -1426,7 +1426,7 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
   int sidenum = (int)(li->backsector == sec);
   if (li->sidenum[sidenum] < 0) Sys_Error("decal engine: invalid linedef (0)!");
 
-  /*
+#if 0
   side_t *side = &Sides[li->sidenum[sidenum]];
   if (side->Sector != sec) Sys_Error("decal engine: invalid linedef (1)!");
   GCon->Logf("z=%f; tfloor=%f; tceil=%f; floor=%f; ceil=%f; btex=%d; mtex=%d; ttex=%d; flags=0x%04x; hasback:%s",
@@ -1481,7 +1481,7 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
       }
     }
   }
-  */
+#endif
 
   VDecalDef *dec = VDecalDef::getDecal(dectype);
   if (dec) AddOneDecal(level, org, dec, sec, li);

@@ -191,15 +191,17 @@ struct tmtrace_t
 	// keep track of the line that lowers the ceiling,
 	// so missiles don't explode against sky hack walls
 	line_t*			CeilingLine;
+	line_t*			FloorLine;
 	// also keep track of the blocking line, for checking
 	// against doortracks
-	line_t*			BlockingLine;
+	line_t*			BlockingLine; // only lines without backsector
 
 	// keep track of special lines as they are hit,
 	// but don't process them until the move is proven valid
 	array<line_t*>	SpecHit;
 
 	Entity			BlockingMobj;
+	line_t*			AnyBlockingLine; // any blocking line
 };
 
 // Info for drawing: position.

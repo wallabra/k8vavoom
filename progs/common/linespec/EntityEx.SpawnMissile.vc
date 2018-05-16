@@ -124,10 +124,22 @@ final bool ExplodeMissile(EntityEx Victim, optional line_t *line)
 
 	//k8:TODO: this should be strictly client-side
 	if (line && DecalName) {
-		//print("MISSILE DECAL: <%s>", NameToStr(DecalName));
-		// the only case we can have a blocking line is the line without backsector
-		// (dunno why, this is how it is done in the source code)
-		if (line->frontsector) SpawnDecal(Origin, DecalName, line->frontsector, line);
+		//print("MISSILE DECAL: <%s> (side:%d:%d) vel:(%f,%f,%f)", NameToStr(DecalName), PointOnPlaneSide(Origin, line), PointOnPlaneSide(Origin-Velocity, line), Velocity.x, Velocity.y, Velocity.z);
+		if (line->frontsector && line->backsector) {
+			auto side = PointOnPlaneSide(Origin-Velocity, line); // move out a little, just in case
+			SpawnDecal(Origin, DecalName, (side ? line->backsector : line->frontsector), line);
+		} else {
+			if (line->frontsector) SpawnDecal(Origin, DecalName, line->frontsector, line);
+			if (line->backsector) SpawnDecal(Origin, DecalName, line->backsector, line);
+		}
+	} else {
+		if (GetCvarB('k8ExplodeMissleTest')) {
+			if (Victim) print("MISSILE VICTIM: <%s>", NameToStr(GetClassName(Victim.Class)));
+			else if (DecalName) {
+				print("MISSILE DECAL, BUT NO LINE: <%s>", NameToStr(DecalName));
+				print("%p", line->frontsector);
+			}
+		}
 	}
 
 	Velocity = vector(0.0, 0.0, 0.0);
@@ -627,7 +639,10 @@ final EntityEx SpawnPlayerMissileEx(class<EntityEx> type, bool RetExploded,
 		}
 	}
 	A = Spawn(type, org);
-	if (specified_decalType && decalType) A.DecalName = decalType;
+	if (specified_decalType && decalType) {
+		print("missile decal set to <%s>", NameToStr(decalType));
+		A.DecalName = decalType;
+	}
 
 	A.PlayMissileSpawnSound(self);
 

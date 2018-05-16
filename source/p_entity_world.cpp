@@ -71,15 +71,17 @@ struct tmtrace_t
 	// keep track of the line that lowers the ceiling,
 	// so missiles don't explode against sky hack walls
 	line_t *CeilingLine;
+	line_t *FloorLine;
 	// also keep track of the blocking line, for checking
 	// against doortracks
-	line_t *BlockingLine;
+	line_t *BlockingLine; // only lines without backsector
 
 	// keep track of special lines as they are hit,
 	// but don't process them until the move is proven valid
 	TArray<line_t*>		SpecHit;
 
 	VEntity *BlockingMobj;
+	line_t *AnyBlockingLine; // any blocking lines
 };
 
 //	Searches though the surrounding mapblocks for monsters/players
@@ -742,16 +744,14 @@ bool VEntity::CheckLine(cptrace_t& cptrace, line_t* ld)
 	}
 
 	// set openrange, opentop, openbottom
-	TVec hit_point = cptrace.Pos - (DotProduct(cptrace.Pos, ld->normal) -
-		ld->dist) * ld->normal;
+	TVec hit_point = cptrace.Pos - (DotProduct(cptrace.Pos, ld->normal)-ld->dist)*ld->normal;
 	opening_t* open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING);
-	open = SV_FindOpening(open, cptrace.Pos.z, cptrace.Pos.z + Height);
+	open = SV_FindOpening(open, cptrace.Pos.z, cptrace.Pos.z+Height);
 
 	if (open)
 	{
 		// adjust floor / ceiling heights
-		if (!(open->ceiling->flags & SPF_NOBLOCKING)
-			&& open->top < cptrace.CeilingZ)
+		if (!(open->ceiling->flags & SPF_NOBLOCKING) && open->top < cptrace.CeilingZ)
 		{
 			cptrace.Ceiling = open->ceiling;
 			cptrace.CeilingZ = open->top;
@@ -958,6 +958,7 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
 		yl = MapBlock(tmtrace.BBox[BOXBOTTOM] - XLevel->BlockMapOrgY);
 		yh = MapBlock(tmtrace.BBox[BOXTOP] - XLevel->BlockMapOrgY);
 
+		line_t *fuckhit = nullptr;
 		for (bx = xl; bx <= xh; bx++)
 		{
 			for (by = yl; by <= yh; by++)
@@ -965,18 +966,27 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
 				line_t*		ld;
 				for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); )
 				{
-					good &= CheckRelLine(tmtrace, ld);
+					//good &= CheckRelLine(tmtrace, ld);
+					if (!CheckRelLine(tmtrace, ld)) {
+						
+						good = false;
+						if (!fuckhit) {/* printf("*** fuckhit!\n");*/ fuckhit = ld; }
+					}
 				}
 			}
 		}
 
 		if (!good)
 		{
+			//printf("*** NOTGOOD\n");
+			if (!tmtrace.AnyBlockingLine) tmtrace.AnyBlockingLine = fuckhit;
 			return false;
 		}
 
 		if (tmtrace.CeilingZ - tmtrace.FloorZ < Height)
 		{
+			//printf("*** SHITHEIGHT\n");
+			if (!tmtrace.AnyBlockingLine) tmtrace.AnyBlockingLine = fuckhit;
 			return false;
 		}
 	}
@@ -989,6 +999,7 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
 	tmtrace.BlockingMobj = thingblocker;
 	if (tmtrace.BlockingMobj)
 	{
+		//printf("*** MOBJ\n");
 		return false;
 	}
 
@@ -1098,21 +1109,18 @@ bool VEntity::CheckRelLine(tmtrace_t& tmtrace, line_t* ld)
 
 	// A line has been hit
 
-	// The moving thing's destination position will cross
-	// the given line.
+	// The moving thing's destination position will cross the given line.
 	// If this should not be allowed, return false.
-	// If the line is special, keep track of it
-	// to process later if the move is proven ok.
-	// NOTE: specials are NOT sorted by order,
-	// so two special lines that are only 8 pixels apart
-	// could be crossed in either order.
+	// If the line is special, keep track of it to process later if the move is proven ok.
+	// NOTE: specials are NOT sorted by order, so two special lines that are only 8 pixels apart
+	//       could be crossed in either order.
 
 	if (!ld->backsector)
 	{
 		// One sided line
 		BlockedByLine(ld);
 		// mark the line as blocking line
-		tmtrace.BlockingLine = ld;
+		tmtrace.BlockingLine = tmtrace.AnyBlockingLine = ld;
 		return false;
 	}
 
@@ -1122,6 +1130,8 @@ bool VEntity::CheckRelLine(tmtrace_t& tmtrace, line_t* ld)
 		{
 			// Explicitly blocking everything
 			BlockedByLine(ld);
+			tmtrace.AnyBlockingLine = ld;
+			//printf("*** 000000\n");
 			return false;
 		}
 
@@ -1130,6 +1140,8 @@ bool VEntity::CheckRelLine(tmtrace_t& tmtrace, line_t* ld)
 		{
 			// Explicitly blocking everything
 			BlockedByLine(ld);
+			tmtrace.AnyBlockingLine = ld;
+			//printf("*** 000001\n");
 			return false;
 		}
 	
@@ -1138,6 +1150,8 @@ bool VEntity::CheckRelLine(tmtrace_t& tmtrace, line_t* ld)
 		{
 			// Block monsters only
 			BlockedByLine(ld);
+			tmtrace.AnyBlockingLine = ld;
+			//printf("*** 000002\n");
 			return false;
 		}
 
@@ -1146,6 +1160,8 @@ bool VEntity::CheckRelLine(tmtrace_t& tmtrace, line_t* ld)
 		{
 			// Block players only
 			BlockedByLine(ld);
+			tmtrace.AnyBlockingLine = ld;
+			//printf("*** 000003\n");
 			return false;
 		}
 
@@ -1154,32 +1170,32 @@ bool VEntity::CheckRelLine(tmtrace_t& tmtrace, line_t* ld)
 		{
 			// Block floaters only
 			BlockedByLine(ld);
+			tmtrace.AnyBlockingLine = ld;
+			//printf("*** 000004\n");
 			return false;
 		}
 	}
 
 	// set openrange, opentop, openbottom
-	TVec hit_point = tmtrace.End - (DotProduct(tmtrace.End, ld->normal) -
-		ld->dist) * ld->normal;
+	TVec hit_point = tmtrace.End - (DotProduct(tmtrace.End, ld->normal)-ld->dist)*ld->normal;
 	opening_t* open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING);
-	open = SV_FindOpening(open, tmtrace.End.z, tmtrace.End.z + Height);
+	open = SV_FindOpening(open, tmtrace.End.z, tmtrace.End.z+Height);
 
 	if (open)
 	{
 		// adjust floor / ceiling heights
-		if (!(open->ceiling->flags & SPF_NOBLOCKING) &&
-			open->top < tmtrace.CeilingZ)
+		if (!(open->ceiling->flags & SPF_NOBLOCKING) && open->top < tmtrace.CeilingZ)
 		{
 			tmtrace.Ceiling = open->ceiling;
 			tmtrace.CeilingZ = open->top;
 			tmtrace.CeilingLine = ld;
 		}
 
-		if (!(open->floor->flags & SPF_NOBLOCKING) &&
-			open->bottom > tmtrace.FloorZ)
+		if (!(open->floor->flags & SPF_NOBLOCKING) && open->bottom > tmtrace.FloorZ)
 		{
 			tmtrace.Floor = open->floor;
 			tmtrace.FloorZ = open->bottom;
+			tmtrace.FloorLine = ld;
 		}
 
 		if (open->lowfloor < tmtrace.DropOffZ)
@@ -1203,6 +1219,7 @@ bool VEntity::CheckRelLine(tmtrace_t& tmtrace, line_t* ld)
 		tmtrace.SpecHit.Append(ld);
 	}
 
+	//printf("*** PASS!\n");
 	return true;
 	unguardSlow;
 }
@@ -1272,6 +1289,7 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 		{
 			// Doesn't fit
 			PushLine(tmtrace);
+			//printf("*** WORLD(0)!\n");
 			return false;
 		}
 
@@ -1282,6 +1300,7 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 		{
 			// mobj must lower itself to fit
 			PushLine(tmtrace);
+			//printf("*** WORLD(1)!\n");
 			return false;
 		}
 		if (EntityFlags & EF_Fly)
@@ -1331,12 +1350,14 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 					    TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ)))
 					{
 						PushLine(tmtrace);
+						//printf("*** WORLD(2)!\n");
 						return false;
 					}
 				}
 				else
 				{
 					PushLine(tmtrace);
+					//printf("*** WORLD(3)!\n");
 					return false;
 				}
 			}
@@ -1344,6 +1365,7 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 			    tmtrace.FloorZ > Origin.z)
 			{
 				PushLine(tmtrace);
+				//printf("*** WORLD(4)!\n");
 				return false;
 			}
 			if (Origin.z < tmtrace.FloorZ)
@@ -1361,6 +1383,7 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 				if (TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ)))
 				{
 					PushLine(tmtrace);
+					//printf("*** WORLD(5)!\n");
 					return false;
 				}
 			}
@@ -1384,6 +1407,7 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 				    !(EntityFlags & EF_Blasted))
 				{
 					// Can't move over a dropoff unless it's been blasted
+					//printf("*** WORLD(6)!\n");
 					return false;
 				}
 			}
@@ -1394,6 +1418,7 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 				if (FloorZ - tmtrace.FloorZ > MaxDropoffHeight ||
 				    DropOffZ - tmtrace.DropOffZ > MaxDropoffHeight)
 				{
+					//printf("*** WORLD(7)!\n");
 					return false;
 				}
 			}
@@ -1402,6 +1427,7 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 		    (tmtrace.Floor->pic != Floor->pic || tmtrace.FloorZ != Origin.z))
 		{
 			// must stay within a sector of a certain floor type
+			//printf("*** WORLD(8)!\n");
 			return false;
 		}
 	}

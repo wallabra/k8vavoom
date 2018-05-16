@@ -384,10 +384,31 @@ final float XYMovement(float DeltaTime, float ScrollX, float ScrollY)
 			// blocked move
 			if (tmtrace.BlockingMobj)
 			{
+				if (GetCvarB('k8ExplodeMissleTest')) print("MOBJ!");
 				HitMobj(tmtrace.BlockingMobj, ptryx, ptryy);
 			}
 			else
 			{
+				if (GetCvarB('k8ExplodeMissleTest')) {
+					print("LINE! (%d)", tmtrace.SpecHit.Length);
+					if (!tmtrace.BlockingLine) print("*** BUT NO LINE!");
+					if (!tmtrace.AnyBlockingLine) print("*** BUT NO ANY-LINE!");
+					if (!tmtrace.AnyBlockingLine) {
+						if (tmtrace.CeilingLine) print("      CEILING LINE IS HERE!");
+						if (tmtrace.FloorLine) print("      FLOOR LINE IS HERE!");
+						if (tmtrace.CeilingLine == tmtrace.FloorLine && tmtrace.FloorLine) print("      FLOOR AND CEILING LINE IS THE SAME!");
+					}
+				}
+				/*
+				if (!tmtrace.BlockingLine && !tmtrace.AnyBlockingLine) {
+					tmtrace_t tr2;
+					if (CheckRelPosition(&tr2, vector(ptryx, ptryy, Origin.z))) {
+						print("second trace returned TRUE!: l:%s; al:%s", (tr2.BlockingLine ? "tan" : "ona"), (tr2.AnyBlockingLine ? "tan" : "ona"));
+					} else {
+						print("second trace returned FALSE!: l:%s; al:%s", (tr2.BlockingLine ? "tan" : "ona"), (tr2.AnyBlockingLine ? "tan" : "ona"));
+					}
+				}
+				*/
 				HitLine(&tmtrace, DeltaTime / itof(Steps));
 			}
 			return oldfloorz;
@@ -533,8 +554,7 @@ final void HitLine(tmtrace_t* tmtrace, float StepVelScale)
 {
 	if (bMissile)
 	{
-		if (bBounceWalls || BounceType == BOUNCE_Doom ||
-			BounceType == BOUNCE_Hexen)
+		if (bBounceWalls || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen)
 		{
 			//	If number of bounces is limited.
 			if (BounceCount > 0 && --BounceCount <= 0)
@@ -545,7 +565,7 @@ final void HitLine(tmtrace_t* tmtrace, float StepVelScale)
 
 			// explode a missile
 			if (tmtrace->CeilingLine && tmtrace->CeilingLine->backsector &&
-				tmtrace->CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
+			    tmtrace->CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
 			{
 				// Hack to prevent missiles exploding against the sky.
 				// Does not handle sky floors.
@@ -564,8 +584,7 @@ final void HitLine(tmtrace_t* tmtrace, float StepVelScale)
 				return;
 			}
 
-			if (tmtrace->BlockingLine && tmtrace->BlockingLine->special ==
-				LNSPEC_LineHorizon)
+			if (tmtrace->BlockingLine && tmtrace->BlockingLine->special == LNSPEC_LineHorizon)
 			{
 				SightSound = '';
 				Destroy();
@@ -573,8 +592,7 @@ final void HitLine(tmtrace_t* tmtrace, float StepVelScale)
 			}
 
 			// Struck a wall
-			if (bBounceWalls || BounceType == BOUNCE_Doom ||
-				BounceType == BOUNCE_Hexen)
+			if (bBounceWalls || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen)
 			{
 				BounceWall(BOUNCE_VAL, WallBounceFactor);
 				if (!bNoBounceSound && !bNoWallBounceSnd && (BounceSound || SightSound))
@@ -587,7 +605,7 @@ final void HitLine(tmtrace_t* tmtrace, float StepVelScale)
 
 		// explode a missile
 		if (tmtrace->CeilingLine && tmtrace->CeilingLine->backsector &&
-			tmtrace->CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
+		    tmtrace->CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
 		{
 			// Hack to prevent missiles exploding against the sky.
 			// Does not handle sky floors.
@@ -605,8 +623,7 @@ final void HitLine(tmtrace_t* tmtrace, float StepVelScale)
 			}
 			return;
 		}
-		if (tmtrace->BlockingLine && tmtrace->BlockingLine->special ==
-			LNSPEC_LineHorizon)
+		if (tmtrace->BlockingLine && tmtrace->BlockingLine->special == LNSPEC_LineHorizon)
 		{
 			if (bBounceSky)
 			{
@@ -618,7 +635,23 @@ final void HitLine(tmtrace_t* tmtrace, float StepVelScale)
 			}
 			return;
 		}
-		ExplodeMissile(none, tmtrace->BlockingLine);
+		line_t* hitline = tmtrace->BlockingLine;
+		if (!hitline) hitline = tmtrace->CeilingLine;
+		if (!hitline) hitline = tmtrace->FloorLine;
+		if (!hitline) hitline = tmtrace->AnyBlockingLine;
+		if (!hitline && tmtrace->SpecHit.Length) {
+			bool wasBlockAll = false;
+			line_t* blockall;
+			for (int f = 0; f < tmtrace->SpecHit.Length; ++f) {
+				line_t* ln = tmtrace->SpecHit[f];
+				if (ln->flags&ML_BLOCKING) { hitline = ln; break; }
+				if (!wasBlockAll && (ln->flags&ML_BLOCKEVERYTHING) != 0) { blockall = ln; wasBlockAll = true; }
+			}
+			if (!hitline) {
+				if (wasBlockAll) hitline = blockall; else hitline = tmtrace->SpecHit[0];
+			}
+		}
+		ExplodeMissile(none, hitline);
 	}
 	else if (bSlide)
 	{
