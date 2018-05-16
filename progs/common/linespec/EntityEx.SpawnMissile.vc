@@ -124,6 +124,7 @@ final bool ExplodeMissile(EntityEx Victim, optional line_t *line)
 
 	//k8:TODO: this should be strictly client-side
 	if (line && DecalName) {
+		//print("MISSILE DECAL: <%s>", NameToStr(DecalName));
 		// the only case we can have a blocking line is the line without backsector
 		// (dunno why, this is how it is done in the source code)
 		if (line->frontsector) SpawnDecal(Origin, DecalName, line->frontsector, line);
@@ -626,6 +627,7 @@ final EntityEx SpawnPlayerMissileEx(class<EntityEx> type, bool RetExploded,
 		}
 	}
 	A = Spawn(type, org);
+	if (specified_decalType && decalType) A.DecalName = decalType;
 
 	A.PlayMissileSpawnSound(self);
 
@@ -642,7 +644,5 @@ final EntityEx SpawnPlayerMissileEx(class<EntityEx> type, bool RetExploded,
 	}
 	VectorAngles(&dir, &A.Angles);
 
-	EntityEx res = A.CheckMissileSpawn() || RetExploded ? A : none;
-	if (res && specified_decalType) res.DecalName = decalType;
-	return res;
+	return A.CheckMissileSpawn() || RetExploded ? A : none;
 }
