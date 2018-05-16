@@ -81,6 +81,8 @@ VCvarF			transsouls("transsouls", "1.0", "Translucent Lost Souls?", CVAR_Archive
 VCvarI			crosshair("crosshair", "2", "Crosshair type (0-2).", CVAR_Archive);
 VCvarF			crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);
 
+static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0: down).", CVAR_Archive);
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -959,7 +961,7 @@ void VRenderLevelShared::DrawCrosshair()
 			cy = (480 - sb_height) / 2;
 		else
 			cy = 240;
-		cy += 20;
+		cy += r_crosshair_yofs;
 		int handle = GTextureManager.AddPatch(VName(va("CROSHAI%i",
 			(int)crosshair), VName::AddLower8), TEXTYPE_Pic);
 		R_DrawPic(320, cy, handle, crosshair_alpha);
