@@ -365,6 +365,8 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		else if (sc->Check("sky1"))
 		{
 			if (newFormat) sc->Expect("=");
+			auto ocm = sc->IsCMode();
+			sc->SetCMode(true);
 			sc->ExpectName8();
 			info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
 			info->Sky1ScrollDelta = 0;
@@ -377,15 +379,19 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 				}
 			} else {
 				if (!sc->IsAtEol()) {
+					sc->Check(",");
 					sc->ExpectFloat();
 					if (HexenMode) sc->Float /= 256.0;
 					info->Sky1ScrollDelta = sc->Float * 35.0;
 				}
 			}
+			sc->SetCMode(ocm);
 		}
 		else if (sc->Check("sky2"))
 		{
 			if (newFormat) sc->Expect("=");
+			auto ocm = sc->IsCMode();
+			sc->SetCMode(true);
 			sc->ExpectName8();
 			info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
 			info->Sky2ScrollDelta = 0;
@@ -398,11 +404,13 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 				}
 			} else {
 				if (!sc->IsAtEol()) {
+					sc->Check(",");
 					sc->ExpectFloat();
 					if (HexenMode) sc->Float /= 256.0;
 					info->Sky2ScrollDelta = sc->Float * 35.0;
 				}
 			}
+			sc->SetCMode(ocm);
 		}
 		else if (sc->Check("skybox"))
 		{
