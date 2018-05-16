@@ -220,6 +220,8 @@ struct line_t : public TPlane
 	int			LineTag;
 	int			HashFirst;
 	int			HashNext;
+
+	seg_t *firstseg; // linked by lsnext
 };
 
 //==========================================================================
@@ -514,6 +516,7 @@ struct seg_t : public TPlane
 
 	side_t		*sidedef;
 	line_t		*linedef;
+	seg_t *lsnext; // next seg in linedef
 
 	// Sector references.
 	// Could be retrieved from linedef, too.

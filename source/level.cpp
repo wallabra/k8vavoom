@@ -1100,9 +1100,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
   }
 
   // find segs for this decal (there may be several segs)
-  for (int sidx = 0; sidx < NumSegs; ++sidx) {
-    seg_t *seg = &Segs[sidx];
-    if (seg->linedef == li && seg->frontsector == sec) {
+  for (seg_t *seg = li->firstseg; seg; seg = seg->lsnext) {
+    if (/*seg->linedef == li &&*/ seg->frontsector == sec) {
       if (segd0 >= seg->offset+seg->length || segd1 < seg->offset) continue;
       //if (prevdir < 0) GCon->Logf("  found seg #%d (segd=%f:%f; seg=%f:%f)", sidx, segd0, segd1, seg->offset, seg->offset+seg->length);
       // create decals

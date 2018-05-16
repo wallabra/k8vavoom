@@ -488,6 +488,8 @@ void VLevel::LoadMap(VName AMapName)
 		W_CloseAuxiliary();
 	}
 
+	PostProcessForDecals();
+
 	TotalTime += Sys_Time();
 	if (true || show_level_load_times)
 	{
@@ -2289,6 +2291,28 @@ inline void VLevel::AddToBox(float* box, float x, float y) const
 
 //==========================================================================
 //
+//  VLevel::PostProcessForDecals
+//
+//==========================================================================
+
+void VLevel::PostProcessForDecals () {
+	GCon->Logf("postprocessing level for faster decals...");
+
+	for (int i = 0; i < NumLines; ++i) Lines[i].firstseg = nullptr;
+
+	GCon->Logf("postprocessing level for faster decals: assigning segs...");
+	// collect segments, so we won't go thru the all segs in decal spawner
+	for (int sidx = 0; sidx < NumSegs; ++sidx) {
+		seg_t *seg = &Segs[sidx];
+		line_t* li = seg->linedef;
+		if (!li) continue;
+		seg->lsnext = li->firstseg;
+		li->firstseg = seg;
+	}
+}
+
+//==========================================================================
+//
 //  VLevel::GroupLines
 //
 //  Builds sector line lists and subsector sector numbers. Finds block
@@ -2389,6 +2413,7 @@ void VLevel::GroupLines() const
 	}
 	delete[] SecLineCount;
 	SecLineCount = NULL;
+
 	unguard;
 }
 
