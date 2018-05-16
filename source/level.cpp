@@ -1162,8 +1162,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       //if (prevdir < 0) GCon->Logf("  found seg #%d (segd=%f:%f; seg=%f:%f)", sidx, segd0, segd1, seg->offset, seg->offset+seg->length);
       int dcmaxcount = decal_onetype_max;
            if (tinf.width >= 128 || tinf.height >= 128) dcmaxcount = 8;
-      else if (tinf.width >= 64 || tinf.height >= 64) dcmaxcount = 32;
-      else if (tinf.width >= 32 || tinf.height >= 32) dcmaxcount = 64;
+      else if (tinf.width >= 64 || tinf.height >= 64) dcmaxcount = 16;
+      else if (tinf.width >= 32 || tinf.height >= 32) dcmaxcount = 32;
       // remove old same-typed decals, if necessary
       if (dcmaxcount > 0 && dcmaxcount < 10000) {
         int count = 0;
@@ -1171,7 +1171,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
         decal_t* first = nullptr;
         decal_t* cur = seg->decals;
         while (cur) {
-          if (cur->dectype == dec->name) {
+          // also, check if this decal is touching our one
+          if (cur->dectype == dec->name && segd1 >= cur->xdist && segd0 <= cur->xdist+tinf.width) {
             if (!first) first = cur;
             ++count;
           }
@@ -1179,7 +1180,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
           cur = cur->next;
         }
         if (count >= dcmaxcount) {
-          //GCon->Logf("removing %d extra '%s' decals", count-dcmaxcount+1, *dec->name);
+          GCon->Logf("removing %d extra '%s' decals", count-dcmaxcount+1, *dec->name);
           // do removal
           decal_t* cur = first;
           if (prev) {
@@ -1189,7 +1190,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
           }
           while (cur) {
             decal_t* n = cur->next;
-            if (cur->dectype == dec->name) {
+            if (cur->dectype == dec->name && segd1 >= cur->xdist && segd0 <= cur->xdist+tinf.width) {
               if (prev) prev->next = n; else seg->decals = n;
               RemoveAnimatedDecal(cur);
               delete cur;
