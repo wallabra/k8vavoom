@@ -248,17 +248,24 @@ VDecalGroup *VDecalGroup::find (const VName& aname) {
 // ////////////////////////////////////////////////////////////////////////// //
 void VDecalGroup::fixup () {
   for (int f = 0; f < nameList.Num(); ++f) {
-    auto it = VDecalDef::find(nameList[f]);
-    if (it) list.Append(it); else GCon->Logf(NAME_Init, "WARNING: decalgroup '%s' contains unknown decal '%s'!", *name, *nameList[f]);
+    auto it = VDecalDef::find(nameList[f].name);
+    if (it) {
+      list.AddEntry(it, nameList[f].weight);
+    } else {
+      GCon->Logf(NAME_Init, "WARNING: decalgroup '%s' contains unknown decal '%s'!", *name, *nameList[f].name);
+    }
   }
 }
 
 
 VDecalDef* VDecalGroup::chooseDecal () {
+  /*
   if (list.Num() == 0) return nullptr;
   auto rnd = (int)(Random()*list.Num());
   rnd = rnd%list.Num();
   return list[rnd];
+  */
+  return list.PickEntry();
 }
 
 
@@ -280,7 +287,8 @@ bool VDecalGroup::parse (VScriptParser* sc) {
     VName dn = VName(*sc->String);
 
     sc->ExpectNumber();
-    while (sc->Number-- > 0) nameList.Append(dn);
+    if (sc->Number > 65535) sc->Number = 65535;
+    nameList.Append(NameListItem(dn, sc->Number));
   }
 
   return false;

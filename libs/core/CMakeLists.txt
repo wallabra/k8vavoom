@@ -31,6 +31,7 @@ add_library(core STATIC
 	stream.cpp
 	stream.h
 	vector.h
+	wlist.h
 	xml.cpp
 	xml.h
 	zone.cpp

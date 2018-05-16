@@ -97,6 +97,15 @@ class VDecalGroup {
 private:
   VDecalGroup* next; // in decalDefHead
 
+public:
+  struct NameListItem {
+    VName name;
+    vuint16 weight;
+
+    NameListItem () : name(NAME_none), weight(0) {}
+    NameListItem (const VName& aname, vuint16 aweight) : name(aname), weight(aweight) {}
+  };
+
 private:
   static void addToList (VDecalGroup* dg);
   static void removeFromList (VDecalGroup* dg);
@@ -110,9 +119,9 @@ public:
 public:
   // decaldef properties
   VName name;
-  TArray<VName> nameList; // can be empty in cloned/loaded object
+  TArray<NameListItem> nameList; // can be empty in cloned/loaded object
   //FIXME: it can refer another decal group
-  TArray<VDecalDef*> list; // can contain less items than `nameList`
+  TWeightedList<VDecalDef*> list; // can contain less items than `nameList`
 
 public:
   VDecalGroup () : next(nullptr), name(NAME_none), nameList(), list() {}

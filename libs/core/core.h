@@ -54,5 +54,6 @@
 #include "xml.h"		//	XML file parsing
 
 #include "hash.h"
+#include "wlist.h"
 
 #endif
