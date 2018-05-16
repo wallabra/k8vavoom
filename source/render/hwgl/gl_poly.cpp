@@ -48,6 +48,8 @@
 static VCvarB glsw_report_verts("glsw_report_verts", false, "Report number of shadow volume vertices?", 0);
 static VCvarB gl_decal_debug_nostencil("gl_decal_debug_nostencil", false, "Don't touch this!", 0);
 static VCvarB gl_decal_debug_noalpha("gl_decal_debug_noalpha", false, "Don't touch this!", 0);
+static VCvarB gl_decal_dump_max("gl_decal_dump_max", false, "Don't touch this!", 0);
+static VCvarB gl_decal_reset_max("gl_decal_reset_max", false, "Don't touch this!", 0);
 
 // CODE --------------------------------------------------------------------
 
@@ -431,6 +433,10 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   decal_t* prev = nullptr;
   decal_t* dc = surf->dcseg->decals;
 
+  int rdcount = 0;
+  static int maxrdcount = 0;
+  if (gl_decal_reset_max) { maxrdcount = 0; gl_decal_reset_max = false; }
+
   while (dc) {
     if (dc->texture < 0 || dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0) {
       // remove it
@@ -533,6 +539,13 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
 
     prev = dc;
     dc = dc->next;
+
+    ++rdcount;
+  }
+
+  if (rdcount > maxrdcount) {
+    maxrdcount = rdcount;
+    if (gl_decal_dump_max) GCon->Logf("*** max decals on seg: %d", maxrdcount);
   }
 
   glEnable(GL_CULL_FACE);

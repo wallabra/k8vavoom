@@ -390,6 +390,9 @@ private:
 	void AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, line_t *li);
 	void PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, vuint32 flips);
 
+	void AddAnimatedDecal (decal_t* dc);
+	void RemoveAnimatedDecal (decal_t* dc); // this will also kill animator
+
 	void PostProcessForDecals ();
 
 	DECLARE_FUNCTION(PointInSector)

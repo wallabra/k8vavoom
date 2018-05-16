@@ -53,6 +53,8 @@ VLevel*			GClLevel;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static VCvarI decal_onetype_max("decal_onetype_max", "128", "Maximum decals of one decaltype on a wall segment", CVAR_Archive);
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -113,17 +115,31 @@ static void DecalIO (VStream& Strm, decal_t *dc) {
 	char namebuf[64];
 	vuint32 namelen = 0;
 	if (Strm.IsLoading()) {
+		// load picture name
 		Strm << namelen;
 		if (namelen == 0 || namelen > 63) Host_Error("Level load: invalid decal name length");
 		memset(namebuf, 0, sizeof(namebuf));
 		Strm.Serialise(namebuf, namelen);
 		dc->picname = VName(namebuf);
 		dc->texture = GTextureManager.AddPatch(dc->picname, TEXTYPE_Pic);
+		// load decal type
+		Strm << namelen;
+		if (namelen == 0 || namelen > 63) Host_Error("Level load: invalid decal name length");
+		memset(namebuf, 0, sizeof(namebuf));
+		Strm.Serialise(namebuf, namelen);
+		dc->dectype = VName(namebuf);
 	} else {
+		// save picture name
 		namelen = (vuint32)strlen(*dc->picname);
 		if (namelen == 0 || namelen > 63) Sys_Error("Level save: invalid decal name length");
 		Strm << namelen;
 		memcpy(namebuf, *dc->picname, namelen);
+		Strm.Serialise(namebuf, namelen);
+		// save decal type
+		namelen = (vuint32)strlen(*dc->dectype);
+		if (namelen == 0 || namelen > 63) Sys_Error("Level save: invalid decal name length");
+		Strm << namelen;
+		memcpy(namebuf, *dc->dectype, namelen);
 		Strm.Serialise(namebuf, namelen);
 	}
 	Strm << dc->flags;
@@ -210,6 +226,7 @@ void VLevel::Serialise(VStream& Strm)
 						// add to decal list
 						if (decal) decal->next = dc; else Segs[f].decals = dc;
 						if (dc->animator) {
+							if (decanimlist) decanimlist->prevanimated = dc;
 							dc->nextanimated = decanimlist;
 							decanimlist = dc;
 						}
@@ -1060,6 +1077,36 @@ line_t* VLevel::FindAdjacentLine (line_t* srcline, int side, int dir) {
 
 //==========================================================================
 //
+// VLevel::AddAnimatedDecal
+//
+//==========================================================================
+
+void VLevel::AddAnimatedDecal (decal_t* dc) {
+  if (!dc || dc->prevanimated || dc->nextanimated || decanimlist == dc || !dc->animator) return;
+  if (decanimlist) decanimlist->prevanimated = dc;
+  dc->nextanimated = decanimlist;
+  decanimlist = dc;
+}
+
+//==========================================================================
+//
+// VLevel::RemoveAnimatedDecal
+//
+// this will also kill animator
+//
+//==========================================================================
+
+void VLevel::RemoveAnimatedDecal (decal_t* dc) {
+  if (!dc || (!dc->prevanimated && !dc->nextanimated && decanimlist != dc)) return;
+  if (dc->prevanimated) dc->prevanimated->nextanimated = dc->nextanimated; else decanimlist = dc->nextanimated;
+  if (dc->nextanimated) dc->nextanimated->prevanimated = dc->prevanimated;
+  delete dc->animator;
+  dc->animator = nullptr;
+  dc->prevanimated = dc->nextanimated = nullptr;
+}
+
+//==========================================================================
+//
 // VLevel::PutDecalAtLine
 //
 // prevdir<0: `segdist` is negative, left offset
@@ -1113,6 +1160,45 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
     if (/*seg->linedef == li &&*/ seg->frontsector == sec) {
       if (segd0 >= seg->offset+seg->length || segd1 < seg->offset) continue;
       //if (prevdir < 0) GCon->Logf("  found seg #%d (segd=%f:%f; seg=%f:%f)", sidx, segd0, segd1, seg->offset, seg->offset+seg->length);
+      int dcmaxcount = decal_onetype_max;
+           if (tinf.width >= 128 || tinf.height >= 128) dcmaxcount = 8;
+      else if (tinf.width >= 64 || tinf.height >= 64) dcmaxcount = 32;
+      else if (tinf.width >= 32 || tinf.height >= 32) dcmaxcount = 64;
+      // remove old same-typed decals, if necessary
+      if (dcmaxcount > 0 && dcmaxcount < 10000) {
+        int count = 0;
+        decal_t* prev = nullptr;
+        decal_t* first = nullptr;
+        decal_t* cur = seg->decals;
+        while (cur) {
+          if (cur->dectype == dec->name) {
+            if (!first) first = cur;
+            ++count;
+          }
+          if (!first) prev = cur;
+          cur = cur->next;
+        }
+        if (count >= dcmaxcount) {
+          //GCon->Logf("removing %d extra '%s' decals", count-dcmaxcount+1, *dec->name);
+          // do removal
+          decal_t* cur = first;
+          if (prev) {
+            if (prev->next != cur) Sys_Error("decal oops(0)");
+          } else {
+            if (seg->decals != cur) Sys_Error("decal oops(1)");
+          }
+          while (cur) {
+            decal_t* n = cur->next;
+            if (cur->dectype == dec->name) {
+              if (prev) prev->next = n; else seg->decals = n;
+              RemoveAnimatedDecal(cur);
+              delete cur;
+              if (--count < dcmaxcount) break;
+            }
+            cur = n;
+          }
+        }
+      }
       // create decals
       decal_t* decal = new decal_t;
       memset(decal, 0, sizeof(decal_t));
@@ -1124,6 +1210,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
         seg->decals = decal;
       }
       decal->seg = seg;
+      decal->dectype = dec->name;
       decal->picname = dec->pic;
       decal->texture = tex;
       decal->orgz = decal->curz = orgz;
@@ -1139,11 +1226,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       decal->alpha = decal->origAlpha = dec->alpha;
       decal->addAlpha = dec->addAlpha;
       decal->animator = (dec->animator ? dec->animator->clone() : nullptr);
-      if (decal->animator) {
-        decal->nextanimated = decanimlist;
-        decanimlist = decal;
-        //GCon->Logf("added animated decal '%s'", *dec->name);
-      }
+      if (decal->animator) AddAnimatedDecal(decal);
+
       // setup misc flags
       decal->flags = flips|(dec->fullbright ? decal_t::Fullbright : 0)|(dec->fuzzy ? decal_t::Fuzzy : 0);
 

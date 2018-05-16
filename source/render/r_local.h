@@ -142,6 +142,7 @@ struct decal_t
 	decal_t* next; // in this seg
 	seg_t* seg;
 	sector_t* bsec; // backsector for SlideXXX
+	VName dectype;
 	VName picname;
 	int texture;
 	vuint32 flags;
@@ -157,6 +158,7 @@ struct decal_t
 	float alpha; // decal alpha
 	float addAlpha; // alpha for additive translucency (not supported yet)
 	VDecalAnim* animator; // decal animator (can be nullptr)
+	decal_t* prevanimated; // so we can skip static decals
 	decal_t* nextanimated; // so we can skip static decals
 };
 

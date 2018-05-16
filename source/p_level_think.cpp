@@ -132,19 +132,13 @@ void VLevel::TickWorld(float DeltaTime)
 
 	// Run decal thinkers
 	if (DeltaTime > 0) {
-		decal_t* prev = nullptr;
 		decal_t* dc = decanimlist;
 		while (dc) {
 			bool removeIt = true;
 			if (dc->animator) removeIt = !dc->animator->animate(dc, DeltaTime);
-			if (removeIt) {
-				if (prev) prev->nextanimated = dc->nextanimated; else decanimlist = dc->nextanimated;
-				delete dc->animator;
-				dc->animator = nullptr;
-			} else {
-				prev = dc;
-			}
+			decal_t* c = dc;
 			dc = dc->nextanimated;
+			if (removeIt) RemoveAnimatedDecal(c);
 		}
 	}
 
