@@ -448,11 +448,12 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
       continue;
     }
 
-    //FIXME: this should use origScale to get starting position
+    // use origScale to get the original starting point
+    float txw2 = dtex->GetWidth()*dc->origScaleX*0.5f;
+    float txh2 = dtex->GetHeight()*dc->origScaleY*0.5f;
+
     float txw = dtex->GetWidth()*dc->scaleX;
     float txh = dtex->GetHeight()*dc->scaleY;
-    float txw2 = txw*0.5f;
-    float txh2 = txh*0.5f;
 
     if (txw < 1 || txh < 1) {
       // remove it
@@ -493,7 +494,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     float xstofs = dc->xdist*dc->linelen-txw2+dc->ofsX;
     TVec v0 = lv1+dir*xstofs;
     TVec v2 = lv1+dir*(xstofs+txw);
-    float dcz = dc->org.z-txh2+dc->ofsY;
+    float dcz = dc->org.z+txh2-dc->ofsY;
 
     float texx0 = (dc->flipX ? 1.0f : 0.0f);
     float texx1 = (dc->flipX ? 0.0f : 1.0f);
@@ -502,8 +503,8 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
 
     glBegin(GL_QUADS);
       glTexCoord2f(texx0, texy0); glVertex3f(v0.x, v0.y, dcz);
-      glTexCoord2f(texx0, texy1); glVertex3f(v0.x, v0.y, dcz+txh);
-      glTexCoord2f(texx1, texy1); glVertex3f(v2.x, v2.y, dcz+txh);
+      glTexCoord2f(texx0, texy1); glVertex3f(v0.x, v0.y, dcz-txh);
+      glTexCoord2f(texx1, texy1); glVertex3f(v2.x, v2.y, dcz-txh);
       glTexCoord2f(texx1, texy0); glVertex3f(v2.x, v2.y, dcz);
     glEnd();
 
