@@ -1249,17 +1249,17 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 	{
 		VEntity *O = tmtrace.BlockingMobj;
 		if (!O || !(EntityFlags & EF_IsPlayer) ||
-			(O->EntityFlags & EF_IsPlayer) ||
-			O->Origin.z + O->Height - Origin.z > MaxStepHeight ||
-			O->CeilingZ - (O->Origin.z + O->Height) < Height ||
-			tmtrace.CeilingZ - (O->Origin.z + O->Height) < Height)
+		    (O->EntityFlags & EF_IsPlayer) ||
+		    O->Origin.z + O->Height - Origin.z > MaxStepHeight ||
+		    O->CeilingZ - (O->Origin.z + O->Height) < Height ||
+		    tmtrace.CeilingZ - (O->Origin.z + O->Height) < Height)
 		{
 			// Can't step up or doesn't fit
 			PushLine(tmtrace);
 			return false;
 		}
 		if (!(EntityFlags & EF_PassMobj) || compat_nopassover ||
-			(Level->LevelInfoFlags2 & VLevelInfo::LIF2_CompatNoPassOver))
+		    (Level->LevelInfoFlags2 & VLevelInfo::LIF2_CompatNoPassOver))
 		{
 			// Can't go over
 			return false;
@@ -1278,7 +1278,7 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 		tmtrace.TraceFlags |= tmtrace_t::TF_FloatOk;
 
 		if (tmtrace.CeilingZ - Origin.z < Height && !(EntityFlags & EF_Fly) &&
-			!(EntityFlags & EF_IgnoreCeilingStep))
+		    !(EntityFlags & EF_IgnoreCeilingStep))
 		{
 			// mobj must lower itself to fit
 			PushLine(tmtrace);
@@ -1292,10 +1292,10 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 			{
 				// If sliding down, make sure we don't have another object below.
 				if ((!tmtrace.BlockingMobj || !tmtrace.BlockingMobj->CheckOnmobj() ||
-					(tmtrace.BlockingMobj->CheckOnmobj() &&
-					 tmtrace.BlockingMobj->CheckOnmobj() != this)) &&
-					(!CheckOnmobj() || (CheckOnmobj() &&
-					 CheckOnmobj() != tmtrace.BlockingMobj)))
+				    (tmtrace.BlockingMobj->CheckOnmobj() &&
+				     tmtrace.BlockingMobj->CheckOnmobj() != this)) &&
+				    (!CheckOnmobj() || (CheckOnmobj() &&
+				     CheckOnmobj() != tmtrace.BlockingMobj)))
 				{
 					Velocity.z = -8.0 * 35.0;
 				}
@@ -1307,10 +1307,10 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 			{
 				// Check to make sure there's nothing in the way for the step up
 				if ((!tmtrace.BlockingMobj || !tmtrace.BlockingMobj->CheckOnmobj() ||
-					(tmtrace.BlockingMobj->CheckOnmobj() &&
-					 tmtrace.BlockingMobj->CheckOnmobj() != this)) &&
-					(!CheckOnmobj() || (CheckOnmobj() &&
-					 CheckOnmobj() != tmtrace.BlockingMobj)))
+				    (tmtrace.BlockingMobj->CheckOnmobj() &&
+				     tmtrace.BlockingMobj->CheckOnmobj() != this)) &&
+				    (!CheckOnmobj() || (CheckOnmobj() &&
+				     CheckOnmobj() != tmtrace.BlockingMobj)))
 				{
 					Velocity.z = 8.0 * 35.0;
 				}
@@ -1327,8 +1327,8 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 				{
 					// Check to make sure there's nothing in the way for the step up
 					if (!Velocity.z || tmtrace.FloorZ - Origin.z > 48.0 ||
-						(tmtrace.BlockingMobj && tmtrace.BlockingMobj->CheckOnmobj()) ||
-						TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ)))
+					    (tmtrace.BlockingMobj && tmtrace.BlockingMobj->CheckOnmobj()) ||
+					    TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ)))
 					{
 						PushLine(tmtrace);
 						return false;
@@ -1341,7 +1341,7 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 				}
 			}
 			if ((EntityFlags & EF_Missile) && !(EntityFlags & EF_StepMissile) &&
-				tmtrace.FloorZ > Origin.z)
+			    tmtrace.FloorZ > Origin.z)
 			{
 				PushLine(tmtrace);
 				return false;
@@ -1367,8 +1367,8 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 		}
 		// killough 3/15/98: Allow certain objects to drop off
 		if ((!AllowDropOff && !(EntityFlags & EF_DropOff) &&
-			!(EntityFlags & EF_Float) && !(EntityFlags & EF_Missile)) ||
-			(EntityFlags & EF_NoDropOff))
+		    !(EntityFlags & EF_Float) && !(EntityFlags & EF_Missile)) ||
+		    (EntityFlags & EF_NoDropOff))
 		{
 			if (!(EntityFlags & EF_AvoidingDropoff))
 			{
@@ -1381,7 +1381,7 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 				}
 
 				if ((floorz - tmtrace.DropOffZ > MaxDropoffHeight) &&
-					!(EntityFlags & EF_Blasted))
+				    !(EntityFlags & EF_Blasted))
 				{
 					// Can't move over a dropoff unless it's been blasted
 					return false;
@@ -1392,14 +1392,14 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 				// special logic to move a monster off a dropoff
 				// this intentionally does not check for standing on things.
 				if (FloorZ - tmtrace.FloorZ > MaxDropoffHeight ||
-					DropOffZ - tmtrace.DropOffZ > MaxDropoffHeight)
+				    DropOffZ - tmtrace.DropOffZ > MaxDropoffHeight)
 				{
 					return false;
 				}
 			}
 		}
 		if (EntityFlags & EF_CantLeaveFloorpic &&
-			(tmtrace.Floor->pic != Floor->pic || tmtrace.FloorZ != Origin.z))
+		    (tmtrace.Floor->pic != Floor->pic || tmtrace.FloorZ != Origin.z))
 		{
 			// must stay within a sector of a certain floor type
 			return false;
@@ -1412,8 +1412,7 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 	{
 		float EyeZ = Player ? Player->ViewOrg.z : Origin.z + Height * 0.5;
 		OldAboveFakeFloor = EyeZ > Sector->heightsec->floor.GetPointZ(Origin);
-		OldAboveFakeCeiling = EyeZ > Sector->heightsec->ceiling.GetPointZ(
-			Origin);
+		OldAboveFakeCeiling = EyeZ > Sector->heightsec->ceiling.GetPointZ(Origin);
 	}
 
 	// the move is ok,
@@ -1466,10 +1465,9 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 
 	//	Do additional check here to avoid calling progs.
 	if ((OldSec->heightsec && Sector->heightsec && Sector->ActionList) ||
-		(OldSec != Sector && (OldSec->ActionList || Sector->ActionList)))
+	    (OldSec != Sector && (OldSec->ActionList || Sector->ActionList)))
 	{
-		eventCheckForSectorActions(OldSec, OldAboveFakeFloor,
-			OldAboveFakeCeiling);
+		eventCheckForSectorActions(OldSec, OldAboveFakeFloor, OldAboveFakeCeiling);
 	}
 
 	return true;
