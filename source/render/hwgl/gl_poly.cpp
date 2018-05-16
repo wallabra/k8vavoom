@@ -468,9 +468,9 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
       continue;
     }
 
-    float lev = (dc->fullbright ? 1.0f : (float)(surf->Light>>24)/255.0f);
+    float lev = (dc->flags&decal_t::Fullbright ? 1.0f : (float)(surf->Light>>24)/255.0f);
     p_glUniform4fARB(SurfDecalLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
-    if (surf->Fade && !dc->fullbright) {
+    if (surf->Fade && (dc->flags&decal_t::Fullbright) == 0) {
       p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_TRUE);
       p_glUniform4fARB(SurfDecalFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
       p_glUniform1fARB(SurfDecalFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
@@ -497,12 +497,21 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     float xstofs = dc->xdist-txw2+dc->ofsX;
     TVec v0 = lv1+dir*xstofs;
     TVec v2 = lv1+dir*(xstofs+txw);
-    float dcz = dc->orgz+txh2-dc->ofsY;
 
-    float texx0 = (dc->flipX ? 1.0f : 0.0f);
-    float texx1 = (dc->flipX ? 0.0f : 1.0f);
-    float texy0 = (dc->flipY ? 1.0f : 0.0f);
-    float texy1 = (dc->flipY ? 0.0f : 1.0f);
+    float dcz = dc->curz+txh2-dc->ofsY;
+    // fix Z, if necessary
+    if (dc->flags&decal_t::SlideFloor) {
+      // should slide with back floor
+      dcz += dc->bsec->floor.TexZ;
+    } else if (dc->flags&decal_t::SlideCeil) {
+      // should slide with back ceiling
+      dcz += dc->bsec->ceiling.TexZ;
+    }
+
+    float texx0 = (dc->flags&decal_t::FlipX ? 1.0f : 0.0f);
+    float texx1 = (dc->flags&decal_t::FlipX ? 0.0f : 1.0f);
+    float texy0 = (dc->flags&decal_t::FlipY ? 1.0f : 0.0f);
+    float texy1 = (dc->flags&decal_t::FlipY ? 0.0f : 1.0f);
 
     glBegin(GL_QUADS);
       glTexCoord2f(texx0, texy0); glVertex3f(v0.x, v0.y, dcz);

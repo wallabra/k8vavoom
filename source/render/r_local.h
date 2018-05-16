@@ -130,25 +130,32 @@ struct sky_t
 
 struct decal_t
 {
+	enum {
+		SlideFloor = 0x0001U, // curz: offset with floorz, slide with it
+		SlideCeil = 0x0002U, // curz: offset with ceilingz, slide with it
+		FlipX = 0x0010U,
+		FlipY = 0x0020U,
+		Fullbright = 0x0100U,
+		Fuzzy = 0x0200U,
+		SideDefOne = 0x0800U,
+	};
 	decal_t* next; // in this seg
 	seg_t* seg;
+	sector_t* bsec; // backsector for SlideXXX
 	VName picname;
 	int texture;
-	float orgz;
+	vuint32 flags;
+	float orgz; // original z position
+	float curz; // z position (offset with floor/ceiling TexZ if not midtex, see `flags`)
 	float xdist; // normalized
 	float linelen; // so we don't have to recalculate it in renderer
 	float shade[4]; // [3]: mix coeff [0..1]; 0 means "original color", 1 means "use shade color"
 	float ofsX, ofsY; // for animators
-	//float shiftX; // for spreaded decals, in pixels
-	//float lenX; // for spreaded decals, in pixels
 	float origScaleX, origScaleY; // for animators
-	float scaleX, scaleY;
-	int flipX, flipY; // FlipXXX constant
+	float scaleX, scaleY; // actual
 	float origAlpha; // for animators
 	float alpha; // decal alpha
 	float addAlpha; // alpha for additive translucency (not supported yet)
-	int fuzzy; // bool: draw decal with "fuzzy" effect (not supported yet)
-	int fullbright; // bool
 	VDecalAnim* animator; // decal animator (can be nullptr)
 	decal_t* nextanimated; // so we can skip static decals
 };

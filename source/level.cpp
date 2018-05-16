@@ -126,7 +126,9 @@ static void DecalIO (VStream& Strm, decal_t *dc) {
 		memcpy(namebuf, *dc->picname, namelen);
 		Strm.Serialise(namebuf, namelen);
 	}
+	Strm << dc->flags;
 	Strm << dc->orgz;
+	Strm << dc->curz;
 	Strm << dc->xdist;
 	Strm << dc->linelen;
 	Strm << dc->shade[0];
@@ -135,19 +137,13 @@ static void DecalIO (VStream& Strm, decal_t *dc) {
 	Strm << dc->shade[3];
 	Strm << dc->ofsX;
 	Strm << dc->ofsY;
-	//Strm << dc->shiftX;
-	//Strm << dc->lenX;
 	Strm << dc->origScaleX;
 	Strm << dc->origScaleY;
 	Strm << dc->scaleX;
 	Strm << dc->scaleY;
-	Strm << dc->flipX;
-	Strm << dc->flipY;
 	Strm << dc->origAlpha;
 	Strm << dc->alpha;
 	Strm << dc->addAlpha;
-	Strm << dc->fuzzy;
-	Strm << dc->fullbright;
 	VDecalAnim::Serialise(Strm, dc->animator);
 }
 
@@ -201,6 +197,17 @@ void VLevel::Serialise(VStream& Strm)
 						delete dc->animator;
 						delete dc;
 					} else {
+						// fix backsector
+						if (dc->flags&(decal_t::SlideFloor|decal_t::SlideCeil)) {
+							line_t* li = Segs[f].linedef;
+							if (!li) Sys_Error("Save loader: invalid seg linedef (0)!");
+							int bsidenum = (dc->flags&decal_t::SideDefOne ? 1 : 0);
+							if (li->sidenum[bsidenum] < 0) Sys_Error("Save loader: invalid seg linedef (1)!");
+							side_t *sb = &Sides[li->sidenum[bsidenum]];
+							dc->bsec = sb->Sector;
+							if (!dc->bsec) Sys_Error("Save loader: invalid seg linedef (2)!");
+						}
+						// add to decal list
 						if (decal) decal->next = dc; else Segs[f].decals = dc;
 						if (dc->animator) {
 							dc->nextanimated = decanimlist;
@@ -1061,7 +1068,9 @@ line_t* VLevel::FindAdjacentLine (line_t* srcline, int side, int dir) {
 //
 //==========================================================================
 
-void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, int flipx, int flipy) {
+void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, vuint32 flips) {
+  guard(VLevel::PutDecalAtLine);
+
   picinfo_t tinf;
   GTextureManager.GetTextureInfo(tex, &tinf);
 
@@ -1117,30 +1126,50 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       decal->seg = seg;
       decal->picname = dec->pic;
       decal->texture = tex;
-      decal->orgz = orgz;
+      decal->orgz = decal->curz = orgz;
       decal->xdist = segd0+tinf.width*0.5f;
       decal->linelen = linelen;
       decal->shade[0] = dec->shade[0];
       decal->shade[1] = dec->shade[1];
       decal->shade[2] = dec->shade[2];
       decal->shade[3] = dec->shade[3];
-      decal->ofsX = 0;
-      decal->ofsY = 0;
-      //decal->shiftX = shiftx;
-      //decal->lenX = (lenx < 0 ? tinf.width : lenx);
+      decal->ofsX = decal->ofsY = 0;
       decal->scaleX = decal->origScaleX = dec->scaleX;
       decal->scaleY = decal->origScaleY = dec->scaleY;
-      decal->flipX = flipx;
-      decal->flipY = flipy;
       decal->alpha = decal->origAlpha = dec->alpha;
       decal->addAlpha = dec->addAlpha;
-      decal->fuzzy = dec->fuzzy;
-      decal->fullbright = dec->fullbright;
       decal->animator = (dec->animator ? dec->animator->clone() : nullptr);
       if (decal->animator) {
         decal->nextanimated = decanimlist;
         decanimlist = decal;
         //GCon->Logf("added animated decal '%s'", *dec->name);
+      }
+      // setup misc flags
+      decal->flags = flips|(dec->fullbright ? decal_t::Fullbright : 0)|(dec->fuzzy ? decal_t::Fuzzy : 0);
+
+      // setup curz and pegs
+      // if we have the other side, check for top/bottom hit
+      if (li->sidenum[1-sidenum] >= 0) {
+        side_t *sb = &Sides[li->sidenum[1-sidenum]];
+        sector_t *bsec = sb->Sector;
+        // this check is just in case of something is really fucked up
+        if (bsec) {
+          // back floor has higher z: has bottom, check for [myfloorz..backfloorz]
+          if (bsec->floor.TexZ > sec->floor.TexZ && orgz >= sec->floor.TexZ && orgz <= bsec->floor.TexZ) {
+            if ((li->flags&ML_DONTPEGTOP) == 0) {
+              decal->curz -= bsec->floor.TexZ;
+              decal->flags |= decal_t::SlideFloor|(sidenum == 0 ? decal_t::SideDefOne : 0);
+              decal->bsec = bsec;
+            }
+          } else if (bsec->ceiling.TexZ < sec->ceiling.TexZ && orgz >= bsec->ceiling.TexZ && orgz <= sec->ceiling.TexZ) {
+            // back ceil has lower z: has top, check for [backceilz..myceilz]
+            if ((li->flags&ML_DONTPEGBOTTOM) == 0) {
+              decal->curz -= bsec->ceiling.TexZ;
+              decal->flags |= decal_t::SlideCeil|(sidenum == 0 ? decal_t::SideDefOne : 0);
+              decal->bsec = bsec;
+            }
+          }
+        }
       }
     }
   }
@@ -1158,9 +1187,9 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
     line_t* spline = FindAdjacentLine(li, sidenum, -1);
     if (spline) {
       //GCon->Logf("  WANT LEFT SPREAD, found linedef");
-      PutDecalAtLine(tex, orgz, segd0, dec, sec, spline, -1, flipx, flipy);
+      PutDecalAtLine(tex, orgz, segd0, dec, sec, spline, -1, flips);
     } else {
-      GCon->Logf("  WANT LEFT SPREAD, but no left line found");
+      //GCon->Logf("  WANT LEFT SPREAD, but no left line found");
     }
   }
 
@@ -1171,11 +1200,13 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
     line_t* spline = FindAdjacentLine(li, sidenum, 1);
     if (spline) {
       //GCon->Logf("  WANT RIGHT SPREAD, found linedef");
-      PutDecalAtLine(tex, orgz, segd1-linelen, dec, sec, spline, 1, flipx, flipy);
+      PutDecalAtLine(tex, orgz, segd1-linelen, dec, sec, spline, 1, flips);
     } else {
-      GCon->Logf("  WANT RIGHT SPREAD, but no left line found");
+      //GCon->Logf("  WANT RIGHT SPREAD, but no right line found");
     }
   }
+
+  unguard;
 }
 
 //==========================================================================
@@ -1184,7 +1215,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
 //
 //==========================================================================
 
-void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, int flipx, int flipy, float shiftx, float lenx) {
+void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, line_t *li) {
   if (!dec || !sec || !li) return;
 
   if (level > 64) {
@@ -1192,7 +1223,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
     return;
   }
 
-  if (prevdir == 0 && dec->lowername != NAME_none) AddDecal(org, dec->lowername, sec, li, level+1);
+  if (dec->lowername != NAME_none) AddDecal(org, dec->lowername, sec, li, level+1);
 
   if (dec->scaleX <= 0 || dec->scaleY <= 0) {
     GCon->Logf("Decal '%s' has zero scale", *dec->name);
@@ -1221,8 +1252,17 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
   }
 
   // setup flips
-  if (flipx < 0) flipx = (dec->flipX == VDecalDef::FlipRandom ? (Random() < 0.5 ? VDecalDef::FlipNone : VDecalDef::FlipAlways) : dec->flipX);
-  if (flipy < 0) flipy = (dec->flipY == VDecalDef::FlipRandom ? (Random() < 0.5 ? VDecalDef::FlipNone : VDecalDef::FlipAlways) : dec->flipY);
+  vuint32 flips = 0;
+  if (dec->flipX == VDecalDef::FlipRandom) {
+    if (Random() < 0.5) flips |= decal_t::FlipX;
+  } else if (dec->flipX == VDecalDef::FlipAlways) {
+    flips |= decal_t::FlipX;
+  }
+  if (dec->flipY == VDecalDef::FlipRandom) {
+    if (Random() < 0.5) flips |= decal_t::FlipY;
+  } else if (dec->flipY == VDecalDef::FlipAlways) {
+    flips |= decal_t::FlipY;
+  }
 
   // calculate `dist` -- distance from wall start
   //int sidenum = 0;
@@ -1258,7 +1298,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
 
   if (segd1 <= 0 || segd0 >= linelen) return; // out of linedef
 
-  PutDecalAtLine(tex, org.z, segdist, dec, sec, li, 0, flipx, flipy);
+  PutDecalAtLine(tex, org.z, segdist, dec, sec, li, 0, flips);
 }
 
 //==========================================================================
@@ -1268,7 +1308,72 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
 //==========================================================================
 
 void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li, int level) {
+  guard(VLevel::AddDecal);
+
   if (!sec || !li || dectype == NAME_none) return; // just in case
+
+  // ignore slopes
+  if (sec->floor.minz != sec->floor.maxz || sec->ceiling.minz != sec->ceiling.maxz) return;
+
+  int sidenum = (int)(li->backsector == sec);
+  if (li->sidenum[sidenum] < 0) Sys_Error("decal engine: invalid linedef (0)!");
+
+  /*
+  side_t *side = &Sides[li->sidenum[sidenum]];
+  if (side->Sector != sec) Sys_Error("decal engine: invalid linedef (1)!");
+  GCon->Logf("z=%f; tfloor=%f; tceil=%f; floor=%f; ceil=%f; btex=%d; mtex=%d; ttex=%d; flags=0x%04x; hasback:%s",
+    org.z, sec->floor.TexZ, sec->ceiling.TexZ,
+    sec->floor.minz, sec->ceiling.minz,
+    side->BottomTexture, side->MidTexture, side->TopTexture,
+    li->flags,
+    (li->sidenum[1-sidenum] >= 0 ? "TAN" : "ona"));
+  if (li->sidenum[1-sidenum] >= 0) {
+    side_t *sb = &Sides[li->sidenum[1-sidenum]];
+    GCon->Logf("z=%f; tfloor=%f; tceil=%f; floor=%f; ceil=%f; btex=%d; mtex=%d; ttex=%d; flags=0x%04x; hasback:%s",
+      org.z, sb->Sector->floor.TexZ, sb->Sector->ceiling.TexZ,
+      sb->Sector->floor.minz, sb->Sector->ceiling.minz,
+      sb->BottomTexture, sb->MidTexture, sb->TopTexture,
+      li->flags,
+      (li->sidenum[1-sidenum] >= 0 ? "TAN" : "ona"));
+  }
+
+  GCon->Logf("=== top regions ===");
+  for (sec_region_t *reg = sec->topregion; reg; reg = reg->next) {
+    GCon->Logf("  floor: texz=%f; minz=%f; maxz=%f", reg->floor->TexZ, reg->floor->minz, reg->floor->maxz);
+    GCon->Logf("  ceil : texz=%f; minz=%f; maxz=%f", reg->ceiling->TexZ, reg->ceiling->minz, reg->ceiling->maxz);
+  }
+
+  GCon->Logf("=== bot regions ===");
+  for (sec_region_t *reg = sec->botregion; reg; reg = reg->next) {
+    GCon->Logf("  floor: texz=%f; minz=%f; maxz=%f", reg->floor->TexZ, reg->floor->minz, reg->floor->maxz);
+    GCon->Logf("  ceil : texz=%f; minz=%f; maxz=%f", reg->ceiling->TexZ, reg->ceiling->minz, reg->ceiling->maxz);
+  }
+
+  // find segs for this decal (there may be several segs)
+  GCon->Logf("=== segs and drawsegs ===");
+  for (seg_t *seg = li->firstseg; seg; seg = seg->lsnext) {
+    if (seg->frontsector == sec) {
+      GCon->Logf(" seg: ofs=%f; len=%f", seg->offset, seg->length);
+      for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next) {
+        if (ds->bot) {
+          GCon->Logf("  bottom: fdist=(%f,%f); bdist=(%f,%f)", ds->bot->frontTopDist, ds->bot->frontBotDist, ds->bot->backTopDist, ds->bot->backBotDist);
+        } else {
+          GCon->Logf("  bottom: NONE");
+        }
+        if (ds->mid) {
+          GCon->Logf("  middle: fdist=(%f,%f); bdist=(%f,%f)", ds->mid->frontTopDist, ds->mid->frontBotDist, ds->mid->backTopDist, ds->mid->backBotDist);
+        } else {
+          GCon->Logf("  middle: NONE");
+        }
+        if (ds->top) {
+          GCon->Logf("  top   : fdist=(%f,%f); bdist=(%f,%f)", ds->top->frontTopDist, ds->top->frontBotDist, ds->top->backTopDist, ds->top->backBotDist);
+        } else {
+          GCon->Logf("  top   : NONE");
+        }
+      }
+    }
+  }
+  */
 
   // first, try decal group
   VDecalGroup *dgrp = VDecalGroup::find(dectype);
@@ -1280,6 +1385,8 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
   // no group, try lone decal
   VDecalDef *dec = VDecalDef::find(dectype);
   if (dec) AddOneDecal(level, org, dec, sec, li);
+
+  unguard;
 }
 
 //==========================================================================
