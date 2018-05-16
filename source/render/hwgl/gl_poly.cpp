@@ -466,14 +466,19 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     }
 
     // use origScale to get the original starting point
-    float txw2 = dtex->GetWidth()*dc->origScaleX*0.5f;
-    float txh2 = dtex->GetHeight()*dc->origScaleY*0.5f;
+    float txwC = dtex->SOffset*dc->origScaleX;
+    float txhC = dtex->TOffset*dc->origScaleY;
+    //float txwC = dtex->SOffset*dc->scaleX;
+    //float txhC = dtex->TOffset*dc->scaleY;
 
     float txw = dtex->GetWidth()*dc->scaleX;
     float txh = dtex->GetHeight()*dc->scaleY;
+    //float txw = dtex->GetWidth()*dc->origScaleX;
+    //float txh = dtex->GetHeight()*dc->origScaleY;
 
     if (txw < 1 || txh < 1) {
       // remove it
+      /*
       decal_t* n = dc->next;
       if (!dc->animator) {
         if (prev) prev->next = n; else surf->dcseg->decals = n;
@@ -482,6 +487,8 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
         prev = dc;
       }
       dc = n;
+      */
+      dc = dc->next;
       continue;
     }
 
@@ -503,20 +510,18 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
 
     SetTexture(dtex, tex->ColourMap); // this sets `tex_iw` and `tex_ih`
 
-    TVec lv1, lv2;
-    lv1 = *(dc->seg->side ? dc->seg->linedef->v2 : dc->seg->linedef->v1);
-    lv2 = *(dc->seg->side ? dc->seg->linedef->v1 : dc->seg->linedef->v2);
-
-    //TODO:FIXME: offsets
-    //if (dtex->SOffset || dtex->TOffset) fprintf(stderr, "tx#%d ofs: %d, %d\n", dc->texture, dtex->SOffset, dtex->TOffset);
+    TVec lv1 = *(dc->seg->side ? dc->seg->linedef->v2 : dc->seg->linedef->v1);
+    TVec lv2 = *(dc->seg->side ? dc->seg->linedef->v1 : dc->seg->linedef->v2);
 
     TVec dir = (lv2-lv1)/dc->linelen;
-    float xstofs = dc->xdist-txw2+dc->ofsX;
+    float xstofs = dc->xdist-txwC+dc->ofsX;
     TVec v0 = lv1+dir*xstofs;
     TVec v2 = lv1+dir*(xstofs+txw);
 
     //float dcz = dc->curz+txh2-dc->ofsY;
-    float dcz = dc->curz-dc->ofsY;
+    //float dcz = dc->curz+dc->ofsY-txhC;
+    //float dcz = dc->curz-txhC+dc->ofsY;
+    float dcz = dc->curz+txhC+dc->ofsY;
     // fix Z, if necessary
     if (dc->flags&decal_t::SlideFloor) {
       // should slide with back floor
@@ -528,14 +533,14 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
 
     float texx0 = (dc->flags&decal_t::FlipX ? 1.0f : 0.0f);
     float texx1 = (dc->flags&decal_t::FlipX ? 0.0f : 1.0f);
-    float texy0 = (dc->flags&decal_t::FlipY ? 1.0f : 0.0f);
-    float texy1 = (dc->flags&decal_t::FlipY ? 0.0f : 1.0f);
+    float texy1 = (dc->flags&decal_t::FlipY ? 1.0f : 0.0f);
+    float texy0 = (dc->flags&decal_t::FlipY ? 0.0f : 1.0f);
 
     glBegin(GL_QUADS);
-      glTexCoord2f(texx0, texy0); glVertex3f(v0.x, v0.y, dcz+txh2);
-      glTexCoord2f(texx0, texy1); glVertex3f(v0.x, v0.y, dcz-txh2);
-      glTexCoord2f(texx1, texy1); glVertex3f(v2.x, v2.y, dcz-txh2);
-      glTexCoord2f(texx1, texy0); glVertex3f(v2.x, v2.y, dcz+txh2);
+      glTexCoord2f(texx0, texy0); glVertex3f(v0.x, v0.y, dcz-txh);
+      glTexCoord2f(texx0, texy1); glVertex3f(v0.x, v0.y, dcz);
+      glTexCoord2f(texx1, texy1); glVertex3f(v2.x, v2.y, dcz);
+      glTexCoord2f(texx1, texy0); glVertex3f(v2.x, v2.y, dcz-txh);
     glEnd();
 
     prev = dc;

@@ -56,6 +56,62 @@ static opening_t	openings[32];
 
 //==========================================================================
 //
+// P_SectorClosestPoint
+//
+// Given a point (x,y), returns the point (ox,oy) on the sector's defining
+// lines that is nearest to (x,y).
+// Ignores `z`.
+//
+//==========================================================================
+
+TVec P_SectorClosestPoint (sector_t *sec, TVec in) {
+  if (!sec) return in;
+
+  double x = in.x, y = in.y;
+  double bestdist = /*HUGE_VAL*/1e200;
+  double bestx = x, besty = y;
+
+  for (int f = 0; f < sec->linecount; ++f) {
+    line_t *check = sec->lines[f];
+    vertex_t *v1 = check->v1;
+    vertex_t *v2 = check->v2;
+    double a = v2->x-v1->x;
+    double b = v2->y-v1->y;
+    double den = a*a+b*b;
+    double ix, iy, dist;
+
+    if (den == 0) {
+      // line is actually a point!
+      ix = v1->x;
+      iy = v1->y;
+    } else {
+      double num = (x-v1->x)*a+(y-v1->y)*b;
+      double u = num/den;
+      if (u <= 0) {
+        ix = v1->x;
+        iy = v1->y;
+      } else if (u >= 1) {
+        ix = v2->x;
+        iy = v2->y;
+      } else {
+        ix = v1->x+u*a;
+        iy = v1->y+u*b;
+      }
+    }
+    a = ix-x;
+    b = iy-y;
+    dist = a*a+b*b;
+    if (dist < bestdist)  {
+      bestdist = dist;
+      bestx = ix;
+      besty = iy;
+    }
+  }
+  return TVec(bestx, besty, in.z);
+}
+
+//==========================================================================
+//
 //	SV_LineOpenings
 //
 //	Sets opentop and openbottom to the window through a two sided line.

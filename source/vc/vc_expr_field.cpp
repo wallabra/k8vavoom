@@ -251,6 +251,11 @@ VExpression* VDotField::IntResolve(VEmitContext& ec, bool AssignTarget)
 		int Flags = op->Flags;
 		op->Flags &= ~FIELD_ReadOnly;
 		op->RequestAddressOf();
+		if (!type.Struct) {
+			ParseError(Loc, "INTERNAL COMPILER ERROR: No such field `%s`, and no struct also!", *FieldName);
+			delete this;
+			return NULL;
+		}
 		VField* field = type.Struct->FindField(FieldName);
 		if (!field)
 		{

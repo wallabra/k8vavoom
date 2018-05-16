@@ -375,6 +375,7 @@ public:
 #endif
 #ifdef SERVER
 	//	Map utilites
+	DECLARE_FUNCTION(SectorClosestPoint)
 	DECLARE_FUNCTION(LineOpenings)
 	DECLARE_FUNCTION(P_BoxOnLineSide)
 	DECLARE_FUNCTION(FindThingGap)

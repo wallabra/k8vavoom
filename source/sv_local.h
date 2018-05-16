@@ -173,6 +173,8 @@ struct opening_t
 	opening_t*		next;
 };
 
+TVec P_SectorClosestPoint (sector_t *sec, TVec in);
+
 opening_t *SV_LineOpenings(const line_t* linedef, const TVec& point, int NoBlockFlags);
 
 int P_BoxOnLineSide(float* tmbox, line_t* ld);

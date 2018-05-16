@@ -1115,15 +1115,13 @@ void VLevel::RemoveAnimatedDecal (decal_t* dc) {
 //
 //==========================================================================
 
-static bool isDecalsOverlap (VDecalDef *dec, float segd0, float segd1, float orgz, decal_t* cur, int width, int height) {
-  // for overlap checking (ONLY!)
-  float oth2 = height*dec->scaleY*0.5f;
-  float tw2 = width*cur->scaleX*0.5f;
-  float th2 = height*cur->scaleY*0.5f;
-  float ccz = cur->curz-cur->ofsY;
+static bool isDecalsOverlap (VDecalDef *dec, float segd0, float segd1, float orgz, decal_t* cur, const picinfo_t& tinf) {
+  float cco = cur->xdist-tinf.xoffset*cur->scaleX+cur->ofsX;
+  float ccz = cur->curz-cur->ofsY+tinf.yoffset*cur->scaleY;
+  orgz += tinf.yoffset*dec->scaleY;
   return
-    segd1 > cur->xdist-tw2+cur->ofsX && segd0 < cur->xdist+tw2+cur->ofsX &&
-    orgz+oth2 > ccz-th2 && orgz-oth2 <= ccz+th2;
+    segd1 > cco && segd0 < cco+tinf.width*cur->scaleX &&
+    orgz > ccz-tinf.height*cur->scaleY && orgz-tinf.height*dec->scaleY < ccz;
 }
 
 
@@ -1189,7 +1187,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
         decal_t* cur = seg->decals;
         while (cur) {
           // also, check if this decal is touching our one
-          if (cur->dectype == dec->name && isDecalsOverlap(dec, segd0, segd1, orgz, cur, tinf.width, tinf.height)) {
+          if (cur->dectype == dec->name && isDecalsOverlap(dec, segd0, segd1, orgz, cur, tinf)) {
             if (!first) first = cur;
             ++count;
           }
@@ -1207,7 +1205,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
           }
           while (cur) {
             decal_t* n = cur->next;
-            if (cur->dectype == dec->name && isDecalsOverlap(dec, segd0, segd1, orgz, cur, tinf.width, tinf.height)) {
+            if (cur->dectype == dec->name && isDecalsOverlap(dec, segd0, segd1, orgz, cur, tinf)) {
               /*
               GCon->Logf("removing extra '%s' decal; org=(%f:%f,%f:%f); neworg=(%f:%f,%f:%f)", *dec->name,
                 cur->xdist-tw2, cur->xdist+tw2, cur->orgz-th2, cur->orgz+th2,
@@ -1345,6 +1343,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
   }
 
   int tex = GTextureManager.AddPatch(dec->pic, TEXTYPE_Pic);
+  //if (dec->pic == VName("scorch1")) tex = GTextureManager.AddPatch(VName("bulde1"), TEXTYPE_Pic);
   if (tex < 0) {
     // no decal gfx, nothing to do
     GCon->Logf("Decal '%s' has no pic (%s)", *dec->name, *dec->pic);
@@ -1358,6 +1357,8 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
     // invisible picture
     GCon->Logf("Decal '%s' has pic without pixels (%s)", *dec->name, *dec->pic);
   }
+
+  GCon->Logf("Picture '%s' size: %d, %d  offsets: %d, %d", *dec->pic, tinf.width, tinf.height, tinf.xoffset, tinf.yoffset);
 
   // setup flips
   vuint32 flips = 0;
@@ -1422,6 +1423,11 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
 
   // ignore slopes
   if (sec->floor.minz != sec->floor.maxz || sec->ceiling.minz != sec->ceiling.maxz) return;
+
+  TVec oorg = org;
+  org = P_SectorClosestPoint(sec, org);
+  //org.z = oorg.z;
+  GCon->Logf("oorg:(%f,%f,%f); org:(%f,%f,%f)", oorg.x, oorg.y, oorg.z, org.x, org.y, org.z);
 
   int sidenum = (int)(li->backsector == sec);
   if (li->sidenum[sidenum] < 0) Sys_Error("decal engine: invalid linedef (0)!");
