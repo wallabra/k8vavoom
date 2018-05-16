@@ -388,6 +388,7 @@ private:
 	void AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li, int level=0);
 	// called by `AddDecal()`
 	void AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir=0, int flipx=-1, int flipy=-1, float shiftx=0, float lenx=-1);
+	void PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, int flipx, int flipy);
 
 	DECLARE_FUNCTION(PointInSector)
 	DECLARE_FUNCTION(TraceLine)

@@ -490,11 +490,14 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     lv1 = *(dc->seg->side ? dc->seg->linedef->v2 : dc->seg->linedef->v1);
     lv2 = *(dc->seg->side ? dc->seg->linedef->v1 : dc->seg->linedef->v2);
 
+    //TODO:FIXME: offsets
+    //if (dtex->SOffset || dtex->TOffset) fprintf(stderr, "tx#%d ofs: %d, %d\n", dc->texture, dtex->SOffset, dtex->TOffset);
+
     TVec dir = (lv2-lv1)/dc->linelen;
-    float xstofs = dc->xdist*dc->linelen-txw2+dc->ofsX;
+    float xstofs = dc->xdist-txw2+dc->ofsX;
     TVec v0 = lv1+dir*xstofs;
     TVec v2 = lv1+dir*(xstofs+txw);
-    float dcz = dc->org.z+txh2-dc->ofsY;
+    float dcz = dc->orgz+txh2-dc->ofsY;
 
     float texx0 = (dc->flipX ? 1.0f : 0.0f);
     float texx1 = (dc->flipX ? 0.0f : 1.0f);

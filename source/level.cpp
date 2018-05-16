@@ -126,9 +126,7 @@ static void DecalIO (VStream& Strm, decal_t *dc) {
 		memcpy(namebuf, *dc->picname, namelen);
 		Strm.Serialise(namebuf, namelen);
 	}
-	Strm << dc->org.x;
-	Strm << dc->org.y;
-	Strm << dc->org.z;
+	Strm << dc->orgz;
 	Strm << dc->xdist;
 	Strm << dc->linelen;
 	Strm << dc->shade[0];
@@ -137,8 +135,8 @@ static void DecalIO (VStream& Strm, decal_t *dc) {
 	Strm << dc->shade[3];
 	Strm << dc->ofsX;
 	Strm << dc->ofsY;
-	Strm << dc->shiftX;
-	Strm << dc->lenX;
+	//Strm << dc->shiftX;
+	//Strm << dc->lenX;
 	Strm << dc->origScaleX;
 	Strm << dc->origScaleY;
 	Strm << dc->scaleX;
@@ -1055,6 +1053,134 @@ line_t* VLevel::FindAdjacentLine (line_t* srcline, int side, int dir) {
 
 //==========================================================================
 //
+// VLevel::PutDecalAtLine
+//
+// prevdir<0: `segdist` is negative, left offset
+// prevdir=0: `segdist` is normal dist
+// prevdir>0: `segdist` is positive, right offset
+//
+//==========================================================================
+
+void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, int flipx, int flipy) {
+  picinfo_t tinf;
+  GTextureManager.GetTextureInfo(tex, &tinf);
+
+  int sidenum = 0;
+  vertex_t* v1;
+  vertex_t* v2;
+
+  if (li->frontsector == sec) {
+    v1 = li->v1;
+    v2 = li->v2;
+  } else {
+    sidenum = 1;
+    v1 = li->v2;
+    v2 = li->v1;
+  }
+
+  TVec lv1 = *v1, lv2 = *v2;
+  lv1.z = 0;
+  lv2.z = 0;
+  float linelen = Length(lv2-lv1);
+
+  float segd0, segd1;
+  if (prevdir < 0) {
+    if (segdist >= 0) return; // just in case
+    segd0 = segdist+linelen;
+    segd1 = segd0+tinf.width;
+    //GCon->Logf("left spread; segdist=%f; segd0=%f; segd1=%f", segdist, segd0, segd1);
+  } else if (prevdir > 0) {
+    if (segdist <= 0) return; // just in case
+    segd1 = segdist;
+    segd0 = segd1-tinf.width;
+    //GCon->Logf("right spread; segdist=%f; segd0=%f; segd1=%f", segdist, segd0, segd1);
+  } else {
+    segd0 = segdist-tinf.width*0.5f;
+    segd1 = segd0+tinf.width;
+  }
+
+  // find segs for this decal (there may be several segs)
+  for (int sidx = 0; sidx < NumSegs; ++sidx) {
+    seg_t *seg = &Segs[sidx];
+    if (seg->linedef == li && seg->frontsector == sec) {
+      if (segd0 >= seg->offset+seg->length || segd1 < seg->offset) continue;
+      //if (prevdir < 0) GCon->Logf("  found seg #%d (segd=%f:%f; seg=%f:%f)", sidx, segd0, segd1, seg->offset, seg->offset+seg->length);
+      // create decals
+      decal_t* decal = new decal_t;
+      memset(decal, 0, sizeof(decal_t));
+      decal_t* cdec = seg->decals;
+      if (cdec) {
+        while (cdec->next) cdec = cdec->next;
+        cdec->next = decal;
+      } else {
+        seg->decals = decal;
+      }
+      decal->seg = seg;
+      decal->picname = dec->pic;
+      decal->texture = tex;
+      decal->orgz = orgz;
+      decal->xdist = segd0+tinf.width*0.5f;
+      decal->linelen = linelen;
+      decal->shade[0] = dec->shade[0];
+      decal->shade[1] = dec->shade[1];
+      decal->shade[2] = dec->shade[2];
+      decal->shade[3] = dec->shade[3];
+      decal->ofsX = 0;
+      decal->ofsY = 0;
+      //decal->shiftX = shiftx;
+      //decal->lenX = (lenx < 0 ? tinf.width : lenx);
+      decal->scaleX = decal->origScaleX = dec->scaleX;
+      decal->scaleY = decal->origScaleY = dec->scaleY;
+      decal->flipX = flipx;
+      decal->flipY = flipy;
+      decal->alpha = decal->origAlpha = dec->alpha;
+      decal->addAlpha = dec->addAlpha;
+      decal->fuzzy = dec->fuzzy;
+      decal->fullbright = dec->fullbright;
+      decal->animator = (dec->animator ? dec->animator->clone() : nullptr);
+      if (decal->animator) {
+        decal->nextanimated = decanimlist;
+        decanimlist = decal;
+        //GCon->Logf("added animated decal '%s'", *dec->name);
+      }
+    }
+  }
+
+  // if our decal is not completely at linedef, spread it to adjacent linedefs
+  // FIXME: this is not right, 'cause we want not a linedef at the same sector,
+  //        but linedef we can use for spreading. the difference is that it can
+  //        belong to any other sector, it just has to have the texture at the
+  //        given z point. i.e. linedef without midtexture (for example) can't
+  //        be used, but another linedef from another sector with such texture
+  //        is ok.
+
+  // left spread?
+  if (segd0 < 0 && prevdir <= 0) {
+    line_t* spline = FindAdjacentLine(li, sidenum, -1);
+    if (spline) {
+      //GCon->Logf("  WANT LEFT SPREAD, found linedef");
+      PutDecalAtLine(tex, orgz, segd0, dec, sec, spline, -1, flipx, flipy);
+    } else {
+      GCon->Logf("  WANT LEFT SPREAD, but no left line found");
+    }
+  }
+
+  //if (prevdir == 0) GCon->Logf("RSP TEST: segd1=%f; linelen=%f", segd1, linelen);
+
+  // right spread?
+  if (segd1 > linelen && prevdir >= 0) {
+    line_t* spline = FindAdjacentLine(li, sidenum, 1);
+    if (spline) {
+      //GCon->Logf("  WANT RIGHT SPREAD, found linedef");
+      PutDecalAtLine(tex, orgz, segd1-linelen, dec, sec, spline, 1, flipx, flipy);
+    } else {
+      GCon->Logf("  WANT RIGHT SPREAD, but no left line found");
+    }
+  }
+}
+
+//==========================================================================
+//
 // VLevel::AddOneDecal
 //
 //==========================================================================
@@ -1100,7 +1226,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
   if (flipy < 0) flipy = (dec->flipY == VDecalDef::FlipRandom ? (Random() < 0.5 ? VDecalDef::FlipNone : VDecalDef::FlipAlways) : dec->flipY);
 
   // calculate `dist` -- distance from wall start
-  int sidenum = 0;
+  //int sidenum = 0;
   vertex_t* v1;
   vertex_t* v2;
 
@@ -1108,7 +1234,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
     v1 = li->v1;
     v2 = li->v2;
   } else {
-    sidenum = 1;
+    //sidenum = 1;
     v1 = li->v2;
     v2 = li->v1;
   }
@@ -1133,84 +1259,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
 
   if (segd1 <= 0 || segd0 >= linelen) return; // out of linedef
 
-  // find segs for this decal (there may be several segs)
-  for (int sidx = 0; sidx < NumSegs; ++sidx) {
-    seg_t *seg = &Segs[sidx];
-    if (seg->linedef == li && seg->frontsector == sec) {
-      if (segd0 >= seg->offset+seg->length || segd1 < seg->offset) continue;
-      //GCon->Logf("  found seg #%d (segd=%f:%f; seg=%f:%f)", sidx, segd0, segd1, seg->offset, seg->offset+seg->length);
-      // create decals
-      decal_t* decal = new decal_t;
-      memset(decal, 0, sizeof(decal_t));
-      decal_t* cdec = seg->decals;
-      if (cdec) {
-        while (cdec->next) cdec = cdec->next;
-        cdec->next = decal;
-      } else {
-        seg->decals = decal;
-      }
-      decal->seg = seg;
-      decal->picname = dec->pic;
-      decal->texture = tex;
-      decal->org = org;
-      decal->xdist = dist;
-      decal->linelen = linelen;
-      decal->shade[0] = dec->shade[0];
-      decal->shade[1] = dec->shade[1];
-      decal->shade[2] = dec->shade[2];
-      decal->shade[3] = dec->shade[3];
-      decal->ofsX = 0;
-      decal->ofsY = 0;
-      decal->shiftX = shiftx;
-      decal->lenX = (lenx < 0 ? tinf.width : lenx);
-      decal->scaleX = decal->origScaleX = dec->scaleX;
-      decal->scaleY = decal->origScaleY = dec->scaleY;
-      decal->flipX = flipx;
-      decal->flipY = flipy;
-      decal->alpha = decal->origAlpha = dec->alpha;
-      decal->addAlpha = dec->addAlpha;
-      decal->fuzzy = dec->fuzzy;
-      decal->fullbright = dec->fullbright;
-      decal->animator = (dec->animator ? dec->animator->clone() : nullptr);
-      if (decal->animator) {
-        decal->nextanimated = decanimlist;
-        decanimlist = decal;
-        //GCon->Logf("added animated decal '%s'", *dec->name);
-      }
-    }
-  }
-
-  // if our decal is not completely at linedef, spread it to adjacent linedefs
-  // FIXME: this is not right, 'cause we want not a linedef at the same sector,
-  //        but linedef we can use for spreading. the difference is that it can
-  //        belong to any other sector, it just has to have the texture at the
-  //        given z point. i.e. linedef without midtexture (for example) can't
-  //        be used, but another linedef from another sector with such texture
-  //        is ok.
-
-  /*
-  // left spread?
-  if (segd0 < 0 && prevdir <= 0) {
-    line_t* spline = FindAdjacentLine(li, sidenum, -1);
-    if (spline) {
-      GCon->Logf("  WANT LEFT SPREAD, found linedef");
-      AddOneDecal(level, org, dec, sec, spline, -1, flipx, flipy, shiftx, lenx);
-    } else {
-      GCon->Logf("  WANT LEFT SPREAD, but no left line found");
-    }
-  }
-
-  // right spread?
-  if (segd1 > linelen && prevdir >= 0) {
-    line_t* spline = FindAdjacentLine(li, sidenum, 1);
-    if (spline) {
-      GCon->Logf("  WANT RIGHT SPREAD, found linedef");
-      AddOneDecal(level, org, dec, sec, spline, 1, flipx, flipy, shiftx, lenx);
-    } else {
-      GCon->Logf("  WANT RIGHT SPREAD, but no left line found");
-    }
-  }
-  */
+  PutDecalAtLine(tex, org.z, segdist, dec, sec, li, 0, flipx, flipy);
 }
 
 //==========================================================================

@@ -134,13 +134,13 @@ struct decal_t
 	seg_t* seg;
 	VName picname;
 	int texture;
-	TVec org;
+	float orgz;
 	float xdist; // normalized
 	float linelen; // so we don't have to recalculate it in renderer
 	float shade[4]; // [3]: mix coeff [0..1]; 0 means "original color", 1 means "use shade color"
 	float ofsX, ofsY; // for animators
-	float shiftX; // for spreaded decals, in pixels
-	float lenX; // for spreaded decals, in pixels
+	//float shiftX; // for spreaded decals, in pixels
+	//float lenX; // for spreaded decals, in pixels
 	float origScaleX, origScaleY; // for animators
 	float scaleX, scaleY;
 	int flipX, flipY; // FlipXXX constant
