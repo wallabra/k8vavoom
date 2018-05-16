@@ -1358,7 +1358,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
     GCon->Logf("Decal '%s' has pic without pixels (%s)", *dec->name, *dec->pic);
   }
 
-  GCon->Logf("Picture '%s' size: %d, %d  offsets: %d, %d", *dec->pic, tinf.width, tinf.height, tinf.xoffset, tinf.yoffset);
+  //GCon->Logf("Picture '%s' size: %d, %d  offsets: %d, %d", *dec->pic, tinf.width, tinf.height, tinf.xoffset, tinf.yoffset);
 
   // setup flips
   vuint32 flips = 0;
