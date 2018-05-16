@@ -959,6 +959,7 @@ void VRenderLevelShared::DrawCrosshair()
 			cy = (480 - sb_height) / 2;
 		else
 			cy = 240;
+		cy += 20;
 		int handle = GTextureManager.AddPatch(VName(va("CROSHAI%i",
 			(int)crosshair), VName::AddLower8), TEXTYPE_Pic);
 		R_DrawPic(320, cy, handle, crosshair_alpha);
