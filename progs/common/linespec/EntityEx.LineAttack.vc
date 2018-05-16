@@ -235,6 +235,7 @@ final EntityEx Aim(out TVec OutDir, float distance, optional float yaw, optional
 	}
 	if (bIsPlayer && /*!PlayerEx(Player).bAutoAim*/!aaim)
 	{
+		//ang.pitch = AngleMod360(ang.pitch-4);
 		AngleVector(&ang, &dir);
 		OutDir = dir;
 	}
