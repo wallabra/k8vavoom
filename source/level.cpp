@@ -1424,10 +1424,10 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
   // ignore slopes
   if (sec->floor.minz != sec->floor.maxz || sec->ceiling.minz != sec->ceiling.maxz) return;
 
-  TVec oorg = org;
+  //TVec oorg = org;
   org = P_SectorClosestPoint(sec, org);
   //org.z = oorg.z;
-  GCon->Logf("oorg:(%f,%f,%f); org:(%f,%f,%f)", oorg.x, oorg.y, oorg.z, org.x, org.y, org.z);
+  //GCon->Logf("oorg:(%f,%f,%f); org:(%f,%f,%f)", oorg.x, oorg.y, oorg.z, org.x, org.y, org.z);
 
   int sidenum = (int)(li->backsector == sec);
   if (li->sidenum[sidenum] < 0) Sys_Error("decal engine: invalid linedef (0)!");
