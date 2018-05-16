@@ -46,6 +46,8 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static VCvarB glsw_report_verts("glsw_report_verts", false, "Report number of shadow volume vertices?", 0);
+static VCvarB gl_decal_debug_nostencil("gl_decal_debug_nostencil", false, "Don't touch this!", 0);
+static VCvarB gl_decal_debug_noalpha("gl_decal_debug_noalpha", false, "Don't touch this!", 0);
 
 // CODE --------------------------------------------------------------------
 
@@ -363,6 +365,8 @@ void VOpenGLDrawer::RenderShaderDecalsEnd () {
 void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf, bool lmap) {
   if (!surf->dcseg || !surf->dcseg->decals) return; // nothing to do
 
+  if (gl_decal_debug_nostencil) return; // debug
+
   if (++decalStcVal == 0) { glClear(GL_STENCIL_BUFFER_BIT); decalStcVal = 1; } // it wrapped, so clear stencil buffer
   glEnable(GL_STENCIL_TEST);
   glStencilFunc(GL_ALWAYS, decalStcVal, 0xff);
@@ -413,8 +417,15 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
 
   //glEnable(GL_DEPTH_TEST);
 
-  //glDisable(GL_STENCIL_TEST);
   //glDisable(GL_BLEND);
+
+  if (gl_decal_debug_nostencil) {
+    glDisable(GL_STENCIL_TEST);
+  }
+
+  if (gl_decal_debug_noalpha) {
+    glDisable(GL_BLEND);
+  }
 
   // also, clear dead decals here, 'cause why not?
   decal_t* prev = nullptr;
