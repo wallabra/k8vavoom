@@ -2175,7 +2175,7 @@ final bool GiveBody(int num)
 //==========================================================================
 
 final void SpawnPuff(TVec Org, float Range, class<EntityEx> PuffType,
-	bool HitThing, optional sector_t* sec, optional line_t* li, optional TVec realOrg)
+	bool HitThing, optional sector_t* sec, optional line_t* li, optional TVec realOrg, optional name decalType)
 {
 	int i, c;
 	EntityEx puff;
@@ -2196,9 +2196,13 @@ final void SpawnPuff(TVec Org, float Range, class<EntityEx> PuffType,
 	}
 
 	//k8:TODO: this should be strictly client-side
-	if (sec && li && PuffType.default.DecalType) {
+	if (sec && li && (PuffType.default.DecalName || (specified_decalType && decalType))) {
 		if (!specified_realOrg) realOrg = Org;
-		SpawnDecal(realOrg, PuffType.default.DecalType, sec, li);
+		if (specified_decalType && decalType) {
+			SpawnDecal(realOrg, decalType, sec, li);
+		} else {
+			SpawnDecal(realOrg, PuffType.default.DecalName, sec, li);
+		}
 	}
 
 	Org.z += (Random() - Random()) * 4.0;
@@ -3321,7 +3325,7 @@ final void SpawnDirt(float radius)
 //
 //===========================================================================
 
-final void GunShot(int accurate, TVec dir, name DmgType, bool secondary)
+final void GunShot(int accurate, TVec dir, name DmgType, bool secondary, optional name DecalName)
 {
 	int damage;
 
@@ -3338,7 +3342,7 @@ final void GunShot(int accurate, TVec dir, name DmgType, bool secondary)
 
 	damage = 5 * (P_Random() % 3 + 1);
 
-	LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,DmgType, secondary);
+	LineAttack(dir, MISSILERANGE, damage, BulletPuff,,, DmgType, secondary, DecalName);
 }
 
 //===========================================================================
@@ -3871,7 +3875,7 @@ void RespawnResetFlags()
 	bNeverFast = default.bNeverFast;
 	bCanUseWalls = default.bCanUseWalls;
 
-	DecalType = default.DecalType;
+	DecalName = default.DecalName;
 }
 
 //==========================================================================

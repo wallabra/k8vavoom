@@ -312,7 +312,6 @@
 		<flag_unsupported name="BaseArmor" />
 		<flag_unsupported name="SuperArmor" />
 		<flag_unsupported name="ExplodeOnDeath" />
-		<prop_name name="Decal" property="DecalType" />
 		<prop_int_unsupported name="LimitedToTeam" />
 		<prop_int_unsupported name="VisibleToTeam" />		
 		<prop_int_unsupported name="LimitedToPlayerClass" />

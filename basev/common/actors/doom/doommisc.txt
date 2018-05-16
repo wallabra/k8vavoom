@@ -43,6 +43,7 @@ actor BulletPuff
 	+NoGravity
 	+AllowParticles
 	+Randomize
+	Decal BulletChip
 	states
 	{
 	Spawn:

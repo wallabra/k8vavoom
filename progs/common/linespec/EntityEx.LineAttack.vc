@@ -437,13 +437,15 @@ final bool ShootCheckPlanes(sector_t* sec, optional line_t* li, TVec linestart, 
 
 final int LineAttack(TVec Dir, float Distance, int LADamage,
 	class<EntityEx> PuffType, optional bool NoAttackGhosts,
-	optional TVec* OutHitPoint, optional name DmgType, optional bool secondary)
+	optional TVec* OutHitPoint, optional name DmgType, optional bool secondary, optional name decalType)
 {
 	TVec			Dst;
 	intercept_t*	in;
 	TVec			LineStart;
 	TVec			LineEnd;
 	TVec			ShootOrigin;
+
+	//print("LineAttack: self=<%s>", NameToStr(GetClassName(Class)));
 
 	ShootOrigin = Origin;
 	ShootOrigin.z += Height * 0.5 - FloorClip;
@@ -561,7 +563,7 @@ final int LineAttack(TVec Dir, float Distance, int LADamage,
 			hit_point -= 4.0 * Dir;
 
 			// Spawn bullet puffs.
-			SpawnPuff(hit_point, Distance, PuffType, false, sec, li, real_hit_point);
+			SpawnPuff(hit_point, Distance, PuffType, false, sec, li, real_hit_point, decalType);
 
 			// don't go any farther
 			return false;

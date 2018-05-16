@@ -80,6 +80,9 @@ public:
   static VDecalDef* find (const VStr& aname);
   static VDecalDef* find (const VName& aname);
 
+  static VDecalDef* getDecal (const VStr& aname);
+  static VDecalDef* getDecal (const VName& aname);
+
 private:
   static VDecalDef* listHead;
 
@@ -89,7 +92,7 @@ private:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// linked list of all known decal groups
+// will choose a random decal
 class VDecalGroup {
 private:
   VDecalGroup* next; // in decalDefHead
@@ -108,11 +111,14 @@ public:
   // decaldef properties
   VName name;
   TArray<VName> nameList; // can be empty in cloned/loaded object
+  //FIXME: it can refer another decal group
   TArray<VDecalDef*> list; // can contain less items than `nameList`
 
 public:
   VDecalGroup () : next(nullptr), name(NAME_none), nameList(), list() {}
   ~VDecalGroup () {}
+
+  VDecalDef* chooseDecal ();
 
 public:
   static VDecalGroup* find (const VStr& aname);

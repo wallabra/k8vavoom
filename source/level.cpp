@@ -1483,15 +1483,7 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
   }
   */
 
-  // first, try decal group
-  VDecalGroup *dgrp = VDecalGroup::find(dectype);
-  if (dgrp) {
-    for (int f = 0; f < dgrp->list.Num(); ++f) AddOneDecal(level, org, dgrp->list[f], sec, li);
-    return;
-  }
-
-  // no group, try lone decal
-  VDecalDef *dec = VDecalDef::find(dectype);
+  VDecalDef *dec = VDecalDef::getDecal(dectype);
   if (dec) AddOneDecal(level, org, dec, sec, li);
 
   unguard;

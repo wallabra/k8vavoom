@@ -349,7 +349,7 @@ static void SetClassFieldFloat(VClass* Class, const char* FieldName,
 static void SetClassFieldName(VClass* Class, const char* FieldName,
 	VName Value)
 {
-	guard(SetClassFieldInt);
+	guard(SetClassFieldName);
 	VField* F = Class->FindFieldChecked(FieldName);
 	VName* Ptr = (VName*)(Class->Defaults + F->Ofs);
 	*Ptr = Value;

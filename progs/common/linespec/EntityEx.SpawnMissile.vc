@@ -123,10 +123,10 @@ final bool ExplodeMissile(EntityEx Victim, optional line_t *line)
 	}
 
 	//k8:TODO: this should be strictly client-side
-	if (line && DecalType) {
+	if (line && DecalName) {
 		// the only case we can have a blocking line is the line without backsector
 		// (dunno why, this is how it is done in the source code)
-		if (line->frontsector) SpawnDecal(Origin, DecalType, line->frontsector, line);
+		if (line->frontsector) SpawnDecal(Origin, DecalName, line->frontsector, line);
 	}
 
 	Velocity = vector(0.0, 0.0, 0.0);
@@ -539,11 +539,11 @@ final EntityEx SpawnSubMissile(class<EntityEx> type, EntityEx AInstigator)
 //
 //==========================================================================
 
-final EntityEx SpawnPlayerMissile(class<EntityEx> type)
+final EntityEx SpawnPlayerMissile(class<EntityEx> type, optional name decalType)
 {
 	EntityEx	AimTarget;
 
-	return SpawnPlayerMissileEx(type, false, AimTarget);
+	return SpawnPlayerMissileEx(type, false, AimTarget,,, decalType);
 }
 
 //==========================================================================
@@ -582,7 +582,7 @@ final EntityEx SpawnPlayerMissileAngleXYZ(TVec org, class<EntityEx> type,
 //==========================================================================
 
 final EntityEx SpawnPlayerMissileEx(class<EntityEx> type, bool RetExploded,
-	out EntityEx AimTarget, optional float angle, optional TVec SpawnOrg)
+	out EntityEx AimTarget, optional float angle, optional TVec SpawnOrg, optional name decalType)
 {
 	EntityEx	A;
 	TVec		dir;
@@ -642,5 +642,7 @@ final EntityEx SpawnPlayerMissileEx(class<EntityEx> type, bool RetExploded,
 	}
 	VectorAngles(&dir, &A.Angles);
 
-	return A.CheckMissileSpawn() || RetExploded ? A : none;
+	EntityEx res = A.CheckMissileSpawn() || RetExploded ? A : none;
+	if (res && specified_decalType) res.DecalName = decalType;
+	return res;
 }

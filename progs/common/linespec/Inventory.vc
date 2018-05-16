@@ -1294,10 +1294,12 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
 	SetState(MeleeState);
 
 	bool noAAim = false;
+	name decal = '';
 	if (Wpn)
 	{
 		PlaySound(Wpn.AttackSound, CHAN_WEAPON);
 		noAAim = Wpn.bNoAutoaim;
+		decal = Wpn.DecalName;
 	}
 
 	Aim(aimDir, 16.0 * 64.0,, noAAim);
@@ -1309,8 +1311,7 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
 		{
 			damage *= (P_Random() % 3 + 1);
 		}
-		LineAttack(aimDir, Range, damage, PuffType,,,
-			PuffType.default.DamageType, false);
+		LineAttack(aimDir, Range, damage, PuffType,,, PuffType.default.DamageType, false, decal);
 	}
 	else
 	{
@@ -1337,8 +1338,7 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
 			{
 				damage *= (P_Random() % 3 + 1);
 			}
-			LineAttack(dir, Range, damage, PuffType,,,
-				PuffType.default.DamageType, (i != 0));
+			LineAttack(dir, Range, damage, PuffType,,, PuffType.default.DamageType, (i != 0), decal);
 		}
 	}
 }
@@ -1363,6 +1363,7 @@ final void A_FireCustomMissile(class<Actor> MissileType, optional float Angle,
 		UseAmmo = true;
 	}
 
+	name decal = '';
 	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 	if (UseAmmo && Wpn)
 	{
@@ -1370,6 +1371,7 @@ final void A_FireCustomMissile(class<Actor> MissileType, optional float Angle,
 		{
 			return;
 		}
+		decal = Wpn.DecalName;
 	}
 
 	TVec ShootOrg = Origin;
@@ -1390,8 +1392,7 @@ final void A_FireCustomMissile(class<Actor> MissileType, optional float Angle,
 	Angles.pitch -= Pitch;
 
 	EntityEx AimTarget;
-	EntityEx A = SpawnPlayerMissileEx(MissileType, false, AimTarget,
-		ShootAngle, ShootOrg);
+	EntityEx A = SpawnPlayerMissileEx(MissileType, false, AimTarget, ShootAngle, ShootOrg, decal);
 	Angles.pitch = SavedPitch;
 
 	if (A)
@@ -1462,6 +1463,7 @@ final void A_FirePistol()
 	bool Accurate;
 
 	bool noAAim = false;
+	name decal = '';
 	if (bIsPlayer)
 	{
 		Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -1473,6 +1475,7 @@ final void A_FirePistol()
 			}
 
 			Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+			decal = Wpn.DecalName;
 			noAAim = Wpn.bNoAutoaim;
 		}
 		SetState(MeleeState);
@@ -1486,7 +1489,7 @@ final void A_FirePistol()
 	PlaySound('weapons/pistol', CHAN_WEAPON);
 
 	Aim(dir, 16.0 * 64.0,, noAAim);
-	GunShot(Accurate, dir, 'Bullet', false);
+	GunShot(Accurate, dir, 'Bullet', false, decal);
 }
 
 //===========================================================================
@@ -1510,6 +1513,7 @@ final void A_FireShotgun()
 	SetState(MeleeState);
 
 	bool noAAim = false;
+	name decal = '';
 	if (Wpn)
 	{
 		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
@@ -1518,13 +1522,14 @@ final void A_FireShotgun()
 		}
 
 		Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+		decal = Wpn.DecalName;
 		noAAim = Wpn.bNoAutoaim;
 	}
 
 	Aim(dir, 16.0 * 64.0,, noAAim);
 	for (i = 0; i < 7; i++)
 	{
-		GunShot(false, dir, 'Shell', (i != 0));
+		GunShot(false, dir, 'Shell', (i != 0), decal);
 	}
 }
 
@@ -1552,6 +1557,7 @@ final void A_FireShotgun2()
 	SetState(MeleeState);
 
 	bool noAAim = false;
+	name decal = '';
 	if (Wpn)
 	{
 		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 2))
@@ -1560,6 +1566,7 @@ final void A_FireShotgun2()
 		}
 
 		Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+		decal = Wpn.DecalName;
 		noAAim = Wpn.bNoAutoaim;
 	}
 
@@ -1571,7 +1578,7 @@ final void A_FireShotgun2()
 		rot.roll = 0.0;
 		dir = RotateDirectionVector(aimDir, rot);
 		damage = 5 * (P_Random() % 3 + 1);
-		LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Shell', (i != 0));
+		LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Shell', (i != 0), decal);
 	}
 }
 
@@ -1628,6 +1635,7 @@ final void A_FireCGun()
 	PlaySound('weapons/chngun', CHAN_WEAPON);
 
 	bool noAAim = false;
+	name decal = '';
 	if (Wpn)
 	{
 		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
@@ -1643,13 +1651,14 @@ final void A_FireCGun()
 		{
 			Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
 		}
+		decal = Wpn.DecalName;
 		noAAim = Wpn.bNoAutoaim;
 	}
 
 	SetState(MeleeState);
 
 	Aim(dir, 16.0 * 64.0,, noAAim);
-	GunShot(!PlayerEx(Player).Refire, dir, 'Bullet', false);
+	GunShot(!PlayerEx(Player).Refire, dir, 'Bullet', false, decal);
 }
 
 //===========================================================================
@@ -1665,14 +1674,16 @@ final void A_FireMissile()
 		return;
 	}
 	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+	name decal = '';
 	if (Wpn)
 	{
 		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
 		{
 			return;
 		}
+		decal = Wpn.DecalName;
 	}
-	SpawnPlayerMissile(Rocket);
+	SpawnPlayerMissile(Rocket, decal);
 }
 
 //===========================================================================
@@ -1688,6 +1699,7 @@ final void A_FirePlasma()
 		return;
 	}
 	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+	name decal = '';
 	if (Wpn)
 	{
 		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
@@ -1702,8 +1714,9 @@ final void A_FirePlasma()
 		{
 			Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
 		}
+		decal = Wpn.DecalName;
 	}
-	SpawnPlayerMissile(PlasmaBall);
+	SpawnPlayerMissile(PlasmaBall, decal);
 }
 
 //===========================================================================
@@ -1807,14 +1820,16 @@ final void A_FireBFG()
 		return;
 	}
 	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+	name decal = '';
 	if (Wpn)
 	{
 		if (!Wpn.DepleteAmmo(Wpn.FireMode,, BFG9000.default.AmmoUse1))
 		{
 			return;
 		}
+		decal = Wpn.DecalName;
 	}
-	SpawnPlayerMissile(BFGBall);
+	SpawnPlayerMissile(BFGBall, decal);
 }
 
 //**************************************************************************

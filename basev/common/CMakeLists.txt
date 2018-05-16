@@ -6,6 +6,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
 		basepak.ls.in
 		confont.pcx
 		decorate.txt
+		decaldef.txt
 		default.cfg
 		in_epi1.txt
 		in_epi2.txt

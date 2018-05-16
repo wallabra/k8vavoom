@@ -101,7 +101,27 @@ VDecalDef *VDecalDef::find (const VName& aname) {
   for (auto it = listHead; it; it = it->next) {
     if (it->name == aname) return it;
   }
+  for (auto it = listHead; it; it = it->next) {
+    if (VStr::ICmp(*it->name, *aname) == 0) return it;
+  }
   return nullptr;
+}
+
+
+VDecalDef* VDecalDef::getDecal (const VStr& aname) {
+  VName xn = VName(*aname, VName::Find);
+  if (xn == NAME_none) return nullptr;
+  return getDecal(xn);
+}
+
+
+VDecalDef* VDecalDef::getDecal (const VName& aname) {
+  VDecalDef* dc = VDecalDef::find(aname);
+  if (dc) return dc;
+  // try group
+  VDecalGroup* gp = VDecalGroup::find(aname);
+  if (!gp) return nullptr;
+  return gp->chooseDecal();
 }
 
 
@@ -218,6 +238,9 @@ VDecalGroup *VDecalGroup::find (const VName& aname) {
   for (auto it = listHead; it; it = it->next) {
     if (it->name == aname) return it;
   }
+  for (auto it = listHead; it; it = it->next) {
+    if (VStr::ICmp(*it->name, *aname) == 0) return it;
+  }
   return nullptr;
 }
 
@@ -228,6 +251,14 @@ void VDecalGroup::fixup () {
     auto it = VDecalDef::find(nameList[f]);
     if (it) list.Append(it); else GCon->Logf(NAME_Init, "WARNING: decalgroup '%s' contains unknown decal '%s'!", *name, *nameList[f]);
   }
+}
+
+
+VDecalDef* VDecalGroup::chooseDecal () {
+  if (list.Num() == 0) return nullptr;
+  auto rnd = (int)(Random()*list.Num());
+  rnd = rnd%list.Num();
+  return list[rnd];
 }
 
 
@@ -295,6 +326,9 @@ VDecalAnim *VDecalAnim::find (const VStr& aname) {
 VDecalAnim *VDecalAnim::find (const VName& aname) {
   for (auto it = listHead; it; it = it->next) {
     if (it->name == aname) return it;
+  }
+  for (auto it = listHead; it; it = it->next) {
+    if (VStr::ICmp(*it->name, *aname) == 0) return it;
   }
   return nullptr;
 }
@@ -702,6 +736,15 @@ void VDecalAnim::Serialise (VStream& Strm, VDecalAnim*& aptr) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static void SetClassFieldName (VClass* Class, VName FieldName, VName Value) {
+  guard(SetClassFieldName);
+  VField* F = Class->FindFieldChecked(FieldName);
+  F->SetName((VObject*)Class->Defaults, Value);
+  unguard;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 void ParseDecalDef (VScriptParser* sc) {
   guard(ParseDecalDef);
 
@@ -736,9 +779,18 @@ void ParseDecalDef (VScriptParser* sc) {
 
       if (sc->Check("generator")) {
         // not here yet
-        sc->Message("WARNING: ignored 'generator' definition");
+        //sc->Message("WARNING: ignored 'generator' definition");
         sc->ExpectString();
+        VStr clsname = sc->String;
         sc->ExpectString();
+        VStr decname = sc->String;
+        // find class
+        VClass* klass = VClass::FindClassLowerCase(*clsname.ToLower());
+        if (klass) {
+          SetClassFieldName(klass, VName("DecalName"), VName(*decname));
+        } else {
+          sc->Message(va("WARNING: ignored 'generator' definition for class '%s'", *clsname));
+        }
         continue;
       }
 
