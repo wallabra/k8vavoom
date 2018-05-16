@@ -265,7 +265,7 @@ class VLevel : public VGameObject
 
 	int					NextSoundOriginID;
 
-	// the following fields are not in .vc
+	decal_t* decanimlist;
 
 	void Serialise(VStream& Strm);
 	void ClearReferences();

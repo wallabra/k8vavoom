@@ -159,6 +159,8 @@ native readonly StateCall*		StateCall;
 
 native readonly private int		NextSoundOriginID;
 
+native readonly private void *__decanimlist;
+
 //
 //	Natives
 //

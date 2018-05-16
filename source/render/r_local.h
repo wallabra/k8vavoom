@@ -144,11 +144,13 @@ struct decal_t
 	float origScaleX, origScaleY; // for animators
 	float scaleX, scaleY;
 	int flipX, flipY; // FlipXXX constant
+	float origAlpha; // for animators
 	float alpha; // decal alpha
 	float addAlpha; // alpha for additive translucency (not supported yet)
 	int fuzzy; // bool: draw decal with "fuzzy" effect (not supported yet)
 	int fullbright; // bool
 	VDecalAnim* animator; // decal animator (can be nullptr)
+	decal_t* nextanimated; // so we can skip static decals
 };
 
 class VSky

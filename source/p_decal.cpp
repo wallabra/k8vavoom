@@ -26,6 +26,7 @@
 #include "gamedefs.h"
 #include "net/network.h"
 #include "sv_local.h"
+#include "render/r_local.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -107,6 +108,13 @@ VDecalDef *VDecalDef::find (const VName& aname) {
 // ////////////////////////////////////////////////////////////////////////// //
 VDecalDef::~VDecalDef () {
   removeFromList(this);
+}
+
+
+void VDecalDef::fixup () {
+  if (animname == NAME_none) return;
+  animator = VDecalAnim::find(animname);
+  if (!animator) GCon->Logf("WARNING: decal '%s': animator '%s' not found!", *name, *animname);
 }
 
 
@@ -310,21 +318,39 @@ VDecalAnimFader::~VDecalAnimFader () {
 
 VDecalAnim* VDecalAnimFader::clone () {
   VDecalAnimFader* res = new VDecalAnimFader();
+  res->name = name;
   res->startTime = startTime;
   res->actionTime = actionTime;
+  res->timePassed = timePassed;
   return res;
 }
 
 
 void VDecalAnimFader::doIO (VStream& Strm) {
   guard(VDecalAnimFader::doIO);
+  Strm << timePassed;
   Strm << startTime;
   Strm << actionTime;
   unguard;
 }
 
 
-void VDecalAnimFader::animate (decal_t* decal) {
+bool VDecalAnimFader::animate (decal_t* decal, float timeDelta) {
+  guard(VDecalAnimFader::animate);
+  if (decal->origAlpha <= 0 || decal->alpha <= 0) return false;
+  timePassed += timeDelta;
+  if (timePassed < startTime) return true; // not yet
+  if (timePassed >= startTime+actionTime || actionTime <= 0) {
+    //GCon->Logf("decal %p completely faded away", decal);
+    decal->alpha = 0;
+    return false;
+  }
+  float dtx = timePassed-startTime;
+  float aleft = decal->origAlpha;
+  decal->alpha = aleft-aleft*dtx/actionTime;
+  //GCon->Logf("decal %p: dtx=%f; origA=%f; a=%f", decal, dtx, decal->origAlpha, decal->alpha);
+  return (decal->alpha > 0);
+  unguard;
 }
 
 
@@ -360,16 +386,19 @@ VDecalAnimStretcher::~VDecalAnimStretcher () {
 
 VDecalAnim* VDecalAnimStretcher::clone () {
   VDecalAnimStretcher* res = new VDecalAnimStretcher();
+  res->name = name;
   res->goalX = goalX;
   res->goalY = goalY;
   res->startTime = startTime;
   res->actionTime = actionTime;
+  res->timePassed = timePassed;
   return res;
 }
 
 
 void VDecalAnimStretcher::doIO (VStream& Strm) {
   guard(VDecalAnimStretcher::doIO);
+  Strm << timePassed;
   Strm << goalX;
   Strm << goalY;
   Strm << startTime;
@@ -378,7 +407,28 @@ void VDecalAnimStretcher::doIO (VStream& Strm) {
 }
 
 
-void VDecalAnimStretcher::animate (decal_t* decal) {
+bool VDecalAnimStretcher::animate (decal_t* decal, float timeDelta) {
+  guard(VDecalAnimStretcher::animate);
+  if (decal->origScaleX <= 0 || decal->origScaleY <= 0) { decal->alpha = 0; return false; }
+  if (decal->scaleX <= 0 || decal->scaleY <= 0) { decal->alpha = 0; return false; }
+  timePassed += timeDelta;
+  if (timePassed < startTime) return true; // not yet
+  if (timePassed >= startTime+actionTime || actionTime <= 0) {
+    if ((decal->scaleX = goalX) <= 0) { decal->alpha = 0; return false; }
+    if ((decal->scaleY = goalY) <= 0) { decal->alpha = 0; return false; }
+    return false;
+  }
+  float dtx = timePassed-startTime;
+  {
+    float aleft = goalX-decal->origScaleX;
+    if ((decal->scaleX = decal->origScaleX+aleft*dtx/actionTime) <= 0) { decal->alpha = 0; return false; }
+  }
+  {
+    float aleft = goalY-decal->origScaleY;
+    if ((decal->scaleY = decal->origScaleY+aleft*dtx/actionTime) <= 0) { decal->alpha = 0; return false; }
+  }
+  return true;
+  unguard;
 }
 
 
@@ -415,16 +465,19 @@ VDecalAnimSlider::~VDecalAnimSlider () {
 
 VDecalAnim* VDecalAnimSlider::clone () {
   VDecalAnimSlider* res = new VDecalAnimSlider();
+  res->name = name;
   res->distX = distX;
   res->distY = distY;
   res->startTime = startTime;
   res->actionTime = actionTime;
+  res->timePassed = timePassed;
   return res;
 }
 
 
 void VDecalAnimSlider::doIO (VStream& Strm) {
   guard(VDecalAnimSlider::doIO);
+  Strm << timePassed;
   Strm << distX;
   Strm << distY;
   Strm << startTime;
@@ -433,7 +486,20 @@ void VDecalAnimSlider::doIO (VStream& Strm) {
 }
 
 
-void VDecalAnimSlider::animate (decal_t* decal) {
+bool VDecalAnimSlider::animate (decal_t* decal, float timeDelta) {
+  guard(VDecalAnimSlider::animate);
+  timePassed += timeDelta;
+  if (timePassed < startTime) return true; // not yet
+  if (timePassed >= startTime+actionTime || actionTime <= 0) {
+    decal->ofsX = distX;
+    decal->ofsY = distY;
+    return false;
+  }
+  float dtx = timePassed-startTime;
+  decal->ofsX = distX*dtx/actionTime;
+  decal->ofsY = distY*dtx/actionTime;
+  return true;
+  unguard;
 }
 
 
@@ -470,17 +536,20 @@ VDecalAnimColorChanger::~VDecalAnimColorChanger () {
 
 VDecalAnim* VDecalAnimColorChanger::clone () {
   VDecalAnimColorChanger* res = new VDecalAnimColorChanger();
+  res->name = name;
   res->dest[0] = dest[0];
   res->dest[1] = dest[1];
   res->dest[2] = dest[2];
   res->startTime = startTime;
   res->actionTime = actionTime;
+  res->timePassed = timePassed;
   return res;
 }
 
 
 void VDecalAnimColorChanger::doIO (VStream& Strm) {
   guard(VDecalAnimColorChanger::doIO);
+  Strm << timePassed;
   Strm << dest[0];
   Strm << dest[1];
   Strm << dest[2];
@@ -490,7 +559,11 @@ void VDecalAnimColorChanger::doIO (VStream& Strm) {
 }
 
 
-void VDecalAnimColorChanger::animate (decal_t* decal) {
+bool VDecalAnimColorChanger::animate (decal_t* decal, float timeDelta) {
+  guard(VDecalAnimColorChanger::animate);
+  // not yet, sorry
+  return true;
+  unguard;
 }
 
 
@@ -541,15 +614,18 @@ void VDecalAnimCombiner::fixup () {
 
 VDecalAnim* VDecalAnimCombiner::clone () {
   VDecalAnimCombiner* res = new VDecalAnimCombiner();
+  res->name = name;
   res->mIsCloned = true;
   for (int f = 0; f < nameList.Num(); ++f) res->nameList.Append(nameList[f]);
   for (int f = 0; f < list.Num(); ++f) res->list.Append(list[f]->clone());
+  res->timePassed = timePassed; // why not?
   return res;
 }
 
 
 void VDecalAnimCombiner::doIO (VStream& Strm) {
   guard(VDecalAnimCombiner::doIO);
+  Strm << timePassed;
   int len = 0;
   if (Strm.IsLoading()) {
     Strm << len;
@@ -565,7 +641,10 @@ void VDecalAnimCombiner::doIO (VStream& Strm) {
 }
 
 
-void VDecalAnimCombiner::animate (decal_t* decal) {
+bool VDecalAnimCombiner::animate (decal_t* decal, float timeDelta) {
+  guard(VDecalAnimCombiner::animate);
+  return true;
+  unguard;
 }
 
 
@@ -756,6 +835,7 @@ void ProcessDecalDefs () {
 
   for (auto it = VDecalGroup::listHead; it; it = it->next) it->fixup();
   for (auto it = VDecalAnim::listHead; it; it = it->next) it->fixup();
+  for (auto it = VDecalDef::listHead; it; it = it->next) it->fixup();
 
   TLocation::ClearSourceFiles();
   unguard;

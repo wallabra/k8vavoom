@@ -409,24 +409,63 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
+  glDisable(GL_ALPHA_TEST); // just in case
 
   //glEnable(GL_DEPTH_TEST);
 
   //glDisable(GL_STENCIL_TEST);
   //glDisable(GL_BLEND);
 
-  for (decal_t* dc = surf->dcseg->decals; dc; dc = dc->next) {
-    if (dc->texture < 0) continue;
-    if (dc->scaleX <= 0 || dc->scaleY <= 0) continue;
+  // also, clear dead decals here, 'cause why not?
+  decal_t* prev = nullptr;
+  decal_t* dc = surf->dcseg->decals;
+
+  while (dc) {
+    if (dc->texture < 0 || dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0) {
+      // remove it
+      decal_t* n = dc->next;
+      if (!dc->animator) {
+        if (prev) prev->next = n; else surf->dcseg->decals = n;
+        delete dc;
+      } else {
+        prev = dc;
+      }
+      dc = n;
+      continue;
+    }
 
     auto dtex = GTextureManager[dc->texture];
-    if (!dtex) continue;
-    if (dtex->Width < 1 || dtex->Height < 1) continue; // invisible picture
+    if (!dtex || dtex->Width < 1 || dtex->Height < 1) {
+      // remove it
+      decal_t* n = dc->next;
+      if (!dc->animator) {
+        if (prev) prev->next = n; else surf->dcseg->decals = n;
+        delete dc;
+      } else {
+        prev = dc;
+      }
+      dc = n;
+      continue;
+    }
 
     //FIXME: this should use origScale to get starting position
-    float txw2 = dtex->Width*dc->scaleX*0.5;
-    float txh2 = dtex->Height*dc->scaleY*0.5;
-    if (txw2 < 1 || txh2 < 1) continue;
+    float txw = dtex->GetWidth()*dc->scaleX;
+    float txh = dtex->GetHeight()*dc->scaleY;
+    float txw2 = txw*0.5f;
+    float txh2 = txh*0.5f;
+
+    if (txw < 1 || txh < 1) {
+      // remove it
+      decal_t* n = dc->next;
+      if (!dc->animator) {
+        if (prev) prev->next = n; else surf->dcseg->decals = n;
+        delete dc;
+      } else {
+        prev = dc;
+      }
+      dc = n;
+      continue;
+    }
 
     float lev = (dc->fullbright ? 1.0f : (float)(surf->Light>>24)/255.0f);
     p_glUniform4fARB(SurfDecalLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
@@ -444,14 +483,17 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     p_glUniform4fARB(SurfDecalSplatColourLoc, dc->shade[0], dc->shade[1], dc->shade[2], dc->shade[3]);
     p_glUniform1fARB(SurfDecalSplatAlphaLoc, dc->alpha);
 
-    SetTexture(dtex, tex->ColourMap);
+    SetTexture(dtex, tex->ColourMap); // this sets `tex_iw` and `tex_ih`
 
     TVec lv1, lv2;
     lv1 = *(dc->seg->side ? dc->seg->linedef->v2 : dc->seg->linedef->v1);
     lv2 = *(dc->seg->side ? dc->seg->linedef->v1 : dc->seg->linedef->v2);
 
-    TVec v0 = lv1+((lv2-lv1)/dc->linelen)*(dc->xdist*dc->linelen-txw2);
-    TVec v2 = lv1+((lv2-lv1)/dc->linelen)*(dc->xdist*dc->linelen+txw2);
+    TVec dir = (lv2-lv1)/dc->linelen;
+    float xstofs = dc->xdist*dc->linelen-txw2+dc->ofsX;
+    TVec v0 = lv1+dir*xstofs;
+    TVec v2 = lv1+dir*(xstofs+txw);
+    float dcz = dc->org.z-txh2+dc->ofsY;
 
     float texx0 = (dc->flipX ? 1.0f : 0.0f);
     float texx1 = (dc->flipX ? 0.0f : 1.0f);
@@ -459,11 +501,14 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     float texy1 = (dc->flipY ? 0.0f : 1.0f);
 
     glBegin(GL_QUADS);
-      glTexCoord2f(texx0, texy0); glVertex3f(v0.x, v0.y, dc->org.z-txh2);
-      glTexCoord2f(texx0, texy1); glVertex3f(v0.x, v0.y, dc->org.z+txh2);
-      glTexCoord2f(texx1, texy1); glVertex3f(v2.x, v2.y, dc->org.z+txh2);
-      glTexCoord2f(texx1, texy0); glVertex3f(v2.x, v2.y, dc->org.z-txh2);
+      glTexCoord2f(texx0, texy0); glVertex3f(v0.x, v0.y, dcz);
+      glTexCoord2f(texx0, texy1); glVertex3f(v0.x, v0.y, dcz+txh);
+      glTexCoord2f(texx1, texy1); glVertex3f(v2.x, v2.y, dcz+txh);
+      glTexCoord2f(texx1, texy0); glVertex3f(v2.x, v2.y, dcz);
     glEnd();
+
+    prev = dc;
+    dc = dc->next;
   }
 
   glEnable(GL_CULL_FACE);

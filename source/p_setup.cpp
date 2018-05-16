@@ -120,6 +120,7 @@ void VLevel::LoadMap(VName AMapName)
 	bool AuxiliaryMap = false;
 	int lumpnum;
 	VName MapLumpName;
+	decanimlist = nullptr;
 
 	double TotalTime = -Sys_Time();
 	double InitTime = -Sys_Time();

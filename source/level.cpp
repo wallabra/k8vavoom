@@ -145,6 +145,7 @@ static void DecalIO (VStream& Strm, decal_t *dc) {
 	Strm << dc->scaleY;
 	Strm << dc->flipX;
 	Strm << dc->flipY;
+	Strm << dc->origAlpha;
 	Strm << dc->alpha;
 	Strm << dc->addAlpha;
 	Strm << dc->fuzzy;
@@ -170,6 +171,7 @@ void VLevel::Serialise(VStream& Strm)
 	//	Decals
 	//
 
+	if (Strm.IsLoading()) decanimlist = nullptr;
 	if (Segs && NumSegs) {
 		vuint32 sgc = (vuint32)NumSegs;
 		vuint32 dctotal = 0;
@@ -195,10 +197,19 @@ void VLevel::Serialise(VStream& Strm)
 				while (dcount-- > 0) {
 					decal_t* dc = new decal_t;
 					memset(dc, 0, sizeof(decal_t));
-					if (decal) decal->next = dc; else Segs[f].decals = dc;
 					dc->seg = &Segs[f];
 					DecalIO(Strm, dc);
-					decal = dc;
+					if (dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0 || dc->texture < 0) {
+						delete dc->animator;
+						delete dc;
+					} else {
+						if (decal) decal->next = dc; else Segs[f].decals = dc;
+						if (dc->animator) {
+							dc->nextanimated = decanimlist;
+							decanimlist = dc;
+						}
+						decal = dc;
+					}
 					++dctotal;
 				}
 			}
@@ -531,6 +542,9 @@ void VLevel::ClearReferences()
 void VLevel::Destroy()
 {
 	guard(VLevel::Destroy);
+
+	decanimlist = nullptr; // why not?
+
 	//	Destroy all thinkers.
 	DestroyAllThinkers();
 
@@ -1112,7 +1126,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
   float linelen = Length(lv2-lv1);
   float segdist = dist*linelen;
 
-  GCon->Logf("Want to spawn decal '%s' (%s); pic=<%s>; dist=%f (linelen=%f)", *dec->name, (li->frontsector == sec ? "front" : "back"), *dec->pic, dist, linelen);
+  //GCon->Logf("Want to spawn decal '%s' (%s); pic=<%s>; dist=%f (linelen=%f)", *dec->name, (li->frontsector == sec ? "front" : "back"), *dec->pic, dist, linelen);
 
   float segd0 = segdist-tinf.width/2.0f;
   float segd1 = segd0+tinf.width;
@@ -1124,7 +1138,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
     seg_t *seg = &Segs[sidx];
     if (seg->linedef == li && seg->frontsector == sec) {
       if (segd0 >= seg->offset+seg->length || segd1 < seg->offset) continue;
-      GCon->Logf("  found seg #%d (segd=%f:%f; seg=%f:%f)", sidx, segd0, segd1, seg->offset, seg->offset+seg->length);
+      //GCon->Logf("  found seg #%d (segd=%f:%f; seg=%f:%f)", sidx, segd0, segd1, seg->offset, seg->offset+seg->length);
       // create decals
       decal_t* decal = new decal_t;
       memset(decal, 0, sizeof(decal_t));
@@ -1153,11 +1167,16 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
       decal->scaleY = decal->origScaleY = dec->scaleY;
       decal->flipX = flipx;
       decal->flipY = flipy;
-      decal->alpha = dec->alpha;
+      decal->alpha = decal->origAlpha = dec->alpha;
       decal->addAlpha = dec->addAlpha;
       decal->fuzzy = dec->fuzzy;
       decal->fullbright = dec->fullbright;
       decal->animator = (dec->animator ? dec->animator->clone() : nullptr);
+      if (decal->animator) {
+        decal->nextanimated = decanimlist;
+        decanimlist = decal;
+        //GCon->Logf("added animated decal '%s'", *dec->name);
+      }
     }
   }
 

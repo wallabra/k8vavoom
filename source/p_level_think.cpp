@@ -26,6 +26,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "gamedefs.h"
+#include "render/r_local.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -128,7 +129,26 @@ void VLevel::DestroyAllThinkers()
 void VLevel::TickWorld(float DeltaTime)
 {
 	guard(VLevel::TickWorld);
-	//	Run thinkers
+
+	// Run decal thinkers
+	if (DeltaTime > 0) {
+		decal_t* prev = nullptr;
+		decal_t* dc = decanimlist;
+		while (dc) {
+			bool removeIt = true;
+			if (dc->animator) removeIt = !dc->animator->animate(dc, DeltaTime);
+			if (removeIt) {
+				if (prev) prev->nextanimated = dc->nextanimated; else decanimlist = dc->nextanimated;
+				delete dc->animator;
+				dc->animator = nullptr;
+			} else {
+				prev = dc;
+			}
+			dc = dc->nextanimated;
+		}
+	}
+
+	// Run thinkers
 	for (VThinker* Th = ThinkerHead; Th; Th = Th->Next)
 	{
 		if (!(Th->GetFlags() & _OF_DelayedDestroy))

@@ -32,8 +32,8 @@ void main () {
   FinalColour_1.r = clamp(TexColour.r*(1.0-SplatColour.a)+SplatColour.r*SplatColour.a, 0.0, 1.0);
   FinalColour_1.g = clamp(TexColour.g*(1.0-SplatColour.a)+SplatColour.g*SplatColour.a, 0.0, 1.0);
   FinalColour_1.b = clamp(TexColour.b*(1.0-SplatColour.a)+SplatColour.b*SplatColour.a, 0.0, 1.0);
-  FinalColour_1.a = min(lumi*SplatAlpha, 1.0);
-  if (FinalColour_1.a < 0.1) discard;
+  FinalColour_1.a = clamp(lumi*SplatAlpha, 0.0, 1.0);
+  if (FinalColour_1.a <= 0.0) discard;
 
   FinalColour_1.r = clamp(FinalColour_1.r*Light.r*Light.a, 0.0, 1.0);
   FinalColour_1.g = clamp(FinalColour_1.g*Light.g*Light.a, 0.0, 1.0);
@@ -59,7 +59,12 @@ void main () {
     FogFactor_3 = clamp(FogFactor_3, 0.0, 1.0);
 
     float FogFactor = clamp((FogFactor_3-0.1)/0.9, 0.0, 1.0);
+    float aa = FinalColour_1.a;
     FinalColour_1 = mix(FogColour, FinalColour_1, FogFactor*FogFactor*(3.0-(2.0*FogFactor)));
+    FinalColour_1.r = clamp(FinalColour_1.r, 0.0, 1.0);
+    FinalColour_1.g = clamp(FinalColour_1.g, 0.0, 1.0);
+    FinalColour_1.b = clamp(FinalColour_1.b, 0.0, 1.0);
+    FinalColour_1.a = aa;
   }
 
   //FinalColour_1 = vec4(1, 0, 0, 1);

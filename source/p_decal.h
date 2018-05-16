@@ -50,6 +50,8 @@ private:
   static void addToList (VDecalDef* dc);
   static void removeFromList (VDecalDef* dc);
 
+  void fixup ();
+
 public:
   // name is not parsed yet
   bool parse (VScriptParser* sc);
@@ -138,6 +140,10 @@ private:
   static void removeFromList (VDecalAnim* anim);
 
 protected:
+  // working data
+  float timePassed;
+
+protected:
   virtual vuint8 getTypeId () const { return VDecalAnim::TypeId; }
   virtual void doIO (VStream& Strm) = 0;
   virtual void fixup ();
@@ -150,13 +156,14 @@ public:
   VName name;
 
 public:
-  VDecalAnim () : next(nullptr), name(NAME_none) {}
+  VDecalAnim () : next(nullptr), timePassed(0), name(NAME_none) {}
   virtual ~VDecalAnim ();
 
   // this does deep clone, so we can attach it to the actual decal object
   virtual VDecalAnim* clone () = 0;
 
-  virtual void animate (decal_t* decal) = 0;
+  // return `false` to stop continue animation; set decal alpha to 0 (or negative) to remove decal on next cleanup
+  virtual bool animate (decal_t* decal, float timeDelta) = 0;
 
   static void Serialise (VStream& Strm, VDecalAnim*& aptr);
 
@@ -195,7 +202,7 @@ public:
   // this does deep clone, so we can attach it to the actual decal object
   virtual VDecalAnim* clone () override;
 
-  virtual void animate (decal_t* decal) override;
+  virtual bool animate (decal_t* decal, float timeDelta) override;
 
   friend void ParseDecalDef (VScriptParser* sc);
   friend void ProcessDecalDefs ();
@@ -226,7 +233,7 @@ public:
   // this does deep clone, so we can attach it to the actual decal object
   virtual VDecalAnim* clone () override;
 
-  virtual void animate (decal_t* decal) override;
+  virtual bool animate (decal_t* decal, float timeDelta) override;
 
   friend void ParseDecalDef (VScriptParser* sc);
   friend void ProcessDecalDefs ();
@@ -257,7 +264,7 @@ public:
   // this does deep clone, so we can attach it to the actual decal object
   virtual VDecalAnim* clone () override;
 
-  virtual void animate (decal_t* decal) override;
+  virtual bool animate (decal_t* decal, float timeDelta) override;
 
   friend void ParseDecalDef (VScriptParser* sc);
   friend void ProcessDecalDefs ();
@@ -288,7 +295,7 @@ public:
   // this does deep clone, so we can attach it to the actual decal object
   virtual VDecalAnim* clone () override;
 
-  virtual void animate (decal_t* decal) override;
+  virtual bool animate (decal_t* decal, float timeDelta) override;
 
   friend void ParseDecalDef (VScriptParser* sc);
   friend void ProcessDecalDefs ();
@@ -325,7 +332,7 @@ public:
   // this does deep clone, so we can attach it to the actual decal object
   virtual VDecalAnim* clone () override;
 
-  virtual void animate (decal_t* decal) override;
+  virtual bool animate (decal_t* decal, float timeDelta) override;
 
   friend void ParseDecalDef (VScriptParser* sc);
   friend void ProcessDecalDefs ();
