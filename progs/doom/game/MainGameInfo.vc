@@ -836,8 +836,10 @@ void TranslateLine(Level InLevel, line_t* line)
 		return;
 	case 300:
 		line->special = 160;
-		line->frontsector->floor.Alpha = 0.5;
-		line->frontsector->ceiling.Alpha = 0.5;
+		if (line->frontsector) {
+			line->frontsector->floor.Alpha = 0.5;
+			line->frontsector->ceiling.Alpha = 0.5;
+		}
 		return;
 	// Doesn't work
 	/*case 301:
