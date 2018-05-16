@@ -515,7 +515,8 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     TVec v0 = lv1+dir*xstofs;
     TVec v2 = lv1+dir*(xstofs+txw);
 
-    float dcz = dc->curz+txh2-dc->ofsY;
+    //float dcz = dc->curz+txh2-dc->ofsY;
+    float dcz = dc->curz-dc->ofsY;
     // fix Z, if necessary
     if (dc->flags&decal_t::SlideFloor) {
       // should slide with back floor
@@ -531,10 +532,10 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     float texy1 = (dc->flags&decal_t::FlipY ? 0.0f : 1.0f);
 
     glBegin(GL_QUADS);
-      glTexCoord2f(texx0, texy0); glVertex3f(v0.x, v0.y, dcz);
-      glTexCoord2f(texx0, texy1); glVertex3f(v0.x, v0.y, dcz-txh);
-      glTexCoord2f(texx1, texy1); glVertex3f(v2.x, v2.y, dcz-txh);
-      glTexCoord2f(texx1, texy0); glVertex3f(v2.x, v2.y, dcz);
+      glTexCoord2f(texx0, texy0); glVertex3f(v0.x, v0.y, dcz+txh2);
+      glTexCoord2f(texx0, texy1); glVertex3f(v0.x, v0.y, dcz-txh2);
+      glTexCoord2f(texx1, texy1); glVertex3f(v2.x, v2.y, dcz-txh2);
+      glTexCoord2f(texx1, texy0); glVertex3f(v2.x, v2.y, dcz+txh2);
     glEnd();
 
     prev = dc;

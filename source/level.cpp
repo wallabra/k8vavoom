@@ -1115,11 +1115,26 @@ void VLevel::RemoveAnimatedDecal (decal_t* dc) {
 //
 //==========================================================================
 
+static bool isDecalsOverlap (VDecalDef *dec, float segd0, float segd1, float orgz, decal_t* cur, int width, int height) {
+  // for overlap checking (ONLY!)
+  float oth2 = height*dec->scaleY*0.5f;
+  float tw2 = width*cur->scaleX*0.5f;
+  float th2 = height*cur->scaleY*0.5f;
+  float ccz = cur->curz-cur->ofsY;
+  return
+    segd1 > cur->xdist-tw2+cur->ofsX && segd0 < cur->xdist+tw2+cur->ofsX &&
+    orgz+oth2 > ccz-th2 && orgz-oth2 <= ccz+th2;
+}
+
+
 void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, vuint32 flips) {
   guard(VLevel::PutDecalAtLine);
 
   picinfo_t tinf;
   GTextureManager.GetTextureInfo(tex, &tinf);
+  float tw = tinf.width*dec->scaleX;
+  float tw2 = tw*0.5f;
+  //float th2 = tinf.height*dec->scaleY*0.5f;
 
   int sidenum = 0;
   vertex_t* v1;
@@ -1143,16 +1158,18 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
   if (prevdir < 0) {
     if (segdist >= 0) return; // just in case
     segd0 = segdist+linelen;
-    segd1 = segd0+tinf.width;
+    segd1 = segd0+tw;
+    segdist = (segd0+segd1)*0.5f;
     //GCon->Logf("left spread; segdist=%f; segd0=%f; segd1=%f", segdist, segd0, segd1);
   } else if (prevdir > 0) {
     if (segdist <= 0) return; // just in case
     segd1 = segdist;
-    segd0 = segd1-tinf.width;
+    segd0 = segd1-tw;
+    segdist = (segd0+segd1)*0.5f;
     //GCon->Logf("right spread; segdist=%f; segd0=%f; segd1=%f", segdist, segd0, segd1);
   } else {
-    segd0 = segdist-tinf.width*0.5f;
-    segd1 = segd0+tinf.width;
+    segd0 = segdist-tw2;
+    segd1 = segd0+tw;
   }
 
   // find segs for this decal (there may be several segs)
@@ -1172,7 +1189,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
         decal_t* cur = seg->decals;
         while (cur) {
           // also, check if this decal is touching our one
-          if (cur->dectype == dec->name && segd1 >= cur->xdist && segd0 <= cur->xdist+tinf.width) {
+          if (cur->dectype == dec->name && isDecalsOverlap(dec, segd0, segd1, orgz, cur, tinf.width, tinf.height)) {
             if (!first) first = cur;
             ++count;
           }
@@ -1180,7 +1197,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
           cur = cur->next;
         }
         if (count >= dcmaxcount) {
-          GCon->Logf("removing %d extra '%s' decals", count-dcmaxcount+1, *dec->name);
+          //GCon->Logf("removing %d extra '%s' decals", count-dcmaxcount+1, *dec->name);
           // do removal
           decal_t* cur = first;
           if (prev) {
@@ -1190,7 +1207,13 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
           }
           while (cur) {
             decal_t* n = cur->next;
-            if (cur->dectype == dec->name && segd1 >= cur->xdist && segd0 <= cur->xdist+tinf.width) {
+            if (cur->dectype == dec->name && isDecalsOverlap(dec, segd0, segd1, orgz, cur, tinf.width, tinf.height)) {
+              /*
+              GCon->Logf("removing extra '%s' decal; org=(%f:%f,%f:%f); neworg=(%f:%f,%f:%f)", *dec->name,
+                cur->xdist-tw2, cur->xdist+tw2, cur->orgz-th2, cur->orgz+th2,
+                segd0, segd1, orgz-th2, orgz+th2
+              );
+              */
               if (prev) prev->next = n; else seg->decals = n;
               RemoveAnimatedDecal(cur);
               delete cur;
