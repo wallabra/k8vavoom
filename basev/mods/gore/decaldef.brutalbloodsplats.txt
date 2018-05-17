@@ -32,6 +32,68 @@ decalgroup BloodSplatRadius {
   K8GoreBloodSuper02 3
 }
 
+///////////////////////////////////////////////
+decalgroup BloodSplatGreen {
+  K8GoreBloodSplat001_Green 6
+  K8GoreBloodSplat002_Green 6
+
+  K8GoreBloodSuper01_Green 1
+  K8GoreBloodSuper02_Green 1
+}
+
+decalgroup BloodSmearGreen {
+  K8GoreBloodSmearSmall1_Green  3
+  K8GoreBloodSmearSmall2_Green  3
+
+  K8GoreBloodSmear01_Green 1
+  K8GoreBloodSmear02_Green 1
+}
+
+// radius damage
+decalgroup BloodSmearRadiusGreen {
+  K8GoreBloodSmear01_Green 1
+  K8GoreBloodSmear02_Green 1
+}
+
+decalgroup BloodSplatRadiusGreen {
+  K8GoreBloodSplat001_Green 6
+  K8GoreBloodSplat002_Green 6
+
+  K8GoreBloodSuper01_Green 3
+  K8GoreBloodSuper02_Green 3
+}
+
+///////////////////////////////////////////////
+decalgroup BloodSplatBlue {
+  K8GoreBloodSplat001_Blue 6
+  K8GoreBloodSplat002_Blue 6
+
+  K8GoreBloodSuper01_Blue 1
+  K8GoreBloodSuper02_Blue 1
+}
+
+decalgroup BloodSmearBlue {
+  K8GoreBloodSmearSmall1_Blue  3
+  K8GoreBloodSmearSmall2_Blue  3
+
+  K8GoreBloodSmear01_Blue 1
+  K8GoreBloodSmear02_Blue 1
+}
+
+// radius damage
+decalgroup BloodSmearRadiusBlue {
+  K8GoreBloodSmear01_Blue 1
+  K8GoreBloodSmear02_Blue 1
+}
+
+decalgroup BloodSplatRadiusBlue {
+  K8GoreBloodSplat001_Blue 6
+  K8GoreBloodSplat002_Blue 6
+
+  K8GoreBloodSuper01_Blue 3
+  K8GoreBloodSuper02_Blue 3
+}
+
 
 /// +++++++++++++++++////
 /// Blood Animators

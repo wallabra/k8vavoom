@@ -186,20 +186,15 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
   bool isHighDamage = false;
   bool isSmallDamage = false;
 
-  name bclasssplat = 'BloodSplat';
-  name bclasssmear = 'BloodSmear';
+  name bclasssplat = GetBloodSplatDecalName();
+  name bclasssmear = GetBloodSmearDecalName();
 
   if (radiusDamage) {
-    if (HasDecal('BloodSplatRadius')) bclasssplat = 'BloodSplatRadius';
-    if (HasDecal('BloodSmearRadius')) bclasssplat = 'BloodSmearRadius';
+    if (HasDecal(GetBloodSplatRadiusDecalName())) bclasssplat = GetBloodSplatRadiusDecalName();
+    if (HasDecal(GetBloodSmearRadiusDecalName())) bclasssmear = GetBloodSmearRadiusDecalName();
   }
 
   name bloodType = bclasssplat;
-
-  if (!HasDecal(bloodType)) {
-    //print("*** NO BLOOD DECAL '%s'", NameToStr(bloodType));
-    return;
-  }
 
   int count;
   float noise;
@@ -208,28 +203,33 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
   if (damage < 15) {
     // For low damages, there is a chance to not spray blood at all
     if (damage <= 10) {
-      if (pr_tracebleed() < 160) {
+      if (pr_tracebleed() < /*1*/60) {
         if (!radiusDamage) return;
         isSmallDamage = true;
-        return;
+        //return;
       }
     }
-    count = 1;
+    count = 1+pr_tracebleed()%3;
     noise = 11.25/256.0;
   } else if (damage < 25) {
-    count = 2;
+    count = 2+pr_tracebleed()%3;
     noise = 22.5/256.0;
   } else {
     // for high damages, there is a chance to spray just one big glob of blood
     if (pr_tracebleed() < 24) {
       bloodType = bclasssmear;
-      count = 1;
+      count = 2+pr_tracebleed()%3;
       noise = 45.0/256.0;
       isHighDamage = true;
     } else {
-      count = 3;
+      count = 6+pr_tracebleed()%4;
       noise = 45.0/256.0;
     }
+  }
+
+  if (!HasDecal(bloodType)) {
+    //print("*** NO BLOOD DECAL '%s'", NameToStr(bloodType));
+    return;
   }
 
   if (isSmallDamage && !radiusDamage) return; // oops
@@ -246,29 +246,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
     vdir.z = -sin(bleedpitch);
     //DVector3 vdir = DVector3(cosp * bleedang.Cos(), cosp * bleedang.Sin(), -bleedpitch.Sin());
 
-    /*
-    if (radiusDamage) {
-      //fprintf(stderr, "summoning blood!\n");
-      P_SpawnBlood(pos, angle, 0, actor); // damage has no sense for DooM anyway
-      P_SpawnBlood(pos, pitch, 0, actor); // damage has no sense for DooM anyway
-      if (!isSmallDamage) {
-        P_SpawnBlood(pos, angle, 0, actor); // damage has no sense for DooM anyway
-        P_SpawnBlood(pos, pitch, 0, actor); // damage has no sense for DooM anyway
-      }
-      // spawn more blood for high damage
-      if (isHighDamage) {
-        P_SpawnBlood(pos, angle, 0, actor); // damage has no sense for DooM anyway
-        P_SpawnBlood(pos, pitch, 0, actor); // damage has no sense for DooM anyway
-        P_SpawnBlood(pos, angle, 0, actor); // damage has no sense for DooM anyway
-        P_SpawnBlood(pos, pitch, 0, actor); // damage has no sense for DooM anyway
-      }
-    } else {
-      //fprintf(stderr, "DON'T summoning blood! (%s : %s)\n", bclasssplat, bclasssmear);
-      //if (!actor) fprintf(stderr, "  no actor!\n");
-    }
-    */
-
-    if (isSmallDamage) continue;
+    if (isSmallDamage && !radiusDamage) continue;
 
     if (TraceSplat(pos, vdir, 172.0, &tr)) {
       //print("*** spawning blood decal '%s'!", NameToStr(bloodType));

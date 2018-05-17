@@ -2249,6 +2249,66 @@ final void SpawnPuff(TVec Org, float Range, class<EntityEx> PuffType,
 
 //==========================================================================
 //
+// GetBloodSplatDecalName
+//
+//==========================================================================
+
+final name GetBloodSplatDecalName () {
+  if (bNoBlood || !self.BloodType) return '';
+  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatGreen';
+  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSplatBlue';
+  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatGreen';
+  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatBlue';
+  return 'BloodSplat';
+}
+
+//==========================================================================
+//
+// GetBloodSmearDecalName
+//
+//==========================================================================
+
+final name GetBloodSmearDecalName () {
+  if (bNoBlood || !self.BloodType) return '';
+  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSmearGreen';
+  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSmearBlue';
+  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSmearGreen';
+  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSmearBlue';
+  return 'BloodSmear';
+}
+
+//==========================================================================
+//
+// GetBloodSplatRadiusDecalName
+//
+//==========================================================================
+
+final name GetBloodSplatRadiusDecalName () {
+  if (bNoBlood || !self.BloodType) return '';
+  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatRadiusGreen';
+  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSplatRadiusBlue';
+  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatRadiusGreen';
+  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatRadiusBlue';
+  return 'BloodSplatRadius';
+}
+
+//==========================================================================
+//
+// GetBloodSmearRadiusDecalName
+//
+//==========================================================================
+
+final name GetBloodSmearRadiusDecalName () {
+  if (bNoBlood || !self.BloodType) return '';
+  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSmearRadiusGreen';
+  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSmearRadiusBlue';
+  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSmearRadiusGreen';
+  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSmearRadiusBlue';
+  return 'BloodSmearRadius';
+}
+
+//==========================================================================
+//
 //  SpawnBlood
 //
 //==========================================================================

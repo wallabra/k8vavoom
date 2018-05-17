@@ -205,6 +205,197 @@ decalgroup BloodSplatRadius
 	BloodSplat7	6
 }
 
+// ////////////////////////////////////////////////////////////////////////// //
+decal BloodSplat1Blue
+{
+	pic BSPLAT1
+	shade "00 00 ff"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+decal BloodSplat2Blue
+{
+	pic BSPLAT2
+	shade "00 00 ff"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+decal BloodSplat3Blue
+{
+	pic BSPLAT3
+	shade "00 00 ff"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+decal BloodSplat4Blue
+{
+	pic BSPLAT4
+	shade "00 00 ff"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+decal BloodSplat5Blue
+{
+	pic BSPLAT5
+	shade "00 00 ff"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+decal BloodSplat6Blue
+{
+	pic BSPLAT6
+	shade "00 00 ff"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+decal BloodSplat7Blue
+{
+	pic BSPLAT7
+	shade "00 00 ff"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+// The smaller blood splats are more common than the big ones.
+
+decalgroup BloodSplatBlue
+{
+	BloodSplat1Blue	2
+	BloodSplat2Blue	1
+	BloodSplat3Blue	5
+	BloodSplat4Blue	5
+	BloodSplat5Blue	5
+	BloodSplat6Blue	5
+	BloodSplat7Blue	6
+}
+
+decalgroup BloodSplatRadiusBlue
+{
+	BloodSplat1Blue	2
+	BloodSplat2Blue	1
+	BloodSplat3Blue	5
+	BloodSplat4Blue	5
+	BloodSplat5Blue	5
+	BloodSplat6Blue	5
+	BloodSplat7Blue	6
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+decal BloodSplat1Green
+{
+	pic BSPLAT1
+	shade "00 aa 00"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+decal BloodSplat2Green
+{
+	pic BSPLAT2
+	shade "00 aa 00"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+decal BloodSplat3Green
+{
+	pic BSPLAT3
+	shade "00 aa 00"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+decal BloodSplat4Green
+{
+	pic BSPLAT4
+	shade "00 aa 00"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+decal BloodSplat5Green
+{
+	pic BSPLAT5
+	shade "00 aa 00"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+decal BloodSplat6Green
+{
+	pic BSPLAT6
+	shade "00 aa 00"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+decal BloodSplat7Green
+{
+	pic BSPLAT7
+	shade "00 aa 00"
+	x-scale 0.75
+	y-scale 0.75
+	randomflipx
+	randomflipy
+}
+
+// The smaller blood splats are more common than the big ones.
+
+decalgroup BloodSplatGreen
+{
+	BloodSplat1Green	2
+	BloodSplat2Green	1
+	BloodSplat3Green	5
+	BloodSplat4Green	5
+	BloodSplat5Green	5
+	BloodSplat6Green	5
+	BloodSplat7Green	6
+}
+
+decalgroup BloodSplatRadiusGreen
+{
+	BloodSplat1Green	2
+	BloodSplat2Green	1
+	BloodSplat3Green	5
+	BloodSplat4Green	5
+	BloodSplat5Green	5
+	BloodSplat6Green	5
+	BloodSplat7Green	6
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
 decal BloodSmear1
 {
 	pic BSMEAR1
@@ -235,6 +426,72 @@ decalgroup BloodSmearRadius
 {
 	BloodSmear1	1
 	BloodSmear2	1
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+decal BloodSmear1Blue
+{
+	pic BSMEAR1
+	x-scale 0.625
+	y-scale 0.625
+	shade "00 00 ff"
+	randomflipx
+	animator BloodSmearer
+}
+
+decal BloodSmear2Blue
+{
+	pic BSMEAR1
+	x-scale 0.625
+	y-scale 0.625
+	shade "00 00 ff"
+	randomflipx
+	animator BloodSmearer
+}
+
+decalgroup BloodSmearBlue
+{
+	BloodSmear1Blue	1
+	BloodSmear2Blue	1
+}
+
+decalgroup BloodSmearRadiusBlue
+{
+	BloodSmear1Blue	1
+	BloodSmear2Blue	1
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+decal BloodSmear1Green
+{
+	pic BSMEAR1
+	x-scale 0.625
+	y-scale 0.625
+	shade "00 aa 00"
+	randomflipx
+	animator BloodSmearer
+}
+
+decal BloodSmear2Green
+{
+	pic BSMEAR1
+	x-scale 0.625
+	y-scale 0.625
+	shade "00 aa 00"
+	randomflipx
+	animator BloodSmearer
+}
+
+decalgroup BloodSmearGreen
+{
+	BloodSmear1Green	1
+	BloodSmear2Green	1
+}
+
+decalgroup BloodSmearRadiusGreen
+{
+	BloodSmear1Green	1
+	BloodSmear2Green	1
 }
 
 /***** Rocket Scorches *****************************************************/
