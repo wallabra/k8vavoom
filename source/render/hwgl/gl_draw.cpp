@@ -61,24 +61,9 @@ void VOpenGLDrawer::DrawPic(float x1, float y1, float x2, float y2,
 {
 	guard(VOpenGLDrawer::DrawPic);
 	SetPic(Tex, Trans, CM_Default);
-	if (HaveShaders)
-	{
-		p_glUseProgramObjectARB(DrawSimpleProgram);
-		p_glUniform1iARB(DrawSimpleTextureLoc, 0);
-		p_glUniform1fARB(DrawSimpleAlphaLoc, Alpha);
-	}
-	else
-	{
-		if (Alpha < 1.0)
-		{
-			glDisable(GL_ALPHA_TEST);
-			glColor4f(1, 1, 1, Alpha);
-		}
-		else
-		{
-			glColor4f(1, 1, 1, 1);
-		}
-	}
+	p_glUseProgramObjectARB(DrawSimpleProgram);
+	p_glUniform1iARB(DrawSimpleTextureLoc, 0);
+	p_glUniform1fARB(DrawSimpleAlphaLoc, Alpha);
 	if (Alpha < 1.0)
 	{
 		glEnable(GL_BLEND);
@@ -97,13 +82,6 @@ void VOpenGLDrawer::DrawPic(float x1, float y1, float x2, float y2,
 	{
 		glDisable(GL_BLEND);
 	}
-	if (!HaveShaders)
-	{
-		if (Alpha < 1.0)
-		{
-			glEnable(GL_ALPHA_TEST);
-		}
-	}
 	unguard;
 }
 
@@ -118,17 +96,9 @@ void VOpenGLDrawer::DrawPicShadow(float x1, float y1, float x2, float y2,
 {
 	guard(VOpenGLDrawer::DrawPicShadow);
 	SetPic(Tex, NULL, CM_Default);
-	if (HaveShaders)
-	{
-		p_glUseProgramObjectARB(DrawShadowProgram);
-		p_glUniform1iARB(DrawSimpleTextureLoc, 0);
-		p_glUniform1fARB(DrawSimpleAlphaLoc, shade);
-	}
-	else
-	{
-		glDisable(GL_ALPHA_TEST);
-		glColor4f(0, 0, 0, shade);
-	}
+	p_glUseProgramObjectARB(DrawShadowProgram);
+	p_glUniform1iARB(DrawSimpleTextureLoc, 0);
+	p_glUniform1fARB(DrawSimpleAlphaLoc, shade);
 	glEnable(GL_BLEND);
 	glBegin(GL_QUADS);
 	glTexCoord2f(s1 * tex_iw, t1 * tex_ih);
@@ -141,10 +111,6 @@ void VOpenGLDrawer::DrawPicShadow(float x1, float y1, float x2, float y2,
 	glVertex2f(x1, y2);
 	glEnd();
 	glDisable(GL_BLEND);
-	if (!HaveShaders)
-	{
-		glEnable(GL_ALPHA_TEST);
-	}
 	unguard;
 }
 
@@ -162,16 +128,9 @@ void VOpenGLDrawer::FillRectWithFlat(float x1, float y1, float x2, float y2,
 	guard(VOpenGLDrawer::FillRectWithFlat);
 	SetTexture(Tex, CM_Default);
 
-	if (HaveShaders)
-	{
-		p_glUseProgramObjectARB(DrawSimpleProgram);
-		p_glUniform1iARB(DrawSimpleTextureLoc, 0);
-		p_glUniform1fARB(DrawSimpleAlphaLoc, 1.0);
-	}
-	else
-	{
-		glColor4f(1, 1, 1, 1);
-	}
+	p_glUseProgramObjectARB(DrawSimpleProgram);
+	p_glUniform1iARB(DrawSimpleTextureLoc, 0);
+	p_glUniform1fARB(DrawSimpleAlphaLoc, 1.0);
 	glBegin(GL_QUADS);
 	glTexCoord2f(s1 * tex_iw, t1 * tex_ih);
 	glVertex2f(x1, y1);
@@ -195,29 +154,15 @@ void VOpenGLDrawer::FillRect(float x1, float y1, float x2, float y2,
 	vuint32 colour)
 {
 	guard(VOpenGLDrawer::FillRect);
-	if (HaveShaders)
-	{
-		p_glUseProgramObjectARB(DrawFixedColProgram);
-		p_glUniform4fARB(DrawFixedColColourLoc, (GLfloat)(((colour >> 16) & 255) / 255.0),
-			(GLfloat)(((colour >> 8) & 255) / 255.0), (GLfloat)((colour & 255) / 255.0), 1.0);
-	}
-	else
-	{
-		SetColour(colour);
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_ALPHA_TEST);
-	}
+	p_glUseProgramObjectARB(DrawFixedColProgram);
+	p_glUniform4fARB(DrawFixedColColourLoc, (GLfloat)(((colour >> 16) & 255) / 255.0),
+		(GLfloat)(((colour >> 8) & 255) / 255.0), (GLfloat)((colour & 255) / 255.0), 1.0);
 	glBegin(GL_QUADS);
 	glVertex2f(x1, y1);
 	glVertex2f(x2, y1);
 	glVertex2f(x2, y2);
 	glVertex2f(x1, y2);
 	glEnd();
-	if (!HaveShaders)
-	{
-		glEnable(GL_ALPHA_TEST);
-		glEnable(GL_TEXTURE_2D);
-	}
 	unguard;
 }
 
@@ -233,17 +178,8 @@ void VOpenGLDrawer::FillRect(float x1, float y1, float x2, float y2,
 void VOpenGLDrawer::ShadeRect(int x, int y, int w, int h, float darkening)
 {
 	guard(VOpenGLDrawer::ShadeRect);
-	if (HaveShaders)
-	{
-		p_glUseProgramObjectARB(DrawFixedColProgram);
-		p_glUniform4fARB(DrawFixedColColourLoc, 0, 0, 0, darkening);
-	}
-	else
-	{
-		glDisable(GL_ALPHA_TEST);
-		glDisable(GL_TEXTURE_2D);
-		glColor4f(0, 0, 0, darkening);
-	}
+	p_glUseProgramObjectARB(DrawFixedColProgram);
+	p_glUniform4fARB(DrawFixedColColourLoc, 0, 0, 0, darkening);
 	glEnable(GL_BLEND);
 
 	glBegin(GL_QUADS);
@@ -254,11 +190,6 @@ void VOpenGLDrawer::ShadeRect(int x, int y, int w, int h, float darkening)
 	glEnd();
 
 	glDisable(GL_BLEND);
-	if (!HaveShaders)
-	{
-		glEnable(GL_ALPHA_TEST);
-		glEnable(GL_TEXTURE_2D);
-	}
 	unguard;
 }
 
@@ -271,17 +202,8 @@ void VOpenGLDrawer::ShadeRect(int x, int y, int w, int h, float darkening)
 void VOpenGLDrawer::DrawConsoleBackground(int h)
 {
 	guard(VOpenGLDrawer::DrawConsoleBackground);
-	if (HaveShaders)
-	{
-		p_glUseProgramObjectARB(DrawFixedColProgram);
-		p_glUniform4fARB(DrawFixedColColourLoc, 0, 0, 0.5, 0.75);
-	}
-	else
-	{
-		glDisable(GL_ALPHA_TEST);
-		glDisable(GL_TEXTURE_2D);
-		glColor4f(0, 0, 0.5, 0.75);
-	}
+	p_glUseProgramObjectARB(DrawFixedColProgram);
+	p_glUniform4fARB(DrawFixedColColourLoc, 0, 0, 0.5, 0.75);
 	glEnable(GL_BLEND);
 
 	glBegin(GL_QUADS);
@@ -292,11 +214,6 @@ void VOpenGLDrawer::DrawConsoleBackground(int h)
 	glEnd();
 
 	glDisable(GL_BLEND);
-	if (!HaveShaders)
-	{
-		glEnable(GL_ALPHA_TEST);
-		glEnable(GL_TEXTURE_2D);
-	}
 	unguard;
 }
 
@@ -325,16 +242,9 @@ void VOpenGLDrawer::DrawSpriteLump(float x1, float y1, float x2, float y2,
 	}
 	float texh = Tex->GetHeight() * tex_ih;
 
-	if (HaveShaders)
-	{
-		p_glUseProgramObjectARB(DrawSimpleProgram);
-		p_glUniform1iARB(DrawSimpleTextureLoc, 0);
-		p_glUniform1fARB(DrawSimpleAlphaLoc, 1.0);
-	}
-	else
-	{
-		glColor4f(1, 1, 1, 1);
-	}
+	p_glUseProgramObjectARB(DrawSimpleProgram);
+	p_glUniform1iARB(DrawSimpleTextureLoc, 0);
+	p_glUniform1fARB(DrawSimpleAlphaLoc, 1.0);
 	glBegin(GL_QUADS);
 
 	glTexCoord2f(s1, 0);
@@ -360,15 +270,7 @@ void VOpenGLDrawer::DrawSpriteLump(float x1, float y1, float x2, float y2,
 void VOpenGLDrawer::StartAutomap()
 {
 	guard(VOpenGLDrawer::StartAutomap);
-	if (HaveShaders)
-	{
-		p_glUseProgramObjectARB(DrawAutomapProgram);
-	}
-	else
-	{
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_ALPHA_TEST);
-	}
+	p_glUseProgramObjectARB(DrawAutomapProgram);
 	glEnable(GL_LINE_SMOOTH);
 	glEnable(GL_BLEND);
 	glBegin(GL_LINES);
@@ -404,10 +306,5 @@ void VOpenGLDrawer::EndAutomap()
 	glEnd();
 	glDisable(GL_BLEND);
 	glDisable(GL_LINE_SMOOTH);
-	if (!HaveShaders)
-	{
-		glEnable(GL_ALPHA_TEST);
-		glEnable(GL_TEXTURE_2D);
-	}
 	unguard;
 }

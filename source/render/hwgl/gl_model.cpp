@@ -211,14 +211,6 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
 	}
 
 	//
-	// get lighting information
-	//
-	float shadelightr = ((light >> 16) & 255) / 255.0;
-	float shadelightg = ((light >> 8) & 255) / 255.0;
-	float shadelightb = (light & 255) / 255.0;
-	float* shadedots = r_avertexnormal_dots[((int)(angles.yaw * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
-
-	//
 	// draw all the triangles
 	//
 	glPushMatrix();
@@ -231,43 +223,9 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
 	glScalef(Scale.x, Scale.y, Scale.z);
 	glTranslatef(Offset.x, Offset.y, Offset.z);
 
-	mmdl_t* pmdl = Mdl->Data;
-	mframe_t* framedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + frame * pmdl->framesize);
-	mframe_t* nextframedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + nextframe * pmdl->framesize);
-
-	if (!HaveShaders)
-	{
-		// Interpolate Scales
-		TVec scale_origin;
-		if (Interpolate)
-		{
-			scale_origin[0] = ((1 - Inter) * framedesc->scale_origin[0] + Inter * nextframedesc->scale_origin[0]);
-			scale_origin[1] = ((1 - Inter) * framedesc->scale_origin[1] + Inter * nextframedesc->scale_origin[1]);
-			scale_origin[2] = ((1 - Inter) * framedesc->scale_origin[2] + Inter * nextframedesc->scale_origin[2]);
-		}
-		else
-		{
-			scale_origin[0] = framedesc->scale_origin[0];
-			scale_origin[1] = framedesc->scale_origin[1];
-			scale_origin[2] = framedesc->scale_origin[2];
-		}
-		glTranslatef(scale_origin[0], scale_origin[1], scale_origin[2]);
-
-		TVec scale;
-		if (Interpolate)
-		{
-			scale[0] = framedesc->scale[0] + Inter * (nextframedesc->scale[0] - framedesc->scale[0]) * Scale.x;
-			scale[1] = framedesc->scale[1] + Inter * (nextframedesc->scale[1] - framedesc->scale[1]) * Scale.y;
-			scale[2] = framedesc->scale[2] + Inter * (nextframedesc->scale[2] - framedesc->scale[2]) * Scale.z;
-		}
-		else
-		{
-			scale[0] = framedesc->scale[0];
-			scale[1] = framedesc->scale[1];
-			scale[2] = framedesc->scale[2];
-		}
-		glScalef(scale[0], scale[1], scale[2]);
-	}
+	//mmdl_t* pmdl = Mdl->Data;
+	//mframe_t* framedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + frame * pmdl->framesize);
+	//mframe_t* nextframedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + nextframe * pmdl->framesize);
 
 	SetPic(Skin, Trans, CMap);
 
@@ -276,62 +234,50 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
 	glAlphaFunc(GL_GREATER, 0.0);
 	glEnable(GL_BLEND);
 
-	if (HaveShaders)
+	p_glUseProgramObjectARB(SurfModelProgram);
+	p_glUniform1iARB(SurfModelTextureLoc, 0);
+	p_glUniform1iARB(SurfModelFogTypeLoc, r_fog & 3);
+
+	if (Alpha < 1.0)
 	{
-		p_glUseProgramObjectARB(SurfModelProgram);
-		p_glUniform1iARB(SurfModelTextureLoc, 0);
-		p_glUniform1iARB(SurfModelFogTypeLoc, r_fog & 3);
-
-		if (Alpha < 1.0)
-		{
-			p_glUniform1fARB(ShadowsModelAlphaLoc, Alpha);
-		}
-		else
-		{
-			p_glUniform1fARB(ShadowsModelAlphaLoc, 1.0);
-		}
-
-		if (Fade)
-		{
-			p_glUniform1iARB(SurfModelFogEnabledLoc, GL_TRUE);
-			p_glUniform4fARB(SurfModelFogColourLoc,
-				((Fade >> 16) & 255) / 255.0,
-				((Fade >> 8) & 255) / 255.0,
-				(Fade & 255) / 255.0, Alpha);
-			p_glUniform1fARB(SurfModelFogDensityLoc, Fade == FADE_LIGHT ? 0.3 : r_fog_density);
-			p_glUniform1fARB(SurfModelFogStartLoc, Fade == FADE_LIGHT ? 1.0 : r_fog_start);
-			p_glUniform1fARB(SurfModelFogEndLoc, Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end);
-		}
-		else
-		{
-			p_glUniform1iARB(SurfModelFogEnabledLoc, GL_FALSE);
-		}
-
-		if (AllowTransparency)
-		{
-			p_glUniform1iARB(SurfModelAllowTransparency, GL_TRUE);
-		}
-		else
-		{
-			p_glUniform1iARB(SurfModelAllowTransparency, GL_FALSE);
-		}
-		p_glUniform1fARB(SurfModelInterLoc, Inter);
+		p_glUniform1fARB(ShadowsModelAlphaLoc, Alpha);
 	}
 	else
 	{
-		if (!model_lighting)
-		{
-			SetColour((light & 0x00ffffff) | (int(255 * Alpha) << 24));
-		}
-		SetFade(Fade);
+		p_glUniform1fARB(ShadowsModelAlphaLoc, 1.0);
 	}
+
+	if (Fade)
+	{
+		p_glUniform1iARB(SurfModelFogEnabledLoc, GL_TRUE);
+		p_glUniform4fARB(SurfModelFogColourLoc,
+			((Fade >> 16) & 255) / 255.0,
+			((Fade >> 8) & 255) / 255.0,
+			(Fade & 255) / 255.0, Alpha);
+		p_glUniform1fARB(SurfModelFogDensityLoc, Fade == FADE_LIGHT ? 0.3 : r_fog_density);
+		p_glUniform1fARB(SurfModelFogStartLoc, Fade == FADE_LIGHT ? 1.0 : r_fog_start);
+		p_glUniform1fARB(SurfModelFogEndLoc, Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end);
+	}
+	else
+	{
+		p_glUniform1iARB(SurfModelFogEnabledLoc, GL_FALSE);
+	}
+
+	if (AllowTransparency)
+	{
+		p_glUniform1iARB(SurfModelAllowTransparency, GL_TRUE);
+	}
+	else
+	{
+		p_glUniform1iARB(SurfModelAllowTransparency, GL_FALSE);
+	}
+	p_glUniform1fARB(SurfModelInterLoc, Inter);
 
 	if (Additive)
 	{
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	}
 
-	if (HaveShaders)
 	{
 		UploadModel(Mdl);
 		VMeshFrame* FrameDesc = &Mdl->Frames[frame];
@@ -368,90 +314,6 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
 		p_glDisableVertexAttribArrayARB(SurfModelVert2Loc);
 		p_glDisableVertexAttribArrayARB(SurfModelTexCoordLoc);
 		p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-	}
-	else
-	{
-		trivertx_t* verts = (trivertx_t *)(framedesc + 1);
-		trivertx_t* verts2 = (trivertx_t *)(nextframedesc + 1);
-		int* order = (int *)((byte *)pmdl + pmdl->ofscmds);
-
-		while (*order)
-		{
-			// get the vertex count and primitive type
-			int count = *order++;
-			if (Alpha < 1.0 && !ForceDepthUse)
-			{
-				glDepthMask(GL_FALSE);
-			}
-			if (count < 0)
-			{
-				count = -count;
-				glBegin(GL_TRIANGLE_FAN);
-			}
-			else
-			{
-				glBegin(GL_TRIANGLE_STRIP);
-			}
-			if (Alpha < 1.0 && !ForceDepthUse)
-			{
-				glDepthMask(GL_TRUE);
-			}
-
-			do
-			{
-				if (HaveShaders)
-				{
-					// texture coordinates come from the draw list
-					p_glVertexAttrib2fARB(SurfModelTexCoordLoc, ((float *)order)[0], ((float *)order)[1]);
-					order += 2;
-
-					// normals and vertexes come from the frame list
-					int index = *order++;
-					if (model_lighting)
-					{
-						float l = shadedots[verts[index].lightnormalindex];
-						p_glVertexAttrib4fARB(SurfModelLightValLoc,
-							l * shadelightr, l * shadelightg, l * shadelightb, Alpha);
-					}
-					else
-					{
-						p_glVertexAttrib4fARB(SurfModelLightValLoc,
-							((light >> 16) & 255) / 255.0,
-							((light >> 8) & 255) / 255.0,
-							(light & 255) / 255.0, Alpha);
-					}
-					p_glVertexAttrib3fARB(SurfModelVert2Loc,
-						verts2[index].v[0], verts2[index].v[1], verts2[index].v[2]);
-					glVertex3f(verts[index].v[0], verts[index].v[1], verts[index].v[2]);
-				}
-				else
-				{
-					// texture coordinates come from the draw list
-					glTexCoord2f(((float *)order)[0], ((float *)order)[1]);
-					order += 2;
-
-					// normals and vertexes come from the frame list
-					int index = *order++;
-					if (model_lighting)
-					{
-						float l = shadedots[verts[index].lightnormalindex];
-						glColor4f(l * shadelightr, l * shadelightg, l * shadelightb, Alpha);
-					}
-					if (Interpolate)
-					{
-						glVertex3f((1 - Inter) * verts[index].v[0] + Inter * verts2[index].v[0],
-							(1 - Inter) * verts[index].v[1] + Inter * verts2[index].v[1],
-							(1 - Inter) * verts[index].v[2] + Inter * verts2[index].v[2]);
-					}
-					else
-					{
-						glVertex3f(verts[index].v[0], verts[index].v[1], verts[index].v[2]);
-					}
-				}
-			} while (--count);
-
-			glEnd();
-		}
 	}
 	glDisable(GL_BLEND);
 	glShadeModel(GL_FLAT);

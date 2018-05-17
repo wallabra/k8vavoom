@@ -366,7 +366,6 @@ public:
 
 	//	Polygon drawing
 	void WorldDrawing();
-	void WorldDrawingShaders();
 	void DrawWorldAmbientPass();
 	void BeginShadowVolumesPass();
 	void BeginLightShadowVolumes();
@@ -467,7 +466,6 @@ protected:
 	int						CurrentFade;
 
 	bool					pointparmsable;
-	bool					HaveShaders;
 	bool					HaveDepthClamp;
 	bool					HaveStencilWrap;
 	bool					HaveDrawRangeElements;
