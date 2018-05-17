@@ -81,7 +81,7 @@ struct tmtrace_t
 	TArray<line_t*>		SpecHit;
 
 	VEntity *BlockingMobj;
-	line_t *AnyBlockingLine; // any blocking lines
+	line_t *AnyBlockingLine; // any blocking lines (including two-sided)
 };
 
 //	Searches though the surrounding mapblocks for monsters/players

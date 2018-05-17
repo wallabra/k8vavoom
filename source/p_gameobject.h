@@ -698,6 +698,7 @@ struct intercept_t
 	enum
 	{
 		IF_IsALine = 0x01,
+		IF_BackSide = 0x02, // not yet
 	};
 	vuint32		Flags;
 	VEntity*	thing;
