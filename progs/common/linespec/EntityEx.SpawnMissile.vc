@@ -108,31 +108,11 @@ final bool CheckMissileSpawn()
 
 //==========================================================================
 //
-//  ExplodeMissile
+//  RayLineIntersection
 //
 //==========================================================================
 
 final TVec RayLineIntersection (TVec rayO, TVec rayE, TVec vv1, TVec vv2) {
-  /*
-  rayDir.z = 0; // not interested
-  rayDir = Normalise(rayDir);
-  TVec v1 = rayO-vv1;
-  TVec v2 = vv2-vv1;
-  TVec v3;
-  v3.x = -rayDir.y;
-  v3.y = rayDir.x;
-  v3.z = 0;
-
-  float dot = v2.x*v1.x+v2.y*v1.y; //DotProduct(v2, v3);
-  if (fabs(dot) < 0.0001) return -1;
-
-  float t1 = (v2.x*v1.y-v2.y*v1.x)/dot; //CrossProduct(v2, v1)/dot;
-  float t2 = (v1.x*v3.x+v1.y*v3.y)/dot; //DotProduct(v1, v3)/dot;
-
-  if (t1 >= 0.0 && t2 >= 0.0 && t2 <= 1.0) return t1;
-  return -1;
-  */
-
   TVec rayDir = rayE-rayO;
   rayDir.z = 0; // not interested
   //rayDir = Normalise(rayDir);
@@ -153,24 +133,13 @@ final TVec RayLineIntersection (TVec rayO, TVec rayE, TVec vv1, TVec vv2) {
     }
   }
   return rayO;
-/*
-      immutable Me.Float den = ((vv2.y-vv1.y)*(point1.x-rayO.x))-((vv2.x-vv1.x)*(point1.y-rayO.y));
-      if (fabs(den) > EPSILON!(Me.Float)) {
-        immutable Me.Float e = rayO.y-vv1.y;
-        immutable Me.Float f = rayO.x-vv1.x;
-        immutable Me.Float invden = cast(Me.Float)1/den;
-        immutable Me.Float ua = (((vv2.x-vv1.x)*e)-((vv2.y-vv1.y)*f))*invden;
-        static if (firstIsSeg) { if (ua < 0 || ua > 1) return Me.Invalid; }
-        if (ua >= 0 && ua <= 1) {
-          immutable Me.Float ub = (((point1.x-rayO.x)*e)-((point1.y-rayO.y)*f))*invden;
-          static if (secondIsSeg) { if (ub < 0 || ub > 1) return Me.Invalid; }
-          if (ua != 0 || ub != 0) return Me(rayO.x+ua*(point1.x-rayO.x), rayO.y+ua*(point1.y-rayO.y));
-        }
-      }
-      return Me.Invalid;
-*/
 }
 
+//==========================================================================
+//
+//  ExplodeMissile
+//
+//==========================================================================
 
 final bool ExplodeMissile(EntityEx Victim, optional line_t *line)
 {
