@@ -30,6 +30,10 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+VCvarB decals_enabled("decals_enabled", true, "Enable decal spawning, processing and rendering?", CVAR_Archive);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 VDecalDef* VDecalDef::listHead = nullptr;
 VDecalAnim* VDecalAnim::listHead = nullptr;
 VDecalGroup* VDecalGroup::listHead = nullptr;

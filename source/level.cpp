@@ -43,6 +43,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+extern VCvarB decals_enabled;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1418,6 +1419,8 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
 
 void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li, int level) {
   guard(VLevel::AddDecal);
+
+  if (!decals_enabled) return;
 
   if (!sec || !li || dectype == NAME_none) return; // just in case
 

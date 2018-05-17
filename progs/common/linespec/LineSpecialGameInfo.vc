@@ -182,8 +182,6 @@ void Init()
 
 	CreateCvar('k8BerserkSwitch', "1", "Switch to fist when Berserker Pack taken", CVAR_ARCHIVE);
 
-	CreateCvar('k8DecalTest', "0", "Decal testing code", 0);
-
 	CreateCvar('k8ExplodeMissleTest', "0", "Missile explosion testing code", 0);
 }
 

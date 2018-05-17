@@ -40,6 +40,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+extern VCvarB decals_enabled;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -365,6 +366,8 @@ void VOpenGLDrawer::RenderShaderDecalsEnd () {
 //==========================================================================
 
 void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf, bool lmap) {
+  if (!decals_enabled) return;
+
   if (!surf->dcseg || !surf->dcseg->decals) return; // nothing to do
 
   if (gl_decal_debug_nostencil) return; // debug
@@ -383,6 +386,8 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf, bool lmap) {
 //==========================================================================
 
 bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
+  if (!decals_enabled) return false;
+
   if (!surf->dcseg || !surf->dcseg->decals) return false; // nothing to do
 
   if (lmap) {

@@ -39,6 +39,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+extern VCvarB decals_enabled;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -131,7 +132,7 @@ void VLevel::TickWorld(float DeltaTime)
 	guard(VLevel::TickWorld);
 
 	// Run decal thinkers
-	if (DeltaTime > 0) {
+	if (DeltaTime > 0 && decals_enabled) {
 		decal_t* dc = decanimlist;
 		while (dc) {
 			bool removeIt = true;
