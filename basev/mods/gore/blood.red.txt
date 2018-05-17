@@ -72,6 +72,9 @@ Actor K8Gore_Blood Replaces Blood {
       //TNT1 AA 0 A_CustomMissile("SuperGoreMistTiny", 0, 0, random(0, 360), 2, random(60, 90))
       TNT1 A 0 A_CustomMissile("K8Gore_BloodHit", 0, 0, random(0, 360), 2, random(0, 90))
       Stop
+
+    Spray:
+      Goto Spawn
   }
 }
 

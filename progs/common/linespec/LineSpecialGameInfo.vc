@@ -127,6 +127,8 @@ float			DehExplosionAlpha;
 
 void Init()
 {
+	CreateCvar('zdoom_blood_hack', "0", "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
+
 	CreateCvar('movebob', "0.1", "Player movement bobbing.", CVAR_ARCHIVE); // doom default is "0.25"
 
 	CreateCvar('menu_quit_prompt', "1", "Show quit prompt on menu quit?", CVAR_ARCHIVE);

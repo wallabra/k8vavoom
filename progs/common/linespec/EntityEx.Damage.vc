@@ -23,36 +23,22 @@
 //**
 //**************************************************************************
 
-/*
-final int booboo () {
-  print("  booboo");
-  switch (42) {
-    case 1: break; return 42;
-    default: return 42;
-  }
-  //return 42;
-}
-*/
-
+//==========================================================================
+//
+// K8onBeforeLineDamage
+//
 // this script will be called before hitscan line damage is done
 // you can return new damage, or <= 0 to prevent any hitscan damage.
 // note that poisoned puffs will still inflict damage to victim.
-// also note that preventing victim from taking any damage will not "awake" it.
+// also note that preventing victim from taking any damage will not
+// "awake" it.
+//
+//==========================================================================
+
 final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name damageType, bool secondary) {
   // is it from player?
   if (!inflictor) return damage;
   if (!inflictor.bIsPlayer) return damage;
-
-  // is it to alive monster?
-  //if (!bIsMonster || Health < 1) return damage;
-  // is this monster dormant?
-  //if (bDormant) return damage;
-  // is this monster friendly?
-  //if (bFriendly)) return damage;
-  // is this monster invulnerable?
-  //if (bInvulnerable) return damage;
-  // is this monster non-shootable?
-  //if (bNonShootable) return damage;
 
   if (damageType != 'Bullet' &&
       damageType != 'Shell' &&
@@ -293,14 +279,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
       // ketchup spawn
       if (instakill) {
-        bool doSpray = GetCvarB('k8HSHeadKillBloodSpray');
-
-        /*
-        Name bloodClassName = 'K8Gore_Blood_Transient';
-        Name mistClassName = 'K8Gore_BloodmistBig_Transient';
-        Name poolClassName = 'K8Gore_GrowingBloodPool';
-        class<Actor> bloodClass = bloodClassName;
-        */
+        bool doSpray = !bNoBlood && GetCvarB('k8HSHeadKillBloodSpray');
 
         if (doSpray) {
           // HellKnight is a kind of Hell Baron
@@ -308,19 +287,6 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
           name bloodClassName;
           name poolClassName;
 
-          /*
-          if (GetClassName(GetClassReplacee(self.Class)) == 'BaronOfHell' || GetClassName(GetClassReplacee(self.Class)) == 'HellKnight') {
-            bloodClassName = 'K8Gore_Blood_Transient_Green';
-            //mistClassName = 'K8Gore_BloodmistBig_Transient_Green';
-            poolClassName = 'K8Gore_GrowingBloodPool_Green';
-            restoreRedBlood = (!FindClass(bloodClassName) || !FindClass(poolClassName));
-          } else if (GetClassName(GetClassReplacee(self.Class)) == 'Cacodemon') {
-            bloodClassName = 'K8Gore_Blood_Transient_Blue';
-            //mistClassName = 'K8Gore_BloodmistBig_Transient_Blue';
-            poolClassName = 'K8Gore_GrowingBloodPool_Blue';
-            restoreRedBlood = (!FindClass(bloodClassName) || !FindClass(poolClassName));
-          }
-          */
           if (self.BloodType && GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') {
             bloodClassName = 'K8Gore_Blood_Transient_Green';
             //mistClassName = 'K8Gore_BloodmistBig_Transient_Green';

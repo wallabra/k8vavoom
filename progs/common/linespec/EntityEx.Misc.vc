@@ -2300,13 +2300,16 @@ final void SpawnBlood(TVec Org, int damage)
 			damage += 2;
 		}
 	}
-	if (damage <= 12 && damage >= 9)
-	{
-		A.SetState(GetStatePlus(A.IdleState, 1));
-	}
-	else if (damage < 9)
-	{
-		A.SetState(GetStatePlus(A.IdleState, 2));
+
+	if (GetCvarB('zdoom_blood_hack')) {
+		if (damage <= 12 && damage >= 9)
+		{
+			A.SetState(GetStatePlus(A.IdleState, 1));
+		}
+		else if (damage < 9)
+		{
+			A.SetState(GetStatePlus(A.IdleState, 2));
+		}
 	}
 }
 

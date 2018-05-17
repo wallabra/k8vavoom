@@ -3,7 +3,7 @@ actor Blood
 {
 	SpawnID 130
 	Mass 5
-	+NoBlockmap
+	-NoBlockmap
 	+NoTeleport
 	states
 	{
@@ -22,7 +22,7 @@ actor BloodBlue
 {
 	SpawnID 130
 	Mass 5
-	+NoBlockmap
+	-NoBlockmap
 	+NoTeleport
 	Translation "168:191=192:207","16:47=240:247"
 	states
@@ -42,7 +42,7 @@ actor BloodGreen
 {
 	SpawnID 130
 	Mass 5
-	+NoBlockmap
+	-NoBlockmap
 	+NoTeleport
 	Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
 	states
@@ -64,7 +64,7 @@ actor BloodSplatter
 	Height 4
 	Mass 5
 	+Missile
-	+NoBlockmap
+	-NoBlockmap
 	+DropOff
 	+NoTeleport
 	+CannotPush
@@ -86,7 +86,7 @@ actor BloodSplatterBlue
 	Height 4
 	Mass 5
 	+Missile
-	+NoBlockmap
+	-NoBlockmap
 	+DropOff
 	+NoTeleport
 	+CannotPush
@@ -109,7 +109,7 @@ actor BloodSplatterGreen
 	Height 4
 	Mass 5
 	+Missile
-	+NoBlockmap
+	-NoBlockmap
 	+DropOff
 	+NoTeleport
 	+CannotPush
@@ -130,7 +130,7 @@ actor AxeBlood
 {
 	Radius 2
 	Height 4
-	+NoBlockmap
+	-NoBlockmap
 	+NoGravity
 	+DropOff
 	+NoTeleport
