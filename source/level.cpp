@@ -1424,6 +1424,18 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
   // ignore slopes
   if (sec->floor.minz != sec->floor.maxz || sec->ceiling.minz != sec->ceiling.maxz) return;
 
+  /*
+  auto op = SV_LineOpenings(li, org, SPF_NOBLOCKING);
+  if (op) {
+    GCon->Logf("========== OPENINGS ==========");
+    while (op) {
+      GCon->Logf("  bottom:%f; top:%f; range:%f; lowfloor:%f; highceiling:%f", op->bottom, op->top, op->range, op->lowfloor, op->highceiling);
+      op = op->next;
+    }
+    GCon->Logf("---------------");
+  }
+  */
+
   //TVec oorg = org;
   org = P_SectorClosestPoint(sec, org);
   //org.z = oorg.z;
