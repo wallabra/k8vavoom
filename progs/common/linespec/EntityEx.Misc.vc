@@ -186,8 +186,10 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
 					dist2 = dist;
 				}
 			}
-			damage = ftoi(((itof(BombDamage) * RDFactor *
-				(BombDistance - dist2)) / BombDistance));
+			damage = ftoi(((itof(BombDamage)*RDFactor*(BombDistance-dist2))/BombDistance));
+
+			Other.SpawnExploBloodAtHead(damage);
+
 			if (DoDamage)
 			{
 				Other.Damage(self, Source, damage, BombDmgType);
@@ -199,9 +201,8 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
 
 			if (!Other.bIceCorpse && (!DoDamage || !bNoDamageThrust))
 			{
-				float Thrust = itof(damage) * 0.5;
-				float VelZ = ((Other.Origin.z + (Other.Height * 0.5)) -
-					Origin.z) * Thrust;
+				float Thrust = itof(damage)*0.5;
+				float VelZ = ((Other.Origin.z+(Other.Height*0.5))-Origin.z)*Thrust;
 				if (Source != Other)
 				{
 					VelZ *= 0.5;
@@ -739,6 +740,7 @@ bool Touch(Entity InOther)
 	// but different classes trigger the touchiness, but that seems less straightforwards.
 	{
 		bArmed = false; // Disarm
+		Other.SpawnExploBloodAtHead(Other.Health);
 		Other.Damage(none, none, Other.Health);  // kill object
 		return true;
 	}
@@ -772,6 +774,7 @@ bool Touch(Entity InOther)
 			if ((Other.Velocity.x + Other.Velocity.y) > 3.0 * 35.0)
 			{
 				damage = (ftoi(Mass) / 100) + 1;
+				Other.SpawnExploBloodAtHead(damage);
 				Other.Damage(self, self, damage);
 				damage = (ftoi(Other.Mass) / 100) + 1;
 				Damage(Other, Other, damage >> 2);
@@ -897,6 +900,7 @@ bool Touch(Entity InOther)
 				}
 				PlaySound('misc/ripslop', CHAN_BODY);
 				damage = GetMissileDamage(3, 2);
+				Other.SpawnExploBloodAtHead(damage);
 				Other.Damage(self, Target, damage, DamageType);
 				if (Other.bPushable && !bCannotPush)
 				{
@@ -919,6 +923,7 @@ bool Touch(Entity InOther)
 			{
 				Other.SpawnBloodSplatter(Origin, damage);
 			}
+			Other.SpawnExploBloodAtHead(damage);
 			Other.Damage(self, Target, damage, DamageType);
 		}
 		// don't traverse any more
@@ -2243,7 +2248,7 @@ final void SpawnPuff(TVec Org, float Range, class<EntityEx> PuffType,
 //==========================================================================
 //
 //  SpawnBlood
-// 
+//
 //==========================================================================
 
 final void SpawnBlood(TVec Org, int damage)
@@ -2311,6 +2316,53 @@ final void SpawnBlood(TVec Org, int damage)
 			A.SetState(GetStatePlus(A.IdleState, 2));
 		}
 	}
+}
+
+//==========================================================================
+//
+//  SpawnBloodAtHead
+//
+//==========================================================================
+
+final void SpawnBloodAtHead (int damage) {
+  TVec goup = Origin;
+  goup.z = Radius+Random()*4;
+  if (goup.z < 0) goup.z = 0;
+  SpawnBlood(goup, damage);
+}
+
+//==========================================================================
+//
+//  SpawnExploBloodAtHead
+//
+//==========================================================================
+
+final void SpawnExploBloodAtHead (int damage) {
+  if (bNoBlood || damage < 1) return;
+
+  bool isSmallDamage = false;
+  bool isHighDamage = false;
+
+       if (damage <= 10) isSmallDamage = true;
+  else if (damage < 25) {}
+  else isHighDamage = true;
+
+  SpawnBloodAtHead(damage);
+  SpawnBloodAtHead(damage);
+  if (!isSmallDamage) {
+    if (Health <= damage) SpawnBloodAtHead(damage);
+    SpawnBloodAtHead(damage);
+  }
+  // spawn more blood for high damage
+  if (isHighDamage) {
+    if (Health <= damage) SpawnBloodAtHead(damage);
+    if (Health <= damage) SpawnBloodAtHead(damage);
+    SpawnBloodAtHead(damage);
+    SpawnBloodAtHead(damage);
+  } else {
+    if (Health <= damage) SpawnBloodAtHead(damage);
+    if (Health <= damage) SpawnBloodAtHead(damage);
+  }
 }
 
 //==========================================================================
