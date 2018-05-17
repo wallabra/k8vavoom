@@ -23,8 +23,16 @@
 //**
 //**************************************************************************
 
-#include "gamedefs.h"
-#include "net/network.h"
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+# include "gamedefs.h"
+# include "net/network.h"
+#else
+# if defined(IN_VCC)
+#  include "../../utils/vcc/vcc.h"
+# elif defined(VCC_STANDALONE_EXECUTOR)
+#  include "../../utils/vcc/vcc_run.h"
+# endif
+#endif
 
 
 // register a class at startup time
@@ -806,11 +814,19 @@ IMPLEMENT_FUNCTION(VObject, GetTextureName) {
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, print) {
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   GCon->Log(PF_FormatString());
+#else
+  fprintf(stdout, "%s\n", PF_FormatString());
+#endif
 }
 
 IMPLEMENT_FUNCTION(VObject, dprint) {
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   GCon->Log(NAME_Dev, PF_FormatString());
+#else
+  fprintf(stderr, "%s\n", PF_FormatString());
+#endif
 }
 
 

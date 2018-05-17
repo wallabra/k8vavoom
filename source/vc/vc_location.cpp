@@ -25,10 +25,14 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#ifdef IN_VCC
-#include "../../utils/vcc/vcc.h"
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+# include "gamedefs.h"
 #else
-#include "gamedefs.h"
+# if defined(IN_VCC)
+#  include "../../utils/vcc/vcc.h"
+# elif defined(VCC_STANDALONE_EXECUTOR)
+#  include "../../utils/vcc/vcc_run.h"
+# endif
 #endif
 
 // MACROS ------------------------------------------------------------------

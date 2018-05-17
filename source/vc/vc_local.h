@@ -26,31 +26,32 @@
 #ifndef __vc_local_h__
 #define __vc_local_h__
 
-#ifdef IN_VCC
-#include "../../utils/vcc/vcc.h"
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+# include "gamedefs.h"
+# include "../progdefs.h"
+# include "vc_emit_context.h"
+# include "vc_expr_base.h"
+# include "vc_expr_literal.h"
+# include "vc_expr_unary_binary.h"
+# include "vc_expr_cast.h"
+# include "vc_expr_type.h"
+# include "vc_expr_field.h"
+# include "vc_expr_array.h"
+# include "vc_expr_invoke.h"
+# include "vc_expr_assign.h"
+# include "vc_expr_local.h"
+# include "vc_expr_misc.h"
+# include "vc_statement.h"
+# include "vc_error.h"
+# include "vc_lexer.h"
+# include "vc_modifiers.h"
+# include "vc_parser.h"
 #else
-
-#include "gamedefs.h"
-#include "../progdefs.h"
-
-#include "vc_emit_context.h"
-#include "vc_expr_base.h"
-#include "vc_expr_literal.h"
-#include "vc_expr_unary_binary.h"
-#include "vc_expr_cast.h"
-#include "vc_expr_type.h"
-#include "vc_expr_field.h"
-#include "vc_expr_array.h"
-#include "vc_expr_invoke.h"
-#include "vc_expr_assign.h"
-#include "vc_expr_local.h"
-#include "vc_expr_misc.h"
-#include "vc_statement.h"
-#include "vc_error.h"
-#include "vc_lexer.h"
-#include "vc_modifiers.h"
-#include "vc_parser.h"
-
+# if defined(IN_VCC)
+#  include "../../utils/vcc/vcc.h"
+# elif defined(VCC_STANDALONE_EXECUTOR)
+#  include "../../utils/vcc/vcc_run.h"
+# endif
 #endif
 
 #endif

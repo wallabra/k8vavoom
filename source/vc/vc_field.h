@@ -71,12 +71,14 @@ public:
 	bool NeedsDestructor() const;
 	bool Define();
 
-#ifndef IN_VCC
+#if !defined(IN_VCC)
 	static void CopyFieldValue(const vuint8*, vuint8*, const VFieldType&);
 	static void SerialiseFieldValue(VStream&, vuint8*, const VFieldType&);
 	static void CleanField(vuint8*, const VFieldType&);
 	static void DestructField(vuint8*, const VFieldType&);
 	static bool IdenticalValue(const vuint8*, const vuint8*, const VFieldType&);
+#endif
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	static bool NetSerialiseValue(VStream&, VNetObjectsMap*, vuint8*, const VFieldType&);
 #endif
 

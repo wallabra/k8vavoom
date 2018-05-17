@@ -179,7 +179,7 @@ VClass::~VClass() noexcept(false)
 		delete[] ClassVTable;
 		ClassVTable = NULL;
 	}
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	if (Defaults)
 	{
 		DestructObject((VObject*)Defaults);
@@ -210,7 +210,7 @@ VClass::~VClass() noexcept(false)
 		}
 		else
 		{
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 			GCon->Log(NAME_Dev, "VClass Unlink: Class not in list");
 #endif
 		}
@@ -289,7 +289,7 @@ int VClass::FindSprite(VName Name, bool Append)
 	unguard;
 }
 
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 
 //==========================================================================
 //
@@ -375,7 +375,7 @@ void VClass::Serialise(VStream& Strm)
 {
 	guard(VClass::Serialise);
 	VMemberBase::Serialise(Strm);
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	VClass* PrevParent = ParentClass;
 #endif
 	Strm << ParentClass
@@ -385,7 +385,7 @@ void VClass::Serialise(VStream& Strm)
 		<< DefaultProperties
 		<< RepInfos
 		<< StateLabels;
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	if ((ObjectFlags & CLASSOF_Native) && ParentClass != PrevParent)
 	{
 		Sys_Error("Bad parent class, class %s, C++ %s, VavoomC %s)",
@@ -410,7 +410,7 @@ void VClass::Shutdown()
 		delete[] ClassVTable;
 		ClassVTable = NULL;
 	}
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	if (Defaults)
 	{
 		DestructObject((VObject*)Defaults);
@@ -909,7 +909,7 @@ bool VClass::Define()
 		}
 	}
 
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	VClass* PrevParent = ParentClass;
 #endif
 	if (ParentClassName != NAME_None)
@@ -924,7 +924,7 @@ bool VClass::Define()
 			ParseError(ParentClassLoc, "Parent class must be defined before");
 		}
 	}
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	if ((ObjectFlags & CLASSOF_Native) && ParentClass != PrevParent)
 	{
 		Sys_Error("Bad parent class, class %s, C++ %s, VavoomC %s)",
@@ -1757,8 +1757,8 @@ void VClass::InitStatesLookup()
 	unguard;
 }
 
-#ifndef IN_VCC
 
+#if !defined(IN_VCC)
 //==========================================================================
 //
 //	VClass::CreateDefaults
@@ -1922,9 +1922,10 @@ VClass* VClass::CreateDerivedClass(VName AName, VMemberBase* AOuter,
 	return NewClass;
 	unguard;
 }
-
 #endif
 
+
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 //==========================================================================
 //
 //	VClass::GetReplacement
@@ -1969,6 +1970,8 @@ VClass* VClass::GetReplacee()
 	return Ret;
 	unguard;
 }
+#endif
+
 
 //==========================================================================
 //

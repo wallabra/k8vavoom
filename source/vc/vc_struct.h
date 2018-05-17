@@ -66,12 +66,14 @@ public:
 	void CalcFieldOffsets();
 	void InitReferences();
 	void InitDestructorFields();
-#ifndef IN_VCC
+#if !defined(IN_VCC)
 	void CopyObject(const vuint8*, vuint8*);
 	void SerialiseObject(VStream&, vuint8*);
 	void CleanObject(vuint8*);
 	void DestructObject(vuint8*);
 	bool IdenticalObject(const vuint8*, const vuint8*);
+#endif
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	bool NetSerialiseObject(VStream&, VNetObjectsMap*, vuint8*);
 #endif
 

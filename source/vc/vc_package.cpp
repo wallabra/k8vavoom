@@ -733,7 +733,7 @@ void VPackage::WriteObject(const VStr& name)
 void VPackage::LoadObject(TLocation l)
 {
 	guard(VPackage::LoadObject);
-#ifdef IN_VCC
+#if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
 	dprintf("Loading package %s\n", *Name);
 
 	//	Load PROGS from a specified file
@@ -866,7 +866,7 @@ void VPackage::LoadObject(TLocation l)
 	Reader->Exports = Exports;
 	Reader->NumExports = Progs.num_exports;
 
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	Checksum = crc;
 	this->Reader = Reader;
 #endif
@@ -900,7 +900,7 @@ void VPackage::LoadObject(TLocation l)
 			Exports[i].Obj = new VStruct(Exports[i].Name, NULL, TLocation());
 			break;
 		case MEMBER_Class:
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 			Exports[i].Obj = VClass::FindClass(*Exports[i].Name);
 			if (!Exports[i].Obj)
 #endif
@@ -927,7 +927,7 @@ void VPackage::LoadObject(TLocation l)
 		}
 	}
 
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	//	Set up info tables.
 	Reader->Seek(Progs.ofs_mobjinfo);
 	for (int i = 0; i < Progs.num_mobjinfo; i++)

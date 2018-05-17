@@ -285,7 +285,7 @@ public:
 	static VClass* FindClassNoCase(const char *);
 	static VClass* FindClassLowerCase(VName);
 	static int FindSprite(VName, bool = true);
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	static void GetSpriteNames(TArray<FReplacedString>&);
 	static void ReplaceSpriteNames(TArray<FReplacedString>&);
 #endif
@@ -345,15 +345,17 @@ public:
 		return ParentClass;
 	}
 
-#ifndef IN_VCC
+#if !defined(IN_VCC)
 	void CopyObject(const vuint8*, vuint8*);
 	void SerialiseObject(VStream&, VObject*);
 	void CleanObject(VObject*);
 	void DestructObject(VObject*);
 	VClass* CreateDerivedClass(VName, VMemberBase*, TLocation);
 #endif
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	VClass* GetReplacement();
 	VClass* GetReplacee();
+#endif
 	void HashLowerCased();
 
 private:
@@ -363,7 +365,7 @@ private:
 	void InitDestructorFields();
 	void CreateVTable();
 	void InitStatesLookup();
-#ifndef IN_VCC
+#if !defined(IN_VCC)
 	void CreateDefaults();
 #endif
 

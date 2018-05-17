@@ -29,12 +29,20 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "gamedefs.h"
-#include "net/network.h"
-#include "sv_local.h"
-#include "cl_local.h"
-#include "sound/snd_local.h"
-#include "drawer.h"
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+# include "gamedefs.h"
+# include "net/network.h"
+# include "sv_local.h"
+# include "cl_local.h"
+# include "sound/snd_local.h"
+# include "drawer.h"
+#else
+# if defined(IN_VCC)
+#  include "../utils/vcc/vcc.h"
+# elif defined(VCC_STANDALONE_EXECUTOR)
+#  include "../utils/vcc/vcc_run.h"
+# endif
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -125,7 +133,11 @@ VStr PF_FormatString () {
           break;
 
         default:
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
           GCon->Logf(NAME_Dev, "PF_FormatString: Unknown format identifier '%c'", *src);
+#else
+          fprintf(stderr, "PF_FormatString: Unknown format identifier '%c'\n", *src);
+#endif
           --src;
           Ret += *src;
           break;
@@ -136,8 +148,13 @@ VStr PF_FormatString () {
     ++src;
   }
 
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   if (pi < count) GCon->Log(NAME_Dev, "PF_FormatString: Not all params were used");
   if (pi > count) GCon->Log(NAME_Dev, "PF_FormatString: Param count overflow");
+#else
+  if (pi < count) fprintf(stderr, "PF_FormatString: Not all params were used\n");
+  if (pi > count) fprintf(stderr, "PF_FormatString: Param count overflow\n");
+#endif
 
   return Ret;
   unguard;

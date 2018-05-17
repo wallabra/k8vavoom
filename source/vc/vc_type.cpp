@@ -595,7 +595,7 @@ VStr VFieldType::GetName() const
 	unguard;
 }
 
-#ifndef IN_VCC
+#if !defined(IN_VCC)
 
 //==========================================================================
 //

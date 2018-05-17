@@ -1,4 +1,4 @@
-add_executable(vcc
+set(VC_COMPILER_SOURCES
 	../../source/common.h
 	../../source/vc/vc_class.cpp
 	../../source/vc/vc_class.h
@@ -57,6 +57,10 @@ add_executable(vcc
 	../../source/vc/vc_struct.h
 	../../source/vc/vc_type.cpp
 	../../source/vc/vc_type.h
+)
+
+add_executable(vcc
+	${VC_COMPILER_SOURCES}
 	vcc.cpp
 	vcc.h
 )
@@ -65,4 +69,18 @@ set_target_properties(vcc PROPERTIES COMPILE_FLAGS -DIN_VCC)
 target_link_libraries(vcc core)
 add_dependencies(vcc core)
 
-#EXTRA_DIST = vcc.txt
+
+add_executable(vcc_run
+	${VC_COMPILER_SOURCES}
+	../../source/maths.h
+	../../source/maths.cpp
+	../../source/pr_cmds.cpp
+	../../source/pr_exec.cpp
+	../../source/vc/vc_object.cpp
+	vcc_run.cpp
+	vcc_run.h
+)
+set_target_properties(vcc_run PROPERTIES OUTPUT_NAME ../bin/vcc_run)
+set_target_properties(vcc_run PROPERTIES COMPILE_FLAGS -DVCC_STANDALONE_EXECUTOR)
+target_link_libraries(vcc_run core)
+add_dependencies(vcc_run core)

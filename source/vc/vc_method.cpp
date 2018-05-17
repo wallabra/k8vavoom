@@ -132,7 +132,7 @@ VMethod::~VMethod() noexcept(false)
 //
 //==========================================================================
 
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 static void PF_Fixme()
 {
 	VObject::VMDumpCallStack();
@@ -545,7 +545,7 @@ void VMethod::PostLoad()
 	//	return;
 	//}
 
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	//	Set up builtins
 	if (NumParams > VMethod::MAX_PARAMS)
 		Sys_Error("Function has more than %i params", VMethod::MAX_PARAMS);

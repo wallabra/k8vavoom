@@ -456,8 +456,8 @@ void VStruct::InitDestructorFields()
 	unguard;
 }
 
-#ifndef IN_VCC
 
+#if !defined(IN_VCC)
 //==========================================================================
 //
 //	VStruct::CopyObject
@@ -567,7 +567,10 @@ bool VStruct::IdenticalObject(const vuint8* Val1, const vuint8* Val2)
 	return true;
 	unguardf(("(%s)", *Name));
 }
+#endif
 
+
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 //==========================================================================
 //
 //	VStruct::NetSerialiseObject
@@ -595,5 +598,4 @@ bool VStruct::NetSerialiseObject(VStream& Strm, VNetObjectsMap* Map,
 	return Ret;
 	unguardf(("(%s)", *Name));
 }
-
 #endif

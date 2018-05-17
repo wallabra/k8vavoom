@@ -2088,7 +2088,7 @@ void VParser::ParseClass()
 			return;
 		}
 
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 		//	Check if it already exists n DECORATE imports.
 		for (int i = 0; i < VMemberBase::GDecorateClassImports.Num(); i++)
 		{
@@ -2115,7 +2115,7 @@ void VParser::ParseClass()
 		Class->MemberType = MEMBER_DecorateClass;
 		Class->Outer = NULL;
 		Package->ParsedDecorateImportClasses.Append(Class);
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 		VMemberBase::GDecorateClassImports.Append(Class);
 #endif
 		return;
@@ -2123,7 +2123,7 @@ void VParser::ParseClass()
 
 	//	For engine package use native class objects.
 	VClass* Class;
-#ifndef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	Class = NULL;
 	if (Package->Name == NAME_engine)
 	{

@@ -29,8 +29,16 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "gamedefs.h"
-#include "progdefs.h"
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+# include "gamedefs.h"
+# include "progdefs.h"
+#else
+# if defined(IN_VCC)
+#  include "../utils/vcc/vcc.h"
+# elif defined(VCC_STANDALONE_EXECUTOR)
+#  include "../utils/vcc/vcc_run.h"
+# endif
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -1808,8 +1816,14 @@ void VObject::DumpProfile () {
   if (!totalcount) return;
   for (int i = 0; i < MAX_PROF && profsort[i]; ++i) {
     VMethod* Func = (VMethod*)VMemberBase::GMembers[profsort[i]];
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     GCon->Logf("%3.2f%% (%9d) %9d %s",
       (double)Func->Profile2*100.0/(double)totalcount,
       (int)Func->Profile2, (int)Func->Profile1, *Func->GetFullName());
+#else
+    fprintf(stderr, "%3.2f%% (%9d) %9d %s\n",
+      (double)Func->Profile2*100.0/(double)totalcount,
+      (int)Func->Profile2, (int)Func->Profile1, *Func->GetFullName());
+#endif
   }
 }

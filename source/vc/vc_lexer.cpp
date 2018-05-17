@@ -251,10 +251,10 @@ VLexer::~VLexer()
 
 void VLexer::PushSource(TLocation& Loc, const VStr& FileName)
 {
-#ifdef IN_VCC
-	VStream* Strm = OpenFile(FileName);
-#else
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	VStream* Strm = FL_OpenFileRead(FileName);
+#else
+	VStream* Strm = OpenFile(FileName);
 #endif
 	if (!Strm)
 	{
@@ -799,10 +799,10 @@ void VLexer::ProcessInclude()
 		if (Src->Path.IsNotEmpty())
 		{
 			VStr FileName = Src->Path + VStr(TokenStringBuffer);
-#ifdef IN_VCC
-			VStream* Strm = OpenFile(FileName);
-#else
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 			VStream* Strm = FL_OpenFileRead(FileName);
+#else
+			VStream* Strm = OpenFile(FileName);
 #endif
 			if (Strm)
 			{
@@ -816,10 +816,10 @@ void VLexer::ProcessInclude()
 		for (int i = IncludePath.Num() - 1; i >= 0; i--)
 		{
 			VStr FileName = IncludePath[i] + VStr(TokenStringBuffer);
-#ifdef IN_VCC
-			VStream* Strm = OpenFile(FileName);
-#else
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 			VStream* Strm = FL_OpenFileRead(FileName);
+#else
+			VStream* Strm = OpenFile(FileName);
 #endif
 			if (Strm)
 			{

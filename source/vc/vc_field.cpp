@@ -26,8 +26,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "vc_local.h"
-#ifndef IN_VCC
-#include "net/network.h"
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+# include "net/network.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -159,8 +159,8 @@ bool VField::Define()
 	return true;
 }
 
-#ifndef IN_VCC
 
+#if !defined(IN_VCC)
 //==========================================================================
 //
 //	VField::CopyFieldValue
@@ -629,7 +629,10 @@ bool VField::IdenticalValue(const vuint8* Val1, const vuint8* Val2,
 	return false;
 	unguard;
 }
+#endif
 
+
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 //==========================================================================
 //
 //	VField::NetSerialiseValue
@@ -770,5 +773,4 @@ bool VField::NetSerialiseValue(VStream& Strm, VNetObjectsMap* Map,
 	return Ret;
 	unguard;
 }
-
 #endif

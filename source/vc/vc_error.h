@@ -60,10 +60,10 @@ void ParseError(TLocation, const char *text, ...) __attribute__ ((format(printf,
 void ParseError(TLocation, ECompileError error);
 void ParseError(TLocation, ECompileError error, const char *text, ...) __attribute__ ((format(printf, 3, 4)));
 void BailOut() __attribute__((noreturn));
-#ifdef IN_VCC
-void FatalError(const char *text, ...) __attribute__((noreturn, format(printf, 1, 2)));
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+# define FatalError	Sys_Error
 #else
-#define FatalError	Sys_Error
+void FatalError(const char *text, ...) __attribute__((noreturn, format(printf, 1, 2)));
 #endif
 
 extern int						NumErrors;

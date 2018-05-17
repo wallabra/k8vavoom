@@ -91,10 +91,10 @@ void ParseWarning(TLocation l, const char *text, ...)
 	va_start(argPtr, text);
 	vsprintf(Buffer, text, argPtr);
 	va_end(argPtr);
-#ifdef IN_VCC
-	fprintf(stderr, "%s:%d: warning: %s\n", *l.GetSource(), l.GetLine(), Buffer);
-#else
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	GCon->Logf("%s:%d: warning: %s", *l.GetSource(), l.GetLine(), Buffer);
+#else
+	fprintf(stderr, "%s:%d: warning: %s\n", *l.GetSource(), l.GetLine(), Buffer);
 #endif
 }
 
@@ -114,10 +114,10 @@ void ParseError(TLocation l, const char *text, ...)
 	va_start(argPtr, text);
 	vsprintf(Buffer, text, argPtr);
 	va_end(argPtr);
-#ifdef IN_VCC
-	fprintf(stderr, "%s:%d: %s\n", *l.GetSource(), l.GetLine(), Buffer);
-#else
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 	GCon->Logf("%s:%d: %s", *l.GetSource(), l.GetLine(), Buffer);
+#else
+	fprintf(stderr, "%s:%d: %s\n", *l.GetSource(), l.GetLine(), Buffer);
 #endif
 
 	if (NumErrors >= 64)
@@ -165,7 +165,9 @@ void BailOut()
 	Sys_Error("Confused by previous errors, bailing out\n");
 }
 
-#ifdef IN_VCC
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+
+#else
 
 //==========================================================================
 //
