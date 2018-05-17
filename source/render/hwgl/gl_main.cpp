@@ -50,7 +50,6 @@ VCvarI VOpenGLDrawer::sprite_tex_linear("gl_sprite_tex_linear", "0", "Sprite int
 VCvarI VOpenGLDrawer::gl_texture_filter_anisotropic("gl_texture_filter_anisotropic", "4", "Texture anisotropic filtering.", CVAR_Archive);
 VCvarB VOpenGLDrawer::clear("gl_clear", false, "Clear screen before rendering new frame?", CVAR_Archive);
 VCvarB VOpenGLDrawer::blend_sprites("gl_blend_sprites", false, "Alpha-blend sprites?", CVAR_Archive);
-VCvarB VOpenGLDrawer::ext_point_parameters("gl_ext_point_parameters", false, "Use OpenGL ext_point_parameters extension (if present)?", 0);
 VCvarB VOpenGLDrawer::ext_anisotropy("gl_ext_anisotropy", true, "Use OpenGL anisotropy extension (if present)?", 0);
 VCvarB VOpenGLDrawer::ext_shaders("gl_ext_shaders", true, "Use OpenGL shaders (if possible)?", 0);
 VCvarB VOpenGLDrawer::ext_vertex_buffer_objects("gl_ext_vertex_buffer_objects", true, "Use OpenGL VBO extension (if present)?", 0);
@@ -140,30 +139,6 @@ void VOpenGLDrawer::InitResolution()
 		glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &tmp);
 		GCon->Logf(NAME_Init, "Max texture units: %d", tmp);
 		if (tmp > 1) MaxTextureUnits = tmp;
-	}
-
-	//  Check point parameters extensions
-	if (ext_point_parameters && CheckExtension("GL_EXT_point_parameters"))
-	{
-		GCon->Log(NAME_Init, "Found GL_EXT_point_parameters...");
-
-		bool found = true;
-		_(glPointParameterfEXT);
-		_(glPointParameterfvEXT);
-		if (found)
-		{
-			GCon->Log(NAME_Init, "Point parameters extensions found");
-			pointparmsable = true;
-		}
-		else
-		{
-			GCon->Log(NAME_Init, "Symbol not found, disabled.");
-			pointparmsable = false;
-		}
-	}
-	else
-	{
-		pointparmsable = false;
 	}
 
 	//  Anisotropy extension
@@ -923,11 +898,6 @@ void VOpenGLDrawer::SetupView(VRenderLevelDrawer* ARLev, const refdef_t *rd)
 		glEnable(GL_DEPTH_CLAMP);
 	}
 
-	if (pointparmsable)
-	{
-		int shift = 8 - (int)((float)rd->width / 320.0 + 0.5);
-		glPointSize(0x8000 >> shift);
-	}
 	unguard;
 }
 

@@ -465,7 +465,6 @@ protected:
 	int						lastgamma;
 	int						CurrentFade;
 
-	bool					pointparmsable;
 	bool					HaveDepthClamp;
 	bool					HaveStencilWrap;
 	bool					HaveDrawRangeElements;
@@ -696,7 +695,6 @@ protected:
 	static VCvarI gl_texture_filter_anisotropic;
 	static VCvarB clear;
 	static VCvarB blend_sprites;
-	static VCvarB ext_point_parameters;
 	static VCvarB ext_anisotropy;
 	static VCvarB ext_shaders;
 	static VCvarB ext_vertex_buffer_objects;
