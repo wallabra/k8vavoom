@@ -470,7 +470,6 @@ protected:
 	bool					HaveShaders;
 	bool					HaveDepthClamp;
 	bool					HaveStencilWrap;
-	bool					HaveVertexBufferObject;
 	bool					HaveDrawRangeElements;
 	bool					HaveTearControl;
 

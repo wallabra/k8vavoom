@@ -235,7 +235,7 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
 	mframe_t* framedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + frame * pmdl->framesize);
 	mframe_t* nextframedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + nextframe * pmdl->framesize);
 
-	if (!HaveShaders || !HaveVertexBufferObject)
+	if (!HaveShaders)
 	{
 		// Interpolate Scales
 		TVec scale_origin;
@@ -331,7 +331,7 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	}
 
-	if (HaveShaders && HaveVertexBufferObject)
+	if (HaveShaders)
 	{
 		UploadModel(Mdl);
 		VMeshFrame* FrameDesc = &Mdl->Frames[frame];

@@ -129,6 +129,7 @@ void VOpenGLDrawer::InitResolution()
 		Sys_Error("OpenGL FATAL: Multitexture extensions not found.");
 	} else {
 		bool found = true;
+
 		_(glMultiTexCoord2fARB);
 		_(glActiveTextureARB);
 
@@ -356,11 +357,12 @@ void VOpenGLDrawer::InitResolution()
 		HaveStencilWrap = false;
 	}
 
-	if (ext_vertex_buffer_objects && CheckExtension("GL_ARB_vertex_buffer_object"))
+	if (!CheckExtension("GL_ARB_vertex_buffer_object"))
 	{
-		GCon->Log(NAME_Init, "Found GL_ARB_vertex_buffer_object...");
-
+		Sys_Error("OpenGL FATAL: VBO not found.");
+	} else {
 		bool found = true;
+
 		_(glBindBufferARB);
 		_(glDeleteBuffersARB);
 		_(glGenBuffersARB);
@@ -373,21 +375,7 @@ void VOpenGLDrawer::InitResolution()
 		_(glGetBufferParameterivARB);
 		_(glGetBufferPointervARB);
 
-		if (found)
-		{
-			GCon->Log(NAME_Init, "Vertex buffer object extensions found.");
-			HaveVertexBufferObject = true;
-		}
-		else
-		{
-			GCon->Log(NAME_Init, "Symbol not found, vertex buffer object extensions disabled.");
-			HaveVertexBufferObject = false;
-		}
-	}
-	else
-	{
-		GCon->Log(NAME_Init, "Symbol not found, vertex buffer object extensions disabled.");
-		HaveVertexBufferObject = false;
+		if (!found) Sys_Error("OpenGL FATAL: VBO not found.");
 	}
 
 	if (CheckExtension("GL_EXT_draw_range_elements"))
@@ -766,8 +754,7 @@ bool VOpenGLDrawer::CheckGLXExtension(const char *ext)
 
 bool VOpenGLDrawer::SupportsAdvancedRendering()
 {
-	return HaveStencilWrap && p_glStencilFuncSeparate &&
-		HaveShaders && HaveVertexBufferObject && HaveDrawRangeElements;
+	return HaveStencilWrap && p_glStencilFuncSeparate && HaveShaders && HaveDrawRangeElements;
 }
 
 //==========================================================================
