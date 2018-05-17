@@ -163,6 +163,122 @@ final bool TraceSplat (TVec org, TVec Dir, float Distance, optional trsplat_t* t
 
 //==========================================================================
 //
+// TraceSplat
+//
+// Trace line to the wall, so we can spawn decal on it.
+// Returns `true` if wall was hit.
+// Returns `false` if floor/ceiling was hit, or nothing was hit.
+//
+//==========================================================================
+
+final int pr_tracebleed () { return P_Random(); }
+
+final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radiusDamage) {
+  //if (!cl_bloodsplats) return;
+
+  if (bNoBlood || damage < 1) return;
+
+  if (bIsPlayer) {
+    if ((PlayerEx(Player).Cheats&PlayerEx::CF_GODMODE)) return;
+  }
+
+  //k8: sorry, this should be one var, but meh
+  bool isHighDamage = false;
+  bool isSmallDamage = false;
+
+  name bclasssplat = 'BloodSplat';
+  name bclasssmear = 'BloodSmear';
+
+  if (radiusDamage) {
+    if (HasDecal('BloodSplatRadius')) bclasssplat = 'BloodSplatRadius';
+    if (HasDecal('BloodSmearRadius')) bclasssplat = 'BloodSmearRadius';
+  }
+
+  name bloodType = bclasssplat;
+
+  if (!HasDecal(bloodType)) {
+    //print("*** NO BLOOD DECAL '%s'", NameToStr(bloodType));
+    return;
+  }
+
+  int count;
+  float noise;
+  trsplat_t tr;
+
+  if (damage < 15) {
+    // For low damages, there is a chance to not spray blood at all
+    if (damage <= 10) {
+      if (pr_tracebleed() < 160) {
+        if (!radiusDamage) return;
+        isSmallDamage = true;
+        return;
+      }
+    }
+    count = 1;
+    noise = 11.25/256.0;
+  } else if (damage < 25) {
+    count = 2;
+    noise = 22.5/256.0;
+  } else {
+    // for high damages, there is a chance to spray just one big glob of blood
+    if (pr_tracebleed() < 24) {
+      bloodType = bclasssmear;
+      count = 1;
+      noise = 45.0/256.0;
+      isHighDamage = true;
+    } else {
+      count = 3;
+      noise = 45.0/256.0;
+    }
+  }
+
+  if (isSmallDamage && !radiusDamage) return; // oops
+
+  while (count-- > 0) {
+    float bleedang = AngleMod360(angle+(pr_tracebleed()-128)*noise);
+    float bleedpitch = AngleMod360(pitch+(pr_tracebleed()-128)*noise);
+    //bleedpitch = pitch;
+    //double cosp = bleedpitch.Cos();
+    float cosp = cos(bleedpitch);
+    TVec vdir;
+    vdir.x = cosp*cos(bleedang);
+    vdir.y = cosp*sin(bleedang);
+    vdir.z = -sin(bleedpitch);
+    //DVector3 vdir = DVector3(cosp * bleedang.Cos(), cosp * bleedang.Sin(), -bleedpitch.Sin());
+
+    /*
+    if (radiusDamage) {
+      //fprintf(stderr, "summoning blood!\n");
+      P_SpawnBlood(pos, angle, 0, actor); // damage has no sense for DooM anyway
+      P_SpawnBlood(pos, pitch, 0, actor); // damage has no sense for DooM anyway
+      if (!isSmallDamage) {
+        P_SpawnBlood(pos, angle, 0, actor); // damage has no sense for DooM anyway
+        P_SpawnBlood(pos, pitch, 0, actor); // damage has no sense for DooM anyway
+      }
+      // spawn more blood for high damage
+      if (isHighDamage) {
+        P_SpawnBlood(pos, angle, 0, actor); // damage has no sense for DooM anyway
+        P_SpawnBlood(pos, pitch, 0, actor); // damage has no sense for DooM anyway
+        P_SpawnBlood(pos, angle, 0, actor); // damage has no sense for DooM anyway
+        P_SpawnBlood(pos, pitch, 0, actor); // damage has no sense for DooM anyway
+      }
+    } else {
+      //fprintf(stderr, "DON'T summoning blood! (%s : %s)\n", bclasssplat, bclasssmear);
+      //if (!actor) fprintf(stderr, "  no actor!\n");
+    }
+    */
+
+    if (isSmallDamage) continue;
+
+    if (TraceSplat(pos, vdir, 172.0, &tr)) {
+      //print("*** spawning blood decal '%s'!", NameToStr(bloodType));
+      SpawnDecal(tr.hit, bloodType, tr.sec, tr.line);
+    }
+  }
+}
+
+//==========================================================================
+//
 //  AimLineAttack
 //
 //  Sets linetaget and aim_slope when a target is aimed at.
@@ -505,7 +621,7 @@ final bool ShootHitPlane(sector_t* sec, line_t* li, sec_plane_t* plane, TVec lin
 
 	// Spawn bullet puffs.
 	//SpawnPuff(lineend, range, PuffType, false, sec, li); //k8: we can't do decals on non-walls yet
-	SpawnPuff(lineend, range, PuffType, false);
+	if (PuffType) SpawnPuff(lineend, range, PuffType, false);
 
 	if (OutHitPoint)
 	{
@@ -750,7 +866,7 @@ final int LineAttack(TVec Dir, float Distance, int LADamage,
 		if (!UseBloodSplatter && !th.bNoBlood && !th.bInvulnerable &&
 			!th.bDormant)
 		{
-			th.SpawnBlood(hit_point, LADamage);
+			th.SpawnBlood(hit_point, LADamage, ShootOrigin);
 		}
 		if (LADamage && UseBloodSplatter)
 		{
@@ -758,11 +874,11 @@ final int LineAttack(TVec Dir, float Distance, int LADamage,
 			{
 				if (UseAxeBlood)
 				{
-					th.SpawnBloodSplatter2(hit_point);
+					th.SpawnBloodSplatter2(hit_point, ShootOrigin);
 				}
 				if (P_Random() < 192)
 				{
-					th.SpawnBloodSplatter(hit_point, LADamage);
+					th.SpawnBloodSplatter(hit_point, LADamage, ShootOrigin);
 				}
 			}
 		}
@@ -1100,7 +1216,7 @@ final void RailAttack(TVec Dir, float Offset, int RailDamage,
 		}
 		else
 		{
-			th.SpawnBlood(hit_point, RailDamage);
+			th.SpawnBlood(hit_point, RailDamage, ShootOrigin);
 		}
 		th.Damage(self, self, RailDamage, DmgType);
 		if (th && DontPierce)

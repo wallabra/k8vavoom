@@ -101,7 +101,9 @@ bool Touch(Entity InOther)
 			if (!Other.bNoBlood && !Other.bReflective &&
 				!Other.bInvulnerable && (P_Random() < 192))
 			{
-				Other.SpawnBloodSplatter(Origin, damage);
+				TVec org = self.Origin;
+				if (self.Radius > 0) org.z += self.Radius/2.0;
+				Other.SpawnBloodSplatter(Origin, damage, org);
 			}
 			Other.Damage(self, Target, damage);
 		}

@@ -111,7 +111,6 @@ decalgroup BulletChip
  * when something bleeds. If a blood color is set, the shade color will be ignored,
  * and the actor's blood color will be used instead.
  */
-/*FIXME!!!
 decal BloodSplat1
 {
 	pic BSPLAT1
@@ -181,7 +180,6 @@ decal BloodSplat7
 	randomflipx
 	randomflipy
 }
-*/
 
 // The smaller blood splats are more common than the big ones.
 
@@ -207,7 +205,6 @@ decalgroup BloodSplatRadius
 	BloodSplat7	6
 }
 
-/*FIXME!!!
 decal BloodSmear1
 {
 	pic BSMEAR1
@@ -227,7 +224,6 @@ decal BloodSmear2
 	randomflipx
 	animator BloodSmearer
 }
-*/
 
 decalgroup BloodSmear
 {

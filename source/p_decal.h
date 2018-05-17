@@ -83,11 +83,14 @@ public:
   static VDecalDef* getDecal (const VStr& aname);
   static VDecalDef* getDecal (const VName& aname);
 
+  static bool hasDecal (const VName& aname);
+
 private:
   static VDecalDef* listHead;
 
   friend void ParseDecalDef (VScriptParser* sc);
   friend void ProcessDecalDefs ();
+  friend class VDecalGroup;
 };
 
 
@@ -106,6 +109,14 @@ public:
     NameListItem (const VName& aname, vuint16 aweight) : name(aname), weight(aweight) {}
   };
 
+  struct ListItem {
+    VDecalDef *dd;
+    VDecalGroup *dg;
+
+    ListItem () : dd(nullptr), dg(nullptr) {}
+    ListItem (VDecalDef *add, VDecalGroup *adg) : dd(add), dg(adg) {}
+  };
+
 private:
   static void addToList (VDecalGroup* dg);
   static void removeFromList (VDecalGroup* dg);
@@ -121,13 +132,13 @@ public:
   VName name;
   TArray<NameListItem> nameList; // can be empty in cloned/loaded object
   //FIXME: it can refer another decal group
-  TWeightedList<VDecalDef*> list; // can contain less items than `nameList`
+  TWeightedList</*VDecalDef*/ListItem*> list; // can contain less items than `nameList`
 
 public:
   VDecalGroup () : next(nullptr), name(NAME_none), nameList(), list() {}
   ~VDecalGroup () {}
 
-  VDecalDef* chooseDecal ();
+  VDecalDef* chooseDecal (int reclevel=0);
 
 public:
   static VDecalGroup* find (const VStr& aname);
@@ -138,6 +149,7 @@ private:
 
   friend void ParseDecalDef (VScriptParser* sc);
   friend void ProcessDecalDefs ();
+  friend class VDecalDef;
 };
 
 

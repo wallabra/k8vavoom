@@ -1501,8 +1501,14 @@ void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li
   }
 #endif
 
+  static TStrSet baddecals;
+
   VDecalDef *dec = VDecalDef::getDecal(dectype);
-  if (dec) AddOneDecal(level, org, dec, sec, li);
+  if (dec) {
+    AddOneDecal(level, org, dec, sec, li);
+  } else {
+    if (!baddecals.put(*dectype)) GCon->Logf("NO DECAL: '%s'", *dectype);
+  }
 
   unguard;
 }

@@ -397,6 +397,8 @@ public:
 	DECLARE_FUNCTION(GetTerrainInfo)
 	DECLARE_FUNCTION(FindClassFromEditorId)
 	DECLARE_FUNCTION(FindClassFromScriptId)
+
+	DECLARE_FUNCTION(HasDecal)
 #endif
 };
 

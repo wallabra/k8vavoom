@@ -188,7 +188,7 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
 			}
 			damage = ftoi(((itof(BombDamage)*RDFactor*(BombDistance-dist2))/BombDistance));
 
-			Other.SpawnExploBloodAtHead(damage);
+			Other.SpawnExploBloodAtHead(damage, Source);
 
 			if (DoDamage)
 			{
@@ -740,7 +740,7 @@ bool Touch(Entity InOther)
 	// but different classes trigger the touchiness, but that seems less straightforwards.
 	{
 		bArmed = false; // Disarm
-		Other.SpawnExploBloodAtHead(Other.Health);
+		Other.SpawnExploBloodAtHead(Other.Health, self);
 		Other.Damage(none, none, Other.Health);  // kill object
 		return true;
 	}
@@ -774,7 +774,7 @@ bool Touch(Entity InOther)
 			if ((Other.Velocity.x + Other.Velocity.y) > 3.0 * 35.0)
 			{
 				damage = (ftoi(Mass) / 100) + 1;
-				Other.SpawnExploBloodAtHead(damage);
+				Other.SpawnExploBloodAtHead(damage, self);
 				Other.Damage(self, self, damage);
 				damage = (ftoi(Other.Mass) / 100) + 1;
 				Damage(Other, Other, damage >> 2);
@@ -900,7 +900,7 @@ bool Touch(Entity InOther)
 				}
 				PlaySound('misc/ripslop', CHAN_BODY);
 				damage = GetMissileDamage(3, 2);
-				Other.SpawnExploBloodAtHead(damage);
+				Other.SpawnExploBloodAtHead(damage, self);
 				Other.Damage(self, Target, damage, DamageType);
 				if (Other.bPushable && !bCannotPush)
 				{
@@ -921,9 +921,11 @@ bool Touch(Entity InOther)
 				!Other.bInvulnerable && !Other.bDormant &&
 				!bBloodlessImpact && P_Random() < 192)
 			{
-				Other.SpawnBloodSplatter(Origin, damage);
+				TVec org = self.Origin;
+				if (self.Radius > 0) org.z += self.Radius/2.0;
+				Other.SpawnBloodSplatter(Origin, damage, org);
 			}
-			Other.SpawnExploBloodAtHead(damage);
+			Other.SpawnExploBloodAtHead(damage, self);
 			Other.Damage(self, Target, damage, DamageType);
 		}
 		// don't traverse any more
@@ -2251,10 +2253,24 @@ final void SpawnPuff(TVec Org, float Range, class<EntityEx> PuffType,
 //
 //==========================================================================
 
-final void SpawnBlood(TVec Org, int damage)
+final void SpawnBlood(TVec Org, int damage, optional TVec org)
 {
 	EntityEx	A;
 	int			i, c;
+
+	if (bNoBlood) return;
+
+	if (specified_org) {
+		TVec goup = Origin;
+		if (Radius) {
+			goup.z += Radius+4-Random()*10;
+		}
+		TAVec av;
+		TVec v = goup-org;
+		VectorAngles(&v, &av);
+		//print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
+		TraceBleed(damage, goup, av.yaw, av.pitch, false);
+	}
 
 	Org.z += (Random() - Random()) * 4.0;
 	damage = damage > 255 ? 255 : damage;
@@ -2337,8 +2353,19 @@ final void SpawnBloodAtHead (int damage) {
 //
 //==========================================================================
 
-final void SpawnExploBloodAtHead (int damage) {
+final void SpawnExploBloodAtHead (int damage, EntityEx src) {
   if (bNoBlood || damage < 1) return;
+
+  if (src) {
+    TVec goup = Origin;
+    if (Radius) goup.z += Radius+4-Random()*10;
+    TAVec av;
+    TVec v;
+    if (src.bIsPlayer) v = goup-src.Origin; else v = src.Velocity;
+    VectorAngles(&v, &av);
+    //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
+    TraceBleed(damage, goup, av.yaw, av.pitch, true);
+  }
 
   bool isSmallDamage = false;
   bool isHighDamage = false;
@@ -2371,10 +2398,12 @@ final void SpawnExploBloodAtHead (int damage) {
 //
 //==========================================================================
 
-final void SpawnBloodSplatter(TVec org, int damage)
+final void SpawnBloodSplatter(TVec org, int damage, TVec shootOrg)
 {
 	EntityEx	mo;
 	int			i, c;
+
+	if (bNoBlood) return;
 
 	damage = damage > 255 ? 255 : damage;
 	c = P_Random() >> 1;
@@ -2402,6 +2431,14 @@ final void SpawnBloodSplatter(TVec org, int damage)
 	{
 		mo.Translation = BloodTranslation;
 	}
+
+	{
+		TAVec av;
+		TVec v = org-shootOrg;
+		VectorAngles(&v, &av);
+		//print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
+		TraceBleed(damage, org, av.yaw, av.pitch, false);
+	}
 }
 
 //===========================================================================
@@ -2410,9 +2447,11 @@ final void SpawnBloodSplatter(TVec org, int damage)
 //
 //===========================================================================
 
-final void SpawnBloodSplatter2(TVec org)
+final void SpawnBloodSplatter2(TVec org, TVec shootOrg)
 {
 	EntityEx	mo;
+
+	if (bNoBlood) return;
 
 	if (!AxeBloodType)
 	{
@@ -2425,6 +2464,14 @@ final void SpawnBloodSplatter2(TVec org)
 	if (BloodTranslation && !mo.bDontTranslate)
 	{
 		mo.Translation = BloodTranslation;
+	}
+
+	{
+		TAVec av;
+		TVec v = org-shootOrg;
+		VectorAngles(&v, &av);
+		//print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
+		TraceBleed(500, org, av.yaw, av.pitch, false);
 	}
 }
 

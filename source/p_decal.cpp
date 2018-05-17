@@ -66,14 +66,10 @@ static bool parseHexRGB (const VStr& str, float clr[]) {
 void VDecalDef::addToList (VDecalDef* dc) {
   if (!dc) return;
   if (dc->name == NAME_none) { delete dc; return; }
-  // remove old definition
-  for (auto it = listHead, prev = (VDecalDef *)nullptr; it; prev = it, it = it->next) {
-    if (it->name == dc->name) {
-      if (prev) prev->next = it->next; else listHead = it->next;
-      delete it;
-      break;
-    }
-  }
+  // remove old definitions
+  //FIXME: memory leak
+  VDecalDef::removeFromList(VDecalDef::find(dc->name));
+  VDecalGroup::removeFromList(VDecalGroup::find(dc->name));
   // insert new one
   dc->next = listHead;
   listHead = dc;
@@ -105,6 +101,13 @@ VDecalDef *VDecalDef::find (const VName& aname) {
     if (VStr::ICmp(*it->name, *aname) == 0) return it;
   }
   return nullptr;
+}
+
+
+bool VDecalDef::hasDecal (const VName& aname) {
+  if (VDecalDef::find(aname)) return true;
+  if (VDecalGroup::find(aname)) return true;
+  return false;
 }
 
 
@@ -159,7 +162,11 @@ bool VDecalDef::parse (VScriptParser* sc) {
 
     if (sc->Check("shade")) {
       sc->ExpectString();
-      if (!parseHexRGB(sc->String, shade)) { sc->Error("invalid color"); return false; }
+      if (sc->String.ICmp("BloodDefault") == 0) {
+        if (!parseHexRGB("88 00 00", shade)) { sc->Error("invalid color"); return false; }
+      } else {
+        if (!parseHexRGB(sc->String, shade)) { sc->Error("invalid color"); return false; }
+      }
       shade[3] = 1; // it colored!
       continue;
     }
@@ -203,14 +210,13 @@ bool VDecalDef::parse (VScriptParser* sc) {
 void VDecalGroup::addToList (VDecalGroup* dg) {
   if (!dg) return;
   if (dg->name == NAME_none) { delete dg; return; }
-  // remove old definition
-  for (auto it = listHead, prev = (VDecalGroup *)nullptr; it; prev = it, it = it->next) {
-    if (it->name == dg->name) {
-      if (prev) prev->next = it->next; else listHead = it->next;
-      delete it;
-      break;
-    }
-  }
+  // remove old definitions
+  //FIXME: memory leak
+  //if (VDecalDef::find(dg->name)) GCon->Logf("replaced decal '%s'...", *dg->name);
+  VDecalDef::removeFromList(VDecalDef::find(dg->name));
+  //if (VDecalGroup::find(dg->name)) GCon->Logf("replaced group '%s'...", *dg->name);
+  VDecalGroup::removeFromList(VDecalGroup::find(dg->name));
+  //GCon->Logf("new group: '%s' (%d items)", *dg->name, dg->nameList.Num());
   // insert new one
   dg->next = listHead;
   listHead = dg;
@@ -247,25 +253,35 @@ VDecalGroup *VDecalGroup::find (const VName& aname) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VDecalGroup::fixup () {
+  GCon->Logf("fixing decal group '%s'...", *name);
   for (int f = 0; f < nameList.Num(); ++f) {
     auto it = VDecalDef::find(nameList[f].name);
     if (it) {
-      list.AddEntry(it, nameList[f].weight);
-    } else {
-      GCon->Logf(NAME_Init, "WARNING: decalgroup '%s' contains unknown decal '%s'!", *name, *nameList[f].name);
+      auto li = new ListItem(it, nullptr);
+      GCon->Logf("  adding decal '%s' (%u)", *it->name, (unsigned)nameList[f].weight);
+      list.AddEntry(li, nameList[f].weight);
+      continue;
     }
+    auto itg = VDecalGroup::find(nameList[f].name);
+    if (itg) {
+      auto li = new ListItem(nullptr, itg);
+      GCon->Logf("  adding group '%s' (%u)", *itg->name, (unsigned)nameList[f].weight);
+      list.AddEntry(li, nameList[f].weight);
+      continue;
+    }
+    GCon->Logf(NAME_Init, "WARNING: decalgroup '%s' contains unknown decal '%s'!", *name, *nameList[f].name);
   }
 }
 
 
-VDecalDef* VDecalGroup::chooseDecal () {
-  /*
-  if (list.Num() == 0) return nullptr;
-  auto rnd = (int)(Random()*list.Num());
-  rnd = rnd%list.Num();
-  return list[rnd];
-  */
-  return list.PickEntry();
+VDecalDef* VDecalGroup::chooseDecal (int reclevel) {
+  if (reclevel > 64) return nullptr; // too deep
+  auto li = list.PickEntry();
+  if (li) {
+    if (li->dd) return li->dd;
+    if (li->dg) return li->dg->chooseDecal(reclevel+1);
+  }
+  return nullptr;
 }
 
 

@@ -1301,3 +1301,10 @@ IMPLEMENT_FUNCTION(VObject, Unclock)
 	P_GET_INT(Idx);
 	unclock_cycle(host_cycles[Idx]);
 }
+
+
+IMPLEMENT_FUNCTION(VObject, HasDecal)
+{
+	P_GET_NAME(name);
+	RET_BOOL(VDecalDef::hasDecal(name));
+}
