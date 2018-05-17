@@ -980,6 +980,7 @@ struct intercept_t
 {
 	float			frac;	// along trace line
 	bool			bIsALine;
+	bool			bIsABackSide; // not yet
 	Entity			Thing;
 	line_t*			line;
 };

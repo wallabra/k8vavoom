@@ -31,6 +31,138 @@
 
 //==========================================================================
 //
+// TraceSplat
+//
+// Trace line to the wall, so we can spawn decal on it.
+// Returns `true` if wall was hit.
+// Returns `false` if floor/ceiling was hit, or nothing was hit.
+//
+//==========================================================================
+
+struct trsplat_t {
+  TVec org;
+  TVec hit;
+  line_t *line;
+  sector_t *sec;
+  int side;
+  bool didhit; // can be true even if `line` is empty (it means floor/ceiling hit)
+};
+
+final bool TraceSplat (TVec org, TVec Dir, float Distance, optional trsplat_t* tr) {
+  TVec Dst;
+  intercept_t* in;
+  TVec LineStart;
+  TVec LineEnd;
+  TVec ShootOrigin;
+  TVec OutHitPoint;
+
+  ShootOrigin = org;
+  //ShootOrigin.z += Height*0.5-FloorClip;
+  ShootOrigin.z += (bIsPlayer ? PlayerPawn(Player.MO).AttackZOffset : 8.0);
+
+
+  Dst = ShootOrigin+Distance*Dir;
+
+  if (tr) {
+    tr->org = org;
+    tr->hit = Dst;
+    tr->line = nullptr;
+    tr->sec = nullptr;
+    tr->didhit = false;
+  }
+
+  LineStart = ShootOrigin;
+  foreach PathTraverse(in, org.x, org.y, Dst.x, Dst.y, PT_ADDLINES/*|PT_EARLYOUT*/) {
+    TVec hit_point, real_hit_point;
+    line_t* li;
+
+    if (in->bIsALine) {
+      int side;
+      sector_t *sec;
+
+      li = in->line;
+      hit_point = ShootOrigin+(Distance*in->frac)*Dir;
+      if (li->flags & ML_TWOSIDED && PointOnPlaneSide(ShootOrigin, li)) {
+        side = 1;
+        sec = li->backsector;
+      } else {
+        side = 0;
+        sec = li->frontsector;
+      }
+
+      LineEnd = hit_point;
+
+      // check for shooting floor or ceiling
+      if (!ShootCheckPlanes(sec, li, LineStart, LineEnd, Distance, none/*PuffType*/, &OutHitPoint)) {
+        // process floor and ceiling here
+        if (tr) { tr->hit = OutHitPoint; tr->didhit = true; }
+        return false;
+      }
+
+      LineStart = LineEnd;
+
+      if (Level.CompatTrace && li->frontsector == li->backsector) continue;
+
+      if (li->flags & ML_TWOSIDED) {
+        // crosses a two sided line
+        float opentop = 0.0;
+
+        opening_t *open = LineOpenings(li, hit_point);
+        if (open) opentop = open->top;
+        while (open) {
+          if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
+            if (!(li->flags & ML_BLOCKEVERYTHING)) break; // shot continues
+          }
+          open = open->next;
+        }
+        if (open) continue;
+
+        if (li->frontsector->ceiling.pic == Level.Game.skyflatnum &&
+            li->backsector->ceiling.pic == Level.Game.skyflatnum &&
+            hit_point.z > opentop)
+        {
+          // it's a sky hack wall
+          if (tr) { tr->hit = hit_point; tr->didhit = true; }
+          return false;
+        }
+      }
+
+      OutHitPoint = hit_point;
+
+      if (li->special == LNSPEC_LineHorizon) {
+        if (tr) tr->hit = hit_point;
+        return false; // don't spawn decals on sky
+      }
+
+      // Hit line
+      if (tr) {
+        tr->hit = hit_point;
+        tr->line = li;
+        tr->sec = sec;
+        tr->side = side;
+        tr->didhit = true;
+      }
+
+      // position a bit closer
+      //real_hit_point = hit_point;
+      //hit_point -= 4.0 * Dir;
+
+      // don't go any farther
+      return true;
+    }
+  }
+
+  LineEnd = Dst;
+  if (!ShootCheckPlanes(XLevel.PointInSector(Dst),, LineStart, LineEnd, Distance, none/*PuffType*/, &OutHitPoint)) {
+    // process floor and ceiling here
+    if (tr) { tr->hit = OutHitPoint; tr->didhit = true; }
+  }
+
+  return false;
+}
+
+//==========================================================================
+//
 //  AimLineAttack
 //
 //  Sets linetaget and aim_slope when a target is aimed at.
