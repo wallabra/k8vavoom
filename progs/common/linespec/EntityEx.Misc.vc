@@ -2206,9 +2206,9 @@ final void SpawnPuff(TVec Org, float Range, class<EntityEx> PuffType,
 	if (sec && li && (PuffType.default.DecalName || (specified_decalType && decalType))) {
 		if (!specified_realOrg) realOrg = Org;
 		if (specified_decalType && decalType) {
-			SpawnDecal(realOrg, decalType, sec, li);
+			SpawnDecal(realOrg, decalType, (sec == li->backsector ? 1 : 0), li);
 		} else {
-			SpawnDecal(realOrg, PuffType.default.DecalName, sec, li);
+			SpawnDecal(realOrg, PuffType.default.DecalName, (sec == li->backsector ? 1 : 0), li);
 		}
 	}
 

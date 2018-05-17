@@ -1401,7 +1401,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
     return;
   }
 
-  if (dec->lowername != NAME_none) AddDecal(org, dec->lowername, sec, li, level+1);
+  if (dec->lowername != NAME_none) AddDecal(org, dec->lowername, (sec == li->backsector ? 1 : 0), li, level+1);
 
   if (dec->scaleX <= 0 || dec->scaleY <= 0) {
     GCon->Logf("Decal '%s' has zero scale", *dec->name);
@@ -1488,12 +1488,14 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
 //
 //==========================================================================
 
-void VLevel::AddDecal (TVec org, const VName& dectype, sector_t *sec, line_t *li, int level) {
+void VLevel::AddDecal (TVec org, const VName& dectype, int side, line_t *li, int level) {
   guard(VLevel::AddDecal);
 
   if (!decals_enabled) return;
+  if (!li || dectype == NAME_none) return; // just in case
 
-  if (!sec || !li || dectype == NAME_none) return; // just in case
+  sector_t *sec = (side ? li->backsector : li->frontsector);
+  if (!sec) return; // just in case
 
   // ignore slopes
   if (sec->floor.minz != sec->floor.maxz || sec->ceiling.minz != sec->ceiling.maxz) return;
@@ -2040,13 +2042,13 @@ IMPLEMENT_FUNCTION(VLevel, SetBodyQueueTrans)
 	RET_INT(Self->SetBodyQueueTrans(Slot, Trans));
 }
 
-//native final void AddDecal (TVec org, name dectype, sector_t *sec, line_t *li);
+//native final void AddDecal (TVec org, name dectype, int side, line_t *li);
 IMPLEMENT_FUNCTION(VLevel, AddDecal)
 {
 	P_GET_PTR(line_t, li);
-	P_GET_PTR(sector_t, sec);
+	P_GET_INT(side);
 	P_GET_NAME(dectype);
 	P_GET_VEC(org);
 	P_GET_SELF;
-	Self->AddDecal(org, dectype, sec, li);
+	Self->AddDecal(org, dectype, side, li);
 }

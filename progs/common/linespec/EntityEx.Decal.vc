@@ -30,8 +30,8 @@
 //
 //==========================================================================
 
-final void SpawnDecal (TVec org, name dectype, sector_t* sec, line_t* li) {
-  if (!dectype || !sec || !li || !XLevel) return; // just in case
+final void SpawnDecal (TVec org, name dectype, int side, line_t* li) {
+  if (!dectype || !li || !XLevel) return; // just in case
   if (!GetCvarB('decals_enabled')) return;
-  XLevel.AddDecal(org, dectype, sec, li);
+  XLevel.AddDecal(org, dectype, side, li);
 }

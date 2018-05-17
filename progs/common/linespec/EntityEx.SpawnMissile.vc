@@ -164,43 +164,10 @@ final bool ExplodeMissile(EntityEx Victim, optional line_t *line)
 				print("  MISSILE SPLAT: side=%d; org=(%f,%f,%f); hit=(%f,%f,%f); sameline:%s; samesec:%s", tr.side, tr.org.x, tr.org.y, tr.org.z, tr.hit.x, tr.hit.y, tr.hit.z, (tr.line == line ? "tan" : "ona"), (tr.sec == sec ? "tan" : "ona"));
 			}
 			//if (GetCvarB('k8ExplodeMissleTest')) print("    itt=(%f,%f,%f)", itt.x, itt.y, itt.z);
-			SpawnDecal(tr.hit, DecalName, tr.sec, tr.line);
+			SpawnDecal(tr.hit, DecalName, tr.side, tr.line);
 		} else {
 			if (GetCvarB('k8ExplodeMissleTest')) print("  MISSILE SPLAT TRACER FAILED!");
 		}
-		/*
-		if (line->frontsector && line->backsector) {
-			//!auto side = PointOnPlaneSide(Origin-Velocity, line); // move out a little, just in case
-			//!if (side) { v1 = *line->v1; v2 = *line->v2; } else { v1 = *line->v2; v2 = *line->v1; }
-			//!sector_t *sec = (side ? line->backsector : line->frontsector);
-			//!TVec itt = RayLineIntersection(Origin-Velocity*2, Origin+Velocity*4, v1, v2);
-			//!itt.z = Origin.z;
-			if (TraceSplat(Origin-dir*2, dir, 64.0, &tr)) {
-				if (GetCvarB('k8ExplodeMissleTest')) print("  MISSILE SPLAT: side=%d; org=(%f,%f,%f); hit=(%f,%f,%f); sameline:%s; samesec:%s", tr.side, tr.org.x, tr.org.y, tr.org.z, tr.hit.x, tr.hit.y, tr.hit.z, (tr.line == line ? "tan" : "ona"), (tr.sec == sec ? "tan" : "ona"));
-				if (GetCvarB('k8ExplodeMissleTest')) print("    itt=(%f,%f,%f)", itt.x, itt.y, itt.z);
-				SpawnDecal(tr.hit, DecalName, tr.sec, tr.line);
-			} else {
-				if (GetCvarB('k8ExplodeMissleTest')) print("  MISSILE SPLAT TRACER FAILED!");
-			}
-			//!if (GetCvarB('k8ExplodeMissleTest')) print("  ISECT(%d)=(%f,%f,%f)  orig=(%f,%f,%f)", side, itt.x, itt.y, itt.z, Origin.x, Origin.y, Origin.z);
-			//!SpawnDecal(itt, DecalName, (side ? line->backsector : line->frontsector), line);
-		} else {
-			if (line->frontsector) {
-				//!v1 = *line->v1; v2 = *line->v2;
-				//!TVec itt = RayLineIntersection(Origin-Velocity*2, Origin+Velocity*4, v1, v2);
-				//!itt.z = Origin.z;
-				//!if (GetCvarB('k8ExplodeMissleTest')) print("  XSECT(0)=(%f,%f,%f)  orig=(%f,%f,%f)", itt.x, itt.y, itt.z, Origin.x, Origin.y, Origin.z);
-				//!SpawnDecal(itt, DecalName, line->frontsector, line);
-			}
-			if (line->backsector) {
-				//!v1 = *line->v2; v2 = *line->v1;
-				//!TVec itt = RayLineIntersection(Origin-Velocity*2, Origin+Velocity*4, v1, v2);
-				//!itt.z = Origin.z;
-				//!if (GetCvarB('k8ExplodeMissleTest')) print("  XSECT(1)=(%f,%f,%f)  orig=(%f,%f,%f)", itt.x, itt.y, itt.z, Origin.x, Origin.y, Origin.z);
-				//!SpawnDecal(itt, DecalName, line->backsector, line);
-			}
-		}
-		*/
 	} else {
 		if (GetCvarB('k8ExplodeMissleTest')) {
 			if (Victim) print("MISSILE VICTIM: <%s>", NameToStr(GetClassName(Victim.Class)));

@@ -250,7 +250,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
 
     if (TraceSplat(pos, vdir, 172.0, &tr)) {
       //print("*** spawning blood decal '%s'!", NameToStr(bloodType));
-      SpawnDecal(tr.hit, bloodType, tr.sec, tr.line);
+      SpawnDecal(tr.hit, bloodType, tr.side, tr.line);
     }
   }
 }
