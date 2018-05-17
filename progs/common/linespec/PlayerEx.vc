@@ -2490,6 +2490,7 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
 	bool				ResetInventory = false;
 	Inventory			Item;
 
+	//print("************SpawnPlayer: 000; Voodoo=%s", (Voodoo ? "tan" : "ona"));
 	if (PlayerState == PST_REBORN)
 	{
 		PlayerReborn();
@@ -2505,8 +2506,7 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
 	{
 		Error("Player::SpawnPlayer : Unknown class type");
 	}
-	PP = Level.Spawn(class<PlayerPawn>(Level.Game.PlayerClasses[PClass]),
-		vector(x, y, z),,, false);
+	PP = Level.Spawn(class<PlayerPawn>(Level.Game.PlayerClasses[PClass]), vector(x, y, z),,, false);
 	PP.Origin.z += mthing->height;
 	PP.LinkToWorld();
 	PP.FriendPlayer = GetPlayerNum() + 1;	//	Players are their own friends.
@@ -2514,8 +2514,7 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
 	//	Set colour translations for player sprites.
 	TranslStart = PP.TranslStart;
 	TranslEnd = PP.TranslEnd;
-	PP.Translation = (Entity::TRANSL_Player << Entity::TRANSL_TYPE_SHIFT) +
-		GetPlayerNum();
+	PP.Translation = (Entity::TRANSL_Player<<Entity::TRANSL_TYPE_SHIFT)+GetPlayerNum();
 
 	//	If a voodoo doll has been spawned, take it's inventory.
 	if (Voodoo)
@@ -2579,20 +2578,37 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
 
 	if (ResetInventory)
 	{
-		Level.XLevel.StartTypedACScripts(Level::SCRIPT_Respawn, 0, 0, 0, MO,
-			true, false);
+		Level.XLevel.StartTypedACScripts(Level::SCRIPT_Respawn, 0, 0, 0, MO, true, false);
 	}
 
   // elven gifts
-  if (!k8ElvenGifted && GetCvarB('k8ElvenGift')) {
-    k8ElvenGifted = true; // gifts should be given only once
-    if (AddElvenGift('Shotgun')) AddElvenGift('ShellBox');
-    if (AddElvenGift('BDW_Rifle')) { int f; for (f = 9; f > 0; --f) AddElvenGift('Clip'); }
-    ClientHudMessage("ELVEN GIFT", 'smallfont', 0, 123666, CR_ORANGE, "",
-      0.5, 0.45, 0, 0,
-      2.5, 0.0, 0.0);
-  }
+	//print("************SpawnPlayer: gifted=%s", (k8ElvenGifted ? "tan" : "ona"));
+	if (GetCvarB('k8ElvenGift')) {
+		if (!Voodoo && !k8ElvenGifted) {
+			k8ElvenGifted = true; // gifts should be given only once
+			if (AddElvenGift('Shotgun')) AddElvenGift('ShellBox');
+			if (AddElvenGift('BDW_Rifle')) { int f; for (f = 9; f > 0; --f) AddElvenGift('Clip'); }
+			ClientHudMessage("ELVEN GIFT", 'smallfont', 0, 123666, CR_ORANGE, "",
+			  0.5, 0.45, 0, 0,
+			  2.5, 0.0, 0.0);
+		}
+		// oops; change weapon, as voodoo doll was spawned
+		if (Voodoo && k8ElvenGifted) {
+			if (FindClass('BDW_Rifle') && ReadyWeapon && ReadyWeapon.bWimpyWeapon && (!PendingWeapon || PendingWeapon.bWimpyWeapon)) {
+				auto rfc = FindClass('BDW_Rifle');
+				for (Item = PP.Inventory; Item; Item = Item.Inventory) {
+					if (Item.Class == rfc) { PendingWeapon = Weapon(Item); break; }
+				}
+			}
+		}
+	}
 }
+
+//===========================================================================
+//
+// AddElvenGift
+//
+//===========================================================================
 
 final bool AddElvenGift (name Klass) {
   if (FindClass(Klass)) {
@@ -2612,7 +2628,6 @@ final bool AddElvenGift (name Klass) {
     return false;
   }
 }
-
 
 //===========================================================================
 //
