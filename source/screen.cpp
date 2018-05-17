@@ -184,16 +184,13 @@ static VCvarB	draw_cycles("draw_cycles", false, "Draw cycles counter?", CVAR_Arc
 //
 //**************************************************************************
 
-static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type.", CVAR_Archive);
+static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type (png/jpg/tga/pcx).", CVAR_Archive);
+static VCvarB screenshot_in_home_dir("screenshot_in_home_dir", true, "Save screenshots in ~/.vavoom?", CVAR_Archive);
 
-void WriteTGA(char* filename, void* data, int width, int height, int bpp,
-	bool bot2top);
-void WritePCX(char* filename, void* data, int width, int height, int bpp,
-	bool bot2top);
-void WritePNG(const VStr& FileName, const void* Data, int Width, int Height,
-	int Bpp, bool Bot2top);
-void WriteJPG(const VStr& FileName, const void* Data, int Width, int Height,
-	int Bpp, bool Bot2top);
+extern void WriteTGA (const VStr& FileName, void* data, int width, int height, int bpp, bool bot2top);
+extern void WritePCX (const VStr& FileName, void* data, int width, int height, int bpp, bool bot2top);
+extern void WritePNG (const VStr& FileName, const void* Data, int Width, int Height, int Bpp, bool Bot2top);
+extern void WriteJPG (const VStr& FileName, const void* Data, int Width, int Height, int Bpp, bool Bot2top);
 
 //==========================================================================
 //
@@ -208,59 +205,61 @@ COMMAND(ScreenShot)
 	int		bpp;
 	bool	bot2top;
 	void	*data;
-	char	filename[128];
+	VStr	filename;
+	char	tmpbuf[128];
 
-	if (strlen(screenshot_type) > 8)
-	{
+	if (strlen(screenshot_type) > 8) {
 		GCon->Log("Screenshot extension too long");
 		return;
 	}
 
 	//	Find a file name to save it to
-	VStr BaseDir = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir) + "/" + fl_gamedir;
-	for (i = 0; i <= 9999; i++)
-	{
-		sprintf(filename, "shot%04d.%s", i, (const char*)screenshot_type);
-		if (!Sys_FileExists(BaseDir + "/" + (const char*)filename))
-			break;	//	File doesn't exist
+	VStr BaseDir;
+	if (screenshot_in_home_dir) {
+#if !defined(_WIN32)
+		const char* HomeDir = getenv("HOME");
+		if (HomeDir && HomeDir[0]) {
+			BaseDir = VStr(HomeDir)+"/.vavoom";
+		} else {
+			BaseDir = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir)+"/"+fl_gamedir;
+		}
+#else
+		BaseDir = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir)+"/"+fl_gamedir;
+#endif
+	} else {
+		BaseDir = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir)+"/"+fl_gamedir;
 	}
-	if (i == 10000)
-	{
+
+	for (i = 0; i <= 9999; ++i) {
+		snprintf(tmpbuf, sizeof(tmpbuf), "shot%04d.%s", i, (const char*)screenshot_type);
+		filename = BaseDir+"/"+tmpbuf;
+		if (!Sys_FileExists(filename)) break; // file doesn't exist
+	}
+
+	if (i == 10000) {
 		GCon->Log("Couldn't create a screenshot file");
 		return;
 	}
 
-	// save the pcx file
+	// save screenshot file
 	data = Drawer->ReadScreen(&bpp, &bot2top);
-	if (data)
-	{
-		if (!VStr::ICmp(screenshot_type, "pcx"))
-		{
-			WritePCX(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
-		}
-		else if (!VStr::ICmp(screenshot_type, "tga"))
-		{
-			WriteTGA(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
-		}
-		else if (!VStr::ICmp(screenshot_type, "png"))
-		{
-			WritePNG(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
-		}
-		else if (!VStr::ICmp(screenshot_type, "jpg"))
-		{
-			WriteJPG(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
-		}
-		else
-		{
+	if (data) {
+		bool report = true;
+		     if (!VStr::ICmp(screenshot_type, "pcx")) WritePCX(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
+		else if (!VStr::ICmp(screenshot_type, "tga")) WriteTGA(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
+		else if (!VStr::ICmp(screenshot_type, "png")) WritePNG(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
+		else if (!VStr::ICmp(screenshot_type, "jpg")) WriteJPG(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
+		else {
+			report = false;
 			GCon->Log("Bad screenshot type");
 			GCon->Log("Supported formats are pcx, tga, png and jpg");
 		}
+		if (report) GCon->Logf("Saved screenshot to '%s'", *filename);
 		Z_Free(data);
-	}
-	else
-	{
+	} else {
 		GCon->Log("Not enough memory to take a screenshot");
 	}
+
 	unguard;
 }
 

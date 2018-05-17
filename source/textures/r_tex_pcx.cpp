@@ -301,14 +301,14 @@ void VPcxTexture::Unload()
 //==========================================================================
 
 #ifdef CLIENT
-void WritePCX(char* filename, void* data, int width, int height, int bpp,
+void WritePCX(const VStr& FileName, void* data, int width, int height, int bpp,
 	bool bot2top)
 {
 	guard(WritePCX);
 	int i;
 	int j;
 
-	VStream* Strm = FL_OpenFileWrite(filename);
+	VStream* Strm = FL_OpenFileWrite(FileName, true);
 	if (!Strm)
 	{
 		GCon->Log("Couldn't write pcx");

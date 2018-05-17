@@ -344,7 +344,7 @@ void WritePNG(const VStr& FileName, const void* Data, int Width, int Height,
 	int Bpp, bool Bot2top)
 {
 	guard(WritePNG);
-	VStream* Strm = FL_OpenFileWrite(FileName);
+	VStream* Strm = FL_OpenFileWrite(FileName, true);
 	if (!Strm)
 	{
 		GCon->Log("Couldn't write png");

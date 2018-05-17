@@ -778,15 +778,19 @@ protected:
 //
 //==========================================================================
 
-VStream* FL_OpenFileWrite(const VStr& Name)
+VStream* FL_OpenFileWrite(const VStr& Name, bool isFullName)
 {
 	guard(FL_OpenFileWrite);
 	VStr TmpName;
 
-	if (fl_savedir.IsNotEmpty())
-		TmpName = fl_savedir + "/" + fl_gamedir + "/" + Name;
-	else
-		TmpName = fl_basedir + "/" + fl_gamedir + "/" + Name;
+	if (isFullName) {
+		TmpName = Name;
+	} else {
+		if (fl_savedir.IsNotEmpty())
+			TmpName = fl_savedir + "/" + fl_gamedir + "/" + Name;
+		else
+			TmpName = fl_basedir + "/" + fl_gamedir + "/" + Name;
+	}
 	FL_CreatePath(TmpName.ExtractFilePath());
 	FILE *File = fopen(*TmpName, "wb");
 	if (!File)
