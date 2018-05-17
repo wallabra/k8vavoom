@@ -170,6 +170,57 @@ static void DecalIO (VStream& Strm, decal_t *dc) {
 //
 //==========================================================================
 
+static void writeOrCheckName (VStream& Strm, const VName& value, const char *errmsg) {
+  if (Strm.IsLoading()) {
+    auto slen = strlen(*value);
+    vuint32 v;
+    Strm << v;
+    if (v != slen) Host_Error(va("Save loader: invalid string length for %s", errmsg));
+    if (v > 0) {
+      auto buf = new char[v];
+      memset(buf, 0, v);
+      Strm.Serialise(buf, v);
+      int res = memcmp(buf, *value, v);
+      delete[] buf;
+      if (res != 0) Host_Error(va("Save loader: invalid string value for %s", errmsg));
+    }
+  } else {
+    vuint32 slen = (vuint32)strlen(*value);
+    Strm << slen;
+    if (slen) Strm.Serialise((char*)*value, slen);
+  }
+}
+
+static void writeOrCheckUInt (VStream& Strm, vuint32 value, const char *errmsg) {
+  if (Strm.IsLoading()) {
+    vuint32 v;
+    Strm << v;
+    if (v != value) Host_Error(va("Save loader: invalid value for %s; got %d, but expected %d", errmsg, v, value));
+  } else {
+    Strm << value;
+  }
+}
+
+static void writeOrCheckInt (VStream& Strm, int value, const char *errmsg) {
+  if (Strm.IsLoading()) {
+    int v;
+    Strm << v;
+    if (v != value) Host_Error(va("Save loader: invalid value for %s; got %d, but expected %d", errmsg, v, value));
+  } else {
+    Strm << value;
+  }
+}
+
+static void writeOrCheckFloat (VStream& Strm, float value, const char *errmsg) {
+  if (Strm.IsLoading()) {
+    float v;
+    Strm << v;
+    if (v != value) Host_Error(va("Save loader: invalid value for %s; got %f, but expected %f", errmsg, v, value));
+  } else {
+    Strm << value;
+  }
+}
+
 void VLevel::Serialise(VStream& Strm)
 {
 	guard(VLevel::Serialise);
@@ -177,6 +228,26 @@ void VLevel::Serialise(VStream& Strm)
 	sector_t* sec;
 	line_t* li;
 	side_t* si;
+
+	// write/check various numbers, so we won't load invalid save accidentally
+	// this is not the best or most reliable way to check it, but it is better
+	// than nothing...
+
+	writeOrCheckName(Strm, MapName, "map name");
+	writeOrCheckUInt(Strm, LevelFlags, "level flags");
+
+	writeOrCheckInt(Strm, NumVertexes, "vertex count");
+	writeOrCheckInt(Strm, NumSectors, "sector count");
+	writeOrCheckInt(Strm, NumSides, "side count");
+	writeOrCheckInt(Strm, NumLines, "line count");
+	writeOrCheckInt(Strm, NumSegs, "seg count");
+	writeOrCheckInt(Strm, NumSubsectors, "subsector count");
+	writeOrCheckInt(Strm, NumNodes, "node count");
+	writeOrCheckInt(Strm, NumPolyObjs, "polyobj count");
+	writeOrCheckInt(Strm, NumZones, "zone count");
+
+	writeOrCheckFloat(Strm, BlockMapOrgX, "blocmap x origin");
+	writeOrCheckFloat(Strm, BlockMapOrgY, "blocmap y origin");
 
 	//
 	//	Decals
