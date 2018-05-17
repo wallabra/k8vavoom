@@ -1,493 +1,357 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
-#include <time.h>
 #include <signal.h>
+#include <time.h>
+
 #include "vcc.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-class VVccLog : public VLogListener
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VVccLog : public VLogListener {
 public:
-	void Serialise(const char* Text, EName Event)
-	{
-		dprintf(Text);
-	}
+  virtual void Serialise (const char* text, EName event) override {
+    dprintf("%s", text);
+  }
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+class VFileReader : public VStream {
+private:
+  FILE* mFile;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+public:
+  VFileReader (FILE* InFile) : mFile(InFile) { bLoading = true; }
 
-static void SignalHandler(int s);
-static void Init();
-static void ProcessArgs(int ArgCount, char **ArgVector);
-static void OpenDebugFile(const VStr& name);
-static void DumpAsm();
-static void PC_Init();
-static void PC_DumpAsm(char*);
+  virtual ~VFileReader () { Close(); }
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+  // stream interface
+  virtual void Serialise (void* V, int Length) override {
+    if (bError) return;
+    if (!mFile || fread(V, Length, 1, mFile) != 1) bError = true;
+  }
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+  virtual void Seek (int InPos) override {
+    if (bError) return;
+    if (!mFile || fseek(mFile, InPos, SEEK_SET)) bError = true;
+  }
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+  virtual int Tell() override {
+    return (mFile ? ftell(mFile) : 0);
+  }
 
-static VStr			SourceFileName;
-static VStr			ObjectFileName;
+  virtual int TotalSize () override {
+    if (bError || !mFile) return 0;
+    auto curpos = ftell(mFile);
+    if (fseek(mFile, 0, SEEK_END)) { bError = true; return 0; }
+    auto size = ftell(mFile);
+    if (fseek(mFile, curpos, SEEK_SET)) { bError = true; return 0; }
+    return (int)size;
+  }
 
-static VPackage*	CurrentPackage;
+  virtual bool AtEnd () override {
+    if (bError || !mFile) return true;
+    return !!feof(mFile);
+  }
 
-static int			num_dump_asm;
-static char*		dump_asm_names[1024];
-static bool			DebugMode;
-static FILE*		DebugFile;
+  virtual void Flush () override {
+    if (!mFile && fflush(mFile)) bError = true;
+  }
 
-static VLexer		Lex;
-static VVccLog		VccLog;
+  virtual bool Close() override {
+    if (mFile) { fclose(mFile); mFile = nullptr; }
+    return !bError;
+  }
+};
 
-// CODE --------------------------------------------------------------------
+
+// ////////////////////////////////////////////////////////////////////////// //
+static VStr SourceFileName;
+static VStr ObjectFileName;
+
+static VPackage *CurrentPackage;
+
+static int num_dump_asm;
+static char *dump_asm_names[1024];
+static bool DebugMode;
+static FILE *DebugFile;
+
+static VLexer Lex;
+static VVccLog VccLog;
+
 
 //==========================================================================
 //
-//	main
+//  dprintf
 //
 //==========================================================================
+__attribute__((format(printf, 1, 2))) int dprintf (const char *text, ...) {
+  if (!DebugMode) return 0;
 
-int main(int argc, char **argv)
-{
-	try
-	{
-		GLog.AddListener(&VccLog);
-
-		int starttime;
-		int endtime;
-
-		M_InitByteOrder();
-
-		signal(SIGSEGV, SignalHandler);
-
-		starttime = time(0);
-		Init();
-		ProcessArgs(argc, argv);
-
-		Lex.OpenSource(SourceFileName);
-		VParser Parser(Lex, CurrentPackage);
-		Parser.Parse();
-		int parsetime = time(0);
-		dprintf("Parsed in %02d:%02d\n",
-			(parsetime - starttime) / 60, (parsetime - starttime) % 60);
-		CurrentPackage->Emit();
-		int compiletime = time(0);
-		dprintf("Compiled in %02d:%02d\n",
-			(compiletime - parsetime) / 60, (compiletime - parsetime) % 60);
-		CurrentPackage->WriteObject(*ObjectFileName);
-		DumpAsm();
-		VName::StaticExit();
-		endtime = time(0);
-		dprintf("Wrote in %02d:%02d\n",
-			(endtime - compiletime) / 60, (endtime - compiletime) % 60);
-		dprintf("Time elapsed: %02d:%02d\n",
-			(endtime - starttime) / 60, (endtime - starttime) % 60);
-		VMemberBase::StaticExit();
-	}
-	catch (VException& e)
-	{
-		FatalError("%s", e.What());
-	}
-	return 0;
+  va_list argPtr;
+  FILE* fp = (DebugFile ? DebugFile : stdout);
+  va_start(argPtr, text);
+  int ret = vfprintf(fp, text, argPtr);
+  va_end(argPtr);
+  fflush(fp);
+  return ret;
 }
 
-//==========================================================================
-//
-// 	signal_handler
-//
-// 	Shuts down system, on error signal
-//
-//==========================================================================
 
-static void SignalHandler(int s)
-{
-	switch (s)
-	{
-	case SIGSEGV:
-		FatalError("%s:%d Segmentation Violation", *Lex.Location.GetSource(),
-			Lex.Location.GetLine());
-	}
+//==========================================================================
+//
+//  Malloc
+//
+//==========================================================================
+void* Malloc (size_t size) {
+  if (!size) return nullptr;
+  void *ptr = Z_Malloc(size);
+  if (!ptr) FatalError("Couldn't alloc %d bytes", (int)size);
+  memset(ptr, 0, size);
+  return ptr;
 }
 
-//==========================================================================
-//
-// 	Init
-//
-//==========================================================================
 
-static void Init()
-{
-	DebugMode = false;
-	DebugFile = NULL;
-	num_dump_asm = 0;
-	VName::StaticInit();
-	VMemberBase::StaticInit();
-	PC_Init();
+//==========================================================================
+//
+//  Free
+//
+//==========================================================================
+void Free (void* ptr) {
+  if (ptr) Z_Free(ptr);
 }
 
-//==========================================================================
-//
-//	DisplayUsage
-//
-//==========================================================================
 
-static void DisplayUsage()
-{
-	//	Print usage.
-	printf("\n");
-	printf("VCC Version 1.%d. Copyright (c)2000-2001 by JL.          (" __DATE__ " " __TIME__ ")\n", PROG_VERSION);
-	printf("Usage: vcc [options] source[.c] [object[.dat]]\n");
-	printf("    -d<file>     Output debugging information into specified file\n");
-	printf("    -a<function> Output function's ASM statements into debug file\n");
-	printf("    -D<name>           Define macro\n");
-	printf("    -I<directory>      Include files directory\n");
-	printf("    -P<directory>      Package import files directory\n");
-	exit(1);
+//==========================================================================
+//
+//  OpenFile
+//
+//==========================================================================
+VStream* OpenFile (const VStr& Name) {
+  FILE* file = fopen(*Name, "rb");
+  return (file ? new VFileReader(file) : nullptr);
 }
 
+
 //==========================================================================
 //
-// 	ProcessArgs
+//  OpenDebugFile
 //
 //==========================================================================
-
-static void ProcessArgs(int ArgCount, char **ArgVector)
-{
-	int		i;
-	int		count;
-	char*	text;
-	char	option;
-
-	count = 0;
-	for (i = 1; i < ArgCount; i++)
-	{
-		text = ArgVector[i];
-		if (*text == '-')
-		{
-			text++;
-			if (*text == 0)
-			{
-				DisplayUsage();
-			}
-			option = *text++;
-			switch (option)
-			{
-			case 'd':
-				DebugMode = true;
-				if (*text)
-				{
-					OpenDebugFile(text);
-				}
-				break;
-			case 'a':
-				if (!*text)
-				{
-					DisplayUsage();
-				}
-				dump_asm_names[num_dump_asm++] = text;
-				break;
-			case 'I':
-				Lex.AddIncludePath(text);
-				break;
-			case 'D':
-				Lex.AddDefine(text);
-				break;
-			case 'P':
-				VMemberBase::StaticAddPackagePath(text);
-				break;
-			default:
-				DisplayUsage();
-				break;
-			}
-			continue;
-		}
-		count++;
-		switch(count)
-		{
-		case 1:
-			SourceFileName = VStr(text).DefaultExtension(".vc");
-			break;
-		case 2:
-			ObjectFileName = VStr(text).DefaultExtension(".dat");
-			break;
-		default:
-			DisplayUsage();
-			break;
-		}
-	}
-	if (count == 0)
-	{
-		DisplayUsage();
-	}
-	if (count == 1)
-	{
-		ObjectFileName = SourceFileName.StripExtension() + ".dat";
-	}
-	if (!DebugFile)
-	{
-		VStr DbgFileName;
-		DbgFileName = ObjectFileName.StripExtension() + ".txt";
-		OpenDebugFile(DbgFileName);
-		DebugMode = true;
-	}
-	SourceFileName = SourceFileName.FixFileSlashes();
-	ObjectFileName = ObjectFileName.FixFileSlashes();
-	dprintf("Main source file: %s\n", *SourceFileName);
-	dprintf("  Resulting file: %s\n", *ObjectFileName);
+static void OpenDebugFile (const VStr& name) {
+  DebugFile = fopen(*name, "w");
+  if (!DebugFile) FatalError("Can\'t open debug file \"%s\".", *name);
 }
 
-//==========================================================================
-//
-// 	OpenDebugFile
-//
-//==========================================================================
-
-static void OpenDebugFile(const VStr& name)
-{
-	DebugFile = fopen(*name, "w");
-	if (!DebugFile)
-	{
-		FatalError("Can\'t open debug file \"%s\".", *name);
-	}
-}
-
-//==========================================================================
-//
-//	DumpAsm
-//
-//==========================================================================
-
-static void DumpAsm()
-{
-	for (int i = 0; i < num_dump_asm; i++)
-	{
-		PC_DumpAsm(dump_asm_names[i]);
-	}
-}
-
-//==========================================================================
-//
-//	dprintf
-//
-//==========================================================================
-
-int dprintf(const char *text, ...)
-{
-	va_list		argPtr;
-
-	if (!DebugMode)
-	{
-		return 0;
-	}
-	FILE* fp = DebugFile? DebugFile : stdout;
-	va_start(argPtr, text);
-	int ret = vfprintf(fp, text, argPtr);
-	va_end(argPtr);
-	fflush(fp);
-	return ret;
-}
-
-//==========================================================================
-//
-//	PC_Init
-//
-//==========================================================================
-
-static void PC_Init()
-{
-	CurrentPackage = new VPackage();
-}
 
 //==========================================================================
 //
 //  PC_DumpAsm
 //
 //==========================================================================
+static void PC_DumpAsm (const char* name) {
+  char buf[1024];
+  char *cname;
+  char *fname;
 
-static void PC_DumpAsm(char* name)
-{
-	int		i;
-	char	buf[1024];
-	char	*cname;
-	char	*fname;
+  snprintf(buf, sizeof(buf), "%s", name);
 
-	VStr::Cpy(buf, name);
-	if (strstr(buf, "."))
-	{
-		cname = buf;
-		fname = strstr(buf, ".") + 1;
-		fname[-1] = 0;
-	}
-	else
-	{
-		dprintf("Dump ASM: Bad name %s\n", name);
-		return;
-	}
-	for (i = 0; i < VMemberBase::GMembers.Num(); i++)
-	{
-		if (VMemberBase::GMembers[i]->MemberType == MEMBER_Method &&
-			!VStr::Cmp(cname, *VMemberBase::GMembers[i]->Outer->Name) &&
-			!VStr::Cmp(fname, *VMemberBase::GMembers[i]->Name))
-		{
-			((VMethod*)VMemberBase::GMembers[i])->DumpAsm();
-			return;
-		}
-	}
-	dprintf("Dump ASM: %s not found!\n", name);
+  //FIXME! PATH WITH DOTS!
+  if (strstr(buf, ".")) {
+    cname = buf;
+    fname = strstr(buf, ".")+1;
+    fname[-1] = 0;
+  } else {
+    dprintf("Dump ASM: Bad name %s\n", name);
+    return;
+  }
+
+  for (int i = 0; i < VMemberBase::GMembers.Num(); ++i) {
+    if (VMemberBase::GMembers[i]->MemberType == MEMBER_Method &&
+        !VStr::Cmp(cname, *VMemberBase::GMembers[i]->Outer->Name) &&
+        !VStr::Cmp(fname, *VMemberBase::GMembers[i]->Name))
+    {
+      ((VMethod*)VMemberBase::GMembers[i])->DumpAsm();
+      return;
+    }
+  }
+
+  dprintf("Dump ASM: %s not found!\n", name);
 }
 
+
 //==========================================================================
 //
-//	Malloc
+//  DumpAsm
 //
 //==========================================================================
-
-void* Malloc(size_t size)
-{
-	if (!size)
-	{
-		return NULL;
-	}
-
-	void *ptr = Z_Malloc(size);
-	if (!ptr)
-	{
-		FatalError("Couldn't alloc %d bytes", (int)size);
-	}
-	memset(ptr, 0, size);
-	return ptr;
+static void DumpAsm () {
+  for (int i = 0; i < num_dump_asm; ++i) PC_DumpAsm(dump_asm_names[i]);
 }
 
-//==========================================================================
-//
-//	Free
-//
-//==========================================================================
 
-void Free(void* ptr)
-{
-	if (ptr)
-	{
-		Z_Free(ptr);
-		ptr = NULL;
-	}
+//==========================================================================
+//
+//  PC_Init
+//
+//==========================================================================
+static void PC_Init () {
+  CurrentPackage = new VPackage();
 }
 
+
 //==========================================================================
 //
-//	VFileReader
+//  Init
 //
 //==========================================================================
-
-class VFileReader : public VStream
-{
-private:
-	FILE*				File;
-
-public:
-	VFileReader(FILE* InFile)
-	: File(InFile)
-	{
-		bLoading = true;
-	}
-	~VFileReader()
-	{
-		if (File) fclose(File);
-	}
-
-	//	Stream interface.
-	void Serialise(void* V, int Length)
-	{
-		if (fread(V, Length, 1, File) != 1)
-		{
-			bError = true;
-		}
-	}
-	void Seek(int InPos)
-	{
-		if (fseek(File, InPos, SEEK_SET))
-		{
-			bError = true;
-		}
-	}
-	int Tell()
-	{
-		return ftell(File);
-	}
-	int TotalSize()
-	{
-		int CurPos = ftell(File);
-		fseek(File, 0, SEEK_END);
-		int Size = ftell(File);
-		fseek(File, CurPos, SEEK_SET);
-		return Size;
-	}
-	bool AtEnd()
-	{
-		return !!feof(File);
-	}
-	void Flush()
-	{
-		if (fflush(File))
-		{
-			bError = true;
-		}
-	}
-	bool Close()
-	{
-		return !bError;
-	}
-};
+static void Init () {
+  DebugMode = false;
+  DebugFile = nullptr;
+  num_dump_asm = 0;
+  VName::StaticInit();
+  VMemberBase::StaticInit();
+  PC_Init();
+}
 
 
 //==========================================================================
 //
-//	OpenFile
+//  DisplayUsage
 //
 //==========================================================================
+static void DisplayUsage () {
+  printf("\n");
+  printf("VCC Version 1.%d. Copyright (c) 2000-2001 by JL, 2018 by Ketmar Dark. (" __DATE__ " " __TIME__ ")\n", PROG_VERSION);
+  printf("Usage: vcc [options] source[.c] [object[.dat]]\n");
+  printf("    -d<file>     Output debugging information into specified file\n");
+  printf("    -a<function> Output function's ASM statements into debug file\n");
+  printf("    -D<name>           Define macro\n");
+  printf("    -I<directory>      Include files directory\n");
+  printf("    -P<directory>      Package import files directory\n");
+  exit(1);
+}
 
-VStream* OpenFile(const VStr& Name)
-{
-	FILE* File = fopen(*Name, "rb");
-	if (!File)
-	{
-		return NULL;
-	}
-	return new VFileReader(File);
+
+//==========================================================================
+//
+//  ProcessArgs
+//
+//==========================================================================
+static void ProcessArgs (int ArgCount, char **ArgVector) {
+  int count = 0; // number of file arguments
+
+  for (int i = 1; i < ArgCount; ++i) {
+    char *text = ArgVector[i];
+    if (*text == '-') {
+      ++text;
+      if (*text == 0) DisplayUsage();
+      char option = *text++;
+      switch (option) {
+        case 'd':
+          DebugMode = true;
+          if (*text) OpenDebugFile(text);
+          break;
+        case 'a':
+          if (!*text) DisplayUsage();
+          dump_asm_names[num_dump_asm++] = text;
+          break;
+        case 'I':
+          Lex.AddIncludePath(text);
+          break;
+        case 'D':
+          Lex.AddDefine(text);
+          break;
+        case 'P':
+          VMemberBase::StaticAddPackagePath(text);
+          break;
+        default:
+          DisplayUsage();
+          break;
+      }
+      continue;
+    }
+    ++count;
+    switch (count) {
+      case 1: SourceFileName = VStr(text).DefaultExtension(".vc"); break;
+      case 2: ObjectFileName = VStr(text).DefaultExtension(".dat"); break;
+      default: DisplayUsage(); break;
+    }
+  }
+
+  if (count == 0) DisplayUsage();
+
+  if (count == 1) ObjectFileName = SourceFileName.StripExtension()+".dat";
+
+  if (!DebugFile) {
+    VStr DbgFileName;
+    DbgFileName = ObjectFileName.StripExtension()+".txt";
+    OpenDebugFile(DbgFileName);
+    DebugMode = true;
+  }
+
+  SourceFileName = SourceFileName.FixFileSlashes();
+  ObjectFileName = ObjectFileName.FixFileSlashes();
+  dprintf("Main source file: %s\n", *SourceFileName);
+  dprintf("  Resulting file: %s\n", *ObjectFileName);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+int main (int argc, char **argv) {
+  try {
+    GLog.AddListener(&VccLog);
+
+    int starttime;
+    int endtime;
+
+    M_InitByteOrder();
+
+    starttime = time(0);
+    Init();
+    ProcessArgs(argc, argv);
+
+    Lex.OpenSource(SourceFileName);
+    VParser Parser(Lex, CurrentPackage);
+    Parser.Parse();
+    int parsetime = time(0);
+    dprintf("Parsed in %02d:%02d\n", (parsetime-starttime)/60, (parsetime-starttime)%60);
+    CurrentPackage->Emit();
+    int compiletime = time(0);
+    dprintf("Compiled in %02d:%02d\n", (compiletime-parsetime)/60, (compiletime-parsetime)%60);
+    CurrentPackage->WriteObject(*ObjectFileName);
+    DumpAsm();
+    VName::StaticExit();
+    endtime = time(0);
+    dprintf("Wrote in %02d:%02d\n", (endtime-compiletime)/60, (endtime-compiletime)%60);
+    dprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
+    VMemberBase::StaticExit();
+  } catch (VException& e) {
+    FatalError("%s", e.What());
+  }
+
+  return 0;
 }
