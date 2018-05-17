@@ -1279,16 +1279,11 @@ void VLexer::ProcessLetterToken(bool CheckKeywords)
 		{
 			Token = TK_None;
 		}
-		break;
-
-/*	case 'N':
-		if (s[1] == 'U' && s[2] == 'L' &&
-			s[3] == 'L' && s[4] == 0)
+		else if (s[1] == 'u' && s[2] == 'l' && s[3] == 'l' && (s[4] == 0 || (s[4] == 'p' && s[5] == 't' && s[6] == 'r' && s[7] == 0)))
 		{
-			Token = TK_KEYWORD;
-			tk_Keyword = KW_NULL;
+			Token = TK_Null;
 		}
-		break;*/
+		break;
 
 	case 'o':
 		if (s[1] == 'p' && s[2] == 't' && s[3] == 'i' && s[4] == 'o' &&
