@@ -126,8 +126,20 @@ inline void* PR_PopPtr () {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-extern void PR_PushStr (const VStr& value);
-extern VStr PR_PopStr ();
+inline void PR_PushStr (const VStr& value) {
+  pr_stackPtr->p = NULL;
+  *(VStr*)&pr_stackPtr->p = value;
+  pr_stackPtr++;
+}
 
+
+inline VStr PR_PopStr () {
+  --pr_stackPtr;
+  VStr Ret = *(VStr*)&pr_stackPtr->p;
+  ((VStr*)&pr_stackPtr->p)->Clean();
+  return Ret;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 extern VStr PF_FormatString ();
