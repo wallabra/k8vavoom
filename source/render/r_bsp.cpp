@@ -103,10 +103,8 @@ void VRenderLevel::QueueWorldSurface(seg_t* seg, surface_t* surf)
 	if (lightmaped)
 	{
 		CacheSurface(surf);
-		if (Drawer->HaveMultiTexture)
-		{
-			return;
-		}
+		//if (Drawer->HaveMultiTexture) return;
+		return;
 	}
 
 	QueueSimpleSurf(seg, surf);

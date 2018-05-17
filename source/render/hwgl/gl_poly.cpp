@@ -162,119 +162,64 @@ void VOpenGLDrawer::WorldDrawing()
 		}
 	}
 
-	if (HaveMultiTexture)
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	SelectTexture(1);
+	glEnable(GL_TEXTURE_2D);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	SelectTexture(0);
+	glColor4f(1, 1, 1, 1);
+
+	for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb)
 	{
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		SelectTexture(1);
-		glEnable(GL_TEXTURE_2D);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		SelectTexture(0);
-		glColor4f(1, 1, 1, 1);
-
-		for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb)
+		if (!RendLev->light_chain[lb])
 		{
-			if (!RendLev->light_chain[lb])
-			{
-				continue;
-			}
-
-			SelectTexture(1);
-			glBindTexture(GL_TEXTURE_2D, lmap_id[lb]);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-			if (RendLev->block_changed[lb])
-			{
-				RendLev->block_changed[lb] = false;
-				glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT,
-					0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->light_block[lb]);
-			}
-			SelectTexture(0);
-
-			for (cache = RendLev->light_chain[lb]; cache; cache = cache->chain)
-			{
-				surf = cache->surf;
-				if (surf->plane->PointOnSide(vieworg))
-				{
-					//	Viewer is in back side or on plane
-					continue;
-				}
-				tex = surf->texinfo;
-
-				SetTexture(tex->Tex, tex->ColourMap);
-				SetFade(surf->Fade);
-				glBegin(GL_POLYGON);
-				for (int i = 0; i < surf->count; ++i)
-				{
-					s = DotProduct(surf->verts[i], tex->saxis) + tex->soffs;
-					t = DotProduct(surf->verts[i], tex->taxis) + tex->toffs;
-					lights = (s - surf->texturemins[0] + cache->s * 16 + 8) / (BLOCK_WIDTH * 16);
-					lightt = (t - surf->texturemins[1] + cache->t * 16 + 8) / (BLOCK_HEIGHT * 16);
-					MultiTexCoord(0, s * tex_iw, t * tex_ih);
-					MultiTexCoord(1, lights, lightt);
-					glVertex(surf->verts[i]);
-				}
-				glEnd();
-			}
+			continue;
 		}
 
 		SelectTexture(1);
-		glDisable(GL_TEXTURE_2D);
-		SelectTexture(0);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	}
-	else
-	{
-		glDepthMask(0);		// don't bother writing Z
-		glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-		glEnable(GL_BLEND);
-		glColor4f(1, 1, 1, 1);
+		glBindTexture(GL_TEXTURE_2D, lmap_id[lb]);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb)
+		if (RendLev->block_changed[lb])
 		{
-			if (!RendLev->light_chain[lb])
+			RendLev->block_changed[lb] = false;
+			glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT,
+				0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->light_block[lb]);
+		}
+		SelectTexture(0);
+
+		for (cache = RendLev->light_chain[lb]; cache; cache = cache->chain)
+		{
+			surf = cache->surf;
+			if (surf->plane->PointOnSide(vieworg))
 			{
+				//	Viewer is in back side or on plane
 				continue;
 			}
+			tex = surf->texinfo;
 
-			glBindTexture(GL_TEXTURE_2D, lmap_id[lb]);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-			if (RendLev->block_changed[lb])
+			SetTexture(tex->Tex, tex->ColourMap);
+			SetFade(surf->Fade);
+			glBegin(GL_POLYGON);
+			for (int i = 0; i < surf->count; ++i)
 			{
-				RendLev->block_changed[lb] = false;
-				glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT,
-					0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->light_block[lb]);
+				s = DotProduct(surf->verts[i], tex->saxis) + tex->soffs;
+				t = DotProduct(surf->verts[i], tex->taxis) + tex->toffs;
+				lights = (s - surf->texturemins[0] + cache->s * 16 + 8) / (BLOCK_WIDTH * 16);
+				lightt = (t - surf->texturemins[1] + cache->t * 16 + 8) / (BLOCK_HEIGHT * 16);
+				MultiTexCoord(0, s * tex_iw, t * tex_ih);
+				MultiTexCoord(1, lights, lightt);
+				glVertex(surf->verts[i]);
 			}
-
-			for (cache = RendLev->light_chain[lb]; cache; cache = cache->chain)
-			{
-				surf = cache->surf;
-				if (surf->plane->PointOnSide(vieworg))
-				{
-					//	Viewer is in back side or on plane
-					continue;
-				}
-				tex = surf->texinfo;
-
-				SetFade(surf->Fade);
-				glBegin(GL_POLYGON);
-				for (int i = 0; i < surf->count; ++i)
-				{
-					s = (DotProduct(surf->verts[i], tex->saxis) + tex->soffs - surf->texturemins[0] + cache->s * 16 + 8) / (BLOCK_WIDTH * 16);
-					t = (DotProduct(surf->verts[i], tex->taxis) + tex->toffs - surf->texturemins[1] + cache->t * 16 + 8) / (BLOCK_HEIGHT * 16);
-					glTexCoord2f(s, t);
-					glVertex(surf->verts[i]);
-				}
-				glEnd();
-			}
+			glEnd();
 		}
-
-		glDisable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDepthMask(1);		// back to normal Z buffering
 	}
+
+	SelectTexture(1);
+	glDisable(GL_TEXTURE_2D);
+	SelectTexture(0);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	//
 	//	Add specular lights
@@ -1359,7 +1304,7 @@ void VOpenGLDrawer::DrawSkyPolygon(surface_t* surf, bool bIsSkyBox,
 	}
 	else
 	{
-		if (HaveMultiTexture && Texture2->Type != TEXTYPE_Null)
+		if (Texture2->Type != TEXTYPE_Null)
 		{
 			SetTexture(Texture1, CMap);
 			SelectTexture(1);

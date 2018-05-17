@@ -50,7 +50,6 @@ VCvarI VOpenGLDrawer::sprite_tex_linear("gl_sprite_tex_linear", "0", "Sprite int
 VCvarI VOpenGLDrawer::gl_texture_filter_anisotropic("gl_texture_filter_anisotropic", "4", "Texture anisotropic filtering.", CVAR_Archive);
 VCvarB VOpenGLDrawer::clear("gl_clear", false, "Clear screen before rendering new frame?", CVAR_Archive);
 VCvarB VOpenGLDrawer::blend_sprites("gl_blend_sprites", false, "Alpha-blend sprites?", CVAR_Archive);
-VCvarB VOpenGLDrawer::ext_multitexture("gl_ext_multitexture", true, "Use OpenGL multitexturing extension (if present)?", 0);
 VCvarB VOpenGLDrawer::ext_point_parameters("gl_ext_point_parameters", false, "Use OpenGL ext_point_parameters extension (if present)?", 0);
 VCvarB VOpenGLDrawer::ext_anisotropy("gl_ext_anisotropy", true, "Use OpenGL anisotropy extension (if present)?", 0);
 VCvarB VOpenGLDrawer::ext_shaders("gl_ext_shaders", true, "Use OpenGL shaders (if possible)?", 0);
@@ -125,33 +124,21 @@ void VOpenGLDrawer::InitResolution()
 #define _(x)	p_##x = x##_t(GetExtFuncPtr(#x)); if (!p_##x) found = false
 
 	//	Check multi-texture extensions
-	if (ext_multitexture && CheckExtension("GL_ARB_multitexture"))
+	if (!CheckExtension("GL_ARB_multitexture"))
 	{
-		GCon->Log(NAME_Init, "Found GL_ARB_multitexture...");
-
+		Sys_Error("OpenGL FATAL: Multitexture extensions not found.");
+	} else {
 		bool found = true;
 		_(glMultiTexCoord2fARB);
 		_(glActiveTextureARB);
 
-		if (found)
-		{
-			GCon->Log(NAME_Init, "Multitexture extensions found.");
-			HaveMultiTexture = true;
-			GLint tmp;
-			glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &tmp);
-			GCon->Logf(NAME_Init, "Max texture units: %d", tmp);
-			if (tmp > 1) MaxTextureUnits = tmp;
-		}
-		else
-		{
-			GCon->Log(NAME_Init, "Symbol not found, Multitexture extensions disabled.");
-			HaveMultiTexture = false;
-		}
-	}
-	else
-	{
-		GCon->Log(NAME_Init, "Symbol not found, Multitexture extensions disabled.");
-		HaveMultiTexture = false;
+		if (!found) Sys_Error("OpenGL FATAL: Multitexture extensions not found.");
+
+		GCon->Log(NAME_Init, "Multitexture extensions found.");
+		GLint tmp;
+		glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &tmp);
+		GCon->Logf(NAME_Init, "Max texture units: %d", tmp);
+		if (tmp > 1) MaxTextureUnits = tmp;
 	}
 
 	//  Check point parameters extensions
@@ -198,7 +185,7 @@ void VOpenGLDrawer::InitResolution()
 	}
 
 	//	Check for shader extensions
-	if (ext_shaders && HaveMultiTexture &&
+	if (ext_shaders &&
 		CheckExtension("GL_ARB_shader_objects") && CheckExtension("GL_ARB_shading_language_100") &&
 		CheckExtension("GL_ARB_vertex_shader") && CheckExtension("GL_ARB_fragment_shader"))
 	{
