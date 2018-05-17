@@ -13,6 +13,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gore.pk3
 		blood.underwater.txt
 		decorate.txt
 		sndinfo.txt
+		decaldef.brutalbloodsplats.txt
 	)
 add_custom_target(gore_modpak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gore.pk3)
 

@@ -3,14 +3,33 @@
 /// +++++++++++++++++////
 // fuck off, default blood splats
 decalgroup BloodSplat {
+  K8GoreBloodSplat01 6
+  K8GoreBloodSplat02 6
+
+  K8GoreBloodSuper01 1
+  K8GoreBloodSuper02 1
 }
+
 decalgroup BloodSmear {
+  K8GoreBloodSmearSmall1  3
+  K8GoreBloodSmearSmall2  3
+
+  K8GoreBloodSmear1 1
+  K8GoreBloodSmear2 1
 }
 
 // radius damage
 decalgroup BloodSmearRadius {
+  K8GoreBloodSmear1 1
+  K8GoreBloodSmear2 1
 }
+
 decalgroup BloodSplatRadius {
+  K8GoreBloodSplat01 6
+  K8GoreBloodSplat02 6
+
+  K8GoreBloodSuper01 3
+  K8GoreBloodSuper02 3
 }
 
 
