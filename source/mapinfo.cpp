@@ -366,8 +366,8 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		{
 			if (newFormat) sc->Expect("=");
 			auto ocm = sc->IsCMode();
-			sc->SetCMode(true);
 			sc->ExpectName8();
+			sc->SetCMode(true);
 			info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
 			info->Sky1ScrollDelta = 0;
 			if (newFormat) {
@@ -391,8 +391,8 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 		{
 			if (newFormat) sc->Expect("=");
 			auto ocm = sc->IsCMode();
-			sc->SetCMode(true);
 			sc->ExpectName8();
+			sc->SetCMode(true);
 			info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
 			info->Sky2ScrollDelta = 0;
 			if (newFormat) {
