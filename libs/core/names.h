@@ -339,6 +339,7 @@ REGISTER_NAME(confont)
 //  Compiler names
 REGISTER_NAME(Num)
 REGISTER_NAME(Length)
+REGISTER_NAME(length)
 REGISTER_NAME(Insert)
 REGISTER_NAME(Remove)
 REGISTER_NAME(Goto)

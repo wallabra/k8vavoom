@@ -467,7 +467,7 @@ void VMethod::DumpAsm()
   VPackage* Package = (VPackage*)PM;
 
   dprintf("--------------------------------------------\n");
-  dprintf("Dump ASM function %s.%s\n\n", *Outer->Name, *Name);
+  dprintf("Dump ASM function %s.%s (%d instructions)\n\n", *Outer->Name, *Name, (Flags&FUNC_Native ? 0 : Instructions.Num()));
   if (Flags & FUNC_Native)
   {
     //  Builtin function

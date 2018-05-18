@@ -102,10 +102,10 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VStr SourceFileName;
-static VStr ObjectFileName;
+static TArray<VStr> scriptArgs;
 
 static int num_dump_asm;
-static char *dump_asm_names[1024];
+static const char *dump_asm_names[1024];
 static bool DebugMode = false;
 static FILE *DebugFile;
 
@@ -199,7 +199,10 @@ static void PC_DumpAsm (const char* name) {
     return;
   }
 
+  //printf("<%s>.<%s>\n", cname, fname);
+
   for (int i = 0; i < VMemberBase::GMembers.Num(); ++i) {
+    //if (VMemberBase::GMembers[i]->MemberType == MEMBER_Method) printf("O:<%s>; N:<%s>\n", *VMemberBase::GMembers[i]->Outer->Name, *VMemberBase::GMembers[i]->Name);
     if (VMemberBase::GMembers[i]->MemberType == MEMBER_Method &&
         !VStr::Cmp(cname, *VMemberBase::GMembers[i]->Outer->Name) &&
         !VStr::Cmp(fname, *VMemberBase::GMembers[i]->Name))
@@ -248,48 +251,33 @@ static void DisplayUsage () {
 //==========================================================================
 static void ProcessArgs (int ArgCount, char **ArgVector) {
   int count = 0; // number of file arguments
+  bool nomore = false;
 
   for (int i = 1; i < ArgCount; ++i) {
-    char *text = ArgVector[i];
-    if (*text == '-') {
+    const char *text = ArgVector[i];
+    if (count == 0 && !nomore && *text == '-') {
       ++text;
       if (*text == 0) DisplayUsage();
-      char option = *text++;
+      if (text[0] == '-' && text[1] == 0) { nomore = true; continue; }
+      const char option = *text++;
       switch (option) {
-        case 'd':
-          DebugMode = true;
-          if (*text) OpenDebugFile(text);
-          break;
-        case 'a':
-          if (!*text) DisplayUsage();
-          dump_asm_names[num_dump_asm++] = text;
-          break;
-        case 'I':
-          Lex.AddIncludePath(text);
-          break;
-        case 'D':
-          Lex.AddDefine(text);
-          break;
-        case 'P':
-          VMemberBase::StaticAddPackagePath(text);
-          break;
-        default:
-          DisplayUsage();
-          break;
+        case 'd': DebugMode = true; if (*text) OpenDebugFile(text); break;
+        case 'a': if (!*text) DisplayUsage(); dump_asm_names[num_dump_asm++] = text; break;
+        case 'I': Lex.AddIncludePath(text); break;
+        case 'D': Lex.AddDefine(text); break;
+        case 'P': VMemberBase::StaticAddPackagePath(text); break;
+        default: DisplayUsage(); break;
       }
       continue;
     }
     ++count;
     switch (count) {
       case 1: SourceFileName = VStr(text).DefaultExtension(".vc"); break;
-      case 2: ObjectFileName = VStr(text).DefaultExtension(".dat"); break;
-      default: DisplayUsage(); break;
+      default: scriptArgs.Append(VStr(text)); break;
     }
   }
 
   if (count == 0) DisplayUsage();
-
-  if (count == 1) ObjectFileName = SourceFileName.StripExtension()+".dat";
 
   /*
   if (!DebugFile) {
@@ -301,9 +289,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
   */
 
   SourceFileName = SourceFileName.FixFileSlashes();
-  ObjectFileName = ObjectFileName.FixFileSlashes();
   dprintf("Main source file: %s\n", *SourceFileName);
-  dprintf("  Resulting file: %s\n", *ObjectFileName);
 }
 
 
@@ -323,7 +309,33 @@ static void initialize () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// <0: error; bit 0: has arg; bit 1: returns int
+static int checkArg (VMethod *mmain) {
+  if (!mmain) return -1;
+  if ((mmain->Flags&FUNC_VarArgs) != 0) return -1;
+  int res = 0;
+  if (mmain->ReturnType.Type != TYPE_Void && mmain->ReturnType.Type != TYPE_Int) return -1;
+  if (mmain->ReturnType.Type == TYPE_Int) res |= 0x02;
+  if (mmain->NumParams != 0) {
+    if (mmain->NumParams != 1) return -1;
+    VFieldType atp = mmain->ParamTypes[0];
+    dprintf("  ptype0: %s\n", *atp.GetName());
+    if (atp.Type != TYPE_Pointer) return -1;
+    atp = atp.GetPointerInnerType();
+    if (atp.Type != TYPE_DynamicArray) return -1;
+    atp = atp.GetArrayInnerType();
+    if (atp.Type != TYPE_String) return -1;
+    res |= 0x01;
+  }
+  return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 int main (int argc, char **argv) {
+  VStack ret;
+  ret.i = 0;
+
   try {
     GLog.AddListener(&VccLog);
 
@@ -352,54 +364,36 @@ int main (int argc, char **argv) {
     }
 
     CurrentPackage->LoadSourceObject(strm, SourceFileName, TLocation());
-    /*
-    Lex.OpenSource(SourceFileName);
-    VParser Parser(Lex, CurrentPackage);
-    Parser.Parse();
-
-    int parsetime = time(0);
-    dprintf("Parsed in %02d:%02d\n", (parsetime-starttime)/60, (parsetime-starttime)%60);
-
-    CurrentPackage->Emit();
-    int compiletime = time(0);
-    dprintf("Compiled in %02d:%02d\n", (compiletime-parsetime)/60, (compiletime-parsetime)%60);
-    */
-
-    /*
-    CurrentPackage->WriteObject(*ObjectFileName);
-    */
-
     DumpAsm();
     endtime = time(0);
-    //dprintf("Wrote in %02d:%02d\n", (endtime-compiletime)/60, (endtime-compiletime)%60);
-
     dprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
 
+    VScriptArray scargs(scriptArgs);
     VClass *mklass = VClass::FindClass("Main");
     if (mklass) {
       dprintf("Found class 'Main'\n");
       VMethod *mmain = mklass->FindMethod("main");
       if (mmain) {
-        dprintf("Found method 'main()'\n");
-        if ((mmain->Flags&FUNC_VarArgs) != 0) FatalError("Main::main() is vararg!");
+        dprintf(" Found method 'main()' (return type: %u:%s)\n", mmain->ReturnType.Type, *mmain->ReturnType.GetName());
+        int atp = checkArg(mmain);
+        if (atp < 0) FatalError("Main::main() should be either arg-less, or have one `array!string*` argument, and should be either `void`, or return `int`!");
         if ((mmain->Flags&FUNC_Static) == 0) {
-          if (mmain->NumParams != 0) FatalError("Main::main() should have no args!");
           //auto imain = Spawn<VLevel>();
           auto imain = VObject::StaticSpawnObject(mklass);
           P_PASS_REF((VObject*)imain);
-          VObject::ExecuteFunction(mmain);
-        } else {
-          if (mmain->NumParams != 0) FatalError("Main::main() should have no args!");
-          VObject::ExecuteFunction(mmain);
         }
+        if (atp&0x01) P_PASS_REF(&scargs);
+        ret = VObject::ExecuteFunction(mmain);
+        if ((atp&0x02) == 0) ret.i = 0;
       }
     }
 
     VObject::StaticExit();
     VName::StaticExit();
   } catch (VException& e) {
+    ret.i = -1;
     FatalError("FATAL: %s", e.What());
   }
 
-  return 0;
+  return ret.i;
 }

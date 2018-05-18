@@ -532,87 +532,82 @@ void VFieldType::CheckMatch(TLocation l, const VFieldType& Other) const
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VFieldType::GetName
 //
 //==========================================================================
-
-VStr VFieldType::GetName() const
-{
+VStr VFieldType::GetName () const {
   guard(VFieldType::GetName);
-  switch (Type)
-  {
-  case TYPE_Int:
-    return "int";
-  case TYPE_Byte:
-    return "byte";
-  case TYPE_Bool:
-    return "bool";
-  case TYPE_Float:
-    return "float";
-  case TYPE_Name:
-    return "name";
-  case TYPE_String:
-    return "string";
-  case TYPE_Pointer:
-  {
-    VStr Ret = GetPointerInnerType().GetName();
-    for (int i = 0; i < PtrLevel; i++)
-    {
-      Ret += "*";
-    }
-    return Ret;
-  }
-  case TYPE_Reference:
-    return Class ? *Class->Name : "none";
-  case TYPE_Class:
-  {
-    VStr Ret("class");
-    if (Class)
-    {
-      Ret += "<";
-      Ret += *Class->Name;
-      Ret += ">";
-    }
-    return Ret;
-  }
-  case TYPE_State:
-    return "state";
-  case TYPE_Struct:
-    return *Struct->Name;
-  case TYPE_Vector:
-    return "vector";
-  case TYPE_Array:
-    return GetArrayInnerType().GetName() + "[]";
-  case TYPE_DynamicArray:
-    return VStr("array<") + GetArrayInnerType().GetName() + ">";
-  case TYPE_Automatic:
-    return "auto";
-  default:
-    return "unknown";
+  VStr Ret;
+  switch (Type) {
+    case TYPE_Void: return "void";
+    case TYPE_Int: return "int";
+    case TYPE_Byte: return "byte";
+    case TYPE_Bool: return "bool";
+    case TYPE_Float: return "float";
+    case TYPE_Name: return "name";
+    case TYPE_String: return "string";
+    case TYPE_Pointer:
+      Ret = GetPointerInnerType().GetName();
+      for (int i = 0; i < PtrLevel; ++i) Ret += "*";
+      return Ret;
+    case TYPE_Reference: return (Class ? *Class->Name : "none");
+    case TYPE_Class:
+      Ret = "class";
+      if (Class) { Ret += "!"; Ret += *Class->Name; }
+      return Ret;
+    case TYPE_State: return "state";
+    case TYPE_Struct: return *Struct->Name;
+    case TYPE_Vector: return "vector";
+    case TYPE_Array: return GetArrayInnerType().GetName() + "[]";
+    case TYPE_DynamicArray:
+      Ret = GetArrayInnerType().GetName();
+      return (Ret.IndexOf('*') < 0 ? VStr("array!")+Ret : VStr("array!(")+Ret+")");
+    case TYPE_Automatic: return "auto";
+    default: return "unknown";
   }
   unguard;
 }
 
+
 #if !defined(IN_VCC)
+
+//==========================================================================
+//
+//  VScriptArray::VScriptArray
+//
+//==========================================================================
+#if defined(VCC_STANDALONE_EXECUTOR)
+VScriptArray::VScriptArray (const TArray<VStr>& xarr) noexcept(false) {
+  guard(VScriptArray::VScriptArray);
+  ArrData = nullptr;
+  ArrNum = 0;
+  ArrSize = 0;
+  if (xarr.Num()) {
+    size_t bytesize = xarr.Num()*sizeof(void*);
+    ArrData = new vuint8[bytesize];
+    memset(ArrData, 0, bytesize);
+    VStr** aa = (VStr**)ArrData;
+    for (int f = 0; f < xarr.Num(); ++f) *(VStr*)(&aa[f]) = xarr[f];
+    ArrSize = ArrNum = xarr.Num();
+  }
+  unguard;
+}
+#endif
+
 
 //==========================================================================
 //
 //  VScriptArray::Clear
 //
 //==========================================================================
-
-void VScriptArray::Clear(VFieldType& Type)
-{
+void VScriptArray::Clear (VFieldType& Type) {
   guard(VScriptArray::Clear);
-  if (ArrData)
-  {
+  if (ArrData) {
     int InnerSize = Type.GetSize();
-    for (int i = 0; i < ArrSize; i++)
-    {
-      VField::DestructField(ArrData + i * InnerSize, Type);
-    }
+    for (int i = 0; i < ArrSize; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
     delete[] ArrData;
   }
   ArrData = NULL;
@@ -621,137 +616,97 @@ void VScriptArray::Clear(VFieldType& Type)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VScriptArray::Resize
 //
 //==========================================================================
-
-void VScriptArray::Resize(int NewSize, VFieldType& Type)
-{
+void VScriptArray::Resize (int NewSize, VFieldType& Type) {
   guard(VScriptArray::Resize);
   check(NewSize >= 0);
 
-  if (NewSize <= 0)
-  {
-    Clear(Type);
-    return;
-  }
+  if (NewSize <= 0) { Clear(Type); return; }
 
-  if (NewSize == ArrSize)
-  {
-    return;
-  }
-  vuint8* OldData = ArrData;
+  if (NewSize == ArrSize) return;
+
+  vuint8 *OldData = ArrData;
   vint32 OldSize = ArrSize;
   ArrSize = NewSize;
-  if (ArrNum > NewSize)
-  {
-    ArrNum = NewSize;
-  }
+  if (ArrNum > NewSize) ArrNum = NewSize;
 
   int InnerSize = Type.GetSize();
-  ArrData = new vuint8[ArrSize * InnerSize];
-  memset(ArrData, 0, ArrSize * InnerSize);
-  for (int i = 0; i < ArrNum; i++)
-  {
-    VField::CopyFieldValue(OldData + i * InnerSize,
-      ArrData + i * InnerSize, Type);
+  ArrData = new vuint8[ArrSize*InnerSize];
+  memset(ArrData, 0, ArrSize*InnerSize);
+  for (int i = 0; i < ArrNum; ++i) VField::CopyFieldValue(OldData+i*InnerSize, ArrData+i*InnerSize, Type);
+
+  if (OldData) {
+    for (int i = 0; i < OldSize; ++i) VField::DestructField(OldData + i * InnerSize, Type);
+    delete[] OldData;
+    //OldData = NULL;
   }
 
-  if (OldData)
-  {
-    for (int i = 0; i < OldSize; i++)
-    {
-      VField::DestructField(OldData + i * InnerSize, Type);
-    }
-    delete[] OldData;
-    OldData = NULL;
-  }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VScriptArray::SetNum
 //
 //==========================================================================
-
-void VScriptArray::SetNum(int NewNum, VFieldType& Type)
-{
+void VScriptArray::SetNum (int NewNum, VFieldType& Type) {
   guard(VScriptArray::SetNum);
   check(NewNum >= 0);
-  if (NewNum == 0)
-  {
-    //  As a special case setting size to 0 should clear the array.
-    Clear(Type);
-  }
-  else if (NewNum > ArrSize)
-  {
-    Resize(NewNum + NewNum * 3 / 8 + 32, Type);
-  }
+  // as a special case setting size to 0 should clear the array
+       if (NewNum == 0) Clear(Type);
+  else if (NewNum > ArrSize) Resize(NewNum+NewNum*3/8+32, Type);
   ArrNum = NewNum;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VScriptArray
 //
 //==========================================================================
-
-void VScriptArray::Insert(int Index, int Count, VFieldType& Type)
-{
+void VScriptArray::Insert (int Index, int Count, VFieldType& Type) {
   guard(VScriptArray::Insert);
   check(ArrData != NULL);
   check(Index >= 0);
   check(Index <= ArrNum);
 
-  SetNum(ArrNum + Count, Type);
+  SetNum(ArrNum+Count, Type);
   int InnerSize = Type.GetSize();
-  //  Move value to new location.
-  for (int i = ArrNum - 1; i >= Index + Count; i--)
-  {
-    VField::CopyFieldValue(ArrData + (i - Count) * InnerSize,
-      ArrData + i * InnerSize, Type);
-  }
-  //  Clean inserted elements
-  for (int i = Index; i < Index + Count; i++)
-  {
-    VField::DestructField(ArrData + i * InnerSize, Type);
-  }
-  memset(ArrData + Index * InnerSize, 0, Count * InnerSize);
+  // move value to new location
+  for (int i = ArrNum-1; i >= Index+Count; --i) VField::CopyFieldValue(ArrData+(i-Count)*InnerSize, ArrData+i*InnerSize, Type);
+  // clean inserted elements
+  for (int i = Index; i < Index+Count; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
+  memset(ArrData+Index*InnerSize, 0, Count*InnerSize);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VScriptArray::Remove
 //
 //==========================================================================
-
-void VScriptArray::Remove(int Index, int Count, VFieldType& Type)
-{
+void VScriptArray::Remove (int Index, int Count, VFieldType& Type) {
   guard(VScriptArray::Remove);
   check(ArrData != NULL);
   check(Index >= 0);
-  check(Index + Count <= ArrNum);
+  check(Index+Count <= ArrNum);
 
   ArrNum -= Count;
-  if (ArrNum == 0)
-  {
-    //  Array is empty, so just clear it.
+  if (ArrNum == 0) {
+    // array is empty, so just clear it
     Clear(Type);
-  }
-  else
-  {
-    //  Move elements that are after removed ones.
+  } else {
+    // move elements that are after removed ones
     int InnerSize = Type.GetSize();
-    for (int i = Index; i < ArrNum; i++)
-    {
-      VField::CopyFieldValue(ArrData + (i + Count) * InnerSize,
-        ArrData + i * InnerSize, Type);
-    }
+    for (int i = Index; i < ArrNum; ++i) VField::CopyFieldValue(ArrData+(i+Count)*InnerSize, ArrData+i*InnerSize, Type);
   }
   unguard;
 }

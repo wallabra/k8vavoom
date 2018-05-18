@@ -292,7 +292,7 @@ VExpression* VDotField::IntResolve(VEmitContext& ec, bool AssignTarget)
     //VFieldType type = op->Type;
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
-    if (FieldName == NAME_Num || FieldName == NAME_Length)
+    if (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length)
     {
       if (AssignTarget)
       {

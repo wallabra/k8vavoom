@@ -116,25 +116,23 @@ struct VObjectDelegate
 
 class VScriptArray
 {
-public:
-  int Num() const
-  {
-    return ArrNum;
-  }
-  vuint8* Ptr()
-  {
-    return ArrData;
-  }
-  void Clear(VFieldType& Type);
-  void Resize(int NewSize, VFieldType& Type);
-  void SetNum(int NewNum, VFieldType& Type);
-  void Insert(int Index, int Count, VFieldType& Type);
-  void Remove(int Index, int Count, VFieldType& Type);
-
 private:
   int ArrNum;
   int ArrSize;
   vuint8* ArrData;
+
+public:
+#if defined(VCC_STANDALONE_EXECUTOR)
+  VScriptArray (const TArray<VStr>& xarr) noexcept(false);
+#endif
+
+  inline int Num() const { return ArrNum; }
+  inline vuint8 *Ptr() { return ArrData; }
+  void Clear (VFieldType& Type);
+  void Resize (int NewSize, VFieldType& Type);
+  void SetNum (int NewNum, VFieldType& Type);
+  void Insert (int Index, int Count, VFieldType& Type);
+  void Remove (int Index, int Count, VFieldType& Type);
 };
 
 //==========================================================================
