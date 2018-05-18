@@ -52,11 +52,12 @@
 //==========================================================================
 
 VAssignment::VAssignment(VAssignment::EAssignOper AOper, VExpression* AOp1,
-	VExpression* AOp2, const TLocation& ALoc)
+	VExpression* AOp2, const TLocation& ALoc, bool valueResolved)
 : VExpression(ALoc)
 , Oper(AOper)
 , op1(AOp1)
 , op2(AOp2)
+, mValueResolved(valueResolved)
 {
 	if (!op2)
 	{
@@ -97,7 +98,7 @@ VExpression* VAssignment::DoResolve(VEmitContext& ec)
 		op1 = op1->ResolveAssignmentTarget(ec);
 	}
 
-	if (op2) {
+	if (op2 && !mValueResolved) {
 		VExpression* re;
 		if (op1->Type.Type == TYPE_Float) {
 			re = op2->ResolveFloat(ec);
@@ -106,6 +107,7 @@ VExpression* VAssignment::DoResolve(VEmitContext& ec)
 		}
 		if (!re) delete op2;
 		op2 = re;
+		mValueResolved = true;
 	}
 
 	if (!op1 || !op2)

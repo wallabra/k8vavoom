@@ -120,6 +120,7 @@ void VLocalDecl::Declare(VEmitContext& ec)
 		}
 
 		bool dbgDump = false;
+		bool valueResolved = false;
 
 		// resolve automatic type
 		if (e.TypeExpr->Type.Type == TYPE_Automatic) {
@@ -127,6 +128,7 @@ void VLocalDecl::Declare(VEmitContext& ec)
 			// resolve type
 			TLocation loc = e.Value->Loc;
 			e.Value = e.Value->Resolve(ec);
+			valueResolved = true;
 			if (!e.Value) {
 				ParseError(e.Loc, "Cannot resolve type for identifier %s", *e.Name);
 				delete e.TypeExpr; // delete old `automatic` type
@@ -135,7 +137,7 @@ void VLocalDecl::Declare(VEmitContext& ec)
 				//fprintf(stderr, "*** automatic type resolved to `%s`\n", *(e.Value->Type.GetName()));
 				delete e.TypeExpr; // delete old `automatic` type
 				e.TypeExpr = new VTypeExpr(e.Value->Type, loc);
-				dbgDump = false;
+				//dbgDump = true;
 			}
 		}
 
@@ -164,7 +166,7 @@ void VLocalDecl::Declare(VEmitContext& ec)
 		if (e.Value) {
 			if (dbgDump) fprintf(stderr, "004\n");
 			VExpression* op1 = new VLocalVar(ec.LocalDefs.Num()-1, e.Loc);
-			e.Value = new VAssignment(VAssignment::Assign, op1, e.Value, e.Loc);
+			e.Value = new VAssignment(VAssignment::Assign, op1, e.Value, e.Loc, valueResolved);
 			if (dbgDump) fprintf(stderr, "005\n");
 			e.Value = e.Value->Resolve(ec);
 			if (dbgDump) fprintf(stderr, "006\n");

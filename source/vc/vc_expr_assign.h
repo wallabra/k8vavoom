@@ -50,10 +50,13 @@ public:
 	VExpression*	op1;
 	VExpression*	op2;
 
-	VAssignment(EAssignOper, VExpression*, VExpression*, const TLocation&);
+	VAssignment(EAssignOper, VExpression*, VExpression*, const TLocation&, bool valueResolved=false);
 	~VAssignment();
 	VExpression* DoResolve(VEmitContext&);
 	void Emit(VEmitContext&);
+
+private:
+	bool mValueResolved;
 };
 
 //==========================================================================
