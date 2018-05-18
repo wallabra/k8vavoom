@@ -192,7 +192,7 @@ VLocalDecl* VParser::ParseLocalVar(VExpression* TypeExpr, bool requireInit)
     Decl->Vars.Append(e);
   } while (Lex.Check(TK_Comma));
   delete TypeExpr;
-  TypeExpr = NULL;
+  TypeExpr = nullptr;
   return Decl;
   unguard;
 }
@@ -404,7 +404,7 @@ VExpression* VParser::ParseExpressionPriority0()
     break;
   }
 
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -419,7 +419,7 @@ VExpression* VParser::ParseExpressionPriority1()
   guard(VParser::ParseExpressionPriority1);
   VExpression* op = ParseExpressionPriority0();
   if (!op)
-    return NULL;
+    return nullptr;
   bool done = false;
   do
   {
@@ -546,7 +546,7 @@ VExpression* VParser::ParseExpressionPriority2()
 
   op = ParseExpressionPriority1();
   if (!op)
-    return NULL;
+    return nullptr;
   l = Lex.Location;
 
   if (Lex.Check(TK_Inc))
@@ -574,7 +574,7 @@ VExpression* VParser::ParseExpressionPriority3()
   guard(VParser::ParseExpressionPriority3);
   VExpression* op1 = ParseExpressionPriority2();
   if (!op1)
-    return NULL;
+    return nullptr;
   bool done = false;
   do
   {
@@ -615,7 +615,7 @@ VExpression* VParser::ParseExpressionPriority4()
   guard(VParser::ParseExpressionPriority4);
   VExpression* op1 = ParseExpressionPriority3();
   if (!op1)
-    return NULL;
+    return nullptr;
   bool done = false;
   do
   {
@@ -651,7 +651,7 @@ VExpression* VParser::ParseExpressionPriority5()
   guard(VParser::ParseExpressionPriority5);
   VExpression* op1 = ParseExpressionPriority4();
   if (!op1)
-    return NULL;
+    return nullptr;
   bool done = false;
   do
   {
@@ -687,7 +687,7 @@ VExpression* VParser::ParseExpressionPriority6()
   guard(VParser::ParseExpressionPriority6);
   VExpression* op1 = ParseExpressionPriority5();
   if (!op1)
-    return NULL;
+    return nullptr;
   bool done = false;
   do
   {
@@ -733,7 +733,7 @@ VExpression* VParser::ParseExpressionPriority7()
   guard(VParser::ParseExpressionPriority7);
   VExpression* op1 = ParseExpressionPriority6();
   if (!op1)
-    return NULL;
+    return nullptr;
   bool done = false;
   do
   {
@@ -768,7 +768,7 @@ VExpression* VParser::ParseExpressionPriority8()
   guard(VParser::ParseExpressionPriority8);
   VExpression* op1 = ParseExpressionPriority7();
   if (!op1)
-    return NULL;
+    return nullptr;
   TLocation l = Lex.Location;
   while (Lex.Check(TK_And))
   {
@@ -791,7 +791,7 @@ VExpression* VParser::ParseExpressionPriority9()
   guard(VParser::ParseExpressionPriority9);
   VExpression* op1 = ParseExpressionPriority8();
   if (!op1)
-    return NULL;
+    return nullptr;
   TLocation l = Lex.Location;
   while (Lex.Check(TK_XOr))
   {
@@ -814,7 +814,7 @@ VExpression* VParser::ParseExpressionPriority10()
   guard(VParser::ParseExpressionPriority10);
   VExpression* op1 = ParseExpressionPriority9();
   if (!op1)
-    return NULL;
+    return nullptr;
   TLocation l = Lex.Location;
   while (Lex.Check(TK_Or))
   {
@@ -837,7 +837,7 @@ VExpression* VParser::ParseExpressionPriority11()
   guard(VParser::ParseExpressionPriority11);
   VExpression* op1 = ParseExpressionPriority10();
   if (!op1)
-    return NULL;
+    return nullptr;
   TLocation l = Lex.Location;
   while (Lex.Check(TK_AndLog))
   {
@@ -860,7 +860,7 @@ VExpression* VParser::ParseExpressionPriority12()
   guard(VParser::ParseExpressionPriority12);
   VExpression* op1 = ParseExpressionPriority11();
   if (!op1)
-    return NULL;
+    return nullptr;
   TLocation l = Lex.Location;
   while (Lex.Check(TK_OrLog))
   {
@@ -883,7 +883,7 @@ VExpression* VParser::ParseExpressionPriority13()
   guard(VParser::ParseExpressionPriority13);
   VExpression* op = ParseExpressionPriority12();
   if (!op)
-    return NULL;
+    return nullptr;
   TLocation l = Lex.Location;
   if (Lex.Check(TK_Quest))
   {
@@ -907,7 +907,7 @@ VExpression* VParser::ParseExpressionPriority14()
   guard(VParser::ParseExpressionPriority14);
   VExpression* op1 = ParseExpressionPriority13();
   if (!op1)
-    return NULL;
+    return nullptr;
   TLocation l = Lex.Location;
   if (Lex.Check(TK_Assign))
   {
@@ -996,7 +996,7 @@ VStatement* VParser::ParseStatement()
   {
   case TK_EOF:
     ParseError(Lex.Location, ERR_UNEXPECTED_EOF);
-    return NULL;
+    return nullptr;
 
   case TK_If:
   {
@@ -1358,7 +1358,7 @@ VExpression* VParser::ParseType()
   }
 
   default:
-    return NULL;
+    return nullptr;
   }
   unguard;
 }
@@ -1538,34 +1538,30 @@ void VParser::ParseDefaultProperties(VClass* InClass)
 //
 //==========================================================================
 
-void VParser::ParseStruct(VClass* InClass, bool IsVector)
+void VParser::ParseStruct (VClass* InClass, bool IsVector)
 {
   guard(VParser::ParseStruct);
+
   VName Name = Lex.Name;
   TLocation StrLoc = Lex.Location;
   if (Lex.Token != TK_Identifier) {
     ParseError(Lex.Location, "Struct name expected");
     Name = NAME_None;
-  }
-  else
-  {
+  } else {
     Lex.NextToken();
   }
 
   // new struct
-  VStruct* Struct = new VStruct(Name, InClass ? (VMemberBase*)InClass : (VMemberBase*)Package, StrLoc);
+  VStruct *Struct = new VStruct(Name, InClass ? (VMemberBase*)InClass : (VMemberBase*)Package, StrLoc);
   Struct->Defined = false;
   Struct->IsVector = IsVector;
-  Struct->Fields = NULL;
+  Struct->Fields = nullptr;
 
-  if (!IsVector && Lex.Check(TK_Colon))
-  {
-    if (Lex.Token != TK_Identifier)
-    {
+  if (!IsVector && Lex.Check(TK_Colon)) {
+    if (Lex.Token != TK_Identifier) {
       ParseError(Lex.Location, "Parent class name expected");
     }
-    else
-    {
+    else {
       Struct->ParentStructName = Lex.Name;
       Struct->ParentStructLoc = Lex.Location;
       Lex.NextToken();
@@ -1573,47 +1569,42 @@ void VParser::ParseStruct(VClass* InClass, bool IsVector)
   }
 
   Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
-  while (!Lex.Check(TK_RBrace))
-  {
+  while (!Lex.Check(TK_RBrace)) {
     vint32 Modifiers = TModifiers::Parse(Lex);
 
-    VExpression* Type = ParseType();
-    if (!Type)
-    {
+    VExpression *Type = ParseType();
+    if (!Type) {
       ParseError(Lex.Location, "Field type expected.");
       Lex.NextToken();
       continue;
     }
 
-    do
-    {
-      VExpression* FieldType = Type->CreateTypeExprCopy();
+    do {
+      VExpression *FieldType = Type->CreateTypeExprCopy();
       TLocation l = Lex.Location;
-      while (Lex.Check(TK_Asterisk))
-      {
+      while (Lex.Check(TK_Asterisk)) {
         FieldType = new VPointerType(FieldType, l);
         l = Lex.Location;
       }
 
       VName FieldName(NAME_None);
       TLocation FieldLoc = Lex.Location;
-      if (Lex.Token != TK_Identifier)
-      {
+      if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "Field name expected");
       }
-      else
-      {
+      else {
         FieldName = Lex.Name;
       }
       Lex.NextToken();
-      if (Lex.Check(TK_LBracket))
-      {
+      // array?
+      if (Lex.Check(TK_LBracket)) {
         TLocation SLoc = Lex.Location;
-        VExpression* e = ParseExpression();
+        VExpression *e = ParseExpression();
         Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
         FieldType = new VFixedArrayType(FieldType, e, SLoc);
       }
-      VField* fi = new VField(FieldName, Struct, FieldLoc);
+      // create field
+      VField *fi = new VField(FieldName, Struct, FieldLoc);
       fi->TypeExpr = FieldType;
       fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
         TModifiers::Native | TModifiers::Private |
@@ -1621,17 +1612,15 @@ void VParser::ParseStruct(VClass* InClass, bool IsVector)
       Struct->AddField(fi);
     } while (Lex.Check(TK_Comma));
     delete Type;
-    Type = NULL;
+    Type = nullptr;
     Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
   }
-  Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+  while (Lex.Check(TK_Semicolon)) {}
+  //Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
 
-  if (InClass)
-  {
+  if (InClass) {
     InClass->Structs.Append(Struct);
-  }
-  else
-  {
+  } else {
     Package->ParsedStructs.Append(Struct);
   }
   unguard;
@@ -1695,8 +1684,8 @@ void VParser::ParseStates(VClass* InClass)
   guard(VParser::ParseStates);
   Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
   int StateIdx = 0;
-  VState* PrevState = NULL;
-  VState* LoopStart = NULL;
+  VState* PrevState = nullptr;
+  VState* LoopStart = nullptr;
   int NewLabelsStart = InClass->StateLabelDefs.Num();
   while (!Lex.Check(TK_RBrace))
   {
@@ -1735,7 +1724,7 @@ void VParser::ParseStates(VClass* InClass)
         InClass->StateLabelDefs[i].GotoOffset = GotoOffset;
       }
       NewLabelsStart = InClass->StateLabelDefs.Num();
-      PrevState = NULL;
+      PrevState = nullptr;
       continue;
     }
 
@@ -1749,14 +1738,14 @@ void VParser::ParseStates(VClass* InClass)
       }
       if (PrevState)
       {
-        PrevState->NextState = NULL;
+        PrevState->NextState = nullptr;
       }
       for (int i = NewLabelsStart; i < InClass->StateLabelDefs.Num(); i++)
       {
-        InClass->StateLabelDefs[i].State = NULL;
+        InClass->StateLabelDefs[i].State = nullptr;
       }
       NewLabelsStart = InClass->StateLabelDefs.Num();
-      PrevState = NULL;
+      PrevState = nullptr;
       continue;
     }
 
@@ -1769,7 +1758,7 @@ void VParser::ParseStates(VClass* InClass)
         continue;
       }
       PrevState->NextState = PrevState;
-      PrevState = NULL;
+      PrevState = nullptr;
       continue;
     }
 
@@ -1782,7 +1771,7 @@ void VParser::ParseStates(VClass* InClass)
         continue;
       }
       PrevState->NextState = LoopStart;
-      PrevState = NULL;
+      PrevState = nullptr;
       continue;
     }
 
@@ -2033,7 +2022,7 @@ void VParser::ParseReplication(VClass* Class)
         VRepField& F = RI.RepFields.Alloc();
         F.Name = Lex.Name;
         F.Loc = Lex.Location;
-        F.Member = NULL;
+        F.Member = nullptr;
         Lex.NextToken();
       }
     }
@@ -2043,23 +2032,22 @@ void VParser::ParseReplication(VClass* Class)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VParser::ParseClass
 //
 //==========================================================================
-
-void VParser::ParseClass()
-{
+void VParser::ParseClass () {
   guard(VParser::ParseClass);
+
   VName ClassName = Lex.Name;
   TLocation ClassLoc = Lex.Location;
-  VClass* ExistingClass = NULL;
+  VClass *ExistingClass = nullptr;
 
   TLocation cstloc = Lex.Location;
 
-  if (Lex.Token != TK_Identifier)
-  {
+  if (Lex.Token != TK_Identifier) {
     ParseError(Lex.Location, "Class name expected");
     ClassName = NAME_None;
   }
@@ -2124,7 +2112,7 @@ void VParser::ParseClass()
 
     //  This class is not IN this package.
     Class->MemberType = MEMBER_DecorateClass;
-    Class->Outer = NULL;
+    Class->Outer = nullptr;
     Package->ParsedDecorateImportClasses.Append(Class);
 #if !defined(IN_VCC)
     VMemberBase::GDecorateClassImports.Append(Class);
@@ -2135,7 +2123,7 @@ void VParser::ParseClass()
   //  For engine package use native class objects.
   VClass* Class;
 #if !defined(IN_VCC)
-  Class = NULL;
+  Class = nullptr;
   if (Package->Name == NAME_engine)
   {
     Class = VClass::FindClass(*ClassName);
@@ -2254,7 +2242,7 @@ void VParser::ParseClass()
 
     if (Lex.Check(TK_Enum))
     {
-      VConstant* PrevValue = NULL;
+      VConstant* PrevValue = nullptr;
       Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
       do
       {
@@ -2563,7 +2551,7 @@ void VParser::ParseClass()
       Class->AddField(fi);
     } while (Lex.Check(TK_Comma));
     delete Type;
-    Type = NULL;
+    Type = nullptr;
     if (need_semicolon)
     {
       Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
@@ -2618,7 +2606,7 @@ void VParser::Parse()
     case TK_Enum:
     {
       Lex.NextToken();
-      VConstant* PrevValue = NULL;
+      VConstant* PrevValue = nullptr;
       Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
       do
       {
