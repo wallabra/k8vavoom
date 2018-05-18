@@ -138,16 +138,10 @@ public:
   // destructors
   virtual ~VObject ();
 
-#ifdef ZONE_DEBUG_NEW
-#undef new
-#endif
   void* operator new (size_t);
   void* operator new (size_t, const char *, int);
   void operator delete (void *);
   void operator delete (void *, const char *, int);
-#ifdef ZONE_DEBUG_NEW
-#define new ZONE_DEBUG_NEW
-#endif
 
   // VObject interface
   virtual void Register ();

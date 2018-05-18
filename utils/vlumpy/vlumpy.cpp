@@ -25,12 +25,15 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "zip.h"
 #include <time.h>
+
+#include "zip.h"
 #include "cmdlib.h"
 #include "wadlib.h"
 #include "scrlib.h"
 #include "imglib.h"
+
+#include "../../libs/core/core.h"
 
 using namespace VavoomUtils;
 

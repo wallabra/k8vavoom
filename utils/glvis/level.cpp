@@ -26,6 +26,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "glvisint.h"
+#include "../../libs/core/core.h"
 
 namespace VavoomUtils {
 

@@ -56,9 +56,6 @@
 #ifndef VAVOOM_CORE_LIB_WLIST
 #define VAVOOM_CORE_LIB_WLIST
 
-#ifdef ZONE_DEBUG_NEW
-#undef new
-#endif
 
 // taken from GZDoom
 template<class T> class TWeightedList {
@@ -164,9 +161,5 @@ template<class T> void TWeightedList<T>::ReplaceValues (T oldval, T newval) {
   }
 }
 
-
-#ifdef ZONE_DEBUG_NEW
-#define new ZONE_DEBUG_NEW
-#endif
 
 #endif

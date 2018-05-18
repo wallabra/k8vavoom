@@ -29,12 +29,6 @@
 #ifndef VAVOOM_CORE_LIB_HASH
 #define VAVOOM_CORE_LIB_HASH
 
-//#include "str.h"
-
-#ifdef ZONE_DEBUG_NEW
-#undef new
-#endif
-
 
 static inline unsigned int fnvHashBuf (const void *buf, unsigned int len) {
   // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
@@ -154,9 +148,5 @@ public:
   }
 };
 
-
-#ifdef ZONE_DEBUG_NEW
-#define new ZONE_DEBUG_NEW
-#endif
 
 #endif

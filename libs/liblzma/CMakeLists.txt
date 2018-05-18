@@ -1,4 +1,3 @@
-add_definitions(-DZONE_DEBUG=1)
 add_definitions(-DHAVE_INTTYPES_H)
 add_definitions(-DHAVE_STDINT_H)
 add_definitions(-DHAVE_LIMITS_H)

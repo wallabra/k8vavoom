@@ -27,10 +27,6 @@
 //**
 //**************************************************************************
 
-#ifdef ZONE_DEBUG_NEW
-#undef new
-#endif
-
 enum EArrayNew { E_ArrayNew };
 
 inline void* operator new(size_t, void* Ptr, EArrayNew, EArrayNew)
@@ -268,7 +264,3 @@ private:
 	int ArrSize;
 	T* ArrData;
 };
-
-#ifdef ZONE_DEBUG_NEW
-#define new ZONE_DEBUG_NEW
-#endif

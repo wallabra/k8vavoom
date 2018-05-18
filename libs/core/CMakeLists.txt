@@ -34,6 +34,5 @@ add_library(core STATIC
 	wlist.h
 	xml.cpp
 	xml.h
-	zone.cpp
 	zone.h
 )

@@ -95,10 +95,6 @@ VObject::~VObject () {
 }
 
 
-#ifdef ZONE_DEBUG_NEW
-#undef new
-#endif
-
 //==========================================================================
 //
 //  VObject::operator new
@@ -118,10 +114,6 @@ void *VObject::operator new (size_t, const char *, int) {
   check(GNewObject);
   return GNewObject;
 }
-
-#ifdef ZONE_DEBUG_NEW
-#define new ZONE_DEBUG_NEW
-#endif
 
 
 //==========================================================================
@@ -817,7 +809,7 @@ IMPLEMENT_FUNCTION(VObject, print) {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   GCon->Log(PF_FormatString());
 #else
-  fprintf(stdout, "%s\n", PF_FormatString());
+  fprintf(stdout, "%s\n", *PF_FormatString());
 #endif
 }
 
@@ -825,7 +817,7 @@ IMPLEMENT_FUNCTION(VObject, dprint) {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   GCon->Log(NAME_Dev, PF_FormatString());
 #else
-  fprintf(stderr, "%s\n", PF_FormatString());
+  fprintf(stderr, "%s\n", *PF_FormatString());
 #endif
 }
 
