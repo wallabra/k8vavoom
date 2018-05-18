@@ -106,12 +106,9 @@ VVector::~VVector()
 
 VExpression* VVector::DoResolve(VEmitContext& ec)
 {
-	if (op1)
-		op1 = op1->Resolve(ec);
-	if (op2)
-		op2 = op2->Resolve(ec);
-	if (op3)
-		op3 = op3->Resolve(ec);
+	if (op1) op1 = op1->ResolveFloat(ec);
+	if (op2) op2 = op2->ResolveFloat(ec);
+	if (op3) op3 = op3->ResolveFloat(ec);
 	if (!op1 || !op2 || !op3)
 	{
 		delete this;
