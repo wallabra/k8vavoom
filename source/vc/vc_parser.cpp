@@ -269,7 +269,6 @@ VExpression* VParser::ParseExpressionPriority0()
 		// third is optional
 		VExpression* op3;
 		if (Lex.Check(TK_Comma)) {
-			Lex.Expect(TK_Comma);
 			op3 = ParseExpressionPriority13();
 		} else {
 			op3 = new VFloatLiteral(0, l);
