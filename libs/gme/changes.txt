@@ -82,13 +82,13 @@ IX/IY+displacement mode.
 - Eliminated all warnings when compiling on gcc 4.0. The following
 generates no diagnostics:
 
-	gcc -S gme/*.cpp -o /dev/null -ansi -fno-gnu-keywords
-	-fno-nonansi-builtins -pedantic -W -Wabi -Wall -Wcast-align
-	-Wcast-qual -Wchar-subscripts -Wdisabled-optimization -Werror
-	-Winline -Wlong-long -Wmultichar -Winvalid-offsetof
-	-Wnon-virtual-dtor -Woverloaded-virtual -Wparentheses
-	-Wpointer-arith -Wredundant-decls -Wreorder -Wsign-compare
-	-Wsign-promo -Wunknown-pragmas -Wwrite-strings
+  gcc -S gme/*.cpp -o /dev/null -ansi -fno-gnu-keywords
+  -fno-nonansi-builtins -pedantic -W -Wabi -Wall -Wcast-align
+  -Wcast-qual -Wchar-subscripts -Wdisabled-optimization -Werror
+  -Winline -Wlong-long -Wmultichar -Winvalid-offsetof
+  -Wnon-virtual-dtor -Woverloaded-virtual -Wparentheses
+  -Wpointer-arith -Wredundant-decls -Wreorder -Wsign-compare
+  -Wsign-promo -Wunknown-pragmas -Wwrite-strings
 
 
 Game_Music_Emu 0.3.0
@@ -143,18 +143,18 @@ functions. This means the "no error" return value is the opposite of
 what it was before, which will break current code which checks the error
 return value:
 
-	// current code (broken)
-	if ( !buf.sample_rate( samples_per_sec ) )
-		out_of_memory();
-	
-	// quick-and-dirty fix (just remove the ! operation)
-	if ( buf.sample_rate( samples_per_sec ) )
-		out_of_memory();
-	
-	// proper fix
-	blargg_err_t error = buf.sample_rate( samples_per_sec );
-	if ( error )
-		report_error( error );
+  // current code (broken)
+  if ( !buf.sample_rate( samples_per_sec ) )
+    out_of_memory();
+
+  // quick-and-dirty fix (just remove the ! operation)
+  if ( buf.sample_rate( samples_per_sec ) )
+    out_of_memory();
+
+  // proper fix
+  blargg_err_t error = buf.sample_rate( samples_per_sec );
+  if ( error )
+    report_error( error );
 
 - Implemented workaround for MSVC++ 6 compiler limitations, allowing it
 to work on that compiler again

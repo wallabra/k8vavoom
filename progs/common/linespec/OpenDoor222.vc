@@ -27,19 +27,19 @@ class OpenDoor222 : DummyStrifeItem;
 
 //==========================================================================
 //
-//	TryPickup
+//  TryPickup
 //
 //==========================================================================
 
 bool TryPickup(EntityEx Toucher)
 {
-	Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 222, 16, 0, 0, 0, NULL, 0,
-		Toucher);
-	GoAwayAndDie();
-	return true;
+  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 222, 16, 0, 0, 0, NULL, 0,
+    Toucher);
+  GoAwayAndDie();
+  return true;
 }
 
 defaultproperties
 {
-	ConversationID = 302;
+  ConversationID = 302;
 }

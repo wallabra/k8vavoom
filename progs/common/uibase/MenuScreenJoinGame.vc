@@ -25,82 +25,82 @@
 
 class MenuScreenJoinGame:MenuScreen;
 
-MenuInputLine		JoinAt;
+MenuInputLine   JoinAt;
 
 //==========================================================================
 //
-//	CreateChoices
+//  CreateChoices
 //
 //==========================================================================
 
 void CreateChoices()
 {
-	MenuTextButton		Btn;
-	int					currentY;
+  MenuTextButton    Btn;
+  int         currentY;
 
-	currentY = ChoicesStartY;
+  currentY = ChoicesStartY;
 
-	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-	Btn.SetPos(ChoicesStartX, currentY);
-	Btn.Text = "Search for internet games...";
-	Btn.TextHAlign = hleft;
-	Btn.Activated = ActivateMasterSearch;
-	currentY += Btn.Height;
+  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetPos(ChoicesStartX, currentY);
+  Btn.Text = "Search for internet games...";
+  Btn.TextHAlign = hleft;
+  Btn.Activated = ActivateMasterSearch;
+  currentY += Btn.Height;
 
-	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-	Btn.SetPos(ChoicesStartX, currentY);
-	Btn.Text = "Search for LAN games...";
-	Btn.TextHAlign = hleft;
-	Btn.Activated = ActivateSearch;
-	currentY += Btn.Height;
+  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetPos(ChoicesStartX, currentY);
+  Btn.Text = "Search for LAN games...";
+  Btn.TextHAlign = hleft;
+  Btn.Activated = ActivateSearch;
+  currentY += Btn.Height;
 
-	JoinAt = MenuInputLine(NewChild(MenuInputLine));
-	JoinAt.SetPos(ChoicesStartX, currentY);
-	JoinAt.Text = "Join Game At";
-	JoinAt.ValueChanged = ChangedJoinAt;
-	currentY += JoinAt.Height;
+  JoinAt = MenuInputLine(NewChild(MenuInputLine));
+  JoinAt.SetPos(ChoicesStartX, currentY);
+  JoinAt.Text = "Join Game At";
+  JoinAt.ValueChanged = ChangedJoinAt;
+  currentY += JoinAt.Height;
 }
 
 //==========================================================================
 //
-//	ActivateMasterSearch
+//  ActivateMasterSearch
 //
 //==========================================================================
 
 void ActivateMasterSearch(Object Sender)
 {
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenMasterList));
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenMasterList));
 }
 
 //==========================================================================
 //
-//	ActivateSearch
+//  ActivateSearch
 //
 //==========================================================================
 
 void ActivateSearch(Object Sender)
 {
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenSList));
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenSList));
 }
 
 //==========================================================================
 //
-//	ChangedJoinAt
+//  ChangedJoinAt
 //
 //==========================================================================
 
 void ChangedJoinAt(Object Sender)
 {
-	if (JoinAt.Value)
-	{
-		CmdBuf_AddText("Connect %s\n", JoinAt.Value);
-	}
+  if (JoinAt.Value)
+  {
+    CmdBuf_AddText("Connect %s\n", JoinAt.Value);
+  }
 }
 
 defaultproperties
 {
-	ChoicesStartX = 64;
-	ChoicesStartY = 40;
-	SelectorType = MenuSelector_SmallLeft;
-	Title = "JOIN GAME";
+  ChoicesStartX = 64;
+  ChoicesStartY = 40;
+  SelectorType = MenuSelector_SmallLeft;
+  Title = "JOIN GAME";
 }

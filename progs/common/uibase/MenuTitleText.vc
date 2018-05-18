@@ -25,31 +25,31 @@
 
 class MenuTitleText : Widget;
 
-string			Text;
+string      Text;
 
 //==========================================================================
 //
-//	SetOrigin
+//  SetOrigin
 //
 //==========================================================================
 
 void SetOrigin(int OrgX, int OrgY)
 {
-	SetFont('bigfont');
-	SetPos(OrgX - TextWidth(Text) / 2, OrgY - TextHeight(Text));
-	SetSize(TextWidth(Text), TextHeight(Text));
+  SetFont('bigfont');
+  SetPos(OrgX - TextWidth(Text) / 2, OrgY - TextHeight(Text));
+  SetSize(TextWidth(Text), TextHeight(Text));
 }
 
 //==========================================================================
 //
-//	OnDraw
+//  OnDraw
 //
 //==========================================================================
 
 void OnDraw()
 {
-	SetFont('bigfont');
-	DrawText(0, 0, Text);
+  SetFont('bigfont');
+  DrawText(0, 0, Text);
 }
 
 defaultproperties

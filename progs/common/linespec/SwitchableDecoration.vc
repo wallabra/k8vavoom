@@ -23,35 +23,35 @@
 //**
 //**************************************************************************
 //**
-//**	A decoration that can be activated and deactivated.
+//**  A decoration that can be activated and deactivated.
 //**
 //**************************************************************************
 
 class SwitchableDecoration : Actor
-	abstract;
+  abstract;
 
 //==========================================================================
 //
-//	Activate
+//  Activate
 //
 //==========================================================================
 
 bool Activate(EntityEx Activator)
 {
-	SetState(FindState('Active'));
-	return true;
+  SetState(FindState('Active'));
+  return true;
 }
 
 //==========================================================================
 //
-//	Deactivate
+//  Deactivate
 //
 //==========================================================================
 
 bool Deactivate(EntityEx Activator)
 {
-	SetState(FindState('Inactive'));
-	return true;
+  SetState(FindState('Inactive'));
+  return true;
 }
 
 defaultproperties

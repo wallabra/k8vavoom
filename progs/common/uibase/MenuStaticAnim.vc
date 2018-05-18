@@ -25,109 +25,109 @@
 
 class MenuStaticAnim : Widget;
 
-int			Speed;
-array<int>	Frames;
-float		Time;
+int     Speed;
+array<int>  Frames;
+float   Time;
 
-int			OffsetX;
-int			OffsetY;
+int     OffsetX;
+int     OffsetY;
 
-int			OriginX;
-int			OriginY;
+int     OriginX;
+int     OriginY;
 
-bool		bAutoSize;
-bool		bBackwards;
+bool    bAutoSize;
+bool    bBackwards;
 
 //==========================================================================
 //
-//	SetOrigin
+//  SetOrigin
 //
 //==========================================================================
 
 void SetOrigin(int OrgX, int OrgY)
 {
-	OriginX = OrgX;
-	OriginY = OrgY;
-	SetPos(OriginX - OffsetX, OriginY - OffsetY);
+  OriginX = OrgX;
+  OriginY = OrgY;
+  SetPos(OriginX - OffsetX, OriginY - OffsetY);
 }
 
 //==========================================================================
 //
-//	AddFrame
+//  AddFrame
 //
 //==========================================================================
 
 void AddFrame(name Name)
 {
-	int			Handle;
-	picinfo_t	Info;
+  int     Handle;
+  picinfo_t Info;
 
-	Handle = R_RegisterPic(Name);
-	Frames.Num = Frames.Num + 1;
-	Frames[Frames.Num - 1] = Handle;
-	if (bAutoSize)
-	{
-		R_GetPicInfo(Handle, &Info);
-		if (Frames.Num == 1)
-		{
-			//	Set up offsets and size for initial frame.
-			OffsetX = Info.xoffset;
-			OffsetY = Info.yoffset;
-			SetSize(Info.width, Info.height);
-		}
-		else
-		{
-			//	Adjust offsets and size.
-			if (OffsetX < Info.xoffset)
-			{
-				OffsetX = Info.xoffset;
-			}
-			if (OffsetY < Info.yoffset)
-			{
-				OffsetY = Info.yoffset;
-			}
-			if (Width - OffsetX < Info.width - Info.xoffset)
-			{
-				Width = Info.width - Info.xoffset + OffsetX;
-			}
-			if (Height - OffsetY < Info.height - Info.yoffset)
-			{
-				Height = Info.height - Info.yoffset + OffsetY;
-			}
-		}
-		SetPos(OriginX - OffsetX, OriginY - OffsetY);
-	}
+  Handle = R_RegisterPic(Name);
+  Frames.Num = Frames.Num + 1;
+  Frames[Frames.Num - 1] = Handle;
+  if (bAutoSize)
+  {
+    R_GetPicInfo(Handle, &Info);
+    if (Frames.Num == 1)
+    {
+      //  Set up offsets and size for initial frame.
+      OffsetX = Info.xoffset;
+      OffsetY = Info.yoffset;
+      SetSize(Info.width, Info.height);
+    }
+    else
+    {
+      //  Adjust offsets and size.
+      if (OffsetX < Info.xoffset)
+      {
+        OffsetX = Info.xoffset;
+      }
+      if (OffsetY < Info.yoffset)
+      {
+        OffsetY = Info.yoffset;
+      }
+      if (Width - OffsetX < Info.width - Info.xoffset)
+      {
+        Width = Info.width - Info.xoffset + OffsetX;
+      }
+      if (Height - OffsetY < Info.height - Info.yoffset)
+      {
+        Height = Info.height - Info.yoffset + OffsetY;
+      }
+    }
+    SetPos(OriginX - OffsetX, OriginY - OffsetY);
+  }
 }
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	Time += DeltaTime;
+  Time += DeltaTime;
 }
 
 //==========================================================================
 //
-//	OnDraw
+//  OnDraw
 //
 //==========================================================================
 
 void OnDraw()
 {
-	int frame = ftoi(Time * itof(Speed)) % Frames.Num;
-	if (bBackwards)
-	{
-		frame = Frames.Num - frame - 1;
-	}
-	DrawPic(OffsetX, OffsetY, Frames[frame]);
+  int frame = ftoi(Time * itof(Speed)) % Frames.Num;
+  if (bBackwards)
+  {
+    frame = Frames.Num - frame - 1;
+  }
+  DrawPic(OffsetX, OffsetY, Frames[frame]);
 }
 
 defaultproperties
 {
-	bTickEnabled = true;
-	bAutoSize = true;
+  bTickEnabled = true;
+  bAutoSize = true;
 }

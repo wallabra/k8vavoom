@@ -46,7 +46,7 @@
 void *UtilCalloc(int size)
 {
   void *ret = calloc(1, size);
-  
+
   if (!ret)
     FatalError("Out of memory (cannot allocate %d bytes)", size);
 
@@ -77,7 +77,7 @@ void UtilFree(void *data)
 {
   if (data == NULL)
     InternalError("Trying to free a NULL pointer");
-  
+
   free(data);
   data = NULL;
 }
@@ -96,7 +96,7 @@ char *UtilStrDup(const char *str)
 
   if (len > 0)
     memcpy(result, str, len);
-  
+
   result[len] = 0;
 
   return result;
@@ -119,7 +119,7 @@ char *UtilStrNDup(const char *str, int size)
 
   if (len > 0)
     memcpy(result, str, len);
-  
+
   result[len] = 0;
 
   return result;
@@ -132,7 +132,7 @@ char *UtilFormat(const char *str, ...)
    */
   char *buf = NULL;
   int buf_size = 128;
-  
+
   for (;;)
   {
     va_list args;
@@ -184,10 +184,10 @@ int UtilRoundPOW2(int x)
     return x;
 
   x--;
-  
+
   for (tmp=x / 2; tmp; tmp /= 2)
     x |= tmp;
-  
+
   return (x + 1);
 }
 
@@ -206,7 +206,7 @@ angle_g UtilComputeAngle(float_g dx, float_g dy)
 
   angle = atan2((double) dy, (double) dx) * 180.0 / M_PI;
 
-  if (angle < 0) 
+  if (angle < 0)
     angle += 360.0;
 
   return angle;
@@ -262,7 +262,7 @@ char *UtilTimeString(void)
       calend_time->tm_mday,
       calend_time->tm_hour, calend_time->tm_min,
       calend_time->tm_sec,  0);
-#endif  
+#endif
 }
 
 //------------------------------------------------------------------------
@@ -292,4 +292,3 @@ void Adler32_Finish(uint32_g *crc)
 {
   /* nothing to do */
 }
-

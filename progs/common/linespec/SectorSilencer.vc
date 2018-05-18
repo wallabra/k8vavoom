@@ -24,35 +24,35 @@
 //**************************************************************************
 
 class SectorSilencer : Actor
-	__mobjinfo__(9082);
+  __mobjinfo__(9082);
 
 //==========================================================================
 //
-//	BeginPlay
+//  BeginPlay
 //
 //==========================================================================
 
 void BeginPlay()
 {
-	::BeginPlay();
-	Sector->bSilent = true;
+  ::BeginPlay();
+  Sector->bSilent = true;
 }
 
 //==========================================================================
 //
-//	Destroyed
+//  Destroyed
 //
 //==========================================================================
 
 void Destroyed()
 {
-	Sector->bSilent = false;
-	::Destroyed();
+  Sector->bSilent = false;
+  ::Destroyed();
 }
 
 defaultproperties
 {
-	bNoBlockmap = true;
-	bNoGravity = true;
-	RenderStyle = STYLE_None;
+  bNoBlockmap = true;
+  bNoGravity = true;
+  RenderStyle = STYLE_None;
 }

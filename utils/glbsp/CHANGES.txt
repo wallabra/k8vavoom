@@ -24,26 +24,26 @@ Changes in V2.24  (26th July 2007)
 
  - added TRICKS.txt document which describes various map tricks
    and how glBSP handles them.
- 
+
  - added new option "-windowfx" to enable the test for the
    One-Sided Window trick, which is now disabled by default.
    The test was made more robust by checking both sides of the
    linedef.  Most importantly, the seg added to the back side
    is now a REAL seg (not a MINISEG like before, as that caused
    many problems).
- 
+
  - new option in nodebuildinfo_t "skip_self_ref" which means no
    segs are created for self-referencing linedefs.  The default
    is FALSE (disabled).  When enabled, the engine needs to find
    self-referencing linedefs and render their middle textures
    with special code (e.g. treat them similar to sprites).
- 
+
  - improved directory layout, with main glbsp code in the 'src'
    directory.  Unfortunately this made all of the IDE Project
    files invalid, so they have been removed.  The existing
    Makefiles have been fixed and consolidated, so each type of
    target (lib/cmdline/gui) is handled in the same makefile.
- 
+
 
 Changes in V2.20  (14th September 2005)
 ---------------------------------------
@@ -187,11 +187,11 @@ Changes in V2.00  (25th September 2002)
 ---------------------------------------
 
  - fixed compilation problems under Digital Unix 4.0 (thanks to André
-   Majorel for the patch). 
+   Majorel for the patch).
 
  - fixed a problem running on big-endian CPUs (thanks to Jussi
    Pakkanen for testing on an IRIX 6.5 machine).
- 
+
  - made the endian checks run-time instead of compile-time, and added
    sanity checks on the type sizes.
 
@@ -200,13 +200,13 @@ Changes in V2.00  (25th September 2002)
    times faster than before.  It comes at a price though, the original
    nodes may not be as good as the ones GLBSP can make.  There is a
    new option "-fresh" to force GLBSP to build nodes from scratch.
- 
+
  - some more Hexen / ZDoom fixes, thanks to Janis Legzdinsh.
- 
+
  - now if any level fails to build properly (e.g. blockmap too big,
    or too many segs) then a large "ATTENTION" message is shown at the
    very end, showing which levels failed (perhaps all of them).
- 
+
  - glBSPX: new misc option "Fresh Partition Lines".
 
  - fixed (hopefully) some rare sectors that were marked as precious
@@ -217,7 +217,7 @@ Changes in V2.00  (25th September 2002)
 -  The "-forcenormal" option is now just "-normal", and has been
    elevated to General Option status.  Backwards compatibility has
    been kept.
- 
+
 
 Changes in V1.96  (1st January 2002)
 ------------------------------------
@@ -226,7 +226,7 @@ Changes in V1.96  (1st January 2002)
 
  - improved the preference dialog in glBSPX, with a new option to
    automatically replace missing extensions.
-   
+
  - a few changes to upgrade to FLTK version 1.1.0.  This means an
    improved file browser and the new radio/check buttons.
 
@@ -241,27 +241,27 @@ Changes in V1.96  (1st January 2002)
    functions.
 
  - made various glBSPX dialogs a bit more user friendly.
- 
+
 
 Changes in V1.95  (24th September 2001)
 ---------------------------------------
 
  - new GUI version using the FLTK toolkit.
- 
+
  - many fixes for Hexen wads, thanks to Janis Legzdinsh, including
    auto-detection of a hexen wad (don't need -hexen option).
 
  - level names (MAP01, E2M3, etc) are detected automatically now,
    allowing arbitrary names (e.g. RUINS, QD05, etc).
- 
+
  - improved wad.c to return error values instead of doing
    FatalError(), setting up the comms->message appropriately.
- 
+
  - removed 'display_setText' function from nodebuildfuncs API.
 
  - fixed the memory semantics for the glbsp API, with new functions
    GlbspStrDup() and GlbspFree().
- 
+
  - documented the nodebuildfuncs in glbsp.h.
 
  - improved the semantics of the GlbspCheckInfo() function, adding a
@@ -306,4 +306,3 @@ Changes in V1.8  (20th June 2000)
  - fixed some bugs with partner segs not being split properly.
 
  - fixed crashing bug when splitting very short segs.
-

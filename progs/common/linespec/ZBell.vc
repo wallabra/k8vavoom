@@ -24,99 +24,99 @@
 //**************************************************************************
 
 class ZBell : Actor
-	game(GAME_Hexen)
-	__mobjinfo__(8065);
+  game(GAME_Hexen)
+  __mobjinfo__(8065);
 
 //==========================================================================
 //
-//	A_BellReset1
+//  A_BellReset1
 //
 //==========================================================================
 
 final void A_BellReset1()
 {
-	bNoGravity = true;
-	Height *= 4.0;
+  bNoGravity = true;
+  Height *= 4.0;
 }
 
 //==========================================================================
 //
-//	Activate
+//  Activate
 //
 //==========================================================================
 
 bool Activate(EntityEx Activator)
 {
-	if (Health > 0)
-	{
-		Damage(none, none, 10);	// 'ring' the bell
-	}
-	return true;
+  if (Health > 0)
+  {
+    Damage(none, none, 10); // 'ring' the bell
+  }
+  return true;
 }
 
 //==========================================================================
 //
-//	A_BellReset2
+//  A_BellReset2
 //
 //==========================================================================
 
 final void A_BellReset2()
 {
-	bShootable = true;
-	bCorpse = false;
-	Health = 5;
+  bShootable = true;
+  bCorpse = false;
+  Health = 5;
 }
 
 states
 {
 Spawn:
-	BBLL F -1
-	Stop
+  BBLL F -1
+  Stop
 Death:
-	BBLL A 4 A_BellReset1
-	BBLL BC 4
-	BBLL D 5 A_Scream
-	BBLL CB 4
-	BBLL A 3
-	BBLL E 4
-	BBLL F 5
-	BBLL G 6 A_Scream
-	BBLL F 5
-	BBLL EA 4
-	BBLL BC 5
-	BBLL D 6 A_Scream
-	BBLL CB 5
-	BBLL A 4
-	BBLL EF 5
-	BBLL G 7 A_Scream
-	BBLL FEA 5
-	BBLL BC 6
-	BBLL D 7 A_Scream
-	BBLL CB 6
-	BBLL A 5
-	BBLL EF 6
-	BBLL G 7 A_Scream
-	BBLL FEABC 6
-	BBLL B 7
-	BBLL A 8
-	BBLL E 12
-	BBLL A 10
-	BBLL BA 12
-	BBLL E 14
-	BBLL A 1 A_BellReset2
-	Goto Spawn
+  BBLL A 4 A_BellReset1
+  BBLL BC 4
+  BBLL D 5 A_Scream
+  BBLL CB 4
+  BBLL A 3
+  BBLL E 4
+  BBLL F 5
+  BBLL G 6 A_Scream
+  BBLL F 5
+  BBLL EA 4
+  BBLL BC 5
+  BBLL D 6 A_Scream
+  BBLL CB 5
+  BBLL A 4
+  BBLL EF 5
+  BBLL G 7 A_Scream
+  BBLL FEA 5
+  BBLL BC 6
+  BBLL D 7 A_Scream
+  BBLL CB 6
+  BBLL A 5
+  BBLL EF 6
+  BBLL G 7 A_Scream
+  BBLL FEABC 6
+  BBLL B 7
+  BBLL A 8
+  BBLL E 12
+  BBLL A 10
+  BBLL BA 12
+  BBLL E 14
+  BBLL A 1 A_BellReset2
+  Goto Spawn
 }
 
 defaultproperties
 {
-	Health = 5;
-	Radius = 56.0;
-	Height = 120.0;
-	Mass = 99999.0;
-	bSolid = true;
-	bShootable = true;
-	bSpawnCeiling = true;
-	bNoGravity = true;
-	bNoBlood = true;
-	DeathSound = 'BellRing';
+  Health = 5;
+  Radius = 56.0;
+  Height = 120.0;
+  Mass = 99999.0;
+  bSolid = true;
+  bShootable = true;
+  bSpawnCeiling = true;
+  bNoGravity = true;
+  bNoBlood = true;
+  DeathSound = 'BellRing';
 }

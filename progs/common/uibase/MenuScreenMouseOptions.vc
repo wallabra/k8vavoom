@@ -27,160 +27,160 @@ class MenuScreenMouseOptions : MenuScreen;
 
 //==========================================================================
 //
-//	CreateChoices
+//  CreateChoices
 //
 //==========================================================================
 
 void CreateChoices()
 {
-	MenuChoiceSlider	Slider;
-	MenuChoiceEnum		Enum;
-	int					currentY;
+  MenuChoiceSlider  Slider;
+  MenuChoiceEnum    Enum;
+  int         currentY;
 
-	currentY = ChoicesStartY;
+  currentY = ChoicesStartY;
 
-	Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
-	Slider.SetOrigin(ChoicesStartX, currentY);
-	Slider.Text = "Mouse X sensitivity";
-	Slider.ValueDelta = 0.25;
-	Slider.MaxValue = 10.0;
-	Slider.SetInitialValue(GetCvarF('mouse_x_sensitivity'));
-	Slider.ValueChanging = ChangeMouseXSens;
-	currentY += Slider.Height;
+  Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
+  Slider.SetOrigin(ChoicesStartX, currentY);
+  Slider.Text = "Mouse X sensitivity";
+  Slider.ValueDelta = 0.25;
+  Slider.MaxValue = 10.0;
+  Slider.SetInitialValue(GetCvarF('mouse_x_sensitivity'));
+  Slider.ValueChanging = ChangeMouseXSens;
+  currentY += Slider.Height;
 
-	Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
-	Slider.SetOrigin(ChoicesStartX, currentY);
-	Slider.Text = "Mouse Y sensitivity";
-	Slider.ValueDelta = 0.25;
-	Slider.MaxValue = 10.0;
-	Slider.SetInitialValue(GetCvarF('mouse_y_sensitivity'));
-	Slider.ValueChanging = ChangeMouseYSens;
-	currentY += Slider.Height;
+  Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
+  Slider.SetOrigin(ChoicesStartX, currentY);
+  Slider.Text = "Mouse Y sensitivity";
+  Slider.ValueDelta = 0.25;
+  Slider.MaxValue = 10.0;
+  Slider.SetInitialValue(GetCvarF('mouse_y_sensitivity'));
+  Slider.ValueChanging = ChangeMouseYSens;
+  currentY += Slider.Height;
 
-	Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-	Enum.SetOrigin(ChoicesStartX, currentY);
-	Enum.Text = "Mouse look";
-	Enum.SetInitialValue(GetCvar('mouse_look'));
-	Enum.ValueChanging = ChangeMouseLook;
-	currentY += Enum.Height;
+  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
+  Enum.SetOrigin(ChoicesStartX, currentY);
+  Enum.Text = "Mouse look";
+  Enum.SetInitialValue(GetCvar('mouse_look'));
+  Enum.ValueChanging = ChangeMouseLook;
+  currentY += Enum.Height;
 
-	Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-	Enum.SetOrigin(ChoicesStartX, currentY);
-	Enum.Text = "Invert mouse";
-	Enum.SetInitialValue(GetCvar('invert_mouse'));
-	Enum.ValueChanging = ChangeInvertMouse;
-	currentY += Enum.Height;
+  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
+  Enum.SetOrigin(ChoicesStartX, currentY);
+  Enum.Text = "Invert mouse";
+  Enum.SetInitialValue(GetCvar('invert_mouse'));
+  Enum.ValueChanging = ChangeInvertMouse;
+  currentY += Enum.Height;
 
-	Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-	Enum.SetOrigin(ChoicesStartX, currentY);
-	Enum.Text = "Look spring";
-	Enum.SetInitialValue(GetCvar('lookspring'));
-	Enum.ValueChanging = ChangeLookSpring;
-	currentY += Enum.Height;
+  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
+  Enum.SetOrigin(ChoicesStartX, currentY);
+  Enum.Text = "Look spring";
+  Enum.SetInitialValue(GetCvar('lookspring'));
+  Enum.ValueChanging = ChangeLookSpring;
+  currentY += Enum.Height;
 
-	Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-	Enum.SetOrigin(ChoicesStartX, currentY);
-	Enum.Text = "Look strafe";
-	Enum.SetInitialValue(GetCvar('lookstrafe'));
-	Enum.ValueChanging = ChangeLookStrafe;
-	currentY += Enum.Height;
+  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
+  Enum.SetOrigin(ChoicesStartX, currentY);
+  Enum.Text = "Look strafe";
+  Enum.SetInitialValue(GetCvar('lookstrafe'));
+  Enum.ValueChanging = ChangeLookStrafe;
+  currentY += Enum.Height;
 
-	Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-	Enum.SetOrigin(ChoicesStartX, currentY);
-	Enum.Text = "Allow mouse in UI";
-	Enum.SetInitialValue(GetCvar('ui_mouse'));
-	Enum.ValueChanging = ChangeUIMouse;
-	currentY += Enum.Height;
+  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
+  Enum.SetOrigin(ChoicesStartX, currentY);
+  Enum.Text = "Allow mouse in UI";
+  Enum.SetInitialValue(GetCvar('ui_mouse'));
+  Enum.ValueChanging = ChangeUIMouse;
+  currentY += Enum.Height;
 }
 
 //==========================================================================
 //
-//	ChangeMouseXSens
+//  ChangeMouseXSens
 //
 //==========================================================================
 
 bool ChangeMouseXSens(Object Sender, float newValue)
 {
-	SetCvarF('mouse_x_sensitivity', newValue);
-	return true;
+  SetCvarF('mouse_x_sensitivity', newValue);
+  return true;
 }
 
 //==========================================================================
 //
-//	ChangeMouseYSens
+//  ChangeMouseYSens
 //
 //==========================================================================
 
 bool ChangeMouseYSens(Object Sender, float newValue)
 {
-	SetCvarF('mouse_y_sensitivity', newValue);
-	return true;
+  SetCvarF('mouse_y_sensitivity', newValue);
+  return true;
 }
 
 //==========================================================================
 //
-//	ChangeMouseLook
+//  ChangeMouseLook
 //
 //==========================================================================
 
 bool ChangeMouseLook(Object Sender, int newValue)
 {
-	SetCvar('mouse_look', newValue);
-	return true;
+  SetCvar('mouse_look', newValue);
+  return true;
 }
 
 //==========================================================================
 //
-//	ChangeInvertMouse
+//  ChangeInvertMouse
 //
 //==========================================================================
 
 bool ChangeInvertMouse(Object Sender, int newValue)
 {
-	SetCvar('invert_mouse', newValue);
-	return true;
+  SetCvar('invert_mouse', newValue);
+  return true;
 }
 
 //==========================================================================
 //
-//	ChangeLookSpring
+//  ChangeLookSpring
 //
 //==========================================================================
 
 bool ChangeLookSpring(Object Sender, int newValue)
 {
-	SetCvar('lookspring', newValue);
-	return true;
+  SetCvar('lookspring', newValue);
+  return true;
 }
 
 //==========================================================================
 //
-//	ChangeLookStrafe
+//  ChangeLookStrafe
 //
 //==========================================================================
 
 bool ChangeLookStrafe(Object Sender, int newValue)
 {
-	SetCvar('lookstrafe', newValue);
-	return true;
+  SetCvar('lookstrafe', newValue);
+  return true;
 }
 
 //==========================================================================
 //
-//	ChangeUIMouse
+//  ChangeUIMouse
 //
 //==========================================================================
 
 bool ChangeUIMouse(Object Sender, int newValue)
 {
-	SetCvar('ui_mouse', newValue);
-	return true;
+  SetCvar('ui_mouse', newValue);
+  return true;
 }
 
 defaultproperties
 {
-	ChoicesStartX = 160;
-	ChoicesStartY = 32;
-	SelectorType = MenuSelector_SmallRight;
-	Title = "MOUSE OPTIONS";
+  ChoicesStartX = 160;
+  ChoicesStartY = 32;
+  SelectorType = MenuSelector_SmallRight;
+  Title = "MOUSE OPTIONS";
 }

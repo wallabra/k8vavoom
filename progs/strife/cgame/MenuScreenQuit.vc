@@ -25,58 +25,58 @@
 
 class MenuScreenQuit : MenuScreen;
 
-MenuStaticBitmap	Page;
-name				QuitSound;
+MenuStaticBitmap  Page;
+name        QuitSound;
 
 name TeaserQuitSounds[5];
 name QuitSounds[8];
 
 void CreateChoices()
 {
-	::CreateChoices();
-	Page = NewChild(MenuStaticBitmap);
-	Page.SetPic('panel7');
+  ::CreateChoices();
+  Page = NewChild(MenuStaticBitmap);
+  Page.SetPic('panel7');
 
-	if (!WadLumpPresent('map01'))
-		QuitSound = TeaserQuitSounds[P_Random() % 5];
-	else
-		QuitSound = QuitSounds[P_Random() % 8];
-	StopLocalSounds();
-	LocalSound(QuitSound);
-	CmdBuf_AddText("music play d_fast\n");
+  if (!WadLumpPresent('map01'))
+    QuitSound = TeaserQuitSounds[P_Random() % 5];
+  else
+    QuitSound = QuitSounds[P_Random() % 8];
+  StopLocalSounds();
+  LocalSound(QuitSound);
+  CmdBuf_AddText("music play d_fast\n");
 }
 
 bool OnKeyDown(int key)
 {
-	return true;
+  return true;
 }
 
 void Tick(float DeltaTime)
 {
-	if (!IsLocalSoundPlaying(QuitSound))
-	{
-		CmdBuf_AddText("Quit\n");
-	}
+  if (!IsLocalSoundPlaying(QuitSound))
+  {
+    CmdBuf_AddText("Quit\n");
+  }
 }
 
 defaultproperties
 {
-	X = 0;
-	Y = 0;
-	ScaleX = 2.0;
-	ScaleY = 2.4;
-	bTickEnabled = true;
-	TeaserQuitSounds[0] = 'svox/voc100';
-	TeaserQuitSounds[1] = 'svox/voc101';
-	TeaserQuitSounds[2] = 'svox/voc102';
-	TeaserQuitSounds[3] = 'svox/voc103';
-	TeaserQuitSounds[4] = 'svox/voc104';
-	QuitSounds[0] = 'svox/qfmrm1';
-	QuitSounds[1] = 'svox/qfmrm2';
-	QuitSounds[2] = 'svox/qfmrm3';
-	QuitSounds[3] = 'svox/qfmrm4';
-	QuitSounds[4] = 'svox/qfmrm5';
-	QuitSounds[5] = 'svox/qfmrm6';
-	QuitSounds[6] = 'svox/qfmrm7';
-	QuitSounds[7] = 'svox/qfmrm8';
+  X = 0;
+  Y = 0;
+  ScaleX = 2.0;
+  ScaleY = 2.4;
+  bTickEnabled = true;
+  TeaserQuitSounds[0] = 'svox/voc100';
+  TeaserQuitSounds[1] = 'svox/voc101';
+  TeaserQuitSounds[2] = 'svox/voc102';
+  TeaserQuitSounds[3] = 'svox/voc103';
+  TeaserQuitSounds[4] = 'svox/voc104';
+  QuitSounds[0] = 'svox/qfmrm1';
+  QuitSounds[1] = 'svox/qfmrm2';
+  QuitSounds[2] = 'svox/qfmrm3';
+  QuitSounds[3] = 'svox/qfmrm4';
+  QuitSounds[4] = 'svox/qfmrm5';
+  QuitSounds[5] = 'svox/qfmrm6';
+  QuitSounds[6] = 'svox/qfmrm7';
+  QuitSounds[7] = 'svox/qfmrm8';
 }

@@ -2,9 +2,9 @@
 
 terrain Lava
 {
-	splash			Lava
-	footclip		10
-	liquid
+  splash      Lava
+  footclip    10
+  liquid
 }
 
 // Floor -> terrain mappings -----------------------------------------------

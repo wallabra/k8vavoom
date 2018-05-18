@@ -24,45 +24,45 @@
 //**************************************************************************
 
 class ArtiDarkServant : Inventory
-	game(GAME_Hexen)
-	__mobjinfo__(86)
-	__scriptid__(16);
+  game(GAME_Hexen)
+  __mobjinfo__(86)
+  __scriptid__(16);
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	EntityEx mo;
+  EntityEx mo;
 
-	mo = EntityEx(Owner).SpawnPlayerMissile(SummoningDoll);
-	if (mo)
-	{
-		mo.Target = EntityEx(Owner);
-		mo.Tracer = EntityEx(Owner);
-		mo.Velocity.z = 5.0 * 35.0;
-	}
-	return true;
+  mo = EntityEx(Owner).SpawnPlayerMissile(SummoningDoll);
+  if (mo)
+  {
+    mo.Target = EntityEx(Owner);
+    mo.Tracer = EntityEx(Owner);
+    mo.Velocity.z = 5.0 * 35.0;
+  }
+  return true;
 }
 
 states
 {
 Spawn:
-	SUMN A 350
-	Loop
+  SUMN A 350
+  Loop
 }
 
 defaultproperties
 {
-	MaxAmount = DefMaxAmount;
-	PickupSound = 'misc/p_pkup';
-	PickupMessage = "$txt_artisummon";
-	RespawnTime = 120.0 + 30.0 / 35.0;
-	IconName = 'artisumn';
-	bFloatBob = true;
-	PickupFlashType = PickupFlash;
-	bInvBar = true;
+  MaxAmount = DefMaxAmount;
+  PickupSound = 'misc/p_pkup';
+  PickupMessage = "$txt_artisummon";
+  RespawnTime = 120.0 + 30.0 / 35.0;
+  IconName = 'artisumn';
+  bFloatBob = true;
+  PickupFlashType = PickupFlash;
+  bInvBar = true;
 }

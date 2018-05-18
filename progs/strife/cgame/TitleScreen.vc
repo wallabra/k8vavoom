@@ -43,74 +43,74 @@ int page_pic;
 
 void AdvanceDemo()
 {
-	if (StartTitleMap())
-	{
-		return;
-	}
+  if (StartTitleMap())
+  {
+    return;
+  }
 
-	demosequence++;
-	demosequence %= 10;
+  demosequence++;
+  demosequence %= 10;
 
-	switch (demosequence)
-	{
-	case 0:
-		pagetime = 12.0;
-		page_pic = R_RegisterPic('titlepic');
-		CmdBuf_AddText("music play d_logo");
-		break;
+  switch (demosequence)
+  {
+  case 0:
+    pagetime = 12.0;
+    page_pic = R_RegisterPic('titlepic');
+    CmdBuf_AddText("music play d_logo");
+    break;
 
-	case 1:
-		pagetime = 5.0;
-		page_pic = R_RegisterPic('rgelogo');
-		LocalSound('crusader/active');
-		break;
+  case 1:
+    pagetime = 5.0;
+    page_pic = R_RegisterPic('rgelogo');
+    LocalSound('crusader/active');
+    break;
 
-	case 2:
-		pagetime = 7.0;
-		page_pic = R_RegisterPic('panel1');
-		CmdBuf_AddText("music play d_intro");
-		LocalSound('svox/pro1');
-		break;
+  case 2:
+    pagetime = 7.0;
+    page_pic = R_RegisterPic('panel1');
+    CmdBuf_AddText("music play d_intro");
+    LocalSound('svox/pro1');
+    break;
 
-	case 3:
-		pagetime = 9.0;
-		page_pic = R_RegisterPic('panel2');
-		LocalSound('svox/pro2');
-		break;
+  case 3:
+    pagetime = 9.0;
+    page_pic = R_RegisterPic('panel2');
+    LocalSound('svox/pro2');
+    break;
 
-	case 4:
-		pagetime = 12.0;
-		page_pic = R_RegisterPic('panel3');
-		LocalSound('svox/pro3');
-		break;
+  case 4:
+    pagetime = 12.0;
+    page_pic = R_RegisterPic('panel3');
+    LocalSound('svox/pro3');
+    break;
 
-	case 5:
-		pagetime = 11.0;
-		page_pic = R_RegisterPic('panel4');
-		LocalSound('svox/pro4');
-		break;
+  case 5:
+    pagetime = 11.0;
+    page_pic = R_RegisterPic('panel4');
+    LocalSound('svox/pro4');
+    break;
 
-	case 6:
-		pagetime = 10.0;
-		page_pic = R_RegisterPic('panel5');
-		LocalSound('svox/pro5');
-		break;
+  case 6:
+    pagetime = 10.0;
+    page_pic = R_RegisterPic('panel5');
+    LocalSound('svox/pro5');
+    break;
 
-	case 7:
-		pagetime = 16.0;
-		page_pic = R_RegisterPic('panel6');
-		LocalSound('svox/pro6');
-		break;
+  case 7:
+    pagetime = 16.0;
+    page_pic = R_RegisterPic('panel6');
+    LocalSound('svox/pro6');
+    break;
 
-	case 8:
-		CmdBuf_AddText("PlayDemo demo1\n");
-		break;
+  case 8:
+    CmdBuf_AddText("PlayDemo demo1\n");
+    break;
 
-	case 9:
-		pagetime = 6.0;
-		page_pic = R_RegisterPic('credit');
-		break;
-	}
+  case 9:
+    pagetime = 6.0;
+    page_pic = R_RegisterPic('credit');
+    break;
+  }
 }
 
 //==========================================================================
@@ -121,34 +121,34 @@ void AdvanceDemo()
 
 void ForceTitle()
 {
-	pagetime = 11.0;
-	page_pic = R_RegisterPic('titlepic');
+  pagetime = 11.0;
+  page_pic = R_RegisterPic('titlepic');
 }
 
 //==========================================================================
 //
-//	OnVisibilityChanged
+//  OnVisibilityChanged
 //
 //==========================================================================
 
 void OnVisibilityChanged(bool bNewVisibility)
 {
-	bTickEnabled = bNewVisibility;
+  bTickEnabled = bNewVisibility;
 }
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	pagetime -= DeltaTime;
-	if (demosequence == -1 || (/*!ClGame.MenuActive() &&*/ pagetime < 0.0))
-	{
-		AdvanceDemo();
-	}
+  pagetime -= DeltaTime;
+  if (demosequence == -1 || (/*!ClGame.MenuActive() &&*/ pagetime < 0.0))
+  {
+    AdvanceDemo();
+  }
 }
 
 //==========================================================================
@@ -159,7 +159,7 @@ void Tick(float DeltaTime)
 
 void OnDraw()
 {
-	DrawFullScreenPic(page_pic);
+  DrawFullScreenPic(page_pic);
 }
 
 //==========================================================================
@@ -170,9 +170,9 @@ void OnDraw()
 
 void OnHostEndGame()
 {
-	if (demosequence != -1)
-		AdvanceDemo();
-	ForceTitle();
+  if (demosequence != -1)
+    AdvanceDemo();
+  ForceTitle();
 }
 
 //==========================================================================
@@ -183,8 +183,8 @@ void OnHostEndGame()
 
 void OnHostError()
 {
-	demosequence = -1;
-	ForceTitle();
+  demosequence = -1;
+  ForceTitle();
 }
 
 //==========================================================================
@@ -195,14 +195,14 @@ void OnHostError()
 
 void StopDemoLoop()
 {
-	demosequence = -1;	// not in the demo loop now
+  demosequence = -1;  // not in the demo loop now
 }
 
 defaultproperties
 {
-	bTickEnabled = true;
-	Focusable = true;
-	Width = 320;
-	Height = 200;
-	demosequence = -1;	// -1 = don't play demos
+  bTickEnabled = true;
+  Focusable = true;
+  Width = 320;
+  Height = 200;
+  demosequence = -1;  // -1 = don't play demos
 }

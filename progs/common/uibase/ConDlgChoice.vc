@@ -29,12 +29,12 @@ int ImpulseNum;
 
 void ActivateEvent()
 {
-	CmdBuf_AddText("Impulse %d\n", ImpulseNum);
-	StopLocalSounds();
-	GetClGame().PopMenu();
+  CmdBuf_AddText("Impulse %d\n", ImpulseNum);
+  StopLocalSounds();
+  GetClGame().PopMenu();
 }
 
 defaultproperties
 {
-	TextHAlign = hleft;
+  TextHAlign = hleft;
 }

@@ -24,10 +24,10 @@
 //**************************************************************************
 
 class TeleportDest : Actor
-	__mobjinfo__(14);
+  __mobjinfo__(14);
 
 defaultproperties
 {
-	bNoSector = true;
-	bNoBlockmap = true;
+  bNoSector = true;
+  bNoBlockmap = true;
 }

@@ -29,49 +29,49 @@ class SorcBall2 : SorcBall;
 //
 //  A_CastSorcererSpell
 //
-//	Defensive
+//  Defensive
 //
 //============================================================================
 
 void A_CastSorcererSpell()
 {
-	Actor mo;
-	float z;
+  Actor mo;
+  float z;
 
-	// Put sorcerer into throw spell animation
-	if (Target.Health > 0)
-		Target.SetState(Target.FindState('Attack2'));
+  // Put sorcerer into throw spell animation
+  if (Target.Health > 0)
+    Target.SetState(Target.FindState('Attack2'));
 
-	z = Target.Origin.z - Target.FloorClip + SORC_DEFENSE_HEIGHT;
-	mo = Spawn(SorcFX2, vector(Origin.x, Origin.y, z));
-	Actor(Target).bInvulnerable = true;
-	Actor(Target).bReflective = true;
-	Target.Args[0] = SORC_DEFENSE_TIME;
-	if (mo)
-	{
-		mo.Target = Target;
-	}
+  z = Target.Origin.z - Target.FloorClip + SORC_DEFENSE_HEIGHT;
+  mo = Spawn(SorcFX2, vector(Origin.x, Origin.y, z));
+  Actor(Target).bInvulnerable = true;
+  Actor(Target).bReflective = true;
+  Target.Args[0] = SORC_DEFENSE_TIME;
+  if (mo)
+  {
+    mo.Target = Target;
+  }
 
-	Target.Args[3] = SORC_STOPPED;
+  Target.Args[3] = SORC_STOPPED;
 }
 
 states
 {
 Spawn:
-	SBMB ABCDEFGHIJKLMNOP 2 A_SorcBallOrbit
-	Loop
+  SBMB ABCDEFGHIJKLMNOP 2 A_SorcBallOrbit
+  Loop
 Pain:
-	SBMB A 5 A_SorcBallPop
-	SBMB B 2 A_BounceCheck
-	Wait
+  SBMB A 5 A_SorcBallPop
+  SBMB B 2 A_BounceCheck
+  Wait
 Death:
-	SBS3 D 5 A_Explode
-	SBS3 E 5
-	SBS3 FGH 6
-	Stop
+  SBS3 D 5 A_Explode
+  SBS3 E 5
+  SBS3 FGH 6
+  Stop
 }
 
 defaultproperties
 {
-	BallAngleOffset = 120.0;
+  BallAngleOffset = 120.0;
 }

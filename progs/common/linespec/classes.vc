@@ -27,27 +27,27 @@ import 'engine';
 
 enum
 {
-	CHAN_AUTO,
-	CHAN_VOICE,
-	CHAN_WEAPON,
-	CHAN_ITEM,
-	CHAN_BODY
+  CHAN_AUTO,
+  CHAN_VOICE,
+  CHAN_WEAPON,
+  CHAN_ITEM,
+  CHAN_BODY
 };
 
 enum
 {
-	CONTENTS_EMPTY,
-	CONTENTS_WATER,
-	CONTENTS_LAVA,
-	CONTENTS_NUKAGE,
-	CONTENTS_SLIME,
-	CONTENTS_HELLSLIME,
-	CONTENTS_BLOOD,
-	CONTENTS_SLUDGE,
-	CONTENTS_HAZARD,
-	CONTENTS_BOOMWATER,
+  CONTENTS_EMPTY,
+  CONTENTS_WATER,
+  CONTENTS_LAVA,
+  CONTENTS_NUKAGE,
+  CONTENTS_SLIME,
+  CONTENTS_HELLSLIME,
+  CONTENTS_BLOOD,
+  CONTENTS_SLUDGE,
+  CONTENTS_HAZARD,
+  CONTENTS_BOOMWATER,
 
-	CONTENTS_SOLID = -1
+  CONTENTS_SOLID = -1
 };
 
 #include "EntityEx.Head.vc"
@@ -352,7 +352,7 @@ class MapSpot : Actor decorate;
 class ItemFog : Actor decorate;
 class BloodySkull : PlayerChunk decorate;
 
-//	Doom classes
+//  Doom classes
 class BulletPuff : Actor decorate;
 class Clip : Ammo decorate;
 class Shell : Ammo decorate;

@@ -33,46 +33,46 @@ class StrifeLevelInfo : LineSpecialLevelInfo;
 
 name GetDefaultDoorSound(sector_t* Sector)
 {
-	int			i;
-	name		SeqName = DefaultDoorSound;
+  int     i;
+  name    SeqName = DefaultDoorSound;
 
-	//	Search the front top textures of 2-sided lines on the door sector
-	// for a door sound to use.
-	for (i = 0; i < Sector->linecount; i++)
-	{
-		if (!Sector->lines[i]->backsector)
-		{
-			continue;
-		}
+  //  Search the front top textures of 2-sided lines on the door sector
+  // for a door sound to use.
+  for (i = 0; i < Sector->linecount; i++)
+  {
+    if (!Sector->lines[i]->backsector)
+    {
+      continue;
+    }
 
-		string TexName = va("%n", GetTextureName(XLevel.Sides[
-			Sector->lines[i]->sidenum[0]].TopTexture));
-		if (StrStartsWith(TexName, "dors"))
-		{
-			SeqName = 'DoorStone';
-		}
-		else if (StrStartsWith(TexName, "dorml"))
-		{
-			SeqName = 'DoorLargeMetal';
-		}
-		else if (StrStartsWith(TexName, "dorwl"))
-		{
-			SeqName = 'DoorLargeWood';
-		}
-		else if (StrStartsWith(TexName, "dorw"))
-		{
-			SeqName = 'DoorSmallWood';
-		}
-	}
+    string TexName = va("%n", GetTextureName(XLevel.Sides[
+      Sector->lines[i]->sidenum[0]].TopTexture));
+    if (StrStartsWith(TexName, "dors"))
+    {
+      SeqName = 'DoorStone';
+    }
+    else if (StrStartsWith(TexName, "dorml"))
+    {
+      SeqName = 'DoorLargeMetal';
+    }
+    else if (StrStartsWith(TexName, "dorwl"))
+    {
+      SeqName = 'DoorLargeWood';
+    }
+    else if (StrStartsWith(TexName, "dorw"))
+    {
+      SeqName = 'DoorSmallWood';
+    }
+  }
 
-	return SeqName;
+  return SeqName;
 }
 
 defaultproperties
 {
-	DefaultDoorSound = 'DoorSmallMetal';
-	bTeleportNewMapBothSides = true;
-	bCheckStrifeStartSpots = true;
-	ExtPlayersBase = 5;
-	Lock103Message = "THIS AREA IS ONLY AVAILABLE IN THE RETAIL VERSION OF STRIFE";
+  DefaultDoorSound = 'DoorSmallMetal';
+  bTeleportNewMapBothSides = true;
+  bCheckStrifeStartSpots = true;
+  ExtPlayersBase = 5;
+  Lock103Message = "THIS AREA IS ONLY AVAILABLE IN THE RETAIL VERSION OF STRIFE";
 }

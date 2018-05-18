@@ -1,183 +1,183 @@
 //------------------------------------------------------------------------------
 actor Sorcerer1 7
 {
-	Game Heretic
-	SpawnID 142
-	Health 2000
-	Radius 28
-	Height 100
-	Mass 800
-	Speed 16
-	PainChance 56
-	Monster
-	+FloorClip
-	+Boss
-	+DontMorph
-	+NoRadiusDmg
-	+NoTarget
-	+NoIceDeath
-	+DontGib
-	SeeSound "dsparilserpent/sight"
-	ActiveSound "dsparilserpent/active"
-	AttackSound "dsparilserpent/attack"
-	PainSound "dsparilserpent/pain"
-	DeathSound "dsparilserpent/death"
-	Obituary "$ob_dsparil1"
-	HitObituary "$ob_dsparil1hit"
+  Game Heretic
+  SpawnID 142
+  Health 2000
+  Radius 28
+  Height 100
+  Mass 800
+  Speed 16
+  PainChance 56
+  Monster
+  +FloorClip
+  +Boss
+  +DontMorph
+  +NoRadiusDmg
+  +NoTarget
+  +NoIceDeath
+  +DontGib
+  SeeSound "dsparilserpent/sight"
+  ActiveSound "dsparilserpent/active"
+  AttackSound "dsparilserpent/attack"
+  PainSound "dsparilserpent/pain"
+  DeathSound "dsparilserpent/death"
+  Obituary "$ob_dsparil1"
+  HitObituary "$ob_dsparil1hit"
 
-	action native A_Sor1Chase();
-	action native A_Srcr1Attack();
-	action native A_Sor1Pain();
-	action native A_SorcererRise();
+  action native A_Sor1Chase();
+  action native A_Srcr1Attack();
+  action native A_Sor1Pain();
+  action native A_SorcererRise();
 
-	states
-	{
-	Spawn:
-		SRCR AB 10 A_Look
-		Loop
-	See:
-		SRCR ABCD 5 A_Sor1Chase
-		Loop
-	Missile:
-		SRCR Q 7 A_FaceTarget
-		SRCR R 6 A_FaceTarget
-		SRCR S 10 A_Srcr1Attack
-		Goto See
-	Missile2:
-		SRCR S 10 A_FaceTarget
-		SRCR Q 7 A_FaceTarget
-		SRCR R 6 A_FaceTarget
-		SRCR S 10 A_Srcr1Attack
-		Goto See
-	Pain:
-		SRCR Q 6 A_Sor1Pain
-		Goto See
-	Death:
-		SRCR E 7
-		SRCR F 7 A_Scream
-		SRCR G 7
-		SRCR HIJK 6
-		SRCR L 25 A_PlaySoundEx("dsparil/zap", "Body", 0, 1)
-		SRCR MN 5
-		SRCR O 4
-		SRCR L 20 A_PlaySoundEx("dsparil/zap", "Body", 0, 1)
-		SRCR MN 5
-		SRCR O 4
-		SRCR L 12
-		SRCR P -1 A_SorcererRise
-		Stop
-	}
+  states
+  {
+  Spawn:
+    SRCR AB 10 A_Look
+    Loop
+  See:
+    SRCR ABCD 5 A_Sor1Chase
+    Loop
+  Missile:
+    SRCR Q 7 A_FaceTarget
+    SRCR R 6 A_FaceTarget
+    SRCR S 10 A_Srcr1Attack
+    Goto See
+  Missile2:
+    SRCR S 10 A_FaceTarget
+    SRCR Q 7 A_FaceTarget
+    SRCR R 6 A_FaceTarget
+    SRCR S 10 A_Srcr1Attack
+    Goto See
+  Pain:
+    SRCR Q 6 A_Sor1Pain
+    Goto See
+  Death:
+    SRCR E 7
+    SRCR F 7 A_Scream
+    SRCR G 7
+    SRCR HIJK 6
+    SRCR L 25 A_PlaySoundEx("dsparil/zap", "Body", 0, 1)
+    SRCR MN 5
+    SRCR O 4
+    SRCR L 20 A_PlaySoundEx("dsparil/zap", "Body", 0, 1)
+    SRCR MN 5
+    SRCR O 4
+    SRCR L 12
+    SRCR P -1 A_SorcererRise
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SorcererFX1
 {
-	Game Heretic
-	SpawnID 144
-	Radius 10
-	Height 10
-	Speed 20
-	FastSpeed 28
-	Damage 10
-	RenderStyle Add
-	DamageType "Fire"
-	Projectile
-	-ActivatePCross
-	-ActivateImpact
-	states
-	{
-	Spawn:
-		FX14 ABC 6 Bright
-		Loop
-	Death:
-		FX14 DEFGH 5 Bright
-		Stop
-	}
+  Game Heretic
+  SpawnID 144
+  Radius 10
+  Height 10
+  Speed 20
+  FastSpeed 28
+  Damage 10
+  RenderStyle Add
+  DamageType "Fire"
+  Projectile
+  -ActivatePCross
+  -ActivateImpact
+  states
+  {
+  Spawn:
+    FX14 ABC 6 Bright
+    Loop
+  Death:
+    FX14 DEFGH 5 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Sorcerer2FX1
 {
-	Game Heretic
-	SpawnID 145
-	Radius 10
-	Height 6
-	Speed 20
-	FastSpeed 28
-	Damage 1
-	RenderStyle Add
-	Projectile
-	-ActivatePCross
-	-ActivateImpact
+  Game Heretic
+  SpawnID 145
+  Radius 10
+  Height 6
+  Speed 20
+  FastSpeed 28
+  Damage 1
+  RenderStyle Add
+  Projectile
+  -ActivatePCross
+  -ActivateImpact
 
-	action native A_BlueSpark();
+  action native A_BlueSpark();
 
-	states
-	{
-	Spawn:
-		FX16 ABC 3 Bright A_BlueSpark
-		Loop
-	Death:
-		FX16 G 5 Bright A_Explode(Random(80, 111))
-		FX16 HIJKL 5 Bright
-		Stop
-	}
+  states
+  {
+  Spawn:
+    FX16 ABC 3 Bright A_BlueSpark
+    Loop
+  Death:
+    FX16 G 5 Bright A_Explode(Random(80, 111))
+    FX16 HIJKL 5 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Sorcerer2FX2
 {
-	Game Heretic
-	SpawnID 146
-	Radius 10
-	Height 6
-	Speed 6
-	Damage 10
-	RenderStyle Add
-	Projectile
-	-ActivatePCross
-	-ActivateImpact
+  Game Heretic
+  SpawnID 146
+  Radius 10
+  Height 6
+  Speed 6
+  Damage 10
+  RenderStyle Add
+  Projectile
+  -ActivatePCross
+  -ActivateImpact
 
-	action native A_GenWizard();
+  action native A_GenWizard();
 
-	states
-	{
-	Spawn:
-		FX11 A 35 Bright
-		FX11 A 5 Bright A_GenWizard
-		FX11 B 5 Bright
-		Goto Spawn+1
-	Death:
-		FX11 CDEFG 5 Bright
-		Stop
-	}
+  states
+  {
+  Spawn:
+    FX11 A 35 Bright
+    FX11 A 5 Bright A_GenWizard
+    FX11 B 5 Bright
+    Goto Spawn+1
+  Death:
+    FX11 CDEFG 5 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Sorcerer2FXSpark
 {
-	RenderStyle Add
-	+NoBlockmap
-	+NoGravity
-	+NoTeleport
-	+CannotPush
-	states
-	{
-	Spawn:
-		FX16 DEF 12 Bright
-		Stop
-	}
+  RenderStyle Add
+  +NoBlockmap
+  +NoGravity
+  +NoTeleport
+  +CannotPush
+  states
+  {
+  Spawn:
+    FX16 DEF 12 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Sorcerer2Telefade
 {
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		SOR2 G 8
-		SOR2 HIJKL 6
-		Stop
-	}
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    SOR2 G 8
+    SOR2 HIJKL 6
+    Stop
+  }
 }

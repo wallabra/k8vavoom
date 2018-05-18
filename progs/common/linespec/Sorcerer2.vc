@@ -24,42 +24,42 @@
 //**************************************************************************
 
 class Sorcerer2 : Actor
-	game(GAME_Heretic)
-	__scriptid__(143);
+  game(GAME_Heretic)
+  __scriptid__(143);
 
-int			BossSpotCount;
-BossSpot	FirstBossSpot;
+int     BossSpotCount;
+BossSpot  FirstBossSpot;
 
 //==========================================================================
 //
-//	BeginPlay
+//  BeginPlay
 //
 //==========================================================================
 
 void BeginPlay()
 {
-	BossSpot		Prev;
-	BossSpot		Spot;
+  BossSpot    Prev;
+  BossSpot    Spot;
 
-	::BeginPlay();
+  ::BeginPlay();
 
-	BossSpotCount = 0;
-	FirstBossSpot = none;
-	Prev = none;
-	foreach AllThinkers(BossSpot, Spot)
-	{
-		if (FirstBossSpot)
-		{
-			Prev.NextSpot = Spot;
-			BossSpotCount++;
-		}
-		else
-		{
-			FirstBossSpot = Spot;
-			BossSpotCount++;
-		}
-		Prev = Spot;
-	}
+  BossSpotCount = 0;
+  FirstBossSpot = none;
+  Prev = none;
+  foreach AllThinkers(BossSpot, Spot)
+  {
+    if (FirstBossSpot)
+    {
+      Prev.NextSpot = Spot;
+      BossSpotCount++;
+    }
+    else
+    {
+      FirstBossSpot = Spot;
+      BossSpotCount++;
+    }
+    Prev = Spot;
+  }
 }
 
 //==========================================================================
@@ -70,7 +70,7 @@ void BeginPlay()
 
 final void A_SorRise()
 {
-	PlaySound('dsparil/rise', CHAN_VOICE, 1.0, ATTN_NONE);
+  PlaySound('dsparil/rise', CHAN_VOICE, 1.0, ATTN_NONE);
 }
 
 //==========================================================================
@@ -81,7 +81,7 @@ final void A_SorRise()
 
 final void A_SorSightSnd()
 {
-	PlaySound('dsparil/sight', CHAN_VOICE, 1.0, ATTN_NONE);
+  PlaySound('dsparil/sight', CHAN_VOICE, 1.0, ATTN_NONE);
 }
 
 //==========================================================================
@@ -92,54 +92,54 @@ final void A_SorSightSnd()
 
 final void DSparilTeleport()
 {
-	int			i;
-	TVec		PrevOrg;
-	TVec		dir;
-	BossSpot	Spot;
-	BossSpot	Initial;
-	Actor		fog;
+  int     i;
+  TVec    PrevOrg;
+  TVec    dir;
+  BossSpot  Spot;
+  BossSpot  Initial;
+  Actor   fog;
 
-	if (!BossSpotCount)
-	{
-		// No spots
-		return;
-	}
-	i = P_Random() % BossSpotCount;
-	for (Spot = FirstBossSpot; i > 0; i--)
-	{
-		Spot = Spot.NextSpot;
-	}
+  if (!BossSpotCount)
+  {
+    // No spots
+    return;
+  }
+  i = P_Random() % BossSpotCount;
+  for (Spot = FirstBossSpot; i > 0; i--)
+  {
+    Spot = Spot.NextSpot;
+  }
 
-	dir = Spot.Origin - Origin;
-	dir.z = 0.0;
-	Initial = Spot;
-	while (Length(dir) < 128.0);
-	{
-		Spot = Spot.NextSpot;
-		if (!Spot)
-		{
-			Spot = FirstBossSpot;
-		}
-		if (Spot == Initial)
-		{
-			//	Avoid infinite loop if all spots are too close.
-			return;
-		}
-		dir = Spot.Origin - Origin;
-		dir.z = 0.0;
-	}
+  dir = Spot.Origin - Origin;
+  dir.z = 0.0;
+  Initial = Spot;
+  while (Length(dir) < 128.0);
+  {
+    Spot = Spot.NextSpot;
+    if (!Spot)
+    {
+      Spot = FirstBossSpot;
+    }
+    if (Spot == Initial)
+    {
+      //  Avoid infinite loop if all spots are too close.
+      return;
+    }
+    dir = Spot.Origin - Origin;
+    dir.z = 0.0;
+  }
 
-	PrevOrg = Origin;
-	if (TeleportMove(Spot.Origin))
-	{
-		fog = Spawn(Sorcerer2Telefade, PrevOrg);
-		fog.PlaySound('misc/teleport', CHAN_VOICE);
-		SetState(FindState('Teleport'));
-		PlaySound('misc/teleport', CHAN_VOICE);
-		Origin.z = FloorZ;
-		Angles.yaw = Spot.Angles.yaw;
-		Velocity = vector(0.0, 0.0, 0.0);
-	}
+  PrevOrg = Origin;
+  if (TeleportMove(Spot.Origin))
+  {
+    fog = Spawn(Sorcerer2Telefade, PrevOrg);
+    fog.PlaySound('misc/teleport', CHAN_VOICE);
+    SetState(FindState('Teleport'));
+    PlaySound('misc/teleport', CHAN_VOICE);
+    Origin.z = FloorZ;
+    Angles.yaw = Spot.Angles.yaw;
+    Velocity = vector(0.0, 0.0, 0.0);
+  }
 }
 
 //==========================================================================
@@ -150,47 +150,47 @@ final void DSparilTeleport()
 
 final void A_Srcr2Decide()
 {
-	float chance;
+  float chance;
 
-	if (!BossSpotCount)
-	{
-		// No spots
-		return;
-	}
-	switch (Health / (default.Health / 8))
-	{
-	case 0:
-		chance = 0.75;
-		break;
-	case 1:
-		chance = 0.46875;
-		break;
-	case 2:
-		chance = 0.46875;
-		break;
-	case 3:
-		chance = 0.46875;
-		break;
-	case 4:
-		chance = 0.25;
-		break;
-	case 5:
-		chance = 0.25;
-		break;
-	case 6:
-		chance = 0.125;
-		break;
-	case 7:
-		chance = 0.0625;
-		break;
-	case 8:
-		chance = 0.0;
-		break;
-	}
-	if (Random() < chance)
-	{
-		DSparilTeleport();
-	}
+  if (!BossSpotCount)
+  {
+    // No spots
+    return;
+  }
+  switch (Health / (default.Health / 8))
+  {
+  case 0:
+    chance = 0.75;
+    break;
+  case 1:
+    chance = 0.46875;
+    break;
+  case 2:
+    chance = 0.46875;
+    break;
+  case 3:
+    chance = 0.46875;
+    break;
+  case 4:
+    chance = 0.25;
+    break;
+  case 5:
+    chance = 0.25;
+    break;
+  case 6:
+    chance = 0.125;
+    break;
+  case 7:
+    chance = 0.0625;
+    break;
+  case 8:
+    chance = 0.0;
+    break;
+  }
+  if (Random() < chance)
+  {
+    DSparilTeleport();
+  }
 }
 
 //==========================================================================
@@ -201,32 +201,32 @@ final void A_Srcr2Decide()
 
 final void A_Srcr2Attack()
 {
-	int chance;
+  int chance;
 
-	if (!Target)
-	{
-		return;
-	}
-	PlaySound(AttackSound, CHAN_AUTO, 1.0, ATTN_NONE);
-	if (CheckMeleeRange())
-	{
-		Target.Damage(self, self, HITDICE(20));
-		return;
-	}
-	chance = Health < default.Health / 2 ? 96 : 48;
-	if (P_Random() < chance)
-	{
-		// Wizard spawners
-		SpawnMissileAngles(Sorcerer2FX2,
-			AngleMod360(Angles.yaw - 45.0), -30.0);
-		SpawnMissileAngles(Sorcerer2FX2,
-			AngleMod360(Angles.yaw + 45.0), -30.0);
-	}
-	else
-	{
-		// Blue bolt
-		SpawnMissile(Target, Sorcerer2FX1);
-	}
+  if (!Target)
+  {
+    return;
+  }
+  PlaySound(AttackSound, CHAN_AUTO, 1.0, ATTN_NONE);
+  if (CheckMeleeRange())
+  {
+    Target.Damage(self, self, HITDICE(20));
+    return;
+  }
+  chance = Health < default.Health / 2 ? 96 : 48;
+  if (P_Random() < chance)
+  {
+    // Wizard spawners
+    SpawnMissileAngles(Sorcerer2FX2,
+      AngleMod360(Angles.yaw - 45.0), -30.0);
+    SpawnMissileAngles(Sorcerer2FX2,
+      AngleMod360(Angles.yaw + 45.0), -30.0);
+  }
+  else
+  {
+    // Blue bolt
+    SpawnMissile(Target, Sorcerer2FX1);
+  }
 }
 
 //==========================================================================
@@ -237,8 +237,8 @@ final void A_Srcr2Attack()
 
 final void A_Sor2DthInit()
 {
-	Special1 = 7;	// Animation loop counter
-	LineSpecialLevelInfo(Level).P_Massacre();	// Kill monsters early
+  Special1 = 7; // Animation loop counter
+  LineSpecialLevelInfo(Level).P_Massacre(); // Kill monsters early
 }
 
 //==========================================================================
@@ -249,7 +249,7 @@ final void A_Sor2DthInit()
 
 final void A_SorDSph()
 {
-	PlaySound('dsparil/scream', CHAN_VOICE, 1.0, ATTN_NONE);
+  PlaySound('dsparil/scream', CHAN_VOICE, 1.0, ATTN_NONE);
 }
 
 //==========================================================================
@@ -260,11 +260,11 @@ final void A_SorDSph()
 
 final void A_Sor2DthLoop()
 {
-	if (--Special1)
-	{
-		// Need to loop
-		SetState(FindState('DeathLoop'));
-	}
+  if (--Special1)
+  {
+    // Need to loop
+    SetState(FindState('DeathLoop'));
+  }
 }
 
 //==========================================================================
@@ -275,7 +275,7 @@ final void A_Sor2DthLoop()
 
 final void A_SorDExp()
 {
-	PlaySound('dsparil/explode', CHAN_BODY, 1.0, ATTN_NONE);
+  PlaySound('dsparil/explode', CHAN_BODY, 1.0, ATTN_NONE);
 }
 
 //==========================================================================
@@ -286,86 +286,86 @@ final void A_SorDExp()
 
 final void A_SorDBon()
 {
-	PlaySound('dsparil/bones', CHAN_BODY, 1.0, ATTN_NONE);
+  PlaySound('dsparil/bones', CHAN_BODY, 1.0, ATTN_NONE);
 }
 
 states
 {
 Rise:
-	SOR2 AB 4
-	SOR2 C 4 A_SorRise
-	SOR2 DEF 4
-	SOR2 G 12 A_SorSightSnd
-	Goto See
+  SOR2 AB 4
+  SOR2 C 4 A_SorRise
+  SOR2 DEF 4
+  SOR2 G 12 A_SorSightSnd
+  Goto See
 Spawn:
-	SOR2 MN 10 A_Look
-	Loop
+  SOR2 MN 10 A_Look
+  Loop
 See:
-	SOR2 MNOP 4 A_Chase
-	Loop
+  SOR2 MNOP 4 A_Chase
+  Loop
 Pain:
-	SOR2 Q 3
-	SOR2 Q 6 A_Pain
-	Goto See
+  SOR2 Q 3
+  SOR2 Q 6 A_Pain
+  Goto See
 Missile:
-	SOR2 R 9 A_Srcr2Decide
-	SOR2 S 9 A_FaceTarget
-	SOR2 T 20 A_Srcr2Attack
-	Goto See
+  SOR2 R 9 A_Srcr2Decide
+  SOR2 S 9 A_FaceTarget
+  SOR2 T 20 A_Srcr2Attack
+  Goto See
 Teleport:
-	SOR2 LKJIHG 6
-	Goto See
+  SOR2 LKJIHG 6
+  Goto See
 Death:
-	SDTH A 8 A_Sor2DthInit
-	SDTH B 8
-	SDTH C 8 A_SorDSph
+  SDTH A 8 A_Sor2DthInit
+  SDTH B 8
+  SDTH C 8 A_SorDSph
 DeathLoop:
-	SDTH D 7
-	SDTH E 7
-	SDTH F 7 A_Sor2DthLoop
-	SDTH G 6 A_SorDExp
-	SDTH H 6
-	SDTH I 18
-	SDTH J 6 A_NoBlocking
-	SDTH K 6 A_SorDBon
-	SDTH L 6
-	SDTH M 6
-	SDTH N 6
-	SDTH O -1 A_BossDeath
-	Stop
+  SDTH D 7
+  SDTH E 7
+  SDTH F 7 A_Sor2DthLoop
+  SDTH G 6 A_SorDExp
+  SDTH H 6
+  SDTH I 18
+  SDTH J 6 A_NoBlocking
+  SDTH K 6 A_SorDBon
+  SDTH L 6
+  SDTH M 6
+  SDTH N 6
+  SDTH O -1 A_BossDeath
+  Stop
 }
 
 defaultproperties
 {
-	Health = 3500;
-	Radius = 16.0;
-	Height = 70.0;
-	Mass = 300.0;
-	Speed = 14.0 * 35.0;
-	PainChance = 0.125;
-	bSolid = true;
-	bShootable = true;
-	bCountKill = true;
-	bMonster = true;
-	bFloorClip = true;
-	bActivateMCross = true;
-	bActivatePushWall = true;
-	bPassMobj = true;
-	bCanUseWalls = true;
-	bDropOff = true;
-	bBoss = true;
-	bNoMorph = true;
-	bNoRadiusDamage = true;
-	bNeverTarget = true;
-	bFullVolActive = true;
-	bNoIceDeath = true;
-	bBossDeath = true;
-	SightSound = 'dsparil/sight';
-	ActiveSound = 'dsparil/active';
-	AttackSound = 'dsparil/attack';
-	PainSound = 'dsparil/pain';
-	DLightColour = RGB(80, 164, 252);
-	DLightRadius = 118.0;
-	Obituary = "$ob_dsparil2";
-	HitObituary = "$ob_dsparil2hit";
+  Health = 3500;
+  Radius = 16.0;
+  Height = 70.0;
+  Mass = 300.0;
+  Speed = 14.0 * 35.0;
+  PainChance = 0.125;
+  bSolid = true;
+  bShootable = true;
+  bCountKill = true;
+  bMonster = true;
+  bFloorClip = true;
+  bActivateMCross = true;
+  bActivatePushWall = true;
+  bPassMobj = true;
+  bCanUseWalls = true;
+  bDropOff = true;
+  bBoss = true;
+  bNoMorph = true;
+  bNoRadiusDamage = true;
+  bNeverTarget = true;
+  bFullVolActive = true;
+  bNoIceDeath = true;
+  bBossDeath = true;
+  SightSound = 'dsparil/sight';
+  ActiveSound = 'dsparil/active';
+  AttackSound = 'dsparil/attack';
+  PainSound = 'dsparil/pain';
+  DLightColour = RGB(80, 164, 252);
+  DLightRadius = 118.0;
+  Obituary = "$ob_dsparil2";
+  HitObituary = "$ob_dsparil2hit";
 }

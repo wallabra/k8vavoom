@@ -1,557 +1,557 @@
 //------------------------------------------------------------------------------
 pointlight KlaxonWarningLight
 {
-	colour 1 0 0
-	radius 86
+  colour 1 0 0
+  radius 86
 }
 
 class KlaxonWarningLight
 {
-	frame KLAXC { light KlaxonWarningLight }
+  frame KLAXC { light KlaxonWarningLight }
 }
 
 //------------------------------------------------------------------------------
 pointlight Computer
 {
-	colour 0.35 0.6 0.2
-	radius 118
+  colour 0.35 0.6 0.2
+  radius 118
 }
 
 pointlight Computer_X1
 {
-	colour 0.35 0.6 0.2
-	radius 250
+  colour 0.35 0.6 0.2
+  radius 250
 }
 
 pointlight Computer_X2
 {
-	colour 0.35 0.6 0.2
-	radius 225
+  colour 0.35 0.6 0.2
+  radius 225
 }
 
 pointlight Computer_X3
 {
-	colour 0.35 0.6 0.2
-	radius 200
+  colour 0.35 0.6 0.2
+  radius 200
 }
 
 pointlight Computer_X4
 {
-	colour 0.35 0.6 0.2
-	radius 175
+  colour 0.35 0.6 0.2
+  radius 175
 }
 
 pointlight Computer_X5
 {
-	colour 0.35 0.6 0.2
-	radius 150
+  colour 0.35 0.6 0.2
+  radius 150
 }
 
 pointlight Computer_X6
 {
-	colour 0.35 0.6 0.2
-	radius 125
+  colour 0.35 0.6 0.2
+  radius 125
 }
 
 pointlight Computer_X7
 {
-	colour 0.35 0.6 0.2
-	radius 100
+  colour 0.35 0.6 0.2
+  radius 100
 }
 
 pointlight Computer_X8
 {
-	colour 0.35 0.6 0.2
-	radius 75
+  colour 0.35 0.6 0.2
+  radius 75
 }
 
 pointlight Computer_X9
 {
-	colour 0.35 0.6 0.2
-	radius 50
+  colour 0.35 0.6 0.2
+  radius 50
 }
 
 pointlight Computer_X10
 {
-	colour 0.35 0.6 0.2
-	radius 25
+  colour 0.35 0.6 0.2
+  radius 25
 }
 
 class Computer
 {
-	frame SECRA { light Computer }
-	frame SECRB { light Computer }
-	frame SECRC { light Computer }
-	frame SECRD { light Computer }
-	frame SECRE { light Computer_X1 }
-	frame SECRF { light Computer_X2 }
-	frame SECRG { light Computer_X3 }
-	frame SECRH { light Computer_X4 }
-	frame SECRI { light Computer_X5 }
-	frame SECRJ { light Computer_X6 }
-	frame SECRK { light Computer_X7 }
-	frame SECRL { light Computer_X8 }
-	frame SECRM { light Computer_X9 }
-	frame SECRN { light Computer_X10 }
+  frame SECRA { light Computer }
+  frame SECRB { light Computer }
+  frame SECRC { light Computer }
+  frame SECRD { light Computer }
+  frame SECRE { light Computer_X1 }
+  frame SECRF { light Computer_X2 }
+  frame SECRG { light Computer_X3 }
+  frame SECRH { light Computer_X4 }
+  frame SECRI { light Computer_X5 }
+  frame SECRJ { light Computer_X6 }
+  frame SECRK { light Computer_X7 }
+  frame SECRL { light Computer_X8 }
+  frame SECRM { light Computer_X9 }
+  frame SECRN { light Computer_X10 }
 }
 
 //------------------------------------------------------------------------------
 pointlight PowerCrystal_X1
 {
-	colour 1 1 1
-	radius 450
+  colour 1 1 1
+  radius 450
 }
 
 pointlight PowerCrystal_X2
 {
-	colour 1 1 1
-	radius 400
+  colour 1 1 1
+  radius 400
 }
 
 pointlight PowerCrystal_X3
 {
-	colour 1 1 1
-	radius 350
+  colour 1 1 1
+  radius 350
 }
 
 pointlight PowerCrystal_X4
 {
-	colour 1 1 1
-	radius 300
+  colour 1 1 1
+  radius 300
 }
 
 pointlight PowerCrystal_X5
 {
-	colour 1 1 1
-	radius 250
+  colour 1 1 1
+  radius 250
 }
 
 pointlight PowerCrystal_X6
 {
-	colour 1 1 1
-	radius 200
+  colour 1 1 1
+  radius 200
 }
 
 pointlight PowerCrystal_X7
 {
-	colour 1 1 1
-	radius 150
+  colour 1 1 1
+  radius 150
 }
 
 pointlight PowerCrystal_X8
 {
-	colour 1 1 1
-	radius 100
+  colour 1 1 1
+  radius 100
 }
 
 pointlight PowerCrystal_X9
 {
-	colour 1 1 1
-	radius 50
+  colour 1 1 1
+  radius 50
 }
 
 class PowerCrystal
 {
-	frame BOOMA { light PowerCrystal_X1 }
-	frame BOOMB { light PowerCrystal_X2 }
-	frame BOOMC { light PowerCrystal_X3 }
-	frame BOOMD { light PowerCrystal_X4 }
-	frame BOOME { light PowerCrystal_X5 }
-	frame BOOMF { light PowerCrystal_X6 }
-	frame BOOMG { light PowerCrystal_X7 }
-	frame BOOMH { light PowerCrystal_X8 }
-	frame BOOMI { light PowerCrystal_X9 }
+  frame BOOMA { light PowerCrystal_X1 }
+  frame BOOMB { light PowerCrystal_X2 }
+  frame BOOMC { light PowerCrystal_X3 }
+  frame BOOMD { light PowerCrystal_X4 }
+  frame BOOME { light PowerCrystal_X5 }
+  frame BOOMF { light PowerCrystal_X6 }
+  frame BOOMG { light PowerCrystal_X7 }
+  frame BOOMH { light PowerCrystal_X8 }
+  frame BOOMI { light PowerCrystal_X9 }
 }
 
 //------------------------------------------------------------------------------
 pointlight ExplosiveBarrel2_X1
 {
-	colour 1 1 0
-	radius 200
+  colour 1 1 0
+  radius 200
 }
 
 pointlight ExplosiveBarrel2_X2
 {
-	colour 1 1 0
-	radius 170
+  colour 1 1 0
+  radius 170
 }
 
 pointlight ExplosiveBarrel2_X3
 {
-	colour 1 1 0
-	radius 140
+  colour 1 1 0
+  radius 140
 }
 
 pointlight ExplosiveBarrel2_X4
 {
-	colour 1 1 0
-	radius 110
+  colour 1 1 0
+  radius 110
 }
 
 pointlight ExplosiveBarrel2_X5
 {
-	colour 1 1 0
-	radius 70
+  colour 1 1 0
+  radius 70
 }
 
 pointlight ExplosiveBarrel2_X6
 {
-	colour 1 1 0
-	radius 30
+  colour 1 1 0
+  radius 30
 }
 
 class ExplosiveBarrel2
 {
-	frame BARTF { light ExplosiveBarrel2_X1 particles ExplosiveBarrel }
-	frame BARTG { light ExplosiveBarrel2_X2 }
-	frame BARTH { light ExplosiveBarrel2_X3 }
-	frame BARTI { light ExplosiveBarrel2_X4 }
-	frame BARTJ { light ExplosiveBarrel2_X5 }
-	frame BARTK { light ExplosiveBarrel2_X6 }
+  frame BARTF { light ExplosiveBarrel2_X1 particles ExplosiveBarrel }
+  frame BARTG { light ExplosiveBarrel2_X2 }
+  frame BARTH { light ExplosiveBarrel2_X3 }
+  frame BARTI { light ExplosiveBarrel2_X4 }
+  frame BARTJ { light ExplosiveBarrel2_X5 }
+  frame BARTK { light ExplosiveBarrel2_X6 }
 }
 
 //------------------------------------------------------------------------------
 pointlight DegninOre_X1
 {
-	colour 1 1 0
-	radius 200
+  colour 1 1 0
+  radius 200
 }
 
 pointlight DegninOre_X2
 {
-	colour 1 1 0
-	radius 175
+  colour 1 1 0
+  radius 175
 }
 
 pointlight DegninOre_X3
 {
-	colour 1 1 0
-	radius 150
+  colour 1 1 0
+  radius 150
 }
 
 pointlight DegninOre_X4
 {
-	colour 1 1 0
-	radius 125
+  colour 1 1 0
+  radius 125
 }
 
 pointlight DegninOre_X5
 {
-	colour 1 1 0
-	radius 100
+  colour 1 1 0
+  radius 100
 }
 
 pointlight DegninOre_X6
 {
-	colour 1 1 0
-	radius 75
+  colour 1 1 0
+  radius 75
 }
 
 pointlight DegninOre_X7
 {
-	colour 1 1 0
-	radius 50
+  colour 1 1 0
+  radius 50
 }
 
 pointlight DegninOre_X8
 {
-	colour 1 1 0
-	radius 25
+  colour 1 1 0
+  radius 25
 }
 
 class DegninOre
 {
-	frame BNG3A { light DegninOre_X1 }
-	frame BNG3B { light DegninOre_X2 }
-	frame BNG3C { light DegninOre_X3 }
-	frame BNG3D { light DegninOre_X4 }
-	frame BNG3E { light DegninOre_X5 }
-	frame BNG3F { light DegninOre_X6 }
-	frame BNG3G { light DegninOre_X7 }
-	frame BNG3H { light DegninOre_X8 }
+  frame BNG3A { light DegninOre_X1 }
+  frame BNG3B { light DegninOre_X2 }
+  frame BNG3C { light DegninOre_X3 }
+  frame BNG3D { light DegninOre_X4 }
+  frame BNG3E { light DegninOre_X5 }
+  frame BNG3F { light DegninOre_X6 }
+  frame BNG3G { light DegninOre_X7 }
+  frame BNG3H { light DegninOre_X8 }
 }
 
 //------------------------------------------------------------------------------
 pointlight TechLampSilver
 {
-	colour 1 1 1
-	radius 200
-	offset 0 0 48
+  colour 1 1 1
+  radius 200
+  offset 0 0 48
 }
 
 class TechLampSilver
 {
-	static_light TechLampSilver
-	frame TECH { light TechLampSilver }
+  static_light TechLampSilver
+  frame TECH { light TechLampSilver }
 }
 
 //------------------------------------------------------------------------------
 pointlight TechLampBrass
 {
-	colour 0.7 0.7 0.5
-	radius 160
-	offset 0 0 32
+  colour 0.7 0.7 0.5
+  radius 160
+  offset 0 0 32
 }
 
 class TechLampBrass
 {
-	static_light TechLampBrass
-	frame TECH { light TechLampBrass }
+  static_light TechLampBrass
+  frame TECH { light TechLampBrass }
 }
 
 //------------------------------------------------------------------------------
 pointlight LightSilverFluorescent
 {
-	colour 1 1 1
-	radius 180
-	offset 0 0 32
+  colour 1 1 1
+  radius 180
+  offset 0 0 32
 }
 
 class LightSilverFluorescent
 {
-	static_light LightSilverFluorescent
-	frame LITS { light LightSilverFluorescent }
+  static_light LightSilverFluorescent
+  frame LITS { light LightSilverFluorescent }
 }
 
 //------------------------------------------------------------------------------
 pointlight LightBrownFluorescent
 {
-	colour 1 1 1
-	radius 160
-	offset 0 0 32
+  colour 1 1 1
+  radius 160
+  offset 0 0 32
 }
 
 class LightBrownFluorescent
 {
-	static_light LightBrownFluorescent
-	frame LITB { light LightBrownFluorescent }
+  static_light LightBrownFluorescent
+  frame LITB { light LightBrownFluorescent }
 }
 
 class LightGoldFluorescent
 {
-	static_light LightBrownFluorescent
-	frame LITG { light LightBrownFluorescent }
+  static_light LightBrownFluorescent
+  frame LITG { light LightBrownFluorescent }
 }
 
 //------------------------------------------------------------------------------
 pointlight SmallTorchLit
 {
-	colour 1 0.7 0.5
-	radius 160
-	offset 0 0 48
+  colour 1 0.7 0.5
+  radius 160
+  offset 0 0 48
 }
 
 class SmallTorchLit
 {
-	static_light SmallTorchLit
-	frame TRHL { light SmallTorchLit }
+  static_light SmallTorchLit
+  frame TRHL { light SmallTorchLit }
 }
 
 //------------------------------------------------------------------------------
 pointlight MediumTorch
 {
-	colour 1 0.7 0.5
-	radius 160
-	offset 0 0 64
+  colour 1 0.7 0.5
+  radius 160
+  offset 0 0 64
 }
 
 class MediumTorch
 {
-	static_light MediumTorch
-	frame LTRH { light MediumTorch }
+  static_light MediumTorch
+  frame LTRH { light MediumTorch }
 }
 
 //------------------------------------------------------------------------------
 pointlight LargeTorch
 {
-	colour 1 0.8 0.5
-	radius 160
-	offset 0 0 64
+  colour 1 0.8 0.5
+  radius 160
+  offset 0 0 64
 }
 
 class LargeTorch
 {
-	static_light LargeTorch
-	frame LMPC { light LargeTorch }
+  static_light LargeTorch
+  frame LMPC { light LargeTorch }
 }
 
 //------------------------------------------------------------------------------
 pointlight HugeTorch
 {
-	colour 1 0.7 0.5
-	radius 180
-	offset 0 0 80
+  colour 1 0.7 0.5
+  radius 180
+  offset 0 0 80
 }
 
 class HugeTorch
 {
-	static_light HugeTorch
-	frame LOGS { light HugeTorch }
+  static_light HugeTorch
+  frame LOGS { light HugeTorch }
 }
 
 //------------------------------------------------------------------------------
 pointlight CageLight
 {
-	colour 1 1 1
-	radius 180
+  colour 1 1 1
+  radius 180
 }
 
 class CageLight
 {
-	static_light CageLight
-	frame CAGE { light CageLight }
+  static_light CageLight
+  frame CAGE { light CageLight }
 }
 
 //------------------------------------------------------------------------------
 pointlight LightGlobe
 {
-	colour 1 1 1
-	radius 140
-	offset 0 0 64
+  colour 1 1 1
+  radius 140
+  offset 0 0 64
 }
 
 class LightGlobe
 {
-	static_light LightGlobe
-	frame LITE { light LightGlobe }
+  static_light LightGlobe
+  frame LITE { light LightGlobe }
 }
 
 //------------------------------------------------------------------------------
 pointlight OutsideLamp
 {
-	colour 1 1 1
-	radius 160
-	offset 0 0 70
+  colour 1 1 1
+  radius 160
+  offset 0 0 70
 }
 
 class OutsideLamp
 {
-	static_light OutsideLamp
-	frame LAMP { light OutsideLamp }
+  static_light OutsideLamp
+  frame LAMP { light OutsideLamp }
 }
 
 //------------------------------------------------------------------------------
 pointlight Candle
 {
-	colour 1 1 1
-	radius 64
-	offset 0 0 16
+  colour 1 1 1
+  radius 64
+  offset 0 0 16
 }
 
 class Candle
 {
-	static_light Candle
-	frame KNDL { light Candle }
+  static_light Candle
+  frame KNDL { light Candle }
 }
 
 //------------------------------------------------------------------------------
 pointlight StrifeCandelabra
 {
-	colour 1 1 1
-	radius 160
-	offset 0 0 64
+  colour 1 1 1
+  radius 160
+  offset 0 0 64
 }
 
 class StrifeCandelabra
 {
-	static_light StrifeCandelabra
-	frame CLBR { light StrifeCandelabra }
+  static_light StrifeCandelabra
+  frame CLBR { light StrifeCandelabra }
 }
 
 //------------------------------------------------------------------------------
 pointlight StrifeBurningBarrel
 {
-	colour 1 1 1
-	radius 160
-	offset 0 0 64
+  colour 1 1 1
+  radius 160
+  offset 0 0 64
 }
 
 class StrifeBurningBarrel
 {
-	static_light StrifeBurningBarrel
-	frame BBAR { light StrifeBurningBarrel }
+  static_light StrifeBurningBarrel
+  frame BBAR { light StrifeBurningBarrel }
 }
 
 //------------------------------------------------------------------------------
 pointlight BurningBrazier
 {
-	colour 1 1 1
-	radius 160
-	offset 0 0 32
+  colour 1 1 1
+  radius 160
+  offset 0 0 32
 }
 
 class BurningBrazier
 {
-	static_light BurningBrazier
-	frame BRAZ { light BurningBrazier }
+  static_light BurningBrazier
+  frame BRAZ { light BurningBrazier }
 }
 
 //------------------------------------------------------------------------------
 pointlight BurningBowl
 {
-	colour 1 1 1
-	radius 160
-	offset 0 0 16
+  colour 1 1 1
+  radius 160
+  offset 0 0 16
 }
 
 class BurningBowl
 {
-	static_light BurningBowl
-	frame BOWL { light BurningBowl }
+  static_light BurningBowl
+  frame BOWL { light BurningBowl }
 }
 
 //------------------------------------------------------------------------------
 pointlight PillarHugeTech
 {
-	colour 0.5 1 0.5
-	radius 185
-	offset 0 0 96
+  colour 0.5 1 0.5
+  radius 185
+  offset 0 0 96
 }
 
 class PillarHugeTech
 {
-	static_light PillarHugeTech
-	frame HUGE { light PillarHugeTech }
+  static_light PillarHugeTech
+  frame HUGE { light PillarHugeTech }
 }
 
 //------------------------------------------------------------------------------
 pointlight AlienSpiderLight
 {
-	colour 0 1 0
-	radius 160
-	offset 0 0 32
+  colour 0 1 0
+  radius 160
+  offset 0 0 32
 }
 
 class AlienSpiderLight
 {
-	static_light AlienSpiderLight
-	frame SPDL { light AlienSpiderLight }
+  static_light AlienSpiderLight
+  frame SPDL { light AlienSpiderLight }
 }
 
 //------------------------------------------------------------------------------
 pointlight TeleportSwirl
 {
-	colour 1 1 0.5
-	radius 200
-	offset 0 0 32
+  colour 1 1 0.5
+  radius 200
+  offset 0 0 32
 }
 
 class TeleportSwirl
 {
-	static_light TeleportSwirl
-	frame TELP { light TeleportSwirl }
+  static_light TeleportSwirl
+  frame TELP { light TeleportSwirl }
 }
 
 //------------------------------------------------------------------------------
 pointlight HeartsInTank
 {
-	colour 1 1 1
-	radius 128
-	offset 0 0 25
+  colour 1 1 1
+  radius 128
+  offset 0 0 25
 }
 
 class HeartsInTank
 {
-	static_light HeartsInTank
-	frame HERT { light HeartsInTank }
+  static_light HeartsInTank
+  frame HERT { light HeartsInTank }
 }

@@ -27,34 +27,34 @@ class PowerScanner : Powerup;
 
 //==========================================================================
 //
-//	InitEffect
+//  InitEffect
 //
 //==========================================================================
 
 void InitEffect()
 {
-	if (Owner.bIsPlayer)
-	{
-		Owner.Player.bAutomapShowThings = true;
-	}
+  if (Owner.bIsPlayer)
+  {
+    Owner.Player.bAutomapShowThings = true;
+  }
 }
 
 //==========================================================================
 //
-//	EndEffect
+//  EndEffect
 //
 //==========================================================================
 
 void EndEffect()
 {
-	if (Owner && Owner.bIsPlayer)
-	{
-		Owner.Player.bAutomapShowThings = false;
-	}
+  if (Owner && Owner.bIsPlayer)
+  {
+    Owner.Player.bAutomapShowThings = false;
+  }
 }
 
 defaultproperties
 {
-	EffectTime = 80.0;
-	bHubPower = true;
+  EffectTime = 80.0;
+  bHubPower = true;
 }

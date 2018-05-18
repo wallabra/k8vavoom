@@ -25,62 +25,62 @@
 
 class MenuStaticBitmap : Widget;
 
-int			Handle;
+int     Handle;
 
-int			OffsetX;
-int			OffsetY;
+int     OffsetX;
+int     OffsetY;
 
-int			OriginX;
-int			OriginY;
+int     OriginX;
+int     OriginY;
 
-bool		bAutoSize;
+bool    bAutoSize;
 
 //==========================================================================
 //
-//	SetOrigin
+//  SetOrigin
 //
 //==========================================================================
 
 void SetOrigin(int OrgX, int OrgY)
 {
-	OriginX = OrgX;
-	OriginY = OrgY;
-	SetPos(OriginX - OffsetX, OriginY - OffsetY);
+  OriginX = OrgX;
+  OriginY = OrgY;
+  SetPos(OriginX - OffsetX, OriginY - OffsetY);
 }
 
 //==========================================================================
 //
-//	SetPic
+//  SetPic
 //
 //==========================================================================
 
 void SetPic(name Name)
 {
-	picinfo_t	Info;
+  picinfo_t Info;
 
-	Handle = R_RegisterPic(Name);
-	if (bAutoSize)
-	{
-		R_GetPicInfo(Handle, &Info);
-		OffsetX = Info.xoffset;
-		OffsetY = Info.yoffset;
-		SetPos(OriginX - OffsetX, OriginY - OffsetY);
-		SetSize(Info.width, Info.height);
-	}
+  Handle = R_RegisterPic(Name);
+  if (bAutoSize)
+  {
+    R_GetPicInfo(Handle, &Info);
+    OffsetX = Info.xoffset;
+    OffsetY = Info.yoffset;
+    SetPos(OriginX - OffsetX, OriginY - OffsetY);
+    SetSize(Info.width, Info.height);
+  }
 }
 
 //==========================================================================
 //
-//	OnDraw
+//  OnDraw
 //
 //==========================================================================
 
 void OnDraw()
 {
-	DrawPic(OffsetX, OffsetY, Handle);
+  DrawPic(OffsetX, OffsetY, Handle);
 }
 
 defaultproperties
 {
-	bAutoSize = true;
+  bAutoSize = true;
 }

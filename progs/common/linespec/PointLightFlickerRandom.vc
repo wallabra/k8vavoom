@@ -24,9 +24,9 @@
 //**************************************************************************
 
 class PointLightFlickerRandom : DynamicLight
-	__mobjinfo__(9804);
+  __mobjinfo__(9804);
 
 defaultproperties
 {
-	LightType = DLTYPE_FlickerRandom;
+  LightType = DLTYPE_FlickerRandom;
 }

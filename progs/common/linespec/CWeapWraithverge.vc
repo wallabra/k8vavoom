@@ -25,17 +25,17 @@
 
 class CWeapWraithverge : ClericWeapon;
 
-int				CShift;
+int       CShift;
 
 //==========================================================================
 //
-//	GetBlend
+//  GetBlend
 //
 //==========================================================================
 
 int GetBlend()
 {
-	return CShift;
+  return CShift;
 }
 
 //============================================================================
@@ -46,13 +46,13 @@ int GetBlend()
 
 final void A_CHolyPalette1() self(Actor)
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	CWeapWraithverge(Wpn).CShift = RGBA(255, 255, 255, 51);
+  CWeapWraithverge(Wpn).CShift = RGBA(255, 255, 255, 51);
 }
 
 //============================================================================
@@ -63,13 +63,13 @@ final void A_CHolyPalette1() self(Actor)
 
 final void A_CHolyPalette2() self(Actor)
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	CWeapWraithverge(Wpn).CShift = RGBA(255, 255, 255, 36);
+  CWeapWraithverge(Wpn).CShift = RGBA(255, 255, 255, 36);
 }
 
 //============================================================================
@@ -80,53 +80,53 @@ final void A_CHolyPalette2() self(Actor)
 
 final void A_CHolyPalette3() self(Actor)
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	// reset back to original playpal
-	CWeapWraithverge(Wpn).CShift = 0;
+  // reset back to original playpal
+  CWeapWraithverge(Wpn).CShift = 0;
 }
 
 states
 {
 Ready:
-	CHLY A 1 DoReadyWeapon
-	Loop
+  CHLY A 1 DoReadyWeapon
+  Loop
 Deselect:
-	CHLY A 1 A_Lower
-	Loop
+  CHLY A 1 A_Lower
+  Loop
 Select:
-	CHLY A 1 A_Raise
-	Loop
+  CHLY A 1 A_Raise
+  Loop
 Fire:
-	CHLY A 1 Bright Offset(0, 40)
-	CHLY B 1 Bright Offset(0, 40)
-	CHLY C 2 Bright Offset(0, 43)
-	CHLY D 2 Bright Offset(0, 43)
-	CHLY E 2 Bright Offset(0, 45)
-	CHLY F 6 Bright Offset(0, 48) A_CHolyAttack
-	CHLY G 2 Bright Offset(0, 40) A_CHolyPalette1
-	CHLY G 2 Bright Offset(0, 40) A_CHolyPalette2
-	CHLY G 2 Bright Offset(0, 36) A_CHolyPalette3
-	Goto Ready
+  CHLY A 1 Bright Offset(0, 40)
+  CHLY B 1 Bright Offset(0, 40)
+  CHLY C 2 Bright Offset(0, 43)
+  CHLY D 2 Bright Offset(0, 43)
+  CHLY E 2 Bright Offset(0, 45)
+  CHLY F 6 Bright Offset(0, 48) A_CHolyAttack
+  CHLY G 2 Bright Offset(0, 40) A_CHolyPalette1
+  CHLY G 2 Bright Offset(0, 40) A_CHolyPalette2
+  CHLY G 2 Bright Offset(0, 36) A_CHolyPalette3
+  Goto Ready
 }
 
 defaultproperties
 {
-	SelectionOrder = 3000;
-	AmmoType1 = Mana1;
-	AmmoType2 = Mana2;
-	AmmoUse1 = 18;
-	AmmoUse2 = 18;
-	AmmoGive1 = 20;
-	AmmoGive2 = 20;
-	PSpriteSY = 0.0;
-	PickupMessage = "$txt_weapon_c4";
-	BotCombatDist = 384.0;
-	bBotProjectile = true;
-	bExtremeDeath = true;
-	bPrimaryUsesBoth = true;
+  SelectionOrder = 3000;
+  AmmoType1 = Mana1;
+  AmmoType2 = Mana2;
+  AmmoUse1 = 18;
+  AmmoUse2 = 18;
+  AmmoGive1 = 20;
+  AmmoGive2 = 20;
+  PSpriteSY = 0.0;
+  PickupMessage = "$txt_weapon_c4";
+  BotCombatDist = 384.0;
+  bBotProjectile = true;
+  bExtremeDeath = true;
+  bPrimaryUsesBoth = true;
 }

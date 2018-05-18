@@ -1,105 +1,105 @@
 //------------------------------------------------------------------------------
 actor Unknown
 {
-	Radius 32
-	Height 56
-	+NoGravity
-	+NoBlockmap
-	+DontSplash
-	states
-	{
-	Spawn:
-		UNKN A -1
-		Stop
-	}
+  Radius 32
+  Height 56
+  +NoGravity
+  +NoBlockmap
+  +DontSplash
+  states
+  {
+  Spawn:
+    UNKN A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor PatrolPoint 9024
 {
-	Radius 8
-	Height 8
-	Mass 10
-	RenderStyle None
-	+NoGravity
-	+NoBlockmap
-	+DontSplash
+  Radius 8
+  Height 8
+  Mass 10
+  RenderStyle None
+  +NoGravity
+  +NoBlockmap
+  +DontSplash
 }
 
 //------------------------------------------------------------------------------
-//	A special to execute when a monster reaches a matching patrol point.
+//  A special to execute when a monster reaches a matching patrol point.
 actor PatrolSpecial 9047
 {
-	Radius 8
-	Height 8
-	Mass 10
-	RenderStyle None
-	+NoGravity
-	+NoBlockmap
-	+DontSplash
+  Radius 8
+  Height 8
+  Mass 10
+  RenderStyle None
+  +NoGravity
+  +NoBlockmap
+  +DontSplash
 }
 
 //------------------------------------------------------------------------------
 actor MapSpot 9001
 {
-	+NoSector
-	+NoBlockmap
-	+NoGravity
-	+DontSplash
-	states
-	{
-	Spawn:
-		TNT1 A -1
-		Stop
-	}
+  +NoSector
+  +NoBlockmap
+  +NoGravity
+  +DontSplash
+  states
+  {
+  Spawn:
+    TNT1 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor MapSpotGravity : MapSpot 9013
 {
-	-NoSector
-	-NoBlockmap
-	-NoGravity
+  -NoSector
+  -NoBlockmap
+  -NoGravity
 }
 
 //------------------------------------------------------------------------------
 actor RealGibs
 {
-	+DropOff
-	+Corpse
-	+NoTeleport
-	+DontGib
-	states
-	{
-	Spawn:
-		POL5 A -1
-		Stop
-	}
+  +DropOff
+  +Corpse
+  +NoTeleport
+  +DontGib
+  states
+  {
+  Spawn:
+    POL5 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Gibs : RealGibs 24
 {
-	Game Doom
-	SpawnID 146
-	ClearFlags
+  Game Doom
+  SpawnID 146
+  ClearFlags
 }
 
 //------------------------------------------------------------------------------
 actor RocketSmokeTrail
 {
-	RenderStyle Translucent
-	Alpha 0.4
-	VSpeed 1
-	+NOBLOCKMAP 
-	+NOCLIP 
-	+NOGRAVITY 
-	+DONTSPLASH
-	+NOTELEPORT
-	States
-	{
-	Spawn:
-		RSMK ABCDE 5
-		Stop
-	}
+  RenderStyle Translucent
+  Alpha 0.4
+  VSpeed 1
+  +NOBLOCKMAP
+  +NOCLIP
+  +NOGRAVITY
+  +DONTSPLASH
+  +NOTELEPORT
+  States
+  {
+  Spawn:
+    RSMK ABCDE 5
+    Stop
+  }
 }

@@ -33,24 +33,24 @@ class FSwordMissile : Actor;
 
 int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
-	if (victim.bIsPlayer)
-	{
-		damage -= damage >> 2;
-	}
-	return damage;
+  if (victim.bIsPlayer)
+  {
+    damage -= damage >> 2;
+  }
+  return damage;
 }
 
 //==========================================================================
 //
-//	GetExplodeParms
+//  GetExplodeParms
 //
 //==========================================================================
 
 void GetExplodeParms(out int damage, out float distance, out byte damageSelf)
 {
-	// Fighter Runesword
-	damage = 64;
-	damageSelf = false;
+  // Fighter Runesword
+  damage = 64;
+  damageSelf = false;
 }
 
 //==========================================================================
@@ -61,47 +61,47 @@ void GetExplodeParms(out int damage, out float distance, out byte damageSelf)
 
 final void A_FSwordFlames()
 {
-	int i;
+  int i;
 
-	for (i = 1 + (P_Random() & 3); i; i--)
-	{
-		Spawn(FSwordFlame, Origin + vector((Random() - 0.5) * 16.0,
-			(Random() - 0.5) * 16.0, (Random() - 0.5) * 8.0));
-	}
+  for (i = 1 + (P_Random() & 3); i; i--)
+  {
+    Spawn(FSwordFlame, Origin + vector((Random() - 0.5) * 16.0,
+      (Random() - 0.5) * 16.0, (Random() - 0.5) * 8.0));
+  }
 }
 
 states
 {
 Spawn:
-	FSFX ABC 3 Bright
-	Loop
+  FSFX ABC 3 Bright
+  Loop
 Death:
-	FSFX D 4 Bright
-	FSFX E 3 Bright A_FSwordFlames
-	FSFX F 4 Bright A_Explode
-	FSFX G 3 Bright
-	FSFX H 4 Bright
-	FSFX I 3 Bright
-	FSFX J 4 Bright
-	FSFX KLM 3 Bright
-	Stop
+  FSFX D 4 Bright
+  FSFX E 3 Bright A_FSwordFlames
+  FSFX F 4 Bright A_Explode
+  FSFX G 3 Bright
+  FSFX H 4 Bright
+  FSFX I 3 Bright
+  FSFX J 4 Bright
+  FSFX KLM 3 Bright
+  Stop
 }
 
 defaultproperties
 {
-	Radius = 16.0;
-	Height = 8.0;
-	Speed = 1050.0;
-	MissileDamage = 8;
-	RenderStyle = STYLE_Add;
-	bMissile = true;
-	bNoBlockmap = true;
-	bDropOff = true;
-	bNoGravity = true;
-	bNoTeleport = true;
-	bActivateImpact = true;
-	bActivatePCross = true;
-	bExtremeDeath = true;
-	bBloodSplatter = true;
-	DeathSound = 'FighterSwordExplode';
+  Radius = 16.0;
+  Height = 8.0;
+  Speed = 1050.0;
+  MissileDamage = 8;
+  RenderStyle = STYLE_Add;
+  bMissile = true;
+  bNoBlockmap = true;
+  bDropOff = true;
+  bNoGravity = true;
+  bNoTeleport = true;
+  bActivateImpact = true;
+  bActivatePCross = true;
+  bExtremeDeath = true;
+  bBloodSplatter = true;
+  DeathSound = 'FighterSwordExplode';
 }

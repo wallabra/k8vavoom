@@ -35,7 +35,7 @@ bool DrawSlotPic;
 
 //**************************************************************************
 //**
-//**	Slot for saves and input lines
+//**  Slot for saves and input lines
 //**
 //**************************************************************************
 
@@ -47,16 +47,16 @@ bool DrawSlotPic;
 
 void InitSlot()
 {
-	if (WadLumpPresent('m_fslot'))
-	{
-		pic_M_FSLOT = R_RegisterPic('m_fslot');
-	}
-	else
-	{
-		pic_M_LSLEFT = R_RegisterPic('m_lsleft');
-		pic_M_LSCNTR = R_RegisterPic('m_lscntr');
-		pic_M_LSRGHT = R_RegisterPic('m_lsrght');
-	}
+  if (WadLumpPresent('m_fslot'))
+  {
+    pic_M_FSLOT = R_RegisterPic('m_fslot');
+  }
+  else
+  {
+    pic_M_LSLEFT = R_RegisterPic('m_lsleft');
+    pic_M_LSCNTR = R_RegisterPic('m_lscntr');
+    pic_M_LSRGHT = R_RegisterPic('m_lsrght');
+  }
 }
 
 //==========================================================================
@@ -67,39 +67,39 @@ void InitSlot()
 
 int DrawSlot(int y, string text, bool entering)
 {
-	int xx;
-	int j;
+  int xx;
+  int j;
 
-	if (DrawSlotPic) {
-		if (pic_M_FSLOT != -1)
-		{
-			DrawPic(0, y, pic_M_FSLOT);
-		}
-		else
-		{
-			DrawPic(3, y + 12, pic_M_LSLEFT);
-			for (j = 0, xx = 11; j < 24; j++, xx += 8)
-			{
-				DrawPic(xx, y + 12, pic_M_LSCNTR);
-			}
-			DrawPic(xx, y + 12, pic_M_LSRGHT);
-		}
-	} else {
-		ShadeRect(0, y+4, 128, 10, GetCvarF('menu_darkening'));
-	}
+  if (DrawSlotPic) {
+    if (pic_M_FSLOT != -1)
+    {
+      DrawPic(0, y, pic_M_FSLOT);
+    }
+    else
+    {
+      DrawPic(3, y + 12, pic_M_LSLEFT);
+      for (j = 0, xx = 11; j < 24; j++, xx += 8)
+      {
+        DrawPic(xx, y + 12, pic_M_LSCNTR);
+      }
+      DrawPic(xx, y + 12, pic_M_LSRGHT);
+    }
+  } else {
+    ShadeRect(0, y+4, 128, 10, GetCvarF('menu_darkening'));
+  }
 
-	SetFont('smallfont');
-	SetTextAlign(hleft, vtop);
-	DrawText(5, y + 5, text);
-	if (entering)
-	{
-		DrawCursor();
-	}
-	return 20;
+  SetFont('smallfont');
+  SetTextAlign(hleft, vtop);
+  DrawText(5, y + 5, text);
+  if (entering)
+  {
+    DrawCursor();
+  }
+  return 20;
 }
 
 defaultproperties
 {
-	pic_M_FSLOT = -1;
-	DrawSlotPic = true;
+  pic_M_FSLOT = -1;
+  DrawSlotPic = true;
 }

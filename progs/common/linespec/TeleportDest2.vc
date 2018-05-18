@@ -23,14 +23,14 @@
 //**
 //**************************************************************************
 //**
-//**	Teleport dest that can spawn above floor
+//**  Teleport dest that can spawn above floor
 //**
 //**************************************************************************
 
 class TeleportDest2 : TeleportDest
-	__mobjinfo__(9044);
+  __mobjinfo__(9044);
 
 defaultproperties
 {
-	bNoGravity = true;
+  bNoGravity = true;
 }

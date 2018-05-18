@@ -25,67 +25,67 @@
 
 class HUDMessageFadeInOut : HUDMessage;
 
-int			State;
-float		FadeInTime;
-float		FadeOutTime;
+int     State;
+float   FadeInTime;
+float   FadeOutTime;
 
 //==========================================================================
 //
-//	Init
+//  Init
 //
 //==========================================================================
 
 void Init(string Message, name AFont, int Type, int AId, int Colour,
-	float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
-	float Time1, float Time2)
+  float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
+  float Time1, float Time2)
 {
-	::Init(Message, AFont, Type, AId, Colour, AMsgX, AMsgY, AHudWidth,
-		AHudHeight, AHoldTime, Time1, Time2);
-	FadeInTime = Time1;
-	FadeOutTime = Time2;
+  ::Init(Message, AFont, Type, AId, Colour, AMsgX, AMsgY, AHudWidth,
+    AHudHeight, AHoldTime, Time1, Time2);
+  FadeInTime = Time1;
+  FadeOutTime = Time2;
 }
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	Time += DeltaTime;
-	if (State == 0)
-	{
-		if (FadeInTime < Time)
-		{
-			State = 1;
-			MsgAlpha = 1.0;
-			Time -= FadeInTime;
-		}
-		else
-		{
-			MsgAlpha = Time / FadeInTime;
-		}
-	}
-	if (State == 1 && HoldTime < Time)
-	{
-		State = 2;
-		Time -= HoldTime;
-	}
-	if (State == 2)
-	{
-		if (FadeOutTime < Time)
-		{
-			Destroy();
-		}
-		else
-		{
-			MsgAlpha = (1.0 - Time / FadeOutTime);
-		}
-	}
+  Time += DeltaTime;
+  if (State == 0)
+  {
+    if (FadeInTime < Time)
+    {
+      State = 1;
+      MsgAlpha = 1.0;
+      Time -= FadeInTime;
+    }
+    else
+    {
+      MsgAlpha = Time / FadeInTime;
+    }
+  }
+  if (State == 1 && HoldTime < Time)
+  {
+    State = 2;
+    Time -= HoldTime;
+  }
+  if (State == 2)
+  {
+    if (FadeOutTime < Time)
+    {
+      Destroy();
+    }
+    else
+    {
+      MsgAlpha = (1.0 - Time / FadeOutTime);
+    }
+  }
 }
 
 defaultproperties
 {
-	MsgAlpha = 0.0;
+  MsgAlpha = 0.0;
 }

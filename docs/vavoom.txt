@@ -202,16 +202,16 @@ For Windows you need:
 
  You can get Timidity patches to use with Vavoom from here:
 
-	http://www.doomworld.com/idgames/index.php?id=13928
+  http://www.doomworld.com/idgames/index.php?id=13928
 
  or from here:
 
-	http://www.doomworld.com/idgames/index.php?id=12527
+  http://www.doomworld.com/idgames/index.php?id=12527
 
  To allow Vavoom to use the patch files, you need to edit the timidity.cfg,
 look for and replace the
 
-	dir d:\doom\misc\patches
+  dir d:\doom\misc\patches
 
 line to point to the directory where you unarchived the pack, then move the
 timidity.cfg file to the same directory where Vavoom executable is located.
@@ -1246,7 +1246,7 @@ Randy Heit      Developer of the ZDoom sourceport, which Vavoom uses features
 
 Rachael
 Alexanderson
-(Eruanna)	Webmaster and administrator of the DRD Team SVN Builds, which host
+(Eruanna) Webmaster and administrator of the DRD Team SVN Builds, which host
 Nigel Rowand    Vavoom SVN builds.
 (Enjay)
 

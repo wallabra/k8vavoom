@@ -24,195 +24,195 @@
 //**************************************************************************
 
 class Widget : Object
-	native;
+  native;
 
 struct ClipRect
 {
-	float		OriginX;	//	Origin of the widget, in absolote coords.
-	float		OriginY;
+  float   OriginX;  //  Origin of the widget, in absolote coords.
+  float   OriginY;
 
-	float		ScaleX;		//	Accomulative scale.
-	float		ScaleY;
+  float   ScaleX;   //  Accomulative scale.
+  float   ScaleY;
 
-	float		ClipX1;		//	Clipping rectangle, in absolute coordinates.
-	float		ClipY1;
-	float		ClipX2;
-	float		ClipY2;
+  float   ClipX1;   //  Clipping rectangle, in absolute coordinates.
+  float   ClipY1;
+  float   ClipX2;
+  float   ClipY2;
 };
 
 //
-//	VSplitLine
+//  VSplitLine
 //
 struct SplitLine
 {
-	string		Text;
-	int			Width;
+  string    Text;
+  int     Width;
 };
 
-//	Parent container widget.
-private readonly Widget			ParentWidget;
-//	Linked list of child widgets.
-private readonly Widget			FirstChildWidget;
-private readonly Widget			LastChildWidget;
-//	Links in the linked list of widgets.
-private readonly Widget			PrevWidget;
-private readonly Widget			NextWidget;
+//  Parent container widget.
+private readonly Widget     ParentWidget;
+//  Linked list of child widgets.
+private readonly Widget     FirstChildWidget;
+private readonly Widget     LastChildWidget;
+//  Links in the linked list of widgets.
+private readonly Widget     PrevWidget;
+private readonly Widget     NextWidget;
 
-//	Position of the widget in the parent widget.
-private int						PosX;
-private int						PosY;
-//	Offset for children.
-private int						OfsX;
-private int						OfsY;
-//	Size of the child area of the widget.
-private int						SizeWidth;
-private int						SizeHeight;
-//	Scaling of the widget.
-private float					SizeScaleX;
-private float					SizeScaleY;
+//  Position of the widget in the parent widget.
+private int           PosX;
+private int           PosY;
+//  Offset for children.
+private int           OfsX;
+private int           OfsY;
+//  Size of the child area of the widget.
+private int           SizeWidth;
+private int           SizeHeight;
+//  Scaling of the widget.
+private float         SizeScaleX;
+private float         SizeScaleY;
 
-private readonly ClipRect		ClipRect;
+private readonly ClipRect   ClipRect;
 
-//	Currently focused child widget.
-private readonly Widget			CurrentFocusChild;
+//  Currently focused child widget.
+private readonly Widget     CurrentFocusChild;
 
-private readonly void*			Font;
+private readonly void*      Font;
 
-//	Text alignements
-private readonly byte			HAlign;
-private readonly byte			VAlign;
+//  Text alignements
+private readonly byte     HAlign;
+private readonly byte     VAlign;
 
-//	Text cursor
-private readonly int			LastX;
-private readonly int			LastY;
+//  Text cursor
+private readonly int      LastX;
+private readonly int      LastY;
 
-//	Is this widget visible?
-private bool					bIsVisible;
-//	A flag that enables or disables Tick event.
-bool							bTickEnabled;
-//	Is this widget enabled and can receive input.
-private bool					bIsEnabled;
-//	Can this widget be focused?
-private bool					bIsFocusable;
-//	Mouse button state for click events.
-private readonly bool			bLMouseDown;
-private readonly bool			bMMouseDown;
-private readonly bool			bRMouseDown;
-//	Shadowed text
-private readonly bool			bTextShadowed;
+//  Is this widget visible?
+private bool          bIsVisible;
+//  A flag that enables or disables Tick event.
+bool              bTickEnabled;
+//  Is this widget enabled and can receive input.
+private bool          bIsEnabled;
+//  Can this widget be focused?
+private bool          bIsFocusable;
+//  Mouse button state for click events.
+private readonly bool     bLMouseDown;
+private readonly bool     bMMouseDown;
+private readonly bool     bRMouseDown;
+//  Shadowed text
+private readonly bool     bTextShadowed;
 
 //==========================================================================
 
 Widget Parent
 {
-	get { return ParentWidget; }
+  get { return ParentWidget; }
 }
 
 Widget FirstChild
 {
-	get { return FirstChildWidget; }
+  get { return FirstChildWidget; }
 }
 
 Widget LastChild
 {
-	get { return LastChildWidget; }
+  get { return LastChildWidget; }
 }
 
 Widget Prev
 {
-	get { return PrevWidget; }
+  get { return PrevWidget; }
 }
 
 Widget Next
 {
-	get { return NextWidget; }
+  get { return NextWidget; }
 }
 
 int X
 {
-	get { return PosX; }
-	set { SetX(value); }
-	default PosX;
+  get { return PosX; }
+  set { SetX(value); }
+  default PosX;
 }
 
 int Y
 {
-	get { return PosY; }
-	set { SetY(value); }
-	default PosY;
+  get { return PosY; }
+  set { SetY(value); }
+  default PosY;
 }
 
 int ChildrenOfsX
 {
-	get { return OfsX; }
-	set { SetOfsX(value); }
-	default OfsX;
+  get { return OfsX; }
+  set { SetOfsX(value); }
+  default OfsX;
 }
 
 int ChildrenOfsY
 {
-	get { return OfsY; }
-	set { SetOfsY(value); }
-	default OfsY;
+  get { return OfsY; }
+  set { SetOfsY(value); }
+  default OfsY;
 }
 
 int Width
 {
-	get { return SizeWidth; }
-	set { SetWidth(value); }
-	default SizeWidth;
+  get { return SizeWidth; }
+  set { SetWidth(value); }
+  default SizeWidth;
 }
 
 int Height
 {
-	get { return SizeHeight; }
-	set { SetHeight(value); }
-	default SizeHeight;
+  get { return SizeHeight; }
+  set { SetHeight(value); }
+  default SizeHeight;
 }
 
 float ScaleX
 {
-	get { return SizeScaleX; }
-	set { SetScale(value, SizeScaleY); }
-	default SizeScaleX;
+  get { return SizeScaleX; }
+  set { SetScale(value, SizeScaleY); }
+  default SizeScaleX;
 }
 
 float ScaleY
 {
-	get { return SizeScaleY; }
-	set { SetScale(SizeScaleX, value); }
-	default SizeScaleY;
+  get { return SizeScaleY; }
+  set { SetScale(SizeScaleX, value); }
+  default SizeScaleY;
 }
 
 bool Visible
 {
-	get { return IsVisible(); }
-	set { SetVisibility(value); }
-	default bIsVisible;
+  get { return IsVisible(); }
+  set { SetVisibility(value); }
+  default bIsVisible;
 }
 
 bool Enabled
 {
-	get { return IsEnabled(); }
-	set { SetEnabled(value); }
-	default bIsEnabled;
+  get { return IsEnabled(); }
+  set { SetEnabled(value); }
+  default bIsEnabled;
 }
 
 bool Focusable
 {
-	get { return IsFocusable(); }
-	set { SetFocusable(value); }
-	default bIsFocusable;
+  get { return IsFocusable(); }
+  set { SetFocusable(value); }
+  default bIsFocusable;
 }
 
 int OldOriginX
 {
-	get { return ftoi(ClipRect.OriginX / ClipRect.ScaleX); }
+  get { return ftoi(ClipRect.OriginX / ClipRect.ScaleX); }
 }
 
 int OldOriginY
 {
-	get { return ftoi(ClipRect.OriginY / ClipRect.ScaleY); }
+  get { return ftoi(ClipRect.OriginY / ClipRect.ScaleY); }
 }
 
 //==========================================================================
@@ -225,20 +225,20 @@ delegate bool KeyUp(Object Sender, int Key);
 
 //==========================================================================
 
-//	Creation and destruction of widgets.
+//  Creation and destruction of widgets.
 native final spawner Widget NewChild(class<Widget> ChildClass);
 native final void Destroy();
 native final void DestroyAllChildren();
 
 native final RootWidget GetRootWidget();
 
-//	Methods to move widget on top or bottom.
+//  Methods to move widget on top or bottom.
 native final void Lower();
 native final void Raise();
 native final void MoveBefore(Widget Other);
 native final void MoveAfter(Widget Other);
 
-//	Methods to set position, size and scale.
+//  Methods to set position, size and scale.
 native final void SetPos(int NewX, int NewY);
 native final void SetX(int NewX);
 native final void SetY(int NewY);
@@ -249,35 +249,35 @@ native final void SetWidth(int NewWidth);
 native final void SetHeight(int NewHeight);
 native final void SetScale(float NewScaleX, float NewScaleY);
 native final void SetConfiguration(int NewX, int NewY, int NewWidth,
-	int NewHeight, optional float NewScaleX, optional float NewScaleY);
+  int NewHeight, optional float NewScaleX, optional float NewScaleY);
 
-//	Visibility methods.
+//  Visibility methods.
 native final void SetVisibility(bool bNewVisibility);
 native final void Show();
 native final void Hide();
 native final bool IsVisible(optional bool Recurse);
 
-//	Enable state methods
+//  Enable state methods
 native final void SetEnabled(bool bNewEnable);
 native final void Enable();
 native final void Disable();
 native final bool IsEnabled(optional bool Recurse);
 
-//	Focusable state methods.
+//  Focusable state methods.
 native final void SetFocusable(bool bNewFocusable);
 native final bool IsFocusable();
 
-//	Focus methods.
+//  Focus methods.
 native final void SetCurrentFocusChild(Widget NewFocus);
 native final Widget GetCurrentFocus();
 native final bool IsFocus(optional bool Recurse);
 native final void SetFocus();
 
 native final void DrawPic(int X, int Y, int Handle, optional float Alpha,
-	optional int Translation);
+  optional int Translation);
 native final void DrawShadowedPic(int X, int Y, int Handle);
 native final void FillRectWithFlat(int x, int y, int width, int height,
-	name Name);
+  name Name);
 //  Darkens a screen region
 native final void ShadeRect(int x, int y, int w, int h, float shade);
 
@@ -291,24 +291,24 @@ native final void SetTextShadow(bool on);
 native final int TextWidth(string text);
 //  Calculates text height
 native final int TextHeight(string text);
-//	Splits text into lines that fit in specified width
+//  Splits text into lines that fit in specified width
 native final int SplitText(string Text, out array<SplitLine> Lines,
-	int Maxwidth);
-//	Splits text into lines that fit in specified width by inserting newlines
+  int Maxwidth);
+//  Splits text into lines that fit in specified width by inserting newlines
 native final string SplitTextWithNewlines(string Text, int Maxwidth);
 //  Draws text
 native final void DrawText(int X, int Y, string Text, optional int Colour,
-	optional int BoldColour, optional float Alpha);
+  optional int BoldColour, optional float Alpha);
 //  Draws a cursor at the end of last drawn string
 native final void DrawCursor();
-//	Returns colour ID for specified name
+//  Returns colour ID for specified name
 native static final int FindTextColour(string Name);
 
 //==========================================================================
 //
-//	OnCreate
+//  OnCreate
 //
-//	Called when widget has been just created.
+//  Called when widget has been just created.
 //
 //==========================================================================
 
@@ -318,9 +318,9 @@ void OnCreate()
 
 //==========================================================================
 //
-//	OnDestroy
+//  OnDestroy
 //
-//	Called when widget is about to be destroyed.
+//  Called when widget is about to be destroyed.
 //
 //==========================================================================
 
@@ -330,9 +330,9 @@ void OnDestroy()
 
 //==========================================================================
 //
-//	OnChildAdded
+//  OnChildAdded
 //
-//	Called when a child widget is added.
+//  Called when a child widget is added.
 //
 //==========================================================================
 
@@ -342,9 +342,9 @@ void OnChildAdded(Widget Child)
 
 //==========================================================================
 //
-//	OnChildRemoved
+//  OnChildRemoved
 //
-//	Called when a child widget is removed.
+//  Called when a child widget is removed.
 //
 //==========================================================================
 
@@ -354,9 +354,9 @@ void OnChildRemoved(Widget Child)
 
 //==========================================================================
 //
-//	OnConfigurationChanged
+//  OnConfigurationChanged
 //
-//	Called when position or size has been changed.
+//  Called when position or size has been changed.
 //
 //==========================================================================
 
@@ -366,9 +366,9 @@ void OnConfigurationChanged()
 
 //==========================================================================
 //
-//	OnVisibilityChanged
+//  OnVisibilityChanged
 //
-//	Called when this widget is shown or hidden.
+//  Called when this widget is shown or hidden.
 //
 //==========================================================================
 
@@ -378,9 +378,9 @@ void OnVisibilityChanged(bool bNewVisibility)
 
 //==========================================================================
 //
-//	OnEnableChanged
+//  OnEnableChanged
 //
-//	Called when this widget is enabled or disabled.
+//  Called when this widget is enabled or disabled.
 //
 //==========================================================================
 
@@ -390,9 +390,9 @@ void OnEnableChanged(bool bNewEnable)
 
 //==========================================================================
 //
-//	OnFocusableChanged
+//  OnFocusableChanged
 //
-//	Called when focusable flag of this widget is changed.
+//  Called when focusable flag of this widget is changed.
 //
 //==========================================================================
 
@@ -402,41 +402,41 @@ void OnFocusableChanged(bool bNewFocusable)
 
 //==========================================================================
 //
-//	OnFocusReceived
+//  OnFocusReceived
 //
-//	Called when focus enters this widget.
+//  Called when focus enters this widget.
 //
 //==========================================================================
 
 void OnFocusReceived()
 {
-	if (FocusReceived)
-	{
-		FocusReceived(self);
-	}
+  if (FocusReceived)
+  {
+    FocusReceived(self);
+  }
 }
 
 //==========================================================================
 //
-//	OnFocusLost
+//  OnFocusLost
 //
-//	Called when focus leaves this widget.
+//  Called when focus leaves this widget.
 //
 //==========================================================================
 
 void OnFocusLost()
 {
-	if (FocusLost)
-	{
-		FocusLost(self);
-	}
+  if (FocusLost)
+  {
+    FocusLost(self);
+  }
 }
 
 //==========================================================================
 //
-//	OnDraw
+//  OnDraw
 //
-//	Draws the window.
+//  Draws the window.
 //
 //==========================================================================
 
@@ -446,9 +446,9 @@ void OnDraw()
 
 //==========================================================================
 //
-//	OnPostDraw
+//  OnPostDraw
 //
-//	Draws the window (AFTER all children are drawn).
+//  Draws the window (AFTER all children are drawn).
 //
 //==========================================================================
 
@@ -458,9 +458,9 @@ void OnPostDraw()
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
-//	Called periodicly, but only when bTickEnabled is true.
+//  Called periodicly, but only when bTickEnabled is true.
 //
 //==========================================================================
 
@@ -470,56 +470,56 @@ void Tick(float DeltaTime)
 
 //==========================================================================
 //
-//	OnKeyDown
+//  OnKeyDown
 //
-//	Called for focused widget and it's parents when a key is pressed.
+//  Called for focused widget and it's parents when a key is pressed.
 //
 //==========================================================================
 
 bool OnKeyDown(int Key)
 {
-	if (KeyDown)
-	{
-		return KeyDown(self, Key);
-	}
-	return false;
+  if (KeyDown)
+  {
+    return KeyDown(self, Key);
+  }
+  return false;
 }
 
 //==========================================================================
 //
-//	OnKeyUp
+//  OnKeyUp
 //
-//	Called for focused widget and it's parents when a key is released.
+//  Called for focused widget and it's parents when a key is released.
 //
 //==========================================================================
 
 bool OnKeyUp(int Key)
 {
-	if (KeyUp)
-	{
-		return KeyUp(self, Key);
-	}
-	return false;
+  if (KeyUp)
+  {
+    return KeyUp(self, Key);
+  }
+  return false;
 }
 
 //==========================================================================
 //
-//	OnMouseMove
+//  OnMouseMove
 //
-//	Called when mouse moves over this widget.
+//  Called when mouse moves over this widget.
 //
 //==========================================================================
 
 bool OnMouseMove(int OldX, int OldY, int NewX, int NewY)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
 //
-//	OnMouseEnter
+//  OnMouseEnter
 //
-//	Called when mouse enters this widget.
+//  Called when mouse enters this widget.
 //
 //==========================================================================
 
@@ -529,9 +529,9 @@ void OnMouseEnter()
 
 //==========================================================================
 //
-//	OnMouseLeave
+//  OnMouseLeave
 //
-//	Called when mouse leaves this widget.
+//  Called when mouse leaves this widget.
 //
 //==========================================================================
 
@@ -541,35 +541,35 @@ void OnMouseLeave()
 
 //==========================================================================
 //
-//	OnMouseDown
+//  OnMouseDown
 //
-//	Called when mouse button is pressed.
+//  Called when mouse button is pressed.
 //
 //==========================================================================
 
 bool OnMouseDown(int X, int Y, int Button)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
 //
-//	OnMouseUp
+//  OnMouseUp
 //
-//	Called when mouse button is released.
+//  Called when mouse button is released.
 //
 //==========================================================================
 
 bool OnMouseUp(int X, int Y, int Button)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
 //
-//	OnMouseClick
+//  OnMouseClick
 //
-//	Callec when left mouse button is clicked on this widget.
+//  Callec when left mouse button is clicked on this widget.
 //
 //==========================================================================
 
@@ -579,9 +579,9 @@ void OnMouseClick(int X, int Y)
 
 //==========================================================================
 //
-//	OnMMouseClick
+//  OnMMouseClick
 //
-//	Callec when middle mouse button is clicked on this widget.
+//  Callec when middle mouse button is clicked on this widget.
 //
 //==========================================================================
 
@@ -591,9 +591,9 @@ void OnMMouseClick(int X, int Y)
 
 //==========================================================================
 //
-//	OnRMouseClick
+//  OnRMouseClick
 //
-//	Callec when right mouse button is clicked on this widget.
+//  Callec when right mouse button is clicked on this widget.
 //
 //==========================================================================
 
@@ -603,28 +603,28 @@ void OnRMouseClick(int X, int Y)
 
 //==========================================================================
 //
-//	SetOrigin
+//  SetOrigin
 //
-//	Sets origin of the widget. Some widget classes will adjust the position.
+//  Sets origin of the widget. Some widget classes will adjust the position.
 //
 //==========================================================================
 
 void SetOrigin(int x, int y)
 {
-	SetPos(x, y);
+  SetPos(x, y);
 }
 
 void DrawFullScreenPic(int Handle)
 {
-	SetVirtualScreen(320, 200);
-	R_DrawPic(0, 0, Handle);
-	SetVirtualScreen(640, 480);
+  SetVirtualScreen(320, 200);
+  R_DrawPic(0, 0, Handle);
+  SetVirtualScreen(640, 480);
 }
 
 defaultproperties
 {
-	ScaleX = 1.0;
-	ScaleY = 1.0;
-	Visible = true;
-	Enabled = true;
+  ScaleX = 1.0;
+  ScaleY = 1.0;
+  Visible = true;
+  Enabled = true;
 }

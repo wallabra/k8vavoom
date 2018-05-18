@@ -24,7 +24,7 @@
 //**************************************************************************
 
 //**************************************************************************
-//	Original Doom/Strife monster attacks
+//  Original Doom/Strife monster attacks
 //**************************************************************************
 
 //==========================================================================
@@ -37,24 +37,24 @@
 
 final void A_PosAttack()
 {
-	int damage;
-	TVec dir;
+  int damage;
+  TVec dir;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
+  A_FaceTarget();
 
-	AimLineAttack(dir, Angles, MISSILERANGE);
-	VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+  AimLineAttack(dir, Angles, MISSILERANGE);
+  VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
 
-	PlaySound('grunt/attack', CHAN_WEAPON);
+  PlaySound('grunt/attack', CHAN_WEAPON);
 
-	damage = ((P_Random() % 5) + 1) * 3;
+  damage = ((P_Random() % 5) + 1) * 3;
 
-	LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet', false);
+  LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet', false);
 }
 
 //==========================================================================
@@ -67,13 +67,13 @@ final void A_PosAttack()
 
 final void A_SPosAttack()
 {
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	PlaySound('shotguy/attack', CHAN_WEAPON);
-	DoSPosAttack();
+  PlaySound('shotguy/attack', CHAN_WEAPON);
+  DoSPosAttack();
 }
 
 //==========================================================================
@@ -86,13 +86,13 @@ final void A_SPosAttack()
 
 final void A_SPosAttackUseAtkSound()
 {
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	PlaySound(AttackSound, CHAN_WEAPON);
-	DoSPosAttack();
+  PlaySound(AttackSound, CHAN_WEAPON);
+  DoSPosAttack();
 }
 
 //==========================================================================
@@ -103,20 +103,20 @@ final void A_SPosAttackUseAtkSound()
 
 final void DoSPosAttack()
 {
-	int i;
-	int damage;
-	TVec aimDir;
-	TVec dir;
+  int i;
+  int damage;
+  TVec aimDir;
+  TVec dir;
 
-	A_FaceTarget();
-	AimLineAttack(aimDir, Angles, MISSILERANGE);
-	for (i = 0; i < 3; i++)
-	{
-		dir = aimDir;
-		VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
-		damage = ((P_Random() % 5) + 1) * 3;
-		LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Shell', (i != 0)); //k8:FIXME: Mastermind guy should use 'Bullet' here
-	}
+  A_FaceTarget();
+  AimLineAttack(aimDir, Angles, MISSILERANGE);
+  for (i = 0; i < 3; i++)
+  {
+    dir = aimDir;
+    VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+    damage = ((P_Random() % 5) + 1) * 3;
+    LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Shell', (i != 0)); //k8:FIXME: Mastermind guy should use 'Bullet' here
+  }
 }
 
 //==========================================================================
@@ -129,27 +129,27 @@ final void DoSPosAttack()
 
 final void A_CPosAttack()
 {
-	int damage;
-	TVec dir;
+  int damage;
+  TVec dir;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	//	Andy Baker's stealth monsters
-	if (bStealth)
-	{
-		VisDir = 1;
-	}
+  //  Andy Baker's stealth monsters
+  if (bStealth)
+  {
+    VisDir = 1;
+  }
 
-	//FIXME
-	PlaySound(AttackSound, CHAN_WEAPON);
-	A_FaceTarget();
-	AimLineAttack(dir, Angles, MISSILERANGE);
-	VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
-	damage = ((P_Random() % 5) + 1) * 3;
-	LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet', false);
+  //FIXME
+  PlaySound(AttackSound, CHAN_WEAPON);
+  A_FaceTarget();
+  AimLineAttack(dir, Angles, MISSILERANGE);
+  VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+  damage = ((P_Random() % 5) + 1) * 3;
+  LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet', false);
 }
 
 //==========================================================================
@@ -162,18 +162,18 @@ final void A_CPosAttack()
 
 final void A_CPosRefire()
 {
-	// keep firing unless target got out of sight
-	A_FaceTarget();
+  // keep firing unless target got out of sight
+  A_FaceTarget();
 
-	if (P_Random() < 40)
-	{
-		return;
-	}
+  if (P_Random() < 40)
+  {
+    return;
+  }
 
-	if (!Target || Target.Health <= 0 || !CanSee(Target))
-	{
-		SetState(SeeState);
-	}
+  if (!Target || Target.Health <= 0 || !CanSee(Target))
+  {
+    SetState(SeeState);
+  }
 }
 
 //==========================================================================
@@ -186,16 +186,16 @@ final void A_CPosRefire()
 
 final void A_SpidRefire()
 {
-	// keep firing unless target got out of sight
-	A_FaceTarget();
+  // keep firing unless target got out of sight
+  A_FaceTarget();
 
-	if (P_Random() < 10)
-		return;
+  if (P_Random() < 10)
+    return;
 
-	if (!Target || Target.Health <= 0 || !CanSee(Target))
-	{
-		SetState(SeeState);
-	}
+  if (!Target || Target.Health <= 0 || !CanSee(Target))
+  {
+    SetState(SeeState);
+  }
 }
 
 //==========================================================================
@@ -208,24 +208,24 @@ final void A_SpidRefire()
 
 final void A_TroopAttack()
 {
-	int damage;
+  int damage;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	if (CheckMeleeRange())
-	{
-		PlaySound('imp/melee', CHAN_WEAPON);
-		damage = (P_Random() % 8 + 1) * 3;
-		Target.Damage(self, self, damage);
-		return;
-	}
+  A_FaceTarget();
+  if (CheckMeleeRange())
+  {
+    PlaySound('imp/melee', CHAN_WEAPON);
+    damage = (P_Random() % 8 + 1) * 3;
+    Target.Damage(self, self, damage);
+    return;
+  }
 
-	// launch a missile
-	SpawnMissile(Target, DoomImpBall);
+  // launch a missile
+  SpawnMissile(Target, DoomImpBall);
 }
 
 //==========================================================================
@@ -238,19 +238,19 @@ final void A_TroopAttack()
 
 final void A_SargAttack()
 {
-	int damage;
+  int damage;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	if (CheckMeleeRange())
-	{
-		damage = ((P_Random() % 10) + 1) * 4;
-		Target.Damage(self, self, damage);
-	}
+  A_FaceTarget();
+  if (CheckMeleeRange())
+  {
+    damage = ((P_Random() % 10) + 1) * 4;
+    Target.Damage(self, self, damage);
+  }
 }
 
 //==========================================================================
@@ -263,23 +263,23 @@ final void A_SargAttack()
 
 final void A_HeadAttack()
 {
-	int damage;
+  int damage;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	if (CheckMeleeRange())
-	{
-		damage = (P_Random() % 6 + 1) * 10;
-		Target.Damage(self, self, damage);
-		return;
-	}
+  A_FaceTarget();
+  if (CheckMeleeRange())
+  {
+    damage = (P_Random() % 6 + 1) * 10;
+    Target.Damage(self, self, damage);
+    return;
+  }
 
-	// launch a missile
-	SpawnMissile(Target, CacodemonBall);
+  // launch a missile
+  SpawnMissile(Target, CacodemonBall);
 }
 
 //==========================================================================
@@ -292,23 +292,23 @@ final void A_HeadAttack()
 
 final void A_BruisAttack()
 {
-	int damage;
+  int damage;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	if (CheckMeleeRange())
-	{
-		PlaySound('baron/melee', CHAN_WEAPON);
-		damage = (P_Random() % 8 + 1) * 10;
-		Target.Damage(self, self, damage);
-		return;
-	}
+  if (CheckMeleeRange())
+  {
+    PlaySound('baron/melee', CHAN_WEAPON);
+    damage = (P_Random() % 8 + 1) * 10;
+    Target.Damage(self, self, damage);
+    return;
+  }
 
-	// launch a missile
-	SpawnMissile(Target, BaronBall);
+  // launch a missile
+  SpawnMissile(Target, BaronBall);
 }
 
 //==========================================================================
@@ -323,16 +323,16 @@ const float SKULLSPEED = 700.0;
 
 final void A_SkullAttack()
 {
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	bSkullFly = true;
+  bSkullFly = true;
 
-	PlaySound(AttackSound, CHAN_VOICE);
-	A_FaceTarget();
-	Velocity = Normalise(Target.GetCentre() - Origin) * SKULLSPEED;
+  PlaySound(AttackSound, CHAN_VOICE);
+  A_FaceTarget();
+  Velocity = Normalise(Target.GetCentre() - Origin) * SKULLSPEED;
 }
 
 //==========================================================================
@@ -343,20 +343,20 @@ final void A_SkullAttack()
 
 final void decorate_A_SkullAttack(optional float SkullSpeed)
 {
-	if (!specified_SkullSpeed)
-	{
-		SkullSpeed = 20.0;
-	}
-	if (!Target)
-	{
-		return;
-	}
+  if (!specified_SkullSpeed)
+  {
+    SkullSpeed = 20.0;
+  }
+  if (!Target)
+  {
+    return;
+  }
 
-	bSkullFly = true;
+  bSkullFly = true;
 
-	PlaySound(AttackSound, CHAN_VOICE);
-	A_FaceTarget();
-	Velocity = Normalise(Target.GetCentre() - Origin) * SkullSpeed * 35.0;
+  PlaySound(AttackSound, CHAN_VOICE);
+  A_FaceTarget();
+  Velocity = Normalise(Target.GetCentre() - Origin) * SkullSpeed * 35.0;
 }
 
 //==========================================================================
@@ -369,15 +369,15 @@ final void decorate_A_SkullAttack(optional float SkullSpeed)
 
 final void A_BspiAttack()
 {
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
+  A_FaceTarget();
 
-	// launch a missile
-	SpawnMissile(Target, ArachnotronPlasma);
+  // launch a missile
+  SpawnMissile(Target, ArachnotronPlasma);
 }
 
 //==========================================================================
@@ -390,13 +390,13 @@ final void A_BspiAttack()
 
 final void A_CyberAttack()
 {
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	SpawnMissile(Target, Rocket);
+  A_FaceTarget();
+  SpawnMissile(Target, Rocket);
 }
 
 //==========================================================================
@@ -404,12 +404,12 @@ final void A_CyberAttack()
 //  A_PainAttack
 //
 //  Pain elemental attack. Spawn a lost soul and launch it at the target.
-// 
+//
 //==========================================================================
 
 final void A_PainAttack()
 {
-	decorate_A_PainAttack(LostSoul);
+  decorate_A_PainAttack(LostSoul);
 }
 
 //==========================================================================
@@ -417,20 +417,20 @@ final void A_PainAttack()
 //  decorate_A_PainAttack
 //
 //  Pain elemental attack. Spawn a lost soul and launch it at the target.
-// 
+//
 //==========================================================================
 
 final void decorate_A_PainAttack(optional class<Actor> SpawnType)
 {
-	if (!GetCvarB('k8ElvenPaine')) return;
+  if (!GetCvarB('k8ElvenPaine')) return;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	PainShootSkull(SpawnType, Angles.yaw);
+  A_FaceTarget();
+  PainShootSkull(SpawnType, Angles.yaw);
 }
 
 //==========================================================================
@@ -441,14 +441,14 @@ final void decorate_A_PainAttack(optional class<Actor> SpawnType)
 
 final void A_DualPainAttack(optional class<Actor> SpawnType)
 {
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	PainShootSkull(SpawnType, Angles.yaw + 45.0);
-	PainShootSkull(SpawnType, Angles.yaw - 45.0);
+  A_FaceTarget();
+  PainShootSkull(SpawnType, Angles.yaw + 45.0);
+  PainShootSkull(SpawnType, Angles.yaw - 45.0);
 }
 
 //==========================================================================
@@ -461,7 +461,7 @@ final void A_DualPainAttack(optional class<Actor> SpawnType)
 
 final void A_PainDie()
 {
-	decorate_A_PainDie(LostSoul);
+  decorate_A_PainDie(LostSoul);
 }
 
 //==========================================================================
@@ -474,10 +474,10 @@ final void A_PainDie()
 
 final void decorate_A_PainDie(optional class<Actor> SpawnType)
 {
-	A_Fall();
-	PainShootSkull(SpawnType, Angles.yaw + 90.0);
-	PainShootSkull(SpawnType, Angles.yaw + 180.0);
-	PainShootSkull(SpawnType, Angles.yaw + 270.0);
+  A_Fall();
+  PainShootSkull(SpawnType, Angles.yaw + 90.0);
+  PainShootSkull(SpawnType, Angles.yaw + 180.0);
+  PainShootSkull(SpawnType, Angles.yaw + 270.0);
 }
 
 //==========================================================================
@@ -490,21 +490,21 @@ final void decorate_A_PainDie(optional class<Actor> SpawnType)
 
 final void A_SkelFist()
 {
-	int damage;
+  int damage;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
+  A_FaceTarget();
 
-	if (CheckMeleeRange())
-	{
-		damage = ((P_Random() % 10) + 1) * 6;
-		PlaySound('skeleton/melee', CHAN_WEAPON);
-		Target.Damage(self, self, damage);
-	}
+  if (CheckMeleeRange())
+  {
+    damage = ((P_Random() % 10) + 1) * 6;
+    PlaySound('skeleton/melee', CHAN_WEAPON);
+    Target.Damage(self, self, damage);
+  }
 }
 
 //==========================================================================
@@ -517,26 +517,26 @@ final void A_SkelFist()
 
 final void A_SkelMissile()
 {
-	EntityEx A;
+  EntityEx A;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	Origin.z += 16.0;	// so missile spawns higher
-	A = SpawnMissile(Target, RevenantTracer);
-	Origin.z -= 16.0;	// back to normal
+  A_FaceTarget();
+  Origin.z += 16.0; // so missile spawns higher
+  A = SpawnMissile(Target, RevenantTracer);
+  Origin.z -= 16.0; // back to normal
 
-	if (A)
-	{
-		A.UnlinkFromWorld();
-		A.Origin = A.Origin + A.Velocity * 0.03;
-		A.LinkToWorld();
-		A.Tracer = Target;
-		A.bSeekerMissile = true;
-	}
+  if (A)
+  {
+    A.UnlinkFromWorld();
+    A.Origin = A.Origin + A.Velocity * 0.03;
+    A.LinkToWorld();
+    A.Tracer = Target;
+    A.bSeekerMissile = true;
+  }
 }
 
 //==========================================================================
@@ -550,7 +550,7 @@ final void A_SkelMissile()
 
 final void A_FatAttack1()
 {
-	decorate_A_FatAttack1(FatShot);
+  decorate_A_FatAttack1(FatShot);
 }
 
 //==========================================================================
@@ -566,29 +566,29 @@ const float FatsoSpreadAngle = 90.0 / 8.0;
 
 final void decorate_A_FatAttack1(optional class<EntityEx> SpawnType)
 {
-	EntityEx A;
+  EntityEx A;
 
-	if (!SpawnType)
-	{
-		SpawnType = FatShot;
-	}
+  if (!SpawnType)
+  {
+    SpawnType = FatShot;
+  }
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	// Change direction  to ...
-	Angles.yaw = AngleMod360(Angles.yaw + FatsoSpreadAngle);
-	SpawnMissile(Target, SpawnType);
+  A_FaceTarget();
+  // Change direction  to ...
+  Angles.yaw = AngleMod360(Angles.yaw + FatsoSpreadAngle);
+  SpawnMissile(Target, SpawnType);
 
-	A = SpawnMissile(Target, SpawnType);
-	if (A)
-	{
-		A.Angles.yaw = AngleMod360(A.Angles.yaw + FatsoSpreadAngle);
-		VectorRotateAroundZ(&A.Velocity, FatsoSpreadAngle);
-	}
+  A = SpawnMissile(Target, SpawnType);
+  if (A)
+  {
+    A.Angles.yaw = AngleMod360(A.Angles.yaw + FatsoSpreadAngle);
+    VectorRotateAroundZ(&A.Velocity, FatsoSpreadAngle);
+  }
 }
 
 //==========================================================================
@@ -601,7 +601,7 @@ final void decorate_A_FatAttack1(optional class<EntityEx> SpawnType)
 
 final void A_FatAttack2()
 {
-	decorate_A_FatAttack2(FatShot);
+  decorate_A_FatAttack2(FatShot);
 }
 
 //==========================================================================
@@ -614,29 +614,29 @@ final void A_FatAttack2()
 
 final void decorate_A_FatAttack2(optional class<EntityEx> SpawnType)
 {
-	EntityEx A;
+  EntityEx A;
 
-	if (!SpawnType)
-	{
-		SpawnType = FatShot;
-	}
+  if (!SpawnType)
+  {
+    SpawnType = FatShot;
+  }
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	// Now here choose opposite deviation.
-	Angles.yaw = AngleMod360(Angles.yaw - FatsoSpreadAngle);
-	SpawnMissile(Target, SpawnType);
+  A_FaceTarget();
+  // Now here choose opposite deviation.
+  Angles.yaw = AngleMod360(Angles.yaw - FatsoSpreadAngle);
+  SpawnMissile(Target, SpawnType);
 
-	A = SpawnMissile(Target, SpawnType);
-	if (A)
-	{
-		A.Angles.yaw = AngleMod360(A.Angles.yaw - FatsoSpreadAngle * 2.0);
-		VectorRotateAroundZ(&A.Velocity, -FatsoSpreadAngle * 2.0);
-	}
+  A = SpawnMissile(Target, SpawnType);
+  if (A)
+  {
+    A.Angles.yaw = AngleMod360(A.Angles.yaw - FatsoSpreadAngle * 2.0);
+    VectorRotateAroundZ(&A.Velocity, -FatsoSpreadAngle * 2.0);
+  }
 }
 
 //==========================================================================
@@ -649,7 +649,7 @@ final void decorate_A_FatAttack2(optional class<EntityEx> SpawnType)
 
 final void A_FatAttack3()
 {
-	decorate_A_FatAttack3(FatShot);
+  decorate_A_FatAttack3(FatShot);
 }
 
 //==========================================================================
@@ -662,33 +662,33 @@ final void A_FatAttack3()
 
 final void decorate_A_FatAttack3(optional class<EntityEx> SpawnType)
 {
-	EntityEx A;
+  EntityEx A;
 
-	if (!SpawnType)
-	{
-		SpawnType = FatShot;
-	}
+  if (!SpawnType)
+  {
+    SpawnType = FatShot;
+  }
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
+  A_FaceTarget();
 
-	A = SpawnMissile(Target, SpawnType);
-	if (A)
-	{
-		A.Angles.yaw = AngleMod360(A.Angles.yaw - FatsoSpreadAngle / 2.0);
-		VectorRotateAroundZ(&A.Velocity, -FatsoSpreadAngle / 2.0);
-	}
+  A = SpawnMissile(Target, SpawnType);
+  if (A)
+  {
+    A.Angles.yaw = AngleMod360(A.Angles.yaw - FatsoSpreadAngle / 2.0);
+    VectorRotateAroundZ(&A.Velocity, -FatsoSpreadAngle / 2.0);
+  }
 
-	A = SpawnMissile(Target, SpawnType);
-	if (A)
-	{
-		A.Angles.yaw = AngleMod360(A.Angles.yaw + FatsoSpreadAngle / 2.0);
-		VectorRotateAroundZ(&A.Velocity, FatsoSpreadAngle / 2.0);
-	}
+  A = SpawnMissile(Target, SpawnType);
+  if (A)
+  {
+    A.Angles.yaw = AngleMod360(A.Angles.yaw + FatsoSpreadAngle / 2.0);
+    VectorRotateAroundZ(&A.Velocity, FatsoSpreadAngle / 2.0);
+  }
 }
 
 //==========================================================================
@@ -701,21 +701,21 @@ final void decorate_A_FatAttack3(optional class<EntityEx> SpawnType)
 
 final void A_VileTarget()
 {
-	EntityEx fog;
+  EntityEx fog;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
+  A_FaceTarget();
 
-	fog = Spawn(ArchvileFire, Target.Origin);
+  fog = Spawn(ArchvileFire, Target.Origin);
 
-	Tracer = fog;
-	fog.Target = self;
-	fog.Tracer = Target;
-	fog.SetState(fog.IdleState);
+  Tracer = fog;
+  fog.Target = self;
+  fog.Tracer = Target;
+  fog.SetState(fog.IdleState);
 }
 
 //==========================================================================
@@ -728,38 +728,38 @@ final void A_VileTarget()
 
 final void A_VileAttack()
 {
-	EntityEx fire;
+  EntityEx fire;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
+  A_FaceTarget();
 
-	if (!CanSee(Target))
-	{
-		return;
-	}
+  if (!CanSee(Target))
+  {
+    return;
+  }
 
-	PlaySound('vile/stop', CHAN_WEAPON);
-	Target.Damage(self, self, 20);
+  PlaySound('vile/stop', CHAN_WEAPON);
+  Target.Damage(self, self, 20);
 
-	fire = Tracer;
+  fire = Tracer;
 
-	if (!fire)
-	{
-		return;
-	}
+  if (!fire)
+  {
+    return;
+  }
 
-	// move the fire between the vile and the player
-	fire.UnlinkFromWorld();
-	fire.Origin.x = Target.Origin.x - 24.0 * cos(Angles.yaw);
-	fire.Origin.y = Target.Origin.y - 24.0 * sin(Angles.yaw);
-	fire.LinkToWorld();
-	fire.RadiusAttack(self, 70, 70.0, true);
-	// change velocity Z component before doing RadiusAttack
-	Target.Velocity.z = (1000.0 / Target.Mass) * 35.0;
+  // move the fire between the vile and the player
+  fire.UnlinkFromWorld();
+  fire.Origin.x = Target.Origin.x - 24.0 * cos(Angles.yaw);
+  fire.Origin.y = Target.Origin.y - 24.0 * sin(Angles.yaw);
+  fire.LinkToWorld();
+  fire.RadiusAttack(self, 70, 70.0, true);
+  // change velocity Z component before doing RadiusAttack
+  Target.Velocity.z = (1000.0 / Target.Mass) * 35.0;
 }
 
 //==========================================================================
@@ -772,135 +772,135 @@ final void A_VileAttack()
 
 final void A_BrainSpit()
 {
-	BrainState		BState;
-	EntityEx		targ;
-	EntityEx		A;
-	float			Frac;
+  BrainState    BState;
+  EntityEx    targ;
+  EntityEx    A;
+  float     Frac;
 
-	//	Find brain state object, create it if not found.
-	BState = none;
-	foreach AllThinkers(BrainState, BState)
-	{
-		break;
-	}
-	if (!BState)
-	{
-		BState = Spawn(BrainState);
-		BState.FindTargets();
-	}
+  //  Find brain state object, create it if not found.
+  BState = none;
+  foreach AllThinkers(BrainState, BState)
+  {
+    break;
+  }
+  if (!BState)
+  {
+    BState = Spawn(BrainState);
+    BState.FindTargets();
+  }
 
-	if (!BState.Targets.Num)
-	{
-		//	No brain targets placed on a map.
-		return;
-	}
+  if (!BState.Targets.Num)
+  {
+    //  No brain targets placed on a map.
+    return;
+  }
 
-	BState.bEasy = !BState.bEasy;
-	if (Level.World.bSkillEasyBossBrain && !BState.bEasy)
-	{
-		return;
-	}
+  BState.bEasy = !BState.bEasy;
+  if (Level.World.bSkillEasyBossBrain && !BState.bEasy)
+  {
+    return;
+  }
 
-	// shoot a cube at current target
-	targ = BState.Targets[BState.TargetOn];
-	BState.TargetOn = (BState.TargetOn + 1) % BState.Targets.Num;
+  // shoot a cube at current target
+  targ = BState.Targets[BState.TargetOn];
+  BState.TargetOn = (BState.TargetOn + 1) % BState.Targets.Num;
 
-	// spawn brain missile
-	A = SpawnMissile(targ, SpawnShot);
-	if (A)
-	{
-		A.Target = targ;
-		A.Master = self;
-		//	Prevent division by 0
-		if (!A.Velocity.x && !A.Velocity.y)
-		{
-			Frac = 0.0;
-		}
-		else if (fabs(A.Velocity.x) > fabs(A.Velocity.y))
-		{
-			Frac = (targ.Origin.x - Origin.x) / A.Velocity.x;
-		}
-		else
-		{
-			Frac = (targ.Origin.y - Origin.y) / A.Velocity.y;
-		}
-		A.ReactionCount = ftoi(Frac / GetStateDuration(A.State));
-	}
+  // spawn brain missile
+  A = SpawnMissile(targ, SpawnShot);
+  if (A)
+  {
+    A.Target = targ;
+    A.Master = self;
+    //  Prevent division by 0
+    if (!A.Velocity.x && !A.Velocity.y)
+    {
+      Frac = 0.0;
+    }
+    else if (fabs(A.Velocity.x) > fabs(A.Velocity.y))
+    {
+      Frac = (targ.Origin.x - Origin.x) / A.Velocity.x;
+    }
+    else
+    {
+      Frac = (targ.Origin.y - Origin.y) / A.Velocity.y;
+    }
+    A.ReactionCount = ftoi(Frac / GetStateDuration(A.State));
+  }
 
-	PlaySound('brain/spit', CHAN_WEAPON, 1.0, ATTN_NONE);
+  PlaySound('brain/spit', CHAN_WEAPON, 1.0, ATTN_NONE);
 }
 
 //==========================================================================
 //
-//	SpawnFly
+//  SpawnFly
 //
-//	Cube flying, spawn monster, when finished.
+//  Cube flying, spawn monster, when finished.
 //
 //==========================================================================
 
 final void SpawnFly(class<EntityEx> SpawnType, name SpawnSound)
 {
-	EntityEx newmobj;
-	EntityEx fog;
-	int r;
-	class<EntityEx> type;
+  EntityEx newmobj;
+  EntityEx fog;
+  int r;
+  class<EntityEx> type;
 
-	if (--ReactionCount)
-		return;	// still flying
+  if (--ReactionCount)
+    return; // still flying
 
-	// First spawn teleport fog.
-	fog = Spawn(SpawnType, Target.Origin, vector(0.0, 0.0, 0.0));
-	fog.PlaySound(SpawnSound, CHAN_VOICE);
+  // First spawn teleport fog.
+  fog = Spawn(SpawnType, Target.Origin, vector(0.0, 0.0, 0.0));
+  fog.PlaySound(SpawnSound, CHAN_VOICE);
 
-	// Randomly select monster to spawn.
-	r = P_Random();
+  // Randomly select monster to spawn.
+  r = P_Random();
 
-	// Probability distribution (kind of :),
-	// decreasing likelihood.
-	if (r < 50)
-		type = DoomImp;
-	else if (r < 90)
-		type = Demon;
-	else if (r < 120)
-		type = Spectre;
-	else if (r < 130)
-		type = PainElemental;
-	else if (r < 160)
-		type = Cacodemon;
-	else if (r < 162)
-		type = Archvile;
-	else if (r < 172)
-		type = Revenant;
-	else if (r < 192)
-		type = Arachnotron;
-	else if (r < 222)
-		type = Fatso;
-	else if (r < 246)
-		type = HellKnight;
-	else
-		type = BaronOfHell;
+  // Probability distribution (kind of :),
+  // decreasing likelihood.
+  if (r < 50)
+    type = DoomImp;
+  else if (r < 90)
+    type = Demon;
+  else if (r < 120)
+    type = Spectre;
+  else if (r < 130)
+    type = PainElemental;
+  else if (r < 160)
+    type = Cacodemon;
+  else if (r < 162)
+    type = Archvile;
+  else if (r < 172)
+    type = Revenant;
+  else if (r < 192)
+    type = Arachnotron;
+  else if (r < 222)
+    type = Fatso;
+  else if (r < 246)
+    type = HellKnight;
+  else
+    type = BaronOfHell;
 
-	newmobj = Spawn(type, Target.Origin, vector(0.0, 0.0, 0.0));
-	//	Make new monster hate the same thing eye hates. Note that this
-	// differs from ZDoom which copies friendliness from target spot.
-	if (Master)
-	{
-		newmobj.CopyFriendliness(Master, false);
-	}
-	if (newmobj.SeeState && newmobj.LookForPlayers(true))
-	{
-		newmobj.SetState(newmobj.SeeState);
-	}
+  newmobj = Spawn(type, Target.Origin, vector(0.0, 0.0, 0.0));
+  //  Make new monster hate the same thing eye hates. Note that this
+  // differs from ZDoom which copies friendliness from target spot.
+  if (Master)
+  {
+    newmobj.CopyFriendliness(Master, false);
+  }
+  if (newmobj.SeeState && newmobj.LookForPlayers(true))
+  {
+    newmobj.SetState(newmobj.SeeState);
+  }
 
-	// telefrag anything in this spot
-	if (!newmobj.IsDestroyed())
-	{
-		newmobj.bTelestomp = true;
-		newmobj.TeleportMove(newmobj.Origin);
-	}
+  // telefrag anything in this spot
+  if (!newmobj.IsDestroyed())
+  {
+    newmobj.bTelestomp = true;
+    newmobj.TeleportMove(newmobj.Origin);
+  }
 
-	// remove self (i.e., cube).
-	Destroy();
+  // remove self (i.e., cube).
+  Destroy();
 }
 
 //==========================================================================
@@ -911,7 +911,7 @@ final void SpawnFly(class<EntityEx> SpawnType, name SpawnSound)
 
 final void A_SpawnFly()
 {
-	SpawnFly(SpawnFire, 'brain/spawn');
+  SpawnFly(SpawnFire, 'brain/spawn');
 }
 
 //==========================================================================
@@ -922,17 +922,17 @@ final void A_SpawnFly()
 
 final void decorate_A_SpawnFly(optional class<EntityEx> SpawnType)
 {
-	name SpawnSound;
-	if (SpawnType)
-	{
-		SpawnSound = SpawnType.default.SightSound;
-	}
-	else
-	{
-		SpawnType = SpawnFire;
-		SpawnSound = 'brain/spawn';
-	}
-	SpawnFly(SpawnType, SpawnSound);
+  name SpawnSound;
+  if (SpawnType)
+  {
+    SpawnSound = SpawnType.default.SightSound;
+  }
+  else
+  {
+    SpawnType = SpawnFire;
+    SpawnSound = 'brain/spawn';
+  }
+  SpawnFly(SpawnType, SpawnSound);
 }
 
 //==========================================================================
@@ -945,8 +945,8 @@ final void decorate_A_SpawnFly(optional class<EntityEx> SpawnType)
 
 final void A_SpawnSound()
 {
-	PlaySound('brain/cube', CHAN_VOICE);
-	SpawnFly(SpawnFire, 'brain/spawn');
+  PlaySound('brain/cube', CHAN_VOICE);
+  SpawnFly(SpawnFire, 'brain/spawn');
 }
 
 //==========================================================================
@@ -959,16 +959,16 @@ final void A_SpawnSound()
 
 final void A_BrainScream()
 {
-	TVec org;
+  TVec org;
 
-	for (org.x = Origin.x - 196.0; org.x < Origin.x + 320.0; org.x += 8.0)
-	{
-		org.y = Origin.y - 320.0;
-		org.z = 1.0 / 512.0 + Random() * 512.0;
-		BrainishExplosion(org);
-	}
+  for (org.x = Origin.x - 196.0; org.x < Origin.x + 320.0; org.x += 8.0)
+  {
+    org.y = Origin.y - 320.0;
+    org.z = 1.0 / 512.0 + Random() * 512.0;
+    BrainishExplosion(org);
+  }
 
-	PlaySound('brain/death', CHAN_VOICE, 1.0, ATTN_NONE);
+  PlaySound('brain/death', CHAN_VOICE, 1.0, ATTN_NONE);
 }
 
 //==========================================================================
@@ -981,113 +981,113 @@ final void A_BrainScream()
 
 final void A_BrainExplode()
 {
-	TVec org;
+  TVec org;
 
-	org.x = Origin.x + (Random() - Random()) * 8.0;
-	org.y = Origin.y;
-	org.z = 1.0 / 512.0 + Random() * 512.0;
-	BrainishExplosion(org);
+  org.x = Origin.x + (Random() - Random()) * 8.0;
+  org.y = Origin.y;
+  org.z = 1.0 / 512.0 + Random() * 512.0;
+  BrainishExplosion(org);
 }
 
 //==========================================================================
 //
-//	BrainishExplosion
+//  BrainishExplosion
 //
 //==========================================================================
 
 final void BrainishExplosion(TVec org)
 {
-	EntityEx A = Spawn(Rocket, org,,, false);
-	A.DeathSound = 'misc/brainexplode';
-	//	Disables collision detection which is not wanted here
-	A.MissileDamage = 0;
-	A.Velocity.z = Random() * 2.0 * 35.0;
+  EntityEx A = Spawn(Rocket, org,,, false);
+  A.DeathSound = 'misc/brainexplode';
+  //  Disables collision detection which is not wanted here
+  A.MissileDamage = 0;
+  A.Velocity.z = Random() * 2.0 * 35.0;
 
-	A.SetState(FindClassState(BossBrain, 'BrainExplode'));
+  A.SetState(FindClassState(BossBrain, 'BrainExplode'));
 
-	A.StateTime -= Random() * 0.2;
-	if (A.StateTime < 0.1)
-	{
-		A.StateTime = 0.1;
-	}
+  A.StateTime -= Random() * 0.2;
+  if (A.StateTime < 0.1)
+  {
+    A.StateTime = 0.1;
+  }
 }
 
 //==========================================================================
 //
-//	A_Mushroom
+//  A_Mushroom
 //
 //==========================================================================
 
 final void A_Mushroom()
 {
-	decorate_A_Mushroom();
+  decorate_A_Mushroom();
 }
 
 //==========================================================================
 //
-//	decorate_A_Mushroom
+//  decorate_A_Mushroom
 //
-//	killough 9/98: a mushroom explosion effect, sorta :)
-//	Original idea: Linguica
+//  killough 9/98: a mushroom explosion effect, sorta :)
+//  Original idea: Linguica
 //
 //==========================================================================
 
 final void decorate_A_Mushroom(optional class<Actor> SpawnType,
-	optional int Amount, optional int Flags, optional float vrange,
-	optional float hrange)
+  optional int Amount, optional int Flags, optional float vrange,
+  optional float hrange)
 {
-	int			i;
-	int			j;
+  int     i;
+  int     j;
 
-	if (!SpawnType)
-	{
-		SpawnType = FatShot;
-	}
-	if (!Amount)
-	{
-		Amount = GetMissileDamage(0, 1);
-	}
+  if (!SpawnType)
+  {
+    SpawnType = FatShot;
+  }
+  if (!Amount)
+  {
+    Amount = GetMissileDamage(0, 1);
+  }
 
-	// First make normal explosion
-	RadiusAttack(self, 128, 128.0, !(Flags & 2), DamageType);
+  // First make normal explosion
+  RadiusAttack(self, 128, 128.0, !(Flags & 2), DamageType);
 
-	// Now launch mushroom cloud
-	// We need something to aim at.
-	Actor target = Spawn(MapSpot,,,, false);
-	target.Height = Height;
-	for (i = -Amount; i <= Amount; i += 8)
-	{
-		for (j = -Amount; j <= Amount; j += 8)
-		{
-			// Aim in many directions from source
-			target.UnlinkFromWorld();
-			target.Origin.x = Origin.x + itof(i);
-			target.Origin.y = Origin.y + itof(j);
-			target.LinkToWorld();
-			// Aim up fairly high
-			target.Origin.z = Origin.z + Length(vector(itof(i), itof(j),
-				0.0)) * (vrange ? vrange : 4.0);
-			EntityEx mo;
-			// Launch fireball
-			if (Flags & 1)
-			{
-				TVec org = vector(Origin.x, Origin.y, Origin.z + 32.0);
-				mo = SpawnMissileXYZ(org, target, SpawnType);
-			}
-			else
-			{
-				mo = SpawnMissile(target, SpawnType);
-			}
-			if (mo)
-			{
-				// Slow it down a bit
-				mo.Velocity = mo.Velocity * (hrange ? hrange : 0.5);
-				// Make debris fall under gravity
-				mo.bNoGravity = false;
-			}
-		}
-	}
-	target.Destroy();
+  // Now launch mushroom cloud
+  // We need something to aim at.
+  Actor target = Spawn(MapSpot,,,, false);
+  target.Height = Height;
+  for (i = -Amount; i <= Amount; i += 8)
+  {
+    for (j = -Amount; j <= Amount; j += 8)
+    {
+      // Aim in many directions from source
+      target.UnlinkFromWorld();
+      target.Origin.x = Origin.x + itof(i);
+      target.Origin.y = Origin.y + itof(j);
+      target.LinkToWorld();
+      // Aim up fairly high
+      target.Origin.z = Origin.z + Length(vector(itof(i), itof(j),
+        0.0)) * (vrange ? vrange : 4.0);
+      EntityEx mo;
+      // Launch fireball
+      if (Flags & 1)
+      {
+        TVec org = vector(Origin.x, Origin.y, Origin.z + 32.0);
+        mo = SpawnMissileXYZ(org, target, SpawnType);
+      }
+      else
+      {
+        mo = SpawnMissile(target, SpawnType);
+      }
+      if (mo)
+      {
+        // Slow it down a bit
+        mo.Velocity = mo.Velocity * (hrange ? hrange : 0.5);
+        // Make debris fall under gravity
+        mo.bNoGravity = false;
+      }
+    }
+  }
+  target.Destroy();
 }
 
 //===========================================================================
@@ -1098,79 +1098,79 @@ final void decorate_A_Mushroom(optional class<Actor> SpawnType,
 
 final void A_M_Saw()
 {
-	float		angle;
-	int			damage;
-	TAVec		aimAng;
-	TVec		dir;
-	EntityEx	AimTarget;
+  float   angle;
+  int     damage;
+  TAVec   aimAng;
+  TVec    dir;
+  EntityEx  AimTarget;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	if (CheckMeleeRange())
-	{
-		damage = 2 * (P_Random() % 10 + 1);
-		aimAng = Angles;
-		aimAng.yaw = AngleMod360(aimAng.yaw + (Random() -
-			Random()) * 45.0 / 8.0);
+  A_FaceTarget();
+  if (CheckMeleeRange())
+  {
+    damage = 2 * (P_Random() % 10 + 1);
+    aimAng = Angles;
+    aimAng.yaw = AngleMod360(aimAng.yaw + (Random() -
+      Random()) * 45.0 / 8.0);
 
-		// use meleerange + 1 se the puff doesn't skip the flash
-		AimTarget = AimLineAttack(dir, aimAng, MELEERANGE + 0.00001);
-		LineAttack(dir, MELEERANGE + 0.00001, damage, BulletPuff,,,'Chainsaw', false);
+    // use meleerange + 1 se the puff doesn't skip the flash
+    AimTarget = AimLineAttack(dir, aimAng, MELEERANGE + 0.00001);
+    LineAttack(dir, MELEERANGE + 0.00001, damage, BulletPuff,,,'Chainsaw', false);
 
-		if (!AimTarget)
-		{
-			PlaySound('weapons/sawfull', CHAN_WEAPON);
-			return;
-		}
-		PlaySound('weapons/sawhit', CHAN_WEAPON);
+    if (!AimTarget)
+    {
+      PlaySound('weapons/sawfull', CHAN_WEAPON);
+      return;
+    }
+    PlaySound('weapons/sawhit', CHAN_WEAPON);
 
-		// turn to face target
-		angle = atan2(AimTarget.Origin.y - Origin.y,
-			AimTarget.Origin.x - Origin.x);
-		if (AngleMod360(angle - Angles.yaw) > 180.0)
-		{
-			if (AngleMod360(angle - Angles.yaw) < -90.0 / 20.0)
-				Angles.yaw = angle + 90.0 / 21.0;
-			else
-				Angles.yaw = Angles.yaw - 90.0 / 20.0;
-		}
-		else
-		{
-			if (AngleMod360(angle - Angles.yaw) > 90.0 / 20.0)
-				Angles.yaw = angle - 90.0 / 21.0;
-			else
-				Angles.yaw += 90.0 / 20.0;
-		}
-		Angles.yaw = AngleMod360(Angles.yaw);
-	}
-	else
-	{
-		PlaySound('weapons/sawfull', CHAN_WEAPON);
-	}
+    // turn to face target
+    angle = atan2(AimTarget.Origin.y - Origin.y,
+      AimTarget.Origin.x - Origin.x);
+    if (AngleMod360(angle - Angles.yaw) > 180.0)
+    {
+      if (AngleMod360(angle - Angles.yaw) < -90.0 / 20.0)
+        Angles.yaw = angle + 90.0 / 21.0;
+      else
+        Angles.yaw = Angles.yaw - 90.0 / 20.0;
+    }
+    else
+    {
+      if (AngleMod360(angle - Angles.yaw) > 90.0 / 20.0)
+        Angles.yaw = angle - 90.0 / 21.0;
+      else
+        Angles.yaw += 90.0 / 20.0;
+    }
+    Angles.yaw = AngleMod360(Angles.yaw);
+  }
+  else
+  {
+    PlaySound('weapons/sawfull', CHAN_WEAPON);
+  }
 }
 
 //==========================================================================
 //
-//	A_SentinelRefire
+//  A_SentinelRefire
 //
 //==========================================================================
 
 final void A_SentinelRefire()
 {
-	// keep firing unless target got out of sight
-	A_FaceTarget();
+  // keep firing unless target got out of sight
+  A_FaceTarget();
 
-	if (P_Random() < 30)
-	{
-		return;
-	}
+  if (P_Random() < 30)
+  {
+    return;
+  }
 
-	if (!Target || Target.Health <= 0 || !CanSee(Target) || P_Random() < 40)
-	{
-		SetState(SeeState);
-	}
+  if (!Target || Target.Health <= 0 || !CanSee(Target) || P_Random() < 40)
+  {
+    SetState(SeeState);
+  }
 }

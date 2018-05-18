@@ -24,14 +24,14 @@
 //**************************************************************************
 
 class MorphProjectile : Actor
-	abstract;
+  abstract;
 
-class<Actor>		MonsterClass;
-class<PlayerPawn>	PlayerClass;
-float				Duration;
-int					MorphStyle;
-class<Actor>		MorphFlash;
-class<Actor>		UnmorphFlash;
+class<Actor>    MonsterClass;
+class<PlayerPawn> PlayerClass;
+float       Duration;
+int         MorphStyle;
+class<Actor>    MorphFlash;
+class<Actor>    UnmorphFlash;
 
 //==========================================================================
 //
@@ -41,17 +41,17 @@ class<Actor>		UnmorphFlash;
 
 int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
-	victim.Morph(class<MorphedMonster>(MonsterClass), PlayerClass, Duration,
-		MorphStyle, MorphFlash, UnmorphFlash);
-	return -1;	// Always return
+  victim.Morph(class<MorphedMonster>(MonsterClass), PlayerClass, Duration,
+    MorphStyle, MorphFlash, UnmorphFlash);
+  return -1;  // Always return
 }
 
 defaultproperties
 {
-	MissileDamage = 1;
-	bNoBlockmap = true;
-	bMissile = true;
-	bDropOff = true;
-	bNoGravity = true;
-	bNoTeleport = true;
+  MissileDamage = 1;
+  bNoBlockmap = true;
+  bMissile = true;
+  bDropOff = true;
+  bNoGravity = true;
+  bNoTeleport = true;
 }

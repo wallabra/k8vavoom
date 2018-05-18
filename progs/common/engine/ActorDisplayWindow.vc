@@ -24,12 +24,12 @@
 //**************************************************************************
 
 class ActorDisplayWindow : Widget
-	native;
+  native;
 
-state		CastState;
-float		CastTime;
-float		StateTime;
-state		NextState;
+state   CastState;
+float   CastTime;
+float   StateTime;
+state   NextState;
 
 native final void SetState(state State);
 

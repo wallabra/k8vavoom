@@ -27,152 +27,152 @@
 // Minotaur variables
 //
 
-bool bFloorFireRefired;		//  internal to minotaur AI
-//  Special1				charge duration countdown
+bool bFloorFireRefired;   //  internal to minotaur AI
+//  Special1        charge duration countdown
 
 const float MinotaurLookDist = 16.0 * 54.0;
 const float ChargeSpeed = 455.0;
 
-float StartTime;			//  minotaur start time
+float StartTime;      //  minotaur start time
 
 //**************************************************************************
-//	Generic monster attacks
+//  Generic monster attacks
 //**************************************************************************
 
 //==========================================================================
 //
-//	A_CustomMissile
+//  A_CustomMissile
 //
 //==========================================================================
 
 final void A_CustomMissile(class<Actor> MissileType, optional float SpawnHeight,
-	optional int SpawnXYOffset, optional float Angle, optional int AimMode,
-	optional float Pitch)
+  optional int SpawnXYOffset, optional float Angle, optional int AimMode,
+  optional float Pitch)
 {
-	int Flags = AimMode & ~3;
-	AimMode &= 3;
+  int Flags = AimMode & ~3;
+  AimMode &= 3;
 
-	if (Target || AimMode == 2)
-	{
-		if (MissileType)
-		{
-			if (!specified_SpawnHeight)
-			{
-				SpawnHeight = 32.0;
-			}
-			if (!specified_SpawnXYOffset)
-			{
-				SpawnXYOffset = 1;
-			}
-			TVec Offs = itof(SpawnXYOffset) * vector(cos(Angles.yaw - 90.0),
-				sin(Angles.yaw - 90.0), 0.0);
-			EntityEx A;
+  if (Target || AimMode == 2)
+  {
+    if (MissileType)
+    {
+      if (!specified_SpawnHeight)
+      {
+        SpawnHeight = 32.0;
+      }
+      if (!specified_SpawnXYOffset)
+      {
+        SpawnXYOffset = 1;
+      }
+      TVec Offs = itof(SpawnXYOffset) * vector(cos(Angles.yaw - 90.0),
+        sin(Angles.yaw - 90.0), 0.0);
+      EntityEx A;
 
-			switch (AimMode)
-			{
-			default:
-				Origin += Offs;
-				A = SpawnMissile(Target, MissileType, SpawnHeight);
-				Origin -= Offs;
-				break;
+      switch (AimMode)
+      {
+      default:
+        Origin += Offs;
+        A = SpawnMissile(Target, MissileType, SpawnHeight);
+        Origin -= Offs;
+        break;
 
-			case 1:
-				Offs.z = SpawnHeight;
-				A = SpawnMissileXYZ(Origin + Offs, Target, MissileType);
-				break;
+      case 1:
+        Offs.z = SpawnHeight;
+        A = SpawnMissileXYZ(Origin + Offs, Target, MissileType);
+        break;
 
-			case 2:
-				Origin += Offs;
-				A = SpawnMissileAngles(MissileType, Angles.yaw, Pitch,
-					SpawnHeight);
-				Origin -= Offs;
-			}
+      case 2:
+        Origin += Offs;
+        A = SpawnMissileAngles(MissileType, Angles.yaw, Pitch,
+          SpawnHeight);
+        Origin -= Offs;
+      }
 
-			if (A)
-			{
-				VectorRotateAroundZ(&A.Velocity, Angle);
-				//	Find correct shooter for projectiles shooting projectiles.
-				if (IsMissile(!!(Flags & 4)))
-				{
-					EntityEx Own = self;
-					while (Own.IsMissile(!!(Flags & 4)) && Own.Target)
-					{
-						Own = Own.Target;
-					}
-					A.Target = Own;
-					if (A.bSeekerMissile)
-					{
-						A.Tracer = Tracer;
-					}
-				}
-				else if (A.bSeekerMissile)
-				{
-					A.Tracer = Target;
-				}
-			}
-		}
-	}
-	else if (Flags & 8)
-	{
-		if (SeeState)
-		{
-			SetState(SeeState);
-		}
-	}
+      if (A)
+      {
+        VectorRotateAroundZ(&A.Velocity, Angle);
+        //  Find correct shooter for projectiles shooting projectiles.
+        if (IsMissile(!!(Flags & 4)))
+        {
+          EntityEx Own = self;
+          while (Own.IsMissile(!!(Flags & 4)) && Own.Target)
+          {
+            Own = Own.Target;
+          }
+          A.Target = Own;
+          if (A.bSeekerMissile)
+          {
+            A.Tracer = Tracer;
+          }
+        }
+        else if (A.bSeekerMissile)
+        {
+          A.Tracer = Target;
+        }
+      }
+    }
+  }
+  else if (Flags & 8)
+  {
+    if (SeeState)
+    {
+      SetState(SeeState);
+    }
+  }
 }
 
 //==========================================================================
 //
-//	A_CustomBulletAttack
+//  A_CustomBulletAttack
 //
 //==========================================================================
 
 final void A_CustomBulletAttack(float SpreadHoriz, float SpreadVert,
-	int NumBullets, int DamagePerBullet, optional class<Actor> PuffType,
-	optional float Range, optional int Flags)
+  int NumBullets, int DamagePerBullet, optional class<Actor> PuffType,
+  optional float Range, optional int Flags)
 {
-	if (!Range)
-	{
-		Range = MISSILERANGE;
-	}
-	if (!PuffType || !specified_PuffType)
-	{
-		PuffType = BulletPuff;
-	}
+  if (!Range)
+  {
+    Range = MISSILERANGE;
+  }
+  if (!PuffType || !specified_PuffType)
+  {
+    PuffType = BulletPuff;
+  }
 
-	if (!Target && !(Flags & 1))
-	{
-		return;
-	}
+  if (!Target && !(Flags & 1))
+  {
+    return;
+  }
 
-	if (!(Flags & 1))
-	{
-		A_FaceTarget();
-	}
+  if (!(Flags & 1))
+  {
+    A_FaceTarget();
+  }
 
-	if (AttackSound)
-	{
-		PlaySound(AttackSound, CHAN_WEAPON);
-	}
+  if (AttackSound)
+  {
+    PlaySound(AttackSound, CHAN_WEAPON);
+  }
 
-	TVec aimDir;
-	AimLineAttack(aimDir, Angles, MISSILERANGE);
-	int i;
-	for (i = 0; i < NumBullets; i++)
-	{
-		TAVec rot;
-		rot.pitch = (Random() - Random()) * SpreadVert;
-		rot.yaw = (Random() - Random()) * SpreadHoriz;
-		rot.roll = 0.0;
-		TVec dir = RotateDirectionVector(aimDir, rot);
-		int damage = DamagePerBullet;
-		if (!(Flags & 2))
-		{
-			damage *= ((P_Random() % 3) + 1);
-		}
-		LineAttack(dir, Range, damage, PuffType,,,
-			PuffType.default.DamageType, (i != 0));
-	}
+  TVec aimDir;
+  AimLineAttack(aimDir, Angles, MISSILERANGE);
+  int i;
+  for (i = 0; i < NumBullets; i++)
+  {
+    TAVec rot;
+    rot.pitch = (Random() - Random()) * SpreadVert;
+    rot.yaw = (Random() - Random()) * SpreadHoriz;
+    rot.roll = 0.0;
+    TVec dir = RotateDirectionVector(aimDir, rot);
+    int damage = DamagePerBullet;
+    if (!(Flags & 2))
+    {
+      damage *= ((P_Random() % 3) + 1);
+    }
+    LineAttack(dir, Range, damage, PuffType,,,
+      PuffType.default.DamageType, (i != 0));
+  }
 }
 
 //===========================================================================
@@ -182,251 +182,251 @@ final void A_CustomBulletAttack(float SpreadHoriz, float SpreadVert,
 //===========================================================================
 
 final void A_CustomRailgun(int RailDamage, optional float Offset,
-	optional string Colour1, optional string Colour2, optional int Flags,
-	optional bool DoAim, optional float MaxDiff,
-	optional class<Actor> PuffType)
+  optional string Colour1, optional string Colour2, optional int Flags,
+  optional bool DoAim, optional float MaxDiff,
+  optional class<Actor> PuffType)
 {
-	if (DoAim && !Target)
-	{
-		return;
-	}
+  if (DoAim && !Target)
+  {
+    return;
+  }
 
-	//	Andy Baker's stealth monsters
-	if (bStealth)
-	{
-		VisDir = 1;
-	}
+  //  Andy Baker's stealth monsters
+  if (bStealth)
+  {
+    VisDir = 1;
+  }
 
-	bAmbush = false;
+  bAmbush = false;
 
-	if (DoAim)
-	{
-		Angles.yaw = atan2(Target.Origin.y - Origin.y,
-			Target.Origin.x - Origin.x);
-	}
+  if (DoAim)
+  {
+    Angles.yaw = atan2(Target.Origin.y - Origin.y,
+      Target.Origin.x - Origin.x);
+  }
 
-	TVec Dir;
-	AimLineAttack(Dir, Angles, MISSILERANGE);
-	TAVec Ang;
-	VectorAngles(&Dir, &Ang);
+  TVec Dir;
+  AimLineAttack(Dir, Angles, MISSILERANGE);
+  TAVec Ang;
+  VectorAngles(&Dir, &Ang);
 
-	if (DoAim)
-	{
-		//	Trail a little bit behind the target
-		Ang.yaw = atan2(
-			Target.Origin.y - Target.Velocity.y * 3.0 / 35.0 - Origin.y,
-			Target.Origin.x - Target.Velocity.y * 3.0 / 35.0 - Origin.x);
+  if (DoAim)
+  {
+    //  Trail a little bit behind the target
+    Ang.yaw = atan2(
+      Target.Origin.y - Target.Velocity.y * 3.0 / 35.0 - Origin.y,
+      Target.Origin.x - Target.Velocity.y * 3.0 / 35.0 - Origin.x);
 
-		if (Target.bShadow)
-		{
-			Ang.yaw = AngleMod360(Angles.yaw + (Random() - Random()) * 45.0);
-		}
-		Angles.yaw = Ang.yaw;
-	}
+    if (Target.bShadow)
+    {
+      Ang.yaw = AngleMod360(Angles.yaw + (Random() - Random()) * 45.0);
+    }
+    Angles.yaw = Ang.yaw;
+  }
 
-	AngleVector(&Ang, &Dir);
-	int Col1 = ParseColour(Colour1);
-	int Col2 = ParseColour(Colour2);
-	RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType,
-		!!(Flags & 1), !!(Flags & 2));
+  AngleVector(&Ang, &Dir);
+  int Col1 = ParseColour(Colour1);
+  int Col2 = ParseColour(Colour2);
+  RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType,
+    !!(Flags & 1), !!(Flags & 2));
 }
 
 //==========================================================================
 //
-//	A_CustomMeleeAttack
+//  A_CustomMeleeAttack
 //
 //==========================================================================
 
 final void A_CustomMeleeAttack(int MeleeDamage, optional name MeleeSound,
-	optional name MissSound, optional name DamageType, optional bool Bleed)
+  optional name MissSound, optional name DamageType, optional bool Bleed)
 {
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	if (CheckMeleeRange())
-	{
-		if (!DamageType)
-		{
-			DamageType = 'Melee';
-		}
-		if (MeleeSound)
-		{
-			PlaySound(MeleeSound, CHAN_WEAPON);
-		}
-		Target.Damage(self, self, MeleeDamage, DamageType);
-	}
-	else
-	{
-		if (MissSound)
-		{
-			PlaySound(MissSound, CHAN_WEAPON);
-		}
-	}
+  A_FaceTarget();
+  if (CheckMeleeRange())
+  {
+    if (!DamageType)
+    {
+      DamageType = 'Melee';
+    }
+    if (MeleeSound)
+    {
+      PlaySound(MeleeSound, CHAN_WEAPON);
+    }
+    Target.Damage(self, self, MeleeDamage, DamageType);
+  }
+  else
+  {
+    if (MissSound)
+    {
+      PlaySound(MissSound, CHAN_WEAPON);
+    }
+  }
 }
 
 //==========================================================================
 //
-//	A_CustomComboAttack
+//  A_CustomComboAttack
 //
 //==========================================================================
 
 final void A_CustomComboAttack(class<Actor> MissileType, float MissileHeight,
-	int MeleeDamage, optional name MeleeSound, optional name DamageType,
-	optional bool Bleed)
+  int MeleeDamage, optional name MeleeSound, optional name DamageType,
+  optional bool Bleed)
 {
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	if (CheckMeleeRange())
-	{
-		if (!DamageType)
-		{
-			DamageType = 'Melee';
-		}
-		if (MeleeSound)
-		{
-			PlaySound(MeleeSound, CHAN_WEAPON);
-		}
-		Target.Damage(self, self, MeleeDamage, DamageType);
-		return;
-	}
+  A_FaceTarget();
+  if (CheckMeleeRange())
+  {
+    if (!DamageType)
+    {
+      DamageType = 'Melee';
+    }
+    if (MeleeSound)
+    {
+      PlaySound(MeleeSound, CHAN_WEAPON);
+    }
+    Target.Damage(self, self, MeleeDamage, DamageType);
+    return;
+  }
 
-	if (MissileType)
-	{
-		EntityEx A = SpawnMissile(Target, MissileType, MissileHeight);
-		if (A)
-		{
-			if (A.bSeekerMissile)
-			{
-				A.Tracer = Target;
-			}
-		}
-	}
+  if (MissileType)
+  {
+    EntityEx A = SpawnMissile(Target, MissileType, MissileHeight);
+    if (A)
+    {
+      if (A.bSeekerMissile)
+      {
+        A.Tracer = Target;
+      }
+    }
+  }
 }
 
 //==========================================================================
 //
-//	DoAttack
+//  DoAttack
 //
 //==========================================================================
 
 final void DoAttack(bool DoMelee, bool DoMissile, int MeleeDamage,
-	name MeleeSound, class<Actor> MissileType, float MissileHeight)
+  name MeleeSound, class<Actor> MissileType, float MissileHeight)
 {
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	A_FaceTarget();
-	if (DoMelee && MeleeDamage > 0 && CheckMeleeRange())
-	{
-		if (MeleeSound)
-		{
-			PlaySound(MeleeSound, CHAN_WEAPON);
-		}
-		int damage = (P_Random() % 8 + 1) * MeleeDamage;
-		Target.Damage(self, self, damage, 'Melee');
-		return;
-	}
+  A_FaceTarget();
+  if (DoMelee && MeleeDamage > 0 && CheckMeleeRange())
+  {
+    if (MeleeSound)
+    {
+      PlaySound(MeleeSound, CHAN_WEAPON);
+    }
+    int damage = (P_Random() % 8 + 1) * MeleeDamage;
+    Target.Damage(self, self, damage, 'Melee');
+    return;
+  }
 
-	if (DoMissile && MissileType)
-	{
-		EntityEx A = SpawnMissile(Target, MissileType, MissileHeight);
-		if (A)
-		{
-			if (A.bSeekerMissile)
-			{
-				A.Tracer = Target;
-			}
-		}
-	}
+  if (DoMissile && MissileType)
+  {
+    EntityEx A = SpawnMissile(Target, MissileType, MissileHeight);
+    if (A)
+    {
+      if (A.bSeekerMissile)
+      {
+        A.Tracer = Target;
+      }
+    }
+  }
 }
 
 //==========================================================================
 //
-//	A_MeleeAttack
+//  A_MeleeAttack
 //
 //==========================================================================
 
 final void A_MeleeAttack()
 {
-	DoAttack(true, false, MeleeDamage, MeleeSound, MissileType,
-		MissileHeight);
+  DoAttack(true, false, MeleeDamage, MeleeSound, MissileType,
+    MissileHeight);
 }
 
 //==========================================================================
 //
-//	A_MissileAttack
+//  A_MissileAttack
 //
 //==========================================================================
 
 final void A_MissileAttack()
 {
-	DoAttack(false, true, MeleeDamage, MeleeSound, MissileType,
-		MissileHeight);
+  DoAttack(false, true, MeleeDamage, MeleeSound, MissileType,
+    MissileHeight);
 }
 
 //==========================================================================
 //
-//	A_ComboAttack
+//  A_ComboAttack
 //
 //==========================================================================
 
 final void A_ComboAttack()
 {
-	DoAttack(true, true, MeleeDamage, MeleeSound, MissileType,
-		MissileHeight);
+  DoAttack(true, true, MeleeDamage, MeleeSound, MissileType,
+    MissileHeight);
 }
 
 //==========================================================================
 //
-//	A_BasicAttack
+//  A_BasicAttack
 //
 //==========================================================================
 
 final void A_BasicAttack(int AMeleeDamage, name AMeleeSound,
-	class<Actor> AMissileType, float AMissileHeight)
+  class<Actor> AMissileType, float AMissileHeight)
 {
-	DoAttack(true, true, AMeleeDamage, AMeleeSound, AMissileType,
-		AMissileHeight);
+  DoAttack(true, true, AMeleeDamage, AMeleeSound, AMissileType,
+    AMissileHeight);
 }
 
 //==========================================================================
 //
-//	A_BulletAttack
+//  A_BulletAttack
 //
 //==========================================================================
 
 final void A_BulletAttack()
 {
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	if (AttackSound)
-	{
-		PlaySound(AttackSound, CHAN_WEAPON);
-	}
-	A_FaceTarget();
-	TVec aimDir;
-	AimLineAttack(aimDir, Angles, MISSILERANGE);
-	int i;
-	int NumBullets = GetMissileDamage(0, 1);
-	for (i = 0; i < NumBullets; i++)
-	{
-		TVec dir = aimDir;
-		VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
-		int damage = ((P_Random() % 5) + 1) * 3;
-		LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet', (i != 0));
-	}
+  if (AttackSound)
+  {
+    PlaySound(AttackSound, CHAN_WEAPON);
+  }
+  A_FaceTarget();
+  TVec aimDir;
+  AimLineAttack(aimDir, Angles, MISSILERANGE);
+  int i;
+  int NumBullets = GetMissileDamage(0, 1);
+  for (i = 0; i < NumBullets; i++)
+  {
+    TVec dir = aimDir;
+    VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+    int damage = ((P_Random() % 5) + 1) * 3;
+    LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet', (i != 0));
+  }
 }
 
 //===========================================================================
@@ -437,40 +437,40 @@ final void A_BulletAttack()
 
 final void A_MonsterRail()
 {
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	//	Andy Baker's stealth monsters
-	if (bStealth)
-	{
-		VisDir = 1;
-	}
+  //  Andy Baker's stealth monsters
+  if (bStealth)
+  {
+    VisDir = 1;
+  }
 
-	bAmbush = false;
+  bAmbush = false;
 
-	Angles.yaw = atan2(Target.Origin.y - Origin.y,
-		Target.Origin.x - Origin.x);
+  Angles.yaw = atan2(Target.Origin.y - Origin.y,
+    Target.Origin.x - Origin.x);
 
-	TVec Dir;
-	AimLineAttack(Dir, Angles, MISSILERANGE);
-	TAVec Ang;
-	VectorAngles(&Dir, &Ang);
+  TVec Dir;
+  AimLineAttack(Dir, Angles, MISSILERANGE);
+  TAVec Ang;
+  VectorAngles(&Dir, &Ang);
 
-	//	Trail a little bit behind the target
-	Ang.yaw = atan2(
-		Target.Origin.y - Target.Velocity.y * 3.0 / 35.0 - Origin.y,
-		Target.Origin.x - Target.Velocity.y * 3.0 / 35.0 - Origin.x);
+  //  Trail a little bit behind the target
+  Ang.yaw = atan2(
+    Target.Origin.y - Target.Velocity.y * 3.0 / 35.0 - Origin.y,
+    Target.Origin.x - Target.Velocity.y * 3.0 / 35.0 - Origin.x);
 
-	if (Target.bShadow)
-	{
-		Ang.yaw = AngleMod360(Angles.yaw + (Random() - Random()) * 45.0);
-	}
-	Angles.yaw = Ang.yaw;
+  if (Target.bShadow)
+  {
+    Ang.yaw = AngleMod360(Angles.yaw + (Random() - Random()) * 45.0);
+  }
+  Angles.yaw = Ang.yaw;
 
-	AngleVector(&Ang, &Dir);
-	RailAttack(Dir, 0.0, GetMissileDamage(0, 1));
+  AngleVector(&Ang, &Dir);
+  RailAttack(Dir, 0.0, GetMissileDamage(0, 1));
 }
 
 //==========================================================================
@@ -482,44 +482,44 @@ final void A_MonsterRail()
 //==========================================================================
 
 final void DoExplode(int damage, float distance, bool damageSelf,
-					 optional int dmgdistance)
+           optional int dmgdistance)
 {
-	int			i;
+  int     i;
 
-	if (specified_dmgdistance && dmgdistance > 0)
-	{
-		RadiusAttack(Target, damage, distance, damageSelf, DamageType, dmgdistance);
-	}
-	else
-	{
-		RadiusAttack(Target, damage, distance, damageSelf, DamageType);
-	}
-	if (Origin.z <= FloorZ + distance)
-	{
-		HitFloorType();
-	}
+  if (specified_dmgdistance && dmgdistance > 0)
+  {
+    RadiusAttack(Target, damage, distance, damageSelf, DamageType, dmgdistance);
+  }
+  else
+  {
+    RadiusAttack(Target, damage, distance, damageSelf, DamageType);
+  }
+  if (Origin.z <= FloorZ + distance)
+  {
+    HitFloorType();
+  }
 
-	if (bExplodeParticles)
-	{
-		//  Spawn explosion effects - dynamic light and particles
-		for (i = 0; i < MAXPLAYERS; i++)
-		{
-			if (!Level.Game.Players[i])
-				continue;
-			if (!Level.Game.Players[i].bSpawned)
-				continue;
-			PlayerEx(Level.Game.Players[i]).ClientParticleExplosion(
-				DLightColour, DLightRadius, Origin + vector(0.0, 0.0, Height * 0.5));
-		}
-	}
-	else if (ExplodeEffect)
-	{
-		SendExplosion(ExplodeEffect, DLightRadius, Origin);
-	}
+  if (bExplodeParticles)
+  {
+    //  Spawn explosion effects - dynamic light and particles
+    for (i = 0; i < MAXPLAYERS; i++)
+    {
+      if (!Level.Game.Players[i])
+        continue;
+      if (!Level.Game.Players[i].bSpawned)
+        continue;
+      PlayerEx(Level.Game.Players[i]).ClientParticleExplosion(
+        DLightColour, DLightRadius, Origin + vector(0.0, 0.0, Height * 0.5));
+    }
+  }
+  else if (ExplodeEffect)
+  {
+    SendExplosion(ExplodeEffect, DLightRadius, Origin);
+  }
 
-	//  Clear old dynamic light and trail effects
-	bDynamicLight = false;
-	bLeaveTrail = false;
+  //  Clear old dynamic light and trail effects
+  bDynamicLight = false;
+  bLeaveTrail = false;
 }
 
 //==========================================================================
@@ -532,19 +532,19 @@ final void DoExplode(int damage, float distance, bool damageSelf,
 
 final void A_Explode()
 {
-	int			damage;
-	float		distance;
-	byte		damageSelf;
+  int     damage;
+  float   distance;
+  byte    damageSelf;
 
-	damage = 128;
-	distance = 128.0;
-	damageSelf = true;
+  damage = 128;
+  distance = 128.0;
+  damageSelf = true;
 
-	PreExplode();
-	GetExplodeParms(damage, distance, damageSelf);
+  PreExplode();
+  GetExplodeParms(damage, distance, damageSelf);
 
-	CheckSplash(distance);
-	DoExplode(damage, distance, damageSelf);
+  CheckSplash(distance);
+  DoExplode(damage, distance, damageSelf);
 }
 
 //==========================================================================
@@ -555,11 +555,11 @@ final void A_Explode()
 
 final void A_ExplodeAndAlert()
 {
-	A_Explode();
-	if (Target && Target.bIsPlayer)
-	{
-		LineSpecialLevelInfo(Level).NoiseAlert(Target, self);
-	}
+  A_Explode();
+  if (Target && Target.bIsPlayer)
+  {
+    LineSpecialLevelInfo(Level).NoiseAlert(Target, self);
+  }
 }
 
 //==========================================================================
@@ -570,24 +570,24 @@ final void A_ExplodeAndAlert()
 
 final void A_ExplodeParms()
 {
-	int			damage;
-	float		distance;
-	byte		damageSelf;
+  int     damage;
+  float   distance;
+  byte    damageSelf;
 
-	damage = ExplosionDamage;
-	distance = itof(ExplosionRadius);
-	damageSelf = !bExplosionDontHurtSelf;
+  damage = ExplosionDamage;
+  distance = itof(ExplosionRadius);
+  damageSelf = !bExplosionDontHurtSelf;
 
-	if (!damage)
-	{
-		damage = 128;
-	}
-	if (!distance)
-	{
-		distance = itof(damage);
-	}
+  if (!damage)
+  {
+    damage = 128;
+  }
+  if (!distance)
+  {
+    distance = itof(damage);
+  }
 
-	DoExplode(damage, distance, damageSelf);
+  DoExplode(damage, distance, damageSelf);
 }
 
 //==========================================================================
@@ -597,71 +597,71 @@ final void A_ExplodeParms()
 //==========================================================================
 
 final void decorate_A_Explode(optional int damage, optional int distance,
-	optional bool damageSelf, optional bool Alert, optional int dmgdistance,
-	optional int nails, optional int naildamage)
+  optional bool damageSelf, optional bool Alert, optional int dmgdistance,
+  optional int nails, optional int naildamage)
 {
-	if (specified_damage)
-	{
-		if (!damage)
-		{
-			damage = 128;
-		}
-		if (!distance)
-		{
-			distance = 128;
-		}
-		if (!specified_damageSelf)
-		{
-			damageSelf = true;
-		}
-	}
-	else
-	{
-		damage = ExplosionDamage;
-		distance = ExplosionRadius;
-		damageSelf = !bExplosionDontHurtSelf;
-		if (!damage)
-		{
-			damage = 128;
-		}
-		if (!distance)
-		{
-			distance = damage;
-		}
-	}
+  if (specified_damage)
+  {
+    if (!damage)
+    {
+      damage = 128;
+    }
+    if (!distance)
+    {
+      distance = 128;
+    }
+    if (!specified_damageSelf)
+    {
+      damageSelf = true;
+    }
+  }
+  else
+  {
+    damage = ExplosionDamage;
+    distance = ExplosionRadius;
+    damageSelf = !bExplosionDontHurtSelf;
+    if (!damage)
+    {
+      damage = 128;
+    }
+    if (!distance)
+    {
+      distance = damage;
+    }
+  }
 
-	// NailBomb effect, from SMMU but not from its source code: instead it was
-	// implemented and generalized from the documentation at
-	// http://www.doomworld.com/eternity/engine/codeptrs.html
-	if (specified_nails && nails > 0)
-	{
-		int i;
-		TAVec Ang;
-		for (i = 0; i < nails; i++)
-		{
-			Ang.yaw = AngleMod360(itof(i * (360 / nails)));
-			// Comparing the results of a test wad with Eternity, it seems
-			// A_NailBomb does not aim
-			//AimLineAttack (self, Ang, MISSILERANGE), 
-			//LineAttack (Ang, MISSILERANGE, 0, naildamage,,,'Nail');
-			//LineAttack (Ang, MISSILERANGE, 0, naildamage, 'None', BulletPuff);
-			LineAttack (Ang, MISSILERANGE, naildamage, BulletPuff,,,'Nail', false);
-		}
-	}
+  // NailBomb effect, from SMMU but not from its source code: instead it was
+  // implemented and generalized from the documentation at
+  // http://www.doomworld.com/eternity/engine/codeptrs.html
+  if (specified_nails && nails > 0)
+  {
+    int i;
+    TAVec Ang;
+    for (i = 0; i < nails; i++)
+    {
+      Ang.yaw = AngleMod360(itof(i * (360 / nails)));
+      // Comparing the results of a test wad with Eternity, it seems
+      // A_NailBomb does not aim
+      //AimLineAttack (self, Ang, MISSILERANGE),
+      //LineAttack (Ang, MISSILERANGE, 0, naildamage,,,'Nail');
+      //LineAttack (Ang, MISSILERANGE, 0, naildamage, 'None', BulletPuff);
+      LineAttack (Ang, MISSILERANGE, naildamage, BulletPuff,,,'Nail', false);
+    }
+  }
 
-	if (specified_dmgdistance && dmgdistance > 0)
-	{
-		DoExplode(damage, itof(distance), damageSelf, dmgdistance);
-	}
-	else
-	{
-		DoExplode(damage, itof(distance), damageSelf);
-	}
-	CheckSplash(itof(distance));
-	if (Alert && Target && Target.bIsPlayer)
-	{
-		LineSpecialLevelInfo(Level).NoiseAlert(Target, self);
-	}
+  if (specified_dmgdistance && dmgdistance > 0)
+  {
+    DoExplode(damage, itof(distance), damageSelf, dmgdistance);
+  }
+  else
+  {
+    DoExplode(damage, itof(distance), damageSelf);
+  }
+  CheckSplash(itof(distance));
+  if (Alert && Target && Target.bIsPlayer)
+  {
+    LineSpecialLevelInfo(Level).NoiseAlert(Target, self);
+  }
 }
 
 //==========================================================================
@@ -671,26 +671,26 @@ final void decorate_A_Explode(optional int damage, optional int distance,
 //==========================================================================
 
 final void A_RadiusThrust(optional int Force, optional int Distance,
-	optional bool AffectSelf)
+  optional bool AffectSelf)
 {
-	if (!Force)
-	{
-		Force = 128;
-	}
-	if (!Distance)
-	{
-		Distance = Force;
-	}
-	if (!specified_AffectSelf)
-	{
-		AffectSelf = true;
-	}
+  if (!Force)
+  {
+    Force = 128;
+  }
+  if (!Distance)
+  {
+    Distance = Force;
+  }
+  if (!specified_AffectSelf)
+  {
+    AffectSelf = true;
+  }
 
-	RadiusAttack(Target, Force, itof(Distance), AffectSelf, DamageType, false);
-	if (Origin.z <= FloorZ + itof(Distance))
-	{
-		HitFloorType();
-	}
+  RadiusAttack(Target, Force, itof(Distance), AffectSelf, DamageType, false);
+  if (Origin.z <= FloorZ + itof(Distance))
+  {
+    HitFloorType();
+  }
 }
 
 //==========================================================================
@@ -701,8 +701,8 @@ final void A_RadiusThrust(optional int Force, optional int Distance,
 
 final void A_Detonate()
 {
-	int damage = GetMissileDamage(0, 1);
-	DoExplode(damage, itof(damage), true);
+  int damage = GetMissileDamage(0, 1);
+  DoExplode(damage, itof(damage), true);
 }
 
 //==========================================================================
@@ -712,61 +712,61 @@ final void A_Detonate()
 //==========================================================================
 
 final void A_ThrowGrenade(class<Actor> ItemType, optional float SpawnHeight,
-	optional float XYVel, optional float ZVel, optional bool UseAmmo)
+  optional float XYVel, optional float ZVel, optional bool UseAmmo)
 {
-	if (!specified_UseAmmo)
-	{
-		UseAmmo = true;
-	}
+  if (!specified_UseAmmo)
+  {
+    UseAmmo = true;
+  }
 
-	//	If called from weapon, then use ammo.
-	if (bIsPlayer &&
-		(XLevel.CallingState == Player.ViewStates[ps_weapon].State ||
-		XLevel.CallingState == Player.ViewStates[ps_flash].State))
-	{
-		Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-		if (!Wpn)
-		{
-			return;
-		}
-		if (UseAmmo && !Wpn.DepleteAmmo(Wpn.FireMode))
-		{
-			return;
-		}
-	}
+  //  If called from weapon, then use ammo.
+  if (bIsPlayer &&
+    (XLevel.CallingState == Player.ViewStates[ps_weapon].State ||
+    XLevel.CallingState == Player.ViewStates[ps_flash].State))
+  {
+    Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+    if (!Wpn)
+    {
+      return;
+    }
+    if (UseAmmo && !Wpn.DepleteAmmo(Wpn.FireMode))
+    {
+      return;
+    }
+  }
 
-	Actor A = Spawn(ItemType, Owner.Origin +
-		vector(0.0, 0.0, SpawnHeight + 35.0 - Owner.FloorClip));
-	if (A)
-	{
-		A.PlayMissileSpawnSound(self);
-		if (XYVel)
-		{
-			A.Speed = XYVel * 35.0;
-		}
-		A.Angles.yaw = AngleMod360(Owner.Angles.yaw +
-			(Random() * 2.0 - 1.0) * 45.0 / 8.0);
-		A.Velocity.z = (ZVel + 2.0 * sin(Owner.Angles.pitch)) * 35.0;
-		A.Origin.z += 2.0 * sin(Owner.Angles.pitch);
-		A.Velocity.x += A.Speed * cos(A.Angles.yaw);
-		A.Velocity.y += A.Speed * sin(A.Angles.yaw);
-		A.Velocity.x += Velocity.x / 2.0;
-		A.Velocity.y += Velocity.y / 2.0;
-		A.Target = self;
-		if (A.bRandomise)
-		{
-			A.StateTime -= Random() * 0.1;
-			if (A.StateTime < 1.0 / 35.0)
-			{
-				A.StateTime = 1.0 / 35.0;
-			}
-		}
-		A.CheckMissileSpawn();
-	}
-	else if (XLevel.StateCall)
-	{
-		XLevel.StateCall->Result = false;
-	}
+  Actor A = Spawn(ItemType, Owner.Origin +
+    vector(0.0, 0.0, SpawnHeight + 35.0 - Owner.FloorClip));
+  if (A)
+  {
+    A.PlayMissileSpawnSound(self);
+    if (XYVel)
+    {
+      A.Speed = XYVel * 35.0;
+    }
+    A.Angles.yaw = AngleMod360(Owner.Angles.yaw +
+      (Random() * 2.0 - 1.0) * 45.0 / 8.0);
+    A.Velocity.z = (ZVel + 2.0 * sin(Owner.Angles.pitch)) * 35.0;
+    A.Origin.z += 2.0 * sin(Owner.Angles.pitch);
+    A.Velocity.x += A.Speed * cos(A.Angles.yaw);
+    A.Velocity.y += A.Speed * sin(A.Angles.yaw);
+    A.Velocity.x += Velocity.x / 2.0;
+    A.Velocity.y += Velocity.y / 2.0;
+    A.Target = self;
+    if (A.bRandomise)
+    {
+      A.StateTime -= Random() * 0.1;
+      if (A.StateTime < 1.0 / 35.0)
+      {
+        A.StateTime = 1.0 / 35.0;
+      }
+    }
+    A.CheckMissileSpawn();
+  }
+  else if (XLevel.StateCall)
+  {
+    XLevel.StateCall->Result = false;
+  }
 }
 
 //==========================================================================
@@ -777,47 +777,47 @@ final void A_ThrowGrenade(class<Actor> ItemType, optional float SpawnHeight,
 
 void A_CheckForReload(int Count, state Jump, optional bool DoIncrement)
 {
-	if (Count <= 0)
-	{
-		return;
-	}
+  if (Count <= 0)
+  {
+    return;
+  }
 
-	if (bIsPlayer)
-	{
-		Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (bIsPlayer)
+  {
+    Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-		int ReloadCounter = Wpn.ReloadCounter;
-		if (!specified_DoIncrement)
-		{
-			DoIncrement = false;
-		}
-		if(!DoIncrement || ReloadCounter != 0)
-		{
-			ReloadCounter = (Wpn.ReloadCounter + 1) % Count;
-		}
-		else
-		{
-			// 0 % 1 = 1?  So how do we check if the weapon was never fired?  We should only do this when we're not incrementing the counter though.
-			ReloadCounter = 1;
-		}
+    int ReloadCounter = Wpn.ReloadCounter;
+    if (!specified_DoIncrement)
+    {
+      DoIncrement = false;
+    }
+    if(!DoIncrement || ReloadCounter != 0)
+    {
+      ReloadCounter = (Wpn.ReloadCounter + 1) % Count;
+    }
+    else
+    {
+      // 0 % 1 = 1?  So how do we check if the weapon was never fired?  We should only do this when we're not incrementing the counter though.
+      ReloadCounter = 1;
+    }
 
-		// If we have not made our last shot...
-		if (ReloadCounter != 0)
-		{
-			// Go back to the refire frames, instead of continuing on to the reload frames.
-			DoJump(Jump);
-		}
-		else
-		{
-			// We need to reload. However, don't reload if we're out of ammo.
-			Wpn.CheckAmmo(Weapon::FIRE_Either, false, false);
-		}
+    // If we have not made our last shot...
+    if (ReloadCounter != 0)
+    {
+      // Go back to the refire frames, instead of continuing on to the reload frames.
+      DoJump(Jump);
+    }
+    else
+    {
+      // We need to reload. However, don't reload if we're out of ammo.
+      Wpn.CheckAmmo(Weapon::FIRE_Either, false, false);
+    }
 
-		if(!DoIncrement)
-		{
-			Wpn.ReloadCounter = ReloadCounter;
-		}
-	}
+    if(!DoIncrement)
+    {
+      Wpn.ReloadCounter = ReloadCounter;
+    }
+  }
 }
 
 //==========================================================================
@@ -828,14 +828,14 @@ void A_CheckForReload(int Count, state Jump, optional bool DoIncrement)
 
 void A_ResetReloadCounter()
 {
-	if (bIsPlayer)
-	{
-		Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-		if (Wpn)
-		{
-			Wpn.ReloadCounter = 0;
-		}
-	}
+  if (bIsPlayer)
+  {
+    Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+    if (Wpn)
+    {
+      Wpn.ReloadCounter = 0;
+    }
+  }
 }
 
 //==========================================================================
@@ -846,30 +846,30 @@ void A_ResetReloadCounter()
 
 void A_ZoomFactor(float zoom, optional int flags)
 {
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	if (bIsPlayer && Wpn)
-	{
-		if (zoom < 0.1)
-		{
-			zoom = 0.1;
-		}
-		if (zoom > 50.0)
-		{
-			zoom = 50.0;
-		}
-		zoom = 1.0 / zoom;
+  if (bIsPlayer && Wpn)
+  {
+    if (zoom < 0.1)
+    {
+      zoom = 0.1;
+    }
+    if (zoom > 50.0)
+    {
+      zoom = 50.0;
+    }
+    zoom = 1.0 / zoom;
 
-		if (flags & 1)
-		{ // Make the zoom instant.
-			PlayerEx(Player).FOV = PlayerEx(Player).DesiredFOV * zoom;
-		}
-		if (flags & 2)
-		{ // Disable pitch/yaw scaling.
-			zoom = -zoom;
-		}
-		Wpn.FOVScale = zoom;
-	}
+    if (flags & 1)
+    { // Make the zoom instant.
+      PlayerEx(Player).FOV = PlayerEx(Player).DesiredFOV * zoom;
+    }
+    if (flags & 2)
+    { // Disable pitch/yaw scaling.
+      zoom = -zoom;
+    }
+    Wpn.FOVScale = zoom;
+  }
 }
 
 //==========================================================================
@@ -879,77 +879,77 @@ void A_ZoomFactor(float zoom, optional int flags)
 //==========================================================================
 
 final void BlastActor(Actor victim, Actor source, float speed,
-					class<Actor> BlastEffect)
+          class<Actor> BlastEffect)
 {
-	float angle;
-	float ang;
-	Actor A;
-	float x;
-	float y;
-	float z;
+  float angle;
+  float ang;
+  Actor A;
+  float x;
+  float y;
+  float z;
 
-	if (victim.bMissile)
-	{
-		if (victim.IsA('SorcBall'))
-		{
-			// don't blast sorcerer balls
-			return;
-		}
-		else if (MageStaffFX2(victim))
-		{
-			// Reflect to originator
-			victim.Tracer = victim.Target;
-			victim.Target = source;
-		}
-	}
-	if (victim.Class == HolySpirit)
-	{
-		if (victim.Tracer == source)
-		{
-			victim.Tracer = victim.Target;
-			victim.Target = source;
-		}
-	}
-	victim.Velocity.x = speed * cos(angle) * 35.0;
-	victim.Velocity.y = speed * sin(angle) * 35.0;
+  if (victim.bMissile)
+  {
+    if (victim.IsA('SorcBall'))
+    {
+      // don't blast sorcerer balls
+      return;
+    }
+    else if (MageStaffFX2(victim))
+    {
+      // Reflect to originator
+      victim.Tracer = victim.Target;
+      victim.Target = source;
+    }
+  }
+  if (victim.Class == HolySpirit)
+  {
+    if (victim.Tracer == source)
+    {
+      victim.Tracer = victim.Target;
+      victim.Target = source;
+    }
+  }
+  victim.Velocity.x = speed * cos(angle) * 35.0;
+  victim.Velocity.y = speed * sin(angle) * 35.0;
 
-	// Spawn blast puff
-	ang = atan2(source.Origin.y - victim.Origin.y,
-		source.Origin.x - victim.Origin.x);
-	x = victim.Origin.x + (victim.Radius + 1.0) * cos(ang);
-	y = victim.Origin.y + (victim.Radius + 1.0) * sin(ang);
-	z = victim.Origin.z - victim.FloorClip + victim.Height / 2.0;
-	A = Spawn(BlastEffect, vector(x, y, z));
-	if (A)
-	{
-		A.Velocity.x = victim.Velocity.x;
-		A.Velocity.y = victim.Velocity.y;
-	}
+  // Spawn blast puff
+  ang = atan2(source.Origin.y - victim.Origin.y,
+    source.Origin.x - victim.Origin.x);
+  x = victim.Origin.x + (victim.Radius + 1.0) * cos(ang);
+  y = victim.Origin.y + (victim.Radius + 1.0) * sin(ang);
+  z = victim.Origin.z - victim.FloorClip + victim.Height / 2.0;
+  A = Spawn(BlastEffect, vector(x, y, z));
+  if (A)
+  {
+    A.Velocity.x = victim.Velocity.x;
+    A.Velocity.y = victim.Velocity.y;
+  }
 
-	if (victim.bMissile)
-	{
-		victim.Velocity.z = 8.0 * 35.0;
-		A.Velocity.z = victim.Velocity.z;
-	}
-	else
-	{
-		victim.Velocity.z = 1000.0 / victim.Mass * 35.0;
-	}
-	if (victim.bIsPlayer)
-	{
-		// Players handled automatically
-	}
-	else
-	{
-		victim.bSlide = true;
-		victim.bBlasted = true;
-	}
-	// Touchy objects die when blasted
-	if (victim.bTouchy)
-	{
-		victim.bArmed = false; // Disarm
-		Damage(victim, source, victim.Health);
-	}
+  if (victim.bMissile)
+  {
+    victim.Velocity.z = 8.0 * 35.0;
+    A.Velocity.z = victim.Velocity.z;
+  }
+  else
+  {
+    victim.Velocity.z = 1000.0 / victim.Mass * 35.0;
+  }
+  if (victim.bIsPlayer)
+  {
+    // Players handled automatically
+  }
+  else
+  {
+    victim.bSlide = true;
+    victim.bBlasted = true;
+  }
+  // Touchy objects die when blasted
+  if (victim.bTouchy)
+  {
+    victim.bArmed = false; // Disarm
+    Damage(victim, source, victim.Health);
+  }
 }
 
 //==========================================================================
@@ -959,60 +959,60 @@ final void BlastActor(Actor victim, Actor source, float speed,
 //==========================================================================
 
 final void A_Blast(int BlastFlags, float Strength, float Radius, float Speed,
-					 class<Actor> BlastEffect, string BlastSound)
+           class<Actor> BlastEffect, string BlastSound)
 {
-	Actor mo;
-	float dist;
+  Actor mo;
+  float dist;
 
-	if (bIsPlayer && (BlastFlags & 1))
-	{
-		Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-		if (!Wpn.DepleteAmmo(Wpn.FireMode))
-			return;
-	}
+  if (bIsPlayer && (BlastFlags & 1))
+  {
+    Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+    if (!Wpn.DepleteAmmo(Wpn.FireMode))
+      return;
+  }
 
-	Owner.PlaySound(StrToName(BlastSound), CHAN_ITEM);
-	if (!(BlastFlags & 2))
-	{
-		LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(Owner), EntityEx(Owner));
-	}
+  Owner.PlaySound(StrToName(BlastSound), CHAN_ITEM);
+  if (!(BlastFlags & 2))
+  {
+    LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(Owner), EntityEx(Owner));
+  }
 
-	foreach AllThinkers(Actor, mo)
-	{
-		if (mo == Owner || mo.bBoss)
-		{
-			// Not a valid monster
-			continue;
-		}
-		if (mo.bCanBlast || mo.bIceCorpse)	// frozen corpse
-		{
-			// Let these special cases go
-		}
-		else if (mo.bMonster && (mo.Health <= 0))
-		{
-			continue;
-		}
-		else if (!mo.bMonster && !mo.bIsPlayer && !mo.bMissile && !mo.bTouchy)
-		{
-			// Must be monster, player, missile or touchy
-			continue;
-		}
-		if (mo.bDormant)
-		{
-			continue;	// no dormant creatures
-		}
-		if (mo.bDontBlast)
-		{
-			continue;
-		}
-		dist = Owner.DistTo(mo);
-		if (dist > Radius)
-		{
-			// Out of range
-			continue;
-		}
-		BlastActor(mo, Actor(Owner), Speed, BlastEffect);
-	}
+  foreach AllThinkers(Actor, mo)
+  {
+    if (mo == Owner || mo.bBoss)
+    {
+      // Not a valid monster
+      continue;
+    }
+    if (mo.bCanBlast || mo.bIceCorpse)  // frozen corpse
+    {
+      // Let these special cases go
+    }
+    else if (mo.bMonster && (mo.Health <= 0))
+    {
+      continue;
+    }
+    else if (!mo.bMonster && !mo.bIsPlayer && !mo.bMissile && !mo.bTouchy)
+    {
+      // Must be monster, player, missile or touchy
+      continue;
+    }
+    if (mo.bDormant)
+    {
+      continue; // no dormant creatures
+    }
+    if (mo.bDontBlast)
+    {
+      continue;
+    }
+    dist = Owner.DistTo(mo);
+    if (dist > Radius)
+    {
+      // Out of range
+      continue;
+    }
+    BlastActor(mo, Actor(Owner), Speed, BlastEffect);
+  }
 }
 
 //==========================================================================
@@ -1023,18 +1023,18 @@ final void A_Blast(int BlastFlags, float Strength, float Radius, float Speed,
 
 final void A_MonsterRefire(int prob, state jump)
 {
-	// keep firing unless target got out of sight
-	A_FaceTarget();
+  // keep firing unless target got out of sight
+  A_FaceTarget();
 
-	if (P_Random() < prob)
-	{
-		return;
-	}
+  if (P_Random() < prob)
+  {
+    return;
+  }
 
-	if (!Target || Target.Health <= 0 || !CanSee(Target))
-	{
-		DoJump(jump);
-	}
+  if (!Target || Target.Health <= 0 || !CanSee(Target))
+  {
+    DoJump(jump);
+  }
 }
 
 //==========================================================================
@@ -1045,127 +1045,127 @@ final void A_MonsterRefire(int prob, state jump)
 
 final EntityEx FindEnemySelf()
 {
-	Entity Other;
+  Entity Other;
 
-	foreach RoughBlockSearch(Other, 20)
-	{
-		EntityEx link = EntityEx(Other);
+  foreach RoughBlockSearch(Other, 20)
+  {
+    EntityEx link = EntityEx(Other);
 
-		if (!link.bMonster && (!link.bIsPlayer || link == Tracer))
-		{
-			continue;
-		}
-		if (!link.bShootable)
-		{
-			continue;
-		}
-		if (link.bDormant)
-		{
-			continue;
-		}
-		if (link.bSummonedMonster && (link.Tracer && (link.Tracer == Tracer ||
-				link.Tracer.IsTeammate(Tracer))))
-		{
-			continue;
-		}
-		if (link.IsTeammate(Tracer))
-		{
-			continue;
-		}
-		if (bScreenSeeker)
-		{
-			if (CanSee(link))
-			{
-				float angle = AngleMod360(atan2(link.Origin.y - Origin.y,
-					link.Origin.x - Origin.x) - Angles.yaw);
-				if (angle <= 226.0 * 360.0 / 256.0 || angle >= 30.0 * 360.0 / 256.0)
-				{
-					continue;
-				}
-			}
-		}
-		else
-		{
-			if (!CanSee(link))
-			{
-				continue;
-			}
-		}
-		return link;
-	}
-	return none;
+    if (!link.bMonster && (!link.bIsPlayer || link == Tracer))
+    {
+      continue;
+    }
+    if (!link.bShootable)
+    {
+      continue;
+    }
+    if (link.bDormant)
+    {
+      continue;
+    }
+    if (link.bSummonedMonster && (link.Tracer && (link.Tracer == Tracer ||
+        link.Tracer.IsTeammate(Tracer))))
+    {
+      continue;
+    }
+    if (link.IsTeammate(Tracer))
+    {
+      continue;
+    }
+    if (bScreenSeeker)
+    {
+      if (CanSee(link))
+      {
+        float angle = AngleMod360(atan2(link.Origin.y - Origin.y,
+          link.Origin.x - Origin.x) - Angles.yaw);
+        if (angle <= 226.0 * 360.0 / 256.0 || angle >= 30.0 * 360.0 / 256.0)
+        {
+          continue;
+        }
+      }
+    }
+    else
+    {
+      if (!CanSee(link))
+      {
+        continue;
+      }
+    }
+    return link;
+  }
+  return none;
 }
 
 //===========================================================================
 //
 //  FindEnemyMaster
 //
-//	Minotaur looking around player
+//  Minotaur looking around player
 //
 //===========================================================================
 
 final EntityEx FindEnemyMaster()
 {
-	Entity Other;
+  Entity Other;
 
-	foreach Tracer.RoughBlockSearch(Other, 20)
-	{
-		EntityEx link = EntityEx(Other);
+  foreach Tracer.RoughBlockSearch(Other, 20)
+  {
+    EntityEx link = EntityEx(Other);
 
-		if (!Tracer.bIsPlayer)
-		{
-			continue;
-		}
-		if (!link.bMonster && (!link.bIsPlayer || link == Tracer))
-		{
-			continue;
-		}
-		if (!link.bShootable)
-		{
-			continue;
-		}
-		if (link.bDormant)
-		{
-			continue;
-		}
-		if (link.bSummonedMonster && (link.Tracer && (link.Tracer == Tracer ||
-				link.Tracer.IsTeammate(Tracer))))
-		{
-		   continue;
-		}
-		if (link.IsTeammate(Tracer))
-		{
-		   continue;
-		}
-		if (Level.Game.netgame && !Level.Game.deathmatch && link.bIsPlayer)
-		{
-			continue;
-		}
-		if (Tracer.CanSee(link))
-		{
-			return link;
-		}
-		if (Tracer.bScreenSeeker)
-		{
-			if (Tracer.CanSee(link))
-			{
-				float angle = AngleMod360(atan2(link.Origin.y - Tracer.Origin.y,
-					link.Origin.x - Tracer.Origin.x) - Tracer.Angles.yaw);
-				if (angle <= 226.0 * 360.0 / 256.0 || angle >= 30.0 * 360.0 / 256.0)
-				{
-					continue;
-				}
-			}
-		}
-		else
-		{
-			if (!Tracer.CanSee(link))
-			{
-				continue;
-			}
-		}
-	}
-	return none;
+    if (!Tracer.bIsPlayer)
+    {
+      continue;
+    }
+    if (!link.bMonster && (!link.bIsPlayer || link == Tracer))
+    {
+      continue;
+    }
+    if (!link.bShootable)
+    {
+      continue;
+    }
+    if (link.bDormant)
+    {
+      continue;
+    }
+    if (link.bSummonedMonster && (link.Tracer && (link.Tracer == Tracer ||
+        link.Tracer.IsTeammate(Tracer))))
+    {
+       continue;
+    }
+    if (link.IsTeammate(Tracer))
+    {
+       continue;
+    }
+    if (Level.Game.netgame && !Level.Game.deathmatch && link.bIsPlayer)
+    {
+      continue;
+    }
+    if (Tracer.CanSee(link))
+    {
+      return link;
+    }
+    if (Tracer.bScreenSeeker)
+    {
+      if (Tracer.CanSee(link))
+      {
+        float angle = AngleMod360(atan2(link.Origin.y - Tracer.Origin.y,
+          link.Origin.x - Tracer.Origin.x) - Tracer.Angles.yaw);
+        if (angle <= 226.0 * 360.0 / 256.0 || angle >= 30.0 * 360.0 / 256.0)
+        {
+          continue;
+        }
+      }
+    }
+    else
+    {
+      if (!Tracer.CanSee(link))
+      {
+        continue;
+      }
+    }
+  }
+  return none;
 }
 
 //==========================================================================
@@ -1178,79 +1178,79 @@ final EntityEx FindEnemyMaster()
 
 final void A_MinotaurLook()
 {
-	Actor mo;
-	float dist;
-	int i;
+  Actor mo;
+  float dist;
+  int i;
 
-	if (!bSummonedMonster)
-	{
-		A_Look();
-		return;
-	}
+  if (!bSummonedMonster)
+  {
+    A_Look();
+    return;
+  }
 
-	Target = none;
+  Target = none;
 
-	if (Level.Game.deathmatch)	// Quick search for players
-	{
-		for (i = 0; i < MAXPLAYERS; i++)
-		{
-			if (!Level.Game.Players[i] || !Level.Game.Players[i].bSpawned)
-				continue;
-			mo = Actor(Level.Game.Players[i].MO);
-			if (mo == Tracer)
-				continue;
-			if (mo.Health <= 0)
-				continue;
-			if (mo.IsTeammate(Tracer))
-			{
-				continue;
-			}
-			dist = DistTo(mo);
-			if (dist > MinotaurLookDist)
-				continue;
-			Target = mo;
-			break;
-		}
-	}
+  if (Level.Game.deathmatch)  // Quick search for players
+  {
+    for (i = 0; i < MAXPLAYERS; i++)
+    {
+      if (!Level.Game.Players[i] || !Level.Game.Players[i].bSpawned)
+        continue;
+      mo = Actor(Level.Game.Players[i].MO);
+      if (mo == Tracer)
+        continue;
+      if (mo.Health <= 0)
+        continue;
+      if (mo.IsTeammate(Tracer))
+      {
+        continue;
+      }
+      dist = DistTo(mo);
+      if (dist > MinotaurLookDist)
+        continue;
+      Target = mo;
+      break;
+    }
+  }
 
-	if (!Target)	// Near player monster search
-	{
-		if (Tracer && (Tracer.Health > 0) && Tracer.bIsPlayer)
-			Target = FindEnemyMaster();
-		else
-			Target = FindEnemySelf();
-	}
+  if (!Target)  // Near player monster search
+  {
+    if (Tracer && (Tracer.Health > 0) && Tracer.bIsPlayer)
+      Target = FindEnemyMaster();
+    else
+      Target = FindEnemySelf();
+  }
 
-	if (!Target)	// Normal monster search
-	{
-		foreach AllThinkers(Actor, mo)
-		{
-			if (!mo.bMonster)
-				continue;
-			if (mo.Health <= 0)
-				continue;
-			if (!mo.bShootable)
-				continue;
-			dist = DistTo(mo);
-			if (dist > MinotaurLookDist)
-				continue;
-			if ((mo == Tracer) || (mo == self))
-				continue;
-			if (mo.bSummonedMonster && (mo.Tracer == Tracer || mo.IsTeammate(Tracer)))
- 				continue;
-			Target = mo;
-			break;	// Found mobj to attack
-		}
-	}
+  if (!Target)  // Normal monster search
+  {
+    foreach AllThinkers(Actor, mo)
+    {
+      if (!mo.bMonster)
+        continue;
+      if (mo.Health <= 0)
+        continue;
+      if (!mo.bShootable)
+        continue;
+      dist = DistTo(mo);
+      if (dist > MinotaurLookDist)
+        continue;
+      if ((mo == Tracer) || (mo == self))
+        continue;
+      if (mo.bSummonedMonster && (mo.Tracer == Tracer || mo.IsTeammate(Tracer)))
+        continue;
+      Target = mo;
+      break;  // Found mobj to attack
+    }
+  }
 
-	if (Target)
-	{
-		SetState(FindState('SeeNF'));
-	}
-	else
-	{
-		SetState(FindState('RoamNF'));
-	}
+  if (Target)
+  {
+    SetState(FindState('SeeNF'));
+  }
+  else
+  {
+    SetState(FindState('RoamNF'));
+  }
 }
 
 //==========================================================================
@@ -1261,63 +1261,63 @@ final void A_MinotaurLook()
 
 final void A_MinotaurChase()
 {
-	RenderStyle = STYLE_Normal;
-	Alpha = 1.0;	// In case pain caused him to skip his fade in.
+  RenderStyle = STYLE_Normal;
+  Alpha = 1.0;  // In case pain caused him to skip his fade in.
 
-	if (!bSummonedMonster)
-	{
-		A_Chase();
-		return;
-	}
+  if (!bSummonedMonster)
+  {
+    A_Chase();
+    return;
+  }
 
-	if (XLevel.Time - StartTime >= PowerMinotaur.default.EffectTime)
-	{
-		Damage(none, none, 10000);
-		return;
-	}
+  if (XLevel.Time - StartTime >= PowerMinotaur.default.EffectTime)
+  {
+    Damage(none, none, 10000);
+    return;
+  }
 
-	if (P_Random() < 30)
-		A_MinotaurLook();	// adjust to closest target
+  if (P_Random() < 30)
+    A_MinotaurLook(); // adjust to closest target
 
-	if (!Target || (Target.Health <= 0) || !Target.bShootable)
-	{
-		// look for a new enemy
-		SetState(FindState('Look'));
-		return;
-	}
+  if (!Target || (Target.Health <= 0) || !Target.bShootable)
+  {
+    // look for a new enemy
+    SetState(FindState('Look'));
+    return;
+  }
 
-	FaceMovementDirection();
-	ReactionCount = 0;
+  FaceMovementDirection();
+  ReactionCount = 0;
 
-	// Melee attack
-	if (MeleeState && CheckMeleeRange())
-	{
-		if (AttackSound)
-		{
-			PlaySound(AttackSound, CHAN_WEAPON);
-		}
-		SetState(MeleeState);
-		return;
-	}
+  // Melee attack
+  if (MeleeState && CheckMeleeRange())
+  {
+    if (AttackSound)
+    {
+      PlaySound(AttackSound, CHAN_WEAPON);
+    }
+    SetState(MeleeState);
+    return;
+  }
 
-	// Missile attack
-	if (MissileState && CheckMissileRange())
-	{
-		SetState(MissileState);
-		return;
-	}
+  // Missile attack
+  if (MissileState && CheckMissileRange())
+  {
+    SetState(MissileState);
+    return;
+  }
 
-	// chase towards target
-	if (!StepMove())
-	{
-		NewChaseDir();
-	}
+  // chase towards target
+  if (!StepMove())
+  {
+    NewChaseDir();
+  }
 
-	// Active sound
-	if (ActiveSound && P_Random() < 6)
-	{
-		PlaySound(ActiveSound, CHAN_VOICE);
-	}
+  // Active sound
+  if (ActiveSound && P_Random() < 6)
+  {
+    PlaySound(ActiveSound, CHAN_VOICE);
+  }
 
 }
 
@@ -1329,33 +1329,33 @@ final void A_MinotaurChase()
 
 final void A_MinotaurRoam()
 {
-	RenderStyle = STYLE_Normal;
-	Alpha = 1.0;	// In case pain caused him to skip his fade in.
+  RenderStyle = STYLE_Normal;
+  Alpha = 1.0;  // In case pain caused him to skip his fade in.
 
-	if (XLevel.Time - StartTime >= PowerMinotaur.default.EffectTime)
-	{
-		Damage(none, none, 10000);
-		return;
-	}
+  if (XLevel.Time - StartTime >= PowerMinotaur.default.EffectTime)
+  {
+    Damage(none, none, 10000);
+    return;
+  }
 
-	if (P_Random() < 30)
-		A_MinotaurLook();	// adjust to closest target
+  if (P_Random() < 30)
+    A_MinotaurLook(); // adjust to closest target
 
-	if (P_Random() < 6)
-	{
-		//Choose new direction
-		MoveDir = P_Random() % 8;
-		FaceMovementDirection();
-	}
-	if (!StepMove())
-	{
-		// Turn
-		if (P_Random() & 1)
-			MoveDir = (++MoveDir) % 8;
-		else
-			MoveDir = (MoveDir + 7) % 8;
-		FaceMovementDirection();
-	}
+  if (P_Random() < 6)
+  {
+    //Choose new direction
+    MoveDir = P_Random() % 8;
+    FaceMovementDirection();
+  }
+  if (!StepMove())
+  {
+    // Turn
+    if (P_Random() & 1)
+      MoveDir = (++MoveDir) % 8;
+    else
+      MoveDir = (MoveDir + 7) % 8;
+    FaceMovementDirection();
+  }
 }
 
 //==========================================================================
@@ -1368,21 +1368,21 @@ final void A_MinotaurRoam()
 
 final void A_MinotaurAtk1()
 {
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	PlaySound('minotaur/melee', CHAN_WEAPON);
-	if (CheckMeleeRange())
-	{
-		Target.Damage(self, self, HITDICE(4));
-		if (Target.bIsPlayer)
-		{
-			// Squish the player
-			PlayerEx(Target.Player).DeltaViewHeight = -512.0;
-		}
-	}
+  PlaySound('minotaur/melee', CHAN_WEAPON);
+  if (CheckMeleeRange())
+  {
+    Target.Damage(self, self, HITDICE(4));
+    if (Target.bIsPlayer)
+    {
+      // Squish the player
+      PlayerEx(Target.Player).DeltaViewHeight = -512.0;
+    }
+  }
 }
 
 //==========================================================================
@@ -1395,45 +1395,45 @@ final void A_MinotaurAtk1()
 
 final void A_MinotaurDecide()
 {
-	float dist;
+  float dist;
 
-	if (!Target)
-	{
-		return;
-	}
-	if (!bSummonedMonster)
-	{
-		PlaySound('minotaur/sight', CHAN_VOICE);
-	}
-	dist = DistTo(Target);
+  if (!Target)
+  {
+    return;
+  }
+  if (!bSummonedMonster)
+  {
+    PlaySound('minotaur/sight', CHAN_VOICE);
+  }
+  dist = DistTo(Target);
 
-	if (Target.Origin.z + Target.Height > Origin.z &&
-		Target.Origin.z + Target.Height < Origin.z + Height &&
-		dist < (bSummonedMonster ? 16.0 : 8.0) * 64.0 && dist > 1.0 * 64.0 &&
-		P_Random() < (bSummonedMonster ? 230 : 150))
-	{
-		// Charge attack
-		// Don't call the state function right away
-		SetState(FindState('Charge'));
-		bSkullFly = true;
-		A_FaceTarget();
-		Velocity = Normalise(Target.Origin - Origin) * ChargeSpeed;
-		Special1 = 35 / 2;	// Charge duration
-	}
-	else if (Target.Origin.z == Target.FloorZ &&
-		dist < 9.0 * 64.0 && P_Random() < (bSummonedMonster ? 100 : 220))
-	{
-		// Floor fire attack
-		SetState(FindState('Hammer'));
-		bFloorFireRefired = false;
-	}
-	else
-	{
-		// Swing attack
-		A_FaceTarget();
-		// Don't need to call SetState because the current state
-		// falls through to the swing attack
-	}
+  if (Target.Origin.z + Target.Height > Origin.z &&
+    Target.Origin.z + Target.Height < Origin.z + Height &&
+    dist < (bSummonedMonster ? 16.0 : 8.0) * 64.0 && dist > 1.0 * 64.0 &&
+    P_Random() < (bSummonedMonster ? 230 : 150))
+  {
+    // Charge attack
+    // Don't call the state function right away
+    SetState(FindState('Charge'));
+    bSkullFly = true;
+    A_FaceTarget();
+    Velocity = Normalise(Target.Origin - Origin) * ChargeSpeed;
+    Special1 = 35 / 2;  // Charge duration
+  }
+  else if (Target.Origin.z == Target.FloorZ &&
+    dist < 9.0 * 64.0 && P_Random() < (bSummonedMonster ? 100 : 220))
+  {
+    // Floor fire attack
+    SetState(FindState('Hammer'));
+    bFloorFireRefired = false;
+  }
+  else
+  {
+    // Swing attack
+    A_FaceTarget();
+    // Don't need to call SetState because the current state
+    // falls through to the swing attack
+  }
 }
 
 //==========================================================================
@@ -1446,34 +1446,34 @@ final void A_MinotaurDecide()
 
 final void A_MinotaurAtk2()
 {
-	EntityEx A;
-	float angle;
-	TAVec ang;
+  EntityEx A;
+  float angle;
+  TAVec ang;
 
-	if (!Target)
-	{
-		return;
-	}
-	PlaySound('minotaur/attack2', CHAN_WEAPON);
-	if (CheckMeleeRange())
-	{
-		Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)));
-		return;
-	}
-	A = SpawnMissile(Target, MinotaurFX1, 40.0);
-	if (A)
-	{
-		VectorAngles(&A.Velocity, &ang);
-		angle = A.Angles.yaw;
-		SpawnMissileAngles(MinotaurFX1,
-			AngleMod360(angle - (45.0 / 8.0)), ang.pitch, 40.0);
-		SpawnMissileAngles(MinotaurFX1,
-			AngleMod360(angle + (45.0 / 8.0)), ang.pitch, 40.0);
-		SpawnMissileAngles(MinotaurFX1,
-			AngleMod360(angle - (45.0 / 16.0)), ang.pitch, 40.0);
-		SpawnMissileAngles(MinotaurFX1,
-			AngleMod360(angle + (45.0 / 16.0)), ang.pitch, 40.0);
-	}
+  if (!Target)
+  {
+    return;
+  }
+  PlaySound('minotaur/attack2', CHAN_WEAPON);
+  if (CheckMeleeRange())
+  {
+    Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)));
+    return;
+  }
+  A = SpawnMissile(Target, MinotaurFX1, 40.0);
+  if (A)
+  {
+    VectorAngles(&A.Velocity, &ang);
+    angle = A.Angles.yaw;
+    SpawnMissileAngles(MinotaurFX1,
+      AngleMod360(angle - (45.0 / 8.0)), ang.pitch, 40.0);
+    SpawnMissileAngles(MinotaurFX1,
+      AngleMod360(angle + (45.0 / 8.0)), ang.pitch, 40.0);
+    SpawnMissileAngles(MinotaurFX1,
+      AngleMod360(angle - (45.0 / 16.0)), ang.pitch, 40.0);
+    SpawnMissileAngles(MinotaurFX1,
+      AngleMod360(angle + (45.0 / 16.0)), ang.pitch, 40.0);
+  }
 }
 
 //==========================================================================
@@ -1486,35 +1486,35 @@ final void A_MinotaurAtk2()
 
 final void A_MinotaurAtk3()
 {
-	EntityEx A;
+  EntityEx A;
 
-	if (!Target)
-	{
-		return;
-	}
-	PlaySound('minotaur/attack3', CHAN_WEAPON);
-	if (CheckMeleeRange())
-	{
-		Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)));
-		if (Target.bIsPlayer)
-		{
-			// Squish the player
-			PlayerEx(Target.Player).DeltaViewHeight = -512.0;
-		}
-	}
-	else
-	{
-		A = SpawnMissile(Target, MinotaurFX2);
-		if (A)
-		{
-			A.PlaySound('minotaur/attack1', CHAN_VOICE);
-		}
-	}
-	if (Random() < 0.75 && !bFloorFireRefired)
-	{
-		SetState(FindState('HammerLoop'));
-		bFloorFireRefired = true;
-	}
+  if (!Target)
+  {
+    return;
+  }
+  PlaySound('minotaur/attack3', CHAN_WEAPON);
+  if (CheckMeleeRange())
+  {
+    Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)));
+    if (Target.bIsPlayer)
+    {
+      // Squish the player
+      PlayerEx(Target.Player).DeltaViewHeight = -512.0;
+    }
+  }
+  else
+  {
+    A = SpawnMissile(Target, MinotaurFX2);
+    if (A)
+    {
+      A.PlaySound('minotaur/attack1', CHAN_VOICE);
+    }
+  }
+  if (Random() < 0.75 && !bFloorFireRefired)
+  {
+    SetState(FindState('HammerLoop'));
+    bFloorFireRefired = true;
+  }
 }
 
 //==========================================================================
@@ -1525,27 +1525,27 @@ final void A_MinotaurAtk3()
 
 final void A_MinotaurCharge()
 {
-	Actor puff;
+  Actor puff;
 
-	if (!Target)
-	{
-		return;
-	}
+  if (!Target)
+  {
+    return;
+  }
 
-	if (Special1 > 0)
-	{
-		class<Actor> PuffType = PhoenixPuff;
-		if (bSummonedMonster)
-		{
-			PuffType = PunchPuff;
-		}
-		puff = Spawn(PuffType, Origin);
-		puff.Velocity.z = 2.0 * 35.0;
-		Special1--;
-	}
-	else
-	{
-		bSkullFly = false;
-		SetState(SeeState);
-	}
+  if (Special1 > 0)
+  {
+    class<Actor> PuffType = PhoenixPuff;
+    if (bSummonedMonster)
+    {
+      PuffType = PunchPuff;
+    }
+    puff = Spawn(PuffType, Origin);
+    puff.Velocity.z = 2.0 * 35.0;
+    Special1--;
+  }
+  else
+  {
+    bSkullFly = false;
+    SetState(SeeState);
+  }
 }

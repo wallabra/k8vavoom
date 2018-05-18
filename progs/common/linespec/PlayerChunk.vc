@@ -24,19 +24,19 @@
 //**************************************************************************
 
 class PlayerChunk : PlayerPawn
-	abstract;
+  abstract;
 
 defaultproperties
 {
-	ReactionCount = 8;
-	bSolid = false;
-	bShootable = false;
-	bPickUp = false;
-	bNoDeathmatch = false;
-	bFriendly = false;
-	bSlide = false;
-	bActivatePushWall = false;
-	bFloorClip = false;
-	bWindThrust = false;
-	bTelestomp = false;
+  ReactionCount = 8;
+  bSolid = false;
+  bShootable = false;
+  bPickUp = false;
+  bNoDeathmatch = false;
+  bFriendly = false;
+  bSlide = false;
+  bActivatePushWall = false;
+  bFloorClip = false;
+  bWindThrust = false;
+  bTelestomp = false;
 }

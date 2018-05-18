@@ -24,52 +24,52 @@
 //**************************************************************************
 
 class ArtiBoostArmor : Inventory
-	game(GAME_Hexen)
-	__mobjinfo__(8041)
-	__scriptid__(22);
+  game(GAME_Hexen)
+  __mobjinfo__(8041)
+  __scriptid__(22);
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	int i;
-	bool good = false;
-	for (i = 0; i < 4; i++)
-	{
-		// 1 point per armor type
-		HexenArmor Armor = Spawn(HexenArmor,,,, false);
-		Armor.Health = i;
-		Armor.Amount = 1;
-		if (Armor.TryPickup(EntityEx(Owner)))
-		{
-			good = true;
-		}
-		else
-		{
-			Armor.Destroy();
-		}
-	}
-	return good;
+  int i;
+  bool good = false;
+  for (i = 0; i < 4; i++)
+  {
+    // 1 point per armor type
+    HexenArmor Armor = Spawn(HexenArmor,,,, false);
+    Armor.Health = i;
+    Armor.Amount = 1;
+    if (Armor.TryPickup(EntityEx(Owner)))
+    {
+      good = true;
+    }
+    else
+    {
+      Armor.Destroy();
+    }
+  }
+  return good;
 }
 
 states
 {
 Spawn:
-	BRAC ABCDEFGH 4 Bright
-	Loop
+  BRAC ABCDEFGH 4 Bright
+  Loop
 }
 
 defaultproperties
 {
-	MaxAmount = DefMaxAmount;
-	PickupSound = 'PickupArtifact';
-	PickupMessage = "$txt_artiboostarmor";
-	IconName = 'artibrac';
-	bFloatBob = true;
-	PickupFlashType = PickupFlash;
-	bInvBar = true;
+  MaxAmount = DefMaxAmount;
+  PickupSound = 'PickupArtifact';
+  PickupMessage = "$txt_artiboostarmor";
+  IconName = 'artibrac';
+  bFloatBob = true;
+  PickupFlashType = PickupFlash;
+  bInvBar = true;
 }

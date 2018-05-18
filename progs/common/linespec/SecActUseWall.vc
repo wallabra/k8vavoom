@@ -24,22 +24,22 @@
 //**************************************************************************
 
 class SecActUseWall : SectorAction
-	__mobjinfo__(9994);
+  __mobjinfo__(9994);
 
 //==========================================================================
 //
-//	TriggerAction
+//  TriggerAction
 //
 //==========================================================================
 
 bool TriggerAction(EntityEx Triggerer, int ActType)
 {
-	bool Ret = (ActType & SECSPAC_UseWall) && CheckTrigger(Triggerer);
-	if (::TriggerAction(Triggerer, ActType))
-	{
-		Ret = true;
-	}
-	return Ret;
+  bool Ret = (ActType & SECSPAC_UseWall) && CheckTrigger(Triggerer);
+  if (::TriggerAction(Triggerer, ActType))
+  {
+    Ret = true;
+  }
+  return Ret;
 }
 
 defaultproperties

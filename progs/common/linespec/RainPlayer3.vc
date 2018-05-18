@@ -28,15 +28,15 @@ class RainPlayer3 : RainPillar;
 states
 {
 Spawn:
-	FX22 A -1 Bright
-	Stop
+  FX22 A -1 Bright
+  Stop
 Death:
-	FX22 B 4 Bright A_RainImpact
-	FX22 CDEF 4 Bright
-	Stop
+  FX22 B 4 Bright A_RainImpact
+  FX22 CDEF 4 Bright
+  Stop
 AirDeath:
-	FX22 GHI 4 Bright
-	Stop
+  FX22 GHI 4 Bright
+  Stop
 }
 
 defaultproperties

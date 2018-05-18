@@ -24,101 +24,101 @@
 //**************************************************************************
 
 class Lightning : Actor
-	abstract;
+  abstract;
 
 Lightning LightningLink;
-int ZigZagCount;	// Only for floor
+int ZigZagCount;  // Only for floor
 float ZagSpeed;
 
 //==========================================================================
 //
-//	Touch
+//  Touch
 //
 //==========================================================================
 
 bool Touch(Entity InOther)
 {
-	int damage;
-	EntityEx Other;
+  int damage;
+  EntityEx Other;
 
-	if (!bMissile)
-	{
-		return false;
-	}
+  if (!bMissile)
+  {
+    return false;
+  }
 
-	Other = EntityEx(InOther);
-	// Check for a non-shootable mobj
-	if (!Other.bShootable || Other.bNonShootable)
-	{
-		return true;
-	}
+  Other = EntityEx(InOther);
+  // Check for a non-shootable mobj
+  if (!Other.bShootable || Other.bNonShootable)
+  {
+    return true;
+  }
 
-	// Check for blasted thing running into another
-	if (bBlasted && Other.bShootable)
-	{
-		if (!Other.bBoss && Other.bMonster)
-		{
-			Other.Velocity.x += Velocity.x;
-			Other.Velocity.y += Velocity.y;
-			if ((Other.Velocity.x + Other.Velocity.y) > 3.0 * 35.0)
-			{
-				damage = (ftoi(Mass) / 100) + 1;
-				Other.Damage(self, self, damage);
-				damage = (ftoi(Other.Mass) / 100) + 1;
-				Damage(Other, Other, damage >> 2);
-			}
-			return false;
-		}
-	}
+  // Check for blasted thing running into another
+  if (bBlasted && Other.bShootable)
+  {
+    if (!Other.bBoss && Other.bMonster)
+    {
+      Other.Velocity.x += Velocity.x;
+      Other.Velocity.y += Velocity.y;
+      if ((Other.Velocity.x + Other.Velocity.y) > 3.0 * 35.0)
+      {
+        damage = (ftoi(Mass) / 100) + 1;
+        Other.Damage(self, self, damage);
+        damage = (ftoi(Other.Mass) / 100) + 1;
+        Damage(Other, Other, damage >> 2);
+      }
+      return false;
+    }
+  }
 
-	if (Other == Target)
-	{
-		return true;
-	}
+  if (Other == Target)
+  {
+    return true;
+  }
 
-	if (Other.Mass != 99999.0)
-	{
-		Other.Velocity.x += Velocity.x / 16.0;
-		Other.Velocity.y += Velocity.y / 16.0;
-	}
-	if ((!Other.bIsPlayer && !Other.bBoss) || !(XLevel.TicTime & 1))
-	{
-		if (Other.IsA('Centaur'))
-		{
-			// Lightning does more damage to centaurs
-			Other.Damage(self, Target, 9);
-		}
-		else
-		{
-			Other.Damage(self, Target, 3);
-		}
-		if (!(GetSoundPlayingInfo(self, GetSoundID('MageLightningZap'))))
-		{
-			PlaySound('MageLightningZap', CHAN_VOICE);
-		}
-		if (Other.HowlSound && Other.bMonster && P_Random() < 64 &&
-			!GetSoundPlayingInfo(Other, GetSoundID(Other.HowlSound)))
-		{
-			Other.PlaySound(Other.HowlSound, CHAN_VOICE);
-		}
-	}
-	Health--;
-	if (Health <= 0 || Other.Health <= 0)
-	{
-		return false;
-	}
-	if (Class == GetClassReplacement(LightningFloor))
-	{
-		if (LightningLink && !LightningLink.Tracer)
-		{
-			LightningLink.Tracer = Other;
-		}
-	}
-	else if (!Tracer)
-	{
-		Tracer = Other;
-	}
-	return true;	// lightning zaps through all sprites
+  if (Other.Mass != 99999.0)
+  {
+    Other.Velocity.x += Velocity.x / 16.0;
+    Other.Velocity.y += Velocity.y / 16.0;
+  }
+  if ((!Other.bIsPlayer && !Other.bBoss) || !(XLevel.TicTime & 1))
+  {
+    if (Other.IsA('Centaur'))
+    {
+      // Lightning does more damage to centaurs
+      Other.Damage(self, Target, 9);
+    }
+    else
+    {
+      Other.Damage(self, Target, 3);
+    }
+    if (!(GetSoundPlayingInfo(self, GetSoundID('MageLightningZap'))))
+    {
+      PlaySound('MageLightningZap', CHAN_VOICE);
+    }
+    if (Other.HowlSound && Other.bMonster && P_Random() < 64 &&
+      !GetSoundPlayingInfo(Other, GetSoundID(Other.HowlSound)))
+    {
+      Other.PlaySound(Other.HowlSound, CHAN_VOICE);
+    }
+  }
+  Health--;
+  if (Health <= 0 || Other.Health <= 0)
+  {
+    return false;
+  }
+  if (Class == GetClassReplacement(LightningFloor))
+  {
+    if (LightningLink && !LightningLink.Tracer)
+    {
+      LightningLink.Tracer = Other;
+    }
+  }
+  else if (!Tracer)
+  {
+    Tracer = Other;
+  }
+  return true;  // lightning zaps through all sprites
 }
 
 //==========================================================================
@@ -129,66 +129,66 @@ bool Touch(Entity InOther)
 
 final void A_LightningClip()
 {
-	EntityEx targ;
-	int zigZag;
+  EntityEx targ;
+  int zigZag;
 
-	if (Class == GetClassReplacement(LightningFloor))
-	{
-		if (Sector->bHasExtrafloors && LightningLink && Target.Origin.z >= LightningLink.FloorZ)
-			Origin.z = LightningLink.FloorZ;
-		else
-			Origin.z = FloorZ;
-		if (LightningLink)
-			targ = LightningLink.Tracer;
-		else
-			targ = none;
-	}
-	else if (Class == GetClassReplacement(LightningCeiling))
-	{
-		if (Sector->bHasExtrafloors && LightningLink && Target.Origin.z <= LightningLink.CeilingZ)
-			Origin.z = LightningLink.CeilingZ - Height;
-		else
-			Origin.z = CeilingZ - Height;
-		targ = Tracer;
-	}
-	if (Class == GetClassReplacement(LightningFloor))
-	{
-		// floor lightning zig-zags, and forces the ceiling lightning to mimic
-		zigZag = P_Random();
-		if ((zigZag > 128 && ZigZagCount < 2) || ZigZagCount < -2)
-		{
-			Thrust(Angles.yaw + 90.0, ZagSpeed);
-			if (LightningLink)
-			{
-				LightningLink.Thrust(Angles.yaw + 90.0, ZagSpeed);
-			}
-			ZigZagCount++;
-		}
-		else
-		{
-			Thrust(Angles.yaw - 90.0, ZagSpeed);
-			if (LightningLink)
-			{
-				LightningLink.Thrust(Angles.yaw - 90.0, ZagSpeed);
-			}
-			ZigZagCount--;
-		}
-	}
-	if (targ)
-	{
-		if (targ.Health <= 0)
-		{
-			ExplodeMissile(targ);
-		}
-		else
-		{
-			Angles.yaw = atan2(targ.Origin.y - Origin.y,
-				targ.Origin.x - Origin.x);
-			Velocity.x = 0.0;
-			Velocity.y = 0.0;
-			Thrust(Angles.yaw, Speed * Level.Game.frametime / 2.0);
-		}
-	}
+  if (Class == GetClassReplacement(LightningFloor))
+  {
+    if (Sector->bHasExtrafloors && LightningLink && Target.Origin.z >= LightningLink.FloorZ)
+      Origin.z = LightningLink.FloorZ;
+    else
+      Origin.z = FloorZ;
+    if (LightningLink)
+      targ = LightningLink.Tracer;
+    else
+      targ = none;
+  }
+  else if (Class == GetClassReplacement(LightningCeiling))
+  {
+    if (Sector->bHasExtrafloors && LightningLink && Target.Origin.z <= LightningLink.CeilingZ)
+      Origin.z = LightningLink.CeilingZ - Height;
+    else
+      Origin.z = CeilingZ - Height;
+    targ = Tracer;
+  }
+  if (Class == GetClassReplacement(LightningFloor))
+  {
+    // floor lightning zig-zags, and forces the ceiling lightning to mimic
+    zigZag = P_Random();
+    if ((zigZag > 128 && ZigZagCount < 2) || ZigZagCount < -2)
+    {
+      Thrust(Angles.yaw + 90.0, ZagSpeed);
+      if (LightningLink)
+      {
+        LightningLink.Thrust(Angles.yaw + 90.0, ZagSpeed);
+      }
+      ZigZagCount++;
+    }
+    else
+    {
+      Thrust(Angles.yaw - 90.0, ZagSpeed);
+      if (LightningLink)
+      {
+        LightningLink.Thrust(Angles.yaw - 90.0, ZagSpeed);
+      }
+      ZigZagCount--;
+    }
+  }
+  if (targ)
+  {
+    if (targ.Health <= 0)
+    {
+      ExplodeMissile(targ);
+    }
+    else
+    {
+      Angles.yaw = atan2(targ.Origin.y - Origin.y,
+        targ.Origin.x - Origin.x);
+      Velocity.x = 0.0;
+      Velocity.y = 0.0;
+      Thrust(Angles.yaw, Speed * Level.Game.frametime / 2.0);
+    }
+  }
 }
 
 //==========================================================================
@@ -199,47 +199,47 @@ final void A_LightningClip()
 
 final void A_LightningZap()
 {
-	LightningZap Zap;
-	float deltaZ;
+  LightningZap Zap;
+  float deltaZ;
 
-	A_LightningClip();
+  A_LightningClip();
 
-	Health -= 8;
-	if (Health <= 0)
-	{
-		SetState(FindState('Death'));
-		return;
-	}
-	if (Class == GetClassReplacement(LightningFloor))
-	{
-		deltaZ = 10.0;
-	}
-	else
-	{
-		deltaZ = -10.0;
-	}
-	Zap = LightningZap(Spawn(LightningZap,
- 		Origin + vector((Random() - 0.5) * Radius,
-		(Random() - 0.5) * Radius, deltaZ)));
-	if (Zap)
-	{
-		Zap.LightningOwner = self;
-		Zap.Velocity.x = Velocity.x;
-		Zap.Velocity.y = Velocity.y;
-		Zap.Target = Target;
-		if (Class == GetClassReplacement(LightningFloor))
-		{
-			Zap.Velocity.z = 20.0 * 35.0;
-		}
-		else
-		{
-			Zap.Velocity.z = -20.0 * 35.0;
-		}
-	}
-	if (Class == GetClassReplacement(LightningFloor) && P_Random() < 160)
-	{
-		PlaySound('MageLightningContinuous', CHAN_VOICE);
-	}
+  Health -= 8;
+  if (Health <= 0)
+  {
+    SetState(FindState('Death'));
+    return;
+  }
+  if (Class == GetClassReplacement(LightningFloor))
+  {
+    deltaZ = 10.0;
+  }
+  else
+  {
+    deltaZ = -10.0;
+  }
+  Zap = LightningZap(Spawn(LightningZap,
+    Origin + vector((Random() - 0.5) * Radius,
+    (Random() - 0.5) * Radius, deltaZ)));
+  if (Zap)
+  {
+    Zap.LightningOwner = self;
+    Zap.Velocity.x = Velocity.x;
+    Zap.Velocity.y = Velocity.y;
+    Zap.Target = Target;
+    if (Class == GetClassReplacement(LightningFloor))
+    {
+      Zap.Velocity.z = 20.0 * 35.0;
+    }
+    else
+    {
+      Zap.Velocity.z = -20.0 * 35.0;
+    }
+  }
+  if (Class == GetClassReplacement(LightningFloor) && P_Random() < 160)
+  {
+    PlaySound('MageLightningContinuous', CHAN_VOICE);
+  }
 }
 
 //==========================================================================
@@ -250,11 +250,11 @@ final void A_LightningZap()
 
 final void A_LightningRemove()
 {
-	if (LightningLink)
-	{
-		LightningLink.LightningLink = none;
-		LightningLink.ExplodeMissile(none);
-	}
+  if (LightningLink)
+  {
+    LightningLink.LightningLink = none;
+    LightningLink.ExplodeMissile(none);
+  }
 }
 
 //==========================================================================
@@ -265,18 +265,18 @@ final void A_LightningRemove()
 
 final void A_LastZap()
 {
-	Actor A;
+  Actor A;
 
-	A = Spawn(LightningZap, Origin);
-	if (A)
-	{
-		A.SetState(A.FindState('LastZap'));
-		A.Velocity.z = 40.0 * 35.0;
-	}
+  A = Spawn(LightningZap, Origin);
+  if (A)
+  {
+    A.SetState(A.FindState('LastZap'));
+    A.Velocity.z = 40.0 * 35.0;
+  }
 }
 
 defaultproperties
 {
-	ZagSpeed = 1.0;
-	bLightning = true;
+  ZagSpeed = 1.0;
+  bLightning = true;
 }

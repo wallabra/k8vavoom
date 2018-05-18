@@ -70,10 +70,10 @@ static superblock_t *quick_alloc_supers = NULL;
 static int PointOnLineSide(seg_t *part, float_g x, float_g y)
 {
   float_g perp = UtilPerpDist(part, x, y);
-  
+
   if (fabs(perp) <= DIST_EPSILON)
     return 0;
-  
+
   return (perp < 0) ? -1 : +1;
 }
 
@@ -186,7 +186,7 @@ void FreeSuper(superblock_t *block)
   {
     if (block->subs[num])
       FreeSuper(block->subs[num]);
-  } 
+  }
 
   // add block to quick-alloc list.  Note that subs[0] is used for
   // linking the blocks together.
@@ -252,7 +252,7 @@ void AddSegToSuper(superblock_t *block, seg_t *seg)
       block->real_num++;
     else
       block->mini_num++;
-   
+
     if (SUPER_IS_LEAF(block))
     {
       // block is a leaf -- no subdivision possible
@@ -336,7 +336,7 @@ void SplitSegInSuper(superblock_t *block, seg_t *seg)
       block->real_num++;
     else
       block->mini_num++;
- 
+
     block = block->parent;
   }
   while (block != NULL);
@@ -355,7 +355,7 @@ static seg_t *CreateOneSeg(linedef_t *line, vertex_t *start, vertex_t *end,
 
     MarkSoftFailure(LIMIT_BAD_SIDE);
   }
- 
+
   seg->start   = start;
   seg->end     = end;
   seg->linedef = line;
@@ -388,7 +388,7 @@ superblock_t *CreateSegs(void)
   PrintVerbose("Creating Segs...\n");
 
   block = NewSuperBlock();
- 
+
   GetBlockmapBounds(&block->x1, &block->y1, &bw, &bh);
 
   block->x2 = block->x1 + 128 * UtilRoundPOW2(bw);
@@ -427,7 +427,7 @@ superblock_t *CreateSegs(void)
             line->index);
       }
     }
-    
+
     if (line->right != NULL)
     {
       right = CreateOneSeg(line, line->start, line->end, line->right, 0);
@@ -440,7 +440,7 @@ superblock_t *CreateSegs(void)
     {
       left = CreateOneSeg(line, line->end, line->start, line->left, 1);
       AddSegToSuper(block, left);
-      
+
       if (right != NULL)
       {
         // -AJA- Partner segs.  These always maintain a one-to-one
@@ -611,7 +611,7 @@ static void ClockwiseOrder(subsec_t *sub)
     array[j]->next = sub->seg_list;
     sub->seg_list  = array[j];
   }
- 
+
   if (total > 32)
     UtilFree(array);
 
@@ -622,7 +622,7 @@ static void ClockwiseOrder(subsec_t *sub)
   {
     angle_g angle = UtilComputeAngle(cur->start->x - sub->mid_x,
         cur->start->y - sub->mid_y);
-    
+
     PrintDebug("  Seg %p: Angle %1.6f  (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
       cur, angle, cur->start->x, cur->start->y, cur->end->x, cur->end->y);
   }
@@ -650,7 +650,7 @@ static void SanityCheckClosed(subsec_t *sub)
   if (gaps > 0)
   {
     PrintMiniWarn("Subsector #%d near (%1.1f,%1.1f) is not closed "
-        "(%d gaps, %d segs)\n", sub->index, 
+        "(%d gaps, %d segs)\n", sub->index,
         sub->mid_x, sub->mid_y, gaps, total);
 
 #   if DEBUG_SUBSEC
@@ -676,10 +676,10 @@ static void SanityCheckSameSector(subsec_t *sub)
   {
     if (! compare->sector)
       continue;
-    
+
     if (compare->sector->coalesce)
       continue;
-    
+
     break;
   }
 
@@ -693,7 +693,7 @@ static void SanityCheckSameSector(subsec_t *sub)
 
     if (cur->sector == compare->sector)
       continue;
- 
+
     // All subsectors must come from same sector unless it's marked
     // "special" with sector tag >= 900. Original idea, Lee Killough
     if (cur->sector->coalesce)
@@ -771,7 +771,7 @@ static void CreateSubsecWorker(subsec_t *sub, superblock_t *block)
     // unlink first seg from block
     seg_t *cur = block->segs;
     block->segs = cur->next;
-    
+
     // link it into head of the subsector's list
     cur->next = sub->seg_list;
     cur->block = NULL;
@@ -832,7 +832,7 @@ int ComputeBspHeight(node_t *node)
   if (node)
   {
     int left, right;
-    
+
     right = ComputeBspHeight(node->r.node);
     left  = ComputeBspHeight(node->l.node);
 
@@ -868,7 +868,7 @@ static void DebugShowSegs(superblock_t *seg_list)
 //
 // BuildNodes
 //
-glbsp_ret_e BuildNodes(superblock_t *seg_list, 
+glbsp_ret_e BuildNodes(superblock_t *seg_list,
     node_t ** N, subsec_t ** S, int depth, node_t *stale_nd)
 {
   node_t *node;
@@ -964,7 +964,7 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
     if (node->dx && node->dy && ((node->dx & 1) || (node->dy & 1)))
     {
       PrintMiniWarn("Loss of accuracy on VERY long node: "
-          "(%d,%d) -> (%d,%d)\n", node->x, node->y, 
+          "(%d,%d) -> (%d,%d)\n", node->x, node->y,
           node->x + node->dx, node->y + node->dy);
     }
 
@@ -980,7 +980,7 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
 # endif
 
   ret = BuildNodes(lefts,  &node->l.node, &node->l.subsec, depth+1,
-      stale_nd ? (stale_opposite ? stale_nd->r.node : stale_nd->l.node) 
+      stale_nd ? (stale_opposite ? stale_nd->r.node : stale_nd->l.node)
       : NULL);
   FreeSuper(lefts);
 
@@ -995,7 +995,7 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
 # endif
 
   ret = BuildNodes(rights, &node->r.node, &node->r.subsec, depth+1,
-      stale_nd ? (stale_opposite ? stale_nd->l.node : stale_nd->r.node) 
+      stale_nd ? (stale_opposite ? stale_nd->l.node : stale_nd->r.node)
       : NULL);
   FreeSuper(rights);
 
@@ -1136,11 +1136,11 @@ static void RoundOffSubsector(subsec_t *sub)
 
       if (cur->linedef)
         last_real_degen = cur;
-      
+
       degen_total++;
       continue;
     }
-    
+
     if (cur->linedef)
       real_total++;
   }
@@ -1156,9 +1156,9 @@ static void RoundOffSubsector(subsec_t *sub)
     if (last_real_degen == NULL)
       InternalError("Subsector %d rounded off with NO real segs",
         sub->index);
-    
+
 #   if DEBUG_SUBSEC
-    PrintDebug("Degenerate before: (%1.2f,%1.2f) -> (%1.2f,%1.2f)\n", 
+    PrintDebug("Degenerate before: (%1.2f,%1.2f) -> (%1.2f,%1.2f)\n",
         last_real_degen->start->x, last_real_degen->start->y,
         last_real_degen->end->x, last_real_degen->end->y);
 #   endif
@@ -1168,7 +1168,7 @@ static void RoundOffSubsector(subsec_t *sub)
         last_real_degen->end);
 
 #   if DEBUG_SUBSEC
-    PrintDebug("Degenerate after:  (%d,%d) -> (%d,%d)\n", 
+    PrintDebug("Degenerate after:  (%d,%d) -> (%d,%d)\n",
         I_ROUND(last_real_degen->start->x),
         I_ROUND(last_real_degen->start->y),
         I_ROUND(last_real_degen->end->x),

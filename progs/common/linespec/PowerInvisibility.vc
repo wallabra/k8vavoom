@@ -27,81 +27,81 @@ class PowerInvisibility : Powerup;
 
 //==========================================================================
 //
-//	InitEffect
+//  InitEffect
 //
 //==========================================================================
 
 void InitEffect()
 {
-	Owner.RenderStyle = STYLE_OptFuzzy;
-	Owner.Alpha = 0.2;
-	EntityEx(Owner).bShadow = true;
+  Owner.RenderStyle = STYLE_OptFuzzy;
+  Owner.Alpha = 0.2;
+  EntityEx(Owner).bShadow = true;
 }
 
 //==========================================================================
 //
-//	DoEffect
+//  DoEffect
 //
 //==========================================================================
 
 void DoEffect()
 {
-	::DoEffect();
-	//	Re-init effect every tic since other PowerInvisibility powers may
-	// interfere with this one.
-	InitEffect();
+  ::DoEffect();
+  //  Re-init effect every tic since other PowerInvisibility powers may
+  // interfere with this one.
+  InitEffect();
 }
 
 //==========================================================================
 //
-//	EndEffect
+//  EndEffect
 //
 //==========================================================================
 
 void EndEffect()
 {
-	if (!Owner)
-	{
-		return;
-	}
+  if (!Owner)
+  {
+    return;
+  }
 
-	Owner.RenderStyle = STYLE_Normal;
-	Owner.Alpha = 1.0;
-	EntityEx(Owner).bShadow = false;
-	EntityEx(Owner).bGhost = false;
-	//	If there are other invisibility powers, reinit their effect.
-	Inventory Item;
-	for (Item = EntityEx(Owner).Inventory; Item; Item = Item.Inventory)
-	{
-		if (PowerInvisibility(Item) && Item != self)
-		{
-			PowerInvisibility(Item).InitEffect();
-		}
-	}
+  Owner.RenderStyle = STYLE_Normal;
+  Owner.Alpha = 1.0;
+  EntityEx(Owner).bShadow = false;
+  EntityEx(Owner).bGhost = false;
+  //  If there are other invisibility powers, reinit their effect.
+  Inventory Item;
+  for (Item = EntityEx(Owner).Inventory; Item; Item = Item.Inventory)
+  {
+    if (PowerInvisibility(Item) && Item != self)
+    {
+      PowerInvisibility(Item).InitEffect();
+    }
+  }
 }
 
 //==========================================================================
 //
-//	GetViewEntRenderParams
+//  GetViewEntRenderParams
 //
 //==========================================================================
 
 void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
 {
-	if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
-		(ftoi(4.0 * EffectTime) & 1))
-	{
-		OutRenderStyle = STYLE_OptFuzzy;
-		OutAlpha = 0.4;
-	}
-	if (Inventory)
-	{
-		Inventory.GetViewEntRenderParams(OutAlpha, OutRenderStyle);
-	}
+  if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
+    (ftoi(4.0 * EffectTime) & 1))
+  {
+    OutRenderStyle = STYLE_OptFuzzy;
+    OutAlpha = 0.4;
+  }
+  if (Inventory)
+  {
+    Inventory.GetViewEntRenderParams(OutAlpha, OutRenderStyle);
+  }
 }
 
 defaultproperties
 {
-	bShadow = true;
-	EffectTime = 60.0;
+  bShadow = true;
+  EffectTime = 60.0;
 }

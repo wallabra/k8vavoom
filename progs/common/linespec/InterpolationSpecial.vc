@@ -23,7 +23,7 @@
 //**
 //**************************************************************************
 //**
-//**	Based on code from ZDoom with following notice:
+//**  Based on code from ZDoom with following notice:
 //**
 //** Copyright 1998-2006 Randy Heit
 //** All rights reserved.
@@ -53,17 +53,17 @@
 //**
 //**************************************************************************
 //**
-//**	InterpolationSpecial: Holds a special to execute when a
+//**  InterpolationSpecial: Holds a special to execute when a
 //**  PathFollower reaches an InterpolationPoint of the same TID.
 //**
 //**************************************************************************
 
 class InterpolationSpecial : Actor
-	__mobjinfo__(9075);
+  __mobjinfo__(9075);
 
 defaultproperties
 {
-	bNoBlockmap = true;
-	bNoSector = true;
-	bNoSplash = true;
+  bNoBlockmap = true;
+  bNoSector = true;
+  bNoSplash = true;
 }

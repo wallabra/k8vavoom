@@ -24,23 +24,23 @@
 //**************************************************************************
 
 class ZBridge : Actor
-	game(GAME_Doom)
-	__mobjinfo__(118)
-	__scriptid__(21);
+  game(GAME_Doom)
+  __mobjinfo__(118)
+  __scriptid__(21);
 
 states
 {
 Spawn:
-	TLGL ABCDE 4
-	Loop
+  TLGL ABCDE 4
+  Loop
 }
 
 defaultproperties
 {
-	Radius = 36.0;
-	Height = 4.0;
-	bSolid = true;
-	bNoGravity = true;
-	bNoLiftDrop = true;
-	bActLikeBridge = true;
+  Radius = 36.0;
+  Height = 4.0;
+  bSolid = true;
+  bNoGravity = true;
+  bNoLiftDrop = true;
+  bActLikeBridge = true;
 }

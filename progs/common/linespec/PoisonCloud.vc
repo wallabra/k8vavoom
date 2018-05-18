@@ -30,14 +30,14 @@ int BobIndex;
 
 //==========================================================================
 //
-//	GetExplodeParms
+//  GetExplodeParms
 //
 //==========================================================================
 
 void GetExplodeParms(out int damage, out float distance, out byte damageSelf)
 {
-	damage = 4;
-	distance = 40.0;
+  damage = 4;
+  distance = 40.0;
 }
 
 //==========================================================================
@@ -48,51 +48,51 @@ void GetExplodeParms(out int damage, out float distance, out byte damageSelf)
 
 int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
-	if (victim.bIsPlayer)
-	{
-		if ((PlayerEx(victim.Player).Cheats & PlayerEx::CF_GODMODE) ||
-			victim.bInvulnerable)
-		{
-			return -1;
-		}
-		if (PlayerEx(victim.Player).PoisonCount < 4)
-		{
-			Actor(victim).PoisonDamage(Actor(source), Actor(source),
-				15 + (P_Random() & 15), false);	// Don't play painsound
-			Actor(victim).PoisonPlayer(Actor(source), 50);
-			if (!PlayerEx(victim.Player).MorphTime)
-			{
-				victim.PlaySound('*poison', CHAN_VOICE);
-			}
-		}
-		return -1;
-	}
-	else if (!victim.bMonster)
-	{
-		// only damage monsters/players with the poison cloud
-		return -1;
-	}
-	return damage;
+  if (victim.bIsPlayer)
+  {
+    if ((PlayerEx(victim.Player).Cheats & PlayerEx::CF_GODMODE) ||
+      victim.bInvulnerable)
+    {
+      return -1;
+    }
+    if (PlayerEx(victim.Player).PoisonCount < 4)
+    {
+      Actor(victim).PoisonDamage(Actor(source), Actor(source),
+        15 + (P_Random() & 15), false); // Don't play painsound
+      Actor(victim).PoisonPlayer(Actor(source), 50);
+      if (!PlayerEx(victim.Player).MorphTime)
+      {
+        victim.PlaySound('*poison', CHAN_VOICE);
+      }
+    }
+    return -1;
+  }
+  else if (!victim.bMonster)
+  {
+    // only damage monsters/players with the poison cloud
+    return -1;
+  }
+  return damage;
 }
 
 //==========================================================================
 //
-//	InitCloud
+//  InitCloud
 //
-//	FIXME this sucks!
+//  FIXME this sucks!
 //
 //==========================================================================
 
 void InitCloud(Actor InstigatedBy)
 {
-	Velocity.x = 0.00001;	// missile objects must move to impact other objects
-	LifeCount = 24 + (P_Random() & 7);
-	BobIndex = 0;
-	Target = InstigatedBy;
-	Radius = 20.0;
-	Height = 30.0;
-	bColideWithThings = true;
-	bColideWithWorld = true;
+  Velocity.x = 0.00001; // missile objects must move to impact other objects
+  LifeCount = 24 + (P_Random() & 7);
+  BobIndex = 0;
+  Target = InstigatedBy;
+  Radius = 20.0;
+  Height = 30.0;
+  bColideWithThings = true;
+  bColideWithWorld = true;
 }
 
 //===========================================================================
@@ -103,10 +103,10 @@ void InitCloud(Actor InstigatedBy)
 
 final void A_PoisonBagDamage()
 {
-	A_Explode();
+  A_Explode();
 
-	Origin.z += Level.Game.FloatBobOffsets[BobIndex] / 16.0;
-	BobIndex = (BobIndex + 1) & 63;
+  Origin.z += Level.Game.FloatBobOffsets[BobIndex] / 16.0;
+  BobIndex = (BobIndex + 1) & 63;
 }
 
 //===========================================================================
@@ -117,44 +117,44 @@ final void A_PoisonBagDamage()
 
 final void A_PoisonBagCheck()
 {
-	if (!--LifeCount)
-	{
-		SetState(FindState('Death'));
-	}
+  if (!--LifeCount)
+  {
+    SetState(FindState('Death'));
+  }
 }
 
 states
 {
 Spawn:
-	PSBG D 1
-	PSBG D 1 A_Scream
-	PSBG DEEEFFFGGGHHHI 2 A_PoisonBagDamage
-	PSBG I 1 A_PoisonBagDamage
-	PSBG I 1 A_PoisonBagCheck
-	Goto Spawn+3
+  PSBG D 1
+  PSBG D 1 A_Scream
+  PSBG DEEEFFFGGGHHHI 2 A_PoisonBagDamage
+  PSBG I 1 A_PoisonBagDamage
+  PSBG I 1 A_PoisonBagCheck
+  Goto Spawn+3
 Death:
-	PSBG HG 7
-	PSBG FD 6
-	Stop
+  PSBG HG 7
+  PSBG FD 6
+  Stop
 }
 
 defaultproperties
 {
-	Radius = 1.0;
-	Height = 1.0;
-	Mass = 99999.0;
-	RenderStyle = STYLE_Translucent;
-	Alpha = 0.333;
-	bNoBlockmap = true;
-	bNoGravity = true;
-	bDropOff = true;
-	bColideWithWorld = false;
-	bColideWithThings = false;
-	bNoDamageThrust = true;
-	bDamageInvulnerable = true;
-	bHowlVictims = true;
-	bNoSplash = true;
-	bCanBlast = true;
-	bBlockedBySolidActors = true;
-	DeathSound = 'PoisonShroomDeath';
+  Radius = 1.0;
+  Height = 1.0;
+  Mass = 99999.0;
+  RenderStyle = STYLE_Translucent;
+  Alpha = 0.333;
+  bNoBlockmap = true;
+  bNoGravity = true;
+  bDropOff = true;
+  bColideWithWorld = false;
+  bColideWithThings = false;
+  bNoDamageThrust = true;
+  bDamageInvulnerable = true;
+  bHowlVictims = true;
+  bNoSplash = true;
+  bCanBlast = true;
+  bBlockedBySolidActors = true;
+  DeathSound = 'PoisonShroomDeath';
 }

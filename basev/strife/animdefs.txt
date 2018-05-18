@@ -1,4 +1,4 @@
-//	Flat animations
+//  Flat animations
 flat optional F_SCANR5 range F_SCANR8 tics 4
 flat optional F_WATR01 range F_WATR03 tics 8
 flat optional F_PWATR1 range F_PWATR3 tics 11
@@ -10,7 +10,7 @@ flat optional F_FAN1   range F_FAN2   tics 4
 flat optional F_CONVY1 range F_CONVY2 tics 4
 flat optional F_RDALN1 range F_RDALN4 tics 4
 
-//	Texture animations
+//  Texture animations
 texture optional SCAN05   range SCAN08   tics 4
 texture optional SWTRMG01 range SWTRMG03 tics 4
 texture optional SCAN01   range SCAN04   tics 4
@@ -35,7 +35,7 @@ texture optional FORCE01  range FORCE04  tics 4
 texture optional FORCE05  range FORCE08  tics 4
 texture optional FAN01    range FAN02    tics 4
 
-//	Switches
+//  Switches
 switch GLASS01  on pic GLASS02  tics 0 sound world/glassbreak
 switch GLASS03  on pic GLASS04  tics 0 sound world/glassbreak
 switch GLASS05  on pic GLASS06  tics 0 sound world/glassbreak
@@ -129,7 +129,7 @@ pic dorchn05
 pic dorchn06
 pic dorchn07
 pic dorchn08
-	
+
 animateddoor dorcrg01
 opensound  DoorOpenSmallMetal
 closesound DoorCloseSmallMetal

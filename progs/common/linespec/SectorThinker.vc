@@ -25,84 +25,84 @@
 
 class SectorThinker : Thinker;
 
-sector_t*		Sector;
-SectorThinker	NextAffector;
+sector_t*   Sector;
+SectorThinker NextAffector;
 
 //==========================================================================
 //
-//	AddAffector
+//  AddAffector
 //
 //==========================================================================
 
 void AddAffector()
 {
-	SectorThinker		Tmp;
+  SectorThinker   Tmp;
 
-	if (!Sector->AffectorData)
-	{
-		Sector->AffectorData = self;
-	}
-	else
-	{
-		Tmp = SectorThinker(Sector->AffectorData);
-		while (Tmp.NextAffector)
-		{
-			Tmp = Tmp.NextAffector;
-		}
-		Tmp.NextAffector = self;
-	}
-	NextAffector = none;
+  if (!Sector->AffectorData)
+  {
+    Sector->AffectorData = self;
+  }
+  else
+  {
+    Tmp = SectorThinker(Sector->AffectorData);
+    while (Tmp.NextAffector)
+    {
+      Tmp = Tmp.NextAffector;
+    }
+    Tmp.NextAffector = self;
+  }
+  NextAffector = none;
 }
 
 //==========================================================================
 //
-//	RemoveAffector
+//  RemoveAffector
 //
 //==========================================================================
 
 void RemoveAffector()
 {
-	SectorThinker		Tmp;
+  SectorThinker   Tmp;
 
-	if (Sector->AffectorData == self)
-	{
-		Sector->AffectorData = NextAffector;
-	}
-	else
-	{
-		Tmp = SectorThinker(Sector->AffectorData);
-		while (Tmp && Tmp.NextAffector != self)
-		{
-			Tmp = Tmp.NextAffector;
-		}
-		if (Tmp && Tmp.NextAffector == self)
-		{
-			Tmp.NextAffector = NextAffector;
-		}
-	}
-	NextAffector = none;
+  if (Sector->AffectorData == self)
+  {
+    Sector->AffectorData = NextAffector;
+  }
+  else
+  {
+    Tmp = SectorThinker(Sector->AffectorData);
+    while (Tmp && Tmp.NextAffector != self)
+    {
+      Tmp = Tmp.NextAffector;
+    }
+    if (Tmp && Tmp.NextAffector == self)
+    {
+      Tmp.NextAffector = NextAffector;
+    }
+  }
+  NextAffector = none;
 }
 
 //==========================================================================
 //
-//	SectorStartSequence
+//  SectorStartSequence
 //
 //==========================================================================
 
 final void SectorStartSequence(sector_t * sector, name sequence, int ModeNum)
 {
-	Level.SectorStartSequence(sector, sequence, ModeNum);
+  Level.SectorStartSequence(sector, sequence, ModeNum);
 }
 
 //==========================================================================
 //
-//	SectorStopSequence
+//  SectorStopSequence
 //
 //==========================================================================
 
 final void SectorStopSequence(sector_t * sector)
 {
-	Level.SectorStopSequence(sector);
+  Level.SectorStopSequence(sector);
 }
 
 defaultproperties

@@ -83,10 +83,10 @@ int CheckLinedefInsideBox(int xmin, int ymin, int xmax, int ymax,
     {
       if (y2 > ymax)
         return FALSE;
-        
+
       x1 = x1 + (int) ((x2-x1) * (double)(ymax-y1) / (double)(y2-y1));
       y1 = ymax;
-      
+
       count = 2;
       continue;
     }
@@ -95,10 +95,10 @@ int CheckLinedefInsideBox(int xmin, int ymin, int xmax, int ymax,
     {
       if (y2 < ymin)
         return FALSE;
-      
+
       x1 = x1 + (int) ((x2-x1) * (double)(ymin-y1) / (double)(y2-y1));
       y1 = ymin;
-      
+
       count = 2;
       continue;
     }
@@ -107,7 +107,7 @@ int CheckLinedefInsideBox(int xmin, int ymin, int xmax, int ymax,
     {
       if (x2 > xmax)
         return FALSE;
-        
+
       y1 = y1 + (int) ((y2-y1) * (double)(xmax-x1) / (double)(x2-x1));
       x1 = xmax;
 
@@ -119,7 +119,7 @@ int CheckLinedefInsideBox(int xmin, int ymin, int xmax, int ymax,
     {
       if (x2 < xmin)
         return FALSE;
-        
+
       y1 = y1 + (int) ((y2-y1) * (double)(xmin-x1) / (double)(x2-x1));
       x1 = xmin;
 
@@ -161,11 +161,11 @@ static void BlockAdd(int blk_num, int line_index)
 
   if (blk_num < 0 || blk_num >= block_count)
     InternalError("BlockAdd: bad block number %d", blk_num);
-    
+
   if (! cur)
   {
     // create empty block
-    block_lines[blk_num] = cur = UtilCalloc(BK_QUANTUM * 
+    block_lines[blk_num] = cur = UtilCalloc(BK_QUANTUM *
         sizeof(uint16_g));
     cur[BK_NUM] = 0;
     cur[BK_MAX] = BK_QUANTUM;
@@ -177,7 +177,7 @@ static void BlockAdd(int blk_num, int line_index)
     // no more room, so allocate some more...
     cur[BK_MAX] += BK_QUANTUM;
 
-    block_lines[blk_num] = cur = UtilRealloc(cur, cur[BK_MAX] * 
+    block_lines[blk_num] = cur = UtilRealloc(cur, cur[BK_MAX] *
         sizeof(uint16_g));
   }
 
@@ -204,7 +204,7 @@ static void BlockAddLine(linedef_t *L)
   int line_index = L->index;
 
 # if DEBUG_BLOCKMAP
-  PrintDebug("BlockAddLine: %d (%d,%d) -> (%d,%d)\n", line_index, 
+  PrintDebug("BlockAddLine: %d (%d,%d) -> (%d,%d)\n", line_index,
       x1, y1, x2, y2);
 # endif
 
@@ -245,7 +245,7 @@ static void BlockAddLine(linedef_t *L)
   for (bx=bx1; bx <= bx2; bx++)
   {
     int blk_num = by * block_w + bx;
-  
+
     int minx = block_x + bx * 128;
     int miny = block_y + by * 128;
     int maxx = minx + 127;
@@ -297,12 +297,12 @@ static int BlockCompare(const void *p1, const void *p2)
   {
     return A[BK_NUM] - B[BK_NUM];
   }
- 
+
   if (A[BK_XOR] != B[BK_XOR])
   {
     return A[BK_XOR] - B[BK_XOR];
   }
- 
+
   return memcmp(A+BK_FIRST, B+BK_FIRST, A[BK_NUM] * sizeof(uint16_g));
 }
 
@@ -322,7 +322,7 @@ static void CompressBlockmap(void)
   // sort duplicate-detecting array.  After the sort, all duplicates
   // will be next to each other.  The duplicate array gives the order
   // of the blocklists in the BLOCKMAP lump.
-  
+
   for (i=0; i < block_count; i++)
     block_dups[i] = i;
 
@@ -357,7 +357,7 @@ static void CompressBlockmap(void)
     // duplicate ?  Only the very last one of a sequence of duplicates
     // will update the current offset value.
 
-    if (i+1 < block_count && 
+    if (i+1 < block_count &&
         BlockCompare(block_dups + i, block_dups + i+1) == 0)
     {
       block_ptrs[blk_num] = cur_offset;
@@ -366,7 +366,7 @@ static void CompressBlockmap(void)
       // free the memory of the duplicated block
       UtilFree(block_lines[blk_num]);
       block_lines[blk_num] = NULL;
-      
+
       dup_count++;
 
       orig_size += count;
@@ -392,7 +392,7 @@ static void CompressBlockmap(void)
   }
 
 # if DEBUG_BLOCKMAP
-  PrintDebug("Blockmap: Last ptr = %d  duplicates = %d\n", 
+  PrintDebug("Blockmap: Last ptr = %d  duplicates = %d\n",
       cur_offset, dup_count);
 # endif
 
@@ -407,7 +407,7 @@ static void CompressBlockmap(void)
 static void WriteBlockmap(void)
 {
   int i;
-  
+
   raw_blockmap_header_t header;
 
   lump_t *lump = CreateLevelLump("BLOCKMAP");
@@ -415,7 +415,7 @@ static void WriteBlockmap(void)
   uint16_g null_block[2] = { 0x0000, 0xFFFF };
   uint16_g m_zero = 0x0000;
   uint16_g m_neg1 = 0xFFFF;
-  
+
   // leave empty if the blockmap overflowed
   if (block_overflowed)
     return;
@@ -425,7 +425,7 @@ static void WriteBlockmap(void)
   header.y_origin = UINT16(block_y);
   header.x_blocks = UINT16(block_w);
   header.y_blocks = UINT16(block_h);
-  
+
   AppendLevelLump(lump, &header, sizeof(header));
 
   // handle pointers
@@ -589,13 +589,13 @@ void PutBlockmap(void)
   // truncate blockmap if too large.  We're limiting the number of
   // blocks to around 16000 (user changeable), this leaves about 48K
   // of shorts for the actual line lists.
- 
+
   if (block_count > cur_info->block_limit)
     TruncateBlockmap();
 
   // initial phase: create internal blockmap containing the index of
   // all lines in each block.
-  
+
   CreateBlockmap();
 
   // -AJA- second phase: compress the blockmap.  We do this by sorting
@@ -603,7 +603,7 @@ void PutBlockmap(void)
   //       a large list.
 
   CompressBlockmap();
- 
+
   // final phase: write it out in the correct format
 
   WriteBlockmap();
@@ -616,4 +616,3 @@ void PutBlockmap(void)
 
   FreeBlockmap();
 }
-

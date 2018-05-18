@@ -25,76 +25,76 @@
 
 class Health : Inventory;
 
-int				PrevHealth;
-int				LowHealth;
-string			LowHealthMessage;
+int       PrevHealth;
+int       LowHealth;
+string      LowHealthMessage;
 
 //==========================================================================
 //
-//	TryPickup
+//  TryPickup
 //
 //==========================================================================
 
 bool TryPickup(EntityEx Toucher)
 {
-	if (Toucher.bIsPlayer)
-	{
-		PrevHealth = Toucher.Health;
-		int max = MaxAmount;
-		if (!max)
-		{
-			max = PlayerEx(Toucher.Player).GetMaxHealth();
-		}
-		if (Toucher.Player.Health >= max)
-		{
-			//	You should be able to pick up health bonuses even at
-			// full health.
-			if (bAlwaysPickup)
-			{
-				GoAwayAndDie();
-				return true;
-			}
-			return false;
-		}
-		Toucher.Player.Health += Amount;
-		if (Toucher.Player.Health > max)
-		{
-			Toucher.Player.Health = max;
-		}
-		Toucher.Health = Toucher.Player.Health;
-		GoAwayAndDie();
-		return true;
-	}
-	else
-	{
-		PrevHealth = 0x7fffffff;
-		if (Toucher.GiveBody(Amount) || bAlwaysPickup)
-		{
-			GoAwayAndDie();
-			return true;
-		}
-		return false;
-	}
+  if (Toucher.bIsPlayer)
+  {
+    PrevHealth = Toucher.Health;
+    int max = MaxAmount;
+    if (!max)
+    {
+      max = PlayerEx(Toucher.Player).GetMaxHealth();
+    }
+    if (Toucher.Player.Health >= max)
+    {
+      //  You should be able to pick up health bonuses even at
+      // full health.
+      if (bAlwaysPickup)
+      {
+        GoAwayAndDie();
+        return true;
+      }
+      return false;
+    }
+    Toucher.Player.Health += Amount;
+    if (Toucher.Player.Health > max)
+    {
+      Toucher.Player.Health = max;
+    }
+    Toucher.Health = Toucher.Player.Health;
+    GoAwayAndDie();
+    return true;
+  }
+  else
+  {
+    PrevHealth = 0x7fffffff;
+    if (Toucher.GiveBody(Amount) || bAlwaysPickup)
+    {
+      GoAwayAndDie();
+      return true;
+    }
+    return false;
+  }
 }
 
 //==========================================================================
 //
-//	GetPickupMessage
+//  GetPickupMessage
 //
 //==========================================================================
 
 string GetPickupMessage()
 {
-	if (PrevHealth < LowHealth && LowHealthMessage)
-	{
-		return LowHealthMessage;
-	}
-	return ::GetPickupMessage();
+  if (PrevHealth < LowHealth && LowHealthMessage)
+  {
+    return LowHealthMessage;
+  }
+  return ::GetPickupMessage();
 }
 
 defaultproperties
 {
-	Amount = 1;
-	MaxAmount = 0;
-	PickupSound = 'misc/health_pkup';
+  Amount = 1;
+  MaxAmount = 0;
+  PickupSound = 'misc/health_pkup';
 }

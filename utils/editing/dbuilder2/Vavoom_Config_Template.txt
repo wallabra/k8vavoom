@@ -54,17 +54,17 @@ include("includes\\vavoom_common.cfg", "game_strife");
 // Depends on both game and map format
 gamedetect
 {
-	// Map format
-	include("includes\\vavoom_misc.cfg", "gamedetect_doom");
-	include("includes\\vavoom_misc.cfg", "gamedetect_hexen");
-	include("includes\\vavoom_misc.cfg", "gamedetect_udmf");
-	// Game scheme
-	include("includes\\doom_misc.cfg", "gamedetect_exmx");
-	include("includes\\doom_misc.cfg", "gamedetect_mapxx");
-	include("includes\\doom_misc.cfg", "gamedetect_either");
-	include("includes\\heretic_misc.cfg", "gamedetect");
-	include("includes\\hexen_misc.cfg", "gamedetect");
-	include("includes\\strife_misc.cfg", "gamedetect");
+  // Map format
+  include("includes\\vavoom_misc.cfg", "gamedetect_doom");
+  include("includes\\vavoom_misc.cfg", "gamedetect_hexen");
+  include("includes\\vavoom_misc.cfg", "gamedetect_udmf");
+  // Game scheme
+  include("includes\\doom_misc.cfg", "gamedetect_exmx");
+  include("includes\\doom_misc.cfg", "gamedetect_mapxx");
+  include("includes\\doom_misc.cfg", "gamedetect_either");
+  include("includes\\heretic_misc.cfg", "gamedetect");
+  include("includes\\hexen_misc.cfg", "gamedetect");
+  include("includes\\strife_misc.cfg", "gamedetect");
 }
 
 // THING TYPES
@@ -72,20 +72,20 @@ gamedetect
 // Order should always be 1: Game; 2: Vavoom/game; 3: Vavoom/vavoom
 thingtypes
 {
-	// Basic game actors
-	include("includes\\doom_things.cfg");
-	include("includes\\doom2_things.cfg");
-	include("includes\\heretic_things.cfg");
-	include("includes\\hexen_things.cfg");
-	include("includes\\strife_things.cfg");
-	// Additional Vavoom actors for that game
-	include("includes\\vavoom_things.cfg", "doom");
-	include("includes\\vavoom_things.cfg", "heretic");
-	include("includes\\vavoom_things.cfg", "hexen");
-	include("includes\\vavoom_things.cfg", "strife");
-	include("includes\\vavoom_things.cfg", "default");
-	// Standard Vavoom actors
-	include("includes\\vavoom_things.cfg", "vavoom");
+  // Basic game actors
+  include("includes\\doom_things.cfg");
+  include("includes\\doom2_things.cfg");
+  include("includes\\heretic_things.cfg");
+  include("includes\\hexen_things.cfg");
+  include("includes\\strife_things.cfg");
+  // Additional Vavoom actors for that game
+  include("includes\\vavoom_things.cfg", "doom");
+  include("includes\\vavoom_things.cfg", "heretic");
+  include("includes\\vavoom_things.cfg", "hexen");
+  include("includes\\vavoom_things.cfg", "strife");
+  include("includes\\vavoom_things.cfg", "default");
+  // Standard Vavoom actors
+  include("includes\\vavoom_things.cfg", "vavoom");
 }
 
 // ENUMERATIONS
@@ -93,13 +93,13 @@ thingtypes
 // These are enumerated lists for linedef types and UDMF fields.
 enums
 {
-	// Basic game enums
-	include("includes\\doom_misc.cfg", "enums");
-	// Standard Vavoom enums
-	include("includes\\vavoom_misc.cfg", "enums");
-	// Additional Vavoom enums for that game
-	include("includes\\vavoom_misc.cfg", "enums_doom");
-	include("includes\\vavoom_misc.cfg", "enums_heretic");
-	include("includes\\vavoom_misc.cfg", "enums_hexen");
-	include("includes\\vavoom_misc.cfg", "enums_strife");
+  // Basic game enums
+  include("includes\\doom_misc.cfg", "enums");
+  // Standard Vavoom enums
+  include("includes\\vavoom_misc.cfg", "enums");
+  // Additional Vavoom enums for that game
+  include("includes\\vavoom_misc.cfg", "enums_doom");
+  include("includes\\vavoom_misc.cfg", "enums_heretic");
+  include("includes\\vavoom_misc.cfg", "enums_hexen");
+  include("includes\\vavoom_misc.cfg", "enums_strife");
 }

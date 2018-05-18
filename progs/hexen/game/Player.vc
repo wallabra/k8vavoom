@@ -35,10 +35,10 @@ BotPlayer Bot;
 
 void CreateBot()
 {
-	Bot = BotPlayer(SpawnObject(BotPlayer));
-	Bot.player = self;
-	Bot.OnBeginPlay();
-	bAutoAim = true;
+  Bot = BotPlayer(SpawnObject(BotPlayer));
+  Bot.player = self;
+  Bot.OnBeginPlay();
+  bAutoAim = true;
 }
 
 //==========================================================================
@@ -49,42 +49,42 @@ void CreateBot()
 
 void OnNetReborn(EntityEx OldMO)
 {
-	Weapon bestWeapon;
-	Inventory Item;
+  Weapon bestWeapon;
+  Inventory Item;
 
-	// Restore keys and weapons when reborn in co-op
-	bestWeapon = none;
-	if (OldMO)
-	{
-		for (Item = OldMO.Inventory; Item; )
-		{
-			Inventory Next = Item.Inventory;
-			if (Weapon(Item))
-			{
-				if (!bestWeapon || bestWeapon.SelectionOrder >
-					Weapon(Item).SelectionOrder)
-				{
-					bestWeapon = Weapon(Item);
-				}
-				Item.AttachToOwner(EntityEx(MO));
-			}
-			else if (FourthWeaponHolder(Item) || Key(Item))
-			{
-				Item.AttachToOwner(EntityEx(MO));
-			}
-			Item = Next;
-		}
-		OldMO.DestroyAllInventory();
-	}
-	GiveAmmo(Mana1, 0);
-	GiveAmmo(Mana2, 0);
-	EntityEx(MO).FindInventory(Mana1).Amount = 25;
-	EntityEx(MO).FindInventory(Mana2).Amount = 25;
-	if (bestWeapon)
-	{
-		// Bring up the best weapon
-		PendingWeapon = bestWeapon;
-	}
+  // Restore keys and weapons when reborn in co-op
+  bestWeapon = none;
+  if (OldMO)
+  {
+    for (Item = OldMO.Inventory; Item; )
+    {
+      Inventory Next = Item.Inventory;
+      if (Weapon(Item))
+      {
+        if (!bestWeapon || bestWeapon.SelectionOrder >
+          Weapon(Item).SelectionOrder)
+        {
+          bestWeapon = Weapon(Item);
+        }
+        Item.AttachToOwner(EntityEx(MO));
+      }
+      else if (FourthWeaponHolder(Item) || Key(Item))
+      {
+        Item.AttachToOwner(EntityEx(MO));
+      }
+      Item = Next;
+    }
+    OldMO.DestroyAllInventory();
+  }
+  GiveAmmo(Mana1, 0);
+  GiveAmmo(Mana2, 0);
+  EntityEx(MO).FindInventory(Mana1).Amount = 25;
+  EntityEx(MO).FindInventory(Mana2).Amount = 25;
+  if (bestWeapon)
+  {
+    // Bring up the best weapon
+    PendingWeapon = bestWeapon;
+  }
 }
 
 //==========================================================================
@@ -95,11 +95,11 @@ void OnNetReborn(EntityEx OldMO)
 
 void DestroyBot()
 {
-	if (Bot != none)
-	{
-		Bot.Destroy();
-		Bot = none;
-	}
+  if (Bot != none)
+  {
+    Bot.Destroy();
+    Bot = none;
+  }
 }
 
 //==========================================================================
@@ -110,7 +110,7 @@ void DestroyBot()
 
 void ResetPlayerOnSpawn()
 {
-	::ResetPlayerOnSpawn();
+  ::ResetPlayerOnSpawn();
 }
 
 //==========================================================================
@@ -121,7 +121,7 @@ void ResetPlayerOnSpawn()
 
 void BotOnSpawn()
 {
-	Bot.OnSpawn();
+  Bot.OnSpawn();
 }
 
 //==========================================================================
@@ -132,11 +132,11 @@ void BotOnSpawn()
 
 void DoClearPlayer()
 {
-	BotPlayer b;
+  BotPlayer b;
 
-	b = Bot;
-	::DoClearPlayer();
-	Bot = b;
+  b = Bot;
+  ::DoClearPlayer();
+  Bot = b;
 }
 
 //==========================================================================
@@ -147,7 +147,7 @@ void DoClearPlayer()
 
 int GetRebornHealth()
 {
-	return MAXHEALTH;
+  return MAXHEALTH;
 }
 
 //==========================================================================
@@ -158,88 +158,88 @@ int GetRebornHealth()
 
 void PlayerImpulse()
 {
-	int impulse;
-	int i;
+  int impulse;
+  int i;
 
-	impulse = Impulse;
-	Impulse = 0;
-	Inventory Arti = none;
+  impulse = Impulse;
+  Impulse = 0;
+  Inventory Arti = none;
 
-	if (impulse <= LineSpecialGameInfo::NUM_WEAPON_SLOTS)
-	{
-		ChangeWeapon(impulse);
-	}
-	else if (impulse == 13)
-	{
-		InventoryLeft();
-	}
-	else if (impulse == 14)
-	{
-		InventoryRight();
-	}
-	else if (impulse == 15)
-	{
-		InventoryUse();
-	}
-	else if (impulse == 16)
-	{
-		Actor(MO).Damage(none, none, 10000);
-	}
-	else if (impulse == 17)
-	{
-		PrevWeapon();
-	}
-	else if (impulse == 18)
-	{
-		NextWeapon();
-	}
-	else if (impulse == 56)
-	{
-		bReloadQueued = true;
-	}
-	else if (impulse >= 200 && impulse <= 205)
-	{
-		LineSpecialLevelInfo(Level).ConChoiceImpulse(impulse - 200);
-	}
-	// Hexen artifact hot keys
-	if (!Arti)
-	{
-		if (impulse == 12 && (Health < MAXHEALTH))
-		{
-			Arti = EntityEx(MO).FindInventory(ArtiHealth);
-		}
-		else if (impulse == 10)
-		{
-			Arti = EntityEx(MO).FindInventory(ArtiPoisonBag);
-		}
-		else if (impulse == 9)
-		{
-			Arti = EntityEx(MO).FindInventory(ArtiBlastRadius);
-		}
-		else if (impulse == 8)
-		{
-			Arti = EntityEx(MO).FindInventory(ArtiTeleport);
-		}
-		else if (impulse == 7)
-		{
-			Arti = EntityEx(MO).FindInventory(ArtiTeleportOther);
-		}
-		else if (impulse == 6)
-		{
-			Arti = EntityEx(MO).FindInventory(ArtiPork);
-		}
-		else if (impulse == 5 &&
-			!EntityEx(MO).FindInventory(PowerInvulnerable))
-		{
-			Arti = EntityEx(MO).FindInventory(ArtiInvulnerability);
-		}
-	}
+  if (impulse <= LineSpecialGameInfo::NUM_WEAPON_SLOTS)
+  {
+    ChangeWeapon(impulse);
+  }
+  else if (impulse == 13)
+  {
+    InventoryLeft();
+  }
+  else if (impulse == 14)
+  {
+    InventoryRight();
+  }
+  else if (impulse == 15)
+  {
+    InventoryUse();
+  }
+  else if (impulse == 16)
+  {
+    Actor(MO).Damage(none, none, 10000);
+  }
+  else if (impulse == 17)
+  {
+    PrevWeapon();
+  }
+  else if (impulse == 18)
+  {
+    NextWeapon();
+  }
+  else if (impulse == 56)
+  {
+    bReloadQueued = true;
+  }
+  else if (impulse >= 200 && impulse <= 205)
+  {
+    LineSpecialLevelInfo(Level).ConChoiceImpulse(impulse - 200);
+  }
+  // Hexen artifact hot keys
+  if (!Arti)
+  {
+    if (impulse == 12 && (Health < MAXHEALTH))
+    {
+      Arti = EntityEx(MO).FindInventory(ArtiHealth);
+    }
+    else if (impulse == 10)
+    {
+      Arti = EntityEx(MO).FindInventory(ArtiPoisonBag);
+    }
+    else if (impulse == 9)
+    {
+      Arti = EntityEx(MO).FindInventory(ArtiBlastRadius);
+    }
+    else if (impulse == 8)
+    {
+      Arti = EntityEx(MO).FindInventory(ArtiTeleport);
+    }
+    else if (impulse == 7)
+    {
+      Arti = EntityEx(MO).FindInventory(ArtiTeleportOther);
+    }
+    else if (impulse == 6)
+    {
+      Arti = EntityEx(MO).FindInventory(ArtiPork);
+    }
+    else if (impulse == 5 &&
+      !EntityEx(MO).FindInventory(PowerInvulnerable))
+    {
+      Arti = EntityEx(MO).FindInventory(ArtiInvulnerability);
+    }
+  }
 
-	if (Arti)
-	{
-		// Use an artifact
-		EntityEx(MO).UseInventory(Arti);
-	}
+  if (Arti)
+  {
+    // Use an artifact
+    EntityEx(MO).UseInventory(Arti);
+  }
 }
 
 //==========================================================================
@@ -250,7 +250,7 @@ void PlayerImpulse()
 
 void BotTick(float deltaTime)
 {
-	Bot.BotTick(deltaTime);
+  Bot.BotTick(deltaTime);
 }
 
 //==========================================================================
@@ -261,42 +261,42 @@ void BotTick(float deltaTime)
 
 void SpawnSpeedEffect()
 {
-	Actor speedA = HexenLevelInfo(Level).Spawn(PlayerSpeed, MO.Origin);
-	if (speedA)
-	{
-		speedA.Angles.yaw = MO.Angles.yaw;
-		speedA.Translation = MO.Translation;
-		speedA.Target = Actor(MO);
-		speedA.Special1 = PClass;
-		if (speedA.Special1 > 2)
-		{
-			speedA.Special1 = 0;
-		}
-		int Idx;
-		switch (PClass)
-		{
-		case HexenDefs::PCLASS_FIGHTER:
-			Idx = 0;
-			break;
-		case HexenDefs::PCLASS_CLERIC:
-			Idx = 2;
-			break;
-		case HexenDefs::PCLASS_MAGE:
-			Idx = 4;
-			break;
-		case HexenDefs::PCLASS_PIG:
-			Idx = 6;
-			break;
-		}
-		speedA.SetState(GetStatePlus(speedA.IdleState, Idx, true));
-		speedA.FloorClip = MO.FloorClip;
+  Actor speedA = HexenLevelInfo(Level).Spawn(PlayerSpeed, MO.Origin);
+  if (speedA)
+  {
+    speedA.Angles.yaw = MO.Angles.yaw;
+    speedA.Translation = MO.Translation;
+    speedA.Target = Actor(MO);
+    speedA.Special1 = PClass;
+    if (speedA.Special1 > 2)
+    {
+      speedA.Special1 = 0;
+    }
+    int Idx;
+    switch (PClass)
+    {
+    case HexenDefs::PCLASS_FIGHTER:
+      Idx = 0;
+      break;
+    case HexenDefs::PCLASS_CLERIC:
+      Idx = 2;
+      break;
+    case HexenDefs::PCLASS_MAGE:
+      Idx = 4;
+      break;
+    case HexenDefs::PCLASS_PIG:
+      Idx = 6;
+      break;
+    }
+    speedA.SetState(GetStatePlus(speedA.IdleState, Idx, true));
+    speedA.FloorClip = MO.FloorClip;
 #ifdef FIXME
-		if (self == GPlayers[consoleplayer])
-		{
-			speedA.bHidden = true;
-		}
+    if (self == GPlayers[consoleplayer])
+    {
+      speedA.bHidden = true;
+    }
 #endif
-	}
+  }
 }
 
 //==========================================================================
@@ -307,144 +307,144 @@ void SpawnSpeedEffect()
 
 void Cheat_Gimme()
 {
-	class<Inventory>			Cls;
-	class<Weapon>				WpnCls;
-	class<FourthWeaponPiece>	PieceCls;
-	Inventory					Inv;
+  class<Inventory>      Cls;
+  class<Weapon>       WpnCls;
+  class<FourthWeaponPiece>  PieceCls;
+  Inventory         Inv;
 
-	if (Cmd_CheckParm("weapons"))
-	{
-		int i;
+  if (Cmd_CheckParm("weapons"))
+  {
+    int i;
 
-		HexenArmor HArmor = HexenArmor(EntityEx(MO).FindInventory(
-			HexenArmor));
-		for (i = 0; i < 4; i++)
-		{
-			HArmor.Slots[i] = HArmor.SlotsIncrement[i];
-		}
-		foreach AllClasses(Weapon, WpnCls)
-		{
-			if (!FindClassState(WpnCls, 'Ready'))
-			{
-				//	Abstract class.
-				continue;
-			}
-			Weapon Wpn = Level.Spawn(WpnCls,,,, false);
-			Wpn.AmmoGive1 = 0;
-			Wpn.AmmoGive2 = 0;
-			if (!Wpn.TryPickup(EntityEx(MO)))
-			{
-				Wpn.Destroy();
-			}
-		}
-		foreach AllClasses(Ammo, Cls)
-		{
-			//	Only direct descendants.
-			if (GetClassParent(Cls) != Ammo)
-			{
-				continue;
-			}
-			Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
-			if (!AmmoItem)
-			{
-				AmmoItem = Level.Spawn(Cls,,,, false);
-				if (!AmmoItem.TryPickup(EntityEx(MO)))
-				{
-					AmmoItem.Destroy();
-					AmmoItem = none;
-				}
-			}
-			if (AmmoItem)
-			{
-				AmmoItem.Amount = AmmoItem.MaxAmount;
-			}
-		}
+    HexenArmor HArmor = HexenArmor(EntityEx(MO).FindInventory(
+      HexenArmor));
+    for (i = 0; i < 4; i++)
+    {
+      HArmor.Slots[i] = HArmor.SlotsIncrement[i];
+    }
+    foreach AllClasses(Weapon, WpnCls)
+    {
+      if (!FindClassState(WpnCls, 'Ready'))
+      {
+        //  Abstract class.
+        continue;
+      }
+      Weapon Wpn = Level.Spawn(WpnCls,,,, false);
+      Wpn.AmmoGive1 = 0;
+      Wpn.AmmoGive2 = 0;
+      if (!Wpn.TryPickup(EntityEx(MO)))
+      {
+        Wpn.Destroy();
+      }
+    }
+    foreach AllClasses(Ammo, Cls)
+    {
+      //  Only direct descendants.
+      if (GetClassParent(Cls) != Ammo)
+      {
+        continue;
+      }
+      Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
+      if (!AmmoItem)
+      {
+        AmmoItem = Level.Spawn(Cls,,,, false);
+        if (!AmmoItem.TryPickup(EntityEx(MO)))
+        {
+          AmmoItem.Destroy();
+          AmmoItem = none;
+        }
+      }
+      if (AmmoItem)
+      {
+        AmmoItem.Amount = AmmoItem.MaxAmount;
+      }
+    }
 
-		FourthWeaponHolder Hold = FourthWeaponHolder(
-			EntityEx(MO).FindInventory(FourthWeaponHolder));
-		if (!Hold)
-		{
-			Hold = Level.Spawn(FourthWeaponHolder,,,, false);
-			Hold.AttachToOwner(EntityEx(MO));
-		}
-		Hold.PieceMask = 7;
+    FourthWeaponHolder Hold = FourthWeaponHolder(
+      EntityEx(MO).FindInventory(FourthWeaponHolder));
+    if (!Hold)
+    {
+      Hold = Level.Spawn(FourthWeaponHolder,,,, false);
+      Hold.AttachToOwner(EntityEx(MO));
+    }
+    Hold.PieceMask = 7;
 
-		cprint("ALL WEAPONS");
-	}
-	if (Cmd_CheckParm("health"))
-	{
-		if (MorphTime)
-		{
-			MO.Health = MAXMORPHHEALTH;
-			Health = MO.Health;
-		}
-		else
-		{
-			MO.Health = MAXHEALTH;
-			Health = MO.Health;
-		}
-		cprint("FULL HEALTH");
-	}
-	if (Cmd_CheckParm("keys"))
-	{
-		foreach AllClasses(Key, Cls)
-		{
-			if (!FindClassState(Cls, 'Spawn'))
-			{
-				//	Abstract class
-				continue;
-			}
-			EntityEx(MO).GiveInventoryType(Cls);
-		}
-		cprint("ALL KEYS");
-	}
-	if (Cmd_CheckParm("artifacts"))
-	{
-		// All artifacts
-		foreach AllClasses(Inventory, Cls)
-		{
-			if (!Cls.default.bInvBar || !Cls.default.MaxAmount)
-			{
-				//	Not an artifact
-				continue;
-			}
-			if (!FindClassState(Cls, 'Spawn'))
-			{
-				//	Abstract class
-				continue;
-			}
-			if (ClassIsChildOf(Cls, PuzzleItem))
-			{
-				//	Not puzzle items.
-				continue;
-			}
-			if (!AreStateSpritesPresent(FindClassState(Cls, 'Spawn')))
-			{
-				//	From other game or not available in shareware.
-				continue;
-			}
-			Inv = Level.Spawn(Cls,,,, false);
-			Inv.Amount = Inv.MaxAmount;
-			if (!Inv.TryPickup(EntityEx(MO)))
-			{
-				Inv.Destroy();
-			}
-		}
-		cprint("ALL ARTIFACTS");
-	}
-	if (Cmd_CheckParm("puzzles"))
-	{
-		foreach AllClasses(PuzzleItem, Cls)
-		{
-			if (!FindClassState(Cls, 'Spawn'))
-			{
-				//	Abstract class
-				continue;
-			}
-			EntityEx(MO).GiveInventoryType(Cls);
-		}
-		cprint("ALL ARTIFACTS");
-	}
+    cprint("ALL WEAPONS");
+  }
+  if (Cmd_CheckParm("health"))
+  {
+    if (MorphTime)
+    {
+      MO.Health = MAXMORPHHEALTH;
+      Health = MO.Health;
+    }
+    else
+    {
+      MO.Health = MAXHEALTH;
+      Health = MO.Health;
+    }
+    cprint("FULL HEALTH");
+  }
+  if (Cmd_CheckParm("keys"))
+  {
+    foreach AllClasses(Key, Cls)
+    {
+      if (!FindClassState(Cls, 'Spawn'))
+      {
+        //  Abstract class
+        continue;
+      }
+      EntityEx(MO).GiveInventoryType(Cls);
+    }
+    cprint("ALL KEYS");
+  }
+  if (Cmd_CheckParm("artifacts"))
+  {
+    // All artifacts
+    foreach AllClasses(Inventory, Cls)
+    {
+      if (!Cls.default.bInvBar || !Cls.default.MaxAmount)
+      {
+        //  Not an artifact
+        continue;
+      }
+      if (!FindClassState(Cls, 'Spawn'))
+      {
+        //  Abstract class
+        continue;
+      }
+      if (ClassIsChildOf(Cls, PuzzleItem))
+      {
+        //  Not puzzle items.
+        continue;
+      }
+      if (!AreStateSpritesPresent(FindClassState(Cls, 'Spawn')))
+      {
+        //  From other game or not available in shareware.
+        continue;
+      }
+      Inv = Level.Spawn(Cls,,,, false);
+      Inv.Amount = Inv.MaxAmount;
+      if (!Inv.TryPickup(EntityEx(MO)))
+      {
+        Inv.Destroy();
+      }
+    }
+    cprint("ALL ARTIFACTS");
+  }
+  if (Cmd_CheckParm("puzzles"))
+  {
+    foreach AllClasses(PuzzleItem, Cls)
+    {
+      if (!FindClassState(Cls, 'Spawn'))
+      {
+        //  Abstract class
+        continue;
+      }
+      EntityEx(MO).GiveInventoryType(Cls);
+    }
+    cprint("ALL ARTIFACTS");
+  }
 }
 
 //==========================================================================
@@ -455,16 +455,16 @@ void Cheat_Gimme()
 
 void Cheat_Morph()
 {
-	if (MorphTime)
-	{
-		UndoPlayerMorph(false, self);
-	}
-	else
-	{
-		Actor(MO).MorphPlayer(PorkFX.default.PlayerClass, 40.0,
-			PorkFX.default.MorphStyle, none, none, Actor(MO));
-	}
-	cprint("SQUEAL!!");
+  if (MorphTime)
+  {
+    UndoPlayerMorph(false, self);
+  }
+  else
+  {
+    Actor(MO).MorphPlayer(PorkFX.default.PlayerClass, 40.0,
+      PorkFX.default.MorphStyle, none, none, Actor(MO));
+  }
+  cprint("SQUEAL!!");
 }
 
 //==========================================================================
@@ -475,55 +475,55 @@ void Cheat_Morph()
 
 void Cheat_Class()
 {
-	int i;
-	int pclass;
-	Inventory Item;
+  int i;
+  int pclass;
+  Inventory Item;
 
-	if (MorphTime)
-	{
-		// don't change class if the player is morphed
-		cprint("CAN'T CHANGE CLASS WHILE MORPHED");
-		return;
-	}
-	if (Cmd_CheckParm("fighter"))
-	{
-		pclass = HexenDefs::PCLASS_FIGHTER;
-	}
-	else if (Cmd_CheckParm("cleric"))
-	{
-		pclass = HexenDefs::PCLASS_CLERIC;
-	}
-	else if (Cmd_CheckParm("mage"))
-	{
-		pclass = HexenDefs::PCLASS_MAGE;
-	}
-	else
-	{
-		cprint("INVALID PLAYER CLASS");
-		return;
-	}
-	//FIXME it doesn't work like this.
-	PClass = pclass;
-	HexenArmor HArmor = HexenArmor(EntityEx(MO).FindInventory(HexenArmor));
-	for (i = 0; i < 4; i++)
-	{
-		HArmor.Slots[i] = 0.0;
-	}
+  if (MorphTime)
+  {
+    // don't change class if the player is morphed
+    cprint("CAN'T CHANGE CLASS WHILE MORPHED");
+    return;
+  }
+  if (Cmd_CheckParm("fighter"))
+  {
+    pclass = HexenDefs::PCLASS_FIGHTER;
+  }
+  else if (Cmd_CheckParm("cleric"))
+  {
+    pclass = HexenDefs::PCLASS_CLERIC;
+  }
+  else if (Cmd_CheckParm("mage"))
+  {
+    pclass = HexenDefs::PCLASS_MAGE;
+  }
+  else
+  {
+    cprint("INVALID PLAYER CLASS");
+    return;
+  }
+  //FIXME it doesn't work like this.
+  PClass = pclass;
+  HexenArmor HArmor = HexenArmor(EntityEx(MO).FindInventory(HexenArmor));
+  for (i = 0; i < 4; i++)
+  {
+    HArmor.Slots[i] = 0.0;
+  }
 
-	// Remove all weapons
-	for (Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory)
-	{
-		if (Weapon(Item) || FourthWeaponHolder(Item))
-		{
-			Item.Destroy();
-		}
-	}
-	BaseClass = pclass;
-//	PostMorphWeapon(HexenDefs::WP_FIRST);
-	Actor(MO).MorphPlayer(class<PlayerPawn>(Level.Game.PlayerClasses[PClass]), 0.0,
-		PorkFX.default.MorphStyle, none, none, Actor(MO));
-	SetCvar('class', pclass);
-	SB_Start();
+  // Remove all weapons
+  for (Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory)
+  {
+    if (Weapon(Item) || FourthWeaponHolder(Item))
+    {
+      Item.Destroy();
+    }
+  }
+  BaseClass = pclass;
+//  PostMorphWeapon(HexenDefs::WP_FIRST);
+  Actor(MO).MorphPlayer(class<PlayerPawn>(Level.Game.PlayerClasses[PClass]), 0.0,
+    PorkFX.default.MorphStyle, none, none, Actor(MO));
+  SetCvar('class', pclass);
+  SB_Start();
 }
 
 //==========================================================================
@@ -534,52 +534,52 @@ void Cheat_Class()
 
 bool IsWeaponAlwaysExtremeDeath()
 {
-	// Always extreme death from fourth weapon
-	return ReadyWeapon.bExtremeDeath;
+  // Always extreme death from fourth weapon
+  return ReadyWeapon.bExtremeDeath;
 }
 
 //==========================================================================
 //
-//	KilledActor
+//  KilledActor
 //
 //==========================================================================
 
 void KilledActor(EntityEx Victim)
 {
-	// Check for frag changes
-	if (Victim.bIsPlayer)
-	{
-		if (bIsBot)
-		{
-			Bot.Killed(Victim);
-		}
+  // Check for frag changes
+  if (Victim.bIsPlayer)
+  {
+    if (bIsBot)
+    {
+      Bot.Killed(Victim);
+    }
 
-		if (Victim.Player.bIsBot)
-		{
-			Player(Victim.Player).Bot.Died(EntityEx(MO));
-		}
+    if (Victim.Player.bIsBot)
+    {
+      Player(Victim.Player).Bot.Died(EntityEx(MO));
+    }
 
-		if (Victim == MO)
-		{
-			// Self-frag
-			Frags--;
-		}
-		else
-		{
-			Frags++;
-		}
-	}
+    if (Victim == MO)
+    {
+      // Self-frag
+      Frags--;
+    }
+    else
+    {
+      Frags++;
+    }
+  }
 }
 
 //==========================================================================
 //
-//	PlayerMorphed
+//  PlayerMorphed
 //
 //==========================================================================
 
 void PlayerMorphed(EntityEx OldMO)
 {
-	PClass = HexenDefs::PCLASS_PIG;
+  PClass = HexenDefs::PCLASS_PIG;
 }
 
 defaultproperties

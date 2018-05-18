@@ -24,17 +24,17 @@
 //**************************************************************************
 
 class PointPuller : Actor
-	__mobjinfo__(5002);
+  __mobjinfo__(5002);
 
 states
 {
 Spawn:
-	TNT1 A -1
-	Stop
+  TNT1 A -1
+  Stop
 }
 
 defaultproperties
 {
-	RenderStyle = STYLE_None;
-	bNoBlockmap = true;
+  RenderStyle = STYLE_None;
+  bNoBlockmap = true;
 }

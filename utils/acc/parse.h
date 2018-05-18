@@ -16,9 +16,9 @@
 
 struct ScriptTypes
 {
-	const char *TypeName;
-	int TypeBase;
-	int TypeCount;
+  const char *TypeName;
+  int TypeBase;
+  int TypeCount;
 };
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------

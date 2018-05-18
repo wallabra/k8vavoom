@@ -1,92 +1,92 @@
 //------------------------------------------------------------------------------
 actor Snout : Weapon
 {
-	Weapon.SelectionOrder 10000
-	Weapon.YAdjust 10
-	+Weapon.DontBob
+  Weapon.SelectionOrder 10000
+  Weapon.YAdjust 10
+  +Weapon.DontBob
 
-	action native A_SnoutAttack();
+  action native A_SnoutAttack();
 
-	states
-	{
-	Ready:
-		WPIG A 1 A_WeaponReady
-		Loop
-	Deselect:
-		WPIG A 1 A_Lower
-		Loop
-	Select:
-		WPIG A 1 A_Raise
-		Loop
-	Fire:
-		WPIG A 4 A_SnoutAttack
-		WPIG B 8 A_SnoutAttack
-		Goto Ready
-	Flash:
-		WPIG B 8
-		Goto Ready
-	}
+  states
+  {
+  Ready:
+    WPIG A 1 A_WeaponReady
+    Loop
+  Deselect:
+    WPIG A 1 A_Lower
+    Loop
+  Select:
+    WPIG A 1 A_Raise
+    Loop
+  Fire:
+    WPIG A 4 A_SnoutAttack
+    WPIG B 8 A_SnoutAttack
+    Goto Ready
+  Flash:
+    WPIG B 8
+    Goto Ready
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SnoutPuff
 {
-	RenderStyle Translucent
-	Alpha 0.6
-	+NoBlockmap
-	+NoGravity
-	states
-	{
-	Spawn:
-		FHFX STUVW 4
-		Stop
-	}
+  RenderStyle Translucent
+  Alpha 0.6
+  +NoBlockmap
+  +NoGravity
+  states
+  {
+  Spawn:
+    FHFX STUVW 4
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Pig : MorphedMonster
 {
-	Health 25
-	Radius 12
-	Height 22
-	Mass 60
-	Speed 10
-	PainChance 128
-	Monster
-	+FloorClip
-	+Telestomp
-	+WindThrust
-	+DontMorph
-	SeeSound "PigActive1"
-	ActiveSound "PigActive"
-	PainSound "PigPain"
-	DeathSound "PigDeath"
-	states
-	{
-	Spawn:
-		PIGY B 10 A_Look
-		Loop
-	See:
-		PIGY ABCD 3 A_Chase
-		Loop
-	Pain:
-		PIGY D 4 A_PigPain
-		Goto See
-	Melee:
-		PIGY A 5 A_FaceTarget
-		PIGY A 10 A_CustomMeleeAttack(Random(2, 3), "PigAttack")
-		Goto See
-	Death:
-		PIGY E 4 A_Scream
-		PIGY F 3 A_NoBlocking
-		PIGY G 4 A_QueueCorpse
-		PIGY H 3
-		PIGY IJK 4
-		PIGY L -1
-		Stop
-	Ice:
-		PIGY M 5 A_FreezeDeath
-		PIGY M 1 A_FreezeDeathChunks
-		Wait
-	}
+  Health 25
+  Radius 12
+  Height 22
+  Mass 60
+  Speed 10
+  PainChance 128
+  Monster
+  +FloorClip
+  +Telestomp
+  +WindThrust
+  +DontMorph
+  SeeSound "PigActive1"
+  ActiveSound "PigActive"
+  PainSound "PigPain"
+  DeathSound "PigDeath"
+  states
+  {
+  Spawn:
+    PIGY B 10 A_Look
+    Loop
+  See:
+    PIGY ABCD 3 A_Chase
+    Loop
+  Pain:
+    PIGY D 4 A_PigPain
+    Goto See
+  Melee:
+    PIGY A 5 A_FaceTarget
+    PIGY A 10 A_CustomMeleeAttack(Random(2, 3), "PigAttack")
+    Goto See
+  Death:
+    PIGY E 4 A_Scream
+    PIGY F 3 A_NoBlocking
+    PIGY G 4 A_QueueCorpse
+    PIGY H 3
+    PIGY IJK 4
+    PIGY L -1
+    Stop
+  Ice:
+    PIGY M 5 A_FreezeDeath
+    PIGY M 1 A_FreezeDeathChunks
+    Wait
+  }
 }

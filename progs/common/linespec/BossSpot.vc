@@ -24,14 +24,14 @@
 //**************************************************************************
 
 class BossSpot : Actor
-	game(GAME_Heretic)
-	__mobjinfo__(56)
-	__scriptid__(141);
+  game(GAME_Heretic)
+  __mobjinfo__(56)
+  __scriptid__(141);
 
-BossSpot		NextSpot;
+BossSpot    NextSpot;
 
 defaultproperties
 {
-	bNoSector = true;
-	bNoBlockmap = true;
+  bNoSector = true;
+  bNoBlockmap = true;
 }

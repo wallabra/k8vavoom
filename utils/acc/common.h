@@ -12,7 +12,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define ARRAY_SIZE(a)	(sizeof(a)/sizeof(*(a)))
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof(*(a)))
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -65,11 +65,11 @@
 
 enum
 {
-	STRLIST_PICS,
-	STRLIST_FUNCTIONS,
-	STRLIST_MAPVARS,
+  STRLIST_PICS,
+  STRLIST_FUNCTIONS,
+  STRLIST_MAPVARS,
 
-	NUM_STRLISTS
+  NUM_STRLISTS
 };
 
 // These are just defs and have not been messed with
@@ -87,26 +87,26 @@ enum
 
 
 
-#define MAKE4CC(a,b,c,d)	((a)|((b)<<8)|((c)<<16)|((d)<<24))
+#define MAKE4CC(a,b,c,d)  ((a)|((b)<<8)|((c)<<16)|((d)<<24))
 
 // TYPES -------------------------------------------------------------------
 
-typedef unsigned int	boolean;
-typedef unsigned char	byte;
-typedef signed char		S_BYTE;
-typedef unsigned char	U_BYTE;
-typedef signed short	S_WORD;
-typedef unsigned short	U_WORD;
-typedef int			S_INT;
-typedef unsigned int	U_INT;
-// typedef signed long		S_LONG;
-// typedef unsigned long	U_LONG;
+typedef unsigned int  boolean;
+typedef unsigned char byte;
+typedef signed char   S_BYTE;
+typedef unsigned char U_BYTE;
+typedef signed short  S_WORD;
+typedef unsigned short  U_WORD;
+typedef int     S_INT;
+typedef unsigned int  U_INT;
+// typedef signed long    S_LONG;
+// typedef unsigned long  U_LONG;
 
 enum ImportModes
 {
-	IMPORT_None,
-	IMPORT_Importing,
-	IMPORT_Exporting
+  IMPORT_None,
+  IMPORT_Importing,
+  IMPORT_Exporting
 };
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------

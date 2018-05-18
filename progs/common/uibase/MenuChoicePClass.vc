@@ -25,7 +25,7 @@
 
 class MenuChoicePClass : MenuBigTextButton;
 
-int				Index;
+int       Index;
 
 defaultproperties
 {

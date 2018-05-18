@@ -25,36 +25,36 @@
 
 class MenuSpriteAnim : Widget;
 
-int		SprDef;
-int		Speed;
-int		NumFrames;
-int		TranslStart;
-int		TranslEnd;
-int		Colour;
-float	Time;
+int   SprDef;
+int   Speed;
+int   NumFrames;
+int   TranslStart;
+int   TranslEnd;
+int   Colour;
+float Time;
 
 void OnCreate()
 {
-	::OnCreate();
-	bTickEnabled = true;
-	Disable();
+  ::OnCreate();
+  bTickEnabled = true;
+  Disable();
 }
 
 void Tick(float DeltaTime)
 {
-	Time += DeltaTime;
+  Time += DeltaTime;
 }
 
 void OnDraw()
 {
-	int frame = ftoi(Time * itof(Speed)) % NumFrames;
+  int frame = ftoi(Time * itof(Speed)) % NumFrames;
 
-	R_DrawSpritePatch(OldOriginX, OldOriginY, SprDef, frame, 0, TranslStart,
-		TranslEnd, Colour);
+  R_DrawSpritePatch(OldOriginX, OldOriginY, SprDef, frame, 0, TranslStart,
+    TranslEnd, Colour);
 }
 
 defaultproperties
 {
-	Width = 320;
-	Height = 200;
+  Width = 320;
+  Height = 200;
 }

@@ -23,52 +23,52 @@
 //**
 //**************************************************************************
 //**
-//**	Base class for old style DECORATE pickups. It just executes the
+//**  Base class for old style DECORATE pickups. It just executes the
 //**  attached special.
 //**
 //**************************************************************************
 
 class FakeInventory : Inventory;
 
-bool			bRespawns;
+bool      bRespawns;
 
 //==========================================================================
 //
-//	ShouldRespawn
+//  ShouldRespawn
 //
 //==========================================================================
 
 bool ShouldRespawn()
 {
-	return bRespawns && ::ShouldRespawn();
+  return bRespawns && ::ShouldRespawn();
 }
 
 //==========================================================================
 //
-//	TryPickup
+//  TryPickup
 //
 //==========================================================================
 
 bool TryPickup(EntityEx Toucher)
 {
-	bool Result = Level.ExecuteActionSpecial(Special, Args[0], Args[1],
-		Args[2], Args[3], Args[4], NULL, 0, Toucher);
-	if (Result)
-	{
-		GoAwayAndDie();
-	}
-	return Result;
+  bool Result = Level.ExecuteActionSpecial(Special, Args[0], Args[1],
+    Args[2], Args[3], Args[4], NULL, 0, Toucher);
+  if (Result)
+  {
+    GoAwayAndDie();
+  }
+  return Result;
 }
 
 //==========================================================================
 //
-//	DoPickupSpecial
+//  DoPickupSpecial
 //
 //==========================================================================
 
 void DoPickupSpecial(EntityEx Toucher)
 {
-	//	TryPickup already executed special.
+  //  TryPickup already executed special.
 }
 
 defaultproperties

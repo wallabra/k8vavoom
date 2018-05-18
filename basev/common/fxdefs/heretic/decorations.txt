@@ -1,97 +1,97 @@
 //------------------------------------------------------------------------------
 pointlight KeyGizmoYellow
 {
-	colour 1 1 0
-	radius 118
-	offset 0 0 69
+  colour 1 1 0
+  radius 118
+  offset 0 0 69
 }
 
 class KeyGizmoYellow
 {
-	static_light KeyGizmoYellow
-	frame KGZ1 { light KeyGizmoYellow }
+  static_light KeyGizmoYellow
+  frame KGZ1 { light KeyGizmoYellow }
 }
 
 //------------------------------------------------------------------------------
 pointlight KeyGizmoGreen
 {
-	colour 0 1 0
-	radius 118
-	offset 0 0 69
+  colour 0 1 0
+  radius 118
+  offset 0 0 69
 }
 
 class KeyGizmoGreen
 {
-	static_light KeyGizmoGreen
-	frame KGZ1 { light KeyGizmoGreen }
+  static_light KeyGizmoGreen
+  frame KGZ1 { light KeyGizmoGreen }
 }
 
 //------------------------------------------------------------------------------
 pointlight KeyGizmoBlue
 {
-	colour 0 0 1
-	radius 118
-	offset 0 0 69
+  colour 0 0 1
+  radius 118
+  offset 0 0 69
 }
 
 class KeyGizmoBlue
 {
-	static_light KeyGizmoBlue
-	frame KGZ1 { light KeyGizmoBlue }
+  static_light KeyGizmoBlue
+  frame KGZ1 { light KeyGizmoBlue }
 }
 
 //------------------------------------------------------------------------------
 pointlight WallTorch
 {
-	colour 1 1 0
-	radius 128
-	offset 0 0 8
+  colour 1 1 0
+  radius 128
+  offset 0 0 8
 }
 
 class WallTorch
 {
-	static_light WallTorch
-	frame WTRH { light WallTorch }
+  static_light WallTorch
+  frame WTRH { light WallTorch }
 }
 
 //------------------------------------------------------------------------------
 pointlight SerpentTorch
 {
-	colour 1 1 0
-	radius 128
-	offset 0 0 46
+  colour 1 1 0
+  radius 128
+  offset 0 0 46
 }
 
 class SerpentTorch
 {
-	static_light SerpentTorch
-	frame SRTC { light SerpentTorch }
+  static_light SerpentTorch
+  frame SRTC { light SerpentTorch }
 }
 
 //------------------------------------------------------------------------------
 pointlight Chandelier
 {
-	colour 1 1 0.5
-	radius 160
-	offset 0 0 56
+  colour 1 1 0.5
+  radius 160
+  offset 0 0 56
 }
 
 class Chandelier
 {
-	static_light Chandelier
-	frame CHDL { light Chandelier }
+  static_light Chandelier
+  frame CHDL { light Chandelier }
 }
 
 //------------------------------------------------------------------------------
 pointlight FireBrazier
 {
-	colour 1 1 0
-	radius 160
-	offset 0 0 55
+  colour 1 1 0
+  radius 160
+  offset 0 0 55
 }
 
 class FireBrazier
 {
-	static_light FireBrazier
-	frame KFR1 { light FireBrazier }
+  static_light FireBrazier
+  frame KFR1 { light FireBrazier }
 }

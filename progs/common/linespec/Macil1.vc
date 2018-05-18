@@ -24,80 +24,80 @@
 //**************************************************************************
 
 class Macil1 : Actor
-	game(GAME_Strife)
-	__mobjinfo__(64);
+  game(GAME_Strife)
+  __mobjinfo__(64);
 
 //============================================================================
 //
-//	TakeSpecialDamage
+//  TakeSpecialDamage
 //
-//	Macil is invulnerable to the first stage Sigil.
+//  Macil is invulnerable to the first stage Sigil.
 //
 //============================================================================
 
 int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage,
-	name DmgType)
+  name DmgType)
 {
-	if (inflictor.IsA('SpectralLightningV1'))
-	{
-		return -1;
-	}
-	return ::TakeSpecialDamage(inflictor, source, damage, DmgType);
+  if (inflictor.IsA('SpectralLightningV1'))
+  {
+    return -1;
+  }
+  return ::TakeSpecialDamage(inflictor, source, damage, DmgType);
 }
 
 states
 {
 Spawn:
-	LEDR C 5 A_Look2
-	Loop
-	LEDR A 8
-	Goto Spawn
-	LEDR B 8
-	Goto Spawn
-	LEAD ABCD 6 A_Wander
-	Goto Spawn
+  LEDR C 5 A_Look2
+  Loop
+  LEDR A 8
+  Goto Spawn
+  LEDR B 8
+  Goto Spawn
+  LEAD ABCD 6 A_Wander
+  Goto Spawn
 See:
 Death:
-	LEAD AABBCCDD 3 A_Chase
-	Loop
+  LEAD AABBCCDD 3 A_Chase
+  Loop
 Missile:
-	LEAD E 2 A_FaceTarget
-	LEAD F 2 Bright A_ShootGun
-	LEAD E 1 A_SentinelRefire
-	Loop
+  LEAD E 2 A_FaceTarget
+  LEAD F 2 Bright A_ShootGun
+  LEAD E 1 A_SentinelRefire
+  Loop
 Pain:
-	LEAD Y 3
-	LEAD Y 3 A_Pain
-	Goto See
+  LEAD Y 3
+  LEAD Y 3 A_Pain
+  Goto See
 }
 
 defaultproperties
 {
-	ConversationID = 49;
-	StrifeName = "MACIL";
-	Health = 95;
-	Radius = 20.0;
-	Height = 56.0;
-	Mass = 100.0;
-	Speed = 8.0 * 35.0;
-	PainChance = 0.9765625;
-	bSolid = true;
-	bShootable = true;
-	bMonster = true;
-	bActivateMCross = true;
-	bActivatePushWall = true;
-	bFloorClip = true;
-	bPassMobj = true;
-	bCanUseWalls = true;
-	bNoDeathmatch = true;
-	bNoIceDeath = true;
-	bFireResist = true;
-	bNoDamage = true;
-	bNeverRespawn = true;
-	SightSound = 'macil/sight';
-	ActiveSound = 'macil/active';
-	PainSound = 'macil/pain';
-	DLightColour = RGB(203, 111, 0);
-	DLightRadius = 118.0;
-	Obituary = "$ob_macil";
+  ConversationID = 49;
+  StrifeName = "MACIL";
+  Health = 95;
+  Radius = 20.0;
+  Height = 56.0;
+  Mass = 100.0;
+  Speed = 8.0 * 35.0;
+  PainChance = 0.9765625;
+  bSolid = true;
+  bShootable = true;
+  bMonster = true;
+  bActivateMCross = true;
+  bActivatePushWall = true;
+  bFloorClip = true;
+  bPassMobj = true;
+  bCanUseWalls = true;
+  bNoDeathmatch = true;
+  bNoIceDeath = true;
+  bFireResist = true;
+  bNoDamage = true;
+  bNeverRespawn = true;
+  SightSound = 'macil/sight';
+  ActiveSound = 'macil/active';
+  PainSound = 'macil/pain';
+  DLightColour = RGB(203, 111, 0);
+  DLightRadius = 118.0;
+  Obituary = "$ob_macil";
 }

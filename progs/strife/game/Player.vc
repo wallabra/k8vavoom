@@ -26,11 +26,11 @@
 class Player : PlayerEx;
 
 const float
-	INFRATIME		= 120.0;
+  INFRATIME   = 120.0;
 
 const int
-	INITIAL_HEALTH	= 100,
-	INITIAL_AMMO	= 50;
+  INITIAL_HEALTH  = 100,
+  INITIAL_AMMO  = 50;
 
 //==========================================================================
 //
@@ -40,7 +40,7 @@ const int
 
 void ResetPlayerOnSpawn()
 {
-	::ResetPlayerOnSpawn();
+  ::ResetPlayerOnSpawn();
 }
 
 //==========================================================================
@@ -51,28 +51,28 @@ void ResetPlayerOnSpawn()
 
 int GetRebornHealth()
 {
-	return INITIAL_HEALTH;
+  return INITIAL_HEALTH;
 }
 
 //==========================================================================
 //
-//	GotAmmo
+//  GotAmmo
 //
 //==========================================================================
 
 void GotAmmo(Ammo NewAmmo)
 {
-	// We were down to zero,
-	// so select a new weapon.
-	// Preferences are not user selectable.
-	if (ReadyWeapon.bWimpyWeapon)
-	{
-		Weapon Best = BestWeapon(class<Ammo>(NewAmmo.Class));
-		if (Best && Best.SelectionOrder < ReadyWeapon.SelectionOrder)
-		{
-			PendingWeapon = Best;
-		}
-	}
+  // We were down to zero,
+  // so select a new weapon.
+  // Preferences are not user selectable.
+  if (ReadyWeapon.bWimpyWeapon)
+  {
+    Weapon Best = BestWeapon(class<Ammo>(NewAmmo.Class));
+    if (Best && Best.SelectionOrder < ReadyWeapon.SelectionOrder)
+    {
+      PendingWeapon = Best;
+    }
+  }
 }
 
 //==========================================================================
@@ -83,59 +83,59 @@ void GotAmmo(Ammo NewAmmo)
 
 void PlayerImpulse()
 {
-	int impulse;
+  int impulse;
 
-	impulse = Impulse;
-	Impulse = 0;
+  impulse = Impulse;
+  Impulse = 0;
 
-	if (impulse <= LineSpecialGameInfo::NUM_WEAPON_SLOTS)
-	{
-		ChangeWeapon(impulse);
-	}
-	else if (impulse == 11)
-	{
-		InventoryThrow();
-	}
-	else if (impulse == 13)
-	{
-		InventoryLeft();
-	}
-	else if (impulse == 14)
-	{
-		InventoryRight();
-	}
-	else if (impulse == 15)
-	{
-		InventoryUse();
-	}
-	else if (impulse == 16)
-	{
-		//  Suicide
-		Actor(MO).Damage(none, none, 10000);
-	}
-	else if (impulse == 17)
-	{
-		PrevWeapon();
-	}
-	else if (impulse == 18)
-	{
-		NextWeapon();
-	}
-	else if (impulse == 56)
-	{
-		bReloadQueued = true;
-	}
-	else if (impulse >= 200 && impulse <= 205)
-	{
-		LineSpecialLevelInfo(Level).ConChoiceImpulse(impulse - 200);
-		// Check if the player is ending a conversation
-		if (impulse == 200)
-		{
-			// Give the player some time to avoid shooting if
-			// ending the conversation with the mouse
-			Buttons = 0;
-		}
-	}
+  if (impulse <= LineSpecialGameInfo::NUM_WEAPON_SLOTS)
+  {
+    ChangeWeapon(impulse);
+  }
+  else if (impulse == 11)
+  {
+    InventoryThrow();
+  }
+  else if (impulse == 13)
+  {
+    InventoryLeft();
+  }
+  else if (impulse == 14)
+  {
+    InventoryRight();
+  }
+  else if (impulse == 15)
+  {
+    InventoryUse();
+  }
+  else if (impulse == 16)
+  {
+    //  Suicide
+    Actor(MO).Damage(none, none, 10000);
+  }
+  else if (impulse == 17)
+  {
+    PrevWeapon();
+  }
+  else if (impulse == 18)
+  {
+    NextWeapon();
+  }
+  else if (impulse == 56)
+  {
+    bReloadQueued = true;
+  }
+  else if (impulse >= 200 && impulse <= 205)
+  {
+    LineSpecialLevelInfo(Level).ConChoiceImpulse(impulse - 200);
+    // Check if the player is ending a conversation
+    if (impulse == 200)
+    {
+      // Give the player some time to avoid shooting if
+      // ending the conversation with the mouse
+      Buttons = 0;
+    }
+  }
 }
 
 //==========================================================================
@@ -146,146 +146,146 @@ void PlayerImpulse()
 
 void Cheat_Gimme()
 {
-	int					i;
-	class<Inventory>	Cls;
-	class<Weapon>		WpnCls;
+  int         i;
+  class<Inventory>  Cls;
+  class<Weapon>   WpnCls;
 
-	// Backpack
-	if (Cmd_CheckParm("Backpack"))
-	{
-		Inventory I = Level.Spawn(AmmoSatchel,,,, false);
-		I.bDropped = true;
-		if (!I.TryPickup(EntityEx(MO)))
-		{
-			I.Destroy();
-		}
-		cprint("EXTRA AMMO");
-	}
+  // Backpack
+  if (Cmd_CheckParm("Backpack"))
+  {
+    Inventory I = Level.Spawn(AmmoSatchel,,,, false);
+    I.bDropped = true;
+    if (!I.TryPickup(EntityEx(MO)))
+    {
+      I.Destroy();
+    }
+    cprint("EXTRA AMMO");
+  }
 
-	// Weapons
-	if (Cmd_CheckParm("Weapons"))
-	{
-		foreach AllClasses(Weapon, WpnCls)
-		{
-			if (!FindClassState(WpnCls, 'Ready'))
-			{
-				//	Abstract base class.
-				continue;
-			}
-			if (WpnCls.default.bCheatNotWeapon)
-			{
-				continue;
-			}
-			Weapon Wpn = Level.Spawn(WpnCls,,,, false);
-			Wpn.AmmoGive1 = 0;
-			Wpn.AmmoGive2 = 0;
-			if (!Wpn.TryPickup(EntityEx(MO)))
-			{
-				Wpn.Destroy();
-			}
-		}
-		cprint("ALL WEAPONS");
-	}
+  // Weapons
+  if (Cmd_CheckParm("Weapons"))
+  {
+    foreach AllClasses(Weapon, WpnCls)
+    {
+      if (!FindClassState(WpnCls, 'Ready'))
+      {
+        //  Abstract base class.
+        continue;
+      }
+      if (WpnCls.default.bCheatNotWeapon)
+      {
+        continue;
+      }
+      Weapon Wpn = Level.Spawn(WpnCls,,,, false);
+      Wpn.AmmoGive1 = 0;
+      Wpn.AmmoGive2 = 0;
+      if (!Wpn.TryPickup(EntityEx(MO)))
+      {
+        Wpn.Destroy();
+      }
+    }
+    cprint("ALL WEAPONS");
+  }
 
-	// Ammo
-	if (Cmd_CheckParm("Ammo"))
-	{
-		foreach AllClasses(Ammo, Cls)
-		{
-			//	Only direct descendants.
-			if (GetClassParent(Cls) != Ammo)
-			{
-				continue;
-			}
-			Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
-			if (!AmmoItem)
-			{
-				AmmoItem = Level.Spawn(Cls,,,, false);
-				if (!AmmoItem.TryPickup(EntityEx(MO)))
-				{
-					AmmoItem.Destroy();
-					AmmoItem = none;
-				}
-			}
-			if (AmmoItem)
-			{
-				AmmoItem.Amount = AmmoItem.MaxAmount;
-			}
-		}
-		cprint("FULL AMMO");
-	}
+  // Ammo
+  if (Cmd_CheckParm("Ammo"))
+  {
+    foreach AllClasses(Ammo, Cls)
+    {
+      //  Only direct descendants.
+      if (GetClassParent(Cls) != Ammo)
+      {
+        continue;
+      }
+      Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
+      if (!AmmoItem)
+      {
+        AmmoItem = Level.Spawn(Cls,,,, false);
+        if (!AmmoItem.TryPickup(EntityEx(MO)))
+        {
+          AmmoItem.Destroy();
+          AmmoItem = none;
+        }
+      }
+      if (AmmoItem)
+      {
+        AmmoItem.Amount = AmmoItem.MaxAmount;
+      }
+    }
+    cprint("FULL AMMO");
+  }
 
-	// Keys
-	if (Cmd_CheckParm("Keys"))
-	{
-		foreach AllClasses(Key, Cls)
-		{
-			if (!FindClassState(Cls, 'Spawn'))
-			{
-				//	Abstract class
-				continue;
-			}
-			EntityEx(MO).GiveInventoryType(Cls);
-		}
-		cprint("ALL KEYS");
-	}
+  // Keys
+  if (Cmd_CheckParm("Keys"))
+  {
+    foreach AllClasses(Key, Cls)
+    {
+      if (!FindClassState(Cls, 'Spawn'))
+      {
+        //  Abstract class
+        continue;
+      }
+      EntityEx(MO).GiveInventoryType(Cls);
+    }
+    cprint("ALL KEYS");
+  }
 
-	// Health
-	if (Cmd_CheckParm("Health"))
-	{
-		Health = MAXHEALTH + Stamina;
-		MO.Health = MAXHEALTH + Stamina;
-		cprint("FULL HEALTH");
-	}
+  // Health
+  if (Cmd_CheckParm("Health"))
+  {
+    Health = MAXHEALTH + Stamina;
+    MO.Health = MAXHEALTH + Stamina;
+    cprint("FULL HEALTH");
+  }
 
-	// Comm unit
-	if (Cmd_CheckParm("CommUnit"))
-	{
-		EntityEx(MO).GiveInventoryType(Communicator);
-		cprint("YOU GOT IT");
-	}
+  // Comm unit
+  if (Cmd_CheckParm("CommUnit"))
+  {
+    EntityEx(MO).GiveInventoryType(Communicator);
+    cprint("YOU GOT IT");
+  }
 
-	// Sigil piece
-	if (Cmd_CheckParm("Sigil"))
-	{
-		Sigil S = Level.Spawn(Sigil,,,, false);
-		if (!S.SpecialDropAction(none))
-		{
-			S.Destroy();
-		}
-		cprint("SIGIL PIECE");
-	}
+  // Sigil piece
+  if (Cmd_CheckParm("Sigil"))
+  {
+    Sigil S = Level.Spawn(Sigil,,,, false);
+    if (!S.SpecialDropAction(none))
+    {
+      S.Destroy();
+    }
+    cprint("SIGIL PIECE");
+  }
 
-	// Quest items.
-	for (i = 0; i < 31; i++)
-	{
-		if (Cmd_CheckParm(va("Quest%d", i + 1)))
-		{
-			EntityEx(MO).GiveInventoryType(class<Inventory>(FindClass(
-				StrToName(va("QuestItem%d", i)))));
-			cprint("YOU GOT IT");
-		}
-	}
+  // Quest items.
+  for (i = 0; i < 31; i++)
+  {
+    if (Cmd_CheckParm(va("Quest%d", i + 1)))
+    {
+      EntityEx(MO).GiveInventoryType(class<Inventory>(FindClass(
+        StrToName(va("QuestItem%d", i)))));
+      cprint("YOU GOT IT");
+    }
+  }
 
-	// Gold
-	if (Cmd_CheckParm("Gold"))
-	{
-		Inventory GoldItem = EntityEx(MO).FindInventory(Coin);
-		if (!GoldItem)
-		{
-			GoldItem = Level.Spawn(Coin,,,, false);
-			if (!GoldItem.TryPickup(EntityEx(MO)))
-			{
-				GoldItem.Destroy();
-				GoldItem = none;
-			}
-		}
-		if (GoldItem)
-		{
-			GoldItem.Amount = GoldItem.MaxAmount;
-		}
-		cprint("GOT GOLD");
-	}
+  // Gold
+  if (Cmd_CheckParm("Gold"))
+  {
+    Inventory GoldItem = EntityEx(MO).FindInventory(Coin);
+    if (!GoldItem)
+    {
+      GoldItem = Level.Spawn(Coin,,,, false);
+      if (!GoldItem.TryPickup(EntityEx(MO)))
+      {
+        GoldItem.Destroy();
+        GoldItem = none;
+      }
+    }
+    if (GoldItem)
+    {
+      GoldItem.Amount = GoldItem.MaxAmount;
+    }
+    cprint("GOT GOLD");
+  }
 }
 
 //==========================================================================
@@ -296,30 +296,30 @@ void Cheat_Gimme()
 
 void StartDeathSlideShow()
 {
-	ClientFinaleType(1);
-	Level.Completed(-1, -1, 0);
+  ClientFinaleType(1);
+  Level.Completed(-1, -1, 0);
 }
 
 //==========================================================================
 //
-//	KilledActor
+//  KilledActor
 //
 //==========================================================================
 
 void KilledActor(EntityEx Victim)
 {
-	// Check for frag changes
-	if (Victim.bIsPlayer)
-	{
-		if (MO == Victim)
-		{
-			Frags--;
-		}
-		else
-		{
-			Frags++;
-		}
-	}
+  // Check for frag changes
+  if (Victim.bIsPlayer)
+  {
+    if (MO == Victim)
+    {
+      Frags--;
+    }
+    else
+    {
+      Frags++;
+    }
+  }
 }
 
 //===========================================================================
@@ -330,16 +330,16 @@ void KilledActor(EntityEx Victim)
 
 int GetSigilPieces()
 {
-	Sigil S = Sigil(EntityEx(MO).FindInventory(Sigil));
-	if (S)
-	{
-		return S.NumPieces;
-	}
-	return 0;
+  Sigil S = Sigil(EntityEx(MO).FindInventory(Sigil));
+  if (S)
+  {
+    return S.NumPieces;
+  }
+  return 0;
 }
 
 defaultproperties
 {
-	bInventoryAlwaysOpen = true;
-	InvSize = 5;
+  bInventoryAlwaysOpen = true;
+  InvSize = 5;
 }

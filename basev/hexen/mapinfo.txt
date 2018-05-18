@@ -1,5 +1,5 @@
-//	MAPINFO for Hexen.
-//	This one just defines clusters, the rest is in hexen.wad
+//  MAPINFO for Hexen.
+//  This one just defines clusters, the rest is in hexen.wad
 
 //------------------------------------------------------
 //  Episode definition

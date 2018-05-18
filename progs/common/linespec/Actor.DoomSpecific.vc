@@ -24,7 +24,7 @@
 //**************************************************************************
 
 //**************************************************************************
-//	Monster specific functions for Doom
+//  Monster specific functions for Doom
 //**************************************************************************
 
 //==========================================================================
@@ -37,8 +37,8 @@
 
 final void A_Hoof()
 {
-	PlaySound('cyber/hoof', CHAN_BODY);
-	A_Chase();
+  PlaySound('cyber/hoof', CHAN_BODY);
+  A_Chase();
 }
 
 //==========================================================================
@@ -51,8 +51,8 @@ final void A_Hoof()
 
 final void A_Metal()
 {
-	PlaySound('spider/walk', CHAN_BODY);
-	A_Chase();
+  PlaySound('spider/walk', CHAN_BODY);
+  A_Chase();
 }
 
 //==========================================================================
@@ -65,8 +65,8 @@ final void A_Metal()
 
 final void A_BabyMetal()
 {
-	PlaySound('baby/walk', CHAN_BODY);
-	A_Chase();
+  PlaySound('baby/walk', CHAN_BODY);
+  A_Chase();
 }
 
 //==========================================================================
@@ -79,8 +79,8 @@ final void A_BabyMetal()
 
 final void A_FatRaise()
 {
-	A_FaceTarget();
-	PlaySound('fatso/raiseguns', CHAN_WEAPON);
+  A_FaceTarget();
+  PlaySound('fatso/raiseguns', CHAN_WEAPON);
 }
 
 //==========================================================================
@@ -93,12 +93,12 @@ final void A_FatRaise()
 
 final void A_SkelWhoosh()
 {
-	if (!Target)
-	{
-		return;
-	}
-	A_FaceTarget();
-	PlaySound('skeleton/swing', CHAN_WEAPON);
+  if (!Target)
+  {
+    return;
+  }
+  A_FaceTarget();
+  PlaySound('skeleton/swing', CHAN_WEAPON);
 }
 
 //==========================================================================
@@ -111,8 +111,8 @@ final void A_SkelWhoosh()
 
 final void A_StartFire()
 {
-	PlaySound('vile/firestrt', CHAN_VOICE);
-	A_Fire();
+  PlaySound('vile/firestrt', CHAN_VOICE);
+  A_Fire();
 }
 
 //==========================================================================
@@ -125,8 +125,8 @@ final void A_StartFire()
 
 final void A_FireCrackle()
 {
-	PlaySound('vile/firecrkl', CHAN_VOICE);
-	A_Fire();
+  PlaySound('vile/firecrkl', CHAN_VOICE);
+  A_Fire();
 }
 
 //===========================================================================
@@ -139,7 +139,7 @@ final void A_FireCrackle()
 
 final void A_BFGSpray()
 {
-	decorate_A_BFGSpray();
+  decorate_A_BFGSpray();
 }
 
 //===========================================================================
@@ -151,58 +151,58 @@ final void A_BFGSpray()
 //===========================================================================
 
 final void decorate_A_BFGSpray(optional class<EntityEx> FlashType,
-	optional int NumRays, optional int DamageAmount)
+  optional int NumRays, optional int DamageAmount)
 {
-	int			i;
-	int			j;
-	int			damage;
-	TAVec		aimAng;
-	EntityEx	spray;
-	TVec		Dir;
-	EntityEx	AimTarget;
+  int     i;
+  int     j;
+  int     damage;
+  TAVec   aimAng;
+  EntityEx  spray;
+  TVec    Dir;
+  EntityEx  AimTarget;
 
-	if (!FlashType)
-	{
-		FlashType = BFGExtra;
-	}
-	if (NumRays <= 0)
-	{
-		NumRays = 40;
-	}
-	if (DamageAmount <= 0)
-	{
-		DamageAmount = 15;
-	}
+  if (!FlashType)
+  {
+    FlashType = BFGExtra;
+  }
+  if (NumRays <= 0)
+  {
+    NumRays = 40;
+  }
+  if (DamageAmount <= 0)
+  {
+    DamageAmount = 15;
+  }
 
-	// offset angles from its attack angle
-	for (i = 0; i < NumRays; i++)
-	{
-		aimAng = Angles;
-		aimAng.yaw = AngleMod360(aimAng.yaw - 45.0 + 90.0 / itof(NumRays) *
-			itof(i));
+  // offset angles from its attack angle
+  for (i = 0; i < NumRays; i++)
+  {
+    aimAng = Angles;
+    aimAng.yaw = AngleMod360(aimAng.yaw - 45.0 + 90.0 / itof(NumRays) *
+      itof(i));
 
-		// target is the originator (player)
-		//  of the missile
-		AimTarget = Target.AimLineAttack(Dir, aimAng, 16.0 * 64.0);
-		if (!AimTarget)
-		{
-			continue;
-		}
+    // target is the originator (player)
+    //  of the missile
+    AimTarget = Target.AimLineAttack(Dir, aimAng, 16.0 * 64.0);
+    if (!AimTarget)
+    {
+      continue;
+    }
 
-		spray = Spawn(FlashType, AimTarget.Origin +
-			vector(0.0, 0.0, AimTarget.Height / 4.0));
+    spray = Spawn(FlashType, AimTarget.Origin +
+      vector(0.0, 0.0, AimTarget.Height / 4.0));
 
-		if (spray && spray.bPuffGetsOwner)
-		{
-			spray.Target = Target;
-		}
+    if (spray && spray.bPuffGetsOwner)
+    {
+      spray.Target = Target;
+    }
 
-		damage = 0;
-		for (j = 0; j < DamageAmount; j++)
-		{
-			damage += (P_Random() & 7) + 1;
-		}
+    damage = 0;
+    for (j = 0; j < DamageAmount; j++)
+    {
+      damage += (P_Random() & 7) + 1;
+    }
 
-		AimTarget.Damage(Target, Target, damage);
-	}
+    AimTarget.Damage(Target, Target, damage);
+  }
 }

@@ -24,78 +24,78 @@
 //**************************************************************************
 
 class ArtiPoisonBag : Inventory
-	game(GAME_Hexen)
-	__mobjinfo__(8000)
-	__scriptid__(72);
+  game(GAME_Hexen)
+  __mobjinfo__(8000)
+  __scriptid__(72);
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	float angle;
-	Actor bomb;
+  float angle;
+  Actor bomb;
 
-	angle = Owner.Angles.yaw;
-	if (ClassIsChildOf(Owner.Class, GetClassReplacement(ClericPlayer)))
-	{
-		bomb = Spawn(PoisonBag, Owner.Origin + vector(16.0 * cos(angle),
-			24.0 * sin(angle), 8.0 - Owner.FloorClip));
-		if (bomb)
-		{
-			bomb.Target = EntityEx(Owner);
-		}
-	}
-	else if (ClassIsChildOf(Owner.Class, GetClassReplacement(MagePlayer)))
-	{
-		bomb = Spawn(FireBomb, Owner.Origin + vector(16.0 * cos(angle),
-			24.0 * sin(angle), 8.0 - Owner.FloorClip));
-		if (bomb)
-		{
-			bomb.Target = EntityEx(Owner);
-		}
-	}
-	else	// PCLASS_FIGHTER, obviously (also pig, not so obviously)
-	{
-		bomb = Spawn(ThrowingBomb, Owner.Origin +
-			vector(0.0, 0.0, 35.0 - Owner.FloorClip));
-		if (bomb)
-		{
-			bomb.Angles.yaw = AngleMod360(Owner.Angles.yaw +
-				(Random() * 2.0 - 1.0) * 45.0 / 8.0);
-			bomb.Velocity.x += bomb.Speed * cos(bomb.Angles.yaw);
-			bomb.Velocity.y += bomb.Speed * sin(bomb.Angles.yaw);
-			bomb.Velocity.z +=
-				(bomb.Speed * -tan(Owner.Angles.pitch) / 48.0) * 35.0;
-			bomb.Origin.z += 173.0 * -tan(Owner.Angles.pitch) / 16.0;
-			bomb.Velocity.x += Owner.Velocity.x / 2.0;
-			bomb.Velocity.y += Owner.Velocity.y / 2.0;
-			bomb.Velocity.z += Owner.Velocity.z / 2.0;
-			bomb.Target = EntityEx(Owner);
-			bomb.StateTime -= Random() * 0.1;
-			bomb.CheckMissileSpawn();
-		}
-	}
-	return true;
+  angle = Owner.Angles.yaw;
+  if (ClassIsChildOf(Owner.Class, GetClassReplacement(ClericPlayer)))
+  {
+    bomb = Spawn(PoisonBag, Owner.Origin + vector(16.0 * cos(angle),
+      24.0 * sin(angle), 8.0 - Owner.FloorClip));
+    if (bomb)
+    {
+      bomb.Target = EntityEx(Owner);
+    }
+  }
+  else if (ClassIsChildOf(Owner.Class, GetClassReplacement(MagePlayer)))
+  {
+    bomb = Spawn(FireBomb, Owner.Origin + vector(16.0 * cos(angle),
+      24.0 * sin(angle), 8.0 - Owner.FloorClip));
+    if (bomb)
+    {
+      bomb.Target = EntityEx(Owner);
+    }
+  }
+  else  // PCLASS_FIGHTER, obviously (also pig, not so obviously)
+  {
+    bomb = Spawn(ThrowingBomb, Owner.Origin +
+      vector(0.0, 0.0, 35.0 - Owner.FloorClip));
+    if (bomb)
+    {
+      bomb.Angles.yaw = AngleMod360(Owner.Angles.yaw +
+        (Random() * 2.0 - 1.0) * 45.0 / 8.0);
+      bomb.Velocity.x += bomb.Speed * cos(bomb.Angles.yaw);
+      bomb.Velocity.y += bomb.Speed * sin(bomb.Angles.yaw);
+      bomb.Velocity.z +=
+        (bomb.Speed * -tan(Owner.Angles.pitch) / 48.0) * 35.0;
+      bomb.Origin.z += 173.0 * -tan(Owner.Angles.pitch) / 16.0;
+      bomb.Velocity.x += Owner.Velocity.x / 2.0;
+      bomb.Velocity.y += Owner.Velocity.y / 2.0;
+      bomb.Velocity.z += Owner.Velocity.z / 2.0;
+      bomb.Target = EntityEx(Owner);
+      bomb.StateTime -= Random() * 0.1;
+      bomb.CheckMissileSpawn();
+    }
+  }
+  return true;
 }
 
 states
 {
 Spawn:
-	PSBG A -1
-	Stop
+  PSBG A -1
+  Stop
 }
 
 defaultproperties
 {
-	MaxAmount = DefMaxAmount;
-	PickupSound = 'PickupArtifact';
-	PickupMessage = "$txt_artipoisonbag";
-	IconName = 'artipsbg';
-	bFloatBob = true;
-	PickupFlashType = PickupFlash;
-	bInvBar = true;
+  MaxAmount = DefMaxAmount;
+  PickupSound = 'PickupArtifact';
+  PickupMessage = "$txt_artipoisonbag";
+  IconName = 'artipsbg';
+  bFloatBob = true;
+  PickupFlashType = PickupFlash;
+  bInvBar = true;
 }

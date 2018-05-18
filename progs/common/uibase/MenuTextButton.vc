@@ -37,51 +37,51 @@ delegate void Activated(Object Sender);
 
 void SetText(string AText)
 {
-	if (StrStartsWith(AText, "$"))
-	{
-		Text = GetLangString(StrToName(substr(AText, 1, strlen(AText) - 1)));
-	}
-	else
-	{
-		Text = AText;
-	}
+  if (StrStartsWith(AText, "$"))
+  {
+    Text = GetLangString(StrToName(substr(AText, 1, strlen(AText) - 1)));
+  }
+  else
+  {
+    Text = AText;
+  }
 }
 
 void ActivateEvent()
 {
-	if (Activated)
-		Activated(self);
+  if (Activated)
+    Activated(self);
 }
 
 bool OnKeyDown(int key)
 {
-	if (key == K_ENTER || key == K_PADENTER ||
-		key == K_MOUSE1 || key == K_JOY1)
-	{
-		ActivateEvent();
-		LocalSound(ActivateSound);
-		return true;
-	}
-	return false;
+  if (key == K_ENTER || key == K_PADENTER ||
+    key == K_MOUSE1 || key == K_JOY1)
+  {
+    ActivateEvent();
+    LocalSound(ActivateSound);
+    return true;
+  }
+  return false;
 }
 
 void OnMouseClick(int X, int Y)
 {
-	SetFocus();
-	ActivateEvent();
-	LocalSound(ActivateSound);
+  SetFocus();
+  ActivateEvent();
+  LocalSound(ActivateSound);
 }
 
 void OnDraw()
 {
-	SetFont(TextFont);
-	SetTextAlign(TextHAlign, TextVAlign);
-	DrawText(CursorXOffs, 0, Text, IsFocus() ? TextColourFocus : TextColour);
+  SetFont(TextFont);
+  SetTextAlign(TextHAlign, TextVAlign);
+  DrawText(CursorXOffs, 0, Text, IsFocus() ? TextColourFocus : TextColour);
 }
 
 defaultproperties
 {
-	ActivateSound = 'menu/choose';
-	TextColour = CR_UNTRANSLATED;
-	TextColourFocus = CR_UNTRANSLATED;
+  ActivateSound = 'menu/choose';
+  TextColour = CR_UNTRANSLATED;
+  TextColourFocus = CR_UNTRANSLATED;
 }

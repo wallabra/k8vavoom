@@ -23,7 +23,7 @@
 //**
 //**************************************************************************
 //**
-//**	Based on code from ZDoom with following notice:
+//**  Based on code from ZDoom with following notice:
 //**
 //** Copyright 1998-2006 Randy Heit
 //** All rights reserved.
@@ -85,82 +85,82 @@
 //**************************************************************************
 
 class SoundSequence : Actor
-	__mobjinfo__(14066);
+  __mobjinfo__(14066);
 
 //==========================================================================
 //
-//	Destroyed
+//  Destroyed
 //
 //==========================================================================
 
 void Destroyed()
 {
-	StopSoundSequence();
-	::Destroyed();
+  StopSoundSequence();
+  ::Destroyed();
 }
 
 //==========================================================================
 //
-//	BeginPlay
+//  BeginPlay
 //
 //==========================================================================
 
 void BeginPlay()
 {
-	::BeginPlay();
+  ::BeginPlay();
 
-	name SName = GetSeqTrans(Args[0], SEQ_Environment);
-	name slot = GetSeqSlot(SName);
-	if (slot)
-	{
-		// This is a slotted sound, so add it to the master for that slot
-		SoundSequenceSlot master;
+  name SName = GetSeqTrans(Args[0], SEQ_Environment);
+  name slot = GetSeqSlot(SName);
+  if (slot)
+  {
+    // This is a slotted sound, so add it to the master for that slot
+    SoundSequenceSlot master;
 
-		foreach AllThinkers(SoundSequenceSlot, master)
-		{
-			if (master.SeqName == slot)
-			{
-				break;
-			}
-		}
-		if (!master)
-		{
-			master = Spawn(SoundSequenceSlot, vector(0.0, 0.0, 0.0),,,
-				false);
-			master.SeqName = slot;
-			master.StartSoundSequence(slot, 0);
-		}
-		master.AddSoundSequenceChoice(SName);
-		Destroy();
-	}
+    foreach AllThinkers(SoundSequenceSlot, master)
+    {
+      if (master.SeqName == slot)
+      {
+        break;
+      }
+    }
+    if (!master)
+    {
+      master = Spawn(SoundSequenceSlot, vector(0.0, 0.0, 0.0),,,
+        false);
+      master.SeqName = slot;
+      master.StartSoundSequence(slot, 0);
+    }
+    master.AddSoundSequenceChoice(SName);
+    Destroy();
+  }
 }
 
 //==========================================================================
 //
-//	Activate
+//  Activate
 //
 //==========================================================================
 
 bool Activate(EntityEx Activator)
 {
-	StartSoundSequence(GetSeqTrans(Args[0], SEQ_Environment), Args[1]);
-	return true;
+  StartSoundSequence(GetSeqTrans(Args[0], SEQ_Environment), Args[1]);
+  return true;
 }
 
 //==========================================================================
 //
-//	Deactivate
+//  Deactivate
 //
 //==========================================================================
 
 bool Deactivate(EntityEx Activator)
 {
-	StopSoundSequence();
-	return true;
+  StopSoundSequence();
+  return true;
 }
 
 defaultproperties
 {
-	bNoSector = true;
-	bNoBlockmap = true;
+  bNoSector = true;
+  bNoBlockmap = true;
 }

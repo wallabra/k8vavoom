@@ -27,9 +27,9 @@ class IntermissionScreen : Widget;
 
 enum
 {
-	IMS_Stats,
-	IMS_Text,
-	IMS_Done
+  IMS_Stats,
+  IMS_Text,
+  IMS_Done
 };
 
 ClientGameBase ClGame;
@@ -54,36 +54,36 @@ int TextPic;
 
 void Start()
 {
-	StopAllSounds();
-	if (!ClGame.deathmatch && !ClGame.cl.Level.bNoIntermission)
-	{
-		print("Intermission stats are not yet implemented");
-	}
-	if (!ClGame.deathmatch)
-	{
-		IM_InitHubText();
-	}
-	else
-	{
-		CmdBuf_AddText("TeleportNewMap\n");
-	}
+  StopAllSounds();
+  if (!ClGame.deathmatch && !ClGame.cl.Level.bNoIntermission)
+  {
+    print("Intermission stats are not yet implemented");
+  }
+  if (!ClGame.deathmatch)
+  {
+    IM_InitHubText();
+  }
+  else
+  {
+    CmdBuf_AddText("TeleportNewMap\n");
+  }
 }
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	intertime += DeltaTime;
-	if (ClGame.skipintermission || intertime > HubCount)
-	{
-		CmdBuf_AddText("TeleportNewMap\n");
-		interstate = IMS_Done;
-		ClGame.skipintermission = false;
-	}
+  intertime += DeltaTime;
+  if (ClGame.skipintermission || intertime > HubCount)
+  {
+    CmdBuf_AddText("TeleportNewMap\n");
+    interstate = IMS_Done;
+    ClGame.skipintermission = false;
+  }
 }
 
 //==========================================================================
@@ -94,16 +94,16 @@ void Tick(float DeltaTime)
 
 void OnDraw()
 {
-	if (interstate == IMS_Done)
-	{
-		return;
-	}
+  if (interstate == IMS_Done)
+  {
+    return;
+  }
 
-	switch (interstate)
-	{
-	case IMS_Text:
-		IM_DrawHubText();
-	}
+  switch (interstate)
+  {
+  case IMS_Text:
+    IM_DrawHubText();
+  }
 }
 
 //========================================================================
@@ -116,43 +116,43 @@ void OnDraw()
 
 void IM_InitHubText()
 {
-	if (!ClGame.im.Text)
-	{
-		CmdBuf_AddText("TeleportNewMap\n");
-		interstate = IMS_Done;
-		return;
-	}
+  if (!ClGame.im.Text)
+  {
+    CmdBuf_AddText("TeleportNewMap\n");
+    interstate = IMS_Done;
+    return;
+  }
 
-	if (ClGame.im.bTextIsLump)
-	{
-		HubText = LoadTextLump(StrToName(ClGame.im.Text));
-	}
-	else
-	{
-		HubText = ClGame.im.Text;
-	}
-	HubCount = itof(strlen(HubText)) * TextSpeed + TextWait;
+  if (ClGame.im.bTextIsLump)
+  {
+    HubText = LoadTextLump(StrToName(ClGame.im.Text));
+  }
+  else
+  {
+    HubText = ClGame.im.Text;
+  }
+  HubCount = itof(strlen(HubText)) * TextSpeed + TextWait;
 
-	TextFlat = '';
-	TextPic = 0;
-	if (ClGame.im.TextPic)
-	{
-		TextPic = R_RegisterPic(ClGame.im.TextPic);
-	}
-	else if (ClGame.im.TextFlat)
-	{
-		TextFlat = ClGame.im.TextFlat;
-	}
+  TextFlat = '';
+  TextPic = 0;
+  if (ClGame.im.TextPic)
+  {
+    TextPic = R_RegisterPic(ClGame.im.TextPic);
+  }
+  else if (ClGame.im.TextFlat)
+  {
+    TextFlat = ClGame.im.TextFlat;
+  }
 
-	if (ClGame.im.TextMusic)
-	{
-		CmdBuf_AddText(va("music loop %n\n", ClGame.im.TextMusic));
-	}
-	else
-	{
-		CmdBuf_AddText("music loop d_intro\n");
-	}
-	interstate = IMS_Text;
+  if (ClGame.im.TextMusic)
+  {
+    CmdBuf_AddText(va("music loop %n\n", ClGame.im.TextMusic));
+  }
+  else
+  {
+    CmdBuf_AddText("music loop d_intro\n");
+  }
+  interstate = IMS_Text;
 }
 
 //===========================================================================
@@ -163,47 +163,47 @@ void IM_InitHubText()
 
 void IM_DrawHubText()
 {
-	if (TextPic)
-	{
-		DrawFullScreenPic(TextPic);
-	}
-	else if (TextFlat)
-	{
-		FillRectWithFlat(0, 0, 640, 480, TextFlat);
-	}
-	else
-	{
-		R_FillRect(0, 0, 640, 480, 0);
-	}
-	int count = ftoi((intertime - 0.3) / TextSpeed);
-	if (count < 0)
-	{
-		count = 0;
-	}
-	if (count > strlen(HubText))
-	{
-		count = strlen(HubText);
-	}
-	SetFont('smallfont');
-	SetTextAlign(hleft, vtop);
-	DrawText(170, 145, substr(HubText, 0, count));
+  if (TextPic)
+  {
+    DrawFullScreenPic(TextPic);
+  }
+  else if (TextFlat)
+  {
+    FillRectWithFlat(0, 0, 640, 480, TextFlat);
+  }
+  else
+  {
+    R_FillRect(0, 0, 640, 480, 0);
+  }
+  int count = ftoi((intertime - 0.3) / TextSpeed);
+  if (count < 0)
+  {
+    count = 0;
+  }
+  if (count > strlen(HubText))
+  {
+    count = strlen(HubText);
+  }
+  SetFont('smallfont');
+  SetTextAlign(hleft, vtop);
+  DrawText(170, 145, substr(HubText, 0, count));
 }
 
 //==========================================================================
 //
-//	OnVisibilityChanged
+//  OnVisibilityChanged
 //
 //==========================================================================
 
 void OnVisibilityChanged(bool bNewVisibility)
 {
-	bTickEnabled = bNewVisibility;
+  bTickEnabled = bNewVisibility;
 }
 
 defaultproperties
 {
-	bTickEnabled = true;
-	Focusable = true;
-	Width = 320;
-	Height = 200;
+  bTickEnabled = true;
+  Focusable = true;
+  Width = 320;
+  Height = 200;
 }

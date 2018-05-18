@@ -24,25 +24,25 @@
 //**************************************************************************
 
 class WorldInfo : GameObject
-	native
-	abstract;
+  native
+  abstract;
 
-native private readonly void*	Acs;
+native private readonly void* Acs;
 
-readonly byte					GameSkill;
-readonly float					SkillAmmoFactor;
-readonly float					SkillDoubleAmmoFactor;
-readonly float					SkillDamageFactor;
-readonly float					SkillRespawnTime;
-readonly int					SkillRespawnLimit;
-readonly float					SkillAggressiveness;
-readonly int					SkillSpawnFilter;
-readonly int					SkillAcsReturn;
+readonly byte         GameSkill;
+readonly float          SkillAmmoFactor;
+readonly float          SkillDoubleAmmoFactor;
+readonly float          SkillDamageFactor;
+readonly float          SkillRespawnTime;
+readonly int          SkillRespawnLimit;
+readonly float          SkillAggressiveness;
+readonly int          SkillSpawnFilter;
+readonly int          SkillAcsReturn;
 
-readonly bool					bSkillFastMonsters;
-readonly bool					bSkillDisableCheats;
-readonly bool					bSkillEasyBossBrain;
-readonly bool					bSkillAutoUseHealth;
+readonly bool         bSkillFastMonsters;
+readonly bool         bSkillDisableCheats;
+readonly bool         bSkillEasyBossBrain;
+readonly bool         bSkillAutoUseHealth;
 
 native final void SetSkill(int Skill);
 

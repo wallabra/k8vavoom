@@ -27,33 +27,33 @@ class OpenDoor224 : DummyStrifeItem;
 
 //==========================================================================
 //
-//	TryPickup
+//  TryPickup
 //
 //==========================================================================
 
 bool TryPickup(EntityEx Toucher)
 {
-	Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 224, 16, 0, 0, 0, NULL, 0,
-		Toucher);
-	GoAwayAndDie();
-	return true;
+  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 224, 16, 0, 0, 0, NULL, 0,
+    Toucher);
+  GoAwayAndDie();
+  return true;
 }
 
 //==========================================================================
 //
-//	SpecialDropAction
+//  SpecialDropAction
 //
 //==========================================================================
 
 bool SpecialDropAction(EntityEx Dropper)
 {
-	Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 224, 16, 0, 0, 0, NULL, 0,
-		Dropper.Target);
-	Destroy();
-	return true;
+  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 224, 16, 0, 0, 0, NULL, 0,
+    Dropper.Target);
+  Destroy();
+  return true;
 }
 
 defaultproperties
 {
-	ConversationID = 305;
+  ConversationID = 305;
 }

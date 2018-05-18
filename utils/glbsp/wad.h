@@ -120,7 +120,7 @@ typedef struct lump_s
 
   // various flags
   int flags;
- 
+
   // data of lump
   void *data;
 

@@ -24,9 +24,9 @@
 //**************************************************************************
 
 class PointLightFlicker : DynamicLight
-	__mobjinfo__(9802);
+  __mobjinfo__(9802);
 
 defaultproperties
 {
-	LightType = DLTYPE_Flicker;
+  LightType = DLTYPE_Flicker;
 }

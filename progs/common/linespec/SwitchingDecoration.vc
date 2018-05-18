@@ -23,22 +23,22 @@
 //**
 //**************************************************************************
 //**
-//**	Only Activate changes state.
+//**  Only Activate changes state.
 //**
 //**************************************************************************
 
 class SwitchingDecoration : SwitchableDecoration
-	abstract;
+  abstract;
 
 //==========================================================================
 //
-//	Deactivate
+//  Deactivate
 //
 //==========================================================================
 
 bool Deactivate(EntityEx Activator)
 {
-	return false;
+  return false;
 }
 
 defaultproperties

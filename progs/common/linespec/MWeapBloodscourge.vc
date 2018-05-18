@@ -25,17 +25,17 @@
 
 class MWeapBloodscourge : MageWeapon;
 
-int				CShift;
+int       CShift;
 
 //==========================================================================
 //
-//	GetBlend
+//  GetBlend
 //
 //==========================================================================
 
 int GetBlend()
 {
-	return CShift;
+  return CShift;
 }
 
 //==========================================================================
@@ -46,13 +46,13 @@ int GetBlend()
 
 final void A_MStaffPalette1() self(Actor)
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	MWeapBloodscourge(Wpn).CShift = RGBA(255, 187, 4, 63);
+  MWeapBloodscourge(Wpn).CShift = RGBA(255, 187, 4, 63);
 }
 
 //==========================================================================
@@ -63,13 +63,13 @@ final void A_MStaffPalette1() self(Actor)
 
 final void A_MStaffPalette2() self(Actor)
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	MWeapBloodscourge(Wpn).CShift = RGBA(255, 187, 4, 51);
+  MWeapBloodscourge(Wpn).CShift = RGBA(255, 187, 4, 51);
 }
 
 //==========================================================================
@@ -80,51 +80,51 @@ final void A_MStaffPalette2() self(Actor)
 
 final void A_MStaffPalette3() self(Actor)
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	// reset back to original playpal
-	MWeapBloodscourge(Wpn).CShift = 0;
+  // reset back to original playpal
+  MWeapBloodscourge(Wpn).CShift = 0;
 }
 
 states
 {
 Ready:
-	MSTF AAAAAABBBBBBCCCCCCDDDDDDEEEEEEFFFFF 1 DoReadyWeapon
-	Loop
+  MSTF AAAAAABBBBBBCCCCCCDDDDDDEEEEEEFFFFF 1 DoReadyWeapon
+  Loop
 Deselect:
-	MSTF A 1 A_Lower
-	Loop
+  MSTF A 1 A_Lower
+  Loop
 Select:
-	MSTF A 1 A_Raise
-	Loop
+  MSTF A 1 A_Raise
+  Loop
 Fire:
-	MSTF G 4 Offset(0, 40)
-	MSTF H 4 Bright Offset(0, 48) A_MStaffAttack
-	MSTF H 2 Bright Offset(0, 48) A_MStaffPalette1
-	MSTF I 2 Offset(0, 48) A_MStaffPalette2
-	MSTF I 2 Offset(0, 48) A_MStaffPalette3
-	MSTF I 1 Offset(0, 40)
-	MSTF J 5 Offset(0, 36)
-	Goto Ready
+  MSTF G 4 Offset(0, 40)
+  MSTF H 4 Bright Offset(0, 48) A_MStaffAttack
+  MSTF H 2 Bright Offset(0, 48) A_MStaffPalette1
+  MSTF I 2 Offset(0, 48) A_MStaffPalette2
+  MSTF I 2 Offset(0, 48) A_MStaffPalette3
+  MSTF I 1 Offset(0, 40)
+  MSTF J 5 Offset(0, 36)
+  Goto Ready
 }
 
 defaultproperties
 {
-	SelectionOrder = 3100;
-	AmmoType1 = Mana1;
-	AmmoType2 = Mana2;
-	AmmoUse1 = 15;
-	AmmoUse2 = 15;
-	AmmoGive1 = 20;
-	AmmoGive2 = 20;
-	PSpriteSY = 20.0;
-	PickupMessage = "$txt_weapon_m4";
-	BotCombatDist= 384.0;
-	bBotProjectile = true;
-	bExtremeDeath = true;
-	bPrimaryUsesBoth = true;
+  SelectionOrder = 3100;
+  AmmoType1 = Mana1;
+  AmmoType2 = Mana2;
+  AmmoUse1 = 15;
+  AmmoUse2 = 15;
+  AmmoGive1 = 20;
+  AmmoGive2 = 20;
+  PSpriteSY = 20.0;
+  PickupMessage = "$txt_weapon_m4";
+  BotCombatDist= 384.0;
+  bBotProjectile = true;
+  bExtremeDeath = true;
+  bPrimaryUsesBoth = true;
 }

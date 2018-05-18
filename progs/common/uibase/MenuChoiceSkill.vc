@@ -25,27 +25,27 @@
 
 class MenuChoiceSkill : MenuBigTextButton;
 
-int				PicHandle;
-int				SkillIndex;
-bool			bMustConfirm;
-string			ConfirmationText;
+int       PicHandle;
+int       SkillIndex;
+bool      bMustConfirm;
+string      ConfirmationText;
 
 //==========================================================================
 //
-//	OnDraw
+//  OnDraw
 //
 //==========================================================================
 
 void OnDraw()
 {
-	if (PicHandle > 0)
-	{
-		DrawPic(0, 0, PicHandle);
-	}
-	else
-	{
-		::OnDraw();
-	}
+  if (PicHandle > 0)
+  {
+    DrawPic(0, 0, PicHandle);
+  }
+  else
+  {
+    ::OnDraw();
+  }
 }
 
 defaultproperties

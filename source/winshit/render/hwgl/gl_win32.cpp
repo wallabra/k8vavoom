@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -34,16 +34,16 @@
 class VWin32OpenGLDrawer : public VOpenGLDrawer
 {
 public:
-	bool		Windowed;
-	HDC			DeviceContext;
-	HGLRC		RenderContext;
-	HWND		RenderWindow;
+  bool    Windowed;
+  HDC     DeviceContext;
+  HGLRC   RenderContext;
+  HWND    RenderWindow;
 
-	void Init();
-	bool SetResolution(int, int, int, bool);
-	void* GetExtFuncPtr(const char*);
-	void Update();
-	void Shutdown();
+  void Init();
+  bool SetResolution(int, int, int, bool);
+  void* GetExtFuncPtr(const char*);
+  void Update();
+  void Shutdown();
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -57,7 +57,7 @@ public:
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 IMPLEMENT_DRAWER(VWin32OpenGLDrawer, DRAWER_OpenGL, "OpenGL",
-	"Win32 OpenGL rasteriser device", "-opengl");
+  "Win32 OpenGL rasteriser device", "-opengl");
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -65,290 +65,290 @@ IMPLEMENT_DRAWER(VWin32OpenGLDrawer, DRAWER_OpenGL, "OpenGL",
 
 //==========================================================================
 //
-//	VWin32OpenGLDrawer::Init
+//  VWin32OpenGLDrawer::Init
 //
-// 	Determine the hardware configuration
+//  Determine the hardware configuration
 //
 //==========================================================================
 
 void VWin32OpenGLDrawer::Init()
 {
-	Windowed = true;
-	DeviceContext = NULL;
-	RenderContext = NULL;
-	RenderWindow = NULL;
+  Windowed = true;
+  DeviceContext = NULL;
+  RenderContext = NULL;
+  RenderWindow = NULL;
 }
 
 //==========================================================================
 //
-// 	VWin32OpenGLDrawer::SetResolution
+//  VWin32OpenGLDrawer::SetResolution
 //
-// 	Set up the video mode
+//  Set up the video mode
 //
 //==========================================================================
 
 bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, int ABPP,
-	bool AWindowed)
+  bool AWindowed)
 {
-	guard(VWin32OpenGLDrawer::SetResolution);
-	int			Width = AWidth;
-	int			Height = AHeight;
-	int			BPP = ABPP;
-	int			pixelformat;
-	MSG			msg;
+  guard(VWin32OpenGLDrawer::SetResolution);
+  int     Width = AWidth;
+  int     Height = AHeight;
+  int     BPP = ABPP;
+  int     pixelformat;
+  MSG     msg;
 
-	if (!Width || !Height)
-	{
-		//	Set defaults
-		Width = 640;
-		Height = 480;
-		BPP = 16;
-	}
+  if (!Width || !Height)
+  {
+    //  Set defaults
+    Width = 640;
+    Height = 480;
+    BPP = 16;
+  }
 
-	if (BPP == 15) BPP = 16;
+  if (BPP == 15) BPP = 16;
 
-	if (BPP < 16)
-	{
-		//	True-colour only
-		return false;
-	}
+  if (BPP < 16)
+  {
+    //  True-colour only
+    return false;
+  }
 
-	//	Shut down current mode
-	Shutdown();
+  //  Shut down current mode
+  Shutdown();
 
-	Windowed = AWindowed;
+  Windowed = AWindowed;
 
-	if (!Windowed)
-	{
-		//	Try to switch to the new mode
-		DEVMODE dmScreenSettings;
-		memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
-		dmScreenSettings.dmSize = sizeof(dmScreenSettings);
-		dmScreenSettings.dmPelsWidth = Width;
-		dmScreenSettings.dmPelsHeight = Height;
-		dmScreenSettings.dmBitsPerPel = BPP;
-		dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+  if (!Windowed)
+  {
+    //  Try to switch to the new mode
+    DEVMODE dmScreenSettings;
+    memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
+    dmScreenSettings.dmSize = sizeof(dmScreenSettings);
+    dmScreenSettings.dmPelsWidth = Width;
+    dmScreenSettings.dmPelsHeight = Height;
+    dmScreenSettings.dmBitsPerPel = BPP;
+    dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
-		if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
-		{
-			return false;
-		}
-	}
+    if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+    {
+      return false;
+    }
+  }
 
-	//	Create window
-	RenderWindow = CreateWindow("VAVOOM", "VAVOOM for Windows",
-		Windowed ? (WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX) |
-		WS_CLIPCHILDREN | WS_CLIPSIBLINGS : WS_POPUP |
-		WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
-		0, 0, 2, 2, hwnd, NULL, hInst, NULL);
-	if (!RenderWindow)
-	{
-		GCon->Log(NAME_Init, "Couldn't create window");
-		return false;
-	}
+  //  Create window
+  RenderWindow = CreateWindow("VAVOOM", "VAVOOM for Windows",
+    Windowed ? (WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX) |
+    WS_CLIPCHILDREN | WS_CLIPSIBLINGS : WS_POPUP |
+    WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+    0, 0, 2, 2, hwnd, NULL, hInst, NULL);
+  if (!RenderWindow)
+  {
+    GCon->Log(NAME_Init, "Couldn't create window");
+    return false;
+  }
 
-	//	Make the window visible & update its client area
-	ShowWindow(RenderWindow, SW_SHOWDEFAULT);
-	UpdateWindow(RenderWindow);
+  //  Make the window visible & update its client area
+  ShowWindow(RenderWindow, SW_SHOWDEFAULT);
+  UpdateWindow(RenderWindow);
 
-	//	Switch input to this window
-	IN_SetActiveWindow(RenderWindow);
+  //  Switch input to this window
+  IN_SetActiveWindow(RenderWindow);
 
-	//	Now we try to make sure we get the focus on the mode switch, because
-	// sometimes in some systems we don't. We grab the foreground, pump all
-	// our messages, and sleep for a little while to let messages finish
-	// bouncing around the system, then we put ourselves at the top of the z
-	// order, then grab the foreground again.
-	//	Who knows if it helps, but it probably doesn't hurt
-	SetForegroundWindow(RenderWindow);
+  //  Now we try to make sure we get the focus on the mode switch, because
+  // sometimes in some systems we don't. We grab the foreground, pump all
+  // our messages, and sleep for a little while to let messages finish
+  // bouncing around the system, then we put ourselves at the top of the z
+  // order, then grab the foreground again.
+  //  Who knows if it helps, but it probably doesn't hurt
+  SetForegroundWindow(RenderWindow);
 
-	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
+  while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+  {
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+  }
 
-	Sleep(10);
+  Sleep(10);
 
-	if (Windowed)
-	{
-		RECT WindowRect;
-		WindowRect.left=(long)0;
-		WindowRect.right=(long)Width;
-		WindowRect.top=(long)0;
-		WindowRect.bottom=(long)Height;
-		AdjustWindowRectEx(&WindowRect, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
-			FALSE, WS_EX_APPWINDOW | WS_EX_WINDOWEDGE);
-		SetWindowPos(RenderWindow, HWND_TOP, 0, 0,
-			WindowRect.right-WindowRect.left,
-			WindowRect.bottom-WindowRect.top, SWP_NOMOVE);
-	}
-	else
-	{
-		SetWindowPos(RenderWindow, HWND_TOP, 0, 0, Width, Height, SWP_NOMOVE);
-	}
+  if (Windowed)
+  {
+    RECT WindowRect;
+    WindowRect.left=(long)0;
+    WindowRect.right=(long)Width;
+    WindowRect.top=(long)0;
+    WindowRect.bottom=(long)Height;
+    AdjustWindowRectEx(&WindowRect, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+      FALSE, WS_EX_APPWINDOW | WS_EX_WINDOWEDGE);
+    SetWindowPos(RenderWindow, HWND_TOP, 0, 0,
+      WindowRect.right-WindowRect.left,
+      WindowRect.bottom-WindowRect.top, SWP_NOMOVE);
+  }
+  else
+  {
+    SetWindowPos(RenderWindow, HWND_TOP, 0, 0, Width, Height, SWP_NOMOVE);
+  }
 
-	SetForegroundWindow(RenderWindow);
+  SetForegroundWindow(RenderWindow);
 
-	//	Get device context
-	DeviceContext = GetDC(RenderWindow);
-	if (!DeviceContext)
-	{
-		GCon->Log(NAME_Init, "Failed to get device context");
-		return false;
-	}
+  //  Get device context
+  DeviceContext = GetDC(RenderWindow);
+  if (!DeviceContext)
+  {
+    GCon->Log(NAME_Init, "Failed to get device context");
+    return false;
+  }
 
-	//	Because we have set the background brush for the window to NULL
-	// (to avoid flickering when re-sizing the window on the desktop), we
-	// clear the window to black when created, otherwise it will be
-	// empty while Vavoom starts up.
-	PatBlt(DeviceContext, 0, 0, Width, Height, BLACKNESS);
+  //  Because we have set the background brush for the window to NULL
+  // (to avoid flickering when re-sizing the window on the desktop), we
+  // clear the window to black when created, otherwise it will be
+  // empty while Vavoom starts up.
+  PatBlt(DeviceContext, 0, 0, Width, Height, BLACKNESS);
 
-	//	Set up pixel format
-	PIXELFORMATDESCRIPTOR pfd =	// pfd Tells Windows How We Want Things To Be
-	{
-		sizeof(PIXELFORMATDESCRIPTOR),	// Size Of This Pixel Format Descriptor
-		1,								// Version Number
-		PFD_DRAW_TO_WINDOW |			// Format Must Support Window
-		PFD_SUPPORT_OPENGL |			// Format Must Support OpenGL
-		PFD_DOUBLEBUFFER,				// Must Support Double Buffering
-		PFD_TYPE_RGBA,					// Request An RGBA Format
-		byte(BPP),						// Select Our Colour Depth
-		0, 0, 0, 0, 0, 0,				// Colour Bits Ignored
-		0,								// No Alpha Buffer
-		0,								// Shift Bit Ignored
-		0,								// No Accumulation Buffer
-		0, 0, 0, 0,						// Accumulation Bits Ignored
-		24,								// 24 bit Z-Buffer (Depth Buffer)
-		8,								// 8 bit Stencil Buffer
-		0,								// No Auxiliary Buffer
-		PFD_MAIN_PLANE,					// Main Drawing Layer
-		0,								// Reserved
-		0, 0, 0							// Layer Masks Ignored
-	};
+  //  Set up pixel format
+  PIXELFORMATDESCRIPTOR pfd = // pfd Tells Windows How We Want Things To Be
+  {
+    sizeof(PIXELFORMATDESCRIPTOR),  // Size Of This Pixel Format Descriptor
+    1,                // Version Number
+    PFD_DRAW_TO_WINDOW |      // Format Must Support Window
+    PFD_SUPPORT_OPENGL |      // Format Must Support OpenGL
+    PFD_DOUBLEBUFFER,       // Must Support Double Buffering
+    PFD_TYPE_RGBA,          // Request An RGBA Format
+    byte(BPP),            // Select Our Colour Depth
+    0, 0, 0, 0, 0, 0,       // Colour Bits Ignored
+    0,                // No Alpha Buffer
+    0,                // Shift Bit Ignored
+    0,                // No Accumulation Buffer
+    0, 0, 0, 0,           // Accumulation Bits Ignored
+    24,               // 24 bit Z-Buffer (Depth Buffer)
+    8,                // 8 bit Stencil Buffer
+    0,                // No Auxiliary Buffer
+    PFD_MAIN_PLANE,         // Main Drawing Layer
+    0,                // Reserved
+    0, 0, 0             // Layer Masks Ignored
+  };
 
-	pixelformat = ChoosePixelFormat(DeviceContext, &pfd);
-	if (pixelformat == 0)
-	{
-		Sys_Error("ChoosePixelFormat failed");
-	}
+  pixelformat = ChoosePixelFormat(DeviceContext, &pfd);
+  if (pixelformat == 0)
+  {
+    Sys_Error("ChoosePixelFormat failed");
+  }
 
-	if (SetPixelFormat(DeviceContext, pixelformat, &pfd) == FALSE)
-	{
-		Sys_Error("SetPixelFormat failed");
-	}
+  if (SetPixelFormat(DeviceContext, pixelformat, &pfd) == FALSE)
+  {
+    Sys_Error("SetPixelFormat failed");
+  }
 
-	//	Create rendering context
-	RenderContext = wglCreateContext(DeviceContext);
-	if (!RenderContext)
-	{
-		GCon->Log(NAME_Init, "Failed to create context");
-		return false;
-	}
+  //  Create rendering context
+  RenderContext = wglCreateContext(DeviceContext);
+  if (!RenderContext)
+  {
+    GCon->Log(NAME_Init, "Failed to create context");
+    return false;
+  }
 
-	//	Make this context current
-	if (!wglMakeCurrent(DeviceContext, RenderContext))
-	{
-		GCon->Log(NAME_Init, "Make current failed");
-		return false;
-	}
+  //  Make this context current
+  if (!wglMakeCurrent(DeviceContext, RenderContext))
+  {
+    GCon->Log(NAME_Init, "Make current failed");
+    return false;
+  }
 
-	//  Swap control extension (VSync)
-	if (CheckExtension("WGL_EXT_swap_control"))
-	{
-		GCon->Log(NAME_Init, "Swap control extension found.");
-		typedef bool (APIENTRY *PFNWGLSWAPINTERVALFARPROC)(int);
+  //  Swap control extension (VSync)
+  if (CheckExtension("WGL_EXT_swap_control"))
+  {
+    GCon->Log(NAME_Init, "Swap control extension found.");
+    typedef bool (APIENTRY *PFNWGLSWAPINTERVALFARPROC)(int);
 
-		PFNWGLSWAPINTERVALFARPROC wglSwapIntervalEXT;
+    PFNWGLSWAPINTERVALFARPROC wglSwapIntervalEXT;
 
-		wglSwapIntervalEXT = (PFNWGLSWAPINTERVALFARPROC)GetExtFuncPtr("wglSwapIntervalEXT");
+    wglSwapIntervalEXT = (PFNWGLSWAPINTERVALFARPROC)GetExtFuncPtr("wglSwapIntervalEXT");
 
-		if( wglSwapIntervalEXT )
-			wglSwapIntervalEXT(r_vsync);
-	}
+    if( wglSwapIntervalEXT )
+      wglSwapIntervalEXT(r_vsync);
+  }
 
-	//	Everything is fine, set some globals and finish
-	ScreenWidth = Width;
-	ScreenHeight = Height;
-	ScreenBPP = BPP;
+  //  Everything is fine, set some globals and finish
+  ScreenWidth = Width;
+  ScreenHeight = Height;
+  ScreenBPP = BPP;
 
-	return true;
-	unguard;
+  return true;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VWin32OpenGLDrawer::GetExtFuncPtr
+//  VWin32OpenGLDrawer::GetExtFuncPtr
 //
 //==========================================================================
 
 void* VWin32OpenGLDrawer::GetExtFuncPtr(const char *name)
 {
-	guard(VWin32OpenGLDrawer::GetExtFuncPtr);
-	return (void*)wglGetProcAddress(name);
-	unguard;
+  guard(VWin32OpenGLDrawer::GetExtFuncPtr);
+  return (void*)wglGetProcAddress(name);
+  unguard;
 }
 
 //==========================================================================
 //
-//	VWin32OpenGLDrawer::Update
+//  VWin32OpenGLDrawer::Update
 //
-//	Blit to the screen / Flip surfaces
+//  Blit to the screen / Flip surfaces
 //
 //==========================================================================
 
 void VWin32OpenGLDrawer::Update()
 {
-	guard(VWin32OpenGLDrawer::Update);
-	SwapBuffers(DeviceContext);
-	unguard;
+  guard(VWin32OpenGLDrawer::Update);
+  SwapBuffers(DeviceContext);
+  unguard;
 }
 
 //==========================================================================
 //
-//	VWin32OpenGLDrawer::Shutdown
+//  VWin32OpenGLDrawer::Shutdown
 //
-//	Close the graphics
+//  Close the graphics
 //
 //==========================================================================
 
 void VWin32OpenGLDrawer::Shutdown()
 {
-	guard(VWin32OpenGLDrawer::Shutdown);
-	DeleteTextures();
+  guard(VWin32OpenGLDrawer::Shutdown);
+  DeleteTextures();
 
-	if (RenderContext)
-	{
-		wglMakeCurrent(NULL, NULL);
-		wglDeleteContext(RenderContext);
-		RenderContext = 0;
-	}
+  if (RenderContext)
+  {
+    wglMakeCurrent(NULL, NULL);
+    wglDeleteContext(RenderContext);
+    RenderContext = 0;
+  }
 
-	if (DeviceContext)
-	{
-		ReleaseDC(RenderWindow, DeviceContext);
-		DeviceContext = 0;
-	}
+  if (DeviceContext)
+  {
+    ReleaseDC(RenderWindow, DeviceContext);
+    DeviceContext = 0;
+  }
 
-	if (RenderWindow)
-	{
-		IN_SetActiveWindow(hwnd);
-		SetForegroundWindow(hwnd);
-		DestroyWindow(RenderWindow);
-		RenderWindow = NULL;
-	}
+  if (RenderWindow)
+  {
+    IN_SetActiveWindow(hwnd);
+    SetForegroundWindow(hwnd);
+    DestroyWindow(RenderWindow);
+    RenderWindow = NULL;
+  }
 
-	if (!Windowed)
-	{
-		ChangeDisplaySettings(NULL, 0);
-	}
+  if (!Windowed)
+  {
+    ChangeDisplaySettings(NULL, 0);
+  }
 
-	MSG msg;
+  MSG msg;
 
-	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
-	unguard;
+  while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+  {
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+  }
+  unguard;
 }

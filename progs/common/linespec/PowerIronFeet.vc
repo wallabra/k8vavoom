@@ -27,24 +27,24 @@ class PowerIronFeet : Powerup;
 
 //==========================================================================
 //
-//	AbsorbDamage
+//  AbsorbDamage
 //
 //==========================================================================
 
 void AbsorbDamage(int damage, name DmgType, out int NewDamage)
 {
-	if (DmgType == 'Drowning')
-	{
-		NewDamage = 0;
-	}
-	else
-	{
-		::AbsorbDamage(damage, DmgType, NewDamage);
-	}
+  if (DmgType == 'Drowning')
+  {
+    NewDamage = 0;
+  }
+  else
+  {
+    ::AbsorbDamage(damage, DmgType, NewDamage);
+  }
 }
 
 defaultproperties
 {
-	EffectTime = 60.0;
-	BlendColour = RGBA(0, 255, 0, 32);
+  EffectTime = 60.0;
+  BlendColour = RGBA(0, 255, 0, 32);
 }

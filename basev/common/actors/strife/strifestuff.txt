@@ -1,813 +1,813 @@
 //------------------------------------------------------------------------------
 actor Tank1 209
 {
-	Game Strife
-	ConversationID 31, -1, -1
-	Radius 16
-	Height 192
-	Mass 50000
-	+Solid
-	states
-	{
-	Spawn:
-		TNK1 A 15
-		TNK1 B 11
-		TNK1 C 40
-		Loop
-	}
+  Game Strife
+  ConversationID 31, -1, -1
+  Radius 16
+  Height 192
+  Mass 50000
+  +Solid
+  states
+  {
+  Spawn:
+    TNK1 A 15
+    TNK1 B 11
+    TNK1 C 40
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Tank2 210
 {
-	Game Strife
-	ConversationID 32, -1, -1
-	Radius 16
-	Height 192
-	Mass 50000
-	+Solid
-	states
-	{
-	Spawn:
-		TNK2 A 15
-		TNK2 B 11
-		TNK2 C 40
-		Loop
-	}
+  Game Strife
+  ConversationID 32, -1, -1
+  Radius 16
+  Height 192
+  Mass 50000
+  +Solid
+  states
+  {
+  Spawn:
+    TNK2 A 15
+    TNK2 B 11
+    TNK2 C 40
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Tank3 211
 {
-	Game Strife
-	ConversationID 33, -1, -1
-	Radius 16
-	Height 192
-	Mass 50000
-	+Solid
-	states
-	{
-	Spawn:
-		TNK3 A 15
-		TNK3 B 11
-		TNK3 C 40
-		Loop
-	}
+  Game Strife
+  ConversationID 33, -1, -1
+  Radius 16
+  Height 192
+  Mass 50000
+  +Solid
+  states
+  {
+  Spawn:
+    TNK3 A 15
+    TNK3 B 11
+    TNK3 C 40
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Tank4 213
 {
-	Game Strife
-	ConversationID 34, -1, -1
-	Radius 16
-	Height 56
-	Mass 50000
-	+Solid
-	states
-	{
-	Spawn:
-		TNK4 A 15
-		TNK4 B 11
-		TNK4 C 40
-		Loop
-	}
+  Game Strife
+  ConversationID 34, -1, -1
+  Radius 16
+  Height 56
+  Mass 50000
+  +Solid
+  states
+  {
+  Spawn:
+    TNK4 A 15
+    TNK4 B 11
+    TNK4 C 40
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Tank5 214
 {
-	Game Strife
-	ConversationID 35, -1, -1
-	Radius 16
-	Height 56
-	Mass 50000
-	+Solid
-	states
-	{
-	Spawn:
-		TNK5 A 15
-		TNK5 B 11
-		TNK5 C 40
-		Loop
-	}
+  Game Strife
+  ConversationID 35, -1, -1
+  Radius 16
+  Height 56
+  Mass 50000
+  +Solid
+  states
+  {
+  Spawn:
+    TNK5 A 15
+    TNK5 B 11
+    TNK5 C 40
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Tank6 229
 {
-	Game Strife
-	ConversationID 36, -1, -1
-	Radius 16
-	Height 56
-	Mass 50000
-	+Solid
-	states
-	{
-	Spawn:
-		TNK6 A 15
-		TNK6 B 11
-		TNK6 C 40
-		Loop
-	}
+  Game Strife
+  ConversationID 36, -1, -1
+  Radius 16
+  Height 56
+  Mass 50000
+  +Solid
+  states
+  {
+  Spawn:
+    TNK6 A 15
+    TNK6 B 11
+    TNK6 C 40
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor KneelingGyu 204
 {
-	Game Strife
-	ConversationID 37, -1, -1
-	Health 51
-	Radius 6
-	Height 17
-	Mass 50000
-	PainChance 255
-	+Solid
-	+Shootable
-	+IsMonster
-	+InCombat
-	+NoBlood
-	ActiveSound "misc/chant"
-	PainSound "misc/static"
-	DeathSound "misc/static"
-	states
-	{
-	Spawn:
-	See:
-		NEAL A 15 A_LoopActiveSound
-		NEAL B 40 A_LoopActiveSound
-		Loop
-	Pain:
-		NEAL C 5 A_SetShadow
-		NEAL B 4 A_Pain
-		NEAL C 5 A_ClearShadow
-		Goto Spawn
-	Wound:
-		NEAL B 6
-		NEAL C 13 A_GetHurt
-		Loop
-	Death:
-		NEAL D 5
-		NEAL E 5 A_Scream
-		NEAL F 6
-		NEAL G 5 A_NoBlocking
-		NEAL H 5
-		NEAL I 6
-		NEAL J -1
-		Stop
-	}
+  Game Strife
+  ConversationID 37, -1, -1
+  Health 51
+  Radius 6
+  Height 17
+  Mass 50000
+  PainChance 255
+  +Solid
+  +Shootable
+  +IsMonster
+  +InCombat
+  +NoBlood
+  ActiveSound "misc/chant"
+  PainSound "misc/static"
+  DeathSound "misc/static"
+  states
+  {
+  Spawn:
+  See:
+    NEAL A 15 A_LoopActiveSound
+    NEAL B 40 A_LoopActiveSound
+    Loop
+  Pain:
+    NEAL C 5 A_SetShadow
+    NEAL B 4 A_Pain
+    NEAL C 5 A_ClearShadow
+    Goto Spawn
+  Wound:
+    NEAL B 6
+    NEAL C 13 A_GetHurt
+    Loop
+  Death:
+    NEAL D 5
+    NEAL E 5 A_Scream
+    NEAL F 6
+    NEAL G 5 A_NoBlocking
+    NEAL H 5
+    NEAL I 6
+    NEAL J -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor KlaxonWarningLight 24
 {
-	Game Strife
-	ConversationID 121, -1, -1
-	ReactionTime 60
-	Radius 5
-	+NoBlockmap
-	+Ambush
-	+SpawnCeiling
-	+NoGravity
-	+FixMapThingPos
-	+NoSplashAlert
-	+Synchronized
-	states
-	{
-	Spawn:
-		KLAX A 5 A_TurretLook
-		Loop
-	See:
-		KLAX B 6 A_KlaxonBlare
-		KLAX C 60
-		Loop
-	}
+  Game Strife
+  ConversationID 121, -1, -1
+  ReactionTime 60
+  Radius 5
+  +NoBlockmap
+  +Ambush
+  +SpawnCeiling
+  +NoGravity
+  +FixMapThingPos
+  +NoSplashAlert
+  +Synchronized
+  states
+  {
+  Spawn:
+    KLAX A 5 A_TurretLook
+    Loop
+  See:
+    KLAX B 6 A_KlaxonBlare
+    KLAX C 60
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor CeilingTurret 27
 {
-	Game Strife
-	ConversationID 122, -1, -1
-	Health 125
-	Mass 10000000
-	Monster
-	-Solid
-	-CanPass
-	+Ambush
-	+SpawnCeiling
-	+NoGravity
-	+NoBlood
-	+NoSplashAlert
-	+DontFall
-	DeathSound "turret/death"
-	Obituary "$ob_turret"
-	states
-	{
-	Spawn:
-		TURT A 5 A_TurretLook
-		Loop
-	See:
-		TURT A 2 A_Chase
-		Loop
-	Missile:
-	Pain:
-		TURT B 4 A_ShootGun
-		TURT D 3 A_SentinelRefire
-		TURT A 4 A_SentinelRefire
-		Loop
-	Death:
-		BALL A 6 Bright A_Scream
-		BALL BCDE 6 Bright
-		TURT C -1
-		Stop
-	}
+  Game Strife
+  ConversationID 122, -1, -1
+  Health 125
+  Mass 10000000
+  Monster
+  -Solid
+  -CanPass
+  +Ambush
+  +SpawnCeiling
+  +NoGravity
+  +NoBlood
+  +NoSplashAlert
+  +DontFall
+  DeathSound "turret/death"
+  Obituary "$ob_turret"
+  states
+  {
+  Spawn:
+    TURT A 5 A_TurretLook
+    Loop
+  See:
+    TURT A 2 A_Chase
+    Loop
+  Missile:
+  Pain:
+    TURT B 4 A_ShootGun
+    TURT D 3 A_SentinelRefire
+    TURT A 4 A_SentinelRefire
+    Loop
+  Death:
+    BALL A 6 Bright A_Scream
+    BALL BCDE 6 Bright
+    TURT C -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor WaterBottle 2014
 {
-	Game Strife
-	ConversationID 131, -1, -1
-	states
-	{
-	Spawn:
-		WATR A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 131, -1, -1
+  states
+  {
+  Spawn:
+    WATR A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Mug 164
 {
-	Game Strife
-	ConversationID 132, -1, -1
-	states
-	{
-	Spawn:
-		MUGG A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 132, -1, -1
+  states
+  {
+  Spawn:
+    MUGG A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor WoodenBarrel 82
 {
-	Game Strife
-	ConversationID 203, -1, -1
-	Health 10
-	Radius 10
-	Height 32
-	+Solid
-	+Shootable
-	+InCombat
-	+NoBlood
-	DeathSound "woodenbarrel/death"
-	states
-	{
-	Spawn:
-		BARW A -1
-		Stop
-	Death:
-		BARW B 2 A_Scream
-		BARW C 2
-		BARW D 2 A_NoBlocking
-		BARW EFG 2
-		BARW H -1
-		Stop
-	}
+  Game Strife
+  ConversationID 203, -1, -1
+  Health 10
+  Radius 10
+  Height 32
+  +Solid
+  +Shootable
+  +InCombat
+  +NoBlood
+  DeathSound "woodenbarrel/death"
+  states
+  {
+  Spawn:
+    BARW A -1
+    Stop
+  Death:
+    BARW B 2 A_Scream
+    BARW C 2
+    BARW D 2 A_NoBlocking
+    BARW EFG 2
+    BARW H -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor ExplosiveBarrel2 : ExplosiveBarrel 94
 {
-	Game Strife
-	ConversationID 204, -1, -1
-	Health 30
-	Radius 10
-	Height 32
-	+InCombat
-	states
-	{
-	Spawn:
-		BART A -1
-		Stop
-	Death:
-		BART B 2 Bright A_Scream
-		BART CD 2 Bright
-		BART E 2 Bright A_NoBlocking
-		BART F 0 Bright A_AlertMonsters
-		BART F 2 Bright A_Explode(64, 64)
-		BART GHI 2 Bright
-		BART JK 3 Bright
-		BART L -1
-		Stop
-	}
+  Game Strife
+  ConversationID 204, -1, -1
+  Health 30
+  Radius 10
+  Height 32
+  +InCombat
+  states
+  {
+  Spawn:
+    BART A -1
+    Stop
+  Death:
+    BART B 2 Bright A_Scream
+    BART CD 2 Bright
+    BART E 2 Bright A_NoBlocking
+    BART F 0 Bright A_AlertMonsters
+    BART F 2 Bright A_Explode(64, 64)
+    BART GHI 2 Bright
+    BART JK 3 Bright
+    BART L -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor TargetPractice 208
 {
-	Game Strife
-	ConversationID 205, -1, -1
-	Health 99999999
-	Radius 10
-	Height 72
-	Mass 9999999
-	PainChance 255
-	+Solid
-	+Shootable
-	+InCombat
-	+NoBlood
-	+NoDamage
-	PainSound "misc/metalhit"
-	states
-	{
-	Spawn:
-		HOGN A 2 A_CheckTerrain
-		Loop
-	Pain:
-		HOGN B 1 A_CheckTerrain
-		HOGN C 1 A_Pain
-		Goto Spawn
-	}
+  Game Strife
+  ConversationID 205, -1, -1
+  Health 99999999
+  Radius 10
+  Height 72
+  Mass 9999999
+  PainChance 255
+  +Solid
+  +Shootable
+  +InCombat
+  +NoBlood
+  +NoDamage
+  PainSound "misc/metalhit"
+  states
+  {
+  Spawn:
+    HOGN A 2 A_CheckTerrain
+    Loop
+  Pain:
+    HOGN B 1 A_CheckTerrain
+    HOGN C 1 A_Pain
+    Goto Spawn
+  }
 }
 
 //------------------------------------------------------------------------------
 actor LightSilverFluorescent 95
 {
-	Game Strife
-	ConversationID 206, -1, -1
-	Radius 4
-	Height 16
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		LITS A -1 Bright
-		Stop
-	}
+  Game Strife
+  ConversationID 206, -1, -1
+  Radius 4
+  Height 16
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    LITS A -1 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor LightBrownFluorescent 96
 {
-	Game Strife
-	ConversationID 207, -1, -1
-	Radius 4
-	Height 16
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		LITB A -1 Bright
-		Stop
-	}
+  Game Strife
+  ConversationID 207, -1, -1
+  Radius 4
+  Height 16
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    LITB A -1 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor LightGoldFluorescent 97
 {
-	Game Strife
-	ConversationID 208, -1, -1
-	Radius 4
-	Height 16
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		LITG A -1 Bright
-		Stop
-	}
+  Game Strife
+  ConversationID 208, -1, -1
+  Radius 4
+  Height 16
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    LITG A -1 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor LightGlobe 2028
 {
-	Game Strife
-	ConversationID 209, -1, -1
-	Radius 16
-	Height 16
-	+Solid
-	states
-	{
-	Spawn:
-		LITE A -1 Bright
-		Stop
-	}
+  Game Strife
+  ConversationID 209, -1, -1
+  Radius 16
+  Height 16
+  +Solid
+  states
+  {
+  Spawn:
+    LITE A -1 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor PillarTechno 48
 {
-	Game Strife
-	ConversationID 210, -1, -1
-	Radius 20
-	Height 128
-	+Solid
-	states
-	{
-	Spawn:
-		MONI A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 210, -1, -1
+  Radius 20
+  Height 128
+  +Solid
+  states
+  {
+  Spawn:
+    MONI A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor PillarAztec 54
 {
-	Game Strife
-	ConversationID 211, -1, -1
-	Radius 16
-	Height 128
-	+Solid
-	states
-	{
-	Spawn:
-		STEL A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 211, -1, -1
+  Radius 16
+  Height 128
+  +Solid
+  states
+  {
+  Spawn:
+    STEL A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor PillarAztecDamaged 55
 {
-	Game Strife
-	ConversationID 212, -1, -1
-	Radius 16
-	Height 80
-	+Solid
-	states
-	{
-	Spawn:
-		STLA A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 212, -1, -1
+  Radius 16
+  Height 80
+  +Solid
+  states
+  {
+  Spawn:
+    STLA A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor PillarAztecRuined 56
 {
-	Game Strife
-	ConversationID 213, -1, -1
-	Radius 16
-	Height 40
-	+Solid
-	states
-	{
-	Spawn:
-		STLE A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 213, -1, -1
+  Radius 16
+  Height 40
+  +Solid
+  states
+  {
+  Spawn:
+    STLE A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor PillarHugeTech 57
 {
-	Game Strife
-	ConversationID 214, -1, -1
-	Radius 24
-	Height 192
-	+Solid
-	states
-	{
-	Spawn:
-		HUGE A 4
-		HUGE BCD 5
-		Loop
-	}
+  Game Strife
+  ConversationID 214, -1, -1
+  Radius 24
+  Height 192
+  +Solid
+  states
+  {
+  Spawn:
+    HUGE A 4
+    HUGE BCD 5
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor PillarAlienPower 227
 {
-	Game Strife
-	ConversationID 215, -1, -1
-	Radius 24
-	Height 192
-	+Solid
-	ActiveSound "ambient/alien2"
-	states
-	{
-	Spawn:
-		APOW A 4 A_FLoopActiveSound
-		Loop
-	}
+  Game Strife
+  ConversationID 215, -1, -1
+  Radius 24
+  Height 192
+  +Solid
+  ActiveSound "ambient/alien2"
+  states
+  {
+  Spawn:
+    APOW A 4 A_FLoopActiveSound
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SStalactiteBig 98
 {
-	Game Strife
-	ConversationID 216, -1, -1
-	Radius 16
-	Height 54
-	+Solid
-	+SpawnCeiling
-	+NoGravity
-	states
-	{
-	Spawn:
-		STLG C -1
-		Stop
-	}
+  Game Strife
+  ConversationID 216, -1, -1
+  Radius 16
+  Height 54
+  +Solid
+  +SpawnCeiling
+  +NoGravity
+  states
+  {
+  Spawn:
+    STLG C -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SStalactiteSmall 161
 {
-	Game Strife
-	ConversationID 217, -1, -1
-	Radius 16
-	Height 40
-	+Solid
-	+SpawnCeiling
-	+NoGravity
-	states
-	{
-	Spawn:
-		STLG A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 217, -1, -1
+  Radius 16
+  Height 40
+  +Solid
+  +SpawnCeiling
+  +NoGravity
+  states
+  {
+  Spawn:
+    STLG A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SStalagmiteBig 160
 {
-	Game Strife
-	ConversationID 218, -1, -1
-	Radius 16
-	Height 40
-	+Solid
-	states
-	{
-	Spawn:
-		STLG B -1
-		Stop
-	}
+  Game Strife
+  ConversationID 218, -1, -1
+  Radius 16
+  Height 40
+  +Solid
+  states
+  {
+  Spawn:
+    STLG B -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor CavePillarTop 159
 {
-	Game Strife
-	ConversationID 219, -1, -1
-	Radius 16
-	Height 128
-	+Solid
-	+SpawnCeiling
-	+NoGravity
-	states
-	{
-	Spawn:
-		STLG D -1
-		Stop
-	}
+  Game Strife
+  ConversationID 219, -1, -1
+  Radius 16
+  Height 128
+  +Solid
+  +SpawnCeiling
+  +NoGravity
+  states
+  {
+  Spawn:
+    STLG D -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor CavePillarBottom 162
 {
-	Game Strife
-	ConversationID 220, -1, -1
-	Radius 16
-	Height 128
-	+Solid
-	states
-	{
-	Spawn:
-		STLG E -1
-		Stop
-	}
+  Game Strife
+  ConversationID 220, -1, -1
+  Radius 16
+  Height 128
+  +Solid
+  states
+  {
+  Spawn:
+    STLG E -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SStalagmiteSmall 163
 {
-	Game Strife
-	ConversationID 221, -1, -1
-	Radius 16
-	Height 25
-	+Solid
-	states
-	{
-	Spawn:
-		STLG F -1
-		Stop
-	}
+  Game Strife
+  ConversationID 221, -1, -1
+  Radius 16
+  Height 25
+  +Solid
+  states
+  {
+  Spawn:
+    STLG F -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Candle 34
 {
-	Game Strife
-	ConversationID 222, -1, -1
-	states
-	{
-	Spawn:
-		KNDL A -1 Bright
-		Stop
-	}
+  Game Strife
+  ConversationID 222, -1, -1
+  states
+  {
+  Spawn:
+    KNDL A -1 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor StrifeCandelabra 35
 {
-	Game Strife
-	ConversationID 223, -1, -1
-	Radius 16
-	Height 40
-	+Solid
-	states
-	{
-	Spawn:
-		CLBR A -1 Bright
-		Stop
-	}
+  Game Strife
+  ConversationID 223, -1, -1
+  Radius 16
+  Height 40
+  +Solid
+  states
+  {
+  Spawn:
+    CLBR A -1 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor WaterDropOnFloor 103
 {
-	Game Strife
-	ConversationID 224, -1, -1
-	+NoBlockmap
-	ActiveSound "world/waterdrip"
-	states
-	{
-	Spawn:
-		DRIP A 6 A_FLoopActiveSound
-		DRIP BC 4
-		DRIP D 4 A_FLoopActiveSound
-		DRIP EF 4
-		DRIP G 4 A_FLoopActiveSound
-		DRIP H 4
-		Loop
-	}
+  Game Strife
+  ConversationID 224, -1, -1
+  +NoBlockmap
+  ActiveSound "world/waterdrip"
+  states
+  {
+  Spawn:
+    DRIP A 6 A_FLoopActiveSound
+    DRIP BC 4
+    DRIP D 4 A_FLoopActiveSound
+    DRIP EF 4
+    DRIP G 4 A_FLoopActiveSound
+    DRIP H 4
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor WaterfallSplash 104
 {
-	Game Strife
-	ConversationID 225, -1, -1
-	+NoBlockmap
-	ActiveSound "world/waterfall"
-	states
-	{
-	Spawn:
-		SPLH ABC 4
-		SPLH D 8
-		SPLH EFG 4
-		SPLH H 4 A_ActiveSound
-		Loop
-	}
+  Game Strife
+  ConversationID 225, -1, -1
+  +NoBlockmap
+  ActiveSound "world/waterfall"
+  states
+  {
+  Spawn:
+    SPLH ABC 4
+    SPLH D 8
+    SPLH EFG 4
+    SPLH H 4 A_ActiveSound
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor WaterDrip 53
 {
-	Game Strife
-	ConversationID 226, -1, -1
-	Radius 20
-	Height 1
-	+NoBlockmap
-	+SpawnCeiling
-	+NoGravity
-	states
-	{
-	Spawn:
-		CDRP A 10
-		CDRP BCD 8
-		Loop
-	}
+  Game Strife
+  ConversationID 226, -1, -1
+  Radius 20
+  Height 1
+  +NoBlockmap
+  +SpawnCeiling
+  +NoGravity
+  states
+  {
+  Spawn:
+    CDRP A 10
+    CDRP BCD 8
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor WaterFountain 112
 {
-	Game Strife
-	ConversationID 227, -1, -1
-	+NoBlockmap
-	ActiveSound "world/watersplash"
-	states
-	{
-	Spawn:
-		WTFT ABC 4
-		WTFT D 4 A_FLoopActiveSound
-		Loop
-	}
+  Game Strife
+  ConversationID 227, -1, -1
+  +NoBlockmap
+  ActiveSound "world/watersplash"
+  states
+  {
+  Spawn:
+    WTFT ABC 4
+    WTFT D 4 A_FLoopActiveSound
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor HeartsInTank 113
 {
-	Game Strife
-	ConversationID 228, -1, -1
-	Radius 16
-	Height 56
-	+Solid
-	states
-	{
-	Spawn:
-		HERT ABC 4 Bright
-		Loop
-	}
+  Game Strife
+  ConversationID 228, -1, -1
+  Radius 16
+  Height 56
+  +Solid
+  states
+  {
+  Spawn:
+    HERT ABC 4 Bright
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor TeleportSwirl 23
 {
-	Game Strife
-	ConversationID 229, -1, -1
-	RenderStyle Translucent
-	Alpha 0.333
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		TELP ABCD 3 Bright
-		Loop
-	}
+  Game Strife
+  ConversationID 229, -1, -1
+  RenderStyle Translucent
+  Alpha 0.333
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    TELP ABCD 3 Bright
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor DeadStrifePlayer 15
 {
-	Game Strife
-	ConversationID 231, -1, -1
-	states
-	{
-	Spawn:
-		PLAY P 700
-		RGIB H -1
-		Stop
-	}
+  Game Strife
+  ConversationID 231, -1, -1
+  states
+  {
+  Spawn:
+    PLAY P 700
+    RGIB H -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor DeadPeasant 18
 {
-	Game Strife
-	ConversationID 232, -1, -1
-	states
-	{
-	Spawn:
-		PEAS N -1
-		Stop
-	}
+  Game Strife
+  ConversationID 232, -1, -1
+  states
+  {
+  Spawn:
+    PEAS N -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor DeadAcolyte 21
 {
-	Game Strife
-	ConversationID 233, -1, -1
-	states
-	{
-	Spawn:
-		AGRD N -1
-		Stop
-	}
+  Game Strife
+  ConversationID 233, -1, -1
+  states
+  {
+  Spawn:
+    AGRD N -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor DeadReaver 20
 {
-	Game Strife
-	ConversationID 234, -1, -1
-	states
-	{
-	Spawn:
-		ROB1 R -1
-		Stop
-	}
+  Game Strife
+  ConversationID 234, -1, -1
+  states
+  {
+  Spawn:
+    ROB1 R -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor DeadRebel 19
 {
-	Game Strife
-	ConversationID 235, -1, -1
-	states
-	{
-	Spawn:
-		HMN1 N -1
-		Stop
-	}
+  Game Strife
+  ConversationID 235, -1, -1
+  states
+  {
+  Spawn:
+    HMN1 N -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SacrificedGuy 212
 {
-	Game Strife
-	ConversationID 236, -1, -1
-	states
-	{
-	Spawn:
-		SACR A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 236, -1, -1
+  states
+  {
+  Spawn:
+    SACR A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -816,930 +816,930 @@ actor SacrificedGuy 212
 // in a map. Pity.
 actor PileOfGuts
 {
-	Game Strife
-	ConversationID 237, -1, -1
-	states
-	{
-	Spawn:
-		DEAD A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 237, -1, -1
+  states
+  {
+  Spawn:
+    DEAD A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor StrifeBurningBarrel 70
 {
-	Game Strife
-	ConversationID 238, -1, -1
-	Radius 16
-	Height 48
-	+Solid
-	states
-	{
-	Spawn:
-		BBAR ABCD 4 Bright
-		Loop
-	}
+  Game Strife
+  ConversationID 238, -1, -1
+  Radius 16
+  Height 48
+  +Solid
+  states
+  {
+  Spawn:
+    BBAR ABCD 4 Bright
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor BurningBowl 105
 {
-	Game Strife
-	ConversationID 239, -1, -1
-	Radius 16
-	Height 16
-	+Solid
-	states
-	{
-	Spawn:
-		BOWL ABCD 4 Bright
-		Loop
-	}
+  Game Strife
+  ConversationID 239, -1, -1
+  Radius 16
+  Height 16
+  +Solid
+  states
+  {
+  Spawn:
+    BOWL ABCD 4 Bright
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor BurningBrazier 106
 {
-	Game Strife
-	ConversationID 240, -1, -1
-	Radius 10
-	Height 32
-	+Solid
-	states
-	{
-	Spawn:
-		BRAZ ABCD 4 Bright
-		Loop
-	}
+  Game Strife
+  ConversationID 240, -1, -1
+  Radius 10
+  Height 32
+  +Solid
+  states
+  {
+  Spawn:
+    BRAZ ABCD 4 Bright
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SmallTorchLit 107
 {
-	Game Strife
-	ConversationID 241, -1, -1
-	Radius 2.5
-	Height 16
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		TRHL ABCD 4 Bright
-		Loop
-	}
+  Game Strife
+  ConversationID 241, -1, -1
+  Radius 2.5
+  Height 16
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    TRHL ABCD 4 Bright
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SmallTorchUnlit 108
 {
-	Game Strife
-	ConversationID 242, -1, -1
-	Radius 0
-	Height 16
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		TRHO A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 242, -1, -1
+  Radius 0
+  Height 16
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    TRHO A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor CeilingChain 109
 {
-	Game Strife
-	ConversationID 243, -1, -1
-	Radius 20
-	Height 93
-	+NoBlockmap
-	+SpawnCeiling
-	+NoGravity
-	states
-	{
-	Spawn:
-		CHAN A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 243, -1, -1
+  Radius 20
+  Height 93
+  +NoBlockmap
+  +SpawnCeiling
+  +NoGravity
+  states
+  {
+  Spawn:
+    CHAN A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor CageLight 28
 {
-	Game Strife
-	ConversationID 244, -1, -1
-	Radius 20
-	Height 3
-	+NoBlockmap
-	+SpawnCeiling
-	+NoGravity
-	states
-	{
-	Spawn:
-		CAGE A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 244, -1, -1
+  Radius 20
+  Height 3
+  +NoBlockmap
+  +SpawnCeiling
+  +NoGravity
+  states
+  {
+  Spawn:
+    CAGE A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Statue 110
 {
-	Game Strife
-	ConversationID 245, -1, -1
-	Radius 20
-	Height 64
-	+Solid
-	states
-	{
-	Spawn:
-		STAT A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 245, -1, -1
+  Radius 20
+  Height 64
+  +Solid
+  states
+  {
+  Spawn:
+    STAT A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor StatueRuined 44
 {
-	Game Strife
-	ConversationID 246, -1, -1
-	Radius 20
-	Height 56
-	+Solid
-	states
-	{
-	Spawn:
-		DSTA A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 246, -1, -1
+  Radius 20
+  Height 56
+  +Solid
+  states
+  {
+  Spawn:
+    DSTA A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor MediumTorch 111
 {
-	Game Strife
-	ConversationID 247, -1, -1
-	Radius 4
-	Height 72
-	+Solid
-	states
-	{
-	Spawn:
-		LTRH ABCD 4 Bright
-		Loop
-	}
+  Game Strife
+  ConversationID 247, -1, -1
+  Radius 4
+  Height 72
+  +Solid
+  states
+  {
+  Spawn:
+    LTRH ABCD 4 Bright
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor OutsideLamp 43
 {
-	Game Strife
-	ConversationID 248, -1, -1
-	Radius 3
-	Height 80
-	+Solid
-	states
-	{
-	Spawn:
-		LAMP A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 248, -1, -1
+  Radius 3
+  Height 80
+  +Solid
+  states
+  {
+  Spawn:
+    LAMP A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor PoleLatern 46
 {
-	Game Strife
-	ConversationID 249, -1, -1
-	Radius 3
-	Height 80
-	+Solid
-	states
-	{
-	Spawn:
-		LANT A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 249, -1, -1
+  Radius 3
+  Height 80
+  +Solid
+  states
+  {
+  Spawn:
+    LANT A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SRock1 99
 {
-	Game Strife
-	ConversationID 250, -1, -1
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		ROK1 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 250, -1, -1
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    ROK1 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SRock2 100
 {
-	Game Strife
-	ConversationID 251, -1, -1
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		ROK2 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 251, -1, -1
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    ROK2 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SRock3 101
 {
-	Game Strife
-	ConversationID 252, -1, -1
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		ROK3 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 252, -1, -1
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    ROK3 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SRock4 102
 {
-	Game Strife
-	ConversationID 253, -1, -1
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		ROK4 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 253, -1, -1
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    ROK4 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor StickInWater 215
 {
-	Game Strife
-	ConversationID 254, -1, -1
-	+NoBlockmap
-	+FloorClip
-	ActiveSound "world/river"
-	states
-	{
-	Spawn:
-		LOGW ABCD 5 A_FLoopActiveSound
-		Loop
-	}
+  Game Strife
+  ConversationID 254, -1, -1
+  +NoBlockmap
+  +FloorClip
+  ActiveSound "world/river"
+  states
+  {
+  Spawn:
+    LOGW ABCD 5 A_FLoopActiveSound
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Rubble1 29
 {
-	Game Strife
-	ConversationID 255, -1, -1
-	+NoBlockmap
-	+NoClip
-	states
-	{
-	Spawn:
-		RUB1 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 255, -1, -1
+  +NoBlockmap
+  +NoClip
+  states
+  {
+  Spawn:
+    RUB1 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Rubble2 30
 {
-	Game Strife
-	ConversationID 256, -1, -1
-	+NoBlockmap
-	+NoClip
-	states
-	{
-	Spawn:
-		RUB2 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 256, -1, -1
+  +NoBlockmap
+  +NoClip
+  states
+  {
+  Spawn:
+    RUB2 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Rubble3 31
 {
-	Game Strife
-	ConversationID 257, -1, -1
-	+NoBlockmap
-	+NoClip
-	states
-	{
-	Spawn:
-		RUB3 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 257, -1, -1
+  +NoBlockmap
+  +NoClip
+  states
+  {
+  Spawn:
+    RUB3 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Rubble4 32
 {
-	Game Strife
-	ConversationID 258, -1, -1
-	+NoBlockmap
-	+NoClip
-	states
-	{
-	Spawn:
-		RUB4 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 258, -1, -1
+  +NoBlockmap
+  +NoClip
+  states
+  {
+  Spawn:
+    RUB4 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Rubble5 36
 {
-	Game Strife
-	ConversationID 259, -1, -1
-	+NoBlockmap
-	+NoClip
-	states
-	{
-	Spawn:
-		RUB5 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 259, -1, -1
+  +NoBlockmap
+  +NoClip
+  states
+  {
+  Spawn:
+    RUB5 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Rubble6 37
 {
-	Game Strife
-	ConversationID 260, -1, -1
-	+NoBlockmap
-	+NoClip
-	states
-	{
-	Spawn:
-		RUB6 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 260, -1, -1
+  +NoBlockmap
+  +NoClip
+  states
+  {
+  Spawn:
+    RUB6 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Rubble7 41
 {
-	Game Strife
-	ConversationID 261, -1, -1
-	+NoBlockmap
-	+NoClip
-	states
-	{
-	Spawn:
-		RUB7 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 261, -1, -1
+  +NoBlockmap
+  +NoClip
+  states
+  {
+  Spawn:
+    RUB7 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Rubble8 42
 {
-	Game Strife
-	ConversationID 262, -1, -1
-	+NoBlockmap
-	+NoClip
-	states
-	{
-	Spawn:
-		RUB8 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 262, -1, -1
+  +NoBlockmap
+  +NoClip
+  states
+  {
+  Spawn:
+    RUB8 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SurgeryCrab 117
 {
-	Game Strife
-	ConversationID 263, -1, -1
-	+Solid
-	+SpawnCeiling
-	+NoGravity
-	states
-	{
-	Spawn:
-		CRAB A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 263, -1, -1
+  +Solid
+  +SpawnCeiling
+  +NoGravity
+  states
+  {
+  Spawn:
+    CRAB A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor LargeTorch 47
 {
-	Game Strife
-	ConversationID 264, -1, -1
-	Radius 10
-	Height 72
-	+Solid
-	ActiveSound "world/smallfire"
-	states
-	{
-	Spawn:
-		LMPC ABDCE 4 Bright
-		Loop
-		// NOTE Wad has 5 frames of animation
-	}
+  Game Strife
+  ConversationID 264, -1, -1
+  Radius 10
+  Height 72
+  +Solid
+  ActiveSound "world/smallfire"
+  states
+  {
+  Spawn:
+    LMPC ABDCE 4 Bright
+    Loop
+    // NOTE Wad has 5 frames of animation
+  }
 }
 
 //------------------------------------------------------------------------------
 actor HugeTorch 50
 {
-	Game Strife
-	ConversationID 265, -1, -1
-	Radius 10
-	Height 80
-	+Solid
-	ActiveSound "world/smallfire"
-	states
-	{
-	Spawn:
-		LOGS ABCDE 4 Bright
-		Loop
-		// NOTE Wad has 5 frames of animation
-	}
+  Game Strife
+  ConversationID 265, -1, -1
+  Radius 10
+  Height 80
+  +Solid
+  ActiveSound "world/smallfire"
+  states
+  {
+  Spawn:
+    LOGS ABCDE 4 Bright
+    Loop
+    // NOTE Wad has 5 frames of animation
+  }
 }
 
 //------------------------------------------------------------------------------
 actor PalmTree 51
 {
-	Game Strife
-	ConversationID 266, -1, -1
-	Radius 15
-	Height 109
-	+Solid
-	states
-	{
-	Spawn:
-		TREE A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 266, -1, -1
+  Radius 15
+  Height 109
+  +Solid
+  states
+  {
+  Spawn:
+    TREE A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor BigTree2 202
 {
-	Game Strife
-	ConversationID 267, -1, -1
-	Radius 15
-	Height 109
-	+Solid
-	states
-	{
-	Spawn:
-		TREE B -1
-		Stop
-	}
+  Game Strife
+  ConversationID 267, -1, -1
+  Radius 15
+  Height 109
+  +Solid
+  states
+  {
+  Spawn:
+    TREE B -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor PottedTree 203
 {
-	Game Strife
-	ConversationID 268, -1, -1
-	Radius 15
-	Height 64
-	+Solid
-	states
-	{
-	Spawn:
-		TREE C -1
-		Stop
-	}
+  Game Strife
+  ConversationID 268, -1, -1
+  Radius 15
+  Height 64
+  +Solid
+  states
+  {
+  Spawn:
+    TREE C -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor TreeStub 33
 {
-	Game Strife
-	ConversationID 269, -1, -1
-	Radius 15
-	Height 80
-	+Solid
-	states
-	{
-	Spawn:
-		TRET A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 269, -1, -1
+  Radius 15
+  Height 80
+  +Solid
+  states
+  {
+  Spawn:
+    TRET A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor ShortBush 60
 {
-	Game Strife
-	ConversationID 270, -1, -1
-	Radius 15
-	Height 40
-	+Solid
-	states
-	{
-	Spawn:
-		BUSH A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 270, -1, -1
+  Radius 15
+  Height 40
+  +Solid
+  states
+  {
+  Spawn:
+    BUSH A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor TallBush 62
 {
-	Game Strife
-	ConversationID 271, -1, -1
-	Radius 20
-	Height 64
-	+Solid
-	states
-	{
-	Spawn:
-		SHRB A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 271, -1, -1
+  Radius 20
+  Height 64
+  +Solid
+  states
+  {
+  Spawn:
+    SHRB A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor ChimneyStack 63
 {
-	Game Strife
-	ConversationID 272, -1, -1
-	Radius 20
-	Height 64
-	+Solid
-	states
-	{
-	Spawn:
-		STAK A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 272, -1, -1
+  Radius 20
+  Height 64
+  +Solid
+  states
+  {
+  Spawn:
+    STAK A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor BarricadeColumn 69
 {
-	Game Strife
-	ConversationID 273, -1, -1
-	Radius 16
-	Height 128
-	+Solid
-	states
-	{
-	Spawn:
-		BARC A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 273, -1, -1
+  Radius 16
+  Height 128
+  +Solid
+  states
+  {
+  Spawn:
+    BARC A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Pot 165
 {
-	Game Strife
-	ConversationID 274, -1, -1
-	Radius 12
-	Height 24
-	+Solid
-	states
-	{
-	Spawn:
-		VAZE A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 274, -1, -1
+  Radius 12
+  Height 24
+  +Solid
+  states
+  {
+  Spawn:
+    VAZE A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Pitcher 188
 {
-	Game Strife
-	ConversationID 275, -1, -1
-	Radius 12
-	Height 32
-	+Solid
-	states
-	{
-	Spawn:
-		VAZE B -1
-		Stop
-	}
+  Game Strife
+  ConversationID 275, -1, -1
+  Radius 12
+  Height 32
+  +Solid
+  states
+  {
+  Spawn:
+    VAZE B -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Stool 189
 {
-	Game Strife
-	ConversationID 276, -1, -1
-	Radius 6
-	Height 24
-	+Solid
-	states
-	{
-	Spawn:
-		STOL A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 276, -1, -1
+  Radius 6
+  Height 24
+  +Solid
+  states
+  {
+  Spawn:
+    STOL A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor MetalPot 190
 {
-	Game Strife
-	ConversationID 277, -1, -1
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		MPOT A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 277, -1, -1
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    MPOT A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Tub 191
 {
-	Game Strife
-	ConversationID 278, -1, -1
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		TUB1 A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 278, -1, -1
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    TUB1 A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Anvil 194
 {
-	Game Strife
-	ConversationID 279, -1, -1
-	Radius 16
-	Height 32
-	+Solid
-	states
-	{
-	Spawn:
-		ANVL A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 279, -1, -1
+  Radius 16
+  Height 32
+  +Solid
+  states
+  {
+  Spawn:
+    ANVL A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor TechLampSilver 196
 {
-	Game Strife
-	ConversationID 280, -1, -1
-	Radius 11
-	Height 64
-	+Solid
-	states
-	{
-	Spawn:
-		TECH A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 280, -1, -1
+  Radius 11
+  Height 64
+  +Solid
+  states
+  {
+  Spawn:
+    TECH A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor TechLampBrass 197
 {
-	Game Strife
-	ConversationID 281, -1, -1
-	Radius 8
-	Height 64
-	+Solid
-	states
-	{
-	Spawn:
-		TECH B -1
-		Stop
-	}
+  Game Strife
+  ConversationID 281, -1, -1
+  Radius 8
+  Height 64
+  +Solid
+  states
+  {
+  Spawn:
+    TECH B -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Tray 68
 {
-	Game Strife
-	ConversationID 282, -1, -1
-	Radius 24
-	Height 40
-	+Solid
-	states
-	{
-	Spawn:
-		TRAY A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 282, -1, -1
+  Radius 24
+  Height 40
+  +Solid
+  states
+  {
+  Spawn:
+    TRAY A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor AmmoFiller 228
 {
-	Game Strife
-	ConversationID 283, -1, -1
-	Radius 12
-	Height 24
-	+Solid
-	states
-	{
-	Spawn:
-		AFED A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 283, -1, -1
+  Radius 12
+  Height 24
+  +Solid
+  states
+  {
+  Spawn:
+    AFED A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor SigilBanner 216
 {
-	Game Strife
-	ConversationID 284, -1, -1
-	Radius 24
-	Height 96
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		SBAN A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 284, -1, -1
+  Radius 24
+  Height 96
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    SBAN A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor RebelBoots 217
 {
-	Game Strife
-	ConversationID 285, -1, -1
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		BOTR A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 285, -1, -1
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    BOTR A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor RebelHelmet 218
 {
-	Game Strife
-	ConversationID 286, -1, -1
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		HATR A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 286, -1, -1
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    HATR A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor RebelShirt 219
 {
-	Game Strife
-	ConversationID 287, -1, -1
-	+NoBlockmap
-	states
-	{
-	Spawn:
-		TOPR A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 287, -1, -1
+  +NoBlockmap
+  states
+  {
+  Spawn:
+    TOPR A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor AlienBubbleColumn 221
 {
-	Game Strife
-	ConversationID 290, -1, -1
-	Radius 16
-	Height 128
-	+Solid
-	ActiveSound "ambient/alien5"
-	states
-	{
-	Spawn:
-		BUBB A 4 A_FLoopActiveSound
-		Loop
-	}
+  Game Strife
+  ConversationID 290, -1, -1
+  Radius 16
+  Height 128
+  +Solid
+  ActiveSound "ambient/alien5"
+  states
+  {
+  Spawn:
+    BUBB A 4 A_FLoopActiveSound
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor AlienFloorBubble 222
 {
-	Game Strife
-	ConversationID 291, -1, -1
-	Radius 16
-	Height 72
-	+Solid
-	ActiveSound "ambient/alien6"
-	states
-	{
-	Spawn:
-		BUBF A 4 A_FLoopActiveSound
-		Loop
-	}
+  Game Strife
+  ConversationID 291, -1, -1
+  Radius 16
+  Height 72
+  +Solid
+  ActiveSound "ambient/alien6"
+  states
+  {
+  Spawn:
+    BUBF A 4 A_FLoopActiveSound
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor AlienCeilingBubble 223
 {
-	Game Strife
-	ConversationID 292, -1, -1
-	Radius 16
-	Height 72
-	+Solid
-	+SpawnCeiling
-	+NoGravity
-	ActiveSound "ambient/alien4"
-	states
-	{
-	Spawn:
-		BUBC A 4 A_FLoopActiveSound
-		Loop
-	}
+  Game Strife
+  ConversationID 292, -1, -1
+  Radius 16
+  Height 72
+  +Solid
+  +SpawnCeiling
+  +NoGravity
+  ActiveSound "ambient/alien4"
+  states
+  {
+  Spawn:
+    BUBC A 4 A_FLoopActiveSound
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor AlienAspClimber 224
 {
-	Game Strife
-	ConversationID 293, -1, -1
-	Radius 16
-	Height 128
-	+Solid
-	ActiveSound "ambient/alien3"
-	states
-	{
-	Spawn:
-		ASPR A 4 A_FLoopActiveSound
-		Loop
-	}
+  Game Strife
+  ConversationID 293, -1, -1
+  Radius 16
+  Height 128
+  +Solid
+  ActiveSound "ambient/alien3"
+  states
+  {
+  Spawn:
+    ASPR A 4 A_FLoopActiveSound
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor AlienSpiderLight 225
 {
-	Game Strife
-	ConversationID 294, -1, -1
-	Radius 32
-	Height 56
-	+Solid
-	ActiveSound "ambient/alien1"
-	states
-	{
-	Spawn:
-		SPDL ABC 5 A_FLoopActiveSound
-		Loop
-	}
+  Game Strife
+  ConversationID 294, -1, -1
+  Radius 32
+  Height 56
+  +Solid
+  ActiveSound "ambient/alien1"
+  states
+  {
+  Spawn:
+    SPDL ABC 5 A_FLoopActiveSound
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Junk : Meat;
 {
-	states
-	{
-	Spawn:
-		JUNK A 700
-		Stop
-		JUNK B 700
-		Stop
-		JUNK C 700
-		Stop
-		JUNK D 700
-		Stop
-		JUNK E 700
-		Stop
-		JUNK F 700
-		Stop
-		JUNK G 700
-		Stop
-		JUNK H 700
-		Stop
-		JUNK I 700
-		Stop
-		JUNK J 700
-		Stop
-		JUNK K 700
-		Stop
-		JUNK L 700
-		Stop
-		JUNK M 700
-		Stop
-		JUNK N 700
-		Stop
-		JUNK O 700
-		Stop
-		JUNK P 700
-		Stop
-		JUNK Q 700
-		Stop
-		JUNK R 700
-		Stop
-		JUNK S 700
-		Stop
-		JUNK T 700
-		Stop
-	}
+  states
+  {
+  Spawn:
+    JUNK A 700
+    Stop
+    JUNK B 700
+    Stop
+    JUNK C 700
+    Stop
+    JUNK D 700
+    Stop
+    JUNK E 700
+    Stop
+    JUNK F 700
+    Stop
+    JUNK G 700
+    Stop
+    JUNK H 700
+    Stop
+    JUNK I 700
+    Stop
+    JUNK J 700
+    Stop
+    JUNK K 700
+    Stop
+    JUNK L 700
+    Stop
+    JUNK M 700
+    Stop
+    JUNK N 700
+    Stop
+    JUNK O 700
+    Stop
+    JUNK P 700
+    Stop
+    JUNK Q 700
+    Stop
+    JUNK R 700
+    Stop
+    JUNK S 700
+    Stop
+    JUNK T 700
+    Stop
+  }
 }

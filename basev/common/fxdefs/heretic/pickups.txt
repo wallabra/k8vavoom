@@ -1,51 +1,51 @@
 //------------------------------------------------------------------------------
 pointlight KeyYellow
 {
-	colour 1 1 0
-	radius 66
-	offset 0 0 1
+  colour 1 1 0
+  radius 66
+  offset 0 0 1
 }
 
 class KeyYellow
 {
-	frame CKYY { light KeyYellow }
+  frame CKYY { light KeyYellow }
 }
 
 //------------------------------------------------------------------------------
 pointlight KeyGreen
 {
-	colour 0 1 0
-	radius 66
-	offset 0 0 1
+  colour 0 1 0
+  radius 66
+  offset 0 0 1
 }
 
 class KeyGreen
 {
-	frame AKYY { light KeyGreen }
+  frame AKYY { light KeyGreen }
 }
 
 //------------------------------------------------------------------------------
 pointlight KeyBlue
 {
-	colour 0 0 1
-	radius 66
-	offset 0 0 1
+  colour 0 0 1
+  radius 66
+  offset 0 0 1
 }
 
 class KeyBlue
 {
-	frame BKYY { light KeyBlue }
+  frame BKYY { light KeyBlue }
 }
 
 //------------------------------------------------------------------------------
 pointlight ArtiInvisibility
 {
-	colour 0.4 0.5 0.4
-	radius 86
-	offset 0 0 1
+  colour 0.4 0.5 0.4
+  radius 86
+  offset 0 0 1
 }
 
 class ArtiInvisibility
 {
-	frame INVS { light ArtiInvisibility }
+  frame INVS { light ArtiInvisibility }
 }

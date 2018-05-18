@@ -35,10 +35,10 @@ BotPlayer Bot;
 
 void CreateBot()
 {
-	Bot = BotPlayer(SpawnObject(BotPlayer));
-	Bot.player = self;
-	Bot.OnBeginPlay();
-	bAutoAim = true;
+  Bot = BotPlayer(SpawnObject(BotPlayer));
+  Bot.player = self;
+  Bot.OnBeginPlay();
+  bAutoAim = true;
 }
 
 //==========================================================================
@@ -49,11 +49,11 @@ void CreateBot()
 
 void DestroyBot()
 {
-	if (Bot != none)
-	{
-		Bot.Destroy();
-		Bot = none;
-	}
+  if (Bot != none)
+  {
+    Bot.Destroy();
+    Bot = none;
+  }
 }
 
 //==========================================================================
@@ -64,32 +64,32 @@ void DestroyBot()
 
 void UserinfoChanged()
 {
-	if (!bSpawned)
-	{
-		return;
-	}
-	SetClientModel();
+  if (!bSpawned)
+  {
+    return;
+  }
+  SetClientModel();
 }
 
 //==========================================================================
 //
-//	SetClientModel
+//  SetClientModel
 //
 //==========================================================================
 
 void SetClientModel()
 {
-	string model;
+  string model;
 
-	model = Info_ValueForKey(UserInfo, "model");
-	if (!model)
-	{
-		MO.bFixedModel = false;
-		return;
-	}
+  model = Info_ValueForKey(UserInfo, "model");
+  if (!model)
+  {
+    MO.bFixedModel = false;
+    return;
+  }
 
-	MO.bFixedModel = true;
-	MO.FixedModelName = va("players/%s/player.xml", model);
+  MO.bFixedModel = true;
+  MO.FixedModelName = va("players/%s/player.xml", model);
 }
 
 //==========================================================================
@@ -100,7 +100,7 @@ void SetClientModel()
 
 void BotOnSpawn()
 {
-	Bot.OnSpawn();
+  Bot.OnSpawn();
 }
 
 //==========================================================================
@@ -111,11 +111,11 @@ void BotOnSpawn()
 
 void DoClearPlayer()
 {
-	BotPlayer b;
+  BotPlayer b;
 
-	b = Bot;
-	::DoClearPlayer();
-	Bot = b;
+  b = Bot;
+  ::DoClearPlayer();
+  Bot = b;
 }
 
 //==========================================================================
@@ -126,29 +126,29 @@ void DoClearPlayer()
 
 int GetRebornHealth()
 {
-	return MainGameInfo(Level.Game).INITIAL_HEALTH;
+  return MainGameInfo(Level.Game).INITIAL_HEALTH;
 }
 
 //==========================================================================
 //
-//	GotAmmo
+//  GotAmmo
 //
 //==========================================================================
 
 void GotAmmo(Ammo NewAmmo)
 {
-	// We were down to zero,
-	// so select a new weapon.
-	// Preferences are not user selectable.
-	if (!ReadyWeapon || ReadyWeapon.bWimpyWeapon)
-	{
-		Weapon Best = BestWeapon(class<Ammo>(NewAmmo.Class));
-		if (Best && (!ReadyWeapon ||
-			Best.SelectionOrder < ReadyWeapon.SelectionOrder))
-		{
-			PendingWeapon = Best;
-		}
-	}
+  // We were down to zero,
+  // so select a new weapon.
+  // Preferences are not user selectable.
+  if (!ReadyWeapon || ReadyWeapon.bWimpyWeapon)
+  {
+    Weapon Best = BestWeapon(class<Ammo>(NewAmmo.Class));
+    if (Best && (!ReadyWeapon ||
+      Best.SelectionOrder < ReadyWeapon.SelectionOrder))
+    {
+      PendingWeapon = Best;
+    }
+  }
 }
 
 //==========================================================================
@@ -159,48 +159,48 @@ void GotAmmo(Ammo NewAmmo)
 
 void PlayerImpulse()
 {
-	int impulse;
+  int impulse;
 
-	impulse = Impulse;
-	Impulse = 0;
+  impulse = Impulse;
+  Impulse = 0;
 
-	if (impulse <= LineSpecialGameInfo::NUM_WEAPON_SLOTS)
-	{
-		ChangeWeapon(impulse);
-	}
-	else if (impulse == 13)
-	{
-		InventoryLeft();
-	}
-	else if (impulse == 14)
-	{
-		InventoryRight();
-	}
-	else if (impulse == 15)
-	{
-		InventoryUse();
-	}
-	else if (impulse == 16)
-	{
-		//  Suicide
-		Actor(MO).Damage(none, none, 10000);
-	}
-	else if (impulse == 17)
-	{
-		PrevWeapon();
-	}
-	else if (impulse == 18)
-	{
-		NextWeapon();
-	}
-	else if (impulse == 56)
-	{
-		bReloadQueued = true;
-	}
-	else if (impulse >= 200 && impulse <= 205)
-	{
-		LineSpecialLevelInfo(Level).ConChoiceImpulse(impulse - 200);
-	}
+  if (impulse <= LineSpecialGameInfo::NUM_WEAPON_SLOTS)
+  {
+    ChangeWeapon(impulse);
+  }
+  else if (impulse == 13)
+  {
+    InventoryLeft();
+  }
+  else if (impulse == 14)
+  {
+    InventoryRight();
+  }
+  else if (impulse == 15)
+  {
+    InventoryUse();
+  }
+  else if (impulse == 16)
+  {
+    //  Suicide
+    Actor(MO).Damage(none, none, 10000);
+  }
+  else if (impulse == 17)
+  {
+    PrevWeapon();
+  }
+  else if (impulse == 18)
+  {
+    NextWeapon();
+  }
+  else if (impulse == 56)
+  {
+    bReloadQueued = true;
+  }
+  else if (impulse >= 200 && impulse <= 205)
+  {
+    LineSpecialLevelInfo(Level).ConChoiceImpulse(impulse - 200);
+  }
 }
 
 //==========================================================================
@@ -211,7 +211,7 @@ void PlayerImpulse()
 
 void BotTick(float deltaTime)
 {
-	Bot.BotTick(deltaTime);
+  Bot.BotTick(deltaTime);
 }
 
 //==========================================================================
@@ -221,201 +221,201 @@ void BotTick(float deltaTime)
 //==========================================================================
 
 const int
-	GIMME_INVULNERABILITY	= 0x00040000,
-	GIMME_STRENGTH			= 0x00080000,
-	GIMME_INVISIBILITY		= 0x00100000,
-	GIMME_IRONFEET			= 0x00200000,
-	GIMME_ALLMAP			= 0x00400000,
-	GIMME_INFRARED			= 0x00800000,
-	GIMME_HEALTH			= 0x01000000,
-	GIMME_HEALTH2			= 0x02000000,
-	GIMME_ARMOR				= 0x04000000,
-	GIMME_ARMOR2			= 0x08000000,
-	GIMME_KEYS				= 0x0003f000,
-	GIMME_POWERS			= 0x00fc0000,
-	GIMME_ALL				= 0xffffffff;
+  GIMME_INVULNERABILITY = 0x00040000,
+  GIMME_STRENGTH      = 0x00080000,
+  GIMME_INVISIBILITY    = 0x00100000,
+  GIMME_IRONFEET      = 0x00200000,
+  GIMME_ALLMAP      = 0x00400000,
+  GIMME_INFRARED      = 0x00800000,
+  GIMME_HEALTH      = 0x01000000,
+  GIMME_HEALTH2     = 0x02000000,
+  GIMME_ARMOR       = 0x04000000,
+  GIMME_ARMOR2      = 0x08000000,
+  GIMME_KEYS        = 0x0003f000,
+  GIMME_POWERS      = 0x00fc0000,
+  GIMME_ALL       = 0xffffffff;
 
 void Cheat_Gimme()
 {
-	int					i;
-	int					i1;
-	class<Inventory>	Cls;
+  int         i;
+  int         i1;
+  class<Inventory>  Cls;
 
-	i1 = 0;
-	// All
-	if (Cmd_CheckParm("All"))
-		i1 |= GIMME_ALL;
+  i1 = 0;
+  // All
+  if (Cmd_CheckParm("All"))
+    i1 |= GIMME_ALL;
 
-	// Powers
-	if (Cmd_CheckParm("Powers"))
-		i1 |= GIMME_POWERS;
-	if (Cmd_CheckParm("Invulnerability") || Cmd_CheckParm("Invul"))
-		i1 |= GIMME_INVULNERABILITY;
-	if (Cmd_CheckParm("Bersek"))
-		i1 |= GIMME_STRENGTH;
-	if (Cmd_CheckParm("Invisibility") || Cmd_CheckParm("Invis"))
-		i1 |= GIMME_INVISIBILITY;
-	if (Cmd_CheckParm("Suit"))
-		i1 |= GIMME_IRONFEET;
-	if (Cmd_CheckParm("AllMap"))
-		i1 |= GIMME_ALLMAP;
-	if (Cmd_CheckParm("LiteAmp"))
-		i1 |= GIMME_INFRARED;
+  // Powers
+  if (Cmd_CheckParm("Powers"))
+    i1 |= GIMME_POWERS;
+  if (Cmd_CheckParm("Invulnerability") || Cmd_CheckParm("Invul"))
+    i1 |= GIMME_INVULNERABILITY;
+  if (Cmd_CheckParm("Bersek"))
+    i1 |= GIMME_STRENGTH;
+  if (Cmd_CheckParm("Invisibility") || Cmd_CheckParm("Invis"))
+    i1 |= GIMME_INVISIBILITY;
+  if (Cmd_CheckParm("Suit"))
+    i1 |= GIMME_IRONFEET;
+  if (Cmd_CheckParm("AllMap"))
+    i1 |= GIMME_ALLMAP;
+  if (Cmd_CheckParm("LiteAmp"))
+    i1 |= GIMME_INFRARED;
 
-	// Health
-	if (Cmd_CheckParm("Health"))
-		i1 |= GIMME_HEALTH;
-	if (Cmd_CheckParm("Health2"))
-		i1 |= GIMME_HEALTH2;
+  // Health
+  if (Cmd_CheckParm("Health"))
+    i1 |= GIMME_HEALTH;
+  if (Cmd_CheckParm("Health2"))
+    i1 |= GIMME_HEALTH2;
 
-	// Armor
-	if (Cmd_CheckParm("Armor"))
-		i1 |= GIMME_ARMOR;
-	if (Cmd_CheckParm("Armor2"))
-		i1 |= GIMME_ARMOR2;
+  // Armor
+  if (Cmd_CheckParm("Armor"))
+    i1 |= GIMME_ARMOR;
+  if (Cmd_CheckParm("Armor2"))
+    i1 |= GIMME_ARMOR2;
 
-	// Weapons
-	if (Cmd_CheckParm("Weapons") || Cmd_CheckParm("All"))
-	{
-		foreach AllClasses(Weapon, Cls)
-		{
-			if (!FindClassState(Cls, 'Ready'))
-			{
-				//	An abstract base class.
-				continue;
-			}
-			Weapon Wpn = Weapon(Level.Spawn(Cls,,,, false));
-			Wpn.AmmoGive1 = 0;
-			Wpn.AmmoGive2 = 0;
-			if (!Wpn.TryPickup(EntityEx(MO)))
-			{
-				Wpn.Destroy();
-			}
-		}
-	}
+  // Weapons
+  if (Cmd_CheckParm("Weapons") || Cmd_CheckParm("All"))
+  {
+    foreach AllClasses(Weapon, Cls)
+    {
+      if (!FindClassState(Cls, 'Ready'))
+      {
+        //  An abstract base class.
+        continue;
+      }
+      Weapon Wpn = Weapon(Level.Spawn(Cls,,,, false));
+      Wpn.AmmoGive1 = 0;
+      Wpn.AmmoGive2 = 0;
+      if (!Wpn.TryPickup(EntityEx(MO)))
+      {
+        Wpn.Destroy();
+      }
+    }
+  }
 
-	// Backpack
-	if (Cmd_CheckParm("Backpack") || Cmd_CheckParm("All"))
-	{
-		BackpackItem Pack = Level.Spawn(Backpack,,,, false);
-		Pack.bDropped = true;
-		if (!Pack.TryPickup(EntityEx(MO)))
-		{
-			Pack.Destroy();
-		}
-	}
+  // Backpack
+  if (Cmd_CheckParm("Backpack") || Cmd_CheckParm("All"))
+  {
+    BackpackItem Pack = Level.Spawn(Backpack,,,, false);
+    Pack.bDropped = true;
+    if (!Pack.TryPickup(EntityEx(MO)))
+    {
+      Pack.Destroy();
+    }
+  }
 
-	// Ammo
-	if (Cmd_CheckParm("Ammo") || Cmd_CheckParm("All"))
-	{
-		foreach AllClasses(Ammo, Cls)
-		{
-			//	Only direct descendants.
-			if (GetClassParent(Cls) != Ammo)
-			{
-				continue;
-			}
-			Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
-			if (!AmmoItem)
-			{
-				AmmoItem = Level.Spawn(Cls,,,, false);
-				if (!AmmoItem.TryPickup(EntityEx(MO)))
-				{
-					AmmoItem.Destroy();
-					AmmoItem = none;
-				}
-			}
-			if (AmmoItem)
-			{
-				AmmoItem.Amount = AmmoItem.MaxAmount;
-			}
-		}
-	}
+  // Ammo
+  if (Cmd_CheckParm("Ammo") || Cmd_CheckParm("All"))
+  {
+    foreach AllClasses(Ammo, Cls)
+    {
+      //  Only direct descendants.
+      if (GetClassParent(Cls) != Ammo)
+      {
+        continue;
+      }
+      Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
+      if (!AmmoItem)
+      {
+        AmmoItem = Level.Spawn(Cls,,,, false);
+        if (!AmmoItem.TryPickup(EntityEx(MO)))
+        {
+          AmmoItem.Destroy();
+          AmmoItem = none;
+        }
+      }
+      if (AmmoItem)
+      {
+        AmmoItem.Amount = AmmoItem.MaxAmount;
+      }
+    }
+  }
 
-	// Keys
-	if (Cmd_CheckParm("Keys") || Cmd_CheckParm("All"))
-	{
-		foreach AllClasses(Key, Cls)
-		{
-			if (!FindClassState(Cls, 'Spawn'))
-			{
-				//	Abstract class
-				continue;
-			}
-			EntityEx(MO).GiveInventoryType(Cls);
-		}
-	}
+  // Keys
+  if (Cmd_CheckParm("Keys") || Cmd_CheckParm("All"))
+  {
+    foreach AllClasses(Key, Cls)
+    {
+      if (!FindClassState(Cls, 'Spawn'))
+      {
+        //  Abstract class
+        continue;
+      }
+      EntityEx(MO).GiveInventoryType(Cls);
+    }
+  }
 
-	// Powers
-	if (i1 & GIMME_INVULNERABILITY)
-		EntityEx(MO).GiveInventoryType(InvulnerabilitySphere);
-	if (i1 & GIMME_STRENGTH)
-		EntityEx(MO).GiveInventoryType(PowerStrength);
-	if (i1 & GIMME_INVISIBILITY)
-		EntityEx(MO).GiveInventoryType(PowerInvisibility);
-	if (i1 & GIMME_IRONFEET)
-		EntityEx(MO).GiveInventoryType(PowerIronFeet);
-	if (i1 & GIMME_INFRARED)
-		EntityEx(MO).GiveInventoryType(PowerLightAmp);
+  // Powers
+  if (i1 & GIMME_INVULNERABILITY)
+    EntityEx(MO).GiveInventoryType(InvulnerabilitySphere);
+  if (i1 & GIMME_STRENGTH)
+    EntityEx(MO).GiveInventoryType(PowerStrength);
+  if (i1 & GIMME_INVISIBILITY)
+    EntityEx(MO).GiveInventoryType(PowerInvisibility);
+  if (i1 & GIMME_IRONFEET)
+    EntityEx(MO).GiveInventoryType(PowerIronFeet);
+  if (i1 & GIMME_INFRARED)
+    EntityEx(MO).GiveInventoryType(PowerLightAmp);
 
-	//  Items
-	if (i1 & GIMME_ALLMAP)
-		EntityEx(MO).GiveInventoryType(Allmap);
+  //  Items
+  if (i1 & GIMME_ALLMAP)
+    EntityEx(MO).GiveInventoryType(Allmap);
 
-	// Health
-	if ((i1 & GIMME_HEALTH) && (Health < 100))
-	{
-		Health = 100;
-		MO.Health = 100;
-	}
-	if (i1 & GIMME_HEALTH2)
-	{
-		Health = 200;
-		MO.Health = 200;
-	}
+  // Health
+  if ((i1 & GIMME_HEALTH) && (Health < 100))
+  {
+    Health = 100;
+    MO.Health = 100;
+  }
+  if (i1 & GIMME_HEALTH2)
+  {
+    Health = 200;
+    MO.Health = 200;
+  }
 
-	// Armor
-	if (i1 & GIMME_ARMOR)
-	{
-		EntityEx(MO).GiveInventoryType(GreenArmor);
-	}
-	if (i1 & GIMME_ARMOR2)
-	{
-		EntityEx(MO).GiveInventoryType(BlueArmor);
-	}
-	cprint("YOU GOT IT");
+  // Armor
+  if (i1 & GIMME_ARMOR)
+  {
+    EntityEx(MO).GiveInventoryType(GreenArmor);
+  }
+  if (i1 & GIMME_ARMOR2)
+  {
+    EntityEx(MO).GiveInventoryType(BlueArmor);
+  }
+  cprint("YOU GOT IT");
 }
 
 //==========================================================================
 //
-//	KilledActor
+//  KilledActor
 //
 //==========================================================================
 
 void KilledActor(EntityEx Victim)
 {
-	// Check for frag changes
-	if (Victim.bIsPlayer)
-	{
-		if (bIsBot)
-		{
-			Bot.Killed(Victim);
-		}
+  // Check for frag changes
+  if (Victim.bIsPlayer)
+  {
+    if (bIsBot)
+    {
+      Bot.Killed(Victim);
+    }
 
-		if (Victim.Player.bIsBot)
-		{
-			Player(Victim.Player).Bot.Died(EntityEx(MO));
-		}
+    if (Victim.Player.bIsBot)
+    {
+      Player(Victim.Player).Bot.Died(EntityEx(MO));
+    }
 
-		if (MO == Victim)
-		{
-			Frags--;
-		}
-		else
-		{
-			Frags++;
-		}
-	}
+    if (MO == Victim)
+    {
+      Frags--;
+    }
+    else
+    {
+      Frags++;
+    }
+  }
 }
 
 defaultproperties

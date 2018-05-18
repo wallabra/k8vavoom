@@ -1,217 +1,217 @@
 //------------------------------------------------------------------------------
 actor FireDemon 10060
 {
-	Game Hexen
-	SpawnID 5
-	Health 80
-	Radius 20
-	Height 68
-	Mass 75
-	Speed 13
-	PainChance 1
-	Damage 1
-	Monster
-	+FloorClip
-	+Telestomp
-	+NoGravity
-	+DropOff
-	+Float
-	+Invulnerable
-	SeeSound "FireDemonSpawn"
-	ActiveSound "FireDemonActive"
-	PainSound "FireDemonPain"
-	DeathSound "FireDemonDeath"
-	Obituary "$ob_firedemon"
+  Game Hexen
+  SpawnID 5
+  Health 80
+  Radius 20
+  Height 68
+  Mass 75
+  Speed 13
+  PainChance 1
+  Damage 1
+  Monster
+  +FloorClip
+  +Telestomp
+  +NoGravity
+  +DropOff
+  +Float
+  +Invulnerable
+  SeeSound "FireDemonSpawn"
+  ActiveSound "FireDemonActive"
+  PainSound "FireDemonPain"
+  DeathSound "FireDemonDeath"
+  Obituary "$ob_firedemon"
 
-	action native A_FiredRocks();
-	action native A_FiredChase();
-	action native A_FiredAttack();
-	action native A_FiredSplotch();
+  action native A_FiredRocks();
+  action native A_FiredChase();
+  action native A_FiredAttack();
+  action native A_FiredSplotch();
 
-	states
-	{
-	Spawn:
-		FDMN X 5 Bright
-		FDMN EFG 10 Bright A_Look
-		Goto Spawn+1
-	See:
-		FDMN E 8 Bright
-		FDMN F 6 Bright
-		FDMN G 5 Bright
-		FDMN F 8 Bright
-		FDMN E 6 Bright
-		FDMN F 7 Bright A_FiredRocks
-		FDMN HI 5 Bright
-		FDMN J 5 Bright A_UnSetInvulnerable
-		FDMN ABC 5 Bright A_FiredChase
-		Goto See+9
-	Pain:
-		FDMN D 6 Bright A_Pain
-		Goto See+9
-	Missile:
-		FDMN K 3 Bright A_FaceTarget
-		FDMN KKK 5 Bright A_FiredAttack
-		Goto See+9
-	Death:
-		FDMN D 4 Bright A_FaceTarget
-		FDMN L 4 Bright A_Scream
-		FDMN L 4 Bright A_NoBlocking
-		FDMN L 200 Bright
-		Goto Crash
-	XDeath:
-	Crash:
-		FDMN M 5 A_FaceTarget
-		FDMN N 5 A_NoBlocking
-		FDMN O 5 A_FiredSplotch
-		Stop
-	Ice:
-		FDMN R 5 A_FreezeDeath
-		FDMN R 1 A_FreezeDeathChunks
-		Wait
-	}
+  states
+  {
+  Spawn:
+    FDMN X 5 Bright
+    FDMN EFG 10 Bright A_Look
+    Goto Spawn+1
+  See:
+    FDMN E 8 Bright
+    FDMN F 6 Bright
+    FDMN G 5 Bright
+    FDMN F 8 Bright
+    FDMN E 6 Bright
+    FDMN F 7 Bright A_FiredRocks
+    FDMN HI 5 Bright
+    FDMN J 5 Bright A_UnSetInvulnerable
+    FDMN ABC 5 Bright A_FiredChase
+    Goto See+9
+  Pain:
+    FDMN D 6 Bright A_Pain
+    Goto See+9
+  Missile:
+    FDMN K 3 Bright A_FaceTarget
+    FDMN KKK 5 Bright A_FiredAttack
+    Goto See+9
+  Death:
+    FDMN D 4 Bright A_FaceTarget
+    FDMN L 4 Bright A_Scream
+    FDMN L 4 Bright A_NoBlocking
+    FDMN L 200 Bright
+    Goto Crash
+  XDeath:
+  Crash:
+    FDMN M 5 A_FaceTarget
+    FDMN N 5 A_NoBlocking
+    FDMN O 5 A_FiredSplotch
+    Stop
+  Ice:
+    FDMN R 5 A_FreezeDeath
+    FDMN R 1 A_FreezeDeathChunks
+    Wait
+  }
 }
 
 //------------------------------------------------------------------------------
 actor FireDemonMissile
 {
-	Radius 10
-	Height 6
-	Mass 15
-	Speed 10
-	Damage 1
-	DamageType "Fire"
-	RenderStyle Add
-	Projectile
-	DeathSound "FireDemonMissileHit"
-	states
-	{
-	Spawn:
-		FDMB A 5 Bright
-		Loop
-	Death:
-		FDMB BCDE 5 Bright
-		Stop
-	}
+  Radius 10
+  Height 6
+  Mass 15
+  Speed 10
+  Damage 1
+  DamageType "Fire"
+  RenderStyle Add
+  Projectile
+  DeathSound "FireDemonMissileHit"
+  states
+  {
+  Spawn:
+    FDMB A 5 Bright
+    Loop
+  Death:
+    FDMB BCDE 5 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor FireDemonSplotch1
 {
-	Radius 3
-	Height 16
-	+Corpse
-	+DropOff
-	+NoTeleport
-	+FloorClip
-	states
-	{
-	Spawn:
-		FDMN P 3
-		FDMN P 6 A_QueueCorpse
-		FDMN Y -1
-		Stop
-	}
+  Radius 3
+  Height 16
+  +Corpse
+  +DropOff
+  +NoTeleport
+  +FloorClip
+  states
+  {
+  Spawn:
+    FDMN P 3
+    FDMN P 6 A_QueueCorpse
+    FDMN Y -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor FireDemonSplotch2 : FireDemonSplotch1
 {
-	states
-	{
-	Spawn:
-		FDMN Q 3
-		FDMN Q 6 A_QueueCorpse
-		FDMN Z -1
-		Stop
-	}
+  states
+  {
+  Spawn:
+    FDMN Q 3
+    FDMN Q 6 A_QueueCorpse
+    FDMN Z -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor FireDemonRock1
 {
-	Radius 3
-	Height 5
-	Mass 16
-	+Missile
-	+NoBlockmap
-	+DropOff
-	+NoTeleport
+  Radius 3
+  Height 5
+  Mass 16
+  +Missile
+  +NoBlockmap
+  +DropOff
+  +NoTeleport
 
-	action native A_SmBounce();
+  action native A_SmBounce();
 
-	states
-	{
-	Spawn:
-		FDMN S 4
-		Loop
-	Death:
-		FDMN S 5 A_SmBounce
-	XDeath:
-		FDMN S 200
-		Stop
-	}
+  states
+  {
+  Spawn:
+    FDMN S 4
+    Loop
+  Death:
+    FDMN S 5 A_SmBounce
+  XDeath:
+    FDMN S 200
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor FireDemonRock2 : FireDemonRock1
 {
-	states
-	{
-	Spawn:
-		FDMN T 4
-		Loop
-	Death:
-		FDMN T 5 A_SmBounce
-	XDeath:
-		FDMN T 200
-		Stop
-	}
+  states
+  {
+  Spawn:
+    FDMN T 4
+    Loop
+  Death:
+    FDMN T 5 A_SmBounce
+  XDeath:
+    FDMN T 200
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor FireDemonRock3 : FireDemonRock1
 {
-	states
-	{
-	Spawn:
-		FDMN U 4
-		Loop
-	Death:
-		FDMN U 5 A_SmBounce
-	XDeath:
-		FDMN U 200
-		Stop
-	}
+  states
+  {
+  Spawn:
+    FDMN U 4
+    Loop
+  Death:
+    FDMN U 5 A_SmBounce
+  XDeath:
+    FDMN U 200
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor FireDemonRock4 : FireDemonRock1
 {
-	states
-	{
-	Spawn:
-		FDMN V 4
-		Loop
-	Death:
-		FDMN V 5 A_SmBounce
-	XDeath:
-		FDMN V 200
-		Stop
-	}
+  states
+  {
+  Spawn:
+    FDMN V 4
+    Loop
+  Death:
+    FDMN V 5 A_SmBounce
+  XDeath:
+    FDMN V 200
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor FireDemonRock5 : FireDemonRock1
 {
-	states
-	{
-	Spawn:
-		FDMN W 4
-		Loop
-	Death:
-		FDMN W 5 A_SmBounce
-	XDeath:
-		FDMN W 200
-		Stop
-	}
+  states
+  {
+  Spawn:
+    FDMN W 4
+    Loop
+  Death:
+    FDMN W 5 A_SmBounce
+  XDeath:
+    FDMN W 200
+    Stop
+  }
 }

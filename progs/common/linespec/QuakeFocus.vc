@@ -28,68 +28,68 @@ class QuakeFocus : Actor;
 //
 // Quake variables
 //
-int Richters;		// Intensity on richter scale (2..9)
-int QuakeDuration;	// Duration in tics
-float DamageRadius;	// Radius for damage
-float TremorRadius;	// Radius for tremor
+int Richters;   // Intensity on richter scale (2..9)
+int QuakeDuration;  // Duration in tics
+float DamageRadius; // Radius for damage
+float TremorRadius; // Radius for tremor
 
 //==========================================================================
 //
-//	A_Quake
+//  A_Quake
 //
 //==========================================================================
 
 final void A_Quake()
 {
-	float		an;
-	PlayerEx	pl;
-	EntityEx	victim;
-	int			playnum;
-	float		dist;
+  float   an;
+  PlayerEx  pl;
+  EntityEx  victim;
+  int     playnum;
+  float   dist;
 
-	if (QuakeDuration-- > 0)
-	{
-		if (Richters > 256 / 9)
-		{
-			Richters = 256 / 9;
-		}
+  if (QuakeDuration-- > 0)
+  {
+    if (Richters > 256 / 9)
+    {
+      Richters = 256 / 9;
+    }
 
-		for (playnum = 0; playnum < MAXPLAYERS; playnum++)
-		{
-			pl = PlayerEx(Level.Game.Players[playnum]);
-			if (!pl || !pl.bSpawned)
-				continue;
+    for (playnum = 0; playnum < MAXPLAYERS; playnum++)
+    {
+      pl = PlayerEx(Level.Game.Players[playnum]);
+      if (!pl || !pl.bSpawned)
+        continue;
 
-			victim = EntityEx(pl.MO);
-			dist = DistTo(victim);
-			if (dist < TremorRadius)	// In tremor radius
-			{
-				pl.LocalQuakeHappening = Richters;
-			}
-			// Check if in damage radius
-			if (dist < DamageRadius && victim.Origin.z <= victim.FloorZ)
-			{
-				if (Random() < 0.1953125)
-				{
-					victim.Damage(none, none, 1 + (P_Random() & 7));
-				}
-				// Thrust player around
-				an = victim.Angles.yaw + Random() * 256.0;
-				victim.Thrust(an, itof(Richters) / 2.0);
-			}
-		}
-	}
-	else
-	{
-		for (playnum = 0; playnum < MAXPLAYERS; playnum++)
-		{
-			if (Level.Game.Players[playnum])
-			{
-				PlayerEx(Level.Game.Players[playnum]).LocalQuakeHappening = 0;
-			}
-		}
-		SetState(none);
-	}
+      victim = EntityEx(pl.MO);
+      dist = DistTo(victim);
+      if (dist < TremorRadius)  // In tremor radius
+      {
+        pl.LocalQuakeHappening = Richters;
+      }
+      // Check if in damage radius
+      if (dist < DamageRadius && victim.Origin.z <= victim.FloorZ)
+      {
+        if (Random() < 0.1953125)
+        {
+          victim.Damage(none, none, 1 + (P_Random() & 7));
+        }
+        // Thrust player around
+        an = victim.Angles.yaw + Random() * 256.0;
+        victim.Thrust(an, itof(Richters) / 2.0);
+      }
+    }
+  }
+  else
+  {
+    for (playnum = 0; playnum < MAXPLAYERS; playnum++)
+    {
+      if (Level.Game.Players[playnum])
+      {
+        PlayerEx(Level.Game.Players[playnum]).LocalQuakeHappening = 0;
+      }
+    }
+    SetState(none);
+  }
 }
 
 //==========================================================================
@@ -100,20 +100,20 @@ final void A_Quake()
 
 final void A_ContMobjSound()
 {
-	PlaySound('world/quake', CHAN_VOICE);
+  PlaySound('world/quake', CHAN_VOICE);
 }
 
 states
 {
 Spawn:
-	TNT1 A 2 A_Quake
-	TNT1 A 1 A_ContMobjSound
-	TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 2 A_Quake
-	Loop
+  TNT1 A 2 A_Quake
+  TNT1 A 1 A_ContMobjSound
+  TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 2 A_Quake
+  Loop
 }
 
 defaultproperties
 {
-	bNoSector = true;
-	bNoBlockmap = true;
+  bNoSector = true;
+  bNoBlockmap = true;
 }

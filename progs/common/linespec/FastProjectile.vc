@@ -27,7 +27,7 @@ class FastProjectile : Actor;
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //  Thinker for the ultra-fast blaster PL2 ripper-spawning missile.
 //
@@ -35,88 +35,88 @@ class FastProjectile : Actor;
 
 void Tick(float DeltaTime)
 {
-	int			i;
-	float		xfrac;
-	float		yfrac;
-	float		zfrac;
-	bool		changexy;
-	tmtrace_t	tmtrace;
+  int     i;
+  float   xfrac;
+  float   yfrac;
+  float   zfrac;
+  bool    changexy;
+  tmtrace_t tmtrace;
 
-	float Count = 8.0;
+  float Count = 8.0;
 
-	if (Radius > 0.0)
-	{
-		while (Velocity.x * DeltaTime / Count > Radius ||
-			Velocity.y * DeltaTime / Count > Radius)
-		{
-			//	Must take smaller steps.
-			Count *= 2.0;
-		}
-	}
+  if (Radius > 0.0)
+  {
+    while (Velocity.x * DeltaTime / Count > Radius ||
+      Velocity.y * DeltaTime / Count > Radius)
+    {
+      //  Must take smaller steps.
+      Count *= 2.0;
+    }
+  }
 
-	// Handle movement
-	if (Velocity.x || Velocity.y || (Origin.z != FloorZ) || Velocity.z)
-	{
-		xfrac = Velocity.x * DeltaTime / Count;
-		yfrac = Velocity.y * DeltaTime / Count;
-		zfrac = Velocity.z * DeltaTime / Count;
-		changexy = xfrac || yfrac;
-		for (i = 0; i < 8; i++)
-		{
-			if (changexy)
-			{
-				if (!TryMoveEx(&tmtrace, vector(Origin.x+xfrac, Origin.y+yfrac, Origin.z), true))
-				{
-					// Blocked move
-					if (tmtrace.BlockingMobj)
-					{
-						BlasterHitMobj(tmtrace.BlockingMobj);
-					}
-					else
-					{
-						// Hit the wall
-						ExplodeMissile(none, tmtrace.BlockingLine);
-					}
-					return;
-				}
-			}
-			Origin.z += zfrac;
-			if (Origin.z <= FloorZ)
-			{
-				// Hit the floor
-				Origin.z = FloorZ;
-				HitFloorType();
-				//!print("FLOOR HIT! '%s'", NameToStr(GetClassName(Class)));
-				ExplodeMissile(none);
-				return;
-			}
-			if (Origin.z + Height > CeilingZ)
-			{
-				// Hit the ceiling
-				Origin.z = CeilingZ - Height;
-				ExplodeMissile(none);
-				return;
-			}
-			if (changexy)
-			{
-				SpawnBlasterEffects();
-			}
-		}
-	}
+  // Handle movement
+  if (Velocity.x || Velocity.y || (Origin.z != FloorZ) || Velocity.z)
+  {
+    xfrac = Velocity.x * DeltaTime / Count;
+    yfrac = Velocity.y * DeltaTime / Count;
+    zfrac = Velocity.z * DeltaTime / Count;
+    changexy = xfrac || yfrac;
+    for (i = 0; i < 8; i++)
+    {
+      if (changexy)
+      {
+        if (!TryMoveEx(&tmtrace, vector(Origin.x+xfrac, Origin.y+yfrac, Origin.z), true))
+        {
+          // Blocked move
+          if (tmtrace.BlockingMobj)
+          {
+            BlasterHitMobj(tmtrace.BlockingMobj);
+          }
+          else
+          {
+            // Hit the wall
+            ExplodeMissile(none, tmtrace.BlockingLine);
+          }
+          return;
+        }
+      }
+      Origin.z += zfrac;
+      if (Origin.z <= FloorZ)
+      {
+        // Hit the floor
+        Origin.z = FloorZ;
+        HitFloorType();
+        //!print("FLOOR HIT! '%s'", NameToStr(GetClassName(Class)));
+        ExplodeMissile(none);
+        return;
+      }
+      if (Origin.z + Height > CeilingZ)
+      {
+        // Hit the ceiling
+        Origin.z = CeilingZ - Height;
+        ExplodeMissile(none);
+        return;
+      }
+      if (changexy)
+      {
+        SpawnBlasterEffects();
+      }
+    }
+  }
 
-	// Cycle through states, calling action functions at transitions
-	AdvanceState(DeltaTime);
+  // Cycle through states, calling action functions at transitions
+  AdvanceState(DeltaTime);
 }
 
 //==========================================================================
 //
-//	BlasterHitMobj
+//  BlasterHitMobj
 //
 //==========================================================================
 
 bool BlasterHitMobj(Entity Other)
 {
-	return ExplodeMissile(EntityEx(Other));
+  return ExplodeMissile(EntityEx(Other));
 }
 
 //==========================================================================
@@ -131,12 +131,12 @@ void SpawnBlasterEffects()
 
 defaultproperties
 {
-	bMissile = true;
-	bNoBlockmap = true;
-	bDropOff = true;
-	bNoGravity = true;
-	bNoTeleport = true;
-	bActivateImpact = true;
-	bActivatePCross = true;
-	bBloodSplatter = true;
+  bMissile = true;
+  bNoBlockmap = true;
+  bDropOff = true;
+  bNoGravity = true;
+  bNoTeleport = true;
+  bActivateImpact = true;
+  bActivatePCross = true;
+  bBloodSplatter = true;
 }

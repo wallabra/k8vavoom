@@ -1,4 +1,4 @@
-//	Switches
+//  Switches
 switch SW_1_UP  on pic SW_1_DN  tics 0 sound Switch1
 switch SW_2_UP  on pic SW_2_DN  tics 0 sound Switch1
 switch VALVE1   on pic VALVE2   tics 0 sound ValveTurn

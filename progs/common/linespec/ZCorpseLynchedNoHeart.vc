@@ -24,8 +24,8 @@
 //**************************************************************************
 
 class ZCorpseLynchedNoHeart : Actor
-	game(GAME_Hexen)
-	__mobjinfo__(109);
+  game(GAME_Hexen)
+  __mobjinfo__(109);
 
 //==========================================================================
 //
@@ -35,9 +35,9 @@ class ZCorpseLynchedNoHeart : Actor
 
 void BeginPlay()
 {
-	::BeginPlay();
-	// Special stuff
-	Spawn(BloodPool, vector(Origin.x, Origin.y, ONFLOORZ));
+  ::BeginPlay();
+  // Special stuff
+  Spawn(BloodPool, vector(Origin.x, Origin.y, ONFLOORZ));
 }
 
 //==========================================================================
@@ -48,25 +48,25 @@ void BeginPlay()
 
 final void A_CorpseBloodDrip()
 {
-	if (Random() > 0.5)
-	{
-		return;
-	}
-	Spawn(CorpseBloodDrip, Origin + vector(0.0, 0.0, Height / 2.0));
+  if (Random() > 0.5)
+  {
+    return;
+  }
+  Spawn(CorpseBloodDrip, Origin + vector(0.0, 0.0, Height / 2.0));
 }
 
 states
 {
 Spawn:
-	CPS5 A 140 A_CorpseBloodDrip
-	Wait
+  CPS5 A 140 A_CorpseBloodDrip
+  Wait
 }
 
 defaultproperties
 {
-	Radius = 10.0;
-	Height = 100.0;
-	bSolid = true;
-	bSpawnCeiling = true;
-	bNoGravity = true;
+  Radius = 10.0;
+  Height = 100.0;
+  bSolid = true;
+  bSpawnCeiling = true;
+  bNoGravity = true;
 }

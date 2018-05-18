@@ -1,117 +1,117 @@
 //------------------------------------------------------------------------------
 actor Dragon 254
 {
-	Game Hexen
-	Health 640
-	Radius 20
-	Height 65
-	Mass 99999
-	Speed 10
-	PainChance 128
-	Monster
-	+NoGravity
-	+Float
-	+NoBlood
-	+Boss
-	+NoTarget
-	+FullVolActive
-	+NoIceDeath
-	SeeSound "DragonSight"
-	ActiveSound "DragonActive"
-	AttackSound "DragonAttack"
-	PainSound "DragonPain"
-	DeathSound "DragonDeath"
-	Obituary "$ob_dragon"
+  Game Hexen
+  Health 640
+  Radius 20
+  Height 65
+  Mass 99999
+  Speed 10
+  PainChance 128
+  Monster
+  +NoGravity
+  +Float
+  +NoBlood
+  +Boss
+  +NoTarget
+  +FullVolActive
+  +NoIceDeath
+  SeeSound "DragonSight"
+  ActiveSound "DragonActive"
+  AttackSound "DragonAttack"
+  PainSound "DragonPain"
+  DeathSound "DragonDeath"
+  Obituary "$ob_dragon"
 
-	action native A_DragonInitFlight();
-	action native A_DragonFlap();
-	action native A_DragonFlight();
-	action native A_DragonPain();
+  action native A_DragonInitFlight();
+  action native A_DragonFlap();
+  action native A_DragonFlight();
+  action native A_DragonPain();
 
-	states
-	{
-	Spawn:
-		DRAG D 10 A_Look
-		Loop
-	See:
-		DRAG CB 5
-		DRAG A 5 A_DragonInitFlight
-		DRAG B 3 A_DragonFlap
-		DRAG BCCDDCCBBAA 3 A_DragonFlight
-		Goto See+3
-	Missile:
-		DRAG E 8 A_CustomMissile("DragonFireball", 32, 0)
-		Goto See+3
-	Pain:
-		DRAG F 10 A_DragonPain
-		Goto See+3
-	Death:
-		DRAG G 5 A_Scream
-		DRAG H 4 A_NoBlocking
-		DRAG I 4
-		DRAG J 4 A_CheckFloor("Crash")
-		Wait
-	Crash:
-		DRAG KL 5
-		DRAG M -1
-		Stop
-	}
+  states
+  {
+  Spawn:
+    DRAG D 10 A_Look
+    Loop
+  See:
+    DRAG CB 5
+    DRAG A 5 A_DragonInitFlight
+    DRAG B 3 A_DragonFlap
+    DRAG BCCDDCCBBAA 3 A_DragonFlight
+    Goto See+3
+  Missile:
+    DRAG E 8 A_CustomMissile("DragonFireball", 32, 0)
+    Goto See+3
+  Pain:
+    DRAG F 10 A_DragonPain
+    Goto See+3
+  Death:
+    DRAG G 5 A_Scream
+    DRAG H 4 A_NoBlocking
+    DRAG I 4
+    DRAG J 4 A_CheckFloor("Crash")
+    Wait
+  Crash:
+    DRAG KL 5
+    DRAG M -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor DragonFireball
 {
-	Radius 12
-	Height 10
-	Speed 24
-	Damage 6
-	RenderStyle Add
-	DamageType "Fire"
-	Projectile
-	-ActivateImpact
-	-ActivatePCross
-	DeathSound "DragonFireballExplode"
+  Radius 12
+  Height 10
+  Speed 24
+  Damage 6
+  RenderStyle Add
+  DamageType "Fire"
+  Projectile
+  -ActivateImpact
+  -ActivatePCross
+  DeathSound "DragonFireballExplode"
 
-	action native A_DragonFX2();
+  action native A_DragonFX2();
 
-	states
-	{
-	Spawn:
-		DRFX ABCDEF 4 Bright
-		Loop
-	Death:
-		DRFX GHI 4 Bright
-		DRFX J 4 Bright A_DragonFX2
-		DRFX KL 3 Bright
-		Stop
-	}
+  states
+  {
+  Spawn:
+    DRFX ABCDEF 4 Bright
+    Loop
+  Death:
+    DRFX GHI 4 Bright
+    DRFX J 4 Bright A_DragonFX2
+    DRFX KL 3 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor DragonExplosion
 {
-	Radius 8
-	Height 8
-	RenderStyle Add
-	DamageType "Fire"
-	+NoBlockmap
-	+Invisible
-	+NoTeleport
-	DeathSound "DragonFireballExplode"
-	states
-	{
-	Spawn:
-		CFCF Q 1 Bright
-		CFCF Q 4 Bright A_UnHideThing
-		CFCF R 3 Bright A_Scream
-		CFCF S 4 Bright
-		CFCF T 3 Bright A_Explode(80, 128, 0)
-		CFCF U 4 Bright
-		CFCF V 3 Bright
-		CFCF W 4 Bright
-		CFCF X 3 Bright
-		CFCF Y 4 Bright
-		CFCF Z 3 Bright
-		Stop
-	}
+  Radius 8
+  Height 8
+  RenderStyle Add
+  DamageType "Fire"
+  +NoBlockmap
+  +Invisible
+  +NoTeleport
+  DeathSound "DragonFireballExplode"
+  states
+  {
+  Spawn:
+    CFCF Q 1 Bright
+    CFCF Q 4 Bright A_UnHideThing
+    CFCF R 3 Bright A_Scream
+    CFCF S 4 Bright
+    CFCF T 3 Bright A_Explode(80, 128, 0)
+    CFCF U 4 Bright
+    CFCF V 3 Bright
+    CFCF W 4 Bright
+    CFCF X 3 Bright
+    CFCF Y 4 Bright
+    CFCF Z 3 Bright
+    Stop
+  }
 }

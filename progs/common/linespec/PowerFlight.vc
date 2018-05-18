@@ -27,70 +27,70 @@ class PowerFlight : Powerup;
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	//	Flight expires in multiplayer of when in current level it's not
-	// infinite.
-	if (!Level.Game.netgame && Level.bInfiniteFlightPowerup)
-	{
-		EffectTime += DeltaTime;
-	}
+  //  Flight expires in multiplayer of when in current level it's not
+  // infinite.
+  if (!Level.Game.netgame && Level.bInfiniteFlightPowerup)
+  {
+    EffectTime += DeltaTime;
+  }
 
-	::Tick(DeltaTime);
+  ::Tick(DeltaTime);
 }
 
 //==========================================================================
 //
-//	InitEffect
+//  InitEffect
 //
 //==========================================================================
 
 void InitEffect()
 {
-	Owner.bFly = true;
-	Owner.bNoGravity = true;
-	if (Owner.Origin.z <= Owner.FloorZ)
-	{
-		// thrust the player in the air a bit
-		PlayerEx(Owner.Player).FlyHeight = 10.0;
-	}
-	if (Owner.Velocity.z <= -35.0 * 35.0)
-	{
-		// stop falling scream
-		Owner.StopSound(CHAN_VOICE);
-	}
+  Owner.bFly = true;
+  Owner.bNoGravity = true;
+  if (Owner.Origin.z <= Owner.FloorZ)
+  {
+    // thrust the player in the air a bit
+    PlayerEx(Owner.Player).FlyHeight = 10.0;
+  }
+  if (Owner.Velocity.z <= -35.0 * 35.0)
+  {
+    // stop falling scream
+    Owner.StopSound(CHAN_VOICE);
+  }
 }
 
 //==========================================================================
 //
-//	EndEffect
+//  EndEffect
 //
 //==========================================================================
 
 void EndEffect()
 {
-	if (!Owner)
-	{
-		return;
-	}
+  if (!Owner)
+  {
+    return;
+  }
 
-	if (!Owner.bIsPlayer || !PlayerEx(Owner.Player).bFly)
-	{
-		if (Owner.Origin.z != Owner.FloorZ)
-		{
-//FIXME		player->centreing = true;
-		}
-		Owner.bFly = false;
-		Owner.bNoGravity = false;
-	}
+  if (!Owner.bIsPlayer || !PlayerEx(Owner.Player).bFly)
+  {
+    if (Owner.Origin.z != Owner.FloorZ)
+    {
+//FIXME   player->centreing = true;
+    }
+    Owner.bFly = false;
+    Owner.bNoGravity = false;
+  }
 }
 
 defaultproperties
 {
-	EffectTime = 60.0;
-	bHubPower = true;
+  EffectTime = 60.0;
+  bHubPower = true;
 }

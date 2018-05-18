@@ -23,106 +23,106 @@
 //**
 //**************************************************************************
 
-const float MORPHTIME	= 40.0;
+const float MORPHTIME = 40.0;
 
 // Morph style states how morphing affects health and other effects in the
 // game; only valid for players.
 const int
-	MORPH_ADDSTAMINA		= 0x00000001,	// Player has a "power" instead of a "curse" (add stamina instead of limiting to health)
-	MORPH_FULLHEALTH		= 0x00000002,	// Player uses new health semantics (!POWER => MaxHealth of animal, POWER => Normal health behaviour)
-	MORPH_UNDOBYTOMEOFPOWER	= 0x00000004,	// Player unmorphs upon activating a Tome of Power
-	MORPH_UNDOBYCHAOSDEVICE	= 0x00000008,	// Player unmorphs upon activating a Chaos Device
-	MORPH_FAILNOTELEFRAG	= 0x00000010,	// Player stays morphed if unmorph by Tome of Power fails
-	MORPH_FAILNOLAUGH		= 0x00000020,	// Player doesn't laugh if unmorph by Chaos Device fails
-	MORPH_WHENINVULNERABLE	= 0x00000040,	// Player can morph (or scripted unmorph) when invulnerable but ONLY if doing it to themselves
-	MORPH_LOSEACTUALWEAPON	= 0x00000080,	// Player loses specified morph weapon only (not "whichever they have when unmorphing")
-	MORPH_NEWTIDBEHAVIOUR	= 0x00000100,	// Actor TID is by default transferred from the old actor to the new actor
-	MORPH_UNDOBYDEATH		= 0x00000200,	// Actor unmorphs when killed and (unless MORPH_UNDOBYDEATHSAVES) stays dead
-	MORPH_UNDOBYDEATHFORCED	= 0x00000400,	// Actor (if unmorphed when killed) forces unmorph (not very useful with UNDOBYDEATHSAVES)
-	MORPH_UNDOBYDEATHSAVES	= 0x00000800;	// Actor (if unmorphed when killed) regains their health and doesn't die
+  MORPH_ADDSTAMINA    = 0x00000001, // Player has a "power" instead of a "curse" (add stamina instead of limiting to health)
+  MORPH_FULLHEALTH    = 0x00000002, // Player uses new health semantics (!POWER => MaxHealth of animal, POWER => Normal health behaviour)
+  MORPH_UNDOBYTOMEOFPOWER = 0x00000004, // Player unmorphs upon activating a Tome of Power
+  MORPH_UNDOBYCHAOSDEVICE = 0x00000008, // Player unmorphs upon activating a Chaos Device
+  MORPH_FAILNOTELEFRAG  = 0x00000010, // Player stays morphed if unmorph by Tome of Power fails
+  MORPH_FAILNOLAUGH   = 0x00000020, // Player doesn't laugh if unmorph by Chaos Device fails
+  MORPH_WHENINVULNERABLE  = 0x00000040, // Player can morph (or scripted unmorph) when invulnerable but ONLY if doing it to themselves
+  MORPH_LOSEACTUALWEAPON  = 0x00000080, // Player loses specified morph weapon only (not "whichever they have when unmorphing")
+  MORPH_NEWTIDBEHAVIOUR = 0x00000100, // Actor TID is by default transferred from the old actor to the new actor
+  MORPH_UNDOBYDEATH   = 0x00000200, // Actor unmorphs when killed and (unless MORPH_UNDOBYDEATHSAVES) stays dead
+  MORPH_UNDOBYDEATHFORCED = 0x00000400, // Actor (if unmorphed when killed) forces unmorph (not very useful with UNDOBYDEATHSAVES)
+  MORPH_UNDOBYDEATHSAVES  = 0x00000800; // Actor (if unmorphed when killed) regains their health and doesn't die
 
 //==========================================================================
 //
-//	Morph
+//  Morph
 //
 //==========================================================================
 
 final bool Morph(class<MorphedMonster> MonsterClass,
-	class<PlayerPawn> PlayerClass, float Duration, int MorphStyle,
-	class<Actor> MorphFlash, class<Actor> UnmorphFlash)
+  class<PlayerPawn> PlayerClass, float Duration, int MorphStyle,
+  class<Actor> MorphFlash, class<Actor> UnmorphFlash)
 {
-	if (bIsPlayer)
-	{
-		return MorphPlayer(PlayerClass, Duration ? Duration : MORPHTIME,
-			MorphStyle, MorphFlash, UnmorphFlash, none);
-	}
-	else
-	{
-		return MorphMonster(MonsterClass, (Duration ? Duration : MORPHTIME) +
-			Random() * 256.0 / 35.0, MorphStyle, MorphFlash, UnmorphFlash);
-	}
+  if (bIsPlayer)
+  {
+    return MorphPlayer(PlayerClass, Duration ? Duration : MORPHTIME,
+      MorphStyle, MorphFlash, UnmorphFlash, none);
+  }
+  else
+  {
+    return MorphMonster(MonsterClass, (Duration ? Duration : MORPHTIME) +
+      Random() * 256.0 / 35.0, MorphStyle, MorphFlash, UnmorphFlash);
+  }
 }
 
 //==========================================================================
 //
-//	MorphMonster
+//  MorphMonster
 //
 //==========================================================================
 
 final bool MorphMonster(class<MorphedMonster> MonsterClass, float Duration,
-	int MorphStyle, class<Actor> MorphFlash, class<Actor> UnmorphFlash)
+  int MorphStyle, class<Actor> MorphFlash, class<Actor> UnmorphFlash)
 {
-	int i;
+  int i;
 
-	if (!bMonster)
-	{
-		return false;
-	}
-	if (bBoss)
-	{
-		return false;
-	}
-	if (bNoMorph)
-	{
-		return false;
-	}
-	if (!MonsterClass)
-	{
-		return false;
-	}
+  if (!bMonster)
+  {
+    return false;
+  }
+  if (bBoss)
+  {
+    return false;
+  }
+  if (bNoMorph)
+  {
+    return false;
+  }
+  if (!MonsterClass)
+  {
+    return false;
+  }
 
-	Spawn(MorphFlash ? MorphFlash : class<Actor>(TeleportFog), Origin +
-		vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
+  Spawn(MorphFlash ? MorphFlash : class<Actor>(TeleportFog), Origin +
+    vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
-	MorphedMonster monster = Spawn(MonsterClass, Origin,,, false);
-	monster.SpecialCID = class<Actor>(Class);
-	monster.MorphStyle = MorphStyle;
-	monster.UnmorphTime = XLevel.Time + Duration;
-	monster.UnmorphFlash = UnmorphFlash;
-	monster.RenderStyle = RenderStyle;
-	monster.Alpha = Alpha;
-	monster.bShadow = bShadow;
-	monster.bGhost = bGhost;
-	monster.CopyFriendliness(self, true);
-	monster.Angles.yaw = Angles.yaw;
-	monster.Special = Special;
-	monster.SetTID(TID);
-	for (i = 0; i < 5; i++)
-	{
-		monster.Args[i] = Args[i];
-	}
+  MorphedMonster monster = Spawn(MonsterClass, Origin,,, false);
+  monster.SpecialCID = class<Actor>(Class);
+  monster.MorphStyle = MorphStyle;
+  monster.UnmorphTime = XLevel.Time + Duration;
+  monster.UnmorphFlash = UnmorphFlash;
+  monster.RenderStyle = RenderStyle;
+  monster.Alpha = Alpha;
+  monster.bShadow = bShadow;
+  monster.bGhost = bGhost;
+  monster.CopyFriendliness(self, true);
+  monster.Angles.yaw = Angles.yaw;
+  monster.Special = Special;
+  monster.SetTID(TID);
+  for (i = 0; i < 5; i++)
+  {
+    monster.Args[i] = Args[i];
+  }
 
-	SetTID(0);
+  SetTID(0);
 
-	SetState(FindState('FreeTargMobj'));
-	MonsterMorphed();
+  SetState(FindState('FreeTargMobj'));
+  MonsterMorphed();
 
-	return true;
+  return true;
 }
 
 //==========================================================================
 //
-//	MonsterMorphed
+//  MonsterMorphed
 //
 //==========================================================================
 
@@ -139,104 +139,104 @@ void MonsterMorphed()
 //==========================================================================
 
 final bool MorphPlayer(class<PlayerPawn> PlayerClass, float Duration,
-	int MorphStyle, class<Actor> MorphFlash, class<Actor> UnmorphFlash,
-	EntityEx Activator)
+  int MorphStyle, class<Actor> MorphFlash, class<Actor> UnmorphFlash,
+  EntityEx Activator)
 {
-	Actor beastMo;
-	int i;
+  Actor beastMo;
+  int i;
 
-	if (bInvulnerable && (self != Activator ||
-		!(MorphStyle & MORPH_WHENINVULNERABLE)))
-	{
-		// Immune when invulnerable
-		return false;
-	}
-	if (bNoMorph)
-	{
-		return false;
-	}
-	if (!PlayerClass)
-	{
-		return false;
-	}
-	if (PlayerEx(Player).MorphTime)
-	{
-		// Player is already a beast
-		if ((PlayerEx(Player).MorphTime < Duration - 1.0) &&
-			!FindInventory(PowerWeaponLevel2))
-		{
-			//	Make a super monster
-			GiveInventoryType(PowerWeaponLevel2);
-		}
-		return false;
-	}
+  if (bInvulnerable && (self != Activator ||
+    !(MorphStyle & MORPH_WHENINVULNERABLE)))
+  {
+    // Immune when invulnerable
+    return false;
+  }
+  if (bNoMorph)
+  {
+    return false;
+  }
+  if (!PlayerClass)
+  {
+    return false;
+  }
+  if (PlayerEx(Player).MorphTime)
+  {
+    // Player is already a beast
+    if ((PlayerEx(Player).MorphTime < Duration - 1.0) &&
+      !FindInventory(PowerWeaponLevel2))
+    {
+      //  Make a super monster
+      GiveInventoryType(PowerWeaponLevel2);
+    }
+    return false;
+  }
 
-	Spawn(MorphFlash ? MorphFlash : class<Actor>(TeleportFog), Origin +
-		vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
+  Spawn(MorphFlash ? MorphFlash : class<Actor>(TeleportFog), Origin +
+    vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
-	beastMo = Spawn(PlayerClass, Origin,,, false);
-	if (TID && (MorphStyle & MORPH_NEWTIDBEHAVIOUR))
-	{
-		beastMo.SetTID(TID);
-		SetTID(0);
-	}
-	beastMo.Tracer = PlayerEx(Player).ReadyWeapon;
-	beastMo.Angles = Angles;
-	beastMo.Player = Player;
-	beastMo.bIsPlayer = true;
-	Player.Health = beastMo.Health;
-	Player.MO = beastMo;
-	if (Player.Camera == self)
-	{
-		Player.Camera = beastMo;
-	}
-	BasicArmor Armor = BasicArmor(FindInventory(BasicArmor));
-	Armor.Amount = 0;
-	Armor.SavePercent = 0.0;
-	HexenArmor HArmor = HexenArmor(FindInventory(HexenArmor));
-	if (HArmor)
-	{
-		for (i = 0; i < 4; i++)
-		{
-			HArmor.Slots[i] = 0.0;
-		}
-	}
-	Inventory Pw = FindInventory(PowerGhost);
-	if (Pw)
-	{
-		Pw.Destroy();
-	}
-	Pw = FindInventory(PowerWeaponLevel2);
-	if (Pw)
-	{
-		Pw.Destroy();
-	}
-	beastMo.ObtainInventory(self);
-	beastMo.bShadow = bShadow;
-	beastMo.bGhost = bGhost;
-	beastMo.bFly = bFly;
-	PlayerEx(Player).MorphTime = Duration;
-	PlayerEx(Player).MorphStyle = MorphStyle;
-	PlayerEx(Player).UnmorphFlash = UnmorphFlash;
-	PlayerEx(Player).PlayerMorphed(self);
-	PlayerEx(Player).ActivateMorphWeapon();
+  beastMo = Spawn(PlayerClass, Origin,,, false);
+  if (TID && (MorphStyle & MORPH_NEWTIDBEHAVIOUR))
+  {
+    beastMo.SetTID(TID);
+    SetTID(0);
+  }
+  beastMo.Tracer = PlayerEx(Player).ReadyWeapon;
+  beastMo.Angles = Angles;
+  beastMo.Player = Player;
+  beastMo.bIsPlayer = true;
+  Player.Health = beastMo.Health;
+  Player.MO = beastMo;
+  if (Player.Camera == self)
+  {
+    Player.Camera = beastMo;
+  }
+  BasicArmor Armor = BasicArmor(FindInventory(BasicArmor));
+  Armor.Amount = 0;
+  Armor.SavePercent = 0.0;
+  HexenArmor HArmor = HexenArmor(FindInventory(HexenArmor));
+  if (HArmor)
+  {
+    for (i = 0; i < 4; i++)
+    {
+      HArmor.Slots[i] = 0.0;
+    }
+  }
+  Inventory Pw = FindInventory(PowerGhost);
+  if (Pw)
+  {
+    Pw.Destroy();
+  }
+  Pw = FindInventory(PowerWeaponLevel2);
+  if (Pw)
+  {
+    Pw.Destroy();
+  }
+  beastMo.ObtainInventory(self);
+  beastMo.bShadow = bShadow;
+  beastMo.bGhost = bGhost;
+  beastMo.bFly = bFly;
+  PlayerEx(Player).MorphTime = Duration;
+  PlayerEx(Player).MorphStyle = MorphStyle;
+  PlayerEx(Player).UnmorphFlash = UnmorphFlash;
+  PlayerEx(Player).PlayerMorphed(self);
+  PlayerEx(Player).ActivateMorphWeapon();
 
-	SetState(FindState('FreeTargMobj'));
+  SetState(FindState('FreeTargMobj'));
 
-	return true;
+  return true;
 }
 
 //==========================================================================
 //
-//	MorphActor
+//  MorphActor
 //
 //==========================================================================
 
 int MorphActor(name PlayerClass, name MonsterClass, float Duration,
-	int Style, name MorphFlash, name UnmorphFlash)
+  int Style, name MorphFlash, name UnmorphFlash)
 {
-	return Morph(class<MorphedMonster>(FindClassLowerCase(MonsterClass)),
-		class<PlayerPawn>(FindClassLowerCase(PlayerClass)), Duration, Style,
-		class<Actor>(FindClassLowerCase(MorphFlash)),
-		class<Actor>(FindClassLowerCase(UnmorphFlash)));
+  return Morph(class<MorphedMonster>(FindClassLowerCase(MonsterClass)),
+    class<PlayerPawn>(FindClassLowerCase(PlayerClass)), Duration, Style,
+    class<Actor>(FindClassLowerCase(MorphFlash)),
+    class<Actor>(FindClassLowerCase(UnmorphFlash)));
 }

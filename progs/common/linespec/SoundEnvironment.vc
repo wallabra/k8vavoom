@@ -24,51 +24,51 @@
 //**************************************************************************
 
 class SoundEnvironment : Actor
-	__mobjinfo__(9048);
+  __mobjinfo__(9048);
 
 //==========================================================================
 //
-//	BeginPlay
+//  BeginPlay
 //
 //==========================================================================
 
 void BeginPlay()
 {
-	::BeginPlay();
-	if (!bDormant)
-	{
-		Activate(self);
-	}
+  ::BeginPlay();
+  if (!bDormant)
+  {
+    Activate(self);
+  }
 }
 
 //==========================================================================
 //
-//	Activate
+//  Activate
 //
 //==========================================================================
 
 bool Activate(EntityEx Activator)
 {
-	XLevel.Zones[Sector->Zone] = (Args[0] << 8) | Args[1];
-	return true;
+  XLevel.Zones[Sector->Zone] = (Args[0] << 8) | Args[1];
+  return true;
 }
 
 //==========================================================================
 //
-//	Deactivate
+//  Deactivate
 //
 //==========================================================================
 
 bool Deactivate(EntityEx Activator)
 {
-	bDormant = true;
-	return true;
+  bDormant = true;
+  return true;
 }
 
 defaultproperties
 {
-	bNoBlockmap = true;
-	bNoSector = true;
-	bNoGravity = true;
-	bNoSplash = true;
+  bNoBlockmap = true;
+  bNoSector = true;
+  bNoGravity = true;
+  bNoSplash = true;
 }

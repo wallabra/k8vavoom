@@ -23,25 +23,25 @@
 //**
 //**************************************************************************
 //**
-//**	Holds info about picked up weapon pieces.
+//**  Holds info about picked up weapon pieces.
 //**
 //**************************************************************************
 
 class WeaponHolder : Inventory
-	abstract;
+  abstract;
 
-int				PieceMask;
-class<Weapon>	WeaponType;
+int       PieceMask;
+class<Weapon> WeaponType;
 
 replication
 {
-	reliable if (Role == ROLE_Authority && bNetOwner)
-		PieceMask, WeaponType;
+  reliable if (Role == ROLE_Authority && bNetOwner)
+    PieceMask, WeaponType;
 }
 
 defaultproperties
 {
-	bNoBlockmap = true;
-	bNoSector = true;
-	bUndroppable = true;
+  bNoBlockmap = true;
+  bNoSector = true;
+  bUndroppable = true;
 }

@@ -27,24 +27,24 @@ class BlasterFX1 : FastProjectile;
 
 //===========================================================================
 //
-//	SpawnBlasterEffects
+//  SpawnBlasterEffects
 //
 //===========================================================================
 
 void SpawnBlasterEffects()
 {
-	TVec org;
+  TVec org;
 
-	if (P_Random() < 64)
-	{
-		org = Origin;
-		org.z = Origin.z - 8.0;
-		if (org.z < FloorZ)
-		{
-			org.z = FloorZ;
-		}
-		Spawn(BlasterSmoke, org);
-	}
+  if (P_Random() < 64)
+  {
+    org = Origin;
+    org.z = Origin.z - 8.0;
+    if (org.z < FloorZ)
+    {
+      org.z = FloorZ;
+    }
+    Spawn(BlasterSmoke, org);
+  }
 }
 
 //==========================================================================
@@ -55,16 +55,16 @@ void SpawnBlasterEffects()
 
 int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
-	if (victim.Class == Ironlich)
-	{
-		// Less damage to Ironlich bosses
-		damage = P_Random() & 1;
-		if (!damage)
-		{
-			return -1;
-		}
-	}
-	return ::DoSpecialDamage(victim, source, damage);
+  if (victim.Class == Ironlich)
+  {
+    // Less damage to Ironlich bosses
+    damage = P_Random() & 1;
+    if (!damage)
+    {
+      return -1;
+    }
+  }
+  return ::DoSpecialDamage(victim, source, damage);
 }
 
 //===========================================================================
@@ -75,41 +75,41 @@ int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 
 final void A_SpawnRippers()
 {
-	int i;
-	float angle;
-	Actor ripper;
+  int i;
+  float angle;
+  Actor ripper;
 
-	for (i = 0; i < 8; i++)
-	{
-		ripper = Spawn(Ripper, Origin);
-		angle = itof(i) * 45.0;
-		ripper.Target = Target;
-		ripper.Angles.yaw = angle;
-		ripper.Velocity.x = ripper.Speed * cos(angle);
-		ripper.Velocity.y = ripper.Speed * sin(angle);
-		ripper.CheckMissileSpawn();
-	}
+  for (i = 0; i < 8; i++)
+  {
+    ripper = Spawn(Ripper, Origin);
+    angle = itof(i) * 45.0;
+    ripper.Target = Target;
+    ripper.Angles.yaw = angle;
+    ripper.Velocity.x = ripper.Speed * cos(angle);
+    ripper.Velocity.y = ripper.Speed * sin(angle);
+    ripper.CheckMissileSpawn();
+  }
 }
 
 states
 {
 Spawn:
-	ACLO E 200
-	Loop
+  ACLO E 200
+  Loop
 Death:
-	FX18 A 3 Bright A_SpawnRippers
-	FX18 B 3 Bright
-	FX18 CDEFG 4 Bright
-	Stop
+  FX18 A 3 Bright A_SpawnRippers
+  FX18 B 3 Bright
+  FX18 CDEFG 4 Bright
+  Stop
 }
 
 defaultproperties
 {
-	Radius = 12.0;
-	Height = 8.0;
-	Speed = 6440.0;
-	MissileDamage = 2;
-	bSpawnSoundSource = true;
-	SightSound = 'weapons/blastershoot';
-	DeathSound = 'weapons/blasterhit';
+  Radius = 12.0;
+  Height = 8.0;
+  Speed = 6440.0;
+  MissileDamage = 2;
+  bSpawnSoundSource = true;
+  SightSound = 'weapons/blastershoot';
+  DeathSound = 'weapons/blasterhit';
 }

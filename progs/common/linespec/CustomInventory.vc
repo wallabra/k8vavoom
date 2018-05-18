@@ -24,50 +24,50 @@
 //**************************************************************************
 
 class CustomInventory : Inventory
-	abstract;
+  abstract;
 
 //==========================================================================
 //
-//	TryPickup
+//  TryPickup
 //
 //==========================================================================
 
 bool TryPickup(EntityEx Toucher)
 {
-	state S = FindState('Pickup');
-	bool IsOk = CallStateChain(Toucher, S);
-	if ((IsOk || !S) && FindState('Use'))
-	{
-		IsOk = ::TryPickup(Toucher);
-	}
-	else if (IsOk || bAlwaysPickup)
-	{
-		GiveQuest(Toucher);
-		GoAwayAndDie();
-	}
-	return IsOk;
+  state S = FindState('Pickup');
+  bool IsOk = CallStateChain(Toucher, S);
+  if ((IsOk || !S) && FindState('Use'))
+  {
+    IsOk = ::TryPickup(Toucher);
+  }
+  else if (IsOk || bAlwaysPickup)
+  {
+    GiveQuest(Toucher);
+    GoAwayAndDie();
+  }
+  return IsOk;
 }
 
 //==========================================================================
 //
-//	SpecialDropAction
+//  SpecialDropAction
 //
 //==========================================================================
 
 bool SpecialDropAction(EntityEx Source)
 {
-	return CallStateChain(Source, FindState('Drop'));
+  return CallStateChain(Source, FindState('Drop'));
 }
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	return CallStateChain(Owner, FindState('Use'));
+  return CallStateChain(Owner, FindState('Use'));
 }
 
 defaultproperties

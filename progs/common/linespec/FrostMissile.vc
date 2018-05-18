@@ -38,19 +38,19 @@ bool bShardSpawnDown;
 
 int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
-	switch (Special2)
-	{
-	case 3:
-		damage <<= 3;
-		break;
-	case 2:
-		damage <<= 2;
-		break;
-	case 1:
-		damage <<= 1;
-		break;
-	}
-	return damage;
+  switch (Special2)
+  {
+  case 3:
+    damage <<= 3;
+    break;
+  case 2:
+    damage <<= 2;
+    break;
+  case 1:
+    damage <<= 1;
+    break;
+  }
+  return damage;
 }
 
 //==========================================================================
@@ -61,107 +61,107 @@ int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 
 final void A_ShedShard()
 {
-	FrostMissile mo;
-	int spermcount = Special2;
+  FrostMissile mo;
+  int spermcount = Special2;
 
-	if (spermcount <= 0)
-		return;	// No sperm left
-	Special2 = 0;
-	spermcount--;
+  if (spermcount <= 0)
+    return; // No sperm left
+  Special2 = 0;
+  spermcount--;
 
-	// every so many calls, spawn a new missile in it's set directions
-	if (bShardSpawnLeft)
-	{
-		mo = FrostMissile(SpawnMissileAngleSpeed(FrostMissile,
-			Angles.yaw + (45.0 / 9.0), 0.0, itof(20 + 2 * spermcount) * 35.0));
-		if (mo)
-		{
-			mo.bShardSpawnLeft = true;
-			mo.Special2 = spermcount;
-			mo.Velocity.z = Velocity.z;
-			mo.Target = Target;
-			mo.Args[0] = (spermcount == 3) ? 2 : 0;
-		}
-	}
-	if (bShardSpawnRight)
-	{
-		mo = FrostMissile(SpawnMissileAngleSpeed(FrostMissile,
-			Angles.yaw - (45.0 / 9.0), 0.0, itof(20 + 2 * spermcount) * 35.0));
-		if (mo)
-		{
-			mo.bShardSpawnRight = true;
-			mo.Special2 = spermcount;
-			mo.Velocity.z = Velocity.z;
-			mo.Target = Target;
-			mo.Args[0] = (spermcount == 3) ? 2 : 0;
-		}
-	}
-	if (bShardSpawnUp)
-	{
-		mo = FrostMissile(SpawnMissileAngleSpeed(FrostMissile, Angles.yaw,
-			0.0, itof(15 + 2 * spermcount) * 35.0));
-		if (mo)
-		{
-			mo.Velocity.z = Velocity.z;
-			mo.Origin.z += 8.0;
-			if (spermcount & 1)	// Every other reproduction
-			{
-				mo.bShardSpawnLeft = true;
-				mo.bShardSpawnRight = true;
-			}
-			mo.bShardSpawnUp = true;
-			mo.Special2 = spermcount;
-			mo.Target = Target;
-			mo.Args[0] = (spermcount == 3) ? 2 : 0;
-		}
-	}
-	if (bShardSpawnDown)
-	{
-		mo = FrostMissile(SpawnMissileAngleSpeed(FrostMissile, Angles.yaw,
-			0.0, itof(15 + 2 * spermcount) * 35.0));
-		if (mo)
-		{
-			mo.Velocity.z = Velocity.z;
-			mo.Origin.z -= 4.0;
-			if (spermcount & 1)	// Every other reproduction
-			{
-				mo.bShardSpawnLeft = true;
-				mo.bShardSpawnRight = true;
-			}
-			mo.bShardSpawnDown = true;
-			mo.Special2 = spermcount;
-			mo.Target = Target;
-			mo.Args[0] = (spermcount == 3) ? 2 : 0;
-		}
-	}
+  // every so many calls, spawn a new missile in it's set directions
+  if (bShardSpawnLeft)
+  {
+    mo = FrostMissile(SpawnMissileAngleSpeed(FrostMissile,
+      Angles.yaw + (45.0 / 9.0), 0.0, itof(20 + 2 * spermcount) * 35.0));
+    if (mo)
+    {
+      mo.bShardSpawnLeft = true;
+      mo.Special2 = spermcount;
+      mo.Velocity.z = Velocity.z;
+      mo.Target = Target;
+      mo.Args[0] = (spermcount == 3) ? 2 : 0;
+    }
+  }
+  if (bShardSpawnRight)
+  {
+    mo = FrostMissile(SpawnMissileAngleSpeed(FrostMissile,
+      Angles.yaw - (45.0 / 9.0), 0.0, itof(20 + 2 * spermcount) * 35.0));
+    if (mo)
+    {
+      mo.bShardSpawnRight = true;
+      mo.Special2 = spermcount;
+      mo.Velocity.z = Velocity.z;
+      mo.Target = Target;
+      mo.Args[0] = (spermcount == 3) ? 2 : 0;
+    }
+  }
+  if (bShardSpawnUp)
+  {
+    mo = FrostMissile(SpawnMissileAngleSpeed(FrostMissile, Angles.yaw,
+      0.0, itof(15 + 2 * spermcount) * 35.0));
+    if (mo)
+    {
+      mo.Velocity.z = Velocity.z;
+      mo.Origin.z += 8.0;
+      if (spermcount & 1) // Every other reproduction
+      {
+        mo.bShardSpawnLeft = true;
+        mo.bShardSpawnRight = true;
+      }
+      mo.bShardSpawnUp = true;
+      mo.Special2 = spermcount;
+      mo.Target = Target;
+      mo.Args[0] = (spermcount == 3) ? 2 : 0;
+    }
+  }
+  if (bShardSpawnDown)
+  {
+    mo = FrostMissile(SpawnMissileAngleSpeed(FrostMissile, Angles.yaw,
+      0.0, itof(15 + 2 * spermcount) * 35.0));
+    if (mo)
+    {
+      mo.Velocity.z = Velocity.z;
+      mo.Origin.z -= 4.0;
+      if (spermcount & 1) // Every other reproduction
+      {
+        mo.bShardSpawnLeft = true;
+        mo.bShardSpawnRight = true;
+      }
+      mo.bShardSpawnDown = true;
+      mo.Special2 = spermcount;
+      mo.Target = Target;
+      mo.Args[0] = (spermcount == 3) ? 2 : 0;
+    }
+  }
 }
 
 states
 {
 Spawn:
-	SHRD A 2 Bright
-	SHRD A 3 Bright A_ShedShard
-	SHRD BC 3 Bright
-	Loop
+  SHRD A 2 Bright
+  SHRD A 3 Bright A_ShedShard
+  SHRD BC 3 Bright
+  Loop
 Death:
-	SHEX ABCDE 5 Bright
-	Stop
+  SHEX ABCDE 5 Bright
+  Stop
 }
 
 defaultproperties
 {
-	Radius = 13.0;
-	Height = 8.0;
-	Speed = 875.0;
-	MissileDamage = 1;
-	DamageType = 'Ice';
-	bMissile = true;
-	bNoBlockmap = true;
-	bDropOff = true;
-	bNoGravity = true;
-	bNoTeleport = true;
-	bActivateImpact = true;
-	bActivatePCross = true;
-	bBloodSplatter = true;
-	DeathSound = 'MageShardsExplode';
+  Radius = 13.0;
+  Height = 8.0;
+  Speed = 875.0;
+  MissileDamage = 1;
+  DamageType = 'Ice';
+  bMissile = true;
+  bNoBlockmap = true;
+  bDropOff = true;
+  bNoGravity = true;
+  bNoTeleport = true;
+  bActivateImpact = true;
+  bActivatePCross = true;
+  bBloodSplatter = true;
+  DeathSound = 'MageShardsExplode';
 }

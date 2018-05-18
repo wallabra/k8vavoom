@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -36,81 +36,81 @@ namespace VavoomUtils {
 
 struct lumpinfo_t
 {
-	char	name[12];
-	int		position;
-	int		size;
+  char  name[12];
+  int   position;
+  int   size;
 };
 
 class WadLibError
 {
  public:
-	WadLibError(const char *Amessage)
-	{
-		strcpy(message, Amessage);
-	}
+  WadLibError(const char *Amessage)
+  {
+    strcpy(message, Amessage);
+  }
 
-	char message[256];
+  char message[256];
 };
 
 class TIWadFile
 {
  public:
-	TIWadFile()
-	{
-		handle = NULL;
-	}
-	~TIWadFile()
-	{
-		if (handle)
-		{
-			Close();
-		}
-	}
-	void Open(const char* filename);
-	int LumpNumForName(const char* name);
-	const char* LumpName(int lump)
-	{
-		return lump >= numlumps ? "" : lumpinfo[lump].name;
-	}
-	int LumpSize(int lump)
-	{
-		return lump >= numlumps ? 0 : lumpinfo[lump].size;
-	}
-	void* GetLump(int lump);
-	void* GetLumpName(const char* name)
-	{
-		return GetLump(LumpNumForName(name));
-	}
-	void Close();
+  TIWadFile()
+  {
+    handle = NULL;
+  }
+  ~TIWadFile()
+  {
+    if (handle)
+    {
+      Close();
+    }
+  }
+  void Open(const char* filename);
+  int LumpNumForName(const char* name);
+  const char* LumpName(int lump)
+  {
+    return lump >= numlumps ? "" : lumpinfo[lump].name;
+  }
+  int LumpSize(int lump)
+  {
+    return lump >= numlumps ? 0 : lumpinfo[lump].size;
+  }
+  void* GetLump(int lump);
+  void* GetLumpName(const char* name)
+  {
+    return GetLump(LumpNumForName(name));
+  }
+  void Close();
 
-	FILE*			handle;
-	char			wadid[4];
-	lumpinfo_t*		lumpinfo;
-	int				numlumps;
+  FILE*     handle;
+  char      wadid[4];
+  lumpinfo_t*   lumpinfo;
+  int       numlumps;
 };
 
 class TOWadFile
 {
  public:
-	TOWadFile()
-	{
-		handle = NULL;
-	}
-	~TOWadFile()
-	{
-		if (handle)
-		{
-			fclose(handle);
-		}
-	}
-	void Open(const char *filename, const char *Awadid);
-	void AddLump(const char *name, const void *data, int size);
-	void Close();
+  TOWadFile()
+  {
+    handle = NULL;
+  }
+  ~TOWadFile()
+  {
+    if (handle)
+    {
+      fclose(handle);
+    }
+  }
+  void Open(const char *filename, const char *Awadid);
+  void AddLump(const char *name, const void *data, int size);
+  void Close();
 
-	FILE*			handle;
-	char			wadid[4];
-	lumpinfo_t*		lumpinfo;
-	int				numlumps;
+  FILE*     handle;
+  char      wadid[4];
+  lumpinfo_t*   lumpinfo;
+  int       numlumps;
 };
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -119,21 +119,21 @@ class TOWadFile
 
 //==========================================================================
 //
-//	CleanupName
+//  CleanupName
 //
 //==========================================================================
 
 inline void CleanupName(const char *src, char *dst)
 {
-	int i;
-	for (i = 0; i < 8 && src[i]; i++)
-	{
-		dst[i] = toupper(src[i]);
-	}
-	for (; i < 12; i++)
-	{
-		dst[i] = 0;
-	}
+  int i;
+  for (i = 0; i < 8 && src[i]; i++)
+  {
+    dst[i] = toupper(src[i]);
+  }
+  for (; i < 12; i++)
+  {
+    dst[i] = 0;
+  }
 }
 
 } // namespace VavoomUtils

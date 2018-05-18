@@ -66,7 +66,7 @@ static wad_t wad;
 
 static const char *level_lumps[NUM_LEVEL_LUMPS]=
 {
-  "THINGS", "LINEDEFS", "SIDEDEFS", "VERTEXES", "SEGS", 
+  "THINGS", "LINEDEFS", "SIDEDEFS", "VERTEXES", "SEGS",
   "SSECTORS", "NODES", "SECTORS", "REJECT", "BLOCKMAP",
   "BEHAVIOR",  // <-- hexen support
   "SCRIPTS"  // -JL- Lump with script sources
@@ -86,12 +86,12 @@ static const char align_filler[4] = { 0, 0, 0, 0 };
 //
 static int CheckMagic(const char type[4])
 {
-  if ((type[0] == 'I' || type[0] == 'P') && 
+  if ((type[0] == 'I' || type[0] == 'P') &&
        type[1] == 'W' && type[2] == 'A' && type[3] == 'D')
   {
     return TRUE;
   }
-  
+
   return FALSE;
 }
 
@@ -102,7 +102,7 @@ static int CheckMagic(const char type[4])
 static int CheckLevelName(const char *name)
 {
   int n;
-  
+
   for (n=0; n < wad.num_level_names; n++)
   {
     if (strcmp(wad.level_names[n], name) == 0)
@@ -128,7 +128,7 @@ static int CheckLevelLumpName(const char *name)
     if (strcmp(name, level_lumps[i]) == 0)
       return 1 + i;
   }
- 
+
   return 0;
 }
 
@@ -151,7 +151,7 @@ static int CheckGLLumpName(const char *name)
     if (strcmp(name, gl_lumps[i]) == 0)
       return TRUE;
   }
-  
+
   return CheckLevelName(name+3);
 }
 
@@ -245,7 +245,7 @@ static void FreeLump(lump_t *lump)
   // check 'data' here, since it gets freed in WriteLumpData()
   if (lump->data)
     UtilFree(lump->data);
-  
+
   UtilFree(lump->name);
   UtilFree(lump);
 }
@@ -266,7 +266,7 @@ static int ReadHeader(const char *filename)
 
   if (len != 1)
   {
-    SetErrorMsg("Trouble reading wad header for %s [%s]", 
+    SetErrorMsg("Trouble reading wad header for %s [%s]",
       filename, strerror(errno));
 
     return FALSE;
@@ -274,14 +274,14 @@ static int ReadHeader(const char *filename)
 
   if (! CheckMagic(header.type))
   {
-    SetErrorMsg("%s does not appear to be a wad file (bad magic)", 
+    SetErrorMsg("%s does not appear to be a wad file (bad magic)",
         filename);
 
     return FALSE;
   }
 
   wad.kind = (header.type[0] == 'I') ? IWAD : PWAD;
-  
+
   wad.num_entries = UINT32(header.num_entries);
   wad.dir_start   = UINT32(header.dir_start);
 
@@ -304,7 +304,7 @@ static void ReadDirEntry(void)
   size_t len;
   raw_wad_entry_t entry;
   lump_t *lump;
-  
+
   DisplayTicker();
 
   len = fread(&entry, sizeof(entry), 1, in_file);
@@ -465,7 +465,7 @@ static void ProcessDirEntry(lump_t *lump)
 
       // mark it to be loaded
       lump->flags |= LUMP_READ_ME;
-    
+
       // link it in
       lump->next = wad.current_level->lev_info->children;
       lump->prev = NULL;
@@ -476,7 +476,7 @@ static void ProcessDirEntry(lump_t *lump)
       wad.current_level->lev_info->children = lump;
       return;
     }
-      
+
     // OK, non-level lump.  End the previous level.
 
     wad.current_level = NULL;
@@ -528,10 +528,10 @@ static void ReadDirectory(void)
   DetermineLevelNames();
 
   // finally, unlink all lumps and process each one in turn
-  
+
   prev_list = wad.dir_head;
   wad.dir_head = wad.dir_tail = NULL;
-  
+
   while (prev_list)
   {
     lump_t *cur = prev_list;
@@ -556,7 +556,7 @@ static void ReadLumpData(lump_t *lump)
 # if DEBUG_LUMP
   PrintDebug("Reading... %s (%d)\n", lump->name, lump->length);
 # endif
-  
+
   if (lump->length == 0)
     return;
 
@@ -745,7 +745,7 @@ static void SortLumps(lump_t ** list, const char **names, int count)
         cur->prev->next = cur->next;
       else
         (*list) = cur->next;
-      
+
       // add to head
       cur->next = (*list);
       cur->prev = NULL;
@@ -774,7 +774,7 @@ static void RecomputeDirectory(void)
 
   wad.num_entries = 0;
   wad.dir_start = sizeof(raw_wad_header_t);
-  
+
   // run through all the lumps, computing the 'new_start' fields, the
   // number of lumps in the directory, the directory starting pos, and
   // also sorting the lumps in the levels.
@@ -831,11 +831,11 @@ static void WriteLumpData(lump_t *lump)
   else
     PrintDebug("Writing... %s (%d)\n", lump->name, lump->length);
 # endif
-  
+
   if (ftell(out_file) != lump->new_start)
-    PrintWarn("Consistency failure writing %s (%08lX, %08X\n", 
+    PrintWarn("Consistency failure writing %s (%08lX, %08X\n",
       lump->name, ftell(out_file), lump->new_start);
- 
+
   if (lump->length == 0)
     return;
 
@@ -852,10 +852,10 @@ static void WriteLumpData(lump_t *lump)
   }
 
   len = fwrite(lump->data, lump->length, 1, out_file);
-   
+
   if (len != 1)
     PrintWarn("Trouble writing lump %s\n", lump->name);
-  
+
   align_size = ALIGN_LEN(lump->length) - lump->length;
 
   if (align_size > 0)
@@ -935,7 +935,7 @@ static int WriteDirectory(void)
 {
   lump_t *cur, *L;
   int count = 0;
-  
+
   if (ftell(out_file) != wad.dir_start)
     PrintWarn("Consistency failure writing lump directory "
       "(%08lX,%08X)\n", ftell(out_file), wad.dir_start);
@@ -993,7 +993,7 @@ int CheckExtension(const char *filename, const char *ext)
   {
     if (A < 0)
       return FALSE;
-    
+
     if (toupper(filename[A]) != toupper(ext[B]))
       return FALSE;
   }
@@ -1010,14 +1010,14 @@ char *ReplaceExtension(const char *filename, const char *ext)
   char buffer[512];
 
   strcpy(buffer, filename);
-  
+
   dot_pos = strrchr(buffer, '.');
 
   if (dot_pos)
     dot_pos[1] = 0;
   else
     strcat(buffer, ".");
-  
+
   strcat(buffer, ext);
 
   return UtilStrDup(buffer);
@@ -1041,12 +1041,12 @@ lump_t *CreateLevelLump(const char *name)
     if (strcmp(name, cur->name) == 0)
       break;
   }
-  
+
   if (cur)
   {
     if (cur->data)
       UtilFree(cur->data);
-    
+
     cur->data = NULL;
     cur->length = 0;
     cur->space  = 0;
@@ -1085,7 +1085,7 @@ lump_t *CreateGLLump(const char *name)
   // create GL level marker if necessary
   if (! wad.current_level->lev_info->buddy)
     CreateGLMarker();
-  
+
   gl_level = wad.current_level->lev_info->buddy;
 
   // check if already exists
@@ -1099,7 +1099,7 @@ lump_t *CreateGLLump(const char *name)
   {
     if (cur->data)
       UtilFree(cur->data);
-    
+
     cur->data = NULL;
     cur->length = 0;
     cur->space  = 0;
@@ -1181,7 +1181,7 @@ int CountLevels(void)
 {
   lump_t *cur;
   int result = 0;
-  
+
   for (cur=wad.dir_head; cur; cur=cur->next)
   {
     if (cur->lev_info && ! (cur->lev_info->flags & LEVEL_IS_GL))
@@ -1197,7 +1197,7 @@ int CountLevels(void)
 int FindNextLevel(void)
 {
   lump_t *cur;
-  
+
   if (wad.current_level)
     cur = wad.current_level->next;
   else
@@ -1218,7 +1218,7 @@ const char *GetLevelName(void)
 {
   if (!wad.current_level)
     InternalError("GetLevelName: no current level");
-    
+
   return wad.current_level->name;
 }
 
@@ -1241,10 +1241,10 @@ lump_t *FindLevelLump(const char *name)
 int CheckLevelLumpZero(lump_t *lump)
 {
   int i;
-  
+
   if (lump->length == 0)
     return TRUE;
-  
+
   // ASSERT(lump->data)
 
   for (i=0; i < lump->length; i++)
@@ -1270,23 +1270,23 @@ glbsp_ret_e ReadWadFile(const char *filename)
   if (! in_file)
   {
     if (errno == ENOENT)
-      SetErrorMsg("Cannot open WAD file: %s", filename); 
+      SetErrorMsg("Cannot open WAD file: %s", filename);
     else
-      SetErrorMsg("Cannot open WAD file: %s [%s]", filename, 
+      SetErrorMsg("Cannot open WAD file: %s [%s]", filename,
           strerror(errno));
 
     return GLBSP_E_ReadError;
   }
-  
+
   if (! ReadHeader(filename))
   {
     fclose(in_file);
     return GLBSP_E_ReadError;
   }
 
-  PrintMsg("Opened %cWAD file : %s\n", (wad.kind == IWAD) ? 'I' : 'P', 
-      filename); 
-  PrintVerbose("Reading %d dir entries at 0x%X\n", wad.num_entries, 
+  PrintMsg("Opened %cWAD file : %s\n", (wad.kind == IWAD) ? 'I' : 'P',
+      filename);
+  PrintVerbose("Reading %d dir entries at 0x%X\n", wad.num_entries,
       wad.dir_start);
 
   // read directory
@@ -1294,7 +1294,7 @@ glbsp_ret_e ReadWadFile(const char *filename)
 
   DisplayOpen(DIS_FILEPROGRESS);
   DisplaySetTitle("glBSP Reading Wad");
-  
+
   read_msg = UtilFormat("Reading: %s", filename);
 
   DisplaySetBarText(1, read_msg);
@@ -1311,7 +1311,7 @@ glbsp_ret_e ReadWadFile(const char *filename)
   if (check != wad.num_entries)
     InternalError("Read directory count consistency failure (%d,%d)",
       check, wad.num_entries);
-  
+
   wad.current_level = NULL;
 
   DisplayClose();
@@ -1351,7 +1351,7 @@ glbsp_ret_e WriteWadFile(const char *filename)
 
   DisplayOpen(DIS_FILEPROGRESS);
   DisplaySetTitle("glBSP Writing Wad");
-  
+
   write_msg = UtilFormat("Writing: %s", filename);
 
   DisplaySetBarText(1, write_msg);
@@ -1387,7 +1387,7 @@ void DeleteGwaFile(const char *base_wad_name)
 
   if (remove(gwa_file) == 0)
     PrintMsg("Deleted GWA file: %s\n", gwa_file);
- 
+
   UtilFree(gwa_file);
 }
 
@@ -1404,13 +1404,13 @@ void CloseWads(void)
     fclose(in_file);
     in_file = NULL;
   }
-  
+
   if (out_file)
   {
     fclose(out_file);
     out_file = NULL;
   }
-  
+
   /* free directory entries */
   while (wad.dir_head)
   {
@@ -1474,7 +1474,7 @@ void ZLibAppendLump(const void *data, int length)
     if (err != Z_OK)
       FatalError("Trouble compressing %d bytes (zlib)\n", length);
 
-    if (zout_stream.avail_out == 0) 
+    if (zout_stream.avail_out == 0)
     {
       AppendLevelLump(zout_lump, zout_buffer, sizeof(zout_buffer));
 
@@ -1506,7 +1506,7 @@ void ZLibFinishLump(void)
     if (err != Z_OK)
       FatalError("Trouble finishing compression (zlib)\n");
 
-    if (zout_stream.avail_out == 0) 
+    if (zout_stream.avail_out == 0)
     {
       AppendLevelLump(zout_lump, zout_buffer, sizeof(zout_buffer));
 
@@ -1690,7 +1690,7 @@ void ReportFailedLevels(void)
   int fail_v5   = 0;
 
   boolean_g need_spacer = FALSE;
- 
+
   for (cur=wad.dir_head; cur; cur=cur->next)
   {
     if (! (cur->lev_info && ! (cur->lev_info->flags & LEVEL_IS_GL)))
@@ -1738,4 +1738,3 @@ void ReportFailedLevels(void)
 
   PrintMsg("\nEnd of problem report.\n");
 }
-

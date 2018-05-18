@@ -1,592 +1,592 @@
-//	Info tables needed by the dehacked support.
-//	Tables must be exactly in this order.
+//  Info tables needed by the dehacked support.
+//  Tables must be exactly in this order.
 
-//	Sprite names, in original order
+//  Sprite names, in original order
 sprites
 {
-	TROO SHTG PUNG PISG PISF SHTF SHT2 CHGG CHGF MISG
-	MISF SAWG PLSG PLSF BFGG BFGF BLUD PUFF BAL1 BAL2
-	PLSS PLSE MISL BFS1 BFE1 BFE2 TFOG IFOG PLAY POSS
-	SPOS VILE FIRE FATB FBXP SKEL MANF FATT CPOS SARG
-	HEAD BAL7 BOSS BOS2 SKUL SPID BSPI APLS APBX CYBR
-	PAIN SSWV KEEN BBRN BOSF ARM1 ARM2 BAR1 BEXP FCAN
-	BON1 BON2 BKEY RKEY YKEY BSKU RSKU YSKU STIM MEDI
-	SOUL PINV PSTR PINS MEGA SUIT PMAP PVIS CLIP AMMO
-	ROCK BROK CELL CELP SHEL SBOX BPAK BFUG MGUN CSAW
-	LAUN PLAS SHOT SGN2 COLU SMT2 GOR1 POL2 POL5 POL4
-	POL3 POL1 POL6 GOR2 GOR3 GOR4 GOR5 SMIT COL1 COL2
-	COL3 COL4 CAND CBRA COL6 TRE1 TRE2 ELEC CEYE FSKU
-	COL5 TBLU TGRN TRED SMBT SMGT SMRT HDB1 HDB2 HDB3
-	HDB4 HDB5 HDB6 POB1 POB2 BRS1 TLMP TLP2
+  TROO SHTG PUNG PISG PISF SHTF SHT2 CHGG CHGF MISG
+  MISF SAWG PLSG PLSF BFGG BFGF BLUD PUFF BAL1 BAL2
+  PLSS PLSE MISL BFS1 BFE1 BFE2 TFOG IFOG PLAY POSS
+  SPOS VILE FIRE FATB FBXP SKEL MANF FATT CPOS SARG
+  HEAD BAL7 BOSS BOS2 SKUL SPID BSPI APLS APBX CYBR
+  PAIN SSWV KEEN BBRN BOSF ARM1 ARM2 BAR1 BEXP FCAN
+  BON1 BON2 BKEY RKEY YKEY BSKU RSKU YSKU STIM MEDI
+  SOUL PINV PSTR PINS MEGA SUIT PMAP PVIS CLIP AMMO
+  ROCK BROK CELL CELP SHEL SBOX BPAK BFUG MGUN CSAW
+  LAUN PLAS SHOT SGN2 COLU SMT2 GOR1 POL2 POL5 POL4
+  POL3 POL1 POL6 GOR2 GOR3 GOR4 GOR5 SMIT COL1 COL2
+  COL3 COL4 CAND CBRA COL6 TRE1 TRE2 ELEC CEYE FSKU
+  COL5 TBLU TGRN TRED SMBT SMGT SMRT HDB1 HDB2 HDB3
+  HDB4 HDB5 HDB6 POB1 POB2 BRS1 TLMP TLP2
 }
 
 states
 {
-	//	S_NULL is implicit
-	Weapon					First	1
-	Fist					First	8
-	Pistol					First	8
-	Shotgun					First	14
-	SuperShotgun			First	17
-	Chaingun				First	8
-	RocketLauncher			First	10
-	Chainsaw				First	7
-	PlasmaRifle				First	7
-	BFG9000					First	9
-	Blood					First	3
-	BulletPuff				First	4
-	DoomImpBall				First	5
-	CacodemonBall			First	5
-	PlasmaBall				First	7
-	Rocket					First	1
-	BFGBall					First	8
-	BFGExtra				First	4
-	Rocket					Death	3
-	TeleportFog				First	12
-	ItemFog					First	7
-	DoomPlayer				First	25
-	ZombieMan				First	33
-	ShotgunGuy				First	34
-	Archvile				First	40
-	ArchvileFire			First	30
-	RevenantTracerSmoke		First	5
-	RevenantTracer			First	5
-	Revenant				First	36
-	FatShot					First	5
-	Fatso					First	44
-	ChaingunGuy				First	36
-	DoomImp					First	33
-	Demon					First	27
-	Cacodemon				First	20
-	BaronBall				First	5
-	BaronOfHell				First	29
-	HellKnight				First	29
-	LostSoul				First	16
-	SpiderMastermind		First	31
-	Arachnotron				First	35
-	ArachnotronPlasma		First	7
-	Cyberdemon				First	27
-	PainElemental			First	25
-	WolfensteinSS			First	37
-	CommanderKeen			First	15
-	BossBrain				Spawn	6
-	BossEye					First	3
-	SpawnShot				First	4
-	SpawnFire				First	8
-	BossBrain				First	3
-	GreenArmor				First	2
-	BlueArmor				First	2
-	ExplosiveBarrel			First	7
-	BurningBarrel			First	3
-	HealthBonus				First	6
-	ArmorBonus				First	6
-	BlueCard				First	2
-	RedCard					First	2
-	YellowCard				First	2
-	BlueSkull				First	2
-	RedSkull				First	2
-	YellowSkull				First	2
-	Stimpack				First	1
-	Medikit					First	1
-	Soulsphere				First	6
-	InvulnerabilitySphere	First	4
-	Berserk					First	1
-	BlurSphere				First	4
-	Megasphere				First	4
-	RadSuit					First	1
-	Allmap					First	6
-	Infrared				First	2
-	Clip					First	1
-	ClipBox					First	1
-	RocketAmmo				First	1
-	RocketBox				First	1
-	Cell					First	1
-	CellPack				First	1
-	Shell					First	1
-	ShellBox				First	1
-	Backpack				First	1
-	BFG9000					Spawn	1
-	Chaingun				Spawn	1
-	Chainsaw				Spawn	1
-	RocketLauncher			Spawn	1
-	PlasmaRifle				Spawn	1
-	Shotgun					Spawn	1
-	SuperShotgun			Spawn	1
-	Column					First	1
-	DoomUnusedStates		First	1
-	BloodyTwitch			First	4
-	DoomUnusedStates		Death	2
-	HeadsOnAStick			First	1
-	RealGibs				First	1
-	HeadOnAStick			First	1
-	HeadCandles				First	2
-	DeadStick				First	1
-	LiveStick				First	2
-	Meat2					First	1
-	Meat3					First	1
-	Meat4					First	1
-	Meat5					First	1
-	Stalagtite				First	1
-	TallGreenColumn			First	1
-	ShortGreenColumn		First	1
-	TallRedColumn			First	1
-	ShortRedColumn			First	1
-	Candlestick				First	1
-	Candelabra				First	1
-	SkullColumn				First	1
-	TorchTree				First	1
-	BigTree					First	1
-	TechPillar				First	1
-	EvilEye					First	4
-	FloatingSkull			First	3
-	HeartColumn				First	2
-	BlueTorch				First	4
-	GreenTorch				First	4
-	RedTorch				First	4
-	ShortBlueTorch			First	4
-	ShortGreenTorch			First	4
-	ShortRedTorch			First	4
-	HangNoGuts				First	1
-	HangBNoBrain			First	1
-	HangTLookingDown		First	1
-	HangTSkull				First	1
-	HangTLookingUp			First	1
-	HangTNoBrain			First	1
-	ColonGibs				First	1
-	SmallBloodPool			First	1
-	BrainStem				First	1
-	TechLamp				First	4
-	TechLamp2				First	4
+  //  S_NULL is implicit
+  Weapon          First 1
+  Fist          First 8
+  Pistol          First 8
+  Shotgun         First 14
+  SuperShotgun      First 17
+  Chaingun        First 8
+  RocketLauncher      First 10
+  Chainsaw        First 7
+  PlasmaRifle       First 7
+  BFG9000         First 9
+  Blood         First 3
+  BulletPuff        First 4
+  DoomImpBall       First 5
+  CacodemonBall     First 5
+  PlasmaBall        First 7
+  Rocket          First 1
+  BFGBall         First 8
+  BFGExtra        First 4
+  Rocket          Death 3
+  TeleportFog       First 12
+  ItemFog         First 7
+  DoomPlayer        First 25
+  ZombieMan       First 33
+  ShotgunGuy        First 34
+  Archvile        First 40
+  ArchvileFire      First 30
+  RevenantTracerSmoke   First 5
+  RevenantTracer      First 5
+  Revenant        First 36
+  FatShot         First 5
+  Fatso         First 44
+  ChaingunGuy       First 36
+  DoomImp         First 33
+  Demon         First 27
+  Cacodemon       First 20
+  BaronBall       First 5
+  BaronOfHell       First 29
+  HellKnight        First 29
+  LostSoul        First 16
+  SpiderMastermind    First 31
+  Arachnotron       First 35
+  ArachnotronPlasma   First 7
+  Cyberdemon        First 27
+  PainElemental     First 25
+  WolfensteinSS     First 37
+  CommanderKeen     First 15
+  BossBrain       Spawn 6
+  BossEye         First 3
+  SpawnShot       First 4
+  SpawnFire       First 8
+  BossBrain       First 3
+  GreenArmor        First 2
+  BlueArmor       First 2
+  ExplosiveBarrel     First 7
+  BurningBarrel     First 3
+  HealthBonus       First 6
+  ArmorBonus        First 6
+  BlueCard        First 2
+  RedCard         First 2
+  YellowCard        First 2
+  BlueSkull       First 2
+  RedSkull        First 2
+  YellowSkull       First 2
+  Stimpack        First 1
+  Medikit         First 1
+  Soulsphere        First 6
+  InvulnerabilitySphere First 4
+  Berserk         First 1
+  BlurSphere        First 4
+  Megasphere        First 4
+  RadSuit         First 1
+  Allmap          First 6
+  Infrared        First 2
+  Clip          First 1
+  ClipBox         First 1
+  RocketAmmo        First 1
+  RocketBox       First 1
+  Cell          First 1
+  CellPack        First 1
+  Shell         First 1
+  ShellBox        First 1
+  Backpack        First 1
+  BFG9000         Spawn 1
+  Chaingun        Spawn 1
+  Chainsaw        Spawn 1
+  RocketLauncher      Spawn 1
+  PlasmaRifle       Spawn 1
+  Shotgun         Spawn 1
+  SuperShotgun      Spawn 1
+  Column          First 1
+  DoomUnusedStates    First 1
+  BloodyTwitch      First 4
+  DoomUnusedStates    Death 2
+  HeadsOnAStick     First 1
+  RealGibs        First 1
+  HeadOnAStick      First 1
+  HeadCandles       First 2
+  DeadStick       First 1
+  LiveStick       First 2
+  Meat2         First 1
+  Meat3         First 1
+  Meat4         First 1
+  Meat5         First 1
+  Stalagtite        First 1
+  TallGreenColumn     First 1
+  ShortGreenColumn    First 1
+  TallRedColumn     First 1
+  ShortRedColumn      First 1
+  Candlestick       First 1
+  Candelabra        First 1
+  SkullColumn       First 1
+  TorchTree       First 1
+  BigTree         First 1
+  TechPillar        First 1
+  EvilEye         First 4
+  FloatingSkull     First 3
+  HeartColumn       First 2
+  BlueTorch       First 4
+  GreenTorch        First 4
+  RedTorch        First 4
+  ShortBlueTorch      First 4
+  ShortGreenTorch     First 4
+  ShortRedTorch     First 4
+  HangNoGuts        First 1
+  HangBNoBrain      First 1
+  HangTLookingDown    First 1
+  HangTSkull        First 1
+  HangTLookingUp      First 1
+  HangTNoBrain      First 1
+  ColonGibs       First 1
+  SmallBloodPool      First 1
+  BrainStem       First 1
+  TechLamp        First 4
+  TechLamp2       First 4
 }
 
-//	Mapping of pointer numbers to actual state indexes
+//  Mapping of pointer numbers to actual state indexes
 code_pointer_states
 {
-	1 2 3 4 6 9 10 11 12 14
-	16 17 18 19 20 22 29 30 31 32
-	33 34 36 38 39 41 43 44 47 48
-	49 50 51 52 53 54 55 56 57 58
-	59 60 61 62 63 65 66 67 68 69
-	70 71 72 73 74 75 76 77 78 79
-	80 81 82 83 84 85 86 87 88 89
-	119 127 157 159 160 166 167 174 175 176
-	177 178 179 180 181 182 183 184 185 188
-	190 191 195 196 207 208 209 210 211 212
-	213 214 215 216 217 218 221 223 224 228
-	229 241 242 243 244 245 246 247 248 249
-	250 251 252 253 254 255 256 257 258 259
-	260 261 262 263 264 270 272 273 281 282
-	283 284 285 286 287 288 289 290 291 292
-	293 294 295 296 297 298 299 300 301 302
-	303 304 305 306 307 308 309 310 316 317
-	321 322 323 324 325 326 327 328 329 330
-	331 332 333 334 335 336 337 338 339 340
-	341 342 344 347 348 362 363 364 365 366
-	367 368 369 370 371 372 373 374 375 376
-	377 378 379 380 381 382 383 384 385 387
-	389 390 397 406 407 408 409 410 411 412
-	413 414 415 416 417 418 419 421 423 424
-	430 431 442 443 444 445 446 447 448 449
-	450 451 452 453 454 456 458 460 463 465
-	475 476 477 478 479 480 481 482 483 484
-	485 486 487 489 491 493 502 503 504 505
-	506 508 511 514 527 528 529 530 531 532
-	533 534 535 536 537 538 539 541 543 545
-	548 556 557 558 559 560 561 562 563 564
-	565 566 567 568 570 572 574 585 586 587
-	588 589 590 594 596 598 601 602 603 604
-	605 606 607 608 609 610 611 612 613 614
-	615 616 617 618 620 621 622 631 632 633
-	635 636 637 638 639 640 641 642 643 644
-	645 646 647 648 650 652 653 654 659 674
-	675 676 677 678 679 680 681 682 683 684
-	685 686 687 688 689 690 692 696 700 701
-	702 703 704 705 706 707 708 709 710 711
-	713 715 718 726 727 728 729 730 731 732
-	733 734 735 736 737 738 739 740 741 743
-	745 746 750 751 766 774 777 779 780 783
-	784 785 786 787 788 789 790 791 792 793
-	794 795 796 797 798 801 809 811
+  1 2 3 4 6 9 10 11 12 14
+  16 17 18 19 20 22 29 30 31 32
+  33 34 36 38 39 41 43 44 47 48
+  49 50 51 52 53 54 55 56 57 58
+  59 60 61 62 63 65 66 67 68 69
+  70 71 72 73 74 75 76 77 78 79
+  80 81 82 83 84 85 86 87 88 89
+  119 127 157 159 160 166 167 174 175 176
+  177 178 179 180 181 182 183 184 185 188
+  190 191 195 196 207 208 209 210 211 212
+  213 214 215 216 217 218 221 223 224 228
+  229 241 242 243 244 245 246 247 248 249
+  250 251 252 253 254 255 256 257 258 259
+  260 261 262 263 264 270 272 273 281 282
+  283 284 285 286 287 288 289 290 291 292
+  293 294 295 296 297 298 299 300 301 302
+  303 304 305 306 307 308 309 310 316 317
+  321 322 323 324 325 326 327 328 329 330
+  331 332 333 334 335 336 337 338 339 340
+  341 342 344 347 348 362 363 364 365 366
+  367 368 369 370 371 372 373 374 375 376
+  377 378 379 380 381 382 383 384 385 387
+  389 390 397 406 407 408 409 410 411 412
+  413 414 415 416 417 418 419 421 423 424
+  430 431 442 443 444 445 446 447 448 449
+  450 451 452 453 454 456 458 460 463 465
+  475 476 477 478 479 480 481 482 483 484
+  485 486 487 489 491 493 502 503 504 505
+  506 508 511 514 527 528 529 530 531 532
+  533 534 535 536 537 538 539 541 543 545
+  548 556 557 558 559 560 561 562 563 564
+  565 566 567 568 570 572 574 585 586 587
+  588 589 590 594 596 598 601 602 603 604
+  605 606 607 608 609 610 611 612 613 614
+  615 616 617 618 620 621 622 631 632 633
+  635 636 637 638 639 640 641 642 643 644
+  645 646 647 648 650 652 653 654 659 674
+  675 676 677 678 679 680 681 682 683 684
+  685 686 687 688 689 690 692 696 700 701
+  702 703 704 705 706 707 708 709 710 711
+  713 715 718 726 727 728 729 730 731 732
+  733 734 735 736 737 738 739 740 741 743
+  745 746 750 751 766 774 777 779 780 783
+  784 785 786 787 788 789 790 791 792 793
+  794 795 796 797 798 801 809 811
 }
 
 code_pointers
 {
-	//	NULL is implicit
-	WeaponReady		Inventory		A_WeaponReady
-	Lower			Inventory		A_Lower
-	Raise			Inventory		A_Raise
-	ReFire			Inventory		A_ReFire
-	CheckReload		Inventory		A_CheckReload
-	GunFlash		Inventory		A_GunFlash
-	Light0			Inventory		A_Light0
-	Light1			Inventory		A_Light1
-	Light2			Inventory		A_Light2
-	Punch			Actor			A_Punch
-	Saw				Inventory		A_Saw
-	FirePistol		Inventory		A_FirePistol
-	FireShotgun		Inventory		A_FireShotgun
-	FireShotgun2	Inventory		A_FireShotgun2
-	OpenShotgun2	Inventory		A_OpenShotgun2
-	LoadShotgun2	Inventory		A_LoadShotgun2
-	CloseShotgun2	Inventory		A_CloseShotgun2
-	FireCGun		Inventory		A_FireCGun
-	FireMissile		Inventory		A_FireMissile
-	FirePlasma		Inventory		A_FirePlasma
-	BFGsound		Inventory		A_BFGsound
-	FireBFG			Inventory		A_FireBFG
-	BFGSpray		Actor			A_BFGSpray
-	Explode			Actor			A_Explode
-	Pain			Actor			A_Pain
-	PlayerScream	Actor			A_PlayerScream
-	Fall			Actor			A_Fall
-	XScream			Actor			A_XScream
-	Look			Actor			A_Look
-	Chase			Actor			A_Chase
-	FaceTarget		Actor			A_FaceTarget
-	PosAttack		Actor			A_PosAttack
-	Scream			Actor			A_Scream
-	SPosAttack		Actor			A_SPosAttack
-	VileChase		Actor			A_VileChase
-	VileStart		Actor			A_VileStart
-	VileTarget		Actor			A_VileTarget
-	VileAttack		Actor			A_VileAttack
-	StartFire		Actor			A_StartFire
-	Fire			Actor			A_Fire
-	FireCrackle		Actor			A_FireCrackle
-	Tracer			Actor			A_Tracer
-	SkelWhoosh		Actor			A_SkelWhoosh
-	SkelFist		Actor			A_SkelFist
-	SkelMissile		Actor			A_SkelMissile
-	FatRaise		Actor			A_FatRaise
-	FatAttack1		Actor			A_FatAttack1
-	FatAttack2		Actor			A_FatAttack2
-	FatAttack3		Actor			A_FatAttack3
-	BossDeath		Actor			A_BossDeath
-	CPosAttack		Actor			A_CPosAttack
-	CPosRefire		Actor			A_CPosRefire
-	TroopAttack		Actor			A_TroopAttack
-	SargAttack		Actor			A_SargAttack
-	HeadAttack		Actor			A_HeadAttack
-	BruisAttack		Actor			A_BruisAttack
-	SkullAttack		Actor			A_SkullAttack
-	Metal			Actor			A_Metal
-	SpidRefire		Actor			A_SpidRefire
-	BabyMetal		Actor			A_BabyMetal
-	BspiAttack		Actor			A_BspiAttack
-	Hoof			Actor			A_Hoof
-	CyberAttack		Actor			A_CyberAttack
-	PainAttack		Actor			A_PainAttack
-	PainDie			Actor			A_PainDie
-	KeenDie			Actor			A_KeenDie
-	BrainPain		Actor			A_BrainPain
-	BrainScream		Actor			A_BrainScream
-	BrainDie		Actor			A_BrainDie
-	BrainAwake		Actor			A_BrainAwake
-	BrainSpit		Actor			A_BrainSpit
-	SpawnSound		Actor			A_SpawnSound
-	SpawnFly		Actor			A_SpawnFly
-	BrainExplode	Actor			A_BrainExplode
-	Mushroom		Actor			A_Mushroom
-	FireRailgun		Inventory		A_FireRailgun
-	FireRailgunLeft	Inventory		A_FireRailgunLeft
-	FireRailgunRight	Inventory	A_FireRailgunRight
-	RailWait		Inventory		A_RailWait
+  //  NULL is implicit
+  WeaponReady   Inventory   A_WeaponReady
+  Lower     Inventory   A_Lower
+  Raise     Inventory   A_Raise
+  ReFire      Inventory   A_ReFire
+  CheckReload   Inventory   A_CheckReload
+  GunFlash    Inventory   A_GunFlash
+  Light0      Inventory   A_Light0
+  Light1      Inventory   A_Light1
+  Light2      Inventory   A_Light2
+  Punch     Actor     A_Punch
+  Saw       Inventory   A_Saw
+  FirePistol    Inventory   A_FirePistol
+  FireShotgun   Inventory   A_FireShotgun
+  FireShotgun2  Inventory   A_FireShotgun2
+  OpenShotgun2  Inventory   A_OpenShotgun2
+  LoadShotgun2  Inventory   A_LoadShotgun2
+  CloseShotgun2 Inventory   A_CloseShotgun2
+  FireCGun    Inventory   A_FireCGun
+  FireMissile   Inventory   A_FireMissile
+  FirePlasma    Inventory   A_FirePlasma
+  BFGsound    Inventory   A_BFGsound
+  FireBFG     Inventory   A_FireBFG
+  BFGSpray    Actor     A_BFGSpray
+  Explode     Actor     A_Explode
+  Pain      Actor     A_Pain
+  PlayerScream  Actor     A_PlayerScream
+  Fall      Actor     A_Fall
+  XScream     Actor     A_XScream
+  Look      Actor     A_Look
+  Chase     Actor     A_Chase
+  FaceTarget    Actor     A_FaceTarget
+  PosAttack   Actor     A_PosAttack
+  Scream      Actor     A_Scream
+  SPosAttack    Actor     A_SPosAttack
+  VileChase   Actor     A_VileChase
+  VileStart   Actor     A_VileStart
+  VileTarget    Actor     A_VileTarget
+  VileAttack    Actor     A_VileAttack
+  StartFire   Actor     A_StartFire
+  Fire      Actor     A_Fire
+  FireCrackle   Actor     A_FireCrackle
+  Tracer      Actor     A_Tracer
+  SkelWhoosh    Actor     A_SkelWhoosh
+  SkelFist    Actor     A_SkelFist
+  SkelMissile   Actor     A_SkelMissile
+  FatRaise    Actor     A_FatRaise
+  FatAttack1    Actor     A_FatAttack1
+  FatAttack2    Actor     A_FatAttack2
+  FatAttack3    Actor     A_FatAttack3
+  BossDeath   Actor     A_BossDeath
+  CPosAttack    Actor     A_CPosAttack
+  CPosRefire    Actor     A_CPosRefire
+  TroopAttack   Actor     A_TroopAttack
+  SargAttack    Actor     A_SargAttack
+  HeadAttack    Actor     A_HeadAttack
+  BruisAttack   Actor     A_BruisAttack
+  SkullAttack   Actor     A_SkullAttack
+  Metal     Actor     A_Metal
+  SpidRefire    Actor     A_SpidRefire
+  BabyMetal   Actor     A_BabyMetal
+  BspiAttack    Actor     A_BspiAttack
+  Hoof      Actor     A_Hoof
+  CyberAttack   Actor     A_CyberAttack
+  PainAttack    Actor     A_PainAttack
+  PainDie     Actor     A_PainDie
+  KeenDie     Actor     A_KeenDie
+  BrainPain   Actor     A_BrainPain
+  BrainScream   Actor     A_BrainScream
+  BrainDie    Actor     A_BrainDie
+  BrainAwake    Actor     A_BrainAwake
+  BrainSpit   Actor     A_BrainSpit
+  SpawnSound    Actor     A_SpawnSound
+  SpawnFly    Actor     A_SpawnFly
+  BrainExplode  Actor     A_BrainExplode
+  Mushroom    Actor     A_Mushroom
+  FireRailgun   Inventory   A_FireRailgun
+  FireRailgunLeft Inventory   A_FireRailgunLeft
+  FireRailgunRight  Inventory A_FireRailgunRight
+  RailWait    Inventory   A_RailWait
 }
 
-//	Names of the sounds to be used when changing sounds
+//  Names of the sounds to be used when changing sounds
 sounds
 {
-	//	First in implicitly empty
-	weapons/pistol
-	weapons/shotgf
-	weapons/shotgr
-	weapons/sshotf
-	weapons/sshoto
-	weapons/sshotc
-	weapons/sshotl
-	weapons/plasmaf
-	weapons/bfgf
-	weapons/sawup
-	weapons/sawidle
-	weapons/sawfull
-	weapons/sawhit
-	weapons/rocklf
-	weapons/bfgx
-	imp/attack
-	imp/shotx
-	plats/pt1_strt
-	plats/pt1_stop
-	doors/dr1_open
-	doors/dr1_clos
-	plats/pt1_mid
-	switches/normbutn
-	switches/exitbutn
-	*pain100
-	demon/pain
-	grunt/pain
-	vile/pain
-	fatso/pain
-	pain/pain
-	misc/gibbed
-	misc/i_pkup
-	misc/w_pkup
-	*grunt
-	misc/teleport
-	grunt/sight1
-	grunt/sight2
-	grunt/sight3
-	imp/sight1
-	imp/sight2
-	demon/sight
-	caco/sight
-	baron/sight
-	cyber/sight
-	spider/sight
-	baby/sight
-	knight/sight
-	vile/sight
-	fatso/sight
-	pain/sight
-	skull/melee
-	demon/melee
-	skeleton/melee
-	vile/start
-	imp/melee
-	skeleton/swing
-	*death
-	*xdeath
-	grunt/death1
-	grunt/death2
-	grunt/death3
-	imp/death1
-	imp/death2
-	demon/death
-	caco/death
-	misc/unused
-	baron/death
-	cyber/death
-	spider/death
-	baby/death
-	vile/death
-	knight/death
-	pain/death
-	skeleton/death
-	grunt/active
-	imp/active
-	demon/active
-	baby/active
-	baby/walk
-	vile/active
-	*usefail
-	world/barrelx
-	*fist
-	cyber/hoof
-	spider/walk
-	weapons/chngun
-	misc/chat
-	doors/dr2_open
-	doors/dr2_clos
-	misc/spawn
-	vile/firecrkl
-	vile/firestrt
-	misc/p_pkup
-	brain/spit
-	brain/cube
-	brain/sight
-	brain/pain
-	brain/death
-	fatso/raiseguns
-	fatso/death
-	wolfss/sight
-	wolfss/death
-	keen/pain
-	keen/death
-	skeleton/active
-	skeleton/sight
-	skeleton/attack
-	misc/chat2
+  //  First in implicitly empty
+  weapons/pistol
+  weapons/shotgf
+  weapons/shotgr
+  weapons/sshotf
+  weapons/sshoto
+  weapons/sshotc
+  weapons/sshotl
+  weapons/plasmaf
+  weapons/bfgf
+  weapons/sawup
+  weapons/sawidle
+  weapons/sawfull
+  weapons/sawhit
+  weapons/rocklf
+  weapons/bfgx
+  imp/attack
+  imp/shotx
+  plats/pt1_strt
+  plats/pt1_stop
+  doors/dr1_open
+  doors/dr1_clos
+  plats/pt1_mid
+  switches/normbutn
+  switches/exitbutn
+  *pain100
+  demon/pain
+  grunt/pain
+  vile/pain
+  fatso/pain
+  pain/pain
+  misc/gibbed
+  misc/i_pkup
+  misc/w_pkup
+  *grunt
+  misc/teleport
+  grunt/sight1
+  grunt/sight2
+  grunt/sight3
+  imp/sight1
+  imp/sight2
+  demon/sight
+  caco/sight
+  baron/sight
+  cyber/sight
+  spider/sight
+  baby/sight
+  knight/sight
+  vile/sight
+  fatso/sight
+  pain/sight
+  skull/melee
+  demon/melee
+  skeleton/melee
+  vile/start
+  imp/melee
+  skeleton/swing
+  *death
+  *xdeath
+  grunt/death1
+  grunt/death2
+  grunt/death3
+  imp/death1
+  imp/death2
+  demon/death
+  caco/death
+  misc/unused
+  baron/death
+  cyber/death
+  spider/death
+  baby/death
+  vile/death
+  knight/death
+  pain/death
+  skeleton/death
+  grunt/active
+  imp/active
+  demon/active
+  baby/active
+  baby/walk
+  vile/active
+  *usefail
+  world/barrelx
+  *fist
+  cyber/hoof
+  spider/walk
+  weapons/chngun
+  misc/chat
+  doors/dr2_open
+  doors/dr2_clos
+  misc/spawn
+  vile/firecrkl
+  vile/firestrt
+  misc/p_pkup
+  brain/spit
+  brain/cube
+  brain/sight
+  brain/pain
+  brain/death
+  fatso/raiseguns
+  fatso/death
+  wolfss/sight
+  wolfss/death
+  keen/pain
+  keen/death
+  skeleton/active
+  skeleton/sight
+  skeleton/attack
+  misc/chat2
 }
 
-//	Class names of things in original order
+//  Class names of things in original order
 things
 {
-	DoomPlayer
-	ZombieMan
-	ShotgunGuy
-	Archvile
-	ArchvileFire
-	Revenant
-	RevenantTracer
-	RevenantTracerSmoke
-	Fatso
-	FatShot
-	ChaingunGuy
-	DoomImp
-	Demon
-	Spectre
-	Cacodemon
-	BaronOfHell
-	BaronBall
-	HellKnight
-	LostSoul
-	SpiderMastermind
-	Arachnotron
-	Cyberdemon
-	PainElemental
-	WolfensteinSS
-	CommanderKeen
-	BossBrain
-	BossEye
-	BossTarget
-	SpawnShot
-	SpawnFire
-	ExplosiveBarrel
-	DoomImpBall
-	CacodemonBall
-	Rocket
-	PlasmaBall
-	BFGBall
-	ArachnotronPlasma
-	BulletPuff
-	Blood
-	TeleportFog
-	ItemFog
-	TeleportDest
-	BFGExtra
-	GreenArmor
-	BlueArmor
-	HealthBonus
-	ArmorBonus
-	BlueCard
-	RedCard
-	YellowCard
-	YellowSkull
-	RedSkull
-	BlueSkull
-	Stimpack
-	Medikit
-	Soulsphere
-	InvulnerabilitySphere
-	Berserk
-	BlurSphere
-	RadSuit
-	Allmap
-	Infrared
-	Megasphere
-	Clip
-	ClipBox
-	RocketAmmo
-	RocketBox
-	Cell
-	CellPack
-	Shell
-	ShellBox
-	Backpack
-	BFG9000
-	Chaingun
-	Chainsaw
-	RocketLauncher
-	PlasmaRifle
-	Shotgun
-	SuperShotgun
-	TechLamp
-	TechLamp2
-	Column
-	TallGreenColumn
-	ShortGreenColumn
-	TallRedColumn
-	ShortRedColumn
-	SkullColumn
-	HeartColumn
-	EvilEye
-	FloatingSkull
-	TorchTree
-	BlueTorch
-	GreenTorch
-	RedTorch
-	ShortBlueTorch
-	ShortGreenTorch
-	ShortRedTorch
-	Stalagtite
-	TechPillar
-	Candlestick
-	Candelabra
-	BloodyTwitch
-	Meat2
-	Meat3
-	Meat4
-	Meat5
-	NonsolidMeat2
-	NonsolidMeat4
-	NonsolidMeat3
-	NonsolidMeat5
-	NonsolidTwitch
-	DeadCacodemon
-	DeadMarine
-	DeadZombieMan
-	DeadDemon
-	DeadLostSoul
-	DeadDoomImp
-	DeadShotgunGuy
-	GibbedMarine
-	GibbedMarineExtra
-	HeadsOnAStick
-	Gibs
-	HeadOnAStick
-	HeadCandles
-	DeadStick
-	LiveStick
-	BigTree
-	BurningBarrel
-	HangNoGuts
-	HangBNoBrain
-	HangTLookingDown
-	HangTSkull
-	HangTLookingUp
-	HangTNoBrain
-	ColonGibs
-	SmallBloodPool
-	BrainStem
+  DoomPlayer
+  ZombieMan
+  ShotgunGuy
+  Archvile
+  ArchvileFire
+  Revenant
+  RevenantTracer
+  RevenantTracerSmoke
+  Fatso
+  FatShot
+  ChaingunGuy
+  DoomImp
+  Demon
+  Spectre
+  Cacodemon
+  BaronOfHell
+  BaronBall
+  HellKnight
+  LostSoul
+  SpiderMastermind
+  Arachnotron
+  Cyberdemon
+  PainElemental
+  WolfensteinSS
+  CommanderKeen
+  BossBrain
+  BossEye
+  BossTarget
+  SpawnShot
+  SpawnFire
+  ExplosiveBarrel
+  DoomImpBall
+  CacodemonBall
+  Rocket
+  PlasmaBall
+  BFGBall
+  ArachnotronPlasma
+  BulletPuff
+  Blood
+  TeleportFog
+  ItemFog
+  TeleportDest
+  BFGExtra
+  GreenArmor
+  BlueArmor
+  HealthBonus
+  ArmorBonus
+  BlueCard
+  RedCard
+  YellowCard
+  YellowSkull
+  RedSkull
+  BlueSkull
+  Stimpack
+  Medikit
+  Soulsphere
+  InvulnerabilitySphere
+  Berserk
+  BlurSphere
+  RadSuit
+  Allmap
+  Infrared
+  Megasphere
+  Clip
+  ClipBox
+  RocketAmmo
+  RocketBox
+  Cell
+  CellPack
+  Shell
+  ShellBox
+  Backpack
+  BFG9000
+  Chaingun
+  Chainsaw
+  RocketLauncher
+  PlasmaRifle
+  Shotgun
+  SuperShotgun
+  TechLamp
+  TechLamp2
+  Column
+  TallGreenColumn
+  ShortGreenColumn
+  TallRedColumn
+  ShortRedColumn
+  SkullColumn
+  HeartColumn
+  EvilEye
+  FloatingSkull
+  TorchTree
+  BlueTorch
+  GreenTorch
+  RedTorch
+  ShortBlueTorch
+  ShortGreenTorch
+  ShortRedTorch
+  Stalagtite
+  TechPillar
+  Candlestick
+  Candelabra
+  BloodyTwitch
+  Meat2
+  Meat3
+  Meat4
+  Meat5
+  NonsolidMeat2
+  NonsolidMeat4
+  NonsolidMeat3
+  NonsolidMeat5
+  NonsolidTwitch
+  DeadCacodemon
+  DeadMarine
+  DeadZombieMan
+  DeadDemon
+  DeadLostSoul
+  DeadDoomImp
+  DeadShotgunGuy
+  GibbedMarine
+  GibbedMarineExtra
+  HeadsOnAStick
+  Gibs
+  HeadOnAStick
+  HeadCandles
+  DeadStick
+  LiveStick
+  BigTree
+  BurningBarrel
+  HangNoGuts
+  HangBNoBrain
+  HangTLookingDown
+  HangTSkull
+  HangTLookingUp
+  HangTNoBrain
+  ColonGibs
+  SmallBloodPool
+  BrainStem
 }
 
-//	Weapon class names
+//  Weapon class names
 weapons
 {
-	Fist
-	Pistol
-	Shotgun
-	Chaingun
-	RocketLauncher
-	PlasmaRifle
-	BFG9000
-	Chainsaw
-	SuperShotgun
+  Fist
+  Pistol
+  Shotgun
+  Chaingun
+  RocketLauncher
+  PlasmaRifle
+  BFG9000
+  Chainsaw
+  SuperShotgun
 }
 
-//	Ammo class names
+//  Ammo class names
 ammo
 {
-	Clip
-	Shell
-	Cell
-	RocketAmmo
+  Clip
+  Shell
+  Cell
+  RocketAmmo
 }
 
-//	Original thing heights
+//  Original thing heights
 heights
 {
-	56 56 56 56 16 56 8 16 64 8
-	56 56 56 56 56 64 8 64 56 100
-	64 110 56 56 72 16 32 32 32 16
-	42 8 8 8 8 8 8 16 16 16
-	16 16 16 16 16 16 16 16 16 16
-	16 16 16 16 16 16 16 16 16 16
-	16 16 16 16 16 16 16 16 16 16
-	16 16 16 16 16 16 16 16 16 16
-	16 16 16 16 16 16 16 16 16 16
-	16 16 16 16 16 16 16 16 16 16
-	16 68 84 84 68 52 84 68 52 52
-	68 16 16 16 16 16 16 16 16 16
-	16 16 16 16 16 16 16 16 88 88
-	64 64 64 64 16 16 16
+  56 56 56 56 16 56 8 16 64 8
+  56 56 56 56 56 64 8 64 56 100
+  64 110 56 56 72 16 32 32 32 16
+  42 8 8 8 8 8 8 16 16 16
+  16 16 16 16 16 16 16 16 16 16
+  16 16 16 16 16 16 16 16 16 16
+  16 16 16 16 16 16 16 16 16 16
+  16 16 16 16 16 16 16 16 16 16
+  16 16 16 16 16 16 16 16 16 16
+  16 16 16 16 16 16 16 16 16 16
+  16 68 84 84 68 52 84 68 52 52
+  68 16 16 16 16 16 16 16 16 16
+  16 16 16 16 16 16 16 16 88 88
+  64 64 64 64 16 16 16
 }

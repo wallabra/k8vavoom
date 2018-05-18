@@ -1,29 +1,29 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
 //**
-//**	Switches, buttons. Two-state animation. Exits.
+//**  Switches, buttons. Two-state animation. Exits.
 //**
 //**************************************************************************
 
@@ -40,33 +40,33 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define BUTTONTIME	1.0					// 1 second
+#define BUTTONTIME  1.0         // 1 second
 
 // TYPES -------------------------------------------------------------------
 
 enum EBWhere
 {
-	SWITCH_Top,
-	SWITCH_Middle,
-	SWITCH_Bottom
+  SWITCH_Top,
+  SWITCH_Middle,
+  SWITCH_Bottom
 };
 
 class VButton : public VThinker
 {
-	DECLARE_CLASS(VButton, VThinker, 0)
-	NO_DEFAULT_CONSTRUCTOR(VButton)
+  DECLARE_CLASS(VButton, VThinker, 0)
+  NO_DEFAULT_CONSTRUCTOR(VButton)
 
-	vint32		Side;
-	vuint8		Where;
-	vint32		SwitchDef;
-	vint32		Frame;
-	float		Timer;
-	VName		DefaultSound;
-	bool		UseAgain;
+  vint32    Side;
+  vuint8    Where;
+  vint32    SwitchDef;
+  vint32    Frame;
+  float   Timer;
+  VName   DefaultSound;
+  bool    UseAgain;
 
-	void Serialise(VStream&);
-	void Tick(float);
-	bool AdvanceFrame();
+  void Serialise(VStream&);
+  void Tick(float);
+  bool AdvanceFrame();
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -89,202 +89,202 @@ IMPLEMENT_CLASS(V, Button)
 //
 //  VLevelInfo::ChangeSwitchTexture
 //
-//	Function that changes wall texture.
-//	Tell it if switch is ok to use again (1=yes, it's a button).
+//  Function that changes wall texture.
+//  Tell it if switch is ok to use again (1=yes, it's a button).
 //
 //==========================================================================
 
 bool VLevelInfo::ChangeSwitchTexture(int sidenum, bool useAgain,
-	VName DefaultSound, bool& Quest)
+  VName DefaultSound, bool& Quest)
 {
-	guard(VLevelInfo::ChangeSwitchTexture);
-	int texTop = XLevel->Sides[sidenum].TopTexture;
-	int texMid = XLevel->Sides[sidenum].MidTexture;
-	int texBot = XLevel->Sides[sidenum].BottomTexture;
+  guard(VLevelInfo::ChangeSwitchTexture);
+  int texTop = XLevel->Sides[sidenum].TopTexture;
+  int texMid = XLevel->Sides[sidenum].MidTexture;
+  int texBot = XLevel->Sides[sidenum].BottomTexture;
 
-	for (int  i = 0; i < Switches.Num(); i++)
-	{
-		EBWhere where;
-		TSwitch* sw = Switches[i];
+  for (int  i = 0; i < Switches.Num(); i++)
+  {
+    EBWhere where;
+    TSwitch* sw = Switches[i];
 
-		if (sw->Tex == texTop)
-		{
-			where = SWITCH_Top;
-			XLevel->Sides[sidenum].TopTexture = sw->Frames[0].Texture;
-		}
-		else if (sw->Tex == texMid)
-		{
-			where = SWITCH_Middle;
-			XLevel->Sides[sidenum].MidTexture = sw->Frames[0].Texture;
-		}
-		else if (sw->Tex == texBot)
-		{
-			where = SWITCH_Bottom;
-			XLevel->Sides[sidenum].BottomTexture = sw->Frames[0].Texture;
-		}
-		else
-		{
-			continue;
-		}
+    if (sw->Tex == texTop)
+    {
+      where = SWITCH_Top;
+      XLevel->Sides[sidenum].TopTexture = sw->Frames[0].Texture;
+    }
+    else if (sw->Tex == texMid)
+    {
+      where = SWITCH_Middle;
+      XLevel->Sides[sidenum].MidTexture = sw->Frames[0].Texture;
+    }
+    else if (sw->Tex == texBot)
+    {
+      where = SWITCH_Bottom;
+      XLevel->Sides[sidenum].BottomTexture = sw->Frames[0].Texture;
+    }
+    else
+    {
+      continue;
+    }
 
-		bool PlaySound;
-		if (useAgain || sw->NumFrames > 1)
-		{
-			PlaySound = StartButton(sidenum, where, i, DefaultSound,
-				useAgain);
-		}
-		else
-		{
-			PlaySound = true;
-		}
+    bool PlaySound;
+    if (useAgain || sw->NumFrames > 1)
+    {
+      PlaySound = StartButton(sidenum, where, i, DefaultSound,
+        useAgain);
+    }
+    else
+    {
+      PlaySound = true;
+    }
 
-		if (PlaySound)
-		{
-			SectorStartSound(XLevel->Sides[sidenum].Sector, sw->Sound ?
-				sw->Sound : GSoundManager->GetSoundID(DefaultSound), 0, 1, 1);
-		}
-		Quest = sw->Quest;
-		return true;
-	}
-	Quest = false;
-	return false;
-	unguard;
+    if (PlaySound)
+    {
+      SectorStartSound(XLevel->Sides[sidenum].Sector, sw->Sound ?
+        sw->Sound : GSoundManager->GetSoundID(DefaultSound), 0, 1, 1);
+    }
+    Quest = sw->Quest;
+    return true;
+  }
+  Quest = false;
+  return false;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VLevelInfo::StartButton
+//  VLevelInfo::StartButton
 //
-//	Start a button counting down till it turns off.
+//  Start a button counting down till it turns off.
 //
 //==========================================================================
 
 bool VLevelInfo::StartButton(int sidenum, vuint8 w, int SwitchDef,
-	VName DefaultSound, bool UseAgain)
+  VName DefaultSound, bool UseAgain)
 {
-	guard(VLevelInfo::StartButton);
-	// See if button is already pressed
-	for (TThinkerIterator<VButton> Btn(XLevel); Btn; ++Btn)
-	{
-		if (Btn->Side == sidenum)
-		{
-			//	Force advancing to the next frame
-			Btn->Timer = 0.001;
-			return false;
-		}
-	}
+  guard(VLevelInfo::StartButton);
+  // See if button is already pressed
+  for (TThinkerIterator<VButton> Btn(XLevel); Btn; ++Btn)
+  {
+    if (Btn->Side == sidenum)
+    {
+      //  Force advancing to the next frame
+      Btn->Timer = 0.001;
+      return false;
+    }
+  }
 
-	VButton* But = (VButton*)XLevel->SpawnThinker(VButton::StaticClass());
-	But->Side = sidenum;
-	But->Where = w;
-	But->SwitchDef = SwitchDef;
-	But->Frame = -1;
-	But->DefaultSound = DefaultSound;
-	But->UseAgain = UseAgain;
-	But->AdvanceFrame();
-	return true;
-	unguard;
+  VButton* But = (VButton*)XLevel->SpawnThinker(VButton::StaticClass());
+  But->Side = sidenum;
+  But->Where = w;
+  But->SwitchDef = SwitchDef;
+  But->Frame = -1;
+  But->DefaultSound = DefaultSound;
+  But->UseAgain = UseAgain;
+  But->AdvanceFrame();
+  return true;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VButton::Serialise
+//  VButton::Serialise
 //
 //==========================================================================
 
 void VButton::Serialise(VStream& Strm)
 {
-	guard(VButton::Serialise);
-	Super::Serialise(Strm);
-	Strm << STRM_INDEX(Side)
-		<< Where
-		<< STRM_INDEX(SwitchDef)
-		<< STRM_INDEX(Frame)
-		<< Timer;
-	unguard;
+  guard(VButton::Serialise);
+  Super::Serialise(Strm);
+  Strm << STRM_INDEX(Side)
+    << Where
+    << STRM_INDEX(SwitchDef)
+    << STRM_INDEX(Frame)
+    << Timer;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VButton::Tick
+//  VButton::Tick
 //
 //==========================================================================
 
 void VButton::Tick(float DeltaTime)
 {
-	guard(VButton::Tick);
-	//  DO BUTTONS
-	Timer -= DeltaTime;
-	if (Timer <= 0.0)
-	{
-		TSwitch* Def = Switches[SwitchDef];
-		if (Frame == Def->NumFrames - 1)
-		{
-			SwitchDef = Def->PairIndex;
-			Def = Switches[Def->PairIndex];
-			Frame = -1;
-			Level->SectorStartSound(XLevel->Sides[Side].Sector,
-				Def->Sound ? Def->Sound :
-				GSoundManager->GetSoundID(DefaultSound), 0, 1, 1);
-			UseAgain = false;
-		}
+  guard(VButton::Tick);
+  //  DO BUTTONS
+  Timer -= DeltaTime;
+  if (Timer <= 0.0)
+  {
+    TSwitch* Def = Switches[SwitchDef];
+    if (Frame == Def->NumFrames - 1)
+    {
+      SwitchDef = Def->PairIndex;
+      Def = Switches[Def->PairIndex];
+      Frame = -1;
+      Level->SectorStartSound(XLevel->Sides[Side].Sector,
+        Def->Sound ? Def->Sound :
+        GSoundManager->GetSoundID(DefaultSound), 0, 1, 1);
+      UseAgain = false;
+    }
 
-		bool KillMe = AdvanceFrame();
-		if (Where == SWITCH_Middle)
-		{
-			XLevel->Sides[Side].MidTexture = Def->Frames[Frame].Texture;
-		}
-		else if (Where == SWITCH_Bottom)
-		{
-			XLevel->Sides[Side].BottomTexture = Def->Frames[Frame].Texture;
-		}
-		else
-		{ // TEXTURE_TOP
-			XLevel->Sides[Side].TopTexture = Def->Frames[Frame].Texture;
-		}
-		if (KillMe)
-		{
-			DestroyThinker();
-		}
-	}
-	unguard;
+    bool KillMe = AdvanceFrame();
+    if (Where == SWITCH_Middle)
+    {
+      XLevel->Sides[Side].MidTexture = Def->Frames[Frame].Texture;
+    }
+    else if (Where == SWITCH_Bottom)
+    {
+      XLevel->Sides[Side].BottomTexture = Def->Frames[Frame].Texture;
+    }
+    else
+    { // TEXTURE_TOP
+      XLevel->Sides[Side].TopTexture = Def->Frames[Frame].Texture;
+    }
+    if (KillMe)
+    {
+      DestroyThinker();
+    }
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VButton::AdvanceFrame
+//  VButton::AdvanceFrame
 //
 //==========================================================================
 
 bool VButton::AdvanceFrame()
 {
-	guard(VButton::AdvanceFrame);
-	Frame++;
-	bool Ret = false;
-	TSwitch* Def = Switches[SwitchDef];
-	if (Frame == Def->NumFrames - 1)
-	{
-		if (UseAgain)
-		{
-			Timer = BUTTONTIME;
-		}
-		else
-		{
-			Ret = true;
-		}
-	}
-	else
-	{
-		if (Def->Frames[Frame].RandomRange)
-		{
-			Timer = (Def->Frames[Frame].BaseTime + Random() *
-				Def->Frames[Frame].RandomRange) / 35.0;
-		}
-		else
-		{
-			Timer = Def->Frames[Frame].BaseTime / 35.0;
-		}
-	}
-	return Ret;
-	unguard;
+  guard(VButton::AdvanceFrame);
+  Frame++;
+  bool Ret = false;
+  TSwitch* Def = Switches[SwitchDef];
+  if (Frame == Def->NumFrames - 1)
+  {
+    if (UseAgain)
+    {
+      Timer = BUTTONTIME;
+    }
+    else
+    {
+      Ret = true;
+    }
+  }
+  else
+  {
+    if (Def->Frames[Frame].RandomRange)
+    {
+      Timer = (Def->Frames[Frame].BaseTime + Random() *
+        Def->Frames[Frame].RandomRange) / 35.0;
+    }
+    else
+    {
+      Timer = Def->Frames[Frame].BaseTime / 35.0;
+    }
+  }
+  return Ret;
+  unguard;
 }

@@ -29,61 +29,61 @@ class SorcBall3 : SorcBall;
 //
 //  A_CastSorcererSpell
 //
-//	Reinforcements
+//  Reinforcements
 //
 //============================================================================
 
 void A_CastSorcererSpell()
 {
-	EntityEx mo;
-	float ang1, ang2;
+  EntityEx mo;
+  float ang1, ang2;
 
-	// Put sorcerer into throw spell animation
-	if (Target.Health > 0)
-		Target.SetState(Target.FindState('Attack2'));
+  // Put sorcerer into throw spell animation
+  if (Target.Health > 0)
+    Target.SetState(Target.FindState('Attack2'));
 
-	ang1 = AngleMod360(Angles.yaw - 45.0);
-	ang2 = AngleMod360(Angles.yaw + 45.0);
-	if (Health < (default.Health / 3))
-	{
-		// Spawn 2 at a time
-		mo = Actor(Target).SpawnMissileAngle(SorcFX3, ang1, 4.0);
-		if (mo)
-			mo.Target = Target;
-		mo = Actor(Target).SpawnMissileAngle(SorcFX3, ang2, 4.0);
-		if (mo)
-			mo.Target = Target;
-	}
-	else
-	{
-		if (P_Random() < 128)
-			ang1 = ang2;
-		mo = Actor(Target).SpawnMissileAngle(SorcFX3, ang1, 4.0);
-		if (mo)
-			mo.Target = Target;
-	}
+  ang1 = AngleMod360(Angles.yaw - 45.0);
+  ang2 = AngleMod360(Angles.yaw + 45.0);
+  if (Health < (default.Health / 3))
+  {
+    // Spawn 2 at a time
+    mo = Actor(Target).SpawnMissileAngle(SorcFX3, ang1, 4.0);
+    if (mo)
+      mo.Target = Target;
+    mo = Actor(Target).SpawnMissileAngle(SorcFX3, ang2, 4.0);
+    if (mo)
+      mo.Target = Target;
+  }
+  else
+  {
+    if (P_Random() < 128)
+      ang1 = ang2;
+    mo = Actor(Target).SpawnMissileAngle(SorcFX3, ang1, 4.0);
+    if (mo)
+      mo.Target = Target;
+  }
 
-	Target.Args[3] = SORC_STOPPED;
+  Target.Args[3] = SORC_STOPPED;
 }
 
 states
 {
 Spawn:
-	SBMG ABCDEFGHIJKLMNOP 2 A_SorcBallOrbit
-	Loop
+  SBMG ABCDEFGHIJKLMNOP 2 A_SorcBallOrbit
+  Loop
 Pain:
-	SBMG A 5 A_SorcBallPop
-	SBMG B 2 A_BounceCheck
-	Wait
+  SBMG A 5 A_SorcBallPop
+  SBMG B 2 A_BounceCheck
+  Wait
 Death:
-	SBS3 D 5 A_Explode
-	SBS3 E 5
-	SBS3 FGH 6
-	Stop
+  SBS3 D 5 A_Explode
+  SBS3 E 5
+  SBS3 FGH 6
+  Stop
 }
 
 defaultproperties
 {
-	Mass = 100.0;
-	BallAngleOffset = 240.0;
+  Mass = 100.0;
+  BallAngleOffset = 240.0;
 }

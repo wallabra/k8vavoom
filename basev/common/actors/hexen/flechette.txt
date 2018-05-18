@@ -1,128 +1,128 @@
 //------------------------------------------------------------------------------
 actor PoisonBag
 {
-	Radius 5
-	Height 5
-	+NoBlockmap
-	+NoGravity
+  Radius 5
+  Height 5
+  +NoBlockmap
+  +NoGravity
 
-	action native A_PoisonBagInit();
+  action native A_PoisonBagInit();
 
-	states
-	{
-	Spawn:
-		PSBG A 18 Bright
-		PSBG B 4 Bright
-		PSBG C 3
-		PSBG C 1 A_PoisonBagInit
-		Stop
-	}
+  states
+  {
+  Spawn:
+    PSBG A 18 Bright
+    PSBG B 4 Bright
+    PSBG C 3
+    PSBG C 1 A_PoisonBagInit
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor FireBomb
 {
-	RenderStyle Translucent
-	Alpha 0.666
-	DamageType "Fire"
-	+NoGravity
-	+FoilInvul
-	DeathSound "FlechetteExplode"
+  RenderStyle Translucent
+  Alpha 0.666
+  DamageType "Fire"
+  +NoGravity
+  +FoilInvul
+  DeathSound "FlechetteExplode"
 
-	action native A_TimeBomb();
+  action native A_TimeBomb();
 
-	states
-	{
-	Spawn:
-		PSBG A 20
-		PSBG AA 10
-		PSBG B 4
-		PSBG C 4 A_Scream
-		XPL1 A 4 Bright A_TimeBomb
-		XPL1 BCDEF 4 Bright
-		Stop
-	}
+  states
+  {
+  Spawn:
+    PSBG A 20
+    PSBG AA 10
+    PSBG B 4
+    PSBG C 4 A_Scream
+    XPL1 A 4 Bright A_TimeBomb
+    XPL1 BCDEF 4 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor ThrowingBomb
 {
-	Health 48
-	Radius 8
-	Height 10
-	Speed 12
-	DamageType "Fire"
-	+Missile
-	+NoBlockmap
-	+DropOff
-	+HexenBounce
-	SeeSound "FlechetteBounce"
-	DeathSound "FlechetteExplode"
+  Health 48
+  Radius 8
+  Height 10
+  Speed 12
+  DamageType "Fire"
+  +Missile
+  +NoBlockmap
+  +DropOff
+  +HexenBounce
+  SeeSound "FlechetteBounce"
+  DeathSound "FlechetteExplode"
 
-	action native A_CheckThrowBomb();
-	action native A_CheckThrowBomb2();
+  action native A_CheckThrowBomb();
+  action native A_CheckThrowBomb2();
 
-	states
-	{
-	Spawn:
-		THRW A 4 A_CheckThrowBomb
-		THRW BCDE 3 A_CheckThrowBomb
-		THRW F 3 A_CheckThrowBomb2
-		Loop
-		THRW G 6 A_CheckThrowBomb
-		THRW F 4 A_CheckThrowBomb
-		THRW H 6 A_CheckThrowBomb
-		THRW F 4 A_CheckThrowBomb
-		THRW G 6 A_CheckThrowBomb
-		THRW F 3 A_CheckThrowBomb
-		Wait
-	Death:
-		CFCF Q 4 Bright A_NoGravity
-		CFCF R 3 Bright A_Scream
-		CFCF S 0 Bright A_SetTranslucent(1, 1)
-		CFCF S 4 Bright A_Explode
-		CFCF T 3 Bright
-		CFCF U 4 Bright
-		CFCF W 3 Bright
-		CFCF X 4 Bright
-		CFCF Z 3 Bright
-		Stop
-	}
+  states
+  {
+  Spawn:
+    THRW A 4 A_CheckThrowBomb
+    THRW BCDE 3 A_CheckThrowBomb
+    THRW F 3 A_CheckThrowBomb2
+    Loop
+    THRW G 6 A_CheckThrowBomb
+    THRW F 4 A_CheckThrowBomb
+    THRW H 6 A_CheckThrowBomb
+    THRW F 4 A_CheckThrowBomb
+    THRW G 6 A_CheckThrowBomb
+    THRW F 3 A_CheckThrowBomb
+    Wait
+  Death:
+    CFCF Q 4 Bright A_NoGravity
+    CFCF R 3 Bright A_Scream
+    CFCF S 0 Bright A_SetTranslucent(1, 1)
+    CFCF S 4 Bright A_Explode
+    CFCF T 3 Bright
+    CFCF U 4 Bright
+    CFCF W 3 Bright
+    CFCF X 4 Bright
+    CFCF Z 3 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor ZPoisonShroom : PoisonBag 8104
 {
-	Game Hexen
-	Health 30
-	Radius 6
-	Height 20
-	Mass 99999
-	PainChance 255
-	-NoBlockmap
-	-NoGravity
-	+Solid
-	+Shootable
-	+NoBlood
-	+NoIceDeath	
-	PainSound "PoisonShroomPain"
-	DeathSound "PoisonShroomDeath"
+  Game Hexen
+  Health 30
+  Radius 6
+  Height 20
+  Mass 99999
+  PainChance 255
+  -NoBlockmap
+  -NoGravity
+  +Solid
+  +Shootable
+  +NoBlood
+  +NoIceDeath
+  PainSound "PoisonShroomPain"
+  DeathSound "PoisonShroomDeath"
 
-	action native A_PoisonShroom();
+  action native A_PoisonShroom();
 
-	states
-	{
-	Spawn:
-		SHRM A 5 A_PoisonShroom
-		Goto Pain+1
-	Pain:
-		SHRM A 6
-		SHRM B 8 A_Pain
-		Goto Spawn
-	Death:
-		SHRM CD 5
-		SHRM E 5 A_PoisonBagInit
-		SHRM F -1
-		Stop
-	}
+  states
+  {
+  Spawn:
+    SHRM A 5 A_PoisonShroom
+    Goto Pain+1
+  Pain:
+    SHRM A 6
+    SHRM B 8 A_Pain
+    Goto Spawn
+  Death:
+    SHRM CD 5
+    SHRM E 5 A_PoisonBagInit
+    SHRM F -1
+    Stop
+  }
 }

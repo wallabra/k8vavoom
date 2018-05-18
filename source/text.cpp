@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -49,77 +49,77 @@
 
 //==========================================================================
 //
-//	T_Init
+//  T_Init
 //
 //==========================================================================
 
 void T_Init()
 {
-	VFont::StaticInit();
+  VFont::StaticInit();
 }
 
 //==========================================================================
 //
-//	T_Shutdown
+//  T_Shutdown
 //
 //==========================================================================
 
 void T_Shutdown()
 {
-	VFont::StaticShutdown();
+  VFont::StaticShutdown();
 }
 
 //==========================================================================
 //
-//	T_SetFont
+//  T_SetFont
 //
 //==========================================================================
 
 void T_SetFont(VFont* AFont)
 {
-	GRoot->SetFont(AFont);
+  GRoot->SetFont(AFont);
 }
 
 //==========================================================================
 //
-//	T_SetAlign
+//  T_SetAlign
 //
 //==========================================================================
 
 void T_SetAlign(halign_e NewHAlign, valign_e NewVAlign)
 {
-	GRoot->SetTextAlign(NewHAlign, NewVAlign);
+  GRoot->SetTextAlign(NewHAlign, NewVAlign);
 }
 
 //==========================================================================
 //
-//	T_DrawText
+//  T_DrawText
 //
 //==========================================================================
 
 void T_DrawText(int x, int y, const VStr& String, int col)
 {
-	GRoot->DrawText(x, y, String, col, CR_YELLOW, 1.0);
+  GRoot->DrawText(x, y, String, col, CR_YELLOW, 1.0);
 }
 
 //==========================================================================
 //
-//	T_DrawCursor
+//  T_DrawCursor
 //
 //==========================================================================
 
 void T_DrawCursor()
 {
-	GRoot->DrawCursor();
+  GRoot->DrawCursor();
 }
 
 //==========================================================================
 //
-//	T_DrawCursorAt
+//  T_DrawCursorAt
 //
 //==========================================================================
 
 void T_DrawCursorAt(int x, int y)
 {
-	GRoot->DrawCursorAt(x, y);
+  GRoot->DrawCursorAt(x, y);
 }

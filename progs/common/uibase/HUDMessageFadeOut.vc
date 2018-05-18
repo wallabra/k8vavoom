@@ -25,49 +25,49 @@
 
 class HUDMessageFadeOut : HUDMessage;
 
-int			State;
-float		FadeOutTime;
+int     State;
+float   FadeOutTime;
 
 //==========================================================================
 //
-//	Init
+//  Init
 //
 //==========================================================================
 
 void Init(string Message, name AFont, int Type, int AId, int Colour,
-	float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
-	float Time1, float Time2)
+  float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
+  float Time1, float Time2)
 {
-	::Init(Message, AFont, Type, AId, Colour, AMsgX, AMsgY, AHudWidth,
-		AHudHeight, AHoldTime, Time1, Time2);
-	FadeOutTime = Time1;
+  ::Init(Message, AFont, Type, AId, Colour, AMsgX, AMsgY, AHudWidth,
+    AHudHeight, AHoldTime, Time1, Time2);
+  FadeOutTime = Time1;
 }
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	Time += DeltaTime;
-	if (State == 0 && HoldTime < Time)
-	{
-		State = 1;
-		Time -= HoldTime;
-	}
-	if (State == 1)
-	{
-		if (FadeOutTime < Time)
-		{
-			Destroy();
-		}
-		else
-		{
-			MsgAlpha = (1.0 - Time / FadeOutTime);
-		}
-	}
+  Time += DeltaTime;
+  if (State == 0 && HoldTime < Time)
+  {
+    State = 1;
+    Time -= HoldTime;
+  }
+  if (State == 1)
+  {
+    if (FadeOutTime < Time)
+    {
+      Destroy();
+    }
+    else
+    {
+      MsgAlpha = (1.0 - Time / FadeOutTime);
+    }
+  }
 }
 
 defaultproperties

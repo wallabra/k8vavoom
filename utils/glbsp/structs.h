@@ -156,7 +156,7 @@ typedef struct raw_hexen_thing_s
 
   uint8_g special;    // special type
   uint8_g arg[5];     // special arguments
-} 
+}
 raw_hexen_thing_t;
 
 // -JL- Hexen polyobj thing types

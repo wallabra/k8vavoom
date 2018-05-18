@@ -25,30 +25,30 @@
 
 defaultproperties
 {
-	Health = 1000;
-	InitialHealth = 1000;
-	ReactionCount = 8;
-	Radius = 20.0;
-	Height = 16.0;
-	Mass = 100.0;
-	MaxStepHeight = 24.0;
-	LightOffset = vector(0.0, 0.0, 0.0);
-	LightColour = 0xffffffff;
-	LightRadius = 128.0;
-	DLightColour = 0xffffffff;
-	DLightRadius = 200.0;
-	MissileChance = 200.0;
-	FloatSpeed = 140.0;
-	BounceFactor = 0.7;
-	WallBounceFactor = 0.75;
-	RDFactor = 1.0;
-	MeleeRange = 44.0;	//	MELEERANGE(64.0) - 20.0
-	MissileHeight = 32.0;
-	WoundHealth = 6;
-	JumpVelZ = 9.5;
-	BloodType = Blood;
-	BloodSplatterType = BloodSplatter;
-	AxeBloodType = AxeBlood;
+  Health = 1000;
+  InitialHealth = 1000;
+  ReactionCount = 8;
+  Radius = 20.0;
+  Height = 16.0;
+  Mass = 100.0;
+  MaxStepHeight = 24.0;
+  LightOffset = vector(0.0, 0.0, 0.0);
+  LightColour = 0xffffffff;
+  LightRadius = 128.0;
+  DLightColour = 0xffffffff;
+  DLightRadius = 200.0;
+  MissileChance = 200.0;
+  FloatSpeed = 140.0;
+  BounceFactor = 0.7;
+  WallBounceFactor = 0.75;
+  RDFactor = 1.0;
+  MeleeRange = 44.0;  //  MELEERANGE(64.0) - 20.0
+  MissileHeight = 32.0;
+  WoundHealth = 6;
+  JumpVelZ = 9.5;
+  BloodType = Blood;
+  BloodSplatterType = BloodSplatter;
+  AxeBloodType = AxeBlood;
 
-	k8InWeaponReady = false;
+  k8InWeaponReady = false;
 }

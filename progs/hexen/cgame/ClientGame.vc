@@ -25,9 +25,9 @@
 
 class ClientGame : ClientGameShared;
 
-TitleScreen			GTitle;
-IntermissionScreen	GImission;
-FinaleScreen		GFinale;
+TitleScreen     GTitle;
+IntermissionScreen  GImission;
+FinaleScreen    GFinale;
 
 int pic_bordt;
 int pic_bordb;
@@ -46,17 +46,17 @@ int pic_bordbr;
 
 void RootWindowCreated()
 {
-	GTitle = TitleScreen(GRoot.NewChild(TitleScreen));
-	GSBar = StatusBarScreen(GRoot.NewChild(StatusBarScreen));
-	GImission = IntermissionScreen(GRoot.NewChild(IntermissionScreen));
-	GFinale = FinaleScreen(GRoot.NewChild(FinaleScreen));
-	GTitle.ClGame = self;
-	GSBar.ClGame = self;
-	GSBar.Hide();
-	GImission.ClGame = self;
-	GImission.Hide();
-	GFinale.ClGame = self;
-	GFinale.Hide();
+  GTitle = TitleScreen(GRoot.NewChild(TitleScreen));
+  GSBar = StatusBarScreen(GRoot.NewChild(StatusBarScreen));
+  GImission = IntermissionScreen(GRoot.NewChild(IntermissionScreen));
+  GFinale = FinaleScreen(GRoot.NewChild(FinaleScreen));
+  GTitle.ClGame = self;
+  GSBar.ClGame = self;
+  GSBar.Hide();
+  GImission.ClGame = self;
+  GImission.Hide();
+  GFinale.ClGame = self;
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -67,11 +67,11 @@ void RootWindowCreated()
 
 void Connected()
 {
-	GTitle.Hide();
-	GTitle.StopDemoLoop();
-	GSBar.Hide();
-	GImission.Hide();
-	GFinale.Hide();
+  GTitle.Hide();
+  GTitle.StopDemoLoop();
+  GSBar.Hide();
+  GImission.Hide();
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -82,10 +82,10 @@ void Connected()
 
 void Disconnected()
 {
-	GTitle.Show();
-	GSBar.Hide();
-	GImission.Hide();
-	GFinale.Hide();
+  GTitle.Show();
+  GSBar.Hide();
+  GImission.Hide();
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -96,10 +96,10 @@ void Disconnected()
 
 void DemoPlaybackStarted()
 {
-	GTitle.Hide();
-	GSBar.Hide();
-	GImission.Hide();
-	GFinale.Hide();
+  GTitle.Hide();
+  GSBar.Hide();
+  GImission.Hide();
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -110,10 +110,10 @@ void DemoPlaybackStarted()
 
 void DemoPlaybackStopped()
 {
-	GTitle.Show();
-	GSBar.Hide();
-	GImission.Hide();
-	GFinale.Hide();
+  GTitle.Show();
+  GSBar.Hide();
+  GImission.Hide();
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -124,7 +124,7 @@ void DemoPlaybackStopped()
 
 void OnHostEndGame()
 {
-	GTitle.OnHostEndGame();
+  GTitle.OnHostEndGame();
 }
 
 //==========================================================================
@@ -135,7 +135,7 @@ void OnHostEndGame()
 
 void OnHostError()
 {
-	GTitle.OnHostError();
+  GTitle.OnHostError();
 }
 
 //==========================================================================
@@ -146,11 +146,11 @@ void OnHostError()
 
 void StatusBarStartMap()
 {
-	StatusBarScreen(GSBar).cl = Player(cl);
-	GSBar.Show();
-	GSBar.StartMap();
-	GImission.Hide();
-	GFinale.Hide();
+  StatusBarScreen(GSBar).cl = Player(cl);
+  GSBar.Show();
+  GSBar.StartMap();
+  GImission.Hide();
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -161,7 +161,7 @@ void StatusBarStartMap()
 
 void StatusBarDrawer(int sb_view)
 {
-	GSBar.SB_Drawer(sb_view);
+  GSBar.SB_Drawer(sb_view);
 }
 
 //==========================================================================
@@ -172,7 +172,7 @@ void StatusBarDrawer(int sb_view)
 
 void StatusBarUpdateWidgets(float DeltaTime)
 {
-	GSBar.SB_UpdateWidgets();
+  GSBar.SB_UpdateWidgets();
 }
 
 //==========================================================================
@@ -183,10 +183,10 @@ void StatusBarUpdateWidgets(float DeltaTime)
 
 void IintermissionStart()
 {
-	GSBar.Hide();
-	GImission.Show();
-	GImission.Start();
-	GFinale.Hide();
+  GSBar.Hide();
+  GImission.Show();
+  GImission.Start();
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -197,10 +197,10 @@ void IintermissionStart()
 
 void StartFinale(name FinaleType)
 {
-	GSBar.Hide();
-	GImission.Hide();
-	GFinale.Show();
-	GFinale.StartFinale(FinaleType);
+  GSBar.Hide();
+  GImission.Hide();
+  GFinale.Show();
+  GFinale.StartFinale(FinaleType);
 }
 
 //===========================================================================
@@ -211,7 +211,7 @@ void StartFinale(name FinaleType)
 
 bool FinaleResponder(event_t * event)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
@@ -222,7 +222,7 @@ bool FinaleResponder(event_t * event)
 
 void DeactivateMenu()
 {
-	ForceMenuOff();
+  ForceMenuOff();
 }
 
 //==========================================================================
@@ -233,16 +233,16 @@ void DeactivateMenu()
 
 bool MenuResponder(event_t * event)
 {
-	if (!CurrentMenuScreen)
-	{
-		// Pop-up menu?
-		if (event->type == ev_keydown && event->data1 == K_ESCAPE)
-		{
-			PushMenuScreen(SpawnMenu(MenuScreenMain));
-			return true;
-		}
-	}
-	return false;
+  if (!CurrentMenuScreen)
+  {
+    // Pop-up menu?
+    if (event->type == ev_keydown && event->data1 == K_ESCAPE)
+    {
+      PushMenuScreen(SpawnMenu(MenuScreenMain));
+      return true;
+    }
+  }
+  return false;
 }
 
 //==========================================================================
@@ -253,85 +253,85 @@ bool MenuResponder(event_t * event)
 
 bool MenuActive()
 {
-	return CurrentMenuScreen != none;
+  return CurrentMenuScreen != none;
 }
 
 //==========================================================================
 //
-//	SetMenu
+//  SetMenu
 //
 //==========================================================================
 
 void SetMenu(string Name)
 {
-	if (!stricmp(Name, "Main"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenMain));
-		return;
-	}
-	if (!stricmp(Name, "Save"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenSaveGame));
-		return;
-	}
-	if (!stricmp(Name, "Load"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenLoadGame));
-		return;
-	}
-	if (!stricmp(Name, "PSetup"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup));
-		return;
-	}
-	if (!stricmp(Name, "Options"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenOptions));
-		return;
-	}
-	if (!stricmp(Name, "Controls"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenControls));
-		return;
-	}
-	/*
-	if (!stricmp(Name, "Controls2"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenControls2));
-		return;
-	}
-	*/
-	if (!stricmp(Name, "Mouse"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenMouseOptions));
-		return;
-	}
-	if (!stricmp(Name, "Resolution"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenScreenResolution));
-		return;
-	}
-	if (!stricmp(Name, "Video"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenVideoOptions));
-		return;
-	}
-	if (!stricmp(Name, "Sound"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenSoundOptions));
-		return;
-	}
-	if (!stricmp(Name, "Help"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenHelp));
-		return;
-	}
-	if (!stricmp(Name, "Quit"))
-	{
-		menu_quit();
-		return;
-	}
-	PushMenuScreen(SpawnMenu(MenuScreenMain));
+  if (!stricmp(Name, "Main"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenMain));
+    return;
+  }
+  if (!stricmp(Name, "Save"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenSaveGame));
+    return;
+  }
+  if (!stricmp(Name, "Load"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenLoadGame));
+    return;
+  }
+  if (!stricmp(Name, "PSetup"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup));
+    return;
+  }
+  if (!stricmp(Name, "Options"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenOptions));
+    return;
+  }
+  if (!stricmp(Name, "Controls"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenControls));
+    return;
+  }
+  /*
+  if (!stricmp(Name, "Controls2"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenControls2));
+    return;
+  }
+  */
+  if (!stricmp(Name, "Mouse"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenMouseOptions));
+    return;
+  }
+  if (!stricmp(Name, "Resolution"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenScreenResolution));
+    return;
+  }
+  if (!stricmp(Name, "Video"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenVideoOptions));
+    return;
+  }
+  if (!stricmp(Name, "Sound"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenSoundOptions));
+    return;
+  }
+  if (!stricmp(Name, "Help"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenHelp));
+    return;
+  }
+  if (!stricmp(Name, "Quit"))
+  {
+    menu_quit();
+    return;
+  }
+  PushMenuScreen(SpawnMenu(MenuScreenMain));
 }
 
 //==========================================================================
@@ -342,9 +342,9 @@ void SetMenu(string Name)
 
 void menu_quit()
 {
-	if (!GetCvarB('menu_quit_prompt')) { CmdBuf_AddText("Quit\n"); return; }
-	LocalSound('misc/chat');
-	MessageBoxStartMessage("ARE YOU SURE YOU WANT TO QUIT?", MB_Quit, true);
+  if (!GetCvarB('menu_quit_prompt')) { CmdBuf_AddText("Quit\n"); return; }
+  LocalSound('misc/chat');
+  MessageBoxStartMessage("ARE YOU SURE YOU WANT TO QUIT?", MB_Quit, true);
 }
 
 //==========================================================================
@@ -355,10 +355,10 @@ void menu_quit()
 
 void QuitResponse(int ch)
 {
-	if (ch != K_y)
-		return;
+  if (ch != K_y)
+    return;
 
-	CmdBuf_AddText("Quit\n");
+  CmdBuf_AddText("Quit\n");
 }
 
 //==========================================================================
@@ -369,14 +369,14 @@ void QuitResponse(int ch)
 
 void InitBorder()
 {
-	pic_bordt = R_RegisterPic('bordt');
-	pic_bordb = R_RegisterPic('bordb');
-	pic_bordl = R_RegisterPic('bordl');
-	pic_bordr = R_RegisterPic('bordr');
-	pic_bordtl = R_RegisterPic('bordtl');
-	pic_bordtr = R_RegisterPic('bordtr');
-	pic_bordbl = R_RegisterPic('bordbl');
-	pic_bordbr = R_RegisterPic('bordbr');
+  pic_bordt = R_RegisterPic('bordt');
+  pic_bordb = R_RegisterPic('bordb');
+  pic_bordl = R_RegisterPic('bordl');
+  pic_bordr = R_RegisterPic('bordr');
+  pic_bordtl = R_RegisterPic('bordtl');
+  pic_bordtr = R_RegisterPic('bordtr');
+  pic_bordbl = R_RegisterPic('bordbl');
+  pic_bordbr = R_RegisterPic('bordbr');
 }
 
 //==========================================================================
@@ -389,30 +389,30 @@ void InitBorder()
 
 void DrawBorder(int x, int y, int w, int h)
 {
-	int i;
+  int i;
 
-	if (!pic_bordb)
-	{
-		InitBorder();
-	}
+  if (!pic_bordb)
+  {
+    InitBorder();
+  }
 
-	for (i = 0; i < w; i += 16)
-		GRoot.DrawPic(x + i, y - 4, pic_bordt);
+  for (i = 0; i < w; i += 16)
+    GRoot.DrawPic(x + i, y - 4, pic_bordt);
 
-	for (i = 0; i < w; i += 16)
-		GRoot.DrawPic(x + i, y + h, pic_bordb);
+  for (i = 0; i < w; i += 16)
+    GRoot.DrawPic(x + i, y + h, pic_bordb);
 
-	for (i = 0; i < h; i += 16)
-		GRoot.DrawPic(x - 4, y + i, pic_bordl);
+  for (i = 0; i < h; i += 16)
+    GRoot.DrawPic(x - 4, y + i, pic_bordl);
 
-	for (i = 0; i < h; i += 16)
-		GRoot.DrawPic(x + w, y + i, pic_bordr);
+  for (i = 0; i < h; i += 16)
+    GRoot.DrawPic(x + w, y + i, pic_bordr);
 
-	// Draw beveled edge.
-	GRoot.DrawPic(x - 4, y - 4, pic_bordtl);
-	GRoot.DrawPic(x + w, y - 4, pic_bordtr);
-	GRoot.DrawPic(x - 4, y + h, pic_bordbl);
-	GRoot.DrawPic(x + w, y + h, pic_bordbr);
+  // Draw beveled edge.
+  GRoot.DrawPic(x - 4, y - 4, pic_bordtl);
+  GRoot.DrawPic(x + w, y - 4, pic_bordtr);
+  GRoot.DrawPic(x - 4, y + h, pic_bordbl);
+  GRoot.DrawPic(x + w, y + h, pic_bordbr);
 }
 
 //==========================================================================
@@ -423,19 +423,19 @@ void DrawBorder(int x, int y, int w, int h)
 
 void DrawViewBorder(int x, int y, int w, int h)
 {
-	GRoot.FillRectWithFlat(0, 0, 640, 480/* - 39*/, 'f_022');
-	DrawBorder(x, y, w, h);
+  GRoot.FillRectWithFlat(0, 0, 640, 480/* - 39*/, 'f_022');
+  DrawBorder(x, y, w, h);
 }
 
 defaultproperties
 {
-	sb_height = 39;
-	MsgBoxFlat = 'f_019';
-	BigSelectorXOffset = -28;
-	BigSelectorYOffset = -1;
-	BigSelectorAnimSpeed = 2;
-	BigSelectorAnimFrames[0] = 'm_slctr1';
-	BigSelectorAnimFrames[1] = 'm_slctr2';
-	DefaultFinaleMusic = 'hub';
-	DefaultFinaleType = 'EndGameChess';
+  sb_height = 39;
+  MsgBoxFlat = 'f_019';
+  BigSelectorXOffset = -28;
+  BigSelectorYOffset = -1;
+  BigSelectorAnimSpeed = 2;
+  BigSelectorAnimFrames[0] = 'm_slctr1';
+  BigSelectorAnimFrames[1] = 'm_slctr2';
+  DefaultFinaleMusic = 'hub';
+  DefaultFinaleType = 'EndGameChess';
 }

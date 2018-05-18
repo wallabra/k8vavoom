@@ -4,83 +4,83 @@ Pointer wiurh0 wiurh1
 
 Animation 224 104 11
 {
-	wia00000
-	wia00001
-	wia00002
+  wia00000
+  wia00001
+  wia00002
 }
 
 Animation 184 160 11
 {
-	wia00100
-	wia00101
-	wia00102
+  wia00100
+  wia00101
+  wia00102
 }
 
 Animation 112 136 11
 {
-	wia00200
-	wia00201
-	wia00202
+  wia00200
+  wia00201
+  wia00202
 }
 
 Animation 72 112 11
 {
-	wia00300
-	wia00301
-	wia00302
+  wia00300
+  wia00301
+  wia00302
 }
 
 Animation 88 96 11
 {
-	wia00400
-	wia00401
-	wia00402
+  wia00400
+  wia00401
+  wia00402
 }
 
 Animation 64 48 11
 {
-	wia00500
-	wia00501
-	wia00502
+  wia00500
+  wia00501
+  wia00502
 }
 
 Animation 192 40 11
 {
-	wia00600
-	wia00601
-	wia00602
+  wia00600
+  wia00601
+  wia00602
 }
 
 Animation 136 16 11
 {
-	wia00700
-	wia00701
-	wia00702
+  wia00700
+  wia00701
+  wia00702
 }
 
 Animation 80 16 11
 {
-	wia00800
-	wia00801
-	wia00802
+  wia00800
+  wia00801
+  wia00802
 }
 
 Animation 64 24 11
 {
-	wia00900
-	wia00901
-	wia00902
+  wia00900
+  wia00901
+  wia00902
 }
 
 Spots
 {
-	e1m1 185 164
-	e1m2 148 143
-	e1m3 69 122
-	e1m4 209 102
-	e1m5 116 89
-	e1m6 166 55
-	e1m7 71 56
-	e1m8 135 29
-	e1m9 71 24
+  e1m1 185 164
+  e1m2 148 143
+  e1m3 69 122
+  e1m4 209 102
+  e1m5 116 89
+  e1m6 166 55
+  e1m7 71 56
+  e1m8 135 29
+  e1m9 71 24
 }

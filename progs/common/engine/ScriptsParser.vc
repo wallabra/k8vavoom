@@ -24,9 +24,9 @@
 //**************************************************************************
 
 class ScriptsParser : Object
-	native;
+  native;
 
-native private readonly void*		Int;
+native private readonly void*   Int;
 
 native string String { get; }
 native int Number { get; }

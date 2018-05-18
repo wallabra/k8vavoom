@@ -77,474 +77,474 @@ int pic_armor[2];
 
 void StartMap()
 {
-	int i;
-	picinfo_t info;
+  int i;
+  picinfo_t info;
 
-	::StartMap();
+  ::StartMap();
 
-	pic_barback = R_RegisterPic('barback');
-	pic_god1 = R_RegisterPic('god1');
-	pic_god2 = R_RegisterPic('god2');
-	pic_barltop = R_RegisterPic('ltfctop');
-	pic_barrtop = R_RegisterPic('rtfctop');
-	pic_chain = R_RegisterPic('chain');
-	if (ClGame.maxclients == 1)
-	{
-		// single player game uses red life gem
-		pic_lifegem = R_RegisterPic('lifegem2');
-	}
-	else
-	{
-		pic_lifegem = R_RegisterPic(StrToName(va("lifegem%d", cl.ClientNum)));
-	}
-	pic_ltface = R_RegisterPic('ltface');
-	pic_rtface = R_RegisterPic('rtface');
+  pic_barback = R_RegisterPic('barback');
+  pic_god1 = R_RegisterPic('god1');
+  pic_god2 = R_RegisterPic('god2');
+  pic_barltop = R_RegisterPic('ltfctop');
+  pic_barrtop = R_RegisterPic('rtfctop');
+  pic_chain = R_RegisterPic('chain');
+  if (ClGame.maxclients == 1)
+  {
+    // single player game uses red life gem
+    pic_lifegem = R_RegisterPic('lifegem2');
+  }
+  else
+  {
+    pic_lifegem = R_RegisterPic(StrToName(va("lifegem%d", cl.ClientNum)));
+  }
+  pic_ltface = R_RegisterPic('ltface');
+  pic_rtface = R_RegisterPic('rtface');
 
-	if (ClGame.deathmatch)
-	{
-		pic_mainbar = R_RegisterPic('statbar');
-	}
-	else
-	{
-		pic_mainbar = R_RegisterPic('lifebar');
-	}
-	for (i = 0; i < 10; i++)
-	{
-		pic_innum[i] = R_RegisterPic(StrToName(va("in%d", i)));
-		pic_smallinnum[i] = R_RegisterPic(StrToName(va("smallin%d", i)));
-		pic_bignum[i] = R_RegisterPic(StrToName(va("fontb%d", 16 + i)));
-		R_GetPicInfo(pic_bignum[i], &info);
-		bignumwidth[i] = info.width;
-	}
-	pic_minus = R_RegisterPic('negnum');
-	pic_lame = R_RegisterPic('lame');
-	pic_ykey = R_RegisterPic('ykeyicon');
-	pic_gkey = R_RegisterPic('gkeyicon');
-	pic_bkey = R_RegisterPic('bkeyicon');
+  if (ClGame.deathmatch)
+  {
+    pic_mainbar = R_RegisterPic('statbar');
+  }
+  else
+  {
+    pic_mainbar = R_RegisterPic('lifebar');
+  }
+  for (i = 0; i < 10; i++)
+  {
+    pic_innum[i] = R_RegisterPic(StrToName(va("in%d", i)));
+    pic_smallinnum[i] = R_RegisterPic(StrToName(va("smallin%d", i)));
+    pic_bignum[i] = R_RegisterPic(StrToName(va("fontb%d", 16 + i)));
+    R_GetPicInfo(pic_bignum[i], &info);
+    bignumwidth[i] = info.width;
+  }
+  pic_minus = R_RegisterPic('negnum');
+  pic_lame = R_RegisterPic('lame');
+  pic_ykey = R_RegisterPic('ykeyicon');
+  pic_gkey = R_RegisterPic('gkeyicon');
+  pic_bkey = R_RegisterPic('bkeyicon');
 
-	pic_artiflash[0] = R_RegisterPic('useartia');
-	pic_artiflash[1] = R_RegisterPic('useartib');
-	pic_artiflash[2] = R_RegisterPic('useartic');
-	pic_artiflash[3] = R_RegisterPic('useartid');
-	pic_artibox = R_RegisterPic('artibox');
-	pic_invbar = R_RegisterPic('invbar');
-	pic_selectbox = R_RegisterPic('selectbo');
-	pic_invgeml[0] = R_RegisterPic('invgeml1');
-	pic_invgeml[1] = R_RegisterPic('invgeml2');
-	pic_invgemr[0] = R_RegisterPic('invgemr1');
-	pic_invgemr[1] = R_RegisterPic('invgemr2');
+  pic_artiflash[0] = R_RegisterPic('useartia');
+  pic_artiflash[1] = R_RegisterPic('useartib');
+  pic_artiflash[2] = R_RegisterPic('useartic');
+  pic_artiflash[3] = R_RegisterPic('useartid');
+  pic_artibox = R_RegisterPic('artibox');
+  pic_invbar = R_RegisterPic('invbar');
+  pic_selectbox = R_RegisterPic('selectbo');
+  pic_invgeml[0] = R_RegisterPic('invgeml1');
+  pic_invgeml[1] = R_RegisterPic('invgeml2');
+  pic_invgemr[0] = R_RegisterPic('invgemr1');
+  pic_invgemr[1] = R_RegisterPic('invgemr2');
 
-	for (i = 0; i < 16; i++)
-	{
-		pic_flight[i] = R_RegisterPic(StrToName(va("spfly%d", i)));
-		pic_book[i] = R_RegisterPic(StrToName(va("spinbk%d", i)));
-	}
+  for (i = 0; i < 16; i++)
+  {
+    pic_flight[i] = R_RegisterPic(StrToName(va("spfly%d", i)));
+    pic_book[i] = R_RegisterPic(StrToName(va("spinbk%d", i)));
+  }
 
-	pic_paused = R_RegisterPic('paused');
+  pic_paused = R_RegisterPic('paused');
 
-	//  FULLSCREEN ICONS FOR HEALTH AND ARMOR
-	pic_health = R_RegisterPic('ptn1a0');
-	pic_armor[0] = R_RegisterPic('shlda0');
-	pic_armor[1] = R_RegisterPic('shd2a0');
+  //  FULLSCREEN ICONS FOR HEALTH AND ARMOR
+  pic_health = R_RegisterPic('ptn1a0');
+  pic_armor[0] = R_RegisterPic('shlda0');
+  pic_armor[1] = R_RegisterPic('shd2a0');
 }
 
 //==========================================================================
 //
-//	SB_DrawNumber9
+//  SB_DrawNumber9
 //
 //==========================================================================
 
 void SB_DrawNumber9(int x, int y, int num)
 {
-	int w = 9;
-	int neg = num < 0;
+  int w = 9;
+  int neg = num < 0;
 
-	if (num < -9)
-	{
-		//	Lame message
-		DrawPic(x + 1, y + 1, pic_lame);
-		return;
-	}
-	if (neg)
-	{
-		num = -num;
-	}
+  if (num < -9)
+  {
+    //  Lame message
+    DrawPic(x + 1, y + 1, pic_lame);
+    return;
+  }
+  if (neg)
+  {
+    num = -num;
+  }
 
-	x = x + 27;
+  x = x + 27;
 
-	// in the special case of 0, you draw 0
-	if (!num)
-	{
-		DrawPic(x - w, y, pic_innum[0]);
-	}
+  // in the special case of 0, you draw 0
+  if (!num)
+  {
+    DrawPic(x - w, y, pic_innum[0]);
+  }
 
-	// draw the new number
-	while (num)
-	{
-		x -= w;
-		DrawPic(x, y, pic_innum[num % 10]);
-		num /= 10;
-	}
+  // draw the new number
+  while (num)
+  {
+    x -= w;
+    DrawPic(x, y, pic_innum[num % 10]);
+    num /= 10;
+  }
 
-	// draw a minus sign if necessary
-	if (neg)
-	{
-		DrawPic(x - 8, y, pic_minus);
-	}
+  // draw a minus sign if necessary
+  if (neg)
+  {
+    DrawPic(x - 8, y, pic_minus);
+  }
 }
 
 //==========================================================================
 //
-//	SB_DrawNumber12
+//  SB_DrawNumber12
 //
 //==========================================================================
 
 void SB_DrawNumber12(int x, int y, int num)
 {
-	x = x + 36;
+  x = x + 36;
 
-	// in the special case of 0, you draw 0
-	if (!num)
-	{
-		DrawShadowedPic(x - bignumwidth[0], y, pic_bignum[0]);
-	}
+  // in the special case of 0, you draw 0
+  if (!num)
+  {
+    DrawShadowedPic(x - bignumwidth[0], y, pic_bignum[0]);
+  }
 
-	// draw the new number
-	while (num)
-	{
-		x -= bignumwidth[num % 10];
-		DrawShadowedPic(x, y, pic_bignum[num % 10]);
-		num /= 10;
-		x -= 3;
-	}
+  // draw the new number
+  while (num)
+  {
+    x -= bignumwidth[num % 10];
+    DrawShadowedPic(x, y, pic_bignum[num % 10]);
+    num /= 10;
+    x -= 3;
+  }
 }
 
 //==========================================================================
 //
-//	SB_DrawINumber
+//  SB_DrawINumber
 //
 //==========================================================================
 
 void SB_DrawINumber(int x, int y, int num)
 {
-	if (num > 1)
-	{
-		x = x + 8;
+  if (num > 1)
+  {
+    x = x + 8;
 
-		// draw the new number
-		while (num)
-		{
-			x -= 4;
-			DrawPic(x, y, pic_smallinnum[num % 10]);
-			num /= 10;
-		}
-	}
+    // draw the new number
+    while (num)
+    {
+      x -= 4;
+      DrawPic(x, y, pic_smallinnum[num % 10]);
+      num /= 10;
+    }
+  }
 }
 
 //==========================================================================
 //
-//	SB_DrawMainBar
+//  SB_DrawMainBar
 //
 //==========================================================================
 
 void SB_DrawMainBar()
 {
-	int chainY;
-	int healthPos;
-	int i;
-	int health;
+  int chainY;
+  int healthPos;
+  int i;
+  int health;
 
-	if (!cl || !cl.MO)
-	{
-		return;
-	}
+  if (!cl || !cl.MO)
+  {
+    return;
+  }
 
-	// draw something in the blank spaces
-	FillRectWithFlat(0, 438, 640, 42,
-		!WadLumpPresent('e2m1') ? 'floor04' : 'flat513');
+  // draw something in the blank spaces
+  FillRectWithFlat(0, 438, 640, 42,
+    !WadLumpPresent('e2m1') ? 'floor04' : 'flat513');
 
-	//  Background
-	DrawPic(BAR_X, BAR_Y, pic_barback);
+  //  Background
+  DrawPic(BAR_X, BAR_Y, pic_barback);
 
-	if (cl.Cheats & Player::CF_GODMODE)
-	{
-		//  God mode
-		DrawPic(BAR_X + 16, BAR_Y + 9, pic_god1);
-		DrawPic(BAR_X + 287, BAR_Y + 9, pic_god2);
-	}
+  if (cl.Cheats & Player::CF_GODMODE)
+  {
+    //  God mode
+    DrawPic(BAR_X + 16, BAR_Y + 9, pic_god1);
+    DrawPic(BAR_X + 287, BAR_Y + 9, pic_god2);
+  }
 
-	//  Top
-	DrawPic(BAR_X + 0, BAR_Y - 10, pic_barltop);
-	DrawPic(BAR_X + 290, BAR_Y - 10, pic_barrtop);
+  //  Top
+  DrawPic(BAR_X + 0, BAR_Y - 10, pic_barltop);
+  DrawPic(BAR_X + 290, BAR_Y - 10, pic_barrtop);
 
-	//  Healtn and chain
-	health = HealthMarker;
-	if (health < 0)
-	{
-		health = 0;
-	}
-	else if (health > 100)
-	{
-		health = 100;
-	}
-	healthPos = (health * 256) / 100;
-	chainY = (HealthMarker == cl.Health) ? 33 : 33 + ChainWiggle;
+  //  Healtn and chain
+  health = HealthMarker;
+  if (health < 0)
+  {
+    health = 0;
+  }
+  else if (health > 100)
+  {
+    health = 100;
+  }
+  healthPos = (health * 256) / 100;
+  chainY = (HealthMarker == cl.Health) ? 33 : 33 + ChainWiggle;
 
-	//  Chain
-	DrawPic(BAR_X + 2 + (healthPos % 17), BAR_Y + chainY, pic_chain);
-	DrawPic(BAR_X + 17 + healthPos, BAR_Y + chainY, pic_lifegem);
-	DrawPic(BAR_X + 0, BAR_Y + 32, pic_ltface);
-	DrawPic(BAR_X + 276, BAR_Y + 32, pic_rtface);
-	for (i = 0; i < 16; i++)
-	{
-		ShadeRect(BAR_X + 277 + i, BAR_Y + 32, 1, 10, itof(9 + i) / 32.0);
-		ShadeRect(BAR_X + 19 + i, BAR_Y + 32, 1, 10, itof(9 + 15 - i) / 32.0);
-	}
+  //  Chain
+  DrawPic(BAR_X + 2 + (healthPos % 17), BAR_Y + chainY, pic_chain);
+  DrawPic(BAR_X + 17 + healthPos, BAR_Y + chainY, pic_lifegem);
+  DrawPic(BAR_X + 0, BAR_Y + 32, pic_ltface);
+  DrawPic(BAR_X + 276, BAR_Y + 32, pic_rtface);
+  for (i = 0; i < 16; i++)
+  {
+    ShadeRect(BAR_X + 277 + i, BAR_Y + 32, 1, 10, itof(9 + i) / 32.0);
+    ShadeRect(BAR_X + 19 + i, BAR_Y + 32, 1, 10, itof(9 + 15 - i) / 32.0);
+  }
 
-	if (!cl.InventoryTime)
-	{
-		//  Main interface
-		DrawPic(BAR_X + 34, BAR_Y + 2, pic_mainbar);
+  if (!cl.InventoryTime)
+  {
+    //  Main interface
+    DrawPic(BAR_X + 34, BAR_Y + 2, pic_mainbar);
 
-		//  Frags / Health
-		if (ClGame.deathmatch)
-		{
-			SB_DrawNumber9(BAR_X + 61, BAR_Y + 12, cl.Frags);
-		}
-		else
-		{
-			SB_DrawNumber9(BAR_X + 61, BAR_Y + 12, health);
-		}
+    //  Frags / Health
+    if (ClGame.deathmatch)
+    {
+      SB_DrawNumber9(BAR_X + 61, BAR_Y + 12, cl.Frags);
+    }
+    else
+    {
+      SB_DrawNumber9(BAR_X + 61, BAR_Y + 12, health);
+    }
 
-		if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo1)
-		{
-			//  Ammo
-			SB_DrawNumber9(BAR_X + 109, BAR_Y + 4, cl.ReadyWeapon.Ammo1.Amount);
-			DrawPic(BAR_X + 111, BAR_Y + 14, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName));
-		}
+    if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo1)
+    {
+      //  Ammo
+      SB_DrawNumber9(BAR_X + 109, BAR_Y + 4, cl.ReadyWeapon.Ammo1.Amount);
+      DrawPic(BAR_X + 111, BAR_Y + 14, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName));
+    }
 
-		//  Ready artifact
-		if (cl.ArtifactFlash)
-		{
-			DrawPic(BAR_X + 182, BAR_Y + 3,
-				pic_artiflash[cl.ArtifactFlash - 1]);
-		}
-		else if (cl.InvPtr)
-		{
-			DrawPic(BAR_X + 179, BAR_Y + 2,
-				R_RegisterPic(cl.InvPtr.IconName));
-			SB_DrawINumber(BAR_X + 201, BAR_Y + 24, cl.InvPtr.Amount);
-		}
+    //  Ready artifact
+    if (cl.ArtifactFlash)
+    {
+      DrawPic(BAR_X + 182, BAR_Y + 3,
+        pic_artiflash[cl.ArtifactFlash - 1]);
+    }
+    else if (cl.InvPtr)
+    {
+      DrawPic(BAR_X + 179, BAR_Y + 2,
+        R_RegisterPic(cl.InvPtr.IconName));
+      SB_DrawINumber(BAR_X + 201, BAR_Y + 24, cl.InvPtr.Amount);
+    }
 
-		//  Keys
-		if (EntityEx(cl.MO).FindInventory(KeyYellow))
-		{
-			DrawPic(BAR_X + 153, BAR_Y + 6, pic_ykey);
-		}
-		if (EntityEx(cl.MO).FindInventory(KeyGreen))
-		{
-			DrawPic(BAR_X + 153, BAR_Y + 14, pic_gkey);
-		}
-		if (EntityEx(cl.MO).FindInventory(KeyBlue))
-		{
-			DrawPic(BAR_X + 153, BAR_Y + 22, pic_bkey);
-		}
+    //  Keys
+    if (EntityEx(cl.MO).FindInventory(KeyYellow))
+    {
+      DrawPic(BAR_X + 153, BAR_Y + 6, pic_ykey);
+    }
+    if (EntityEx(cl.MO).FindInventory(KeyGreen))
+    {
+      DrawPic(BAR_X + 153, BAR_Y + 14, pic_gkey);
+    }
+    if (EntityEx(cl.MO).FindInventory(KeyBlue))
+    {
+      DrawPic(BAR_X + 153, BAR_Y + 22, pic_bkey);
+    }
 
-		//  Armor
-		BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(
-			BasicArmor));
-		SB_DrawNumber9(BAR_X + 228, BAR_Y + 12, Armor ? Armor.Amount : 0);
-	}
-	else
-	{
-		//  Inventory
-		DrawPic(BAR_X + 34, BAR_Y + 2, pic_invbar);
-		Inventory Item = cl.InvFirst;
-		for (i = 0; Item && i < 7; i++)
-		{
-			DrawPic(BAR_X + 50 + i * 31, BAR_Y + 2,
-				R_RegisterPic(Item.IconName));
-			SB_DrawINumber(BAR_X + 69 + i * 31, BAR_Y + 24, Item.Amount);
-			if (Item == cl.InvPtr)
-			{
-				DrawPic(BAR_X + 50 + i * 31, BAR_Y + 31, pic_selectbox);
-			}
-			Item = Item.NextInv();
-		}
-		if (cl.InvFirst && cl.InvFirst.PrevInv())
-		{
-			DrawPic(BAR_X + 38, BAR_Y + 1, pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1]);
-		}
-		if (Item)
-		{
-			DrawPic(BAR_X + 269, BAR_Y + 1, pic_invgemr[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1]);
-		}
-	}
+    //  Armor
+    BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(
+      BasicArmor));
+    SB_DrawNumber9(BAR_X + 228, BAR_Y + 12, Armor ? Armor.Amount : 0);
+  }
+  else
+  {
+    //  Inventory
+    DrawPic(BAR_X + 34, BAR_Y + 2, pic_invbar);
+    Inventory Item = cl.InvFirst;
+    for (i = 0; Item && i < 7; i++)
+    {
+      DrawPic(BAR_X + 50 + i * 31, BAR_Y + 2,
+        R_RegisterPic(Item.IconName));
+      SB_DrawINumber(BAR_X + 69 + i * 31, BAR_Y + 24, Item.Amount);
+      if (Item == cl.InvPtr)
+      {
+        DrawPic(BAR_X + 50 + i * 31, BAR_Y + 31, pic_selectbox);
+      }
+      Item = Item.NextInv();
+    }
+    if (cl.InvFirst && cl.InvFirst.PrevInv())
+    {
+      DrawPic(BAR_X + 38, BAR_Y + 1, pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1]);
+    }
+    if (Item)
+    {
+      DrawPic(BAR_X + 269, BAR_Y + 1, pic_invgemr[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1]);
+    }
+  }
 }
 
 //==========================================================================
 //
-//	SB_DrawFullscreenStats
+//  SB_DrawFullscreenStats
 //
 //==========================================================================
 
 void SB_DrawFullscreenStats()
 {
-	int i;
+  int i;
 
-	if (!cl || !cl.MO)
-	{
-		return;
-	}
+  if (!cl || !cl.MO)
+  {
+    return;
+  }
 
-	//  Health
-	SB_DrawNumber9(50, 456, cl.Health);
-	DrawPic(30, 494, pic_health, 0.6);
+  //  Health
+  SB_DrawNumber9(50, 456, cl.Health);
+  DrawPic(30, 494, pic_health, 0.6);
 
-	//  Armorpoints
-	BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor));
-	if (Armor && Armor.Amount)
-	{
-		i = Armor.SavePercent > 0.5 ? 1 : 0;
-		SB_DrawNumber9(140, 456, Armor.Amount);
-		DrawPic(120, 490, pic_armor[i], 0.6);
-	}
+  //  Armorpoints
+  BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor));
+  if (Armor && Armor.Amount)
+  {
+    i = Armor.SavePercent > 0.5 ? 1 : 0;
+    SB_DrawNumber9(140, 456, Armor.Amount);
+    DrawPic(120, 490, pic_armor[i], 0.6);
+  }
 
-	//  Frags
-	if (ClGame.deathmatch)
-	{
-		SB_DrawNumber9(200, 450, cl.Frags);
-	}
+  //  Frags
+  if (ClGame.deathmatch)
+  {
+    SB_DrawNumber9(200, 450, cl.Frags);
+  }
 
-	//  Ammo
-	if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo1)
-	{
-		SB_DrawNumber9(610, 456, cl.ReadyWeapon.Ammo1.Amount);
-		DrawPic(590, 454, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), 0.6);
-	}
-	if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo2 &&
-		cl.ReadyWeapon.Ammo2 != cl.ReadyWeapon.Ammo1)
-	{
-		SB_DrawNumber9(610, 424, cl.ReadyWeapon.Ammo2.Amount);
-		DrawPic(590, 422, R_RegisterPic(cl.ReadyWeapon.Ammo2.IconName), 0.6);
-	}
+  //  Ammo
+  if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo1)
+  {
+    SB_DrawNumber9(610, 456, cl.ReadyWeapon.Ammo1.Amount);
+    DrawPic(590, 454, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), 0.6);
+  }
+  if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo2 &&
+    cl.ReadyWeapon.Ammo2 != cl.ReadyWeapon.Ammo1)
+  {
+    SB_DrawNumber9(610, 424, cl.ReadyWeapon.Ammo2.Amount);
+    DrawPic(590, 422, R_RegisterPic(cl.ReadyWeapon.Ammo2.IconName), 0.6);
+  }
 
-	//  Keys
-	int KeyX = 320;
-	Inventory Item;
-	for (Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory)
-	{
-		if (Key(Item))
-		{
-			int Pic = R_RegisterPic(Item.IconName);
-			if (Pic >= 0)
-			{
-				DrawPic(KeyX, 460, Pic, 0.6);
-				KeyX += 20;
-			}
-		}
-	}
+  //  Keys
+  int KeyX = 320;
+  Inventory Item;
+  for (Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory)
+  {
+    if (Key(Item))
+    {
+      int Pic = R_RegisterPic(Item.IconName);
+      if (Pic >= 0)
+      {
+        DrawPic(KeyX, 460, Pic, 0.6);
+        KeyX += 20;
+      }
+    }
+  }
 
-	if (cl.InventoryTime)
-	{
-		//  Inventory
-		Item = cl.InvFirst;
-		for (i = 0; i < 7; i++)
-		{
-			DrawPic(210 + i * 31, 448, pic_artibox, 0.6);
-			if (Item)
-			{
-				DrawShadowedPic(210 + i * 31, 448,
-					R_RegisterPic(Item.IconName));
-				SB_DrawINumber(229 + i * 31, 470, Item.Amount);
-				if (Item == cl.InvPtr)
-				{
-					DrawPic(210 + i * 31, 477, pic_selectbox, 0.6);
-				}
-				Item = Item.NextInv();
-			}
-		}
-		if (cl.InvFirst && cl.InvFirst.PrevInv())
-		{
-			DrawPic(198, 447, pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1], 0.6);
-		}
-		if (Item)
-		{
-			DrawPic(429, 447, pic_invgemr[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1], 0.6);
-		}
-	}
-	else if (cl.InvPtr)
-	{
-		//  Ready artifact
-		DrawPic(546, 440, pic_artibox, 0.6);
-		DrawShadowedPic(546, 440, R_RegisterPic(cl.InvPtr.IconName));
-		SB_DrawINumber(567, 462, cl.InvPtr.Amount);
-	}
+  if (cl.InventoryTime)
+  {
+    //  Inventory
+    Item = cl.InvFirst;
+    for (i = 0; i < 7; i++)
+    {
+      DrawPic(210 + i * 31, 448, pic_artibox, 0.6);
+      if (Item)
+      {
+        DrawShadowedPic(210 + i * 31, 448,
+          R_RegisterPic(Item.IconName));
+        SB_DrawINumber(229 + i * 31, 470, Item.Amount);
+        if (Item == cl.InvPtr)
+        {
+          DrawPic(210 + i * 31, 477, pic_selectbox, 0.6);
+        }
+        Item = Item.NextInv();
+      }
+    }
+    if (cl.InvFirst && cl.InvFirst.PrevInv())
+    {
+      DrawPic(198, 447, pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1], 0.6);
+    }
+    if (Item)
+    {
+      DrawPic(429, 447, pic_invgemr[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1], 0.6);
+    }
+  }
+  else if (cl.InvPtr)
+  {
+    //  Ready artifact
+    DrawPic(546, 440, pic_artibox, 0.6);
+    DrawShadowedPic(546, 440, R_RegisterPic(cl.InvPtr.IconName));
+    SB_DrawINumber(567, 462, cl.InvPtr.Amount);
+  }
 }
 
 //==========================================================================
 //
-//	SB_DrawIcons
+//  SB_DrawIcons
 //
 //==========================================================================
 
 void SB_DrawIcons()
 {
-	int frame;
+  int frame;
 
-	if (!cl.MO)
-	{
-		return;
-	}
+  if (!cl.MO)
+  {
+    return;
+  }
 
-	//  Artifact rotating icons
-	Powerup Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerFlight));
-	if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD ||
-		!(ftoi(2.0 * Pw.EffectTime) & 1)))
-	{
-		frame = (ftoi(cl.MO.Level.XLevel.Time * 35.0) /* ClGame.GLevel.TicTime */ / 3) & 15;
-		if (cl.MO.bFly)
-		{
-			if (hitCentreFrame && frame != 15 && frame != 0)
-			{
-				frame = 15;
-			}
-			else
-			{
-				hitCentreFrame = false;
-			}
-		}
-		else
-		{
-			if (hitCentreFrame || frame == 15 || frame == 0)
-			{
-				frame = 15;
-				hitCentreFrame = true;
-			}
-		}
-		DrawPic(20, 17, pic_flight[frame]);
-	}
+  //  Artifact rotating icons
+  Powerup Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerFlight));
+  if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD ||
+    !(ftoi(2.0 * Pw.EffectTime) & 1)))
+  {
+    frame = (ftoi(cl.MO.Level.XLevel.Time * 35.0) /* ClGame.GLevel.TicTime */ / 3) & 15;
+    if (cl.MO.bFly)
+    {
+      if (hitCentreFrame && frame != 15 && frame != 0)
+      {
+        frame = 15;
+      }
+      else
+      {
+        hitCentreFrame = false;
+      }
+    }
+    else
+    {
+      if (hitCentreFrame || frame == 15 || frame == 0)
+      {
+        frame = 15;
+        hitCentreFrame = true;
+      }
+    }
+    DrawPic(20, 17, pic_flight[frame]);
+  }
 
-	Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerWeaponLevel2));
-	if (Pw && !cl.MorphTime && (Pw.EffectTime > Player::BLINKTHRESHOLD ||
-		!(ftoi(2.0 * Pw.EffectTime) & 1)))
-	{
-		DrawPic(620, 17, pic_book[(ftoi(cl.MO.Level.XLevel.Time * 35.0) / 3) & 15]);
-	}
+  Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerWeaponLevel2));
+  if (Pw && !cl.MorphTime && (Pw.EffectTime > Player::BLINKTHRESHOLD ||
+    !(ftoi(2.0 * Pw.EffectTime) & 1)))
+  {
+    DrawPic(620, 17, pic_book[(ftoi(cl.MO.Level.XLevel.Time * 35.0) / 3) & 15]);
+  }
 }
 
 //==========================================================================
 //
-//	SB_DrawPause
+//  SB_DrawPause
 //
 //==========================================================================
 
 void SB_DrawPause()
 {
-	if (ClGame.Game.bPaused && GetCvar('draw_pause'))
-	{
-		DrawPic(320, ClGame.maxclients > 1 ? 140 : 40, pic_paused);
-	}
+  if (ClGame.Game.bPaused && GetCvar('draw_pause'))
+  {
+    DrawPic(320, ClGame.maxclients > 1 ? 140 : 40, pic_paused);
+  }
 }
 
 //==========================================================================
@@ -555,20 +555,20 @@ void SB_DrawPause()
 
 void SB_Drawer(int sb_view)
 {
-	if (!cl || !cl.MO)
-	{
-		return;
-	}
-	if (sb_view == SB_VIEW_FULLSCREEN)
-	{
-		SB_DrawFullscreenStats();
-	}
-	else
-	{
-		SB_DrawMainBar();
-	}
-	SB_DrawIcons();
-	SB_DrawPause();
+  if (!cl || !cl.MO)
+  {
+    return;
+  }
+  if (sb_view == SB_VIEW_FULLSCREEN)
+  {
+    SB_DrawFullscreenStats();
+  }
+  else
+  {
+    SB_DrawMainBar();
+  }
+  SB_DrawIcons();
+  SB_DrawPause();
 }
 
 //==========================================================================
@@ -579,63 +579,63 @@ void SB_Drawer(int sb_view)
 
 void SB_UpdateWidgets()
 {
-	int i;
-	int delta;
-	int curHealth;
+  int i;
+  int delta;
+  int curHealth;
 
-	if (ClGame.GLevel.TicTime & 1)
-	{
-		ChainWiggle = P_Random() & 1;
-	}
+  if (ClGame.GLevel.TicTime & 1)
+  {
+    ChainWiggle = P_Random() & 1;
+  }
 
-	curHealth = cl.Health;
-	if (curHealth < 0)
-	{
-		curHealth = 0;
-	}
-	if (curHealth < HealthMarker)
-	{
-		delta = (HealthMarker - curHealth) >> 2;
-		if (delta < 1)
-		{
-			delta = 1;
-		}
-		else if (delta > 8)
-		{
-			delta = 8;
-		}
-		HealthMarker -= delta;
-	}
-	else if (curHealth > HealthMarker)
-	{
-		delta = (curHealth - HealthMarker) >> 2;
-		if (delta < 1)
-		{
-			delta = 1;
-		}
-		else if (delta > 8)
-		{
-			delta = 8;
-		}
-		HealthMarker += delta;
-	}
+  curHealth = cl.Health;
+  if (curHealth < 0)
+  {
+    curHealth = 0;
+  }
+  if (curHealth < HealthMarker)
+  {
+    delta = (HealthMarker - curHealth) >> 2;
+    if (delta < 1)
+    {
+      delta = 1;
+    }
+    else if (delta > 8)
+    {
+      delta = 8;
+    }
+    HealthMarker -= delta;
+  }
+  else if (curHealth > HealthMarker)
+  {
+    delta = (curHealth - HealthMarker) >> 2;
+    if (delta < 1)
+    {
+      delta = 1;
+    }
+    else if (delta > 8)
+    {
+      delta = 8;
+    }
+    HealthMarker += delta;
+  }
 }
 
 //==========================================================================
 //
-//	OnVisibilityChanged
+//  OnVisibilityChanged
 //
 //==========================================================================
 
 void OnVisibilityChanged(bool bNewVisibility)
 {
-	bTickEnabled = bNewVisibility;
+  bTickEnabled = bNewVisibility;
 }
 
 defaultproperties
 {
-	bTickEnabled = true;
-	Focusable = true;
-	Width = 640;
-	Height = 480;
+  bTickEnabled = true;
+  Focusable = true;
+  Width = 640;
+  Height = 480;
 }

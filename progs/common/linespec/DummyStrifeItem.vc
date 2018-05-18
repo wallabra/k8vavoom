@@ -23,19 +23,19 @@
 //**
 //**************************************************************************
 //**
-//**	Base class for special items that are used by conversation scrpts
+//**  Base class for special items that are used by conversation scrpts
 //**  to perform some action.
 //**
 //**************************************************************************
 
 class DummyStrifeItem : Inventory
-	abstract;
+  abstract;
 
 states
 {
 Spawn:
-	TOKN A -1
-	Stop
+  TOKN A -1
+  Stop
 }
 
 defaultproperties

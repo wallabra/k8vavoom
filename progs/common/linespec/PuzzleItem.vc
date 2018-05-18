@@ -24,76 +24,76 @@
 //**************************************************************************
 
 class PuzzleItem : Inventory
-	abstract;
+  abstract;
 
-int				PuzzleItemNumber;
-string			FailMessage;
+int       PuzzleItemNumber;
+string      FailMessage;
 
 //==========================================================================
 //
-//	HandlePickup
+//  HandlePickup
 //
 //==========================================================================
 
 bool HandlePickup(Inventory Item)
 {
-	if (Item.Class == Class && Level.Game.netgame && !Level.Game.deathmatch)
-	{
-		// Can't carry more than 1 puzzle item in coop netplay
-		return true;
-	}
+  if (Item.Class == Class && Level.Game.netgame && !Level.Game.deathmatch)
+  {
+    // Can't carry more than 1 puzzle item in coop netplay
+    return true;
+  }
 
-	return ::HandlePickup(Item);
+  return ::HandlePickup(Item);
 }
 
 //==========================================================================
 //
-//	ShouldStay
+//  ShouldStay
 //
 //==========================================================================
 
 bool ShouldStay()
 {
-	return Level.Game.netgame && !Level.Game.deathmatch;
+  return Level.Game.netgame && !Level.Game.deathmatch;
 }
 
 //==========================================================================
 //
-//	ShouldRespawn
+//  ShouldRespawn
 //
 //==========================================================================
 
 bool ShouldRespawn()
 {
-	// Remove puzzle items if not cooperative netplay
-	return false;
+  // Remove puzzle items if not cooperative netplay
+  return false;
 }
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	if (PlayerEx(Owner.Player).UsePuzzleItem(PuzzleItemNumber))
-	{
-		return true;
-	}
-	else
-	{
-		Owner.Player.centreprint(FailMessage);
-		return false;
-	}
+  if (PlayerEx(Owner.Player).UsePuzzleItem(PuzzleItemNumber))
+  {
+    return true;
+  }
+  else
+  {
+    Owner.Player.centreprint(FailMessage);
+    return false;
+  }
 }
 
 defaultproperties
 {
-	MaxAmount = DefMaxAmount;
-	bNoGravity = true;
-	bInvBar = true;
-	bFullVolPickupSound = true;
-	UseSound = 'PuzzleSuccess';
-	FailMessage = "$txt_usepuzzlefailed";
+  MaxAmount = DefMaxAmount;
+  bNoGravity = true;
+  bInvBar = true;
+  bFullVolPickupSound = true;
+  UseSound = 'PuzzleSuccess';
+  FailMessage = "$txt_usepuzzlefailed";
 }

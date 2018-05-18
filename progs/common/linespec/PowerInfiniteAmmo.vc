@@ -27,33 +27,33 @@ class PowerInfiniteAmmo : Powerup;
 
 //==========================================================================
 //
-//	InitEffect
+//  InitEffect
 //
 //==========================================================================
 
 void InitEffect()
 {
-	if (Owner)
-	{
-		Owner.PlaySound(SightSound, CHAN_VOICE);
-	}
+  if (Owner)
+  {
+    Owner.PlaySound(SightSound, CHAN_VOICE);
+  }
 }
 
 //==========================================================================
 //
-//	EndEffect
+//  EndEffect
 //
 //==========================================================================
 
 void EndEffect()
 {
-	if (Owner)
-	{
-		Owner.PlaySound(DeathSound, CHAN_VOICE);
-	}
+  if (Owner)
+  {
+    Owner.PlaySound(DeathSound, CHAN_VOICE);
+  }
 }
 
 defaultproperties
 {
-	EffectTime = 30.0;
+  EffectTime = 30.0;
 }

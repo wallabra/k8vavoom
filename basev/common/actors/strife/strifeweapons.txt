@@ -1,727 +1,727 @@
 //------------------------------------------------------------------------------
 actor StrifeWeapon : Weapon
 {
-	Weapon.Kickback 100
-	states
-	{
-	BurnWave:
-		WAVE ABCD 3 Bright
-		Loop
-	UnknownTargeter:
-		RBPY ABCD 3 Bright
-		Loop
-		TRGT A -1
-		Stop
-		TRGT B -1
-		Stop
-		TRGT C -1
-		Stop
-	}
+  Weapon.Kickback 100
+  states
+  {
+  BurnWave:
+    WAVE ABCD 3 Bright
+    Loop
+  UnknownTargeter:
+    RBPY ABCD 3 Bright
+    Loop
+    TRGT A -1
+    Stop
+    TRGT B -1
+    Stop
+    TRGT C -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor StrifePuff
 {
-	RenderStyle Translucent
-	Alpha 0.25
-	+NoBlockmap
-	+NoGravity
-	+AllowParticles
-	states
-	{
-	Spawn:
-		POW3 ABCDEFGH 3
-		Stop
-	Crash:
-		PUFY A 4 Bright
-		PUFY BCD 4
-		Stop
-	}
+  RenderStyle Translucent
+  Alpha 0.25
+  +NoBlockmap
+  +NoGravity
+  +AllowParticles
+  states
+  {
+  Spawn:
+    POW3 ABCDEFGH 3
+    Stop
+  Crash:
+    PUFY A 4 Bright
+    PUFY BCD 4
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor StrifeSpark : StrifePuff
 {
-	RenderStyle Add
-	states
-	{
-	Crash:
-		POW2 ABCD 4
-		Stop
-	}
+  RenderStyle Add
+  states
+  {
+  Crash:
+    POW2 ABCD 4
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor StrifeZap1
 {
-	//	Just to be able to spawn it on its own.
-	+NoBlockmap
-	+NoGravity
-	+DropOff
-	states
-	{
-	Spawn:
-	Death:
-		ZAP1 A 3 A_AlertMonsters
-		ZAP1 BCDEFE 3
-		ZAP1 DCB 2
-		ZAP1 A 1
-		Stop
-	}
+  //  Just to be able to spawn it on its own.
+  +NoBlockmap
+  +NoGravity
+  +DropOff
+  states
+  {
+  Spawn:
+  Death:
+    ZAP1 A 3 A_AlertMonsters
+    ZAP1 BCDEFE 3
+    ZAP1 DCB 2
+    ZAP1 A 1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor PunchDagger : StrifeWeapon
 {
-	Weapon.SelectionOrder 3900
-	+Weapon.NoAlert
-	+Weapon.MeleeWeapon
+  Weapon.SelectionOrder 3900
+  +Weapon.NoAlert
+  +Weapon.MeleeWeapon
 
-	action native A_JabDagger();
+  action native A_JabDagger();
 
-	states
-	{
-	Ready:
-		PNCH A 1 A_WeaponReady
-		Loop
-	Deselect:
-		PNCH A 1 A_Lower
-		Loop
-	Select:
-		PNCH A 1 A_Raise
-		Loop
-	Fire:
-		PNCH B 4
-		PNCH C 4 A_JabDagger
-		PNCH D 5
-		PNCH C 4
-		PNCH B 5 A_ReFire
-		Goto Ready
-	}
+  states
+  {
+  Ready:
+    PNCH A 1 A_WeaponReady
+    Loop
+  Deselect:
+    PNCH A 1 A_Lower
+    Loop
+  Select:
+    PNCH A 1 A_Raise
+    Loop
+  Fire:
+    PNCH B 4
+    PNCH C 4 A_JabDagger
+    PNCH D 5
+    PNCH C 4
+    PNCH B 5 A_ReFire
+    Goto Ready
+  }
 }
 
 //------------------------------------------------------------------------------
 actor StrifeCrossbow : StrifeWeapon 2001
 {
-	Game Strife
-	ConversationID 194, 188, 192
-	Tag "crossbow"
-	+FloorClip
-	Inventory.PickupMessage "$txt_strifecrossbow"
-	Inventory.Icon "cbowa0"
-	Weapon.SisterWeapon "StrifeCrossbow2"
-	Weapon.SelectionOrder 1200
-	Weapon.AmmoType1 "ElectricBolts"
-	Weapon.AmmoUse1 1
-	Weapon.AmmoGive1 8
-	+Weapon.NoAlert
+  Game Strife
+  ConversationID 194, 188, 192
+  Tag "crossbow"
+  +FloorClip
+  Inventory.PickupMessage "$txt_strifecrossbow"
+  Inventory.Icon "cbowa0"
+  Weapon.SisterWeapon "StrifeCrossbow2"
+  Weapon.SelectionOrder 1200
+  Weapon.AmmoType1 "ElectricBolts"
+  Weapon.AmmoUse1 1
+  Weapon.AmmoGive1 8
+  +Weapon.NoAlert
 
-	action native A_ShowElectricFlash();
-	action native A_ClearFlash();
-	action native A_FireArrow(class<Actor> Proj);
+  action native A_ShowElectricFlash();
+  action native A_ClearFlash();
+  action native A_FireArrow(class<Actor> Proj);
 
-	states
-	{
-	Ready:
-		XBOW A 0 A_ShowElectricFlash
-		XBOW A 1 A_WeaponReady
-		Wait
-	Deselect:
-		XBOW A 1 A_Lower
-		Loop
-	Select:
-		XBOW A 1 A_Raise
-		Loop
-	Fire:
-		XBOW A 3 A_ClearFlash
-		XBOW B 6 A_FireArrow("ElectricBolt")
-		XBOW C 4
-		XBOW D 6
-		XBOW E 3
-		XBOW F 5
-		XBOW G 5 A_CheckReload
-		Goto Ready
-	ElectricFlash:
-		XBOW KLM 5
-		Loop
-	Spawn:
-		CBOW A -1
-		Stop
-	}
+  states
+  {
+  Ready:
+    XBOW A 0 A_ShowElectricFlash
+    XBOW A 1 A_WeaponReady
+    Wait
+  Deselect:
+    XBOW A 1 A_Lower
+    Loop
+  Select:
+    XBOW A 1 A_Raise
+    Loop
+  Fire:
+    XBOW A 3 A_ClearFlash
+    XBOW B 6 A_FireArrow("ElectricBolt")
+    XBOW C 4
+    XBOW D 6
+    XBOW E 3
+    XBOW F 5
+    XBOW G 5 A_CheckReload
+    Goto Ready
+  ElectricFlash:
+    XBOW KLM 5
+    Loop
+  Spawn:
+    CBOW A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor StrifeCrossbow2 : StrifeCrossbow
 {
-	Weapon.SisterWeapon "StrifeCrossbow"
-	Weapon.SelectionOrder 2700
-	Weapon.AmmoType1 "PoisonBolts"
-	Weapon.AmmoUse1 1
-	Weapon.AmmoGive1 0
-	states
-	{
-	Ready:
-		XBOW H 1 A_WeaponReady
-		Loop
-	Deselect:
-		XBOW H 1 A_Lower
-		Loop
-	Select:
-		XBOW H 1 A_Raise
-		Loop
-	Fire:
-		XBOW H 3
-		XBOW B 6 A_FireArrow("PoisonBolt")
-		XBOW C 4
-		XBOW D 6
-		XBOW E 3
-		XBOW I 5
-		XBOW J 5 A_CheckReload
-		Goto Ready
-	}
+  Weapon.SisterWeapon "StrifeCrossbow"
+  Weapon.SelectionOrder 2700
+  Weapon.AmmoType1 "PoisonBolts"
+  Weapon.AmmoUse1 1
+  Weapon.AmmoGive1 0
+  states
+  {
+  Ready:
+    XBOW H 1 A_WeaponReady
+    Loop
+  Deselect:
+    XBOW H 1 A_Lower
+    Loop
+  Select:
+    XBOW H 1 A_Raise
+    Loop
+  Fire:
+    XBOW H 3
+    XBOW B 6 A_FireArrow("PoisonBolt")
+    XBOW C 4
+    XBOW D 6
+    XBOW E 3
+    XBOW I 5
+    XBOW J 5 A_CheckReload
+    Goto Ready
+  }
 }
 
 //------------------------------------------------------------------------------
 actor ElectricBolt : StrifeZap1
 {
-	ConversationID 102, -1, -1
-	Radius 10
-	Height 10
-	Speed 30
-	MaxStepHeight 4
-	Damage 10
-	Projectile
-	+StrifeDamage
-	SeeSound "misc/swish"
-	ActiveSound "misc/swish"
-	DeathSound "weapons/xbowhit"
-	states
-	{
-	Spawn:
-		AROW A 10 A_LoopActiveSound
-		Loop
-	}
+  ConversationID 102, -1, -1
+  Radius 10
+  Height 10
+  Speed 30
+  MaxStepHeight 4
+  Damage 10
+  Projectile
+  +StrifeDamage
+  SeeSound "misc/swish"
+  ActiveSound "misc/swish"
+  DeathSound "weapons/xbowhit"
+  states
+  {
+  Spawn:
+    AROW A 10 A_LoopActiveSound
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor AssaultGun : StrifeWeapon 2002
 {
-	Game Strife
-	ConversationID 188, 182, 186
-	Tag "assault_gun"
-	+FloorClip
-	Inventory.PickupMessage "$txt_assaultgun"
-	Inventory.Icon "rifla0"
-	Weapon.SelectionOrder 600
-	Weapon.AmmoType1 "ClipOfBullets"
-	Weapon.AmmoUse1 1
-	Weapon.AmmoGive1 20
-	states
-	{
-	Ready:
-		RIFG A 1 A_WeaponReady
-		Loop
-	Deselect:
-		RIFG B 1 A_Lower
-		Loop
-	Select:
-		RIFG A 1 A_Raise
-		Loop
-	Fire:
-		RIFF AB 3 A_FireAssaultGun
-		RIFG D 3 A_FireAssaultGun
-		RIFG C 0 A_ReFire
-		RIFG B 2 A_Light0
-		Goto Ready
-	Spawn:
-		RIFL A -1
-		Stop
-	}
+  Game Strife
+  ConversationID 188, 182, 186
+  Tag "assault_gun"
+  +FloorClip
+  Inventory.PickupMessage "$txt_assaultgun"
+  Inventory.Icon "rifla0"
+  Weapon.SelectionOrder 600
+  Weapon.AmmoType1 "ClipOfBullets"
+  Weapon.AmmoUse1 1
+  Weapon.AmmoGive1 20
+  states
+  {
+  Ready:
+    RIFG A 1 A_WeaponReady
+    Loop
+  Deselect:
+    RIFG B 1 A_Lower
+    Loop
+  Select:
+    RIFG A 1 A_Raise
+    Loop
+  Fire:
+    RIFF AB 3 A_FireAssaultGun
+    RIFG D 3 A_FireAssaultGun
+    RIFG C 0 A_ReFire
+    RIFG B 2 A_Light0
+    Goto Ready
+  Spawn:
+    RIFL A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor AssaultGunStanding : WeaponGiver 2006
 {
-	Game Strife
-	ConversationID 189, 183, 187
-	DropItem "AssaultGun"
-	Inventory.PickupMessage "$txt_assaultgun"
-	states
-	{
-	Spawn:
-		RIFL B -1
-		Stop
-	}
+  Game Strife
+  ConversationID 189, 183, 187
+  DropItem "AssaultGun"
+  Inventory.PickupMessage "$txt_assaultgun"
+  states
+  {
+  Spawn:
+    RIFL B -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor MiniMissileLauncher : StrifeWeapon 2003
 {
-	Game Strife
-	ConversationID 192, 186, 190
-	Tag "mini_missile_launcher"
-	+FloorClip
-	Inventory.PickupMessage "$txt_mmlauncher"
-	Inventory.Icon "mmsla0"
-	Weapon.SelectionOrder 1800
-	Weapon.AmmoType1 "MiniMissiles"
-	Weapon.AmmoUse1 1
-	Weapon.AmmoGive1 8
-	+Weapon.NoAutoFire
+  Game Strife
+  ConversationID 192, 186, 190
+  Tag "mini_missile_launcher"
+  +FloorClip
+  Inventory.PickupMessage "$txt_mmlauncher"
+  Inventory.Icon "mmsla0"
+  Weapon.SelectionOrder 1800
+  Weapon.AmmoType1 "MiniMissiles"
+  Weapon.AmmoUse1 1
+  Weapon.AmmoGive1 8
+  +Weapon.NoAutoFire
 
-	action native A_FireMiniMissile();
+  action native A_FireMiniMissile();
 
-	states
-	{
-	Ready:
-		MMIS A 1 A_WeaponReady
-		Loop
-	Deselect:
-		MMIS A 1 A_Lower
-		Loop
-	Select:
-		MMIS A 1 A_Raise
-		Loop
-	Fire:
-		MMIS A 4 A_FireMiniMissile
-		MMIS B 4 A_Light1
-		MMIS C 5 Bright
-		MMIS D 2 Bright A_Light2
-		MMIS E 2 Bright
-		MMIS F 2 Bright A_Light0
-		MMIS F 0 A_ReFire
-		Goto Ready
-	Spawn:
-		MMSL A -1
-		Stop
-	}
+  states
+  {
+  Ready:
+    MMIS A 1 A_WeaponReady
+    Loop
+  Deselect:
+    MMIS A 1 A_Lower
+    Loop
+  Select:
+    MMIS A 1 A_Raise
+    Loop
+  Fire:
+    MMIS A 4 A_FireMiniMissile
+    MMIS B 4 A_Light1
+    MMIS C 5 Bright
+    MMIS D 2 Bright A_Light2
+    MMIS E 2 Bright
+    MMIS F 2 Bright A_Light0
+    MMIS F 0 A_ReFire
+    Goto Ready
+  Spawn:
+    MMSL A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor MiniMissile
 {
-	ConversationID 99, -1, -1
-	Radius 10
-	Height 14
-	Speed 20
-	MaxStepHeight 4
-	Damage 10
-	Projectile
-	+StrifeDamage
-	SeeSound "weapons/minimissile"
-	DeathSound "weapons/minimissilehit"
-	states
-	{
-	Spawn:
-		MICR A 6 Bright A_RocketInFlight
-		Loop
-	Death:
-		SMIS A 0 Bright A_SetTranslucent(1, 1)
-		SMIS A 0 Bright A_StopSoundEx("Voice")
-		SMIS A 5 Bright A_Explode(64, 64, 1, 1)
-		SMIS B 5 Bright
-		SMIS C 4 Bright
-		SMIS DEFG 2 Bright
-		Stop
-	}
+  ConversationID 99, -1, -1
+  Radius 10
+  Height 14
+  Speed 20
+  MaxStepHeight 4
+  Damage 10
+  Projectile
+  +StrifeDamage
+  SeeSound "weapons/minimissile"
+  DeathSound "weapons/minimissilehit"
+  states
+  {
+  Spawn:
+    MICR A 6 Bright A_RocketInFlight
+    Loop
+  Death:
+    SMIS A 0 Bright A_SetTranslucent(1, 1)
+    SMIS A 0 Bright A_StopSoundEx("Voice")
+    SMIS A 5 Bright A_Explode(64, 64, 1, 1)
+    SMIS B 5 Bright
+    SMIS C 4 Bright
+    SMIS DEFG 2 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor RocketTrail
 {
-	ConversationID 51, -1, -1
-	RenderStyle Translucent
-	Alpha 0.35 //0.25
-	+NoBlockmap
-	+NoGravity
-	SeeSound "misc/missileinflight"
-	states
-	{
-	Spawn:
-		PUFY BCBCD 4
-		Stop
-	}
+  ConversationID 51, -1, -1
+  RenderStyle Translucent
+  Alpha 0.35 //0.25
+  +NoBlockmap
+  +NoGravity
+  SeeSound "misc/missileinflight"
+  states
+  {
+  Spawn:
+    PUFY BCBCD 4
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor MiniMissilePuff : StrifePuff
 {
-	-AllowParticles
-	states
-	{
-	Spawn:
-		Goto Super::Crash
-	}
+  -AllowParticles
+  states
+  {
+  Spawn:
+    Goto Super::Crash
+  }
 }
 
 //------------------------------------------------------------------------------
 actor StrifeGrenadeLauncher : StrifeWeapon 154
 {
-	Game Strife
-	ConversationID 195, 189, 193
-	Tag "Grenade_launcher"
-	Inventory.PickupMessage "$txt_glauncher"
-	Inventory.Icon "grnda0"
-	Weapon.SisterWeapon "StrifeGrenadeLauncher2"
-	Weapon.SelectionOrder 2400
-	Weapon.AmmoType1 "HEGrenadeRounds"
-	Weapon.AmmoUse1 1
-	Weapon.AmmoGive1 12
+  Game Strife
+  ConversationID 195, 189, 193
+  Tag "Grenade_launcher"
+  Inventory.PickupMessage "$txt_glauncher"
+  Inventory.Icon "grnda0"
+  Weapon.SisterWeapon "StrifeGrenadeLauncher2"
+  Weapon.SelectionOrder 2400
+  Weapon.AmmoType1 "HEGrenadeRounds"
+  Weapon.AmmoUse1 1
+  Weapon.AmmoGive1 12
 
-	action native A_FireGrenade(class<Actor> grenadetype, float angleofs, state flash);
+  action native A_FireGrenade(class<Actor> grenadetype, float angleofs, state flash);
 
-	states
-	{
-	Ready:
-		GREN A 1 A_WeaponReady
-		Loop
-	Deselect:
-		GREN A 1 A_Lower
-		Loop
-	Select:
-		GREN A 1 A_Raise
-		Loop
-	Fire:
-		GREN A 5 A_FireGrenade("HEGrenade", -90, "Flash")
-		GREN B 10
-		GREN A 5 A_FireGrenade("HEGrenade", 90, "Flash2")
-		GREN C 10
-		GREN A 0 A_ReFire
-		Goto Ready
-	Flash:
-		GREF A 5 Bright A_Light1
-		Goto Super::LightDone
-	FlashUnused:
-		GREF A 10 A_Light0
-		Goto Super::LightDone
-	Flash2:
-		GREF B 5 Bright A_Light2
-		Goto Super::LightDone
-	Spawn:
-		GRND A -1
-		Stop
-	}
+  states
+  {
+  Ready:
+    GREN A 1 A_WeaponReady
+    Loop
+  Deselect:
+    GREN A 1 A_Lower
+    Loop
+  Select:
+    GREN A 1 A_Raise
+    Loop
+  Fire:
+    GREN A 5 A_FireGrenade("HEGrenade", -90, "Flash")
+    GREN B 10
+    GREN A 5 A_FireGrenade("HEGrenade", 90, "Flash2")
+    GREN C 10
+    GREN A 0 A_ReFire
+    Goto Ready
+  Flash:
+    GREF A 5 Bright A_Light1
+    Goto Super::LightDone
+  FlashUnused:
+    GREF A 10 A_Light0
+    Goto Super::LightDone
+  Flash2:
+    GREF B 5 Bright A_Light2
+    Goto Super::LightDone
+  Spawn:
+    GRND A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor StrifeGrenadeLauncher2 : StrifeGrenadeLauncher
 {
-	Weapon.SisterWeapon "StrifeGrenadeLauncher"
-	Weapon.SelectionOrder 3200
-	Weapon.AmmoType1 PhosphorusGrenadeRounds
-	Weapon.AmmoUse1 1
-	Weapon.AmmoGive1 0
-	states
-	{
-	Ready:
-		GREN D 1 A_WeaponReady
-		Loop
-	Deselect:
-		GREN D 1 A_Lower
-		Loop
-	Select:
-		GREN D 1 A_Raise
-		Loop
-	Fire:
-		GREN D 5 A_FireGrenade("PhosphorousGrenade", -90, "Flash")
-		GREN E 10
-		GREN D 5 A_FireGrenade("PhosphorousGrenade", 90, "Flash2")
-		GREN F 10
-		GREN A 0 A_ReFire
-		Goto Ready
-	Flash:
-		GREF C 5 Bright A_Light1
-		Goto StrifeWeapon::LightDone
-	FlashUnused:
-		GREF C 10 A_Light0
-		Goto StrifeWeapon::LightDone
-	Flash2:
-		GREF D 5 Bright A_Light2
-		Goto StrifeWeapon::LightDone
-	}
+  Weapon.SisterWeapon "StrifeGrenadeLauncher"
+  Weapon.SelectionOrder 3200
+  Weapon.AmmoType1 PhosphorusGrenadeRounds
+  Weapon.AmmoUse1 1
+  Weapon.AmmoGive1 0
+  states
+  {
+  Ready:
+    GREN D 1 A_WeaponReady
+    Loop
+  Deselect:
+    GREN D 1 A_Lower
+    Loop
+  Select:
+    GREN D 1 A_Raise
+    Loop
+  Fire:
+    GREN D 5 A_FireGrenade("PhosphorousGrenade", -90, "Flash")
+    GREN E 10
+    GREN D 5 A_FireGrenade("PhosphorousGrenade", 90, "Flash2")
+    GREN F 10
+    GREN A 0 A_ReFire
+    Goto Ready
+  Flash:
+    GREF C 5 Bright A_Light1
+    Goto StrifeWeapon::LightDone
+  FlashUnused:
+    GREF C 10 A_Light0
+    Goto StrifeWeapon::LightDone
+  Flash2:
+    GREF D 5 Bright A_Light2
+    Goto StrifeWeapon::LightDone
+  }
 }
 
 //------------------------------------------------------------------------------
 actor HEGrenade
 {
-	ConversationID 106, -1, -1
-	Radius 13
-	Height 13
-	Mass 20
-	Speed 15
-	MaxStepHeight 4
-	ReactionTime 30
-	Damage 1
-	Projectile
-	-NoGravity
-	+BounceOnActors
-	+NoBounceSound
-	+ExplodeOnWater
-	+StrifeDamage
-	+DoomBounce
-	BounceCount 2
-	BounceFactor 0.5
-	SeeSound "weapons/hegrenadeshoot"
-	DeathSound "weapons/hegrenadebang"
-	states
-	{
-	Spawn:
-		GRAP AB 3 A_Countdown
-		Loop
-	Death:
-		BNG4 A 0 Bright A_SetTranslucent(1, 1)
-		BNG4 A 2 Bright A_Explode(192, 192, 1, 1)
-		BNG4 BCDEFGHIJKLMN 3 Bright
-		Stop
-	}
+  ConversationID 106, -1, -1
+  Radius 13
+  Height 13
+  Mass 20
+  Speed 15
+  MaxStepHeight 4
+  ReactionTime 30
+  Damage 1
+  Projectile
+  -NoGravity
+  +BounceOnActors
+  +NoBounceSound
+  +ExplodeOnWater
+  +StrifeDamage
+  +DoomBounce
+  BounceCount 2
+  BounceFactor 0.5
+  SeeSound "weapons/hegrenadeshoot"
+  DeathSound "weapons/hegrenadebang"
+  states
+  {
+  Spawn:
+    GRAP AB 3 A_Countdown
+    Loop
+  Death:
+    BNG4 A 0 Bright A_SetTranslucent(1, 1)
+    BNG4 A 2 Bright A_Explode(192, 192, 1, 1)
+    BNG4 BCDEFGHIJKLMN 3 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor PhosphorousGrenade
 {
-	ConversationID 107, -1, -1
-	Radius 13
-	Height 13
-	Mass 20
-	Speed 15
-	MaxStepHeight 4
-	ReactionTime 40
-	Damage 1
-	BounceCount 2
-	BounceFactor 0.5
-	Projectile
-	-NoGravity
-	+BounceOnActors
-	+NoBounceSound
-	+ExplodeOnWater
-	+StrifeDamage
-	+DoomBounce
-	SeeSound "weapons/phgrenadeshoot"
-	DeathSound "weapons/phgrenadebang"
-	states
-	{
-	Spawn:
-		GRIN AB 3 A_Countdown
-		Loop
-	Death:
-		BNG3 A 1 A_SpawnItemEx("PhosphorousFire")
-		Stop
-	}
+  ConversationID 107, -1, -1
+  Radius 13
+  Height 13
+  Mass 20
+  Speed 15
+  MaxStepHeight 4
+  ReactionTime 40
+  Damage 1
+  BounceCount 2
+  BounceFactor 0.5
+  Projectile
+  -NoGravity
+  +BounceOnActors
+  +NoBounceSound
+  +ExplodeOnWater
+  +StrifeDamage
+  +DoomBounce
+  SeeSound "weapons/phgrenadeshoot"
+  DeathSound "weapons/phgrenadebang"
+  states
+  {
+  Spawn:
+    GRIN AB 3 A_Countdown
+    Loop
+  Death:
+    BNG3 A 1 A_SpawnItemEx("PhosphorousFire")
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor FlameThrower : StrifeWeapon 2005
 {
-	Game Strife
-	ConversationID 190, 184, 188
-	Tag "flame_thrower"
-	+FloorClip
-	Inventory.PickupMessage "$txt_flamer"
-	Inventory.Icon "flama0"
-	Weapon.SelectionOrder 2100
-	Weapon.AmmoType1 "EnergyPod"
-	Weapon.AmmoUse1 1
-	Weapon.AmmoGive1 100
-	Weapon.Kickback 0
-	Weapon.UpSound "weapons/flameidle"
-	Weapon.ReadySound "weapons/flameidle"
+  Game Strife
+  ConversationID 190, 184, 188
+  Tag "flame_thrower"
+  +FloorClip
+  Inventory.PickupMessage "$txt_flamer"
+  Inventory.Icon "flama0"
+  Weapon.SelectionOrder 2100
+  Weapon.AmmoType1 "EnergyPod"
+  Weapon.AmmoUse1 1
+  Weapon.AmmoGive1 100
+  Weapon.Kickback 0
+  Weapon.UpSound "weapons/flameidle"
+  Weapon.ReadySound "weapons/flameidle"
 
-	action native A_FireFlamer();
+  action native A_FireFlamer();
 
-	states
-	{
-	Ready:
-		FLMT AAABBB 1 A_WeaponReady
-		Loop
-	Deselect:
-		FLMT A 1 A_Lower
-		Loop
-	Select:
-		FLMT A 1 A_Raise
-		Loop
-	Fire:
-		FLMF A 2 A_FireFlamer
-		FLMF B 3 A_ReFire
-		Goto Ready
-	Spawn:
-		FLAM A -1
-		Stop
-	}
+  states
+  {
+  Ready:
+    FLMT AAABBB 1 A_WeaponReady
+    Loop
+  Deselect:
+    FLMT A 1 A_Lower
+    Loop
+  Select:
+    FLMT A 1 A_Raise
+    Loop
+  Fire:
+    FLMF A 2 A_FireFlamer
+    FLMF B 3 A_ReFire
+    Goto Ready
+  Spawn:
+    FLAM A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor FlameMissile
 {
-	Radius 8
-	Height 11
-	Mass 10
-	Speed 15
-	MaxStepHeight 4
-	Damage 4
-	DamageType "Fire"
-	RenderStyle Add
-	Projectile
-	-NoGravity
-	+StrifeDamage
-	SeeSound "weapons/flamethrower"
+  Radius 8
+  Height 11
+  Mass 10
+  Speed 15
+  MaxStepHeight 4
+  Damage 4
+  DamageType "Fire"
+  RenderStyle Add
+  Projectile
+  -NoGravity
+  +StrifeDamage
+  SeeSound "weapons/flamethrower"
 
-	action native A_FlameDie();
+  action native A_FlameDie();
 
-	states
-	{
-	Spawn:
-		FRBL AB 3 Bright
-		FRBL C 3 Bright A_Countdown
-		Loop
-	Death:
-		FRBL D 5 Bright A_FlameDie
-		FRBL EFGHI 5 Bright
-		Stop
-	}
+  states
+  {
+  Spawn:
+    FRBL AB 3 Bright
+    FRBL C 3 Bright A_Countdown
+    Loop
+  Death:
+    FRBL D 5 Bright A_FlameDie
+    FRBL EFGHI 5 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Mauler : StrifeWeapon 2004
 {
-	Game Strife
-	ConversationID 193, 187, 191
-	Tag "mauler"
-	+FloorClip
-	Inventory.PickupMessage "$txt_mauler"
-	Inventory.Icon "trpda0"
-	Weapon.SisterWeapon "Mauler2"
-	Weapon.SelectionOrder 300
-	Weapon.AmmoType1 "EnergyPod"
-	Weapon.AmmoUse1 20
-	Weapon.AmmoGive1 40
+  Game Strife
+  ConversationID 193, 187, 191
+  Tag "mauler"
+  +FloorClip
+  Inventory.PickupMessage "$txt_mauler"
+  Inventory.Icon "trpda0"
+  Weapon.SisterWeapon "Mauler2"
+  Weapon.SelectionOrder 300
+  Weapon.AmmoType1 "EnergyPod"
+  Weapon.AmmoUse1 20
+  Weapon.AmmoGive1 40
 
-	action native A_FireMauler1();
+  action native A_FireMauler1();
 
-	states
-	{
-	Ready:
-		MAUL FFFFFFGGGGGGHHHHHHAAAAA 1 A_WeaponReady
-		Loop
-	Deselect:
-		MAUL A 1 A_Lower
-		Loop
-	Select:
-		MAUL A 1 A_Raise
-		Loop
-	Fire:
-		BLSF A 5 Bright A_FireMauler1
-		MAUL B 3 Bright A_Light1
-		MAUL C 2 A_Light2
-		MAUL DE 2
-		MAUL A 7 A_Light0
-		MAUL H 7
-		MAUL G 7 A_CheckReload
-		Goto Ready
-	Spawn:
-		TRPD A -1
-		Stop
-	}
+  states
+  {
+  Ready:
+    MAUL FFFFFFGGGGGGHHHHHHAAAAA 1 A_WeaponReady
+    Loop
+  Deselect:
+    MAUL A 1 A_Lower
+    Loop
+  Select:
+    MAUL A 1 A_Raise
+    Loop
+  Fire:
+    BLSF A 5 Bright A_FireMauler1
+    MAUL B 3 Bright A_Light1
+    MAUL C 2 A_Light2
+    MAUL DE 2
+    MAUL A 7 A_Light0
+    MAUL H 7
+    MAUL G 7 A_CheckReload
+    Goto Ready
+  Spawn:
+    TRPD A -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Mauler2 : Mauler
 {
-	Weapon.SisterWeapon "Mauler"
-	Weapon.SelectionOrder 3300
-	Weapon.AmmoUse1 30
-	Weapon.AmmoGive1 0
+  Weapon.SisterWeapon "Mauler"
+  Weapon.SelectionOrder 3300
+  Weapon.AmmoUse1 30
+  Weapon.AmmoGive1 0
 
-	action native A_FireMauler2Pre();
-	action native A_FireMauler2();
+  action native A_FireMauler2Pre();
+  action native A_FireMauler2();
 
-	states
-	{
-	Ready:
-		MAUL IIIIIIIJJJJJJJKKKKKKKLLLLLLL 1 A_WeaponReady
-		Loop
-	Deselect:
-		MAUL I 1 A_Lower
-		Loop
-	Select:
-		MAUL I 1 A_Raise
-		Loop
-	Fire:
-		MAUL I 20 A_FireMauler2Pre
-		MAUL J 10 A_Light1
-		BLSF A 10 Bright A_FireMauler2
-		MAUL B 3 Bright A_Light2
-		MAUL C 2
-		MAUL D 2 A_Light0
-		MAUL E 2 A_ReFire
-		Goto Ready
-	}
+  states
+  {
+  Ready:
+    MAUL IIIIIIIJJJJJJJKKKKKKKLLLLLLL 1 A_WeaponReady
+    Loop
+  Deselect:
+    MAUL I 1 A_Lower
+    Loop
+  Select:
+    MAUL I 1 A_Raise
+    Loop
+  Fire:
+    MAUL I 20 A_FireMauler2Pre
+    MAUL J 10 A_Light1
+    BLSF A 10 Bright A_FireMauler2
+    MAUL B 3 Bright A_Light2
+    MAUL C 2
+    MAUL D 2 A_Light0
+    MAUL E 2 A_ReFire
+    Goto Ready
+  }
 }
 
 //------------------------------------------------------------------------------
 actor MaulerPuff
 {
-	RenderStyle Add
-	DamageType "Disintegrate"
-	+NoBlockmap
-	+NoGravity
-	+PuffOnActors
-	states
-	{
-	Spawn:
-		MPUF AB 5
-		POW1 ABCDE 4
-		Stop
-	}
+  RenderStyle Add
+  DamageType "Disintegrate"
+  +NoBlockmap
+  +NoGravity
+  +PuffOnActors
+  states
+  {
+  Spawn:
+    MPUF AB 5
+    POW1 ABCDE 4
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor MaulerTorpedo
 {
-	Radius 13
-	Height 8
-	Speed 20
-	MaxStepHeight 4
-	Damage 1
-	DamageType "Disintegrate"
-	RenderStyle Add
-	Projectile
-	+StrifeDamage
-	SeeSound "weapons/mauler2fire"
-	DeathSound "weapons/mauler2hit"
+  Radius 13
+  Height 8
+  Speed 20
+  MaxStepHeight 4
+  Damage 1
+  DamageType "Disintegrate"
+  RenderStyle Add
+  Projectile
+  +StrifeDamage
+  SeeSound "weapons/mauler2fire"
+  DeathSound "weapons/mauler2hit"
 
-	action native A_MaulerTorpedoWave();
+  action native A_MaulerTorpedoWave();
 
-	states
-	{
-	Spawn:
-		TORP ABCD 4 Bright
-		Loop
-	Death:
-		THIT AB 8 Bright
-		THIT C 8 Bright A_MaulerTorpedoWave
-		THIT DE 8 Bright
-		Stop
-	}
+  states
+  {
+  Spawn:
+    TORP ABCD 4 Bright
+    Loop
+  Death:
+    THIT AB 8 Bright
+    THIT C 8 Bright A_MaulerTorpedoWave
+    THIT DE 8 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor MaulerTorpedoWave
 {
-	Radius 13
-	Height 13
-	Speed 35
-	MaxStepHeight 4
-	Damage 10
-	DamageType "Disintegrate"
-	RenderStyle Add
-	Projectile
-	+StrifeDamage
-	states
-	{
-	Spawn:
-		TWAV AB 9 Bright
-	Death:
-		TWAV C 9 Bright
-		Stop
-	}
+  Radius 13
+  Height 13
+  Speed 35
+  MaxStepHeight 4
+  Damage 10
+  DamageType "Disintegrate"
+  RenderStyle Add
+  Projectile
+  +StrifeDamage
+  states
+  {
+  Spawn:
+    TWAV AB 9 Bright
+  Death:
+    TWAV C 9 Bright
+    Stop
+  }
 }

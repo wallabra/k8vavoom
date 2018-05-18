@@ -23,16 +23,16 @@
 //**
 //**************************************************************************
 //**
-//**	GLOWING LIGHT
+//**  GLOWING LIGHT
 //**
 //**************************************************************************
 
 class GlowingLight : Lighting;
 
-float		Speed;
-int			Direction;
-int			MaxLight;
-int			MinLight;
+float   Speed;
+int     Direction;
+int     MaxLight;
+int     MinLight;
 
 //==========================================================================
 //
@@ -44,12 +44,12 @@ int			MinLight;
 
 void Init(sector_t* InSector)
 {
-	Sector = InSector;
-	Sector->LightingData = self;
+  Sector = InSector;
+  Sector->LightingData = self;
 
-	MinLight = Level.FindMinSurroundingLight(Sector, Sector->params.lightlevel);
-	MaxLight = Sector->params.lightlevel;
-	Direction = -1;
+  MinLight = Level.FindMinSurroundingLight(Sector, Sector->params.lightlevel);
+  MaxLight = Sector->params.lightlevel;
+  Direction = -1;
 }
 
 //==========================================================================
@@ -60,31 +60,31 @@ void Init(sector_t* InSector)
 
 void Tick(float DeltaTime)
 {
-	switch (Direction)
-	{
-	case -1:
-		// DOWN
-		Sector->params.lightlevel -= ftoi(Speed * DeltaTime);
-		if (Sector->params.lightlevel <= MinLight)
-		{
-			Sector->params.lightlevel += ftoi(Speed * DeltaTime);
-			Direction = 1;
-		}
-		break;
+  switch (Direction)
+  {
+  case -1:
+    // DOWN
+    Sector->params.lightlevel -= ftoi(Speed * DeltaTime);
+    if (Sector->params.lightlevel <= MinLight)
+    {
+      Sector->params.lightlevel += ftoi(Speed * DeltaTime);
+      Direction = 1;
+    }
+    break;
 
-	case 1:
-		// UP
-		Sector->params.lightlevel += ftoi(Speed * DeltaTime);
-		if (Sector->params.lightlevel >= MaxLight)
-		{
-			Sector->params.lightlevel -= ftoi(Speed * DeltaTime);
-			Direction = -1;
-		}
-		break;
-	}
+  case 1:
+    // UP
+    Sector->params.lightlevel += ftoi(Speed * DeltaTime);
+    if (Sector->params.lightlevel >= MaxLight)
+    {
+      Sector->params.lightlevel -= ftoi(Speed * DeltaTime);
+      Direction = -1;
+    }
+    break;
+  }
 }
 
 defaultproperties
 {
-	Speed = 256.0;
+  Speed = 256.0;
 }

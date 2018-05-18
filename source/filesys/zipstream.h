@@ -31,42 +31,42 @@
 class VZipStreamReader : public VStream
 {
 private:
-	enum { BUFFER_SIZE = 16384 };
+  enum { BUFFER_SIZE = 16384 };
 
-	VStream*		SrcStream;
-	Bytef			Buffer[BUFFER_SIZE];
-	z_stream		ZStream;
-	bool			Initialised;
-	vuint32			UncompressedSize;
+  VStream*    SrcStream;
+  Bytef     Buffer[BUFFER_SIZE];
+  z_stream    ZStream;
+  bool      Initialised;
+  vuint32     UncompressedSize;
 
 public:
-	VZipStreamReader(VStream*, vuint32 = 0xffffffff);
-	~VZipStreamReader();
-	void Serialise(void*, int);
-	void Seek(int);
-	int Tell();
-	int TotalSize();
-	bool AtEnd();
-	bool Close();
+  VZipStreamReader(VStream*, vuint32 = 0xffffffff);
+  ~VZipStreamReader();
+  void Serialise(void*, int);
+  void Seek(int);
+  int Tell();
+  int TotalSize();
+  bool AtEnd();
+  bool Close();
 };
 
 class VZipStreamWriter : public VStream
 {
 private:
-	enum { BUFFER_SIZE = 16384 };
+  enum { BUFFER_SIZE = 16384 };
 
-	VStream*		DstStream;
-	Bytef			Buffer[BUFFER_SIZE];
-	z_stream		ZStream;
-	bool			Initialised;
+  VStream*    DstStream;
+  Bytef     Buffer[BUFFER_SIZE];
+  z_stream    ZStream;
+  bool      Initialised;
 
 public:
-	VZipStreamWriter(VStream*);
-	~VZipStreamWriter();
-	void Serialise(void*, int);
-	void Seek(int);
-	void Flush();
-	bool Close();
+  VZipStreamWriter(VStream*);
+  ~VZipStreamWriter();
+  void Serialise(void*, int);
+  void Seek(int);
+  void Flush();
+  bool Close();
 };
 
 #endif

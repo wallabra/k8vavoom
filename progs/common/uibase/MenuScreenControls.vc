@@ -32,20 +32,20 @@ int NumControls;
 // We'll create some arrays here for special controls
 struct alias
 {
-	string alias_name;		// Name of the alias
-	string command;			// Command to type from console
+  string alias_name;    // Name of the alias
+  string command;     // Command to type from console
 };
 
 struct bind
 {
-	string bind_key;		// Key to bind this alias to
-	string alias_name;		// Name of the alias
+  string bind_key;    // Key to bind this alias to
+  string alias_name;    // Name of the alias
 };
 
 struct menukey
 {
-	string desc;			// Description of the key for menu
-	string alias_name;		// Name of the alias
+  string desc;      // Description of the key for menu
+  string alias_name;    // Name of the alias
 };
 
 // Keep dynamic arrays of each of these so that we "build"
@@ -55,11 +55,11 @@ array<bind> dbinds_list;
 array<bind> binds_list;
 array<menukey> menukeys_list;
 
-string AltTitle;			// Alternate Title for the screen (if any)
+string AltTitle;      // Alternate Title for the screen (if any)
 
 //==========================================================================
 //
-//	GenerateArrays
+//  GenerateArrays
 //
 //  This method generates dynamic arrays of special controls from KEYCONF
 //  scripts
@@ -68,184 +68,184 @@ string AltTitle;			// Alternate Title for the screen (if any)
 
 void GenerateArrays()
 {
-	// This method parses KEYCONF special controls to be added to
-	// a special controls screen to display
-	ScriptsParser kc = ScriptsParser(SpawnObject(ScriptsParser));
+  // This method parses KEYCONF special controls to be added to
+  // a special controls screen to display
+  ScriptsParser kc = ScriptsParser(SpawnObject(ScriptsParser));
 
-	kc.OpenLumpName('keyconf');
-	// Lump is present, scan it until we find a 'addkeysection'
-	while (!kc.AtEnd())
-	{
-		// We are only interested in a couple of commands, like
-		// 'addkeysection', 'bind', 'defaultbind' and 'addmenukey'
-		if (kc.Check("addkeysection"))
-		{
-			// addkeysection "Title" keysection<-(for config file)
-			kc.ExpectString();
-			AltTitle = kc.String;
-			// Ignore the config section
-			// (until we think a way to implement it)
-			kc.ExpectString();
-		}
-		if (kc.Check("alias"))
-		{
-			// Store alias name in the special array
-			aliases_list.Num = aliases_list.Num + 1;
-			kc.ExpectString();
-			aliases_list[aliases_list.Num - 1].alias_name = kc.String;
-			kc.ExpectString();
-			aliases_list[aliases_list.Num - 1].command = kc.String;
-		}
-		if (kc.Check("defaultbind"))
-		{
-			dbinds_list.Num = dbinds_list.Num + 1;
-			kc.ExpectString();
-			dbinds_list[dbinds_list.Num - 1].bind_key = kc.String;
-			kc.ExpectString();
-			dbinds_list[dbinds_list.Num - 1].alias_name = kc.String;
-		}
-		if (kc.Check("bind"))
-		{
-			binds_list.Num = binds_list.Num + 1;
-			kc.ExpectString();
-			binds_list[binds_list.Num - 1].bind_key = kc.String;
-			kc.ExpectString();
-			binds_list[binds_list.Num - 1].alias_name = kc.String;
-		}
-		if (kc.Check("addmenukey"))
-		{
-			menukeys_list.Num = menukeys_list.Num + 1;
-			kc.ExpectString();
-			menukeys_list[menukeys_list.Num - 1].desc = kc.String;
-			kc.ExpectString();
-			menukeys_list[menukeys_list.Num - 1].alias_name = kc.String;
-		}
-		kc.GetString();
-	}
-	kc.Destroy();
+  kc.OpenLumpName('keyconf');
+  // Lump is present, scan it until we find a 'addkeysection'
+  while (!kc.AtEnd())
+  {
+    // We are only interested in a couple of commands, like
+    // 'addkeysection', 'bind', 'defaultbind' and 'addmenukey'
+    if (kc.Check("addkeysection"))
+    {
+      // addkeysection "Title" keysection<-(for config file)
+      kc.ExpectString();
+      AltTitle = kc.String;
+      // Ignore the config section
+      // (until we think a way to implement it)
+      kc.ExpectString();
+    }
+    if (kc.Check("alias"))
+    {
+      // Store alias name in the special array
+      aliases_list.Num = aliases_list.Num + 1;
+      kc.ExpectString();
+      aliases_list[aliases_list.Num - 1].alias_name = kc.String;
+      kc.ExpectString();
+      aliases_list[aliases_list.Num - 1].command = kc.String;
+    }
+    if (kc.Check("defaultbind"))
+    {
+      dbinds_list.Num = dbinds_list.Num + 1;
+      kc.ExpectString();
+      dbinds_list[dbinds_list.Num - 1].bind_key = kc.String;
+      kc.ExpectString();
+      dbinds_list[dbinds_list.Num - 1].alias_name = kc.String;
+    }
+    if (kc.Check("bind"))
+    {
+      binds_list.Num = binds_list.Num + 1;
+      kc.ExpectString();
+      binds_list[binds_list.Num - 1].bind_key = kc.String;
+      kc.ExpectString();
+      binds_list[binds_list.Num - 1].alias_name = kc.String;
+    }
+    if (kc.Check("addmenukey"))
+    {
+      menukeys_list.Num = menukeys_list.Num + 1;
+      kc.ExpectString();
+      menukeys_list[menukeys_list.Num - 1].desc = kc.String;
+      kc.ExpectString();
+      menukeys_list[menukeys_list.Num - 1].alias_name = kc.String;
+    }
+    kc.GetString();
+  }
+  kc.Destroy();
 }
 
 //==========================================================================
 //
-//	AddControl
+//  AddControl
 //
 //==========================================================================
 
 void AddControl(string Text, string CommandOn, string CommandOff)
 {
-	MenuControlKey newCtl;
+  MenuControlKey newCtl;
 
-	//if (NumControls >= MAX_MENU_CONTROL_ITEMS) FatalError("Too many items in `MenuScreenControls`");
+  //if (NumControls >= MAX_MENU_CONTROL_ITEMS) FatalError("Too many items in `MenuScreenControls`");
 
-	newCtl = MenuControlKey(NewChild(MenuControlKey));
-	newCtl.SetOrigin(ChoicesStartX, ChoicesStartY+NumControls*10);
-	newCtl.Height = 10;
-	newCtl.Text = Text;
-	newCtl.CommandOn = CommandOn;
-	newCtl.CommandOff = CommandOff;
-	//Controls[NumControls] = newCtl;
-	++NumControls;
+  newCtl = MenuControlKey(NewChild(MenuControlKey));
+  newCtl.SetOrigin(ChoicesStartX, ChoicesStartY+NumControls*10);
+  newCtl.Height = 10;
+  newCtl.Text = Text;
+  newCtl.CommandOn = CommandOn;
+  newCtl.CommandOff = CommandOff;
+  //Controls[NumControls] = newCtl;
+  ++NumControls;
 }
 
 //==========================================================================
 //
-//	AddText
+//  AddText
 //
 //==========================================================================
 
 void AddText(string Text)
 {
-	auto Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-	Btn.SetOrigin(ChoicesStartX, ChoicesStartY+NumControls*10);
-	Btn.Text = Text;
-	Btn.Focusable = false;
-	Btn.TextColour = CR_OLIVE;
-	Btn.TextColourFocus = CR_OLIVE;
-	Btn.Height = 10;
-	++NumControls;
+  auto Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetOrigin(ChoicesStartX, ChoicesStartY+NumControls*10);
+  Btn.Text = Text;
+  Btn.Focusable = false;
+  Btn.TextColour = CR_OLIVE;
+  Btn.TextColourFocus = CR_OLIVE;
+  Btn.Height = 10;
+  ++NumControls;
 }
 
 //==========================================================================
 //
-//	CreateControlKeyChoices
+//  CreateControlKeyChoices
 //
 //==========================================================================
 
 void CreateControlKeyChoices()
 {
-	AddControl("Move foward", "+Forward", "-Forward");
-	AddControl("Move backward", "+Backward", "-Backward");
-	AddControl("Turn left", "+Left", "-Left");
-	AddControl("Turn right", "+Right", "-Right");
-	AddControl("Move left", "+MoveLeft", "-MoveLeft");
-	AddControl("Move right", "+MoveRight", "-MoveRight");
-	AddControl("Look up", "+LookUp", "-LookUp");
-	AddControl("Look down", "+LookDown", "-LookDown");
-	AddControl("Centre look", "+LookCentre", "-LookCentre");
-	AddControl("Jump", "+Jump", "-Jump");
-	AddControl("Fire", "+Attack", "-Attack");
-	AddControl("Alt Fire", "+AltAttack", "-AltAttack");
-	AddControl("Use", "+Use", "-Use");
-	AddControl("Strafe", "+Strafe", "-Strafe");
-	AddControl("Run", "+Speed", "-Speed");
-	AddControl("Mouse look", "+MouseLook", "-MouseLook");
+  AddControl("Move foward", "+Forward", "-Forward");
+  AddControl("Move backward", "+Backward", "-Backward");
+  AddControl("Turn left", "+Left", "-Left");
+  AddControl("Turn right", "+Right", "-Right");
+  AddControl("Move left", "+MoveLeft", "-MoveLeft");
+  AddControl("Move right", "+MoveRight", "-MoveRight");
+  AddControl("Look up", "+LookUp", "-LookUp");
+  AddControl("Look down", "+LookDown", "-LookDown");
+  AddControl("Centre look", "+LookCentre", "-LookCentre");
+  AddControl("Jump", "+Jump", "-Jump");
+  AddControl("Fire", "+Attack", "-Attack");
+  AddControl("Alt Fire", "+AltAttack", "-AltAttack");
+  AddControl("Use", "+Use", "-Use");
+  AddControl("Strafe", "+Strafe", "-Strafe");
+  AddControl("Run", "+Speed", "-Speed");
+  AddControl("Mouse look", "+MouseLook", "-MouseLook");
 
-	AddText("");
+  AddText("");
 
-	AddControl("Reload", "impulse 56", "");
-	AddControl("Fly up", "+FlyUp", "-FlyUp");
-	AddControl("Fly down", "+FlyDown", "-FlyDown");
-	AddControl("Centre flight", "+FlyCentre", "-FlyCentre");
-	AddControl("Inventory left", "Impulse 13", "");
-	AddControl("Inventory right", "Impulse 14", "");
-	AddControl("Inventory use", "Impulse 15", "");
-	AddControl("Talk key", "ChatMode", "");
-	AddControl("Toggle always run", "ToggleAlwaysRun", "");
-	AddControl("Previous weapon", "impulse 17", "");
-	AddControl("Next weapon", "impulse 18", "");
-	AddControl("Toggle Console", "ToggleConsole", "");
+  AddControl("Reload", "impulse 56", "");
+  AddControl("Fly up", "+FlyUp", "-FlyUp");
+  AddControl("Fly down", "+FlyDown", "-FlyDown");
+  AddControl("Centre flight", "+FlyCentre", "-FlyCentre");
+  AddControl("Inventory left", "Impulse 13", "");
+  AddControl("Inventory right", "Impulse 14", "");
+  AddControl("Inventory use", "Impulse 15", "");
+  AddControl("Talk key", "ChatMode", "");
+  AddControl("Toggle always run", "ToggleAlwaysRun", "");
+  AddControl("Previous weapon", "impulse 17", "");
+  AddControl("Next weapon", "impulse 18", "");
+  AddControl("Toggle Console", "ToggleConsole", "");
 
   // strife keys
-	AddText("");
-	AddText("Strife Keys");
-	AddControl("Inventory drop", "Impulse 11", "");
-	AddControl("Show weapons", "sb_show_weapons 1", "sb_show_weapons 0");
-	AddControl("Show keys", "sb_show_keys 1", "sb_show_keys 0");
-	AddControl("Show objectives", "sb_show_objectives 1", "sb_show_objectives 0");
+  AddText("");
+  AddText("Strife Keys");
+  AddControl("Inventory drop", "Impulse 11", "");
+  AddControl("Show weapons", "sb_show_weapons 1", "sb_show_weapons 0");
+  AddControl("Show keys", "sb_show_keys 1", "sb_show_keys 0");
+  AddControl("Show objectives", "sb_show_objectives 1", "sb_show_objectives 0");
 }
 
 //==========================================================================
 //
-//	CreateChoices
+//  CreateChoices
 //
 //==========================================================================
 
 void CreateChoices()
 {
-	CreateControlKeyChoices();
+  CreateControlKeyChoices();
 }
 
 //==========================================================================
 //
-//	CursorMoved
+//  CursorMoved
 //
 //==========================================================================
 
 void CursorMoved()
 {
-	::CursorMoved();
-	if (Selector && ClGame)
-	{
-		Selector.SetPos(160 + Items[CursorPos].X + ClGame.ControlColumn * 90,
-			Items[CursorPos].Y);
-	}
+  ::CursorMoved();
+  if (Selector && ClGame)
+  {
+    Selector.SetPos(160 + Items[CursorPos].X + ClGame.ControlColumn * 90,
+      Items[CursorPos].Y);
+  }
 }
 
 defaultproperties
 {
-	ChoicesStartX = 150;
-	ChoicesStartY = 26;
-	SelectorType = MenuSelector_SmallRight;
-	Title = "SETUP CONTROLS";
-	MenuScrollable = true;
+  ChoicesStartX = 150;
+  ChoicesStartY = 26;
+  SelectorType = MenuSelector_SmallRight;
+  Title = "SETUP CONTROLS";
+  MenuScrollable = true;
 }

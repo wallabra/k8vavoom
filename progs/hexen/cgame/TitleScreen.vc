@@ -44,46 +44,46 @@ int advisor_pic;
 
 void AdvanceDemo()
 {
-	if (StartTitleMap())
-	{
-		return;
-	}
+  if (StartTitleMap())
+  {
+    return;
+  }
 
-	demosequence++;
-	demosequence %= 6;
+  demosequence++;
+  demosequence %= 6;
 
-	switch (demosequence)
-	{
-	case 0:
-		pagetime = 490.0 / 35.0;
-		page_pic = R_RegisterPic('title');
+  switch (demosequence)
+  {
+  case 0:
+    pagetime = 490.0 / 35.0;
+    page_pic = R_RegisterPic('title');
 //      S_StartSong("hexen", P_GetCDTitleTrack(), true);
-		CmdBuf_AddText("music play hexen\n");
-		break;
+    CmdBuf_AddText("music play hexen\n");
+    break;
 
-	case 1:
-		advisor_pic = R_RegisterPic('advisor');
-		CmdBuf_AddText("PlayDemo demo1\n");
-		break;
+  case 1:
+    advisor_pic = R_RegisterPic('advisor');
+    CmdBuf_AddText("PlayDemo demo1\n");
+    break;
 
-	case 2:
-		pagetime = 200.0 / 35.0;
-		page_pic = R_RegisterPic('credit');
-		break;
+  case 2:
+    pagetime = 200.0 / 35.0;
+    page_pic = R_RegisterPic('credit');
+    break;
 
-	case 3:
-		CmdBuf_AddText("PlayDemo demo2\n");
-		break;
+  case 3:
+    CmdBuf_AddText("PlayDemo demo2\n");
+    break;
 
-	case 4:
-		pagetime = 200.0 / 35.0;
-		page_pic = R_RegisterPic('credit');
-		break;
+  case 4:
+    pagetime = 200.0 / 35.0;
+    page_pic = R_RegisterPic('credit');
+    break;
 
-	case 5:
-		CmdBuf_AddText("PlayDemo demo3\n");
-		break;
-	}
+  case 5:
+    CmdBuf_AddText("PlayDemo demo3\n");
+    break;
+  }
 }
 
 //==========================================================================
@@ -94,34 +94,34 @@ void AdvanceDemo()
 
 void ForceTitle()
 {
-	pagetime = 14.0;
-	page_pic = R_RegisterPic('title');
+  pagetime = 14.0;
+  page_pic = R_RegisterPic('title');
 }
 
 //==========================================================================
 //
-//	OnVisibilityChanged
+//  OnVisibilityChanged
 //
 //==========================================================================
 
 void OnVisibilityChanged(bool bNewVisibility)
 {
-	bTickEnabled = bNewVisibility;
+  bTickEnabled = bNewVisibility;
 }
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	pagetime -= DeltaTime;
-	if (demosequence == -1 || (/*!ClGame.MenuActive() &&*/ pagetime < 0.0))
-	{
-		AdvanceDemo();
-	}
+  pagetime -= DeltaTime;
+  if (demosequence == -1 || (/*!ClGame.MenuActive() &&*/ pagetime < 0.0))
+  {
+    AdvanceDemo();
+  }
 }
 
 //==========================================================================
@@ -132,11 +132,11 @@ void Tick(float DeltaTime)
 
 void OnDraw()
 {
-	DrawFullScreenPic(page_pic);
-	if (demosequence == 1)
-	{
-		DrawPic(4, 440, advisor_pic);
-	}
+  DrawFullScreenPic(page_pic);
+  if (demosequence == 1)
+  {
+    DrawPic(4, 440, advisor_pic);
+  }
 }
 
 //==========================================================================
@@ -147,9 +147,9 @@ void OnDraw()
 
 void OnHostEndGame()
 {
-	if (demosequence != -1)
-		AdvanceDemo();
-	ForceTitle();
+  if (demosequence != -1)
+    AdvanceDemo();
+  ForceTitle();
 }
 
 //==========================================================================
@@ -160,8 +160,8 @@ void OnHostEndGame()
 
 void OnHostError()
 {
-	demosequence = -1;
-	ForceTitle();
+  demosequence = -1;
+  ForceTitle();
 }
 
 //==========================================================================
@@ -172,14 +172,14 @@ void OnHostError()
 
 void StopDemoLoop()
 {
-	demosequence = -1;	// not in the demo loop now
+  demosequence = -1;  // not in the demo loop now
 }
 
 defaultproperties
 {
-	bTickEnabled = true;
-	Focusable = true;
-	Width = 320;
-	Height = 200;
-	demosequence = -1;	// -1 = don't play demos
+  bTickEnabled = true;
+  Focusable = true;
+  Width = 320;
+  Height = 200;
+  demosequence = -1;  // -1 = don't play demos
 }

@@ -25,10 +25,10 @@
 
 class SoundSequenceSlot : Actor;
 
-name			SeqName;
+name      SeqName;
 
 defaultproperties
 {
-	bNoSector = true;
-	bNoBlockmap = true;
+  bNoSector = true;
+  bNoBlockmap = true;
 }

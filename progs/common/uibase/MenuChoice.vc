@@ -25,51 +25,51 @@
 
 class MenuChoice : Widget;
 
-int				CursorXOffs;
-int				CursorYOffs;
+int       CursorXOffs;
+int       CursorYOffs;
 
 //==========================================================================
 //
-//	GetClGame
+//  GetClGame
 //
 //==========================================================================
 
 ClientGameShared GetClGame()
 {
-	return MenuScreen(Parent).ClGame;
+  return MenuScreen(Parent).ClGame;
 }
 
 //==========================================================================
 //
-//	OnFocusReceived
+//  OnFocusReceived
 //
 //==========================================================================
 
 void OnFocusReceived()
 {
-	if (MenuScreen(Parent) && MenuScreen(Parent).Selector)
-	{
-		MenuScreen(Parent).Selector.SetOrigin(X + CursorXOffs,
-			Y + CursorYOffs);
-	}
-	::OnFocusReceived();
+  if (MenuScreen(Parent) && MenuScreen(Parent).Selector)
+  {
+    MenuScreen(Parent).Selector.SetOrigin(X + CursorXOffs,
+      Y + CursorYOffs);
+  }
+  ::OnFocusReceived();
 }
 
 //==========================================================================
 //
-//	OnMouseEnter
+//  OnMouseEnter
 //
 //==========================================================================
 
 void OnMouseEnter()
 {
-	//SetFocus();
-	//LocalSound('menu/cursor');
+  //SetFocus();
+  //LocalSound('menu/cursor');
 }
 
 defaultproperties
 {
-	Focusable = true;
-	Width = 320;
-	Height = 200;
+  Focusable = true;
+  Width = 320;
+  Height = 200;
 }

@@ -28,11 +28,11 @@ class PickupFlash : Actor;
 states
 {
 Spawn:
-	ACLO DCDCBCBABA 3
-	Stop
+  ACLO DCDCBCBABA 3
+  Stop
 }
 
 defaultproperties
 {
-	bNoGravity = true;
+  bNoGravity = true;
 }

@@ -1,45 +1,45 @@
 $dest basepak.pk3
 
-//	Crosshairs
-graphics/croshai1.lmp	@CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai1.lmp
-graphics/croshai2.lmp	@CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai2.lmp
-graphics/croshai3.lmp	@CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai3.lmp
+//  Crosshairs
+graphics/croshai1.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai1.lmp
+graphics/croshai2.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai2.lmp
+graphics/croshai3.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai3.lmp
 
-//	Some missing characters in small font
-graphics/fonta30.lmp	@CMAKE_CURRENT_SOURCE_DIR@/graphics/fonta30.lmp
-graphics/fonta63.lmp	@CMAKE_CURRENT_SOURCE_DIR@/graphics/fonta63.lmp
+//  Some missing characters in small font
+graphics/fonta30.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/fonta30.lmp
+graphics/fonta63.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/fonta63.lmp
 
-//	Client progs
-progs/cgame/classes.vc						@CMAKE_SOURCE_DIR@/progs/heretic/cgame/classes.vc
-progs/cgame/ClientGame.vc					@CMAKE_SOURCE_DIR@/progs/heretic/cgame/ClientGame.vc
-progs/cgame/IntermissionScreen.vc			@CMAKE_SOURCE_DIR@/progs/heretic/cgame/IntermissionScreen.vc
-progs/cgame/MenuScreenControls2.vc			@CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenControls2.vc
-progs/cgame/MenuScreenGameplayOptions.vc	@CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenGameplayOptions.vc
-progs/cgame/MenuScreenHelp.vc				@CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenHelp.vc
-progs/cgame/MenuScreenMain.vc				@CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenMain.vc
-progs/cgame/MenuScreenMultiplayer.vc		@CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenMultiplayer.vc
-progs/cgame/MenuScreenNewNetGame.vc			@CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenNewNetGame.vc
-progs/cgame/MenuScreenOptions.vc			@CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenOptions.vc
-progs/cgame/MenuScreenPlayerSetup.vc		@CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenPlayerSetup.vc
-progs/cgame/StatusBarScreen.vc				@CMAKE_SOURCE_DIR@/progs/heretic/cgame/StatusBarScreen.vc
-progs/cgame/TitleScreen.vc					@CMAKE_SOURCE_DIR@/progs/heretic/cgame/TitleScreen.vc
+//  Client progs
+progs/cgame/classes.vc            @CMAKE_SOURCE_DIR@/progs/heretic/cgame/classes.vc
+progs/cgame/ClientGame.vc         @CMAKE_SOURCE_DIR@/progs/heretic/cgame/ClientGame.vc
+progs/cgame/IntermissionScreen.vc     @CMAKE_SOURCE_DIR@/progs/heretic/cgame/IntermissionScreen.vc
+progs/cgame/MenuScreenControls2.vc      @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenControls2.vc
+progs/cgame/MenuScreenGameplayOptions.vc  @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenGameplayOptions.vc
+progs/cgame/MenuScreenHelp.vc       @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenHelp.vc
+progs/cgame/MenuScreenMain.vc       @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenMain.vc
+progs/cgame/MenuScreenMultiplayer.vc    @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenMultiplayer.vc
+progs/cgame/MenuScreenNewNetGame.vc     @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenNewNetGame.vc
+progs/cgame/MenuScreenOptions.vc      @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenOptions.vc
+progs/cgame/MenuScreenPlayerSetup.vc    @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenPlayerSetup.vc
+progs/cgame/StatusBarScreen.vc        @CMAKE_SOURCE_DIR@/progs/heretic/cgame/StatusBarScreen.vc
+progs/cgame/TitleScreen.vc          @CMAKE_SOURCE_DIR@/progs/heretic/cgame/TitleScreen.vc
 
-//	Server progs
-progs/game/classes.vc			@CMAKE_SOURCE_DIR@/progs/heretic/game/classes.vc
-progs/game/BotPlayer.vc			@CMAKE_SOURCE_DIR@/progs/heretic/game/BotPlayer.vc
-progs/game/HereticLevelInfo.vc	@CMAKE_SOURCE_DIR@/progs/heretic/game/HereticLevelInfo.vc
-progs/game/MainGameInfo.vc		@CMAKE_SOURCE_DIR@/progs/heretic/game/MainGameInfo.vc
-progs/game/Player.vc			@CMAKE_SOURCE_DIR@/progs/heretic/game/Player.vc
+//  Server progs
+progs/game/classes.vc     @CMAKE_SOURCE_DIR@/progs/heretic/game/classes.vc
+progs/game/BotPlayer.vc     @CMAKE_SOURCE_DIR@/progs/heretic/game/BotPlayer.vc
+progs/game/HereticLevelInfo.vc  @CMAKE_SOURCE_DIR@/progs/heretic/game/HereticLevelInfo.vc
+progs/game/MainGameInfo.vc    @CMAKE_SOURCE_DIR@/progs/heretic/game/MainGameInfo.vc
+progs/game/Player.vc      @CMAKE_SOURCE_DIR@/progs/heretic/game/Player.vc
 
-//	Scripts
-animdefs.txt			@CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt
-lockdefs.txt			@CMAKE_CURRENT_SOURCE_DIR@/lockdefs.txt
-mapinfo.txt				@CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
-skyboxes.txt			@CMAKE_CURRENT_SOURCE_DIR@/skyboxes.txt
-sndinfo.txt				@CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
-sndseq.txt				@CMAKE_CURRENT_SOURCE_DIR@/sndseq.txt
-sprite_rename.txt		@CMAKE_CURRENT_SOURCE_DIR@/sprite_rename.txt
-terrain.txt				@CMAKE_CURRENT_SOURCE_DIR@/terrain.txt
+//  Scripts
+animdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt
+lockdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/lockdefs.txt
+mapinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
+skyboxes.txt      @CMAKE_CURRENT_SOURCE_DIR@/skyboxes.txt
+sndinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
+sndseq.txt        @CMAKE_CURRENT_SOURCE_DIR@/sndseq.txt
+sprite_rename.txt   @CMAKE_CURRENT_SOURCE_DIR@/sprite_rename.txt
+terrain.txt       @CMAKE_CURRENT_SOURCE_DIR@/terrain.txt
 
 $load @CMAKE_CURRENT_SOURCE_DIR@/palette.pcx
-translat.dat			raw 0 1 256 3
+translat.dat      raw 0 1 256 3

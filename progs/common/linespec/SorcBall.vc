@@ -24,7 +24,7 @@
 //**************************************************************************
 
 class SorcBall : Actor
-	abstract;
+  abstract;
 
 //  Heresiarch Ball Variables
 //      Special1f       Previous angle of ball (for woosh)
@@ -40,27 +40,27 @@ float BallAngleOffset;
 
 void FloorBounceMissile()
 {
-	Velocity.z = Velocity.z * -0.7;
-	Velocity.x = 2.0 * Velocity.x / 3.0;
-	Velocity.y = 2.0 * Velocity.y / 3.0;
-	if (SightSound && !Args[0])
-	{
-		PlaySound(SightSound, CHAN_VOICE);
-	}
+  Velocity.z = Velocity.z * -0.7;
+  Velocity.x = 2.0 * Velocity.x / 3.0;
+  Velocity.y = 2.0 * Velocity.y / 3.0;
+  if (SightSound && !Args[0])
+  {
+    PlaySound(SightSound, CHAN_VOICE);
+  }
 }
 
 //==========================================================================
 //
-//	GetExplodeParms
+//  GetExplodeParms
 //
 //==========================================================================
 
 void GetExplodeParms(out int damage, out float distance, out byte damageSelf)
 {
-	// Sorcerer balls
-	distance = 255.0;
-	damage = 255;
-	Args[0] = 1;	// don't play bounce
+  // Sorcerer balls
+  distance = 255.0;
+  damage = 255;
+  Args[0] = 1;  // don't play bounce
 }
 
 //==========================================================================
@@ -73,21 +73,21 @@ void GetExplodeParms(out int damage, out float distance, out byte damageSelf)
 
 final void A_AccelBalls()
 {
-	EntityEx sorc = Target;
+  EntityEx sorc = Target;
 
-	if (sorc.Args[4] < sorc.Args[2])
-	{
-		sorc.Args[4]++;
-	}
-	else
-	{
-		sorc.Args[3] = SORC_NORMAL;
-		if (sorc.Args[4] >= SORCBALL_TERMINAL_SPEED && !sorc.bIsPlayer)
-		{
-			// Reached terminal velocity - stop balls
-			Actor(sorc).A_StopBalls();
-		}
-	}
+  if (sorc.Args[4] < sorc.Args[2])
+  {
+    sorc.Args[4]++;
+  }
+  else
+  {
+    sorc.Args[3] = SORC_NORMAL;
+    if (sorc.Args[4] >= SORCBALL_TERMINAL_SPEED && !sorc.bIsPlayer)
+    {
+      // Reached terminal velocity - stop balls
+      Actor(sorc).A_StopBalls();
+    }
+  }
 }
 
 //==========================================================================
@@ -100,16 +100,16 @@ final void A_AccelBalls()
 
 final void A_DecelBalls()
 {
-	EntityEx sorc = Target;
+  EntityEx sorc = Target;
 
-	if (sorc.Args[4] > sorc.Args[2])
-	{
-		sorc.Args[4]--;
-	}
-	else
-	{
-		sorc.Args[3] = SORC_NORMAL;
-	}
+  if (sorc.Args[4] > sorc.Args[2])
+  {
+    sorc.Args[4]--;
+  }
+  else
+  {
+    sorc.Args[3] = SORC_NORMAL;
+  }
 }
 
 //==========================================================================
@@ -122,10 +122,10 @@ final void A_DecelBalls()
 
 final void A_SorcUpdateBallAngle()
 {
-	if (Class == SorcBall1)
-	{
-		Actor(Target).Special1f = AngleMod360(Actor(Target).Special1f + itof(Target.Args[4]));
-	}
+  if (Class == SorcBall1)
+  {
+    Actor(Target).Special1f = AngleMod360(Actor(Target).Special1f + itof(Target.Args[4]));
+  }
 }
 
 //==========================================================================
@@ -138,28 +138,28 @@ final void A_SorcUpdateBallAngle()
 
 final void A_SorcOffense2()
 {
-	float ang1;
-	EntityEx mo;
-	float delta, index;
-	float dist;
+  float ang1;
+  EntityEx mo;
+  float delta, index;
+  float dist;
 
-	index = itof(Args[4]) * 360.0 / 256.0;
-	Args[4] = (Args[4] + 15) & 0xff;
-	delta = sin(index) * SORCFX4_SPREAD_ANGLE;
-	ang1 = AngleMod360(Angles.yaw + delta);
-	mo = Actor(Target).SpawnMissileAngle(SorcFX4, ang1, 0.0);
-	if (mo)
-	{
-		Actor(mo).Special2 = 35 * 5 / 2;	// 5 seconds
-		if (Target && Target.Target)
-		{
-			dist = Target.Target.DistTo2(mo);
-		}
-		dist = dist / mo.Speed;
-		if (dist < 1.0)
-			dist = 1.0;
-		mo.Velocity.z = (Target.Target.Origin.z - mo.Origin.z) / dist;
-	}
+  index = itof(Args[4]) * 360.0 / 256.0;
+  Args[4] = (Args[4] + 15) & 0xff;
+  delta = sin(index) * SORCFX4_SPREAD_ANGLE;
+  ang1 = AngleMod360(Angles.yaw + delta);
+  mo = Actor(Target).SpawnMissileAngle(SorcFX4, ang1, 0.0);
+  if (mo)
+  {
+    Actor(mo).Special2 = 35 * 5 / 2;  // 5 seconds
+    if (Target && Target.Target)
+    {
+      dist = Target.Target.DistTo2(mo);
+    }
+    dist = dist / mo.Speed;
+    if (dist < 1.0)
+      dist = 1.0;
+    mo.Velocity.z = (Target.Target.Origin.z - mo.Origin.z) / dist;
+  }
 }
 
 //==========================================================================
@@ -182,101 +182,101 @@ void A_CastSorcererSpell()
 
 final void A_SorcBallOrbit()
 {
-	if (!Target)
-	{
-		//	Heresiarch dissapeared.
-		Destroy();
-		return;
-	}
+  if (!Target)
+  {
+    //  Heresiarch dissapeared.
+    Destroy();
+    return;
+  }
 
-	float angle, baseangle;
-	int mode = Target.Args[3];
-	float dist = Target.Radius - (Radius * 2.0);
-	float prevangle = Special1f;
+  float angle, baseangle;
+  int mode = Target.Args[3];
+  float dist = Target.Radius - (Radius * 2.0);
+  float prevangle = Special1f;
 
-	if (Target.Health <= 0)
-		SetState(FindState('Pain'));
+  if (Target.Health <= 0)
+    SetState(FindState('Pain'));
 
-	baseangle = Actor(Target).Special1f;
-	angle = AngleMod360(baseangle + BallAngleOffset);
-	Angles.yaw = angle;
+  baseangle = Actor(Target).Special1f;
+  angle = AngleMod360(baseangle + BallAngleOffset);
+  Angles.yaw = angle;
 
-	switch (mode)
-	{
-	case SORC_NORMAL:	// Balls rotating normally
-		A_SorcUpdateBallAngle();
-		break;
-	case SORC_DECELERATE:	// Balls decelerating
-		A_DecelBalls();
-		A_SorcUpdateBallAngle();
-		break;
-	case SORC_ACCELERATE:	// Balls accelerating
-		A_AccelBalls();
-		A_SorcUpdateBallAngle();
-		break;
-	case SORC_STOPPING:	// Balls stopping
-		if ((Actor(Target).SpecialCID == Class) &&
-			(Target.Args[1] > SORCBALL_SPEED_ROTATIONS) &&
-			(fabs(AngleMod180(angle - Target.Angles.yaw)) <
-			15.0 * 45.0 / 16.0))
-		{
-			// Can stop now
-			Target.Args[3] = SORC_FIRESPELL;
-			Target.Args[4] = 0;
-			// Set angle so ball angle == sorcerer angle
-			Actor(Target).Special1f = AngleMod360(Target.Angles.yaw -
-				BallAngleOffset);
-		}
-		else
-		{
-			A_SorcUpdateBallAngle();
-		}
-		break;
-	case SORC_FIRESPELL:	// Casting spell
-		if (Actor(Target).SpecialCID == Class)
-		{
-			// Put sorcerer into special throw spell anim
-			if (Target.Health > 0)
-				Target.SetState(Target.FindState('Attack1'));
+  switch (mode)
+  {
+  case SORC_NORMAL: // Balls rotating normally
+    A_SorcUpdateBallAngle();
+    break;
+  case SORC_DECELERATE: // Balls decelerating
+    A_DecelBalls();
+    A_SorcUpdateBallAngle();
+    break;
+  case SORC_ACCELERATE: // Balls accelerating
+    A_AccelBalls();
+    A_SorcUpdateBallAngle();
+    break;
+  case SORC_STOPPING: // Balls stopping
+    if ((Actor(Target).SpecialCID == Class) &&
+      (Target.Args[1] > SORCBALL_SPEED_ROTATIONS) &&
+      (fabs(AngleMod180(angle - Target.Angles.yaw)) <
+      15.0 * 45.0 / 16.0))
+    {
+      // Can stop now
+      Target.Args[3] = SORC_FIRESPELL;
+      Target.Args[4] = 0;
+      // Set angle so ball angle == sorcerer angle
+      Actor(Target).Special1f = AngleMod360(Target.Angles.yaw -
+        BallAngleOffset);
+    }
+    else
+    {
+      A_SorcUpdateBallAngle();
+    }
+    break;
+  case SORC_FIRESPELL:  // Casting spell
+    if (Actor(Target).SpecialCID == Class)
+    {
+      // Put sorcerer into special throw spell anim
+      if (Target.Health > 0)
+        Target.SetState(Target.FindState('Attack1'));
 
-			PlaySound('SorcererSpellCast', CHAN_VOICE, 1.0, ATTN_NONE);
+      PlaySound('SorcererSpellCast', CHAN_VOICE, 1.0, ATTN_NONE);
 
-			A_CastSorcererSpell();
-		}
-		break;
-	case SORC_FIRING_SPELL:
-		if (Actor(Target).SpecialCID == Class)
-		{
-			if (Special2-- <= 0)
-			{
-				// Done rapid firing 
-				Target.Args[3] = SORC_STOPPED;
-				// Back to orbit balls
-				if (Target.Health > 0)
-					Target.SetState(Target.FindState('Attack2'));
-			}
-			else
-			{
-				// Do rapid fire spell
-				A_SorcOffense2();
-			}
-		}
-		break;
-	case SORC_STOPPED:	// Balls stopped
-	default:
-		break;
-	}
+      A_CastSorcererSpell();
+    }
+    break;
+  case SORC_FIRING_SPELL:
+    if (Actor(Target).SpecialCID == Class)
+    {
+      if (Special2-- <= 0)
+      {
+        // Done rapid firing
+        Target.Args[3] = SORC_STOPPED;
+        // Back to orbit balls
+        if (Target.Health > 0)
+          Target.SetState(Target.FindState('Attack2'));
+      }
+      else
+      {
+        // Do rapid fire spell
+        A_SorcOffense2();
+      }
+    }
+    break;
+  case SORC_STOPPED:  // Balls stopped
+  default:
+    break;
+  }
 
-	if ((angle < prevangle) && (Target.Args[4] == SORCBALL_TERMINAL_SPEED))
-	{
-		Target.Args[1]++;	// Bump rotation counter
-		// Completed full rotation - make woosh sound
-		PlaySound('SorcererBallWoosh', CHAN_VOICE, 1.0, ATTN_NONE);
-	}
-	Special1f = angle;	// Set previous angle
-	Origin.x = Target.Origin.x + dist * cos(angle);
-	Origin.y = Target.Origin.y + dist * sin(angle);
-	Origin.z = Target.Origin.z - Target.FloorClip + Target.Height;
+  if ((angle < prevangle) && (Target.Args[4] == SORCBALL_TERMINAL_SPEED))
+  {
+    Target.Args[1]++; // Bump rotation counter
+    // Completed full rotation - make woosh sound
+    PlaySound('SorcererBallWoosh', CHAN_VOICE, 1.0, ATTN_NONE);
+  }
+  Special1f = angle;  // Set previous angle
+  Origin.x = Target.Origin.x + dist * cos(angle);
+  Origin.y = Target.Origin.y + dist * sin(angle);
+  Origin.z = Target.Origin.z - Target.FloorClip + Target.Height;
 }
 
 //==========================================================================
@@ -289,14 +289,14 @@ final void A_SorcBallOrbit()
 
 final void A_SorcBallPop()
 {
-	PlaySound('SorcererBallPop', CHAN_VOICE, 1.0, ATTN_NONE);
-	bNoGravity = false;
-	Gravity = 0.125;
-	Velocity.x = (Random() * 10.0 - 5.0) * 35.0;
-	Velocity.y = (Random() * 10.0 - 5.0) * 35.0;
-	Velocity.z = (2.0 + Random() * 3.0) * 35.0;
-	Args[4] = BOUNCE_TIME_UNIT;	// Bounce time unit
-	Args[3] = 5;	// Bounce time in seconds
+  PlaySound('SorcererBallPop', CHAN_VOICE, 1.0, ATTN_NONE);
+  bNoGravity = false;
+  Gravity = 0.125;
+  Velocity.x = (Random() * 10.0 - 5.0) * 35.0;
+  Velocity.y = (Random() * 10.0 - 5.0) * 35.0;
+  Velocity.z = (2.0 + Random() * 3.0) * 35.0;
+  Args[4] = BOUNCE_TIME_UNIT; // Bounce time unit
+  Args[3] = 5;  // Bounce time in seconds
 }
 
 //==========================================================================
@@ -307,34 +307,34 @@ final void A_SorcBallPop()
 
 final void A_BounceCheck()
 {
-	if (Args[4]-- <= 0)
-	{
-		if (Args[3]-- <= 0)
-		{
-			SetState(FindState('Death'));
-			PlaySound('SorcererBigBallExplode', CHAN_VOICE, 1.0, ATTN_NONE);
-		}
-		else
-		{
-			Args[4] = BOUNCE_TIME_UNIT;
-		}
-	}
+  if (Args[4]-- <= 0)
+  {
+    if (Args[3]-- <= 0)
+    {
+      SetState(FindState('Death'));
+      PlaySound('SorcererBigBallExplode', CHAN_VOICE, 1.0, ATTN_NONE);
+    }
+    else
+    {
+      Args[4] = BOUNCE_TIME_UNIT;
+    }
+  }
 }
 
 defaultproperties
 {
-	Radius = 5.0;
-	Height = 5.0;
-	Speed = 350.0;
-	BounceType = BOUNCE_Hexen;
-	bMissile = true;
-	bNoBlockmap = true;
-	bDropOff = true;
-	bNoGravity = true;
-	bNoTeleport = true;
-	bBloodSplatter = true;
-	bNoWallBounceSnd = true;
-	bFullVolDeath = true;
-	SightSound = 'SorcererBallBounce';
-	DeathSound = 'SorcererBigBallExplode';
+  Radius = 5.0;
+  Height = 5.0;
+  Speed = 350.0;
+  BounceType = BOUNCE_Hexen;
+  bMissile = true;
+  bNoBlockmap = true;
+  bDropOff = true;
+  bNoGravity = true;
+  bNoTeleport = true;
+  bBloodSplatter = true;
+  bNoWallBounceSnd = true;
+  bFullVolDeath = true;
+  SightSound = 'SorcererBallBounce';
+  DeathSound = 'SorcererBigBallExplode';
 }

@@ -1,58 +1,58 @@
 $dest basepak.pk3
 
-//	Automap background
-graphics/autopage.lmp	@CMAKE_CURRENT_SOURCE_DIR@/graphics/autopage.lmp
+//  Automap background
+graphics/autopage.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/autopage.lmp
 
-//	Crosshairs
-graphics/croshai1.lmp	@CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai1.lmp
-graphics/croshai2.lmp	@CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai2.lmp
-graphics/croshai3.lmp	@CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai3.lmp
+//  Crosshairs
+graphics/croshai1.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai1.lmp
+graphics/croshai2.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai2.lmp
+graphics/croshai3.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai3.lmp
 
-//	Client progs
-progs/cgame/classes.vc						@CMAKE_SOURCE_DIR@/progs/strife/cgame/classes.vc
-progs/cgame/ClientGame.vc					@CMAKE_SOURCE_DIR@/progs/strife/cgame/ClientGame.vc
-progs/cgame/ConSlideshow1.vc				@CMAKE_SOURCE_DIR@/progs/strife/cgame/ConSlideshow1.vc
-progs/cgame/ConSlideshow2.vc				@CMAKE_SOURCE_DIR@/progs/strife/cgame/ConSlideshow2.vc
-progs/cgame/IntermissionScreen.vc			@CMAKE_SOURCE_DIR@/progs/strife/cgame/IntermissionScreen.vc
-progs/cgame/MenuScreenControls2.vc			@CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenControls2.vc
-progs/cgame/MenuScreenGameplayOptions.vc	@CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenGameplayOptions.vc
-progs/cgame/MenuScreenHelp.vc				@CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenHelp.vc
-progs/cgame/MenuScreenMain.vc				@CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenMain.vc
-progs/cgame/MenuScreenMultiplayer.vc		@CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenMultiplayer.vc
-progs/cgame/MenuScreenNewNetGame.vc			@CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenNewNetGame.vc
-progs/cgame/MenuScreenOptions.vc			@CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenOptions.vc
-progs/cgame/MenuScreenPlayerSetup.vc		@CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenPlayerSetup.vc
-progs/cgame/MenuScreenQuit.vc				@CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenQuit.vc
-progs/cgame/StatusBarScreen.vc				@CMAKE_SOURCE_DIR@/progs/strife/cgame/StatusBarScreen.vc
-progs/cgame/TitleScreen.vc					@CMAKE_SOURCE_DIR@/progs/strife/cgame/TitleScreen.vc
+//  Client progs
+progs/cgame/classes.vc            @CMAKE_SOURCE_DIR@/progs/strife/cgame/classes.vc
+progs/cgame/ClientGame.vc         @CMAKE_SOURCE_DIR@/progs/strife/cgame/ClientGame.vc
+progs/cgame/ConSlideshow1.vc        @CMAKE_SOURCE_DIR@/progs/strife/cgame/ConSlideshow1.vc
+progs/cgame/ConSlideshow2.vc        @CMAKE_SOURCE_DIR@/progs/strife/cgame/ConSlideshow2.vc
+progs/cgame/IntermissionScreen.vc     @CMAKE_SOURCE_DIR@/progs/strife/cgame/IntermissionScreen.vc
+progs/cgame/MenuScreenControls2.vc      @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenControls2.vc
+progs/cgame/MenuScreenGameplayOptions.vc  @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenGameplayOptions.vc
+progs/cgame/MenuScreenHelp.vc       @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenHelp.vc
+progs/cgame/MenuScreenMain.vc       @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenMain.vc
+progs/cgame/MenuScreenMultiplayer.vc    @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenMultiplayer.vc
+progs/cgame/MenuScreenNewNetGame.vc     @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenNewNetGame.vc
+progs/cgame/MenuScreenOptions.vc      @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenOptions.vc
+progs/cgame/MenuScreenPlayerSetup.vc    @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenPlayerSetup.vc
+progs/cgame/MenuScreenQuit.vc       @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenQuit.vc
+progs/cgame/StatusBarScreen.vc        @CMAKE_SOURCE_DIR@/progs/strife/cgame/StatusBarScreen.vc
+progs/cgame/TitleScreen.vc          @CMAKE_SOURCE_DIR@/progs/strife/cgame/TitleScreen.vc
 
-//	Server progs
-progs/game/classes.vc					@CMAKE_SOURCE_DIR@/progs/strife/game/classes.vc
-progs/game/MainGameInfo.vc				@CMAKE_SOURCE_DIR@/progs/strife/game/MainGameInfo.vc
-progs/game/Player.vc					@CMAKE_SOURCE_DIR@/progs/strife/game/Player.vc
-progs/game/StrifeLevelInfo.vc			@CMAKE_SOURCE_DIR@/progs/strife/game/StrifeLevelInfo.vc
+//  Server progs
+progs/game/classes.vc         @CMAKE_SOURCE_DIR@/progs/strife/game/classes.vc
+progs/game/MainGameInfo.vc        @CMAKE_SOURCE_DIR@/progs/strife/game/MainGameInfo.vc
+progs/game/Player.vc          @CMAKE_SOURCE_DIR@/progs/strife/game/Player.vc
+progs/game/StrifeLevelInfo.vc     @CMAKE_SOURCE_DIR@/progs/strife/game/StrifeLevelInfo.vc
 
-//	ACS helper
-acs/strfhelp.o			strfhelp.o
+//  ACS helper
+acs/strfhelp.o      strfhelp.o
 
-//	Temporary solution to make teaser versions work.
-script32.lmp			@CMAKE_CURRENT_SOURCE_DIR@/script32.lmp
-script33.lmp			@CMAKE_CURRENT_SOURCE_DIR@/script33.lmp
-script34.lmp			@CMAKE_CURRENT_SOURCE_DIR@/script34.lmp
+//  Temporary solution to make teaser versions work.
+script32.lmp      @CMAKE_CURRENT_SOURCE_DIR@/script32.lmp
+script33.lmp      @CMAKE_CURRENT_SOURCE_DIR@/script33.lmp
+script34.lmp      @CMAKE_CURRENT_SOURCE_DIR@/script34.lmp
 
-//	Scripts
-animdefs.txt			@CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt
-lockdefs.txt			@CMAKE_CURRENT_SOURCE_DIR@/lockdefs.txt
-mapinfo.txt				@CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
-skyboxes.txt			@CMAKE_CURRENT_SOURCE_DIR@/skyboxes.txt
-sndinfo.txt				@CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
-sndseq.txt				@CMAKE_CURRENT_SOURCE_DIR@/sndseq.txt
-sprite_rename.txt		@CMAKE_CURRENT_SOURCE_DIR@/sprite_rename.txt
-terrain.txt				@CMAKE_CURRENT_SOURCE_DIR@/terrain.txt
+//  Scripts
+animdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt
+lockdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/lockdefs.txt
+mapinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
+skyboxes.txt      @CMAKE_CURRENT_SOURCE_DIR@/skyboxes.txt
+sndinfo.txt       @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
+sndseq.txt        @CMAKE_CURRENT_SOURCE_DIR@/sndseq.txt
+sprite_rename.txt   @CMAKE_CURRENT_SOURCE_DIR@/sprite_rename.txt
+terrain.txt       @CMAKE_CURRENT_SOURCE_DIR@/terrain.txt
 
-//	Big font
+//  Big font
 $load @CMAKE_CURRENT_SOURCE_DIR@/bigfont.pcx
-bigfont.lmp				fon2
+bigfont.lmp       fon2
 
 $load @CMAKE_CURRENT_SOURCE_DIR@/palette.pcx
-translat.dat			raw 0 1 256 7
+translat.dat      raw 0 1 256 7

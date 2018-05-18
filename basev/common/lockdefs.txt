@@ -2,14 +2,14 @@ ClearLocks
 
 Lock 100
 {
-	Message "$pd_any"
-	RemoteMessage "$pd_anyobj"
-	MapColor 128 128 255
+  Message "$pd_any"
+  RemoteMessage "$pd_anyobj"
+  MapColor 128 128 255
 }
 
 Lock 228
 {
-	Message "$pd_any"
-	RemoteMessage "$pd_anyobj"
-	MapColor 128 128 255
+  Message "$pd_any"
+  RemoteMessage "$pd_anyobj"
+  MapColor 128 128 255
 }

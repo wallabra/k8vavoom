@@ -33,82 +33,82 @@ class ChickenPlayer : PlayerPawn;
 
 void MorphPlayerThink()
 {
-	if (Health > 0)
-	{
-		// Handle beak movement
-		Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP +
-			itof(PlayerEx(Player).ChickenPeck) / 2.0;
-	}
-	if (ftoi(32.0 * PlayerEx(Player).MorphTime) & 15)
-	{
-		return;
-	}
-	if (!(Velocity.x + Velocity.y) && P_Random() < 160)
-	{
-		// Twitch view angle
-		Angles.yaw = AngleMod360(Angles.yaw +
-			(Random() - Random()) * 45.0 / 4.0);
-		Player.bFixAngle = true;
-	}
-	if ((Origin.z <= FloorZ) && (P_Random() < 32))
-	{
-		// Jump and noise
-		Velocity.z += 1.0 * 35.0;
-		SetState(FindState('Pain'));
-		return;
-	}
-	if (P_Random() < 48)
-	{
-		// Just noise
-		PlaySound('chicken/attack', CHAN_VOICE);
-	}
+  if (Health > 0)
+  {
+    // Handle beak movement
+    Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP +
+      itof(PlayerEx(Player).ChickenPeck) / 2.0;
+  }
+  if (ftoi(32.0 * PlayerEx(Player).MorphTime) & 15)
+  {
+    return;
+  }
+  if (!(Velocity.x + Velocity.y) && P_Random() < 160)
+  {
+    // Twitch view angle
+    Angles.yaw = AngleMod360(Angles.yaw +
+      (Random() - Random()) * 45.0 / 4.0);
+    Player.bFixAngle = true;
+  }
+  if ((Origin.z <= FloorZ) && (P_Random() < 32))
+  {
+    // Jump and noise
+    Velocity.z += 1.0 * 35.0;
+    SetState(FindState('Pain'));
+    return;
+  }
+  if (P_Random() < 48)
+  {
+    // Just noise
+    PlaySound('chicken/attack', CHAN_VOICE);
+  }
 }
 
 states
 {
 Spawn:
-	CHKN A -1
-	Stop
+  CHKN A -1
+  Stop
 See:
-	CHKN ABAB 3
-	Loop
+  CHKN ABAB 3
+  Loop
 Melee:
 Missile:
-	CHKN C 4
-	CHKN C 4
-	CHKN C 4
-	Goto Spawn
+  CHKN C 4
+  CHKN C 4
+  CHKN C 4
+  Goto Spawn
 Pain:
-	CHKN D 4 A_Feathers
-	CHKN C 4 A_Pain
-	Goto Spawn
+  CHKN D 4 A_Feathers
+  CHKN C 4 A_Pain
+  Goto Spawn
 Death:
-	CHKN E 6 A_Scream
-	CHKN F 6 A_Feathers
-	CHKN G 6
-	CHKN H 6 A_NoBlocking
-	CHKN IJK 6
-	CHKN L -1
-	Stop
+  CHKN E 6 A_Scream
+  CHKN F 6 A_Feathers
+  CHKN G 6
+  CHKN H 6 A_NoBlocking
+  CHKN IJK 6
+  CHKN L -1
+  Stop
 }
 
 defaultproperties
 {
-	Health = 30;
-	Radius = 16.0;
-	Height = 24.0;
-	Gravity = 0.125;
-	PainChance = 1.0;
-	ViewHeight = 21.0;
-	// Chicken speed
-	ForwardMove1 = 1.2;
-	ForwardMove2 = 1.2;
-	SideMove1 = 1.2;
-	SideMove2 = 1.2;
-	JumpVelZ = 1.0 * 35.0;
-	MorphWeapon = Beak;
-	bPickUp = false;
-	bOnmobjCopyVel = true;
-	PainSound = 'chicken/pain';
-	DeathSound = 'chicken/death';
+  Health = 30;
+  Radius = 16.0;
+  Height = 24.0;
+  Gravity = 0.125;
+  PainChance = 1.0;
+  ViewHeight = 21.0;
+  // Chicken speed
+  ForwardMove1 = 1.2;
+  ForwardMove2 = 1.2;
+  SideMove1 = 1.2;
+  SideMove2 = 1.2;
+  JumpVelZ = 1.0 * 35.0;
+  MorphWeapon = Beak;
+  bPickUp = false;
+  bOnmobjCopyVel = true;
+  PainSound = 'chicken/pain';
+  DeathSound = 'chicken/death';
 }

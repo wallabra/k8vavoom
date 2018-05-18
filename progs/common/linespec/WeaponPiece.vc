@@ -24,11 +24,11 @@
 //**************************************************************************
 
 class WeaponPiece : Inventory
-	abstract;
+  abstract;
 
-int				PieceValue;
-class<Weapon>	WeaponType;
-Weapon			GivenWeapon;
+int       PieceValue;
+class<Weapon> WeaponType;
+Weapon      GivenWeapon;
 
 //==========================================================================
 //
@@ -38,125 +38,125 @@ Weapon			GivenWeapon;
 
 bool TryPickup(EntityEx Toucher)
 {
-	GivenWeapon = none;
+  GivenWeapon = none;
 
-	Inventory Inv;
-	WeaponHolder Hold = none;
-	for (Inv = Toucher.Inventory; Inv; Inv = Inv.Inventory)
-	{
-		if (WeaponHolder(Inv) && WeaponHolder(Inv).WeaponType == WeaponType)
-		{
-			Hold = WeaponHolder(Inv);
-			break;
-		}
-	}
-	if (!Hold)
-	{
-		Hold = Spawn(WeaponHolder,,,, false);
-		Hold.AttachToOwner(Toucher);
-		Hold.WeaponType = WeaponType;
-		Hold.PieceMask = 0;
-	}
+  Inventory Inv;
+  WeaponHolder Hold = none;
+  for (Inv = Toucher.Inventory; Inv; Inv = Inv.Inventory)
+  {
+    if (WeaponHolder(Inv) && WeaponHolder(Inv).WeaponType == WeaponType)
+    {
+      Hold = WeaponHolder(Inv);
+      break;
+    }
+  }
+  if (!Hold)
+  {
+    Hold = Spawn(WeaponHolder,,,, false);
+    Hold.AttachToOwner(Toucher);
+    Hold.WeaponType = WeaponType;
+    Hold.PieceMask = 0;
+  }
 
-	if (ShouldStay())
-	{
-		if (Hold.PieceMask & PieceValue)
-		{
-			// Already has the piece
-			return false;
-		}
-		PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType1,
-			WeaponType.default.AmmoGive1);
-		PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2,
-			WeaponType.default.AmmoGive2);
-	}
-	else
-	{
-		int GaveAmmo = PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType1,
-			WeaponType.default.AmmoGive1) |
-			PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2,
-			WeaponType.default.AmmoGive2);
-		if (Hold.PieceMask & PieceValue)
-		{
-			// Already has the piece, check if ammo needed
-			if (!GaveAmmo)
-			{
-				// Didn't need the ammo, so don't pick it up
-				return false;
-			}
-			GiveQuest(Toucher);
-			GoAwayAndDie();
-			return true;
-		}
-	}
+  if (ShouldStay())
+  {
+    if (Hold.PieceMask & PieceValue)
+    {
+      // Already has the piece
+      return false;
+    }
+    PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType1,
+      WeaponType.default.AmmoGive1);
+    PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2,
+      WeaponType.default.AmmoGive2);
+  }
+  else
+  {
+    int GaveAmmo = PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType1,
+      WeaponType.default.AmmoGive1) |
+      PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2,
+      WeaponType.default.AmmoGive2);
+    if (Hold.PieceMask & PieceValue)
+    {
+      // Already has the piece, check if ammo needed
+      if (!GaveAmmo)
+      {
+        // Didn't need the ammo, so don't pick it up
+        return false;
+      }
+      GiveQuest(Toucher);
+      GoAwayAndDie();
+      return true;
+    }
+  }
 
-	// Pick up the weapon piece
+  // Pick up the weapon piece
 
-	// Check if fourth weapon assembled
-	Hold.PieceMask |= PieceValue;
-	if (Hold.PieceMask == (1 << WeaponType.default.Health) - 1)
-	{
-		if (!Toucher.FindInventory(WeaponType))
-		{
-			GivenWeapon = Level.Spawn(WeaponType);
-			//	Given weapon should not give any more ammo to the player.
-			GivenWeapon.AmmoGive1 = 0;
-			GivenWeapon.AmmoGive2 = 0;
-			GivenWeapon.AttachToOwner(Toucher);
-			GivenWeapon.AmmoGive1 = GivenWeapon.default.AmmoGive1;
-			GivenWeapon.AmmoGive2 = GivenWeapon.default.AmmoGive2;
-		}
-	}
-	GiveQuest(Toucher);
-	GoAwayAndDie();
-	return true;
+  // Check if fourth weapon assembled
+  Hold.PieceMask |= PieceValue;
+  if (Hold.PieceMask == (1 << WeaponType.default.Health) - 1)
+  {
+    if (!Toucher.FindInventory(WeaponType))
+    {
+      GivenWeapon = Level.Spawn(WeaponType);
+      //  Given weapon should not give any more ammo to the player.
+      GivenWeapon.AmmoGive1 = 0;
+      GivenWeapon.AmmoGive2 = 0;
+      GivenWeapon.AttachToOwner(Toucher);
+      GivenWeapon.AmmoGive1 = GivenWeapon.default.AmmoGive1;
+      GivenWeapon.AmmoGive2 = GivenWeapon.default.AmmoGive2;
+    }
+  }
+  GiveQuest(Toucher);
+  GoAwayAndDie();
+  return true;
 }
 
 //==========================================================================
 //
-//	ShouldStay
+//  ShouldStay
 //
 //==========================================================================
 
 bool ShouldStay()
 {
-	return LineSpecialGameInfo(Level.Game).bWeaponsStay;
+  return LineSpecialGameInfo(Level.Game).bWeaponsStay;
 }
 
 //==========================================================================
 //
-//	GetPickupMessage
+//  GetPickupMessage
 //
 //==========================================================================
 
 string GetPickupMessage()
 {
-	if (GivenWeapon)
-	{
-		return GivenWeapon.PickupMessage;
-	}
-	else
-	{
-		return ::GetPickupMessage();
-	}
+  if (GivenWeapon)
+  {
+    return GivenWeapon.PickupMessage;
+  }
+  else
+  {
+    return ::GetPickupMessage();
+  }
 }
 
 //==========================================================================
 //
-//	PlayPickupSound
+//  PlayPickupSound
 //
 //==========================================================================
 
 void PlayPickupSound(EntityEx Toucher)
 {
-	if (GivenWeapon)
-	{
-		GivenWeapon.PlayPickupSound(Toucher);
-	}
-	else
-	{
-		::PlayPickupSound(Toucher);
-	}
+  if (GivenWeapon)
+  {
+    GivenWeapon.PlayPickupSound(Toucher);
+  }
+  else
+  {
+    ::PlayPickupSound(Toucher);
+  }
 }
 
 defaultproperties

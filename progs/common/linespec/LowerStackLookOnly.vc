@@ -24,34 +24,34 @@
 //**************************************************************************
 
 class LowerStackLookOnly : StackPoint
-	__mobjinfo__(9078);
+  __mobjinfo__(9078);
 
 //==========================================================================
 //
-//	InitSkyBox
+//  InitSkyBox
 //
 //==========================================================================
 
 void InitSkyBox()
 {
-	::InitSkyBox();
+  ::InitSkyBox();
 
-	UpperStackLookOnly SkyBox = none;
-	Entity E;
-	for (E = Level.FindMobjFromTID(TID, none); E && !SkyBox;
-		E = Level.FindMobjFromTID(TID, E))
-	{
-		if (UpperStackLookOnly(E))
-		{
-			SkyBox = UpperStackLookOnly(E);
-		}
-	}
-	Sector->ceiling.SkyBox = SkyBox;
-	if (SkyBox)
-	{
-		SkyBox.Mate = self;
-		SkyBox.PlaneAlpha = itof(Args[0]) / 255.0;
-	}
+  UpperStackLookOnly SkyBox = none;
+  Entity E;
+  for (E = Level.FindMobjFromTID(TID, none); E && !SkyBox;
+    E = Level.FindMobjFromTID(TID, E))
+  {
+    if (UpperStackLookOnly(E))
+    {
+      SkyBox = UpperStackLookOnly(E);
+    }
+  }
+  Sector->ceiling.SkyBox = SkyBox;
+  if (SkyBox)
+  {
+    SkyBox.Mate = self;
+    SkyBox.PlaneAlpha = itof(Args[0]) / 255.0;
+  }
 }
 
 defaultproperties

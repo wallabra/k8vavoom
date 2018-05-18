@@ -24,61 +24,61 @@
 //**************************************************************************
 
 class Thinker : GameObject
-	native
-	abstract;
+  native
+  abstract;
 
 enum
 {
-	ROLE_None,
-	ROLE_DumbProxy,
-	ROLE_Authority
+  ROLE_None,
+  ROLE_DumbProxy,
+  ROLE_Authority
 };
 
 enum
 {
-	SNDTYPE_World,
-	SNDTYPE_Point,
-	SNDTYPE_Surround,
-	SNDTYPE_OriginMask = 0x03,
+  SNDTYPE_World,
+  SNDTYPE_Point,
+  SNDTYPE_Surround,
+  SNDTYPE_OriginMask = 0x03,
 
-	SNDTYPE_Continuous = 4,
-	SNDTYPE_Random = 8,
-	SNDTYPE_Periodic = 12,
-	SNDTYPE_PlaybackMask = 0x0c
+  SNDTYPE_Continuous = 4,
+  SNDTYPE_Random = 8,
+  SNDTYPE_Periodic = 12,
+  SNDTYPE_PlaybackMask = 0x0c
 };
 
 struct FAmbientSound
 {
-	int			Type;		// type of ambient sound
-	float		PeriodMin;	// # of tics between repeats
-	float		PeriodMax;	// max # of tics for random ambients
-	float		Volume;		// relative volume of sound
-	float		Attenuation;
-	name		Sound;		// Logical name of sound to play
+  int     Type;   // type of ambient sound
+  float   PeriodMin;  // # of tics between repeats
+  float   PeriodMax;  // max # of tics for random ambients
+  float   Volume;   // relative volume of sound
+  float   Attenuation;
+  name    Sound;    // Logical name of sound to play
 };
 
-readonly Level			XLevel;		//	Level object.
-readonly LevelInfo		Level;		//	Level info object.
+readonly Level      XLevel;   //  Level object.
+readonly LevelInfo    Level;    //  Level info object.
 
-native readonly private Thinker	Prev;
-native readonly private Thinker	Next;
+native readonly private Thinker Prev;
+native readonly private Thinker Next;
 
-byte					Role;
-byte					RemoteRole;
+byte          Role;
+byte          RemoteRole;
 
-bool					bAlwaysRelevant;	//	Always updated
-readonly bool			bNetInitial;		//	Initial update
-readonly bool			bNetOwner;			//	Is owned by current player.
+bool          bAlwaysRelevant;  //  Always updated
+readonly bool     bNetInitial;    //  Initial update
+readonly bool     bNetOwner;      //  Is owned by current player.
 
 replication
 {
-	reliable if (Role == ROLE_Authority)
-		Role, RemoteRole;
+  reliable if (Role == ROLE_Authority)
+    Role, RemoteRole;
 }
 
 native final spawner Thinker Spawn(class<Thinker> Type, optional TVec AOrigin,
-	optional TAVec AAngles, optional mthing_t* mthing,
-	optional bool AllowReplace);
+  optional TAVec AAngles, optional mthing_t* mthing,
+  optional bool AllowReplace);
 native void Destroy();
 
 //  Broadcast message (print to all clients)
@@ -91,12 +91,12 @@ native static final FAmbientSound* GetAmbientSound(int Idx);
 native final iterator AllThinkers(class<Thinker> Class, out Thinker Thinker);
 native final iterator AllActivePlayers(out BasePlayer Player);
 native final iterator PathTraverse(out intercept_t* In, float x1, float y1,
-	float x2, float y2, int flags);
+  float x2, float y2, int flags);
 native final iterator RadiusThings(out Entity Ent, TVec Org, float Radius);
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
@@ -106,7 +106,7 @@ void Tick(float deltaTime)
 
 //==========================================================================
 //
-//	ClientTick
+//  ClientTick
 //
 //==========================================================================
 
@@ -116,6 +116,6 @@ void ClientTick(float DeltaTime)
 
 defaultproperties
 {
-	Role = ROLE_Authority;
-	RemoteRole = ROLE_DumbProxy;
+  Role = ROLE_Authority;
+  RemoteRole = ROLE_DumbProxy;
 }

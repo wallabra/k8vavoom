@@ -24,9 +24,9 @@
 //**************************************************************************
 
 class MageWeaponPiece : FourthWeaponPiece
-	abstract;
+  abstract;
 
 defaultproperties
 {
-	PieceClass = MagePlayer;
+  PieceClass = MagePlayer;
 }

@@ -27,43 +27,43 @@ class IceChunk : Actor;
 
 //============================================================================
 //
-//	A_IceSetTics
+//  A_IceSetTics
 //
 //============================================================================
 
 final void A_IceSetTics()
 {
-	VTerrainInfo* floor;
+  VTerrainInfo* floor;
 
-	StateTime = 2.0 + Random() * 2.0;
-	floor = GetFloorType();
-	if (floor->DamageType == 'lava')
-	{
-		StateTime /= 4.0;
-	}
-	else if (floor->DamageType == 'ice')
-	{
-		StateTime *= 2.0;
-	}
+  StateTime = 2.0 + Random() * 2.0;
+  floor = GetFloorType();
+  if (floor->DamageType == 'lava')
+  {
+    StateTime /= 4.0;
+  }
+  else if (floor->DamageType == 'ice')
+  {
+    StateTime *= 2.0;
+  }
 }
 
 states
 {
 Spawn:
-	ICEC A 10
-	ICEC B 10 A_IceSetTics
-	ICEC C 10 A_IceSetTics
-	ICEC D 10 A_IceSetTics
-	Stop
+  ICEC A 10
+  ICEC B 10 A_IceSetTics
+  ICEC C 10 A_IceSetTics
+  ICEC D 10 A_IceSetTics
+  Stop
 }
 
 defaultproperties
 {
-	Radius = 3.0;
-	Height = 4.0;
-	Gravity = 0.125;
-	bNoBlockmap = true;
-	bDropOff = true;
-	bFloorClip = true;
-	bCannotPush = true;
+  Radius = 3.0;
+  Height = 4.0;
+  Gravity = 0.125;
+  bNoBlockmap = true;
+  bDropOff = true;
+  bFloorClip = true;
+  bCannotPush = true;
 }

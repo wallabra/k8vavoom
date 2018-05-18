@@ -24,133 +24,133 @@
 //**************************************************************************
 
 class TeleporterBeacon : Inventory
-	game(GAME_Strife)
-	__mobjinfo__(10);
+  game(GAME_Strife)
+  __mobjinfo__(10);
 
-bool			bRebelSpawned;
+bool      bRebelSpawned;
 
 //==========================================================================
 //
-//	TryPickup
+//  TryPickup
 //
 //==========================================================================
 
 bool TryPickup(EntityEx Toucher)
 {
-	//	Can't pick it up if already started to spawn rebels.
-	if (bRebelSpawned)
-	{
-		return false;
-	}
-	return ::TryPickup(Toucher);
+  //  Can't pick it up if already started to spawn rebels.
+  if (bRebelSpawned)
+  {
+    return false;
+  }
+  return ::TryPickup(Toucher);
 }
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	//	Increase item count because ItemThrow also decreases it.
-	Amount++;
-	EntityEx A = PlayerEx(Owner.Player).InventoryThrow();
-	if (A)
-	{
-		A.SetState(A.SeeState);
-		A.Target = EntityEx(Owner);
-		Amount--;
-		return true;
-	}
-	else
-	{
-		Amount--;
-	}
-	return false;
+  //  Increase item count because ItemThrow also decreases it.
+  Amount++;
+  EntityEx A = PlayerEx(Owner.Player).InventoryThrow();
+  if (A)
+  {
+    A.SetState(A.SeeState);
+    A.Target = EntityEx(Owner);
+    Amount--;
+    return true;
+  }
+  else
+  {
+    Amount--;
+  }
+  return false;
 }
 
 //==========================================================================
 //
-//	A_SummonRebel
+//  A_SummonRebel
 //
 //==========================================================================
 
 final void A_SummonRebel()
 {
-	EntityEx	A;
+  EntityEx  A;
 
-	A = Spawn(Rebel1, Origin + vector((Random() - 0.5) * 64.0,
-		(Random() - 0.5) * 64.0, 0.0));
-	if (!A.TryMove(A.Origin, false))
-	{
-		A.Destroy();
-		return;
-	}
-	//	Once the rebels start teleporting in, you can't pick up the beacon
-	// anymore.
-	bRebelSpawned = true;
-	EntityEx Owner = self.Target;
+  A = Spawn(Rebel1, Origin + vector((Random() - 0.5) * 64.0,
+    (Random() - 0.5) * 64.0, 0.0));
+  if (!A.TryMove(A.Origin, false))
+  {
+    A.Destroy();
+    return;
+  }
+  //  Once the rebels start teleporting in, you can't pick up the beacon
+  // anymore.
+  bRebelSpawned = true;
+  EntityEx Owner = self.Target;
 
-	// Set up the new rebel.
-	if (Owner)
-	{
-		A.Translation = Owner.Translation;
-		A.FriendPlayer = Owner.bIsPlayer ? Owner.Player.GetPlayerNum() + 1 : 0;
-	}
-	A.Threshold = 100;
-	A.bFriendly = true;
-	A.bInCombat = true;
-	A.LastHeard = Owner;	//	Make sure rebels look for targets.
-	if (Level.Game.deathmatch)
-	{
-		A.Health *= 2;
-	}
-	if (Owner)
-	{
-		// Rebels are the same colour as their owner
-		A.Translation = Owner.Translation;
-		// Set the rebel's target to whatever last hurt the player, so long as it's not
-		// one of the player's other rebels.
-		if (Owner.Target && !A.IsFriend(Owner.Target))
-		{
-			A.Target = Owner.Target;
-		}
-	}
-	A.SetState (A.SeeState);
-	A.Angles = Angles;
+  // Set up the new rebel.
+  if (Owner)
+  {
+    A.Translation = Owner.Translation;
+    A.FriendPlayer = Owner.bIsPlayer ? Owner.Player.GetPlayerNum() + 1 : 0;
+  }
+  A.Threshold = 100;
+  A.bFriendly = true;
+  A.bInCombat = true;
+  A.LastHeard = Owner;  //  Make sure rebels look for targets.
+  if (Level.Game.deathmatch)
+  {
+    A.Health *= 2;
+  }
+  if (Owner)
+  {
+    // Rebels are the same colour as their owner
+    A.Translation = Owner.Translation;
+    // Set the rebel's target to whatever last hurt the player, so long as it's not
+    // one of the player's other rebels.
+    if (Owner.Target && !A.IsFriend(Owner.Target))
+    {
+      A.Target = Owner.Target;
+    }
+  }
+  A.SetState (A.SeeState);
+  A.Angles = Angles;
 
-	Spawn(TeleportFog, A.Origin);
+  Spawn(TeleportFog, A.Origin);
 
-	Health--;
-	if (Health < 0)
-	{
-		Destroy();
-	}
+  Health--;
+  if (Health < 0)
+  {
+    Destroy();
+  }
 }
 
 states
 {
 Spawn:
-	BEAC A -1
-	Stop
+  BEAC A -1
+  Stop
 See:
-	BEAC A 30
-	BEAC A 160 A_SummonRebel
-	Loop
+  BEAC A 30
+  BEAC A 160 A_SummonRebel
+  Loop
 }
 
 defaultproperties
 {
-	ConversationID = 166;
-	PickupMessage = "$txt_beacon";
-	Health = 5;
-	Radius = 16.0;
-	Height = 8.0;
-	Mass = 3.0;
-	MaxAmount = 1;
-	IconName = 'i_beac';
-	bDropped = true;
-	bFloorClip = true;
-	bInvBar = true;
+  ConversationID = 166;
+  PickupMessage = "$txt_beacon";
+  Health = 5;
+  Radius = 16.0;
+  Height = 8.0;
+  Mass = 3.0;
+  MaxAmount = 1;
+  IconName = 'i_beac';
+  bDropped = true;
+  bFloorClip = true;
+  bInvBar = true;
 }

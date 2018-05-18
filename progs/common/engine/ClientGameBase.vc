@@ -24,8 +24,8 @@
 //**************************************************************************
 
 class ClientGameBase : Object
-	abstract
-	native;
+  abstract
+  native;
 
 bool local_server;
 
@@ -177,7 +177,7 @@ void StartFinale(name FinaleType)
 
 bool FinaleResponder(event_t * event)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
@@ -198,7 +198,7 @@ void DeactivateMenu()
 
 bool MenuResponder(event_t * event)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
@@ -209,7 +209,7 @@ bool MenuResponder(event_t * event)
 
 bool MenuActive()
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
@@ -240,7 +240,7 @@ void MessageBoxDrawer()
 
 bool MessageBoxResponder(event_t * event)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
@@ -251,7 +251,7 @@ bool MessageBoxResponder(event_t * event)
 
 bool MessageBoxActive()
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
@@ -266,7 +266,7 @@ void DrawViewBorder(int x, int y, int w, int h)
 
 //==========================================================================
 //
-//	AddNotifyMessage
+//  AddNotifyMessage
 //
 //==========================================================================
 
@@ -276,7 +276,7 @@ void AddNotifyMessage(string Str)
 
 //==========================================================================
 //
-//	AddCentreMessage
+//  AddCentreMessage
 //
 //==========================================================================
 
@@ -286,17 +286,17 @@ void AddCentreMessage(string Msg)
 
 //==========================================================================
 //
-//	AddHudMessage
+//  AddHudMessage
 //
 //==========================================================================
 
 void AddHudMessage(string Message, name Font, int Type, int Id, int Colour,
-	string ColourName, float x, float y, int HudWidth, int HudHeight,
-	float HoldTime, float Time1, float Time2)
+  string ColourName, float x, float y, int HudWidth, int HudHeight,
+  float HoldTime, float Time1, float Time2)
 {
 }
 
 defaultproperties
 {
-	local_server = true;
+  local_server = true;
 }

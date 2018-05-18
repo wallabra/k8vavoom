@@ -24,43 +24,43 @@
 //**************************************************************************
 
 class Scanner : PowerupGiver
-	game(GAME_Strife)
-	__mobjinfo__(2027);
+  game(GAME_Strife)
+  __mobjinfo__(2027);
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	if (!Owner.bIsPlayer)
-	{
-		return false;
-	}
-	if (!Owner.Player.bAutomapRevealed)
-	{
-		Owner.Player.cprint("$txt_needmap");
-		return false;
-	}
-	return ::Use(Pickup);
+  if (!Owner.bIsPlayer)
+  {
+    return false;
+  }
+  if (!Owner.Player.bAutomapRevealed)
+  {
+    Owner.Player.cprint("$txt_needmap");
+    return false;
+  }
+  return ::Use(Pickup);
 }
 
 states
 {
 Spawn:
-	PMUP AB 6 Bright
-	Loop
+  PMUP AB 6 Bright
+  Loop
 }
 
 defaultproperties
 {
-	ConversationID = 165;
-	PowerupType = PowerScanner;
-	PickupMessage = "$txt_scanner";
-	PickupSound = 'misc/i_pkup';
-	MaxAmount = 1;
-	IconName = 'i_pmup';
-	bFloorClip = true;
+  ConversationID = 165;
+  PowerupType = PowerScanner;
+  PickupMessage = "$txt_scanner";
+  PickupSound = 'misc/i_pkup';
+  MaxAmount = 1;
+  IconName = 'i_pmup';
+  bFloorClip = true;
 }

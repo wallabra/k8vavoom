@@ -27,28 +27,28 @@ class MenuScreenLoadGame : MenuScreen;
 
 //==========================================================================
 //
-//	CreateChoices
+//  CreateChoices
 //
 //==========================================================================
 
 void CreateChoices()
 {
-	MenuChoice_LoadSlot		newChoice;
-	int						i;
+  MenuChoice_LoadSlot   newChoice;
+  int           i;
 
-	for (i = 0; i < 8; i++)
-	{
-		newChoice = NewChild(MenuChoice_LoadSlot);
-		newChoice.SetOrigin(ChoicesStartX, ChoicesStartY + i * 18);
-		newChoice.SlotNum = i;
-		newChoice.Status = SV_GetSaveString(i, &newChoice.Text);
-	}
+  for (i = 0; i < 8; i++)
+  {
+    newChoice = NewChild(MenuChoice_LoadSlot);
+    newChoice.SetOrigin(ChoicesStartX, ChoicesStartY + i * 18);
+    newChoice.SlotNum = i;
+    newChoice.Status = SV_GetSaveString(i, &newChoice.Text);
+  }
 }
 
 defaultproperties
 {
-	ChoicesStartX = 80;
-	ChoicesStartY = 40;
-	SelectorType = MenuSelector_Big;
-	Title = "LOAD GAME";
+  ChoicesStartX = 80;
+  ChoicesStartY = 40;
+  SelectorType = MenuSelector_Big;
+  Title = "LOAD GAME";
 }

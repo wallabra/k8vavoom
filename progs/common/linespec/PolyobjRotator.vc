@@ -31,42 +31,42 @@ float speed;
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float deltaTime)
 {
-	float move;
-	float absMove;
-	polyobj_t *poly;
+  float move;
+  float absMove;
+  polyobj_t *poly;
 
-	move = speed * deltaTime;
-	absMove = fabs(move);
-	if (dist >= 0.0 && dist < absMove)
-	{
-		move = dist * (speed < 0.0 ? -1.0 : 1.0);
-	}
-	if (XLevel.RotatePolyobj(polyobj, move))
-	{
-		if (dist < 0.0)
-		{
-			// perpetual polyobj
-			return;
-		}
-		dist -= absMove;
-		if (dist <= 0.0)
-		{
-			poly = XLevel.GetPolyobj(polyobj);
-			if (poly->SpecialData == self)
-			{
-				poly->SpecialData = none;
-			}
-			PolyobjStopSequence(poly);
-			Destroy();
-			return;
-		}
-	}
+  move = speed * deltaTime;
+  absMove = fabs(move);
+  if (dist >= 0.0 && dist < absMove)
+  {
+    move = dist * (speed < 0.0 ? -1.0 : 1.0);
+  }
+  if (XLevel.RotatePolyobj(polyobj, move))
+  {
+    if (dist < 0.0)
+    {
+      // perpetual polyobj
+      return;
+    }
+    dist -= absMove;
+    if (dist <= 0.0)
+    {
+      poly = XLevel.GetPolyobj(polyobj);
+      if (poly->SpecialData == self)
+      {
+        poly->SpecialData = none;
+      }
+      PolyobjStopSequence(poly);
+      Destroy();
+      return;
+    }
+  }
 }
 
 defaultproperties

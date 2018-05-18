@@ -1,228 +1,228 @@
 //------------------------------------------------------------------------------
 pointlight EggFX
 {
-	colour 1 1 1
-	radius 120
+  colour 1 1 1
+  radius 120
 }
 
 pointlight EggFX_X1
 {
-	colour 1 1 1
-	radius 250
+  colour 1 1 1
+  radius 250
 }
 
 pointlight EggFX_X2
 {
-	colour 1 1 1
-	radius 190
+  colour 1 1 1
+  radius 190
 }
 
 pointlight EggFX_X3
 {
-	colour 1 1 1
-	radius 130
+  colour 1 1 1
+  radius 130
 }
 
 pointlight EggFX_X4
 {
-	colour 1 1 1
-	radius 70
+  colour 1 1 1
+  radius 70
 }
 
 class EggFX
 {
-	frame EGGM { light EggFX }
-	frame FX01E { light EggFX_X1 }
-	frame FX01F { light EggFX_X2 }
-	frame FX01G { light EggFX_X3 }
-	frame FX01H { light EggFX_X4 }
+  frame EGGM { light EggFX }
+  frame FX01E { light EggFX_X1 }
+  frame FX01F { light EggFX_X2 }
+  frame FX01G { light EggFX_X3 }
+  frame FX01H { light EggFX_X4 }
 }
 
 //------------------------------------------------------------------------------
 particleeffect Volcano
 {
-	type static
-	type2 explode2
-	colour 1 0.5 0
-	count 10
-	offset 0 0 20
-	velocity 256 256 256
-	velocityrandom 0.3
-	acceleration 20
-	gravity 85
-	duration 1
-	ramp 2
+  type static
+  type2 explode2
+  colour 1 0.5 0
+  count 10
+  offset 0 0 20
+  velocity 256 256 256
+  velocityrandom 0.3
+  acceleration 20
+  gravity 85
+  duration 1
+  ramp 2
 }
 
 class Volcano
 {
-	frame VLCOE { particles Volcano }
+  frame VLCOE { particles Volcano }
 }
 
 //------------------------------------------------------------------------------
 pointlight VolcanoBlast
 {
-	colour 1 0.5 0
-	radius 126
+  colour 1 0.5 0
+  radius 126
 }
 
 pointlight VolcanoBlast_X1
 {
-	colour 1 0.5 0
-	radius 250
+  colour 1 0.5 0
+  radius 250
 }
 
 pointlight VolcanoBlast_X2
 {
-	colour 1 0.5 0
-	radius 210
+  colour 1 0.5 0
+  radius 210
 }
 
 pointlight VolcanoBlast_X3
 {
-	colour 1 0.5 0
-	radius 170
+  colour 1 0.5 0
+  radius 170
 }
 
 pointlight VolcanoBlast_X4
 {
-	colour 1 0.5 0
-	radius 130
+  colour 1 0.5 0
+  radius 130
 }
 
 pointlight VolcanoBlast_X5
 {
-	colour 1 0.5 0
-	radius 90
+  colour 1 0.5 0
+  radius 90
 }
 
 pointlight VolcanoBlast_X6
 {
-	colour 1 0.5 0
-	radius 50
+  colour 1 0.5 0
+  radius 50
 }
 
 particleeffect VolcanoBlast
 {
-	type static
-	colour 1 0.5 0
-	count 10
-	originrandom 10
-	velocity 256 256 256
-	velocityrandom 0.3
-	acceleration 20
-	gravity 85
-	duration 1
-	ramp 2
+  type static
+  colour 1 0.5 0
+  count 10
+  originrandom 10
+  velocity 256 256 256
+  velocityrandom 0.3
+  acceleration 20
+  gravity 85
+  duration 1
+  ramp 2
 }
 
 class VolcanoBlast
 {
-	frame VFBL { light VolcanoBlast }
-	frame XPL1A { light VolcanoBlast_X1 particles VolcanoBlast }
-	frame XPL1B { light VolcanoBlast_X2 }
-	frame XPL1C { light VolcanoBlast_X3 }
-	frame XPL1D { light VolcanoBlast_X4 }
-	frame XPL1E { light VolcanoBlast_X5 }
-	frame XPL1F { light VolcanoBlast_X6 }
+  frame VFBL { light VolcanoBlast }
+  frame XPL1A { light VolcanoBlast_X1 particles VolcanoBlast }
+  frame XPL1B { light VolcanoBlast_X2 }
+  frame XPL1C { light VolcanoBlast_X3 }
+  frame XPL1D { light VolcanoBlast_X4 }
+  frame XPL1E { light VolcanoBlast_X5 }
+  frame XPL1F { light VolcanoBlast_X6 }
 }
 
 class VolcanoTBlast
 {
-	frame VTFB { light VolcanoBlast }
-	frame SFFIA { light VolcanoBlast_X2 }
-	frame SFFIB { light VolcanoBlast_X3 }
-	frame SFFIC { light VolcanoBlast_X4 }
-	frame SFFID { light VolcanoBlast_X5 }
-	frame SFFIE { light VolcanoBlast_X6 }
+  frame VTFB { light VolcanoBlast }
+  frame SFFIA { light VolcanoBlast_X2 }
+  frame SFFIB { light VolcanoBlast_X3 }
+  frame SFFIC { light VolcanoBlast_X4 }
+  frame SFFID { light VolcanoBlast_X5 }
+  frame SFFIE { light VolcanoBlast_X6 }
 }
 
 //------------------------------------------------------------------------------
 pointlight TeleGlitter1
 {
-	colour 1 0.7 0.7
-	radius 66
+  colour 1 0.7 0.7
+  radius 66
 }
 
 class TeleGlitter1
 {
-	frame TGLT { light TeleGlitter1 }
+  frame TGLT { light TeleGlitter1 }
 }
 
 //------------------------------------------------------------------------------
 pointlight TeleGlitter2
 {
-	colour 0.75 0.75 0.8
-	radius 66
+  colour 0.75 0.75 0.8
+  radius 66
 }
 
 class TeleGlitter2
 {
-	frame TGLT { light TeleGlitter2 }
+  frame TGLT { light TeleGlitter2 }
 }
 
 //------------------------------------------------------------------------------
 pointlight ActivatedTimeBomb_X1
 {
-	colour 1 0.5 0
-	radius 126
+  colour 1 0.5 0
+  radius 126
 }
 
 pointlight ActivatedTimeBomb_X2
 {
-	colour 1 0.5 0
-	radius 105
+  colour 1 0.5 0
+  radius 105
 }
 
 pointlight ActivatedTimeBomb_X3
 {
-	colour 1 0.5 0
-	radius 84
+  colour 1 0.5 0
+  radius 84
 }
 
 pointlight ActivatedTimeBomb_X4
 {
-	colour 1 0.5 0
-	radius 63
+  colour 1 0.5 0
+  radius 63
 }
 
 pointlight ActivatedTimeBomb_X5
 {
-	colour 1 0.5 0
-	radius 42
+  colour 1 0.5 0
+  radius 42
 }
 
 pointlight ActivatedTimeBomb_X6
 {
-	colour 1 0.5 0
-	radius 21
+  colour 1 0.5 0
+  radius 21
 }
 
 class ActivatedTimeBomb
 {
-	frame XPL1A { light ActivatedTimeBomb_X1 }
-	frame XPL1B { light ActivatedTimeBomb_X2 }
-	frame XPL1C { light ActivatedTimeBomb_X3 }
-	frame XPL1D { light ActivatedTimeBomb_X4 }
-	frame XPL1E { light ActivatedTimeBomb_X5 }
-	frame XPL1F { light ActivatedTimeBomb_X6 }
+  frame XPL1A { light ActivatedTimeBomb_X1 }
+  frame XPL1B { light ActivatedTimeBomb_X2 }
+  frame XPL1C { light ActivatedTimeBomb_X3 }
+  frame XPL1D { light ActivatedTimeBomb_X4 }
+  frame XPL1E { light ActivatedTimeBomb_X5 }
+  frame XPL1F { light ActivatedTimeBomb_X6 }
 }
 
 //------------------------------------------------------------------------------
 pointlight Pod_X1
 {
-	colour 0.4 0.9 0.4
-	radius 200
+  colour 0.4 0.9 0.4
+  radius 200
 }
 
 pointlight Pod_X2
 {
-	colour 0.4 0.9 0.4
-	radius 100
+  colour 0.4 0.9 0.4
+  radius 100
 }
 
 class Pod
 {
-	frame PPODE { light Pod_X1 }
-	frame PPODF { light Pod_X2 }
+  frame PPODE { light Pod_X1 }
+  frame PPODF { light Pod_X2 }
 }

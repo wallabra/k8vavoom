@@ -24,208 +24,208 @@
 //**************************************************************************
 
 //**************************************************************************
-//	Inventory functions
+//  Inventory functions
 //**************************************************************************
 
 //==========================================================================
 //
-//	DoGiveInventory
+//  DoGiveInventory
 //
 //==========================================================================
 
 final void DoGiveInventory(class<Inventory> ItemType, int Amount,
-	EntityEx Receiver)
+  EntityEx Receiver)
 {
-	if (!Receiver)
-	{
-		return;
-	}
+  if (!Receiver)
+  {
+    return;
+  }
 
-	if (!Amount)
-	{
-		Amount = 1;
-	}
-	bool Ret = true;
-	if (ItemType)
-	{
-		Inventory Item = Spawn(ItemType,,,, false);
-		if (Health(Item))
-		{
-			Item.Amount *= Amount;
-		}
-		else
-		{
-			Item.Amount = Amount;
-		}
-		Item.bDropped = true;
-		//	This shouldn't count for the item statistics
-		if (Item.bCountItem)
-		{
-			Item.bCountItem = false;
-			Level.TotalItems--;
-		}
-		if (!Item.TryPickup(Receiver))
-		{
-			Item.Destroy();
-			Ret = false;
-		}
-	}
-	else
-	{
-		Ret = false;
-	}
+  if (!Amount)
+  {
+    Amount = 1;
+  }
+  bool Ret = true;
+  if (ItemType)
+  {
+    Inventory Item = Spawn(ItemType,,,, false);
+    if (Health(Item))
+    {
+      Item.Amount *= Amount;
+    }
+    else
+    {
+      Item.Amount = Amount;
+    }
+    Item.bDropped = true;
+    //  This shouldn't count for the item statistics
+    if (Item.bCountItem)
+    {
+      Item.bCountItem = false;
+      Level.TotalItems--;
+    }
+    if (!Item.TryPickup(Receiver))
+    {
+      Item.Destroy();
+      Ret = false;
+    }
+  }
+  else
+  {
+    Ret = false;
+  }
 
-	if (XLevel.StateCall)
-	{
-		XLevel.StateCall->Result = Ret;
-	}
+  if (XLevel.StateCall)
+  {
+    XLevel.StateCall->Result = Ret;
+  }
 }
 
 //==========================================================================
 //
-//	A_GiveInventory
+//  A_GiveInventory
 //
 //==========================================================================
 
 final void A_GiveInventory(class<Inventory> ItemType, optional int Amount)
 {
-	DoGiveInventory(ItemType, Amount, self);
+  DoGiveInventory(ItemType, Amount, self);
 }
 
 //==========================================================================
 //
-//	A_GiveToTarget
+//  A_GiveToTarget
 //
 //==========================================================================
 
 final void A_GiveToTarget(class<Inventory> ItemType, optional int Amount)
 {
-	DoGiveInventory(ItemType, Amount, Target);
+  DoGiveInventory(ItemType, Amount, Target);
 }
 
 //==========================================================================
 //
-//	DoTakeInventory
+//  DoTakeInventory
 //
 //==========================================================================
 
 final void DoTakeInventory(class<Inventory> ItemType, int Amount,
-	EntityEx Receiver)
+  EntityEx Receiver)
 {
-	if (!Receiver)
-	{
-		return;
-	}
+  if (!Receiver)
+  {
+    return;
+  }
 
-	if (XLevel.StateCall)
-	{
-		XLevel.StateCall->Result = false;
-	}
+  if (XLevel.StateCall)
+  {
+    XLevel.StateCall->Result = false;
+  }
 
-	Inventory Item = Receiver.FindInventory(ItemType);
-	if (Item && !HexenArmor(Item))
-	{
-		if (Item.Amount > 0 && XLevel.StateCall)
-		{
-			XLevel.StateCall->Result = true;
-		}
-		if (!Amount || Item.Amount <= Amount)
-		{
-			if (Item.bKeepDepleted)
-			{
-				Item.Amount = 0;
-			}
-			else
-			{
-				Item.Destroy();
-			}
-		}
-		else
-		{
-			Item.Amount -= Amount;
-		}
-	}
+  Inventory Item = Receiver.FindInventory(ItemType);
+  if (Item && !HexenArmor(Item))
+  {
+    if (Item.Amount > 0 && XLevel.StateCall)
+    {
+      XLevel.StateCall->Result = true;
+    }
+    if (!Amount || Item.Amount <= Amount)
+    {
+      if (Item.bKeepDepleted)
+      {
+        Item.Amount = 0;
+      }
+      else
+      {
+        Item.Destroy();
+      }
+    }
+    else
+    {
+      Item.Amount -= Amount;
+    }
+  }
 }
 
 //==========================================================================
 //
-//	A_TakeInventory
+//  A_TakeInventory
 //
 //==========================================================================
 
 final void A_TakeInventory(class<Inventory> ItemType, optional int Amount)
 {
-	DoTakeInventory(ItemType, Amount, self);
+  DoTakeInventory(ItemType, Amount, self);
 }
 
 //==========================================================================
 //
-//	A_TakeFromTarget
+//  A_TakeFromTarget
 //
 //==========================================================================
 
 final void A_TakeFromTarget(class<Inventory> ItemType, optional int Amount)
 {
-	DoTakeInventory(ItemType, Amount, Target);
+  DoTakeInventory(ItemType, Amount, Target);
 }
 
 //==========================================================================
 //
-//	A_DropInventory
+//  A_DropInventory
 //
 //==========================================================================
 
 final void A_DropInventory(class<Inventory> ItemType)
 {
-	Inventory Item = FindInventory(ItemType);
-	if (Item)
-	{
-		DropInventory(Item);
-	}
+  Inventory Item = FindInventory(ItemType);
+  if (Item)
+  {
+    DropInventory(Item);
+  }
 }
 
 //==========================================================================
 //
-//	A_SelectWeapon
+//  A_SelectWeapon
 //
 //==========================================================================
 
 final void A_SelectWeapon(class<Weapon> WeaponType)
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
+  if (!bIsPlayer)
+  {
+    return;
+  }
 
-	Weapon Wpn = Weapon(FindInventory(WeaponType));
-	if (Wpn)
-	{
-		if (PlayerEx(Player).ReadyWeapon != Wpn)
-		{
-			PlayerEx(Player).PendingWeapon = Wpn;
-		}
-	}
-	else if (XLevel.StateCall)
-	{
-		XLevel.StateCall->Result = false;
-	}
+  Weapon Wpn = Weapon(FindInventory(WeaponType));
+  if (Wpn)
+  {
+    if (PlayerEx(Player).ReadyWeapon != Wpn)
+    {
+      PlayerEx(Player).PendingWeapon = Wpn;
+    }
+  }
+  else if (XLevel.StateCall)
+  {
+    XLevel.StateCall->Result = false;
+  }
 }
 
 //**************************************************************************
-//	Weapon functions
+//  Weapon functions
 //**************************************************************************
 
 final void A_Recoil(float Force)
 {
-	TVec Dir;
-	TAVec Ang = Angles;
-	Ang.yaw += 180.0;
-	AngleVector(&Ang, &Dir);
-	Velocity += Dir * Force * 35.0;
+  TVec Dir;
+  TAVec Ang = Angles;
+  Ang.yaw += 180.0;
+  AngleVector(&Ang, &Dir);
+  Velocity += Dir * Force * 35.0;
 }
 
 //**************************************************************************
-//	Weapon attack functions
+//  Weapon attack functions
 //**************************************************************************
 
 //===========================================================================
@@ -236,87 +236,87 @@ final void A_Recoil(float Force)
 
 final void A_Punch()
 {
-	int			damage;
-	TAVec		aimAngles;
-	TVec		dir;
-	EntityEx	AimTarget;
+  int     damage;
+  TAVec   aimAngles;
+  TVec    dir;
+  EntityEx  AimTarget;
 
-	if (bIsPlayer)
-	{
-		Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-		if (Wpn)
-		{
-			if (!Wpn.DepleteAmmo(Wpn.FireMode))
-			{
-				return;
-			}
-		}
-	}
+  if (bIsPlayer)
+  {
+    Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+    if (Wpn)
+    {
+      if (!Wpn.DepleteAmmo(Wpn.FireMode))
+      {
+        return;
+      }
+    }
+  }
 
-	damage = (P_Random() % 10 + 1) << 1;
+  damage = (P_Random() % 10 + 1) << 1;
 
-	if (FindInventory(PowerStrength))
-		damage *= 10;
+  if (FindInventory(PowerStrength))
+    damage *= 10;
 
-	aimAngles = Angles;
-	aimAngles.yaw = AngleMod360(aimAngles.yaw + (Random() -
-		Random()) * 45.0 / 8.0);
-	AimTarget = AimLineAttack(dir, aimAngles, MELEERANGE);
-	LineAttack(dir, MELEERANGE, damage, BulletPuff,,,'Fist');
+  aimAngles = Angles;
+  aimAngles.yaw = AngleMod360(aimAngles.yaw + (Random() -
+    Random()) * 45.0 / 8.0);
+  AimTarget = AimLineAttack(dir, aimAngles, MELEERANGE);
+  LineAttack(dir, MELEERANGE, damage, BulletPuff,,,'Fist');
 
-	// turn to face target
-	if (AimTarget)
-	{
-		PlaySound('*fist', CHAN_WEAPON);
-		Angles.yaw = atan2(AimTarget.Origin.y - Origin.y,
-			AimTarget.Origin.x - Origin.x);
-		if (bIsPlayer)
-		{
-			Player.bFixAngle = true;
-		}
-	}
+  // turn to face target
+  if (AimTarget)
+  {
+    PlaySound('*fist', CHAN_WEAPON);
+    Angles.yaw = atan2(AimTarget.Origin.y - Origin.y,
+      AimTarget.Origin.x - Origin.x);
+    if (bIsPlayer)
+    {
+      Player.bFixAngle = true;
+    }
+  }
 }
 
 //==========================================================================
 //
-//	A_FireAssaultGun
+//  A_FireAssaultGun
 //
 //==========================================================================
 
 final void A_FireAssaultGun()
 {
-	TVec dir;
-	TAVec angles;
-	int damage;
+  TVec dir;
+  TAVec angles;
+  int damage;
 
-	PlaySound('weapons/assaultgun', CHAN_WEAPON);
+  PlaySound('weapons/assaultgun', CHAN_WEAPON);
 
-	if (bIsPlayer)
-	{
-		Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (bIsPlayer)
+  {
+    Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-		if (!Wpn.DepleteAmmo(Wpn.FireMode))
-		{
-			return;
-		}
+    if (!Wpn.DepleteAmmo(Wpn.FireMode))
+    {
+      return;
+    }
 
-		SetState(MissileState);
+    SetState(MissileState);
 
-		Aim(dir, 16.0 * 64.0);
-		if (PlayerEx(Player).Refire)
-		{
-			VectorAngles(&dir, &angles);
-			angles.yaw = AngleMod360(angles.yaw +
-				(Random() - Random()) * 45.0 / 2.0 /
-				itof(1 << (PlayerEx(Player).Accuracy * 5 / 100)));
-			AngleVector(&angles, &dir);
-		}
-	}
-	else
-	{
-		Aim(dir, 16.0 * 64.0);
-	}
+    Aim(dir, 16.0 * 64.0);
+    if (PlayerEx(Player).Refire)
+    {
+      VectorAngles(&dir, &angles);
+      angles.yaw = AngleMod360(angles.yaw +
+        (Random() - Random()) * 45.0 / 2.0 /
+        itof(1 << (PlayerEx(Player).Accuracy * 5 / 100)));
+      AngleVector(&angles, &dir);
+    }
+  }
+  else
+  {
+    Aim(dir, 16.0 * 64.0);
+  }
 
-	damage = 4 * (P_Random() % 3 + 1);
-	LineAttack(dir, MISSILERANGE, damage, StrifePuff,,,'Bullet');
+  damage = 4 * (P_Random() % 3 + 1);
+  LineAttack(dir, MISSILERANGE, damage, StrifePuff,,,'Bullet');
 }

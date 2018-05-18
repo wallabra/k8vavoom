@@ -75,7 +75,7 @@ intersection_t;
 // be used to quickly find a matching seg -- but if none match, or it
 // is unsuitable, the pointer should be cleared.
 //
-seg_t *PickNode(superblock_t *seg_list, int depth, 
+seg_t *PickNode(superblock_t *seg_list, int depth,
     node_t ** stale_nd, int *stale_opposite);
 
 // compute the boundary of the list of segs
@@ -90,7 +90,7 @@ void RecomputeSeg(seg_t *seg);
 // well.  Updates the intersection list if the seg lies on or crosses
 // the partition line.
 //
-void DivideOneSeg(seg_t *cur, seg_t *part, 
+void DivideOneSeg(seg_t *cur, seg_t *part,
     superblock_t *left_list, superblock_t *right_list,
     intersection_t ** cut_list);
 
@@ -106,8 +106,8 @@ void SeparateSegs(superblock_t *seg_list, seg_t *part,
 // given seg lists (one miniseg on each side).  All the intersection
 // structures will be freed back into a quick-alloc list.
 //
-void AddMinisegs(seg_t *part, 
-    superblock_t *left_list, superblock_t *right_list, 
+void AddMinisegs(seg_t *part,
+    superblock_t *left_list, superblock_t *right_list,
     intersection_t *cut_list);
 
 // free the quick allocation cut list

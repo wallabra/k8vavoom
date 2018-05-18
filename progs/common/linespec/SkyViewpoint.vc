@@ -24,118 +24,118 @@
 //**************************************************************************
 
 class SkyViewpoint : Actor
-	__mobjinfo__(9080);
+  __mobjinfo__(9080);
 
-bool			bAlways;
-SkyViewpoint	Mate;
-float			PlaneAlpha;
+bool      bAlways;
+SkyViewpoint  Mate;
+float     PlaneAlpha;
 
 replication
 {
-	reliable if (Role == ROLE_Authority)
-		bAlways, Mate, PlaneAlpha;
+  reliable if (Role == ROLE_Authority)
+    bAlways, Mate, PlaneAlpha;
 }
 
 //==========================================================================
 //
-//	BeginPlay
+//  BeginPlay
 //
 //==========================================================================
 
 void BeginPlay()
 {
-	::BeginPlay();
-	InitSkyBox();
+  ::BeginPlay();
+  InitSkyBox();
 }
 
 //==========================================================================
 //
-//	InitSkyBox
+//  InitSkyBox
 //
 //==========================================================================
 
 void InitSkyBox()
 {
-	if (TID == 0)
-	{
-		//	Set this as a default sky box.
-		int i;
-		for (i = 0; i < XLevel.NumSectors; i++)
-		{
-			if (!XLevel.Sectors[i].floor.SkyBox)
-			{
-				XLevel.Sectors[i].floor.SkyBox = self;
-			}
-			if (!XLevel.Sectors[i].ceiling.SkyBox)
-			{
-				XLevel.Sectors[i].ceiling.SkyBox = self;
-			}
-		}
-	}
+  if (TID == 0)
+  {
+    //  Set this as a default sky box.
+    int i;
+    for (i = 0; i < XLevel.NumSectors; i++)
+    {
+      if (!XLevel.Sectors[i].floor.SkyBox)
+      {
+        XLevel.Sectors[i].floor.SkyBox = self;
+      }
+      if (!XLevel.Sectors[i].ceiling.SkyBox)
+      {
+        XLevel.Sectors[i].ceiling.SkyBox = self;
+      }
+    }
+  }
 }
 
 //==========================================================================
 //
-//	Destroyed
+//  Destroyed
 //
 //==========================================================================
 
 void Destroyed()
 {
-	//	Removed all references to this sky box.
-	int i;
-	for (i = 0; i < XLevel.NumSectors; i++)
-	{
-		if (XLevel.Sectors[i].floor.SkyBox == self)
-		{
-			XLevel.Sectors[i].floor.SkyBox = none;
-		}
-		if (XLevel.Sectors[i].ceiling.SkyBox == self)
-		{
-			XLevel.Sectors[i].ceiling.SkyBox = none;
-		}
-	}
-	::Destroyed();
+  //  Removed all references to this sky box.
+  int i;
+  for (i = 0; i < XLevel.NumSectors; i++)
+  {
+    if (XLevel.Sectors[i].floor.SkyBox == self)
+    {
+      XLevel.Sectors[i].floor.SkyBox = none;
+    }
+    if (XLevel.Sectors[i].ceiling.SkyBox == self)
+    {
+      XLevel.Sectors[i].ceiling.SkyBox = none;
+    }
+  }
+  ::Destroyed();
 }
 
 //==========================================================================
 //
-//	SkyBoxGetAlways
+//  SkyBoxGetAlways
 //
 //==========================================================================
 
 bool SkyBoxGetAlways()
 {
-	return bAlways;
+  return bAlways;
 }
 
 //==========================================================================
 //
-//	SkyBoxGetMate
+//  SkyBoxGetMate
 //
 //==========================================================================
 
 Entity SkyBoxGetMate()
 {
-	return Mate;
+  return Mate;
 }
 
 //==========================================================================
 //
-//	SkyBoxGetPlaneAlpha
+//  SkyBoxGetPlaneAlpha
 //
 //==========================================================================
 
 float SkyBoxGetPlaneAlpha()
 {
-	return PlaneAlpha;
+  return PlaneAlpha;
 }
 
 defaultproperties
 {
-	bNoSector = true;
-	bNoBlockmap = true;
-	bNoGravity = true;
-	bNoSplash = true;
-	bAlwaysRelevant = true;
+  bNoSector = true;
+  bNoBlockmap = true;
+  bNoGravity = true;
+  bNoSplash = true;
+  bAlwaysRelevant = true;
 }

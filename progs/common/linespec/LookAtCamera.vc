@@ -23,7 +23,7 @@
 //**
 //**************************************************************************
 //**
-//**	Based on code from ZDoom with following notice:
+//**  Based on code from ZDoom with following notice:
 //**
 //** Copyright 1998-2006 Randy Heit
 //** All rights reserved.
@@ -53,72 +53,72 @@
 //**
 //**************************************************************************
 //**
-//**	LookAtCamera: Always look at specified actor.
+//**  LookAtCamera: Always look at specified actor.
 //**
-//**	Same as PathFollower, except
-//**	args[3] = tid of thing to look at (0 if none)
+//**  Same as PathFollower, except
+//**  args[3] = tid of thing to look at (0 if none)
 //**
 //**************************************************************************
 
 class LookAtCamera : PathFollower
-	__mobjinfo__(9072);
+  __mobjinfo__(9072);
 
 //==========================================================================
 //
-//	BeginPlay
+//  BeginPlay
 //
 //==========================================================================
 
 void BeginPlay()
 {
-	EntityEx A;
+  EntityEx A;
 
-	::BeginPlay();
+  ::BeginPlay();
 
-	if (Args[3] != 0)
-	{
-		foreach AllThinkers(EntityEx, A)
-		{
-			if (A.TID == Args[3])
-			{
-				Target = A;
-				break;
-			}
-		}
-		if (Target == none)
-		{
-			print("LookAtCamera %d: Can't find thing %d", TID, Args[3]);
-		}
-	}
+  if (Args[3] != 0)
+  {
+    foreach AllThinkers(EntityEx, A)
+    {
+      if (A.TID == Args[3])
+      {
+        Target = A;
+        break;
+      }
+    }
+    if (Target == none)
+    {
+      print("LookAtCamera %d: Can't find thing %d", TID, Args[3]);
+    }
+  }
 }
 
 //==========================================================================
 //
-//	Interpolate
+//  Interpolate
 //
 //==========================================================================
 
 bool Interpolate()
 {
-	TVec delta;
-	TAVec ang;
+  TVec delta;
+  TAVec ang;
 
-	if (Target == none)
-		return ::Interpolate();
+  if (Target == none)
+    return ::Interpolate();
 
-	if (::Interpolate())
-	{
-		delta = Target.GetCentre() - Origin;
-		VectorAngles(&delta, &ang);
-		Angles.yaw = ang.yaw;
-		if (Args[2] & 4)
-		{
-			// Also aim camera's pitch
-			Angles.pitch = ang.pitch;
-		}
-		return true;
-	}
-	return false;
+  if (::Interpolate())
+  {
+    delta = Target.GetCentre() - Origin;
+    VectorAngles(&delta, &ang);
+    Angles.yaw = ang.yaw;
+    if (Args[2] & 4)
+    {
+      // Also aim camera's pitch
+      Angles.pitch = ang.pitch;
+    }
+    return true;
+  }
+  return false;
 }
 
 defaultproperties

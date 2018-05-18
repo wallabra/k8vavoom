@@ -36,7 +36,7 @@ typedef struct wall_tip_s
   // link in list.  List is kept in ANTI-clockwise order.
   struct wall_tip_s *next;
   struct wall_tip_s *prev;
-  
+
   // angle that line makes at vertex (degrees).
   angle_g angle;
 
@@ -136,7 +136,7 @@ typedef struct sidedef_s
   char upper_tex[8];
   char lower_tex[8];
   char mid_tex[8];
-  
+
   // sidedef index.  Always valid after loading & pruning.
   int index;
 
@@ -189,7 +189,7 @@ typedef struct linedef_s
 
   // Hexen support
   int specials[5];
-  
+
   // normally NULL, except when this linedef directly overlaps an earlier
   // one (a rarely-used trick to create higher mid-masked textures).
   // No segs should be created for these overlapping linedefs.
@@ -249,7 +249,7 @@ typedef struct seg_s
   // ignored when writing the SEGS or V1 GL_SEGS lumps.  [Note: there
   // won't be any of these when writing the V2 GL_SEGS lump].
   int degenerate;
- 
+
   // the superblock that contains this seg, or NULL if the seg is no
   // longer in any superblock (e.g. now in a subsector).
   struct superblock_s *block;

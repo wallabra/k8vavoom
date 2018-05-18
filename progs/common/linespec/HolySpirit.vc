@@ -30,71 +30,71 @@ int WeaveZ;
 
 //==========================================================================
 //
-//	Touch
+//  Touch
 //
 //==========================================================================
 
 bool Touch(Entity InOther)
 {
-	int damage;
-	EntityEx Other;
+  int damage;
+  EntityEx Other;
 
-	Other = EntityEx(InOther);
-	if (!Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) &&
-		!Other.bBlockedBySolidActors)
-	{
-		return true;
-	}
+  Other = EntityEx(InOther);
+  if (!Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) &&
+    !Other.bBlockedBySolidActors)
+  {
+    return true;
+  }
 
-	// Check for skulls slamming into things
-	if (bSkullFly)
-	{
-		if (Other.bShootable && Other != Target)
-		{
-			if (Level.Game.netgame && !Level.Game.deathmatch && Other.bIsPlayer)
-			{
-				// don't attack other co-op players
-				return true;
-			}
-			if (Other.bReflective && (Other.bIsPlayer || Other.bBoss))
-			{
-				Tracer = Target;
-				Target = Other;
-				return true;
-			}
-			if (Other.bMonster || Other.bIsPlayer)
-			{
-				Tracer = Other;
-			}
-			if (P_Random() < 96)
-			{
-				damage = 12;
-				if (Other.bIsPlayer || Other.bBoss)
-				{
-					damage = 3;
-					// ghost burns out faster when attacking players/bosses
-					Health -= 6;
-				}
-				Other.Damage(self, Target, damage);
-				if (P_Random() < 128)
-				{
-					Spawn(HolyPuff, Origin);
-					PlaySound('SpiritAttack', CHAN_VOICE);
-					if (Other.HowlSound && Other.bMonster && P_Random() < 128 &&
-						!GetSoundPlayingInfo(Other, GetSoundID(Other.HowlSound)))
-					{
-						Other.PlaySound(Other.HowlSound, CHAN_VOICE);
-					}
-				}
-			}
-			if (Other.Health <= 0)
-			{
-				Tracer = none;
-			}
-		}
-		return true;
-	}
-	return ::Touch(InOther);
+  // Check for skulls slamming into things
+  if (bSkullFly)
+  {
+    if (Other.bShootable && Other != Target)
+    {
+      if (Level.Game.netgame && !Level.Game.deathmatch && Other.bIsPlayer)
+      {
+        // don't attack other co-op players
+        return true;
+      }
+      if (Other.bReflective && (Other.bIsPlayer || Other.bBoss))
+      {
+        Tracer = Target;
+        Target = Other;
+        return true;
+      }
+      if (Other.bMonster || Other.bIsPlayer)
+      {
+        Tracer = Other;
+      }
+      if (P_Random() < 96)
+      {
+        damage = 12;
+        if (Other.bIsPlayer || Other.bBoss)
+        {
+          damage = 3;
+          // ghost burns out faster when attacking players/bosses
+          Health -= 6;
+        }
+        Other.Damage(self, Target, damage);
+        if (P_Random() < 128)
+        {
+          Spawn(HolyPuff, Origin);
+          PlaySound('SpiritAttack', CHAN_VOICE);
+          if (Other.HowlSound && Other.bMonster && P_Random() < 128 &&
+            !GetSoundPlayingInfo(Other, GetSoundID(Other.HowlSound)))
+          {
+            Other.PlaySound(Other.HowlSound, CHAN_VOICE);
+          }
+        }
+      }
+      if (Other.Health <= 0)
+      {
+        Tracer = none;
+      }
+    }
+    return true;
+  }
+  return ::Touch(InOther);
 }
 
 //============================================================================
@@ -105,47 +105,47 @@ bool Touch(Entity InOther)
 
 void CHolyFindTarget()
 {
-	Entity		Other;
+  Entity    Other;
 
-	foreach RoughBlockSearch(Other, 6)
-	{
-		EntityEx link = EntityEx(Other);
+  foreach RoughBlockSearch(Other, 6)
+  {
+    EntityEx link = EntityEx(Other);
 
-		if ((!link.bMonster && !link.bIsPlayer) || link.bDormant)
-		{
-			continue;
-		}
-		if (!link.bShootable)
-		{
-			continue;
-		}
-		if (Level.Game.netgame && !Level.Game.deathmatch && link.bIsPlayer)
-		{
-			continue;
-		}
-		if (link == Target)
-		{
-			continue;
-		}
-		if (!CanSee(link))
-		{
-			continue;
-		}
-		if (bScreenSeeker)
-		{
-			float angle = AngleMod360(atan2(link.Origin.y - Target.Origin.y,
-				link.Origin.x - Target.Origin.x) - Target.Angles.yaw);
-			if (angle <= 226.0 * 360.0 / 256.0 || angle >= 30.0 * 360.0 / 256.0)
-			{
-				continue;
-			}
-		}
-		Tracer = link;
-		bColideWithWorld = false;
-		bSkullFly = true;
-		bMissile = false;
-		break;
-	}
+    if ((!link.bMonster && !link.bIsPlayer) || link.bDormant)
+    {
+      continue;
+    }
+    if (!link.bShootable)
+    {
+      continue;
+    }
+    if (Level.Game.netgame && !Level.Game.deathmatch && link.bIsPlayer)
+    {
+      continue;
+    }
+    if (link == Target)
+    {
+      continue;
+    }
+    if (!CanSee(link))
+    {
+      continue;
+    }
+    if (bScreenSeeker)
+    {
+      float angle = AngleMod360(atan2(link.Origin.y - Target.Origin.y,
+        link.Origin.x - Target.Origin.x) - Target.Angles.yaw);
+      if (angle <= 226.0 * 360.0 / 256.0 || angle >= 30.0 * 360.0 / 256.0)
+      {
+        continue;
+      }
+    }
+    Tracer = link;
+    bColideWithWorld = false;
+    bSkullFly = true;
+    bMissile = false;
+    break;
+  }
 }
 
 //============================================================================
@@ -158,185 +158,185 @@ void CHolyFindTarget()
 
 void CHolySeekerMissile(float thresh, float turnMax)
 {
-	int dir;
-	float dist;
-	float delta;
-	float angle;
-	float newZ;
-	float deltaZ;
+  int dir;
+  float dist;
+  float delta;
+  float angle;
+  float newZ;
+  float deltaZ;
 
-	if (!Tracer)
-	{
-		return;
-	}
-	if (!Tracer.bShootable || (!Tracer.bMonster && !Tracer.bIsPlayer))
-	{
-		// Target died/target isn't a player or creature
-		Tracer = none;
-		bColideWithWorld = true;
-		bSkullFly = false;
-		bMissile = true;
-		CHolyFindTarget();
-		return;
-	}
-	dir = FaceActor(Actor(Tracer), delta);
-	if (delta > thresh)
-	{
-		delta /= 2.0;
-		if (delta > turnMax)
-		{
-			delta = turnMax;
-		}
-	}
-	if (dir)
-	{
-		// Turn clockwise
-		Angles.yaw += delta;
-	}
-	else
-	{
-		// Turn counter clockwise
-		Angles.yaw -= delta;
-	}
-	Angles.yaw = AngleMod360(Angles.yaw);
-	angle = Angles.yaw;
-	Velocity.x = Speed * cos(angle);
-	Velocity.y = Speed * sin(angle);
-	if (!(XLevel.TicTime & 15) || Origin.z > Tracer.Origin.z + Tracer.Height ||
-		Origin.z + Height < Tracer.Origin.z)
-	{
-		newZ = Tracer.Origin.z + Random() * Tracer.Height;
-		deltaZ = newZ - Origin.z;
-		if (fabs(deltaZ) > 15.0)
-		{
-			if (deltaZ > 0.0)
-			{
-				deltaZ = 15.0;
-			}
-			else
-			{
-				deltaZ = -15.0;
-			}
-		}
-		dist = DistTo2(Tracer);
-		dist = dist / Speed;
-		if (dist < 1.0)
-		{
-			dist = 1.0;
-		}
-		Velocity.z = deltaZ / dist;
-	}
-	return;
+  if (!Tracer)
+  {
+    return;
+  }
+  if (!Tracer.bShootable || (!Tracer.bMonster && !Tracer.bIsPlayer))
+  {
+    // Target died/target isn't a player or creature
+    Tracer = none;
+    bColideWithWorld = true;
+    bSkullFly = false;
+    bMissile = true;
+    CHolyFindTarget();
+    return;
+  }
+  dir = FaceActor(Actor(Tracer), delta);
+  if (delta > thresh)
+  {
+    delta /= 2.0;
+    if (delta > turnMax)
+    {
+      delta = turnMax;
+    }
+  }
+  if (dir)
+  {
+    // Turn clockwise
+    Angles.yaw += delta;
+  }
+  else
+  {
+    // Turn counter clockwise
+    Angles.yaw -= delta;
+  }
+  Angles.yaw = AngleMod360(Angles.yaw);
+  angle = Angles.yaw;
+  Velocity.x = Speed * cos(angle);
+  Velocity.y = Speed * sin(angle);
+  if (!(XLevel.TicTime & 15) || Origin.z > Tracer.Origin.z + Tracer.Height ||
+    Origin.z + Height < Tracer.Origin.z)
+  {
+    newZ = Tracer.Origin.z + Random() * Tracer.Height;
+    deltaZ = newZ - Origin.z;
+    if (fabs(deltaZ) > 15.0)
+    {
+      if (deltaZ > 0.0)
+      {
+        deltaZ = 15.0;
+      }
+      else
+      {
+        deltaZ = -15.0;
+      }
+    }
+    dist = DistTo2(Tracer);
+    dist = dist / Speed;
+    if (dist < 1.0)
+    {
+      dist = 1.0;
+    }
+    Velocity.z = deltaZ / dist;
+  }
+  return;
 }
 
 //============================================================================
 //
-//	CHolyWeave
+//  CHolyWeave
 //
 //============================================================================
 
 void CHolyWeave()
 {
-	float newX, newY;
-	float angle;
+  float newX, newY;
+  float angle;
 
-	angle = AngleMod360(Angles.yaw + 90.0);
-	newX = Origin.x - cos(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
-	newY = Origin.y - sin(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
-	WeaveXY = (WeaveXY + (P_Random() % 5)) & 63;
-	newX += cos(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
-	newY += sin(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
-	TryMove(vector(newX, newY, Origin.z), false);
-	Origin.z -= Level.Game.FloatBobOffsets[WeaveZ] * 2.0;
-	WeaveZ = (WeaveZ + (P_Random() % 5)) & 63;
-	Origin.z += Level.Game.FloatBobOffsets[WeaveZ] * 2.0;
+  angle = AngleMod360(Angles.yaw + 90.0);
+  newX = Origin.x - cos(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
+  newY = Origin.y - sin(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
+  WeaveXY = (WeaveXY + (P_Random() % 5)) & 63;
+  newX += cos(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
+  newY += sin(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
+  TryMove(vector(newX, newY, Origin.z), false);
+  Origin.z -= Level.Game.FloatBobOffsets[WeaveZ] * 2.0;
+  WeaveZ = (WeaveZ + (P_Random() % 5)) & 63;
+  Origin.z += Level.Game.FloatBobOffsets[WeaveZ] * 2.0;
 }
 
 //============================================================================
 //
-//	A_CHolySeek
+//  A_CHolySeek
 //
 //============================================================================
 
 final void A_CHolySeek()
 {
-	Health--;
-	if (Health <= 0)
-	{
-		Velocity.x /= 4.0;
-		Velocity.y /= 4.0;
-		Velocity.z = 0.0;
-		SetState(FindState('Death'));
-		StateTime -= Random() * 0.1;
-		return;
-	}
-	if (Tracer)
-	{
-		CHolySeekerMissile(itof(Args[0]), itof(Args[0]) * 2.0);
-		if (!((XLevel.TicTime + 7) & 15))
-		{
-			Args[0] = 5 + (P_Random() / 20);
-		}
-	}
-	CHolyWeave();
+  Health--;
+  if (Health <= 0)
+  {
+    Velocity.x /= 4.0;
+    Velocity.y /= 4.0;
+    Velocity.z = 0.0;
+    SetState(FindState('Death'));
+    StateTime -= Random() * 0.1;
+    return;
+  }
+  if (Tracer)
+  {
+    CHolySeekerMissile(itof(Args[0]), itof(Args[0]) * 2.0);
+    if (!((XLevel.TicTime + 7) & 15))
+    {
+      Args[0] = 5 + (P_Random() / 20);
+    }
+  }
+  CHolyWeave();
 }
 
 //============================================================================
 //
-//	A_CHolyCheckScream
+//  A_CHolyCheckScream
 //
 //============================================================================
 
 final void A_CHolyCheckScream()
 {
-	A_CHolySeek();
-	if (P_Random() < 20)
-	{
-		PlaySound('SpiritActive', CHAN_VOICE);
-	}
-	if (!Tracer)
-	{
-		CHolyFindTarget();
-	}
+  A_CHolySeek();
+  if (P_Random() < 20)
+  {
+    PlaySound('SpiritActive', CHAN_VOICE);
+  }
+  if (!Tracer)
+  {
+    CHolyFindTarget();
+  }
 }
 
 states
 {
 Spawn:
-	SPIR AAB 2 A_CHolySeek
-	SPIR B 2 A_CHolyCheckScream
-	Loop
+  SPIR AAB 2 A_CHolySeek
+  SPIR B 2 A_CHolyCheckScream
+  Loop
 Death:
-	SPIR D 4
-	SPIR E 4 A_Scream
-	SPIR FGHI 4
-	Stop
+  SPIR D 4
+  SPIR E 4 A_Scream
+  SPIR FGHI 4
+  Stop
 }
 
 defaultproperties
 {
-	Health = 105;
-	Radius = 10.0;
-	Height = 6.0;
-	Speed = 420.0;
-	MissileDamage = 3;
-	RenderStyle = STYLE_Translucent;
-	Alpha = 0.666;
-	bMissile = true;
-	bNoBlockmap = true;
-	bDropOff = true;
-	bNoGravity = true;
-	bNoTeleport = true;
-	bActivateImpact = true;
-	bActivatePCross = true;
-	bBloodSplatter = true;
-	bRip = true;
-	bSeekerMissile = true;
-	bDamageInvulnerable = true;
-	bExplodeOnSky = true;
-	bNoExplodeFloor = true;
-	bExtremeDeath = true;
-	bCanBlast = true;
-	bDontShieldReflect = true;
-	DeathSound = 'SpiritDie';
+  Health = 105;
+  Radius = 10.0;
+  Height = 6.0;
+  Speed = 420.0;
+  MissileDamage = 3;
+  RenderStyle = STYLE_Translucent;
+  Alpha = 0.666;
+  bMissile = true;
+  bNoBlockmap = true;
+  bDropOff = true;
+  bNoGravity = true;
+  bNoTeleport = true;
+  bActivateImpact = true;
+  bActivatePCross = true;
+  bBloodSplatter = true;
+  bRip = true;
+  bSeekerMissile = true;
+  bDamageInvulnerable = true;
+  bExplodeOnSky = true;
+  bNoExplodeFloor = true;
+  bExtremeDeath = true;
+  bCanBlast = true;
+  bDontShieldReflect = true;
+  DeathSound = 'SpiritDie';
 }

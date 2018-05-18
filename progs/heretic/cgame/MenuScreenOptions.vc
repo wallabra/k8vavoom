@@ -27,205 +27,205 @@ class MenuScreenOptions : MenuScreen;
 
 //==========================================================================
 //
-//	CreateChoices
+//  CreateChoices
 //
 //==========================================================================
 
 void CreateChoices()
 {
-	MenuTextButton		Btn;
-	int					currentY;
-	bool				found = false;
+  MenuTextButton    Btn;
+  int         currentY;
+  bool        found = false;
 
-	currentY = ChoicesStartY;
+  currentY = ChoicesStartY;
 
-	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-	Btn.SetOrigin(ChoicesStartX, currentY);
-	Btn.Text = "Controls";
-	Btn.Activated = ActivateControls;
-	currentY += Btn.Height;
+  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetOrigin(ChoicesStartX, currentY);
+  Btn.Text = "Controls";
+  Btn.Activated = ActivateControls;
+  currentY += Btn.Height;
 
-	/*
-	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-	Btn.SetOrigin(ChoicesStartX, currentY);
-	Btn.Text = "Controls 2";
-	Btn.Activated = ActivateControls2;
-	currentY += Btn.Height;
-	*/
+  /*
+  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetOrigin(ChoicesStartX, currentY);
+  Btn.Text = "Controls 2";
+  Btn.Activated = ActivateControls2;
+  currentY += Btn.Height;
+  */
 
-	// Add "Special Controls" for MODs if keyconf lump is present
-	// and it has an "addkeysection" command
-	if (WadLumpPresent('keyconf'))
-	{
-		ScriptsParser kc = ScriptsParser(SpawnObject(ScriptsParser));
+  // Add "Special Controls" for MODs if keyconf lump is present
+  // and it has an "addkeysection" command
+  if (WadLumpPresent('keyconf'))
+  {
+    ScriptsParser kc = ScriptsParser(SpawnObject(ScriptsParser));
 
-		kc.OpenLumpName('keyconf');
-		// Lump is present, scan it until we find a 'addkeysection'
-		while (!kc.AtEnd())
-		{
-			if (kc.Check("addkeysection"))
-			{
-				kc.ExpectString();
-				kc.ExpectString();
-				found = true;
-			}
-			kc.GetString();
-		}
-		kc.Destroy();
-	}
-	if (found)
-	{
-		// Surely a MOD that contains KEYCONF bindings
-		// so we'll show the special controls option
-		Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-		Btn.SetOrigin(ChoicesStartX, currentY);
-		Btn.Text = "Special Controls";
-		Btn.Activated = ActivateSpecialControls;
-		currentY += Btn.Height;
-	}
+    kc.OpenLumpName('keyconf');
+    // Lump is present, scan it until we find a 'addkeysection'
+    while (!kc.AtEnd())
+    {
+      if (kc.Check("addkeysection"))
+      {
+        kc.ExpectString();
+        kc.ExpectString();
+        found = true;
+      }
+      kc.GetString();
+    }
+    kc.Destroy();
+  }
+  if (found)
+  {
+    // Surely a MOD that contains KEYCONF bindings
+    // so we'll show the special controls option
+    Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+    Btn.SetOrigin(ChoicesStartX, currentY);
+    Btn.Text = "Special Controls";
+    Btn.Activated = ActivateSpecialControls;
+    currentY += Btn.Height;
+  }
 
-	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-	Btn.SetOrigin(ChoicesStartX, currentY);
-	Btn.Text = "Mouse Options";
-	Btn.Activated = ActivateMouseOpt;
-	currentY += Btn.Height;
+  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetOrigin(ChoicesStartX, currentY);
+  Btn.Text = "Mouse Options";
+  Btn.Activated = ActivateMouseOpt;
+  currentY += Btn.Height;
 
-	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-	Btn.SetOrigin(ChoicesStartX, currentY);
-	Btn.Text = "Screen Resolution";
-	Btn.Activated = ActivateScreenResolution;
-	currentY += Btn.Height;
+  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetOrigin(ChoicesStartX, currentY);
+  Btn.Text = "Screen Resolution";
+  Btn.Activated = ActivateScreenResolution;
+  currentY += Btn.Height;
 
-	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-	Btn.SetOrigin(ChoicesStartX, currentY);
-	Btn.Text = "Video options";
-	Btn.Activated = ActivateVideoOpt;
-	currentY += Btn.Height;
+  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetOrigin(ChoicesStartX, currentY);
+  Btn.Text = "Video options";
+  Btn.Activated = ActivateVideoOpt;
+  currentY += Btn.Height;
 
-	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-	Btn.SetOrigin(ChoicesStartX, currentY);
-	Btn.Text = "Sound Settings";
-	Btn.Activated = ActivateSoundOpt;
-	currentY += Btn.Height;
+  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetOrigin(ChoicesStartX, currentY);
+  Btn.Text = "Sound Settings";
+  Btn.Activated = ActivateSoundOpt;
+  currentY += Btn.Height;
 
-	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-	Btn.SetOrigin(ChoicesStartX, currentY);
-	Btn.Text = "Gameplay options";
-	Btn.Activated = ActivateGameplayOpt;
-	currentY += Btn.Height;
+  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetOrigin(ChoicesStartX, currentY);
+  Btn.Text = "Gameplay options";
+  Btn.Activated = ActivateGameplayOpt;
+  currentY += Btn.Height;
 
-	Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-	Btn.SetOrigin(ChoicesStartX, currentY);
-	Btn.Text = "Go to console";
-	Btn.Activated = ActivateConsole;
-	currentY += Btn.Height;
+  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetOrigin(ChoicesStartX, currentY);
+  Btn.Text = "Go to console";
+  Btn.Activated = ActivateConsole;
+  currentY += Btn.Height;
 }
 
 //==========================================================================
 //
-//	ActivateControls
+//  ActivateControls
 //
 //==========================================================================
 
 void ActivateControls(Object Sender)
 {
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenControls));
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenControls));
 }
 
 //==========================================================================
 //
-//	ActivateControls2
+//  ActivateControls2
 //
 //==========================================================================
 
 /*
 void ActivateControls2(Object Sender)
 {
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenControls2));
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenControls2));
 }
 */
 
 //==========================================================================
 //
-//	ActivateSpecialControls
+//  ActivateSpecialControls
 //
 //==========================================================================
 
 void ActivateSpecialControls(Object Sender)
 {
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenSpecialControls));
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenSpecialControls));
 }
 
 //==========================================================================
 //
-//	ActivateMouseOpt
+//  ActivateMouseOpt
 //
 //==========================================================================
 
 void ActivateMouseOpt(Object Sender)
 {
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenMouseOptions));
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenMouseOptions));
 }
 
 //==========================================================================
 //
-//	ActivateScreenResolution
+//  ActivateScreenResolution
 //
 //==========================================================================
 
 void ActivateScreenResolution(Object Sender)
 {
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenScreenResolution));
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenScreenResolution));
 }
 
 //==========================================================================
 //
-//	ActivateVideoOpt
+//  ActivateVideoOpt
 //
 //==========================================================================
 
 void ActivateVideoOpt(Object Sender)
 {
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenVideoOptions));
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenVideoOptions));
 }
 
 //==========================================================================
 //
-//	ActivateSoundOpt
+//  ActivateSoundOpt
 //
 //==========================================================================
 
 void ActivateSoundOpt(Object Sender)
 {
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenSoundOptions));
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenSoundOptions));
 }
 
 //==========================================================================
 //
-//	ActivateGameplayOpt
+//  ActivateGameplayOpt
 //
 //==========================================================================
 
 void ActivateGameplayOpt(Object Sender)
 {
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenGameplayOptions));
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenGameplayOptions));
 }
 
 //==========================================================================
 //
-//	ActivateConsole
+//  ActivateConsole
 //
 //==========================================================================
 
 void ActivateConsole(Object Sender)
 {
-	CmdBuf_AddText("ToggleConsole\n");
+  CmdBuf_AddText("ToggleConsole\n");
 }
 
 defaultproperties
 {
-	ChoicesStartX = 160;
-	ChoicesStartY = 32;
-	SelectorType = MenuSelector_SmallRight;
-	Title = "OPTIONS";
+  ChoicesStartX = 160;
+  ChoicesStartY = 32;
+  SelectorType = MenuSelector_SmallRight;
+  Title = "OPTIONS";
 }

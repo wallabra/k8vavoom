@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -25,202 +25,202 @@
 
 //==========================================================================
 //
-//	VVector
+//  VVector
 //
 //==========================================================================
 
 class VVector : public VExpression
 {
 public:
-	VExpression*	op1;
-	VExpression*	op2;
-	VExpression*	op3;
+  VExpression*  op1;
+  VExpression*  op2;
+  VExpression*  op3;
 
-	VVector(VExpression*, VExpression*, VExpression*, const TLocation&);
-	~VVector();
-	VExpression* DoResolve(VEmitContext&);
-	void Emit(VEmitContext&);
+  VVector(VExpression*, VExpression*, VExpression*, const TLocation&);
+  ~VVector();
+  VExpression* DoResolve(VEmitContext&);
+  void Emit(VEmitContext&);
 };
 
 //==========================================================================
 //
-//	VSingleName
+//  VSingleName
 //
 //==========================================================================
 
 class VSingleName : public VExpression
 {
 public:
-	VName			Name;
+  VName     Name;
 
-	VSingleName(VName, const TLocation&);
-	VExpression* IntResolve(VEmitContext&, bool);
-	VExpression* DoResolve(VEmitContext&);
-	VExpression* ResolveAssignmentTarget(VEmitContext&);
-	VTypeExpr* ResolveAsType(VEmitContext&);
-	void Emit(VEmitContext&);
-	bool IsValidTypeExpression();
-	VExpression* CreateTypeExprCopy();
+  VSingleName(VName, const TLocation&);
+  VExpression* IntResolve(VEmitContext&, bool);
+  VExpression* DoResolve(VEmitContext&);
+  VExpression* ResolveAssignmentTarget(VEmitContext&);
+  VTypeExpr* ResolveAsType(VEmitContext&);
+  void Emit(VEmitContext&);
+  bool IsValidTypeExpression();
+  VExpression* CreateTypeExprCopy();
 };
 
 //==========================================================================
 //
-//	VDoubleName
+//  VDoubleName
 //
 //==========================================================================
 
 class VDoubleName : public VExpression
 {
 public:
-	VName			Name1;
-	VName			Name2;
+  VName     Name1;
+  VName     Name2;
 
-	VDoubleName(VName, VName, const TLocation&);
-	VExpression* DoResolve(VEmitContext&);
-	VTypeExpr* ResolveAsType(VEmitContext&);
-	void Emit(VEmitContext&);
-	bool IsValidTypeExpression();
-	VExpression* CreateTypeExprCopy();
+  VDoubleName(VName, VName, const TLocation&);
+  VExpression* DoResolve(VEmitContext&);
+  VTypeExpr* ResolveAsType(VEmitContext&);
+  void Emit(VEmitContext&);
+  bool IsValidTypeExpression();
+  VExpression* CreateTypeExprCopy();
 };
 
 //==========================================================================
 //
-//	VDefaultObject
+//  VDefaultObject
 //
 //==========================================================================
 
 class VDefaultObject : public VExpression
 {
 public:
-	VExpression*		op;
+  VExpression*    op;
 
-	VDefaultObject(VExpression*, const TLocation&);
-	~VDefaultObject();
-	VExpression* DoResolve(VEmitContext&);
-	void Emit(VEmitContext&);
-	bool IsDefaultObject() const;
+  VDefaultObject(VExpression*, const TLocation&);
+  ~VDefaultObject();
+  VExpression* DoResolve(VEmitContext&);
+  void Emit(VEmitContext&);
+  bool IsDefaultObject() const;
 };
 
 //==========================================================================
 //
-//	VPushPointed
+//  VPushPointed
 //
 //==========================================================================
 
 class VPushPointed : public VExpression
 {
 public:
-	VExpression*	op;
-	bool			AddressRequested;
+  VExpression*  op;
+  bool      AddressRequested;
 
-	VPushPointed(VExpression*);
-	~VPushPointed();
-	VExpression* DoResolve(VEmitContext&);
-	void RequestAddressOf();
-	void Emit(VEmitContext&);
+  VPushPointed(VExpression*);
+  ~VPushPointed();
+  VExpression* DoResolve(VEmitContext&);
+  void RequestAddressOf();
+  void Emit(VEmitContext&);
 };
 
 //==========================================================================
 //
-//	VConditional
+//  VConditional
 //
 //==========================================================================
 
 class VConditional : public VExpression
 {
 public:
-	VExpression*		op;
-	VExpression*		op1;
-	VExpression*		op2;
+  VExpression*    op;
+  VExpression*    op1;
+  VExpression*    op2;
 
-	VConditional(VExpression*, VExpression*, VExpression*, const TLocation&);
-	~VConditional();
-	VExpression* DoResolve(VEmitContext&);
-	void Emit(VEmitContext&);
+  VConditional(VExpression*, VExpression*, VExpression*, const TLocation&);
+  ~VConditional();
+  VExpression* DoResolve(VEmitContext&);
+  void Emit(VEmitContext&);
 };
 
 //==========================================================================
 //
-//	VDropResult
+//  VDropResult
 //
 //==========================================================================
 
 class VDropResult : public VExpression
 {
 public:
-	VExpression*		op;
+  VExpression*    op;
 
-	VDropResult(VExpression*);
-	~VDropResult();
-	VExpression* DoResolve(VEmitContext&);
-	void Emit(VEmitContext&);
+  VDropResult(VExpression*);
+  ~VDropResult();
+  VExpression* DoResolve(VEmitContext&);
+  void Emit(VEmitContext&);
 };
 
 //==========================================================================
 //
-//	VClassConstant
+//  VClassConstant
 //
 //==========================================================================
 
 class VClassConstant : public VExpression
 {
 public:
-	VClass*		Class;
+  VClass*   Class;
 
-	VClassConstant(VClass* AClass, const TLocation& ALoc);
-	VExpression* DoResolve(VEmitContext&);
-	void Emit(VEmitContext&);
+  VClassConstant(VClass* AClass, const TLocation& ALoc);
+  VExpression* DoResolve(VEmitContext&);
+  void Emit(VEmitContext&);
 };
 
 //==========================================================================
 //
-//	VStateConstant
+//  VStateConstant
 //
 //==========================================================================
 
 class VStateConstant : public VExpression
 {
 public:
-	VState*		State;
+  VState*   State;
 
-	VStateConstant(VState* AState, const TLocation& ALoc);
-	VExpression* DoResolve(VEmitContext&);
-	void Emit(VEmitContext&);
+  VStateConstant(VState* AState, const TLocation& ALoc);
+  VExpression* DoResolve(VEmitContext&);
+  void Emit(VEmitContext&);
 };
 
 //==========================================================================
 //
-//	VConstantValue
+//  VConstantValue
 //
 //==========================================================================
 
 class VConstantValue : public VExpression
 {
 public:
-	VConstant*		Const;
+  VConstant*    Const;
 
-	VConstantValue(VConstant* AConst, const TLocation& ALoc);
-	VExpression* DoResolve(VEmitContext&);
-	void Emit(VEmitContext&);
-	bool IsIntConst() const;
-	bool IsFloatConst() const;
-	vint32 GetIntConst() const;
-	float GetFloatConst() const;
+  VConstantValue(VConstant* AConst, const TLocation& ALoc);
+  VExpression* DoResolve(VEmitContext&);
+  void Emit(VEmitContext&);
+  bool IsIntConst() const;
+  bool IsFloatConst() const;
+  vint32 GetIntConst() const;
+  float GetFloatConst() const;
 };
 
 //==========================================================================
 //
-//	VDecorateSingleName
+//  VDecorateSingleName
 //
 //==========================================================================
 
 class VDecorateSingleName : public VExpression
 {
 public:
-	VStr			Name;
+  VStr      Name;
 
-	VDecorateSingleName(const VStr&, const TLocation&);
-	VExpression* DoResolve(VEmitContext&);
-	void Emit(VEmitContext&);
-	bool IsDecorateSingleName() const;
+  VDecorateSingleName(const VStr&, const TLocation&);
+  VExpression* DoResolve(VEmitContext&);
+  void Emit(VEmitContext&);
+  bool IsDecorateSingleName() const;
 };

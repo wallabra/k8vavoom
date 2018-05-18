@@ -23,190 +23,190 @@
 //**
 //**************************************************************************
 //**
-//**	Base class for all items that a player can carry.
+//**  Base class for all items that a player can carry.
 //**
 //**************************************************************************
 
 class Inventory : Actor
-	abstract;
+  abstract;
 
-const float BONUSADD		= 0.2;
+const float BONUSADD    = 0.2;
 
-const int DefMaxAmount		= -2;
+const int DefMaxAmount    = -2;
 
-//	Special values for powerup's blend colour.
-const int INVERSECOLOUR		= 0x00123456;
-const int GOLDCOLOUR		= 0x00123457;
-const int REDCOLOUR			= 0x00123458;
-const int GREENCOLOUR		= 0x00123459;
+//  Special values for powerup's blend colour.
+const int INVERSECOLOUR   = 0x00123456;
+const int GOLDCOLOUR    = 0x00123457;
+const int REDCOLOUR     = 0x00123458;
+const int GREENCOLOUR   = 0x00123459;
 
-int					Amount;					// Amount of item this instance has.
-int					InterHubAmount;			// Amount of item that can be kept between hubs or levels.
-int					MaxAmount;				// Max amount of item this instance can have.
-string				PickupMessage;
-float				RespawnTime;			// Tics from pickup time to respawn time.
-int					GiveQuestNum;
-name				IconName;
-float				DropTime;
-//	Spawn PickuFlash when picked up.
-class<Actor>		PickupFlashType;
+int         Amount;         // Amount of item this instance has.
+int         InterHubAmount;     // Amount of item that can be kept between hubs or levels.
+int         MaxAmount;        // Max amount of item this instance can have.
+string        PickupMessage;
+float       RespawnTime;      // Tics from pickup time to respawn time.
+int         GiveQuestNum;
+name        IconName;
+float       DropTime;
+//  Spawn PickuFlash when picked up.
+class<Actor>    PickupFlashType;
 
-name				PickupSound;
-name				UseSound;
+name        PickupSound;
+name        UseSound;
 
-//	Originally these didn't respawn in deathmatch
-bool				bBigPowerup;
-//	Play pickup sound at full volume
-bool				bFullVolPickupSound;
-//	Used by HandlePickup.
-bool				bPickupGood;
-//	Can be displayed in the inventory bar
-bool				bInvBar;
-//	Keep item in inventory even if amount is 0
-bool				bKeepDepleted;
-//	This item cannot be tossed out
-bool				bUndroppable;
-//	Ignore skill level when giving this item
-bool				bIgnoreSkill;
-//	Automaticly use when picked up.
-bool				bAutoActivate;
-//	For auto activate items always pick up the item, even if it wasn't used.
-bool				bAlwaysPickup;
-//	Keep powerup while travelingbetween levels in a hub
-bool				bHubPower;
-//	Remove when traveling between different clusters.
-bool				bInterHubStrip;
-//	No feedback when picked up
-bool				bQuiet;
-//	When picked up while it's still active, time is added
-bool				bAdditiveTime;
-//	CreateCopy changed the owner
-bool				bCreateCopyMoved;
-//	Powerup failed to activate.
-bool				bInitEffectFailed;
+//  Originally these didn't respawn in deathmatch
+bool        bBigPowerup;
+//  Play pickup sound at full volume
+bool        bFullVolPickupSound;
+//  Used by HandlePickup.
+bool        bPickupGood;
+//  Can be displayed in the inventory bar
+bool        bInvBar;
+//  Keep item in inventory even if amount is 0
+bool        bKeepDepleted;
+//  This item cannot be tossed out
+bool        bUndroppable;
+//  Ignore skill level when giving this item
+bool        bIgnoreSkill;
+//  Automaticly use when picked up.
+bool        bAutoActivate;
+//  For auto activate items always pick up the item, even if it wasn't used.
+bool        bAlwaysPickup;
+//  Keep powerup while travelingbetween levels in a hub
+bool        bHubPower;
+//  Remove when traveling between different clusters.
+bool        bInterHubStrip;
+//  No feedback when picked up
+bool        bQuiet;
+//  When picked up while it's still active, time is added
+bool        bAdditiveTime;
+//  CreateCopy changed the owner
+bool        bCreateCopyMoved;
+//  Powerup failed to activate.
+bool        bInitEffectFailed;
 
-bool				bNoAutoaim;
+bool        bNoAutoaim;
 
 replication
 {
-	reliable if (Role == ROLE_Authority && bNetOwner)
-		Amount, MaxAmount;
+  reliable if (Role == ROLE_Authority && bNetOwner)
+    Amount, MaxAmount;
 }
 
 //==========================================================================
 //
-//	OnMapSpawn
+//  OnMapSpawn
 //
 //==========================================================================
 
 void OnMapSpawn(mthing_t* mthing)
 {
-	if (!mthing)
-	{
-		//	Non-placed items are dropped by default.
-		bDropped = true;
-	}
-	if (MaxAmount == DefMaxAmount)
-	{
-		MaxAmount = LineSpecialGameInfo(Level.Game).InvDefaultMaxAmount;
-	}
-	::OnMapSpawn(mthing);
+  if (!mthing)
+  {
+    //  Non-placed items are dropped by default.
+    bDropped = true;
+  }
+  if (MaxAmount == DefMaxAmount)
+  {
+    MaxAmount = LineSpecialGameInfo(Level.Game).InvDefaultMaxAmount;
+  }
+  ::OnMapSpawn(mthing);
 }
 
 //==========================================================================
 //
-//	Destroyed
+//  Destroyed
 //
 //==========================================================================
 
 void Destroyed()
 {
-	if (Role == ROLE_Authority)
-	{
-		if (Owner)
-		{
-			EntityEx(Owner).RemoveInventory(self);
-		}
-		Inventory = none;
-	}
-	::Destroyed();
+  if (Role == ROLE_Authority)
+  {
+    if (Owner)
+    {
+      EntityEx(Owner).RemoveInventory(self);
+    }
+    Inventory = none;
+  }
+  ::Destroyed();
 }
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	::Tick(DeltaTime);
-	if (DropTime)
-	{
-		DropTime -= DeltaTime;
-		if (DropTime <= 0.0)
-		{
-			DropTime = 0.0;
-			bSpecial = default.bSpecial;
-			bSolid = default.bSolid;
-		}
-	}
+  ::Tick(DeltaTime);
+  if (DropTime)
+  {
+    DropTime -= DeltaTime;
+    if (DropTime <= 0.0)
+    {
+      DropTime = 0.0;
+      bSpecial = default.bSpecial;
+      bSolid = default.bSolid;
+    }
+  }
 }
 
 //==========================================================================
 //
-//	BecomeItem
+//  BecomeItem
 //
 //==========================================================================
 
 final void BecomeItem()
 {
-	UnlinkFromWorld();
-	bNoSector = true;
-	bNoBlockmap = true;
-	LinkToWorld();
-	SetTID(0);
-	bSpecial = false;
-	SetState(FindState('Held'));
+  UnlinkFromWorld();
+  bNoSector = true;
+  bNoBlockmap = true;
+  LinkToWorld();
+  SetTID(0);
+  bSpecial = false;
+  SetState(FindState('Held'));
 }
 
 //==========================================================================
 //
-//	BecomePickup
+//  BecomePickup
 //
 //==========================================================================
 
 final void BecomePickup()
 {
-	if (Owner)
-	{
-		EntityEx(Owner).RemoveInventory(self);
-	}
-	UnlinkFromWorld();
-	bNoSector = false;
-	bNoBlockmap = false;
-	LinkToWorld();
-	bSpecial = default.bSpecial;
-	SetState(IdleState);
+  if (Owner)
+  {
+    EntityEx(Owner).RemoveInventory(self);
+  }
+  UnlinkFromWorld();
+  bNoSector = false;
+  bNoBlockmap = false;
+  LinkToWorld();
+  bSpecial = default.bSpecial;
+  SetState(IdleState);
 }
 
 //==========================================================================
 //
-//	AttachToOwner
+//  AttachToOwner
 //
 //==========================================================================
 
 void AttachToOwner(EntityEx NewOwner)
 {
-	BecomeItem();
-	NewOwner.AddInventory(self);
+  BecomeItem();
+  NewOwner.AddInventory(self);
 }
 
 //==========================================================================
 //
-//	DetachedFromOwner
+//  DetachedFromOwner
 //
-//	Event called when item is being removed from Owner's inventory.
+//  Event called when item is being removed from Owner's inventory.
 //
 //==========================================================================
 
@@ -216,148 +216,148 @@ void DetachedFromOwner()
 
 //==========================================================================
 //
-//	TouchSpecial
+//  TouchSpecial
 //
 //==========================================================================
 
 final void TouchSpecial(EntityEx Toucher, optional bool noflash)
 {
-	if (!Toucher.bPickUp)
-	{
-		// Can't be picked up by toucher
-		return;
-	}
-	if (Toucher.Health <= 0)
-	{
-		// Toucher is dead
-		return;
-	}
+  if (!Toucher.bPickUp)
+  {
+    // Can't be picked up by toucher
+    return;
+  }
+  if (Toucher.Health <= 0)
+  {
+    // Toucher is dead
+    return;
+  }
 
-	//	Make sure that if it's a voodoo doll touching item it's given to the
-	// actual player actor.
-	if (Toucher.bIsPlayer)
-	{
-		Toucher = EntityEx(Toucher.Player.MO);
-	}
+  //  Make sure that if it's a voodoo doll touching item it's given to the
+  // actual player actor.
+  if (Toucher.bIsPlayer)
+  {
+    Toucher = EntityEx(Toucher.Player.MO);
+  }
 
-	if (!TryPickup(Toucher))
-	{
-		return;
-	}
+  if (!TryPickup(Toucher))
+  {
+    return;
+  }
 
-	if (!bQuiet && (!specified_noflash || !noflash))
-	{
-		if (Toucher.bIsPlayer)
-		{
-			Toucher.Player.cprint(GetPickupMessage());
-		}
-		PlayPickupSound(Toucher);
-		if (Toucher.bIsPlayer)
-		{
-			PlayerEx(Toucher.Player).BonusFlash += BONUSADD;
-		}
-	}
+  if (!bQuiet && (!specified_noflash || !noflash))
+  {
+    if (Toucher.bIsPlayer)
+    {
+      Toucher.Player.cprint(GetPickupMessage());
+    }
+    PlayPickupSound(Toucher);
+    if (Toucher.bIsPlayer)
+    {
+      PlayerEx(Toucher.Player).BonusFlash += BONUSADD;
+    }
+  }
 
-	DoPickupSpecial(Toucher);
-	if (bCountItem)
-	{
-		if (Toucher.bIsPlayer)
-		{
-			Toucher.Player.ItemCount++;
-		}
-		Level.CurrentItems++;
-	}
+  DoPickupSpecial(Toucher);
+  if (bCountItem)
+  {
+    if (Toucher.bIsPlayer)
+    {
+      Toucher.Player.ItemCount++;
+    }
+    Level.CurrentItems++;
+  }
 }
 
 //==========================================================================
 //
-//	TryPickup
+//  TryPickup
 //
 //==========================================================================
 
 bool TryPickup(EntityEx Toucher)
 {
-	EntityEx NewToucher = Toucher;
-	bPickupGood = false;
-	if (Toucher.Inventory && Toucher.Inventory.HandlePickup(self))
-	{
-		if (!bPickupGood)
-		{
-			return false;
-		}
-		GoAwayAndDie();
-	}
-	else if (MaxAmount == 0)
-	{
-		//	A special case: Items with max amount of 0 can be picked up if
-		// they are autoactivate-able.
-		if (!bAutoActivate)
-		{
-			return false;
-		}
+  EntityEx NewToucher = Toucher;
+  bPickupGood = false;
+  if (Toucher.Inventory && Toucher.Inventory.HandlePickup(self))
+  {
+    if (!bPickupGood)
+    {
+      return false;
+    }
+    GoAwayAndDie();
+  }
+  else if (MaxAmount == 0)
+  {
+    //  A special case: Items with max amount of 0 can be picked up if
+    // they are autoactivate-able.
+    if (!bAutoActivate)
+    {
+      return false;
+    }
 
-		//	Put it in the inventory long enoung to be used.
-		Toucher.AddInventory(self);
-		bool UseGood = Use(true);
-		Toucher.RemoveInventory(self);
+    //  Put it in the inventory long enoung to be used.
+    Toucher.AddInventory(self);
+    bool UseGood = Use(true);
+    Toucher.RemoveInventory(self);
 
-		if (UseGood || bAlwaysPickup)
-		{
-			GoAwayAndDie();
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
-	{
-		Inventory Copy = CreateCopy(Toucher);
-		if (!Copy)
-		{
-			return false;
-		}
-		//	Some powerups cannot activate absolutely, for example,
-		// PowerMorph; fail the pickup if so.
-		if (Copy.bInitEffectFailed)
-		{
-			if (Copy != self)
-			{
-				Copy.Destroy();
-			}
-			else
-			{
-				bInitEffectFailed = false;
-			}
-			return false;
-		}
-		//	Handle owner-changing powerups
-		if (Copy.bCreateCopyMoved)
-		{
-			NewToucher = EntityEx(Copy.Owner);
-			Copy.Owner = none;
-			Copy.bCreateCopyMoved = false;
-		}
-		Copy.AttachToOwner(NewToucher);
-		if (bAutoActivate && Copy.Use(true))
-		{
-			Copy.Amount--;
-			if (Copy.Amount <= 0)
-			{
-				Copy.bSpecial = false;
-				Copy.SetState(Copy.FindState('HoldAndDestroy'));
-			}
-		}
-	}
-	GiveQuest(Toucher);
-	return true;
+    if (UseGood || bAlwaysPickup)
+    {
+      GoAwayAndDie();
+    }
+    else
+    {
+      return false;
+    }
+  }
+  else
+  {
+    Inventory Copy = CreateCopy(Toucher);
+    if (!Copy)
+    {
+      return false;
+    }
+    //  Some powerups cannot activate absolutely, for example,
+    // PowerMorph; fail the pickup if so.
+    if (Copy.bInitEffectFailed)
+    {
+      if (Copy != self)
+      {
+        Copy.Destroy();
+      }
+      else
+      {
+        bInitEffectFailed = false;
+      }
+      return false;
+    }
+    //  Handle owner-changing powerups
+    if (Copy.bCreateCopyMoved)
+    {
+      NewToucher = EntityEx(Copy.Owner);
+      Copy.Owner = none;
+      Copy.bCreateCopyMoved = false;
+    }
+    Copy.AttachToOwner(NewToucher);
+    if (bAutoActivate && Copy.Use(true))
+    {
+      Copy.Amount--;
+      if (Copy.Amount <= 0)
+      {
+        Copy.bSpecial = false;
+        Copy.SetState(Copy.FindState('HoldAndDestroy'));
+      }
+    }
+  }
+  GiveQuest(Toucher);
+  return true;
 }
 
 //==========================================================================
 //
-//	HandlePickup
+//  HandlePickup
 //
-//	Called for each item in touchers inventory. Returns true if pickup
+//  Called for each item in touchers inventory. Returns true if pickup
 // should be interrupted. Sets bPickupGood to true if pickup should be
 // considered successful.
 //
@@ -365,258 +365,258 @@ bool TryPickup(EntityEx Toucher)
 
 bool HandlePickup(Inventory Item)
 {
-	if (Item.Class == Class)
-	{
-		if (Amount < MaxAmount)
-		{
-			Amount += Item.Amount;
-			if (Amount > MaxAmount)
-			{
-				Amount = MaxAmount;
-			}
-			Item.bPickupGood = true;
-		}
-		return true;
-	}
+  if (Item.Class == Class)
+  {
+    if (Amount < MaxAmount)
+    {
+      Amount += Item.Amount;
+      if (Amount > MaxAmount)
+      {
+        Amount = MaxAmount;
+      }
+      Item.bPickupGood = true;
+    }
+    return true;
+  }
 
-	if (Inventory)
-	{
-		return Inventory.HandlePickup(Item);
-	}
-	return false;
+  if (Inventory)
+  {
+    return Inventory.HandlePickup(Item);
+  }
+  return false;
 }
 
 //==========================================================================
 //
-//	CreateCopy
+//  CreateCopy
 //
 //==========================================================================
 
 Inventory CreateCopy(EntityEx Toucher)
 {
-	Inventory Copy;
-	if (GoAway())
-	{
-		//	Must create a copy
-		Copy = Spawn(class<Inventory>(Class),,,, false);
-		Copy.Amount = Amount;
-		Copy.MaxAmount = MaxAmount;
-	}
-	else
-	{
-		//	Use this one
-		Copy = self;
-	}
-	return Copy;
+  Inventory Copy;
+  if (GoAway())
+  {
+    //  Must create a copy
+    Copy = Spawn(class<Inventory>(Class),,,, false);
+    Copy.Amount = Amount;
+    Copy.MaxAmount = MaxAmount;
+  }
+  else
+  {
+    //  Use this one
+    Copy = self;
+  }
+  return Copy;
 }
 
 //==========================================================================
 //
-//	CreateTossable
+//  CreateTossable
 //
-//	Create item suitable fro dropping.
+//  Create item suitable fro dropping.
 //
 //==========================================================================
 
 Inventory CreateTossable()
 {
-	if (!IdleState)
-	{
-		//	This item has no spawn state so it cannot be seen.
-		return none;
-	}
-	if (bUndroppable || !Owner || Amount <= 0)
-	{
-		return none;
-	}
+  if (!IdleState)
+  {
+    //  This item has no spawn state so it cannot be seen.
+    return none;
+  }
+  if (bUndroppable || !Owner || Amount <= 0)
+  {
+    return none;
+  }
 
-	if (Amount == 1 && !bKeepDepleted)
-	{
-		//	Drop the current one.
-		BecomePickup();
-		DropTime = 1.0;
-		bSpecial = false;
-		bSolid = false;
-		return self;
-	}
+  if (Amount == 1 && !bKeepDepleted)
+  {
+    //  Drop the current one.
+    BecomePickup();
+    DropTime = 1.0;
+    bSpecial = false;
+    bSolid = false;
+    return self;
+  }
 
-	Inventory Copy = Spawn(class<Inventory>(Class),,,, false);
-	Copy.Amount = 1;
-	Copy.MaxAmount = MaxAmount;
-	Copy.DropTime = 1.0;
-	Copy.bSpecial = false;
-	Copy.bSolid = false;
-	Amount--;
-	return Copy;
+  Inventory Copy = Spawn(class<Inventory>(Class),,,, false);
+  Copy.Amount = 1;
+  Copy.MaxAmount = MaxAmount;
+  Copy.DropTime = 1.0;
+  Copy.bSpecial = false;
+  Copy.bSolid = false;
+  Amount--;
+  return Copy;
 }
 
 //==========================================================================
 //
-//	ShouldStay
+//  ShouldStay
 //
-//	Returns true if item should stay after it's been picked up.
+//  Returns true if item should stay after it's been picked up.
 //
 //==========================================================================
 
 bool ShouldStay()
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
 //
-//	ShouldRespawn
+//  ShouldRespawn
 //
 //==========================================================================
 
 bool ShouldRespawn()
 {
-	if (bBigPowerup && !LineSpecialGameInfo(Level.Game).bRespawnBigItems)
-	{
-		return false;
-	}
-	return LineSpecialGameInfo(Level.Game).bRespawnItems;
+  if (bBigPowerup && !LineSpecialGameInfo(Level.Game).bRespawnBigItems)
+  {
+    return false;
+  }
+  return LineSpecialGameInfo(Level.Game).bRespawnItems;
 }
 
 //==========================================================================
 //
-//	GoAway
+//  GoAway
 //
 //==========================================================================
 
 final bool GoAway()
 {
-	//	Never respawn dropped items.
-	if (bDropped)
-	{
-		if (PickupFlashType)
-		{
-			//  Initiate the artifact pickup animation.
-			Spawn(PickupFlashType, Origin);
-		}
-		return false;
-	}
+  //  Never respawn dropped items.
+  if (bDropped)
+  {
+    if (PickupFlashType)
+    {
+      //  Initiate the artifact pickup animation.
+      Spawn(PickupFlashType, Origin);
+    }
+    return false;
+  }
 
-	if (!ShouldStay())
-	{
-		if (PickupFlashType)
-		{
-			//  Initiate the artifact pickup animation.
-			Spawn(PickupFlashType, Origin);
-		}
-		if (ShouldRespawn())
-		{
-			Hide();
-		}
-		else
-		{
-			// Don't respawn
-			return false;
-		}
-	}
-	return true;
+  if (!ShouldStay())
+  {
+    if (PickupFlashType)
+    {
+      //  Initiate the artifact pickup animation.
+      Spawn(PickupFlashType, Origin);
+    }
+    if (ShouldRespawn())
+    {
+      Hide();
+    }
+    else
+    {
+      // Don't respawn
+      return false;
+    }
+  }
+  return true;
 }
 
 //==========================================================================
 //
-//	GoAwayAndDie
+//  GoAwayAndDie
 //
 //==========================================================================
 
 final void GoAwayAndDie()
 {
-	if (!GoAway())
-	{
-		bSpecial = false;
-		SetState(FindState('HoldAndDestroy'));
-	}
+  if (!GoAway())
+  {
+    bSpecial = false;
+    SetState(FindState('HoldAndDestroy'));
+  }
 }
 
 //==========================================================================
 //
-//	Hide
+//  Hide
 //
 //==========================================================================
 
 final void Hide()
 {
-	bSpecial = false;
-	bInvisible = true;
-	if (LineSpecialGameInfo(Level.Game).bRavenStylePickupRespawn)
-	{
-		SetState(FindState('HideSpecial'));
-		StateTime = 40.0;
-		if (PickupFlashType)
-		{
-			StateTime += 30.0 / 35.0;
-		}
-	}
-	else
-	{
-		SetState(FindState('DormantPickup'));
-		StateTime = 30.0;
-	}
-	if (RespawnTime)
-	{
-		StateTime = RespawnTime;
-	}
+  bSpecial = false;
+  bInvisible = true;
+  if (LineSpecialGameInfo(Level.Game).bRavenStylePickupRespawn)
+  {
+    SetState(FindState('HideSpecial'));
+    StateTime = 40.0;
+    if (PickupFlashType)
+    {
+      StateTime += 30.0 / 35.0;
+    }
+  }
+  else
+  {
+    SetState(FindState('DormantPickup'));
+    StateTime = 30.0;
+  }
+  if (RespawnTime)
+  {
+    StateTime = RespawnTime;
+  }
 }
 
 //==========================================================================
 //
-//	GetPickupMessage
+//  GetPickupMessage
 //
 //==========================================================================
 
 string GetPickupMessage()
 {
-	return PickupMessage;
+  return PickupMessage;
 }
 
 //==========================================================================
 //
-//	DoPickupSpecial
+//  DoPickupSpecial
 //
 //==========================================================================
 
 void DoPickupSpecial(EntityEx Toucher)
 {
-	if (Special)
-	{
-		Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2],
-			Args[3], Args[4], NULL, 0, Toucher);
-		Special = 0;
-	}
+  if (Special)
+  {
+    Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2],
+      Args[3], Args[4], NULL, 0, Toucher);
+    Special = 0;
+  }
 }
 
 //==========================================================================
 //
-//	PlayPickupSound
+//  PlayPickupSound
 //
 //==========================================================================
 
 void PlayPickupSound(EntityEx Toucher)
 {
-	if (PickupSound)
-	{
-		Toucher.PlaySound(PickupSound, CHAN_BODY, 1.0,
-			bFullVolPickupSound ? ATTN_NONE : ATTN_NORMAL);
-	}
+  if (PickupSound)
+  {
+    Toucher.PlaySound(PickupSound, CHAN_BODY, 1.0,
+      bFullVolPickupSound ? ATTN_NONE : ATTN_NORMAL);
+  }
 }
 
 //==========================================================================
 //
-//	GiveQuest
+//  GiveQuest
 //
 //==========================================================================
 
 final void GiveQuest(EntityEx Toucher)
 {
-	if (GiveQuestNum)
-	{
-		Toucher.GiveInventoryType(class<Inventory>(FindClass(
-			StrToName(va("QuestItem%d", GiveQuestNum)))));
-	}
+  if (GiveQuestNum)
+  {
+    Toucher.GiveInventoryType(class<Inventory>(FindClass(
+      StrToName(va("QuestItem%d", GiveQuestNum)))));
+  }
 }
 
 //==========================================================================
@@ -627,75 +627,75 @@ final void GiveQuest(EntityEx Toucher)
 
 bool DoRespawn()
 {
-	return true;
+  return true;
 }
 
 //==========================================================================
 //
-//	SpecialDropAction
+//  SpecialDropAction
 //
 //==========================================================================
 
 bool SpecialDropAction(EntityEx Source)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
 //
-//	PrevInv
+//  PrevInv
 //
-//	Return previous item with bInvBar flag set.
+//  Return previous item with bInvBar flag set.
 //
 //==========================================================================
 
 Inventory PrevInv()
 {
-	Inventory Item = Inventory;
-	while (Item && !Item.bInvBar)
-	{
-		Item = Item.Inventory;
-	}
-	return Item;
+  Inventory Item = Inventory;
+  while (Item && !Item.bInvBar)
+  {
+    Item = Item.Inventory;
+  }
+  return Item;
 }
 
 //==========================================================================
 //
-//	NextInv
+//  NextInv
 //
-//	Return next item with bInvBar flag set.
+//  Return next item with bInvBar flag set.
 //
 //==========================================================================
 
 Inventory NextInv()
 {
-	Inventory Ret = none;
-	Inventory Item = EntityEx(Owner).Inventory;
-	while (Item && Item != self)
-	{
-		if (Item.bInvBar)
-		{
-			Ret = Item;
-		}
-		Item = Item.Inventory;
-	}
-	return Ret;
+  Inventory Ret = none;
+  Inventory Item = EntityEx(Owner).Inventory;
+  while (Item && Item != self)
+  {
+    if (Item.bInvBar)
+    {
+      Ret = Item;
+    }
+    Item = Item.Inventory;
+  }
+  return Ret;
 }
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
 //
-//	DoEffect
+//  DoEffect
 //
 //==========================================================================
 
@@ -705,32 +705,32 @@ void DoEffect()
 
 //==========================================================================
 //
-//	GetBlend
+//  GetBlend
 //
 //==========================================================================
 
 int GetBlend()
 {
-	return 0;
+  return 0;
 }
 
 //==========================================================================
 //
-//	AbsorbDamage
+//  AbsorbDamage
 //
 //==========================================================================
 
 void AbsorbDamage(int damage, name DmgType, out int NewDamage)
 {
-	if (Inventory)
-	{
-		Inventory.AbsorbDamage(damage, DmgType, NewDamage);
-	}
+  if (Inventory)
+  {
+    Inventory.AbsorbDamage(damage, DmgType, NewDamage);
+  }
 }
 
 //==========================================================================
 //
-//	OwnerDied
+//  OwnerDied
 //
 //==========================================================================
 
@@ -740,24 +740,24 @@ void OwnerDied()
 
 //==========================================================================
 //
-//	GetSpeedFactor
+//  GetSpeedFactor
 //
 //==========================================================================
 
 float GetSpeedFactor()
 {
-	if (Inventory)
-	{
-		return Inventory.GetSpeedFactor();
-	}
-	else
-	{
-		return 1.0;
-	}
+  if (Inventory)
+  {
+    return Inventory.GetSpeedFactor();
+  }
+  else
+  {
+    return 1.0;
+  }
 }
 
 //**************************************************************************
-//	State jumps
+//  State jumps
 //**************************************************************************
 
 //==========================================================================
@@ -768,31 +768,31 @@ float GetSpeedFactor()
 
 final void A_JumpIfNoAmmo(state Label)
 {
-	//	State jumps should not affect state chain results.
-	if (XLevel.StateCall)
-	{
-		XLevel.StateCall->Result = false;
-	}
+  //  State jumps should not affect state chain results.
+  if (XLevel.StateCall)
+  {
+    XLevel.StateCall->Result = false;
+  }
 
-	//	Only for weapons.
-	if (!bIsPlayer || XLevel.StateCall)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-	if (!Wpn)
-	{
-		return;
-	}
+  //  Only for weapons.
+  if (!bIsPlayer || XLevel.StateCall)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn)
+  {
+    return;
+  }
 
-	if (!Wpn.CheckAmmo(Wpn.FireMode, false, true))
-	{
-		DoJump(Label);
-	}
+  if (!Wpn.CheckAmmo(Wpn.FireMode, false, true))
+  {
+    DoJump(Label);
+  }
 }
 
 //**************************************************************************
-//	Weapon functions
+//  Weapon functions
 //**************************************************************************
 
 //==========================================================================
@@ -805,55 +805,55 @@ final void A_JumpIfNoAmmo(state Label)
 
 final void A_Lower()
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
+  if (!bIsPlayer)
+  {
+    return;
+  }
 
-	if (PlayerEx(Player).MorphTime ||
-		PlayerEx(Player).bInstantWeaponSwitch)
-	{
-		Player.ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
-	}
-	else
-	{
-		//	FIXME!!
-		if (Level.Game.frametime < 1.0 / 35.0)
-		{
-			Player.ViewStates[ps_weapon].SY += Weapon::LOWERSPEED;
-		}
-		else
-		{
-			Player.ViewStates[ps_weapon].SY += Weapon::LOWERSPEED * 35.0 *
-				Level.Game.frametime;
-		}
-	}
+  if (PlayerEx(Player).MorphTime ||
+    PlayerEx(Player).bInstantWeaponSwitch)
+  {
+    Player.ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
+  }
+  else
+  {
+    //  FIXME!!
+    if (Level.Game.frametime < 1.0 / 35.0)
+    {
+      Player.ViewStates[ps_weapon].SY += Weapon::LOWERSPEED;
+    }
+    else
+    {
+      Player.ViewStates[ps_weapon].SY += Weapon::LOWERSPEED * 35.0 *
+        Level.Game.frametime;
+    }
+  }
 
-	if (Player.ViewStates[ps_weapon].SY < Weapon::WEAPONBOTTOM)
-	{
-		// Not lowered all the way yet
-		return;
-	}
+  if (Player.ViewStates[ps_weapon].SY < Weapon::WEAPONBOTTOM)
+  {
+    // Not lowered all the way yet
+    return;
+  }
 
-	if (Player.PlayerState == PST_DEAD)
-	{
-		// Player is dead, so don't bring up a pending weapon
-		Player.ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
-		return;
-	}
+  if (Player.PlayerState == PST_DEAD)
+  {
+    // Player is dead, so don't bring up a pending weapon
+    Player.ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
+    return;
+  }
 
-	if (Player.MO.Health <= 0)
-	{
-		// Player is dead, so keep the weapon off screen.
-		Player.SetViewState(ps_weapon, none);
-		return;
-	}
+  if (Player.MO.Health <= 0)
+  {
+    // Player is dead, so keep the weapon off screen.
+    Player.SetViewState(ps_weapon, none);
+    return;
+  }
 
-	//	Clear flash state, needed for Strife.
-	Player.SetViewState(ps_flash, none);
+  //  Clear flash state, needed for Strife.
+  Player.SetViewState(ps_flash, none);
 
-	PlayerEx(Player).SetWeapon(PlayerEx(Player).PendingWeapon);
-	PlayerEx(Player).BringUpWeapon();
+  PlayerEx(Player).SetWeapon(PlayerEx(Player).PendingWeapon);
+  PlayerEx(Player).BringUpWeapon();
 }
 
 //==========================================================================
@@ -864,36 +864,36 @@ final void A_Lower()
 
 final void A_Raise()
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	//	FIXME!!
-	if (Level.Game.frametime < 1.0 / 35.0)
-	{
-		Player.ViewStates[ps_weapon].SY -= Weapon::RAISESPEED;
-	}
-	else
-	{
-		Player.ViewStates[ps_weapon].SY -= Weapon::RAISESPEED * 35.0 *
-			Level.Game.frametime;
-	}
-	if (Player.ViewStates[ps_weapon].SY > Weapon::WEAPONTOP)
-	{
-		// Not raised all the way yet
-		return;
-	}
-	Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP;
-	if (Wpn)
-	{
-		Player.SetViewState(ps_weapon, Wpn.GetReadyState());
-	}
-	else
-	{
-		Player.SetViewState(ps_weapon, none);
-	}
+  //  FIXME!!
+  if (Level.Game.frametime < 1.0 / 35.0)
+  {
+    Player.ViewStates[ps_weapon].SY -= Weapon::RAISESPEED;
+  }
+  else
+  {
+    Player.ViewStates[ps_weapon].SY -= Weapon::RAISESPEED * 35.0 *
+      Level.Game.frametime;
+  }
+  if (Player.ViewStates[ps_weapon].SY > Weapon::WEAPONTOP)
+  {
+    // Not raised all the way yet
+    return;
+  }
+  Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP;
+  if (Wpn)
+  {
+    Player.SetViewState(ps_weapon, Wpn.GetReadyState());
+  }
+  else
+  {
+    Player.SetViewState(ps_weapon, none);
+  }
 }
 
 //===========================================================================
@@ -906,31 +906,31 @@ final void A_Raise()
 
 final void A_ReFire()
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	if (Wpn.FireMode == Weapon::FIRE_Primary &&
-		(Player.Buttons & BT_ATTACK) &&
-		!PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
-	{
-		PlayerEx(Player).Refire++;
-		if (!k8InWeaponReady) PlayerEx(Player).FireWeapon();
-	}
-	else if (Wpn.FireMode == Weapon::FIRE_Secondary &&
-		(Player.Buttons & BT_ALT_ATTACK) &&
-		!PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
-	{
-		PlayerEx(Player).Refire++;
-		if (!k8InWeaponReady) PlayerEx(Player).AltFireWeapon();
-	}
-	else
-	{
-		PlayerEx(Player).Refire = 0;
-		Wpn.CheckAmmo(Wpn.FireMode, true);
-	}
+  if (Wpn.FireMode == Weapon::FIRE_Primary &&
+    (Player.Buttons & BT_ATTACK) &&
+    !PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
+  {
+    PlayerEx(Player).Refire++;
+    if (!k8InWeaponReady) PlayerEx(Player).FireWeapon();
+  }
+  else if (Wpn.FireMode == Weapon::FIRE_Secondary &&
+    (Player.Buttons & BT_ALT_ATTACK) &&
+    !PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
+  {
+    PlayerEx(Player).Refire++;
+    if (!k8InWeaponReady) PlayerEx(Player).AltFireWeapon();
+  }
+  else
+  {
+    PlayerEx(Player).Refire = 0;
+    Wpn.CheckAmmo(Wpn.FireMode, true);
+  }
 }
 
 //===========================================================================
@@ -941,10 +941,10 @@ final void A_ReFire()
 
 final void A_ClearReFire()
 {
-	if (bIsPlayer)
-	{
-		PlayerEx(Player).Refire = 0;
-	}
+  if (bIsPlayer)
+  {
+    PlayerEx(Player).Refire = 0;
+  }
 }
 
 //===========================================================================
@@ -955,14 +955,14 @@ final void A_ClearReFire()
 
 final void A_GunFlash()
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	SetState(MeleeState);
-	Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+  SetState(MeleeState);
+  Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
 }
 
 //===========================================================================
@@ -973,13 +973,13 @@ final void A_GunFlash()
 
 final void A_CheckReload()
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	Wpn.CheckAmmo(Wpn.FireMode, true);
+  Wpn.CheckAmmo(Wpn.FireMode, true);
 }
 
 //===========================================================================
@@ -990,20 +990,20 @@ final void A_CheckReload()
 
 final void A_Light(int LightValue)
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
+  if (!bIsPlayer)
+  {
+    return;
+  }
 
-	if (LightValue < 0)
-	{
-		LightValue = 0;
-	}
-	else if (LightValue > 20)
-	{
-		LightValue = 20;
-	}
-	Player.ExtraLight = LightValue;
+  if (LightValue < 0)
+  {
+    LightValue = 0;
+  }
+  else if (LightValue > 20)
+  {
+    LightValue = 20;
+  }
+  Player.ExtraLight = LightValue;
 }
 
 //===========================================================================
@@ -1014,12 +1014,12 @@ final void A_Light(int LightValue)
 
 final void A_Light0()
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
+  if (!bIsPlayer)
+  {
+    return;
+  }
 
-	Player.ExtraLight = 0;
+  Player.ExtraLight = 0;
 }
 
 //===========================================================================
@@ -1030,12 +1030,12 @@ final void A_Light0()
 
 final void A_Light1()
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
+  if (!bIsPlayer)
+  {
+    return;
+  }
 
-	Player.ExtraLight = 1;
+  Player.ExtraLight = 1;
 }
 
 //===========================================================================
@@ -1046,30 +1046,30 @@ final void A_Light1()
 
 final void A_Light2()
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
+  if (!bIsPlayer)
+  {
+    return;
+  }
 
-	Player.ExtraLight = 2;
+  Player.ExtraLight = 2;
 }
 
 //==========================================================================
 //
-//	A_LightInverse
+//  A_LightInverse
 //
 //==========================================================================
 
 final void A_LightInverse()
 {
-	if (bIsPlayer)
-	{
-		Player.ExtraLight = 255;
-	}
+  if (bIsPlayer)
+  {
+    Player.ExtraLight = 255;
+  }
 }
 
 //**************************************************************************
-//	Weapon attack functions
+//  Weapon attack functions
 //**************************************************************************
 
 //===========================================================================
@@ -1080,7 +1080,7 @@ final void A_LightInverse()
 
 final void A_Saw()
 {
-	decorate_A_Saw();
+  decorate_A_Saw();
 }
 
 //===========================================================================
@@ -1090,81 +1090,81 @@ final void A_Saw()
 //===========================================================================
 
 final void decorate_A_Saw(optional name FullSound, optional name HitSound,
-	optional int SawDamage, optional class<Actor> PuffType)
+  optional int SawDamage, optional class<Actor> PuffType)
 {
-	float		angle;
-	int			damage;
-	TAVec		aimAng;
-	TVec		dir;
-	EntityEx	AimTarget;
+  float   angle;
+  int     damage;
+  TAVec   aimAng;
+  TVec    dir;
+  EntityEx  AimTarget;
 
-	if (!specified_FullSound)
-	{
-		FullSound = 'weapons/sawfull';
-		HitSound = 'weapons/sawhit';
-	}
-	if (!SawDamage)
-	{
-		SawDamage = 2;
-	}
-	if (!PuffType)
-	{
-		PuffType = BulletPuff;
-	}
+  if (!specified_FullSound)
+  {
+    FullSound = 'weapons/sawfull';
+    HitSound = 'weapons/sawhit';
+  }
+  if (!SawDamage)
+  {
+    SawDamage = 2;
+  }
+  if (!PuffType)
+  {
+    PuffType = BulletPuff;
+  }
 
-	if (!bIsPlayer)
-	{
-		return;
-	}
+  if (!bIsPlayer)
+  {
+    return;
+  }
 
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-	if (Wpn)
-	{
-		if (!Wpn.DepleteAmmo(Wpn.FireMode))
-		{
-			return;
-		}
-	}
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (Wpn)
+  {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode))
+    {
+      return;
+    }
+  }
 
-	damage = SawDamage * (P_Random() % 10 + 1);
-	aimAng = Angles;
-	aimAng.yaw = AngleMod360(aimAng.yaw + (Random() -
-		Random()) * 45.0 / 8.0);
+  damage = SawDamage * (P_Random() % 10 + 1);
+  aimAng = Angles;
+  aimAng.yaw = AngleMod360(aimAng.yaw + (Random() -
+    Random()) * 45.0 / 8.0);
 
-	// use meleerange + 1 se the puff doesn't skip the flash
-	AimTarget = AimLineAttack(dir, aimAng, MELEERANGE + 0.00001);
-	LineAttack(dir, MELEERANGE + 0.00001, damage, PuffType,,,'Chainsaw');
+  // use meleerange + 1 se the puff doesn't skip the flash
+  AimTarget = AimLineAttack(dir, aimAng, MELEERANGE + 0.00001);
+  LineAttack(dir, MELEERANGE + 0.00001, damage, PuffType,,,'Chainsaw');
 
-	if (!AimTarget)
-	{
-		PlaySound(FullSound, CHAN_WEAPON);
-		return;
-	}
-	PlaySound(HitSound, CHAN_WEAPON);
+  if (!AimTarget)
+  {
+    PlaySound(FullSound, CHAN_WEAPON);
+    return;
+  }
+  PlaySound(HitSound, CHAN_WEAPON);
 
-	// turn to face target
-	angle = atan2(AimTarget.Origin.y - Origin.y,
-		AimTarget.Origin.x - Origin.x);
-	if (AngleMod360(angle - Angles.yaw) > 180.0)
-	{
-		if (AngleMod360(angle - Angles.yaw) < -90.0 / 20.0)
-			Angles.yaw = angle + 90.0 / 21.0;
-		else
-			Angles.yaw = Angles.yaw - 90.0 / 20.0;
-	}
-	else
-	{
-		if (AngleMod360(angle - Angles.yaw) > 90.0 / 20.0)
-			Angles.yaw = angle - 90.0 / 21.0;
-		else
-			Angles.yaw += 90.0 / 20.0;
-	}
-	Angles.yaw = AngleMod360(Angles.yaw);
-	bJustAttacked = true;
-	if (bIsPlayer)
-	{
-		Player.bFixAngle = true;
-	}
+  // turn to face target
+  angle = atan2(AimTarget.Origin.y - Origin.y,
+    AimTarget.Origin.x - Origin.x);
+  if (AngleMod360(angle - Angles.yaw) > 180.0)
+  {
+    if (AngleMod360(angle - Angles.yaw) < -90.0 / 20.0)
+      Angles.yaw = angle + 90.0 / 21.0;
+    else
+      Angles.yaw = Angles.yaw - 90.0 / 20.0;
+  }
+  else
+  {
+    if (AngleMod360(angle - Angles.yaw) > 90.0 / 20.0)
+      Angles.yaw = angle - 90.0 / 21.0;
+    else
+      Angles.yaw += 90.0 / 20.0;
+  }
+  Angles.yaw = AngleMod360(Angles.yaw);
+  bJustAttacked = true;
+  if (bIsPlayer)
+  {
+    Player.bFixAngle = true;
+  }
 }
 
 //===========================================================================
@@ -1174,77 +1174,77 @@ final void decorate_A_Saw(optional name FullSound, optional name HitSound,
 //===========================================================================
 
 final void A_CustomPunch(int PunchDamage, optional bool NoRandom,
-	optional int Flags, optional class<Actor> PuffType,
-	optional float Range, optional float LifeSteal)
+  optional int Flags, optional class<Actor> PuffType,
+  optional float Range, optional float LifeSteal)
 {
-	TAVec		aimAngles;
-	TVec		dir;
-	EntityEx	AimTarget;
-	bool		UseAmmo = false;
+  TAVec   aimAngles;
+  TVec    dir;
+  EntityEx  AimTarget;
+  bool    UseAmmo = false;
 
-	if (!bIsPlayer)
-	{
-		return;
-	}
+  if (!bIsPlayer)
+  {
+    return;
+  }
 
-	if (!specified_Flags)
-	{
-		UseAmmo = true;
-	}
-	if (!PuffType)
-	{
-		PuffType = BulletPuff;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!specified_Flags)
+  {
+    UseAmmo = true;
+  }
+  if (!PuffType)
+  {
+    PuffType = BulletPuff;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	aimAngles = Angles;
-	aimAngles.yaw = AngleMod360(aimAngles.yaw + (Random() -
-		Random()) * 45.0 / 8.0);
-	AimTarget = AimLineAttack(dir, aimAngles, Range);
+  aimAngles = Angles;
+  aimAngles.yaw = AngleMod360(aimAngles.yaw + (Random() -
+    Random()) * 45.0 / 8.0);
+  AimTarget = AimLineAttack(dir, aimAngles, Range);
 
-	//	Use ammo only if hit something.
-	if ((specified_Flags && (Flags & 1) || UseAmmo) && AimTarget && Wpn)
-	{
-		if (!Wpn.DepleteAmmo(Wpn.FireMode))
-		{
-			return;
-		}
-	}
+  //  Use ammo only if hit something.
+  if ((specified_Flags && (Flags & 1) || UseAmmo) && AimTarget && Wpn)
+  {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode))
+    {
+      return;
+    }
+  }
 
-	if (!NoRandom)
-	{
-		PunchDamage *= (P_Random() % 8 + 1);
-	}
+  if (!NoRandom)
+  {
+    PunchDamage *= (P_Random() % 8 + 1);
+  }
 
-	LineAttack(dir, Range, PunchDamage, PuffType,,,
-		PuffType.default.DamageType);
+  LineAttack(dir, Range, PunchDamage, PuffType,,,
+    PuffType.default.DamageType);
 
-	// turn to face target
-	if (AimTarget)
-	{
-		if (LifeSteal)
-		{
-			GiveBody (ftoi(itof(PunchDamage) * LifeSteal));
-		}
-		if (Wpn)
-		{
-			PlaySound(Wpn.AttackSound, CHAN_WEAPON);
-		}
-		Angles.yaw = atan2(AimTarget.Origin.y - Origin.y,
-			AimTarget.Origin.x - Origin.x);
-		if (bIsPlayer)
-		{
-			Player.bFixAngle = true;
-		}
-		if (Flags & 4)
-		{
-			bJustAttacked = true;
-		}
-		if (Flags & 2)
-		{
-			A_AttackAlert(self, AimTarget);
-		}
-	}
+  // turn to face target
+  if (AimTarget)
+  {
+    if (LifeSteal)
+    {
+      GiveBody (ftoi(itof(PunchDamage) * LifeSteal));
+    }
+    if (Wpn)
+    {
+      PlaySound(Wpn.AttackSound, CHAN_WEAPON);
+    }
+    Angles.yaw = atan2(AimTarget.Origin.y - Origin.y,
+      AimTarget.Origin.x - Origin.x);
+    if (bIsPlayer)
+    {
+      Player.bFixAngle = true;
+    }
+    if (Flags & 4)
+    {
+      bJustAttacked = true;
+    }
+    if (Flags & 2)
+    {
+      A_AttackAlert(self, AimTarget);
+    }
+  }
 }
 
 //===========================================================================
@@ -1254,93 +1254,93 @@ final void A_CustomPunch(int PunchDamage, optional bool NoRandom,
 //===========================================================================
 
 final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
-	int DamagePerBullet, optional class<Actor> PuffType, optional int Flags,
-	optional float Range)
+  int DamagePerBullet, optional class<Actor> PuffType, optional int Flags,
+  optional float Range)
 {
-	TVec		dir;
-	int			i;
-	int			damage;
-	TAVec		rot;
-	TVec		aimDir;
-	bool		UseAmmo = false;
+  TVec    dir;
+  int     i;
+  int     damage;
+  TAVec   rot;
+  TVec    aimDir;
+  bool    UseAmmo = false;
 
-	if (!PuffType || !specified_PuffType)
-	{
-		PuffType = BulletPuff;
-	}
-	if (!Range)
-	{
-		Range = MISSILERANGE;
-	}
+  if (!PuffType || !specified_PuffType)
+  {
+    PuffType = BulletPuff;
+  }
+  if (!Range)
+  {
+    Range = MISSILERANGE;
+  }
 
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	if (!specified_Flags)
-	{
-		UseAmmo = true;
-	}
-	if (((specified_Flags && (Flags & 1)) || UseAmmo) && Wpn)
-	{
-		if (!Wpn.DepleteAmmo(Wpn.FireMode))
-		{
-			return;
-		}
-	}
+  if (!specified_Flags)
+  {
+    UseAmmo = true;
+  }
+  if (((specified_Flags && (Flags & 1)) || UseAmmo) && Wpn)
+  {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode))
+    {
+      return;
+    }
+  }
 
-	SetState(MeleeState);
+  SetState(MeleeState);
 
-	bool noAAim = false;
-	name decal = '';
-	if (Wpn)
-	{
-		PlaySound(Wpn.AttackSound, CHAN_WEAPON);
-		noAAim = Wpn.bNoAutoaim;
-		decal = Wpn.DecalName;
-	}
+  bool noAAim = false;
+  name decal = '';
+  if (Wpn)
+  {
+    PlaySound(Wpn.AttackSound, CHAN_WEAPON);
+    noAAim = Wpn.bNoAutoaim;
+    decal = Wpn.DecalName;
+  }
 
-	Aim(aimDir, 16.0 * 64.0,, noAAim);
+  Aim(aimDir, 16.0 * 64.0,, noAAim);
 
-	if ((NumBullets == 1 && !PlayerEx(Player).Refire) || NumBullets == 0)
-	{
-		damage = DamagePerBullet;
-		if (!(Flags & 2))
-		{
-			damage *= (P_Random() % 3 + 1);
-		}
-		LineAttack(aimDir, Range, damage, PuffType,,, PuffType.default.DamageType, false, decal);
-	}
-	else
-	{
-		if (NumBullets == -1)
-		{
-			NumBullets = 1;
-		}
-		for (i = 0; i < NumBullets; i++)
-		{
-			if (Flags & 4)
-			{
-				rot.pitch = SpreadVert;
-				rot.yaw = SpreadHoriz;
-			}
-			else
-			{
-				rot.pitch = (Random() - Random()) * SpreadVert;
-				rot.yaw = (Random() - Random()) * SpreadHoriz;
-			}
-			rot.roll = 0.0;
-			dir = RotateDirectionVector(aimDir, rot);
-			damage = DamagePerBullet;
-			if (!(Flags & 2))
-			{
-				damage *= (P_Random() % 3 + 1);
-			}
-			LineAttack(dir, Range, damage, PuffType,,, PuffType.default.DamageType, (i != 0), decal);
-		}
-	}
+  if ((NumBullets == 1 && !PlayerEx(Player).Refire) || NumBullets == 0)
+  {
+    damage = DamagePerBullet;
+    if (!(Flags & 2))
+    {
+      damage *= (P_Random() % 3 + 1);
+    }
+    LineAttack(aimDir, Range, damage, PuffType,,, PuffType.default.DamageType, false, decal);
+  }
+  else
+  {
+    if (NumBullets == -1)
+    {
+      NumBullets = 1;
+    }
+    for (i = 0; i < NumBullets; i++)
+    {
+      if (Flags & 4)
+      {
+        rot.pitch = SpreadVert;
+        rot.yaw = SpreadHoriz;
+      }
+      else
+      {
+        rot.pitch = (Random() - Random()) * SpreadVert;
+        rot.yaw = (Random() - Random()) * SpreadHoriz;
+      }
+      rot.roll = 0.0;
+      dir = RotateDirectionVector(aimDir, rot);
+      damage = DamagePerBullet;
+      if (!(Flags & 2))
+      {
+        damage *= (P_Random() % 3 + 1);
+      }
+      LineAttack(dir, Range, damage, PuffType,,, PuffType.default.DamageType, (i != 0), decal);
+    }
+  }
 }
 
 //===========================================================================
@@ -1350,64 +1350,64 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
 //===========================================================================
 
 final void A_FireCustomMissile(class<Actor> MissileType, optional float Angle,
-	optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
-	optional int AimAtAngle, optional float Pitch)
+  optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
+  optional int AimAtAngle, optional float Pitch)
 {
-	if (!MissileType || !bIsPlayer)
-	{
-		return;
-	}
+  if (!MissileType || !bIsPlayer)
+  {
+    return;
+  }
 
-	if (!specified_UseAmmo)
-	{
-		UseAmmo = true;
-	}
+  if (!specified_UseAmmo)
+  {
+    UseAmmo = true;
+  }
 
-	name decal = '';
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-	if (UseAmmo && Wpn)
-	{
-		if (!Wpn.DepleteAmmo(Wpn.FireMode))
-		{
-			return;
-		}
-		decal = Wpn.DecalName;
-	}
+  name decal = '';
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (UseAmmo && Wpn)
+  {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode))
+    {
+      return;
+    }
+    decal = Wpn.DecalName;
+  }
 
-	TVec ShootOrg = Origin;
-	if (SpawnXY)
-	{
-		ShootOrg.x += itof(SpawnXY) * cos(Angles.yaw - 90.0);
-		ShootOrg.y += itof(SpawnXY) * sin(Angles.yaw - 90.0);
-	}
-	ShootOrg.x += SpawnZ;
+  TVec ShootOrg = Origin;
+  if (SpawnXY)
+  {
+    ShootOrg.x += itof(SpawnXY) * cos(Angles.yaw - 90.0);
+    ShootOrg.y += itof(SpawnXY) * sin(Angles.yaw - 90.0);
+  }
+  ShootOrg.x += SpawnZ;
 
-	float ShootAngle = Angles.yaw;
-	if (AimAtAngle)
-	{
-		ShootAngle += Angle;
-	}
-	// Temporarily adjusts the pitch
-	float SavedPitch = Angles.pitch;
-	Angles.pitch -= Pitch;
+  float ShootAngle = Angles.yaw;
+  if (AimAtAngle)
+  {
+    ShootAngle += Angle;
+  }
+  // Temporarily adjusts the pitch
+  float SavedPitch = Angles.pitch;
+  Angles.pitch -= Pitch;
 
-	EntityEx AimTarget;
-	EntityEx A = SpawnPlayerMissileEx(MissileType, false, AimTarget, ShootAngle, ShootOrg, decal);
-	Angles.pitch = SavedPitch;
+  EntityEx AimTarget;
+  EntityEx A = SpawnPlayerMissileEx(MissileType, false, AimTarget, ShootAngle, ShootOrg, decal);
+  Angles.pitch = SavedPitch;
 
-	if (A)
-	{
-		//	Handle seeker missiles.
-		if (A.bSeekerMissile)
-		{
-			A.Tracer = AimTarget;
-		}
+  if (A)
+  {
+    //  Handle seeker missiles.
+    if (A.bSeekerMissile)
+    {
+      A.Tracer = AimTarget;
+    }
 
-		if (!AimAtAngle)
-		{
-			VectorRotateAroundZ(&A.Velocity, Angle);
-		}
-	}
+    if (!AimAtAngle)
+    {
+      VectorRotateAroundZ(&A.Velocity, Angle);
+    }
+  }
 }
 
 //===========================================================================
@@ -1417,38 +1417,38 @@ final void A_FireCustomMissile(class<Actor> MissileType, optional float Angle,
 //===========================================================================
 
 final void A_RailAttack(int RailDamage, optional float Offset,
-	optional bool UseAmmo, optional string Colour1, optional string Colour2,
-	optional int Flags, optional float MaxDiff,
-	optional class<Actor> PuffType)
+  optional bool UseAmmo, optional string Colour1, optional string Colour2,
+  optional int Flags, optional float MaxDiff,
+  optional class<Actor> PuffType)
 {
-	if (!specified_UseAmmo)
-	{
-		UseAmmo = true;
-	}
+  if (!specified_UseAmmo)
+  {
+    UseAmmo = true;
+  }
 
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-	if ((specified_Flags && (Flags & 1)) || UseAmmo)
-	{
-		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
-		{
-			return;
-		}
-	}
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if ((specified_Flags && (Flags & 1)) || UseAmmo)
+  {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+    {
+      return;
+    }
+  }
 
-	int Col1 = ParseColour(Colour1);
-	int Col2 = ParseColour(Colour2);
-	TVec Dir;
-	AngleVector(&Angles, &Dir);
-	RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType,
-		!!(Flags & 1), !!(Flags & 2));
+  int Col1 = ParseColour(Colour1);
+  int Col2 = ParseColour(Colour2);
+  TVec Dir;
+  AngleVector(&Angles, &Dir);
+  RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType,
+    !!(Flags & 1), !!(Flags & 2));
 }
 
 //**************************************************************************
-//	Doom weapon atack functions
+//  Doom weapon atack functions
 //**************************************************************************
 
 //===========================================================================
@@ -1459,37 +1459,37 @@ final void A_RailAttack(int RailDamage, optional float Offset,
 
 final void A_FirePistol()
 {
-	TVec dir;
-	bool Accurate;
+  TVec dir;
+  bool Accurate;
 
-	bool noAAim = false;
-	name decal = '';
-	if (bIsPlayer)
-	{
-		Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-		if (Wpn)
-		{
-			if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
-			{
-				return;
-			}
+  bool noAAim = false;
+  name decal = '';
+  if (bIsPlayer)
+  {
+    Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+    if (Wpn)
+    {
+      if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+      {
+        return;
+      }
 
-			Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
-			decal = Wpn.DecalName;
-			noAAim = Wpn.bNoAutoaim;
-		}
-		SetState(MeleeState);
-		Accurate = !PlayerEx(Player).Refire;
-	}
-	else
-	{
-		Accurate = true;
-	}
+      Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+      decal = Wpn.DecalName;
+      noAAim = Wpn.bNoAutoaim;
+    }
+    SetState(MeleeState);
+    Accurate = !PlayerEx(Player).Refire;
+  }
+  else
+  {
+    Accurate = true;
+  }
 
-	PlaySound('weapons/pistol', CHAN_WEAPON);
+  PlaySound('weapons/pistol', CHAN_WEAPON);
 
-	Aim(dir, 16.0 * 64.0,, noAAim);
-	GunShot(Accurate, dir, 'Bullet', false, decal);
+  Aim(dir, 16.0 * 64.0,, noAAim);
+  GunShot(Accurate, dir, 'Bullet', false, decal);
 }
 
 //===========================================================================
@@ -1500,37 +1500,37 @@ final void A_FirePistol()
 
 final void A_FireShotgun()
 {
-	int i;
-	TVec dir;
+  int i;
+  TVec dir;
 
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	PlaySound('weapons/shotgf', CHAN_WEAPON);
-	SetState(MeleeState);
+  PlaySound('weapons/shotgf', CHAN_WEAPON);
+  SetState(MeleeState);
 
-	bool noAAim = false;
-	name decal = '';
-	if (Wpn)
-	{
-		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
-		{
-			return;
-		}
+  bool noAAim = false;
+  name decal = '';
+  if (Wpn)
+  {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+    {
+      return;
+    }
 
-		Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
-		decal = Wpn.DecalName;
-		noAAim = Wpn.bNoAutoaim;
-	}
+    Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    decal = Wpn.DecalName;
+    noAAim = Wpn.bNoAutoaim;
+  }
 
-	Aim(dir, 16.0 * 64.0,, noAAim);
-	for (i = 0; i < 7; i++)
-	{
-		GunShot(false, dir, 'Shell', (i != 0), decal);
-	}
+  Aim(dir, 16.0 * 64.0,, noAAim);
+  for (i = 0; i < 7; i++)
+  {
+    GunShot(false, dir, 'Shell', (i != 0), decal);
+  }
 }
 
 //===========================================================================
@@ -1541,45 +1541,45 @@ final void A_FireShotgun()
 
 final void A_FireShotgun2()
 {
-	int i;
-	int damage;
-	TAVec rot;
-	TVec aimDir;
-	TVec dir;
+  int i;
+  int damage;
+  TAVec rot;
+  TVec aimDir;
+  TVec dir;
 
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	PlaySound('weapons/sshotf', CHAN_WEAPON);
-	SetState(MeleeState);
+  PlaySound('weapons/sshotf', CHAN_WEAPON);
+  SetState(MeleeState);
 
-	bool noAAim = false;
-	name decal = '';
-	if (Wpn)
-	{
-		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 2))
-		{
-			return;
-		}
+  bool noAAim = false;
+  name decal = '';
+  if (Wpn)
+  {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 2))
+    {
+      return;
+    }
 
-		Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
-		decal = Wpn.DecalName;
-		noAAim = Wpn.bNoAutoaim;
-	}
+    Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    decal = Wpn.DecalName;
+    noAAim = Wpn.bNoAutoaim;
+  }
 
-	Aim(aimDir, 16.0 * 64.0,, noAAim);
-	for (i = 0; i < 20; i++)
-	{
-		rot.pitch = (Random() - Random()) * 45.0 / 8.0;
-		rot.yaw = (Random() - Random()) * 45.0 / 4.0;
-		rot.roll = 0.0;
-		dir = RotateDirectionVector(aimDir, rot);
-		damage = 5 * (P_Random() % 3 + 1);
-		LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Shell', (i != 0), decal);
-	}
+  Aim(aimDir, 16.0 * 64.0,, noAAim);
+  for (i = 0; i < 20; i++)
+  {
+    rot.pitch = (Random() - Random()) * 45.0 / 8.0;
+    rot.yaw = (Random() - Random()) * 45.0 / 4.0;
+    rot.roll = 0.0;
+    dir = RotateDirectionVector(aimDir, rot);
+    damage = 5 * (P_Random() % 3 + 1);
+    LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Shell', (i != 0), decal);
+  }
 }
 
 //===========================================================================
@@ -1590,7 +1590,7 @@ final void A_FireShotgun2()
 
 final void A_OpenShotgun2()
 {
-	PlaySound('weapons/sshoto', CHAN_WEAPON);
+  PlaySound('weapons/sshoto', CHAN_WEAPON);
 }
 
 //===========================================================================
@@ -1601,7 +1601,7 @@ final void A_OpenShotgun2()
 
 final void A_LoadShotgun2()
 {
-	PlaySound('weapons/sshotl', CHAN_WEAPON);
+  PlaySound('weapons/sshotl', CHAN_WEAPON);
 }
 
 //===========================================================================
@@ -1612,8 +1612,8 @@ final void A_LoadShotgun2()
 
 final void A_CloseShotgun2()
 {
-	PlaySound('weapons/sshotc', CHAN_WEAPON);
-	A_ReFire();
+  PlaySound('weapons/sshotc', CHAN_WEAPON);
+  A_ReFire();
 }
 
 //===========================================================================
@@ -1624,41 +1624,41 @@ final void A_CloseShotgun2()
 
 final void A_FireCGun()
 {
-	TVec dir;
+  TVec dir;
 
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	PlaySound('weapons/chngun', CHAN_WEAPON);
+  PlaySound('weapons/chngun', CHAN_WEAPON);
 
-	bool noAAim = false;
-	name decal = '';
-	if (Wpn)
-	{
-		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
-		{
-			return;
-		}
+  bool noAAim = false;
+  name decal = '';
+  if (Wpn)
+  {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+    {
+      return;
+    }
 
-		if (Player.ViewStates[ps_weapon].State == Wpn.GetAttackState(false))
-		{
-			Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
-		}
-		else
-		{
-			Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
-		}
-		decal = Wpn.DecalName;
-		noAAim = Wpn.bNoAutoaim;
-	}
+    if (Player.ViewStates[ps_weapon].State == Wpn.GetAttackState(false))
+    {
+      Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    }
+    else
+    {
+      Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
+    }
+    decal = Wpn.DecalName;
+    noAAim = Wpn.bNoAutoaim;
+  }
 
-	SetState(MeleeState);
+  SetState(MeleeState);
 
-	Aim(dir, 16.0 * 64.0,, noAAim);
-	GunShot(!PlayerEx(Player).Refire, dir, 'Bullet', false, decal);
+  Aim(dir, 16.0 * 64.0,, noAAim);
+  GunShot(!PlayerEx(Player).Refire, dir, 'Bullet', false, decal);
 }
 
 //===========================================================================
@@ -1669,21 +1669,21 @@ final void A_FireCGun()
 
 final void A_FireMissile()
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-	name decal = '';
-	if (Wpn)
-	{
-		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
-		{
-			return;
-		}
-		decal = Wpn.DecalName;
-	}
-	SpawnPlayerMissile(Rocket, decal);
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  name decal = '';
+  if (Wpn)
+  {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+    {
+      return;
+    }
+    decal = Wpn.DecalName;
+  }
+  SpawnPlayerMissile(Rocket, decal);
 }
 
 //===========================================================================
@@ -1694,29 +1694,29 @@ final void A_FireMissile()
 
 final void A_FirePlasma()
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-	name decal = '';
-	if (Wpn)
-	{
-		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
-		{
-			return;
-		}
-		if (!(P_Random() & 1))
-		{
-			Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
-		}
-		else
-		{
-			Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
-		}
-		decal = Wpn.DecalName;
-	}
-	SpawnPlayerMissile(PlasmaBall, decal);
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  name decal = '';
+  if (Wpn)
+  {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+    {
+      return;
+    }
+    if (!(P_Random() & 1))
+    {
+      Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    }
+    else
+    {
+      Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
+    }
+    decal = Wpn.DecalName;
+  }
+  SpawnPlayerMissile(PlasmaBall, decal);
 }
 
 //===========================================================================
@@ -1727,30 +1727,30 @@ final void A_FirePlasma()
 
 final void DoFireRailgun(float Offset)
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-	if (Wpn)
-	{
-		if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
-		{
-			return;
-		}
-		if (!(P_Random() & 1))
-		{
-			Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
-		}
-		else
-		{
-			Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
-		}
-	}
-	int RailDamage = Level.Game.deathmatch ? 100 : 150;
-	TVec Dir;
-	AngleVector(&Angles, &Dir);
-	RailAttack(Dir, Offset, RailDamage);
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (Wpn)
+  {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+    {
+      return;
+    }
+    if (!(P_Random() & 1))
+    {
+      Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    }
+    else
+    {
+      Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
+    }
+  }
+  int RailDamage = Level.Game.deathmatch ? 100 : 150;
+  TVec Dir;
+  AngleVector(&Angles, &Dir);
+  RailAttack(Dir, Offset, RailDamage);
 }
 
 //===========================================================================
@@ -1761,7 +1761,7 @@ final void DoFireRailgun(float Offset)
 
 final void A_FireRailgun()
 {
-	DoFireRailgun(0.0);
+  DoFireRailgun(0.0);
 }
 
 //===========================================================================
@@ -1772,7 +1772,7 @@ final void A_FireRailgun()
 
 final void A_FireRailgunLeft()
 {
-	DoFireRailgun(-10.0);
+  DoFireRailgun(-10.0);
 }
 
 //===========================================================================
@@ -1783,7 +1783,7 @@ final void A_FireRailgunLeft()
 
 final void A_FireRailgunRight()
 {
-	DoFireRailgun(10.0);
+  DoFireRailgun(10.0);
 }
 
 //===========================================================================
@@ -1804,7 +1804,7 @@ final void A_RailWait()
 
 final void A_BFGsound()
 {
-	PlaySound('weapons/bfgf', CHAN_WEAPON);
+  PlaySound('weapons/bfgf', CHAN_WEAPON);
 }
 
 //===========================================================================
@@ -1815,21 +1815,21 @@ final void A_BFGsound()
 
 final void A_FireBFG()
 {
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-	name decal = '';
-	if (Wpn)
-	{
-		if (!Wpn.DepleteAmmo(Wpn.FireMode,, BFG9000.default.AmmoUse1))
-		{
-			return;
-		}
-		decal = Wpn.DecalName;
-	}
-	SpawnPlayerMissile(BFGBall, decal);
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  name decal = '';
+  if (Wpn)
+  {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode,, BFG9000.default.AmmoUse1))
+    {
+      return;
+    }
+    decal = Wpn.DecalName;
+  }
+  SpawnPlayerMissile(BFGBall, decal);
 }
 
 //**************************************************************************
@@ -1846,11 +1846,11 @@ final void A_FireBFG()
 
 final void A_RestoreSpecialThing1()
 {
-	bInvisible = false;
-	if (DoRespawn())
-	{
-		PlaySound('misc/spawn', CHAN_VOICE);
-	}
+  bInvisible = false;
+  if (DoRespawn())
+  {
+    PlaySound('misc/spawn', CHAN_VOICE);
+  }
 }
 
 //==========================================================================
@@ -1861,56 +1861,56 @@ final void A_RestoreSpecialThing1()
 
 final void A_RestoreSpecialThing2()
 {
-	bSpecial = true;
-	SetState(IdleState);
+  bSpecial = true;
+  SetState(IdleState);
 }
 
 states
 {
-	//	Hide pickup like in Doom and Strife.
+  //  Hide pickup like in Doom and Strife.
 DormantPickup:
-	TNT1 A 1050
-	TNT1 A -1
-	{
-		EntityEx	A;
+  TNT1 A 1050
+  TNT1 A -1
+  {
+    EntityEx  A;
 
-		bInvisible = false;
-		bSpecial = true;
-		SetState(IdleState);
+    bInvisible = false;
+    bSpecial = true;
+    SetState(IdleState);
 
-		// spawn a teleport fog at the new spot
-		A = Spawn(ItemFog, Origin);
-		A.PlaySound('misc/spawn', CHAN_ITEM);
-	}
-	Stop
+    // spawn a teleport fog at the new spot
+    A = Spawn(ItemFog, Origin);
+    A.PlaySound('misc/spawn', CHAN_ITEM);
+  }
+  Stop
 
-	//	Hide for 40 secs
+  //  Hide for 40 secs
 HideSpecial:
-	ACLO E 1400
-	ACLO A 4 A_RestoreSpecialThing1
-	ACLO BABCBCDC 4
-	ACLO D 4 A_RestoreSpecialThing2
-	Stop
+  ACLO E 1400
+  ACLO A 4 A_RestoreSpecialThing1
+  ACLO BABCBCDC 4
+  ACLO D 4 A_RestoreSpecialThing2
+  Stop
 
-	//	Invisible state for held items
+  //  Invisible state for held items
 Held:
-	TNT1 A -1
-	Stop
+  TNT1 A -1
+  Stop
 
-	//	Will destroy item as soon as possible
+  //  Will destroy item as soon as possible
 HoldAndDestroy:
-	TNT1 A 1
-	Stop
+  TNT1 A 1
+  Stop
 }
 
 defaultproperties
 {
-	Amount = 1;
-	InterHubAmount = 1;
-	MaxAmount = 1;
-	bSpecial = true;
-	PickupMessage = "You got a pickup";
-	PickupSound = 'misc/i_pkup';
-	UseSound = 'misc/invuse';
-	bNoAutoaim = false;
+  Amount = 1;
+  InterHubAmount = 1;
+  MaxAmount = 1;
+  bSpecial = true;
+  PickupMessage = "You got a pickup";
+  PickupSound = 'misc/i_pkup';
+  UseSound = 'misc/invuse';
+  bNoAutoaim = false;
 }

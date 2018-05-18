@@ -27,38 +27,38 @@ class HealthFillup : DummyStrifeItem;
 
 //==========================================================================
 //
-//	TryPickup
+//  TryPickup
 //
 //==========================================================================
 
 bool TryPickup(EntityEx Toucher)
 {
-	int			Amount;
+  int     Amount;
 
-	switch (Level.World.GameSkill)
-	{
-	case 0:
-	case 4:
-		Amount = 100;
-		break;
-	case 1:
-		Amount = 75;
-		break;
-	case 2:
-	case 3:
-		Amount = 50;
-		break;
-	}
-	if (!Toucher.GiveBody(-Amount))
-	{
-		return false;
-	}
-	GoAwayAndDie();
-	return true;
+  switch (Level.World.GameSkill)
+  {
+  case 0:
+  case 4:
+    Amount = 100;
+    break;
+  case 1:
+    Amount = 75;
+    break;
+  case 2:
+  case 3:
+    Amount = 50;
+    break;
+  }
+  if (!Toucher.GiveBody(-Amount))
+  {
+    return false;
+  }
+  GoAwayAndDie();
+  return true;
 }
 
 defaultproperties
 {
-	ConversationID = 299;
-	StrifeName = "Health";
+  ConversationID = 299;
+  StrifeName = "Health";
 }

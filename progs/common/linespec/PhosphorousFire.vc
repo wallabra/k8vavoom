@@ -33,91 +33,91 @@ class PhosphorousFire : Actor;
 
 int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
-	if (victim.bNoBlood)
-	{
-		return damage / 2;
-	}
-	return ::DoSpecialDamage(victim, source, damage);
+  if (victim.bNoBlood)
+  {
+    return damage / 2;
+  }
+  return ::DoSpecialDamage(victim, source, damage);
 }
 
 //==========================================================================
 //
-//	A_Burnination
+//  A_Burnination
 //
 //==========================================================================
 
 final void A_Burnination()
 {
-	float xofs;
-	float yofs;
-	Actor drop;
+  float xofs;
+  float yofs;
+  Actor drop;
 
-	Velocity.z -= 8.0 * 35.0;
-	Velocity.x += (Random() - Random()) * 4.0 * 35.0;
-	Velocity.y += (Random() - Random()) * 4.0 * 35.0;
-	PlaySound('world/largefire', CHAN_VOICE);
+  Velocity.z -= 8.0 * 35.0;
+  Velocity.x += (Random() - Random()) * 4.0 * 35.0;
+  Velocity.y += (Random() - Random()) * 4.0 * 35.0;
+  PlaySound('world/largefire', CHAN_VOICE);
 
-	//	Only the main fire spawns more.
-	if (!bDropped)
-	{
-		xofs = (Random() - 0.5) * 40.0;
-		yofs = (Random() - 0.5) * 40.0;
+  //  Only the main fire spawns more.
+  if (!bDropped)
+  {
+    xofs = (Random() - 0.5) * 40.0;
+    yofs = (Random() - 0.5) * 40.0;
 
-		if (xofs < 0.0)
-		{
-			xofs -= 12.0;
-		}
-		else
-		{
-			xofs += 12.0;
-		}
+    if (xofs < 0.0)
+    {
+      xofs -= 12.0;
+    }
+    else
+    {
+      xofs += 12.0;
+    }
 
-		if (yofs < 0.0)
-		{
-			yofs -= 12.0;
-		}
-		else
-		{
-			yofs += 12.0;
-		}
+    if (yofs < 0.0)
+    {
+      yofs -= 12.0;
+    }
+    else
+    {
+      yofs += 12.0;
+    }
 
-		drop = Spawn(PhosphorousFire, Origin + vector(xofs, yofs, 4.0));
-		if (drop)
-		{
-			drop.Velocity.x = Velocity.x + (Random() - Random()) * 8.0 * 35.0;
-			drop.Velocity.y = Velocity.y + (Random() - Random()) * 8.0 * 35.0;
-			drop.Velocity.z = Velocity.z - 1.0 * 35.0;
-			drop.ReactionCount = (P_Random() & 3) + 2;
-			drop.bDropped = true;
-			drop.Target = Target;
-		}
-	}
+    drop = Spawn(PhosphorousFire, Origin + vector(xofs, yofs, 4.0));
+    if (drop)
+    {
+      drop.Velocity.x = Velocity.x + (Random() - Random()) * 8.0 * 35.0;
+      drop.Velocity.y = Velocity.y + (Random() - Random()) * 8.0 * 35.0;
+      drop.Velocity.z = Velocity.z - 1.0 * 35.0;
+      drop.ReactionCount = (P_Random() & 3) + 2;
+      drop.bDropped = true;
+      drop.Target = Target;
+    }
+  }
 }
 
 states
 {
 Spawn:
-	BNG3 B 2 Bright A_Explode
-	BNG3 C 2 Bright A_Countdown
-	FLBE A 2 Bright A_Burnination
-	FLBE B 2 Bright A_Countdown
-	FLBE C 2 Bright A_Explode
-	FLBE D 3 Bright A_Countdown
-	FLBE E 3 Bright A_Explode
-	FLBE F 3 Bright A_Countdown
-	FLBE G 3 Bright A_Burnination
-	Goto Spawn+5
+  BNG3 B 2 Bright A_Explode
+  BNG3 C 2 Bright A_Countdown
+  FLBE A 2 Bright A_Burnination
+  FLBE B 2 Bright A_Countdown
+  FLBE C 2 Bright A_Explode
+  FLBE D 3 Bright A_Countdown
+  FLBE E 3 Bright A_Explode
+  FLBE F 3 Bright A_Countdown
+  FLBE G 3 Bright A_Burnination
+  Goto Spawn+5
 Death:
-	FLBE H 2 Bright
-	FLBE I 2 Bright A_Burnination
-	FLBE JK 2 Bright
-	Stop
+  FLBE H 2 Bright
+  FLBE I 2 Bright A_Burnination
+  FLBE JK 2 Bright
+  Stop
 }
 
 defaultproperties
 {
-	RenderStyle = STYLE_Add;
-	ReactionCount = 120;
-	bNoBlockmap = true;
-	DamageType = 'Fire';
+  RenderStyle = STYLE_Add;
+  ReactionCount = 120;
+  bNoBlockmap = true;
+  DamageType = 'Fire';
 }

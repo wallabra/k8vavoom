@@ -28,19 +28,19 @@ class IceChunkHead : PlayerChunk;
 states
 {
 Spawn:
-	ICEC A 10 A_CheckPlayerDone
-	Wait
-	ICEC A 1050
-	Stop
+  ICEC A 10 A_CheckPlayerDone
+  Wait
+  ICEC A 1050
+  Stop
 }
 
 defaultproperties
 {
-	Radius = 3.0;
-	Height = 4.0;
-	Gravity = 0.125;
-	DamageType = 'Ice';	// used to force blue palette
-	bNoBlockmap = true;
-	bPassMobj = false;
-	bCannotPush = true;
+  Radius = 3.0;
+  Height = 4.0;
+  Gravity = 0.125;
+  DamageType = 'Ice'; // used to force blue palette
+  bNoBlockmap = true;
+  bPassMobj = false;
+  bCannotPush = true;
 }

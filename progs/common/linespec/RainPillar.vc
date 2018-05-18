@@ -33,12 +33,12 @@ class RainPillar : Actor;
 
 int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
-	if (Actor(victim).bBoss)
-	{
-		// Decrease damage for bosses
-		damage = (P_Random() & 7) + 1;
-	}
-	return ::DoSpecialDamage(victim, source, damage);
+  if (Actor(victim).bBoss)
+  {
+    // Decrease damage for bosses
+    damage = (P_Random() & 7) + 1;
+  }
+  return ::DoSpecialDamage(victim, source, damage);
 }
 
 //===========================================================================
@@ -49,42 +49,42 @@ int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 
 final void A_RainImpact()
 {
-	if (Origin.z > FloorZ)
-	{
-		SetState(FindState('AirDeath'));
-	}
-	else if (P_Random() < 40)
-	{
-		HitFloorType();
-	}
+  if (Origin.z > FloorZ)
+  {
+    SetState(FindState('AirDeath'));
+  }
+  else if (P_Random() < 40)
+  {
+    HitFloorType();
+  }
 }
 
 states
 {
 Spawn:
-	FX20 A -1 Bright
-	Stop
+  FX20 A -1 Bright
+  Stop
 Death:
-	FX20 B 4 Bright A_RainImpact
-	FX20 CDEF 4 Bright
-	Stop
+  FX20 B 4 Bright A_RainImpact
+  FX20 CDEF 4 Bright
+  Stop
 AirDeath:
-	FX20 GHI 4 Bright
-	Stop
+  FX20 GHI 4 Bright
+  Stop
 }
 
 defaultproperties
 {
-	Radius = 5.0;
-	Height = 12.0;
-	Speed = 420.0;
-	MissileDamage = 5;
-	RenderStyle = STYLE_Add;
-	bMissile = true;
-	bNoBlockmap = true;
-	bNoGravity = true;
-	bDropOff = true;
-	bNoTeleport = true;
-	bActivatePCross = true;
-	bBloodSplatter = true;
+  Radius = 5.0;
+  Height = 12.0;
+  Speed = 420.0;
+  MissileDamage = 5;
+  RenderStyle = STYLE_Add;
+  bMissile = true;
+  bNoBlockmap = true;
+  bNoGravity = true;
+  bDropOff = true;
+  bNoTeleport = true;
+  bActivatePCross = true;
+  bBloodSplatter = true;
 }

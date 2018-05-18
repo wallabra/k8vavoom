@@ -5,179 +5,179 @@
 //**************************************************************************
 
 :HereticDoorOpen
-	play			doors/dr1_open
-	nostopcutoff
+  play      doors/dr1_open
+  nostopcutoff
 end
 
 :HereticDoorClose
-	play			doors/dr1_open
-	stopsound		doors/dr1_clos
+  play      doors/dr1_open
+  stopsound   doors/dr1_clos
 end
 
 [HereticDoor
-	0				HereticDoorOpen
-	1				HereticDoorClose
-	2				HereticDoorOpen
-	3				HereticDoorClose
+  0       HereticDoorOpen
+  1       HereticDoorClose
+  2       HereticDoorOpen
+  3       HereticDoorClose
 ]
 
 :CeilingNormal
-	playrepeat		doors/dr1_move
+  playrepeat    doors/dr1_move
 end
 
 :CeilingSemiSilent
-	stopsound		plats/pt1_stop
+  stopsound   plats/pt1_stop
 end
 
 :Floor
-	playrepeat		doors/dr1_move
+  playrepeat    doors/dr1_move
 end
 
 :FloorAlt
-	playrepeat		plats/pt1_mid
-	stopsound		plats/pt1_stop
+  playrepeat    plats/pt1_mid
+  stopsound   plats/pt1_stop
 end
 
 :FloorStairStep
-	playrepeat		plats/pt1_mid
-	stopsound		plats/pt1_stop
+  playrepeat    plats/pt1_mid
+  stopsound   plats/pt1_stop
 end
 
 :Platform
-	playuntildone   plats/pt1_strt
-	playrepeat		plats/pt1_mid
-	stopsound		plats/pt1_stop
+  playuntildone   plats/pt1_strt
+  playrepeat    plats/pt1_mid
+  stopsound   plats/pt1_stop
 end
 
 :Silence
 end
 
 //
-//	------- Ambient sounds --------
+//  ------- Ambient sounds --------
 //
 
 :HereticAmbience
-	delayrand		210 465
-	volumerand		0 63
-	attenuation		none
-	randomsequence
-	restart
+  delayrand   210 465
+  volumerand    0 63
+  attenuation   none
+  randomsequence
+  restart
 end
 
 :AFX_Scream
-	environment		0
-	slot			HereticAmbience
-	playuntildone	world/amb1
+  environment   0
+  slot      HereticAmbience
+  playuntildone world/amb1
 end
 
 :AFX_Squish
-	environment		1
-	slot			HereticAmbience
-	playuntildone	world/amb2
+  environment   1
+  slot      HereticAmbience
+  playuntildone world/amb2
 end
 
 :AFX_Drops
-	environment		2
-	slot			HereticAmbience
-	play			world/amb3
-	delayrand		16 47
-	play			world/amb7
-	delayrand		16 47
-	play			world/amb3
-	delayrand		16 47
-	play			world/amb7
-	delayrand		16 47
-	play			world/amb3
-	delayrand		16 47
-	play			world/amb7
-	delayrand		16 47
+  environment   2
+  slot      HereticAmbience
+  play      world/amb3
+  delayrand   16 47
+  play      world/amb7
+  delayrand   16 47
+  play      world/amb3
+  delayrand   16 47
+  play      world/amb7
+  delayrand   16 47
+  play      world/amb3
+  delayrand   16 47
+  play      world/amb7
+  delayrand   16 47
 end
 
 :AFX_SlowFootsteps
-	environment		3
-	slot			HereticAmbience
-	playtime		world/amb4 15
-	volumerel		-2.36
-	playtime		world/amb11 15
-	volumerel		-2.36
-	playtime		world/amb4 15
-	volumerel		-2.36
-	playtime		world/amb11 15
-	volumerel		-2.36
-	playtime		world/amb4 15
-	volumerel		-2.36
-	playtime		world/amb11 15
-	volumerel		-2.36
-	playtime		world/amb4 15
-	volumerel		-2.36
-	playuntildone	world/amb11
+  environment   3
+  slot      HereticAmbience
+  playtime    world/amb4 15
+  volumerel   -2.36
+  playtime    world/amb11 15
+  volumerel   -2.36
+  playtime    world/amb4 15
+  volumerel   -2.36
+  playtime    world/amb11 15
+  volumerel   -2.36
+  playtime    world/amb4 15
+  volumerel   -2.36
+  playtime    world/amb11 15
+  volumerel   -2.36
+  playtime    world/amb4 15
+  volumerel   -2.36
+  playuntildone world/amb11
 end
 
 :AFX_Heartbeat
-	environment		4
-	slot			HereticAmbience
-	playtime		world/amb5 35
-	playtime		world/amb5 35
-	playtime		world/amb5 35
-	playuntildone	world/amb5
+  environment   4
+  slot      HereticAmbience
+  playtime    world/amb5 35
+  playtime    world/amb5 35
+  playtime    world/amb5 35
+  playuntildone world/amb5
 end
 
 :AFX_Bells
-	environment		5
-	slot			HereticAmbience
-	playtime		world/amb6 17
-	volumerel		-6.3
-	playtime		world/amb6 17
-	volumerel		-6.3
-	playtime		world/amb6 17
-	volumerel		-6.3
-	playuntildone	world/amb6
+  environment   5
+  slot      HereticAmbience
+  playtime    world/amb6 17
+  volumerel   -6.3
+  playtime    world/amb6 17
+  volumerel   -6.3
+  playtime    world/amb6 17
+  volumerel   -6.3
+  playuntildone world/amb6
 end
 
 :AFX_Growl
-	environment		6
-	slot			HereticAmbience
-	playuntildone	world/amb12
+  environment   6
+  slot      HereticAmbience
+  playuntildone world/amb12
 end
 
 :AFX_Magic
-	environment		7
-	slot			HereticAmbience
-	playuntildone	world/amb8
+  environment   7
+  slot      HereticAmbience
+  playuntildone world/amb8
 end
 
 :AFX_Laughter
-	environment		8
-	slot			HereticAmbience
-	playtime		world/amb9 16
-	volumerel		-3.15
-	playtime		world/amb9 16
-	volumerel		-3.15
-	playtime		world/amb9 16
-	volumerel		-3.15
-	playtime		world/amb10 16
-	volumerel		-3.15
-	playtime		world/amb10 16
-	volumerel		-3.15
-	playuntildone	world/amb10
+  environment   8
+  slot      HereticAmbience
+  playtime    world/amb9 16
+  volumerel   -3.15
+  playtime    world/amb9 16
+  volumerel   -3.15
+  playtime    world/amb9 16
+  volumerel   -3.15
+  playtime    world/amb10 16
+  volumerel   -3.15
+  playtime    world/amb10 16
+  volumerel   -3.15
+  playuntildone world/amb10
 end
 
 :AFX_FastFootsteps
-	environment		9
-	slot			HereticAmbience
-	playtime		world/amb4 8
-	volumerel		-2.36
-	playtime		world/amb11 8
-	volumerel		-2.36
-	playtime		world/amb4 8
-	volumerel		-2.36
-	playtime		world/amb11 8
-	volumerel		-2.36
-	playtime		world/amb4 8
-	volumerel		-2.36
-	playtime		world/amb11 8
-	volumerel		-2.36
-	playtime		world/amb4 8
-	volumerel		-2.36
-	playuntildone	world/amb11
+  environment   9
+  slot      HereticAmbience
+  playtime    world/amb4 8
+  volumerel   -2.36
+  playtime    world/amb11 8
+  volumerel   -2.36
+  playtime    world/amb4 8
+  volumerel   -2.36
+  playtime    world/amb11 8
+  volumerel   -2.36
+  playtime    world/amb4 8
+  volumerel   -2.36
+  playtime    world/amb11 8
+  volumerel   -2.36
+  playtime    world/amb4 8
+  volumerel   -2.36
+  playuntildone world/amb11
 end

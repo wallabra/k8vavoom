@@ -24,22 +24,22 @@
 //**************************************************************************
 
 class SecActEyesSurface : SectorAction
-	__mobjinfo__(9992);
+  __mobjinfo__(9992);
 
 //==========================================================================
 //
-//	TriggerAction
+//  TriggerAction
 //
 //==========================================================================
 
 bool TriggerAction(EntityEx Triggerer, int ActType)
 {
-	bool Ret = (ActType & SECSPAC_EyesSurface) && CheckTrigger(Triggerer);
-	if (::TriggerAction(Triggerer, ActType))
-	{
-		Ret = true;
-	}
-	return Ret;
+  bool Ret = (ActType & SECSPAC_EyesSurface) && CheckTrigger(Triggerer);
+  if (::TriggerAction(Triggerer, ActType))
+  {
+    Ret = true;
+  }
+  return Ret;
 }
 
 defaultproperties

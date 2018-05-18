@@ -33,13 +33,13 @@ class PhoenixFX2 : Actor;
 
 int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
-	// Flame thrower
-	if (victim.Player && P_Random() < 128)
-	{
-		// Freeze player for a bit
-		victim.ReactionTime += 0.125;
-	}
-	return ::DoSpecialDamage(victim, source, damage);
+  // Flame thrower
+  if (victim.Player && P_Random() < 128)
+  {
+    // Freeze player for a bit
+    victim.ReactionTime += 0.125;
+  }
+  return ::DoSpecialDamage(victim, source, damage);
 }
 
 //===========================================================================
@@ -50,7 +50,7 @@ int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 
 final void A_FlameEnd()
 {
-	Velocity.z += 1.5 * 35.0;
+  Velocity.z += 1.5 * 35.0;
 }
 
 //===========================================================================
@@ -61,38 +61,38 @@ final void A_FlameEnd()
 
 final void A_FloatPuff()
 {
-	Velocity.z += 1.8 * 35.0;
+  Velocity.z += 1.8 * 35.0;
 }
 
 states
 {
 Spawn:
-	FX09 ABABA 2 Bright
-	FX09 B 2 Bright A_FlameEnd
-	FX09 CDEF 2 Bright
-	Stop
+  FX09 ABABA 2 Bright
+  FX09 B 2 Bright A_FlameEnd
+  FX09 CDEF 2 Bright
+  Stop
 Death:
-	FX09 G 3 Bright
-	FX09 H 3 Bright A_FloatPuff
-	FX09 I 4 Bright
-	FX09 JK 5 Bright
-	Stop
+  FX09 G 3 Bright
+  FX09 H 3 Bright A_FloatPuff
+  FX09 I 4 Bright
+  FX09 JK 5 Bright
+  Stop
 }
 
 defaultproperties
 {
-	Radius = 6.0;
-	Height = 8.0;
-	Speed = 350.0;
-	MissileDamage = 2;
-	RenderStyle = STYLE_Add;
-	DamageType = 'Fire';
-	bMissile = true;
-	bNoBlockmap = true;
-	bNoGravity = true;
-	bDropOff = true;
-	bNoTeleport = true;
-	bActivatePCross = true;
-	bActivateImpact = true;
-	bBloodSplatter = true;
+  Radius = 6.0;
+  Height = 8.0;
+  Speed = 350.0;
+  MissileDamage = 2;
+  RenderStyle = STYLE_Add;
+  DamageType = 'Fire';
+  bMissile = true;
+  bNoBlockmap = true;
+  bNoGravity = true;
+  bDropOff = true;
+  bNoTeleport = true;
+  bActivatePCross = true;
+  bActivateImpact = true;
+  bBloodSplatter = true;
 }

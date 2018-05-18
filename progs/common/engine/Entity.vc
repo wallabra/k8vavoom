@@ -76,285 +76,285 @@
 //**************************************************************************
 
 class Entity : Thinker
-	native
-	abstract;
+  native
+  abstract;
 
 enum
 {
-	STYLE_None,					// Do not draw
-	STYLE_Normal,				// Normal; just copy the image to the screen
-	STYLE_Fuzzy,				// Draw silhouette using "fuzz" effect
-	STYLE_SoulTrans,			// Draw translucent with amount in r_transsouls
-	STYLE_OptFuzzy,				// Draw as fuzzy or translucent, based on user preference
-	STYLE_Translucent = 64,		// Draw translucent
-	STYLE_Add					// Draw additive
+  STYLE_None,         // Do not draw
+  STYLE_Normal,       // Normal; just copy the image to the screen
+  STYLE_Fuzzy,        // Draw silhouette using "fuzz" effect
+  STYLE_SoulTrans,      // Draw translucent with amount in r_transsouls
+  STYLE_OptFuzzy,       // Draw as fuzzy or translucent, based on user preference
+  STYLE_Translucent = 64,   // Draw translucent
+  STYLE_Add         // Draw additive
 };
 
-//	Colour tralslation types.
+//  Colour tralslation types.
 enum
 {
-	//	No translation.
-	TRANSL_None,
-	//	Game's standard translations.
-	TRANSL_Standard,
-	//	Per-player translations.
-	TRANSL_Player,
-	//	ACS translations.
-	TRANSL_Level,
-	//	Translations of dead players.
-	TRANSL_BodyQueue,
-	//	Translations defined in DECORATE.
-	TRANSL_Decorate,
-	//	Blood translations, for blood colour
-	TRANSL_Blood,
+  //  No translation.
+  TRANSL_None,
+  //  Game's standard translations.
+  TRANSL_Standard,
+  //  Per-player translations.
+  TRANSL_Player,
+  //  ACS translations.
+  TRANSL_Level,
+  //  Translations of dead players.
+  TRANSL_BodyQueue,
+  //  Translations defined in DECORATE.
+  TRANSL_Decorate,
+  //  Blood translations, for blood colour
+  TRANSL_Blood,
 
-	TRANSL_Max
+  TRANSL_Max
 };
 
 const int TRANSL_TYPE_SHIFT = 16;
 
-//	Flags for A_LookEx method
+//  Flags for A_LookEx method
 enum
 {
-	LOF_NOSIGHTCHECK = 1,
-	LOF_NOSOUNDCHECK = 2,
-	LOF_DONTCHASEGOAL = 4,
-	LOF_NOSEESOUND = 8,
-	LOF_FULLVOLSEESOUND = 16
+  LOF_NOSIGHTCHECK = 1,
+  LOF_NOSOUNDCHECK = 2,
+  LOF_DONTCHASEGOAL = 4,
+  LOF_NOSEESOUND = 8,
+  LOF_FULLVOLSEESOUND = 16
 };
 
 struct LightEffectDef
 {
-	name				Name;
-	byte				Type;
-	int					Colour;
-	float				Radius;
-	float				Radius2;
-	float				MinLight;
-	TVec				Offset;
-	float				Chance;
-	float				Interval;
-	float				Scale;
+  name        Name;
+  byte        Type;
+  int         Colour;
+  float       Radius;
+  float       Radius2;
+  float       MinLight;
+  TVec        Offset;
+  float       Chance;
+  float       Interval;
+  float       Scale;
 };
 
 struct ParticleEffectDef
 {
-	name				Name;
-	byte				Type;
-	byte				Type2;
-	int					Colour;
-	TVec				Offset;
-	int					Count;
-	float				OrgRnd;
-	TVec				Velocity;
-	float				VelRnd;
-	float				Accel;
-	float				Grav;
-	float				Duration;
-	float				Ramp;
+  name        Name;
+  byte        Type;
+  byte        Type2;
+  int         Colour;
+  TVec        Offset;
+  int         Count;
+  float       OrgRnd;
+  TVec        Velocity;
+  float       VelRnd;
+  float       Accel;
+  float       Grav;
+  float       Duration;
+  float       Ramp;
 };
 
 struct DropItemInfo
 {
-	class<Entity>		Type;
-	name				TypeName;
-	int					Amount;
-	float				Chance;
+  class<Entity>   Type;
+  name        TypeName;
+  int         Amount;
+  float       Chance;
 };
 
 struct DamageFactor
 {
-	name				DamageType;
-	float				Factor;
+  name        DamageType;
+  float       Factor;
 };
 
 struct PainChanceInfo
 {
-	name				DamageType;
-	float				Chance;
+  name        DamageType;
+  float       Chance;
 };
 
 struct tmtrace_t
 {
-	Entity			StepThing;
-	TVec			End;
-	float			BBox[4];
-	float			FloorZ;
-	float			CeilingZ;
-	float			DropOffZ;
-	sec_plane_t*	Floor;
-	sec_plane_t*	Ceiling;
+  Entity      StepThing;
+  TVec      End;
+  float     BBox[4];
+  float     FloorZ;
+  float     CeilingZ;
+  float     DropOffZ;
+  sec_plane_t*  Floor;
+  sec_plane_t*  Ceiling;
 
-	bool			bFloatOk;	// if true, move would be ok if
-								// within tmtrace.FloorZ - tmtrace.CeilingZ
+  bool      bFloatOk; // if true, move would be ok if
+                // within tmtrace.FloorZ - tmtrace.CeilingZ
 
-	// keep track of the line that lowers the ceiling,
-	// so missiles don't explode against sky hack walls
-	line_t*			CeilingLine;
-	line_t*			FloorLine;
-	// also keep track of the blocking line, for checking
-	// against doortracks
-	line_t*			BlockingLine; // only lines without backsector
+  // keep track of the line that lowers the ceiling,
+  // so missiles don't explode against sky hack walls
+  line_t*     CeilingLine;
+  line_t*     FloorLine;
+  // also keep track of the blocking line, for checking
+  // against doortracks
+  line_t*     BlockingLine; // only lines without backsector
 
-	// keep track of special lines as they are hit,
-	// but don't process them until the move is proven valid
-	array<line_t*>	SpecHit;
+  // keep track of special lines as they are hit,
+  // but don't process them until the move is proven valid
+  array<line_t*>  SpecHit;
 
-	Entity			BlockingMobj;
-	line_t*			AnyBlockingLine; // any blocking line
+  Entity      BlockingMobj;
+  line_t*     AnyBlockingLine; // any blocking line
 };
 
 // Info for drawing: position.
-TVec			Origin;
+TVec      Origin;
 
 // Momentums, used to update position.
-TVec			Velocity;
+TVec      Velocity;
 
-TAVec			Angles;				// orientation
+TAVec     Angles;       // orientation
 
-readonly state	State;
-readonly state	DispState;
-float			StateTime;			// state tic counter
+readonly state  State;
+readonly state  DispState;
+float     StateTime;      // state tic counter
 
 //More drawing info.
-byte			SpriteType;				//  How to draw sprite
-name			FixedSpriteName;
-string			FixedModelName;
-byte			ModelVersion;
+byte      SpriteType;       //  How to draw sprite
+name      FixedSpriteName;
+string      FixedModelName;
+byte      ModelVersion;
 int             NumTouchingLights;
 
-byte			RenderStyle;
-float			Alpha;
-int				Translation;
+byte      RenderStyle;
+float     Alpha;
+int       Translation;
 
-float			FloorClip;	// value to use for floor clipping
+float     FloorClip;  // value to use for floor clipping
 
-//	Scaling.
-float			ScaleX;
-float			ScaleY;
+//  Scaling.
+float     ScaleX;
+float     ScaleY;
 
-native readonly subsector_t*	SubSector;
-native readonly sector_t*		Sector;
+native readonly subsector_t*  SubSector;
+native readonly sector_t*   Sector;
 
 // Interaction info, by BLOCKMAP.
 // Links in blocks (if needed).
-native readonly private Entity	BlockMapNext;
-native readonly private Entity	BlockMapPrev;
+native readonly private Entity  BlockMapNext;
+native readonly private Entity  BlockMapPrev;
 
 // Links in sector (if needed).
-native readonly Entity			SNext;
-native readonly Entity			SPrev;
+native readonly Entity      SNext;
+native readonly Entity      SPrev;
 
-native readonly msecnode_t*		TouchingSectorList;
+native readonly msecnode_t*   TouchingSectorList;
 
 // The closest interval over all contacted Sectors.
-native float	FloorZ;
-native float	CeilingZ;
-native float	DropOffZ;
+native float  FloorZ;
+native float  CeilingZ;
+native float  DropOffZ;
 
 //  Closest floor and ceiling, source of floorz and ceilingz
-native sec_plane_t*	Floor;
-native sec_plane_t*	Ceiling;
+native sec_plane_t* Floor;
+native sec_plane_t* Ceiling;
 
 // If == validcount, already checked.
-int				ValidCount;
+int       ValidCount;
 
-//	Flags
-bool bSolid;			// Blocks.
-bool bNoSector;			// don't use the sector links (invisible but touchable)
-bool bNoBlockmap;		// don't use the BlockLinks (inert but displayable)
-bool bIsPlayer;			// PLayer or player-bot
+//  Flags
+bool bSolid;      // Blocks.
+bool bNoSector;     // don't use the sector links (invisible but touchable)
+bool bNoBlockmap;   // don't use the BlockLinks (inert but displayable)
+bool bIsPlayer;     // PLayer or player-bot
 bool bFixedModel;
 
-bool bNoGravity;		// don't apply gravity every tic
-bool bPassMobj;			// Enable z block checking.  If on,
-						// this flag will allow the mobj
-						// to pass over/under other mobjs.
+bool bNoGravity;    // don't apply gravity every tic
+bool bPassMobj;     // Enable z block checking.  If on,
+            // this flag will allow the mobj
+            // to pass over/under other mobjs.
 bool bColideWithThings;
 bool bColideWithWorld;
 bool bCheckLineBlocking;
 bool bCheckLineBlockMonsters;
-bool bDropOff;			// allow jumps from high places
-bool bFloat;			// allow moves to any height, no gravity
-bool bFly;				// fly mode is active
-bool bBlasted;			// missile will pass through ghosts
+bool bDropOff;      // allow jumps from high places
+bool bFloat;      // allow moves to any height, no gravity
+bool bFly;        // fly mode is active
+bool bBlasted;      // missile will pass through ghosts
 bool bCantLeaveFloorpic; // stay within a certain floor type
-bool bFloorClip;		// if feet are allowed to be clipped
+bool bFloorClip;    // if feet are allowed to be clipped
 bool bIgnoreCeilingStep; // continue walk without lowering itself
-bool bIgnoreFloorStep;	// continue walk ignoring floor height changes
-bool bAvoidingDropoff;	// used to move monsters away from dropoffs
-bool bOnMobj;			// mobj is resting on top of another mobj
-bool bCorpse;			// don't stop moving halfway off a step
-bool bFullBright;		// make current state full bright
-bool bInvisible;		// Don't draw this actor
-bool bMissile;			// don't hit same species, explode on block
-bool bDontOverlap;		// Prevent some things from overlapping.
-readonly bool bUseDispState;	// Use DispState for rendering
-bool bActLikeBridge;	// Always allow objects to pass.
-bool bNoDropOff;		// Can't drop off under any circumstances
-bool bBright;			// Always render full bright
-bool bCanJump;			// Can perform standard jump
-bool bStepMissile;		// Missile can "walk" up steps
+bool bIgnoreFloorStep;  // continue walk ignoring floor height changes
+bool bAvoidingDropoff;  // used to move monsters away from dropoffs
+bool bOnMobj;     // mobj is resting on top of another mobj
+bool bCorpse;     // don't stop moving halfway off a step
+bool bFullBright;   // make current state full bright
+bool bInvisible;    // Don't draw this actor
+bool bMissile;      // don't hit same species, explode on block
+bool bDontOverlap;    // Prevent some things from overlapping.
+readonly bool bUseDispState;  // Use DispState for rendering
+bool bActLikeBridge;  // Always allow objects to pass.
+bool bNoDropOff;    // Can't drop off under any circumstances
+bool bBright;     // Always render full bright
+bool bCanJump;      // Can perform standard jump
+bool bStepMissile;    // Missile can "walk" up steps
 
-int				Health;
-int				InitialHealth;
+int       Health;
+int       InitialHealth;
 
 // For movement checking.
-float			Radius;
-float			Height;
+float     Radius;
+float     Height;
 
 // Additional info record for player avatars only.
 // Only valid if type == MT_PLAYER
-BasePlayer		Player;
+BasePlayer    Player;
 
-readonly int	TID;		// thing identifier
-readonly private Entity	TIDHashNext;
-readonly private Entity	TIDHashPrev;
+readonly int  TID;    // thing identifier
+readonly private Entity TIDHashNext;
+readonly private Entity TIDHashPrev;
 
-int				Special;	// special
-int				Args[5];	// special arguments
+int       Special;  // special
+int       Args[5];  // special arguments
 
-readonly private int	SoundOriginID;
+readonly private int  SoundOriginID;
 
 //  Params
-float			Mass;
-float			MaxStepHeight;
-float			MaxDropoffHeight;
-float			Gravity;
+float     Mass;
+float     MaxStepHeight;
+float     MaxDropoffHeight;
+float     Gravity;
 
 //  Water
-byte			WaterLevel;
-byte			WaterType;
+byte      WaterLevel;
+byte      WaterType;
 
 //   For player sounds.
-name			SoundClass;
-name			SoundGender;
+name      SoundClass;
+name      SoundGender;
 
-	//	Owner entity of inventory item
-Entity			Owner;
+  //  Owner entity of inventory item
+Entity      Owner;
 
 name DecalName;
 
 replication
 {
-	reliable if (Role == ROLE_Authority)
-		Origin, Angles, FloorClip, State, StateTime, SpriteType,
-		FixedSpriteName, ModelVersion, NumTouchingLights, RenderStyle, Alpha,
-		Translation, ScaleX, ScaleY, bFly, bNoSector, bInvisible, bFullBright,
-		bFixedModel, SoundOriginID, bUseDispState, bBright;
+  reliable if (Role == ROLE_Authority)
+    Origin, Angles, FloorClip, State, StateTime, SpriteType,
+    FixedSpriteName, ModelVersion, NumTouchingLights, RenderStyle, Alpha,
+    Translation, ScaleX, ScaleY, bFly, bNoSector, bInvisible, bFullBright,
+    bFixedModel, SoundOriginID, bUseDispState, bBright;
 
-	reliable if (Role == ROLE_Authority && bUseDispState)
-		DispState;
+  reliable if (Role == ROLE_Authority && bUseDispState)
+    DispState;
 
-	reliable if (Role == ROLE_Authority && bFixedModel)
-		FixedModelName;
+  reliable if (Role == ROLE_Authority && bFixedModel)
+    FixedModelName;
 
-	reliable if (Role == ROLE_Authority && bNetOwner)
-		Owner;
+  reliable if (Role == ROLE_Authority && bNetOwner)
+    Owner;
 }
 
 //
-//	Natives
+//  Natives
 //
 
 native final void SetTID(int tid);
@@ -363,15 +363,15 @@ native final bool SetState(state State);
 native final void SetInitialState(state State);
 native final bool AdvanceState(float deltaTime);
 native final state FindState(name StateName, optional name SubLabel,
-	optional bool Exact);
+  optional bool Exact);
 native final state FindStateEx(string StateName, optional bool Exact);
 native final state HasSpecialStates(name StateName);
 native final void GetStateEffects(out array<LightEffectDef*> Lights,
-	out array<ParticleEffectDef*> Lights);
+  out array<ParticleEffectDef*> Lights);
 native final bool CallStateChain(Entity Actor, state State);
 
 native final void PlaySound(name SoundName, int Channel, optional float Volume,
-	optional float Atenuation, optional bool Loop);
+  optional float Atenuation, optional bool Loop);
 native final void StopSound(int Channel);
 native final bool AreSoundsEquivalent(name Sound1, name Sound2);
 native final bool IsSoundPresent(name Sound);
@@ -419,7 +419,7 @@ void OnMapSpawn(mthing_t* mthing)
 
 //==========================================================================
 //
-//	BeginPlay
+//  BeginPlay
 //
 //==========================================================================
 
@@ -429,7 +429,7 @@ void BeginPlay()
 
 //==========================================================================
 //
-//	Destroyed
+//  Destroyed
 //
 //==========================================================================
 
@@ -439,18 +439,18 @@ void Destroyed()
 
 //==========================================================================
 //
-//	Touch
+//  Touch
 //
 //==========================================================================
 
 bool Touch(Entity Other)
 {
-	return !Other.bSolid;
+  return !Other.bSolid;
 }
 
 //===========================================================================
 //
-//	CheckForPushSpecial
+//  CheckForPushSpecial
 //
 //===========================================================================
 
@@ -460,7 +460,7 @@ void CheckForPushSpecial(line_t* line, int side)
 
 //==========================================================================
 //
-//	BlastedHitLine
+//  BlastedHitLine
 //
 //==========================================================================
 
@@ -470,7 +470,7 @@ void BlastedHitLine()
 
 //==========================================================================
 //
-//	PushLine
+//  PushLine
 //
 //==========================================================================
 
@@ -480,7 +480,7 @@ void PushLine(tmtrace_t* tmtrace)
 
 //==========================================================================
 //
-//	HandleFloorclip
+//  HandleFloorclip
 //
 //==========================================================================
 
@@ -490,7 +490,7 @@ void HandleFloorclip()
 
 //==========================================================================
 //
-//	CrossSpecialLine
+//  CrossSpecialLine
 //
 //==========================================================================
 
@@ -500,7 +500,7 @@ void CrossSpecialLine(line_t* ld, int side)
 
 //==========================================================================
 //
-//	ApplyFriction
+//  ApplyFriction
 //
 //==========================================================================
 
@@ -510,13 +510,13 @@ void ApplyFriction()
 
 //==========================================================================
 //
-//	SectorChanged
+//  SectorChanged
 //
 //==========================================================================
 
 bool SectorChanged(int CrushChange)
 {
-	return true;
+  return true;
 }
 
 //===========================================================================
@@ -557,7 +557,7 @@ void TakeInventory(name ItemName, int Amount)
 
 int CheckInventory(name ItemName)
 {
-	return 0;
+  return 0;
 }
 
 //===========================================================================
@@ -568,7 +568,7 @@ int CheckInventory(name ItemName)
 
 int UseInventoryName(name ItemName)
 {
-	return 0;
+  return 0;
 }
 
 //===========================================================================
@@ -579,7 +579,7 @@ int UseInventoryName(name ItemName)
 
 int GetSigilPieces()
 {
-	return 0;
+  return 0;
 }
 
 //===========================================================================
@@ -590,7 +590,7 @@ int GetSigilPieces()
 
 int GetArmorPoints()
 {
-	return 0;
+  return 0;
 }
 
 //===========================================================================
@@ -601,7 +601,7 @@ int GetArmorPoints()
 
 int CheckNamedWeapon(name Name)
 {
-	return 0;
+  return 0;
 }
 
 //===========================================================================
@@ -612,7 +612,7 @@ int CheckNamedWeapon(name Name)
 
 int SetNamedWeapon(name Name)
 {
-	return 0;
+  return 0;
 }
 
 //===========================================================================
@@ -623,7 +623,7 @@ int SetNamedWeapon(name Name)
 
 int GetAmmoCapacity(name Name)
 {
-	return 0;
+  return 0;
 }
 
 //===========================================================================
@@ -644,23 +644,23 @@ void SetAmmoCapacity(name Name, int Amount)
 
 bool MoveThing(TVec Pos, bool Fog)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
 //
-//	GetStateTime
+//  GetStateTime
 //
 //==========================================================================
 
 float GetStateTime(state AState, float AStateTime)
 {
-	return AStateTime;
+  return AStateTime;
 }
 
 //==========================================================================
 //
-//	SetActorProperty
+//  SetActorProperty
 //
 //==========================================================================
 
@@ -670,96 +670,96 @@ void SetActorProperty(int Prop, int IntVal, string StrVal)
 
 //==========================================================================
 //
-//	GetActorProperty
+//  GetActorProperty
 //
 //==========================================================================
 
 int GetActorProperty(int Prop)
 {
-	return 0;
+  return 0;
 }
 
 //==========================================================================
 //
-//	CheckForSectorActions
+//  CheckForSectorActions
 //
 //==========================================================================
 
 void CheckForSectorActions(sector_t* OldSec, bool OldAboveFakeFloor,
-	bool OldAboveFakeCeiling)
+  bool OldAboveFakeCeiling)
 {
 }
 
 //==========================================================================
 //
-//	SkyBoxGetAlways
+//  SkyBoxGetAlways
 //
 //==========================================================================
 
 bool SkyBoxGetAlways()
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
 //
-//	SkyBoxGetMate
+//  SkyBoxGetMate
 //
 //==========================================================================
 
 Entity SkyBoxGetMate()
 {
-	return none;
+  return none;
 }
 
 //==========================================================================
 //
-//	SkyBoxGetPlaneAlpha
+//  SkyBoxGetPlaneAlpha
 //
 //==========================================================================
 
 float SkyBoxGetPlaneAlpha()
 {
-	return 0.0;
+  return 0.0;
 }
 
 //==========================================================================
 //
-//	ClassifyActor
+//  ClassifyActor
 //
 //==========================================================================
 
 int ClassifyActor()
 {
-	return 0;
+  return 0;
 }
 
 //==========================================================================
 //
-//	MorphActor
+//  MorphActor
 //
 //==========================================================================
 
 int MorphActor(name PlayerClass, name MonsterClass, float Duration,
-	int Style, name MorphFlash, name UnmorphFlash)
+  int Style, name MorphFlash, name UnmorphFlash)
 {
-	return 0;
+  return 0;
 }
 
 //==========================================================================
 //
-//	UnmorphActor
+//  UnmorphActor
 //
 //==========================================================================
 
 int UnmorphActor(Entity Activator, int Force)
 {
-	return 0;
+  return 0;
 }
 
 //==========================================================================
 //
-//	GetViewEntRenderParams
+//  GetViewEntRenderParams
 //
 //==========================================================================
 
@@ -769,7 +769,7 @@ void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
 
 //==========================================================================
 //
-//	CalcFakeZMovement
+//  CalcFakeZMovement
 //
 //==========================================================================
 
@@ -779,26 +779,26 @@ void CalcFakeZMovement(out TVec Ret, float DeltaTime)
 
 //==========================================================================
 //
-//	SetOrigin
+//  SetOrigin
 //
 //==========================================================================
 
 final void SetOrigin(TVec NewOrigin)
 {
-	UnlinkFromWorld();
-	Origin = NewOrigin;
-	LinkToWorld();
+  UnlinkFromWorld();
+  Origin = NewOrigin;
+  LinkToWorld();
 }
 
 //==========================================================================
 //
-//	RemoveThing
+//  RemoveThing
 //
 //==========================================================================
 
 void RemoveThing()
 {
-	Destroy();
+  Destroy();
 }
 
 //==========================================================================
@@ -809,7 +809,7 @@ void RemoveThing()
 
 final float DistTo(Entity Other)
 {
-	return Length(Other.GetCentre() - GetCentre());
+  return Length(Other.GetCentre() - GetCentre());
 }
 
 //==========================================================================
@@ -820,34 +820,34 @@ final float DistTo(Entity Other)
 
 final float DistTo2(Entity Other)
 {
-	TVec dir;
+  TVec dir;
 
-	dir = Other.Origin - Origin;
-	dir.z = 0.0;
-	return Length(dir);
+  dir = Other.Origin - Origin;
+  dir.z = 0.0;
+  return Length(dir);
 }
 
 //==========================================================================
 //
-//	GetCentre
+//  GetCentre
 //
 //==========================================================================
 
 final TVec GetCentre()
 {
-	return Origin + vector(0.0, 0.0, Height * 0.5 - FloorClip);
+  return Origin + vector(0.0, 0.0, Height * 0.5 - FloorClip);
 }
 
 defaultproperties
 {
-	RenderStyle = STYLE_Normal;
-	Alpha = 1.0;
-	ScaleX = 1.0;
-	ScaleY = 1.0;
-	bColideWithThings = true;
-	bColideWithWorld = true;
-	MaxDropoffHeight = 24.0;
-	Gravity = 1.0;
-	SoundClass = 'player';
-	SoundGender = 'male';
+  RenderStyle = STYLE_Normal;
+  Alpha = 1.0;
+  ScaleX = 1.0;
+  ScaleY = 1.0;
+  bColideWithThings = true;
+  bColideWithWorld = true;
+  MaxDropoffHeight = 24.0;
+  Gravity = 1.0;
+  SoundClass = 'player';
+  SoundGender = 'male';
 }

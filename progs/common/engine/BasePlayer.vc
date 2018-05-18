@@ -23,144 +23,144 @@
 //**
 //**************************************************************************
 //
-//	Extended player object info
+//  Extended player object info
 //
 //**************************************************************************
 
 class BasePlayer : GameObject
-	native
-	abstract;
+  native
+  abstract;
 
 //
-//	Constants for FixedColourmap
+//  Constants for FixedColourmap
 //
 enum
 {
-	NUMCOLOURMAPS		= 32,
-	INVERSECOLOURMAP	= 32,
-	GOLDCOLOURMAP		= 33,
-	REDCOLOURMAP		= 34,
-	GREENCOLOURMAP		= 35
+  NUMCOLOURMAPS   = 32,
+  INVERSECOLOURMAP  = 32,
+  GOLDCOLOURMAP   = 33,
+  REDCOLOURMAP    = 34,
+  GREENCOLOURMAP    = 35
 };
 
-const float TOCENTRE		= -128.0;
+const float TOCENTRE    = -128.0;
 
 struct VViewState
 {
-	state		State;							// a 0 state means not active
-	float		StateTime;
-	float		SX;
-	float		SY;
+  state   State;              // a 0 state means not active
+  float   StateTime;
+  float   SX;
+  float   SY;
 };
 
-readonly LevelInfo		Level;
+readonly LevelInfo    Level;
 
-readonly bool			bActive;
-readonly bool			bSpawned;
-readonly bool			bIsBot;
-bool					bFixAngle;
-bool					bAttackDown;			// True if button down last tic.
-bool					bUseDown;
-bool					bDidSecret;				// True if secret level has been done.
-readonly private bool	bCentreing;
-readonly bool			bIsClient;				// Player on client side
-bool					bAutomapRevealed;
-bool					bAutomapShowThings;
-bool					bReloadQueued;			// True if "reload" was pressed
+readonly bool     bActive;
+readonly bool     bSpawned;
+readonly bool     bIsBot;
+bool          bFixAngle;
+bool          bAttackDown;      // True if button down last tic.
+bool          bUseDown;
+bool          bDidSecret;       // True if secret level has been done.
+readonly private bool bCentreing;
+readonly bool     bIsClient;        // Player on client side
+bool          bAutomapRevealed;
+bool          bAutomapShowThings;
+bool          bReloadQueued;      // True if "reload" was pressed
 
 native readonly private void* Net;
 
-string					UserInfo;
+string          UserInfo;
 
-string					PlayerName;
-byte					BaseClass;
-byte					PClass;					// player class type
-byte					TranslStart;
-byte					TranslEnd;
-int						Colour;
+string          PlayerName;
+byte          BaseClass;
+byte          PClass;         // player class type
+byte          TranslStart;
+byte          TranslEnd;
+int           Colour;
 
-float					ClientForwardMove;		// *2048 for move
-float					ClientSideMove;			// *2048 for move
-float					ForwardMove;			// *2048 for move
-float					SideMove;				// *2048 for move
-float					FlyMove;				// fly up/down/centreing
-byte					Buttons;				// fire, use
-byte					Impulse;				// weapon changes, inventory, etc
-//	For ACS
-byte					OldButtons;
-TAVec					OldViewAngles;
+float         ClientForwardMove;    // *2048 for move
+float         ClientSideMove;     // *2048 for move
+float         ForwardMove;      // *2048 for move
+float         SideMove;       // *2048 for move
+float         FlyMove;        // fly up/down/centreing
+byte          Buttons;        // fire, use
+byte          Impulse;        // weapon changes, inventory, etc
+//  For ACS
+byte          OldButtons;
+TAVec         OldViewAngles;
 
-Entity					MO;
-Entity					Camera;
-int						PlayerState;
+Entity          MO;
+Entity          Camera;
+int           PlayerState;
 
 // Determine POV,
 //  including viewpoint bobbing during movement.
 // Focal origin above r.z
-TVec					ViewOrg;
+TVec          ViewOrg;
 
-TAVec					ViewAngles;
+TAVec         ViewAngles;
 
 // This is only used between levels,
 // mo->health is used during levels.
-int						Health;
+int           Health;
 
 // Frags, kills of other players.
-int						Frags;
-int						Deaths;
+int           Frags;
+int           Deaths;
 
 // For intermission stats.
-int						KillCount;
-int						ItemCount;
-int						SecretCount;
+int           KillCount;
+int           ItemCount;
+int           SecretCount;
 
 // So gun flashes light up areas.
-byte					ExtraLight;
+byte          ExtraLight;
 
 // For lite-amp and invulnarability powers
-byte					FixedColourmap;
+byte          FixedColourmap;
 
 //  Colour shifts for damage, powerups and content types
-int						CShift;
+int           CShift;
 
 // Overlay view sprites (gun, etc).
-VViewState				ViewStates[NUMPSPRITES];
-float					PSpriteSY;
+VViewState        ViewStates[NUMPSPRITES];
+float         PSpriteSY;
 
-float					WorldTimer;				// total time the player's been playing
+float         WorldTimer;       // total time the player's been playing
 
-native readonly byte	ClientNum;
+native readonly byte  ClientNum;
 
-int						SoundEnvironment;
+int           SoundEnvironment;
 
-native readonly ClientGameBase	ClGame;			//	Valid only on client side
+native readonly ClientGameBase  ClGame;     //  Valid only on client side
 
-PlayerReplicationInfo	PlayerReplicationInfo;
+PlayerReplicationInfo PlayerReplicationInfo;
 
 replication
 {
-	reliable if (!bIsClient)
-		Health, Frags, Deaths, ExtraLight, FixedColourmap, CShift,
-		PSpriteSY, KillCount, ItemCount, SecretCount, ViewStates,
-		ClientNum, WorldTimer, MO, Camera, bAutomapRevealed,
-		bAutomapShowThings, SoundEnvironment, bAttackDown, bReloadQueued;
+  reliable if (!bIsClient)
+    Health, Frags, Deaths, ExtraLight, FixedColourmap, CShift,
+    PSpriteSY, KillCount, ItemCount, SecretCount, ViewStates,
+    ClientNum, WorldTimer, MO, Camera, bAutomapRevealed,
+    bAutomapShowThings, SoundEnvironment, bAttackDown, bReloadQueued;
 
-	unreliable if (!bIsClient)
-		ClientStartSound, ClientStopSound, ClientSetViewOrg;
+  unreliable if (!bIsClient)
+    ClientStartSound, ClientStopSound, ClientSetViewOrg;
 
-	reliable if (!bIsClient)
-		ClientStartSequence, ClientAddSequenceChoice, ClientStopSequence,
-		ClientPrint, ClientCentrePrint, ClientSetAngles, ClientIntermission,
-		ClientPause, ClientSkipIntermission, ClientFinale, ClientChangeMusic,
-		ClientSetServerInfo, ClientHudMessage;
+  reliable if (!bIsClient)
+    ClientStartSequence, ClientAddSequenceChoice, ClientStopSequence,
+    ClientPrint, ClientCentrePrint, ClientSetAngles, ClientIntermission,
+    ClientPause, ClientSkipIntermission, ClientFinale, ClientChangeMusic,
+    ClientSetServerInfo, ClientHudMessage;
 
-	//	Movement variables
-	reliable if (bIsClient)
-		ViewAngles, ClientForwardMove, ClientSideMove, FlyMove, Buttons;
+  //  Movement variables
+  reliable if (bIsClient)
+    ViewAngles, ClientForwardMove, ClientSideMove, FlyMove, Buttons;
 
-	//	Methods client can execute on server
-	reliable if (bIsClient)
-		ServerImpulse, ServerSetUserInfo;
+  //  Methods client can execute on server
+  reliable if (bIsClient)
+    ServerImpulse, ServerSetUserInfo;
 }
 
 //  Print to client
@@ -174,12 +174,12 @@ native final void SetViewState(int position, state stnum);
 native final void AdvanceViewStates(float deltaTime);
 native final void DisconnectBot();
 
-//	For networking
+//  For networking
 native void ClientStartSound(int SoundId, TVec Org, int OriginId,
-	int Channel, float Volume, float Attenuation, bool Loop);
+  int Channel, float Volume, float Attenuation, bool Loop);
 native void ClientStopSound(int OriginId, int Channel);
 native void ClientStartSequence(TVec Origin, int OriginId, name Name,
-	int ModeNum);
+  int ModeNum);
 native void ClientAddSequenceChoice(int OriginId, name Choice);
 native void ClientStopSequence(int OriginId);
 native void ClientPrint(string Str);
@@ -192,8 +192,8 @@ native void ClientFinale(string Type);
 native void ClientChangeMusic(name Song, int CDTrack);
 native void ClientSetServerInfo(string Key, string Value);
 native void ClientHudMessage(string Message, name Font, int Type, int Id,
-	int Colour, string ColourName, float x, float y, int HudWidth,
-	int HudHeight, float HoldTime, float Time1, float Time2);
+  int Colour, string ColourName, float x, float y, int HudWidth,
+  int HudHeight, float HoldTime, float Time1, float Time2);
 
 native void ServerSetUserInfo(string Info);
 
@@ -296,12 +296,12 @@ void Cheat_Freeze()
 
 void ServerImpulse(int AImpulse)
 {
-	Impulse = AImpulse;
+  Impulse = AImpulse;
 }
 
 void ClientSetViewOrg(float x, float y, float z)
 {
-	ViewOrg = vector(x, y, z);
+  ViewOrg = vector(x, y, z);
 }
 
 defaultproperties

@@ -24,23 +24,23 @@
 //**************************************************************************
 
 class MapRevealer : Inventory
-	abstract;
+  abstract;
 
 //==========================================================================
 //
-//	TryPickup
+//  TryPickup
 //
 //==========================================================================
 
 bool TryPickup(EntityEx Toucher)
 {
-	if (Toucher.bIsPlayer)
-	{
-		PlayerEx(Toucher.Player).AddRevealedMap();
-	}
-	GiveQuest(Toucher);
-	GoAwayAndDie();
-	return true;
+  if (Toucher.bIsPlayer)
+  {
+    PlayerEx(Toucher.Player).AddRevealedMap();
+  }
+  GiveQuest(Toucher);
+  GoAwayAndDie();
+  return true;
 }
 
 defaultproperties

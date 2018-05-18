@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -36,155 +36,155 @@
 class VSoundSeqNode
 {
 public:
-	vint32			Sequence;
-	vint32*			SequencePtr;
-	vint32			OriginId;
-	TVec			Origin;
-	vint32			CurrentSoundID;
-	float			DelayTime;
-	float			Volume;
-	float			Attenuation;
-	vint32			StopSound;
-	vuint32			DidDelayOnce;
-	TArray<vint32>	SeqChoices;
-	vint32			ModeNum;
-	VSoundSeqNode*	Prev;
-	VSoundSeqNode*	Next;
-	VSoundSeqNode*	ParentSeq;
-	VSoundSeqNode*	ChildSeq;
+  vint32      Sequence;
+  vint32*     SequencePtr;
+  vint32      OriginId;
+  TVec      Origin;
+  vint32      CurrentSoundID;
+  float     DelayTime;
+  float     Volume;
+  float     Attenuation;
+  vint32      StopSound;
+  vuint32     DidDelayOnce;
+  TArray<vint32>  SeqChoices;
+  vint32      ModeNum;
+  VSoundSeqNode*  Prev;
+  VSoundSeqNode*  Next;
+  VSoundSeqNode*  ParentSeq;
+  VSoundSeqNode*  ChildSeq;
 
-	VSoundSeqNode(int, const TVec&, int, int);
-	~VSoundSeqNode();
-	void Update(float);
-	void Serialise(VStream&);
+  VSoundSeqNode(int, const TVec&, int, int);
+  ~VSoundSeqNode();
+  void Update(float);
+  void Serialise(VStream&);
 };
 
 //
-//	VAudio
+//  VAudio
 //
-//	Main audio management class.
+//  Main audio management class.
 //
 class VAudio : public VAudioPublic
 {
 public:
-	//	Sound sequence list
-	int					ActiveSequences;
-	VSoundSeqNode*		SequenceListHead;
+  //  Sound sequence list
+  int         ActiveSequences;
+  VSoundSeqNode*    SequenceListHead;
 
-	//	Structors.
-	VAudio();
-	~VAudio();
+  //  Structors.
+  VAudio();
+  ~VAudio();
 
-	//	Top level methods.
-	void Init();
-	void Shutdown();
+  //  Top level methods.
+  void Init();
+  void Shutdown();
 
-	//	Playback of sound effects
-	void PlaySound(int, const TVec&, const TVec&, int, int, float, float,
-		bool);
-	void StopSound(int, int);
-	void StopAllSound();
-	bool IsSoundPlaying(int, int);
+  //  Playback of sound effects
+  void PlaySound(int, const TVec&, const TVec&, int, int, float, float,
+    bool);
+  void StopSound(int, int);
+  void StopAllSound();
+  bool IsSoundPlaying(int, int);
 
-	//	Music and general sound control
-	void StartSong(VName, int, bool);
-	void PauseSound();
-	void ResumeSound();
-	void Start();
-	void MusicChanged();
-	void UpdateSounds();
+  //  Music and general sound control
+  void StartSong(VName, int, bool);
+  void PauseSound();
+  void ResumeSound();
+  void Start();
+  void MusicChanged();
+  void UpdateSounds();
 
-	//	Sound sequences
-	void StartSequence(int, const TVec&, VName, int);
-	void AddSeqChoice(int, VName);
-	void StopSequence(int);
-	void UpdateActiveSequences(float);
-	void StopAllSequences();
-	void SerialiseSounds(VStream&);
+  //  Sound sequences
+  void StartSequence(int, const TVec&, VName, int);
+  void AddSeqChoice(int, VName);
+  void StopSequence(int);
+  void UpdateActiveSequences(float);
+  void StopAllSequences();
+  void SerialiseSounds(VStream&);
 
-	//	EAX utilites
-	float EAX_CalcEnvSize();
+  //  EAX utilites
+  float EAX_CalcEnvSize();
 
 private:
-	enum { MAX_CHANNELS = 256 };
+  enum { MAX_CHANNELS = 256 };
 
-	enum { PRIORITY_MAX_ADJUST = 10 };
+  enum { PRIORITY_MAX_ADJUST = 10 };
 
-	//	Info about sounds currently playing.
-	struct FChannel
-	{
-		int			origin_id;
-		int			channel;
-		TVec		origin;
-		TVec		velocity;
-		int			sound_id;
-		int			priority;
-		float		volume;
-		float		Attenuation;
-		int			handle;
-		bool		is3D;
-		bool		LocalPlayerSound;
-		bool		Loop;
-	};
+  //  Info about sounds currently playing.
+  struct FChannel
+  {
+    int     origin_id;
+    int     channel;
+    TVec    origin;
+    TVec    velocity;
+    int     sound_id;
+    int     priority;
+    float   volume;
+    float   Attenuation;
+    int     handle;
+    bool    is3D;
+    bool    LocalPlayerSound;
+    bool    Loop;
+  };
 
-	//	Sound curve
-	vuint8*				SoundCurve;
-	int 				MaxSoundDist;
+  //  Sound curve
+  vuint8*       SoundCurve;
+  int         MaxSoundDist;
 
-	//	Map's music lump and CD track
-	VName				MapSong;
-	int					MapCDTrack;
-	float				MusicVolumeFactor;
+  //  Map's music lump and CD track
+  VName       MapSong;
+  int         MapCDTrack;
+  float       MusicVolumeFactor;
 
-	//	Stream music player
-	bool				MusicEnabled;
-	bool				StreamPlaying;
-	VStreamMusicPlayer*	StreamMusicPlayer;
+  //  Stream music player
+  bool        MusicEnabled;
+  bool        StreamPlaying;
+  VStreamMusicPlayer* StreamMusicPlayer;
 
-	//	List of currently playing sounds
-	FChannel			Channel[MAX_CHANNELS];
-	int					NumChannels;
-	int 				SndCount;
+  //  List of currently playing sounds
+  FChannel      Channel[MAX_CHANNELS];
+  int         NumChannels;
+  int         SndCount;
 
-	// maximum volume for sound
-	float				MaxVolume;
+  // maximum volume for sound
+  float       MaxVolume;
 
-	//	Listener orientation
-	TVec				ListenerForward;
-	TVec				ListenerRight;
-	TVec				ListenerUp;
+  //  Listener orientation
+  TVec        ListenerForward;
+  TVec        ListenerRight;
+  TVec        ListenerUp;
 
-	//	Hardware devices
-	VSoundDevice*		SoundDevice;
-	VMidiDevice*		MidiDevice;
-	VCDAudioDevice*		CDAudioDevice;
+  //  Hardware devices
+  VSoundDevice*   SoundDevice;
+  VMidiDevice*    MidiDevice;
+  VCDAudioDevice*   CDAudioDevice;
 
-	//	Console variables
-	static VCvarF		snd_sfx_volume;
-	static VCvarF		snd_music_volume;
-	static VCvarB		snd_swap_stereo;
-	static VCvarI		snd_channels;
-	static VCvarB		snd_external_music;
-	static VCvarF		snd_eax_distance_unit;
+  //  Console variables
+  static VCvarF   snd_sfx_volume;
+  static VCvarF   snd_music_volume;
+  static VCvarB   snd_swap_stereo;
+  static VCvarI   snd_channels;
+  static VCvarB   snd_external_music;
+  static VCvarF   snd_eax_distance_unit;
 
-	//	Friends
-	friend class TCmdMusic;
-	friend class TCmdCD;
+  //  Friends
+  friend class TCmdMusic;
+  friend class TCmdCD;
 
-	//	Sound effect helpers
-	int GetChannel(int, int, int, int);
-	void StopChannel(int);
-	void UpdateSfx();
+  //  Sound effect helpers
+  int GetChannel(int, int, int, int);
+  void StopChannel(int);
+  void UpdateSfx();
 
-	//	Music playback
-	void StartMusic();
-	void PlaySong(const char*, bool);
+  //  Music playback
+  void StartMusic();
+  void PlaySong(const char*, bool);
 
-	//	Execution of console commands
-	void CmdMusic(const TArray<VStr>&);
-	void CmdCD(const TArray<VStr>&);
+  //  Execution of console commands
+  void CmdMusic(const TArray<VStr>&);
+  void CmdCD(const TArray<VStr>&);
 
-	float CalcDirSize(const TVec&);
+  float CalcDirSize(const TVec&);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -197,47 +197,47 @@ private:
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-VAudioPublic*		GAudio;
+VAudioPublic*   GAudio;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-VCvarF				VAudio::snd_sfx_volume("snd_sfx_volume", "0.5", "Sound effects volume.", CVAR_Archive);
-VCvarF				VAudio::snd_music_volume("snd_music_volume", "0.5", "Music volume", CVAR_Archive);
-VCvarB				VAudio::snd_swap_stereo("snd_swap_stereo", false, "Swap stereo channels?", CVAR_Archive);
-VCvarI				VAudio::snd_channels("snd_channels", "128", "Number of sound channels.", CVAR_Archive);
-VCvarB				VAudio::snd_external_music("snd_external_music", true, "Allow external music remapping?", CVAR_Archive);
-VCvarF				VAudio::snd_eax_distance_unit("snd_eax_distance_unit", "32.0", "EAX distance unit.", CVAR_Archive);
+VCvarF        VAudio::snd_sfx_volume("snd_sfx_volume", "0.5", "Sound effects volume.", CVAR_Archive);
+VCvarF        VAudio::snd_music_volume("snd_music_volume", "0.5", "Music volume", CVAR_Archive);
+VCvarB        VAudio::snd_swap_stereo("snd_swap_stereo", false, "Swap stereo channels?", CVAR_Archive);
+VCvarI        VAudio::snd_channels("snd_channels", "128", "Number of sound channels.", CVAR_Archive);
+VCvarB        VAudio::snd_external_music("snd_external_music", true, "Allow external music remapping?", CVAR_Archive);
+VCvarF        VAudio::snd_eax_distance_unit("snd_eax_distance_unit", "32.0", "EAX distance unit.", CVAR_Archive);
 
 //  Public CVars
 #if defined(DJGPP) || defined(_WIN32)
-VCvarB				snd_mid_player("snd_mid_player", false, "Allow MIDI?", CVAR_Archive);
+VCvarB        snd_mid_player("snd_mid_player", false, "Allow MIDI?", CVAR_Archive);
 #else
-VCvarB				snd_mid_player("snd_mid_player", true, "Allow MIDI?", CVAR_Archive);
+VCvarB        snd_mid_player("snd_mid_player", true, "Allow MIDI?", CVAR_Archive);
 #endif
-VCvarB				snd_mod_player("snd_mod_player", true, "Allow music modules?", CVAR_Archive);
+VCvarB        snd_mod_player("snd_mod_player", true, "Allow music modules?", CVAR_Archive);
 
-FAudioCodecDesc*	FAudioCodecDesc::List;
+FAudioCodecDesc*  FAudioCodecDesc::List;
 
-static FSoundDeviceDesc*	SoundDeviceList[SNDDRV_MAX];
-static FMidiDeviceDesc*		MidiDeviceList[MIDIDRV_MAX];
-static FCDAudioDeviceDesc*	CDAudioDeviceList[CDDRV_MAX];
+static FSoundDeviceDesc*  SoundDeviceList[SNDDRV_MAX];
+static FMidiDeviceDesc*   MidiDeviceList[MIDIDRV_MAX];
+static FCDAudioDeviceDesc*  CDAudioDeviceList[CDDRV_MAX];
 
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
-//	VAudioPublic::Create
+//  VAudioPublic::Create
 //
 //==========================================================================
 
 VAudioPublic* VAudioPublic::Create()
 {
-	return new VAudio();
+  return new VAudio();
 }
 
 //==========================================================================
 //
-//	VAudio::VAudio
+//  VAudio::VAudio
 //
 //==========================================================================
 
@@ -256,484 +256,484 @@ VAudio::VAudio()
 , MidiDevice(NULL)
 , CDAudioDevice(NULL)
 {
-	ActiveSequences = 0;
-	SequenceListHead = NULL;
-	memset(Channel, 0, sizeof(Channel));
+  ActiveSequences = 0;
+  SequenceListHead = NULL;
+  memset(Channel, 0, sizeof(Channel));
 }
 
 //==========================================================================
 //
-//	VAudio::~VAudio
+//  VAudio::~VAudio
 //
 //==========================================================================
 
 VAudio::~VAudio()
 {
-	Shutdown();
+  Shutdown();
 }
 
 //==========================================================================
 //
-//	VAudio::Init
+//  VAudio::Init
 //
-//	Initialises sound stuff, including volume
-//	Sets channels, SFX and music volume, allocates channel buffer.
+//  Initialises sound stuff, including volume
+//  Sets channels, SFX and music volume, allocates channel buffer.
 //
 //==========================================================================
 
 void VAudio::Init()
 {
-	guard(VAudio::Init);
-	//	Initialise sound driver.
-	int SIdx = -1;
-	if (!GArgs.CheckParm("-nosound") && !GArgs.CheckParm("-nosfx"))
-	{
-		for (int i = 0; i < SNDDRV_MAX; i++)
-		{
-			if (!SoundDeviceList[i])
-				continue;
-			//	Default to first available non-null sound device.
-			if (SIdx == -1)
-				SIdx = i;
-			//	Check for user selection.
-			if (SoundDeviceList[i]->CmdLineArg &&
-				GArgs.CheckParm(SoundDeviceList[i]->CmdLineArg))
-				SIdx = i;
-		}
-	}
-	if (SIdx != -1)
-	{
-		GCon->Logf(NAME_Init, "Selected %s", SoundDeviceList[SIdx]->Description);
-		SoundDevice = SoundDeviceList[SIdx]->Creator();
-		if (!SoundDevice->Init())
-		{
-			delete SoundDevice;
-			SoundDevice = NULL;
-		}
-	}
+  guard(VAudio::Init);
+  //  Initialise sound driver.
+  int SIdx = -1;
+  if (!GArgs.CheckParm("-nosound") && !GArgs.CheckParm("-nosfx"))
+  {
+    for (int i = 0; i < SNDDRV_MAX; i++)
+    {
+      if (!SoundDeviceList[i])
+        continue;
+      //  Default to first available non-null sound device.
+      if (SIdx == -1)
+        SIdx = i;
+      //  Check for user selection.
+      if (SoundDeviceList[i]->CmdLineArg &&
+        GArgs.CheckParm(SoundDeviceList[i]->CmdLineArg))
+        SIdx = i;
+    }
+  }
+  if (SIdx != -1)
+  {
+    GCon->Logf(NAME_Init, "Selected %s", SoundDeviceList[SIdx]->Description);
+    SoundDevice = SoundDeviceList[SIdx]->Creator();
+    if (!SoundDevice->Init())
+    {
+      delete SoundDevice;
+      SoundDevice = NULL;
+    }
+  }
 
-	//	Initialise MIDI driver.
-	int MIdx = -1;
-	if (!GArgs.CheckParm("-nosound") && !GArgs.CheckParm("-nomusic"))
-	{
-		for (int i = 0; i < MIDIDRV_MAX; i++)
-		{
-			if (!MidiDeviceList[i])
-				continue;
-			//	Default to first available non-null midi device.
-			if (MIdx == -1)
-				MIdx = i;
-			//	Check for user selection.
-			if (MidiDeviceList[i]->CmdLineArg &&
-				GArgs.CheckParm(MidiDeviceList[i]->CmdLineArg))
-				MIdx = i;
-		}
-	}
-	if (MIdx != -1)
-	{
-		GCon->Logf(NAME_Init, "Selected %s", MidiDeviceList[MIdx]->Description);
-		MidiDevice = MidiDeviceList[MIdx]->Creator();
-		MidiDevice->Init();
-		if (!MidiDevice->Initialised)
-		{
-			delete MidiDevice;
-			MidiDevice = NULL;
-		}
-	}
+  //  Initialise MIDI driver.
+  int MIdx = -1;
+  if (!GArgs.CheckParm("-nosound") && !GArgs.CheckParm("-nomusic"))
+  {
+    for (int i = 0; i < MIDIDRV_MAX; i++)
+    {
+      if (!MidiDeviceList[i])
+        continue;
+      //  Default to first available non-null midi device.
+      if (MIdx == -1)
+        MIdx = i;
+      //  Check for user selection.
+      if (MidiDeviceList[i]->CmdLineArg &&
+        GArgs.CheckParm(MidiDeviceList[i]->CmdLineArg))
+        MIdx = i;
+    }
+  }
+  if (MIdx != -1)
+  {
+    GCon->Logf(NAME_Init, "Selected %s", MidiDeviceList[MIdx]->Description);
+    MidiDevice = MidiDeviceList[MIdx]->Creator();
+    MidiDevice->Init();
+    if (!MidiDevice->Initialised)
+    {
+      delete MidiDevice;
+      MidiDevice = NULL;
+    }
+  }
 
-	//	Initialise CD audio driver.
-	int CDIdx = -1;
-	if (!GArgs.CheckParm("-nosound") && !GArgs.CheckParm("-nocdaudio"))
-	{
-		for (int i = 0; i < CDDRV_MAX; i++)
-		{
-			if (!CDAudioDeviceList[i])
-				continue;
-			//	Default to first available non-null CD audio device.
-			if (CDIdx == -1)
-				CDIdx = i;
-			//	Check for user selection.
-			if (CDAudioDeviceList[i]->CmdLineArg &&
-				GArgs.CheckParm(CDAudioDeviceList[i]->CmdLineArg))
-				CDIdx = i;
-		}
-	}
-	if (CDIdx != -1)
-	{
-		GCon->Logf(NAME_Init, "Selected %s", CDAudioDeviceList[CDIdx]->Description);
-		CDAudioDevice = CDAudioDeviceList[CDIdx]->Creator();
-		CDAudioDevice->Init();
-		if (!CDAudioDevice->Initialised)
-		{
-			delete CDAudioDevice;
-			CDAudioDevice = NULL;
-		}
-	}
+  //  Initialise CD audio driver.
+  int CDIdx = -1;
+  if (!GArgs.CheckParm("-nosound") && !GArgs.CheckParm("-nocdaudio"))
+  {
+    for (int i = 0; i < CDDRV_MAX; i++)
+    {
+      if (!CDAudioDeviceList[i])
+        continue;
+      //  Default to first available non-null CD audio device.
+      if (CDIdx == -1)
+        CDIdx = i;
+      //  Check for user selection.
+      if (CDAudioDeviceList[i]->CmdLineArg &&
+        GArgs.CheckParm(CDAudioDeviceList[i]->CmdLineArg))
+        CDIdx = i;
+    }
+  }
+  if (CDIdx != -1)
+  {
+    GCon->Logf(NAME_Init, "Selected %s", CDAudioDeviceList[CDIdx]->Description);
+    CDAudioDevice = CDAudioDeviceList[CDIdx]->Creator();
+    CDAudioDevice->Init();
+    if (!CDAudioDevice->Initialised)
+    {
+      delete CDAudioDevice;
+      CDAudioDevice = NULL;
+    }
+  }
 
-	//	Initialise stream music player.
-	if (SoundDevice && !GArgs.CheckParm("-nomusic"))
-	{
-		StreamMusicPlayer = new VStreamMusicPlayer(SoundDevice);
-		StreamMusicPlayer->Init();
-	}
+  //  Initialise stream music player.
+  if (SoundDevice && !GArgs.CheckParm("-nomusic"))
+  {
+    StreamMusicPlayer = new VStreamMusicPlayer(SoundDevice);
+    StreamMusicPlayer->Init();
+  }
 
-	int Lump = W_CheckNumForName(NAME_sndcurve);
-	if (Lump >= 0)
-	{
-		VStream* Strm = W_CreateLumpReaderNum(Lump);
-		MaxSoundDist = Strm->TotalSize();
-		SoundCurve = new vuint8[MaxSoundDist];
-		Strm->Serialise(SoundCurve, MaxSoundDist);
-		delete Strm;
-		Strm = NULL;
-	}
-	else
-	{
-		MaxSoundDist = 1200;
-		SoundCurve = new vuint8[MaxSoundDist];
-		for (int i = 0; i < MaxSoundDist; i++)
-		{
-			SoundCurve[i] = MIN(127, (MaxSoundDist - i) * 127 /
-				(MaxSoundDist - 160));
-		}
-	}
-	MaxVolume = -1;
+  int Lump = W_CheckNumForName(NAME_sndcurve);
+  if (Lump >= 0)
+  {
+    VStream* Strm = W_CreateLumpReaderNum(Lump);
+    MaxSoundDist = Strm->TotalSize();
+    SoundCurve = new vuint8[MaxSoundDist];
+    Strm->Serialise(SoundCurve, MaxSoundDist);
+    delete Strm;
+    Strm = NULL;
+  }
+  else
+  {
+    MaxSoundDist = 1200;
+    SoundCurve = new vuint8[MaxSoundDist];
+    for (int i = 0; i < MaxSoundDist; i++)
+    {
+      SoundCurve[i] = MIN(127, (MaxSoundDist - i) * 127 /
+        (MaxSoundDist - 160));
+    }
+  }
+  MaxVolume = -1;
 
-	//	Free all channels for use.
-	memset(Channel, 0, sizeof(Channel));
-	NumChannels = SoundDevice ? SoundDevice->SetChannels(snd_channels) : 0;
-	unguard;
+  //  Free all channels for use.
+  memset(Channel, 0, sizeof(Channel));
+  NumChannels = SoundDevice ? SoundDevice->SetChannels(snd_channels) : 0;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::Shutdown
+//  VAudio::Shutdown
 //
-//	Shuts down all sound stuff
+//  Shuts down all sound stuff
 //
 //==========================================================================
 
 void VAudio::Shutdown()
 {
-	guard(VAudio::Shutdown);
-	//	Stop playback of all sounds.
-	StopAllSequences();
-	StopAllSound();
+  guard(VAudio::Shutdown);
+  //  Stop playback of all sounds.
+  StopAllSequences();
+  StopAllSound();
 
-	if (StreamMusicPlayer)
-	{
-		StreamMusicPlayer->Shutdown();
-		delete StreamMusicPlayer;
-		StreamMusicPlayer = NULL;
-	}
-	if (CDAudioDevice)
-	{
-		CDAudioDevice->Shutdown();
-		delete CDAudioDevice;
-		CDAudioDevice = NULL;
-	}
-	if (MidiDevice)
-	{
-		MidiDevice->Shutdown();
-		delete MidiDevice;
-		MidiDevice = NULL;
-	}
-	if (SoundDevice)
-	{
-		SoundDevice->Shutdown();
-		delete SoundDevice;
-		SoundDevice = NULL;
-	}
-	if (SoundCurve)
-	{
-		delete[] SoundCurve;
-		SoundCurve = NULL;
-	}
-	unguard;
+  if (StreamMusicPlayer)
+  {
+    StreamMusicPlayer->Shutdown();
+    delete StreamMusicPlayer;
+    StreamMusicPlayer = NULL;
+  }
+  if (CDAudioDevice)
+  {
+    CDAudioDevice->Shutdown();
+    delete CDAudioDevice;
+    CDAudioDevice = NULL;
+  }
+  if (MidiDevice)
+  {
+    MidiDevice->Shutdown();
+    delete MidiDevice;
+    MidiDevice = NULL;
+  }
+  if (SoundDevice)
+  {
+    SoundDevice->Shutdown();
+    delete SoundDevice;
+    SoundDevice = NULL;
+  }
+  if (SoundCurve)
+  {
+    delete[] SoundCurve;
+    SoundCurve = NULL;
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::PlaySound
+//  VAudio::PlaySound
 //
-// 	This function adds a sound to the list of currently active sounds, which
+//  This function adds a sound to the list of currently active sounds, which
 // is maintained as a given number of internal channels.
 //
 //==========================================================================
 
 void VAudio::PlaySound(int InSoundId, const TVec& origin,
-	const TVec& velocity, int origin_id, int channel, float volume,
-	float Attenuation, bool Loop)
+  const TVec& velocity, int origin_id, int channel, float volume,
+  float Attenuation, bool Loop)
 {
-	guard(VAudio::PlaySound);
-	if (!SoundDevice || !InSoundId || !MaxVolume || !volume)
-	{
-		return;
-	}
+  guard(VAudio::PlaySound);
+  if (!SoundDevice || !InSoundId || !MaxVolume || !volume)
+  {
+    return;
+  }
 
-	//	Find actual sound ID to use.
-	int sound_id = GSoundManager->ResolveSound(InSoundId);
+  //  Find actual sound ID to use.
+  int sound_id = GSoundManager->ResolveSound(InSoundId);
 
-	//	If it's a looping sound and it's still playing, then continue
-	// playing the existing one.
-	for (int i = 0; i < NumChannels; i++)
-	{
-		if (Channel[i].origin_id == origin_id &&
-			Channel[i].channel == channel &&
-			Channel[i].sound_id == sound_id && Channel[i].Loop)
-		{
-			return;
-		}
-	}
+  //  If it's a looping sound and it's still playing, then continue
+  // playing the existing one.
+  for (int i = 0; i < NumChannels; i++)
+  {
+    if (Channel[i].origin_id == origin_id &&
+      Channel[i].channel == channel &&
+      Channel[i].sound_id == sound_id && Channel[i].Loop)
+    {
+      return;
+    }
+  }
 
-	//	Apply sound volume.
-	volume *= MaxVolume;
+  //  Apply sound volume.
+  volume *= MaxVolume;
 
-	//	Check if this sound is emited by the local player.
-	bool LocalPlayerSound = cl && cl->MO && cl->MO->SoundOriginID == origin_id;
+  //  Check if this sound is emited by the local player.
+  bool LocalPlayerSound = cl && cl->MO && cl->MO->SoundOriginID == origin_id;
 
-	// calculate the distance before other stuff so that we can throw out
-	// sounds that are beyond the hearing range.
-	int dist = 0;
-	if (origin_id && !LocalPlayerSound && Attenuation > 0 && cl)
-	{
-		dist = (int)(Length(origin - cl->ViewOrg) * Attenuation);
-	}
-	if (dist >= MaxSoundDist)
-	{
-		return; // sound is beyond the hearing range...
-	}
+  // calculate the distance before other stuff so that we can throw out
+  // sounds that are beyond the hearing range.
+  int dist = 0;
+  if (origin_id && !LocalPlayerSound && Attenuation > 0 && cl)
+  {
+    dist = (int)(Length(origin - cl->ViewOrg) * Attenuation);
+  }
+  if (dist >= MaxSoundDist)
+  {
+    return; // sound is beyond the hearing range...
+  }
 
-	int priority = GSoundManager->S_sfx[sound_id].Priority *
-		(PRIORITY_MAX_ADJUST - PRIORITY_MAX_ADJUST * dist / MaxSoundDist);
+  int priority = GSoundManager->S_sfx[sound_id].Priority *
+    (PRIORITY_MAX_ADJUST - PRIORITY_MAX_ADJUST * dist / MaxSoundDist);
 
-	int chan = GetChannel(sound_id, origin_id, channel, priority);
-	if (chan == -1)
-	{
-		return; //no free channels.
-	}
+  int chan = GetChannel(sound_id, origin_id, channel, priority);
+  if (chan == -1)
+  {
+    return; //no free channels.
+  }
 
-	float pitch = 1.0;
-	if (GSoundManager->S_sfx[sound_id].ChangePitch)
-	{
-		pitch = 1.0 + (Random() - Random()) *
-			GSoundManager->S_sfx[sound_id].ChangePitch;
-	}
-	int handle;
-	bool is3D;
-	if (!origin_id || LocalPlayerSound || Attenuation <= 0)
-	{
-		//	Local sound
-		handle = SoundDevice->PlaySound(sound_id, volume, 0, pitch, Loop);
-		is3D = false;
-	}
-	else if (!SoundDevice->Sound3D)
-	{
-		float vol = SoundCurve[dist] / 127.0 * volume;
-		float sep = DotProduct(origin - (cl ? cl->ViewOrg : TVec(0.0, 0.0, 0.0)), ListenerRight) /
-			MaxSoundDist;
-		if (snd_swap_stereo)
-		{
-			sep = -sep;
-		}
-		handle = SoundDevice->PlaySound(sound_id, vol, sep, pitch, Loop);
-		is3D = false;
-	}
-	else
-	{
-		handle = SoundDevice->PlaySound3D(sound_id, origin, velocity,
-			volume, pitch, Loop);
-		is3D = true;
-	}
-	Channel[chan].origin_id = origin_id;
-	Channel[chan].channel = channel;
-	Channel[chan].origin = origin;
-	Channel[chan].velocity = velocity;
-	Channel[chan].sound_id = sound_id;
-	Channel[chan].priority = priority;
-	Channel[chan].volume = volume;
-	Channel[chan].Attenuation = Attenuation;
-	Channel[chan].handle = handle;
-	Channel[chan].is3D = is3D;
-	Channel[chan].LocalPlayerSound = LocalPlayerSound;
-	Channel[chan].Loop = Loop;
-	unguard;
+  float pitch = 1.0;
+  if (GSoundManager->S_sfx[sound_id].ChangePitch)
+  {
+    pitch = 1.0 + (Random() - Random()) *
+      GSoundManager->S_sfx[sound_id].ChangePitch;
+  }
+  int handle;
+  bool is3D;
+  if (!origin_id || LocalPlayerSound || Attenuation <= 0)
+  {
+    //  Local sound
+    handle = SoundDevice->PlaySound(sound_id, volume, 0, pitch, Loop);
+    is3D = false;
+  }
+  else if (!SoundDevice->Sound3D)
+  {
+    float vol = SoundCurve[dist] / 127.0 * volume;
+    float sep = DotProduct(origin - (cl ? cl->ViewOrg : TVec(0.0, 0.0, 0.0)), ListenerRight) /
+      MaxSoundDist;
+    if (snd_swap_stereo)
+    {
+      sep = -sep;
+    }
+    handle = SoundDevice->PlaySound(sound_id, vol, sep, pitch, Loop);
+    is3D = false;
+  }
+  else
+  {
+    handle = SoundDevice->PlaySound3D(sound_id, origin, velocity,
+      volume, pitch, Loop);
+    is3D = true;
+  }
+  Channel[chan].origin_id = origin_id;
+  Channel[chan].channel = channel;
+  Channel[chan].origin = origin;
+  Channel[chan].velocity = velocity;
+  Channel[chan].sound_id = sound_id;
+  Channel[chan].priority = priority;
+  Channel[chan].volume = volume;
+  Channel[chan].Attenuation = Attenuation;
+  Channel[chan].handle = handle;
+  Channel[chan].is3D = is3D;
+  Channel[chan].LocalPlayerSound = LocalPlayerSound;
+  Channel[chan].Loop = Loop;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::GetChannel
+//  VAudio::GetChannel
 //
 //==========================================================================
 
 int VAudio::GetChannel(int sound_id, int origin_id, int channel, int priority)
 {
-	guard(VAudio::GetChannel);
-	int 		chan;
-	int			i;
-	int			lp; //least priority
-	int			found;
-	int			prior;
-	int numchannels = GSoundManager->S_sfx[sound_id].NumChannels;
+  guard(VAudio::GetChannel);
+  int     chan;
+  int     i;
+  int     lp; //least priority
+  int     found;
+  int     prior;
+  int numchannels = GSoundManager->S_sfx[sound_id].NumChannels;
 
-	if (numchannels > 0)
-	{
-		lp = -1; //denote the argument sound_id
-		found = 0;
-		prior = priority;
-		for (i = 0; i < NumChannels; i++)
-		{
-			if (Channel[i].sound_id == sound_id)
-			{
-				if (GSoundManager->S_sfx[sound_id].bSingular)
-				{
-					// This sound is already playing, so don't start it again.
-					return -1;
-				}
-				found++; //found one.  Now, should we replace it??
-				if (prior >= Channel[i].priority)
-				{
-					// if we're gonna kill one, then this'll be it
-					lp = i;
-					prior = Channel[i].priority;
-				}
-			}
-		}
-
-		if (found >= numchannels)
-		{
-			if (lp == -1)
-			{// other sounds have greater priority
-				return -1; // don't replace any sounds
-			}
-			StopChannel(lp);
-		}
-	}
-
-	//	Mobjs can have only one sound
-/*	if (origin_id && channel)
+  if (numchannels > 0)
+  {
+    lp = -1; //denote the argument sound_id
+    found = 0;
+    prior = priority;
+    for (i = 0; i < NumChannels; i++)
     {
-		for (i = 0; i < NumChannels; i++)
-		{
-			if (Channel[i].origin_id == origin_id &&
-				Channel[i].channel == channel)
-			{
-				// only allow other mobjs one sound
-				StopChannel(i);
-				return i;
-			}
-		}
-	}*/
+      if (Channel[i].sound_id == sound_id)
+      {
+        if (GSoundManager->S_sfx[sound_id].bSingular)
+        {
+          // This sound is already playing, so don't start it again.
+          return -1;
+        }
+        found++; //found one.  Now, should we replace it??
+        if (prior >= Channel[i].priority)
+        {
+          // if we're gonna kill one, then this'll be it
+          lp = i;
+          prior = Channel[i].priority;
+        }
+      }
+    }
 
-	//	Look for a free channel
-	for (i = 0; i < NumChannels; i++)
-	{
-		if (!Channel[i].sound_id)
-		{
-			return i;
-		}
-	}
+    if (found >= numchannels)
+    {
+      if (lp == -1)
+      {// other sounds have greater priority
+        return -1; // don't replace any sounds
+      }
+      StopChannel(lp);
+    }
+  }
 
-	//	Look for a lower priority sound to replace.
-	SndCount++;
-	if (SndCount >= NumChannels)
-	{
-		SndCount = 0;
-	}
+  //  Mobjs can have only one sound
+/*  if (origin_id && channel)
+    {
+    for (i = 0; i < NumChannels; i++)
+    {
+      if (Channel[i].origin_id == origin_id &&
+        Channel[i].channel == channel)
+      {
+        // only allow other mobjs one sound
+        StopChannel(i);
+        return i;
+      }
+    }
+  }*/
 
-	for (chan = 0; chan < NumChannels; chan++)
-	{
-		i = (SndCount + chan) % NumChannels;
-		if (priority >= Channel[i].priority)
-		{
-			//replace the lower priority sound.
-			StopChannel(i);
-			return i;
-		}
-	}
+  //  Look for a free channel
+  for (i = 0; i < NumChannels; i++)
+  {
+    if (!Channel[i].sound_id)
+    {
+      return i;
+    }
+  }
 
-    //	no free channels.
-	return -1;
-	unguard;
+  //  Look for a lower priority sound to replace.
+  SndCount++;
+  if (SndCount >= NumChannels)
+  {
+    SndCount = 0;
+  }
+
+  for (chan = 0; chan < NumChannels; chan++)
+  {
+    i = (SndCount + chan) % NumChannels;
+    if (priority >= Channel[i].priority)
+    {
+      //replace the lower priority sound.
+      StopChannel(i);
+      return i;
+    }
+  }
+
+    //  no free channels.
+  return -1;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::StopChannel
+//  VAudio::StopChannel
 //
 //==========================================================================
 
 void VAudio::StopChannel(int chan_num)
 {
-	guard(VAudio::StopChannel);
-	if (Channel[chan_num].sound_id)
-	{
-		SoundDevice->StopChannel(Channel[chan_num].handle);
-		Channel[chan_num].handle = -1;
-		Channel[chan_num].origin_id = 0;
-		Channel[chan_num].sound_id = 0;
-	}
-	unguard;
+  guard(VAudio::StopChannel);
+  if (Channel[chan_num].sound_id)
+  {
+    SoundDevice->StopChannel(Channel[chan_num].handle);
+    Channel[chan_num].handle = -1;
+    Channel[chan_num].origin_id = 0;
+    Channel[chan_num].sound_id = 0;
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::StopSound
+//  VAudio::StopSound
 //
 //==========================================================================
 
 void VAudio::StopSound(int origin_id, int channel)
 {
-	guard(VAudio::StopSound);
-	for (int i = 0; i < NumChannels; i++)
-	{
-		if (Channel[i].origin_id == origin_id &&
-			(!channel || Channel[i].channel == channel))
-		{
-			StopChannel(i);
-		}
-	}
-	unguard;
+  guard(VAudio::StopSound);
+  for (int i = 0; i < NumChannels; i++)
+  {
+    if (Channel[i].origin_id == origin_id &&
+      (!channel || Channel[i].channel == channel))
+    {
+      StopChannel(i);
+    }
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::StopAllSound
+//  VAudio::StopAllSound
 //
 //==========================================================================
 
 void VAudio::StopAllSound()
 {
-	guard(VAudio::StopAllSound);
-	//	stop all sounds
-	for (int i = 0; i < NumChannels; i++)
-	{
-		StopChannel(i);
-	}
-	unguard;
+  guard(VAudio::StopAllSound);
+  //  stop all sounds
+  for (int i = 0; i < NumChannels; i++)
+  {
+    StopChannel(i);
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::IsSoundPlaying
+//  VAudio::IsSoundPlaying
 //
 //==========================================================================
 
 bool VAudio::IsSoundPlaying(int origin_id, int InSoundId)
 {
-	guard(VAudio::IsSoundPlaying);
-	int sound_id = GSoundManager->ResolveSound(InSoundId);
-	for (int i = 0; i < NumChannels; i++)
-	{
-		if (Channel[i].sound_id == sound_id &&
-			Channel[i].origin_id == origin_id &&
-			SoundDevice->IsChannelPlaying(Channel[i].handle))
-		{
-			return true;
-		}
-	}
-	return false;
-	unguard;
+  guard(VAudio::IsSoundPlaying);
+  int sound_id = GSoundManager->ResolveSound(InSoundId);
+  for (int i = 0; i < NumChannels; i++)
+  {
+    if (Channel[i].sound_id == sound_id &&
+      Channel[i].origin_id == origin_id &&
+      SoundDevice->IsChannelPlaying(Channel[i].handle))
+    {
+      return true;
+    }
+  }
+  return false;
+  unguard;
 }
 
 //==========================================================================
@@ -743,16 +743,16 @@ bool VAudio::IsSoundPlaying(int origin_id, int InSoundId)
 //==========================================================================
 
 void VAudio::StartSequence(int OriginId, const TVec &Origin, VName Name,
-	int ModeNum)
+  int ModeNum)
 {
-	guard(VAudio::StartSequence);
-	int Idx = GSoundManager->FindSequence(Name);
-	if (Idx != -1)
-	{
-		StopSequence(OriginId); // Stop any previous sequence
-		new VSoundSeqNode(OriginId, Origin, Idx, ModeNum);
-	}
-	unguard;
+  guard(VAudio::StartSequence);
+  int Idx = GSoundManager->FindSequence(Name);
+  if (Idx != -1)
+  {
+    StopSequence(OriginId); // Stop any previous sequence
+    new VSoundSeqNode(OriginId, Origin, Idx, ModeNum);
+  }
+  unguard;
 }
 
 //==========================================================================
@@ -763,21 +763,21 @@ void VAudio::StartSequence(int OriginId, const TVec &Origin, VName Name,
 
 void VAudio::AddSeqChoice(int OriginId, VName Name)
 {
-	guard(VAudio::AddSeqChoice);
-	int Idx = GSoundManager->FindSequence(Name);
-	if (Idx == -1)
-	{
-		return;
-	}
-	for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
-	{
-		if (node->OriginId == OriginId)
-		{
-			node->SeqChoices.Append(Idx);
-			return;
-		}
-	}
-	unguard;
+  guard(VAudio::AddSeqChoice);
+  int Idx = GSoundManager->FindSequence(Name);
+  if (Idx == -1)
+  {
+    return;
+  }
+  for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
+  {
+    if (node->OriginId == OriginId)
+    {
+      node->SeqChoices.Append(Idx);
+      return;
+    }
+  }
+  unguard;
 }
 
 //==========================================================================
@@ -788,15 +788,15 @@ void VAudio::AddSeqChoice(int OriginId, VName Name)
 
 void VAudio::StopSequence(int origin_id)
 {
-	guard(VAudio::StopSequence);
-	for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
-	{
-		if (node->OriginId == origin_id)
-		{
-			delete node;
-		}
-	}
-	unguard;
+  guard(VAudio::StopSequence);
+  for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
+  {
+    if (node->OriginId == origin_id)
+    {
+      delete node;
+    }
+  }
+  unguard;
 }
 
 //==========================================================================
@@ -807,18 +807,18 @@ void VAudio::StopSequence(int origin_id)
 
 void VAudio::UpdateActiveSequences(float DeltaTime)
 {
-	guard(VAudio::UpdateActiveSequences);
-	if (!ActiveSequences || GGameInfo->IsPaused() || !cl)
-	{
-		//	No sequences currently playing/game is paused
-		//  or there's no player in the map
-		return;
-	}
-	for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
-	{
-		node->Update(DeltaTime);
-	}
-	unguard;
+  guard(VAudio::UpdateActiveSequences);
+  if (!ActiveSequences || GGameInfo->IsPaused() || !cl)
+  {
+    //  No sequences currently playing/game is paused
+    //  or there's no player in the map
+    return;
+  }
+  for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
+  {
+    node->Update(DeltaTime);
+  }
+  unguard;
 }
 
 //==========================================================================
@@ -829,201 +829,201 @@ void VAudio::UpdateActiveSequences(float DeltaTime)
 
 void VAudio::StopAllSequences()
 {
-	guard(VAudio::StopAllSequences);
-	for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
-	{
-		node->StopSound = 0; // don't play any stop sounds
-		delete node;
-	}
-	unguard;
+  guard(VAudio::StopAllSequences);
+  for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
+  {
+    node->StopSound = 0; // don't play any stop sounds
+    delete node;
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::SerialiseSounds
+//  VAudio::SerialiseSounds
 //
 //==========================================================================
 
 void VAudio::SerialiseSounds(VStream& Strm)
 {
-	guard(VAudio::SerialiseSounds);
-	if (Strm.IsLoading())
-	{
-		// Reload and restart all sound sequences
-		vint32 numSequences = Streamer<vint32>(Strm);
-		for (int i = 0; i < numSequences; i++)
-		{
-			new VSoundSeqNode(0, TVec(0, 0, 0), -1, 0);
-		}
-		VSoundSeqNode* node = SequenceListHead;
-		for (int i = 0; i < numSequences; i++, node = node->Next)
-		{
-			node->Serialise(Strm);
-		}
-	}
-	else
-	{
-		// Save the sound sequences
-		Strm << ActiveSequences;
-		for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
-		{
-			node->Serialise(Strm);
-		}
-	}
-	unguard;
+  guard(VAudio::SerialiseSounds);
+  if (Strm.IsLoading())
+  {
+    // Reload and restart all sound sequences
+    vint32 numSequences = Streamer<vint32>(Strm);
+    for (int i = 0; i < numSequences; i++)
+    {
+      new VSoundSeqNode(0, TVec(0, 0, 0), -1, 0);
+    }
+    VSoundSeqNode* node = SequenceListHead;
+    for (int i = 0; i < numSequences; i++, node = node->Next)
+    {
+      node->Serialise(Strm);
+    }
+  }
+  else
+  {
+    // Save the sound sequences
+    Strm << ActiveSequences;
+    for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
+    {
+      node->Serialise(Strm);
+    }
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::UpdateSfx
+//  VAudio::UpdateSfx
 //
-// 	Update the sound parameters. Used to control volume and pan
+//  Update the sound parameters. Used to control volume and pan
 // changes such as when a player turns.
 //
 //==========================================================================
 
 void VAudio::UpdateSfx()
 {
-	guard(VAudio::UpdateSfx);
-	if (!SoundDevice || !NumChannels)
-	{
-		return;
-	}
+  guard(VAudio::UpdateSfx);
+  if (!SoundDevice || !NumChannels)
+  {
+    return;
+  }
 
-	if (snd_sfx_volume != MaxVolume)
+  if (snd_sfx_volume != MaxVolume)
     {
-	    MaxVolume = snd_sfx_volume;
-		if (!MaxVolume)
-		{
-			StopAllSound();
-		}
+      MaxVolume = snd_sfx_volume;
+    if (!MaxVolume)
+    {
+      StopAllSound();
+    }
     }
 
-	if (!MaxVolume)
-	{
-		//	Silence
-		return;
-	}
+  if (!MaxVolume)
+  {
+    //  Silence
+    return;
+  }
 
-	if (cl)
-	{
-		AngleVectors(cl->ViewAngles, ListenerForward, ListenerRight, ListenerUp);
-	}
+  if (cl)
+  {
+    AngleVectors(cl->ViewAngles, ListenerForward, ListenerRight, ListenerUp);
+  }
 
-	for (int i = 0; i < NumChannels; i++)
-	{
-		if (!Channel[i].sound_id)
-		{
-			//	Nothing on this channel
-			continue;
-		}
-		if (!SoundDevice->IsChannelPlaying(Channel[i].handle))
-		{
-			//	Playback done
-			StopChannel(i);
-			continue;
-		}
-		if (!Channel[i].origin_id || Channel[i].Attenuation <= 0)
-		{
-			//	Full volume sound
-			continue;
-		}
+  for (int i = 0; i < NumChannels; i++)
+  {
+    if (!Channel[i].sound_id)
+    {
+      //  Nothing on this channel
+      continue;
+    }
+    if (!SoundDevice->IsChannelPlaying(Channel[i].handle))
+    {
+      //  Playback done
+      StopChannel(i);
+      continue;
+    }
+    if (!Channel[i].origin_id || Channel[i].Attenuation <= 0)
+    {
+      //  Full volume sound
+      continue;
+    }
 
-		if (Channel[i].LocalPlayerSound)
-		{
-			//	Client sound
-			continue;
-		}
+    if (Channel[i].LocalPlayerSound)
+    {
+      //  Client sound
+      continue;
+    }
 
-		//	Move sound
-		Channel[i].origin += Channel[i].velocity * host_frametime;
+    //  Move sound
+    Channel[i].origin += Channel[i].velocity * host_frametime;
 
-		if (!cl)
-		{
-			continue;
-		}
+    if (!cl)
+    {
+      continue;
+    }
 
-		int dist = (int)(Length(Channel[i].origin - cl->ViewOrg) *
-			Channel[i].Attenuation);
-		if (dist >= MaxSoundDist)
-		{
-			//	Too far away
-			StopChannel(i);
-			continue;
-		}
+    int dist = (int)(Length(Channel[i].origin - cl->ViewOrg) *
+      Channel[i].Attenuation);
+    if (dist >= MaxSoundDist)
+    {
+      //  Too far away
+      StopChannel(i);
+      continue;
+    }
 
-		//	Update params
-		if (!Channel[i].is3D)
-		{
-			float vol = SoundCurve[dist] / 127.0 * Channel[i].volume;
-			float sep = DotProduct(Channel[i].origin - cl->ViewOrg,
-				ListenerRight) / MaxSoundDist;
-			if (snd_swap_stereo)
-			{
-				sep = -sep;
-			}
-			SoundDevice->UpdateChannel(Channel[i].handle, vol, sep);
-		}
-		else
-		{
-			SoundDevice->UpdateChannel3D(Channel[i].handle,
-				Channel[i].origin, Channel[i].velocity);
-		}
-		Channel[i].priority = GSoundManager->S_sfx[Channel[i].sound_id].Priority *
-			(PRIORITY_MAX_ADJUST - PRIORITY_MAX_ADJUST * dist / MaxSoundDist);
-	}
+    //  Update params
+    if (!Channel[i].is3D)
+    {
+      float vol = SoundCurve[dist] / 127.0 * Channel[i].volume;
+      float sep = DotProduct(Channel[i].origin - cl->ViewOrg,
+        ListenerRight) / MaxSoundDist;
+      if (snd_swap_stereo)
+      {
+        sep = -sep;
+      }
+      SoundDevice->UpdateChannel(Channel[i].handle, vol, sep);
+    }
+    else
+    {
+      SoundDevice->UpdateChannel3D(Channel[i].handle,
+        Channel[i].origin, Channel[i].velocity);
+    }
+    Channel[i].priority = GSoundManager->S_sfx[Channel[i].sound_id].Priority *
+      (PRIORITY_MAX_ADJUST - PRIORITY_MAX_ADJUST * dist / MaxSoundDist);
+  }
 
-	if (SoundDevice->Sound3D && cl)
-	{
-		SoundDevice->UpdateListener(cl->ViewOrg, TVec(0, 0, 0),
-			ListenerForward, ListenerRight, ListenerUp,
-			GSoundManager->FindEnvironment(cl->SoundEnvironment));
-	}
+  if (SoundDevice->Sound3D && cl)
+  {
+    SoundDevice->UpdateListener(cl->ViewOrg, TVec(0, 0, 0),
+      ListenerForward, ListenerRight, ListenerUp,
+      GSoundManager->FindEnvironment(cl->SoundEnvironment));
+  }
 
-	SoundDevice->Tick(host_frametime);
-	unguard;
+  SoundDevice->Tick(host_frametime);
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::StartSong
+//  VAudio::StartSong
 //
 //==========================================================================
 
 void VAudio::StartSong(VName song, int track, bool loop)
 {
-	guard(VAudio::StartSong);
-	if (loop)
-		GCmdBuf << "Music Loop " << *song << "\n";
-	else
-		GCmdBuf << "Music Play " << *song << "\n";
-	unguard;
+  guard(VAudio::StartSong);
+  if (loop)
+    GCmdBuf << "Music Loop " << *song << "\n";
+  else
+    GCmdBuf << "Music Play " << *song << "\n";
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::PauseSound
+//  VAudio::PauseSound
 //
 //==========================================================================
 
 void VAudio::PauseSound()
 {
-	guard(VAudio::PauseSound);
-	GCmdBuf << "Music Pause\n";
-	unguard;
+  guard(VAudio::PauseSound);
+  GCmdBuf << "Music Pause\n";
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::ResumeSound
+//  VAudio::ResumeSound
 //
 //==========================================================================
 
 void VAudio::ResumeSound()
 {
-	guard(VAudio::ResumeSound);
-	GCmdBuf << "Music resume\n";
-	unguard;
+  guard(VAudio::ResumeSound);
+  GCmdBuf << "Music resume\n";
+  unguard;
 }
 
 //==========================================================================
@@ -1034,257 +1034,257 @@ void VAudio::ResumeSound()
 
 void VAudio::StartMusic()
 {
-	StartSong(MapSong, MapCDTrack, true);
+  StartSong(MapSong, MapCDTrack, true);
 }
 
 //==========================================================================
 //
-//	VAudio::Start
+//  VAudio::Start
 //
-//	Per level startup code. Kills playing sounds at start of level,
+//  Per level startup code. Kills playing sounds at start of level,
 // determines music if any, changes music.
 //
 //==========================================================================
 
 void VAudio::Start()
 {
-	guard(VAudio::Start);
-	StopAllSequences();
-	StopAllSound();
-	unguard;
-}	
+  guard(VAudio::Start);
+  StopAllSequences();
+  StopAllSound();
+  unguard;
+}
 
 //==========================================================================
 //
-//	VAudio::MusicChanged
+//  VAudio::MusicChanged
 //
 //==========================================================================
 
 void VAudio::MusicChanged()
 {
-	guard(VAudio::MusicChanged);
-	MapSong = GClLevel->LevelInfo->SongLump;
-	MapCDTrack = GClLevel->LevelInfo->CDTrack;
+  guard(VAudio::MusicChanged);
+  MapSong = GClLevel->LevelInfo->SongLump;
+  MapCDTrack = GClLevel->LevelInfo->CDTrack;
 
-	StartMusic();
-	unguard;
+  StartMusic();
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::UpdateSounds
+//  VAudio::UpdateSounds
 //
-//	Updates music & sounds
+//  Updates music & sounds
 //
 //==========================================================================
 
 void VAudio::UpdateSounds()
 {
-	guard(VAudio::UpdateSounds);
-	//	Check sound volume.
-	if (snd_sfx_volume < 0.0)
-	{
-		snd_sfx_volume = 0.0;
-	}
-	if (snd_sfx_volume > 1.0)
-	{
-		snd_sfx_volume = 1.0;
-	}
+  guard(VAudio::UpdateSounds);
+  //  Check sound volume.
+  if (snd_sfx_volume < 0.0)
+  {
+    snd_sfx_volume = 0.0;
+  }
+  if (snd_sfx_volume > 1.0)
+  {
+    snd_sfx_volume = 1.0;
+  }
 
-	//	Check music volume.
-	if (snd_music_volume < 0.0)
-	{
-		snd_music_volume = 0.0;
-	}
-	if (snd_music_volume > 1.0)
-	{
-		snd_music_volume = 1.0;
-	}
+  //  Check music volume.
+  if (snd_music_volume < 0.0)
+  {
+    snd_music_volume = 0.0;
+  }
+  if (snd_music_volume > 1.0)
+  {
+    snd_music_volume = 1.0;
+  }
 
-	// Update any Sequences
-	UpdateActiveSequences(host_frametime);
+  // Update any Sequences
+  UpdateActiveSequences(host_frametime);
 
-	UpdateSfx();
-	if (StreamMusicPlayer)
-	{
-		SoundDevice->SetStreamVolume(snd_music_volume * MusicVolumeFactor);
-		StreamMusicPlayer->Tick(host_frametime);
-	}
-	if (MidiDevice)
-	{
-		MidiDevice->SetVolume(snd_music_volume * MusicVolumeFactor);
-		MidiDevice->Tick(host_frametime);
-	}
-	if (CDAudioDevice)
-	{
-		CDAudioDevice->Update();
-	}
-	unguard;
+  UpdateSfx();
+  if (StreamMusicPlayer)
+  {
+    SoundDevice->SetStreamVolume(snd_music_volume * MusicVolumeFactor);
+    StreamMusicPlayer->Tick(host_frametime);
+  }
+  if (MidiDevice)
+  {
+    MidiDevice->SetVolume(snd_music_volume * MusicVolumeFactor);
+    MidiDevice->Tick(host_frametime);
+  }
+  if (CDAudioDevice)
+  {
+    CDAudioDevice->Update();
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::PlaySong
+//  VAudio::PlaySong
 //
 //==========================================================================
 
 void VAudio::PlaySong(const char* Song, bool Loop)
 {
-	guard(VAudio::PlaySong);
-	static const char* Exts[] = { "ogg", "mp3", "wav", "mid", "mus", "669",
-		"amf", "dsm", "far", "gdm", "imf", "it", "m15", "med", "mod", "mtm",
-		"okt", "s3m", "stm", "stx", "ult", "uni", "xm", "flac", "ay", "gbs",
-		"gym", "hes", "kss", "nsf", "nsfe", "sap", "sgc", "spc", "vgm", NULL };
-	static const char* ExtraExts[] = { "ogg", "mp3", NULL };
+  guard(VAudio::PlaySong);
+  static const char* Exts[] = { "ogg", "mp3", "wav", "mid", "mus", "669",
+    "amf", "dsm", "far", "gdm", "imf", "it", "m15", "med", "mod", "mtm",
+    "okt", "s3m", "stm", "stx", "ult", "uni", "xm", "flac", "ay", "gbs",
+    "gym", "hes", "kss", "nsf", "nsfe", "sap", "sgc", "spc", "vgm", NULL };
+  static const char* ExtraExts[] = { "ogg", "mp3", NULL };
 
-	if (!Song || !Song[0])
-	{
-		return;
-	}
+  if (!Song || !Song[0])
+  {
+    return;
+  }
 
-	if (StreamPlaying)
-	{
-		StreamMusicPlayer->Stop();
-	}
-	else if (MidiDevice)
-	{
-		MidiDevice->Stop();
-	}
-	StreamPlaying = false;
+  if (StreamPlaying)
+  {
+    StreamMusicPlayer->Stop();
+  }
+  else if (MidiDevice)
+  {
+    MidiDevice->Stop();
+  }
+  StreamPlaying = false;
 
-	//	Get music volume for this song.
-	MusicVolumeFactor = GSoundManager->GetMusicVolume(Song);
-	if (StreamMusicPlayer)
-	{
-		SoundDevice->SetStreamVolume(snd_music_volume * MusicVolumeFactor);
-	}
-	if (MidiDevice)
-	{
-		MidiDevice->SetVolume(snd_music_volume * MusicVolumeFactor);
-	}
+  //  Get music volume for this song.
+  MusicVolumeFactor = GSoundManager->GetMusicVolume(Song);
+  if (StreamMusicPlayer)
+  {
+    SoundDevice->SetStreamVolume(snd_music_volume * MusicVolumeFactor);
+  }
+  if (MidiDevice)
+  {
+    MidiDevice->SetVolume(snd_music_volume * MusicVolumeFactor);
+  }
 
-	//	Find the song.
-	int Lump = -1;
-	if (snd_external_music)
-	{
-		//	Check external music definition file.
-		VStream* XmlStrm = FL_OpenFileRead("extras/music/remap.xml");
-		if (XmlStrm)
-		{
-			VXmlDocument* Doc = new VXmlDocument();
-			Doc->Parse(*XmlStrm, "extras/music/remap.xml");
-			delete XmlStrm;
-			XmlStrm = NULL;
-			for (VXmlNode* N = Doc->Root.FirstChild; N; N = N->NextSibling)
-			{
-				if (N->Name != "song")
-				{
-					continue;
-				}
-				if (N->GetAttribute("name") != Song)
-				{
-					continue;
-				}
-				Lump = W_CheckNumForFileName(N->GetAttribute("file"));
-				if (Lump >= 0)
-				{
-					break;
-				}
-			}
-			delete Doc;
-			Doc = NULL;
-		}
-		//	Also try OGG or MP3 directly.
-		if (Lump < 0)
-		{
-			Lump = W_FindLumpByFileNameWithExts(va("extras/music/%s", Song),
-				ExtraExts);
-		}
-	}
-	if (Lump < 0)
-	{
-		int FileIdx = W_FindLumpByFileNameWithExts(va("music/%s", Song), Exts);
-		int LumpIdx = W_CheckNumForName(VName(Song, VName::AddLower8), WADNS_Music);
-		Lump = MAX(FileIdx, LumpIdx);
-	}
-	if (Lump < 0)
-	{
-		GCon->Logf("Can't find song %s", Song);
-		return;
-	}
-	VStream* Strm = W_CreateLumpReaderNum(Lump);
+  //  Find the song.
+  int Lump = -1;
+  if (snd_external_music)
+  {
+    //  Check external music definition file.
+    VStream* XmlStrm = FL_OpenFileRead("extras/music/remap.xml");
+    if (XmlStrm)
+    {
+      VXmlDocument* Doc = new VXmlDocument();
+      Doc->Parse(*XmlStrm, "extras/music/remap.xml");
+      delete XmlStrm;
+      XmlStrm = NULL;
+      for (VXmlNode* N = Doc->Root.FirstChild; N; N = N->NextSibling)
+      {
+        if (N->Name != "song")
+        {
+          continue;
+        }
+        if (N->GetAttribute("name") != Song)
+        {
+          continue;
+        }
+        Lump = W_CheckNumForFileName(N->GetAttribute("file"));
+        if (Lump >= 0)
+        {
+          break;
+        }
+      }
+      delete Doc;
+      Doc = NULL;
+    }
+    //  Also try OGG or MP3 directly.
+    if (Lump < 0)
+    {
+      Lump = W_FindLumpByFileNameWithExts(va("extras/music/%s", Song),
+        ExtraExts);
+    }
+  }
+  if (Lump < 0)
+  {
+    int FileIdx = W_FindLumpByFileNameWithExts(va("music/%s", Song), Exts);
+    int LumpIdx = W_CheckNumForName(VName(Song, VName::AddLower8), WADNS_Music);
+    Lump = MAX(FileIdx, LumpIdx);
+  }
+  if (Lump < 0)
+  {
+    GCon->Logf("Can't find song %s", Song);
+    return;
+  }
+  VStream* Strm = W_CreateLumpReaderNum(Lump);
 
-	if (Strm->TotalSize() < 4)
-	{
-		delete Strm;
-		Strm = NULL;
-		return;
-	}
+  if (Strm->TotalSize() < 4)
+  {
+    delete Strm;
+    Strm = NULL;
+    return;
+  }
 
-	byte Hdr[4];
-	Strm->Serialise(Hdr, 4);
-	if (!memcmp(Hdr, MUSMAGIC, 4))
-	{
-		// convert mus to mid with a wonderfull function
-		// thanks to S.Bacquet for the source of qmus2mid
-		Strm->Seek(0);
-		VMemoryStream* MidStrm = new VMemoryStream();
-		MidStrm->BeginWrite();
-		VQMus2Mid Conv;
-		int MidLength = Conv.Run(*Strm, *MidStrm);
-		delete Strm;
-		Strm = NULL;
-		if (!MidLength)
-		{
-			delete MidStrm;
-			MidStrm = NULL;
-			return;
-		}
-		MidStrm->Seek(0);
-		MidStrm->BeginRead();
-		Strm = MidStrm;
-	}
+  byte Hdr[4];
+  Strm->Serialise(Hdr, 4);
+  if (!memcmp(Hdr, MUSMAGIC, 4))
+  {
+    // convert mus to mid with a wonderfull function
+    // thanks to S.Bacquet for the source of qmus2mid
+    Strm->Seek(0);
+    VMemoryStream* MidStrm = new VMemoryStream();
+    MidStrm->BeginWrite();
+    VQMus2Mid Conv;
+    int MidLength = Conv.Run(*Strm, *MidStrm);
+    delete Strm;
+    Strm = NULL;
+    if (!MidLength)
+    {
+      delete MidStrm;
+      MidStrm = NULL;
+      return;
+    }
+    MidStrm->Seek(0);
+    MidStrm->BeginRead();
+    Strm = MidStrm;
+  }
 
-	//	Try to create audio codec.
-	VAudioCodec* Codec = NULL;
-	for (FAudioCodecDesc* Desc = FAudioCodecDesc::List; Desc && !Codec; Desc = Desc->Next)
-	{
-//		GCon->Logf(va("Using %s to open the stream", Desc->Description));
-		Codec = Desc->Creator(Strm);
-	}
+  //  Try to create audio codec.
+  VAudioCodec* Codec = NULL;
+  for (FAudioCodecDesc* Desc = FAudioCodecDesc::List; Desc && !Codec; Desc = Desc->Next)
+  {
+//    GCon->Logf(va("Using %s to open the stream", Desc->Description));
+    Codec = Desc->Creator(Strm);
+  }
 
-	if (StreamMusicPlayer && Codec)
-	{
-		//	Start playing streamed music.
-		StreamMusicPlayer->Play(Codec, Song, Loop);
-		StreamPlaying = true;
-	}
-	else if (MidiDevice)
-	{
-		int Length = Strm->TotalSize();
-		void* Data = Z_Malloc(Length);
-		Strm->Seek(0);
-		Strm->Serialise(Data, Length);
-		Strm->Close();
-		delete Strm;
-		Strm = NULL;
+  if (StreamMusicPlayer && Codec)
+  {
+    //  Start playing streamed music.
+    StreamMusicPlayer->Play(Codec, Song, Loop);
+    StreamPlaying = true;
+  }
+  else if (MidiDevice)
+  {
+    int Length = Strm->TotalSize();
+    void* Data = Z_Malloc(Length);
+    Strm->Seek(0);
+    Strm->Serialise(Data, Length);
+    Strm->Close();
+    delete Strm;
+    Strm = NULL;
 
-		if (!memcmp(Data, MIDIMAGIC, 4))
-		{
-			MidiDevice->Play(Data, Length, Song, Loop);
-		}
-		else
-		{
-			GCon->Log("Music file format is not supported");
-			Z_Free(Data);
-		}
-	}
-	else
-	{
-		delete Strm;
-		Strm = NULL;
-	}
-	unguard;
+    if (!memcmp(Data, MIDIMAGIC, 4))
+    {
+      MidiDevice->Play(Data, Length, Song, Loop);
+    }
+    else
+    {
+      GCon->Log("Music file format is not supported");
+      Z_Free(Data);
+    }
+  }
+  else
+  {
+    delete Strm;
+    Strm = NULL;
+  }
+  unguard;
 }
 
 //==========================================================================
@@ -1295,329 +1295,329 @@ void VAudio::PlaySong(const char* Song, bool Loop)
 
 void VAudio::CmdMusic(const TArray<VStr>& Args)
 {
-	guard(VAudio::CmdMusic);
-	if (!MidiDevice && !StreamMusicPlayer)
-	{
-		return;
-	}
+  guard(VAudio::CmdMusic);
+  if (!MidiDevice && !StreamMusicPlayer)
+  {
+    return;
+  }
 
-	if (Args.Num() < 2)
-	{
-		return;
-	}
+  if (Args.Num() < 2)
+  {
+    return;
+  }
 
-	VStr command = Args[1].ToLower();
+  VStr command = Args[1].ToLower();
 
-	if (command == "on")
-	{
-		MusicEnabled = true;
-		return;
-	}
+  if (command == "on")
+  {
+    MusicEnabled = true;
+    return;
+  }
 
-	if (command == "off")
-	{
-		if (MidiDevice)
-		{
-			MidiDevice->Stop();
-		}
-		if (StreamMusicPlayer)
-		{
-			StreamMusicPlayer->Stop();
-		}
-		MusicEnabled = false;
-		return;
-	}
+  if (command == "off")
+  {
+    if (MidiDevice)
+    {
+      MidiDevice->Stop();
+    }
+    if (StreamMusicPlayer)
+    {
+      StreamMusicPlayer->Stop();
+    }
+    MusicEnabled = false;
+    return;
+  }
 
-	if (!MusicEnabled)
-	{
-		return;
-	}
+  if (!MusicEnabled)
+  {
+    return;
+  }
 
-	if (command == "play")
-	{
-		if (Args.Num() < 3)
-		{
-			GCon->Log("Please enter name of the song.");
-			return;
-		}
-		PlaySong(*Args[2].ToLower(), false);
-		return;
-	}
+  if (command == "play")
+  {
+    if (Args.Num() < 3)
+    {
+      GCon->Log("Please enter name of the song.");
+      return;
+    }
+    PlaySong(*Args[2].ToLower(), false);
+    return;
+  }
 
-	if (command == "loop")
-	{
-		if (Args.Num() < 3)
-		{
-			GCon->Log("Please enter name of the song.");
-			return;
-		}
-		PlaySong(*Args[2].ToLower(), true);
-		return;
-	}
+  if (command == "loop")
+  {
+    if (Args.Num() < 3)
+    {
+      GCon->Log("Please enter name of the song.");
+      return;
+    }
+    PlaySong(*Args[2].ToLower(), true);
+    return;
+  }
 
-	if (command == "pause")
-	{
-		if (StreamPlaying)
-		{
-			StreamMusicPlayer->Pause();
-		}
-		else if (MidiDevice)
-		{
-			MidiDevice->Pause();
-		}
-		return;
-	}
+  if (command == "pause")
+  {
+    if (StreamPlaying)
+    {
+      StreamMusicPlayer->Pause();
+    }
+    else if (MidiDevice)
+    {
+      MidiDevice->Pause();
+    }
+    return;
+  }
 
-	if (command == "resume")
-	{
-		if (StreamPlaying)
-		{
-			StreamMusicPlayer->Resume();
-		}
-		else if (MidiDevice)
-		{
-			MidiDevice->Resume();
-		}
-		return;
-	}
+  if (command == "resume")
+  {
+    if (StreamPlaying)
+    {
+      StreamMusicPlayer->Resume();
+    }
+    else if (MidiDevice)
+    {
+      MidiDevice->Resume();
+    }
+    return;
+  }
 
-	if (command == "stop")
-	{
-		if (StreamPlaying)
-		{
-			StreamMusicPlayer->Stop();
-		}
-		else if (MidiDevice)
-		{
-			MidiDevice->Stop();
-		}
-		return;
-	}
+  if (command == "stop")
+  {
+    if (StreamPlaying)
+    {
+      StreamMusicPlayer->Stop();
+    }
+    else if (MidiDevice)
+    {
+      MidiDevice->Stop();
+    }
+    return;
+  }
 
-	if (command == "info")
-	{
-		if (StreamPlaying && StreamMusicPlayer->IsPlaying())
-		{
-			GCon->Logf("Currently %s %s.", StreamMusicPlayer->CurrLoop ?
-				"looping" : "playing", *StreamMusicPlayer->CurrSong);
-		}
-		else if (MidiDevice && !StreamPlaying && MidiDevice->IsPlaying())
-		{
-			GCon->Logf("Currently %s %s.", MidiDevice->CurrLoop ?
-				"looping" : "playing", *MidiDevice->CurrSong);
-		}
-		else
-		{
-			GCon->Log("No song currently playing");
-		}
-		return;
-	}
-	unguard;
+  if (command == "info")
+  {
+    if (StreamPlaying && StreamMusicPlayer->IsPlaying())
+    {
+      GCon->Logf("Currently %s %s.", StreamMusicPlayer->CurrLoop ?
+        "looping" : "playing", *StreamMusicPlayer->CurrSong);
+    }
+    else if (MidiDevice && !StreamPlaying && MidiDevice->IsPlaying())
+    {
+      GCon->Logf("Currently %s %s.", MidiDevice->CurrLoop ?
+        "looping" : "playing", *MidiDevice->CurrSong);
+    }
+    else
+    {
+      GCon->Log("No song currently playing");
+    }
+    return;
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::CmdCD
+//  VAudio::CmdCD
 //
 //==========================================================================
 
 void VAudio::CmdCD(const TArray<VStr>& Args)
 {
-	guard(VAudio::CmdCD);
-	if (!CDAudioDevice)
-		return;
+  guard(VAudio::CmdCD);
+  if (!CDAudioDevice)
+    return;
 
-	if (Args.Num() < 2)
-		return;
+  if (Args.Num() < 2)
+    return;
 
-	VStr command = Args[1].ToLower();
+  VStr command = Args[1].ToLower();
 
-	if (command == "on")
-	{
-		CDAudioDevice->Enabled = true;
-		return;
-	}
+  if (command == "on")
+  {
+    CDAudioDevice->Enabled = true;
+    return;
+  }
 
-	if (command == "off")
-	{
-		if (CDAudioDevice->Playing)
-		{
-			CDAudioDevice->Stop();
-		}
-		CDAudioDevice->Enabled = false;
-		return;
-	}
+  if (command == "off")
+  {
+    if (CDAudioDevice->Playing)
+    {
+      CDAudioDevice->Stop();
+    }
+    CDAudioDevice->Enabled = false;
+    return;
+  }
 
-	if (command == "reset")
-	{
-		int		n;
+  if (command == "reset")
+  {
+    int   n;
 
-		CDAudioDevice->Enabled = true;
-		if (CDAudioDevice->Playing)
-		{
-			CDAudioDevice->Stop();
-		}
-		for (n = 0; n < 100; n++)
-		{
-			CDAudioDevice->Remap[n] = n;
-		}
-		CDAudioDevice->GetInfo();
-		return;
-	}
+    CDAudioDevice->Enabled = true;
+    if (CDAudioDevice->Playing)
+    {
+      CDAudioDevice->Stop();
+    }
+    for (n = 0; n < 100; n++)
+    {
+      CDAudioDevice->Remap[n] = n;
+    }
+    CDAudioDevice->GetInfo();
+    return;
+  }
 
-	if (command == "remap")
-	{
-		int		n;
-		int		ret;
+  if (command == "remap")
+  {
+    int   n;
+    int   ret;
 
-		ret = Args.Num() - 2;
-		if (ret <= 0)
-		{
-			for (n = 1; n < 100; n++)
-			{
-				if (CDAudioDevice->Remap[n] != n)
-				{
-					GCon->Logf("%d -> %d", n, CDAudioDevice->Remap[n]);
-				}
-			}
-			return;
-		}
-		for (n = 1; n <= ret; n++)
-		{
-			CDAudioDevice->Remap[n] = atoi(*Args[n + 1]);
-		}
-		return;
-	}
+    ret = Args.Num() - 2;
+    if (ret <= 0)
+    {
+      for (n = 1; n < 100; n++)
+      {
+        if (CDAudioDevice->Remap[n] != n)
+        {
+          GCon->Logf("%d -> %d", n, CDAudioDevice->Remap[n]);
+        }
+      }
+      return;
+    }
+    for (n = 1; n <= ret; n++)
+    {
+      CDAudioDevice->Remap[n] = atoi(*Args[n + 1]);
+    }
+    return;
+  }
 
-	if (!CDAudioDevice->Enabled)
-	{
-		return;
-	}
+  if (!CDAudioDevice->Enabled)
+  {
+    return;
+  }
 
-	if (command == "eject")
-	{
-		if (CDAudioDevice->Playing)
-		{
-			CDAudioDevice->Stop();
-		}
-		CDAudioDevice->OpenDoor();
-		CDAudioDevice->CDValid = false;
-		return;
-	}
+  if (command == "eject")
+  {
+    if (CDAudioDevice->Playing)
+    {
+      CDAudioDevice->Stop();
+    }
+    CDAudioDevice->OpenDoor();
+    CDAudioDevice->CDValid = false;
+    return;
+  }
 
-	if (command == "close")
-	{
-		CDAudioDevice->CloseDoor();
-		return;
-	}
+  if (command == "close")
+  {
+    CDAudioDevice->CloseDoor();
+    return;
+  }
 
-	if (!CDAudioDevice->CDValid)
-	{
-		CDAudioDevice->GetInfo();
-		if (!CDAudioDevice->CDValid)
-		{
-			GCon->Log("No CD in player.");
-			return;
-		}
-	}
+  if (!CDAudioDevice->CDValid)
+  {
+    CDAudioDevice->GetInfo();
+    if (!CDAudioDevice->CDValid)
+    {
+      GCon->Log("No CD in player.");
+      return;
+    }
+  }
 
-	if (command == "play")
-	{
-		if (Args.Num() < 2)
-		{
-			GCon->Log("Please enter CD track number");
-			return;
-		}
-		CDAudioDevice->Play(atoi(*Args[2]), false);
-		return;
-	}
+  if (command == "play")
+  {
+    if (Args.Num() < 2)
+    {
+      GCon->Log("Please enter CD track number");
+      return;
+    }
+    CDAudioDevice->Play(atoi(*Args[2]), false);
+    return;
+  }
 
-	if (command == "loop")
-	{
-		if (Args.Num() < 2)
-		{
-			GCon->Log("Please enter CD track number");
-			return;
-		}
-		CDAudioDevice->Play(atoi(*Args[2]), true);
-		return;
-	}
+  if (command == "loop")
+  {
+    if (Args.Num() < 2)
+    {
+      GCon->Log("Please enter CD track number");
+      return;
+    }
+    CDAudioDevice->Play(atoi(*Args[2]), true);
+    return;
+  }
 
-	if (command == "pause")
-	{
-		CDAudioDevice->Pause();
-		return;
-	}
+  if (command == "pause")
+  {
+    CDAudioDevice->Pause();
+    return;
+  }
 
-	if (command == "resume")
-	{
-		CDAudioDevice->Resume();
-		return;
-	}
+  if (command == "resume")
+  {
+    CDAudioDevice->Resume();
+    return;
+  }
 
-	if (command == "stop")
-	{
-		CDAudioDevice->Stop();
-		return;
-	}
+  if (command == "stop")
+  {
+    CDAudioDevice->Stop();
+    return;
+  }
 
-	if (command == "info")
-	{
-		GCon->Logf("%d tracks", CDAudioDevice->MaxTrack);
-		if (CDAudioDevice->Playing || CDAudioDevice->WasPlaying)
-		{
-			GCon->Logf("%s %s track %d", CDAudioDevice->Playing ?
-				"Currently" : "Paused", CDAudioDevice->PlayLooping ?
-				"looping" : "playing", CDAudioDevice->PlayTrack);
-		}
-		return;
-	}
-	unguard;
+  if (command == "info")
+  {
+    GCon->Logf("%d tracks", CDAudioDevice->MaxTrack);
+    if (CDAudioDevice->Playing || CDAudioDevice->WasPlaying)
+    {
+      GCon->Logf("%s %s track %d", CDAudioDevice->Playing ?
+        "Currently" : "Paused", CDAudioDevice->PlayLooping ?
+        "looping" : "playing", CDAudioDevice->PlayTrack);
+    }
+    return;
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::EAX_CalcEnvSize
+//  VAudio::EAX_CalcEnvSize
 //
 //==========================================================================
 
 float VAudio::EAX_CalcEnvSize()
 {
-	guard(VAudio::EAX_CalcEnvSize);
-	if (!cl)
-	{
-		return 7.5;
-	}
+  guard(VAudio::EAX_CalcEnvSize);
+  if (!cl)
+  {
+    return 7.5;
+  }
 
-	float len = 0;
-	len += CalcDirSize(TVec(3200, 0, 0));
-	len += CalcDirSize(TVec(0, 3200, 0));
-	len += CalcDirSize(TVec(0, 0, 3200));
-	return len / 3.0;
-	unguard;
+  float len = 0;
+  len += CalcDirSize(TVec(3200, 0, 0));
+  len += CalcDirSize(TVec(0, 3200, 0));
+  len += CalcDirSize(TVec(0, 0, 3200));
+  return len / 3.0;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAudio::CalcDirSize
+//  VAudio::CalcDirSize
 //
 //==========================================================================
 
 float VAudio::CalcDirSize(const TVec &dir)
 {
-	guard(VAudio::CalcDirSize);
-	linetrace_t Trace;
-	GClLevel->TraceLine(Trace, cl->ViewOrg, cl->ViewOrg + dir, SPF_NOBLOCKSIGHT);
-	float len = Length(Trace.LineEnd - cl->ViewOrg);
-	GClLevel->TraceLine(Trace, cl->ViewOrg, cl->ViewOrg - dir, SPF_NOBLOCKSIGHT);
-	len += Length(Trace.LineEnd - cl->ViewOrg);
-	len /= snd_eax_distance_unit;
-	if (len > 100)
-		len = 100;
-	if (len < 1)
-		len = 1;
-	return len;
-	unguard;
+  guard(VAudio::CalcDirSize);
+  linetrace_t Trace;
+  GClLevel->TraceLine(Trace, cl->ViewOrg, cl->ViewOrg + dir, SPF_NOBLOCKSIGHT);
+  float len = Length(Trace.LineEnd - cl->ViewOrg);
+  GClLevel->TraceLine(Trace, cl->ViewOrg, cl->ViewOrg - dir, SPF_NOBLOCKSIGHT);
+  len += Length(Trace.LineEnd - cl->ViewOrg);
+  len /= snd_eax_distance_unit;
+  if (len > 100)
+    len = 100;
+  if (len < 1)
+    len = 1;
+  return len;
+  unguard;
 }
 
 //==========================================================================
@@ -1627,7 +1627,7 @@ float VAudio::CalcDirSize(const TVec &dir)
 //==========================================================================
 
 VSoundSeqNode::VSoundSeqNode(int AOriginId, const TVec& AOrigin,
-	int ASequence, int AModeNum)
+  int ASequence, int AModeNum)
 : Sequence(ASequence)
 , OriginId(AOriginId)
 , Origin(AOrigin)
@@ -1642,24 +1642,24 @@ VSoundSeqNode::VSoundSeqNode(int AOriginId, const TVec& AOrigin,
 , ParentSeq(NULL)
 , ChildSeq(NULL)
 {
-	if (Sequence >= 0)
-	{
-		SequencePtr = GSoundManager->SeqInfo[Sequence].Data;
-		StopSound = GSoundManager->SeqInfo[Sequence].StopSound;
-	}
+  if (Sequence >= 0)
+  {
+    SequencePtr = GSoundManager->SeqInfo[Sequence].Data;
+    StopSound = GSoundManager->SeqInfo[Sequence].StopSound;
+  }
 
-	//	Add to the list of sound sequences.
-	if (!((VAudio*)GAudio)->SequenceListHead)
-	{
-		((VAudio*)GAudio)->SequenceListHead = this;
-	}
-	else
-	{
-		((VAudio*)GAudio)->SequenceListHead->Prev = this;
-		Next = ((VAudio*)GAudio)->SequenceListHead;
-		((VAudio*)GAudio)->SequenceListHead = this;
-	}
-	((VAudio*)GAudio)->ActiveSequences++;
+  //  Add to the list of sound sequences.
+  if (!((VAudio*)GAudio)->SequenceListHead)
+  {
+    ((VAudio*)GAudio)->SequenceListHead = this;
+  }
+  else
+  {
+    ((VAudio*)GAudio)->SequenceListHead->Prev = this;
+    Next = ((VAudio*)GAudio)->SequenceListHead;
+    ((VAudio*)GAudio)->SequenceListHead = this;
+  }
+  ((VAudio*)GAudio)->ActiveSequences++;
 }
 
 //==========================================================================
@@ -1670,45 +1670,45 @@ VSoundSeqNode::VSoundSeqNode(int AOriginId, const TVec& AOrigin,
 
 VSoundSeqNode::~VSoundSeqNode()
 {
-	if (ParentSeq && ParentSeq->ChildSeq == this)
-	{
-		//	Re-activate parent sequence.
-		ParentSeq->SequencePtr++;
-		ParentSeq->ChildSeq = NULL;
-		ParentSeq = NULL;
-	}
+  if (ParentSeq && ParentSeq->ChildSeq == this)
+  {
+    //  Re-activate parent sequence.
+    ParentSeq->SequencePtr++;
+    ParentSeq->ChildSeq = NULL;
+    ParentSeq = NULL;
+  }
 
-	if (ChildSeq)
-	{
-		delete ChildSeq;
-		ChildSeq = NULL;
-	}
+  if (ChildSeq)
+  {
+    delete ChildSeq;
+    ChildSeq = NULL;
+  }
 
-	//	Play stop sound.
-	if (StopSound >= 0)
-	{
-		((VAudio*)GAudio)->StopSound(OriginId, 0);
-	}
-	if (StopSound >= 1)
-	{
-		((VAudio*)GAudio)->PlaySound(StopSound, Origin, TVec(0, 0, 0),
-			OriginId, 1, Volume, Attenuation, false);
-	}
+  //  Play stop sound.
+  if (StopSound >= 0)
+  {
+    ((VAudio*)GAudio)->StopSound(OriginId, 0);
+  }
+  if (StopSound >= 1)
+  {
+    ((VAudio*)GAudio)->PlaySound(StopSound, Origin, TVec(0, 0, 0),
+      OriginId, 1, Volume, Attenuation, false);
+  }
 
-	//	Remove from the list of active sound sequences.
-	if (((VAudio*)GAudio)->SequenceListHead == this)
-	{
-		((VAudio*)GAudio)->SequenceListHead = Next;
-	}
-	if (Prev)
-	{
-		Prev->Next = Next;
-	}
-	if (Next)
-	{
-		Next->Prev = Prev;
-	}
-	((VAudio*)GAudio)->ActiveSequences--;
+  //  Remove from the list of active sound sequences.
+  if (((VAudio*)GAudio)->SequenceListHead == this)
+  {
+    ((VAudio*)GAudio)->SequenceListHead = Next;
+  }
+  if (Prev)
+  {
+    Prev->Next = Next;
+  }
+  if (Next)
+  {
+    Next->Prev = Prev;
+  }
+  ((VAudio*)GAudio)->ActiveSequences--;
 }
 
 //==========================================================================
@@ -1719,309 +1719,309 @@ VSoundSeqNode::~VSoundSeqNode()
 
 void VSoundSeqNode::Update(float DeltaTime)
 {
-	guard(VSoundSeqNode::Update);
-	if (DelayTime)
-	{
-		DelayTime -= DeltaTime;
-		if (DelayTime <= 0.0)
-		{
-			DelayTime = 0.0;
-		}
-		return;
-	}
+  guard(VSoundSeqNode::Update);
+  if (DelayTime)
+  {
+    DelayTime -= DeltaTime;
+    if (DelayTime <= 0.0)
+    {
+      DelayTime = 0.0;
+    }
+    return;
+  }
 
-	bool sndPlaying = GAudio->IsSoundPlaying(OriginId, CurrentSoundID);
-	switch (*SequencePtr)
-	{
-	case SSCMD_None:
-		SequencePtr++;
-		break;
+  bool sndPlaying = GAudio->IsSoundPlaying(OriginId, CurrentSoundID);
+  switch (*SequencePtr)
+  {
+  case SSCMD_None:
+    SequencePtr++;
+    break;
 
-	case SSCMD_Play:
-		if (!sndPlaying)
-		{
-			CurrentSoundID = SequencePtr[1];
-			GAudio->PlaySound(CurrentSoundID, Origin, TVec(0, 0, 0),
-				OriginId, 1, Volume, Attenuation, false);
-		}
-		SequencePtr += 2;
-		break;
+  case SSCMD_Play:
+    if (!sndPlaying)
+    {
+      CurrentSoundID = SequencePtr[1];
+      GAudio->PlaySound(CurrentSoundID, Origin, TVec(0, 0, 0),
+        OriginId, 1, Volume, Attenuation, false);
+    }
+    SequencePtr += 2;
+    break;
 
-	case SSCMD_WaitUntilDone:
-		if (!sndPlaying)
-		{
-			SequencePtr++;
-			CurrentSoundID = 0;
-		}
-		break;
+  case SSCMD_WaitUntilDone:
+    if (!sndPlaying)
+    {
+      SequencePtr++;
+      CurrentSoundID = 0;
+    }
+    break;
 
-	case SSCMD_PlayRepeat:
-		if (!sndPlaying)
-		{
-			CurrentSoundID = SequencePtr[1];
-			GAudio->PlaySound(CurrentSoundID, Origin, TVec(0, 0, 0),
-				OriginId, 1, Volume, Attenuation, false);
-		}
-		break;
+  case SSCMD_PlayRepeat:
+    if (!sndPlaying)
+    {
+      CurrentSoundID = SequencePtr[1];
+      GAudio->PlaySound(CurrentSoundID, Origin, TVec(0, 0, 0),
+        OriginId, 1, Volume, Attenuation, false);
+    }
+    break;
 
-	case SSCMD_PlayLoop:
-		CurrentSoundID = SequencePtr[1];
-		GAudio->PlaySound(CurrentSoundID, Origin, TVec(0, 0, 0), OriginId, 1,
-			Volume, Attenuation, false);
-		DelayTime = SequencePtr[2] / 35.0;
-		break;
+  case SSCMD_PlayLoop:
+    CurrentSoundID = SequencePtr[1];
+    GAudio->PlaySound(CurrentSoundID, Origin, TVec(0, 0, 0), OriginId, 1,
+      Volume, Attenuation, false);
+    DelayTime = SequencePtr[2] / 35.0;
+    break;
 
-	case SSCMD_Delay:
-		DelayTime = SequencePtr[1] / 35.0;
-		SequencePtr += 2;
-		CurrentSoundID = 0;
-		break;
+  case SSCMD_Delay:
+    DelayTime = SequencePtr[1] / 35.0;
+    SequencePtr += 2;
+    CurrentSoundID = 0;
+    break;
 
-	case SSCMD_DelayOnce:
-		if (!(DidDelayOnce & (1 << SequencePtr[2])))
-		{
-			DidDelayOnce |= 1 << SequencePtr[2];
-			DelayTime = SequencePtr[1] / 35.0;
-			CurrentSoundID = 0;
-		}
-		SequencePtr += 3;
-		break;
+  case SSCMD_DelayOnce:
+    if (!(DidDelayOnce & (1 << SequencePtr[2])))
+    {
+      DidDelayOnce |= 1 << SequencePtr[2];
+      DelayTime = SequencePtr[1] / 35.0;
+      CurrentSoundID = 0;
+    }
+    SequencePtr += 3;
+    break;
 
-	case SSCMD_DelayRand:
-		DelayTime = (SequencePtr[1] + rand() % (SequencePtr[2] -
-			SequencePtr[1])) / 35.0;
-		SequencePtr += 3;
-		CurrentSoundID = 0;
-		break;
+  case SSCMD_DelayRand:
+    DelayTime = (SequencePtr[1] + rand() % (SequencePtr[2] -
+      SequencePtr[1])) / 35.0;
+    SequencePtr += 3;
+    CurrentSoundID = 0;
+    break;
 
-	case SSCMD_Volume:
-		Volume = SequencePtr[1] / 10000.0;
-		SequencePtr += 2;
-		break;
+  case SSCMD_Volume:
+    Volume = SequencePtr[1] / 10000.0;
+    SequencePtr += 2;
+    break;
 
-	case SSCMD_VolumeRel:
-		Volume += SequencePtr[1] / 10000.0;
-		SequencePtr += 2;
-		break;
+  case SSCMD_VolumeRel:
+    Volume += SequencePtr[1] / 10000.0;
+    SequencePtr += 2;
+    break;
 
-	case SSCMD_VolumeRand:
-		Volume = (SequencePtr[1] + rand() % (SequencePtr[2] -
-			SequencePtr[1])) / 10000.0;
-		SequencePtr += 3;
-		break;
+  case SSCMD_VolumeRand:
+    Volume = (SequencePtr[1] + rand() % (SequencePtr[2] -
+      SequencePtr[1])) / 10000.0;
+    SequencePtr += 3;
+    break;
 
-	case SSCMD_Attenuation:
-		Attenuation = SequencePtr[1];
-		SequencePtr += 2;
-		break;
+  case SSCMD_Attenuation:
+    Attenuation = SequencePtr[1];
+    SequencePtr += 2;
+    break;
 
-	case SSCMD_RandomSequence:
-		if (SeqChoices.Num() == 0)
-		{
-			SequencePtr++;
-		}
-		else if (!ChildSeq)
-		{
-			int Choice = rand() % SeqChoices.Num();
-			ChildSeq = new VSoundSeqNode(OriginId, Origin, SeqChoices[Choice],
-				ModeNum);
-			ChildSeq->ParentSeq = this;
-			ChildSeq->Volume = Volume;
-			ChildSeq->Attenuation = Attenuation;
-			return;
-		}
-		else
-		{
-			//	Waiting for child sequence to finish.
-			return;
-		}
-		break;
+  case SSCMD_RandomSequence:
+    if (SeqChoices.Num() == 0)
+    {
+      SequencePtr++;
+    }
+    else if (!ChildSeq)
+    {
+      int Choice = rand() % SeqChoices.Num();
+      ChildSeq = new VSoundSeqNode(OriginId, Origin, SeqChoices[Choice],
+        ModeNum);
+      ChildSeq->ParentSeq = this;
+      ChildSeq->Volume = Volume;
+      ChildSeq->Attenuation = Attenuation;
+      return;
+    }
+    else
+    {
+      //  Waiting for child sequence to finish.
+      return;
+    }
+    break;
 
-	case SSCMD_Branch:
-		SequencePtr -= SequencePtr[1];
-		break;
+  case SSCMD_Branch:
+    SequencePtr -= SequencePtr[1];
+    break;
 
-	case SSCMD_Select:
-		{
-			//	Transfer sequence to the one matching the ModeNum.
-			int NumChoices = SequencePtr[1];
-			int i;
-			for (i = 0; i < NumChoices; i++)
-			{
-				if (SequencePtr[2 + i * 2] == ModeNum)
-				{
-					int Idx = GSoundManager->FindSequence(
-						*(VName*)&SequencePtr[3 + i * 2]);
-					if (Idx != -1)
-					{
-						Sequence = Idx;
-						SequencePtr = GSoundManager->SeqInfo[Sequence].Data;
-						StopSound = GSoundManager->SeqInfo[Sequence].StopSound;
-						break;
-					}
-				}
-			}
-			if (i == NumChoices)
-			{
-				//	Not found.
-				SequencePtr += 2 + NumChoices;
-			}
-		}
-		break;
+  case SSCMD_Select:
+    {
+      //  Transfer sequence to the one matching the ModeNum.
+      int NumChoices = SequencePtr[1];
+      int i;
+      for (i = 0; i < NumChoices; i++)
+      {
+        if (SequencePtr[2 + i * 2] == ModeNum)
+        {
+          int Idx = GSoundManager->FindSequence(
+            *(VName*)&SequencePtr[3 + i * 2]);
+          if (Idx != -1)
+          {
+            Sequence = Idx;
+            SequencePtr = GSoundManager->SeqInfo[Sequence].Data;
+            StopSound = GSoundManager->SeqInfo[Sequence].StopSound;
+            break;
+          }
+        }
+      }
+      if (i == NumChoices)
+      {
+        //  Not found.
+        SequencePtr += 2 + NumChoices;
+      }
+    }
+    break;
 
-	case SSCMD_StopSound:
-		// Wait until something else stops the sequence
-		break;
+  case SSCMD_StopSound:
+    // Wait until something else stops the sequence
+    break;
 
-	case SSCMD_End:
-		delete this;
-		break;
+  case SSCMD_End:
+    delete this;
+    break;
 
-	default:	
-		break;
-	}
-	unguard;
+  default:
+    break;
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VSoundSeqNode::Serialise
+//  VSoundSeqNode::Serialise
 //
 //==========================================================================
 
 void VSoundSeqNode::Serialise(VStream& Strm)
 {
-	guard(VSoundSeqNode::Serialise);
-	Strm << STRM_INDEX(Sequence)
-		<< STRM_INDEX(OriginId)
-		<< Origin
-		<< STRM_INDEX(CurrentSoundID)
-		<< DelayTime
-		<< STRM_INDEX(DidDelayOnce)
-		<< Volume
-		<< Attenuation
-		<< STRM_INDEX(ModeNum);
+  guard(VSoundSeqNode::Serialise);
+  Strm << STRM_INDEX(Sequence)
+    << STRM_INDEX(OriginId)
+    << Origin
+    << STRM_INDEX(CurrentSoundID)
+    << DelayTime
+    << STRM_INDEX(DidDelayOnce)
+    << Volume
+    << Attenuation
+    << STRM_INDEX(ModeNum);
 
-	if (Strm.IsLoading())
-	{
-		vint32 Offset;
-		Strm << STRM_INDEX(Offset);
-		SequencePtr = GSoundManager->SeqInfo[Sequence].Data + Offset;
-		StopSound = GSoundManager->SeqInfo[Sequence].StopSound;
+  if (Strm.IsLoading())
+  {
+    vint32 Offset;
+    Strm << STRM_INDEX(Offset);
+    SequencePtr = GSoundManager->SeqInfo[Sequence].Data + Offset;
+    StopSound = GSoundManager->SeqInfo[Sequence].StopSound;
 
-		vint32 Count;
-		Strm << STRM_INDEX(Count);
-		for (int i = 0; i < Count; i++)
-		{
-			VName SeqName;
-			Strm << SeqName;
-			SeqChoices.Append(GSoundManager->FindSequence(SeqName));
-		}
+    vint32 Count;
+    Strm << STRM_INDEX(Count);
+    for (int i = 0; i < Count; i++)
+    {
+      VName SeqName;
+      Strm << SeqName;
+      SeqChoices.Append(GSoundManager->FindSequence(SeqName));
+    }
 
-		vint32 ParentSeqIdx;
-		vint32 ChildSeqIdx;
-		Strm << STRM_INDEX(ParentSeqIdx)
-			<< STRM_INDEX(ChildSeqIdx);
-		if (ParentSeqIdx != -1 || ChildSeqIdx != -1)
-		{
-			int i = 0;
-			for (VSoundSeqNode* n = ((VAudio*)GAudio)->SequenceListHead;
-				n; n = n->Next, i++)
-			{
-				if (ParentSeqIdx == i)
-				{
-					ParentSeq = n;
-				}
-				if (ChildSeqIdx == i)
-				{
-					ChildSeq = n;
-				}
-			}
-		}
-	}
-	else
-	{
-		vint32 Offset = SequencePtr - GSoundManager->SeqInfo[Sequence].Data;
-		Strm << STRM_INDEX(Offset);
+    vint32 ParentSeqIdx;
+    vint32 ChildSeqIdx;
+    Strm << STRM_INDEX(ParentSeqIdx)
+      << STRM_INDEX(ChildSeqIdx);
+    if (ParentSeqIdx != -1 || ChildSeqIdx != -1)
+    {
+      int i = 0;
+      for (VSoundSeqNode* n = ((VAudio*)GAudio)->SequenceListHead;
+        n; n = n->Next, i++)
+      {
+        if (ParentSeqIdx == i)
+        {
+          ParentSeq = n;
+        }
+        if (ChildSeqIdx == i)
+        {
+          ChildSeq = n;
+        }
+      }
+    }
+  }
+  else
+  {
+    vint32 Offset = SequencePtr - GSoundManager->SeqInfo[Sequence].Data;
+    Strm << STRM_INDEX(Offset);
 
-		vint32 Count = SeqChoices.Num();
-		Strm << STRM_INDEX(Count);
-		for (int i = 0; i < SeqChoices.Num(); i++)
-			Strm << GSoundManager->SeqInfo[SeqChoices[i]].Name;
+    vint32 Count = SeqChoices.Num();
+    Strm << STRM_INDEX(Count);
+    for (int i = 0; i < SeqChoices.Num(); i++)
+      Strm << GSoundManager->SeqInfo[SeqChoices[i]].Name;
 
-		vint32 ParentSeqIdx = -1;
-		vint32 ChildSeqIdx = -1;
-		if (ParentSeq || ChildSeq)
-		{
-			int i = 0;
-			for (VSoundSeqNode* n = ((VAudio*)GAudio)->SequenceListHead;
-				n; n = n->Next, i++)
-			{
-				if (ParentSeq == n)
-				{
-					ParentSeqIdx = i;
-				}
-				if (ChildSeq == n)
-				{
-					ChildSeqIdx = i;
-				}
-			}
-		}
-		Strm << STRM_INDEX(ParentSeqIdx)
-			<< STRM_INDEX(ChildSeqIdx);
-	}
-	unguard;
+    vint32 ParentSeqIdx = -1;
+    vint32 ChildSeqIdx = -1;
+    if (ParentSeq || ChildSeq)
+    {
+      int i = 0;
+      for (VSoundSeqNode* n = ((VAudio*)GAudio)->SequenceListHead;
+        n; n = n->Next, i++)
+      {
+        if (ParentSeq == n)
+        {
+          ParentSeqIdx = i;
+        }
+        if (ChildSeq == n)
+        {
+          ChildSeqIdx = i;
+        }
+      }
+    }
+    Strm << STRM_INDEX(ParentSeqIdx)
+      << STRM_INDEX(ChildSeqIdx);
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	FSoundDeviceDesc::FSoundDeviceDesc
+//  FSoundDeviceDesc::FSoundDeviceDesc
 //
 //==========================================================================
 
 FSoundDeviceDesc::FSoundDeviceDesc(int Type, const char* AName,
-	const char* ADescription, const char* ACmdLineArg,
-	VSoundDevice* (*ACreator)())
+  const char* ADescription, const char* ACmdLineArg,
+  VSoundDevice* (*ACreator)())
 : Name(AName)
 , Description(ADescription)
 , CmdLineArg(ACmdLineArg)
 , Creator(ACreator)
 {
-	SoundDeviceList[Type] = this;
+  SoundDeviceList[Type] = this;
 }
 
 //==========================================================================
 //
-//	FMidiDeviceDesc::FMidiDeviceDesc
+//  FMidiDeviceDesc::FMidiDeviceDesc
 //
 //==========================================================================
 
 FMidiDeviceDesc::FMidiDeviceDesc(int Type, const char* AName,
-	const char* ADescription, const char* ACmdLineArg,
-	VMidiDevice* (*ACreator)())
+  const char* ADescription, const char* ACmdLineArg,
+  VMidiDevice* (*ACreator)())
 : Name(AName)
 , Description(ADescription)
 , CmdLineArg(ACmdLineArg)
 , Creator(ACreator)
 {
-	MidiDeviceList[Type] = this;
+  MidiDeviceList[Type] = this;
 }
 
 //==========================================================================
 //
-//	FCDAudioDeviceDesc::FCDAudioDeviceDesc
+//  FCDAudioDeviceDesc::FCDAudioDeviceDesc
 //
 //==========================================================================
 
 FCDAudioDeviceDesc::FCDAudioDeviceDesc(int Type, const char* AName,
-	const char* ADescription, const char* ACmdLineArg,
-	VCDAudioDevice* (*ACreator)())
+  const char* ADescription, const char* ACmdLineArg,
+  VCDAudioDevice* (*ACreator)())
 : Name(AName)
 , Description(ADescription)
 , CmdLineArg(ACmdLineArg)
 , Creator(ACreator)
 {
-	CDAudioDeviceList[Type] = this;
+  CDAudioDeviceList[Type] = this;
 }
 
 //==========================================================================
@@ -2032,20 +2032,20 @@ FCDAudioDeviceDesc::FCDAudioDeviceDesc(int Type, const char* AName,
 
 COMMAND(Music)
 {
-	guard(COMMAND Music);
-	((VAudio*)GAudio)->CmdMusic(Args);
-	unguard;
+  guard(COMMAND Music);
+  ((VAudio*)GAudio)->CmdMusic(Args);
+  unguard;
 }
 
 //==========================================================================
 //
-//	COMMAND CD
+//  COMMAND CD
 //
 //==========================================================================
 
 COMMAND(CD)
 {
-	guard(COMMAND CD);
-	((VAudio*)GAudio)->CmdCD(Args);
-	unguard;
+  guard(COMMAND CD);
+  ((VAudio*)GAudio)->CmdCD(Args);
+  unguard;
 }

@@ -24,42 +24,42 @@
 //**************************************************************************
 
 class ArtiTeleportOther : Inventory
-	game(GAME_Hexen)
-	__mobjinfo__(10040)
-	__scriptid__(17);
+  game(GAME_Hexen)
+  __mobjinfo__(10040)
+  __scriptid__(17);
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	EntityEx mo;
+  EntityEx mo;
 
-	mo = EntityEx(Owner).SpawnPlayerMissile(TelOtherFX1);
-	if (mo)
-	{
-		mo.Target = EntityEx(Owner);
-	}
-	return true;
+  mo = EntityEx(Owner).SpawnPlayerMissile(TelOtherFX1);
+  if (mo)
+  {
+    mo.Target = EntityEx(Owner);
+  }
+  return true;
 }
 
 states
 {
 Spawn:
-	TELO ABCD 5
-	Loop
+  TELO ABCD 5
+  Loop
 }
 
 defaultproperties
 {
-	MaxAmount = DefMaxAmount;
-	PickupSound = 'PickupArtifact';
-	PickupMessage = "$txt_artiteleportother";
-	IconName = 'artitelo';
-	bFloatBob = true;
-	PickupFlashType = PickupFlash;
-	bInvBar = true;
+  MaxAmount = DefMaxAmount;
+  PickupSound = 'PickupArtifact';
+  PickupMessage = "$txt_artiteleportother";
+  IconName = 'artitelo';
+  bFloatBob = true;
+  PickupFlashType = PickupFlash;
+  bInvBar = true;
 }

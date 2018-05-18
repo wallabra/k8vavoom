@@ -24,9 +24,9 @@
 //**************************************************************************
 
 class SectorPointLight : DynamicLight
-	__mobjinfo__(9803);
+  __mobjinfo__(9803);
 
 defaultproperties
 {
-	LightType = DLTYPE_Sector;
+  LightType = DLTYPE_Sector;
 }

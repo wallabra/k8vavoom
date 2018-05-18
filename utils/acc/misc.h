@@ -19,9 +19,9 @@
 
 typedef enum
 {
-	MSG_NORMAL,
-	MSG_VERBOSE,
-	MSG_DEBUG
+  MSG_NORMAL,
+  MSG_VERBOSE,
+  MSG_DEBUG
 } msg_t;
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------

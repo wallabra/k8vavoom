@@ -24,10 +24,10 @@
 //**************************************************************************
 
 class InvisibleBridge16 : InvisibleBridge
-	__mobjinfo__(5064);
+  __mobjinfo__(5064);
 
 defaultproperties
 {
-	Radius = 16.0;
-	Height = 8.0;
+  Radius = 16.0;
+  Height = 8.0;
 }

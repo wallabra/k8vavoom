@@ -24,7 +24,7 @@
 //**************************************************************************
 
 class HexenWeapon : Weapon
-	abstract;
+  abstract;
 
 class<Actor> WeaponClass;
 
@@ -36,35 +36,35 @@ class<Actor> WeaponClass;
 
 bool TryPickup(EntityEx Toucher)
 {
-	if (!ClassIsChildOf(Toucher.Class, GetClassReplacement(WeaponClass)))
-	{
-		// Wrong class, but try to pick up for mana
-		if (ShouldStay() && !bDropped)
-		{
-			return false;
-		}
-		bool gaveMana = false;
-		if (PlayerEx(Toucher.Player).GiveAmmo(AmmoType1, AmmoGive1))
-		{
-			gaveMana = true;
-		}
-		if (PlayerEx(Toucher.Player).GiveAmmo(AmmoType2, AmmoGive2))
-		{
-			gaveMana = true;
-		}
-		if (gaveMana)
-		{
-			GoAwayAndDie();
-			GiveQuest(Toucher);
-			return true;
-		}
-		return false;
-	}
+  if (!ClassIsChildOf(Toucher.Class, GetClassReplacement(WeaponClass)))
+  {
+    // Wrong class, but try to pick up for mana
+    if (ShouldStay() && !bDropped)
+    {
+      return false;
+    }
+    bool gaveMana = false;
+    if (PlayerEx(Toucher.Player).GiveAmmo(AmmoType1, AmmoGive1))
+    {
+      gaveMana = true;
+    }
+    if (PlayerEx(Toucher.Player).GiveAmmo(AmmoType2, AmmoGive2))
+    {
+      gaveMana = true;
+    }
+    if (gaveMana)
+    {
+      GoAwayAndDie();
+      GiveQuest(Toucher);
+      return true;
+    }
+    return false;
+  }
 
-	return ::TryPickup(Toucher);
+  return ::TryPickup(Toucher);
 }
 
 defaultproperties
 {
-	Kickback = 150.0;
+  Kickback = 150.0;
 }

@@ -24,246 +24,246 @@
 //**************************************************************************
 
 class LevelInfo : Thinker
-	native
-	abstract;
+  native
+  abstract;
 
 const int TID_HASH_SIZE = 128;
 
 struct MapSpecialAction
 {
-	name		TypeName;
-	int			Special;
-	int			Args[5];
+  name    TypeName;
+  int     Special;
+  int     Args[5];
 };
 
-native readonly GameInfo	Game;
-native readonly WorldInfo	World;
+native readonly GameInfo  Game;
+native readonly WorldInfo World;
 
-string			LevelName;
-int				LevelNum;
-byte			Cluster;
+string      LevelName;
+int       LevelNum;
+byte      Cluster;
 
-name			NextMap;
-name			SecretMap;
+name      NextMap;
+name      SecretMap;
 
-int				ParTime;
-int				SuckTime;
+int       ParTime;
+int       SuckTime;
 
-int				Sky1Texture;
-int				Sky2Texture;
-float			Sky1ScrollDelta;
-float			Sky2ScrollDelta;
-name			SkyBox;
+int       Sky1Texture;
+int       Sky2Texture;
+float     Sky1ScrollDelta;
+float     Sky2ScrollDelta;
+name      SkyBox;
 
-name			FadeTable;
-int				Fade;
-int				OutsideFog;
+name      FadeTable;
+int       Fade;
+int       OutsideFog;
 
-name			SongLump;
-byte			CDTrack;
+name      SongLump;
+byte      CDTrack;
 
-bool			bDoubleSky;	// parallax sky: sky2 behind sky1
-bool			bLightning;	// Use of lightning on the level flashes from sky1 to sky2
-//	Special actions, as set in MAPINFO.
-bool			bMap07Special;
-bool			bBaronSpecial;
-bool			bCyberDemonSpecial;
-bool			bSpiderMastermindSpecial;
-bool			bMinotaurSpecial;
-bool			bDSparilSpecial;
-bool			bIronLichSpecial;
-bool			bSpecialActionOpenDoor;
-bool			bSpecialActionLowerFloor;
-bool			bSpecialActionKillMonsters;
-bool			bNoIntermission;
-bool			bAllowMonsterTelefrags;
-bool			bNoAllies;
-bool			bDeathSlideShow;
-bool			bForceNoSkyStretch;
-bool			bLookupName;
-bool			bFallingDamage;
-bool			bOldFallingDamage;
-bool			bStrifeFallingDamage;
-bool			bMonsterFallingDamage;
-bool			bNoFreelook;
-bool			bNoJump;
-bool			bNoAutoSndSeq;
-bool			bActivateOwnSpecial;
-bool			bMissilesActivateImpact;
-bool			bFilterStarts;
-bool			bInfiniteFlightPowerup;
-bool			bClipMidTex;
-bool			bWrapMidTex;
-bool			bKeepFullInventory;
+bool      bDoubleSky; // parallax sky: sky2 behind sky1
+bool      bLightning; // Use of lightning on the level flashes from sky1 to sky2
+//  Special actions, as set in MAPINFO.
+bool      bMap07Special;
+bool      bBaronSpecial;
+bool      bCyberDemonSpecial;
+bool      bSpiderMastermindSpecial;
+bool      bMinotaurSpecial;
+bool      bDSparilSpecial;
+bool      bIronLichSpecial;
+bool      bSpecialActionOpenDoor;
+bool      bSpecialActionLowerFloor;
+bool      bSpecialActionKillMonsters;
+bool      bNoIntermission;
+bool      bAllowMonsterTelefrags;
+bool      bNoAllies;
+bool      bDeathSlideShow;
+bool      bForceNoSkyStretch;
+bool      bLookupName;
+bool      bFallingDamage;
+bool      bOldFallingDamage;
+bool      bStrifeFallingDamage;
+bool      bMonsterFallingDamage;
+bool      bNoFreelook;
+bool      bNoJump;
+bool      bNoAutoSndSeq;
+bool      bActivateOwnSpecial;
+bool      bMissilesActivateImpact;
+bool      bFilterStarts;
+bool      bInfiniteFlightPowerup;
+bool      bClipMidTex;
+bool      bWrapMidTex;
+bool      bKeepFullInventory;
 
-bool			bCompatShortTex;
-bool			bCompatStairs;
-bool			bCompatLimitPain;
-bool			bCompatNoPassOver;
-bool			bCompatNoTossDrops;
-bool			bCompatUseBlocking;
-bool			bCompatNoDoorLight;
-bool			bCompatRavenScroll;
-bool			bCompatSoundTarget;
-bool			bCompatDehHealth;
-bool			bCompatTrace;
-bool			bCompatDropOff;
-bool			bCompatBoomScroll;
-bool			bCompatInvisibility;
-bool			bLaxMonsterActivation;
-bool			bHaveMonsterActivation;
-bool			bClusterHub;
-readonly bool	bBegunPlay;
-bool			bFrozen;
+bool      bCompatShortTex;
+bool      bCompatStairs;
+bool      bCompatLimitPain;
+bool      bCompatNoPassOver;
+bool      bCompatNoTossDrops;
+bool      bCompatUseBlocking;
+bool      bCompatNoDoorLight;
+bool      bCompatRavenScroll;
+bool      bCompatSoundTarget;
+bool      bCompatDehHealth;
+bool      bCompatTrace;
+bool      bCompatDropOff;
+bool      bCompatBoomScroll;
+bool      bCompatInvisibility;
+bool      bLaxMonsterActivation;
+bool      bHaveMonsterActivation;
+bool      bClusterHub;
+readonly bool bBegunPlay;
+bool      bFrozen;
 
-int				TotalKills;
-int				TotalItems;
-int				TotalSecret;		// for intermission
-int				CurrentKills;
-int				CurrentItems;
-int				CurrentSecret;
+int       TotalKills;
+int       TotalItems;
+int       TotalSecret;    // for intermission
+int       CurrentKills;
+int       CurrentItems;
+int       CurrentSecret;
 
-float			CompletitionTime;	//	For intermission
+float     CompletitionTime; //  For intermission
 
 // Maintain single and multi player starting spots.
-array<mthing_t>	DeathmatchStarts;	// Player spawn spots for deathmatch.
-array<mthing_t>	PlayerStarts;	// Player spawn spots.
+array<mthing_t> DeathmatchStarts; // Player spawn spots for deathmatch.
+array<mthing_t> PlayerStarts; // Player spawn spots.
 
-private Entity	TIDHash[TID_HASH_SIZE];
+private Entity  TIDHash[TID_HASH_SIZE];
 
-float			Gravity;			// Level Gravity
-float			AirControl;
-int				Infighting;
-array<MapSpecialAction>	SpecialActions;
+float     Gravity;      // Level Gravity
+float     AirControl;
+int       Infighting;
+array<MapSpecialAction> SpecialActions;
 
 replication
 {
-	reliable if (Role == ROLE_Authority)
-		LevelName, Cluster, ParTime, SuckTime, Sky1Texture, Sky2Texture,
-		Sky1ScrollDelta, Sky2ScrollDelta, SkyBox, FadeTable, Fade, OutsideFog,
-		SongLump, CDTrack, bDoubleSky, bLightning, bNoIntermission,
-		bForceNoSkyStretch, bLookupName, TotalKills, TotalItems, TotalSecret,
-		CurrentKills, CurrentItems, CurrentSecret, CompletitionTime,
-		bNoFreelook;
+  reliable if (Role == ROLE_Authority)
+    LevelName, Cluster, ParTime, SuckTime, Sky1Texture, Sky2Texture,
+    Sky1ScrollDelta, Sky2ScrollDelta, SkyBox, FadeTable, Fade, OutsideFog,
+    SongLump, CDTrack, bDoubleSky, bLightning, bNoIntermission,
+    bForceNoSkyStretch, bLookupName, TotalKills, TotalItems, TotalSecret,
+    CurrentKills, CurrentItems, CurrentSecret, CompletitionTime,
+    bNoFreelook;
 }
 
 bool CompatShortTex
 {
-	get
-	{
-		return bCompatShortTex || GetCvar('compat_shorttex');
-	}
+  get
+  {
+    return bCompatShortTex || GetCvar('compat_shorttex');
+  }
 }
 bool CompatStairs
 {
-	get
-	{
-		return bCompatStairs || GetCvar('compat_stairs');
-	}
+  get
+  {
+    return bCompatStairs || GetCvar('compat_stairs');
+  }
 }
 bool CompatLimitPain
 {
-	get
-	{
-		return bCompatLimitPain || GetCvar('compat_limitpain');
-	}
+  get
+  {
+    return bCompatLimitPain || GetCvar('compat_limitpain');
+  }
 }
 bool CompatNoPassOver
 {
-	get
-	{
-		return bCompatNoPassOver || GetCvar('compat_nopassover');
-	}
+  get
+  {
+    return bCompatNoPassOver || GetCvar('compat_nopassover');
+  }
 }
 bool CompatNoTossDrops
 {
-	get
-	{
-		return bCompatNoTossDrops || GetCvar('compat_notossdrops');
-	}
+  get
+  {
+    return bCompatNoTossDrops || GetCvar('compat_notossdrops');
+  }
 }
 bool CompatUseBlocking
 {
-	get
-	{
-		return bCompatUseBlocking || GetCvar('compat_useblocking');
-	}
+  get
+  {
+    return bCompatUseBlocking || GetCvar('compat_useblocking');
+  }
 }
 bool CompatNoDoorLight
 {
-	get
-	{
-		return bCompatNoDoorLight || GetCvar('compat_nodoorlight');
-	}
+  get
+  {
+    return bCompatNoDoorLight || GetCvar('compat_nodoorlight');
+  }
 }
 bool CompatRavenScroll
 {
-	get
-	{
-		return bCompatRavenScroll || GetCvar('compat_ravenscroll');
-	}
+  get
+  {
+    return bCompatRavenScroll || GetCvar('compat_ravenscroll');
+  }
 }
 bool CompatSoundTarget
 {
-	get
-	{
-		return bCompatSoundTarget || GetCvar('compat_soundtarget');
-	}
+  get
+  {
+    return bCompatSoundTarget || GetCvar('compat_soundtarget');
+  }
 }
 bool CompatDehHealth
 {
-	get
-	{
-		return bCompatDehHealth || GetCvar('compat_dehhealth');
-	}
+  get
+  {
+    return bCompatDehHealth || GetCvar('compat_dehhealth');
+  }
 }
 bool CompatTrace
 {
-	get
-	{
-		return bCompatTrace || GetCvar('compat_trace');
-	}
+  get
+  {
+    return bCompatTrace || GetCvar('compat_trace');
+  }
 }
 bool CompatDropOff
 {
-	get
-	{
-		return bCompatDropOff || GetCvar('compat_dropoff');
-	}
+  get
+  {
+    return bCompatDropOff || GetCvar('compat_dropoff');
+  }
 }
 bool CompatBoomScroll
 {
-	get
-	{
-		return bCompatBoomScroll || GetCvar('compat_boomscroll');
-	}
+  get
+  {
+    return bCompatBoomScroll || GetCvar('compat_boomscroll');
+  }
 }
 bool CompatInvisibility
 {
-	get
-	{
-		return bCompatInvisibility || GetCvar('compat_invisibility');
-	}
+  get
+  {
+    return bCompatInvisibility || GetCvar('compat_invisibility');
+  }
 }
 
 //
-//	Static lights
+//  Static lights
 //
 native final void AddStaticLight(TVec origin, float radius);
 native final void AddStaticLightRGB(TVec origin, float radius, int colour);
 
 //
-//	Sound sequences
+//  Sound sequences
 //
 native final void SectorStartSequence(sector_t* sector, name sequence,
-	int ModeNum);
+  int ModeNum);
 native final void SectorStopSequence(sector_t* sector);
 native final void PolyobjStartSequence(polyobj_t* mobj, name sequence,
-	int ModeNum);
+  int ModeNum);
 native final void PolyobjStopSequence(polyobj_t* mobj);
 
 //
-//	Exiting the level
+//  Exiting the level
 //
 native final void ExitLevel(int Position);
 native final void SecretExitLevel(int Position);
@@ -273,7 +273,7 @@ native final void Completed(int Map, int Position, int SaveAngle);
 //  Special thinker utilites
 //
 native final bool ChangeSwitchTexture(int SideNum, int useAgain,
-	name DefaultSound, out byte Quest);
+  name DefaultSound, out byte Quest);
 native final Entity FindMobjFromTID(int tid, Entity Prev);
 native final void AutoSave();
 
@@ -331,24 +331,24 @@ void PolyCrushMobj(Entity A, polyobj_t * po)
 
 //==========================================================================
 //
-//	TagBusy
+//  TagBusy
 //
 //==========================================================================
 
 bool TagBusy(int tag)
 {
-	int sectorIndex;
+  int sectorIndex;
 
-	for (sectorIndex = XLevel.FindSectorFromTag(tag, -1); sectorIndex >= 0;
-		sectorIndex = XLevel.FindSectorFromTag(tag, sectorIndex))
-	{
-		if (XLevel.Sectors[sectorIndex].FloorData ||
-			XLevel.Sectors[sectorIndex].CeilingData)
-		{
-			return true;
-		}
-	}
-	return false;
+  for (sectorIndex = XLevel.FindSectorFromTag(tag, -1); sectorIndex >= 0;
+    sectorIndex = XLevel.FindSectorFromTag(tag, sectorIndex))
+  {
+    if (XLevel.Sectors[sectorIndex].FloorData ||
+      XLevel.Sectors[sectorIndex].CeilingData)
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 //==========================================================================
@@ -359,18 +359,18 @@ bool TagBusy(int tag)
 
 bool PolyBusy(int polyobj)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
 //
-//	ThingCount
+//  ThingCount
 //
 //==========================================================================
 
 int ThingCount(int type, name TypeName, int tid, int SectorTag)
 {
-	return 0;
+  return 0;
 }
 
 //==========================================================================
@@ -380,21 +380,21 @@ int ThingCount(int type, name TypeName, int tid, int SectorTag)
 //==========================================================================
 
 int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
-	int Arg4, int Arg5, line_t* line, int side, Entity A)
+  int Arg4, int Arg5, line_t* line, int side, Entity A)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
 //
-//	EV_ThingProjectile
+//  EV_ThingProjectile
 //
 //==========================================================================
 
 bool EV_ThingProjectile(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-	bool gravity, int newtid, name TypeName, Entity Activator)
+  bool gravity, int newtid, name TypeName, Entity Activator)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
@@ -404,8 +404,8 @@ bool EV_ThingProjectile(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //==========================================================================
 
 void StartPlaneWatcher(Entity it, line_t* line, int lineSide, bool ceiling,
-	int tag, int height, int special, int arg0, int arg1, int arg2, int arg3,
-	int arg4)
+  int tag, int height, int special, int arg0, int arg1, int arg2, int arg3,
+  int arg4)
 {
 }
 
@@ -425,21 +425,21 @@ void StartPlaneWatcher(Entity it, line_t* line, int lineSide, bool ceiling,
 
 final sector_t *getNextSector(line_t * line, sector_t * sec)
 {
-	if (!(line->flags & ML_TWOSIDED))
-	{
-		return NULL;
-	}
+  if (!(line->flags & ML_TWOSIDED))
+  {
+    return NULL;
+  }
 
-	if (line->frontsector == sec)
-	{
-		if (line->backsector == sec)
-		{
-			return NULL;
-		}
-		return line->backsector;
-	}
+  if (line->frontsector == sec)
+  {
+    if (line->backsector == sec)
+    {
+      return NULL;
+    }
+    return line->backsector;
+  }
 
-	return line->frontsector;
+  return line->frontsector;
 }
 
 //==========================================================================
@@ -452,41 +452,41 @@ final sector_t *getNextSector(line_t * line, sector_t * sec)
 
 final float FindLowestFloorSurrounding(sector_t* sec, TVec* v)
 {
-	int			i;
-	line_t*		check;
-	sector_t*	other;
-	float		floor;
-	float		ofloor;
-	TVec		spot;
+  int     i;
+  line_t*   check;
+  sector_t* other;
+  float   floor;
+  float   ofloor;
+  TVec    spot;
 
-	spot = *sec->lines[0]->v1;
-	floor = GetPlanePointZ(&sec->floor, spot);
-	for (i = 0; i < sec->linecount; i++)
-	{
-		check = sec->lines[i];
-		other = getNextSector(check, sec);
+  spot = *sec->lines[0]->v1;
+  floor = GetPlanePointZ(&sec->floor, spot);
+  for (i = 0; i < sec->linecount; i++)
+  {
+    check = sec->lines[i];
+    other = getNextSector(check, sec);
 
-		if (!other)
-			continue;
+    if (!other)
+      continue;
 
-		ofloor = GetPlanePointZ(&other->floor, *check->v1);
-		if (ofloor < floor &&
-			ofloor < GetPlanePointZ(&sec->floor, *check->v1))
-		{
-			floor = ofloor;
-			spot = *check->v1;
-		}
-		ofloor = GetPlanePointZ(&other->floor, *check->v2);
-		if (ofloor < floor &&
-			ofloor < GetPlanePointZ(&sec->floor, *check->v2))
-		{
-			floor = ofloor;
-			spot = *check->v2;
-		}
-	}
-	if (v)
-		*v = spot;
-	return floor;
+    ofloor = GetPlanePointZ(&other->floor, *check->v1);
+    if (ofloor < floor &&
+      ofloor < GetPlanePointZ(&sec->floor, *check->v1))
+    {
+      floor = ofloor;
+      spot = *check->v1;
+    }
+    ofloor = GetPlanePointZ(&other->floor, *check->v2);
+    if (ofloor < floor &&
+      ofloor < GetPlanePointZ(&sec->floor, *check->v2))
+    {
+      floor = ofloor;
+      spot = *check->v2;
+    }
+  }
+  if (v)
+    *v = spot;
+  return floor;
 }
 
 //==========================================================================
@@ -499,263 +499,263 @@ final float FindLowestFloorSurrounding(sector_t* sec, TVec* v)
 
 final float FindHighestFloorSurrounding(sector_t* sec, TVec* v)
 {
-	int			i;
-	line_t*		check;
-	sector_t*	other;
-	float		floor;
-	float		ofloor;
-	TVec		spot;
+  int     i;
+  line_t*   check;
+  sector_t* other;
+  float   floor;
+  float   ofloor;
+  TVec    spot;
 
-	spot = *sec->lines[0]->v1;
-	floor = -99999.0;
-	for (i = 0; i < sec->linecount; i++)
-	{
-		check = sec->lines[i];
-		other = getNextSector(check, sec);
+  spot = *sec->lines[0]->v1;
+  floor = -99999.0;
+  for (i = 0; i < sec->linecount; i++)
+  {
+    check = sec->lines[i];
+    other = getNextSector(check, sec);
 
-		if (!other)
-			continue;
+    if (!other)
+      continue;
 
-		ofloor = GetPlanePointZ(&other->floor, *check->v1);
-		if (ofloor > floor)
-		{
-			floor = ofloor;
-			spot = *check->v1;
-		}
-		ofloor = GetPlanePointZ(&other->floor, *check->v2);
-		if (ofloor > floor)
-		{
-			floor = ofloor;
-			spot = *check->v2;
-		}
-	}
-	if (v)
-		*v = spot;
-	return floor;
+    ofloor = GetPlanePointZ(&other->floor, *check->v1);
+    if (ofloor > floor)
+    {
+      floor = ofloor;
+      spot = *check->v1;
+    }
+    ofloor = GetPlanePointZ(&other->floor, *check->v2);
+    if (ofloor > floor)
+    {
+      floor = ofloor;
+      spot = *check->v2;
+    }
+  }
+  if (v)
+    *v = spot;
+  return floor;
 }
 
 //==========================================================================
 //
 //  FindNextHighestFloor
 //
-//	Passed a sector, returns the value of the smallest floor height in a
+//  Passed a sector, returns the value of the smallest floor height in a
 // surrounding sector larger than the floor height of passed sector. If no
 // such height exists the floor height of passed sector is returned.
 //
-//	Rewritten by Lee Killough to avoid fixed array and to be faster
+//  Rewritten by Lee Killough to avoid fixed array and to be faster
 //
 //==========================================================================
 
 final float FindNextHighestFloor(sector_t* sec, TVec* v)
 {
-	int			i;
-	line_t*		check;
-	sector_t*	other;
-	float		floor;
-	float		ofloor;
-	TVec		spot;
-	float		height;
-	float		heightdiff;
+  int     i;
+  line_t*   check;
+  sector_t* other;
+  float   floor;
+  float   ofloor;
+  TVec    spot;
+  float   height;
+  float   heightdiff;
 
-	spot = *sec->lines[0]->v1;
-	height = GetPlanePointZ(&sec->floor, spot);
-	heightdiff = 99999.0;
-	for (i = 0; i < sec->linecount; i++)
-	{
-		check = sec->lines[i];
-		other = getNextSector(check, sec);
+  spot = *sec->lines[0]->v1;
+  height = GetPlanePointZ(&sec->floor, spot);
+  heightdiff = 99999.0;
+  for (i = 0; i < sec->linecount; i++)
+  {
+    check = sec->lines[i];
+    other = getNextSector(check, sec);
 
-		if (!other)
-			continue;
+    if (!other)
+      continue;
 
-		ofloor = GetPlanePointZ(&other->floor, *check->v1);
-		floor = GetPlanePointZ(&sec->floor, *check->v1);
-		if (ofloor > floor && ofloor - floor < heightdiff)
-		{
-			heightdiff = ofloor - floor;
-			height = ofloor;
-			spot = *check->v1;
-		}
-		ofloor = GetPlanePointZ(&other->floor, *check->v2);
-		floor = GetPlanePointZ(&sec->floor, *check->v2);
-		if (ofloor > floor && ofloor - floor < heightdiff)
-		{
-			heightdiff = ofloor - floor;
-			height = ofloor;
-			spot = *check->v2;
-		}
-	}
-	if (v)
-		*v = spot;
-	return height;
+    ofloor = GetPlanePointZ(&other->floor, *check->v1);
+    floor = GetPlanePointZ(&sec->floor, *check->v1);
+    if (ofloor > floor && ofloor - floor < heightdiff)
+    {
+      heightdiff = ofloor - floor;
+      height = ofloor;
+      spot = *check->v1;
+    }
+    ofloor = GetPlanePointZ(&other->floor, *check->v2);
+    floor = GetPlanePointZ(&sec->floor, *check->v2);
+    if (ofloor > floor && ofloor - floor < heightdiff)
+    {
+      heightdiff = ofloor - floor;
+      height = ofloor;
+      spot = *check->v2;
+    }
+  }
+  if (v)
+    *v = spot;
+  return height;
 }
 
 //==========================================================================
 //
 //  FindNextLowestFloor
 //
-//	Passed a sector, returns the value of the largest floor height in a
+//  Passed a sector, returns the value of the largest floor height in a
 // surrounding sector smaller than the floor height of passed sector. If no
 // such height exists the floor height of passed sector is returned.
 //
-//	jff 02/03/98 Twiddled Lee's P_FindNextHighestFloor to make this
+//  jff 02/03/98 Twiddled Lee's P_FindNextHighestFloor to make this
 //
 //==========================================================================
 
 final float FindNextLowestFloor(sector_t* sec, TVec* v)
 {
-	int			i;
-	line_t*		check;
-	sector_t*	other;
-	float		floor;
-	float		ofloor;
-	TVec		spot;
-	float		height;
-	float		heightdiff;
+  int     i;
+  line_t*   check;
+  sector_t* other;
+  float   floor;
+  float   ofloor;
+  TVec    spot;
+  float   height;
+  float   heightdiff;
 
-	spot = *sec->lines[0]->v1;
-	height = GetPlanePointZ(&sec->floor, spot);
-	heightdiff = 99999.0;
-	for (i = 0; i < sec->linecount; i++)
-	{
-		check = sec->lines[i];
-		other = getNextSector(check, sec);
+  spot = *sec->lines[0]->v1;
+  height = GetPlanePointZ(&sec->floor, spot);
+  heightdiff = 99999.0;
+  for (i = 0; i < sec->linecount; i++)
+  {
+    check = sec->lines[i];
+    other = getNextSector(check, sec);
 
-		if (!other)
-			continue;
+    if (!other)
+      continue;
 
-		ofloor = GetPlanePointZ(&other->floor, *check->v1);
-		floor = GetPlanePointZ(&sec->floor, *check->v1);
-		if (ofloor < floor && floor - ofloor < heightdiff)
-		{
-			heightdiff = floor - ofloor;
-			height = ofloor;
-			spot = *check->v1;
-		}
-		ofloor = GetPlanePointZ(&other->floor, *check->v2);
-		floor = GetPlanePointZ(&sec->floor, *check->v2);
-		if (ofloor < floor && floor - ofloor < heightdiff)
-		{
-			heightdiff = floor - ofloor;
-			height = ofloor;
-			spot = *check->v2;
-		}
-	}
-	if (v)
-		*v = spot;
-	return height;
+    ofloor = GetPlanePointZ(&other->floor, *check->v1);
+    floor = GetPlanePointZ(&sec->floor, *check->v1);
+    if (ofloor < floor && floor - ofloor < heightdiff)
+    {
+      heightdiff = floor - ofloor;
+      height = ofloor;
+      spot = *check->v1;
+    }
+    ofloor = GetPlanePointZ(&other->floor, *check->v2);
+    floor = GetPlanePointZ(&sec->floor, *check->v2);
+    if (ofloor < floor && floor - ofloor < heightdiff)
+    {
+      heightdiff = floor - ofloor;
+      height = ofloor;
+      spot = *check->v2;
+    }
+  }
+  if (v)
+    *v = spot;
+  return height;
 }
 
 //==========================================================================
 //
 //  FindNextLowestCeiling
 //
-//	Passed a sector, returns the value of the largest ceiling height in a
+//  Passed a sector, returns the value of the largest ceiling height in a
 // surrounding sector smaller than the ceiling height of passed sector. If
 // no such height exists the ceiling height of passed sector is returned.
 //
-//	jff 02/03/98 Twiddled Lee's P_FindNextHighestFloor to make this
+//  jff 02/03/98 Twiddled Lee's P_FindNextHighestFloor to make this
 //
 //==========================================================================
 
 final float FindNextLowestCeiling(sector_t* sec, TVec* v)
 {
-	int			i;
-	line_t*		check;
-	sector_t*	other;
-	float		ceil;
-	float		oceil;
-	TVec		spot;
-	float		height;
-	float		heightdiff;
+  int     i;
+  line_t*   check;
+  sector_t* other;
+  float   ceil;
+  float   oceil;
+  TVec    spot;
+  float   height;
+  float   heightdiff;
 
-	spot = *sec->lines[0]->v1;
-	height = GetPlanePointZ(&sec->ceiling, spot);
-	heightdiff = 99999.0;
-	for (i = 0; i < sec->linecount; i++)
-	{
-		check = sec->lines[i];
-		other = getNextSector(check, sec);
+  spot = *sec->lines[0]->v1;
+  height = GetPlanePointZ(&sec->ceiling, spot);
+  heightdiff = 99999.0;
+  for (i = 0; i < sec->linecount; i++)
+  {
+    check = sec->lines[i];
+    other = getNextSector(check, sec);
 
-		if (!other)
-			continue;
+    if (!other)
+      continue;
 
-		oceil = GetPlanePointZ(&other->ceiling, *check->v1);
-		ceil = GetPlanePointZ(&sec->ceiling, *check->v1);
-		if (oceil < ceil && ceil - oceil < heightdiff)
-		{
-			heightdiff = ceil - oceil;
-			height = oceil;
-			spot = *check->v1;
-		}
-		oceil = GetPlanePointZ(&other->ceiling, *check->v2);
-		ceil = GetPlanePointZ(&sec->ceiling, *check->v2);
-		if (oceil < ceil && ceil - oceil < heightdiff)
-		{
-			heightdiff = ceil - oceil;
-			height = oceil;
-			spot = *check->v2;
-		}
-	}
-	if (v)
-		*v = spot;
-	return height;
+    oceil = GetPlanePointZ(&other->ceiling, *check->v1);
+    ceil = GetPlanePointZ(&sec->ceiling, *check->v1);
+    if (oceil < ceil && ceil - oceil < heightdiff)
+    {
+      heightdiff = ceil - oceil;
+      height = oceil;
+      spot = *check->v1;
+    }
+    oceil = GetPlanePointZ(&other->ceiling, *check->v2);
+    ceil = GetPlanePointZ(&sec->ceiling, *check->v2);
+    if (oceil < ceil && ceil - oceil < heightdiff)
+    {
+      heightdiff = ceil - oceil;
+      height = oceil;
+      spot = *check->v2;
+    }
+  }
+  if (v)
+    *v = spot;
+  return height;
 }
 
 //==========================================================================
 //
 //  FindNextHighestCeiling
 //
-//	Passed a sector, returns the value of the smallest ceiling height in a
+//  Passed a sector, returns the value of the smallest ceiling height in a
 // surrounding sector larger than the ceiling height of passed sector. If
 // no such height exists the ceiling height of passed sector is returned.
 //
-//	jff 02/03/98 Twiddled Lee's P_FindNextHighestFloor to make this
+//  jff 02/03/98 Twiddled Lee's P_FindNextHighestFloor to make this
 //
 //==========================================================================
 
 final float FindNextHighestCeiling(sector_t* sec, TVec* v)
 {
-	int			i;
-	line_t*		check;
-	sector_t*	other;
-	float		ceil;
-	float		oceil;
-	TVec		spot;
-	float		height;
-	float		heightdiff;
+  int     i;
+  line_t*   check;
+  sector_t* other;
+  float   ceil;
+  float   oceil;
+  TVec    spot;
+  float   height;
+  float   heightdiff;
 
-	spot = *sec->lines[0]->v1;
-	height = GetPlanePointZ(&sec->ceiling, spot);
-	heightdiff = 99999.0;
-	for (i = 0; i < sec->linecount; i++)
-	{
-		check = sec->lines[i];
-		other = getNextSector(check, sec);
+  spot = *sec->lines[0]->v1;
+  height = GetPlanePointZ(&sec->ceiling, spot);
+  heightdiff = 99999.0;
+  for (i = 0; i < sec->linecount; i++)
+  {
+    check = sec->lines[i];
+    other = getNextSector(check, sec);
 
-		if (!other)
-			continue;
+    if (!other)
+      continue;
 
-		oceil = GetPlanePointZ(&other->ceiling, *check->v1);
-		ceil = GetPlanePointZ(&sec->ceiling, *check->v1);
-		if (oceil > ceil && oceil - ceil < heightdiff)
-		{
-			heightdiff = oceil - ceil;
-			height = oceil;
-			spot = *check->v1;
-		}
-		oceil = GetPlanePointZ(&other->ceiling, *check->v2);
-		ceil = GetPlanePointZ(&sec->ceiling, *check->v2);
-		if (oceil > ceil && oceil - ceil < heightdiff)
-		{
-			heightdiff = oceil - ceil;
-			height = oceil;
-			spot = *check->v2;
-		}
-	}
-	if (v)
-		*v = spot;
-	return height;
+    oceil = GetPlanePointZ(&other->ceiling, *check->v1);
+    ceil = GetPlanePointZ(&sec->ceiling, *check->v1);
+    if (oceil > ceil && oceil - ceil < heightdiff)
+    {
+      heightdiff = oceil - ceil;
+      height = oceil;
+      spot = *check->v1;
+    }
+    oceil = GetPlanePointZ(&other->ceiling, *check->v2);
+    ceil = GetPlanePointZ(&sec->ceiling, *check->v2);
+    if (oceil > ceil && oceil - ceil < heightdiff)
+    {
+      heightdiff = oceil - ceil;
+      height = oceil;
+      spot = *check->v2;
+    }
+  }
+  if (v)
+    *v = spot;
+  return height;
 }
 
 //==========================================================================
@@ -768,39 +768,39 @@ final float FindNextHighestCeiling(sector_t* sec, TVec* v)
 
 final float FindLowestCeilingSurrounding(sector_t* sec, TVec* v)
 {
-	int			i;
-	line_t*		check;
-	sector_t*	other;
-	float		height;
-	float		oceil;
-	TVec		spot;
+  int     i;
+  line_t*   check;
+  sector_t* other;
+  float   height;
+  float   oceil;
+  TVec    spot;
 
-	spot = *sec->lines[0]->v1;
-	height = 99999.0;
-	for (i = 0; i < sec->linecount; i++)
-	{
-		check = sec->lines[i];
-		other = getNextSector(check, sec);
+  spot = *sec->lines[0]->v1;
+  height = 99999.0;
+  for (i = 0; i < sec->linecount; i++)
+  {
+    check = sec->lines[i];
+    other = getNextSector(check, sec);
 
-		if (!other)
-			continue;
+    if (!other)
+      continue;
 
-		oceil = GetPlanePointZ(&other->ceiling, *check->v1);
-		if (oceil < height)
-		{
-			height = oceil;
-			spot = *check->v1;
-		}
-		oceil = GetPlanePointZ(&other->ceiling, *check->v2);
-		if (oceil < height)
-		{
-			height = oceil;
-			spot = *check->v2;
-		}
-	}
-	if (v)
-		*v = spot;
-	return height;
+    oceil = GetPlanePointZ(&other->ceiling, *check->v1);
+    if (oceil < height)
+    {
+      height = oceil;
+      spot = *check->v1;
+    }
+    oceil = GetPlanePointZ(&other->ceiling, *check->v2);
+    if (oceil < height)
+    {
+      height = oceil;
+      spot = *check->v2;
+    }
+  }
+  if (v)
+    *v = spot;
+  return height;
 }
 
 //==========================================================================
@@ -813,206 +813,206 @@ final float FindLowestCeilingSurrounding(sector_t* sec, TVec* v)
 
 final float FindHighestCeilingSurrounding(sector_t* sec, TVec* v)
 {
-	int			i;
-	line_t*		check;
-	sector_t*	other;
-	float		height;
-	float		oceil;
-	TVec		spot;
+  int     i;
+  line_t*   check;
+  sector_t* other;
+  float   height;
+  float   oceil;
+  TVec    spot;
 
-	spot = *sec->lines[0]->v1;
-	height = -99999.0;
-	for (i = 0; i < sec->linecount; i++)
-	{
-		check = sec->lines[i];
-		other = getNextSector(check, sec);
+  spot = *sec->lines[0]->v1;
+  height = -99999.0;
+  for (i = 0; i < sec->linecount; i++)
+  {
+    check = sec->lines[i];
+    other = getNextSector(check, sec);
 
-		if (!other)
-			continue;
+    if (!other)
+      continue;
 
-		oceil = GetPlanePointZ(&other->ceiling, *check->v1);
-		if (oceil > height)
-		{
-			height = oceil;
-			spot = *check->v1;
-		}
-		oceil = GetPlanePointZ(&other->ceiling, *check->v2);
-		if (oceil > height)
-		{
-			height = oceil;
-			spot = *check->v2;
-		}
-	}
-	if (v)
-		*v = spot;
-	return height;
+    oceil = GetPlanePointZ(&other->ceiling, *check->v1);
+    if (oceil > height)
+    {
+      height = oceil;
+      spot = *check->v1;
+    }
+    oceil = GetPlanePointZ(&other->ceiling, *check->v2);
+    if (oceil > height)
+    {
+      height = oceil;
+      spot = *check->v2;
+    }
+  }
+  if (v)
+    *v = spot;
+  return height;
 }
 
 //==========================================================================
 //
-//	FindShortestTextureAround
+//  FindShortestTextureAround
 //
-//	Passed a sector number, returns the shortest lower texture on a
+//  Passed a sector number, returns the shortest lower texture on a
 // linedef bounding the sector.
 //
-//	jff 02/03/98 Add routine to find shortest lower texture
+//  jff 02/03/98 Add routine to find shortest lower texture
 //
 //==========================================================================
 
 final float FindShortestTextureAround(sector_t* sec)
 {
-	int			i;
-	float		minsize;
-	int			texnum;
+  int     i;
+  float   minsize;
+  int     texnum;
 
-	minsize = 99999.0;
-	for (i = 0; i < sec->linecount; i++)
-	{
-		if (!(sec->lines[i]->flags & ML_TWOSIDED))
-			continue;
+  minsize = 99999.0;
+  for (i = 0; i < sec->linecount; i++)
+  {
+    if (!(sec->lines[i]->flags & ML_TWOSIDED))
+      continue;
 
-		texnum = XLevel.Sides[sec->lines[i]->sidenum[0]].BottomTexture;
-		if (texnum > 0 || (texnum == 0 && CompatShortTex))
-		{
-			if (TextureHeight(texnum) < minsize)
-			{
-				minsize = TextureHeight(texnum);
-			}
-		}
-		texnum = XLevel.Sides[sec->lines[i]->sidenum[1]].BottomTexture;
-		if (texnum > 0 || (texnum == 0 && CompatShortTex))
-		{
-			if (TextureHeight(texnum) < minsize)
-			{
-				minsize = TextureHeight(texnum);
-			}
-		}
-	}
-	return minsize < 99999.0 ? minsize : TextureHeight(0);
+    texnum = XLevel.Sides[sec->lines[i]->sidenum[0]].BottomTexture;
+    if (texnum > 0 || (texnum == 0 && CompatShortTex))
+    {
+      if (TextureHeight(texnum) < minsize)
+      {
+        minsize = TextureHeight(texnum);
+      }
+    }
+    texnum = XLevel.Sides[sec->lines[i]->sidenum[1]].BottomTexture;
+    if (texnum > 0 || (texnum == 0 && CompatShortTex))
+    {
+      if (TextureHeight(texnum) < minsize)
+      {
+        minsize = TextureHeight(texnum);
+      }
+    }
+  }
+  return minsize < 99999.0 ? minsize : TextureHeight(0);
 }
 
 //==========================================================================
 //
-//	FindShortestUpperAround
+//  FindShortestUpperAround
 //
-//	Passed a sector number, returns the shortest upper texture on a
+//  Passed a sector number, returns the shortest upper texture on a
 // linedef bounding the sector.
 //
-//	Note: If no upper texture exists MAXINT is returned.
+//  Note: If no upper texture exists MAXINT is returned.
 //
-//	jff 03/20/98 Add routine to find shortest upper texture
+//  jff 03/20/98 Add routine to find shortest upper texture
 //
 //==========================================================================
 
 final float FindShortestUpperAround(sector_t* sec)
 {
-	int			i;
-	float		minsize;
-	int			texnum;
+  int     i;
+  float   minsize;
+  int     texnum;
 
-	minsize = 99999.0;
-	for (i = 0; i < sec->linecount; i++)
-	{
-		if ((sec->lines[i]->flags & ML_TWOSIDED))
-			continue;
+  minsize = 99999.0;
+  for (i = 0; i < sec->linecount; i++)
+  {
+    if ((sec->lines[i]->flags & ML_TWOSIDED))
+      continue;
 
-		texnum = XLevel.Sides[sec->lines[i]->sidenum[0]].TopTexture;
-		if (texnum > 0 || (texnum == 0 && CompatShortTex))
-		{
-			if (TextureHeight(texnum) < minsize)
-			{
-				minsize = TextureHeight(texnum);
-			}
-		}
-		texnum = XLevel.Sides[sec->lines[i]->sidenum[1]].TopTexture;
-		if (texnum > 0 || (texnum == 0 && CompatShortTex))
-		{
-			if (TextureHeight(texnum) < minsize)
-			{
-				minsize = TextureHeight(texnum);
-			}
-		}
-	}
-	return minsize < 99999.0 ? minsize : TextureHeight(0);
+    texnum = XLevel.Sides[sec->lines[i]->sidenum[0]].TopTexture;
+    if (texnum > 0 || (texnum == 0 && CompatShortTex))
+    {
+      if (TextureHeight(texnum) < minsize)
+      {
+        minsize = TextureHeight(texnum);
+      }
+    }
+    texnum = XLevel.Sides[sec->lines[i]->sidenum[1]].TopTexture;
+    if (texnum > 0 || (texnum == 0 && CompatShortTex))
+    {
+      if (TextureHeight(texnum) < minsize)
+      {
+        minsize = TextureHeight(texnum);
+      }
+    }
+  }
+  return minsize < 99999.0 ? minsize : TextureHeight(0);
 }
 
 //==========================================================================
 //
-//	FindModelFloorSector
+//  FindModelFloorSector
 //
-//	Passed a floor height and a sector number, return a pointer to a
+//  Passed a floor height and a sector number, return a pointer to a
 // a sector with that floor height across the lowest numbered two sided
 // line surrounding the sector.
 //
-//	Note: If no sector at that height bounds the sector passed, return NULL
+//  Note: If no sector at that height bounds the sector passed, return NULL
 //
-//	jff 02/03/98 Add routine to find numeric model floor
+//  jff 02/03/98 Add routine to find numeric model floor
 // around a sector specified by sector number
-//	jff 3/14/98 change first parameter to plain height to allow call
+//  jff 3/14/98 change first parameter to plain height to allow call
 // from routine not using floormove_t
 //
 //==========================================================================
 
 final sector_t* FindModelFloorSector(sector_t* sec, float height)
 {
-	int			i;
-	line_t*		check;
-	sector_t*	other;
+  int     i;
+  line_t*   check;
+  sector_t* other;
 
-	//jff 5/23/98 don't disturb sec->linecount while searching
-	// but allow early exit in old demos
-	for (i = 0; i < sec->linecount; i++)
-	{
-		check = sec->lines[i];
-		other = getNextSector(check, sec);
-		if (other &&
-			(GetPlanePointZ(&other->floor, *check->v1) == height ||
-			GetPlanePointZ(&other->floor, *check->v2) == height))
-		{
-			return other;
-		}
-	}
-	return NULL;
+  //jff 5/23/98 don't disturb sec->linecount while searching
+  // but allow early exit in old demos
+  for (i = 0; i < sec->linecount; i++)
+  {
+    check = sec->lines[i];
+    other = getNextSector(check, sec);
+    if (other &&
+      (GetPlanePointZ(&other->floor, *check->v1) == height ||
+      GetPlanePointZ(&other->floor, *check->v2) == height))
+    {
+      return other;
+    }
+  }
+  return NULL;
 }
 
 //==========================================================================
 //
-//	FindModelCeilingSector
+//  FindModelCeilingSector
 //
-//	Passed a ceiling height and a sector number, return a pointer to a
+//  Passed a ceiling height and a sector number, return a pointer to a
 // a sector with that ceiling height across the lowest numbered two sided
 // line surrounding the sector.
 //
-//	Note: If no sector at that height bounds the sector passed, return NULL
+//  Note: If no sector at that height bounds the sector passed, return NULL
 //
-//	jff 02/03/98 Add routine to find numeric model ceiling
+//  jff 02/03/98 Add routine to find numeric model ceiling
 // around a sector specified by sector number
 // used only from generalised ceiling types
-//	jff 3/14/98 change first parameter to plain height to allow call
+//  jff 3/14/98 change first parameter to plain height to allow call
 // from routine not using ceiling_t
 //
 //==========================================================================
 
 final sector_t* FindModelCeilingSector(sector_t* sec, float height)
 {
-	int			i;
-	line_t*		check;
-	sector_t*	other;
+  int     i;
+  line_t*   check;
+  sector_t* other;
 
-	//jff 5/23/98 don't disturb sec->linecount while searching
-	// but allow early exit in old demos
-	for (i = 0; i < sec->linecount; i++)
-	{
-		check = sec->lines[i];
-		other = getNextSector(check, sec);
-		if (other &&
-			(GetPlanePointZ(&other->ceiling, *check->v1) == height ||
-			GetPlanePointZ(&other->ceiling, *check->v2) == height))
-		{
-			return other;
-		}
-	}
-	return NULL;
+  //jff 5/23/98 don't disturb sec->linecount while searching
+  // but allow early exit in old demos
+  for (i = 0; i < sec->linecount; i++)
+  {
+    check = sec->lines[i];
+    other = getNextSector(check, sec);
+    if (other &&
+      (GetPlanePointZ(&other->ceiling, *check->v1) == height ||
+      GetPlanePointZ(&other->ceiling, *check->v2) == height))
+    {
+      return other;
+    }
+  }
+  return NULL;
 }
 
 //==========================================================================
@@ -1025,112 +1025,112 @@ final sector_t* FindModelCeilingSector(sector_t* sec, float height)
 
 final int FindMinSurroundingLight(sector_t* sector, int min)
 {
-	int			i;
-	line_t*		line;
-	sector_t*	check;
+  int     i;
+  line_t*   line;
+  sector_t* check;
 
-	for (i = 0; i < sector->linecount; i++)
-	{
-		line = sector->lines[i];
-		check = getNextSector(line, sector);
+  for (i = 0; i < sector->linecount; i++)
+  {
+    line = sector->lines[i];
+    check = getNextSector(line, sector);
 
-		if (!check)
-			continue;
+    if (!check)
+      continue;
 
-		if (check->params.lightlevel < min)
-			min = check->params.lightlevel;
-	}
-	return min;
+    if (check->params.lightlevel < min)
+      min = check->params.lightlevel;
+  }
+  return min;
 }
 
 //==========================================================================
 //
-//	FindHighestFloorPoint
+//  FindHighestFloorPoint
 //
-//	Find the highest point on the floor of the sector
+//  Find the highest point on the floor of the sector
 //
 //==========================================================================
 
 final float FindHighestFloorPoint(sector_t* sec, TVec* v)
 {
-	int			i;
-	line_t*		line;
-	float		height;
-	float		probeheight;
-	TVec		spot;
+  int     i;
+  line_t*   line;
+  float   height;
+  float   probeheight;
+  TVec    spot;
 
-	if (!sec->floor.normal.x && !sec->floor.normal.y)
-	{
-		if (v)
-			*v = *sec->lines[0]->v1;
-		return sec->floor.dist;
-	}
+  if (!sec->floor.normal.x && !sec->floor.normal.y)
+  {
+    if (v)
+      *v = *sec->lines[0]->v1;
+    return sec->floor.dist;
+  }
 
-	height = -99999.0;
-	for (i = 0; i < sec->linecount; i++)
-	{
-		line = sec->lines[i];
-		probeheight = GetPlanePointZ(&sec->floor, *line->v1);
-		if (probeheight > height)
-		{
-			height = probeheight;
-			spot = *line->v1;
-		}
-		probeheight = GetPlanePointZ(&sec->floor, *line->v2);
-		if (probeheight > height)
-		{
-			height = probeheight;
-			spot = *line->v2;
-		}
-	}
-	if (v)
-		*v = spot;
-	return height;
+  height = -99999.0;
+  for (i = 0; i < sec->linecount; i++)
+  {
+    line = sec->lines[i];
+    probeheight = GetPlanePointZ(&sec->floor, *line->v1);
+    if (probeheight > height)
+    {
+      height = probeheight;
+      spot = *line->v1;
+    }
+    probeheight = GetPlanePointZ(&sec->floor, *line->v2);
+    if (probeheight > height)
+    {
+      height = probeheight;
+      spot = *line->v2;
+    }
+  }
+  if (v)
+    *v = spot;
+  return height;
 }
 
 //==========================================================================
 //
-//	FindLowestCeilingPoint
+//  FindLowestCeilingPoint
 //
-//	Find the lowest point on the ceiling of the sector
+//  Find the lowest point on the ceiling of the sector
 //
 //==========================================================================
 
 final float FindLowestCeilingPoint(sector_t* sec, TVec* v)
 {
-	int			i;
-	line_t*		line;
-	float		height;
-	float		probeheight;
-	TVec		spot;
+  int     i;
+  line_t*   line;
+  float   height;
+  float   probeheight;
+  TVec    spot;
 
-	if (!sec->ceiling.normal.x && !sec->ceiling.normal.y)
-	{
-		if (v)
-			*v = *sec->lines[0]->v1;
-		return -sec->ceiling.dist;
-	}
+  if (!sec->ceiling.normal.x && !sec->ceiling.normal.y)
+  {
+    if (v)
+      *v = *sec->lines[0]->v1;
+    return -sec->ceiling.dist;
+  }
 
-	height = 99999.0;
-	for (i = 0; i < sec->linecount; i++)
-	{
-		line = sec->lines[i];
-		probeheight = GetPlanePointZ(&sec->ceiling, *line->v1);
-		if (probeheight < height)
-		{
-			height = probeheight;
-			spot = *line->v1;
-		}
-		probeheight = GetPlanePointZ(&sec->ceiling, *line->v2);
-		if (probeheight < height)
-		{
-			height = probeheight;
-			spot = *line->v2;
-		}
-	}
-	if (v)
-		*v = spot;
-	return height;
+  height = 99999.0;
+  for (i = 0; i < sec->linecount; i++)
+  {
+    line = sec->lines[i];
+    probeheight = GetPlanePointZ(&sec->ceiling, *line->v1);
+    if (probeheight < height)
+    {
+      height = probeheight;
+      spot = *line->v1;
+    }
+    probeheight = GetPlanePointZ(&sec->ceiling, *line->v2);
+    if (probeheight < height)
+    {
+      height = probeheight;
+      spot = *line->v2;
+    }
+  }
+  if (v)
+    *v = spot;
+  return height;
 }
 
 //==========================================================================
@@ -1151,54 +1151,54 @@ void SpawnMapThing(mthing_t* mthing)
 
 final void CopyMThing(mthing_t * from, mthing_t * to)
 {
-	to->tid = from->tid;
-	to->x = from->x;
-	to->y = from->y;
-	to->height = from->height;
-	to->angle = from->angle;
-	to->type = from->type;
-	to->options = from->options;
-	to->SkillClassFilter = from->SkillClassFilter;
-	to->special = from->special;
-	to->arg1 = from->arg1;
-	to->arg2 = from->arg2;
-	to->arg3 = from->arg3;
-	to->arg4 = from->arg4;
-	to->arg5 = from->arg5;
+  to->tid = from->tid;
+  to->x = from->x;
+  to->y = from->y;
+  to->height = from->height;
+  to->angle = from->angle;
+  to->type = from->type;
+  to->options = from->options;
+  to->SkillClassFilter = from->SkillClassFilter;
+  to->special = from->special;
+  to->arg1 = from->arg1;
+  to->arg2 = from->arg2;
+  to->arg3 = from->arg3;
+  to->arg4 = from->arg4;
+  to->arg5 = from->arg5;
 }
 
 //==========================================================================
 //
-//	GetPlayerStart
+//  GetPlayerStart
 //
 //==========================================================================
 
 final mthing_t* GetPlayerStart(int PNum, int Position)
 {
-	mthing_t* Best = NULL;
-	int i;
-	for (i = PlayerStarts.Num - 1; i >= 0; i--)
-	{
-		if (PlayerStarts[i].type != PNum + 1)
-		{
-			continue;
-		}
-		if (PlayerStarts[i].arg1 == Position)
-		{
-			return &PlayerStarts[i];
-		}
-		if (!Best)
-		{
-			Best = &PlayerStarts[i];
-		}
-	}
+  mthing_t* Best = NULL;
+  int i;
+  for (i = PlayerStarts.Num - 1; i >= 0; i--)
+  {
+    if (PlayerStarts[i].type != PNum + 1)
+    {
+      continue;
+    }
+    if (PlayerStarts[i].arg1 == Position)
+    {
+      return &PlayerStarts[i];
+    }
+    if (!Best)
+    {
+      Best = &PlayerStarts[i];
+    }
+  }
 
-	if (!Best)
-	{
-		Error("Player %d has no start spots", PNum + 1);
-	}
-	print("Player %d has no start spot for position %d", PNum + 1, Position);
-	return Best;
+  if (!Best)
+  {
+    Error("Player %d has no start spots", PNum + 1);
+  }
+  print("Player %d has no start spot for position %d", PNum + 1, Position);
+  return Best;
 }
 
 //==========================================================================
@@ -1208,7 +1208,7 @@ final mthing_t* GetPlayerStart(int PNum, int Position)
 //==========================================================================
 
 void ParticleEffect(int count, int type1, int type2, TVec origin, float ornd,
-	TVec velocity, float vrnd, float acceleration, float grav, int colour, float duration, float ramp)
+  TVec velocity, float vrnd, float acceleration, float grav, int colour, float duration, float ramp)
 {
 }
 
@@ -1230,7 +1230,7 @@ void UpdateParticle(particle_t* p, float DeltaTime)
 
 int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
@@ -1241,7 +1241,7 @@ int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle)
 
 int AcsSpawnSpot(name Name, int SpotTid, int Tid, float Angle)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
@@ -1252,7 +1252,7 @@ int AcsSpawnSpot(name Name, int SpotTid, int Tid, float Angle)
 
 int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
@@ -1262,24 +1262,24 @@ int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid)
 //==========================================================================
 
 void SectorDamage(int Tag, int Amount, name DamageType, name ProtectionType,
-	int Flags)
+  int Flags)
 {
 }
 
 //==========================================================================
 //
-//	DoThingDamage
+//  DoThingDamage
 //
 //==========================================================================
 
 int DoThingDamage(int Tid, int Amount, name DmgType, Entity Activator)
 {
-	return 0;
+  return 0;
 }
 
 //==========================================================================
 //
-//	SetMarineWeapon
+//  SetMarineWeapon
 //
 //==========================================================================
 
@@ -1289,7 +1289,7 @@ void SetMarineWeapon(int Tid, int Weapon, Entity Activator)
 
 //==========================================================================
 //
-//	SetMarineSprite
+//  SetMarineSprite
 //
 //==========================================================================
 
@@ -1299,19 +1299,19 @@ void SetMarineSprite(int Tid, name SrcClassName, Entity Activator)
 
 //==========================================================================
 //
-//	AcsFadeRange
+//  AcsFadeRange
 //
 //==========================================================================
 
 void AcsFadeRange(float BlendR1, float BlendG1, float BlendB1, float BlendA1,
-	float BlendR2, float BlendG2, float BlendB2, float BlendA2,
-	float Duration, Entity Activator)
+  float BlendR2, float BlendG2, float BlendB2, float BlendA2,
+  float Duration, Entity Activator)
 {
 }
 
 //==========================================================================
 //
-//	AcsCancelFade
+//  AcsCancelFade
 //
 //==========================================================================
 
@@ -1321,6 +1321,6 @@ void AcsCancelFade(Entity Activator)
 
 defaultproperties
 {
-	bAlwaysRelevant = true;
-	AirControl = 1.0 / 256.0;
+  bAlwaysRelevant = true;
+  AirControl = 1.0 / 256.0;
 }

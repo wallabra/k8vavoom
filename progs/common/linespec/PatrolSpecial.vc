@@ -23,20 +23,20 @@
 //**
 //**************************************************************************
 //**
-//**	A special to execute when a monster reaches a matching patrol point.
+//**  A special to execute when a monster reaches a matching patrol point.
 //**
 //**************************************************************************
 
 class PatrolSpecial : Actor
-	__mobjinfo__(9047);
+  __mobjinfo__(9047);
 
 defaultproperties
 {
-	Radius  = 8.0;
-	Height = 8.0;
-	Mass = 10.0;
-	bNoGravity = true;
-	bNoBlockmap = true;
-	bNoSplash = true;
-	RenderStyle = STYLE_None;
+  Radius  = 8.0;
+  Height = 8.0;
+  Mass = 10.0;
+  bNoGravity = true;
+  bNoBlockmap = true;
+  bNoSplash = true;
+  RenderStyle = STYLE_None;
 }

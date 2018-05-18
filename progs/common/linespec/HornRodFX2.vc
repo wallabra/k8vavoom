@@ -35,13 +35,13 @@ int RainColour;
 
 int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
-	if (victim.Class == Sorcerer2 && P_Random() < 96)
-	{
-		// D'Sparil teleports away
-		Sorcerer2(victim).DSparilTeleport();
-		return -1;
-	}
-	return ::DoSpecialDamage(victim, source, damage);
+  if (victim.Class == Sorcerer2 && P_Random() < 96)
+  {
+    // D'Sparil teleports away
+    Sorcerer2(victim).DSparilTeleport();
+    return -1;
+  }
+  return ::DoSpecialDamage(victim, source, damage);
 }
 
 //===========================================================================
@@ -52,7 +52,7 @@ int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 
 final void A_SkullRodPL2Seek()
 {
-	SeekerMissile(10.0, 30.0);
+  SeekerMissile(10.0, 30.0);
 }
 
 //===========================================================================
@@ -63,48 +63,48 @@ final void A_SkullRodPL2Seek()
 
 final void A_AddPlayerRain()
 {
-	PlayerEx player;
+  PlayerEx player;
 
-	player = PlayerEx(Target.Player);
-	if (!player || !player.bActive)
-	{
-		// Player left the game
-		return;
-	}
-	if (player.Health <= 0)
-	{
-		// Player is dead
-		return;
-	}
-	if (player.Rain1 && player.Rain2)
-	{
-		// Terminate an active rain
-		if (player.Rain1.Health < player.Rain2.Health)
-		{
-			if (player.Rain1.Health > 16)
-			{
-				player.Rain1.Health = 16;
-			}
-			player.Rain1 = none;
-		}
-		else
-		{
-			if (player.Rain2.Health > 16)
-			{
-				player.Rain2.Health = 16;
-			}
-			player.Rain2 = none;
-		}
-	}
-	// Add rain mobj to list
-	if (player.Rain1)
-	{
-		player.Rain2 = self;
-	}
-	else
-	{
-		player.Rain1 = self;
-	}
+  player = PlayerEx(Target.Player);
+  if (!player || !player.bActive)
+  {
+    // Player left the game
+    return;
+  }
+  if (player.Health <= 0)
+  {
+    // Player is dead
+    return;
+  }
+  if (player.Rain1 && player.Rain2)
+  {
+    // Terminate an active rain
+    if (player.Rain1.Health < player.Rain2.Health)
+    {
+      if (player.Rain1.Health > 16)
+      {
+        player.Rain1.Health = 16;
+      }
+      player.Rain1 = none;
+    }
+    else
+    {
+      if (player.Rain2.Health > 16)
+      {
+        player.Rain2.Health = 16;
+      }
+      player.Rain2 = none;
+    }
+  }
+  // Add rain mobj to list
+  if (player.Rain1)
+  {
+    player.Rain2 = self;
+  }
+  else
+  {
+    player.Rain1 = self;
+  }
 }
 
 //===========================================================================
@@ -115,7 +115,7 @@ final void A_AddPlayerRain()
 
 final void A_HideInCeiling()
 {
-	Origin.z = CeilingZ + 4.0;
+  Origin.z = CeilingZ + 4.0;
 }
 
 //===========================================================================
@@ -126,98 +126,98 @@ final void A_HideInCeiling()
 
 final void A_SkullRodStorm()
 {
-	float x;
-	float y;
-	Actor A;
-	PlayerEx player;
-	class<Actor> rain_type;
+  float x;
+  float y;
+  Actor A;
+  PlayerEx player;
+  class<Actor> rain_type;
 
-	if (Health-- == 0)
-	{
-		SetState(none);
-		player = PlayerEx(Target.Player);
-		if (!player || !player.bActive)
-		{
-			// Player left the game
-			return;
-		}
-		if (player.Health <= 0)
-		{
-			// Player is dead
-			return;
-		}
-		if (player.Rain1 == self)
-		{
-			player.Rain1 = none;
-		}
-		else if (player.Rain2 == self)
-		{
-			player.Rain2 = none;
-		}
-		return;
-	}
-	if (Random() < 0.1)
-	{
-		// Fudge rain frequency
-		return;
-	}
-	x = Origin.x + Random() * 128.0 - 64.0;
-	y = Origin.y + Random() * 128.0 - 64.0;
-	switch (RainColour)
-	{
-	case 0: rain_type = RainPillar; break;
-	case 1: rain_type = RainPlayer2; break;
-	case 2: rain_type = RainPlayer3; break;
-	case 3: rain_type = RainPlayer4; break;
-	}
-	A = Spawn(rain_type, vector(x, y, ONCEILINGZ));
-	if(Sector->bHasExtrafloors && Origin.z <= CeilingZ)
-		A.Origin.z = CeilingZ - A.Height;
-	A.Target = Target;
-	A.Velocity.x = 0.00001;	// Force collision detection
-	A.Velocity.z = -A.Speed;
-	A.CheckMissileSpawn();
-	if (!(Special1 & 31))
-	{
-		PlaySound('weapons/hornrodpowrain', CHAN_VOICE);
-	}
-	Special1++;
+  if (Health-- == 0)
+  {
+    SetState(none);
+    player = PlayerEx(Target.Player);
+    if (!player || !player.bActive)
+    {
+      // Player left the game
+      return;
+    }
+    if (player.Health <= 0)
+    {
+      // Player is dead
+      return;
+    }
+    if (player.Rain1 == self)
+    {
+      player.Rain1 = none;
+    }
+    else if (player.Rain2 == self)
+    {
+      player.Rain2 = none;
+    }
+    return;
+  }
+  if (Random() < 0.1)
+  {
+    // Fudge rain frequency
+    return;
+  }
+  x = Origin.x + Random() * 128.0 - 64.0;
+  y = Origin.y + Random() * 128.0 - 64.0;
+  switch (RainColour)
+  {
+  case 0: rain_type = RainPillar; break;
+  case 1: rain_type = RainPlayer2; break;
+  case 2: rain_type = RainPlayer3; break;
+  case 3: rain_type = RainPlayer4; break;
+  }
+  A = Spawn(rain_type, vector(x, y, ONCEILINGZ));
+  if(Sector->bHasExtrafloors && Origin.z <= CeilingZ)
+    A.Origin.z = CeilingZ - A.Height;
+  A.Target = Target;
+  A.Velocity.x = 0.00001; // Force collision detection
+  A.Velocity.z = -A.Speed;
+  A.CheckMissileSpawn();
+  if (!(Special1 & 31))
+  {
+    PlaySound('weapons/hornrodpowrain', CHAN_VOICE);
+  }
+  Special1++;
 }
 
 states
 {
 Spawn:
-	FX00 C 3 Bright
-	FX00 D 3 Bright A_SkullRodPL2Seek
-	FX00 E 3 Bright
-	FX00 F 3 Bright A_SkullRodPL2Seek
-	Loop
+  FX00 C 3 Bright
+  FX00 D 3 Bright A_SkullRodPL2Seek
+  FX00 E 3 Bright
+  FX00 F 3 Bright A_SkullRodPL2Seek
+  Loop
 Death:
-	FX00 H 5 Bright A_AddPlayerRain
-	FX00 I 5 Bright
-	FX00 J 4 Bright
-	FX00 KLM 3 Bright
-	FX00 G 1 A_HideInCeiling
-	FX00 G 1 A_SkullRodStorm
-	Wait
+  FX00 H 5 Bright A_AddPlayerRain
+  FX00 I 5 Bright
+  FX00 J 4 Bright
+  FX00 KLM 3 Bright
+  FX00 G 1 A_HideInCeiling
+  FX00 G 1 A_SkullRodStorm
+  Wait
 }
 
 defaultproperties
 {
-	Health = 140;
-	Radius = 12.0;
-	Height = 8.0;
-	Speed = 770.0;
-	MissileDamage = 10;
-	RenderStyle = STYLE_Add;
-	bMissile = true;
-	bNoBlockmap = true;
-	bNoGravity = true;
-	bDropOff = true;
-	bNoTeleport = true;
-	bActivatePCross = true;
-	bActivateImpact = true;
-	bBloodSplatter = true;
-	SightSound = 'weapons/hornrodshoot';
-	DeathSound = 'weapons/hornrodpowhit';
+  Health = 140;
+  Radius = 12.0;
+  Height = 8.0;
+  Speed = 770.0;
+  MissileDamage = 10;
+  RenderStyle = STYLE_Add;
+  bMissile = true;
+  bNoBlockmap = true;
+  bNoGravity = true;
+  bDropOff = true;
+  bNoTeleport = true;
+  bActivatePCross = true;
+  bActivateImpact = true;
+  bBloodSplatter = true;
+  SightSound = 'weapons/hornrodshoot';
+  DeathSound = 'weapons/hornrodpowhit';
 }

@@ -25,25 +25,25 @@
 
 class MainGameInfo : LineSpecialGameInfo;
 
-const int NUM_SPECIALS		= 108;
+const int NUM_SPECIALS    = 108;
 
-const int NUMTOTALBOTS		= 8;
-const int NUMBOTTYPES		= 8;
+const int NUMTOTALBOTS    = 8;
+const int NUMBOTTYPES   = 8;
 
-const float TELEFOGHEIGHT 	= 32.0;
+const float TELEFOGHEIGHT   = 32.0;
 
 struct spec_trans_t
 {
-	int special;
-	int arg1;
-	int arg2;
-	int arg3;
-	int arg4;
-	int arg5;
-	int spac;
-	int repeat;
-	int monst;
-	int not_destroy;
+  int special;
+  int arg1;
+  int arg2;
+  int arg3;
+  int arg4;
+  int arg5;
+  int spac;
+  int repeat;
+  int monst;
+  int not_destroy;
 };
 
 spec_trans_t spec_trans_tab[NUM_SPECIALS];
@@ -55,16 +55,16 @@ bool shareware;
 
 //==========================================================================
 //
-//	Init
+//  Init
 //
 //==========================================================================
 
 void Init()
 {
-	::Init();
-	shareware = !WadLumpPresent('e2m1');
-	InitTranslationTables();
-	InitBotTypes();
+  ::Init();
+  shareware = !WadLumpPresent('e2m1');
+  InitTranslationTables();
+  InitBotTypes();
 }
 
 //==========================================================================
@@ -75,10 +75,10 @@ void Init()
 
 void InitNewGame(int skill)
 {
-	SetSkill(skill);
-	nomonsters = GetCvar('NoMonsters');
-	bRespawnItems = !!GetCvar('deathmatch');
-	bWeaponsStay = netgame && !GetCvar('deathmatch');
+  SetSkill(skill);
+  nomonsters = GetCvar('NoMonsters');
+  bRespawnItems = !!GetCvar('deathmatch');
+  bWeaponsStay = netgame && !GetCvar('deathmatch');
 }
 
 //==========================================================================
@@ -89,78 +89,78 @@ void InitNewGame(int skill)
 
 void InitBotTypes()
 {
-	SetBotType(0,
-		"bot1",
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		"\\Name\\bot1\\colour\\0\\class\\0\\model\\doomguy\\skin\\green.pcx"
-	);
-	SetBotType(1,
-		"bot2",
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		"\\Name\\bot2\\colour\\1\\class\\0\\model\\doomguy\\skin\\bluef.pcx"
-	);
-	SetBotType(2,
-		"bot3",
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		"\\Name\\bot3\\colour\\2\\class\\0\\model\\doomguy\\skin\\pinkf.pcx"
-	);
-	SetBotType(3,
-		"bot4",
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		"\\Name\\bot4\\colour\\3\\class\\0\\model\\doomguy\\skin\\camo.pcx"
-	);
-	SetBotType(4,
-		"bot5",
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		"\\Name\\bot5\\colour\\4\\class\\0\\model\\doomguy\\skin\\green.pcx"
-	);
-	SetBotType(5,
-		"bot6",
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		"\\Name\\bot6\\colour\\5\\class\\0\\model\\doomguy\\skin\\bluef.pcx"
-	);
-	SetBotType(6,
-		"bot7",
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		"\\Name\\bot7\\colour\\6\\class\\0\\model\\doomguy\\skin\\pinkf.pcx"
-	);
-	SetBotType(7,
-		"bot8",
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		BotPlayer::bsk_medium,
-		"\\Name\\bot8\\colour\\7\\class\\0\\model\\doomguy\\skin\\camo.pcx"
-	);
+  SetBotType(0,
+    "bot1",
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    "\\Name\\bot1\\colour\\0\\class\\0\\model\\doomguy\\skin\\green.pcx"
+  );
+  SetBotType(1,
+    "bot2",
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    "\\Name\\bot2\\colour\\1\\class\\0\\model\\doomguy\\skin\\bluef.pcx"
+  );
+  SetBotType(2,
+    "bot3",
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    "\\Name\\bot3\\colour\\2\\class\\0\\model\\doomguy\\skin\\pinkf.pcx"
+  );
+  SetBotType(3,
+    "bot4",
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    "\\Name\\bot4\\colour\\3\\class\\0\\model\\doomguy\\skin\\camo.pcx"
+  );
+  SetBotType(4,
+    "bot5",
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    "\\Name\\bot5\\colour\\4\\class\\0\\model\\doomguy\\skin\\green.pcx"
+  );
+  SetBotType(5,
+    "bot6",
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    "\\Name\\bot6\\colour\\5\\class\\0\\model\\doomguy\\skin\\bluef.pcx"
+  );
+  SetBotType(6,
+    "bot7",
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    "\\Name\\bot7\\colour\\6\\class\\0\\model\\doomguy\\skin\\pinkf.pcx"
+  );
+  SetBotType(7,
+    "bot8",
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    BotPlayer::bsk_medium,
+    "\\Name\\bot8\\colour\\7\\class\\0\\model\\doomguy\\skin\\camo.pcx"
+  );
 }
 
 //==========================================================================
@@ -170,165 +170,165 @@ void InitBotTypes()
 //==========================================================================
 
 void SetBotType(int i, string Name, int accuracy, int intelect, int evade,
-	int anticip, int reaction, string userinfo)
+  int anticip, int reaction, string userinfo)
 {
-	botinfo[i].Name = Name;
-	botinfo[i].accuracy = accuracy;
-	botinfo[i].intelect = intelect;
-	botinfo[i].evade = evade;
-	botinfo[i].anticip = anticip;
-	botinfo[i].reaction = reaction;
-	botinfo[i].userinfo = userinfo;
+  botinfo[i].Name = Name;
+  botinfo[i].accuracy = accuracy;
+  botinfo[i].intelect = intelect;
+  botinfo[i].evade = evade;
+  botinfo[i].anticip = anticip;
+  botinfo[i].reaction = reaction;
+  botinfo[i].userinfo = userinfo;
 }
 
 //==========================================================================
 //
-//	InitTranslationTables
+//  InitTranslationTables
 //
 //==========================================================================
 
 void InitTranslationTables()
 {
-	//  0
-	SetLineTrans(1, LNSPEC_DoorRaise, 0, 16, 150, 0, 0, SPAC_Use, true, true);
-	SetLineTrans(2, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(3, LNSPEC_DoorClose, -1, 16, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(4, LNSPEC_DoorRaise, -1, 16, 150, 0, 0, SPAC_Cross, false, true);
-	SetLineTrans(5, LNSPEC_FloorRaiseToLowestCeiling, -1, 8, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(6, LNSPEC_CeilingCrushAndRaiseA, -1, 16, 16, 10, 0, SPAC_Cross, false);
-	SetLineTrans(7, LNSPEC_StairsBuildUpDoom, -1, 8, 8, 0, 0, SPAC_Use, false);
-	SetLineTrans(8, LNSPEC_StairsBuildUpDoom, -1, 8, 8, 0, 0, SPAC_Cross, false);
-	SetLineTrans(9, LNSPEC_FloorDonut, -1, 4, 4, 0, 0, SPAC_Use, false);
+  //  0
+  SetLineTrans(1, LNSPEC_DoorRaise, 0, 16, 150, 0, 0, SPAC_Use, true, true);
+  SetLineTrans(2, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(3, LNSPEC_DoorClose, -1, 16, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(4, LNSPEC_DoorRaise, -1, 16, 150, 0, 0, SPAC_Cross, false, true);
+  SetLineTrans(5, LNSPEC_FloorRaiseToLowestCeiling, -1, 8, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(6, LNSPEC_CeilingCrushAndRaiseA, -1, 16, 16, 10, 0, SPAC_Cross, false);
+  SetLineTrans(7, LNSPEC_StairsBuildUpDoom, -1, 8, 8, 0, 0, SPAC_Use, false);
+  SetLineTrans(8, LNSPEC_StairsBuildUpDoom, -1, 8, 8, 0, 0, SPAC_Cross, false);
+  SetLineTrans(9, LNSPEC_FloorDonut, -1, 4, 4, 0, 0, SPAC_Use, false);
 
-	SetLineTrans(10, LNSPEC_PlatDownWaitUpStayLip, -1, 32, 105, 0, 0, SPAC_Cross, false, true);
-	SetLineTrans(11, LNSPEC_ExitNormal, -1, 0, 0, 0, 0, SPAC_Use, false);
-	SetLineTrans(12, LNSPEC_LightMaxNeighbor, -1, 0, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(13, LNSPEC_LightChangeToValue, -1, 255, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(14, LNSPEC_FloorRaiseByValueChangeTex, -1, 4, 4, 0, 0, SPAC_Use, false);
-	SetLineTrans(15, LNSPEC_FloorRaiseByValueChangeTex, -1, 4, 3, 0, 0, SPAC_Use, false);
-	SetLineTrans(16, LNSPEC_DoorCloseWaitOpen, -1, 16, 240, 0, 0, SPAC_Cross, false);
-	SetLineTrans(17, LNSPEC_LightStrobeDoom, -1, 5, 35, 0, 0, SPAC_Cross, false);
-	SetLineTrans(18, LNSPEC_FloorRaiseToNearest, -1, 8, 0, 0, 0, SPAC_Use, false);
-	SetLineTrans(19, LNSPEC_FloorLowerToHighest, -1, 8, 128, 0, 0, SPAC_Cross, false);
+  SetLineTrans(10, LNSPEC_PlatDownWaitUpStayLip, -1, 32, 105, 0, 0, SPAC_Cross, false, true);
+  SetLineTrans(11, LNSPEC_ExitNormal, -1, 0, 0, 0, 0, SPAC_Use, false);
+  SetLineTrans(12, LNSPEC_LightMaxNeighbor, -1, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(13, LNSPEC_LightChangeToValue, -1, 255, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(14, LNSPEC_FloorRaiseByValueChangeTex, -1, 4, 4, 0, 0, SPAC_Use, false);
+  SetLineTrans(15, LNSPEC_FloorRaiseByValueChangeTex, -1, 4, 3, 0, 0, SPAC_Use, false);
+  SetLineTrans(16, LNSPEC_DoorCloseWaitOpen, -1, 16, 240, 0, 0, SPAC_Cross, false);
+  SetLineTrans(17, LNSPEC_LightStrobeDoom, -1, 5, 35, 0, 0, SPAC_Cross, false);
+  SetLineTrans(18, LNSPEC_FloorRaiseToNearest, -1, 8, 0, 0, 0, SPAC_Use, false);
+  SetLineTrans(19, LNSPEC_FloorLowerToHighest, -1, 8, 128, 0, 0, SPAC_Cross, false);
 
-	SetLineTrans(20, LNSPEC_FloorRaiseToNearestChange, -1, 4, 0, 0, 0, SPAC_Use, false, false, true);
-	SetLineTrans(21, LNSPEC_PlatDownWaitUpStayLip, -1, 32, 105, 0, 0, SPAC_Use, false);
-	SetLineTrans(22, LNSPEC_FloorRaiseToNearestChange, -1, 4, 0, 0, 0, SPAC_Cross, false, false, true);
-	SetLineTrans(23, LNSPEC_FloorLowerToLowest, -1, 8, 0, 0, 0, SPAC_Use, false);
-	SetLineTrans(24, LNSPEC_FloorRaiseToLowestCeiling, -1, 8, 0, 0, 0, SPAC_Impact, false);
-	SetLineTrans(25, LNSPEC_CeilingCrushAndRaiseA, -1, 8, 8, 10, 0, SPAC_Cross, false);
-	SetLineTrans(26, LNSPEC_DoorLockedRaise, 0, 16, 150, 2, 0, SPAC_Use, true);
-	SetLineTrans(27, LNSPEC_DoorLockedRaise, 0, 16, 150, 3, 0, SPAC_Use, true);
-	SetLineTrans(28, LNSPEC_DoorLockedRaise, 0, 16, 150, 1, 0, SPAC_Use, true);
-	SetLineTrans(29, LNSPEC_DoorRaise, -1, 16, 150, 0, 0, SPAC_Use, false);
+  SetLineTrans(20, LNSPEC_FloorRaiseToNearestChange, -1, 4, 0, 0, 0, SPAC_Use, false, false, true);
+  SetLineTrans(21, LNSPEC_PlatDownWaitUpStayLip, -1, 32, 105, 0, 0, SPAC_Use, false);
+  SetLineTrans(22, LNSPEC_FloorRaiseToNearestChange, -1, 4, 0, 0, 0, SPAC_Cross, false, false, true);
+  SetLineTrans(23, LNSPEC_FloorLowerToLowest, -1, 8, 0, 0, 0, SPAC_Use, false);
+  SetLineTrans(24, LNSPEC_FloorRaiseToLowestCeiling, -1, 8, 0, 0, 0, SPAC_Impact, false);
+  SetLineTrans(25, LNSPEC_CeilingCrushAndRaiseA, -1, 8, 8, 10, 0, SPAC_Cross, false);
+  SetLineTrans(26, LNSPEC_DoorLockedRaise, 0, 16, 150, 2, 0, SPAC_Use, true);
+  SetLineTrans(27, LNSPEC_DoorLockedRaise, 0, 16, 150, 3, 0, SPAC_Use, true);
+  SetLineTrans(28, LNSPEC_DoorLockedRaise, 0, 16, 150, 1, 0, SPAC_Use, true);
+  SetLineTrans(29, LNSPEC_DoorRaise, -1, 16, 150, 0, 0, SPAC_Use, false);
 
-	SetLineTrans(30, LNSPEC_FloorRaiseByTexture, -1, 8, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(31, LNSPEC_DoorOpen, 0, 16, 0, 0, 0, SPAC_Use, false);
-	SetLineTrans(32, LNSPEC_DoorLockedRaise, 0, 16, 0, 2, 0, SPAC_Use, false, true);
-	SetLineTrans(33, LNSPEC_DoorLockedRaise, 0, 16, 0, 1, 0, SPAC_Use, false, true);
-	SetLineTrans(34, LNSPEC_DoorLockedRaise, 0, 16, 0, 3, 0, SPAC_Use, false, true);
-	SetLineTrans(35, LNSPEC_LightChangeToValue, -1, 35, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(36, LNSPEC_FloorLowerToHighest, -1, 32, 136, 0, 0, SPAC_Cross, false);
-	SetLineTrans(37, LNSPEC_FloorLowerToLowestChange, -1, 8, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(38, LNSPEC_FloorLowerToLowest, -1, 8, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(39, LNSPEC_Teleport, 0, -1, 0, 0, 0, SPAC_Cross, false, true);
+  SetLineTrans(30, LNSPEC_FloorRaiseByTexture, -1, 8, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(31, LNSPEC_DoorOpen, 0, 16, 0, 0, 0, SPAC_Use, false);
+  SetLineTrans(32, LNSPEC_DoorLockedRaise, 0, 16, 0, 2, 0, SPAC_Use, false, true);
+  SetLineTrans(33, LNSPEC_DoorLockedRaise, 0, 16, 0, 1, 0, SPAC_Use, false, true);
+  SetLineTrans(34, LNSPEC_DoorLockedRaise, 0, 16, 0, 3, 0, SPAC_Use, false, true);
+  SetLineTrans(35, LNSPEC_LightChangeToValue, -1, 35, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(36, LNSPEC_FloorLowerToHighest, -1, 32, 136, 0, 0, SPAC_Cross, false);
+  SetLineTrans(37, LNSPEC_FloorLowerToLowestChange, -1, 8, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(38, LNSPEC_FloorLowerToLowest, -1, 8, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(39, LNSPEC_Teleport, 0, -1, 0, 0, 0, SPAC_Cross, false, true);
 
-	SetLineTrans(40, LNSPEC_CeilingGeneric, -1, 8, 0, 1, 8, SPAC_Cross, false);
-	SetLineTrans(41, LNSPEC_CeilingLowerToFloor, -1, 8, 0, 0, 0, SPAC_Use, false);
-	SetLineTrans(42, LNSPEC_DoorClose, -1, 16, 0, 0, 0, SPAC_Use, true);
-	SetLineTrans(43, LNSPEC_CeilingLowerToFloor, -1, 8, 0, 0, 0, SPAC_Use, true);
-	SetLineTrans(44, LNSPEC_CeilingLowerAndCrush, -1, 8, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(45, LNSPEC_FloorLowerToHighest, -1, 8, 128, 0, 0, SPAC_Use, true);
-	SetLineTrans(46, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Impact, true, true);
-	SetLineTrans(47, LNSPEC_FloorRaiseToNearestChange, -1, 4, 0, 0, 0, SPAC_Impact, false, false, true);
-	SetLineTrans(48, LNSPEC_ScrollTextureLeft, 64, 0, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(49, LNSPEC_CeilingCrushAndRaiseA, -1, 8, 8, 10, 0, SPAC_Use, false);
+  SetLineTrans(40, LNSPEC_CeilingGeneric, -1, 8, 0, 1, 8, SPAC_Cross, false);
+  SetLineTrans(41, LNSPEC_CeilingLowerToFloor, -1, 8, 0, 0, 0, SPAC_Use, false);
+  SetLineTrans(42, LNSPEC_DoorClose, -1, 16, 0, 0, 0, SPAC_Use, true);
+  SetLineTrans(43, LNSPEC_CeilingLowerToFloor, -1, 8, 0, 0, 0, SPAC_Use, true);
+  SetLineTrans(44, LNSPEC_CeilingLowerAndCrush, -1, 8, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(45, LNSPEC_FloorLowerToHighest, -1, 8, 128, 0, 0, SPAC_Use, true);
+  SetLineTrans(46, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Impact, true, true);
+  SetLineTrans(47, LNSPEC_FloorRaiseToNearestChange, -1, 4, 0, 0, 0, SPAC_Impact, false, false, true);
+  SetLineTrans(48, LNSPEC_ScrollTextureLeft, 64, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(49, LNSPEC_CeilingCrushAndRaiseA, -1, 8, 8, 10, 0, SPAC_Use, false);
 
-	SetLineTrans(50, LNSPEC_DoorClose, -1, 16, 0, 0, 0, SPAC_Use, false);
-	SetLineTrans(51, LNSPEC_ExitSecret, -1, 0, 0, 0, 0, SPAC_Use, false);
-	SetLineTrans(52, LNSPEC_ExitNormal, -1, 0, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(53, LNSPEC_PlatPerpetualRaiseLip, -1, 8, 105, 0, 0, SPAC_Cross, false);
-	SetLineTrans(54, LNSPEC_PlatStop, -1, 0, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(55, LNSPEC_FloorRaiseAndCrush, -1, 8, 10, 0, 0, SPAC_Use, false);
-	SetLineTrans(56, LNSPEC_FloorRaiseAndCrush, -1, 8, 10, 0, 0, SPAC_Cross, false);
-	SetLineTrans(57, LNSPEC_CeilingCrushStop, -1, 0, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(58, LNSPEC_FloorRaiseByValue, -1, 8, 24, 0, 0, SPAC_Cross, false);
-	SetLineTrans(59, LNSPEC_FloorRaiseByValueChange, -1, 8, 24, 0, 0, SPAC_Cross, false);
+  SetLineTrans(50, LNSPEC_DoorClose, -1, 16, 0, 0, 0, SPAC_Use, false);
+  SetLineTrans(51, LNSPEC_ExitSecret, -1, 0, 0, 0, 0, SPAC_Use, false);
+  SetLineTrans(52, LNSPEC_ExitNormal, -1, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(53, LNSPEC_PlatPerpetualRaiseLip, -1, 8, 105, 0, 0, SPAC_Cross, false);
+  SetLineTrans(54, LNSPEC_PlatStop, -1, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(55, LNSPEC_FloorRaiseAndCrush, -1, 8, 10, 0, 0, SPAC_Use, false);
+  SetLineTrans(56, LNSPEC_FloorRaiseAndCrush, -1, 8, 10, 0, 0, SPAC_Cross, false);
+  SetLineTrans(57, LNSPEC_CeilingCrushStop, -1, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(58, LNSPEC_FloorRaiseByValue, -1, 8, 24, 0, 0, SPAC_Cross, false);
+  SetLineTrans(59, LNSPEC_FloorRaiseByValueChange, -1, 8, 24, 0, 0, SPAC_Cross, false);
 
-	SetLineTrans(60, LNSPEC_FloorLowerToLowest, -1, 8, 0, 0, 0, SPAC_Use, true);
-	SetLineTrans(61, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Use, true);
-	SetLineTrans(62, LNSPEC_PlatDownWaitUpStayLip, -1, 32, 105, 0, 0, SPAC_Use, true);
-	SetLineTrans(63, LNSPEC_DoorRaise, -1, 16, 150, 0, 0, SPAC_Use, true);
-	SetLineTrans(64, LNSPEC_FloorRaiseToLowestCeiling, -1, 8, 0, 0, 0, SPAC_Use, true);
-	SetLineTrans(65, LNSPEC_FloorRaiseAndCrush, -1, 8, 10, 0, 0, SPAC_Use, true);
-	SetLineTrans(66, LNSPEC_FloorRaiseByValueChangeTex, -1, 4, 3, 0, 0, SPAC_Use, true);
-	SetLineTrans(67, LNSPEC_FloorRaiseByValueChangeTex, -1, 4, 4, 0, 0, SPAC_Use, true);
-	SetLineTrans(68, LNSPEC_FloorRaiseToNearestChange, -1, 4, 0, 0, 0, SPAC_Use, true, false, true);
-	SetLineTrans(69, LNSPEC_FloorRaiseToNearest, -1, 8, 0, 0, 0, SPAC_Use, true);
+  SetLineTrans(60, LNSPEC_FloorLowerToLowest, -1, 8, 0, 0, 0, SPAC_Use, true);
+  SetLineTrans(61, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Use, true);
+  SetLineTrans(62, LNSPEC_PlatDownWaitUpStayLip, -1, 32, 105, 0, 0, SPAC_Use, true);
+  SetLineTrans(63, LNSPEC_DoorRaise, -1, 16, 150, 0, 0, SPAC_Use, true);
+  SetLineTrans(64, LNSPEC_FloorRaiseToLowestCeiling, -1, 8, 0, 0, 0, SPAC_Use, true);
+  SetLineTrans(65, LNSPEC_FloorRaiseAndCrush, -1, 8, 10, 0, 0, SPAC_Use, true);
+  SetLineTrans(66, LNSPEC_FloorRaiseByValueChangeTex, -1, 4, 3, 0, 0, SPAC_Use, true);
+  SetLineTrans(67, LNSPEC_FloorRaiseByValueChangeTex, -1, 4, 4, 0, 0, SPAC_Use, true);
+  SetLineTrans(68, LNSPEC_FloorRaiseToNearestChange, -1, 4, 0, 0, 0, SPAC_Use, true, false, true);
+  SetLineTrans(69, LNSPEC_FloorRaiseToNearest, -1, 8, 0, 0, 0, SPAC_Use, true);
 
-	SetLineTrans(70, LNSPEC_FloorLowerToHighest, -1, 32, 136, 0, 0, SPAC_Use, true);
-	SetLineTrans(71, LNSPEC_FloorLowerToHighest, -1, 32, 136, 0, 0, SPAC_Use, false);
-	SetLineTrans(72, LNSPEC_CeilingLowerAndCrush, -1, 8, 0, 0, 0, SPAC_Cross, true);
-	SetLineTrans(73, LNSPEC_CeilingCrushAndRaiseA, -1, 8, 8, 10, 0, SPAC_Cross, true);
-	SetLineTrans(74, LNSPEC_CeilingCrushStop, -1, 0, 0, 0, 0, SPAC_Cross, true);
-	SetLineTrans(75, LNSPEC_DoorClose, -1, 16, 0, 0, 0, SPAC_Cross, true);
-	SetLineTrans(76, LNSPEC_DoorCloseWaitOpen, -1, 16, 240, 0, 0, SPAC_Cross, true);
-	SetLineTrans(77, LNSPEC_CeilingCrushAndRaiseA, -1, 16, 16, 10, 0, SPAC_Cross, true);
-	//  78
-	SetLineTrans(79, LNSPEC_LightChangeToValue, -1, 35, 0, 0, 0, SPAC_Cross, true);
+  SetLineTrans(70, LNSPEC_FloorLowerToHighest, -1, 32, 136, 0, 0, SPAC_Use, true);
+  SetLineTrans(71, LNSPEC_FloorLowerToHighest, -1, 32, 136, 0, 0, SPAC_Use, false);
+  SetLineTrans(72, LNSPEC_CeilingLowerAndCrush, -1, 8, 0, 0, 0, SPAC_Cross, true);
+  SetLineTrans(73, LNSPEC_CeilingCrushAndRaiseA, -1, 8, 8, 10, 0, SPAC_Cross, true);
+  SetLineTrans(74, LNSPEC_CeilingCrushStop, -1, 0, 0, 0, 0, SPAC_Cross, true);
+  SetLineTrans(75, LNSPEC_DoorClose, -1, 16, 0, 0, 0, SPAC_Cross, true);
+  SetLineTrans(76, LNSPEC_DoorCloseWaitOpen, -1, 16, 240, 0, 0, SPAC_Cross, true);
+  SetLineTrans(77, LNSPEC_CeilingCrushAndRaiseA, -1, 16, 16, 10, 0, SPAC_Cross, true);
+  //  78
+  SetLineTrans(79, LNSPEC_LightChangeToValue, -1, 35, 0, 0, 0, SPAC_Cross, true);
 
-	SetLineTrans(80, LNSPEC_LightMaxNeighbor, -1, 0, 0, 0, 0, SPAC_Cross, true);
-	SetLineTrans(81, LNSPEC_LightChangeToValue, -1, 255, 0, 0, 0, SPAC_Cross, true);
-	SetLineTrans(82, LNSPEC_FloorLowerToLowest, -1, 8, 0, 0, 0, SPAC_Cross, true);
-	SetLineTrans(83, LNSPEC_FloorLowerToHighest, -1, 8, 128, 0, 0, SPAC_Cross, true);
-	SetLineTrans(84, LNSPEC_FloorLowerToLowestChange, -1, 8, 0, 0, 0, SPAC_Cross, true);
-	//  85
-	SetLineTrans(86, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Cross, true);
-	SetLineTrans(87, LNSPEC_PlatPerpetualRaiseLip, -1, 8, 105, 0, 0, SPAC_Cross, true);
-	SetLineTrans(88, LNSPEC_PlatDownWaitUpStayLip, -1, 32, 105, 0, 0, SPAC_Cross, true, true);
-	SetLineTrans(89, LNSPEC_PlatStop, -1, 0, 0, 0, 0, SPAC_Cross, true);
+  SetLineTrans(80, LNSPEC_LightMaxNeighbor, -1, 0, 0, 0, 0, SPAC_Cross, true);
+  SetLineTrans(81, LNSPEC_LightChangeToValue, -1, 255, 0, 0, 0, SPAC_Cross, true);
+  SetLineTrans(82, LNSPEC_FloorLowerToLowest, -1, 8, 0, 0, 0, SPAC_Cross, true);
+  SetLineTrans(83, LNSPEC_FloorLowerToHighest, -1, 8, 128, 0, 0, SPAC_Cross, true);
+  SetLineTrans(84, LNSPEC_FloorLowerToLowestChange, -1, 8, 0, 0, 0, SPAC_Cross, true);
+  //  85
+  SetLineTrans(86, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Cross, true);
+  SetLineTrans(87, LNSPEC_PlatPerpetualRaiseLip, -1, 8, 105, 0, 0, SPAC_Cross, true);
+  SetLineTrans(88, LNSPEC_PlatDownWaitUpStayLip, -1, 32, 105, 0, 0, SPAC_Cross, true, true);
+  SetLineTrans(89, LNSPEC_PlatStop, -1, 0, 0, 0, 0, SPAC_Cross, true);
 
-	SetLineTrans(90, LNSPEC_DoorRaise, -1, 16, 150, 0, 0, SPAC_Cross, true);
-	SetLineTrans(91, LNSPEC_FloorRaiseToLowestCeiling, -1, 8, 0, 0, 0, SPAC_Cross, true);
-	SetLineTrans(92, LNSPEC_FloorRaiseByValue, -1, 8, 24, 0, 0, SPAC_Cross, true);
-	SetLineTrans(93, LNSPEC_FloorRaiseByValueChange, -1, 8, 24, 0, 0, SPAC_Cross, true);
-	SetLineTrans(94, LNSPEC_FloorRaiseAndCrush, -1, 8, 10, 0, 0, SPAC_Cross, true);
-	SetLineTrans(95, LNSPEC_FloorRaiseToNearestChange, -1, 4, 0, 0, 0, SPAC_Cross, true, false, true);
-	SetLineTrans(96, LNSPEC_FloorRaiseByTexture, -1, 8, 0, 0, 0, SPAC_Cross, true);
-	SetLineTrans(97, LNSPEC_Teleport, 0, -1, 0, 0, 0, SPAC_Cross, true, true);
-	SetLineTrans(98, LNSPEC_FloorLowerToHighest, -1, 32, 136, 0, 0, SPAC_Cross, true);
-	SetLineTrans(99, LNSPEC_ScrollTextureRight, 64, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(90, LNSPEC_DoorRaise, -1, 16, 150, 0, 0, SPAC_Cross, true);
+  SetLineTrans(91, LNSPEC_FloorRaiseToLowestCeiling, -1, 8, 0, 0, 0, SPAC_Cross, true);
+  SetLineTrans(92, LNSPEC_FloorRaiseByValue, -1, 8, 24, 0, 0, SPAC_Cross, true);
+  SetLineTrans(93, LNSPEC_FloorRaiseByValueChange, -1, 8, 24, 0, 0, SPAC_Cross, true);
+  SetLineTrans(94, LNSPEC_FloorRaiseAndCrush, -1, 8, 10, 0, 0, SPAC_Cross, true);
+  SetLineTrans(95, LNSPEC_FloorRaiseToNearestChange, -1, 4, 0, 0, 0, SPAC_Cross, true, false, true);
+  SetLineTrans(96, LNSPEC_FloorRaiseByTexture, -1, 8, 0, 0, 0, SPAC_Cross, true);
+  SetLineTrans(97, LNSPEC_Teleport, 0, -1, 0, 0, 0, SPAC_Cross, true, true);
+  SetLineTrans(98, LNSPEC_FloorLowerToHighest, -1, 32, 136, 0, 0, SPAC_Cross, true);
+  SetLineTrans(99, LNSPEC_ScrollTextureRight, 64, 0, 0, 0, 0, SPAC_Cross, false);
 
-	SetLineTrans(100, LNSPEC_DoorRaise, -1, 48, 150, 0, 0, SPAC_Cross, true);
-	SetLineTrans(101, LNSPEC_FloorRaiseToLowestCeiling, -1, 8, 0, 0, 0, SPAC_Use, false);
-	SetLineTrans(102, LNSPEC_FloorLowerToHighest, -1, 8, 128, 0, 0, SPAC_Use, false);
-	SetLineTrans(103, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Use, false);
-	SetLineTrans(104, LNSPEC_LightMinNeighbor, -1, 0, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(105, LNSPEC_ExitSecret, -1, 0, 0, 0, 0, SPAC_Cross, false);
-	SetLineTrans(106, LNSPEC_StairsBuildUpDoom, -1, 8, 16, 0, 0, SPAC_Cross, false);
-	SetLineTrans(107, LNSPEC_StairsBuildUpDoom, -1, 8, 16, 0, 0, SPAC_Use, false);
+  SetLineTrans(100, LNSPEC_DoorRaise, -1, 48, 150, 0, 0, SPAC_Cross, true);
+  SetLineTrans(101, LNSPEC_FloorRaiseToLowestCeiling, -1, 8, 0, 0, 0, SPAC_Use, false);
+  SetLineTrans(102, LNSPEC_FloorLowerToHighest, -1, 8, 128, 0, 0, SPAC_Use, false);
+  SetLineTrans(103, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Use, false);
+  SetLineTrans(104, LNSPEC_LightMinNeighbor, -1, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(105, LNSPEC_ExitSecret, -1, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(106, LNSPEC_StairsBuildUpDoom, -1, 8, 16, 0, 0, SPAC_Cross, false);
+  SetLineTrans(107, LNSPEC_StairsBuildUpDoom, -1, 8, 16, 0, 0, SPAC_Use, false);
 }
 
 //==========================================================================
 //
-//	SetLineTrans
+//  SetLineTrans
 //
 //==========================================================================
 
 void SetLineTrans(int i, int special, int arg1, int arg2, int arg3,
-	int arg4, int arg5, int spac, int repeat, optional int monst,
-	optional int not_destroy)
+  int arg4, int arg5, int spac, int repeat, optional int monst,
+  optional int not_destroy)
 {
-	spec_trans_tab[i].special = special;
-	spec_trans_tab[i].arg1 = arg1;
-	spec_trans_tab[i].arg2 = arg2;
-	spec_trans_tab[i].arg3 = arg3;
-	spec_trans_tab[i].arg4 = arg4;
-	spec_trans_tab[i].arg5 = arg5;
-	spec_trans_tab[i].spac = spac;
-	spec_trans_tab[i].repeat = repeat;
-	spec_trans_tab[i].monst = monst;
-	spec_trans_tab[i].not_destroy = not_destroy;
+  spec_trans_tab[i].special = special;
+  spec_trans_tab[i].arg1 = arg1;
+  spec_trans_tab[i].arg2 = arg2;
+  spec_trans_tab[i].arg3 = arg3;
+  spec_trans_tab[i].arg4 = arg4;
+  spec_trans_tab[i].arg5 = arg5;
+  spec_trans_tab[i].spac = spac;
+  spec_trans_tab[i].repeat = repeat;
+  spec_trans_tab[i].monst = monst;
+  spec_trans_tab[i].not_destroy = not_destroy;
 }
 
 //==========================================================================
@@ -339,146 +339,146 @@ void SetLineTrans(int i, int special, int arg1, int arg2, int arg3,
 
 void TranslateLine(line_t* line)
 {
-	int			OldSpec;
-	int			OldTag;
-	int			OldFlags;
+  int     OldSpec;
+  int     OldTag;
+  int     OldFlags;
 
-	OldSpec = line->special;
-	OldTag = line->arg1;
-	OldFlags = line->flags;
-	if (!line->special)
-	{
-		return;
-	}
+  OldSpec = line->special;
+  OldTag = line->arg1;
+  OldFlags = line->flags;
+  if (!line->special)
+  {
+    return;
+  }
 
-	if (line->special >= NUM_SPECIALS)
-	{
-		line->special = 0;
-		line->arg1 = 0;
-		return;
-	}
+  if (line->special >= NUM_SPECIALS)
+  {
+    line->special = 0;
+    line->arg1 = 0;
+    return;
+  }
 
-	//	Special.
-	line->special = spec_trans_tab[OldSpec].special;
-	//	Arg 1.
-	if (spec_trans_tab[OldSpec].arg1 == -1)
-	{
-		line->arg1 = OldTag;
-	}
-	else
-	{
-		line->arg1 = spec_trans_tab[OldSpec].arg1;
-	}
-	//	Arg 2.
-	if (spec_trans_tab[OldSpec].arg2 == -1)
-	{
-		line->arg2 = OldTag;
-	}
-	else
-	{
-		line->arg2 = spec_trans_tab[OldSpec].arg2;
-	}
-	//	Arg 3.
-	if (spec_trans_tab[OldSpec].arg3 == -1)
-	{
-		line->arg3 = OldTag;
-	}
-	else
-	{
-		line->arg3 = spec_trans_tab[OldSpec].arg3;
-	}
-	//	Arg 4.
-	if (spec_trans_tab[OldSpec].arg4 == -1)
-	{
-		line->arg4 = OldTag;
-	}
-	else
-	{
-		line->arg4 = spec_trans_tab[OldSpec].arg4;
-	}
-	//	Arg 5.
-	if (spec_trans_tab[OldSpec].arg5 == -1)
-	{
-		line->arg5 = OldTag;
-	}
-	else
-	{
-		line->arg5 = spec_trans_tab[OldSpec].arg5;
-	}
-	//	Activation flags.
-	line->SpacFlags = spec_trans_tab[OldSpec].spac;
-	if (spec_trans_tab[OldSpec].repeat)
-	{
-		line->flags |= ML_REPEAT_SPECIAL;
-	}
-	if (spec_trans_tab[OldSpec].monst)
-	{
-		line->flags |= ML_MONSTERSCANACTIVATE;
-	}
-	if ((line->flags & ML_SECRET) && line->SpacFlags & (SPAC_Use |
-		SPAC_UseThrough))
-	{
-		line->flags &= ~ML_MONSTERSCANACTIVATE;
-	}
-	// Check to see if we want thinkers destroyed or not
-	if (spec_trans_tab[OldSpec].not_destroy)
-	{
-		line->flags |= ML_KEEPDATA;
-	}
+  //  Special.
+  line->special = spec_trans_tab[OldSpec].special;
+  //  Arg 1.
+  if (spec_trans_tab[OldSpec].arg1 == -1)
+  {
+    line->arg1 = OldTag;
+  }
+  else
+  {
+    line->arg1 = spec_trans_tab[OldSpec].arg1;
+  }
+  //  Arg 2.
+  if (spec_trans_tab[OldSpec].arg2 == -1)
+  {
+    line->arg2 = OldTag;
+  }
+  else
+  {
+    line->arg2 = spec_trans_tab[OldSpec].arg2;
+  }
+  //  Arg 3.
+  if (spec_trans_tab[OldSpec].arg3 == -1)
+  {
+    line->arg3 = OldTag;
+  }
+  else
+  {
+    line->arg3 = spec_trans_tab[OldSpec].arg3;
+  }
+  //  Arg 4.
+  if (spec_trans_tab[OldSpec].arg4 == -1)
+  {
+    line->arg4 = OldTag;
+  }
+  else
+  {
+    line->arg4 = spec_trans_tab[OldSpec].arg4;
+  }
+  //  Arg 5.
+  if (spec_trans_tab[OldSpec].arg5 == -1)
+  {
+    line->arg5 = OldTag;
+  }
+  else
+  {
+    line->arg5 = spec_trans_tab[OldSpec].arg5;
+  }
+  //  Activation flags.
+  line->SpacFlags = spec_trans_tab[OldSpec].spac;
+  if (spec_trans_tab[OldSpec].repeat)
+  {
+    line->flags |= ML_REPEAT_SPECIAL;
+  }
+  if (spec_trans_tab[OldSpec].monst)
+  {
+    line->flags |= ML_MONSTERSCANACTIVATE;
+  }
+  if ((line->flags & ML_SECRET) && line->SpacFlags & (SPAC_Use |
+    SPAC_UseThrough))
+  {
+    line->flags &= ~ML_MONSTERSCANACTIVATE;
+  }
+  // Check to see if we want thinkers destroyed or not
+  if (spec_trans_tab[OldSpec].not_destroy)
+  {
+    line->flags |= ML_KEEPDATA;
+  }
 }
 
 //==========================================================================
 //
-//	TranslateSector
+//  TranslateSector
 //
 //==========================================================================
 
 void TranslateSector(sector_t* sector)
 {
-	int special;
-	int high;
+  int special;
+  int high;
 
-	special = sector->special;
-	if (!special)
-	{
-		return;
-	}
-	if (special == 9)
-	{
-		sector->special = SECSPEC_SECRET_MASK;
-		return;
-	}
+  special = sector->special;
+  if (!special)
+  {
+    return;
+  }
+  if (special == 9)
+  {
+    sector->special = SECSPEC_SECRET_MASK;
+    return;
+  }
 
-	high = (special & 0xfc0) << 3;
-	special &= 0x3f;
-	if (special == 5)
-	{
-		sector->special = high | SECSPEC_DamageLavaWimpy;
-	}
-	else if (special == 6)
-	{
-		sector->special = high | SECSPEC_DamageSludge;
-	}
-	else if (special == 16)
-	{
-		sector->special = high | SECSPEC_DamageLavaHefty;
-	}
-	else if (special == 4)
-	{
-		sector->special = high | SECSPEC_ScrollEastLavaDamage;
-	}
-	else if (special < 20)
-	{
-		sector->special = high | (special + 64);
-	}
-	else if (special < 40)
-	{
-		sector->special = high | (special + 205);
-	}
-	else
-	{
-		sector->special = high | special;
-	}
+  high = (special & 0xfc0) << 3;
+  special &= 0x3f;
+  if (special == 5)
+  {
+    sector->special = high | SECSPEC_DamageLavaWimpy;
+  }
+  else if (special == 6)
+  {
+    sector->special = high | SECSPEC_DamageSludge;
+  }
+  else if (special == 16)
+  {
+    sector->special = high | SECSPEC_DamageLavaHefty;
+  }
+  else if (special == 4)
+  {
+    sector->special = high | SECSPEC_ScrollEastLavaDamage;
+  }
+  else if (special < 20)
+  {
+    sector->special = high | (special + 64);
+  }
+  else if (special < 40)
+  {
+    sector->special = high | (special + 205);
+  }
+  else
+  {
+    sector->special = high | special;
+  }
 }
 
 //==========================================================================
@@ -489,13 +489,13 @@ void TranslateSector(sector_t* sector)
 
 void TranslateThing(mthing_t* mthing)
 {
-	int flags;
+  int flags;
 
-	// translate the spawn flags to Hexen format.
-	flags = mthing->options;
-	mthing->options = (flags & 0xf) | 0x7e0;
-	if (flags & 0x10)
-		mthing->options &= ~HereticLevelInfo::MTF_GSINGLE;
+  // translate the spawn flags to Hexen format.
+  flags = mthing->options;
+  mthing->options = (flags & 0xf) | 0x7e0;
+  if (flags & 0x10)
+    mthing->options &= ~HereticLevelInfo::MTF_GSINGLE;
 }
 
 //==========================================================================
@@ -506,50 +506,50 @@ void TranslateThing(mthing_t* mthing)
 
 void TranslateLevel(Level InLevel)
 {
-	int i;
+  int i;
 
-	for (i = 0; i < InLevel.NumLines; i++)
-	{
-		TranslateLine(&InLevel.Lines[i]);
-	}
+  for (i = 0; i < InLevel.NumLines; i++)
+  {
+    TranslateLine(&InLevel.Lines[i]);
+  }
 
-	for (i = 0; i < InLevel.NumSectors; i++)
-	{
-		TranslateSector(&InLevel.Sectors[i]);
-	}
+  for (i = 0; i < InLevel.NumSectors; i++)
+  {
+    TranslateSector(&InLevel.Sectors[i]);
+  }
 
-	for (i = 0; i < InLevel.NumThings; i++)
-	{
-		TranslateThing(&InLevel.Things[i]);
-	}
+  for (i = 0; i < InLevel.NumThings; i++)
+  {
+    TranslateThing(&InLevel.Things[i]);
+  }
 }
 
 defaultproperties
 {
-	LevelInfoClass = HereticLevelInfo;
-	GameFilterFlag = EntityEx::GAME_Heretic;
-	bDefaultLaxMonsterActivation = true;
-	bDefaultBloodSplatter = true;
-	bUseHexenPolyobjTypes = true;
-	bNightmareFastChase = true;
-	bRavenStylePickupRespawn = true;
-	TeleFogHeight = TELEFOGHEIGHT;
-	TeleportFogState = 'Raven';
-	DefaultKickBack = 150.0;
-	InvDefaultMaxAmount = 16;
-	IceMoveFactor = 0.25;
-	bRipperBloodNoGravity = true;
+  LevelInfoClass = HereticLevelInfo;
+  GameFilterFlag = EntityEx::GAME_Heretic;
+  bDefaultLaxMonsterActivation = true;
+  bDefaultBloodSplatter = true;
+  bUseHexenPolyobjTypes = true;
+  bNightmareFastChase = true;
+  bRavenStylePickupRespawn = true;
+  TeleFogHeight = TELEFOGHEIGHT;
+  TeleportFogState = 'Raven';
+  DefaultKickBack = 150.0;
+  InvDefaultMaxAmount = 16;
+  IceMoveFactor = 0.25;
+  bRipperBloodNoGravity = true;
 
-	botskill = 2;
+  botskill = 2;
 
-	PlayerClasses.Num = 1;
-	PlayerClasses[0] = HereticPlayer;
-	WeaponSlots[1].Weapons[0] = Staff;
-	WeaponSlots[1].Weapons[1] = Gauntlets;
-	WeaponSlots[2].Weapons[0] = GoldWand;
-	WeaponSlots[3].Weapons[0] = Crossbow;
-	WeaponSlots[4].Weapons[0] = Blaster;
-	WeaponSlots[5].Weapons[0] = SkullRod;
-	WeaponSlots[6].Weapons[0] = PhoenixRod;
-	WeaponSlots[7].Weapons[0] = Mace;
+  PlayerClasses.Num = 1;
+  PlayerClasses[0] = HereticPlayer;
+  WeaponSlots[1].Weapons[0] = Staff;
+  WeaponSlots[1].Weapons[1] = Gauntlets;
+  WeaponSlots[2].Weapons[0] = GoldWand;
+  WeaponSlots[3].Weapons[0] = Crossbow;
+  WeaponSlots[4].Weapons[0] = Blaster;
+  WeaponSlots[5].Weapons[0] = SkullRod;
+  WeaponSlots[6].Weapons[0] = PhoenixRod;
+  WeaponSlots[7].Weapons[0] = Mace;
 }

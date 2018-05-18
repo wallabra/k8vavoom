@@ -1,128 +1,128 @@
 //------------------------------------------------------------------------------
 actor Beak : HereticWeapon
 {
-	Weapon.SelectionOrder 10000
-	Weapon.YAdjust 15
-	Weapon.SisterWeapon "BeakPowered"
-	Weapon.BotCombatDist 1
-	+Weapon.MeleeWeapon
-	+Weapon.DontBob
+  Weapon.SelectionOrder 10000
+  Weapon.YAdjust 15
+  Weapon.SisterWeapon "BeakPowered"
+  Weapon.BotCombatDist 1
+  +Weapon.MeleeWeapon
+  +Weapon.DontBob
 
-	action native A_BeakRaise();
-	action native A_BeakAttackPL1();
+  action native A_BeakRaise();
+  action native A_BeakAttackPL1();
 
-	states
-	{
-	Ready:
-		BEAK A 1 A_WeaponReady
-		Loop
-	Deselect:
-		BEAK A 1 A_Lower
-		Loop
-	Select:
-		BEAK A 1 A_BeakRaise
-		Loop
-	Fire:
-		BEAK A 18 A_BeakAttackPL1
-		Goto Ready
-	}
+  states
+  {
+  Ready:
+    BEAK A 1 A_WeaponReady
+    Loop
+  Deselect:
+    BEAK A 1 A_Lower
+    Loop
+  Select:
+    BEAK A 1 A_BeakRaise
+    Loop
+  Fire:
+    BEAK A 18 A_BeakAttackPL1
+    Goto Ready
+  }
 }
 
 //------------------------------------------------------------------------------
 actor BeakPowered : Beak
 {
-	Weapon.SisterWeapon "Beak"
-	+Weapon.Powered_Up
+  Weapon.SisterWeapon "Beak"
+  +Weapon.Powered_Up
 
-	action native A_BeakAttackPL2();
+  action native A_BeakAttackPL2();
 
-	states
-	{
-	Fire:
-		BEAK A 12 A_BeakAttackPL2
-		Goto Super::Ready
-	}
+  states
+  {
+  Fire:
+    BEAK A 12 A_BeakAttackPL2
+    Goto Super::Ready
+  }
 }
 
 //------------------------------------------------------------------------------
 actor BeakPuff : StaffPuff
 {
-	Mass 5
-	Alpha 0.4
-	VSpeed 1
-	AttackSound "chicken/attack"
+  Mass 5
+  Alpha 0.4
+  VSpeed 1
+  AttackSound "chicken/attack"
 }
 
 //------------------------------------------------------------------------------
 actor Chicken : MorphedMonster
 {
-	Game Heretic
-	SpawnID 122
-	Health 10
-	Radius 9
-	Height 22
-	Mass 40
-	Speed 4
-	PainChance 200
-	Monster
-	+FloorClip
-	+WindThrust
-	+DontMorph
-	SeeSound "chicken/sight"
-	ActiveSound "chicken/active"
-	AttackSound "chicken/attack"
-	PainSound "chicken/pain"
-	DeathSound "chicken/death"
-	Obituary "$ob_chicken"
-	states
-	{
-	Spawn:
-		CHKN AB 10 A_Look
-		Loop
-	See:
-		CHKN ABAB 3 A_Chase
-		Loop
-	Melee:
-		CHKN mo 8 A_FaceTarget
-		CHKN C 5 A_CustomMeleeAttack(random(1, 2))
-		CHKN C 5
-		Goto See
-	Pain:
-		CHKN D 5 A_Feathers
-		CHKN C 5 A_Pain
-		Goto See
-	Death:
-		CHKN E 6 A_Scream
-		CHKN F 6 A_Feathers
-		CHKN G 6
-		CHKN H 6 A_NoBlocking
-		CHKN IJK 6
-		CHKN L -1
-		Stop
-	}
+  Game Heretic
+  SpawnID 122
+  Health 10
+  Radius 9
+  Height 22
+  Mass 40
+  Speed 4
+  PainChance 200
+  Monster
+  +FloorClip
+  +WindThrust
+  +DontMorph
+  SeeSound "chicken/sight"
+  ActiveSound "chicken/active"
+  AttackSound "chicken/attack"
+  PainSound "chicken/pain"
+  DeathSound "chicken/death"
+  Obituary "$ob_chicken"
+  states
+  {
+  Spawn:
+    CHKN AB 10 A_Look
+    Loop
+  See:
+    CHKN ABAB 3 A_Chase
+    Loop
+  Melee:
+    CHKN mo 8 A_FaceTarget
+    CHKN C 5 A_CustomMeleeAttack(random(1, 2))
+    CHKN C 5
+    Goto See
+  Pain:
+    CHKN D 5 A_Feathers
+    CHKN C 5 A_Pain
+    Goto See
+  Death:
+    CHKN E 6 A_Scream
+    CHKN F 6 A_Feathers
+    CHKN G 6
+    CHKN H 6 A_NoBlocking
+    CHKN IJK 6
+    CHKN L -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor Feather
 {
-	Game Heretic
-	SpawnID 121
-	Radius 2
-	Height 4
-	Gravity 0.125
-	+Missile
-	+DropOff
-	+NoTeleport
-	+WindThrust
-	+CannotPush
-	+DontSplash
-	states
-	{
-	Spawn:
-		CHKN MNOPQPON 3
-		Loop
-	Death:
-		CHKN N 6
-		Stop
-	}
+  Game Heretic
+  SpawnID 121
+  Radius 2
+  Height 4
+  Gravity 0.125
+  +Missile
+  +DropOff
+  +NoTeleport
+  +WindThrust
+  +CannotPush
+  +DontSplash
+  states
+  {
+  Spawn:
+    CHKN MNOPQPON 3
+    Loop
+  Death:
+    CHKN N 6
+    Stop
+  }
 }

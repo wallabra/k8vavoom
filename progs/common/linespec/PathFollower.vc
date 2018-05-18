@@ -23,7 +23,7 @@
 //**
 //**************************************************************************
 //**
-//**	Based on code from ZDoom with following notice:
+//**  Based on code from ZDoom with following notice:
 //**
 //** Copyright 1998-2006 Randy Heit
 //** All rights reserved.
@@ -53,20 +53,20 @@
 //**
 //**************************************************************************
 //**
-//**	PathFollower: something that follows a camera path
-//**	Base class for some moving cameras
+//**  PathFollower: something that follows a camera path
+//**  Base class for some moving cameras
 //**
-//**	args[0] = low byte of first node in path's tid
-//**	args[1] = high byte of first node's tid
-//**	args[2] = bit 0 = follow a linear path (rather than curved)
-//**			  bit 1 = adjust angle
-//**			  bit 2 = adjust pitch
-//**			  bit 3 = aim in direction of motion
+//**  args[0] = low byte of first node in path's tid
+//**  args[1] = high byte of first node's tid
+//**  args[2] = bit 0 = follow a linear path (rather than curved)
+//**        bit 1 = adjust angle
+//**        bit 2 = adjust pitch
+//**        bit 3 = aim in direction of motion
 //**
 //**************************************************************************
 
 class PathFollower : Actor
-	__mobjinfo__(9071);
+  __mobjinfo__(9071);
 
 bool bActive;
 bool bJustStepped;
@@ -74,357 +74,357 @@ InterpolationPoint StartPrevNode;
 InterpolationPoint StartCurrNode;
 InterpolationPoint PrevNode;
 InterpolationPoint CurrNode;
-float Time;		// Runs from 0.0 to 1.0 between CurrNode and CurrNode->NextPoint
+float Time;   // Runs from 0.0 to 1.0 between CurrNode and CurrNode->NextPoint
 float HoldTime;
 
 //==========================================================================
 //
-//	SLerp
+//  SLerp
 //
-//	Interpolate between p2 and p3 along a Catmull-Rom spline.
-//	http://research.microsoft.com/~hollasch/cgindex/curves/catmull-rom.html
+//  Interpolate between p2 and p3 along a Catmull-Rom spline.
+//  http://research.microsoft.com/~hollasch/cgindex/curves/catmull-rom.html
 //
 //==========================================================================
 
 float SLerp(float p1, float p2, float p3, float p4)
 {
-	float t = Time;
-	float res = 2.0 * p2;
-	res += (p3 - p1) * Time;
-	t *= Time;
-	res += (2.0 * p1 - 5.0 * p2 + 4.0 * p3 - p4) * t;
-	t *= Time;
-	res += (3.0 * p2 - 3.0 * p3 + p4 - p1) * t;
-	return 0.5 * res;
+  float t = Time;
+  float res = 2.0 * p2;
+  res += (p3 - p1) * Time;
+  t *= Time;
+  res += (2.0 * p1 - 5.0 * p2 + 4.0 * p3 - p4) * t;
+  t *= Time;
+  res += (3.0 * p2 - 3.0 * p3 + p4 - p1) * t;
+  return 0.5 * res;
 }
 
 //==========================================================================
 //
-//	Lerp
+//  Lerp
 //
-//	Linearly interpolate between p1 and p2.
+//  Linearly interpolate between p1 and p2.
 //
 //==========================================================================
 
 float Lerp(float p1, float p2)
 {
-	return p2 * Time + p1 * (1.0 - Time);
+  return p2 * Time + p1 * (1.0 - Time);
 }
 
 //==========================================================================
 //
-//	BeginPlay
+//  BeginPlay
 //
 //==========================================================================
 
 void BeginPlay()
 {
-	InterpolationPoint A;
-	InterpolationPoint node;
-	InterpolationPoint prevnode;
+  InterpolationPoint A;
+  InterpolationPoint node;
+  InterpolationPoint prevnode;
 
-	::BeginPlay();
+  ::BeginPlay();
 
-	// Find first node of path
-	foreach AllThinkers(InterpolationPoint, A)
-	{
-		if (A.TID == Args[0] + 256 * Args[1])
-		{
-			node = A;
-			break;
-		}
-	}
+  // Find first node of path
+  foreach AllThinkers(InterpolationPoint, A)
+  {
+    if (A.TID == Args[0] + 256 * Args[1])
+    {
+      node = A;
+      break;
+    }
+  }
 
-	StartCurrNode = node;
+  StartCurrNode = node;
 
-	if (node == none)
-	{
-		print("PathFollower %d: Can't find interpolation pt %d",
-			TID, Args[0] + 256 * Args[1]);
-		return;
-	}
+  if (node == none)
+  {
+    print("PathFollower %d: Can't find interpolation pt %d",
+      TID, Args[0] + 256 * Args[1]);
+    return;
+  }
 
-	// Verify the path has enough nodes
-	node.FormChain();
-	if (Args[2] & 1)
-	{
-		// linear path; need 2 nodes
-		if (node.NextPoint == none)
-		{
-			print("PathFollower %d: Path needs at least 2 nodes", TID);
-			return;
-		}
-		StartPrevNode = none;
-	}
-	else
-	{
-		// spline path; need 4 nodes
-		if (node.NextPoint == none ||
-			node.NextPoint.NextPoint == none ||
-			node.NextPoint.NextPoint.NextPoint == none)
-		{
-			print("PathFollower %d: Path needs at least 4 nodes", TID);
-			return;
-		}
-		// If the first node is in a loop, we can start there.
-		// Otherwise, we need to start at the second node in the path.
-		prevnode = node.ScanForLoop();
-		if (prevnode == none || prevnode.NextPoint != node)
-		{
-			StartPrevNode = node;
-			StartCurrNode = node.NextPoint;
-		}
-		else
-		{
-			StartPrevNode = prevnode;
-		}
-	}
+  // Verify the path has enough nodes
+  node.FormChain();
+  if (Args[2] & 1)
+  {
+    // linear path; need 2 nodes
+    if (node.NextPoint == none)
+    {
+      print("PathFollower %d: Path needs at least 2 nodes", TID);
+      return;
+    }
+    StartPrevNode = none;
+  }
+  else
+  {
+    // spline path; need 4 nodes
+    if (node.NextPoint == none ||
+      node.NextPoint.NextPoint == none ||
+      node.NextPoint.NextPoint.NextPoint == none)
+    {
+      print("PathFollower %d: Path needs at least 4 nodes", TID);
+      return;
+    }
+    // If the first node is in a loop, we can start there.
+    // Otherwise, we need to start at the second node in the path.
+    prevnode = node.ScanForLoop();
+    if (prevnode == none || prevnode.NextPoint != node)
+    {
+      StartPrevNode = node;
+      StartCurrNode = node.NextPoint;
+    }
+    else
+    {
+      StartPrevNode = prevnode;
+    }
+  }
 }
 
 //==========================================================================
 //
-//	Deactivate
+//  Deactivate
 //
 //==========================================================================
 
 bool Deactivate(EntityEx Activator)
 {
-	bActive = false;
-	return true;
+  bActive = false;
+  return true;
 }
 
 //==========================================================================
 //
-//	Activate
+//  Activate
 //
 //==========================================================================
 
 bool Activate(EntityEx Activator)
 {
-	if (!bActive)
-	{
-		CurrNode = StartCurrNode;
-		PrevNode = StartPrevNode;
+  if (!bActive)
+  {
+    CurrNode = StartCurrNode;
+    PrevNode = StartPrevNode;
 
-		if (CurrNode != none)
-		{
-			NewNode();
-			SetOrigin(CurrNode.Origin);
-			Time = 0.0;
-			HoldTime = 0.0;
-			bJustStepped = true;
-			bActive = true;
-		}
-		return true;
-	}
-	return false;
+    if (CurrNode != none)
+    {
+      NewNode();
+      SetOrigin(CurrNode.Origin);
+      Time = 0.0;
+      HoldTime = 0.0;
+      bJustStepped = true;
+      bActive = true;
+    }
+    return true;
+  }
+  return false;
 }
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	::Tick(DeltaTime);
-	if (!bActive)
-		return;
+  ::Tick(DeltaTime);
+  if (!bActive)
+    return;
 
-	if (bJustStepped)
-	{
-		bJustStepped = false;
-		if (CurrNode.Args[2])
-		{
-			HoldTime = XLevel.Time + itof(CurrNode.Args[2]) * 4.0 / 35.0;
-			Origin = CurrNode.Origin;
-		}
-	}
+  if (bJustStepped)
+  {
+    bJustStepped = false;
+    if (CurrNode.Args[2])
+    {
+      HoldTime = XLevel.Time + itof(CurrNode.Args[2]) * 4.0 / 35.0;
+      Origin = CurrNode.Origin;
+    }
+  }
 
-	if (HoldTime > XLevel.Time)
-		return;
+  if (HoldTime > XLevel.Time)
+    return;
 
-	if (CurrNode.NextPoint == none)
-	{
-		bActive = false;
-		return;
-	}
+  if (CurrNode.NextPoint == none)
+  {
+    bActive = false;
+    return;
+  }
 
-	if (Interpolate())
-	{
-		Time += 8.0 / itof(CurrNode.Args[1]) * DeltaTime;
-		if (Time > 1.0)
-		{
-			Time -= 1.0;
-			bJustStepped = true;
-			PrevNode = CurrNode;
-			CurrNode = CurrNode.NextPoint;
-			if (CurrNode != none)
-				NewNode();
-			if (CurrNode == none || CurrNode.NextPoint == none)
-				Deactivate(none);
-			if ((Args[2] & 1) == 0 && CurrNode.NextPoint.NextPoint == none)
-				Deactivate(none);
-		}
-	}
+  if (Interpolate())
+  {
+    Time += 8.0 / itof(CurrNode.Args[1]) * DeltaTime;
+    if (Time > 1.0)
+    {
+      Time -= 1.0;
+      bJustStepped = true;
+      PrevNode = CurrNode;
+      CurrNode = CurrNode.NextPoint;
+      if (CurrNode != none)
+        NewNode();
+      if (CurrNode == none || CurrNode.NextPoint == none)
+        Deactivate(none);
+      if ((Args[2] & 1) == 0 && CurrNode.NextPoint.NextPoint == none)
+        Deactivate(none);
+    }
+  }
 }
 
 //==========================================================================
 //
-//	NewNode
+//  NewNode
 //
 //==========================================================================
 
 void NewNode()
 {
-	InterpolationSpecial S;
+  InterpolationSpecial S;
 
-	foreach AllThinkers(InterpolationSpecial, S)
-	{
-		if (S.TID == CurrNode.TID)
-		{
-			Level.ExecuteActionSpecial(S.Special, S.Args[0], S.Args[1],
-				S.Args[2], S.Args[3], S.Args[4], NULL, 0, none);
-		}
-	}
+  foreach AllThinkers(InterpolationSpecial, S)
+  {
+    if (S.TID == CurrNode.TID)
+    {
+      Level.ExecuteActionSpecial(S.Special, S.Args[0], S.Args[1],
+        S.Args[2], S.Args[3], S.Args[4], NULL, 0, none);
+    }
+  }
 }
 
 //==========================================================================
 //
-//	Interpolate
+//  Interpolate
 //
 //==========================================================================
 
 bool Interpolate()
 {
-	TVec TempOrg;
-	TAVec TempAng;
+  TVec TempOrg;
+  TAVec TempAng;
 
-	if ((Args[2] & 8) && Time > 0.0)
-	{
-		TempOrg = Origin;
-	}
+  if ((Args[2] & 8) && Time > 0.0)
+  {
+    TempOrg = Origin;
+  }
 
-	UnlinkFromWorld();
-	if (Args[2] & 1)
-	{
-		// linear
-		Origin.x = Lerp(CurrNode.Origin.x, CurrNode.NextPoint.Origin.x);
-		Origin.y = Lerp(CurrNode.Origin.y, CurrNode.NextPoint.Origin.y);
-		Origin.z = Lerp(CurrNode.Origin.z, CurrNode.NextPoint.Origin.z);
-	}
-	else
-	{
-		// spline
-		Origin.x = SLerp(PrevNode.Origin.x, CurrNode.Origin.x,
-			CurrNode.NextPoint.Origin.x, CurrNode.NextPoint.NextPoint.Origin.x);
-		Origin.y = SLerp(PrevNode.Origin.y, CurrNode.Origin.y,
-			CurrNode.NextPoint.Origin.y, CurrNode.NextPoint.NextPoint.Origin.y);
-		Origin.z = SLerp(PrevNode.Origin.z, CurrNode.Origin.z,
-			CurrNode.NextPoint.Origin.z, CurrNode.NextPoint.NextPoint.Origin.z);
-	}
-	LinkToWorld();
+  UnlinkFromWorld();
+  if (Args[2] & 1)
+  {
+    // linear
+    Origin.x = Lerp(CurrNode.Origin.x, CurrNode.NextPoint.Origin.x);
+    Origin.y = Lerp(CurrNode.Origin.y, CurrNode.NextPoint.Origin.y);
+    Origin.z = Lerp(CurrNode.Origin.z, CurrNode.NextPoint.Origin.z);
+  }
+  else
+  {
+    // spline
+    Origin.x = SLerp(PrevNode.Origin.x, CurrNode.Origin.x,
+      CurrNode.NextPoint.Origin.x, CurrNode.NextPoint.NextPoint.Origin.x);
+    Origin.y = SLerp(PrevNode.Origin.y, CurrNode.Origin.y,
+      CurrNode.NextPoint.Origin.y, CurrNode.NextPoint.NextPoint.Origin.y);
+    Origin.z = SLerp(PrevNode.Origin.z, CurrNode.Origin.z,
+      CurrNode.NextPoint.Origin.z, CurrNode.NextPoint.NextPoint.Origin.z);
+  }
+  LinkToWorld();
 
-	if (Args[2] & 6)
-	{
-		if (Args[2] & 8)
-		{
-			if (Args[2] & 1)
-			{
-				// linear
-				TempOrg = CurrNode.NextPoint.Origin - CurrNode.Origin;
-			}
-			else if (Time > 0.0)
-			{
-				// spline
-				TempOrg = Origin - TempOrg;
-			}
-			else
-			{
-				int realarg = Args[2];
-				Args[2] &= ~(2 | 4 | 8);
-				Time += 0.1;
-				TempOrg = Origin;
-				Interpolate();
-				Time -= 0.1;
-				Args[2] = realarg;
-				TempOrg = Origin - TempOrg;
-				Origin -= TempOrg;
-			}
-			VectorAngles(&TempOrg, &TempAng);
-			if (Args[2] & 2)
-			{
-				// adjust yaw
-				Angles.yaw = TempAng.yaw;
-			}
-			if (Args[2] & 4)
-			{
-				// adjust pitch
-				Angles.pitch = TempAng.pitch;
-			}
-		}
-		else
-		{
-			if (Args[2] & 2)
-			{
-				// interpolate angle
-				float angle1 = CurrNode.Angles.yaw;
-				float angle2 = CurrNode.NextPoint.Angles.yaw;
-				if (angle2 - angle1 <= -180.0)
-				{
-					float lerped = Lerp(angle1, angle2 + 360.0);
-					if (lerped >= 360.0)
-					{
-						Angles.yaw = lerped - 360.0;
-					}
-					else
-					{
-						Angles.yaw = lerped;
-					}
-				}
-				else if (angle2 - angle1 >= 180.0)
-				{
-					float lerped = Lerp(angle1, angle2 - 360.0);
-					if (lerped < 0.0)
-					{
-						Angles.yaw = lerped + 360.0;
-					}
-					else
-					{
-						Angles.yaw = lerped;
-					}
-				}
-				else
-				{
-					Angles.yaw = Lerp(angle1, angle2);
-				}
-			}
-			if (Args[2] & 4)
-			{
-				// interpolate pitch
-				if (Args[2] & 1)
-				{
-					// linear
-					Angles.pitch = Lerp(CurrNode.Angles.pitch, CurrNode.NextPoint.Angles.pitch);
-				}
-				else
-				{
-					// spline
-					Angles.pitch = SLerp(PrevNode.Angles.pitch, CurrNode.Angles.pitch,
-						CurrNode.NextPoint.Angles.pitch, CurrNode.NextPoint.NextPoint.Angles.pitch);
-				}
-			}
-		}
-	}
+  if (Args[2] & 6)
+  {
+    if (Args[2] & 8)
+    {
+      if (Args[2] & 1)
+      {
+        // linear
+        TempOrg = CurrNode.NextPoint.Origin - CurrNode.Origin;
+      }
+      else if (Time > 0.0)
+      {
+        // spline
+        TempOrg = Origin - TempOrg;
+      }
+      else
+      {
+        int realarg = Args[2];
+        Args[2] &= ~(2 | 4 | 8);
+        Time += 0.1;
+        TempOrg = Origin;
+        Interpolate();
+        Time -= 0.1;
+        Args[2] = realarg;
+        TempOrg = Origin - TempOrg;
+        Origin -= TempOrg;
+      }
+      VectorAngles(&TempOrg, &TempAng);
+      if (Args[2] & 2)
+      {
+        // adjust yaw
+        Angles.yaw = TempAng.yaw;
+      }
+      if (Args[2] & 4)
+      {
+        // adjust pitch
+        Angles.pitch = TempAng.pitch;
+      }
+    }
+    else
+    {
+      if (Args[2] & 2)
+      {
+        // interpolate angle
+        float angle1 = CurrNode.Angles.yaw;
+        float angle2 = CurrNode.NextPoint.Angles.yaw;
+        if (angle2 - angle1 <= -180.0)
+        {
+          float lerped = Lerp(angle1, angle2 + 360.0);
+          if (lerped >= 360.0)
+          {
+            Angles.yaw = lerped - 360.0;
+          }
+          else
+          {
+            Angles.yaw = lerped;
+          }
+        }
+        else if (angle2 - angle1 >= 180.0)
+        {
+          float lerped = Lerp(angle1, angle2 - 360.0);
+          if (lerped < 0.0)
+          {
+            Angles.yaw = lerped + 360.0;
+          }
+          else
+          {
+            Angles.yaw = lerped;
+          }
+        }
+        else
+        {
+          Angles.yaw = Lerp(angle1, angle2);
+        }
+      }
+      if (Args[2] & 4)
+      {
+        // interpolate pitch
+        if (Args[2] & 1)
+        {
+          // linear
+          Angles.pitch = Lerp(CurrNode.Angles.pitch, CurrNode.NextPoint.Angles.pitch);
+        }
+        else
+        {
+          // spline
+          Angles.pitch = SLerp(PrevNode.Angles.pitch, CurrNode.Angles.pitch,
+            CurrNode.NextPoint.Angles.pitch, CurrNode.NextPoint.NextPoint.Angles.pitch);
+        }
+      }
+    }
+  }
 
-	return true;
+  return true;
 }
 
 defaultproperties
 {
-	bNoBlockmap = true;
-	bNoSector = true;
-	bNoGravity = true;
-	bNoSplash = true;
+  bNoBlockmap = true;
+  bNoSector = true;
+  bNoGravity = true;
+  bNoSplash = true;
 }

@@ -27,11 +27,11 @@ class HexenDefs : Object;
 
 enum
 {
-	PCLASS_FIGHTER,
-	PCLASS_CLERIC,
-	PCLASS_MAGE,
-	PCLASS_PIG,
-	NUMCLASSES
+  PCLASS_FIGHTER,
+  PCLASS_CLERIC,
+  PCLASS_MAGE,
+  PCLASS_PIG,
+  NUMCLASSES
 };
 
 defaultproperties

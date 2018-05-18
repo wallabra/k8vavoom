@@ -1,346 +1,346 @@
 //------------------------------------------------------------------------------
 class Actor extends Thinker
-	native
+  native
 {
-	//
-	//	Monster AI
-	//
-	action native A_Look();
-	action native A_Look2();
-	action native A_LookEx(eval int flags, eval float minseedist, eval float maxseedist, eval float maxheardist,
-			eval float fov, eval name wakestate);
-	action native A_TurretLook();
-	action native A_Wander();
-	action native A_Chase(optional state melee, optional state missile, optional eval int flags);
-	action native A_FastChase();
-	action native A_VileChase();
-	action native A_ExtChase(eval bool usemelee, eval bool usemissile,
-		optional evalnot bool playactive, optional eval bool nightmarefast);
-	action native A_FaceTarget();
-	action native A_Die(optional DamageType);
-	action native A_CentaurDefend();
-	action native A_AlertMonsters();
-	action native A_ClearTarget();
-	action native A_ClearSoundTarget();
-	action native A_KillMaster();
-	action native A_KillChildren();
-	action native A_SentinelBob();
-	action native A_Burst(class<Actor> chunktype);
+  //
+  //  Monster AI
+  //
+  action native A_Look();
+  action native A_Look2();
+  action native A_LookEx(eval int flags, eval float minseedist, eval float maxseedist, eval float maxheardist,
+      eval float fov, eval name wakestate);
+  action native A_TurretLook();
+  action native A_Wander();
+  action native A_Chase(optional state melee, optional state missile, optional eval int flags);
+  action native A_FastChase();
+  action native A_VileChase();
+  action native A_ExtChase(eval bool usemelee, eval bool usemissile,
+    optional evalnot bool playactive, optional eval bool nightmarefast);
+  action native A_FaceTarget();
+  action native A_Die(optional DamageType);
+  action native A_CentaurDefend();
+  action native A_AlertMonsters();
+  action native A_ClearTarget();
+  action native A_ClearSoundTarget();
+  action native A_KillMaster();
+  action native A_KillChildren();
+  action native A_SentinelBob();
+  action native A_Burst(class<Actor> chunktype);
 
-	//
-	//	Generic monster attacks
-	//
-	action native A_CustomMissile(class<Actor> missiletype, optional eval float spawnheight,
-		optional eval int spawnoffs_xy, optional eval float angle, optional eval int aimmode,
-		optional eval float pitch);
-	action native A_CustomBulletAttack(eval float spread_horiz, eval float spread_vert,
-		eval int numbullets, eval int damage, optional class<Actor> pufftype,
-		optional eval float range, optional eval int flags);
-	action native A_CustomRailgun(eval int damage, optional eval float offset_xy,
-		optional eval color color1, optional eval color color2, optional eval int flags,
-		optional eval bool aim, optional eval float maxdiff, optional class<Actor> pufftype);
-	action native A_CustomMeleeAttack(eval int damage, optional string meleesound,
-		optional string misssound, optional string damagetype, optional eval bool bleed);
-	action native A_CustomComboAttack(class<Actor> missiletype, eval float spawnheight,
-		eval int damage, optional string meleesound, optional string damagetype,
-		optional eval bool bleed);
-	action native A_MeleeAttack();
-	action native A_MissileAttack();
-	action native A_ComboAttack();
-	action native A_BasicAttack(eval int meleedamage, string meleesound,
-		class<Actor> missiletype, eval float missileheight);
-	action native A_BulletAttack();
-	action native A_MonsterRail();
-	action native A_Explode(optional eval int damage, optional eval int distance,
-		optional evalnot bool hurtsource, optional eval bool alert,
-		optional eval int dmgdistance, optional eval int nails, optional eval int naildamage);
-	action native A_RadiusThrust(optional eval int force, optional eval int distance,
-		optional evanot bool affectsource);
-	action native A_Detonate();
-	action native A_ThrowGrenade(class<Actor> itemtype, optional eval float spawnheight,
-		optional eval float xyvel, optional eval float zvel, optional evalnot bool useammo);
-	action native A_MonsterRefire(int prob, state jump);
+  //
+  //  Generic monster attacks
+  //
+  action native A_CustomMissile(class<Actor> missiletype, optional eval float spawnheight,
+    optional eval int spawnoffs_xy, optional eval float angle, optional eval int aimmode,
+    optional eval float pitch);
+  action native A_CustomBulletAttack(eval float spread_horiz, eval float spread_vert,
+    eval int numbullets, eval int damage, optional class<Actor> pufftype,
+    optional eval float range, optional eval int flags);
+  action native A_CustomRailgun(eval int damage, optional eval float offset_xy,
+    optional eval color color1, optional eval color color2, optional eval int flags,
+    optional eval bool aim, optional eval float maxdiff, optional class<Actor> pufftype);
+  action native A_CustomMeleeAttack(eval int damage, optional string meleesound,
+    optional string misssound, optional string damagetype, optional eval bool bleed);
+  action native A_CustomComboAttack(class<Actor> missiletype, eval float spawnheight,
+    eval int damage, optional string meleesound, optional string damagetype,
+    optional eval bool bleed);
+  action native A_MeleeAttack();
+  action native A_MissileAttack();
+  action native A_ComboAttack();
+  action native A_BasicAttack(eval int meleedamage, string meleesound,
+    class<Actor> missiletype, eval float missileheight);
+  action native A_BulletAttack();
+  action native A_MonsterRail();
+  action native A_Explode(optional eval int damage, optional eval int distance,
+    optional evalnot bool hurtsource, optional eval bool alert,
+    optional eval int dmgdistance, optional eval int nails, optional eval int naildamage);
+  action native A_RadiusThrust(optional eval int force, optional eval int distance,
+    optional evanot bool affectsource);
+  action native A_Detonate();
+  action native A_ThrowGrenade(class<Actor> itemtype, optional eval float spawnheight,
+    optional eval float xyvel, optional eval float zvel, optional evalnot bool useammo);
+  action native A_MonsterRefire(int prob, state jump);
 
-	//
-	//	Freeze death functions
-	//
-	action native A_FreezeDeath();
-	action native A_GenericFreezeDeath();
-	action native A_FreezeDeathChunks();
-	action native A_IceGuyDie();
+  //
+  //  Freeze death functions
+  //
+  action native A_FreezeDeath();
+  action native A_GenericFreezeDeath();
+  action native A_FreezeDeathChunks();
+  action native A_IceGuyDie();
 
-	//
-	//	Sound functions
-	//
-	action native A_PlaySound(string soundname);
-	action native A_PlaySoundEx(string soundname, string chanel, optional bool loop, optional int attenuation);
-	action native A_PlayWeaponSound(string soundname);
-	action native A_ActiveSound();
-	action native A_LoopActiveSound();
-	action native A_FLoopActiveSound();
-	action native A_StopSound();
-	action native A_StopSoundEx(string channel);
-	action native A_Pain();
-	action native A_Scream();
-	action native A_XScream();
-	action native A_VileStart();
-	action native A_BrainPain();
-	action native A_BrainAwake();
-	action native A_PlayerScream();
+  //
+  //  Sound functions
+  //
+  action native A_PlaySound(string soundname);
+  action native A_PlaySoundEx(string soundname, string chanel, optional bool loop, optional int attenuation);
+  action native A_PlayWeaponSound(string soundname);
+  action native A_ActiveSound();
+  action native A_LoopActiveSound();
+  action native A_FLoopActiveSound();
+  action native A_StopSound();
+  action native A_StopSoundEx(string channel);
+  action native A_Pain();
+  action native A_Scream();
+  action native A_XScream();
+  action native A_VileStart();
+  action native A_BrainPain();
+  action native A_BrainAwake();
+  action native A_PlayerScream();
 
-	//
-	//	Special actions
-	//
-	action native A_BossDeath();
-	action native A_KeenDie();
-	action native A_BrainDie();
-	action native A_GetHurt();
-	action native A_KlaxonBlare();
-	action native A_CheckTerrain();
-	action native A_Print(string text, optional eval float time, optional string fontname);
-	action native A_SetBlend(color color1, eval float alpha, eval int tics, optional color color2);
-	action native A_CheckSight(state label);
-	action native A_CheckFloor(state label);
-	action native A_CheckPlayerDone();
-	action native A_SkullPop(optional class<Actor> spawntype);
+  //
+  //  Special actions
+  //
+  action native A_BossDeath();
+  action native A_KeenDie();
+  action native A_BrainDie();
+  action native A_GetHurt();
+  action native A_KlaxonBlare();
+  action native A_CheckTerrain();
+  action native A_Print(string text, optional eval float time, optional string fontname);
+  action native A_SetBlend(color color1, eval float alpha, eval int tics, optional color color2);
+  action native A_CheckSight(state label);
+  action native A_CheckFloor(state label);
+  action native A_CheckPlayerDone();
+  action native A_SkullPop(optional class<Actor> spawntype);
 
-	//
-	//	Spawn functions
-	//
-	action native A_TossGib();
-	action native A_SpawnDebris(class<Actor> SpawnType, optional eval bool transfer_translation,
-		optional eval float mult_h, optional eval float mult_v);
-	action native A_SpawnItem(class<Actor> itemtype, optional eval float distance,
-		optional eval float zheight, optional evalnot bool useammo,
-		optional eval bool transfer_translation);
-	action native A_SpawnItemEx(class<Actor> itemtype, optional eval float xoffs,
-		optional eval float yoffs, optional eval float zoffs, optional eval float xmom,
-		optional eval float ymom, optional eval float zmom, optional eval float angle,
-		optional eval int flags, optional eval int chance, optional eval bool ApplyTranslation);
+  //
+  //  Spawn functions
+  //
+  action native A_TossGib();
+  action native A_SpawnDebris(class<Actor> SpawnType, optional eval bool transfer_translation,
+    optional eval float mult_h, optional eval float mult_v);
+  action native A_SpawnItem(class<Actor> itemtype, optional eval float distance,
+    optional eval float zheight, optional evalnot bool useammo,
+    optional eval bool transfer_translation);
+  action native A_SpawnItemEx(class<Actor> itemtype, optional eval float xoffs,
+    optional eval float yoffs, optional eval float zoffs, optional eval float xmom,
+    optional eval float ymom, optional eval float zmom, optional eval float angle,
+    optional eval int flags, optional eval int chance, optional eval bool ApplyTranslation);
 
-	//
-	//	State jumps
-	//
-	action native A_Jump(eval int chance, state label, ...);
-	action native A_JumpIf(eval bool expr, state label);
-	action native A_JumpIfCloser(eval float dist, state label);
-	action native A_JumpIfHealthLower(eval int health, state label);
-	action native A_JumpIfInventory(class<Actor> itemtype, eval int amount, state label);
-	action native A_JumpIfInTargetInventory(class<Actor> itemtype, eval int amount, state label);
-	action native A_JumpIfTargetInLOS(state label, optional float fov);
-	action native A_JumpIfCVarTrue(string cvar, state label);
-	action native A_JumpIfCVarFalse(string cvar, state label);
+  //
+  //  State jumps
+  //
+  action native A_Jump(eval int chance, state label, ...);
+  action native A_JumpIf(eval bool expr, state label);
+  action native A_JumpIfCloser(eval float dist, state label);
+  action native A_JumpIfHealthLower(eval int health, state label);
+  action native A_JumpIfInventory(class<Actor> itemtype, eval int amount, state label);
+  action native A_JumpIfInTargetInventory(class<Actor> itemtype, eval int amount, state label);
+  action native A_JumpIfTargetInLOS(state label, optional float fov);
+  action native A_JumpIfCVarTrue(string cvar, state label);
+  action native A_JumpIfCVarFalse(string cvar, state label);
 
-	//
-	//	Flags and appearance
-	//
-	action native A_ChangeFlag(string name, eval bool value);
-	action native A_SetFloorClip();
-	action native A_UnSetFloorClip();
-	action native A_HideThing();
-	action native A_UnHideThing();
-	action native A_SetInvulnerable();
-	action native A_UnSetInvulnerable();
-	action native A_SetReflective();
-	action native A_UnSetReflective();
-	action native A_SetReflectiveInvulnerable();
-	action native A_UnSetReflectiveInvulnerable();
-	action native A_SetShootable();
-	action native A_UnSetShootable();
-	action native A_NoGravity();
-	action native A_Gravity();
-	action native A_LowGravity();
-	action native A_NoBlocking();
-	action native A_Fall();
-	action native A_SetSolid();
-	action native A_UnsetSolid();
-	action native A_SetFloat();
-	action native A_UnsetFloat();
-	action native A_ScreamAndUnblock();
-	action native A_ActiveAndUnblock();
-	action native A_SetShadow();
-	action native A_ClearShadow();
-	action native A_SetTranslucent(eval float alpha, optional eval int mode);
-	action native A_FadeIn(optional eval float increase);
-	action native A_FadeOut(optional eval float reduce);
-	action native A_QueueCorpse();
-	action native A_DeQueueCorpse();
-	action native A_ChangeVelocity(float x, float y, float z, int flags);
-  	action native A_ScaleVelocity(float scale);
-	action native A_PreExplode(int RenderStyle, float A);
+  //
+  //  Flags and appearance
+  //
+  action native A_ChangeFlag(string name, eval bool value);
+  action native A_SetFloorClip();
+  action native A_UnSetFloorClip();
+  action native A_HideThing();
+  action native A_UnHideThing();
+  action native A_SetInvulnerable();
+  action native A_UnSetInvulnerable();
+  action native A_SetReflective();
+  action native A_UnSetReflective();
+  action native A_SetReflectiveInvulnerable();
+  action native A_UnSetReflectiveInvulnerable();
+  action native A_SetShootable();
+  action native A_UnSetShootable();
+  action native A_NoGravity();
+  action native A_Gravity();
+  action native A_LowGravity();
+  action native A_NoBlocking();
+  action native A_Fall();
+  action native A_SetSolid();
+  action native A_UnsetSolid();
+  action native A_SetFloat();
+  action native A_UnsetFloat();
+  action native A_ScreamAndUnblock();
+  action native A_ActiveAndUnblock();
+  action native A_SetShadow();
+  action native A_ClearShadow();
+  action native A_SetTranslucent(eval float alpha, optional eval int mode);
+  action native A_FadeIn(optional eval float increase);
+  action native A_FadeOut(optional eval float reduce);
+  action native A_QueueCorpse();
+  action native A_DeQueueCorpse();
+  action native A_ChangeVelocity(float x, float y, float z, int flags);
+    action native A_ScaleVelocity(float scale);
+  action native A_PreExplode(int RenderStyle, float A);
 
-	//
-	//  Misc. Stuff
-	//
-	action native A_Log(string text);
-	action native A_LogInt(int num);
+  //
+  //  Misc. Stuff
+  //
+  action native A_Log(string text);
+  action native A_LogInt(int num);
 
-	//
-	//	Missile movement
-	//
-	action native A_SeekerMissile(eval int threshold, eval int turnmax, optional eval int flags,
-					optional eval int chance, optional eval int distance);
-	action native A_Tracer();
-	action native A_Tracer2();
-	action native A_Fire(optional eval int Height);
-	action native A_BishopMissileWeave();
-	action native A_CStaffMissileSlither();
-	action native A_Countdown();
-	action native A_CountdownArg(eval int argnum);
-	action native A_Stop();
+  //
+  //  Missile movement
+  //
+  action native A_SeekerMissile(eval int threshold, eval int turnmax, optional eval int flags,
+          optional eval int chance, optional eval int distance);
+  action native A_Tracer();
+  action native A_Tracer2();
+  action native A_Fire(optional eval int Height);
+  action native A_BishopMissileWeave();
+  action native A_CStaffMissileSlither();
+  action native A_Countdown();
+  action native A_CountdownArg(eval int argnum);
+  action native A_Stop();
 
-	//
-	//	Inventory functions
-	//
-	action native A_GiveInventory(class<Inventory> itemtype, optional eval int amount);
-	action native A_GiveToTarget(class<Inventory> itemtype, optional eval int amount);
-	action native A_TakeInventory(class<Inventory> itemtype, optional eval int amount);
-	action native A_TakeFromTarget(class<Inventory> itemtype, optional eval int amount);
-	action native A_DropInventory(class<Inventory> itemtype);
-	action native A_SelectWeapon(class<Weapon> weapontype);
+  //
+  //  Inventory functions
+  //
+  action native A_GiveInventory(class<Inventory> itemtype, optional eval int amount);
+  action native A_GiveToTarget(class<Inventory> itemtype, optional eval int amount);
+  action native A_TakeInventory(class<Inventory> itemtype, optional eval int amount);
+  action native A_TakeFromTarget(class<Inventory> itemtype, optional eval int amount);
+  action native A_DropInventory(class<Inventory> itemtype);
+  action native A_SelectWeapon(class<Weapon> weapontype);
 
-	//
-	//	Weapon functions
-	//
-	action native A_Recoil(eval float force);
+  //
+  //  Weapon functions
+  //
+  action native A_Recoil(eval float force);
 
-	//
-	//	Weapon attack functions
-	//
-	action native A_Punch();
-	action native A_FireAssaultGun();
+  //
+  //  Weapon attack functions
+  //
+  action native A_Punch();
+  action native A_FireAssaultGun();
 
-	//
-	//	Original Doom/Strife monster attacks
-	//
-	action native A_PosAttack();
-	action native A_SPosAttack();
-	action native A_SPosAttackUseAtkSound();
-	action native A_CPosAttack();
-	action native A_CPosRefire();
-	action native A_SpidRefire();
-	action native A_TroopAttack();
-	action native A_SargAttack();
-	action native A_HeadAttack();
-	action native A_BruisAttack();
-	action native A_SkullAttack(optional float speed);
-	action native A_BspiAttack();
-	action native A_CyberAttack();
-	action native A_PainAttack(optional class<Actor> spawntype);
-	action native A_DualPainAttack(optional class<Actor> spawntype);
-	action native A_PainDie(optional class<Actor> spawntype);
-	action native A_SkelFist();
-	action native A_SkelMissile();
-	action native A_FatAttack1(optional class<Actor> spawntype);
-	action native A_FatAttack2(optional class<Actor> spawntype);
-	action native A_FatAttack3(optional class<Actor> spawntype);
-	action native A_VileTarget();
-	action native A_VileAttack();
-	action native A_BrainSpit();
-	action native A_SpawnFly();
-	action native A_SpawnSound();
-	action native A_BrainScream();
-	action native A_BrainExplode();
-	action native A_Mushroom(optional class<Actor> spawntype, optioal eval int amount,
-				optional eval int flags, optional eval float hrange,
-				optional eval float vrange);
-	action native A_M_Saw();
-	action native A_SentinelRefire();
+  //
+  //  Original Doom/Strife monster attacks
+  //
+  action native A_PosAttack();
+  action native A_SPosAttack();
+  action native A_SPosAttackUseAtkSound();
+  action native A_CPosAttack();
+  action native A_CPosRefire();
+  action native A_SpidRefire();
+  action native A_TroopAttack();
+  action native A_SargAttack();
+  action native A_HeadAttack();
+  action native A_BruisAttack();
+  action native A_SkullAttack(optional float speed);
+  action native A_BspiAttack();
+  action native A_CyberAttack();
+  action native A_PainAttack(optional class<Actor> spawntype);
+  action native A_DualPainAttack(optional class<Actor> spawntype);
+  action native A_PainDie(optional class<Actor> spawntype);
+  action native A_SkelFist();
+  action native A_SkelMissile();
+  action native A_FatAttack1(optional class<Actor> spawntype);
+  action native A_FatAttack2(optional class<Actor> spawntype);
+  action native A_FatAttack3(optional class<Actor> spawntype);
+  action native A_VileTarget();
+  action native A_VileAttack();
+  action native A_BrainSpit();
+  action native A_SpawnFly();
+  action native A_SpawnSound();
+  action native A_BrainScream();
+  action native A_BrainExplode();
+  action native A_Mushroom(optional class<Actor> spawntype, optioal eval int amount,
+        optional eval int flags, optional eval float hrange,
+        optional eval float vrange);
+  action native A_M_Saw();
+  action native A_SentinelRefire();
 
-	//
-	//	Monster specific functions for Doom
-	//
-	action native A_Hoof();
-	action native A_Metal();
-	action native A_BabyMetal();
-	action native A_FatRaise();
-	action native A_SkelWhoosh();
-	action native A_StartFire();
-	action native A_FireCrackle();
-	action native A_BFGSpray(optional class<Actor> flashtype, optional eval int numrays, optioal eval int damage);
+  //
+  //  Monster specific functions for Doom
+  //
+  action native A_Hoof();
+  action native A_Metal();
+  action native A_BabyMetal();
+  action native A_FatRaise();
+  action native A_SkelWhoosh();
+  action native A_StartFire();
+  action native A_FireCrackle();
+  action native A_BFGSpray(optional class<Actor> flashtype, optional eval int numrays, optioal eval int damage);
 
-	//
-	//	Not documented
-	//
-	action native A_SetGravity(eval float gravity);
-	action native A_PlayerSkinCheck(state label);
-	action native A_Respawn(optional eval int flags);
-	action native A_BarrelDestroy();
-	action native A_Feathers();
-	action native A_ShootGun();
-	action native A_RocketInFlight();
-	action native A_Bang4Cloud();
-	action native A_DropFire();
-	action native A_GiveQuestItem(int QuestType);
-	action native A_RemoveForceField();
-	action native A_PigPain();
-	action native A_ClassBossHealth();
+  //
+  //  Not documented
+  //
+  action native A_SetGravity(eval float gravity);
+  action native A_PlayerSkinCheck(state label);
+  action native A_Respawn(optional eval int flags);
+  action native A_BarrelDestroy();
+  action native A_Feathers();
+  action native A_ShootGun();
+  action native A_RocketInFlight();
+  action native A_Bang4Cloud();
+  action native A_DropFire();
+  action native A_GiveQuestItem(int QuestType);
+  action native A_RemoveForceField();
+  action native A_PigPain();
+  action native A_ClassBossHealth();
 }
 
 //------------------------------------------------------------------------------
 class Inventory extends Actor
-	native
+  native
 {
-	//
-	//	State jumps
-	//
-	action native A_JumpIfNoAmmo(state label);
+  //
+  //  State jumps
+  //
+  action native A_JumpIfNoAmmo(state label);
 
-	//
-	//	Weapon functions
-	//
-	action native A_WeaponReady(optional eval int flags);
-	action native A_SetPitch(float newpitch);
-	action native A_Lower();
-	action native A_Raise();
-	action native A_ReFire();
-	action native A_ClearReFire();
-	action native A_GunFlash();
-	action native A_CheckReload();
-	action native A_CheckForReload(eval int Count, state Jump, optional eval bool DoIncrement);
-	action native A_ResetReloadCounter();
-	action native A_Light(eval int value);
-	action native A_Light0();
-	action native A_Light1();
-	action native A_Light2();
-	action native A_LightInverse();
-	action native A_ZoomFactor(float zoom, optional eval int flags);
+  //
+  //  Weapon functions
+  //
+  action native A_WeaponReady(optional eval int flags);
+  action native A_SetPitch(float newpitch);
+  action native A_Lower();
+  action native A_Raise();
+  action native A_ReFire();
+  action native A_ClearReFire();
+  action native A_GunFlash();
+  action native A_CheckReload();
+  action native A_CheckForReload(eval int Count, state Jump, optional eval bool DoIncrement);
+  action native A_ResetReloadCounter();
+  action native A_Light(eval int value);
+  action native A_Light0();
+  action native A_Light1();
+  action native A_Light2();
+  action native A_LightInverse();
+  action native A_ZoomFactor(float zoom, optional eval int flags);
 
-	//
-	//	Weapon attack functions
-	//
-	action native A_Saw(optional string fullsound, optional string hitsound,
-		optional eval int damage, optional class<Actor> pufftype);
-	action native A_CustomPunch(eval int PunchDamage, optional eval bool NoRandom,
-		optional eval int flags, optional class<Actor> PuffType,
-		optional eval float Range, optional eval float LifeSteal);
-	action native A_FireBullets(eval float spread_horz, eval float spread_vert,
-		eval int numbullets, eval int damage, optional class<Actor> pufftype,
-		optional eval int flags, optional eval float range);
-	action native A_FireCustomMissile(class<Actor> MissileType,
-		optional eval float Angle, optional evalnot bool UseAmmo,
-		optional eval int SpawnXY, optional eval float SpawnZ,
-		optional eval int AimAtAngle, optional eval float Pitch);
-	action native A_RailAttack(eval int damage, optional eval float offset_xy,
-		optional evalnot bool useammo, optional color color1, optional color color2,
-		optional eval int flags, optional eval float maxdiff, optional class<Actor> pufftype);
+  //
+  //  Weapon attack functions
+  //
+  action native A_Saw(optional string fullsound, optional string hitsound,
+    optional eval int damage, optional class<Actor> pufftype);
+  action native A_CustomPunch(eval int PunchDamage, optional eval bool NoRandom,
+    optional eval int flags, optional class<Actor> PuffType,
+    optional eval float Range, optional eval float LifeSteal);
+  action native A_FireBullets(eval float spread_horz, eval float spread_vert,
+    eval int numbullets, eval int damage, optional class<Actor> pufftype,
+    optional eval int flags, optional eval float range);
+  action native A_FireCustomMissile(class<Actor> MissileType,
+    optional eval float Angle, optional evalnot bool UseAmmo,
+    optional eval int SpawnXY, optional eval float SpawnZ,
+    optional eval int AimAtAngle, optional eval float Pitch);
+  action native A_RailAttack(eval int damage, optional eval float offset_xy,
+    optional evalnot bool useammo, optional color color1, optional color color2,
+    optional eval int flags, optional eval float maxdiff, optional class<Actor> pufftype);
 
-	//
-	//	Not documented Doom weapon atack functions
-	//
-	action native A_FirePistol();
-	action native A_FireShotgun();
-	action native A_FireShotgun2();
-	action native A_OpenShotgun2();
-	action native A_LoadShotgun2();
-	action native A_CloseShotgun2();
-	action native A_FireCGun();
-	action native A_FireMissile();
-	action native A_FirePlasma();
-	action native A_FireRailgun();
-	action native A_FireRailgunLeft();
-	action native A_FireRailgunRight();
-	action native A_RailWait();
-	action native A_BFGsound();
-	action native A_FireBFG();
+  //
+  //  Not documented Doom weapon atack functions
+  //
+  action native A_FirePistol();
+  action native A_FireShotgun();
+  action native A_FireShotgun2();
+  action native A_OpenShotgun2();
+  action native A_LoadShotgun2();
+  action native A_CloseShotgun2();
+  action native A_FireCGun();
+  action native A_FireMissile();
+  action native A_FirePlasma();
+  action native A_FireRailgun();
+  action native A_FireRailgunLeft();
+  action native A_FireRailgunRight();
+  action native A_RailWait();
+  action native A_BFGsound();
+  action native A_FireBFG();
 }

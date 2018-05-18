@@ -24,9 +24,9 @@
 //**************************************************************************
 
 class PointLight : DynamicLight
-	__mobjinfo__(9800);
+  __mobjinfo__(9800);
 
 defaultproperties
 {
-	LightType = DLTYPE_Point;
+  LightType = DLTYPE_Point;
 }

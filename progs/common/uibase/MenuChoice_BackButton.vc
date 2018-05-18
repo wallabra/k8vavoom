@@ -33,9 +33,9 @@ class MenuChoice_BackButton : MenuTextButton;
 
 void OnDraw()
 {
-	SetFont('bigfont');
-	int Col = IsFocus() ? CR_YELLOW : CR_UNTRANSLATED;
-	DrawText(0, 0, Text, Col);
+  SetFont('bigfont');
+  int Col = IsFocus() ? CR_YELLOW : CR_UNTRANSLATED;
+  DrawText(0, 0, Text, Col);
 }
 
 //==========================================================================
@@ -46,23 +46,23 @@ void OnDraw()
 
 void OnMouseClick(int X, int Y)
 {
-	GetClGame().PopMenu();
+  GetClGame().PopMenu();
 }
 
 //==========================================================================
 //
-//	OnFocusReceived
+//  OnFocusReceived
 //
 //==========================================================================
 
 void OnFocusReceived()
 {
-//	::OnFocusReceived();
+//  ::OnFocusReceived();
 }
 
 defaultproperties
 {
-	TextFont = 'bigfont';
-	Text = "x";
-	Height = 23;
+  TextFont = 'bigfont';
+  Text = "x";
+  Height = 23;
 }

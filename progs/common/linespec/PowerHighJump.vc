@@ -27,34 +27,34 @@ class PowerHighJump : Powerup;
 
 //==========================================================================
 //
-//	InitEffect
+//  InitEffect
 //
 //==========================================================================
 
 void InitEffect()
 {
-	if (Owner && Owner.Player)
-	{
-		Owner.PlaySound(SightSound, CHAN_VOICE);
-		// Apply effect.
-		PlayerEx(Owner.Player).Cheats |= PlayerEx::CF_HIGHJUMP;
-	}
+  if (Owner && Owner.Player)
+  {
+    Owner.PlaySound(SightSound, CHAN_VOICE);
+    // Apply effect.
+    PlayerEx(Owner.Player).Cheats |= PlayerEx::CF_HIGHJUMP;
+  }
 }
 
 //==========================================================================
 //
-//	EndEffect
+//  EndEffect
 //
 //==========================================================================
 
 void EndEffect()
 {
-	if (Owner && Owner.Player)
-	{
-		Owner.PlaySound(DeathSound, CHAN_VOICE);
-		// Remove effect.
-		PlayerEx(Owner.Player).Cheats &= ~PlayerEx::CF_HIGHJUMP;
-	}
+  if (Owner && Owner.Player)
+  {
+    Owner.PlaySound(DeathSound, CHAN_VOICE);
+    // Remove effect.
+    PlayerEx(Owner.Player).Cheats &= ~PlayerEx::CF_HIGHJUMP;
+  }
 }
 
 defaultproperties

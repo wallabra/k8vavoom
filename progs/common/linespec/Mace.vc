@@ -24,11 +24,11 @@
 //**************************************************************************
 
 class Mace : HereticWeapon
-	game(GAME_Heretic)
-	__scriptid__(31);
+  game(GAME_Heretic)
+  __scriptid__(31);
 
-EntityEx		FirstSpot;
-int				SpotCount;
+EntityEx    FirstSpot;
+int       SpotCount;
 
 //==========================================================================
 //
@@ -40,57 +40,57 @@ int				SpotCount;
 
 bool DoRespawn()
 {
-	int				SpotIdx;
-	EntityEx		Spot;
+  int       SpotIdx;
+  EntityEx    Spot;
 
-	// Do random mace placement
-	if (SpotCount)
-	{
-		SpotIdx = P_Random() % SpotCount;
-		for (Spot = FirstSpot; SpotIdx > 0; SpotIdx--)
-		{
-			Spot = Spot.Target;
-		}
+  // Do random mace placement
+  if (SpotCount)
+  {
+    SpotIdx = P_Random() % SpotCount;
+    for (Spot = FirstSpot; SpotIdx > 0; SpotIdx--)
+    {
+      Spot = Spot.Target;
+    }
 
-		UnlinkFromWorld();
-		Origin = Spot.Origin;
-		LinkToWorld();
-	}
-	return true;
+    UnlinkFromWorld();
+    Origin = Spot.Origin;
+    LinkToWorld();
+  }
+  return true;
 }
 
 states
 {
 Ready:
-	MACE A 1 DoReadyWeapon
-	Loop
+  MACE A 1 DoReadyWeapon
+  Loop
 Deselect:
-	MACE A 1 A_Lower
-	Loop
+  MACE A 1 A_Lower
+  Loop
 Select:
-	MACE A 1 A_Raise
-	Loop
+  MACE A 1 A_Raise
+  Loop
 Fire:
-	MACE B 4
+  MACE B 4
 Hold:
-	MACE CDEF 3 A_FireMacePL1
-	MACE C 4 A_ReFire
-	MACE DEFB 4
-	Goto Ready
+  MACE CDEF 3 A_FireMacePL1
+  MACE C 4 A_ReFire
+  MACE DEFB 4
+  Goto Ready
 Spawn:
-	WMCE A -1
-	Stop
+  WMCE A -1
+  Stop
 }
 
 defaultproperties
 {
-	SelectionOrder = 1400;
-	AmmoType1 = MaceAmmo;
-	AmmoUse1 = 1;
-	AmmoGive1 = 50;
-	PSpriteSY = 15.0;
-	PickupMessage = "$txt_wpnmace";
-	SisterWeaponType = MacePowered;
-	BotCombatDist = 384.0;
-	bBotProjectile = true;
+  SelectionOrder = 1400;
+  AmmoType1 = MaceAmmo;
+  AmmoUse1 = 1;
+  AmmoGive1 = 50;
+  PSpriteSY = 15.0;
+  PickupMessage = "$txt_wpnmace";
+  SisterWeaponType = MacePowered;
+  BotCombatDist = 384.0;
+  bBotProjectile = true;
 }

@@ -12,23 +12,23 @@ $pitchshiftrange 2
 //
 //==========================================================================
 
-$playersound	player	male	*grunt			plroof
-$playersounddup	player	male	*usefail		*grunt
-$playersounddup	player	male	*land			*grunt
-$playersound	player	male	*pain100		plrpai
-$playersounddup	player	male	*pain75			*pain100
-$playersounddup	player	male	*pain50			*pain100
-$playersounddup	player	male	*pain25			*pain100
-$playersound	player	male	*death			plrdth
-$playersound	player	male	*wimpydeath		plrwdth
-$playersound	player	male	*crazydeath		plrcdth
-$playersound	player	male	*gibbed			gibdth
-$playersound	player	male	*weaponlaugh	wpnup
-$playersounddup	player	male	*evillaugh		*weaponlaugh
-$playersound	player	male	*burndeath		hedat1
+$playersound  player  male  *grunt      plroof
+$playersounddup player  male  *usefail    *grunt
+$playersounddup player  male  *land     *grunt
+$playersound  player  male  *pain100    plrpai
+$playersounddup player  male  *pain75     *pain100
+$playersounddup player  male  *pain50     *pain100
+$playersounddup player  male  *pain25     *pain100
+$playersound  player  male  *death      plrdth
+$playersound  player  male  *wimpydeath   plrwdth
+$playersound  player  male  *crazydeath   plrcdth
+$playersound  player  male  *gibbed     gibdth
+$playersound  player  male  *weaponlaugh  wpnup
+$playersounddup player  male  *evillaugh    *weaponlaugh
+$playersound  player  male  *burndeath    hedat1
 
 // Use *pain in a script to play any of the pain sounds
-$random *pain					{ *pain100  *pain75  *pain50  *pain25 }
+$random *pain         { *pain100  *pain75  *pain50  *pain25 }
 
 //==========================================================================
 //
@@ -37,16 +37,16 @@ $random *pain					{ *pain100  *pain75  *pain50  *pain25 }
 //==========================================================================
 
 //  Staff
-weapons/staffhit				stfhit
-weapons/staffpowerhit			stfpow
-weapons/staffcrackle			stfcrk
+weapons/staffhit        stfhit
+weapons/staffpowerhit     stfpow
+weapons/staffcrackle      stfcrk
 
 //  Gauntlets
-weapons/gauntletson				gntful
-weapons/gauntletshit			gnthit
-weapons/gauntletspowhit			gntpow
-weapons/gauntletsactivate		gntact
-weapons/gauntletsuse			gntuse
+weapons/gauntletson       gntful
+weapons/gauntletshit      gnthit
+weapons/gauntletspowhit     gntpow
+weapons/gauntletsactivate   gntact
+weapons/gauntletsuse      gntuse
 $limit weapons/gauntletson 0
 $limit weapons/gauntletshit 0
 $limit weapons/gauntletspowhit 0
@@ -54,40 +54,40 @@ $limit weapons/gauntletsactivate 0
 $limit weapons/gauntletsuse 0
 
 //  Gold wand
-weapons/wandhit					gldhit
+weapons/wandhit         gldhit
 
 //  Crossbow
-weapons/bowshoot				bowsht
-weapons/bowhit					hrnhit
+weapons/bowshoot        bowsht
+weapons/bowhit          hrnhit
 $limit weapons/bowhit 0
 
 //  Blaster
-weapons/blastershoot			blssht
-weapons/blasterhit				blshit
-weapons/blasterpowhit			hrnhit
+weapons/blastershoot      blssht
+weapons/blasterhit        blshit
+weapons/blasterpowhit     hrnhit
 
 //  Skull rod
-weapons/hornrodshoot			hrnsht
-weapons/hornrodhit				hrnhit
-weapons/hornrodpowshoot			hrnpow
-weapons/hornrodpowhit			ramphit
-weapons/hornrodpowrain			ramrain
+weapons/hornrodshoot      hrnsht
+weapons/hornrodhit        hrnhit
+weapons/hornrodpowshoot     hrnpow
+weapons/hornrodpowhit     ramphit
+weapons/hornrodpowrain      ramrain
 $limit weapons/hornrodshoot 0
 $limit weapons/hornrodhit 0
 
 //  Phoenix rod
-weapons/phoenixshoot			phosht
-weapons/phoenixhit				phohit
-weapons/phoenixpowshoot			hedat1
+weapons/phoenixshoot      phosht
+weapons/phoenixhit        phohit
+weapons/phoenixpowshoot     hedat1
 $limit weapons/phoenixhit 0
 $limit weapons/phoenixpowshoot 1
 
 //  Mace
-weapons/maceshoot				lobsht
-weapons/macehit					lobhit
-weapons/macebounce				bounce
-weapons/maceexplode				phohit
-weapons/macestop				pstop
+weapons/maceshoot       lobsht
+weapons/macehit         lobhit
+weapons/macebounce        bounce
+weapons/maceexplode       phohit
+weapons/macestop        pstop
 $limit weapons/maceshoot 0
 $limit weapons/maceexplode 0
 
@@ -98,109 +98,109 @@ $limit weapons/maceexplode 0
 //==========================================================================
 
 //  Imp
-himp/sight						impsit
-himp/active						impsit
-himp/attack						impat1
-himp/leaderattack				impat2
-himp/pain						imppai
-himp/death						impdth
+himp/sight            impsit
+himp/active           impsit
+himp/attack           impat1
+himp/leaderattack       impat2
+himp/pain           imppai
+himp/death            impdth
 
 //  Mumy
-mummy/sight						mumsit
-mummy/active					mumsit
-mummy/attack1					mumat1
-mummy/attack2					mumat2
-mummy/pain						mumpai
-mummy/death						mumdth
-mummy/head						mumhed
+mummy/sight           mumsit
+mummy/active          mumsit
+mummy/attack1         mumat1
+mummy/attack2         mumat2
+mummy/pain            mumpai
+mummy/death           mumdth
+mummy/head            mumhed
 
 //  Beast
-beast/sight						bstsit
-beast/active					bstact
-beast/attack					bstatk
-beast/pain						bstpai
-beast/death						bstdth
+beast/sight           bstsit
+beast/active          bstact
+beast/attack          bstatk
+beast/pain            bstpai
+beast/death           bstdth
 
 //  Clink
-clink/sight						clksit
-clink/active					clkact
-clink/attack					clkatk
-clink/pain						clkpai
-clink/death						clkdth
+clink/sight           clksit
+clink/active          clkact
+clink/attack          clkatk
+clink/pain            clkpai
+clink/death           clkdth
 
 //  Snake
-snake/sight						snksit
-snake/active					snkact
-snake/attack					snkatk
-snake/pain						snkpai
-snake/death						snkdth
+snake/sight           snksit
+snake/active          snkact
+snake/attack          snkatk
+snake/pain            snkpai
+snake/death           snkdth
 
 //  Knight
-hknight/sight					kgtsit
-hknight/active					kgtsit
-hknight/attack					kgtatk
-hknight/melee					kgtat2
-hknight/pain					kgtpai
-hknight/death					kgtdth
-hknight/hit						hrnhit
-hknight/axewhoosh				kgtatk
+hknight/sight         kgtsit
+hknight/active          kgtsit
+hknight/attack          kgtatk
+hknight/melee         kgtat2
+hknight/pain          kgtpai
+hknight/death         kgtdth
+hknight/hit           hrnhit
+hknight/axewhoosh       kgtatk
 
 //  Wizard
-wizard/sight					wizsit
-wizard/active1					wizact
-wizard/attack					wizatk
-wizard/pain						wizpai
-wizard/death					wizdth
-$random wizard/active 			{ wizard/sight wizard/active1 }
+wizard/sight          wizsit
+wizard/active1          wizact
+wizard/attack         wizatk
+wizard/pain           wizpai
+wizard/death          wizdth
+$random wizard/active       { wizard/sight wizard/active1 }
 
 //  Minotaur
-minotaur/sight					minsit
-minotaur/active					minact
-minotaur/melee					stfhit
-minotaur/attack1				minat1
-minotaur/attack2				minat2
-minotaur/attack3				minat3
-minotaur/pain					minpai
-minotaur/death					mindth
-minotaur/fx2hit					phohit
-minotaur/fx3hit					phohit
+minotaur/sight          minsit
+minotaur/active         minact
+minotaur/melee          stfhit
+minotaur/attack1        minat1
+minotaur/attack2        minat2
+minotaur/attack3        minat3
+minotaur/pain         minpai
+minotaur/death          mindth
+minotaur/fx2hit         phohit
+minotaur/fx3hit         phohit
 
 //  Head
-ironlich/sight					hedsit
-ironlich/active					hedact
-ironlich/attack1				hedat1
-ironlich/attack2				hedat2
-ironlich/attack3				hedat3
-ironlich/pain					hedpai
-ironlich/death					heddth
+ironlich/sight          hedsit
+ironlich/active         hedact
+ironlich/attack1        hedat1
+ironlich/attack2        hedat2
+ironlich/attack3        hedat3
+ironlich/pain         hedpai
+ironlich/death          heddth
 
 //  Sorcerer
-dsparilserpent/sight			bstsit
-dsparilserpent/active			sbtact
-dsparilserpent/attack			bstatk
-dsparilserpent/pain				sbtpai
-dsparilserpent/death			sbtdth
+dsparilserpent/sight      bstsit
+dsparilserpent/active     sbtact
+dsparilserpent/attack     bstatk
+dsparilserpent/pain       sbtpai
+dsparilserpent/death      sbtdth
 
-dsparil/zap						sorzap
-dsparil/rise					sorrise
-dsparil/sight					sorsit
-dsparil/active					soract
-dsparil/attack					soratk
-dsparil/pain					sorpai
-dsparil/scream					sordsph
-dsparil/explode					sordexp
-dsparil/bones					sordbon
+dsparil/zap           sorzap
+dsparil/rise          sorrise
+dsparil/sight         sorsit
+dsparil/active          soract
+dsparil/attack          soratk
+dsparil/pain          sorpai
+dsparil/scream          sordsph
+dsparil/explode         sordexp
+dsparil/bones         sordbon
 
 //  Chicken
-chicken/sight					chicpai
-chicken/active					chicact
-chicken/peck1					chicpk1
-chicken/peck2					chicpk2
-chicken/peck3					chicpk3
-chicken/attack					chicatk
-chicken/pain					chicpai
-chicken/death					chicdth
-$random chicken/peck			{ chicken/peck1  chicken/peck2  chicken/peck3 }
+chicken/sight         chicpai
+chicken/active          chicact
+chicken/peck1         chicpk1
+chicken/peck2         chicpk2
+chicken/peck3         chicpk3
+chicken/attack          chicatk
+chicken/pain          chicpai
+chicken/death         chicdth
+$random chicken/peck      { chicken/peck1  chicken/peck2  chicken/peck3 }
 
 //==========================================================================
 //
@@ -209,54 +209,54 @@ $random chicken/peck			{ chicken/peck1  chicken/peck2  chicken/peck3 }
 //==========================================================================
 
 //  Door
-doors/dr1_open					doropn
-doors/dr1_clos					dorcls
-doors/dr1_move					dormov
-doors/dr2_open					doropn
-doors/dr2_clos					dorcls
-doors/dr2_move					dormov
+doors/dr1_open          doropn
+doors/dr1_clos          dorcls
+doors/dr1_move          dormov
+doors/dr2_open          doropn
+doors/dr2_clos          dorcls
+doors/dr2_move          dormov
 
 //  Platforms
-plats/pt1_strt					pstart
-plats/pt1_stop					pstop
-plats/pt1_mid					stnmov
+plats/pt1_strt          pstart
+plats/pt1_stop          pstop
+plats/pt1_mid         stnmov
 
-misc/teleport					telept
-switches/normbutn				switch
-world/podgrow					newpod
-world/podexplode				podexp
-world/volcano/shoot				bstatk
-world/volcano/blast				lobhit
-misc/timebomb					phohit
-world/lavasizzle				burn
-world/watersplash				gloop
-world/waterfall					waterfl
-world/wind						wind
-misc/ripslop					ripslop
-misc/spawn						respawn
-misc/burn						hedat1
-$alias switches/exitbutn		switches/normbutn
+misc/teleport         telept
+switches/normbutn       switch
+world/podgrow         newpod
+world/podexplode        podexp
+world/volcano/shoot       bstatk
+world/volcano/blast       lobhit
+misc/timebomb         phohit
+world/lavasizzle        burn
+world/watersplash       gloop
+world/waterfall         waterfl
+world/wind            wind
+misc/ripslop          ripslop
+misc/spawn            respawn
+misc/burn           hedat1
+$alias switches/exitbutn    switches/normbutn
 $limit world/podgrow 0
 $limit world/podexplode 0
 $limit world/wind 1
 $limit misc/spawn 1
 
 //  Earthquake
-world/quake						dsquake
+world/quake           dsquake
 
 //  Ambient sounds
-world/amb1						amb1
-world/amb2						amb2
-world/amb3						amb3
-world/amb4						amb4
-world/amb5						amb5
-world/amb6						amb6
-world/amb7						amb7
-world/amb8						amb8
-world/amb9						amb9
-world/amb10						amb10
-world/amb11						amb11
-world/amb12						bstsit
+world/amb1            amb1
+world/amb2            amb2
+world/amb3            amb3
+world/amb4            amb4
+world/amb5            amb5
+world/amb6            amb6
+world/amb7            amb7
+world/amb8            amb8
+world/amb9            amb9
+world/amb10           amb10
+world/amb11           amb11
+world/amb12           bstsit
 
 $limit world/amb1 1
 $limit world/amb2 1
@@ -270,15 +270,15 @@ $limit world/amb9 1
 $limit world/amb10 1
 $limit world/amb11 0
 
-//	Sparks
-world/spark1					spark1
-world/spark2					spark2
-world/spark3					spark3
-$random world/spark				{ world/spark1  world/spark2  world/spark3 }
+//  Sparks
+world/spark1          spark1
+world/spark2          spark2
+world/spark3          spark3
+$random world/spark       { world/spark1  world/spark2  world/spark3 }
 
-//	Freeze death
-misc/freeze						icedth1
-misc/icebreak					icebrk1a
+//  Freeze death
+misc/freeze           icedth1
+misc/icebreak         icebrk1a
 
 //==========================================================================
 //
@@ -286,16 +286,16 @@ misc/icebreak					icebrk1a
 //
 //==========================================================================
 
-misc/i_pkup						itemup
-misc/p_pkup						artiup
-misc/k_pkup						keyup
-misc/invuse						artiuse
-misc/frag						gfrag
-$alias misc/w_pkup				*weaponlaugh
-$alias misc/keytry				*usefail
-$alias misc/health_pkup			misc/i_pkup
-$alias misc/armor_pkup			misc/i_pkup
-$alias misc/ammo_pkup			misc/i_pkup
+misc/i_pkup           itemup
+misc/p_pkup           artiup
+misc/k_pkup           keyup
+misc/invuse           artiuse
+misc/frag           gfrag
+$alias misc/w_pkup        *weaponlaugh
+$alias misc/keytry        *usefail
+$alias misc/health_pkup     misc/i_pkup
+$alias misc/armor_pkup      misc/i_pkup
+$alias misc/ammo_pkup     misc/i_pkup
 $limit misc/invuse 1
 $limit misc/frag 1
 
@@ -305,15 +305,15 @@ $limit misc/frag 1
 //
 //==========================================================================
 
-misc/chat						chat
+misc/chat           chat
 $limit misc/chat 1
 
-menu/activate					dorcls
-menu/cursor						switch
-menu/choose						dorcls
-menu/change						keyup
-menu/backup						switch
-menu/clear						dorcls
-menu/prompt						chat
-menu/invalid					plroof
-menu/dismiss					dorcls
+menu/activate         dorcls
+menu/cursor           switch
+menu/choose           dorcls
+menu/change           keyup
+menu/backup           switch
+menu/clear            dorcls
+menu/prompt           chat
+menu/invalid          plroof
+menu/dismiss          dorcls

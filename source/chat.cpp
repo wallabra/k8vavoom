@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -42,11 +42,11 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-bool					chatmodeon;
+bool          chatmodeon;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static TILine			w_chat;
+static TILine     w_chat;
 static VCvarS ChatMacro0("Chatmacro0", "No", "Chat macro #0.", CVAR_Archive);
 static VCvarS ChatMacro1("Chatmacro1", "I'm ready to kick butt!", "Chat macro #1.", CVAR_Archive);
 static VCvarS ChatMacro2("Chatmacro2", "I'm OK.", "Chat macro #2.", CVAR_Archive);
@@ -75,26 +75,26 @@ static VCvarS *chat_macros[10] =
 
 //===========================================================================
 //
-//	CT_Init
+//  CT_Init
 //
-// 	Initialise chat mode data
+//  Initialise chat mode data
 //
 //===========================================================================
 
 void CT_Init()
 {
-	chatmodeon = false;
+  chatmodeon = false;
 }
 
 //===========================================================================
 //
-//	CT_Stop
+//  CT_Stop
 //
 //===========================================================================
 
 static void CT_Stop()
 {
-	chatmodeon = false;
+  chatmodeon = false;
 }
 
 //===========================================================================
@@ -105,48 +105,48 @@ static void CT_Stop()
 
 bool CT_Responder(event_t *ev)
 {
-	bool		eatkey;
+  bool    eatkey;
 
-	if (!chatmodeon || ev->type != ev_keydown)
-	{
-		return false;
-	}
+  if (!chatmodeon || ev->type != ev_keydown)
+  {
+    return false;
+  }
 
-	if (GInput->AltDown)
-	{
-		if (ev->data1 >= '0' && ev->data1 <= '9')
-		{
-			GCmdBuf << "Say " << *chat_macros[ev->data1 - '0'] << "\n";
-			CT_Stop();
-			return true;
-		}
-	}
+  if (GInput->AltDown)
+  {
+    if (ev->data1 >= '0' && ev->data1 <= '9')
+    {
+      GCmdBuf << "Say " << *chat_macros[ev->data1 - '0'] << "\n";
+      CT_Stop();
+      return true;
+    }
+  }
 
-	eatkey = w_chat.Key((byte)ev->data1);
-	if (ev->data1 == K_ENTER || ev->data1 == K_PADENTER)
-	{
-		GCmdBuf << "Say " << w_chat.Data << "\n";
-		CT_Stop();
-		return true;
-	}
-	else if (ev->data1 == K_ESCAPE)
-	{
-		CT_Stop();
-		return true;
-	}
-	return eatkey;
+  eatkey = w_chat.Key((byte)ev->data1);
+  if (ev->data1 == K_ENTER || ev->data1 == K_PADENTER)
+  {
+    GCmdBuf << "Say " << w_chat.Data << "\n";
+    CT_Stop();
+    return true;
+  }
+  else if (ev->data1 == K_ESCAPE)
+  {
+    CT_Stop();
+    return true;
+  }
+  return eatkey;
 }
 
 //==========================================================================
 //
-//	COMMAND ChatMode
+//  COMMAND ChatMode
 //
 //==========================================================================
 
 COMMAND(ChatMode)
 {
-	w_chat.Init();
-	chatmodeon = true;
+  w_chat.Init();
+  chatmodeon = true;
 }
 
 //===========================================================================
@@ -157,11 +157,11 @@ COMMAND(ChatMode)
 
 void CT_Drawer()
 {
-	if (chatmodeon)
-	{
-		T_SetFont(SmallFont);
-		T_SetAlign(hleft, vtop);
-		T_DrawText(25, 10, w_chat.Data, CR_UNTRANSLATED);
-		T_DrawCursor();
-	}
+  if (chatmodeon)
+  {
+    T_SetFont(SmallFont);
+    T_SetAlign(hleft, vtop);
+    T_DrawText(25, 10, w_chat.Data, CR_UNTRANSLATED);
+    T_DrawCursor();
+  }
 }

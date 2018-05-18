@@ -94,7 +94,7 @@ Each option has a short form and a long form.
                 displayed when this option is given, and a few other
                 messages are skipped.  Important messages, like
                 failure to build a certain level, are still shown.
-              
+
   -f -fast      Allows glBSP to cheat a bit and re-use the original node
                 information to create the GL nodes, doing it much faster.
                 Use this option to enable this feature.  The message
@@ -104,14 +104,14 @@ Each option has a short form and a long form.
                 may not be as good as the ones glBSP normally creates,
                 e.g. the special checks to minimise slime-trails don't
                 kick in, and the -factor value doesn't have any effect.
-              
+
   -w -warn      Shows extra warning messages, which detail various
                 non-serious problems that glBSP has while analysing the
                 level structure.  Often these warnings show a real
                 problem in the level (e.g. a non-closed sector or
                 invalid sidedef), so they are worth checking now and
                 then.
-              
+
   -n -normal    glBSP usually detects if the normal node info (i.e.
                 the non-GL variety) is present: when yes, it is left
                 untouched, otherwise glBSP creates it.  This option
@@ -125,11 +125,11 @@ Each option has a short form and a long form.
                 avoid them), but smaller values produce better BSP
                 trees.  See the section below for more info.  The
                 default value is known to be a good compromise.
-               
+
   -p -pack      Pack sidedefs, by detecting which sidedefs are
                 identical and removing the duplicates, producing a
                 smaller PWAD.
-               
+
                 NOTE: this will make your level a lot harder to edit!
                 Therefore this is most useful when producing your final
                 WAD for public release.
@@ -158,14 +158,14 @@ These options are rarely needed:
   -y -windowfx  Lets glBSP detect and handle the "One-Sided Window"
                 mapping trick.  This can cause problems in some engines
                 so it is disabled by default.
- 
+
   -u -prunesec  Removes any unused sectors found in the level.  Only
                 works when normal nodes are being built.  This is
                 not done by default since some scripting languages
                 (Fragglescript, old versions of RTS) refer directly
                 to the sector numbers and removing even one will
                 change all the numbering.
-               
+
   -b -maxblock <num>
                 Sets the limit of the number of blocks the BLOCKMAP may
                 contain before we truncate it.  Default is 16000.  When
@@ -176,7 +176,7 @@ These options are rarely needed:
                 through walls and other objects and bullets/missiles
                 don't hit anything.  On very large but sparse levels,
                 using a larger value (e.g. 30000) may help.
-               
+
                 A more serious problem is when the blockmap overflows.
                 The blockmap created would be invalid, and could crash
                 the DOOM engine when used.  glBSP will create an empty
@@ -294,4 +294,3 @@ were changed or abandoned.  Features that are different:
 
 
 ---------------------------------------------------------------------------
-

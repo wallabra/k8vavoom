@@ -25,11 +25,11 @@
 
 class ClientGame : ClientGameShared;
 
-const int NUM_END_MESSAGES	= 15;
+const int NUM_END_MESSAGES  = 15;
 
-TitleScreen			GTitle;
-IntermissionScreen	GImission;
-FinaleScreen		GFinale;
+TitleScreen     GTitle;
+IntermissionScreen  GImission;
+FinaleScreen    GFinale;
 
 name quitsounds[8];
 
@@ -52,17 +52,17 @@ int pic_brdr_br;
 
 void RootWindowCreated()
 {
-	GTitle = TitleScreen(GRoot.NewChild(TitleScreen));
-	GSBar = StatusBarScreen(GRoot.NewChild(StatusBarScreen));
-	GImission = IntermissionScreen(GRoot.NewChild(IntermissionScreen));
-	GFinale = FinaleScreen(GRoot.NewChild(FinaleScreen));
-	GTitle.ClGame = self;
-	GSBar.ClGame = self;
-	GSBar.Hide();
-	GImission.ClGame = self;
-	GImission.Hide();
-	GFinale.ClGame = self;
-	GFinale.Hide();
+  GTitle = TitleScreen(GRoot.NewChild(TitleScreen));
+  GSBar = StatusBarScreen(GRoot.NewChild(StatusBarScreen));
+  GImission = IntermissionScreen(GRoot.NewChild(IntermissionScreen));
+  GFinale = FinaleScreen(GRoot.NewChild(FinaleScreen));
+  GTitle.ClGame = self;
+  GSBar.ClGame = self;
+  GSBar.Hide();
+  GImission.ClGame = self;
+  GImission.Hide();
+  GFinale.ClGame = self;
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -73,11 +73,11 @@ void RootWindowCreated()
 
 void Connected()
 {
-	GTitle.Hide();
-	GTitle.StopDemoLoop();
-	GSBar.Hide();
-	GImission.Hide();
-	GFinale.Hide();
+  GTitle.Hide();
+  GTitle.StopDemoLoop();
+  GSBar.Hide();
+  GImission.Hide();
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -88,10 +88,10 @@ void Connected()
 
 void Disconnected()
 {
-	GTitle.Show();
-	GSBar.Hide();
-	GImission.Hide();
-	GFinale.Hide();
+  GTitle.Show();
+  GSBar.Hide();
+  GImission.Hide();
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -102,10 +102,10 @@ void Disconnected()
 
 void DemoPlaybackStarted()
 {
-	GTitle.Hide();
-	GSBar.Hide();
-	GImission.Hide();
-	GFinale.Hide();
+  GTitle.Hide();
+  GSBar.Hide();
+  GImission.Hide();
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -116,10 +116,10 @@ void DemoPlaybackStarted()
 
 void DemoPlaybackStopped()
 {
-	GTitle.Show();
-	GSBar.Hide();
-	GImission.Hide();
-	GFinale.Hide();
+  GTitle.Show();
+  GSBar.Hide();
+  GImission.Hide();
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -130,7 +130,7 @@ void DemoPlaybackStopped()
 
 void OnHostEndGame()
 {
-	GTitle.OnHostEndGame();
+  GTitle.OnHostEndGame();
 }
 
 //==========================================================================
@@ -141,7 +141,7 @@ void OnHostEndGame()
 
 void OnHostError()
 {
-	GTitle.OnHostError();
+  GTitle.OnHostError();
 }
 
 //==========================================================================
@@ -152,11 +152,11 @@ void OnHostError()
 
 void StatusBarStartMap()
 {
-	StatusBarScreen(GSBar).cl = Player(cl);
-	GSBar.Show();
-	GSBar.StartMap();
-	GImission.Hide();
-	GFinale.Hide();
+  StatusBarScreen(GSBar).cl = Player(cl);
+  GSBar.Show();
+  GSBar.StartMap();
+  GImission.Hide();
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -167,7 +167,7 @@ void StatusBarStartMap()
 
 void StatusBarDrawer(int sb_view)
 {
-	GSBar.SB_Drawer(sb_view);
+  GSBar.SB_Drawer(sb_view);
 }
 
 //==========================================================================
@@ -178,7 +178,7 @@ void StatusBarDrawer(int sb_view)
 
 void StatusBarUpdateWidgets(float DeltaTime)
 {
-	GSBar.SB_UpdateWidgets();
+  GSBar.SB_UpdateWidgets();
 }
 
 //==========================================================================
@@ -189,10 +189,10 @@ void StatusBarUpdateWidgets(float DeltaTime)
 
 void IintermissionStart()
 {
-	GSBar.Hide();
-	GImission.Show();
-	GImission.Start();
-	GFinale.Hide();
+  GSBar.Hide();
+  GImission.Show();
+  GImission.Start();
+  GFinale.Hide();
 }
 
 //==========================================================================
@@ -203,11 +203,11 @@ void IintermissionStart()
 
 void StartFinale(name FinaleType)
 {
-	intermission = 2;
-	GSBar.Hide();
-	GImission.Hide();
-	GFinale.Show();
-	GFinale.StartFinale(FinaleType);
+  intermission = 2;
+  GSBar.Hide();
+  GImission.Hide();
+  GFinale.Show();
+  GFinale.StartFinale(FinaleType);
 }
 
 //===========================================================================
@@ -218,7 +218,7 @@ void StartFinale(name FinaleType)
 
 bool FinaleResponder(event_t * event)
 {
-	return GFinale.Responder(event);
+  return GFinale.Responder(event);
 }
 
 //==========================================================================
@@ -229,7 +229,7 @@ bool FinaleResponder(event_t * event)
 
 void DeactivateMenu()
 {
-	ForceMenuOff();
+  ForceMenuOff();
 }
 
 //==========================================================================
@@ -240,16 +240,16 @@ void DeactivateMenu()
 
 bool MenuResponder(event_t * event)
 {
-	if (!CurrentMenuScreen)
-	{
-		// Pop-up menu?
-		if (event->type == ev_keydown && event->data1 == K_ESCAPE)
-		{
-			PushMenuScreen(SpawnMenu(MenuScreenMain));
-			return true;
-		}
-	}
-	return false;
+  if (!CurrentMenuScreen)
+  {
+    // Pop-up menu?
+    if (event->type == ev_keydown && event->data1 == K_ESCAPE)
+    {
+      PushMenuScreen(SpawnMenu(MenuScreenMain));
+      return true;
+    }
+  }
+  return false;
 }
 
 //==========================================================================
@@ -260,85 +260,85 @@ bool MenuResponder(event_t * event)
 
 bool MenuActive()
 {
-	return CurrentMenuScreen != none;
+  return CurrentMenuScreen != none;
 }
 
 //==========================================================================
 //
-//	SetMenu
+//  SetMenu
 //
 //==========================================================================
 
 void SetMenu(string Name)
 {
-	if (!stricmp(Name, "Main"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenMain));
-		return;
-	}
-	if (!stricmp(Name, "Save"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenSaveGame));
-		return;
-	}
-	if (!stricmp(Name, "Load"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenLoadGame));
-		return;
-	}
-	if (!stricmp(Name, "PSetup"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup));
-		return;
-	}
-	if (!stricmp(Name, "Options"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenOptions));
-		return;
-	}
-	if (!stricmp(Name, "Controls"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenControls));
-		return;
-	}
-	/*
-	if (!stricmp(Name, "Controls2"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenControls2));
-		return;
-	}
-	*/
-	if (!stricmp(Name, "Mouse"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenMouseOptions));
-		return;
-	}
-	if (!stricmp(Name, "Resolution"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenScreenResolution));
-		return;
-	}
-	if (!stricmp(Name, "Video"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenVideoOptions));
-		return;
-	}
-	if (!stricmp(Name, "Sound"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenSoundOptions));
-		return;
-	}
-	if (!stricmp(Name, "Help"))
-	{
-		PushMenuScreen(SpawnMenu(MenuScreenHelp));
-		return;
-	}
-	if (!stricmp(Name, "Quit"))
-	{
-		menu_quit();
-		return;
-	}
-	PushMenuScreen(SpawnMenu(MenuScreenMain));
+  if (!stricmp(Name, "Main"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenMain));
+    return;
+  }
+  if (!stricmp(Name, "Save"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenSaveGame));
+    return;
+  }
+  if (!stricmp(Name, "Load"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenLoadGame));
+    return;
+  }
+  if (!stricmp(Name, "PSetup"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup));
+    return;
+  }
+  if (!stricmp(Name, "Options"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenOptions));
+    return;
+  }
+  if (!stricmp(Name, "Controls"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenControls));
+    return;
+  }
+  /*
+  if (!stricmp(Name, "Controls2"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenControls2));
+    return;
+  }
+  */
+  if (!stricmp(Name, "Mouse"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenMouseOptions));
+    return;
+  }
+  if (!stricmp(Name, "Resolution"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenScreenResolution));
+    return;
+  }
+  if (!stricmp(Name, "Video"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenVideoOptions));
+    return;
+  }
+  if (!stricmp(Name, "Sound"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenSoundOptions));
+    return;
+  }
+  if (!stricmp(Name, "Help"))
+  {
+    PushMenuScreen(SpawnMenu(MenuScreenHelp));
+    return;
+  }
+  if (!stricmp(Name, "Quit"))
+  {
+    menu_quit();
+    return;
+  }
+  PushMenuScreen(SpawnMenu(MenuScreenMain));
 }
 
 //==========================================================================
@@ -349,10 +349,10 @@ void SetMenu(string Name)
 
 void menu_quit()
 {
-	if (!GetCvarB('menu_quit_prompt')) { CmdBuf_AddText("Quit\n"); return; }
-	LocalSound('misc/chat');
-	MessageBoxStartMessage(va("%s\n\n(press y to quit)",
-			endmsg[P_Random() % NUM_END_MESSAGES]), MB_Quit, true);
+  if (!GetCvarB('menu_quit_prompt')) { CmdBuf_AddText("Quit\n"); return; }
+  LocalSound('misc/chat');
+  MessageBoxStartMessage(va("%s\n\n(press y to quit)",
+      endmsg[P_Random() % NUM_END_MESSAGES]), MB_Quit, true);
 }
 
 //==========================================================================
@@ -363,14 +363,14 @@ void menu_quit()
 
 void QuitResponse(int ch)
 {
-	if (ch != K_y)
-		return;
+  if (ch != K_y)
+    return;
 
-	//	Continue to show message box.
-	messageToPrint = true;
-	WaitForQuit = true;
-	QuitSound = quitsounds[P_Random() & 7];
-	LocalSound(QuitSound);
+  //  Continue to show message box.
+  messageToPrint = true;
+  WaitForQuit = true;
+  QuitSound = quitsounds[P_Random() & 7];
+  LocalSound(QuitSound);
 }
 
 //==========================================================================
@@ -381,7 +381,7 @@ void QuitResponse(int ch)
 
 void SharewareResponse(int key)
 {
-	PushMenuScreen(SpawnMenu(MenuScreenHelp));
+  PushMenuScreen(SpawnMenu(MenuScreenHelp));
 }
 
 //==========================================================================
@@ -392,14 +392,14 @@ void SharewareResponse(int key)
 
 void InitBorder()
 {
-	pic_brdr_t = R_RegisterPic('brdr_t');
-	pic_brdr_b = R_RegisterPic('brdr_b');
-	pic_brdr_l = R_RegisterPic('brdr_l');
-	pic_brdr_r = R_RegisterPic('brdr_r');
-	pic_brdr_tl = R_RegisterPic('brdr_tl');
-	pic_brdr_tr = R_RegisterPic('brdr_tr');
-	pic_brdr_bl = R_RegisterPic('brdr_bl');
-	pic_brdr_br = R_RegisterPic('brdr_br');
+  pic_brdr_t = R_RegisterPic('brdr_t');
+  pic_brdr_b = R_RegisterPic('brdr_b');
+  pic_brdr_l = R_RegisterPic('brdr_l');
+  pic_brdr_r = R_RegisterPic('brdr_r');
+  pic_brdr_tl = R_RegisterPic('brdr_tl');
+  pic_brdr_tr = R_RegisterPic('brdr_tr');
+  pic_brdr_bl = R_RegisterPic('brdr_bl');
+  pic_brdr_br = R_RegisterPic('brdr_br');
 }
 
 //==========================================================================
@@ -412,30 +412,30 @@ void InitBorder()
 
 void DrawBorder(int x, int y, int w, int h)
 {
-	int i;
+  int i;
 
-	if (!pic_brdr_b)
-	{
-		InitBorder();
-	}
+  if (!pic_brdr_b)
+  {
+    InitBorder();
+  }
 
-	for (i = 0; i < w; i += 8)
-		GRoot.DrawPic(x + i, y - 8, pic_brdr_t);
+  for (i = 0; i < w; i += 8)
+    GRoot.DrawPic(x + i, y - 8, pic_brdr_t);
 
-	for (i = 0; i < w; i += 8)
-		GRoot.DrawPic(x + i, y + h, pic_brdr_b);
+  for (i = 0; i < w; i += 8)
+    GRoot.DrawPic(x + i, y + h, pic_brdr_b);
 
-	for (i = 0; i < h; i += 8)
-		GRoot.DrawPic(x - 8, y + i, pic_brdr_l);
+  for (i = 0; i < h; i += 8)
+    GRoot.DrawPic(x - 8, y + i, pic_brdr_l);
 
-	for (i = 0; i < h; i += 8)
-		GRoot.DrawPic(x + w, y + i, pic_brdr_r);
+  for (i = 0; i < h; i += 8)
+    GRoot.DrawPic(x + w, y + i, pic_brdr_r);
 
-	// Draw beveled edge.
-	GRoot.DrawPic(x - 8, y - 8, pic_brdr_tl);
-	GRoot.DrawPic(x + w, y - 8, pic_brdr_tr);
-	GRoot.DrawPic(x - 8, y + h, pic_brdr_bl);
-	GRoot.DrawPic(x + w, y + h, pic_brdr_br);
+  // Draw beveled edge.
+  GRoot.DrawPic(x - 8, y - 8, pic_brdr_tl);
+  GRoot.DrawPic(x + w, y - 8, pic_brdr_tr);
+  GRoot.DrawPic(x - 8, y + h, pic_brdr_bl);
+  GRoot.DrawPic(x + w, y + h, pic_brdr_br);
 }
 
 //==========================================================================
@@ -446,59 +446,59 @@ void DrawBorder(int x, int y, int w, int h)
 
 void DrawViewBorder(int x, int y, int w, int h)
 {
-	if (IsAnyDoom2) {
-		GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'grnrock');
-	} else {
-		GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'floor7_2');
-	}
-	DrawBorder(x, y, w, h);
+  if (IsAnyDoom2) {
+    GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'grnrock');
+  } else {
+    GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'floor7_2');
+  }
+  DrawBorder(x, y, w, h);
 }
 
 defaultproperties
 {
-	sb_height = 32;
-	MsgBoxFlat = 'flat20';
-	BigSelectorXOffset = -32;
-	BigSelectorYOffset = -5;
-	BigSelectorAnimSpeed = 4;
-	BigSelectorAnimFrames[0] = 'm_skull1';
-	BigSelectorAnimFrames[1] = 'm_skull2';
-	if (!IsAnyDoom2) {
-		DefaultFinaleMusic = 'd_victor';
-		DefaultFinaleType = 'EndGamePic1';
-		quitsounds[0] = '*death';
-		quitsounds[1] = 'demon/pain';
-		quitsounds[2] = 'grunt/pain';
-		quitsounds[3] = 'misc/gibbed';
-		quitsounds[4] = 'misc/teleport';
-		quitsounds[5] = 'grunt/sight1';
-		quitsounds[6] = 'grunt/sight3';
-		quitsounds[7] = 'demon/melee';
-	} else {
-		DefaultFinaleMusic = 'd_read_m';
-		DefaultFinaleType = 'EndGameCast';
-		quitsounds[0] = 'vile/active';
-		quitsounds[1] = 'misc/p_pkup';
-		quitsounds[2] = 'brain/cube';
-		quitsounds[3] = 'misc/gibbed';
-		quitsounds[4] = 'skeleton/swing';
-		quitsounds[5] = 'knight/death';
-		quitsounds[6] = 'baby/active';
-		quitsounds[7] = 'demon/melee';
-	}
-	endmsg[0] = "are you sure you want to\nquit this great game?";
-	endmsg[1] = "please don\'t leave, there\'s more\ndemons to toast!";
-	endmsg[2] = "let\'s beat it -- this is turning\ninto a bloodbath!";
-	endmsg[3] = "i wouldn\'t leave if i were you.\ndos is much worse.";
-	endmsg[4] = "you\'re trying to say you like dos\nbetter than me, right?";
-	endmsg[5] = "don\'t leave yet -- there\'s a\ndemon around that corner!";
-	endmsg[6] = "ya know, next time you come in here\ni\'m gonna toast ya.";
-	endmsg[7] = "go ahead and leave. see if i care.";
-	endmsg[8] = "you want to quit?\nthen, thou hast lost an eighth!";
-	endmsg[9] = "don\'t go now, there\'s a \ndimensional shambler waiting\nat the dos prompt!";
-	endmsg[10] = "get outta here and go back\nto your boring programs.";
-	endmsg[11] = "if i were your boss, i\'d \n deathmatch ya in a minute!";
-	endmsg[12] = "look, bud. you leave now\nand you forfeit your body count!";
-	endmsg[13] = "just leave. when you come\nback, i\'ll be waiting with a bat.";
-	endmsg[14] = "you\'re lucky i don\'t smack\nyou for thinking about leaving.";
+  sb_height = 32;
+  MsgBoxFlat = 'flat20';
+  BigSelectorXOffset = -32;
+  BigSelectorYOffset = -5;
+  BigSelectorAnimSpeed = 4;
+  BigSelectorAnimFrames[0] = 'm_skull1';
+  BigSelectorAnimFrames[1] = 'm_skull2';
+  if (!IsAnyDoom2) {
+    DefaultFinaleMusic = 'd_victor';
+    DefaultFinaleType = 'EndGamePic1';
+    quitsounds[0] = '*death';
+    quitsounds[1] = 'demon/pain';
+    quitsounds[2] = 'grunt/pain';
+    quitsounds[3] = 'misc/gibbed';
+    quitsounds[4] = 'misc/teleport';
+    quitsounds[5] = 'grunt/sight1';
+    quitsounds[6] = 'grunt/sight3';
+    quitsounds[7] = 'demon/melee';
+  } else {
+    DefaultFinaleMusic = 'd_read_m';
+    DefaultFinaleType = 'EndGameCast';
+    quitsounds[0] = 'vile/active';
+    quitsounds[1] = 'misc/p_pkup';
+    quitsounds[2] = 'brain/cube';
+    quitsounds[3] = 'misc/gibbed';
+    quitsounds[4] = 'skeleton/swing';
+    quitsounds[5] = 'knight/death';
+    quitsounds[6] = 'baby/active';
+    quitsounds[7] = 'demon/melee';
+  }
+  endmsg[0] = "are you sure you want to\nquit this great game?";
+  endmsg[1] = "please don\'t leave, there\'s more\ndemons to toast!";
+  endmsg[2] = "let\'s beat it -- this is turning\ninto a bloodbath!";
+  endmsg[3] = "i wouldn\'t leave if i were you.\ndos is much worse.";
+  endmsg[4] = "you\'re trying to say you like dos\nbetter than me, right?";
+  endmsg[5] = "don\'t leave yet -- there\'s a\ndemon around that corner!";
+  endmsg[6] = "ya know, next time you come in here\ni\'m gonna toast ya.";
+  endmsg[7] = "go ahead and leave. see if i care.";
+  endmsg[8] = "you want to quit?\nthen, thou hast lost an eighth!";
+  endmsg[9] = "don\'t go now, there\'s a \ndimensional shambler waiting\nat the dos prompt!";
+  endmsg[10] = "get outta here and go back\nto your boring programs.";
+  endmsg[11] = "if i were your boss, i\'d \n deathmatch ya in a minute!";
+  endmsg[12] = "look, bud. you leave now\nand you forfeit your body count!";
+  endmsg[13] = "just leave. when you come\nback, i\'ll be waiting with a bat.";
+  endmsg[14] = "you\'re lucky i don\'t smack\nyou for thinking about leaving.";
 }

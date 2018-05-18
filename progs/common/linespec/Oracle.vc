@@ -24,66 +24,66 @@
 //**************************************************************************
 
 class Oracle : Actor
-	game(GAME_Strife)
-	__mobjinfo__(199);
+  game(GAME_Strife)
+  __mobjinfo__(199);
 
 //==========================================================================
 //
-//	A_OracleDeath
+//  A_OracleDeath
 //
 //==========================================================================
 
 final void A_OracleDeath()
 {
-	Actor A;
+  Actor A;
 
-	foreach AllThinkers(AlienSpectre3, A)
-	{
-		if (A && A.bMonster && A.Health > 0)
-		{
-			A.Sector->SoundTarget = LastHeard;
-			A.LastHeard = LastHeard;
-			A.Target = Target;
-			A.SetState(A.SeeState);
-		}
-	}
+  foreach AllThinkers(AlienSpectre3, A)
+  {
+    if (A && A.bMonster && A.Health > 0)
+    {
+      A.Sector->SoundTarget = LastHeard;
+      A.LastHeard = LastHeard;
+      A.Target = Target;
+      A.SetState(A.SeeState);
+    }
+  }
 }
 
 states
 {
 Spawn:
-	ORCL A -1
-	Stop
+  ORCL A -1
+  Stop
 Death:
-	ORCL BCDEFGHIJK 5
-	ORCL L 5 A_NoBlocking
-	ORCL M 5
-	ORCL N 5 A_OracleDeath
-	ORCL OP 5
-	ORCL Q -1
-	Stop
+  ORCL BCDEFGHIJK 5
+  ORCL L 5 A_NoBlocking
+  ORCL M 5
+  ORCL N 5 A_OracleDeath
+  ORCL OP 5
+  ORCL Q -1
+  Stop
 }
 
 defaultproperties
 {
-	ConversationID = 65;
-	StrifeName = "ORACLE";
-	Health = 1;
-	Radius = 15.0;
-	Height = 56.0;
-	Mass = 100.0;
-	MaxDropoffHeight = 32.0;
-	bSolid = true;
-	bShootable = true;
-	bCountKill = true;
-	bMonster = true;
-	bActivateMCross = true;
-	bActivatePushWall = true;
-	bFloorClip = true;
-	bPassMobj = true;
-	bCanUseWalls = true;
-	bNoDeathmatch = true;
-	bNoBlood = true;
-	bFireResist = true;
-	bLowSpectralResist = true;
+  ConversationID = 65;
+  StrifeName = "ORACLE";
+  Health = 1;
+  Radius = 15.0;
+  Height = 56.0;
+  Mass = 100.0;
+  MaxDropoffHeight = 32.0;
+  bSolid = true;
+  bShootable = true;
+  bCountKill = true;
+  bMonster = true;
+  bActivateMCross = true;
+  bActivatePushWall = true;
+  bFloorClip = true;
+  bPassMobj = true;
+  bCanUseWalls = true;
+  bNoDeathmatch = true;
+  bNoBlood = true;
+  bFireResist = true;
+  bLowSpectralResist = true;
 }

@@ -24,41 +24,41 @@
 //**************************************************************************
 
 class ArtiTimeBomb : Inventory
-	game(GAME_Heretic)
-	__mobjinfo__(34)
-	__scriptid__(72);
+  game(GAME_Heretic)
+  __mobjinfo__(34)
+  __scriptid__(72);
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	float angle = Owner.Angles.yaw;
-	Actor A = Spawn(ActivatedTimeBomb,
-		Owner.Origin + vector(24.0 * cos(angle), 24.0 * sin(angle),
-		-Owner.FloorClip));
-	A.Target = EntityEx(Owner);
-	return true;
+  float angle = Owner.Angles.yaw;
+  Actor A = Spawn(ActivatedTimeBomb,
+    Owner.Origin + vector(24.0 * cos(angle), 24.0 * sin(angle),
+    -Owner.FloorClip));
+  A.Target = EntityEx(Owner);
+  return true;
 }
 
 states
 {
 Spawn:
-	FBMB E 350
-	Loop
+  FBMB E 350
+  Loop
 }
 
 defaultproperties
 {
-	MaxAmount = DefMaxAmount;
-	PickupSound = 'misc/p_pkup';
-	PickupMessage = "$txt_artifirebomb";
-	IconName = 'artifbmb';
-	bCountItem = true;
-	bFloatBob = true;
-	PickupFlashType = PickupFlash;
-	bInvBar = true;
+  MaxAmount = DefMaxAmount;
+  PickupSound = 'misc/p_pkup';
+  PickupMessage = "$txt_artifirebomb";
+  IconName = 'artifbmb';
+  bCountItem = true;
+  bFloatBob = true;
+  PickupFlashType = PickupFlash;
+  bInvBar = true;
 }

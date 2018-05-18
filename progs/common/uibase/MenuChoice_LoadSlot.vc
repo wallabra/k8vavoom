@@ -27,15 +27,15 @@ class MenuChoice_LoadSlot : MenuSaveSlot;
 
 void ActivateSlot()
 {
-	if (!Status)
-	{
-		// Don't try to load from an empty slot
-		return;
-	}
+  if (!Status)
+  {
+    // Don't try to load from an empty slot
+    return;
+  }
 
-	CmdBuf_AddText("Load %d\n", SlotNum);
-	GetClGame().ForceMenuOff();
-	LocalSound('menu/choose');
+  CmdBuf_AddText("Load %d\n", SlotNum);
+  GetClGame().ForceMenuOff();
+  LocalSound('menu/choose');
 }
 
 defaultproperties

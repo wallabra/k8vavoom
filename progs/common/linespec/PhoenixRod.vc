@@ -24,11 +24,11 @@
 //**************************************************************************
 
 class PhoenixRod : HereticWeapon
-	game(GAME_Heretic)
-	__mobjinfo__(2003)
-	__scriptid__(29);
+  game(GAME_Heretic)
+  __mobjinfo__(2003)
+  __scriptid__(29);
 
-int FlameCount;	// for flame thrower duration
+int FlameCount; // for flame thrower duration
 
 //===========================================================================
 //
@@ -38,52 +38,52 @@ int FlameCount;	// for flame thrower duration
 
 final void A_FirePhoenixPL1() self(Actor)
 {
-	TVec vforward;
+  TVec vforward;
 
-	if (!bIsPlayer)
-	{
-		return;
-	}
-	Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!bIsPlayer)
+  {
+    return;
+  }
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-	Wpn.DepleteAmmo(Wpn.FireMode);
-	SpawnPlayerMissile(PhoenixFX1);
-	AngleVector(&Angles, &vforward);
-	Velocity -= vforward * 140.0;
+  Wpn.DepleteAmmo(Wpn.FireMode);
+  SpawnPlayerMissile(PhoenixFX1);
+  AngleVector(&Angles, &vforward);
+  Velocity -= vforward * 140.0;
 }
 
 states
 {
 Ready:
-	PHNX A 1 DoReadyWeapon
-	Loop
+  PHNX A 1 DoReadyWeapon
+  Loop
 Deselect:
-	PHNX A 1 A_Lower
-	Loop
+  PHNX A 1 A_Lower
+  Loop
 Select:
-	PHNX A 1 A_Raise
-	Loop
+  PHNX A 1 A_Raise
+  Loop
 Fire:
-	PHNX B 5
-	PHNX C 7 A_FirePhoenixPL1
-	PHNX DB 4
-	PHNX B 0 A_ReFire
-	Goto Ready
+  PHNX B 5
+  PHNX C 7 A_FirePhoenixPL1
+  PHNX DB 4
+  PHNX B 0 A_ReFire
+  Goto Ready
 Spawn:
-	WPHX A -1
-	Stop
+  WPHX A -1
+  Stop
 }
 
 defaultproperties
 {
-	SelectionOrder = 2600;
-	AmmoType1 = PhoenixRodAmmo;
-	AmmoUse1 = 1;
-	AmmoGive1 = 2;
-	PSpriteSY = 15.0;
-	PickupMessage = "$txt_wpnphoenixrod";
-	SisterWeaponType = PhoenixRodPowered;
-	BotCombatDist = 256.0;
-	bNoAutoFire = true;
-	bBotProjectile = true;
+  SelectionOrder = 2600;
+  AmmoType1 = PhoenixRodAmmo;
+  AmmoUse1 = 1;
+  AmmoGive1 = 2;
+  PSpriteSY = 15.0;
+  PickupMessage = "$txt_wpnphoenixrod";
+  SisterWeaponType = PhoenixRodPowered;
+  BotCombatDist = 256.0;
+  bNoAutoFire = true;
+  bBotProjectile = true;
 }

@@ -24,9 +24,9 @@
 //**************************************************************************
 
 class ClericWeaponPiece : FourthWeaponPiece
-	abstract;
+  abstract;
 
 defaultproperties
 {
-	PieceClass = ClericPlayer;
+  PieceClass = ClericPlayer;
 }

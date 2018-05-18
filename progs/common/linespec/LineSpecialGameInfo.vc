@@ -25,164 +25,164 @@
 
 class LineSpecialGameInfo : GameInfo;
 
-//	Thing types that are handled durign set-up of a level.
+//  Thing types that are handled durign set-up of a level.
 const int
-	FLOOR_SLOPE_TYPE = 1500,
-	CEILING_SLOPE_TYPE = 1501,
+  FLOOR_SLOPE_TYPE = 1500,
+  CEILING_SLOPE_TYPE = 1501,
 
-	FLOOR_VERTEX_HEIGHT_TYPE = 1504,
-	CEILING_VERTEX_HEIGHT_TYPE = 1505,
+  FLOOR_VERTEX_HEIGHT_TYPE = 1504,
+  CEILING_VERTEX_HEIGHT_TYPE = 1505,
 
-	PO_ANCHOR_TYPE_HEXEN = 3000,
-	PO_SPAWN_TYPE_HEXEN = 3001,
-	PO_SPAWNCRUSH_TYPE_HEXEN = 3002,
+  PO_ANCHOR_TYPE_HEXEN = 3000,
+  PO_SPAWN_TYPE_HEXEN = 3001,
+  PO_SPAWNCRUSH_TYPE_HEXEN = 3002,
 
-	PO_ANCHOR_TYPE = 9300,
-	PO_SPAWN_TYPE = 9301,
-	PO_SPAWNCRUSH_TYPE = 9302,
-	PO_SPAWNHURT_TYPE = 9303,
+  PO_ANCHOR_TYPE = 9300,
+  PO_SPAWN_TYPE = 9301,
+  PO_SPAWNCRUSH_TYPE = 9302,
+  PO_SPAWNHURT_TYPE = 9303,
 
-	SLOPE_FLOOR_POINT_LINE_TYPE = 9500,
-	SLOPE_CEILING_POINT_LINE_TYPE = 9501,
-	SET_FLOOR_SLOPE_TYPE = 9502,
-	SET_CEILING_SLOPE_TYPE = 9503,
-	COPY_FLOOR_PLANE_TYPE = 9510,
-	COPY_CEILING_PLANE_TYPE = 9511;
+  SLOPE_FLOOR_POINT_LINE_TYPE = 9500,
+  SLOPE_CEILING_POINT_LINE_TYPE = 9501,
+  SET_FLOOR_SLOPE_TYPE = 9502,
+  SET_CEILING_SLOPE_TYPE = 9503,
+  COPY_FLOOR_PLANE_TYPE = 9510,
+  COPY_CEILING_PLANE_TYPE = 9511;
 
 const int
-	NUM_WEAPON_SLOTS = 10,
-	MAX_WEAPONS_PER_SLOT = 8;
+  NUM_WEAPON_SLOTS = 10,
+  MAX_WEAPONS_PER_SLOT = 8;
 
 struct WeaponSlot
 {
-	class<Weapon>	Weapons[MAX_WEAPONS_PER_SLOT+1];
+  class<Weapon> Weapons[MAX_WEAPONS_PER_SLOT+1];
 };
 
-float			contents_alpha[9];
+float     contents_alpha[9];
 
-bool			bUseHexenPolyobjTypes;
-//	-- Flags for actor behavior --
-//	In Doom non-clipping missiles doesn't explode when hitting the floor,
+bool      bUseHexenPolyobjTypes;
+//  -- Flags for actor behavior --
+//  In Doom non-clipping missiles doesn't explode when hitting the floor,
 // in other games they do.
-bool			bNoClipIgnoreFloor;
-//	Don't do damage thrust to the invulnerable players
-bool			bNoDamageThrustInvulnerable;
-//	Monsters move faster in nightmare mode.
-bool			bNightmareFastChase;
-//	Use pickup respawn effects like in Raven's games.
-bool			bRavenStylePickupRespawn;
-//	Always to switch to a newly picked up weapon.
-bool			bAlwaysSwitchNewWeapon;
-//	Randomise blood's initial state time
-bool			bBloodRandomiseTime;
-//	Enter blood's spray state
-bool			bBloodSpray;
-//	Ripper blood has no gravity
-bool			bRipperBloodNoGravity;
+bool      bNoClipIgnoreFloor;
+//  Don't do damage thrust to the invulnerable players
+bool      bNoDamageThrustInvulnerable;
+//  Monsters move faster in nightmare mode.
+bool      bNightmareFastChase;
+//  Use pickup respawn effects like in Raven's games.
+bool      bRavenStylePickupRespawn;
+//  Always to switch to a newly picked up weapon.
+bool      bAlwaysSwitchNewWeapon;
+//  Randomise blood's initial state time
+bool      bBloodRandomiseTime;
+//  Enter blood's spray state
+bool      bBloodSpray;
+//  Ripper blood has no gravity
+bool      bRipperBloodNoGravity;
 
-bool			bDehacked;
+bool      bDehacked;
 
-bool			bRespawnItems;
-bool			bRespawnBigItems;
-bool			bWeaponsStay;
-bool			bRandomClass;
+bool      bRespawnItems;
+bool      bRespawnBigItems;
+bool      bWeaponsStay;
+bool      bRandomClass;
 
-float			windTab[3];
-float			pushTab[5];
+float     windTab[3];
+float     pushTab[5];
 
-int				opposite[9];
-int				diags[4];
-float			xspeed[8];
-float			yspeed[8];
+int       opposite[9];
+int       diags[4];
+float     xspeed[8];
+float     yspeed[8];
 
-float			TeleFogHeight;
-name			TeleportFogState;
+float     TeleFogHeight;
+name      TeleportFogState;
 
-float			DefaultKickBack;
+float     DefaultKickBack;
 
-int				NonMonsterAngleIncrements;
+int       NonMonsterAngleIncrements;
 
-int				InvDefaultMaxAmount;
+int       InvDefaultMaxAmount;
 
-float			IceMoveFactor;
-float			GibsHealthFactor;
+float     IceMoveFactor;
+float     GibsHealthFactor;
 
-int				ramp1[16];
-int				ramp2[16];
+int       ramp1[16];
+int       ramp2[16];
 
-WeaponSlot		WeaponSlots[NUM_WEAPON_SLOTS+1];
+WeaponSlot    WeaponSlots[NUM_WEAPON_SLOTS+1];
 
-float			RespawnTime;
+float     RespawnTime;
 
-int				GOD_HEALTH;
+int       GOD_HEALTH;
 
-int				DehExplosionStyle;
-float			DehExplosionAlpha;
+int       DehExplosionStyle;
+float     DehExplosionAlpha;
 
 //==========================================================================
 //
-//	Init
+//  Init
 //
 //==========================================================================
 
 void Init()
 {
-	CreateCvar('zdoom_blood_hack', "0", "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
+  CreateCvar('zdoom_blood_hack', "0", "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
 
-	CreateCvar('movebob', "0.1", "Player movement bobbing.", CVAR_ARCHIVE); // doom default is "0.25"
+  CreateCvar('movebob', "0.1", "Player movement bobbing.", CVAR_ARCHIVE); // doom default is "0.25"
 
-	CreateCvar('menu_quit_prompt', "1", "Show quit prompt on menu quit?", CVAR_ARCHIVE);
+  CreateCvar('menu_quit_prompt', "1", "Show quit prompt on menu quit?", CVAR_ARCHIVE);
 
-	CreateCvar('monster_backing', "0", "Should monsters back away from melee attacker?", CVAR_ARCHIVE);
-	CreateCvar('addrocketexplosion', "0", "Use additive visuals for explosions?", CVAR_ARCHIVE);
-	CreateCvar('damage_thrust', "1", "Should big damage do kickbacks?", CVAR_ARCHIVE);
-	CreateCvar('autoaim', "1", "Should weapons autoaim?", CVAR_ARCHIVE);
-	CreateCvar('monster_dropoff', "0", "Should monsters move away from dropoffs?", CVAR_ARCHIVE);
-	// This one is only used in Hexen for now, but it could come in
-	// handy for other games if needed
-	CreateCvar('alternate_monster_attacks', "0", "Alternate monster attacks in Hexen?", CVAR_ARCHIVE);
-	CreateCvar('wpn_autoswitch', "0", "Should we autoswitch to new weapon?", CVAR_ARCHIVE);
+  CreateCvar('monster_backing', "0", "Should monsters back away from melee attacker?", CVAR_ARCHIVE);
+  CreateCvar('addrocketexplosion', "0", "Use additive visuals for explosions?", CVAR_ARCHIVE);
+  CreateCvar('damage_thrust', "1", "Should big damage do kickbacks?", CVAR_ARCHIVE);
+  CreateCvar('autoaim', "1", "Should weapons autoaim?", CVAR_ARCHIVE);
+  CreateCvar('monster_dropoff', "0", "Should monsters move away from dropoffs?", CVAR_ARCHIVE);
+  // This one is only used in Hexen for now, but it could come in
+  // handy for other games if needed
+  CreateCvar('alternate_monster_attacks', "0", "Alternate monster attacks in Hexen?", CVAR_ARCHIVE);
+  CreateCvar('wpn_autoswitch', "0", "Should we autoswitch to new weapon?", CVAR_ARCHIVE);
 
-	// debug headshots?
-	CreateCvar('k8HSDEBUG', "0", "Show headshots debug messages?", 0);
+  // debug headshots?
+  CreateCvar('k8HSDEBUG', "0", "Show headshots debug messages?", 0);
 
-	// show headshots calculation? (doesn't matter if debug is off)
-	CreateCvar('k8HSShowHeadshots', "1", "Show headshots calculation debug?", 0);
+  // show headshots calculation? (doesn't matter if debug is off)
+  CreateCvar('k8HSShowHeadshots', "1", "Show headshots calculation debug?", 0);
 
-	// show criticals calculation? (doesn't matter if debug is off)
-	CreateCvar('k8HSDebugCrits', "1", "Show headshows criticals debug?", 0);
+  // show criticals calculation? (doesn't matter if debug is off)
+  CreateCvar('k8HSDebugCrits', "1", "Show headshows criticals debug?", 0);
 
-	// enable headshots?
-	CreateCvar('k8HSEnabled', "1", "Is headshots enabled?", CVAR_ARCHIVE);
-	// distance multiplier (the more -- the less headshot chance on big distances)
-	CreateCvar('k8HSDistMult', "1.1", "Headshots distance multiplier (the more -- the less headshot chance on big distances)", CVAR_ARCHIVE);
-	// announce critical messages
-	CreateCvar('k8HSShowCriticals', "1", "Announce critical shots?", CVAR_ARCHIVE);
-	// disable criticals?
-	CreateCvar('k8HSCriticals', "1", "Enable critical shots?", CVAR_ARCHIVE);
+  // enable headshots?
+  CreateCvar('k8HSEnabled', "1", "Is headshots enabled?", CVAR_ARCHIVE);
+  // distance multiplier (the more -- the less headshot chance on big distances)
+  CreateCvar('k8HSDistMult', "1.1", "Headshots distance multiplier (the more -- the less headshot chance on big distances)", CVAR_ARCHIVE);
+  // announce critical messages
+  CreateCvar('k8HSShowCriticals', "1", "Announce critical shots?", CVAR_ARCHIVE);
+  // disable criticals?
+  CreateCvar('k8HSCriticals', "1", "Enable critical shots?", CVAR_ARCHIVE);
 
-	// fastkill/instakill some annoying monsters?
-	CreateCvar('k8HSFastKillAnnoyingMonsters', "1", "Fastkill some annoying monsters?", CVAR_ARCHIVE);
-	// instakill Pain Elementals?
-	CreateCvar('k8HSInstaKillPainElementals', "1", "Instakill Pain Elementals?", CVAR_ARCHIVE);
-	// instakill Lost Souls?
-	CreateCvar('k8HSInstaKillLostSouls', "1", "Instakill Lost Souls?", CVAR_ARCHIVE);
-	// how mush damage should be inflicted to Arch-Vile?
-	CreateCvar('k8HSFastKillArchVileDamage', "120", "Amount of damage dealt for fast-killing ArchViles.", CVAR_ARCHIVE);
+  // fastkill/instakill some annoying monsters?
+  CreateCvar('k8HSFastKillAnnoyingMonsters', "1", "Fastkill some annoying monsters?", CVAR_ARCHIVE);
+  // instakill Pain Elementals?
+  CreateCvar('k8HSInstaKillPainElementals', "1", "Instakill Pain Elementals?", CVAR_ARCHIVE);
+  // instakill Lost Souls?
+  CreateCvar('k8HSInstaKillLostSouls', "1", "Instakill Lost Souls?", CVAR_ARCHIVE);
+  // how mush damage should be inflicted to Arch-Vile?
+  CreateCvar('k8HSFastKillArchVileDamage', "120", "Amount of damage dealt for fast-killing ArchViles.", CVAR_ARCHIVE);
 
-	CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill?", CVAR_ARCHIVE);
-	CreateCvar('k8HSHeadKillBloodCount', "8", "How much blood to spray on instakill?", CVAR_ARCHIVE);
-	CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill?", CVAR_ARCHIVE);
+  CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill?", CVAR_ARCHIVE);
+  CreateCvar('k8HSHeadKillBloodCount', "8", "How much blood to spray on instakill?", CVAR_ARCHIVE);
+  CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill?", CVAR_ARCHIVE);
 
-	CreateCvar('k8AmmoKing', "1", "Enable Ammo King mode?", CVAR_ARCHIVE);
+  CreateCvar('k8AmmoKing', "1", "Enable Ammo King mode?", CVAR_ARCHIVE);
 
-	CreateCvar('k8ElvenGift', "1", "Start game with some Elven Gifts", CVAR_ARCHIVE);
+  CreateCvar('k8ElvenGift', "1", "Start game with some Elven Gifts", CVAR_ARCHIVE);
 
-	CreateCvar('k8ElvenPaine', "0", "Allow Pain Elemental attacks", CVAR_ARCHIVE);
+  CreateCvar('k8ElvenPaine', "0", "Allow Pain Elemental attacks", CVAR_ARCHIVE);
 
-	CreateCvar('k8BerserkSwitch', "1", "Switch to fist when Berserker Pack taken", CVAR_ARCHIVE);
+  CreateCvar('k8BerserkSwitch', "1", "Switch to fist when Berserker Pack taken", CVAR_ARCHIVE);
 
-	CreateCvar('k8ExplodeMissleTest', "0", "Missile explosion testing code", 0);
+  CreateCvar('k8ExplodeMissleTest', "0", "Missile explosion testing code", 0);
 }
 
 //==========================================================================
@@ -193,24 +193,24 @@ void Init()
 
 WorldInfo CreateWorldInfo()
 {
-	return WorldInfo(SpawnObject(WorldInfoEx));
+  return WorldInfo(SpawnObject(WorldInfoEx));
 }
 
 //==========================================================================
 //
-//	SetSkill
+//  SetSkill
 //
 //==========================================================================
 
 void SetSkill(int NewSkill)
 {
-	WorldInfo.SetSkill(NewSkill);
-	fastparm = WorldInfo.bSkillFastMonsters || GetCvar('Fast');
-	RespawnTime = WorldInfo.SkillRespawnTime;
-	if (!RespawnTime && GetCvar('RespawnMonsters'))
-	{
-		RespawnTime = 12.0 / 35.0;
-	}
+  WorldInfo.SetSkill(NewSkill);
+  fastparm = WorldInfo.bSkillFastMonsters || GetCvar('Fast');
+  RespawnTime = WorldInfo.SkillRespawnTime;
+  if (!RespawnTime && GetCvar('RespawnMonsters'))
+  {
+    RespawnTime = 12.0 / 35.0;
+  }
 }
 
 //==========================================================================
@@ -221,550 +221,550 @@ void SetSkill(int NewSkill)
 
 void MakeSlope(Level InLevel, mthing_t* mthing, bool IsCeiling)
 {
-	sector_t*		sec;
-	line_t*			line;
-	int				i;
-	sec_plane_t*	plane;
+  sector_t*   sec;
+  line_t*     line;
+  int       i;
+  sec_plane_t*  plane;
 
-	sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
-	for (i = 0; i < sec->linecount; i++)
-	{
-		line = sec->lines[i];
-		if (mthing->tid == line->arg1)
-		{
-			TVec v1;
-			TVec v2;
-			TVec p1;
-			TVec p2;
-			TVec p3;
+  sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
+  for (i = 0; i < sec->linecount; i++)
+  {
+    line = sec->lines[i];
+    if (mthing->tid == line->arg1)
+    {
+      TVec v1;
+      TVec v2;
+      TVec p1;
+      TVec p2;
+      TVec p3;
 
-			if (!IsCeiling)
-			{
-				plane = &sec->floor;
-				p1 = vector(line->v1->x, line->v1->y, plane->minz);
-				p2 = vector(line->v2->x, line->v2->y, plane->minz);
-			}
-			else
-			{
-				plane = &sec->ceiling;
-				p1 = vector(line->v1->x, line->v1->y, plane->maxz);
-				p2 = vector(line->v2->x, line->v2->y, plane->maxz);
-			}
-			p3 = vector(mthing->x, mthing->y, mthing->height);
-			if (PointOnPlaneSide(p3, line) == IsCeiling)
-			{
-				v1 = p2 - p3;
-				v2 = p1 - p3;
-			}
-			else
-			{
-				v1 = p1 - p3;
-				v2 = p2 - p3;
-			}
-			plane->normal = Normalise(CrossProduct(v1, v2));
-			if (!IsCeiling && plane->normal.z <= 0.0)
-			{
-				Error("Floor with normal.z <= 0.0");
-			}
-			else if (IsCeiling && plane->normal.z >= 0.0)
-			{
-				Error("Ceiling with normal.z >= 0.0");
-			}
-			plane->dist = DotProduct(plane->normal, p3);
-			return;
-		}
-	}
+      if (!IsCeiling)
+      {
+        plane = &sec->floor;
+        p1 = vector(line->v1->x, line->v1->y, plane->minz);
+        p2 = vector(line->v2->x, line->v2->y, plane->minz);
+      }
+      else
+      {
+        plane = &sec->ceiling;
+        p1 = vector(line->v1->x, line->v1->y, plane->maxz);
+        p2 = vector(line->v2->x, line->v2->y, plane->maxz);
+      }
+      p3 = vector(mthing->x, mthing->y, mthing->height);
+      if (PointOnPlaneSide(p3, line) == IsCeiling)
+      {
+        v1 = p2 - p3;
+        v2 = p1 - p3;
+      }
+      else
+      {
+        v1 = p1 - p3;
+        v2 = p2 - p3;
+      }
+      plane->normal = Normalise(CrossProduct(v1, v2));
+      if (!IsCeiling && plane->normal.z <= 0.0)
+      {
+        Error("Floor with normal.z <= 0.0");
+      }
+      else if (IsCeiling && plane->normal.z >= 0.0)
+      {
+        Error("Ceiling with normal.z >= 0.0");
+      }
+      plane->dist = DotProduct(plane->normal, p3);
+      return;
+    }
+  }
 }
 
 //===========================================================================
 //
-//	SlopeLineToPoint
+//  SlopeLineToPoint
 //
 //===========================================================================
 
 void SlopeLineToPoint(Level InLevel, mthing_t* mthing, bool IsCeiling)
 {
-	sector_t*		sec;
-	sec_plane_t*	plane;
-	TVec			p1;
-	TVec			p2;
-	int				i;
-	TVec			v1;
-	TVec			v2;
-	TVec			cross;
+  sector_t*   sec;
+  sec_plane_t*  plane;
+  TVec      p1;
+  TVec      p2;
+  int       i;
+  TVec      v1;
+  TVec      v2;
+  TVec      cross;
 
-	sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
-	if (!IsCeiling)
-	{
-		plane = &sec->floor;
-	}
-	else
-	{
-		plane = &sec->ceiling;
-	}
-	p1 = vector(mthing->x, mthing->y, 0.0);
-	p1.z = GetPlanePointZ(plane, p1) + mthing->height;
+  sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
+  if (!IsCeiling)
+  {
+    plane = &sec->floor;
+  }
+  else
+  {
+    plane = &sec->ceiling;
+  }
+  p1 = vector(mthing->x, mthing->y, 0.0);
+  p1.z = GetPlanePointZ(plane, p1) + mthing->height;
 
-	for (i = 0; i < InLevel.NumLines; i++)
-	{
-		line_t* line = &InLevel.Lines[i];
-		if (line->LineTag != mthing->arg1)
-		{
-			continue;
-		}
+  for (i = 0; i < InLevel.NumLines; i++)
+  {
+    line_t* line = &InLevel.Lines[i];
+    if (line->LineTag != mthing->arg1)
+    {
+      continue;
+    }
 
-		if (PointOnPlaneSide(p1, line) == 0)
-		{
-			sec = line->frontsector;
-		}
-		else
-		{
-			sec = line->backsector;
-		}
-		if (sec == NULL)
-		{
-			continue;
-		}
-		if (!IsCeiling)
-		{
-			plane = &sec->floor;
-		}
-		else
-		{
-			plane = &sec->ceiling;
-		}
+    if (PointOnPlaneSide(p1, line) == 0)
+    {
+      sec = line->frontsector;
+    }
+    else
+    {
+      sec = line->backsector;
+    }
+    if (sec == NULL)
+    {
+      continue;
+    }
+    if (!IsCeiling)
+    {
+      plane = &sec->floor;
+    }
+    else
+    {
+      plane = &sec->ceiling;
+    }
 
-		p2 = *line->v1;
-		p2.z = GetPlanePointZ(plane, p2);
-		v1 = *line->v2 - *line->v1;
-		v1.z = GetPlanePointZ(plane, *line->v2) - p2.z;
-		v2 = p1 - *line->v1;
-		v2.z = p1.z - p2.z;
+    p2 = *line->v1;
+    p2.z = GetPlanePointZ(plane, p2);
+    v1 = *line->v2 - *line->v1;
+    v1.z = GetPlanePointZ(plane, *line->v2) - p2.z;
+    v2 = p1 - *line->v1;
+    v2.z = p1.z - p2.z;
 
-		cross = CrossProduct(v1, v2);
-		float len = Length(cross);
-		if (len == 0.0)
-		{
-			print("Slope thing at (%d,%d) lies directly on its target line.\n",
-				mthing->x, mthing->y);
-			return;
-		}
-		cross = cross / len;
-		// Fix backward normals
-		if ((cross.z < 0.0 && !IsCeiling) || (cross.z > 0.0 && IsCeiling))
-		{
-			cross = -cross;
-		}
+    cross = CrossProduct(v1, v2);
+    float len = Length(cross);
+    if (len == 0.0)
+    {
+      print("Slope thing at (%d,%d) lies directly on its target line.\n",
+        mthing->x, mthing->y);
+      return;
+    }
+    cross = cross / len;
+    // Fix backward normals
+    if ((cross.z < 0.0 && !IsCeiling) || (cross.z > 0.0 && IsCeiling))
+    {
+      cross = -cross;
+    }
 
-		plane->normal = cross;
-		plane->dist = DotProduct(plane->normal, p1);
-	}
+    plane->normal = cross;
+    plane->dist = DotProduct(plane->normal, p1);
+  }
 }
 
 //===========================================================================
 //
-//	SetSlope
+//  SetSlope
 //
 //===========================================================================
 
 void SetSlope(Level InLevel, mthing_t* mthing, bool IsCeiling)
 {
-	TVec			p1;
-	sec_plane_t*	plane;
-	sector_t*		sec;
-	float			xyang;
-	float			zang;
-	TVec			norm;
+  TVec      p1;
+  sec_plane_t*  plane;
+  sector_t*   sec;
+  float     xyang;
+  float     zang;
+  TVec      norm;
 
-	sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
-	if (!IsCeiling)
-	{
-		plane = &sec->floor;
-	}
-	else
-	{
-		plane = &sec->ceiling;
-	}
-	p1 = vector(mthing->x, mthing->y, 0.0);
-	p1.z = GetPlanePointZ(plane, p1) + mthing->height;
+  sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
+  if (!IsCeiling)
+  {
+    plane = &sec->floor;
+  }
+  else
+  {
+    plane = &sec->ceiling;
+  }
+  p1 = vector(mthing->x, mthing->y, 0.0);
+  p1.z = GetPlanePointZ(plane, p1) + mthing->height;
 
-	if (mthing->arg1 >= 180)
-	{
-		zang = 179.0;
-	}
-	else if (mthing->arg1 <= 0)
-	{
-		zang = 1.0;
-	}
-	else
-	{
-		zang = itof(mthing->arg1);
-	}
-	if (IsCeiling)
-	{
-		zang += 180.0;
-	}
+  if (mthing->arg1 >= 180)
+  {
+    zang = 179.0;
+  }
+  else if (mthing->arg1 <= 0)
+  {
+    zang = 1.0;
+  }
+  else
+  {
+    zang = itof(mthing->arg1);
+  }
+  if (IsCeiling)
+  {
+    zang += 180.0;
+  }
 
-	xyang = itof(mthing->angle);
+  xyang = itof(mthing->angle);
 
-	norm.x = cos(zang) * cos(xyang);
-	norm.y = cos(zang) * sin(xyang);
-	norm.z = sin(zang);
-	norm = Normalise(norm);
-	plane->normal = norm;
-	plane->dist = DotProduct(plane->normal, p1);
+  norm.x = cos(zang) * cos(xyang);
+  norm.y = cos(zang) * sin(xyang);
+  norm.z = sin(zang);
+  norm = Normalise(norm);
+  plane->normal = norm;
+  plane->dist = DotProduct(plane->normal, p1);
 }
 
 //==========================================================================
 //
-//	SetVertexHeights
+//  SetVertexHeights
 //
 //==========================================================================
 
 bool SetVertexHeights(Level InLevel, int ThingID)
 {
-	int i;
-	int j;
-	bool ret;
-	mthing_t * mthing;
-	
-	ret = false;
-	//	Clean all
-	for (i = 0; i < InLevel.NumVertexes; i++)
-	{
-		InLevel.Vertexes[i].z = 0.1;
-	}
-	for (j = 0; j < InLevel.NumThings; j++)
-	{
-		mthing = &InLevel.Things[j];
-		if (mthing->type == ThingID)
-		{
-			for (i = 0; i < InLevel.NumVertexes; i++)
-			{
-				if (InLevel.Vertexes[i].x == mthing->x &&
-					InLevel.Vertexes[i].y == mthing->y)
-				{
-					InLevel.Vertexes[i].z = mthing->height;
-					ret = true;
-				}
-			}
-			mthing->type = 0;
-		}
-	}
-	return ret;
+  int i;
+  int j;
+  bool ret;
+  mthing_t * mthing;
+
+  ret = false;
+  //  Clean all
+  for (i = 0; i < InLevel.NumVertexes; i++)
+  {
+    InLevel.Vertexes[i].z = 0.1;
+  }
+  for (j = 0; j < InLevel.NumThings; j++)
+  {
+    mthing = &InLevel.Things[j];
+    if (mthing->type == ThingID)
+    {
+      for (i = 0; i < InLevel.NumVertexes; i++)
+      {
+        if (InLevel.Vertexes[i].x == mthing->x &&
+          InLevel.Vertexes[i].y == mthing->y)
+        {
+          InLevel.Vertexes[i].z = mthing->height;
+          ret = true;
+        }
+      }
+      mthing->type = 0;
+    }
+  }
+  return ret;
 }
 
 //==========================================================================
 //
-//	CleanVertexHeights
+//  CleanVertexHeights
 //
 //==========================================================================
 
 void CleanVertexHeights(Level InLevel)
 {
-	int i;
-	
-	for (i = 0; i < InLevel.NumVertexes; i++)
-	{
-		InLevel.Vertexes[i].z = 0.0;
-	}
+  int i;
+
+  for (i = 0; i < InLevel.NumVertexes; i++)
+  {
+    InLevel.Vertexes[i].z = 0.0;
+  }
 }
 
 //==========================================================================
 //
-//	MakeVertexFloorHeights
+//  MakeVertexFloorHeights
 //
 //==========================================================================
 
 void MakeVertexFloorHeights(Level InLevel)
 {
-	int i;
-	sector_t *sec;
-	TVec p1;
-	TVec p2;
-	TVec p3;
-	TVec v1;
-	TVec v2;
-	
-	if (!SetVertexHeights(InLevel, FLOOR_VERTEX_HEIGHT_TYPE))
-	{
-		return;
-	}
-	for (i = 0; i < InLevel.NumSectors; i++)
-	{
-		sec = &InLevel.Sectors[i];
-		if (sec->linecount != 3)
-			continue;
-		p1 = *sec->lines[0]->v1;
-		p2 = *sec->lines[0]->v2;
-		if (sec->lines[1]->v1 == sec->lines[0]->v1 ||
-			sec->lines[1]->v1 == sec->lines[0]->v2)
-		{
-			p3 = *sec->lines[1]->v2;
-		}
-		else
-		{
-			p3 = *sec->lines[1]->v1;
-		}
-		if (p1.z == 0.1 && p2.z == 0.1 && p3.z == 0.1)
-		{
-			continue;
-		}
-		if (p1.z == 0.1)
-		{
-			p1.z = sec->floor.TexZ;
-		}
-		if (p2.z == 0.1)
-		{
-			p2.z = sec->floor.TexZ;
-		}
-		if (p3.z == 0.1)
-		{
-			p3.z = sec->floor.TexZ;
-		}
-		if (PointOnPlaneSide(p3, sec->lines[0]) == 0)
-		{
-			v1 = p2 - p3;
-			v2 = p1 - p3;
-		}
-		else
-		{
-			v1 = p1 - p3;
-			v2 = p2 - p3;
-		}
-		sec->floor.normal = Normalise(CrossProduct(v1, v2));
-		if (sec->floor.normal.z <= 0.0)
-		{
-			Error("Floor with normal.z <= 0.0");
-		}
-		sec->floor.dist = DotProduct(sec->floor.normal, p3);
-	}
+  int i;
+  sector_t *sec;
+  TVec p1;
+  TVec p2;
+  TVec p3;
+  TVec v1;
+  TVec v2;
+
+  if (!SetVertexHeights(InLevel, FLOOR_VERTEX_HEIGHT_TYPE))
+  {
+    return;
+  }
+  for (i = 0; i < InLevel.NumSectors; i++)
+  {
+    sec = &InLevel.Sectors[i];
+    if (sec->linecount != 3)
+      continue;
+    p1 = *sec->lines[0]->v1;
+    p2 = *sec->lines[0]->v2;
+    if (sec->lines[1]->v1 == sec->lines[0]->v1 ||
+      sec->lines[1]->v1 == sec->lines[0]->v2)
+    {
+      p3 = *sec->lines[1]->v2;
+    }
+    else
+    {
+      p3 = *sec->lines[1]->v1;
+    }
+    if (p1.z == 0.1 && p2.z == 0.1 && p3.z == 0.1)
+    {
+      continue;
+    }
+    if (p1.z == 0.1)
+    {
+      p1.z = sec->floor.TexZ;
+    }
+    if (p2.z == 0.1)
+    {
+      p2.z = sec->floor.TexZ;
+    }
+    if (p3.z == 0.1)
+    {
+      p3.z = sec->floor.TexZ;
+    }
+    if (PointOnPlaneSide(p3, sec->lines[0]) == 0)
+    {
+      v1 = p2 - p3;
+      v2 = p1 - p3;
+    }
+    else
+    {
+      v1 = p1 - p3;
+      v2 = p2 - p3;
+    }
+    sec->floor.normal = Normalise(CrossProduct(v1, v2));
+    if (sec->floor.normal.z <= 0.0)
+    {
+      Error("Floor with normal.z <= 0.0");
+    }
+    sec->floor.dist = DotProduct(sec->floor.normal, p3);
+  }
 }
 
 //==========================================================================
 //
-//	MakeVertexCeilingHeights
+//  MakeVertexCeilingHeights
 //
 //==========================================================================
 
 void MakeVertexCeilingHeights(Level InLevel)
 {
-	int i;
-	sector_t *sec;
-	TVec p1;
-	TVec p2;
-	TVec p3;
-	TVec v1;
-	TVec v2;
-	
-	if (!SetVertexHeights(InLevel, CEILING_VERTEX_HEIGHT_TYPE))
-	{
-		return;
-	}
-	for (i = 0; i < InLevel.NumSectors; i++)
-	{
-		sec = &InLevel.Sectors[i];
-		if (sec->linecount != 3)
-			continue;
-		p1 = *sec->lines[0]->v1;
-		p2 = *sec->lines[0]->v2;
-		if (sec->lines[1]->v1 == sec->lines[0]->v1 ||
-			sec->lines[1]->v1 == sec->lines[0]->v2)
-		{
-			p3 = *sec->lines[1]->v2;
-		}
-		else
-		{
-			p3 = *sec->lines[1]->v1;
-		}
-		if (p1.z == 0.1 && p2.z == 0.1 && p3.z == 0.1)
-		{
-			continue;
-		}
-		if (p1.z == 0.1)
-		{
-			p1.z = sec->ceiling.TexZ;
-		}
-		if (p2.z == 0.1)
-		{
-			p2.z = sec->ceiling.TexZ;
-		}
-		if (p3.z == 0.1)
-		{
-			p3.z = sec->ceiling.TexZ;
-		}
-		if (PointOnPlaneSide(p3, sec->lines[0]) == 0)
-		{
-			v1 = p1 - p3;
-			v2 = p2 - p3;
-		}
-		else
-		{
-			v1 = p2 - p3;
-			v2 = p1 - p3;
-		}
-		sec->ceiling.normal = Normalise(CrossProduct(v1, v2));
-		if (sec->ceiling.normal.z >= 0.0)
-		{
-			Error("Ceiling with normal.z >= 0.0");
-		}
-		sec->ceiling.dist = DotProduct(sec->ceiling.normal, p3);
-	}
+  int i;
+  sector_t *sec;
+  TVec p1;
+  TVec p2;
+  TVec p3;
+  TVec v1;
+  TVec v2;
+
+  if (!SetVertexHeights(InLevel, CEILING_VERTEX_HEIGHT_TYPE))
+  {
+    return;
+  }
+  for (i = 0; i < InLevel.NumSectors; i++)
+  {
+    sec = &InLevel.Sectors[i];
+    if (sec->linecount != 3)
+      continue;
+    p1 = *sec->lines[0]->v1;
+    p2 = *sec->lines[0]->v2;
+    if (sec->lines[1]->v1 == sec->lines[0]->v1 ||
+      sec->lines[1]->v1 == sec->lines[0]->v2)
+    {
+      p3 = *sec->lines[1]->v2;
+    }
+    else
+    {
+      p3 = *sec->lines[1]->v1;
+    }
+    if (p1.z == 0.1 && p2.z == 0.1 && p3.z == 0.1)
+    {
+      continue;
+    }
+    if (p1.z == 0.1)
+    {
+      p1.z = sec->ceiling.TexZ;
+    }
+    if (p2.z == 0.1)
+    {
+      p2.z = sec->ceiling.TexZ;
+    }
+    if (p3.z == 0.1)
+    {
+      p3.z = sec->ceiling.TexZ;
+    }
+    if (PointOnPlaneSide(p3, sec->lines[0]) == 0)
+    {
+      v1 = p1 - p3;
+      v2 = p2 - p3;
+    }
+    else
+    {
+      v1 = p2 - p3;
+      v2 = p1 - p3;
+    }
+    sec->ceiling.normal = Normalise(CrossProduct(v1, v2));
+    if (sec->ceiling.normal.z >= 0.0)
+    {
+      Error("Ceiling with normal.z >= 0.0");
+    }
+    sec->ceiling.dist = DotProduct(sec->ceiling.normal, p3);
+  }
 }
 
 //==========================================================================
 //
-//	AlignPlane
+//  AlignPlane
 //
-//	Set slopes for sectors, based on line specials
+//  Set slopes for sectors, based on line specials
 //
-//	Aligns the floor or ceiling of a sector to the corresponding plane
+//  Aligns the floor or ceiling of a sector to the corresponding plane
 // on the other side of the reference line. (By definition, line must be
 // two-sided.)
 //
-//	If (which & 1), sets floor.
-//	If (which & 2), sets ceiling.
+//  If (which & 1), sets floor.
+//  If (which & 2), sets ceiling.
 //
 //==========================================================================
 
 void AlignPlane(Level InLevel, sector_t *sec, line_t *line, int which)
 {
-	sector_t *refsec;
-	float bestdist;
-	TVec *refvert = (*sec->lines)->v1;
-	int i;
-	line_t **probe;
-	float dist;
-	TVec *vert;
-	TVec p, v1, v2, cross;
-	sec_plane_t *refplane;
-	sec_plane_t *srcplane;
-	float srcheight, destheight;
+  sector_t *refsec;
+  float bestdist;
+  TVec *refvert = (*sec->lines)->v1;
+  int i;
+  line_t **probe;
+  float dist;
+  TVec *vert;
+  TVec p, v1, v2, cross;
+  sec_plane_t *refplane;
+  sec_plane_t *srcplane;
+  float srcheight, destheight;
 
-	if (line->backsector == NULL)
-		return;
+  if (line->backsector == NULL)
+    return;
 
-	//	Find furthest vertex from the reference line. It, along with the two
-	// ends of the line will define the plane.
-	bestdist = 0.0;
-	for (i = sec->linecount * 2, probe = sec->lines; i > 0; i--)
-	{
-		if (i & 1)
-		{
-			vert = (*probe)->v2;
-			probe = &probe[1];
-		}
-		else
-			vert = (*probe)->v1;
-		dist = fabs(DotProduct(*vert, line->normal) - line->dist);
+  //  Find furthest vertex from the reference line. It, along with the two
+  // ends of the line will define the plane.
+  bestdist = 0.0;
+  for (i = sec->linecount * 2, probe = sec->lines; i > 0; i--)
+  {
+    if (i & 1)
+    {
+      vert = (*probe)->v2;
+      probe = &probe[1];
+    }
+    else
+      vert = (*probe)->v1;
+    dist = fabs(DotProduct(*vert, line->normal) - line->dist);
 
-		if (dist > bestdist)
-		{
-			bestdist = dist;
-			refvert = vert;
-		}
-	}
+    if (dist > bestdist)
+    {
+      bestdist = dist;
+      refvert = vert;
+    }
+  }
 
-	refsec = line->frontsector == sec ? line->backsector : line->frontsector;
+  refsec = line->frontsector == sec ? line->backsector : line->frontsector;
 
-	p = *line->v1;
-	v1 = *line->v2 - *line->v1;
-	v2 = *refvert - *line->v1;
+  p = *line->v1;
+  v1 = *line->v2 - *line->v1;
+  v2 = *refvert - *line->v1;
 
-	refplane = (which == 0) ? &refsec->floor : &refsec->ceiling;
-	srcplane = (which == 0) ? &sec->floor : &sec->ceiling;
-	srcheight = (which == 0) ? sec->floor.TexZ : sec->ceiling.TexZ;
-	destheight = (which == 0) ? refsec->floor.TexZ : refsec->ceiling.TexZ;
+  refplane = (which == 0) ? &refsec->floor : &refsec->ceiling;
+  srcplane = (which == 0) ? &sec->floor : &sec->ceiling;
+  srcheight = (which == 0) ? sec->floor.TexZ : sec->ceiling.TexZ;
+  destheight = (which == 0) ? refsec->floor.TexZ : refsec->ceiling.TexZ;
 
-	p.z = destheight;
-	v1.z = 0.0;
-	v2.z = srcheight - destheight;
+  p.z = destheight;
+  v1.z = 0.0;
+  v2.z = srcheight - destheight;
 
-	cross = Normalise(CrossProduct(v1, v2));
+  cross = Normalise(CrossProduct(v1, v2));
 
-	// Fix backward normals
-	if ((cross.z < 0.0 && which == 0) || (cross.z > 0.0 && which == 1))
-	{
-		cross = -cross;
-	}
+  // Fix backward normals
+  if ((cross.z < 0.0 && which == 0) || (cross.z > 0.0 && which == 1))
+  {
+    cross = -cross;
+  }
 
-	srcplane->normal = cross;
-	srcplane->dist = DotProduct(cross, p);
+  srcplane->normal = cross;
+  srcplane->dist = DotProduct(cross, p);
 }
 
 //==========================================================================
 //
-//	SetSlopes
+//  SetSlopes
 //
 //==========================================================================
 
 void SetSlopes(Level InLevel)
 {
-	int i, s;
+  int i, s;
 
-	for (i = 0; i < InLevel.NumLines; i++)
-	{
-		if (InLevel.Lines[i].special == LNSPEC_PlaneAlign)
-		{
-			InLevel.Lines[i].special = 0;
-			InLevel.Lines[i].LineTag = InLevel.Lines[i].arg3;
-			if (InLevel.Lines[i].backsector != NULL)
-			{
-				// args[0] is for floor, args[1] is for ceiling
-				//
-				// As a special case, if args[1] is 0,
-				// then args[0], bits 2-3 are for ceiling.
-				for (s = 0; s < 2; s++)
-				{
-					int bits = (s == 0 ? InLevel.Lines[i].arg1 :
- 						InLevel.Lines[i].arg2) & 3;
+  for (i = 0; i < InLevel.NumLines; i++)
+  {
+    if (InLevel.Lines[i].special == LNSPEC_PlaneAlign)
+    {
+      InLevel.Lines[i].special = 0;
+      InLevel.Lines[i].LineTag = InLevel.Lines[i].arg3;
+      if (InLevel.Lines[i].backsector != NULL)
+      {
+        // args[0] is for floor, args[1] is for ceiling
+        //
+        // As a special case, if args[1] is 0,
+        // then args[0], bits 2-3 are for ceiling.
+        for (s = 0; s < 2; s++)
+        {
+          int bits = (s == 0 ? InLevel.Lines[i].arg1 :
+            InLevel.Lines[i].arg2) & 3;
 
-					if (s == 1 && bits == 0)
-						bits = (InLevel.Lines[i].arg1 >> 2) & 3;
+          if (s == 1 && bits == 0)
+            bits = (InLevel.Lines[i].arg1 >> 2) & 3;
 
-					if (bits == 1)			// align front side to back
-						AlignPlane(InLevel, InLevel.Lines[i].frontsector,
-							&InLevel.Lines[i], s);
-					else if (bits == 2)		// align back side to front
-						AlignPlane(InLevel, InLevel.Lines[i].backsector,
-							&InLevel.Lines[i], s);
-				}
-			}
-		}
-	}
+          if (bits == 1)      // align front side to back
+            AlignPlane(InLevel, InLevel.Lines[i].frontsector,
+              &InLevel.Lines[i], s);
+          else if (bits == 2)   // align back side to front
+            AlignPlane(InLevel, InLevel.Lines[i].backsector,
+              &InLevel.Lines[i], s);
+        }
+      }
+    }
+  }
 }
 
 //===========================================================================
 //
-//	CopyPlane
+//  CopyPlane
 //
 //===========================================================================
 
 void CopyPlane(Level InLevel, mthing_t* mthing, bool IsCeiling)
 {
-	sector_t*	dst;
-	sector_t*	src;
-	int			secnum;
+  sector_t* dst;
+  sector_t* src;
+  int     secnum;
 
-	dst = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
-	secnum = InLevel.FindSectorFromTag(mthing->arg1, -1);
-	if (secnum == -1)
-	{
-		return;
-	}
+  dst = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
+  secnum = InLevel.FindSectorFromTag(mthing->arg1, -1);
+  if (secnum == -1)
+  {
+    return;
+  }
 
-	src = &InLevel.Sectors[secnum];
+  src = &InLevel.Sectors[secnum];
 
-	if (!IsCeiling)
-	{
-		dst->floor.normal = src->floor.normal;
-		dst->floor.dist = src->floor.dist;
-	}
-	else
-	{
-		dst->ceiling.normal = src->ceiling.normal;
-		dst->ceiling.dist = src->ceiling.dist;
-	}
+  if (!IsCeiling)
+  {
+    dst->floor.normal = src->floor.normal;
+    dst->floor.dist = src->floor.dist;
+  }
+  else
+  {
+    dst->ceiling.normal = src->ceiling.normal;
+    dst->ceiling.dist = src->ceiling.dist;
+  }
 }
 
 //==========================================================================
@@ -775,15 +775,15 @@ void CopyPlane(Level InLevel, mthing_t* mthing, bool IsCeiling)
 
 void SpawnExtraFloors(Level InLevel, line_t * line)
 {
-	int j;
+  int j;
 
-	for (j = 0; j < InLevel.NumSectors; j++)
-	{
-		if (line->arg1 == InLevel.Sectors[j].tag)
-		{
-			InLevel.AddExtraFloor(line, &InLevel.Sectors[j]);
-		}
-	}
+  for (j = 0; j < InLevel.NumSectors; j++)
+  {
+    if (line->arg1 == InLevel.Sectors[j].tag)
+    {
+      InLevel.AddExtraFloor(line, &InLevel.Sectors[j]);
+    }
+  }
 }
 
 //==========================================================================
@@ -794,78 +794,78 @@ void SpawnExtraFloors(Level InLevel, line_t * line)
 
 void MakeContents(line_t * line)
 {
-	int contents;
+  int contents;
 
-	if (!line->arg1 && !line->arg2 && !line->arg3)
-	{
-		contents = 1;//CONTENTS_WATER;
-		line->frontsector->params.contents = contents;
-		if (line->frontsector->floor.dist == -line->frontsector->ceiling.dist)
-		{
-			line->frontsector->floor.Alpha =
-				contents_alpha[contents];
-			line->frontsector->ceiling.Alpha =
-				contents_alpha[contents];
-			line->frontsector->ceiling.flags |=
-				SPF_NOBLOCKING | SPF_NOBLOCKSIGHT | SPF_NOBLOCKSHOOT;
-			line->frontsector->floor.flags |=
-				SPF_NOBLOCKING | SPF_NOBLOCKSIGHT | SPF_NOBLOCKSHOOT;
-		}
-	}
-	else
-	{
-		line->frontsector->params.contents = line->arg1;
+  if (!line->arg1 && !line->arg2 && !line->arg3)
+  {
+    contents = 1;//CONTENTS_WATER;
+    line->frontsector->params.contents = contents;
+    if (line->frontsector->floor.dist == -line->frontsector->ceiling.dist)
+    {
+      line->frontsector->floor.Alpha =
+        contents_alpha[contents];
+      line->frontsector->ceiling.Alpha =
+        contents_alpha[contents];
+      line->frontsector->ceiling.flags |=
+        SPF_NOBLOCKING | SPF_NOBLOCKSIGHT | SPF_NOBLOCKSHOOT;
+      line->frontsector->floor.flags |=
+        SPF_NOBLOCKING | SPF_NOBLOCKSIGHT | SPF_NOBLOCKSHOOT;
+    }
+  }
+  else
+  {
+    line->frontsector->params.contents = line->arg1;
 
-		line->frontsector->floor.Alpha = (100.0 - itof(line->arg2)) / 100.0;
-		line->frontsector->ceiling.Alpha = (100.0 - itof(line->arg2)) / 100.0;
+    line->frontsector->floor.Alpha = (100.0 - itof(line->arg2)) / 100.0;
+    line->frontsector->ceiling.Alpha = (100.0 - itof(line->arg2)) / 100.0;
 
-		line->frontsector->ceiling.flags = line->arg3;
-		line->frontsector->floor.flags = line->arg3;
-	}
+    line->frontsector->ceiling.flags = line->arg3;
+    line->frontsector->floor.flags = line->arg3;
+  }
 }
 
 //==========================================================================
 //
 //  MakeHeightSec
 //
-//	killough 3/7/98:
-//	support for drawn heights coming from different sector
+//  killough 3/7/98:
+//  support for drawn heights coming from different sector
 //
 //==========================================================================
 
 void MakeHeightSec(Level InLevel, line_t* Line)
 {
-	sector_t*	Sec;
-	int			s;
+  sector_t* Sec;
+  int     s;
 
-	Sec = Line->frontsector;
-	Sec->bTransferSource = true;
-	if (Line->arg2 & 2)
-	{
-		Sec->bFakeFloorOnly = true;
-	}
-	if (Line->arg2 & 4)
-	{
-		Sec->bClipFakePlanes = true;
-	}
-	if (Line->arg2 & 8)
-	{
-		Sec->bUnderWater = true;
-	}
-	if (Line->arg2 & 16)
-	{
-		Sec->bIgnoreHeightSec = true;
-	}
-	if (Line->arg2 & 32)
-	{
-		Sec->bNoFakeLight = true;
-	}
-	for (s = InLevel.FindSectorFromTag(Line->arg1, -1); s  >= 0;
-		s = InLevel.FindSectorFromTag(Line->arg1, s))
-	{
-		InLevel.Sectors[s].heightsec = Sec;
-		InLevel.SetHeightSector(&InLevel.Sectors[s], Sec, Line->arg2);
-	}
+  Sec = Line->frontsector;
+  Sec->bTransferSource = true;
+  if (Line->arg2 & 2)
+  {
+    Sec->bFakeFloorOnly = true;
+  }
+  if (Line->arg2 & 4)
+  {
+    Sec->bClipFakePlanes = true;
+  }
+  if (Line->arg2 & 8)
+  {
+    Sec->bUnderWater = true;
+  }
+  if (Line->arg2 & 16)
+  {
+    Sec->bIgnoreHeightSec = true;
+  }
+  if (Line->arg2 & 32)
+  {
+    Sec->bNoFakeLight = true;
+  }
+  for (s = InLevel.FindSectorFromTag(Line->arg1, -1); s  >= 0;
+    s = InLevel.FindSectorFromTag(Line->arg1, s))
+  {
+    InLevel.Sectors[s].heightsec = Sec;
+    InLevel.SetHeightSector(&InLevel.Sectors[s], Sec, Line->arg2);
+  }
 }
 
 //==========================================================================
@@ -876,70 +876,70 @@ void MakeHeightSec(Level InLevel, line_t* Line)
 
 void SetSectorFriction(Level InLevel, int tag, int amount, bool alterFlag)
 {
-	int			s;
-	int			OldFriction;
-	int			OldMoveFactor;
-	float		Friction;
-	float		MoveFactor;
+  int     s;
+  int     OldFriction;
+  int     OldMoveFactor;
+  float   Friction;
+  float   MoveFactor;
 
-	// An amount of 100 should result in a friction of
-	// ORIG_FRICTION (0xE800)
-	OldFriction = (0x1EB8 * amount) / 0x80 + 0xD001;
+  // An amount of 100 should result in a friction of
+  // ORIG_FRICTION (0xE800)
+  OldFriction = (0x1EB8 * amount) / 0x80 + 0xD001;
 
-	// killough 8/28/98: prevent odd situations
-	if (OldFriction > 0x10000)
-		OldFriction = 0x10000;
-	if (OldFriction < 0)
-		OldFriction = 0;
+  // killough 8/28/98: prevent odd situations
+  if (OldFriction > 0x10000)
+    OldFriction = 0x10000;
+  if (OldFriction < 0)
+    OldFriction = 0;
 
-	// The following check might seem odd. At the time of movement,
-	// the move distance is multiplied by 'friction/0x10000', so a
-	// higher friction value actually means 'less friction'.
+  // The following check might seem odd. At the time of movement,
+  // the move distance is multiplied by 'friction/0x10000', so a
+  // higher friction value actually means 'less friction'.
 
-	// [RH] Twiddled these values so that momentum on ice (with
-	//		friction 0xf900) is the same as in Heretic/Hexen.
-	if (OldFriction >= 0xe800)	// ice
-//		movefactor = ((0x10092 - friction)*(0x70))/0x158;
-		OldMoveFactor = ((0x10092 - OldFriction) * 1024) / 4352 + 568;
-	else
-		OldMoveFactor = ((OldFriction - 0xDB34) * (0xA)) / 0x80;
+  // [RH] Twiddled these values so that momentum on ice (with
+  //    friction 0xf900) is the same as in Heretic/Hexen.
+  if (OldFriction >= 0xe800)  // ice
+//    movefactor = ((0x10092 - friction)*(0x70))/0x158;
+    OldMoveFactor = ((0x10092 - OldFriction) * 1024) / 4352 + 568;
+  else
+    OldMoveFactor = ((OldFriction - 0xDB34) * (0xA)) / 0x80;
 
-	// killough 8/28/98: prevent odd situations
-	if (OldMoveFactor < 32)
-		OldMoveFactor = 32;
+  // killough 8/28/98: prevent odd situations
+  if (OldMoveFactor < 32)
+    OldMoveFactor = 32;
 
-	Friction = (1.0 - itof(OldFriction) / itof(0x10000)) * 35.0;
-	MoveFactor = itof(OldMoveFactor) / itof(0x10000);
+  Friction = (1.0 - itof(OldFriction) / itof(0x10000)) * 35.0;
+  MoveFactor = itof(OldMoveFactor) / itof(0x10000);
 
-	for (s = InLevel.FindSectorFromTag(tag, -1); s >= 0;
-		s = InLevel.FindSectorFromTag(tag, s))
-	{
-		// killough 8/28/98:
-		//
-		// Instead of spawning thinkers, which are slow and expensive,
-		// modify the sector's own friction values. Friction should be
-		// a property of sectors, not objects which reside inside them.
-		// Original code scanned every object in every friction sector
-		// on every tic, adjusting its friction, putting unnecessary
-		// drag on CPU. New code adjusts friction of sector only once
-		// at level startup, and then uses this friction value.
+  for (s = InLevel.FindSectorFromTag(tag, -1); s >= 0;
+    s = InLevel.FindSectorFromTag(tag, s))
+  {
+    // killough 8/28/98:
+    //
+    // Instead of spawning thinkers, which are slow and expensive,
+    // modify the sector's own friction values. Friction should be
+    // a property of sectors, not objects which reside inside them.
+    // Original code scanned every object in every friction sector
+    // on every tic, adjusting its friction, putting unnecessary
+    // drag on CPU. New code adjusts friction of sector only once
+    // at level startup, and then uses this friction value.
 
-		InLevel.Sectors[s].Friction = Friction;
-		InLevel.Sectors[s].MoveFactor = MoveFactor;
-		if (alterFlag)
-		{
-			// When used inside a script, the sectors' friction flags
-			// can be enabled and disabled at will.
-			if (OldFriction == 0xe800)
-			{
-				InLevel.Sectors[s].special &= ~SECSPEC_FRICTION_MASK;
-			}
-			else
-			{
-				InLevel.Sectors[s].special |= SECSPEC_FRICTION_MASK;
-			}
-		}
-	}
+    InLevel.Sectors[s].Friction = Friction;
+    InLevel.Sectors[s].MoveFactor = MoveFactor;
+    if (alterFlag)
+    {
+      // When used inside a script, the sectors' friction flags
+      // can be enabled and disabled at will.
+      if (OldFriction == 0xe800)
+      {
+        InLevel.Sectors[s].special &= ~SECSPEC_FRICTION_MASK;
+      }
+      else
+      {
+        InLevel.Sectors[s].special |= SECSPEC_FRICTION_MASK;
+      }
+    }
+  }
 }
 
 //==========================================================================
@@ -950,38 +950,38 @@ void SetSectorFriction(Level InLevel, int tag, int amount, bool alterFlag)
 
 void StaticInit(Level InLevel, line_t* line)
 {
-	int			s;
-	float		Grav;
-	int			Dmg;
+  int     s;
+  float   Grav;
+  int     Dmg;
 
-	switch (line->arg2)
-	{
-	case 0:
-		Grav = Length(*line->v2 - *line->v1) / 100.0;
-		for (s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0;
-			s = InLevel.FindSectorFromTag(line->arg1, s))
-		{
-			InLevel.Sectors[s].Gravity = Grav;
-		}
-		break;
+  switch (line->arg2)
+  {
+  case 0:
+    Grav = Length(*line->v2 - *line->v1) / 100.0;
+    for (s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0;
+      s = InLevel.FindSectorFromTag(line->arg1, s))
+    {
+      InLevel.Sectors[s].Gravity = Grav;
+    }
+    break;
 
-	case 2:
-		Dmg = ftoi(Length(*line->v2 - *line->v1));
-		for (s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0;
-			s = InLevel.FindSectorFromTag(line->arg1, s))
-		{
-			InLevel.Sectors[s].Damage = Dmg;
-		}
-		break;
+  case 2:
+    Dmg = ftoi(Length(*line->v2 - *line->v1));
+    for (s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0;
+      s = InLevel.FindSectorFromTag(line->arg1, s))
+    {
+      InLevel.Sectors[s].Damage = Dmg;
+    }
+    break;
 
-	case 255:
-		for (s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0;
-			s = InLevel.FindSectorFromTag(line->arg1, s))
-		{
-			InLevel.Sectors[s].Sky = (line->sidenum[0] + 1) | SKY_FROM_SIDE;
-		}
-		break;
-	}
+  case 255:
+    for (s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0;
+      s = InLevel.FindSectorFromTag(line->arg1, s))
+    {
+      InLevel.Sectors[s].Sky = (line->sidenum[0] + 1) | SKY_FROM_SIDE;
+    }
+    break;
+  }
 }
 
 //==========================================================================
@@ -1082,16 +1082,16 @@ final void FixDeepWater (Level InLevel, int lidx, line_t *line) {
     print("SELF-REFERENCED, LINEDEF #%d", lidx);
   }
 /*
-	bool			bHasExtrafloors;	//	This sector has extrafloors.
-	bool			bExtrafloorSource;	//	This sector is a source of an extrafloor.
-	bool			bTransferSource;	//	Source of an heightsec or transfer light.
-	bool			bFakeFloorOnly;		//	When used as heightsec in R_FakeFlat, only copies floor
-	bool			bClipFakePlanes;	//	As a heightsec, clip planes to target sector's planes
-	bool			bNoFakeLight;		//	heightsec does not change lighting
-	bool			bIgnoreHeightSec;	//	heightsec is only for triggering sector actions
-	bool			bUnderWater;		//	Sector is underwater
-	bool			bSilent;			//	Actors don't make noise in this sector.
-	bool			bNoFallingDamage;	//	No falling damage in this sector.
+  bool      bHasExtrafloors;  //  This sector has extrafloors.
+  bool      bExtrafloorSource;  //  This sector is a source of an extrafloor.
+  bool      bTransferSource;  //  Source of an heightsec or transfer light.
+  bool      bFakeFloorOnly;   //  When used as heightsec in R_FakeFlat, only copies floor
+  bool      bClipFakePlanes;  //  As a heightsec, clip planes to target sector's planes
+  bool      bNoFakeLight;   //  heightsec does not change lighting
+  bool      bIgnoreHeightSec; //  heightsec is only for triggering sector actions
+  bool      bUnderWater;    //  Sector is underwater
+  bool      bSilent;      //  Actors don't make noise in this sector.
+  bool      bNoFallingDamage; //  No falling damage in this sector.
 */
 }
 
@@ -1104,286 +1104,286 @@ final void FixDeepWater (Level InLevel, int lidx, line_t *line) {
 
 void SpawnWorld(Level InLevel)
 {
-	int			i;
-	int			j;
-	int			length;
-	int			SecNum;
-	float		alpha;
-	mthing_t*	mthing;
-	line_t*		line;
+  int     i;
+  int     j;
+  int     length;
+  int     SecNum;
+  float   alpha;
+  mthing_t* mthing;
+  line_t*   line;
 
-	//	Set up tagged lines.
-	if (!InLevel.bTextMap)
-	{
-		for (i = 0; i < InLevel.NumLines; i++)
-		{
-			line = &InLevel.Lines[i];
-			switch (line->special)
-			{
-			case LNSPEC_LineSetIdentification:
-				line->special = 0;
-				line->LineTag = line->arg1 + (line->arg5 << 8);
-				line->flags |= line->arg2 << 16;
-				break;
-			case LNSPEC_LineTranslucent:
-				line->LineTag = line->arg1;
-				line->flags |= line->arg4 << 16;
-				break;
-			case LNSPEC_TeleportLine:
-			case LNSPEC_ScrollTextureModel:
-				line->LineTag = line->arg1;
-				break;
-			case LNSPEC_PolyStartLine:
-				line->LineTag = line->arg4;
-				break;
-			case LNSPEC_PolyExplicitLine:
-				line->LineTag = line->arg5;
-				break;
-			case LNSPEC_StaticInit:
-				if (line->arg2 == 3)
-				{
-					line->LineTag = line->arg1;
-				}
-				break;
-			}
-		}
-	}
+  //  Set up tagged lines.
+  if (!InLevel.bTextMap)
+  {
+    for (i = 0; i < InLevel.NumLines; i++)
+    {
+      line = &InLevel.Lines[i];
+      switch (line->special)
+      {
+      case LNSPEC_LineSetIdentification:
+        line->special = 0;
+        line->LineTag = line->arg1 + (line->arg5 << 8);
+        line->flags |= line->arg2 << 16;
+        break;
+      case LNSPEC_LineTranslucent:
+        line->LineTag = line->arg1;
+        line->flags |= line->arg4 << 16;
+        break;
+      case LNSPEC_TeleportLine:
+      case LNSPEC_ScrollTextureModel:
+        line->LineTag = line->arg1;
+        break;
+      case LNSPEC_PolyStartLine:
+        line->LineTag = line->arg4;
+        break;
+      case LNSPEC_PolyExplicitLine:
+        line->LineTag = line->arg5;
+        break;
+      case LNSPEC_StaticInit:
+        if (line->arg2 == 3)
+        {
+          line->LineTag = line->arg1;
+        }
+        break;
+      }
+    }
+  }
 
-	//	Spawn slopes.
-	SetSlopes(InLevel);
-	for (i = 0; i < InLevel.NumThings; i++)
-	{
-		mthing = &InLevel.Things[i];
-		switch (mthing->type)
-		{
-		case FLOOR_SLOPE_TYPE:
-			MakeSlope(InLevel, mthing, false);
-			mthing->type = 0;
-			break;
-		case CEILING_SLOPE_TYPE:
-			MakeSlope(InLevel, mthing, true);
-			mthing->type = 0;
-			break;
-		case SLOPE_FLOOR_POINT_LINE_TYPE:
-			SlopeLineToPoint(InLevel, mthing, false);
-			mthing->type = 0;
-			break;
-		case SLOPE_CEILING_POINT_LINE_TYPE:
-			SlopeLineToPoint(InLevel, mthing, true);
-			mthing->type = 0;
-			break;
-		case SET_FLOOR_SLOPE_TYPE:
-			SetSlope(InLevel, mthing, false);
-			mthing->type = 0;
-			break;
-		case SET_CEILING_SLOPE_TYPE:
-			SetSlope(InLevel, mthing, true);
-			mthing->type = 0;
-			break;
-		}
-	}
-	MakeVertexFloorHeights(InLevel);
-	MakeVertexCeilingHeights(InLevel);
-	CleanVertexHeights(InLevel);
-	for (i = 0; i < InLevel.NumThings; i++)
-	{
-		mthing = &InLevel.Things[i];
-		if (mthing->type == COPY_FLOOR_PLANE_TYPE ||
-			mthing->type == COPY_CEILING_PLANE_TYPE)
-		{
-			CopyPlane(InLevel, mthing, mthing->type & 1);
-			mthing->type = 0;
-		}
-	}
+  //  Spawn slopes.
+  SetSlopes(InLevel);
+  for (i = 0; i < InLevel.NumThings; i++)
+  {
+    mthing = &InLevel.Things[i];
+    switch (mthing->type)
+    {
+    case FLOOR_SLOPE_TYPE:
+      MakeSlope(InLevel, mthing, false);
+      mthing->type = 0;
+      break;
+    case CEILING_SLOPE_TYPE:
+      MakeSlope(InLevel, mthing, true);
+      mthing->type = 0;
+      break;
+    case SLOPE_FLOOR_POINT_LINE_TYPE:
+      SlopeLineToPoint(InLevel, mthing, false);
+      mthing->type = 0;
+      break;
+    case SLOPE_CEILING_POINT_LINE_TYPE:
+      SlopeLineToPoint(InLevel, mthing, true);
+      mthing->type = 0;
+      break;
+    case SET_FLOOR_SLOPE_TYPE:
+      SetSlope(InLevel, mthing, false);
+      mthing->type = 0;
+      break;
+    case SET_CEILING_SLOPE_TYPE:
+      SetSlope(InLevel, mthing, true);
+      mthing->type = 0;
+      break;
+    }
+  }
+  MakeVertexFloorHeights(InLevel);
+  MakeVertexCeilingHeights(InLevel);
+  CleanVertexHeights(InLevel);
+  for (i = 0; i < InLevel.NumThings; i++)
+  {
+    mthing = &InLevel.Things[i];
+    if (mthing->type == COPY_FLOOR_PLANE_TYPE ||
+      mthing->type == COPY_CEILING_PLANE_TYPE)
+    {
+      CopyPlane(InLevel, mthing, mthing->type & 1);
+      mthing->type = 0;
+    }
+  }
 
-	//	Set up 3D floors, transfers of light, etc.
-	print("******* LINES: %d", InLevel.NumLines);
-	for (i = 0; i < InLevel.NumLines; i++)
-	{
-		line = &InLevel.Lines[i];
-		FixDeepWater(InLevel, i, line);
-		switch (line->special)
-		{
-		case LNSPEC_SectorSet3dFloor:
-			SpawnExtraFloors(InLevel, line);
-			line->special = 0;
-			break;
-		case LNSPEC_Contents:
-			MakeContents(line);
-			line->special = 0;
-			break;
-		case LNSPEC_TransferFloorLight:
-			for (SecNum = InLevel.FindSectorFromTag(line->arg1, -1);
-				SecNum >= 0;
-				SecNum = InLevel.FindSectorFromTag(line->arg1, SecNum))
-			{
-				InLevel.SetFloorLightSector(&InLevel.Sectors[SecNum],
-					line->frontsector);
-			}
-			line->special = 0;
-			line->frontsector->bTransferSource = true;
-			break;
-		case LNSPEC_TransferCeilingLight:
-			for (SecNum = InLevel.FindSectorFromTag(line->arg1, -1);
-				SecNum >= 0;
-				SecNum = InLevel.FindSectorFromTag(line->arg1, SecNum))
-			{
-				InLevel.SetCeilingLightSector(&InLevel.Sectors[SecNum],
-					line->frontsector);
-			}
-			line->special = 0;
-			line->frontsector->bTransferSource = true;
-			break;
-		case LNSPEC_SectorSetFriction:
-			if (line->arg2)
-			{
-				//	Allow setting friction amount from parameter
-				length = line->arg2 <= 200 ? line->arg2 : 200;
-			}
-			else
-			{
-				length = ftoi(Length(*line->v2 - *line->v1));
-			}
-			SetSectorFriction(InLevel, line->arg1, length, false);
-			line->special = 0;
-			break;
-		case LNSPEC_TransferHeights:
-			MakeHeightSec(InLevel, line);
-			line->special = 0;
-			break;
-		case LNSPEC_StaticInit:
-			StaticInit(InLevel, line);
-			line->special = 0;
-			break;
-		}
-	}
+  //  Set up 3D floors, transfers of light, etc.
+  print("******* LINES: %d", InLevel.NumLines);
+  for (i = 0; i < InLevel.NumLines; i++)
+  {
+    line = &InLevel.Lines[i];
+    FixDeepWater(InLevel, i, line);
+    switch (line->special)
+    {
+    case LNSPEC_SectorSet3dFloor:
+      SpawnExtraFloors(InLevel, line);
+      line->special = 0;
+      break;
+    case LNSPEC_Contents:
+      MakeContents(line);
+      line->special = 0;
+      break;
+    case LNSPEC_TransferFloorLight:
+      for (SecNum = InLevel.FindSectorFromTag(line->arg1, -1);
+        SecNum >= 0;
+        SecNum = InLevel.FindSectorFromTag(line->arg1, SecNum))
+      {
+        InLevel.SetFloorLightSector(&InLevel.Sectors[SecNum],
+          line->frontsector);
+      }
+      line->special = 0;
+      line->frontsector->bTransferSource = true;
+      break;
+    case LNSPEC_TransferCeilingLight:
+      for (SecNum = InLevel.FindSectorFromTag(line->arg1, -1);
+        SecNum >= 0;
+        SecNum = InLevel.FindSectorFromTag(line->arg1, SecNum))
+      {
+        InLevel.SetCeilingLightSector(&InLevel.Sectors[SecNum],
+          line->frontsector);
+      }
+      line->special = 0;
+      line->frontsector->bTransferSource = true;
+      break;
+    case LNSPEC_SectorSetFriction:
+      if (line->arg2)
+      {
+        //  Allow setting friction amount from parameter
+        length = line->arg2 <= 200 ? line->arg2 : 200;
+      }
+      else
+      {
+        length = ftoi(Length(*line->v2 - *line->v1));
+      }
+      SetSectorFriction(InLevel, line->arg1, length, false);
+      line->special = 0;
+      break;
+    case LNSPEC_TransferHeights:
+      MakeHeightSec(InLevel, line);
+      line->special = 0;
+      break;
+    case LNSPEC_StaticInit:
+      StaticInit(InLevel, line);
+      line->special = 0;
+      break;
+    }
+  }
 
-	//	Initialise initial friction values.
-	for (i = 0; i < InLevel.NumSectors; i++)
-	{
-		InLevel.Sectors[i].Friction = EntityEx::FRICTION_NORMAL;
-		//	Handle Sky2 sector special.
-		if (InLevel.Sectors[i].special == SECSPEC_Sky2)
-		{
-			InLevel.Sectors[i].Sky = SKY_FROM_SIDE;
-		}
-	}
+  //  Initialise initial friction values.
+  for (i = 0; i < InLevel.NumSectors; i++)
+  {
+    InLevel.Sectors[i].Friction = EntityEx::FRICTION_NORMAL;
+    //  Handle Sky2 sector special.
+    if (InLevel.Sectors[i].special == SECSPEC_Sky2)
+    {
+      InLevel.Sectors[i].Sky = SKY_FROM_SIDE;
+    }
+  }
 
-	//	Process translucent lines
-	for (i = 0; i < InLevel.NumLines; i++)
-	{
-		line = &InLevel.Lines[i];
-		switch (line->special)
-		{
-		case LNSPEC_LineTranslucent:
-			alpha = itof(line->arg2) / 255.0;
-			if (line->arg1)
-			{
-				for (j = 0; j < InLevel.NumLines; j++)
-				{
-					if (InLevel.Lines[j].LineTag == line->arg1)
-					{
-						InLevel.Lines[j].alpha = alpha;
-						if (line->arg3 == 1)
-						{
-							InLevel.Lines[j].flags |= ML_ADDITIVE;
-						}
-					}
-				}
-			}
-			else
-			{
-				line->alpha = alpha;
-				if (line->arg3 == 1)
-				{
-					line->flags |= ML_ADDITIVE;
-				}
-			}
-			line->special = 0;
-			break;
+  //  Process translucent lines
+  for (i = 0; i < InLevel.NumLines; i++)
+  {
+    line = &InLevel.Lines[i];
+    switch (line->special)
+    {
+    case LNSPEC_LineTranslucent:
+      alpha = itof(line->arg2) / 255.0;
+      if (line->arg1)
+      {
+        for (j = 0; j < InLevel.NumLines; j++)
+        {
+          if (InLevel.Lines[j].LineTag == line->arg1)
+          {
+            InLevel.Lines[j].alpha = alpha;
+            if (line->arg3 == 1)
+            {
+              InLevel.Lines[j].flags |= ML_ADDITIVE;
+            }
+          }
+        }
+      }
+      else
+      {
+        line->alpha = alpha;
+        if (line->arg3 == 1)
+        {
+          line->flags |= ML_ADDITIVE;
+        }
+      }
+      line->special = 0;
+      break;
 
-		case LNSPEC_GlassBreak:
-			if (line->arg2 != 255)
-			{
-				line->alpha = itof(line->arg2) / 255.0;
-			}
-			break;
-		}
-	}
+    case LNSPEC_GlassBreak:
+      if (line->arg2 != 255)
+      {
+        line->alpha = itof(line->arg2) / 255.0;
+      }
+      break;
+    }
+  }
 
-	//	Spawn polyobjects.
-	for (i = 0; i < InLevel.NumThings; i++)
-	{
-		mthing = &InLevel.Things[i];
-		switch (mthing->type)
-		{
-		case PO_SPAWN_TYPE_HEXEN:
-		case PO_SPAWNCRUSH_TYPE_HEXEN:
-			if (!bUseHexenPolyobjTypes)
-			{
-				break;
-			}
-		case PO_SPAWN_TYPE:
-		case PO_SPAWNCRUSH_TYPE:
-		case PO_SPAWNHURT_TYPE:
-			// Polyobj StartSpot Pt.
-			InLevel.SpawnPolyobj(mthing->x, mthing->y, mthing->angle,
-				mthing->type == PO_SPAWNCRUSH_TYPE_HEXEN ||
-				mthing->type == PO_SPAWNCRUSH_TYPE ||
-				mthing->type == PO_SPAWNHURT_TYPE,
-				mthing->type == PO_SPAWNHURT_TYPE);
-			mthing->type = 0;
-			break;
+  //  Spawn polyobjects.
+  for (i = 0; i < InLevel.NumThings; i++)
+  {
+    mthing = &InLevel.Things[i];
+    switch (mthing->type)
+    {
+    case PO_SPAWN_TYPE_HEXEN:
+    case PO_SPAWNCRUSH_TYPE_HEXEN:
+      if (!bUseHexenPolyobjTypes)
+      {
+        break;
+      }
+    case PO_SPAWN_TYPE:
+    case PO_SPAWNCRUSH_TYPE:
+    case PO_SPAWNHURT_TYPE:
+      // Polyobj StartSpot Pt.
+      InLevel.SpawnPolyobj(mthing->x, mthing->y, mthing->angle,
+        mthing->type == PO_SPAWNCRUSH_TYPE_HEXEN ||
+        mthing->type == PO_SPAWNCRUSH_TYPE ||
+        mthing->type == PO_SPAWNHURT_TYPE,
+        mthing->type == PO_SPAWNHURT_TYPE);
+      mthing->type = 0;
+      break;
 
-		case PO_ANCHOR_TYPE_HEXEN:
-			if (!bUseHexenPolyobjTypes)
-			{
-				break;
-			}
-		case PO_ANCHOR_TYPE:
-			// Polyobj Anchor Pt.
-			InLevel.AddPolyAnchorPoint(mthing->x, mthing->y, mthing->angle);
-			mthing->type = 0;
-			break;
-		}
-	}
+    case PO_ANCHOR_TYPE_HEXEN:
+      if (!bUseHexenPolyobjTypes)
+      {
+        break;
+      }
+    case PO_ANCHOR_TYPE:
+      // Polyobj Anchor Pt.
+      InLevel.AddPolyAnchorPoint(mthing->x, mthing->y, mthing->angle);
+      mthing->type = 0;
+      break;
+    }
+  }
 }
 
 //==========================================================================
 //
-//	FindWeaponSlot
+//  FindWeaponSlot
 //
 //==========================================================================
 
 bool FindWeaponSlot(class<Weapon> WpnClass, out int Slot, out int Index,
-					optional int Position)
+          optional int Position)
 {
-	int			i;
-	int			j;
+  int     i;
+  int     j;
 
-	for (i = 0; i < NUM_WEAPON_SLOTS; i++)
-	{
-		for (j = 0; j < MAX_WEAPONS_PER_SLOT; j++)
-		{
-			if (WeaponSlots[i].Weapons[j] == WpnClass)
-			{
-				Slot = i;
-				// Assign weapon position, if it's already set...
-				if (Position)
-				{
-					Index = Position;
-				}
-				else
-				{
-					Index = j;
-				}
-				return true;
-			}
-		}
-	}
-	Slot = -1;
-	Index = -1;
-	return false;
+  for (i = 0; i < NUM_WEAPON_SLOTS; i++)
+  {
+    for (j = 0; j < MAX_WEAPONS_PER_SLOT; j++)
+    {
+      if (WeaponSlots[i].Weapons[j] == WpnClass)
+      {
+        Slot = i;
+        // Assign weapon position, if it's already set...
+        if (Position)
+        {
+          Index = Position;
+        }
+        else
+        {
+          Index = j;
+        }
+        return true;
+      }
+    }
+  }
+  Slot = -1;
+  Index = -1;
+  return false;
 }
 
 //==========================================================================
@@ -1394,22 +1394,22 @@ bool FindWeaponSlot(class<Weapon> WpnClass, out int Slot, out int Index,
 
 bool AddWeaponToSlot(int Slot, class<Weapon> WeaponClass)
 {
-	int i;
+  int i;
 
-	for (i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
-	{
-		if (WeaponSlots[Slot].Weapons[i] == WeaponClass)
-		{
-			//	Already there.
-			return true;
-		}
-		if (!WeaponSlots[Slot].Weapons[i])
-		{
-			WeaponSlots[Slot].Weapons[i] = WeaponClass;
-			return true;
-		}
-	}
-	return false;
+  for (i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
+  {
+    if (WeaponSlots[Slot].Weapons[i] == WeaponClass)
+    {
+      //  Already there.
+      return true;
+    }
+    if (!WeaponSlots[Slot].Weapons[i])
+    {
+      WeaponSlots[Slot].Weapons[i] = WeaponClass;
+      return true;
+    }
+  }
+  return false;
 }
 
 //==========================================================================
@@ -1420,12 +1420,12 @@ bool AddWeaponToSlot(int Slot, class<Weapon> WeaponClass)
 
 void CmdWeaponSection(string Section)
 {
-	if (!strlen(Section))
-	{
-		print("Usage: WeaponSection <section name>");
-		return;
-	}
-	//	Unused right now.
+  if (!strlen(Section))
+  {
+    print("Usage: WeaponSection <section name>");
+    return;
+  }
+  //  Unused right now.
 }
 
 //==========================================================================
@@ -1436,53 +1436,53 @@ void CmdWeaponSection(string Section)
 
 void CmdSetSlot(out array<string> Args)
 {
-	if (Args.Num < 2)
-	{
-		print("Usage: SetSlot <slot> <weapon> ...");
-		return;
-	}
+  if (Args.Num < 2)
+  {
+    print("Usage: SetSlot <slot> <weapon> ...");
+    return;
+  }
 
-	//	Get slot number.
-	int Slot = atoi(Args[1]);
-	if (Slot < 0 || Slot >= NUM_WEAPON_SLOTS)
-	{
-		print("Bad weapon slot number");
-		return;
-	}
-	if (Slot == 0)
-	{
-		//  Slot '0' means '10'
-		Slot = 10;
-	}
+  //  Get slot number.
+  int Slot = atoi(Args[1]);
+  if (Slot < 0 || Slot >= NUM_WEAPON_SLOTS)
+  {
+    print("Bad weapon slot number");
+    return;
+  }
+  if (Slot == 0)
+  {
+    //  Slot '0' means '10'
+    Slot = 10;
+  }
 
-	//	Clear slot.
-	int i;
-	for (i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
-	{
-		WeaponSlots[Slot].Weapons[i] = none;
-	}
+  //  Clear slot.
+  int i;
+  for (i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
+  {
+    WeaponSlots[Slot].Weapons[i] = none;
+  }
 
-	if (Args.Num == 2)
-	{
-		print("Slot cleared");
-	}
-	else
-	{
-		for (i = 2; i < Args.Num; i++)
-		{
-			// Standarize class name here, since I've found people writing in all types of
-			// mixed cases...
-			class<Weapon> Cls = class<Weapon>(FindClassLowerCase(StrToName(strlwr(Args[i]))));
-			if (!Cls)
-			{
-				print("%s is not a weapon", Args[i]);
-			}
-			else if (!AddWeaponToSlot(Slot, Cls))
-			{
-				print("Couldn\'t add %s to slot %d", Args[i], Slot);
-			}
-		}
-	}
+  if (Args.Num == 2)
+  {
+    print("Slot cleared");
+  }
+  else
+  {
+    for (i = 2; i < Args.Num; i++)
+    {
+      // Standarize class name here, since I've found people writing in all types of
+      // mixed cases...
+      class<Weapon> Cls = class<Weapon>(FindClassLowerCase(StrToName(strlwr(Args[i]))));
+      if (!Cls)
+      {
+        print("%s is not a weapon", Args[i]);
+      }
+      else if (!AddWeaponToSlot(Slot, Cls))
+      {
+        print("Couldn\'t add %s to slot %d", Args[i], Slot);
+      }
+    }
+  }
 }
 
 //==========================================================================
@@ -1493,108 +1493,108 @@ void CmdSetSlot(out array<string> Args)
 
 void CmdAddSlotDefault(out array<string> Args)
 {
-	if (Args.Num != 3)
-	{
-		print("Usage: SetSlot <slot> <weapon>");
-		return;
-	}
+  if (Args.Num != 3)
+  {
+    print("Usage: SetSlot <slot> <weapon>");
+    return;
+  }
 
-	//	Get slot number.
-	int Slot = atoi(Args[1]);
-	if (Slot < 0 || Slot >= NUM_WEAPON_SLOTS)
-	{
-		print("Bad weapon slot number");
-		return;
-	}
+  //  Get slot number.
+  int Slot = atoi(Args[1]);
+  if (Slot < 0 || Slot >= NUM_WEAPON_SLOTS)
+  {
+    print("Bad weapon slot number");
+    return;
+  }
 
-	// Standarize class name here, since I've found people writing in all types of
-	// mixed cases...
-	class<Weapon> Cls = class<Weapon>(FindClassLowerCase(StrToName(strlwr(Args[2]))));
-	if (!Cls)
-	{
-		print("%s is not a weapon", Args[2]);
-		return;
-	}
+  // Standarize class name here, since I've found people writing in all types of
+  // mixed cases...
+  class<Weapon> Cls = class<Weapon>(FindClassLowerCase(StrToName(strlwr(Args[2]))));
+  if (!Cls)
+  {
+    print("%s is not a weapon", Args[2]);
+    return;
+  }
 
-	int TmpSlot;
-	int TmpIndex;
-	if (!FindWeaponSlot(Cls, TmpSlot, TmpIndex))
-	{
-		if (!AddWeaponToSlot(Slot, Cls))
-		{
-			print("Couldn\'t add %s to slot %d", Args[2], Slot);
-		}
-	}
+  int TmpSlot;
+  int TmpIndex;
+  if (!FindWeaponSlot(Cls, TmpSlot, TmpIndex))
+  {
+    if (!AddWeaponToSlot(Slot, Cls))
+    {
+      print("Couldn\'t add %s to slot %d", Args[2], Slot);
+    }
+  }
 }
 
 defaultproperties
 {
-	contents_alpha[0] = 1.0;
-	contents_alpha[1] = 0.5;
-	contents_alpha[2] = 0.8;
-	contents_alpha[3] = 0.6;
-	contents_alpha[4] = 0.55;
-	contents_alpha[5] = 0.7;
-	contents_alpha[6] = 0.85;
-	contents_alpha[7] = 0.7;
-	contents_alpha[8] = 0.7;
+  contents_alpha[0] = 1.0;
+  contents_alpha[1] = 0.5;
+  contents_alpha[2] = 0.8;
+  contents_alpha[3] = 0.6;
+  contents_alpha[4] = 0.55;
+  contents_alpha[5] = 0.7;
+  contents_alpha[6] = 0.85;
+  contents_alpha[7] = 0.7;
+  contents_alpha[8] = 0.7;
 
-	windTab[0] = 5.0 / 32.0;
-	windTab[1] = 10.0 / 32.0;
-	windTab[2] = 25.0 / 32.0;
+  windTab[0] = 5.0 / 32.0;
+  windTab[1] = 10.0 / 32.0;
+  windTab[2] = 25.0 / 32.0;
 
-	pushTab[0] = 5.0 * 35.0 * 35.0 / 32.0;
-	pushTab[1] = 10.0 * 35.0 * 35.0 / 32.0;
-	pushTab[2] = 25.0 * 35.0 * 35.0 / 32.0;
-	pushTab[3] = 30.0 * 35.0 * 35.0 / 32.0;
-	pushTab[4] = 35.0 * 35.0 * 35.0 / 32.0;
+  pushTab[0] = 5.0 * 35.0 * 35.0 / 32.0;
+  pushTab[1] = 10.0 * 35.0 * 35.0 / 32.0;
+  pushTab[2] = 25.0 * 35.0 * 35.0 / 32.0;
+  pushTab[3] = 30.0 * 35.0 * 35.0 / 32.0;
+  pushTab[4] = 35.0 * 35.0 * 35.0 / 32.0;
 
-	opposite[0] = DI_WEST;
-	opposite[1] = DI_SOUTHWEST;
-	opposite[2] = DI_SOUTH;
-	opposite[3] = DI_SOUTHEAST;
-	opposite[4] = DI_EAST;
-	opposite[5] = DI_NORTHEAST;
-	opposite[6] = DI_NORTH;
-	opposite[7] = DI_NORTHWEST;
-	opposite[8] = DI_NODIR;
+  opposite[0] = DI_WEST;
+  opposite[1] = DI_SOUTHWEST;
+  opposite[2] = DI_SOUTH;
+  opposite[3] = DI_SOUTHEAST;
+  opposite[4] = DI_EAST;
+  opposite[5] = DI_NORTHEAST;
+  opposite[6] = DI_NORTH;
+  opposite[7] = DI_NORTHWEST;
+  opposite[8] = DI_NODIR;
 
-	diags[0] = DI_NORTHWEST;
-	diags[1] = DI_NORTHEAST;
-	diags[2] = DI_SOUTHWEST;
-	diags[3] = DI_SOUTHEAST;
+  diags[0] = DI_NORTHWEST;
+  diags[1] = DI_NORTHEAST;
+  diags[2] = DI_SOUTHWEST;
+  diags[3] = DI_SOUTHEAST;
 
-	xspeed[0] = 1.0;
-	xspeed[1] = 0.7171630859;
-	xspeed[2] = 0.0;
-	xspeed[3] = -0.7171630859;
-	xspeed[4] = -1.0;
-	xspeed[5] = -0.7171630859;
-	xspeed[6] = 0.0;
-	xspeed[7] = 0.7171630859;
+  xspeed[0] = 1.0;
+  xspeed[1] = 0.7171630859;
+  xspeed[2] = 0.0;
+  xspeed[3] = -0.7171630859;
+  xspeed[4] = -1.0;
+  xspeed[5] = -0.7171630859;
+  xspeed[6] = 0.0;
+  xspeed[7] = 0.7171630859;
 
-	yspeed[0] = 0.0;
-	yspeed[1] = 0.7171630859;
-	yspeed[2] = 1.0;
-	yspeed[3] = 0.7171630859;
-	yspeed[4] = 0.0;
-	yspeed[5] = -0.7171630859;
-	yspeed[6] = -1.0;
-	yspeed[7] = -0.7171630859;
+  yspeed[0] = 0.0;
+  yspeed[1] = 0.7171630859;
+  yspeed[2] = 1.0;
+  yspeed[3] = 0.7171630859;
+  yspeed[4] = 0.0;
+  yspeed[5] = -0.7171630859;
+  yspeed[6] = -1.0;
+  yspeed[7] = -0.7171630859;
 
-	ramp1[0] = 0xfffff31b; ramp1[1] = 0xefdfab27; ramp1[2] = 0xdfbf772f; ramp1[3] = 0xcf9f4f33;
-	ramp1[4] = 0xbf7f3b2b; ramp1[5] = 0xaf632f1f; ramp1[6] = 0x9f4b2313; ramp1[7] = 0x8f2f170b;
-	ramp1[8] = 0x7f7f3b2b; ramp1[9] = 0x6f632f1f; ramp1[10] = 0x5f4b2313; ramp1[11] = 0x4f2f170b;
-	ramp1[12] = 0x3f7f3b2b; ramp1[13] = 0x2f632f1f; ramp1[14] = 0x1f4b2313; ramp1[15] = 0x0f2f170b;
-	ramp2[0] = 0xfffff31b; ramp2[1] = 0xefefcb1f; ramp2[2] = 0xdfdfab27; ramp2[3] = 0xcfcf8f2b;
-	ramp2[4] = 0xbfbf772f; ramp2[5] = 0xafaf632f; ramp2[6] = 0x9f8f4333; ramp2[7] = 0x8f733723;
-	ramp2[8] = 0x7fbf772f; ramp2[9] = 0x6faf632f; ramp2[10] = 0x5f8f4333; ramp2[11] = 0x4f733723;
-	ramp2[12] = 0x3fbf772f; ramp2[13] = 0x2faf632f; ramp2[14] = 0x1f8f4333; ramp2[15] = 0x0f733723;
+  ramp1[0] = 0xfffff31b; ramp1[1] = 0xefdfab27; ramp1[2] = 0xdfbf772f; ramp1[3] = 0xcf9f4f33;
+  ramp1[4] = 0xbf7f3b2b; ramp1[5] = 0xaf632f1f; ramp1[6] = 0x9f4b2313; ramp1[7] = 0x8f2f170b;
+  ramp1[8] = 0x7f7f3b2b; ramp1[9] = 0x6f632f1f; ramp1[10] = 0x5f4b2313; ramp1[11] = 0x4f2f170b;
+  ramp1[12] = 0x3f7f3b2b; ramp1[13] = 0x2f632f1f; ramp1[14] = 0x1f4b2313; ramp1[15] = 0x0f2f170b;
+  ramp2[0] = 0xfffff31b; ramp2[1] = 0xefefcb1f; ramp2[2] = 0xdfdfab27; ramp2[3] = 0xcfcf8f2b;
+  ramp2[4] = 0xbfbf772f; ramp2[5] = 0xafaf632f; ramp2[6] = 0x9f8f4333; ramp2[7] = 0x8f733723;
+  ramp2[8] = 0x7fbf772f; ramp2[9] = 0x6faf632f; ramp2[10] = 0x5f8f4333; ramp2[11] = 0x4f733723;
+  ramp2[12] = 0x3fbf772f; ramp2[13] = 0x2faf632f; ramp2[14] = 0x1f8f4333; ramp2[15] = 0x0f733723;
 
-	NonMonsterAngleIncrements = 45;
-	InvDefaultMaxAmount = 25;
-	IceMoveFactor = 0.5;
-	GibsHealthFactor = 0.5;
-	DehExplosionStyle = 255;
-	DehExplosionAlpha = 0.666;
+  NonMonsterAngleIncrements = 45;
+  InvDefaultMaxAmount = 25;
+  IceMoveFactor = 0.5;
+  GibsHealthFactor = 0.5;
+  DehExplosionStyle = 255;
+  DehExplosionAlpha = 0.666;
 }

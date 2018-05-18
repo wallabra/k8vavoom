@@ -1,104 +1,104 @@
 //------------------------------------------------------------------------------
 actor DeadMarine 15
 {
-	Game Doom
-	states
-	{
-	Spawn:
-		PLAY N -1
-		Stop
-	}
+  Game Doom
+  states
+  {
+  Spawn:
+    PLAY N -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor GibbedMarine 10
 {
-	Game Doom
-	SpawnID 145
-	states
-	{
-	Spawn:
-		PLAY W -1
-		Stop
-	}
+  Game Doom
+  SpawnID 145
+  states
+  {
+  Spawn:
+    PLAY W -1
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor GibbedMarineExtra : GibbedMarine 12
 {
-	Game Doom
+  Game Doom
 }
 
 //------------------------------------------------------------------------------
 actor DeadZombieMan : ZombieMan 18
 {
-	Skip_Super
-	Game Doom
-	DropItem None
-	states
-	{
-	Spawn:
-		Goto Super::Death+4
-	}
+  Skip_Super
+  Game Doom
+  DropItem None
+  states
+  {
+  Spawn:
+    Goto Super::Death+4
+  }
 }
 
 //------------------------------------------------------------------------------
 actor DeadShotgunGuy : ShotgunGuy 19
 {
-	Skip_Super
-	Game Doom
-	DropItem None
-	states
-	{
-	Spawn:
-		Goto Super::Death+4
-	}
+  Skip_Super
+  Game Doom
+  DropItem None
+  states
+  {
+  Spawn:
+    Goto Super::Death+4
+  }
 }
 
 //------------------------------------------------------------------------------
 actor DeadDoomImp : DoomImp 20
 {
-	Skip_Super
-	Game Doom
-	states
-	{
-	Spawn:
-		Goto Super::Death+4
-	}
+  Skip_Super
+  Game Doom
+  states
+  {
+  Spawn:
+    Goto Super::Death+4
+  }
 }
 
 //------------------------------------------------------------------------------
 actor DeadDemon : Demon 21
 {
-	Skip_Super
-	Game Doom
-	states
-	{
-	Spawn:
-		Goto Super::Death+5
-	}
+  Skip_Super
+  Game Doom
+  states
+  {
+  Spawn:
+    Goto Super::Death+5
+  }
 }
 
 //------------------------------------------------------------------------------
 actor DeadCacodemon : Cacodemon 22
 {
-	Skip_Super
-	Game Doom
-	states
-	{
-	Spawn:
-		Goto Super::Death+5
-	}
+  Skip_Super
+  Game Doom
+  states
+  {
+  Spawn:
+    Goto Super::Death+5
+  }
 }
 
 //------------------------------------------------------------------------------
 actor DeadLostSoul : LostSoul 23
 {
-	Skip_Super
-	Game Doom
-	states
-	{
-	Spawn:
-		Goto Super::Death+5
-	}
+  Skip_Super
+  Game Doom
+  states
+  {
+  Spawn:
+    Goto Super::Death+5
+  }
 }

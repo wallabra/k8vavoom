@@ -33,23 +33,23 @@ class MenuSmallTextButton:MenuTextButton;
 
 void SetOrigin(int x, int y)
 {
-	if (TextHAlign == hright)
-	{
-		CursorXOffs = 200;
-		SetPos(x - CursorXOffs, y);
-	}
-	else
-	{
-		SetPos(x, y);
-	}
+  if (TextHAlign == hright)
+  {
+    CursorXOffs = 200;
+    SetPos(x - CursorXOffs, y);
+  }
+  else
+  {
+    SetPos(x, y);
+  }
 }
 
 defaultproperties
 {
-	TextFont = 'smallfont';
-	TextColour = CR_WHITE;
-	TextColourFocus = CR_YELLOW;
-	TextHAlign = hright;
-	TextVAlign = vtop;
-	Height = 10;
+  TextFont = 'smallfont';
+  TextColour = CR_WHITE;
+  TextColourFocus = CR_YELLOW;
+  TextHAlign = hright;
+  TextVAlign = vtop;
+  Height = 10;
 }

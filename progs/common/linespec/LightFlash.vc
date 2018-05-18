@@ -23,17 +23,17 @@
 //**
 //**************************************************************************
 //**
-//**	BROKEN LIGHT FLASHING
+//**  BROKEN LIGHT FLASHING
 //**
 //**************************************************************************
 
 class LightFlash : Lighting;
 
-float		Time;
-int			MaxLight;
-int			MinLight;
-int			MaxTime;
-int			MinTime;
+float   Time;
+int     MaxLight;
+int     MinLight;
+int     MaxTime;
+int     MinTime;
 
 //==========================================================================
 //
@@ -43,14 +43,14 @@ int			MinTime;
 
 void Init(sector_t* InSector)
 {
-	Sector = InSector;
-	Sector->LightingData = self;
+  Sector = InSector;
+  Sector->LightingData = self;
 
-	MaxLight = Sector->params.lightlevel;
-	MinLight = Level.FindMinSurroundingLight(Sector, Sector->params.lightlevel);
-	MaxTime = 64;
-	MinTime = 7;
-	Time = itof((P_Random() & MaxTime) + 1) / 35.0;
+  MaxLight = Sector->params.lightlevel;
+  MinLight = Level.FindMinSurroundingLight(Sector, Sector->params.lightlevel);
+  MaxTime = 64;
+  MinTime = 7;
+  Time = itof((P_Random() & MaxTime) + 1) / 35.0;
 }
 
 //==========================================================================
@@ -63,22 +63,22 @@ void Init(sector_t* InSector)
 
 void Tick(float DeltaTime)
 {
-	Time -= DeltaTime;
-	if (Time >= 0.0)
-	{
-		return;
-	}
+  Time -= DeltaTime;
+  if (Time >= 0.0)
+  {
+    return;
+  }
 
-	if (Sector->params.lightlevel == MaxLight)
-	{
-		Sector->params.lightlevel = MinLight;
-		Time = itof((P_Random() & MinTime) + 1) / 35.0;
-	}
-	else
-	{
-		Sector->params.lightlevel = MaxLight;
-		Time = itof((P_Random() & MaxTime) + 1) / 35.0;
-	}
+  if (Sector->params.lightlevel == MaxLight)
+  {
+    Sector->params.lightlevel = MinLight;
+    Time = itof((P_Random() & MinTime) + 1) / 35.0;
+  }
+  else
+  {
+    Sector->params.lightlevel = MaxLight;
+    Time = itof((P_Random() & MaxTime) + 1) / 35.0;
+  }
 
 }
 

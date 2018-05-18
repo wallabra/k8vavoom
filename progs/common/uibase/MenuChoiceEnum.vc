@@ -25,11 +25,11 @@
 
 class MenuChoiceEnum : MenuChoice;
 
-string			Text;
-bool			bLeftAlign;
+string      Text;
+bool      bLeftAlign;
 
-int				Value;
-array<string>	EnumNames;
+int       Value;
+array<string> EnumNames;
 
 delegate bool ValueChanging(Object Sender, int NewValue);
 
@@ -41,15 +41,15 @@ delegate bool ValueChanging(Object Sender, int NewValue);
 
 void SetOrigin(int x, int y)
 {
-	if (bLeftAlign)
-	{
-		SetPos(x, y);
-	}
-	else
-	{
-		CursorXOffs = 200;
-		SetPos(x - CursorXOffs, y);
-	}
+  if (bLeftAlign)
+  {
+    SetPos(x, y);
+  }
+  else
+  {
+    CursorXOffs = 200;
+    SetPos(x - CursorXOffs, y);
+  }
 }
 
 //==========================================================================
@@ -60,11 +60,11 @@ void SetOrigin(int x, int y)
 
 bool SetNewValue(int newValue)
 {
-	if (ValueChanging)
-	{
-		return ValueChanging(self, newValue);
-	}
-	return true;
+  if (ValueChanging)
+  {
+    return ValueChanging(self, newValue);
+  }
+  return true;
 }
 
 //==========================================================================
@@ -75,8 +75,8 @@ bool SetNewValue(int newValue)
 
 void AddItem(string AValue)
 {
-	EnumNames.Num = EnumNames.Num + 1;
-	EnumNames[EnumNames.Num - 1] = AValue;
+  EnumNames.Num = EnumNames.Num + 1;
+  EnumNames[EnumNames.Num - 1] = AValue;
 }
 
 //==========================================================================
@@ -87,11 +87,11 @@ void AddItem(string AValue)
 
 void SetInitialValue(int AValue)
 {
-	Value = AValue;
-	if (Value >= EnumNames.Num)
-		Value = EnumNames.Num - 1;
-	if (Value < 0)
-		Value = 0;
+  Value = AValue;
+  if (Value >= EnumNames.Num)
+    Value = EnumNames.Num - 1;
+  if (Value < 0)
+    Value = 0;
 }
 
 //==========================================================================
@@ -102,33 +102,33 @@ void SetInitialValue(int AValue)
 
 void OnDraw()
 {
-	int xx;
+  int xx;
 
-	int Col = IsFocus() ? CR_YELLOW : CR_WHITE;
-	if (bLeftAlign)
-	{
-		SetTextAlign(hleft, vtop);
-		DrawText(0, 0, Text, Col);
-	}
-	else
-	{
-		SetTextAlign(hright, vtop);
-		DrawText(CursorXOffs, 0, Text, Col);
-	}
+  int Col = IsFocus() ? CR_YELLOW : CR_WHITE;
+  if (bLeftAlign)
+  {
+    SetTextAlign(hleft, vtop);
+    DrawText(0, 0, Text, Col);
+  }
+  else
+  {
+    SetTextAlign(hright, vtop);
+    DrawText(CursorXOffs, 0, Text, Col);
+  }
 
-	if (bLeftAlign)
-	{
-		xx = TextWidth(Text) + 8;
-	}
-	else
-	{
-		xx = CursorXOffs + 10;
-	}
-	SetTextAlign(hleft, vtop);
-	if (EnumNames.Num)
-	{
-		DrawText(xx, 0, EnumNames[Value], IsFocus() ? CR_YELLOW : CR_TAN);
-	}
+  if (bLeftAlign)
+  {
+    xx = TextWidth(Text) + 8;
+  }
+  else
+  {
+    xx = CursorXOffs + 10;
+  }
+  SetTextAlign(hleft, vtop);
+  if (EnumNames.Num)
+  {
+    DrawText(xx, 0, EnumNames[Value], IsFocus() ? CR_YELLOW : CR_TAN);
+  }
 }
 
 //==========================================================================
@@ -139,75 +139,75 @@ void OnDraw()
 
 bool OnKeyDown(int key)
 {
-	int newValue;
+  int newValue;
 
-	switch (key)
-	{
-	case K_LEFTARROW:
-		if (Value > 0)
-			newValue = Value - 1;
-		else
-			newValue = EnumNames.Num - 1;
-		if (SetNewValue(newValue))
-		{
-			Value = newValue;
-			LocalSound('menu/change');
-		}
-		return true;
-	case K_RIGHTARROW:
-	case K_ENTER:
-	case K_PADENTER:
-	case K_MOUSE1:
-		if (Value < EnumNames.Num - 1)
-			newValue = Value + 1;
-		else
-			newValue = 0;
-		if (SetNewValue(newValue))
-		{
-			Value = newValue;
-			LocalSound('menu/change');
-		}
-		return true;
-	}
-	return false;
+  switch (key)
+  {
+  case K_LEFTARROW:
+    if (Value > 0)
+      newValue = Value - 1;
+    else
+      newValue = EnumNames.Num - 1;
+    if (SetNewValue(newValue))
+    {
+      Value = newValue;
+      LocalSound('menu/change');
+    }
+    return true;
+  case K_RIGHTARROW:
+  case K_ENTER:
+  case K_PADENTER:
+  case K_MOUSE1:
+    if (Value < EnumNames.Num - 1)
+      newValue = Value + 1;
+    else
+      newValue = 0;
+    if (SetNewValue(newValue))
+    {
+      Value = newValue;
+      LocalSound('menu/change');
+    }
+    return true;
+  }
+  return false;
 }
 
 void OnMouseClick(int X, int Y)
 {
-	int newValue;
+  int newValue;
 
-	SetFocus();
+  SetFocus();
 
-	if (Value < EnumNames.Num - 1)
-		newValue = Value + 1;
-	else
-		newValue = 0;
-	if (SetNewValue(newValue))
-	{
-		Value = newValue;
-		LocalSound('menu/change');
-	}
+  if (Value < EnumNames.Num - 1)
+    newValue = Value + 1;
+  else
+    newValue = 0;
+  if (SetNewValue(newValue))
+  {
+    Value = newValue;
+    LocalSound('menu/change');
+  }
 }
 
 void OnRMouseClick(int X, int Y)
 {
-	int newValue;
+  int newValue;
 
-	SetFocus();
+  SetFocus();
 
-	if (Value > 0)
-		newValue = Value - 1;
-	else
-		newValue = EnumNames.Num - 1;
-	if (SetNewValue(newValue))
-	{
-		Value = newValue;
-		LocalSound('menu/change');
-	}
+  if (Value > 0)
+    newValue = Value - 1;
+  else
+    newValue = EnumNames.Num - 1;
+  if (SetNewValue(newValue))
+  {
+    Value = newValue;
+    LocalSound('menu/change');
+  }
 }
 
 defaultproperties
 {
-	Width = 360;
-	Height = 10;
+  Width = 360;
+  Height = 10;
 }

@@ -27,39 +27,39 @@ class TeleportFog : Actor;
 
 //==========================================================================
 //
-//	BeginPlay
+//  BeginPlay
 //
 //==========================================================================
 
 void BeginPlay()
 {
-	::BeginPlay();
-	PlaySound('misc/teleport', CHAN_VOICE);
-	if (LineSpecialGameInfo(Level.Game).TeleportFogState)
-	{
-		SetState(FindState(LineSpecialGameInfo(Level.Game).TeleportFogState));
-	}
+  ::BeginPlay();
+  PlaySound('misc/teleport', CHAN_VOICE);
+  if (LineSpecialGameInfo(Level.Game).TeleportFogState)
+  {
+    SetState(FindState(LineSpecialGameInfo(Level.Game).TeleportFogState));
+  }
 }
 
 states
 {
 Spawn:
-	TFOG ABABCDEFGHIJ 6 Bright
-	Stop
+  TFOG ABABCDEFGHIJ 6 Bright
+  Stop
 
 Raven:
-	TELE ABCDEFGHGFEDC 6 Bright
-	Stop
+  TELE ABCDEFGHGFEDC 6 Bright
+  Stop
 
 Strife:
-	TFOG ABCDEFEDCB 6 Bright
-	Stop
+  TFOG ABCDEFEDCB 6 Bright
+  Stop
 }
 
 defaultproperties
 {
-	RenderStyle = STYLE_Add;
-	Alpha = 0.666;
-	bNoBlockmap = true;
-	bNoGravity = true;
+  RenderStyle = STYLE_Add;
+  Alpha = 0.666;
+  bNoBlockmap = true;
+  bNoGravity = true;
 }

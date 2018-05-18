@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -30,263 +30,263 @@
 #include "render/r_shared.h"
 
 //
-//	A dummy texture.
+//  A dummy texture.
 //
 class VDummyTexture : public VTexture
 {
 public:
-	VDummyTexture();
-	vuint8* GetPixels();
-	void Unload();
+  VDummyTexture();
+  vuint8* GetPixels();
+  void Unload();
 };
 
 //
-//	A standard Doom patch.
+//  A standard Doom patch.
 //
 class VPatchTexture : public VTexture
 {
 private:
-	vuint8*		Pixels;
+  vuint8*   Pixels;
 
 public:
-	static VTexture* Create(VStream&, int);
+  static VTexture* Create(VStream&, int);
 
-	VPatchTexture(int, int, int, int, int);
-	virtual ~VPatchTexture() noexcept(false);
-	vuint8* GetPixels();
-	void Unload();
+  VPatchTexture(int, int, int, int, int);
+  virtual ~VPatchTexture() noexcept(false);
+  vuint8* GetPixels();
+  void Unload();
 };
 
 //
-//	A texture defined in TEXTURE1/TEXTURE2 lumps.
-//	A maptexturedef_t describes a rectangular texture, which is composed of
+//  A texture defined in TEXTURE1/TEXTURE2 lumps.
+//  A maptexturedef_t describes a rectangular texture, which is composed of
 // one or more mappatch_t structures that arrange graphic patches
 //
 class VMultiPatchTexture : public VTexture
 {
 private:
-	enum
-	{
-		STYLE_Copy,
-		STYLE_Translucent,
-		STYLE_Add,
-		STYLE_Subtract,
-		STYLE_ReverseSubtract,
-		STYLE_Modulate,
-		STYLE_CopyAlpha
-	};
+  enum
+  {
+    STYLE_Copy,
+    STYLE_Translucent,
+    STYLE_Add,
+    STYLE_Subtract,
+    STYLE_ReverseSubtract,
+    STYLE_Modulate,
+    STYLE_CopyAlpha
+  };
 
-	struct VTexPatch
-	{
-		//	Block origin (allways UL), which has allready accounted for the
-		// internal origin of the patch.
-		short					XOrigin;
-		short					YOrigin;
-		vuint8					Rot;
-		vuint8					Style;
-		bool					bOwnTrans;
-		VTexture*				Tex;
-		VTextureTranslation*	Trans;
-		rgba_t					Blend;
-		float					Alpha;
-	};
+  struct VTexPatch
+  {
+    //  Block origin (allways UL), which has allready accounted for the
+    // internal origin of the patch.
+    short         XOrigin;
+    short         YOrigin;
+    vuint8          Rot;
+    vuint8          Style;
+    bool          bOwnTrans;
+    VTexture*       Tex;
+    VTextureTranslation*  Trans;
+    rgba_t          Blend;
+    float         Alpha;
+  };
 
-	//	All the Patches[PatchCount] are drawn back to front into the cached
-	// texture.
-	int				PatchCount;
-	VTexPatch*		Patches;
-	vuint8*			Pixels;
+  //  All the Patches[PatchCount] are drawn back to front into the cached
+  // texture.
+  int       PatchCount;
+  VTexPatch*    Patches;
+  vuint8*     Pixels;
 
 public:
-	VMultiPatchTexture(VStream&, int, VTexture**, int, int, bool);
-	VMultiPatchTexture(VScriptParser*, int);
-	virtual ~VMultiPatchTexture() noexcept(false);
-	void SetFrontSkyLayer();
-	vuint8* GetPixels();
-	void Unload();
+  VMultiPatchTexture(VStream&, int, VTexture**, int, int, bool);
+  VMultiPatchTexture(VScriptParser*, int);
+  virtual ~VMultiPatchTexture() noexcept(false);
+  void SetFrontSkyLayer();
+  vuint8* GetPixels();
+  void Unload();
 };
 
 //
-//	A standard Doom flat.
+//  A standard Doom flat.
 //
 class VFlatTexture : public VTexture
 {
 private:
-	vuint8*		Pixels;
+  vuint8*   Pixels;
 
 public:
-	static VTexture* Create(VStream&, int);
+  static VTexture* Create(VStream&, int);
 
-	VFlatTexture(int);
-	virtual ~VFlatTexture() noexcept(false);
-	vuint8* GetPixels();
-	void Unload();
+  VFlatTexture(int);
+  virtual ~VFlatTexture() noexcept(false);
+  vuint8* GetPixels();
+  void Unload();
 };
 
 //
-//	Raven's raw screens.
+//  Raven's raw screens.
 //
 class VRawPicTexture : public VTexture
 {
 private:
-	int			PalLumpNum;
-	vuint8*		Pixels;
-	rgba_t*		Palette;
+  int     PalLumpNum;
+  vuint8*   Pixels;
+  rgba_t*   Palette;
 
 public:
-	static VTexture* Create(VStream&, int);
+  static VTexture* Create(VStream&, int);
 
-	VRawPicTexture(int, int);
-	virtual ~VRawPicTexture() noexcept(false);
-	vuint8* GetPixels();
-	rgba_t* GetPalette();
-	void Unload();
+  VRawPicTexture(int, int);
+  virtual ~VRawPicTexture() noexcept(false);
+  vuint8* GetPixels();
+  rgba_t* GetPalette();
+  void Unload();
 };
 
 //
-//	Raven's automap background.
+//  Raven's automap background.
 //
 class VAutopageTexture : public VTexture
 {
 private:
-	vuint8*		Pixels;
+  vuint8*   Pixels;
 
 public:
-	static VTexture* Create(VStream&, int);
+  static VTexture* Create(VStream&, int);
 
-	VAutopageTexture(int);
-	virtual ~VAutopageTexture() noexcept(false);
-	vuint8* GetPixels();
-	void Unload();
+  VAutopageTexture(int);
+  virtual ~VAutopageTexture() noexcept(false);
+  vuint8* GetPixels();
+  void Unload();
 };
 
 //
-//	ZDoom's IMGZ grapnics.
+//  ZDoom's IMGZ grapnics.
 // [RH] Just a format I invented to avoid WinTex's palette remapping
 // when I wanted to insert some alpha maps.
 //
 class VImgzTexture : public VTexture
 {
 private:
-	vuint8*		Pixels;
+  vuint8*   Pixels;
 
 public:
-	static VTexture* Create(VStream&, int);
+  static VTexture* Create(VStream&, int);
 
-	VImgzTexture(int, int, int, int, int);
-	virtual ~VImgzTexture() noexcept(false);
-	vuint8* GetPixels();
-	void Unload();
+  VImgzTexture(int, int, int, int, int);
+  virtual ~VImgzTexture() noexcept(false);
+  vuint8* GetPixels();
+  void Unload();
 };
 
 //
-//	A PCX file.
+//  A PCX file.
 //
 class VPcxTexture : public VTexture
 {
 private:
-	vuint8*		Pixels;
-	rgba_t*		Palette;
+  vuint8*   Pixels;
+  rgba_t*   Palette;
 
 public:
-	static VTexture* Create(VStream&, int);
+  static VTexture* Create(VStream&, int);
 
-	VPcxTexture(int, struct pcx_t&);
-	virtual ~VPcxTexture() noexcept(false);
-	vuint8* GetPixels();
-	rgba_t* GetPalette();
-	void Unload();
+  VPcxTexture(int, struct pcx_t&);
+  virtual ~VPcxTexture() noexcept(false);
+  vuint8* GetPixels();
+  rgba_t* GetPalette();
+  void Unload();
 };
 
 //
-//	A TGA file.
+//  A TGA file.
 //
 class VTgaTexture : public VTexture
 {
 private:
-	vuint8*		Pixels;
-	rgba_t*		Palette;
+  vuint8*   Pixels;
+  rgba_t*   Palette;
 
 public:
-	static VTexture* Create(VStream&, int);
+  static VTexture* Create(VStream&, int);
 
-	VTgaTexture(int, struct tgaHeader_t&);
-	virtual ~VTgaTexture() noexcept(false);
-	vuint8* GetPixels();
-	rgba_t* GetPalette();
-	void Unload();
+  VTgaTexture(int, struct tgaHeader_t&);
+  virtual ~VTgaTexture() noexcept(false);
+  vuint8* GetPixels();
+  rgba_t* GetPalette();
+  void Unload();
 };
 
 //
-//	A PNG file.
+//  A PNG file.
 //
 class VPngTexture : public VTexture
 {
 private:
-	vuint8*		Pixels;
+  vuint8*   Pixels;
 
 public:
-	static VTexture* Create(VStream&, int);
+  static VTexture* Create(VStream&, int);
 
-	VPngTexture(int, int, int, int, int);
-	virtual ~VPngTexture() noexcept(false);
-	vuint8* GetPixels();
-	void Unload();
+  VPngTexture(int, int, int, int, int);
+  virtual ~VPngTexture() noexcept(false);
+  vuint8* GetPixels();
+  void Unload();
 };
 
 //
-//	A JPEG file.
+//  A JPEG file.
 //
 class VJpegTexture : public VTexture
 {
 public:
-	vuint8*		Pixels;
+  vuint8*   Pixels;
 
-	static VTexture* Create(VStream&, int);
+  static VTexture* Create(VStream&, int);
 
-	VJpegTexture(int, int, int);
-	virtual ~VJpegTexture() noexcept(false);
-	vuint8* GetPixels();
-	void Unload();
+  VJpegTexture(int, int, int);
+  virtual ~VJpegTexture() noexcept(false);
+  vuint8* GetPixels();
+  void Unload();
 };
 
 //
-//	A texture that returns a wiggly version of another texture.
+//  A texture that returns a wiggly version of another texture.
 //
 class VWarpTexture : public VTexture
 {
 protected:
-	VTexture*	SrcTex;
-	vuint8*		Pixels;
-	float		GenTime;
-	float		WarpXScale;
-	float		WarpYScale;
-	float*		XSin1;
-	float*		XSin2;
-	float*		YSin1;
-	float*		YSin2;
+  VTexture* SrcTex;
+  vuint8*   Pixels;
+  float   GenTime;
+  float   WarpXScale;
+  float   WarpYScale;
+  float*    XSin1;
+  float*    XSin2;
+  float*    YSin1;
+  float*    YSin2;
 
 public:
-	VWarpTexture(VTexture*);
-	virtual ~VWarpTexture() noexcept(false);
-	void SetFrontSkyLayer();
-	bool CheckModified();
-	vuint8* GetPixels();
-	rgba_t* GetPalette();
-	VTexture* GetHighResolutionTexture();
-	void Unload();
+  VWarpTexture(VTexture*);
+  virtual ~VWarpTexture() noexcept(false);
+  void SetFrontSkyLayer();
+  bool CheckModified();
+  vuint8* GetPixels();
+  rgba_t* GetPalette();
+  VTexture* GetHighResolutionTexture();
+  void Unload();
 };
 
 //
-//	Different style of warping.
+//  Different style of warping.
 //
 class VWarp2Texture : public VWarpTexture
 {
 public:
-	VWarp2Texture(VTexture*);
-	vuint8* GetPixels();
+  VWarp2Texture(VTexture*);
+  vuint8* GetPixels();
 };
 
-extern VCvarB			r_hirestex;
+extern VCvarB     r_hirestex;
 
 #endif

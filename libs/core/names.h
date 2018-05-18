@@ -1,29 +1,29 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2010 Jānis Legzdiņš
+//**  Copyright (C) 1999-2010 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
 //**
-//**	Header file registering global hardcoded Vavoom names.
+//**  Header file registering global hardcoded Vavoom names.
 //**
 //**************************************************************************
 
@@ -31,9 +31,9 @@
 
 // Define a message as an enumeration.
 #ifndef REGISTER_NAME
-	#define REGISTER_NAME(name)	NAME_##name,
-	#define REGISTERING_ENUM
-	enum EName {
+  #define REGISTER_NAME(name) NAME_##name,
+  #define REGISTERING_ENUM
+  enum EName {
 #endif
 
 // Hardcoded names ---------------------------------------------------------
@@ -48,7 +48,7 @@ REGISTER_NAME(Init)
 REGISTER_NAME(Dev)
 REGISTER_NAME(DevNet)
 
-//	Native class names.
+//  Native class names.
 REGISTER_NAME(Object)
 REGISTER_NAME(GameObject)
 REGISTER_NAME(Thinker)
@@ -69,15 +69,15 @@ REGISTER_NAME(ClientGameBase)
 REGISTER_NAME(ClientState)
 REGISTER_NAME(ScriptsParser)
 
-//	Special struct names
+//  Special struct names
 REGISTER_NAME(TVec)
 REGISTER_NAME(TAVec)
 
-//	Thinker events
+//  Thinker events
 REGISTER_NAME(Tick)
 REGISTER_NAME(ClientTick)
 
-//	Entity events
+//  Entity events
 REGISTER_NAME(OnMapSpawn)
 REGISTER_NAME(BeginPlay)
 REGISTER_NAME(Destroyed)
@@ -114,7 +114,7 @@ REGISTER_NAME(MorphActor)
 REGISTER_NAME(UnmorphActor)
 REGISTER_NAME(GetViewEntRenderParams)
 
-//	LevelInfo events
+//  LevelInfo events
 REGISTER_NAME(SpawnSpecials)
 REGISTER_NAME(UpdateSpecials)
 REGISTER_NAME(AfterUnarchiveThinkers)
@@ -140,7 +140,7 @@ REGISTER_NAME(SetMarineSprite)
 REGISTER_NAME(AcsFadeRange)
 REGISTER_NAME(AcsCancelFade)
 
-//	BasePlayer events
+//  BasePlayer events
 REGISTER_NAME(PutClientIntoServer)
 REGISTER_NAME(SpawnClient)
 REGISTER_NAME(NetGameReborn)
@@ -183,7 +183,7 @@ REGISTER_NAME(ClientHudMessage)
 REGISTER_NAME(ServerImpulse)
 REGISTER_NAME(ServerSetUserInfo)
 
-//	ClientGameBase events
+//  ClientGameBase events
 REGISTER_NAME(RootWindowCreated)
 REGISTER_NAME(Connected)
 REGISTER_NAME(Disconnected)
@@ -209,7 +209,7 @@ REGISTER_NAME(AddNotifyMessage)
 REGISTER_NAME(AddCentreMessage)
 REGISTER_NAME(AddHudMessage)
 
-//	Widget events
+//  Widget events
 REGISTER_NAME(OnCreate)
 REGISTER_NAME(OnDestroy)
 REGISTER_NAME(OnChildAdded)
@@ -233,7 +233,7 @@ REGISTER_NAME(OnMouseClick)
 REGISTER_NAME(OnMMouseClick)
 REGISTER_NAME(OnRMouseClick)
 
-//	Lump names
+//  Lump names
 REGISTER_NAME(s_start)
 REGISTER_NAME(s_end)
 REGISTER_NAME(ss_start)
@@ -329,14 +329,14 @@ REGISTER_NAME(strfdefs)
 REGISTER_NAME(keyconf)
 REGISTER_NAME(textures)
 
-//	Standard font names
+//  Standard font names
 REGISTER_NAME(smallfont)
 REGISTER_NAME(smallfont2)
 REGISTER_NAME(bigfont)
 REGISTER_NAME(consolefont)
 REGISTER_NAME(confont)
 
-//	Compiler names
+//  Compiler names
 REGISTER_NAME(Num)
 REGISTER_NAME(Length)
 REGISTER_NAME(Insert)
@@ -353,8 +353,8 @@ REGISTER_NAME(Offset)
 // Closing -----------------------------------------------------------------
 
 #ifdef REGISTERING_ENUM
-		NUM_HARDCODED_NAMES
-	};
-	#undef REGISTER_NAME
-	#undef REGISTERING_ENUM
+    NUM_HARDCODED_NAMES
+  };
+  #undef REGISTER_NAME
+  #undef REGISTERING_ENUM
 #endif

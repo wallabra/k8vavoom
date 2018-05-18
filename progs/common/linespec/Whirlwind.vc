@@ -24,8 +24,8 @@
 //**************************************************************************
 
 class Whirlwind : Actor
-	game(GAME_Heretic)
-	__scriptid__(165);
+  game(GAME_Heretic)
+  __scriptid__(165);
 
 //==========================================================================
 //
@@ -35,8 +35,8 @@ class Whirlwind : Actor
 
 int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
-	TouchWhirlwind(Actor(victim));
-	return -1;
+  TouchWhirlwind(Actor(victim));
+  return -1;
 }
 
 //==========================================================================
@@ -47,29 +47,29 @@ int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 
 void TouchWhirlwind(Actor Other)
 {
-	float randVal;
+  float randVal;
 
-	Other.Angles.yaw = AngleMod360(Other.Angles.yaw +
-		(Random() - Random()) * 45.0 / 2.0);
-	Other.Velocity.x += (Random() - Random()) * 4.0 * 35.0;
-	Other.Velocity.y += (Random() - Random()) * 4.0 * 35.0;
-	if (XLevel.TicTime & 16 && !Other.bBoss)
-	{
-		randVal = Random() * 4.0;
-		if (randVal > 2.5)
-		{
-			randVal = 2.5;
-		}
-		Other.Velocity.z += randVal * 35.0;
-		if (Other.Velocity.z > 12.0 * 35.0)
-		{
-			Other.Velocity.z = 12.0 * 35.0;
-		}
-	}
-	if (!(XLevel.TicTime & 7))
-	{
-		Other.Damage(none, none, 3);
-	}
+  Other.Angles.yaw = AngleMod360(Other.Angles.yaw +
+    (Random() - Random()) * 45.0 / 2.0);
+  Other.Velocity.x += (Random() - Random()) * 4.0 * 35.0;
+  Other.Velocity.y += (Random() - Random()) * 4.0 * 35.0;
+  if (XLevel.TicTime & 16 && !Other.bBoss)
+  {
+    randVal = Random() * 4.0;
+    if (randVal > 2.5)
+    {
+      randVal = 2.5;
+    }
+    Other.Velocity.z += randVal * 35.0;
+    if (Other.Velocity.z > 12.0 * 35.0)
+    {
+      Other.Velocity.z = 12.0 * 35.0;
+    }
+  }
+  if (!(XLevel.TicTime & 7))
+  {
+    Other.Damage(none, none, 3);
+  }
 }
 
 //==========================================================================
@@ -80,55 +80,55 @@ void TouchWhirlwind(Actor Other)
 
 final void A_WhirlwindSeek()
 {
-	Health -= 3;
-	if (Health < 0)
-	{
-		Velocity = vector(0.0, 0.0, 0.0);
-		SetState(FindState('Death'));
-		bMissile = false;
-		return;
-	}
-	Special2 -= 3;
-	if (Special2 < 0)
-	{
-		Special2 = 58 + (P_Random() & 31);
-		PlaySound('ironlich/attack3', CHAN_WEAPON);
-	}
-	if (Tracer && Tracer.bShadow)
-	{
-		return;
-	}
-	SeekerMissile(10.0, 30.0);
+  Health -= 3;
+  if (Health < 0)
+  {
+    Velocity = vector(0.0, 0.0, 0.0);
+    SetState(FindState('Death'));
+    bMissile = false;
+    return;
+  }
+  Special2 -= 3;
+  if (Special2 < 0)
+  {
+    Special2 = 58 + (P_Random() & 31);
+    PlaySound('ironlich/attack3', CHAN_WEAPON);
+  }
+  if (Tracer && Tracer.bShadow)
+  {
+    return;
+  }
+  SeekerMissile(10.0, 30.0);
 }
 
 states
 {
 Spawn:
-	FX07 DEFG 3
-	FX07 ABC 3 A_WhirlwindSeek
-	Goto Spawn+4
+  FX07 DEFG 3
+  FX07 ABC 3 A_WhirlwindSeek
+  Goto Spawn+4
 Death:
-	FX07 GFED 4
-	Stop
+  FX07 GFED 4
+  Stop
 }
 
 defaultproperties
 {
-	Radius = 16.0;
-	Height = 74.0;
-	Speed = 350.0;
-	MissileDamage = 1;
-	RenderStyle = STYLE_Translucent;
-	Alpha = 0.666;
-	bStepMissile = true;
-	bMissile = true;
-	bNoBlockmap = true;
-	bNoGravity = true;
-	bDropOff = true;
-	bNoTeleport = true;
-	bActivatePCross = true;
-	bExploCount = true;
-	bBloodSplatter = true;
-	Special2 = 50;
-	Special1 = 60;
+  Radius = 16.0;
+  Height = 74.0;
+  Speed = 350.0;
+  MissileDamage = 1;
+  RenderStyle = STYLE_Translucent;
+  Alpha = 0.666;
+  bStepMissile = true;
+  bMissile = true;
+  bNoBlockmap = true;
+  bNoGravity = true;
+  bDropOff = true;
+  bNoTeleport = true;
+  bActivatePCross = true;
+  bExploCount = true;
+  bBloodSplatter = true;
+  Special2 = 50;
+  Special1 = 60;
 }

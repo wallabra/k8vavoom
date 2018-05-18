@@ -24,9 +24,9 @@
 //**************************************************************************
 
 class FighterWeapon : HexenWeapon
-	abstract;
+  abstract;
 
 defaultproperties
 {
-	WeaponClass = FighterPlayer;
+  WeaponClass = FighterPlayer;
 }

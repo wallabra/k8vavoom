@@ -27,13 +27,13 @@ class StackPoint : SkyViewpoint;
 
 //==========================================================================
 //
-//	InitSkyBox
+//  InitSkyBox
 //
 //==========================================================================
 
 void InitSkyBox()
 {
-	bAlways = true;
+  bAlways = true;
 }
 
 defaultproperties

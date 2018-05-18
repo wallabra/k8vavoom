@@ -25,108 +25,108 @@
 
 class FlashFader : Thinker;
 
-float		BlendR1;
-float		BlendG1;
-float		BlendB1;
-float		BlendA1;
-float		BlendR2;
-float		BlendG2;
-float		BlendB2;
-float		BlendA2;
-float		Time;
-float		Duration;
-EntityEx	ForWho;
+float   BlendR1;
+float   BlendG1;
+float   BlendB1;
+float   BlendA1;
+float   BlendR2;
+float   BlendG2;
+float   BlendB2;
+float   BlendA2;
+float   Time;
+float   Duration;
+EntityEx  ForWho;
 
 //==========================================================================
 //
-//	Init
+//  Init
 //
 //==========================================================================
 
 final void Init(float ABlendR1, float ABlendG1, float ABlendB1, float ABlendA1,
-	float ABlendR2, float ABlendG2, float ABlendB2, float ABlendA2,
-	float ADuration, EntityEx AForWho)
+  float ABlendR2, float ABlendG2, float ABlendB2, float ABlendA2,
+  float ADuration, EntityEx AForWho)
 {
-	BlendR1 = ABlendR1;
-	BlendG1 = ABlendG1;
-	BlendB1 = ABlendB1;
-	BlendA1 = ABlendA1;
-	BlendR2 = ABlendR2;
-	BlendG2 = ABlendG2;
-	BlendB2 = ABlendB2;
-	BlendA2 = ABlendA2;
-	Duration = ADuration;
-	ForWho = AForWho;
-	Time = 0.0;
+  BlendR1 = ABlendR1;
+  BlendG1 = ABlendG1;
+  BlendB1 = ABlendB1;
+  BlendA1 = ABlendA1;
+  BlendR2 = ABlendR2;
+  BlendG2 = ABlendG2;
+  BlendB2 = ABlendB2;
+  BlendA2 = ABlendA2;
+  Duration = ADuration;
+  ForWho = AForWho;
+  Time = 0.0;
 }
 
 //==========================================================================
 //
-//	Destroy
+//  Destroy
 //
 //==========================================================================
 
 void Destroy()
 {
-	SetBlend(1.0);
-	::Destroy();
+  SetBlend(1.0);
+  ::Destroy();
 }
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	//	We need a valid player.
-	if (!ForWho || !ForWho.bIsPlayer)
-	{
-		Destroy();
-		return;
-	}
+  //  We need a valid player.
+  if (!ForWho || !ForWho.bIsPlayer)
+  {
+    Destroy();
+    return;
+  }
 
-	Time += DeltaTime;
-	if (Time >= Duration)
-	{
-		SetBlend(1.0);
-		Destroy();
-		return;
-	}
-	SetBlend(Time / Duration);
+  Time += DeltaTime;
+  if (Time >= Duration)
+  {
+    SetBlend(1.0);
+    Destroy();
+    return;
+  }
+  SetBlend(Time / Duration);
 }
 
 //==========================================================================
 //
-//	Cancel
+//  Cancel
 //
 //==========================================================================
 
 final void Cancel()
 {
-	Duration = Time;
-	BlendA2 = 0.0;
+  Duration = Time;
+  BlendA2 = 0.0;
 }
 
 //==========================================================================
 //
-//	SetBlend
+//  SetBlend
 //
 //==========================================================================
 
 final void SetBlend(float Inter)
 {
-	if (!ForWho || !ForWho.bIsPlayer)
-	{
-		return;
-	}
-	PlayerEx P = PlayerEx(ForWho.Player);
-	float InvInter = 1.0 - Inter;
-	P.BlendR = BlendR1 * InvInter + BlendR2 * Inter;
-	P.BlendG = BlendG1 * InvInter + BlendG2 * Inter;
-	P.BlendB = BlendB1 * InvInter + BlendB2 * Inter;
-	P.BlendA = BlendA1 * InvInter + BlendA2 * Inter;
+  if (!ForWho || !ForWho.bIsPlayer)
+  {
+    return;
+  }
+  PlayerEx P = PlayerEx(ForWho.Player);
+  float InvInter = 1.0 - Inter;
+  P.BlendR = BlendR1 * InvInter + BlendR2 * Inter;
+  P.BlendG = BlendG1 * InvInter + BlendG2 * Inter;
+  P.BlendB = BlendB1 * InvInter + BlendB2 * Inter;
+  P.BlendA = BlendA1 * InvInter + BlendA2 * Inter;
 }
 
 defaultproperties

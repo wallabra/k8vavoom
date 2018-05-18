@@ -27,5 +27,5 @@ class PowerMinotaur : Powerup;
 
 defaultproperties
 {
-	EffectTime = 25.0;
+  EffectTime = 25.0;
 }

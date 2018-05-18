@@ -33,31 +33,31 @@ class HexenLevelInfo : LineSpecialLevelInfo;
 
 int GetPClassSpawnFlags()
 {
-	if (!Game.netgame)
-	{
-		// Single player
-		return MainGameInfo(Game).classFlags[GetCvar('class')];
-	}
-#ifdef FIXME	//  Because of client/server and in-game joining we can't do this
-	else if (!deathmatch)
-	{
-		// Cooperative
-		int spawnMask = 0;
-		for (i = 0; i < MAXPLAYERS; i++)
-		{
-			if (GPlayers[i])
-			{
-				spawnMask |= classFlags[PlayerClass[i]];
-			}
-		}
-		return spawnMask;
-	}
+  if (!Game.netgame)
+  {
+    // Single player
+    return MainGameInfo(Game).classFlags[GetCvar('class')];
+  }
+#ifdef FIXME  //  Because of client/server and in-game joining we can't do this
+  else if (!deathmatch)
+  {
+    // Cooperative
+    int spawnMask = 0;
+    for (i = 0; i < MAXPLAYERS; i++)
+    {
+      if (GPlayers[i])
+      {
+        spawnMask |= classFlags[PlayerClass[i]];
+      }
+    }
+    return spawnMask;
+  }
 #endif
-	return 0;
+  return 0;
 }
 
 defaultproperties
 {
-	ExtPlayersBase = 9100;
-	bDefaultStopOnCrush = true;
+  ExtPlayersBase = 9100;
+  bDefaultStopOnCrush = true;
 }

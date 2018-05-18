@@ -25,25 +25,25 @@
 
 class MenuChoiceEpisode : MenuBigTextButton;
 
-int				PicHandle;
-EpisodeDef*		EDef;
+int       PicHandle;
+EpisodeDef*   EDef;
 
 //==========================================================================
 //
-//	OnDraw
+//  OnDraw
 //
 //==========================================================================
 
 void OnDraw()
 {
-	if (PicHandle > 0)
-	{
-		DrawPic(0, 0, PicHandle);
-	}
-	else
-	{
-		::OnDraw();
-	}
+  if (PicHandle > 0)
+  {
+    DrawPic(0, 0, PicHandle);
+  }
+  else
+  {
+    ::OnDraw();
+  }
 }
 
 defaultproperties

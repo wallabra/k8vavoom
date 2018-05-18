@@ -1,29 +1,29 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
 //**
-//**	Rendering main loop and setup functions, utility functions (BSP,
+//**  Rendering main loop and setup functions, utility functions (BSP,
 //**  geometry, trigonometry). See tables.c, too.
 //**
 //**************************************************************************
@@ -49,67 +49,67 @@ void R_FreeSkyboxData();
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int						screenblocks = 0;
+int           screenblocks = 0;
 
-TVec					vieworg;
-TVec					viewforward;
-TVec					viewright;
-TVec					viewup;
-TAVec					viewangles;
+TVec          vieworg;
+TVec          viewforward;
+TVec          viewright;
+TVec          viewup;
+TAVec         viewangles;
 
-TClipPlane				view_clipplanes[5];
+TClipPlane        view_clipplanes[5];
 
-int						r_visframecount;
+int           r_visframecount;
 
-VCvarB					r_fog("r_fog", false, "Fog mode.");
-VCvarB					r_fog_test("r_fog_test", false, "Is fog testing enabled?");
-VCvarF					r_fog_r("r_fog_r", "0.5", "Fog color: red component.");
-VCvarF					r_fog_g("r_fog_g", "0.5", "Fog color: green component.");
-VCvarF					r_fog_b("r_fog_b", "0.5", "Fog color: blue component.");
-VCvarF					r_fog_start("r_fog_start", "1.0", "Fog start distance.");
-VCvarF					r_fog_end("r_fog_end", "2048.0", "Fog end distance.");
-VCvarF					r_fog_density("r_fog_density", "0.5", "Fog density.");
+VCvarB          r_fog("r_fog", false, "Fog mode.");
+VCvarB          r_fog_test("r_fog_test", false, "Is fog testing enabled?");
+VCvarF          r_fog_r("r_fog_r", "0.5", "Fog color: red component.");
+VCvarF          r_fog_g("r_fog_g", "0.5", "Fog color: green component.");
+VCvarF          r_fog_b("r_fog_b", "0.5", "Fog color: blue component.");
+VCvarF          r_fog_start("r_fog_start", "1.0", "Fog start distance.");
+VCvarF          r_fog_end("r_fog_end", "2048.0", "Fog end distance.");
+VCvarF          r_fog_density("r_fog_density", "0.5", "Fog density.");
 
-VCvarI					aspect_ratio("r_aspect_ratio", "1", "Aspect ratio correction mode ([0..3]: normal/4:3/16:9/16:10).", CVAR_Archive);
-VCvarB					r_interpolate_frames("r_interpolate_frames", true, "Use frame interpolation for smoother rendering?", CVAR_Archive);
-VCvarB					r_vsync("r_vsync", false, "VSync mode.", CVAR_Archive);
-VCvarB					r_fade_light("r_fade_light", "0", "Fade lights?", CVAR_Archive);
-VCvarF					r_fade_factor("r_fade_factor", "4.0", "Fade actor lights?", CVAR_Archive);
-VCvarF					r_sky_bright_factor("r_sky_bright_factor", "1.0", "Skybright actor factor.", CVAR_Archive);
+VCvarI          aspect_ratio("r_aspect_ratio", "1", "Aspect ratio correction mode ([0..3]: normal/4:3/16:9/16:10).", CVAR_Archive);
+VCvarB          r_interpolate_frames("r_interpolate_frames", true, "Use frame interpolation for smoother rendering?", CVAR_Archive);
+VCvarB          r_vsync("r_vsync", false, "VSync mode.", CVAR_Archive);
+VCvarB          r_fade_light("r_fade_light", "0", "Fade lights?", CVAR_Archive);
+VCvarF          r_fade_factor("r_fade_factor", "4.0", "Fade actor lights?", CVAR_Archive);
+VCvarF          r_sky_bright_factor("r_sky_bright_factor", "1.0", "Skybright actor factor.", CVAR_Archive);
 
-extern VCvarF			r_lights_radius;
+extern VCvarF     r_lights_radius;
 
-VDrawer					*Drawer;
+VDrawer         *Drawer;
 
-refdef_t				refdef;
+refdef_t        refdef;
 
-float					PixelAspect;
+float         PixelAspect;
 
-bool					MirrorFlip;
-bool					MirrorClip;
+bool          MirrorFlip;
+bool          MirrorClip;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static FDrawerDesc		*DrawerList[DRAWER_MAX];
+static FDrawerDesc    *DrawerList[DRAWER_MAX];
 
-VCvarI					screen_size("screen_size", "11", "Screen size.", CVAR_Archive);
-bool					set_resolutioon_needed = true;
+VCvarI          screen_size("screen_size", "11", "Screen size.", CVAR_Archive);
+bool          set_resolutioon_needed = true;
 
 // Angles in the SCREENWIDTH wide window.
-VCvarF					fov("fov", "90", "Field of vision.");
+VCvarF          fov("fov", "90", "Field of vision.");
 
-TVec					clip_base[4];
+TVec          clip_base[4];
 
 //
-//	Translation tables
+//  Translation tables
 //
-VTextureTranslation*	PlayerTranslations[MAXPLAYERS + 1];
-static TArray<VTextureTranslation*>	CachedTranslations;
+VTextureTranslation*  PlayerTranslations[MAXPLAYERS + 1];
+static TArray<VTextureTranslation*> CachedTranslations;
 
 // if true, load all graphics at start
-VCvarB					precache("precache", true, "Load all graphics at startup (instead of on-demand)?", CVAR_Archive);
+VCvarB          precache("precache", true, "Load all graphics at startup (instead of on-demand)?", CVAR_Archive);
 
-static VCvarI			r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:normal; 2:advanced).", CVAR_Archive);
+static VCvarI     r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:normal; 2:advanced).", CVAR_Archive);
 
 // CODE --------------------------------------------------------------------
 
@@ -120,15 +120,15 @@ static VCvarI			r_level_renderer("r_level_renderer", "1", "Level renderer type (
 //==========================================================================
 
 FDrawerDesc::FDrawerDesc(int Type, const char* AName, const char* ADescription,
-	const char* ACmdLineArg, VDrawer* (*ACreator)())
+  const char* ACmdLineArg, VDrawer* (*ACreator)())
 : Name(AName)
 , Description(ADescription)
 , CmdLineArg(ACmdLineArg)
 , Creator(ACreator)
 {
-	guard(FDrawerDesc::FDrawerDesc);
-	DrawerList[Type] = this;
-	unguard
+  guard(FDrawerDesc::FDrawerDesc);
+  DrawerList[Type] = this;
+  unguard
 }
 
 //==========================================================================
@@ -139,15 +139,15 @@ FDrawerDesc::FDrawerDesc(int Type, const char* AName, const char* ADescription,
 
 void R_Init()
 {
-	guard(R_Init);
-	R_InitSkyBoxes();
-	R_InitModels();
+  guard(R_Init);
+  R_InitSkyBoxes();
+  R_InitModels();
 
-	for (int i = 0; i < 256; i++)
-	{
-		light_remap[i] = byte(i * i / 255);
-	}
-	unguard;
+  for (int i = 0; i < 256; i++)
+  {
+    light_remap[i] = byte(i * i / 255);
+  }
+  unguard;
 }
 
 //==========================================================================
@@ -158,34 +158,34 @@ void R_Init()
 
 void R_Start(VLevel* ALevel)
 {
-	guard(R_Start);
-	switch (r_level_renderer)
-	{
-	case 1:
-		ALevel->RenderData = new VRenderLevel(ALevel);
-		break;
+  guard(R_Start);
+  switch (r_level_renderer)
+  {
+  case 1:
+    ALevel->RenderData = new VRenderLevel(ALevel);
+    break;
 
-	case 2:
-		ALevel->RenderData = new VAdvancedRenderLevel(ALevel);
-		break;
+  case 2:
+    ALevel->RenderData = new VAdvancedRenderLevel(ALevel);
+    break;
 
-	default:
-		if (Drawer->SupportsAdvancedRendering())
-		{
-			ALevel->RenderData = new VAdvancedRenderLevel(ALevel);
-		}
-		else
-		{
-			ALevel->RenderData = new VRenderLevel(ALevel);
-		}
-		break;
-	}
-	unguard;
+  default:
+    if (Drawer->SupportsAdvancedRendering())
+    {
+      ALevel->RenderData = new VAdvancedRenderLevel(ALevel);
+    }
+    else
+    {
+      ALevel->RenderData = new VRenderLevel(ALevel);
+    }
+    break;
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VRenderLevelShared::VRenderLevelShared
+//  VRenderLevelShared::VRenderLevelShared
 //
 //==========================================================================
 
@@ -217,42 +217,42 @@ VRenderLevelShared::VRenderLevelShared(VLevel* ALevel)
 , AllocatedSegParts(NULL)
 , cacheframecount(0)
 {
-	guard(VRenderLevelShared::VRenderLevelShared);
-	memset(MainTransSprites, 0, sizeof(MainTransSprites));
+  guard(VRenderLevelShared::VRenderLevelShared);
+  memset(MainTransSprites, 0, sizeof(MainTransSprites));
 
-	memset(light_block, 0, sizeof(light_block));
-	memset(block_changed, 0, sizeof(block_changed));
-	memset(light_chain, 0, sizeof(light_chain));
-	memset(add_block, 0, sizeof(add_block));
-	memset(add_changed, 0, sizeof(add_changed));
-	memset(add_chain, 0, sizeof(add_chain));
-	SimpleSurfsHead = NULL;
-	SimpleSurfsTail = NULL;
-	SkyPortalsHead = NULL;
-	SkyPortalsTail = NULL;
-	HorizonPortalsHead = NULL;
-	HorizonPortalsTail = NULL;
-	PortalDepth = 0;
+  memset(light_block, 0, sizeof(light_block));
+  memset(block_changed, 0, sizeof(block_changed));
+  memset(light_chain, 0, sizeof(light_chain));
+  memset(add_block, 0, sizeof(add_block));
+  memset(add_changed, 0, sizeof(add_changed));
+  memset(add_chain, 0, sizeof(add_chain));
+  SimpleSurfsHead = NULL;
+  SimpleSurfsTail = NULL;
+  SkyPortalsHead = NULL;
+  SkyPortalsTail = NULL;
+  HorizonPortalsHead = NULL;
+  HorizonPortalsTail = NULL;
+  PortalDepth = 0;
 
-	VisSize = (Level->NumSubsectors + 7) >> 3;
-	BspVis = new vuint8[VisSize];
+  VisSize = (Level->NumSubsectors + 7) >> 3;
+  BspVis = new vuint8[VisSize];
 
-	InitParticles();
-	ClearParticles();
+  InitParticles();
+  ClearParticles();
 
-	screenblocks = 0;
+  screenblocks = 0;
 
-	// preload graphics
-	if (precache)
-	{
-		PrecacheLevel();
-	}
-	unguard;
+  // preload graphics
+  if (precache)
+  {
+    PrecacheLevel();
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VRenderLevel::VRenderLevel
+//  VRenderLevel::VRenderLevel
 //
 //==========================================================================
 
@@ -262,21 +262,21 @@ VRenderLevel::VRenderLevel(VLevel* ALevel)
 , c_seg_div(0)
 , freeblocks(NULL)
 {
-	guard(VRenderLevel::VRenderLevel);
-	NeedsInfiniteFarClip = false;
+  guard(VRenderLevel::VRenderLevel);
+  NeedsInfiniteFarClip = false;
 
-	memset(cacheblocks, 0, sizeof(cacheblocks));
-	memset(blockbuf, 0, sizeof(blockbuf));
+  memset(cacheblocks, 0, sizeof(cacheblocks));
+  memset(blockbuf, 0, sizeof(blockbuf));
 
-	FlushCaches();
+  FlushCaches();
 
-	memset(DLights, 0, sizeof(DLights));
-	unguard;
+  memset(DLights, 0, sizeof(DLights));
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAdvancedRenderLevel::VAdvancedRenderLevel
+//  VAdvancedRenderLevel::VAdvancedRenderLevel
 //
 //==========================================================================
 
@@ -284,138 +284,138 @@ VAdvancedRenderLevel::VAdvancedRenderLevel(VLevel* ALevel)
 : VRenderLevelShared(ALevel)
 , LightVis(NULL)
 {
-	guard(VAdvancedRenderLevel::VAdvancedRenderLevel);
-	NeedsInfiniteFarClip = true;
+  guard(VAdvancedRenderLevel::VAdvancedRenderLevel);
+  NeedsInfiniteFarClip = true;
 
-	memset(DLights, 0, sizeof(DLights));
+  memset(DLights, 0, sizeof(DLights));
 
-	LightVis = new vuint8[VisSize];
-	LightBspVis = new vuint8[VisSize];
-	unguard;
+  LightVis = new vuint8[VisSize];
+  LightBspVis = new vuint8[VisSize];
+  unguard;
 }
 
 //==========================================================================
 //
-//	VRenderLevelShared::~VRenderLevelShared
+//  VRenderLevelShared::~VRenderLevelShared
 //
 //==========================================================================
 
 VRenderLevelShared::~VRenderLevelShared()
 {
-	guard(VRenderLevelShared::~VRenderLevelShared);
-	//	Free fake floor data.
-	for (int i = 0; i < Level->NumSectors; i++)
-	{
-		if (Level->Sectors[i].fakefloors)
-		{
-			delete Level->Sectors[i].fakefloors;
-			Level->Sectors[i].fakefloors = NULL;
-		}
-	}
+  guard(VRenderLevelShared::~VRenderLevelShared);
+  //  Free fake floor data.
+  for (int i = 0; i < Level->NumSectors; i++)
+  {
+    if (Level->Sectors[i].fakefloors)
+    {
+      delete Level->Sectors[i].fakefloors;
+      Level->Sectors[i].fakefloors = NULL;
+    }
+  }
 
-	for (int i = 0; i < Level->NumSubsectors; i++)
-	{
-		for (subregion_t* r = Level->Subsectors[i].regions; r != NULL; r = r->next)
-		{
-			if (r->floor != NULL)
-			{
-				FreeSurfaces(r->floor->surfs);
-				delete r->floor;
-				r->floor = NULL;
-			}
-			if (r->ceil != NULL)
-			{
-				FreeSurfaces(r->ceil->surfs);
-				delete r->ceil;
-				r->ceil = NULL;
-			}
-		}
-	}
+  for (int i = 0; i < Level->NumSubsectors; i++)
+  {
+    for (subregion_t* r = Level->Subsectors[i].regions; r != NULL; r = r->next)
+    {
+      if (r->floor != NULL)
+      {
+        FreeSurfaces(r->floor->surfs);
+        delete r->floor;
+        r->floor = NULL;
+      }
+      if (r->ceil != NULL)
+      {
+        FreeSurfaces(r->ceil->surfs);
+        delete r->ceil;
+        r->ceil = NULL;
+      }
+    }
+  }
 
-	//	Free seg parts.
-	for (int i = 0; i < Level->NumSegs; i++)
-	{
-		for (drawseg_t* ds = Level->Segs[i].drawsegs; ds; ds = ds->next)
-		{
-			FreeSegParts(ds->top);
-			FreeSegParts(ds->mid);
-			FreeSegParts(ds->bot);
-			FreeSegParts(ds->topsky);
-			FreeSegParts(ds->extra);
-			if (ds->HorizonTop)
-			{
-				Z_Free(ds->HorizonTop);
-			}
-			if (ds->HorizonBot)
-			{
-				Z_Free(ds->HorizonBot);
-			}
-		}
-	}
-	//	Free allocated wall surface blocks.
-	for (void* Block = AllocatedWSurfBlocks; Block;)
-	{
-		void* Next = *(void**)Block;
-		Z_Free(Block);
-		Block = Next;
-	}
-	AllocatedWSurfBlocks = NULL;
+  //  Free seg parts.
+  for (int i = 0; i < Level->NumSegs; i++)
+  {
+    for (drawseg_t* ds = Level->Segs[i].drawsegs; ds; ds = ds->next)
+    {
+      FreeSegParts(ds->top);
+      FreeSegParts(ds->mid);
+      FreeSegParts(ds->bot);
+      FreeSegParts(ds->topsky);
+      FreeSegParts(ds->extra);
+      if (ds->HorizonTop)
+      {
+        Z_Free(ds->HorizonTop);
+      }
+      if (ds->HorizonBot)
+      {
+        Z_Free(ds->HorizonBot);
+      }
+    }
+  }
+  //  Free allocated wall surface blocks.
+  for (void* Block = AllocatedWSurfBlocks; Block;)
+  {
+    void* Next = *(void**)Block;
+    Z_Free(Block);
+    Block = Next;
+  }
+  AllocatedWSurfBlocks = NULL;
 
-	//	Free big blocks.
-	delete[] AllocatedSubRegions;
-	AllocatedSubRegions = NULL;
-	delete[] AllocatedDrawSegs;
-	AllocatedDrawSegs = NULL;
-	delete[] AllocatedSegParts;
-	AllocatedSegParts = NULL;
+  //  Free big blocks.
+  delete[] AllocatedSubRegions;
+  AllocatedSubRegions = NULL;
+  delete[] AllocatedDrawSegs;
+  AllocatedDrawSegs = NULL;
+  delete[] AllocatedSegParts;
+  AllocatedSegParts = NULL;
 
-	delete[] Particles;
-	Particles = NULL;
-	delete[] BspVis;
-	BspVis = NULL;
+  delete[] Particles;
+  Particles = NULL;
+  delete[] BspVis;
+  BspVis = NULL;
 
-	for (int i = 0; i < SideSkies.Num(); i++)
-	{
-		delete SideSkies[i];
-		SideSkies[i] = NULL;
-	}
-	unguard;
+  for (int i = 0; i < SideSkies.Num(); i++)
+  {
+    delete SideSkies[i];
+    SideSkies[i] = NULL;
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VAdvancedRenderLevel::~VAdvancedRenderLevel
+//  VAdvancedRenderLevel::~VAdvancedRenderLevel
 //
 //==========================================================================
 
 VAdvancedRenderLevel::~VAdvancedRenderLevel()
 {
-	guard(VAdvancedRenderLevel::~VAdvancedRenderLevel);
-	delete[] LightVis;
-	LightVis = NULL;
-	delete[] LightBspVis;
-	LightBspVis = NULL;
-	unguard;
+  guard(VAdvancedRenderLevel::~VAdvancedRenderLevel);
+  delete[] LightVis;
+  LightVis = NULL;
+  delete[] LightBspVis;
+  LightBspVis = NULL;
+  unguard;
 }
 
 //==========================================================================
 //
-// 	R_SetViewSize
+//  R_SetViewSize
 //
-// 	Do not really change anything here, because it might be in the middle
+//  Do not really change anything here, because it might be in the middle
 // of a refresh. The change will take effect next refresh.
 //
 //==========================================================================
 
 void R_SetViewSize(int blocks)
 {
-	guard(R_SetViewSize);
-	if (blocks > 2)
-	{
-		screen_size = blocks;
-	}
-	set_resolutioon_needed = true;
-	unguard;
+  guard(R_SetViewSize);
+  if (blocks > 2)
+  {
+    screen_size = blocks;
+  }
+  set_resolutioon_needed = true;
+  unguard;
 }
 
 //==========================================================================
@@ -426,9 +426,9 @@ void R_SetViewSize(int blocks)
 
 COMMAND(SizeDown)
 {
-	R_SetViewSize(screenblocks - 1);
-	GAudio->PlaySound(GSoundManager->GetSoundID("menu/change"),
-		TVec(0, 0, 0), TVec(0, 0, 0), 0, 0, 1, 0, false);
+  R_SetViewSize(screenblocks - 1);
+  GAudio->PlaySound(GSoundManager->GetSoundID("menu/change"),
+    TVec(0, 0, 0), TVec(0, 0, 0), 0, 0, 1, 0, false);
 }
 
 //==========================================================================
@@ -439,357 +439,357 @@ COMMAND(SizeDown)
 
 COMMAND(SizeUp)
 {
-	R_SetViewSize(screenblocks + 1);
-	GAudio->PlaySound(GSoundManager->GetSoundID("menu/change"),
-		TVec(0, 0, 0), TVec(0, 0, 0), 0, 0, 1, 0, false);
+  R_SetViewSize(screenblocks + 1);
+  GAudio->PlaySound(GSoundManager->GetSoundID("menu/change"),
+    TVec(0, 0, 0), TVec(0, 0, 0), 0, 0, 1, 0, false);
 }
 
 //==========================================================================
 //
-//	VRenderLevelShared::ExecuteSetViewSize
+//  VRenderLevelShared::ExecuteSetViewSize
 //
 //==========================================================================
 
 void VRenderLevelShared::ExecuteSetViewSize()
 {
-	guard(VRenderLevelShared::ExecuteSetViewSize);
-	set_resolutioon_needed = false;
-	if (screen_size < 3)
-	{
-		screen_size = 3;
-	}
-	if (screen_size > 11)
-	{
-		screen_size = 11;
-	}
-	screenblocks = screen_size;
+  guard(VRenderLevelShared::ExecuteSetViewSize);
+  set_resolutioon_needed = false;
+  if (screen_size < 3)
+  {
+    screen_size = 3;
+  }
+  if (screen_size > 11)
+  {
+    screen_size = 11;
+  }
+  screenblocks = screen_size;
 
-	if (fov < 5.0)
-	{
-		fov = 5.0;
-	}
-	if (fov > 175.0)
-	{
-		fov = 175.0;
-	}
-	old_fov = fov;
+  if (fov < 5.0)
+  {
+    fov = 5.0;
+  }
+  if (fov > 175.0)
+  {
+    fov = 175.0;
+  }
+  old_fov = fov;
 
-	if (screenblocks > 10)
-	{
-		refdef.width = ScreenWidth;
-		refdef.height = ScreenHeight;
-		refdef.y = 0;
-	}
-	else if (GGameInfo->NetMode == NM_TitleMap)
-	{
-		//	No status bar for titlemap.
-		refdef.width = screenblocks * ScreenWidth / 10;
-		refdef.height = (screenblocks * ScreenHeight / 10);
-		refdef.y = (ScreenHeight - refdef.height) >> 1;
-	}
-	else
-	{
-		refdef.width = screenblocks * ScreenWidth / 10;
-		refdef.height = (screenblocks * (ScreenHeight - SB_REALHEIGHT) / 10);
-		refdef.y = (ScreenHeight - SB_REALHEIGHT - refdef.height) >> 1;
-	}
-	refdef.x = (ScreenWidth - refdef.width) >> 1;
+  if (screenblocks > 10)
+  {
+    refdef.width = ScreenWidth;
+    refdef.height = ScreenHeight;
+    refdef.y = 0;
+  }
+  else if (GGameInfo->NetMode == NM_TitleMap)
+  {
+    //  No status bar for titlemap.
+    refdef.width = screenblocks * ScreenWidth / 10;
+    refdef.height = (screenblocks * ScreenHeight / 10);
+    refdef.y = (ScreenHeight - refdef.height) >> 1;
+  }
+  else
+  {
+    refdef.width = screenblocks * ScreenWidth / 10;
+    refdef.height = (screenblocks * (ScreenHeight - SB_REALHEIGHT) / 10);
+    refdef.y = (ScreenHeight - SB_REALHEIGHT - refdef.height) >> 1;
+  }
+  refdef.x = (ScreenWidth - refdef.width) >> 1;
 
-	if (aspect_ratio == 0)
-	{
-		// Original aspect ratio
-		PixelAspect = ((float)ScreenHeight * 320.0) / ((float)ScreenWidth * 200.0);
-	}
-	else if (aspect_ratio == 1)
-	{
-		// 4:3 aspect ratio
-		PixelAspect = ((float)ScreenHeight * 4.0) / ((float)ScreenWidth * 3.0);
-	}
-	else if (aspect_ratio == 2)
-	{
-		// 16:9 aspect ratio
-		PixelAspect = ((float)ScreenHeight * 16.0) / ((float)ScreenWidth * 9.0);
-	}
-	else
-	{
-		// 16:10 aspect ratio
-		PixelAspect = ((float)ScreenHeight * 16.0) / ((float)ScreenWidth * 10.0);
-	}
-	prev_aspect_ratio = aspect_ratio;
+  if (aspect_ratio == 0)
+  {
+    // Original aspect ratio
+    PixelAspect = ((float)ScreenHeight * 320.0) / ((float)ScreenWidth * 200.0);
+  }
+  else if (aspect_ratio == 1)
+  {
+    // 4:3 aspect ratio
+    PixelAspect = ((float)ScreenHeight * 4.0) / ((float)ScreenWidth * 3.0);
+  }
+  else if (aspect_ratio == 2)
+  {
+    // 16:9 aspect ratio
+    PixelAspect = ((float)ScreenHeight * 16.0) / ((float)ScreenWidth * 9.0);
+  }
+  else
+  {
+    // 16:10 aspect ratio
+    PixelAspect = ((float)ScreenHeight * 16.0) / ((float)ScreenWidth * 10.0);
+  }
+  prev_aspect_ratio = aspect_ratio;
 
-	refdef.fovx = tan(DEG2RAD(fov) / 2);
-	refdef.fovy = refdef.fovx * refdef.height / refdef.width / PixelAspect;
+  refdef.fovx = tan(DEG2RAD(fov) / 2);
+  refdef.fovy = refdef.fovx * refdef.height / refdef.width / PixelAspect;
 
-	// left side clip
-	clip_base[0] = Normalise(TVec(1, 1.0 / refdef.fovx, 0));
-	
-	// right side clip
-	clip_base[1] = Normalise(TVec(1, -1.0 / refdef.fovx, 0));
-	
-	// top side clip
-	clip_base[2] = Normalise(TVec(1, 0, -1.0 / refdef.fovy));
-	
-	// bottom side clip
-	clip_base[3] = Normalise(TVec(1, 0, 1.0 / refdef.fovy));
+  // left side clip
+  clip_base[0] = Normalise(TVec(1, 1.0 / refdef.fovx, 0));
 
-	refdef.drawworld = true;
-	unguard;
+  // right side clip
+  clip_base[1] = Normalise(TVec(1, -1.0 / refdef.fovx, 0));
+
+  // top side clip
+  clip_base[2] = Normalise(TVec(1, 0, -1.0 / refdef.fovy));
+
+  // bottom side clip
+  clip_base[3] = Normalise(TVec(1, 0, 1.0 / refdef.fovy));
+
+  refdef.drawworld = true;
+  unguard;
 }
 
 //==========================================================================
 //
-//	R_DrawViewBorder
+//  R_DrawViewBorder
 //
 //==========================================================================
 
 void R_DrawViewBorder()
 {
-	guard(R_DrawViewBorder);
-	if (GGameInfo->NetMode == NM_TitleMap)
-	{
-		GClGame->eventDrawViewBorder(320 - screenblocks * 32,
-			(480 - screenblocks * 480 / 10) / 2,
-			screenblocks * 64, screenblocks * 480 / 10);
-	}
-	else
-	{
-		GClGame->eventDrawViewBorder(320 - screenblocks * 32,
-			(480 - sb_height - screenblocks * (480 - sb_height) / 10) / 2,
-			screenblocks * 64, screenblocks * (480 - sb_height) / 10);
-	}
-	unguard;
+  guard(R_DrawViewBorder);
+  if (GGameInfo->NetMode == NM_TitleMap)
+  {
+    GClGame->eventDrawViewBorder(320 - screenblocks * 32,
+      (480 - screenblocks * 480 / 10) / 2,
+      screenblocks * 64, screenblocks * 480 / 10);
+  }
+  else
+  {
+    GClGame->eventDrawViewBorder(320 - screenblocks * 32,
+      (480 - sb_height - screenblocks * (480 - sb_height) / 10) / 2,
+      screenblocks * 64, screenblocks * (480 - sb_height) / 10);
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VRenderLevelShared::TransformFrustum
+//  VRenderLevelShared::TransformFrustum
 //
 //==========================================================================
 
 void VRenderLevelShared::TransformFrustum()
 {
-	guard(VRenderLevelShared::TransformFrustum);
-	for (int i = 0; i < 4; i++)
-	{
-		TVec &v = clip_base[i];
-		TVec v2;
+  guard(VRenderLevelShared::TransformFrustum);
+  for (int i = 0; i < 4; i++)
+  {
+    TVec &v = clip_base[i];
+    TVec v2;
 
-		v2.x = v.y * viewright.x + v.z * viewup.x + v.x * viewforward.x;
-		v2.y = v.y * viewright.y + v.z * viewup.y + v.x * viewforward.y;
-		v2.z = v.y * viewright.z + v.z * viewup.z + v.x * viewforward.z;
+    v2.x = v.y * viewright.x + v.z * viewup.x + v.x * viewforward.x;
+    v2.y = v.y * viewright.y + v.z * viewup.y + v.x * viewforward.y;
+    v2.z = v.y * viewright.z + v.z * viewup.z + v.x * viewforward.z;
 
-		view_clipplanes[i].Set(v2, DotProduct(vieworg, v2));
+    view_clipplanes[i].Set(v2, DotProduct(vieworg, v2));
 
-		view_clipplanes[i].next = i == 3 ? NULL : &view_clipplanes[i + 1];
-		view_clipplanes[i].clipflag = 1 << i;
-	}
-	unguard;
+    view_clipplanes[i].next = i == 3 ? NULL : &view_clipplanes[i + 1];
+    view_clipplanes[i].clipflag = 1 << i;
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VRenderLevelShared::SetupFrame
+//  VRenderLevelShared::SetupFrame
 //
 //==========================================================================
 
-VCvarB			r_chasecam("r_chasecam", false, "Chasecam mode.", CVAR_Archive);
-VCvarF			r_chase_dist("r_chase_dist", "32.0", "Chasecam distance.", CVAR_Archive);
-VCvarF			r_chase_up("r_chase_up", "128.0", "Chasecam position: up.", CVAR_Archive);
-VCvarF			r_chase_right("r_chase_right", "0", "Chasecam position: right.", CVAR_Archive);
-VCvarI			r_chase_front("r_chase_front", "0", "Chasecam position: front.", CVAR_Archive);
+VCvarB      r_chasecam("r_chasecam", false, "Chasecam mode.", CVAR_Archive);
+VCvarF      r_chase_dist("r_chase_dist", "32.0", "Chasecam distance.", CVAR_Archive);
+VCvarF      r_chase_up("r_chase_up", "128.0", "Chasecam position: up.", CVAR_Archive);
+VCvarF      r_chase_right("r_chase_right", "0", "Chasecam position: right.", CVAR_Archive);
+VCvarI      r_chase_front("r_chase_front", "0", "Chasecam position: front.", CVAR_Archive);
 
 void VRenderLevelShared::SetupFrame()
 {
-	guard(VRenderLevelShared::SetupFrame);
-	// change the view size if needed
-	if (screen_size != screenblocks || !screenblocks ||
-		set_resolutioon_needed || old_fov != fov ||
-		aspect_ratio != prev_aspect_ratio)
-	{
-		ExecuteSetViewSize();
-	}
+  guard(VRenderLevelShared::SetupFrame);
+  // change the view size if needed
+  if (screen_size != screenblocks || !screenblocks ||
+    set_resolutioon_needed || old_fov != fov ||
+    aspect_ratio != prev_aspect_ratio)
+  {
+    ExecuteSetViewSize();
+  }
 
-	ViewEnt = cl->Camera;
-	viewangles = cl->ViewAngles;
-	if (r_chasecam && r_chase_front)
-	{
-		//	This is used to see how weapon looks in player's hands
-		viewangles.yaw = AngleMod(viewangles.yaw + 180);
-		viewangles.pitch = -viewangles.pitch;
-	}
-	AngleVectors(viewangles, viewforward, viewright, viewup);
+  ViewEnt = cl->Camera;
+  viewangles = cl->ViewAngles;
+  if (r_chasecam && r_chase_front)
+  {
+    //  This is used to see how weapon looks in player's hands
+    viewangles.yaw = AngleMod(viewangles.yaw + 180);
+    viewangles.pitch = -viewangles.pitch;
+  }
+  AngleVectors(viewangles, viewforward, viewright, viewup);
 
-	if (r_chasecam && cl->MO == cl->Camera)
-	{
-		vieworg = cl->MO->Origin + TVec(0.0, 0.0, 32.0)
-			- r_chase_dist * viewforward + r_chase_up * viewup
-			+ r_chase_right * viewright;
-	}
-	else
-	{
-		vieworg = cl->ViewOrg;
-	}
+  if (r_chasecam && cl->MO == cl->Camera)
+  {
+    vieworg = cl->MO->Origin + TVec(0.0, 0.0, 32.0)
+      - r_chase_dist * viewforward + r_chase_up * viewup
+      + r_chase_right * viewright;
+  }
+  else
+  {
+    vieworg = cl->ViewOrg;
+  }
 
-	ExtraLight = ViewEnt->Player ? ViewEnt->Player->ExtraLight * 8 : 0;
-	if (cl->Camera == cl->MO)
-	{
-		ColourMap = CM_Default;
-		if (cl->FixedColourmap == INVERSECOLOURMAP)
-		{
-			ColourMap = CM_Inverse;
-			FixedLight = 255;
-		}
-		else if (cl->FixedColourmap == GOLDCOLOURMAP)
-		{
-			ColourMap = CM_Gold;
-			FixedLight = 255;
-		}
-		else if (cl->FixedColourmap == REDCOLOURMAP)
-		{
-			ColourMap = CM_Red;
-			FixedLight = 255;
-		}
-		else if (cl->FixedColourmap == GREENCOLOURMAP)
-		{
-			ColourMap = CM_Green;
-			FixedLight = 255;
-		}
-		else if (cl->FixedColourmap >= NUMCOLOURMAPS)
-		{
-			FixedLight = 255;
-		}
-		else if (cl->FixedColourmap)
-		{
-			FixedLight = 255 - (cl->FixedColourmap << 3);
-		}
-		else
-		{
-			FixedLight = 0;
-		}
-	}
-	else
-	{
-		FixedLight = 0;
-		ColourMap = 0;
-	}
-	//	Inverse colourmap flash effect.
-	if (cl->ExtraLight == 255)
-	{
-		ExtraLight = 0;
-		ColourMap = CM_Inverse;
-		FixedLight = 255;
-	}
+  ExtraLight = ViewEnt->Player ? ViewEnt->Player->ExtraLight * 8 : 0;
+  if (cl->Camera == cl->MO)
+  {
+    ColourMap = CM_Default;
+    if (cl->FixedColourmap == INVERSECOLOURMAP)
+    {
+      ColourMap = CM_Inverse;
+      FixedLight = 255;
+    }
+    else if (cl->FixedColourmap == GOLDCOLOURMAP)
+    {
+      ColourMap = CM_Gold;
+      FixedLight = 255;
+    }
+    else if (cl->FixedColourmap == REDCOLOURMAP)
+    {
+      ColourMap = CM_Red;
+      FixedLight = 255;
+    }
+    else if (cl->FixedColourmap == GREENCOLOURMAP)
+    {
+      ColourMap = CM_Green;
+      FixedLight = 255;
+    }
+    else if (cl->FixedColourmap >= NUMCOLOURMAPS)
+    {
+      FixedLight = 255;
+    }
+    else if (cl->FixedColourmap)
+    {
+      FixedLight = 255 - (cl->FixedColourmap << 3);
+    }
+    else
+    {
+      FixedLight = 0;
+    }
+  }
+  else
+  {
+    FixedLight = 0;
+    ColourMap = 0;
+  }
+  //  Inverse colourmap flash effect.
+  if (cl->ExtraLight == 255)
+  {
+    ExtraLight = 0;
+    ColourMap = CM_Inverse;
+    FixedLight = 255;
+  }
 
-	Drawer->SetupView(this, &refdef);
-	cacheframecount++;
-	PortalDepth = 0;
-	unguard;
+  Drawer->SetupView(this, &refdef);
+  cacheframecount++;
+  PortalDepth = 0;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VRenderLevelShared::SetupCameraFrame
+//  VRenderLevelShared::SetupCameraFrame
 //
 //==========================================================================
 
 void VRenderLevelShared::SetupCameraFrame(VEntity* Camera, VTexture* Tex,
-	int FOV, refdef_t* rd)
+  int FOV, refdef_t* rd)
 {
-	guard(VRenderLevelShared::SetupCameraFrame);
-	rd->width = Tex->GetWidth();
-	rd->height = Tex->GetHeight();
-	rd->y = 0;
-	rd->x = 0;
+  guard(VRenderLevelShared::SetupCameraFrame);
+  rd->width = Tex->GetWidth();
+  rd->height = Tex->GetHeight();
+  rd->y = 0;
+  rd->x = 0;
 
-	if (aspect_ratio == 0)
-	{
-		PixelAspect = ((float)rd->height * 320.0) / ((float)rd->width * 200.0);
-	}
-	else if (aspect_ratio == 1)
-	{
-		PixelAspect = ((float)rd->height * 4.0) / ((float)rd->width * 3.0);
-	}
-	else if (aspect_ratio == 2)
-	{
-		PixelAspect = ((float)rd->height * 16.0) / ((float)rd->width * 9.0);
-	}
-	else if (aspect_ratio > 2)
-	{
-		PixelAspect = ((float)rd->height * 16.0) / ((float)rd->width * 10.0);
-	}
+  if (aspect_ratio == 0)
+  {
+    PixelAspect = ((float)rd->height * 320.0) / ((float)rd->width * 200.0);
+  }
+  else if (aspect_ratio == 1)
+  {
+    PixelAspect = ((float)rd->height * 4.0) / ((float)rd->width * 3.0);
+  }
+  else if (aspect_ratio == 2)
+  {
+    PixelAspect = ((float)rd->height * 16.0) / ((float)rd->width * 9.0);
+  }
+  else if (aspect_ratio > 2)
+  {
+    PixelAspect = ((float)rd->height * 16.0) / ((float)rd->width * 10.0);
+  }
 
-	rd->fovx = tan(DEG2RAD(FOV) / 2);
-	rd->fovy = rd->fovx * rd->height / rd->width / PixelAspect;
+  rd->fovx = tan(DEG2RAD(FOV) / 2);
+  rd->fovy = rd->fovx * rd->height / rd->width / PixelAspect;
 
-	// left side clip
-	clip_base[0] = Normalise(TVec(1, 1.0 / rd->fovx, 0));
-	
-	// right side clip
-	clip_base[1] = Normalise(TVec(1, -1.0 / rd->fovx, 0));
-	
-	// top side clip
-	clip_base[2] = Normalise(TVec(1, 0, -1.0 / rd->fovy));
-	
-	// bottom side clip
-	clip_base[3] = Normalise(TVec(1, 0, 1.0 / rd->fovy));
+  // left side clip
+  clip_base[0] = Normalise(TVec(1, 1.0 / rd->fovx, 0));
 
-	rd->drawworld = true;
+  // right side clip
+  clip_base[1] = Normalise(TVec(1, -1.0 / rd->fovx, 0));
 
-	ViewEnt = Camera;
-	viewangles = Camera->Angles;
-	AngleVectors(viewangles, viewforward, viewright, viewup);
+  // top side clip
+  clip_base[2] = Normalise(TVec(1, 0, -1.0 / rd->fovy));
 
-	vieworg = Camera->Origin;
+  // bottom side clip
+  clip_base[3] = Normalise(TVec(1, 0, 1.0 / rd->fovy));
 
-	ExtraLight = 0;
-	FixedLight = 0;
-	ColourMap = 0;
+  rd->drawworld = true;
 
-	Drawer->SetupView(this, rd);
-	cacheframecount++;
-	PortalDepth = 0;
-	set_resolutioon_needed = true;
-	unguard;
+  ViewEnt = Camera;
+  viewangles = Camera->Angles;
+  AngleVectors(viewangles, viewforward, viewright, viewup);
+
+  vieworg = Camera->Origin;
+
+  ExtraLight = 0;
+  FixedLight = 0;
+  ColourMap = 0;
+
+  Drawer->SetupView(this, rd);
+  cacheframecount++;
+  PortalDepth = 0;
+  set_resolutioon_needed = true;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VRenderLevelShared::MarkLeaves
+//  VRenderLevelShared::MarkLeaves
 //
 //==========================================================================
 
 void VRenderLevelShared::MarkLeaves()
 {
-	guard(VRenderLevelShared::MarkLeaves);
-	byte	*vis;
-	node_t	*node;
-	int		i;
+  guard(VRenderLevelShared::MarkLeaves);
+  byte  *vis;
+  node_t  *node;
+  int   i;
 
-	if (r_oldviewleaf == r_viewleaf)
-		return;
-	
-	r_visframecount++;
-	r_oldviewleaf = r_viewleaf;
+  if (r_oldviewleaf == r_viewleaf)
+    return;
 
-	vis = Level->LeafPVS(r_viewleaf);
+  r_visframecount++;
+  r_oldviewleaf = r_viewleaf;
 
-	for (i = 0; i < Level->NumSubsectors; i++)
-	{
-		if (vis[i >> 3] & (1 << (i & 7)))
-		{
-			subsector_t *sub = &Level->Subsectors[i];
-			sub->VisFrame = r_visframecount;
-			node = sub->parent;
-			while (node)
-			{
-				if (node->VisFrame == r_visframecount)
-					break;
-				node->VisFrame = r_visframecount;
-				node = node->parent;
-			}
-		}
-	}
-	unguard;
+  vis = Level->LeafPVS(r_viewleaf);
+
+  for (i = 0; i < Level->NumSubsectors; i++)
+  {
+    if (vis[i >> 3] & (1 << (i & 7)))
+    {
+      subsector_t *sub = &Level->Subsectors[i];
+      sub->VisFrame = r_visframecount;
+      node = sub->parent;
+      while (node)
+      {
+        if (node->VisFrame == r_visframecount)
+          break;
+        node->VisFrame = r_visframecount;
+        node = node->parent;
+      }
+    }
+  }
+  unguard;
 }
 
 //==========================================================================
@@ -800,25 +800,25 @@ void VRenderLevelShared::MarkLeaves()
 
 void VRenderLevel::RenderScene(const refdef_t* RD, const VViewClipper* Range)
 {
-	guard(VRenderLevel::RenderScene);
-	r_viewleaf = Level->PointInSubsector(vieworg);
+  guard(VRenderLevel::RenderScene);
+  r_viewleaf = Level->PointInSubsector(vieworg);
 
-	TransformFrustum();
+  TransformFrustum();
 
-	Drawer->SetupViewOrg();
+  Drawer->SetupViewOrg();
 
-	MarkLeaves();
+  MarkLeaves();
 
-	UpdateWorld(RD, Range);
+  UpdateWorld(RD, Range);
 
-	RenderWorld(RD, Range);
+  RenderWorld(RD, Range);
 
-	RenderMobjs(RPASS_Normal);
+  RenderMobjs(RPASS_Normal);
 
-	DrawParticles();
+  DrawParticles();
 
-	DrawTranslucentPolys();
-	unguard;
+  DrawTranslucentPolys();
+  unguard;
 }
 
 //==========================================================================
@@ -829,123 +829,123 @@ void VRenderLevel::RenderScene(const refdef_t* RD, const VViewClipper* Range)
 
 void VAdvancedRenderLevel::RenderScene(const refdef_t* RD, const VViewClipper* Range)
 {
-	guard(VAdvancedRenderLevel::RenderScene);
-	if (!Drawer->SupportsAdvancedRendering())
-	{
-		Host_Error("Advanced rendering not supported by graphics card");
-	}
+  guard(VAdvancedRenderLevel::RenderScene);
+  if (!Drawer->SupportsAdvancedRendering())
+  {
+    Host_Error("Advanced rendering not supported by graphics card");
+  }
 
-	r_viewleaf = Level->PointInSubsector(vieworg);
+  r_viewleaf = Level->PointInSubsector(vieworg);
 
-	TransformFrustum();
+  TransformFrustum();
 
-	Drawer->SetupViewOrg();
+  Drawer->SetupViewOrg();
 
-	MarkLeaves();
+  MarkLeaves();
 
-	UpdateWorld(RD, Range);
+  UpdateWorld(RD, Range);
 
-	RenderWorld(RD, Range);
-	RenderMobjsAmbient();
+  RenderWorld(RD, Range);
+  RenderMobjsAmbient();
 
-	Drawer->BeginShadowVolumesPass();
+  Drawer->BeginShadowVolumesPass();
 
-	subsector_t		*sub;
-	int				leafnum;
-	vuint8*         dyn_facevis;
-	linetrace_t		Trace;
-	TVec			Delta;
+  subsector_t   *sub;
+  int       leafnum;
+  vuint8*         dyn_facevis;
+  linetrace_t   Trace;
+  TVec      Delta;
 
-	CurrLightsNumber = 0;
-	CurrShadowsNumber = 0;
+  CurrLightsNumber = 0;
+  CurrShadowsNumber = 0;
 
-	if (!FixedLight && r_static_lights)
-	{
-		for (int i = 0; i < Lights.Num(); i++)
-		{
-			if (!Lights[i].radius)
-			{
-				continue;
-			}
+  if (!FixedLight && r_static_lights)
+  {
+    for (int i = 0; i < Lights.Num(); i++)
+    {
+      if (!Lights[i].radius)
+      {
+        continue;
+      }
 
-			sub = Level->PointInSubsector(Lights[i].origin);
-			dyn_facevis = Level->LeafPVS(sub);
+      sub = Level->PointInSubsector(Lights[i].origin);
+      dyn_facevis = Level->LeafPVS(sub);
 
-			// Check potential visibility
-			if (!(dyn_facevis[Lights[i].leafnum >> 3] & (1 << (Lights[i].leafnum & 7))))
-			{
-				continue;
-			}
+      // Check potential visibility
+      if (!(dyn_facevis[Lights[i].leafnum >> 3] & (1 << (Lights[i].leafnum & 7))))
+      {
+        continue;
+      }
 
-			Delta = Lights[i].origin - vieworg;
-			Delta.z = 0;
-			//	Don't do lights that are too far away.
-			if ((Delta.Length() > r_lights_radius / 4.0) && !Level->TraceLine(Trace, Lights[i].origin, vieworg, SPF_NOBLOCKSIGHT))
-			{
-				continue;
-			}
+      Delta = Lights[i].origin - vieworg;
+      Delta.z = 0;
+      //  Don't do lights that are too far away.
+      if ((Delta.Length() > r_lights_radius / 4.0) && !Level->TraceLine(Trace, Lights[i].origin, vieworg, SPF_NOBLOCKSIGHT))
+      {
+        continue;
+      }
 
-			if (Delta.Length() > r_lights_radius)
-			{
-				continue;
-			}
+      if (Delta.Length() > r_lights_radius)
+      {
+        continue;
+      }
 
-			RenderLightShadows(RD, Range, Lights[i].origin, Lights[i].radius, Lights[i].colour, true);
-		}
-	}
+      RenderLightShadows(RD, Range, Lights[i].origin, Lights[i].radius, Lights[i].colour, true);
+    }
+  }
 
-	if (!FixedLight && r_dynamic)
-	{
-		dlight_t* l = DLights;
+  if (!FixedLight && r_dynamic)
+  {
+    dlight_t* l = DLights;
 
-		for (int i = 0; i < MAX_DLIGHTS; i++, l++)
-		{
-			if (!l->radius || l->die < Level->Time)
-			{
-				continue;
-			}
+    for (int i = 0; i < MAX_DLIGHTS; i++, l++)
+    {
+      if (!l->radius || l->die < Level->Time)
+      {
+        continue;
+      }
 
-			sub = Level->PointInSubsector(l->origin);
-			dyn_facevis = Level->LeafPVS(sub);
+      sub = Level->PointInSubsector(l->origin);
+      dyn_facevis = Level->LeafPVS(sub);
 
-			leafnum = Level->PointInSubsector(l->origin) - Level->Subsectors;
+      leafnum = Level->PointInSubsector(l->origin) - Level->Subsectors;
 
-			// Check potential visibility
-			if (!(dyn_facevis[leafnum >> 3] & (1 << (leafnum & 7))))
-			{
-				continue;
-			}
+      // Check potential visibility
+      if (!(dyn_facevis[leafnum >> 3] & (1 << (leafnum & 7))))
+      {
+        continue;
+      }
 
-			Delta = l->origin - vieworg;
-			Delta.z = 0;
-			//	Don't do lights that are too far away.
-			if ((Delta.Length() > r_lights_radius / 4.0) && !Level->TraceLine(Trace, l->origin, vieworg, SPF_NOBLOCKSIGHT))
-			{
-				continue;
-			}
+      Delta = l->origin - vieworg;
+      Delta.z = 0;
+      //  Don't do lights that are too far away.
+      if ((Delta.Length() > r_lights_radius / 4.0) && !Level->TraceLine(Trace, l->origin, vieworg, SPF_NOBLOCKSIGHT))
+      {
+        continue;
+      }
 
-			if (Delta.Length() > r_lights_radius)
-			{
-				continue;
-			}
+      if (Delta.Length() > r_lights_radius)
+      {
+        continue;
+      }
 
-			RenderLightShadows(RD, Range, l->origin, l->radius, l->colour, true);
-		}
-	}
+      RenderLightShadows(RD, Range, l->origin, l->radius, l->colour, true);
+    }
+  }
 
-	Drawer->DrawWorldTexturesPass();
-	RenderMobjsTextures();
+  Drawer->DrawWorldTexturesPass();
+  RenderMobjsTextures();
 
-	Drawer->DrawWorldFogPass();
-	RenderMobjsFog();
-	Drawer->EndFogPass();
+  Drawer->DrawWorldFogPass();
+  RenderMobjsFog();
+  Drawer->EndFogPass();
 
-	RenderMobjs(RPASS_NonShadow);
+  RenderMobjs(RPASS_NonShadow);
 
-	DrawParticles();
+  DrawParticles();
 
-	DrawTranslucentPolys();
-	unguard;
+  DrawTranslucentPolys();
+  unguard;
 }
 
 //==========================================================================
@@ -956,9 +956,9 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t* RD, const VViewClipper* R
 
 void R_RenderPlayerView()
 {
-	guard(R_RenderPlayerView);
-	GClLevel->RenderData->RenderPlayerView();
-	unguard;
+  guard(R_RenderPlayerView);
+  GClLevel->RenderData->RenderPlayerView();
+  unguard;
 }
 
 //==========================================================================
@@ -969,502 +969,502 @@ void R_RenderPlayerView()
 
 void VRenderLevelShared::RenderPlayerView()
 {
-	guard(VRenderLevelShared::RenderPlayerView);
-	if (!Level->LevelInfo)
-	{
-		return;
-	}
+  guard(VRenderLevelShared::RenderPlayerView);
+  if (!Level->LevelInfo)
+  {
+    return;
+  }
 
-	GTextureManager.Time = Level->Time;
+  GTextureManager.Time = Level->Time;
 
-	BuildPlayerTranslations();
+  BuildPlayerTranslations();
 
-	AnimateSky(host_frametime);
+  AnimateSky(host_frametime);
 
-	UpdateParticles(host_frametime);
-	PushDlights();
+  UpdateParticles(host_frametime);
+  PushDlights();
 
-	//	Update camera textures that were visible in last frame.
-	for (int i = 0; i < Level->CameraTextures.Num(); i++)
-	{
-		UpdateCameraTexture(Level->CameraTextures[i].Camera,
-			Level->CameraTextures[i].TexNum, Level->CameraTextures[i].FOV);
-	}
+  //  Update camera textures that were visible in last frame.
+  for (int i = 0; i < Level->CameraTextures.Num(); i++)
+  {
+    UpdateCameraTexture(Level->CameraTextures[i].Camera,
+      Level->CameraTextures[i].TexNum, Level->CameraTextures[i].FOV);
+  }
 
-	SetupFrame();
+  SetupFrame();
 
-	RenderScene(&refdef, NULL);
+  RenderScene(&refdef, NULL);
 
-	// draw the psprites on top of everything
-	if (fov <= 90.0 && cl->MO == cl->Camera &&
-		GGameInfo->NetMode != NM_TitleMap)
-	{
-		DrawPlayerSprites();
-	}
+  // draw the psprites on top of everything
+  if (fov <= 90.0 && cl->MO == cl->Camera &&
+    GGameInfo->NetMode != NM_TitleMap)
+  {
+    DrawPlayerSprites();
+  }
 
-	Drawer->EndView();
+  Drawer->EndView();
 
-	// Draw crosshair
-	if (cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap)
-	{
-		DrawCrosshair();
-	}
-	unguard;
+  // Draw crosshair
+  if (cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap)
+  {
+    DrawCrosshair();
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VRenderLevelShared::UpdateCameraTexture
+//  VRenderLevelShared::UpdateCameraTexture
 //
 //==========================================================================
 
 void VRenderLevelShared::UpdateCameraTexture(VEntity* Camera, int TexNum,
-	int FOV)
+  int FOV)
 {
-	guard(VRenderLevelShared::UpdateCameraTexture);
-	if (!Camera)
-	{
-		return;
-	}
+  guard(VRenderLevelShared::UpdateCameraTexture);
+  if (!Camera)
+  {
+    return;
+  }
 
-	if (!GTextureManager[TexNum]->bIsCameraTexture)
-	{
-		return;
-	}
-	VCameraTexture* Tex = (VCameraTexture*)GTextureManager[TexNum];
-	if (!Tex->bNeedsUpdate)
-	{
-		return;
-	}
+  if (!GTextureManager[TexNum]->bIsCameraTexture)
+  {
+    return;
+  }
+  VCameraTexture* Tex = (VCameraTexture*)GTextureManager[TexNum];
+  if (!Tex->bNeedsUpdate)
+  {
+    return;
+  }
 
-	refdef_t		CameraRefDef;
-	CameraRefDef.DrawCamera = true;
+  refdef_t    CameraRefDef;
+  CameraRefDef.DrawCamera = true;
 
-	SetupCameraFrame(Camera, Tex, FOV, &CameraRefDef);
+  SetupCameraFrame(Camera, Tex, FOV, &CameraRefDef);
 
-	RenderScene(&CameraRefDef, NULL);
+  RenderScene(&CameraRefDef, NULL);
 
-	Drawer->EndView();
+  Drawer->EndView();
 
-	Tex->CopyImage();
-	unguard;
+  Tex->CopyImage();
+  unguard;
 }
 
 //==========================================================================
 //
-//	VRenderLevelShared::GetFade
+//  VRenderLevelShared::GetFade
 //
 //==========================================================================
 
 vuint32 VRenderLevelShared::GetFade(sec_region_t* Reg)
 {
-	guard(VRenderLevelShared::GetFade);
-	if (r_fog_test)
-	{
-		return 0xff000000 | (int(255 * r_fog_r) << 16) |
-			(int(255 * r_fog_g) << 8) | int(255 * r_fog_b);
-	}
-	if (Reg->params->Fade)
-	{
-		return Reg->params->Fade;
-	}
-	if (Level->LevelInfo->OutsideFog && Reg->ceiling->pic == skyflatnum)
-	{
-		return Level->LevelInfo->OutsideFog;
-	}
-	if (Level->LevelInfo->Fade)
-	{
-		return Level->LevelInfo->Fade;
-	}
-	if (Level->LevelInfo->FadeTable == NAME_fogmap)
-	{
-		return 0xff7f7f7f;
-	}
-	if (r_fade_light)
-	{
-		// Simulate light fading using dark fog
-		return FADE_LIGHT;
-	}
-	else
-	{
-		return 0;
-	}
-	unguard;
+  guard(VRenderLevelShared::GetFade);
+  if (r_fog_test)
+  {
+    return 0xff000000 | (int(255 * r_fog_r) << 16) |
+      (int(255 * r_fog_g) << 8) | int(255 * r_fog_b);
+  }
+  if (Reg->params->Fade)
+  {
+    return Reg->params->Fade;
+  }
+  if (Level->LevelInfo->OutsideFog && Reg->ceiling->pic == skyflatnum)
+  {
+    return Level->LevelInfo->OutsideFog;
+  }
+  if (Level->LevelInfo->Fade)
+  {
+    return Level->LevelInfo->Fade;
+  }
+  if (Level->LevelInfo->FadeTable == NAME_fogmap)
+  {
+    return 0xff7f7f7f;
+  }
+  if (r_fade_light)
+  {
+    // Simulate light fading using dark fog
+    return FADE_LIGHT;
+  }
+  else
+  {
+    return 0;
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	R_DrawPic
+//  R_DrawPic
 //
 //==========================================================================
 
 void R_DrawPic(int x, int y, int handle, float Alpha)
 {
-	guard(R_DrawPic);
-	if (handle < 0)
-	{
-		return;
-	}
+  guard(R_DrawPic);
+  if (handle < 0)
+  {
+    return;
+  }
 
-	VTexture* Tex = GTextureManager(handle);
-	x -= Tex->GetScaledSOffset();
-	y -= Tex->GetScaledTOffset();
-	Drawer->DrawPic(fScaleX * x, fScaleY * y,
-		fScaleX * (x + Tex->GetScaledWidth()), fScaleY * (y + Tex->GetScaledHeight()),
-		0, 0, Tex->GetWidth(), Tex->GetHeight(), Tex, NULL, Alpha);
-	unguard;
+  VTexture* Tex = GTextureManager(handle);
+  x -= Tex->GetScaledSOffset();
+  y -= Tex->GetScaledTOffset();
+  Drawer->DrawPic(fScaleX * x, fScaleY * y,
+    fScaleX * (x + Tex->GetScaledWidth()), fScaleY * (y + Tex->GetScaledHeight()),
+    0, 0, Tex->GetWidth(), Tex->GetHeight(), Tex, NULL, Alpha);
+  unguard;
 }
 
 //==========================================================================
 //
-// 	VRenderLevelShared::PrecacheLevel
+//  VRenderLevelShared::PrecacheLevel
 //
-// 	Preloads all relevant graphics for the level.
+//  Preloads all relevant graphics for the level.
 //
 //==========================================================================
 
 void VRenderLevelShared::PrecacheLevel()
 {
-	guard(VRenderLevelShared::PrecacheLevel);
-	int			i;
+  guard(VRenderLevelShared::PrecacheLevel);
+  int     i;
 
-	if (cls.demoplayback)
-		return;
+  if (cls.demoplayback)
+    return;
 
 #ifdef __GNUC__
-	char texturepresent[GTextureManager.GetNumTextures()];
+  char texturepresent[GTextureManager.GetNumTextures()];
 #else
-	char* texturepresent = (char*)Z_Malloc(GTextureManager.GetNumTextures());
+  char* texturepresent = (char*)Z_Malloc(GTextureManager.GetNumTextures());
 #endif
-	memset(texturepresent, 0, GTextureManager.GetNumTextures());
+  memset(texturepresent, 0, GTextureManager.GetNumTextures());
 
-	for (i = 0; i < Level->NumSectors; i++)
-	{
-		texturepresent[Level->Sectors[i].floor.pic] = true;
-		texturepresent[Level->Sectors[i].ceiling.pic] = true;
-	}
-	
-	for (i = 0; i < Level->NumSides; i++)
-	{
-		texturepresent[Level->Sides[i].TopTexture] = true;
-		texturepresent[Level->Sides[i].MidTexture] = true;
-		texturepresent[Level->Sides[i].BottomTexture] = true;
-	}
+  for (i = 0; i < Level->NumSectors; i++)
+  {
+    texturepresent[Level->Sectors[i].floor.pic] = true;
+    texturepresent[Level->Sectors[i].ceiling.pic] = true;
+  }
 
-	// Precache textures.
-	for (i = 1; i < GTextureManager.GetNumTextures(); i++)
-	{
-		if (texturepresent[i])
-		{
-			Drawer->PrecacheTexture(GTextureManager[i]);
-		}
-	}
+  for (i = 0; i < Level->NumSides; i++)
+  {
+    texturepresent[Level->Sides[i].TopTexture] = true;
+    texturepresent[Level->Sides[i].MidTexture] = true;
+    texturepresent[Level->Sides[i].BottomTexture] = true;
+  }
+
+  // Precache textures.
+  for (i = 1; i < GTextureManager.GetNumTextures(); i++)
+  {
+    if (texturepresent[i])
+    {
+      Drawer->PrecacheTexture(GTextureManager[i]);
+    }
+  }
 
 #ifndef __GNUC__
-	Z_Free(texturepresent);
+  Z_Free(texturepresent);
 #endif
-	unguard;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VRenderLevelShared::GetTranslation
+//  VRenderLevelShared::GetTranslation
 //
 //==========================================================================
 
 VTextureTranslation* VRenderLevelShared::GetTranslation(int TransNum)
 {
-	guard(VRenderLevelShared::GetTranslation);
-	return R_GetCachedTranslation(TransNum, Level);
-	unguard;
+  guard(VRenderLevelShared::GetTranslation);
+  return R_GetCachedTranslation(TransNum, Level);
+  unguard;
 }
 
 //==========================================================================
 //
-//	VRenderLevelShared::BuildPlayerTranslations
+//  VRenderLevelShared::BuildPlayerTranslations
 //
 //==========================================================================
 
 void VRenderLevelShared::BuildPlayerTranslations()
 {
-	guard(VRenderLevelShared::BuildPlayerTranslations);
-	for (TThinkerIterator<VPlayerReplicationInfo> It(Level); It; ++It)
-	{
-		if (It->PlayerNum < 0 || It->PlayerNum >= MAXPLAYERS)
-		{
-			//	Should not happen.
-			continue;
-		}
-		if (!It->TranslStart || !It->TranslEnd)
-		{
-			continue;
-		}
+  guard(VRenderLevelShared::BuildPlayerTranslations);
+  for (TThinkerIterator<VPlayerReplicationInfo> It(Level); It; ++It)
+  {
+    if (It->PlayerNum < 0 || It->PlayerNum >= MAXPLAYERS)
+    {
+      //  Should not happen.
+      continue;
+    }
+    if (!It->TranslStart || !It->TranslEnd)
+    {
+      continue;
+    }
 
-		VTextureTranslation* Tr = PlayerTranslations[It->PlayerNum];
-		if (Tr && Tr->TranslStart == It->TranslStart &&
-			Tr->TranslEnd == It->TranslEnd && Tr->Colour == It->Colour)
-		{
-			continue;
-		}
+    VTextureTranslation* Tr = PlayerTranslations[It->PlayerNum];
+    if (Tr && Tr->TranslStart == It->TranslStart &&
+      Tr->TranslEnd == It->TranslEnd && Tr->Colour == It->Colour)
+    {
+      continue;
+    }
 
-		if (!Tr)
-		{
-			Tr = new VTextureTranslation;
-			PlayerTranslations[It->PlayerNum] = Tr;
-		}
-		//	Don't waste time clearing if it's the same range.
-		if (Tr->TranslStart != It->TranslStart ||
-			Tr->TranslEnd != It->TranslEnd)
-		{
-			Tr->Clear();
-		}
-		Tr->BuildPlayerTrans(It->TranslStart, It->TranslEnd, It->Colour);
-	}
-	unguard;
+    if (!Tr)
+    {
+      Tr = new VTextureTranslation;
+      PlayerTranslations[It->PlayerNum] = Tr;
+    }
+    //  Don't waste time clearing if it's the same range.
+    if (Tr->TranslStart != It->TranslStart ||
+      Tr->TranslEnd != It->TranslEnd)
+    {
+      Tr->Clear();
+    }
+    Tr->BuildPlayerTrans(It->TranslStart, It->TranslEnd, It->Colour);
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	R_SetMenuPlayerTrans
+//  R_SetMenuPlayerTrans
 //
 //==========================================================================
 
 int R_SetMenuPlayerTrans(int Start, int End, int Col)
 {
-	guard(R_SetMenuPlayerTrans);
-	if (!Start || !End)
-	{
-		return 0;
-	}
+  guard(R_SetMenuPlayerTrans);
+  if (!Start || !End)
+  {
+    return 0;
+  }
 
-	VTextureTranslation* Tr = PlayerTranslations[MAXPLAYERS];
-	if (Tr && Tr->TranslStart == Start && Tr->TranslEnd == End &&
-		Tr->Colour == Col)
-	{
-		return (TRANSL_Player << TRANSL_TYPE_SHIFT) + MAXPLAYERS;
-	}
+  VTextureTranslation* Tr = PlayerTranslations[MAXPLAYERS];
+  if (Tr && Tr->TranslStart == Start && Tr->TranslEnd == End &&
+    Tr->Colour == Col)
+  {
+    return (TRANSL_Player << TRANSL_TYPE_SHIFT) + MAXPLAYERS;
+  }
 
-	if (!Tr)
-	{
-		Tr = new VTextureTranslation();
-		PlayerTranslations[MAXPLAYERS] = Tr;
-	}
-	if (Tr->TranslStart != Start || Tr->TranslEnd == End)
-	{
-		Tr->Clear();
-	}
-	Tr->BuildPlayerTrans(Start, End, Col);
-	return (TRANSL_Player << TRANSL_TYPE_SHIFT) + MAXPLAYERS;
-	unguard;
+  if (!Tr)
+  {
+    Tr = new VTextureTranslation();
+    PlayerTranslations[MAXPLAYERS] = Tr;
+  }
+  if (Tr->TranslStart != Start || Tr->TranslEnd == End)
+  {
+    Tr->Clear();
+  }
+  Tr->BuildPlayerTrans(Start, End, Col);
+  return (TRANSL_Player << TRANSL_TYPE_SHIFT) + MAXPLAYERS;
+  unguard;
 }
 
 //==========================================================================
 //
-//	R_GetCachedTranslation
+//  R_GetCachedTranslation
 //
 //==========================================================================
 
 VTextureTranslation* R_GetCachedTranslation(int TransNum, VLevel* Level)
 {
-	guard(R_GetCachedTranslation);
-	int Type = TransNum >> TRANSL_TYPE_SHIFT;
-	int Index = TransNum & ((1 << TRANSL_TYPE_SHIFT) - 1);
-	VTextureTranslation* Tr;
-	switch (Type)
-	{
-	case TRANSL_Standard:
-		if (Index == 7)
-		{
-			Tr = &IceTranslation;
-		}
-		else
-		{
-			if (Index < 0 || Index >= NumTranslationTables)
-			{
-				return NULL;
-			}
-			Tr = TranslationTables[Index];
-		}
-		break;
+  guard(R_GetCachedTranslation);
+  int Type = TransNum >> TRANSL_TYPE_SHIFT;
+  int Index = TransNum & ((1 << TRANSL_TYPE_SHIFT) - 1);
+  VTextureTranslation* Tr;
+  switch (Type)
+  {
+  case TRANSL_Standard:
+    if (Index == 7)
+    {
+      Tr = &IceTranslation;
+    }
+    else
+    {
+      if (Index < 0 || Index >= NumTranslationTables)
+      {
+        return NULL;
+      }
+      Tr = TranslationTables[Index];
+    }
+    break;
 
-	case TRANSL_Player:
-		if (Index < 0 || Index >= MAXPLAYERS + 1)
-		{
-			return NULL;
-		}
-		Tr = PlayerTranslations[Index];
-		break;
+  case TRANSL_Player:
+    if (Index < 0 || Index >= MAXPLAYERS + 1)
+    {
+      return NULL;
+    }
+    Tr = PlayerTranslations[Index];
+    break;
 
-	case TRANSL_Level:
-		if (!Level || Index < 0 || Index >= Level->Translations.Num())
-		{
-			return NULL;
-		}
-		Tr = Level->Translations[Index];
-		break;
+  case TRANSL_Level:
+    if (!Level || Index < 0 || Index >= Level->Translations.Num())
+    {
+      return NULL;
+    }
+    Tr = Level->Translations[Index];
+    break;
 
-	case TRANSL_BodyQueue:
-		if (!Level || Index < 0 || Index >= Level->BodyQueueTrans.Num())
-		{
-			return NULL;
-		}
-		Tr = Level->BodyQueueTrans[Index];
-		break;
+  case TRANSL_BodyQueue:
+    if (!Level || Index < 0 || Index >= Level->BodyQueueTrans.Num())
+    {
+      return NULL;
+    }
+    Tr = Level->BodyQueueTrans[Index];
+    break;
 
-	case TRANSL_Decorate:
-		if (Index < 0 || Index >= DecorateTranslations.Num())
-		{
-			return NULL;
-		}
-		Tr = DecorateTranslations[Index];
-		break;
+  case TRANSL_Decorate:
+    if (Index < 0 || Index >= DecorateTranslations.Num())
+    {
+      return NULL;
+    }
+    Tr = DecorateTranslations[Index];
+    break;
 
-	case TRANSL_Blood:
-		if (Index < 0 || Index >= BloodTranslations.Num())
-		{
-			return NULL;
-		}
-		Tr = BloodTranslations[Index];
-		break;
+  case TRANSL_Blood:
+    if (Index < 0 || Index >= BloodTranslations.Num())
+    {
+      return NULL;
+    }
+    Tr = BloodTranslations[Index];
+    break;
 
-	default:
-		return NULL;
-	}
+  default:
+    return NULL;
+  }
 
-	if (!Tr)
-	{
-		return NULL;
-	}
+  if (!Tr)
+  {
+    return NULL;
+  }
 
-	for (int i = 0; i < CachedTranslations.Num(); i++)
-	{
-		VTextureTranslation* Check = CachedTranslations[i];
-		if (Check->Crc != Tr->Crc)
-		{
-			continue;
-		}
-		if (memcmp(Check->Palette, Tr->Palette, sizeof(Tr->Palette)))
-		{
-			continue;
-		}
-		return Check;
-	}
+  for (int i = 0; i < CachedTranslations.Num(); i++)
+  {
+    VTextureTranslation* Check = CachedTranslations[i];
+    if (Check->Crc != Tr->Crc)
+    {
+      continue;
+    }
+    if (memcmp(Check->Palette, Tr->Palette, sizeof(Tr->Palette)))
+    {
+      continue;
+    }
+    return Check;
+  }
 
-	VTextureTranslation* Copy = new VTextureTranslation;
-	*Copy = *Tr;
-	CachedTranslations.Append(Copy);
-	return Copy;
-	unguard;
+  VTextureTranslation* Copy = new VTextureTranslation;
+  *Copy = *Tr;
+  CachedTranslations.Append(Copy);
+  return Copy;
+  unguard;
 }
 
 //==========================================================================
 //
-//	COMMAND TimeRefresh
+//  COMMAND TimeRefresh
 //
-//	For program optimization
+//  For program optimization
 //
 //==========================================================================
 
 COMMAND(TimeRefresh)
 {
-	guard(COMMAND TimeRefresh);
-	int			i;
-	double		start, stop, time, RenderTime, UpdateTime;
-	float		startangle;
+  guard(COMMAND TimeRefresh);
+  int     i;
+  double    start, stop, time, RenderTime, UpdateTime;
+  float   startangle;
 
-	if (!cl)
-	{
-		return;
-	}
+  if (!cl)
+  {
+    return;
+  }
 
-	startangle = cl->ViewAngles.yaw;
+  startangle = cl->ViewAngles.yaw;
 
-	RenderTime = 0;
-	UpdateTime = 0;
-	start = Sys_Time();
-	for (i = 0; i < 128; i++)
-	{
-		cl->ViewAngles.yaw = (float)(i) * 360.0 / 128.0;
+  RenderTime = 0;
+  UpdateTime = 0;
+  start = Sys_Time();
+  for (i = 0; i < 128; i++)
+  {
+    cl->ViewAngles.yaw = (float)(i) * 360.0 / 128.0;
 
-		Drawer->StartUpdate();
+    Drawer->StartUpdate();
 
-		RenderTime -= Sys_Time();
-		R_RenderPlayerView();
-		RenderTime += Sys_Time();
+    RenderTime -= Sys_Time();
+    R_RenderPlayerView();
+    RenderTime += Sys_Time();
 
-		UpdateTime -= Sys_Time();
-		Drawer->Update();
-		UpdateTime += Sys_Time();
-	}
-	stop = Sys_Time();
-	time = stop - start;
-	GCon->Logf("%f seconds (%f fps)", time, 128 / time);
-	GCon->Logf("Render time %f, update time %f", RenderTime, UpdateTime);
+    UpdateTime -= Sys_Time();
+    Drawer->Update();
+    UpdateTime += Sys_Time();
+  }
+  stop = Sys_Time();
+  time = stop - start;
+  GCon->Logf("%f seconds (%f fps)", time, 128 / time);
+  GCon->Logf("Render time %f, update time %f", RenderTime, UpdateTime);
 
-	cl->ViewAngles.yaw = startangle;
-	unguard;
+  cl->ViewAngles.yaw = startangle;
+  unguard;
 }
 
 //==========================================================================
 //
-//	V_Init
+//  V_Init
 //
 //==========================================================================
 
 void V_Init()
 {
-	guard(V_Init);
-	int DIdx = -1;
-	for (int i = 0; i < DRAWER_MAX; i++)
-	{
-		if (!DrawerList[i])
-			continue;
-		//	Pick first available as default.
-		if (DIdx == -1)
-			DIdx = i;
-		//	Check for user driver selection.
-		if (DrawerList[i]->CmdLineArg && GArgs.CheckParm(DrawerList[i]->CmdLineArg))
-			DIdx = i;
-	}
-	if (DIdx == -1)
-		Sys_Error("No drawers are available");
-	GCon->Logf(NAME_Init, "Selected %s", DrawerList[DIdx]->Description);
-	//	Create drawer.
-	Drawer = DrawerList[DIdx]->Creator();
-	Drawer->Init();
-	unguard;
+  guard(V_Init);
+  int DIdx = -1;
+  for (int i = 0; i < DRAWER_MAX; i++)
+  {
+    if (!DrawerList[i])
+      continue;
+    //  Pick first available as default.
+    if (DIdx == -1)
+      DIdx = i;
+    //  Check for user driver selection.
+    if (DrawerList[i]->CmdLineArg && GArgs.CheckParm(DrawerList[i]->CmdLineArg))
+      DIdx = i;
+  }
+  if (DIdx == -1)
+    Sys_Error("No drawers are available");
+  GCon->Logf(NAME_Init, "Selected %s", DrawerList[DIdx]->Description);
+  //  Create drawer.
+  Drawer = DrawerList[DIdx]->Creator();
+  Drawer->Init();
+  unguard;
 }
 
 //==========================================================================
 //
-//	V_Shutdown
+//  V_Shutdown
 //
 //==========================================================================
 
 void V_Shutdown()
 {
-	guard(V_Shutdown);
-	if (Drawer)
-	{
-		Drawer->Shutdown();
-		delete Drawer;
-		Drawer = NULL;
-	}
-	R_FreeModels();
-	for (int i = 0; i < MAXPLAYERS + 1; i++)
-	{
-		if (PlayerTranslations[i])
-		{
-			delete PlayerTranslations[i];
-			PlayerTranslations[i] = NULL;
-		}
-	}
-	for (int i = 0; i < CachedTranslations.Num(); i++)
-	{
-		delete CachedTranslations[i];
-		CachedTranslations[i] = NULL;
-	}
-	CachedTranslations.Clear();
-	R_FreeSkyboxData();
-	unguard;
+  guard(V_Shutdown);
+  if (Drawer)
+  {
+    Drawer->Shutdown();
+    delete Drawer;
+    Drawer = NULL;
+  }
+  R_FreeModels();
+  for (int i = 0; i < MAXPLAYERS + 1; i++)
+  {
+    if (PlayerTranslations[i])
+    {
+      delete PlayerTranslations[i];
+      PlayerTranslations[i] = NULL;
+    }
+  }
+  for (int i = 0; i < CachedTranslations.Num(); i++)
+  {
+    delete CachedTranslations[i];
+    CachedTranslations[i] = NULL;
+  }
+  CachedTranslations.Clear();
+  R_FreeSkyboxData();
+  unguard;
 }

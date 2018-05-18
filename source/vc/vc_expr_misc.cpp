@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -49,7 +49,7 @@
 
 //==========================================================================
 //
-//	VVector::VVector
+//  VVector::VVector
 //
 //==========================================================================
 
@@ -59,96 +59,96 @@ VVector::VVector(VExpression* AOp1, VExpression* AOp2, VExpression* AOp3, const 
 , op2(AOp2)
 , op3(AOp3)
 {
-	if (!op1)
-	{
-		ParseError(Loc, "Expression expected");
-	}
-	if (!op2)
-	{
-		ParseError(Loc, "Expression expected");
-	}
-	if (!op3)
-	{
-		ParseError(Loc, "Expression expected");
-	}
+  if (!op1)
+  {
+    ParseError(Loc, "Expression expected");
+  }
+  if (!op2)
+  {
+    ParseError(Loc, "Expression expected");
+  }
+  if (!op3)
+  {
+    ParseError(Loc, "Expression expected");
+  }
 }
 
 //==========================================================================
 //
-//	VVector::~VVector
+//  VVector::~VVector
 //
 //==========================================================================
 
 VVector::~VVector()
 {
-	if (op1)
-	{
-		delete op1;
-		op1 = NULL;
-	}
-	if (op2)
-	{
-		delete op2;
-		op2 = NULL;
-	}
-	if (op3)
-	{
-		delete op3;
-		op3 = NULL;
-	}
+  if (op1)
+  {
+    delete op1;
+    op1 = NULL;
+  }
+  if (op2)
+  {
+    delete op2;
+    op2 = NULL;
+  }
+  if (op3)
+  {
+    delete op3;
+    op3 = NULL;
+  }
 }
 
 //==========================================================================
 //
-//	VVector::DoResolve
+//  VVector::DoResolve
 //
 //==========================================================================
 
 VExpression* VVector::DoResolve(VEmitContext& ec)
 {
-	if (op1) op1 = op1->ResolveFloat(ec);
-	if (op2) op2 = op2->ResolveFloat(ec);
-	if (op3) op3 = op3->ResolveFloat(ec);
-	if (!op1 || !op2 || !op3)
-	{
-		delete this;
-		return NULL;
-	}
+  if (op1) op1 = op1->ResolveFloat(ec);
+  if (op2) op2 = op2->ResolveFloat(ec);
+  if (op3) op3 = op3->ResolveFloat(ec);
+  if (!op1 || !op2 || !op3)
+  {
+    delete this;
+    return NULL;
+  }
 
-	if (op1->Type.Type != TYPE_Float)
-	{
-		ParseError(Loc, "Expression type mismatch, vector param 1 is not a float");
-		delete this;
-		return NULL;
-	}
-	if (op2->Type.Type != TYPE_Float)
-	{
-		ParseError(Loc, "Expression type mismatch, vector param 2 is not a float");
-		delete this;
-		return NULL;
-	}
-	if (op3->Type.Type != TYPE_Float)
-	{
-		ParseError(Loc, "Expression type mismatch, vector param 3 is not a float");
-		delete this;
-		return NULL;
-	}
+  if (op1->Type.Type != TYPE_Float)
+  {
+    ParseError(Loc, "Expression type mismatch, vector param 1 is not a float");
+    delete this;
+    return NULL;
+  }
+  if (op2->Type.Type != TYPE_Float)
+  {
+    ParseError(Loc, "Expression type mismatch, vector param 2 is not a float");
+    delete this;
+    return NULL;
+  }
+  if (op3->Type.Type != TYPE_Float)
+  {
+    ParseError(Loc, "Expression type mismatch, vector param 3 is not a float");
+    delete this;
+    return NULL;
+  }
 
-	Type = TYPE_Vector;
-	return this;
+  Type = TYPE_Vector;
+  return this;
 }
 
 //==========================================================================
 //
-//	VVector::Emit
+//  VVector::Emit
 //
 //==========================================================================
 
 void VVector::Emit(VEmitContext& ec)
 {
-	op1->Emit(ec);
-	op2->Emit(ec);
-	op3->Emit(ec);
+  op1->Emit(ec);
+  op2->Emit(ec);
+  op3->Emit(ec);
 }
 
 //END
@@ -157,7 +157,7 @@ void VVector::Emit(VEmitContext& ec)
 
 //==========================================================================
 //
-//	VSingleName::VSingleName
+//  VSingleName::VSingleName
 //
 //==========================================================================
 
@@ -169,213 +169,213 @@ VSingleName::VSingleName(VName AName, const TLocation& ALoc)
 
 //==========================================================================
 //
-//	VSingleName::IntResolve
+//  VSingleName::IntResolve
 //
 //==========================================================================
 
 VExpression* VSingleName::IntResolve(VEmitContext& ec, bool AssignTarget)
 {
-	int num = ec.CheckForLocalVar(Name);
-	if (num != -1)
-	{
-		VExpression* e = new VLocalVar(num, Loc);
-		delete this;
-		return e->Resolve(ec);
-	}
+  int num = ec.CheckForLocalVar(Name);
+  if (num != -1)
+  {
+    VExpression* e = new VLocalVar(num, Loc);
+    delete this;
+    return e->Resolve(ec);
+  }
 
-	if (ec.SelfClass)
-	{
-		VConstant* Const = ec.SelfClass->FindConstant(Name);
-		if (Const)
-		{
-			VExpression* e = new VConstantValue(Const, Loc);
-			delete this;
-			return e->Resolve(ec);
-		}
+  if (ec.SelfClass)
+  {
+    VConstant* Const = ec.SelfClass->FindConstant(Name);
+    if (Const)
+    {
+      VExpression* e = new VConstantValue(Const, Loc);
+      delete this;
+      return e->Resolve(ec);
+    }
 
-		VMethod* M = ec.SelfClass->FindMethod(Name);
-		if (M)
-		{
-			VExpression* e = new VDelegateVal((new VSelf(Loc))->Resolve(ec), M, Loc);
-			delete this;
-			return e->Resolve(ec);
-		}
+    VMethod* M = ec.SelfClass->FindMethod(Name);
+    if (M)
+    {
+      VExpression* e = new VDelegateVal((new VSelf(Loc))->Resolve(ec), M, Loc);
+      delete this;
+      return e->Resolve(ec);
+    }
 
-		VField* field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
-		if (field)
-		{
-			VExpression* e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
-			delete this;
-			return e->Resolve(ec);
-		}
+    VField* field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
+    if (field)
+    {
+      VExpression* e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
+      delete this;
+      return e->Resolve(ec);
+    }
 
-		VProperty* Prop = ec.SelfClass->FindProperty(Name);
-		if (Prop)
-		{
-			if (AssignTarget)
-			{
-				if (ec.InDefaultProperties)
-				{
-					if (!Prop->DefaultField)
-					{
-						ParseError(Loc, "Property %s has no default field set", *Name);
-						delete this;
-						return NULL;
-					}
-					VExpression* e = new VFieldAccess((new VSelf(Loc))->Resolve(ec),
-						Prop->DefaultField, Loc, 0);
-					delete this;
-					return e->Resolve(ec);
-				}
-				else
-				{
-					if (!Prop->SetFunc)
-					{
-						ParseError(Loc, "Property %s cannot be set", *Name);
-						delete this;
-						return NULL;
-					}
-					VExpression* e = new VPropertyAssign(NULL, Prop->SetFunc, false, Loc);
-					delete this;
-					//	Assignment will call resolve.
-					return e;
-				}
-			}
-			else
-			{
-				if (!Prop->GetFunc)
-				{
-					ParseError(Loc, "Property %s cannot be read", *Name);
-					delete this;
-					return NULL;
-				}
-				VExpression* e = new VInvocation(NULL, Prop->GetFunc, NULL,
-					false, false, Loc, 0, NULL);
-				delete this;
-				return e->Resolve(ec);
-			}
-		}
-	}
+    VProperty* Prop = ec.SelfClass->FindProperty(Name);
+    if (Prop)
+    {
+      if (AssignTarget)
+      {
+        if (ec.InDefaultProperties)
+        {
+          if (!Prop->DefaultField)
+          {
+            ParseError(Loc, "Property %s has no default field set", *Name);
+            delete this;
+            return NULL;
+          }
+          VExpression* e = new VFieldAccess((new VSelf(Loc))->Resolve(ec),
+            Prop->DefaultField, Loc, 0);
+          delete this;
+          return e->Resolve(ec);
+        }
+        else
+        {
+          if (!Prop->SetFunc)
+          {
+            ParseError(Loc, "Property %s cannot be set", *Name);
+            delete this;
+            return NULL;
+          }
+          VExpression* e = new VPropertyAssign(NULL, Prop->SetFunc, false, Loc);
+          delete this;
+          //  Assignment will call resolve.
+          return e;
+        }
+      }
+      else
+      {
+        if (!Prop->GetFunc)
+        {
+          ParseError(Loc, "Property %s cannot be read", *Name);
+          delete this;
+          return NULL;
+        }
+        VExpression* e = new VInvocation(NULL, Prop->GetFunc, NULL,
+          false, false, Loc, 0, NULL);
+        delete this;
+        return e->Resolve(ec);
+      }
+    }
+  }
 
-	VConstant* Const = ec.Package->FindConstant(Name);
-	if (Const)
-	{
-		VExpression* e = new VConstantValue(Const, Loc);
-		delete this;
-		return e->Resolve(ec);
-	}
+  VConstant* Const = ec.Package->FindConstant(Name);
+  if (Const)
+  {
+    VExpression* e = new VConstantValue(Const, Loc);
+    delete this;
+    return e->Resolve(ec);
+  }
 
-	VClass* Class = VMemberBase::StaticFindClass(Name);
-	if (Class)
-	{
-		VExpression* e = new VClassConstant(Class, Loc);
-		delete this;
-		return e->Resolve(ec);
-	}
+  VClass* Class = VMemberBase::StaticFindClass(Name);
+  if (Class)
+  {
+    VExpression* e = new VClassConstant(Class, Loc);
+    delete this;
+    return e->Resolve(ec);
+  }
 
-	Class = ec.Package->FindDecorateImportClass(Name);
-	if (Class)
-	{
-		VExpression* e = new VClassConstant(Class, Loc);
-		delete this;
-		return e->Resolve(ec);
-	}
+  Class = ec.Package->FindDecorateImportClass(Name);
+  if (Class)
+  {
+    VExpression* e = new VClassConstant(Class, Loc);
+    delete this;
+    return e->Resolve(ec);
+  }
 
-	Const = (VConstant*)VMemberBase::StaticFindMember(Name, ANY_PACKAGE,
-		MEMBER_Const);
-	if (Const)
-	{
-		VExpression* e = new VConstantValue(Const, Loc);
-		delete this;
-		return e->Resolve(ec);
-	}
+  Const = (VConstant*)VMemberBase::StaticFindMember(Name, ANY_PACKAGE,
+    MEMBER_Const);
+  if (Const)
+  {
+    VExpression* e = new VConstantValue(Const, Loc);
+    delete this;
+    return e->Resolve(ec);
+  }
 
-	ParseError(Loc, "Illegal expression identifier %s", *Name);
-	delete this;
-	return NULL;
+  ParseError(Loc, "Illegal expression identifier %s", *Name);
+  delete this;
+  return NULL;
 }
 
 //==========================================================================
 //
-//	VSingleName::DoResolve
+//  VSingleName::DoResolve
 //
 //==========================================================================
 
 VExpression* VSingleName::DoResolve(VEmitContext& ec)
 {
-	return IntResolve(ec, false);
+  return IntResolve(ec, false);
 }
 
 //==========================================================================
 //
-//	VSingleName::ResolveAssignmentTarget
+//  VSingleName::ResolveAssignmentTarget
 //
 //==========================================================================
 
 VExpression* VSingleName::ResolveAssignmentTarget(VEmitContext& ec)
 {
-	return IntResolve(ec, true);
+  return IntResolve(ec, true);
 }
 
 //==========================================================================
 //
-//	VSingleName::ResolveAsType
+//  VSingleName::ResolveAsType
 //
 //==========================================================================
 
 VTypeExpr* VSingleName::ResolveAsType(VEmitContext& ec)
 {
-	Type = VMemberBase::StaticFindType(ec.SelfClass, Name);
+  Type = VMemberBase::StaticFindType(ec.SelfClass, Name);
 
-	if (Type.Type == TYPE_Unknown)
-	{
-		ParseError(Loc, "Invalid identifier, bad type name %s", *Name);
-		delete this;
-		return NULL;
-	}
+  if (Type.Type == TYPE_Unknown)
+  {
+    ParseError(Loc, "Invalid identifier, bad type name %s", *Name);
+    delete this;
+    return NULL;
+  }
 
-	if (Type.Type == TYPE_Automatic)
-	{
-		fprintf(stderr, "VC INTERNAL COMPILER ERROR: unresolved automatic type (1)!\n");
-		*(int*)0 = 0;
-	}
+  if (Type.Type == TYPE_Automatic)
+  {
+    fprintf(stderr, "VC INTERNAL COMPILER ERROR: unresolved automatic type (1)!\n");
+    *(int*)0 = 0;
+  }
 
-	VTypeExpr* e = new VTypeExpr(Type, Loc);
-	delete this;
-	return e;
+  VTypeExpr* e = new VTypeExpr(Type, Loc);
+  delete this;
+  return e;
 }
 
 //==========================================================================
 //
-//	VSingleName::Emit
+//  VSingleName::Emit
 //
 //==========================================================================
 
 void VSingleName::Emit(VEmitContext&)
 {
-	ParseError(Loc, "Should not happen");
+  ParseError(Loc, "Should not happen");
 }
 
 //==========================================================================
 //
-//	VSingleName::IsValidTypeExpression
+//  VSingleName::IsValidTypeExpression
 //
 //==========================================================================
 
 bool VSingleName::IsValidTypeExpression()
 {
-	return true;
+  return true;
 }
 
 //==========================================================================
 //
-//	VSingleName::CreateTypeExprCopy
+//  VSingleName::CreateTypeExprCopy
 //
 //==========================================================================
 
 VExpression* VSingleName::CreateTypeExprCopy()
 {
-	return new VSingleName(Name, Loc);
+  return new VSingleName(Name, Loc);
 }
 
 //END
@@ -384,7 +384,7 @@ VExpression* VSingleName::CreateTypeExprCopy()
 
 //==========================================================================
 //
-//	VDoubleName::VDoubleName
+//  VDoubleName::VDoubleName
 //
 //==========================================================================
 
@@ -397,100 +397,100 @@ VDoubleName::VDoubleName(VName AName1, VName AName2, const TLocation& ALoc)
 
 //==========================================================================
 //
-//	VDoubleName::DoResolve
+//  VDoubleName::DoResolve
 //
 //==========================================================================
 
 VExpression* VDoubleName::DoResolve(VEmitContext& ec)
 {
-	VClass* Class = VMemberBase::StaticFindClass(Name1);
-	if (!Class)
-	{
-		ParseError(Loc, "No such class %s", *Name1);
-		delete this;
-		return NULL;
-	}
+  VClass* Class = VMemberBase::StaticFindClass(Name1);
+  if (!Class)
+  {
+    ParseError(Loc, "No such class %s", *Name1);
+    delete this;
+    return NULL;
+  }
 
-	VConstant* Const = Class->FindConstant(Name2);
-	if (Const)
-	{
-		VExpression* e = new VConstantValue(Const, Loc);
-		delete this;
-		return e->Resolve(ec);
-	}
+  VConstant* Const = Class->FindConstant(Name2);
+  if (Const)
+  {
+    VExpression* e = new VConstantValue(Const, Loc);
+    delete this;
+    return e->Resolve(ec);
+  }
 
-	ParseError(Loc, "No such constant or state %s", *Name2);
-	delete this;
-	return NULL;
+  ParseError(Loc, "No such constant or state %s", *Name2);
+  delete this;
+  return NULL;
 }
 
 //==========================================================================
 //
-//	VDoubleName::ResolveAsType
+//  VDoubleName::ResolveAsType
 //
 //==========================================================================
 
 VTypeExpr* VDoubleName::ResolveAsType(VEmitContext&)
 {
-	VClass* Class = VMemberBase::StaticFindClass(Name1);
-	if (!Class)
-	{
-		ParseError(Loc, "No such class %s", *Name1);
-		delete this;
-		return NULL;
-	}
+  VClass* Class = VMemberBase::StaticFindClass(Name1);
+  if (!Class)
+  {
+    ParseError(Loc, "No such class %s", *Name1);
+    delete this;
+    return NULL;
+  }
 
-	Type = VMemberBase::StaticFindType(Class, Name2);
+  Type = VMemberBase::StaticFindType(Class, Name2);
 
-	if (Type.Type == TYPE_Unknown)
-	{
-		ParseError(Loc, "Invalid identifier, bad type name %s::%s", *Name1, *Name2);
-		delete this;
-		return NULL;
-	}
+  if (Type.Type == TYPE_Unknown)
+  {
+    ParseError(Loc, "Invalid identifier, bad type name %s::%s", *Name1, *Name2);
+    delete this;
+    return NULL;
+  }
 
-	if (Type.Type == TYPE_Automatic)
-	{
-		fprintf(stderr, "VC INTERNAL COMPILER ERROR: unresolved automatic type (2)!\n");
-		*(int*)0 = 0;
-	}
+  if (Type.Type == TYPE_Automatic)
+  {
+    fprintf(stderr, "VC INTERNAL COMPILER ERROR: unresolved automatic type (2)!\n");
+    *(int*)0 = 0;
+  }
 
-	VTypeExpr* e = new VTypeExpr(Type, Loc);
-	delete this;
-	return e;
+  VTypeExpr* e = new VTypeExpr(Type, Loc);
+  delete this;
+  return e;
 }
 
 //==========================================================================
 //
-//	VDoubleName::Emit
+//  VDoubleName::Emit
 //
 //==========================================================================
 
 void VDoubleName::Emit(VEmitContext&)
 {
-	ParseError(Loc, "Should not happen");
+  ParseError(Loc, "Should not happen");
 }
 
 //==========================================================================
 //
-//	VDoubleName::IsValidTypeExpression
+//  VDoubleName::IsValidTypeExpression
 //
 //==========================================================================
 
 bool VDoubleName::IsValidTypeExpression()
 {
-	return true;
+  return true;
 }
 
 //==========================================================================
 //
-//	VDoubleName::CreateTypeExprCopy
+//  VDoubleName::CreateTypeExprCopy
 //
 //==========================================================================
 
 VExpression* VDoubleName::CreateTypeExprCopy()
 {
-	return new VDoubleName(Name1, Name2, Loc);
+  return new VDoubleName(Name1, Name2, Loc);
 }
 
 //END
@@ -499,7 +499,7 @@ VExpression* VDoubleName::CreateTypeExprCopy()
 
 //==========================================================================
 //
-//	VDefaultObject::VDefaultObject
+//  VDefaultObject::VDefaultObject
 //
 //==========================================================================
 
@@ -511,85 +511,85 @@ VDefaultObject::VDefaultObject(VExpression* AOp, const TLocation& ALoc)
 
 //==========================================================================
 //
-//	VDefaultObject::~VDefaultObject
+//  VDefaultObject::~VDefaultObject
 //
 //==========================================================================
 
 VDefaultObject::~VDefaultObject()
 {
-	if (op)
-	{
-		delete op;
-		op = NULL;
-	}
+  if (op)
+  {
+    delete op;
+    op = NULL;
+  }
 }
 
 //==========================================================================
 //
-//	VDefaultObject::DoResolve
+//  VDefaultObject::DoResolve
 //
 //==========================================================================
 
 VExpression* VDefaultObject::DoResolve(VEmitContext& ec)
 {
-	if (op)
-		op = op->Resolve(ec);
-	if (!op)
-	{
-		delete this;
-		return NULL;
-	}
+  if (op)
+    op = op->Resolve(ec);
+  if (!op)
+  {
+    delete this;
+    return NULL;
+  }
 
-	if (op->Type.Type == TYPE_Reference)
-	{
-		Type = op->Type;
-		return this;
-	}
-	else if (op->Type.Type == TYPE_Class)
-	{
-		if (!op->Type.Class)
-		{
-			ParseError(Loc, "A typed class value required");
-			delete this;
-			return NULL;
-		}
-		Type = VFieldType(op->Type.Class);
-		return this;
-	}
+  if (op->Type.Type == TYPE_Reference)
+  {
+    Type = op->Type;
+    return this;
+  }
+  else if (op->Type.Type == TYPE_Class)
+  {
+    if (!op->Type.Class)
+    {
+      ParseError(Loc, "A typed class value required");
+      delete this;
+      return NULL;
+    }
+    Type = VFieldType(op->Type.Class);
+    return this;
+  }
 
-	ParseError(Loc, "Reference or class expected on left side of default");
-	delete this;
-	return NULL;
+  ParseError(Loc, "Reference or class expected on left side of default");
+  delete this;
+  return NULL;
 }
 
 //==========================================================================
 //
-//	VDefaultObject::Emit
+//  VDefaultObject::Emit
 //
 //==========================================================================
 
 void VDefaultObject::Emit(VEmitContext& ec)
 {
-	op->Emit(ec);
-	if (op->Type.Type == TYPE_Reference)
-	{
-		ec.AddStatement(OPC_GetDefaultObj);
-	}
-	else if (op->Type.Type == TYPE_Class)
-	{
-		ec.AddStatement(OPC_GetClassDefaultObj);
-	}
+  op->Emit(ec);
+  if (op->Type.Type == TYPE_Reference)
+  {
+    ec.AddStatement(OPC_GetDefaultObj);
+  }
+  else if (op->Type.Type == TYPE_Class)
+  {
+    ec.AddStatement(OPC_GetClassDefaultObj);
+  }
 }
 
 //==========================================================================
 //
-//	VDefaultObject::IsDefaultObject
+//  VDefaultObject::IsDefaultObject
 //
 //==========================================================================
 
 bool VDefaultObject::IsDefaultObject() const
 {
-	return true;
+  return true;
 }
 
 //END
@@ -598,7 +598,7 @@ bool VDefaultObject::IsDefaultObject() const
 
 //==========================================================================
 //
-//	VPushPointed::VPushPointed
+//  VPushPointed::VPushPointed
 //
 //==========================================================================
 
@@ -607,90 +607,90 @@ VPushPointed::VPushPointed(VExpression* AOp)
 , op(AOp)
 , AddressRequested(false)
 {
-	if (!op)
-	{
-		ParseError(Loc, "Expression expected");
-		return;
-	}
+  if (!op)
+  {
+    ParseError(Loc, "Expression expected");
+    return;
+  }
 }
 
 //==========================================================================
 //
-//	VPushPointed::~VPushPointed
+//  VPushPointed::~VPushPointed
 //
 //==========================================================================
 
 VPushPointed::~VPushPointed()
 {
-	if (op)
-	{
-		delete op;
-		op = NULL;
-	}
+  if (op)
+  {
+    delete op;
+    op = NULL;
+  }
 }
 
 //==========================================================================
 //
-//	VPushPointed::DoResolve
+//  VPushPointed::DoResolve
 //
 //==========================================================================
 
 VExpression* VPushPointed::DoResolve(VEmitContext& ec)
 {
-	if (op)
-		op = op->Resolve(ec);
-	if (!op)
-	{
-		delete this;
-		return NULL;
-	}
+  if (op)
+    op = op->Resolve(ec);
+  if (!op)
+  {
+    delete this;
+    return NULL;
+  }
 
-	if (op->Type.Type != TYPE_Pointer)
-	{
-		ParseError(Loc, "Expression syntax error");
-		delete this;
-		return NULL;
-	}
-	Type = op->Type.GetPointerInnerType();
-	RealType = Type;
-	if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool)
-	{
-		Type = VFieldType(TYPE_Int);
-	}
-	return this;
+  if (op->Type.Type != TYPE_Pointer)
+  {
+    ParseError(Loc, "Expression syntax error");
+    delete this;
+    return NULL;
+  }
+  Type = op->Type.GetPointerInnerType();
+  RealType = Type;
+  if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool)
+  {
+    Type = VFieldType(TYPE_Int);
+  }
+  return this;
 }
 
 //==========================================================================
 //
-//	VPushPointed::RequestAddressOf
+//  VPushPointed::RequestAddressOf
 //
 //==========================================================================
 
 void VPushPointed::RequestAddressOf()
 {
-	if (RealType.Type == TYPE_Void)
-	{
-		ParseError(Loc, "Bad address operation");
-		return;
-	}
-	if (AddressRequested)
-		ParseError(Loc, "Multiple address of");
-	AddressRequested = true;
+  if (RealType.Type == TYPE_Void)
+  {
+    ParseError(Loc, "Bad address operation");
+    return;
+  }
+  if (AddressRequested)
+    ParseError(Loc, "Multiple address of");
+  AddressRequested = true;
 }
 
 //==========================================================================
 //
-//	VPushPointed::Emit
+//  VPushPointed::Emit
 //
 //==========================================================================
 
 void VPushPointed::Emit(VEmitContext& ec)
 {
-	op->Emit(ec);
-	if (!AddressRequested)
-	{
-		EmitPushPointedCode(RealType, ec);
-	}
+  op->Emit(ec);
+  if (!AddressRequested)
+  {
+    EmitPushPointedCode(RealType, ec);
+  }
 }
 
 //END
@@ -699,7 +699,7 @@ void VPushPointed::Emit(VEmitContext& ec)
 
 //==========================================================================
 //
-//	VConditional::VConditional
+//  VConditional::VConditional
 //
 //==========================================================================
 
@@ -709,88 +709,88 @@ VConditional::VConditional(VExpression* AOp, VExpression* AOp1, VExpression* AOp
 , op1(AOp1)
 , op2(AOp2)
 {
-	if (!op1)
-	{
-		ParseError(Loc, "Expression expected");
-		return;
-	}
-	if (!op2)
-	{
-		ParseError(Loc, "Expression expected");
-		return;
-	}
+  if (!op1)
+  {
+    ParseError(Loc, "Expression expected");
+    return;
+  }
+  if (!op2)
+  {
+    ParseError(Loc, "Expression expected");
+    return;
+  }
 }
 
 //==========================================================================
 //
-//	VConditional::~VConditional
+//  VConditional::~VConditional
 //
 //==========================================================================
 
 VConditional::~VConditional()
 {
-	if (op)
-	{
-		delete op;
-		op = NULL;
-	}
-	if (op1)
-	{
-		delete op1;
-		op1 = NULL;
-	}
-	if (op2)
-	{
-		delete op2;
-		op2 = NULL;
-	}
+  if (op)
+  {
+    delete op;
+    op = NULL;
+  }
+  if (op1)
+  {
+    delete op1;
+    op1 = NULL;
+  }
+  if (op2)
+  {
+    delete op2;
+    op2 = NULL;
+  }
 }
 
 //==========================================================================
 //
-//	VConditional::DoResolve
+//  VConditional::DoResolve
 //
 //==========================================================================
 
 VExpression* VConditional::DoResolve(VEmitContext& ec)
 {
-	if (op)
-		op = op->ResolveBoolean(ec);
-	if (op1)
-		op1 = op1->Resolve(ec);
-	if (op2)
-		op2 = op2->Resolve(ec);
-	if (!op || !op1 || !op2)
-	{
-		delete this;
-		return NULL;
-	}
+  if (op)
+    op = op->ResolveBoolean(ec);
+  if (op1)
+    op1 = op1->Resolve(ec);
+  if (op2)
+    op2 = op2->Resolve(ec);
+  if (!op || !op1 || !op2)
+  {
+    delete this;
+    return NULL;
+  }
 
-	op1->Type.CheckMatch(Loc, op2->Type);
-	if (op1->Type.Type == TYPE_Pointer && op1->Type.InnerType == TYPE_Void)
-		Type = op2->Type;
-	else
-		Type = op1->Type;
-	return this;
+  op1->Type.CheckMatch(Loc, op2->Type);
+  if (op1->Type.Type == TYPE_Pointer && op1->Type.InnerType == TYPE_Void)
+    Type = op2->Type;
+  else
+    Type = op1->Type;
+  return this;
 }
 
 //==========================================================================
 //
-//	VConditional::Emit
+//  VConditional::Emit
 //
 //==========================================================================
 
 void VConditional::Emit(VEmitContext& ec)
 {
-	VLabel FalseTarget = ec.DefineLabel();
-	VLabel End = ec.DefineLabel();
+  VLabel FalseTarget = ec.DefineLabel();
+  VLabel End = ec.DefineLabel();
 
-	op->EmitBranchable(ec, FalseTarget, false);
-	op1->Emit(ec);
-	ec.AddStatement(OPC_Goto, End);
-	ec.MarkLabel(FalseTarget);
-	op2->Emit(ec);
-	ec.MarkLabel(End);
+  op->EmitBranchable(ec, FalseTarget, false);
+  op1->Emit(ec);
+  ec.AddStatement(OPC_Goto, End);
+  ec.MarkLabel(FalseTarget);
+  op2->Emit(ec);
+  ec.MarkLabel(End);
 }
 
 //END
@@ -799,7 +799,7 @@ void VConditional::Emit(VEmitContext& ec)
 
 //==========================================================================
 //
-//	VClassConstant::VClassConstant
+//  VClassConstant::VClassConstant
 //
 //==========================================================================
 
@@ -807,30 +807,30 @@ VClassConstant::VClassConstant(VClass* AClass, const TLocation& ALoc)
 : VExpression(ALoc)
 , Class(AClass)
 {
-	Type = TYPE_Class;
-	Type.Class = Class;
+  Type = TYPE_Class;
+  Type.Class = Class;
 }
 
 //==========================================================================
 //
-//	VClassConstant::DoResolve
+//  VClassConstant::DoResolve
 //
 //==========================================================================
 
 VExpression* VClassConstant::DoResolve(VEmitContext&)
 {
-	return this;
+  return this;
 }
 
 //==========================================================================
 //
-//	VClassConstant::Emit
+//  VClassConstant::Emit
 //
 //==========================================================================
 
 void VClassConstant::Emit(VEmitContext& ec)
 {
-	ec.AddStatement(OPC_PushClassId, Class);
+  ec.AddStatement(OPC_PushClassId, Class);
 }
 
 //END
@@ -839,7 +839,7 @@ void VClassConstant::Emit(VEmitContext& ec)
 
 //==========================================================================
 //
-//	VStateConstant::VStateConstant
+//  VStateConstant::VStateConstant
 //
 //==========================================================================
 
@@ -847,29 +847,29 @@ VStateConstant::VStateConstant(VState* AState, const TLocation& ALoc)
 : VExpression(ALoc)
 , State(AState)
 {
-	Type = TYPE_State;
+  Type = TYPE_State;
 }
 
 //==========================================================================
 //
-//	VStateConstant::DoResolve
+//  VStateConstant::DoResolve
 //
 //==========================================================================
 
 VExpression* VStateConstant::DoResolve(VEmitContext&)
 {
-	return this;
+  return this;
 }
 
 //==========================================================================
 //
-//	VStateConstant::Emit
+//  VStateConstant::Emit
 //
 //==========================================================================
 
 void VStateConstant::Emit(VEmitContext& ec)
 {
-	ec.AddStatement(OPC_PushState, State);
+  ec.AddStatement(OPC_PushState, State);
 }
 
 //END
@@ -878,7 +878,7 @@ void VStateConstant::Emit(VEmitContext& ec)
 
 //==========================================================================
 //
-//	VConstantValue::VConstantValue
+//  VConstantValue::VConstantValue
 //
 //==========================================================================
 
@@ -890,77 +890,77 @@ VConstantValue::VConstantValue(VConstant* AConst, const TLocation& ALoc)
 
 //==========================================================================
 //
-//	VConstantValue::DoResolve
+//  VConstantValue::DoResolve
 //
 //==========================================================================
 
 VExpression* VConstantValue::DoResolve(VEmitContext&)
 {
-	Type = (EType)Const->Type;
-	return this;
+  Type = (EType)Const->Type;
+  return this;
 }
 
 //==========================================================================
 //
-//	VConstantValue::Emit
+//  VConstantValue::Emit
 //
 //==========================================================================
 
 void VConstantValue::Emit(VEmitContext& ec)
 {
-	ec.EmitPushNumber(Const->Value);
+  ec.EmitPushNumber(Const->Value);
 }
 
 //==========================================================================
 //
-//	VConstantValue::GetIntConst
+//  VConstantValue::GetIntConst
 //
 //==========================================================================
 
 vint32 VConstantValue::GetIntConst() const
 {
-	if (Const->Type == TYPE_Int)
-	{
-		return Const->Value;
-	}
-	return VExpression::GetIntConst();
+  if (Const->Type == TYPE_Int)
+  {
+    return Const->Value;
+  }
+  return VExpression::GetIntConst();
 }
 
 //==========================================================================
 //
-//	VConstantValue::GetFloatConst
+//  VConstantValue::GetFloatConst
 //
 //==========================================================================
 
 float VConstantValue::GetFloatConst() const
 {
-	if (Const->Type == TYPE_Float)
-	{
-		return Const->FloatValue;
-	}
-	return VExpression::GetFloatConst();
+  if (Const->Type == TYPE_Float)
+  {
+    return Const->FloatValue;
+  }
+  return VExpression::GetFloatConst();
 }
 
 //==========================================================================
 //
-//	VConstantValue::IsIntConst
+//  VConstantValue::IsIntConst
 //
 //==========================================================================
 
 bool VConstantValue::IsIntConst() const
 {
-	return Const->Type == TYPE_Int;
+  return Const->Type == TYPE_Int;
 }
 
 //==========================================================================
 //
-//	VConstantValue::IsFloatConst
+//  VConstantValue::IsFloatConst
 //
 //==========================================================================
 
 bool VConstantValue::IsFloatConst() const
 {
-	return Const->Type == TYPE_Float;
+  return Const->Type == TYPE_Float;
 }
 
 //END
@@ -969,7 +969,7 @@ bool VConstantValue::IsFloatConst() const
 
 //==========================================================================
 //
-//	VDropResult::VDropResult
+//  VDropResult::VDropResult
 //
 //==========================================================================
 
@@ -981,83 +981,83 @@ VDropResult::VDropResult(VExpression* AOp)
 
 //==========================================================================
 //
-//	VDropResult::~VDropResult
+//  VDropResult::~VDropResult
 //
 //==========================================================================
 
 VDropResult::~VDropResult()
 {
-	if (op)
-	{
-		delete op;
-		op = NULL;
-	}
+  if (op)
+  {
+    delete op;
+    op = NULL;
+  }
 }
 
 //==========================================================================
 //
-//	VDropResult::DoResolve
+//  VDropResult::DoResolve
 //
 //==========================================================================
 
 VExpression* VDropResult::DoResolve(VEmitContext& ec)
 {
-	if (op)
-		op = op->Resolve(ec);
-	if (!op)
-	{
-		delete this;
-		return NULL;
-	}
+  if (op)
+    op = op->Resolve(ec);
+  if (!op)
+  {
+    delete this;
+    return NULL;
+  }
 
-	if (op->Type.Type == TYPE_Delegate)
-	{
-		ParseError(Loc, "Delegate call parameters are missing");
-		delete this;
-		return NULL;
-	}
+  if (op->Type.Type == TYPE_Delegate)
+  {
+    ParseError(Loc, "Delegate call parameters are missing");
+    delete this;
+    return NULL;
+  }
 
-	if (op->Type.Type != TYPE_String && op->Type.GetStackSize() != 4 &&
-		op->Type.Type != TYPE_Vector && op->Type.Type != TYPE_Void)
-	{
-		ParseError(Loc, "Expression's result type cannot be dropped");
-		delete this;
-		return NULL;
-	}
+  if (op->Type.Type != TYPE_String && op->Type.GetStackSize() != 4 &&
+    op->Type.Type != TYPE_Vector && op->Type.Type != TYPE_Void)
+  {
+    ParseError(Loc, "Expression's result type cannot be dropped");
+    delete this;
+    return NULL;
+  }
 
-	if (op->AddDropResult())
-	{
-		VExpression* e = op;
-		op = NULL;
-		delete this;
-		return e;
-	}
+  if (op->AddDropResult())
+  {
+    VExpression* e = op;
+    op = NULL;
+    delete this;
+    return e;
+  }
 
-	Type = TYPE_Void;
-	return this;
+  Type = TYPE_Void;
+  return this;
 }
 
 //==========================================================================
 //
-//	VDropResult::Emit
+//  VDropResult::Emit
 //
 //==========================================================================
 
 void VDropResult::Emit(VEmitContext& ec)
 {
-	op->Emit(ec);
-	if (op->Type.Type == TYPE_String)
-	{
-		ec.AddStatement(OPC_DropStr);
-	}
-	else if (op->Type.Type == TYPE_Vector)
-	{
-		ec.AddStatement(OPC_VDrop);
-	}
-	else if (op->Type.GetStackSize() == 4)
-	{
-		ec.AddStatement(OPC_Drop);
-	}
+  op->Emit(ec);
+  if (op->Type.Type == TYPE_String)
+  {
+    ec.AddStatement(OPC_DropStr);
+  }
+  else if (op->Type.Type == TYPE_Vector)
+  {
+    ec.AddStatement(OPC_VDrop);
+  }
+  else if (op->Type.GetStackSize() == 4)
+  {
+    ec.AddStatement(OPC_Drop);
+  }
 }
 
 //END

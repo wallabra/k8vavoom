@@ -27,47 +27,47 @@ class MageWandMissile : FastProjectile;
 
 //===========================================================================
 //
-//	SpawnBlasterEffects
+//  SpawnBlasterEffects
 //
 //===========================================================================
 
 void SpawnBlasterEffects()
 {
-	float z;
+  float z;
 
-	if (P_Random() < 128)
-	{
-		z = Origin.z - 8.0;
-		if (z < FloorZ)
-		{
-			z = FloorZ;
-		}
-		Spawn(MageWandSmoke, vector(Origin.x, Origin.y, z));
-	}
+  if (P_Random() < 128)
+  {
+    z = Origin.z - 8.0;
+    if (z < FloorZ)
+    {
+      z = FloorZ;
+    }
+    Spawn(MageWandSmoke, vector(Origin.x, Origin.y, z));
+  }
 }
 
 states
 {
 Spawn:
-	MWND CD 4 Bright
-	Loop
+  MWND CD 4 Bright
+  Loop
 Death:
-	MWND E 4 Bright
-	MWND F 3 Bright
-	MWND G 4 Bright
-	MWND H 3 Bright
-	MWND I 4 Bright
-	Stop
+  MWND E 4 Bright
+  MWND F 3 Bright
+  MWND G 4 Bright
+  MWND H 3 Bright
+  MWND I 4 Bright
+  Stop
 }
 
 defaultproperties
 {
-	Radius = 12.0;
-	Height = 8.0;
-	Speed = 6440.0;
-	MissileDamage = 2;
-	bRip = true;
-	bCannotPush = true;
-	bNoDamageThrust = true;
-	SightSound = 'MageWandFire';
+  Radius = 12.0;
+  Height = 8.0;
+  Speed = 6440.0;
+  MissileDamage = 2;
+  bRip = true;
+  bCannotPush = true;
+  bNoDamageThrust = true;
+  SightSound = 'MageWandFire';
 }

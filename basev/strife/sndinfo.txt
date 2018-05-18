@@ -10,19 +10,19 @@
 //
 //==========================================================================
 
-$playersound	player	male	*grunt		dsoof
-$playersounddup	player	male	*land		*grunt
-$playersound	player	male	*usefail	dsnoway
-$playersound	player	male	*pain100	dsplpain
-$playersounddup	player	male	*pain75		*pain100
-$playersounddup	player	male	*pain50		*pain100
-$playersounddup	player	male	*pain25		*pain100
-$playersound	player	male	*death		dspldeth
-$playersound	player	male	*xdeath		dsplxdth
-$playersound	player	male	*gibbed		dsslop
+$playersound  player  male  *grunt    dsoof
+$playersounddup player  male  *land   *grunt
+$playersound  player  male  *usefail  dsnoway
+$playersound  player  male  *pain100  dsplpain
+$playersounddup player  male  *pain75   *pain100
+$playersounddup player  male  *pain50   *pain100
+$playersounddup player  male  *pain25   *pain100
+$playersound  player  male  *death    dspldeth
+$playersound  player  male  *xdeath   dsplxdth
+$playersound  player  male  *gibbed   dsslop
 
 // Use *pain in a script to play any of the pain sounds
-$random *pain					{ *pain100  *pain75  *pain50  *pain25 }
+$random *pain         { *pain100  *pain75  *pain50  *pain25 }
 
 //==========================================================================
 //
@@ -32,48 +32,48 @@ $random *pain					{ *pain100  *pain75  *pain50  *pain25 }
 
 // Punch
 
-misc/swish						dsswish
-misc/meathit					dsmeatht
-misc/metalhit					dsmtalht
+misc/swish            dsswish
+misc/meathit          dsmeatht
+misc/metalhit         dsmtalht
 
 // Crossbow
 
-weapons/xbowshoot				dsxbow
-weapons/xbowhit					dsfirxpl
+weapons/xbowshoot       dsxbow
+weapons/xbowhit         dsfirxpl
 
 // Assault gun
 
-weapons/assaultgun				dsrifle
+weapons/assaultgun        dsrifle
 
 // Mini missile launcher
 
-weapons/minimissile				dsrlaunc
-weapons/minimissilehit			dsmislht
+weapons/minimissile       dsrlaunc
+weapons/minimissilehit      dsmislht
 
 // Grenade launcher
 
-weapons/hegrenadeshoot			dsphoot
-weapons/hegrenadebang			dsexplod
-weapons/phgrenadeshoot			dsphoot
-weapons/phgrenadebang			dsexplod
+weapons/hegrenadeshoot      dsphoot
+weapons/hegrenadebang     dsexplod
+weapons/phgrenadeshoot      dsphoot
+weapons/phgrenadebang     dsexplod
 
 // Flame thrower
 
-weapons/flamethrower			dsflburn
-weapons/flameidle				dsflidl
+weapons/flamethrower      dsflburn
+weapons/flameidle       dsflidl
 
 // Mauler
 
-weapons/mauler1					dspgrdat
-weapons/mauler2charge			dsproton
-weapons/mauler2fire				dsprotfl
-weapons/mauler2hit				dsexplod
+weapons/mauler1         dspgrdat
+weapons/mauler2charge     dsproton
+weapons/mauler2fire       dsprotfl
+weapons/mauler2hit        dsexplod
 
 // Sigil
 
-weapons/sigil					dssigil
-weapons/sigilhit				dssglhit
-weapons/sigilcharge				dssiglup
+weapons/sigil         dssigil
+weapons/sigilhit        dssglhit
+weapons/sigilcharge       dssiglup
 
 //==========================================================================
 //
@@ -81,186 +81,186 @@ weapons/sigilcharge				dssiglup
 //
 //==========================================================================
 
-monsters/rifle					dsrifle
+monsters/rifle          dsrifle
 
 // Peasant
 
-peasant/sight					dsrebact
-peasant/active					dsrebact
-peasant/attack					dsmeatht
-$random peasant/pain 			{ peasant/pain1 peasant/pain2 peasant/pain3 peasant/pain4 }
-peasant/pain1					dspespna
-peasant/pain2					dspespnb
-peasant/pain3					dspespnc
-peasant/pain4					dspespnd
-$alias peasant/death			peasant/death1
-peasant/death1					dspsdtha
-peasant/death2					dspsdthb // UNUSED Doom sound
-peasant/death3					dspsdthc // UNUSED Doom sound
+peasant/sight         dsrebact
+peasant/active          dsrebact
+peasant/attack          dsmeatht
+$random peasant/pain      { peasant/pain1 peasant/pain2 peasant/pain3 peasant/pain4 }
+peasant/pain1         dspespna
+peasant/pain2         dspespnb
+peasant/pain3         dspespnc
+peasant/pain4         dspespnd
+$alias peasant/death      peasant/death1
+peasant/death1          dspsdtha
+peasant/death2          dspsdthb // UNUSED Doom sound
+peasant/death3          dspsdthc // UNUSED Doom sound
 
 // Peasant zombie
 
-$alias zombie/death				peasant/death
-zombie/spawner					dstelept
+$alias zombie/death       peasant/death
+zombie/spawner          dstelept
 
 // Beggar
 
-beggar/attack					dsmeatht
-$alias beggar/pain				peasant/pain
-$alias beggar/death				peasant/death
+beggar/attack         dsmeatht
+$alias beggar/pain        peasant/pain
+$alias beggar/death       peasant/death
 
 // Merchants
 
-$alias smith/pain				peasant/pain
-$alias armorer/pain				peasant/pain
-$alias medic/pain				peasant/pain
+$alias smith/pain       peasant/pain
+$alias armorer/pain       peasant/pain
+$alias medic/pain       peasant/pain
 
 // Bar keep
 
-barkeep/active					dsambppl
-barkeep/pain					dsambbar
+barkeep/active          dsambppl
+barkeep/pain          dsambbar
 $singular barkeep/active
 $singular barkeep/pain
 
 // Rebel
 
-rebel/sight						dswpnup
-rebel/active					dsrebact
-$alias rebel/pain				peasant/pain
-rebel/death						dsrebdth
+rebel/sight           dswpnup
+rebel/active          dsrebact
+$alias rebel/pain       peasant/pain
+rebel/death           dsrebdth
 
 // Acolyte
 
-acolyte/sight					dsagrsee
-acolyte/active1					dsagrac1
-acolyte/active2					dsagrac2
-acolyte/active3					dsagrac3
-acolyte/active4					dsagrac4
-$random acolyte/active			{ acolyte/active1 acolyte/active2 acolyte/active3 acolyte/active4 }
-acolyte/rifle					dsrifle
-acolyte/pain					dsagrdpn
-acolyte/death					dsagrdth
+acolyte/sight         dsagrsee
+acolyte/active1         dsagrac1
+acolyte/active2         dsagrac2
+acolyte/active3         dsagrac3
+acolyte/active4         dsagrac4
+$random acolyte/active      { acolyte/active1 acolyte/active2 acolyte/active3 acolyte/active4 }
+acolyte/rifle         dsrifle
+acolyte/pain          dsagrdpn
+acolyte/death         dsagrdth
 
 // Becoming acolyte
 
-$alias becoming/death			peasant/death
+$alias becoming/death     peasant/death
 
 // Turret
 
-turret/death					dsmislht
+turret/death          dsmislht
 
 // Stalker
 
-stalker/sight					dsspisit
-stalker/active					dsspisit
-stalker/walk					dsspdwlk
-stalker/attack					dsspdatk
-stalker/pain					dsspdatk
-stalker/death					dsspidth
+stalker/sight         dsspisit
+stalker/active          dsspisit
+stalker/walk          dsspdwlk
+stalker/attack          dsspdatk
+stalker/pain          dsspdatk
+stalker/death         dsspidth
 
 // Sentinel
 
-sentinel/sight					dssntsee
-sentinel/active					dssntact
-sentinel/plasma					dsplasma
-sentinel/death					dssntdth
+sentinel/sight          dssntsee
+sentinel/active         dssntact
+sentinel/plasma         dsplasma
+sentinel/death          dssntdth
 
 // Templar
 
-templar/sight					dspgrsee
-templar/active					dspgract
-templar/shoot					dspgrdat
-templar/pain					dspgrdpn
-templar/death					dspgrdth
+templar/sight         dspgrsee
+templar/active          dspgract
+templar/shoot         dspgrdat
+templar/pain          dspgrdpn
+templar/death         dspgrdth
 
 // Reaver
 
-reaver/sight					dsrevsee
-reaver/active					dsrevact
-reaver/blade					dsrevbld
-reaver/attack					dsreavat
-reaver/pain						dsreavpn
-reaver/death					dsrevdth
+reaver/sight          dsrevsee
+reaver/active         dsrevact
+reaver/blade          dsrevbld
+reaver/attack         dsreavat
+reaver/pain           dsreavpn
+reaver/death          dsrevdth
 
 // Crusader
 
-crusader/sight					dsrb2see
-crusader/active					dsrb2act
-crusader/pain					dsrb2pn
-crusader/death					dsrb2dth
-crusader/misl					dsrlaunc
-crusader/mislx					dsmislht
+crusader/sight          dsrb2see
+crusader/active         dsrb2act
+crusader/pain         dsrb2pn
+crusader/death          dsrb2dth
+crusader/misl         dsrlaunc
+crusader/mislx          dsmislht
 
 // Inquisitor
 
-inquisitor/sight				dsinqsee
-inquisitor/active				dsinqact
-inquisitor/walk					dsinqact
-inquisitor/jump					dsinqjmp
-inquisitor/attack				dsphoot
-inquisitor/atkexplode			dsexplod
-inquisitor/death				dsinqdth
+inquisitor/sight        dsinqsee
+inquisitor/active       dsinqact
+inquisitor/walk         dsinqact
+inquisitor/jump         dsinqjmp
+inquisitor/attack       dsphoot
+inquisitor/atkexplode     dsexplod
+inquisitor/death        dsinqdth
 
 // Programmer
 
-programmer/active				dsprogac
-programmer/attack				dsrevbld
-programmer/clank				dsmtalht
-programmer/pain					dsprgpn
-programmer/death				dsrb2dth
+programmer/active       dsprogac
+programmer/attack       dsrevbld
+programmer/clank        dsmtalht
+programmer/pain         dsprgpn
+programmer/death        dsrb2dth
 
 // Bishop
 
-bishop/sight					dsrb2see
-bishop/active					dsrb2act
-bishop/misl						dsrlaunc
-bishop/mislx					dsmislht
-bishop/pain						dsrb2pn
-bishop/death					dspgrdth
+bishop/sight          dsrb2see
+bishop/active         dsrb2act
+bishop/misl           dsrlaunc
+bishop/mislx          dsmislht
+bishop/pain           dsrb2pn
+bishop/death          dspgrdth
 
 // Macil
 
-macil/sight						dsagrsee
-macil/active					dsrebact
-$alias macil/pain				peasant/pain
-macil/slop						dsslop
+macil/sight           dsagrsee
+macil/active          dsrebact
+$alias macil/pain       peasant/pain
+macil/slop            dsslop
 
 // Loremaster
 
-loremaster/sight				dslorsee
-loremaster/active				dstend
-loremaster/attack				dsrevbld
-loremaster/chain				dschain
-loremaster/swish				dsswish
-loremaster/pain					dslorpn
-loremaster/death				dsslop
+loremaster/sight        dslorsee
+loremaster/active       dstend
+loremaster/attack       dsrevbld
+loremaster/chain        dschain
+loremaster/swish        dsswish
+loremaster/pain         dslorpn
+loremaster/death        dsslop
 
 // Specter
 
-alienspectre/sight				dsalnsee
-alienspectre/active				dsalnact
-alienspectre/blade				dsrevbld
-alienspectre/pain				dsalnpn
-alienspectre/death				dsalndth
+alienspectre/sight        dsalnsee
+alienspectre/active       dsalnact
+alienspectre/blade        dsrevbld
+alienspectre/pain       dsalnpn
+alienspectre/death        dsalndth
 
 // Entity
 
-entity/sight					dsmnalse
-entity/active					dsalnact
-entity/melee					dsrevbld
-entity/pain					dsalnpn
-entity/death					dsmnaldt
+entity/sight          dsmnalse
+entity/active         dsalnact
+entity/melee          dsrevbld
+entity/pain         dsalnpn
+entity/death          dsmnaldt
 
 // Kneeling guy
 
-misc/chant					dschant
-misc/static					dsstatic
+misc/chant          dschant
+misc/static         dsstatic
 
 // Rat
 
-rat/sight					dsratact
-rat/active					dsratact
-rat/death					dsratact
+rat/sight         dsratact
+rat/active          dsratact
+rat/death         dsratact
 $singular rat/sight
 
 //==========================================================================
@@ -271,84 +271,84 @@ $singular rat/sight
 
 // Alarm
 
-misc/alarm					dsalarm
+misc/alarm          dsalarm
 $singular misc/alarm
 
 // Water
 
-world/river					dswriver
-world/waterfall					dswfall
-world/waterdrip					dswdrip
-world/watersplash				dswsplsh
+world/river         dswriver
+world/waterfall         dswfall
+world/waterdrip         dswdrip
+world/watersplash       dswsplsh
 $limit world/river 1
 $limit world/waterfall 1
 $limit world/waterdrip 1
 
 // Power crystal
 
-misc/reactor					dsreactr
+misc/reactor          dsreactr
 
 // Alien spaceship
 
-ambient/alien1					dsamaln1
-ambient/alien2					dsamaln2
-ambient/alien3					dsamaln3
-ambient/alien4					dsamaln4
-ambient/alien5					dsamaln5
-ambient/alien6					dsamaln6
+ambient/alien1          dsamaln1
+ambient/alien2          dsamaln2
+ambient/alien3          dsamaln3
+ambient/alien4          dsamaln4
+ambient/alien5          dsamaln5
+ambient/alien6          dsamaln6
 
 // World objects
 
-world/barrelx					dsbarexp
-world/smallfire					dssmfire
-world/largefire					dslgfire
-woodenbarrel/death				dswbrldt
-ore/explode					dsexplod
-misc/explosion					dsexplod
+world/barrelx         dsbarexp
+world/smallfire         dssmfire
+world/largefire         dslgfire
+woodenbarrel/death        dswbrldt
+ore/explode         dsexplod
+misc/explosion          dsexplod
 
-world/glassbreak				dsbglass
+world/glassbreak        dsbglass
 
 // Switches
 
-switches/normbutn				dsswtchn
-switches/chain					dspulchn
-switches/knob					dsswknob
-switches/keycard				dskeycrd
-switches/stone					dsswston
-switches/bolt					dsswbolt
-switches/scanner				dsswscan
-switches/fool					dsdifool
-switches/valve					dsvalve
-switches/sizzle					dsfirxpl
-$alias switches/exitbutn 			switches/normbutn
+switches/normbutn       dsswtchn
+switches/chain          dspulchn
+switches/knob         dsswknob
+switches/keycard        dskeycrd
+switches/stone          dsswston
+switches/bolt         dsswbolt
+switches/scanner        dsswscan
+switches/fool         dsdifool
+switches/valve          dsvalve
+switches/sizzle         dsfirxpl
+$alias switches/exitbutn      switches/normbutn
 
 // Doors
 
-doors/small_metal_open				dsdrsmto // FIXME
-doors/small_metal_close				dsdrsmtc // FIXME
-doors/large_metal_open				dsdrlmto
-doors/large_metal_close				dsdrlmtc
-doors/large_wood_open				dsdrlwud
-doors/large_wood_close				dsdrlwud
-doors/small_wood_open				dsdrswud
-doors/small_wood_close				dsdrswud
-doors/stone_open				dsdrston
-doors/stone_close				dsdrston
-doors/dr2_open					dsbdopn
-doors/dr2_clos					dsbdcls
-doors/airlock_open				dsairlck
-doors/airlock_close				dsairlck
-doors/chain_open				dsdrchno
-doors/chain_close				dsdrchnc
+doors/small_metal_open        dsdrsmto // FIXME
+doors/small_metal_close       dsdrsmtc // FIXME
+doors/large_metal_open        dsdrlmto
+doors/large_metal_close       dsdrlmtc
+doors/large_wood_open       dsdrlwud
+doors/large_wood_close        dsdrlwud
+doors/small_wood_open       dsdrswud
+doors/small_wood_close        dsdrswud
+doors/stone_open        dsdrston
+doors/stone_close       dsdrston
+doors/dr2_open          dsbdopn
+doors/dr2_clos          dsbdcls
+doors/airlock_open        dsairlck
+doors/airlock_close       dsairlck
+doors/chain_open        dsdrchno
+doors/chain_close       dsdrchnc
 
 // Platforms
 
-plats/pt1_strt					dspstart
-plats/pt1_stop					dspstop
-plats/pt1_mid					dsstnmov
+plats/pt1_strt          dspstart
+plats/pt1_stop          dspstop
+plats/pt1_mid         dsstnmov
 
 //  Earthquake
-world/quake						dsquake
+world/quake           dsquake
 
 //==========================================================================
 //
@@ -358,43 +358,43 @@ world/quake						dsquake
 
 // Shared by player and others
 
-misc/pcrush						dspcrush
+misc/pcrush           dspcrush
 
-misc/gibbed						dsslop
-human/imonfire					dsburnme
-misc/disruptordeath				dsdsrptr
+misc/gibbed           dsslop
+human/imonfire          dsburnme
+misc/disruptordeath       dsdsrptr
 
-misc/missileinflight			dsrflite
+misc/missileinflight      dsrflite
 
 // Effects
 
-misc/teleport					dstelept
-misc/spawn						dsitmbk
+misc/teleport         dstelept
+misc/spawn            dsitmbk
 
-misc/w_pkup						dswpnup
-misc/i_pkup						dsitemup
-misc/k_pkup						dsitemup
-misc/p_pkup						dsyeah
-misc/mask						dsmask
-misc/invuse						dsitemup
-misc/secret						dsyeah
-misc/chat						dsradio
-$alias misc/keytry				*usefail
-$alias misc/health_pkup			misc/i_pkup
-$alias misc/armor_pkup			misc/i_pkup
-$alias misc/ammo_pkup			misc/i_pkup
+misc/w_pkup           dswpnup
+misc/i_pkup           dsitemup
+misc/k_pkup           dsitemup
+misc/p_pkup           dsyeah
+misc/mask           dsmask
+misc/invuse           dsitemup
+misc/secret           dsyeah
+misc/chat           dsradio
+$alias misc/keytry        *usefail
+$alias misc/health_pkup     misc/i_pkup
+$alias misc/armor_pkup      misc/i_pkup
+$alias misc/ammo_pkup     misc/i_pkup
 
-misc/ripslop					dsempty
+misc/ripslop          dsempty
 
-//	Sparks
-world/spark1					spark1
-world/spark2					spark2
-world/spark3					spark3
-$random world/spark				{ world/spark1  world/spark2  world/spark3 }
+//  Sparks
+world/spark1          spark1
+world/spark2          spark2
+world/spark3          spark3
+$random world/spark       { world/spark1  world/spark2  world/spark3 }
 
-//	Freeze death
-misc/freeze						icedth1
-misc/icebreak					icebrk1a
+//  Freeze death
+misc/freeze           icedth1
+misc/icebreak         icebrk1a
 
 //==========================================================================
 //
@@ -402,12 +402,12 @@ misc/icebreak					icebrk1a
 //
 //==========================================================================
 
-menu/activate					dsswtchn
-menu/cursor						dspstop
-menu/choose						dsswknob
-menu/change						dsstnmov
-menu/backup						dsswtchn
-menu/clear						dsmtalht
-menu/prompt						dsswtchn
-menu/invalid					dsoof
-menu/dismiss					dsswtchx
+menu/activate         dsswtchn
+menu/cursor           dspstop
+menu/choose           dsswknob
+menu/change           dsstnmov
+menu/backup           dsswtchn
+menu/clear            dsmtalht
+menu/prompt           dsswtchn
+menu/invalid          dsoof
+menu/dismiss          dsswtchx

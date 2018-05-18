@@ -24,9 +24,9 @@
 //**************************************************************************
 
 class ClericWeapon : HexenWeapon
-	abstract;
+  abstract;
 
 defaultproperties
 {
-	WeaponClass = ClericPlayer;
+  WeaponClass = ClericPlayer;
 }

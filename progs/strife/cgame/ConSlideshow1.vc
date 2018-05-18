@@ -25,87 +25,87 @@
 
 class ConSlideshow1 : MenuScreen;
 
-//	Background
-MenuStaticBitmap	BackPic;
-int					PageNum;
-float				PicTimer;
+//  Background
+MenuStaticBitmap  BackPic;
+int         PageNum;
+float       PicTimer;
 
 void CreateChoices()
 {
-	::CreateChoices();
-	BackPic = NewChild(MenuStaticBitmap);
-	PlayPage();
+  ::CreateChoices();
+  BackPic = NewChild(MenuStaticBitmap);
+  PlayPage();
 }
 
 void Tick(float DeltaTime)
 {
-	::Tick(DeltaTime);
-	PicTimer -= DeltaTime;
-	if (PicTimer <= 0.0)
-	{
-		PlayPage();
-	}
+  ::Tick(DeltaTime);
+  PicTimer -= DeltaTime;
+  if (PicTimer <= 0.0)
+  {
+    PlayPage();
+  }
 }
 
 void PlayPage()
 {
-	switch (PageNum)
-	{
-	case 0:
-		StopLocalSounds();
-		BackPic.SetPic('ss2f1');
-		LocalSound('svox/mac10');
-		PicTimer = 9.0;
-		PageNum = 1;
-		break;
+  switch (PageNum)
+  {
+  case 0:
+    StopLocalSounds();
+    BackPic.SetPic('ss2f1');
+    LocalSound('svox/mac10');
+    PicTimer = 9.0;
+    PageNum = 1;
+    break;
 
-	case 1:
-		BackPic.SetPic('ss2f2');
-		LocalSound('svox/mac11');
-		PicTimer = 10.0;
-		PageNum = 2;
-		break;
+  case 1:
+    BackPic.SetPic('ss2f2');
+    LocalSound('svox/mac11');
+    PicTimer = 10.0;
+    PageNum = 2;
+    break;
 
-	case 2:
-		BackPic.SetPic('ss2f3');
-		LocalSound('svox/mac12');
-		PicTimer = 12.0;
-		PageNum = 3;
-		break;
+  case 2:
+    BackPic.SetPic('ss2f3');
+    LocalSound('svox/mac12');
+    PicTimer = 12.0;
+    PageNum = 3;
+    break;
 
-	case 3:
-		BackPic.SetPic('ss2f4');
-		LocalSound('svox/mac13');
-		PicTimer = 17.0;
-		PageNum = -1;
-		break;
+  case 3:
+    BackPic.SetPic('ss2f4');
+    LocalSound('svox/mac13');
+    PicTimer = 17.0;
+    PageNum = -1;
+    break;
 
-	case -1:
-		CmdBuf_AddText("Impulse 200\n");
-		ClGame.PopMenu();
-		break;
-	}
+  case -1:
+    CmdBuf_AddText("Impulse 200\n");
+    ClGame.PopMenu();
+    break;
+  }
 }
 
 bool OnKeyDown(int key)
 {
-	switch (key)
-	{
-	case K_ESCAPE:
-	case K_MOUSE2:
-		StopLocalSounds();
-		CmdBuf_AddText("Impulse 200\n");
-		ClGame.PopMenu();
-		return true;
-	}
-	return ::OnKeyDown(key);
+  switch (key)
+  {
+  case K_ESCAPE:
+  case K_MOUSE2:
+    StopLocalSounds();
+    CmdBuf_AddText("Impulse 200\n");
+    ClGame.PopMenu();
+    return true;
+  }
+  return ::OnKeyDown(key);
 }
 
 defaultproperties
 {
-	X = 0;
-	Y = 0;
-	ScaleX = 2.0;
-	ScaleY = 2.4;
-	bTickEnabled = true;
+  X = 0;
+  Y = 0;
+  ScaleX = 2.0;
+  ScaleY = 2.4;
+  bTickEnabled = true;
 }

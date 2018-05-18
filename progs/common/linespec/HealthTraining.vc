@@ -27,40 +27,40 @@ class HealthTraining : Inventory;
 
 //==========================================================================
 //
-//	TryPickup
+//  TryPickup
 //
 //==========================================================================
 
 bool TryPickup(EntityEx Toucher)
 {
-	if (::TryPickup(Toucher))
-	{
-		Toucher.GiveInventoryType(GunTraining);
-		Inventory Item = Spawn(Coin,,,, false);
-		Item.Amount = PlayerEx(Toucher.Player).Accuracy * 5 + 300;
-		if (!Item.TryPickup(Toucher))
-		{
-			Item.Destroy();
-		}
-		return true;
-	}
-	return false;
+  if (::TryPickup(Toucher))
+  {
+    Toucher.GiveInventoryType(GunTraining);
+    Inventory Item = Spawn(Coin,,,, false);
+    Item.Amount = PlayerEx(Toucher.Player).Accuracy * 5 + 300;
+    if (!Item.TryPickup(Toucher))
+    {
+      Item.Destroy();
+    }
+    return true;
+  }
+  return false;
 }
 
 states
 {
 Spawn:
-	HELT A -1
-	Stop
+  HELT A -1
+  Stop
 }
 
 defaultproperties
 {
-	ConversationID = 309;
-	PickupMessage = "Toughness";
-	MaxAmount = 100;
-	IconName = 'i_helt';
-	bFloorClip = true;
-	bInvBar = true;
-	bUndroppable = true;
+  ConversationID = 309;
+  PickupMessage = "Toughness";
+  MaxAmount = 100;
+  IconName = 'i_helt';
+  bFloorClip = true;
+  bInvBar = true;
+  bUndroppable = true;
 }

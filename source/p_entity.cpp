@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -68,31 +68,31 @@ int VEntity::FIndex_GetStateTime;
 
 //==========================================================================
 //
-//	VEntity::InitFuncIndexes
+//  VEntity::InitFuncIndexes
 //
 //==========================================================================
 
 void VEntity::InitFuncIndexes()
 {
-	guard(VEntity::InitFuncIndexes);
-	FIndex_OnMapSpawn = StaticClass()->GetMethodIndex(NAME_OnMapSpawn);
-	FIndex_BeginPlay = StaticClass()->GetMethodIndex(NAME_BeginPlay);
-	FIndex_Destroyed = StaticClass()->GetMethodIndex(NAME_Destroyed);
-	FIndex_Touch = StaticClass()->GetMethodIndex(NAME_Touch);
-	FIndex_BlastedHitLine = StaticClass()->GetMethodIndex(NAME_BlastedHitLine);
-	FIndex_CheckForPushSpecial = StaticClass()->GetMethodIndex(NAME_CheckForPushSpecial);
-	FIndex_ApplyFriction = StaticClass()->GetMethodIndex(NAME_ApplyFriction);
-	FIndex_HandleFloorclip = StaticClass()->GetMethodIndex(NAME_HandleFloorclip);
-	FIndex_CrossSpecialLine = StaticClass()->GetMethodIndex(NAME_CrossSpecialLine);
-	FIndex_SectorChanged = StaticClass()->GetMethodIndex(NAME_SectorChanged);
-	FIndex_RoughCheckThing = StaticClass()->GetMethodIndex(NAME_RoughCheckThing);
-	FIndex_GiveInventory = StaticClass()->GetMethodIndex(NAME_GiveInventory);
-	FIndex_TakeInventory = StaticClass()->GetMethodIndex(NAME_TakeInventory);
-	FIndex_CheckInventory = StaticClass()->GetMethodIndex(NAME_CheckInventory);
-	FIndex_GetSigilPieces = StaticClass()->GetMethodIndex(NAME_GetSigilPieces);
-	FIndex_MoveThing = StaticClass()->GetMethodIndex(NAME_MoveThing);
-	FIndex_GetStateTime = StaticClass()->GetMethodIndex(NAME_GetStateTime);
-	unguard;
+  guard(VEntity::InitFuncIndexes);
+  FIndex_OnMapSpawn = StaticClass()->GetMethodIndex(NAME_OnMapSpawn);
+  FIndex_BeginPlay = StaticClass()->GetMethodIndex(NAME_BeginPlay);
+  FIndex_Destroyed = StaticClass()->GetMethodIndex(NAME_Destroyed);
+  FIndex_Touch = StaticClass()->GetMethodIndex(NAME_Touch);
+  FIndex_BlastedHitLine = StaticClass()->GetMethodIndex(NAME_BlastedHitLine);
+  FIndex_CheckForPushSpecial = StaticClass()->GetMethodIndex(NAME_CheckForPushSpecial);
+  FIndex_ApplyFriction = StaticClass()->GetMethodIndex(NAME_ApplyFriction);
+  FIndex_HandleFloorclip = StaticClass()->GetMethodIndex(NAME_HandleFloorclip);
+  FIndex_CrossSpecialLine = StaticClass()->GetMethodIndex(NAME_CrossSpecialLine);
+  FIndex_SectorChanged = StaticClass()->GetMethodIndex(NAME_SectorChanged);
+  FIndex_RoughCheckThing = StaticClass()->GetMethodIndex(NAME_RoughCheckThing);
+  FIndex_GiveInventory = StaticClass()->GetMethodIndex(NAME_GiveInventory);
+  FIndex_TakeInventory = StaticClass()->GetMethodIndex(NAME_TakeInventory);
+  FIndex_CheckInventory = StaticClass()->GetMethodIndex(NAME_CheckInventory);
+  FIndex_GetSigilPieces = StaticClass()->GetMethodIndex(NAME_GetSigilPieces);
+  FIndex_MoveThing = StaticClass()->GetMethodIndex(NAME_MoveThing);
+  FIndex_GetStateTime = StaticClass()->GetMethodIndex(NAME_GetStateTime);
+  unguard;
 }
 
 //==========================================================================
@@ -103,139 +103,139 @@ void VEntity::InitFuncIndexes()
 
 void VEntity::Serialise(VStream& Strm)
 {
-	guard(VEntity::Serialise);
-	Super::Serialise(Strm);
+  guard(VEntity::Serialise);
+  Super::Serialise(Strm);
 
-	if (Strm.IsLoading())
-	{
-		if (EntityFlags & EF_IsPlayer)
-		{
-			Player->MO = this;
-		}
-		SubSector = NULL;	//	Must mark as not linked
-		LinkToWorld();
-	}
-	unguard;
+  if (Strm.IsLoading())
+  {
+    if (EntityFlags & EF_IsPlayer)
+    {
+      Player->MO = this;
+    }
+    SubSector = NULL; //  Must mark as not linked
+    LinkToWorld();
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::DestroyThinker
+//  VEntity::DestroyThinker
 //
 //==========================================================================
 
 void VEntity::DestroyThinker()
 {
-	guard(VEntity::DestroyThinker)
-	if (Role == ROLE_Authority)
-	{
-		eventDestroyed();
+  guard(VEntity::DestroyThinker)
+  if (Role == ROLE_Authority)
+  {
+    eventDestroyed();
 
-		if (TID)
-		{
-			// Remove from TID list
-			RemoveFromTIDList();
-		}
+    if (TID)
+    {
+      // Remove from TID list
+      RemoveFromTIDList();
+    }
 
-		// stop any playing sound
-		StopSound(0);
-	}
+    // stop any playing sound
+    StopSound(0);
+  }
 
-	// unlink from sector and block lists
-	UnlinkFromWorld();
-	XLevel->DelSectorList();
+  // unlink from sector and block lists
+  UnlinkFromWorld();
+  XLevel->DelSectorList();
 
-	Super::DestroyThinker();
-	unguard;
+  Super::DestroyThinker();
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::AddedToLevel
+//  VEntity::AddedToLevel
 //
 //==========================================================================
 
 void VEntity::AddedToLevel()
 {
-	guard(VEntity::AddedToLevel);
-	if (!XLevel->NextSoundOriginID)
-	{
-		XLevel->NextSoundOriginID = 1;
-	}
-	SoundOriginID = XLevel->NextSoundOriginID + (SNDORG_Entity << 24);
-	XLevel->NextSoundOriginID = (XLevel->NextSoundOriginID + 1) & 0x00ffffff;
-	unguard;
+  guard(VEntity::AddedToLevel);
+  if (!XLevel->NextSoundOriginID)
+  {
+    XLevel->NextSoundOriginID = 1;
+  }
+  SoundOriginID = XLevel->NextSoundOriginID + (SNDORG_Entity << 24);
+  XLevel->NextSoundOriginID = (XLevel->NextSoundOriginID + 1) & 0x00ffffff;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::SetTID
+//  VEntity::SetTID
 //
 //==========================================================================
 
 void VEntity::SetTID(int tid)
 {
-	guard(VEntity::SetTID);
-	RemoveFromTIDList();
-	if (tid)
-	{
-		InsertIntoTIDList(tid);
-	}
-	unguard;
+  guard(VEntity::SetTID);
+  RemoveFromTIDList();
+  if (tid)
+  {
+    InsertIntoTIDList(tid);
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::InsertIntoTIDList
+//  VEntity::InsertIntoTIDList
 //
 //==========================================================================
 
 void VEntity::InsertIntoTIDList(int tid)
 {
-	guard(VEntity::InsertIntoTIDList);
-	TID = tid;
-	int HashIndex = tid & (VLevelInfo::TID_HASH_SIZE - 1);
-	TIDHashPrev = NULL;
-	TIDHashNext = Level->TIDHash[HashIndex];
-	if (TIDHashNext)
-	{
-		TIDHashNext->TIDHashPrev = this;
-	}
-	Level->TIDHash[HashIndex] = this;
-	unguard;
+  guard(VEntity::InsertIntoTIDList);
+  TID = tid;
+  int HashIndex = tid & (VLevelInfo::TID_HASH_SIZE - 1);
+  TIDHashPrev = NULL;
+  TIDHashNext = Level->TIDHash[HashIndex];
+  if (TIDHashNext)
+  {
+    TIDHashNext->TIDHashPrev = this;
+  }
+  Level->TIDHash[HashIndex] = this;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::RemoveFromTIDList
+//  VEntity::RemoveFromTIDList
 //
 //==========================================================================
 
 void VEntity::RemoveFromTIDList()
 {
-	guard(VEntity::RemoveFromTIDList);
-	if (!TID)
-	{
-		//	No TID, which means it's not in the cache.
-		return;
-	}
+  guard(VEntity::RemoveFromTIDList);
+  if (!TID)
+  {
+    //  No TID, which means it's not in the cache.
+    return;
+  }
 
-	if (TIDHashNext)
-	{
-		TIDHashNext->TIDHashPrev = TIDHashPrev;
-	}
-	if (TIDHashPrev)
-	{
-		TIDHashPrev->TIDHashNext = TIDHashNext;
-	}
-	else
-	{
-		int HashIndex = TID & (VLevelInfo::TID_HASH_SIZE - 1);
-		check(Level->TIDHash[HashIndex] == this);
-		Level->TIDHash[HashIndex] = TIDHashNext;
-	}
-	TID = 0;
-	unguard;
+  if (TIDHashNext)
+  {
+    TIDHashNext->TIDHashPrev = TIDHashPrev;
+  }
+  if (TIDHashPrev)
+  {
+    TIDHashPrev->TIDHashNext = TIDHashNext;
+  }
+  else
+  {
+    int HashIndex = TID & (VLevelInfo::TID_HASH_SIZE - 1);
+    check(Level->TIDHash[HashIndex] == this);
+    Level->TIDHash[HashIndex] = TIDHashNext;
+  }
+  TID = 0;
+  unguard;
 }
 
 //==========================================================================
@@ -248,62 +248,62 @@ void VEntity::RemoveFromTIDList()
 
 bool VEntity::SetState(VState* InState)
 {
-	guard(VEntity::SetState);
-	VState *st = InState;
-	int watchcatCount = 1024;
-	do
-	{
-		if (--watchcatCount <= 0) {
-			//k8: FIXME!
-			GCon->Logf("ERROR: WatchCat interrupted `VEntity::SetState`!");
-			break;
-		}
-		if (!st)
-		{
-			// Remove mobj
-			State = NULL;
-			StateTime = -1;
-			DestroyThinker();
-			return false;
-		}
+  guard(VEntity::SetState);
+  VState *st = InState;
+  int watchcatCount = 1024;
+  do
+  {
+    if (--watchcatCount <= 0) {
+      //k8: FIXME!
+      GCon->Logf("ERROR: WatchCat interrupted `VEntity::SetState`!");
+      break;
+    }
+    if (!st)
+    {
+      // Remove mobj
+      State = NULL;
+      StateTime = -1;
+      DestroyThinker();
+      return false;
+    }
 
-		if (st->SpriteIndex == 1)
-		{
-			//	1 is ----, which is "do not change sprite"
-			if (!(EntityFlags & EF_UseDispState))
-			{
-				DispState = State;
-				EntityFlags |= EF_UseDispState;
-			}
-		}
-		else
-		{
-			EntityFlags &= ~EF_UseDispState;
-		}
-		State = st;
-		//printf("0: CALLING GetStateTime; StateTime=%f\n", StateTime);
-		StateTime = eventGetStateTime(st, st->Time);
-		//printf("1: GetStateTime called; StateTime=%f\n", StateTime);
-		EntityFlags &= ~EF_FullBright;
+    if (st->SpriteIndex == 1)
+    {
+      //  1 is ----, which is "do not change sprite"
+      if (!(EntityFlags & EF_UseDispState))
+      {
+        DispState = State;
+        EntityFlags |= EF_UseDispState;
+      }
+    }
+    else
+    {
+      EntityFlags &= ~EF_UseDispState;
+    }
+    State = st;
+    //printf("0: CALLING GetStateTime; StateTime=%f\n", StateTime);
+    StateTime = eventGetStateTime(st, st->Time);
+    //printf("1: GetStateTime called; StateTime=%f\n", StateTime);
+    EntityFlags &= ~EF_FullBright;
 
-		// Modified handling.
-		// Call action functions when the state is set
-		if (st->Function)
-		{
-			XLevel->CallingState = State;
-			P_PASS_SELF;
-			ExecuteFunction(st->Function);
-		}
+    // Modified handling.
+    // Call action functions when the state is set
+    if (st->Function)
+    {
+      XLevel->CallingState = State;
+      P_PASS_SELF;
+      ExecuteFunction(st->Function);
+    }
 
-		if (!State)
-		{
-			return false;
-		}
-		st = State->NextState;
-	}
-	while (!StateTime);
-	return true;
-	unguard;
+    if (!State)
+    {
+      return false;
+    }
+    st = State->NextState;
+  }
+  while (!StateTime);
+  return true;
+  unguard;
 }
 
 //==========================================================================
@@ -316,442 +316,442 @@ bool VEntity::SetState(VState* InState)
 
 void VEntity::SetInitialState(VState* InState)
 {
-	guard(VEntity::SetInitialState);
-	State = InState;
-	if (InState)
-	{
-		StateTime = eventGetStateTime(InState, InState->Time);
-	}
-	else
-	{
-		StateTime = -1.0;
-	}
-	unguard;
+  guard(VEntity::SetInitialState);
+  State = InState;
+  if (InState)
+  {
+    StateTime = eventGetStateTime(InState, InState->Time);
+  }
+  else
+  {
+    StateTime = -1.0;
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::AdvanceState
+//  VEntity::AdvanceState
 //
 //==========================================================================
 
 bool VEntity::AdvanceState(float deltaTime)
 {
-	guard(VEntity::AdvanceState);
-	if (State && StateTime != -1.0)
-	{
-		StateTime -= deltaTime;
-		// you can cycle through multiple states in a tic
-		if (StateTime <= 0.0)
-		{
-			if (!SetState(State->NextState))
-			{
-				return false;	// freed itself
-			}
-		}
-	}
-	return true;
-	unguard;
+  guard(VEntity::AdvanceState);
+  if (State && StateTime != -1.0)
+  {
+    StateTime -= deltaTime;
+    // you can cycle through multiple states in a tic
+    if (StateTime <= 0.0)
+    {
+      if (!SetState(State->NextState))
+      {
+        return false; // freed itself
+      }
+    }
+  }
+  return true;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::FindState
+//  VEntity::FindState
 //
 //==========================================================================
 
 VState* VEntity::FindState(VName StateName, VName SubLabel, bool Exact)
 {
-	guard(VEntity::FindState);
-	VStateLabel* Lbl = GetClass()->FindStateLabel(StateName, SubLabel, Exact);
-	return Lbl ? Lbl->State : NULL;
-	unguard;
+  guard(VEntity::FindState);
+  VStateLabel* Lbl = GetClass()->FindStateLabel(StateName, SubLabel, Exact);
+  return Lbl ? Lbl->State : NULL;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::FindStateEx
+//  VEntity::FindStateEx
 //
 //==========================================================================
 
 VState* VEntity::FindStateEx(const VStr& StateName, bool Exact)
 {
-	guard(VEntity::FindStateEx);
-	TArray<VName> Names;
-	VMemberBase::StaticSplitStateLabel(StateName, Names);
-	VStateLabel* Lbl = GetClass()->FindStateLabel(Names, Exact);
-	return Lbl ? Lbl->State : NULL;
-	unguard;
+  guard(VEntity::FindStateEx);
+  TArray<VName> Names;
+  VMemberBase::StaticSplitStateLabel(StateName, Names);
+  VStateLabel* Lbl = GetClass()->FindStateLabel(Names, Exact);
+  return Lbl ? Lbl->State : NULL;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::HasSpecialStates
+//  VEntity::HasSpecialStates
 //
 //==========================================================================
 
 bool VEntity::HasSpecialStates(VName StateName)
 {
-	guard(VEntity::HasSpecialStates);
-	VStateLabel* Lbl = GetClass()->FindStateLabel(StateName);
-	return Lbl != NULL && Lbl->SubLabels.Num() > 0;
-	unguard;
+  guard(VEntity::HasSpecialStates);
+  VStateLabel* Lbl = GetClass()->FindStateLabel(StateName);
+  return Lbl != NULL && Lbl->SubLabels.Num() > 0;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::GetStateEffects
+//  VEntity::GetStateEffects
 //
 //==========================================================================
 
 void VEntity::GetStateEffects(TArray<VLightEffectDef*>& Lights,
-	TArray<VParticleEffectDef*>& Part) const
+  TArray<VParticleEffectDef*>& Part) const
 {
-	guard(VEntity::GetStateEffects);
-	//	Clear arrays.
-	Lights.Clear();
+  guard(VEntity::GetStateEffects);
+  //  Clear arrays.
+  Lights.Clear();
 
-	//	Check for valid state
-	if (!State)
-	{
-		return;
-	}
+  //  Check for valid state
+  if (!State)
+  {
+    return;
+  }
 
-	//	Find all matching effects.
-	for (int i = 0; i < GetClass()->SpriteEffects.Num(); i++)
-	{
-		VSpriteEffect& SprFx = GetClass()->SpriteEffects[i];
-		if (SprFx.SpriteIndex != State->SpriteIndex)
-		{
-			continue;
-		}
-		if (SprFx.Frame != -1 &&
-			SprFx.Frame != (State->Frame & VState::FF_FRAMEMASK))
-		{
-			continue;
-		}
+  //  Find all matching effects.
+  for (int i = 0; i < GetClass()->SpriteEffects.Num(); i++)
+  {
+    VSpriteEffect& SprFx = GetClass()->SpriteEffects[i];
+    if (SprFx.SpriteIndex != State->SpriteIndex)
+    {
+      continue;
+    }
+    if (SprFx.Frame != -1 &&
+      SprFx.Frame != (State->Frame & VState::FF_FRAMEMASK))
+    {
+      continue;
+    }
 
-		if (SprFx.LightDef)
-		{
-			Lights.Append(SprFx.LightDef);
-		}
-		if (SprFx.PartDef)
-		{
-			Part.Append(SprFx.PartDef);
-		}
-	}
-	unguard;
+    if (SprFx.LightDef)
+    {
+      Lights.Append(SprFx.LightDef);
+    }
+    if (SprFx.PartDef)
+    {
+      Part.Append(SprFx.PartDef);
+    }
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::CallStateChain
+//  VEntity::CallStateChain
 //
 //==========================================================================
 
 bool VEntity::CallStateChain(VEntity* Actor, VState* AState)
 {
-	guard(VEntity::CallStateChain);
-	//	Set up state call structure.
-	VStateCall* PrevCall = XLevel->StateCall;
-	VStateCall Call;
-	Call.Item = this;
-	bool Ret = false;
-	XLevel->StateCall = &Call;
+  guard(VEntity::CallStateChain);
+  //  Set up state call structure.
+  VStateCall* PrevCall = XLevel->StateCall;
+  VStateCall Call;
+  Call.Item = this;
+  bool Ret = false;
+  XLevel->StateCall = &Call;
 
-	int RunAway = 0;
-	VState* S = AState;
-	while (S)
-	{
-		Call.State = S;
-		//	Call action function.
-		if (S->Function)
-		{
-			//	Assume success by default.
-			XLevel->CallingState = S;
-			Call.Result = true;
-			P_PASS_REF(Actor);
-			ExecuteFunction(S->Function);
-			//	At least one success means overal success.
-			if (Call.Result)
-			{
-				Ret = true;
-			}
-		}
+  int RunAway = 0;
+  VState* S = AState;
+  while (S)
+  {
+    Call.State = S;
+    //  Call action function.
+    if (S->Function)
+    {
+      //  Assume success by default.
+      XLevel->CallingState = S;
+      Call.Result = true;
+      P_PASS_REF(Actor);
+      ExecuteFunction(S->Function);
+      //  At least one success means overal success.
+      if (Call.Result)
+      {
+        Ret = true;
+      }
+    }
 
-		//	Check for infinite loops
-		RunAway++;
-		if (RunAway > 1000)
-		{
-			break;
-		}
+    //  Check for infinite loops
+    RunAway++;
+    if (RunAway > 1000)
+    {
+      break;
+    }
 
-		if (Call.State == S)
-		{
-			//	Abort immediately if next state loops to itself. In this case
-			// the overal result is always false.
-			if (S->NextState == S)
-			{
-				Ret = false;
-				break;
-			}
-			//	Advance to the next state.
-			S = S->NextState;
-		}
-		else
-		{
-			//	There was a state jump.
-			S = Call.State;
-		}
-	}
+    if (Call.State == S)
+    {
+      //  Abort immediately if next state loops to itself. In this case
+      // the overal result is always false.
+      if (S->NextState == S)
+      {
+        Ret = false;
+        break;
+      }
+      //  Advance to the next state.
+      S = S->NextState;
+    }
+    else
+    {
+      //  There was a state jump.
+      S = Call.State;
+    }
+  }
 
-	XLevel->StateCall = PrevCall;
-	return Ret;
-	unguard;
+  XLevel->StateCall = PrevCall;
+  return Ret;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::StartSound
+//  VEntity::StartSound
 //
 //==========================================================================
 
 void VEntity::StartSound(VName Sound, vint32 Channel, float Volume,
-	float Attenuation, bool Loop)
+  float Attenuation, bool Loop)
 {
-	guard(VEntity::StartSound);
-	if (!Sector)
-	{
-		return;
-	}
-	if (Sector->SectorFlags & sector_t::SF_Silent)
-	{
-		return;
-	}
-	Super::StartSound(Origin, SoundOriginID,
-		GSoundManager->ResolveEntitySound(SoundClass, SoundGender, Sound),
-		Channel, Volume, Attenuation, Loop);
-	unguard;
+  guard(VEntity::StartSound);
+  if (!Sector)
+  {
+    return;
+  }
+  if (Sector->SectorFlags & sector_t::SF_Silent)
+  {
+    return;
+  }
+  Super::StartSound(Origin, SoundOriginID,
+    GSoundManager->ResolveEntitySound(SoundClass, SoundGender, Sound),
+    Channel, Volume, Attenuation, Loop);
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::StartLocalSound
+//  VEntity::StartLocalSound
 //
 //==========================================================================
 
 void VEntity::StartLocalSound(VName Sound, vint32 Channel, float Volume,
-	float Attenuation)
+  float Attenuation)
 {
-	guard(VEntity::StartLocalSound);
-	if (Sector->SectorFlags & sector_t::SF_Silent)
-	{
-		return;
-	}
-	if (Player)
-	{
-		Player->eventClientStartSound(
-			GSoundManager->ResolveEntitySound(SoundClass, SoundGender, Sound),
-			TVec(0, 0, 0), 0, Channel, Volume, Attenuation, false);
-	}
-	unguard;
+  guard(VEntity::StartLocalSound);
+  if (Sector->SectorFlags & sector_t::SF_Silent)
+  {
+    return;
+  }
+  if (Player)
+  {
+    Player->eventClientStartSound(
+      GSoundManager->ResolveEntitySound(SoundClass, SoundGender, Sound),
+      TVec(0, 0, 0), 0, Channel, Volume, Attenuation, false);
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::StopSound
+//  VEntity::StopSound
 //
 //==========================================================================
 
 void VEntity::StopSound(vint32 channel)
 {
-	guard(VEntity::StopSound);
-	Super::StopSound(SoundOriginID, channel);
-	unguard;
+  guard(VEntity::StopSound);
+  Super::StopSound(SoundOriginID, channel);
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::StartSoundSequence
+//  VEntity::StartSoundSequence
 //
 //==========================================================================
 
 void VEntity::StartSoundSequence(VName Name, vint32 ModeNum)
 {
-	guard(VEntity::StartSoundSequence);
-	if (Sector->SectorFlags & sector_t::SF_Silent)
-	{
-		return;
-	}
-	Super::StartSoundSequence(Origin, SoundOriginID, Name, ModeNum);
-	unguard;
+  guard(VEntity::StartSoundSequence);
+  if (Sector->SectorFlags & sector_t::SF_Silent)
+  {
+    return;
+  }
+  Super::StartSoundSequence(Origin, SoundOriginID, Name, ModeNum);
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::AddSoundSequenceChoice
+//  VEntity::AddSoundSequenceChoice
 //
 //==========================================================================
 
 void VEntity::AddSoundSequenceChoice(VName Choice)
 {
-	guard(VEntity::AddSoundSequenceChoice);
-	if (Sector->SectorFlags & sector_t::SF_Silent)
-	{
-		return;
-	}
-	Super::AddSoundSequenceChoice(SoundOriginID, Choice);
-	unguard;
+  guard(VEntity::AddSoundSequenceChoice);
+  if (Sector->SectorFlags & sector_t::SF_Silent)
+  {
+    return;
+  }
+  Super::AddSoundSequenceChoice(SoundOriginID, Choice);
+  unguard;
 }
 
 //==========================================================================
 //
-//	VEntity::StopSoundSequence
+//  VEntity::StopSoundSequence
 //
 //==========================================================================
 
 void VEntity::StopSoundSequence()
 {
-	guard(VEntity::StopSoundSequence);
-	Super::StopSoundSequence(SoundOriginID);
-	unguard;
+  guard(VEntity::StopSoundSequence);
+  Super::StopSoundSequence(SoundOriginID);
+  unguard;
 }
 
 //==========================================================================
 //
-//	Script natives
+//  Script natives
 //
 //==========================================================================
 
 IMPLEMENT_FUNCTION(VEntity, SetTID)
 {
-	P_GET_INT(tid);
-	P_GET_SELF;
-	Self->SetTID(tid);
+  P_GET_INT(tid);
+  P_GET_SELF;
+  Self->SetTID(tid);
 }
 
 IMPLEMENT_FUNCTION(VEntity, SetState)
 {
-	P_GET_PTR(VState, state);
-	P_GET_SELF;
-	RET_BOOL(Self->SetState(state));
+  P_GET_PTR(VState, state);
+  P_GET_SELF;
+  RET_BOOL(Self->SetState(state));
 }
 
 IMPLEMENT_FUNCTION(VEntity, SetInitialState)
 {
-	P_GET_PTR(VState, state);
-	P_GET_SELF;
-	Self->SetInitialState(state);
+  P_GET_PTR(VState, state);
+  P_GET_SELF;
+  Self->SetInitialState(state);
 }
 
 IMPLEMENT_FUNCTION(VEntity, AdvanceState)
 {
-	P_GET_FLOAT(deltaTime);
-	P_GET_SELF;
-	RET_BOOL(Self->AdvanceState(deltaTime));
+  P_GET_FLOAT(deltaTime);
+  P_GET_SELF;
+  RET_BOOL(Self->AdvanceState(deltaTime));
 }
 
 IMPLEMENT_FUNCTION(VEntity, FindState)
 {
-	P_GET_BOOL_OPT(Exact, false);
-	P_GET_NAME_OPT(SubLabel, NAME_None);
-	P_GET_NAME(StateName);
-	P_GET_SELF;
-	RET_PTR(Self->FindState(StateName, SubLabel, Exact));
+  P_GET_BOOL_OPT(Exact, false);
+  P_GET_NAME_OPT(SubLabel, NAME_None);
+  P_GET_NAME(StateName);
+  P_GET_SELF;
+  RET_PTR(Self->FindState(StateName, SubLabel, Exact));
 }
 
 IMPLEMENT_FUNCTION(VEntity, FindStateEx)
 {
-	P_GET_BOOL_OPT(Exact, false);
-	P_GET_STR(StateName);
-	P_GET_SELF;
-	RET_PTR(Self->FindStateEx(StateName, Exact));
+  P_GET_BOOL_OPT(Exact, false);
+  P_GET_STR(StateName);
+  P_GET_SELF;
+  RET_PTR(Self->FindStateEx(StateName, Exact));
 }
 
 IMPLEMENT_FUNCTION(VEntity, HasSpecialStates)
 {
-	P_GET_NAME(StateName);
-	P_GET_SELF;
-	RET_BOOL(Self->HasSpecialStates(StateName));
+  P_GET_NAME(StateName);
+  P_GET_SELF;
+  RET_BOOL(Self->HasSpecialStates(StateName));
 }
 
 IMPLEMENT_FUNCTION(VEntity, GetStateEffects)
 {
-	P_GET_PTR(TArray<VParticleEffectDef*>, Part);
-	P_GET_PTR(TArray<VLightEffectDef*>, Lights);
-	P_GET_SELF;
-	Self->GetStateEffects(*Lights, *Part);
+  P_GET_PTR(TArray<VParticleEffectDef*>, Part);
+  P_GET_PTR(TArray<VLightEffectDef*>, Lights);
+  P_GET_SELF;
+  Self->GetStateEffects(*Lights, *Part);
 }
 
 IMPLEMENT_FUNCTION(VEntity, CallStateChain)
 {
-	P_GET_PTR(VState, State);
-	P_GET_REF(VEntity, Actor);
-	P_GET_SELF;
-	RET_BOOL(Self->CallStateChain(Actor, State));
+  P_GET_PTR(VState, State);
+  P_GET_REF(VEntity, Actor);
+  P_GET_SELF;
+  RET_BOOL(Self->CallStateChain(Actor, State));
 }
 
 IMPLEMENT_FUNCTION(VEntity, PlaySound)
 {
-	P_GET_BOOL_OPT(Loop, false);
-	P_GET_FLOAT_OPT(Attenuation, 1.0);
-	P_GET_FLOAT_OPT(Volume, 1.0);
-	P_GET_INT(Channel);
-	P_GET_NAME(SoundName);
-	P_GET_SELF;
-	Self->StartSound(SoundName, Channel, Volume, Attenuation, Loop);
+  P_GET_BOOL_OPT(Loop, false);
+  P_GET_FLOAT_OPT(Attenuation, 1.0);
+  P_GET_FLOAT_OPT(Volume, 1.0);
+  P_GET_INT(Channel);
+  P_GET_NAME(SoundName);
+  P_GET_SELF;
+  Self->StartSound(SoundName, Channel, Volume, Attenuation, Loop);
 }
 
 IMPLEMENT_FUNCTION(VEntity, StopSound)
 {
-	P_GET_INT(Channel);
-	P_GET_SELF;
-	Self->StopSound(Channel);
+  P_GET_INT(Channel);
+  P_GET_SELF;
+  Self->StopSound(Channel);
 }
 
 IMPLEMENT_FUNCTION(VEntity, AreSoundsEquivalent)
 {
-	P_GET_NAME(Sound2);
-	P_GET_NAME(Sound1);
-	P_GET_SELF;
-	RET_BOOL(GSoundManager->ResolveEntitySound(Self->SoundClass,
-		Self->SoundGender, Sound1) == GSoundManager->ResolveEntitySound(
-		Self->SoundClass, Self->SoundGender, Sound2));
+  P_GET_NAME(Sound2);
+  P_GET_NAME(Sound1);
+  P_GET_SELF;
+  RET_BOOL(GSoundManager->ResolveEntitySound(Self->SoundClass,
+    Self->SoundGender, Sound1) == GSoundManager->ResolveEntitySound(
+    Self->SoundClass, Self->SoundGender, Sound2));
 }
 
 IMPLEMENT_FUNCTION(VEntity, IsSoundPresent)
 {
-	P_GET_NAME(Sound);
-	P_GET_SELF;
-	RET_BOOL(GSoundManager->IsSoundPresent(Self->SoundClass,
-		Self->SoundGender, Sound));
+  P_GET_NAME(Sound);
+  P_GET_SELF;
+  RET_BOOL(GSoundManager->IsSoundPresent(Self->SoundClass,
+    Self->SoundGender, Sound));
 }
 
 IMPLEMENT_FUNCTION(VEntity, StartSoundSequence)
 {
-	P_GET_INT(ModeNum);
-	P_GET_NAME(Name);
-	P_GET_SELF;
-	Self->StartSoundSequence(Name, ModeNum);
+  P_GET_INT(ModeNum);
+  P_GET_NAME(Name);
+  P_GET_SELF;
+  Self->StartSoundSequence(Name, ModeNum);
 }
 
 IMPLEMENT_FUNCTION(VEntity, AddSoundSequenceChoice)
 {
-	P_GET_NAME(Choice);
-	P_GET_SELF;
-	Self->AddSoundSequenceChoice(Choice);
+  P_GET_NAME(Choice);
+  P_GET_SELF;
+  Self->AddSoundSequenceChoice(Choice);
 }
 
 IMPLEMENT_FUNCTION(VEntity, StopSoundSequence)
 {
-	P_GET_SELF;
-	Self->StopSoundSequence();
+  P_GET_SELF;
+  Self->StopSoundSequence();
 }
 
 IMPLEMENT_FUNCTION(VEntity, SetDecorateFlag)
 {
-	P_GET_BOOL(Value);
-	P_GET_STR(Name);
-	P_GET_SELF;
-	Self->SetDecorateFlag(Name, Value);
+  P_GET_BOOL(Value);
+  P_GET_STR(Name);
+  P_GET_SELF;
+  Self->SetDecorateFlag(Name, Value);
 }

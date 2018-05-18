@@ -27,40 +27,40 @@ class PowerGhost : PowerInvisibility;
 
 //==========================================================================
 //
-//	InitEffect
+//  InitEffect
 //
 //==========================================================================
 
 void InitEffect()
 {
-	Owner.RenderStyle = STYLE_Translucent;
-	Owner.Alpha = 0.666;
-	EntityEx(Owner).bShadow = true;
-	EntityEx(Owner).bGhost = true;
+  Owner.RenderStyle = STYLE_Translucent;
+  Owner.Alpha = 0.666;
+  EntityEx(Owner).bShadow = true;
+  EntityEx(Owner).bGhost = true;
 }
 
 //==========================================================================
 //
-//	GetViewEntRenderParams
+//  GetViewEntRenderParams
 //
 //==========================================================================
 
 void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
 {
-	if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
-		(ftoi(4.0 * EffectTime) & 1))
-	{
-		OutRenderStyle = STYLE_Translucent;
-		OutAlpha = 0.666;
-	}
-	if (Inventory)
-	{
-		Inventory.GetViewEntRenderParams(OutAlpha, OutRenderStyle);
-	}
+  if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
+    (ftoi(4.0 * EffectTime) & 1))
+  {
+    OutRenderStyle = STYLE_Translucent;
+    OutAlpha = 0.666;
+  }
+  if (Inventory)
+  {
+    Inventory.GetViewEntRenderParams(OutAlpha, OutRenderStyle);
+  }
 }
 
 defaultproperties
 {
-	bGhost = true;
-	EffectTime = 60.0;
+  bGhost = true;
+  EffectTime = 60.0;
 }

@@ -12,21 +12,21 @@ $pitchshiftrange 4
 //
 //==========================================================================
 
-$playersound	player	male	*pain100	dsplpain
-$playersounddup	player	male	*pain75		*pain100
-$playersounddup	player	male	*pain50		*pain100
-$playersounddup	player	male	*pain25		*pain100
-$playersound	player	male	*death		dspldeth
-$playersound	player	male	*xdeath		dspdiehi
-$playersound	player	male	*gibbed		dsslop
-$playersound	player	male	*grunt		dsoof
-$playersounddup	player	male	*land		*grunt
-$playersound	player	male	*jump		dsjump
-$playersound	player	male	*fist		dspunch
-$playersound	player	male	*usefail	dsnoway
+$playersound  player  male  *pain100  dsplpain
+$playersounddup player  male  *pain75   *pain100
+$playersounddup player  male  *pain50   *pain100
+$playersounddup player  male  *pain25   *pain100
+$playersound  player  male  *death    dspldeth
+$playersound  player  male  *xdeath   dspdiehi
+$playersound  player  male  *gibbed   dsslop
+$playersound  player  male  *grunt    dsoof
+$playersounddup player  male  *land   *grunt
+$playersound  player  male  *jump   dsjump
+$playersound  player  male  *fist   dspunch
+$playersound  player  male  *usefail  dsnoway
 
 // Use *pain in a script to play any of the pain sounds
-$random *pain					{ *pain100  *pain75  *pain50  *pain25 }
+$random *pain         { *pain100  *pain75  *pain50  *pain25 }
 
 //==========================================================================
 //
@@ -36,46 +36,46 @@ $random *pain					{ *pain100  *pain75  *pain50  *pain25 }
 
 //  Chainsaw
 $pitchshiftrange 3
-weapons/sawup					dssawup
-weapons/sawidle					dssawidl
-weapons/sawfull					dssawful
-weapons/sawhit					dssawhit
+weapons/sawup         dssawup
+weapons/sawidle         dssawidl
+weapons/sawfull         dssawful
+weapons/sawhit          dssawhit
 $pitchshiftrange 4
 
 //  Pistol
-weapons/pistol					dspistol
+weapons/pistol          dspistol
 
 //  Shotgun
-weapons/shotgf					dsshotgn
-weapons/shotgr					dssgcock
+weapons/shotgf          dsshotgn
+weapons/shotgr          dssgcock
 
 //  Super shotgun
-weapons/sshotf					dsdshtgn
-weapons/sshoto					dsdbopn
-weapons/sshotc					dsdbcls
-weapons/sshotl					dsdbload
+weapons/sshotf          dsdshtgn
+weapons/sshoto          dsdbopn
+weapons/sshotc          dsdbcls
+weapons/sshotl          dsdbload
 
 //  Chaingun
-weapons/chngun					dspistol
+weapons/chngun          dspistol
 $limit weapons/chngun 0
 
 //  Rocket launcher fire
-weapons/rocklf					dsrlaunc
-weapons/rocklx					dsbarexp
+weapons/rocklf          dsrlaunc
+weapons/rocklx          dsbarexp
 $limit weapons/rocklf 0
 $limit weapons/rocklx 0
 
 //  Plasma gun
-weapons/plasmaf					dsplasma
-weapons/plasmax					dsfirxpl
+weapons/plasmaf         dsplasma
+weapons/plasmax         dsfirxpl
 $limit weapons/plasmaf 0
 
 //  BFG fire
-weapons/bfgf					dsbfg
-weapons/bfgx					dsrxplod
+weapons/bfgf          dsbfg
+weapons/bfgx          dsrxplod
 
-//	Railgun
-weapons/railgf					railgf1
+//  Railgun
+weapons/railgf          railgf1
 
 //==========================================================================
 //
@@ -83,190 +83,190 @@ weapons/railgf					railgf1
 //
 //==========================================================================
 
-misc/gibbed						dsslop
+misc/gibbed           dsslop
 
 //  Zombieman
-$random grunt/sight 			{ grunt/sight1  grunt/sight2  grunt/sight3 }
-$random grunt/death				{ grunt/death1  grunt/death2  grunt/death3 }
-grunt/sight1					dsposit1
-grunt/sight2					dsposit2
-grunt/sight3					dsposit3
-grunt/active					dsposact
-grunt/attack					dspistol
-grunt/pain						dspopain
-grunt/death1					dspodth1
-grunt/death2					dspodth2
-grunt/death3					dspodth3
+$random grunt/sight       { grunt/sight1  grunt/sight2  grunt/sight3 }
+$random grunt/death       { grunt/death1  grunt/death2  grunt/death3 }
+grunt/sight1          dsposit1
+grunt/sight2          dsposit2
+grunt/sight3          dsposit3
+grunt/active          dsposact
+grunt/attack          dspistol
+grunt/pain            dspopain
+grunt/death1          dspodth1
+grunt/death2          dspodth2
+grunt/death3          dspodth3
 
 //  Shotgun guy
-$random shotguy/sight			{ shotguy/sight1  shotguy/sight2  shotguy/sight3 }
-$random shotguy/death			{ shotguy/death1  shotguy/death2  shotguy/death3 }
-shotguy/sight1					dsposit1
-shotguy/sight2					dsposit2
-shotguy/sight3					dsposit3
-shotguy/active					dsposact
-shotguy/pain					dspopain
-shotguy/death1					dspodth1
-shotguy/death2					dspodth2
-shotguy/death3					dspodth3
-shotguy/attack					dsshotgn
+$random shotguy/sight     { shotguy/sight1  shotguy/sight2  shotguy/sight3 }
+$random shotguy/death     { shotguy/death1  shotguy/death2  shotguy/death3 }
+shotguy/sight1          dsposit1
+shotguy/sight2          dsposit2
+shotguy/sight3          dsposit3
+shotguy/active          dsposact
+shotguy/pain          dspopain
+shotguy/death1          dspodth1
+shotguy/death2          dspodth2
+shotguy/death3          dspodth3
+shotguy/attack          dsshotgn
 
 //  Imp
-$random imp/sight				{ imp/sight1  imp/sight2 }
-$random imp/death				{ imp/death1  imp/death2 }
-imp/sight1						dsbgsit1
-imp/sight2						dsbgsit2
-imp/active						dsbgact
-imp/melee						dsclaw
-imp/attack						dsfirsht
-imp/shotx						dsfirxpl
-imp/pain						dspopain
-imp/death1						dsbgdth1
-imp/death2						dsbgdth2
+$random imp/sight       { imp/sight1  imp/sight2 }
+$random imp/death       { imp/death1  imp/death2 }
+imp/sight1            dsbgsit1
+imp/sight2            dsbgsit2
+imp/active            dsbgact
+imp/melee           dsclaw
+imp/attack            dsfirsht
+imp/shotx           dsfirxpl
+imp/pain            dspopain
+imp/death1            dsbgdth1
+imp/death2            dsbgdth2
 $limit imp/active 6
 
 //  Demon
-demon/sight						dssgtsit
-demon/active					dsdmact
-demon/melee						dssgtatk
-demon/pain						dsdmpain
-demon/death						dssgtdth
+demon/sight           dssgtsit
+demon/active          dsdmact
+demon/melee           dssgtatk
+demon/pain            dsdmpain
+demon/death           dssgtdth
 $limit demon/melee 4
 
 //  Spectre
-spectre/sight					dssgtsit
-spectre/active					dsdmact
-spectre/melee					dssgtatk
-spectre/pain					dsdmpain
-spectre/death					dssgtdth
+spectre/sight         dssgtsit
+spectre/active          dsdmact
+spectre/melee         dssgtatk
+spectre/pain          dsdmpain
+spectre/death         dssgtdth
 
 //  Lost soul
-skull/active					dsdmact
-skull/melee						dssklatk
-skull/pain						dsdmpain
-skull/death						dsfirxpl
+skull/active          dsdmact
+skull/melee           dssklatk
+skull/pain            dsdmpain
+skull/death           dsfirxpl
 
 //  Cacodemon
-caco/sight						dscacsit
-caco/active						dsdmact
-caco/attack						dsfirsht
-caco/shotx						dsfirxpl
-caco/pain						dsdmpain
-caco/death						dscacdth
+caco/sight            dscacsit
+caco/active           dsdmact
+caco/attack           dsfirsht
+caco/shotx            dsfirxpl
+caco/pain           dsdmpain
+caco/death            dscacdth
 
 //  Baron of hell
-baron/sight						dsbrssit
-baron/active					dsdmact
-baron/melee						dsclaw
-baron/attack					dsfirsht
-baron/shotx						dsfirxpl
-baron/pain						dsdmpain
-baron/death						dsbrsdth
+baron/sight           dsbrssit
+baron/active          dsdmact
+baron/melee           dsclaw
+baron/attack          dsfirsht
+baron/shotx           dsfirxpl
+baron/pain            dsdmpain
+baron/death           dsbrsdth
 
 //  Cyberdemon
-cyber/sight						dscybsit
-cyber/active					dsdmact
-cyber/hoof						dshoof
-cyber/pain						dsdmpain
-cyber/death						dscybdth
+cyber/sight           dscybsit
+cyber/active          dsdmact
+cyber/hoof            dshoof
+cyber/pain            dsdmpain
+cyber/death           dscybdth
 
 //  Spider mastermind
-spider/sight					dsspisit
-spider/active					dsdmact
-spider/walk						dsmetal
-spider/attack					dsshotgn
-spider/pain						dsdmpain
-spider/death					dsspidth
+spider/sight          dsspisit
+spider/active         dsdmact
+spider/walk           dsmetal
+spider/attack         dsshotgn
+spider/pain           dsdmpain
+spider/death          dsspidth
 
 //  Chainguy
-$random chainguy/sight			{ chainguy/sight1  chainguy/sight2  chainguy/sight3 }
-$random chainguy/death			{ chainguy/death1  chainguy/death2  chainguy/death3 }
-chainguy/sight1					dsposit1
-chainguy/sight2					dsposit2
-chainguy/sight3					dsposit3
-chainguy/active					dsposact
-chainguy/attack					dsshotgn
-chainguy/pain					dspopain
-chainguy/death1					dspodth1
-chainguy/death2					dspodth2
-chainguy/death3					dspodth3
+$random chainguy/sight      { chainguy/sight1  chainguy/sight2  chainguy/sight3 }
+$random chainguy/death      { chainguy/death1  chainguy/death2  chainguy/death3 }
+chainguy/sight1         dsposit1
+chainguy/sight2         dsposit2
+chainguy/sight3         dsposit3
+chainguy/active         dsposact
+chainguy/attack         dsshotgn
+chainguy/pain         dspopain
+chainguy/death1         dspodth1
+chainguy/death2         dspodth2
+chainguy/death3         dspodth3
 $limit chainguy/attack 0
 
 //  Hell knight
-knight/sight					dskntsit
-knight/active					dsdmact
-knight/pain						dsdmpain
-knight/death					dskntdth
+knight/sight          dskntsit
+knight/active         dsdmact
+knight/pain           dsdmpain
+knight/death          dskntdth
 
 //  Ravenant
-skeleton/sight					dsskesit
-skeleton/active					dsskeact
-skeleton/melee					dsskepch
-skeleton/swing					dsskeswg
-skeleton/attack					dsskeatk
-skeleton/tracex					dsbarexp
-skeleton/pain					dspopain
-skeleton/death					dsskedth
+skeleton/sight          dsskesit
+skeleton/active         dsskeact
+skeleton/melee          dsskepch
+skeleton/swing          dsskeswg
+skeleton/attack         dsskeatk
+skeleton/tracex         dsbarexp
+skeleton/pain         dspopain
+skeleton/death          dsskedth
 
 //  Arachnotron
-baby/sight						dsbspsit
-baby/active						dsbspact
-baby/walk						dsbspwlk
-baby/attack						dsplasma
-baby/shotx						dsfirxpl
-baby/pain						dsdmpain
-baby/death						dsbspdth
+baby/sight            dsbspsit
+baby/active           dsbspact
+baby/walk           dsbspwlk
+baby/attack           dsplasma
+baby/shotx            dsfirxpl
+baby/pain           dsdmpain
+baby/death            dsbspdth
 $limit baby/attack 0
 
 //  Mancubus
-fatso/sight						dsmansit
-fatso/active					dsposact
-fatso/raiseguns					dsmanatk
-fatso/attack					dsfirsht
-fatso/shotx						dsfirxpl
-fatso/pain						dsmnpain
-fatso/death						dsmandth
+fatso/sight           dsmansit
+fatso/active          dsposact
+fatso/raiseguns         dsmanatk
+fatso/attack          dsfirsht
+fatso/shotx           dsfirxpl
+fatso/pain            dsmnpain
+fatso/death           dsmandth
 
 //  Pain elemental
-pain/sight						dspesit
-pain/active						dsdmact
-pain/pain						dspepain
-pain/death						dspedth
+pain/sight            dspesit
+pain/active           dsdmact
+pain/pain           dspepain
+pain/death            dspedth
 
 //  Arch-vile
-vile/sight						dsvilsit
-vile/active						dsvilact
-vile/start						dsvilatk
-vile/stop						dsbarexp
-vile/raise						dsslop
-vile/pain						dsvipain
-vile/death						dsvildth
-vile/firestrt					dsflamst
-vile/firecrkl					dsflame
+vile/sight            dsvilsit
+vile/active           dsvilact
+vile/start            dsvilatk
+vile/stop           dsbarexp
+vile/raise            dsslop
+vile/pain           dsvipain
+vile/death            dsvildth
+vile/firestrt         dsflamst
+vile/firecrkl         dsflame
 
 //  Wolfenstain SS
-wolfss/sight					dssssit
-wolfss/active					dsposact
-wolfss/attack					dsshotgn
-wolfss/pain						dspopain
-wolfss/death					dsssdth
+wolfss/sight          dssssit
+wolfss/active         dsposact
+wolfss/attack         dsshotgn
+wolfss/pain           dspopain
+wolfss/death          dsssdth
 
 //  Commander Keen
-keen/pain						dskeenpn
-keen/death						dskeendt
+keen/pain           dskeenpn
+keen/death            dskeendt
 
 //  Boss brain
-brain/sight						dsbossit
-brain/spit						dsbospit
-brain/cube						dsboscub
-brain/cubeboom					dsfirxpl
-brain/pain						dsbospn
-brain/death						dsbosdth
-$alias brain/spawn				misc/teleport
+brain/sight           dsbossit
+brain/spit            dsbospit
+brain/cube            dsboscub
+brain/cubeboom          dsfirxpl
+brain/pain            dsbospn
+brain/death           dsbosdth
+$alias brain/spawn        misc/teleport
 // Problem: weapons/rocklx needs to be unlimited but is also used for the
 // MAP30 brain explosion. This alias remaps to the original but has its own
 // limit attached so that it doesn't become too loud.
-$alias misc/brainexplode		weapons/rocklx
+$alias misc/brainexplode    weapons/rocklx
 $limit misc/brainexplode 4
 
 //==========================================================================
@@ -276,38 +276,38 @@ $limit misc/brainexplode 4
 //==========================================================================
 
 //  Barrel
-world/barrelx					dsbarexp
+world/barrelx         dsbarexp
 
 //  Platform
-plats/pt1_strt					dspstart
-plats/pt1_stop					dspstop
-plats/pt1_mid					dsstnmov
+plats/pt1_strt          dspstart
+plats/pt1_stop          dspstop
+plats/pt1_mid         dsstnmov
 
 //  Doors
-doors/dr1_open					dsdoropn
-doors/dr1_clos					dsdorcls
-doors/dr2_open					dsbdopn
-doors/dr2_clos					dsbdcls
+doors/dr1_open          dsdoropn
+doors/dr1_clos          dsdorcls
+doors/dr2_open          dsbdopn
+doors/dr2_clos          dsbdcls
 
 //  Switches
-switches/normbutn				dsswtchn
-switches/exitbutn				dsswtchx
+switches/normbutn       dsswtchn
+switches/exitbutn       dsswtchx
 
 //  Teleport
-misc/teleport					dstelept
+misc/teleport         dstelept
 
 //  Earthquake
-world/quake						dsquake
+world/quake           dsquake
 
 //  Pickups
-misc/spawn						dsitmbk
-misc/i_pkup						dsitemup
-misc/k_pkup						dsitemup
-misc/w_pkup						dswpnup
-misc/p_pkup						dsgetpow
-$alias misc/health_pkup			misc/i_pkup
-$alias misc/armor_pkup			misc/i_pkup
-$alias misc/ammo_pkup			misc/i_pkup
+misc/spawn            dsitmbk
+misc/i_pkup           dsitemup
+misc/k_pkup           dsitemup
+misc/w_pkup           dswpnup
+misc/p_pkup           dsgetpow
+$alias misc/health_pkup     misc/i_pkup
+$alias misc/armor_pkup      misc/i_pkup
+$alias misc/ammo_pkup     misc/i_pkup
 $limit misc/i_pkup 1
 $limit misc/k_pkup 1
 $limit misc/w_pkup 1
@@ -315,22 +315,22 @@ $limit misc/p_pkup 1
 $pitchshift misc/i_pkup 0
 $pitchshift misc/k_pkup 0
 
-$alias misc/keytry				*usefail
+$alias misc/keytry        *usefail
 
 //  Unused
-misc/unused						dsskldth
+misc/unused           dsskldth
 
-misc/ripslop					dsempty
+misc/ripslop          dsempty
 
-//	Sparks
-world/spark1					spark1
-world/spark2					spark2
-world/spark3					spark3
-$random world/spark				{ world/spark1  world/spark2  world/spark3 }
+//  Sparks
+world/spark1          spark1
+world/spark2          spark2
+world/spark3          spark3
+$random world/spark       { world/spark1  world/spark2  world/spark3 }
 
-//	Freeze death
-misc/freeze						icedth1
-misc/icebreak					icebrk1a
+//  Freeze death
+misc/freeze           icedth1
+misc/icebreak         icebrk1a
 
 //==========================================================================
 //
@@ -338,16 +338,16 @@ misc/icebreak					icebrk1a
 //
 //==========================================================================
 
-misc/chat						dsradio
-misc/chat2						dstink
+misc/chat           dsradio
+misc/chat2            dstink
 $pitchshift misc/chat2 0
 
-menu/activate					dsswtchn
-menu/cursor						dspstop
-menu/choose						dspistol
-menu/change						dsstnmov
-menu/backup						dsswtchn
-menu/clear						dsswtchx
-menu/invalid					dsoof
-menu/prompt						dsswtchn
-menu/dismiss					dsswtchx
+menu/activate         dsswtchn
+menu/cursor           dspstop
+menu/choose           dspistol
+menu/change           dsstnmov
+menu/backup           dsswtchn
+menu/clear            dsswtchx
+menu/invalid          dsoof
+menu/prompt           dsswtchn
+menu/dismiss          dsswtchx

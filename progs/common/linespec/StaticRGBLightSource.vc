@@ -24,20 +24,20 @@
 //**************************************************************************
 
 class StaticRGBLightSource : Actor
-	__mobjinfo__(1503);
+  __mobjinfo__(1503);
 
 void OnMapSpawn(mthing_t * mthing)
 {
-	float l;
+  float l;
 
-	InitialHealth = Health;
-	Destroy();
-	if (!mthing->arg1)
-		l = 200.0;
-	else
-		l = itof(mthing->arg1) * 8.0;
-	Level.AddStaticLightRGB(vector(mthing->x, mthing->y, mthing->height), l,
-		RGB(mthing->arg2, mthing->arg3, mthing->arg4));
+  InitialHealth = Health;
+  Destroy();
+  if (!mthing->arg1)
+    l = 200.0;
+  else
+    l = itof(mthing->arg1) * 8.0;
+  Level.AddStaticLightRGB(vector(mthing->x, mthing->y, mthing->height), l,
+    RGB(mthing->arg2, mthing->arg3, mthing->arg4));
 }
 
 defaultproperties

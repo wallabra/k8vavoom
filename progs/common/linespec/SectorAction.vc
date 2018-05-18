@@ -24,21 +24,21 @@
 //**************************************************************************
 
 class SectorAction : Actor
-	abstract;
+  abstract;
 
 enum
 {
-	SECSPAC_Enter		= 1,	// Trigger when player enters
-	SECSPAC_Exit		= 2,	// Trigger when player exits
-	SECSPAC_HitFloor	= 4,	// Trigger when player hits floor
-	SECSPAC_HitCeiling	= 8,	// Trigger when player hits ceiling
-	SECSPAC_Use			= 16,	// Trigger when player uses
-	SECSPAC_UseWall		= 32,	// Trigger when player uses a wall
-	SECSPAC_EyesDive	= 64,	// Trigger when player eyes go below fake floor
-	SECSPAC_EyesSurface = 128,	// Trigger when player eyes go above fake floor
-	SECSPAC_EyesBelowC	= 256,	// Trigger when player eyes go below fake ceiling
-	SECSPAC_EyesAboveC	= 512,	// Trigger when player eyes go above fake ceiling
-	SECSPAC_HitFakeFloor= 1024	// Trigger when player hits fake floor
+  SECSPAC_Enter   = 1,  // Trigger when player enters
+  SECSPAC_Exit    = 2,  // Trigger when player exits
+  SECSPAC_HitFloor  = 4,  // Trigger when player hits floor
+  SECSPAC_HitCeiling  = 8,  // Trigger when player hits ceiling
+  SECSPAC_Use     = 16, // Trigger when player uses
+  SECSPAC_UseWall   = 32, // Trigger when player uses a wall
+  SECSPAC_EyesDive  = 64, // Trigger when player eyes go below fake floor
+  SECSPAC_EyesSurface = 128,  // Trigger when player eyes go above fake floor
+  SECSPAC_EyesBelowC  = 256,  // Trigger when player eyes go below fake ceiling
+  SECSPAC_EyesAboveC  = 512,  // Trigger when player eyes go above fake ceiling
+  SECSPAC_HitFakeFloor= 1024  // Trigger when player hits fake floor
 };
 
 //==========================================================================
@@ -49,25 +49,25 @@ enum
 
 void Destroyed()
 {
-	//	Removed this action from sector's action list.
-	if (Sector->ActionList == self)
-	{
-		Sector->ActionList = Tracer;
-	}
-	else
-	{
-		EntityEx Prev = EntityEx(Sector->ActionList);
-		while (Prev && Prev.Tracer != self)
-		{
-			Prev = Prev.Tracer;
-		}
-		if (Prev)
-		{
-			Prev.Tracer = Tracer;
-		}
-	}
+  //  Removed this action from sector's action list.
+  if (Sector->ActionList == self)
+  {
+    Sector->ActionList = Tracer;
+  }
+  else
+  {
+    EntityEx Prev = EntityEx(Sector->ActionList);
+    while (Prev && Prev.Tracer != self)
+    {
+      Prev = Prev.Tracer;
+    }
+    if (Prev)
+    {
+      Prev.Tracer = Tracer;
+    }
+  }
 
-	::Destroyed();
+  ::Destroyed();
 }
 
 //==========================================================================
@@ -78,80 +78,80 @@ void Destroyed()
 
 void BeginPlay()
 {
-	::BeginPlay();
+  ::BeginPlay();
 
-	//	Add to the list of sector's action triggers.
-	Tracer = EntityEx(Sector->ActionList);
-	Sector->ActionList = self;
+  //  Add to the list of sector's action triggers.
+  Tracer = EntityEx(Sector->ActionList);
+  Sector->ActionList = self;
 }
 
 //==========================================================================
 //
-//	Activate
+//  Activate
 //
 //==========================================================================
 
 bool Activate(EntityEx Activator)
 {
-	//	Projectiles cannot activate.
-	bDormant = false;
-	return true;
+  //  Projectiles cannot activate.
+  bDormant = false;
+  return true;
 }
 
 //==========================================================================
 //
-//	Deactivate
+//  Deactivate
 //
 //==========================================================================
 
 bool Deactivate(EntityEx Activator)
 {
-	//	Projectiles can activate.
-	bDormant = true;
-	return true;
+  //  Projectiles can activate.
+  bDormant = true;
+  return true;
 }
 
 //==========================================================================
 //
-//	TriggerAction
+//  TriggerAction
 //
 //==========================================================================
 
 bool TriggerAction(EntityEx Triggerer, int ActType)
 {
-	//	Pass action to the next sector action trigger.
-	if (Tracer)
-	{
-		return SectorAction(Tracer).TriggerAction(Triggerer, ActType);
-	}
-	else
-	{
-		return false;
-	}
+  //  Pass action to the next sector action trigger.
+  if (Tracer)
+  {
+    return SectorAction(Tracer).TriggerAction(Triggerer, ActType);
+  }
+  else
+  {
+    return false;
+  }
 }
 
 //==========================================================================
 //
-//	CheckTrigger
+//  CheckTrigger
 //
 //==========================================================================
 
 final bool CheckTrigger(EntityEx Triggerer)
 {
-	if (Special && (Triggerer.bIsPlayer ||
-		(bAmbush && Triggerer.bActivateMCross) ||
-		(bDormant && Triggerer.bActivatePCross)))
-	{
-		return !!Level.ExecuteActionSpecial(Special, Args[0], Args[1],
-			Args[2], Args[3], Args[4], NULL, 0, Triggerer);
-	}
-	return false;
+  if (Special && (Triggerer.bIsPlayer ||
+    (bAmbush && Triggerer.bActivateMCross) ||
+    (bDormant && Triggerer.bActivatePCross)))
+  {
+    return !!Level.ExecuteActionSpecial(Special, Args[0], Args[1],
+      Args[2], Args[3], Args[4], NULL, 0, Triggerer);
+  }
+  return false;
 }
 
 defaultproperties
 {
-	bNoBlockmap = true;
-	bNoSector = true;
-	bNoGravity = true;
-	bNoSplash = true;
+  bNoBlockmap = true;
+  bNoSector = true;
+  bNoGravity = true;
+  bNoSplash = true;
 }

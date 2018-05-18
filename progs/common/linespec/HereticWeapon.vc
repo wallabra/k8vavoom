@@ -24,26 +24,26 @@
 //**************************************************************************
 
 class HereticWeapon : Weapon
-	abstract;
+  abstract;
 
 //==========================================================================
 //
-//	AttachToOwner
+//  AttachToOwner
 //
 //==========================================================================
 
 void AttachToOwner(EntityEx NewOwner)
 {
-	::AttachToOwner(NewOwner);
-	//	In deathmatch powered-up weapons use the same amount of ammo per
-	// shot as non-powered ones.
-	if (bPoweredUp && Level.Game.deathmatch && SisterWeapon)
-	{
-		AmmoUse1 = SisterWeapon.AmmoUse1;
-	}
+  ::AttachToOwner(NewOwner);
+  //  In deathmatch powered-up weapons use the same amount of ammo per
+  // shot as non-powered ones.
+  if (bPoweredUp && Level.Game.deathmatch && SisterWeapon)
+  {
+    AmmoUse1 = SisterWeapon.AmmoUse1;
+  }
 }
 
 defaultproperties
 {
-	Kickback = 150.0;
+  Kickback = 150.0;
 }

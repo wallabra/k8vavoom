@@ -24,74 +24,74 @@
 //**************************************************************************
 
 class HealthPickup : Inventory
-	abstract;
+  abstract;
 
 int AutoUseMode;
 
 //==========================================================================
 //
-//	CreateCopy
+//  CreateCopy
 //
 //==========================================================================
 
 Inventory CreateCopy(EntityEx Toucher)
 {
-	Inventory Copy = ::CreateCopy(Toucher);
-	Copy.Health = Health;
-	return Copy;
+  Inventory Copy = ::CreateCopy(Toucher);
+  Copy.Health = Health;
+  return Copy;
 }
 
 //==========================================================================
 //
-//	CreateTossable
+//  CreateTossable
 //
 //==========================================================================
 
 Inventory CreateTossable()
 {
-	Inventory Copy = ::CreateTossable();
-	if (Copy)
-	{
-		Copy.Health = Health;
-	}
-	return Copy;
+  Inventory Copy = ::CreateTossable();
+  if (Copy)
+  {
+    Copy.Health = Health;
+  }
+  return Copy;
 }
 
 //==========================================================================
 //
-//	HandlePickup
+//  HandlePickup
 //
 //==========================================================================
 
 bool HandlePickup(Inventory Item)
 {
-	//	Health pickups of the same type but with different health amount are 
-	// considerer different items.
-	if (Item.Health == Health)
-	{
-		return ::HandlePickup(Item);
-	}
-	if (Inventory)
-	{
-		return Inventory.HandlePickup(Item);
-	}
-	return false;
+  //  Health pickups of the same type but with different health amount are
+  // considerer different items.
+  if (Item.Health == Health)
+  {
+    return ::HandlePickup(Item);
+  }
+  if (Inventory)
+  {
+    return Inventory.HandlePickup(Item);
+  }
+  return false;
 }
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	return EntityEx(Owner).GiveBody(Health);
+  return EntityEx(Owner).GiveBody(Health);
 }
 
 defaultproperties
 {
-	MaxAmount = DefMaxAmount;
-	bInvBar = true;
-	AutoUseMode = 0;
+  MaxAmount = DefMaxAmount;
+  bInvBar = true;
+  AutoUseMode = 0;
 }

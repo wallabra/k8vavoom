@@ -27,17 +27,17 @@ class MenuScreenSList : MenuScreen;
 
 //==========================================================================
 //
-//	CreateChoices
+//  CreateChoices
 //
 //==========================================================================
 
 void CreateChoices()
 {
-	MenuSList Lst = MenuSList(NewChild(MenuSList));
-	Lst.StartSearching();
+  MenuSList Lst = MenuSList(NewChild(MenuSList));
+  Lst.StartSearching();
 }
 
 defaultproperties
 {
-	Title = "JOIN GAME";
+  Title = "JOIN GAME";
 }

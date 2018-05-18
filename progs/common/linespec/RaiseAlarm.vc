@@ -27,35 +27,35 @@ class RaiseAlarm : DummyStrifeItem;
 
 //==========================================================================
 //
-//	TryPickup
+//  TryPickup
 //
 //==========================================================================
 
 bool TryPickup(EntityEx Toucher)
 {
-	LineSpecialLevelInfo(Level).NoiseAlert(Toucher, Toucher);
-	GoAwayAndDie();
-	return true;
+  LineSpecialLevelInfo(Level).NoiseAlert(Toucher, Toucher);
+  GoAwayAndDie();
+  return true;
 }
 
 //==========================================================================
 //
-//	SpecialDropAction
+//  SpecialDropAction
 //
 //==========================================================================
 
 bool SpecialDropAction(EntityEx Dropper)
 {
-	LineSpecialLevelInfo(Level).NoiseAlert(Dropper.Target, Dropper.Target);
-	if (Dropper.Target.bIsPlayer)
-		Dropper.Target.Player.cprint("You Fool!  You\'ve set off the alarm.");
+  LineSpecialLevelInfo(Level).NoiseAlert(Dropper.Target, Dropper.Target);
+  if (Dropper.Target.bIsPlayer)
+    Dropper.Target.Player.cprint("You Fool!  You\'ve set off the alarm.");
 
-	Destroy();
-	return true;
+  Destroy();
+  return true;
 }
 
 defaultproperties
 {
-	ConversationID = 301;
-	PickupMessage = "alarm";
+  ConversationID = 301;
+  PickupMessage = "alarm";
 }

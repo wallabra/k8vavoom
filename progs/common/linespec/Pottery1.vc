@@ -24,19 +24,19 @@
 //**************************************************************************
 
 class Pottery1 : Actor
-	game(GAME_Hexen)
-	__mobjinfo__(104);
+  game(GAME_Hexen)
+  __mobjinfo__(104);
 
 //==========================================================================
 //
-//	OnHitFloor
+//  OnHitFloor
 //
 //==========================================================================
 
 void OnHitFloor()
 {
-	::OnHitFloor();
-	Damage(none, none, 25);
+  ::OnHitFloor();
+  Damage(none, none, 25);
 }
 
 //==========================================================================
@@ -47,54 +47,54 @@ void OnHitFloor()
 
 final void A_PotteryExplode()
 {
-	EntityEx A;
-	int i;
+  EntityEx A;
+  int i;
 
-	for (i = (P_Random() & 3) + 3; i; i--)
-	{
-		A = Spawn(PotteryBit, Origin);
-		A.SetState(GetStatePlus(A.IdleState, P_Random() % 5, true));
-		if (A)
-		{
-			A.Velocity.x = (Random() - Random()) * 4.0 * 35.0;
-			A.Velocity.y = (Random() - Random()) * 4.0 * 35.0;
-			A.Velocity.z = (Random() * 8.0 + 5.0) * (3.0 / 4.0) * 35.0;
-		}
-	}
-	A.PlaySound('PotteryExplode', CHAN_VOICE);
-	if (Args[0])
-	{
-		// Spawn an item. Don't spawn monsters it they are disabled.
-		class<EntityEx> Cls = class<EntityEx>(FindClassFromScriptId(Args[0],
-			LineSpecialGameInfo(Level.Game).GameFilterFlag));
-		if (Cls && (!Level.Game.nomonsters || !Cls.default.bMonster))
-		{
-			Spawn(Cls, Origin, vector(0.0, 0.0, 0.0));
-		}
-	}
+  for (i = (P_Random() & 3) + 3; i; i--)
+  {
+    A = Spawn(PotteryBit, Origin);
+    A.SetState(GetStatePlus(A.IdleState, P_Random() % 5, true));
+    if (A)
+    {
+      A.Velocity.x = (Random() - Random()) * 4.0 * 35.0;
+      A.Velocity.y = (Random() - Random()) * 4.0 * 35.0;
+      A.Velocity.z = (Random() * 8.0 + 5.0) * (3.0 / 4.0) * 35.0;
+    }
+  }
+  A.PlaySound('PotteryExplode', CHAN_VOICE);
+  if (Args[0])
+  {
+    // Spawn an item. Don't spawn monsters it they are disabled.
+    class<EntityEx> Cls = class<EntityEx>(FindClassFromScriptId(Args[0],
+      LineSpecialGameInfo(Level.Game).GameFilterFlag));
+    if (Cls && (!Level.Game.nomonsters || !Cls.default.bMonster))
+    {
+      Spawn(Cls, Origin, vector(0.0, 0.0, 0.0));
+    }
+  }
 }
 
 states
 {
 Spawn:
-	POT1 A -1
-	Stop
+  POT1 A -1
+  Stop
 Death:
-	POT1 A 0 A_PotteryExplode
-	Stop
+  POT1 A 0 A_PotteryExplode
+  Stop
 }
 
 defaultproperties
 {
-	Health = 15;
-	Radius = 10.0;
-	Height = 32.0;
-	bSolid = true;
-	bShootable = true;
-	bDropOff = true;
-	bNoBlood = true;
-	bPushable = true;
-	bSlide = true;
-	bTelestomp = true;
-	bPassMobj = true;
+  Health = 15;
+  Radius = 10.0;
+  Height = 32.0;
+  bSolid = true;
+  bShootable = true;
+  bDropOff = true;
+  bNoBlood = true;
+  bPushable = true;
+  bSlide = true;
+  bTelestomp = true;
+  bPassMobj = true;
 }

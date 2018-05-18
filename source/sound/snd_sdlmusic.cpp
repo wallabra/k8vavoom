@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -38,23 +38,23 @@
 class VSDLMidiDevice : public VMidiDevice
 {
 public:
-	bool		DidInitMixer;
-	Mix_Music*	music;
+  bool    DidInitMixer;
+  Mix_Music*  music;
 
-	void*		Mus_SndPtr;
-	bool		MusicPaused;
-	float		MusVolume;
+  void*   Mus_SndPtr;
+  bool    MusicPaused;
+  float   MusVolume;
 
-	VSDLMidiDevice();
-	void Init();
-	void Shutdown();
-	void SetVolume(float);
-	void Tick(float);
-	void Play(void*, int, const char*, bool);
-	void Pause();
-	void Resume();
-	void Stop();
-	bool IsPlaying();
+  VSDLMidiDevice();
+  void Init();
+  void Shutdown();
+  void SetVolume(float);
+  void Tick(float);
+  void Play(void*, int, const char*, bool);
+  void Pause();
+  void Resume();
+  void Stop();
+  bool IsPlaying();
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -65,12 +65,12 @@ public:
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern bool					sdl_mixer_initialised;
+extern bool         sdl_mixer_initialised;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 IMPLEMENT_MIDI_DEVICE(VSDLMidiDevice, MIDIDRV_Default, "Default",
-	"SDL midi device", NULL);
+  "SDL midi device", NULL);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -78,7 +78,7 @@ IMPLEMENT_MIDI_DEVICE(VSDLMidiDevice, MIDIDRV_Default, "Default",
 
 //==========================================================================
 //
-//	VSDLMidiDevice::VSDLMidiDevice
+//  VSDLMidiDevice::VSDLMidiDevice
 //
 //==========================================================================
 
@@ -93,67 +93,67 @@ VSDLMidiDevice::VSDLMidiDevice()
 
 //==========================================================================
 //
-//	VSDLMidiDevice::Init
+//  VSDLMidiDevice::Init
 //
 //==========================================================================
 
 void VSDLMidiDevice::Init()
 {
-	guard(VSDLMidiDevice::Init);
-	if (!sdl_mixer_initialised)
-	{
-		//	Currently I failed to make OpenAL work with SDL music.
+  guard(VSDLMidiDevice::Init);
+  if (!sdl_mixer_initialised)
+  {
+    //  Currently I failed to make OpenAL work with SDL music.
 #if 1
-		return;
+    return;
 #else
-		if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT,
-			MIX_DEFAULT_CHANNELS, 4096) < 0)
-		{
-			GCon->Logf(NAME_Init, "Failed to intialise SDL mixer");
-			return;
-		}
-		DidInitMixer = true;
+    if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT,
+      MIX_DEFAULT_CHANNELS, 4096) < 0)
+    {
+      GCon->Logf(NAME_Init, "Failed to intialise SDL mixer");
+      return;
+    }
+    DidInitMixer = true;
 #endif
-	}
-	Initialised = true;
-	unguard;
+  }
+  Initialised = true;
+  unguard;
 }
 
 //==========================================================================
 //
-//	VSDLMidiDevice::Shutdown
+//  VSDLMidiDevice::Shutdown
 //
 //==========================================================================
 
 void VSDLMidiDevice::Shutdown()
 {
-	guard(VSDLMidiDevice::Shutdown);
-	if (Initialised)
-	{
-		Stop();
-		if (DidInitMixer)
-		{
-			Mix_CloseAudio();
-		}
-	}
-	unguard;
+  guard(VSDLMidiDevice::Shutdown);
+  if (Initialised)
+  {
+    Stop();
+    if (DidInitMixer)
+    {
+      Mix_CloseAudio();
+    }
+  }
+  unguard;
 }
 
 //==========================================================================
 //
-//	VSDLMidiDevice::SetVolume
+//  VSDLMidiDevice::SetVolume
 //
 //==========================================================================
 
 void VSDLMidiDevice::SetVolume(float Volume)
 {
-	guard(VSDLMidiDevice::SetVolume);
-	if (Volume != MusVolume)
-	{
-		MusVolume = Volume;
-		Mix_VolumeMusic(int(MusVolume * 255));
-	}
-	unguard;
+  guard(VSDLMidiDevice::SetVolume);
+  if (Volume != MusVolume)
+  {
+    MusVolume = Volume;
+    Mix_VolumeMusic(int(MusVolume * 255));
+  }
+  unguard;
 }
 
 //==========================================================================
@@ -168,43 +168,43 @@ void VSDLMidiDevice::Tick(float)
 
 //==========================================================================
 //
-//	VSDLMidiDevice::Play
+//  VSDLMidiDevice::Play
 //
 //==========================================================================
 
 void VSDLMidiDevice::Play(void* Data, int len, const char* song, bool loop)
 {
-	guard(VSDLMidiDevice::Play);
-	Mus_SndPtr = Data;
-	VStr TmpFileName = fl_savedir.IsNotEmpty() ? fl_savedir + "/vv_temp.mid" :
-		"vv_temp.mid";
-	FILE* f = fopen(*TmpFileName, "wb");
-	if (!f)
-	{
-		return;
-	}
-	fwrite(Mus_SndPtr, 1, len, f);
-	fclose(f);
+  guard(VSDLMidiDevice::Play);
+  Mus_SndPtr = Data;
+  VStr TmpFileName = fl_savedir.IsNotEmpty() ? fl_savedir + "/vv_temp.mid" :
+    "vv_temp.mid";
+  FILE* f = fopen(*TmpFileName, "wb");
+  if (!f)
+  {
+    return;
+  }
+  fwrite(Mus_SndPtr, 1, len, f);
+  fclose(f);
 
-	music = Mix_LoadMUS(*TmpFileName);
-	remove(*TmpFileName);
+  music = Mix_LoadMUS(*TmpFileName);
+  remove(*TmpFileName);
 
-	if (!music)
-	{
-		Z_Free(Mus_SndPtr);
-		Mus_SndPtr = NULL;
-		return;
-	}
+  if (!music)
+  {
+    Z_Free(Mus_SndPtr);
+    Mus_SndPtr = NULL;
+    return;
+  }
 
-	Mix_FadeInMusic(music, loop, 2000);
+  Mix_FadeInMusic(music, loop, 2000);
 
-	if (!MusVolume || MusicPaused)
-	{
-		Mix_PauseMusic();
-	}
-	CurrSong = VName(song, VName::AddLower8);
-	CurrLoop = loop;
-	unguard;
+  if (!MusVolume || MusicPaused)
+  {
+    Mix_PauseMusic();
+  }
+  CurrSong = VName(song, VName::AddLower8);
+  CurrLoop = loop;
+  unguard;
 }
 
 //==========================================================================
@@ -215,10 +215,10 @@ void VSDLMidiDevice::Play(void* Data, int len, const char* song, bool loop)
 
 void VSDLMidiDevice::Pause()
 {
-	guard(VSDLMidiDevice::Pause);
-	Mix_PauseMusic();
-	MusicPaused = true;
-	unguard;
+  guard(VSDLMidiDevice::Pause);
+  Mix_PauseMusic();
+  MusicPaused = true;
+  unguard;
 }
 
 //==========================================================================
@@ -229,11 +229,11 @@ void VSDLMidiDevice::Pause()
 
 void VSDLMidiDevice::Resume()
 {
-	guard(VSDLMidiDevice::Resume);
-	if (MusVolume)
-		Mix_ResumeMusic();
-	MusicPaused = false;
-	unguard;
+  guard(VSDLMidiDevice::Resume);
+  if (MusVolume)
+    Mix_ResumeMusic();
+  MusicPaused = false;
+  unguard;
 }
 
 //==========================================================================
@@ -244,20 +244,20 @@ void VSDLMidiDevice::Resume()
 
 void VSDLMidiDevice::Stop()
 {
-	guard(VSDLMidiDevice::Stop);
-	if (music)
-	{
-		Mix_HaltMusic();
-		Mix_FreeMusic(music);
-		music = NULL;
-	}
-	if (Mus_SndPtr)
-	{
-		Z_Free(Mus_SndPtr);
-		Mus_SndPtr = NULL;
-	}
-	CurrSong = NAME_None;
-	unguard;
+  guard(VSDLMidiDevice::Stop);
+  if (music)
+  {
+    Mix_HaltMusic();
+    Mix_FreeMusic(music);
+    music = NULL;
+  }
+  if (Mus_SndPtr)
+  {
+    Z_Free(Mus_SndPtr);
+    Mus_SndPtr = NULL;
+  }
+  CurrSong = NAME_None;
+  unguard;
 }
 
 //==========================================================================
@@ -268,7 +268,7 @@ void VSDLMidiDevice::Stop()
 
 bool VSDLMidiDevice::IsPlaying()
 {
-	guard(VSDLMidiDevice::IsPlaying);
-	return !!music;
-	unguard;
+  guard(VSDLMidiDevice::IsPlaying);
+  return !!music;
+  unguard;
 }

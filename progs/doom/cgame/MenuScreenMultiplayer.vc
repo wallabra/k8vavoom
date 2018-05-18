@@ -27,77 +27,77 @@ class MenuScreenMultiplayer : MenuScreen;
 
 //==========================================================================
 //
-//	CreateChoices
+//  CreateChoices
 //
 //==========================================================================
 
 void CreateChoices()
 {
-	MenuTextButton		Btn;
-	int					currentY;
+  MenuTextButton    Btn;
+  int         currentY;
 
-	currentY = ChoicesStartY;
+  currentY = ChoicesStartY;
 
-	Btn = MenuTextButton(NewChild(MenuBigTextButton));
-	Btn.SetPos(ChoicesStartX, currentY);
-	Btn.Text = "New Game";
-	Btn.Activated = ActivateNewGame;
-	currentY += Btn.Height;
+  Btn = MenuTextButton(NewChild(MenuBigTextButton));
+  Btn.SetPos(ChoicesStartX, currentY);
+  Btn.Text = "New Game";
+  Btn.Activated = ActivateNewGame;
+  currentY += Btn.Height;
 
-	Btn = MenuTextButton(NewChild(MenuBigTextButton));
-	Btn.SetPos(ChoicesStartX, currentY);
-	Btn.Text = "Join Game";
-	Btn.Activated = ActivateJoin;
-	currentY += Btn.Height;
+  Btn = MenuTextButton(NewChild(MenuBigTextButton));
+  Btn.SetPos(ChoicesStartX, currentY);
+  Btn.Text = "Join Game";
+  Btn.Activated = ActivateJoin;
+  currentY += Btn.Height;
 
-	Btn = MenuTextButton(NewChild(MenuBigTextButton));
-	Btn.SetPos(ChoicesStartX, currentY);
-	Btn.Text = "Player Setup";
-	Btn.Activated = ActivatePlayerSetup;
-	currentY += Btn.Height;
+  Btn = MenuTextButton(NewChild(MenuBigTextButton));
+  Btn.SetPos(ChoicesStartX, currentY);
+  Btn.Text = "Player Setup";
+  Btn.Activated = ActivatePlayerSetup;
+  currentY += Btn.Height;
 }
 
 //==========================================================================
 //
-//	ActivateNewGame
+//  ActivateNewGame
 //
 //==========================================================================
 
 void ActivateNewGame(Object Sender)
 {
-	if (!ClGame.local_server)
-	{
-		return;
-	}
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenNewNetGame));
+  if (!ClGame.local_server)
+  {
+    return;
+  }
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenNewNetGame));
 }
 
 //==========================================================================
 //
-//	ActivateJoin
+//  ActivateJoin
 //
 //==========================================================================
 
 void ActivateJoin(Object Sender)
 {
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenJoinGame));
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenJoinGame));
 }
 
 //==========================================================================
 //
-//	ActivatePlayerSetup
+//  ActivatePlayerSetup
 //
 //==========================================================================
 
 void ActivatePlayerSetup(Object Sender)
 {
-	ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenPlayerSetup));
+  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenPlayerSetup));
 }
 
 defaultproperties
 {
-	ChoicesStartX = 97;
-	ChoicesStartY = 40;
-	SelectorType = MenuSelector_Big;
-	Title = "MULTIPLAYER";
+  ChoicesStartX = 97;
+  ChoicesStartY = 40;
+  SelectorType = MenuSelector_Big;
+  Title = "MULTIPLAYER";
 }

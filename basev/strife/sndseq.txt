@@ -5,150 +5,150 @@
 //**************************************************************************
 
 :DoorOpenBlazing
-	play		doors/dr2_open
-	nostopcutoff
+  play    doors/dr2_open
+  nostopcutoff
 end
 
 :DoorCloseBlazing
-	play		doors/dr2_clos
-	nostopcutoff
+  play    doors/dr2_clos
+  nostopcutoff
 end
 
 :DoorOpenStone
-	play		doors/stone_open
-	nostopcutoff
+  play    doors/stone_open
+  nostopcutoff
 end
 
 :DoorCloseStone
-	play		doors/stone_close
-	nostopcutoff
+  play    doors/stone_close
+  nostopcutoff
 end
 
 :DoorOpenLargeWood
-	play		doors/large_wood_open
-	nostopcutoff
+  play    doors/large_wood_open
+  nostopcutoff
 end
 
 :DoorCloseLargeWood
-	play		doors/large_wood_close
-	nostopcutoff
+  play    doors/large_wood_close
+  nostopcutoff
 end
 
 :DoorOpenSmallWood
-	play		doors/small_wood_open
-	nostopcutoff
+  play    doors/small_wood_open
+  nostopcutoff
 end
 
 :DoorCloseSmallWood
-	play		doors/small_wood_close
-	nostopcutoff
+  play    doors/small_wood_close
+  nostopcutoff
 end
 
 :DoorOpenLargeMetal
-	play		doors/large_metal_open
-	nostopcutoff
+  play    doors/large_metal_open
+  nostopcutoff
 end
 
 :DoorCloseLargeMetal
-	play		doors/large_metal_close
-	nostopcutoff
+  play    doors/large_metal_close
+  nostopcutoff
 end
 
 :DoorOpenSmallMetal
-	play		doors/small_metal_open
-	nostopcutoff
+  play    doors/small_metal_open
+  nostopcutoff
 end
 
 :DoorCloseSmallMetal
-	play		doors/small_metal_close
-	nostopcutoff
+  play    doors/small_metal_close
+  nostopcutoff
 end
 
 :DoorOpenChain
-	play		doors/chain_open
-	nostopcutoff
+  play    doors/chain_open
+  nostopcutoff
 end
 
 :DoorCloseChain
-	play		doors/chain_close
-	nostopcutoff
+  play    doors/chain_close
+  nostopcutoff
 end
 
 :DoorOpenAirlock
-	play		doors/airlock_open
-	nostopcutoff
+  play    doors/airlock_open
+  nostopcutoff
 end
 
 :DoorCloseAirlock
-	play		doors/airlock_close
-	nostopcutoff
+  play    doors/airlock_close
+  nostopcutoff
 end
 
 [DoorStone
-	0			DoorOpenStone
-	1			DoorCloseStone
-	2			DoorOpenBlazing
-	3			DoorCloseBlazing
+  0     DoorOpenStone
+  1     DoorCloseStone
+  2     DoorOpenBlazing
+  3     DoorCloseBlazing
 ]
 
 [DoorLargeWood
-	0			DoorOpenLargeWood
-	1			DoorCloseLargeWood
-	2			DoorOpenBlazing
-	3			DoorCloseBlazing
+  0     DoorOpenLargeWood
+  1     DoorCloseLargeWood
+  2     DoorOpenBlazing
+  3     DoorCloseBlazing
 ]
 
 [DoorSmallWood
-	0			DoorOpenSmallWood
-	1			DoorCloseSmallWood
-	2			DoorOpenBlazing
-	3			DoorCloseBlazing
+  0     DoorOpenSmallWood
+  1     DoorCloseSmallWood
+  2     DoorOpenBlazing
+  3     DoorCloseBlazing
 ]
 
 [DoorLargeMetal
-	0			DoorOpenLargeMetal
-	1			DoorCloseLargeMetal
-	2			DoorOpenBlazing
-	3			DoorCloseBlazing
+  0     DoorOpenLargeMetal
+  1     DoorCloseLargeMetal
+  2     DoorOpenBlazing
+  3     DoorCloseBlazing
 ]
 
 [DoorSmallMetal
-	0			DoorOpenSmallMetal
-	1			DoorCloseSmallMetal
-	2			DoorOpenBlazing
-	3			DoorCloseBlazing
+  0     DoorOpenSmallMetal
+  1     DoorCloseSmallMetal
+  2     DoorOpenBlazing
+  3     DoorCloseBlazing
 ]
 
 [DoorChain
-	0			DoorOpenChain
-	1			DoorCloseChain
-	2			DoorOpenBlazing
-	3			DoorCloseBlazing
+  0     DoorOpenChain
+  1     DoorCloseChain
+  2     DoorOpenBlazing
+  3     DoorCloseBlazing
 ]
 
 [DoorAirlock
-	0			DoorOpenAirlock
-	1			DoorCloseAirlock
-	2			DoorOpenBlazing
-	3			DoorCloseBlazing
+  0     DoorOpenAirlock
+  1     DoorCloseAirlock
+  2     DoorOpenBlazing
+  3     DoorCloseBlazing
 ]
 
 :CeilingNormal
-	playrepeat		plats/pt1_mid
+  playrepeat    plats/pt1_mid
 end
 
 :CeilingSemiSilent
-	stopsound		plats/pt1_stop
+  stopsound   plats/pt1_stop
 end
 
 :Floor
-	playrepeat		plats/pt1_mid
-	stopsound		plats/pt1_stop
+  playrepeat    plats/pt1_mid
+  stopsound   plats/pt1_stop
 end
 
 :Platform
-	playuntildone   	plats/pt1_strt
-	stopsound		plats/pt1_stop
+  playuntildone     plats/pt1_strt
+  stopsound   plats/pt1_stop
 end
 
 :Silence

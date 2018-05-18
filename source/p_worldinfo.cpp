@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -50,91 +50,91 @@ IMPLEMENT_CLASS(V, WorldInfo)
 
 //==========================================================================
 //
-//	VWorldInfo::VWorldInfo
+//  VWorldInfo::VWorldInfo
 //
 //==========================================================================
 
 VWorldInfo::VWorldInfo()
 {
-	Acs = new VAcsGlobal;
+  Acs = new VAcsGlobal;
 }
 
 //==========================================================================
 //
-//	VWorldInfo::Serialise
+//  VWorldInfo::Serialise
 //
 //==========================================================================
 
 void VWorldInfo::Serialise(VStream& Strm)
 {
-	guard(VWorldInfo::Serialise);
-	//	Serialise global script info.
-	Acs->Serialise(Strm);
+  guard(VWorldInfo::Serialise);
+  //  Serialise global script info.
+  Acs->Serialise(Strm);
 
-	Super::Serialise(Strm);
-	unguard;
+  Super::Serialise(Strm);
+  unguard;
 }
 
 //==========================================================================
 //
-//	VWorldInfo::Destroy
+//  VWorldInfo::Destroy
 //
 //==========================================================================
 
 void VWorldInfo::Destroy()
 {
-	guard(VWorldInfo::Destroy);
-	delete Acs;
-	Acs = NULL;
+  guard(VWorldInfo::Destroy);
+  delete Acs;
+  Acs = NULL;
 
-	Super::Destroy();
-	unguard;
+  Super::Destroy();
+  unguard;
 }
 
 //==========================================================================
 //
-//	VWorldInfo::SetSkill
+//  VWorldInfo::SetSkill
 //
 //==========================================================================
 
 void VWorldInfo::SetSkill(int ASkill)
 {
-	guard(VWorldInfo::SetSkill);
-	if (ASkill < 0)
-	{
-		GameSkill = 0;
-	}
-	else if (ASkill >= P_GetNumSkills())
-	{
-		GameSkill = P_GetNumSkills() - 1;
-	}
-	else
-	{
-		GameSkill = ASkill;
-	}
-	const VSkillDef* SDef = P_GetSkillDef(GameSkill);
+  guard(VWorldInfo::SetSkill);
+  if (ASkill < 0)
+  {
+    GameSkill = 0;
+  }
+  else if (ASkill >= P_GetNumSkills())
+  {
+    GameSkill = P_GetNumSkills() - 1;
+  }
+  else
+  {
+    GameSkill = ASkill;
+  }
+  const VSkillDef* SDef = P_GetSkillDef(GameSkill);
 
-	SkillAmmoFactor = SDef->AmmoFactor;
-	SkillDoubleAmmoFactor = SDef->DoubleAmmoFactor;
-	SkillDamageFactor = SDef->DamageFactor;
-	SkillRespawnTime = SDef->RespawnTime;
-	SkillRespawnLimit = SDef->RespawnLimit;
-	SkillAggressiveness = SDef->Aggressiveness;
-	SkillSpawnFilter = SDef->SpawnFilter;
-	SkillAcsReturn = SDef->AcsReturn;
-	Flags = (Flags & 0xfffffff0) | (SDef->Flags & 0x0000000f);
-	unguard;
+  SkillAmmoFactor = SDef->AmmoFactor;
+  SkillDoubleAmmoFactor = SDef->DoubleAmmoFactor;
+  SkillDamageFactor = SDef->DamageFactor;
+  SkillRespawnTime = SDef->RespawnTime;
+  SkillRespawnLimit = SDef->RespawnLimit;
+  SkillAggressiveness = SDef->Aggressiveness;
+  SkillSpawnFilter = SDef->SpawnFilter;
+  SkillAcsReturn = SDef->AcsReturn;
+  Flags = (Flags & 0xfffffff0) | (SDef->Flags & 0x0000000f);
+  unguard;
 }
 
 //==========================================================================
 //
-//	VWorldInfo
+//  VWorldInfo
 //
 //==========================================================================
 
 IMPLEMENT_FUNCTION(VWorldInfo, SetSkill)
 {
-	P_GET_INT(Skill);
-	P_GET_SELF;
-	Self->SetSkill(Skill);
+  P_GET_INT(Skill);
+  P_GET_SELF;
+  Self->SetSkill(Skill);
 }

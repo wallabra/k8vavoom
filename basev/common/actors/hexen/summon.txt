@@ -1,38 +1,38 @@
 //------------------------------------------------------------------------------
 actor SummoningDoll
 {
-	Speed 20
-	+Missile
-	+NoBlockmap
-	+DropOff
-	+NoTeleport
+  Speed 20
+  +Missile
+  +NoBlockmap
+  +DropOff
+  +NoTeleport
 
-	action native A_Summon();
+  action native A_Summon();
 
-	states
-	{
-	Spawn:
-		SUMN A 4
-		Loop
-	Death:
-		SUMN AA 4
-		SUMN A 4 A_Summon
-		Stop
-	}
+  states
+  {
+  Spawn:
+    SUMN A 4
+    Loop
+  Death:
+    SUMN AA 4
+    SUMN A 4 A_Summon
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor MinotaurSmoke
 {
-	RenderStyle Translucent
-	Alpha 0.6
-	+NoBlockmap
-	+NoGravity
-	+NoTeleport
-	states
-	{
-	Spawn:
-		MNSM ABCDEFGHIJKLMNOPQ 3
-		Stop
-	}
+  RenderStyle Translucent
+  Alpha 0.6
+  +NoBlockmap
+  +NoGravity
+  +NoTeleport
+  states
+  {
+  Spawn:
+    MNSM ABCDEFGHIJKLMNOPQ 3
+    Stop
+  }
 }

@@ -25,30 +25,30 @@
 
 class MenuSaveSlot : MenuChoiceSlot;
 
-const int SLOTTEXTLEN		= 24;
+const int SLOTTEXTLEN   = 24;
 
-int		Status;
-bool	bEnteringText;
-int		SlotNum;
-string	Text;
-string	EnterText;
+int   Status;
+bool  bEnteringText;
+int   SlotNum;
+string  Text;
+string  EnterText;
 
 void OnCreate()
 {
-	::OnCreate();
-	InitSlot();
+  ::OnCreate();
+  InitSlot();
 }
 
 void OnDraw()
 {
-	if (bEnteringText && IsFocus())
-	{
-		DrawSlot(0, EnterText, true);
-	}
-	else
-	{
-		DrawSlot(0, Text, false);
-	}
+  if (bEnteringText && IsFocus())
+  {
+    DrawSlot(0, EnterText, true);
+  }
+  else
+  {
+    DrawSlot(0, Text, false);
+  }
 }
 
 void ActivateSlot()
@@ -57,75 +57,75 @@ void ActivateSlot()
 
 bool OnKeyDown(int key)
 {
-	int Len;
-	
-	if (bEnteringText)
-	{
-		// Save Game string input
-		switch (key)
-		{
-		case K_ESCAPE:
-		case K_MOUSE2:
-			bEnteringText = false;
-			break;
+  int Len;
 
-		case K_ENTER:
-		case K_PADENTER:
-		case K_MOUSE1:
-			bEnteringText = false;
-			if (strlen(EnterText))
-			{
-				Text = EnterText;
-				CmdBuf_AddText("Save %d \"%s\"\n", SlotNum, Text);
-				GetClGame().ForceMenuOff();
-			}
-			break;
+  if (bEnteringText)
+  {
+    // Save Game string input
+    switch (key)
+    {
+    case K_ESCAPE:
+    case K_MOUSE2:
+      bEnteringText = false;
+      break;
 
-    	case K_BACKSPACE:
-		    if (strlen(EnterText))
-			{
-				EnterText = substr(EnterText, 0, strlen(EnterText) - 1);
-			}
-			break;
-			
-		default:
-		    if (key >= 32 && key < 128)
-			{
-				Len = strlen(EnterText);
-			    if (Len < SLOTTEXTLEN - 1)
-    			{
-					EnterText = strcat(EnterText, TranslateKey(key));
-		    	}
-			}
-			break;
-		}
-		return true;
-	}
+    case K_ENTER:
+    case K_PADENTER:
+    case K_MOUSE1:
+      bEnteringText = false;
+      if (strlen(EnterText))
+      {
+        Text = EnterText;
+        CmdBuf_AddText("Save %d \"%s\"\n", SlotNum, Text);
+        GetClGame().ForceMenuOff();
+      }
+      break;
 
-	if (key == K_ENTER || key == K_PADENTER ||
-		key == K_MOUSE1 || key == K_JOY1)
-	{
-		ActivateSlot();
-		return true;
-	}
-	return false;
+      case K_BACKSPACE:
+        if (strlen(EnterText))
+      {
+        EnterText = substr(EnterText, 0, strlen(EnterText) - 1);
+      }
+      break;
+
+    default:
+        if (key >= 32 && key < 128)
+      {
+        Len = strlen(EnterText);
+          if (Len < SLOTTEXTLEN - 1)
+          {
+          EnterText = strcat(EnterText, TranslateKey(key));
+          }
+      }
+      break;
+    }
+    return true;
+  }
+
+  if (key == K_ENTER || key == K_PADENTER ||
+    key == K_MOUSE1 || key == K_JOY1)
+  {
+    ActivateSlot();
+    return true;
+  }
+  return false;
 }
 
 void OnMouseClick(int X, int Y)
 {
-	SetFocus();
-	if (bEnteringText)
-	{
-		bEnteringText = false;
-		if (strlen(EnterText))
-		{
-			Text = EnterText;
-			CmdBuf_AddText("Save %d \"%s\"\n", SlotNum, Text);
-			GetClGame().ForceMenuOff();
-		}
-	}
-	
-	ActivateSlot();
+  SetFocus();
+  if (bEnteringText)
+  {
+    bEnteringText = false;
+    if (strlen(EnterText))
+    {
+      Text = EnterText;
+      CmdBuf_AddText("Save %d \"%s\"\n", SlotNum, Text);
+      GetClGame().ForceMenuOff();
+    }
+  }
+
+  ActivateSlot();
 }
 
 defaultproperties

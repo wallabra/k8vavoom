@@ -24,58 +24,58 @@
 //**************************************************************************
 
 class ArtiTomeOfPower : PowerupGiver
-	game(GAME_Heretic)
-	__mobjinfo__(86)
-	__scriptid__(134);
+  game(GAME_Heretic)
+  __mobjinfo__(86)
+  __scriptid__(134);
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	if (PlayerEx(Owner.Player).MorphTime &&
-		(PlayerEx(Owner.Player).MorphStyle & MORPH_UNDOBYTOMEOFPOWER))
-	{
-		// Attempt to undo chicken
-		if (PlayerEx(Owner.Player).UndoPlayerMorph(false,
-			PlayerEx(Owner.Player)) == false)
-		{
-			// Failed
-			if (!(PlayerEx(Owner.Player).MorphStyle & MORPH_FAILNOTELEFRAG))
-			{
-				EntityEx(Owner).Damage(none, none, 10000);
-			}
-		}
-		else
-		{
-			// Succeeded
-			PlayerEx(Owner.Player).MorphTime = 0.0;
-			Owner.PlaySound('*evillaugh', CHAN_BODY);
-		}
-		return true;
-	}
-	else
-	{
-		return ::Use(Pickup);
-	}
+  if (PlayerEx(Owner.Player).MorphTime &&
+    (PlayerEx(Owner.Player).MorphStyle & MORPH_UNDOBYTOMEOFPOWER))
+  {
+    // Attempt to undo chicken
+    if (PlayerEx(Owner.Player).UndoPlayerMorph(false,
+      PlayerEx(Owner.Player)) == false)
+    {
+      // Failed
+      if (!(PlayerEx(Owner.Player).MorphStyle & MORPH_FAILNOTELEFRAG))
+      {
+        EntityEx(Owner).Damage(none, none, 10000);
+      }
+    }
+    else
+    {
+      // Succeeded
+      PlayerEx(Owner.Player).MorphTime = 0.0;
+      Owner.PlaySound('*evillaugh', CHAN_BODY);
+    }
+    return true;
+  }
+  else
+  {
+    return ::Use(Pickup);
+  }
 }
 
 states
 {
 Spawn:
-	PWBK A 350
-	Loop
+  PWBK A 350
+  Loop
 }
 
 defaultproperties
 {
-	PowerupType = PowerWeaponLevel2;
-	PickupMessage = "$txt_artitomeofpower";
-	IconName = 'artipwbk';
-	bCountItem = true;
-	bFloatBob = true;
-	PickupFlashType = PickupFlash;
+  PowerupType = PowerWeaponLevel2;
+  PickupMessage = "$txt_artitomeofpower";
+  IconName = 'artipwbk';
+  bCountItem = true;
+  bFloatBob = true;
+  PickupFlashType = PickupFlash;
 }

@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -27,93 +27,93 @@ class VProgsReader;
 
 //==========================================================================
 //
-//	mobjinfo_t
+//  mobjinfo_t
 //
 //==========================================================================
 
 struct mobjinfo_t
 {
-	int			DoomEdNum;
-	vint32		GameFilter;
-	VClass*		Class;
+  int     DoomEdNum;
+  vint32    GameFilter;
+  VClass*   Class;
 
-	friend VStream& operator<<(VStream&, mobjinfo_t&);
+  friend VStream& operator<<(VStream&, mobjinfo_t&);
 };
 
 //==========================================================================
 //
-//	VImportedPackage
+//  VImportedPackage
 //
 //==========================================================================
 
 struct VImportedPackage
 {
-	VName		Name;
-	TLocation	Loc;
-	VPackage*	Pkg;
+  VName   Name;
+  TLocation Loc;
+  VPackage* Pkg;
 };
 
 //==========================================================================
 //
-//	VPackage
+//  VPackage
 //
 //==========================================================================
 
 class VPackage : public VMemberBase
 {
 private:
-	struct TStringInfo
-	{
-		int		Offs;
-		int		Next;
-	};
+  struct TStringInfo
+  {
+    int   Offs;
+    int   Next;
+  };
 
-	TArray<TStringInfo>			StringInfo;
-	int							StringLookup[256];
+  TArray<TStringInfo>     StringInfo;
+  int             StringLookup[256];
 
-	static int StringHashFunc(const char*);
+  static int StringHashFunc(const char*);
 
 public:
-	//	Shared fields
-	TArray<char>				Strings;
+  //  Shared fields
+  TArray<char>        Strings;
 
-	//	Compiler fields
-	TArray<VImportedPackage>	PackagesToLoad;
+  //  Compiler fields
+  TArray<VImportedPackage>  PackagesToLoad;
 
-	TArray<mobjinfo_t>			MobjInfo;
-	TArray<mobjinfo_t>			ScriptIds;
+  TArray<mobjinfo_t>      MobjInfo;
+  TArray<mobjinfo_t>      ScriptIds;
 
-	TArray<VConstant*>			ParsedConstants;
-	TArray<VStruct*>			ParsedStructs;
-	TArray<VClass*>				ParsedClasses;
-	TArray<VClass*>				ParsedDecorateImportClasses;
+  TArray<VConstant*>      ParsedConstants;
+  TArray<VStruct*>      ParsedStructs;
+  TArray<VClass*>       ParsedClasses;
+  TArray<VClass*>       ParsedDecorateImportClasses;
 
-	int							NumBuiltins;
+  int             NumBuiltins;
 
-	//	Run-time fields
-	vuint16						Checksum;
-	VProgsReader*				Reader;
+  //  Run-time fields
+  vuint16           Checksum;
+  VProgsReader*       Reader;
 
-	VPackage();
-	VPackage(VName InName);
-	~VPackage();
+  VPackage();
+  VPackage(VName InName);
+  ~VPackage();
 
-	void Serialise(VStream&);
+  void Serialise(VStream&);
 
-	int FindString(const char*);
-	VConstant* FindConstant(VName);
+  int FindString(const char*);
+  VConstant* FindConstant(VName);
 
-	VClass* FindDecorateImportClass(VName) const;
+  VClass* FindDecorateImportClass(VName) const;
 
-	void Emit();
-	void WriteObject(const VStr&);
-	void LoadObject(TLocation);
+  void Emit();
+  void WriteObject(const VStr&);
+  void LoadObject(TLocation);
 
-	// will delete `Strm`
-	void LoadSourceObject (VStream *Strm, const VStr& filename, TLocation l);
-	// will delete `Strm`
-	void LoadBinaryObject (VStream *Strm, const VStr& filename, TLocation l);
+  // will delete `Strm`
+  void LoadSourceObject (VStream *Strm, const VStr& filename, TLocation l);
+  // will delete `Strm`
+  void LoadBinaryObject (VStream *Strm, const VStr& filename, TLocation l);
 
-	friend inline VStream& operator<<(VStream& Strm, VPackage*& Obj)
-	{ return Strm << *(VMemberBase**)&Obj; }
+  friend inline VStream& operator<<(VStream& Strm, VPackage*& Obj)
+  { return Strm << *(VMemberBase**)&Obj; }
 };

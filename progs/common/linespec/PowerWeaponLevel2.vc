@@ -27,68 +27,68 @@ class PowerWeaponLevel2 : Powerup;
 
 //==========================================================================
 //
-//	InitEffect
+//  InitEffect
 //
 //==========================================================================
 
 void InitEffect()
 {
-	if (!Owner.bIsPlayer)
-	{
-		return;
-	}
+  if (!Owner.bIsPlayer)
+  {
+    return;
+  }
 
-	Weapon Wpn = PlayerEx(Owner.Player).ReadyWeapon;
-	if (!Wpn)
-	{
-		return;
-	}
+  Weapon Wpn = PlayerEx(Owner.Player).ReadyWeapon;
+  if (!Wpn)
+  {
+    return;
+  }
 
-	Weapon Sist = PlayerEx(Owner.Player).ReadyWeapon.SisterWeapon;
-	if (!Sist)
-	{
-		return;
-	}
+  Weapon Sist = PlayerEx(Owner.Player).ReadyWeapon.SisterWeapon;
+  if (!Sist)
+  {
+    return;
+  }
 
-	if (!Sist.bPoweredUp)
-	{
-		return;
-	}
+  if (!Sist.bPoweredUp)
+  {
+    return;
+  }
 
-	PlayerEx(Owner.Player).SetWeapon(Sist);
-	if (Sist.GetReadyState() != Wpn.GetReadyState())
-	{
-		PlayerEx(Owner.Player).SetViewState(ps_weapon, Sist.GetReadyState());
-	}
+  PlayerEx(Owner.Player).SetWeapon(Sist);
+  if (Sist.GetReadyState() != Wpn.GetReadyState())
+  {
+    PlayerEx(Owner.Player).SetViewState(ps_weapon, Sist.GetReadyState());
+  }
 }
 
 //==========================================================================
 //
-//	EndEffect
+//  EndEffect
 //
 //==========================================================================
 
 void EndEffect()
 {
-	if (!Owner || !Owner.bIsPlayer)
-	{
-		return;
-	}
+  if (!Owner || !Owner.bIsPlayer)
+  {
+    return;
+  }
 
-	PlayerEx P = PlayerEx(Owner.Player);
-	if (P.ReadyWeapon && P.ReadyWeapon.bPoweredUp)
-	{
-		P.ReadyWeapon.EndPowerup();
-	}
-	//	Make sure pending weapon is not a powered-up version of a weapon.
-	if (P.PendingWeapon && P.PendingWeapon.bPoweredUp &&
-		P.PendingWeapon.SisterWeapon)
-	{
-		P.PendingWeapon = P.PendingWeapon.SisterWeapon;
-	}
+  PlayerEx P = PlayerEx(Owner.Player);
+  if (P.ReadyWeapon && P.ReadyWeapon.bPoweredUp)
+  {
+    P.ReadyWeapon.EndPowerup();
+  }
+  //  Make sure pending weapon is not a powered-up version of a weapon.
+  if (P.PendingWeapon && P.PendingWeapon.bPoweredUp &&
+    P.PendingWeapon.SisterWeapon)
+  {
+    P.PendingWeapon = P.PendingWeapon.SisterWeapon;
+  }
 }
 
 defaultproperties
 {
-	EffectTime = 40.0;
+  EffectTime = 40.0;
 }

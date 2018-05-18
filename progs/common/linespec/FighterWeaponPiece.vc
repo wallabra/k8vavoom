@@ -24,9 +24,9 @@
 //**************************************************************************
 
 class FighterWeaponPiece : FourthWeaponPiece
-	abstract;
+  abstract;
 
 defaultproperties
 {
-	PieceClass = FighterPlayer;
+  PieceClass = FighterPlayer;
 }

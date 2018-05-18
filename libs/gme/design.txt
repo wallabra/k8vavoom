@@ -191,4 +191,3 @@ get useful code out of hardware I/O addresses, so no software will
 intentionally execute out of I/O space. Since the page size can be
 changed easily, most program memory mapping schemes can be accommodated.
 This greatly reduces memory access function calls.
-

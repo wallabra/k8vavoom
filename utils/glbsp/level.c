@@ -19,7 +19,7 @@
 //------------------------------------------------------------------------
 //
 //  ZDBSP format support based on code (C) 2002,2003 Randy Heit
-// 
+//
 //------------------------------------------------------------------------
 
 #include "system.h"
@@ -187,22 +187,22 @@ vertex_t *LookupVertex(int index)
 
 linedef_t *LookupLinedef(int index)
   LOOKERUPPER(lev_linedefs, num_linedefs, "linedef")
-  
+
 sidedef_t *LookupSidedef(int index)
   LOOKERUPPER(lev_sidedefs, num_sidedefs, "sidedef")
-  
+
 sector_t *LookupSector(int index)
   LOOKERUPPER(lev_sectors, num_sectors, "sector")
-  
+
 thing_t *LookupThing(int index)
   LOOKERUPPER(lev_things, num_things, "thing")
-  
+
 seg_t *LookupSeg(int index)
   LOOKERUPPER(segs, num_segs, "seg")
-  
+
 subsec_t *LookupSubsec(int index)
   LOOKERUPPER(subsecs, num_subsecs, "subsector")
-  
+
 node_t *LookupNode(int index)
   LOOKERUPPER(nodes, num_nodes, "node")
 
@@ -219,18 +219,18 @@ node_t *LookupStaleNode(int index)
 int CheckForNormalNodes(void)
 {
   lump_t *lump;
-  
+
   /* Note: an empty NODES lump can be valid */
   if (FindLevelLump("NODES") == NULL)
     return FALSE;
- 
+
   lump = FindLevelLump("SEGS");
-  
+
   if (! lump || lump->length == 0 || CheckLevelLumpZero(lump))
     return FALSE;
 
   lump = FindLevelLump("SSECTORS");
-  
+
   if (! lump || lump->length == 0 || CheckLevelLumpZero(lump))
     return FALSE;
 
@@ -503,7 +503,7 @@ void GetLinedefs(void)
     line->end   = end;
 
     /* check for zero-length line */
-    line->zero_len = (fabs(start->x - end->x) < DIST_EPSILON) && 
+    line->zero_len = (fabs(start->x - end->x) < DIST_EPSILON) &&
         (fabs(start->y - end->y) < DIST_EPSILON);
 
     line->flags = UINT16(raw->flags);
@@ -511,7 +511,7 @@ void GetLinedefs(void)
     line->tag  = SINT16(raw->tag);
 
     line->two_sided = (line->flags & LINEFLAG_TWO_SIDED) ? TRUE : FALSE;
-    line->is_precious = (line->tag >= 900 && line->tag < 1000) ? 
+    line->is_precious = (line->tag >= 900 && line->tag < 1000) ?
         TRUE : FALSE;
 
     line->right = SafeLookupSidedef(UINT16(raw->sidedef1));
@@ -575,7 +575,7 @@ void GetLinedefsHexen(void)
     line->end   = end;
 
     // check for zero-length line
-    line->zero_len = (fabs(start->x - end->x) < DIST_EPSILON) && 
+    line->zero_len = (fabs(start->x - end->x) < DIST_EPSILON) &&
         (fabs(start->y - end->y) < DIST_EPSILON);
 
     line->flags = UINT16(raw->flags);
@@ -653,9 +653,9 @@ void GetStaleNodes(void)
     nd->dy = SINT16(raw->dy);
 
     nd->index = i;
-    
+
     /* Note: we ignore the subsector references */
-     
+
     if ((UINT16(raw->right) & 0x8000U) == 0)
     {
       nd->r.node = LookupStaleNode(UINT16(raw->right));
@@ -682,9 +682,9 @@ static INLINE_G int TransformSegDist(const seg_t *seg)
 static INLINE_G int TransformAngle(angle_g angle)
 {
   int result;
-  
+
   result = (int)(angle * 65536.0 / 360.0);
-  
+
   if (result < 0)
     result += 65536;
 
@@ -842,7 +842,7 @@ void PutSidedefs(void)
     memcpy(raw.upper_tex, side->upper_tex, sizeof(raw.upper_tex));
     memcpy(raw.lower_tex, side->lower_tex, sizeof(raw.lower_tex));
     memcpy(raw.mid_tex,   side->mid_tex,   sizeof(raw.mid_tex));
- 
+
     AppendLevelLump(lump, &raw, sizeof(raw));
   }
 
@@ -966,8 +966,8 @@ void PutSegs(void)
 #   if DEBUG_BSP
     PrintDebug("PUT SEG: %04X  Vert %04X->%04X  Line %04X %s  "
         "Angle %04X  (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n", seg->index,
-        UINT16(raw.start), UINT16(raw.end), UINT16(raw.linedef), 
-        seg->side ? "L" : "R", UINT16(raw.angle), 
+        UINT16(raw.start), UINT16(raw.end), UINT16(raw.linedef),
+        seg->side ? "L" : "R", UINT16(raw.angle),
         seg->start->x, seg->start->y, seg->end->x, seg->end->y);
 #   endif
   }
@@ -1021,7 +1021,7 @@ void PutGLSegs(void)
 
 #   if DEBUG_BSP
     PrintDebug("PUT GL SEG: %04X  Line %04X %s  Partner %04X  "
-      "(%1.1f,%1.1f) -> (%1.1f,%1.1f)\n", seg->index, UINT16(raw.linedef), 
+      "(%1.1f,%1.1f) -> (%1.1f,%1.1f)\n", seg->index, UINT16(raw.linedef),
       seg->side ? "L" : "R", UINT16(raw.partner),
       seg->start->x, seg->start->y, seg->end->x, seg->end->y);
 #   endif
@@ -1088,7 +1088,7 @@ void PutV3Segs(int do_v5)
 
 #   if DEBUG_BSP
     PrintDebug("PUT V3 SEG: %06X  Line %04X %s  Partner %06X  "
-      "(%1.1f,%1.1f) -> (%1.1f,%1.1f)\n", seg->index, UINT16(raw.linedef), 
+      "(%1.1f,%1.1f) -> (%1.1f,%1.1f)\n", seg->index, UINT16(raw.linedef),
       seg->side ? "L" : "R", UINT32(raw.partner),
       seg->start->x, seg->start->y, seg->end->x, seg->end->y);
 #   endif
@@ -1365,7 +1365,7 @@ void PutZSubsecs(void)
       if (cur_seg_index != seg->index)
         InternalError("PutZSubsecs: seg index mismatch in sub %d (%d != %d)\n",
             i, cur_seg_index, seg->index);
-      
+
       count++;
     }
 
@@ -1506,7 +1506,7 @@ void SaveZDFormat(node_t *root_node)
   CreateLevelLump("SSECTORS");
 
   lump = CreateLevelLump("NODES");
- 
+
   AppendLevelLump(lump, lev_ZD_magic, 4);
 
   ZLibBeginLump(lump);
@@ -1533,7 +1533,7 @@ void LoadLevel(void)
 
   boolean_g normal_exists = CheckForNormalNodes();
 
-  lev_doing_normal = !cur_info->gwa_mode && (cur_info->force_normal || 
+  lev_doing_normal = !cur_info->gwa_mode && (cur_info->force_normal ||
     (!cur_info->no_normal && !normal_exists));
 
   // -JL- Identify Hexen mode by presence of BEHAVIOR lump
@@ -1545,7 +1545,7 @@ void LoadLevel(void)
   else
     message = UtilFormat("Building GL nodes on %s%s",
         level_name, lev_doing_hexen ? " (Hexen)" : "");
- 
+
   lev_doing_hexen |= cur_info->force_hexen;
 
   DisplaySetBarText(1, message);
@@ -1571,7 +1571,7 @@ void LoadLevel(void)
     GetThings();
   }
 
-  PrintVerbose("Loaded %d vertices, %d sectors, %d sides, %d lines, %d things\n", 
+  PrintVerbose("Loaded %d vertices, %d sectors, %d sides, %d lines, %d things\n",
       num_vertices, num_sectors, num_sidedefs, num_linedefs, num_things);
 
   if (cur_info->fast && !lev_doing_normal &&
@@ -1580,7 +1580,7 @@ void LoadLevel(void)
     PrintVerbose("Using original nodes to speed things up\n");
     GetStaleNodes();
   }
- 
+
   if (lev_doing_normal)
   {
     // NOTE: order here is critical
@@ -1604,7 +1604,7 @@ void LoadLevel(void)
     if (cur_info->prune_sect)
       PruneSectors();
   }
- 
+
   CalculateWallTips();
 
   if (lev_doing_hexen)
@@ -1695,7 +1695,7 @@ void SaveLevel(node_t *root_node)
 {
   lev_force_v3 = (cur_info->spec_version == 3) ? TRUE : FALSE;
   lev_force_v5 = (cur_info->spec_version == 5) ? TRUE : FALSE;
-  
+
   // Note: RoundOffBspTree will convert the GL vertices in segs to
   // their normal counterparts (pointer change: use normal_dup).
 
@@ -1756,7 +1756,7 @@ void SaveLevel(node_t *root_node)
   {
     if (cur_info->spec_version != 1)
       RoundOffBspTree(root_node);
- 
+
     NormaliseBspTree(root_node);
 
     PutVertices("VERTEXES", FALSE);
@@ -1767,7 +1767,7 @@ void SaveLevel(node_t *root_node)
       PutLinedefsHexen();
     else
       PutLinedefs();
- 
+
     if (lev_force_v5)
     {
       // don't report a problem when -v5 was explicitly given
@@ -1807,4 +1807,3 @@ void SaveLevel(node_t *root_node)
   // so that we use the new VERTEXES lump in the checksum.
   PutGLChecksum();
 }
-

@@ -24,124 +24,124 @@
 //**************************************************************************
 
 class Coin : Inventory
-	game(GAME_Strife)
-	__mobjinfo__(93);
+  game(GAME_Strife)
+  __mobjinfo__(93);
 
 //==========================================================================
 //
-//	HandlePickup
+//  HandlePickup
 //
 //==========================================================================
 
 bool HandlePickup(Inventory Item)
 {
-	if (Coin(Item))
-	{
-		if (Amount < MaxAmount)
-		{
-			Amount += Item.Amount;
-			if (Amount > MaxAmount)
-			{
-				Amount = MaxAmount;
-			}
-			Item.bPickupGood = true;
-		}
-		return true;
-	}
+  if (Coin(Item))
+  {
+    if (Amount < MaxAmount)
+    {
+      Amount += Item.Amount;
+      if (Amount > MaxAmount)
+      {
+        Amount = MaxAmount;
+      }
+      Item.bPickupGood = true;
+    }
+    return true;
+  }
 
-	if (Inventory)
-	{
-		return Inventory.HandlePickup(Item);
-	}
-	return false;
+  if (Inventory)
+  {
+    return Inventory.HandlePickup(Item);
+  }
+  return false;
 }
 
 //==========================================================================
 //
-//	CreateCopy
+//  CreateCopy
 //
 //==========================================================================
 
 Inventory CreateCopy(EntityEx Toucher)
 {
-	if (Class == Coin)
-	{
-		return ::CreateCopy(Toucher);
-	}
-	else
-	{
-		Inventory Copy = Spawn(Coin,,,, false);
-		Copy.Amount = Amount;
-		GoAwayAndDie();
-		return Copy;
-	}
+  if (Class == Coin)
+  {
+    return ::CreateCopy(Toucher);
+  }
+  else
+  {
+    Inventory Copy = Spawn(Coin,,,, false);
+    Copy.Amount = Amount;
+    GoAwayAndDie();
+    return Copy;
+  }
 }
 
 //==========================================================================
 //
-//	CreateTossable
+//  CreateTossable
 //
 //==========================================================================
 
 Inventory CreateTossable()
 {
-	Inventory Copy;
+  Inventory Copy;
 
-	if (bUndroppable || !Owner || Amount <= 0)
-	{
-		return none;
-	}
-	//	Gold is dropped with maximal throwable amount.
-	if (Amount >= 50)
-	{
-		Copy = Spawn(Gold50,,,, false);
-		Amount -= 50;
-	}
-	else if (Amount >= 25)
-	{
-		Copy = Spawn(Gold25,,,, false);
-		Amount -= 25;
-	}
-	else if (Amount >= 10)
-	{
-		Copy = Spawn(Gold10,,,, false);
-		Amount -= 10;
-	}
-	else if (Amount > 1 || bKeepDepleted)
-	{
-		Copy = Spawn(Coin,,,, false);
-		Amount -= 1;
-	}
-	else
-	{
-		Copy = self;
-		BecomePickup();
-	}
-	Copy.DropTime = 1.0;
-	Copy.bSpecial = false;
-	Copy.bSolid = false;
-	if (Copy != self && Amount <= 0 && !bKeepDepleted)
-	{
-		Destroy();
-	}
-	return Copy;
+  if (bUndroppable || !Owner || Amount <= 0)
+  {
+    return none;
+  }
+  //  Gold is dropped with maximal throwable amount.
+  if (Amount >= 50)
+  {
+    Copy = Spawn(Gold50,,,, false);
+    Amount -= 50;
+  }
+  else if (Amount >= 25)
+  {
+    Copy = Spawn(Gold25,,,, false);
+    Amount -= 25;
+  }
+  else if (Amount >= 10)
+  {
+    Copy = Spawn(Gold10,,,, false);
+    Amount -= 10;
+  }
+  else if (Amount > 1 || bKeepDepleted)
+  {
+    Copy = Spawn(Coin,,,, false);
+    Amount -= 1;
+  }
+  else
+  {
+    Copy = self;
+    BecomePickup();
+  }
+  Copy.DropTime = 1.0;
+  Copy.bSpecial = false;
+  Copy.bSolid = false;
+  if (Copy != self && Amount <= 0 && !bKeepDepleted)
+  {
+    Destroy();
+  }
+  return Copy;
 }
 
 states
 {
 Spawn:
-	COIN A -1
-	Stop
+  COIN A -1
+  Stop
 }
 
 defaultproperties
 {
-	ConversationID = 168;
-	PickupMessage = "$txt_coin";
-	MaxAmount = 0x7fffffff;
-	IconName = 'i_coin';
-	bDropped = true;
-	bNoDeathmatch = true;
-	bFloorClip = true;
-	bInvBar = true;
+  ConversationID = 168;
+  PickupMessage = "$txt_coin";
+  MaxAmount = 0x7fffffff;
+  IconName = 'i_coin';
+  bDropped = true;
+  bNoDeathmatch = true;
+  bFloorClip = true;
+  bInvBar = true;
 }

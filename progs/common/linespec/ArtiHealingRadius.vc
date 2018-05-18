@@ -24,14 +24,14 @@
 //**************************************************************************
 
 class ArtiHealingRadius : Inventory
-	game(GAME_Hexen)
-	__mobjinfo__(10120);
+  game(GAME_Hexen)
+  __mobjinfo__(10120);
 
-const float HEAL_RADIUS_DIST	= 255.0;
+const float HEAL_RADIUS_DIST  = 255.0;
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //  Do class specific effect for everyone in radius
 //
@@ -39,89 +39,89 @@ const float HEAL_RADIUS_DIST	= 255.0;
 
 bool Use(bool Pickup)
 {
-	PlayerPawn P;
-	float dist;
-	int effective = false;
-	int amount;
-	int i;
-	bool GaveArmor;
+  PlayerPawn P;
+  float dist;
+  int effective = false;
+  int amount;
+  int i;
+  bool GaveArmor;
 
-	foreach AllThinkers(PlayerPawn, P)
-	{
-		if (!P.bIsPlayer)
-			continue;
-		if (P.Health <= 0)
-			continue;
-		dist = Owner.DistTo(P);
-		if (dist > HEAL_RADIUS_DIST)
-		{
-			// Out of range
-			continue;
-		}
+  foreach AllThinkers(PlayerPawn, P)
+  {
+    if (!P.bIsPlayer)
+      continue;
+    if (P.Health <= 0)
+      continue;
+    dist = Owner.DistTo(P);
+    if (dist > HEAL_RADIUS_DIST)
+    {
+      // Out of range
+      continue;
+    }
 
-		if (PlayerPawn(Owner).HealRadiusType == 'Armor')
-		{
-			// Radius armor boost
-			GaveArmor = false;
-			for (i = 0; i < 4; i++)
-			{
-				HexenArmor Armor = Spawn(HexenArmor,,,, false);
-				Armor.Health = i;
-				Armor.Amount = 1;
-				if (Armor.TryPickup(P))
-				{
-					GaveArmor = true;
-				}
-				else
-				{
-					Armor.Destroy();
-				}
-			}
-			if (GaveArmor)
-			{
-				effective = true;
-				P.PlaySound('MysticIncant', CHAN_ITEM);
-			}
-		}
-		else if (PlayerPawn(Owner).HealRadiusType == 'Mana')
-		{
-			// Radius mana boost
-			amount = 50 + (P_Random() % 50);
-			if ((PlayerEx(P.Player).GiveAmmo(Mana1, amount)) ||
-				(PlayerEx(P.Player).GiveAmmo(Mana2, amount)))
-			{
-				effective = true;
-				P.PlaySound('MysticIncant', CHAN_ITEM);
-			}
-		}
-		else
-		{
-			// Radius heal
-			amount = 50 + (P_Random() % 50);
-			if (P.GiveBody(amount))
-			{
-				effective = true;
-				P.PlaySound('MysticIncant', CHAN_ITEM);
-			}
-		}
-	}
-	return effective;
+    if (PlayerPawn(Owner).HealRadiusType == 'Armor')
+    {
+      // Radius armor boost
+      GaveArmor = false;
+      for (i = 0; i < 4; i++)
+      {
+        HexenArmor Armor = Spawn(HexenArmor,,,, false);
+        Armor.Health = i;
+        Armor.Amount = 1;
+        if (Armor.TryPickup(P))
+        {
+          GaveArmor = true;
+        }
+        else
+        {
+          Armor.Destroy();
+        }
+      }
+      if (GaveArmor)
+      {
+        effective = true;
+        P.PlaySound('MysticIncant', CHAN_ITEM);
+      }
+    }
+    else if (PlayerPawn(Owner).HealRadiusType == 'Mana')
+    {
+      // Radius mana boost
+      amount = 50 + (P_Random() % 50);
+      if ((PlayerEx(P.Player).GiveAmmo(Mana1, amount)) ||
+        (PlayerEx(P.Player).GiveAmmo(Mana2, amount)))
+      {
+        effective = true;
+        P.PlaySound('MysticIncant', CHAN_ITEM);
+      }
+    }
+    else
+    {
+      // Radius heal
+      amount = 50 + (P_Random() % 50);
+      if (P.GiveBody(amount))
+      {
+        effective = true;
+        P.PlaySound('MysticIncant', CHAN_ITEM);
+      }
+    }
+  }
+  return effective;
 }
 
 states
 {
 Spawn:
-	HRAD ABCDEFGHIJKLMNOP 4 Bright
-	Loop
+  HRAD ABCDEFGHIJKLMNOP 4 Bright
+  Loop
 }
 
 defaultproperties
 {
-	MaxAmount = DefMaxAmount;
-	PickupSound = 'PickupArtifact';
-	PickupMessage = "$txt_artihealingradius";
-	IconName = 'artihrad';
-	bFloatBob = true;
-	PickupFlashType = PickupFlash;
-	bInvBar = true;
+  MaxAmount = DefMaxAmount;
+  PickupSound = 'PickupArtifact';
+  PickupMessage = "$txt_artihealingradius";
+  IconName = 'artihrad';
+  bFloatBob = true;
+  PickupFlashType = PickupFlash;
+  bInvBar = true;
 }

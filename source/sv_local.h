@@ -1,22 +1,22 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
@@ -26,40 +26,40 @@
 #ifndef _SV_LOCAL_H
 #define _SV_LOCAL_H
 
-#define MAXHEALTH				100
-#define DEFAULT_GRAVITY			1225.0
+#define MAXHEALTH       100
+#define DEFAULT_GRAVITY     1225.0
 
-#define REBORN_DESCRIPTION		"TEMP GAME"
+#define REBORN_DESCRIPTION    "TEMP GAME"
 
 struct tmtrace_t;
 class VMessageOut;
 
-extern VLevelInfo*		GLevelInfo;
+extern VLevelInfo*    GLevelInfo;
 
 //==========================================================================
 //
-//	sv_acs
+//  sv_acs
 //
-//	Action code scripts
+//  Action code scripts
 //
 //==========================================================================
 
-//	Script types
+//  Script types
 enum
 {
-	SCRIPT_Closed		= 0,
-	SCRIPT_Open			= 1,
-	SCRIPT_Respawn		= 2,
-	SCRIPT_Death		= 3,
-	SCRIPT_Enter		= 4,
-	SCRIPT_Pickup		= 5,
-	SCRIPT_BlueReturn	= 6,
-	SCRIPT_RedReturn	= 7,
-	SCRIPT_WhiteReturn	= 8,
-	SCRIPT_Lightning	= 12,
-	SCRIPT_Unloading	= 13,
-	SCRIPT_Disconnect	= 14,
-	SCRIPT_Return		= 15,
+  SCRIPT_Closed   = 0,
+  SCRIPT_Open     = 1,
+  SCRIPT_Respawn    = 2,
+  SCRIPT_Death    = 3,
+  SCRIPT_Enter    = 4,
+  SCRIPT_Pickup   = 5,
+  SCRIPT_BlueReturn = 6,
+  SCRIPT_RedReturn  = 7,
+  SCRIPT_WhiteReturn  = 8,
+  SCRIPT_Lightning  = 12,
+  SCRIPT_Unloading  = 13,
+  SCRIPT_Disconnect = 14,
+  SCRIPT_Return   = 15,
 };
 
 class VAcs;
@@ -69,108 +69,108 @@ struct VAcsInfo;
 class VAcsLevel
 {
 private:
-	bool AddToACSStore(int Type, VName Map, int Number, int Arg1, int Arg2,
-		int Arg3, VEntity* Activator);
+  bool AddToACSStore(int Type, VName Map, int Number, int Arg1, int Arg2,
+    int Arg3, VEntity* Activator);
 
 public:
-	VLevel*				XLevel;
+  VLevel*       XLevel;
 
-	TArray<VAcsObject*>	LoadedObjects;
+  TArray<VAcsObject*> LoadedObjects;
 
-	VAcsLevel(VLevel* ALevel);
-	virtual ~VAcsLevel() noexcept(false);
+  VAcsLevel(VLevel* ALevel);
+  virtual ~VAcsLevel() noexcept(false);
 
-	VAcsObject* LoadObject(int Lump);
-	VAcsInfo* FindScript(int Number, VAcsObject*& Object);
-	VStr GetString(int Index);
-	VName GetNameLowerCase(int Index);
-	VAcsObject* GetObject(int Index);
-	void StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
-		VEntity* Activator, bool Always, bool RunNow);
-	void Serialise(VStream& Strm);
-	void CheckAcsStore();
-	bool Start(int Number, int MapNum, int Arg1, int Arg2, int Arg3,
-		VEntity* Activator, line_t* Line, int Side, bool Always,
-		bool WantResult, bool Net = false);
-	bool Terminate(int Number, int MapNum);
-	bool Suspend(int Number, int MapNum);
-	VAcs* SpawnScript(VAcsInfo* Info, VAcsObject* Object, VEntity* Activator,
-		line_t* Line, int Side, int Arg1, int Arg2, int Arg3, bool Always,
-		bool Delayed);
+  VAcsObject* LoadObject(int Lump);
+  VAcsInfo* FindScript(int Number, VAcsObject*& Object);
+  VStr GetString(int Index);
+  VName GetNameLowerCase(int Index);
+  VAcsObject* GetObject(int Index);
+  void StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
+    VEntity* Activator, bool Always, bool RunNow);
+  void Serialise(VStream& Strm);
+  void CheckAcsStore();
+  bool Start(int Number, int MapNum, int Arg1, int Arg2, int Arg3,
+    VEntity* Activator, line_t* Line, int Side, bool Always,
+    bool WantResult, bool Net = false);
+  bool Terminate(int Number, int MapNum);
+  bool Suspend(int Number, int MapNum);
+  VAcs* SpawnScript(VAcsInfo* Info, VAcsObject* Object, VEntity* Activator,
+    line_t* Line, int Side, int Arg1, int Arg2, int Arg3, bool Always,
+    bool Delayed);
 };
 
 class VAcsGrowingArray
 {
 private:
-	vint32		Size;
-	vint32*		Data;
+  vint32    Size;
+  vint32*   Data;
 public:
-	VAcsGrowingArray();
-	void Redim(int NewSize);
-	void SetElemVal(int Index, int Value);
-	int GetElemVal(int Index);
-	void Serialise(VStream& Strm);
+  VAcsGrowingArray();
+  void Redim(int NewSize);
+  void SetElemVal(int Index, int Value);
+  int GetElemVal(int Index);
+  void Serialise(VStream& Strm);
 };
 
 struct VAcsStore
 {
-	enum
-	{
-		Start,
-		StartAlways,
-		Terminate,
-		Suspend
-	};
+  enum
+  {
+    Start,
+    StartAlways,
+    Terminate,
+    Suspend
+  };
 
-	VName		Map;		//	Target map
-	vuint8		Type;		//	Type of action
-	vint8		PlayerNum;	//	Player who executes this script
-	vint32		Script;		//	Script number on target map
-	vint32		Args[3];	//	Arguments
+  VName   Map;    //  Target map
+  vuint8    Type;   //  Type of action
+  vint8   PlayerNum;  //  Player who executes this script
+  vint32    Script;   //  Script number on target map
+  vint32    Args[3];  //  Arguments
 
-	friend VStream& operator << (VStream& Strm, VAcsStore& Store);
+  friend VStream& operator << (VStream& Strm, VAcsStore& Store);
 };
 
 class VAcsGlobal
 {
 public:
-	enum
-	{
-		MAX_ACS_WORLD_VARS	= 256,
-		MAX_ACS_GLOBAL_VARS	= 64,
-	};
+  enum
+  {
+    MAX_ACS_WORLD_VARS  = 256,
+    MAX_ACS_GLOBAL_VARS = 64,
+  };
 
-	int					WorldVars[MAX_ACS_WORLD_VARS];
-	int					GlobalVars[MAX_ACS_GLOBAL_VARS];
-	VAcsGrowingArray	WorldArrays[MAX_ACS_WORLD_VARS];
-	VAcsGrowingArray	GlobalArrays[MAX_ACS_GLOBAL_VARS];
-	TArray<VAcsStore>	Store;
+  int         WorldVars[MAX_ACS_WORLD_VARS];
+  int         GlobalVars[MAX_ACS_GLOBAL_VARS];
+  VAcsGrowingArray  WorldArrays[MAX_ACS_WORLD_VARS];
+  VAcsGrowingArray  GlobalArrays[MAX_ACS_GLOBAL_VARS];
+  TArray<VAcsStore> Store;
 
-	VAcsGlobal();
+  VAcsGlobal();
 
-	void Serialise(VStream& Strm);
+  void Serialise(VStream& Strm);
 };
 
 //==========================================================================
 //
-//	sv_world
+//  sv_world
 //
-//	Map utilites
+//  Map utilites
 //
 //==========================================================================
 
 struct opening_t
 {
-	float			top;
-	float			bottom;
-	float			range;
-	float			lowfloor;
-	float			highceiling;
-	sec_plane_t*	floor;
-	sec_plane_t*	ceiling;
-	sec_plane_t*	lowfloorplane;
-	sec_plane_t*	highceilingplane;
-	opening_t*		next;
+  float     top;
+  float     bottom;
+  float     range;
+  float     lowfloor;
+  float     highceiling;
+  sec_plane_t*  floor;
+  sec_plane_t*  ceiling;
+  sec_plane_t*  lowfloorplane;
+  sec_plane_t*  highceilingplane;
+  opening_t*    next;
 };
 
 TVec P_SectorClosestPoint (sector_t *sec, TVec in);
@@ -186,9 +186,9 @@ int SV_PointContents(const sector_t *sector, const TVec &p);
 
 //==========================================================================
 //
-//	sv_switch
+//  sv_switch
 //
-//	Switches
+//  Switches
 //
 //==========================================================================
 
@@ -200,17 +200,17 @@ void P_FreeTerrainTypes();
 
 //==========================================================================
 //
-//	sv_tick
+//  sv_tick
 //
-//	Handling thinkers, running tics
+//  Handling thinkers, running tics
 //
 //==========================================================================
 
-extern int 			TimerGame; // tic countdown for deathmatch
+extern int      TimerGame; // tic countdown for deathmatch
 
 //==========================================================================
 //
-//	sv_main
+//  sv_main
 //
 //==========================================================================
 
@@ -222,18 +222,18 @@ void SV_DropClient(VBasePlayer* Player, bool crash);
 void SV_SpawnServer(const char*, bool, bool);
 void SV_SendServerInfoToClients();
 
-extern int 		LeavePosition;
-extern bool		completed;
+extern int    LeavePosition;
+extern bool   completed;
 
 //==========================================================================
 //
-//	sv_user
+//  sv_user
 //
 //==========================================================================
 
 //==========================================================================
 //
-//	????
+//  ????
 //
 //==========================================================================
 
@@ -242,33 +242,33 @@ void G_WorldDone();
 void G_PlayerReborn(int player);
 void G_StartNewInit();
 
-extern VBasePlayer*		GPlayersBase[MAXPLAYERS]; // Bookkeeping on players - state.
+extern VBasePlayer*   GPlayersBase[MAXPLAYERS]; // Bookkeeping on players - state.
 
-extern vuint8			deathmatch;   			// only if started as net death
+extern vuint8     deathmatch;         // only if started as net death
 
-extern bool				sv_loading;
-extern bool				sv_map_travel;
-extern int				sv_load_num_players;
-extern bool				run_open_scripts;
+extern bool       sv_loading;
+extern bool       sv_map_travel;
+extern int        sv_load_num_players;
+extern bool       run_open_scripts;
 
 //==========================================================================
 //
-//	Inlines
+//  Inlines
 //
 //==========================================================================
 
 inline int SV_GetPlayerNum(VBasePlayer* player)
 {
-	int		i;
+  int   i;
 
-	for (i = 0; i < MAXPLAYERS; i++)
-	{
-		if (player == GPlayersBase[i])
-		{
-		    return i;
-		}
-	}
-	return 0;
+  for (i = 0; i < MAXPLAYERS; i++)
+  {
+    if (player == GPlayersBase[i])
+    {
+        return i;
+    }
+  }
+  return 0;
 }
 
 #endif

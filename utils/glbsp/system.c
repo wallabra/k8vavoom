@@ -241,19 +241,19 @@ void InitEndian(void)
     uint32_g val;
   }
   u;
- 
+
   /* sanity-check type sizes */
 
   if (sizeof(uint8_g) != 1)
-    FatalError("Sanity check failed: sizeof(uint8_g) = %d", 
+    FatalError("Sanity check failed: sizeof(uint8_g) = %d",
         (int)sizeof(uint8_g));
 
   if (sizeof(uint16_g) != 2)
-    FatalError("Sanity check failed: sizeof(uint16_g) = %d", 
+    FatalError("Sanity check failed: sizeof(uint16_g) = %d",
         (int)sizeof(uint16_g));
 
   if (sizeof(uint32_g) != 4)
-    FatalError("Sanity check failed: sizeof(uint32_g) = %d", 
+    FatalError("Sanity check failed: sizeof(uint32_g) = %d",
         (int)sizeof(uint32_g));
 
   /* check endianness */
@@ -277,10 +277,10 @@ void InitEndian(void)
 # if DEBUG_ENDIAN
   PrintDebug("Endianness = %s\n", cpu_big_endian ? "BIG" : "LITTLE");
 
-  PrintDebug("Endianness check: 0x1234 --> 0x%04x\n", 
+  PrintDebug("Endianness check: 0x1234 --> 0x%04x\n",
       (int) Endian_U16(0x1234));
-  
-  PrintDebug("Endianness check: 0x11223344 --> 0x%08x\n", 
+
+  PrintDebug("Endianness check: 0x11223344 --> 0x%08x\n",
       Endian_U32(0x11223344));
 # endif
 }
@@ -307,4 +307,3 @@ uint32_g Endian_U32(uint32_g x)
   else
     return x;
 }
-

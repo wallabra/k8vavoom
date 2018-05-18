@@ -24,8 +24,8 @@
 //**************************************************************************
 
 class Heresiarch : Actor
-	game(GAME_Hexen)
-	__mobjinfo__(10080);
+  game(GAME_Hexen)
+  __mobjinfo__(10080);
 
 //
 // Sorcerer Variables
@@ -47,84 +47,84 @@ class Heresiarch : Actor
 
 void Died(EntityEx source, EntityEx inflictor)
 {
-	//	For Heresiarch special is actually the script to be executed.
-	int Script = Special;
-	Special = 0;
+  //  For Heresiarch special is actually the script to be executed.
+  int Script = Special;
+  Special = 0;
 
-	::Died(source, inflictor);
+  ::Died(source, inflictor);
 
-	if (Script)
-	{
-		XLevel.StartACS(Script, 0, 0, 0, 0, self, NULL, 0, false, false);
-	}
+  if (Script)
+  {
+    XLevel.StartACS(Script, 0, 0, 0, 0, self, NULL, 0, false, false);
+  }
 }
 
 states
 {
 Spawn:
-	SORC A 3
-	SORC A 2 A_SorcSpinBalls
-	SORC A 10 A_Look
-	Wait
+  SORC A 3
+  SORC A 2 A_SorcSpinBalls
+  SORC A 10 A_Look
+  Wait
 See:
-	SORC ABCD 5 A_Chase
-	Loop
+  SORC ABCD 5 A_Chase
+  Loop
 Pain:
-	SORC G 8
-	SORC G 8 A_Pain
-	Goto See
+  SORC G 8
+  SORC G 8 A_Pain
+  Goto See
 Missile:
-	SORC F 6 Bright A_FaceTarget
-	SORC F 6 Bright A_SpeedBalls
-	SORC F 6 Bright A_FaceTarget
-	Wait
+  SORC F 6 Bright A_FaceTarget
+  SORC F 6 Bright A_SpeedBalls
+  SORC F 6 Bright A_FaceTarget
+  Wait
 Attack1:
-	SORC E 6 Bright
-	SORC E 6 Bright A_SpawnFizzle
-	SORC E 5 Bright A_FaceTarget
-	Goto Attack1+1
+  SORC E 6 Bright
+  SORC E 6 Bright A_SpawnFizzle
+  SORC E 5 Bright A_FaceTarget
+  Goto Attack1+1
 Attack2:
-	SORC E 2 Bright
-	SORC E 2 Bright A_SorcBossAttack
-	Goto See
+  SORC E 2 Bright
+  SORC E 2 Bright A_SorcBossAttack
+  Goto See
 Death:
-	SORC H 5 Bright
-	SORC I 5 Bright A_FaceTarget
-	SORC J 5 Bright A_Scream
-	SORC KLMNOPQRST 5 Bright
-	SORC U 5 Bright A_NoBlocking
-	SORC VWXY 5 Bright
-	SORC Z -1 Bright
-	Stop
+  SORC H 5 Bright
+  SORC I 5 Bright A_FaceTarget
+  SORC J 5 Bright A_Scream
+  SORC KLMNOPQRST 5 Bright
+  SORC U 5 Bright A_NoBlocking
+  SORC VWXY 5 Bright
+  SORC Z -1 Bright
+  Stop
 }
 
 defaultproperties
 {
-	Health = 5000;
-	Radius = 40.0;
-	Height = 110.0;
-	Mass = 500.0;
-	Speed = 16.0 * 35.0;
-	PainChance = 0.0390625;
-	MissileDamage = 9;
-	bSolid = true;
-	bShootable = true;
-	bCountKill = true;
-	bMonster = true;
-	bActivatePushWall = true;
-	bActivateMCross = true;
-	bPassMobj = true;
-	bCanUseWalls = true;
-	bFloorClip = true;
-	bNoBlood = true;
-	bBoss = true;
-	bNeverTarget = true;
-	bFullVolActive = true;
-	bNoIceDeath = true;
-	bDeflect = true;
-	SightSound = 'SorcererSight';
-	ActiveSound = 'SorcererActive';
-	PainSound = 'SorcererPain';
-	DeathSound = 'SorcererDeathScream';
-	Obituary = "$ob_heresiarch";
+  Health = 5000;
+  Radius = 40.0;
+  Height = 110.0;
+  Mass = 500.0;
+  Speed = 16.0 * 35.0;
+  PainChance = 0.0390625;
+  MissileDamage = 9;
+  bSolid = true;
+  bShootable = true;
+  bCountKill = true;
+  bMonster = true;
+  bActivatePushWall = true;
+  bActivateMCross = true;
+  bPassMobj = true;
+  bCanUseWalls = true;
+  bFloorClip = true;
+  bNoBlood = true;
+  bBoss = true;
+  bNeverTarget = true;
+  bFullVolActive = true;
+  bNoIceDeath = true;
+  bDeflect = true;
+  SightSound = 'SorcererSight';
+  ActiveSound = 'SorcererActive';
+  PainSound = 'SorcererPain';
+  DeathSound = 'SorcererDeathScream';
+  Obituary = "$ob_heresiarch";
 }

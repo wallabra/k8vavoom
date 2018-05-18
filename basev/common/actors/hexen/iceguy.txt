@@ -1,172 +1,172 @@
 //------------------------------------------------------------------------------
 actor IceGuy 8020
 {
-	Game Hexen
-	SpawnID 20
-	Health 120
-	Radius 22
-	Height 75
-	Mass 150
-	Speed 14
-	PainChance 144
-	DamageType "Ice"
-	Monster
-	+Telestomp
-	+NoBlood
-	+NoIceDeath
-	SeeSound "IceGuySight"
-	ActiveSound "IceGuyActive"
-	AttackSound "IceGuyAttack"
-	Obituary "$ob_iceguy"
+  Game Hexen
+  SpawnID 20
+  Health 120
+  Radius 22
+  Height 75
+  Mass 150
+  Speed 14
+  PainChance 144
+  DamageType "Ice"
+  Monster
+  +Telestomp
+  +NoBlood
+  +NoIceDeath
+  SeeSound "IceGuySight"
+  ActiveSound "IceGuyActive"
+  AttackSound "IceGuyAttack"
+  Obituary "$ob_iceguy"
 
-	action native A_IceGuyLook();
-	action native A_IceGuyChase();
-	action native A_IceGuyAttack();
+  action native A_IceGuyLook();
+  action native A_IceGuyChase();
+  action native A_IceGuyAttack();
 
-	states
-	{
-	Spawn:
-		ICEY A 10 A_IceGuyLook
-		Loop
-	Inactive:
-		ICEY A -1
-		Goto Spawn
-	See:
-		ICEY A 4 A_Chase
-		ICEY B 4 A_IceGuyChase
-		ICEY CD 4 A_Chase
-		Loop
-	Missile:
-		ICEY EF 3 A_FaceTarget
-		ICEY G 8 Bright A_IceGuyAttack
-		ICEY F 4 A_FaceTarget
-		Goto See
-	Pain:
-		ICEY A 1 A_Pain
-		Goto See
-	Death:
-		ICEY A 1 A_IceGuyDie
-		Stop
-	}
+  states
+  {
+  Spawn:
+    ICEY A 10 A_IceGuyLook
+    Loop
+  Inactive:
+    ICEY A -1
+    Goto Spawn
+  See:
+    ICEY A 4 A_Chase
+    ICEY B 4 A_IceGuyChase
+    ICEY CD 4 A_Chase
+    Loop
+  Missile:
+    ICEY EF 3 A_FaceTarget
+    ICEY G 8 Bright A_IceGuyAttack
+    ICEY F 4 A_FaceTarget
+    Goto See
+  Pain:
+    ICEY A 1 A_Pain
+    Goto See
+  Death:
+    ICEY A 1 A_IceGuyDie
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor IceGuyFX
 {
-	Radius 8
-	Height 10
-	Speed 14
-	Damage 1
-	DamageType "Ice"
-	Projectile
-	-ActivateImpact
-	-ActivatePCross
-	DeathSound "IceGuyMissileExplode"
+  Radius 8
+  Height 10
+  Speed 14
+  Damage 1
+  DamageType "Ice"
+  Projectile
+  -ActivateImpact
+  -ActivatePCross
+  DeathSound "IceGuyMissileExplode"
 
-	action native A_IceGuyMissileExplode();
+  action native A_IceGuyMissileExplode();
 
-	states
-	{
-	Spawn:
-		ICPR ABC 3 Bright A_SpawnItemEx("IceFXPuff", 0, 0, 2)
-		Loop
-	Death:
-		ICPR D 4 Bright
-		ICPR E 4 Bright A_IceGuyMissileExplode
-		ICPR FG 4 Bright
-		ICPR H 3 Bright
-		Stop
-	}
+  states
+  {
+  Spawn:
+    ICPR ABC 3 Bright A_SpawnItemEx("IceFXPuff", 0, 0, 2)
+    Loop
+  Death:
+    ICPR D 4 Bright
+    ICPR E 4 Bright A_IceGuyMissileExplode
+    ICPR FG 4 Bright
+    ICPR H 3 Bright
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor IceFXPuff
 {
-	Radius 1
-	Height 1
-	RenderStyle Translucent
-	Alpha 0.4
-	+NoBlockmap
-	+NoGravity
-	+Shadow
-	+DropOff
-	+NoTeleport
-	states
-	{
-	Spawn:
-		ICPR IJK 3
-		ICPR LM 2
-		Stop
-	}
+  Radius 1
+  Height 1
+  RenderStyle Translucent
+  Alpha 0.4
+  +NoBlockmap
+  +NoGravity
+  +Shadow
+  +DropOff
+  +NoTeleport
+  states
+  {
+  Spawn:
+    ICPR IJK 3
+    ICPR LM 2
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor IceGuyFX2
 {
-	Radius 4
-	Height 4
-	Gravity 0.125
-	Speed 10
-	Damage 1
-	DamageType "Ice"
-	+Missile
-	+NoBlockmap
-	+DropOff
-	+NoTeleport
-	+BloodSplatter
-	+StrifeDamage
-	states
-	{
-	Spawn:
-		ICPR NOP 3 Bright
-		Loop
-	}
+  Radius 4
+  Height 4
+  Gravity 0.125
+  Speed 10
+  Damage 1
+  DamageType "Ice"
+  +Missile
+  +NoBlockmap
+  +DropOff
+  +NoTeleport
+  +BloodSplatter
+  +StrifeDamage
+  states
+  {
+  Spawn:
+    ICPR NOP 3 Bright
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor IceGuyBit
 {
-	Radius 1
-	Height 1
-	Gravity 0.125
-	+NoBlockmap
-	+DropOff
-	+NoTeleport
-	states
-	{
-	Spawn:
-		ICPR Q 50
-		Stop
-		ICPR R 50
-		Stop
-	}
+  Radius 1
+  Height 1
+  Gravity 0.125
+  +NoBlockmap
+  +DropOff
+  +NoTeleport
+  states
+  {
+  Spawn:
+    ICPR Q 50
+    Stop
+    ICPR R 50
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor IceGuyWisp1
 {
-	RenderStyle Translucent
-	Alpha 0.4
-	+Missile
-	+NoBlockmap
-	+DropOff
-	+NoGravity
-	+NoTeleport
-	states
-	{
-	Spawn:
-		ICWS ABCDEFGHI 2
-		Stop
-	}
+  RenderStyle Translucent
+  Alpha 0.4
+  +Missile
+  +NoBlockmap
+  +DropOff
+  +NoGravity
+  +NoTeleport
+  states
+  {
+  Spawn:
+    ICWS ABCDEFGHI 2
+    Stop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor IceGuyWisp2 : IceGuyWisp1
 {
-	states
-	{
-	Spawn:
-		ICWS JKLMNOPQR 2
-		Stop
-	}
+  states
+  {
+  Spawn:
+    ICWS JKLMNOPQR 2
+    Stop
+  }
 }

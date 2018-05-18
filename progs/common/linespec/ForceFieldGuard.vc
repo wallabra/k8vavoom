@@ -24,8 +24,8 @@
 //**************************************************************************
 
 class ForceFieldGuard : Actor
-	game(GAME_Strife)
-	__mobjinfo__(25);
+  game(GAME_Strife)
+  __mobjinfo__(25);
 
 //==========================================================================
 //
@@ -34,32 +34,32 @@ class ForceFieldGuard : Actor
 //==========================================================================
 
 int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage,
-	name DmgType)
+  name DmgType)
 {
-	if (!DegninOre(inflictor))
-	{
-		return -1;
-	}
-	return Health;
+  if (!DegninOre(inflictor))
+  {
+    return -1;
+  }
+  return Health;
 }
 
 states
 {
 Spawn:
-	TOKN A -1
-	Stop
+  TOKN A -1
+  Stop
 Death:
-	TNT1 A 1 A_RemoveForceField
-	Stop
+  TNT1 A 1 A_RemoveForceField
+  Stop
 }
 
 defaultproperties
 {
-	Health = 10;
-	Radius = 2.0;
-	Height = 1.0;
-	Mass = 10000.0;
-	bShootable = true;
-	bNoSector = true;
-	bInCombat = true;
+  Health = 10;
+  Radius = 2.0;
+  Height = 1.0;
+  Mass = 10000.0;
+  bShootable = true;
+  bNoSector = true;
+  bInCombat = true;
 }

@@ -24,9 +24,9 @@
 //**************************************************************************
 
 class Armor : Inventory
-	abstract;
+  abstract;
 
 defaultproperties
 {
-	PickupSound = 'misc/armor_pkup';
+  PickupSound = 'misc/armor_pkup';
 }

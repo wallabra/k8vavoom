@@ -23,14 +23,14 @@
 //**
 //**************************************************************************
 //**
-//**	Z-preserving dest subject to gravity (for TeleportGroup, etc.)
+//**  Z-preserving dest subject to gravity (for TeleportGroup, etc.)
 //**
 //**************************************************************************
 
 class TeleportDest3 : TeleportDest2
-	__mobjinfo__(9043);
+  __mobjinfo__(9043);
 
 defaultproperties
 {
-	bNoGravity = false;
+  bNoGravity = false;
 }

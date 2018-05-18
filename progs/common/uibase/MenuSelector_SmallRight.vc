@@ -27,18 +27,18 @@ class MenuSelector_SmallRight : Widget;
 
 void OnCreate()
 {
-	::OnCreate();
-	Disable();
+  ::OnCreate();
+  Disable();
 }
 
 void OnDraw()
 {
-	SetTextAlign(hleft, vtop);
-	DrawText(2, 0, ">");
+  SetTextAlign(hleft, vtop);
+  DrawText(2, 0, ">");
 }
 
 defaultproperties
 {
-	Width = 320;
-	Height = 200;
+  Width = 320;
+  Height = 200;
 }

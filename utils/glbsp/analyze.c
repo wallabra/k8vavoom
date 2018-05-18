@@ -60,7 +60,7 @@ extern boolean_g lev_doing_normal;
 static void MarkPolyobjSector(sector_t *sector)
 {
   int i;
-    
+
   if (! sector)
     return;
 
@@ -74,7 +74,7 @@ static void MarkPolyobjSector(sector_t *sector)
 
   /* mark all lines of this sector as precious, to prevent the sector
    * from being split.
-   */ 
+   */
   sector->has_polyobj = TRUE;
 
   for (i = 0; i < num_linedefs; i++)
@@ -93,7 +93,7 @@ static void MarkPolyobjPoint(float_g x, float_g y)
 {
   int i;
   int inside_count = 0;
- 
+
   float_g best_dist = 999999;
   linedef_t *best_match = NULL;
   sector_t *sector = NULL;
@@ -154,7 +154,7 @@ static void MarkPolyobjPoint(float_g x, float_g y)
     if (fabs(y2 - y1) < DIST_EPSILON)
       continue;
 
-    if ((y > (y1 + DIST_EPSILON) && y > (y2 + DIST_EPSILON)) || 
+    if ((y > (y1 + DIST_EPSILON) && y > (y2 + DIST_EPSILON)) ||
         (y < (y1 - DIST_EPSILON) && y < (y2 - DIST_EPSILON)))
       continue;
 
@@ -191,7 +191,7 @@ static void MarkPolyobjPoint(float_g x, float_g y)
         best_match->index);
   }
 # endif
- 
+
   /* check orientation of line, to determine which side the polyobj is
    * actually on.
    */
@@ -201,7 +201,7 @@ static void MarkPolyobjPoint(float_g x, float_g y)
     sector = best_match->left ? best_match->left->sector : NULL;
 
 # if DEBUG_POLYOBJ
-  PrintDebug("  Sector %d contains the polyobj.\n", 
+  PrintDebug("  Sector %d contains the polyobj.\n",
       sector ? sector->index : -1);
 # endif
 
@@ -250,7 +250,7 @@ void DetectPolyobjSectors(void)
 
   // -JL- Detect what polyobj thing types are used - Hexen ones or ZDoom ones
   hexen_style = TRUE;
-  
+
   for (i = 0; i < num_things; i++)
   {
     thing_t *T = LookupThing(i);
@@ -267,7 +267,7 @@ void DetectPolyobjSectors(void)
   PrintDebug("Using %s style polyobj things\n",
       hexen_style ? "HEXEN" : "ZDOOM");
 # endif
-   
+
   for (i = 0; i < num_things; i++)
   {
     thing_t *T = LookupThing(i);
@@ -292,7 +292,7 @@ void DetectPolyobjSectors(void)
 #   if DEBUG_POLYOBJ
     PrintDebug("Thing %d at (%1.0f,%1.0f) is a polyobj spawner.\n", i, x, y);
 #   endif
- 
+
     MarkPolyobjPoint(x, y);
   }
 }
@@ -311,8 +311,8 @@ static int VertexCompare(const void *p1, const void *p2)
     return 0;
 
   if ((int)A->x != (int)B->x)
-    return (int)A->x - (int)B->x; 
-  
+    return (int)A->x - (int)B->x;
+
   return (int)A->y - (int)B->y;
 }
 
@@ -351,10 +351,10 @@ static int SidedefCompare(const void *p1, const void *p2)
 
   comp = memcmp(A->upper_tex, B->upper_tex, sizeof(A->upper_tex));
   if (comp) return comp;
-  
+
   comp = memcmp(A->lower_tex, B->lower_tex, sizeof(A->lower_tex));
   if (comp) return comp;
-  
+
   comp = memcmp(A->mid_tex, B->mid_tex, sizeof(A->mid_tex));
   if (comp) return comp;
 
@@ -372,7 +372,7 @@ void DetectDuplicateVertices(void)
   // sort array of indices
   for (i=0; i < num_vertices; i++)
     array[i] = i;
-  
+
   qsort(array, num_vertices, sizeof(uint16_g), VertexCompare);
 
   // now mark them off
@@ -402,7 +402,7 @@ void DetectDuplicateSidedefs(void)
   // sort array of indices
   for (i=0; i < num_sidedefs; i++)
     array[i] = i;
-  
+
   qsort(array, num_sidedefs, sizeof(uint16_g), SidedefCompare);
 
   // now mark them off
@@ -503,7 +503,7 @@ void PruneVertices(void)
 
     if (V->ref_count < 0)
       InternalError("Vertex %d ref_count is %d", i, V->ref_count);
-    
+
     if (V->ref_count == 0)
     {
       if (V->equiv == NULL)
@@ -533,7 +533,7 @@ void PruneVertices(void)
 
   if (new_num == 0)
     FatalError("Couldn't find any Vertices");
- 
+
   num_normal_vert = num_vertices;
 }
 
@@ -552,7 +552,7 @@ void PruneSidedefs(void)
 
     if (S->ref_count < 0)
       InternalError("Sidedef %d ref_count is %d", i, S->ref_count);
-    
+
     if (S->ref_count == 0)
     {
       if (S->sector)
@@ -600,7 +600,7 @@ void PruneSectors(void)
 
     if (S->ref_count < 0)
       InternalError("Sector %d ref_count is %d", i, S->ref_count);
-    
+
     if (S->ref_count == 0)
     {
       UtilFree(S);
@@ -627,7 +627,7 @@ static INLINE_G int LineVertexLowest(const linedef_t *L)
   // line is vertical, then the bottom-most) => 0 for start, 1 for end.
 
   return ((int)L->start->x < (int)L->end->x ||
-          ((int)L->start->x == (int)L->end->x && 
+          ((int)L->start->x == (int)L->end->x &&
            (int)L->start->y <  (int)L->end->y)) ? 0 : 1;
 }
 
@@ -650,7 +650,7 @@ static int LineStartCompare(const void *p1, const void *p2)
   D = LineVertexLowest(B) ? B->end : B->start;
 
   if ((int)C->x != (int)D->x)
-    return (int)C->x - (int)D->x; 
+    return (int)C->x - (int)D->x;
 
   return (int)C->y - (int)D->y;
 }
@@ -674,7 +674,7 @@ static int LineEndCompare(const void *p1, const void *p2)
   D = LineVertexLowest(B) ? B->start : B->end;
 
   if ((int)C->x != (int)D->x)
-    return (int)C->x - (int)D->x; 
+    return (int)C->x - (int)D->x;
 
   return (int)C->y - (int)D->y;
 }
@@ -695,7 +695,7 @@ void DetectOverlappingLines(void)
   // sort array of indices
   for (i=0; i < num_linedefs; i++)
     array[i] = i;
-  
+
   qsort(array, num_linedefs, sizeof(int), LineStartCompare);
 
   for (i=0; i < num_linedefs - 1; i++)
@@ -928,9 +928,9 @@ static void VertexAddWallTip(vertex_t *vert, float_g dx, float_g dy,
   for (after=vert->tip_set; after && after->next; after=after->next)
   { }
 
-  while (after && tip->angle + ANG_EPSILON < after->angle) 
+  while (after && tip->angle + ANG_EPSILON < after->angle)
     after = after->prev;
-  
+
   // link it in
   tip->next = after ? after->next : vert->tip_set;
   tip->prev = after;
@@ -939,14 +939,14 @@ static void VertexAddWallTip(vertex_t *vert, float_g dx, float_g dy,
   {
     if (after->next)
       after->next->prev = tip;
-    
+
     after->next = tip;
   }
   else
   {
     if (vert->tip_set)
       vert->tip_set->prev = tip;
-    
+
     vert->tip_set = tip;
   }
 }
@@ -983,7 +983,7 @@ void CalculateWallTips(void)
     VertexAddWallTip(line->start, x2-x1, y2-y1, left, right);
     VertexAddWallTip(line->end,   x1-x2, y1-y2, right, left);
   }
- 
+
 # if DEBUG_WALLTIPS
   for (i=0; i < num_vertices; i++)
   {
@@ -1027,7 +1027,7 @@ vertex_t *NewVertexFromSplitSeg(seg_t *seg, float_g x, float_g y)
 
   // compute wall_tip info
 
-  VertexAddWallTip(vert, -seg->pdx, -seg->pdy, seg->sector, 
+  VertexAddWallTip(vert, -seg->pdx, -seg->pdy, seg->sector,
       seg->partner ? seg->partner->sector : NULL);
 
   VertexAddWallTip(vert, seg->pdx, seg->pdy,
@@ -1086,7 +1086,7 @@ vertex_t *NewVertexDegenerate(vertex_t *start, vertex_t *end)
   dx /= dlen;
   dy /= dlen;
 
-  while (I_ROUND(vert->x) == I_ROUND(start->x) && 
+  while (I_ROUND(vert->x) == I_ROUND(start->x) &&
          I_ROUND(vert->y) == I_ROUND(start->y))
   {
     vert->x += dx;
@@ -1139,8 +1139,7 @@ sector_t * VertexCheckOpen(vertex_t *vert, float_g dx, float_g dy)
       return tip->left;
     }
   }
- 
+
   InternalError("Vertex %d has no tips !", vert->index);
   return FALSE;
 }
-

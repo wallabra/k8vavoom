@@ -33,73 +33,73 @@ class PigPlayer : PlayerPawn;
 
 void MorphPlayerThink()
 {
-	//FIXME this sucks
-	if (ftoi(32.0 * PlayerEx(Player).MorphTime) & 15)
-	{
-		return;
-	}
-	if (!(Velocity.x + Velocity.y) && P_Random() < 64)
-	{
-		// Snout sniff
-		Player.SetViewState(ps_weapon,
-			PlayerEx(Player).ReadyWeapon.FindState('Flash'));
-		PlaySound('PigActive1', CHAN_VOICE);	// snort
-		return;
-	}
-	if (P_Random() < 48)
-	{
-		PlaySound('PigActive', CHAN_VOICE);
-	}
+  //FIXME this sucks
+  if (ftoi(32.0 * PlayerEx(Player).MorphTime) & 15)
+  {
+    return;
+  }
+  if (!(Velocity.x + Velocity.y) && P_Random() < 64)
+  {
+    // Snout sniff
+    Player.SetViewState(ps_weapon,
+      PlayerEx(Player).ReadyWeapon.FindState('Flash'));
+    PlaySound('PigActive1', CHAN_VOICE);  // snort
+    return;
+  }
+  if (P_Random() < 48)
+  {
+    PlaySound('PigActive', CHAN_VOICE);
+  }
 }
 
 states
 {
 Spawn:
-	PIGY A -1
-	Stop
+  PIGY A -1
+  Stop
 See:
-	PIGY ABCD 3
-	Loop
+  PIGY ABCD 3
+  Loop
 Melee:
 Missile:
-	PIGY A 12
-	Goto Spawn
+  PIGY A 12
+  Goto Spawn
 Pain:
-	PIGY D 4 A_PigPain
-	Goto Spawn
+  PIGY D 4 A_PigPain
+  Goto Spawn
 Death:
-	PIGY E 4 A_Scream
-	PIGY F 3 A_NoBlocking
-	PIGY G 4 A_QueueCorpse
-	PIGY H 3
-	PIGY IJK 4
-	PIGY L -1
-	Stop
+  PIGY E 4 A_Scream
+  PIGY F 3 A_NoBlocking
+  PIGY G 4 A_QueueCorpse
+  PIGY H 3
+  PIGY IJK 4
+  PIGY L -1
+  Stop
 Ice:
-	PIGY M 5 A_FreezeDeath
-	PIGY M 1 A_FreezeDeathChunks
-	Wait
+  PIGY M 5 A_FreezeDeath
+  PIGY M 1 A_FreezeDeathChunks
+  Wait
 }
 
 defaultproperties
 {
-	Health = 30;
-	Radius = 16.0;
-	Height = 24.0;
-	PainChance = 1.0;
-	ViewHeight = 28.0;
-	ForwardMove1 = 0.97;
-	ForwardMove2 = 0.97;
-	SideMove1 = 0.97;
-	SideMove2 = 0.97;
-	JumpVelZ = 6.5 * 35.0;
-	RDFactor = 0.25;
-	PainSound = 'PigPain';
-	DeathSound = 'PigDeath';
-	SoundClass = 'pig';
-	MorphWeapon = Snout;
-	bPickUp = false;
+  Health = 30;
+  Radius = 16.0;
+  Height = 24.0;
+  PainChance = 1.0;
+  ViewHeight = 28.0;
+  ForwardMove1 = 0.97;
+  ForwardMove2 = 0.97;
+  SideMove1 = 0.97;
+  SideMove2 = 0.97;
+  JumpVelZ = 6.5 * 35.0;
+  RDFactor = 0.25;
+  PainSound = 'PigPain';
+  DeathSound = 'PigDeath';
+  SoundClass = 'pig';
+  MorphWeapon = Snout;
+  bPickUp = false;
 
-	DropItemList.Num = 1;
-	DropItemList[0].Type = Snout; DropItemList[0].Amount = 1;
+  DropItemList.Num = 1;
+  DropItemList[0].Type = Snout; DropItemList[0].Amount = 1;
 }

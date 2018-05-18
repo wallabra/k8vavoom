@@ -25,23 +25,23 @@
 
 class MorphedMonster : Actor;
 
-int				MorphStyle;
-float			UnmorphTime;
-class<Actor>	UnmorphFlash;
-EntityEx		UnmorphedMo;
+int       MorphStyle;
+float     UnmorphTime;
+class<Actor>  UnmorphFlash;
+EntityEx    UnmorphedMo;
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	if (!UpdateMorphedMonster())
-	{
-		::Tick(DeltaTime);
-	}
+  if (!UpdateMorphedMonster())
+  {
+    ::Tick(DeltaTime);
+  }
 }
 
 //==========================================================================
@@ -54,107 +54,107 @@ void Tick(float DeltaTime)
 
 final bool UpdateMorphedMonster()
 {
-	if (Health <= 0)
-	{
-		return false;
-	}
-	if (UnmorphTime > XLevel.Time)
-	{
-		return false;
-	}
-	if (!UnmorphActor(none, false))
-	{
-		return false;
-	}
-	return true;
+  if (Health <= 0)
+  {
+    return false;
+  }
+  if (UnmorphTime > XLevel.Time)
+  {
+    return false;
+  }
+  if (!UnmorphActor(none, false))
+  {
+    return false;
+  }
+  return true;
 }
 
 //==========================================================================
 //
-//	UnmorphActor
+//  UnmorphActor
 //
 //==========================================================================
 
 int UnmorphActor(Entity Activator, int Force)
 {
-	TVec oldOrigin;
-	class<EntityEx> originalClass;
-	float oldAngle;
-	int oldSpecial;
-	int oldTID;
-	int oldArgs[5];
-	EntityEx mo;
+  TVec oldOrigin;
+  class<EntityEx> originalClass;
+  float oldAngle;
+  int oldSpecial;
+  int oldTID;
+  int oldArgs[5];
+  EntityEx mo;
 
-	originalClass = SpecialCID;
-	if (originalClass.default.bStayMorphed)
-	{
-		// These must remain morphed
-		return false;
-	}
-	oldOrigin = Origin;
-	oldAngle = Angles.yaw;
-	oldSpecial = Special;
-	oldTID = TID;
-	oldArgs[0] = Args[0];
-	oldArgs[1] = Args[1];
-	oldArgs[2] = Args[2];
-	oldArgs[3] = Args[3];
-	oldArgs[4] = Args[4];
+  originalClass = SpecialCID;
+  if (originalClass.default.bStayMorphed)
+  {
+    // These must remain morphed
+    return false;
+  }
+  oldOrigin = Origin;
+  oldAngle = Angles.yaw;
+  oldSpecial = Special;
+  oldTID = TID;
+  oldArgs[0] = Args[0];
+  oldArgs[1] = Args[1];
+  oldArgs[2] = Args[2];
+  oldArgs[3] = Args[3];
+  oldArgs[4] = Args[4];
 
-	UnlinkFromWorld();
-	mo = Spawn(originalClass, Origin);
+  UnlinkFromWorld();
+  mo = Spawn(originalClass, Origin);
 
-	if (!mo.TestLocation() && !Force)
-	{
-		// Didn't fit
-		mo.Destroy();
-		LinkToWorld();
-		UnmorphTime = XLevel.Time + 5.0;	// Next try in 5 seconds
-		return false;
-	}
-	LinkToWorld();
-	SetTID(0);
-	mo.Angles.yaw = oldAngle;
-	mo.Special = oldSpecial;
-	mo.Args[0] = oldArgs[0];
-	mo.Args[1] = oldArgs[1];
-	mo.Args[2] = oldArgs[2];
-	mo.Args[3] = oldArgs[3];
-	mo.Args[4] = oldArgs[4];
-	mo.SetTID(oldTID);
-	mo.CopyFriendliness(self, true);
-	mo.bShadow = bShadow;
-	mo.bGhost = bGhost;
-	SetState(FindState('FreeTargMobj'));
-	UnmorphedMo = mo;
-	Spawn(UnmorphFlash ? UnmorphFlash : class<Actor>(TeleportFog), oldOrigin +
-		vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
-	return true;
+  if (!mo.TestLocation() && !Force)
+  {
+    // Didn't fit
+    mo.Destroy();
+    LinkToWorld();
+    UnmorphTime = XLevel.Time + 5.0;  // Next try in 5 seconds
+    return false;
+  }
+  LinkToWorld();
+  SetTID(0);
+  mo.Angles.yaw = oldAngle;
+  mo.Special = oldSpecial;
+  mo.Args[0] = oldArgs[0];
+  mo.Args[1] = oldArgs[1];
+  mo.Args[2] = oldArgs[2];
+  mo.Args[3] = oldArgs[3];
+  mo.Args[4] = oldArgs[4];
+  mo.SetTID(oldTID);
+  mo.CopyFriendliness(self, true);
+  mo.bShadow = bShadow;
+  mo.bGhost = bGhost;
+  SetState(FindState('FreeTargMobj'));
+  UnmorphedMo = mo;
+  Spawn(UnmorphFlash ? UnmorphFlash : class<Actor>(TeleportFog), oldOrigin +
+    vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
+  return true;
 }
 
 //==========================================================================
 //
-//	MorphedDeath
+//  MorphedDeath
 //
 //==========================================================================
 
 bool MorphedDeath(out EntityEx Morphed, out int MorphedStyle,
-	out int MorphedHealth)
+  out int MorphedHealth)
 {
-	if (UnmorphTime && (MorphStyle & MORPH_UNDOBYDEATH))
-	{
-		int RealStyle = MorphStyle;
-		int RealHealth = Health;
-		if (UnmorphActor(none, MorphStyle & MORPH_UNDOBYDEATHFORCED))
-		{
-			Morphed = UnmorphedMo;
-			MorphedStyle = RealStyle;
-			MorphedHealth = RealHealth;
-			return true;
-		}
-	}
-	bStayMorphed = true;
-	return false;
+  if (UnmorphTime && (MorphStyle & MORPH_UNDOBYDEATH))
+  {
+    int RealStyle = MorphStyle;
+    int RealHealth = Health;
+    if (UnmorphActor(none, MorphStyle & MORPH_UNDOBYDEATHFORCED))
+    {
+      Morphed = UnmorphedMo;
+      MorphedStyle = RealStyle;
+      MorphedHealth = RealHealth;
+      return true;
+    }
+  }
+  bStayMorphed = true;
+  return false;
 }
 
 defaultproperties

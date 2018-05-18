@@ -1,26 +1,26 @@
 //------------------------------------------------------------------------------
 actor DirtClump
 {
-	+NoBlockmap
-	+NoTeleport
-	states
-	{
-	Spawn:
-		TSPK C 20
-		Loop
-	}
+  +NoBlockmap
+  +NoTeleport
+  states
+  {
+  Spawn:
+    TSPK C 20
+    Loop
+  }
 }
 
 //------------------------------------------------------------------------------
 actor ThrustFloorUp : ThrustFloorDown 10091
 {
-	Game Hexen
-	SpawnID 104
-	+Solid
-	-Invisible
-	states
-	{
-	Spawn:
-		Goto Super::Up
-	}
+  Game Hexen
+  SpawnID 104
+  +Solid
+  -Invisible
+  states
+  {
+  Spawn:
+    Goto Super::Up
+  }
 }

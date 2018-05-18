@@ -24,9 +24,9 @@
 //**************************************************************************
 
 class MageWeapon : HexenWeapon
-	abstract;
+  abstract;
 
 defaultproperties
 {
-	WeaponClass = MagePlayer;
+  WeaponClass = MagePlayer;
 }

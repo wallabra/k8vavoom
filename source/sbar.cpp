@@ -1,29 +1,29 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
 //**
-//**	Status bar code.
+//**  Status bar code.
 //**
 //**************************************************************************
 
@@ -39,9 +39,9 @@
 
 enum
 {
-	SB_VIEW_NORMAL,
-	SB_VIEW_AUTOMAP,
-	SB_VIEW_FULLSCREEN
+  SB_VIEW_NORMAL,
+  SB_VIEW_AUTOMAP,
+  SB_VIEW_FULLSCREEN
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -52,11 +52,11 @@ enum
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern refdef_t			refdef;
+extern refdef_t     refdef;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int 					sb_height = 32;
+int           sb_height = 32;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -70,7 +70,7 @@ int 					sb_height = 32;
 
 void SB_Init()
 {
-	sb_height = GClGame->sb_height;
+  sb_height = GClGame->sb_height;
 }
 
 //==========================================================================
@@ -81,34 +81,34 @@ void SB_Init()
 
 void SB_Ticker()
 {
-	if (cl && cls.signon && cl->MO)
-	{
-	    GClGame->eventStatusBarUpdateWidgets(host_frametime);
-	}
+  if (cl && cls.signon && cl->MO)
+  {
+      GClGame->eventStatusBarUpdateWidgets(host_frametime);
+  }
 }
 
 //==========================================================================
 //
-//	SB_Responder
+//  SB_Responder
 //
 //==========================================================================
 
 bool SB_Responder(event_t *)
 {
-	return false;
+  return false;
 }
 
 //==========================================================================
 //
-//	SB_Drawer
+//  SB_Drawer
 //
 //==========================================================================
 
 void SB_Drawer()
 {
-	//	Update widget visibility
-	GClGame->eventStatusBarDrawer(automapactive > 0 ? SB_VIEW_AUTOMAP :
-		refdef.height == ScreenHeight ? SB_VIEW_FULLSCREEN : SB_VIEW_NORMAL);
+  //  Update widget visibility
+  GClGame->eventStatusBarDrawer(automapactive > 0 ? SB_VIEW_AUTOMAP :
+    refdef.height == ScreenHeight ? SB_VIEW_FULLSCREEN : SB_VIEW_NORMAL);
 }
 
 //==========================================================================
@@ -119,5 +119,5 @@ void SB_Drawer()
 
 void SB_Start()
 {
-	GClGame->eventStatusBarStartMap();
+  GClGame->eventStatusBarStartMap();
 }

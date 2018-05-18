@@ -45,7 +45,7 @@
 // InitReject
 //
 // Puts each sector into individual groups.
-// 
+//
 static void InitReject(void)
 {
   int i;
@@ -77,7 +77,7 @@ static void GroupSectors(void)
 
     if (! line->right || ! line->left)
       continue;
-    
+
     // the standard DOOM engine will not allow sight past lines
     // lacking the TWOSIDED flag, so we can skip them here too.
     if (! line->two_sided)
@@ -85,7 +85,7 @@ static void GroupSectors(void)
 
     sec1 = line->right->sector;
     sec2 = line->left->sector;
-    
+
     if (! sec1 || ! sec2 || sec1 == sec2)
       continue;
 
@@ -104,20 +104,20 @@ static void GroupSectors(void)
     {
       tmp = sec1; sec1 = sec2; sec2 = tmp;
     }
-    
+
     // update the group numbers in the second group
-    
+
     sec2->rej_group = sec1->rej_group;
 
     for (tmp=sec2->rej_next; tmp != sec2; tmp=tmp->rej_next)
       tmp->rej_group = sec1->rej_group;
-    
+
     // merge 'em baby...
 
     sec1->rej_next->rej_prev = sec2;
     sec2->rej_next->rej_prev = sec1;
 
-    tmp = sec1->rej_next; 
+    tmp = sec1->rej_next;
     sec1->rej_next = sec2->rej_next;
     sec2->rej_next = tmp;
   }
@@ -127,7 +127,7 @@ static void GroupSectors(void)
 static void CountGroups(void)
 {
   // Note: this routine is destructive to the group numbers
-  
+
   int i;
 
   for (i=0; i < num_sectors; i++)
@@ -177,7 +177,7 @@ static void CreateReject(uint8_g *matrix)
 
     p1 = view * num_sectors + target;
     p2 = target * num_sectors + view;
-    
+
     matrix[p1 >> 3] |= (1 << (p1 & 7));
     matrix[p2 >> 3] |= (1 << (p2 & 7));
   }
@@ -200,7 +200,7 @@ void PutReject(void)
 
   InitReject();
   GroupSectors();
-  
+
   reject_size = (num_sectors * num_sectors + 7) / 8;
   matrix = UtilCalloc(reject_size);
 
@@ -218,4 +218,3 @@ void PutReject(void)
 
   UtilFree(matrix);
 }
-

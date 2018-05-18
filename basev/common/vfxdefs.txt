@@ -1,11 +1,11 @@
-//	Generic muzzle flash light
+//  Generic muzzle flash light
 muzzleflashlight MuzzleFlash
 {
-	colour 1 1 1
-	radius 118
-	radius2 150
-	offset 18 0 48
-	minlight 32
+  colour 1 1 1
+  radius 118
+  radius2 150
+  offset 18 0 48
+  minlight 32
 }
 
 #include "fxdefs/common/effects.txt"

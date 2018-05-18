@@ -126,9 +126,8 @@ Raphael Quinet, for DEU and the original idea.
 id Software, for not only creating such an irresistable game, but
 releasing the source code for so much of their stuff.
 
-... and everyone else who deserves it ! 
+... and everyone else who deserves it !
 
 
 
 ---------------------------------------------------------------------------
-

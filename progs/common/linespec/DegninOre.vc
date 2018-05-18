@@ -24,73 +24,73 @@
 //**************************************************************************
 
 class DegninOre : Inventory
-	game(GAME_Strife)
-	__mobjinfo__(59);
+  game(GAME_Strife)
+  __mobjinfo__(59);
 
 //==========================================================================
 //
-//	GetExplodeParms
+//  GetExplodeParms
 //
 //==========================================================================
 
 void GetExplodeParms(out int damage, out float distance, out byte damageSelf)
 {
-	damage = 192;
-	distance = 192.0;
+  damage = 192;
+  distance = 192.0;
 
-	PlaySound(DeathSound, CHAN_VOICE);
+  PlaySound(DeathSound, CHAN_VOICE);
 }
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	if (Pickup)
-	{
-		return false;
-	}
-	//	Increase item count because ItemThrow also decreases it.
-	Amount++;
-	EntityEx A = EntityEx(Owner).DropInventory(self);
-	if (!A)
-	{
-		Amount--;
-		return false;
-	}
-	return true;
+  if (Pickup)
+  {
+    return false;
+  }
+  //  Increase item count because ItemThrow also decreases it.
+  Amount++;
+  EntityEx A = EntityEx(Owner).DropInventory(self);
+  if (!A)
+  {
+    Amount--;
+    return false;
+  }
+  return true;
 }
 
 states
 {
 Spawn:
-	XPRK A -1
-	Stop
+  XPRK A -1
+  Stop
 Death:
-	XPRK A 1 A_RemoveForceField
-	BNG3 A 3 Bright A_ExplodeAndAlert
-	BNG3 BCDEFGH 3 Bright
-	Stop
+  XPRK A 1 A_RemoveForceField
+  BNG3 A 3 Bright A_ExplodeAndAlert
+  BNG3 BCDEFGH 3 Bright
+  Stop
 }
 
 defaultproperties
 {
-	ConversationID = 128;
-	PickupMessage = "$txt_degninore";
-	Health = 10;
-	Radius = 16.0;
-	Height = 8.0;
-	Mass = 10.0;
-	MaxAmount = 10;
-	IconName = 'i_xprk';
-	bSolid = true;
-	bShootable = true;
-	bInCombat = true;
-	bNoBlood = true;
-	bFloorClip = true;
-	bInvBar = true;
-	DeathSound = 'ore/explode';
+  ConversationID = 128;
+  PickupMessage = "$txt_degninore";
+  Health = 10;
+  Radius = 16.0;
+  Height = 8.0;
+  Mass = 10.0;
+  MaxAmount = 10;
+  IconName = 'i_xprk';
+  bSolid = true;
+  bShootable = true;
+  bInCombat = true;
+  bNoBlood = true;
+  bFloorClip = true;
+  bInvBar = true;
+  DeathSound = 'ore/explode';
 }

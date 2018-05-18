@@ -24,8 +24,8 @@
 //**************************************************************************
 
 class MaceFX4 : Actor
-	game(GAME_Heretic)
-	__scriptid__(153);
+  game(GAME_Heretic)
+  __scriptid__(153);
 
 //==========================================================================
 //
@@ -35,30 +35,30 @@ class MaceFX4 : Actor
 
 int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
-	if (victim.bBoss || victim.bDontSquash)
-	{
-		// Don't allow cheap boss kills
-	}
-	else if (victim.bIsPlayer)
-	{
-		// Player specific checks
-		if (victim.bInvulnerable)
-		{
-			// Can't hurt invulnerable players
-		}
-		else if (AutoUseChaosDevice(victim))
-		{
-			// Player was saved using chaos device
-			return -1;
-		}
-		else
-			damage = 10000;	// Something's gonna die
-	}
-	else
-	{
-		damage = 10000;	// Something's gonna die
-	}
-	return ::DoSpecialDamage(victim, source, damage);
+  if (victim.bBoss || victim.bDontSquash)
+  {
+    // Don't allow cheap boss kills
+  }
+  else if (victim.bIsPlayer)
+  {
+    // Player specific checks
+    if (victim.bInvulnerable)
+    {
+      // Can't hurt invulnerable players
+    }
+    else if (AutoUseChaosDevice(victim))
+    {
+      // Player was saved using chaos device
+      return -1;
+    }
+    else
+      damage = 10000; // Something's gonna die
+  }
+  else
+  {
+    damage = 10000; // Something's gonna die
+  }
+  return ::DoSpecialDamage(victim, source, damage);
 }
 
 //==========================================================================
@@ -69,15 +69,15 @@ int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 
 final bool AutoUseChaosDevice(EntityEx Victim)
 {
-	Inventory Item = Victim.FindInventory(ArtiTeleport);
-	if (Item)
-	{
-		Victim.UseInventory(Item);
-		Victim.Health = (Victim.Health + 1) / 2;
-		Victim.Player.Health = Victim.Health;
-		return true;
-	}
-	return false;
+  Inventory Item = Victim.FindInventory(ArtiTeleport);
+  if (Item)
+  {
+    Victim.UseInventory(Item);
+    Victim.Health = (Victim.Health + 1) / 2;
+    Victim.Player.Health = Victim.Health;
+    return true;
+  }
+  return false;
 }
 //===========================================================================
 //
@@ -87,102 +87,102 @@ final bool AutoUseChaosDevice(EntityEx Victim)
 
 final void A_DeathBallImpact()
 {
-	int			i;
-	float		angle;
-	int			newAngle;
-	TAVec		angles;
-	TVec		Dir;
-	EntityEx	AimTarget;
+  int     i;
+  float   angle;
+  int     newAngle;
+  TAVec   angles;
+  TVec    Dir;
+  EntityEx  AimTarget;
 
-	if (Origin.z <= FloorZ && HitFloorType())
-	{
-		// Landed in some sort of liquid
-		Destroy();
-		return;
-	}
-	if ((Origin.z <= FloorZ) && Velocity.z)
-	{
-		// Bounce
-		newAngle = false;
-		if (Tracer)
-		{
-			if (!Tracer.bShootable)
-			{
-				// Target died
-				Tracer = none;
-			}
-			else
-			{
-				// Seek
-				angle = atan2(Tracer.Origin.y - Origin.y,
-					Tracer.Origin.x - Origin.x);
-				newAngle = true;
-			}
-		}
-		else
-		{
-			// Find new target
-			angles.pitch = 0.0;
-			angles.yaw = 0.0;
-			angles.roll = 0.0;
-			for (i = 0; i < 16; i++)
-			{
-				AimTarget = AimLineAttack(Dir, angles, 10.0 * 64.0);
-				if (AimTarget && Target != AimTarget)
-				{
-					Tracer = AimTarget;
-					angle = atan2(AimTarget.Origin.y - Origin.y,
-						AimTarget.Origin.x - Origin.x);
-					newAngle = true;
-					break;
-				}
-				angles.yaw = AngleMod360(angles.yaw + 45.0 / 2.0);
-			}
-		}
-		if (newAngle)
-		{
-			Angles.yaw = angle;
-			Velocity.x = Speed * cos(angle);
-			Velocity.y = Speed * sin(angle);
-		}
-		SetState(IdleState);
-		PlaySound('weapons/macestop', CHAN_VOICE);
-	}
-	else
-	{
-		// Explode
-		bNoGravity = true;
-		Gravity = 1.0;
-		SendExplosion(RGB(255, 128, 0), 86.0, Origin);
-		PlaySound('weapons/maceexplode', CHAN_VOICE);
-	}
+  if (Origin.z <= FloorZ && HitFloorType())
+  {
+    // Landed in some sort of liquid
+    Destroy();
+    return;
+  }
+  if ((Origin.z <= FloorZ) && Velocity.z)
+  {
+    // Bounce
+    newAngle = false;
+    if (Tracer)
+    {
+      if (!Tracer.bShootable)
+      {
+        // Target died
+        Tracer = none;
+      }
+      else
+      {
+        // Seek
+        angle = atan2(Tracer.Origin.y - Origin.y,
+          Tracer.Origin.x - Origin.x);
+        newAngle = true;
+      }
+    }
+    else
+    {
+      // Find new target
+      angles.pitch = 0.0;
+      angles.yaw = 0.0;
+      angles.roll = 0.0;
+      for (i = 0; i < 16; i++)
+      {
+        AimTarget = AimLineAttack(Dir, angles, 10.0 * 64.0);
+        if (AimTarget && Target != AimTarget)
+        {
+          Tracer = AimTarget;
+          angle = atan2(AimTarget.Origin.y - Origin.y,
+            AimTarget.Origin.x - Origin.x);
+          newAngle = true;
+          break;
+        }
+        angles.yaw = AngleMod360(angles.yaw + 45.0 / 2.0);
+      }
+    }
+    if (newAngle)
+    {
+      Angles.yaw = angle;
+      Velocity.x = Speed * cos(angle);
+      Velocity.y = Speed * sin(angle);
+    }
+    SetState(IdleState);
+    PlaySound('weapons/macestop', CHAN_VOICE);
+  }
+  else
+  {
+    // Explode
+    bNoGravity = true;
+    Gravity = 1.0;
+    SendExplosion(RGB(255, 128, 0), 86.0, Origin);
+    PlaySound('weapons/maceexplode', CHAN_VOICE);
+  }
 }
 
 states
 {
 Spawn:
-	FX02 E 99
-	Loop
+  FX02 E 99
+  Loop
 Death:
-	FX02 C 4 Bright A_DeathBallImpact
-	FX02 GHIJ 4 Bright
-	Stop
+  FX02 C 4 Bright A_DeathBallImpact
+  FX02 GHIJ 4 Bright
+  Stop
 }
 
 defaultproperties
 {
-	Radius = 8.0;
-	Height = 6.0;
-	Speed = 7.0 * 35.0;
-	Gravity = 0.125;
-	MissileDamage = 18;
-	BounceType = BOUNCE_Heretic;
-	bMissile = true;
-	bDropOff = true;
-	bNoBlockmap = true;
-	bActivatePCross = true;
-	bActivateImpact = true;
-	bBloodSplatter = true;
-	bThruGhost = true;
-	bTelestomp = true;
+  Radius = 8.0;
+  Height = 6.0;
+  Speed = 7.0 * 35.0;
+  Gravity = 0.125;
+  MissileDamage = 18;
+  BounceType = BOUNCE_Heretic;
+  bMissile = true;
+  bDropOff = true;
+  bNoBlockmap = true;
+  bActivatePCross = true;
+  bActivateImpact = true;
+  bBloodSplatter = true;
+  bThruGhost = true;
+  bTelestomp = true;
 }

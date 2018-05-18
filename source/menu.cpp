@@ -1,31 +1,31 @@
 //**************************************************************************
 //**
-//**	##   ##    ##    ##   ##   ####     ####   ###     ###
-//**	##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**	 ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**	 ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**	  ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**	   #    ##    ##    #      ####     ####   ##       ##
+//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**	$Id$
+//**  $Id$
 //**
-//**	Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
-//**	This program is free software; you can redistribute it and/or
+//**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
 //**  as published by the Free Software Foundation; either version 2
 //**  of the License, or (at your option) any later version.
 //**
-//**	This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-//**	
-//**	DOOM selection menu, options, episode etc.
-//**	Sliders and icons. Kinda widget stuff.
-//**	
+//**
+//**  DOOM selection menu, options, episode etc.
+//**  Sliders and icons. Kinda widget stuff.
+//**
 //**************************************************************************
 
 // HEADER FILES ------------------------------------------------------------
@@ -54,30 +54,30 @@
 
 //==========================================================================
 //
-//	COMMAND SetMenu
+//  COMMAND SetMenu
 //
 //==========================================================================
 
 COMMAND(SetMenu)
 {
-	GClGame->eventSetMenu(Args.Num() > 1 ? *Args[1] : "");
+  GClGame->eventSetMenu(Args.Num() > 1 ? *Args[1] : "");
 }
 
 //==========================================================================
 //
-//	MN_Init
+//  MN_Init
 //
 //==========================================================================
 
 void MN_Init()
 {
 #ifdef SERVER
-	GClGame->ClientFlags |= VClientGameBase::CF_LocalServer;
+  GClGame->ClientFlags |= VClientGameBase::CF_LocalServer;
 #else
-	GClGame->ClientFlags &= ~VClientGameBase::CF_LocalServer;
+  GClGame->ClientFlags &= ~VClientGameBase::CF_LocalServer;
 #endif
-	VRootWidget::StaticInit();
-	GClGame->eventRootWindowCreated();
+  VRootWidget::StaticInit();
+  GClGame->eventRootWindowCreated();
 }
 
 //==========================================================================
@@ -93,13 +93,13 @@ void MN_ActivateMenu () {
 
 //==========================================================================
 //
-//	MN_DeactivateMenu
+//  MN_DeactivateMenu
 //
 //==========================================================================
 
 void MN_DeactivateMenu()
 {
-	GClGame->eventDeactivateMenu();
+  GClGame->eventDeactivateMenu();
 }
 
 //==========================================================================
@@ -110,41 +110,41 @@ void MN_DeactivateMenu()
 
 bool MN_Responder(event_t* event)
 {
-	if (GClGame->eventMessageBoxResponder(event))
-	{
-		return true;
-	}
+  if (GClGame->eventMessageBoxResponder(event))
+  {
+    return true;
+  }
 
     // Pop-up menu?
     if (!MN_Active() && event->type == ev_keydown && !C_Active() &&
-		(!cl || cls.demoplayback || GGameInfo->NetMode == NM_TitleMap) &&
-		event->data1 != '`' && (event->data1 < K_F1 || event->data1 > K_F12))
-	{
-		MN_ActivateMenu();
-		return true;
-	}
+    (!cl || cls.demoplayback || GGameInfo->NetMode == NM_TitleMap) &&
+    event->data1 != '`' && (event->data1 < K_F1 || event->data1 > K_F12))
+  {
+    MN_ActivateMenu();
+    return true;
+  }
 
-	return GClGame->eventMenuResponder(event);
+  return GClGame->eventMenuResponder(event);
 }
 
 //==========================================================================
 //
-//	MN_Drawer
+//  MN_Drawer
 //
 //==========================================================================
 
 void MN_Drawer()
 {
-	GClGame->eventMessageBoxDrawer();
+  GClGame->eventMessageBoxDrawer();
 }
 
 //==========================================================================
 //
-//	MN_Active
+//  MN_Active
 //
 //==========================================================================
 
 bool MN_Active()
 {
-	return GClGame->eventMenuActive() || GClGame->eventMessageBoxActive();
+  return GClGame->eventMenuActive() || GClGame->eventMessageBoxActive();
 }

@@ -23,28 +23,28 @@
 //**
 //**************************************************************************
 //**
-//**	Placehiolder for DoomBuilder's 3D view camera that just destroys
+//**  Placehiolder for DoomBuilder's 3D view camera that just destroys
 //**  itself so that it doesn't show up as an unknown object.
 //**
 //**************************************************************************
 
 class DoomBuilderCamera : Actor
-	__mobjinfo__(32000);
+  __mobjinfo__(32000);
 
 //==========================================================================
 //
-//	BeginPlay
+//  BeginPlay
 //
 //==========================================================================
 
 void BeginPlay()
 {
-	::BeginPlay();
-	Destroy();
+  ::BeginPlay();
+  Destroy();
 }
 
 defaultproperties
 {
-	bNoBlockmap = true;
-	bNoSector = true;
+  bNoBlockmap = true;
+  bNoSector = true;
 }

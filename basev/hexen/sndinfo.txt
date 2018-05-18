@@ -12,74 +12,74 @@ $pitchshiftrange 3
 //
 //==========================================================================
 
-$random PlayerFighterExtremeDeathPicker	{ PlayerFighterExtreme1Death
-										  PlayerFighterExtreme2Death
-										  PlayerFighterExtreme3Death }
+$random PlayerFighterExtremeDeathPicker { PlayerFighterExtreme1Death
+                      PlayerFighterExtreme2Death
+                      PlayerFighterExtreme3Death }
 
-$playeralias	fighter	male	*usefail	PlayerFighterFailedUse
-$playeralias	fighter	male	*puzzfail	PuzzleFailFighter
-$playeralias	fighter	male	*grunt		PlayerFighterGrunt
-$playeralias	fighter	male	*land		PlayerLand
-$playeralias	fighter	male	*falling	PlayerFighterFallingScream
-$playeralias	fighter	male	*poison		PlayerPoisonCough
-$playeralias	fighter	male	*pain100	PlayerFighterPain
-$playersounddup	fighter	male	*pain75		*pain100
-$playersounddup	fighter	male	*pain50		*pain100
-$playersounddup	fighter	male	*pain25		*pain100
-$playeralias	fighter	male	*death		PlayerFighterNormalDeath
-$playeralias	fighter	male	*crazydeath	PlayerFighterCrazyDeath
-$playeralias	fighter	male	*xdeath		PlayerFighterExtremeDeathPicker
-$playeralias	fighter	male	*splat		PlayerFallingSplat
-$playeralias	fighter	male	*burndeath	PlayerFighterBurnDeath
-$playeralias	fighter male 	*fistgrunt	FighterGrunt
-$playersound	fighter	male	*jump		fgtjump
+$playeralias  fighter male  *usefail  PlayerFighterFailedUse
+$playeralias  fighter male  *puzzfail PuzzleFailFighter
+$playeralias  fighter male  *grunt    PlayerFighterGrunt
+$playeralias  fighter male  *land   PlayerLand
+$playeralias  fighter male  *falling  PlayerFighterFallingScream
+$playeralias  fighter male  *poison   PlayerPoisonCough
+$playeralias  fighter male  *pain100  PlayerFighterPain
+$playersounddup fighter male  *pain75   *pain100
+$playersounddup fighter male  *pain50   *pain100
+$playersounddup fighter male  *pain25   *pain100
+$playeralias  fighter male  *death    PlayerFighterNormalDeath
+$playeralias  fighter male  *crazydeath PlayerFighterCrazyDeath
+$playeralias  fighter male  *xdeath   PlayerFighterExtremeDeathPicker
+$playeralias  fighter male  *splat    PlayerFallingSplat
+$playeralias  fighter male  *burndeath  PlayerFighterBurnDeath
+$playeralias  fighter male  *fistgrunt  FighterGrunt
+$playersound  fighter male  *jump   fgtjump
 
-$random PlayerClericExtremeDeathPicker	{ PlayerClericExtreme1Death
-										  PlayerClericExtreme2Death
-										  PlayerClericExtreme3Death }
+$random PlayerClericExtremeDeathPicker  { PlayerClericExtreme1Death
+                      PlayerClericExtreme2Death
+                      PlayerClericExtreme3Death }
 
-$playeralias	cleric	male	*usefail	PlayerClericFailedUse
-$playeralias	cleric	male	*puzzfail	PuzzleFailCleric
-$playeralias	cleric	male	*grunt		PlayerClericGrunt
-$playeralias	cleric	male	*land		PlayerLand
-$playeralias	cleric	male	*falling	PlayerClericFallingScream
-$playeralias	cleric	male	*poison		PlayerPoisonCough
-$playeralias	cleric	male	*pain100	PlayerClericPain
-$playersounddup	cleric	male	*pain75		*pain100
-$playersounddup	cleric	male	*pain50		*pain100
-$playersounddup	cleric	male	*pain25		*pain100
-$playeralias	cleric	male	*death		PlayerClericNormalDeath
-$playeralias	cleric	male	*crazydeath	PlayerClericCrazyDeath
-$playeralias	cleric	male	*xdeath		PlayerClericExtremeDeathPicker
-$playeralias	cleric	male	*splat		PlayerFallingSplat
-$playeralias	cleric	male	*burndeath	PlayerClericBurnDeath
-$playersound	cleric	male	*jump		plrjump
+$playeralias  cleric  male  *usefail  PlayerClericFailedUse
+$playeralias  cleric  male  *puzzfail PuzzleFailCleric
+$playeralias  cleric  male  *grunt    PlayerClericGrunt
+$playeralias  cleric  male  *land   PlayerLand
+$playeralias  cleric  male  *falling  PlayerClericFallingScream
+$playeralias  cleric  male  *poison   PlayerPoisonCough
+$playeralias  cleric  male  *pain100  PlayerClericPain
+$playersounddup cleric  male  *pain75   *pain100
+$playersounddup cleric  male  *pain50   *pain100
+$playersounddup cleric  male  *pain25   *pain100
+$playeralias  cleric  male  *death    PlayerClericNormalDeath
+$playeralias  cleric  male  *crazydeath PlayerClericCrazyDeath
+$playeralias  cleric  male  *xdeath   PlayerClericExtremeDeathPicker
+$playeralias  cleric  male  *splat    PlayerFallingSplat
+$playeralias  cleric  male  *burndeath  PlayerClericBurnDeath
+$playersound  cleric  male  *jump   plrjump
 
-$random PlayerMageExtremeDeathPicker	{ PlayerMageExtreme1Death
-										  PlayerMageExtreme2Death
-										  PlayerMageExtreme3Death }
+$random PlayerMageExtremeDeathPicker  { PlayerMageExtreme1Death
+                      PlayerMageExtreme2Death
+                      PlayerMageExtreme3Death }
 
-$playeralias	mage	male	*usefail	PlayerMageFailedUse
-$playeralias	mage	male	*puzzfail	PuzzleFailMage
-$playeralias	mage	male	*grunt		PlayerMageGrunt
-$playeralias	mage	male	*land		PlayerLand
-$playeralias	mage	male	*falling	PlayerMageFallingScream
-$playeralias	mage	male	*poison		PlayerPoisonCough
-$playeralias	mage	male	*pain100	PlayerMagePain
-$playersounddup	mage	male	*pain75		*pain100
-$playersounddup	mage	male	*pain50		*pain100
-$playersounddup	mage	male	*pain25		*pain100
-$playeralias	mage	male	*death		PlayerMageNormalDeath
-$playeralias	mage	male	*crazydeath	PlayerMageCrazyDeath
-$playeralias	mage	male	*xdeath		PlayerMageExtremeDeathPicker
-$playeralias	mage	male	*splat		PlayerFallingSplat
-$playeralias	mage	male	*burndeath	PlayerMageBurnDeath
-$playersound	mage	male	*jump		mgjump
+$playeralias  mage  male  *usefail  PlayerMageFailedUse
+$playeralias  mage  male  *puzzfail PuzzleFailMage
+$playeralias  mage  male  *grunt    PlayerMageGrunt
+$playeralias  mage  male  *land   PlayerLand
+$playeralias  mage  male  *falling  PlayerMageFallingScream
+$playeralias  mage  male  *poison   PlayerPoisonCough
+$playeralias  mage  male  *pain100  PlayerMagePain
+$playersounddup mage  male  *pain75   *pain100
+$playersounddup mage  male  *pain50   *pain100
+$playersounddup mage  male  *pain25   *pain100
+$playeralias  mage  male  *death    PlayerMageNormalDeath
+$playeralias  mage  male  *crazydeath PlayerMageCrazyDeath
+$playeralias  mage  male  *xdeath   PlayerMageExtremeDeathPicker
+$playeralias  mage  male  *splat    PlayerFallingSplat
+$playeralias  mage  male  *burndeath  PlayerMageBurnDeath
+$playersound  mage  male  *jump   mgjump
 
-$playeralias	pig		male	*usefail	PigActive1
+$playeralias  pig   male  *usefail  PigActive1
 
 // Use *pain in a script to play any of the pain sounds
-$random *pain					{ *pain100  *pain75  *pain50  *pain25 }
+$random *pain         { *pain100  *pain75  *pain50  *pain25 }
 
 //==========================================================================
 //
@@ -87,99 +87,99 @@ $random *pain					{ *pain100  *pain75  *pain50  *pain25 }
 //
 //==========================================================================
 
-$limit PlayerFighterFailedUse	1
-$limit PlayerClericFailedUse	1
-$limit PlayerMageFailedUse		1
+$limit PlayerFighterFailedUse 1
+$limit PlayerClericFailedUse  1
+$limit PlayerMageFailedUse    1
 
-$limit SorcererBallWoosh		4
-$limit SorcererBallBounce		3
-$limit SorcererBallExplode		3
-$limit SorcererBigBallExplode	3
-$limit SorcererBallPop			3
+$limit SorcererBallWoosh    4
+$limit SorcererBallBounce   3
+$limit SorcererBallExplode    3
+$limit SorcererBigBallExplode 3
+$limit SorcererBallPop      3
 
-$limit Ambient1					1
-$limit Ambient2					1
-$limit Ambient3					1
-$limit Ambient4					1
-$limit Ambient5					1
-$limit Ambient6					1
-$limit Ambient7					1
-$limit Ambient8					1
-$limit Ambient9					1
-$limit Ambient10				1
-$limit Ambient11				1
-$limit Ambient12				1
-$limit Ambient13				1
-$limit Ambient14				1
-$limit Ambient15				1
+$limit Ambient1         1
+$limit Ambient2         1
+$limit Ambient3         1
+$limit Ambient4         1
+$limit Ambient5         1
+$limit Ambient6         1
+$limit Ambient7         1
+$limit Ambient8         1
+$limit Ambient9         1
+$limit Ambient10        1
+$limit Ambient11        1
+$limit Ambient12        1
+$limit Ambient13        1
+$limit Ambient14        1
+$limit Ambient15        1
 
-$limit MysticIncant				4
+$limit MysticIncant       4
 
-$limit DoorCloseLight			4
+$limit DoorCloseLight     4
 
-$limit PuppyBeat				0
-$limit CeantaurPain				0
-$limit BishopPain				0
-$limit SerpentPain				0
-$limit DemonPain				0
-$limit WraithPain				0
-$limit MaulatorPain				0
-$limit EttinPain				0
-$limit FireDemonPain			0
-$limit SorcererPain				0
-$limit DragonPain				0
+$limit PuppyBeat        0
+$limit CeantaurPain       0
+$limit BishopPain       0
+$limit SerpentPain        0
+$limit DemonPain        0
+$limit WraithPain       0
+$limit MaulatorPain       0
+$limit EttinPain        0
+$limit FireDemonPain      0
+$limit SorcererPain       0
+$limit DragonPain       0
 
-$pitchshift PlayerMageNormalDeath		0
-$pitchshift PlayerMageCrazyDeath		0
-$pitchshift PlayerMageExtreme1Death		0
-$pitchshift PlayerMageExtreme2Death		0
-$pitchshift PlayerMageExtreme3Death		0
-$pitchshift PlayerMageBurnDeath			0
-$pitchshift PlayerMagePain				0
-$pitchshift PlayerMageGrunt				0
-$pitchshift PlayerMageFallingScream		0
-$pitchshift PlayerMageFailedUse			0
+$pitchshift PlayerMageNormalDeath   0
+$pitchshift PlayerMageCrazyDeath    0
+$pitchshift PlayerMageExtreme1Death   0
+$pitchshift PlayerMageExtreme2Death   0
+$pitchshift PlayerMageExtreme3Death   0
+$pitchshift PlayerMageBurnDeath     0
+$pitchshift PlayerMagePain        0
+$pitchshift PlayerMageGrunt       0
+$pitchshift PlayerMageFallingScream   0
+$pitchshift PlayerMageFailedUse     0
 
-$pitchshift PickupWeapon		0
-$pitchshift PickupPiece			0
-$pitchshift WeaponBuild			0
+$pitchshift PickupWeapon    0
+$pitchshift PickupPiece     0
+$pitchshift WeaponBuild     0
 
-$pitchshift BellRing			0
+$pitchshift BellRing      0
 
-$alias world/drip				Ambient10
-$alias world/watersplash		WaterSplash
-$alias world/lavasizzle			LavaSizzle
-$alias world/sludgegloop		SludgeGloop
-$alias world/wind				Wind
-$alias world/quake				Earthquake
-$alias world/thunder			ThunderCrash
-$alias misc/chat				Chat
-$alias misc/chat2				Chat
-$alias misc/teleport			Teleport
-$alias misc/spawn				Respawn
-$alias misc/i_pkup				PickupItem
-$alias misc/w_pkup				PickupWeapon
-$alias misc/p_pkup				PickupArtifact
-$alias misc/k_pkup				PickupKey
-$alias misc/health_pkup			misc/i_pkup
-$alias misc/armor_pkup			misc/i_pkup
-$alias misc/ammo_pkup			misc/i_pkup
-$alias misc/invuse				UseArtifact
-$alias misc/keytry				DoorLocked
-$alias misc/freeze				FreezeDeath
-$alias misc/icebreak			FreezeShatter
-$alias misc/fallingsplat		PlayerFallingSplat
+$alias world/drip       Ambient10
+$alias world/watersplash    WaterSplash
+$alias world/lavasizzle     LavaSizzle
+$alias world/sludgegloop    SludgeGloop
+$alias world/wind       Wind
+$alias world/quake        Earthquake
+$alias world/thunder      ThunderCrash
+$alias misc/chat        Chat
+$alias misc/chat2       Chat
+$alias misc/teleport      Teleport
+$alias misc/spawn       Respawn
+$alias misc/i_pkup        PickupItem
+$alias misc/w_pkup        PickupWeapon
+$alias misc/p_pkup        PickupArtifact
+$alias misc/k_pkup        PickupKey
+$alias misc/health_pkup     misc/i_pkup
+$alias misc/armor_pkup      misc/i_pkup
+$alias misc/ammo_pkup     misc/i_pkup
+$alias misc/invuse        UseArtifact
+$alias misc/keytry        DoorLocked
+$alias misc/freeze        FreezeDeath
+$alias misc/icebreak      FreezeShatter
+$alias misc/fallingsplat    PlayerFallingSplat
 
-$alias minotaur/sight			MaulatorSight
-$alias minotaur/pain			MaulatorPain
-$alias minotaur/death			MaulatorDeath
-$alias minotaur/melee			MaulatorHamSwing
-$alias minotaur/active			MaulatorActive
-$alias minotaur/attack1			MaulatorHamHit
-$alias minotaur/attack2			MaulatorHamSwing
+$alias minotaur/sight     MaulatorSight
+$alias minotaur/pain      MaulatorPain
+$alias minotaur/death     MaulatorDeath
+$alias minotaur/melee     MaulatorHamSwing
+$alias minotaur/active      MaulatorActive
+$alias minotaur/attack1     MaulatorHamHit
+$alias minotaur/attack2     MaulatorHamSwing
 
-$random BishopActiveSounds		{ BishopActive BishopSight }
-$random PigActive				{ PigActive1 PigActive2 }
+$random BishopActiveSounds    { BishopActive BishopSight }
+$random PigActive       { PigActive1 PigActive2 }
 
 //==========================================================================
 //
@@ -187,13 +187,13 @@ $random PigActive				{ PigActive1 PigActive2 }
 //
 //==========================================================================
 
-misc/ripslop					dsempty
+misc/ripslop          dsempty
 
-//	Sparks
-world/spark1					spark1
-world/spark2					spark2
-world/spark3					spark3
-$random world/spark				{ world/spark1  world/spark2  world/spark3 }
+//  Sparks
+world/spark1          spark1
+world/spark2          spark2
+world/spark3          spark3
+$random world/spark       { world/spark1  world/spark2  world/spark3 }
 
 //==========================================================================
 //
@@ -201,15 +201,15 @@ $random world/spark				{ world/spark1  world/spark2  world/spark3 }
 //
 //==========================================================================
 
-$alias menu/activate			DoorCloseLight
-$alias menu/cursor				FighterHammerHitWall
-$alias menu/choose				DoorCloseLight
-$alias menu/change				PickupKey
-$alias menu/backup				PickupKey
-$alias menu/clear				PlatformStop
-$alias menu/prompt				Chat
-$alias menu/invalid				DoorCloseMetal
-$alias menu/dismiss				PlatformStop
+$alias menu/activate      DoorCloseLight
+$alias menu/cursor        FighterHammerHitWall
+$alias menu/choose        DoorCloseLight
+$alias menu/change        PickupKey
+$alias menu/backup        PickupKey
+$alias menu/clear       PlatformStop
+$alias menu/prompt        Chat
+$alias menu/invalid       DoorCloseMetal
+$alias menu/dismiss       PlatformStop
 
 //===========================================================================
 //

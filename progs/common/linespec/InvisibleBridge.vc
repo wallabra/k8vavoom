@@ -24,41 +24,41 @@
 //**************************************************************************
 
 class InvisibleBridge : Actor
-	__mobjinfo__(9990);
+  __mobjinfo__(9990);
 
 //==========================================================================
 //
-//	BeginPlay
+//  BeginPlay
 //
 //==========================================================================
 
 void BeginPlay()
 {
-	::BeginPlay();
-	if (Args[0])
-	{
-		Radius = itof(Args[0]);
-	}
-	if (Args[1])
-	{
-		Height = itof(Args[1]);
-	}
+  ::BeginPlay();
+  if (Args[0])
+  {
+    Radius = itof(Args[0]);
+  }
+  if (Args[1])
+  {
+    Height = itof(Args[1]);
+  }
 }
 
 states
 {
 Spawn:
-	TNT1 A -1
-	Stop
+  TNT1 A -1
+  Stop
 }
 
 defaultproperties
 {
-	Radius = 32.0;
-	Height = 4.0;
-	RenderStyle = STYLE_None;
-	bSolid = true;
-	bNoGravity = true;
-	bNoLiftDrop = true;
-	bActLikeBridge = true;
+  Radius = 32.0;
+  Height = 4.0;
+  RenderStyle = STYLE_None;
+  bSolid = true;
+  bNoGravity = true;
+  bNoLiftDrop = true;
+  bActLikeBridge = true;
 }

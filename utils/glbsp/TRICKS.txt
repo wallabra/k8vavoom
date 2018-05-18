@@ -15,7 +15,7 @@ the following special physics effects:
   2. deep water (self-ref sector floor is lower)
   3. force fields (self-ref sector blocks movement)
   4. railings you can jump over.
- 
+
 glBSP detects these lines and does two things: prevents
 spurious warnings about mismatched sectors, and adjusts
 the final subsector so that the FIRST seg is not one on
@@ -111,4 +111,3 @@ can do in these cases.
 
 
 ---------------------------------------------------------------------------
-

@@ -24,62 +24,62 @@
 //**************************************************************************
 
 class BasicArmorPickup : Armor
-	abstract;
+  abstract;
 
-int				SaveAmount;
-float			SavePercent;
+int       SaveAmount;
+float     SavePercent;
 
 //==========================================================================
 //
-//	CreateCopy
+//  CreateCopy
 //
 //==========================================================================
 
 Inventory CreateCopy(EntityEx Toucher)
 {
-	BasicArmorPickup Copy = BasicArmorPickup(::CreateCopy(Toucher));
-	if (Copy)
-	{
-		Copy.SaveAmount = SaveAmount;
-		Copy.SavePercent = SavePercent;
-	}
-	return Copy;
+  BasicArmorPickup Copy = BasicArmorPickup(::CreateCopy(Toucher));
+  if (Copy)
+  {
+    Copy.SaveAmount = SaveAmount;
+    Copy.SavePercent = SavePercent;
+  }
+  return Copy;
 }
 
 //==========================================================================
 //
-//	Use
+//  Use
 //
 //==========================================================================
 
 bool Use(bool Pickup)
 {
-	BasicArmor Armor = BasicArmor(EntityEx(Owner).FindInventory(BasicArmor));
-	if (!Armor)
-	{
-		Armor = Spawn(BasicArmor,,,, false);
-		Armor.AttachToOwner(EntityEx(Owner));
-	}
-	else
-	{
-		//	Can't use it if owner has more armor that is given by this one.
-		if (Armor.Amount >= SaveAmount)
-		{
-			return false;
-		}
-		//	Don't use if you are picking it up and already have some.
-		if (Pickup && Armor.Amount > 0 && MaxAmount > 0)
-		{
-			return false;
-		}
-	}
-	Armor.SavePercent = SavePercent;
-	Armor.Amount = SaveAmount;
-	return true;
+  BasicArmor Armor = BasicArmor(EntityEx(Owner).FindInventory(BasicArmor));
+  if (!Armor)
+  {
+    Armor = Spawn(BasicArmor,,,, false);
+    Armor.AttachToOwner(EntityEx(Owner));
+  }
+  else
+  {
+    //  Can't use it if owner has more armor that is given by this one.
+    if (Armor.Amount >= SaveAmount)
+    {
+      return false;
+    }
+    //  Don't use if you are picking it up and already have some.
+    if (Pickup && Armor.Amount > 0 && MaxAmount > 0)
+    {
+      return false;
+    }
+  }
+  Armor.SavePercent = SavePercent;
+  Armor.Amount = SaveAmount;
+  return true;
 }
 
 defaultproperties
 {
-	MaxAmount = 0;
-	bAutoActivate = true;
+  MaxAmount = 0;
+  bAutoActivate = true;
 }

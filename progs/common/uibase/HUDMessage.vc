@@ -25,218 +25,218 @@
 
 class HUDMessage : Widget;
 
-//	ID, used as a priority or to replace a previous message.
-int					Id;
+//  ID, used as a priority or to replace a previous message.
+int         Id;
 
-array<SplitLine>	MsgLines;
-name				MsgFont;
-int					MsgColour;
-float				MsgAlpha;
+array<SplitLine>  MsgLines;
+name        MsgFont;
+int         MsgColour;
+float       MsgAlpha;
 
-//	Calculated size of the message box.
-int					MsgWidth;
-int					MsgHeight;
+//  Calculated size of the message box.
+int         MsgWidth;
+int         MsgHeight;
 
-//	Message location
-float				MsgX;
-float				MsgY;
+//  Message location
+float       MsgX;
+float       MsgY;
 
-int					HudWidth;
-int					HudHeight;
+int         HudWidth;
+int         HudHeight;
 
-//	True if text lines should be centred.
-bool				bCentreX;
+//  True if text lines should be centred.
+bool        bCentreX;
 
-float				HoldTime;
-float				Time;
+float       HoldTime;
+float       Time;
 
 //==========================================================================
 //
-//	Init
+//  Init
 //
 //==========================================================================
 
 void Init(string Message, name AFont, int Type, int AId, int Colour,
-	float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
-	float Time1, float Time2)
+  float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
+  float Time1, float Time2)
 {
-	int		i;
+  int   i;
 
-	Id = AId;
-	MsgFont = AFont;
-	if (!MsgFont)
-	{
-		MsgFont = 'smallfont';
-	}
-	MsgColour = Colour;
-	HoldTime = AHoldTime;
+  Id = AId;
+  MsgFont = AFont;
+  if (!MsgFont)
+  {
+    MsgFont = 'smallfont';
+  }
+  MsgColour = Colour;
+  HoldTime = AHoldTime;
 
-	//	Position of the message.
-	MsgX = AMsgX;
-	MsgY = AMsgY;
-	if (AHudWidth == 0 || AHudHeight == 0)
-	{
-		if (fabs(MsgX) > 2.0)
-		{
-			bCentreX = true;
-			MsgX = 0.5;
-		}
-		else
-		{
-			if (fabs(MsgX) > 1.0)
-			{
-				bCentreX = true;
-			}
-			MsgX = MsgX > 1.0 ? MsgX - 1.0 : MsgX < -1.0 ? MsgX + 1.0 : MsgX;
-		}
-	}
-	else
-	{
-		HudWidth = AHudWidth;
-		HudHeight = AHudHeight;
-		Width = abs(HudWidth);
-		Height = abs(HudHeight);
-		ScaleX = itof(Parent.Width) / itof(Width);
-		ScaleY = itof(Parent.Height) / itof(Height);
+  //  Position of the message.
+  MsgX = AMsgX;
+  MsgY = AMsgY;
+  if (AHudWidth == 0 || AHudHeight == 0)
+  {
+    if (fabs(MsgX) > 2.0)
+    {
+      bCentreX = true;
+      MsgX = 0.5;
+    }
+    else
+    {
+      if (fabs(MsgX) > 1.0)
+      {
+        bCentreX = true;
+      }
+      MsgX = MsgX > 1.0 ? MsgX - 1.0 : MsgX < -1.0 ? MsgX + 1.0 : MsgX;
+    }
+  }
+  else
+  {
+    HudWidth = AHudWidth;
+    HudHeight = AHudHeight;
+    Width = abs(HudWidth);
+    Height = abs(HudHeight);
+    ScaleX = itof(Parent.Width) / itof(Width);
+    ScaleY = itof(Parent.Height) / itof(Height);
 
-		int IntPart = ftoi(MsgX);
-		int FracPart = ftoi(fabs(MsgX - itof(IntPart)) * 10.0 + 0.5);
-		if (FracPart & 4)
-		{
-			bCentreX = true;
-		}
-		if (MsgX > 0.0)
-		{
-			MsgX = itof(IntPart) + itof(FracPart & 3) / 10.0;
-		}
-		else
-		{
-			MsgX = itof(IntPart) - itof(FracPart & 3) / 10.0;
-		}
-	}
+    int IntPart = ftoi(MsgX);
+    int FracPart = ftoi(fabs(MsgX - itof(IntPart)) * 10.0 + 0.5);
+    if (FracPart & 4)
+    {
+      bCentreX = true;
+    }
+    if (MsgX > 0.0)
+    {
+      MsgX = itof(IntPart) + itof(FracPart & 3) / 10.0;
+    }
+    else
+    {
+      MsgX = itof(IntPart) - itof(FracPart & 3) / 10.0;
+    }
+  }
 
-	//	Calculate width and height of the text.
-	SetFont(MsgFont);
-	MsgHeight = SplitText(Message, MsgLines, Width);
-	MsgWidth = 0;
-	for (i = 0; i < MsgLines.Num; i++)
-	{
-		if (MsgLines[i].Width > MsgWidth)
-		{
-			MsgWidth = MsgLines[i].Width;
-		}
-	}
+  //  Calculate width and height of the text.
+  SetFont(MsgFont);
+  MsgHeight = SplitText(Message, MsgLines, Width);
+  MsgWidth = 0;
+  for (i = 0; i < MsgLines.Num; i++)
+  {
+    if (MsgLines[i].Width > MsgWidth)
+    {
+      MsgWidth = MsgLines[i].Width;
+    }
+  }
 }
 
 //==========================================================================
 //
-//	OnDraw
+//  OnDraw
 //
 //==========================================================================
 
 void OnDraw()
 {
-	int		i;
-	int		x;
-	int		y;
+  int   i;
+  int   x;
+  int   y;
 
-	if (HudWidth == 0)
-	{
-		if (MsgX > 0.0)
-		{
-			x = ftoi(itof(Width - MsgWidth) * MsgX);
-		}
-		else
-		{
-			x = ftoi(itof(Width) * -MsgX);
-		}
-		if (MsgY > 0.0)
-		{
-			y = ftoi(itof(Height - MsgHeight) * MsgY);
-		}
-		else
-		{
-			y = ftoi(itof(Height) * -MsgY);
-		}
-	}
-	else
-	{
-		int IntPart = ftoi(MsgX);
-		int FracPart = ftoi(fabs(MsgX - itof(IntPart)) * 10.0 + 0.5);
-		x = IntPart;
-		//	Fractional part specifies alignment, 0 - centre, 1 - left,
-		// 2 - right.
-		switch (FracPart & 3)
-		{
-		case 0:
-			x -= MsgWidth / 2;
-			break;
-		case 2:
-			x -= MsgWidth;
-			break;
-		}
+  if (HudWidth == 0)
+  {
+    if (MsgX > 0.0)
+    {
+      x = ftoi(itof(Width - MsgWidth) * MsgX);
+    }
+    else
+    {
+      x = ftoi(itof(Width) * -MsgX);
+    }
+    if (MsgY > 0.0)
+    {
+      y = ftoi(itof(Height - MsgHeight) * MsgY);
+    }
+    else
+    {
+      y = ftoi(itof(Height) * -MsgY);
+    }
+  }
+  else
+  {
+    int IntPart = ftoi(MsgX);
+    int FracPart = ftoi(fabs(MsgX - itof(IntPart)) * 10.0 + 0.5);
+    x = IntPart;
+    //  Fractional part specifies alignment, 0 - centre, 1 - left,
+    // 2 - right.
+    switch (FracPart & 3)
+    {
+    case 0:
+      x -= MsgWidth / 2;
+      break;
+    case 2:
+      x -= MsgWidth;
+      break;
+    }
 
-		IntPart = ftoi(MsgY);
-		FracPart = ftoi(fabs(MsgY - itof(IntPart)) * 10.0 + 0.5);
-		y = IntPart;
-		//	Fractional part specifies alignment, 0 - centre, 1 - top,
-		// 2 - bottom.
-		switch (FracPart & 3)
-		{
-		case 0:
-			y -= MsgHeight / 2;
-			break;
-		case 2:
-			y -= MsgHeight;
-			break;
-		}
-	}
+    IntPart = ftoi(MsgY);
+    FracPart = ftoi(fabs(MsgY - itof(IntPart)) * 10.0 + 0.5);
+    y = IntPart;
+    //  Fractional part specifies alignment, 0 - centre, 1 - top,
+    // 2 - bottom.
+    switch (FracPart & 3)
+    {
+    case 0:
+      y -= MsgHeight / 2;
+      break;
+    case 2:
+      y -= MsgHeight;
+      break;
+    }
+  }
 
-	for (i = 0; i < MsgLines.Num; i++)
-	{
-		if (bCentreX)
-		{
-			DrawLine(i, x + (MsgWidth - MsgLines[i].Width) / 2, y,
-				MsgLines[i].Text);
-		}
-		else
-		{
-			DrawLine(i, x, y, MsgLines[i].Text);
-		}
-		y += MsgHeight / MsgLines.Num;
-	}
+  for (i = 0; i < MsgLines.Num; i++)
+  {
+    if (bCentreX)
+    {
+      DrawLine(i, x + (MsgWidth - MsgLines[i].Width) / 2, y,
+        MsgLines[i].Text);
+    }
+    else
+    {
+      DrawLine(i, x, y, MsgLines[i].Text);
+    }
+    y += MsgHeight / MsgLines.Num;
+  }
 }
 
 //==========================================================================
 //
-//	DrawLine
+//  DrawLine
 //
 //==========================================================================
 
 void DrawLine(int LineIdx, int x, int y, string Text)
 {
-	DrawText(x, y, Text, MsgColour, CR_YELLOW, MsgAlpha);
+  DrawText(x, y, Text, MsgColour, CR_YELLOW, MsgAlpha);
 }
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	Time += DeltaTime;
-	if (HoldTime && HoldTime < Time)
-	{
-		Destroy();
-	}
+  Time += DeltaTime;
+  if (HoldTime && HoldTime < Time)
+  {
+    Destroy();
+  }
 }
 
 defaultproperties
 {
-	Width = 640;
-	Height = 480;
-	bTickEnabled = true;
-	MsgAlpha = 1.0;
+  Width = 640;
+  Height = 480;
+  bTickEnabled = true;
+  MsgAlpha = 1.0;
 }

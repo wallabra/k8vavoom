@@ -31,46 +31,46 @@ int CurPage;
 
 //==========================================================================
 //
-//	CreateChoices
+//  CreateChoices
 //
 //==========================================================================
 
 void CreateChoices()
 {
-	if (!IsAnyDoom2) {
-		NumPages = (WadLumpPresent('e4m1') ? 1 : 2);
-	} else {
-		NumPages = 1;
-	}
-	CurPage = 0;
+  if (!IsAnyDoom2) {
+    NumPages = (WadLumpPresent('e4m1') ? 1 : 2);
+  } else {
+    NumPages = 1;
+  }
+  CurPage = 0;
 
-	Pic = NewChild(MenuStaticBitmap);
-	if (IsAnyDoom2) Pic.SetPic('help'); else Pic.SetPic('help1');
+  Pic = NewChild(MenuStaticBitmap);
+  if (IsAnyDoom2) Pic.SetPic('help'); else Pic.SetPic('help1');
 }
 
 //==========================================================================
 //
-//	Key
+//  Key
 //
 //==========================================================================
 
 bool OnKeyDown(int key)
 {
-	LocalSound('menu/clear');
-	//ClGame.ForceMenuOff(); // for one page
-	++CurPage;
-	if (key == K_ESCAPE || CurPage >= NumPages) {
-		ClGame.ForceMenuOff();
-	} else {
-		Pic.SetPic('help2');
-	}
-	return true;
+  LocalSound('menu/clear');
+  //ClGame.ForceMenuOff(); // for one page
+  ++CurPage;
+  if (key == K_ESCAPE || CurPage >= NumPages) {
+    ClGame.ForceMenuOff();
+  } else {
+    Pic.SetPic('help2');
+  }
+  return true;
 }
 
 defaultproperties
 {
-	X = 0;
-	Y = 0;
-	ScaleX = 2.0;
-	ScaleY = 2.4;
+  X = 0;
+  Y = 0;
+  ScaleX = 2.0;
+  ScaleY = 2.4;
 }

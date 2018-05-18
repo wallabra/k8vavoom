@@ -43,78 +43,78 @@ int page_pic;
 
 void AdvanceDemo()
 {
-	if (StartTitleMap())
-	{
-		return;
-	}
+  if (StartTitleMap())
+  {
+    return;
+  }
 
-	demosequence++;
-	if (!IsAnyDoom2) {
-		if (WadLumpPresent('e4m1'))
-			demosequence %= 7;
-		else
-			demosequence %= 6;
-	} else {
-		demosequence %= 6;
-	}
+  demosequence++;
+  if (!IsAnyDoom2) {
+    if (WadLumpPresent('e4m1'))
+      demosequence %= 7;
+    else
+      demosequence %= 6;
+  } else {
+    demosequence %= 6;
+  }
 
-	switch (demosequence)
-	{
-	case 0:
-		page_pic = R_RegisterPic('titlepic');
-		if (!IsAnyDoom2) {
-			pagetime = 170.0 / 35.0;
-			//S_StartSong("D_INTRO", P_GetCDTitleTrack(), false);
-			CmdBuf_AddText("music play d_intro\n");
-		} else {
-			pagetime = 11.0;
-			//S_StartSong("D_DM2TTL", P_GetCDTitleTrack(), false);
-			CmdBuf_AddText("music play d_dm2ttl\n");
-		}
-		break;
+  switch (demosequence)
+  {
+  case 0:
+    page_pic = R_RegisterPic('titlepic');
+    if (!IsAnyDoom2) {
+      pagetime = 170.0 / 35.0;
+      //S_StartSong("D_INTRO", P_GetCDTitleTrack(), false);
+      CmdBuf_AddText("music play d_intro\n");
+    } else {
+      pagetime = 11.0;
+      //S_StartSong("D_DM2TTL", P_GetCDTitleTrack(), false);
+      CmdBuf_AddText("music play d_dm2ttl\n");
+    }
+    break;
 
-	case 1:
-		CmdBuf_AddText("PlayDemo demo1\n");
-		break;
+  case 1:
+    CmdBuf_AddText("PlayDemo demo1\n");
+    break;
 
-	case 2:
-		pagetime = 200.0 / 35.0;
-		page_pic = R_RegisterPic('credit');
-		break;
+  case 2:
+    pagetime = 200.0 / 35.0;
+    page_pic = R_RegisterPic('credit');
+    break;
 
-	case 3:
-		CmdBuf_AddText("PlayDemo demo2\n");
-		break;
+  case 3:
+    CmdBuf_AddText("PlayDemo demo2\n");
+    break;
 
-	case 4:
-		if (!IsAnyDoom2) {
-			pagetime = 200.0 / 35.0;
-			if (WadLumpPresent('e4m1'))
-			{
-				page_pic = R_RegisterPic('credit');
-			}
-			else
-			{
-				page_pic = R_RegisterPic('help2');
-			}
-		} else {
-			pagetime = 11.0;
-			page_pic = R_RegisterPic('titlepic');
-			CmdBuf_AddText("music play d_dm2ttl\n");
-		}
-		break;
+  case 4:
+    if (!IsAnyDoom2) {
+      pagetime = 200.0 / 35.0;
+      if (WadLumpPresent('e4m1'))
+      {
+        page_pic = R_RegisterPic('credit');
+      }
+      else
+      {
+        page_pic = R_RegisterPic('help2');
+      }
+    } else {
+      pagetime = 11.0;
+      page_pic = R_RegisterPic('titlepic');
+      CmdBuf_AddText("music play d_dm2ttl\n");
+    }
+    break;
 
-	case 5:
-		CmdBuf_AddText("PlayDemo demo3\n");
-		break;
+  case 5:
+    CmdBuf_AddText("PlayDemo demo3\n");
+    break;
 
-		// THE DEFINITIVE DOOM Special Edition demo
-	case 6:
-		if (!IsAnyDoom2) {
-			CmdBuf_AddText("PlayDemo demo4\n");
-		}
-		break;
-	}
+    // THE DEFINITIVE DOOM Special Edition demo
+  case 6:
+    if (!IsAnyDoom2) {
+      CmdBuf_AddText("PlayDemo demo4\n");
+    }
+    break;
+  }
 }
 
 //==========================================================================
@@ -125,34 +125,34 @@ void AdvanceDemo()
 
 void ForceTitle()
 {
-	pagetime = (!IsAnyDoom2 ? 5.0 : 11.0);
-	page_pic = R_RegisterPic('titlepic');
+  pagetime = (!IsAnyDoom2 ? 5.0 : 11.0);
+  page_pic = R_RegisterPic('titlepic');
 }
 
 //==========================================================================
 //
-//	OnVisibilityChanged
+//  OnVisibilityChanged
 //
 //==========================================================================
 
 void OnVisibilityChanged(bool bNewVisibility)
 {
-	bTickEnabled = bNewVisibility;
+  bTickEnabled = bNewVisibility;
 }
 
 //==========================================================================
 //
-//	Tick
+//  Tick
 //
 //==========================================================================
 
 void Tick(float DeltaTime)
 {
-	pagetime -= DeltaTime;
-	if (demosequence == -1 || (/*!ClGame.MenuActive() &&*/ pagetime < 0.0))
-	{
-		AdvanceDemo();
-	}
+  pagetime -= DeltaTime;
+  if (demosequence == -1 || (/*!ClGame.MenuActive() &&*/ pagetime < 0.0))
+  {
+    AdvanceDemo();
+  }
 }
 
 //==========================================================================
@@ -163,7 +163,7 @@ void Tick(float DeltaTime)
 
 void OnDraw()
 {
-	DrawFullScreenPic(page_pic);
+  DrawFullScreenPic(page_pic);
 }
 
 //==========================================================================
@@ -174,9 +174,9 @@ void OnDraw()
 
 void OnHostEndGame()
 {
-	if (demosequence != -1)
-		AdvanceDemo();
-	ForceTitle();
+  if (demosequence != -1)
+    AdvanceDemo();
+  ForceTitle();
 }
 
 //==========================================================================
@@ -187,8 +187,8 @@ void OnHostEndGame()
 
 void OnHostError()
 {
-	demosequence = -1;
-	ForceTitle();
+  demosequence = -1;
+  ForceTitle();
 }
 
 //==========================================================================
@@ -199,14 +199,14 @@ void OnHostError()
 
 void StopDemoLoop()
 {
-	demosequence = -1;	// not in the demo loop now
+  demosequence = -1;  // not in the demo loop now
 }
 
 defaultproperties
 {
-	bTickEnabled = true;
-	Focusable = true;
-	Width = 320;
-	Height = 200;
-	demosequence = -1;	// -1 = don't play demos
+  bTickEnabled = true;
+  Focusable = true;
+  Width = 320;
+  Height = 200;
+  demosequence = -1;  // -1 = don't play demos
 }

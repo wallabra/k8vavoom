@@ -23,7 +23,7 @@
 //**
 //**************************************************************************
 //**
-//**	Based on code from ZDoom with following notice:
+//**  Based on code from ZDoom with following notice:
 //**
 //** Copyright 1998-2006 Randy Heit
 //** All rights reserved.
@@ -53,82 +53,82 @@
 //**
 //**************************************************************************
 //**
-//**	InterpolationPoint: node along a camera's path
+//**  InterpolationPoint: node along a camera's path
 //**
-//**	args[0] = pitch
-//**	args[1] = time (in octics) to get here from previous node
-//**	args[2] = time (in octics) to stay here before moving to next node
-//**	args[3] = low byte of next node's tid
-//**	args[4] = high byte of next node's tid
+//**  args[0] = pitch
+//**  args[1] = time (in octics) to get here from previous node
+//**  args[2] = time (in octics) to stay here before moving to next node
+//**  args[3] = low byte of next node's tid
+//**  args[4] = high byte of next node's tid
 //**
 //**************************************************************************
 
 class InterpolationPoint : Actor
-	__mobjinfo__(9070);
+  __mobjinfo__(9070);
 
 InterpolationPoint NextPoint;
 
 //==========================================================================
 //
-//	FormChain
+//  FormChain
 //
 //==========================================================================
 
 void FormChain()
 {
-	InterpolationPoint A;
+  InterpolationPoint A;
 
-	if (bAmbush)
-		return;
+  if (bAmbush)
+    return;
 
-	bAmbush = true;
+  bAmbush = true;
 
-	foreach AllThinkers(InterpolationPoint, A)
-	{
-		if (A.TID != Args[3] + 256 * Args[4])
-			continue;
-		if (A == self)	// Don't link to self
-			continue;
-		NextPoint = A;
-		break;
-	}
+  foreach AllThinkers(InterpolationPoint, A)
+  {
+    if (A.TID != Args[3] + 256 * Args[4])
+      continue;
+    if (A == self)  // Don't link to self
+      continue;
+    NextPoint = A;
+    break;
+  }
 
-	if (NextPoint == none && (Args[3] | Args[4]))
-		print("Can't find target for camera node %d", TID);
+  if (NextPoint == none && (Args[3] | Args[4]))
+    print("Can't find target for camera node %d", TID);
 
-	Angles.pitch = itof(Args[0]);
-	if (Angles.pitch <= -90.0)
-		Angles.pitch = -89.0;
-	else if (Angles.pitch >= 90.0)
-		Angles.pitch = 89.0;
+  Angles.pitch = itof(Args[0]);
+  if (Angles.pitch <= -90.0)
+    Angles.pitch = -89.0;
+  else if (Angles.pitch >= 90.0)
+    Angles.pitch = 89.0;
 
-	if (NextPoint != none)
-		NextPoint.FormChain();
+  if (NextPoint != none)
+    NextPoint.FormChain();
 }
 
 //==========================================================================
 //
-//	ScanForLoop
+//  ScanForLoop
 //
-//	Return the node (if any) where a path loops, relative to this one.
+//  Return the node (if any) where a path loops, relative to this one.
 //
 //==========================================================================
 
 InterpolationPoint ScanForLoop()
 {
-	InterpolationPoint node = self;
-	while (node.NextPoint && node.NextPoint != self && node.Special1 == 0)
-	{
-		node.Special1 = 1;
-		node = node.NextPoint;
-	}
-	return node.NextPoint ? node : none;
+  InterpolationPoint node = self;
+  while (node.NextPoint && node.NextPoint != self && node.Special1 == 0)
+  {
+    node.Special1 = 1;
+    node = node.NextPoint;
+  }
+  return node.NextPoint ? node : none;
 }
 
 defaultproperties
 {
-	bNoBlockmap = true;
-	bNoGravity = true;
-	bNoSplash = true;
-	RenderStyle = STYLE_None;
+  bNoBlockmap = true;
+  bNoGravity = true;
+  bNoSplash = true;
+  RenderStyle = STYLE_None;
 }
