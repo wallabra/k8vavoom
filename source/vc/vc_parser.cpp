@@ -1514,8 +1514,13 @@ void VParser::ParseDefaultProperties(VClass* InClass)
 	Func->ReturnType = VFieldType(TYPE_Void);
 	InClass->DefaultProperties = Func;
 
-	Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
-	Func->Statement = ParseCompoundStatement();
+	// if we have no 'defaultproperties', create empty compound statement
+	if (Lex.Check(TK_EOF)) {
+		Func->Statement = new VCompound(Lex.Location);
+	} else {
+		Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
+		Func->Statement = ParseCompoundStatement();
+	}
 	unguard;
 }
 
@@ -2549,6 +2554,7 @@ void VParser::ParseClass()
 	}
 
 	ParseDefaultProperties(Class);
+	//if (!Lex.Check(TK_EOF)) { ParseError(Lex.Location, "extra code after `defaultproperties`"); Sys_Error("VCC: cannot continue"); }
 
 	Package->ParsedClasses.Append(Class);
 	unguard;

@@ -28,7 +28,7 @@
 #define Random()  ((float)(rand()&0x7fff)/(float)0x8000)
 
 
-#define OPCODE_STATS
+//#define OPCODE_STATS
 
 #include "../../libs/core/core.h"
 #include "../../source/common.h"

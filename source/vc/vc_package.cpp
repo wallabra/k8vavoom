@@ -693,6 +693,7 @@ void VPackage::WriteObject(const VStr& name)
 		Writer.Exports[i].Obj->Serialise(Writer);
 	}
 
+#if !defined(VCC_STANDALONE_EXECUTOR)
 	//	Print statistics.
 	dprintf("            count   size\n");
 	dprintf("Header     %6d %6ld\n", 1, (long int)sizeof(progs));
@@ -705,6 +706,7 @@ void VPackage::WriteObject(const VStr& name)
 	dprintf("Exports    %6d %6d\n", Writer.Exports.Num(), progs.ofs_exportdata - progs.ofs_exportinfo);
 	dprintf("Type data  %6d %6d\n", Writer.Exports.Num(), Writer.Tell() - progs.ofs_exportdata);
 	dprintf("TOTAL SIZE       %7d\n", Writer.Tell());
+#endif
 
 	//	Write header.
 	memcpy(progs.magic, PROG_MAGIC, 4);
