@@ -2050,7 +2050,7 @@ void VParser::ParseClass () {
   TLocation ClassLoc = Lex.Location;
   VClass *ExistingClass = nullptr;
 
-  TLocation cstloc = Lex.Location;
+  //TLocation cstloc = Lex.Location;
 
   if (Lex.Token != TK_Identifier) {
     ParseError(Lex.Location, "Class name expected");
@@ -2181,8 +2181,8 @@ void VParser::ParseClass () {
   // parse class definitions
   while (!Lex.Check(TK_DefaultProperties)) {
     if (Lex.Check(TK_EOF)) {
-      ParseError(cstloc, "`defaultproperties` not found");
-      Sys_Error("VCC: cannot continue");
+      //ParseError(cstloc, "`defaultproperties` not found");
+      //Sys_Error("VCC: cannot continue");
       break;
     }
 
