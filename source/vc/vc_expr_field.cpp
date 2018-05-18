@@ -407,6 +407,7 @@ void VFieldAccess::RequestAddressOf()
 
 void VFieldAccess::Emit(VEmitContext& ec)
 {
+	if (!op) return; //k8: don't segfault
 	op->Emit(ec);
 	if (AddressRequested)
 	{

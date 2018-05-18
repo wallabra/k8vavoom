@@ -345,9 +345,16 @@ int main (int argc, char **argv) {
     VMemberBase::StaticLoadPackage(VName("engine"), TLocation());
 
     dprintf("Compiling '%s'...\n", *SourceFileName);
+
+    VStream *strm = OpenFile(SourceFileName);
+    if (!strm) {
+      FatalError("FATAL: cannot open file '%s'", *SourceFileName);
+    }
+
+    CurrentPackage->LoadSourceObject(strm, SourceFileName, TLocation());
+    /*
     Lex.OpenSource(SourceFileName);
     VParser Parser(Lex, CurrentPackage);
-
     Parser.Parse();
 
     int parsetime = time(0);
@@ -356,6 +363,7 @@ int main (int argc, char **argv) {
     CurrentPackage->Emit();
     int compiletime = time(0);
     dprintf("Compiled in %02d:%02d\n", (compiletime-parsetime)/60, (compiletime-parsetime)%60);
+    */
 
     /*
     CurrentPackage->WriteObject(*ObjectFileName);
@@ -363,9 +371,29 @@ int main (int argc, char **argv) {
 
     DumpAsm();
     endtime = time(0);
-    dprintf("Wrote in %02d:%02d\n", (endtime-compiletime)/60, (endtime-compiletime)%60);
+    //dprintf("Wrote in %02d:%02d\n", (endtime-compiletime)/60, (endtime-compiletime)%60);
 
     dprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
+
+    VClass *mklass = VClass::FindClass("Main");
+    if (mklass) {
+      dprintf("Found class 'Main'\n");
+      VMethod *mmain = mklass->FindMethod("main");
+      if (mmain) {
+        dprintf("Found method 'main()'\n");
+        if ((mmain->Flags&FUNC_VarArgs) != 0) FatalError("Main::main() is vararg!");
+        if ((mmain->Flags&FUNC_Static) == 0) {
+          if (mmain->NumParams != 0) FatalError("Main::main() should have no args!");
+          //auto imain = Spawn<VLevel>();
+          auto imain = VObject::StaticSpawnObject(mklass);
+          P_PASS_REF((VObject*)imain);
+          VObject::ExecuteFunction(mmain);
+        } else {
+          if (mmain->NumParams != 0) FatalError("Main::main() should have no args!");
+          VObject::ExecuteFunction(mmain);
+        }
+      }
+    }
 
     VObject::StaticExit();
     VName::StaticExit();
