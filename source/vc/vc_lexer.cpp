@@ -230,6 +230,22 @@ void VLexer::OpenSource(const VStr& FileName)
 
 //==========================================================================
 //
+//	VLexer::OpenSource
+//
+//==========================================================================
+
+void VLexer::OpenSource(VStream *astream, const VStr& FileName)
+{
+	// Read file and prepare for compilation.
+	PushSource(Location, astream, FileName);
+
+	SourceOpen = true;
+
+	Token = TK_NoToken;
+}
+
+//==========================================================================
+//
 //	VLexer::~VLexer
 //
 //==========================================================================
@@ -256,6 +272,22 @@ void VLexer::PushSource(TLocation& Loc, const VStr& FileName)
 #else
 	VStream* Strm = OpenFile(FileName);
 #endif
+	if (!Strm)
+	{
+		FatalError("Couldn't open %s", *FileName);
+		return;
+	}
+	PushSource(Loc, Strm, FileName);
+}
+
+//==========================================================================
+//
+//	VLexer::PushSource
+//
+//==========================================================================
+
+void VLexer::PushSource(TLocation& Loc, VStream *Strm, const VStr& FileName)
+{
 	if (!Strm)
 	{
 		FatalError("Couldn't open %s", *FileName);

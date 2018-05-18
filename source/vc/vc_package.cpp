@@ -733,292 +733,240 @@ void VPackage::WriteObject(const VStr& name)
 
 //==========================================================================
 //
-//	VPackage::LoadObject
+// VPackage::LoadSourceObject
+//
+// will delete `Strm`
 //
 //==========================================================================
 
-void VPackage::LoadObject(TLocation l)
-{
-	guard(VPackage::LoadObject);
+void VPackage::LoadSourceObject (VStream *Strm, const VStr& filename, TLocation l) {
+  guard(VPackage::LoadSourceObject);
+
+  if (!Strm) return;
+
+  VLexer Lex;
+  Lex.OpenSource(Strm, filename);
+  VParser Parser(Lex, this);
+  Parser.Parse();
+  Emit();
+
+#if !defined(IN_VCC)
+  // Copy mobj infos and spawn IDs.
+  for (int i = 0; i < MobjInfo.Num(); ++i) VClass::GMobjInfos.Alloc() = MobjInfo[i];
+  for (int i = 0; i < ScriptIds.Num(); ++i) VClass::GScriptIds.Alloc() = ScriptIds[i];
+  for (int i = 0; i < GMembers.Num(); ++i) if (GMembers[i]->IsIn(this)) GMembers[i]->PostLoad();
+
+  // Create default objects.
+  for (int i = 0; i < ParsedClasses.Num(); ++i) ParsedClasses[i]->CreateDefaults();
+
+  if (Name == NAME_engine) {
+    for (VClass* Cls = GClasses; Cls; Cls = Cls->LinkNext) {
+      if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
+        Cls->PostLoad();
+        Cls->CreateDefaults();
+        Cls->Outer = this;
+      }
+    }
+  }
+#endif
+
+  unguard;
+}
+
+//==========================================================================
+//
+// VPackage::LoadBinaryObject
+//
+// will delete `Strm`
+//
+//==========================================================================
+
+void VPackage::LoadBinaryObject (VStream *Strm, const VStr& filename, TLocation l) {
+  guard(VPackage::LoadBinaryObject);
+
+  if (!Strm) return;
+
+  VProgsReader* Reader = new VProgsReader(Strm);
+
+  // calcutate CRC
+#if !defined(IN_VCC)
+  TCRC crc;
+  crc.Init();
+  for (int i = 0; i < Reader->TotalSize(); ++i) crc + Streamer<vuint8>(*Reader);
+#endif
+
+  // read the header
+  dprograms_t Progs;
+  Reader->Seek(0);
+  Reader->Serialise(Progs.magic, 4);
+  for (int i = 1; i < (int)sizeof(Progs) / 4; ++i) *Reader << ((int*)&Progs)[i];
+
+  if (VStr::NCmp(Progs.magic, PROG_MAGIC, 4)) {
+    ParseError(l, "Package '%s' has wrong file ID", *Name);
+    BailOut();
+  }
+  if (Progs.version != PROG_VERSION) {
+    ParseError(l, "Package '%s' has wrong version number (%i should be %i)", *Name, Progs.version, PROG_VERSION);
+    BailOut();
+  }
+
+  // read names
+  VName *NameRemap = new VName[Progs.num_names];
+  Reader->Seek(Progs.ofs_names);
+  for (int i = 0; i < Progs.num_names; ++i) {
+    VNameEntry E;
+    *Reader << E;
+    NameRemap[i] = E.Name;
+  }
+  Reader->NameRemap = NameRemap;
+
+  Reader->Imports = new VProgsImport[Progs.num_imports];
+  Reader->NumImports = Progs.num_imports;
+  Reader->Seek(Progs.ofs_imports);
+  for (int i = 0; i < Progs.num_imports; ++i) *Reader << Reader->Imports[i];
+  Reader->ResolveImports();
+
+  VProgsExport* Exports = new VProgsExport[Progs.num_exports];
+  Reader->Exports = Exports;
+  Reader->NumExports = Progs.num_exports;
+
+#if !defined(IN_VCC)
+  Checksum = crc;
+  this->Reader = Reader;
+#endif
+
+  // Create objects
+  Reader->Seek(Progs.ofs_exportinfo);
+  for (int i = 0; i < Progs.num_exports; ++i) {
+    *Reader << Exports[i];
+    switch (Exports[i].Type) {
+      case MEMBER_Package: Exports[i].Obj = new VPackage(Exports[i].Name); break;
+      case MEMBER_Field: Exports[i].Obj = new VField(Exports[i].Name, NULL, TLocation()); break;
+      case MEMBER_Property: Exports[i].Obj = new VProperty(Exports[i].Name, NULL, TLocation()); break;
+      case MEMBER_Method: Exports[i].Obj = new VMethod(Exports[i].Name, NULL, TLocation()); break;
+      case MEMBER_State: Exports[i].Obj = new VState(Exports[i].Name, NULL, TLocation()); break;
+      case MEMBER_Const: Exports[i].Obj = new VConstant(Exports[i].Name, NULL, TLocation()); break;
+      case MEMBER_Struct: Exports[i].Obj = new VStruct(Exports[i].Name, NULL, TLocation()); break;
+      case MEMBER_Class:
+#if !defined(IN_VCC)
+        Exports[i].Obj = VClass::FindClass(*Exports[i].Name);
+        if (!Exports[i].Obj)
+#endif
+        {
+          Exports[i].Obj = new VClass(Exports[i].Name, NULL, TLocation());
+        }
+        break;
+      default: ParseError(l, "Package '%s' contains corrupted data", *Name); BailOut();
+    }
+  }
+
+  // read strings
+  Strings.SetNum(Progs.num_strings);
+  Reader->Seek(Progs.ofs_strings);
+  Reader->Serialise(Strings.Ptr(), Progs.num_strings);
+
+  // serialise objects
+  Reader->Seek(Progs.ofs_exportdata);
+  for (int i = 0; i < Progs.num_exports; ++i) {
+    Exports[i].Obj->Serialise(*Reader);
+    if (!Exports[i].Obj->Outer) Exports[i].Obj->Outer = this;
+  }
+
+#if !defined(IN_VCC)
+  // set up info tables
+  Reader->Seek(Progs.ofs_mobjinfo);
+  for (int i = 0; i < Progs.num_mobjinfo; ++i) *Reader << VClass::GMobjInfos.Alloc();
+  Reader->Seek(Progs.ofs_scriptids);
+  for (int i = 0; i < Progs.num_scriptids; ++i) *Reader << VClass::GScriptIds.Alloc();
+
+  for (int i = 0; i < Progs.num_exports; ++i) Exports[i].Obj->PostLoad();
+
+  // create default objects
+  for (int i = 0; i < Progs.num_exports; ++i) {
+    if (Exports[i].Obj->MemberType == MEMBER_Class) ((VClass*)Exports[i].Obj)->CreateDefaults();
+  }
+
+  if (Name == NAME_engine) {
+    for (VClass* Cls = GClasses; Cls; Cls = Cls->LinkNext) {
+      if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
+        Cls->PostLoad();
+        Cls->CreateDefaults();
+        Cls->Outer = this;
+      }
+    }
+  }
+#endif
+  // fuck you, shitplusplus: no finally
+  this->Reader = NULL;
+  delete Reader;
+
+  unguard;
+}
+
+//==========================================================================
+//
+// VPackage::LoadObject
+//
+//==========================================================================
+
+void VPackage::LoadObject (TLocation l) {
+  guard(VPackage::LoadObject);
+
 #if defined(IN_VCC)
-	dprintf("Loading package %s\n", *Name);
+  dprintf("Loading package %s\n", *Name);
 
-	// Load PROGS from a specified file
-	VStream* f = OpenFile(va("%s.dat", *Name));
-	if (!f)
-	{
-		for (int i = 0; i < GPackagePath.Num(); i++)
-		{
-			f = OpenFile(GPackagePath[i] + "/" + Name + ".dat");
-			if (f)
-			{
-				break;
-			}
-		}
-	}
-	if (!f)
-	{
-		ParseError(l, "Can't find package %s", *Name);
-		return;
-	}
-	VProgsReader* Reader = new VProgsReader(f);
+  // Load PROGS from a specified file
+  // fuck you, shitplusplus: no finally
+  VStream* f = OpenFile(va("%s.dat", *Name));
+  if (f) { LoadBinaryObject(f, va("%s.dat", *Name), l); return; }
+  for (int i = 0; i < GPackagePath.Num(); ++i) {
+    VStr fname = GPackagePath[i]+"/"+Name+".dat";
+    f = OpenFile(*fname);
+    if (f) { LoadBinaryObject(f, va("%s.dat", *Name), l); return; }
+  }
+
+  ParseError(l, "Can't find package %s", *Name);
+
 #elif defined(VCC_STANDALONE_EXECUTOR)
-	dprintf("Loading package '%s'...\n", *Name);
+  dprintf("Loading package '%s'...\n", *Name);
 
-	VStr mainVC;
-	for (int i = 0; i < GPackagePath.Num(); ++i) {
-		mainVC = GPackagePath[i]+"/"+Name+"/classes.vc";
-		VStream* f = OpenFile(mainVC);
-		if (f) { delete f; break; }
-		mainVC = "";
-	}
-	if (!mainVC.Length()) {
-		mainVC = VStr("packages/")+Name+"/classes.vc";
-		VStream* f = OpenFile(mainVC);
-		if (!f) ParseError(l, "Can't find package %s", *Name);
-	}
+  // fuck you, shitplusplus: no finally
+  for (int i = 0; i < GPackagePath.Num(); ++i) {
+    VStr mainVC = GPackagePath[i]+"/"+Name+"/classes.vc";
+    VStream *Strm = OpenFile(*mainVC);
+    if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+  }
 
-	// Compile package
-	dprintf("  '%s'\n", *mainVC);
-	VLexer Lex;
-	Lex.OpenSource(*mainVC);
-	VParser Parser(Lex, this);
-	Parser.Parse();
-	Emit();
+  {
+    VStr mainVC = VStr("packages/")+Name+"/classes.vc";
+    VStream *Strm = OpenFile(*mainVC);
+    if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+  }
 
-	// Copy mobj infos and spawn IDs.
-	for (int i = 0; i < MobjInfo.Num(); ++i) VClass::GMobjInfos.Alloc() = MobjInfo[i];
-	for (int i = 0; i < ScriptIds.Num(); ++i) VClass::GScriptIds.Alloc() = ScriptIds[i];
-	for (int i = 0; i < GMembers.Num(); ++i) if (GMembers[i]->IsIn(this)) GMembers[i]->PostLoad();
+  VStr mainVC = va("packages/%s.dat", *Name);
+  VStream *Strm = OpenFile(*mainVC);
+  if (Strm) { dprintf("  '%s'\n", *mainVC); LoadBinaryObject(Strm, mainVC, l); return; }
 
-	// Create default objects.
-	for (int i = 0; i < ParsedClasses.Num(); ++i) ParsedClasses[i]->CreateDefaults();
-
-	if (Name == NAME_engine) {
-		for (VClass* Cls = GClasses; Cls; Cls = Cls->LinkNext) {
-			if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
-				Cls->PostLoad();
-				Cls->CreateDefaults();
-				Cls->Outer = this;
-			}
-		}
-	}
-	return;
+  ParseError(l, "Can't find package %s", *Name);
+  BailOut();
 
 #else
-	//	Load PROGS from a specified file
-	VStream* Strm = FL_OpenFileRead(va("progs/%s.dat", *Name));
-	if (!Strm)
-	{
-		if (FL_FileExists(va("progs/%s/classes.vc", *Name)))
-		{
-			//	Compile package
-			VLexer Lex;
-			Lex.OpenSource(va("progs/%s/classes.vc", *Name));
-			VParser Parser(Lex, this);
-			Parser.Parse();
-			Emit();
+  // Load PROGS from a specified file
+  VStr mainVC = va("progs/%s.dat", *Name);
+  VStream* Strm = FL_OpenFileRead(*mainVC);
+  if (!Strm) {
+    mainVC = va("progs/%s/classes.vc", *Name);
+    if (FL_FileExists(*mainVC)) {
+      // Compile package
+      Strm = FL_OpenFileRead(*mainVC);
+      LoadSourceObject(Strm, mainVC, l);
+      return;
+    }
+    Sys_Error("Progs package %s not found", *Name);
+  }
 
-			//	Copy mobj infos and spawn IDs.
-			for (int i = 0; i < MobjInfo.Num(); i++)
-			{
-				VClass::GMobjInfos.Alloc() = MobjInfo[i];
-			}
-			for (int i = 0; i < ScriptIds.Num(); i++)
-			{
-				VClass::GScriptIds.Alloc() = ScriptIds[i];
-			}
-
-			for (int i = 0; i < GMembers.Num(); i++)
-			{
-				if (GMembers[i]->IsIn(this))
-				{
-					GMembers[i]->PostLoad();
-				}
-			}
-
-			//	Create default objects.
-			for (int i = 0; i < ParsedClasses.Num(); i++)
-			{
-				ParsedClasses[i]->CreateDefaults();
-			}
-
-			if (Name == NAME_engine)
-			{
-				for (VClass* Cls = GClasses; Cls; Cls = Cls->LinkNext)
-				{
-					if (!Cls->Outer && Cls->MemberType == MEMBER_Class)
-					{
-						Cls->PostLoad();
-						Cls->CreateDefaults();
-						Cls->Outer = this;
-					}
-				}
-			}
-
-			return;
-		}
-		Sys_Error("Progs package %s not found", *Name);
-	}
-	VProgsReader* Reader = new VProgsReader(Strm);
-
-	//	Calcutate CRC
-	TCRC crc;
-	crc.Init();
-	for (int i = 0; i < Reader->TotalSize(); i++)
-	{
-		crc + Streamer<vuint8>(*Reader);
-	}
+  LoadBinaryObject(Strm, mainVC, l);
 #endif
 
-	// Read the header
-	dprograms_t Progs;
-	Reader->Seek(0);
-	Reader->Serialise(Progs.magic, 4);
-	for (int i = 1; i < (int)sizeof(Progs) / 4; i++)
-	{
-		*Reader << ((int*)&Progs)[i];
-	}
-
-	if (VStr::NCmp(Progs.magic, PROG_MAGIC, 4))
-	{
-		ParseError(l, "Package %s has wrong file ID", *Name);
-		BailOut();
-	}
-	if (Progs.version != PROG_VERSION)
-	{
-		ParseError(l, "Package %s has wrong version number (%i should be %i)",
-			*Name, Progs.version, PROG_VERSION);
-		BailOut();
-	}
-
-	// Read names
-	VName* NameRemap = new VName[Progs.num_names];
-	Reader->Seek(Progs.ofs_names);
-	for (int i = 0; i < Progs.num_names; i++)
-	{
-		VNameEntry E;
-		*Reader << E;
-		NameRemap[i] = E.Name;
-	}
-	Reader->NameRemap = NameRemap;
-
-	Reader->Imports = new VProgsImport[Progs.num_imports];
-	Reader->NumImports = Progs.num_imports;
-	Reader->Seek(Progs.ofs_imports);
-	for (int i = 0; i < Progs.num_imports; i++)
-	{
-		*Reader << Reader->Imports[i];
-	}
-	Reader->ResolveImports();
-
-	VProgsExport* Exports = new VProgsExport[Progs.num_exports];
-	Reader->Exports = Exports;
-	Reader->NumExports = Progs.num_exports;
-
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-	Checksum = crc;
-	this->Reader = Reader;
-#endif
-
-	//	Create objects
-	Reader->Seek(Progs.ofs_exportinfo);
-	for (int i = 0; i < Progs.num_exports; i++)
-	{
-		*Reader << Exports[i];
-		switch (Exports[i].Type)
-		{
-		case MEMBER_Package:
-			Exports[i].Obj = new VPackage(Exports[i].Name);
-			break;
-		case MEMBER_Field:
-			Exports[i].Obj = new VField(Exports[i].Name, NULL, TLocation());
-			break;
-		case MEMBER_Property:
-			Exports[i].Obj = new VProperty(Exports[i].Name, NULL, TLocation());
-			break;
-		case MEMBER_Method:
-			Exports[i].Obj = new VMethod(Exports[i].Name, NULL, TLocation());
-			break;
-		case MEMBER_State:
-			Exports[i].Obj = new VState(Exports[i].Name, NULL, TLocation());
-			break;
-		case MEMBER_Const:
-			Exports[i].Obj = new VConstant(Exports[i].Name, NULL, TLocation());
-			break;
-		case MEMBER_Struct:
-			Exports[i].Obj = new VStruct(Exports[i].Name, NULL, TLocation());
-			break;
-		case MEMBER_Class:
-#if !defined(IN_VCC)
-			Exports[i].Obj = VClass::FindClass(*Exports[i].Name);
-			if (!Exports[i].Obj)
-#endif
-			{
-				Exports[i].Obj = new VClass(Exports[i].Name, NULL, TLocation());
-			}
-			break;
-		}
-	}
-
-	//	Read strings.
-	Strings.SetNum(Progs.num_strings);
-	Reader->Seek(Progs.ofs_strings);
-	Reader->Serialise(Strings.Ptr(), Progs.num_strings);
-
-	//	Serialise objects.
-	Reader->Seek(Progs.ofs_exportdata);
-	for (int i = 0; i < Progs.num_exports; i++)
-	{
-		Exports[i].Obj->Serialise(*Reader);
-		if (!Exports[i].Obj->Outer)
-		{
-			Exports[i].Obj->Outer = this;
-		}
-	}
-
-#if !defined(IN_VCC)
-	//	Set up info tables.
-	Reader->Seek(Progs.ofs_mobjinfo);
-	for (int i = 0; i < Progs.num_mobjinfo; i++)
-	{
-		*Reader << VClass::GMobjInfos.Alloc();
-	}
-	Reader->Seek(Progs.ofs_scriptids);
-	for (int i = 0; i < Progs.num_scriptids; i++)
-	{
-		*Reader << VClass::GScriptIds.Alloc();
-	}
-
-	for (int i = 0; i < Progs.num_exports; i++)
-	{
-		Exports[i].Obj->PostLoad();
-	}
-
-	//	Create default objects.
-	for (int i = 0; i < Progs.num_exports; i++)
-	{
-		if (Exports[i].Obj->MemberType == MEMBER_Class)
-		{
-			((VClass*)Exports[i].Obj)->CreateDefaults();
-		}
-	}
-
-	if (Name == NAME_engine)
-	{
-		for (VClass* Cls = GClasses; Cls; Cls = Cls->LinkNext)
-		{
-			if (!Cls->Outer && Cls->MemberType == MEMBER_Class)
-			{
-				Cls->PostLoad();
-				Cls->CreateDefaults();
-				Cls->Outer = this;
-			}
-		}
-	}
-#endif
-
-	delete Reader;
-	this->Reader = NULL;
-	unguard;
+  unguard;
 }

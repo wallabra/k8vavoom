@@ -106,7 +106,7 @@ static VStr ObjectFileName;
 
 static int num_dump_asm;
 static char *dump_asm_names[1024];
-static bool DebugMode = true;
+static bool DebugMode = false;
 static FILE *DebugFile;
 
 static VLexer Lex;
@@ -291,12 +291,14 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
 
   if (count == 1) ObjectFileName = SourceFileName.StripExtension()+".dat";
 
+  /*
   if (!DebugFile) {
     VStr DbgFileName;
     DbgFileName = ObjectFileName.StripExtension()+".txt";
     OpenDebugFile(DbgFileName);
     DebugMode = true;
   }
+  */
 
   SourceFileName = SourceFileName.FixFileSlashes();
   ObjectFileName = ObjectFileName.FixFileSlashes();
@@ -311,8 +313,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
 //
 //==========================================================================
 static void initialize () {
-  //DebugMode = false;
-  DebugMode = true;
+  DebugMode = false;
   DebugFile = nullptr;
   num_dump_asm = 0;
   VName::StaticInit();
@@ -333,9 +334,7 @@ int main (int argc, char **argv) {
 
     starttime = time(0);
 
-    dprintf("initializing...\n");
     initialize();
-    dprintf("initialized.\n");
 
     ProcessArgs(argc, argv);
 
@@ -357,11 +356,15 @@ int main (int argc, char **argv) {
     CurrentPackage->Emit();
     int compiletime = time(0);
     dprintf("Compiled in %02d:%02d\n", (compiletime-parsetime)/60, (compiletime-parsetime)%60);
-    CurrentPackage->WriteObject(*ObjectFileName);
-    DumpAsm();
 
+    /*
+    CurrentPackage->WriteObject(*ObjectFileName);
+    */
+
+    DumpAsm();
     endtime = time(0);
     dprintf("Wrote in %02d:%02d\n", (endtime-compiletime)/60, (endtime-compiletime)%60);
+
     dprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
 
     VObject::StaticExit();

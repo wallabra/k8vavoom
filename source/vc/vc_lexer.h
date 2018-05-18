@@ -220,7 +220,8 @@ private:
 	void ProcessElse();
 	void ProcessEndIf();
 	void ProcessInclude();
-	void PushSource(TLocation&, const VStr&);
+	void PushSource(TLocation&, const VStr& FileName);
+	void PushSource(TLocation&, VStream *Strm, const VStr& FileName); // takes ownership
 	void PopSource();
 	void ProcessNumberToken();
 	void ProcessChar();
@@ -246,6 +247,7 @@ public:
 	void AddDefine(const VStr&);
 	void AddIncludePath(const VStr&);
 	void OpenSource(const VStr&);
+	void OpenSource(VStream *astream, const VStr& FileName); // takes ownership
 
 	void NextToken();
 	bool Check(EToken);
