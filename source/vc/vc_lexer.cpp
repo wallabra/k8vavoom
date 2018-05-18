@@ -81,7 +81,7 @@ const char*			VLexer::TokenNames[] =
 	"name",
 	"native",
 	"none",
-	"NULL",
+	"nullptr",
 	"optional",
 	"out",
 	"private",

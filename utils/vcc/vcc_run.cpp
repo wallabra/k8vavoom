@@ -104,11 +104,9 @@ public:
 static VStr SourceFileName;
 static VStr ObjectFileName;
 
-static VPackage *CurrentPackage;
-
 static int num_dump_asm;
 static char *dump_asm_names[1024];
-static bool DebugMode;
+static bool DebugMode = true;
 static FILE *DebugFile;
 
 static VLexer Lex;
@@ -124,7 +122,7 @@ __attribute__((format(printf, 1, 2))) int dprintf (const char *text, ...) {
   if (!DebugMode) return 0;
 
   va_list argPtr;
-  FILE* fp = (DebugFile ? DebugFile : stdout);
+  FILE* fp = stderr; //(DebugFile ? DebugFile : stdout);
   va_start(argPtr, text);
   int ret = vfprintf(fp, text, argPtr);
   va_end(argPtr);
@@ -141,7 +139,7 @@ __attribute__((format(printf, 1, 2))) int dprintf (const char *text, ...) {
 void* Malloc (size_t size) {
   if (!size) return nullptr;
   void *ptr = Z_Malloc(size);
-  if (!ptr) FatalError("Couldn't alloc %d bytes", (int)size);
+  if (!ptr) FatalError("FATAL: couldn't alloc %d bytes", (int)size);
   memset(ptr, 0, size);
   return ptr;
 }
@@ -175,7 +173,7 @@ VStream* OpenFile (const VStr& Name) {
 //==========================================================================
 static void OpenDebugFile (const VStr& name) {
   DebugFile = fopen(*name, "w");
-  if (!DebugFile) FatalError("Can\'t open debug file \"%s\".", *name);
+  if (!DebugFile) FatalError("FATAL: can\'t open debug file \"%s\".", *name);
 }
 
 
@@ -222,31 +220,6 @@ static void PC_DumpAsm (const char* name) {
 //==========================================================================
 static void DumpAsm () {
   for (int i = 0; i < num_dump_asm; ++i) PC_DumpAsm(dump_asm_names[i]);
-}
-
-
-//==========================================================================
-//
-//  PC_Init
-//
-//==========================================================================
-static void PC_Init () {
-  CurrentPackage = new VPackage();
-}
-
-
-//==========================================================================
-//
-//  Init
-//
-//==========================================================================
-static void Init () {
-  DebugMode = false;
-  DebugFile = nullptr;
-  num_dump_asm = 0;
-  VName::StaticInit();
-  VMemberBase::StaticInit();
-  PC_Init();
 }
 
 
@@ -332,6 +305,22 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
 }
 
 
+//==========================================================================
+//
+//  initialize
+//
+//==========================================================================
+static void initialize () {
+  //DebugMode = false;
+  DebugMode = true;
+  DebugFile = nullptr;
+  num_dump_asm = 0;
+  VName::StaticInit();
+  //VMemberBase::StaticInit();
+  VObject::StaticInit();
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 int main (int argc, char **argv) {
   try {
@@ -343,26 +332,42 @@ int main (int argc, char **argv) {
     M_InitByteOrder();
 
     starttime = time(0);
-    Init();
+
+    dprintf("initializing...\n");
+    initialize();
+    dprintf("initialized.\n");
+
     ProcessArgs(argc, argv);
 
+    PR_Init();
+
+    VPackage *CurrentPackage = new VPackage(VName("vccrun"));
+
+    VMemberBase::StaticLoadPackage(VName("engine"), TLocation());
+
+    dprintf("Compiling '%s'...\n", *SourceFileName);
     Lex.OpenSource(SourceFileName);
     VParser Parser(Lex, CurrentPackage);
+
     Parser.Parse();
+
     int parsetime = time(0);
     dprintf("Parsed in %02d:%02d\n", (parsetime-starttime)/60, (parsetime-starttime)%60);
+
     CurrentPackage->Emit();
     int compiletime = time(0);
     dprintf("Compiled in %02d:%02d\n", (compiletime-parsetime)/60, (compiletime-parsetime)%60);
     CurrentPackage->WriteObject(*ObjectFileName);
     DumpAsm();
-    VName::StaticExit();
+
     endtime = time(0);
     dprintf("Wrote in %02d:%02d\n", (endtime-compiletime)/60, (endtime-compiletime)%60);
     dprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
-    VMemberBase::StaticExit();
+
+    VObject::StaticExit();
+    VName::StaticExit();
   } catch (VException& e) {
-    FatalError("%s", e.What());
+    FatalError("FATAL: %s", e.What());
   }
 
   return 0;

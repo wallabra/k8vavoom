@@ -503,6 +503,7 @@ void VPackage::Emit()
 
 	for (int i = 0; i < PackagesToLoad.Num(); i++)
 	{
+		dprintf("  importing package '%s'...\n", *PackagesToLoad[i].Name);
 		PackagesToLoad[i].Pkg = StaticLoadPackage(PackagesToLoad[i].Name,
 			PackagesToLoad[i].Loc);
 	}
@@ -516,6 +517,7 @@ void VPackage::Emit()
 
 	for (int i = 0; i < ParsedConstants.Num(); i++)
 	{
+		dprintf("  defining constant '%s'...\n", *ParsedConstants[i]->Name);
 		ParsedConstants[i]->Define();
 	}
 
@@ -523,6 +525,7 @@ void VPackage::Emit()
 
 	for (int i = 0; i < ParsedStructs.Num(); i++)
 	{
+		dprintf("  defining struct '%s'...\n", *ParsedStructs[i]->Name);
 		ParsedStructs[i]->Define();
 	}
 
@@ -530,11 +533,13 @@ void VPackage::Emit()
 
 	for (int i = 0; i < ParsedClasses.Num(); i++)
 	{
+		dprintf("  defining class '%s'...\n", *ParsedClasses[i]->Name);
 		ParsedClasses[i]->Define();
 	}
 
 	for (int i = 0; i < ParsedDecorateImportClasses.Num(); i++)
 	{
+		dprintf("  defining decorate import class '%s'...\n", *ParsedDecorateImportClasses[i]->Name);
 		ParsedDecorateImportClasses[i]->Define();
 	}
 
@@ -733,10 +738,10 @@ void VPackage::WriteObject(const VStr& name)
 void VPackage::LoadObject(TLocation l)
 {
 	guard(VPackage::LoadObject);
-#if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
+#if defined(IN_VCC)
 	dprintf("Loading package %s\n", *Name);
 
-	//	Load PROGS from a specified file
+	// Load PROGS from a specified file
 	VStream* f = OpenFile(va("%s.dat", *Name));
 	if (!f)
 	{
@@ -755,6 +760,49 @@ void VPackage::LoadObject(TLocation l)
 		return;
 	}
 	VProgsReader* Reader = new VProgsReader(f);
+#elif defined(VCC_STANDALONE_EXECUTOR)
+	dprintf("Loading package '%s'...\n", *Name);
+
+	VStr mainVC;
+	for (int i = 0; i < GPackagePath.Num(); ++i) {
+		mainVC = GPackagePath[i]+"/"+Name+"/classes.vc";
+		VStream* f = OpenFile(mainVC);
+		if (f) { delete f; break; }
+		mainVC = "";
+	}
+	if (!mainVC.Length()) {
+		mainVC = VStr("packages/")+Name+"/classes.vc";
+		VStream* f = OpenFile(mainVC);
+		if (!f) ParseError(l, "Can't find package %s", *Name);
+	}
+
+	// Compile package
+	dprintf("  '%s'\n", *mainVC);
+	VLexer Lex;
+	Lex.OpenSource(*mainVC);
+	VParser Parser(Lex, this);
+	Parser.Parse();
+	Emit();
+
+	// Copy mobj infos and spawn IDs.
+	for (int i = 0; i < MobjInfo.Num(); ++i) VClass::GMobjInfos.Alloc() = MobjInfo[i];
+	for (int i = 0; i < ScriptIds.Num(); ++i) VClass::GScriptIds.Alloc() = ScriptIds[i];
+	for (int i = 0; i < GMembers.Num(); ++i) if (GMembers[i]->IsIn(this)) GMembers[i]->PostLoad();
+
+	// Create default objects.
+	for (int i = 0; i < ParsedClasses.Num(); ++i) ParsedClasses[i]->CreateDefaults();
+
+	if (Name == NAME_engine) {
+		for (VClass* Cls = GClasses; Cls; Cls = Cls->LinkNext) {
+			if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
+				Cls->PostLoad();
+				Cls->CreateDefaults();
+				Cls->Outer = this;
+			}
+		}
+	}
+	return;
+
 #else
 	//	Load PROGS from a specified file
 	VStream* Strm = FL_OpenFileRead(va("progs/%s.dat", *Name));
@@ -900,7 +948,7 @@ void VPackage::LoadObject(TLocation l)
 			Exports[i].Obj = new VStruct(Exports[i].Name, NULL, TLocation());
 			break;
 		case MEMBER_Class:
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
 			Exports[i].Obj = VClass::FindClass(*Exports[i].Name);
 			if (!Exports[i].Obj)
 #endif
@@ -927,7 +975,7 @@ void VPackage::LoadObject(TLocation l)
 		}
 	}
 
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
 	//	Set up info tables.
 	Reader->Seek(Progs.ofs_mobjinfo);
 	for (int i = 0; i < Progs.num_mobjinfo; i++)

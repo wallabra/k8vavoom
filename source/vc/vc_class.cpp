@@ -179,7 +179,7 @@ VClass::~VClass() noexcept(false)
 		delete[] ClassVTable;
 		ClassVTable = NULL;
 	}
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
 	if (Defaults)
 	{
 		DestructObject((VObject*)Defaults);
@@ -375,7 +375,7 @@ void VClass::Serialise(VStream& Strm)
 {
 	guard(VClass::Serialise);
 	VMemberBase::Serialise(Strm);
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
 	VClass* PrevParent = ParentClass;
 #endif
 	Strm << ParentClass
@@ -385,7 +385,7 @@ void VClass::Serialise(VStream& Strm)
 		<< DefaultProperties
 		<< RepInfos
 		<< StateLabels;
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
 	if ((ObjectFlags & CLASSOF_Native) && ParentClass != PrevParent)
 	{
 		Sys_Error("Bad parent class, class %s, C++ %s, VavoomC %s)",
@@ -410,7 +410,7 @@ void VClass::Shutdown()
 		delete[] ClassVTable;
 		ClassVTable = NULL;
 	}
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
 	if (Defaults)
 	{
 		DestructObject((VObject*)Defaults);
@@ -909,7 +909,7 @@ bool VClass::Define()
 		}
 	}
 
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
 	VClass* PrevParent = ParentClass;
 #endif
 	if (ParentClassName != NAME_None)
@@ -924,7 +924,7 @@ bool VClass::Define()
 			ParseError(ParentClassLoc, "Parent class must be defined before");
 		}
 	}
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
 	if ((ObjectFlags & CLASSOF_Native) && ParentClass != PrevParent)
 	{
 		Sys_Error("Bad parent class, class %s, C++ %s, VavoomC %s)",

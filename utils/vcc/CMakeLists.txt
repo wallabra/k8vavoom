@@ -80,7 +80,7 @@ add_executable(vcc_run
 	vcc_run.cpp
 	vcc_run.h
 )
-set_target_properties(vcc_run PROPERTIES OUTPUT_NAME ../bin/vcc_run)
+set_target_properties(vcc_run PROPERTIES OUTPUT_NAME ../../vcc_run)
 set_target_properties(vcc_run PROPERTIES COMPILE_FLAGS -DVCC_STANDALONE_EXECUTOR)
 target_link_libraries(vcc_run core)
 add_dependencies(vcc_run core)
