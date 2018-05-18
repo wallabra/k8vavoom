@@ -162,12 +162,33 @@ VDotField::~VDotField()
 
 VExpression* VDotField::IntResolve(VEmitContext& ec, bool AssignTarget)
 {
-	if (op)
-		op = op->Resolve(ec);
+	if (op) op = op->Resolve(ec);
 	if (!op)
 	{
 		delete this;
 		return NULL;
+	}
+
+	//FIXME: remove pasta!
+	if (op->Type.Type == TYPE_Pointer) {
+		VFieldType type = op->Type.GetPointerInnerType();
+		if (!type.Struct)
+		{
+			ParseError(Loc, "Not a structure type");
+			delete this;
+			return NULL;
+		}
+		VField* field = type.Struct->FindField(FieldName);
+		if (!field)
+		{
+			ParseError(Loc, "No such field %s", *FieldName);
+			delete this;
+			return NULL;
+		}
+		VExpression* e = new VFieldAccess(op, field, Loc, 0);
+		op = NULL;
+		delete this;
+		return e->Resolve(ec);
 	}
 
 	if (op->Type.Type == TYPE_Reference)
@@ -184,8 +205,7 @@ VExpression* VDotField::IntResolve(VEmitContext& ec, bool AssignTarget)
 		VField* field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
 		if (field)
 		{
-			VExpression* e = new VFieldAccess(op, field, Loc,
-				op->IsDefaultObject() ? FIELD_ReadOnly : 0);
+			VExpression* e = new VFieldAccess(op, field, Loc, op->IsDefaultObject() ? FIELD_ReadOnly : 0);
 			op = NULL;
 			delete this;
 			return e->Resolve(ec);
@@ -218,8 +238,7 @@ VExpression* VDotField::IntResolve(VEmitContext& ec, bool AssignTarget)
 						delete this;
 						return NULL;
 					}
-					VExpression* e = new VFieldAccess(op, Prop->DefaultField,
-						Loc, FIELD_ReadOnly);
+					VExpression* e = new VFieldAccess(op, Prop->DefaultField, Loc, FIELD_ReadOnly);
 					op = NULL;
 					delete this;
 					return e->Resolve(ec);
