@@ -2050,9 +2050,7 @@ void VParser::ParseClass () {
   if (Lex.Token != TK_Identifier) {
     ParseError(Lex.Location, "Class name expected");
     ClassName = NAME_None;
-  }
-  else
-  {
+  } else {
     ExistingClass = VMemberBase::StaticFindClass(Lex.Name);
   }
   Lex.NextToken();
@@ -2060,47 +2058,34 @@ void VParser::ParseClass () {
   VName ParentClassName = NAME_None;
   TLocation ParentClassLoc;
 
-  if (Lex.Check(TK_Colon))
-  {
-    if (Lex.Token != TK_Identifier)
-    {
+  if (Lex.Check(TK_Colon)) {
+    if (Lex.Token != TK_Identifier) {
       ParseError(Lex.Location, "Parent class name expected");
-    }
-    else
-    {
+    } else {
       ParentClassName = Lex.Name;
       ParentClassLoc = Lex.Location;
       Lex.NextToken();
     }
-  }
-  else if (ClassName != NAME_Object)
-  {
+  } else if (ClassName != NAME_Object) {
     ParseError(Lex.Location, "Parent class expected");
   }
 
-  if (Lex.Check(TK_Decorate))
-  {
+  if (Lex.Check(TK_Decorate)) {
     Lex.Expect(TK_Semicolon);
 
-    if (ExistingClass)
-    {
-      return;
-    }
+    if (ExistingClass) return;
 
 #if !defined(IN_VCC)
-    //  Check if it already exists n DECORATE imports.
-    for (int i = 0; i < VMemberBase::GDecorateClassImports.Num(); i++)
-    {
-      if (VMemberBase::GDecorateClassImports[i]->Name == ClassName)
-      {
-        Package->ParsedDecorateImportClasses.Append(
-          VMemberBase::GDecorateClassImports[i]);
+    // check if it already exists n DECORATE imports
+    for (int i = 0; i < VMemberBase::GDecorateClassImports.Num(); ++i) {
+      if (VMemberBase::GDecorateClassImports[i]->Name == ClassName) {
+        Package->ParsedDecorateImportClasses.Append(VMemberBase::GDecorateClassImports[i]);
         return;
       }
     }
 #endif
 
-    //  New class.
+    // new class
     VClass* Class = new VClass(ClassName, Package, ClassLoc);
     Class->Defined = false;
 
@@ -2110,7 +2095,7 @@ void VParser::ParseClass () {
       Class->ParentClassLoc = ParentClassLoc;
     }
 
-    //  This class is not IN this package.
+    // this class is not IN this package
     Class->MemberType = MEMBER_DecorateClass;
     Class->Outer = nullptr;
     Package->ParsedDecorateImportClasses.Append(Class);
@@ -2120,208 +2105,143 @@ void VParser::ParseClass () {
     return;
   }
 
-  //  For engine package use native class objects.
-  VClass* Class;
+  // for engine package use native class objects
+  VClass *Class;
 #if !defined(IN_VCC)
   Class = nullptr;
-  if (Package->Name == NAME_engine)
-  {
+  if (Package->Name == NAME_engine) {
     Class = VClass::FindClass(*ClassName);
   }
-  if (Class)
-  {
-    //  If Defined is not set, it's a duplicate.
+  if (Class) {
+    // if `Defined `is not set, it's a duplicate
     check(Class->Defined);
     Class->Outer = Package;
   }
   else
 #endif
   {
-    //  New class.
+    // new class
     Class = new VClass(ClassName, Package, ClassLoc);
   }
   Class->Defined = false;
 
-  if (ParentClassName != NAME_None)
-  {
+  if (ParentClassName != NAME_None) {
     Class->ParentClassName = ParentClassName;
     Class->ParentClassLoc = ParentClassLoc;
   }
 
-  int ClassAttr = TModifiers::ClassAttr(TModifiers::Check(
-    TModifiers::Parse(Lex), TModifiers::Native | TModifiers::Abstract,
-    Lex.Location));
+  int ClassAttr = TModifiers::ClassAttr(TModifiers::Check(TModifiers::Parse(Lex), TModifiers::Native | TModifiers::Abstract, Lex.Location));
   (void)ClassAttr; //k8: don't even ask me!
-  do
-  {
-    if (Lex.Check(TK_MobjInfo))
-    {
+  // parse class attributes
+  do {
+    if (Lex.Check(TK_MobjInfo)) {
       Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
       VExpression* e = ParseExpression();
-      if (!e)
-      {
+      if (!e) {
         ParseError(Lex.Location, "Constant expression expected");
-      }
-      else if (Class->MobjInfoExpr)
-      {
+      } else if (Class->MobjInfoExpr) {
         ParseError(Lex.Location, "Only one Editor ID allowed");
-      }
-      else
-      {
+      } else {
         Class->MobjInfoExpr = e;
       }
       Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-    }
-    else if (Lex.Check(TK_ScriptId))
-    {
+    } else if (Lex.Check(TK_ScriptId)) {
       Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
       VExpression* e = ParseExpression();
-      if (!e)
-      {
+      if (!e) {
         ParseError(Lex.Location, "Constant expression expected");
-      }
-      else if (Class->ScriptIdExpr)
-      {
+      } else if (Class->ScriptIdExpr) {
         ParseError(Lex.Location, "Only one script ID allowed");
-      }
-      else
-      {
+      } else {
         Class->ScriptIdExpr = e;
       }
       Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-    }
-    else if (Lex.Check(TK_Game))
-    {
+    } else if (Lex.Check(TK_Game)) {
       Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
       VExpression* e = ParseExpression();
-      if (!e)
-      {
+      if (!e) {
         ParseError(Lex.Location, "Constant expression expected");
-      }
-      else if (Class->GameExpr)
-      {
+      } else if (Class->GameExpr) {
         ParseError(Lex.Location, "Only one game expression allowed");
-      }
-      else
-      {
+      } else {
         Class->GameExpr = e;
       }
       Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-    }
-    else
-    {
+    } else {
       break;
     }
   } while (1);
-
   Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-  while (!Lex.Check(TK_DefaultProperties))
-  {
+
+  // parse class definitions
+  while (!Lex.Check(TK_DefaultProperties)) {
     if (Lex.Check(TK_EOF)) {
       ParseError(cstloc, "`defaultproperties` not found");
       Sys_Error("VCC: cannot continue");
       break;
     }
 
+    // another class?
     if (Lex.Token == TK_Class) {
-      // another class?
       char nch = Lex.peekNextNonBlankChar();
-      //fprintf(stderr, "NEXT CHAR: %d (%c)\n", (int)nch, nch);
-      //if (nch != '<' && nch != ':') break;
       // identifier?
       if (nch >= 'A' && nch <= 'Z') break;
       if (nch >= 'a' && nch <= 'z') break;
       if (nch == '_') break;
     }
 
-    if (Lex.Check(TK_States))
-    {
+    if (Lex.Check(TK_States)) {
       ParseStates(Class);
       continue;
     }
 
-    if (Lex.Check(TK_Enum))
-    {
-      VConstant* PrevValue = nullptr;
+    if (Lex.Check(TK_Enum)) {
+      VConstant *PrevValue = nullptr;
       Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
-      do
-      {
-        if (Lex.Token != TK_Identifier)
-        {
+      for (;;) {
+        if (Lex.Token != TK_Identifier) {
           ParseError(Lex.Location, "Identifier expected");
           Lex.NextToken();
           continue;
         }
-        if (Class->FindConstant(Lex.Name))
-        {
-          ParseError(Lex.Location, "Redefined identifier %s", *Lex.Name);
-        }
-        VConstant* cDef = new VConstant(Lex.Name, Class, Lex.Location);
+        if (Class->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier %s", *Lex.Name);
+        VConstant *cDef = new VConstant(Lex.Name, Class, Lex.Location);
         cDef->Type = TYPE_Int;
         Lex.NextToken();
-        if (Lex.Check(TK_Assign))
-        {
-          cDef->ValueExpr = ParseExpression();
-        }
-        else if (PrevValue)
-        {
-          cDef->PrevEnumValue = PrevValue;
-        }
-        else
-        {
-          cDef->ValueExpr = new VIntLiteral(0, Lex.Location);
-        }
+             if (Lex.Check(TK_Assign)) cDef->ValueExpr = ParseExpression();
+        else if (PrevValue) cDef->PrevEnumValue = PrevValue;
+        else cDef->ValueExpr = new VIntLiteral(0, Lex.Location);
         PrevValue = cDef;
         Class->AddConstant(cDef);
-      } while (Lex.Check(TK_Comma));
+        // get comma
+        if (!Lex.Check(TK_Comma)) break;
+        // this can be last "orphan" comma
+        if (Lex.Token == TK_RBrace) break;
+      }
       Lex.Expect(TK_RBrace, ERR_MISSING_RBRACE);
-      Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+      while (Lex.Check(TK_Semicolon)) {}
+      //Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
       continue;
     }
 
-    if (Lex.Check(TK_Const))
-    {
+    if (Lex.Check(TK_Const)) {
       int Type = TYPE_Unknown;
-      if (Lex.Check(TK_Int))
-      {
-        Type = TYPE_Int;
-      }
-      else if (Lex.Check(TK_Float))
-      {
-        Type = TYPE_Float;
-      }
-      else if (Lex.Check(TK_Name))
-      {
-        Type = TYPE_Name;
-      }
-      else if (Lex.Check(TK_String))
-      {
-        Type = TYPE_String;
-      }
-      else
-      {
-        ParseError(Lex.Location, "Bad constant type");
-        Lex.NextToken();
-      }
-      do
-      {
-        if (Lex.Token != TK_Identifier)
-        {
+           if (Lex.Check(TK_Int)) Type = TYPE_Int;
+      else if (Lex.Check(TK_Float)) Type = TYPE_Float;
+      else if (Lex.Check(TK_Name)) Type = TYPE_Name;
+      else if (Lex.Check(TK_String)) Type = TYPE_String;
+      else { ParseError(Lex.Location, "Bad constant type"); Lex.NextToken(); }
+      do {
+        if (Lex.Token != TK_Identifier) {
           ParseError(Lex.Location, "Const name expected");
           Lex.NextToken();
           continue;
         }
-        if (Class->FindConstant(Lex.Name))
-        {
-          ParseError(Lex.Location, "Redefined identifier %s", *Lex.Name);
-        }
-        VConstant* cDef = new VConstant(Lex.Name, Class, Lex.Location);
+        if (Class->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier %s", *Lex.Name);
+        VConstant *cDef = new VConstant(Lex.Name, Class, Lex.Location);
         cDef->Type = Type;
         Lex.NextToken();
-        if (!Lex.Check(TK_Assign))
-        {
-          ParseError(Lex.Location, "Assignement operator expected");
-        }
+        if (!Lex.Check(TK_Assign)) ParseError(Lex.Location, "Assignement operator expected");
         cDef->ValueExpr = ParseExpression();
         Class->AddConstant(cDef);
       } while (Lex.Check(TK_Comma));
@@ -2329,92 +2249,73 @@ void VParser::ParseClass () {
       continue;
     }
 
-    if (Lex.Check(TK_Struct))
-    {
+    if (Lex.Check(TK_Struct)) {
       ParseStruct(Class, false);
       continue;
     }
 
-    if (Lex.Check(TK_Vector))
-    {
+    if (Lex.Check(TK_Vector)) {
       ParseStruct(Class, true);
       continue;
     }
 
-    if (Lex.Check(TK_Delegate))
-    {
+    if (Lex.Check(TK_Delegate)) {
       VExpression* Type = ParseType();
-      if (!Type)
-      {
+      if (!Type) {
         ParseError(Lex.Location, "Field type expected.");
         continue;
       }
       TLocation l = Lex.Location;
-      while (Lex.Check(TK_Asterisk))
-      {
+      while (Lex.Check(TK_Asterisk)) {
         Type = new VPointerType(Type, l);
         l = Lex.Location;
       }
 
-      if (Lex.Token != TK_Identifier)
-      {
+      if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "Field name expected");
         continue;
       }
-      VField* fi = new VField(Lex.Name, Class, Lex.Location);
-      if (Class->FindField(Lex.Name) || Class->FindMethod(Lex.Name))
-      {
-        ParseError(Lex.Location, "Redeclared field");
-      }
+      VField *fi = new VField(Lex.Name, Class, Lex.Location);
+      if (Class->FindField(Lex.Name) || Class->FindMethod(Lex.Name)) ParseError(Lex.Location, "Redeclared field");
       Lex.NextToken();
       Class->AddField(fi);
       ParseDelegate(Type, fi);
       continue;
     }
 
-    if (Lex.Check(TK_Replication))
-    {
+    if (Lex.Check(TK_Replication)) {
       ParseReplication(Class);
       continue;
     }
 
     int Modifiers = TModifiers::Parse(Lex);
 
-    if (Lex.Check(TK_Iterator))
-    {
-      if (Lex.Token != TK_Identifier)
-      {
-        ParseError(Lex.Location, "Method name expected");
-      }
+    if (Lex.Check(TK_Iterator)) {
+      if (Lex.Token != TK_Identifier) ParseError(Lex.Location, "Method name expected");
       VName FieldName = Lex.Name;
       TLocation FieldLoc = Lex.Location;
       Lex.NextToken();
       Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
-      ParseMethodDef(new VTypeExpr(VFieldType(TYPE_Void).MakePointerType(),
-        Lex.Location), FieldName, FieldLoc, Class, Modifiers, true);
+      ParseMethodDef(new VTypeExpr(VFieldType(TYPE_Void).MakePointerType(), Lex.Location), FieldName, FieldLoc, Class, Modifiers, true);
       continue;
     }
 
-    VExpression* Type = ParseType();
-    if (!Type)
-    {
+    VExpression *Type = ParseType();
+    if (!Type) {
       ParseError(Lex.Location, "Field type expected.");
       Lex.NextToken();
       continue;
     }
 
     bool need_semicolon = true;
-    do
-    {
+    do {
       VExpression* FieldType = Type->CreateTypeExprCopy();
       TLocation l = Lex.Location;
-      while (Lex.Check(TK_Asterisk))
-      {
+      while (Lex.Check(TK_Asterisk)) {
         FieldType = new VPointerType(FieldType, l);
         l = Lex.Location;
       }
-      if (Lex.Token != TK_Identifier)
-      {
+      if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "Field name expected");
         continue;
       }
@@ -2422,50 +2323,39 @@ void VParser::ParseClass () {
       TLocation FieldLoc = Lex.Location;
       Lex.NextToken();
 
-      if (Class->FindField(FieldName))
-      {
+      if (Class->FindField(FieldName)) {
         ParseError(Lex.Location, "Redeclared field");
         continue;
       }
 
-      if (Lex.Check(TK_LBrace))
-      {
-        Modifiers = TModifiers::Check(Modifiers,
-          TModifiers::Native | TModifiers::Final, FieldLoc);
+      if (Lex.Check(TK_LBrace)) {
+        Modifiers = TModifiers::Check(Modifiers, TModifiers::Native | TModifiers::Final, FieldLoc);
         VProperty* Prop = new VProperty(FieldName, Class, FieldLoc);
         Prop->TypeExpr = FieldType;
         Prop->Flags = TModifiers::PropAttr(Modifiers);
-        do
-        {
-          if (Lex.Check(TK_Get))
-          {
+        do {
+          if (Lex.Check(TK_Get)) {
             char TmpName[NAME_SIZE];
             sprintf(TmpName, "get_%s", *FieldName);
             VMethod* Func = new VMethod(TmpName, Class, Lex.Location);
             Func->Flags = TModifiers::MethodAttr(Modifiers);
             Func->ReturnTypeExpr = FieldType->CreateTypeExprCopy();
 
-            if (Modifiers & TModifiers::Native)
-            {
+            if (Modifiers & TModifiers::Native) {
               Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-              Package->NumBuiltins++;
-            }
-            else
-            {
+              ++Package->NumBuiltins;
+            } else {
               Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
               Func->Statement = ParseCompoundStatement();
             }
 
-            if (Prop->GetFunc)
-            {
+            if (Prop->GetFunc) {
               ParseError(FieldLoc, "Property already has a get method");
               ParseError(Prop->GetFunc->Loc, "Previous get method here");
             }
             Prop->GetFunc = Func;
             Class->AddMethod(Func);
-          }
-          else if (Lex.Check(TK_Set))
-          {
+          } else if (Lex.Check(TK_Set)) {
             char TmpName[NAME_SIZE];
             sprintf(TmpName, "set_%s", *FieldName);
             VMethod* Func = new VMethod(TmpName, Class, Lex.Location);
@@ -2477,66 +2367,48 @@ void VParser::ParseClass () {
             P.Name = "value";
             P.Loc = Lex.Location;
             Func->ParamFlags[Func->NumParams] = 0;
-            Func->NumParams++;
+            ++Func->NumParams;
 
-            if (Modifiers & TModifiers::Native)
-            {
+            if (Modifiers & TModifiers::Native) {
               Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-              Package->NumBuiltins++;
-            }
-            else
-            {
+              ++Package->NumBuiltins;
+            } else {
               Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
               Func->Statement = ParseCompoundStatement();
             }
 
-            if (Prop->SetFunc)
-            {
+            if (Prop->SetFunc) {
               ParseError(FieldLoc, "Property already has a set method");
               ParseError(Prop->SetFunc->Loc, "Previous set method here");
             }
             Prop->SetFunc = Func;
             Class->AddMethod(Func);
-          }
-          else if (Lex.Check(TK_Default))
-          {
-            if (Lex.Token != TK_Identifier)
-            {
+          } else if (Lex.Check(TK_Default)) {
+            if (Lex.Token != TK_Identifier) {
               ParseError(Lex.Location, "Default field name expected");
-            }
-            else
-            {
-              if (Prop->DefaultFieldName != NAME_None)
-              {
-                ParseError(Lex.Location, "Property already has default field defined");
-              }
+            } else {
+              if (Prop->DefaultFieldName != NAME_None) ParseError(Lex.Location, "Property already has default field defined");
               Prop->DefaultFieldName = Lex.Name;
               Lex.NextToken();
             }
             Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-          }
-          else
-          {
+          } else {
             ParseError(Lex.Location, "Invalid declaration");
             Lex.NextToken();
           }
-        }
-        while (!Lex.Check(TK_RBrace));
+        } while (!Lex.Check(TK_RBrace));
         Class->AddProperty(Prop);
         need_semicolon = false;
         break;
       }
 
-      if (Lex.Check(TK_LParen))
-      {
-        ParseMethodDef(FieldType, FieldName, FieldLoc, Class,
-          Modifiers, false);
+      if (Lex.Check(TK_LParen)) {
+        ParseMethodDef(FieldType, FieldName, FieldLoc, Class, Modifiers, false);
         need_semicolon = false;
         break;
       }
 
-      if (Lex.Check(TK_LBracket))
-      {
+      if (Lex.Check(TK_LBracket)) {
         TLocation SLoc = Lex.Location;
         VExpression* e = ParseExpression();
         Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
@@ -2550,11 +2422,12 @@ void VParser::ParseClass () {
         TModifiers::ReadOnly | TModifiers::Transient, FieldLoc));
       Class->AddField(fi);
     } while (Lex.Check(TK_Comma));
+
     delete Type;
     Type = nullptr;
-    if (need_semicolon)
-    {
+    if (need_semicolon) {
       Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+      while (Lex.Check(TK_Semicolon)) {}
     }
   }
 
@@ -2565,12 +2438,12 @@ void VParser::ParseClass () {
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VParser::Parse
 //
 //==========================================================================
-
 void VParser::Parse()
 {
   guard(VParser::Parse);
@@ -2591,10 +2464,7 @@ void VParser::Parse()
     case TK_Import:
     {
       Lex.NextToken();
-      if (Lex.Token != TK_NameLiteral)
-      {
-        ParseError(Lex.Location, "Package name expected");
-      }
+      if (Lex.Token != TK_NameLiteral) ParseError(Lex.Location, "Package name expected");
       VImportedPackage& I = Package->PackagesToLoad.Alloc();
       I.Name = Lex.Name;
       I.Loc = Lex.Location;
@@ -2608,36 +2478,25 @@ void VParser::Parse()
       Lex.NextToken();
       VConstant* PrevValue = nullptr;
       Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
-      do
-      {
-        if (Lex.Token != TK_Identifier)
-        {
-          ParseError(Lex.Location, "Expected IDENTIFIER");
-        }
-        if (Package->FindConstant(Lex.Name))
-        {
-          ParseError(Lex.Location, "Redefined identifier %s", *Lex.Name);
-        }
-        VConstant* cDef = new VConstant(Lex.Name, Package, Lex.Location);
+      for (;;) {
+        if (Lex.Token != TK_Identifier) ParseError(Lex.Location, "Expected IDENTIFIER");
+        if (Package->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier %s", *Lex.Name);
+        VConstant *cDef = new VConstant(Lex.Name, Package, Lex.Location);
         cDef->Type = TYPE_Int;
         Lex.NextToken();
-        if (Lex.Check(TK_Assign))
-        {
-          cDef->ValueExpr = ParseExpression();
-        }
-        else if (PrevValue)
-        {
-          cDef->PrevEnumValue = PrevValue;
-        }
-        else
-        {
-          cDef->ValueExpr = new VIntLiteral(0, Lex.Location);
-        }
+             if (Lex.Check(TK_Assign)) cDef->ValueExpr = ParseExpression();
+        else if (PrevValue) cDef->PrevEnumValue = PrevValue;
+        else cDef->ValueExpr = new VIntLiteral(0, Lex.Location);
         PrevValue = cDef;
         Package->ParsedConstants.Append(cDef);
-      } while (Lex.Check(TK_Comma));
+        // get comma
+        if (!Lex.Check(TK_Comma)) break;
+        // this can be last "orphan" comma
+        if (Lex.Token == TK_RBrace) break;
+      }
       Lex.Expect(TK_RBrace, ERR_MISSING_RBRACE);
-      Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+      while (Lex.Check(TK_Semicolon)) {}
+      //Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
       break;
     }
 
