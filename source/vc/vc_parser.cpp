@@ -1515,7 +1515,7 @@ void VParser::ParseDefaultProperties(VClass* InClass)
 	InClass->DefaultProperties = Func;
 
 	// if we have no 'defaultproperties', create empty compound statement
-	if (Lex.Check(TK_EOF)) {
+	if (Lex.Check(TK_EOF) || Lex.Token == TK_Class) {
 		Func->Statement = new VCompound(Lex.Location);
 	} else {
 		Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
@@ -2227,6 +2227,17 @@ void VParser::ParseClass()
 			ParseError(cstloc, "`defaultproperties` not found");
 			Sys_Error("VCC: cannot continue");
 			break;
+		}
+
+		if (Lex.Token == TK_Class) {
+			// another class?
+			char nch = Lex.peekNextNonBlankChar();
+			//fprintf(stderr, "NEXT CHAR: %d (%c)\n", (int)nch, nch);
+			//if (nch != '<' && nch != ':') break;
+			// identifier?
+			if (nch >= 'A' && nch <= 'Z') break;
+			if (nch >= 'a' && nch <= 'z') break;
+			if (nch == '_') break;
 		}
 
 		if (Lex.Check(TK_States))
