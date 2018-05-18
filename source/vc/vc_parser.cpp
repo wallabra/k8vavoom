@@ -1343,17 +1343,22 @@ VExpression* VParser::ParseType()
   case TK_Array:
   {
     Lex.NextToken();
-    Lex.Expect(TK_Less);
-    VExpression* Inner = ParseType();
-    if (!Inner)
-    {
-      ParseError(Lex.Location, "Inner type declaration expected");
+    VExpression* Inner = nullptr;
+    if (Lex.Check(TK_Not)) {
+      bool hasParen = Lex.Check(TK_LParen);
+      Inner = ParseType();
+      if (!Inner) ParseError(Lex.Location, "Inner type declaration expected");
+      if (hasParen) {
+        while (Lex.Check(TK_Asterisk)) Inner = new VPointerType(Inner, Lex.Location);
+        Lex.Expect(TK_RParen);
+      }
+    } else {
+      Lex.Expect(TK_Less);
+      Inner = ParseType();
+      if (!Inner) ParseError(Lex.Location, "Inner type declaration expected");
+      while (Lex.Check(TK_Asterisk)) Inner = new VPointerType(Inner, Lex.Location);
+      Lex.Expect(TK_Greater);
     }
-    while (Lex.Check(TK_Asterisk))
-    {
-      Inner = new VPointerType(Inner, Lex.Location);
-    }
-    Lex.Expect(TK_Greater);
     return new VDynamicArrayType(Inner, l);
   }
 
