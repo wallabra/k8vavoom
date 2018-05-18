@@ -410,6 +410,8 @@ set(SERVER_COMMON_SOURCES
   ${NETSUB_SOURCES}
   p_acs.cpp
   p_clip.cpp
+  p_decal.cpp
+  p_decal.h
   p_entity.cpp
   p_entity_sight.cpp
   p_entity_world.cpp

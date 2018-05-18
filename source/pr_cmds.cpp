@@ -262,6 +262,8 @@ IMPLEMENT_FUNCTION(VObject, GetSoundPlayingInfo) {
 #ifdef CLIENT
   RET_BOOL(GAudio->IsSoundPlaying(mobj->SoundOriginID, id));
 #else
+  (void)id;
+  (void)mobj;
   RET_BOOL(false);
 #endif
 }
