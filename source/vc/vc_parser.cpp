@@ -266,8 +266,14 @@ VExpression* VParser::ParseExpressionPriority0()
 		VExpression* op1 = ParseExpressionPriority13();
 		Lex.Expect(TK_Comma);
 		VExpression* op2 = ParseExpressionPriority13();
-		Lex.Expect(TK_Comma);
-		VExpression* op3 = ParseExpressionPriority13();
+		// third is optional
+		VExpression* op3;
+		if (Lex.Check(TK_Comma)) {
+			Lex.Expect(TK_Comma);
+			op3 = ParseExpressionPriority13();
+		} else {
+			op3 = new VFloatLiteral(0, l);
+		}
 		Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
 		return new VVector(op1, op2, op3, l);
 	}
