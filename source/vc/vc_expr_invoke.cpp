@@ -719,7 +719,6 @@ void VInvocation::CheckParams(VEmitContext& ec)
 							Args[i] = (new VScalarToInt(Args[i]))->Resolve(ec);
 						}
 						break;
-
 					case TYPE_Float:
 						if (Args[i]->IsIntConst())
 						{
@@ -762,6 +761,18 @@ void VInvocation::CheckParams(VEmitContext& ec)
 				{
 					if (!(Func->ParamFlags[NumArgs] & FPARM_Optional))
 					{
+						if (Func->ParamTypes[i].Type == TYPE_Float) {
+							if (Args[i]->IsIntConst()) {
+								int Val = Args[i]->GetIntConst();
+								TLocation Loc = Args[i]->Loc;
+								delete Args[i];
+								Args[i] = NULL;
+								Args[i] = new VFloatLiteral(Val, Loc);
+								Args[i] = Args[i]->Resolve(ec);
+							} else if (Args[i]->Type.Type == TYPE_Int) {
+								Args[i] = (new VScalarToFloat(Args[i]))->Resolve(ec);
+							}
+						}
 						Args[i]->Type.CheckMatch(Args[i]->Loc, Func->ParamTypes[i]);
 					}
 				}
