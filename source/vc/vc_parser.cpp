@@ -360,21 +360,21 @@ VExpression* VParser::ParseExpressionPriority0()
 	case TK_Class:
 	{
 		Lex.NextToken();
-		Lex.Expect(TK_Less);
-		if (Lex.Token != TK_Identifier)
-		{
-			ParseError(Lex.Location, "Identifier expected");
-			break;
+		VName ClassName = NAME_None;
+		if (Lex.Check(TK_Not)) {
+			if (Lex.Token != TK_Identifier) { ParseError(Lex.Location, "Identifier expected"); break; }
+			ClassName = Lex.Name;
+			Lex.NextToken();
+		} else {
+			Lex.Expect(TK_Less);
+			if (Lex.Token != TK_Identifier) { ParseError(Lex.Location, "Identifier expected"); break; }
+			ClassName = Lex.Name;
+			Lex.NextToken();
+			Lex.Expect(TK_Greater);
 		}
-		VName ClassName = Lex.Name;
-		Lex.NextToken();
-		Lex.Expect(TK_Greater);
 		Lex.Expect(TK_LParen);
 		VExpression* Expr = ParseExpressionPriority13();
-		if (!Expr)
-		{
-			ParseError(Lex.Location, "Expression expected");
-		}
+		if (!Expr) ParseError(Lex.Location, "Expression expected");
 		Lex.Expect(TK_RParen);
 		return new VDynamicClassCast(ClassName, Expr, l);
 	}
@@ -1300,14 +1300,17 @@ VExpression* VParser::ParseType()
 	{
 		Lex.NextToken();
 		VName MetaClassName = NAME_None;
-		if (Lex.Check(TK_Less))
-		{
-			if (Lex.Token != TK_Identifier)
-			{
+		if (Lex.Check(TK_Not)) {
+			if (Lex.Token != TK_Identifier) {
 				ParseError(Lex.Location, "Invalid identifier, class name expected");
+			} else {
+				MetaClassName = Lex.Name;
+				Lex.NextToken();
 			}
-			else
-			{
+		} else if (Lex.Check(TK_Less)) {
+			if (Lex.Token != TK_Identifier) {
+				ParseError(Lex.Location, "Invalid identifier, class name expected");
+			} else {
 				MetaClassName = Lex.Name;
 				Lex.NextToken();
 			}
