@@ -327,6 +327,8 @@ public:
 #ifdef CLIENT
   DECLARE_FUNCTION(P_GetMapName)
   DECLARE_FUNCTION(P_GetMapIndexByLevelNum)
+  DECLARE_FUNCTION(P_GetNumMaps)
+  DECLARE_FUNCTION(P_GetMapInfo)
   DECLARE_FUNCTION(P_GetMapLumpName)
   DECLARE_FUNCTION(P_TranslateMap)
   DECLARE_FUNCTION(P_GetNumEpisodes)

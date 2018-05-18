@@ -127,27 +127,42 @@ void CreateChoices()
 }
 
 void InitMapList (int epi) {
-	if (!IsAnyDoom2) {
-		// doom1
-		for (int i = 0; i < 9; ++i) Level.EnumNames[i] = P_GetMapName(epi * 9 + i);
-	} else {
-		// doom2
+  /*
+  print("=== MAP COUNT: %d ===", P_GetNumMaps());
+  for (int i = 0; i < P_GetNumMaps(); ++i) {
+    print("  %d: <%s> (%d)", i, P_GetMapName(i), P_GetMapInfo(i)->LevelNum);
+  }
+
+  for (int i = 0; i < P_GetNumEpisodes(); ++i) {
+    EpisodeDef *EDef = P_GetEpisodeDef(i);
+    name startMap = EDef->Name;
+    if (EDef->TeaserName && !IsMapPresent(EDef->Name)) startMap = EDef->TeaserName;
+    print("EPISODE #%d (%s:%s): start map is %s", i, EDef->Text, GetLangString(StrToName(EDef->Text)), NameToStr(startMap));
+  }
+  */
+
+  // build episode list and map list
+  if (!IsAnyDoom2) {
+    // doom1
+    for (int i = 0; i < 9; ++i) Level.EnumNames[i] = P_GetMapName(epi * 9 + i);
+  } else {
+    // doom2
 #ifdef FIXME
-		int count = 0;
-		for (int i = 1; i <= 99; ++i) {
-			int map = P_TranslateMap(i);
-			if (map != -1) {
-				Level.EnumNames[count] = P_GetMapName(map);
-				count++;
-			}
-		}
-		Level.MaxValue = count;
-		return;
+    int count = 0;
+    for (int i = 1; i <= 99; ++i) {
+      int map = P_TranslateMap(i);
+      if (map != -1) {
+        Level.EnumNames[count] = P_GetMapName(map);
+        count++;
+      }
+    }
+    Level.MaxValue = count;
+    return;
 #else
-		for (int i = 0; i < 32; ++i) Level.EnumNames[i] = P_GetMapName(i);
-	}
+    for (int i = 0; i < P_GetNumMaps(); ++i) Level.EnumNames[i] = P_GetMapName(i);
+  }
 #endif
-	Level.Value = 0;
+  Level.Value = 0;
 }
 
 bool ChangedEpisode(Object Sender, int newValue)
@@ -165,10 +180,18 @@ void ActivateStartNewGame(Object Sender)
 	CmdBuf_AddText("TimeLimit %d\n", TimeLimit.Value * 5);
 	CmdBuf_AddText("Skill %d\n", Skill.Value);
 	if (IsAnyDoom2) {
+		/*
 		if (Level.Value + 1 < 10)
 			CmdBuf_AddText("Map MAP0%d\n", Level.Value + 1);
 		else
 			CmdBuf_AddText("Map MAP%d\n", Level.Value + 1);
+		*/
+		mapInfo_t *mi = P_GetMapInfo(Level.Value);
+		if (mi) {
+			CmdBuf_AddText("Map %s\n", NameToStr(mi->LumpName));
+		} else {
+			Error("cannot start map!");
+		}
 	} else {
 		CmdBuf_AddText("Map E%dM%d\n", Episode.Value + 1, Level.Value + 1);
 	}

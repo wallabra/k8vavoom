@@ -210,6 +210,8 @@ VName P_GetMapLumpNameByLevelNum(int);
 void P_PutMapSongLump(int, VName);
 const VClusterDef* P_GetClusterDef(int);
 int P_GetNumEpisodes();
+int P_GetNumMaps();
+mapInfo_t *P_GetMapInfoPtr(int mapidx);
 VEpisodeDef* P_GetEpisodeDef(int);
 int P_GetNumSkills();
 const VSkillDef* P_GetSkillDef(int);

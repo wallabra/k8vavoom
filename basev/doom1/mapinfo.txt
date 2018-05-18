@@ -2,18 +2,22 @@ clearepisodes
 
 episode e1m1
 picname m_epi1
+name "Knee-Deep in the Dead"
 key k
 
 episode e2m1
 picname m_epi2
+name "The Shores of Hell"
 key t
 
 episode e3m1
 picname m_epi3
+name "Inferno"
 key i
 
 episode e4m1
 picname m_epi4
+name "Thy Flesh Consumed"
 key t
 optional
 

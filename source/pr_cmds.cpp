@@ -588,6 +588,17 @@ IMPLEMENT_FUNCTION(VObject, P_GetMapIndexByLevelNum) {
 }
 
 
+IMPLEMENT_FUNCTION(VObject, P_GetNumMaps) {
+  RET_INT(P_GetNumMaps());
+}
+
+
+IMPLEMENT_FUNCTION(VObject, P_GetMapInfo) {
+  P_GET_INT(map);
+  RET_PTR(P_GetMapInfoPtr(map));
+}
+
+
 IMPLEMENT_FUNCTION(VObject, P_GetMapLumpName) {
   P_GET_INT(map);
   RET_NAME(P_GetMapLumpName(map));

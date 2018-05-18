@@ -673,8 +673,56 @@ native static final void Clock(int Idx);
 native static final void Unclock(int Idx);
 
 native static final int P_GetMapIndexByLevelNum(int map);
+native static final int P_GetNumMaps();
 
 native static final bool HasDecal (name aname);
+
+
+struct VMapSpecialAction
+{
+	name		TypeName;
+	int		Special;
+	int		Args[5];
+};
+
+struct mapInfo_t
+{
+	name		LumpName;
+	string		Name;			// Name of map
+	int		LevelNum;		// Level number for action specials
+	int		Cluster;		// Defines what cluster level belongs to
+	int		WarpTrans;		// Actual map number in case maps are not sequential
+	name		NextMap;		// Map to teleport to upon exit of timed deathmatch
+	name		SecretMap;		// Map to teleport upon secret exit
+	name		SongLump;		// Background music (MUS or MIDI)
+	int		CDTrack;		// CD track to play during level
+	int		Sky1Texture;	// Default sky texture
+	int		Sky2Texture;	// Alternate sky displayed in Sky2 sectors
+	float		Sky1ScrollDelta;// Default sky texture speed
+	float		Sky2ScrollDelta;// Alternate sky texture speed
+	name		SkyBox;			// Sky box
+	name		FadeTable;		// Fade table {fogmap}
+	int		Fade; // unsigned
+	int		OutsideFog; // unsigned
+	float		Gravity;		// Map gravity
+	float		AirControl;		// Air control in this map.
+	int		Flags;// unsigned
+	int		Flags2;// unsigned
+	name		TitlePatch;
+	int		ParTime;
+	int		SuckTime;
+	byte		HorizWallShade;
+	byte		VertWallShade;
+	byte		Infighting;
+	array<VMapSpecialAction>	SpecialActions;
+	name		RedirectType;
+	name		RedirectMap;
+	name		ExitPic;
+	name		EnterPic;
+	name		InterMusic;
+};
+
+native static final mapInfo_t *P_GetMapInfo(int map);
 
 //==========================================================================
 //
