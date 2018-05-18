@@ -109,11 +109,14 @@ public:
 
 class VPushPointed : public VExpression
 {
-public:
-  VExpression*  op;
-  bool      AddressRequested;
+private:
+  bool mOpResolved;
 
-  VPushPointed(VExpression*);
+public:
+  VExpression *op;
+  bool AddressRequested;
+
+  VPushPointed (VExpression *, bool opResolved=false);
   ~VPushPointed();
   VExpression* DoResolve(VEmitContext&);
   void RequestAddressOf();

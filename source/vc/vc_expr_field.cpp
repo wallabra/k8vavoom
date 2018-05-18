@@ -45,215 +45,188 @@
 
 // CODE --------------------------------------------------------------------
 
+
 //==========================================================================
 //
 //  VPointerField::VPointerField
 //
 //==========================================================================
-
-VPointerField::VPointerField(VExpression* AOp, VName AFieldName, const TLocation& ALoc)
-: VExpression(ALoc)
-, op(AOp)
-, FieldName(AFieldName)
+VPointerField::VPointerField (VExpression *AOp, VName AFieldName, const TLocation& ALoc, bool opResolved)
+  : VExpression(ALoc)
+  , mOpResolved(opResolved)
+  , op(AOp)
+  , FieldName(AFieldName)
 {
 }
+
 
 //==========================================================================
 //
 //  VPointerField::~VPointerField
 //
 //==========================================================================
-
-VPointerField::~VPointerField()
-{
-  if (op)
-  {
+VPointerField::~VPointerField () {
+  if (op) {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
+
 
 //==========================================================================
 //
 //  VPointerField::DoResolve
 //
 //==========================================================================
-
-VExpression* VPointerField::DoResolve(VEmitContext& ec)
-{
-  if (op)
+VExpression* VPointerField::DoResolve (VEmitContext& ec) {
+  if (op && !mOpResolved) {
     op = op->Resolve(ec);
-  if (!op)
-  {
+    mOpResolved = true;
+  }
+  if (!op) {
     delete this;
-    return NULL;
+    return nullptr;
   }
 
-  if (op->Type.Type != TYPE_Pointer)
-  {
+  if (op->Type.Type != TYPE_Pointer) {
     ParseError(Loc, "Pointer type required on left side of ->");
     delete this;
-    return NULL;
+    return nullptr;
   }
+
   VFieldType type = op->Type.GetPointerInnerType();
-  if (!type.Struct)
-  {
+  if (!type.Struct) {
     ParseError(Loc, "Not a structure type");
     delete this;
-    return NULL;
+    return nullptr;
   }
-  VField* field = type.Struct->FindField(FieldName);
-  if (!field)
-  {
+
+  VField *field = type.Struct->FindField(FieldName);
+  if (!field) {
     ParseError(Loc, "No such field %s", *FieldName);
     delete this;
-    return NULL;
+    return nullptr;
   }
-  VExpression* e = new VFieldAccess(op, field, Loc, 0);
-  op = NULL;
+
+  VExpression *e = new VFieldAccess(op, field, Loc, 0);
+  op = nullptr;
   delete this;
+
   return e->Resolve(ec);
 }
+
 
 //==========================================================================
 //
 //  VPointerField::Emit
 //
 //==========================================================================
-
-void VPointerField::Emit(VEmitContext&)
-{
+void VPointerField::Emit (VEmitContext &) {
   ParseError(Loc, "Should not happen");
 }
+
 
 //==========================================================================
 //
 //  VDotField::VDotField
 //
 //==========================================================================
-
-VDotField::VDotField(VExpression* AOp, VName AFieldName, const TLocation& ALoc)
-: VExpression(ALoc)
-, op(AOp)
-, FieldName(AFieldName)
+VDotField::VDotField (VExpression* AOp, VName AFieldName, const TLocation& ALoc)
+  : VExpression(ALoc)
+  , op(AOp)
+  , FieldName(AFieldName)
 {
 }
+
 
 //==========================================================================
 //
 //  VDotField::~VDotField
 //
 //==========================================================================
-
-VDotField::~VDotField()
-{
-  if (op)
-  {
+VDotField::~VDotField () {
+  if (op) {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
+
 
 //==========================================================================
 //
 //  VDotField::IntResolve
 //
 //==========================================================================
-
-VExpression* VDotField::IntResolve(VEmitContext& ec, bool AssignTarget)
-{
+VExpression *VDotField::IntResolve (VEmitContext& ec, bool AssignTarget) {
   if (op) op = op->Resolve(ec);
-  if (!op)
-  {
+  if (!op) {
     delete this;
-    return NULL;
+    return nullptr;
   }
 
-  //FIXME: remove pasta!
   if (op->Type.Type == TYPE_Pointer) {
-    VFieldType type = op->Type.GetPointerInnerType();
-    if (!type.Struct)
-    {
-      ParseError(Loc, "Not a structure type");
+    // allow dotted access for dynamic arrays
+    if (op->Type.InnerType == TYPE_DynamicArray) {
+      VExpression *ee = new VPushPointed(op, true); // `op` is resolved
+      op = ee->Resolve(ec);
+      if (!op) { delete this; return nullptr; }
+    } else {
+      VPointerField *e = new VPointerField(op, FieldName, Loc, true); // `op` is resolved
+      op = nullptr; // don't kill it
       delete this;
-      return NULL;
+      return e->Resolve(ec);
     }
-    VField* field = type.Struct->FindField(FieldName);
-    if (!field)
-    {
-      ParseError(Loc, "No such field %s", *FieldName);
-      delete this;
-      return NULL;
-    }
-    VExpression* e = new VFieldAccess(op, field, Loc, 0);
-    op = NULL;
-    delete this;
-    return e->Resolve(ec);
   }
 
-  if (op->Type.Type == TYPE_Reference)
-  {
-    VMethod* M = op->Type.Class->FindMethod(FieldName);
-    if (M)
-    {
-      VExpression* e = new VDelegateVal(op, M, Loc);
-      op = NULL;
+  if (op->Type.Type == TYPE_Reference) {
+    VMethod *M = op->Type.Class->FindMethod(FieldName);
+    if (M) {
+      VExpression *e = new VDelegateVal(op, M, Loc);
+      op = nullptr;
       delete this;
       return e->Resolve(ec);
     }
 
-    VField* field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
-    if (field)
-    {
-      VExpression* e = new VFieldAccess(op, field, Loc, op->IsDefaultObject() ? FIELD_ReadOnly : 0);
-      op = NULL;
+    VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
+    if (field) {
+      VExpression *e = new VFieldAccess(op, field, Loc, op->IsDefaultObject() ? FIELD_ReadOnly : 0);
+      op = nullptr;
       delete this;
       return e->Resolve(ec);
     }
 
-    VProperty* Prop = op->Type.Class->FindProperty(FieldName);
-    if (Prop)
-    {
-      if (AssignTarget)
-      {
-        if (!Prop->SetFunc)
-        {
+    VProperty *Prop = op->Type.Class->FindProperty(FieldName);
+    if (Prop) {
+      if (AssignTarget) {
+        if (!Prop->SetFunc) {
           ParseError(Loc, "Property %s cannot be set", *FieldName);
           delete this;
-          return NULL;
+          return nullptr;
         }
-        VExpression* e = new VPropertyAssign(op, Prop->SetFunc, true, Loc);
-        op = NULL;
+        VExpression *e = new VPropertyAssign(op, Prop->SetFunc, true, Loc);
+        op = nullptr;
         delete this;
-        //  Assignment will call resolve.
+        // assignment will call resolve
         return e;
-      }
-      else
-      {
-        if (op->IsDefaultObject())
-        {
-          if (!Prop->DefaultField)
-          {
+      } else {
+        if (op->IsDefaultObject()) {
+          if (!Prop->DefaultField) {
             ParseError(Loc, "Property %s has no default field set", *FieldName);
             delete this;
-            return NULL;
+            return nullptr;
           }
-          VExpression* e = new VFieldAccess(op, Prop->DefaultField, Loc, FIELD_ReadOnly);
-          op = NULL;
+          VExpression *e = new VFieldAccess(op, Prop->DefaultField, Loc, FIELD_ReadOnly);
+          op = nullptr;
           delete this;
           return e->Resolve(ec);
-        }
-        else
-        {
-          if (!Prop->GetFunc)
-          {
+        } else {
+          if (!Prop->GetFunc) {
             ParseError(Loc, "Property %s cannot be read", *FieldName);
             delete this;
-            return NULL;
+            return nullptr;
           }
-          VExpression* e = new VInvocation(op, Prop->GetFunc, NULL,
-            true, false, Loc, 0, NULL);
-          op = NULL;
+          VExpression *e = new VInvocation(op, Prop->GetFunc, nullptr, true, false, Loc, 0, nullptr);
+          op = nullptr;
           delete this;
           return e->Resolve(ec);
         }
@@ -262,10 +235,10 @@ VExpression* VDotField::IntResolve(VEmitContext& ec, bool AssignTarget)
 
     ParseError(Loc, "No such field %s", *FieldName);
     delete this;
-    return NULL;
+    return nullptr;
   }
-  else if (op->Type.Type == TYPE_Struct || op->Type.Type == TYPE_Vector)
-  {
+
+  if (op->Type.Type == TYPE_Struct || op->Type.Type == TYPE_Vector) {
     VFieldType type = op->Type;
     int Flags = op->Flags;
     op->Flags &= ~FIELD_ReadOnly;
@@ -273,265 +246,226 @@ VExpression* VDotField::IntResolve(VEmitContext& ec, bool AssignTarget)
     if (!type.Struct) {
       ParseError(Loc, "INTERNAL COMPILER ERROR: No such field `%s`, and no struct also!", *FieldName);
       delete this;
-      return NULL;
+      return nullptr;
     }
-    VField* field = type.Struct->FindField(FieldName);
-    if (!field)
-    {
+    VField *field = type.Struct->FindField(FieldName);
+    if (!field) {
       ParseError(Loc, "No such field %s", *FieldName);
       delete this;
-      return NULL;
+      return nullptr;
     }
-    VExpression* e = new VFieldAccess(op, field, Loc, Flags & FIELD_ReadOnly);
-    op = NULL;
+    VExpression *e = new VFieldAccess(op, field, Loc, Flags & FIELD_ReadOnly);
+    op = nullptr;
     delete this;
     return e->Resolve(ec);
   }
-  else if (op->Type.Type == TYPE_DynamicArray)
-  {
+
+  if (op->Type.Type == TYPE_DynamicArray) {
     //VFieldType type = op->Type;
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
-    if (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length)
-    {
-      if (AssignTarget)
-      {
-        VExpression* e = new VDynArraySetNum(op, NULL, Loc);
-        op = NULL;
+    if (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length) {
+      if (AssignTarget) {
+        VExpression *e = new VDynArraySetNum(op, nullptr, Loc);
+        op = nullptr;
+        delete this;
+        return e->Resolve(ec);
+      } else {
+        VExpression *e = new VDynArrayGetNum(op, Loc);
+        op = nullptr;
         delete this;
         return e->Resolve(ec);
       }
-      else
-      {
-        VExpression* e = new VDynArrayGetNum(op, Loc);
-        op = NULL;
-        delete this;
-        return e->Resolve(ec);
-      }
-    }
-    else
-    {
+    } else {
       ParseError(Loc, "No such field %s", *FieldName);
       delete this;
-      return NULL;
+      return nullptr;
     }
   }
+
   ParseError(Loc, "Reference, struct or vector expected on left side of . %d", op->Type.Type);
   delete this;
-  return NULL;
+  return nullptr;
 }
+
 
 //==========================================================================
 //
 //  VDotField::DoResolve
 //
 //==========================================================================
-
-VExpression* VDotField::DoResolve(VEmitContext& ec)
-{
+VExpression *VDotField::DoResolve (VEmitContext& ec) {
   return IntResolve(ec, false);
 }
+
 
 //==========================================================================
 //
 //  VDotField::ResolveAssignmentTarget
 //
 //==========================================================================
-
-VExpression* VDotField::ResolveAssignmentTarget(VEmitContext& ec)
-{
+VExpression *VDotField::ResolveAssignmentTarget (VEmitContext& ec) {
   return IntResolve(ec, true);
 }
+
 
 //==========================================================================
 //
 //  VDotField::Emit
 //
 //==========================================================================
-
-void VDotField::Emit(VEmitContext&)
-{
+void VDotField::Emit (VEmitContext&) {
   ParseError(Loc, "Should not happen");
 }
+
 
 //==========================================================================
 //
 //  VFieldAccess::VFieldAccess
 //
 //==========================================================================
-
-VFieldAccess::VFieldAccess(VExpression* AOp, VField* AField, const TLocation& ALoc, int ExtraFlags)
-: VExpression(ALoc)
-, op(AOp)
-, field(AField)
-, AddressRequested(false)
+VFieldAccess::VFieldAccess (VExpression *AOp, VField *AField, const TLocation& ALoc, int ExtraFlags)
+  : VExpression(ALoc)
+  , op(AOp)
+  , field(AField)
+  , AddressRequested(false)
 {
   Flags = field->Flags | ExtraFlags;
 }
+
 
 //==========================================================================
 //
 //  VFieldAccess::~VFieldAccess
 //
 //==========================================================================
-
-VFieldAccess::~VFieldAccess()
-{
-  if (op)
-  {
+VFieldAccess::~VFieldAccess () {
+  if (op) {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
+
 
 //==========================================================================
 //
 //  VFieldAccess::DoResolve
 //
 //==========================================================================
-
-VExpression* VFieldAccess::DoResolve(VEmitContext&)
-{
+VExpression* VFieldAccess::DoResolve (VEmitContext&) {
   Type = field->Type;
   RealType = field->Type;
-  if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool)
-  {
-    Type = VFieldType(TYPE_Int);
-  }
+  if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
   return this;
 }
+
 
 //==========================================================================
 //
 //  VFieldAccess::RequestAddressOf
 //
 //==========================================================================
-
-void VFieldAccess::RequestAddressOf()
-{
-  if (Flags & FIELD_ReadOnly)
-  {
-    ParseError(op->Loc, "Tried to assign to a read-only field");
-  }
-  if (AddressRequested)
-    ParseError(Loc, "Multiple address of");
+void VFieldAccess::RequestAddressOf () {
+  if (Flags & FIELD_ReadOnly) ParseError(op->Loc, "Tried to assign to a read-only field");
+  if (AddressRequested) ParseError(Loc, "Multiple address of");
   AddressRequested = true;
 }
+
 
 //==========================================================================
 //
 //  VFieldAccess::Emit
 //
 //==========================================================================
-
-void VFieldAccess::Emit(VEmitContext& ec)
-{
+void VFieldAccess::Emit (VEmitContext& ec) {
   if (!op) return; //k8: don't segfault
   op->Emit(ec);
-  if (AddressRequested)
-  {
+  if (AddressRequested) {
     ec.AddStatement(OPC_Offset, field);
-  }
-  else
-  {
+  } else {
     switch (field->Type.Type)
     {
-    case TYPE_Int:
-    case TYPE_Float:
-    case TYPE_Name:
-      ec.AddStatement(OPC_FieldValue, field);
-      break;
-
-    case TYPE_Byte:
-      ec.AddStatement(OPC_ByteFieldValue, field);
-      break;
-
-    case TYPE_Bool:
-      if (field->Type.BitMask & 0x000000ff)
-        ec.AddStatement(OPC_Bool0FieldValue, field, (int)(field->Type.BitMask));
-      else if (field->Type.BitMask & 0x0000ff00)
-        ec.AddStatement(OPC_Bool1FieldValue, field, (int)(field->Type.BitMask >> 8));
-      else if (field->Type.BitMask & 0x00ff0000)
-        ec.AddStatement(OPC_Bool2FieldValue, field, (int)(field->Type.BitMask >> 16));
-      else
-        ec.AddStatement(OPC_Bool3FieldValue, field, (int)(field->Type.BitMask >> 24));
-      break;
-
-    case TYPE_Pointer:
-    case TYPE_Reference:
-    case TYPE_Class:
-    case TYPE_State:
-      ec.AddStatement(OPC_PtrFieldValue, field);
-      break;
-
-    case TYPE_Vector:
-      ec.AddStatement(OPC_VFieldValue, field);
-      break;
-
-    case TYPE_String:
-      ec.AddStatement(OPC_StrFieldValue, field);
-      break;
-
-    case TYPE_Delegate:
-      ec.AddStatement(OPC_Offset, field);
-      ec.AddStatement(OPC_PushPointedDelegate);
-      break;
-
-    default:
-      ParseError(Loc, "Invalid operation on field of this type");
+      case TYPE_Int:
+      case TYPE_Float:
+      case TYPE_Name:
+        ec.AddStatement(OPC_FieldValue, field);
+        break;
+      case TYPE_Byte:
+        ec.AddStatement(OPC_ByteFieldValue, field);
+        break;
+      case TYPE_Bool:
+             if (field->Type.BitMask & 0x000000ff) ec.AddStatement(OPC_Bool0FieldValue, field, (int)(field->Type.BitMask));
+        else if (field->Type.BitMask & 0x0000ff00) ec.AddStatement(OPC_Bool1FieldValue, field, (int)(field->Type.BitMask >> 8));
+        else if (field->Type.BitMask & 0x00ff0000) ec.AddStatement(OPC_Bool2FieldValue, field, (int)(field->Type.BitMask >> 16));
+        else ec.AddStatement(OPC_Bool3FieldValue, field, (int)(field->Type.BitMask >> 24));
+        break;
+      case TYPE_Pointer:
+      case TYPE_Reference:
+      case TYPE_Class:
+      case TYPE_State:
+        ec.AddStatement(OPC_PtrFieldValue, field);
+        break;
+      case TYPE_Vector:
+        ec.AddStatement(OPC_VFieldValue, field);
+        break;
+      case TYPE_String:
+        ec.AddStatement(OPC_StrFieldValue, field);
+        break;
+      case TYPE_Delegate:
+        ec.AddStatement(OPC_Offset, field);
+        ec.AddStatement(OPC_PushPointedDelegate);
+        break;
+      default:
+        ParseError(Loc, "Invalid operation on field of this type");
     }
   }
 }
+
 
 //==========================================================================
 //
 //  VDelegateVal::VDelegateVal
 //
 //==========================================================================
-
-VDelegateVal::VDelegateVal(VExpression* AOp, VMethod* AM, const TLocation& ALoc)
-: VExpression(ALoc)
-, op(AOp)
-, M(AM)
+VDelegateVal::VDelegateVal (VExpression *AOp, VMethod *AM, const TLocation& ALoc)
+  : VExpression(ALoc)
+  , op(AOp)
+  , M(AM)
 {
 }
+
 
 //==========================================================================
 //
 //  VDelegateVal::~VDelegateVal
 //
 //==========================================================================
-
-VDelegateVal::~VDelegateVal()
-{
-  if (op)
-  {
+VDelegateVal::~VDelegateVal () {
+  if (op) {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
+
 
 //==========================================================================
 //
 //  VDelegateVal::DoResolve
 //
 //==========================================================================
-
-VExpression* VDelegateVal::DoResolve(VEmitContext&)
-{
+VExpression *VDelegateVal::DoResolve (VEmitContext&) {
   Type = TYPE_Delegate;
   Type.Function = M;
   return this;
 }
+
 
 //==========================================================================
 //
 //  VDelegateVal::Emit
 //
 //==========================================================================
-
-void VDelegateVal::Emit(VEmitContext& ec)
-{
+void VDelegateVal::Emit (VEmitContext& ec) {
   op->Emit(ec);
   ec.AddStatement(OPC_PushVFunc, M);
 }

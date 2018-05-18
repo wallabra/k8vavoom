@@ -93,46 +93,43 @@ VArrayElement::~VArrayElement()
 
 VExpression* VArrayElement::DoResolve(VEmitContext& ec)
 {
-  if (op)
-    op = op->Resolve(ec);
-  if (ind)
-    ind = ind->Resolve(ec);
-  if (!op || !ind)
-  {
+  if (op) op = op->Resolve(ec);
+  if (ind) ind = ind->Resolve(ec);
+
+  if (!op || !ind) {
     delete this;
     return NULL;
   }
 
-  if (ind->Type.Type != TYPE_Int)
-  {
+  if (ind->Type.Type != TYPE_Int) {
     ParseError(Loc, "Array index must be of integer type");
     delete this;
     return NULL;
   }
-  if (op->Type.Type == TYPE_Array || op->Type.Type == TYPE_DynamicArray)
-  {
+
+  // hack: allow indexing of pointers to dynamic arrays without `(*arr)`
+  if (op->Type.Type == TYPE_Pointer && op->Type.InnerType == TYPE_DynamicArray) {
+    VExpression *ee = new VPushPointed(op, true); // `op` is resolved
+    op = ee->Resolve(ec);
+    if (!op) { delete this; return nullptr; }
+  }
+
+  if (op->Type.Type == TYPE_Array || op->Type.Type == TYPE_DynamicArray) {
     Flags = op->Flags;
     Type = op->Type.GetArrayInnerType();
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
-  }
-  else if (op->Type.Type == TYPE_Pointer)
-  {
+  } else if (op->Type.Type == TYPE_Pointer) {
     Flags = 0;
     Type = op->Type.GetPointerInnerType();
-  }
-  else
-  {
+  } else {
     ParseError(Loc, "Bad operation with array");
     delete this;
     return NULL;
   }
 
   RealType = Type;
-  if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool)
-  {
-    Type = VFieldType(TYPE_Int);
-  }
+  if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
   return this;
 }
 

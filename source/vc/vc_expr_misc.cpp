@@ -602,13 +602,13 @@ bool VDefaultObject::IsDefaultObject() const
 //
 //==========================================================================
 
-VPushPointed::VPushPointed(VExpression* AOp)
-: VExpression(AOp->Loc)
-, op(AOp)
-, AddressRequested(false)
+VPushPointed::VPushPointed(VExpression* AOp, bool opResolved)
+  : VExpression(AOp->Loc)
+  , mOpResolved(opResolved)
+  , op(AOp)
+  , AddressRequested(false)
 {
-  if (!op)
-  {
+  if (!op) {
     ParseError(Loc, "Expression expected");
     return;
   }
@@ -637,8 +637,10 @@ VPushPointed::~VPushPointed()
 
 VExpression* VPushPointed::DoResolve(VEmitContext& ec)
 {
-  if (op)
+  if (op && !mOpResolved) {
     op = op->Resolve(ec);
+    mOpResolved = true;
+  }
   if (!op)
   {
     delete this;

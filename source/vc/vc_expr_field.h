@@ -31,14 +31,17 @@
 
 class VPointerField : public VExpression
 {
-public:
-  VExpression*    op;
-  VName       FieldName;
+private:
+  bool mOpResolved;
 
-  VPointerField(VExpression*, VName, const TLocation&);
-  ~VPointerField();
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+public:
+  VExpression* op;
+  VName FieldName;
+
+  VPointerField (VExpression*, VName, const TLocation&, bool opResolved=false);
+  virtual ~VPointerField ();
+  VExpression *DoResolve (VEmitContext&);
+  void Emit (VEmitContext&);
 };
 
 //==========================================================================
