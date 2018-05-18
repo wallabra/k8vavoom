@@ -191,8 +191,8 @@ void VLanguage::ParseLanguageScript(vint32 Lump, const char* InCode,
 					else
 					{
 						sc->Error(va("Language code must be 2 or 3 "
-							"characters long, %s is %d characters long",
-							*sc->String, Len));
+							"characters long, %s is %u characters long",
+							*sc->String, (unsigned)Len));
 						//	Shut up compiler
 						CurCode[0] = 0;
 						CurCode[1] = 0;
