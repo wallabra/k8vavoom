@@ -78,6 +78,8 @@ if (ENABLE_VCCRUN)
     ../../source/pr_cmds.cpp
     ../../source/pr_exec.cpp
     ../../source/vc/vc_object.cpp
+    ../../source/scripts.h
+    ../../source/sc_man.cpp
     vcc_run.cpp
     vcc_run.h
   )

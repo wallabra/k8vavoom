@@ -305,6 +305,7 @@ static void initialize () {
   VName::StaticInit();
   //VMemberBase::StaticInit();
   VObject::StaticInit();
+  Lex.AddDefine("VCC_STANDALONE_EXECUTOR");
 }
 
 

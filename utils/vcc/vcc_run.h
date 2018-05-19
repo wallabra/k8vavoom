@@ -66,6 +66,8 @@
 
 #include "../../source/vc/vc_object.h"
 
+#include "../../source/scripts.h"
+
 
 extern bool GBigEndian;
 
