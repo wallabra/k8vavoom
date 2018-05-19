@@ -37,41 +37,14 @@ static VCvar* cvhBuckets[CVAR_HASH_SIZE] = {NULL};
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#ifdef USE_SIMPLE_HASHFN
-// djb
-static vuint32 cvnamehash (const char *buf) {
-  vuint32 hash = 5381;
-  const vuint8 *s = (const vuint8 *)buf;
-  if (s) {
-    for (; *s; ++s) {
-      vuint32 ch = *s&0xff;
-      if (ch >= 'A' && ch <= 'Z') ch += 32; // poor man's tolower
-      hash = ((hash<<5)+hash)+ch;
-    }
-  }
-  return hash;
-}
-
-#else
-
-// fnv
-static inline vuint32 cvnamehashBuf (const void *buf, unsigned int len) {
-  // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
-  vuint32 hash = 2166136261U; // fnv offset basis
-  const vuint8 *s = (const vuint8 *)buf;
-  while (len-- > 0) {
-    hash ^= *s++;
-    hash *= 16777619U; // 32-bit fnv prime
-  }
-  return hash;
-}
-
-
 static inline vuint32 cvnamehash (const char *buf) {
-  if (!buf) return 0;
-  return cvnamehashBuf(buf, strlen(buf));
-}
+  if (!buf || !buf[0]) return 1;
+#ifdef USE_SIMPLE_HASHFN
+  return djbHashBufCI(buf, strlen(buf));
+#else
+  return fnvHashBufCI(buf, strlen(buf));
 #endif
+}
 
 
 static bool xstrcmpCI (const char* s, const char *pat) {

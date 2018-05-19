@@ -30,10 +30,26 @@
 #define VAVOOM_CORE_LIB_HASH
 
 
-static inline unsigned int fnvHashBuf (const void *buf, unsigned int len) {
+// fnv
+static __attribute((unused)) inline vuint32 fnvHashBufCI (const void *buf, size_t len) {
   // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
-  unsigned int hash = 2166136261U; // fnv offset basis
-  const unsigned char *s = (const unsigned char *)buf;
+  vuint32 hash = 2166136261U; // fnv offset basis
+  const vuint8 *s = (const vuint8 *)buf;
+  while (len-- > 0) {
+    vuint32 ch = *s++;
+    if (ch >= 'A' && ch <= 'Z') ch += 32; // poor man's tolower
+    hash ^= ch;
+    hash *= 16777619U; // 32-bit fnv prime
+  }
+  return (hash ? hash : 1); // this is unlikely, but...
+}
+
+
+// fnv
+static __attribute((unused)) inline vuint32 fnvHashBuf (const void *buf, size_t len) {
+  // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
+  vuint32 hash = 2166136261U; // fnv offset basis
+  const vuint8 *s = (const vuint8 *)buf;
   while (len-- > 0) {
     hash ^= *s++;
     hash *= 16777619U; // 32-bit fnv prime
@@ -42,18 +58,42 @@ static inline unsigned int fnvHashBuf (const void *buf, unsigned int len) {
 }
 
 
+// djb
+static __attribute((unused)) inline vuint32 djbHashBufCI (const void *buf, size_t len) {
+  vuint32 hash = 5381;
+  const vuint8 *s = (const vuint8 *)buf;
+  while (len-- > 0) {
+    vuint32 ch = *s++;
+    if (ch >= 'A' && ch <= 'Z') ch += 32; // poor man's tolower
+    hash = ((hash<<5)+hash)+ch;
+  }
+  return (hash ? hash : 1); // this is unlikely, but...
+}
+
+
+// djb
+static __attribute((unused)) inline vuint32 djbHashBuf (const void *buf, size_t len) {
+  vuint32 hash = 5381;
+  const vuint8 *s = (const vuint8 *)buf;
+  while (len-- > 0) hash = ((hash<<5)+hash)+(*s++);
+  return (hash ? hash : 1); // this is unlikely, but...
+}
+
+
+#define TSTRSET_HASH  djbHashBuf
+
 //k8 TODO: rewrite it!
 /*template<class T>*/ class TStrSet {
 private:
   struct BucketItem {
     VStr key;
     bool value;
-    unsigned int hash;
+    vuint32 hash;
   };
 
   BucketItem* mData;
-  unsigned int mDataSize; // in items
-  unsigned int mCount;
+  vuint32 mDataSize; // in items
+  vuint32 mCount;
 
 public:
   TStrSet () : mData(NULL), mDataSize(0), mCount(0) {}
@@ -70,23 +110,23 @@ public:
     mDataSize = mCount = 0;
   }
 
-  unsigned int count () const { return mCount; }
+  vuint32 count () const { return mCount; }
 
   // return `true` if replaced
   bool put (const VStr& key, bool value=true) {
     if (mDataSize == 0) {
       mDataSize = 512;
       mData = new BucketItem[mDataSize];
-      for (unsigned int n = 0; n < mDataSize; ++n) {
+      for (vuint32 n = 0; n < mDataSize; ++n) {
         mData[n].key = VStr("");
         mData[n].value = false;
         mData[n].hash = 0;
       }
     }
-    unsigned int hash = fnvHashBuf(*key, key.Length());
-    unsigned int bnum = hash%mDataSize;
+    vuint32 hash = TSTRSET_HASH(*key, key.Length());
+    vuint32 bnum = hash%mDataSize;
     // replace, if it is already there
-    for (unsigned int n = mDataSize; n > 0; --n) {
+    for (vuint32 n = mDataSize; n > 0; --n) {
       if (!mData[bnum].hash) break;
       if (mData[bnum].hash == hash && mData[bnum].key == key) {
         mData[bnum].value = value;
@@ -97,20 +137,20 @@ public:
     // not found; check if we need to grow data array
     if (mDataSize-mCount < mDataSize/3) {
       // grow it
-      unsigned int newsz = mDataSize*2;
+      vuint32 newsz = mDataSize*2;
       BucketItem* newarr = new BucketItem[newsz];
-      for (unsigned int n = 0; n < newsz; ++n) {
+      for (vuint32 n = 0; n < newsz; ++n) {
         newarr[n].key = VStr("");
         newarr[n].value = false;
         newarr[n].hash = 0;
       }
       // put items in new hash
-      unsigned int oldsz = mDataSize;
+      vuint32 oldsz = mDataSize;
       BucketItem* oldarr = mData;
       mData = newarr;
       mDataSize = newsz;
       mCount = 0;
-      for (unsigned int n = 0; n < oldsz; ++n) {
+      for (vuint32 n = 0; n < oldsz; ++n) {
         if (oldarr[n].hash) put(oldarr[n].key, oldarr[n].value);
       }
       delete[] oldarr;
@@ -126,9 +166,9 @@ public:
   }
 
   bool has (const VStr& key) {
-    unsigned int hash = fnvHashBuf(*key, key.Length());
-    unsigned int bnum = hash%mDataSize;
-    for (unsigned int n = mDataSize; n > 0; --n) {
+    vuint32 hash = TSTRSET_HASH(*key, key.Length());
+    vuint32 bnum = hash%mDataSize;
+    for (vuint32 n = mDataSize; n > 0; --n) {
       if (!mData[bnum].hash) return false;
       if (mData[bnum].hash == hash && mData[bnum].key == key) return true;
       ++bnum;
@@ -137,9 +177,9 @@ public:
   }
 
   bool get (const VStr& key, bool defval=false) {
-    unsigned int hash = fnvHashBuf(*key, key.Length());
-    unsigned int bnum = hash%mDataSize;
-    for (unsigned int n = mDataSize; n > 0; --n) {
+    vuint32 hash = TSTRSET_HASH(*key, key.Length());
+    vuint32 bnum = hash%mDataSize;
+    for (vuint32 n = mDataSize; n > 0; --n) {
       if (!mData[bnum].hash) return defval;
       if (mData[bnum].hash == hash && mData[bnum].key == key) return mData[bnum].value;
       ++bnum;
