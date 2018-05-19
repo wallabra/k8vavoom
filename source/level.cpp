@@ -1401,7 +1401,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
     return;
   }
 
-  if (dec->lowername != NAME_none) AddDecal(org, dec->lowername, (sec == li->backsector ? 1 : 0), li, level+1);
+  if (dec->lowername != NAME_None) AddDecal(org, dec->lowername, (sec == li->backsector ? 1 : 0), li, level+1);
 
   if (dec->scaleX <= 0 || dec->scaleY <= 0) {
     GCon->Logf("Decal '%s' has zero scale", *dec->name);
@@ -1492,7 +1492,7 @@ void VLevel::AddDecal (TVec org, const VName& dectype, int side, line_t *li, int
   guard(VLevel::AddDecal);
 
   if (!decals_enabled) return;
-  if (!li || dectype == NAME_none) return; // just in case
+  if (!li || dectype == NAME_None) return; // just in case
 
   sector_t *sec = (side ? li->backsector : li->frontsector);
   if (!sec) return; // just in case

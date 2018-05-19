@@ -30,56 +30,6 @@
 #define VAVOOM_CORE_LIB_HASH
 
 
-// fnv
-static __attribute((unused)) inline vuint32 fnvHashBufCI (const void *buf, size_t len) {
-  // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
-  vuint32 hash = 2166136261U; // fnv offset basis
-  const vuint8 *s = (const vuint8 *)buf;
-  while (len-- > 0) {
-    vuint32 ch = *s++;
-    if (ch >= 'A' && ch <= 'Z') ch += 32; // poor man's tolower
-    hash ^= ch;
-    hash *= 16777619U; // 32-bit fnv prime
-  }
-  return (hash ? hash : 1); // this is unlikely, but...
-}
-
-
-// fnv
-static __attribute((unused)) inline vuint32 fnvHashBuf (const void *buf, size_t len) {
-  // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
-  vuint32 hash = 2166136261U; // fnv offset basis
-  const vuint8 *s = (const vuint8 *)buf;
-  while (len-- > 0) {
-    hash ^= *s++;
-    hash *= 16777619U; // 32-bit fnv prime
-  }
-  return (hash ? hash : 1); // this is unlikely, but...
-}
-
-
-// djb
-static __attribute((unused)) inline vuint32 djbHashBufCI (const void *buf, size_t len) {
-  vuint32 hash = 5381;
-  const vuint8 *s = (const vuint8 *)buf;
-  while (len-- > 0) {
-    vuint32 ch = *s++;
-    if (ch >= 'A' && ch <= 'Z') ch += 32; // poor man's tolower
-    hash = ((hash<<5)+hash)+ch;
-  }
-  return (hash ? hash : 1); // this is unlikely, but...
-}
-
-
-// djb
-static __attribute((unused)) inline vuint32 djbHashBuf (const void *buf, size_t len) {
-  vuint32 hash = 5381;
-  const vuint8 *s = (const vuint8 *)buf;
-  while (len-- > 0) hash = ((hash<<5)+hash)+(*s++);
-  return (hash ? hash : 1); // this is unlikely, but...
-}
-
-
 #define TSTRSET_HASH  djbHashBuf
 
 //k8 TODO: rewrite it!

@@ -27,98 +27,63 @@
 //**
 //**************************************************************************
 
-//  Maximum length of a name
+// maximum length of a name
 enum { NAME_SIZE = 64 };
 
-//
-//  VNameEntry
-//
-//  Entry in the names table.
-//
-struct VNameEntry
-{
-  VNameEntry*   HashNext;     //  Next name for this hash list.
-  vint32      Index;        //  Index of the name.
-  char      Name[NAME_SIZE];  //  Name value.
 
-  friend VStream& operator<<(VStream&, VNameEntry&);
-  friend VNameEntry* AllocateNameEntry(const char* Name, vint32 Index,
-    VNameEntry* HashNext);
+// entry in the names table
+struct VNameEntry {
+  VNameEntry *HashNext; // next name for this hash list
+  vint32 Index; // index of the name
+  char Name[NAME_SIZE]; // name value
+
+  friend VStream& operator << (VStream &, VNameEntry &);
+  friend VNameEntry *AllocateNameEntry (const char *Name, vint32 Index, VNameEntry *HashNext);
 };
 
-//
-//  VName
-//
-//  Names are stored as indexes in the global name table. They are stored once
-// and only once. All names are case-sensitive.
-//
-class VName
-{
+
+// names are stored as indexes in the global name table.
+// they are stored once and only once.
+// all names are case-sensitive.
+class VName {
 private:
   enum { HASH_SIZE = 4096 };
 
-  vint32            Index;
+  vint32 Index;
 
-  static TArray<VNameEntry*>  Names;
-  static VNameEntry*      HashTable[HASH_SIZE];
-  static bool         Initialised;
+  static TArray<VNameEntry *> Names;
+  static VNameEntry *HashTable[HASH_SIZE];
+  static bool Initialised;
 
 public:
   //  Different types of finding a name.
-  enum ENameFindType
-  {
-    Find,   // Find a name, return 0 if it doesn't exist.
-    Add,    // Find a name, add it if it doesn't exist.
-    AddLower8,  // Find or add lowercased, max length 8 name.
-    AddLower, // Find or add lowercased.
+  enum ENameFindType {
+    Find,      // Find a name, return 0 if it doesn't exist.
+    Add,       // Find a name, add it if it doesn't exist.
+    AddLower8, // Find or add lowercased, max length 8 name.
+    AddLower,  // Find or add lowercased.
   };
 
-  //  Constructors.
-  VName()
-  {}
-  VName(EName N) : Index(N)
-  {}
-  VName(const char*, ENameFindType = Add);
+  // constructors
+  VName () : Index(0) {}
+  VName (EName N) : Index(N) {}
+  VName (const char *, ENameFindType=Add);
 
-  //  Ancestors.
-  const char* operator*() const
-  {
-    return Names[Index]->Name;
-  }
-  vint32 GetIndex() const
-  {
-    return Index;
-  }
+  // accessors
+  inline const char *operator * () const { return Names[Index]->Name; }
+  inline vint32 GetIndex () const { return Index; }
 
-  //  Comparison operators.
-  bool operator==(const VName& Other) const
-  {
-    return Index == Other.Index;
-  }
-  bool operator!=(const VName& Other) const
-  {
-    return Index != Other.Index;
-  }
+  // comparisons
+  inline bool operator == (const VName &Other) const { return (Index == Other.Index); }
+  inline bool operator != (const VName &Other) const { return (Index != Other.Index); }
 
-  //  Global functions.
-  static void StaticInit();
-  static void StaticExit();
+  // global functions
+  static void StaticInit ();
+  static void StaticExit ();
 
-  static int GetNumNames()
-  {
-    return Names.Num();
-  }
-  static VNameEntry* GetEntry(int i)
-  {
-    return Names[i];
-  }
-  static const char* SafeString(EName N)
-  {
-    return Initialised ? Names[N]->Name : "Uninitialised";
-  }
+  static inline int GetNumNames () { return Names.Num(); }
+  static inline VNameEntry *GetEntry (int i) { return Names[i]; }
+  static inline const char *SafeString (EName N) { return (Initialised ? Names[N]->Name : "Uninitialised"); }
 };
 
-inline vuint32 GetTypeHash(const VName& N)
-{
-  return N.GetIndex();
-}
+inline vuint32 GetTypeHash (const VName &N) { return N.GetIndex(); }

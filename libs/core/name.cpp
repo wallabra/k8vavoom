@@ -23,70 +23,38 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "core.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+TArray<VNameEntry *> VName::Names;
+VNameEntry *VName::HashTable[VName::HASH_SIZE];
+bool VName::Initialised;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-TArray<VNameEntry*> VName::Names;
-VNameEntry*     VName::HashTable[VName::HASH_SIZE];
-bool        VName::Initialised;
-
+// ////////////////////////////////////////////////////////////////////////// //
 #define REGISTER_NAME(name)   { NULL, NAME_##name, #name },
-static VNameEntry AutoNames[] =
-{
+static VNameEntry AutoNames[] = {
 #include "names.h"
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// CODE --------------------------------------------------------------------
-
-//==========================================================================
-//
-//  operator VStream << VNameEntry
-//
-//==========================================================================
-
-VStream& operator<<(VStream& Strm, VNameEntry& E)
-{
+// ////////////////////////////////////////////////////////////////////////// //
+VStream &operator << (VStream &Strm, VNameEntry &E) {
   guard(operator VStream << VNameEntry);
   vuint8 Size;
-  if (Strm.IsSaving())
-  {
-    Size = vuint8(VStr::Length(E.Name) + 1);
-  }
+  if (Strm.IsSaving()) Size = (vuint8)(VStr::Length(E.Name)+1);
   Strm << Size;
   Strm.Serialise(E.Name, Size);
   return Strm;
   unguard;
 }
 
-//==========================================================================
-//
-//  AllocateNameEntry
-//
-//==========================================================================
 
-VNameEntry* AllocateNameEntry(const char* Name, vint32 Index,
-  VNameEntry* HashNext)
-{
+VNameEntry *AllocateNameEntry (const char *Name, vint32 Index, VNameEntry *HashNext) {
   guard(AllocateNameEntry);
-  int Size = sizeof(VNameEntry) - NAME_SIZE + int(VStr::Length(Name)) + 1;
-  VNameEntry* E = (VNameEntry*)Z_Malloc(Size);
+  size_t Size = sizeof(VNameEntry)-NAME_SIZE+int(VStr::Length(Name))+1;
+  VNameEntry *E = (VNameEntry *)Z_Malloc(Size);
   memset(E, 0, Size);
   VStr::Cpy(E->Name, Name);
   E->Index = Index;
@@ -95,111 +63,73 @@ VNameEntry* AllocateNameEntry(const char* Name, vint32 Index,
   unguard;
 }
 
-//==========================================================================
-//
-//  VName::VName
-//
-//==========================================================================
 
-VName::VName(const char* Name, ENameFindType FindType)
-{
+VName::VName (const char *Name, ENameFindType FindType) {
   guard(VName::VName);
-  char    NameBuf[NAME_SIZE];
+
+  char NameBuf[NAME_SIZE+1];
 
   Index = NAME_None;
-  //  Make sure name is valid.
-  if (!Name || !*Name)
-  {
-    return;
-  }
+  // make sure name is valid
+  if (!Name || !*Name) return;
 
-  //  Copy name localy, make sure it's not longer than 64 characters.
-  if (FindType == AddLower8)
-  {
-    for (int i = 0; i < 8; i++)
-    {
-      NameBuf[i] = VStr::ToLower(Name[i]);
-    }
+  memset(NameBuf, 0, sizeof(NameBuf));
+  size_t nlen = strlen(Name);
+  if (nlen >= NAME_SIZE) nlen = NAME_SIZE-1;
+
+  // copy name localy, make sure it's not longer than 64 characters
+  if (FindType == AddLower8) {
+    if (nlen > 8) nlen = 8;
+    for (size_t i = 0; i < nlen; ++i) NameBuf[i] = VStr::ToLower(Name[i]);
     NameBuf[8] = 0;
-  }
-  else if (FindType == AddLower)
-  {
-    for (int i = 0; i < NAME_SIZE; i++)
-    {
-      NameBuf[i] = VStr::ToLower(Name[i]);
-    }
-    NameBuf[NAME_SIZE - 1] = 0;
-  }
-  else
-  {
-    VStr::NCpy(NameBuf, Name, NAME_SIZE);
-    NameBuf[NAME_SIZE - 1] = 0;
+  } else if (FindType == AddLower) {
+    for (size_t i = 0; i < nlen; ++i) NameBuf[i] = VStr::ToLower(Name[i]);
+  } else {
+    memcpy(NameBuf, Name, nlen);
   }
 
-  //  Search in cache.
-  int HashIndex = GetTypeHash(NameBuf) & (HASH_SIZE - 1);
-  VNameEntry* TempHash = HashTable[HashIndex];
-  while (TempHash)
-  {
-    if (!VStr::Cmp(NameBuf, TempHash->Name))
-    {
+  // search in cache
+  int HashIndex = GetTypeHash(NameBuf)&(HASH_SIZE-1);
+  VNameEntry *TempHash = HashTable[HashIndex];
+  while (TempHash) {
+    if (!VStr::Cmp(NameBuf, TempHash->Name)) {
       Index = TempHash->Index;
       break;
     }
     TempHash = TempHash->HashNext;
   }
 
-  //  Add new name if not found.
-  if (!TempHash && FindType != Find)
-  {
+  // add new name if not found
+  if (!TempHash && FindType != Find) {
     Index = Names.Num();
     Names.Append(AllocateNameEntry(NameBuf, Index, HashTable[HashIndex]));
     HashTable[HashIndex] = Names[Index];
   }
 
-  //  Map 'none' to 'None'.
-  if (Index == NAME_none)
-  {
-    Index = NAME_None;
-  }
+  // map 'none' to 'None'
+  if (Index == NAME_none) Index = NAME_None;
   unguard;
 }
 
-//==========================================================================
-//
-//  VName::StaticInit
-//
-//==========================================================================
 
-void VName::StaticInit()
-{
+void VName::StaticInit () {
   guard(VName::StaticInit);
-  //  Register hardcoded names.
-  for (int i = 0; i < (int)ARRAY_COUNT(AutoNames); i++)
-  {
+  // register hardcoded names
+  for (int i = 0; i < (int)ARRAY_COUNT(AutoNames); ++i) {
     Names.Append(&AutoNames[i]);
-    int HashIndex = GetTypeHash(AutoNames[i].Name) & (HASH_SIZE - 1);
+    int HashIndex = GetTypeHash(AutoNames[i].Name)&(HASH_SIZE-1);
     AutoNames[i].HashNext = HashTable[HashIndex];
     HashTable[HashIndex] = &AutoNames[i];
   }
-  //  We are now initialised.
+  // we are now initialised
   Initialised = true;
   unguard;
 }
 
-//==========================================================================
-//
-//  VName::StaticExit
-//
-//==========================================================================
 
-void VName::StaticExit()
-{
+void VName::StaticExit () {
   guard(VName::StaticExit);
-  for (int i = NUM_HARDCODED_NAMES; i < Names.Num(); i++)
-  {
-    Z_Free(Names[i]);
-  }
+  for (int i = NUM_HARDCODED_NAMES; i < Names.Num(); ++i) Z_Free(Names[i]);
   Names.Clear();
   Initialised = false;
   unguard;

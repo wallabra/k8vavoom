@@ -34,4 +34,4 @@ private:
   vuint16   CrcValue;
 };
 
-vuint32 GetTypeHash(const char*);
+//vuint32 GetTypeHash(const char*);

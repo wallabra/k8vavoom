@@ -129,7 +129,7 @@ TCRC::operator vuint16()
 //  GetTypeHash
 //
 //==========================================================================
-
+/*
 vuint32 GetTypeHash(const char *S)
 {
   vuint16 Hash = CRC_INIT_VALUE;
@@ -139,3 +139,4 @@ vuint32 GetTypeHash(const char *S)
   }
   return Hash;
 }
+*/

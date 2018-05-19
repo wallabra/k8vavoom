@@ -69,7 +69,7 @@ static bool parseHexRGB (const VStr& str, float clr[]) {
 // ////////////////////////////////////////////////////////////////////////// //
 void VDecalDef::addToList (VDecalDef* dc) {
   if (!dc) return;
-  if (dc->name == NAME_none) { delete dc; return; }
+  if (dc->name == NAME_None) { delete dc; return; }
   // remove old definitions
   //FIXME: memory leak
   VDecalDef::removeFromList(VDecalDef::find(dc->name));
@@ -93,7 +93,7 @@ void VDecalDef::removeFromList (VDecalDef* dc) {
 
 VDecalDef *VDecalDef::find (const VStr& aname) {
   VName xn = VName(*aname, VName::Find);
-  if (xn == NAME_none) return nullptr;
+  if (xn == NAME_None) return nullptr;
   return find(xn);
 }
 
@@ -117,7 +117,7 @@ bool VDecalDef::hasDecal (const VName& aname) {
 
 VDecalDef* VDecalDef::getDecal (const VStr& aname) {
   VName xn = VName(*aname, VName::Find);
-  if (xn == NAME_none) return nullptr;
+  if (xn == NAME_None) return nullptr;
   return getDecal(xn);
 }
 
@@ -139,7 +139,7 @@ VDecalDef::~VDecalDef () {
 
 
 void VDecalDef::fixup () {
-  if (animname == NAME_none) return;
+  if (animname == NAME_None) return;
   animator = VDecalAnim::find(animname);
   if (!animator) GCon->Logf("WARNING: decal '%s': animator '%s' not found!", *name, *animname);
 }
@@ -213,7 +213,7 @@ bool VDecalDef::parse (VScriptParser* sc) {
 // ////////////////////////////////////////////////////////////////////////// //
 void VDecalGroup::addToList (VDecalGroup* dg) {
   if (!dg) return;
-  if (dg->name == NAME_none) { delete dg; return; }
+  if (dg->name == NAME_None) { delete dg; return; }
   // remove old definitions
   //FIXME: memory leak
   //if (VDecalDef::find(dg->name)) GCon->Logf("replaced decal '%s'...", *dg->name);
@@ -240,7 +240,7 @@ void VDecalGroup::removeFromList (VDecalGroup* dg) {
 
 VDecalGroup *VDecalGroup::find (const VStr& aname) {
   VName xn = VName(*aname, VName::Find);
-  if (xn == NAME_none) return nullptr;
+  if (xn == NAME_None) return nullptr;
   return find(xn);
 }
 
@@ -319,7 +319,7 @@ bool VDecalGroup::parse (VScriptParser* sc) {
 // ////////////////////////////////////////////////////////////////////////// //
 void VDecalAnim::addToList (VDecalAnim* anim) {
   if (!anim) return;
-  if (anim->name == NAME_none) { delete anim; return; }
+  if (anim->name == NAME_None) { delete anim; return; }
   // remove old definition
   for (auto it = listHead, prev = (VDecalAnim *)nullptr; it; prev = it, it = it->next) {
     if (it->name == anim->name) {
@@ -347,7 +347,7 @@ void VDecalAnim::removeFromList (VDecalAnim* anim) {
 
 VDecalAnim *VDecalAnim::find (const VStr& aname) {
   VName xn = VName(*aname, VName::Find);
-  if (xn == NAME_none) return nullptr;
+  if (xn == NAME_None) return nullptr;
   return find(xn);
 }
 

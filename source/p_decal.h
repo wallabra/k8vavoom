@@ -73,7 +73,7 @@ public:
   //float ofsX, ofsY;
 
 public:
-  VDecalDef () : next(nullptr), animname(NAME_none), name(NAME_none), pic(NAME_none), scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0), fuzzy(false), fullbright(false), lowername(NAME_none), animator(nullptr) { shade[0] = shade[1] = shade[2] = shade[3] = 0; }
+  VDecalDef () : next(nullptr), animname(NAME_None), name(NAME_None), pic(NAME_None), scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0), fuzzy(false), fullbright(false), lowername(NAME_None), animator(nullptr) { shade[0] = shade[1] = shade[2] = shade[3] = 0; }
   ~VDecalDef ();
 
 public:
@@ -105,7 +105,7 @@ public:
     VName name;
     vuint16 weight;
 
-    NameListItem () : name(NAME_none), weight(0) {}
+    NameListItem () : name(NAME_None), weight(0) {}
     NameListItem (const VName& aname, vuint16 aweight) : name(aname), weight(aweight) {}
   };
 
@@ -135,7 +135,7 @@ public:
   TWeightedList</*VDecalDef*/ListItem*> list; // can contain less items than `nameList`
 
 public:
-  VDecalGroup () : next(nullptr), name(NAME_none), nameList(), list() {}
+  VDecalGroup () : next(nullptr), name(NAME_None), nameList(), list() {}
   ~VDecalGroup () {}
 
   VDecalDef* chooseDecal (int reclevel=0);
@@ -183,7 +183,7 @@ public:
   VName name;
 
 public:
-  VDecalAnim () : next(nullptr), timePassed(0), name(NAME_none) {}
+  VDecalAnim () : next(nullptr), timePassed(0), name(NAME_None) {}
   virtual ~VDecalAnim ();
 
   // this does deep clone, so we can attach it to the actual decal object

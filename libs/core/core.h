@@ -34,6 +34,7 @@
 #include <cmath>
 
 #include "common.h"   //  Common types and definitions
+#include "hashfunc.h"
 #include "zone.h"   //  Zone memory allocation
 #include "endian.h"   //  Endianes handling
 #include "names.h"    //  Built-in names
@@ -53,7 +54,7 @@
 #include "matrix.h"   //  Matrices
 #include "xml.h"    //  XML file parsing
 
-#include "hash.h"
+#include "hashset.h"
 #include "wlist.h"
 
 #endif
