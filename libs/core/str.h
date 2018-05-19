@@ -45,7 +45,7 @@ private:
   void MakeMutable (); // and unique
   void Resize (int newlen); // always makes string unique
 
-  void SetContents (const char *s, int len=-1); // not necessarily copies anything
+  void SetContent (const char *s, int len=-1); // not necessarily copies anything
 
   inline bool isMyData (const char *buf) const { return (data && buf && buf >= data && buf < data+length()); }
   inline bool isMyData (const char *buf, int len) const { return (data && buf && buf < data+length() && buf+len >= data); }
@@ -53,34 +53,52 @@ private:
 public:
   VStr () : data(nullptr) {}
   VStr (ENoInit) {}
-  VStr (const VStr& instr, int start, int len) noexcept(false);
+  VStr (const VStr &instr, int start, int len) : data(nullptr) { Assign(instr.mid(start, len)); }
+  //VStr (const VStr *instr, int start, int len) : data(nullptr) { if (instr && instr->data) Assign(instr->mid(start, len)); }
 
-  VStr (const char *instr) : data(nullptr) { SetContents(instr); }
-  VStr (const VStr& instr) : data(nullptr) { if (instr.data) { data = (char*)instr.data; ++(*refp()); } }
-  explicit VStr (char inchr) : data(nullptr) { SetContents(&inchr, 1); }
-  explicit VStr (bool InBool) : data(nullptr) { SetContents(InBool ? "true" : "false"); }
+  VStr (const VStr &instr) : data(nullptr) { if (instr.data) { data = (char*)instr.data; ++(*refp()); } }
+  VStr (const char *instr, int len=-1) : data(nullptr) { SetContent(instr, len); }
+  //VStr (const VStr *instr) : data(nullptr) { if (instr && instr->data) { data = (char*)instr->data; ++(*refp()); } }
+
+  explicit VStr (char inchr) : data(nullptr) { SetContent(&inchr, 1); }
+  explicit VStr (bool InBool) : data(nullptr) { SetContent(InBool ? "true" : "false"); }
 
   explicit VStr (int InInt) : data(nullptr) {
     char buf[64];
     int len = (int)snprintf(buf, sizeof(buf), "%d", InInt);
-    SetContents(buf, len);
+    SetContent(buf, len);
   }
 
   explicit VStr (unsigned InInt) : data(nullptr) {
     char buf[64];
     int len = (int)snprintf(buf, sizeof(buf), "%u", InInt);
-    SetContents(buf, len);
+    SetContent(buf, len);
   }
 
   explicit VStr (float InFloat) : data(nullptr) {
     char buf[64];
     int len = (int)snprintf(buf, sizeof(buf), "%f", InFloat);
-    SetContents(buf, len);
+    SetContent(buf, len);
   }
 
-  explicit VStr (const VName& InName) : data(nullptr) { SetContents(*InName); }
+  explicit VStr (const VName &InName) : data(nullptr) { SetContent(*InName); }
 
   ~VStr () { Clean(); }
+
+  inline void Assign (const VStr &instr) {
+    if (instr.data) {
+      if (instr.data != data) {
+        int *xrp = (int*)instr.data;
+        ++(xrp[-2]); // increment refcounter
+        Clear();
+        data = (char*)instr.data;
+      } else {
+        ++(*refp());
+      }
+    } else {
+      Clear();
+    }
+  }
 
   // clears the string
   inline void Clean () { Resize(0); }
@@ -117,31 +135,19 @@ public:
 
   inline char *GetMutableCharPointer (int Idx) { MakeMutable(); return &data[Idx]; }
 
-  // assignement operators
-  inline VStr& operator = (const char *instr) { SetContents(instr); return *this; }
+  VStr mid (int start, int len) const;
 
-  VStr& operator = (const VStr& instr) {
-    if (instr.data) {
-      if (instr.data != data) {
-        int *xrp = (int*)instr.data;
-        ++xrp[-2]; // increment refcounter
-        Clear();
-        data = (char*)instr.data;
-      } else {
-        ++(*refp());
-      }
-    } else {
-      Clear();
-    }
-    return *this;
-  }
+  // assignement operators
+  inline VStr &operator = (const char *instr) { SetContent(instr); return *this; }
+  inline VStr &operator = (const VStr &instr) { Assign(instr); return *this; }
+  //inline VStr &operator = (const VStr *instr) { if (instr) Assign(*instr); else Clear(); return *this; }
 
   // concatenation operators
-  VStr& operator += (const char *instr) {
+  VStr &operator += (const char *instr) {
     int inl = int(Length(instr));
     if (inl) {
       if (isMyData(instr, inl)) {
-        VStr s = instr;
+        VStr s(instr);
         operator+=(s);
       } else {
         int l = int(Length());
@@ -152,12 +158,12 @@ public:
     return *this;
   }
 
-  VStr& operator += (const VStr& instr) {
+  VStr &operator += (const VStr &instr) {
     int inl = int(instr.Length());
     if (inl) {
       int l = int(Length());
       if (isMyData(instr.data, inl)) {
-        VStr s = instr;
+        VStr s(instr);
         s.MakeMutable(); // ensure unique
         Resize(int(l+inl));
         memcpy(data+l, s.data, inl+1);
@@ -169,55 +175,55 @@ public:
     return *this;
   }
 
-  VStr& operator += (char inchr) {
+  VStr &operator += (char inchr) {
     int l = int(Length());
     Resize(int(l+1));
     data[l] = inchr;
     return *this;
   }
 
-  inline VStr& operator += (bool InBool) { return operator+=(InBool ? "true" : "false"); }
+  inline VStr &operator += (bool InBool) { return operator+=(InBool ? "true" : "false"); }
 
-  VStr& operator += (int InInt) {
+  VStr &operator += (int InInt) {
     char buf[64];
     snprintf(buf, sizeof(buf), "%d", InInt);
     return operator+=(buf);
   }
 
-  VStr& operator += (unsigned InInt) {
+  VStr &operator += (unsigned InInt) {
     char buf[64];
     snprintf(buf, sizeof(buf), "%u", InInt);
     return operator+=(buf);
   }
 
-  VStr& operator += (float InFloat) {
+  VStr &operator += (float InFloat) {
     char buf[64];
     snprintf(buf, sizeof(buf), "%f", InFloat);
     return operator+=(buf);
   }
 
-  inline VStr& operator += (const VName& InName) { return operator+=(*InName); }
+  inline VStr &operator += (const VName &InName) { return operator+=(*InName); }
 
-  friend VStr operator + (const VStr& S1, const char *S2) { VStr res(S1); res += S2; return res; }
-  friend VStr operator + (const VStr& S1, const VStr& S2) { VStr res(S1); res += S2; return res; }
-  friend VStr operator + (const VStr& S1, char S2) { VStr res(S1); res += S2; return res; }
-  friend VStr operator + (const VStr& S1, bool InBool) { VStr res(S1); res += InBool; return res; }
-  friend VStr operator + (const VStr& S1, int InInt) { VStr res(S1); res += InInt; return res; }
-  friend VStr operator + (const VStr& S1, unsigned InInt) { VStr res(S1); res += InInt; return res; }
-  friend VStr operator + (const VStr& S1, float InFloat) { VStr res(S1); res += InFloat; return res; }
-  friend VStr operator + (const VStr& S1, const VName& InName) { VStr res(S1); res += InName; return res; }
+  friend VStr operator + (const VStr &S1, const char *S2) { VStr res(S1); res += S2; return res; }
+  friend VStr operator + (const VStr &S1, const VStr &S2) { VStr res(S1); res += S2; return res; }
+  friend VStr operator + (const VStr &S1, char S2) { VStr res(S1); res += S2; return res; }
+  friend VStr operator + (const VStr &S1, bool InBool) { VStr res(S1); res += InBool; return res; }
+  friend VStr operator + (const VStr &S1, int InInt) { VStr res(S1); res += InInt; return res; }
+  friend VStr operator + (const VStr &S1, unsigned InInt) { VStr res(S1); res += InInt; return res; }
+  friend VStr operator + (const VStr &S1, float InFloat) { VStr res(S1); res += InFloat; return res; }
+  friend VStr operator + (const VStr &S1, const VName &InName) { VStr res(S1); res += InName; return res; }
 
   // comparison operators
-  friend bool operator == (const VStr& S1, const char* S2) { return (Cmp(*S1, S2) == 0); }
-  friend bool operator == (const VStr& S1, const VStr& S2) { return (S1.data == S2.data ? true : (Cmp(*S1, *S2) == 0)); }
-  friend bool operator != (const VStr& S1, const char* S2) { return (Cmp(*S1, S2) != 0); }
-  friend bool operator != (const VStr& S1, const VStr& S2) { return (S1.data == S2.data ? false : (Cmp(*S1, *S2) != 0)); }
+  friend bool operator == (const VStr &S1, const char* S2) { return (Cmp(*S1, S2) == 0); }
+  friend bool operator == (const VStr &S1, const VStr &S2) { return (S1.data == S2.data ? true : (Cmp(*S1, *S2) == 0)); }
+  friend bool operator != (const VStr &S1, const char* S2) { return (Cmp(*S1, S2) != 0); }
+  friend bool operator != (const VStr &S1, const VStr &S2) { return (S1.data == S2.data ? false : (Cmp(*S1, *S2) != 0)); }
 
   // comparison functions
-  inline int Cmp (const char *S2) const { return Cmp(**this, S2); }
-  inline int Cmp (const VStr& S2) const { return Cmp(**this, *S2); }
-  inline int ICmp (const char *S2) const { return ICmp(**this, S2); }
-  inline int ICmp (const VStr& S2) const { return ICmp(**this, *S2); }
+  inline int Cmp (const char *S2) const { return Cmp(data, S2); }
+  inline int Cmp (const VStr &S2) const { return Cmp(data, *S2); }
+  inline int ICmp (const char *S2) const { return ICmp(data, S2); }
+  inline int ICmp (const VStr &S2) const { return ICmp(data, *S2); }
 
   bool StartsWith (const char *) const;
   bool StartsWith (const VStr&) const;
@@ -249,7 +255,7 @@ public:
   VStr Latin1ToUtf8 () const;
 
   // serialisation operator
-  friend VStream& operator << (VStream& Strm, VStr& S) {
+  friend VStream &operator << (VStream &Strm, VStr &S) {
     if (Strm.IsLoading()) {
       vint32 len;
       Strm << STRM_INDEX(len);
@@ -273,8 +279,8 @@ public:
   VStr ExtractFileBase () const;
   VStr ExtractFileExtension () const;
   VStr StripExtension () const;
-  VStr DefaultPath (const VStr& basepath) const;
-  VStr DefaultExtension (const VStr& extension) const;
+  VStr DefaultPath (const VStr &basepath) const;
+  VStr DefaultExtension (const VStr &extension) const;
   VStr FixFileSlashes () const;
 
   static inline size_t Length (const char *s) { return (s ? strlen(s) : 0); }
@@ -284,8 +290,9 @@ public:
   static size_t ByteLengthForUtf8 (const char *, size_t);
   static int GetChar (const char *&);
   static VStr FromChar (int);
-  static inline int Cmp (const char *S1, const char *S2) { return (S1 == S2 ? 0 : strcmp(S1, S2)); }
-  static inline int NCmp (const char *S1, const char *S2, size_t N) { return (S1 == S2 ? 0 : strncmp(S1, S2, N)); }
+
+  static inline int Cmp (const char *S1, const char *S2) { return (S1 == S2 ? 0 : strcmp((S1 ? S1 : ""), (S2 ? S2 : ""))); }
+  static inline int NCmp (const char *S1, const char *S2, size_t N) { return (S1 == S2 ? 0 : strncmp((S1 ? S1 : ""), (S2 ? S2 : ""), N)); }
 
   static inline int ICmp (const char *s0, const char *s1) {
     if (!s0) s0 = "";
@@ -322,9 +329,7 @@ public:
   }
 
   static inline void Cpy (char *dst, const char *src) {
-    if (dst) {
-      if (src) strcpy(dst, src); else *dst = 0;
-    }
+    if (dst) { if (src) strcpy(dst, src); else *dst = 0; }
   }
 
   // will write terminating zero
