@@ -286,6 +286,7 @@ enum {
   DECLARE_OPC(StrLessEqu, None),
   DECLARE_OPC(StrGreat, None),
   DECLARE_OPC(StrGreatEqu, None),
+  DECLARE_OPC(StrLength, None),
 
   // string assignment operators
   DECLARE_OPC(AssignStrDrop, None),

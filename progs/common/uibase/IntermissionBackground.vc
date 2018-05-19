@@ -25,16 +25,16 @@
 
 class IntermissionBackground : Widget;
 
-enum
-{
+
+enum {
   STATE_Default,
   STATE_PrevLoc,
   STATE_NextLoc,
-  STATE_Done
-};
+  STATE_Done,
+}
 
-enum
-{
+
+enum {
   COND_None,
   COND_IfLeaving,
   COND_IfNotLeaving,
@@ -43,78 +43,75 @@ enum
   COND_IfVisited,
   COND_IfNotVisited,
   COND_IfTravelling,
-  COND_IfNotTravelling
-};
+  COND_IfNotTravelling,
+}
 
-struct AnimInfo
-{
-  byte      Cond;
 
-  name      MapName1;
-  name      MapName2;
+struct AnimInfo {
+  byte Cond;
 
-  //  Location of animation
-  int       X;
-  int       Y;
+  name MapName1;
+  name MapName2;
 
-  //  Period in seconds between animations
-  float     Period;
+  // location of animation
+  int X;
+  int Y;
 
-  //  Actual graphics for frames of animations
-  array<int>    Pics;
+  // period in seconds between animations
+  float Period;
 
-  //  Next value of btime (used in conjunction with period)
-  float     NextTime;
+  // actual graphics for frames of animations
+  array!int Pics;
 
-  //  Next frame number to animate
-  int       Ctr;
+  // next value of btime (used in conjunction with period)
+  float NextTime;
 
-  bool      bOnce;
-};
+  // next frame number to animate
+  int Ctr;
 
-struct SpotInfo
-{
-  name      Map;
-  int       X;
-  int       Y;
-};
+  bool bOnce;
+}
 
-ClientGameShared  ClGame;
 
-int         BackgroundPic;
-name        BackgroundFlat;
-int         SplatPic;
-array<int>      PointerPics;
-bool        bNoAutoStartMap;
+struct SpotInfo {
+  name Map;
+  int X;
+  int Y;
+}
 
-array<AnimInfo>   Anims;
-array<SpotInfo>   Spots;
 
-//  Used for timing of background animation
-float       btime;
+ClientGameShared ClGame;
 
-byte        State;
+int BackgroundPic;
+name BackgroundFlat;
+int SplatPic;
+array!int PointerPics;
+bool bNoAutoStartMap;
+
+array!AnimInfo Anims;
+array!SpotInfo Spots;
+
+// used for timing of background animation
+float btime;
+
+byte State;
+
 
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
-
-final void Init(name Name, byte AState, ClientGameShared AClGame)
-{
+final void Init (name Name, byte AState, ClientGameShared AClGame) {
   Clean();
 
   State = AState;
   ClGame = AClGame;
 
   string NameStr = va("%n", Name);
-  if (StrStartsWith(NameStr, "$"))
-  {
-    ParseScript(StrToName(substr(NameStr, 1, strlen(NameStr) - 1)));
-  }
-  else
-  {
+  if (StrStartsWith(NameStr, "$")) {
+    ParseScript(StrToName(substr(NameStr, 1, strlen(NameStr)-1)));
+  } else {
     BackgroundPic = R_RegisterPic(Name);
   }
 }

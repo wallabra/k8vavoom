@@ -120,3 +120,20 @@ public:
   VExpression* DoResolve(VEmitContext&);
   void Emit(VEmitContext&);
 };
+
+//==========================================================================
+//
+//  VStringGetLength
+//
+//==========================================================================
+
+class VStringGetLength : public VExpression
+{
+public:
+  VExpression *StrExpr;
+
+  VStringGetLength (VExpression *, const TLocation&);
+  virtual ~VStringGetLength () override;
+  virtual VExpression *DoResolve (VEmitContext&) override;
+  virtual void Emit (VEmitContext&) override;
+};

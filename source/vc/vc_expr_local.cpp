@@ -250,105 +250,66 @@ void VLocalVar::RequestAddressOf()
   AddressRequested = true;
 }
 
+
 //==========================================================================
 //
 //  VLocalVar::Emit
 //
 //==========================================================================
-
-void VLocalVar::Emit(VEmitContext& ec)
-{
-  if (AddressRequested)
-  {
+void VLocalVar::Emit(VEmitContext& ec) {
+  if (AddressRequested) {
     ec.EmitLocalAddress(ec.LocalDefs[num].Offset);
-  }
-  else if (ec.LocalDefs[num].ParamFlags & FPARM_Out)
-  {
-    if (ec.LocalDefs[num].Offset < 256)
-    {
+  } else if (ec.LocalDefs[num].ParamFlags&FPARM_Out) {
+    if (ec.LocalDefs[num].Offset < 256) {
       int Ofs = ec.LocalDefs[num].Offset;
-      if (Ofs == 0)
-        ec.AddStatement(OPC_LocalValue0);
-      else if (Ofs == 1)
-        ec.AddStatement(OPC_LocalValue1);
-      else if (Ofs == 2)
-        ec.AddStatement(OPC_LocalValue2);
-      else if (Ofs == 3)
-        ec.AddStatement(OPC_LocalValue3);
-      else if (Ofs == 4)
-        ec.AddStatement(OPC_LocalValue4);
-      else if (Ofs == 5)
-        ec.AddStatement(OPC_LocalValue5);
-      else if (Ofs == 6)
-        ec.AddStatement(OPC_LocalValue6);
-      else if (Ofs == 7)
-        ec.AddStatement(OPC_LocalValue7);
-      else
-        ec.AddStatement(OPC_LocalValueB, Ofs);
-    }
-    else
-    {
+           if (Ofs == 0) ec.AddStatement(OPC_LocalValue0);
+      else if (Ofs == 1) ec.AddStatement(OPC_LocalValue1);
+      else if (Ofs == 2) ec.AddStatement(OPC_LocalValue2);
+      else if (Ofs == 3) ec.AddStatement(OPC_LocalValue3);
+      else if (Ofs == 4) ec.AddStatement(OPC_LocalValue4);
+      else if (Ofs == 5) ec.AddStatement(OPC_LocalValue5);
+      else if (Ofs == 6) ec.AddStatement(OPC_LocalValue6);
+      else if (Ofs == 7) ec.AddStatement(OPC_LocalValue7);
+      else ec.AddStatement(OPC_LocalValueB, Ofs);
+    } else {
       ec.EmitLocalAddress(ec.LocalDefs[num].Offset);
       ec.AddStatement(OPC_PushPointedPtr);
     }
-    if (PushOutParam)
-    {
-      EmitPushPointedCode(ec.LocalDefs[num].Type, ec);
-    }
-  }
-  else if (ec.LocalDefs[num].Offset < 256)
-  {
+    if (PushOutParam) EmitPushPointedCode(ec.LocalDefs[num].Type, ec);
+  } else if (ec.LocalDefs[num].Offset < 256) {
     int Ofs = ec.LocalDefs[num].Offset;
-    if (ec.LocalDefs[num].Type.Type == TYPE_Bool &&
-      ec.LocalDefs[num].Type.BitMask != 1)
-    {
-      ParseError(Loc, "Strange local bool mask");
+    if (ec.LocalDefs[num].Type.Type == TYPE_Bool && ec.LocalDefs[num].Type.BitMask != 1) ParseError(Loc, "Strange local bool mask");
+    switch (ec.LocalDefs[num].Type.Type) {
+      case TYPE_Int:
+      case TYPE_Byte:
+      case TYPE_Bool:
+      case TYPE_Float:
+      case TYPE_Name:
+      case TYPE_Pointer:
+      case TYPE_Reference:
+      case TYPE_Class:
+      case TYPE_State:
+             if (Ofs == 0) ec.AddStatement(OPC_LocalValue0);
+        else if (Ofs == 1) ec.AddStatement(OPC_LocalValue1);
+        else if (Ofs == 2) ec.AddStatement(OPC_LocalValue2);
+        else if (Ofs == 3) ec.AddStatement(OPC_LocalValue3);
+        else if (Ofs == 4) ec.AddStatement(OPC_LocalValue4);
+        else if (Ofs == 5) ec.AddStatement(OPC_LocalValue5);
+        else if (Ofs == 6) ec.AddStatement(OPC_LocalValue6);
+        else if (Ofs == 7) ec.AddStatement(OPC_LocalValue7);
+        else ec.AddStatement(OPC_LocalValueB, Ofs);
+        break;
+      case TYPE_Vector:
+        ec.AddStatement(OPC_VLocalValueB, Ofs);
+        break;
+      case TYPE_String:
+        ec.AddStatement(OPC_StrLocalValueB, Ofs);
+        break;
+      default:
+        ParseError(Loc, "Invalid operation of this variable type");
+        break;
     }
-    switch (ec.LocalDefs[num].Type.Type)
-    {
-    case TYPE_Int:
-    case TYPE_Byte:
-    case TYPE_Bool:
-    case TYPE_Float:
-    case TYPE_Name:
-    case TYPE_Pointer:
-    case TYPE_Reference:
-    case TYPE_Class:
-    case TYPE_State:
-      if (Ofs == 0)
-        ec.AddStatement(OPC_LocalValue0);
-      else if (Ofs == 1)
-        ec.AddStatement(OPC_LocalValue1);
-      else if (Ofs == 2)
-        ec.AddStatement(OPC_LocalValue2);
-      else if (Ofs == 3)
-        ec.AddStatement(OPC_LocalValue3);
-      else if (Ofs == 4)
-        ec.AddStatement(OPC_LocalValue4);
-      else if (Ofs == 5)
-        ec.AddStatement(OPC_LocalValue5);
-      else if (Ofs == 6)
-        ec.AddStatement(OPC_LocalValue6);
-      else if (Ofs == 7)
-        ec.AddStatement(OPC_LocalValue7);
-      else
-        ec.AddStatement(OPC_LocalValueB, Ofs);
-      break;
-
-    case TYPE_Vector:
-      ec.AddStatement(OPC_VLocalValueB, Ofs);
-      break;
-
-    case TYPE_String:
-      ec.AddStatement(OPC_StrLocalValueB, Ofs);
-      break;
-
-    default:
-      ParseError(Loc, "Invalid operation of this variable type");
-    }
-  }
-  else
-  {
+  } else {
     ec.EmitLocalAddress(ec.LocalDefs[num].Offset);
     EmitPushPointedCode(ec.LocalDefs[num].Type, ec);
   }

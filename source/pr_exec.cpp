@@ -1457,6 +1457,15 @@ func_loop:
         STRCMPOP(>=)
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_StrLength)
+        {
+          ++ip;
+          auto len = (*((VStr**)&sp[-1].p))->Length();
+          //((VStr*)&sp[-1].p)->Clean();
+          sp[-1].i = (int)len;
+        }
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_AssignStrDrop)
         ++ip;
         *(VStr*)sp[-2].p = *(VStr*)&sp[-1].p;

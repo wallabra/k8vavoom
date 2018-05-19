@@ -283,6 +283,28 @@ VExpression *VDotField::IntResolve (VEmitContext& ec, bool AssignTarget) {
     }
   }
 
+  if (op->Type.Type == TYPE_String) {
+    if (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length) {
+      if (AssignTarget) {
+        ParseError(Loc, "Cannot change string length via assign yet.");
+        delete this;
+        return nullptr;
+      }
+      if (!op->IsStrConst()) {
+        op->Flags &= ~FIELD_ReadOnly;
+        op->RequestAddressOf();
+      }
+      VExpression *e = new VStringGetLength(op, Loc);
+      op = nullptr;
+      delete this;
+      return e->Resolve(ec);
+    } else {
+      ParseError(Loc, "No field '%s' for string", *FieldName);
+      delete this;
+      return nullptr;
+    }
+  }
+
   ParseError(Loc, "Reference, struct or vector expected on left side of . %d", op->Type.Type);
   delete this;
   return nullptr;

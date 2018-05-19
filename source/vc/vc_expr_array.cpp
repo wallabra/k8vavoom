@@ -509,3 +509,59 @@ void VDynArrayRemove::Emit(VEmitContext& ec)
   CountExpr->Emit(ec);
   ec.AddStatement(OPC_DynArrayRemove, ArrayExpr->Type.GetArrayInnerType());
 }
+
+
+//==========================================================================
+//
+//  VStringGetLength::VStringGetLength
+//
+//==========================================================================
+VStringGetLength::VStringGetLength(VExpression *AStrExpr, const TLocation& ALoc)
+  : VExpression(ALoc)
+  , StrExpr(AStrExpr)
+{
+  Flags = FIELD_ReadOnly;
+}
+
+
+//==========================================================================
+//
+//  VStringGetLength::~VStringGetLength
+//
+//==========================================================================
+VStringGetLength::~VStringGetLength () {
+  if (StrExpr) {
+    delete StrExpr;
+    StrExpr = NULL;
+  }
+}
+
+
+//==========================================================================
+//
+//  VStringGetLength::DoResolve
+//
+//==========================================================================
+VExpression* VStringGetLength::DoResolve (VEmitContext &ec) {
+  // optimize it for string literals
+  if (StrExpr->IsStrConst()) {
+    VStr val = StrExpr->GetStrConst(ec.Package);
+    VExpression *e = new VIntLiteral(val.Length(), Loc);
+    e = e->Resolve(ec);
+    delete this;
+    return e;
+  }
+  Type = VFieldType(TYPE_Int);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VStringGetLength::Emit
+//
+//==========================================================================
+void VStringGetLength::Emit (VEmitContext& ec) {
+  StrExpr->Emit(ec);
+  ec.AddStatement(OPC_StrLength);
+}
