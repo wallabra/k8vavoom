@@ -43,11 +43,12 @@ private:
   inline const int *lenp () const { return (data ? ((const int*)data)-1 : nullptr); }
 
   void MakeMutable (); // and unique
-  void Resize (int newlen);
+  void Resize (int newlen); // always makes string unique
 
-  void SetContents (const char *s, int len=-1);
+  void SetContents (const char *s, int len=-1); // not necessarily copies anything
 
   inline bool isMyData (const char *buf) const { return (data && buf && buf >= data && buf < data+length()); }
+  inline bool isMyData (const char *buf, int len) const { return (data && buf && buf < data+length() && buf+len >= data); }
 
 public:
   VStr () : data(nullptr) {}
@@ -137,13 +138,13 @@ public:
 
   // concatenation operators
   VStr& operator += (const char *instr) {
-    if (instr && *instr) {
-      if (isMyData(instr)) {
+    int inl = int(Length(instr));
+    if (inl) {
+      if (isMyData(instr, inl)) {
         VStr s = instr;
         operator+=(s);
       } else {
         int l = int(Length());
-        int inl = int(Length(instr));
         Resize(int(l+inl));
         memcpy(data+l, instr, inl+1);
       }
@@ -152,13 +153,15 @@ public:
   }
 
   VStr& operator += (const VStr& instr) {
-    if (instr.Length()) {
-      if (isMyData(instr.data)) {
-        VStr s = *instr;
-        operator+=(*s);
+    int inl = int(instr.Length());
+    if (inl) {
+      int l = int(Length());
+      if (isMyData(instr.data, inl)) {
+        VStr s = instr;
+        s.MakeMutable(); // ensure unique
+        Resize(int(l+inl));
+        memcpy(data+l, s.data, inl+1);
       } else {
-        int l = int(Length());
-        int inl = int(instr.Length());
         Resize(int(l+inl));
         memcpy(data+l, instr.data, inl+1);
       }

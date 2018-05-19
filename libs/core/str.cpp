@@ -78,7 +78,6 @@ void VStr::Resize (int newlen) {
   guard(VStr::Resize);
 
   check(newlen >= 0);
-  if ((size_t)newlen == Length()) MakeMutable(); // same length, make string unique (just in case)
 
   if (newlen <= 0) {
     // free string
@@ -86,6 +85,12 @@ void VStr::Resize (int newlen) {
       if (--(*refp()) == 0) delete[](data-sizeof(int)*2);
       data = nullptr;
     }
+    return;
+  }
+
+  if ((size_t)newlen == Length()) {
+    // same length, make string unique (just in case)
+    MakeMutable();
     return;
   }
 
@@ -128,7 +133,10 @@ void VStr::SetContents (const char *s, int len) {
     if (len < 0) len = (s ? (int)strlen(s) : 0);
     if (len) {
       // check for pathological case: is `s` inside our data?
-      if (s >= data && s < data+length()) {
+      if (s == data && (size_t)len == length()) {
+        // this is prolly `VStr(*otherstr)` case, so just increment refcount
+        ++(*refp());
+      } else if (isMyData(s, len)) {
         // make temporary copy
         char *temp = new char[len];
         memcpy(temp, s, len);
