@@ -506,10 +506,12 @@ char VLexer::peekNextNonBlankChar () const {
 //==========================================================================
 void VLexer::ProcessPreprocessor () {
   NextChr();
+
   if (Src->NewLine || Chr == EOF_CHARACTER) {
     ParseError(Location, "Bad directive.");
     return;
   }
+
   if (ASCIIToChrCode[(vuint8)Chr] != CHR_Letter) {
     ParseError(Location, "Bad directive.");
     while (!Src->NewLine && Chr != EOF_CHARACTER) NextChr();
@@ -523,14 +525,16 @@ void VLexer::ProcessPreprocessor () {
     SkipWhitespaceAndComments();
     if (ASCIIToChrCode[(vuint8)Chr] != CHR_Number) ParseError(Location, "Bad directive.");
     ProcessNumberToken();
-    Src->Line = Number - 1;
+    /*if (!Src->Skipping)*/ Src->Line = Number-1;
 
     // read file name
     SkipWhitespaceAndComments();
     if (ASCIIToChrCode[(vuint8)Chr] != CHR_Quote) ParseError(Location, "Bad directive.");
     ProcessFileName();
-    Src->SourceIdx = TLocation::AddSourceFile(String);
-    Location = TLocation(Src->SourceIdx, Src->Line);
+    /*if (!Src->Skipping)*/ {
+      Src->SourceIdx = TLocation::AddSourceFile(String);
+      Location = TLocation(Src->SourceIdx, Src->Line);
+    }
 
     // ignore flags
     while (!Src->NewLine) NextChr();
@@ -566,6 +570,7 @@ void VLexer::ProcessPreprocessor () {
 //==========================================================================
 void VLexer::ProcessDefine () {
   SkipWhitespaceAndComments();
+
   // argument to the #define must be on the same line.
   if (Src->NewLine || Chr == EOF_CHARACTER) {
     ParseError(Location, "Bad directive.");

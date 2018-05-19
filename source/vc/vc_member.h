@@ -25,6 +25,7 @@
 
 class VExpression;
 class VStatement;
+class VLexer;
 
 #define ANY_PACKAGE       ((VPackage*)-1)
 #define ANY_MEMBER        255
@@ -105,6 +106,15 @@ public:
   static VClass* StaticFindClass(VName);
 
   static void StaticSplitStateLabel(const VStr&, TArray<VName>&);
+
+  static void StaticAddIncludePath (const char *);
+  static void StaticAddDefine (const char *);
+
+  static void InitLexer (VLexer &lex);
+
+private:
+  static TArray<VStr> incpathlist;
+  static TArray<VStr> definelist;
 };
 
 inline vuint32 GetTypeHash(VMemberBase* M)

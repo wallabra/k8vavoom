@@ -745,6 +745,7 @@ void VPackage::LoadSourceObject (VStream *Strm, const VStr& filename, TLocation 
   if (!Strm) return;
 
   VLexer Lex;
+  VMemberBase::InitLexer(Lex);
   Lex.OpenSource(Strm, filename);
   VParser Parser(Lex, this);
   Parser.Parse();

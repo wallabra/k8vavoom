@@ -2533,8 +2533,7 @@ void VParser::Parse()
       break;
 
     default:
-      ParseError(Lex.Location, "Invalid token \"%s\"",
-        VLexer::TokenNames[Lex.Token]);
+      ParseError(Lex.Location, "Invalid token \"%s\"", VLexer::TokenNames[Lex.Token]);
       Lex.NextToken();
       break;
     }

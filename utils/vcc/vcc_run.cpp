@@ -263,8 +263,8 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
       switch (option) {
         case 'd': DebugMode = true; if (*text) OpenDebugFile(text); break;
         case 'a': if (!*text) DisplayUsage(); dump_asm_names[num_dump_asm++] = text; break;
-        case 'I': Lex.AddIncludePath(text); break;
-        case 'D': Lex.AddDefine(text); break;
+        case 'I': VMemberBase::StaticAddIncludePath(text); break;
+        case 'D': VMemberBase::StaticAddDefine(text); break;
         case 'P': VMemberBase::StaticAddPackagePath(text); break;
         default: DisplayUsage(); break;
       }
@@ -305,7 +305,7 @@ static void initialize () {
   VName::StaticInit();
   //VMemberBase::StaticInit();
   VObject::StaticInit();
-  Lex.AddDefine("VCC_STANDALONE_EXECUTOR");
+  VMemberBase::StaticAddDefine("VCC_STANDALONE_EXECUTOR");
 }
 
 

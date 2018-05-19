@@ -51,6 +51,9 @@ TArray<VClass*>     VMemberBase::GDecorateClassImports;
 
 VClass*         VMemberBase::GClasses;
 
+TArray<VStr> VMemberBase::incpathlist;
+TArray<VStr> VMemberBase::definelist;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -405,4 +408,39 @@ void VMemberBase::StaticSplitStateLabel(const VStr& LabelName,
     Parts.Append(*StrParts[i]);
   }
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::StaticAddIncludePath
+//
+//==========================================================================
+void VMemberBase::StaticAddIncludePath (const char *s) {
+  if (!s || !s[0]) return;
+  incpathlist.Append(VStr(s));
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::StaticAddDefine
+//
+//==========================================================================
+void VMemberBase::StaticAddDefine (const char *s) {
+  if (!s || !s[0]) return;
+  VStr str(s);
+  for (int f = 0; f < definelist.length(); ++f) if (definelist[f] == str) return;
+  definelist.Append(str);
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::InitLexer
+//
+//==========================================================================
+void VMemberBase::InitLexer (VLexer &lex) {
+  for (int f = 0; f < incpathlist.length(); ++f) lex.AddIncludePath(*incpathlist[f]);
+  for (int f = 0; f < definelist.length(); ++f) lex.AddDefine(*definelist[f]);
 }
