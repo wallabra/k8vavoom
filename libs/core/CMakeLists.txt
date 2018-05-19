@@ -15,7 +15,8 @@ add_library(core STATIC
   endian.h
   exception.cpp
   exception.h
-  hash.h
+  hashfunc.h
+  hashset.h
   log.cpp
   log.h
   map.h
