@@ -1925,7 +1925,7 @@ VClass* VClass::CreateDerivedClass(VName AName, VMemberBase* AOuter,
 #endif
 
 
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VClass::GetReplacement

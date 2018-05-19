@@ -896,7 +896,6 @@ IMPLEMENT_FUNCTION(VObject, GetClassParent) {
   RET_PTR(SomeClass->ParentClass);
 }
 
-#ifndef VCC_STANDALONE_EXECUTOR
 IMPLEMENT_FUNCTION(VObject, GetClassReplacement) {
   P_GET_PTR(VClass, SomeClass);
   RET_PTR(SomeClass->GetReplacement());
@@ -925,10 +924,8 @@ IMPLEMENT_FUNCTION(VObject, GetClassFirstState) {
   P_GET_PTR(VClass, Cls);
   RET_PTR(Cls->States);
 }
-#endif // !VCC_STANDALONE_EXECUTOR
 
 
-#ifndef VCC_STANDALONE_EXECUTOR
 //==========================================================================
 //
 //  State methods
@@ -965,11 +962,12 @@ IMPLEMENT_FUNCTION(VObject, GetStatePlus) {
   RET_PTR(State->GetPlus(Offset, IgnoreJump));
 }
 
+#ifndef VCC_STANDALONE_EXECUTOR
 IMPLEMENT_FUNCTION(VObject, AreStateSpritesPresent) {
   P_GET_PTR(VState, State);
   RET_BOOL(State ? R_AreSpritesPresent(State->SpriteIndex) : false);
 }
-#endif // !VCC_STANDALONE_EXECUTOR
+#endif
 
 
 //==========================================================================

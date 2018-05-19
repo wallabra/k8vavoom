@@ -351,8 +351,6 @@ public:
   void CleanObject(VObject*);
   void DestructObject(VObject*);
   VClass* CreateDerivedClass(VName, VMemberBase*, TLocation);
-#endif
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   VClass* GetReplacement();
   VClass* GetReplacee();
 #endif

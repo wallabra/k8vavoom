@@ -280,21 +280,19 @@ public:
   DECLARE_FUNCTION(ClassIsChildOf)
   DECLARE_FUNCTION(GetClassName)
   DECLARE_FUNCTION(GetClassParent)
-#ifndef VCC_STANDALONE_EXECUTOR
   DECLARE_FUNCTION(GetClassReplacement)
   DECLARE_FUNCTION(GetClassReplacee)
   DECLARE_FUNCTION(FindClassState)
   DECLARE_FUNCTION(GetClassNumOwnedStates)
   DECLARE_FUNCTION(GetClassFirstState)
-#endif
 
-#ifndef VCC_STANDALONE_EXECUTOR
   // state methods
   DECLARE_FUNCTION(StateIsInRange)
   DECLARE_FUNCTION(StateIsInSequence)
   DECLARE_FUNCTION(GetStateSpriteName)
   DECLARE_FUNCTION(GetStateDuration)
   DECLARE_FUNCTION(GetStatePlus)
+#ifndef VCC_STANDALONE_EXECUTOR
   DECLARE_FUNCTION(AreStateSpritesPresent)
 #endif
 
