@@ -492,6 +492,16 @@ IMPLEMENT_FUNCTION(VObject, AngleMod180) {
   RET_FLOAT(AngleMod180(an));
 }
 
+IMPLEMENT_FUNCTION(VObject, deg2rad) {
+  P_GET_FLOAT(an);
+  RET_FLOAT(DEG2RAD(an));
+}
+
+IMPLEMENT_FUNCTION(VObject, rad2deg) {
+  P_GET_FLOAT(an);
+  RET_FLOAT(RAD2DEG(an));
+}
+
 IMPLEMENT_FUNCTION(VObject, abs) {
   P_GET_INT(i);
   RET_INT(abs(i));
@@ -508,7 +518,19 @@ IMPLEMENT_FUNCTION(VObject, Min) {
   RET_INT(MIN(v1, v2));
 }
 
+IMPLEMENT_FUNCTION(VObject, min) {
+  P_GET_INT(v2);
+  P_GET_INT(v1);
+  RET_INT(MIN(v1, v2));
+}
+
 IMPLEMENT_FUNCTION(VObject, FMin) {
+  P_GET_FLOAT(v2);
+  P_GET_FLOAT(v1);
+  RET_FLOAT(MIN(v1, v2));
+}
+
+IMPLEMENT_FUNCTION(VObject, fmin) {
   P_GET_FLOAT(v2);
   P_GET_FLOAT(v1);
   RET_FLOAT(MIN(v1, v2));
@@ -520,7 +542,19 @@ IMPLEMENT_FUNCTION(VObject, Max) {
   RET_INT(MAX(v1, v2));
 }
 
+IMPLEMENT_FUNCTION(VObject, max) {
+  P_GET_INT(v2);
+  P_GET_INT(v1);
+  RET_INT(MAX(v1, v2));
+}
+
 IMPLEMENT_FUNCTION(VObject, FMax) {
+  P_GET_FLOAT(v2);
+  P_GET_FLOAT(v1);
+  RET_FLOAT(MAX(v1, v2));
+}
+
+IMPLEMENT_FUNCTION(VObject, fmax) {
   P_GET_FLOAT(v2);
   P_GET_FLOAT(v1);
   RET_FLOAT(MAX(v1, v2));
@@ -533,7 +567,21 @@ IMPLEMENT_FUNCTION(VObject, Clamp) {
   RET_INT(MID(Min, Val, Max));
 }
 
+IMPLEMENT_FUNCTION(VObject, clamp) {
+  P_GET_INT(Max);
+  P_GET_INT(Min);
+  P_GET_INT(Val);
+  RET_INT(MID(Min, Val, Max));
+}
+
 IMPLEMENT_FUNCTION(VObject, FClamp) {
+  P_GET_FLOAT(Max);
+  P_GET_FLOAT(Min);
+  P_GET_FLOAT(Val);
+  RET_FLOAT(MID(Min, Val, Max));
+}
+
+IMPLEMENT_FUNCTION(VObject, fclamp) {
   P_GET_FLOAT(Max);
   P_GET_FLOAT(Min);
   P_GET_FLOAT(Val);
@@ -586,7 +634,17 @@ IMPLEMENT_FUNCTION(VObject, Length) {
   RET_FLOAT(Length(vec));
 }
 
+IMPLEMENT_FUNCTION(VObject, length) {
+  P_GET_VEC(vec);
+  RET_FLOAT(Length(vec));
+}
+
 IMPLEMENT_FUNCTION(VObject, Normalise) {
+  P_GET_VEC(vec);
+  RET_VEC(Normalise(vec));
+}
+
+IMPLEMENT_FUNCTION(VObject, normalise) {
   P_GET_VEC(vec);
   RET_VEC(Normalise(vec));
 }
@@ -597,7 +655,19 @@ IMPLEMENT_FUNCTION(VObject, DotProduct) {
   RET_FLOAT(DotProduct(v1, v2));
 }
 
+IMPLEMENT_FUNCTION(VObject, dot) {
+  P_GET_VEC(v2);
+  P_GET_VEC(v1);
+  RET_FLOAT(DotProduct(v1, v2));
+}
+
 IMPLEMENT_FUNCTION(VObject, CrossProduct) {
+  P_GET_VEC(v2);
+  P_GET_VEC(v1);
+  RET_VEC(CrossProduct(v1, v2));
+}
+
+IMPLEMENT_FUNCTION(VObject, cross) {
   P_GET_VEC(v2);
   P_GET_VEC(v1);
   RET_VEC(CrossProduct(v1, v2));
