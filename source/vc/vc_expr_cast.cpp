@@ -70,7 +70,7 @@ VDelegateToBool::~VDelegateToBool()
   if (op)
   {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
 
@@ -122,7 +122,7 @@ VStringToBool::~VStringToBool()
   if (op)
   {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
 
@@ -173,7 +173,7 @@ VPointerToBool::~VPointerToBool()
   if (op)
   {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
 
@@ -200,190 +200,179 @@ void VPointerToBool::Emit(VEmitContext& ec)
   ec.AddStatement(OPC_PtrToBool);
 }
 
+
 //==========================================================================
 //
 //  VScalarToFloat::VScalarToFloat
 //
 //==========================================================================
-
-VScalarToFloat::VScalarToFloat(VExpression* AOp)
-: VExpression(AOp->Loc)
-, op(AOp)
+VScalarToFloat::VScalarToFloat (VExpression *AOp)
+  : VExpression(AOp->Loc)
+  , op(AOp)
 {
   // convert it in-place
   if (op && op->IsIntConst()) {
     //printf("*** IN-PLACE CONVERSION OF %d\n", op->GetIntConst());
-    VExpression* lit = new VFloatLiteral((float)op->GetIntConst(), op->Loc);
+    VExpression *lit = new VFloatLiteral((float)op->GetIntConst(), op->Loc);
     delete op;
     op = lit; // op is resolved here, but literal resolves to itself, so it is ok
   }
   Type = TYPE_Float;
 }
 
+
 //==========================================================================
 //
 //  VScalarToFloat::~VScalarToFloat
 //
 //==========================================================================
-
-VScalarToFloat::~VScalarToFloat()
-{
-  if (op)
-  {
+VScalarToFloat::~VScalarToFloat () {
+  if (op) {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
+
 
 //==========================================================================
 //
 //  VScalarToFloat::DoResolve
 //
 //==========================================================================
-
-VExpression* VScalarToFloat::DoResolve(VEmitContext& ec)
-{
+VExpression *VScalarToFloat::DoResolve (VEmitContext& ec) {
   //printf("VScalarToFloat::DoResolve!\n");
-  if (!op) return NULL;
+  if (!op) return nullptr;
   op = op->Resolve(ec);
-  if (!op) { delete this; return NULL; }
-  switch (op->Type.Type)
-  {
-  case TYPE_Int:
-  case TYPE_Byte:
-  case TYPE_Bool:
-    if (op->IsIntConst()) {
-      VExpression* lit = new VFloatLiteral((float)op->GetIntConst(), op->Loc);
-      delete op;
-      op = lit->Resolve(ec); // just in case
-      if (!op) { delete this; return NULL; }
-    }
-    break;
-  case TYPE_Float:
-    break;
-  default:
-    ParseError(Loc, "cannot convert type to `float`");
-    delete this;
-    return NULL;
+  if (!op) { delete this; return nullptr; }
+  switch (op->Type.Type) {
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Bool:
+      if (op->IsIntConst()) {
+        VExpression *lit = new VFloatLiteral((float)op->GetIntConst(), op->Loc);
+        delete op;
+        op = lit->Resolve(ec); // just in case
+        if (!op) { delete this; return nullptr; }
+      }
+      break;
+    case TYPE_Float:
+      break;
+    default:
+      ParseError(Loc, "cannot convert type to `float`");
+      delete this;
+      return nullptr;
   }
   return this;
 }
+
 
 //==========================================================================
 //
 //  VScalarToFloat::Emit
 //
 //==========================================================================
-
-void VScalarToFloat::Emit(VEmitContext& ec)
-{
+void VScalarToFloat::Emit (VEmitContext& ec) {
   op->Emit(ec);
-  switch (op->Type.Type)
-  {
-  case TYPE_Int:
-  case TYPE_Byte:
-  case TYPE_Bool:
-    ec.AddStatement(OPC_IntToFloat);
-    break;
-  case TYPE_Float: // nothing to do
-    break;
-  default:
-    ParseError(Loc, "Internal compiler error (VScalarToFloat::Emit)");
+  switch (op->Type.Type) {
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Bool:
+      ec.AddStatement(OPC_IntToFloat);
+      break;
+    case TYPE_Float: // nothing to do
+      break;
+    default:
+      ParseError(Loc, "Internal compiler error (VScalarToFloat::Emit)");
   }
 }
+
 
 //==========================================================================
 //
 //  VScalarToInt::VScalarToInt
 //
 //==========================================================================
-
-VScalarToInt::VScalarToInt(VExpression* AOp)
-: VExpression(AOp->Loc)
-, op(AOp)
+VScalarToInt::VScalarToInt (VExpression *AOp)
+  : VExpression(AOp->Loc)
+  , op(AOp)
 {
   // convert it in-place
   if (op && op->IsFloatConst()) {
-    VExpression* lit = new VIntLiteral((vint32)op->GetFloatConst(), op->Loc);
+    VExpression *lit = new VIntLiteral((vint32)op->GetFloatConst(), op->Loc);
     delete op;
     op = lit; // op is resolved here, but literal resolves to itself, so it is ok
   }
   Type = TYPE_Int;
 }
 
+
 //==========================================================================
 //
 //  VScalarToInt::~VScalarToInt
 //
 //==========================================================================
-
-VScalarToInt::~VScalarToInt()
-{
-  if (op)
-  {
+VScalarToInt::~VScalarToInt () {
+  if (op) {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
+
 
 //==========================================================================
 //
 //  VScalarToInt::DoResolve
 //
 //==========================================================================
-
-VExpression* VScalarToInt::DoResolve(VEmitContext& ec)
-{
+VExpression *VScalarToInt::DoResolve (VEmitContext& ec) {
   //printf("VScalarToInt::DoResolve!\n");
-  if (!op) return NULL;
+  if (!op) return nullptr;
   op = op->Resolve(ec);
-  if (!op) { delete this; return NULL; }
-  switch (op->Type.Type)
-  {
-  case TYPE_Int:
-  case TYPE_Byte:
-  case TYPE_Bool:
-    break;
-  case TYPE_Float:
-    if (op->IsFloatConst()) {
-      VExpression* lit = new VIntLiteral((vint32)op->GetFloatConst(), op->Loc);
-      delete op;
-      op = lit->Resolve(ec); // just in case
-      if (!op) { delete this; return NULL; }
-    }
-    break;
-  default:
-    ParseError(Loc, "cannot convert type to `int`");
-    delete this;
-    return NULL;
+  if (!op) { delete this; return nullptr; }
+  switch (op->Type.Type) {
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Bool:
+      break;
+    case TYPE_Float:
+      if (op->IsFloatConst()) {
+        VExpression *lit = new VIntLiteral((vint32)op->GetFloatConst(), op->Loc);
+        delete op;
+        op = lit->Resolve(ec); // just in case
+        if (!op) { delete this; return nullptr; }
+      }
+      break;
+    default:
+      ParseError(Loc, "cannot convert type to `int`");
+      delete this;
+      return nullptr;
   }
   return this;
 }
+
 
 //==========================================================================
 //
 //  VScalarToInt::Emit
 //
 //==========================================================================
-
-void VScalarToInt::Emit(VEmitContext& ec)
-{
+void VScalarToInt::Emit (VEmitContext& ec) {
   op->Emit(ec);
-  switch (op->Type.Type)
-  {
-  case TYPE_Int:
-  case TYPE_Byte:
-  case TYPE_Bool:
-    // nothing to do
-    break;
-  case TYPE_Float:
-    ec.AddStatement(OPC_FloatToInt);
-    break;
-  default:
-    ParseError(Loc, "Internal compiler error (VScalarToInt::Emit)");
-    return;
+  switch (op->Type.Type) {
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Bool:
+      // nothing to do
+      break;
+    case TYPE_Float:
+      ec.AddStatement(OPC_FloatToInt);
+      break;
+    default:
+      ParseError(Loc, "Internal compiler error (VScalarToInt::Emit)");
+      return;
   }
 }
+
 
 //==========================================================================
 //
@@ -409,7 +398,7 @@ VDynamicCast::~VDynamicCast()
   if (op)
   {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
 
@@ -426,14 +415,14 @@ VExpression* VDynamicCast::DoResolve(VEmitContext& ec)
   if (!op)
   {
     delete this;
-    return NULL;
+    return nullptr;
   }
 
   if (op->Type.Type != TYPE_Reference)
   {
     ParseError(Loc, "Bad expression, class reference required");
     delete this;
-    return NULL;
+    return nullptr;
   }
   Type = VFieldType(Class);
   return this;
@@ -476,7 +465,7 @@ VDynamicClassCast::~VDynamicClassCast()
   if (op)
   {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
 
@@ -493,14 +482,14 @@ VExpression* VDynamicClassCast::DoResolve(VEmitContext& ec)
   if (!op)
   {
     delete this;
-    return NULL;
+    return nullptr;
   }
 
   if (op->Type.Type != TYPE_Class)
   {
     ParseError(Loc, "Bad expression, class type required");
     delete this;
-    return NULL;
+    return nullptr;
   }
 
   Type = TYPE_Class;
@@ -509,7 +498,7 @@ VExpression* VDynamicClassCast::DoResolve(VEmitContext& ec)
   {
     ParseError(Loc, "No such class %s", *ClassName);
     delete this;
-    return NULL;
+    return nullptr;
   }
   return this;
 }
@@ -524,4 +513,136 @@ void VDynamicClassCast::Emit(VEmitContext& ec)
 {
   op->Emit(ec);
   ec.AddStatement(OPC_DynamicClassCast, Type.Class);
+}
+
+
+//==========================================================================
+//
+//  VCastToString::VCastToString
+//
+//==========================================================================
+VCastToString::VCastToString (VExpression *AOp)
+  : VExpression(AOp->Loc)
+  , op(AOp)
+{
+  Type = TYPE_String;
+}
+
+
+//==========================================================================
+//
+//  VCastToString::~VCastToString
+//
+//==========================================================================
+VCastToString::~VCastToString () {
+  if (op) {
+    delete op;
+    op = nullptr;
+  }
+}
+
+
+//==========================================================================
+//
+//  VCastToString::DoResolve
+//
+//==========================================================================
+VExpression *VCastToString::DoResolve (VEmitContext& ec) {
+  if (!op) return nullptr;
+
+  if (op->Type.Type != TYPE_String) {
+    //TODO: convert it in-place
+    VExpression *TmpArgs[1];
+    TmpArgs[0] = op;
+    op = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("NameToStr"), nullptr, false, false, Loc, 1, TmpArgs); // no self, not base call
+  }
+
+  op = op->Resolve(ec);
+  if (!op) { delete this; return nullptr; }
+
+  if (op->Type.Type != TYPE_String) {
+    ParseError(Loc, "cannot convert type `%s` to `string`", *op->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VCastToString::Emit
+//
+//==========================================================================
+void VCastToString::Emit (VEmitContext& ec) {
+  if (!op) return;
+  op->Emit(ec);
+  if (op->Type.Type != TYPE_String) ParseError(Loc, "cannot convert type to `string`");
+}
+
+
+//==========================================================================
+//
+//  VCastToName::VCastToName
+//
+//==========================================================================
+VCastToName::VCastToName (VExpression *AOp)
+  : VExpression(AOp->Loc)
+  , op(AOp)
+{
+  Type = TYPE_Name;
+}
+
+
+//==========================================================================
+//
+//  VCastToName::~VCastToName
+//
+//==========================================================================
+VCastToName::~VCastToName () {
+  if (op) {
+    delete op;
+    op = nullptr;
+  }
+}
+
+
+//==========================================================================
+//
+//  VCastToName::DoResolve
+//
+//==========================================================================
+VExpression *VCastToName::DoResolve (VEmitContext& ec) {
+  if (!op) return nullptr;
+
+  if (op->Type.Type != TYPE_Name) {
+    //TODO: convert it in-place
+    VExpression *TmpArgs[1];
+    TmpArgs[0] = op;
+    op = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("StrToName"), nullptr, false, false, Loc, 1, TmpArgs); // no self, not base call
+  }
+
+  op = op->Resolve(ec);
+  if (!op) { delete this; return nullptr; }
+
+  if (op->Type.Type != TYPE_Name) {
+    ParseError(Loc, "cannot convert type `%s` to `name`", *op->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VCastToName::Emit
+//
+//==========================================================================
+void VCastToName::Emit (VEmitContext& ec) {
+  if (!op) return;
+  op->Emit(ec);
+  if (op->Type.Type != TYPE_Name) ParseError(Loc, "cannot convert type to `name`");
 }

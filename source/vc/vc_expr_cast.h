@@ -108,6 +108,39 @@ public:
   void Emit(VEmitContext&);
 };
 
+
+//==========================================================================
+//
+//  VCastToString
+//
+//==========================================================================
+class VCastToString : public VExpression {
+public:
+  VExpression *op;
+
+  VCastToString (VExpression *AOp);
+  virtual ~VCastToString () override;
+  virtual VExpression *DoResolve(VEmitContext&) override;
+  virtual void Emit (VEmitContext&) override;
+};
+
+
+//==========================================================================
+//
+//  VCastToName
+//
+//==========================================================================
+class VCastToName : public VExpression {
+public:
+  VExpression *op;
+
+  VCastToName (VExpression *AOp);
+  virtual ~VCastToName () override;
+  virtual VExpression *DoResolve(VEmitContext&) override;
+  virtual void Emit (VEmitContext&) override;
+};
+
+
 //==========================================================================
 //
 //  VDynamicCast

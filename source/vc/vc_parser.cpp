@@ -400,6 +400,28 @@ VExpression* VParser::ParseExpressionPriority0()
     return new VScalarToFloat(op);
   }
 
+  // string(val) --> convert name to string
+  case TK_String:
+  {
+    Lex.NextToken();
+    Lex.Expect(TK_LParen);
+    VExpression *op = ParseExpressionPriority13(); //k8:???
+    if (!op) ParseError(l, "Expression expected");
+    Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+    return new VCastToString(op);
+  }
+
+  // name(val) --> convert string to name
+  case TK_Name:
+  {
+    Lex.NextToken();
+    Lex.Expect(TK_LParen);
+    VExpression *op = ParseExpressionPriority13(); //k8:???
+    if (!op) ParseError(l, "Expression expected");
+    Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+    return new VCastToName(op);
+  }
+
   default:
     break;
   }

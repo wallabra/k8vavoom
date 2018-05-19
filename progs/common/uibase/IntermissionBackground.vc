@@ -110,7 +110,8 @@ final void Init (name Name, byte AState, ClientGameShared AClGame) {
 
   string NameStr = va("%n", Name);
   if (StrStartsWith(NameStr, "$")) {
-    ParseScript(StrToName(substr(NameStr, 1, strlen(NameStr)-1)));
+    //ParseScript(StrToName(substr(NameStr, 1, strlen(NameStr)-1)));
+    ParseScript(StrToName(substr(NameStr, 1, NameStr.length-1)));
   } else {
     BackgroundPic = R_RegisterPic(Name);
   }
