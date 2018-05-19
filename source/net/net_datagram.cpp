@@ -352,7 +352,8 @@ void VDatagramDriver::SearchForHosts(VNetLanDriver* Drv, bool xmit,
         }
         else
         {
-          Net->HostCache[n].Name[i - 1]++;
+          ++(*Net->HostCache[n].Name.GetMutableCharPointer(i-1));
+          //Net->HostCache[n].Name[i - 1]++;
         }
         i = -1;
       }

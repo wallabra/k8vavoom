@@ -1439,10 +1439,28 @@ func_loop:
       }
 
       PR_VM_CASE(OPC_StrEquals)
-        STRCMPOP(==)
+        //STRCMPOP(==)
+        // the following is slightly faster for the same strings
+        {
+          ++ip;
+          bool cmp = *((VStr*)&sp[-2].p) == *((VStr*)&sp[-1].p);
+          ((VStr*)&sp[-2].p)->Clean();
+          ((VStr*)&sp[-1].p)->Clean();
+          sp -= 1;
+          sp[-1].i = int(cmp);
+        }
         PR_VM_BREAK;
       PR_VM_CASE(OPC_StrNotEquals)
-        STRCMPOP(!=)
+        //STRCMPOP(!=)
+        // the following is slightly faster for the same strings
+        {
+          ++ip;
+          bool cmp = *((VStr*)&sp[-2].p) != *((VStr*)&sp[-1].p);
+          ((VStr*)&sp[-2].p)->Clean();
+          ((VStr*)&sp[-1].p)->Clean();
+          sp -= 1;
+          sp[-1].i = int(cmp);
+        }
         PR_VM_BREAK;
       PR_VM_CASE(OPC_StrLess)
         STRCMPOP(<)

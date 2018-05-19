@@ -414,9 +414,12 @@ void VZipFile::OpenArchive (VStream* fstream) {
       // For sprites \ is a valid frame character but is not allowed to
       // be in a file name, so we do a little mapping here.
       if (Files[i].LumpNamespace == WADNS_Sprites) {
+        /*
         for (size_t ni = 0; ni < LumpName.Length(); ++ni) {
           if (LumpName[ni] == '^') LumpName[ni] = '\\';
         }
+        */
+        LumpName = LumpName.Replace("^", "\\");
       }
 
       // Final lump name;

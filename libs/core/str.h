@@ -29,372 +29,315 @@
 
 #define TEXT_COLOUR_ESCAPE    '\034'
 
-class VStr
-{
+// WARNING! this cannot be bigger than one pointer, or VM will break!
+class VStr {
 private:
-  char*   Str;
+  // int at [-1]: length
+  // int at [-2]: refcount
+  char *data; // string, 0-terminated (0 is not in length); can be null
 
-  void Resize(int NewLen);
+  inline int *refp () { return (data ? ((int*)data)-2 : nullptr); }
+  inline int *lenp () { return (data ? ((int*)data)-1 : nullptr); }
+
+  inline const int *refp () const { return (data ? ((const int*)data)-2 : nullptr); }
+  inline const int *lenp () const { return (data ? ((const int*)data)-1 : nullptr); }
+
+  void MakeMutable (); // and unique
+  void Resize (int newlen);
+
+  void SetContents (const char *s, int len=-1);
+
+  inline bool isMyData (const char *buf) const { return (data && buf && buf >= data && buf < data+length()); }
 
 public:
-  //  Constructors.
-  VStr()
-  : Str(NULL)
-  {}
-  VStr(ENoInit)
-  {}
-  VStr(const char* InStr)
-  : Str(NULL)
-  {
-    if (*InStr)
-    {
-      Resize(int(Length(InStr)));
-      Cpy(Str, InStr);
-    }
-  }
-  VStr(const VStr& InStr)
-  : Str(NULL)
-  {
-    if (InStr.Str)
-    {
-      Resize(int(InStr.Length()));
-      Cpy(Str, InStr.Str);
-    }
-  }
-  VStr(const VStr& InStr, int Start, int Len);
-  explicit VStr(char InChr)
-  : Str(NULL)
-  {
-    Resize(1);
-    Str[0] = InChr;
-  }
-  explicit VStr(bool InBool)
-  : Str(NULL)
-  {
-    if (InBool)
-    {
-      Resize(4);
-      Cpy(Str, "true");
-    }
-    else
-    {
-      Resize(5);
-      Cpy(Str, "false");
-    }
-  }
-  explicit VStr(int InInt)
-  : Str(NULL)
-  {
-    char Buf[64];
+  VStr () : data(nullptr) {}
+  VStr (ENoInit) {}
+  VStr (const VStr& instr, int start, int len) noexcept(false);
 
-    sprintf(Buf, "%d", InInt);
-    Resize(int(Length(Buf)));
-    Cpy(Str, Buf);
-  }
-  explicit VStr(unsigned InInt)
-  : Str(NULL)
-  {
-    char Buf[64];
+  VStr (const char *instr) : data(nullptr) { SetContents(instr); }
+  VStr (const VStr& instr) : data(nullptr) { if (instr.data) { data = (char*)instr.data; ++(*refp()); } }
+  explicit VStr (char inchr) : data(nullptr) { SetContents(&inchr, 1); }
+  explicit VStr (bool InBool) : data(nullptr) { SetContents(InBool ? "true" : "false"); }
 
-    sprintf(Buf, "%u", InInt);
-    Resize(int(Length(Buf)));
-    Cpy(Str, Buf);
-  }
-  explicit VStr(float InFloat)
-  : Str(NULL)
-  {
-    char Buf[64];
-
-    sprintf(Buf, "%f", InFloat);
-    Resize(int(Length(Buf)));
-    Cpy(Str, Buf);
-  }
-  explicit VStr(const VName& InName)
-  : Str(NULL)
-  {
-    Resize(int(Length(*InName)));
-    Cpy(Str, *InName);
+  explicit VStr (int InInt) : data(nullptr) {
+    char buf[64];
+    int len = (int)snprintf(buf, sizeof(buf), "%d", InInt);
+    SetContents(buf, len);
   }
 
-  //  Destructor.
-  ~VStr()
-  {
-    Clean();
+  explicit VStr (unsigned InInt) : data(nullptr) {
+    char buf[64];
+    int len = (int)snprintf(buf, sizeof(buf), "%u", InInt);
+    SetContents(buf, len);
   }
 
-  //  Clears the string.
-  void Clean()
-  {
-    Resize(0);
-  }
-  //  Return length of the string.
-  size_t Length() const
-  {
-    return Str ? ((int*)Str)[-1] : 0;
-  }
-  //  Return number of characters in a UTF-8 string.
-  size_t Utf8Length() const
-  {
-    return Str ? Utf8Length(Str) : 0;
-  }
-  //  Return C string.
-  const char* operator*() const
-  {
-    return Str ? Str : "";
-  }
-  //  Check if string is empty.
-  bool IsEmpty() const
-  {
-    return !Str;
-  }
-  bool IsNotEmpty() const
-  {
-    return !!Str;
+  explicit VStr (float InFloat) : data(nullptr) {
+    char buf[64];
+    int len = (int)snprintf(buf, sizeof(buf), "%f", InFloat);
+    SetContents(buf, len);
   }
 
-  //  Character ancestors.
-  char operator[](int Idx) const
-  {
-    return Str[Idx];
-  }
-  char& operator[](int Idx)
-  {
-    return Str[Idx];
-  }
+  explicit VStr (const VName& InName) : data(nullptr) { SetContents(*InName); }
 
-  //  Assignement operators.
-  VStr& operator=(const char* InStr)
-  {
-    Resize(int(Length(InStr)));
-    if (*InStr)
-      Cpy(Str, InStr);
-    return *this;
-  }
-  VStr& operator=(const VStr& InStr)
-  {
-    Resize(int(InStr.Length()));
-    if (InStr.Str)
-      Cpy(Str, InStr.Str);
-    return *this;
-  }
+  ~VStr () { Clean(); }
 
-  //  Concatenation operators.
-  VStr& operator+=(const char* InStr)
-  {
-    if (*InStr)
-    {
-      int l = int(Length());
-      Resize(int(l + Length(InStr)));
-      Cpy(Str + l, InStr);
+  // clears the string
+  inline void Clean () { Resize(0); }
+  // clears the string
+  inline void Clear () { Resize(0); }
+  // clears the string
+  inline void clear () { Resize(0); }
+
+  // returns length of the string
+  inline size_t Length () const { return (data ? *lenp() : 0); }
+  // returns length of the string
+  inline size_t length () const { return (data ? *lenp() : 0); }
+
+  // returns number of characters in a UTF-8 string
+  inline size_t Utf8Length () const { return (data ? Utf8Length(data) : 0); }
+  // returns number of characters in a UTF-8 string
+  inline size_t utf8Length () const { return (data ? Utf8Length(data) : 0); }
+
+  // returns C string
+  inline const char *operator * () const { return (data ? data : ""); }
+
+  inline bool isUnuqie () const { return (data && *refp() == 1); }
+
+  // checks if string is empty
+  inline bool IsEmpty () const { return !data; }
+  inline bool IsNotEmpty () const { return !!data; }
+
+  inline bool isEmpty () const { return !data; }
+  inline bool isNotEmpty () const { return !!data; }
+
+  // character accessors
+  inline char operator [] (int Idx) const { return data[Idx]; }
+  //char& operator [] (int Idx) { return data[Idx]; }
+
+  inline char *GetMutableCharPointer (int Idx) { MakeMutable(); return &data[Idx]; }
+
+  // assignement operators
+  inline VStr& operator = (const char *instr) { SetContents(instr); return *this; }
+
+  VStr& operator = (const VStr& instr) {
+    if (instr.data) {
+      if (instr.data != data) {
+        int *xrp = (int*)instr.data;
+        ++xrp[-2]; // increment refcounter
+        Clear();
+        data = (char*)instr.data;
+      } else {
+        ++(*refp());
+      }
+    } else {
+      Clear();
     }
     return *this;
   }
-  VStr& operator+=(const VStr& InStr)
-  {
-    if (InStr.Length())
-    {
-      int l = int(Length());
-      Resize(int(l + InStr.Length()));
-      Cpy(Str + l, *InStr);
+
+  // concatenation operators
+  VStr& operator += (const char *instr) {
+    if (instr && *instr) {
+      if (isMyData(instr)) {
+        VStr s = instr;
+        operator+=(s);
+      } else {
+        int l = int(Length());
+        int inl = int(Length(instr));
+        Resize(int(l+inl));
+        memcpy(data+l, instr, inl+1);
+      }
     }
     return *this;
   }
-  VStr& operator+=(char InChr)
-  {
+
+  VStr& operator += (const VStr& instr) {
+    if (instr.Length()) {
+      if (isMyData(instr.data)) {
+        VStr s = *instr;
+        operator+=(*s);
+      } else {
+        int l = int(Length());
+        int inl = int(instr.Length());
+        Resize(int(l+inl));
+        memcpy(data+l, instr.data, inl+1);
+      }
+    }
+    return *this;
+  }
+
+  VStr& operator += (char inchr) {
     int l = int(Length());
-    Resize(int(l + 1));
-    Str[l] = InChr;
+    Resize(int(l+1));
+    data[l] = inchr;
     return *this;
   }
-  VStr& operator+=(bool InBool)
-  {
-    return operator+=(InBool ? "true" : "false");
-  }
-  VStr& operator+=(int InInt)
-  {
-    char Buf[64];
 
-    sprintf(Buf, "%d", InInt);
-    return operator+=(Buf);
-  }
-  VStr& operator+=(unsigned InInt)
-  {
-    char Buf[64];
+  inline VStr& operator += (bool InBool) { return operator+=(InBool ? "true" : "false"); }
 
-    sprintf(Buf, "%u", InInt);
-    return operator+=(Buf);
-  }
-  VStr& operator+=(float InFloat)
-  {
-    char Buf[64];
-
-    sprintf(Buf, "%f", InFloat);
-    return operator+=(Buf);
-  }
-  VStr& operator+=(const VName& InName)
-  {
-    return operator+=(*InName);
-  }
-  friend VStr operator+(const VStr& S1, const char* S2)
-  {
-    VStr Ret(S1);
-    Ret += S2;
-    return Ret;
-  }
-  friend VStr operator+(const VStr& S1, const VStr& S2)
-  {
-    VStr Ret(S1);
-    Ret += S2;
-    return Ret;
-  }
-  friend VStr operator+(const VStr& S1, char S2)
-  {
-    VStr Ret(S1);
-    Ret += S2;
-    return Ret;
-  }
-  friend VStr operator+(const VStr& S1, bool InBool)
-  {
-    VStr Ret(S1);
-    Ret += InBool;
-    return Ret;
-  }
-  friend VStr operator+(const VStr& S1, int InInt)
-  {
-    VStr Ret(S1);
-    Ret += InInt;
-    return Ret;
-  }
-  friend VStr operator+(const VStr& S1, unsigned InInt)
-  {
-    VStr Ret(S1);
-    Ret += InInt;
-    return Ret;
-  }
-  friend VStr operator+(const VStr& S1, float InFloat)
-  {
-    VStr Ret(S1);
-    Ret += InFloat;
-    return Ret;
-  }
-  friend VStr operator+(const VStr& S1, const VName& InName)
-  {
-    VStr Ret(S1);
-    Ret += InName;
-    return Ret;
+  VStr& operator += (int InInt) {
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%d", InInt);
+    return operator+=(buf);
   }
 
-  //  Comparison operators.
-  friend bool operator==(const VStr& S1, const char* S2)
-  {
-    return !Cmp(*S1, S2);
-  }
-  friend bool operator==(const VStr& S1, const VStr& S2)
-  {
-    return !Cmp(*S1, *S2);
-  }
-  friend bool operator!=(const VStr& S1, const char* S2)
-  {
-    return !!Cmp(*S1, S2);
-  }
-  friend bool operator!=(const VStr& S1, const VStr& S2)
-  {
-    return !!Cmp(*S1, *S2);
+  VStr& operator += (unsigned InInt) {
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%u", InInt);
+    return operator+=(buf);
   }
 
-  //  Comparison functions.
-  int Cmp(const char* S2) const
-  {
-    return Cmp(**this, S2);
-  }
-  int Cmp(const VStr& S2) const
-  {
-    return Cmp(**this, *S2);
-  }
-  int ICmp(const char* S2) const
-  {
-    return ICmp(**this, S2);
-  }
-  int ICmp(const VStr& S2) const
-  {
-    return ICmp(**this, *S2);
+  VStr& operator += (float InFloat) {
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%f", InFloat);
+    return operator+=(buf);
   }
 
-  bool StartsWith(const char*) const;
-  bool StartsWith(const VStr&) const;
-  bool EndsWith(const char*) const;
-  bool EndsWith(const VStr&) const;
+  inline VStr& operator += (const VName& InName) { return operator+=(*InName); }
 
-  VStr ToLower() const;
-  VStr ToUpper() const;
+  friend VStr operator + (const VStr& S1, const char *S2) { VStr res(S1); res += S2; return res; }
+  friend VStr operator + (const VStr& S1, const VStr& S2) { VStr res(S1); res += S2; return res; }
+  friend VStr operator + (const VStr& S1, char S2) { VStr res(S1); res += S2; return res; }
+  friend VStr operator + (const VStr& S1, bool InBool) { VStr res(S1); res += InBool; return res; }
+  friend VStr operator + (const VStr& S1, int InInt) { VStr res(S1); res += InInt; return res; }
+  friend VStr operator + (const VStr& S1, unsigned InInt) { VStr res(S1); res += InInt; return res; }
+  friend VStr operator + (const VStr& S1, float InFloat) { VStr res(S1); res += InFloat; return res; }
+  friend VStr operator + (const VStr& S1, const VName& InName) { VStr res(S1); res += InName; return res; }
 
-  int IndexOf(char) const;
-  int IndexOf(const char*) const;
-  int IndexOf(const VStr&) const;
-  int LastIndexOf(char) const;
-  int LastIndexOf(const char*) const;
-  int LastIndexOf(const VStr&) const;
+  // comparison operators
+  friend bool operator == (const VStr& S1, const char* S2) { return (Cmp(*S1, S2) == 0); }
+  friend bool operator == (const VStr& S1, const VStr& S2) { return (S1.data == S2.data ? true : (Cmp(*S1, *S2) == 0)); }
+  friend bool operator != (const VStr& S1, const char* S2) { return (Cmp(*S1, S2) != 0); }
+  friend bool operator != (const VStr& S1, const VStr& S2) { return (S1.data == S2.data ? false : (Cmp(*S1, *S2) != 0)); }
 
-  VStr Replace(const char*, const char*) const;
-  VStr Replace(const VStr&, const VStr&) const;
+  // comparison functions
+  inline int Cmp (const char *S2) const { return Cmp(**this, S2); }
+  inline int Cmp (const VStr& S2) const { return Cmp(**this, *S2); }
+  inline int ICmp (const char *S2) const { return ICmp(**this, S2); }
+  inline int ICmp (const VStr& S2) const { return ICmp(**this, *S2); }
 
-  VStr Utf8Substring(int, int) const;
+  bool StartsWith (const char *) const;
+  bool StartsWith (const VStr&) const;
+  bool EndsWith (const char *) const;
+  bool EndsWith (const VStr&) const;
 
-  void Split(char, TArray<VStr>&) const;
-  void Split(const char*, TArray<VStr>&) const;
+  VStr ToLower () const;
+  VStr ToUpper () const;
 
-  bool IsValidUtf8() const;
-  VStr Latin1ToUtf8() const;
+  int IndexOf (char) const;
+  int IndexOf (const char *) const;
+  int IndexOf (const VStr&) const;
+  int LastIndexOf (char) const;
+  int LastIndexOf (const char *) const;
+  int LastIndexOf (const VStr&) const;
 
-  //  Serialisation operator.
-  friend VStream& operator<<(VStream& Strm, VStr& S)
-  {
-    if (Strm.IsLoading())
-    {
-      vint32 Len;
-      Strm << STRM_INDEX(Len);
-      if (Len < 0)
-        Len = 0;
-      S.Resize(Len);
-      if (Len)
-        Strm.Serialise(S.Str, Len + 1);
-    }
-    else
-    {
-      vint32 Len = vint32(S.Length());
-      Strm << STRM_INDEX(Len);
-      if (Len)
-        Strm.Serialise(S.Str, Len + 1);
+  VStr Replace (const char *, const char *) const;
+  VStr Replace (const VStr&, const VStr&) const;
+
+  VStr Utf8Substring (int start, int len) const;
+
+  void Split (char, TArray<VStr>&) const;
+  void Split (const char *, TArray<VStr>&) const;
+
+  // split string to path components; first component can be '/', others has no slashes
+  void SplitPath (TArray<VStr>&) const;
+
+  bool IsValidUtf8 () const;
+  VStr Latin1ToUtf8 () const;
+
+  // serialisation operator
+  friend VStream& operator << (VStream& Strm, VStr& S) {
+    if (Strm.IsLoading()) {
+      vint32 len;
+      Strm << STRM_INDEX(len);
+      if (len < 0) len = 0;
+      S.Resize(len);
+      if (len) Strm.Serialise(S.data, len+1);
+    } else {
+      vint32 len = vint32(S.Length());
+      Strm << STRM_INDEX(len);
+      if (len) Strm.Serialise(S.data, len+1);
     }
     return Strm;
   }
 
-  VStr EvalEscapeSequences() const;
+  VStr EvalEscapeSequences () const;
 
-  VStr RemoveColours() const;
+  VStr RemoveColours () const;
 
-  VStr ExtractFilePath() const;
-  VStr ExtractFileName() const;
-  VStr ExtractFileBase() const;
-  VStr ExtractFileExtension() const;
-  VStr StripExtension() const;
-  VStr DefaultPath(const VStr& basepath) const;
-  VStr DefaultExtension(const VStr& extension) const;
-  VStr FixFileSlashes() const;
+  VStr ExtractFilePath () const;
+  VStr ExtractFileName () const;
+  VStr ExtractFileBase () const;
+  VStr ExtractFileExtension () const;
+  VStr StripExtension () const;
+  VStr DefaultPath (const VStr& basepath) const;
+  VStr DefaultExtension (const VStr& extension) const;
+  VStr FixFileSlashes () const;
 
-  static size_t Length(const char*);
-  static size_t Utf8Length(const char*);
-  static size_t ByteLengthForUtf8(const char*, size_t);
-  static int GetChar(const char*&);
-  static VStr FromChar(int);
-  static int Cmp(const char*, const char*);
-  static int NCmp(const char*, const char*, size_t);
-  static int ICmp(const char*, const char*);
-  static int NICmp(const char*, const char*, size_t);
-  static void Cpy(char*, const char*);
-  static void NCpy(char*, const char*, size_t);
-  static char ToUpper(char);
-  static char ToLower(char);
+  static inline size_t Length (const char *s) { return (s ? strlen(s) : 0); }
+  static inline size_t length (const char *s) { return (s ? strlen(s) : 0); }
+  static size_t Utf8Length (const char *);
+  static inline size_t utf8Length (const char *s) { return Utf8Length(s); }
+  static size_t ByteLengthForUtf8 (const char *, size_t);
+  static int GetChar (const char *&);
+  static VStr FromChar (int);
+  static inline int Cmp (const char *S1, const char *S2) { return (S1 == S2 ? 0 : strcmp(S1, S2)); }
+  static inline int NCmp (const char *S1, const char *S2, size_t N) { return (S1 == S2 ? 0 : strncmp(S1, S2, N)); }
+
+  static inline int ICmp (const char *s0, const char *s1) {
+    if (!s0) s0 = "";
+    if (!s1) s1 = "";
+    while (*s0 && *s1) {
+      vuint8 c0 = (vuint8)(*s0++);
+      vuint8 c1 = (vuint8)(*s1++);
+      if (c0 >= 'A' && c0 <= 'Z') c0 += 32;
+      if (c1 >= 'A' && c1 <= 'Z') c1 += 32;
+      if (c0 < c1) return -1;
+      if (c0 > c1) return 1;
+    }
+    if (*s0) return 1;
+    if (*s1) return -1;
+    return 0;
+  }
+
+  static inline int NICmp (const char *s0, const char *s1, size_t max) {
+    if (max == 0) return 0;
+    if (!s0) s0 = "";
+    if (!s1) s1 = "";
+    while (*s0 && *s1) {
+      vuint8 c0 = (vuint8)(*s0++);
+      vuint8 c1 = (vuint8)(*s1++);
+      if (c0 >= 'A' && c0 <= 'Z') c0 += 32;
+      if (c1 >= 'A' && c1 <= 'Z') c1 += 32;
+      if (c0 < c1) return -1;
+      if (c0 > c1) return 1;
+      if (--max == 0) return 0;
+    }
+    if (*s0) return 1;
+    if (*s1) return -1;
+    return 0;
+  }
+
+  static inline void Cpy (char *dst, const char *src) {
+    if (dst) {
+      if (src) strcpy(dst, src); else *dst = 0;
+    }
+  }
+
+  // will write terminating zero
+  static inline void NCpy (char *dst, const char *src, size_t N) {
+    if (dst && src && N && src[0]) {
+      size_t slen = strlen(src);
+      if (slen > N) slen = N;
+      memcpy(dst, src, slen);
+      dst[slen] = 0;
+    } else {
+      if (dst) *dst = 0;
+    }
+  }
+
+  static inline char ToUpper (char c) { return (c >= 'a' && c <= 'z' ? c-32 : c); }
+  static inline char ToLower (char c) { return (c >= 'A' && c <= 'Z' ? c+32 : c); }
 };
 
-char *va(const char *text, ...) __attribute__ ((format(printf, 1, 2)));
+char *va (const char *text, ...) __attribute__ ((format(printf, 1, 2)));

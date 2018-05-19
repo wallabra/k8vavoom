@@ -336,6 +336,17 @@ int main (int argc, char **argv) {
   VStack ret;
   ret.i = 0;
 
+  /*{
+    TArray<VStr> pts;
+    VStr s = "/this/is/path/";
+    s.SplitPath(pts);
+    for (int f = 0; f < pts.length(); ++f) printf("  %d: <%s>:%d\n", f, *pts[f], pts[f].length());
+    printf("<%s>\n", *(s.ToUpper()));
+    printf("<%s>\n", *(s.ToLower()));
+    printf("<%s>\n", *(s.ToUpper().ToLower()));
+    printf("<%s>\n", *s);
+  }*/
+
   try {
     GLog.AddListener(&VccLog);
 

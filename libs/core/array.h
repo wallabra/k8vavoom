@@ -68,10 +68,9 @@ public:
     ArrNum = 0;
     ArrSize = 0;
   }
-  int Num() const
-  {
-    return ArrNum;
-  }
+  inline int Num() const { return ArrNum; }
+  inline int Length() const { return ArrNum; }
+  inline int length() const { return ArrNum; }
   int NumAllocated() const
   {
     return ArrSize;

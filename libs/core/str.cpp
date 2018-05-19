@@ -27,12 +27,9 @@
 //
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
+//#include <cctype>
 
 #include "core.h"
-#include <cctype>
-
-// MACROS ------------------------------------------------------------------
 
 #if !defined _WIN32 && !defined DJGPP
 #undef stricmp  //  Allegro defines them
@@ -41,589 +38,432 @@
 #define strnicmp  strncasecmp
 #endif
 
-// TYPES -------------------------------------------------------------------
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+static char va_buffer[16][65536];
+static int va_bufnum = 0;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static char   va_buffer[4][1024];
-static int    va_bufnum;
-
-// CODE --------------------------------------------------------------------
-
-//==========================================================================
-//
-//  VStr::VStr
-//
-//==========================================================================
-
-VStr::VStr(const VStr& InStr, int Start, int Len)
-: Str(NULL)
-{
-  check(Start >= 0);
-  check(Start <= (int)InStr.Length());
-  check(Len >= 0);
-  check(Start + Len <= (int)InStr.Length());
-  if (Len)
-  {
-    Resize(Len);
-    NCpy(Str, InStr.Str + Start, Len);
+// ////////////////////////////////////////////////////////////////////////// //
+VStr::VStr (const VStr& instr, int start, int len) noexcept(false) : data(nullptr) {
+  guard(VStr::VStr);
+  check(start >= 0);
+  check(start <= (int)instr.Length());
+  check(len >= 0);
+  check(start+len <= (int)instr.Length());
+  if (len) {
+    Resize(len);
+    memcpy(data, instr.data+start, len);
   }
+  unguard;
 }
 
-//==========================================================================
-//
-//  VStr::Resize
-//
-//==========================================================================
 
-void VStr::Resize(int NewLen)
-{
+void VStr::MakeMutable () {
+  guard(VStr::MakeMutable);
+  if (!data || *refp() == 1) return; // nothing to do
+  // allocate new string
+  size_t newsize = (size_t)*lenp()+sizeof(int)*2+1;
+  char *newdata = new char[newsize];
+  memcpy(newdata, data-sizeof(int)*2, newsize);
+  --(*refp()); // decrement old refcounter
+  data = newdata;
+  data += sizeof(int)*2; // skip bookkeeping data
+  *refp() = 1; // set new refcounter
+  unguard;
+}
+
+
+void VStr::Resize (int newlen) {
   guard(VStr::Resize);
-  check(NewLen >= 0);
-  if ((size_t)NewLen == Length())
-  {
-    //  Same length, use existing buffer.
+
+  check(newlen >= 0);
+  if ((size_t)newlen == Length()) MakeMutable(); // same length, make string unique (just in case)
+
+  if (newlen <= 0) {
+    // free string
+    if (data) {
+      if (--(*refp()) == 0) delete[](data-sizeof(int)*2);
+      data = nullptr;
+    }
     return;
   }
-  if (!NewLen)
-  {
-    //  Free string.
-    if (Str)
-    {
-      delete[] (Str - sizeof(int));
-      Str = NULL;
+
+  // allocate new memory buffer
+  size_t newsize = newlen+sizeof(int)*2+1;
+  char *newdata = new char[newsize];
+  char *newstrdata = newdata+sizeof(int)*2;
+
+  // copy old contents, if any
+  if (data) {
+    // has old content, copy it
+    int oldlen = *lenp();
+    if (newlen < oldlen) {
+      // new string is smaller
+      memcpy(newstrdata, data, newlen);
+    } else {
+      // new string is bigger
+      memcpy(newstrdata, data, oldlen+1); // take zero too; it should be overwritten by the caller later
     }
+    // decref old string, and free it, if necessary
+    if (--(*refp()) == 0) delete[](data-sizeof(int)*2);
+  } else {
+    // no old content
+    newstrdata[0] = 0; // to be on a safe side
   }
-  else
-  {
-    //  Allocate memory.
-    int AllocLen = sizeof(int) + NewLen + 1;
-    char* NewStr = (new char[AllocLen]) + sizeof(int);
-    if (Str)
-    {
-      size_t Len = Min(Length(), (size_t)NewLen);
-      NCpy(NewStr, Str, Len);
-      delete[] (Str - sizeof(int));
-      Str = NULL;
+  newstrdata[newlen] = 0; // set trailing zero, just in case
+
+  // setup new pointer and bookkeeping
+  data = newstrdata;
+  *lenp() = newlen;
+  *refp() = 1;
+
+  unguard;
+}
+
+
+void VStr::SetContents (const char *s, int len) {
+  guard(VStr::SetContents);
+  if (s && s[0] && len != 0) {
+    if (len < 0) len = (s ? (int)strlen(s) : 0);
+    if (len) {
+      // check for pathological case: is `s` inside our data?
+      if (s >= data && s < data+length()) {
+        // make temporary copy
+        char *temp = new char[len];
+        memcpy(temp, s, len);
+        Resize(len);
+        memcpy(data, temp, len);
+        delete[] temp;
+      } else {
+        Resize(len);
+        memcpy(data, s, len);
+      }
+    } else {
+      Clear();
     }
-    Str = NewStr;
-    //  Set length.
-    ((int*)Str)[-1] = NewLen;
-    //  Set terminator.
-    Str[NewLen] = 0;
+  } else {
+    Clear();
   }
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::StartsWith
-//
-//==========================================================================
 
-bool VStr::StartsWith(const char* S) const
-{
+bool VStr::StartsWith (const char* s) const {
   guard(VStr::StartsWith);
-  size_t l = Length(S);
-  if (l > Length())
-  {
-    return false;
-  }
-  return NCmp(**this, S, l) == 0;
+  if (!s || !s[0]) return false;
+  size_t l = Length(s);
+  if (l > Length()) return false;
+  return (NCmp(**this, s, l) == 0);
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::StartsWith
-//
-//==========================================================================
 
-bool VStr::StartsWith(const VStr& S) const
-{
+bool VStr::StartsWith (const VStr& s) const {
   guard(VStr::StartsWith);
-  size_t l = S.Length();
-  if (l > Length())
-  {
-    return false;
-  }
-  return NCmp(**this, *S, l) == 0;
+  size_t l = s.Length();
+  if (l > Length()) return false;
+  return (NCmp(**this, *s, l) == 0);
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::EndsWith
-//
-//==========================================================================
 
-bool VStr::EndsWith(const char* S) const
-{
+bool VStr::EndsWith (const char* s) const {
   guard(VStr::EndsWith);
-  size_t l = Length(S);
-  if (l > Length())
-  {
-    return false;
-  }
-  return NCmp(**this + Length() - l, S, l) == 0;
+  if (!s || !s[0]) return false;
+  size_t l = Length(s);
+  if (l > Length()) return false;
+  return (NCmp(**this+Length()-l, s, l) == 0);
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::EndsWith
-//
-//==========================================================================
 
-bool VStr::EndsWith(const VStr& S) const
-{
+bool VStr::EndsWith (const VStr& s) const {
   guard(VStr::EndsWith);
-  size_t l = S.Length();
-  if (l > Length())
-  {
-    return false;
-  }
-  return NCmp(**this + Length() - l, *S, l) == 0;
+  size_t l = s.Length();
+  if (l > Length()) return false;
+  return (NCmp(**this+Length()-l, *s, l) == 0);
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::ToLower
-//
-//==========================================================================
 
-VStr VStr::ToLower() const
-{
+VStr VStr::ToLower () const {
   guard(VStr::ToLower);
-  if (!Str)
-  {
-    return VStr();
+  if (!data) return VStr();
+  bool hasWork = false;
+  int l = Length();
+  for (int i = 0; i < l; ++i) if (data[i] >= 'A' && data[i] <= 'Z') { hasWork = true; break; }
+  if (hasWork) {
+    VStr res;
+    res = *this;
+    res.MakeMutable();
+    for (int i = 0; i < l; ++i) if (res.data[i] >= 'A' && res.data[i] <= 'Z') res.data[i] += 32; // poor man's tolower()
+    return res;
+  } else {
+    return VStr(*this);
   }
-  VStr Ret;
-  int l = int(Length());
-  Ret.Resize(l);
-  for (int i = 0; i < l; i++)
-  {
-    Ret.Str[i] = ToLower(Str[i]);
-  }
-  return Ret;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::ToUpper
-//
-//==========================================================================
 
-VStr VStr::ToUpper() const
-{
+VStr VStr::ToUpper () const {
   guard(VStr::ToUpper);
-  if (!Str)
-  {
-    return VStr();
+  if (!data) return VStr();
+  bool hasWork = false;
+  int l = Length();
+  for (int i = 0; i < l; ++i) if (data[i] >= 'a' && data[i] <= 'z') { hasWork = true; break; }
+  if (hasWork) {
+    VStr res;
+    res = *this;
+    res.MakeMutable();
+    for (int i = 0; i < l; ++i) if (res.data[i] >= 'a' && res.data[i] <= 'z') res.data[i] -= 32; // poor man's toupper()
+    return res;
+  } else {
+    return VStr(*this);
   }
-  VStr Ret;
-  int l = int(Length());
-  Ret.Resize(l);
-  for (int i = 0; i < l; i++)
-  {
-    Ret.Str[i] = ToUpper(Str[i]);
-  }
-  return Ret;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::IndexOf
-//
-//==========================================================================
 
-int VStr::IndexOf(char C) const
-{
+int VStr::IndexOf (char c) const {
   guard(VStr::IndexOf);
-  int l = int(Length());
-  for (int i = 0; i < l; i++)
-  {
-    if (Str[i] == C)
-    {
-      return i;
-    }
+  if (data) {
+    const char *pos = (const char *)memchr(data, c, *lenp());
+    return (pos ? (int)(pos-data) : -1);
+  } else {
+    return -1;
   }
-  return -1;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::IndexOf
-//
-//==========================================================================
 
-int VStr::IndexOf(const char* S) const
-{
+int VStr::IndexOf (const char* s) const {
   guard(VStr::IndexOf);
-  int sl = int(Length(S));
-  if (!sl)
-  {
-    return -1;
-  }
+  if (!s || !s[0]) return -1;
+  int sl = int(Length(s));
   int l = int(Length());
-  for (int i = 0; i <= l - sl; i++)
-  {
-    if (NCmp(Str + i, S, sl) == 0)
-    {
-      return i;
-    }
-  }
+  for (int i = 0; i <= l-sl; ++i) if (NCmp(data+i, s, sl) == 0) return i;
   return -1;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::IndexOf
-//
-//==========================================================================
 
-int VStr::IndexOf(const VStr& S) const
-{
+int VStr::IndexOf (const VStr& s) const {
   guard(VStr::IndexOf);
-  int sl = int(S.Length());
-  if (!sl)
-  {
+  int sl = int(s.Length());
+  if (!sl) return -1;
+  int l = int(Length());
+  for (int i = 0; i <= l-sl; ++i) if (NCmp(data+i, *s, sl) == 0) return i;
+  return -1;
+  unguard;
+}
+
+
+int VStr::LastIndexOf (char c) const {
+  guard(VStr::LastIndexOf);
+  if (data) {
+    const char *pos = (const char *)memrchr(data, c, *lenp());
+    return (pos ? (int)(pos-data) : -1);
+  } else {
     return -1;
   }
-  int l = int(Length());
-  for (int i = 0; i <= l - sl; i++)
-  {
-    if (NCmp(Str + i, *S, sl) == 0)
-    {
-      return i;
-    }
-  }
-  return -1;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::LastIndexOf
-//
-//==========================================================================
 
-int VStr::LastIndexOf(char C) const
-{
+int VStr::LastIndexOf (const char* s) const {
   guard(VStr::LastIndexOf);
-  for (int i = int(Length()) - 1; i >= 0; i--)
-  {
-    if (Str[i] == C)
-    {
-      return i;
-    }
-  }
-  return -1;
-  unguard;
-}
-
-//==========================================================================
-//
-//  VStr::LastIndexOf
-//
-//==========================================================================
-
-int VStr::LastIndexOf(const char* S) const
-{
-  guard(VStr::LastIndexOf);
-  int sl = int(Length(S));
-  if (!sl)
-  {
-    return -1;
-  }
+  if (!s || !s[0]) return -1;
+  int sl = int(Length(s));
   int l = int(Length());
-  for (int i = l - sl; i >= 0; i--)
-  {
-    if (NCmp(Str + i, S, sl) == 0)
-    {
-      return i;
-    }
-  }
+  for (int i = l-sl; i >= 0; --i) if (NCmp(data+i, s, sl) == 0) return i;
   return -1;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::LastIndexOf
-//
-//==========================================================================
 
-int VStr::LastIndexOf(const VStr& S) const
-{
+int VStr::LastIndexOf (const VStr& s) const {
   guard(VStr::LastIndexOf);
-  int sl = int(S.Length());
-  if (!sl)
-  {
-    return -1;
-  }
+  int sl = int(s.Length());
+  if (!sl) return -1;
   int l = int(Length());
-  for (int i = l - sl; i >= 0; i--)
-  {
-    if (NCmp(Str + i, *S, sl) == 0)
-    {
-      return i;
-    }
-  }
+  for (int i = l-sl; i >= 0; --i) if (NCmp(data + i, *s, sl) == 0) return i;
   return -1;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::Replace
-//
-//==========================================================================
 
-VStr VStr::Replace(const char* Search, const char* Replacement) const
-{
+VStr VStr::Replace (const char *Search, const char *Replacement) const {
   guard(VStr::Replace);
-  if (!Length())
-  {
-    //  Nothing to replace in an empty string.
-    return *this;
-  }
+  if (!Length()) return VStr(*this); // nothing to replace in an empty string
 
   size_t SLen = Length(Search);
   size_t RLen = Length(Replacement);
-  if (!SLen)
-  {
-    //  Nothing to search for.
-    return *this;
-  }
+  if (!SLen) return VStr(*this); // nothing to search for
 
-  VStr Ret = *this;
+  VStr res = VStr(*this);
   size_t i = 0;
-  while (i <= Ret.Length() - SLen)
-  {
-    if (!NCmp(Ret.Str + i, Search, SLen))
-    {
-      //  If search and replace strings are of the same size, we can
-      // just copy the data and avoid memory allocations.
-      if (SLen == RLen)
-      {
-        memcpy(Ret.Str + i, Replacement, RLen);
-      }
-      else
-      {
-        Ret = VStr(Ret, 0, int(i)) + Replacement +
-          VStr(Ret, int(i + SLen), int(Ret.Length() - i - SLen));
+  while (i <= res.Length()-SLen) {
+    if (NCmp(res.data+i, Search, SLen) == 0) {
+      // if search and replace strings are of the same size,
+      // we can just copy the data and avoid memory allocations
+      if (SLen == RLen) {
+        res.MakeMutable();
+        memcpy(res.data+i, Replacement, RLen);
+      } else {
+        //FIXME: optimize this!
+        res = VStr(res, 0, int(i))+Replacement+VStr(res, int(i+SLen), int(res.Length()-i-SLen));
       }
       i += RLen;
-    }
-    else
-    {
-      i++;
+    } else {
+      ++i;
     }
   }
-  return Ret;
+
+  return res;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::Replace
-//
-//==========================================================================
 
-VStr VStr::Replace(const VStr& Search, const VStr& Replacement) const
-{
+VStr VStr::Replace (const VStr& Search, const VStr& Replacement) const {
   guard(VStr::Replace);
-  if (!Length())
-  {
-    //  Nothing to replace in an empty string.
-    return *this;
-  }
+  if (!Length()) return VStr(*this); // nothing to replace in an empty string
 
   size_t SLen = Search.Length();
   size_t RLen = Replacement.Length();
-  if (!SLen)
-  {
-    //  Nothing to search for.
-    return *this;
-  }
+  if (!SLen) return VStr(*this); // nothing to search for
 
-  VStr Ret = *this;
+  VStr res = *this;
   size_t i = 0;
-  while (i <= Ret.Length() - SLen)
-  {
-    if (!NCmp(Ret.Str + i, *Search, SLen))
-    {
-      //  If search and replace strings are of the same size, we can
-      // just copy the data and avoid memory allocations.
-      if (SLen == RLen)
-      {
-        memcpy(Ret.Str + i, *Replacement, RLen);
-      }
-      else
-      {
-        Ret = VStr(Ret, 0, int(i)) + Replacement +
-          VStr(Ret, int(i + SLen), int(Ret.Length() - i - SLen));
+  while (i <= res.Length()-SLen) {
+    if (NCmp(res.data+i, *Search, SLen) == 0) {
+      // if search and replace strings are of the same size,
+      // we can just copy the data and avoid memory allocations
+      if (SLen == RLen) {
+        res.MakeMutable();
+        memcpy(res.data+i, *Replacement, RLen);
+      } else {
+        //FIXME: optimize this!
+        res = VStr(res, 0, int(i))+Replacement+VStr(res, int(i+SLen), int(res.Length()-i-SLen));
       }
       i += RLen;
-    }
-    else
-    {
-      i++;
+    } else {
+      ++i;
     }
   }
-  return Ret;
+
+  return res;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::Utf8Substring
-//
-//==========================================================================
 
-VStr VStr::Utf8Substring(int Start, int Len) const
-{
-  check(Start >= 0);
-  check(Start <= (int)Utf8Length());
-  check(Len >= 0);
-  check(Start + Len <= (int)Utf8Length());
-  if (!Len)
-  {
-    return VStr();
-  }
-  int RealStart = int(ByteLengthForUtf8(Str, Start));
-  int RealLen = int(ByteLengthForUtf8(Str, Start + Len) - RealStart);
+VStr VStr::Utf8Substring (int start, int len) const {
+  check(start >= 0);
+  check(start <= (int)Utf8Length());
+  check(len >= 0);
+  check(start+len <= (int)Utf8Length());
+  if (!len) return VStr();
+  int RealStart = int(ByteLengthForUtf8(data, start));
+  int RealLen = int(ByteLengthForUtf8(data, start+len)-RealStart);
   return VStr(*this, RealStart, RealLen);
 }
 
-//==========================================================================
-//
-//  VStr::Split
-//
-//==========================================================================
 
-void VStr::Split(char C, TArray<VStr>& A) const
-{
+void VStr::Split (char c, TArray<VStr>& A) const {
   guard(VStr::Split);
+
   A.Clear();
-  if (!Str)
-  {
-    return;
-  }
-  int Start = 0;
-  int Len = int(Length());
-  for (int i = 0; i <= Len; i++)
-  {
-    if (i == Len || Str[i] == C)
-    {
-      if (Start != i)
-      {
-        A.Append(VStr(*this, Start, i - Start));
-      }
-      Start = i + 1;
+  if (!data) return;
+
+  int start = 0;
+  int len = int(Length());
+  for (int i = 0; i <= len; ++i) {
+    if (i == len || data[i] == c) {
+      if (start != i) A.Append(VStr(*this, start, i-start));
+      start = i+1;
     }
   }
+
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::Split
-//
-//==========================================================================
 
-void VStr::Split(const char* Chars, TArray<VStr>& A) const
-{
+void VStr::Split (const char *chars, TArray<VStr>& A) const {
   guard(VStr::Split);
+
   A.Clear();
-  if (!Str)
-  {
-    return;
-  }
-  int Start = 0;
-  int Len = int(Length());
-  for (int i = 0; i <= Len; i++)
-  {
-    bool DoSplit = i == Len;
-    for (const char* pChar = Chars; !DoSplit && *pChar; pChar++)
-    {
-      DoSplit = Str[i] == *pChar;
-    }
-    if (DoSplit)
-    {
-      if (Start != i)
-      {
-        A.Append(VStr(*this, Start, i - Start));
-      }
-      Start = i + 1;
+  if (!data) return;
+
+  int start = 0;
+  int len = int(Length());
+  for (int i = 0; i <= len; ++i) {
+    bool DoSplit = (i == len);
+    for (const char* pChar = chars; !DoSplit && *pChar; ++pChar) DoSplit = (data[i] == *pChar);
+    if (DoSplit) {
+      if (start != i) A.Append(VStr(*this, start, i-start));
+      start = i+1;
     }
   }
+
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::IsValidUtf8
-//
-//==========================================================================
 
-bool VStr::IsValidUtf8() const
-{
+// split string to path components; first component can be '/', others has no slashes
+void VStr::SplitPath (TArray<VStr>& arr) const {
+  guard(VStr::SplitPath);
+
+  arr.Clear();
+  if (!data) return;
+
+  int pos = 0;
+  int len = *lenp();
+
+#if !defined(_WIN32)
+  if (data[0] == '/') arr.Append(VStr("/"));
+  while (pos < len) {
+    if (data[pos] == '/') { ++pos; continue; }
+    int epos = pos+1;
+    while (epos < len && data[epos] != '/') ++epos;
+    arr.Append(VStr(*this, pos, epos-pos));
+    pos = epos+1;
+  }
+#else
+  if (data[0] == '/' || data[0] == '\\') {
+    arr.Append(VStr("/"));
+  } else if (data[1] == ':' && (data[2] == '/' || data[2] == '\\')) {
+    arr.Append(VStr(*this, 0, 3));
+    pos = 3;
+  }
+  while (pos < len) {
+    if (data[pos] == '/' || data[pos] == '\\') { ++pos; continue; }
+    int epos = pos+1;
+    while (epos < len && data[epos] != '/' && data[epos] != '\\') ++epos;
+    arr.Append(VStr(*this, pos, epos-pos));
+    pos = epos+1;
+  }
+#endif
+
+  unguard;
+}
+
+
+bool VStr::IsValidUtf8 () const {
   guard(VStr::IsValidUtf8);
-  if (!Str)
-  {
-    return true;
-  }
-  for (const char* c = Str; *c;)
-  {
-    if ((*c & 0x80) == 0)
-    {
-      c++;
-    }
-    else if ((*c & 0xe0) == 0xc0)
-    {
-      if ((c[1] & 0xc0) != 0x80)
-      {
-        return false;
-      }
+  if (!data) return true;
+  for (const char* c = data; *c;) {
+    if ((*c&0x80) == 0) {
+      ++c;
+    } else if ((*c&0xe0) == 0xc0) {
+      if ((c[1]&0xc0) != 0x80) return false;
       c += 2;
-    }
-    else if ((*c & 0xf0) == 0xe0)
-    {
-      if ((c[1] & 0xc0) != 0x80 || (c[2] & 0xc0) != 0x80)
-      {
-        return false;
-      }
+    } else if ((*c&0xf0) == 0xe0) {
+      if ((c[1]&0xc0) != 0x80 || (c[2]&0xc0) != 0x80) return false;
       c += 3;
-    }
-    else if ((*c & 0xf8) == 0xf0)
-    {
-      if ((c[1] & 0xc0) != 0x80 || (c[2] & 0xc0) != 0x80 ||
-        (c[3] & 0xc0) != 0x80)
-      {
-        return false;
-      }
+    } else if ((*c&0xf8) == 0xf0) {
+      if ((c[1]&0xc0) != 0x80 || (c[2]&0xc0) != 0x80 || (c[3]&0xc0) != 0x80) return false;
       c += 4;
-    }
-    else
-    {
+    } else {
       return false;
     }
   }
@@ -631,587 +471,351 @@ bool VStr::IsValidUtf8() const
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::Latin1ToUtf8
-//
-//==========================================================================
 
-VStr VStr::Latin1ToUtf8() const
-{
+VStr VStr::Latin1ToUtf8 () const {
   guard(VStr::Latin1ToUtf8);
-  VStr Ret;
-  for (size_t i = 0; i < Length(); i++)
-  {
-    Ret += FromChar((vuint8)Str[i]);
-  }
-  return Ret;
+  VStr res;
+  for (size_t i = 0; i < Length(); ++i) res += FromChar((vuint8)data[i]);
+  return res;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::EvalEscapeSequences
-//
-//==========================================================================
 
-VStr VStr::EvalEscapeSequences() const
-{
+VStr VStr::EvalEscapeSequences () const {
   guard(VStr::EvalEscapeSequences);
-  VStr Ret;
-  char Val;
-  for (const char* c = **this; *c; c++)
-  {
-    if (*c == '\\')
-    {
-      c++;
-      switch (*c)
-      {
-      case 't':
-        Ret += '\t';
-        break;
-      case 'n':
-        Ret += '\n';
-        break;
-      case 'r':
-        Ret += '\r';
-        break;
-      case 'c':
-        Ret += TEXT_COLOUR_ESCAPE;
-        break;
-      case 'x':
-        Val = 0;
-        c++;
-        for (int i = 0; i < 2; i++)
-        {
-          if (*c >= '0' && *c <= '9')
-            Val = (Val << 4) + *c - '0';
-          else if (*c >= 'a' && *c <= 'f')
-            Val = (Val << 4) + 10 + *c - 'a';
-          else if (*c >= 'A' && *c <= 'F')
-            Val = (Val << 4) + 10 + *c - 'A';
-          else
-            break;
-          c++;
-        }
-        c--;
-        Ret += Val;
-        break;
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-        Val = 0;
-        for (int i = 0; i < 3; i++)
-        {
-          if (*c >= '0' && *c <= '7')
-            Val = (Val << 3) + *c - '0';
-          else
-            break;
-          c++;
-        }
-        c--;
-        Ret += Val;
-        break;
-      case '\n':
-        break;
-      case 0:
-        c--;
-        break;
-      default:
-        Ret += *c;
-        break;
+  VStr res;
+  char val;
+  for (const char* c = **this; *c; ++c) {
+    if (*c == '\\') {
+      ++c;
+      switch (*c) {
+        case 't': res += '\t'; break;
+        case 'n': res += '\n'; break;
+        case 'r': res += '\r'; break;
+        case 'c': res += TEXT_COLOUR_ESCAPE; break;
+        case 'x':
+          val = 0;
+          ++c;
+          for (int i = 0; i < 2; ++i) {
+                 if (*c >= '0' && *c <= '9') val = (val<<4)+*c-'0';
+            else if (*c >= 'a' && *c <= 'f') val = (val<<4)+10+*c-'a';
+            else if (*c >= 'A' && *c <= 'F') val = (val<<4)+10+*c-'A';
+            else break;
+            ++c;
+          }
+          --c;
+          res += val;
+          break;
+        case '0': case '1': case '2': case '3':
+        case '4': case '5': case '6': case '7':
+          val = 0;
+          for (int i = 0; i < 3; ++i) {
+            if (*c >= '0' && *c <= '7') val = (val<<3)+*c-'0'; else break;
+            ++c;
+          }
+          --c;
+          res += val;
+          break;
+        case '\n':
+          break;
+        case 0:
+          --c;
+          break;
+        default:
+          res += *c;
+          break;
       }
-    }
-    else
-    {
-      Ret += *c;
+    } else {
+      res += *c;
     }
   }
-  return Ret;
+  return res;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::RemoveColours
-//
-//==========================================================================
 
-VStr VStr::RemoveColours() const
-{
+VStr VStr::RemoveColours () const {
   guard(VStr::RemoveColours);
-  VStr Ret;
-  for (const char* c = **this; *c; c++)
-  {
-    if (*c == TEXT_COLOUR_ESCAPE)
-    {
-      if (c[1])
-      {
-        c++;
+  bool hasWork = false;
+  for (const char* c = **this; *c; ++c) if (*c == TEXT_COLOUR_ESCAPE) { hasWork = true; break; }
+  if (hasWork) {
+    VStr res;
+    for (const char *c = **this; *c; ++c) {
+      if (*c == TEXT_COLOUR_ESCAPE) {
+        if (c[1]) ++c;
+        if (*c == '[') { while (c[1] && *c != ']') ++c; }
+        continue;
       }
-      if (*c == '[')
-      {
-        while (c[1] && *c != ']')
-        {
-          c++;
-        }
-      }
-      continue;
+      res += *c;
     }
-    Ret += *c;
+    return res;
+  } else {
+    return VStr(*this);
   }
-  return Ret;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::ExtractFilePath
-//
-//==========================================================================
 
-VStr VStr::ExtractFilePath() const
-{
+VStr VStr::ExtractFilePath () const {
   guard(FL_ExtractFilePath);
-  const char* src = Str + Length() - 1;
-
-  //
-  // back up until a \ or the start
-  //
-  while (src != Str && *(src - 1) != '/' && *(src - 1) != '\\')
-    src--;
-
-  return VStr(*this, 0, src - Str);
+  const char *src = data+Length();
+#if !defined(_WIN32)
+  while (src != data && src[-1] != '/') --src;
+#else
+  while (src != data && src[-1] != '/' && src[-1] != '\\') --src;
+#endif
+  return VStr(*this, 0, src-data);
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr:ExtractFileName
-//
-//==========================================================================
 
-VStr VStr::ExtractFileName() const
-{
+VStr VStr::ExtractFileName() const {
   guard(VStr:ExtractFileName);
-  const char* src = Str + Length() - 1;
-
-  //
-  // back up until a \ or the start
-  //
-  while (src != Str && *(src - 1) != '/' && *(src - 1) != '\\')
-    src--;
-
-  return src;
+  const char *src = data+Length();
+#if !defined(_WIN32)
+  while (src != data && src[-1] != '/') --src;
+#else
+  while (src != data && src[-1] != '/' && src[-1] != '\\') --src;
+#endif
+  return VStr(src);
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::ExtractFileBase
-//
-//==========================================================================
 
-VStr VStr::ExtractFileBase() const
-{
+VStr VStr::ExtractFileBase () const {
   guard(VStr::ExtractFileBase);
-  int i = int(Length() - 1);
+  int i = int(Length());
 
+  if (i == 0) return VStr();
+
+#if !defined(_WIN32)
   // back up until a \ or the start
-  while (i && Str[i - 1] != '\\' && Str[i - 1] != '/')
-  {
-    i--;
-  }
+  while (i && data[i-1] != '/') --i;
+#else
+  while (i && data[i-1] != '/' && data[i-1] != '\\') --i;
+#endif
 
   // copy up to eight characters
   int start = i;
   int length = 0;
-  while (Str[i] && Str[i] != '.')
-  {
-    if (++length == 9)
-      Sys_Error("Filename base of %s >8 chars", Str);
-    i++;
+  while (data[i] && data[i] != '.') {
+    if (++length == 9) Sys_Error("Filename base of %s >8 chars", data);
+    ++i;
   }
   return VStr(*this, start, length);
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::ExtractFileExtension
-//
-//==========================================================================
 
-VStr VStr::ExtractFileExtension() const
-{
+VStr VStr::ExtractFileExtension () const {
   guard(VStr::ExtractFileExtension);
-  const char* src = Str + Length() - 1;
-
-  //
-  // back up until a . or the start
-  //
-  while (src != Str && *(src - 1) != '.')
-    src--;
-  if (src == Str)
-  {
-    return VStr();  // no extension
+  const char *src = data+Length();
+  while (src != data) {
+    char ch = src[-1];
+    if (ch == '.') return VStr(src);
+#if !defined(_WIN32)
+    if (ch == '/') return VStr();
+#else
+    if (ch == '/' || ch == '\\') return VStr();
+#endif
+    --src;
   }
-
-  return src;
+  return VStr();
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::StripExtension
-//
-//==========================================================================
 
-VStr VStr::StripExtension() const
-{
+VStr VStr::StripExtension () const {
   guard(VStr::StripExtension);
-  const char* search = Str + Length() - 1;
-  while (*search != '/' && *search != '\\' && search != Str)
-  {
-    if (*search == '.')
-    {
-      return VStr(*this, 0, search - Str);
-    }
-    search--;
+  const char *src = data+Length();
+  while (src != data) {
+    char ch = src[-1];
+    if (ch == '.') return VStr(*this, 0, src-data-1);
+#if !defined(_WIN32)
+    if (ch == '/') break;
+#else
+    if (ch == '/' || ch == '\\') break;
+#endif
+    --src;
   }
-  return *this;
+  return VStr(*this);
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::DefaultPath
-//
-//==========================================================================
 
-VStr VStr::DefaultPath(const VStr& basepath) const
-{
+VStr VStr::DefaultPath (const VStr& basepath) const {
   guard(VStr::DefaultPath);
-  if (Str[0] == '/')
-  {
-    return *this; // absolute path location
-  }
-  return basepath + *this;
+#if !defined(_WIN32)
+  if (data && data[0] == '/') return *this; // absolute path location
+#else
+  if (data && data[0] == '/') return *this; // absolute path location
+  if (data && data[0] == '\\') return *this; // absolute path location
+  if (data && data[1] == ':' && (data[2] == '/' || data[2] == '\\')) return *this; // absolute path location
+#endif
+  return basepath+*this;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr.DefaultExtension
-//
-//==========================================================================
 
-VStr VStr::DefaultExtension(const VStr& extension) const
-{
+// if path doesn't have a .EXT, append extension (extension should include the leading dot)
+VStr VStr::DefaultExtension (const VStr& extension) const {
   guard(VStr::DefaultExtension);
-  //
-  // if path doesn't have a .EXT, append extension
-  // (extension should include the .)
-  //
-  const char* src = Str + Length() - 1;
-
-  while (*src != '/' && *src != '\\' && src != Str)
-  {
-    if (*src == '.')
-        {
-      return *this; // it has an extension
-    }
-    src--;
+  const char *src = data+Length();
+  while (src != data) {
+    char ch = src[-1];
+    if (ch == '.') return VStr(*this);
+#if !defined(_WIN32)
+    if (ch == '/') break;
+#else
+    if (ch == '/' || ch == '\\') break;
+#endif
+    --src;
   }
-
-  return *this + extension;
+  return VStr(*this)+extension;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::FixFileSlashes
-//
-//==========================================================================
 
-VStr VStr::FixFileSlashes() const
-{
+VStr VStr::FixFileSlashes () const {
   guard(VStr::FixFileSlashes);
-  VStr Ret(*this);
-  int l = int(Length());
-  for (int i = 0; i < l; i++)
-  {
-    if (Ret[i] == '\\')
-      Ret[i] = '/';
+  bool hasWork = false;
+  for (const char* c = **this; *c; ++c) if (*c == '\\') { hasWork = true; break; }
+  if (hasWork) {
+    VStr res(*this);
+    res.MakeMutable();
+    for (char* c = res.data; *c; ++c) if (*c == '\\') *c = '/';
+    return res;
+  } else {
+    return VStr(*this);
   }
-  return Ret;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::Length
-//
-//==========================================================================
 
-size_t VStr::Length(const char* S)
-{
-  return strlen(S);
-}
-
-//==========================================================================
-//
-//  VStr::Utf8Length
-//
-//==========================================================================
-
-size_t VStr::Utf8Length(const char* S)
-{
+size_t VStr::Utf8Length (const char *s) {
   guard(VStr::Utf8Length);
-  size_t Count = 0;
-  for (const char* c = S; *c; c++)
-    if ((*c & 0xc0) != 0x80)
-      Count++;
-  return Count;
+  size_t count = 0;
+  if (s) {
+    for (const char* c = s; *c; ++c) if ((*c&0xc0) != 0x80) ++count;
+  }
+  return count;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::ByteLengthForUtf8
-//
-//==========================================================================
 
-size_t VStr::ByteLengthForUtf8(const char* S, size_t N)
-{
+size_t VStr::ByteLengthForUtf8 (const char *s, size_t N) {
   guard(VStr::ByteLengthForUtf8);
-  size_t Count = 0;
-  const char* c;
-  for (c = S; *c; c++)
-  {
-    if ((*c & 0xc0) != 0x80)
-    {
-      if (Count == N)
-      {
-        return c - S;
+  if (s) {
+    size_t count = 0;
+    const char* c;
+    for (c = s; *c; ++c) {
+      if ((*c&0xc0) != 0x80) {
+        if (count == N) return c-s;
+        ++count;
       }
-      Count++;
     }
+    check(N == count);
+    return c-s;
+  } else {
+    return 0;
   }
-  check(N == Count);
-  return c - S;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::GetChar
-//
-//==========================================================================
 
-int VStr::GetChar(const char*& S)
-{
+int VStr::GetChar (const char*& s) {
   guard(VStr::GetChar);
-  if ((vuint8)*S < 128)
-  {
-    return *S++;
-  }
-  int Cnt;
-  int Val;
-  if ((*S & 0xe0) == 0xc0)
-  {
-    Val = *S & 0x1f;
-    Cnt = 1;
-  }
-  else if ((*S & 0xf0) == 0xe0)
-  {
-    Val = *S & 0x0f;
-    Cnt = 2;
-  }
-  else if ((*S & 0xf8) == 0xf0)
-  {
-    Val = *S & 0x07;
-    Cnt = 3;
-  }
-  else
-  {
+  if ((vuint8)*s < 128) return *s++;
+  int cnt, val;
+  if ((*s&0xe0) == 0xc0) {
+    val = *s&0x1f;
+    cnt = 1;
+  } else if ((*s&0xf0) == 0xe0) {
+    val = *s&0x0f;
+    cnt = 2;
+  } else if ((*s&0xf8) == 0xf0) {
+    val = *s&0x07;
+    cnt = 3;
+  } else {
     Sys_Error("Not a valid UTF-8");
     return 0;
   }
-  S++;
+  ++s;
 
-  do
-  {
-    if ((*S & 0xc0) != 0x80)
-      Sys_Error("Not a valid UTF-8");
-    Val = (Val << 6) | (*S & 0x3f);
-    S++;
-  }
-  while (--Cnt);
-  return Val;
+  do {
+    if ((*s&0xc0) != 0x80) Sys_Error("Not a valid UTF-8");
+    val = (val<<6)|(*s&0x3f);
+    ++s;
+  } while (--cnt);
+
+  return val;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::FromChar
-//
-//==========================================================================
 
-VStr VStr::FromChar(int C)
-{
+VStr VStr::FromChar (int c) {
   guard(VStr::FromChar);
-  char Ret[8];
-  if (C < 0x80)
-  {
-    Ret[0] = C;
-    Ret[1] = 0;
+  char res[8];
+  if (c < 0x80) {
+    res[0] = c;
+    res[1] = 0;
+  } else if (c < 0x800) {
+    res[0] = 0xc0|(c&0x1f);
+    res[1] = 0x80|((c>>5)&0x3f);
+    res[2] = 0;
+  } else if (c < 0x10000) {
+    res[0] = 0xe0|(c&0x0f);
+    res[1] = 0x80|((c>>4)&0x3f);
+    res[2] = 0x80|((c>>10)&0x3f);
+    res[3] = 0;
+  } else {
+    res[0] = 0xf0|(c&0x07);
+    res[1] = 0x80|((c>>3)&0x3f);
+    res[2] = 0x80|((c>>9)&0x3f);
+    res[3] = 0x80|((c>>15)&0x3f);
+    res[4] = 0;
   }
-  else if (C < 0x800)
-  {
-    Ret[0] = 0xc0 | (C & 0x1f);
-    Ret[1] = 0x80 | ((C >> 5) & 0x3f);
-    Ret[2] = 0;
-  }
-  else if (C < 0x10000)
-  {
-    Ret[0] = 0xe0 | (C & 0x0f);
-    Ret[1] = 0x80 | ((C >> 4) & 0x3f);
-    Ret[2] = 0x80 | ((C >> 10) & 0x3f);
-    Ret[3] = 0;
-  }
-  else
-  {
-    Ret[0] = 0xf0 | (C & 0x07);
-    Ret[1] = 0x80 | ((C >> 3) & 0x3f);
-    Ret[2] = 0x80 | ((C >> 9) & 0x3f);
-    Ret[3] = 0x80 | ((C >> 15) & 0x3f);
-    Ret[4] = 0;
-  }
-  return Ret;
+  return res;
   unguard;
 }
 
-//==========================================================================
-//
-//  VStr::Cmp
-//
-//==========================================================================
 
-int VStr::Cmp(const char* S1, const char* S2)
-{
-  return strcmp(S1, S2);
+/*
+int VStr::ICmp (const char* S1, const char* S2) {
+#ifdef WIN32
+  return _stricmp(S1, S2);
+#else
+  return stricmp(S1, S2);
+#endif
 }
 
-//==========================================================================
-//
-//  VStr::NCmp
-//
-//==========================================================================
 
-int VStr::NCmp(const char* S1, const char* S2, size_t N)
-{
-  return strncmp(S1, S2, N);
-}
-
-//==========================================================================
-//
-//  VStr::ICmp
-//
-//==========================================================================
-
-int VStr::ICmp(const char* S1, const char* S2)
-{
-  #ifdef WIN32
-    return _stricmp(S1, S2);
-  #else
-    return stricmp(S1, S2);
-  #endif
-}
-
-//==========================================================================
-//
-//  VStr::NICmp
-//
-//==========================================================================
-
-int VStr::NICmp(const char* S1, const char* S2, size_t N)
-{
+int VStr::NICmp (const char *S1, const char *S2, size_t N) {
   #ifdef WIN32
     return _strnicmp(S1, S2, N);
   #else
     return strnicmp(S1, S2, N);
   #endif
 }
+*/
 
-//==========================================================================
-//
-//  VStr::Cpy
-//
-//==========================================================================
-
-void VStr::Cpy(char* Dst, const char* Src)
-{
-  strcpy(Dst, Src);
-}
-
-//==========================================================================
-//
-//  VStr::NCpy
-//
-//==========================================================================
-
-void VStr::NCpy(char* Dst, const char* Src, size_t N)
-{
-  strncpy(Dst, Src, N);
-}
-
-//==========================================================================
-//
-//  VStr::ToUpper
-//
-//==========================================================================
-
-char VStr::ToUpper(char C)
-{
-  return toupper(C);
-}
-
-//==========================================================================
-//
-//  VStr::ToLower
-//
-//==========================================================================
-
-char VStr::ToLower(char C)
-{
-  return tolower(C);
-}
 
 //==========================================================================
 //
 //  va
 //
-//  Very usefull function from QUAKE
-//  Does a varargs printf into a temp buffer, so I don't need to have
+// Very usefull function from QUAKE
+// Does a varargs printf into a temp buffer, so I don't need to have
 // varargs versions of all text functions.
-//  FIXME: make this buffer size safe someday
+// FIXME: make this buffer size safe someday
 //
 //==========================================================================
 
-char *va(const char *text, ...)
-{
+char *va (const char *text, ...) {
   va_list args;
-
-  va_bufnum = (va_bufnum + 1) & 3;
+  va_bufnum = (va_bufnum+1)&15;
   va_start(args, text);
-  vsprintf(va_buffer[va_bufnum], text, args);
+  vsnprintf(va_buffer[va_bufnum], 65535, text, args);
   va_end(args);
-
   return va_buffer[va_bufnum];
 }

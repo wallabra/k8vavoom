@@ -634,6 +634,18 @@ bool FL_FileExists(const VStr& fname)
 void FL_CreatePath(const VStr& Path)
 {
   guard(FL_CreatePath);
+  TArray<VStr> spp;
+  Path.SplitPath(spp);
+  if (spp.length() == 0 || (spp.length() == 1 && spp[0] == "/")) return;
+  if (spp.length() > 0) {
+    VStr newpath;
+    for (int pos = 0; pos < spp.length(); ++pos) {
+      if (newpath.length() && newpath[newpath.length()-1] != '/') newpath += "/";
+      newpath += spp[pos];
+      if (!Sys_DirExists(newpath)) Sys_CreateDirectory(newpath);
+    }
+  }
+  /*
   VStr Temp = Path;
   for (size_t i = 3; i <= Temp.Length(); i++)
   {
@@ -646,6 +658,7 @@ void FL_CreatePath(const VStr& Path)
       Temp[i] = Save;
     }
   }
+  */
   unguard;
 }
 

@@ -131,6 +131,11 @@ VStr PF_FormatString () {
           Ret += va("(%f,%f,%f)", params[pi].f, params[pi+1].f, params[pi+2].f);
           pi += 3;
           break;
+        case 'B': // boolean
+          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          Ret += (params[pi].i ? "true" : "false");
+          ++pi;
+          break;
 
         default:
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)

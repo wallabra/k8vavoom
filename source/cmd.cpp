@@ -334,7 +334,9 @@ void VCommand::TokeniseString(const VStr& str)
 {
   guard(VCommand::TokeniseString);
   Args.Clear();
+  //fprintf(stderr, "+++ TKSS(0): orig=<%s>; str=<%s>\n", *Original, *str);
   Original = str;
+  //fprintf(stderr, "+++ TKSS(1): orig=<%s>; str=<%s>\n", *Original, *str);
   size_t i = 0;
   while (i < str.Length())
   {
@@ -388,9 +390,14 @@ void VCommand::ExecuteString(const VStr& Acmd, ECmdSource src,
   VBasePlayer* APlayer)
 {
   guard(VCommand::ExecuteString);
+
+  //fprintf(stderr, "+++ command BEFORE tokenizing: <%s>\n", *Acmd);
   TokeniseString(Acmd);
   Source = src;
   Player = APlayer;
+
+  //fprintf(stderr, "+++ command argc=%d (<%s>)\n", Args.length(), *Acmd);
+  //for (int f = 0; f < Args.length(); ++f) fprintf(stderr, "  #%d: <%s>\n", f, *Args[f]);
 
   if (!Args.Num())
     return;
@@ -419,8 +426,8 @@ void VCommand::ExecuteString(const VStr& Acmd, ECmdSource src,
   //
   for (VCommand* cmd = Cmds; cmd; cmd = cmd->Next)
   {
-    if (!Args[0].ICmp(cmd->Name))
-    {
+    if (Args[0].ICmp(cmd->Name) == 0) {
+      //fprintf(stderr, "+++ COMMAND FOUND: [%s] [%s] +++\n", *Args[0], cmd->Name);
       cmd->Run();
       return;
     }
@@ -473,10 +480,12 @@ void VCommand::ForwardToServer()
   }
   if (cl->Net)
   {
+    //fprintf(stderr, "*** sending over the network: <%s>\n", *Original);
     cl->Net->SendCommand(Original);
   }
   else
   {
+    //fprintf(stderr, "*** local executing: <%s>\n", *Original);
     VCommand::ExecuteString(Original, VCommand::SRC_Client, cl);
   }
 #endif
