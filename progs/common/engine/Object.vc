@@ -31,6 +31,7 @@ class Object
   native
   abstract;
 
+#ifndef VCC_STANDALONE_EXECUTOR
 enum
 {
   CVAR_ARCHIVE    = 1,  //  Set to cause it to be saved to vavoom.cfg
@@ -43,11 +44,15 @@ enum
   CVAR_CHEAT      = 64, //  Can not be changed if cheats are disabled
   CVAR_MODIFIED   = 128 //  Set each time the cvar is changed
 };
+#endif
 
 const int MININT        = 0x80000000;
 const int MAXINT        = 0x7fffffff;
 
+#ifndef VCC_STANDALONE_EXECUTOR
 const int MAXPLAYERS      = 8;
+#endif
+
 
 //**************************************************************************
 //**
@@ -143,6 +148,8 @@ struct TPlane
   int __reserved2;
 };
 
+
+#ifndef VCC_STANDALONE_EXECUTOR
 //**************************************************************************
 //
 //  Client types
@@ -248,6 +255,8 @@ struct SkillDef
   bool    bMenuNameIsPic;
   bool    bMustConfirm;
 };
+#endif
+
 
 //**************************************************************************
 
@@ -418,6 +427,7 @@ native void Destroy();
 native final bool IsA(name CheckName);
 native final bool IsDestroyed();
 
+
 //==========================================================================
 //
 //              COMMON BUILTINS
@@ -433,6 +443,8 @@ native static final void Error(string format, ...);
 //  Exit programm with error
 native static final void FatalError(string format, ...);
 
+
+#ifndef VCC_STANDALONE_EXECUTOR
 //
 //  Cvar functions
 //
@@ -465,6 +477,8 @@ final bool IsAnyDoom2 { get { return (GetCvarS('game_name') != "doom"); } } // F
 final bool IsPlutonia { get { return (GetCvarS('game_name') == "plutonia"); } }
 final bool IsTnt { get { return (GetCvarS('game_name') == "tnt"); } }
 final bool IsNerve { get { return (GetCvarS('game_name') == "nerve"); } }
+#endif
+
 
 //
 //  Math functions
@@ -583,16 +597,19 @@ native static final void print(string format, ...);
 //  Print to console only when developer == 1
 native static final void dprint(string format, ...);
 
+
+#ifndef VCC_STANDALONE_EXECUTOR
 //
 //  Texture / flat number retrieval
 //
-
 native static final int CheckTextureNumForName(name Name);
 native static final int TextureNumForName(name Name);
 native static final int CheckFlatNumForName(name Name);
 native static final int FlatNumForName(name Name);
 native static final float TextureHeight(int pic);
 native static final name GetTextureName(int Handle);
+#endif
+
 
 //
 //  Type conversions
@@ -607,13 +624,16 @@ native static final name StrToName(string Str);
 //  Converts name to string
 native static final string NameToStr(name Name);
 
+
+#ifndef VCC_STANDALONE_EXECUTOR
 //
 //  Console command functions
 //
-
 native static final int Cmd_CheckParm(string str);
 //  Adds text to command buffer, same as typing it in console
 native static final void CmdBuf_AddText(string format, ...);
+#endif
+
 
 //
 //  Class methods
@@ -624,8 +644,10 @@ native static final class FindClassLowerCase(name Name);
 native static final bool ClassIsChildOf(class SomeClass, class BaseClass);
 native static final name GetClassName(class C);
 native static final class GetClassParent(class C);
+#ifndef VCC_STANDALONE_EXECUTOR
 native static final class GetClassReplacement(class C);
 native static final class GetClassReplacee(class C);
+#endif
 native static final state FindClassState(class C, name StateName);
 native static final int GetClassNumOwnedStates(class C);
 native static final state GetClassFirstState(class C);
@@ -634,14 +656,14 @@ native static final state GetClassFirstState(class C);
 //  State methods
 //
 
-native static final bool StateIsInRange(state State, state Start, state End,
-  int MaxDepth);
+native static final bool StateIsInRange(state State, state Start, state End, int MaxDepth);
 native static final bool StateIsInSequence(state State, state Start);
 native static final name GetStateSpriteName(state State);
 native static final float GetStateDuration(state State);
-native static final state GetStatePlus(state S, int Offset,
-  optional bool IgnoreJump);
+native static final state GetStatePlus(state S, int Offset, optional bool IgnoreJump);
+#ifndef VCC_STANDALONE_EXECUTOR
 native static final bool AreStateSpritesPresent(state State);
+#endif
 
 //
 //  Iterators
@@ -654,6 +676,7 @@ native static final iterator AllClasses(class BaseClass, out class Class);
 //  Misc
 //
 
+#ifndef VCC_STANDALONE_EXECUTOR
 //  Reads key value from info string (userinfo or serverinfo)
 native static final string Info_ValueForKey(string info, string key);
 //  Checks if WAD lump is present, used to check for shareware/extended WADs
@@ -661,8 +684,10 @@ native static final bool WadLumpPresent(name Name);
 native static final Object SpawnObject(class cid);
 native static final GameObject::VAnimDoorDef* FindAnimDoor(int BaseTex);
 native static final string GetLangString(name Id);
+#endif
 native static final int RGB(byte r, byte g, byte b);
 native static final int RGBA(byte r, byte g, byte b, byte a);
+#ifndef VCC_STANDALONE_EXECUTOR
 native static final GameObject::LockDef* GetLockDef(int Lock);
 native static final int ParseColour(string Name);
 native static final string TextColourString(int Colour);
@@ -676,8 +701,10 @@ native static final int P_GetMapIndexByLevelNum(int map);
 native static final int P_GetNumMaps();
 
 native static final bool HasDecal (name aname);
+#endif
 
 
+#ifndef VCC_STANDALONE_EXECUTOR
 struct VMapSpecialAction
 {
   name    TypeName;
@@ -723,7 +750,10 @@ struct mapInfo_t
 };
 
 native static final mapInfo_t *P_GetMapInfo(int map);
+#endif
 
+
+#ifndef VCC_STANDALONE_EXECUTOR
 //==========================================================================
 //
 //              CLIENT BUILTINS
@@ -827,6 +857,8 @@ native static final GameObject::VTerrainInfo* GetTerrainInfo(name Name);
 native static final void SB_Start();
 native static final class FindClassFromEditorId(int Id, int GameFilter);
 native static final class FindClassFromScriptId(int Id, int GameFilter);
+#endif
+
 
 defaultproperties
 {
