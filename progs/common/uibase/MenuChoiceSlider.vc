@@ -207,6 +207,19 @@ void OnRMouseClick(int X, int Y)
   }
 }
 
+
+//==========================================================================
+//
+// ChangeSliderFloatCvarCB
+//
+//==========================================================================
+bool ChangeSliderFloatCvarCB (Object Sender, float newValue) {
+  auto ccls = MenuChoiceSlider(Sender);
+  SetCvarF(ccls.choiceCvar, newValue);
+  return true;
+}
+
+
 defaultproperties
 {
   Width = 360;

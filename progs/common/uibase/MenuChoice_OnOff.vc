@@ -25,40 +25,52 @@
 
 class MenuChoice_OnOff : MenuChoiceEnum;
 
+
 //==========================================================================
 //
-//  OnDraw
+// UseCvar
 //
 //==========================================================================
+void UseCvar (name cvname) {
+  choiceCvar = cvname;
+  SetInitialValue(GetCvar(cvname));
+  ValueChanging = ChangeCvarCB;
+}
 
-void OnDraw()
-{
-  int xx;
 
-  int Col = IsFocus() ? CR_YELLOW : CR_WHITE;
-  if (bLeftAlign)
-  {
+//==========================================================================
+//
+// ChangeCvarCB
+//
+//==========================================================================
+bool ChangeCvarCB (Object Sender, int newValue) {
+  auto ccls = MenuChoice_OnOff(Sender);
+  SetCvar(ccls.choiceCvar, newValue);
+  return true;
+}
+
+
+//==========================================================================
+//
+// OnDraw
+//
+//==========================================================================
+void OnDraw () {
+  int Col = (IsFocus() ? CR_YELLOW : CR_WHITE);
+  if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
     DrawText(0, 0, Text, Col);
-  }
-  else
-  {
+  } else {
     SetTextAlign(hright, vtop);
     DrawText(CursorXOffs, 0, Text, Col);
   }
 
-  if (bLeftAlign)
-  {
-    xx = TextWidth(Text) + 8;
-  }
-  else
-  {
-    xx = CursorXOffs + 10;
-  }
+  int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
   int Col2 = IsFocus() ? CR_YELLOW : Value ? CR_GREEN : CR_RED;
   SetTextAlign(hleft, vtop);
   DrawText(xx, 0, EnumNames[Value], Col2);
 }
+
 
 defaultproperties
 {

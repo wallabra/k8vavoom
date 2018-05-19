@@ -48,6 +48,8 @@ name ActivateSound;
 name DeactivateSound;
 name ClearMenusSound;
 
+int currentY;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 //k8: is this necessary?
@@ -91,6 +93,53 @@ void DrawBackButton () {
 
 
 void CreateChoices () {
+}
+
+
+// should be called from `CreateChoices()` (and `currentY` must be set)
+MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
+  auto onoff = MenuChoice_OnOff(NewChild(MenuChoice_OnOff));
+  onoff.SetOrigin(ChoicesStartX, currentY);
+  onoff.Text = text;
+  onoff.UseCvar(cvname);
+  currentY += onoff.Height;
+  return onoff;
+}
+
+
+// should be called from `CreateChoices()` (and `currentY` must be set)
+MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, optional float min, optional float max) {
+  auto slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
+  slider.SetOrigin(ChoicesStartX, currentY);
+  slider.Text = text;
+  slider.choiceCvar = cvname;
+  slider.ValueDelta = delta;
+  if (specified_min) slider.MinValue = min;
+  if (specified_max) slider.MaxValue = max;
+  slider.SetInitialValue(GetCvarF(cvname));
+  slider.ValueChanging = slider.ChangeSliderFloatCvarCB;
+  currentY += slider.Height;
+  return slider;
+}
+
+
+// should be called from `CreateChoices()` (and `currentY` must be set)
+// default color: CR_OLIVE
+MenuTextButton CreateChoiceTextLabel (string text, optional int color) {
+  auto btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  btn.SetOrigin(ChoicesStartX, currentY);
+  btn.Text = text;
+  btn.Focusable = false;
+  if (specified_color) {
+    btn.TextColour = color;
+    btn.TextColourFocus = color;
+  } else {
+    btn.TextColour = CR_OLIVE;
+    btn.TextColourFocus = CR_OLIVE;
+  }
+  btn.Height = 10;
+  currentY += btn.Height;
+  return btn;
 }
 
 

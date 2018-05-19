@@ -27,296 +27,47 @@ class MenuScreenMiscOptions : MenuScreen;
 
 
 void CreateChoices () {
-  MenuChoiceEnum Enum;
-  MenuChoiceSlider Slider;
-  MenuTextButton Btn;
-  int currentY = ChoicesStartY;
+  currentY = ChoicesStartY;
 
-/*
-  Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Message Colour";
-  Enum.AddItem("Brick");
-  Enum.AddItem("Tan");
-  Enum.AddItem("Gray");
-  Enum.AddItem("Green");
-  Enum.AddItem("Brown");
-  Enum.AddItem("Gold");
-  Enum.AddItem("Red");
-  Enum.AddItem("Blue");
-  Enum.AddItem("Orange");
-  Enum.AddItem("White");
-  Enum.AddItem("Yellow");
-  Enum.AddItem("Normal");
-  Enum.AddItem("Black");
-  Enum.AddItem("Light Blue");
-  Enum.AddItem("Cream");
-  Enum.AddItem("Olive");
-  Enum.AddItem("Dark Green");
-  Enum.AddItem("Dark Red");
-  Enum.AddItem("Dark Brown");
-  Enum.AddItem("Purple");
-  Enum.AddItem("Dark Gray");
-  Enum.SetInitialValue(GetCvar('font_colour'));
-  Enum.ValueChanging = ChangeFontColour;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Centre Message Colour";
-  Enum.AddItem("Brick");
-  Enum.AddItem("Tan");
-  Enum.AddItem("Gray");
-  Enum.AddItem("Green");
-  Enum.AddItem("Brown");
-  Enum.AddItem("Gold");
-  Enum.AddItem("Red");
-  Enum.AddItem("Blue");
-  Enum.AddItem("Orange");
-  Enum.AddItem("White");
-  Enum.AddItem("Yellow");
-  Enum.AddItem("Normal");
-  Enum.AddItem("Black");
-  Enum.AddItem("Light Blue");
-  Enum.AddItem("Cream");
-  Enum.AddItem("Olive");
-  Enum.AddItem("Dark Green");
-  Enum.AddItem("Dark Red");
-  Enum.AddItem("Dark Brown");
-  Enum.AddItem("Purple");
-  Enum.AddItem("Dark Gray");
-  Enum.SetInitialValue(GetCvar('font_colour2'));
-  Enum.ValueChanging = ChangeFontColour2;
-  currentY += Enum.Height;
-*/
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Quit prompt";
-  Enum.SetInitialValue(GetCvar('menu_quit_prompt'));
-  Enum.ValueChanging = ChangeQuitPrompt;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Autoaim";
-  Enum.SetInitialValue(GetCvar('autoaim'));
-  Enum.ValueChanging = ChangeAutoAim;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Weapon autoswitch";
-  Enum.SetInitialValue(GetCvar('wpn_autoswitch'));
-  Enum.ValueChanging = ChangeAutoSwitch;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Berserk autoswitch";
-  Enum.SetInitialValue(GetCvar('k8BerserkSwitch'));
-  Enum.ValueChanging = ChangeBerserkAutoSwitch;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Overlay automap";
-  Enum.SetInitialValue(GetCvar('am_overlay'));
-  Enum.ValueChanging = ChangeAutomapOver;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Ignore 'nojump'";
-  Enum.SetInitialValue(GetCvar('sv_ignore_nojump'));
-  Enum.ValueChanging = ChangeIgnoreNojump;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Ignore 'nofreelook'";
-  Enum.SetInitialValue(GetCvar('sv_ignore_nomlook'));
-  Enum.ValueChanging = ChangeIgnoreNomlook;
-  currentY += Enum.Height;
-
-  Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
-  Slider.SetOrigin(ChoicesStartX, currentY);
-  Slider.Text = "Bobbing";
-  Slider.ValueDelta = 0.1;
-  Slider.MaxValue = 1.0;
-  Slider.SetInitialValue(GetCvarF('movebob'));
-  Slider.ValueChanging = ChangeBobbing;
-  currentY += Slider.Height;
+  CreateOnOffCvar("Quit prompt", 'menu_quit_prompt');
+  CreateOnOffCvar("Autoaim", 'autoaim');
+  CreateOnOffCvar("Weapon autoswitch", 'wpn_autoswitch');
+  CreateOnOffCvar("Berserk autoswitch", 'k8BerserkSwitch');
+  CreateOnOffCvar("Overlay automap", 'am_overlay');
+  CreateOnOffCvar("Ignore 'nojump'", 'sv_ignore_nojump');
+  CreateOnOffCvar("Ignore 'nofreelook'", 'sv_ignore_nomlook');
+  CreateFloatSliderCvar("Bobbing", 'movebob', 0.1, 0, 1);
 
 
-  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  Btn.SetOrigin(ChoicesStartX, currentY);
-  Btn.Text = "";
-  Btn.Focusable = false;
-  Btn.TextColour = CR_OLIVE;
-  Btn.TextColourFocus = CR_OLIVE;
-  Btn.Height = 10;
-  currentY += Btn.Height;
-
-  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  Btn.SetOrigin(ChoicesStartX, currentY);
-  Btn.Text = "Headshots Options";
-  Btn.Focusable = false;
-  Btn.TextColour = CR_OLIVE;
-  Btn.TextColourFocus = CR_OLIVE;
-  Btn.Height = 10;
-  currentY += Btn.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Headshots";
-  Enum.SetInitialValue(GetCvar('k8HSEnabled'));
-  Enum.ValueChanging = ChangeHSEnabled;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Criticals";
-  Enum.SetInitialValue(GetCvar('k8HSCriticals'));
-  Enum.ValueChanging = ChangeCriticals;
-  currentY += Enum.Height;
-
-  Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
-  Slider.SetOrigin(ChoicesStartX, currentY);
-  Slider.Text = "Distance multiplier";
-  Slider.ValueDelta = 0.1;
-  Slider.MinValue = 0.8;
-  Slider.MaxValue = 4.0;
-  Slider.SetInitialValue(GetCvarF('k8HSDistMult'));
-  Slider.ValueChanging = ChangeDistMult;
-  currentY += Slider.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Announce criticals";
-  Enum.SetInitialValue(GetCvar('k8HSShowCriticals'));
-  Enum.ValueChanging = ChangeCritAnnounce;
-  currentY += Enum.Height;
+  CreateChoiceTextLabel("");
+  CreateChoiceTextLabel("Headshots Options");
+  CreateOnOffCvar("Headshots", 'k8HSEnabled');
+  CreateOnOffCvar("Criticals", 'k8HSCriticals');
+  CreateFloatSliderCvar("Distance multiplier", 'k8HSDistMult', 0.1, 0.8, 4.0);
+  CreateOnOffCvar("Announce criticals", 'k8HSShowCriticals');
 
 
-  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  Btn.SetOrigin(ChoicesStartX, currentY);
-  Btn.Text = "";
-  Btn.Focusable = false;
-  Btn.TextColour = CR_OLIVE;
-  Btn.TextColourFocus = CR_OLIVE;
-  Btn.Height = 10;
-  currentY += Btn.Height;
+  CreateChoiceTextLabel("");
+  CreateChoiceTextLabel("Headshots Fastkill");
 
-  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  Btn.SetOrigin(ChoicesStartX, currentY);
-  Btn.Text = "Headshots Fastkill";
-  Btn.Focusable = false;
-  Btn.TextColour = CR_OLIVE;
-  Btn.TextColourFocus = CR_OLIVE;
-  Btn.Height = 10;
-  currentY += Btn.Height;
+  CreateOnOffCvar("Fastkills", 'k8HSFastKillAnnoyingMonsters');
+  CreateOnOffCvar("FK Pain Elementals", 'k8HSInstaKillPainElementals');
+  CreateOnOffCvar("FK Lost Souls", 'k8HSInstaKillLostSouls');
 
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Fastkills";
-  Enum.SetInitialValue(GetCvar('k8HSFastKillAnnoyingMonsters'));
-  Enum.ValueChanging = ChangeFastKills;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "FK Pain Elementals";
-  Enum.SetInitialValue(GetCvar('k8HSInstaKillPainElementals'));
-  Enum.ValueChanging = ChangeFastKillPE;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "FK Lost Souls";
-  Enum.SetInitialValue(GetCvar('k8HSInstaKillLostSouls'));
-  Enum.ValueChanging = ChangeFastKillLS;
-  currentY += Enum.Height;
-
-  Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
-  Slider.SetOrigin(ChoicesStartX, currentY);
-  Slider.Text = "Arch-Vile FK Damage";
-  Slider.ValueDelta = 10;
-  Slider.MinValue = 10;
-  Slider.MaxValue = 300;
-  Slider.SetInitialValue(GetCvarF('k8HSFastKillArchVileDamage'));
-  Slider.ValueChanging = ChangeFastKillAV;
-  currentY += Slider.Height;
+  CreateFloatSliderCvar("Arch-Vile FK Damage", 'k8HSFastKillArchVileDamage', 10, 10, 400);
 
   //TODO: CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill?", CVAR_ARCHIVE);
   //TODO: CreateCvar('k8HSHeadKillBloodCount', "8", "How much blood to spray on instakill?", CVAR_ARCHIVE);
   //TODO: CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill?", CVAR_ARCHIVE);
 
 
-  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  Btn.SetOrigin(ChoicesStartX, currentY);
-  Btn.Text = "";
-  Btn.Focusable = false;
-  Btn.TextColour = CR_OLIVE;
-  Btn.TextColourFocus = CR_OLIVE;
-  Btn.Height = 10;
-  currentY += Btn.Height;
+  CreateChoiceTextLabel("");
+  CreateChoiceTextLabel("Elven Gifts");
 
-  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  Btn.SetOrigin(ChoicesStartX, currentY);
-  Btn.Text = "Elven Gifts";
-  Btn.Focusable = false;
-  Btn.TextColour = CR_OLIVE;
-  Btn.TextColourFocus = CR_OLIVE;
-  Btn.Height = 10;
-  currentY += Btn.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Ammo King";
-  Enum.SetInitialValue(GetCvar('k8AmmoKing'));
-  Enum.ValueChanging = ChangeAmmoKing;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Elven Gift";
-  Enum.SetInitialValue(GetCvar('k8ElvenGift'));
-  Enum.ValueChanging = ChangeElvenGift;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "PainElem. Attacks";
-  Enum.SetInitialValue(GetCvar('k8ElvenPaine'));
-  Enum.ValueChanging = ChangeElvenPaine;
-  currentY += Enum.Height;
+  CreateOnOffCvar("Ammo King", 'k8AmmoKing');
+  CreateOnOffCvar("Elven Gift", 'k8ElvenGift');
+  CreateOnOffCvar("PainElem. Attacks", 'k8ElvenPaine');
 }
-
-
-bool ChangeQuitPrompt (Object Sender, int newValue) { SetCvar('menu_quit_prompt', newValue); return true; }
-bool ChangeAutomapOver (Object Sender, int newValue) { SetCvar('am_overlay', newValue); return true; }
-bool ChangeAutoAim (Object Sender, int newValue) { SetCvar('autoaim', newValue); return true; }
-bool ChangeAutoSwitch (Object Sender, int newValue) { SetCvar('wpn_autoswitch', newValue); return true; }
-bool ChangeBerserkAutoSwitch (Object Sender, int newValue) { SetCvar('k8BerserkSwitch', newValue); return true; }
-bool ChangeBobbing (Object Sender, float newValue) { SetCvarF('movebob', newValue); return true; }
-
-bool ChangeIgnoreNojump (Object Sender, int newValue) { SetCvar('sv_ignore_nojump', newValue); return true; }
-bool ChangeIgnoreNomlook (Object Sender, int newValue) { SetCvar('sv_ignore_nomlook', newValue); return true; }
-
-bool ChangeHSEnabled (Object Sender, int newValue) { SetCvar('k8HSEnabled', newValue); return true; }
-bool ChangeCriticals (Object Sender, int newValue) { SetCvar('k8HSCriticals', newValue); return true; }
-bool ChangeCritAnnounce (Object Sender, int newValue) { SetCvar('k8HSShowCriticals', newValue); return true; }
-bool ChangeDistMult (Object Sender, float newValue) { SetCvarF('k8HSDistMult', newValue); return true; }
-
-bool ChangeFastKills (Object Sender, int newValue) { SetCvar('k8HSFastKillAnnoyingMonsters', newValue); return true; }
-bool ChangeFastKillPE (Object Sender, int newValue) { SetCvar('k8HSInstaKillPainElementals', newValue); return true; }
-bool ChangeFastKillLS (Object Sender, int newValue) { SetCvar('k8HSInstaKillLostSouls', newValue); return true; }
-bool ChangeFastKillAV (Object Sender, float newValue) { SetCvarF('k8HSFastKillArchVileDamage', newValue); return true; }
-
-bool ChangeAmmoKing (Object Sender, int newValue) { SetCvar('k8AmmoKing', newValue); return true; }
-bool ChangeElvenGift (Object Sender, int newValue) { SetCvar('k8ElvenGift', newValue); return true; }
-bool ChangeElvenPaine (Object Sender, int newValue) { SetCvar('k8ElvenPaine', newValue); return true; }
 
 
 defaultproperties
