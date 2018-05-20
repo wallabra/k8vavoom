@@ -445,6 +445,7 @@ void VMethod::Emit()
   }
   NumLocals = ec.localsofs;
   ec.EndCode();
+  if (VMemberBase::doAsmDump) DumpAsm();
   unguard;
 }
 

@@ -262,7 +262,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
       const char option = *text++;
       switch (option) {
         case 'd': DebugMode = true; if (*text) OpenDebugFile(text); break;
-        case 'a': if (!*text) DisplayUsage(); dump_asm_names[num_dump_asm++] = text; break;
+        case 'a': /*if (!*text) DisplayUsage(); dump_asm_names[num_dump_asm++] = text;*/ VMemberBase::doAsmDump = true; break;
         case 'I': VMemberBase::StaticAddIncludePath(text); break;
         case 'D': VMemberBase::StaticAddDefine(text); break;
         case 'P': VMemberBase::StaticAddPackagePath(text); break;

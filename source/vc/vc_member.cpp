@@ -54,6 +54,9 @@ VClass*         VMemberBase::GClasses;
 TArray<VStr> VMemberBase::incpathlist;
 TArray<VStr> VMemberBase::definelist;
 
+bool VMemberBase::doAsmDump = false;
+
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------

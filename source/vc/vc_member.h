@@ -112,6 +112,8 @@ public:
 
   static void InitLexer (VLexer &lex);
 
+  static bool doAsmDump;
+
 private:
   static TArray<VStr> incpathlist;
   static TArray<VStr> definelist;
