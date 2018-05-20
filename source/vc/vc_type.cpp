@@ -668,6 +668,34 @@ void VScriptArray::SetNum (int NewNum, VFieldType& Type) {
 
 //==========================================================================
 //
+//  VScriptArray::SetNumMinus
+//
+//==========================================================================
+void VScriptArray::SetNumMinus (int NewNum, VFieldType& Type) {
+  guard(VScriptArray::SetNumMinus);
+  NewNum = ArrNum-NewNum;
+  if (NewNum < 0) NewNum = 0;
+  SetNum(NewNum, Type);
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VScriptArray::SetNumPlus
+//
+//==========================================================================
+void VScriptArray::SetNumPlus (int NewNum, VFieldType& Type) {
+  guard(VScriptArray::SetNumPlus);
+  NewNum += ArrNum;
+  if (NewNum < 0) NewNum = 0;
+  SetNum(NewNum, Type);
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VScriptArray
 //
 //==========================================================================

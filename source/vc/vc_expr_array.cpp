@@ -257,6 +257,7 @@ VDynArraySetNum::VDynArraySetNum(VExpression* AArrayExpr,
 : VExpression(ALoc)
 , ArrayExpr(AArrayExpr)
 , NumExpr(ANumExpr)
+, opsign(0)
 {
   Type = VFieldType(TYPE_Void);
 }
@@ -302,7 +303,16 @@ void VDynArraySetNum::Emit(VEmitContext& ec)
 {
   ArrayExpr->Emit(ec);
   NumExpr->Emit(ec);
-  ec.AddStatement(OPC_DynArraySetNum, ArrayExpr->Type.GetArrayInnerType());
+  if (opsign == 0) {
+    // normal assign
+    ec.AddStatement(OPC_DynArraySetNum, ArrayExpr->Type.GetArrayInnerType());
+  } else if (opsign < 0) {
+    // -=
+    ec.AddStatement(OPC_DynArraySetNumMinus, ArrayExpr->Type.GetArrayInnerType());
+  } else {
+    // +=
+    ec.AddStatement(OPC_DynArraySetNumPlus, ArrayExpr->Type.GetArrayInnerType());
+  }
 }
 
 //==========================================================================

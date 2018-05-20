@@ -322,6 +322,8 @@ enum {
   DECLARE_OPC(DynArrayElementGrow, Type),
   DECLARE_OPC(DynArrayGetNum, None),
   DECLARE_OPC(DynArraySetNum, Type),
+  DECLARE_OPC(DynArraySetNumMinus, Type),
+  DECLARE_OPC(DynArraySetNumPlus, Type),
   DECLARE_OPC(DynArrayInsert, Type),
   DECLARE_OPC(DynArrayRemove, Type),
 

@@ -68,11 +68,11 @@ public:
 //
 //==========================================================================
 
-class VDynArraySetNum : public VExpression
-{
+class VDynArraySetNum : public VExpression {
 public:
-  VExpression*    ArrayExpr;
-  VExpression*    NumExpr;
+  VExpression *ArrayExpr;
+  VExpression *NumExpr;
+  int opsign; // <0: -=; >0: +=; 0: =; fixed in assign expression resolving
 
   VDynArraySetNum(VExpression*, VExpression*, const TLocation&);
   ~VDynArraySetNum();

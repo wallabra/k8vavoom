@@ -1656,6 +1656,26 @@ func_loop:
         }
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_DynArraySetNumMinus)
+        {
+          VFieldType Type;
+          ReadType(Type, ip+1);
+          ip += 9+sizeof(VClass*);
+          ((VScriptArray*)sp[-2].p)->SetNumMinus(sp[-1].i, Type);
+          sp -= 2;
+        }
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_DynArraySetNumPlus)
+        {
+          VFieldType Type;
+          ReadType(Type, ip+1);
+          ip += 9+sizeof(VClass*);
+          ((VScriptArray*)sp[-2].p)->SetNumPlus(sp[-1].i, Type);
+          sp -= 2;
+        }
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_DynArrayInsert)
         {
           VFieldType Type;

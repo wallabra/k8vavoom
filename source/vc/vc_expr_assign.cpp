@@ -87,14 +87,17 @@ VExpression* VAssignment::DoResolve (VEmitContext &ec) {
   }
 
   if (op1->IsDynArraySetNum()) {
-    if (Oper != Assign) {
-      ParseError(Loc, "Only `=` can be used to resize an array");
+    if (Oper != Assign && Oper != AddAssign && Oper != MinusAssign) {
+      ParseError(Loc, "Only `=`, `+=`, or `-=` can be used to resize an array");
       delete this;
       return nullptr;
     }
     op2->Type.CheckMatch(Loc, VFieldType(TYPE_Int));
     VDynArraySetNum *e = (VDynArraySetNum*)op1;
     e->NumExpr = op2;
+         if (Oper == Assign) e->opsign = 0;
+    else if (Oper == AddAssign) e->opsign = 1;
+    else if (Oper == MinusAssign) e->opsign = -1;
     op1 = nullptr;
     op2 = nullptr;
     delete this;
