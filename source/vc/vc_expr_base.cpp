@@ -23,141 +23,109 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VExpression::VExpression
 //
 //==========================================================================
-
-VExpression::VExpression(const TLocation& ALoc)
-: Type(TYPE_Void)
-, RealType(TYPE_Void)
-, Flags(0)
-, Loc(ALoc)
+VExpression::VExpression (const TLocation& ALoc)
+  : Type(TYPE_Void)
+  , RealType(TYPE_Void)
+  , Flags(0)
+  , Loc(ALoc)
 {
 }
+
 
 //==========================================================================
 //
 //  VExpression::~VExpression
 //
 //==========================================================================
-
-VExpression::~VExpression() noexcept(false)
+VExpression::~VExpression () noexcept(false)
 {
 }
+
 
 //==========================================================================
 //
 //  VExpression::Resolve
 //
 //==========================================================================
-
-VExpression* VExpression::Resolve(VEmitContext& ec)
-{
-  VExpression* e = DoResolve(ec);
+VExpression *VExpression::Resolve (VEmitContext &ec) {
+  VExpression *e = DoResolve(ec);
   return e;
 }
+
 
 //==========================================================================
 //
 //  VExpression::ResolveBoolean
 //
 //==========================================================================
+VExpression *VExpression::ResolveBoolean (VEmitContext &ec) {
+  VExpression *e = Resolve(ec);
+  if (!e) return nullptr;
 
-VExpression* VExpression::ResolveBoolean(VEmitContext& ec)
-{
-  VExpression* e = Resolve(ec);
-  if (!e)
-  {
-    return NULL;
+  switch (e->Type.Type) {
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Bool:
+    case TYPE_Float:
+    case TYPE_Name:
+      break;
+    case TYPE_Pointer:
+    case TYPE_Reference:
+    case TYPE_Class:
+    case TYPE_State:
+      e = new VPointerToBool(e);
+      break;
+    case TYPE_String:
+      e = new VStringToBool(e);
+      break;
+    case TYPE_Delegate:
+      e = new VDelegateToBool(e);
+      break;
+    default:
+      ParseError(Loc, "Expression type mismatch, boolean expression expected");
+      delete e;
+      e = nullptr;
+      return nullptr;
   }
 
-  switch (e->Type.Type)
-  {
-  case TYPE_Int:
-  case TYPE_Byte:
-  case TYPE_Bool:
-  case TYPE_Float:
-  case TYPE_Name:
-    break;
-
-  case TYPE_Pointer:
-  case TYPE_Reference:
-  case TYPE_Class:
-  case TYPE_State:
-    e = new VPointerToBool(e);
-    break;
-
-  case TYPE_String:
-    e = new VStringToBool(e);
-    break;
-
-  case TYPE_Delegate:
-    e = new VDelegateToBool(e);
-    break;
-
-  default:
-    ParseError(Loc, "Expression type mismatch, boolean expression expected");
-    delete e;
-    e = NULL;
-    return NULL;
-  }
   return e;
 }
+
 
 //==========================================================================
 //
 //  VExpression::ResolveFloat
 //
 //==========================================================================
+VExpression *VExpression::ResolveFloat (VEmitContext &ec) {
+  VExpression *e = Resolve(ec);
+  if (!e) return nullptr;
 
-VExpression* VExpression::ResolveFloat(VEmitContext& ec)
-{
-  VExpression* e = Resolve(ec);
-  if (!e) return NULL;
-
-  switch (e->Type.Type)
-  {
-  case TYPE_Int:
-  case TYPE_Byte:
-  case TYPE_Bool:
-    e = new VScalarToFloat(e);
-    break;
-
-  case TYPE_Float:
-    break;
-
-  default:
-    ParseError(Loc, "Expression type mismatch, float expression expected");
-    delete e;
-    e = NULL;
+  switch (e->Type.Type) {
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Bool:
+      e = new VScalarToFloat(e);
+      break;
+    case TYPE_Float:
+      break;
+    default:
+      ParseError(Loc, "Expression type mismatch, float expression expected");
+      delete e;
+      e = nullptr;
   }
 
   return e;
 }
+
 
 //==========================================================================
 //
@@ -166,280 +134,246 @@ VExpression* VExpression::ResolveFloat(VEmitContext& ec)
 // Expression MUST be already resolved here.
 //
 //==========================================================================
-VExpression* VExpression::CoerceToFloat()
-{
+VExpression *VExpression::CoerceToFloat () {
   if (Type.Type == TYPE_Float) return this; // nothing to do
   if (Type.Type == TYPE_Int || Type.Type == TYPE_Byte) return new VScalarToFloat(this);
   ParseError(Loc, "Expression type mismatch, float expression expected");
-  delete this; //k8: `delete this`? oops
-  return NULL;
+  delete this;
+  return nullptr;
 }
+
 
 //==========================================================================
 //
 //  VExpression::ResolveAsType
 //
 //==========================================================================
-
-VTypeExpr* VExpression::ResolveAsType(VEmitContext&)
-{
+VTypeExpr *VExpression::ResolveAsType (VEmitContext &) {
   ParseError(Loc, "Invalid type expression");
   delete this;
-  return NULL;
+  return nullptr;
 }
+
 
 //==========================================================================
 //
 //  VExpression::ResolveAssignmentTarget
 //
 //==========================================================================
-
-VExpression* VExpression::ResolveAssignmentTarget(VEmitContext& ec)
-{
+VExpression *VExpression::ResolveAssignmentTarget (VEmitContext &ec) {
   return Resolve(ec);
 }
+
 
 //==========================================================================
 //
 //  VExpression::ResolveIterator
 //
 //==========================================================================
-
-VExpression* VExpression::ResolveIterator(VEmitContext&)
-{
+VExpression *VExpression::ResolveIterator (VEmitContext &) {
   ParseError(Loc, "Iterator method expected");
   delete this;
-  return NULL;
+  return nullptr;
 }
+
 
 //==========================================================================
 //
 //  VExpression::RequestAddressOf
 //
 //==========================================================================
-
-void VExpression::RequestAddressOf()
-{
+void VExpression::RequestAddressOf () {
   ParseError(Loc, "Bad address operation");
 }
+
 
 //==========================================================================
 //
 //  VExpression::EmitBranchable
 //
 //==========================================================================
-
-void VExpression::EmitBranchable(VEmitContext& ec, VLabel Lbl, bool OnTrue)
-{
+void VExpression::EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue) {
   Emit(ec);
-  if (OnTrue)
-  {
+  if (OnTrue) {
     ec.AddStatement(OPC_IfGoto, Lbl);
-  }
-  else
-  {
+  } else {
     ec.AddStatement(OPC_IfNotGoto, Lbl);
   }
 }
+
 
 //==========================================================================
 //
 //  VExpression::EmitPushPointedCode
 //
 //==========================================================================
-
-void VExpression::EmitPushPointedCode(VFieldType type, VEmitContext& ec)
-{
-  switch (type.Type)
-  {
-  case TYPE_Int:
-  case TYPE_Float:
-  case TYPE_Name:
-    ec.AddStatement(OPC_PushPointed);
-    break;
-
-  case TYPE_Byte:
-    ec.AddStatement(OPC_PushPointedByte);
-    break;
-
-  case TYPE_Bool:
-    if (type.BitMask & 0x000000ff)
-      ec.AddStatement(OPC_PushBool0, (int)(type.BitMask));
-    else if (type.BitMask & 0x0000ff00)
-      ec.AddStatement(OPC_PushBool1, (int)(type.BitMask >> 8));
-    else if (type.BitMask & 0x00ff0000)
-      ec.AddStatement(OPC_PushBool2, (int)(type.BitMask >> 16));
-    else
-      ec.AddStatement(OPC_PushBool3, (int)(type.BitMask >> 24));
-    break;
-
-  case TYPE_Pointer:
-  case TYPE_Reference:
-  case TYPE_Class:
-  case TYPE_State:
-    ec.AddStatement(OPC_PushPointedPtr);
-    break;
-
-  case TYPE_Vector:
-    ec.AddStatement(OPC_VPushPointed);
-    break;
-
-  case TYPE_String:
-    ec.AddStatement(OPC_PushPointedStr);
-    break;
-
-  case TYPE_Delegate:
-    ec.AddStatement(OPC_PushPointedDelegate);
-    break;
-
-  default:
-    ParseError(Loc, "Bad push pointed");
+void VExpression::EmitPushPointedCode (VFieldType type, VEmitContext& ec) {
+  switch (type.Type) {
+    case TYPE_Int:
+    case TYPE_Float:
+    case TYPE_Name:
+      ec.AddStatement(OPC_PushPointed);
+      break;
+    case TYPE_Byte:
+      ec.AddStatement(OPC_PushPointedByte);
+      break;
+    case TYPE_Bool:
+           if (type.BitMask&0x000000ff) ec.AddStatement(OPC_PushBool0, (int)(type.BitMask));
+      else if (type.BitMask&0x0000ff00) ec.AddStatement(OPC_PushBool1, (int)(type.BitMask >> 8));
+      else if (type.BitMask&0x00ff0000) ec.AddStatement(OPC_PushBool2, (int)(type.BitMask >> 16));
+      else ec.AddStatement(OPC_PushBool3, (int)(type.BitMask >> 24));
+      break;
+    case TYPE_Pointer:
+    case TYPE_Reference:
+    case TYPE_Class:
+    case TYPE_State:
+      ec.AddStatement(OPC_PushPointedPtr);
+      break;
+    case TYPE_Vector:
+      ec.AddStatement(OPC_VPushPointed);
+      break;
+    case TYPE_String:
+      ec.AddStatement(OPC_PushPointedStr);
+      break;
+    case TYPE_Delegate:
+      ec.AddStatement(OPC_PushPointedDelegate);
+      break;
+    default:
+      ParseError(Loc, "Bad push pointed");
+      break;
   }
 }
+
 
 //==========================================================================
 //
 //  VExpression::IsValidTypeExpression
 //
 //==========================================================================
-
-bool VExpression::IsValidTypeExpression()
-{
+bool VExpression::IsValidTypeExpression () {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VExpression::IsIntConst
 //
 //==========================================================================
-
-bool VExpression::IsIntConst() const
-{
+bool VExpression::IsIntConst () const {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VExpression::IsFloatConst
 //
 //==========================================================================
-
-bool VExpression::IsFloatConst() const
-{
+bool VExpression::IsFloatConst () const {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VExpression::IsStrConst
 //
 //==========================================================================
-
-bool VExpression::IsStrConst() const
-{
+bool VExpression::IsStrConst () const {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VExpression::GetIntConst
 //
 //==========================================================================
-
-vint32 VExpression::GetIntConst() const
-{
+vint32 VExpression::GetIntConst () const {
   ParseError(Loc, "Integer constant expected");
   return 0;
 }
+
 
 //==========================================================================
 //
 //  VExpression::GetFloatConst
 //
 //==========================================================================
-
-float VExpression::GetFloatConst() const
-{
+float VExpression::GetFloatConst () const {
   ParseError(Loc, "Float constant expected");
   return 0.0;
 }
+
 
 //==========================================================================
 //
 //  VExpression::GetStrConst
 //
 //==========================================================================
-
-VStr VExpression::GetStrConst(VPackage*) const
-{
+VStr VExpression::GetStrConst (VPackage *) const {
   ParseError(Loc, "String constant expected");
   return VStr();
 }
+
 
 //==========================================================================
 //
 //  VExpression::IsDefaultObject
 //
 //==========================================================================
-
-bool VExpression::IsDefaultObject() const
-{
+bool VExpression::IsDefaultObject () const {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VExpression::IsPropertyAssign
 //
 //==========================================================================
-
-bool VExpression::IsPropertyAssign() const
-{
+bool VExpression::IsPropertyAssign () const {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VExpression::IsDynArraySetNum
 //
 //==========================================================================
-
-bool VExpression::IsDynArraySetNum() const
-{
+bool VExpression::IsDynArraySetNum () const {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VExpression::CreateTypeExprCopy
 //
 //==========================================================================
-
-VExpression* VExpression::CreateTypeExprCopy()
-{
+VExpression *VExpression::CreateTypeExprCopy () {
   ParseError(Loc, "Not a type");
   return new VTypeExpr(TYPE_Unknown, Loc);
 }
+
 
 //==========================================================================
 //
 //  VExpression::AddDropResult
 //
 //==========================================================================
-
-bool VExpression::AddDropResult()
-{
+bool VExpression::AddDropResult () {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VExpression::IsDecorateSingleName
 //
 //==========================================================================
-
-bool VExpression::IsDecorateSingleName() const
-{
+bool VExpression::IsDecorateSingleName () const {
   return false;
 }

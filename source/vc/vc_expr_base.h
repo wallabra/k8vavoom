@@ -25,45 +25,40 @@
 
 class VTypeExpr;
 
-//==========================================================================
-//
-//  VExpression
-//
-//==========================================================================
 
-class VExpression
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VExpression {
 public:
-  VFieldType    Type;
-  VFieldType    RealType;
-  int     Flags;
+  VFieldType Type;
+  VFieldType RealType;
+  int Flags;
   TLocation Loc;
 
-  VExpression(const TLocation&);
-  virtual ~VExpression() noexcept(false);
-  virtual VExpression* DoResolve(VEmitContext&) = 0;
-  VExpression* Resolve(VEmitContext&);
-  VExpression* ResolveBoolean(VEmitContext&);
-  VExpression* ResolveFloat(VEmitContext&);
-  VExpression* CoerceToFloat(); // expression MUST be already resolved
-  virtual VTypeExpr* ResolveAsType(VEmitContext&);
-  virtual VExpression* ResolveAssignmentTarget(VEmitContext&);
-  virtual VExpression* ResolveIterator(VEmitContext&);
-  virtual void RequestAddressOf();
-  virtual void Emit(VEmitContext&) = 0;
-  virtual void EmitBranchable(VEmitContext&, VLabel, bool);
-  void EmitPushPointedCode(VFieldType, VEmitContext&);
-  virtual bool IsValidTypeExpression();
-  virtual bool IsIntConst() const;
-  virtual bool IsFloatConst() const;
-  virtual bool IsStrConst() const;
-  virtual vint32 GetIntConst() const;
-  virtual float GetFloatConst() const;
-  virtual VStr GetStrConst(VPackage*) const;
-  virtual bool IsDefaultObject() const;
-  virtual bool IsPropertyAssign() const;
-  virtual bool IsDynArraySetNum() const;
-  virtual VExpression* CreateTypeExprCopy();
-  virtual bool AddDropResult();
-  virtual bool IsDecorateSingleName() const;
+  VExpression (const TLocation &ALoc);
+  virtual ~VExpression () noexcept(false);
+  virtual VExpression *DoResolve (VEmitContext &ec) = 0;
+  VExpression *Resolve (VEmitContext &ec);
+  VExpression *ResolveBoolean (VEmitContext &ec); // actually, *to* boolean
+  VExpression *ResolveFloat (VEmitContext &ec); // actually, *to* float
+  VExpression *CoerceToFloat (); // expression MUST be already resolved
+  virtual VTypeExpr *ResolveAsType (VEmitContext &ec);
+  virtual VExpression *ResolveAssignmentTarget (VEmitContext &ec);
+  virtual VExpression *ResolveIterator (VEmitContext &ec);
+  virtual void RequestAddressOf ();
+  virtual void Emit (VEmitContext &ec) = 0;
+  virtual void EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue);
+  void EmitPushPointedCode (VFieldType type, VEmitContext &ec);
+  virtual bool IsValidTypeExpression ();
+  virtual bool IsIntConst () const;
+  virtual bool IsFloatConst () const;
+  virtual bool IsStrConst () const;
+  virtual vint32 GetIntConst () const;
+  virtual float GetFloatConst () const;
+  virtual VStr GetStrConst (VPackage *) const;
+  virtual bool IsDefaultObject () const;
+  virtual bool IsPropertyAssign () const;
+  virtual bool IsDynArraySetNum () const;
+  virtual VExpression *CreateTypeExprCopy ();
+  virtual bool AddDropResult ();
+  virtual bool IsDecorateSingleName () const;
 };

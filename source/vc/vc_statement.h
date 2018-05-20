@@ -23,255 +23,226 @@
 //**
 //**************************************************************************
 
-class VStatement
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VStatement {
 public:
-  TLocation   Loc;
+  TLocation Loc;
 
-  VStatement(const TLocation&);
+  VStatement (const TLocation &);
   virtual ~VStatement() noexcept(false);
-  virtual bool Resolve(VEmitContext&) = 0;
-  virtual void DoEmit(VEmitContext&) = 0;
-  void Emit(VEmitContext&);
-  virtual bool IsBreak () { return false; }
-  virtual bool IsContinue () { return false; }
-  virtual bool IsReturn () { return false; }
-  virtual bool IsCase () { return false; }
-  virtual bool IsDefault () { return false; }
-  virtual bool IsEndsWithReturn () { return false; }
+  virtual bool Resolve (VEmitContext &) = 0;
+  virtual void DoEmit (VEmitContext &) = 0;
+  void Emit (VEmitContext &);
+  virtual bool IsBreak ();
+  virtual bool IsContinue ();
+  virtual bool IsReturn ();
+  virtual bool IsSwitchCase ();
+  virtual bool IsSwitchDefault ();
+  virtual bool IsEndsWithReturn ();
 };
 
-class VEmptyStatement : public VStatement
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VEmptyStatement : public VStatement {
 public:
-  VEmptyStatement(const TLocation&);
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsEndsWithReturn () { return false; }
+  VEmptyStatement (const TLocation &);
+  virtual bool Resolve (VEmitContext&) override;
+  virtual void DoEmit (VEmitContext&) override;
+  virtual bool IsEndsWithReturn () override;
 };
 
-class VIf : public VStatement
-{
-public:
-  VExpression*  Expr;
-  VStatement*   TrueStatement;
-  VStatement*   FalseStatement;
 
-  VIf(VExpression*, VStatement*, const TLocation&);
-  VIf(VExpression*, VStatement*, VStatement*, const TLocation&);
-  ~VIf();
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsEndsWithReturn () {
-    if (TrueStatement && FalseStatement) return (TrueStatement->IsEndsWithReturn() && FalseStatement->IsEndsWithReturn());
-    if (TrueStatement) return TrueStatement->IsEndsWithReturn();
-    if (FalseStatement) return FalseStatement->IsEndsWithReturn();
-    return false;
-  }
+// ////////////////////////////////////////////////////////////////////////// //
+class VIf : public VStatement {
+public:
+  VExpression *Expr;
+  VStatement *TrueStatement;
+  VStatement *FalseStatement;
+
+  VIf (VExpression *AExpr, VStatement *ATrueStatement, const TLocation &ALoc);
+  VIf (VExpression *AExpr, VStatement *ATrueStatement, VStatement *AFalseStatement, const TLocation &ALoc);
+  virtual ~VIf () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsEndsWithReturn () override;
 };
 
-class VWhile : public VStatement
-{
-public:
-  VExpression*    Expr;
-  VStatement*     Statement;
 
-  VWhile(VExpression*, VStatement*, const TLocation&);
-  ~VWhile();
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsEndsWithReturn () { return (Statement && Statement->IsEndsWithReturn()); }
+// ////////////////////////////////////////////////////////////////////////// //
+class VWhile : public VStatement {
+public:
+  VExpression *Expr;
+  VStatement *Statement;
+
+  VWhile (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
+  virtual ~VWhile () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsEndsWithReturn () override;
 };
 
-class VDo : public VStatement
-{
-public:
-  VExpression*    Expr;
-  VStatement*     Statement;
 
-  VDo(VExpression*, VStatement*, const TLocation&);
-  ~VDo();
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsEndsWithReturn () { return (Statement && Statement->IsEndsWithReturn()); }
+// ////////////////////////////////////////////////////////////////////////// //
+class VDo : public VStatement {
+public:
+  VExpression *Expr;
+  VStatement *Statement;
+
+  VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
+  virtual ~VDo () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsEndsWithReturn () override;
 };
 
-class VFor : public VStatement
-{
-public:
-  TArray<VExpression*>  InitExpr;
-  VExpression*      CondExpr;
-  TArray<VExpression*>  LoopExpr;
-  VStatement*       Statement;
 
-  VFor(const TLocation&);
-  ~VFor();
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsEndsWithReturn () { return (Statement && Statement->IsEndsWithReturn()); }
+// ////////////////////////////////////////////////////////////////////////// //
+class VFor : public VStatement {
+public:
+  TArray<VExpression *> InitExpr;
+  VExpression *CondExpr;
+  TArray<VExpression *> LoopExpr;
+  VStatement *Statement;
+
+  VFor (const TLocation &ALoc);
+  virtual ~VFor () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsEndsWithReturn () override;
 };
 
-class VForeach : public VStatement
-{
-public:
-  VExpression*    Expr;
-  VStatement*     Statement;
 
-  VForeach(VExpression*, VStatement*, const TLocation&);
-  ~VForeach();
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsEndsWithReturn () { return (Statement && Statement->IsEndsWithReturn()); }
+// ////////////////////////////////////////////////////////////////////////// //
+class VForeach : public VStatement {
+public:
+  VExpression *Expr;
+  VStatement *Statement;
+
+  VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
+  virtual ~VForeach () override;
+  virtual bool Resolve (VEmitContext&) override;
+  virtual void DoEmit (VEmitContext&) override;
+  virtual bool IsEndsWithReturn () override;
 };
 
-class VSwitch : public VStatement
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VSwitch : public VStatement {
 public:
-  struct VCaseInfo
-  {
-    vint32      Value;
-    VLabel      Address;
+  struct VCaseInfo {
+    vint32 Value;
+    VLabel Address;
   };
 
-  VExpression*    Expr;
+  VExpression *Expr;
   TArray<VCaseInfo> CaseInfo;
-  VLabel        DefaultAddress;
-  TArray<VStatement*> Statements;
-  bool        HaveDefault;
+  VLabel DefaultAddress;
+  TArray<VStatement *> Statements;
+  bool HaveDefault;
 
-  VSwitch(const TLocation&);
-  ~VSwitch();
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsEndsWithReturn () {
-    if (Statements.Num() == 0) return false;
-    bool defautSeen = false;
-    bool returnSeen = false;
-    bool breakSeen = false;
-    bool statementSeen = false;
-    for (int n = 0; n < Statements.Num(); ++n) {
-      if (!Statements[n]) return false;
-      // `case` or `default`?
-      if (Statements[n]->IsCase() || Statements[n]->IsDefault()) {
-        if (!returnSeen && statementSeen) return false; // oops
-        if (Statements[n]->IsDefault()) defautSeen = true;
-        breakSeen = false;
-        statementSeen = true;
-        returnSeen = false;
-        continue;
-      }
-      if (breakSeen) continue;
-      statementSeen = true;
-      if (Statements[n]->IsBreak() || Statements[n]->IsContinue()) {
-        // `break`
-        if (!returnSeen) return false;
-        breakSeen = true;
-      } else {
-        // normal statement
-        if (!returnSeen) returnSeen = Statements[n]->IsEndsWithReturn();
-      }
-    }
-    if (!statementSeen) return false; // just in case
-    // without `default` it may fallthru
-    return (returnSeen && defautSeen);
-  }
+  VSwitch (const TLocation &ALoc);
+  virtual ~VSwitch () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsEndsWithReturn () override;
 };
 
-class VSwitchCase : public VStatement
-{
-public:
-  VSwitch*    Switch;
-  VExpression*  Expr;
-  vint32      Value;
-  vint32      Index;
 
-  VSwitchCase(VSwitch*, VExpression*, const TLocation&);
-  ~VSwitchCase();
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsCase () { return true; }
+// ////////////////////////////////////////////////////////////////////////// //
+class VSwitchCase : public VStatement {
+public:
+  VSwitch *Switch;
+  VExpression *Expr;
+  vint32 Value;
+  vint32 Index;
+
+  VSwitchCase (VSwitch *ASwitch, VExpression *AExpr, const TLocation &ALoc);
+  virtual ~VSwitchCase () override;
+  virtual bool Resolve (VEmitContext&) override;
+  virtual void DoEmit (VEmitContext&) override;
+  virtual bool IsSwitchCase () override;
 };
 
-class VSwitchDefault : public VStatement
-{
-public:
-  VSwitch*    Switch;
 
-  VSwitchDefault(VSwitch*, const TLocation&);
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsDefault () { return true; }
+// ////////////////////////////////////////////////////////////////////////// //
+class VSwitchDefault : public VStatement {
+public:
+  VSwitch *Switch;
+
+  VSwitchDefault (VSwitch *ASwitch, const TLocation &ALoc);
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsSwitchDefault () override;
 };
 
-class VBreak : public VStatement
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VBreak : public VStatement {
 public:
-  VBreak(const TLocation&);
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsBreak () { return true; }
+  VBreak (const TLocation &ALoc);
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsBreak () override;
 };
 
-class VContinue : public VStatement
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VContinue : public VStatement {
 public:
-  VContinue(const TLocation&);
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsContinue () { return true; }
+  VContinue (const TLocation &ALoc);
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsContinue () override;
 };
 
-class VReturn : public VStatement
-{
-public:
-  VExpression*    Expr;
-  int         NumLocalsToClear;
 
-  VReturn(VExpression*, const TLocation&);
-  ~VReturn();
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsReturn () { return true; }
-  virtual bool IsEndsWithReturn () { return true; }
+// ////////////////////////////////////////////////////////////////////////// //
+class VReturn : public VStatement {
+public:
+  VExpression *Expr;
+  int NumLocalsToClear;
+
+  VReturn (VExpression *AExpr, const TLocation &ALoc);
+  virtual ~VReturn () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsReturn () override;
+  virtual bool IsEndsWithReturn () override;
 };
 
-class VExpressionStatement : public VStatement
-{
-public:
-  VExpression*    Expr;
 
-  VExpressionStatement(VExpression*);
-  virtual ~VExpressionStatement() noexcept(false);
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
+// ////////////////////////////////////////////////////////////////////////// //
+class VExpressionStatement : public VStatement {
+public:
+  VExpression *Expr;
+
+  VExpressionStatement (VExpression *AExpr);
+  virtual ~VExpressionStatement () noexcept(false) override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
 };
 
-class VLocalVarStatement : public VStatement
-{
-public:
-  VLocalDecl*   Decl;
 
-  VLocalVarStatement(VLocalDecl*);
-  ~VLocalVarStatement();
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
+// ////////////////////////////////////////////////////////////////////////// //
+class VLocalVarStatement : public VStatement {
+public:
+  VLocalDecl *Decl;
+
+  VLocalVarStatement (VLocalDecl *ADecl);
+  virtual ~VLocalVarStatement () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
 };
 
-class VCompound : public VStatement
-{
-public:
-  TArray<VStatement*>   Statements;
 
-  VCompound(const TLocation&);
-  ~VCompound();
-  bool Resolve(VEmitContext&);
-  void DoEmit(VEmitContext&);
-  virtual bool IsEndsWithReturn () {
-    for (int n = 0; n < Statements.Num(); ++n) {
-      if (!Statements[n]) continue;
-      if (Statements[n]->IsEndsWithReturn()) return true;
-      if (Statements[n]->IsBreak() || Statements[n]->IsContinue()) break;
-    }
-    return false;
-  }
+// ////////////////////////////////////////////////////////////////////////// //
+class VCompound : public VStatement {
+public:
+  TArray<VStatement *> Statements;
+
+  VCompound (const TLocation &ALoc);
+  virtual ~VCompound () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsEndsWithReturn () override;
 };
