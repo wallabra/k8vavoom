@@ -105,8 +105,7 @@ VExpression* VBaseInvocation::DoResolve(VEmitContext& ec)
     return NULL;
   }
 
-  VExpression* e = new VInvocation(NULL, Func, NULL, false,
-    true, Loc, NumArgs, Args);
+  VInvocation* e = new VInvocation(NULL, Func, NULL, false, true, Loc, NumArgs, Args);
   NumArgs = 0;
   delete this;
   return e->Resolve(ec);
@@ -137,6 +136,7 @@ VCastOrInvocation::VCastOrInvocation(VName AName, const TLocation& ALoc, int ANu
 : VExpression(ALoc)
 , Name(AName)
 , NumArgs(ANumArgs)
+, FirstOpIsResolved(false)
 {
   for (int i = 0; i < NumArgs; i++)
     Args[i] = AArgs[i];
@@ -194,8 +194,8 @@ VExpression* VCastOrInvocation::DoResolve(VEmitContext& ec)
         delete this;
         return NULL;
       }
-      VExpression* e = new VInvocation(NULL, M, NULL,
-        false, false, Loc, NumArgs, Args);
+      VInvocation* e = new VInvocation(NULL, M, NULL, false, false, Loc, NumArgs, Args);
+      e->FirstOpIsResolved = FirstOpIsResolved;
       NumArgs = 0;
       delete this;
       return e->Resolve(ec);
@@ -203,8 +203,8 @@ VExpression* VCastOrInvocation::DoResolve(VEmitContext& ec)
     VField* field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
     if (field != NULL && field->Type.Type == TYPE_Delegate)
     {
-      VExpression* e = new VInvocation(NULL, field->Func, field,
-        false, false, Loc, NumArgs, Args);
+      VInvocation* e = new VInvocation(NULL, field->Func, field, false, false, Loc, NumArgs, Args);
+      e->FirstOpIsResolved = FirstOpIsResolved;
       NumArgs = 0;
       delete this;
       return e->Resolve(ec);
@@ -238,8 +238,8 @@ VExpression* VCastOrInvocation::ResolveIterator(VEmitContext& ec)
     return NULL;
   }
 
-  VExpression* e = new VInvocation(NULL, M, NULL, false, false, Loc,
-    NumArgs, Args);
+  VInvocation* e = new VInvocation(NULL, M, NULL, false, false, Loc, NumArgs, Args);
+  e->FirstOpIsResolved = FirstOpIsResolved;
   NumArgs = 0;
   delete this;
   return e->Resolve(ec);
@@ -473,12 +473,10 @@ VInvocation::VInvocation(VExpression* ASelfExpr, VMethod* AFunc, VField* ADelega
 , NumArgs(ANumArgs)
 , CallerState(NULL)
 , MultiFrameState(false)
+, FirstOpIsResolved(false)
 {
   guard(VInvocation::VInvocation);
-  for (int i = 0; i < NumArgs; i++)
-  {
-    Args[i] = AArgs[i];
-  }
+  for (int i = 0; i < NumArgs; i++) Args[i] = AArgs[i];
   unguard;
 }
 
@@ -522,6 +520,7 @@ VExpression* VInvocation::DoResolve(VEmitContext& ec)
   bool ArgsOk = true;
   for (int i = 0; i < NumArgs; i++)
   {
+    if (i == 0 && FirstOpIsResolved) continue;
     if (Args[i] != NULL)
     {
       Args[i] = Args[i]->Resolve(ec);

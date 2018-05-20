@@ -54,6 +54,7 @@ public:
   VName     Name;
   int       NumArgs;
   VExpression*  Args[VMethod::MAX_PARAMS + 1];
+  bool FirstOpIsResolved;
 
   VCastOrInvocation(VName, const TLocation&, int, VExpression**);
   ~VCastOrInvocation();
@@ -101,6 +102,7 @@ public:
   VExpression*  Args[VMethod::MAX_PARAMS + 1];
   VState*     CallerState;
   bool      MultiFrameState;
+  bool FirstOpIsResolved;
 
   VInvocation(VExpression* ASelfExpr, VMethod* AFunc, VField* ADelegateField,
     bool AHaveSelf, bool ABaseCall, const TLocation& ALoc, int ANumArgs,

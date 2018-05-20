@@ -240,14 +240,25 @@ VExpression *VDotField::IntResolve (VEmitContext& ec, bool AssignTarget) {
 
   if (op->Type.Type == TYPE_Struct || op->Type.Type == TYPE_Vector) {
     VFieldType type = op->Type;
+    if (!type.Struct) {
+      // convert to method, 'cause why not?
+      if (!AssignTarget) {
+        VExpression *ufcsArgs[1];
+        ufcsArgs[0] = op;
+        VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
+        call->FirstOpIsResolved = true;
+        op = nullptr;
+        delete this;
+        return call->Resolve(ec);
+      } else {
+        ParseError(Loc, "INTERNAL COMPILER ERROR: No such field `%s`, and no struct also!", *FieldName);
+        delete this;
+        return nullptr;
+      }
+    }
     int Flags = op->Flags;
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
-    if (!type.Struct) {
-      ParseError(Loc, "INTERNAL COMPILER ERROR: No such field `%s`, and no struct also!", *FieldName);
-      delete this;
-      return nullptr;
-    }
     VField *field = type.Struct->FindField(FieldName);
     if (!field) {
       ParseError(Loc, "No such field %s", *FieldName);
@@ -303,6 +314,17 @@ VExpression *VDotField::IntResolve (VEmitContext& ec, bool AssignTarget) {
       delete this;
       return nullptr;
     }
+  }
+
+  // convert to method, 'cause why not?
+  if (!AssignTarget) {
+    VExpression *ufcsArgs[1];
+    ufcsArgs[0] = op;
+    VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
+    call->FirstOpIsResolved = true;
+    op = nullptr;
+    delete this;
+    return call->Resolve(ec);
   }
 
   ParseError(Loc, "Reference, struct or vector expected on left side of . %d", op->Type.Type);
