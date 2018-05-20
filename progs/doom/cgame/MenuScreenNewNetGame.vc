@@ -25,18 +25,37 @@
 
 class MenuScreenNewNetGame : MenuScreen;
 
-MenuChoiceEnum    Players;
-MenuChoiceEnum    Monsters;
-MenuChoiceEnum    DeathMatch;
-MenuChoiceEnum    Skill;
-MenuChoiceEnum    TimeLimit;
-MenuChoiceEnum    Episode;
-MenuChoiceEnum    Level;
+MenuChoiceEnum Players;
+MenuChoiceEnum Monsters;
+MenuChoiceEnum DeathMatch;
+MenuChoiceEnum Skill;
+MenuChoiceEnum TimeLimit;
+MenuChoiceEnum Episode;
+MenuChoiceEnum Level;
 
-void CreateChoices()
-{
-  MenuTextButton  startGame;
-  int       i;
+
+final static void setSavedInt (name Name, int val) {
+  if (!CvarExists(Name)) {
+    //print("NO cvar '%n': %d", Name, val);
+    CreateCvar(Name, va("%d", val), "___saved_menu__value___", 0);
+  } else {
+    //print("set cvar '%n': %d", Name, val);
+    SetCvar(Name, val);
+  }
+}
+
+final static int getSavedInt (name Name, int defval) {
+  if (!CvarExists(Name)) {
+    //print("default value for cvar '%n': %d", Name, defval);
+    return defval;
+  }
+  //print("existing cvar '%n': %d", Name, GetCvar(Name));
+  return GetCvar(Name);
+}
+
+
+void CreateChoices () {
+  MenuTextButton startGame;
 
   startGame = MenuTextButton(NewChild(MenuSmallTextButton));
   startGame.SetOrigin(ChoicesStartX, ChoicesStartY);
@@ -54,12 +73,15 @@ void CreateChoices()
   Players.AddItem("6");
   Players.AddItem("7");
   Players.AddItem("8");
-  Players.SetInitialValue(2);
+  Players.SetInitialValue(getSavedInt('_netgame_max_players_', 2));
+  Players.ValueChanging = ChangedPlayers;
   ChoicesStartY += Players.Height;
 
   Monsters = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Monsters.SetOrigin(ChoicesStartX, ChoicesStartY);
   Monsters.Text = "Monsters";
+  Monsters.SetInitialValue(getSavedInt('_netgame_allow_monsters_', 0));
+  Monsters.ValueChanging = ChangedMonsters;
   ChoicesStartY += Monsters.Height;
 
   DeathMatch = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -68,17 +90,16 @@ void CreateChoices()
   DeathMatch.AddItem("Cooperative");
   DeathMatch.AddItem("Deathmatch");
   DeathMatch.AddItem("Deathmatch2");
-  DeathMatch.SetInitialValue(2);
+  DeathMatch.SetInitialValue(getSavedInt('_netgame_game_type_', 2));
+  DeathMatch.ValueChanging = ChangedGameType;
   ChoicesStartY += DeathMatch.Height;
 
   Skill = MenuChoiceEnum(NewChild(MenuChoiceEnum));
   Skill.SetOrigin(ChoicesStartX, ChoicesStartY);
   Skill.Text = "Skill";
-  for (i = 0; i < P_GetNumSkills(); i++)
-  {
-    Skill.AddItem(P_GetSkillDef(i)->Name);
-  }
-  Skill.SetInitialValue(2);
+  for (int i = 0; i < P_GetNumSkills(); ++i) Skill.AddItem(P_GetSkillDef(i)->Name);
+  Skill.SetInitialValue(getSavedInt('_netgame_game_skill_', 2));
+  Skill.ValueChanging = ChangedSkill;
   ChoicesStartY += Skill.Height;
 
   TimeLimit = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -97,6 +118,8 @@ void CreateChoices()
   TimeLimit.AddItem("50");
   TimeLimit.AddItem("55");
   TimeLimit.AddItem("60");
+  TimeLimit.SetInitialValue(getSavedInt('_netgame_time_limit_', 0));
+  TimeLimit.ValueChanging = ChangedTimeLimit;
   ChoicesStartY += TimeLimit.Height;
 
   if (!IsAnyDoom2) {
@@ -104,15 +127,12 @@ void CreateChoices()
     Episode.SetOrigin(ChoicesStartX, ChoicesStartY);
     Episode.Text = "Episode";
     Episode.AddItem("Knee - Deep in the Dead");
-    if (WadLumpPresent('e2m1'))
-    {
+    if (WadLumpPresent('e2m1')) {
       Episode.AddItem("The Shores of Hell");
       Episode.AddItem("Inferno");
-      if (WadLumpPresent('e4m1'))
-      {
-        Episode.AddItem("Thy Flesh Consumed");
-      }
+      if (WadLumpPresent('e4m1')) Episode.AddItem("Thy Flesh Consumed");
     }
+    Episode.SetInitialValue(getSavedInt('_netgame_episode_', 0));
     Episode.ValueChanging = ChangedEpisode;
     ChoicesStartY += Episode.Height;
   }
@@ -121,10 +141,18 @@ void CreateChoices()
   Level.SetOrigin(ChoicesStartX, ChoicesStartY);
   Level.AddItem("test");
   Level.Text = "Level";
+  Level.ValueChanging = ChangedMapIndex;
   ChoicesStartY += Level.Height;
 
-  InitMapList(0);
+  if (!IsAnyDoom2) {
+    InitMapList(getSavedInt('_netgame_episode_', 0));
+  } else {
+    InitMapList(0);
+  }
+
+  //Level.Value = getSavedInt('_netgame_mapindex_', 0);
 }
+
 
 void InitMapList (int epi) {
   /*
@@ -162,17 +190,20 @@ void InitMapList (int epi) {
     for (int i = 0; i < P_GetNumMaps(); ++i) Level.EnumNames[i] = P_GetMapName(i);
   }
 #endif
-  Level.Value = 0;
+  Level.Value = getSavedInt('_netgame_mapindex_', 0);
 }
 
-bool ChangedEpisode(Object Sender, int newValue)
-{
-  InitMapList(newValue);
-  return true;
-}
 
-void ActivateStartNewGame(Object Sender)
-{
+bool ChangedPlayers (Object Sender, int newValue) { setSavedInt('_netgame_max_players_', newValue); return true; }
+bool ChangedEpisode (Object Sender, int newValue) { setSavedInt('_netgame_episode_', newValue); InitMapList(newValue); return true; }
+bool ChangedMonsters (Object Sender, int newValue) { setSavedInt('_netgame_allow_monsters_', newValue); return true; }
+bool ChangedGameType (Object Sender, int newValue) { setSavedInt('_netgame_game_type_', newValue); return true; }
+bool ChangedSkill (Object Sender, int newValue) { setSavedInt('_netgame_game_skill_', newValue); return true; }
+bool ChangedTimeLimit (Object Sender, int newValue) { setSavedInt('_netgame_time_limit_', newValue); return true; }
+bool ChangedMapIndex (Object Sender, int newValue) { setSavedInt('_netgame_mapindex_', newValue); return true; }
+
+
+void ActivateStartNewGame (Object Sender) {
   CmdBuf_AddText("Disconnect\n");
   CmdBuf_AddText("MaxPlayers %d\n", Players.Value + 2);
   CmdBuf_AddText("NoMonsters %d\n", !Monsters.Value);
@@ -196,6 +227,7 @@ void ActivateStartNewGame(Object Sender)
     CmdBuf_AddText("Map E%dM%d\n", Episode.Value + 1, Level.Value + 1);
   }
 }
+
 
 defaultproperties
 {

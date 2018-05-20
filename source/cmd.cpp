@@ -246,35 +246,33 @@ void VCommand::ProcessKeyConf()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VCommand::AddToAutoComplete
 //
 //==========================================================================
-
-void VCommand::AddToAutoComplete(const char* string)
-{
+void VCommand::AddToAutoComplete (const char *string) {
   guard(VCommand::AddToAutoComplete);
-#ifdef PARANOID
-  for (int i = 0; i < AutoCompleteTable.Num(); i++)
-  {
-    if (!VStr::ICmp(AutoCompleteTable[i], string))
-      Sys_Error("C_AddToAutoComplete: %s is allready registered.", string);
+
+  if (!string || !string[0] || string[0] == '_') return;
+
+  for (int i = 0; i < AutoCompleteTable.Num(); ++i) {
+    if (VStr::ICmp(AutoCompleteTable[i], string) == 0) return; //Sys_Error("C_AddToAutoComplete: %s is allready registered.", string);
   }
-#endif
 
   AutoCompleteTable.Append(string);
 
-  // Alphabetic sort
-  for (int i = AutoCompleteTable.Num() - 1; i &&
-    (VStr::ICmp(AutoCompleteTable[i - 1], AutoCompleteTable[i]) > 0); i--)
-  {
-    const char* Swap = AutoCompleteTable[i];
-    AutoCompleteTable[i] = AutoCompleteTable[i - 1];
-    AutoCompleteTable[i - 1] = Swap;
+  // alphabetic sort
+  for (int i = AutoCompleteTable.Num()-1; i && VStr::ICmp(AutoCompleteTable[i-1], AutoCompleteTable[i]) > 0; --i) {
+    const char *Swap = AutoCompleteTable[i];
+    AutoCompleteTable[i] = AutoCompleteTable[i-1];
+    AutoCompleteTable[i-1] = Swap;
   }
+
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -282,38 +280,24 @@ void VCommand::AddToAutoComplete(const char* string)
 //
 //==========================================================================
 
-VStr VCommand::GetAutoComplete(const VStr& String, int& Index, bool Backward)
-{
+VStr VCommand::GetAutoComplete (const VStr& String, int& Index, bool Backward) {
   guard(VCommand::GetAutoComplete);
   int i;
-  if (Index == -1)
-  {
-    if (Backward)
-      i = AutoCompleteTable.Num() - 1;
-    else
-      i = 0;
-  }
-  else
-  {
-    if (Backward)
-      i = Index - 1;
-    else
-      i = Index + 1;
+
+  if (Index == -1) {
+    i = (Backward ? AutoCompleteTable.Num()-1 : 0);
+  } else {
+    if (Backward) i = Index-1; else i = Index+1;
   }
 
-  while (i < AutoCompleteTable.Num() && i >= 0)
-  {
-    if (String.Length() <= VStr::Length(AutoCompleteTable[i]) &&
-      !VStr::NICmp(*String, AutoCompleteTable[i], String.Length()))
-    {
+  while (i < AutoCompleteTable.Num() && i >= 0) {
+    if (String.Length() <= VStr::Length(AutoCompleteTable[i]) && VStr::NICmp(*String, AutoCompleteTable[i], String.Length()) == 0) {
       Index = i;
       return AutoCompleteTable[i];
     }
-    if (Backward)
-      i--;
-    else
-      i++;
+    if (Backward) --i; else ++i;
   }
+
   return VStr();
   unguard;
 }
