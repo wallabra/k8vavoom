@@ -23,17 +23,11 @@
 //**
 //**************************************************************************
 
-//==========================================================================
-//
-//  VAssignment
-//
-//==========================================================================
 
-class VAssignment : public VExpression
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VAssignment : public VExpression {
 public:
-  enum EAssignOper
-  {
+  enum EAssignOper {
     Assign,
     AddAssign,
     MinusAssign,
@@ -46,29 +40,27 @@ public:
     LShiftAssign,
     RShiftAssign,
   };
-  EAssignOper   Oper;
-  VExpression*  op1;
-  VExpression*  op2;
 
-  VAssignment(EAssignOper, VExpression*, VExpression*, const TLocation&, bool valueResolved=false);
-  ~VAssignment();
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+public:
+  EAssignOper Oper;
+  VExpression *op1;
+  VExpression *op2;
 
 private:
   bool mValueResolved;
+
+public:
+  VAssignment (EAssignOper, VExpression*, VExpression*, const TLocation&, bool valueResolved=false);
+  virtual ~VAssignment () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+  virtual bool IsAssignExpr () const override;
 };
 
-//==========================================================================
-//
-//  VPropertyAssign
-//
-//==========================================================================
 
-class VPropertyAssign : public VInvocation
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VPropertyAssign : public VInvocation {
 public:
-  VPropertyAssign(VExpression* ASelfExpr, VMethod* AFunc, bool AHaveSelf,
-    const TLocation& ALoc);
-  bool IsPropertyAssign() const;
+  VPropertyAssign (VExpression *ASelfExpr, VMethod *AFunc, bool AHaveSelf, const TLocation &ALoc);
+  virtual bool IsPropertyAssign () const override;
 };

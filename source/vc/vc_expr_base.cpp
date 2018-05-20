@@ -245,135 +245,21 @@ void VExpression::EmitPushPointedCode (VFieldType type, VEmitContext& ec) {
 }
 
 
-//==========================================================================
-//
-//  VExpression::IsValidTypeExpression
-//
-//==========================================================================
-bool VExpression::IsValidTypeExpression () {
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VExpression::IsIntConst
-//
-//==========================================================================
-bool VExpression::IsIntConst () const {
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VExpression::IsFloatConst
-//
-//==========================================================================
-bool VExpression::IsFloatConst () const {
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VExpression::IsStrConst
-//
-//==========================================================================
-bool VExpression::IsStrConst () const {
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VExpression::GetIntConst
-//
-//==========================================================================
-vint32 VExpression::GetIntConst () const {
-  ParseError(Loc, "Integer constant expected");
-  return 0;
-}
-
-
-//==========================================================================
-//
-//  VExpression::GetFloatConst
-//
-//==========================================================================
-float VExpression::GetFloatConst () const {
-  ParseError(Loc, "Float constant expected");
-  return 0.0;
-}
-
-
-//==========================================================================
-//
-//  VExpression::GetStrConst
-//
-//==========================================================================
-VStr VExpression::GetStrConst (VPackage *) const {
-  ParseError(Loc, "String constant expected");
-  return VStr();
-}
-
-
-//==========================================================================
-//
-//  VExpression::IsDefaultObject
-//
-//==========================================================================
-bool VExpression::IsDefaultObject () const {
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VExpression::IsPropertyAssign
-//
-//==========================================================================
-bool VExpression::IsPropertyAssign () const {
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VExpression::IsDynArraySetNum
-//
-//==========================================================================
-bool VExpression::IsDynArraySetNum () const {
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VExpression::CreateTypeExprCopy
-//
-//==========================================================================
-VExpression *VExpression::CreateTypeExprCopy () {
-  ParseError(Loc, "Not a type");
-  return new VTypeExpr(TYPE_Unknown, Loc);
-}
-
-
-//==========================================================================
-//
-//  VExpression::AddDropResult
-//
-//==========================================================================
-bool VExpression::AddDropResult () {
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VExpression::IsDecorateSingleName
-//
-//==========================================================================
-bool VExpression::IsDecorateSingleName () const {
-  return false;
-}
+// ////////////////////////////////////////////////////////////////////////// //
+// IsXXX
+bool VExpression::IsValidTypeExpression () { return false; }
+bool VExpression::IsIntConst () const { return false; }
+bool VExpression::IsFloatConst () const { return false; }
+bool VExpression::IsStrConst () const { return false; }
+vint32 VExpression::GetIntConst () const { ParseError(Loc, "Integer constant expected"); return 0; }
+float VExpression::GetFloatConst () const { ParseError(Loc, "Float constant expected"); return 0.0; }
+VStr VExpression::GetStrConst (VPackage *) const { ParseError(Loc, "String constant expected"); return VStr(); }
+bool VExpression::IsDefaultObject () const { return false; }
+bool VExpression::IsPropertyAssign () const { return false; }
+bool VExpression::IsDynArraySetNum () const { return false; }
+VExpression *VExpression::CreateTypeExprCopy () { ParseError(Loc, "Not a type"); return new VTypeExpr(TYPE_Unknown, Loc); }
+bool VExpression::AddDropResult () { return false; }
+bool VExpression::IsDecorateSingleName () const { return false; }
+bool VExpression::IsLocalVarDecl () const { return false; }
+bool VExpression::IsLocalVarExpr () const { return false; }
+bool VExpression::IsAssignExpr () const { return false; }

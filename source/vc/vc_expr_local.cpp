@@ -151,6 +151,16 @@ void VLocalDecl::EmitInitialisations (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VLocalDecl::IsLocalVarDecl
+//
+//==========================================================================
+bool VLocalDecl::IsLocalVarDecl () const {
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VLocalVar::VLocalVar
 //
 //==========================================================================
@@ -255,3 +265,14 @@ void VLocalVar::Emit (VEmitContext &ec) {
     EmitPushPointedCode(ec.LocalDefs[num].Type, ec);
   }
 }
+
+
+//==========================================================================
+//
+//  VLocalVar::IsLocalVarExpr
+//
+//==========================================================================
+bool VLocalVar::IsLocalVarExpr () const {
+  return true;
+}
+

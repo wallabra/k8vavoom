@@ -61,4 +61,7 @@ public:
   virtual VExpression *CreateTypeExprCopy ();
   virtual bool AddDropResult ();
   virtual bool IsDecorateSingleName () const;
+  virtual bool IsLocalVarDecl () const;
+  virtual bool IsLocalVarExpr () const;
+  virtual bool IsAssignExpr () const;
 };

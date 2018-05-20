@@ -400,11 +400,13 @@ bool VUnaryMutator::AddDropResult()
 //
 //==========================================================================
 
-VBinary::VBinary(EBinOp AOper, VExpression* AOp1, VExpression* AOp2, const TLocation& ALoc)
+VBinary::VBinary(EBinOp AOper, VExpression* AOp1, VExpression* AOp2, const TLocation& ALoc, bool aOp1Resolved, bool aOp2Resolved)
 : VExpression(ALoc)
 , Oper(AOper)
 , op1(AOp1)
 , op2(AOp2)
+, mOp1Resolved(aOp1Resolved)
+, mOp2Resolved(aOp2Resolved)
 {
   if (!op2)
   {
@@ -441,10 +443,8 @@ VBinary::~VBinary()
 
 VExpression* VBinary::DoResolve(VEmitContext& ec)
 {
-  if (op1)
-    op1 = op1->Resolve(ec);
-  if (op2)
-    op2 = op2->Resolve(ec);
+  if (op1 && !mOp1Resolved) { mOp1Resolved = true; op1 = op1->Resolve(ec); }
+  if (op2 && !mOp2Resolved) { mOp2Resolved = true; op2 = op2->Resolve(ec); }
   if (!op1 || !op2)
   {
     delete this;

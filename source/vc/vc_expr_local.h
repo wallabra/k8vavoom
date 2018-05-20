@@ -57,6 +57,8 @@ public:
 
   void Declare (VEmitContext &);
   void EmitInitialisations (VEmitContext &);
+
+  virtual bool IsLocalVarDecl () const override;
 };
 
 
@@ -75,4 +77,6 @@ public:
   virtual VExpression* DoResolve (VEmitContext &) override;
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual bool IsLocalVarExpr () const override;
 };

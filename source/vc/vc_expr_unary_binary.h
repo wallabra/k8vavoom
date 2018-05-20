@@ -85,8 +85,10 @@ public:
   EBinOp      Oper;
   VExpression*  op1;
   VExpression*  op2;
+  bool mOp1Resolved;
+  bool mOp2Resolved;
 
-  VBinary(EBinOp, VExpression*, VExpression*, const TLocation&);
+  VBinary(EBinOp, VExpression*, VExpression*, const TLocation&, bool aOp1Resolved=false, bool aOp2Resolved=false);
   ~VBinary();
   VExpression* DoResolve(VEmitContext&);
   void Emit(VEmitContext&);
