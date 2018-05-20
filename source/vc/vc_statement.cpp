@@ -37,11 +37,14 @@ bool VStatement::IsReturn () { return false; }
 bool VStatement::IsSwitchCase () { return false; }
 bool VStatement::IsSwitchDefault () { return false; }
 bool VStatement::IsEndsWithReturn () { return false; }
+void VStatement::DoSyntaxCopyTo (VStatement *e) { e->Loc = Loc; }
+void VStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 // VEmptyStatement
 VEmptyStatement::VEmptyStatement (const TLocation &ALoc) : VStatement(ALoc) {}
+VStatement *VEmptyStatement::SyntaxCopy () { auto res = new VEmptyStatement(); DoSyntaxCopyTo(res); return res; }
 bool VEmptyStatement::Resolve (VEmitContext &) { return true; }
 bool VEmptyStatement::IsEndsWithReturn () { return false; }
 void VEmptyStatement::DoEmit (VEmitContext &) {}
@@ -84,6 +87,43 @@ VIf::~VIf () {
   if (Expr) { delete Expr; Expr = nullptr; }
   if (TrueStatement) { delete TrueStatement; TrueStatement = nullptr; }
   if (FalseStatement) { delete FalseStatement; FalseStatement = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VIf::SyntaxCopy
+//
+//==========================================================================
+VStatement *VIf::SyntaxCopy () {
+  auto res = new VIf();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VIf::DoSyntaxCopyTo
+//
+//==========================================================================
+void VIf::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VIf *)e;
+  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
+  res->TrueStatement = (TrueStatement ? TrueStatement->SyntaxCopy() : nullptr);
+  res->FalseStatement = (FalseStatement ? FalseStatement->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VIf::DoFixSwitch
+//
+//==========================================================================
+void VIf::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (TrueStatement) TrueStatement->DoFixSwitch(aold, anew);
+  if (FalseStatement) FalseStatement->DoFixSwitch(aold, anew);
 }
 
 
@@ -167,6 +207,41 @@ VWhile::~VWhile () {
 
 //==========================================================================
 //
+//  VWhile::SyntaxCopy
+//
+//==========================================================================
+VStatement *VWhile::SyntaxCopy () {
+  auto res = new VWhile();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VWhile::DoSyntaxCopyTo
+//
+//==========================================================================
+void VWhile::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VWhile *)e;
+  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
+  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VWhile::DoFixSwitch
+//
+//==========================================================================
+void VWhile::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (Statement) Statement->DoFixSwitch(aold, anew);
+}
+
+
+//==========================================================================
+//
 //  VWhile::Resolve
 //
 //==========================================================================
@@ -235,6 +310,41 @@ VDo::VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc)
 VDo::~VDo () {
   if (Expr) { delete Expr; Expr = nullptr; }
   if (Statement) { delete Statement; Statement = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VDo::SyntaxCopy
+//
+//==========================================================================
+VStatement *VDo::SyntaxCopy () {
+  auto res = new VDo();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDo::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDo::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VDo *)e;
+  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
+  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDo::DoFixSwitch
+//
+//==========================================================================
+void VDo::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -313,6 +423,45 @@ VFor::~VFor () {
     if (LoopExpr[i]) { delete LoopExpr[i]; LoopExpr[i] = nullptr; }
   }
   if (Statement) { delete Statement; Statement = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VFor::SyntaxCopy
+//
+//==========================================================================
+VStatement *VFor::SyntaxCopy () {
+  auto res = new VFor();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VFor::DoSyntaxCopyTo
+//
+//==========================================================================
+void VFor::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VFor *)e;
+  res->CondExpr = (CondExpr ? CondExpr->SyntaxCopy() : nullptr);
+  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
+  res->InitExpr.SetNum(InitExpr.length());
+  for (int f = 0; f < InitExpr.length(); ++f) res->InitExpr[f] = (InitExpr[f] ? InitExpr[f]->SyntaxCopy() : nullptr);
+  res->LoopExpr.SetNum(LoopExpr.length());
+  for (int f = 0; f < LoopExpr.length(); ++f) res->LoopExpr[f] = (LoopExpr[f] ? LoopExpr[f]->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VFor::DoFixSwitch
+//
+//==========================================================================
+void VFor::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -427,6 +576,41 @@ VForeach::~VForeach () {
 
 //==========================================================================
 //
+//  VForeach::SyntaxCopy
+//
+//==========================================================================
+VStatement *VForeach::SyntaxCopy () {
+  auto res = new VForeach();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VForeach::DoSyntaxCopyTo
+//
+//==========================================================================
+void VForeach::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VForeach *)e;
+  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
+  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VForeach::DoFixSwitch
+//
+//==========================================================================
+void VForeach::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (Statement) Statement->DoFixSwitch(aold, anew);
+}
+
+
+//==========================================================================
+//
 //  VForeach::Resolve
 //
 //==========================================================================
@@ -500,6 +684,47 @@ VSwitch::~VSwitch () {
   for (int i = 0; i < Statements.length(); ++i) {
     if (Statements[i]) { delete Statements[i]; Statements[i] = nullptr; }
   }
+}
+
+
+//==========================================================================
+//
+//  VSwitch::SyntaxCopy
+//
+//==========================================================================
+VStatement *VSwitch::SyntaxCopy () {
+  auto res = new VSwitch();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VSwitch::DoSyntaxCopyTo
+//
+//==========================================================================
+void VSwitch::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VSwitch *)e;
+  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
+  res->CaseInfo.SetNum(CaseInfo.length());
+  for (int f = 0; f < CaseInfo.length(); ++f) res->CaseInfo[f] = CaseInfo[f];
+  res->DefaultAddress = DefaultAddress;
+  res->Statements.SetNum(Statements.length());
+  for (int f = 0; f < Statements.length(); ++f) res->Statements[f] = (Statements[f] ? Statements[f]->SyntaxCopy() : nullptr);
+  res->HaveDefault = HaveDefault;
+  res->DoFixSwitch(this, res);
+}
+
+
+//==========================================================================
+//
+//  VSwitch::DoFixSwitch
+//
+//==========================================================================
+void VSwitch::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  for (int f = 0; f < Statements.length(); ++f) if (Statements[f]) Statements[f]->DoFixSwitch(aold, anew);
 }
 
 
@@ -619,6 +844,7 @@ VSwitchCase::VSwitchCase (VSwitch *ASwitch, VExpression *AExpr, const TLocation 
 {
 }
 
+
 //==========================================================================
 //
 //  VSwitchCase::~VSwitchCase
@@ -626,6 +852,43 @@ VSwitchCase::VSwitchCase (VSwitch *ASwitch, VExpression *AExpr, const TLocation 
 //==========================================================================
 VSwitchCase::~VSwitchCase () {
   if (Expr) { delete Expr; Expr = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VSwitch::SyntaxCopy
+//
+//==========================================================================
+VStatement *VSwitchCase::SyntaxCopy () {
+  auto res = new VSwitchCase();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VSwitchCase::DoSyntaxCopyTo
+//
+//==========================================================================
+void VSwitchCase::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VSwitchCase *)e;
+  res->Switch = Switch;
+  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
+  res->Value = Value;
+  res->Index = Index;
+}
+
+
+//==========================================================================
+//
+//  VSwitchCase::DoFixSwitch
+//
+//==========================================================================
+void VSwitchCase::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (Switch == aold) Switch = anew;
 }
 
 
@@ -693,6 +956,40 @@ VSwitchDefault::VSwitchDefault (VSwitch *ASwitch, const TLocation &ALoc)
 
 //==========================================================================
 //
+//  VSwitchDefault::SyntaxCopy
+//
+//==========================================================================
+VStatement *VSwitchDefault::SyntaxCopy () {
+  auto res = new VSwitchDefault();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VSwitchDefault::DoSyntaxCopyTo
+//
+//==========================================================================
+void VSwitchDefault::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VSwitchDefault *)e;
+  res->Switch = Switch;
+}
+
+
+//==========================================================================
+//
+//  VSwitchDefault::DoFixSwitch
+//
+//==========================================================================
+void VSwitchDefault::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (Switch == aold) Switch = anew;
+}
+
+
+//==========================================================================
+//
 //  VSwitchDefault::Resolve
 //
 //==========================================================================
@@ -735,6 +1032,19 @@ VBreak::VBreak (const TLocation &ALoc) : VStatement(ALoc)
 {
 }
 
+
+//==========================================================================
+//
+//  VBreak::SyntaxCopy
+//
+//==========================================================================
+VStatement *VBreak::SyntaxCopy () {
+  auto res = new VBreak();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
 //==========================================================================
 //
 //  VBreak::Resolve
@@ -776,6 +1086,18 @@ bool VBreak::IsBreak () {
 //==========================================================================
 VContinue::VContinue (const TLocation &ALoc) : VStatement(ALoc)
 {
+}
+
+
+//==========================================================================
+//
+//  VContinue::SyntaxCopy
+//
+//==========================================================================
+VStatement *VContinue::SyntaxCopy () {
+  auto res = new VContinue();
+  DoSyntaxCopyTo(res);
+  return res;
 }
 
 
@@ -832,6 +1154,31 @@ VReturn::VReturn (VExpression *AExpr, const TLocation &ALoc)
 //==========================================================================
 VReturn::~VReturn () {
   if (Expr) { delete Expr; Expr = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VReturn::SyntaxCopy
+//
+//==========================================================================
+VStatement *VReturn::SyntaxCopy () {
+  auto res = new VReturn();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VReturn::DoSyntaxCopyTo
+//
+//==========================================================================
+void VReturn::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VReturn *)e;
+  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
+  res->NumLocalsToClear = NumLocalsToClear;
 }
 
 
@@ -930,6 +1277,30 @@ VExpressionStatement::~VExpressionStatement () noexcept(false) {
 
 //==========================================================================
 //
+//  VExpressionStatement::SyntaxCopy
+//
+//==========================================================================
+VStatement *VExpressionStatement::SyntaxCopy () {
+  auto res = new VExpressionStatement();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VExpressionStatement::DoSyntaxCopyTo
+//
+//==========================================================================
+void VExpressionStatement::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VExpressionStatement *)e;
+  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
 //  VExpressionStatement::Resolve
 //
 //==========================================================================
@@ -975,6 +1346,30 @@ VLocalVarStatement::~VLocalVarStatement () {
 
 //==========================================================================
 //
+//  VLocalVarStatement::SyntaxCopy
+//
+//==========================================================================
+VStatement *VLocalVarStatement::SyntaxCopy () {
+  auto res = new VLocalVarStatement();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::DoSyntaxCopyTo
+//
+//==========================================================================
+void VLocalVarStatement::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VLocalVarStatement *)e;
+  res->Decl = (VLocalDecl *)(Decl ? Decl->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
 //  VLocalVarStatement::Resolve
 //
 //==========================================================================
@@ -1014,6 +1409,41 @@ VCompound::~VCompound () {
   for (int i = 0; i < Statements.length(); ++i) {
     if (Statements[i]) { delete Statements[i]; Statements[i] = nullptr; }
   }
+}
+
+
+//==========================================================================
+//
+//  VCompound::SyntaxCopy
+//
+//==========================================================================
+VStatement *VCompound::SyntaxCopy () {
+  auto res = new VCompound();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VCompound::DoSyntaxCopyTo
+//
+//==========================================================================
+void VCompound::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VCompound *)e;
+  res->Statements.SetNum(Statements.length());
+  for (int f = 0; f < Statements.length(); ++f) res->Statements[f] = (Statements[f] ? Statements[f]->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VCompound::DoFixSwitch
+//
+//==========================================================================
+void VCompound::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  for (int f = 0; f < Statements.length(); ++f) if (Statements[f]) Statements[f]->DoFixSwitch(aold, anew);
 }
 
 

@@ -23,6 +23,11 @@
 //**
 //**************************************************************************
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VSwitch;
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class VStatement {
 public:
@@ -30,6 +35,7 @@ public:
 
   VStatement (const TLocation &);
   virtual ~VStatement() noexcept(false);
+  virtual VStatement *SyntaxCopy () = 0;
   virtual bool Resolve (VEmitContext &) = 0;
   virtual void DoEmit (VEmitContext &) = 0;
   void Emit (VEmitContext &);
@@ -39,6 +45,13 @@ public:
   virtual bool IsSwitchCase ();
   virtual bool IsSwitchDefault ();
   virtual bool IsEndsWithReturn ();
+
+protected:
+  VStatement () {}
+  virtual void DoSyntaxCopyTo (VStatement *e);
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew);
 };
 
 
@@ -46,9 +59,13 @@ public:
 class VEmptyStatement : public VStatement {
 public:
   VEmptyStatement (const TLocation &);
-  virtual bool Resolve (VEmitContext&) override;
-  virtual void DoEmit (VEmitContext&) override;
+  virtual VStatement *SyntaxCopy () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () override;
+
+protected:
+  VEmptyStatement () {}
 };
 
 
@@ -62,9 +79,16 @@ public:
   VIf (VExpression *AExpr, VStatement *ATrueStatement, const TLocation &ALoc);
   VIf (VExpression *AExpr, VStatement *ATrueStatement, VStatement *AFalseStatement, const TLocation &ALoc);
   virtual ~VIf () override;
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () override;
+
+protected:
+  VIf () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -76,9 +100,17 @@ public:
 
   VWhile (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
   virtual ~VWhile () override;
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () override;
+
+protected:
+  VWhile () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -90,9 +122,17 @@ public:
 
   VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
   virtual ~VDo () override;
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () override;
+
+protected:
+  VDo () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -106,9 +146,17 @@ public:
 
   VFor (const TLocation &ALoc);
   virtual ~VFor () override;
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () override;
+
+protected:
+  VFor () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -120,9 +168,17 @@ public:
 
   VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
   virtual ~VForeach () override;
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext&) override;
   virtual void DoEmit (VEmitContext&) override;
   virtual bool IsEndsWithReturn () override;
+
+protected:
+  VForeach () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -142,9 +198,17 @@ public:
 
   VSwitch (const TLocation &ALoc);
   virtual ~VSwitch () override;
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () override;
+
+protected:
+  VSwitch () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -158,9 +222,17 @@ public:
 
   VSwitchCase (VSwitch *ASwitch, VExpression *AExpr, const TLocation &ALoc);
   virtual ~VSwitchCase () override;
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext&) override;
   virtual void DoEmit (VEmitContext&) override;
   virtual bool IsSwitchCase () override;
+
+protected:
+  VSwitchCase () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -170,9 +242,17 @@ public:
   VSwitch *Switch;
 
   VSwitchDefault (VSwitch *ASwitch, const TLocation &ALoc);
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsSwitchDefault () override;
+
+protected:
+  VSwitchDefault () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -180,9 +260,13 @@ public:
 class VBreak : public VStatement {
 public:
   VBreak (const TLocation &ALoc);
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsBreak () override;
+
+protected:
+  VBreak () {}
 };
 
 
@@ -190,9 +274,13 @@ public:
 class VContinue : public VStatement {
 public:
   VContinue (const TLocation &ALoc);
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsContinue () override;
+
+protected:
+  VContinue () {}
 };
 
 
@@ -204,10 +292,15 @@ public:
 
   VReturn (VExpression *AExpr, const TLocation &ALoc);
   virtual ~VReturn () override;
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsReturn () override;
   virtual bool IsEndsWithReturn () override;
+
+protected:
+  VReturn () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
 };
 
 
@@ -218,8 +311,13 @@ public:
 
   VExpressionStatement (VExpression *AExpr);
   virtual ~VExpressionStatement () noexcept(false) override;
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
+
+protected:
+  VExpressionStatement () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
 };
 
 
@@ -230,8 +328,13 @@ public:
 
   VLocalVarStatement (VLocalDecl *ADecl);
   virtual ~VLocalVarStatement () override;
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
+
+protected:
+  VLocalVarStatement () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
 };
 
 
@@ -242,7 +345,15 @@ public:
 
   VCompound (const TLocation &ALoc);
   virtual ~VCompound () override;
+  virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () override;
+
+protected:
+  VCompound () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
