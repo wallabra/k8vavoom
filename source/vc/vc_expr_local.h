@@ -23,63 +23,56 @@
 //**
 //**************************************************************************
 
+
 //==========================================================================
 //
 //  VLocalEntry
 //
 //==========================================================================
-
-class VLocalEntry
-{
+class VLocalEntry {
 public:
-  VExpression*  TypeExpr;
-  VName     Name;
-  TLocation   Loc;
-  VExpression*  Value;
+  VExpression *TypeExpr;
+  VName Name;
+  TLocation Loc;
+  VExpression *Value;
 
-  VLocalEntry()
-  : TypeExpr(NULL)
-  , Name(NAME_None)
-  , Value(NULL)
-  {}
+  VLocalEntry () : TypeExpr(nullptr), Name(NAME_None), Value(nullptr) {}
 };
+
 
 //==========================================================================
 //
 //  VLocalDecl
 //
 //==========================================================================
-
-class VLocalDecl : public VExpression
-{
+class VLocalDecl : public VExpression {
 public:
   TArray<VLocalEntry> Vars;
 
-  VLocalDecl(const TLocation&);
-  ~VLocalDecl();
+  VLocalDecl (const TLocation &);
+  virtual ~VLocalDecl () override;
 
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
 
-  void Declare(VEmitContext&);
-  void EmitInitialisations(VEmitContext&);
+  void Declare (VEmitContext &);
+  void EmitInitialisations (VEmitContext &);
 };
+
 
 //==========================================================================
 //
 //  VLocalVar
 //
 //==========================================================================
-
-class VLocalVar : public VExpression
-{
+class VLocalVar : public VExpression {
 public:
-  int       num;
-  bool      AddressRequested;
-  bool      PushOutParam;
+  int num;
+  bool AddressRequested;
+  bool PushOutParam;
 
-  VLocalVar(int ANum, const TLocation& ALoc);
-  VExpression* DoResolve(VEmitContext&);
-  void RequestAddressOf();
-  void Emit(VEmitContext&);
+  VLocalVar (int ANum, const TLocation &ALoc);
+  virtual VExpression* DoResolve (VEmitContext &) override;
+  virtual void RequestAddressOf () override;
+  virtual void Emit (VEmitContext &) override;
 };

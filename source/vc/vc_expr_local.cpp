@@ -23,101 +23,63 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VLocalDecl::VLocalDecl
 //
 //==========================================================================
-
-VLocalDecl::VLocalDecl(const TLocation& ALoc)
-: VExpression(ALoc)
+VLocalDecl::VLocalDecl (const TLocation &ALoc) : VExpression(ALoc)
 {
 }
+
 
 //==========================================================================
 //
 //  VLocalDecl::~VLocalDecl
 //
 //==========================================================================
-
-VLocalDecl::~VLocalDecl()
-{
-  for (int i = 0; i < Vars.Num(); i++)
-  {
-    if (Vars[i].TypeExpr)
-    {
-      delete Vars[i].TypeExpr;
-      Vars[i].TypeExpr = NULL;
-    }
-    if (Vars[i].Value)
-    {
-      delete Vars[i].Value;
-      Vars[i].Value = NULL;
-    }
+VLocalDecl::~VLocalDecl () {
+  for (int i = 0; i < Vars.length(); ++i) {
+    if (Vars[i].TypeExpr) { delete Vars[i].TypeExpr; Vars[i].TypeExpr = nullptr; }
+    if (Vars[i].Value) { delete Vars[i].Value; Vars[i].Value = nullptr; }
   }
 }
+
 
 //==========================================================================
 //
 //  VLocalDecl::DoResolve
 //
 //==========================================================================
-
-VExpression* VLocalDecl::DoResolve(VEmitContext& ec)
-{
+VExpression *VLocalDecl::DoResolve (VEmitContext &ec) {
   Declare(ec);
   return this;
 }
+
 
 //==========================================================================
 //
 //  VLocalDecl::Emit
 //
 //==========================================================================
-
-void VLocalDecl::Emit(VEmitContext& ec)
-{
+void VLocalDecl::Emit (VEmitContext &ec) {
   EmitInitialisations(ec);
 }
+
 
 //==========================================================================
 //
 //  VLocalDecl::Declare
 //
 //==========================================================================
+void VLocalDecl::Declare (VEmitContext &ec) {
+  for (int i = 0; i < Vars.length(); ++i) {
+    VLocalEntry &e = Vars[i];
 
-void VLocalDecl::Declare(VEmitContext& ec)
-{
-  for (int i = 0; i < Vars.Num(); i++)
-  {
-    VLocalEntry& e = Vars[i];
-
-    if (ec.CheckForLocalVar(e.Name) != -1)
-    {
-      ParseError(e.Loc, "Redefined identifier %s", *e.Name);
-    }
+    if (ec.CheckForLocalVar(e.Name) != -1) ParseError(e.Loc, "Redefined identifier %s", *e.Name);
 
     bool dbgDump = false;
     bool valueResolved = false;
@@ -143,17 +105,11 @@ void VLocalDecl::Declare(VEmitContext& ec)
 
     e.TypeExpr = e.TypeExpr->ResolveAsType(ec);
     if (dbgDump) fprintf(stderr, "003\n");
-    if (e.TypeExpr == NULL)
-    {
-      continue;
-    }
+    if (!e.TypeExpr) continue;
     if (dbgDump) fprintf(stderr, "003-1 (%s)\n", *(e.TypeExpr->Type.GetName()));
 
     VFieldType Type = e.TypeExpr->Type;
-    if (Type.Type == TYPE_Void || Type.Type == TYPE_Automatic)
-    {
-      ParseError(e.TypeExpr->Loc, "Bad variable type");
-    }
+    if (Type.Type == TYPE_Void || Type.Type == TYPE_Automatic) ParseError(e.TypeExpr->Loc, "Bad variable type");
 
     VLocalVarDef& L = ec.LocalDefs.Alloc();
     L.Name = e.Name;
@@ -165,7 +121,7 @@ void VLocalDecl::Declare(VEmitContext& ec)
     // resolve initialisation
     if (e.Value) {
       if (dbgDump) fprintf(stderr, "004\n");
-      VExpression* op1 = new VLocalVar(ec.LocalDefs.Num()-1, e.Loc);
+      VExpression* op1 = new VLocalVar(ec.LocalDefs.length()-1, e.Loc);
       e.Value = new VAssignment(VAssignment::Assign, op1, e.Value, e.Loc, valueResolved);
       if (dbgDump) fprintf(stderr, "005\n");
       e.Value = e.Value->Resolve(ec);
@@ -176,77 +132,62 @@ void VLocalDecl::Declare(VEmitContext& ec)
     if (dbgDump) fprintf(stderr, "007\n");
 
     ec.localsofs += Type.GetStackSize() / 4;
-    if (ec.localsofs > 1024)
-    {
-      ParseWarning(e.Loc, "Local vars > 1k");
-    }
+    if (ec.localsofs > 1024) ParseWarning(e.Loc, "Local vars > 1k");
   }
 }
+
 
 //==========================================================================
 //
 //  VLocalDecl::EmitInitialisations
 //
 //==========================================================================
-
-void VLocalDecl::EmitInitialisations(VEmitContext& ec)
-{
-  for (int i = 0; i < Vars.Num(); i++)
-  {
-    if (Vars[i].Value)
-    {
-      Vars[i].Value->Emit(ec);
-    }
+void VLocalDecl::EmitInitialisations (VEmitContext &ec) {
+  for (int i = 0; i < Vars.length(); ++i) {
+    if (Vars[i].Value) Vars[i].Value->Emit(ec);
   }
 }
+
 
 //==========================================================================
 //
 //  VLocalVar::VLocalVar
 //
 //==========================================================================
-
-VLocalVar::VLocalVar(int ANum, const TLocation& ALoc)
-: VExpression(ALoc)
-, num(ANum)
-, AddressRequested(false)
-, PushOutParam(false)
+VLocalVar::VLocalVar (int ANum, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , num(ANum)
+  , AddressRequested(false)
+  , PushOutParam(false)
 {
 }
+
 
 //==========================================================================
 //
 //  VLocalVar::DoResolve
 //
 //==========================================================================
-
-VExpression* VLocalVar::DoResolve(VEmitContext& ec)
-{
+VExpression *VLocalVar::DoResolve (VEmitContext &ec) {
   Type = ec.LocalDefs[num].Type;
   RealType = ec.LocalDefs[num].Type;
-  if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool)
-  {
-    Type = VFieldType(TYPE_Int);
-  }
-  PushOutParam = !!(ec.LocalDefs[num].ParamFlags & FPARM_Out);
+  if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
+  PushOutParam = !!(ec.LocalDefs[num].ParamFlags&FPARM_Out);
   return this;
 }
+
 
 //==========================================================================
 //
 //  VLocalVar::RequestAddressOf
 //
 //==========================================================================
-
-void VLocalVar::RequestAddressOf()
-{
-  if (PushOutParam)
-  {
+void VLocalVar::RequestAddressOf () {
+  if (PushOutParam) {
     PushOutParam = false;
     return;
   }
-  if (AddressRequested)
-    ParseError(Loc, "Multiple address of");
+  if (AddressRequested) ParseError(Loc, "Multiple address of");
   AddressRequested = true;
 }
 
@@ -256,7 +197,7 @@ void VLocalVar::RequestAddressOf()
 //  VLocalVar::Emit
 //
 //==========================================================================
-void VLocalVar::Emit(VEmitContext& ec) {
+void VLocalVar::Emit (VEmitContext &ec) {
   if (AddressRequested) {
     ec.EmitLocalAddress(ec.LocalDefs[num].Offset);
   } else if (ec.LocalDefs[num].ParamFlags&FPARM_Out) {
