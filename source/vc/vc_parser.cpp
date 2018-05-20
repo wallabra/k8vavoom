@@ -127,66 +127,100 @@ VExpression* VParser::ParseMethodCallOrCast(VName Name, TLocation Loc)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VParser::ParseLocalVar
 //
 //==========================================================================
-
-VLocalDecl* VParser::ParseLocalVar(VExpression* TypeExpr, bool requireInit)
-{
+VLocalDecl *VParser::ParseLocalVar (VExpression* TypeExpr, bool requireInit) {
   guard(VParser::ParseLocalVar);
-  VLocalDecl* Decl = new VLocalDecl(Lex.Location);
-  do
-  {
+  VLocalDecl *Decl = new VLocalDecl(Lex.Location);
+  bool isFirstVar = true;
+  bool wasNewArray = false;
+  do {
     VLocalEntry e;
 
     e.TypeExpr = TypeExpr->CreateTypeExprCopy();
     TLocation l = Lex.Location;
-    while (Lex.Check(TK_Asterisk))
-    {
+    while (Lex.Check(TK_Asterisk)) {
       e.TypeExpr = new VPointerType(e.TypeExpr, l);
       l = Lex.Location;
     }
-    if (Lex.Token != TK_Identifier)
-    {
-      ParseError(Lex.Location, "Invalid identifier, variable name expected");
-      continue;
-    }
-    e.Loc = Lex.Location;
-    e.Name = Lex.Name;
-    Lex.NextToken();
 
-    if (requireInit && Lex.Token != TK_Assign) {
-      ParseError(Lex.Location, "Initializer required");
-      continue;
-    }
-
-    if (Lex.Check(TK_LBracket))
-    {
+    // check for `type[size] arr` syntax
+    if (Lex.Check(TK_LBracket)) {
       // arrays cannot be initialized (it seems), so they cannot be automatic
-      if (TypeExpr->Type.Type == TYPE_Automatic)
-      {
+      if (TypeExpr->Type.Type == TYPE_Automatic) {
         ParseError(Lex.Location, "Automatic variable requires initializer");
         continue;
       }
-      TLocation SLoc = Lex.Location;
-      VExpression* SE = ParseExpression();
-      Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
-      e.TypeExpr = new VFixedArrayType(e.TypeExpr, SE, SLoc);
-    }
-    //  Initialisation
-    else if (Lex.Check(TK_Assign))
-    {
-      e.Value = ParseExpressionPriority13();
-    }
-    else
-    {
-      // automatic type cannot be declared without initializer
-      if (TypeExpr->Type.Type == TYPE_Automatic)
-      {
-        ParseError(Lex.Location, "Automatic variable requires initializer");
+      if (!isFirstVar) {
+        ParseError(Lex.Location, "Only one array can be declared with `type[size] name` syntex");
         continue;
+      }
+      isFirstVar = false;
+      // size
+      TLocation SLoc = Lex.Location;
+      VExpression *SE = ParseExpression();
+      Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
+      // name
+      if (Lex.Token != TK_Identifier) {
+        ParseError(Lex.Location, "Invalid identifier, variable name expected");
+        continue;
+      }
+      e.Loc = Lex.Location;
+      e.Name = Lex.Name;
+      Lex.NextToken();
+      // create it
+      e.TypeExpr = new VFixedArrayType(e.TypeExpr, SE, SLoc);
+      wasNewArray = true;
+      if (requireInit) {
+        ParseError(Lex.Location, "Initializer required, but arrays doesn't support initialization");
+        continue;
+      }
+    } else {
+      // normal (and old-style array) syntax
+      if (wasNewArray) {
+        ParseError(Lex.Location, "Only one array can be declared with `type[size] name` syntex");
+        break;
+      }
+      isFirstVar = false;
+
+      if (Lex.Token != TK_Identifier) {
+        ParseError(Lex.Location, "Invalid identifier, variable name expected");
+        continue;
+      }
+      e.Loc = Lex.Location;
+      e.Name = Lex.Name;
+      Lex.NextToken();
+
+      if (requireInit && Lex.Token != TK_Assign) {
+        ParseError(Lex.Location, "Initializer required");
+        continue;
+      }
+
+      if (Lex.Check(TK_LBracket)) {
+        // arrays cannot be initialized (it seems), so they cannot be automatic
+        if (TypeExpr->Type.Type == TYPE_Automatic) {
+          ParseError(Lex.Location, "Automatic variable requires initializer");
+          continue;
+        }
+        TLocation SLoc = Lex.Location;
+        VExpression* SE = ParseExpression();
+        Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
+        e.TypeExpr = new VFixedArrayType(e.TypeExpr, SE, SLoc);
+      }
+      // Initialisation
+      else if (Lex.Check(TK_Assign)) {
+        e.Value = ParseExpressionPriority13();
+      }
+      else {
+        // automatic type cannot be declared without initializer
+        if (TypeExpr->Type.Type == TYPE_Automatic) {
+          ParseError(Lex.Location, "Automatic variable requires initializer");
+          continue;
+        }
       }
     }
     Decl->Vars.Append(e);
@@ -196,6 +230,7 @@ VLocalDecl* VParser::ParseLocalVar(VExpression* TypeExpr, bool requireInit)
   return Decl;
   unguard;
 }
+
 
 //==========================================================================
 //
