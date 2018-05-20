@@ -74,7 +74,7 @@ VUnary::~VUnary()
   if (op)
   {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
 
@@ -96,7 +96,7 @@ VExpression* VUnary::DoResolve(VEmitContext& ec)
   if (!op)
   {
     delete this;
-    return NULL;
+    return nullptr;
   }
 
   switch (Oper)
@@ -107,12 +107,12 @@ VExpression* VUnary::DoResolve(VEmitContext& ec)
     {
       ParseError(Loc, "Expression type mismatch");
       delete this;
-      return NULL;
+      return nullptr;
     }
     else
     {
       VExpression* e = op;
-      op = NULL;
+      op = nullptr;
       delete this;
       return e;
     }
@@ -134,7 +134,7 @@ VExpression* VUnary::DoResolve(VEmitContext& ec)
     {
       ParseError(Loc, "Expression type mismatch");
       delete this;
-      return NULL;
+      return nullptr;
     }
     break;
 
@@ -147,7 +147,7 @@ VExpression* VUnary::DoResolve(VEmitContext& ec)
     {
       ParseError(Loc, "Expression type mismatch");
       delete this;
-      return NULL;
+      return nullptr;
     }
     Type = TYPE_Int;
     break;
@@ -157,7 +157,7 @@ VExpression* VUnary::DoResolve(VEmitContext& ec)
     {
       ParseError(Loc, "Tried to take address of reference");
       delete this;
-      return NULL;
+      return nullptr;
     }
     else
     {
@@ -171,7 +171,7 @@ VExpression* VUnary::DoResolve(VEmitContext& ec)
   if (op->IsIntConst())
   {
     vint32 Value = op->GetIntConst();
-    VExpression* e = NULL;
+    VExpression* e = nullptr;
     switch (Oper)
     {
     case Minus:
@@ -298,7 +298,7 @@ VUnaryMutator::~VUnaryMutator()
   if (op)
   {
     delete op;
-    op = NULL;
+    op = nullptr;
   }
 }
 
@@ -315,14 +315,14 @@ VExpression* VUnaryMutator::DoResolve(VEmitContext& ec)
   if (!op)
   {
     delete this;
-    return NULL;
+    return nullptr;
   }
 
   if (op->Type.Type != TYPE_Int)
   {
     ParseError(Loc, "Expression type mismatch");
     delete this;
-    return NULL;
+    return nullptr;
   }
   Type = TYPE_Int;
   op->RequestAddressOf();
@@ -426,30 +426,25 @@ VBinary::~VBinary()
   if (op1)
   {
     delete op1;
-    op1 = NULL;
+    op1 = nullptr;
   }
   if (op2)
   {
     delete op2;
-    op2 = NULL;
+    op2 = nullptr;
   }
 }
+
 
 //==========================================================================
 //
 //  VBinary::DoResolve
 //
 //==========================================================================
-
-VExpression* VBinary::DoResolve(VEmitContext& ec)
-{
+VExpression* VBinary::DoResolve (VEmitContext &ec) {
   if (op1 && !mOp1Resolved) { mOp1Resolved = true; op1 = op1->Resolve(ec); }
   if (op2 && !mOp2Resolved) { mOp2Resolved = true; op2 = op2->Resolve(ec); }
-  if (!op1 || !op2)
-  {
-    delete this;
-    return NULL;
-  }
+  if (!op1 || !op2) { delete this; return nullptr; }
 
   // coerce both to floats
   //k8:FIXME: simplify this!
@@ -460,7 +455,7 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
   {
     //printf("*** OP1 require float, and OP2 is integral: COERCING OP2\n");
     op2 = op2->CoerceToFloat();
-    if (!op2) { delete this; return NULL; }
+    if (!op2) { delete this; return nullptr; }
   }
 
   // if op2 is `float` or `vector`, and op1 is integral -> coerce op1
@@ -469,13 +464,11 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
   {
     //printf("*** OP2 require float, and OP1 is integral: COERCING OP1\n");
     op1 = op1->CoerceToFloat();
-    if (!op1) { delete this; return NULL; }
+    if (!op1) { delete this; return nullptr; }
   }
 
-  if (ec.Package->Name == NAME_decorate)
-  {
-    if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Float)
-    {
+  if (ec.Package->Name == NAME_decorate) {
+    if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Float) {
       /*
       VExpression* TmpArgs[1];
       TmpArgs[0] = op1;
@@ -484,10 +477,8 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
       op1 = op1->Resolve(ec);
       */
       op1 = (new VScalarToFloat(op1))->Resolve(ec);
-      if (!op1) { delete this; return NULL; } // oops
-    }
-    else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Int)
-    {
+      if (!op1) { delete this; return nullptr; } // oops
+    } else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Int) {
       /*
       VExpression* TmpArgs[1];
       TmpArgs[0] = op2;
@@ -496,264 +487,190 @@ VExpression* VBinary::DoResolve(VEmitContext& ec)
       op2 = op2->Resolve(ec);
       */
       op2 = (new VScalarToFloat(op2))->Resolve(ec);
-      if (!op2) { delete this; return NULL; } // oops
+      if (!op2) { delete this; return nullptr; } // oops
     }
   }
 
-  switch (Oper)
-  {
-  case Add:
-  case Subtract:
-    if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int)
-    {
+  // determine resulting type (and check operand types)
+  switch (Oper) {
+    case Add:
+    case Subtract:
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) Type = TYPE_Int;
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) Type = TYPE_Float;
+      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) Type = TYPE_Vector;
+      else {
+        ParseError(Loc, "Expression type mismatch");
+        delete this;
+        return nullptr;
+      }
+      break;
+    case Multiply:
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) Type = TYPE_Int;
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) Type = TYPE_Float;
+      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Float) Type = TYPE_Vector;
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Vector) Type = TYPE_Vector;
+      else {
+        ParseError(Loc, "Expression type mismatch");
+        delete this;
+        return nullptr;
+      }
+      break;
+    case Divide:
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) Type = TYPE_Int;
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) Type = TYPE_Float;
+      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Float) Type = TYPE_Vector;
+      else {
+        ParseError(Loc, "Expression type mismatch");
+        delete this;
+        return nullptr;
+      }
+      break;
+    case Modulus:
+    case LShift:
+    case RShift:
+    case And:
+    case XOr:
+    case Or:
+      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) Type = TYPE_Int;
+      else {
+        ParseError(Loc, "Expression type mismatch");
+        delete this;
+        return nullptr;
+      }
+      break;
+    case Less:
+    case LessEquals:
+    case Greater:
+    case GreaterEquals:
+      if (!(op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) &&
+          !(op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) &&
+          !(op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String))
+      {
+        ParseError(Loc, "Expression type mismatch");
+        delete this;
+        return nullptr;
+      }
       Type = TYPE_Int;
-    }
-    else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float)
-    {
-      Type = TYPE_Float;
-    }
-    else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector)
-    {
-      Type = TYPE_Vector;
-    }
-    else
-    {
-      ParseError(Loc, "Expression type mismatch");
-      delete this;
-      return NULL;
-    }
-    break;
-  case Multiply:
-    if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int)
-    {
+      break;
+    case Equals:
+    case NotEquals:
+      if (!(op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) &&
+          !(op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) &&
+          !(op1->Type.Type == TYPE_Name && op2->Type.Type == TYPE_Name) &&
+          !(op1->Type.Type == TYPE_Pointer && op2->Type.Type == TYPE_Pointer) &&
+          !(op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) &&
+          !(op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) &&
+          !(op1->Type.Type == TYPE_State && op2->Type.Type == TYPE_State) &&
+          !(op1->Type.Type == TYPE_Reference && op2->Type.Type == TYPE_Reference) &&
+          !(op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String))
+      {
+        ParseError(Loc, "Expression type mismatch");
+        delete this;
+        return nullptr;
+      }
       Type = TYPE_Int;
-    }
-    else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float)
-    {
-      Type = TYPE_Float;
-    }
-    else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Float)
-    {
-      Type = TYPE_Vector;
-    }
-    else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Vector)
-    {
-      Type = TYPE_Vector;
-    }
-    else
-    {
-      ParseError(Loc, "Expression type mismatch");
-      delete this;
-      return NULL;
-    }
-    break;
-  case Divide:
-    if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int)
-    {
-      Type = TYPE_Int;
-    }
-    else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float)
-    {
-      Type = TYPE_Float;
-    }
-    else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Float)
-    {
-      Type = TYPE_Vector;
-    }
-    else
-    {
-      ParseError(Loc, "Expression type mismatch");
-      delete this;
-      return NULL;
-    }
-    break;
-  case Modulus:
-  case LShift:
-  case RShift:
-  case And:
-  case XOr:
-  case Or:
-    if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int)
-    {
-      Type = TYPE_Int;
-    }
-    else
-    {
-      ParseError(Loc, "Expression type mismatch");
-      delete this;
-      return NULL;
-    }
-    break;
-  case Less:
-  case LessEquals:
-  case Greater:
-  case GreaterEquals:
-    if (!(op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) &&
-        !(op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) &&
-        !(op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String))
-    {
-      ParseError(Loc, "Expression type mismatch");
-      delete this;
-      return NULL;
-    }
-    Type = TYPE_Int;
-    break;
-  case Equals:
-  case NotEquals:
-    if (!(op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) &&
-        !(op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) &&
-        !(op1->Type.Type == TYPE_Name && op2->Type.Type == TYPE_Name) &&
-        !(op1->Type.Type == TYPE_Pointer && op2->Type.Type == TYPE_Pointer) &&
-        !(op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) &&
-        !(op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) &&
-        !(op1->Type.Type == TYPE_State && op2->Type.Type == TYPE_State) &&
-        !(op1->Type.Type == TYPE_Reference && op2->Type.Type == TYPE_Reference) &&
-        !(op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String))
-    {
-      ParseError(Loc, "Expression type mismatch");
-      delete this;
-      return NULL;
-    }
-    Type = TYPE_Int;
-    break;
+      break;
   }
 
-  //  Optimise integer constants
-  if (op1->IsIntConst() && op2->IsIntConst())
-  {
+  // optimise integer constants
+  if (op1->IsIntConst() && op2->IsIntConst()) {
     vint32 Value1 = op1->GetIntConst();
     vint32 Value2 = op2->GetIntConst();
-    VExpression* e = NULL;
-    switch (Oper)
-    {
-    case Add:
-      e = new VIntLiteral(Value1 + Value2, Loc);
-      break;
-
-    case Subtract:
-      e = new VIntLiteral(Value1 - Value2, Loc);
-      break;
-
-    case Multiply:
-      e = new VIntLiteral(Value1 * Value2, Loc);
-      break;
-
-    case Divide:
-      if (!Value2)
-      {
-        ParseError(Loc, "Division by 0");
-        delete this;
-        return NULL;
-      }
-      e = new VIntLiteral(Value1 / Value2, Loc);
-      break;
-
-    case Modulus:
-      if (!Value2)
-      {
-        ParseError(Loc, "Division by 0");
-        delete this;
-        return NULL;
-      }
-      e = new VIntLiteral(Value1 % Value2, Loc);
-      break;
-
-    case LShift:
-      e = new VIntLiteral(Value1 << Value2, Loc);
-      break;
-
-    case RShift:
-      e = new VIntLiteral(Value1 >> Value2, Loc);
-      break;
-
-    case Less:
-      e = new VIntLiteral(Value1 < Value2, Loc);
-      break;
-
-    case LessEquals:
-      e = new VIntLiteral(Value1 <= Value2, Loc);
-      break;
-
-    case Greater:
-      e = new VIntLiteral(Value1 > Value2, Loc);
-      break;
-
-    case GreaterEquals:
-      e = new VIntLiteral(Value1 >= Value2, Loc);
-      break;
-
-    case Equals:
-      e = new VIntLiteral(Value1 == Value2, Loc);
-      break;
-
-    case NotEquals:
-      e = new VIntLiteral(Value1 != Value2, Loc);
-      break;
-
-    case And:
-      e = new VIntLiteral(Value1 & Value2, Loc);
-      break;
-
-    case XOr:
-      e = new VIntLiteral(Value1 ^ Value2, Loc);
-      break;
-
-    case Or:
-      e = new VIntLiteral(Value1 | Value2, Loc);
-      break;
-
-    default:
-      break;
+    VExpression *e = nullptr;
+    switch (Oper) {
+      case Add: e = new VIntLiteral(Value1+Value2, Loc); break;
+      case Subtract: e = new VIntLiteral(Value1-Value2, Loc); break;
+      case Multiply: e = new VIntLiteral(Value1*Value2, Loc); break;
+      case Divide:
+        if (!Value2) {
+          ParseError(Loc, "Division by 0");
+          delete this;
+          return nullptr;
+        }
+        e = new VIntLiteral(Value1/Value2, Loc);
+        break;
+      case Modulus:
+        if (!Value2) {
+          ParseError(Loc, "Division by 0");
+          delete this;
+          return nullptr;
+        }
+        e = new VIntLiteral(Value1%Value2, Loc);
+        break;
+      case LShift: e = new VIntLiteral(Value1<<Value2, Loc); break;
+      case RShift: e = new VIntLiteral(Value1>>Value2, Loc); break;
+      case Less: e = new VIntLiteral(Value1 < Value2, Loc); break;
+      case LessEquals: e = new VIntLiteral(Value1 <= Value2, Loc); break;
+      case Greater: e = new VIntLiteral(Value1 > Value2, Loc); break;
+      case GreaterEquals: e = new VIntLiteral(Value1 >= Value2, Loc); break;
+      case Equals: e = new VIntLiteral(Value1 == Value2, Loc); break;
+      case NotEquals: e = new VIntLiteral(Value1 != Value2, Loc); break;
+      case And: e = new VIntLiteral(Value1 & Value2, Loc); break;
+      case XOr: e = new VIntLiteral(Value1 ^ Value2, Loc); break;
+      case Or: e = new VIntLiteral(Value1 | Value2, Loc); break;
+      default: break;
     }
-    if (e)
-    {
-      delete this;
-      return e;
-    }
+    if (e) { delete this; return e; }
   }
 
-  //  Optimise float constants.
-  if (op1->IsFloatConst() && op2->IsFloatConst())
-  {
+  // optimise float constants
+  if (op1->IsFloatConst() && op2->IsFloatConst()) {
     float Value1 = op1->GetFloatConst();
     float Value2 = op2->GetFloatConst();
-    VExpression* e = NULL;
-    switch (Oper)
-    {
-    case Add:
-      e = new VFloatLiteral(Value1 + Value2, Loc);
-      break;
-
-    case Subtract:
-      e = new VFloatLiteral(Value1 - Value2, Loc);
-      break;
-
-    case Multiply:
-      e = new VFloatLiteral(Value1 * Value2, Loc);
-      break;
-
-    case Divide:
-      if (!Value2)
-      {
-        ParseError(Loc, "Division by 0");
-        delete this;
-        return NULL;
-      }
-      e = new VFloatLiteral(Value1 / Value2, Loc);
-      break;
-
-    default:
-      break;
+    VExpression* e = nullptr;
+    switch (Oper) {
+      case Add: e = new VFloatLiteral(Value1+Value2, Loc); break;
+      case Subtract: e = new VFloatLiteral(Value1-Value2, Loc); break;
+      case Multiply: e = new VFloatLiteral(Value1*Value2, Loc); break;
+      case Divide:
+        if (!Value2) {
+          ParseError(Loc, "Division by 0");
+          delete this;
+          return nullptr;
+        }
+        e = new VFloatLiteral(Value1/Value2, Loc);
+        break;
+      default: break;
     }
-    if (e)
-    {
-      delete this;
-      return e;
-    }
+    if (e) { delete this; return e; }
   }
+
+  bool isOp1Zero = ((op1->IsIntConst() && op1->GetIntConst() == 0) || (op1->IsFloatConst() && op1->GetFloatConst() == 0));
+  bool isOp2Zero = ((op2->IsIntConst() && op2->GetIntConst() == 0) || (op2->IsFloatConst() && op2->GetFloatConst() == 0));
+
+  bool isOp1One = ((op1->IsIntConst() && op1->GetIntConst() == 1) || (op1->IsFloatConst() && op1->GetFloatConst() == 1));
+  bool isOp2One = ((op2->IsIntConst() && op2->GetIntConst() == 1) || (op2->IsFloatConst() && op2->GetFloatConst() == 1));
+
+  // division by zero check
+  if (isOp2Zero && (Oper == Divide || Oper == Modulus)) {
+    ParseError(Loc, "Division by 0");
+    delete this;
+    return nullptr;
+  }
+
+  // optimize 0+n
+  if (Oper == Add && isOp1Zero) { VExpression *e = op2; op2 = nullptr; delete this; return e; }
+  // optimize n+0
+  if (Oper == Add && isOp2Zero) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
+
+  // optimize n-0
+  if (Oper == Subtract && isOp2Zero) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
+
+  // optimize 0*n
+  if (Oper == Multiply && isOp1Zero) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
+  // optimize n*0
+  if (Oper == Multiply && isOp2Zero) { VExpression *e = op2; op2 = nullptr; delete this; return e; }
+  // optimize 1*n
+  if (Oper == Multiply && isOp1One) { VExpression *e = op2; op2 = nullptr; delete this; return e; }
+  // optimize n*1
+  if (Oper == Multiply && isOp2One) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
+
+  // optimize n/1
+  if (Oper == Divide && isOp2One) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
 
   return this;
 }
+
 
 //==========================================================================
 //
@@ -1045,12 +962,12 @@ VBinaryLogical::~VBinaryLogical()
   if (op1)
   {
     delete op1;
-    op1 = NULL;
+    op1 = nullptr;
   }
   if (op2)
   {
     delete op2;
-    op2 = NULL;
+    op2 = nullptr;
   }
 }
 
@@ -1069,7 +986,7 @@ VExpression* VBinaryLogical::DoResolve(VEmitContext& ec)
   if (!op1 || !op2)
   {
     delete this;
-    return NULL;
+    return nullptr;
   }
 
   Type = TYPE_Int;
@@ -1079,7 +996,7 @@ VExpression* VBinaryLogical::DoResolve(VEmitContext& ec)
   {
     vint32 Value1 = op1->GetIntConst();
     vint32 Value2 = op2->GetIntConst();
-    VExpression* e = NULL;
+    VExpression* e = nullptr;
     switch (Oper)
     {
     case And:
