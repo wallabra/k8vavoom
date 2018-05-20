@@ -208,6 +208,7 @@ private:
   VSourceFile *Src;
 
   void NextChr ();
+  char Peek (int dist=0) const;
   void SkipWhitespaceAndComments ();
   void ProcessPreprocessor ();
   void ProcessDefine ();

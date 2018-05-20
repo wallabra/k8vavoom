@@ -389,6 +389,23 @@ void VLexer::NextChr () {
 
 //==========================================================================
 //
+//  VLexer::Peek
+//
+//==========================================================================
+char VLexer::Peek (int dist) const {
+  if (dist < 0) ParseError(Location, "VC INTERNAL COMPILER ERROR: peek dist is negative!");
+  if (dist == 0) {
+    return (Src->FilePtr > Src->FileStart ? Src->FilePtr[-1] : Src->FilePtr[0]);
+  } else {
+    --dist;
+    if (Src->FileEnd-Src->FilePtr <= dist) return EOF_CHARACTER;
+    return Src->FilePtr[dist];
+  }
+}
+
+
+//==========================================================================
+//
 //  VLexer::SkipWhitespaceAndComments
 //
 //==========================================================================
@@ -845,19 +862,26 @@ void VLexer::ProcessNumberToken () {
   }
 
   if (Chr == '.') {
-    Token = TK_FloatLiteral;
-    NextChr(); // skip dot
-    Float = Number;
-    float fmul = 0.1;
-    for (;;) {
-      if (Chr != '_') {
-        if (ASCIIToChrCode[(vuint8)Chr] != CHR_Number) break;
-        Float += (Chr-'0')*fmul;
-        fmul /= 10.0;
-      } else {
-        //ParseError(Location, "RADIX!");
+    char nch = Peek(1);
+    if ((nch >= 'A' && nch <= 'Z') || (nch >= 'a' && nch <= 'z') || nch == '_') {
+      // num dot smth
+      return;
+    } else {
+      Token = TK_FloatLiteral;
+      NextChr(); // skip dot
+      Float = Number;
+      float fmul = 0.1;
+      for (;;) {
+        if (Chr != '_') {
+          if (ASCIIToChrCode[(vuint8)Chr] != CHR_Number) break;
+          Float += (Chr-'0')*fmul;
+          fmul /= 10.0;
+        } else {
+          //ParseError(Location, "RADIX!");
+        }
+        NextChr();
       }
-      NextChr();
+      if (Chr == 'f') NextChr();
     }
     return;
   }
