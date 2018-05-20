@@ -52,9 +52,14 @@ private:
 public:
   VAssignment (EAssignOper, VExpression*, VExpression*, const TLocation&, bool valueResolved=false);
   virtual ~VAssignment () override;
+  virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual bool IsAssignExpr () const override;
+
+protected:
+  VAssignment () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 
 
@@ -62,5 +67,10 @@ public:
 class VPropertyAssign : public VInvocation {
 public:
   VPropertyAssign (VExpression *ASelfExpr, VMethod *AFunc, bool AHaveSelf, const TLocation &ALoc);
+  virtual VExpression *SyntaxCopy () override;
   virtual bool IsPropertyAssign () const override;
+
+protected:
+  VPropertyAssign () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };

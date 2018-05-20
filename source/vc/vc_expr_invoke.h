@@ -23,93 +23,118 @@
 //**
 //**************************************************************************
 
+
+//==========================================================================
+//
+//  VInvocationBase
+//
+//==========================================================================
+class VInvocationBase : public VExpression {
+public:
+  int NumArgs;
+  VExpression *Args[VMethod::MAX_PARAMS+1];
+
+  VInvocationBase (int ANumArgs, VExpression **AArgs, const TLocation& ALoc);
+  virtual ~VInvocationBase () override;
+
+protected:
+  VInvocationBase () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
 //==========================================================================
 //
 //  VBaseInvocation
 //
 //==========================================================================
-
-class VBaseInvocation : public VExpression
-{
+class VBaseInvocation : public VInvocationBase {
 public:
-  VName     Name;
-  int       NumArgs;
-  VExpression*  Args[VMethod::MAX_PARAMS + 1];
+  VName Name;
 
   VBaseInvocation(VName, int, VExpression**, const TLocation&);
-  virtual ~VBaseInvocation() noexcept(false);
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VBaseInvocation () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VCastOrInvocation
 //
 //==========================================================================
-
-class VCastOrInvocation : public VExpression
-{
+class VCastOrInvocation : public VInvocationBase {
 public:
-  VName     Name;
-  int       NumArgs;
-  VExpression*  Args[VMethod::MAX_PARAMS + 1];
+  VName Name;
   bool FirstOpIsResolved;
 
-  VCastOrInvocation(VName, const TLocation&, int, VExpression**);
-  ~VCastOrInvocation();
-  VExpression* DoResolve(VEmitContext&);
-  VExpression* ResolveIterator(VEmitContext&);
-  void Emit(VEmitContext&);
+  VCastOrInvocation (VName, const TLocation&, int, VExpression**);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual VExpression *ResolveIterator (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VCastOrInvocation () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VDotInvocation
 //
 //==========================================================================
-
-class VDotInvocation : public VExpression
-{
+class VDotInvocation : public VInvocationBase {
 public:
-  VExpression*  SelfExpr;
-  VName     MethodName;
-  int       NumArgs;
-  VExpression*  Args[VMethod::MAX_PARAMS + 1];
+  VExpression *SelfExpr;
+  VName MethodName;
 
-  VDotInvocation(VExpression*, VName, const TLocation&, int, VExpression**);
-  ~VDotInvocation();
-  VExpression* DoResolve(VEmitContext&);
-  VExpression* ResolveIterator(VEmitContext&);
-  void Emit(VEmitContext&);
+  VDotInvocation (VExpression *, VName, const TLocation &, int, VExpression **);
+  virtual ~VDotInvocation () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual VExpression *ResolveIterator (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDotInvocation () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VInvocation
 //
 //==========================================================================
-
-class VInvocation : public VExpression
-{
+class VInvocation : public VInvocationBase {
 public:
-  VExpression*  SelfExpr;
-  VMethod*    Func;
-  VField*     DelegateField;
-  bool      HaveSelf;
-  bool      BaseCall;
-  int       NumArgs;
-  VExpression*  Args[VMethod::MAX_PARAMS + 1];
-  VState*     CallerState;
-  bool      MultiFrameState;
+  VExpression *SelfExpr;
+  VMethod *Func;
+  VField *DelegateField;
+  bool HaveSelf;
+  bool BaseCall;
+  VState *CallerState;
+  bool MultiFrameState;
   bool FirstOpIsResolved;
 
-  VInvocation(VExpression* ASelfExpr, VMethod* AFunc, VField* ADelegateField,
-    bool AHaveSelf, bool ABaseCall, const TLocation& ALoc, int ANumArgs,
-    VExpression** AArgs);
-  virtual ~VInvocation() noexcept(false);
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
-  void CheckParams(VEmitContext&);
-  void CheckDecorateParams(VEmitContext&);
+  VInvocation (VExpression *ASelfExpr, VMethod *AFunc, VField *ADelegateField,
+               bool AHaveSelf, bool ABaseCall, const TLocation &ALoc, int ANumArgs,
+               VExpression **AArgs);
+  virtual ~VInvocation () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+  void CheckParams (VEmitContext &);
+  void CheckDecorateParams (VEmitContext &);
+
+protected:
+  VInvocation () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };

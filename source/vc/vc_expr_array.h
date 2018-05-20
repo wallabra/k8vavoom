@@ -23,117 +23,140 @@
 //**
 //**************************************************************************
 
+
 //==========================================================================
 //
 //  VArrayElement
 //
 //==========================================================================
-
-class VArrayElement : public VExpression
-{
+class VArrayElement : public VExpression {
 public:
-  VExpression*    op;
-  VExpression*    ind;
-  bool        AddressRequested;
-  bool        IsAssign;
+  VExpression *op;
+  VExpression *ind;
+  bool AddressRequested;
+  bool IsAssign;
 
-  VArrayElement(VExpression*, VExpression*, const TLocation&);
-  ~VArrayElement();
-  VExpression* DoResolve(VEmitContext&);
-  VExpression* ResolveAssignmentTarget(VEmitContext&);
-  void RequestAddressOf();
-  void Emit(VEmitContext&);
+  VArrayElement (VExpression *AOp, VExpression *AInd, const TLocation &ALoc);
+  virtual ~VArrayElement () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual VExpression *ResolveAssignmentTarget (VEmitContext &) override;
+  virtual void RequestAddressOf () override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VArrayElement () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VDynArrayGetNum
 //
 //==========================================================================
-
-class VDynArrayGetNum : public VExpression
-{
+class VDynArrayGetNum : public VExpression {
 public:
-  VExpression*    ArrayExpr;
+  VExpression *ArrayExpr;
 
-  VDynArrayGetNum(VExpression*, const TLocation&);
-  ~VDynArrayGetNum();
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+  VDynArrayGetNum (VExpression *AArrayExpr, const TLocation& ALoc);
+  virtual ~VDynArrayGetNum() override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDynArrayGetNum () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VDynArraySetNum
 //
 //==========================================================================
-
 class VDynArraySetNum : public VExpression {
 public:
   VExpression *ArrayExpr;
   VExpression *NumExpr;
   int opsign; // <0: -=; >0: +=; 0: =; fixed in assign expression resolving
 
-  VDynArraySetNum(VExpression*, VExpression*, const TLocation&);
-  ~VDynArraySetNum();
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
-  bool IsDynArraySetNum() const;
+  VDynArraySetNum (VExpression *, VExpression *, const TLocation &);
+  virtual ~VDynArraySetNum () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+  virtual bool IsDynArraySetNum () const override;
+
+protected:
+  VDynArraySetNum () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VDynArrayInsert
 //
 //==========================================================================
-
-class VDynArrayInsert : public VExpression
-{
+class VDynArrayInsert : public VExpression {
 public:
-  VExpression*    ArrayExpr;
-  VExpression*    IndexExpr;
-  VExpression*    CountExpr;
+  VExpression *ArrayExpr;
+  VExpression *IndexExpr;
+  VExpression *CountExpr;
 
-  VDynArrayInsert(VExpression*, VExpression*, VExpression*,
-    const TLocation&);
-  ~VDynArrayInsert();
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+  VDynArrayInsert (VExpression *, VExpression *, VExpression *, const TLocation &);
+  virtual ~VDynArrayInsert () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDynArrayInsert () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VDynArrayRemove
 //
 //==========================================================================
-
-class VDynArrayRemove : public VExpression
-{
+class VDynArrayRemove : public VExpression {
 public:
-  VExpression*    ArrayExpr;
-  VExpression*    IndexExpr;
-  VExpression*    CountExpr;
+  VExpression *ArrayExpr;
+  VExpression *IndexExpr;
+  VExpression *CountExpr;
 
-  VDynArrayRemove(VExpression*, VExpression*, VExpression*,
-    const TLocation&);
-  ~VDynArrayRemove();
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+  VDynArrayRemove (VExpression *, VExpression *, VExpression *, const TLocation &);
+  virtual ~VDynArrayRemove () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDynArrayRemove () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VStringGetLength
 //
 //==========================================================================
-
-class VStringGetLength : public VExpression
-{
+class VStringGetLength : public VExpression {
 public:
   VExpression *StrExpr;
 
   VStringGetLength (VExpression *, const TLocation&);
   virtual ~VStringGetLength () override;
+  virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext&) override;
   virtual void Emit (VEmitContext&) override;
+
+protected:
+  VStringGetLength () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };

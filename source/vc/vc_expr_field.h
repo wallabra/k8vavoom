@@ -23,81 +23,108 @@
 //**
 //**************************************************************************
 
+
+//==========================================================================
+//
+//  VFieldBase
+//
+//==========================================================================
+class VFieldBase : public VExpression {
+public:
+  VExpression *op;
+  VName FieldName;
+
+protected:
+  bool mOpResolved;
+
+public:
+  VFieldBase (VExpression *AOp, VName AFieldName, const TLocation& ALoc, bool opResolved);
+  virtual ~VFieldBase () override;
+
+protected:
+  VFieldBase () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
 //==========================================================================
 //
 //  VPointerField
 //
 //==========================================================================
-
-class VPointerField : public VExpression
-{
-private:
-  bool mOpResolved;
-
+class VPointerField : public VFieldBase {
 public:
-  VExpression* op;
-  VName FieldName;
+  VPointerField (VExpression *AOp, VName AFieldName, const TLocation& ALoc, bool opResolved=false);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
 
-  VPointerField (VExpression*, VName, const TLocation&, bool opResolved=false);
-  virtual ~VPointerField ();
-  VExpression *DoResolve (VEmitContext&);
-  void Emit (VEmitContext&);
+protected:
+  VPointerField () {}
 };
+
 
 //==========================================================================
 //
 //  VDotField
 //
 //==========================================================================
-
-class VDotField : public VExpression
-{
+class VDotField : public VFieldBase {
 public:
-  VExpression*    op;
-  VName       FieldName;
+  VDotField (VExpression *AOp, VName AFieldName, const TLocation& ALoc, bool opResolved=false);
 
-  VDotField(VExpression*, VName, const TLocation&);
-  ~VDotField();
-  VExpression* IntResolve(VEmitContext&, bool);
-  VExpression* DoResolve(VEmitContext&);
-  VExpression* ResolveAssignmentTarget(VEmitContext&);
-  void Emit(VEmitContext&);
+  VExpression *IntResolve (VEmitContext &, bool);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual VExpression *ResolveAssignmentTarget (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDotField () {}
 };
+
 
 //==========================================================================
 //
 //  VFieldAccess
 //
 //==========================================================================
-
-class VFieldAccess : public VExpression
-{
+class VFieldAccess : public VExpression {
 public:
-  VExpression*    op;
-  VField*       field;
-  bool        AddressRequested;
+  VExpression *op;
+  VField *field;
+  bool AddressRequested;
 
-  VFieldAccess(VExpression* AOp, VField* AField, const TLocation& ALoc, int ExtraFlags);
-  ~VFieldAccess();
-  VExpression* DoResolve(VEmitContext&);
-  void RequestAddressOf();
-  void Emit(VEmitContext&);
+  VFieldAccess (VExpression *AOp, VField *AField, const TLocation &ALoc, int ExtraFlags);
+  virtual ~VFieldAccess () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void RequestAddressOf () override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VFieldAccess () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VDelegateVal
 //
 //==========================================================================
-
-class VDelegateVal : public VExpression
-{
+class VDelegateVal : public VExpression {
 public:
-  VExpression*    op;
-  VMethod*      M;
+  VExpression *op;
+  VMethod *M;
 
-  VDelegateVal(VExpression* AOp, VMethod* AM, const TLocation& ALoc);
-  ~VDelegateVal();
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+  VDelegateVal (VExpression *AOp, VMethod *AM, const TLocation &ALoc);
+  virtual ~VDelegateVal () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDelegateVal () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };

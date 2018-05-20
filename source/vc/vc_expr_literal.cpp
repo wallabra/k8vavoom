@@ -23,344 +23,458 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VIntLiteral::VIntLiteral
 //
 //==========================================================================
-
-VIntLiteral::VIntLiteral(vint32 AValue, const TLocation& ALoc)
-: VExpression(ALoc)
-, Value(AValue)
+VIntLiteral::VIntLiteral (vint32 AValue, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , Value(AValue)
 {
   Type = TYPE_Int;
 }
+
+
+//==========================================================================
+//
+//  VIntLiteral::SyntaxCopy
+//
+//==========================================================================
+VExpression *VIntLiteral::SyntaxCopy () {
+  auto res = new VIntLiteral();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VIntLiteral::DoSyntaxCopyTo
+//
+//==========================================================================
+void VIntLiteral::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VIntLiteral *)e;
+  res->Value = Value;
+}
+
 
 //==========================================================================
 //
 //  VIntLiteral::DoResolve
 //
 //==========================================================================
-
-VExpression* VIntLiteral::DoResolve(VEmitContext&)
-{
+VExpression *VIntLiteral::DoResolve (VEmitContext &) {
   return this;
 }
+
 
 //==========================================================================
 //
 //  VIntLiteral::Emit
 //
 //==========================================================================
-
-void VIntLiteral::Emit(VEmitContext& ec)
-{
+void VIntLiteral::Emit (VEmitContext &ec) {
   ec.EmitPushNumber(Value);
 }
+
 
 //==========================================================================
 //
 //  VIntLiteral::GetIntConst
 //
 //==========================================================================
-
-vint32 VIntLiteral::GetIntConst() const
-{
+vint32 VIntLiteral::GetIntConst () const {
   return Value;
 }
+
 
 //==========================================================================
 //
 //  VIntLiteral::IsIntConst
 //
 //==========================================================================
-
-bool VIntLiteral::IsIntConst() const
-{
+bool VIntLiteral::IsIntConst () const {
   return true;
 }
+
 
 //==========================================================================
 //
 //  VFloatLiteral::VFloatLiteral
 //
 //==========================================================================
-
-VFloatLiteral::VFloatLiteral(float AValue, const TLocation& ALoc)
-: VExpression(ALoc)
-, Value(AValue)
+VFloatLiteral::VFloatLiteral (float AValue, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , Value(AValue)
 {
   Type = TYPE_Float;
 }
+
+
+//==========================================================================
+//
+//  VFloatLiteral::SyntaxCopy
+//
+//==========================================================================
+VExpression *VFloatLiteral::SyntaxCopy () {
+  auto res = new VFloatLiteral();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VFloatLiteral::DoSyntaxCopyTo
+//
+//==========================================================================
+void VFloatLiteral::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VFloatLiteral *)e;
+  res->Value = Value;
+}
+
 
 //==========================================================================
 //
 //  VFloatLiteral::DoResolve
 //
 //==========================================================================
-
-VExpression* VFloatLiteral::DoResolve(VEmitContext&)
-{
+VExpression *VFloatLiteral::DoResolve (VEmitContext &) {
   return this;
 }
+
 
 //==========================================================================
 //
 //  VFloatLiteral::Emit
 //
 //==========================================================================
-
-void VFloatLiteral::Emit(VEmitContext& ec)
-{
+void VFloatLiteral::Emit (VEmitContext &ec) {
   ec.AddStatement(OPC_PushNumber, Value);
 }
+
 
 //==========================================================================
 //
 //  VFloatLiteral::IsFloatConst
 //
 //==========================================================================
-
-bool VFloatLiteral::IsFloatConst() const
-{
+bool VFloatLiteral::IsFloatConst () const {
   return true;
 }
+
 
 //==========================================================================
 //
 //  VFloatLiteral::GetFloatConst
 //
 //==========================================================================
-
-float VFloatLiteral::GetFloatConst() const
-{
+float VFloatLiteral::GetFloatConst () const {
   return Value;
 }
+
 
 //==========================================================================
 //
 //  VNameLiteral::VNameLiteral
 //
 //==========================================================================
-
-VNameLiteral::VNameLiteral(VName AValue, const TLocation& ALoc)
-: VExpression(ALoc)
-, Value(AValue)
+VNameLiteral::VNameLiteral (VName AValue, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , Value(AValue)
 {
   Type = TYPE_Name;
 }
+
+
+//==========================================================================
+//
+//  VNameLiteral::SyntaxCopy
+//
+//==========================================================================
+VExpression *VNameLiteral::SyntaxCopy () {
+  auto res = new VNameLiteral();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VNameLiteral::DoSyntaxCopyTo
+//
+//==========================================================================
+void VNameLiteral::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VNameLiteral *)e;
+  res->Value = Value;
+}
+
 
 //==========================================================================
 //
 //  VNameLiteral::DoResolve
 //
 //==========================================================================
-
-VExpression* VNameLiteral::DoResolve(VEmitContext&)
-{
+VExpression *VNameLiteral::DoResolve (VEmitContext &) {
   return this;
 }
+
 
 //==========================================================================
 //
 //  VNameLiteral::Emit
 //
 //==========================================================================
-
-void VNameLiteral::Emit(VEmitContext& ec)
-{
+void VNameLiteral::Emit (VEmitContext &ec) {
   ec.AddStatement(OPC_PushName, Value);
 }
+
 
 //==========================================================================
 //
 //  VStringLiteral::VStringLiteral
 //
 //==========================================================================
-
-VStringLiteral::VStringLiteral(vint32 AValue, const TLocation& ALoc)
-: VExpression(ALoc)
-, Value(AValue)
+VStringLiteral::VStringLiteral (vint32 AValue, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , Value(AValue)
 {
   Type = TYPE_String;
 }
+
+
+//==========================================================================
+//
+//  VStringLiteral::SyntaxCopy
+//
+//==========================================================================
+VExpression *VStringLiteral::SyntaxCopy () {
+  auto res = new VStringLiteral();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VStringLiteral::DoSyntaxCopyTo
+//
+//==========================================================================
+void VStringLiteral::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VStringLiteral *)e;
+  res->Value = Value;
+}
+
 
 //==========================================================================
 //
 //  VStringLiteral::DoResolve
 //
 //==========================================================================
-
-VExpression* VStringLiteral::DoResolve(VEmitContext&)
-{
+VExpression *VStringLiteral::DoResolve (VEmitContext &) {
   return this;
 }
+
 
 //==========================================================================
 //
 //  VStringLiteral::Emit
 //
 //==========================================================================
-
-void VStringLiteral::Emit(VEmitContext& ec)
-{
+void VStringLiteral::Emit (VEmitContext &ec) {
   ec.AddStatement(OPC_PushString, Value);
 }
+
 
 //==========================================================================
 //
 //  VStringLiteral::IsStrConst
 //
 //==========================================================================
-
-bool VStringLiteral::IsStrConst() const
-{
+bool VStringLiteral::IsStrConst () const {
   return true;
 }
+
 
 //==========================================================================
 //
 //  VStringLiteral::GetStrConst
 //
 //==========================================================================
-
-VStr VStringLiteral::GetStrConst(VPackage* Pkg) const
-{
+VStr VStringLiteral::GetStrConst (VPackage *Pkg) const {
   return &Pkg->Strings[Value];
 }
+
 
 //==========================================================================
 //
 //  VSelf::VSelf
 //
 //==========================================================================
-
-VSelf::VSelf(const TLocation& ALoc)
-: VExpression(ALoc)
-{
+VSelf::VSelf (const TLocation &ALoc) : VExpression(ALoc) {
 }
+
+
+//==========================================================================
+//
+//  VSelf::SyntaxCopy
+//
+//==========================================================================
+VExpression *VSelf::SyntaxCopy () {
+  auto res = new VSelf();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VSelf::DoSyntaxCopyTo
+//
+//==========================================================================
+void VSelf::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+}
+
 
 //==========================================================================
 //
 //  VSelf::DoResolve
 //
 //==========================================================================
-
-VExpression* VSelf::DoResolve(VEmitContext& ec)
-{
-  if (!ec.SelfClass)
-  {
+VExpression *VSelf::DoResolve (VEmitContext &ec) {
+  if (!ec.SelfClass) {
     ParseError(Loc, "self used outside member function\n");
     delete this;
-    return NULL;
+    return nullptr;
   }
-  if (ec.CurrentFunc->Flags & FUNC_Static)
-  {
+  if (ec.CurrentFunc->Flags&FUNC_Static) {
     ParseError(Loc, "self used in a static method\n");
     delete this;
-    return NULL;
+    return nullptr;
   }
   Type = VFieldType(ec.SelfClass);
   return this;
 }
+
 
 //==========================================================================
 //
 //  VSelf::Emit
 //
 //==========================================================================
-
-void VSelf::Emit(VEmitContext& ec)
-{
+void VSelf::Emit (VEmitContext &ec) {
   ec.AddStatement(OPC_LocalValue0);
 }
+
 
 //==========================================================================
 //
 //  VNoneLiteral::VNoneLiteral
 //
 //==========================================================================
-
-VNoneLiteral::VNoneLiteral(const TLocation& ALoc)
-: VExpression(ALoc)
-{
-  Type = VFieldType((VClass*)NULL);
+VNoneLiteral::VNoneLiteral (const TLocation& ALoc) : VExpression(ALoc) {
+  Type = VFieldType((VClass*)nullptr);
 }
+
+
+//==========================================================================
+//
+//  VNoneLiteral::SyntaxCopy
+//
+//==========================================================================
+VExpression *VNoneLiteral::SyntaxCopy () {
+  auto res = new VNoneLiteral();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VNoneLiteral::DoSyntaxCopyTo
+//
+//==========================================================================
+void VNoneLiteral::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+}
+
 
 //==========================================================================
 //
 //  VNoneLiteral::DoResolve
 //
 //==========================================================================
-
-VExpression* VNoneLiteral::DoResolve(VEmitContext&)
-{
+VExpression *VNoneLiteral::DoResolve (VEmitContext &) {
   return this;
 }
+
 
 //==========================================================================
 //
 //  VNoneLiteral::Emit
 //
 //==========================================================================
-
-void VNoneLiteral::Emit(VEmitContext& ec)
-{
+void VNoneLiteral::Emit (VEmitContext &ec) {
   ec.AddStatement(OPC_PushNull);
 }
+
 
 //==========================================================================
 //
 //  VNullLiteral::VNullLiteral
 //
 //==========================================================================
-
-VNullLiteral::VNullLiteral(const TLocation& ALoc)
-: VExpression(ALoc)
-{
+VNullLiteral::VNullLiteral (const TLocation &ALoc) : VExpression(ALoc) {
   Type = VFieldType(TYPE_Void).MakePointerType();
 }
+
+
+//==========================================================================
+//
+//  VNullLiteral::SyntaxCopy
+//
+//==========================================================================
+VExpression *VNullLiteral::SyntaxCopy () {
+  auto res = new VNullLiteral();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VNullLiteral::DoSyntaxCopyTo
+//
+//==========================================================================
+void VNullLiteral::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+}
+
 
 //==========================================================================
 //
 //  VNullLiteral::DoResolve
 //
 //==========================================================================
-
-VExpression* VNullLiteral::DoResolve(VEmitContext&)
-{
+VExpression *VNullLiteral::DoResolve (VEmitContext &) {
   return this;
 }
+
 
 //==========================================================================
 //
 //  VNullLiteral::Emit
 //
 //==========================================================================
-
-void VNullLiteral::Emit(VEmitContext& ec)
-{
+void VNullLiteral::Emit (VEmitContext &ec) {
   ec.AddStatement(OPC_PushNull);
 }

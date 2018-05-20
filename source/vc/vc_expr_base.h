@@ -34,8 +34,13 @@ public:
   int Flags;
   TLocation Loc;
 
+protected:
+  VExpression () {} // used in SyntaxCopy
+
+public:
   VExpression (const TLocation &ALoc);
   virtual ~VExpression () noexcept(false);
+  virtual VExpression *SyntaxCopy () = 0;
   virtual VExpression *DoResolve (VEmitContext &ec) = 0;
   VExpression *Resolve (VEmitContext &ec);
   VExpression *ResolveBoolean (VEmitContext &ec); // actually, *to* boolean
@@ -58,11 +63,14 @@ public:
   virtual bool IsDefaultObject () const;
   virtual bool IsPropertyAssign () const;
   virtual bool IsDynArraySetNum () const;
-  virtual VExpression *CreateTypeExprCopy ();
   virtual bool AddDropResult ();
   virtual bool IsDecorateSingleName () const;
   virtual bool IsLocalVarDecl () const;
   virtual bool IsLocalVarExpr () const;
   virtual bool IsAssignExpr () const;
   virtual bool IsBinaryMath () const;
+
+protected:
+  // `e` should be of correct type
+  virtual void DoSyntaxCopyTo (VExpression *e);
 };

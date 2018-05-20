@@ -23,179 +23,123 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+//==========================================================================
+//
+//  VCastExpressionBase
+//
+//==========================================================================
+VCastExpressionBase::VCastExpressionBase (VExpression *AOp) : VExpression(AOp->Loc), op(AOp) {}
+VCastExpressionBase::VCastExpressionBase (const TLocation &ALoc) : VExpression(ALoc), op(nullptr) {}
+VCastExpressionBase::~VCastExpressionBase () { if (op) { delete op; op = nullptr; } }
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+void VCastExpressionBase::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VCastExpressionBase *)e;
+  res->op = (op ? op->SyntaxCopy() : nullptr);
+}
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+VExpression *VCastExpressionBase::DoResolve (VEmitContext &) { return this; }
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VDelegateToBool::VDelegateToBool
 //
 //==========================================================================
-
-VDelegateToBool::VDelegateToBool(VExpression* AOp)
-: VExpression(AOp->Loc)
-, op(AOp)
-{
+VDelegateToBool::VDelegateToBool (VExpression *AOp) : VCastExpressionBase(AOp) {
   Type = TYPE_Int;
   op->RequestAddressOf();
 }
 
-//==========================================================================
-//
-//  VDelegateToBool::~VDelegateToBool
-//
-//==========================================================================
 
-VDelegateToBool::~VDelegateToBool()
-{
-  if (op)
-  {
-    delete op;
-    op = nullptr;
-  }
+//==========================================================================
+//
+//  VDelegateToBool::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDelegateToBool::SyntaxCopy () {
+  auto res = new VDelegateToBool();
+  DoSyntaxCopyTo(res);
+  return res;
 }
 
-//==========================================================================
-//
-//  VDelegateToBool::DoResolve
-//
-//==========================================================================
-
-VExpression* VDelegateToBool::DoResolve(VEmitContext&)
-{
-  return this;
-}
 
 //==========================================================================
 //
 //  VDelegateToBool::Emit
 //
 //==========================================================================
-
-void VDelegateToBool::Emit(VEmitContext& ec)
-{
+void VDelegateToBool::Emit (VEmitContext &ec) {
   op->Emit(ec);
   ec.AddStatement(OPC_PushPointedPtr);
   ec.AddStatement(OPC_PtrToBool);
 }
+
 
 //==========================================================================
 //
 //  VStringToBool::VStringToBool
 //
 //==========================================================================
-
-VStringToBool::VStringToBool(VExpression* AOp)
-: VExpression(AOp->Loc)
-, op(AOp)
-{
+VStringToBool::VStringToBool (VExpression *AOp) : VCastExpressionBase(AOp) {
   Type = TYPE_Int;
 }
 
-//==========================================================================
-//
-//  VStringToBool::~VStringToBool
-//
-//==========================================================================
 
-VStringToBool::~VStringToBool()
-{
-  if (op)
-  {
-    delete op;
-    op = nullptr;
-  }
+//==========================================================================
+//
+//  VStringToBool::SyntaxCopy
+//
+//==========================================================================
+VExpression *VStringToBool::SyntaxCopy () {
+  auto res = new VStringToBool();
+  DoSyntaxCopyTo(res);
+  return res;
 }
 
-//==========================================================================
-//
-//  VStringToBool::DoResolve
-//
-//==========================================================================
-
-VExpression* VStringToBool::DoResolve(VEmitContext&)
-{
-  return this;
-}
 
 //==========================================================================
 //
 //  VStringToBool::Emit
 //
 //==========================================================================
-
-void VStringToBool::Emit(VEmitContext& ec)
-{
+void VStringToBool::Emit (VEmitContext &ec) {
   op->Emit(ec);
   ec.AddStatement(OPC_StrToBool);
 }
+
 
 //==========================================================================
 //
 //  VPointerToBool::VPointerToBool
 //
 //==========================================================================
-
-VPointerToBool::VPointerToBool(VExpression* AOp)
-: VExpression(AOp->Loc)
-, op(AOp)
-{
+VPointerToBool::VPointerToBool (VExpression *AOp) : VCastExpressionBase(AOp) {
   Type = TYPE_Int;
 }
 
-//==========================================================================
-//
-//  VPointerToBool::~VPointerToBool
-//
-//==========================================================================
 
-VPointerToBool::~VPointerToBool()
-{
-  if (op)
-  {
-    delete op;
-    op = nullptr;
-  }
+//==========================================================================
+//
+//  VPointerToBool::SyntaxCopy
+//
+//==========================================================================
+VExpression *VPointerToBool::SyntaxCopy () {
+  auto res = new VPointerToBool();
+  DoSyntaxCopyTo(res);
+  return res;
 }
 
-//==========================================================================
-//
-//  VPointerToBool::DoResolve
-//
-//==========================================================================
-
-VExpression* VPointerToBool::DoResolve(VEmitContext&)
-{
-  return this;
-}
 
 //==========================================================================
 //
 //  VPointerToBool::Emit
 //
 //==========================================================================
-
-void VPointerToBool::Emit(VEmitContext& ec)
-{
+void VPointerToBool::Emit (VEmitContext &ec) {
   op->Emit(ec);
   ec.AddStatement(OPC_PtrToBool);
 }
@@ -206,10 +150,7 @@ void VPointerToBool::Emit(VEmitContext& ec)
 //  VScalarToFloat::VScalarToFloat
 //
 //==========================================================================
-VScalarToFloat::VScalarToFloat (VExpression *AOp)
-  : VExpression(AOp->Loc)
-  , op(AOp)
-{
+VScalarToFloat::VScalarToFloat (VExpression *AOp) : VCastExpressionBase(AOp) {
   // convert it in-place
   if (op && op->IsIntConst()) {
     //printf("*** IN-PLACE CONVERSION OF %d\n", op->GetIntConst());
@@ -223,14 +164,13 @@ VScalarToFloat::VScalarToFloat (VExpression *AOp)
 
 //==========================================================================
 //
-//  VScalarToFloat::~VScalarToFloat
+//  VScalarToFloat::SyntaxCopy
 //
 //==========================================================================
-VScalarToFloat::~VScalarToFloat () {
-  if (op) {
-    delete op;
-    op = nullptr;
-  }
+VExpression *VScalarToFloat::SyntaxCopy () {
+  auto res = new VScalarToFloat();
+  DoSyntaxCopyTo(res);
+  return res;
 }
 
 
@@ -292,10 +232,7 @@ void VScalarToFloat::Emit (VEmitContext& ec) {
 //  VScalarToInt::VScalarToInt
 //
 //==========================================================================
-VScalarToInt::VScalarToInt (VExpression *AOp)
-  : VExpression(AOp->Loc)
-  , op(AOp)
-{
+VScalarToInt::VScalarToInt (VExpression *AOp) : VCastExpressionBase(AOp) {
   // convert it in-place
   if (op && op->IsFloatConst()) {
     VExpression *lit = new VIntLiteral((vint32)op->GetFloatConst(), op->Loc);
@@ -308,14 +245,13 @@ VScalarToInt::VScalarToInt (VExpression *AOp)
 
 //==========================================================================
 //
-//  VScalarToInt::~VScalarToInt
+//  VScalarToInt::SyntaxCopy
 //
 //==========================================================================
-VScalarToInt::~VScalarToInt () {
-  if (op) {
-    delete op;
-    op = nullptr;
-  }
+VExpression *VScalarToInt::SyntaxCopy () {
+  auto res = new VScalarToInt();
+  DoSyntaxCopyTo(res);
+  return res;
 }
 
 
@@ -376,169 +312,23 @@ void VScalarToInt::Emit (VEmitContext& ec) {
 
 //==========================================================================
 //
-//  VDynamicCast::VDynamicCast
-//
-//==========================================================================
-
-VDynamicCast::VDynamicCast(VClass* AClass, VExpression* AOp, const TLocation& ALoc)
-: VExpression(ALoc)
-, Class(AClass)
-, op(AOp)
-{
-}
-
-//==========================================================================
-//
-//  VDynamicCast::~VDynamicCast
-//
-//==========================================================================
-
-VDynamicCast::~VDynamicCast()
-{
-  if (op)
-  {
-    delete op;
-    op = nullptr;
-  }
-}
-
-//==========================================================================
-//
-//  VDynamicCast::DoResolve
-//
-//==========================================================================
-
-VExpression* VDynamicCast::DoResolve(VEmitContext& ec)
-{
-  if (op)
-    op = op->Resolve(ec);
-  if (!op)
-  {
-    delete this;
-    return nullptr;
-  }
-
-  if (op->Type.Type != TYPE_Reference)
-  {
-    ParseError(Loc, "Bad expression, class reference required");
-    delete this;
-    return nullptr;
-  }
-  Type = VFieldType(Class);
-  return this;
-}
-
-//==========================================================================
-//
-//  VDynamicCast::Emit
-//
-//==========================================================================
-
-void VDynamicCast::Emit(VEmitContext& ec)
-{
-  op->Emit(ec);
-  ec.AddStatement(OPC_DynamicCast, Class);
-}
-
-//==========================================================================
-//
-//  VDynamicClassCast::VDynamicClassCast
-//
-//==========================================================================
-
-VDynamicClassCast::VDynamicClassCast(VName AClassName, VExpression* AOp,
-  const TLocation& ALoc)
-: VExpression(ALoc)
-, ClassName(AClassName)
-, op(AOp)
-{
-}
-
-//==========================================================================
-//
-//  VDynamicClassCast::~VDynamicClassCast
-//
-//==========================================================================
-
-VDynamicClassCast::~VDynamicClassCast()
-{
-  if (op)
-  {
-    delete op;
-    op = nullptr;
-  }
-}
-
-//==========================================================================
-//
-//  VDynamicClassCast::DoResolve
-//
-//==========================================================================
-
-VExpression* VDynamicClassCast::DoResolve(VEmitContext& ec)
-{
-  if (op)
-    op = op->Resolve(ec);
-  if (!op)
-  {
-    delete this;
-    return nullptr;
-  }
-
-  if (op->Type.Type != TYPE_Class)
-  {
-    ParseError(Loc, "Bad expression, class type required");
-    delete this;
-    return nullptr;
-  }
-
-  Type = TYPE_Class;
-  Type.Class = VMemberBase::StaticFindClass(ClassName);
-  if (!Type.Class)
-  {
-    ParseError(Loc, "No such class %s", *ClassName);
-    delete this;
-    return nullptr;
-  }
-  return this;
-}
-
-//==========================================================================
-//
-//  VDynamicClassCast::Emit
-//
-//==========================================================================
-
-void VDynamicClassCast::Emit(VEmitContext& ec)
-{
-  op->Emit(ec);
-  ec.AddStatement(OPC_DynamicClassCast, Type.Class);
-}
-
-
-//==========================================================================
-//
 //  VCastToString::VCastToString
 //
 //==========================================================================
-VCastToString::VCastToString (VExpression *AOp)
-  : VExpression(AOp->Loc)
-  , op(AOp)
-{
+VCastToString::VCastToString (VExpression *AOp) : VCastExpressionBase(AOp) {
   Type = TYPE_String;
 }
 
 
 //==========================================================================
 //
-//  VCastToString::~VCastToString
+//  VCastToString::SyntaxCopy
 //
 //==========================================================================
-VCastToString::~VCastToString () {
-  if (op) {
-    delete op;
-    op = nullptr;
-  }
+VExpression *VCastToString::SyntaxCopy () {
+  auto res = new VCastToString();
+  DoSyntaxCopyTo(res);
+  return res;
 }
 
 
@@ -587,24 +377,20 @@ void VCastToString::Emit (VEmitContext& ec) {
 //  VCastToName::VCastToName
 //
 //==========================================================================
-VCastToName::VCastToName (VExpression *AOp)
-  : VExpression(AOp->Loc)
-  , op(AOp)
-{
+VCastToName::VCastToName (VExpression *AOp) : VCastExpressionBase(AOp) {
   Type = TYPE_Name;
 }
 
 
 //==========================================================================
 //
-//  VCastToName::~VCastToName
+//  VCastToName::SyntaxCopy
 //
 //==========================================================================
-VCastToName::~VCastToName () {
-  if (op) {
-    delete op;
-    op = nullptr;
-  }
+VExpression *VCastToName::SyntaxCopy () {
+  auto res = new VCastToName();
+  DoSyntaxCopyTo(res);
+  return res;
 }
 
 
@@ -645,4 +431,155 @@ void VCastToName::Emit (VEmitContext& ec) {
   if (!op) return;
   op->Emit(ec);
   if (op->Type.Type != TYPE_Name) ParseError(Loc, "cannot convert type to `name`");
+}
+
+
+//==========================================================================
+//
+//  VDynamicCast::VDynamicCast
+//
+//==========================================================================
+
+VDynamicCast::VDynamicCast(VClass* AClass, VExpression* AOp, const TLocation& ALoc)
+  : VCastExpressionBase(ALoc)
+  , Class(AClass)
+{
+  op = AOp;
+}
+
+
+//==========================================================================
+//
+//  VDynamicCast::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynamicCast::SyntaxCopy () {
+  auto res = new VDynamicCast();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynamicCast::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VDynamicCast::DoSyntaxCopyTo (VExpression *e) {
+  VCastExpressionBase::DoSyntaxCopyTo(e);
+  auto res = (VDynamicCast *)e;
+  res->Class = Class;
+}
+
+
+//==========================================================================
+//
+//  VDynamicCast::DoResolve
+//
+//==========================================================================
+VExpression *VDynamicCast::DoResolve (VEmitContext &ec) {
+  if (op) op = op->Resolve(ec);
+  if (!op) {
+    delete this;
+    return nullptr;
+  }
+
+  if (op->Type.Type != TYPE_Reference) {
+    ParseError(Loc, "Bad expression, class reference required");
+    delete this;
+    return nullptr;
+  }
+  Type = VFieldType(Class);
+
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDynamicCast::Emit
+//
+//==========================================================================
+void VDynamicCast::Emit (VEmitContext &ec) {
+  op->Emit(ec);
+  ec.AddStatement(OPC_DynamicCast, Class);
+}
+
+
+//==========================================================================
+//
+//  VDynamicClassCast::VDynamicClassCast
+//
+//==========================================================================
+
+VDynamicClassCast::VDynamicClassCast(VName AClassName, VExpression* AOp, const TLocation& ALoc)
+  : VCastExpressionBase(ALoc)
+  , ClassName(AClassName)
+{
+  op = AOp;
+}
+
+
+//==========================================================================
+//
+//  VDynamicClassCast::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynamicClassCast::SyntaxCopy () {
+  auto res = new VDynamicClassCast();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynamicCast::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VDynamicClassCast::DoSyntaxCopyTo (VExpression *e) {
+  VCastExpressionBase::DoSyntaxCopyTo(e);
+  auto res = (VDynamicClassCast *)e;
+  res->ClassName = ClassName;
+}
+
+
+//==========================================================================
+//
+//  VDynamicClassCast::DoResolve
+//
+//==========================================================================
+VExpression *VDynamicClassCast::DoResolve (VEmitContext &ec) {
+  if (op) op = op->Resolve(ec);
+  if (!op) {
+    delete this;
+    return nullptr;
+  }
+
+  if (op->Type.Type != TYPE_Class) {
+    ParseError(Loc, "Bad expression, class type required");
+    delete this;
+    return nullptr;
+  }
+
+  Type = TYPE_Class;
+  Type.Class = VMemberBase::StaticFindClass(ClassName);
+  if (!Type.Class) {
+    ParseError(Loc, "No such class %s", *ClassName);
+    delete this;
+    return nullptr;
+  }
+
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDynamicClassCast::Emit
+//
+//==========================================================================
+void VDynamicClassCast::Emit (VEmitContext &ec) {
+  op->Emit(ec);
+  ec.AddStatement(OPC_DynamicClassCast, Type.Class);
 }

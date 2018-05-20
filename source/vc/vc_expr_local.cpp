@@ -28,6 +28,23 @@
 
 //==========================================================================
 //
+//  VLocalEntry::SyntaxCopy
+//
+//==========================================================================
+/*
+VExpression *VLocalEntry::SyntaxCopy () {
+  auto res = new VLocalEntry();
+  res->TypeExpr = TypeExpr;
+  res->Name = Name;
+  res->Loc = Loc;
+  res->Value = Value; //???
+  return res;
+}
+*/
+
+
+//==========================================================================
+//
 //  VLocalDecl::VLocalDecl
 //
 //==========================================================================
@@ -45,6 +62,35 @@ VLocalDecl::~VLocalDecl () {
   for (int i = 0; i < Vars.length(); ++i) {
     if (Vars[i].TypeExpr) { delete Vars[i].TypeExpr; Vars[i].TypeExpr = nullptr; }
     if (Vars[i].Value) { delete Vars[i].Value; Vars[i].Value = nullptr; }
+  }
+}
+
+
+//==========================================================================
+//
+//  VLocalDecl::SyntaxCopy
+//
+//==========================================================================
+VExpression *VLocalDecl::SyntaxCopy () {
+  auto res = new VLocalDecl();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VLocalDecl::DoSyntaxCopyTo
+//
+//==========================================================================
+void VLocalDecl::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VLocalDecl *)e;
+  res->Vars.SetNum(Vars.Num());
+  for (int f = 0; f < Vars.Num(); ++f) {
+    res->Vars[f] = Vars[f];
+    if (res->Vars[f].TypeExpr) res->Vars[f].TypeExpr = Vars[f].TypeExpr->SyntaxCopy();
+    if (res->Vars[f].Value) res->Vars[f].Value = Vars[f].Value->SyntaxCopy();
   }
 }
 
@@ -175,6 +221,32 @@ VLocalVar::VLocalVar (int ANum, const TLocation &ALoc)
 
 //==========================================================================
 //
+//  VLocalVar::SyntaxCopy
+//
+//==========================================================================
+VExpression *VLocalVar::SyntaxCopy () {
+  auto res = new VLocalVar();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VLocalVar::DoSyntaxCopyTo
+//
+//==========================================================================
+void VLocalVar::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VLocalVar *)e;
+  res->num = num;
+  res->AddressRequested = AddressRequested;
+  res->PushOutParam = PushOutParam;
+}
+
+
+//==========================================================================
+//
 //  VLocalVar::DoResolve
 //
 //==========================================================================
@@ -275,4 +347,3 @@ void VLocalVar::Emit (VEmitContext &ec) {
 bool VLocalVar::IsLocalVarExpr () const {
   return true;
 }
-

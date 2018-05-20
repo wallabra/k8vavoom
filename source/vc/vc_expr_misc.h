@@ -23,92 +23,105 @@
 //**
 //**************************************************************************
 
+
 //==========================================================================
 //
 //  VVector
 //
 //==========================================================================
-
-class VVector : public VExpression
-{
+class VVector : public VExpression {
 public:
-  VExpression*  op1;
-  VExpression*  op2;
-  VExpression*  op3;
+  VExpression *op1;
+  VExpression *op2;
+  VExpression *op3;
 
-  VVector(VExpression*, VExpression*, VExpression*, const TLocation&);
-  ~VVector();
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+  VVector (VExpression *, VExpression *, VExpression *, const TLocation &);
+  virtual ~VVector () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VVector () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VSingleName
 //
 //==========================================================================
-
-class VSingleName : public VExpression
-{
+class VSingleName : public VExpression {
 public:
-  VName     Name;
+  VName Name;
 
-  VSingleName(VName, const TLocation&);
-  VExpression* IntResolve(VEmitContext&, bool);
-  VExpression* DoResolve(VEmitContext&);
-  VExpression* ResolveAssignmentTarget(VEmitContext&);
-  VTypeExpr* ResolveAsType(VEmitContext&);
-  void Emit(VEmitContext&);
-  bool IsValidTypeExpression();
-  VExpression* CreateTypeExprCopy();
+  VSingleName (VName, const TLocation &);
+  virtual VExpression *SyntaxCopy () override;
+  VExpression *IntResolve (VEmitContext &, bool);
+  virtual VExpression *DoResolve (VEmitContext &);
+  virtual VExpression *ResolveAssignmentTarget (VEmitContext &);
+  virtual VTypeExpr *ResolveAsType (VEmitContext &);
+  virtual void Emit (VEmitContext &);
+  virtual bool IsValidTypeExpression ();
+
+protected:
+  VSingleName () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VDoubleName
 //
 //==========================================================================
-
-class VDoubleName : public VExpression
-{
+class VDoubleName : public VExpression {
 public:
-  VName     Name1;
-  VName     Name2;
+  VName Name1;
+  VName Name2;
 
-  VDoubleName(VName, VName, const TLocation&);
-  VExpression* DoResolve(VEmitContext&);
-  VTypeExpr* ResolveAsType(VEmitContext&);
-  void Emit(VEmitContext&);
-  bool IsValidTypeExpression();
-  VExpression* CreateTypeExprCopy();
+  VDoubleName (VName, VName, const TLocation &);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+  virtual bool IsValidTypeExpression () override;
+
+protected:
+  VDoubleName () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VDefaultObject
 //
 //==========================================================================
-
-class VDefaultObject : public VExpression
-{
+class VDefaultObject : public VExpression {
 public:
-  VExpression*    op;
+  VExpression *op;
 
-  VDefaultObject(VExpression*, const TLocation&);
-  ~VDefaultObject();
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
-  bool IsDefaultObject() const;
+  VDefaultObject (VExpression *, const TLocation &);
+  virtual ~VDefaultObject () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &);
+  virtual void Emit (VEmitContext &) override;
+  virtual bool IsDefaultObject () const override;
+
+protected:
+  VDefaultObject () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VPushPointed
 //
 //==========================================================================
-
-class VPushPointed : public VExpression
-{
+class VPushPointed : public VExpression {
 private:
   bool mOpResolved;
 
@@ -117,113 +130,142 @@ public:
   bool AddressRequested;
 
   VPushPointed (VExpression *, bool opResolved=false);
-  ~VPushPointed();
-  VExpression* DoResolve(VEmitContext&);
-  void RequestAddressOf();
-  void Emit(VEmitContext&);
+  virtual ~VPushPointed () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression* DoResolve (VEmitContext &) override;
+  virtual void RequestAddressOf () override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VPushPointed () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VConditional
 //
 //==========================================================================
-
-class VConditional : public VExpression
-{
+class VConditional : public VExpression {
 public:
-  VExpression*    op;
-  VExpression*    op1;
-  VExpression*    op2;
+  VExpression *op;
+  VExpression *op1;
+  VExpression *op2;
 
-  VConditional(VExpression*, VExpression*, VExpression*, const TLocation&);
-  ~VConditional();
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+  VConditional (VExpression *, VExpression *, VExpression *, const TLocation &);
+  virtual ~VConditional () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VConditional () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VDropResult
 //
 //==========================================================================
-
-class VDropResult : public VExpression
-{
+class VDropResult : public VExpression {
 public:
-  VExpression*    op;
+  VExpression *op;
 
-  VDropResult(VExpression*);
-  ~VDropResult();
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+  VDropResult (VExpression *);
+  virtual ~VDropResult () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDropResult () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VClassConstant
 //
 //==========================================================================
-
-class VClassConstant : public VExpression
-{
+class VClassConstant : public VExpression {
 public:
-  VClass*   Class;
+  VClass *Class;
 
-  VClassConstant(VClass* AClass, const TLocation& ALoc);
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+  VClassConstant (VClass *AClass, const TLocation &ALoc);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VClassConstant () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VStateConstant
 //
 //==========================================================================
-
-class VStateConstant : public VExpression
-{
+class VStateConstant : public VExpression {
 public:
-  VState*   State;
+  VState *State;
 
-  VStateConstant(VState* AState, const TLocation& ALoc);
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+  VStateConstant (VState *AState, const TLocation &ALoc);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VStateConstant () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VConstantValue
 //
 //==========================================================================
-
-class VConstantValue : public VExpression
-{
+class VConstantValue : public VExpression {
 public:
-  VConstant*    Const;
+  VConstant *Const;
 
-  VConstantValue(VConstant* AConst, const TLocation& ALoc);
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
-  bool IsIntConst() const;
-  bool IsFloatConst() const;
-  vint32 GetIntConst() const;
-  float GetFloatConst() const;
+  VConstantValue (VConstant *AConst, const TLocation &ALoc);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+  virtual bool IsIntConst () const override;
+  virtual bool IsFloatConst () const override;
+  virtual vint32 GetIntConst () const override;
+  virtual float GetFloatConst () const override;
+
+protected:
+  VConstantValue () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VDecorateSingleName
 //
 //==========================================================================
-
-class VDecorateSingleName : public VExpression
-{
+class VDecorateSingleName : public VExpression {
 public:
-  VStr      Name;
+  VStr Name;
 
-  VDecorateSingleName(const VStr&, const TLocation&);
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
-  bool IsDecorateSingleName() const;
+  VDecorateSingleName (const VStr &, const TLocation &);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+  virtual bool IsDecorateSingleName () const override;
+
+protected:
+  VDecorateSingleName ();
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };

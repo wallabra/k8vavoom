@@ -23,73 +23,86 @@
 //**
 //**************************************************************************
 
+
 //==========================================================================
 //
 //  VTypeExpr
 //
 //==========================================================================
-
-class VTypeExpr : public VExpression
-{
+class VTypeExpr : public VExpression {
 public:
-  VName   MetaClassName;
+  VName MetaClassName;
 
-  VTypeExpr(VFieldType, const TLocation&);
-  VTypeExpr(VFieldType, const TLocation&, VName);
-  VExpression* DoResolve(VEmitContext&);
-  VTypeExpr* ResolveAsType(VEmitContext&);
-  void Emit(VEmitContext&);
-  VStr GetName() const;
-  VExpression* CreateTypeExprCopy();
+  VTypeExpr (VFieldType, const TLocation &);
+  VTypeExpr (VFieldType, const TLocation &, VName);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+  VStr GetName () const;
+
+protected:
+  VTypeExpr () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VPointerType
 //
 //==========================================================================
-
-class VPointerType : public VTypeExpr
-{
+class VPointerType : public VTypeExpr {
 public:
-  VExpression*  Expr;
+  VExpression *Expr;
 
-  VPointerType(VExpression*, const TLocation&);
-  ~VPointerType();
-  VTypeExpr* ResolveAsType(VEmitContext&);
-  VExpression* CreateTypeExprCopy();
+  VPointerType (VExpression *, const TLocation &);
+  virtual ~VPointerType () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
+
+protected:
+  VPointerType () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VFixedArrayType
 //
 //==========================================================================
-
-class VFixedArrayType : public VTypeExpr
-{
+class VFixedArrayType : public VTypeExpr {
 public:
-  VExpression*  Expr;
-  VExpression*  SizeExpr;
+  VExpression *Expr;
+  VExpression *SizeExpr;
 
-  VFixedArrayType(VExpression*, VExpression*, const TLocation&);
-  ~VFixedArrayType();
-  VTypeExpr* ResolveAsType(VEmitContext&);
+  VFixedArrayType (VExpression *, VExpression *, const TLocation &);
+  virtual ~VFixedArrayType () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
+
+protected:
+  VFixedArrayType () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
 
 //==========================================================================
 //
 //  VDynamicArrayType
 //
 //==========================================================================
-
-class VDynamicArrayType : public VTypeExpr
-{
+class VDynamicArrayType : public VTypeExpr {
 public:
-  VExpression*  Expr;
+  VExpression *Expr;
 
-  VDynamicArrayType(VExpression*, const TLocation&);
-  ~VDynamicArrayType();
-  VTypeExpr* ResolveAsType(VEmitContext&);
-  VExpression* CreateTypeExprCopy();
+  VDynamicArrayType (VExpression *, const TLocation &);
+  virtual ~VDynamicArrayType () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
+
+protected:
+  VDynamicArrayType () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };

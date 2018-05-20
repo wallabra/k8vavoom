@@ -23,27 +23,33 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+//==========================================================================
+//
+//  VFieldBase
+//
+//==========================================================================
+VFieldBase::VFieldBase (VExpression *AOp, VName AFieldName, const TLocation& ALoc, bool opResolved)
+  : VExpression(ALoc)
+  , op(AOp)
+  , FieldName(AFieldName)
+  , mOpResolved(opResolved)
+{
+}
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+VFieldBase::~VFieldBase () {
+  if (op) { delete op; op = nullptr; }
+}
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+void VFieldBase::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VFieldBase *)e;
+  res->op = (op ? op->SyntaxCopy() : nullptr);
+  res->FieldName = FieldName;
+  res->mOpResolved = mOpResolved;
+}
 
 
 //==========================================================================
@@ -52,24 +58,20 @@
 //
 //==========================================================================
 VPointerField::VPointerField (VExpression *AOp, VName AFieldName, const TLocation& ALoc, bool opResolved)
-  : VExpression(ALoc)
-  , mOpResolved(opResolved)
-  , op(AOp)
-  , FieldName(AFieldName)
+  : VFieldBase(AOp, AFieldName, ALoc, opResolved)
 {
 }
 
 
 //==========================================================================
 //
-//  VPointerField::~VPointerField
+//  VPointerField::SyntaxCopy
 //
 //==========================================================================
-VPointerField::~VPointerField () {
-  if (op) {
-    delete op;
-    op = nullptr;
-  }
+VExpression *VPointerField::SyntaxCopy () {
+  auto res = new VPointerField();
+  DoSyntaxCopyTo(res);
+  return res;
 }
 
 
@@ -131,24 +133,21 @@ void VPointerField::Emit (VEmitContext &) {
 //  VDotField::VDotField
 //
 //==========================================================================
-VDotField::VDotField (VExpression* AOp, VName AFieldName, const TLocation& ALoc)
-  : VExpression(ALoc)
-  , op(AOp)
-  , FieldName(AFieldName)
+VDotField::VDotField (VExpression* AOp, VName AFieldName, const TLocation& ALoc, bool opResolved)
+  : VFieldBase(AOp, AFieldName, ALoc, opResolved)
 {
 }
 
 
 //==========================================================================
 //
-//  VDotField::~VDotField
+//  VDotField::SyntaxCopy
 //
 //==========================================================================
-VDotField::~VDotField () {
-  if (op) {
-    delete op;
-    op = nullptr;
-  }
+VExpression *VDotField::SyntaxCopy () {
+  auto res = new VDotField();
+  DoSyntaxCopyTo(res);
+  return res;
 }
 
 
@@ -158,7 +157,10 @@ VDotField::~VDotField () {
 //
 //==========================================================================
 VExpression *VDotField::IntResolve (VEmitContext& ec, bool AssignTarget) {
-  if (op) op = op->Resolve(ec);
+  if (op && !mOpResolved) {
+    op = op->Resolve(ec);
+    mOpResolved = true;
+  }
   if (!op) {
     delete this;
     return nullptr;
@@ -393,6 +395,32 @@ VFieldAccess::~VFieldAccess () {
 
 //==========================================================================
 //
+//  VFieldAccess::SyntaxCopy
+//
+//==========================================================================
+VExpression *VFieldAccess::SyntaxCopy () {
+  auto res = new VFieldAccess();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VFieldAccess::DoSyntaxCopyTo
+//
+//==========================================================================
+void VFieldAccess::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VFieldAccess *)e;
+  res->op = (op ? op->SyntaxCopy() : nullptr);
+  res->field = field;
+  res->AddressRequested = AddressRequested;
+}
+
+
+//==========================================================================
+//
 //  VFieldAccess::DoResolve
 //
 //==========================================================================
@@ -489,6 +517,31 @@ VDelegateVal::~VDelegateVal () {
     delete op;
     op = nullptr;
   }
+}
+
+
+//==========================================================================
+//
+//  VDelegateVal::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDelegateVal::SyntaxCopy () {
+  auto res = new VDelegateVal();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDelegateVal::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDelegateVal::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDelegateVal *)e;
+  res->op = (op ? op->SyntaxCopy() : nullptr);
+  res->M = M;
 }
 
 

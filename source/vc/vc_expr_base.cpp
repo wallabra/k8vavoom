@@ -52,6 +52,19 @@ VExpression::~VExpression () noexcept(false)
 
 //==========================================================================
 //
+//  VExpression::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VExpression::DoSyntaxCopyTo (VExpression *e) {
+  e->Type = Type;
+  e->RealType = RealType;
+  e->Flags = Flags;
+  e->Loc = Loc;
+}
+
+
+//==========================================================================
+//
 //  VExpression::Resolve
 //
 //==========================================================================
@@ -257,7 +270,7 @@ VStr VExpression::GetStrConst (VPackage *) const { ParseError(Loc, "String const
 bool VExpression::IsDefaultObject () const { return false; }
 bool VExpression::IsPropertyAssign () const { return false; }
 bool VExpression::IsDynArraySetNum () const { return false; }
-VExpression *VExpression::CreateTypeExprCopy () { ParseError(Loc, "Not a type"); return new VTypeExpr(TYPE_Unknown, Loc); }
+VExpression *VExpression::SyntaxCopy () { ParseError(Loc, "Not a type"); return new VTypeExpr(TYPE_Unknown, Loc); }
 bool VExpression::AddDropResult () { return false; }
 bool VExpression::IsDecorateSingleName () const { return false; }
 bool VExpression::IsLocalVarDecl () const { return false; }

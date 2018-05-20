@@ -141,7 +141,7 @@ VLocalDecl *VParser::ParseLocalVar (VExpression* TypeExpr, bool requireInit) {
   do {
     VLocalEntry e;
 
-    e.TypeExpr = TypeExpr->CreateTypeExprCopy();
+    e.TypeExpr = TypeExpr->SyntaxCopy();
     TLocation l = Lex.Location;
     while (Lex.Check(TK_Asterisk)) {
       e.TypeExpr = new VPointerType(e.TypeExpr, l);
@@ -1642,7 +1642,7 @@ void VParser::ParseStruct (VClass* InClass, bool IsVector)
     }
 
     do {
-      VExpression *FieldType = Type->CreateTypeExprCopy();
+      VExpression *FieldType = Type->SyntaxCopy();
       TLocation l = Lex.Location;
       while (Lex.Check(TK_Asterisk)) {
         FieldType = new VPointerType(FieldType, l);
@@ -2371,7 +2371,7 @@ void VParser::ParseClass () {
 
     bool need_semicolon = true;
     do {
-      VExpression* FieldType = Type->CreateTypeExprCopy();
+      VExpression* FieldType = Type->SyntaxCopy();
       TLocation l = Lex.Location;
       while (Lex.Check(TK_Asterisk)) {
         FieldType = new VPointerType(FieldType, l);
@@ -2401,7 +2401,7 @@ void VParser::ParseClass () {
             sprintf(TmpName, "get_%s", *FieldName);
             VMethod* Func = new VMethod(TmpName, Class, Lex.Location);
             Func->Flags = TModifiers::MethodAttr(Modifiers);
-            Func->ReturnTypeExpr = FieldType->CreateTypeExprCopy();
+            Func->ReturnTypeExpr = FieldType->SyntaxCopy();
 
             if (Modifiers & TModifiers::Native) {
               Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
@@ -2425,7 +2425,7 @@ void VParser::ParseClass () {
             Func->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
 
             VMethodParam& P = Func->Params[Func->NumParams];
-            P.TypeExpr = FieldType->CreateTypeExprCopy();
+            P.TypeExpr = FieldType->SyntaxCopy();
             P.Name = "value";
             P.Loc = Lex.Location;
             Func->ParamFlags[Func->NumParams] = 0;

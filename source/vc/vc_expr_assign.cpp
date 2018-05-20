@@ -58,6 +58,33 @@ VAssignment::~VAssignment () {
 
 //==========================================================================
 //
+//  VAssignment::SyntaxCopy
+//
+//==========================================================================
+VExpression *VAssignment::SyntaxCopy () {
+  auto res = new VAssignment();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VAssignment::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VAssignment::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VAssignment *)e;
+  res->Oper = Oper;
+  res->op1 = (op1 ? op1->SyntaxCopy() : nullptr);
+  res->op2 = (op2 ? op2->SyntaxCopy() : nullptr);
+  res->mValueResolved = mValueResolved;
+}
+
+
+//==========================================================================
+//
 //  VAssignment::DoResolve
 //
 //==========================================================================
@@ -193,7 +220,7 @@ void VAssignment::Emit (VEmitContext &ec) {
     case OrAssign:
            if (op1->RealType.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_OrVarDrop);
       else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteOrVarDrop);
-  //FIXME This is wrong!
+      //FIXME This is wrong!
       else if (op1->RealType.Type == TYPE_Bool && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_OrVarDrop);
       else ParseError(Loc, "Expression type mismatch");
       break;
@@ -240,6 +267,28 @@ bool VAssignment::IsAssignExpr () const {
 VPropertyAssign::VPropertyAssign (VExpression *ASelfExpr, VMethod *AFunc, bool AHaveSelf, const TLocation &ALoc)
   : VInvocation(ASelfExpr, AFunc, nullptr, AHaveSelf, false, ALoc, 0, nullptr)
 {
+}
+
+
+//==========================================================================
+//
+//  VPropertyAssign::SyntaxCopy
+//
+//==========================================================================
+VExpression *VPropertyAssign::SyntaxCopy () {
+  auto res = new VPropertyAssign();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VPropertyAssign::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VPropertyAssign::DoSyntaxCopyTo (VExpression *e) {
+  VInvocation::DoSyntaxCopyTo(e);
 }
 
 

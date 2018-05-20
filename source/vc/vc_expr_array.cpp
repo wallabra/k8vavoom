@@ -23,88 +23,84 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VArrayElement::VArrayElement
 //
 //==========================================================================
-
-VArrayElement::VArrayElement(VExpression* AOp, VExpression* AInd, const TLocation& ALoc)
-: VExpression(ALoc)
-, op(AOp)
-, ind(AInd)
-, AddressRequested(false)
-, IsAssign(false)
+VArrayElement::VArrayElement (VExpression *AOp, VExpression *AInd, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , op(AOp)
+  , ind(AInd)
+  , AddressRequested(false)
+  , IsAssign(false)
 {
-  if (!ind)
-  {
+  if (!ind) {
     ParseError(Loc, "Expression expected");
     return;
   }
 }
+
 
 //==========================================================================
 //
 //  VArrayElement::~VArrayElement
 //
 //==========================================================================
-
-VArrayElement::~VArrayElement()
-{
-  if (op)
-  {
-    delete op;
-    op = NULL;
-  }
-  if (ind)
-  {
-    delete ind;
-    ind = NULL;
-  }
+VArrayElement::~VArrayElement () {
+  if (op) { delete op; op = nullptr; }
+  if (ind) { delete ind; ind = nullptr; }
 }
+
+
+//==========================================================================
+//
+//  VArrayElement::SyntaxCopy
+//
+//==========================================================================
+VExpression *VArrayElement::SyntaxCopy () {
+  auto res = new VArrayElement();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VArrayElement::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VArrayElement::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VArrayElement *)e;
+  res->op = (op ? op->SyntaxCopy() : nullptr);
+  res->ind = (ind ? ind->SyntaxCopy() : nullptr);
+  res->AddressRequested = AddressRequested;
+  res->IsAssign = IsAssign;
+}
+
 
 //==========================================================================
 //
 //  VArrayElement::DoResolve
 //
 //==========================================================================
-
-VExpression* VArrayElement::DoResolve(VEmitContext& ec)
-{
+VExpression *VArrayElement::DoResolve (VEmitContext &ec) {
   if (op) op = op->Resolve(ec);
   if (ind) ind = ind->Resolve(ec);
 
   if (!op || !ind) {
     delete this;
-    return NULL;
+    return nullptr;
   }
 
   if (ind->Type.Type != TYPE_Int) {
     ParseError(Loc, "Array index must be of integer type");
     delete this;
-    return NULL;
+    return nullptr;
   }
 
   // hack: allow indexing of pointers to dynamic arrays without `(*arr)`
@@ -125,7 +121,7 @@ VExpression* VArrayElement::DoResolve(VEmitContext& ec)
   } else {
     ParseError(Loc, "Bad operation with array");
     delete this;
-    return NULL;
+    return nullptr;
   }
 
   RealType = Type;
@@ -133,174 +129,188 @@ VExpression* VArrayElement::DoResolve(VEmitContext& ec)
   return this;
 }
 
+
 //==========================================================================
 //
 //  VArrayElement::ResolveAssignmentTarget
 //
 //==========================================================================
-
-VExpression* VArrayElement::ResolveAssignmentTarget(VEmitContext& ec)
-{
+VExpression* VArrayElement::ResolveAssignmentTarget (VEmitContext &ec) {
   IsAssign = true;
   return Resolve(ec);
 }
+
 
 //==========================================================================
 //
 //  VArrayElement::RequestAddressOf
 //
 //==========================================================================
-
-void VArrayElement::RequestAddressOf()
-{
-  if (Flags & FIELD_ReadOnly)
-  {
-    ParseError(op->Loc, "Tried to assign to a read-only field");
-  }
-  if (AddressRequested)
-    ParseError(Loc, "Multiple address of");
+void VArrayElement::RequestAddressOf () {
+  if (Flags&FIELD_ReadOnly) ParseError(op->Loc, "Tried to assign to a read-only field");
+  if (AddressRequested) ParseError(Loc, "Multiple address of");
   AddressRequested = true;
 }
+
 
 //==========================================================================
 //
 //  VArrayElement::Emit
 //
 //==========================================================================
-
-void VArrayElement::Emit(VEmitContext& ec)
-{
+void VArrayElement::Emit (VEmitContext &ec) {
   op->Emit(ec);
   ind->Emit(ec);
-  if (op->Type.Type == TYPE_DynamicArray)
-  {
-    if (IsAssign)
-    {
+  if (op->Type.Type == TYPE_DynamicArray) {
+    if (IsAssign) {
       ec.AddStatement(OPC_DynArrayElementGrow, RealType);
-    }
-    else
-    {
+    } else {
       ec.AddStatement(OPC_DynArrayElement, RealType);
     }
-  }
-  else
-  {
+  } else {
     ec.AddStatement(OPC_ArrayElement, RealType);
   }
-  if (!AddressRequested)
-  {
-    EmitPushPointedCode(RealType, ec);
-  }
+  if (!AddressRequested) EmitPushPointedCode(RealType, ec);
 }
+
 
 //==========================================================================
 //
 //  VDynArrayGetNum::VDynArrayGetNum
 //
 //==========================================================================
-
-VDynArrayGetNum::VDynArrayGetNum(VExpression* AArrayExpr,
-  const TLocation& ALoc)
-: VExpression(ALoc)
-, ArrayExpr(AArrayExpr)
+VDynArrayGetNum::VDynArrayGetNum (VExpression *AArrayExpr, const TLocation& ALoc)
+  : VExpression(ALoc)
+  , ArrayExpr(AArrayExpr)
 {
   Flags = FIELD_ReadOnly;
 }
+
 
 //==========================================================================
 //
 //  VDynArrayGetNum::~VDynArrayGetNum
 //
 //==========================================================================
-
-VDynArrayGetNum::~VDynArrayGetNum()
-{
-  if (ArrayExpr)
-  {
-    delete ArrayExpr;
-    ArrayExpr = NULL;
-  }
+VDynArrayGetNum::~VDynArrayGetNum () {
+  if (ArrayExpr) { delete ArrayExpr; ArrayExpr = nullptr; }
 }
+
+
+//==========================================================================
+//
+//  VDynArrayGetNum::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynArrayGetNum::SyntaxCopy () {
+  auto res = new VDynArrayGetNum();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynArrayGetNum::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VDynArrayGetNum::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDynArrayGetNum *)e;
+  res->ArrayExpr = (ArrayExpr ? ArrayExpr->SyntaxCopy() : nullptr);
+}
+
 
 //==========================================================================
 //
 //  VDynArrayGetNum::DoResolve
 //
 //==========================================================================
-
-VExpression* VDynArrayGetNum::DoResolve(VEmitContext&)
-{
+VExpression *VDynArrayGetNum::DoResolve (VEmitContext &) {
   Type = VFieldType(TYPE_Int);
   return this;
 }
+
 
 //==========================================================================
 //
 //  VDynArrayGetNum::Emit
 //
 //==========================================================================
-
-void VDynArrayGetNum::Emit(VEmitContext& ec)
-{
+void VDynArrayGetNum::Emit (VEmitContext &ec) {
   ArrayExpr->Emit(ec);
   ec.AddStatement(OPC_DynArrayGetNum);
 }
+
 
 //==========================================================================
 //
 //  VDynArraySetNum::VDynArraySetNum
 //
 //==========================================================================
-
-VDynArraySetNum::VDynArraySetNum(VExpression* AArrayExpr,
-  VExpression* ANumExpr, const TLocation& ALoc)
-: VExpression(ALoc)
-, ArrayExpr(AArrayExpr)
-, NumExpr(ANumExpr)
-, opsign(0)
+VDynArraySetNum::VDynArraySetNum (VExpression *AArrayExpr, VExpression *ANumExpr, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , ArrayExpr(AArrayExpr)
+  , NumExpr(ANumExpr)
+  , opsign(0)
 {
   Type = VFieldType(TYPE_Void);
 }
+
 
 //==========================================================================
 //
 //  VDynArraySetNum::~VDynArraySetNum
 //
 //==========================================================================
-
-VDynArraySetNum::~VDynArraySetNum()
-{
-  if (ArrayExpr)
-  {
-    delete ArrayExpr;
-    ArrayExpr = NULL;
-  }
-  if (NumExpr)
-  {
-    delete NumExpr;
-    NumExpr = NULL;
-  }
+VDynArraySetNum::~VDynArraySetNum () {
+  if (ArrayExpr) { delete ArrayExpr; ArrayExpr = nullptr; }
+  if (NumExpr) { delete NumExpr; NumExpr = nullptr; }
 }
+
+
+//==========================================================================
+//
+//  VDynArraySetNum::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynArraySetNum::SyntaxCopy () {
+  auto res = new VDynArraySetNum();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynArraySetNum::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VDynArraySetNum::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDynArraySetNum *)e;
+  res->ArrayExpr = (ArrayExpr ? ArrayExpr->SyntaxCopy() : nullptr);
+  res->NumExpr = (NumExpr ? NumExpr->SyntaxCopy() : nullptr);
+  res->opsign = opsign;
+}
+
 
 //==========================================================================
 //
 //  VDynArraySetNum::DoResolve
 //
 //==========================================================================
-
-VExpression* VDynArraySetNum::DoResolve(VEmitContext&)
-{
+VExpression *VDynArraySetNum::DoResolve (VEmitContext &) {
   return this;
 }
+
 
 //==========================================================================
 //
 //  VDynArraySetNum::Emit
 //
 //==========================================================================
-
-void VDynArraySetNum::Emit(VEmitContext& ec)
-{
+void VDynArraySetNum::Emit (VEmitContext &ec) {
   ArrayExpr->Emit(ec);
   NumExpr->Emit(ec);
   if (opsign == 0) {
@@ -315,205 +325,206 @@ void VDynArraySetNum::Emit(VEmitContext& ec)
   }
 }
 
+
 //==========================================================================
 //
 //  VDynArraySetNum::IsDynArraySetNum
 //
 //==========================================================================
-
-bool VDynArraySetNum::IsDynArraySetNum() const
-{
+bool VDynArraySetNum::IsDynArraySetNum () const {
   return true;
 }
+
 
 //==========================================================================
 //
 //  VDynArrayInsert::VDynArrayInsert
 //
 //==========================================================================
-
-VDynArrayInsert::VDynArrayInsert(VExpression* AArrayExpr,
-  VExpression* AIndexExpr, VExpression* ACountExpr, const TLocation& ALoc)
-: VExpression(ALoc)
-, ArrayExpr(AArrayExpr)
-, IndexExpr(AIndexExpr)
-, CountExpr(ACountExpr)
+VDynArrayInsert::VDynArrayInsert (VExpression *AArrayExpr, VExpression *AIndexExpr, VExpression *ACountExpr, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , ArrayExpr(AArrayExpr)
+  , IndexExpr(AIndexExpr)
+  , CountExpr(ACountExpr)
 {
 }
+
 
 //==========================================================================
 //
 //  VDynArrayInsert::~VDynArrayInsert
 //
 //==========================================================================
-
-VDynArrayInsert::~VDynArrayInsert()
-{
-  if (ArrayExpr)
-  {
-    delete ArrayExpr;
-    ArrayExpr = NULL;
-  }
-  if (IndexExpr)
-  {
-    delete IndexExpr;
-    IndexExpr = NULL;
-  }
-  if (CountExpr)
-  {
-    delete CountExpr;
-    CountExpr = NULL;
-  }
+VDynArrayInsert::~VDynArrayInsert () {
+  if (ArrayExpr) { delete ArrayExpr; ArrayExpr = nullptr; }
+  if (IndexExpr) { delete IndexExpr; IndexExpr = nullptr; }
+  if (CountExpr) { delete CountExpr; CountExpr = nullptr; }
 }
+
+
+//==========================================================================
+//
+//  VDynArrayInsert::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynArrayInsert::SyntaxCopy () {
+  auto res = new VDynArrayInsert();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynArrayInsert::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VDynArrayInsert::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDynArrayInsert *)e;
+  res->ArrayExpr = (ArrayExpr ? ArrayExpr->SyntaxCopy() : nullptr);
+  res->IndexExpr = (IndexExpr ? IndexExpr->SyntaxCopy() : nullptr);
+  res->CountExpr = (CountExpr ? CountExpr->SyntaxCopy() : nullptr);
+}
+
 
 //==========================================================================
 //
 //  VDynArrayInsert::DoResolve
 //
 //==========================================================================
-
-VExpression* VDynArrayInsert::DoResolve(VEmitContext& ec)
-{
-  ArrayExpr->RequestAddressOf();
-
-  //  Resolve arguments.
-  if (IndexExpr)
-  {
-    IndexExpr = IndexExpr->Resolve(ec);
-  }
-  if (CountExpr)
-  {
-    CountExpr = CountExpr->Resolve(ec);
-  }
-  if (!IndexExpr || !CountExpr)
-  {
+VExpression *VDynArrayInsert::DoResolve (VEmitContext &ec) {
+  if (ArrayExpr) ArrayExpr->RequestAddressOf();
+  // resolve arguments
+  if (IndexExpr) IndexExpr = IndexExpr->Resolve(ec);
+  if (CountExpr) CountExpr = CountExpr->Resolve(ec);
+  if (!IndexExpr || !CountExpr) {
     delete this;
-    return NULL;
+    return nullptr;
   }
 
-  //  Check argument types.
-  if (IndexExpr->Type.Type != TYPE_Int)
-  {
+  // check argument types
+  if (IndexExpr->Type.Type != TYPE_Int) {
     ParseError(Loc, "Index must be integer expression");
     delete this;
-    return NULL;
+    return nullptr;
   }
-  if (CountExpr->Type.Type != TYPE_Int)
-  {
+
+  if (CountExpr->Type.Type != TYPE_Int) {
     ParseError(Loc, "Count must be integer expression");
     delete this;
-    return NULL;
+    return nullptr;
   }
 
   Type = VFieldType(TYPE_Void);
   return this;
 }
+
 
 //==========================================================================
 //
 //  VDynArrayInsert::Emit
 //
 //==========================================================================
-
-void VDynArrayInsert::Emit(VEmitContext& ec)
-{
+void VDynArrayInsert::Emit (VEmitContext &ec) {
   ArrayExpr->Emit(ec);
   IndexExpr->Emit(ec);
   CountExpr->Emit(ec);
   ec.AddStatement(OPC_DynArrayInsert, ArrayExpr->Type.GetArrayInnerType());
 }
 
+
 //==========================================================================
 //
 //  VDynArrayRemove::VDynArrayRemove
 //
 //==========================================================================
-
-VDynArrayRemove::VDynArrayRemove(VExpression* AArrayExpr,
-  VExpression* AIndexExpr, VExpression* ACountExpr, const TLocation& ALoc)
-: VExpression(ALoc)
-, ArrayExpr(AArrayExpr)
-, IndexExpr(AIndexExpr)
-, CountExpr(ACountExpr)
+VDynArrayRemove::VDynArrayRemove (VExpression *AArrayExpr, VExpression *AIndexExpr, VExpression *ACountExpr, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , ArrayExpr(AArrayExpr)
+  , IndexExpr(AIndexExpr)
+  , CountExpr(ACountExpr)
 {
 }
+
 
 //==========================================================================
 //
 //  VDynArrayRemove::~VDynArrayRemove
 //
 //==========================================================================
-
-VDynArrayRemove::~VDynArrayRemove()
-{
-  if (ArrayExpr)
-  {
-    delete ArrayExpr;
-    ArrayExpr = NULL;
-  }
-  if (IndexExpr)
-  {
-    delete IndexExpr;
-    IndexExpr = NULL;
-  }
-  if (CountExpr)
-  {
-    delete CountExpr;
-    CountExpr = NULL;
-  }
+VDynArrayRemove::~VDynArrayRemove () {
+  if (ArrayExpr) { delete ArrayExpr; ArrayExpr = nullptr; }
+  if (IndexExpr) { delete IndexExpr; IndexExpr = nullptr; }
+  if (CountExpr) { delete CountExpr; CountExpr = nullptr; }
 }
+
+
+//==========================================================================
+//
+//  VDynArrayRemove::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynArrayRemove::SyntaxCopy () {
+  auto res = new VDynArrayRemove();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynArrayRemove::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VDynArrayRemove::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDynArrayRemove *)e;
+  res->ArrayExpr = (ArrayExpr ? ArrayExpr->SyntaxCopy() : nullptr);
+  res->IndexExpr = (IndexExpr ? IndexExpr->SyntaxCopy() : nullptr);
+  res->CountExpr = (CountExpr ? CountExpr->SyntaxCopy() : nullptr);
+}
+
 
 //==========================================================================
 //
 //  VDynArrayRemove::DoResolve
 //
 //==========================================================================
-
-VExpression* VDynArrayRemove::DoResolve(VEmitContext& ec)
-{
-  ArrayExpr->RequestAddressOf();
-
-  //  Resolve arguments.
-  if (IndexExpr)
-  {
-    IndexExpr = IndexExpr->Resolve(ec);
-  }
-  if (CountExpr)
-  {
-    CountExpr = CountExpr->Resolve(ec);
-  }
-  if (!IndexExpr || !CountExpr)
-  {
+VExpression *VDynArrayRemove::DoResolve (VEmitContext &ec) {
+  if (ArrayExpr) ArrayExpr->RequestAddressOf();
+  // resolve arguments
+  if (IndexExpr) IndexExpr = IndexExpr->Resolve(ec);
+  if (CountExpr) CountExpr = CountExpr->Resolve(ec);
+  if (!IndexExpr || !CountExpr) {
     delete this;
-    return NULL;
+    return nullptr;
   }
 
-  //  Check argument types.
-  if (IndexExpr->Type.Type != TYPE_Int)
-  {
+  // check argument types
+  if (IndexExpr->Type.Type != TYPE_Int) {
     ParseError(Loc, "Index must be integer expression");
     delete this;
-    return NULL;
+    return nullptr;
   }
-  if (CountExpr->Type.Type != TYPE_Int)
-  {
+
+  if (CountExpr->Type.Type != TYPE_Int) {
     ParseError(Loc, "Count must be integer expression");
     delete this;
-    return NULL;
+    return nullptr;
   }
 
   Type = VFieldType(TYPE_Void);
   return this;
 }
 
+
 //==========================================================================
 //
 //  VDynArrayRemove::Emit
 //
 //==========================================================================
-
-void VDynArrayRemove::Emit(VEmitContext& ec)
-{
+void VDynArrayRemove::Emit (VEmitContext &ec) {
   ArrayExpr->Emit(ec);
   IndexExpr->Emit(ec);
   CountExpr->Emit(ec);
@@ -542,8 +553,32 @@ VStringGetLength::VStringGetLength(VExpression *AStrExpr, const TLocation& ALoc)
 VStringGetLength::~VStringGetLength () {
   if (StrExpr) {
     delete StrExpr;
-    StrExpr = NULL;
+    StrExpr = nullptr;
   }
+}
+
+
+//==========================================================================
+//
+//  VStringGetLength::SyntaxCopy
+//
+//==========================================================================
+VExpression *VStringGetLength::SyntaxCopy () {
+  auto res = new VStringGetLength();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VStringGetLength::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VStringGetLength::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VStringGetLength *)e;
+  res->StrExpr = (StrExpr ? StrExpr->SyntaxCopy() : nullptr);
 }
 
 
@@ -552,7 +587,7 @@ VStringGetLength::~VStringGetLength () {
 //  VStringGetLength::DoResolve
 //
 //==========================================================================
-VExpression* VStringGetLength::DoResolve (VEmitContext &ec) {
+VExpression *VStringGetLength::DoResolve (VEmitContext &ec) {
   // optimize it for string literals
   if (StrExpr->IsStrConst()) {
     VStr val = StrExpr->GetStrConst(ec.Package);

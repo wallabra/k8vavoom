@@ -23,126 +23,84 @@
 //**
 //**************************************************************************
 
+
 //==========================================================================
 //
 //  Field flags
 //
 //==========================================================================
-
-enum
-{
-  FIELD_Native  = 0x0001, //  Native serialisation
-  FIELD_Transient = 0x0002, //  Not to be saved
-  FIELD_Private = 0x0004, //  Private field
-  FIELD_ReadOnly  = 0x0008, //  Read-only field
-  FIELD_Net   = 0x0010, //  Network replicated field
+enum {
+  FIELD_Native    = 0x0001, // native serialisation
+  FIELD_Transient = 0x0002, // not to be saved
+  FIELD_Private   = 0x0004, // private field
+  FIELD_ReadOnly  = 0x0008, // read-only field
+  FIELD_Net       = 0x0010, // network replicated field
 };
+
 
 //==========================================================================
 //
 //  VField
 //
 //==========================================================================
-
-class VField : public VMemberBase
-{
+class VField : public VMemberBase {
 public:
-  //  Persistent fields
-  VField*     Next;
-  VFieldType    Type;
-  VMethod*    Func;
-  vuint32     Flags;
-  VMethod*    ReplCond;
+  // persistent fields
+  VField *Next;
+  VFieldType Type;
+  VMethod *Func;
+  vuint32 Flags;
+  VMethod *ReplCond;
 
-  //  Compiler fields
-  VExpression*  TypeExpr;
+  // compiler fields
+  VExpression *TypeExpr;
 
-  //  Run-time fields
-  VField*   NextReference;  //  Linked list of reference fields.
-  VField*   DestructorLink;
-  VField*   NextNetField;
-  vint32    Ofs;
-  vint32    NetIndex;
+  // run-time fields
+  VField *NextReference; // linked list of reference fields
+  VField *DestructorLink;
+  VField *NextNetField;
+  vint32 Ofs;
+  vint32 NetIndex;
 
-  VField(VName, VMemberBase*, TLocation);
-  ~VField();
+  VField (VName, VMemberBase *, TLocation);
+  virtual ~VField () override;
 
-  void Serialise(VStream&);
-  bool NeedsDestructor() const;
+  virtual void Serialise (VStream &) override;
+  bool NeedsDestructor () const;
   bool Define();
 
 #if !defined(IN_VCC)
-  static void CopyFieldValue(const vuint8*, vuint8*, const VFieldType&);
-  static void SerialiseFieldValue(VStream&, vuint8*, const VFieldType&);
-  static void CleanField(vuint8*, const VFieldType&);
-  static void DestructField(vuint8*, const VFieldType&);
-  static bool IdenticalValue(const vuint8*, const vuint8*, const VFieldType&);
+  static void CopyFieldValue (const vuint8 *, vuint8 *, const VFieldType &);
+  static void SerialiseFieldValue (VStream &, vuint8 *, const VFieldType &);
+  static void CleanField (vuint8 *, const VFieldType &);
+  static void DestructField (vuint8 *, const VFieldType &);
+  static bool IdenticalValue (const vuint8 *, const vuint8 *, const VFieldType &);
 #endif
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  static bool NetSerialiseValue(VStream&, VNetObjectsMap*, vuint8*, const VFieldType&);
+  static bool NetSerialiseValue (VStream &, VNetObjectsMap *, vuint8 *, const VFieldType &);
 #endif
 
-  friend inline VStream& operator<<(VStream& Strm, VField*& Obj)
-  { return Strm << *(VMemberBase**)&Obj; }
+  friend inline VStream & operator << (VStream &Strm, VField *&Obj) { return Strm << *(VMemberBase**)&Obj; }
 
-  vuint8* GetFieldPtr(VObject* Obj) const
-  {
-    return (vuint8*)Obj + Ofs;
-  }
-  float GetFloat(const VObject* Obj) const
-  {
-    return *(float*)((vuint8*)Obj + Ofs);
-  }
-  TVec GetVec(const VObject* Obj) const
-  {
-    return *(TVec*)((vuint8*)Obj + Ofs);
-  }
+  inline vuint8 *GetFieldPtr (VObject *Obj) const { return (vuint8*)Obj+Ofs; }
+  inline float GetFloat (const VObject *Obj) const { return *(float*)((vuint8*)Obj+Ofs); }
+  inline TVec GetVec (const VObject *Obj) const { return *(TVec*)((vuint8*)Obj+Ofs); }
+  inline void SetByte (VObject *Obj, vuint8 Value) const { *((vuint8*)Obj+Ofs) = Value; }
+  inline void SetInt (VObject *Obj, int Value) const { *(vint32*)((vuint8*)Obj+Ofs) = Value; }
+  inline void SetInt (VObject *Obj, int Value, int Idx) const { ((vint32*)((vuint8*)Obj+Ofs))[Idx] = Value; }
+  inline void SetFloat (VObject *Obj, float Value) const { *(float*)((vuint8*)Obj+Ofs) = Value; }
+  inline void SetFloat (VObject *Obj, float Value, int Idx) const { ((float*)((vuint8*)Obj+Ofs))[Idx] = Value; }
+  inline void SetName (VObject *Obj, VName Value) const { *(VName*)((vuint8*)Obj+Ofs) = Value; }
+  inline void SetStr (VObject *Obj, const VStr &Value) const { *(VStr*)((vuint8*)Obj+Ofs) = Value; }
 
-  void SetByte(VObject* Obj, vuint8 Value) const
-  {
-    *((vuint8*)Obj + Ofs) = Value;
-  }
-  void SetInt(VObject* Obj, int Value) const
-  {
-    *(vint32*)((vuint8*)Obj + Ofs) = Value;
-  }
-  void SetInt(VObject* Obj, int Value, int Idx) const
-  {
-    ((vint32*)((vuint8*)Obj + Ofs))[Idx] = Value;
-  }
-  void SetFloat(VObject* Obj, float Value) const
-  {
-    *(float*)((vuint8*)Obj + Ofs) = Value;
-  }
-  void SetFloat(VObject* Obj, float Value, int Idx) const
-  {
-    ((float*)((vuint8*)Obj + Ofs))[Idx] = Value;
-  }
-  void SetName(VObject* Obj, VName Value) const
-  {
-    *(VName*)((vuint8*)Obj + Ofs) = Value;
-  }
-  void SetStr(VObject* Obj, const VStr& Value) const
-  {
-    *(VStr*)((vuint8*)Obj + Ofs) = Value;
-  }
-  void SetBool(VObject* Obj, int Value) const
-  {
-    if (Value)
-    {
-      *(vuint32*)((vuint8*)Obj + Ofs) |= Type.BitMask;
-    }
-    else
-    {
-      *(vuint32*)((vuint8*)Obj + Ofs) &= ~Type.BitMask;
+  inline void SetBool (VObject *Obj, int Value) const {
+    if (Value) {
+      *(vuint32*)((vuint8*)Obj+Ofs) |= Type.BitMask;
+    } else {
+      *(vuint32*)((vuint8*)Obj+Ofs) &= ~Type.BitMask;
     }
   }
-  void SetVec(VObject* Obj, const TVec& Value) const
-  {
-    *(TVec*)((vuint8*)Obj + Ofs) = Value;
-  }
-  void SetClass(VObject* Obj, VClass* Value) const
-  {
-    *(VClass**)((vuint8*)Obj + Ofs) = Value;
-  }
+
+  inline void SetVec (VObject *Obj, const TVec &Value) const { *(TVec*)((vuint8*)Obj+Ofs) = Value; }
+  inline void SetClass (VObject *Obj, VClass *Value) const { *(VClass**)((vuint8*)Obj+Ofs) = Value; }
 };

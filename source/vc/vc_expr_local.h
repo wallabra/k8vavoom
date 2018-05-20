@@ -37,6 +37,7 @@ public:
   VExpression *Value;
 
   VLocalEntry () : TypeExpr(nullptr), Name(NAME_None), Value(nullptr) {}
+  //VExpression *SyntaxCopy ();
 };
 
 
@@ -52,13 +53,16 @@ public:
   VLocalDecl (const TLocation &);
   virtual ~VLocalDecl () override;
 
+  virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
-
   void Declare (VEmitContext &);
   void EmitInitialisations (VEmitContext &);
-
   virtual bool IsLocalVarDecl () const override;
+
+protected:
+  VLocalDecl () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 
 
@@ -74,9 +78,13 @@ public:
   bool PushOutParam;
 
   VLocalVar (int ANum, const TLocation &ALoc);
+  virtual VExpression *SyntaxCopy () override;
   virtual VExpression* DoResolve (VEmitContext &) override;
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &) override;
-
   virtual bool IsLocalVarExpr () const override;
+
+protected:
+  VLocalVar () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };

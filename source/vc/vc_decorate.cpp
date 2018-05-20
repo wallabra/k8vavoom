@@ -197,9 +197,14 @@ public:
   VExpression*  Args[VMethod::MAX_PARAMS + 1];
 
   VDecorateInvocation(VName, const TLocation&, int, VExpression**);
-  ~VDecorateInvocation();
-  VExpression* DoResolve(VEmitContext&);
-  void Emit(VEmitContext&);
+  virtual ~VDecorateInvocation() override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression* DoResolve(VEmitContext&) override;
+  virtual void Emit(VEmitContext&) override;
+
+protected:
+  VDecorateInvocation () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -665,13 +670,45 @@ VFlagDef& VFlagList::NewFlag(vuint8 Type, VXmlNode* PN)
 //  VDecorateSingleName::VDecorateSingleName
 //
 //==========================================================================
-
 VDecorateSingleName::VDecorateSingleName(const VStr& AName,
   const TLocation& ALoc)
 : VExpression(ALoc)
 , Name(AName)
 {
 }
+
+
+//==========================================================================
+//
+//  VDecorateSingleName::VDecorateSingleName
+//
+//==========================================================================
+VDecorateSingleName::VDecorateSingleName () {}
+
+
+//==========================================================================
+//
+//  VDecorateSingleName::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDecorateSingleName::SyntaxCopy () {
+  auto res = new VDecorateSingleName();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDecorateSingleName::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDecorateSingleName::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDecorateSingleName *)e;
+  res->Name = Name;
+}
+
 
 //==========================================================================
 //
@@ -778,6 +815,34 @@ VDecorateInvocation::~VDecorateInvocation()
       Args[i] = NULL;
     }
 }
+
+
+//==========================================================================
+//
+//  VDecorateInvocation::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDecorateInvocation::SyntaxCopy () {
+  auto res = new VDecorateInvocation();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDecorateInvocation::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDecorateInvocation::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDecorateInvocation *)e;
+  memset(res, 0, sizeof(Args));
+  res->Name = Name;
+  res->NumArgs = NumArgs;
+  for (int f = 0; f < NumArgs; ++f) res->Args[f] = (Args[f] ? Args[f]->SyntaxCopy() : nullptr);
+}
+
 
 //==========================================================================
 //
