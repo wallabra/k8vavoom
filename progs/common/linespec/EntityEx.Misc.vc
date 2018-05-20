@@ -1622,6 +1622,20 @@ void NoBlockingSet()
 
 void Tick(float deltaTime)
 {
+  if (bIsPlayer && GetCvarB('k8TraceDebug')) {
+    auto plr = PlayerEx(Player);
+    trsplat_t tr;
+    TAVec ang = Angles; //vector(plr.pitch, plr.yaw, plr.roll);
+    TVec dir;
+    AngleVector(&ang, &dir);
+    bool wallHit = TraceLineEx(Origin, dir, 4096, true, &tr);
+    if (wallHit) {
+      print("*** WALL");
+    } else if (tr.mobj) {
+      print("*** thing %n: health=%d", GetClassName(tr.mobj.Class), tr.mobj.Health);
+    }
+  }
+
   Inventory   Item;
 
   if (Level.bFrozen && ((!bIsPlayer && !bNoTimeFreeze) ||
