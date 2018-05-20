@@ -92,6 +92,8 @@ public:
   ~VBinary();
   VExpression* DoResolve(VEmitContext&);
   void Emit(VEmitContext&);
+
+  virtual bool IsBinaryMath () const override;
 };
 
 //==========================================================================

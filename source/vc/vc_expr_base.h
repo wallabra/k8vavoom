@@ -64,4 +64,5 @@ public:
   virtual bool IsLocalVarDecl () const;
   virtual bool IsLocalVarExpr () const;
   virtual bool IsAssignExpr () const;
+  virtual bool IsBinaryMath () const;
 };

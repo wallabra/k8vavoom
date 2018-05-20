@@ -263,3 +263,4 @@ bool VExpression::IsDecorateSingleName () const { return false; }
 bool VExpression::IsLocalVarDecl () const { return false; }
 bool VExpression::IsLocalVarExpr () const { return false; }
 bool VExpression::IsAssignExpr () const { return false; }
+bool VExpression::IsBinaryMath () const { return false; }
