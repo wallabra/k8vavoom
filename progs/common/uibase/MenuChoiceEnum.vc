@@ -25,30 +25,53 @@
 
 class MenuChoiceEnum : MenuChoice;
 
-string      Text;
-bool      bLeftAlign;
+string Text;
+bool bLeftAlign;
 
-int       Value;
+int Value;
 array<string> EnumNames;
 
 delegate bool ValueChanging(Object Sender, int NewValue);
+
+name cvarSession; // if not empty, value will be saved in it, and read back on creation
+
+
+//==========================================================================
+//
+//  getSavedValue
+//
+//==========================================================================
+int getSavedValue (optional int defval) {
+  if (!specified_defval) defval = Value;
+  if (cvarSession) return getSavedInt(cvarSession, defval);
+  return defval;
+}
+
+
+//==========================================================================
+//
+//  SetSessionCvar
+//
+//==========================================================================
+void SetSessionCvar (name Name, optional int defval) {
+  if (!specified_defval) defval = 0;
+  cvarSession = Name;
+  if (Name) defval = getSavedInt(Name, defval);
+  if (SetNewValue(defval)) Value = defval;
+}
+
 
 //==========================================================================
 //
 //  SetOrigin
 //
 //==========================================================================
-
-void SetOrigin(int x, int y)
-{
-  if (bLeftAlign)
-  {
+void SetOrigin (int x, int y) {
+  if (bLeftAlign) {
     SetPos(x, y);
-  }
-  else
-  {
+  } else {
     CursorXOffs = 200;
-    SetPos(x - CursorXOffs, y);
+    SetPos(x-CursorXOffs, y);
   }
 }
 
@@ -57,157 +80,103 @@ void SetOrigin(int x, int y)
 //  SetNewValue
 //
 //==========================================================================
-
-bool SetNewValue(int newValue)
-{
-  if (ValueChanging)
-  {
-    return ValueChanging(self, newValue);
+bool SetNewValue (int newValue) {
+  if (newValue < 0 || newValue >= EnumNames.length) return false;
+  if (ValueChanging) {
+    if (!ValueChanging(self, newValue)) return false;
   }
+  if (cvarSession) setSavedInt(cvarSession, newValue);
+  Value = newValue;
   return true;
 }
+
 
 //==========================================================================
 //
 //  AddItem
 //
 //==========================================================================
-
-void AddItem(string AValue)
-{
-  EnumNames.Num = EnumNames.Num + 1;
-  EnumNames[EnumNames.Num - 1] = AValue;
+void AddItem (string AValue) {
+  EnumNames.Num = EnumNames.Num+1;
+  EnumNames[EnumNames.Num-1] = AValue;
 }
+
 
 //==========================================================================
 //
 //  SetInitialValue
 //
 //==========================================================================
-
-void SetInitialValue(int AValue)
-{
+void SetInitialValue (int AValue) {
   Value = AValue;
-  if (Value >= EnumNames.Num)
-    Value = EnumNames.Num - 1;
-  if (Value < 0)
-    Value = 0;
+  if (Value >= EnumNames.Num) Value = EnumNames.Num-1;
+  if (Value < 0) Value = 0;
+  if (cvarSession) setSavedInt(cvarSession, Value);
 }
+
 
 //==========================================================================
 //
 //  OnDraw
 //
 //==========================================================================
-
-void OnDraw()
-{
-  int xx;
-
-  int Col = IsFocus() ? CR_YELLOW : CR_WHITE;
-  if (bLeftAlign)
-  {
+void OnDraw () {
+  int Col = (IsFocus() ? CR_YELLOW : CR_WHITE);
+  if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
     DrawText(0, 0, Text, Col);
-  }
-  else
-  {
+  } else {
     SetTextAlign(hright, vtop);
     DrawText(CursorXOffs, 0, Text, Col);
   }
 
-  if (bLeftAlign)
-  {
-    xx = TextWidth(Text) + 8;
-  }
-  else
-  {
-    xx = CursorXOffs + 10;
-  }
+  int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
   SetTextAlign(hleft, vtop);
-  if (EnumNames.Num)
-  {
-    DrawText(xx, 0, EnumNames[Value], IsFocus() ? CR_YELLOW : CR_TAN);
-  }
+  if (Value >= 0 && Value < EnumNames.length) DrawText(xx, 0, EnumNames[Value], (IsFocus() ? CR_YELLOW : CR_TAN));
 }
+
 
 //==========================================================================
 //
 //  OnKeyDown
 //
 //==========================================================================
-
-bool OnKeyDown(int key)
-{
+bool OnKeyDown (int key) {
   int newValue;
-
-  switch (key)
-  {
-  case K_LEFTARROW:
-    if (Value > 0)
-      newValue = Value - 1;
-    else
-      newValue = EnumNames.Num - 1;
-    if (SetNewValue(newValue))
-    {
-      Value = newValue;
-      LocalSound('menu/change');
-    }
-    return true;
-  case K_RIGHTARROW:
-  case K_ENTER:
-  case K_PADENTER:
-  case K_MOUSE1:
-    if (Value < EnumNames.Num - 1)
-      newValue = Value + 1;
-    else
-      newValue = 0;
-    if (SetNewValue(newValue))
-    {
-      Value = newValue;
-      LocalSound('menu/change');
-    }
-    return true;
+  switch (key) {
+    case K_LEFTARROW:
+      if (Value > 0) newValue = Value-1; else newValue = EnumNames.Num-1;
+      if (SetNewValue(newValue)) LocalSound('menu/change');
+      return true;
+    case K_RIGHTARROW:
+    case K_ENTER:
+    case K_PADENTER:
+    case K_MOUSE1:
+      if (Value < EnumNames.Num-1) newValue = Value+1; else newValue = 0;
+      if (SetNewValue(newValue)) LocalSound('menu/change');
+      return true;
   }
   return false;
 }
 
-void OnMouseClick(int X, int Y)
-{
-  int newValue;
 
+void OnMouseClick (int X, int Y) {
   SetFocus();
-
-  if (Value < EnumNames.Num - 1)
-    newValue = Value + 1;
-  else
-    newValue = 0;
-  if (SetNewValue(newValue))
-  {
-    Value = newValue;
-    LocalSound('menu/change');
-  }
+  int newValue = (Value < EnumNames.Num-1 ? Value+1 : 0);
+  if (SetNewValue(newValue)) LocalSound('menu/change');
 }
 
-void OnRMouseClick(int X, int Y)
-{
-  int newValue;
 
+void OnRMouseClick (int X, int Y) {
   SetFocus();
-
-  if (Value > 0)
-    newValue = Value - 1;
-  else
-    newValue = EnumNames.Num - 1;
-  if (SetNewValue(newValue))
-  {
-    Value = newValue;
-    LocalSound('menu/change');
-  }
+  int newValue = (Value > 0 ? Value-1 : EnumNames.Num-1);
+  if (SetNewValue(newValue)) LocalSound('menu/change');
 }
+
 
 defaultproperties
 {
   Width = 360;
   Height = 10;
+  cvarSession = '';
 }

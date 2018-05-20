@@ -34,26 +34,6 @@ MenuChoiceEnum Episode;
 MenuChoiceEnum Level;
 
 
-final static void setSavedInt (name Name, int val) {
-  if (!CvarExists(Name)) {
-    //print("NO cvar '%n': %d", Name, val);
-    CreateCvar(Name, va("%d", val), "___saved_menu__value___", 0);
-  } else {
-    //print("set cvar '%n': %d", Name, val);
-    SetCvar(Name, val);
-  }
-}
-
-final static int getSavedInt (name Name, int defval) {
-  if (!CvarExists(Name)) {
-    //print("default value for cvar '%n': %d", Name, defval);
-    return defval;
-  }
-  //print("existing cvar '%n': %d", Name, GetCvar(Name));
-  return GetCvar(Name);
-}
-
-
 void CreateChoices () {
   MenuTextButton startGame;
 
@@ -73,15 +53,13 @@ void CreateChoices () {
   Players.AddItem("6");
   Players.AddItem("7");
   Players.AddItem("8");
-  Players.SetInitialValue(getSavedInt('_netgame_max_players_', 2));
-  Players.ValueChanging = ChangedPlayers;
+  Players.SetSessionCvar('_netgame_max_players_', 2);
   ChoicesStartY += Players.Height;
 
   Monsters = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Monsters.SetOrigin(ChoicesStartX, ChoicesStartY);
   Monsters.Text = "Monsters";
-  Monsters.SetInitialValue(getSavedInt('_netgame_allow_monsters_', 0));
-  Monsters.ValueChanging = ChangedMonsters;
+  Monsters.SetSessionCvar('_netgame_allow_monsters_', 0);
   ChoicesStartY += Monsters.Height;
 
   DeathMatch = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -90,16 +68,14 @@ void CreateChoices () {
   DeathMatch.AddItem("Cooperative");
   DeathMatch.AddItem("Deathmatch");
   DeathMatch.AddItem("Deathmatch2");
-  DeathMatch.SetInitialValue(getSavedInt('_netgame_game_type_', 2));
-  DeathMatch.ValueChanging = ChangedGameType;
+  DeathMatch.SetSessionCvar('_netgame_game_type_', 2);
   ChoicesStartY += DeathMatch.Height;
 
   Skill = MenuChoiceEnum(NewChild(MenuChoiceEnum));
   Skill.SetOrigin(ChoicesStartX, ChoicesStartY);
   Skill.Text = "Skill";
   for (int i = 0; i < P_GetNumSkills(); ++i) Skill.AddItem(P_GetSkillDef(i)->Name);
-  Skill.SetInitialValue(getSavedInt('_netgame_game_skill_', 2));
-  Skill.ValueChanging = ChangedSkill;
+  Skill.SetSessionCvar('_netgame_game_skill_', 2);
   ChoicesStartY += Skill.Height;
 
   TimeLimit = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -118,8 +94,7 @@ void CreateChoices () {
   TimeLimit.AddItem("50");
   TimeLimit.AddItem("55");
   TimeLimit.AddItem("60");
-  TimeLimit.SetInitialValue(getSavedInt('_netgame_time_limit_', 0));
-  TimeLimit.ValueChanging = ChangedTimeLimit;
+  TimeLimit.SetSessionCvar('_netgame_time_limit_', 0);
   ChoicesStartY += TimeLimit.Height;
 
   if (!IsAnyDoom2) {
@@ -132,7 +107,7 @@ void CreateChoices () {
       Episode.AddItem("Inferno");
       if (WadLumpPresent('e4m1')) Episode.AddItem("Thy Flesh Consumed");
     }
-    Episode.SetInitialValue(getSavedInt('_netgame_episode_', 0));
+    Episode.SetSessionCvar('_netgame_episode_', 0);
     Episode.ValueChanging = ChangedEpisode;
     ChoicesStartY += Episode.Height;
   }
@@ -141,11 +116,11 @@ void CreateChoices () {
   Level.SetOrigin(ChoicesStartX, ChoicesStartY);
   Level.AddItem("test");
   Level.Text = "Level";
-  Level.ValueChanging = ChangedMapIndex;
+  Level.SetSessionCvar('_netgame_mapindex_', 0);
   ChoicesStartY += Level.Height;
 
   if (!IsAnyDoom2) {
-    InitMapList(getSavedInt('_netgame_episode_', 0));
+    InitMapList(Level.getSavedValue(0));
   } else {
     InitMapList(0);
   }
@@ -190,17 +165,11 @@ void InitMapList (int epi) {
     for (int i = 0; i < P_GetNumMaps(); ++i) Level.EnumNames[i] = P_GetMapName(i);
   }
 #endif
-  Level.Value = getSavedInt('_netgame_mapindex_', 0);
+  Level.Value = Level.getSavedValue(0);
 }
 
 
-bool ChangedPlayers (Object Sender, int newValue) { setSavedInt('_netgame_max_players_', newValue); return true; }
-bool ChangedEpisode (Object Sender, int newValue) { setSavedInt('_netgame_episode_', newValue); InitMapList(newValue); return true; }
-bool ChangedMonsters (Object Sender, int newValue) { setSavedInt('_netgame_allow_monsters_', newValue); return true; }
-bool ChangedGameType (Object Sender, int newValue) { setSavedInt('_netgame_game_type_', newValue); return true; }
-bool ChangedSkill (Object Sender, int newValue) { setSavedInt('_netgame_game_skill_', newValue); return true; }
-bool ChangedTimeLimit (Object Sender, int newValue) { setSavedInt('_netgame_time_limit_', newValue); return true; }
-bool ChangedMapIndex (Object Sender, int newValue) { setSavedInt('_netgame_mapindex_', newValue); return true; }
+bool ChangedEpisode (Object Sender, int newValue) { InitMapList(newValue); return true; }
 
 
 void ActivateStartNewGame (Object Sender) {
