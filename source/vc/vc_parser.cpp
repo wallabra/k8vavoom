@@ -344,7 +344,7 @@ VExpression* VParser::ParseExpressionPriority0()
     Lex.Expect(TK_Dot);
     if (Lex.Token != TK_Identifier)
     {
-      ParseError(Lex.Location, "Invalid identifier, field name expacted");
+      ParseError(Lex.Location, "Invalid identifier, field name expected");
     }
     VName FieldName = Lex.Name;
     TLocation Loc = Lex.Location;
@@ -451,7 +451,7 @@ VExpression* VParser::ParseExpressionPriority1()
     {
       if (Lex.Token != TK_Identifier)
       {
-        ParseError(Lex.Location, "Invalid identifier, field name expacted");
+        ParseError(Lex.Location, "Invalid identifier, field name expected");
       }
       else
       {
@@ -468,7 +468,7 @@ VExpression* VParser::ParseExpressionPriority1()
       }
       if (Lex.Token != TK_Identifier)
       {
-        ParseError(Lex.Location, "Invalid identifier, field name expacted");
+        ParseError(Lex.Location, "Invalid identifier, field name expected");
       }
       else
       {
