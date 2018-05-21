@@ -153,10 +153,10 @@ VExpression *VDotField::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VDotField::IntResolve
+//  VDotField::InternalResolve
 //
 //==========================================================================
-VExpression *VDotField::IntResolve (VEmitContext& ec, bool AssignTarget) {
+VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
   if (op && !mOpResolved) {
     op = op->Resolve(ec);
     mOpResolved = true;
@@ -341,7 +341,7 @@ VExpression *VDotField::IntResolve (VEmitContext& ec, bool AssignTarget) {
 //
 //==========================================================================
 VExpression *VDotField::DoResolve (VEmitContext& ec) {
-  return IntResolve(ec, false);
+  return InternalResolve(ec, false);
 }
 
 
@@ -351,7 +351,7 @@ VExpression *VDotField::DoResolve (VEmitContext& ec) {
 //
 //==========================================================================
 VExpression *VDotField::ResolveAssignmentTarget (VEmitContext& ec) {
-  return IntResolve(ec, true);
+  return InternalResolve(ec, true);
 }
 
 

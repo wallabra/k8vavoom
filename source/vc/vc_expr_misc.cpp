@@ -168,10 +168,10 @@ void VSingleName::DoSyntaxCopyTo (VExpression *e) {
 
 //==========================================================================
 //
-//  VSingleName::IntResolve
+//  VSingleName::InternalResolve
 //
 //==========================================================================
-VExpression *VSingleName::IntResolve (VEmitContext &ec, bool AssignTarget) {
+VExpression *VSingleName::InternalResolve (VEmitContext &ec, bool AssignTarget) {
   int num = ec.CheckForLocalVar(Name);
   if (num != -1) {
     VExpression *e = new VLocalVar(num, Loc);
@@ -277,7 +277,7 @@ VExpression *VSingleName::IntResolve (VEmitContext &ec, bool AssignTarget) {
 //
 //==========================================================================
 VExpression *VSingleName::DoResolve (VEmitContext &ec) {
-  return IntResolve(ec, false);
+  return InternalResolve(ec, false);
 }
 
 
@@ -287,7 +287,7 @@ VExpression *VSingleName::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 VExpression *VSingleName::ResolveAssignmentTarget (VEmitContext &ec) {
-  return IntResolve(ec, true);
+  return InternalResolve(ec, true);
 }
 
 
@@ -331,7 +331,7 @@ void VSingleName::Emit (VEmitContext &) {
 //  VSingleName::IsValidTypeExpression
 //
 //==========================================================================
-bool VSingleName::IsValidTypeExpression () {
+bool VSingleName::IsValidTypeExpression () const {
   return true;
 }
 
@@ -446,7 +446,7 @@ void VDoubleName::Emit (VEmitContext &) {
 //  VDoubleName::IsValidTypeExpression
 //
 //==========================================================================
-bool VDoubleName::IsValidTypeExpression () {
+bool VDoubleName::IsValidTypeExpression () const {
   return true;
 }
 

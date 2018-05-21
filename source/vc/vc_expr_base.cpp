@@ -45,8 +45,7 @@ VExpression::VExpression (const TLocation& ALoc)
 //  VExpression::~VExpression
 //
 //==========================================================================
-VExpression::~VExpression () noexcept(false)
-{
+VExpression::~VExpression () {
 }
 
 
@@ -260,7 +259,7 @@ void VExpression::EmitPushPointedCode (VFieldType type, VEmitContext& ec) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // IsXXX
-bool VExpression::IsValidTypeExpression () { return false; }
+bool VExpression::IsValidTypeExpression () const { return false; }
 bool VExpression::IsIntConst () const { return false; }
 bool VExpression::IsFloatConst () const { return false; }
 bool VExpression::IsStrConst () const { return false; }

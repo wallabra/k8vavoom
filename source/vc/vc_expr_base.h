@@ -39,21 +39,21 @@ protected:
 
 public:
   VExpression (const TLocation &ALoc);
-  virtual ~VExpression () noexcept(false);
-  virtual VExpression *SyntaxCopy () = 0;
-  virtual VExpression *DoResolve (VEmitContext &ec) = 0;
-  VExpression *Resolve (VEmitContext &ec);
-  VExpression *ResolveBoolean (VEmitContext &ec); // actually, *to* boolean
-  VExpression *ResolveFloat (VEmitContext &ec); // actually, *to* float
-  VExpression *CoerceToFloat (); // expression MUST be already resolved
+  virtual ~VExpression ();
+  virtual VExpression *SyntaxCopy () = 0; // this should be called on *UNRESOLVED* expression
+  virtual VExpression *DoResolve (VEmitContext &ec) = 0; // tho shon't call this twice, neither thrice!
+  VExpression *Resolve (VEmitContext &ec); // this will usually just call `DoResolve()`
+  VExpression *ResolveBoolean (VEmitContext &ec); // actually, *TO* boolean
+  VExpression *ResolveFloat (VEmitContext &ec); // actually, *TO* float
+  VExpression *CoerceToFloat (); // expression *MUST* be already resolved
   virtual VTypeExpr *ResolveAsType (VEmitContext &ec);
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &ec);
   virtual VExpression *ResolveIterator (VEmitContext &ec);
   virtual void RequestAddressOf ();
   virtual void Emit (VEmitContext &ec) = 0;
   virtual void EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue);
-  void EmitPushPointedCode (VFieldType type, VEmitContext &ec);
-  virtual bool IsValidTypeExpression ();
+  void EmitPushPointedCode (VFieldType type, VEmitContext &ec); // yeah, non-virtual
+  virtual bool IsValidTypeExpression () const;
   virtual bool IsIntConst () const;
   virtual bool IsFloatConst () const;
   virtual bool IsStrConst () const;

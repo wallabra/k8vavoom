@@ -58,12 +58,12 @@ public:
 
   VSingleName (VName, const TLocation &);
   virtual VExpression *SyntaxCopy () override;
-  VExpression *IntResolve (VEmitContext &, bool);
-  virtual VExpression *DoResolve (VEmitContext &);
-  virtual VExpression *ResolveAssignmentTarget (VEmitContext &);
-  virtual VTypeExpr *ResolveAsType (VEmitContext &);
-  virtual void Emit (VEmitContext &);
-  virtual bool IsValidTypeExpression ();
+  VExpression *InternalResolve (VEmitContext &, bool);
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual VExpression *ResolveAssignmentTarget (VEmitContext &) override;
+  virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+  virtual bool IsValidTypeExpression () const override;
 
 protected:
   VSingleName () {}
@@ -86,7 +86,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
-  virtual bool IsValidTypeExpression () override;
+  virtual bool IsValidTypeExpression () const override;
 
 protected:
   VDoubleName () {}

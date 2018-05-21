@@ -73,7 +73,7 @@ class VDotField : public VFieldBase {
 public:
   VDotField (VExpression *AOp, VName AFieldName, const TLocation& ALoc, bool opResolved=false);
 
-  VExpression *IntResolve (VEmitContext &, bool);
+  VExpression *InternalResolve (VEmitContext &, bool);
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &) override;
