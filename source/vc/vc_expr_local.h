@@ -37,7 +37,6 @@ public:
   VExpression *Value;
 
   VLocalEntry () : TypeExpr(nullptr), Name(NAME_None), Value(nullptr) {}
-  //VExpression *SyntaxCopy ();
 };
 
 

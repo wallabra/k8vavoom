@@ -270,7 +270,6 @@ VStr VExpression::GetStrConst (VPackage *) const { ParseError(Loc, "String const
 bool VExpression::IsDefaultObject () const { return false; }
 bool VExpression::IsPropertyAssign () const { return false; }
 bool VExpression::IsDynArraySetNum () const { return false; }
-VExpression *VExpression::SyntaxCopy () { ParseError(Loc, "Not a type"); return new VTypeExpr(TYPE_Unknown, Loc); }
 bool VExpression::AddDropResult () { return false; }
 bool VExpression::IsDecorateSingleName () const { return false; }
 bool VExpression::IsLocalVarDecl () const { return false; }
