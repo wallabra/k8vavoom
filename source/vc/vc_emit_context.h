@@ -23,120 +23,91 @@
 //**
 //**************************************************************************
 
-//==========================================================================
-//
-//  VLabel
-//
-//==========================================================================
 
-class VLabel
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VLabel {
 private:
   friend class VEmitContext;
 
-  int     Index;
+  int Index;
 
-  VLabel(int AIndex)
-  : Index(AIndex)
-  {}
+  VLabel (int AIndex) : Index(AIndex) {}
 
 public:
-  VLabel()
-  : Index(-1)
-  {}
-  bool IsDefined() const
-  {
-    return Index != -1;
-  }
+  VLabel() : Index(-1) {}
+  inline bool IsDefined() const { return (Index != -1); }
 };
 
-//==========================================================================
-//
-//  VLocalVarDef
-//
-//==========================================================================
 
-class VLocalVarDef
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VLocalVarDef {
 public:
-  VName     Name;
-  TLocation   Loc;
-  int       Offset;
-  VFieldType    Type;
-  bool      Visible;
-  vuint8      ParamFlags;
+  VName Name;
+  TLocation Loc;
+  int Offset;
+  VFieldType Type;
+  bool Visible;
+  vuint8 ParamFlags;
 
-  VLocalVarDef()
-  {}
+  VLocalVarDef () {}
 };
 
-//==========================================================================
-//
-//  VEmitContext
-//
-//==========================================================================
 
-class VEmitContext
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VEmitContext {
 private:
-  struct VLabelFixup
-  {
-    int         Pos;
-    int         LabelIdx;
-    int         Arg;
+  struct VLabelFixup {
+    int Pos;
+    int LabelIdx;
+    int Arg;
   };
 
-  TArray<int>       Labels;
-  TArray<VLabelFixup>   Fixups;
+  TArray<int> Labels;
+  TArray<VLabelFixup> Fixups;
 
 public:
-  VMethod*        CurrentFunc;
-  VClass*         SelfClass;
-  VPackage*       Package;
+  VMethod *CurrentFunc;
+  VClass *SelfClass;
+  VPackage *Package;
 
-  VFieldType        FuncRetType;
+  VFieldType FuncRetType;
 
-  TArray<VLocalVarDef>  LocalDefs;
-  int           localsofs;
+  TArray<VLocalVarDef> LocalDefs;
+  int localsofs;
 
-  VLabel          LoopStart;
-  VLabel          LoopEnd;
+  VLabel LoopStart;
+  VLabel LoopEnd;
 
-  bool          InDefaultProperties;
+  bool InDefaultProperties;
 
-  VEmitContext(VMemberBase*);
-  void EndCode();
+  VEmitContext (VMemberBase *);
+  void EndCode ();
 
-  int CheckForLocalVar(VName);
+  int CheckForLocalVar (VName);
 
-  VLabel DefineLabel();
-  void MarkLabel(VLabel);
+  VLabel DefineLabel ();
+  void MarkLabel (VLabel);
 
-  void AddStatement(int);
-  void AddStatement(int, int);
-  void AddStatement(int, float);
-  void AddStatement(int, VName);
-  void AddStatement(int, VMemberBase*);
-  void AddStatement(int, VMemberBase*, int);
-  void AddStatement(int, const VFieldType&);
-  void AddStatement(int, VLabel);
-  void AddStatement(int, int, VLabel);
-  void EmitPushNumber(int);
-  void EmitLocalAddress(int);
-  void EmitClearStrings(int, int);
+  void AddStatement (int);
+  void AddStatement (int, int);
+  void AddStatement (int, float);
+  void AddStatement (int, VName);
+  void AddStatement (int, VMemberBase*);
+  void AddStatement (int, VMemberBase*, int);
+  void AddStatement (int, const VFieldType&);
+  void AddStatement (int, VLabel);
+  void AddStatement (int, int, VLabel);
+  void EmitPushNumber (int);
+  void EmitLocalAddress (int);
+  void EmitClearStrings (int, int);
 };
 
-//==========================================================================
-//
-//  VStatementInfo
-//
-//==========================================================================
 
-struct VStatementInfo
-{
-  const char*   name;
-  int       Args;
-  int       usecount;
+// ////////////////////////////////////////////////////////////////////////// //
+struct VStatementInfo {
+  const char *name;
+  int Args;
+  int usecount;
 };
 
-extern VStatementInfo     StatementInfo[NUM_OPCODES];
+extern VStatementInfo StatementInfo[NUM_OPCODES];
