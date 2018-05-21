@@ -89,25 +89,33 @@ void VArrayElement::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VArrayElement::DoResolve (VEmitContext &ec) {
+  // we need a copy in case this is a pointer thingy
+  auto opcopy = (op ? op->SyntaxCopy() : nullptr);
+
   if (op) op = op->Resolve(ec);
   if (ind) ind = ind->Resolve(ec);
 
   if (!op || !ind) {
+    delete opcopy;
     delete this;
     return nullptr;
   }
 
   if (ind->Type.Type != TYPE_Int) {
     ParseError(Loc, "Array index must be of integer type");
+    delete opcopy;
     delete this;
     return nullptr;
   }
 
   // hack: allow indexing of pointers to dynamic arrays without `(*arr)`
   if (op->Type.Type == TYPE_Pointer && op->Type.InnerType == TYPE_DynamicArray) {
-    VExpression *ee = new VPushPointed(op, true); // `op` is resolved
-    op = ee->Resolve(ec);
+    delete op;
+    op = nullptr;
+    op = (new VPushPointed(opcopy))->Resolve(ec);
     if (!op) { delete this; return nullptr; }
+  } else {
+    delete opcopy;
   }
 
   if (op->Type.Type == TYPE_Array || op->Type.Type == TYPE_DynamicArray) {

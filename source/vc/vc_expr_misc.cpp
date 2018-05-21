@@ -557,9 +557,8 @@ bool VDefaultObject::IsDefaultObject () const {
 //  VPushPointed::VPushPointed
 //
 //==========================================================================
-VPushPointed::VPushPointed (VExpression *AOp, bool opResolved)
+VPushPointed::VPushPointed (VExpression *AOp)
   : VExpression(AOp->Loc)
-  , mOpResolved(opResolved)
   , op(AOp)
   , AddressRequested(false)
 {
@@ -601,7 +600,6 @@ void VPushPointed::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
   auto res = (VPushPointed *)e;
   res->op = (op ? op->SyntaxCopy() : nullptr);
-  res->mOpResolved = mOpResolved;
   res->AddressRequested = AddressRequested;
 }
 
@@ -612,10 +610,7 @@ void VPushPointed::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VPushPointed::DoResolve (VEmitContext &ec) {
-  if (op && !mOpResolved) {
-    op = op->Resolve(ec);
-    mOpResolved = true;
-  }
+  if (op) op = op->Resolve(ec);
   if (!op) {
     delete this;
     return nullptr;

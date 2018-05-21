@@ -46,11 +46,8 @@ public:
   VExpression *op1;
   VExpression *op2;
 
-private:
-  bool mValueResolved;
-
 public:
-  VAssignment (EAssignOper, VExpression*, VExpression*, const TLocation&, bool valueResolved=false);
+  VAssignment (EAssignOper, VExpression*, VExpression*, const TLocation&);
   virtual ~VAssignment () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;

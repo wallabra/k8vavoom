@@ -104,6 +104,7 @@ void VLocalDecl::Emit (VEmitContext &ec) {
 //  VLocalDecl::Declare
 //
 //==========================================================================
+//#include <typeinfo>
 void VLocalDecl::Declare (VEmitContext &ec) {
   for (int i = 0; i < Vars.length(); ++i) {
     VLocalEntry &e = Vars[i];
@@ -111,24 +112,22 @@ void VLocalDecl::Declare (VEmitContext &ec) {
     if (ec.CheckForLocalVar(e.Name) != -1) ParseError(e.Loc, "Redefined identifier %s", *e.Name);
 
     bool dbgDump = false;
-    bool valueResolved = false;
 
     // resolve automatic type
     if (e.TypeExpr->Type.Type == TYPE_Automatic) {
       if (!e.Value) { fprintf(stderr, "VC INTERNAL COMPILER ERROR: automatic type without initializer!\n"); *(int*)0 = 0; }
       // resolve type
-      TLocation loc = e.Value->Loc;
-      e.Value = e.Value->Resolve(ec);
-      valueResolved = true;
-      if (!e.Value) {
+      auto res = e.Value->SyntaxCopy()->Resolve(ec);
+      if (!res) {
         ParseError(e.Loc, "Cannot resolve type for identifier %s", *e.Name);
         delete e.TypeExpr; // delete old `automatic` type
-        e.TypeExpr = new VTypeExpr(TYPE_Void, loc);
+        e.TypeExpr = new VTypeExpr(TYPE_Void, e.Value->Loc);
       } else {
-        //fprintf(stderr, "*** automatic type resolved to `%s`\n", *(e.Value->Type.GetName()));
+        //fprintf(stderr, "*** automatic type resolved to `%s`\n", *(res->Type.GetName()));
         delete e.TypeExpr; // delete old `automatic` type
-        e.TypeExpr = new VTypeExpr(e.Value->Type, loc);
+        e.TypeExpr = new VTypeExpr(res->Type, e.Value->Loc);
         //dbgDump = true;
+        delete res;
       }
     }
 
@@ -151,7 +150,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
     if (e.Value) {
       if (dbgDump) fprintf(stderr, "004\n");
       VExpression* op1 = new VLocalVar(ec.LocalDefs.length()-1, e.Loc);
-      e.Value = new VAssignment(VAssignment::Assign, op1, e.Value, e.Loc, valueResolved);
+      e.Value = new VAssignment(VAssignment::Assign, op1, e.Value, e.Loc);
       if (dbgDump) fprintf(stderr, "005\n");
       e.Value = e.Value->Resolve(ec);
       if (dbgDump) fprintf(stderr, "006\n");

@@ -31,11 +31,10 @@
 //  VFieldBase
 //
 //==========================================================================
-VFieldBase::VFieldBase (VExpression *AOp, VName AFieldName, const TLocation& ALoc, bool opResolved)
+VFieldBase::VFieldBase (VExpression *AOp, VName AFieldName, const TLocation& ALoc)
   : VExpression(ALoc)
   , op(AOp)
   , FieldName(AFieldName)
-  , mOpResolved(opResolved)
 {
 }
 
@@ -48,7 +47,6 @@ void VFieldBase::DoSyntaxCopyTo (VExpression *e) {
   auto res = (VFieldBase *)e;
   res->op = (op ? op->SyntaxCopy() : nullptr);
   res->FieldName = FieldName;
-  res->mOpResolved = mOpResolved;
 }
 
 
@@ -57,8 +55,8 @@ void VFieldBase::DoSyntaxCopyTo (VExpression *e) {
 //  VPointerField::VPointerField
 //
 //==========================================================================
-VPointerField::VPointerField (VExpression *AOp, VName AFieldName, const TLocation& ALoc, bool opResolved)
-  : VFieldBase(AOp, AFieldName, ALoc, opResolved)
+VPointerField::VPointerField (VExpression *AOp, VName AFieldName, const TLocation& ALoc)
+  : VFieldBase(AOp, AFieldName, ALoc)
 {
 }
 
@@ -81,10 +79,7 @@ VExpression *VPointerField::SyntaxCopy () {
 //
 //==========================================================================
 VExpression* VPointerField::DoResolve (VEmitContext& ec) {
-  if (op && !mOpResolved) {
-    op = op->Resolve(ec);
-    mOpResolved = true;
-  }
+  if (op) op = op->Resolve(ec);
   if (!op) {
     delete this;
     return nullptr;
@@ -133,8 +128,8 @@ void VPointerField::Emit (VEmitContext &) {
 //  VDotField::VDotField
 //
 //==========================================================================
-VDotField::VDotField (VExpression* AOp, VName AFieldName, const TLocation& ALoc, bool opResolved)
-  : VFieldBase(AOp, AFieldName, ALoc, opResolved)
+VDotField::VDotField (VExpression* AOp, VName AFieldName, const TLocation& ALoc)
+  : VFieldBase(AOp, AFieldName, ALoc)
 {
 }
 
@@ -157,11 +152,12 @@ VExpression *VDotField::SyntaxCopy () {
 //
 //==========================================================================
 VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
-  if (op && !mOpResolved) {
-    op = op->Resolve(ec);
-    mOpResolved = true;
-  }
+  // we need a copy in case this is a pointer thingy
+  auto opcopy = (op ? op->SyntaxCopy() : nullptr);
+
+  if (op) op = op->Resolve(ec);
   if (!op) {
+    delete opcopy;
     delete this;
     return nullptr;
   }
@@ -169,18 +165,25 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
   if (op->Type.Type == TYPE_Pointer) {
     // allow dotted access for dynamic arrays
     if (op->Type.InnerType == TYPE_DynamicArray) {
-      VExpression *ee = new VPushPointed(op, true); // `op` is resolved
-      op = ee->Resolve(ec);
-      if (!op) { delete this; return nullptr; }
+      auto cp2 = opcopy->SyntaxCopy(); // for vector property conversions
+      delete op;
+      op = nullptr;
+      op = (new VPushPointed(opcopy))->Resolve(ec);
+      if (!op) { delete cp2; delete this; return nullptr; }
+      opcopy = cp2;
     } else {
-      VPointerField *e = new VPointerField(op, FieldName, Loc, true); // `op` is resolved
-      op = nullptr; // don't kill it
+      delete op;
+      op = nullptr;
+      VPointerField *e = new VPointerField(opcopy, FieldName, Loc);
       delete this;
       return e->Resolve(ec);
     }
   }
 
   if (op->Type.Type == TYPE_Reference) {
+    // we never ever need opcopy here
+    delete opcopy;
+
     VMethod *M = op->Type.Class->FindMethod(FieldName);
     if (M) {
       VExpression *e = new VDelegateVal(op, M, Loc);
@@ -246,18 +249,18 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
       // convert to method, 'cause why not?
       if (!AssignTarget) {
         VExpression *ufcsArgs[1];
-        ufcsArgs[0] = op;
+        ufcsArgs[0] = opcopy;
         VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
-        call->FirstOpIsResolved = true;
-        op = nullptr;
         delete this;
         return call->Resolve(ec);
       } else {
+        delete opcopy;
         ParseError(Loc, "INTERNAL COMPILER ERROR: No such field `%s`, and no struct also!", *FieldName);
         delete this;
         return nullptr;
       }
     }
+    delete opcopy; // we never ever need opcopy here
     int Flags = op->Flags;
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
@@ -274,6 +277,7 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
   }
 
   if (op->Type.Type == TYPE_DynamicArray) {
+    delete opcopy; // we never ever need opcopy here
     //VFieldType type = op->Type;
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
@@ -297,6 +301,7 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
   }
 
   if (op->Type.Type == TYPE_String) {
+    delete opcopy; // we never ever need opcopy here
     if (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length) {
       if (AssignTarget) {
         ParseError(Loc, "Cannot change string length via assign yet.");
@@ -321,14 +326,13 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
   // convert to method, 'cause why not?
   if (!AssignTarget) {
     VExpression *ufcsArgs[1];
-    ufcsArgs[0] = op;
+    ufcsArgs[0] = opcopy;
     VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
-    call->FirstOpIsResolved = true;
-    op = nullptr;
     delete this;
     return call->Resolve(ec);
   }
 
+  delete opcopy; // we never ever need opcopy here
   ParseError(Loc, "Reference, struct or vector expected on left side of . %d", op->Type.Type);
   delete this;
   return nullptr;

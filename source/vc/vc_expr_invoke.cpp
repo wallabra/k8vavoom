@@ -138,7 +138,6 @@ void VBaseInvocation::Emit (VEmitContext &) {
 VCastOrInvocation::VCastOrInvocation (VName AName, const TLocation &ALoc, int ANumArgs, VExpression **AArgs)
   : VInvocationBase(ANumArgs, AArgs, ALoc)
   , Name(AName)
-  , FirstOpIsResolved(false)
 {
 }
 
@@ -163,7 +162,7 @@ VExpression *VCastOrInvocation::SyntaxCopy () {
 void VCastOrInvocation::DoSyntaxCopyTo (VExpression *e) {
   VInvocationBase::DoSyntaxCopyTo(e);
   auto res = (VCastOrInvocation *)e;
-  res->FirstOpIsResolved = FirstOpIsResolved;
+  res->Name = Name;
 }
 
 
@@ -195,7 +194,6 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
         return nullptr;
       }
       VInvocation* e = new VInvocation(nullptr, M, nullptr, false, false, Loc, NumArgs, Args);
-      e->FirstOpIsResolved = FirstOpIsResolved;
       NumArgs = 0;
       delete this;
       return e->Resolve(ec);
@@ -204,7 +202,6 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
     VField *field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
     if (field != nullptr && field->Type.Type == TYPE_Delegate) {
       VInvocation* e = new VInvocation(nullptr, field->Func, field, false, false, Loc, NumArgs, Args);
-      e->FirstOpIsResolved = FirstOpIsResolved;
       NumArgs = 0;
       delete this;
       return e->Resolve(ec);
@@ -236,7 +233,6 @@ VExpression *VCastOrInvocation::ResolveIterator (VEmitContext &ec) {
   }
 
   VInvocation *e = new VInvocation(nullptr, M, nullptr, false, false, Loc, NumArgs, Args);
-  e->FirstOpIsResolved = FirstOpIsResolved;
   NumArgs = 0;
   delete this;
   return e->Resolve(ec);
@@ -455,7 +451,6 @@ VInvocation::VInvocation (VExpression* ASelfExpr, VMethod* AFunc, VField* ADeleg
   , BaseCall(ABaseCall)
   , CallerState(nullptr)
   , MultiFrameState(false)
-  , FirstOpIsResolved(false)
 {
 }
 
@@ -497,7 +492,6 @@ void VInvocation::DoSyntaxCopyTo (VExpression *e) {
   res->BaseCall = BaseCall;
   res->CallerState = CallerState;
   res->MultiFrameState = MultiFrameState;
-  res->FirstOpIsResolved = FirstOpIsResolved;
 }
 
 
@@ -513,7 +507,6 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   // resolve arguments
   bool ArgsOk = true;
   for (int i = 0; i < NumArgs; ++i) {
-    if (i == 0 && FirstOpIsResolved) continue;
     if (Args[i]) {
       Args[i] = Args[i]->Resolve(ec);
       if (!Args[i]) ArgsOk = false;

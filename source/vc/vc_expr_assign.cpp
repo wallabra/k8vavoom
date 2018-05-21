@@ -31,12 +31,11 @@
 //  VAssignment::VAssignment
 //
 //==========================================================================
-VAssignment::VAssignment (VAssignment::EAssignOper AOper, VExpression *AOp1, VExpression *AOp2, const TLocation &ALoc, bool valueResolved)
+VAssignment::VAssignment (VAssignment::EAssignOper AOper, VExpression *AOp1, VExpression *AOp2, const TLocation &ALoc)
   : VExpression(ALoc)
   , Oper(AOper)
   , op1(AOp1)
   , op2(AOp2)
-  , mValueResolved(valueResolved)
 {
   if (!op2) {
     ParseError(Loc, "Expression required on the right side of assignment operator");
@@ -79,7 +78,6 @@ void VAssignment::DoSyntaxCopyTo (VExpression *e) {
   res->Oper = Oper;
   res->op1 = (op1 ? op1->SyntaxCopy() : nullptr);
   res->op2 = (op2 ? op2->SyntaxCopy() : nullptr);
-  res->mValueResolved = mValueResolved;
 }
 
 
@@ -90,11 +88,7 @@ void VAssignment::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression* VAssignment::DoResolve (VEmitContext &ec) {
   if (op1) op1 = op1->ResolveAssignmentTarget(ec);
-
-  if (op2 && !mValueResolved) {
-    op2 = (op1 && op1->Type.Type == TYPE_Float ? op2->ResolveFloat(ec) : op2->Resolve(ec));
-    mValueResolved = true;
-  }
+  if (op2) op2 = (op1 && op1->Type.Type == TYPE_Float ? op2->ResolveFloat(ec) : op2->Resolve(ec));
 
   if (!op1 || !op2) { delete this; return nullptr; }
 

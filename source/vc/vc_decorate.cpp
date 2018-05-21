@@ -188,7 +188,7 @@ public:
   virtual void Emit (VEmitContext &) override;
 
 protected:
-  VDecorateInvocation () {}
+  VDecorateInvocation () : Name(NAME_None), NumArgs(0) {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 

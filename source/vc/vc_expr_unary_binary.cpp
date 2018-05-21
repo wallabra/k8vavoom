@@ -317,13 +317,11 @@ bool VUnaryMutator::AddDropResult () {
 //  VBinary::VBinary
 //
 //==========================================================================
-VBinary::VBinary (EBinOp AOper, VExpression *AOp1, VExpression *AOp2, const TLocation &ALoc, bool aOp1Resolved, bool aOp2Resolved)
+VBinary::VBinary (EBinOp AOper, VExpression *AOp1, VExpression *AOp2, const TLocation &ALoc)
   : VExpression(ALoc)
   , Oper(AOper)
   , op1(AOp1)
   , op2(AOp2)
-  , mOp1Resolved(aOp1Resolved)
-  , mOp2Resolved(aOp2Resolved)
 {
   if (!op2) ParseError(Loc, "Expression expected");
 }
@@ -363,8 +361,6 @@ void VBinary::DoSyntaxCopyTo (VExpression *e) {
   res->Oper = Oper;
   res->op1 = (op1 ? op1->SyntaxCopy() : nullptr);
   res->op2 = (op2 ? op2->SyntaxCopy() : nullptr);
-  res->mOp1Resolved = mOp1Resolved;
-  res->mOp2Resolved = mOp2Resolved;
 }
 
 
@@ -374,8 +370,8 @@ void VBinary::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression* VBinary::DoResolve (VEmitContext &ec) {
-  if (op1 && !mOp1Resolved) { mOp1Resolved = true; op1 = op1->Resolve(ec); }
-  if (op2 && !mOp2Resolved) { mOp2Resolved = true; op2 = op2->Resolve(ec); }
+  if (op1) op1 = op1->Resolve(ec);
+  if (op2) op2 = op2->Resolve(ec);
   if (!op1 || !op2) { delete this; return nullptr; }
 
   // coerce both to floats

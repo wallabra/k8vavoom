@@ -122,14 +122,11 @@ protected:
 //
 //==========================================================================
 class VPushPointed : public VExpression {
-private:
-  bool mOpResolved;
-
 public:
   VExpression *op;
   bool AddressRequested;
 
-  VPushPointed (VExpression *, bool opResolved=false);
+  VPushPointed (VExpression *);
   virtual ~VPushPointed () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression* DoResolve (VEmitContext &) override;

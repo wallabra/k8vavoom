@@ -34,11 +34,8 @@ public:
   VExpression *op;
   VName FieldName;
 
-protected:
-  bool mOpResolved;
-
 public:
-  VFieldBase (VExpression *AOp, VName AFieldName, const TLocation& ALoc, bool opResolved);
+  VFieldBase (VExpression *AOp, VName AFieldName, const TLocation& ALoc);
   virtual ~VFieldBase () override;
 
 protected:
@@ -54,7 +51,7 @@ protected:
 //==========================================================================
 class VPointerField : public VFieldBase {
 public:
-  VPointerField (VExpression *AOp, VName AFieldName, const TLocation& ALoc, bool opResolved=false);
+  VPointerField (VExpression *AOp, VName AFieldName, const TLocation& ALoc);
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
@@ -71,7 +68,7 @@ protected:
 //==========================================================================
 class VDotField : public VFieldBase {
 public:
-  VDotField (VExpression *AOp, VName AFieldName, const TLocation& ALoc, bool opResolved=false);
+  VDotField (VExpression *AOp, VName AFieldName, const TLocation& ALoc);
 
   VExpression *InternalResolve (VEmitContext &, bool);
   virtual VExpression *SyntaxCopy () override;

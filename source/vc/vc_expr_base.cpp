@@ -54,7 +54,9 @@ VExpression::~VExpression () {
 //  VExpression::DoRestSyntaxCopyTo
 //
 //==========================================================================
+//#include <typeinfo>
 void VExpression::DoSyntaxCopyTo (VExpression *e) {
+  //fprintf(stderr, "  ***VExpression::DoSyntaxCopyTo for `%s`\n", typeid(*e).name());
   e->Type = Type;
   e->RealType = RealType;
   e->Flags = Flags;
