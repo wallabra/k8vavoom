@@ -23,27 +23,25 @@
 //**
 //**************************************************************************
 
-enum
-{
-  GAME_Doom       = 0x01,
-  GAME_Heretic      = 0x02,
-  GAME_Hexen        = 0x04,
-  GAME_Strife       = 0x08,
-  GAME_Raven        = GAME_Heretic | GAME_Hexen,
-  GAME_Any        = 0x0f,
+enum {
+  GAME_Doom    = 0x01,
+  GAME_Heretic = 0x02,
+  GAME_Hexen   = 0x04,
+  GAME_Strife  = 0x08,
+  GAME_Raven   = GAME_Heretic|GAME_Hexen,
+  GAME_Any     = 0x0f,
 };
 
 enum { MAX_DECORATE_TRANSLATIONS = 0xffff };
 enum { MAX_BLOOD_TRANSLATIONS = 0xffff };
 
-struct VLineSpecInfo
-{
-  VStr    Name;
-  int     Number;
+struct VLineSpecInfo {
+  VStr Name;
+  int Number;
 };
 
-void ReadLineSpecialInfos();
-void ProcessDecorateScripts();
-void ShutdownDecorate();
+void ReadLineSpecialInfos ();
+void ProcessDecorateScripts ();
+void ShutdownDecorate ();
 
-extern TArray<VLineSpecInfo>  LineSpecialInfos;
+extern TArray<VLineSpecInfo> LineSpecialInfos;
