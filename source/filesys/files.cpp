@@ -69,11 +69,36 @@ static TArray<VStr>   IWadDirs;
 static int        IWadIndex;
 static VCvarS game_name("game_name", "unknown", "The Name Of The Game.", CVAR_Rom);
 
+static TArray<VStr> wpklist;
+
+
 // CODE --------------------------------------------------------------------
+
+__attribute__((unused)) static int cmpfuncCI (const void *v1, const void *v2) {
+  return ((VStr*)v1)->ICmp((*(VStr*)v2));
+}
 
 //==========================================================================
 //
-//  AddGameDir
+//  AddZipFile
+//
+//==========================================================================
+TArray<VStr> GetWadPk3List () {
+  TArray<VStr> res;
+  for (int f = 0; f < wpklist.length(); ++f) {
+    bool found = false;
+    for (int c = 0; c < res.length(); ++c) if (res[c] == wpklist[f]) { found = true; break; }
+    if (!found) res.Append(wpklist[f]);
+  }
+  // and sort it
+  //qsort(res.Ptr(), res.length(), sizeof(VStr), cmpfuncCI);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  AddZipFile
 //
 //==========================================================================
 
@@ -141,8 +166,7 @@ static void AddZipFile (VStr ZipName, VZipFile* Zip, bool allowpk3) {
 
 
 static void AddZipFile (VStr ZipName) {
-  //  Add ZIP file.
-  VZipFile* Zip = new VZipFile(ZipName);
+  VZipFile *Zip = new VZipFile(ZipName);
   AddZipFile(ZipName, Zip, true);
 }
 
@@ -152,16 +176,17 @@ static void AddZipFile (VStr ZipName) {
 //
 //==========================================================================
 
-static int cmpfunc(const void* v1, const void* v2)
-{
+static int cmpfunc (const void *v1, const void *v2) {
   return ((VStr*)v1)->StripExtension().ICmp(((VStr*)v2)->StripExtension());
 }
 
-static void AddGameDir(const VStr& basedir, const VStr& dir)
-{
+static void AddGameDir (const VStr &basedir, const VStr &dir) {
   guard(AddGameDir);
-  //  First add all .pk3 files in that directory.
-  if (Sys_OpenDir(basedir+"/"+dir)) {
+
+  VStr bdx = basedir+"/"+dir;
+
+  // first add all .pk3 files in that directory
+  if (Sys_OpenDir(bdx)) {
     TArray<VStr> ZipFiles;
     for (VStr test = Sys_ReadDir(); test.IsNotEmpty(); test = Sys_ReadDir()) {
       VStr ext = test.ExtractFileExtension().ToLower();
@@ -170,24 +195,27 @@ static void AddGameDir(const VStr& basedir, const VStr& dir)
     Sys_CloseDir();
     qsort(ZipFiles.Ptr(), ZipFiles.Num(), sizeof(VStr), cmpfunc);
     for (int i = 0; i < ZipFiles.Num(); ++i) {
-      AddZipFile(basedir+"/"+dir+"/"+ZipFiles[i]);
+      wpklist.Append(dir+"/"+ZipFiles[i]);
+      AddZipFile(bdx+"/"+ZipFiles[i]);
     }
   }
 
-  //  Then add wad##.wad files.
+  // then add wad##.wad files
   VStr gwadir;
   if (fl_savedir.IsNotEmpty() && basedir != fl_savedir) {
     gwadir = fl_savedir+"/"+dir;
   }
 
   for (int i = 0; i < 1024; ++i) {
-    VStr buf = basedir+"/"+dir+"/wad"+i+".wad";
+    VStr buf = bdx+"/wad"+i+".wad";
     if (!Sys_FileExists(buf)) break;
+    wpklist.Append(dir+"/wad"+i+".wad");
     W_AddFile(buf, gwadir, false);
   }
 
-  //  Finally add directory itself.
-  VFilesDir* info = new VFilesDir(basedir+"/"+dir);
+  // finally add directory itself
+  VFilesDir *info = new VFilesDir(bdx);
+  //wpklist.Append(bdx+"/");
   SearchPaths.Append(info);
   unguard;
 }
@@ -331,22 +359,17 @@ static void ParseBase(const VStr& name)
           }
           bIwadAdded = true;
         }
-        for (int j = 0; j < G.AddFiles.Num(); j++)
-        {
-          W_AddFile(fl_basedir + "/" + G.AddFiles[j], fl_savedir,
-            false);
+        for (int j = 0; j < G.AddFiles.Num(); ++j) {
+          W_AddFile(fl_basedir+"/"+G.AddFiles[j], fl_savedir, false);
         }
         SetupGameDir(G.GameDir);
         return;
       }
       continue;
     }
-    if (G.MainWad.IsEmpty())
-    {
-      continue;
-    }
+    if (G.MainWad.IsEmpty()) continue;
 
-    //  Look for the main wad file.
+    // look for the main wad file
     VStr MainWadPath = FindMainWad(G.MainWad);
     if (MainWadPath.IsNotEmpty())
     {
@@ -522,10 +545,6 @@ void FL_Init()
 
   AddGameDir("basev/common");
 
-  if (GArgs.CheckParm("-nogore") == 0) {
-    AddGameDir("basev/mods/gore");
-  }
-
   p = GArgs.CheckValue("-iwad");
   if (p)
   {
@@ -556,6 +575,8 @@ void FL_Init()
 #endif
   }
 
+  if (GArgs.CheckParm("-nogore") == 0) AddGameDir("basev/mods/gore");
+
   int fp = GArgs.CheckParm("-file");
   if (fp)
   {
@@ -565,6 +586,7 @@ void FL_Init()
         GCon->Logf(NAME_Init, "WARNING: File \"%s\" doesn't exist.", GArgs[fp]);
       } else {
         VStr Ext = VStr(GArgs[fp]).ExtractFileExtension().ToLower();
+        wpklist.Append(VStr(GArgs[fp]));
         if (Ext == "pk3" || Ext == "zip")
           AddZipFile(GArgs[fp]);
         else
@@ -573,9 +595,7 @@ void FL_Init()
     }
   }
 
-  if (GArgs.CheckParm("-bdw") != 0) {
-    AddGameDir("basev/mods/bdw");
-  }
+  if (GArgs.CheckParm("-bdw") != 0) AddGameDir("basev/mods/bdw");
 
   RenameSprites();
   unguard;

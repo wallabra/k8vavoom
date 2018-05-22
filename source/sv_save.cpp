@@ -27,32 +27,27 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "net/network.h"
 #include "sv_local.h"
 #include "filesys/zipstream.h"
 
-// MACROS ------------------------------------------------------------------
 
-#define REBORN_SLOT       9
+// ////////////////////////////////////////////////////////////////////////// //
+#define REBORN_SLOT  (9)
 
-#define EMPTYSTRING       "empty slot"
-#define MOBJ_NULL         -1
-#define SAVE_NAME(_slot) \
-  (VStr("saves/save") + _slot + ".vsg")
-#define SAVE_NAME_ABS(_slot) \
-  (SV_GetSavesDir() + "/save" + _slot + ".vsg")
+#define EMPTYSTRING  "empty slot"
+#define MOBJ_NULL  (-1)
+#define SAVE_NAME(_slot)      (VStr("saves/save")+(_slot)+".vsg")
+#define SAVE_NAME_ABS(_slot)  (SV_GetSavesDir()+"/save"+(_slot)+".vsg")
 
-#define SAVE_DESCRIPTION_LENGTH   24
-#define SAVE_VERSION_TEXT     "Version 1.34.3"
-#define SAVE_VERSION_TEXT_LENGTH  16
+#define SAVE_DESCRIPTION_LENGTH   (24)
+#define SAVE_VERSION_TEXT         "Version 1.34.4"
+#define SAVE_VERSION_TEXT_LENGTH  (16)
 
-// TYPES -------------------------------------------------------------------
 
-enum gameArchiveSegment_t
-{
+// ////////////////////////////////////////////////////////////////////////// //
+enum gameArchiveSegment_t {
   ASEG_MAP_HEADER = 101,
   ASEG_WORLD,
   ASEG_SCRIPTS,
@@ -60,246 +55,145 @@ enum gameArchiveSegment_t
   ASEG_END
 };
 
-class VSavedMap
-{
+
+class VSavedMap {
 public:
-  TArray<vuint8>    Data;
-  VName       Name;
-  vint32        DecompressedSize;
+  TArray<vuint8> Data;
+  VName Name;
+  vint32 DecompressedSize;
 };
 
-class VSaveSlot
-{
-public:
-  VStr        Description;
-  VName       CurrentMap;
-  TArray<VSavedMap*>  Maps;
 
-  ~VSaveSlot()
-  {
-    Clear();
-  }
-  void Clear();
-  bool LoadSlot(int Slot);
-  void SaveToSlot(int Slot);
-  VSavedMap* FindMap(VName Name);
+class VSaveSlot {
+public:
+  VStr Description;
+  VName CurrentMap;
+  TArray<VSavedMap *> Maps;
+
+  ~VSaveSlot () { Clear(); }
+
+  void Clear ();
+  bool LoadSlot (int Slot);
+  void SaveToSlot (int Slot);
+  VSavedMap *FindMap (VName Name);
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+static VSaveSlot BaseSlot;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static VSaveSlot    BaseSlot;
-
-// CODE --------------------------------------------------------------------
-
-class VSaveLoaderStream : public VStream
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VSaveLoaderStream : public VStream {
 private:
-  VStream*      Stream;
+  VStream *Stream;
 
 public:
-  TArray<VName>   NameRemap;
-  TArray<VObject*>  Exports;
+  TArray<VName> NameRemap;
+  TArray<VObject *> Exports;
 
-  VSaveLoaderStream(VStream* InStream)
-  : Stream(InStream)
-  {
-    bLoading = true;
-  }
-  virtual ~VSaveLoaderStream() noexcept(false)
-  {
-    delete Stream;
-    Stream = NULL;
-  }
+  VSaveLoaderStream (VStream *InStream) : Stream(InStream) { bLoading = true; }
+  virtual ~VSaveLoaderStream () override { delete Stream; Stream = nullptr; }
 
-  //  Stream interface.
-  void Serialise(void* Data, int Len)
-  {
-    Stream->Serialise(Data, Len);
-  }
-  void Seek(int Pos)
-  {
-    Stream->Seek(Pos);
-  }
-  int Tell()
-  {
-    return Stream->Tell();
-  }
-  int TotalSize()
-  {
-    return Stream->TotalSize();
-  }
-  bool AtEnd()
-  {
-    return Stream->AtEnd();
-  }
-  void Flush()
-  {
-    Stream->Flush();
-  }
-  bool Close()
-  {
-    return Stream->Close();
-  }
+  // stream interface
+  virtual void Serialise (void *Data, int Len) override { Stream->Serialise(Data, Len); }
+  virtual void Seek (int Pos) override { Stream->Seek(Pos); }
+  virtual int Tell () override { return Stream->Tell(); }
+  virtual int TotalSize () override { return Stream->TotalSize(); }
+  virtual bool AtEnd () override { return Stream->AtEnd(); }
+  virtual void Flush () override { Stream->Flush(); }
+  virtual bool Close () override { return Stream->Close(); }
 
-  VStream& operator<<(VName& Name)
-  {
+  VStream &operator << (VName &Name) {
     int NameIndex;
     *this << STRM_INDEX(NameIndex);
     Name = NameRemap[NameIndex];
     return *this;
   }
-  VStream& operator<<(VObject*& Ref)
-  {
+
+  VStream &operator << (VObject *&Ref) {
     guard(Loader::operator<<VObject*&);
     int TmpIdx;
     *this << STRM_INDEX(TmpIdx);
-    if (TmpIdx == 0)
-    {
-      Ref = NULL;
-    }
-    else if (TmpIdx > 0)
-    {
-      if (TmpIdx > Exports.Num())
-        Sys_Error("Bad index %d", TmpIdx);
-      Ref = Exports[TmpIdx - 1];
-    }
-    else
-    {
-      Ref = GPlayersBase[-TmpIdx - 1];
+    if (TmpIdx == 0) {
+      Ref = nullptr;
+    } else if (TmpIdx > 0) {
+      if (TmpIdx > Exports.Num()) Sys_Error("Bad index %d", TmpIdx);
+      Ref = Exports[TmpIdx-1];
+    } else {
+      Ref = GPlayersBase[-TmpIdx-1];
     }
     return *this;
     unguard;
   }
-  void SerialiseStructPointer(void*& Ptr, VStruct* Struct)
-  {
+
+  void SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
     int TmpIdx;
     *this << STRM_INDEX(TmpIdx);
-    if (Struct->Name == "sector_t")
-    {
-      Ptr = TmpIdx >= 0 ? &GLevel->Sectors[TmpIdx] : NULL;
-    }
-    else if (Struct->Name == "line_t")
-    {
-      Ptr = TmpIdx >= 0 ? &GLevel->Lines[TmpIdx] : NULL;
-    }
-    else
-    {
+    if (Struct->Name == "sector_t") {
+      Ptr = (TmpIdx >= 0 ? &GLevel->Sectors[TmpIdx] : nullptr);
+    } else if (Struct->Name == "line_t") {
+      Ptr = (TmpIdx >= 0 ? &GLevel->Lines[TmpIdx] : nullptr);
+    } else {
       dprintf("Don't know how to handle pointer to %s\n", *Struct->Name);
-      Ptr = NULL;
+      Ptr = nullptr;
     }
   }
 };
 
-class VSaveWriterStream : public VStream
-{
+
+class VSaveWriterStream : public VStream {
 private:
-  VStream*      Stream;
+  VStream *Stream;
 
 public:
-  TArray<VName>   Names;
-  TArray<VObject*>  Exports;
-  TArray<vint32>    NamesMap;
-  TArray<vint32>    ObjectsMap;
+  TArray<VName> Names;
+  TArray<VObject *> Exports;
+  TArray<vint32> NamesMap;
+  TArray<vint32> ObjectsMap;
 
-  VSaveWriterStream(VStream* InStream)
-  : Stream(InStream)
-  {
+  VSaveWriterStream (VStream *InStream) : Stream(InStream) {
     bLoading = false;
     NamesMap.SetNum(VName::GetNumNames());
-    for (int i = 0; i < VName::GetNumNames(); i++)
-    {
-      NamesMap[i] = -1;
-    }
-  }
-  ~VSaveWriterStream()
-  {
-    delete Stream;
-    Stream = NULL;
+    for (int i = 0; i < VName::GetNumNames(); ++i) NamesMap[i] = -1;
   }
 
-  //  Stream interface.
-  void Serialise(void* Data, int Len)
-  {
-    Stream->Serialise(Data, Len);
-  }
-  void Seek(int Pos)
-  {
-    Stream->Seek(Pos);
-  }
-  int Tell()
-  {
-    return Stream->Tell();
-  }
-  int TotalSize()
-  {
-    return Stream->TotalSize();
-  }
-  bool AtEnd()
-  {
-    return Stream->AtEnd();
-  }
-  void Flush()
-  {
-    Stream->Flush();
-  }
-  bool Close()
-  {
-    return Stream->Close();
-  }
+  virtual ~VSaveWriterStream () override { delete Stream; Stream = nullptr; }
 
-  VStream& operator<<(VName& Name)
-  {
-    if (NamesMap[Name.GetIndex()] == -1)
-    {
-      NamesMap[Name.GetIndex()] = Names.Append(Name);
-    }
+  // stream interface
+  virtual void Serialise (void *Data, int Len) override { Stream->Serialise(Data, Len); }
+  virtual void Seek (int Pos) override { Stream->Seek(Pos); }
+  virtual int Tell () override { return Stream->Tell(); }
+  virtual int TotalSize () override { return Stream->TotalSize(); }
+  virtual bool AtEnd () override { return Stream->AtEnd(); }
+  virtual void Flush () override { Stream->Flush(); }
+  virtual bool Close () override { return Stream->Close(); }
+
+  VStream &operator << (VName &Name) {
+    if (NamesMap[Name.GetIndex()] == -1) NamesMap[Name.GetIndex()] = Names.Append(Name);
     *this << STRM_INDEX(NamesMap[Name.GetIndex()]);
     return *this;
   }
-  VStream& operator<<(VObject*& Ref)
-  {
+
+  VStream &operator << (VObject *&Ref) {
     guard(Saver::operator<<VObject*&);
     int TmpIdx;
-    if (!Ref)
-    {
+    if (!Ref) {
       TmpIdx = 0;
-    }
-    else
-    {
+    } else {
       TmpIdx = ObjectsMap[Ref->GetIndex()];
     }
     return *this << STRM_INDEX(TmpIdx);
     unguard;
   }
-  void SerialiseStructPointer(void*& Ptr, VStruct* Struct)
-  {
+
+  void SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
     int TmpIdx;
-    if (Struct->Name == "sector_t")
-    {
-      if (Ptr)
-        TmpIdx = (sector_t*)Ptr - GLevel->Sectors;
-      else
-          TmpIdx = -1;
-    }
-    else if (Struct->Name == "line_t")
-    {
-      if (Ptr)
-        TmpIdx = (line_t*)Ptr - GLevel->Lines;
-      else
-          TmpIdx = -1;
-    }
-    else
-    {
+    if (Struct->Name == "sector_t") {
+      TmpIdx = (Ptr ? (int)((sector_t *)Ptr-GLevel->Sectors) : -1);
+    } else if (Struct->Name == "line_t") {
+      TmpIdx = (Ptr ? (int)((line_t *)Ptr-GLevel->Lines) : -1);
+    } else {
       dprintf("Don't know how to handle pointer to %s\n", *Struct->Name);
       TmpIdx = -1;
     }
@@ -307,71 +201,87 @@ public:
   }
 };
 
+
 //==========================================================================
 //
 //  SV_GetSavesDir
 //
 //==========================================================================
-
-static VStr SV_GetSavesDir()
-{
-  if (fl_savedir.IsNotEmpty())
-    return fl_savedir + "/" + fl_gamedir + "/saves";
-  else
-    return fl_basedir + "/" + fl_gamedir + "/saves";
+static VStr SV_GetSavesDir () {
+  VStr res = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir);
+  res += "/";
+  res += fl_gamedir;
+  res += "/saves";
+  return res;
 }
+
 
 //==========================================================================
 //
 //  VSaveSlot::Clear
 //
 //==========================================================================
-
-void VSaveSlot::Clear()
-{
+void VSaveSlot::Clear () {
   guard(VSaveSlot::Clear);
   Description.Clean();
   CurrentMap = NAME_None;
-  for (int i = 0; i < Maps.Num(); i++)
-  {
-    delete Maps[i];
-    Maps[i] = NULL;
-  }
+  for (int i = 0; i < Maps.Num(); ++i) { delete Maps[i]; Maps[i] = nullptr; }
   Maps.Clear();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VSaveSlot::LoadSlot
 //
 //==========================================================================
-
-bool VSaveSlot::LoadSlot(int Slot)
-{
+bool VSaveSlot::LoadSlot (int Slot) {
   guard(VSaveSlot::LoadSlot);
   Clear();
-  VStream* Strm = FL_OpenFileRead(SAVE_NAME(Slot));
-  if (!Strm)
-  {
+  VStream *Strm = FL_OpenFileRead(SAVE_NAME(Slot));
+  if (!Strm) {
     GCon->Log("Savegame file doesn't exist");
     return false;
   }
 
-  // Check the version text
+  // check the version text
   char VersionText[SAVE_VERSION_TEXT_LENGTH];
   Strm->Serialise(VersionText, SAVE_VERSION_TEXT_LENGTH);
-  if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT))
-  {
-    // Bad version
+  if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT)) {
+    // bad version
     Strm->Close();
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
     GCon->Log("Savegame is from incompatible version");
     return false;
   }
 
   *Strm << Description;
+
+  // check list of loaded modules
+  auto wadlist = GetWadPk3List();
+  vint32 wcount = wadlist.length();
+  *Strm << wcount;
+  if (wcount < 1 || wcount > 8192 || wcount != wadlist.length()) {
+    Strm->Close();
+    delete Strm;
+    Strm = nullptr;
+    GCon->Log("Invalid savegame (bad number of mods)");
+    return false;
+  }
+
+  for (int f = 0; f < wcount; ++f) {
+    VStr s;
+    *Strm << s;
+    if (s != wadlist[f]) {
+      Strm->Close();
+      delete Strm;
+      Strm = nullptr;
+      GCon->Log("Invalid savegame (bad mod)");
+      return false;
+    }
+  }
 
   VStr TmpName;
   *Strm << TmpName;
@@ -379,14 +289,11 @@ bool VSaveSlot::LoadSlot(int Slot)
 
   int NumMaps;
   *Strm << STRM_INDEX(NumMaps);
-  for (int i = 0; i < NumMaps; i++)
-  {
+  for (int i = 0; i < NumMaps; ++i) {
     VSavedMap* Map = new VSavedMap();
     Maps.Append(Map);
     vint32 DataLen;
-    *Strm << TmpName
-      << Map->DecompressedSize
-      << STRM_INDEX(DataLen);
+    *Strm << TmpName << Map->DecompressedSize << STRM_INDEX(DataLen);
     Map->Name = *TmpName;
     Map->Data.SetNum(DataLen);
     Strm->Serialise(Map->Data.Ptr(), Map->Data.Num());
@@ -394,153 +301,150 @@ bool VSaveSlot::LoadSlot(int Slot)
 
   Strm->Close();
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   return true;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VSaveSlot::SaveToSlot
 //
 //==========================================================================
-
-void VSaveSlot::SaveToSlot(int Slot)
-{
+void VSaveSlot::SaveToSlot (int Slot) {
   guard(VSaveSlot::SaveToSlot);
-  VStream* Strm = FL_OpenFileWrite(*SAVE_NAME(Slot));
+  VStream *Strm = FL_OpenFileWrite(*SAVE_NAME(Slot));
 
-  // Write version info
+  // write version info
   char VersionText[SAVE_VERSION_TEXT_LENGTH];
   memset(VersionText, 0, SAVE_VERSION_TEXT_LENGTH);
   VStr::Cpy(VersionText, SAVE_VERSION_TEXT);
   Strm->Serialise(VersionText, SAVE_VERSION_TEXT_LENGTH);
 
-  // Write game save description
+  // write game save description
   *Strm << Description;
 
-  // Write current map
+  // write list of loaded modules
+  auto wadlist = GetWadPk3List();
+  //GCon->Logf("====================="); for (int f = 0; f < wadlist.length(); ++f) GCon->Logf("  %d: %s", f, *wadlist[f]);
+  vint32 wcount = wadlist.length();
+  *Strm << wcount;
+  for (int f = 0; f < wadlist.length(); ++f) *Strm << wadlist[f];
+
+  // write current map
   VStr TmpName(CurrentMap);
   *Strm << TmpName;
 
   int NumMaps = Maps.Num();
   *Strm << STRM_INDEX(NumMaps);
-  for (int i = 0; i < Maps.Num(); i++)
-  {
+  for (int i = 0; i < Maps.Num(); ++i) {
     TmpName = VStr(Maps[i]->Name);
     vint32 DataLen = Maps[i]->Data.Num();
-    *Strm << TmpName
-      << Maps[i]->DecompressedSize
-      << STRM_INDEX(DataLen);
+    *Strm << TmpName << Maps[i]->DecompressedSize << STRM_INDEX(DataLen);
     Strm->Serialise(Maps[i]->Data.Ptr(), Maps[i]->Data.Num());
   }
 
   Strm->Close();
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VSaveSlot::FindMap
 //
 //==========================================================================
-
-VSavedMap* VSaveSlot::FindMap(VName Name)
-{
+VSavedMap *VSaveSlot::FindMap (VName Name) {
   guard(VSaveSlot::FindMap);
-  for (int i = 0; i < Maps.Num(); i++)
-  {
-    if (Maps[i]->Name == Name)
-    {
-      return Maps[i];
-    }
-  }
-  return NULL;
+  for (int i = 0; i < Maps.Num(); ++i) if (Maps[i]->Name == Name) return Maps[i];
+  return nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  SV_GetSaveString
 //
 //==========================================================================
-
-bool SV_GetSaveString(int Slot, VStr& Desc)
-{
+bool SV_GetSaveString (int Slot, VStr &Desc) {
   guard(SV_GetSaveString);
-  VStream* Strm = FL_OpenFileRead(SAVE_NAME(Slot));
-  if (Strm)
-  {
+  VStream *Strm = FL_OpenFileRead(SAVE_NAME(Slot));
+  if (Strm) {
     char VersionText[SAVE_VERSION_TEXT_LENGTH];
     Strm->Serialise(VersionText, SAVE_VERSION_TEXT_LENGTH);
     *Strm << Desc;
-    if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT))
-    {
-      //  Bad version, put an asterisk in front of the description.
-      Desc = "*" + Desc;
+    bool goodSave = true;
+    if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT)) {
+      // bad version, put an asterisk in front of the description
+      goodSave = false;
+    } else {
+      // check list of loaded modules
+      auto wadlist = GetWadPk3List();
+      vint32 wcount = wadlist.length();
+      *Strm << wcount;
+      if (wcount < 1 || wcount > 8192 || wcount != wadlist.length()) {
+        goodSave = false;
+      } else {
+        for (int f = 0; f < wcount; ++f) {
+          VStr s;
+          *Strm << s;
+          if (s != wadlist[f]) { goodSave = false; break; }
+        }
+      }
     }
+    if (!goodSave) Desc = "*"+Desc;
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
     return true;
-  }
-  else
-  {
+  } else {
     Desc = EMPTYSTRING;
     return false;
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  AssertSegment
 //
 //==========================================================================
-
-static void AssertSegment(VStream& Strm, gameArchiveSegment_t segType)
-{
+static void AssertSegment (VStream &Strm, gameArchiveSegment_t segType) {
   guard(AssertSegment);
-  if (Streamer<int>(Strm) != (int)segType)
-  {
-    Host_Error("Corrupt save game: Segment [%d] failed alignment check",
-      segType);
-  }
+  if (Streamer<int>(Strm) != (int)segType) Host_Error("Corrupt save game: Segment [%d] failed alignment check", segType);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  ArchiveNames
 //
 //==========================================================================
-
-static void ArchiveNames(VSaveWriterStream* Saver)
-{
-  //  Write offset to the names in the beginning of the file.
+static void ArchiveNames (VSaveWriterStream *Saver) {
+  // write offset to the names in the beginning of the file
   vint32 NamesOffset = Saver->Tell();
   Saver->Seek(0);
   *Saver << NamesOffset;
   Saver->Seek(NamesOffset);
 
-  //  Serialise names.
+  // serialise names
   vint32 Count = Saver->Names.Num();
   *Saver << STRM_INDEX(Count);
-  for (int i = 0; i < Count; i++)
-  {
-    *Saver << *VName::GetEntry(Saver->Names[i].GetIndex());
-  }
+  for (int i = 0; i < Count; ++i) *Saver << *VName::GetEntry(Saver->Names[i].GetIndex());
 }
+
 
 //==========================================================================
 //
 //  UnarchiveNames
 //
 //==========================================================================
-
-static void UnarchiveNames(VSaveLoaderStream* Loader)
-{
+static void UnarchiveNames (VSaveLoaderStream *Loader) {
   vint32 NamesOffset;
   *Loader << NamesOffset;
 
@@ -549,8 +453,7 @@ static void UnarchiveNames(VSaveLoaderStream* Loader)
   vint32 Count;
   *Loader << STRM_INDEX(Count);
   Loader->NameRemap.SetNum(Count);
-  for (int i = 0; i < Count; i++)
-  {
+  for (int i = 0; i < Count; ++i) {
     VNameEntry E;
     *Loader << E;
     Loader->NameRemap[i] = VName(E.Name);
@@ -558,139 +461,108 @@ static void UnarchiveNames(VSaveLoaderStream* Loader)
   Loader->Seek(TmpOffset);
 }
 
+
 //==========================================================================
 //
 // ArchiveThinkers
 //
 //==========================================================================
-
-static void ArchiveThinkers(VSaveWriterStream* Saver, bool SavingPlayers)
-{
+static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
   guard(ArchiveThinkers);
   vint32 Seg = ASEG_WORLD;
   *Saver << Seg;
 
   Saver->ObjectsMap.SetNum(VObject::GetObjectsCount());
-  for (int i = 0; i < VObject::GetObjectsCount(); i++)
-  {
-    Saver->ObjectsMap[i] = 0;
-  }
+  for (int i = 0; i < VObject::GetObjectsCount(); ++i) Saver->ObjectsMap[i] = 0;
 
-  //  Add level
+  // add level
   Saver->Exports.Append(GLevel);
   Saver->ObjectsMap[GLevel->GetIndex()] = Saver->Exports.Num();
 
-  //  Add world info
+  // add world info
   vuint8 WorldInfoSaved = (byte)SavingPlayers;
   *Saver << WorldInfoSaved;
-  if (WorldInfoSaved)
-  {
+  if (WorldInfoSaved) {
     Saver->Exports.Append(GGameInfo->WorldInfo);
     Saver->ObjectsMap[GGameInfo->WorldInfo->GetIndex()] = Saver->Exports.Num();
   }
 
-  //  Add players.
-  for (int i = 0; i < MAXPLAYERS; i++)
-  {
+  // add players
+  for (int i = 0; i < MAXPLAYERS; ++i) {
     byte Active = (byte)(SavingPlayers && GGameInfo->Players[i]);
     *Saver << Active;
-    if (!Active)
-    {
-      continue;
-    }
-
+    if (!Active) continue;
     Saver->Exports.Append(GGameInfo->Players[i]);
     Saver->ObjectsMap[GGameInfo->Players[i]->GetIndex()] = Saver->Exports.Num();
   }
 
-  //  Add thinkers.
+  // add thinkers
   int ThinkersStart = Saver->Exports.Num();
-  for (TThinkerIterator<VThinker> Th(GLevel); Th; ++Th)
-  {
+  for (TThinkerIterator<VThinker> Th(GLevel); Th; ++Th) {
     VEntity *mobj = Cast<VEntity>(*Th);
-    if (mobj != NULL && mobj->EntityFlags & VEntity::EF_IsPlayer && !SavingPlayers)
-    {
-      // Skipping player mobjs
-      continue;
-    }
-
+    if (mobj != nullptr && mobj->EntityFlags & VEntity::EF_IsPlayer && !SavingPlayers) continue; // skipping player mobjs
     Saver->Exports.Append(*Th);
     Saver->ObjectsMap[Th->GetIndex()] = Saver->Exports.Num();
   }
 
   vint32 NumObjects = Saver->Exports.Num() - ThinkersStart;
   *Saver << STRM_INDEX(NumObjects);
-  for (int i = ThinkersStart; i < Saver->Exports.Num(); i++)
-  {
+  for (int i = ThinkersStart; i < Saver->Exports.Num(); ++i) {
     VName CName = Saver->Exports[i]->GetClass()->GetVName();
     *Saver << CName;
   }
 
-  //  Serialise objects.
-  for (int i = 0; i < Saver->Exports.Num(); i++)
-  {
-    Saver->Exports[i]->Serialise(*Saver);
-  }
+  // serialise objects
+  for (int i = 0; i < Saver->Exports.Num(); ++i) Saver->Exports[i]->Serialise(*Saver);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  UnarchiveThinkers
 //
 //==========================================================================
-
-static void UnarchiveThinkers(VSaveLoaderStream* Loader)
-{
+static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   guard(UnarchiveThinkers);
-  VObject*      Obj;
+  VObject *Obj;
 
   AssertSegment(*Loader, ASEG_WORLD);
 
-  //  Add level.
+  // add level
   Loader->Exports.Append(GLevel);
 
-  //  Add world info
+  // add world info
   vuint8 WorldInfoSaved;
   *Loader << WorldInfoSaved;
-  if (WorldInfoSaved)
-  {
-    Loader->Exports.Append(GGameInfo->WorldInfo);
-  }
+  if (WorldInfoSaved) Loader->Exports.Append(GGameInfo->WorldInfo);
 
-  //  Add players.
+  // add players
   sv_load_num_players = 0;
-  for (int i = 0; i < MAXPLAYERS; i++)
-  {
+  for (int i = 0; i < MAXPLAYERS; ++i) {
     byte Active;
     *Loader << Active;
-    if (Active)
-    {
-      sv_load_num_players++;
+    if (Active) {
+      ++sv_load_num_players;
       Loader->Exports.Append(GPlayersBase[i]);
     }
   }
 
   vint32 NumObjects;
   *Loader << STRM_INDEX(NumObjects);
-  for (int i = 0; i < NumObjects; i++)
-  {
-    //  Get params
+  for (int i = 0; i < NumObjects; ++i) {
+    // get params
     VName CName;
     *Loader << CName;
     VClass *Class = VClass::FindClass(*CName);
-    if (!Class)
-    {
-      Sys_Error("No such class %s", *CName);
-    }
+    if (!Class) Sys_Error("No such class %s", *CName);
 
-    //  Allocate object and copy data
+    // allocate object and copy data
     Obj = VObject::StaticSpawnObject(Class);
 
-    //  Handle level info
-    if (Obj->IsA(VLevelInfo::StaticClass()))
-    {
-      GLevelInfo = (VLevelInfo*)Obj;
+    // handle level info
+    if (Obj->IsA(VLevelInfo::StaticClass())) {
+      GLevelInfo = (VLevelInfo *)Obj;
       GLevelInfo->Game = GGameInfo;
       GLevelInfo->World = GGameInfo->WorldInfo;
       GLevel->LevelInfo = GLevelInfo;
@@ -702,23 +574,19 @@ static void UnarchiveThinkers(VSaveLoaderStream* Loader)
   GLevelInfo->Game = GGameInfo;
   GLevelInfo->World = GGameInfo->WorldInfo;
 
-  for (int i = 0; i < Loader->Exports.Num(); i++)
-  {
-    Loader->Exports[i]->Serialise(*Loader);
-  }
+  for (int i = 0; i < Loader->Exports.Num(); ++i) Loader->Exports[i]->Serialise(*Loader);
 
   GLevelInfo->eventAfterUnarchiveThinkers();
   unguard;
 }
+
 
 //==========================================================================
 //
 // ArchiveSounds
 //
 //==========================================================================
-
-static void ArchiveSounds(VStream& Strm)
-{
+static void ArchiveSounds (VStream &Strm) {
   vint32 Seg = ASEG_SOUNDS;
   Strm << Seg;
 #ifdef CLIENT
@@ -729,220 +597,204 @@ static void ArchiveSounds(VStream& Strm)
 #endif
 }
 
+
 //==========================================================================
 //
 // UnarchiveSounds
 //
 //==========================================================================
-
-static void UnarchiveSounds(VStream& Strm)
-{
+static void UnarchiveSounds (VStream &Strm) {
   AssertSegment(Strm, ASEG_SOUNDS);
 #ifdef CLIENT
   GAudio->SerialiseSounds(Strm);
 #else
   vint32 Dummy = 0;
   Strm << Dummy;
-  Strm.Seek(Strm.Tell() + Dummy * 36);
+  Strm.Seek(Strm.Tell()+Dummy*36); //FIXME!
 #endif
 }
+
 
 //==========================================================================
 //
 // SV_SaveMap
 //
 //==========================================================================
-
-static void SV_SaveMap(bool savePlayers)
-{
+static void SV_SaveMap (bool savePlayers) {
   guard(SV_SaveMap);
-  // Make sure we don't have any garbage
+
+  // make sure we don't have any garbage
   VObject::CollectGarbage();
 
-  // Open the output file
-  VMemoryStream* InStrm = new VMemoryStream();
-  VSaveWriterStream* Saver = new VSaveWriterStream(InStrm);
+  // open the output file
+  VMemoryStream *InStrm = new VMemoryStream();
+  VSaveWriterStream *Saver = new VSaveWriterStream(InStrm);
 
   int NamesOffset = 0;
   *Saver << NamesOffset;
 
-  // Place a header marker
+  // place a header marker
   vint32 Seg = ASEG_MAP_HEADER;
   *Saver << Seg;
 
-  // Write the level timer
-  *Saver << GLevel->Time
-    << GLevel->TicTime;
+  // write the level timer
+  *Saver << GLevel->Time << GLevel->TicTime;
 
   ArchiveThinkers(Saver, savePlayers);
   ArchiveSounds(*Saver);
 
-  // Place a termination marker
+  // place a termination marker
   Seg = ASEG_END;
   *Saver << Seg;
 
   ArchiveNames(Saver);
 
-  // Close the output file
+  // close the output file
   Saver->Close();
 
-  TArray<vuint8>& Buf = InStrm->GetArray();
+  TArray<vuint8> &Buf = InStrm->GetArray();
 
-  VSavedMap* Map = BaseSlot.FindMap(GLevel->MapName);
-  if (!Map)
-  {
+  VSavedMap *Map = BaseSlot.FindMap(GLevel->MapName);
+  if (!Map) {
     Map = new VSavedMap();
     BaseSlot.Maps.Append(Map);
     Map->Name = GLevel->MapName;
   }
 
-  //  Compress map data.
+  // compress map data
   Map->DecompressedSize = Buf.Num();
   Map->Data.Clear();
-  VArrayStream* ArrStrm = new VArrayStream(Map->Data);
+  VArrayStream *ArrStrm = new VArrayStream(Map->Data);
   ArrStrm->BeginWrite();
-  VZipStreamWriter* ZipStrm = new VZipStreamWriter(ArrStrm);
+  VZipStreamWriter *ZipStrm = new VZipStreamWriter(ArrStrm);
   ZipStrm->Serialise(Buf.Ptr(), Buf.Num());
   delete ZipStrm;
-  ZipStrm = NULL;
+  ZipStrm = nullptr;
   delete ArrStrm;
-  ArrStrm = NULL;
+  ArrStrm = nullptr;
 
   delete Saver;
-  Saver = NULL;
+  Saver = nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  SV_LoadMap
 //
 //==========================================================================
-
-static void SV_LoadMap(VName MapName)
-{
+static void SV_LoadMap (VName MapName) {
   guard(SV_LoadMap);
-  // Load a base level
+  // load a base level
   SV_SpawnServer(*MapName, false, false);
 
   VSavedMap* Map = BaseSlot.FindMap(MapName);
   check(Map);
 
-  //  Decompress map data
-  VArrayStream* ArrStrm = new VArrayStream(Map->Data);
-  VZipStreamReader* ZipStrm = new VZipStreamReader(ArrStrm);
+  // decompress map data
+  VArrayStream *ArrStrm = new VArrayStream(Map->Data);
+  VZipStreamReader *ZipStrm = new VZipStreamReader(ArrStrm);
   TArray<vuint8> DecompressedData;
   DecompressedData.SetNum(Map->DecompressedSize);
   ZipStrm->Serialise(DecompressedData.Ptr(), DecompressedData.Num());
   delete ZipStrm;
-  ZipStrm = NULL;
+  ZipStrm = nullptr;
   delete ArrStrm;
-  ArrStrm = NULL;
+  ArrStrm = nullptr;
 
-  VSaveLoaderStream* Loader = new VSaveLoaderStream(
-    new VArrayStream(DecompressedData));
+  VSaveLoaderStream *Loader = new VSaveLoaderStream(new VArrayStream(DecompressedData));
 
-  // Load names
+  // load names
   UnarchiveNames(Loader);
 
   AssertSegment(*Loader, ASEG_MAP_HEADER);
 
-  // Read the level timer
-  *Loader << GLevel->Time
-    << GLevel->TicTime;
+  // read the level timer
+  *Loader << GLevel->Time << GLevel->TicTime;
 
   UnarchiveThinkers(Loader);
   UnarchiveSounds(*Loader);
 
   AssertSegment(*Loader, ASEG_END);
 
-  // Free save buffer
+  // free save buffer
   Loader->Close();
   delete Loader;
-  Loader = NULL;
+  Loader = nullptr;
 
-  //  Do this here so that clients have loaded info, not initial one.
+  // do this here so that clients have loaded info, not initial one
   SV_SendServerInfoToClients();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  SV_SaveGame
 //
 //==========================================================================
-
-void SV_SaveGame(int slot, const VStr& Description)
-{
+void SV_SaveGame (int slot, const VStr &Description) {
   guard(SV_SaveGame);
+
   BaseSlot.Description = Description;
   BaseSlot.CurrentMap = GLevel->MapName;
 
-  // Save out the current map
+  // save out the current map
   SV_SaveMap(true); // true = save player info
 
-  // Write data to destination slot
+  // write data to destination slot
   BaseSlot.SaveToSlot(slot);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  SV_LoadGame
 //
 //==========================================================================
-
-void SV_LoadGame(int slot)
-{
+void SV_LoadGame (int slot) {
   guard(SV_LoadGame);
   SV_ShutdownGame();
 
-  if (!BaseSlot.LoadSlot(slot))
-  {
-    return;
-  }
+  if (!BaseSlot.LoadSlot(slot)) return;
 
   sv_loading = true;
 
-  // Load the current map
+  // load the current map
   SV_LoadMap(BaseSlot.CurrentMap);
 
 #ifdef CLIENT
-  if (GGameInfo->NetMode != NM_DedicatedServer)
-  {
-    CL_SetUpLocalPlayer();
-  }
+  if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
 #endif
 
-  // Launch waiting scripts
-  if (!deathmatch)
-  {
-    GLevel->Acs->CheckAcsStore();
-  }
+  // launch waiting scripts
+  if (!deathmatch) GLevel->Acs->CheckAcsStore();
+
   unguard;
 }
+
 
 //==========================================================================
 //
 //  SV_InitBaseSlot
 //
 //==========================================================================
-
-void SV_InitBaseSlot()
-{
+void SV_InitBaseSlot () {
   BaseSlot.Clear();
 }
+
 
 //==========================================================================
 //
 // SV_GetRebornSlot
 //
 //==========================================================================
-
-int SV_GetRebornSlot()
-{
+int SV_GetRebornSlot () {
   return REBORN_SLOT;
 }
+
 
 //==========================================================================
 //
@@ -951,15 +803,11 @@ int SV_GetRebornSlot()
 // Returns true if the reborn slot is available.
 //
 //==========================================================================
-
-bool SV_RebornSlotAvailable()
-{
-  if (Sys_FileExists(SAVE_NAME_ABS(REBORN_SLOT)))
-  {
-    return true;
-  }
+bool SV_RebornSlotAvailable () {
+  if (Sys_FileExists(SAVE_NAME_ABS(REBORN_SLOT))) return true;
   return false;
 }
+
 
 //==========================================================================
 //
@@ -968,39 +816,31 @@ bool SV_RebornSlotAvailable()
 // Copies the base slot to the reborn slot.
 //
 //==========================================================================
-
-void SV_UpdateRebornSlot()
-{
+void SV_UpdateRebornSlot () {
   BaseSlot.SaveToSlot(REBORN_SLOT);
 }
+
 
 //==========================================================================
 //
 // SV_MapTeleport
 //
 //==========================================================================
-
-void SV_MapTeleport(VName mapname)
-{
+void SV_MapTeleport (VName mapname) {
   guard(SV_MapTeleport);
-  TArray<VThinker*>   TravelObjs;
+  TArray<VThinker *> TravelObjs;
 
-  //  Call PreTravel event
-  for (int i = 0; i < MAXPLAYERS; i++)
-  {
-    if (!GGameInfo->Players[i])
-    {
-      continue;
-    }
+  // call PreTravel event
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    if (!GGameInfo->Players[i]) continue;
     GGameInfo->Players[i]->eventPreTravel();
   }
 
-  //  Coolect list of thinkers that will go to the new level.
-  for (VThinker* Th = GLevel->ThinkerHead; Th; Th = Th->Next)
-  {
+  // collect list of thinkers that will go to the new level
+  for (VThinker *Th = GLevel->ThinkerHead; Th; Th = Th->Next) {
     VEntity *vent = Cast<VEntity>(Th);
-    if (vent != NULL && (//(vent->EntityFlags & VEntity::EF_IsPlayer) ||
-      (vent->Owner && (vent->Owner->EntityFlags & VEntity::EF_IsPlayer))))
+    if (vent != nullptr && (//(vent->EntityFlags & VEntity::EF_IsPlayer) ||
+        (vent->Owner && (vent->Owner->EntityFlags & VEntity::EF_IsPlayer))))
     {
       TravelObjs.Append(vent);
       GLevel->RemoveThinker(vent);
@@ -1008,75 +848,64 @@ void SV_MapTeleport(VName mapname)
       GLevel->DelSectorList();
       vent->StopSound(0);
     }
-    if (Th->IsA(VPlayerReplicationInfo::StaticClass()))
-    {
+    if (Th->IsA(VPlayerReplicationInfo::StaticClass())) {
       TravelObjs.Append(Th);
       GLevel->RemoveThinker(Th);
     }
   }
 
-  if (!deathmatch)
-  {
-    const mapInfo_t& old_info = P_GetMapInfo(GLevel->MapName);
-    const mapInfo_t& new_info = P_GetMapInfo(mapname);
-    //  All maps in cluster 0 are treated as in different clusters.
+  if (!deathmatch) {
+    const mapInfo_t &old_info = P_GetMapInfo(GLevel->MapName);
+    const mapInfo_t &new_info = P_GetMapInfo(mapname);
+    // all maps in cluster 0 are treated as in different clusters
     if (old_info.Cluster && old_info.Cluster == new_info.Cluster &&
-      (P_GetClusterDef(old_info.Cluster)->Flags & CLUSTERF_Hub))
+        (P_GetClusterDef(old_info.Cluster)->Flags & CLUSTERF_Hub))
     {
-      // Same cluster - save map without saving player mobjs
+      // same cluster: save map without saving player mobjs
       SV_SaveMap(false);
-    }
-    else
-    {
-      // Entering new cluster - clear base slot
+    } else {
+      // entering new cluster: clear base slot
       BaseSlot.Clear();
     }
   }
 
   sv_map_travel = true;
-  if (!deathmatch && BaseSlot.FindMap(mapname))
-  {
-    // Unarchive map
+  if (!deathmatch && BaseSlot.FindMap(mapname)) {
+    // unarchive map
     SV_LoadMap(mapname);
-  }
-  else
-  {
-    // New map
+  } else {
+    // new map
     SV_SpawnServer(*mapname, true, false);
   }
 
-  //  Add traveling thinkers to the new level.
-  for (int i = 0; i < TravelObjs.Num(); i++)
-  {
+  // add traveling thinkers to the new level
+  for (int i = 0; i < TravelObjs.Num(); ++i) {
     GLevel->AddThinker(TravelObjs[i]);
-    VEntity* Ent = Cast<VEntity>(TravelObjs[i]);
-    if (Ent)
-    {
-      Ent->LinkToWorld();
-    }
+    VEntity *Ent = Cast<VEntity>(TravelObjs[i]);
+    if (Ent) Ent->LinkToWorld();
   }
 
 #ifdef CLIENT
   if (GGameInfo->NetMode == NM_TitleMap ||
-    GGameInfo->NetMode == NM_Standalone ||
-    GGameInfo->NetMode == NM_ListenServer)
+      GGameInfo->NetMode == NM_Standalone ||
+      GGameInfo->NetMode == NM_ListenServer)
   {
     CL_SetUpStandaloneClient();
   }
 #endif
 
-  // Launch waiting scripts
-  if (!deathmatch)
-  {
-    GLevel->Acs->CheckAcsStore();
-  }
+  // launch waiting scripts
+  if (!deathmatch) GLevel->Acs->CheckAcsStore();
+
   unguard;
 }
 
+
 #ifdef CLIENT
 
-void Draw_SaveIcon();
-void Draw_LoadIcon();
+void Draw_SaveIcon ();
+void Draw_LoadIcon ();
+
 
 //==========================================================================
 //
@@ -1085,36 +914,26 @@ void Draw_LoadIcon();
 //  Called by the menu task. Description is a 24 byte text string
 //
 //==========================================================================
-
-COMMAND(Save)
-{
+COMMAND(Save) {
   guard(COMMAND Save)
-  if (Args.Num() != 3)
-  {
-    return;
-  }
+  if (Args.Num() != 3) return;
 
-  if (deathmatch)
-  {
+  if (deathmatch) {
     GCon->Log("Can't save in deathmatch game");
     return;
   }
 
-  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_TitleMap ||
-    GGameInfo->NetMode == NM_Client)
-  {
+  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_TitleMap || GGameInfo->NetMode == NM_Client) {
     GCon->Log("you can't save if you aren't playing!");
     return;
   }
 
-  if (sv.intermission)
-  {
+  if (sv.intermission) {
     GCon->Log("You can't save while in intermission!");
     return;
   }
 
-  if (Args[2].Length() >= 32)
-  {
+  if (Args[2].Length() >= 32) {
     GCon->Log("Description too long");
     return;
   }
@@ -1127,29 +946,24 @@ COMMAND(Save)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  COMMAND Load
 //
 //==========================================================================
-
-COMMAND(Load)
-{
+COMMAND(Load) {
   guard(COMMAND Load);
-  if (Args.Num() != 2)
-  {
-    return;
-  }
-  if (deathmatch)
-  {
+  if (Args.Num() != 2) return;
+
+  if (deathmatch) {
     GCon->Log("Can't load in deathmatch game");
     return;
   }
 
   int slot = atoi(*Args[1]);
   VStr desc;
-  if (!SV_GetSaveString(slot, desc))
-  {
+  if (!SV_GetSaveString(slot, desc)) {
     GCon->Log("Empty slot");
     return;
   }
@@ -1157,12 +971,12 @@ COMMAND(Load)
 
   Draw_LoadIcon();
   SV_LoadGame(slot);
-  if (GGameInfo->NetMode == NM_Standalone)
-  {
-    // Copy the base slot to the reborn slot
+  if (GGameInfo->NetMode == NM_Standalone) {
+    // copy the base slot to the reborn slot
     SV_UpdateRebornSlot();
   }
   unguard;
 }
+
 
 #endif

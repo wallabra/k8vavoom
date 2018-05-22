@@ -23,21 +23,12 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void SV_SaveGame(int Slot, const VStr& Description);
-void SV_MapTeleport(VName MapName);
-void SV_LoadGame(int Slot);
-void SV_InitBaseSlot();
-void SV_UpdateRebornSlot();
-bool SV_RebornSlotAvailable();
-int SV_GetRebornSlot();
-bool SV_GetSaveString(int Slot, VStr& Desc);
-
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
+extern void SV_SaveGame (int Slot, const VStr &Description);
+extern void SV_MapTeleport (VName MapName);
+extern void SV_LoadGame (int Slot);
+extern void SV_InitBaseSlot ();
+extern void SV_UpdateRebornSlot ();
+extern bool SV_RebornSlotAvailable ();
+extern int SV_GetRebornSlot ();
+extern bool SV_GetSaveString (int Slot, VStr &Desc);

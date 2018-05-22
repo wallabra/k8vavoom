@@ -27,40 +27,22 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "drawer.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-enum
-{
+enum {
   SB_VIEW_NORMAL,
   SB_VIEW_AUTOMAP,
   SB_VIEW_FULLSCREEN
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+extern refdef_t refdef;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+int sb_height = 32;
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern refdef_t     refdef;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-int           sb_height = 32;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
@@ -68,56 +50,49 @@ int           sb_height = 32;
 //
 //==========================================================================
 
-void SB_Init()
-{
+void SB_Init () {
   sb_height = GClGame->sb_height;
 }
+
 
 //==========================================================================
 //
 //  SB_Ticker
 //
 //==========================================================================
-
-void SB_Ticker()
-{
-  if (cl && cls.signon && cl->MO)
-  {
-      GClGame->eventStatusBarUpdateWidgets(host_frametime);
-  }
+void SB_Ticker () {
+  if (cl && cls.signon && cl->MO) GClGame->eventStatusBarUpdateWidgets(host_frametime);
 }
+
 
 //==========================================================================
 //
 //  SB_Responder
 //
 //==========================================================================
-
-bool SB_Responder(event_t *)
-{
+bool SB_Responder (event_t *) {
   return false;
 }
+
 
 //==========================================================================
 //
 //  SB_Drawer
 //
 //==========================================================================
-
-void SB_Drawer()
-{
-  //  Update widget visibility
-  GClGame->eventStatusBarDrawer(automapactive > 0 ? SB_VIEW_AUTOMAP :
-    refdef.height == ScreenHeight ? SB_VIEW_FULLSCREEN : SB_VIEW_NORMAL);
+void SB_Drawer () {
+  // update widget visibility
+  GClGame->eventStatusBarDrawer(automapactive > 0 ?
+      SB_VIEW_AUTOMAP :
+      refdef.height == ScreenHeight ? SB_VIEW_FULLSCREEN : SB_VIEW_NORMAL);
 }
+
 
 //==========================================================================
 //
 //  SB_Start
 //
 //==========================================================================
-
-void SB_Start()
-{
+void SB_Start () {
   GClGame->eventStatusBarStartMap();
 }

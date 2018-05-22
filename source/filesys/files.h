@@ -43,6 +43,8 @@ VStream* FL_OpenFileWrite(const VStr& Name, bool isFullName=false);
 
 VStream* FL_OpenSysFileRead(const VStr& Name);
 
+TArray<VStr> GetWadPk3List ();
+
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
 extern bool   fl_devmode;
