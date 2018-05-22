@@ -45,14 +45,14 @@ decalgroup BloodSmearGreen {
   K8GoreBloodSmearSmall1_Green  3
   K8GoreBloodSmearSmall2_Green  3
 
-  K8GoreBloodSmear01_Green 1
-  K8GoreBloodSmear02_Green 1
+  K8GoreBloodSmear1_Green 1
+  K8GoreBloodSmear2_Green 1
 }
 
 // radius damage
 decalgroup BloodSmearRadiusGreen {
-  K8GoreBloodSmear01_Green 1
-  K8GoreBloodSmear02_Green 1
+  K8GoreBloodSmear1_Green 1
+  K8GoreBloodSmear2_Green 1
 }
 
 decalgroup BloodSplatRadiusGreen {
@@ -76,14 +76,14 @@ decalgroup BloodSmearBlue {
   K8GoreBloodSmearSmall1_Blue  3
   K8GoreBloodSmearSmall2_Blue  3
 
-  K8GoreBloodSmear01_Blue 1
-  K8GoreBloodSmear02_Blue 1
+  K8GoreBloodSmear1_Blue 1
+  K8GoreBloodSmear2_Blue 1
 }
 
 // radius damage
 decalgroup BloodSmearRadiusBlue {
-  K8GoreBloodSmear01_Blue 1
-  K8GoreBloodSmear02_Blue 1
+  K8GoreBloodSmear1_Blue 1
+  K8GoreBloodSmear2_Blue 1
 }
 
 decalgroup BloodSplatRadiusBlue {
@@ -531,6 +531,22 @@ decalgroup K8GoreBloodSmear_Transient_Green {
 }
 
 
+decal K8GoreBloodSmear1_Green {
+  pic BGPLNEW4
+  x-scale 0.6
+  y-scale 0.6
+  randomflipx
+  animator K8GoreBloodSmearer
+}
+
+decal K8GoreBloodSmear2_Green {
+  pic BGPLNEW5
+  x-scale 0.6
+  y-scale 0.6
+  randomflipx
+  animator K8GoreBloodSmearer
+}
+
 
 decal K8GoreBloodSmearSmall1_Transient_Green {
   pic BGPLNEW8
@@ -552,6 +568,24 @@ decalgroup K8GoreBloodSmearSmall_Transient_Green {
   K8GoreBloodSmearSmall1_Transient_Green  1
   K8GoreBloodSmearSmall2_Transient_Green  1
 }
+
+
+decal K8GoreBloodSmearSmall1_Green {
+  pic BGPLNEW8
+  x-scale 0.6
+  y-scale 0.6
+  randomflipx
+  animator K8GoreBloodSmearer
+}
+
+decal K8GoreBloodSmearSmall2_Green {
+  pic BGPLNEW7
+  x-scale 0.6
+  y-scale 0.6
+  randomflipx
+  animator K8GoreBloodSmearer
+}
+
 
 
 decal K8GoreBloodSplat01_Transient_Green {
@@ -629,6 +663,22 @@ decalgroup K8GoreBloodSmear_Transient_Blue {
   K8GoreBloodSmear2_Transient_Blue 1
 }
 
+
+decal K8GoreBloodSmearSmall1_Blue {
+  pic BBPLNEW8
+  x-scale 0.6
+  y-scale 0.6
+  randomflipx
+  animator K8GoreBloodSmearer
+}
+
+decal K8GoreBloodSmearSmall2_Blue {
+  pic BBPLNEW7
+  x-scale 0.6
+  y-scale 0.6
+  randomflipx
+  animator K8GoreBloodSmearer
+}
 
 
 decal K8GoreBloodSmearSmall1_Transient_Blue {
