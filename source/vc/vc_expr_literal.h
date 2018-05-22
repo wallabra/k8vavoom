@@ -162,3 +162,21 @@ protected:
   VNullLiteral () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
+
+//==========================================================================
+//
+//  VDollar
+//
+//==========================================================================
+class VDollar : public VExpression {
+public:
+  VDollar (const TLocation &);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDollar () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};

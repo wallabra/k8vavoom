@@ -25,6 +25,10 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VArrayElement;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VLabel {
 private:
   friend class VEmitContext;
@@ -69,6 +73,7 @@ public:
   VMethod *CurrentFunc;
   VClass *SelfClass;
   VPackage *Package;
+  VArrayElement *IndArray;
 
   VFieldType FuncRetType;
 
@@ -100,6 +105,8 @@ public:
   void EmitPushNumber (int);
   void EmitLocalAddress (int);
   void EmitClearStrings (int, int);
+
+  VArrayElement *SetIndexArray (VArrayElement *el); // returns previous
 };
 
 

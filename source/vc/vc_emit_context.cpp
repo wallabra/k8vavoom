@@ -40,6 +40,7 @@ VStatementInfo StatementInfo[NUM_OPCODES] = {
 //==========================================================================
 VEmitContext::VEmitContext (VMemberBase *Member)
   : CurrentFunc(nullptr)
+  , IndArray(nullptr)
   , FuncRetType(TYPE_Unknown)
   , localsofs(0)
   , InDefaultProperties(false)
@@ -366,4 +367,16 @@ void VEmitContext::EmitClearStrings (int Start, int End) {
       }
     }
   }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::SetIndexArray
+//
+//==========================================================================
+VArrayElement *VEmitContext::SetIndexArray (VArrayElement *el) {
+  auto res = IndArray;
+  IndArray = el;
+  return res;
 }

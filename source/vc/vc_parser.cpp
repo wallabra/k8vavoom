@@ -238,6 +238,7 @@ VExpression *VParser::ParseExpressionPriority0 () {
     case TK_Null: Lex.NextToken(); return new VNullLiteral(l);
     case TK_False: Lex.NextToken(); return new VIntLiteral(0, l);
     case TK_True: Lex.NextToken(); return new VIntLiteral(1, l);
+    case TK_Dollar: Lex.NextToken(); return new VDollar(l);
     case TK_Vector:
       {
         Lex.NextToken();

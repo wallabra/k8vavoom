@@ -90,13 +90,17 @@ void VArrayElement::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VArrayElement::DoResolve (VEmitContext &ec) {
   // we need a copy in case this is a pointer thingy
-  auto opcopy = (op ? op->SyntaxCopy() : nullptr);
+  opcopy = (op ? op->SyntaxCopy() : nullptr);
 
   if (op) op = op->Resolve(ec);
+  // resolve index expression
+  auto oldIndArray = ec.SetIndexArray(this);
   if (ind) ind = ind->Resolve(ec);
+  ec.SetIndexArray(oldIndArray);
 
   if (!op || !ind) {
     delete opcopy;
+    opcopy = nullptr;
     delete this;
     return nullptr;
   }
@@ -104,6 +108,7 @@ VExpression *VArrayElement::DoResolve (VEmitContext &ec) {
   if (ind->Type.Type != TYPE_Int) {
     ParseError(Loc, "Array index must be of integer type");
     delete opcopy;
+    opcopy = nullptr;
     delete this;
     return nullptr;
   }
@@ -113,8 +118,10 @@ VExpression *VArrayElement::DoResolve (VEmitContext &ec) {
     delete op;
     op = nullptr;
     op = (new VPushPointed(opcopy))->Resolve(ec);
+    opcopy = nullptr;
     if (!op) { delete this; return nullptr; }
   } else {
+    opcopy = nullptr;
     delete opcopy;
   }
 

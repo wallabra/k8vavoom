@@ -30,6 +30,9 @@
 //
 //==========================================================================
 class VArrayElement : public VExpression {
+private:
+  VExpression *opcopy; // valid only in `DoResolve()`
+
 public:
   VExpression *op;
   VExpression *ind;
@@ -47,6 +50,8 @@ public:
 protected:
   VArrayElement () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
+
+  friend class VDollar; // to access opcopy
 };
 
 

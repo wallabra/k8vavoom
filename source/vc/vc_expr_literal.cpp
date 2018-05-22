@@ -352,7 +352,7 @@ void VSelf::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VSelf::DoResolve (VEmitContext &ec) {
   if (!ec.SelfClass) {
-    ParseError(Loc, "self used outside member function\n");
+    ParseError(Loc, "self used outside of member function\n");
     delete this;
     return nullptr;
   }
@@ -477,4 +477,62 @@ VExpression *VNullLiteral::DoResolve (VEmitContext &) {
 //==========================================================================
 void VNullLiteral::Emit (VEmitContext &ec) {
   ec.AddStatement(OPC_PushNull);
+}
+
+
+//==========================================================================
+//
+//  VDollar::VDollar
+//
+//==========================================================================
+VDollar::VDollar (const TLocation &ALoc) : VExpression(ALoc) {
+}
+
+
+//==========================================================================
+//
+//  VDollar::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDollar::SyntaxCopy () {
+  auto res = new VDollar();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDollar::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDollar::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+}
+
+
+//==========================================================================
+//
+//  VDollar::DoResolve
+//
+//==========================================================================
+VExpression *VDollar::DoResolve (VEmitContext &ec) {
+  if (!ec.IndArray) {
+    ParseError(Loc, "`$` used outside of array indexing\n");
+    delete this;
+    return nullptr;
+  }
+  VExpression *e = new VDotField(ec.IndArray->opcopy->SyntaxCopy(), VName("length"), Loc);
+  delete this;
+  return e->Resolve(ec);
+}
+
+
+//==========================================================================
+//
+//  VDollar::Emit
+//
+//==========================================================================
+void VDollar::Emit (VEmitContext &ec) {
+  ParseError(Loc, "the thing that should not be");
 }
