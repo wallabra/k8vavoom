@@ -257,19 +257,19 @@ VDecalGroup *VDecalGroup::find (const VName& aname) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VDecalGroup::fixup () {
-  GCon->Logf("fixing decal group '%s'...", *name);
+  //GCon->Logf("fixing decal group '%s'...", *name);
   for (int f = 0; f < nameList.Num(); ++f) {
     auto it = VDecalDef::find(nameList[f].name);
     if (it) {
       auto li = new ListItem(it, nullptr);
-      GCon->Logf("  adding decal '%s' (%u)", *it->name, (unsigned)nameList[f].weight);
+      //GCon->Logf("  adding decal '%s' (%u)", *it->name, (unsigned)nameList[f].weight);
       list.AddEntry(li, nameList[f].weight);
       continue;
     }
     auto itg = VDecalGroup::find(nameList[f].name);
     if (itg) {
       auto li = new ListItem(nullptr, itg);
-      GCon->Logf("  adding group '%s' (%u)", *itg->name, (unsigned)nameList[f].weight);
+      //GCon->Logf("  adding group '%s' (%u)", *itg->name, (unsigned)nameList[f].weight);
       list.AddEntry(li, nameList[f].weight);
       continue;
     }
@@ -798,7 +798,7 @@ void ParseDecalDef (VScriptParser* sc) {
           scstack[scsp++] = sc;
           sc = new VScriptParser(*sc->String, W_CreateLumpReaderNum(lmp));
         } else {
-          sc->Error(va("mapinfo include '%s' not found", *sc->String));
+          sc->Error(va("decal include '%s' not found", *sc->String));
           error = true;
           break;
         }
