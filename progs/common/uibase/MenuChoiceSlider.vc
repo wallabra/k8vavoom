@@ -223,7 +223,7 @@ bool ChangeSliderFloatCvarCB (Object Sender, float newValue) {
 defaultproperties
 {
   Width = 360;
-  Height = 20;
+  Height = 16;
   CursorXOffs = 200;
   pic_M_SLDLT = -1;
   Value = 0.0;
