@@ -30,9 +30,11 @@ private:
   VPackage *Package;
   bool CheckForLocal;
 
-  VExpression *ParseDotMethodCall (VExpression *, VName, TLocation);
-  VExpression *ParseBaseMethodCall (VName, TLocation);
-  VExpression *ParseMethodCallOrCast (VName, TLocation);
+  // not more than `MAX_PARAMS`; returns argc
+  int ParseArgList (const TLocation &stloc, VExpression **argv);
+  VExpression *ParseDotMethodCall (VExpression *, VName, const TLocation &);
+  VExpression *ParseBaseMethodCall (VName, const TLocation &);
+  VExpression *ParseMethodCallOrCast (VName, const TLocation &);
   VLocalDecl *ParseLocalVar (VExpression *TypeExpr, bool requireInit=false);
   VExpression *ParseExpressionPriority0 ();
   VExpression *ParseExpressionPriority1 ();
@@ -53,9 +55,9 @@ private:
   VStatement *ParseStatement ();
   VCompound *ParseCompoundStatement ();
   VExpression *ParseType ();
-  void ParseMethodDef (VExpression *, VName, TLocation, VClass *, vint32, bool);
+  void ParseMethodDef (VExpression *, VName, const TLocation &, VClass *, vint32, bool);
   void ParseDelegate (VExpression *, VField *);
-  void ParseDefaultProperties (VClass *);
+  void ParseDefaultProperties (VClass *, bool doparse);
   void ParseStruct (VClass *, bool);
   VName ParseStateString ();
   void ParseStates (VClass *);
@@ -63,6 +65,6 @@ private:
   void ParseClass ();
 
 public:
-  VParser(VLexer& ALex, VPackage* APackage) : Lex(ALex), Package(APackage) {}
+  VParser (VLexer &ALex, VPackage *APackage) : Lex(ALex), Package(APackage) {}
   void Parse ();
 };
