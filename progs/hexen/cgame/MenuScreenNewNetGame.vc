@@ -42,15 +42,16 @@ override void CreateChoices()
 {
   MenuTextButton    Btn;
   int         i;
+  int currY = ChoicesStartY;
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  Btn.SetOrigin(ChoicesStartX, ChoicesStartY);
+  Btn.SetOrigin(ChoicesStartX, currY);
   Btn.Text = "Start Game";
   Btn.Activated = ActivateStartNewGame;
-  ChoicesStartY += Btn.Height;
+  currY += Btn.Height;
 
   Players = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Players.SetOrigin(ChoicesStartX, ChoicesStartY);
+  Players.SetOrigin(ChoicesStartX, currY);
   Players.Text = "Max players";
   Players.AddItem("2");
   Players.AddItem("3");
@@ -60,33 +61,33 @@ override void CreateChoices()
   Players.AddItem("7");
   Players.AddItem("8");
   Players.SetInitialValue(2);
-  ChoicesStartY += Players.Height;
+  currY += Players.Height;
 
   Monsters = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Monsters.SetOrigin(ChoicesStartX, ChoicesStartY);
+  Monsters.SetOrigin(ChoicesStartX, currY);
   Monsters.Text = "Monsters";
-  ChoicesStartY += Monsters.Height;
+  currY += Monsters.Height;
 
   DeathMatch = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  DeathMatch.SetOrigin(ChoicesStartX, ChoicesStartY);
+  DeathMatch.SetOrigin(ChoicesStartX, currY);
   DeathMatch.Text = "Game type";
   DeathMatch.AddItem("Cooperative");
   DeathMatch.AddItem("Deathmatch");
   DeathMatch.SetInitialValue(1);
-  ChoicesStartY += DeathMatch.Height;
+  currY += DeathMatch.Height;
 
   Skill = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Skill.SetOrigin(ChoicesStartX, ChoicesStartY);
+  Skill.SetOrigin(ChoicesStartX, currY);
   Skill.Text = "Skill";
   for (i = 0; i < P_GetNumSkills(); i++)
   {
     Skill.AddItem(P_GetSkillDef(i)->Name);
   }
   Skill.SetInitialValue(2);
-  ChoicesStartY += Skill.Height;
+  currY += Skill.Height;
 
   TimeLimit = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  TimeLimit.SetOrigin(ChoicesStartX, ChoicesStartY);
+  TimeLimit.SetOrigin(ChoicesStartX, currY);
   TimeLimit.Text = "Time limit";
   TimeLimit.AddItem("0");
   TimeLimit.AddItem("5");
@@ -101,12 +102,12 @@ override void CreateChoices()
   TimeLimit.AddItem("50");
   TimeLimit.AddItem("55");
   TimeLimit.AddItem("60");
-  ChoicesStartY += TimeLimit.Height;
+  currY += TimeLimit.Height;
 
   Level = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Level.SetOrigin(ChoicesStartX, ChoicesStartY);
+  Level.SetOrigin(ChoicesStartX, currY);
   Level.Text = "Level";
-  ChoicesStartY += Level.Height;
+  currY += Level.Height;
 
   InitMapList();
 }

@@ -46,40 +46,41 @@ override void CreateChoices()
   name    SkinName;
   string    SkinDesc;
   int     i;
+  int currY = ChoicesStartY;
 
   PlayerName = MenuInputLine(NewChild(MenuInputLine));
-  PlayerName.SetOrigin(ChoicesStartX + 10, ChoicesStartY);
+  PlayerName.SetOrigin(ChoicesStartX + 10, currY);
   PlayerName.CursorXOffs = -10;
   PlayerName.Text = "Name";
   PlayerName.Value = GetCvarS('Name');
   PlayerName.ValueChanged = ChangeName;
-  ChoicesStartY += PlayerName.Height;
+  currY += PlayerName.Height;
 
   int Col = ParseColour(GetCvarS('colour'));
 
   ColR = NewChild(MenuChoiceSlider);
-  ColR.SetOrigin(ChoicesStartX, ChoicesStartY);
+  ColR.SetOrigin(ChoicesStartX, currY);
   ColR.Text = "Red";
   ColR.ValueDelta = 0.1;
   ColR.SetInitialValue(itof((Col >> 16) & 0xff) / 255.0);
   ColR.ValueChanging = ChangeColour;
-  ChoicesStartY += ColR.Height;
+  currY += ColR.Height;
 
   ColG = NewChild(MenuChoiceSlider);
-  ColG.SetOrigin(ChoicesStartX, ChoicesStartY);
+  ColG.SetOrigin(ChoicesStartX, currY);
   ColG.Text = "Green";
   ColG.ValueDelta = 0.1;
   ColG.SetInitialValue(itof((Col >> 8) & 0xff) / 255.0);
   ColG.ValueChanging = ChangeColour;
-  ChoicesStartY += ColG.Height;
+  currY += ColG.Height;
 
   ColB = NewChild(MenuChoiceSlider);
-  ColB.SetOrigin(ChoicesStartX, ChoicesStartY);
+  ColB.SetOrigin(ChoicesStartX, currY);
   ColB.Text = "Blue";
   ColB.ValueDelta = 0.1;
   ColB.SetInitialValue(itof(Col & 0xff) / 255.0);
   ColB.ValueChanging = ChangeColour;
-  ChoicesStartY += ColB.Height;
+  currY += ColB.Height;
 
   R_InstallSprite("PLAY", 500);
 

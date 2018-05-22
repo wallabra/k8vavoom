@@ -14,7 +14,6 @@ progs/cgame/ClientGame.vc         @CMAKE_SOURCE_DIR@/progs/strife/cgame/ClientGa
 progs/cgame/ConSlideshow1.vc        @CMAKE_SOURCE_DIR@/progs/strife/cgame/ConSlideshow1.vc
 progs/cgame/ConSlideshow2.vc        @CMAKE_SOURCE_DIR@/progs/strife/cgame/ConSlideshow2.vc
 progs/cgame/IntermissionScreen.vc     @CMAKE_SOURCE_DIR@/progs/strife/cgame/IntermissionScreen.vc
-progs/cgame/MenuScreenControls2.vc      @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenControls2.vc
 progs/cgame/MenuScreenGameplayOptions.vc  @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenGameplayOptions.vc
 progs/cgame/MenuScreenHelp.vc       @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenHelp.vc
 progs/cgame/MenuScreenMain.vc       @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenMain.vc

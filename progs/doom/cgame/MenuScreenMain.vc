@@ -25,122 +25,46 @@
 
 class MenuScreenMain : MenuScreen;
 
+
 //==========================================================================
 //
 //  CreateTitle
 //
 //==========================================================================
-
-override void CreateTitle()
-{
-  MenuStaticBitmap  Img;
-
-  Img = NewChild(MenuStaticBitmap);
+override void CreateTitle () {
+  MenuStaticBitmap Img = NewChild(MenuStaticBitmap);
   Img.SetOrigin(94, 2);
   Img.SetPic('m_doom');
 }
+
 
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
+override void CreateChoices () {
+  CreateSubMenuBigText("Single Player", MenuScreenSinglePlayer);
+  CreateSubMenuBigText("Multiplayer", MenuScreenMultiplayer);
+  CreateSubMenuBigText("Options", MenuScreenOptions);
+  CreateSubMenuBigText((!IsAnyDoom2 && !WadLumpPresent('e2m1') ? "Read This!" : "Help"), MenuScreenHelp);
 
-override void CreateChoices()
-{
-  MenuBigTextButton btn;
-  int         currentY;
-
-  currentY = ChoicesStartY;
-
-  btn = MenuBigTextButton(NewChild(MenuBigTextButton));
-  btn.SetPos(ChoicesStartX, currentY);
-  btn.Text = "Single Player";
-  btn.Activated = ActivateSP;
-  currentY += btn.Height;
-
-  btn = MenuBigTextButton(NewChild(MenuBigTextButton));
-  btn.SetPos(ChoicesStartX, currentY);
-  btn.Text = "Multiplayer";
-  btn.Activated = ActivateMP;
-  currentY += btn.Height;
-
-  btn = MenuBigTextButton(NewChild(MenuBigTextButton));
-  btn.SetPos(ChoicesStartX, currentY);
-  btn.Text = "Options";
-  btn.Activated = ActivateOpt;
-  currentY += btn.Height;
-
-  btn = MenuBigTextButton(NewChild(MenuBigTextButton));
-  btn.SetPos(ChoicesStartX, currentY);
-  btn.Text = "Help";
-  if (!IsAnyDoom2) {
-    // shareware?
-    if (!WadLumpPresent('e2m1')) btn.Text = "Read This!";
-  }
-  btn.Activated = ActivateHelp;
-  currentY += btn.Height;
-
-  btn = MenuBigTextButton(NewChild(MenuBigTextButton));
+  MenuBigTextButton btn = MenuBigTextButton(NewChild(MenuBigTextButton));
   btn.SetPos(ChoicesStartX, currentY);
   btn.Text = "Quit game";
   btn.Activated = ActivateQuit;
 }
 
-//==========================================================================
-//
-//  ActivateSP
-//
-//==========================================================================
-
-void ActivateSP(Object Sender)
-{
-  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenSinglePlayer));
-}
-
-//==========================================================================
-//
-//  ActivateMP
-//
-//==========================================================================
-
-void ActivateMP(Object Sender)
-{
-  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenMultiplayer));
-}
-
-//==========================================================================
-//
-//  ActivateOpt
-//
-//==========================================================================
-
-void ActivateOpt(Object Sender)
-{
-  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenOptions));
-}
-
-//==========================================================================
-//
-//  ActivateHelp
-//
-//==========================================================================
-
-void ActivateHelp(Object Sender)
-{
-  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenHelp));
-}
 
 //==========================================================================
 //
 //  ActivateQuit
 //
 //==========================================================================
-
-void ActivateQuit(Object Sender)
-{
+void ActivateQuit (Object Sender) {
   ClGame.menu_quit();
 }
+
 
 defaultproperties
 {

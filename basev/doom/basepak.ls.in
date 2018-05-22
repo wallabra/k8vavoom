@@ -20,7 +20,6 @@ graphics/selectbo.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/selectbo.lmp
 progs/cgame/classes.vc            @CMAKE_SOURCE_DIR@/progs/doom/cgame/classes.vc
 progs/cgame/ClientGame.vc         @CMAKE_SOURCE_DIR@/progs/doom/cgame/ClientGame.vc
 progs/cgame/IntermissionScreen.vc     @CMAKE_SOURCE_DIR@/progs/doom/cgame/IntermissionScreen.vc
-progs/cgame/MenuScreenControls2.vc      @CMAKE_SOURCE_DIR@/progs/doom/cgame/MenuScreenControls2.vc
 progs/cgame/MenuScreenGameplayOptions.vc  @CMAKE_SOURCE_DIR@/progs/doom/cgame/MenuScreenGameplayOptions.vc
 progs/cgame/MenuScreenHelp.vc       @CMAKE_SOURCE_DIR@/progs/doom/cgame/MenuScreenHelp.vc
 progs/cgame/MenuScreenMain.vc       @CMAKE_SOURCE_DIR@/progs/doom/cgame/MenuScreenMain.vc

@@ -38,13 +38,13 @@ override void CreateChoices () {
   MenuTextButton startGame;
 
   startGame = MenuTextButton(NewChild(MenuSmallTextButton));
-  startGame.SetOrigin(ChoicesStartX, ChoicesStartY);
+  startGame.SetOrigin(ChoicesStartX, currentY);
   startGame.Text = "Start Game";
   startGame.Activated = ActivateStartNewGame;
-  ChoicesStartY += startGame.Height;
+  currentY += startGame.Height;
 
   Players = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Players.SetOrigin(ChoicesStartX, ChoicesStartY);
+  Players.SetOrigin(ChoicesStartX, currentY);
   Players.Text = "Max players";
   Players.AddItem("2");
   Players.AddItem("3");
@@ -54,32 +54,32 @@ override void CreateChoices () {
   Players.AddItem("7");
   Players.AddItem("8");
   Players.SetSessionCvar('_netgame_max_players_', 2);
-  ChoicesStartY += Players.Height;
+  currentY += Players.Height;
 
   Monsters = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Monsters.SetOrigin(ChoicesStartX, ChoicesStartY);
+  Monsters.SetOrigin(ChoicesStartX, currentY);
   Monsters.Text = "Monsters";
   Monsters.SetSessionCvar('_netgame_allow_monsters_', 0);
-  ChoicesStartY += Monsters.Height;
+  currentY += Monsters.Height;
 
   DeathMatch = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  DeathMatch.SetOrigin(ChoicesStartX, ChoicesStartY);
+  DeathMatch.SetOrigin(ChoicesStartX, currentY);
   DeathMatch.Text = "Game type";
   DeathMatch.AddItem("Cooperative");
   DeathMatch.AddItem("Deathmatch");
   DeathMatch.AddItem("Deathmatch2");
   DeathMatch.SetSessionCvar('_netgame_game_type_', 2);
-  ChoicesStartY += DeathMatch.Height;
+  currentY += DeathMatch.Height;
 
   Skill = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Skill.SetOrigin(ChoicesStartX, ChoicesStartY);
+  Skill.SetOrigin(ChoicesStartX, currentY);
   Skill.Text = "Skill";
   for (int i = 0; i < P_GetNumSkills(); ++i) Skill.AddItem(P_GetSkillDef(i)->Name);
   Skill.SetSessionCvar('_netgame_game_skill_', 2);
-  ChoicesStartY += Skill.Height;
+  currentY += Skill.Height;
 
   TimeLimit = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  TimeLimit.SetOrigin(ChoicesStartX, ChoicesStartY);
+  TimeLimit.SetOrigin(ChoicesStartX, currentY);
   TimeLimit.Text = "Time limit";
   TimeLimit.AddItem("0");
   TimeLimit.AddItem("5");
@@ -95,11 +95,11 @@ override void CreateChoices () {
   TimeLimit.AddItem("55");
   TimeLimit.AddItem("60");
   TimeLimit.SetSessionCvar('_netgame_time_limit_', 0);
-  ChoicesStartY += TimeLimit.Height;
+  currentY += TimeLimit.Height;
 
   if (!IsAnyDoom2) {
     Episode = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-    Episode.SetOrigin(ChoicesStartX, ChoicesStartY);
+    Episode.SetOrigin(ChoicesStartX, currentY);
     Episode.Text = "Episode";
     Episode.AddItem("Knee - Deep in the Dead");
     if (WadLumpPresent('e2m1')) {
@@ -109,15 +109,15 @@ override void CreateChoices () {
     }
     Episode.SetSessionCvar('_netgame_episode_', 0);
     Episode.ValueChanging = ChangedEpisode;
-    ChoicesStartY += Episode.Height;
+    currentY += Episode.Height;
   }
 
   Level = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Level.SetOrigin(ChoicesStartX, ChoicesStartY);
+  Level.SetOrigin(ChoicesStartX, currentY);
   Level.AddItem("test");
   Level.Text = "Level";
   Level.SetSessionCvar('_netgame_mapindex_', 0);
-  ChoicesStartY += Level.Height;
+  currentY += Level.Height;
 
   if (!IsAnyDoom2) {
     InitMapList(Level.getSavedValue(0));

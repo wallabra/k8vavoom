@@ -28,30 +28,6 @@ class MenuChoice_OnOff : MenuChoiceEnum;
 
 //==========================================================================
 //
-// UseCvar
-//
-//==========================================================================
-void UseCvar (name cvname) {
-  choiceCvar = cvname;
-  SetInitialValue(GetCvar(cvname));
-  ValueChanging = ChangeCvarCB;
-}
-
-
-//==========================================================================
-//
-// ChangeCvarCB
-//
-//==========================================================================
-bool ChangeCvarCB (Object Sender, int newValue) {
-  auto ccls = MenuChoice_OnOff(Sender);
-  SetCvar(ccls.choiceCvar, newValue);
-  return true;
-}
-
-
-//==========================================================================
-//
 // OnDraw
 //
 //==========================================================================

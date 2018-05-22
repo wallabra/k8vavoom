@@ -27,7 +27,7 @@ class MenuChoice : Widget;
 
 int CursorXOffs;
 int CursorYOffs;
-name choiceCvar;
+name cvarSession; // if not empty, value will be saved in it, and read back on creation
 
 
 //==========================================================================
@@ -57,47 +57,67 @@ final static int getSavedInt (name Name, int defval) {
 
 //==========================================================================
 //
+//  setSavedFloat
+//
+//==========================================================================
+final static void setSavedFloat (name Name, float val) {
+  if (!CvarExists(Name)) {
+    CreateCvar(Name, va("%f", val), "___saved_menu__value___", 0);
+  } else {
+    SetCvarF(Name, val);
+  }
+}
+
+
+//==========================================================================
+//
+//  getSavedFloat
+//
+//==========================================================================
+final static float getSavedFloat (name Name, float defval) {
+  if (!CvarExists(Name)) return defval;
+  return GetCvarF(Name);
+}
+
+
+//==========================================================================
+//
 //  GetClGame
 //
 //==========================================================================
-
-ClientGameShared GetClGame()
-{
+ClientGameShared GetClGame () {
   return MenuScreen(Parent).ClGame;
 }
+
 
 //==========================================================================
 //
 //  OnFocusReceived
 //
 //==========================================================================
-
-override void OnFocusReceived()
-{
-  if (MenuScreen(Parent) && MenuScreen(Parent).Selector)
-  {
-    MenuScreen(Parent).Selector.SetOrigin(X + CursorXOffs,
-      Y + CursorYOffs);
+override void OnFocusReceived () {
+  if (MenuScreen(Parent) && MenuScreen(Parent).Selector) {
+    MenuScreen(Parent).Selector.SetOrigin(X+CursorXOffs, Y+CursorYOffs);
   }
   ::OnFocusReceived();
 }
+
 
 //==========================================================================
 //
 //  OnMouseEnter
 //
 //==========================================================================
-
-override void OnMouseEnter()
-{
+override void OnMouseEnter() {
   //SetFocus();
   //LocalSound('menu/cursor');
 }
+
 
 defaultproperties
 {
   Focusable = true;
   Width = 320;
   Height = 200;
-  choiceCvar = '';
+  cvarSession = '';
 }

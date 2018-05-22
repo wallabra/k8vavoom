@@ -31,9 +31,7 @@ bool bLeftAlign;
 int Value;
 array<string> EnumNames;
 
-delegate bool ValueChanging(Object Sender, int NewValue);
-
-name cvarSession; // if not empty, value will be saved in it, and read back on creation
+delegate bool ValueChanging (Object Sender, int NewValue);
 
 
 //==========================================================================
@@ -129,7 +127,6 @@ override void OnDraw () {
     SetTextAlign(hright, vtop);
     DrawText(CursorXOffs, 0, Text, Col);
   }
-
   int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
   SetTextAlign(hleft, vtop);
   if (Value >= 0 && Value < EnumNames.length) DrawText(xx, 0, EnumNames[Value], (IsFocus() ? CR_YELLOW : CR_TAN));

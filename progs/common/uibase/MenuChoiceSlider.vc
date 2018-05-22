@@ -25,69 +25,104 @@
 
 class MenuChoiceSlider : MenuChoice;
 
-string    Text;
+string Text;
 
-float   Value;
-float   ValueDelta;
-float   MinValue;
-float   MaxValue;
+float Value;
+float ValueDelta;
+float MinValue;
+float MaxValue;
 
-int     pic_M_THERML;
-int     pic_M_THERMM;
-int     pic_M_THERMR;
-int     pic_M_THERMO;
+int pic_M_THERML;
+int pic_M_THERMM;
+int pic_M_THERMR;
+int pic_M_THERMO;
 
-int     pic_M_SLDLT;
-int     pic_M_SLDMD1;
-int     pic_M_SLDMD2;
-int     pic_M_SLDRT;
-int     pic_M_SLDKB;
+int pic_M_SLDLT;
+int pic_M_SLDMD1;
+int pic_M_SLDMD2;
+int pic_M_SLDRT;
+int pic_M_SLDKB;
 
-delegate bool ValueChanging(Object Sender, float NewValue);
+delegate bool ValueChanging (Object Sender, float NewValue);
+
+
+//==========================================================================
+//
+//  getSavedValue
+//
+//==========================================================================
+float getSavedValue (optional float defval) {
+  if (!specified_defval) defval = Value;
+  if (cvarSession) return getSavedFloat(cvarSession, defval);
+  return defval;
+}
+
+
+//==========================================================================
+//
+//  SetSessionCvar
+//
+//==========================================================================
+void SetSessionCvar (name Name, optional float defval) {
+  if (!specified_defval) defval = 0;
+  cvarSession = Name;
+  if (Name) defval = getSavedFloat(Name, defval);
+  if (SetNewValue(defval)) Value = defval;
+}
+
 
 //==========================================================================
 //
 //  SetOrigin
 //
 //==========================================================================
-
-override void SetOrigin(int x, int y)
-{
-  SetPos(x - CursorXOffs, y);
+override void SetOrigin (int x, int y) {
+  SetPos(x-CursorXOffs, y);
 }
 
-bool SetNewValue(float NewValue)
-{
-  if (ValueChanging)
-  {
-    return ValueChanging(self, NewValue);
+
+//==========================================================================
+//
+//  SetNewValue
+//
+//==========================================================================
+bool SetNewValue (float newValue) {
+  if (ValueChanging) {
+    if (!ValueChanging(self, newValue)) return false;
   }
+  if (cvarSession) setSavedFloat(cvarSession, newValue);
+  Value = newValue;
   return true;
 }
 
-void SetInitialValue(float AValue)
-{
+
+//==========================================================================
+//
+//  SetInitialValue
+//
+//==========================================================================
+void SetInitialValue (float AValue) {
   Value = AValue;
-  if (Value < MinValue)
-    Value = MinValue;
-  if (Value > MaxValue)
-    Value = MaxValue;
+  if (Value < MinValue) Value = MinValue;
+  if (Value > MaxValue) Value = MaxValue;
 }
 
-override void OnCreate()
-{
+
+//==========================================================================
+//
+//  OnCreate
+//
+//==========================================================================
+override void OnCreate () {
   ::OnCreate();
 
-  if (WadLumpPresent('m_sldlt'))
-  {
+  if (WadLumpPresent('m_sldlt')) {
     pic_M_SLDLT = R_RegisterPic('m_sldlt');
     pic_M_SLDMD1 = R_RegisterPic('m_sldmd1');
     pic_M_SLDMD2 = R_RegisterPic('m_sldmd2');
     pic_M_SLDRT = R_RegisterPic('m_sldrt');
     pic_M_SLDKB = R_RegisterPic('m_sldkb');
-  }
-  else
-  {
+  } else {
     pic_M_THERML = R_RegisterPic('m_therml');
     pic_M_THERMM = R_RegisterPic('m_thermm');
     pic_M_THERMR = R_RegisterPic('m_thermr');
@@ -95,128 +130,93 @@ override void OnCreate()
   }
 }
 
-override void OnDraw()
-{
-  int i;
+
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
+override void OnDraw () {
   int xx, xt;
 
   SetTextAlign(hright, vtop);
   DrawText(CursorXOffs, 2, Text, IsFocus() ? CR_YELLOW : CR_WHITE);
 
-  if (pic_M_SLDLT != -1)
-  {
+  if (pic_M_SLDLT != -1) {
     xx = CursorXOffs;
     DrawPic(xx, 0, pic_M_SLDLT);
     xx += 32;
-    for (i = 0; i < 12; i++)
-    {
-      DrawPic(xx, 0, i & 1 ? pic_M_SLDMD1 : pic_M_SLDMD2);
+    for (int i = 0; i < 12; ++i) {
+      DrawPic(xx, 0, (i&1 ? pic_M_SLDMD1 : pic_M_SLDMD2));
       xx += 8;
     }
     DrawPic(xx, 0, pic_M_SLDRT);
-    xt = xx + 8;
-    xx = CursorXOffs + 30 + ftoi((Value - MinValue) * 100.0 / (MaxValue - MinValue));
+    xt = xx+8;
+    xx = CursorXOffs+30+int((Value-MinValue)*100.0/(MaxValue-MinValue));
     DrawPic(xx, 7, pic_M_SLDKB);
-  }
-  else
-  {
-    xx = CursorXOffs + 8;
+  } else {
+    xx = CursorXOffs+8;
     DrawPic(xx, 0, pic_M_THERML);
     xx += 8;
-    for (i = 0; i < 13; i++)
-    {
+    for (int i = 0; i < 13; ++i) {
       DrawPic(xx, 0, pic_M_THERMM);
       xx += 8;
     }
     DrawPic(xx, 0, pic_M_THERMR);
-    xx = CursorXOffs + 8 + 6 + ftoi((Value - MinValue) * 100.0 / (MaxValue - MinValue));
+    xx = CursorXOffs+8+6+int((Value-MinValue)*100.0/(MaxValue-MinValue));
     DrawPic(xx, 0, pic_M_THERMO);
   }
 }
 
-override bool OnKeyDown(int key)
-{
+
+//==========================================================================
+//
+//  OnKeyDown
+//
+//==========================================================================
+override bool OnKeyDown (int key) {
   float newValue;
-
-  switch (key)
-  {
-  case K_LEFTARROW:
-  case K_MWHEELDOWN:
-    newValue = Value - ValueDelta;
-    if (newValue < MinValue)
-    {
-      newValue = MinValue;
-    }
-    if (SetNewValue(newValue))
-    {
-      Value = newValue;
-      LocalSound('menu/change');
-    }
-    return true;
-
-  case K_RIGHTARROW:
-  case K_MWHEELUP:
-    newValue = Value + ValueDelta;
-    if (newValue > MaxValue)
-    {
-      newValue = MaxValue;
-    }
-    if (SetNewValue(newValue))
-    {
-      Value = newValue;
-      LocalSound('menu/change');
-    }
-    return true;
+  switch (key) {
+    case K_LEFTARROW:
+    case K_MWHEELDOWN:
+      newValue = Value-ValueDelta;
+      if (newValue < MinValue) newValue = MinValue;
+      if (SetNewValue(newValue)) LocalSound('menu/change');
+      return true;
+    case K_RIGHTARROW:
+    case K_MWHEELUP:
+      newValue = Value+ValueDelta;
+      if (newValue > MaxValue) newValue = MaxValue;
+      if (SetNewValue(newValue)) LocalSound('menu/change');
+      return true;
   }
   return ::OnKeyDown(key);
 }
 
-override void OnMouseClick(int X, int Y)
-{
-  float newValue;
 
+//==========================================================================
+//
+//  OnMouseClick
+//
+//==========================================================================
+override void OnMouseClick (int X, int Y) {
   SetFocus();
-
-  newValue = Value - ValueDelta;
-  if (newValue < MinValue)
-  {
-    newValue = MinValue;
-  }
-  if (SetNewValue(newValue))
-  {
-    Value = newValue;
-    LocalSound('menu/change');
-  }
-}
-
-override void OnRMouseClick(int X, int Y)
-{
-  float newValue;
-
-  SetFocus();
-
-  newValue = Value + ValueDelta;
-  if (newValue > MaxValue)
-  {
-    newValue = MaxValue;
-  }
-  if (SetNewValue(newValue))
-  {
-    Value = newValue;
-    LocalSound('menu/change');
-  }
+  float newValue = Value-ValueDelta;
+  if (newValue < MinValue) newValue = MinValue;
+  if (SetNewValue(newValue)) LocalSound('menu/change');
 }
 
 
 //==========================================================================
 //
-// ChangeSliderFloatCvarCB
+//  OnRMouseClick
 //
 //==========================================================================
-bool ChangeSliderFloatCvarCB (Object Sender, float newValue) {
-  auto ccls = MenuChoiceSlider(Sender);
-  SetCvarF(ccls.choiceCvar, newValue);
-  return true;
+override void OnRMouseClick (int X, int Y) {
+  SetFocus();
+  float newValue = Value+ValueDelta;
+  if (newValue > MaxValue) newValue = MaxValue;
+  if (SetNewValue(newValue)) LocalSound('menu/change');
 }
 
 

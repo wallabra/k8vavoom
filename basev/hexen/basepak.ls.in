@@ -13,7 +13,6 @@ graphics/fonta63.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/fonta63.lmp
 progs/cgame/classes.vc            @CMAKE_SOURCE_DIR@/progs/hexen/cgame/classes.vc
 progs/cgame/ClientGame.vc         @CMAKE_SOURCE_DIR@/progs/hexen/cgame/ClientGame.vc
 progs/cgame/IntermissionScreen.vc     @CMAKE_SOURCE_DIR@/progs/hexen/cgame/IntermissionScreen.vc
-progs/cgame/MenuScreenControls2.vc      @CMAKE_SOURCE_DIR@/progs/hexen/cgame/MenuScreenControls2.vc
 progs/cgame/MenuScreenGameplayOptions.vc  @CMAKE_SOURCE_DIR@/progs/hexen/cgame/MenuScreenGameplayOptions.vc
 progs/cgame/MenuScreenHelp.vc       @CMAKE_SOURCE_DIR@/progs/hexen/cgame/MenuScreenHelp.vc
 progs/cgame/MenuScreenMain.vc       @CMAKE_SOURCE_DIR@/progs/hexen/cgame/MenuScreenMain.vc

@@ -55,6 +55,7 @@ int currentY;
 void CreateMenu () {
   CreateTitle();
   DrawBackButton();
+  currentY = ChoicesStartY;
   CreateChoices();
   CreateSelector();
   SetDefaultChoice();
@@ -95,7 +96,7 @@ MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
   auto onoff = MenuChoice_OnOff(NewChild(MenuChoice_OnOff));
   onoff.SetOrigin(ChoicesStartX, currentY);
   onoff.Text = text;
-  onoff.UseCvar(cvname);
+  onoff.SetSessionCvar(cvname);
   currentY += onoff.Height;
   return onoff;
 }
@@ -106,12 +107,11 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
   auto slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
   slider.SetOrigin(ChoicesStartX, currentY);
   slider.Text = text;
-  slider.choiceCvar = cvname;
+  slider.cvarSession = cvname;
   slider.ValueDelta = delta;
   if (specified_min) slider.MinValue = min;
   if (specified_max) slider.MaxValue = max;
-  slider.SetInitialValue(GetCvarF(cvname));
-  slider.ValueChanging = slider.ChangeSliderFloatCvarCB;
+  slider.SetSessionCvar(cvname);
   currentY += slider.Height;
   return slider;
 }
@@ -132,6 +132,26 @@ MenuTextButton CreateChoiceTextLabel (string text, optional int color) {
     btn.TextColourFocus = CR_OLIVE;
   }
   btn.Height = 10;
+  currentY += btn.Height;
+  return btn;
+}
+
+
+MenuTextButton CreateSubMenuText (string text, class!MenuScreen asubmenuClass) {
+  auto btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  btn.SetOrigin(ChoicesStartX, currentY);
+  btn.Text = text;
+  btn.SetSubMenuClass(asubmenuClass);
+  currentY += btn.Height;
+  return btn;
+}
+
+
+MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass) {
+  auto btn = MenuTextButton(NewChild(MenuBigTextButton));
+  btn.SetOrigin(ChoicesStartX, currentY);
+  btn.Text = text;
+  btn.SetSubMenuClass(asubmenuClass);
   currentY += btn.Height;
   return btn;
 }
