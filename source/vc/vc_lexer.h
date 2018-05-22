@@ -74,6 +74,7 @@ enum EToken {
   TK_Null,
   TK_Optional,
   TK_Out,
+  TK_Override,
   TK_Private,
   TK_ReadOnly,
   TK_Ref,
