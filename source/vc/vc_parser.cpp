@@ -1138,7 +1138,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
     if (!P.TypeExpr && Func->NumParams == 0) break;
     TLocation l = Lex.Location;
     while (Lex.Check(TK_Asterisk)) {
-      P.TypeExpr = new VPointerType(P.TypeExpr, l);;
+      P.TypeExpr = new VPointerType(P.TypeExpr, l);
       l = Lex.Location;
     }
     if (Lex.Token == TK_Identifier) {

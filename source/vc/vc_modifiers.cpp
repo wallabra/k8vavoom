@@ -34,21 +34,39 @@
 //
 //==========================================================================
 int TModifiers::Parse (VLexer &Lex) {
+  struct Mod {
+    EToken token;
+    int flag;
+  };
+
+  static const Mod mods[] = {
+    {TK_Native, Native},
+    {TK_Static, Static},
+    {TK_Abstract, Abstract},
+    {TK_Private, Private},
+    {TK_ReadOnly, ReadOnly},
+    {TK_Transient, Transient},
+    {TK_Final, Final},
+    {TK_Optional, Optional},
+    {TK_Out, Out},
+    {TK_Spawner, Spawner},
+    {TK_Override, Override},
+    {TK_Ref, Ref},
+    {TK_EOF, 0},
+  };
+
   int Modifiers = 0;
   for (;;) {
-         if (Lex.Check(TK_Native)) Modifiers |= Native;
-    else if (Lex.Check(TK_Static)) Modifiers |= Static;
-    else if (Lex.Check(TK_Abstract)) Modifiers |= Abstract;
-    else if (Lex.Check(TK_Private)) Modifiers |= Private;
-    else if (Lex.Check(TK_ReadOnly)) Modifiers |= ReadOnly;
-    else if (Lex.Check(TK_Transient)) Modifiers |= Transient;
-    else if (Lex.Check(TK_Final)) Modifiers |= Final;
-    else if (Lex.Check(TK_Optional)) Modifiers |= Optional;
-    else if (Lex.Check(TK_Out)) Modifiers |= Out;
-    else if (Lex.Check(TK_Spawner)) Modifiers |= Spawner;
-    else if (Lex.Check(TK_Override)) Modifiers |= Override;
-    else if (Lex.Check(TK_Ref)) Modifiers |= Ref;
-    else break;
+    bool wasHit = false;
+    for (const Mod *mod = mods; mod->flag; ++mod) {
+      if (Lex.Check(mod->token)) {
+        if (Modifiers&mod->flag) ParseError(Lex.Location, "duplicate modifier");
+        Modifiers |= mod->flag;
+        wasHit = true;
+        break;
+      }
+    }
+    if (!wasHit) break;
   }
   return Modifiers;
 }
