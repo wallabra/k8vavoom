@@ -31,7 +31,7 @@ class HexenLevelInfo : LineSpecialLevelInfo;
 //
 //==========================================================================
 
-int GetPClassSpawnFlags()
+override int GetPClassSpawnFlags()
 {
   if (!Game.netgame)
   {

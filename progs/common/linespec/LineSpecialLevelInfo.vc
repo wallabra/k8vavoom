@@ -110,7 +110,7 @@ int       corpseQueueSlot;
 //
 //==========================================================================
 
-void SpawnSpecials()
+override void SpawnSpecials()
 {
   sector_t *sector;
   int i;
@@ -475,7 +475,7 @@ final bool CheckActivation(int activationType, line_t* line, int Side,
 //
 //==========================================================================
 
-int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
+override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
   int Arg4, int Arg5, line_t* Line, int Side, Entity E)
 {
   EntityEx A = EntityEx(E);
@@ -1254,7 +1254,7 @@ int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
 //
 //==========================================================================
 
-final void StartPlaneWatcher(Entity it, line_t* line, int lineSide,
+final override void StartPlaneWatcher(Entity it, line_t* line, int lineSide,
   bool ceiling, int tag, int height, int special, int arg0, int arg1,
   int arg2, int arg3, int arg4)
 {
@@ -4045,7 +4045,7 @@ final void ClampSecPlaneOffsets(sec_plane_t* Plane)
 //
 //==========================================================================
 
-final bool EV_ThingProjectile(int Arg1, int Arg2, int Arg3, int Arg4,
+final override bool EV_ThingProjectile(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, bool gravity, int newtid, name TypeName, Entity Activator)
 {
   return DoThingProjectile(Arg1, Arg2, Arg3, Arg4, Arg5, gravity, newtid,
@@ -4323,7 +4323,7 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //
 //==========================================================================
 
-final int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle)
+final override int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle)
 {
   class EClass = FindClassLowerCase(Name);
   if (!EClass)
@@ -4374,7 +4374,7 @@ final int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle)
 //
 //==========================================================================
 
-final int AcsSpawnSpot(name Name, int SpotTid, int Tid, float Angle)
+final override int AcsSpawnSpot(name Name, int SpotTid, int Tid, float Angle)
 {
   int NumSpawned = 0;
   Entity A;
@@ -4392,7 +4392,7 @@ final int AcsSpawnSpot(name Name, int SpotTid, int Tid, float Angle)
 //
 //==========================================================================
 
-final int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid)
+final override int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid)
 {
   int NumSpawned = 0;
   Entity A;
@@ -4562,7 +4562,7 @@ final int EV_ThingDamage(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //
 //==========================================================================
 
-final int DoThingDamage(int Tid, int Amount, name DmgType, Entity Activator)
+final override int DoThingDamage(int Tid, int Amount, name DmgType, Entity Activator)
 {
   Entity  A;
   int   NumDamaged;
@@ -6318,7 +6318,7 @@ final name ModToDamageType(int Mod)
 //
 //==========================================================================
 
-final void PolyThrustMobj(Entity Other, TVec thrustDir, polyobj_t* po)
+final override void PolyThrustMobj(Entity Other, TVec thrustDir, polyobj_t* po)
 {
   float force;
   PolyobjThinker pe;
@@ -6374,7 +6374,7 @@ final void PolyThrustMobj(Entity Other, TVec thrustDir, polyobj_t* po)
 //
 //==========================================================================
 
-final void PolyCrushMobj(Entity Other, polyobj_t* po)
+final override void PolyCrushMobj(Entity Other, polyobj_t* po)
 {
   if (po->bCrush)
   {
@@ -6444,7 +6444,7 @@ final void PolyCrushMobj(Entity Other, polyobj_t* po)
 //
 //==========================================================================
 
-final bool PolyBusy(int polyobj)
+final override bool PolyBusy(int polyobj)
 {
   polyobj_t* poly = XLevel.GetPolyobj(polyobj);
   if (!poly || !poly->SpecialData)
@@ -6463,7 +6463,7 @@ final bool PolyBusy(int polyobj)
 //
 //==========================================================================
 
-final int ThingCount(int type, name TypeName, int tid, int SectorTag)
+final override int ThingCount(int type, name TypeName, int tid, int SectorTag)
 {
   class<EntityEx>   moType;
 
@@ -6579,7 +6579,7 @@ final int DoThingCount(class<EntityEx> moType, int tid, int SectorTag)
 //
 //==========================================================================
 
-final void SectorDamage(int Tag, int Amount, name DamageType,
+final override void SectorDamage(int Tag, int Amount, name DamageType,
   name ProtectionType, int Flags)
 {
   class<Inventory> ProtectClass = class<Inventory>(FindClassLowerCase(
@@ -6656,7 +6656,7 @@ final void SectorDamage(int Tag, int Amount, name DamageType,
 //
 //==========================================================================
 
-final void SpawnMapThing(mthing_t* mthing)
+final override void SpawnMapThing(mthing_t* mthing)
 {
   int       spawnMask;
   class<EntityEx> moClass;
@@ -7218,7 +7218,7 @@ final void AddPlayerCorpse(EntityEx Corpse)
 //
 //==========================================================================
 
-void ParticleEffect(int count, int type1, int type2, TVec origin, float ornd,
+override void ParticleEffect(int count, int type1, int type2, TVec origin, float ornd,
   TVec velocity, float vrnd, float acceleration, float grav, int colour, float duration, float ramp)
 {
   int i;
@@ -7289,7 +7289,7 @@ void ParticleEffect(int count, int type1, int type2, TVec origin, float ornd,
 //
 //==========================================================================
 
-void UpdateParticle(particle_t * p, float DeltaTime)
+override void UpdateParticle(particle_t * p, float DeltaTime)
 {
   float time2, time3;
   float dvel;
@@ -7365,7 +7365,7 @@ void UpdateParticle(particle_t * p, float DeltaTime)
 //
 //==========================================================================
 
-void AcsFadeRange(float BlendR1, float BlendG1, float BlendB1, float BlendA1,
+override void AcsFadeRange(float BlendR1, float BlendG1, float BlendB1, float BlendA1,
   float BlendR2, float BlendG2, float BlendB2, float BlendA2,
   float Duration, Entity Activator)
 {
@@ -7438,7 +7438,7 @@ final void StartFlashFader(float BlendR1, float BlendG1, float BlendB1,
 //
 //==========================================================================
 
-void AcsCancelFade(Entity Activator)
+override void AcsCancelFade(Entity Activator)
 {
   Thinker Th;
   foreach AllThinkers(FlashFader, Th)
@@ -7485,7 +7485,7 @@ final int P_Massacre()
 //
 //==========================================================================
 
-final void SetMarineWeapon(int Tid, int Weapon, Entity Activator)
+final override void SetMarineWeapon(int Tid, int Weapon, Entity Activator)
 {
   if (Tid)
   {
@@ -7511,7 +7511,7 @@ final void SetMarineWeapon(int Tid, int Weapon, Entity Activator)
 //
 //==========================================================================
 
-final void SetMarineSprite(int Tid, name SrcClassName, Entity Activator)
+final override void SetMarineSprite(int Tid, name SrcClassName, Entity Activator)
 {
   //  If there's no such class, print message and do nothing.
   class TmpClass = FindClass(SrcClassName);

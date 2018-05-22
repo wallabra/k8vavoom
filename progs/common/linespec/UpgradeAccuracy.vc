@@ -31,7 +31,7 @@ class UpgradeAccuracy : DummyStrifeItem;
 //
 //==========================================================================
 
-bool TryPickup(EntityEx Toucher)
+override bool TryPickup(EntityEx Toucher)
 {
   if (!Toucher.Player || PlayerEx(Toucher.Player).Accuracy >= MaxAmount)
   {

@@ -34,7 +34,7 @@ class<Actor> WeaponClass;
 //
 //==========================================================================
 
-bool TryPickup(EntityEx Toucher)
+override bool TryPickup(EntityEx Toucher)
 {
   if (!ClassIsChildOf(Toucher.Class, GetClassReplacement(WeaponClass)))
   {

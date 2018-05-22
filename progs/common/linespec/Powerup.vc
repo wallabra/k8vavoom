@@ -46,7 +46,7 @@ replication
 //
 //==========================================================================
 
-void Destroyed()
+override void Destroyed()
 {
   EndEffect();
   ::Destroyed();
@@ -58,7 +58,7 @@ void Destroyed()
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   //  Powerup cannot exist without an owner.
   if (!Owner)
@@ -83,7 +83,7 @@ void Tick(float DeltaTime)
 //
 //==========================================================================
 
-bool HandlePickup(Inventory Item)
+override bool HandlePickup(Inventory Item)
 {
   if (Item.Class == Class)
   {
@@ -130,7 +130,7 @@ bool HandlePickup(Inventory Item)
 //
 //==========================================================================
 
-Inventory CreateCopy(EntityEx Toucher)
+override Inventory CreateCopy(EntityEx Toucher)
 {
   Owner = Toucher;
   InitEffect();
@@ -151,7 +151,7 @@ Inventory CreateCopy(EntityEx Toucher)
 //
 //==========================================================================
 
-void OwnerDied()
+override void OwnerDied()
 {
   //  Powerups don't last after owner's death.
   Destroy();
@@ -173,7 +173,7 @@ void InitEffect()
 //
 //==========================================================================
 
-void DoEffect()
+override void DoEffect()
 {
   if (!Owner)
   {
@@ -227,7 +227,7 @@ void EndEffect()
 //
 //==========================================================================
 
-int GetBlend()
+override int GetBlend()
 {
   if (EffectTime <= PlayerEx::BLINKTHRESHOLD &&
     !(ftoi(4.0 * EffectTime) & 1))

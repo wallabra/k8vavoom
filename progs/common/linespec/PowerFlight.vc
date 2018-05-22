@@ -31,7 +31,7 @@ class PowerFlight : Powerup;
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   //  Flight expires in multiplayer of when in current level it's not
   // infinite.
@@ -49,7 +49,7 @@ void Tick(float DeltaTime)
 //
 //==========================================================================
 
-void InitEffect()
+override void InitEffect()
 {
   Owner.bFly = true;
   Owner.bNoGravity = true;
@@ -71,7 +71,7 @@ void InitEffect()
 //
 //==========================================================================
 
-void EndEffect()
+override void EndEffect()
 {
   if (!Owner)
   {

@@ -515,7 +515,7 @@ bool CrushStop(int InTag)
 //
 //==========================================================================
 
-void Tick(float deltaTime)
+override void Tick(float deltaTime)
 {
   //  Handle resetting stairs.
   if (Type == FLOOREV_RaiseBuildStep)

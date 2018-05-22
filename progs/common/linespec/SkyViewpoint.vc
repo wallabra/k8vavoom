@@ -42,7 +42,7 @@ replication
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
   InitSkyBox();
@@ -80,7 +80,7 @@ void InitSkyBox()
 //
 //==========================================================================
 
-void Destroyed()
+override void Destroyed()
 {
   //  Removed all references to this sky box.
   int i;
@@ -104,7 +104,7 @@ void Destroyed()
 //
 //==========================================================================
 
-bool SkyBoxGetAlways()
+override bool SkyBoxGetAlways()
 {
   return bAlways;
 }
@@ -115,7 +115,7 @@ bool SkyBoxGetAlways()
 //
 //==========================================================================
 
-Entity SkyBoxGetMate()
+override Entity SkyBoxGetMate()
 {
   return Mate;
 }
@@ -126,7 +126,7 @@ Entity SkyBoxGetMate()
 //
 //==========================================================================
 
-float SkyBoxGetPlaneAlpha()
+override float SkyBoxGetPlaneAlpha()
 {
   return PlaneAlpha;
 }

@@ -33,7 +33,7 @@ class FastProjectile : Actor;
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   int     i;
   float   xfrac;

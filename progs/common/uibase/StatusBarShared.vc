@@ -56,7 +56,7 @@ const int HUDMSG_COLOURSTRING = 0x40000000;
 //
 //==========================================================================
 
-void OnCreate()
+override void OnCreate()
 {
   ::OnCreate();
   HudMsgWin = NewChild(Widget);
@@ -83,7 +83,7 @@ void StartMap()
 //
 //==========================================================================
 
-void OnDraw()
+override void OnDraw()
 {
   DrawNotify();
   DrawCentreMessage();
@@ -95,7 +95,7 @@ void OnDraw()
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   UpdateNotify(DeltaTime);
   UpdateCentreMessage(DeltaTime);

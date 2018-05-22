@@ -75,7 +75,7 @@ bool bSavedDormant;
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   EntityEx A;
 
@@ -102,7 +102,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-bool Interpolate()
+override bool Interpolate()
 {
   if (Tracer == none)
     return true;
@@ -130,7 +130,7 @@ bool Interpolate()
 //
 //==========================================================================
 
-bool Activate(EntityEx Activator)
+override bool Activate(EntityEx Activator)
 {
   if (Tracer == none || bActive)
     return false;
@@ -161,7 +161,7 @@ bool Activate(EntityEx Activator)
 //
 //==========================================================================
 
-bool Deactivate(EntityEx Activator)
+override bool Deactivate(EntityEx Activator)
 {
   ::Deactivate(Activator);
   if (Tracer != none)

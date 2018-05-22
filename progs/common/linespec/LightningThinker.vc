@@ -56,7 +56,7 @@ void Init()
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   //  Update lightning
   if (!NextLightningFlash || LightningFlash)

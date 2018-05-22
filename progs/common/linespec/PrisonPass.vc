@@ -31,7 +31,7 @@ class PrisonPass : Inventory;
 //
 //==========================================================================
 
-bool TryPickup(EntityEx Toucher)
+override bool TryPickup(EntityEx Toucher)
 {
   ::TryPickup(Toucher);
   Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 223, 16, 0, 0, 0, NULL, 0,
@@ -45,7 +45,7 @@ bool TryPickup(EntityEx Toucher)
 //
 //==========================================================================
 
-bool SpecialDropAction(EntityEx Source)
+override bool SpecialDropAction(EntityEx Source)
 {
   Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 223, 16, 0, 0, 0, NULL, 0,
     Source);

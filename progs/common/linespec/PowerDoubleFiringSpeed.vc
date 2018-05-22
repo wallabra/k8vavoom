@@ -31,7 +31,7 @@ class PowerDoubleFiringSpeed : Powerup;
 //
 //==========================================================================
 
-void InitEffect()
+override void InitEffect()
 {
   if (Owner && Owner.Player)
   {
@@ -47,7 +47,7 @@ void InitEffect()
 //
 //==========================================================================
 
-void EndEffect()
+override void EndEffect()
 {
   if (Owner && Owner.Player)
   {

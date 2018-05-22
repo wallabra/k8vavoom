@@ -38,7 +38,7 @@ const int
 //
 //==========================================================================
 
-void ResetPlayerOnSpawn()
+override void ResetPlayerOnSpawn()
 {
   ::ResetPlayerOnSpawn();
 }
@@ -49,7 +49,7 @@ void ResetPlayerOnSpawn()
 //
 //==========================================================================
 
-int GetRebornHealth()
+override int GetRebornHealth()
 {
   return INITIAL_HEALTH;
 }
@@ -60,7 +60,7 @@ int GetRebornHealth()
 //
 //==========================================================================
 
-void GotAmmo(Ammo NewAmmo)
+override void GotAmmo(Ammo NewAmmo)
 {
   // We were down to zero,
   // so select a new weapon.
@@ -81,7 +81,7 @@ void GotAmmo(Ammo NewAmmo)
 //
 //==========================================================================
 
-void PlayerImpulse()
+override void PlayerImpulse()
 {
   int impulse;
 
@@ -144,7 +144,7 @@ void PlayerImpulse()
 //
 //==========================================================================
 
-void Cheat_Gimme()
+override void Cheat_Gimme()
 {
   int         i;
   class<Inventory>  Cls;
@@ -294,7 +294,7 @@ void Cheat_Gimme()
 //
 //==========================================================================
 
-void StartDeathSlideShow()
+override void StartDeathSlideShow()
 {
   ClientFinaleType(1);
   Level.Completed(-1, -1, 0);
@@ -306,7 +306,7 @@ void StartDeathSlideShow()
 //
 //==========================================================================
 
-void KilledActor(EntityEx Victim)
+override void KilledActor(EntityEx Victim)
 {
   // Check for frag changes
   if (Victim.bIsPlayer)
@@ -328,7 +328,7 @@ void KilledActor(EntityEx Victim)
 //
 //===========================================================================
 
-int GetSigilPieces()
+override int GetSigilPieces()
 {
   Sigil S = Sigil(EntityEx(MO).FindInventory(Sigil));
   if (S)

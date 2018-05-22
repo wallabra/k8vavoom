@@ -35,7 +35,7 @@ int CurPage;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   if (!IsAnyDoom2) {
     NumPages = (WadLumpPresent('e4m1') ? 1 : 2);
@@ -54,7 +54,7 @@ void CreateChoices()
 //
 //==========================================================================
 
-bool OnKeyDown(int key)
+override bool OnKeyDown(int key)
 {
   LocalSound('menu/clear');
   //ClGame.ForceMenuOff(); // for one page

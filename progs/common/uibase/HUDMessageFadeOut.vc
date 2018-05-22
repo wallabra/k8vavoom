@@ -34,7 +34,7 @@ float   FadeOutTime;
 //
 //==========================================================================
 
-void Init(string Message, name AFont, int Type, int AId, int Colour,
+override void Init(string Message, name AFont, int Type, int AId, int Colour,
   float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
   float Time1, float Time2)
 {
@@ -49,7 +49,7 @@ void Init(string Message, name AFont, int Type, int AId, int Colour,
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   Time += DeltaTime;
   if (State == 0 && HoldTime < Time)

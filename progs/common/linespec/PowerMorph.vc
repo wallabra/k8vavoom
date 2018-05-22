@@ -37,7 +37,7 @@ PlayerEx      OwnerPlayer;
 //
 //===========================================================================
 
-void InitEffect()
+override void InitEffect()
 {
   if (Owner && Owner.bIsPlayer && PlayerClass)
   {
@@ -68,7 +68,7 @@ void InitEffect()
 //
 //===========================================================================
 
-void EndEffect()
+override void EndEffect()
 {
   //  Abort if owner already destroyed
   if (!Owner)

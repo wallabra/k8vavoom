@@ -53,7 +53,7 @@ void ActivateEvent()
     Activated(self);
 }
 
-bool OnKeyDown(int key)
+override bool OnKeyDown(int key)
 {
   if (key == K_ENTER || key == K_PADENTER ||
     key == K_MOUSE1 || key == K_JOY1)
@@ -65,14 +65,14 @@ bool OnKeyDown(int key)
   return false;
 }
 
-void OnMouseClick(int X, int Y)
+override void OnMouseClick(int X, int Y)
 {
   SetFocus();
   ActivateEvent();
   LocalSound(ActivateSound);
 }
 
-void OnDraw()
+override void OnDraw()
 {
   SetFont(TextFont);
   SetTextAlign(TextHAlign, TextVAlign);

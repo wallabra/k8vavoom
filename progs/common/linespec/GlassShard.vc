@@ -32,7 +32,7 @@ class GlassShard : Actor
 //
 //==========================================================================
 
-void FloorBounceMissile()
+override void FloorBounceMissile()
 {
   if (HitFloorType())
   {

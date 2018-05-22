@@ -32,7 +32,7 @@ class SoundEnvironment : Actor
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
   if (!bDormant)
@@ -47,7 +47,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-bool Activate(EntityEx Activator)
+override bool Activate(EntityEx Activator)
 {
   XLevel.Zones[Sector->Zone] = (Args[0] << 8) | Args[1];
   return true;
@@ -59,7 +59,7 @@ bool Activate(EntityEx Activator)
 //
 //==========================================================================
 
-bool Deactivate(EntityEx Activator)
+override bool Deactivate(EntityEx Activator)
 {
   bDormant = true;
   return true;

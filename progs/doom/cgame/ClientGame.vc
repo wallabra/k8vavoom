@@ -50,7 +50,7 @@ int pic_brdr_br;
 //
 //==========================================================================
 
-void RootWindowCreated()
+override void RootWindowCreated()
 {
   GTitle = TitleScreen(GRoot.NewChild(TitleScreen));
   GSBar = StatusBarScreen(GRoot.NewChild(StatusBarScreen));
@@ -71,7 +71,7 @@ void RootWindowCreated()
 //
 //==========================================================================
 
-void Connected()
+override void Connected()
 {
   GTitle.Hide();
   GTitle.StopDemoLoop();
@@ -86,7 +86,7 @@ void Connected()
 //
 //==========================================================================
 
-void Disconnected()
+override void Disconnected()
 {
   GTitle.Show();
   GSBar.Hide();
@@ -100,7 +100,7 @@ void Disconnected()
 //
 //==========================================================================
 
-void DemoPlaybackStarted()
+override void DemoPlaybackStarted()
 {
   GTitle.Hide();
   GSBar.Hide();
@@ -114,7 +114,7 @@ void DemoPlaybackStarted()
 //
 //==========================================================================
 
-void DemoPlaybackStopped()
+override void DemoPlaybackStopped()
 {
   GTitle.Show();
   GSBar.Hide();
@@ -128,7 +128,7 @@ void DemoPlaybackStopped()
 //
 //==========================================================================
 
-void OnHostEndGame()
+override void OnHostEndGame()
 {
   GTitle.OnHostEndGame();
 }
@@ -139,7 +139,7 @@ void OnHostEndGame()
 //
 //==========================================================================
 
-void OnHostError()
+override void OnHostError()
 {
   GTitle.OnHostError();
 }
@@ -150,7 +150,7 @@ void OnHostError()
 //
 //==========================================================================
 
-void StatusBarStartMap()
+override void StatusBarStartMap()
 {
   StatusBarScreen(GSBar).cl = Player(cl);
   GSBar.Show();
@@ -165,7 +165,7 @@ void StatusBarStartMap()
 //
 //==========================================================================
 
-void StatusBarDrawer(int sb_view)
+override void StatusBarDrawer(int sb_view)
 {
   GSBar.SB_Drawer(sb_view);
 }
@@ -176,7 +176,7 @@ void StatusBarDrawer(int sb_view)
 //
 //==========================================================================
 
-void StatusBarUpdateWidgets(float DeltaTime)
+override void StatusBarUpdateWidgets(float DeltaTime)
 {
   GSBar.SB_UpdateWidgets();
 }
@@ -187,7 +187,7 @@ void StatusBarUpdateWidgets(float DeltaTime)
 //
 //==========================================================================
 
-void IintermissionStart()
+override void IintermissionStart()
 {
   GSBar.Hide();
   GImission.Show();
@@ -201,7 +201,7 @@ void IintermissionStart()
 //
 //==========================================================================
 
-void StartFinale(name FinaleType)
+override void StartFinale(name FinaleType)
 {
   intermission = 2;
   GSBar.Hide();
@@ -216,7 +216,7 @@ void StartFinale(name FinaleType)
 //
 //===========================================================================
 
-bool FinaleResponder(event_t * event)
+override bool FinaleResponder(event_t * event)
 {
   return GFinale.Responder(event);
 }
@@ -227,7 +227,7 @@ bool FinaleResponder(event_t * event)
 //
 //==========================================================================
 
-void DeactivateMenu()
+override void DeactivateMenu()
 {
   ForceMenuOff();
 }
@@ -238,7 +238,7 @@ void DeactivateMenu()
 //
 //==========================================================================
 
-bool MenuResponder(event_t * event)
+override bool MenuResponder(event_t * event)
 {
   if (!CurrentMenuScreen)
   {
@@ -258,7 +258,7 @@ bool MenuResponder(event_t * event)
 //
 //==========================================================================
 
-bool MenuActive()
+override bool MenuActive()
 {
   return CurrentMenuScreen != none;
 }
@@ -269,7 +269,7 @@ bool MenuActive()
 //
 //==========================================================================
 
-void SetMenu(string Name)
+override void SetMenu(string Name)
 {
   if (!stricmp(Name, "Main"))
   {
@@ -347,7 +347,7 @@ void SetMenu(string Name)
 //
 //==========================================================================
 
-void menu_quit()
+override void menu_quit()
 {
   if (!GetCvarB('menu_quit_prompt')) { CmdBuf_AddText("Quit\n"); return; }
   LocalSound('misc/chat');
@@ -361,7 +361,7 @@ void menu_quit()
 //
 //==========================================================================
 
-void QuitResponse(int ch)
+override void QuitResponse(int ch)
 {
   if (ch != K_y)
     return;
@@ -379,7 +379,7 @@ void QuitResponse(int ch)
 //
 //==========================================================================
 
-void SharewareResponse(int key)
+override void SharewareResponse(int key)
 {
   PushMenuScreen(SpawnMenu(MenuScreenHelp));
 }
@@ -410,7 +410,7 @@ void InitBorder()
 //
 //==========================================================================
 
-void DrawBorder(int x, int y, int w, int h)
+override void DrawBorder(int x, int y, int w, int h)
 {
   int i;
 
@@ -444,7 +444,7 @@ void DrawBorder(int x, int y, int w, int h)
 //
 //==========================================================================
 
-void DrawViewBorder(int x, int y, int w, int h)
+override void DrawViewBorder(int x, int y, int w, int h)
 {
   if (IsAnyDoom2) {
     GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'grnrock');

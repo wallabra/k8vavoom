@@ -25,7 +25,7 @@
 
 class MenuChoice_SaveSlot : MenuSaveSlot;
 
-void ActivateSlot()
+override void ActivateSlot()
 {
   //  We are going to be intercepting all chars.
   bEnteringText = true;

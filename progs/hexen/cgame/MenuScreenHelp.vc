@@ -30,7 +30,7 @@ name        PageNames[3];
 int         NumPages;
 int         CurPage;
 
-void CreateChoices()
+override void CreateChoices()
 {
   Page = NewChild(MenuStaticBitmap);
   Page.SetPic(PageNames[CurPage]);
@@ -38,7 +38,7 @@ void CreateChoices()
   ::CreateChoices();
 }
 
-bool OnKeyDown(int key)
+override bool OnKeyDown(int key)
 {
   CurPage++;
   LocalSound('menu/clear');

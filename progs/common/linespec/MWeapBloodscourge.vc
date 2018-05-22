@@ -33,7 +33,7 @@ int       CShift;
 //
 //==========================================================================
 
-int GetBlend()
+override int GetBlend()
 {
   return CShift;
 }

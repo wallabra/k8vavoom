@@ -142,7 +142,7 @@ final void StartFinale(name AFinaleType)
 //
 //==========================================================================
 
-void OnCreate()
+override void OnCreate()
 {
   ::OnCreate();
   Background = NewChild(FinaleBackground);
@@ -157,7 +157,7 @@ void OnCreate()
 //
 //==========================================================================
 
-void OnVisibilityChanged(bool bNewVisibility)
+override void OnVisibilityChanged(bool bNewVisibility)
 {
   bTickEnabled = bNewVisibility;
 }
@@ -168,7 +168,7 @@ void OnVisibilityChanged(bool bNewVisibility)
 //
 //==========================================================================
 
-void OnPostDraw()
+override void OnPostDraw()
 {
   if (FinaleType == 'EndGameCast')
   {
@@ -201,7 +201,7 @@ bool Responder(event_t * event)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   FinaleTime += DeltaTime;
   if (FinaleType == 'EndGameCast')

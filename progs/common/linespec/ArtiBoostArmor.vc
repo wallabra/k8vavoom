@@ -34,7 +34,7 @@ class ArtiBoostArmor : Inventory
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   int i;
   bool good = false;

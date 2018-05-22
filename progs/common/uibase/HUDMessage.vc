@@ -134,7 +134,7 @@ void Init(string Message, name AFont, int Type, int AId, int Colour,
 //
 //==========================================================================
 
-void OnDraw()
+override void OnDraw()
 {
   int   i;
   int   x;
@@ -224,7 +224,7 @@ void DrawLine(int LineIdx, int x, int y, string Text)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   Time += DeltaTime;
   if (HoldTime && HoldTime < Time)

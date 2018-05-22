@@ -31,7 +31,7 @@ class UpgradeStamina : DummyStrifeItem;
 //
 //==========================================================================
 
-bool TryPickup(EntityEx Toucher)
+override bool TryPickup(EntityEx Toucher)
 {
   if (!Toucher.Player)
   {

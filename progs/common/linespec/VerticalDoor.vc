@@ -212,7 +212,7 @@ bool ReUse(int InType, line_t* Line, Entity Thing)
 //
 //==========================================================================
 
-void Tick(float deltaTime)
+override void Tick(float deltaTime)
 {
   int     res;
 

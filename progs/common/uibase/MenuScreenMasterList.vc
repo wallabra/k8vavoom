@@ -31,7 +31,7 @@ class MenuScreenMasterList : MenuScreen;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   MenuSList Lst = MenuSList(NewChild(MenuSList));
   Lst.Master = true;

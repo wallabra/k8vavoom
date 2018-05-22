@@ -31,7 +31,7 @@ class MenuScreenSpecialControls : MenuScreenControls;
 //
 //==========================================================================
 
-void CreateControlKeyChoices()
+override void CreateControlKeyChoices()
 {
   int i, j;
 

@@ -31,7 +31,7 @@ class PowerWeaponLevel2 : Powerup;
 //
 //==========================================================================
 
-void InitEffect()
+override void InitEffect()
 {
   if (!Owner.bIsPlayer)
   {
@@ -68,7 +68,7 @@ void InitEffect()
 //
 //==========================================================================
 
-void EndEffect()
+override void EndEffect()
 {
   if (!Owner || !Owner.bIsPlayer)
   {

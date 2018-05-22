@@ -104,7 +104,7 @@ void ForceTitle()
 //
 //==========================================================================
 
-void OnVisibilityChanged(bool bNewVisibility)
+override void OnVisibilityChanged(bool bNewVisibility)
 {
   bTickEnabled = bNewVisibility;
 }
@@ -115,7 +115,7 @@ void OnVisibilityChanged(bool bNewVisibility)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   pagetime -= DeltaTime;
   if (demosequence == -1 || (/*!ClGame.MenuActive() &&*/ pagetime < 0.0))
@@ -130,7 +130,7 @@ void Tick(float DeltaTime)
 //
 //==========================================================================
 
-void OnDraw()
+override void OnDraw()
 {
   DrawFullScreenPic(page_pic);
   if (demosequence == 1)

@@ -58,7 +58,7 @@ void Init(sector_t* InSector)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   switch (Direction)
   {

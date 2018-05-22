@@ -73,7 +73,7 @@ final int k8GetAmmoKingMax () {
 //
 //==========================================================================
 
-bool HandlePickup(Inventory Item)
+override bool HandlePickup(Inventory Item)
 {
   if (Item.Class == Class ||
     (Ammo(Item) && Ammo(Item).GetParentAmmo() == Class))
@@ -122,7 +122,7 @@ bool HandlePickup(Inventory Item)
 //
 //==========================================================================
 
-Inventory CreateCopy(EntityEx Toucher)
+override Inventory CreateCopy(EntityEx Toucher)
 {
   int NewAmount = Amount;
   if (!bIgnoreSkill)
@@ -156,7 +156,7 @@ Inventory CreateCopy(EntityEx Toucher)
 //
 //==========================================================================
 
-Inventory CreateTossable()
+override Inventory CreateTossable()
 {
   Inventory Copy = ::CreateTossable();
   if (Copy)

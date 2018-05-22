@@ -31,7 +31,7 @@ class PowerGhost : PowerInvisibility;
 //
 //==========================================================================
 
-void InitEffect()
+override void InitEffect()
 {
   Owner.RenderStyle = STYLE_Translucent;
   Owner.Alpha = 0.666;
@@ -45,7 +45,7 @@ void InitEffect()
 //
 //==========================================================================
 
-void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
+override void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
 {
   if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
     (ftoi(4.0 * EffectTime) & 1))

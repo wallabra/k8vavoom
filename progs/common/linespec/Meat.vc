@@ -31,7 +31,7 @@ class Meat : Actor;
 //
 //==========================================================================
 
-void OnMapSpawn(mthing_t* mthing)
+override void OnMapSpawn(mthing_t* mthing)
 {
   ::OnMapSpawn(mthing);
   SetState(GetStatePlus(IdleState, P_Random() % 20, true));

@@ -47,7 +47,7 @@ enum
 //
 //==========================================================================
 
-void Destroyed()
+override void Destroyed()
 {
   //  Removed this action from sector's action list.
   if (Sector->ActionList == self)
@@ -76,7 +76,7 @@ void Destroyed()
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
 
@@ -91,7 +91,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-bool Activate(EntityEx Activator)
+override bool Activate(EntityEx Activator)
 {
   //  Projectiles cannot activate.
   bDormant = false;
@@ -104,7 +104,7 @@ bool Activate(EntityEx Activator)
 //
 //==========================================================================
 
-bool Deactivate(EntityEx Activator)
+override bool Deactivate(EntityEx Activator)
 {
   //  Projectiles can activate.
   bDormant = true;

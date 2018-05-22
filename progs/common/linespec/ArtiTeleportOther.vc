@@ -34,7 +34,7 @@ class ArtiTeleportOther : Inventory
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   EntityEx mo;
 

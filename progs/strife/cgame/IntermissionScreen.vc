@@ -75,7 +75,7 @@ void Start()
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   intertime += DeltaTime;
   if (ClGame.skipintermission || intertime > HubCount)
@@ -92,7 +92,7 @@ void Tick(float DeltaTime)
 //
 //==========================================================================
 
-void OnDraw()
+override void OnDraw()
 {
   if (interstate == IMS_Done)
   {
@@ -195,7 +195,7 @@ void IM_DrawHubText()
 //
 //==========================================================================
 
-void OnVisibilityChanged(bool bNewVisibility)
+override void OnVisibilityChanged(bool bNewVisibility)
 {
   bTickEnabled = bNewVisibility;
 }

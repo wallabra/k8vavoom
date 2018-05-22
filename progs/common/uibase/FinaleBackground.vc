@@ -115,7 +115,7 @@ final void InitChess()
 //
 //==========================================================================
 
-void OnDraw()
+override void OnDraw()
 {
   if (FScreen.FinaleType == 'EndGameBunny')
   {

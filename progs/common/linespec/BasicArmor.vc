@@ -33,7 +33,7 @@ float     SavePercent;
 //
 //==========================================================================
 
-Inventory CreateCopy(EntityEx Toucher)
+override Inventory CreateCopy(EntityEx Toucher)
 {
   //  I don't see why we need this, but for compatibility purposes it's
   // here.
@@ -52,7 +52,7 @@ Inventory CreateCopy(EntityEx Toucher)
 //
 //==========================================================================
 
-bool HandlePickup(Inventory Item)
+override bool HandlePickup(Inventory Item)
 {
   if (Item.Class == Class)
   {
@@ -72,7 +72,7 @@ bool HandlePickup(Inventory Item)
 //
 //==========================================================================
 
-void AbsorbDamage(int damage, name DmgType, out int NewDamage)
+override void AbsorbDamage(int damage, name DmgType, out int NewDamage)
 {
   if (DmgType != 'Drowning')
   {

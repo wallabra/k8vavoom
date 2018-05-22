@@ -191,7 +191,7 @@ int sb_faceindex;
 //
 //==========================================================================
 
-void StartMap()
+override void StartMap()
 {
   int i;
 
@@ -646,7 +646,7 @@ void SB_DrawPause()
 //
 //==========================================================================
 
-void SB_Drawer(int sb_view)
+override void SB_Drawer(int sb_view)
 {
   if (!cl || !cl.MO)
   {
@@ -870,7 +870,7 @@ final void UpdateFaceWidget(float FrameTime)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   ::Tick(DeltaTime);
   if (cl.MO)
@@ -885,7 +885,7 @@ void Tick(float DeltaTime)
 //
 //==========================================================================
 
-void SB_UpdateWidgets()
+override void SB_UpdateWidgets()
 {
 }
 
@@ -895,7 +895,7 @@ void SB_UpdateWidgets()
 //
 //==========================================================================
 
-void OnVisibilityChanged(bool bNewVisibility)
+override void OnVisibilityChanged(bool bNewVisibility)
 {
   bTickEnabled = bNewVisibility;
 }

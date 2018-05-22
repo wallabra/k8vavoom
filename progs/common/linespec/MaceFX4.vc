@@ -33,7 +33,7 @@ class MaceFX4 : Actor
 //
 //==========================================================================
 
-int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
+override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
   if (victim.bBoss || victim.bDontSquash)
   {

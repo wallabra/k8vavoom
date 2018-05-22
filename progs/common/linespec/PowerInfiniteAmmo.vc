@@ -31,7 +31,7 @@ class PowerInfiniteAmmo : Powerup;
 //
 //==========================================================================
 
-void InitEffect()
+override void InitEffect()
 {
   if (Owner)
   {
@@ -45,7 +45,7 @@ void InitEffect()
 //
 //==========================================================================
 
-void EndEffect()
+override void EndEffect()
 {
   if (Owner)
   {

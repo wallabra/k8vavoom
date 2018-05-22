@@ -33,7 +33,7 @@ BotPlayer Bot;
 //
 //==========================================================================
 
-void CreateBot()
+override void CreateBot()
 {
   Bot = BotPlayer(SpawnObject(BotPlayer));
   Bot.player = self;
@@ -47,7 +47,7 @@ void CreateBot()
 //
 //==========================================================================
 
-void DestroyBot()
+override void DestroyBot()
 {
   if (Bot != none)
   {
@@ -62,7 +62,7 @@ void DestroyBot()
 //
 //==========================================================================
 
-void UserinfoChanged()
+override void UserinfoChanged()
 {
   if (!bSpawned)
   {
@@ -77,7 +77,7 @@ void UserinfoChanged()
 //
 //==========================================================================
 
-void SetClientModel()
+override void SetClientModel()
 {
   string model;
 
@@ -98,7 +98,7 @@ void SetClientModel()
 //
 //==========================================================================
 
-void BotOnSpawn()
+override void BotOnSpawn()
 {
   Bot.OnSpawn();
 }
@@ -109,7 +109,7 @@ void BotOnSpawn()
 //
 //==========================================================================
 
-void DoClearPlayer()
+override void DoClearPlayer()
 {
   BotPlayer b;
 
@@ -124,7 +124,7 @@ void DoClearPlayer()
 //
 //==========================================================================
 
-int GetRebornHealth()
+override int GetRebornHealth()
 {
   return MainGameInfo(Level.Game).INITIAL_HEALTH;
 }
@@ -135,7 +135,7 @@ int GetRebornHealth()
 //
 //==========================================================================
 
-void GotAmmo(Ammo NewAmmo)
+override void GotAmmo(Ammo NewAmmo)
 {
   // We were down to zero,
   // so select a new weapon.
@@ -157,7 +157,7 @@ void GotAmmo(Ammo NewAmmo)
 //
 //==========================================================================
 
-void PlayerImpulse()
+override void PlayerImpulse()
 {
   int impulse;
 
@@ -209,7 +209,7 @@ void PlayerImpulse()
 //
 //==========================================================================
 
-void BotTick(float deltaTime)
+override void BotTick(float deltaTime)
 {
   Bot.BotTick(deltaTime);
 }
@@ -235,7 +235,7 @@ const int
   GIMME_POWERS      = 0x00fc0000,
   GIMME_ALL       = 0xffffffff;
 
-void Cheat_Gimme()
+override void Cheat_Gimme()
 {
   int         i;
   int         i1;
@@ -392,7 +392,7 @@ void Cheat_Gimme()
 //
 //==========================================================================
 
-void KilledActor(EntityEx Victim)
+override void KilledActor(EntityEx Victim)
 {
   // Check for frag changes
   if (Victim.bIsPlayer)

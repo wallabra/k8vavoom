@@ -62,7 +62,7 @@ void Init(sector_t* InSector, int InBase, int InIndex)
 //
 //============================================================================
 
-void Tick(float deltaTime)
+override void Tick(float deltaTime)
 {
   Index += deltaTime;
   Sector->params.lightlevel = Base + Level.Game.PhaseTable[ftoi(Index * 32.0) & 63];

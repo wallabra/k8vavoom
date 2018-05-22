@@ -32,7 +32,7 @@ class Key : Inventory
 //
 //==========================================================================
 
-bool HandlePickup(Inventory Item)
+override bool HandlePickup(Inventory Item)
 {
   if (Item.Class == Class)
   {
@@ -58,7 +58,7 @@ bool HandlePickup(Inventory Item)
 //
 //==========================================================================
 
-bool ShouldStay()
+override bool ShouldStay()
 {
   return Level.Game.netgame;
 }

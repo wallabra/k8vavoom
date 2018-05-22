@@ -72,7 +72,7 @@ ClientGameShared GetClGame()
 //
 //==========================================================================
 
-void OnFocusReceived()
+override void OnFocusReceived()
 {
   if (MenuScreen(Parent) && MenuScreen(Parent).Selector)
   {
@@ -88,7 +88,7 @@ void OnFocusReceived()
 //
 //==========================================================================
 
-void OnMouseEnter()
+override void OnMouseEnter()
 {
   //SetFocus();
   //LocalSound('menu/cursor');

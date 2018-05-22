@@ -26,7 +26,7 @@
 class MenuScreenMiscOptions : MenuScreen;
 
 
-void CreateChoices () {
+override void CreateChoices () {
   currentY = ChoicesStartY;
 
   CreateOnOffCvar("Quit prompt", 'menu_quit_prompt');

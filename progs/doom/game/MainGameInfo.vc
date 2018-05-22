@@ -54,7 +54,7 @@ int INITIAL_HEALTH;
 //
 //==========================================================================
 
-void Init()
+override void Init()
 {
   ::Init();
   InitTranslationTables();
@@ -67,7 +67,7 @@ void Init()
 //
 //==========================================================================
 
-void InitNewGame(int skill)
+override void InitNewGame(int skill)
 {
   SetSkill(skill);
   nomonsters = GetCvar('NoMonsters');
@@ -1098,7 +1098,7 @@ void TranslateThing(mthing_t* mthing)
 //
 //==========================================================================
 
-void TranslateLevel(Level InLevel)
+override void TranslateLevel(Level InLevel)
 {
   int i;
 

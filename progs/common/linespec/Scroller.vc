@@ -345,7 +345,7 @@ void SetSpeed(int Arg2, int Arg3)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   float   XDelta;
   float   YDelta;

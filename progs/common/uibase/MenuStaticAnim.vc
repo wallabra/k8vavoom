@@ -44,7 +44,7 @@ bool    bBackwards;
 //
 //==========================================================================
 
-void SetOrigin(int OrgX, int OrgY)
+override void SetOrigin(int OrgX, int OrgY)
 {
   OriginX = OrgX;
   OriginY = OrgY;
@@ -105,7 +105,7 @@ void AddFrame(name Name)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   Time += DeltaTime;
 }
@@ -116,7 +116,7 @@ void Tick(float DeltaTime)
 //
 //==========================================================================
 
-void OnDraw()
+override void OnDraw()
 {
   int frame = ftoi(Time * itof(Speed)) % Frames.Num;
   if (bBackwards)

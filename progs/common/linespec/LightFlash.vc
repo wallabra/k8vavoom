@@ -61,7 +61,7 @@ void Init(sector_t* InSector)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   Time -= DeltaTime;
   if (Time >= 0.0)

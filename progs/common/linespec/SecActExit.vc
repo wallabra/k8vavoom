@@ -32,7 +32,7 @@ class SecActExit : SectorAction
 //
 //==========================================================================
 
-bool TriggerAction(EntityEx Triggerer, int ActType)
+override bool TriggerAction(EntityEx Triggerer, int ActType)
 {
   bool Ret = (ActType & SECSPAC_Exit) && CheckTrigger(Triggerer);
   if (::TriggerAction(Triggerer, ActType))

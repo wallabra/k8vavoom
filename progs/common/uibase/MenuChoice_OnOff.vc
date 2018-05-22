@@ -55,7 +55,7 @@ bool ChangeCvarCB (Object Sender, int newValue) {
 // OnDraw
 //
 //==========================================================================
-void OnDraw () {
+override void OnDraw () {
   int Col = (IsFocus() ? CR_YELLOW : CR_WHITE);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);

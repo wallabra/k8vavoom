@@ -39,7 +39,7 @@ int         PClass;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   int     currentY;
 

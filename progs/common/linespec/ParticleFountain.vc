@@ -70,7 +70,7 @@ replication
 //
 //==========================================================================
 
-bool Activate(EntityEx Activator)
+override bool Activate(EntityEx Activator)
 {
   if (::Activate(Activator))
   {
@@ -86,7 +86,7 @@ bool Activate(EntityEx Activator)
 //
 //==========================================================================
 
-bool Deactivate(EntityEx Activator)
+override bool Deactivate(EntityEx Activator)
 {
   if (::Deactivate(Activator))
   {
@@ -102,7 +102,7 @@ bool Deactivate(EntityEx Activator)
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
   if (!bDormant)
@@ -117,7 +117,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-void ClientTick(float deltaTime)
+override void ClientTick(float deltaTime)
 {
   ::ClientTick(deltaTime);
   if (!bFountain)

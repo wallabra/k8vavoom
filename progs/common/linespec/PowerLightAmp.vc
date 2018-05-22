@@ -31,7 +31,7 @@ class PowerLightAmp : Powerup;
 //
 //==========================================================================
 
-void DoEffect()
+override void DoEffect()
 {
   ::DoEffect();
   if (Owner && Owner.bIsPlayer &&
@@ -56,7 +56,7 @@ void DoEffect()
 //
 //==========================================================================
 
-void EndEffect()
+override void EndEffect()
 {
   if (Owner && Owner.bIsPlayer &&
     Owner.Player.FixedColourmap  < PlayerEx::NUMCOLOURMAPS)

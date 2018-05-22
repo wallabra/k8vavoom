@@ -34,7 +34,7 @@ int       DownPieces;
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   NumPieces = Health;
   ::BeginPlay();
@@ -46,7 +46,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-bool HandlePickup(Inventory Item)
+override bool HandlePickup(Inventory Item)
 {
   if (Sigil(Item))
   {
@@ -80,7 +80,7 @@ bool HandlePickup(Inventory Item)
 //
 //==========================================================================
 
-Inventory CreateCopy(EntityEx Toucher)
+override Inventory CreateCopy(EntityEx Toucher)
 {
   Sigil Copy = Spawn(Sigil,,,, false);
   Copy.Amount = Amount;
@@ -97,7 +97,7 @@ Inventory CreateCopy(EntityEx Toucher)
 //
 //==========================================================================
 
-bool SpecialDropAction(EntityEx Source)
+override bool SpecialDropAction(EntityEx Source)
 {
   int     i;
 

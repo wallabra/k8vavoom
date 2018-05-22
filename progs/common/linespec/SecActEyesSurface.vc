@@ -32,7 +32,7 @@ class SecActEyesSurface : SectorAction
 //
 //==========================================================================
 
-bool TriggerAction(EntityEx Triggerer, int ActType)
+override bool TriggerAction(EntityEx Triggerer, int ActType)
 {
   bool Ret = (ActType & SECSPAC_EyesSurface) && CheckTrigger(Triggerer);
   if (::TriggerAction(Triggerer, ActType))

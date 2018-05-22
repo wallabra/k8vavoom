@@ -32,7 +32,7 @@ class HereticWeapon : Weapon
 //
 //==========================================================================
 
-void AttachToOwner(EntityEx NewOwner)
+override void AttachToOwner(EntityEx NewOwner)
 {
   ::AttachToOwner(NewOwner);
   //  In deathmatch powered-up weapons use the same amount of ammo per

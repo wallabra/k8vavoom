@@ -34,7 +34,7 @@ int AutoUseMode;
 //
 //==========================================================================
 
-Inventory CreateCopy(EntityEx Toucher)
+override Inventory CreateCopy(EntityEx Toucher)
 {
   Inventory Copy = ::CreateCopy(Toucher);
   Copy.Health = Health;
@@ -47,7 +47,7 @@ Inventory CreateCopy(EntityEx Toucher)
 //
 //==========================================================================
 
-Inventory CreateTossable()
+override Inventory CreateTossable()
 {
   Inventory Copy = ::CreateTossable();
   if (Copy)
@@ -63,7 +63,7 @@ Inventory CreateTossable()
 //
 //==========================================================================
 
-bool HandlePickup(Inventory Item)
+override bool HandlePickup(Inventory Item)
 {
   //  Health pickups of the same type but with different health amount are
   // considerer different items.
@@ -84,7 +84,7 @@ bool HandlePickup(Inventory Item)
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   return EntityEx(Owner).GiveBody(Health);
 }

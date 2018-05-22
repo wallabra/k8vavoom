@@ -31,7 +31,7 @@ class MenuChoice_BackButton : MenuTextButton;
 //
 //==========================================================================
 
-void OnDraw()
+override void OnDraw()
 {
   SetFont('bigfont');
   int Col = IsFocus() ? CR_YELLOW : CR_UNTRANSLATED;
@@ -44,7 +44,7 @@ void OnDraw()
 //
 //==========================================================================
 
-void OnMouseClick(int X, int Y)
+override void OnMouseClick(int X, int Y)
 {
   GetClGame().PopMenu();
 }
@@ -55,9 +55,9 @@ void OnMouseClick(int X, int Y)
 //
 //==========================================================================
 
-void OnFocusReceived()
+override void OnFocusReceived()
 {
-//  ::OnFocusReceived();
+  //::OnFocusReceived();
 }
 
 defaultproperties

@@ -32,7 +32,7 @@ class SecActHitFakeFloor : SectorAction
 //
 //==========================================================================
 
-bool TriggerAction(EntityEx Triggerer, int ActType)
+override bool TriggerAction(EntityEx Triggerer, int ActType)
 {
   bool Ret = (ActType & SECSPAC_HitFakeFloor) && CheckTrigger(Triggerer);
   if (::TriggerAction(Triggerer, ActType))

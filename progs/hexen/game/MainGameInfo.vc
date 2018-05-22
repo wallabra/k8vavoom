@@ -41,7 +41,7 @@ int classFlags[3];
 //
 //==========================================================================
 
-void Init()
+override void Init()
 {
   ::Init();
   SetSeqTrans('Platform', 0, SEQ_Platform);
@@ -77,7 +77,7 @@ void Init()
 //
 //==========================================================================
 
-void InitNewGame(int skill)
+override void InitNewGame(int skill)
 {
   SetSkill(skill);
   nomonsters = GetCvar('NoMonsters');

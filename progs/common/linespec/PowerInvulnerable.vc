@@ -37,7 +37,7 @@ int       PrevTicTime;
 //
 //==========================================================================
 
-void InitEffect()
+override void InitEffect()
 {
   //  If we don't have any specific mode, set it to the default of the
   // player class.
@@ -59,7 +59,7 @@ void InitEffect()
 //
 //==========================================================================
 
-void DoEffect()
+override void DoEffect()
 {
   ::DoEffect();
 
@@ -232,7 +232,7 @@ void DoEffect()
 //
 //==========================================================================
 
-void EndEffect()
+override void EndEffect()
 {
   if (!Owner)
   {
@@ -272,7 +272,7 @@ void EndEffect()
 //
 //==========================================================================
 
-void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
+override void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
 {
   if (Owner && (Mode == 'Ghost' || Mode == 'Initial') &&
     (EffectTime > PlayerEx::BLINKTHRESHOLD ||

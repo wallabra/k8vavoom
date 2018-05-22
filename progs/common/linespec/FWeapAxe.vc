@@ -34,7 +34,7 @@ class FWeapAxe : FighterWeapon
 //
 //==========================================================================
 
-state GetUpState()
+override state GetUpState()
 {
   return Ammo1.Amount > 0 ? FindState('GlowSelect') : ::GetUpState();
 }
@@ -45,7 +45,7 @@ state GetUpState()
 //
 //==========================================================================
 
-state GetDownState()
+override state GetDownState()
 {
   return Ammo1.Amount > 0 ? FindState('GlowDeselect') : ::GetDownState();
 }
@@ -56,7 +56,7 @@ state GetDownState()
 //
 //==========================================================================
 
-state GetReadyState()
+override state GetReadyState()
 {
   return Ammo1.Amount > 0 ? FindState('GlowReady') : ::GetReadyState();
 }
@@ -67,7 +67,7 @@ state GetReadyState()
 //
 //==========================================================================
 
-state GetAttackState(bool Hold)
+override state GetAttackState(bool Hold)
 {
   return Ammo1.Amount > 0 ? FindState('GlowFire') : // Glowing axe
     ::GetAttackState(Hold);

@@ -33,7 +33,7 @@ BotPlayer Bot;
 //
 //==========================================================================
 
-void CreateBot()
+override void CreateBot()
 {
   Bot = BotPlayer(SpawnObject(BotPlayer));
   Bot.player = self;
@@ -47,7 +47,7 @@ void CreateBot()
 //
 //==========================================================================
 
-void DestroyBot()
+override void DestroyBot()
 {
   if (Bot != none)
   {
@@ -62,7 +62,7 @@ void DestroyBot()
 //
 //==========================================================================
 
-void BotOnSpawn()
+override void BotOnSpawn()
 {
   Bot.OnSpawn();
 }
@@ -73,7 +73,7 @@ void BotOnSpawn()
 //
 //==========================================================================
 
-void DoClearPlayer()
+override void DoClearPlayer()
 {
   BotPlayer b;
 
@@ -88,7 +88,7 @@ void DoClearPlayer()
 //
 //==========================================================================
 
-int GetRebornHealth()
+override int GetRebornHealth()
 {
   return MAXHEALTH;
 }
@@ -99,7 +99,7 @@ int GetRebornHealth()
 //
 //==========================================================================
 
-void GotAmmo(Ammo NewAmmo)
+override void GotAmmo(Ammo NewAmmo)
 {
   if (ReadyWeapon.bWimpyWeapon && !ReadyWeapon.bNoAutoSwitch && GetCvarB('wpn_autoswitch'))
   {
@@ -117,7 +117,7 @@ void GotAmmo(Ammo NewAmmo)
 //
 //==========================================================================
 
-void PlayerImpulse()
+override void PlayerImpulse()
 {
   int impulse;
 
@@ -179,7 +179,7 @@ void PlayerImpulse()
 //
 //==========================================================================
 
-void BotTick(float deltaTime)
+override void BotTick(float deltaTime)
 {
   Bot.BotTick(deltaTime);
 }
@@ -190,7 +190,7 @@ void BotTick(float deltaTime)
 //
 //==========================================================================
 
-void Cheat_Gimme()
+override void Cheat_Gimme()
 {
   class<Inventory>  Cls;
   class<Weapon>   WpnCls;
@@ -367,7 +367,7 @@ void Cheat_Gimme()
 //
 //==========================================================================
 
-void Cheat_Morph()
+override void Cheat_Morph()
 {
   if (MorphTime)
   {
@@ -392,7 +392,7 @@ void Cheat_Morph()
 //
 //==========================================================================
 
-void KilledActor(EntityEx Victim)
+override void KilledActor(EntityEx Victim)
 {
   // Check for frag changes
   if (Victim.bIsPlayer)

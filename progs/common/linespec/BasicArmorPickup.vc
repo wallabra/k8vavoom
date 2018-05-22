@@ -35,7 +35,7 @@ float     SavePercent;
 //
 //==========================================================================
 
-Inventory CreateCopy(EntityEx Toucher)
+override Inventory CreateCopy(EntityEx Toucher)
 {
   BasicArmorPickup Copy = BasicArmorPickup(::CreateCopy(Toucher));
   if (Copy)
@@ -52,7 +52,7 @@ Inventory CreateCopy(EntityEx Toucher)
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   BasicArmor Armor = BasicArmor(EntityEx(Owner).FindInventory(BasicArmor));
   if (!Armor)

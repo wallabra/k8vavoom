@@ -68,7 +68,7 @@ class<Key> KeyCID[30];
 //
 //==========================================================================
 
-void StartMap()
+override void StartMap()
 {
   int i;
 
@@ -591,7 +591,7 @@ void SB_DrawPause()
 //
 //==========================================================================
 
-void SB_Drawer(int sb_view)
+override void SB_Drawer(int sb_view)
 {
   if (!cl || !cl.MO)
   {
@@ -614,7 +614,7 @@ void SB_Drawer(int sb_view)
 //
 //==========================================================================
 
-void SB_UpdateWidgets()
+override void SB_UpdateWidgets()
 {
   if (bShowKeys && !GetCvar('sb_show_keys'))
   {
@@ -631,7 +631,7 @@ void SB_UpdateWidgets()
 //
 //==========================================================================
 
-void OnVisibilityChanged(bool bNewVisibility)
+override void OnVisibilityChanged(bool bNewVisibility)
 {
   bTickEnabled = bNewVisibility;
 }

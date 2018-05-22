@@ -31,7 +31,7 @@ class PowerInvisibility : Powerup;
 //
 //==========================================================================
 
-void InitEffect()
+override void InitEffect()
 {
   Owner.RenderStyle = STYLE_OptFuzzy;
   Owner.Alpha = 0.2;
@@ -44,7 +44,7 @@ void InitEffect()
 //
 //==========================================================================
 
-void DoEffect()
+override void DoEffect()
 {
   ::DoEffect();
   //  Re-init effect every tic since other PowerInvisibility powers may
@@ -58,7 +58,7 @@ void DoEffect()
 //
 //==========================================================================
 
-void EndEffect()
+override void EndEffect()
 {
   if (!Owner)
   {
@@ -86,7 +86,7 @@ void EndEffect()
 //
 //==========================================================================
 
-void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
+override void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
 {
   if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
     (ftoi(4.0 * EffectTime) & 1))

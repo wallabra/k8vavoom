@@ -36,7 +36,7 @@ float ZagSpeed;
 //
 //==========================================================================
 
-bool Touch(Entity InOther)
+override bool Touch(Entity InOther)
 {
   int damage;
   EntityEx Other;

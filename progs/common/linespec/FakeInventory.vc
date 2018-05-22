@@ -38,7 +38,7 @@ bool      bRespawns;
 //
 //==========================================================================
 
-bool ShouldRespawn()
+override bool ShouldRespawn()
 {
   return bRespawns && ::ShouldRespawn();
 }
@@ -49,7 +49,7 @@ bool ShouldRespawn()
 //
 //==========================================================================
 
-bool TryPickup(EntityEx Toucher)
+override bool TryPickup(EntityEx Toucher)
 {
   bool Result = Level.ExecuteActionSpecial(Special, Args[0], Args[1],
     Args[2], Args[3], Args[4], NULL, 0, Toucher);
@@ -66,7 +66,7 @@ bool TryPickup(EntityEx Toucher)
 //
 //==========================================================================
 
-void DoPickupSpecial(EntityEx Toucher)
+override void DoPickupSpecial(EntityEx Toucher)
 {
   //  TryPickup already executed special.
 }

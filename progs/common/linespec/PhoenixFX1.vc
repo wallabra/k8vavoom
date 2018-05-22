@@ -33,7 +33,7 @@ class PhoenixFX1 : Actor
 //
 //==========================================================================
 
-int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
+override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
   if (victim.Class == Sorcerer2 && P_Random() < 96)
   {

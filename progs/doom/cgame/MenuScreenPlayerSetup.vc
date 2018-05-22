@@ -40,7 +40,7 @@ MenuModel     Mdl;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   void*   model;
   name    SkinName;

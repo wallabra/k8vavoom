@@ -31,7 +31,7 @@ class PowerTimeFreezer : Powerup;
 //
 //==========================================================================
 
-void InitEffect()
+override void InitEffect()
 {
   if (Owner && Owner.Player)
   {
@@ -78,7 +78,7 @@ void InitEffect()
 //
 //==========================================================================
 
-void DoEffect()
+override void DoEffect()
 {
   ::DoEffect();
   // [RH] Do not change LEVEL_FROZEN on odd tics, or the Revenant's tracer
@@ -107,7 +107,7 @@ void DoEffect()
 //
 //==========================================================================
 
-void EndEffect()
+override void EndEffect()
 {
   // Allow other actors to move about freely once again.
   Level.bFrozen = false;

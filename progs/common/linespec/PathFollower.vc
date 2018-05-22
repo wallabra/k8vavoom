@@ -117,7 +117,7 @@ float Lerp(float p1, float p2)
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   InterpolationPoint A;
   InterpolationPoint node;
@@ -187,7 +187,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-bool Deactivate(EntityEx Activator)
+override bool Deactivate(EntityEx Activator)
 {
   bActive = false;
   return true;
@@ -199,7 +199,7 @@ bool Deactivate(EntityEx Activator)
 //
 //==========================================================================
 
-bool Activate(EntityEx Activator)
+override bool Activate(EntityEx Activator)
 {
   if (!bActive)
   {
@@ -226,7 +226,7 @@ bool Activate(EntityEx Activator)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   ::Tick(DeltaTime);
   if (!bActive)

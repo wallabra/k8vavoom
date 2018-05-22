@@ -33,7 +33,7 @@ class Pottery1 : Actor
 //
 //==========================================================================
 
-void OnHitFloor()
+override void OnHitFloor()
 {
   ::OnHitFloor();
   Damage(none, none, 25);

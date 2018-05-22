@@ -35,7 +35,7 @@ string      FailMessage;
 //
 //==========================================================================
 
-bool HandlePickup(Inventory Item)
+override bool HandlePickup(Inventory Item)
 {
   if (Item.Class == Class && Level.Game.netgame && !Level.Game.deathmatch)
   {
@@ -52,7 +52,7 @@ bool HandlePickup(Inventory Item)
 //
 //==========================================================================
 
-bool ShouldStay()
+override bool ShouldStay()
 {
   return Level.Game.netgame && !Level.Game.deathmatch;
 }
@@ -63,7 +63,7 @@ bool ShouldStay()
 //
 //==========================================================================
 
-bool ShouldRespawn()
+override bool ShouldRespawn()
 {
   // Remove puzzle items if not cooperative netplay
   return false;
@@ -75,7 +75,7 @@ bool ShouldRespawn()
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   if (PlayerEx(Owner.Player).UsePuzzleItem(PuzzleItemNumber))
   {

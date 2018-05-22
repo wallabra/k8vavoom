@@ -160,7 +160,7 @@ void ChangeValues(int magnitude, int angle)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   sector_t*   sec;
   EntityEx    thing;

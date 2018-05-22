@@ -31,7 +31,7 @@ class TeleportFog : Actor;
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
   PlaySound('misc/teleport', CHAN_VOICE);

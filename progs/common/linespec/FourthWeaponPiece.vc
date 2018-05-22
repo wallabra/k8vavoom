@@ -41,7 +41,7 @@ bool      gaveWeapon;
 //
 //==========================================================================
 
-bool TryPickup(EntityEx Toucher)
+override bool TryPickup(EntityEx Toucher)
 {
   int       GaveAmmo;
   bool      checkAssembled;
@@ -137,7 +137,7 @@ bool TryPickup(EntityEx Toucher)
 //
 //==========================================================================
 
-string GetPickupMessage()
+override string GetPickupMessage()
 {
   if (gaveWeapon)
   {
@@ -155,7 +155,7 @@ string GetPickupMessage()
 //
 //==========================================================================
 
-void PlayPickupSound(EntityEx Toucher)
+override void PlayPickupSound(EntityEx Toucher)
 {
   if (gaveWeapon)
   {
@@ -174,7 +174,7 @@ void PlayPickupSound(EntityEx Toucher)
 //
 //==========================================================================
 
-bool ShouldStay()
+override bool ShouldStay()
 {
   return Level.Game.netgame && !Level.Game.deathmatch;
 }

@@ -45,7 +45,7 @@ class Heresiarch : Actor
 //
 //==========================================================================
 
-void Died(EntityEx source, EntityEx inflictor)
+override void Died(EntityEx source, EntityEx inflictor)
 {
   //  For Heresiarch special is actually the script to be executed.
   int Script = Special;

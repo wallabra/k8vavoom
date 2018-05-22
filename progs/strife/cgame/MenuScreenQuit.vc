@@ -31,7 +31,7 @@ name        QuitSound;
 name TeaserQuitSounds[5];
 name QuitSounds[8];
 
-void CreateChoices()
+override void CreateChoices()
 {
   ::CreateChoices();
   Page = NewChild(MenuStaticBitmap);
@@ -46,12 +46,12 @@ void CreateChoices()
   CmdBuf_AddText("music play d_fast\n");
 }
 
-bool OnKeyDown(int key)
+override bool OnKeyDown(int key)
 {
   return true;
 }
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   if (!IsLocalSoundPlaying(QuitSound))
   {

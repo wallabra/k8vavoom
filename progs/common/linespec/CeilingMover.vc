@@ -408,7 +408,7 @@ void ActivateInStasis(int InTag)
 //
 //==========================================================================
 
-void Tick(float deltaTime)
+override void Tick(float deltaTime)
 {
   int res;
 

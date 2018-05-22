@@ -38,7 +38,7 @@ MenuChoiceEnum    Level;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   MenuTextButton    Btn;
   int         i;

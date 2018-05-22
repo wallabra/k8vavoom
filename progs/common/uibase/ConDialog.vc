@@ -161,7 +161,7 @@ void SetSpeech(EntityEx Speaker, int SpeechNum)
 //
 //==========================================================================
 
-void DrawBackButton()
+override void DrawBackButton()
 {
   //  Don't draw back button on conversation windows...
 }
@@ -172,7 +172,7 @@ void DrawBackButton()
 //
 //==========================================================================
 
-void OnDraw()
+override void OnDraw()
 {
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
@@ -204,7 +204,7 @@ void OnDraw()
 //
 //==========================================================================
 
-bool OnKeyDown(int key)
+override bool OnKeyDown(int key)
 {
   switch (key)
   {

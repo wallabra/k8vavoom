@@ -26,7 +26,7 @@
 class StaticRGBLightSource : Actor
   __mobjinfo__(1503);
 
-void OnMapSpawn(mthing_t * mthing)
+override void OnMapSpawn(mthing_t * mthing)
 {
   float l;
 

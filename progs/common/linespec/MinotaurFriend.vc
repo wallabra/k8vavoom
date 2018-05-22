@@ -31,7 +31,7 @@ class MinotaurFriend : Minotaur;
 //
 //==========================================================================
 
-void Died(EntityEx source, EntityEx inflictor)
+override void Died(EntityEx source, EntityEx inflictor)
 {
   ::Died(source, inflictor);
   if (Tracer && Tracer.Health > 0)

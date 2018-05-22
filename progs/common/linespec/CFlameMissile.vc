@@ -34,7 +34,7 @@ Actor bmo;
 //
 //==========================================================================
 
-bool BlasterHitMobj(Entity Other)
+override bool BlasterHitMobj(Entity Other)
 {
   bmo = Actor(Other);
   return ::BlasterHitMobj(Other);
@@ -46,7 +46,7 @@ bool BlasterHitMobj(Entity Other)
 //
 //===========================================================================
 
-void SpawnBlasterEffects()
+override void SpawnBlasterEffects()
 {
   float z;
   Actor A;

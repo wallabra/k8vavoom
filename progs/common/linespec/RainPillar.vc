@@ -31,7 +31,7 @@ class RainPillar : Actor;
 //
 //==========================================================================
 
-int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
+override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
   if (Actor(victim).bBoss)
   {

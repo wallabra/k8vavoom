@@ -34,7 +34,7 @@ class ArtiPoisonBag : Inventory
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   float angle;
   Actor bomb;

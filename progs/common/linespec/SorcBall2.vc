@@ -33,7 +33,7 @@ class SorcBall2 : SorcBall;
 //
 //============================================================================
 
-void A_CastSorcererSpell()
+override void A_CastSorcererSpell()
 {
   Actor mo;
   float z;

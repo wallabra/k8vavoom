@@ -52,12 +52,6 @@ int currentY;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-//k8: is this necessary?
-void OnDestroy () {
-  Items.Num = 0;
-}
-
-
 void CreateMenu () {
   CreateTitle();
   DrawBackButton();
@@ -67,7 +61,7 @@ void CreateMenu () {
 }
 
 
-void OnChildAdded (Widget Child) {
+override void OnChildAdded (Widget Child) {
   if (MenuChoice(Child) && !MenuChoice_BackButton(Child)) {
     if (Items.Num > 128) FatalError("Too many menu items");
     Items[Items.Length] = MenuChoice(Child);
@@ -282,7 +276,7 @@ void DoEnd () {
 }
 
 
-bool OnKeyDown (int key) {
+override bool OnKeyDown (int key) {
   switch (key) {
     case K_UPARROW:
     case K_PAD8:
@@ -329,7 +323,7 @@ bool OnKeyDown (int key) {
 
 // fade all the screen buffer, so that the menu is more readable,
 // especially now that we use the small hudfont in the menus
-void OnDraw () {
+override void OnDraw () {
   ShadeRect(0, 0, 640, 480, GetCvarF('menu_darkening'));
 }
 

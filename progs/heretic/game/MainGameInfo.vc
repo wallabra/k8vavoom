@@ -59,7 +59,7 @@ bool shareware;
 //
 //==========================================================================
 
-void Init()
+override void Init()
 {
   ::Init();
   shareware = !WadLumpPresent('e2m1');
@@ -73,7 +73,7 @@ void Init()
 //
 //==========================================================================
 
-void InitNewGame(int skill)
+override void InitNewGame(int skill)
 {
   SetSkill(skill);
   nomonsters = GetCvar('NoMonsters');
@@ -504,7 +504,7 @@ void TranslateThing(mthing_t* mthing)
 //
 //==========================================================================
 
-void TranslateLevel(Level InLevel)
+override void TranslateLevel(Level InLevel)
 {
   int i;
 

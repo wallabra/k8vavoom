@@ -143,7 +143,7 @@ bool StartClosing()
 //
 //==========================================================================
 
-void Tick(float deltaTime)
+override void Tick(float deltaTime)
 {
   int   i;
   int   res;

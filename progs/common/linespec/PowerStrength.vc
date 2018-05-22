@@ -31,7 +31,7 @@ class PowerStrength : Powerup;
 //
 //==========================================================================
 
-bool HandlePickup(Inventory Item)
+override bool HandlePickup(Inventory Item)
 {
   //  Setting effect time to 0 will cause powerup pickup handler to reset
   // effect time so we get the red flash again.
@@ -48,7 +48,7 @@ bool HandlePickup(Inventory Item)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   //  Strength counts up to diminish fade.
   EffectTime += 2.0 * DeltaTime;
@@ -61,7 +61,7 @@ void Tick(float DeltaTime)
 //
 //==========================================================================
 
-int GetBlend()
+override int GetBlend()
 {
   // slowly fade the berzerk out
   int Amount = 12 - ftoi(EffectTime / 2.0);

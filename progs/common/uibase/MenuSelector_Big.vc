@@ -42,7 +42,7 @@ ClientGameShared GetClGame()
 //
 //==========================================================================
 
-void OnCreate()
+override void OnCreate()
 {
   int i;
 
@@ -61,7 +61,7 @@ void OnCreate()
 //
 //==========================================================================
 
-void SetOrigin(int X, int Y)
+override void SetOrigin(int X, int Y)
 {
   ::SetOrigin(X + GetClGame().BigSelectorXOffset,
     Y + GetClGame().BigSelectorYOffset);

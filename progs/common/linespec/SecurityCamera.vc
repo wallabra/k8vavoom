@@ -76,7 +76,7 @@ float Range;
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
   Centre = Angles.yaw;
@@ -101,7 +101,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   ::Tick(DeltaTime);
   TickCamera(DeltaTime);

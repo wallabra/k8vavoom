@@ -31,7 +31,7 @@ class MageWandMissile : FastProjectile;
 //
 //===========================================================================
 
-void SpawnBlasterEffects()
+override void SpawnBlasterEffects()
 {
   float z;
 

@@ -41,7 +41,7 @@ bool    bAutoSize;
 //
 //==========================================================================
 
-void SetOrigin(int OrgX, int OrgY)
+override void SetOrigin(int OrgX, int OrgY)
 {
   OriginX = OrgX;
   OriginY = OrgY;
@@ -75,7 +75,7 @@ void SetPic(name Name)
 //
 //==========================================================================
 
-void OnDraw()
+override void OnDraw()
 {
   DrawPic(OffsetX, OffsetY, Handle);
 }

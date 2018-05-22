@@ -75,7 +75,7 @@ int pic_armor[2];
 //
 //==========================================================================
 
-void StartMap()
+override void StartMap()
 {
   int i;
   picinfo_t info;
@@ -553,7 +553,7 @@ void SB_DrawPause()
 //
 //==========================================================================
 
-void SB_Drawer(int sb_view)
+override void SB_Drawer(int sb_view)
 {
   if (!cl || !cl.MO)
   {
@@ -577,7 +577,7 @@ void SB_Drawer(int sb_view)
 //
 //==========================================================================
 
-void SB_UpdateWidgets()
+override void SB_UpdateWidgets()
 {
   int i;
   int delta;
@@ -627,7 +627,7 @@ void SB_UpdateWidgets()
 //
 //==========================================================================
 
-void OnVisibilityChanged(bool bNewVisibility)
+override void OnVisibilityChanged(bool bNewVisibility)
 {
   bTickEnabled = bNewVisibility;
 }

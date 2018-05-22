@@ -33,7 +33,7 @@ string      Text;
 //
 //==========================================================================
 
-void SetOrigin(int OrgX, int OrgY)
+override void SetOrigin(int OrgX, int OrgY)
 {
   SetFont('bigfont');
   SetPos(OrgX - TextWidth(Text) / 2, OrgY - TextHeight(Text));
@@ -46,7 +46,7 @@ void SetOrigin(int OrgX, int OrgY)
 //
 //==========================================================================
 
-void OnDraw()
+override void OnDraw()
 {
   SetFont('bigfont');
   DrawText(0, 0, Text);

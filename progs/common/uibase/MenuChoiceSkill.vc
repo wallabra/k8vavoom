@@ -36,7 +36,7 @@ string      ConfirmationText;
 //
 //==========================================================================
 
-void OnDraw()
+override void OnDraw()
 {
   if (PicHandle > 0)
   {

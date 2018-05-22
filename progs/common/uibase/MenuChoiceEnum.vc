@@ -66,7 +66,7 @@ void SetSessionCvar (name Name, optional int defval) {
 //  SetOrigin
 //
 //==========================================================================
-void SetOrigin (int x, int y) {
+override void SetOrigin (int x, int y) {
   if (bLeftAlign) {
     SetPos(x, y);
   } else {
@@ -120,7 +120,7 @@ void SetInitialValue (int AValue) {
 //  OnDraw
 //
 //==========================================================================
-void OnDraw () {
+override void OnDraw () {
   int Col = (IsFocus() ? CR_YELLOW : CR_WHITE);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
@@ -141,7 +141,7 @@ void OnDraw () {
 //  OnKeyDown
 //
 //==========================================================================
-bool OnKeyDown (int key) {
+override bool OnKeyDown (int key) {
   int newValue;
   switch (key) {
     case K_LEFTARROW:
@@ -160,14 +160,14 @@ bool OnKeyDown (int key) {
 }
 
 
-void OnMouseClick (int X, int Y) {
+override void OnMouseClick (int X, int Y) {
   SetFocus();
   int newValue = (Value < EnumNames.Num-1 ? Value+1 : 0);
   if (SetNewValue(newValue)) LocalSound('menu/change');
 }
 
 
-void OnRMouseClick (int X, int Y) {
+override void OnRMouseClick (int X, int Y) {
   SetFocus();
   int newValue = (Value > 0 ? Value-1 : EnumNames.Num-1);
   if (SetNewValue(newValue)) LocalSound('menu/change');

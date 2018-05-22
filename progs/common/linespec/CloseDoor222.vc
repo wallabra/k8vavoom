@@ -31,7 +31,7 @@ class CloseDoor222 : DummyStrifeItem;
 //
 //==========================================================================
 
-bool TryPickup(EntityEx Toucher)
+override bool TryPickup(EntityEx Toucher)
 {
   Level.ExecuteActionSpecial(LNSPEC_DoorClose, 222, 16, 0, 0, 0, NULL, 0,
     Toucher);
@@ -45,7 +45,7 @@ bool TryPickup(EntityEx Toucher)
 //
 //==========================================================================
 
-bool SpecialDropAction(EntityEx Dropper)
+override bool SpecialDropAction(EntityEx Dropper)
 {
   Level.ExecuteActionSpecial(LNSPEC_DoorClose, 222, 16, 0, 0, 0, NULL, 0,
     Dropper.Target);

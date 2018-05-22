@@ -69,7 +69,7 @@ class LookAtCamera : PathFollower
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   EntityEx A;
 
@@ -98,7 +98,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-bool Interpolate()
+override bool Interpolate()
 {
   TVec delta;
   TAVec ang;

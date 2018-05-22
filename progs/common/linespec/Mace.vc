@@ -38,7 +38,7 @@ int       SpotCount;
 //
 //==========================================================================
 
-bool DoRespawn()
+override bool DoRespawn()
 {
   int       SpotIdx;
   EntityEx    Spot;

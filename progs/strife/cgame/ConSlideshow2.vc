@@ -30,14 +30,14 @@ MenuStaticBitmap  BackPic;
 int         PageNum;
 float       PicTimer;
 
-void CreateChoices()
+override void CreateChoices()
 {
   ::CreateChoices();
   BackPic = NewChild(MenuStaticBitmap);
   PlayPage();
 }
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   ::Tick(DeltaTime);
   PicTimer -= DeltaTime;
@@ -87,7 +87,7 @@ void PlayPage()
   }
 }
 
-bool OnKeyDown(int key)
+override bool OnKeyDown(int key)
 {
   switch (key)
   {

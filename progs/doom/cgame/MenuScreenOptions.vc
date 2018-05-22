@@ -31,7 +31,7 @@ class MenuScreenOptions : MenuScreen;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   MenuTextButton    Btn;
   int         currentY;

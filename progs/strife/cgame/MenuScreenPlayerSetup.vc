@@ -37,7 +37,7 @@ MenuSpriteAnim    Anim;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   PlayerName = MenuInputLine(NewChild(MenuInputLine));
   PlayerName.SetOrigin(ChoicesStartX + 10, ChoicesStartY);

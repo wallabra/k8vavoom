@@ -31,7 +31,7 @@ class ChickenPlayer : PlayerPawn;
 //
 //==========================================================================
 
-void MorphPlayerThink()
+override void MorphPlayerThink()
 {
   if (Health > 0)
   {

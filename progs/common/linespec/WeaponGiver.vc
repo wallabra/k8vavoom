@@ -32,7 +32,7 @@ class WeaponGiver : Weapon
 //
 //==========================================================================
 
-bool TryPickup(EntityEx Toucher)
+override bool TryPickup(EntityEx Toucher)
 {
   if (DropItemList.Num && ClassIsChildOf(DropItemList[0].Type, Weapon))
   {

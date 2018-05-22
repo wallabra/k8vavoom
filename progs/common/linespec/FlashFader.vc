@@ -66,7 +66,7 @@ final void Init(float ABlendR1, float ABlendG1, float ABlendB1, float ABlendA1,
 //
 //==========================================================================
 
-void Destroy()
+override void Destroy()
 {
   SetBlend(1.0);
   ::Destroy();
@@ -78,7 +78,7 @@ void Destroy()
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   //  We need a valid player.
   if (!ForWho || !ForWho.bIsPlayer)

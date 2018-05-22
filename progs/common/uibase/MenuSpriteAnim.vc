@@ -33,19 +33,19 @@ int   TranslEnd;
 int   Colour;
 float Time;
 
-void OnCreate()
+override void OnCreate()
 {
   ::OnCreate();
   bTickEnabled = true;
   Disable();
 }
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   Time += DeltaTime;
 }
 
-void OnDraw()
+override void OnDraw()
 {
   int frame = ftoi(Time * itof(Speed)) % NumFrames;
 

@@ -31,7 +31,7 @@ class PowerMask : PowerIronFeet;
 //
 //==========================================================================
 
-void DoEffect()
+override void DoEffect()
 {
   ::DoEffect();
 
@@ -52,7 +52,7 @@ void DoEffect()
 //
 //==========================================================================
 
-void AbsorbDamage(int damage, name DmgType, out int NewDamage)
+override void AbsorbDamage(int damage, name DmgType, out int NewDamage)
 {
   if (DmgType == 'Fire')
   {

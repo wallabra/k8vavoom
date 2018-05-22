@@ -39,7 +39,7 @@ void DisableSlotRendering () {
   }
 }
 
-void OnCreate()
+override void OnCreate()
 {
   ::OnCreate();
   InitSlot();
@@ -53,7 +53,7 @@ void OnValueChanged()
   }
 }
 
-void OnDraw()
+override void OnDraw()
 {
   SetTextAlign(hleft, vtop);
   DrawText(0, 0, Text, IsFocus() ? CR_YELLOW : CR_WHITE);
@@ -63,7 +63,7 @@ void OnDraw()
     DrawSlot(12-(DrawSlotPic ? 0 : 7), Value, false);
 }
 
-bool OnKeyDown(int key)
+override bool OnKeyDown(int key)
 {
   int Len;
 
@@ -117,7 +117,7 @@ bool OnKeyDown(int key)
   return false;
 }
 
-void OnMouseClick(int X, int Y)
+override void OnMouseClick(int X, int Y)
 {
   SetFocus();
 

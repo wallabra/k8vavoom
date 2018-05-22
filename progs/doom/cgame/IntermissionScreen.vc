@@ -237,7 +237,7 @@ void FindEpisodeAndMap(name Name, int *epi, int *map)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   // counter for general background animation
   btime += DeltaTime;
@@ -276,7 +276,7 @@ void Tick(float DeltaTime)
 //
 //==========================================================================
 
-void OnPostDraw()
+override void OnPostDraw()
 {
   SetFont('bigfont');
 
@@ -1275,7 +1275,7 @@ void IM_UpdateText(float DeltaTime)
 //
 //==========================================================================
 
-void OnVisibilityChanged(bool bNewVisibility)
+override void OnVisibilityChanged(bool bNewVisibility)
 {
   bTickEnabled = bNewVisibility;
   if (Background)

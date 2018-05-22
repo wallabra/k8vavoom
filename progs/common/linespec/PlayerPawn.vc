@@ -85,7 +85,7 @@ int k8hsCount; //k8
 //
 //==========================================================================
 
-bool ShouldDropItems()
+override bool ShouldDropItems()
 {
   return false;
 }
@@ -96,7 +96,7 @@ bool ShouldDropItems()
 //
 //==========================================================================
 
-void AddInventory(Inventory Item)
+override void AddInventory(Inventory Item)
 {
   ::AddInventory(Item);
   if (bIsPlayer && Item.bInvBar && !PlayerEx(Player).InvPtr)
@@ -112,7 +112,7 @@ void AddInventory(Inventory Item)
 //
 //==========================================================================
 
-void RemoveInventory(Inventory Item)
+override void RemoveInventory(Inventory Item)
 {
   bool SelectNewWeap = false;
   if (bIsPlayer)
@@ -166,7 +166,7 @@ void RemoveInventory(Inventory Item)
 //
 //==========================================================================
 
-bool UseInventory(Inventory Item)
+override bool UseInventory(Inventory Item)
 {
   //  Can't use anything while totally frozen
   if (PlayerEx(Player).bTotallyFrozen ||
@@ -261,7 +261,7 @@ void MorphPlayerThink()
 //
 //===========================================================================
 
-int GetSigilPieces()
+override int GetSigilPieces()
 {
   return PlayerEx(Player).GetSigilPieces();
 }
@@ -272,7 +272,7 @@ int GetSigilPieces()
 //
 //==========================================================================
 
-int UnmorphActor(Entity Activator, int Force)
+override int UnmorphActor(Entity Activator, int Force)
 {
   if (PlayerEx(Player).MorphTime)
   {

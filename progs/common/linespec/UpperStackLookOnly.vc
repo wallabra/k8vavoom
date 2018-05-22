@@ -32,7 +32,7 @@ class UpperStackLookOnly : StackPoint
 //
 //==========================================================================
 
-void InitSkyBox()
+override void InitSkyBox()
 {
   ::InitSkyBox();
 

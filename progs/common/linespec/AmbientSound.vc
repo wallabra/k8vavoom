@@ -35,7 +35,7 @@ bool      bActive;
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
   Activate(none);
@@ -47,7 +47,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-bool Activate(EntityEx Activator)
+override bool Activate(EntityEx Activator)
 {
   ::Activate(Activator);
 
@@ -72,7 +72,7 @@ bool Activate(EntityEx Activator)
 //
 //==========================================================================
 
-bool Deactivate(EntityEx Activator)
+override bool Deactivate(EntityEx Activator)
 {
   ::Deactivate(Activator);
   if (bActive)
@@ -93,7 +93,7 @@ bool Deactivate(EntityEx Activator)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   ::Tick(DeltaTime);
 

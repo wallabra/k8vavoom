@@ -125,7 +125,7 @@ float     DehExplosionAlpha;
 //
 //==========================================================================
 
-void Init()
+override void Init()
 {
   CreateCvar('zdoom_blood_hack', "0", "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
 
@@ -193,7 +193,7 @@ void Init()
 //
 //==========================================================================
 
-WorldInfo CreateWorldInfo()
+override WorldInfo CreateWorldInfo()
 {
   return WorldInfo(SpawnObject(WorldInfoEx));
 }
@@ -1104,7 +1104,7 @@ final void FixDeepWater (Level InLevel, int lidx, line_t *line) {
 //
 //==========================================================================
 
-void SpawnWorld(Level InLevel)
+override void SpawnWorld(Level InLevel)
 {
   int     i;
   int     j;
@@ -1420,7 +1420,7 @@ bool AddWeaponToSlot(int Slot, class<Weapon> WeaponClass)
 //
 //==========================================================================
 
-void CmdWeaponSection(string Section)
+override void CmdWeaponSection(string Section)
 {
   if (!strlen(Section))
   {
@@ -1436,7 +1436,7 @@ void CmdWeaponSection(string Section)
 //
 //==========================================================================
 
-void CmdSetSlot(out array<string> Args)
+override void CmdSetSlot(out array<string> Args)
 {
   if (Args.Num < 2)
   {
@@ -1493,7 +1493,7 @@ void CmdSetSlot(out array<string> Args)
 //
 //==========================================================================
 
-void CmdAddSlotDefault(out array<string> Args)
+override void CmdAddSlotDefault(out array<string> Args)
 {
   if (Args.Num != 3)
   {

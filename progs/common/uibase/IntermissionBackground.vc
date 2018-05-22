@@ -309,7 +309,7 @@ final void ParseScript (name ScriptName) {
 //  Updates stuff each frame
 //
 //==========================================================================
-void Tick (float DeltaTime) {
+override void Tick (float DeltaTime) {
   //  Counter for general background animation
   btime += DeltaTime;
 
@@ -334,7 +334,7 @@ void Tick (float DeltaTime) {
 //  OnDraw
 //
 //==========================================================================
-void OnDraw () {
+override void OnDraw () {
   if (BackgroundPic > 0) {
     DrawPic(0, 0, BackgroundPic);
   } else if (BackgroundFlat) {

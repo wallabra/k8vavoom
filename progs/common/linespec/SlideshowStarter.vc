@@ -31,7 +31,7 @@ class SlideshowStarter : DummyStrifeItem;
 //
 //==========================================================================
 
-bool TryPickup(EntityEx Toucher)
+override bool TryPickup(EntityEx Toucher)
 {
   name Old_Music;
 

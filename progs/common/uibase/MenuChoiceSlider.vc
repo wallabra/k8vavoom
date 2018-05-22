@@ -51,7 +51,7 @@ delegate bool ValueChanging(Object Sender, float NewValue);
 //
 //==========================================================================
 
-void SetOrigin(int x, int y)
+override void SetOrigin(int x, int y)
 {
   SetPos(x - CursorXOffs, y);
 }
@@ -74,7 +74,7 @@ void SetInitialValue(float AValue)
     Value = MaxValue;
 }
 
-void OnCreate()
+override void OnCreate()
 {
   ::OnCreate();
 
@@ -95,7 +95,7 @@ void OnCreate()
   }
 }
 
-void OnDraw()
+override void OnDraw()
 {
   int i;
   int xx, xt;
@@ -134,7 +134,7 @@ void OnDraw()
   }
 }
 
-bool OnKeyDown(int key)
+override bool OnKeyDown(int key)
 {
   float newValue;
 
@@ -171,7 +171,7 @@ bool OnKeyDown(int key)
   return ::OnKeyDown(key);
 }
 
-void OnMouseClick(int X, int Y)
+override void OnMouseClick(int X, int Y)
 {
   float newValue;
 
@@ -189,7 +189,7 @@ void OnMouseClick(int X, int Y)
   }
 }
 
-void OnRMouseClick(int X, int Y)
+override void OnRMouseClick(int X, int Y)
 {
   float newValue;
 

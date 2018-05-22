@@ -25,12 +25,12 @@
 
 class MenuSelector_SmallLeft : Widget;
 
-void SetOrigin(int OrgX, int OrgY)
+override void SetOrigin(int OrgX, int OrgY)
 {
   SetPos(OrgX - 10, OrgY);
 }
 
-void OnDraw()
+override void OnDraw()
 {
   SetTextAlign(hright, vtop);
   DrawText(8, 0, ">");

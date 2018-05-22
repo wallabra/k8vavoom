@@ -31,7 +31,7 @@ class MenuScreenSkill : MenuScreen;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   int i;
   int j;
@@ -77,7 +77,7 @@ void CreateChoices()
 //
 //==========================================================================
 
-void SetDefaultChoice()
+override void SetDefaultChoice()
 {
   ::SetDefaultChoice();
   CycleNextChoice();

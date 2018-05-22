@@ -97,7 +97,7 @@ void Start()
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   if (interstate == IMS_Done)
   {
@@ -127,7 +127,7 @@ void Tick(float DeltaTime)
 //
 //==========================================================================
 
-void OnDraw()
+override void OnDraw()
 {
   if (interstate == IMS_Done)
   {
@@ -433,7 +433,7 @@ void IM_DrawDeathTally()
 //
 //==========================================================================
 
-void OnVisibilityChanged(bool bNewVisibility)
+override void OnVisibilityChanged(bool bNewVisibility)
 {
   bTickEnabled = bNewVisibility;
 }

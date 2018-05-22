@@ -36,7 +36,7 @@ int BounceCount;
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   int n = 0, i = 0;
   bool IsBoss = false;
@@ -222,7 +222,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-void Tick(float deltaTime)
+override void Tick(float deltaTime)
 {
   ::Tick(deltaTime);
 

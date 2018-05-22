@@ -34,7 +34,7 @@ class PowerCoupling : Actor
 //
 //==========================================================================
 
-void Died(EntityEx source, EntityEx inflictor)
+override void Died(EntityEx source, EntityEx inflictor)
 {
   int i;
 

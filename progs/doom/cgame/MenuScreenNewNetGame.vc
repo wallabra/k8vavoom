@@ -34,7 +34,7 @@ MenuChoiceEnum Episode;
 MenuChoiceEnum Level;
 
 
-void CreateChoices () {
+override void CreateChoices () {
   MenuTextButton startGame;
 
   startGame = MenuTextButton(NewChild(MenuSmallTextButton));

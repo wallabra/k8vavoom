@@ -88,7 +88,7 @@ void Start(Entity it, line_t* line, int lineSide, bool ceiling, int tag,
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   float   NewDist;
 

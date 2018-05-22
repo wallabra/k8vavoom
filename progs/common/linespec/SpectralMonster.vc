@@ -32,7 +32,7 @@ class SpectralMonster : Actor
 //
 //==========================================================================
 
-bool Touch(Entity InOther)
+override bool Touch(Entity InOther)
 {
   EntityEx(InOther).Damage(self, self, 5, 'Melee');
 

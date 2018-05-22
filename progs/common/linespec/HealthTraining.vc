@@ -31,7 +31,7 @@ class HealthTraining : Inventory;
 //
 //==========================================================================
 
-bool TryPickup(EntityEx Toucher)
+override bool TryPickup(EntityEx Toucher)
 {
   if (::TryPickup(Toucher))
   {

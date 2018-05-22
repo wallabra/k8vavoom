@@ -32,7 +32,7 @@ class SkyPicker : Actor
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
 

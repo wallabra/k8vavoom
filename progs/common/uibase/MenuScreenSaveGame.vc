@@ -31,7 +31,7 @@ class MenuScreenSaveGame:MenuScreen;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   MenuChoice_SaveSlot   newChoice;
   int           i;

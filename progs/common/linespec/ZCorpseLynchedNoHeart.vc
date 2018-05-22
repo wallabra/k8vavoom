@@ -33,7 +33,7 @@ class ZCorpseLynchedNoHeart : Actor
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
   // Special stuff

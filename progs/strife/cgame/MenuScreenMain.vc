@@ -25,7 +25,7 @@
 
 class MenuScreenMain : MenuScreen;
 
-void CreateTitle()
+override void CreateTitle()
 {
   MenuStaticBitmap  Img;
 
@@ -40,7 +40,7 @@ void CreateTitle()
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   MenuBigTextButton btn;
   int         currentY;

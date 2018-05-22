@@ -29,7 +29,7 @@
 //
 //==========================================================================
 
-void Destroyed()
+override void Destroyed()
 {
   if (Role == ROLE_Authority)
   {
@@ -413,7 +413,7 @@ final bool Teleport(TVec Dst, float angle, bool DstFog, bool SrcFog,
 //
 //===========================================================================
 
-final bool MoveThing(TVec Pos, bool Fog)
+final override bool MoveThing(TVec Pos, bool Fog)
 {
   TVec OldOrg = Origin;
 
@@ -616,7 +616,7 @@ final bool HeightClip()
 //
 //==========================================================================
 
-final float GetStateTime(state AState, float AStateTime)
+final override float GetStateTime(state AState, float AStateTime)
 {
   if (IsFast())
   {
@@ -697,7 +697,7 @@ final void NightmareRespawn()
 //
 //==========================================================================
 
-bool Touch(Entity InOther)
+override bool Touch(Entity InOther)
 {
   bool solid;
   int damage;
@@ -1064,7 +1064,7 @@ name GetSpecies()
 //
 //===========================================================================
 
-final void CheckForPushSpecial(line_t* line, int side)
+final override void CheckForPushSpecial(line_t* line, int side)
 {
   if (!bNoTrigger)
   {
@@ -1088,7 +1088,7 @@ final void CheckForPushSpecial(line_t* line, int side)
 //
 //==========================================================================
 
-final void BlastedHitLine()
+final override void BlastedHitLine()
 {
   Damage(none, none, ftoi(Mass) >> 5);
 }
@@ -1099,7 +1099,7 @@ final void BlastedHitLine()
 //
 //==========================================================================
 
-final void CrossSpecialLine(line_t *ld, int side)
+final override void CrossSpecialLine(line_t *ld, int side)
 {
   if (!bNoTrigger)
   {
@@ -1222,7 +1222,7 @@ final void FaceMovementDirection()
 //
 //==========================================================================
 
-void OnMapSpawn(mthing_t* mthing)
+override void OnMapSpawn(mthing_t* mthing)
 {
   InitialHealth = Health;
 
@@ -1620,7 +1620,7 @@ void NoBlockingSet()
 //
 //==========================================================================
 
-void Tick(float deltaTime)
+override void Tick(float deltaTime)
 {
   if (bIsPlayer && GetCvarB('k8TraceDebug')) {
     auto plr = PlayerEx(Player);
@@ -1761,7 +1761,7 @@ void Tick(float deltaTime)
 //
 //==========================================================================
 
-final bool SectorChanged(int CrushChange)
+final override bool SectorChanged(int CrushChange)
 {
   EntityEx  A;
 
@@ -1871,7 +1871,7 @@ final bool SectorChanged(int CrushChange)
 //
 //==========================================================================
 
-void ClientTick(float DeltaTime)
+override void ClientTick(float DeltaTime)
 {
   dlight_t* dl;
   TVec    fv;
@@ -2755,7 +2755,7 @@ final EntityEx TossUpObject(class<EntityEx> type)
 //
 //==========================================================================
 
-final void SetActorProperty(int Prop, int IntVal, string StrVal)
+final override void SetActorProperty(int Prop, int IntVal, string StrVal)
 {
   switch (Prop)
   {
@@ -2849,7 +2849,7 @@ final void SetActorProperty(int Prop, int IntVal, string StrVal)
 //
 //==========================================================================
 
-final int GetActorProperty(int Prop)
+final override int GetActorProperty(int Prop)
 {
   switch (Prop)
   {
@@ -3590,7 +3590,7 @@ final void DoJump(state State)
 //
 //==========================================================================
 
-void CheckForSectorActions(sector_t* OldSec, bool OldAboveFakeFloor,
+override void CheckForSectorActions(sector_t* OldSec, bool OldAboveFakeFloor,
   bool OldAboveFakeCeiling)
 {
   //  Check for crossing fake floor or ceiling
@@ -4060,7 +4060,7 @@ void RespawnResetFlags()
 //
 //==========================================================================
 
-void CalcFakeZMovement(out TVec Ret, float DeltaTime)
+override void CalcFakeZMovement(out TVec Ret, float DeltaTime)
 {
   //
   //  adjust height
@@ -4214,7 +4214,7 @@ final bool IsHostile(EntityEx Other)
 //
 //==========================================================================
 
-final int ClassifyActor()
+final override int ClassifyActor()
 {
   int Ret = 0;
   if (bIsPlayer)
@@ -4277,7 +4277,7 @@ final bool CountsAsKill()
 //
 //==========================================================================
 
-void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
+override void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
 {
   if (Inventory)
   {

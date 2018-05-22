@@ -33,7 +33,7 @@ class SorcBall3 : SorcBall;
 //
 //============================================================================
 
-void A_CastSorcererSpell()
+override void A_CastSorcererSpell()
 {
   EntityEx mo;
   float ang1, ang2;

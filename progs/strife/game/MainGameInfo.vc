@@ -49,7 +49,7 @@ spec_trans_t spec_trans_tab[NUM_SPECIALS];
 //
 //==========================================================================
 
-void Init()
+override void Init()
 {
   ::Init();
   InitTranslationTables();
@@ -61,7 +61,7 @@ void Init()
 //
 //==========================================================================
 
-void InitNewGame(int skill)
+override void InitNewGame(int skill)
 {
   SetSkill(skill);
   nomonsters = GetCvar('NoMonsters');
@@ -573,7 +573,7 @@ void TranslateThing(mthing_t* mthing)
 //
 //==========================================================================
 
-void TranslateLevel(Level InLevel)
+override void TranslateLevel(Level InLevel)
 {
   int i;
 
@@ -599,7 +599,7 @@ void TranslateLevel(Level InLevel)
 //
 //==========================================================================
 
-name GetConScriptName(name LevelName)
+override name GetConScriptName(name LevelName)
 {
   int i;
 

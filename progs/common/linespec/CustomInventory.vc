@@ -32,7 +32,7 @@ class CustomInventory : Inventory
 //
 //==========================================================================
 
-bool TryPickup(EntityEx Toucher)
+override bool TryPickup(EntityEx Toucher)
 {
   state S = FindState('Pickup');
   bool IsOk = CallStateChain(Toucher, S);
@@ -54,7 +54,7 @@ bool TryPickup(EntityEx Toucher)
 //
 //==========================================================================
 
-bool SpecialDropAction(EntityEx Source)
+override bool SpecialDropAction(EntityEx Source)
 {
   return CallStateChain(Source, FindState('Drop'));
 }
@@ -65,7 +65,7 @@ bool SpecialDropAction(EntityEx Source)
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   return CallStateChain(Owner, FindState('Use'));
 }

@@ -34,7 +34,7 @@ class ArtiTomeOfPower : PowerupGiver
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   if (PlayerEx(Owner.Player).MorphTime &&
     (PlayerEx(Owner.Player).MorphStyle & MORPH_UNDOBYTOMEOFPOWER))

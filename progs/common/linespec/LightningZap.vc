@@ -33,7 +33,7 @@ Lightning LightningOwner; //  Lightning missile that spawned zap.
 //
 //==========================================================================
 
-bool Touch(Entity InOther)
+override bool Touch(Entity InOther)
 {
   int damage;
   EntityEx Other;

@@ -35,7 +35,7 @@ bool      bDepleeted;
 //
 //==========================================================================
 
-bool HandlePickup(Inventory Item)
+override bool HandlePickup(Inventory Item)
 {
   if (BackpackItem(Item))
   {
@@ -90,7 +90,7 @@ bool HandlePickup(Inventory Item)
 //
 //==========================================================================
 
-Inventory CreateCopy(EntityEx Toucher)
+override Inventory CreateCopy(EntityEx Toucher)
 {
   class<Ammo> Cls;
 
@@ -149,7 +149,7 @@ Inventory CreateCopy(EntityEx Toucher)
 //
 //==========================================================================
 
-void DetachedFromOwner()
+override void DetachedFromOwner()
 {
   //  Backpack has been removed, reset all ammo maximal amounts to default.
   Inventory AmmoItem;
@@ -180,7 +180,7 @@ void DetachedFromOwner()
 //
 //==========================================================================
 
-Inventory CreateTossable()
+override Inventory CreateTossable()
 {
   //  Set depleeted flag to prevent cheating.
   Inventory Copy = ::CreateTossable();

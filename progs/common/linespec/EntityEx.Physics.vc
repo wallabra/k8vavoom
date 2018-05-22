@@ -1443,7 +1443,7 @@ final VTerrainInfo* GetFloorType()
 //
 //==========================================================================
 
-final void HandleFloorclip()
+final override void HandleFloorclip()
 {
   if (bFloorClip)
   {
@@ -1465,7 +1465,7 @@ final void HandleFloorclip()
 //
 //==========================================================================
 
-final void ApplyFriction()
+final override void ApplyFriction()
 {
   float dot;
 

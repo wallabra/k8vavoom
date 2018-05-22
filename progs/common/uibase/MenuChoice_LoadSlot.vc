@@ -25,7 +25,7 @@
 
 class MenuChoice_LoadSlot : MenuSaveSlot;
 
-void ActivateSlot()
+override void ActivateSlot()
 {
   if (!Status)
   {

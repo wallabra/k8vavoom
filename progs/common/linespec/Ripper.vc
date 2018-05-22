@@ -33,7 +33,7 @@ class Ripper : Actor
 //
 //==========================================================================
 
-int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
+override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
   if (victim.Class == Ironlich)
   {

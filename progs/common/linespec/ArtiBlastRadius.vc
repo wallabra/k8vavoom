@@ -40,7 +40,7 @@ const float BLAST_SPEED     = 20.0;
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   Actor mo;
   float dist;

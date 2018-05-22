@@ -213,7 +213,7 @@ void ObtainInventory(EntityEx Other)
 //
 //===========================================================================
 
-final void ClearInventory()
+final override void ClearInventory()
 {
   Inventory Item = Inventory;
   while (Item)
@@ -258,7 +258,7 @@ final void ClearInventory()
 //
 //===========================================================================
 
-final void GiveInventory(name ItemName, int Amount)
+final override void GiveInventory(name ItemName, int Amount)
 {
   if (Amount <= 0)
   {
@@ -328,7 +328,7 @@ final void GiveInventory(name ItemName, int Amount)
 //
 //===========================================================================
 
-final void TakeInventory(name ItemName, int Amount)
+final override void TakeInventory(name ItemName, int Amount)
 {
   if (Amount <= 0)
   {
@@ -373,7 +373,7 @@ final void TakeInventory(name ItemName, int Amount)
 //
 //===========================================================================
 
-final int CheckInventory(name ItemName)
+final override int CheckInventory(name ItemName)
 {
   if (ItemName == 'armor')
   {
@@ -400,7 +400,7 @@ final int CheckInventory(name ItemName)
 //
 //===========================================================================
 
-final int UseInventoryName(name ItemName)
+final override int UseInventoryName(name ItemName)
 {
   class<Inventory> ItemClass = class<Inventory>(FindClassLowerCase(
     ItemName));
@@ -421,7 +421,7 @@ final int UseInventoryName(name ItemName)
 //
 //===========================================================================
 
-final int GetArmorPoints()
+final override int GetArmorPoints()
 {
   Inventory A = FindInventory(BasicArmor);
   return A ? A.Amount : 0;
@@ -433,7 +433,7 @@ final int GetArmorPoints()
 //
 //===========================================================================
 
-final int CheckNamedWeapon(name Name)
+final override int CheckNamedWeapon(name Name)
 {
   if (!bIsPlayer || !PlayerEx(Player).ReadyWeapon)
   {
@@ -449,7 +449,7 @@ final int CheckNamedWeapon(name Name)
 //
 //===========================================================================
 
-final int SetNamedWeapon(name Name)
+final override int SetNamedWeapon(name Name)
 {
   if (!bIsPlayer)
   {
@@ -484,7 +484,7 @@ final int SetNamedWeapon(name Name)
 //
 //===========================================================================
 
-final int GetAmmoCapacity(name Name)
+final override int GetAmmoCapacity(name Name)
 {
   class<Ammo> AmmoType = class<Ammo>(FindClassLowerCase(Name));
   if (!AmmoType)
@@ -515,7 +515,7 @@ final int GetAmmoCapacity(name Name)
 //
 //===========================================================================
 
-final void SetAmmoCapacity(name Name, int Amount)
+final override void SetAmmoCapacity(name Name, int Amount)
 {
   class<Ammo> AmmoType = class<Ammo>(FindClassLowerCase(Name));
   if (!AmmoType)

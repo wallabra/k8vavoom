@@ -31,7 +31,7 @@ class MenuScreenGameplayOptions : MenuScreen;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   MenuChoiceEnum    Enum;
   MenuChoiceSlider  Slider;

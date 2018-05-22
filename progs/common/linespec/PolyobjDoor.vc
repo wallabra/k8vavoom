@@ -49,7 +49,7 @@ bool bClose;
 //
 //==========================================================================
 
-void Tick(float deltaTime)
+override void Tick(float deltaTime)
 {
   polyobj_t *poly;
   float move;

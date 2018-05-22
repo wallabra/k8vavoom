@@ -33,7 +33,7 @@ class Scanner : PowerupGiver
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   if (!Owner.bIsPlayer)
   {

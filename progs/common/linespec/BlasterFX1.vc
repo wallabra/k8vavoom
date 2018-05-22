@@ -31,7 +31,7 @@ class BlasterFX1 : FastProjectile;
 //
 //===========================================================================
 
-void SpawnBlasterEffects()
+override void SpawnBlasterEffects()
 {
   TVec org;
 
@@ -53,7 +53,7 @@ void SpawnBlasterEffects()
 //
 //==========================================================================
 
-int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
+override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
   if (victim.Class == Ironlich)
   {

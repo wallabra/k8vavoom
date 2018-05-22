@@ -48,7 +48,7 @@ enum {
 //
 //==========================================================================
 
-void Destroyed()
+override void Destroyed()
 {
   // Remove from creature queue
   if (bMonster && bCorpse)

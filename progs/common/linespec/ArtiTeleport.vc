@@ -34,7 +34,7 @@ class ArtiTeleport : Inventory
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   int i;
   float destX;

@@ -31,7 +31,7 @@ class MenuScreenVideoOptions : MenuScreen;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   MenuChoiceSlider  Slider;
   MenuChoiceEnum    Enum;

@@ -73,7 +73,7 @@ float MaxPitchChange;
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   EntityEx A;
 
@@ -102,7 +102,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-void TickCamera(float DeltaTime)
+override void TickCamera(float DeltaTime)
 {
   if (Target)
   {

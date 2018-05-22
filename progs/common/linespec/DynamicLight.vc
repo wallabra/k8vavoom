@@ -45,7 +45,7 @@ float     Intensity;
 //
 //==========================================================================
 
-void OnMapSpawn(mthing_t* mthing)
+override void OnMapSpawn(mthing_t* mthing)
 {
   ::OnMapSpawn(mthing);
 
@@ -73,7 +73,7 @@ void OnMapSpawn(mthing_t* mthing)
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
 
@@ -89,7 +89,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-bool Activate(EntityEx Activator)
+override bool Activate(EntityEx Activator)
 {
   bDormant = false;
   LightTime = 0.0;
@@ -103,7 +103,7 @@ bool Activate(EntityEx Activator)
 //
 //==========================================================================
 
-bool Deactivate(EntityEx Activator)
+override bool Deactivate(EntityEx Activator)
 {
   bDormant = true;
   return true;
@@ -115,7 +115,7 @@ bool Deactivate(EntityEx Activator)
 //
 //==========================================================================
 
-void ClientTick(float DeltaTime)
+override void ClientTick(float DeltaTime)
 {
   ::ClientTick(DeltaTime);
 

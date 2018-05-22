@@ -52,7 +52,7 @@ int     PrevTicks;
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
 
@@ -67,7 +67,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   ::Tick(DeltaTime);
 

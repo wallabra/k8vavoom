@@ -80,7 +80,7 @@ Spawn:
 //
 //==========================================================================
 
-void RemoveThing()
+override void RemoveThing()
 {
   Special1 = true;  // Removing the bridge
   bSolid = false;

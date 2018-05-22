@@ -36,7 +36,7 @@ class SwitchingDecoration : SwitchableDecoration
 //
 //==========================================================================
 
-bool Deactivate(EntityEx Activator)
+override bool Deactivate(EntityEx Activator)
 {
   return false;
 }

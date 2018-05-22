@@ -38,7 +38,7 @@ MenuStaticAnim    MageWalk;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   if (WadLumpPresent('m_fbox'))
   {

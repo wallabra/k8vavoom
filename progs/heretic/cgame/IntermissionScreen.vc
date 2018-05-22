@@ -136,7 +136,7 @@ void FindEpisodeAndMap(name Name, int *epi, int *map)
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   if (interstate == IMS_Done)
   {
@@ -218,7 +218,7 @@ void Tick(float DeltaTime)
 //
 //==========================================================================
 
-void OnPostDraw()
+override void OnPostDraw()
 {
   if (oldinterstate != IMS_NextLoc && interstate == IMS_NextLoc)
   {
@@ -843,7 +843,7 @@ void IM_DrawText()
 //
 //==========================================================================
 
-void OnVisibilityChanged(bool bNewVisibility)
+override void OnVisibilityChanged(bool bNewVisibility)
 {
   bTickEnabled = bNewVisibility;
 }

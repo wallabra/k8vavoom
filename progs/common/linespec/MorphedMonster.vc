@@ -36,7 +36,7 @@ EntityEx    UnmorphedMo;
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   if (!UpdateMorphedMonster())
   {
@@ -75,7 +75,7 @@ final bool UpdateMorphedMonster()
 //
 //==========================================================================
 
-int UnmorphActor(Entity Activator, int Force)
+override int UnmorphActor(Entity Activator, int Force)
 {
   TVec oldOrigin;
   class<EntityEx> originalClass;
@@ -138,7 +138,7 @@ int UnmorphActor(Entity Activator, int Force)
 //
 //==========================================================================
 
-bool MorphedDeath(out EntityEx Morphed, out int MorphedStyle,
+override bool MorphedDeath(out EntityEx Morphed, out int MorphedStyle,
   out int MorphedHealth)
 {
   if (UnmorphTime && (MorphStyle & MORPH_UNDOBYDEATH))

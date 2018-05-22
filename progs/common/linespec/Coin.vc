@@ -33,7 +33,7 @@ class Coin : Inventory
 //
 //==========================================================================
 
-bool HandlePickup(Inventory Item)
+override bool HandlePickup(Inventory Item)
 {
   if (Coin(Item))
   {
@@ -62,7 +62,7 @@ bool HandlePickup(Inventory Item)
 //
 //==========================================================================
 
-Inventory CreateCopy(EntityEx Toucher)
+override Inventory CreateCopy(EntityEx Toucher)
 {
   if (Class == Coin)
   {
@@ -83,7 +83,7 @@ Inventory CreateCopy(EntityEx Toucher)
 //
 //==========================================================================
 
-Inventory CreateTossable()
+override Inventory CreateTossable()
 {
   Inventory Copy;
 

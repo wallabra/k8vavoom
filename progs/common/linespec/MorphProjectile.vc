@@ -39,7 +39,7 @@ class<Actor>    UnmorphFlash;
 //
 //==========================================================================
 
-int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
+override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
   victim.Morph(class<MorphedMonster>(MonsterClass), PlayerClass, Duration,
     MorphStyle, MorphFlash, UnmorphFlash);

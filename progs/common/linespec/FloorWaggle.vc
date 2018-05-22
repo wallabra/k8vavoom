@@ -73,7 +73,7 @@ void Init(sector_t* InSector, int InTag, int InHeight, int InSpeed,
 //
 //==========================================================================
 
-void Tick(float DeltaTime)
+override void Tick(float DeltaTime)
 {
   switch (State)
   {

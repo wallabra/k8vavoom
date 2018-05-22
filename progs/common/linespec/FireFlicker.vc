@@ -56,7 +56,7 @@ void Init(sector_t* InSector)
 //
 //==========================================================================
 
-void Tick(float deltaTime)
+override void Tick(float deltaTime)
 {
   int   Amount;
 

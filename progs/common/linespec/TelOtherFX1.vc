@@ -31,7 +31,7 @@ class TelOtherFX1 : Actor;
 //
 //==========================================================================
 
-int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
+override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
    if ((victim.bMonster || victim.bIsPlayer) && !victim.bBoss && !victim.bNoTeleOther)
   {

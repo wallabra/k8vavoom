@@ -134,7 +134,7 @@ replication
 //
 //==========================================================================
 
-void Destroyed()
+override void Destroyed()
 {
   if (SisterWeapon)
   {
@@ -150,7 +150,7 @@ void Destroyed()
 //
 //==========================================================================
 
-bool TryPickup(EntityEx Toucher)
+override bool TryPickup(EntityEx Toucher)
 {
   //  If sprites for ready state are missing, you can't pick up this
   // weapon.
@@ -168,7 +168,7 @@ bool TryPickup(EntityEx Toucher)
 //
 //==========================================================================
 
-bool HandlePickup(Inventory Item)
+override bool HandlePickup(Inventory Item)
 {
   if (Item.Class == Class)
   {
@@ -192,7 +192,7 @@ bool HandlePickup(Inventory Item)
 //
 //==========================================================================
 
-Inventory CreateCopy(EntityEx Toucher)
+override Inventory CreateCopy(EntityEx Toucher)
 {
   Weapon Copy = Weapon(::CreateCopy(Toucher));
   if (Copy)
@@ -209,7 +209,7 @@ Inventory CreateCopy(EntityEx Toucher)
 //
 //==========================================================================
 
-Inventory CreateTossable()
+override Inventory CreateTossable()
 {
   //  Drop the weapon that is meant to be placed in a level, i.e. that
   // normally gives you ammo.
@@ -242,7 +242,7 @@ Inventory CreateTossable()
 //
 //==========================================================================
 
-void AttachToOwner(EntityEx NewOwner)
+override void AttachToOwner(EntityEx NewOwner)
 {
   ::AttachToOwner(NewOwner);
 
@@ -408,7 +408,7 @@ bool PickupForAmmo(Weapon ExistingWeapon)
 //
 //==========================================================================
 
-bool ShouldStay()
+override bool ShouldStay()
 {
   return LineSpecialGameInfo(Level.Game).bWeaponsStay;
 }
@@ -421,7 +421,7 @@ bool ShouldStay()
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   //  Can't directly use powered up weapon.
   if (bPoweredUp)

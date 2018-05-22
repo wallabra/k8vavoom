@@ -35,7 +35,7 @@ float speed;
 //
 //==========================================================================
 
-void Tick(float deltaTime)
+override void Tick(float deltaTime)
 {
   float move;
   float absMove;

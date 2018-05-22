@@ -36,7 +36,7 @@ class SwitchableDecoration : Actor
 //
 //==========================================================================
 
-bool Activate(EntityEx Activator)
+override bool Activate(EntityEx Activator)
 {
   SetState(FindState('Active'));
   return true;
@@ -48,7 +48,7 @@ bool Activate(EntityEx Activator)
 //
 //==========================================================================
 
-bool Deactivate(EntityEx Activator)
+override bool Deactivate(EntityEx Activator)
 {
   SetState(FindState('Inactive'));
   return true;

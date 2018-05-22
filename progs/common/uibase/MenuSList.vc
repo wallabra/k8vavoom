@@ -59,7 +59,7 @@ void DrawTextBox(string text)
   DrawText(160, 100, text);
 }
 
-void OnDraw()
+override void OnDraw()
 {
   int i;
   int x;
@@ -113,7 +113,7 @@ void OnDraw()
   }
 }
 
-bool OnKeyDown(int key)
+override bool OnKeyDown(int key)
 {
   slist = GetSlist();
 

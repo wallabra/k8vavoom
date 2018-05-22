@@ -31,7 +31,7 @@ class StackPoint : SkyViewpoint;
 //
 //==========================================================================
 
-void InitSkyBox()
+override void InitSkyBox()
 {
   bAlways = true;
 }

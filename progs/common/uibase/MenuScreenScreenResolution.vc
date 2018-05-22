@@ -47,7 +47,7 @@ MenuChoiceEnum    VSync;
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   MenuTextButton    Btn;
 

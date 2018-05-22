@@ -37,7 +37,7 @@ const float HEAL_RADIUS_DIST  = 255.0;
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   PlayerPawn P;
   float dist;

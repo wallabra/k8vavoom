@@ -35,13 +35,13 @@ int   TranslStart;
 int   TranslEnd;
 int   Colour;
 
-void OnCreate()
+override void OnCreate()
 {
   ::OnCreate();
   Disable();
 }
 
-void OnDraw()
+override void OnDraw()
 {
   R_DrawModelFrame(Origin, Angle, Model, Frame, NextFrame, Skin,
     TranslStart, TranslEnd, Colour);

@@ -34,7 +34,7 @@ class ArtiTimeBomb : Inventory
 //
 //==========================================================================
 
-bool Use(bool Pickup)
+override bool Use(bool Pickup)
 {
   float angle = Owner.Angles.yaw;
   Actor A = Spawn(ActivatedTimeBomb,

@@ -31,7 +31,7 @@ class PowerSpeed : Powerup;
 //
 //==========================================================================
 
-float GetSpeedFactor()
+override float GetSpeedFactor()
 {
   if (Inventory)
   {

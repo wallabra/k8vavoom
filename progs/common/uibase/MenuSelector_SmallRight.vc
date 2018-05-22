@@ -25,13 +25,13 @@
 
 class MenuSelector_SmallRight : Widget;
 
-void OnCreate()
+override void OnCreate()
 {
   ::OnCreate();
   Disable();
 }
 
-void OnDraw()
+override void OnDraw()
 {
   SetTextAlign(hleft, vtop);
   DrawText(2, 0, ">");

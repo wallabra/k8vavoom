@@ -220,7 +220,7 @@ void CreateControlKeyChoices()
 //
 //==========================================================================
 
-void CreateChoices()
+override void CreateChoices()
 {
   CreateControlKeyChoices();
 }
@@ -231,7 +231,7 @@ void CreateChoices()
 //
 //==========================================================================
 
-void CursorMoved()
+override void CursorMoved()
 {
   ::CursorMoved();
   if (Selector && ClGame)

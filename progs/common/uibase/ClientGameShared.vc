@@ -266,7 +266,7 @@ final void MessageBoxStartMessage(string text, int type, bool input)
 //
 //==========================================================================
 
-final void MessageBoxDrawer()
+final override void MessageBoxDrawer()
 {
   // Horiz. & Vertically centre string and print it.
   if (messageToPrint)
@@ -290,7 +290,7 @@ final void MessageBoxDrawer()
 //
 //==========================================================================
 
-final bool MessageBoxResponder(event_t * event)
+final override bool MessageBoxResponder(event_t * event)
 {
   if (WaitForQuit)
   {
@@ -344,7 +344,7 @@ final bool MessageBoxResponder(event_t * event)
 //
 //==========================================================================
 
-final bool MessageBoxActive()
+final override bool MessageBoxActive()
 {
   return messageToPrint;
 }
@@ -418,7 +418,7 @@ final void EndGameResponse(int ch)
 //
 //==========================================================================
 
-void AddNotifyMessage(string Str)
+override void AddNotifyMessage(string Str)
 {
   GSBar.AddNotifyMessage(Str);
 }
@@ -429,7 +429,7 @@ void AddNotifyMessage(string Str)
 //
 //==========================================================================
 
-void AddCentreMessage(string Msg)
+override void AddCentreMessage(string Msg)
 {
   GSBar.AddCentreMessage(Msg);
 }
@@ -440,7 +440,7 @@ void AddCentreMessage(string Msg)
 //
 //==========================================================================
 
-void AddHudMessage(string Message, name Font, int Type, int Id, int Colour,
+override void AddHudMessage(string Message, name Font, int Type, int Id, int Colour,
   string ColourName, float x, float y, int HudWidth, int HudHeight,
   float HoldTime, float Time1, float Time2)
 {

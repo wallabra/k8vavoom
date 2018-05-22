@@ -32,7 +32,7 @@ class InvisibleBridge : Actor
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
   if (Args[0])

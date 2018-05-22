@@ -93,7 +93,7 @@ class SoundSequence : Actor
 //
 //==========================================================================
 
-void Destroyed()
+override void Destroyed()
 {
   StopSoundSequence();
   ::Destroyed();
@@ -105,7 +105,7 @@ void Destroyed()
 //
 //==========================================================================
 
-void BeginPlay()
+override void BeginPlay()
 {
   ::BeginPlay();
 
@@ -141,7 +141,7 @@ void BeginPlay()
 //
 //==========================================================================
 
-bool Activate(EntityEx Activator)
+override bool Activate(EntityEx Activator)
 {
   StartSoundSequence(GetSeqTrans(Args[0], SEQ_Environment), Args[1]);
   return true;
@@ -153,7 +153,7 @@ bool Activate(EntityEx Activator)
 //
 //==========================================================================
 
-bool Deactivate(EntityEx Activator)
+override bool Deactivate(EntityEx Activator)
 {
   StopSoundSequence();
   return true;

@@ -34,7 +34,7 @@ int       NewTorchDelta;
 //
 //==========================================================================
 
-void DoEffect()
+override void DoEffect()
 {
   if (!Owner || !Owner.bIsPlayer)
   {

@@ -36,7 +36,7 @@ class Spark : Actor
 //
 //==========================================================================
 
-int AngleIncrements()
+override int AngleIncrements()
 {
   return 1;
 }
@@ -47,7 +47,7 @@ int AngleIncrements()
 //
 //==========================================================================
 
-bool Activate(EntityEx Activator)
+override bool Activate(EntityEx Activator)
 {
   int     i;
 

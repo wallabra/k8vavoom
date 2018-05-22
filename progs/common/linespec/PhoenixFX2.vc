@@ -31,7 +31,7 @@ class PhoenixFX2 : Actor;
 //
 //==========================================================================
 
-int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
+override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
   // Flame thrower
   if (victim.Player && P_Random() < 128)

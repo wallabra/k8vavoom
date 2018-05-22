@@ -30,7 +30,7 @@ name        PageNames[4];
 int         NumPages;
 int         CurPage;
 
-void CreateChoices()
+override void CreateChoices()
 {
   if (!WadLumpPresent('e2m1'))
   {
@@ -41,7 +41,7 @@ void CreateChoices()
   Page.SetPic(PageNames[CurPage]);
 }
 
-bool OnKeyDown(int key)
+override bool OnKeyDown(int key)
 {
   CurPage++;
   LocalSound('menu/clear');

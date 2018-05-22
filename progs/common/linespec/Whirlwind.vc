@@ -33,7 +33,7 @@ class Whirlwind : Actor
 //
 //==========================================================================
 
-int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
+override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
   TouchWhirlwind(Actor(victim));
   return -1;
