@@ -378,6 +378,7 @@ int main (int argc, char **argv) {
     }
 
     CurrentPackage->LoadSourceObject(strm, SourceFileName, TLocation());
+    dprintf("Total memory used: %u\n", VExpression::TotalMemoryUsed);
     DumpAsm();
     endtime = time(0);
     dprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);

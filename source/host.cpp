@@ -136,9 +136,9 @@ void Host_Init()
   OpenDebugFile("basev/debug.txt");
 #endif
 
-   // Seed the random-number generator with the current time so that
-   // the numbers will be different every time we run.
-   srand((unsigned)time(NULL));
+  // Seed the random-number generator with the current time so that
+  // the numbers will be different every time we run.
+  srand((unsigned)time(NULL));
 
   // init subsystems
 

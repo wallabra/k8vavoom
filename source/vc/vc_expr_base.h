@@ -33,6 +33,7 @@ public:
   VFieldType RealType;
   int Flags;
   TLocation Loc;
+  static vuint32 TotalMemoryUsed;
 
 protected:
   VExpression () {} // used in SyntaxCopy
@@ -69,6 +70,11 @@ public:
   virtual bool IsLocalVarExpr () const;
   virtual bool IsAssignExpr () const;
   virtual bool IsBinaryMath () const;
+
+  void *operator new (size_t size);
+  void *operator new[] (size_t size);
+  void operator delete (void *p);
+  void operator delete[] (void *p);
 
 protected:
   // `e` should be of correct type

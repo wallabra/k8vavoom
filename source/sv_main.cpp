@@ -107,35 +107,25 @@ static double LastMasterUpdate;
 void SV_Init()
 {
   guard(SV_Init);
-  int   i;
 
   svs.max_clients = 1;
 
   VMemberBase::StaticLoadPackage(NAME_game, TLocation());
 
-  GGameInfo = (VGameInfo*)VObject::StaticSpawnObject(
-    VClass::FindClass("MainGameInfo"));
+  GGameInfo = (VGameInfo*)VObject::StaticSpawnObject(VClass::FindClass("MainGameInfo"));
   GGameInfo->eventInit();
 
   ProcessDecorateScripts();
-
   ProcessDecalDefs();
-
   ProcessDehackedFiles();
+  CompilerReportMemory();
 
-  for (i = 0; i < VClass::GSpriteNames.Num(); i++)
-  {
-    R_InstallSprite(*VClass::GSpriteNames[i], i);
-  }
+  for (int i = 0; i < VClass::GSpriteNames.Num(); ++i) R_InstallSprite(*VClass::GSpriteNames[i], i);
 
   ServerNetContext = new VServerNetContext();
 
-  VClass* PlayerClass = VClass::FindClass("Player");
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    GPlayersBase[i] = (VBasePlayer*)VObject::StaticSpawnObject(
-      PlayerClass);
-  }
+  VClass *PlayerClass = VClass::FindClass("Player");
+  for (int i = 0; i < MAXPLAYERS; ++i) GPlayersBase[i] = (VBasePlayer*)VObject::StaticSpawnObject(PlayerClass);
 
   GGameInfo->validcount = &validcount;
   GGameInfo->skyflatnum = skyflatnum;

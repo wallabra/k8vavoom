@@ -277,3 +277,37 @@ bool VExpression::IsLocalVarDecl () const { return false; }
 bool VExpression::IsLocalVarExpr () const { return false; }
 bool VExpression::IsAssignExpr () const { return false; }
 bool VExpression::IsBinaryMath () const { return false; }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// memory allocation
+vuint32 VExpression::TotalMemoryUsed = 0;
+
+void *VExpression::operator new (size_t size) {
+  if (size == 0) size = 1;
+  void *res = malloc(size);
+  if (!res) { fprintf(stderr, "\nFATAL: OUT OF MEMORY!\n"); *(int *)0 = 0; }
+  memset(res, 0, size);
+  TotalMemoryUsed += (vuint32)size;
+  return res;
+}
+
+
+void *VExpression::operator new[] (size_t size) {
+  if (size == 0) size = 1;
+  void *res = malloc(size);
+  if (!res) { fprintf(stderr, "\nFATAL: OUT OF MEMORY!\n"); *(int *)0 = 0; }
+  memset(res, 0, size);
+  TotalMemoryUsed += (vuint32)size;
+  return res;
+}
+
+
+void VExpression::operator delete (void *p) {
+  if (p) free(p);
+}
+
+
+void VExpression::operator delete[] (void *p) {
+  if (p) free(p);
+}

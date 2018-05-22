@@ -43,5 +43,6 @@ struct VLineSpecInfo {
 void ReadLineSpecialInfos ();
 void ProcessDecorateScripts ();
 void ShutdownDecorate ();
+void CompilerReportMemory ();
 
 extern TArray<VLineSpecInfo> LineSpecialInfos;

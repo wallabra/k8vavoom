@@ -3223,3 +3223,13 @@ void VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
   GCon->Logf("Unknown flag %s", *Flag);
   unguard;
 }
+
+
+//==========================================================================
+//
+//  CompilerReportMemory
+//
+//==========================================================================
+void CompilerReportMemory () {
+  GCon->Logf("Compiler allocated %u bytes.", VExpression::TotalMemoryUsed);
+}
