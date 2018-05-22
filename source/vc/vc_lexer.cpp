@@ -97,6 +97,7 @@ const char *VLexer::TokenNames[] = {
   "...",
   "<<=",
   ">>=",
+  "..",
   "+=",
   "-=",
   "*=",
@@ -1182,10 +1183,10 @@ void VLexer::ProcessSpecialToken () {
       else Token = TK_XOr;
       break;
     case '.':
-      if (currCh == '.' && src->FilePtr[0] == '.') {
-        Token = TK_VarArgs;
+      if (currCh == '.') {
         NextChr();
-        NextChr();
+        if (currCh == '.') { Token = TK_VarArgs; NextChr(); }
+        else Token = TK_DotDot;
       } else {
         Token = TK_Dot;
       }

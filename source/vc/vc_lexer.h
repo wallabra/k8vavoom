@@ -102,6 +102,7 @@ enum EToken {
   TK_VarArgs,
   TK_LShiftAssign,
   TK_RShiftAssign,
+  TK_DotDot,
   TK_AddAssign,
   TK_MinusAssign,
   TK_MultiplyAssign,
