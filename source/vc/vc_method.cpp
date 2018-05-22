@@ -23,131 +23,92 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+FBuiltinInfo *FBuiltinInfo::Builtins;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-FBuiltinInfo*   FBuiltinInfo::Builtins;
-
-// CODE --------------------------------------------------------------------
-
-//==========================================================================
-//
-//  VMethodParam::VMethodParam
-//
-//==========================================================================
-
-VMethodParam::VMethodParam()
-: TypeExpr(NULL)
-, Name(NAME_None)
-{
-}
-
-//==========================================================================
-//
-//  VMethodParam::~VMethodParam
-//
-//==========================================================================
-
-VMethodParam::~VMethodParam() noexcept(false)
-{
-  guard(VMethodParam::~VMethodParam);
-  if (TypeExpr)
-  {
-    delete TypeExpr;
-    TypeExpr = NULL;
-  }
-  unguard;
-}
-
-//==========================================================================
-//
-//  VMethod::VMethod
-//
-//==========================================================================
-
-VMethod::VMethod(VName AName, VMemberBase* AOuter, TLocation ALoc)
-: VMemberBase(MEMBER_Method, AName, AOuter, ALoc)
-, NumLocals(0)
-, Flags(0)
-, ReturnType(TYPE_Void)
-, NumParams(0)
-, ParamsSize(0)
-, SuperMethod(NULL)
-, ReplCond(NULL)
-, ReturnTypeExpr(NULL)
-, Statement(NULL)
-, SelfTypeName(NAME_None)
-, Profile1(0)
-, Profile2(0)
-, NativeFunc(0)
-, VTableIndex(0)
-, NetIndex(0)
-, NextNetMethod(0)
-{
-  memset(ParamFlags, 0, sizeof(ParamFlags));
-}
-
-//==========================================================================
-//
-//  VMethod::~VMethod
-//
-//==========================================================================
-
-VMethod::~VMethod() noexcept(false)
-{
-  guard(VMethod::~VMethod);
-  if (ReturnTypeExpr)
-  {
-    delete ReturnTypeExpr;
-    ReturnTypeExpr = NULL;
-  }
-  if (Statement)
-  {
-    delete Statement;
-    Statement = NULL;
-  }
-  unguard;
-}
 
 //==========================================================================
 //
 //  PF_Fixme
 //
 //==========================================================================
-
 #if !defined(IN_VCC)
-static void PF_Fixme()
-{
+static void PF_Fixme () {
   VObject::VMDumpCallStack();
   Sys_Error("unimplemented bulitin");
 }
 #endif
+
+
+//==========================================================================
+//
+//  VMethodParam::VMethodParam
+//
+//==========================================================================
+VMethodParam::VMethodParam () : TypeExpr(nullptr), Name(NAME_None) {
+}
+
+
+//==========================================================================
+//
+//  VMethodParam::~VMethodParam
+//
+//==========================================================================
+VMethodParam::~VMethodParam () {
+  if (TypeExpr) { delete TypeExpr; TypeExpr = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VMethod::VMethod
+//
+//==========================================================================
+VMethod::VMethod (VName AName, VMemberBase *AOuter, TLocation ALoc)
+  : VMemberBase(MEMBER_Method, AName, AOuter, ALoc)
+  , NumLocals(0)
+  , Flags(0)
+  , ReturnType(TYPE_Void)
+  , NumParams(0)
+  , ParamsSize(0)
+  , SuperMethod(nullptr)
+  , ReplCond(nullptr)
+  , ReturnTypeExpr(nullptr)
+  , Statement(nullptr)
+  , SelfTypeName(NAME_None)
+  , Profile1(0)
+  , Profile2(0)
+  , NativeFunc(0)
+  , VTableIndex(0)
+  , NetIndex(0)
+  , NextNetMethod(0)
+{
+  memset(ParamFlags, 0, sizeof(ParamFlags));
+}
+
+
+//==========================================================================
+//
+//  VMethod::~VMethod
+//
+//==========================================================================
+VMethod::~VMethod() noexcept(false) {
+  guard(VMethod::~VMethod);
+  if (ReturnTypeExpr) { delete ReturnTypeExpr; ReturnTypeExpr = nullptr; }
+  if (Statement) { delete Statement; Statement = nullptr; }
+  unguard;
+}
+
 
 //==========================================================================
 //
 //  VMethod::Serialise
 //
 //==========================================================================
-
-void VMethod::Serialise(VStream& Strm)
-{
+void VMethod::Serialise (VStream &Strm) {
   guard(VMethod::Serialise);
   VMemberBase::Serialise(Strm);
 
@@ -157,177 +118,130 @@ void VMethod::Serialise(VStream& Strm)
     << ReturnType
     << STRM_INDEX(NumParams)
     << STRM_INDEX(ParamsSize);
-  for (int i = 0; i < NumParams; i++)
-  {
-    Strm << ParamTypes[i]
-      << ParamFlags[i];
-  }
-  Strm << ReplCond
-    << Instructions;
+  for (int i = 0; i < NumParams; ++i) Strm << ParamTypes[i] << ParamFlags[i];
+  Strm << ReplCond << Instructions;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VMethod::Define
 //
 //==========================================================================
-
-bool VMethod::Define()
-{
+bool VMethod::Define () {
   guard(VMethod::Define);
   bool Ret = true;
 
-  if (Flags & FUNC_Static)
-  {
-    if (!(Flags & FUNC_Final))
-    {
+  if (Flags&FUNC_Static) {
+    if ((Flags&FUNC_Final) == 0) {
       ParseError(Loc, "Currently static methods must be final.");
       Ret = false;
     }
   }
 
-  if ((Flags & FUNC_VarArgs) && !(Flags & FUNC_Native))
-  {
+  if ((Flags&FUNC_VarArgs) != 0 && (Flags&FUNC_Native) == 0) {
     ParseError(Loc, "Only native methods can have varargs");
     Ret = false;
   }
 
-  if ((Flags & FUNC_Iterator) && !(Flags & FUNC_Native))
-  {
+  if ((Flags&FUNC_Iterator) != 0 && (Flags&FUNC_Native) == 0) {
     ParseError(Loc, "Iterators can only be native");
     Ret = false;
   }
 
   VEmitContext ec(this);
 
-  if (ReturnTypeExpr)
-  {
-    ReturnTypeExpr = ReturnTypeExpr->ResolveAsType(ec);
-  }
-  if (ReturnTypeExpr)
-  {
+  if (ReturnTypeExpr) ReturnTypeExpr = ReturnTypeExpr->ResolveAsType(ec);
+  if (ReturnTypeExpr) {
     VFieldType t = ReturnTypeExpr->Type;
-    if (t.Type != TYPE_Void)
-    {
-      //  Function's return type must be void, vector or with size 4
+    if (t.Type != TYPE_Void) {
+      // function's return type must be void, vector or with size 4
       t.CheckPassable(ReturnTypeExpr->Loc);
     }
     ReturnType = t;
-  }
-  else
-  {
+  } else {
     Ret = false;
   }
 
-  //  Resolve parameters types.
-  ParamsSize = Flags & FUNC_Static ? 0 : 1;
-  for (int i = 0; i < NumParams; i++)
-  {
-    VMethodParam& P = Params[i];
+  // resolve parameters types
+  ParamsSize = (Flags&FUNC_Static ? 0 : 1); // first is `self`
+  for (int i = 0; i < NumParams; ++i) {
+    VMethodParam &P = Params[i];
 
-    if (P.TypeExpr)
-    {
-      P.TypeExpr = P.TypeExpr->ResolveAsType(ec);
-    }
-    if (!P.TypeExpr)
-    {
-      Ret = false;
-      continue;
-    }
+    if (P.TypeExpr) P.TypeExpr = P.TypeExpr->ResolveAsType(ec);
+    if (!P.TypeExpr) { Ret = false; continue; }
     VFieldType type = P.TypeExpr->Type;
 
-    if (type.Type == TYPE_Void)
-    {
+    if (type.Type == TYPE_Void) {
       ParseError(P.TypeExpr->Loc, "Bad variable type");
       Ret = false;
       continue;
     }
 
     ParamTypes[i] = type;
-    if ((ParamFlags[i] & FPARM_Optional) && (ParamFlags[i] & FPARM_Out))
-    {
-      ParseError(P.Loc, "Modifiers optional and out are mutually exclusive");
-    }
-    if (ParamFlags[i] & FPARM_Out)
-    {
-      ParamsSize++;
-    }
-    else
-    {
+    if ((ParamFlags[i]&FPARM_Optional) != 0 && (ParamFlags[i]&FPARM_Out) != 0) ParseError(P.Loc, "Modifiers optional and out are mutually exclusive");
+
+    if (ParamFlags[i]&FPARM_Out) {
+      ++ParamsSize;
+    } else {
       type.CheckPassable(P.TypeExpr->Loc);
-      ParamsSize += type.GetStackSize() / 4;
+      ParamsSize += type.GetStackSize()/4;
     }
-    if (ParamFlags[i] & FPARM_Optional)
-    {
-      ParamsSize++;
-    }
+    if (ParamFlags[i]&FPARM_Optional) ++ParamsSize;
   }
 
-  //  If this is a overriden method, verify that return type and argument
-  // types match.
-  SuperMethod = NULL;
-  if (Outer->MemberType == MEMBER_Class && Name != NAME_None &&
-    ((VClass*)Outer)->ParentClass)
-  {
+  // if this is a overriden method, verify that return type and argument types match
+  SuperMethod = nullptr;
+  if (Outer->MemberType == MEMBER_Class && Name != NAME_None && ((VClass *)Outer)->ParentClass) {
     SuperMethod = ((VClass*)Outer)->ParentClass->FindMethod(Name);
   }
-  if (SuperMethod)
-  {
-    if (SuperMethod->Flags & FUNC_Final)
-    {
-      ParseError(Loc, "Method already has been declared as final and cannot be overriden.");
+  if (SuperMethod) {
+    if ((Flags&FUNC_Override) == 0) {
+      ParseError(Loc, "Overriding virtual method without `override` keyword");
       Ret = false;
     }
-    if (!SuperMethod->ReturnType.Equals(ReturnType))
-    {
+    if (SuperMethod->Flags&FUNC_Final) {
+      ParseError(Loc, "Method already has been declared as final and cannot be overriden");
+      Ret = false;
+    }
+    if (!SuperMethod->ReturnType.Equals(ReturnType)) {
       ParseError(Loc, "Method redefined with different return type");
       Ret = false;
-    }
-    else if (SuperMethod->NumParams != NumParams)
-    {
+    } else if (SuperMethod->NumParams != NumParams) {
       ParseError(Loc, "Method redefined with different number of arguments");
       Ret = false;
-    }
-    else
-    {
-      for (int i = 0; i < NumParams; i++)
-      {
-        if (!SuperMethod->ParamTypes[i].Equals(ParamTypes[i]))
-        {
-          ParseError(Loc, "Type of argument %d differs from base class", i + 1);
+    } else {
+      for (int i = 0; i < NumParams; ++i) {
+        if (!SuperMethod->ParamTypes[i].Equals(ParamTypes[i])) {
+          ParseError(Loc, "Type of argument %d differs from base class", i+1);
           Ret = false;
         }
-        if ((SuperMethod->ParamFlags[i] ^ ParamFlags[i]) &
-          (FPARM_Optional | FPARM_Out))
-        {
-          ParseError(Loc, "Modifiers of argument %d differs from base class", i + 1);
+        if ((SuperMethod->ParamFlags[i]^ParamFlags[i])&(FPARM_Optional|FPARM_Out)) {
+          ParseError(Loc, "Modifiers of argument %d differs from base class", i+1);
           Ret = false;
         }
       }
     }
 
-    //  Inherit network flags
-    Flags |= SuperMethod->Flags & FUNC_NetFlags;
+    // inherit network flags
+    Flags |= SuperMethod->Flags&FUNC_NetFlags;
+  } else {
+    if ((Flags&FUNC_Override) != 0) {
+      ParseError(Loc, "Trying to override non-existing method");
+      Ret = false;
+    }
   }
 
-  if (Flags & FUNC_Spawner)
-  {
-    //  Verify that it's a valid spawner method
-    if (NumParams < 1)
-    {
+  if (Flags&FUNC_Spawner) {
+    // verify that it's a valid spawner method
+    if (NumParams < 1) {
       ParseError(Loc, "Spawner method must have at least 1 argument");
-    }
-    else if (ParamTypes[0].Type != TYPE_Class)
-    {
+    } else if (ParamTypes[0].Type != TYPE_Class) {
       ParseError(Loc, "Spawner method must have class as it's first argument");
-    }
-    else if (ReturnType.Type != TYPE_Reference)
-    {
+    } else if (ReturnType.Type != TYPE_Reference) {
       ParseError(Loc, "Spawner method must return an object reference");
-    }
-    else if (ReturnType.Class != ParamTypes[0].Class)
-    {
+    } else if (ReturnType.Class != ParamTypes[0].Class) {
       ParseError(Loc, "Spawner method must return an object of the same type as class");
     }
   }
@@ -336,35 +250,22 @@ bool VMethod::Define()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VMethod::Emit
 //
 //==========================================================================
-
-void VMethod::Emit()
-{
+void VMethod::Emit () {
   guard(VMethod::Emit);
-  if (Flags & FUNC_Native)
-  {
-    if (Statement)
-    {
-      ParseError(Loc, "Native methods can't have a body");
-    }
+  if (Flags&FUNC_Native) {
+    if (Statement) ParseError(Loc, "Native methods can't have a body");
     return;
   }
 
-  if (Outer->MemberType == MEMBER_Field)
-  {
-    //  Delegate
-    return;
-  }
+  if (Outer->MemberType == MEMBER_Field) return; // delegate
 
-  if (!Statement)
-  {
-    ParseError(Loc, "Method body missing");
-    return;
-  }
+  if (!Statement) { ParseError(Loc, "Method body missing"); return; }
 
   if (ReturnTypeExpr && ReturnTypeExpr->Type.Type != TYPE_Void) {
     if (!Statement->IsEndsWithReturn()) {
@@ -376,22 +277,15 @@ void VMethod::Emit()
   VEmitContext ec(this);
 
   ec.LocalDefs.Clear();
-  ec.localsofs = Flags & FUNC_Static ? 0 : 1;
-  if (Outer->MemberType == MEMBER_Class &&
-    this == ((VClass*)Outer)->DefaultProperties)
-  {
+  ec.localsofs = (Flags&FUNC_Static ? 0 : 1); // first is `self`
+  if (Outer->MemberType == MEMBER_Class && this == ((VClass*)Outer)->DefaultProperties) {
     ec.InDefaultProperties = true;
   }
 
-  for (int i = 0; i < NumParams; i++)
-  {
-    VMethodParam& P = Params[i];
-    if (P.Name != NAME_None)
-    {
-      if (ec.CheckForLocalVar(P.Name) != -1)
-      {
-        ParseError(P.Loc, "Redefined identifier %s", *P.Name);
-      }
+  for (int i = 0; i < NumParams; ++i) {
+    VMethodParam &P = Params[i];
+    if (P.Name != NAME_None) {
+      if (ec.CheckForLocalVar(P.Name) != -1) ParseError(P.Loc, "Redefined identifier %s", *P.Name);
       VLocalVarDef& L = ec.LocalDefs.Alloc();
       L.Name = P.Name;
       L.Type = ParamTypes[i];
@@ -399,47 +293,35 @@ void VMethod::Emit()
       L.Visible = true;
       L.ParamFlags = ParamFlags[i];
     }
-    if (ParamFlags[i] & FPARM_Out)
-    {
-      ec.localsofs++;
+    if (ParamFlags[i] & FPARM_Out) {
+      ++ec.localsofs;
+    } else {
+      ec.localsofs += ParamTypes[i].GetStackSize()/4;
     }
-    else
-    {
-      ec.localsofs += ParamTypes[i].GetStackSize() / 4;
-    }
-    if (ParamFlags[i] & FPARM_Optional)
-    {
-      if (P.Name != NAME_None)
-      {
-        VLocalVarDef& L = ec.LocalDefs.Alloc();
+    if (ParamFlags[i] & FPARM_Optional) {
+      if (P.Name != NAME_None) {
+        VLocalVarDef &L = ec.LocalDefs.Alloc();
         L.Name = va("specified_%s", *P.Name);
         L.Type = TYPE_Int;
         L.Offset = ec.localsofs;
         L.Visible = true;
         L.ParamFlags = 0;
       }
-      ec.localsofs++;
+      ++ec.localsofs;
     }
   }
 
-  for (int i = 0; i < ec.LocalDefs.Num(); i++)
-  {
-    if (ec.LocalDefs[i].Type.Type == TYPE_Vector &&
-      !(ParamFlags[i] & FPARM_Out))
-    {
+  for (int i = 0; i < ec.LocalDefs.Num(); ++i) {
+    if (ec.LocalDefs[i].Type.Type == TYPE_Vector && (ParamFlags[i]&FPARM_Out) == 0) {
       ec.AddStatement(OPC_VFixParam, ec.LocalDefs[i].Offset);
     }
   }
 
-  if (!Statement->Resolve(ec))
-  {
-    return;
-  }
+  if (!Statement->Resolve(ec)) return;
 
   Statement->Emit(ec);
 
-  if (ReturnType.Type == TYPE_Void)
-  {
+  if (ReturnType.Type == TYPE_Void) {
     ec.EmitClearStrings(0, ec.LocalDefs.Num());
     ec.AddStatement(OPC_Return);
   }
@@ -448,6 +330,7 @@ void VMethod::Emit()
   if (VMemberBase::doAsmDump) DumpAsm();
   unguard;
 }
+
 
 //==========================================================================
 //

@@ -1116,7 +1116,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
   VMethod *Func = new VMethod(MName, InClass, MethodLoc);
   Func->Flags = TModifiers::MethodAttr(TModifiers::Check(Modifiers,
     TModifiers::Native | TModifiers::Static | TModifiers::Final |
-    TModifiers::Spawner, MethodLoc));
+    TModifiers::Spawner | TModifiers::Override, MethodLoc));
   Func->ReturnTypeExpr = RetType;
   if (Iterator) Func->Flags |= FUNC_Iterator;
   InClass->AddMethod(Func);

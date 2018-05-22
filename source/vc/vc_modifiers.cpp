@@ -23,27 +23,8 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
@@ -52,60 +33,26 @@
 //  Parse supported modifiers.
 //
 //==========================================================================
-
-int TModifiers::Parse(VLexer& Lex)
-{
+int TModifiers::Parse (VLexer &Lex) {
   int Modifiers = 0;
-  bool done = false;
-  do
-  {
-    if (Lex.Check(TK_Native))
-    {
-      Modifiers |= Native;
-    }
-    else if (Lex.Check(TK_Static))
-    {
-      Modifiers |= Static;
-    }
-    else if (Lex.Check(TK_Abstract))
-    {
-      Modifiers |= Abstract;
-    }
-    else if (Lex.Check(TK_Private))
-    {
-      Modifiers |= Private;
-    }
-    else if (Lex.Check(TK_ReadOnly))
-    {
-      Modifiers |= ReadOnly;
-    }
-    else if (Lex.Check(TK_Transient))
-    {
-      Modifiers |= Transient;
-    }
-    else if (Lex.Check(TK_Final))
-    {
-      Modifiers |= Final;
-    }
-    else if (Lex.Check(TK_Optional))
-    {
-      Modifiers |= Optional;
-    }
-    else if (Lex.Check(TK_Out))
-    {
-      Modifiers |= Out;
-    }
-    else if (Lex.Check(TK_Spawner))
-    {
-      Modifiers |= Spawner;
-    }
-    else
-    {
-      done = true;
-    }
-  } while (!done);
+  for (;;) {
+         if (Lex.Check(TK_Native)) Modifiers |= Native;
+    else if (Lex.Check(TK_Static)) Modifiers |= Static;
+    else if (Lex.Check(TK_Abstract)) Modifiers |= Abstract;
+    else if (Lex.Check(TK_Private)) Modifiers |= Private;
+    else if (Lex.Check(TK_ReadOnly)) Modifiers |= ReadOnly;
+    else if (Lex.Check(TK_Transient)) Modifiers |= Transient;
+    else if (Lex.Check(TK_Final)) Modifiers |= Final;
+    else if (Lex.Check(TK_Optional)) Modifiers |= Optional;
+    else if (Lex.Check(TK_Out)) Modifiers |= Out;
+    else if (Lex.Check(TK_Spawner)) Modifiers |= Spawner;
+    else if (Lex.Check(TK_Override)) Modifiers |= Override;
+    else if (Lex.Check(TK_Ref)) Modifiers |= Ref;
+    else break;
+  }
   return Modifiers;
 }
+
 
 //==========================================================================
 //
@@ -114,24 +61,24 @@ int TModifiers::Parse(VLexer& Lex)
 //  Return string representation of a modifier.
 //
 //==========================================================================
-
-const char* TModifiers::Name(int Modifier)
-{
-  switch (Modifier)
-  {
-  case Native:  return "native";
-  case Static:  return "static";
-  case Abstract:  return "abstract";
-  case Private: return "private";
-  case ReadOnly:  return "readonly";
-  case Transient: return "transient";
-  case Final:   return "final";
-  case Optional:  return "optional";
-  case Out:   return "out";
-  case Spawner: return "spawner";
+const char *TModifiers::Name (int Modifier) {
+  switch (Modifier) {
+    case Native: return "native";
+    case Static: return "static";
+    case Abstract: return "abstract";
+    case Private: return "private";
+    case ReadOnly: return "readonly";
+    case Transient: return "transient";
+    case Final: return "final";
+    case Optional: return "optional";
+    case Out: return "out";
+    case Spawner: return "spawner";
+    case Override: return "override";
+    case Ref: return "ref";
   }
   return "";
 }
+
 
 //==========================================================================
 //
@@ -140,19 +87,15 @@ const char* TModifiers::Name(int Modifier)
 //  Verify that modifiers are valid in current context.
 //
 //==========================================================================
-
-int TModifiers::Check(int Modifers, int Allowed, TLocation l)
-{
-  int Bad = Modifers & ~Allowed;
-  if (Bad)
-  {
-    for (int i = 0; i < 32; i++)
-      if (Bad & (1 << i))
-        ParseError(l, "%s modifier is not allowed", Name(1 << i));
-    return Modifers & Allowed;
+int TModifiers::Check (int Modifers, int Allowed, const TLocation &l) {
+  int Bad = Modifers&~Allowed;
+  if (Bad) {
+    for (int i = 0; i < 32; ++i) if (Bad&(1<<i)) ParseError(l, "%s modifier is not allowed", Name(1<<i));
+    return (Modifers&Allowed);
   }
   return Modifers;
 }
+
 
 //==========================================================================
 //
@@ -161,20 +104,16 @@ int TModifiers::Check(int Modifers, int Allowed, TLocation l)
 //  Convert modifiers to method attributes.
 //
 //==========================================================================
-
-int TModifiers::MethodAttr(int Modifiers)
-{
+int TModifiers::MethodAttr (int Modifiers) {
   int Attributes = 0;
-  if (Modifiers & Native)
-    Attributes |= FUNC_Native;
-  if (Modifiers & Static)
-    Attributes |= FUNC_Static;
-  if (Modifiers & Final)
-    Attributes |= FUNC_Final;
-  if (Modifiers & Spawner)
-    Attributes |= FUNC_Spawner;
+  if (Modifiers&Native) Attributes |= FUNC_Native;
+  if (Modifiers&Static) Attributes |= FUNC_Static;
+  if (Modifiers&Final) Attributes |= FUNC_Final;
+  if (Modifiers&Spawner) Attributes |= FUNC_Spawner;
+  if (Modifiers&Override) Attributes |= FUNC_Override;
   return Attributes;
 }
+
 
 //==========================================================================
 //
@@ -183,16 +122,13 @@ int TModifiers::MethodAttr(int Modifiers)
 //  Convert modifiers to class attributes.
 //
 //==========================================================================
-
-int TModifiers::ClassAttr(int Modifiers)
-{
+int TModifiers::ClassAttr (int Modifiers) {
   int Attributes = 0;
-  if (Modifiers & Native)
-    Attributes |= CLASS_Native;
-  if (Modifiers & Abstract)
-    Attributes |= CLASS_Abstract;
+  if (Modifiers&Native) Attributes |= CLASS_Native;
+  if (Modifiers&Abstract) Attributes |= CLASS_Abstract;
   return Attributes;
 }
+
 
 //==========================================================================
 //
@@ -201,20 +137,15 @@ int TModifiers::ClassAttr(int Modifiers)
 //  Convert modifiers to field attributes.
 //
 //==========================================================================
-
-int TModifiers::FieldAttr(int Modifiers)
-{
+int TModifiers::FieldAttr (int Modifiers) {
   int Attributes = 0;
-  if (Modifiers & Native)
-    Attributes |= FIELD_Native;
-  if (Modifiers & Transient)
-    Attributes |= FIELD_Transient;
-  if (Modifiers & Private)
-    Attributes |= FIELD_Private;
-  if (Modifiers & ReadOnly)
-    Attributes |= FIELD_ReadOnly;
+  if (Modifiers&Native) Attributes |= FIELD_Native;
+  if (Modifiers&Transient) Attributes |= FIELD_Transient;
+  if (Modifiers&Private) Attributes |= FIELD_Private;
+  if (Modifiers&ReadOnly) Attributes |= FIELD_ReadOnly;
   return Attributes;
 }
+
 
 //==========================================================================
 //
@@ -223,16 +154,13 @@ int TModifiers::FieldAttr(int Modifiers)
 //  Convert modifiers to property attributes.
 //
 //==========================================================================
-
-int TModifiers::PropAttr(int Modifiers)
-{
+int TModifiers::PropAttr (int Modifiers) {
   int Attributes = 0;
-  if (Modifiers & Native)
-    Attributes |= PROP_Native;
-  if (Modifiers & Final)
-    Attributes |= PROP_Final;
+  if (Modifiers&Native) Attributes |= PROP_Native;
+  if (Modifiers&Final) Attributes |= PROP_Final;
   return Attributes;
 }
+
 
 //==========================================================================
 //
@@ -241,13 +169,9 @@ int TModifiers::PropAttr(int Modifiers)
 //  Convert modifiers to method parameter attributes.
 //
 //==========================================================================
-
-int TModifiers::ParmAttr(int Modifiers)
-{
+int TModifiers::ParmAttr (int Modifiers) {
   int Attributes = 0;
-  if (Modifiers & Optional)
-    Attributes |= FPARM_Optional;
-  if (Modifiers & Out)
-    Attributes |= FPARM_Out;
+  if (Modifiers&Optional) Attributes |= FPARM_Optional;
+  if (Modifiers&Out) Attributes |= FPARM_Out;
   return Attributes;
 }

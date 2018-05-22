@@ -23,15 +23,17 @@
 //**
 //**************************************************************************
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VExpression;
 class VStatement;
 class VLexer;
 
-#define ANY_PACKAGE       ((VPackage*)-1)
-#define ANY_MEMBER        255
+#define ANY_PACKAGE  ((VPackage*)-1)
+#define ANY_MEMBER   (255)
 
-enum
-{
+
+enum {
   MEMBER_Package,
   MEMBER_Field,
   MEMBER_Property,
@@ -45,6 +47,7 @@ enum
   MEMBER_DecorateClass,
 };
 
+
 //==========================================================================
 //
 //  VMemberBase
@@ -52,60 +55,52 @@ enum
 //  The base class of all objects.
 //
 //==========================================================================
-
-class VMemberBase
-{
+class VMemberBase {
 public:
-  //  Internal variables.
-  vuint8      MemberType;
-  vint32      MemberIndex;
-  VName     Name;
-  VMemberBase*  Outer;
-  TLocation   Loc;
-  VMemberBase*  HashNext;
+  // internal variables
+  vuint8 MemberType;
+  vint32 MemberIndex;
+  VName Name;
+  VMemberBase *Outer;
+  TLocation Loc;
+  VMemberBase *HashNext;
 
-  static bool           GObjInitialised;
-  static TArray<VMemberBase*>   GMembers;
-  static VMemberBase*       GMembersHash[4096];
+  static bool GObjInitialised;
+  static TArray<VMemberBase *> GMembers;
+  static VMemberBase *GMembersHash[4096];
 
-  static TArray<VStr>       GPackagePath;
-  static TArray<VPackage*>    GLoadedPackages;
-  static TArray<VClass*>      GDecorateClassImports;
+  static TArray<VStr> GPackagePath;
+  static TArray<VPackage *> GLoadedPackages;
+  static TArray<VClass *> GDecorateClassImports;
 
-  static VClass*          GClasses; // Linked list of all classes.
+  static VClass *GClasses; // linked list of all classes
 
-  //  Srtuctors.
-  VMemberBase(vuint8, VName, VMemberBase*, TLocation);
+  // srtuctors
+  VMemberBase (vuint8, VName, VMemberBase *, const TLocation &);
   virtual ~VMemberBase() noexcept(false);
 
-  //  Accessors.
-  const char *GetName() const
-  {
-    return *Name;
-  }
-  const VName GetVName() const
-  {
-    return Name;
-  }
-  VStr GetFullName() const;
-  VPackage* GetPackage() const;
-  bool IsIn(VMemberBase*) const;
+  // accessors
+  inline const char *GetName () const { return *Name; }
+  inline const VName GetVName () const { return Name; }
+  VStr GetFullName () const;
+  VPackage* GetPackage () const;
+  bool IsIn (VMemberBase *) const;
 
-  virtual void Serialise(VStream&);
-  virtual void PostLoad();
-  virtual void Shutdown();
+  virtual void Serialise (VStream &);
+  virtual void PostLoad ();
+  virtual void Shutdown ();
 
-  static void StaticInit();
-  static void StaticExit();
-  static void StaticAddPackagePath(const char*);
-  static VPackage* StaticLoadPackage(VName, TLocation);
-  static VMemberBase* StaticFindMember(VName, VMemberBase*, vuint8);
+  static void StaticInit ();
+  static void StaticExit ();
+  static void StaticAddPackagePath (const char *);
+  static VPackage *StaticLoadPackage (VName, const TLocation &);
+  static VMemberBase *StaticFindMember (VName, VMemberBase *, vuint8);
 
-  //FIXME This looks ugly.
-  static VFieldType StaticFindType(VClass*, VName);
-  static VClass* StaticFindClass(VName);
+  //FIXME: this looks ugly
+  static VFieldType StaticFindType (VClass *, VName);
+  static VClass *StaticFindClass (VName);
 
-  static void StaticSplitStateLabel(const VStr&, TArray<VName>&);
+  static void StaticSplitStateLabel (const VStr &, TArray<VName> &);
 
   static void StaticAddIncludePath (const char *);
   static void StaticAddDefine (const char *);
@@ -119,7 +114,4 @@ private:
   static TArray<VStr> definelist;
 };
 
-inline vuint32 GetTypeHash(VMemberBase* M)
-{
-  return M ? M->MemberIndex : 0;
-}
+inline vuint32 GetTypeHash (const VMemberBase *M) { return (M ? M->MemberIndex : 0); }

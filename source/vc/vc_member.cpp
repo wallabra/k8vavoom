@@ -23,33 +23,19 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+bool VMemberBase::GObjInitialised;
+TArray<VMemberBase *>  VMemberBase::GMembers;
+VMemberBase *VMemberBase::GMembersHash[4096];
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+TArray<VStr> VMemberBase::GPackagePath;
+TArray<VPackage *> VMemberBase::GLoadedPackages;
+TArray<VClass *> VMemberBase::GDecorateClassImports;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-bool          VMemberBase::GObjInitialised;
-TArray<VMemberBase*>  VMemberBase::GMembers;
-VMemberBase*      VMemberBase::GMembersHash[4096];
-
-TArray<VStr>      VMemberBase::GPackagePath;
-TArray<VPackage*>   VMemberBase::GLoadedPackages;
-TArray<VClass*>     VMemberBase::GDecorateClassImports;
-
-VClass*         VMemberBase::GClasses;
+VClass *VMemberBase::GClasses;
 
 TArray<VStr> VMemberBase::incpathlist;
 TArray<VStr> VMemberBase::definelist;
@@ -57,168 +43,147 @@ TArray<VStr> VMemberBase::definelist;
 bool VMemberBase::doAsmDump = false;
 
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
 //==========================================================================
 //
 //  VProgsImport::VProgsImport
 //
 //==========================================================================
-
-VProgsImport::VProgsImport(VMemberBase* InObj, vint32 InOuterIndex)
-: Type(InObj->MemberType)
-, Name(InObj->Name)
-, OuterIndex(InOuterIndex)
-, Obj(InObj)
+VProgsImport::VProgsImport (VMemberBase *InObj, vint32 InOuterIndex)
+  : Type(InObj->MemberType)
+  , Name(InObj->Name)
+  , OuterIndex(InOuterIndex)
+  , Obj(InObj)
 {
 }
+
 
 //==========================================================================
 //
 //  VProgsExport::VProgsExport
 //
 //==========================================================================
-
-VProgsExport::VProgsExport(VMemberBase* InObj)
-: Type(InObj->MemberType)
-, Name(InObj->Name)
-, Obj(InObj)
+VProgsExport::VProgsExport (VMemberBase *InObj)
+  : Type(InObj->MemberType)
+  , Name(InObj->Name)
+  , Obj(InObj)
 {
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::VMemberBase
 //
 //==========================================================================
-
-VMemberBase::VMemberBase(vuint8 AMemberType, VName AName, VMemberBase* AOuter,
-  TLocation ALoc)
-: MemberType(AMemberType)
-, Name(AName)
-, Outer(AOuter)
-, Loc(ALoc)
+VMemberBase::VMemberBase (vuint8 AMemberType, VName AName, VMemberBase *AOuter, const TLocation &ALoc)
+  : MemberType(AMemberType)
+  , Name(AName)
+  , Outer(AOuter)
+  , Loc(ALoc)
 {
-  if (GObjInitialised)
-  {
+  if (GObjInitialised) {
     MemberIndex = GMembers.Append(this);
-    int HashIndex = Name.GetIndex() & 4095;
+    int HashIndex = Name.GetIndex()&4095;
     HashNext = GMembersHash[HashIndex];
     GMembersHash[HashIndex] = this;
   }
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::~VMemberBase
 //
 //==========================================================================
-
-VMemberBase::~VMemberBase() noexcept(false)
-{
+VMemberBase::~VMemberBase() noexcept(false) {
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::GetFullName
 //
 //==========================================================================
-
-VStr VMemberBase::GetFullName() const
-{
+VStr VMemberBase::GetFullName () const {
   guardSlow(VMemberBase::GetFullName);
-  if (Outer)
-    return Outer->GetFullName() + "." + Name;
+  if (Outer) return Outer->GetFullName()+"."+Name;
   return VStr(Name);
   unguardSlow;
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::GetPackage
 //
 //==========================================================================
-
-VPackage* VMemberBase::GetPackage() const
-{
+VPackage *VMemberBase::GetPackage () const {
   guard(VMemberBase::GetPackage);
-  for (const VMemberBase* p = this; p; p = p->Outer)
-    if (p->MemberType == MEMBER_Package)
-      return (VPackage*)p;
+  for (const VMemberBase *p = this; p; p = p->Outer) if (p->MemberType == MEMBER_Package) return (VPackage *)p;
   Sys_Error("Member object %s not in a package", *GetFullName());
-  return NULL;
+  return nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::IsIn
 //
 //==========================================================================
-
-bool VMemberBase::IsIn(VMemberBase* SomeOuter) const
-{
+bool VMemberBase::IsIn (VMemberBase *SomeOuter) const {
   guardSlow(VMemberBase::IsIn);
-  for (VMemberBase* Tst = Outer; Tst; Tst = Tst->Outer)
-    if (Tst == SomeOuter)
-      return true;
+  for (const VMemberBase *Tst = Outer; Tst; Tst = Tst->Outer) if (Tst == SomeOuter) return true;
   return !SomeOuter;
   unguardSlow;
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::Serialise
 //
 //==========================================================================
-
-void VMemberBase::Serialise(VStream& Strm)
-{
+void VMemberBase::Serialise (VStream &Strm) {
   Strm << Outer;
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::PostLoad
 //
 //==========================================================================
-
-void VMemberBase::PostLoad()
-{
+void VMemberBase::PostLoad () {
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::Shutdown
 //
 //==========================================================================
-
-void VMemberBase::Shutdown()
-{
+void VMemberBase::Shutdown () {
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::StaticInit
 //
 //==========================================================================
-
-void VMemberBase::StaticInit()
-{
+void VMemberBase::StaticInit () {
   guard(VMemberBase::StaticInit);
-  //  Add native classes to the list.
-  for (VClass* C = GClasses; C; C = C->LinkNext)
-  {
+  // add native classes to the list.
+  for (VClass *C = GClasses; C; C = C->LinkNext) {
     C->MemberIndex = GMembers.Append(C);
-    int HashIndex = C->Name.GetIndex() & 4095;
+    int HashIndex = C->Name.GetIndex()&4095;
     C->HashNext = GMembersHash[HashIndex];
     GMembersHash[HashIndex] = C;
     C->HashLowerCased();
   }
 
-  //  Sprite TNT1 is always 0, ---- is always 1
+  // sprite TNT1 is always 0, ---- is always 1
   VClass::GSpriteNames.Append("tnt1");
   VClass::GSpriteNames.Append("----");
 
@@ -226,24 +191,18 @@ void VMemberBase::StaticInit()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VMemberBase::StaticExit
 //
 //==========================================================================
-
-void VMemberBase::StaticExit()
-{
-  for (int i = 0; i < GMembers.Num(); i++)
-  {
-    if (GMembers[i]->MemberType != MEMBER_Class ||
-      !(((VClass*)GMembers[i])->ObjectFlags & CLASSOF_Native))
-    {
+void VMemberBase::StaticExit () {
+  for (int i = 0; i < GMembers.Num(); ++i) {
+    if (GMembers[i]->MemberType != MEMBER_Class || (((VClass *)GMembers[i])->ObjectFlags&CLASSOF_Native) == 0) {
       delete GMembers[i];
-      GMembers[i] = NULL;
-    }
-    else
-    {
+      GMembers[i] = nullptr;
+    } else {
       GMembers[i]->Shutdown();
     }
   }
@@ -257,159 +216,118 @@ void VMemberBase::StaticExit()
   GObjInitialised = false;
 }
 
+
 //==========================================================================
 //
 //  VMemberBase::StaticAddPackagePath
 //
 //==========================================================================
-
-void VMemberBase::StaticAddPackagePath(const char* Path)
-{
-  GPackagePath.Append(Path);
+void VMemberBase::StaticAddPackagePath (const char *Path) {
+  if (Path && Path[0]) GPackagePath.Append(Path);
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::StaticLoadPackage
 //
 //==========================================================================
-
-VPackage* VMemberBase::StaticLoadPackage(VName AName, TLocation l)
-{
+VPackage *VMemberBase::StaticLoadPackage (VName AName, const TLocation &l) {
   guard(VMemberBase::StaticLoadPackage);
-  //  Check if already loaded.
-  for (int i = 0; i < GLoadedPackages.Num(); i++)
-  {
-    if (GLoadedPackages[i]->Name == AName)
-    {
-      return GLoadedPackages[i];
-    }
-  }
-
-  VPackage* Pkg = new VPackage(AName);
+  // check if already loaded
+  for (int i = 0; i < GLoadedPackages.Num(); ++i) if (GLoadedPackages[i]->Name == AName) return GLoadedPackages[i];
+  VPackage *Pkg = new VPackage(AName);
   GLoadedPackages.Append(Pkg);
   Pkg->LoadObject(l);
   return Pkg;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VMemberBase::StaticFindMember
 //
 //==========================================================================
-
-VMemberBase* VMemberBase::StaticFindMember(VName AName, VMemberBase* AOuter,
-  vuint8 AType)
-{
+VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType) {
   guard(VMemberBase::StaticFindMember);
-  int HashIndex = AName.GetIndex() & 4095;
-  for (VMemberBase* m = GMembersHash[HashIndex]; m; m = m->HashNext)
-  {
+  int HashIndex = AName.GetIndex()&4095;
+  for (VMemberBase *m = GMembersHash[HashIndex]; m; m = m->HashNext) {
     if (m->Name == AName && (m->Outer == AOuter ||
-      (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
-      (AType == ANY_MEMBER || m->MemberType == AType))
+        (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
+        (AType == ANY_MEMBER || m->MemberType == AType))
     {
       return m;
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::StaticFindType
 //
 //==========================================================================
-
-VFieldType VMemberBase::StaticFindType(VClass* AClass, VName Name)
-{
+VFieldType VMemberBase::StaticFindType (VClass *AClass, VName Name) {
   guard(VMemberBase::StaticFindType);
-  if (Name == NAME_None)
-  {
-    return VFieldType(TYPE_Unknown);
-  }
+  if (Name == NAME_None) return VFieldType(TYPE_Unknown);
 
-  VMemberBase* m = StaticFindMember(Name, ANY_PACKAGE, MEMBER_Class);
-  if (m)
-  {
-    return VFieldType((VClass*)m);
-  }
-  m = StaticFindMember(Name, AClass ? (VMemberBase*)AClass :
-    (VMemberBase*)ANY_PACKAGE, MEMBER_Struct);
-  if (m)
-  {
-    return VFieldType((VStruct*)m);
-  }
-  if (AClass)
-  {
-    return StaticFindType(AClass->ParentClass, Name);
-  }
+  VMemberBase *m = StaticFindMember(Name, ANY_PACKAGE, MEMBER_Class);
+  if (m) return VFieldType((VClass*)m);
+
+  m = StaticFindMember(Name, (AClass ? (VMemberBase *)AClass : (VMemberBase *)ANY_PACKAGE), MEMBER_Struct);
+  if (m) return VFieldType((VStruct*)m);
+
+  if (AClass) return StaticFindType(AClass->ParentClass, Name);
+
   return VFieldType(TYPE_Unknown);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::StaticFindClass
 //
 //==========================================================================
-
-VClass* VMemberBase::StaticFindClass(VName Name)
-{
+VClass *VMemberBase::StaticFindClass (VName Name) {
   guard(VMemberBase::StaticFindClass);
-  VMemberBase* m = StaticFindMember(Name, ANY_PACKAGE, MEMBER_Class);
-  if (m)
-  {
-    return (VClass*)m;
-  }
-  return NULL;
+  VMemberBase *m = StaticFindMember(Name, ANY_PACKAGE, MEMBER_Class);
+  if (m) return (VClass *)m;
+  return nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VMemberBase::StaticSplitStateLabel
 //
 //==========================================================================
-
-void VMemberBase::StaticSplitStateLabel(const VStr& LabelName,
-  TArray<VName>& Parts)
-{
+void VMemberBase::StaticSplitStateLabel (const VStr &LabelName, TArray<VName> &Parts) {
   guard(VMemberBase::StaticSplitStateLabel);
   TArray<VStr> StrParts;
   LabelName.Split(".", StrParts);
   Parts.Clear();
-  //  Remap old death state labels to proper names.
-  if (StrParts[0] == "XDeath")
-  {
+  // remap old death state labels to proper names
+  if (StrParts[0] == "XDeath") {
     Parts.Append("Death");
     Parts.Append("Extreme");
-  }
-  else if (StrParts[0] == "Burn")
-  {
+  } else if (StrParts[0] == "Burn") {
     Parts.Append("Death");
     Parts.Append("Fire");
-  }
-  else if (StrParts[0] == "Ice")
-  {
+  } else if (StrParts[0] == "Ice") {
     Parts.Append("Death");
     Parts.Append("Ice");
-  }
-  else if (StrParts[0] == "Disintegrate")
-  {
+  } else if (StrParts[0] == "Disintegrate") {
     Parts.Append("Death");
     Parts.Append("Disintegrate");
-  }
-  else
-  {
+  } else {
     Parts.Append(*StrParts[0]);
   }
-  for (int i = 1; i < StrParts.Num(); i++)
-  {
-    Parts.Append(*StrParts[i]);
-  }
+  for (int i = 1; i < StrParts.Num(); ++i) Parts.Append(*StrParts[i]);
   unguard;
 }
 
@@ -445,5 +363,5 @@ void VMemberBase::StaticAddDefine (const char *s) {
 //==========================================================================
 void VMemberBase::InitLexer (VLexer &lex) {
   for (int f = 0; f < incpathlist.length(); ++f) lex.AddIncludePath(*incpathlist[f]);
-  for (int f = 0; f < definelist.length(); ++f) lex.AddDefine(*definelist[f]);
+  for (int f = 0; f < definelist.length(); ++f) lex.AddDefine(*definelist[f], false); // no warnings
 }
