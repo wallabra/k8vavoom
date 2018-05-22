@@ -76,6 +76,7 @@ enum EToken {
   TK_Out,
   TK_Private,
   TK_ReadOnly,
+  TK_Ref,
   TK_Reliable,
   TK_Replication,
   TK_Return,
@@ -145,6 +146,7 @@ enum EToken {
   TK_RBracket,
   TK_LBrace,
   TK_RBrace,
+  TK_Dollar,
 };
 
 
@@ -180,15 +182,14 @@ private:
     IF_ElseSkip,  // else case inside curently skipped code
   };
 
-  struct VSourceFile
-  {
+  struct VSourceFile {
     VSourceFile *Next; // nesting stack
     VStr FileName;
     VStr Path;
     char *FileStart;
     char *FilePtr;
     char *FileEnd;
-    char Chr;
+    char currCh;
     TLocation Loc;
     int SourceIdx;
     int Line;
@@ -198,14 +199,19 @@ private:
     bool Skipping;
   };
 
-  char ASCIIToChrCode[256];
-  vuint8 ASCIIToHexDigit[256];
-  char TokenStringBuffer[MAX_QUOTED_LENGTH];
-  bool SourceOpen;
-  char Chr;
-  TArray<VStr> Defines;
-  TArray<VStr> IncludePath;
-  VSourceFile *Src;
+  //k8: initialization is not thread-safe, but i don't care for now
+  static char ASCIIToChrCode[256];
+  static vuint8 ASCIIToHexDigit[256];
+  static bool tablesInited;
+
+  char tokenStringBuffer[MAX_QUOTED_LENGTH];
+  bool sourceOpen;
+  char currCh;
+  TArray<VStr> defines;
+  TArray<VStr> includePath;
+  VSourceFile *src;
+
+  inline bool checkStrTk (const char *tokname) const { return (strcmp(tokenStringBuffer, tokname) == 0); }
 
   void NextChr ();
   char Peek (int dist=0) const;
@@ -216,8 +222,8 @@ private:
   void ProcessElse ();
   void ProcessEndIf ();
   void ProcessInclude ();
-  void PushSource (TLocation& Loc, const VStr& FileName);
-  void PushSource (TLocation& Loc, VStream *Strm, const VStr& FileName); // takes ownership
+  void PushSource (TLocation &Loc, const VStr &FileName);
+  void PushSource (TLocation &Loc, VStream *Strm, const VStr &FileName); // takes ownership
   void PopSource ();
   void ProcessNumberToken ();
   void ProcessChar ();
@@ -241,10 +247,11 @@ public:
 public:
   VLexer ();
   ~VLexer ();
-  void AddDefine (const VStr& CondNam);
-  void AddIncludePath (const VStr& DirName);
-  void OpenSource (const VStr& FileName);
-  void OpenSource (VStream *astream, const VStr& FileName); // takes ownership
+
+  void AddDefine (const VStr &CondNam, bool showWarning=true);
+  void AddIncludePath (const VStr &DirName);
+  void OpenSource (const VStr &FileName);
+  void OpenSource (VStream *astream, const VStr &FileName); // takes ownership
 
   char peekNextNonBlankChar () const;
 

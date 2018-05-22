@@ -23,24 +23,10 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
+// ////////////////////////////////////////////////////////////////////////// //
 const char *VLexer::TokenNames[] = {
   "",
   "END OF FILE",
@@ -86,6 +72,7 @@ const char *VLexer::TokenNames[] = {
   "out",
   "private",
   "readonly",
+  "ref",
   "reliable",
   "replication",
   "return",
@@ -154,11 +141,13 @@ const char *VLexer::TokenNames[] = {
   "]",
   "{",
   "}",
+  "$",
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+char VLexer::ASCIIToChrCode[256];
+vuint8 VLexer::ASCIIToHexDigit[256];
+bool VLexer::tablesInited = false;
 
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
@@ -166,32 +155,35 @@ const char *VLexer::TokenNames[] = {
 //
 //==========================================================================
 VLexer::VLexer ()
-  : SourceOpen(false)
-  , Src(nullptr)
+  : sourceOpen(false)
+  , src(nullptr)
   , Token(TK_NoToken)
   , Number(0)
   , Float(0)
   , Name(NAME_None)
 {
-  memset(TokenStringBuffer, 0, sizeof(TokenStringBuffer));
-  for (int i = 0; i < 256; ++i) {
-    ASCIIToChrCode[i] = CHR_Special;
-    ASCIIToHexDigit[i] = NON_HEX_DIGIT;
+  memset(tokenStringBuffer, 0, sizeof(tokenStringBuffer));
+  if (!tablesInited) {
+    for (int i = 0; i < 256; ++i) {
+      ASCIIToChrCode[i] = CHR_Special;
+      ASCIIToHexDigit[i] = NON_HEX_DIGIT;
+    }
+    for (int i = '0'; i <= '9'; ++i) {
+      ASCIIToChrCode[i] = CHR_Number;
+      ASCIIToHexDigit[i] = i-'0';
+    }
+    for (int i = 'A'; i <= 'F'; ++i) ASCIIToHexDigit[i] = 10+(i-'A');
+    for (int i = 'a'; i <= 'f'; ++i) ASCIIToHexDigit[i] = 10+(i-'a');
+    for (int i = 'A'; i <= 'Z'; ++i) ASCIIToChrCode[i] = CHR_Letter;
+    for (int i = 'a'; i <= 'z'; ++i) ASCIIToChrCode[i] = CHR_Letter;
+    ASCIIToChrCode[(int)'\"'] = CHR_Quote;
+    ASCIIToChrCode[(int)'\''] = CHR_SingleQuote;
+    ASCIIToChrCode[(int)'_'] = CHR_Letter;
+    ASCIIToChrCode[0] = CHR_EOF;
+    ASCIIToChrCode[EOF_CHARACTER] = CHR_EOF;
+    tablesInited = true;
   }
-  for (int i = '0'; i <= '9'; ++i) {
-    ASCIIToChrCode[i] = CHR_Number;
-    ASCIIToHexDigit[i] = i-'0';
-  }
-  for (int i = 'A'; i <= 'F'; ++i) ASCIIToHexDigit[i] = 10+(i-'A');
-  for (int i = 'a'; i <= 'f'; ++i) ASCIIToHexDigit[i] = 10+(i-'a');
-  for (int i = 'A'; i <= 'Z'; ++i) ASCIIToChrCode[i] = CHR_Letter;
-  for (int i = 'a'; i <= 'z'; ++i) ASCIIToChrCode[i] = CHR_Letter;
-  ASCIIToChrCode[(int)'\"'] = CHR_Quote;
-  ASCIIToChrCode[(int)'\''] = CHR_SingleQuote;
-  ASCIIToChrCode[(int)'_'] = CHR_Letter;
-  ASCIIToChrCode[0] = CHR_EOF;
-  ASCIIToChrCode[EOF_CHARACTER] = CHR_EOF;
-  String = TokenStringBuffer;
+  String = tokenStringBuffer;
 }
 
 
@@ -201,8 +193,8 @@ VLexer::VLexer ()
 //
 //==========================================================================
 VLexer::~VLexer () {
-  while (Src) PopSource();
-  SourceOpen = false;
+  while (src) PopSource();
+  sourceOpen = false;
 }
 
 
@@ -211,10 +203,10 @@ VLexer::~VLexer () {
 //  VLexer::OpenSource
 //
 //==========================================================================
-void VLexer::OpenSource (const VStr& FileName) {
+void VLexer::OpenSource (const VStr &FileName) {
   // read file and prepare for compilation
   PushSource(Location, FileName);
-  SourceOpen = true;
+  sourceOpen = true;
   Token = TK_NoToken;
 }
 
@@ -224,10 +216,10 @@ void VLexer::OpenSource (const VStr& FileName) {
 //  VLexer::OpenSource
 //
 //==========================================================================
-void VLexer::OpenSource (VStream *astream, const VStr& FileName) {
+void VLexer::OpenSource (VStream *astream, const VStr &FileName) {
   // read file and prepare for compilation
   PushSource(Location, astream, FileName);
-  SourceOpen = true;
+  sourceOpen = true;
   Token = TK_NoToken;
 }
 
@@ -237,7 +229,7 @@ void VLexer::OpenSource (VStream *astream, const VStr& FileName) {
 //  VLexer::PushSource
 //
 //==========================================================================
-void VLexer::PushSource (TLocation& Loc, const VStr& FileName) {
+void VLexer::PushSource (TLocation &Loc, const VStr &FileName) {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   VStream *Strm = FL_OpenFileRead(FileName);
 #else
@@ -252,15 +244,15 @@ void VLexer::PushSource (TLocation& Loc, const VStr& FileName) {
 //  VLexer::PushSource
 //
 //==========================================================================
-void VLexer::PushSource (TLocation& Loc, VStream *Strm, const VStr& FileName) {
+void VLexer::PushSource (TLocation &Loc, VStream *Strm, const VStr &FileName) {
   if (!Strm) {
     FatalError("Couldn't open %s", *FileName);
     return;
   }
 
   VSourceFile *NewSrc = new VSourceFile();
-  NewSrc->Next = Src;
-  Src = NewSrc;
+  NewSrc->Next = src;
+  src = NewSrc;
 
   // copy file name
   NewSrc->FileName = FileName;
@@ -276,22 +268,16 @@ void VLexer::PushSource (TLocation& Loc, VStream *Strm, const VStr& FileName) {
   Strm->Serialise(NewSrc->FileStart, FileSize);
   Strm->Close();
   delete Strm;
-  //Strm = nullptr;
 
   NewSrc->FileStart[FileSize] = 0;
   NewSrc->FileEnd = NewSrc->FileStart+FileSize;
   NewSrc->FilePtr = NewSrc->FileStart;
 
-  // skip garbage some editors add in the begining of UTF-8 files.
-  if ((vuint8)NewSrc->FilePtr[0] == 0xef &&
-      (vuint8)NewSrc->FilePtr[1] == 0xbb &&
-      (vuint8)NewSrc->FilePtr[2] == 0xbf)
-  {
-    NewSrc->FilePtr += 3;
-  }
+  // skip garbage some editors add in the begining of UTF-8 files (BOM)
+  if ((vuint8)NewSrc->FilePtr[0] == 0xef && (vuint8)NewSrc->FilePtr[1] == 0xbb && (vuint8)NewSrc->FilePtr[2] == 0xbf) NewSrc->FilePtr += 3;
 
-  // Save current character and location to be able to restore them.
-  NewSrc->Chr = Chr;
+  // save current character and location to be able to restore them
+  NewSrc->currCh = currCh;
   NewSrc->Loc = Location;
 
   NewSrc->SourceIdx = TLocation::AddSourceFile(FileName);
@@ -310,18 +296,15 @@ void VLexer::PushSource (TLocation& Loc, VStream *Strm, const VStr& FileName) {
 //
 //==========================================================================
 void VLexer::PopSource () {
-  if (!Src) return;
-
-  if (Src->IfStates.Num()) ParseError(Location, "#ifdef without a corresponding #endif");
-
-  VSourceFile *Tmp = Src;
+  if (!src) return;
+  if (src->IfStates.Num()) ParseError(Location, "#ifdef without a corresponding #endif");
+  VSourceFile *Tmp = src;
   delete[] Tmp->FileStart;
   Tmp->FileStart = nullptr;
-  Src = Tmp->Next;
-  Chr = Tmp->Chr;
+  src = Tmp->Next;
+  currCh = Tmp->currCh;
   Location = Tmp->Loc;
   delete Tmp;
-  //Tmp = nullptr;
 }
 
 
@@ -331,24 +314,24 @@ void VLexer::PopSource () {
 //
 //==========================================================================
 void VLexer::NextToken () {
-  if (!Src) { NewLine = false; Token = TK_EOF; return; }
-  NewLine = Src->NewLine;
+  if (!src) { NewLine = false; Token = TK_EOF; return; }
+  NewLine = src->NewLine;
   do {
-    TokenStringBuffer[0] = 0;
+    tokenStringBuffer[0] = 0;
     SkipWhitespaceAndComments();
 
-    if (Src->NewLine) {
+    if (src->NewLine) {
       NewLine = true;
       // a new line has been started, check preprocessor directive
-      Src->NewLine = false;
-      if (Chr == '#') {
+      src->NewLine = false;
+      if (currCh == '#') {
         ProcessPreprocessor();
         continue;
       }
     }
 
-    switch (ASCIIToChrCode[(vuint8)Chr]) {
-      case CHR_EOF: PopSource(); Token = (Src ? TK_NoToken : TK_EOF); break;
+    switch (ASCIIToChrCode[(vuint8)currCh]) {
+      case CHR_EOF: PopSource(); Token = (src ? TK_NoToken : TK_EOF); break;
       case CHR_Letter: ProcessLetterToken(true); break;
       case CHR_Number: ProcessNumberToken(); break;
       case CHR_Quote: ProcessQuoteToken(); break;
@@ -356,7 +339,7 @@ void VLexer::NextToken () {
       default: ProcessSpecialToken(); break;
     }
 
-    if (Token != TK_EOF && Src->Skipping) Token = TK_NoToken;
+    if (Token != TK_EOF && src->Skipping) Token = TK_NoToken;
   } while (Token == TK_NoToken);
 }
 
@@ -367,22 +350,22 @@ void VLexer::NextToken () {
 //
 //==========================================================================
 void VLexer::NextChr () {
-  if (Src->FilePtr >= Src->FileEnd) {
-    Chr = EOF_CHARACTER;
+  if (src->FilePtr >= src->FileEnd) {
+    currCh = EOF_CHARACTER;
     return;
   }
-  if (Src->IncLineNumber) {
-    ++Src->Line;
-    Location = TLocation(Src->SourceIdx, Src->Line);
-    Src->IncLineNumber = false;
+  if (src->IncLineNumber) {
+    ++src->Line;
+    Location = TLocation(src->SourceIdx, src->Line);
+    src->IncLineNumber = false;
   }
-  Chr = *Src->FilePtr++;
-  if ((vuint8)Chr < ' ') {
-    if (Chr == '\n') {
-      Src->IncLineNumber = true;
-      Src->NewLine = true;
+  currCh = *src->FilePtr++;
+  if ((vuint8)currCh < ' ') {
+    if (currCh == '\n') {
+      src->IncLineNumber = true;
+      src->NewLine = true;
     }
-    Chr = ' ';
+    currCh = ' ';
   }
 }
 
@@ -395,11 +378,11 @@ void VLexer::NextChr () {
 char VLexer::Peek (int dist) const {
   if (dist < 0) ParseError(Location, "VC INTERNAL COMPILER ERROR: peek dist is negative!");
   if (dist == 0) {
-    return (Src->FilePtr > Src->FileStart ? Src->FilePtr[-1] : Src->FilePtr[0]);
+    return (src->FilePtr > src->FileStart ? src->FilePtr[-1] : src->FilePtr[0]);
   } else {
     --dist;
-    if (Src->FileEnd-Src->FilePtr <= dist) return EOF_CHARACTER;
-    return Src->FilePtr[dist];
+    if (src->FileEnd-src->FilePtr <= dist) return EOF_CHARACTER;
+    return src->FilePtr[dist];
   }
 }
 
@@ -413,35 +396,35 @@ void VLexer::SkipWhitespaceAndComments () {
   bool Done;
   do {
     Done = true;
-    while (Chr == ' ') NextChr();
-    if (Chr == '/' && *Src->FilePtr == '*') {
+    while (currCh == ' ') NextChr();
+    if (currCh == '/' && *src->FilePtr == '*') {
       // block comment
       NextChr();
       do {
         NextChr();
-        if (Chr == EOF_CHARACTER) {
+        if (currCh == EOF_CHARACTER) {
           ParseError(Location, "End of file inside a comment");
           return;
         }
-      } while (Chr != '*' || *Src->FilePtr != '/');
+      } while (currCh != '*' || *src->FilePtr != '/');
       NextChr();
       NextChr();
       Done = false;
-    } else if (Chr == '/' && *Src->FilePtr == '+') {
+    } else if (currCh == '/' && *src->FilePtr == '+') {
       // nested block comment
       NextChr();
       int level = 1;
       for (;;) {
         NextChr();
-        if (Chr == EOF_CHARACTER) {
+        if (currCh == EOF_CHARACTER) {
           ParseError(Location, "End of file inside a comment");
           return;
         }
-        if (Chr == '+' && *Src->FilePtr == '/') {
+        if (currCh == '+' && *src->FilePtr == '/') {
           NextChr();
           NextChr();
           if (--level == 0) break;
-        } else if (Chr == '/' && *Src->FilePtr == '+') {
+        } else if (currCh == '/' && *src->FilePtr == '+') {
           NextChr();
           NextChr();
           ++level;
@@ -450,16 +433,16 @@ void VLexer::SkipWhitespaceAndComments () {
         }
       }
       Done = false;
-    } else if (Chr == '/' && *Src->FilePtr == '/') {
+    } else if (currCh == '/' && *src->FilePtr == '/') {
       // c++ style comment
       NextChr();
       do {
         NextChr();
-        if (Chr == EOF_CHARACTER) {
+        if (currCh == EOF_CHARACTER) {
           ParseError(Location, "End of file inside a comment");
           return;
         }
-      } while (!Src->IncLineNumber);
+      } while (!src->IncLineNumber);
       Done = false;
     }
   } while (!Done);
@@ -472,23 +455,23 @@ void VLexer::SkipWhitespaceAndComments () {
 //
 //==========================================================================
 char VLexer::peekNextNonBlankChar () const {
-  const char *fpos = Src->FilePtr;
-  if (fpos > Src->FileStart) --fpos; // unget last char
-  while (fpos < Src->FileEnd) {
+  const char *fpos = src->FilePtr;
+  if (fpos > src->FileStart) --fpos; // unget last char
+  while (fpos < src->FileEnd) {
     char ch = *fpos++;
     if ((vuint8)ch <= ' ') continue;
     // comment?
-    if (ch == '/' && fpos < Src->FileEnd) {
+    if (ch == '/' && fpos < src->FileEnd) {
       ch = *fpos++;
       // single-line?
       if (ch == '/') {
-        while (fpos < Src->FileEnd && *fpos != '\n') ++fpos;
+        while (fpos < src->FileEnd && *fpos != '\n') ++fpos;
         continue;
       }
       // multiline?
       if (ch == '*') {
-        while (fpos < Src->FileEnd) {
-          if (*fpos == '*' && Src->FileEnd-fpos > 1 && fpos[1] == '/') { fpos += 2; break; }
+        while (fpos < src->FileEnd) {
+          if (*fpos == '*' && src->FileEnd-fpos > 1 && fpos[1] == '/') { fpos += 2; break; }
           ++fpos;
         }
         continue;
@@ -496,11 +479,11 @@ char VLexer::peekNextNonBlankChar () const {
       // multiline nested?
       if (ch == '+') {
         int level = 1;
-        while (fpos < Src->FileEnd) {
-          if (*fpos == '+' && Src->FileEnd-fpos > 1 && fpos[1] == '/') {
+        while (fpos < src->FileEnd) {
+          if (*fpos == '+' && src->FileEnd-fpos > 1 && fpos[1] == '/') {
             fpos += 2;
             if (--level == 0) break;
-          } else if (*fpos == '/' && Src->FileEnd-fpos > 1 && fpos[1] == '+') {
+          } else if (*fpos == '/' && src->FileEnd-fpos > 1 && fpos[1] == '+') {
             ++level;
           } else {
             ++fpos;
@@ -524,59 +507,57 @@ char VLexer::peekNextNonBlankChar () const {
 void VLexer::ProcessPreprocessor () {
   NextChr();
 
-  if (Src->NewLine || Chr == EOF_CHARACTER) {
+  if (src->NewLine || currCh == EOF_CHARACTER) {
     ParseError(Location, "Bad directive.");
     return;
   }
 
-  if (ASCIIToChrCode[(vuint8)Chr] != CHR_Letter) {
+  if (ASCIIToChrCode[(vuint8)currCh] != CHR_Letter) {
     ParseError(Location, "Bad directive.");
-    while (!Src->NewLine && Chr != EOF_CHARACTER) NextChr();
+    while (!src->NewLine && currCh != EOF_CHARACTER) NextChr();
     return;
   }
 
   ProcessLetterToken(false);
 
-  if (!VStr::Cmp(TokenStringBuffer, "line")) {
+  if (!VStr::Cmp(tokenStringBuffer, "line")) {
     // read line number
     SkipWhitespaceAndComments();
-    if (ASCIIToChrCode[(vuint8)Chr] != CHR_Number) ParseError(Location, "Bad directive.");
+    if (ASCIIToChrCode[(vuint8)currCh] != CHR_Number) ParseError(Location, "Bad directive.");
     ProcessNumberToken();
-    /*if (!Src->Skipping)*/ Src->Line = Number-1;
+    src->Line = Number-1;
 
     // read file name
     SkipWhitespaceAndComments();
-    if (ASCIIToChrCode[(vuint8)Chr] != CHR_Quote) ParseError(Location, "Bad directive.");
+    if (ASCIIToChrCode[(vuint8)currCh] != CHR_Quote) ParseError(Location, "Bad directive.");
     ProcessFileName();
-    /*if (!Src->Skipping)*/ {
-      Src->SourceIdx = TLocation::AddSourceFile(String);
-      Location = TLocation(Src->SourceIdx, Src->Line);
-    }
+    src->SourceIdx = TLocation::AddSourceFile(String);
+    Location = TLocation(src->SourceIdx, src->Line);
 
     // ignore flags
-    while (!Src->NewLine) NextChr();
-  } else if (!VStr::Cmp(TokenStringBuffer, "define")) {
+    while (!src->NewLine) NextChr();
+  } else if (!VStr::Cmp(tokenStringBuffer, "define")) {
     ProcessDefine();
-  } else if (!VStr::Cmp(TokenStringBuffer, "ifdef")) {
+  } else if (!VStr::Cmp(tokenStringBuffer, "ifdef")) {
     ProcessIf(true);
-  } else if (!VStr::Cmp(TokenStringBuffer, "ifndef")) {
+  } else if (!VStr::Cmp(tokenStringBuffer, "ifndef")) {
     ProcessIf(false);
-  } else if (!VStr::Cmp(TokenStringBuffer, "else")) {
+  } else if (!VStr::Cmp(tokenStringBuffer, "else")) {
     ProcessElse();
-  } else if (!VStr::Cmp(TokenStringBuffer, "endif")) {
+  } else if (!VStr::Cmp(tokenStringBuffer, "endif")) {
     ProcessEndIf();
-  } else if (!VStr::Cmp(TokenStringBuffer, "include")) {
+  } else if (!VStr::Cmp(tokenStringBuffer, "include")) {
     ProcessInclude();
     return;
   } else {
     ParseError(Location, "Bad directive.");
-    while (!Src->NewLine && Chr != EOF_CHARACTER) NextChr();
+    while (!src->NewLine && currCh != EOF_CHARACTER) NextChr();
   }
   Token = TK_NoToken;
 
   SkipWhitespaceAndComments();
   // a new-line is expected at the end of preprocessor directive.
-  if (!Src->NewLine) ParseError(Location, "Bad directive.");
+  if (!src->NewLine) ParseError(Location, "Bad directive.");
 }
 
 
@@ -589,22 +570,22 @@ void VLexer::ProcessDefine () {
   SkipWhitespaceAndComments();
 
   // argument to the #define must be on the same line.
-  if (Src->NewLine || Chr == EOF_CHARACTER) {
+  if (src->NewLine || currCh == EOF_CHARACTER) {
     ParseError(Location, "Bad directive.");
     return;
   }
 
   // parse name to be defined
-  if (ASCIIToChrCode[(vuint8)Chr] != CHR_Letter) {
+  if (ASCIIToChrCode[(vuint8)currCh] != CHR_Letter) {
     ParseError(Location, "Bad directive.");
-    while (!Src->NewLine && Chr != EOF_CHARACTER) NextChr();
+    while (!src->NewLine && currCh != EOF_CHARACTER) NextChr();
     return;
   }
   ProcessLetterToken(false);
 
-  if (Src->Skipping) return;
+  if (src->Skipping) return;
 
-  AddDefine(TokenStringBuffer);
+  AddDefine(tokenStringBuffer);
 }
 
 
@@ -613,17 +594,16 @@ void VLexer::ProcessDefine () {
 //  VLexer::AddDefine
 //
 //==========================================================================
-void VLexer::AddDefine (const VStr& CondName) {
+void VLexer::AddDefine (const VStr &CondName, bool showWarning) {
+  if (CondName.length() == 0) return; // get lost!
   // check for redefined names
-  bool Found = false;
-  for (int i = 0; i < Defines.Num(); ++i) {
-    if (Defines[i] == CondName) {
-      ParseWarning(Location, "Redefined conditional");
-      Found = true;
-      break;
+  for (int i = 0; i < defines.length(); ++i) {
+    if (defines[i] == CondName) {
+      if (showWarning) ParseWarning(Location, "Redefined conditional");
+      return;
     }
   }
-  if (!Found) Defines.Append(CondName); // add it
+  defines.Append(CondName);
 }
 
 
@@ -636,36 +616,36 @@ void VLexer::ProcessIf (bool OnTrue) {
   SkipWhitespaceAndComments();
 
   // argument to the #ifdef must be on the same line
-  if (Src->NewLine || Chr == EOF_CHARACTER) {
+  if (src->NewLine || currCh == EOF_CHARACTER) {
     ParseError(Location, "Bad directive.");
     return;
   }
 
   // parse condition name
-  if (ASCIIToChrCode[(vuint8)Chr] != CHR_Letter) {
+  if (ASCIIToChrCode[(vuint8)currCh] != CHR_Letter) {
     ParseError(Location, "Bad directive.");
-    while (!Src->NewLine && Chr != EOF_CHARACTER) NextChr();
+    while (!src->NewLine && currCh != EOF_CHARACTER) NextChr();
     return;
   }
 
   ProcessLetterToken(false);
 
-  if (Src->Skipping) {
-    Src->IfStates.Append(IF_Skip);
+  if (src->Skipping) {
+    src->IfStates.Append(IF_Skip);
   } else {
     // check if the names has been defined
     bool Found = false;
-    for (int i = 0; i < Defines.Num(); ++i) {
-      if (Defines[i] == TokenStringBuffer) {
+    for (int i = 0; i < defines.Num(); ++i) {
+      if (defines[i] == tokenStringBuffer) {
         Found = true;
         break;
       }
     }
     if (Found == OnTrue) {
-      Src->IfStates.Append(IF_True);
+      src->IfStates.Append(IF_True);
     } else {
-      Src->IfStates.Append(IF_False);
-      Src->Skipping = true;
+      src->IfStates.Append(IF_False);
+      src->Skipping = true;
     }
   }
 }
@@ -677,27 +657,27 @@ void VLexer::ProcessIf (bool OnTrue) {
 //
 //==========================================================================
 void VLexer::ProcessElse () {
-  if (!Src->IfStates.Num()) {
+  if (!src->IfStates.Num()) {
     ParseError(Location, "#else without an #ifdef/#ifndef");
     return;
   }
-  switch (Src->IfStates[Src->IfStates.Num()-1]) {
+  switch (src->IfStates[src->IfStates.Num()-1]) {
     case IF_True:
-      Src->IfStates[Src->IfStates.Num()-1] = IF_ElseFalse;
-      Src->Skipping = true;
+      src->IfStates[src->IfStates.Num()-1] = IF_ElseFalse;
+      src->Skipping = true;
       break;
     case IF_False:
-      Src->IfStates[Src->IfStates.Num()-1] = IF_ElseTrue;
-      Src->Skipping = false;
+      src->IfStates[src->IfStates.Num()-1] = IF_ElseTrue;
+      src->Skipping = false;
       break;
     case IF_Skip:
-      Src->IfStates[Src->IfStates.Num()-1] = IF_ElseSkip;
+      src->IfStates[src->IfStates.Num()-1] = IF_ElseSkip;
       break;
     case IF_ElseTrue:
     case IF_ElseFalse:
     case IF_ElseSkip:
       ParseError(Location, "Multiple #else directives for a single #ifdef");
-      Src->Skipping = true;
+      src->Skipping = true;
       break;
   }
 }
@@ -709,27 +689,27 @@ void VLexer::ProcessElse () {
 //
 //==========================================================================
 void VLexer::ProcessEndIf () {
-  if (!Src->IfStates.Num()) {
+  if (!src->IfStates.Num()) {
     ParseError(Location, "#endif without an #ifdef/#ifndef");
     return;
   }
-  Src->IfStates.RemoveIndex(Src->IfStates.Num()-1);
-  if (Src->IfStates.Num() > 0) {
-    switch (Src->IfStates[Src->IfStates.Num()-1]) {
+  src->IfStates.RemoveIndex(src->IfStates.Num()-1);
+  if (src->IfStates.Num() > 0) {
+    switch (src->IfStates[src->IfStates.Num()-1]) {
       case IF_True:
       case IF_ElseTrue:
-        Src->Skipping = false;
+        src->Skipping = false;
         break;
       case IF_False:
       case IF_ElseFalse:
-        Src->Skipping = true;
+        src->Skipping = true;
         break;
       case IF_Skip:
       case IF_ElseSkip:
         break;
     }
   } else {
-    Src->Skipping = false;
+    src->Skipping = false;
   }
 }
 
@@ -743,15 +723,15 @@ void VLexer::ProcessInclude () {
   SkipWhitespaceAndComments();
 
   // file name must be on the same line
-  if (Src->NewLine || Chr == EOF_CHARACTER) {
+  if (src->NewLine || currCh == EOF_CHARACTER) {
     ParseError(Location, "Bad directive.");
     return;
   }
 
   // parse file name
-  if (Chr != '\"') {
+  if (currCh != '\"') {
     ParseError(Location, "Bad directive.");
-    while (!Src->NewLine && Chr != EOF_CHARACTER) NextChr();
+    while (!src->NewLine && currCh != EOF_CHARACTER) NextChr();
     return;
   }
   ProcessFileName();
@@ -760,15 +740,15 @@ void VLexer::ProcessInclude () {
   Token = TK_NoToken;
   SkipWhitespaceAndComments();
   // a new-line is expected at the end of preprocessor directive.
-  if (!Src->NewLine) ParseError(Location, "Bad directive.");
+  if (!src->NewLine) ParseError(Location, "Bad directive.");
 
-  if (Src->Skipping) return;
+  if (src->Skipping) return;
 
   // check if it's an absolute path location.
-  if (TokenStringBuffer[0] != '/' && TokenStringBuffer[0] != '\\') {
+  if (tokenStringBuffer[0] != '/' && tokenStringBuffer[0] != '\\') {
     // first try relative to the current source file
-    if (Src->Path.IsNotEmpty()) {
-      VStr FileName = Src->Path+VStr(TokenStringBuffer);
+    if (src->Path.IsNotEmpty()) {
+      VStr FileName = src->Path+VStr(tokenStringBuffer);
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
       VStream *Strm = FL_OpenFileRead(FileName);
 #else
@@ -780,8 +760,8 @@ void VLexer::ProcessInclude () {
       }
     }
 
-    for (int i = IncludePath.Num() - 1; i >= 0; --i) {
-      VStr FileName = IncludePath[i] + VStr(TokenStringBuffer);
+    for (int i = includePath.Num() - 1; i >= 0; --i) {
+      VStr FileName = includePath[i]+VStr(tokenStringBuffer);
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
       VStream *Strm = FL_OpenFileRead(FileName);
 #else
@@ -795,7 +775,7 @@ void VLexer::ProcessInclude () {
   }
 
   // either it's relative to the current directory or absolute path
-  PushSource(Loc, TokenStringBuffer);
+  PushSource(Loc, tokenStringBuffer);
 }
 
 
@@ -804,11 +784,24 @@ void VLexer::ProcessInclude () {
 //  VLexer::AddIncludePath
 //
 //==========================================================================
-void VLexer::AddIncludePath (const VStr& DirName) {
-  VStr Copy = DirName;
+void VLexer::AddIncludePath (const VStr &DirName) {
+  if (DirName.length() == 0) return; // get lost
+  VStr copy = DirName;
   // append trailing slash if needed
-  if (!Copy.EndsWith("/") && !Copy.EndsWith("\\")) Copy += '/';
-  IncludePath.Append(Copy);
+#ifndef _WIN32
+  if (!copy.EndsWith("/")) copy += '/';
+#else
+  if (!copy.EndsWith("/") && !copy.EndsWith("\\")) copy += '/';
+#endif
+  // check for duplicate pathes
+  for (int i = 0; i < includePath.length(); ++i) {
+#ifndef _WIN32
+    if (includePath[i] == copy) return;
+#else
+    if (includePath[i].ICmp(copy) == 0) return;
+#endif
+  }
+  includePath.Append(copy);
 }
 
 
@@ -820,14 +813,14 @@ void VLexer::AddIncludePath (const VStr& DirName) {
 void VLexer::ProcessNumberToken () {
   Token = TK_IntLiteral;
 
-  char c = Chr;
+  char c = currCh;
   NextChr();
   Number = c-'0';
 
   // hex/octal/decimal/binary constant?
   if (c == '0') {
     int base = 0;
-    switch (Chr) {
+    switch (currCh) {
       case 'x': case 'X': base = 16; break;
       case 'd': case 'D': base = 10; break;
       case 'o': case 'O': base = 8; break;
@@ -836,13 +829,13 @@ void VLexer::ProcessNumberToken () {
     if (base != 0) {
       NextChr();
       for (;;) {
-        if (Chr != '_') {
+        if (currCh != '_') {
           if (base == 16) {
-            if (ASCIIToHexDigit[(vuint8)Chr] == NON_HEX_DIGIT) break;
-            Number = (Number<<4)+ASCIIToHexDigit[(vuint8)Chr];
+            if (ASCIIToHexDigit[(vuint8)currCh] == NON_HEX_DIGIT) break;
+            Number = (Number<<4)+ASCIIToHexDigit[(vuint8)currCh];
           } else {
-            if (Chr < '0' || Chr >= '0'+base) break;
-            Number = Number*base+(Chr-'0');
+            if (currCh < '0' || currCh >= '0'+base) break;
+            Number = Number*base+(currCh-'0');
           }
         }
         NextChr();
@@ -852,67 +845,35 @@ void VLexer::ProcessNumberToken () {
   }
 
   for (;;) {
-    if (Chr != '_') {
-      if (ASCIIToChrCode[(vuint8)Chr] != CHR_Number) break;
-      Number = 10*Number+(Chr-'0');
-    } else {
-      //ParseError(Location, "RADIX!");
+    if (currCh != '_') {
+      if (ASCIIToChrCode[(vuint8)currCh] != CHR_Number) break;
+      Number = 10*Number+(currCh-'0');
     }
     NextChr();
   }
 
-  if (Chr == '.') {
+  if (currCh == '.') {
     char nch = Peek(1);
     if ((nch >= 'A' && nch <= 'Z') || (nch >= 'a' && nch <= 'z') || nch == '_') {
       // num dot smth
-      return;
     } else {
       Token = TK_FloatLiteral;
       NextChr(); // skip dot
       Float = Number;
       float fmul = 0.1;
       for (;;) {
-        if (Chr != '_') {
-          if (ASCIIToChrCode[(vuint8)Chr] != CHR_Number) break;
-          Float += (Chr-'0')*fmul;
+        if (currCh != '_') {
+          if (ASCIIToChrCode[(vuint8)currCh] != CHR_Number) break;
+          Float += (currCh-'0')*fmul;
           fmul /= 10.0;
         } else {
           //ParseError(Location, "RADIX!");
         }
         NextChr();
       }
-      if (Chr == 'f') NextChr();
+      if (currCh == 'f') NextChr();
     }
-    return;
   }
-
-  /*
-  if (Chr == '_') {
-    ParseError(Location, "RADIX!");
-
-    int radix;
-    int digit;
-
-    NextChr(); // Underscore
-    radix = Number;
-    if (radix < 2 || radix > 36) {
-      ParseError(Location, ERR_BAD_RADIX_CONSTANT);
-      radix = 2;
-    }
-    Number = 0;
-    do {
-      digit = VStr::ToUpper(Chr);
-           if (digit < '0' || (digit > '9' && digit < 'A') || digit > 'Z') digit = -1;
-      else if(digit > '9') digit = 10 + digit - 'A';
-      else digit -= '0';
-      if (digit >= radix) digit = -1;
-      if (digit != -1) {
-        Number = radix * Number + digit;
-        NextChr();
-      }
-    } while (digit != -1);
-  }
-  */
 }
 
 
@@ -922,37 +883,37 @@ void VLexer::ProcessNumberToken () {
 //
 //==========================================================================
 void VLexer::ProcessChar () {
-  if (Chr == EOF_CHARACTER) {
+  if (currCh == EOF_CHARACTER) {
     ParseError(Location, ERR_EOF_IN_STRING);
     BailOut();
   }
-  if (Src->IncLineNumber) ParseError(Location, ERR_NEW_LINE_INSIDE_QUOTE);
-  if (Chr == '\\') {
+  if (src->IncLineNumber) ParseError(Location, ERR_NEW_LINE_INSIDE_QUOTE);
+  if (currCh == '\\') {
     // special symbol
     NextChr();
-    if (Chr == EOF_CHARACTER) { ParseError(Location, ERR_EOF_IN_STRING); BailOut(); }
-    if (Src->IncLineNumber) ParseError(Location, ERR_NEW_LINE_INSIDE_QUOTE);
-    switch (Chr) {
-      case 'n': Chr = '\n'; break;
-      case 'r': Chr = '\r'; break;
-      case 't': Chr = '\t'; break;
-      case '\'': Chr = '\''; break;
-      case '"': Chr = '"'; break;
-      case '\\': Chr = '\\'; break;
-      case 'c': Chr = TEXT_COLOUR_ESCAPE; break;
-      case 'e': Chr = '\x1b'; break;
+    if (currCh == EOF_CHARACTER) { ParseError(Location, ERR_EOF_IN_STRING); BailOut(); }
+    if (src->IncLineNumber) ParseError(Location, ERR_NEW_LINE_INSIDE_QUOTE);
+    switch (currCh) {
+      case 'n': currCh = '\n'; break;
+      case 'r': currCh = '\r'; break;
+      case 't': currCh = '\t'; break;
+      case '\'': currCh = '\''; break;
+      case '"': currCh = '"'; break;
+      case '\\': currCh = '\\'; break;
+      case 'c': currCh = TEXT_COLOUR_ESCAPE; break;
+      case 'e': currCh = '\x1b'; break;
       case 'x': case 'X':
         {
           NextChr();
-          if (Chr == EOF_CHARACTER) { ParseError(Location, ERR_EOF_IN_STRING); BailOut(); }
-          if (ASCIIToHexDigit[(vuint8)Chr] == NON_HEX_DIGIT) { ParseError(Location, ERR_EOF_IN_STRING); BailOut(); }
-          int n = ASCIIToHexDigit[(vuint8)Chr];
+          if (currCh == EOF_CHARACTER) { ParseError(Location, ERR_EOF_IN_STRING); BailOut(); }
+          if (ASCIIToHexDigit[(vuint8)currCh] == NON_HEX_DIGIT) { ParseError(Location, ERR_EOF_IN_STRING); BailOut(); }
+          int n = ASCIIToHexDigit[(vuint8)currCh];
           // second digit
-          if (Src->FilePtr < Src->FileEnd && ASCIIToHexDigit[(vuint8)(*Src->FilePtr)] != NON_HEX_DIGIT) {
+          if (src->FilePtr < src->FileEnd && ASCIIToHexDigit[(vuint8)(*src->FilePtr)] != NON_HEX_DIGIT) {
             NextChr();
-            n = n*16+ASCIIToHexDigit[(vuint8)Chr];
+            n = n*16+ASCIIToHexDigit[(vuint8)currCh];
           }
-          Chr = (char)n;
+          currCh = (char)n;
         }
         break;
       default: ParseError(Location, ERR_UNKNOWN_ESC_CHAR);
@@ -970,18 +931,18 @@ void VLexer::ProcessQuoteToken () {
   Token = TK_StringLiteral;
   int len = 0;
   NextChr();
-  while (Chr != '\"') {
+  while (currCh != '\"') {
     if (len >= MAX_QUOTED_LENGTH-1) {
       ParseError(Location, ERR_STRING_TOO_LONG);
       NextChr();
       continue;
     }
     ProcessChar();
-    TokenStringBuffer[len] = Chr;
+    tokenStringBuffer[len] = currCh;
     NextChr();
     ++len;
   }
-  TokenStringBuffer[len] = 0;
+  tokenStringBuffer[len] = 0;
   NextChr();
 }
 
@@ -995,20 +956,20 @@ void VLexer::ProcessSingleQuoteToken () {
   Token = TK_NameLiteral;
   int len = 0;
   NextChr();
-  while (Chr != '\'') {
+  while (currCh != '\'') {
     if (len >= MAX_IDENTIFIER_LENGTH-1) {
       ParseError(Location, ERR_STRING_TOO_LONG);
       NextChr();
       continue;
     }
     ProcessChar();
-    TokenStringBuffer[len] = Chr;
+    tokenStringBuffer[len] = currCh;
     NextChr();
     ++len;
   }
-  TokenStringBuffer[len] = 0;
+  tokenStringBuffer[len] = 0;
   NextChr();
-  Name = TokenStringBuffer;
+  Name = tokenStringBuffer;
 }
 
 
@@ -1020,311 +981,125 @@ void VLexer::ProcessSingleQuoteToken () {
 void VLexer::ProcessLetterToken (bool CheckKeywords) {
   Token = TK_Identifier;
   int len = 0;
-  while (ASCIIToChrCode[(vuint8)Chr] == CHR_Letter || ASCIIToChrCode[(vuint8)Chr] == CHR_Number) {
+  while (ASCIIToChrCode[(vuint8)currCh] == CHR_Letter || ASCIIToChrCode[(vuint8)currCh] == CHR_Number) {
     if (len == MAX_IDENTIFIER_LENGTH-1) {
       ParseError(Location, ERR_IDENTIFIER_TOO_LONG);
       NextChr();
       continue;
     }
-    TokenStringBuffer[len] = Chr;
+    tokenStringBuffer[len] = currCh;
     ++len;
     NextChr();
   }
-  TokenStringBuffer[len] = 0;
+  tokenStringBuffer[len] = 0;
 
   if (!CheckKeywords) return;
 
-  const char *s = TokenStringBuffer;
+  //k8: there were alot of `if`s with char-by-char comparisons, but meh... it is 2018 now.
+  const char *s = tokenStringBuffer;
   switch (s[0]) {
     case '_':
       if (s[1] == '_') {
-        if (s[2] == 'm' && s[3] == 'o' && s[4] == 'b' && s[5] == 'j' &&
-            s[6] == 'i' && s[7] == 'n' && s[8] == 'f' && s[9] == 'o' &&
-            s[10] == '_' && s[11] == '_' && s[12] == 0)
-        {
-          Token = TK_MobjInfo;
-        } else if (s[2] == 's' && s[3] == 'c' && s[4] == 'r' &&
-                   s[5] == 'i' && s[6] == 'p' && s[7] == 't' && s[8] == 'i' &&
-                   s[9] == 'd' && s[10] == '_' && s[11] == '_' && s[12] == 0)
-        {
-          Token = TK_ScriptId;
-        }
+             if (checkStrTk("__mobjinfo__")) Token = TK_MobjInfo;
+        else if (checkStrTk("__scriptid__")) Token = TK_ScriptId;
       }
       break;
     case 'a':
-      if (s[1] == 'b' && s[2] == 's' && s[3] == 't' && s[4] == 'r' &&
-          s[5] == 'a' && s[6] == 'c' && s[7] == 't' && s[8] == 0)
-      {
-        Token = TK_Abstract;
-      } else if (s[1] == 'r' && s[2] == 'r' && s[3] == 'a' && s[4] == 'y' && s[5] == 0)
-      {
-        Token = TK_Array;
-      } else if (s[1] == 'u' && s[2] == 't' && s[3] == 'o' && s[4] == 0)
-      {
-        Token = TK_Auto;
-      }
+           if (checkStrTk("abstract")) Token = TK_Abstract;
+      else if (checkStrTk("array")) Token = TK_Array;
+      else if (checkStrTk("auto")) Token = TK_Auto;
       break;
     case 'b':
-      if (s[1] == 'o' && s[2] == 'o' && s[3] == 'l' && s[4] == 0)
-      {
-        Token = TK_Bool;
-      } else if (s[1] == 'r' && s[2] == 'e' && s[3] == 'a' && s[4] == 'k' && s[5] == 0)
-      {
-        Token = TK_Break;
-      } else if (s[1] == 'y' && s[2] == 't' && s[3] == 'e' && s[4] == 0)
-      {
-        Token = TK_Byte;
-      }
+           if (checkStrTk("bool")) Token = TK_Bool;
+      else if (checkStrTk("break")) Token = TK_Break;
+      else if (checkStrTk("byte")) Token = TK_Byte;
       break;
     case 'c':
-      if (s[1] == 'a' && s[2] == 's' && s[3] == 'e' && s[4] == 0)
-      {
-        Token = TK_Case;
-      } else if (s[1] == 'l' && s[2] == 'a' && s[3] == 's' && s[4] == 's' && s[5] == 0)
-      {
-        Token = TK_Class;
-      } else if (s[1] == 'o' && s[2] == 'n') {
-        if (s[3] == 's' && s[4] == 't' && s[5] == 0)
-        {
-          Token = TK_Const;
-        } else if (s[3] == 't' && s[4] == 'i' && s[5] == 'n' && s[6] == 'u' && s[7] == 'e' && s[8] == 0)
-        {
-          Token = TK_Continue;
-        }
-      }
+           if (checkStrTk("case")) Token = TK_Case;
+      else if (checkStrTk("class")) Token = TK_Class;
+      else if (checkStrTk("const")) Token = TK_Const;
+      else if (checkStrTk("continue")) Token = TK_Continue;
       break;
     case 'd':
-      if (s[1] == 'e') {
-        if (s[2] == 'c' && s[3] == 'o' && s[4] == 'r' &&
-            s[5] == 'a' && s[6] == 't' && s[7] == 'e' && s[8] == 0)
-        {
-          Token = TK_Decorate;
-        } else if (s[2] == 'f' && s[3] == 'a' && s[4] == 'u' && s[5] == 'l' && s[6] == 't')
-        {
-          if (s[7] == 0)
-          {
-            Token = TK_Default;
-          } else if (s[7] == 'p' && s[8] == 'r' && s[9] == 'o' &&
-                     s[10] == 'p' && s[11] == 'e' && s[12] == 'r' &&
-                     s[13] == 't' && s[14] == 'i' && s[15] == 'e' &&
-                     s[16] == 's' && s[17] == 0)
-          {
-            Token = TK_DefaultProperties;
-          }
-        } else if (s[2] == 'l' && s[3] == 'e' && s[4] == 'g' && s[5] == 'a' &&
-                   s[6] == 't' && s[7] == 'e' && s[8] == 0)
-        {
-          Token = TK_Delegate;
-        }
-      } else if (s[1] == 'o' && s[2] == 0)
-      {
-        Token = TK_Do;
-      }
+           if (checkStrTk("decorate")) Token = TK_Decorate;
+      else if (checkStrTk("default")) Token = TK_Default;
+      else if (checkStrTk("defaultproperties")) Token = TK_DefaultProperties;
+      else if (checkStrTk("delegate")) Token = TK_Delegate;
+      else if (checkStrTk("do")) Token = TK_Do;
       break;
     case 'e':
-      if (s[1] == 'l' && s[2] == 's' && s[3] == 'e' && s[4] == 0)
-      {
-        Token = TK_Else;
-      } else if (s[1] == 'n' && s[2] == 'u' && s[3] == 'm' && s[4] == 0)
-      {
-        Token = TK_Enum;
-      }
+           if (checkStrTk("else")) Token = TK_Else;
+      else if (checkStrTk("enum")) Token = TK_Enum;
       break;
     case 'f':
-      if (s[1] == 'a' && s[2] == 'l' && s[3] == 's' && s[4] == 'e' && s[5] == 0)
-      {
-        Token = TK_False;
-      } else if (s[1] == 'i' && s[2] == 'n' && s[3] == 'a' && s[4] == 'l' && s[5] == 0)
-      {
-        Token = TK_Final;
-      } else if (s[1] == 'l' && s[2] == 'o' && s[3] == 'a' && s[4] == 't' && s[5] == 0)
-      {
-        Token = TK_Float;
-      } else if (s[1] == 'o' && s[2] == 'r')
-      {
-        if (s[3] == 0)
-        {
-          Token = TK_For;
-        } else if (s[3] == 'e' && s[4] == 'a' && s[5] == 'c' && s[6] == 'h' && s[7] == 0)
-        {
-          Token = TK_Foreach;
-        }
-      }
+           if (checkStrTk("false")) Token = TK_False;
+      else if (checkStrTk("final")) Token = TK_Final;
+      else if (checkStrTk("float")) Token = TK_Float;
+      else if (checkStrTk("for")) Token = TK_For;
+      else if (checkStrTk("foreach")) Token = TK_Foreach;
       break;
     case 'g':
-      if (s[1] == 'a' && s[2] == 'm' && s[3] == 'e' && s[4] == 0)
-      {
-        Token = TK_Game;
-      } else if (s[1] == 'e' && s[2] == 't' && s[3] == 0)
-      {
-        Token = TK_Get;
-      }
+           if (checkStrTk("game")) Token = TK_Game;
+      else if (checkStrTk("get")) Token = TK_Get;
+      break;
     case 'i':
-      if (s[1] == 'f' && s[2] == 0)
-      {
-        Token = TK_If;
-      } else if (s[1] == 'm' && s[2] == 'p' && s[3] == 'o' && s[4] == 'r' && s[5] == 't' && s[6] == 0)
-      {
-        Token = TK_Import;
-      } else if (s[1] == 'n' && s[2] == 't' && s[3] == 0)
-      {
-        Token = TK_Int;
-      } else if (s[1] == 't' && s[2] == 'e' && s[3] == 'r' && s[4] == 'a' &&
-                 s[5] == 't' && s[6] == 'o' && s[7] == 'r' && s[8] == 0)
-      {
-        Token = TK_Iterator;
-      }
+           if (checkStrTk("if")) Token = TK_If;
+      else if (checkStrTk("import")) Token = TK_Import;
+      else if (checkStrTk("int")) Token = TK_Int;
+      else if (checkStrTk("iterator")) Token = TK_Iterator;
       break;
     case 'n':
-      if (s[1] == 'a')
-      {
-        if (s[2] == 'm' && s[3] == 'e' && s[4] == 0)
-        {
-          Token = TK_Name;
-        } else if (s[2] == 't' && s[3] == 'i' && s[4] == 'v' && s[5] == 'e' && s[6] == 0)
-        {
-          Token = TK_Native;
-        }
-      } else if (s[1] == 'o' && s[2] == 'n' && s[3] == 'e' && s[4] == 0)
-      {
-        Token = TK_None;
-      } else if (s[1] == 'u' && s[2] == 'l' && s[3] == 'l' && (s[4] == 0 || (s[4] == 'p' && s[5] == 't' && s[6] == 'r' && s[7] == 0)))
-      {
-        Token = TK_Null;
-      }
+           if (checkStrTk("name")) Token = TK_Name;
+      else if (checkStrTk("native")) Token = TK_Native;
+      else if (checkStrTk("none")) Token = TK_None;
+      else if (checkStrTk("null")) Token = TK_Null;
+      else if (checkStrTk("nullptr")) Token = TK_Null;
       break;
     case 'o':
-      if (s[1] == 'p' && s[2] == 't' && s[3] == 'i' && s[4] == 'o' &&
-          s[5] == 'n' && s[6] == 'a' && s[7] == 'l' && s[8] == 0)
-      {
-        Token = TK_Optional;
-      } else if (s[1] == 'u' && s[2] == 't' && s[3] == 0)
-      {
-        Token = TK_Out;
-      }
+           if (checkStrTk("optional")) Token = TK_Optional;
+      else if (checkStrTk("out")) Token = TK_Out;
       break;
     case 'p':
-      if (s[1] == 'r' && s[2] == 'i' && s[3] == 'v' && s[4] == 'a' &&
-          s[5] == 't' && s[6] == 'e' && s[7] == 0)
-      {
-        Token = TK_Private;
-      }
+      if (checkStrTk("private")) Token = TK_Private;
       break;
     case 'r':
-      if (s[1] == 'e')
-      {
-        if (s[2] == 'a' && s[3] == 'd' && s[4] == 'o' && s[5] == 'n' &&
-            s[6] == 'l' && s[7] == 'y' && s[8] == 0)
-        {
-          Token = TK_ReadOnly;
-        } else if (s[2] == 'l' && s[3] == 'i' && s[4] == 'a' &&
-                   s[5] == 'b' && s[6] == 'l' && s[7] == 'e' && s[8] == 0)
-        {
-          Token = TK_Reliable;
-        } else if (s[2] == 'p' && s[3] == 'l' && s[4] == 'i' &&
-                   s[5] == 'c' && s[6] == 'a' && s[7] == 't' && s[8] == 'i' &&
-                   s[9] == 'o' && s[10] == 'n' && s[11] == 0)
-        {
-          Token = TK_Replication;
-        } else if (s[2] == 't' && s[3] == 'u' && s[4] == 'r' && s[5] == 'n' && s[6] == 0)
-        {
-          Token = TK_Return;
-        }
-      }
+           if (checkStrTk("return")) Token = TK_Return;
+      else if (checkStrTk("ref")) Token = TK_Ref;
+      else if (checkStrTk("readonly")) Token = TK_ReadOnly;
+      else if (checkStrTk("reliable")) Token = TK_Reliable;
+      else if (checkStrTk("replication")) Token = TK_Replication;
       break;
     case 's':
-      if (s[1] == 'e')
-      {
-        if (s[2] == 'l' && s[3] == 'f' && s[4] == 0)
-        {
-          Token = TK_Self;
-        } else if (s[2] == 't' && s[3] == 0)
-        {
-          Token = TK_Set;
-        }
-      } else if (s[1] == 'p' && s[2] == 'a' && s[3] == 'w' && s[4] == 'n' &&
-                 s[5] == 'e' && s[6] == 'r' && s[7] == 0)
-      {
-        Token = TK_Spawner;
-      } else if (s[1] == 't')
-      {
-        if (s[2] == 'a' && s[3] == 't')
-        {
-          if (s[4] == 'e')
-          {
-            if (s[5] == 0)
-            {
-              Token = TK_State;
-            } else if (s[5] == 's' && s[6] == 0)
-            {
-              Token = TK_States;
-            }
-          } else if (s[4] == 'i' && s[5] == 'c' && s[6] == 0)
-          {
-            Token = TK_Static;
-          }
-        } else if (s[2] == 'r')
-        {
-          if (s[3] == 'i' && s[4] == 'n' && s[5] == 'g' && s[6] == 0)
-          {
-            Token = TK_String;
-          } else if (s[3] == 'u' && s[4] == 'c' && s[5] == 't' &&
-            s[6] == 0)
-          {
-            Token = TK_Struct;
-          }
-        }
-      } else if (s[1] == 'w' && s[2] == 'i' && s[3] == 't' && s[4] == 'c' && s[5] == 'h' && s[6] == 0)
-      {
-        Token = TK_Switch;
-      }
+           if (checkStrTk("string")) Token = TK_String;
+      else if (checkStrTk("switch")) Token = TK_Switch;
+      else if (checkStrTk("self")) Token = TK_Self;
+      else if (checkStrTk("set")) Token = TK_Set;
+      else if (checkStrTk("struct")) Token = TK_Struct;
+      else if (checkStrTk("spawner")) Token = TK_Spawner;
+      else if (checkStrTk("static")) Token = TK_Static;
+      else if (checkStrTk("state")) Token = TK_State;
+      else if (checkStrTk("states")) Token = TK_States;
       break;
     case 't':
-      if (s[1] == 'r')
-      {
-        if (s[2] == 'a' && s[3] == 'n' && s[4] == 's' && s[5] == 'i' &&
-            s[6] == 'e' && s[7] == 'n' && s[8] == 't' && s[9] == 0)
-        {
-          Token = TK_Transient;
-        } else if (s[2] == 'u' && s[3] == 'e' && s[4] == 0)
-        {
-          Token = TK_True;
-        }
-      }
+           if (checkStrTk("true")) Token = TK_True;
+      else if (checkStrTk("transient")) Token = TK_Transient;
       break;
     case 'u':
-      if (s[1] == 'n' && s[2] == 'r' && s[3] == 'e' && s[4] == 'l' &&
-          s[5] == 'i' && s[6] == 'a' && s[7] == 'b' && s[8] == 'l' &&
-          s[9] == 'e' && s[10] == 0)
-      {
-        Token = TK_Unreliable;
-      }
+      if (checkStrTk("unreliable")) Token = TK_Unreliable;
       break;
     case 'v':
-      if (s[1] == 'e' && s[2] == 'c' && s[3] == 't' && s[4] == 'o' &&
-          s[5] == 'r' && s[6] == 0)
-      {
-        Token = TK_Vector;
-      } else if (s[1] == 'o' && s[2] == 'i' && s[3] == 'd' && s[4] == 0)
-      {
-        Token = TK_Void;
-      }
+           if (checkStrTk("void")) Token = TK_Void;
+      else if (checkStrTk("vector")) Token = TK_Vector;
       break;
     case 'w':
-      if (s[1] == 'h' && s[2] == 'i' && s[3] == 'l' && s[4] == 'e' && s[5] == 0)
-      {
-        Token = TK_While;
-      }
+      if (checkStrTk("while")) Token = TK_While;
       break;
     case 'N':
-      if (s[0] == 'N' && s[1] == 'U' && s[2] == 'L' && s[3] == 'L' && s[4] == 0)
-      {
-        Token = TK_Null;
-      }
+      if (checkStrTk("NULL")) Token = TK_Null;
       break;
-  } // switch
+  }
 
-  if (Token == TK_Identifier) Name = TokenStringBuffer;
+  if (Token == TK_Identifier) Name = tokenStringBuffer;
 }
 
 
@@ -1334,76 +1109,42 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
 //
 //==========================================================================
 void VLexer::ProcessSpecialToken () {
-  char c = Chr;
+  char c = currCh;
   NextChr();
   switch (c) {
     case '+':
-      if (Chr == '=') {
-        Token = TK_AddAssign;
-        NextChr();
-      } else if (Chr == '+') {
-        Token = TK_Inc;
-        NextChr();
-      } else {
-        Token = TK_Plus;
-      }
+           if (currCh == '=') { Token = TK_AddAssign; NextChr(); }
+      else if (currCh == '+') { Token = TK_Inc; NextChr(); }
+      else Token = TK_Plus;
       break;
     case '-':
-      if (Chr == '=') {
-        Token = TK_MinusAssign;
-        NextChr();
-      } else if (Chr == '-') {
-        Token = TK_Dec;
-        NextChr();
-      } else if (Chr == '>') {
-        Token = TK_Arrow;
-        NextChr();
-      } else {
-        Token = TK_Minus;
-      }
+           if (currCh == '=') { Token = TK_MinusAssign; NextChr(); }
+      else if (currCh == '-') { Token = TK_Dec; NextChr(); }
+      else if (currCh == '>') { Token = TK_Arrow; NextChr(); }
+      else Token = TK_Minus;
       break;
     case '*':
-      if (Chr == '=') {
-        Token = TK_MultiplyAssign;
-        NextChr();
-      } else {
-        Token = TK_Asterisk;
-      }
+      if (currCh == '=') { Token = TK_MultiplyAssign; NextChr(); }
+      else Token = TK_Asterisk;
       break;
     case '/':
-      if (Chr == '=') {
-        Token = TK_DivideAssign;
-        NextChr();
-      } else {
-        Token = TK_Slash;
-      }
+      if (currCh == '=') { Token = TK_DivideAssign; NextChr(); }
+      else Token = TK_Slash;
       break;
     case '%':
-      if (Chr == '=') {
-        Token = TK_ModAssign;
-        NextChr();
-      } else {
-        Token = TK_Percent;
-      }
+      if (currCh == '=') { Token = TK_ModAssign; NextChr(); }
+      else Token = TK_Percent;
       break;
     case '=':
-      if (Chr == '=') {
-        Token = TK_Equals;
-        NextChr();
-      } else {
-        Token = TK_Assign;
-      }
+      if (currCh == '=') { Token = TK_Equals; NextChr(); }
+      else Token = TK_Assign;
       break;
     case '<':
-      if (Chr == '<') {
+      if (currCh == '<') {
         NextChr();
-        if (Chr == '=') {
-          Token = TK_LShiftAssign;
-          NextChr();
-        } else {
-          Token = TK_LShift;
-        }
-      } else if (Chr == '=') {
+        if (currCh == '=') { Token = TK_LShiftAssign; NextChr(); }
+        else Token = TK_LShift;
+      } else if (currCh == '=') {
         Token = TK_LessEquals;
         NextChr();
       } else {
@@ -1411,15 +1152,11 @@ void VLexer::ProcessSpecialToken () {
       }
       break;
     case '>':
-      if (Chr == '>') {
+      if (currCh == '>') {
         NextChr();
-        if (Chr == '=') {
-          Token = TK_RShiftAssign;
-          NextChr();
-        } else {
-          Token = TK_RShift;
-        }
-      } else if (Chr == '=') {
+        if (currCh == '=') { Token = TK_RShiftAssign; NextChr(); }
+        else Token = TK_RShift;
+      } else if (currCh == '=') {
         Token = TK_GreaterEquals;
         NextChr();
       } else {
@@ -1427,45 +1164,25 @@ void VLexer::ProcessSpecialToken () {
       }
       break;
     case '!':
-      if (Chr == '=') {
-        Token = TK_NotEquals;
-        NextChr();
-      } else {
-        Token = TK_Not;
-      }
+      if (currCh == '=') { Token = TK_NotEquals; NextChr(); }
+      else Token = TK_Not;
       break;
     case '&':
-      if (Chr == '=') {
-        Token = TK_AndAssign;
-        NextChr();
-      } else if (Chr == '&') {
-        Token = TK_AndLog;
-        NextChr();
-      } else {
-        Token = TK_And;
-      }
+           if (currCh == '=') { Token = TK_AndAssign; NextChr(); }
+      else if (currCh == '&') { Token = TK_AndLog; NextChr(); }
+      else Token = TK_And;
       break;
     case '|':
-      if (Chr == '=') {
-        Token = TK_OrAssign;
-        NextChr();
-      } else if (Chr == '|') {
-        Token = TK_OrLog;
-        NextChr();
-      } else {
-        Token = TK_Or;
-      }
+           if (currCh == '=') { Token = TK_OrAssign; NextChr(); }
+      else if (currCh == '|') { Token = TK_OrLog; NextChr(); }
+      else Token = TK_Or;
       break;
     case '^':
-      if (Chr == '=') {
-        Token = TK_XOrAssign;
-        NextChr();
-      } else {
-        Token = TK_XOr;
-      }
+      if (currCh == '=') { Token = TK_XOrAssign; NextChr(); }
+      else Token = TK_XOr;
       break;
     case '.':
-      if (Chr == '.' && Src->FilePtr[0] == '.') {
+      if (currCh == '.' && src->FilePtr[0] == '.') {
         Token = TK_VarArgs;
         NextChr();
         NextChr();
@@ -1474,45 +1191,22 @@ void VLexer::ProcessSpecialToken () {
       }
       break;
     case ':':
-      if (Chr == ':') {
-        Token = TK_DColon;
-        NextChr();
-      } else {
-        Token = TK_Colon;
-      }
+      if (currCh == ':') { Token = TK_DColon; NextChr(); }
+      else Token = TK_Colon;
       break;
-    case '(':
-      Token = TK_LParen;
-      break;
-    case ')':
-      Token = TK_RParen;
-      break;
-    case '?':
-      Token = TK_Quest;
-      break;
-    case '~':
-      Token = TK_Tilde;
-      break;
-    case ',':
-      Token = TK_Comma;
-      break;
-    case ';':
-      Token = TK_Semicolon;
-      break;
-    case '[':
-      Token = TK_LBracket;
-      break;
-    case ']':
-      Token = TK_RBracket;
-      break;
-    case '{':
-      Token = TK_LBrace;
-      break;
-    case '}':
-      Token = TK_RBrace;
-      break;
+    case '(': Token = TK_LParen; break;
+    case ')': Token = TK_RParen; break;
+    case '?': Token = TK_Quest; break;
+    case '~': Token = TK_Tilde; break;
+    case ',': Token = TK_Comma; break;
+    case ';': Token = TK_Semicolon; break;
+    case '[': Token = TK_LBracket; break;
+    case ']': Token = TK_RBracket; break;
+    case '{': Token = TK_LBrace; break;
+    case '}': Token = TK_RBrace; break;
+    case '$': Token = TK_Dollar; break;
     default:
-      ParseError(Location, ERR_BAD_CHARACTER, "Unknown punctuation \'%c\'", Chr);
+      ParseError(Location, ERR_BAD_CHARACTER, "Unknown punctuation \'%c\'", currCh);
       Token = TK_NoToken;
       break;
   }
@@ -1527,22 +1221,22 @@ void VLexer::ProcessSpecialToken () {
 void VLexer::ProcessFileName () {
   int len = 0;
   NextChr();
-  while (Chr != '\"') {
+  while (currCh != '\"') {
     if (len >= MAX_QUOTED_LENGTH-1) {
       ParseError(Location, ERR_STRING_TOO_LONG);
       NextChr();
       continue;
     }
-    if (Chr == EOF_CHARACTER) {
+    if (currCh == EOF_CHARACTER) {
       ParseError(Location, ERR_EOF_IN_STRING);
       break;
     }
-    if (Src->IncLineNumber) ParseError(Location, ERR_NEW_LINE_INSIDE_QUOTE);
-    TokenStringBuffer[len] = Chr;
+    if (src->IncLineNumber) ParseError(Location, ERR_NEW_LINE_INSIDE_QUOTE);
+    tokenStringBuffer[len] = currCh;
     NextChr();
     ++len;
   }
-  TokenStringBuffer[len] = 0;
+  tokenStringBuffer[len] = 0;
   NextChr();
 }
 
@@ -1553,10 +1247,7 @@ void VLexer::ProcessFileName () {
 //
 //==========================================================================
 bool VLexer::Check (EToken tk) {
-  if (Token == tk) {
-    NextToken();
-    return true;
-  }
+  if (Token == tk) { NextToken(); return true; }
   return false;
 }
 
@@ -1570,9 +1261,7 @@ bool VLexer::Check (EToken tk) {
 //
 //==========================================================================
 void VLexer::Expect (EToken tk) {
-  if (Token != tk) {
-    ParseError(Location, "expected %s, found %s", TokenNames[tk], TokenNames[Token]);
-  }
+  if (Token != tk) ParseError(Location, "expected %s, found %s", TokenNames[tk], TokenNames[Token]);
   NextToken();
 }
 
@@ -1586,8 +1275,6 @@ void VLexer::Expect (EToken tk) {
 //
 //==========================================================================
 void VLexer::Expect (EToken tk, ECompileError error) {
-  if (Token != tk) {
-    ParseError(Location, error, "expected %s, found %s", TokenNames[tk], TokenNames[Token]);
-  }
+  if (Token != tk) ParseError(Location, error, "expected %s, found %s", TokenNames[tk], TokenNames[Token]);
   NextToken();
 }
