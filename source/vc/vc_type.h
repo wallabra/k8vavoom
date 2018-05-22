@@ -92,7 +92,7 @@ public:
   int GetSize() const;
   int GetAlignment() const;
   void CheckPassable(TLocation) const;
-  void CheckMatch(TLocation, const VFieldType&) const;
+  bool CheckMatch (const TLocation &loc, const VFieldType &, bool raiseError=true) const;
   VStr GetName() const;
 };
 

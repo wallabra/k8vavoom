@@ -403,132 +403,85 @@ void VFieldType::CheckPassable(TLocation l) const
 //
 //==========================================================================
 
-void VFieldType::CheckMatch(TLocation l, const VFieldType& Other) const
-{
+bool VFieldType::CheckMatch (const TLocation &l, const VFieldType& Other, bool raiseError) const {
   guard(VFieldType::CheckMatch);
   CheckPassable(l);
   Other.CheckPassable(l);
-  if (Equals(Other))
-  {
-    return;
-  }
-  if (Type == TYPE_String && Other.Type == TYPE_String)
-  {
-    return;
-  }
-  if (Type == TYPE_Vector && Other.Type == TYPE_Vector)
-  {
-    return;
-  }
-  if (Type == TYPE_Pointer && Other.Type == TYPE_Pointer)
-  {
+
+  if (Equals(Other)) return true;
+
+  if (Type == TYPE_String && Other.Type == TYPE_String) return true;
+  if (Type == TYPE_Vector && Other.Type == TYPE_Vector) return true;
+
+  if (Type == TYPE_Pointer && Other.Type == TYPE_Pointer) {
     VFieldType it1 = GetPointerInnerType();
     VFieldType it2 = Other.GetPointerInnerType();
-    if (it1.Equals(it2))
-    {
-      return;
+    if (it1.Equals(it2)) return true;
+    if (it1.Type == TYPE_Void || it2.Type == TYPE_Void) return true;
+    if (it1.Type == TYPE_Struct && it2.Type == TYPE_Struct) {
+      VStruct *s1 = it1.Struct;
+      VStruct *s2 = it2.Struct;
+      for (VStruct *st1 = s1->ParentStruct; st1; st1 = st1->ParentStruct) if (st1 == s2) return true;
     }
-    if ((it1.Type == TYPE_Void) || (it2.Type == TYPE_Void))
-    {
-      return;
+  }
+
+  if (Type == TYPE_Reference && Other.Type == TYPE_Reference) {
+    VClass *c1 = Class;
+    VClass *c2 = Other.Class;
+    if (!c1 || !c2) return true; // none reference can be assigned to any reference
+    if (c1 == c2) return true;
+    for (VClass *pc1 = c1->ParentClass; pc1; pc1 = pc1->ParentClass) if (pc1 == c2) return true;
+  }
+
+  if (Type == TYPE_Class && Other.Type == TYPE_Class) {
+    VClass *c1 = Class;
+    VClass *c2 = Other.Class;
+    if (!c2) return true; // can assign any class type to generic class type
+    if (c1 == c2) return true;
+    if (c1) {
+      for (VClass *pc1 = c1->ParentClass; pc1; pc1 = pc1->ParentClass) if (pc1 == c2) return true;
     }
-    if (it1.Type == TYPE_Struct && it2.Type == TYPE_Struct)
-    {
-      VStruct* s1 = it1.Struct;
-      VStruct* s2 = it2.Struct;
-      for (VStruct* st1 = s1->ParentStruct; st1; st1 = st1->ParentStruct)
-      {
-        if (st1 == s2)
-        {
-          return;
-        }
+  }
+
+  if (Type == TYPE_Int && Other.Type == TYPE_Byte) return true;
+  if (Type == TYPE_Int && Other.Type == TYPE_Bool) return true;
+
+  // allow assigning none to states, classes and delegates
+  if (Type == TYPE_Reference && Class == nullptr &&
+      (Other.Type == TYPE_Class || Other.Type == TYPE_State || Other.Type == TYPE_Delegate))
+  {
+    return true;
+  }
+
+  bool result = true;
+
+  if (Type == TYPE_Delegate && Other.Type == TYPE_Delegate) {
+    VMethod &F1 = *Function;
+    VMethod &F2 = *Other.Function;
+    if (F1.Flags & FUNC_Static || F2.Flags & FUNC_Static) {
+      result = false;
+      if (raiseError) ParseError(l, "Can't assign a static function to delegate");
+    }
+    if (!F1.ReturnType.Equals(F2.ReturnType)) {
+      result = false;
+      if (raiseError) ParseError(l, "Delegate has different return type");
+    } else if (F1.NumParams != F2.NumParams) {
+      result = false;
+      if (raiseError) ParseError(l, "Delegate has different number of arguments");
+    } else for (int i = 0; i < F1.NumParams; ++i) {
+      if (!F1.ParamTypes[i].Equals(F2.ParamTypes[i])) {
+        result = false;
+        if (raiseError) ParseError(l, "Delegate argument %d differs", i+1);
       }
     }
+    return result;
   }
-  if (Type == TYPE_Reference && Other.Type == TYPE_Reference)
-  {
-    VClass* c1 = Class;
-    VClass* c2 = Other.Class;
-    if (!c1 || !c2)
-    {
-      //  none reference can be assigned to any reference.
-      return;
-    }
-    if (c1 == c2)
-    {
-      return;
-    }
-    for (VClass* pc1 = c1->ParentClass; pc1; pc1 = pc1->ParentClass)
-    {
-      if (pc1 == c2)
-      {
-        return;
-      }
-    }
+
+  if (raiseError) {
+    ParseError(l, "Type mismatch, types %s and %s are not compatible %d %d", *GetName(), *Other.GetName(), Type, Other.Type);
   }
-  if (Type == TYPE_Class && Other.Type == TYPE_Class)
-  {
-    VClass* c1 = Class;
-    VClass* c2 = Other.Class;
-    if (!c2)
-    {
-      //  Can assign any class type to generic class type.
-      return;
-    }
-    if (c1 == c2)
-    {
-      return;
-    }
-    if (c1)
-    {
-      for (VClass* pc1 = c1->ParentClass; pc1; pc1 = pc1->ParentClass)
-      {
-        if (pc1 == c2)
-        {
-          return;
-        }
-      }
-    }
-  }
-  if (Type == TYPE_Int && Other.Type == TYPE_Byte)
-  {
-    return;
-  }
-  if (Type == TYPE_Int && Other.Type == TYPE_Bool)
-  {
-    return;
-  }
-  //  Allow assigning none to states, classes and delegates
-  if (Type == TYPE_Reference && Class == NULL && (Other.Type == TYPE_Class ||
-    Other.Type == TYPE_State || Other.Type == TYPE_Delegate))
-  {
-    return;
-  }
-  if (Type == TYPE_Delegate && Other.Type == TYPE_Delegate)
-  {
-    VMethod& F1 = *Function;
-    VMethod& F2 = *Other.Function;
-    if (F1.Flags & FUNC_Static || F2.Flags & FUNC_Static)
-    {
-      ParseError(l, "Can't assign a static function to delegate");
-    }
-    if (!F1.ReturnType.Equals(F2.ReturnType))
-    {
-      ParseError(l, "Delegate has different return type");
-    }
-    else if (F1.NumParams != F2.NumParams)
-    {
-      ParseError(l, "Delegate has different number of arguments");
-    }
-    else for (int i = 0; i < F1.NumParams; i++)
-      if (!F1.ParamTypes[i].Equals(F2.ParamTypes[i]))
-      {
-        ParseError(l, "Delegate argument %d differs", i + 1);
-      }
-    return;
-  }
-  ParseError(l, "Type mismatch, types %s and %s are not compatible %d %d",
-    *GetName(), *Other.GetName(), Type, Other.Type);
+
+  return false;
   unguard;
 }
 
@@ -610,7 +563,7 @@ void VScriptArray::Clear (VFieldType& Type) {
     for (int i = 0; i < ArrSize; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
     delete[] ArrData;
   }
-  ArrData = NULL;
+  ArrData = nullptr;
   ArrNum = 0;
   ArrSize = 0;
   unguard;
@@ -701,7 +654,7 @@ void VScriptArray::SetNumPlus (int NewNum, VFieldType& Type) {
 //==========================================================================
 void VScriptArray::Insert (int Index, int Count, VFieldType& Type) {
   guard(VScriptArray::Insert);
-  check(ArrData != NULL);
+  check(ArrData != nullptr);
   check(Index >= 0);
   check(Index <= ArrNum);
 
@@ -723,7 +676,7 @@ void VScriptArray::Insert (int Index, int Count, VFieldType& Type) {
 //==========================================================================
 void VScriptArray::Remove (int Index, int Count, VFieldType& Type) {
   guard(VScriptArray::Remove);
-  check(ArrData != NULL);
+  check(ArrData != nullptr);
   check(Index >= 0);
   check(Index+Count <= ArrNum);
 

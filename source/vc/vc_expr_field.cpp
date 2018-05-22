@@ -327,9 +327,11 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
   if (!AssignTarget) {
     VExpression *ufcsArgs[1];
     ufcsArgs[0] = opcopy;
-    VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
-    delete this;
-    return call->Resolve(ec);
+    if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
+      VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
+      delete this;
+      return call->Resolve(ec);
+    }
   }
 
   delete opcopy; // we never ever need opcopy here

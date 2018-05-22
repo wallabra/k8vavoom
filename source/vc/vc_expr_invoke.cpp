@@ -600,6 +600,78 @@ void VInvocation::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VInvocation::FindMethodWithSignature
+//
+//==========================================================================
+VMethod *VInvocation::FindMethodWithSignature (VEmitContext &ec, VName name, int argc, VExpression **argv) {
+  if (argc < 0 || argc > VMethod::MAX_PARAMS) return nullptr;
+  if (!ec.SelfClass) return nullptr;
+  VMethod *m = ec.SelfClass->FindMethod(name);
+  if (!m) return nullptr;
+  if (!IsGoodMethodParams(ec, m, argc, argv)) return nullptr;
+  return m;
+}
+
+
+//==========================================================================
+//
+//  VInvocation::IsGoodMethodParams
+//
+//==========================================================================
+bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VExpression **argv) {
+  if (argc < 0 || argc > VMethod::MAX_PARAMS) return false;
+  if (!m) return false;
+
+  // determine parameter count
+  int requiredParams = m->NumParams;
+  int maxParams = (m->Flags&FUNC_VarArgs ? VMethod::MAX_PARAMS-1 : m->NumParams);
+
+  for (int i = 0; i < argc; ++i) {
+    if (i < requiredParams) {
+      if (!argv[i]) {
+        if (!(m->ParamFlags[i]&FPARM_Optional)) return false; // ommited non-optional
+        continue;
+      }
+      if (ec.Package->Name == NAME_decorate) {
+        switch (m->ParamTypes[i].Type) {
+          case TYPE_Int:
+          case TYPE_Float:
+            if (argv[i]->Type.Type == TYPE_Float || argv[i]->Type.Type == TYPE_Int) continue;
+            break;
+        }
+      }
+      if (m->ParamFlags[i]&FPARM_Out) {
+        if (!argv[i]->Type.Equals(m->ParamTypes[i])) {
+          //FIXME: This should be error
+          if (!(m->ParamFlags[argc]&FPARM_Optional)) {
+            // check, but don't raise any errors
+            if (!argv[i]->Type.CheckMatch(argv[i]->Loc, m->ParamTypes[i], false)) return false;
+            //ParseError(Args[i]->Loc, "Out parameter types must be equal");
+          }
+        }
+      } else {
+        if (m->ParamTypes[i].Type == TYPE_Float && argv[i]->Type.Type == TYPE_Int) continue;
+        // check, but don't raise any errors
+        if (!argv[i]->Type.CheckMatch(argv[i]->Loc, m->ParamTypes[i], false)) return false;;
+      }
+    } else if (!argv[i]) {
+      return false;
+    }
+  }
+
+  if (argc > maxParams) return false;
+
+  while (argc < requiredParams) {
+    if (!(m->ParamFlags[argc]&FPARM_Optional)) return false;
+    ++argc;
+  }
+
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VInvocation::CheckParams
 //
 //==========================================================================
@@ -608,16 +680,11 @@ void VInvocation::CheckParams (VEmitContext &ec) {
 
   // determine parameter count
   int argsize = 0;
-  int max_params;
-  int num_needed_params = Func->NumParams;
-  if (Func->Flags&FUNC_VarArgs) {
-    max_params = VMethod::MAX_PARAMS-1;
-  } else {
-    max_params = Func->NumParams;
-  }
+  int requiredParams = Func->NumParams;
+  int maxParams = (Func->Flags&FUNC_VarArgs ? VMethod::MAX_PARAMS-1 : Func->NumParams);
 
   for (int i = 0; i < NumArgs; ++i) {
-    if (i < num_needed_params) {
+    if (i < requiredParams) {
       if (!Args[i]) {
         if (!(Func->ParamFlags[i] & FPARM_Optional)) ParseError(Loc, "Cannot omit non-optional argument");
         argsize += Func->ParamTypes[i].GetStackSize();
@@ -687,20 +754,20 @@ void VInvocation::CheckParams (VEmitContext &ec) {
     }
   }
 
-  if (NumArgs > max_params) ParseError(Loc, "Incorrect number of arguments, need %d, got %d.", max_params, NumArgs);
+  if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments, need %d, got %d.", maxParams, NumArgs);
 
-  while (NumArgs < num_needed_params) {
+  while (NumArgs < requiredParams) {
     if (Func->ParamFlags[NumArgs] & FPARM_Optional) {
       Args[NumArgs] = nullptr;
       ++NumArgs;
     } else {
-      ParseError(Loc, "Incorrect argument count %d, should be %d", NumArgs, num_needed_params);
+      ParseError(Loc, "Incorrect argument count %d, should be %d", NumArgs, requiredParams);
       break;
     }
   }
 
   if (Func->Flags&FUNC_VarArgs) {
-    Args[NumArgs++] = new VIntLiteral(argsize/4-num_needed_params, Loc);
+    Args[NumArgs++] = new VIntLiteral(argsize/4-requiredParams, Loc);
   }
 
   unguard;
@@ -715,18 +782,18 @@ void VInvocation::CheckParams (VEmitContext &ec) {
 void VInvocation::CheckDecorateParams (VEmitContext &ec) {
   guard(VInvocation::CheckDecorateParams);
 
-  int max_params;
-  int num_needed_params = Func->NumParams;
+  int maxParams;
+  int requiredParams = Func->NumParams;
   if (Func->Flags & FUNC_VarArgs) {
-    max_params = VMethod::MAX_PARAMS-1;
+    maxParams = VMethod::MAX_PARAMS-1;
   } else {
-    max_params = Func->NumParams;
+    maxParams = Func->NumParams;
   }
 
-  if (NumArgs > max_params) ParseError(Loc, "Incorrect number of arguments, need %d, got %d.", max_params, NumArgs);
+  if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments, need %d, got %d.", maxParams, NumArgs);
 
   for (int i = 0; i < NumArgs; ++i) {
-    if (i >= num_needed_params) continue;
+    if (i >= requiredParams) continue;
     if (!Args[i]) continue;
     switch (Func->ParamTypes[i].Type) {
       case TYPE_Name:

@@ -132,6 +132,11 @@ public:
   void CheckParams (VEmitContext &);
   void CheckDecorateParams (VEmitContext &);
 
+  // arguments should be already resolved (i.e. has type)
+  static VMethod *FindMethodWithSignature (VEmitContext &ec, VName name, int argc, VExpression **argv);
+  // arguments should be already resolved (i.e. has type)
+  static bool IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VExpression **argv);
+
 protected:
   VInvocation () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
