@@ -1956,6 +1956,15 @@ void CalcSecMinMaxs(sector_t *sector)
 //
 //==========================================================================
 
+IMPLEMENT_FUNCTION(VLevel, GetLineIndex)
+{
+  P_GET_PTR(line_t, line);
+  P_GET_SELF;
+  int idx = -1;
+  if (line) idx = (int)(line-Self->Lines);
+  RET_INT(idx);
+}
+
 IMPLEMENT_FUNCTION(VLevel, PointInSector)
 {
   P_GET_VEC(Point);

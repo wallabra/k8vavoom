@@ -395,6 +395,8 @@ private:
 
   void PostProcessForDecals ();
 
+  DECLARE_FUNCTION(GetLineIndex)
+
   DECLARE_FUNCTION(PointInSector)
   DECLARE_FUNCTION(TraceLine)
   DECLARE_FUNCTION(ChangeSector)
