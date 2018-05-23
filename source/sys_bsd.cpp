@@ -267,6 +267,8 @@ void Sys_Shutdown()
 //
 //==========================================================================
 
+#ifdef USE_SIGNAL_HANDLER
+
 static void signal_handler(int s)
 {
   // Ignore future instances of this signal.
@@ -327,6 +329,9 @@ static void signal_handler(int s)
 #endif
 }
 
+#endif
+
+
 //==========================================================================
 //
 //  main
@@ -343,6 +348,7 @@ int main(int argc, char** argv)
 
     GArgs.Init(argc, argv);
 
+#ifdef USE_SIGNAL_HANDLER
     //  Install signal handlers
     signal(SIGABRT, signal_handler);
     signal(SIGFPE,  signal_handler);
@@ -358,6 +364,7 @@ int main(int argc, char** argv)
 #endif
 #ifdef SIGNOFP
     signal(SIGNOFP, signal_handler);
+#endif
 #endif
 
     //  Initialise
