@@ -1,4 +1,4 @@
-﻿//**************************************************************************
+//**************************************************************************
 //**
 //**    ##   ##    ##    ##   ##   ####     ####   ###     ###
 //**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
@@ -24,14 +24,21 @@
 //**
 //**************************************************************************
 
+
 //==========================================================================
 //
 //  SpawnDecal
 //
 //==========================================================================
-
 final void SpawnDecal (TVec org, name dectype, int side, line_t* li) {
   if (!dectype || !li || !XLevel) return; // just in case
   if (!GetCvarB('decals_enabled')) return;
-  XLevel.AddDecal(org, dectype, side, li);
+  //XLevel.AddDecal(org, dectype, side, li);
+  int lidx = XLevel.GetLineIndex(li);
+  if (lidx < 0 || lidx >= XLevel.NumLines) return;
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    if (!Level.Game.Players[i]) continue;
+    if (!Level.Game.Players[i].bSpawned) continue;
+    PlayerEx(Level.Game.Players[i]).DecalEffect(org, dectype, side, lidx);
+  }
 }

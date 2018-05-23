@@ -159,7 +159,7 @@ replication
 
   unreliable if (!bIsClient)
     ParticleEffect, ClientExplosion, ClientParticleExplosion,
-    ClientSparkParticles, ClientRailTrail;
+    ClientSparkParticles, ClientRailTrail, DecalEffect;
 
   reliable if (!bIsClient)
     ClientVoice, ClientSpeech, ClientFinaleType, ClientSlideshow1,
@@ -1459,6 +1459,19 @@ void ParticleEffect(int count, int type1, int type2, TVec origin, float ornd,
 {
   Level.ParticleEffect(count, type1, type2, origin, ornd, velocity, vrnd, acceleration,
         grav, colour, duration, ramp);
+}
+
+//==========================================================================
+//
+//  ParticleEffect
+//
+//==========================================================================
+
+void DecalEffect (TVec org, name dectype, int side, /*line_t* li*/int lineidx) {
+  if (!dectype || lineidx < 0 || !Level.XLevel) return; // just in case
+  if (!GetCvarB('decals_enabled')) return;
+  if (lineidx >= Level.XLevel.NumLines) return;
+  Level.XLevel.AddDecal(org, dectype, side, &Level.XLevel.Lines[lineidx]);
 }
 
 //==========================================================================

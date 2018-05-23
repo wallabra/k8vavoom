@@ -165,6 +165,8 @@ native readonly private void *__decanimlist;
 //  Natives
 //
 
+native final int GetLineIndex (line_t *line);
+
 native final sector_t *PointInSector(TVec Point);
 native final bool TraceLine(TVec start, TVec end, out TVec HitPoint,
   out TVec HitNormal);

@@ -2201,15 +2201,11 @@ final void SpawnPuff(TVec Org, float Range, class<EntityEx> PuffType,
   int i, c;
   EntityEx puff;
 
-  if (PuffType.default.bPuffParticles)
-  {
+  if (PuffType.default.bPuffParticles) {
     c = P_Random() >> 1;
-    for (i = 0; i < MAXPLAYERS; i++)
-    {
-      if (!Level.Game.Players[i])
-        continue;
-      if (!Level.Game.Players[i].bSpawned)
-        continue;
+    for (i = 0; i < MAXPLAYERS; ++i) {
+      if (!Level.Game.Players[i]) continue;
+      if (!Level.Game.Players[i].bSpawned) continue;
       PlayerEx(Level.Game.Players[i]).ParticleEffect(20, LineSpecialLevelInfo::pt_static,
             LineSpecialLevelInfo::pt_explode2, Org, 0.0, vector(32.0, 32.0, 32.0),
             0.5, 10.0, 40.0, RGB(c, c, c), 0.8, 0.0);
