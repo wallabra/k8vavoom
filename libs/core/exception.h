@@ -27,44 +27,45 @@
 #define DO_CHECK    1
 
 #ifdef PARANOID
-#define DO_GUARD_SLOW 1
-#define DO_CHECK_SLOW 1
+# warning "PARANOID MODE"
+# define DO_GUARD_SLOW  1
+# define DO_CHECK_SLOW  1
 #endif
+
 
 //==========================================================================
 //
 //  Exceptions
 //
 //==========================================================================
-
-class VException : VInterface
-{
+class VException : VInterface {
 public:
-  virtual const char* What() const = 0;
+  virtual const char *What() const = 0;
 };
 
-#define MAX_ERROR_TEXT_SIZE   1024
 
-class VavoomError : public VException
-{
+#define MAX_ERROR_TEXT_SIZE   (1024)
+
+class VavoomError : public VException {
 public:
   char message[MAX_ERROR_TEXT_SIZE];
 
-  explicit VavoomError(const char *text);
-  const char* What() const;
+  explicit VavoomError (const char *text);
+  const char *What() const;
 };
 
-class RecoverableError : public VavoomError
-{
+
+class RecoverableError : public VavoomError {
 public:
-  explicit RecoverableError(const char *text) : VavoomError(text) { }
+  explicit RecoverableError (const char *text) : VavoomError(text) {}
 };
 
 class ZoneError : public VavoomError
 {
 public:
-  explicit ZoneError(const char* text) : VavoomError(text) { }
+  explicit ZoneError(const char *text) : VavoomError(text) {}
 };
+
 
 //==========================================================================
 //
@@ -72,61 +73,70 @@ public:
 //
 //==========================================================================
 
-//  Turn on usage of context in guard macros on platforms where it's not
-// safe to throw an exception in signal handler.
-#if DO_GUARD && defined(__linux__)
-#define USE_GUARD_SIGNAL_CONTEXT
+// turn on usage of context in guard macros on platforms where it's not
+// safe to throw an exception in signal handler
+#ifdef USE_SIGNAL_HANDLER
+# if DO_GUARD && defined(__linux__)
+#  define USE_GUARD_SIGNAL_CONTEXT
+# elif defined(USE_GUARD_SIGNAL_CONTEXT)
+#  undef USE_GUARD_SIGNAL_CONTEXT
+# endif
+#elif defined(USE_GUARD_SIGNAL_CONTEXT)
+# undef USE_GUARD_SIGNAL_CONTEXT
 #endif
+
 
 #ifdef USE_GUARD_SIGNAL_CONTEXT
 #include <setjmp.h>
-//  Stack control.
-class __Context
-{
+// stack control
+class __Context {
 public:
-  __Context() { memcpy(&Last, &Env, sizeof(jmp_buf)); }
-  ~__Context() { memcpy(&Env, &Last, sizeof(jmp_buf)); }
+  __Context () { memcpy(&Last, &Env, sizeof(jmp_buf)); }
+  ~__Context () { memcpy(&Env, &Last, sizeof(jmp_buf)); }
   static jmp_buf Env;
-  static const char* ErrToThrow;
+  static const char *ErrToThrow;
 
 protected:
   jmp_buf Last;
 };
 #endif
 
+
 #if defined(_DEBUG) || !DO_GUARD
-#define guard(name)   {static const char __FUNC_NAME__[] = #name; {
-#define unguard     }}
-#define unguardf(msg) }}
+# define guard(name)    { static const char __FUNC_NAME__[] = #name; {
+# define unguard        }}
+# define unguardf(msg)  }}
 #elif defined(USE_GUARD_SIGNAL_CONTEXT)
-#define guard(name)   {static const char __FUNC_NAME__[] = #name; \
-  __Context __LOCAL_CONTEXT__; try { if (setjmp(__Context::Env)) { \
-  throw VavoomError(__Context::ErrToThrow); } else {
-#define unguard     }} catch (RecoverableError &e) { throw e; } \
-  catch (...) { Host_CoreDump(__FUNC_NAME__); throw; }}
-#define unguardf(msg) }} catch (RecoverableError &e) { throw e; } \
-  catch (...) { Host_CoreDump(__FUNC_NAME__); Host_CoreDump msg; throw; }}
+# define guard(name)    { \
+    static const char __FUNC_NAME__[] = #name; \
+    __Context __LOCAL_CONTEXT__; try { if (setjmp(__Context::Env)) { \
+    throw VavoomError(__Context::ErrToThrow); } else {
+# define unguard        }} catch (RecoverableError &e) { throw e; } \
+    catch (...) { Host_CoreDump(__FUNC_NAME__); throw; }}
+# define unguardf(msg)  }} catch (RecoverableError &e) { throw e; } \
+    catch (...) { Host_CoreDump(__FUNC_NAME__); Host_CoreDump msg; throw; }}
 #else
-#define guard(name)   {static const char __FUNC_NAME__[] = #name; try {
-#define unguard     } catch (RecoverableError &e) { throw e; } \
-  catch (...) { Host_CoreDump(__FUNC_NAME__); throw; }}
-#define unguardf(msg) } catch (RecoverableError &e) { throw e; } \
-  catch (...) { Host_CoreDump(__FUNC_NAME__); Host_CoreDump msg; throw; }}
+# define guard(name)   {static const char __FUNC_NAME__[] = #name; try {
+# define unguard     } catch (RecoverableError &e) { throw e; } \
+    catch (...) { Host_CoreDump(__FUNC_NAME__); throw; }}
+# define unguardf(msg) } catch (RecoverableError &e) { throw e; } \
+    catch (...) { Host_CoreDump(__FUNC_NAME__); Host_CoreDump msg; throw; }}
 #endif
 
 #if !defined(_DEBUG) && DO_GUARD_SLOW
-#define guardSlow(name)   guard(name)
-#define unguardSlow     unguard
-#define unguardfSlow(msg) unguardf(msg)
+# define guardSlow(name)    guard(name)
+# define unguardSlow        unguard
+# define unguardfSlow(msg)  unguardf(msg)
 #else
-#define guardSlow(name)   {
-#define unguardSlow     }
-#define unguardfSlow(msg) }
+# define guardSlow(name)    {
+# define unguardSlow        }
+# define unguardfSlow(msg)  }
 #endif
 
-void Host_CoreDump(const char *fmt, ...);
-void __attribute__((noreturn, format(printf, 1, 2))) __declspec(noreturn)
-  Sys_Error(const char*, ...);
+
+void Host_CoreDump (const char *fmt, ...) __attribute__((format(printf, 1, 2)));;
+void Sys_Error (const char *, ...) __attribute__((noreturn, format(printf, 1, 2)));
+
 
 //==========================================================================
 //
@@ -135,17 +145,17 @@ void __attribute__((noreturn, format(printf, 1, 2))) __declspec(noreturn)
 //==========================================================================
 
 #if DO_CHECK
-#define check(e)  if (!(e)) throw VavoomError("Assertion failed: " #e)
-#define verify(e) if (!(e)) throw VavoomError("Assertion failed: " #e)
+# define check(e)  if (!(e)) throw VavoomError("Assertion failed: " #e)
+# define verify(e) if (!(e)) throw VavoomError("Assertion failed: " #e)
 #else
 #define check(e)
 #define verify(e) (e)
 #endif
 
 #if DO_CHECK_SLOW
-#define checkSlow(e)  check(e)
-#define verifySlow(e) verify(e)
+# define checkSlow(e)  check(e)
+# define verifySlow(e) verify(e)
 #else
-#define checkSlow(e)
-#define verifySlow(e) (e)
+# define checkSlow(e)
+# define verifySlow(e) (e)
 #endif
