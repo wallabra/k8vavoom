@@ -692,6 +692,7 @@ protected:
   //
   static VCvarI tex_linear;
   static VCvarI sprite_tex_linear;
+  static VCvarB gl_2d_filtering;
   static VCvarI gl_texture_filter_anisotropic;
   static VCvarB clear;
   static VCvarB blend_sprites;
@@ -721,6 +722,7 @@ protected:
   void SetTexture(VTexture*, int);
   void SetSpriteLump(VTexture*, VTextureTranslation*, int);
   void SetPic(VTexture*, VTextureTranslation*, int);
+  void SetPicModel(VTexture*, VTextureTranslation*, int);
   void GenerateTexture(VTexture*, GLuint*, VTextureTranslation*, int);
   void UploadTexture8(int, int, const vuint8*, const rgba_t*);
   void UploadTexture(int, int, const rgba_t*);

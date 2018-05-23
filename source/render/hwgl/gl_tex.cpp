@@ -251,29 +251,57 @@ void VOpenGLDrawer::SetSpriteLump(VTexture* Tex,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::SetPic
 //
 //==========================================================================
-
-void VOpenGLDrawer::SetPic(VTexture* Tex, VTextureTranslation* Trans,
-  int CMap)
-{
+void VOpenGLDrawer::SetPic(VTexture *Tex, VTextureTranslation *Trans, int CMap) {
   guard(VOpenGLDrawer::SetPic);
+
+  /*
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
-  if (Tex->Type == TEXTYPE_Skin || Tex->Type == TEXTYPE_FontChar)
-  {
+  if (Tex->Type == TEXTYPE_Skin || Tex->Type == TEXTYPE_FontChar) {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipfilter);
+  } else {
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
   }
-  else
-  {
+  */
+
+  if (gl_2d_filtering) {
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  } else {
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  }
+  if (max_anisotropy > 1.0) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 0.0f);
+
+  SetSpriteLump(Tex, Trans, CMap);
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::SetPicModel
+//
+//==========================================================================
+void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap) {
+  guard(VOpenGLDrawer::SetPicModel);
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
+  if (Tex->Type == TEXTYPE_Skin || Tex->Type == TEXTYPE_FontChar) {
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipfilter);
+  } else {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
   }
 
   SetSpriteLump(Tex, Trans, CMap);
   unguard;
 }
+
 
 //==========================================================================
 //

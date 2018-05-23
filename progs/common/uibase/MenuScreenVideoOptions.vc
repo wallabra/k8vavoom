@@ -36,10 +36,7 @@ override void CreateChoices()
   MenuChoiceSlider  Slider;
   MenuChoiceEnum    Enum;
   MenuTextButton    Btn;
-  int         currentY;
-  int         i;
-
-  currentY = ChoicesStartY;
+  int i;
 
   Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
   Slider.SetOrigin(ChoicesStartX, currentY);
@@ -146,6 +143,8 @@ override void CreateChoices()
   Enum.SetInitialValue(GetCvar('draw_fps'));
   Enum.ValueChanging = ChangeDrawFps;
   currentY += Enum.Height;
+
+  CreateOnOffCvar("Interface filtering", 'gl_2d_filtering');
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);

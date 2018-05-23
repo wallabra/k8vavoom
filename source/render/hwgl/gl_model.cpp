@@ -227,7 +227,7 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
   //mframe_t* framedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + frame * pmdl->framesize);
   //mframe_t* nextframedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + nextframe * pmdl->framesize);
 
-  SetPic(Skin, Trans, CMap);
+  SetPicModel(Skin, Trans, CMap);
 
   glEnable(GL_ALPHA_TEST);
   glShadeModel(GL_SMOOTH);
@@ -348,7 +348,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient(const TVec &origin, const TAVec &angle
   VMeshFrame* FrameDesc = &Mdl->Frames[frame];
   VMeshFrame* NextFrameDesc = &Mdl->Frames[nextframe];
 
-  SetPic(Skin, NULL, CM_Default);
+  SetPicModel(Skin, NULL, CM_Default);
 
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);
@@ -448,7 +448,7 @@ void VOpenGLDrawer::DrawAliasModelTextures(const TVec &origin, const TAVec &angl
   VMeshFrame* FrameDesc = &Mdl->Frames[frame];
   VMeshFrame* NextFrameDesc = &Mdl->Frames[nextframe];
 
-  SetPic(Skin, Trans, CMap);
+  SetPicModel(Skin, Trans, CMap);
 
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);
@@ -577,7 +577,7 @@ void VOpenGLDrawer::DrawAliasModelLight(const TVec &origin, const TAVec &angles,
   NormalMat[2][1] = normalmatrix[2][1];
   NormalMat[2][2] = normalmatrix[2][2];
 
-  SetPic(Skin, NULL, CM_Default);
+  SetPicModel(Skin, NULL, CM_Default);
 
   p_glUniform1fARB(ShadowsModelLightInterLoc, Inter);
   p_glUniformMatrix4fvARB(ShadowsModelLightModelToWorldMatLoc, 1, GL_FALSE, RotationMatrix[0]);
@@ -764,7 +764,7 @@ void VOpenGLDrawer::DrawAliasModelFog(const TVec &origin, const TAVec &angles,
   VMeshFrame* FrameDesc = &Mdl->Frames[frame];
   VMeshFrame* NextFrameDesc = &Mdl->Frames[nextframe];
 
-  SetPic(Skin, NULL, CM_Default);
+  SetPicModel(Skin, NULL, CM_Default);
 
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);
