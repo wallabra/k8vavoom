@@ -23,28 +23,10 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gl_local.h"
-
 #include "render/r_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 extern VCvarB decals_enabled;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static VCvarB glsw_report_verts("glsw_report_verts", false, "Report number of shadow volume vertices?", 0);
 static VCvarB gl_decal_debug_nostencil("gl_decal_debug_nostencil", false, "Don't touch this!", 0);
@@ -52,7 +34,6 @@ static VCvarB gl_decal_debug_noalpha("gl_decal_debug_noalpha", false, "Don't tou
 static VCvarB gl_decal_dump_max("gl_decal_dump_max", false, "Don't touch this!", 0);
 static VCvarB gl_decal_reset_max("gl_decal_reset_max", false, "Don't touch this!", 0);
 
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
@@ -60,28 +41,27 @@ static VCvarB gl_decal_reset_max("gl_decal_reset_max", false, "Don't touch this!
 //
 //==========================================================================
 
-static inline void glVertex(const TVec &v)
-{
+static inline void glVertex (const TVec &v) {
   glVertex3f(v.x, v.y, v.z);
 }
+
 
 //==========================================================================
 //
 // VOpenGLDrawer::RenderShaderDecalsStart
 //
 //==========================================================================
-
 void VOpenGLDrawer::RenderShaderDecalsStart () {
   decalStcVal = 255; // next value for stencil buffer (clear on the first use, and clear on each wrap)
   decalUsedStencil = false;
 }
+
 
 //==========================================================================
 //
 // VOpenGLDrawer::RenderShaderDecalsEnd
 //
 //==========================================================================
-
 void VOpenGLDrawer::RenderShaderDecalsEnd () {
   if (decalUsedStencil) {
     // clear stencil buffer, as other stages may expect it cleared
@@ -90,12 +70,12 @@ void VOpenGLDrawer::RenderShaderDecalsEnd () {
   }
 }
 
+
 //==========================================================================
 //
 // VOpenGLDrawer::RenderPrepareShaderDecals
 //
 //==========================================================================
-
 void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf, bool lmap) {
   if (!decals_enabled) return;
 
@@ -110,12 +90,12 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf, bool lmap) {
   decalUsedStencil = true;
 }
 
+
 //==========================================================================
 //
 // VOpenGLDrawer::RenderFinishShaderDecals
 //
 //==========================================================================
-
 bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   if (!decals_enabled) return false;
 
@@ -166,8 +146,8 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   }
 
   // also, clear dead decals here, 'cause why not?
-  decal_t* prev = nullptr;
-  decal_t* dc = surf->dcseg->decals;
+  decal_t *prev = nullptr;
+  decal_t *dc = surf->dcseg->decals;
 
   int rdcount = 0;
   static int maxrdcount = 0;
@@ -176,7 +156,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   while (dc) {
     if (dc->texture < 0 || dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0) {
       // remove it
-      decal_t* n = dc->next;
+      decal_t *n = dc->next;
       if (!dc->animator) {
         if (prev) prev->next = n; else surf->dcseg->decals = n;
         delete dc;
@@ -213,18 +193,13 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
     //float txh = dtex->GetHeight()*dc->origScaleY;
 
     if (txw < 1 || txh < 1) {
-      // remove it
-      /*
-      decal_t* n = dc->next;
+      // remove it, if it is not animated
+      decal_t *n = dc->next;
       if (!dc->animator) {
         if (prev) prev->next = n; else surf->dcseg->decals = n;
         delete dc;
-      } else {
-        prev = dc;
       }
       dc = n;
-      */
-      dc = dc->next;
       continue;
     }
 
@@ -312,14 +287,13 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap) {
   return true;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::WorldDrawing
 //
 //==========================================================================
-
-void VOpenGLDrawer::WorldDrawing()
-{
+void VOpenGLDrawer::WorldDrawing () {
   guard(VOpenGLDrawer::WorldDrawing);
   surfcache_t *cache;
   surface_t *surf;
@@ -477,47 +451,29 @@ void VOpenGLDrawer::WorldDrawing()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawWorldAmbientPass
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawWorldAmbientPass()
-{
+void VOpenGLDrawer::DrawWorldAmbientPass () {
   guard(VOpenGLDrawer::DrawWorldAmbientPass);
-  //  First draw horizons.
-  if (RendLev->HorizonPortalsHead)
-  {
-    for (surface_t* surf = RendLev->HorizonPortalsHead; surf; surf = surf->DrawNext)
-    {
-      if (surf->plane->PointOnSide(vieworg))
-      {
-        //  Viewer is in back side or on plane
-        continue;
-      }
-
+  // first draw horizons
+  if (RendLev->HorizonPortalsHead) {
+    for (surface_t *surf = RendLev->HorizonPortalsHead; surf; surf = surf->DrawNext) {
+      if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
       DoHorizonPolygon(surf);
     }
   }
 
-  if (RendLev->SkyPortalsHead)
-  {
+  if (RendLev->SkyPortalsHead) {
     p_glUseProgramObjectARB(SurfZBufProgram);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    for (surface_t* surf = RendLev->SkyPortalsHead; surf; surf = surf->DrawNext)
-    {
-      if (surf->plane->PointOnSide(vieworg))
-      {
-        //  Viewer is in back side or on plane
-        continue;
-      }
-
+    for (surface_t *surf = RendLev->SkyPortalsHead; surf; surf = surf->DrawNext) {
+      if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
       glBegin(GL_POLYGON);
-      for (int i = 0; i < surf->count; i++)
-      {
-        glVertex(surf->verts[i]);
-      }
+      for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
       glEnd();
     }
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -527,15 +483,10 @@ void VOpenGLDrawer::DrawWorldAmbientPass()
 
   p_glUseProgramObjectARB(ShadowsAmbientProgram);
   p_glUniform1iARB(ShadowsAmbientTextureLoc, 0);
-  for (surface_t* surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext)
-  {
-    if (surf->plane->PointOnSide(vieworg))
-    {
-      //  Viewer is in back side or on plane
-      continue;
-    }
+  for (surface_t *surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
+    if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
 
-    texinfo_t* tex = surf->texinfo;
+    texinfo_t *tex = surf->texinfo;
     SetTexture(tex->Tex, tex->ColourMap);
     p_glUniform3fvARB(ShadowsAmbientSAxisLoc, 1, &tex->saxis.x);
     p_glUniform1fARB(ShadowsAmbientSOffsLoc, tex->soffs);
@@ -576,28 +527,25 @@ void VOpenGLDrawer::DrawWorldAmbientPass()
 //  VOpenGLDrawer::BeginShadowVolumesPass
 //
 //==========================================================================
-
-void VOpenGLDrawer::BeginShadowVolumesPass()
-{
+void VOpenGLDrawer::BeginShadowVolumesPass () {
   guard(VOpenGLDrawer::BeginShadowVolumesPass);
-  //  Set up for shadow volume rendering.
+  // set up for shadow volume rendering
   glEnable(GL_STENCIL_TEST);
   glDepthMask(GL_FALSE);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::BeginLightShadowVolumes
 //
 //==========================================================================
-
 static int swcount = 0;
 
-void VOpenGLDrawer::BeginLightShadowVolumes()
-{
+void VOpenGLDrawer::BeginLightShadowVolumes () {
   guard(VOpenGLDrawer::BeginLightShadowVolumes);
-  //  Set up for shadow volume rendering.
+  // set up for shadow volume rendering
   glClear(GL_STENCIL_BUFFER_BIT);
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   glEnable(GL_POLYGON_OFFSET_FILL);
@@ -615,69 +563,51 @@ void VOpenGLDrawer::BeginLightShadowVolumes()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::EndLightShadowVolumes
 //
 //==========================================================================
-
-void VOpenGLDrawer::EndLightShadowVolumes()
-{
+void VOpenGLDrawer::EndLightShadowVolumes () {
   guard(VOpenGLDrawer::EndLightShadowVolumes);
   if (glsw_report_verts) GCon->Logf("swcount=%d", swcount);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::RenderSurfaceShadowVolume
 //
 //==========================================================================
-
-void VOpenGLDrawer::RenderSurfaceShadowVolume(surface_t *surf, TVec& LightPos, float Radius, bool LightCanCross)
-{
+void VOpenGLDrawer::RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, float Radius, bool LightCanCross) {
   guard(VOpenGLDrawer::RenderSurfaceShadowVolume);
-  int i;
-  TArray<TVec>    v;
-  if (surf->plane->PointOnSide(vieworg) && LightCanCross)
-  {
-    //  Viewer is in back side or on plane
-    return;
-  }
+  if (surf->plane->PointOnSide(vieworg) && LightCanCross) return; // viewer is in back side or on plane
   float dist = DotProduct(LightPos, surf->plane->normal) - surf->plane->dist;
-  if ((dist <= 0.0 && !LightCanCross) || dist < -Radius || dist > Radius)
-  {
-    //  Light is too far away
-    return;
-  }
+  if ((dist <= 0.0 && !LightCanCross) || dist < -Radius || dist > Radius) return; // light is too far away
+
+  TArray<TVec> v;
   v.SetNum(surf->count);
 
   swcount += surf->count*4;
 
-  for (i = 0; i < surf->count; i++)
-  {
-    v[i] = Normalise(surf->verts[i] - LightPos);
+  for (int i = 0; i < surf->count; ++i) {
+    v[i] = Normalise(surf->verts[i]-LightPos);
     v[i] *= M_INFINITY;
     v[i] += LightPos;
   }
 
   glBegin(GL_POLYGON);
-  for (i = surf->count - 1; i >= 0; i--)
-  {
-    glVertex(v[i]);
-  }
+  for (int i = surf->count-1; i >= 0; --i) glVertex(v[i]);
   glEnd();
 
   glBegin(GL_POLYGON);
-  for (i = 0; i < surf->count; i++)
-  {
-    glVertex(surf->verts[i]);
-  }
+  for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
   glEnd();
 
   glBegin(GL_TRIANGLE_STRIP);
-  for (i = 0; i < surf->count; i++)
-  {
+  for (int i = 0; i < surf->count; ++i) {
     glVertex(surf->verts[i]);
     glVertex(v[i]);
   }
@@ -688,14 +618,13 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume(surface_t *surf, TVec& LightPos, f
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::BeginLightPass
 //
 //==========================================================================
-
-void VOpenGLDrawer::BeginLightPass(TVec& LightPos, float Radius, vuint32 Colour)
-{
+void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour) {
   guard(VOpenGLDrawer::BeginLightPass);
   glDepthFunc(GL_LEQUAL);
   glDisable(GL_POLYGON_OFFSET_FILL);
@@ -711,34 +640,25 @@ void VOpenGLDrawer::BeginLightPass(TVec& LightPos, float Radius, vuint32 Colour)
   p_glUniform3fARB(ShadowsLightLightPosLoc, LightPos.x, LightPos.y, LightPos.z);
   p_glUniform1fARB(ShadowsLightLightRadiusLoc, Radius);
   p_glUniform3fARB(ShadowsLightLightColourLoc,
-    ((Colour >> 16) & 255) / 255.0,
-    ((Colour >> 8) & 255) / 255.0,
-    (Colour & 255) / 255.0);
+    ((Colour>>16)&255)/255.0,
+    ((Colour>>8)&255)/255.0,
+    (Colour&255)/255.0);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawSurfaceLight
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawSurfaceLight(surface_t* Surf, TVec& LightPos, float Radius, bool LightCanCross)
-{
+void VOpenGLDrawer::DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Radius, bool LightCanCross) {
   guard(VOpenGLDrawer::DrawSurfaceLight);
-  if (Surf->plane->PointOnSide(vieworg))
-  {
-    //  Viewer is in back side or on plane
-    return;
-  }
+  if (Surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
   float dist = DotProduct(LightPos, Surf->plane->normal) - Surf->plane->dist;
-  if ((dist <= 0.0 && !LightCanCross) || dist < -Radius || dist > Radius)
-  {
-    //  Light is too far away
-    return;
-  }
+  if ((dist <= 0.0 && !LightCanCross) || dist < -Radius || dist > Radius) return; // light is too far away
   p_glUniform1iARB(ShadowsAmbientTextureLoc, 0);
-  texinfo_t* tex = Surf->texinfo;
+  texinfo_t *tex = Surf->texinfo;
   SetTexture(tex->Tex, tex->ColourMap);
   p_glUniform3fvARB(ShadowsAmbientSAxisLoc, 1, &tex->saxis.x);
   p_glUniform1fARB(ShadowsAmbientSOffsLoc, tex->soffs);
@@ -751,24 +671,20 @@ void VOpenGLDrawer::DrawSurfaceLight(surface_t* Surf, TVec& LightPos, float Radi
   p_glUniform3fARB(ShadowsLightViewOrigin, vieworg.x, vieworg.y, vieworg.z);
 
   glBegin(GL_POLYGON);
-  for (int i = 0; i < Surf->count; i++)
-  {
-    glVertex(Surf->verts[i]);
-  }
+  for (int i = 0; i < Surf->count; ++i) glVertex(Surf->verts[i]);
   glEnd();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawWorldTexturesPass
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawWorldTexturesPass()
-{
+void VOpenGLDrawer::DrawWorldTexturesPass () {
   guard(VOpenGLDrawer::DrawWorldTexturesPass);
-  //  Stop stenciling now.
+  // stop stenciling now
   glDisable(GL_STENCIL_TEST);
 
   glBlendFunc(GL_DST_COLOR, GL_ZERO);
@@ -777,24 +693,16 @@ void VOpenGLDrawer::DrawWorldTexturesPass()
   p_glUseProgramObjectARB(ShadowsTextureProgram);
   p_glUniform1iARB(ShadowsTextureTextureLoc, 0);
 
-  for (surface_t* surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext)
-  {
-    if (surf->plane->PointOnSide(vieworg))
-    {
-      //  Viewer is in back side or on plane
-      continue;
-    }
-
+  for (surface_t *surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
+    if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
     // this is for advanced renderer only
-
-    texinfo_t* tex = surf->texinfo;
+    texinfo_t *tex = surf->texinfo;
     SetTexture(tex->Tex, tex->ColourMap);
     glBegin(GL_POLYGON);
-    for (int i = 0; i < surf->count; i++)
-    {
+    for (int i = 0; i < surf->count; ++i) {
       p_glVertexAttrib2fARB(ShadowsTextureTexCoordLoc,
-        (DotProduct(surf->verts[i], tex->saxis) + tex->soffs) * tex_iw,
-        (DotProduct(surf->verts[i], tex->taxis) + tex->toffs) * tex_ih);
+        (DotProduct(surf->verts[i], tex->saxis)+tex->soffs)*tex_iw,
+        (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
       glVertex(surf->verts[i]);
     }
     glEnd();
@@ -802,33 +710,23 @@ void VOpenGLDrawer::DrawWorldTexturesPass()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawWorldFogPass
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawWorldFogPass()
-{
+void VOpenGLDrawer::DrawWorldFogPass () {
   guard(VOpenGLDrawer::DrawWorldFogPass);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  //  Draw surfaces.
+  // draw surfaces
   p_glUseProgramObjectARB(ShadowsFogProgram);
-  p_glUniform1iARB(ShadowsFogFogTypeLoc, r_fog & 3);
+  p_glUniform1iARB(ShadowsFogFogTypeLoc, r_fog&3);
 
-  for (surface_t* surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext)
-  {
-    if (!surf->Fade)
-    {
-      continue;
-    }
-
-    if (surf->plane->PointOnSide(vieworg))
-    {
-      //  Viewer is in back side or on plane
-      continue;
-    }
+  for (surface_t *surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
+    if (!surf->Fade) continue;
+    if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
 
     p_glUniform4fARB(ShadowsFogFogColourLoc,
       ((surf->Fade >> 16) & 255) / 255.0,
@@ -839,84 +737,70 @@ void VOpenGLDrawer::DrawWorldFogPass()
     p_glUniform1fARB(ShadowsFogFogEndLoc, surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end);
 
     glBegin(GL_POLYGON);
-    for (int i = 0; i < surf->count; i++)
-    {
-      glVertex(surf->verts[i]);
-    }
+    for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
     glEnd();
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::EndFogPass
 //
 //==========================================================================
-
-void VOpenGLDrawer::EndFogPass()
-{
+void VOpenGLDrawer::EndFogPass () {
   guard(VOpenGLDrawer::EndFogPass);
   glDisable(GL_BLEND);
 
-  //  Back to normal z-buffering.
+  // back to normal z-buffering
   glDepthMask(GL_TRUE);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::DoHorizonPolygon
 //
 //==========================================================================
-
-void VOpenGLDrawer::DoHorizonPolygon(surface_t* Surf)
-{
+void VOpenGLDrawer::DoHorizonPolygon (surface_t *Surf) {
   guard(VOpenGLDrawer::DoHorizonPolygon);
-  float Dist = 4096.0;
+  float Dist = 4096.0f;
   TVec v[4];
-  if (Surf->HorizonPlane->normal.z > 0.0)
-  {
+  if (Surf->HorizonPlane->normal.z > 0.0f) {
     v[0] = Surf->verts[0];
     v[3] = Surf->verts[3];
     TVec HDir = -Surf->plane->normal;
 
     TVec Dir1 = Normalise(vieworg - Surf->verts[1]);
     TVec Dir2 = Normalise(vieworg - Surf->verts[2]);
-    float Mul1 = 1.0 / DotProduct(HDir, Dir1);
-    v[1] = Surf->verts[1] + Dir1 * Mul1 * Dist;
-    float Mul2 = 1.0 / DotProduct(HDir, Dir2);
-    v[2] = Surf->verts[2] + Dir2 * Mul2 * Dist;
-    if (v[1].z < v[0].z)
-    {
-      v[1] = Surf->verts[1] + Dir1 * Mul1 * Dist * (Surf->verts[1].z -
-        Surf->verts[0].z) / (Surf->verts[1].z - v[1].z);
-      v[2] = Surf->verts[2] + Dir2 * Mul2 * Dist * (Surf->verts[2].z -
-        Surf->verts[3].z) / (Surf->verts[2].z - v[2].z);
+    float Mul1 = 1.0f/DotProduct(HDir, Dir1);
+    v[1] = Surf->verts[1]+Dir1*Mul1*Dist;
+    float Mul2 = 1.0f/DotProduct(HDir, Dir2);
+    v[2] = Surf->verts[2]+Dir2*Mul2*Dist;
+    if (v[1].z < v[0].z) {
+      v[1] = Surf->verts[1]+Dir1*Mul1*Dist*(Surf->verts[1].z-Surf->verts[0].z)/(Surf->verts[1].z-v[1].z);
+      v[2] = Surf->verts[2]+Dir2*Mul2*Dist*(Surf->verts[2].z-Surf->verts[3].z)/(Surf->verts[2].z-v[2].z);
     }
-  }
-  else
-  {
+  } else {
     v[1] = Surf->verts[1];
     v[2] = Surf->verts[2];
     TVec HDir = -Surf->plane->normal;
 
-    TVec Dir1 = Normalise(vieworg - Surf->verts[0]);
-    TVec Dir2 = Normalise(vieworg - Surf->verts[3]);
-    float Mul1 = 1.0 / DotProduct(HDir, Dir1);
-    v[0] = Surf->verts[0] + Dir1 * Mul1 * Dist;
-    float Mul2 = 1.0 / DotProduct(HDir, Dir2);
-    v[3] = Surf->verts[3] + Dir2 * Mul2 * Dist;
-    if (v[1].z < v[0].z)
-    {
-      v[0] = Surf->verts[0] + Dir1 * Mul1 * Dist * (Surf->verts[1].z -
-        Surf->verts[0].z) / (v[0].z - Surf->verts[0].z);
-      v[3] = Surf->verts[3] + Dir2 * Mul2 * Dist * (Surf->verts[2].z -
-        Surf->verts[3].z) / (v[3].z - Surf->verts[3].z);
+    TVec Dir1 = Normalise(vieworg-Surf->verts[0]);
+    TVec Dir2 = Normalise(vieworg-Surf->verts[3]);
+    float Mul1 = 1.0f/DotProduct(HDir, Dir1);
+    v[0] = Surf->verts[0]+Dir1*Mul1*Dist;
+    float Mul2 = 1.0f/DotProduct(HDir, Dir2);
+    v[3] = Surf->verts[3]+Dir2*Mul2*Dist;
+    if (v[1].z < v[0].z) {
+      v[0] = Surf->verts[0]+Dir1*Mul1*Dist*(Surf->verts[1].z-Surf->verts[0].z)/(v[0].z-Surf->verts[0].z);
+      v[3] = Surf->verts[3]+Dir2*Mul2*Dist*(Surf->verts[2].z-Surf->verts[3].z)/(v[3].z-Surf->verts[3].z);
     }
   }
 
-  texinfo_t* Tex = Surf->texinfo;
+  texinfo_t *Tex = Surf->texinfo;
   SetTexture(Tex->Tex, Tex->ColourMap);
 
   p_glUseProgramObjectARB(SurfSimpleProgram);
@@ -930,87 +814,65 @@ void VOpenGLDrawer::DoHorizonPolygon(surface_t* Surf)
   p_glUniform1fARB(SurfSimpleTOffsLoc, Tex->toffs);
   p_glUniform1fARB(SurfSimpleTexIHLoc, tex_ih);
 
-  float lev = float(Surf->Light >> 24) / 255.0;
-  p_glUniform4fARB(SurfSimpleLightLoc,
-    ((Surf->Light >> 16) & 255) * lev / 255.0,
-    ((Surf->Light >> 8) & 255) * lev / 255.0,
-    (Surf->Light & 255) * lev / 255.0, 1.0);
-  if (Surf->Fade)
-  {
+  float lev = float(Surf->Light>>24)/255.0;
+  p_glUniform4fARB(SurfSimpleLightLoc, ((Surf->Light>>16)&255)*lev/255.0, ((Surf->Light>>8)&255)*lev/255.0, (Surf->Light&255)*lev/255.0, 1.0);
+  if (Surf->Fade) {
     p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_TRUE);
-    p_glUniform4fARB(SurfSimpleFogColourLoc,
-      ((Surf->Fade >> 16) & 255) / 255.0,
-      ((Surf->Fade >> 8) & 255) / 255.0,
-      (Surf->Fade & 255) / 255.0, 1.0);
+    p_glUniform4fARB(SurfSimpleFogColourLoc, ((Surf->Fade>>16)&255)/255.0, ((Surf->Fade>>8)&255)/255.0, (Surf->Fade&255)/255.0, 1.0);
     p_glUniform1fARB(SurfSimpleFogDensityLoc, Surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density);
     p_glUniform1fARB(SurfSimpleFogStartLoc, Surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start);
     p_glUniform1fARB(SurfSimpleFogEndLoc, Surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end);
-  }
-  else
-  {
+  } else {
     p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_FALSE);
   }
 
-  //  Draw it
+  // draw it
   glDepthMask(GL_FALSE);
   glBegin(GL_POLYGON);
-  for (int i = 0; i < 4; i++)
-  {
-    glVertex(v[i]);
-  }
+  for (int i = 0; i < 4; ++i) glVertex(v[i]);
   glEnd();
   glDepthMask(GL_TRUE);
 
-  //  Write to the depth buffer.
+  // write to the depth buffer
   p_glUseProgramObjectARB(SurfZBufProgram);
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   glBegin(GL_POLYGON);
-  for (int i = 0; i < Surf->count; i++)
-  {
-    glVertex(Surf->verts[i]);
-  }
+  for (int i = 0; i < Surf->count; ++i) glVertex(Surf->verts[i]);
   glEnd();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawSkyPolygon
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawSkyPolygon(surface_t* surf, bool bIsSkyBox,
-  VTexture* Texture1, float offs1, VTexture* Texture2, float offs2,
-  int CMap)
+void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *Texture1,
+                                    float offs1, VTexture *Texture2, float offs2, int CMap)
 {
   guard(VOpenGLDrawer::DrawSkyPolygon);
-  int   i;
-  int   sidx[4];
+  int sidx[4];
 
   SetFade(surf->Fade);
   sidx[0] = 0;
   sidx[1] = 1;
   sidx[2] = 2;
   sidx[3] = 3;
-  if (!bIsSkyBox)
-  {
-    if (surf->verts[1].z > 0)
-    {
+  if (!bIsSkyBox) {
+    if (surf->verts[1].z > 0) {
       sidx[1] = 0;
       sidx[2] = 3;
-    }
-    else
-    {
+    } else {
       sidx[0] = 1;
       sidx[3] = 2;
     }
   }
   texinfo_t *tex = surf->texinfo;
 
-  if (Texture2->Type != TEXTYPE_Null)
-  {
+  if (Texture2->Type != TEXTYPE_Null) {
     SetTexture(Texture1, CMap);
     SelectTexture(1);
     SetTexture(Texture2, CMap);
@@ -1022,8 +884,7 @@ void VOpenGLDrawer::DrawSkyPolygon(surface_t* surf, bool bIsSkyBox,
     p_glUniform1fARB(SurfDSkyBrightnessLoc, r_sky_bright_factor);
 
     glBegin(GL_POLYGON);
-    for (i = 0; i < surf->count; i++)
-    {
+    for (int i = 0; i < surf->count; ++i) {
       p_glVertexAttrib2fARB(SurfDSkyTexCoordLoc,
         (DotProduct(surf->verts[sidx[i]], tex->saxis) + tex->soffs - offs1) * tex_iw,
         (DotProduct(surf->verts[i], tex->taxis) + tex->toffs) * tex_ih);
@@ -1033,9 +894,7 @@ void VOpenGLDrawer::DrawSkyPolygon(surface_t* surf, bool bIsSkyBox,
       glVertex(surf->verts[i]);
     }
     glEnd();
-  }
-  else
-  {
+  } else {
     SetTexture(Texture1, CMap);
 
     p_glUseProgramObjectARB(SurfSkyProgram);
@@ -1043,8 +902,7 @@ void VOpenGLDrawer::DrawSkyPolygon(surface_t* surf, bool bIsSkyBox,
     p_glUniform1fARB(SurfSkyBrightnessLoc, r_sky_bright_factor);
 
     glBegin(GL_POLYGON);
-    for (i = 0; i < surf->count; i++)
-    {
+    for (int i = 0; i < surf->count; ++i) {
       p_glVertexAttrib2fARB(SurfSkyTexCoordLoc,
         (DotProduct(surf->verts[sidx[i]], tex->saxis) + tex->soffs - offs1) * tex_iw,
         (DotProduct(surf->verts[i], tex->taxis) + tex->toffs) * tex_ih);
@@ -1056,58 +914,46 @@ void VOpenGLDrawer::DrawSkyPolygon(surface_t* surf, bool bIsSkyBox,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawMaskedPolygon
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawMaskedPolygon(surface_t* surf, float Alpha,
-  bool Additive)
-{
+void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) {
   guard(VOpenGLDrawer::DrawMaskedPolygon);
-  if (surf->plane->PointOnSide(vieworg))
-  {
-    //  Viewer is in back side or on plane
-    return;
-  }
+  if (surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
 
-  texinfo_t* tex = surf->texinfo;
+  texinfo_t *tex = surf->texinfo;
   SetTexture(tex->Tex, tex->ColourMap);
 
   p_glUseProgramObjectARB(SurfMaskedProgram);
   p_glUniform1iARB(SurfMaskedTextureLoc, 0);
   p_glUniform1iARB(SurfMaskedFogTypeLoc, r_fog & 3);
 
-  if (surf->lightmap != NULL ||
-    surf->dlightframe == r_dlightframecount)
-  {
+  if (surf->lightmap != nullptr || surf->dlightframe == r_dlightframecount) {
     RendLev->BuildLightMap(surf, 0);
-    int w = (surf->extents[0] >> 4) + 1;
-    int h = (surf->extents[1] >> 4) + 1;
-    int size = w * h;
+    int w = (surf->extents[0]>>4)+1;
+    int h = (surf->extents[1]>>4)+1;
+    int size = w*h;
     int r = 0;
     int g = 0;
     int b = 0;
-    for (int i = 0; i < size; i++)
-    {
-      r += 255 * 256 - blocklightsr[i];
-      g += 255 * 256 - blocklightsg[i];
-      b += 255 * 256 - blocklightsb[i];
+    for (int i = 0; i < size; ++i) {
+      r += 255*256-blocklightsr[i];
+      g += 255*256-blocklightsg[i];
+      b += 255*256-blocklightsb[i];
     }
-    double iscale = 1.0 / (size * 255 * 256);
-    p_glUniform4fARB(SurfMaskedLightLoc, r * iscale, g * iscale, b * iscale, Alpha);
-  }
-  else
-  {
+    double iscale = 1.0/(size*255*256);
+    p_glUniform4fARB(SurfMaskedLightLoc, r*iscale, g*iscale, b*iscale, Alpha);
+  } else {
     float lev = float(surf->Light >> 24) / 255.0;
     p_glUniform4fARB(SurfMaskedLightLoc,
       ((surf->Light >> 16) & 255) * lev / 255.0,
       ((surf->Light >> 8) & 255) * lev / 255.0,
       (surf->Light & 255) * lev / 255.0, Alpha);
   }
-  if (surf->Fade)
-  {
+  if (surf->Fade) {
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_TRUE);
     p_glUniform4fARB(SurfMaskedFogColourLoc,
       ((surf->Fade >> 16) & 255) / 255.0,
@@ -1116,29 +962,20 @@ void VOpenGLDrawer::DrawMaskedPolygon(surface_t* surf, float Alpha,
     p_glUniform1fARB(SurfMaskedFogDensityLoc, surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density);
     p_glUniform1fARB(SurfMaskedFogStartLoc, surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start);
     p_glUniform1fARB(SurfMaskedFogEndLoc, surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end);
-  }
-  else
-  {
+  } else {
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_FALSE);
   }
 
-  if (blend_sprites || Additive || Alpha < 1.0)
-  {
+  if (blend_sprites || Additive || Alpha < 1.0) {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.333);
     glEnable(GL_BLEND);
-  }
-  else
-  {
+  } else {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555);
   }
-  if (Additive)
-  {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-  }
+  if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
   glBegin(GL_POLYGON);
-  for (int i = 0; i < surf->count; i++)
-  {
+  for (int i = 0; i < surf->count; ++i) {
     p_glVertexAttrib2fARB(SurfMaskedTexCoordLoc,
       (DotProduct(surf->verts[i], tex->saxis) + tex->soffs) * tex_iw,
       (DotProduct(surf->verts[i], tex->taxis) + tex->toffs) * tex_ih);
@@ -1146,77 +983,59 @@ void VOpenGLDrawer::DrawMaskedPolygon(surface_t* surf, float Alpha,
   }
   glEnd();
 
-  if (blend_sprites || Additive || Alpha < 1.0)
-  {
-    glDisable(GL_BLEND);
-  }
-  if (Additive)
-  {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  }
+  if (blend_sprites || Additive || Alpha < 1.0) glDisable(GL_BLEND);
+  if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawSpritePolygon
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawSpritePolygon(TVec *cv, VTexture* Tex, float Alpha,
-  bool Additive, VTextureTranslation* Translation, int CMap, vuint32 light,
-  vuint32 Fade, const TVec&, float, const TVec& saxis, const TVec& taxis,
-  const TVec& texorg)
+void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture* Tex, float Alpha,
+  bool Additive, VTextureTranslation *Translation, int CMap, vuint32 light,
+  vuint32 Fade, const TVec &, float, const TVec &saxis, const TVec &taxis,
+  const TVec &texorg)
 {
   guard(VOpenGLDrawer::DrawSpritePolygon);
-  TVec  texpt;
+  TVec texpt;
 
   SetSpriteLump(Tex, Translation, CMap);
 
-  switch (sprite_tex_linear)
-  {
+  switch (sprite_tex_linear) {
     case 1:
-    {
       spr_maxfilter = GL_LINEAR;
       spr_minfilter = GL_LINEAR;
       spr_mipfilter = GL_NEAREST;
       break;
-    }
     case 2:
-    {
       spr_maxfilter = GL_LINEAR;
       spr_minfilter = GL_LINEAR;
       spr_mipfilter = GL_LINEAR_MIPMAP_NEAREST;
       break;
-    }
     case 3:
-    {
       spr_maxfilter = GL_LINEAR;
       spr_minfilter = GL_LINEAR;
       spr_mipfilter = GL_LINEAR_MIPMAP_LINEAR;
       break;
-    }
     case 4: // BILINEAR
-    {
       spr_maxfilter = GL_NEAREST;
       spr_minfilter = GL_LINEAR_MIPMAP_NEAREST;
       spr_mipfilter = GL_LINEAR_MIPMAP_NEAREST;
       break;
-    }
     case 5: // TRILINEAR
-    {
       spr_maxfilter = GL_NEAREST;
       spr_minfilter = GL_LINEAR_MIPMAP_LINEAR;
       spr_mipfilter = GL_LINEAR_MIPMAP_LINEAR;
       break;
-    }
     default:
-    {
       spr_maxfilter = GL_NEAREST;
       spr_minfilter = GL_NEAREST;
       spr_mipfilter = GL_NEAREST;
-    }
+      break;
   }
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, spr_mipfilter);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, spr_maxfilter);
@@ -1233,8 +1052,7 @@ void VOpenGLDrawer::DrawSpritePolygon(TVec *cv, VTexture* Tex, float Alpha,
     ((light >> 16) & 255) / 255.0,
     ((light >> 8) & 255) / 255.0,
     (light & 255) / 255.0, Alpha);
-  if (Fade)
-  {
+  if (Fade) {
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_TRUE);
     p_glUniform4fARB(SurfMaskedFogColourLoc,
       ((Fade >> 16) & 255) / 255.0,
@@ -1243,25 +1061,17 @@ void VOpenGLDrawer::DrawSpritePolygon(TVec *cv, VTexture* Tex, float Alpha,
     p_glUniform1fARB(SurfMaskedFogDensityLoc, Fade == FADE_LIGHT ? 0.3 : r_fog_density);
     p_glUniform1fARB(SurfMaskedFogStartLoc, Fade == FADE_LIGHT ? 1.0 : r_fog_start);
     p_glUniform1fARB(SurfMaskedFogEndLoc, Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end);
-  }
-  else
-  {
+  } else {
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_FALSE);
   }
 
-  if (blend_sprites || Additive || Alpha < 1.0)
-  {
+  if (blend_sprites || Additive || Alpha < 1.0) {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.333);
     glEnable(GL_BLEND);
-  }
-  else
-  {
+  } else {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555);
   }
-  if (Additive)
-  {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-  }
+  if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
   glBegin(GL_QUADS);
 
@@ -1291,26 +1101,19 @@ void VOpenGLDrawer::DrawSpritePolygon(TVec *cv, VTexture* Tex, float Alpha,
 
   glEnd();
 
-  if (blend_sprites || Additive || Alpha < 1.0)
-  {
-    glDisable(GL_BLEND);
-  }
-  if (Additive)
-  {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  }
+  if (blend_sprites || Additive || Alpha < 1.0) glDisable(GL_BLEND);
+  if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::StartParticles
 //
 //==========================================================================
-
-void VOpenGLDrawer::StartParticles()
-{
+void VOpenGLDrawer::StartParticles () {
   guard(VOpenGLDrawer::StartParticles);
   glEnable(GL_BLEND);
   p_glUseProgramObjectARB(SurfPartProgram);
@@ -1319,14 +1122,13 @@ void VOpenGLDrawer::StartParticles()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawParticle
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawParticle(particle_t *p)
-{
+void VOpenGLDrawer::DrawParticle (particle_t *p) {
   guard(VOpenGLDrawer::DrawParticle);
   float r = ((p->colour >> 16) & 255) / 255.0;
   float g = ((p->colour >> 8) & 255) / 255.0;
@@ -1347,82 +1149,67 @@ void VOpenGLDrawer::DrawParticle(particle_t *p)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::EndParticles
 //
 //==========================================================================
-
-void VOpenGLDrawer::EndParticles()
-{
+void VOpenGLDrawer::EndParticles () {
   guard(VOpenGLDrawer::EndParticles);
   glEnd();
   glDisable(GL_BLEND);
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::StartPortal
 //
 //==========================================================================
-
-bool VOpenGLDrawer::StartPortal(VPortal* Portal, bool UseStencil)
-{
+bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
   guard(VOpenGLDrawer::StartPortal);
-  if (UseStencil)
-  {
-    //  Doesn't work for now.
-    if (RendLev->NeedsInfiniteFarClip)
-    {
-      return false;
-    }
+  if (UseStencil) {
+    // doesn't work for now
+    if (RendLev->NeedsInfiniteFarClip) return false;
 
-    //  Disable drawing
+    // disable drawing
     p_glUseProgramObjectARB(SurfZBufProgram);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glDepthMask(GL_FALSE);
 
-    //  Set up stencil test.
-    if (!RendLev->PortalDepth)
-    {
-      glEnable(GL_STENCIL_TEST);
-    }
+    // set up stencil test
+    if (!RendLev->PortalDepth) glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
     glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
 
-    //  Mark the portal area.
+    // mark the portal area
     DrawPortalArea(Portal);
 
-    //  Set up stencil test for portal
-    glStencilFunc(GL_EQUAL, RendLev->PortalDepth + 1, ~0);
+    // set up stencil test for portal
+    glStencilFunc(GL_EQUAL, RendLev->PortalDepth+1, ~0);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    if (Portal->NeedsDepthBuffer())
-    {
+    if (Portal->NeedsDepthBuffer()) {
       glDepthMask(GL_TRUE);
-      //  Clear depth buffer
+      // clear depth buffer
       glDepthRange(1, 1);
       glDepthFunc(GL_ALWAYS);
       DrawPortalArea(Portal);
       glDepthFunc(GL_LEQUAL);
       glDepthRange(0, 1);
-    }
-    else
-    {
+    } else {
       glDepthMask(GL_FALSE);
       glDisable(GL_DEPTH_TEST);
     }
 
-    //  Enable drawing.
+    // enable drawing
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-    RendLev->PortalDepth++;
-  }
-  else
-  {
-    if (!Portal->NeedsDepthBuffer())
-    {
+    ++RendLev->PortalDepth;
+  } else {
+    if (!Portal->NeedsDepthBuffer()) {
       glDepthMask(GL_FALSE);
       glDisable(GL_DEPTH_TEST);
     }
@@ -1431,88 +1218,70 @@ bool VOpenGLDrawer::StartPortal(VPortal* Portal, bool UseStencil)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawPortalArea
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawPortalArea(VPortal* Portal)
-{
+void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
   guard(VOpenGLDrawer::DrawPortalArea);
-  for (int i = 0; i < Portal->Surfs.Num(); i++)
-  {
-    const surface_t* Surf = Portal->Surfs[i];
+  for (int i = 0; i < Portal->Surfs.Num(); ++i) {
+    const surface_t *Surf = Portal->Surfs[i];
     glBegin(GL_POLYGON);
-    for (int j = 0; j < Surf->count; j++)
-    {
-      glVertex(Surf->verts[j]);
-    }
+    for (int j = 0; j < Surf->count; ++j) glVertex(Surf->verts[j]);
     glEnd();
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VSoftwareDrawer::EndPortal
 //
 //==========================================================================
-
-void VOpenGLDrawer::EndPortal(VPortal* Portal, bool UseStencil)
-{
+void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
   guard(VOpenGLDrawer::EndPortal);
 
   p_glUseProgramObjectARB(SurfZBufProgram);
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-  if (UseStencil)
-  {
-    if (Portal->NeedsDepthBuffer())
-    {
-      //  Clear depth buffer
+  if (UseStencil) {
+    if (Portal->NeedsDepthBuffer()) {
+      // clear depth buffer
       glDepthRange(1, 1);
       glDepthFunc(GL_ALWAYS);
       DrawPortalArea(Portal);
       glDepthFunc(GL_LEQUAL);
       glDepthRange(0, 1);
-    }
-    else
-    {
+    } else {
       glDepthMask(GL_TRUE);
       glEnable(GL_DEPTH_TEST);
     }
 
     glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
 
-    //  Draw proper z-buffer for the portal area.
+    // draw proper z-buffer for the portal area
     glDepthFunc(GL_ALWAYS);
     DrawPortalArea(Portal);
     glDepthFunc(GL_LEQUAL);
 
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    RendLev->PortalDepth--;
+    --RendLev->PortalDepth;
     glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
-    if (!RendLev->PortalDepth)
-    {
-      glDisable(GL_STENCIL_TEST);
-    }
-  }
-  else
-  {
-    if (Portal->NeedsDepthBuffer())
-    {
-      //  Clear depth buffer
+    if (!RendLev->PortalDepth) glDisable(GL_STENCIL_TEST);
+  } else {
+    if (Portal->NeedsDepthBuffer()) {
+      // clear depth buffer
       glClear(GL_DEPTH_BUFFER_BIT);
-    }
-    else
-    {
+    } else {
       glDepthMask(GL_TRUE);
       glEnable(GL_DEPTH_TEST);
     }
 
-    //  Draw proper z-buffer for the portal area.
+    // draw proper z-buffer for the portal area
     DrawPortalArea(Portal);
   }
 
