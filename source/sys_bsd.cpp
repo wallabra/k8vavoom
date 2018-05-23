@@ -329,6 +329,15 @@ static void signal_handler(int s)
 #endif
 }
 
+#else
+
+static volatile int sigReceived = 0;
+
+static void signal_handler (int s) {
+  sigReceived = 1;
+}
+
+
 #endif
 
 
@@ -365,6 +374,12 @@ int main(int argc, char** argv)
 #ifdef SIGNOFP
     signal(SIGNOFP, signal_handler);
 #endif
+
+#else
+    // install signal handlers
+    signal(SIGTERM, signal_handler);
+    signal(SIGINT,  signal_handler);
+    signal(SIGQUIT, signal_handler);
 #endif
 
     //  Initialise
@@ -374,6 +389,12 @@ int main(int argc, char** argv)
     while (1)
     {
       Host_Frame();
+      if (sigReceived) {
+        GCon->Logf("*** SIGNAL RECEIVED ***");
+        Host_Shutdown();
+        fprintf(stderr, "*** TERMINATED BY SIGNAL ***\n");
+        break;
+      }
     }
   }
   catch (VavoomError &e)
