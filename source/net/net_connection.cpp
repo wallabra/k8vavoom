@@ -94,11 +94,22 @@ VNetConnection::VNetConnection(VSocketPublic* ANetCon, VNetContext* AContext,
 VNetConnection::~VNetConnection()
 {
   guard(VNetConnection::~VNetConnection);
-  while (OpenChannels.Num())
-  {
-    delete OpenChannels[OpenChannels.Num() - 1];
-    OpenChannels[OpenChannels.Num() - 1] = NULL;
+  //GCon->Logf("NET: deleting #%d channels...", OpenChannels.length());
+  while (OpenChannels.length()) {
+    int idx = OpenChannels.length()-1;
+    if (OpenChannels[idx]) {
+      delete OpenChannels[idx];
+      if (OpenChannels.length() == idx+1) {
+        GCon->Logf("NET: channel #%d failed to remove itself, initialing manual remove...", idx);
+        OpenChannels[idx] = nullptr;
+        OpenChannels.SetNum(idx);
+      }
+    } else {
+      GCon->Logf("NET: channel #%d is empty", idx);
+      OpenChannels.SetNum(idx);
+    }
   }
+  //GCon->Logf("NET: all channels deleted.");
   if (NetCon)
   {
     delete NetCon;
