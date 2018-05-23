@@ -46,6 +46,7 @@ private:
   void Resize (int newlen); // always makes string unique
 
   void SetContent (const char *s, int len=-1); // not necessarily copies anything
+  void SetStaticContent (const char *s);
 
   inline bool isMyData (const char *buf) const { return (data && buf && buf >= data && buf < data+length()); }
   inline bool isMyData (const char *buf, int len) const { return (data && buf && buf < data+length() && buf+len >= data); }

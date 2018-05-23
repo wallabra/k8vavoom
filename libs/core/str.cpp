@@ -90,11 +90,11 @@ void VStr::MakeMutable () {
   if (!data || *refp() == 1) return; // nothing to do
   // allocate new string
   size_t newsize = (size_t)*lenp()+sizeof(int)*2+1;
-  char *newdata = new char[newsize];
+  char *newdata = (char *)malloc(newsize);
+  if (!newdata) Sys_Error("Out of memory");
   memcpy(newdata, data-sizeof(int)*2, newsize);
   --(*refp()); // decrement old refcounter
-  data = newdata;
-  data += sizeof(int)*2; // skip bookkeeping data
+  data = newdata+sizeof(int)*2; // skip bookkeeping data
   *refp() = 1; // set new refcounter
   unguard;
 }
@@ -108,7 +108,7 @@ void VStr::Resize (int newlen) {
   if (newlen <= 0) {
     // free string
     if (data) {
-      if (--(*refp()) == 0) delete[](data-sizeof(int)*2);
+      if (--(*refp()) == 0) free(data-sizeof(int)*2);
       data = nullptr;
     }
     return;
@@ -118,37 +118,53 @@ void VStr::Resize (int newlen) {
 
   if (newlen == oldlen) {
     // same length, make string unique (just in case)
-    MakeMutable();
+    if (data && *refp() != 1) MakeMutable();
     return;
   }
 
-  // allocate new memory buffer
+  // get new (or resize old) memory buffer
   size_t newsize = newlen+sizeof(int)*2+1;
-  char *newdata = new char[newsize];
-  char *newstrdata = newdata+sizeof(int)*2;
 
-  // copy old contents, if any
-  if (data) {
-    // has old content, copy it
-    if (newlen < oldlen) {
-      // new string is smaller
-      memcpy(newstrdata, data, newlen);
-    } else {
-      // new string is bigger
-      memcpy(newstrdata, data, oldlen+1); // take zero too; it should be overwritten by the caller later
-    }
-    // decref old string, and free it, if necessary
-    if (--(*refp()) == 0) delete[](data-sizeof(int)*2);
+  // if this string is unique, use `realloc()`, otherwise allocate new buffer
+  if (data && *refp() == 1) {
+    // realloc
+    char *newdata = (char *)realloc(data-sizeof(int)*2, newsize);
+    if (!newdata) Sys_Error("Out of memory");
+    data = newdata+sizeof(int)*2;
   } else {
-    // no old content
-    newstrdata[0] = 0; // to be on a safe side
-  }
-  newstrdata[newlen] = 0; // set trailing zero, just in case
+    // new buffer
+    char *newdata = (char *)malloc(newsize);
+    if (!newdata) Sys_Error("Out of memory");
+    char *newstrdata = newdata+sizeof(int)*2;
 
-  // setup new pointer and bookkeeping
-  data = newstrdata;
-  *lenp() = newlen;
-  *refp() = 1;
+    // copy old contents, if any
+    if (data) {
+      // has old content, copy it
+      if (newlen < oldlen) {
+        // new string is smaller
+        memcpy(newstrdata, data, newlen);
+      } else {
+        // new string is bigger
+        memcpy(newstrdata, data, oldlen+1); // take zero too; it should be overwritten by the caller later
+      }
+      // decref old string
+      if (--(*refp()) == 0) {
+        // this is something that should not happen, fail hard
+        *(int *)0 = 0;
+        //free(data-sizeof(int)*2);
+      }
+    } else {
+      // no old content
+      newstrdata[0] = 0; // to be on a safe side
+    }
+
+    // setup new pointer and bookkeeping
+    data = newstrdata;
+    *refp() = 1;
+  }
+
+  *lenp() = newlen; // set new length
+  data[newlen] = 0; // set trailing zero, this is required by `SetContent()`
 
   unguard;
 }
@@ -165,11 +181,19 @@ void VStr::SetContent (const char *s, int len) {
         ++(*refp());
       } else if (isMyData(s, len)) {
         // make temporary copy
-        char *temp = new char[len];
-        memcpy(temp, s, len);
-        Resize(len);
-        memcpy(data, temp, len);
-        delete[] temp;
+        char tbuf[128];
+        if ((size_t)len <= sizeof(tbuf)) {
+          memcpy(tbuf, s, len);
+          Resize(len);
+          memcpy(data, tbuf, len);
+        } else {
+          char *temp = (char *)malloc(len);
+          if (!temp) Sys_Error("Out of memory");
+          memcpy(temp, s, len);
+          Resize(len);
+          memcpy(data, temp, len);
+          free(temp);
+        }
       } else {
         Resize(len);
         memcpy(data, s, len);
