@@ -78,7 +78,7 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p)
   guard(VAdvancedRenderLevel::LightPoint);
   subsector_t   *sub;
   subregion_t   *reg;
-  float     l, lr, lg, lb, add;
+  float     l=0, lr=0, lg=0, lb=0, add;
   int       leafnum;
   linetrace_t   Trace;
 

@@ -822,7 +822,7 @@ vuint32 VRenderLevel::LightPoint(const TVec &p)
   guard(VRenderLevel::LightPoint);
   subsector_t   *sub;
   subregion_t   *reg;
-  float     l, lr, lg, lb;
+  float     l=0, lr=0, lg=0, lb=0;
   surface_t   *surf;
   rgb_t     *rgbtmp;
 
