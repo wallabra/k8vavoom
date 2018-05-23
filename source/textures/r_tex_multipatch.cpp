@@ -619,6 +619,7 @@ vuint8* VMultiPatchTexture::GetPixels()
       case 5:
         PIdxY = PWidth - y + y1 - 1;
         break;
+      default: Sys_Error("invalid `patch->Rot` in `VMultiPatchTexture::GetPixels()` (PIdxY)");
       }
 
       for (int x = x1 < 0 ? 0 : x1; x < x2; x++)
@@ -642,6 +643,7 @@ vuint8* VMultiPatchTexture::GetPixels()
         case 7:
           PIdx = (x - x1) * PWidth + PIdxY;
           break;
+        default: Sys_Error("invalid `patch->Rot` in `VMultiPatchTexture::GetPixels() (PIdx)`");
         }
 
         if (Format == TEXFMT_8)
