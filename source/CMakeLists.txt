@@ -559,10 +559,12 @@ endif(WIN32)
 #
 #  **** Check for libpng ****
 #
-
-find_package(PNG REQUIRED)
-include_directories(${PNG_INCLUDE_DIR})
-set(MAIN_LIBS ${PNG_LIBRARY} ${MAIN_LIBS})
+if(WITH_LIBPNG)
+  find_package(PNG REQUIRED)
+  include_directories(${PNG_INCLUDE_DIR})
+  set(MAIN_LIBS ${PNG_LIBRARY} ${MAIN_LIBS})
+  add_definitions(-DVAVOOM_USE_LIBPNG=1)
+endif(WITH_LIBPNG)
 
 #
 #  **** Check for libjpeg ****

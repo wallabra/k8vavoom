@@ -36,4 +36,6 @@ add_library(core STATIC
   xml.cpp
   xml.h
   zone.h
+  minipng.h
+  minipng.cpp
 )

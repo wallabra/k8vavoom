@@ -9,6 +9,7 @@ option(WITH_MIKMOD "Enable MikMod support" ON)
 option(WITH_MODPLUG "Enable ModPlug support" ON)
 option(WITH_FLAC "Enable FLAC support" ON)
 option(WITH_GME "Enable built-in GME support" OFF)
+option(WITH_LIBPNG "Use system libpng" OFF)
 
 option(ENABLE_SIGNAL_HANDLER "Intercept system signals" OFF)
 
@@ -90,7 +91,7 @@ endif(NOT DEFINED BINDIR)
 
 if(ENABLE_SIGNAL_HANDLER)
   add_definitions(-DUSE_SIGNAL_HANDLER=1)
-   message(STATUS "BUILD: Using Signal Handler")
+  message(STATUS "BUILD: Using Signal Handler")
 endif(ENABLE_SIGNAL_HANDLER)
 
 #

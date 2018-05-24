@@ -60,6 +60,8 @@ public:
     return bError;
   }
 
+  inline void Serialize (void *buf, int len) { Serialise(buf, len); }
+
   //  Stream interface.
   virtual void Serialise(void*, int);
   virtual void SerialiseBits(void*, int);

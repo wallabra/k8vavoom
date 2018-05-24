@@ -27,7 +27,7 @@ class TCRC
 {
 public:
   void Init();
-  TCRC& operator + (vuint8);
+  TCRC &operator + (vuint8);
   operator vuint16();
 
 private:

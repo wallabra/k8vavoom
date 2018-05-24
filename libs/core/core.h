@@ -57,4 +57,6 @@
 #include "hashset.h"
 #include "wlist.h"
 
+#include "minipng.h"
+
 #endif
