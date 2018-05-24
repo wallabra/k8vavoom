@@ -461,8 +461,10 @@ void VJpegTexture::Unload()
   unguard;
 }
 
+
 #ifdef CLIENT
 
+#ifdef VAVOOM_USE_LIBJPG
 //==========================================================================
 //
 //  my_init_destination
@@ -508,6 +510,8 @@ static void my_term_destination(j_compress_ptr cinfo)
   cdata->Strm->Serialise(cdata->Buffer, 4096 - cinfo->dest->free_in_buffer);
   unguard;
 }
+#endif
+
 
 //==========================================================================
 //
