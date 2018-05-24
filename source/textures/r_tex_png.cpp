@@ -346,6 +346,33 @@ void WritePNG(const VStr& FileName, const void* Data, int Width, int Height, int
   Strm->Close();
   delete Strm;
   //Strm = nullptr;
+
+#else
+
+  if (Bpp != 24) { GCon->Log("Couldn't write png (invalid bpp)"); return; }
+
+  VStream *Strm = FL_OpenFileWrite(FileName, true);
+  if (!Strm) { GCon->Log("Couldn't write png"); return; }
+
+  if (Bot2top) {
+    // new buffer
+    vuint8 *newbuf = new vuint8[Width*Height*(Bpp/8)];
+    for (int y = 0; y < Height; ++y) {
+      memcpy(newbuf+y*(Width*(Bpp/8)), (const vuint8 *)Data+(Height-y-1)*(Width*(Bpp/8)), Width*(Bpp/8));
+    }
+    if (!M_CreatePNG(Strm, newbuf, nullptr, SS_RGB, Width, Height, Width*(Bpp/8), 1.0f)) {
+      GCon->Log("Error writing png");
+    }
+    delete newbuf;
+  } else {
+    if (!M_CreatePNG(Strm, (const vuint8 *)Data, nullptr, SS_RGB, Width, Height, Width*(Bpp/8), 1.0f)) {
+      GCon->Log("Error writing png");
+    }
+  }
+
+  Strm->Close();
+  delete Strm;
+
 #endif
 
   unguard;
