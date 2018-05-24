@@ -125,7 +125,7 @@ bool VSDLSoundDevice::Init()
   Uint16 fmt;
   int    ch;  /* audio */
   int    cksz;
-  char   dname[32];
+  //char   dname[32];
 
   Chunks = NULL;
   StrmBuffer = NULL;
@@ -177,7 +177,7 @@ bool VSDLSoundDevice::Init()
   memset(Chunks, 0, sizeof(Mix_Chunk*) * GSoundManager->S_sfx.Num());
 
   GCon->Logf(NAME_Init, "Configured audio device");
-  GCon->Logf(NAME_Init, "Driver: %s", SDL_AudioDriverName(dname, 32));
+  //GCon->Logf(NAME_Init, "Driver: %s", SDL_AudioDriverName(dname, 32));
   GCon->Logf(NAME_Init, "Freqency: %d", CurFrequency);
   GCon->Logf(NAME_Init, "Channels: %d", CurChannels);
   GCon->Logf(NAME_Init, "Format: %04x", CurFormat);

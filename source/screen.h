@@ -31,13 +31,10 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void SCR_Init(void);
-void SCR_Update(void);
+void SCR_Init ();
+void SCR_Update ();
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
-extern int    ScreenWidth;
-extern int    ScreenHeight;
-extern int    ScreenBPP;
-
-extern int    PixelBytes;
+extern int ScreenWidth;
+extern int ScreenHeight;

@@ -23,44 +23,28 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <SDL.h>
 #include "gl_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-class VSdlOpenGLDrawer : public VOpenGLDrawer
-{
+class VSdlOpenGLDrawer : public VOpenGLDrawer {
 public:
-  SDL_Surface*  hw_screen;
+  SDL_Window* hw_window;
+  SDL_GLContext hw_glctx;
 
-  void Init();
-  bool SetResolution(int, int, int, bool);
-  void* GetExtFuncPtr(const char*);
+  void Init ();
+  bool SetResolution (int, int, bool);
+  void* GetExtFuncPtr (const char *);
   bool SetAdaptiveSwap ();
-  void Update();
-  void Shutdown();
+  void Update ();
+  void Shutdown ();
+
+  virtual void WarpMouseToWindowCenter () override;
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+IMPLEMENT_DRAWER(VSdlOpenGLDrawer, DRAWER_OpenGL, "OpenGL", "SDL OpenGL rasteriser device", "-opengl");
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-IMPLEMENT_DRAWER(VSdlOpenGLDrawer, DRAWER_OpenGL, "OpenGL",
-  "SDL OpenGL rasteriser device", "-opengl");
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
@@ -69,11 +53,31 @@ IMPLEMENT_DRAWER(VSdlOpenGLDrawer, DRAWER_OpenGL, "OpenGL",
 //  Determine the hardware configuration
 //
 //==========================================================================
-
-void VSdlOpenGLDrawer::Init()
-{
-  hw_screen = NULL;
+void VSdlOpenGLDrawer::Init () {
+  hw_window = nullptr;
+  hw_glctx = nullptr;
 }
+
+
+//==========================================================================
+//
+//  VSdlOpenGLDrawer::WarpMouseToWindowCenter
+//
+//  k8: omebody should fix this; i don't care
+//
+//==========================================================================
+void VSdlOpenGLDrawer::WarpMouseToWindowCenter () {
+  if (!hw_window) return;
+  /*
+  if (SDL_GetMouseFocus() == hw_window) {
+    SDL_WarpMouseInWindow(hw_window, ScreenWidth/2, ScreenHeight/2);
+  }
+  */
+  int wx, wy;
+  SDL_GetWindowPosition(hw_window, &wx, &wy);
+  SDL_WarpMouseGlobal(wx+ScreenWidth/2, wy+ScreenHeight/2);
+}
+
 
 //==========================================================================
 //
@@ -82,91 +86,92 @@ void VSdlOpenGLDrawer::Init()
 //  Set up the video mode
 //
 //==========================================================================
-
-bool VSdlOpenGLDrawer::SetResolution(int AWidth, int AHeight, int ABPP,
-  bool Windowed)
-{
+bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, bool Windowed) {
   guard(VSdlOpenGLDrawer::SetResolution);
   int Width = AWidth;
   int Height = AHeight;
-  int BPP = ABPP;
-  if (!Width || !Height)
-  {
-    // Set defaults
+  if (!Width || !Height) {
+    // set defaults
     Width = 640;
     Height = 480;
-    BPP = 16;
   }
 
-  if (BPP == 15)
-    BPP = 16;
-
-  if (BPP < 16)
-  {
-    // True-colour only
-    return false;
-  }
-
-  // Sut down current mode
+  // shut down current mode
   Shutdown();
 
-  Uint32 flags = SDL_OPENGL;
-  if (!Windowed)
-  {
-    flags |= SDL_FULLSCREEN;
-  }
+  Uint32 flags = SDL_WINDOW_OPENGL;
+  if (!Windowed) flags |= SDL_WINDOW_FULLSCREEN;
+
+  //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
+  //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-  //k8: require OpenGL 2.1, sorry; non-shader renderer will be removed soon
-  //    will be done on SDL2 transition
-  //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-  //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+  if (r_vsync) {
+    if (SDL_GL_SetSwapInterval(-1) == -1) SDL_GL_SetSwapInterval(1);
+  } else {
+    SDL_GL_SetSwapInterval(0);
+  }
 
-  hw_screen = SDL_SetVideoMode(Width, Height, BPP, flags);
-  if (!hw_screen) {
-    // alas
+  hw_window = SDL_CreateWindow("k8VaVoom", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Width, Height, flags);
+  if (!hw_window) {
+    GCon->Logf("ALAS: cannot create SDL2 window.");
+    return false;
+  }
+
+  hw_glctx = SDL_GL_CreateContext(hw_window);
+  if (!hw_glctx) {
+    SDL_DestroyWindow(hw_window);
+    hw_window = nullptr;
     GCon->Logf("ALAS: cannot initialize OpenGL 2.1 with stencil buffer.");
     return false;
   }
 
-  SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
-  SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+  SDL_GL_MakeCurrent(hw_window, hw_glctx);
+
+  //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
+  if (r_vsync) {
+    if (SDL_GL_SetSwapInterval(-1) == -1) SDL_GL_SetSwapInterval(1);
+  } else {
+    SDL_GL_SetSwapInterval(0);
+  }
+  //SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
   // Everything is fine, set some globals and finish
   ScreenWidth = Width;
   ScreenHeight = Height;
-  ScreenBPP = BPP;
+
+  //SDL_DisableScreenSaver();
 
   return true;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VSdlOpenGLDrawer::GetExtFuncPtr
 //
 //==========================================================================
-
-void* VSdlOpenGLDrawer::GetExtFuncPtr(const char* name)
-{
+void *VSdlOpenGLDrawer::GetExtFuncPtr (const char *name) {
   guard(VSdlOpenGLDrawer::GetExtFuncPtr);
   return SDL_GL_GetProcAddress(name);
   unguard;
 }
 
-//==========================================================================
-//
-//  VSdlOpenGLDrawer::GetExtFuncPtr
-//
-//==========================================================================
 
+//==========================================================================
+//
+//  VSdlOpenGLDrawer::SetAdaptiveSwap
+//
+//==========================================================================
 enum { GLX_LATE_SWAPS_TEAR_EXT = 0x20F3 };
 
 typedef const char *(APIENTRY* glXQueryExtensionsString)(void* dpy, int screen);
@@ -193,6 +198,7 @@ bool VSdlOpenGLDrawer::SetAdaptiveSwap () {
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VSdlOpenGLDrawer::Update
@@ -200,13 +206,12 @@ bool VSdlOpenGLDrawer::SetAdaptiveSwap () {
 //  Blit to the screen / Flip surfaces
 //
 //==========================================================================
-
-void VSdlOpenGLDrawer::Update()
-{
+void VSdlOpenGLDrawer::Update () {
   guard(VSdlOpenGLDrawer::Update);
-  SDL_GL_SwapBuffers();
+  if (hw_window) SDL_GL_SwapWindow(hw_window);
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -215,12 +220,17 @@ void VSdlOpenGLDrawer::Update()
 //  Close the graphics
 //
 //==========================================================================
-
-void VSdlOpenGLDrawer::Shutdown()
-{
+void VSdlOpenGLDrawer::Shutdown() {
   guard(VSdlOpenGLDrawer::Shutdown);
   DeleteTextures();
-  if (hw_screen != NULL)
-    SDL_FreeSurface(hw_screen);
+  if (hw_glctx) {
+    if (hw_window) SDL_GL_MakeCurrent(hw_window, hw_glctx);
+    SDL_GL_DeleteContext(hw_glctx);
+    hw_glctx = nullptr;
+  }
+  if (hw_window) {
+    SDL_DestroyWindow(hw_window);
+    hw_window = nullptr;
+  }
   unguard;
 }

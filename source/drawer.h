@@ -124,7 +124,7 @@ public:
   {}
 
   virtual void Init() = 0;
-  virtual bool SetResolution(int, int, int, bool) = 0;
+  virtual bool SetResolution(int, int, bool) = 0;
   virtual void InitResolution() = 0;
   virtual void StartUpdate() = 0;
   virtual void Update() = 0;
@@ -133,6 +133,7 @@ public:
   virtual void Shutdown() = 0;
   virtual void* ReadScreen(int*, bool*) = 0;
   virtual void ReadBackScreen(int, int, rgba_t*) = 0;
+  virtual void WarpMouseToWindowCenter () = 0;
 
   //  Rendring stuff
   virtual void SetupView(VRenderLevelDrawer*, const refdef_t*) = 0;

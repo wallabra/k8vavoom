@@ -354,8 +354,8 @@ set(MAIN_OPENGL_SOURCES
 set(MAIN_UNIX_SDL_SOURCES
   in_sdl.cpp
   net/net_udp.cpp
-  sound/snd_sdl.cpp
-  sound/snd_sdlmusic.cpp
+  #sound/snd_sdl.cpp
+  #sound/snd_sdlmusic.cpp
   sys_sdl.cpp
 )
 set(MAIN_OPENGL_UNIX_SDL_SOURCES
@@ -513,19 +513,28 @@ if(WIN32)
   endif(WITH_OPENAL)
 else(WIN32)
   # ---------------- Other *NIX platforms ----------------
-  if(WITH_SDL)
-    find_package(SDL REQUIRED)
-  endif(WITH_SDL)
+  if(WITH_SDL2)
+    find_package(SDL2 REQUIRED)
+    #PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
+  endif(WITH_SDL2)
 
-  if(SDL_FOUND)
-    message(STATUS "Using SDL")
-    find_package(SDL_mixer REQUIRED)
-    include_directories(${SDL_INCLUDE_DIR})
+  if(SDL2_FOUND)
+    message(STATUS "Using SDL2")
+    include_directories(${SDL2_INCLUDE_DIRS})
     set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_UNIX_SDL_SOURCES})
-    set(MAIN_LIBS ${SDLMIXER_LIBRARY} ${SDL_LIBRARY} ${MAIN_LIBS})
-  endif(SDL_FOUND)
+    set(MAIN_LIBS ${SDL2_LIBRARIES} ${MAIN_LIBS})
+  else(SDL2_FOUND)
+    if(WITH_SDL2)
+      message(SEND_ERROR "SDL NOT FOUND")
+      return()
+    endif(WITH_SDL2)
+  endif(SDL2_FOUND)
 
   if(WITH_OPENGL)
+    if(NOT SDL2_FOUND)
+      message(SEND_ERROR "SDL2 required for OpenGL")
+      return()
+    endif(NOT SDL2_FOUND)
     find_package(OpenGL)
     if(OPENGL_FOUND)
       message(STATUS "Found OpenGL")

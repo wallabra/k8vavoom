@@ -1,6 +1,6 @@
 project(vavoom)
 
-option(WITH_SDL "Use SDL library" ON)
+option(WITH_SDL2 "Use SDL2 library" ON)
 option(WITH_OPENGL "Use OpenGL library" ON)
 option(WITH_OPENAL "Use OpenAL library" ON)
 option(WITH_VORBIS "Enable Vorbis support" ON)
@@ -29,6 +29,21 @@ IF( NOT CMAKE_BUILD_TYPE )
   FORCE )
 ENDIF()
 
+
+if(NOT ENABLE_CLIENT)
+  message(STATUS "Server-only build, turning off SDL2, OpenGL and OpenAL")
+  SET(WITH_SDL2 OFF)
+  SET(WITH_OPENGL OFF)
+  SET(WITH_OPENAL OFF)
+  SET(WITH_VORBIS OFF)
+  SET(WITH_LIBMAD OFF)
+  SET(WITH_MIKMOD OFF)
+  SET(WITH_MODPLUG OFF)
+  SET(WITH_FLAC OFF)
+  SET(WITH_GME OFF)
+endif(NOT ENABLE_CLIENT)
+
+
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14" )
 
 set( UNFUCK_GCC_FLAGS "" )
@@ -49,6 +64,7 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g ${UNFUCK_GCC_FLAGS}"
 
 set( CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2 ${UNFUCK_GCC_FLAGS}" )
 set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 ${UNFUCK_GCC_FLAGS}" )
+
 
 ## message(STATUS "BUILD: ${CMAKE_BUILD_TYPE}")
 ## message(STATUS "cflags  : ${CMAKE_C_FLAGS}")

@@ -50,9 +50,6 @@ extern int        screenblocks;
 
 int   ScreenWidth = 0;
 int   ScreenHeight = 0;
-int   ScreenBPP = 0;
-
-int   PixelBytes;
 
 int   VirtualWidth = 640;
 int   VirtualHeight = 480;
@@ -156,7 +153,6 @@ byte  gammatable[5][256] =
 static bool   setresolutionneeded = false;
 static int    setwidth;
 static int    setheight;
-static int    setbpp;
 
 static VCvarF menu_darkening("menu_darkening", "0.5", "Screen darkening for active menus.", CVAR_Archive);
 static VCvarB draw_pause("draw_pause", true, "Draw \"paused\" text?");
@@ -349,50 +345,37 @@ static void DrawCycles()
 //
 //==========================================================================
 
-static void ChangeResolution(int InWidth, int InHeight, int InBpp)
+static void ChangeResolution(int InWidth, int InHeight)
 {
   guard(ChangeResolution);
   int width = InWidth;
   int height = InHeight;
-  int bpp = InBpp;
   bool win = false;
-  if (bpp != 8 && bpp != 15 && bpp != 16 && bpp != 24 && bpp != 32)
-  {
-    GCon->Log("Invalid bpp, using 8");
-    bpp = 8;
-  }
-  if (screen_windowed > 0)
-  {
-    win = true;
-  }
+  if (screen_windowed > 0) win = true;
 
   // Changing resolution
-  if (!Drawer->SetResolution(width, height, bpp, win))
+  if (!Drawer->SetResolution(width, height, win))
   {
-    GCon->Logf("Failed to set resolution %dx%dx%d", width, height, bpp);
+    GCon->Logf("Failed to set resolution %dx%d", width, height);
     if (ScreenWidth)
     {
-      if (!Drawer->SetResolution(ScreenWidth, ScreenHeight, ScreenBPP,
-        win))
+      if (!Drawer->SetResolution(ScreenWidth, ScreenHeight, win))
         Sys_Error("ChangeResolution: failed to restore resolution");
       else
         GCon->Log("Restoring previous resolution");
     }
     else
     {
-      if (!Drawer->SetResolution(0, 0, 0, win))
+      if (!Drawer->SetResolution(0, 0, win))
         Sys_Error("ChangeResolution: Failed to set default resolution");
       else
         GCon->Log("Setting default resolution");
     }
   }
-  GCon->Logf("%dx%dx%d.", ScreenWidth, ScreenHeight, ScreenBPP);
+  GCon->Logf("%dx%d.", ScreenWidth, ScreenHeight);
 
   screen_width = ScreenWidth;
   screen_height = ScreenHeight;
-  screen_bpp = ScreenBPP;
-
-  PixelBytes = (ScreenBPP + 7) / 8;
 
   fScaleX = (float)ScreenWidth / (float)VirtualWidth;
   fScaleY = (float)ScreenHeight / (float)VirtualHeight;
@@ -428,14 +411,13 @@ static void CheckResolutionChange()
   }
   if (setresolutionneeded)
   {
-    ChangeResolution(setwidth, setheight, setbpp);
+    ChangeResolution(setwidth, setheight);
     setresolutionneeded = false;
     res_changed = true;
   }
-  else if (!screen_width || screen_width != ScreenWidth ||
-    screen_height != ScreenHeight || screen_bpp != ScreenBPP)
+  else if (!screen_width || screen_width != ScreenWidth || screen_height != ScreenHeight)
   {
-    ChangeResolution(screen_width, screen_height, screen_bpp);
+    ChangeResolution(screen_width, screen_height);
     res_changed = true;
   }
 
@@ -461,14 +443,6 @@ COMMAND(SetResolution)
   {
     setwidth = superatoi(*Args[1]);
     setheight = superatoi(*Args[2]);
-    setbpp = ScreenBPP;
-    setresolutionneeded = true;
-  }
-  else if (Args.Num() == 4)
-  {
-    setwidth = superatoi(*Args[1]);
-    setheight = superatoi(*Args[2]);
-    setbpp = superatoi(*Args[3]);
     setresolutionneeded = true;
   }
   else
@@ -487,7 +461,6 @@ COMMAND(vid_restart)
 {
   setwidth = ScreenWidth;
   setheight = ScreenHeight;
-  setbpp = ScreenBPP;
   setresolutionneeded = true;
 }
 

@@ -40,10 +40,12 @@ public:
   HWND    RenderWindow;
 
   void Init();
-  bool SetResolution(int, int, int, bool);
+  bool SetResolution(int, int, bool);
   void* GetExtFuncPtr(const char*);
   void Update();
   void Shutdown();
+
+  virtual void WarpMouseToWindowCenter () override;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -79,6 +81,19 @@ void VWin32OpenGLDrawer::Init()
   RenderWindow = NULL;
 }
 
+
+//==========================================================================
+//
+//  VWin32OpenGLDrawer::WarpMouseToWindowCenter
+//
+//  k8: omebody should fix this; i don't care
+//
+//==========================================================================
+
+void VWin32OpenGLDrawer::WarpMouseToWindowCenter () {
+}
+
+
 //==========================================================================
 //
 //  VWin32OpenGLDrawer::SetResolution
@@ -87,13 +102,11 @@ void VWin32OpenGLDrawer::Init()
 //
 //==========================================================================
 
-bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, int ABPP,
-  bool AWindowed)
+bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
 {
   guard(VWin32OpenGLDrawer::SetResolution);
   int     Width = AWidth;
   int     Height = AHeight;
-  int     BPP = ABPP;
   int     pixelformat;
   MSG     msg;
 
@@ -102,15 +115,6 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, int ABPP,
     //  Set defaults
     Width = 640;
     Height = 480;
-    BPP = 16;
-  }
-
-  if (BPP == 15) BPP = 16;
-
-  if (BPP < 16)
-  {
-    //  True-colour only
-    return false;
   }
 
   //  Shut down current mode
@@ -126,7 +130,7 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, int ABPP,
     dmScreenSettings.dmSize = sizeof(dmScreenSettings);
     dmScreenSettings.dmPelsWidth = Width;
     dmScreenSettings.dmPelsHeight = Height;
-    dmScreenSettings.dmBitsPerPel = BPP;
+    dmScreenSettings.dmBitsPerPel = 32/*BPP*/;
     dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
     if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
@@ -213,7 +217,7 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, int ABPP,
     PFD_SUPPORT_OPENGL |      // Format Must Support OpenGL
     PFD_DOUBLEBUFFER,       // Must Support Double Buffering
     PFD_TYPE_RGBA,          // Request An RGBA Format
-    byte(BPP),            // Select Our Colour Depth
+    byte(32/*BPP*/),            // Select Our Colour Depth
     0, 0, 0, 0, 0, 0,       // Colour Bits Ignored
     0,                // No Alpha Buffer
     0,                // Shift Bit Ignored
@@ -270,7 +274,6 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, int ABPP,
   //  Everything is fine, set some globals and finish
   ScreenWidth = Width;
   ScreenHeight = Height;
-  ScreenBPP = BPP;
 
   return true;
   unguard;

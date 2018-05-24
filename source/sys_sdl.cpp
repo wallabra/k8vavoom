@@ -530,7 +530,7 @@ int main(int argc,char** argv)
     {
       Sys_Error("SDL_InitSubSystem(): %s\n",SDL_GetError());
     }
-    SDL_WM_SetCaption("VaVoom", "VaVoom");
+    //SDL_WM_SetCaption("VaVoom", "VaVoom");
 
 #ifdef USE_SIGNAL_HANDLER
     //  Install signal handlers
