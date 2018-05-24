@@ -276,7 +276,7 @@ void VMethod::Emit () {
 
   VEmitContext ec(this);
 
-  ec.LocalDefs.Clear();
+  ec.ClearLocalDefs();
   ec.localsofs = (Flags&FUNC_Static ? 0 : 1); // first is `self`
   if (Outer->MemberType == MEMBER_Class && this == ((VClass*)Outer)->DefaultProperties) {
     ec.InDefaultProperties = true;
@@ -285,24 +285,24 @@ void VMethod::Emit () {
   for (int i = 0; i < NumParams; ++i) {
     VMethodParam &P = Params[i];
     if (P.Name != NAME_None) {
+      auto oldlofs = ec.localsofs;
       if (ec.CheckForLocalVar(P.Name) != -1) ParseError(P.Loc, "Redefined identifier %s", *P.Name);
-      VLocalVarDef& L = ec.LocalDefs.Alloc();
-      L.Name = P.Name;
-      L.Type = ParamTypes[i];
+      VLocalVarDef &L = ec.AllocLocal(P.Name, ParamTypes[i], P.Loc);
+      ec.localsofs = oldlofs;
       L.Offset = ec.localsofs;
       L.Visible = true;
       L.ParamFlags = ParamFlags[i];
     }
-    if (ParamFlags[i] & FPARM_Out) {
+    if (ParamFlags[i]&FPARM_Out) {
       ++ec.localsofs;
     } else {
       ec.localsofs += ParamTypes[i].GetStackSize()/4;
     }
-    if (ParamFlags[i] & FPARM_Optional) {
+    if (ParamFlags[i]&FPARM_Optional) {
       if (P.Name != NAME_None) {
-        VLocalVarDef &L = ec.LocalDefs.Alloc();
-        L.Name = va("specified_%s", *P.Name);
-        L.Type = TYPE_Int;
+        auto oldlofs = ec.localsofs;
+        VLocalVarDef &L = ec.AllocLocal(va("specified_%s", *P.Name), TYPE_Int, P.Loc);
+        ec.localsofs = oldlofs;
         L.Offset = ec.localsofs;
         L.Visible = true;
         L.ParamFlags = 0;
@@ -311,9 +311,10 @@ void VMethod::Emit () {
     }
   }
 
-  for (int i = 0; i < ec.LocalDefs.Num(); ++i) {
-    if (ec.LocalDefs[i].Type.Type == TYPE_Vector && (ParamFlags[i]&FPARM_Out) == 0) {
-      ec.AddStatement(OPC_VFixParam, ec.LocalDefs[i].Offset);
+  for (int i = 0; i < ec.GetLocalDefCount(); ++i) {
+    VLocalVarDef &loc = ec.GetLocalByIndex(i);
+    if (loc.Type.Type == TYPE_Vector && (ParamFlags[i]&FPARM_Out) == 0) {
+      ec.AddStatement(OPC_VFixParam, loc.Offset);
     }
   }
 
@@ -322,7 +323,7 @@ void VMethod::Emit () {
   Statement->Emit(ec);
 
   if (ReturnType.Type == TYPE_Void) {
-    ec.EmitClearStrings(0, ec.LocalDefs.Num());
+    ec.EmitClearStrings(0, ec.GetLocalDefCount());
     ec.AddStatement(OPC_Return);
   }
   NumLocals = ec.localsofs;

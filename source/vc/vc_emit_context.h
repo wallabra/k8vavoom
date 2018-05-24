@@ -38,8 +38,8 @@ private:
   VLabel (int AIndex) : Index(AIndex) {}
 
 public:
-  VLabel() : Index(-1) {}
-  inline bool IsDefined() const { return (Index != -1); }
+  VLabel () : Index(-1) {}
+  inline bool IsDefined () const { return (Index != -1); }
 };
 
 
@@ -51,7 +51,10 @@ public:
   int Offset;
   VFieldType Type;
   bool Visible;
+  bool Reusable; // if this is `true`, and `Visible` is false, local can be reused
   vuint8 ParamFlags;
+  // internal index; DO NOT CHANGE!
+  int ldindex;
 
   VLocalVarDef () {}
 };
@@ -68,6 +71,7 @@ private:
 
   TArray<int> Labels;
   TArray<VLabelFixup> Fixups;
+  TArray<VLocalVarDef> LocalDefs;
 
 public:
   VMethod *CurrentFunc;
@@ -77,7 +81,6 @@ public:
 
   VFieldType FuncRetType;
 
-  TArray<VLocalVarDef> LocalDefs;
   int localsofs;
 
   VLabel LoopStart;
@@ -85,26 +88,37 @@ public:
 
   bool InDefaultProperties;
 
-  VEmitContext (VMemberBase *);
+  VEmitContext (VMemberBase *Member);
   void EndCode ();
 
-  int CheckForLocalVar (VName);
+  // this doesn't modify `localsofs`
+  void ClearLocalDefs ();
+
+  // allocates new local, sets offset
+  VLocalVarDef &AllocLocal (VName aname, const VFieldType &atype, const TLocation &aloc);
+
+  VLocalVarDef &GetLocalByIndex (int idx);
+
+  inline int GetLocalDefCount () const { return LocalDefs.length(); }
+
+  // returns index in `LocalDefs`
+  int CheckForLocalVar (VName Name);
 
   VLabel DefineLabel ();
-  void MarkLabel (VLabel);
+  void MarkLabel (VLabel l);
 
-  void AddStatement (int);
-  void AddStatement (int, int);
-  void AddStatement (int, float);
-  void AddStatement (int, VName);
-  void AddStatement (int, VMemberBase*);
-  void AddStatement (int, VMemberBase*, int);
-  void AddStatement (int, const VFieldType&);
-  void AddStatement (int, VLabel);
-  void AddStatement (int, int, VLabel);
-  void EmitPushNumber (int);
-  void EmitLocalAddress (int);
-  void EmitClearStrings (int, int);
+  void AddStatement (int statement);
+  void AddStatement (int statement, int parm1);
+  void AddStatement (int statement, float FloatArg);
+  void AddStatement (int statement, VName NameArg);
+  void AddStatement (int statement, VMemberBase *Member);
+  void AddStatement (int statement, VMemberBase *Member, int Arg);
+  void AddStatement (int statement, const VFieldType &TypeArg);
+  void AddStatement (int statement, VLabel Lbl);
+  void AddStatement (int statement, int p, VLabel Lbl);
+  void EmitPushNumber (int Val);
+  void EmitLocalAddress (int Ofs);
+  void EmitClearStrings (int Start, int End);
 
   VArrayElement *SetIndexArray (VArrayElement *el); // returns previous
 };

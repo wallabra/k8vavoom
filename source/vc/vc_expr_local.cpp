@@ -31,8 +31,7 @@
 //  VLocalDecl::VLocalDecl
 //
 //==========================================================================
-VLocalDecl::VLocalDecl (const TLocation &ALoc) : VExpression(ALoc)
-{
+VLocalDecl::VLocalDecl (const TLocation &ALoc) : VExpression(ALoc) {
 }
 
 
@@ -111,8 +110,6 @@ void VLocalDecl::Declare (VEmitContext &ec) {
 
     if (ec.CheckForLocalVar(e.Name) != -1) ParseError(e.Loc, "Redefined identifier %s", *e.Name);
 
-    bool dbgDump = false;
-
     // resolve automatic type
     if (e.TypeExpr->Type.Type == TYPE_Automatic) {
       if (!e.Value) { fprintf(stderr, "VC INTERNAL COMPILER ERROR: automatic type without initializer!\n"); *(int*)0 = 0; }
@@ -126,41 +123,27 @@ void VLocalDecl::Declare (VEmitContext &ec) {
         //fprintf(stderr, "*** automatic type resolved to `%s`\n", *(res->Type.GetName()));
         delete e.TypeExpr; // delete old `automatic` type
         e.TypeExpr = new VTypeExpr(res->Type, e.Value->Loc);
-        //dbgDump = true;
         delete res;
       }
     }
 
     e.TypeExpr = e.TypeExpr->ResolveAsType(ec);
-    if (dbgDump) fprintf(stderr, "003\n");
     if (!e.TypeExpr) continue;
-    if (dbgDump) fprintf(stderr, "003-1 (%s)\n", *(e.TypeExpr->Type.GetName()));
 
     VFieldType Type = e.TypeExpr->Type;
     if (Type.Type == TYPE_Void || Type.Type == TYPE_Automatic) ParseError(e.TypeExpr->Loc, "Bad variable type");
 
-    VLocalVarDef& L = ec.LocalDefs.Alloc();
-    L.Name = e.Name;
-    L.Type = Type;
-    L.Offset = ec.localsofs;
-    L.Visible = false;
+    VLocalVarDef &L = ec.AllocLocal(e.Name, Type, e.Loc);
     L.ParamFlags = 0;
 
     // resolve initialisation
     if (e.Value) {
-      if (dbgDump) fprintf(stderr, "004\n");
-      VExpression* op1 = new VLocalVar(ec.LocalDefs.length()-1, e.Loc);
+      L.Visible = false; // hide from initializer expression
+      VExpression *op1 = new VLocalVar(L.ldindex, e.Loc);
       e.Value = new VAssignment(VAssignment::Assign, op1, e.Value, e.Loc);
-      if (dbgDump) fprintf(stderr, "005\n");
       e.Value = e.Value->Resolve(ec);
-      if (dbgDump) fprintf(stderr, "006\n");
+      L.Visible = true; // and make it visible again
     }
-
-    L.Visible = true;
-    if (dbgDump) fprintf(stderr, "007\n");
-
-    ec.localsofs += Type.GetStackSize() / 4;
-    if (ec.localsofs > 1024) ParseWarning(e.Loc, "Local vars > 1k");
   }
 }
 
@@ -233,10 +216,11 @@ void VLocalVar::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VLocalVar::DoResolve (VEmitContext &ec) {
-  Type = ec.LocalDefs[num].Type;
-  RealType = ec.LocalDefs[num].Type;
+  VLocalVarDef &loc = ec.GetLocalByIndex(num);
+  Type = loc.Type;
+  RealType = loc.Type;
   if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
-  PushOutParam = !!(ec.LocalDefs[num].ParamFlags&FPARM_Out);
+  PushOutParam = !!(loc.ParamFlags&FPARM_Out);
   return this;
 }
 
@@ -262,11 +246,12 @@ void VLocalVar::RequestAddressOf () {
 //
 //==========================================================================
 void VLocalVar::Emit (VEmitContext &ec) {
+  VLocalVarDef &loc = ec.GetLocalByIndex(num);
   if (AddressRequested) {
-    ec.EmitLocalAddress(ec.LocalDefs[num].Offset);
-  } else if (ec.LocalDefs[num].ParamFlags&FPARM_Out) {
-    if (ec.LocalDefs[num].Offset < 256) {
-      int Ofs = ec.LocalDefs[num].Offset;
+    ec.EmitLocalAddress(loc.Offset);
+  } else if (loc.ParamFlags&FPARM_Out) {
+    if (loc.Offset < 256) {
+      int Ofs = loc.Offset;
            if (Ofs == 0) ec.AddStatement(OPC_LocalValue0);
       else if (Ofs == 1) ec.AddStatement(OPC_LocalValue1);
       else if (Ofs == 2) ec.AddStatement(OPC_LocalValue2);
@@ -277,14 +262,14 @@ void VLocalVar::Emit (VEmitContext &ec) {
       else if (Ofs == 7) ec.AddStatement(OPC_LocalValue7);
       else ec.AddStatement(OPC_LocalValueB, Ofs);
     } else {
-      ec.EmitLocalAddress(ec.LocalDefs[num].Offset);
+      ec.EmitLocalAddress(loc.Offset);
       ec.AddStatement(OPC_PushPointedPtr);
     }
-    if (PushOutParam) EmitPushPointedCode(ec.LocalDefs[num].Type, ec);
-  } else if (ec.LocalDefs[num].Offset < 256) {
-    int Ofs = ec.LocalDefs[num].Offset;
-    if (ec.LocalDefs[num].Type.Type == TYPE_Bool && ec.LocalDefs[num].Type.BitMask != 1) ParseError(Loc, "Strange local bool mask");
-    switch (ec.LocalDefs[num].Type.Type) {
+    if (PushOutParam) EmitPushPointedCode(loc.Type, ec);
+  } else if (loc.Offset < 256) {
+    int Ofs = loc.Offset;
+    if (loc.Type.Type == TYPE_Bool && loc.Type.BitMask != 1) ParseError(Loc, "Strange local bool mask");
+    switch (loc.Type.Type) {
       case TYPE_Int:
       case TYPE_Byte:
       case TYPE_Bool:
@@ -315,8 +300,8 @@ void VLocalVar::Emit (VEmitContext &ec) {
         break;
     }
   } else {
-    ec.EmitLocalAddress(ec.LocalDefs[num].Offset);
-    EmitPushPointedCode(ec.LocalDefs[num].Type, ec);
+    ec.EmitLocalAddress(loc.Offset);
+    EmitPushPointedCode(loc.Type, ec);
   }
 }
 

@@ -1188,7 +1188,7 @@ void VReturn::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 bool VReturn::Resolve (VEmitContext &ec) {
-  NumLocalsToClear = ec.LocalDefs.length();
+  NumLocalsToClear = ec.GetLocalDefCount();
   bool Ret = true;
   if (Expr) {
     Expr = (ec.FuncRetType.Type == TYPE_Float ? Expr->ResolveFloat(ec) : Expr->Resolve(ec));
@@ -1454,13 +1454,14 @@ void VCompound::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //==========================================================================
 bool VCompound::Resolve (VEmitContext &ec) {
   bool Ret = true;
-  int NumLocalsOnStart = ec.LocalDefs.length();
+  int NumLocalsOnStart = ec.GetLocalDefCount();
   for (int i = 0; i < Statements.length(); ++i) {
     if (!Statements[i]->Resolve(ec)) Ret = false;
   }
 
-  for (int i = NumLocalsOnStart; i < ec.LocalDefs.length(); ++i) {
-    ec.LocalDefs[i].Visible = false;
+  for (int i = NumLocalsOnStart; i < ec.GetLocalDefCount(); ++i) {
+    VLocalVarDef &loc = ec.GetLocalByIndex(i);
+    loc.Visible = false;
   }
 
   return Ret;

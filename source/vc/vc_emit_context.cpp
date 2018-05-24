@@ -97,6 +97,65 @@ void VEmitContext::EndCode () {
 
 //==========================================================================
 //
+//  VEmitContext::ClearLocalDefs
+//
+//==========================================================================
+void VEmitContext::ClearLocalDefs () {
+  LocalDefs.Clear();
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::AllocLocal
+//
+//==========================================================================
+// allocates new local, sets offset
+VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, const TLocation &aloc) {
+  // try to find reusable local
+  for (int f = 0; f < LocalDefs.length(); ++f) {
+    VLocalVarDef &ll = LocalDefs[f];
+    if (ll.Reusable && !ll.Visible) {
+      if (ll.Type.CheckMatch(aloc, atype, false)) {
+        // i found her!
+        fprintf(stderr, "method '%s': found reusable local '%s' at index %d (new local is '%s')\n", CurrentFunc->GetName(), *ll.Name, f, *aname);
+        ll.Reusable = false;
+        ll.Visible = true;
+        ll.Name = aname;
+        ll.Type = atype;
+        ll.ParamFlags = 0;
+        return ll;
+      }
+    }
+  }
+  // introduce new local
+  VLocalVarDef &loc = LocalDefs.Alloc();
+  loc.Name = aname;
+  loc.Type = atype;
+  loc.Offset = localsofs;
+  loc.Reusable = false;
+  loc.Visible = true;
+  loc.ParamFlags = 0;
+  loc.ldindex = LocalDefs.length()-1;
+  localsofs += atype.GetStackSize()/4;
+  if (localsofs > 1024) ParseWarning(aloc, "Local vars > 1k");
+  return loc;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::GetLocalByIndex
+//
+//==========================================================================
+VLocalVarDef &VEmitContext::GetLocalByIndex (int idx) {
+  if (idx < 0 || idx >= LocalDefs.length()) Sys_Error("VC INTERNAL COMPILER ERROR IN `VEmitContext::GetLocalByIndex()`");
+  return LocalDefs[idx];
+}
+
+
+//==========================================================================
+//
 //  VEmitContext::CheckForLocalVar
 //
 //==========================================================================
