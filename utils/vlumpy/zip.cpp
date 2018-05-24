@@ -14,7 +14,11 @@ Read zip.h for more info
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "zlib.h"
+#ifdef USE_INTERNAL_ZLIB
+# include "../../libs/zlib/zlib.h"
+#else
+# include <zlib.h>
+#endif
 #include "zip.h"
 
 #ifdef STDC

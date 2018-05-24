@@ -246,7 +246,11 @@ void Std_File_Reader::close()
 
 #ifdef HAVE_ZLIB_H
 
-#include "zlib.h"
+#ifdef USE_INTERNAL_ZLIB
+# include "../../zlib/zlib.h"
+#else
+# include <zlib.h>
+#endif
 
 static const char* get_gzip_eof( const char* path, long* eof )
 {

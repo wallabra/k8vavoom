@@ -25,11 +25,4 @@ add_library(glbsp
   wad.h
 )
 target_link_libraries(glbsp ${ZLIB_LIBRARY})
-#EXTRA_DIST = \
-# AUTHORS.txt \
-# CHANGES.txt \
-# COPYING.txt \
-# INSTALL.txt \
-# README.txt \
-# TRICKS.txt \
-# USAGE.txt
+add_dependencies(glbsp ${ZLIB_DEPS})

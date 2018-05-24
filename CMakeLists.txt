@@ -11,6 +11,7 @@ option(WITH_FLAC "Enable FLAC support" ON)
 option(WITH_GME "Enable built-in GME support" OFF)
 option(WITH_LIBPNG "Use system libpng" OFF)
 option(WITH_LIBJPG "Use system libjpg" OFF)
+option(WITH_ZLIB "Use system zlib" OFF)
 
 option(ENABLE_SIGNAL_HANDLER "Intercept system signals" OFF)
 
@@ -98,9 +99,18 @@ endif(ENABLE_SIGNAL_HANDLER)
 #
 #  **** Check for zlib ****
 #
-
-find_package(ZLIB REQUIRED)
-include_directories(${ZLIB_INCLUDE_DIR})
+if(WITH_ZLIB)
+  find_package(ZLIB REQUIRED)
+  include_directories(${ZLIB_INCLUDE_DIR})
+  set(ZLIB_LIBRARY "")
+  set(ZLIB_DEPS "")
+else(WITH_ZLIB)
+  add_definitions(-DUSE_INTERNAL_ZLIB=1)
+  add_definitions(-DHAVE_ZLIB_H=1)
+  message(STATUS "Using built-in zlib")
+  set(ZLIB_LIBRARY "z")
+  set(ZLIB_DEPS "z")
+endif(WITH_ZLIB)
 
 #
 #  **** Check for inttypes.h ****

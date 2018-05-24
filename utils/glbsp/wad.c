@@ -29,7 +29,11 @@
 #include <limits.h>
 #include <errno.h>
 
-#include <zlib.h>
+#ifdef USE_INTERNAL_ZLIB
+# include "../../libs/zlib/zlib.h"
+#else
+# include <zlib.h>
+#endif
 
 #include "blockmap.h"
 #include "level.h"

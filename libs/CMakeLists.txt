@@ -1,6 +1,10 @@
 add_subdirectory(core)
 add_subdirectory(liblzma)
 
+if(NOT WITH_ZLIB)
+  add_subdirectory(zlib)
+endif(NOT WITH_ZLIB)
+
 if(ENABLE_CLIENT)
   if(WITH_GME)
     message(STATUS "GME enabled")

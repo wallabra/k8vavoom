@@ -724,7 +724,7 @@ if (MAIN_COMPILE_FLAGS)
   set_target_properties(vavoom PROPERTIES COMPILE_FLAGS ${MAIN_COMPILE_FLAGS})
 endif (MAIN_COMPILE_FLAGS)
 target_link_libraries(vavoom ${MAIN_LIBS})
-add_dependencies(vavoom core timidity gme glbsp libglvis lzma)
+add_dependencies(vavoom core timidity gme glbsp libglvis lzma ${ZLIB_DEPS})
 
 install(TARGETS vavoom DESTINATION ${BINDIR})
 
