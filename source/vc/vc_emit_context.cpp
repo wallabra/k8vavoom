@@ -39,7 +39,8 @@ VStatementInfo StatementInfo[NUM_OPCODES] = {
 //
 //==========================================================================
 VEmitContext::VEmitContext (VMemberBase *Member)
-  : CurrentFunc(nullptr)
+  : compindex(0)
+  , CurrentFunc(nullptr)
   , IndArray(nullptr)
   , FuncRetType(TYPE_Unknown)
   , localsofs(0)
@@ -116,20 +117,24 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
   for (int f = 0; f < LocalDefs.length(); ++f) {
     VLocalVarDef &ll = LocalDefs[f];
     if (ll.Reusable && !ll.Visible) {
-      if (ll.Type.CheckMatch(aloc, atype, false)) {
+      if (ll.Type.IsSame(atype)) {
         // i found her!
-        fprintf(stderr, "method '%s': found reusable local '%s' at index %d (new local is '%s')\n", CurrentFunc->GetName(), *ll.Name, f, *aname);
+        //fprintf(stderr, "method '%s': found reusable local '%s' at index %d (new local is '%s'); type is '%s'; new type is '%s'; oloc:%s:%d; nloc:%s:%d\n", CurrentFunc->GetName(), *ll.Name, f, *aname, *ll.Type.GetName(), *atype.GetName(), *ll.Loc.GetSource(), ll.Loc.GetLine(), *aloc.GetSource(), aloc.GetLine());
+        if (atype.GetStackSize() != ll.Type.GetStackSize()) Sys_Error("VC INTERNAL COMPILER ERROR: invalid type sizes in reused local");
+        ll.Loc = aloc;
         ll.Reusable = false;
         ll.Visible = true;
         ll.Name = aname;
         ll.Type = atype;
         ll.ParamFlags = 0;
+        ll.compindex = compindex;
         return ll;
       }
     }
   }
   // introduce new local
   VLocalVarDef &loc = LocalDefs.Alloc();
+  loc.Loc = aloc;
   loc.Name = aname;
   loc.Type = atype;
   loc.Offset = localsofs;
@@ -137,6 +142,7 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
   loc.Visible = true;
   loc.ParamFlags = 0;
   loc.ldindex = LocalDefs.length()-1;
+  loc.compindex = compindex;
   localsofs += atype.GetStackSize()/4;
   if (localsofs > 1024) ParseWarning(aloc, "Local vars > 1k");
   return loc;
@@ -156,14 +162,46 @@ VLocalVarDef &VEmitContext::GetLocalByIndex (int idx) {
 
 //==========================================================================
 //
+//  VEmitContext::EnterCompound
+//
+//==========================================================================
+int VEmitContext::EnterCompound () {
+  return ++compindex;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::ExitCompound
+//
+//==========================================================================
+void VEmitContext::ExitCompound (int cidx) {
+  if (cidx != compindex) Sys_Error("VC COMPILER INTERNAL ERROR: unbalanced compounds");
+  if (cidx < 1) Sys_Error("VC COMPILER INTERNAL ERROR: invalid compound index");
+  for (int f = 0; f < LocalDefs.length(); ++f) {
+    VLocalVarDef &loc = LocalDefs[f];
+    if (loc.compindex == cidx) {
+      //fprintf(stderr, "method '%s': compound #%d; freeing '%s' (%d; %s)\n", CurrentFunc->GetName(), cidx, *loc.Name, f, *loc.Type.GetName());
+      loc.Visible = false;
+      loc.Reusable = true;
+      loc.compindex = -1;
+    }
+  }
+  --compindex;
+}
+
+
+//==========================================================================
+//
 //  VEmitContext::CheckForLocalVar
 //
 //==========================================================================
 int VEmitContext::CheckForLocalVar (VName Name) {
   if (Name == NAME_None) return -1;
-  for (int i = 0; i < LocalDefs.Num(); ++i) {
-    if (!LocalDefs[i].Visible) continue;
-    if (LocalDefs[i].Name == Name) return i;
+  for (int i = LocalDefs.length()-1; i >= 0; --i) {
+    VLocalVarDef &loc = LocalDefs[i];
+    if (!loc.Visible) continue;
+    if (loc.Name == Name) return i;
   }
   return -1;
 }

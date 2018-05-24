@@ -94,6 +94,8 @@ public:
   void CheckPassable(TLocation) const;
   bool CheckMatch (const TLocation &loc, const VFieldType &, bool raiseError=true) const;
   VStr GetName() const;
+
+  bool IsSame (const VFieldType &other) const;
 };
 
 //==========================================================================

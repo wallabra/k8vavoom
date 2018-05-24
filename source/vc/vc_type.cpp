@@ -525,6 +525,55 @@ VStr VFieldType::GetName () const {
 }
 
 
+//==========================================================================
+//
+//  VFieldType::IsSame
+//
+//==========================================================================
+bool VFieldType::IsSame (const VFieldType &other) const {
+  if (Type != other.Type) return false;
+  if (PtrLevel != other.PtrLevel) return false;
+  switch (Type) {
+    case TYPE_Void:
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Bool:
+    case TYPE_Float:
+    case TYPE_Name:
+    case TYPE_String:
+      return true;
+    case TYPE_Pointer:
+      if (InnerType != other.InnerType) return false;
+      return true;
+    case TYPE_Reference:
+      if (Class != other.Class) return false;
+      return true;
+    case TYPE_Class:
+      if (Class != other.Class) return false;
+      return true;
+    case TYPE_State:
+      return true;
+    case TYPE_Struct:
+      if (Struct != other.Struct) return false;
+      return true;
+    case TYPE_Vector:
+      return true;
+    case TYPE_Array:
+      if (ArrayInnerType != other.ArrayInnerType) return false;
+      if (ArrayDim != other.ArrayDim) return false;
+      return true;
+    case TYPE_DynamicArray:
+      if (ArrayInnerType != other.ArrayInnerType) return false;
+      return true;
+    case TYPE_Automatic:
+      return false;
+    default:
+      break;
+  }
+  return false;
+}
+
+
 #if !defined(IN_VCC)
 
 //==========================================================================

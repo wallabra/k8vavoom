@@ -56,7 +56,15 @@ public:
   // internal index; DO NOT CHANGE!
   int ldindex;
 
+private:
+  int compindex; // for enter/exit compound
+
+public:
   VLocalVarDef () {}
+
+  inline int GetCompIndex () const { return compindex; } // for debugging
+
+  friend class VEmitContext; // it needs access to `compindex`
 };
 
 
@@ -72,6 +80,7 @@ private:
   TArray<int> Labels;
   TArray<VLabelFixup> Fixups;
   TArray<VLocalVarDef> LocalDefs;
+  int compindex;
 
 public:
   VMethod *CurrentFunc;
@@ -100,6 +109,12 @@ public:
   VLocalVarDef &GetLocalByIndex (int idx);
 
   inline int GetLocalDefCount () const { return LocalDefs.length(); }
+
+  // compound statement will call these functions; exiting will mark all allocated vars for reusing
+  int EnterCompound (); // returns compound index
+  void ExitCompound (int cidx); // pass result of `EnterCompound()` to this
+
+  inline int GetCurrCompIndex () const { return compindex; } // for debugging
 
   // returns index in `LocalDefs`
   int CheckForLocalVar (VName Name);

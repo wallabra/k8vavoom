@@ -1454,16 +1454,13 @@ void VCompound::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //==========================================================================
 bool VCompound::Resolve (VEmitContext &ec) {
   bool Ret = true;
-  int NumLocalsOnStart = ec.GetLocalDefCount();
+  auto cidx = ec.EnterCompound();
+  //fprintf(stderr, "ENTERING COMPOUND %d (%s:%d)\n", cidx, *Loc.GetSource(), Loc.GetLine());
   for (int i = 0; i < Statements.length(); ++i) {
     if (!Statements[i]->Resolve(ec)) Ret = false;
   }
-
-  for (int i = NumLocalsOnStart; i < ec.GetLocalDefCount(); ++i) {
-    VLocalVarDef &loc = ec.GetLocalByIndex(i);
-    loc.Visible = false;
-  }
-
+  //fprintf(stderr, "EXITING COMPOUND %d (%s:%d)\n", cidx, *Loc.GetSource(), Loc.GetLine());
+  ec.ExitCompound(cidx);
   return Ret;
 }
 

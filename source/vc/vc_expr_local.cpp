@@ -108,7 +108,13 @@ void VLocalDecl::Declare (VEmitContext &ec) {
   for (int i = 0; i < Vars.length(); ++i) {
     VLocalEntry &e = Vars[i];
 
-    if (ec.CheckForLocalVar(e.Name) != -1) ParseError(e.Loc, "Redefined identifier %s", *e.Name);
+    if (ec.CheckForLocalVar(e.Name) != -1) {
+      //VLocalVarDef &loc = ec.GetLocalByIndex(ec.CheckForLocalVar(e.Name));
+      //fprintf(stderr, "duplicate '%s'(%d) (old(%d) is at %s:%d)\n", *e.Name, ec.GetCurrCompIndex(), loc.GetCompIndex(), *loc.Loc.GetSource(), loc.Loc.GetLine());
+      ParseError(e.Loc, "Redefined identifier %s", *e.Name);
+    } else {
+      //fprintf(stderr, "NEW '%s'(%d) (%s:%d)\n", *e.Name, ec.GetCurrCompIndex(), *e.Loc.GetSource(), e.Loc.GetLine());
+    }
 
     // resolve automatic type
     if (e.TypeExpr->Type.Type == TYPE_Automatic) {
