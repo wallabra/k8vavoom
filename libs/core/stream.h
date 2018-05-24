@@ -27,51 +27,36 @@
 //**
 //**************************************************************************
 
-//
-//  VStream
-//
-//  Base class for various streams.
-//
-class VStream
-{
+
+// base class for various streams
+class VStream {
 protected:
-  bool    bLoading; //  Are we loading or saving?
-  bool    bError;   //  Did we have any errors?
+  bool bLoading; // are we loading or saving?
+  bool bError; // did we have any errors?
 
 public:
-  //  Structors.
-  VStream()
-  : bLoading(false)
-  , bError(false)
-  {}
-  virtual ~VStream() noexcept(false);
+  VStream () : bLoading(false) , bError(false) {}
+  virtual ~VStream () noexcept(false);
 
-  //  Status requests.
-  bool IsLoading()
-  {
-    return bLoading;
-  }
-  bool IsSaving()
-  {
-    return !bLoading;
-  }
-  bool IsError()
-  {
-    return bError;
-  }
+  // status requests
+  inline bool IsLoading () const { return bLoading;}
+  inline bool IsSaving () const { return !bLoading; }
+  inline bool IsError () const { return bError; }
 
   inline void Serialize (void *buf, int len) { Serialise(buf, len); }
+  inline void Serialize (const void *buf, int len) { Serialise(buf, len); }
+  void Serialise (const void *buf, int len); // only write
 
-  //  Stream interface.
-  virtual void Serialise(void*, int);
-  virtual void SerialiseBits(void*, int);
-  virtual void SerialiseInt(vuint32&, vuint32);
-  virtual void Seek(int);
-  virtual int Tell();
-  virtual int TotalSize();
-  virtual bool AtEnd();
-  virtual void Flush();
-  virtual bool Close();
+  // stream interface
+  virtual void Serialise (void *Data, int Length);
+  virtual void SerialiseBits (void *Data, int Length);
+  virtual void SerialiseInt (vuint32 &, vuint32);
+  virtual void Seek (int);
+  virtual int Tell ();
+  virtual int TotalSize ();
+  virtual bool AtEnd ();
+  virtual void Flush ();
+  virtual bool Close ();
 
   //  Interface functions for objects and classes streams.
   virtual VStream& operator<<(VName&);
