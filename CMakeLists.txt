@@ -10,6 +10,7 @@ option(WITH_MODPLUG "Enable ModPlug support" ON)
 option(WITH_FLAC "Enable FLAC support" ON)
 option(WITH_GME "Enable built-in GME support" OFF)
 option(WITH_LIBPNG "Use system libpng" OFF)
+option(WITH_LIBJPG "Use system libjpg" OFF)
 
 option(ENABLE_SIGNAL_HANDLER "Intercept system signals" OFF)
 

@@ -477,8 +477,14 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(ENABLE_CLIENT)
 
+if(WITH_JPG)
+  set(JPG_LIBRARY "")
+else(WITH_JPG)
+  set(JPG_LIBRARY "jpeg")
+endif(WITH_JPG)
+
 set(MAIN_SOURCES ${MAIN_COMMON_SOURCES})
-set(MAIN_LIBS glbsp libglvis timidity gme core lzma ${ZLIB_LIBRARY} ${NET_LIBRARIES})
+set(MAIN_LIBS glbsp libglvis timidity gme core lzma ${JPG_LIBRARY} ${ZLIB_LIBRARY} ${NET_LIBRARIES})
 set(MAIN_COMPILE_FLAGS "")
 
 #
@@ -569,10 +575,12 @@ endif(WITH_LIBPNG)
 #
 #  **** Check for libjpeg ****
 #
-
-find_package(JPEG REQUIRED)
-include_directories(${JPEG_INCLUDE_DIR})
-set(MAIN_LIBS ${JPEG_LIBRARY} ${MAIN_LIBS})
+if(WITH_LIBJPG)
+  find_package(JPEG REQUIRED)
+  include_directories(${JPEG_INCLUDE_DIR})
+  set(MAIN_LIBS ${JPEG_LIBRARY} ${MAIN_LIBS})
+  add_definitions(-DVAVOOM_USE_LIBJPG=1)
+endif(WITH_LIBJPG)
 
 #
 #  **** Check for Vorbis ****

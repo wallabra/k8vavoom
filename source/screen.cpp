@@ -180,13 +180,19 @@ static VCvarB draw_cycles("draw_cycles", false, "Draw cycles counter?", CVAR_Arc
 //
 //**************************************************************************
 
+#ifdef VAVOOM_USE_LIBJPG
 static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type (png/jpg/tga/pcx).", CVAR_Archive);
+#else
+static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type (png/tga/pcx).", CVAR_Archive);
+#endif
 static VCvarB screenshot_in_home_dir("screenshot_in_home_dir", true, "Save screenshots in ~/.vavoom?", CVAR_Archive);
 
 extern void WriteTGA (const VStr& FileName, void* data, int width, int height, int bpp, bool bot2top);
 extern void WritePCX (const VStr& FileName, void* data, int width, int height, int bpp, bool bot2top);
 extern void WritePNG (const VStr& FileName, const void* Data, int Width, int Height, int Bpp, bool Bot2top);
+#ifdef VAVOOM_USE_LIBJPG
 extern void WriteJPG (const VStr& FileName, const void* Data, int Width, int Height, int Bpp, bool Bot2top);
+#endif
 
 //==========================================================================
 //
@@ -244,7 +250,9 @@ COMMAND(ScreenShot)
          if (!VStr::ICmp(screenshot_type, "pcx")) WritePCX(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
     else if (!VStr::ICmp(screenshot_type, "tga")) WriteTGA(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
     else if (!VStr::ICmp(screenshot_type, "png")) WritePNG(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
+#ifdef VAVOOM_USE_LIBJPG
     else if (!VStr::ICmp(screenshot_type, "jpg")) WriteJPG(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
+#endif
     else {
       report = false;
       GCon->Log("Bad screenshot type");

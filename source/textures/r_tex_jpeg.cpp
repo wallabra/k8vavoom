@@ -31,7 +31,11 @@
 #ifdef CLIENT
 extern "C"
 {
-#include <jpeglib.h>
+#ifdef VAVOOM_USE_LIBJPG
+# include <jpeglib.h>
+#else
+# include "../../libs/jpeg/jpeglib.h"
+#endif
 }
 #endif
 
@@ -511,6 +515,7 @@ static void my_term_destination(j_compress_ptr cinfo)
 //
 //==========================================================================
 
+#ifdef VAVOOM_USE_LIBJPG
 void WriteJPG(const VStr& FileName, const void* Data, int Width, int Height,
   int Bpp, bool Bot2top)
 {
@@ -601,5 +606,6 @@ void WriteJPG(const VStr& FileName, const void* Data, int Width, int Height,
   Strm = NULL;
   unguard;
 }
+#endif
 
 #endif
