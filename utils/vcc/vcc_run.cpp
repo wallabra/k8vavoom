@@ -306,6 +306,16 @@ static void initialize () {
   //VMemberBase::StaticInit();
   VObject::StaticInit();
   VMemberBase::StaticAddDefine("VCC_STANDALONE_EXECUTOR");
+#ifdef VCCRUN_HAS_SDL
+  VMemberBase::StaticAddDefine("VCCRUN_HAS_SDL");
+#endif
+#ifdef VCCRUN_HAS_OPENGL
+  VMemberBase::StaticAddDefine("VCCRUN_HAS_OPENGL");
+#endif
+#ifdef VCCRUN_HAS_OPENAL
+  VMemberBase::StaticAddDefine("VCCRUN_HAS_OPENAL");
+#endif
+  VMemberBase::StaticAddDefine("VCCRUN_HAS_IMAGO");
 }
 
 
