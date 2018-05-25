@@ -259,6 +259,8 @@ class Actor extends Thinker
   action native A_FireCrackle();
   action native A_BFGSpray(optional class<Actor> flashtype, optional eval int numrays, optioal eval int damage);
 
+  action native A_SetAngle(float newyaw);
+
   //
   //  Not documented
   //

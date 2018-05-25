@@ -563,6 +563,24 @@ final void A_SetPitch (float newpitch) {
 
 //==========================================================================
 //
+//  A_SetAngle
+//
+//==========================================================================
+final void A_SetAngle (float newyaw) {
+  /*
+  if (newyaw < 0.0) newyaw += 360.0;
+  newyaw = AngleMod360(newyaw);
+  //if (newyaw > 90.0) newyaw -= 360.0;
+  //print("oldpitch=%f; newpitch=%f", Angles.pitch, newpitch);
+  Angles.yaw = newyaw;
+  //Angles.pitch = -10.0;
+  */
+  dprint("A_SetAngle: not implemented!");
+}
+
+
+//==========================================================================
+//
 //  A_WeaponReady
 //
 //  The player can fire the weapon or change to another weapon at this time.
