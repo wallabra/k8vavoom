@@ -27,6 +27,9 @@
 #include "sv_local.h"
 
 
+static VCvarB dbg_show_decorate_unsupported("dbg_show_decorate_unsupported", false, "Show unsupported decorate props/flags?", 0);
+
+
 enum {
   PROPS_HASH_SIZE = 256,
   FLAGS_HASH_SIZE = 256,
@@ -1527,7 +1530,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
       if (FlagName == F.Name) {
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(DefObj, Value); break;
-          case FLAG_Unsupported: GCon->Logf("Unsupported flag %s in %s", *FlagName, Class->GetName()); break;
+          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf("Unsupported flag %s in %s", *FlagName, Class->GetName()); break;
           case FLAG_Byte: F.Field->SetByte(DefObj, Value ? F.BTrue : F.BFalse); break;
           case FLAG_Float: F.Field->SetFloat(DefObj, Value ? F.FTrue : F.FFalse); break;
           case FLAG_Name: F.Field->SetName(DefObj, Value ? F.NTrue : F.NFalse); break;
@@ -2012,7 +2015,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
           case PROP_IntUnsupported:
             //FIXME
             sc->CheckNumberWithSign();
-            GCon->Logf("Property %s in %s is not yet supported", *Prop, Class->GetName());
+            if (dbg_show_decorate_unsupported) GCon->Logf("Property %s in %s is not yet supported", *Prop, Class->GetName());
             break;
           case PROP_IntIdUnsupported:
             //FIXME
@@ -2024,7 +2027,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
               sc->ExpectIdentifier();
               if (sc->Check(",")) sc->ExpectIdentifier();
               sc->SetCMode(oldcm);
-              GCon->Logf("Property %s in %s is not yet supported", *Prop, Class->GetName());
+              if (dbg_show_decorate_unsupported) GCon->Logf("Property %s in %s is not yet supported", *Prop, Class->GetName());
             }
             break;
           case PROP_BitIndex:
@@ -2087,7 +2090,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
           case PROP_StrUnsupported:
             //FIXME
             sc->ExpectString();
-            GCon->Logf("Property %s in %s is not yet supported", *Prop, Class->GetName());
+            if (dbg_show_decorate_unsupported) GCon->Logf("Property %s in %s is not yet supported", *Prop, Class->GetName());
             break;
           case PROP_Class:
             sc->ExpectString();
@@ -2226,7 +2229,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
               else if (sc->Check("OptFuzzy")) RenderStyle = STYLE_OptFuzzy;
               else if (sc->Check("Translucent")) RenderStyle = STYLE_Translucent;
               else if (sc->Check("Add")) RenderStyle = STYLE_Add;
-              else if (sc->Check("Stencil")) GCon->Logf("Render style Stencil in %s is not yet supported", Class->GetName()); //FIXME
+              else if (sc->Check("Stencil")) { if (dbg_show_decorate_unsupported) GCon->Logf("Render style Stencil in %s is not yet supported", Class->GetName()); } //FIXME
               else if (sc->Check("Shaded")) RenderStyle = STYLE_Fuzzy; //FIXME -- This is an aproximated style... but it's not the desired one!
               else sc->Error("Bad render style");
               P.Field->SetByte(DefObj, RenderStyle);
@@ -2271,7 +2274,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
             } else {
               sc->ExpectString();
             }
-            GCon->Logf("Property StencilColor in %s is not yet supported", Class->GetName());
+            if (dbg_show_decorate_unsupported) GCon->Logf("Property StencilColor in %s is not yet supported", Class->GetName());
             break;
           case PROP_Monster:
             SetClassFieldBool(Class, "bShootable", true);
@@ -3202,7 +3205,7 @@ void VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
       if (FlagName == F.Name) {
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(this, Value); break;
-          case FLAG_Unsupported: GCon->Logf("Unsupported flag %s in %s", *Flag, GetClass()->GetName()); break;
+          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf("Unsupported flag %s in %s", *Flag, GetClass()->GetName()); break;
           case FLAG_Byte: F.Field->SetByte(this, Value ? F.BTrue : F.BFalse); break;
           case FLAG_Float: F.Field->SetFloat(this, Value ? F.FTrue : F.FFalse); break;
           case FLAG_Name: F.Field->SetName(this, Value ? F.NTrue : F.NFalse); break;
