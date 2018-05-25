@@ -1,0 +1,7 @@
+class VideoMode : Object abstract native;
+
+native final static bool canInit ();
+native final static bool hasOpenGL ();
+native final static bool isInitialized ();
+native final static int getWidth ();
+native final static int getHeight ();
