@@ -1,5 +1,6 @@
 add_subdirectory(core)
 add_subdirectory(liblzma)
+add_subdirectory(imago)
 
 if(NOT WITH_ZLIB)
   add_subdirectory(zlib)
