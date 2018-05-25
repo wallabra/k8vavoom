@@ -1,4 +1,5 @@
 add_library(core STATIC
+  propp.h
   args.cpp
   args.h
   array.h

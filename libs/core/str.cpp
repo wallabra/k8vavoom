@@ -205,6 +205,26 @@ VStr VStr::win2utf () const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+bool VStr::fnameEqu1251CI (const char *s) const {
+  size_t slen = length();
+  if (!s || !s[0]) return (slen == 0);
+  size_t pos = 0;
+  while (pos < slen && *s) {
+    if (data[pos] == '/') {
+      if (*s != '/') return false;
+      while (pos < slen && data[pos] == '/') ++pos;
+      while (*s == '/') ++s;
+      continue;
+    }
+    if (locase1251(data[pos]) != locase1251(*s)) return false;
+    ++pos;
+    ++s;
+  }
+  return (*s == 0);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 VStr VStr::mid (int start, int len) const {
   guard(VStr::mid);
   int mylen = (int)length();
@@ -942,7 +962,7 @@ size_t VStr::ByteLengthForUtf8 (const char *s, size_t N) {
 }
 
 
-int VStr::GetChar (const char*& s) {
+int VStr::GetChar (const char *&s) {
   guard(VStr::GetChar);
   if ((vuint8)*s < 128) return *s++;
   int cnt, val;
@@ -999,26 +1019,6 @@ VStr VStr::FromChar (int c) {
 }
 
 
-/*
-int VStr::ICmp (const char* S1, const char* S2) {
-#ifdef WIN32
-  return _stricmp(S1, S2);
-#else
-  return stricmp(S1, S2);
-#endif
-}
-
-
-int VStr::NICmp (const char *S1, const char *S2, size_t N) {
-  #ifdef WIN32
-    return _strnicmp(S1, S2, N);
-  #else
-    return strnicmp(S1, S2, N);
-  #endif
-}
-*/
-
-
 //==========================================================================
 //
 //  va
@@ -1029,8 +1029,7 @@ int VStr::NICmp (const char *S1, const char *S2, size_t N) {
 // FIXME: make this buffer size safe someday
 //
 //==========================================================================
-
-char *va (const char *text, ...) {
+__attribute__((format(printf, 1, 2))) char *va (const char *text, ...) {
   va_list args;
   va_bufnum = (va_bufnum+1)&15;
   va_start(args, text);

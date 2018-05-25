@@ -366,6 +366,24 @@ public:
   VStr toLowerCase1251 () const;
   VStr toUpperCase1251 () const;
 
+  inline bool equ1251CI (const VStr &s) const {
+    size_t slen = length();
+    if (slen != s.length()) return false;
+    for (size_t f = 0; f < slen; ++f) if (locase1251(data[f]) != locase1251(s.data[f])) return false;
+    return true;
+  }
+
+  inline bool equ1251CI (const char *s) const {
+    size_t slen = length();
+    if (!s || !s[0]) return (slen == 0);
+    if (slen != strlen(s)) return false;
+    for (size_t f = 0; f < slen; ++f) if (locase1251(data[f]) != locase1251(s[f])) return false;
+    return true;
+  }
+
+  inline bool fnameEqu1251CI (const VStr &s) const { return fnameEqu1251CI(s.data); }
+  bool fnameEqu1251CI (const char *s) const;
+
 public:
   static inline char wchar2win (vuint32 wc) { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
 
@@ -411,7 +429,7 @@ public:
 };
 
 
-char *va (const char *text, ...) __attribute__ ((format(printf, 1, 2)));
+char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
 
 inline vuint32 GetTypeHash (const char *s) { return (s && s[0] ? fnvHashBuf(s, strlen(s)) : 1); }
 inline vuint32 GetTypeHash (const VStr &s) { return (s.length() ? fnvHashBuf(*s, s.length()) : 1); }

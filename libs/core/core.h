@@ -34,6 +34,7 @@
 #include <cmath>
 
 #include "common.h"   //  Common types and definitions
+#include "propp.h"
 #include "hashfunc.h"
 #include "zone.h"   //  Zone memory allocation
 #include "endian.h"   //  Endianes handling
