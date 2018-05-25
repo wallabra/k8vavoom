@@ -102,6 +102,7 @@ protected:
   ImageType mFormat;
   int mWidth, mHeight;
   VStr mName;
+  VStr mType;
 
   vuint8 *mPixels;
   RGBA mPalette[256];
@@ -113,6 +114,8 @@ private:
   int getHeight () const { return mHeight; }
   const VStr &getName () const { return mName; }
   void setName (const VStr &aname) { mName = aname; }
+  const VStr &getType () const { return mType; }
+  void setType (const VStr &aname) { mType = aname; }
 
   bool getIsTrueColor () const { return (mFormat == IT_RGBA); }
   bool getHasPalette () const { return (mPalUsed > 0); }
@@ -124,6 +127,7 @@ public:
   PropertyRO<int, VImage> width {this, &VImage::getWidth};
   PropertyRO<int, VImage> height {this, &VImage::getHeight};
   Property<const VStr &, VImage> name {this, &VImage::getName, &VImage::setName};
+  Property<const VStr &, VImage> type {this, &VImage::getType, &VImage::setType};
   PropertyRO<bool, VImage> isTrueColor {this, &VImage::getIsTrueColor};
   PropertyRO<bool, VImage> hasPalette {this, &VImage::getHasPalette}; // note that non-tc images can still be palette-less
   PropertyRO<int, VImage> palUsed {this, &VImage::getPalUsed};
@@ -148,11 +152,14 @@ public:
 
   RGBA getPixel (int x, int y) const;
   void setPixel (int x, int y, const RGBA &col);
+
+  // has any sense only for paletted images
+  void setBytePixel (int x, int y, vuint8 b);
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-typedef VImage* (*VImageLoaderFn) (VStream *, const VStr &name);
+typedef VImage* (*VImageLoaderFn) (VStream *);
 
 // `ext` may, or may not include dot
 // loaders with higher priority will be tried first

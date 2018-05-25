@@ -26,11 +26,9 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-//typedef VImage* (*VImageLoaderFn) (VStream *, const VStr &name);
-
 struct ImagoLoader {
   VImageLoaderFn ldr;
-  VStr ext;
+  VStr ext; // without dot
   VStr desc;
   int prio;
   ImagoLoader *next;
@@ -48,7 +46,7 @@ void ImagoRegisterLoader (const char *fmtext, const char *fmtdesc, VImageLoaderF
   if (fmtext && fmtext[0]) {
     if (fmtext[0] == '.' && fmtext[1] == 0) {
     } else {
-      if (fmtext[0] == '.') ext = VStr(fmtext); else ext = VStr(".")+fmtext;
+      if (fmtext[0] == '.') ext = VStr(fmtext+1); else ext = VStr(fmtext);
     }
   }
 
@@ -152,6 +150,15 @@ void VImage::setPixel (int x, int y, const RGBA &col) {
 }
 
 
+// has any sense only for paletted images
+void VImage::setBytePixel (int x, int y, vuint8 b) {
+  if (x < 0 || y < 0 || x >= mWidth || y >= mHeight || !mPixels || mFormat != IT_Pal) return;
+
+  vuint8 *data = mPixels+y*mWidth+x;
+  *data = b;
+}
+
+
 void VImage::checkerFill () {
   if (!mPixels || width < 1 || height < 1) return;
   for (int y = 0; y < mHeight; ++y) {
@@ -172,4 +179,21 @@ void VImage::setPalette (const RGBA *pal, int colnum) {
   } else {
     mPalUsed = 0;
   }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// load image from stream; return `nullptr` on error
+VImage *VImage::loadFrom (VStream *strm, const VStr &name) {
+  if (!strm) return nullptr;
+  for (ImagoLoader *it = loaders; it; it = it->next) {
+    strm->Seek(0);
+    VImage *res = it->ldr(strm);
+    if (res) {
+      res->name = name;
+      res->type = it->ext;
+      return res;
+    }
+  }
+  return nullptr;
 }

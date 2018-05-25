@@ -82,7 +82,7 @@ static bool pngReadIDAT (VStream &file, vuint8 *buffer, int width, int height, i
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VImage *loadPNG (VStream *strm, const VStr &name) {
+static VImage *loadPNG (VStream *strm) {
   if (!strm || strm->IsError()) return nullptr;
   strm->Seek(0);
   if (strm->IsError()) return nullptr;
