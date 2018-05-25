@@ -28,6 +28,7 @@
 
 
 static VCvarB dbg_show_decorate_unsupported("dbg_show_decorate_unsupported", false, "Show unsupported decorate props/flags?", 0);
+VCvarB dbg_show_missing_class("dbg_show_missing_class", false, "Show missing classes?", 0);
 
 
 enum {
@@ -3122,7 +3123,7 @@ void ProcessDecorateScripts () {
     } else {
       VClass *C = VClass::FindClassLowerCase(*CF.Name.ToLower());
       if (!C) {
-        GCon->Logf("WARNING: No such class %s", *CF.Name);
+        if (dbg_show_missing_class) GCon->Logf("WARNING: No such class %s", *CF.Name);
       } else if (!C->IsChildOf(CF.ReqParent)) {
         GCon->Logf("WARNING: Class %s is not a descendant of %s", *CF.Name, CF.ReqParent->GetName());
       } else {
@@ -3138,7 +3139,7 @@ void ProcessDecorateScripts () {
       VDropItemInfo& DI = List[j];
       if (DI.TypeName == NAME_None) continue;
       VClass* C = VClass::FindClassLowerCase(DI.TypeName);
-           if (!C) GCon->Logf("WARNING: No such class %s", *DI.TypeName);
+           if (!C) { if (dbg_show_missing_class) GCon->Logf("WARNING: No such class %s", *DI.TypeName); }
       else if (!C->IsChildOf(ActorClass)) GCon->Logf("WARNING: Class %s is not an actor class", *DI.TypeName);
       else DI.Type = C;
     }

@@ -27,6 +27,8 @@
 
 #include "gamedefs.h"
 
+extern VCvarB dbg_show_missing_class;
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -130,7 +132,7 @@ static void ParseLockDefs(VScriptParser* sc)
             VClass* Cls = VClass::FindClass(*sc->String);
             if (!Cls)
             {
-              GCon->Logf("No such class %s", *sc->String);
+              if (dbg_show_missing_class) GCon->Logf("No such class %s", *sc->String);
             }
             else
             {
@@ -144,7 +146,7 @@ static void ParseLockDefs(VScriptParser* sc)
           VClass* Cls = VClass::FindClass(*sc->String);
           if (!Cls)
           {
-            GCon->Logf("No such class %s", *sc->String);
+            if (dbg_show_missing_class) GCon->Logf("No such class %s", *sc->String);
           }
           else
           {

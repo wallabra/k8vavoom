@@ -32,6 +32,8 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
+extern VCvarB dbg_show_missing_class;
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -1796,7 +1798,7 @@ void R_ParseEffectDefs()
     }
     else
     {
-      GCon->Logf(NAME_Init, "No such class %s", *CD.ClassName);
+      if (dbg_show_missing_class) GCon->Logf(NAME_Init, "No such class %s", *CD.ClassName);
       continue;
     }
 
