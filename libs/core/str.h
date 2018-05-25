@@ -230,31 +230,59 @@ public:
   inline int ICmp (const char *S2) const { return ICmp(data, S2); }
   inline int ICmp (const VStr &S2) const { return ICmp(data, *S2); }
 
+  inline int cmp (const char *S2) const { return Cmp(data, S2); }
+  inline int cmp (const VStr &S2) const { return Cmp(data, *S2); }
+  inline int icmp (const char *S2) const { return ICmp(data, S2); }
+  inline int icmp (const VStr &S2) const { return ICmp(data, *S2); }
+
   bool StartsWith (const char *) const;
-  bool StartsWith (const VStr&) const;
+  bool StartsWith (const VStr &) const;
   bool EndsWith (const char *) const;
-  bool EndsWith (const VStr&) const;
+  bool EndsWith (const VStr &) const;
+
+  inline bool startsWith (const char *s) const { return StartsWith(s); }
+  inline bool startsWith (const VStr &s) const { return StartsWith(s); }
+  inline bool endsWith (const char *s) const { return EndsWith(s); }
+  inline bool endsWith (const VStr &s) const { return EndsWith(s); }
 
   VStr ToLower () const;
   VStr ToUpper () const;
 
+  inline VStr toLowerCase () const { return ToLower(); }
+  inline VStr toUpperCase () const { return ToUpper(); }
+
   int IndexOf (char) const;
   int IndexOf (const char *) const;
-  int IndexOf (const VStr&) const;
+  int IndexOf (const VStr &) const;
   int LastIndexOf (char) const;
   int LastIndexOf (const char *) const;
-  int LastIndexOf (const VStr&) const;
+  int LastIndexOf (const VStr &) const;
+
+  inline int indexOf (char v) const { return IndexOf(v); }
+  inline int indexOf (const char *v) const { return IndexOf(v); }
+  inline int indexOf (const VStr &v) const { return IndexOf(v); }
+  inline int lastIndexOf (char v) const { return LastIndexOf(v); }
+  inline int lastIndexOf (const char *v) const { return LastIndexOf(v); }
+  inline int lastIndexOf (const VStr &v) const { return LastIndexOf(v); }
 
   VStr Replace (const char *, const char *) const;
-  VStr Replace (const VStr&, const VStr&) const;
+  VStr Replace (const VStr &, const VStr &) const;
+
+  inline VStr replace (const char *s0, const char *s1) const { return Replace(s0, s1); }
+  inline VStr replace (const VStr &s0, const VStr &s1) const { return Replace(s0, s1); }
 
   VStr Utf8Substring (int start, int len) const;
+  inline VStr utf8Substring (int start, int len) const { return Utf8Substring(start, len); }
 
-  void Split (char, TArray<VStr>&) const;
-  void Split (const char *, TArray<VStr>&) const;
+  void Split (char, TArray<VStr> &) const;
+  void Split (const char *, TArray<VStr> &) const;
+
+  inline void split (char c, TArray<VStr> &a) const { Split(c, a); }
+  inline void split (const char *s, TArray<VStr> &a) const { Split(s, a); }
 
   // split string to path components; first component can be '/', others has no slashes
-  void SplitPath (TArray<VStr>&) const;
+  void SplitPath (TArray<VStr> &) const;
+  inline void splitPath (TArray<VStr> &a) const { SplitPath(a); }
 
   bool IsValidUtf8 () const;
   VStr Latin1ToUtf8 () const;
@@ -288,12 +316,21 @@ public:
   VStr DefaultExtension (const VStr &extension) const;
   VStr FixFileSlashes () const;
 
+  inline VStr extractFilePath () const { return ExtractFilePath(); }
+  inline VStr extractFileName () const { return ExtractFileName(); }
+  inline VStr extractFileBase () const { return ExtractFileBase(); }
+  inline VStr extractFileExtension () const { return ExtractFileExtension(); }
+  inline VStr stripExtension () const { return StripExtension(); }
+  inline VStr defaultPath (const VStr &basepath) const { return DefaultPath(basepath); }
+  inline VStr defaultExtension (const VStr &extension) const { return DefaultExtension(extension); }
+  inline VStr fixSlashes () const { return FixFileSlashes(); }
+
   static inline size_t Length (const char *s) { return (s ? strlen(s) : 0); }
   static inline size_t length (const char *s) { return (s ? strlen(s) : 0); }
   static size_t Utf8Length (const char *);
   static inline size_t utf8Length (const char *s) { return Utf8Length(s); }
   static size_t ByteLengthForUtf8 (const char *, size_t);
-  static int GetChar (const char *&);
+  static int GetChar (const char *&); // utf8
   static VStr FromChar (int);
 
   static inline int Cmp (const char *S1, const char *S2) { return (S1 == S2 ? 0 : strcmp((S1 ? S1 : ""), (S2 ? S2 : ""))); }

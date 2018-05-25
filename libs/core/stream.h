@@ -28,11 +28,15 @@
 //**************************************************************************
 
 
+class VStr;
+
+
 // base class for various streams
 class VStream {
 protected:
   bool bLoading; // are we loading or saving?
   bool bError; // did we have any errors?
+  static const VStr mEmptyName;
 
 public:
   VStream () : bLoading(false) , bError(false) {}
@@ -48,6 +52,7 @@ public:
   void Serialise (const void *buf, int len); // only write
 
   // stream interface
+  virtual const VStr &GetName () const;
   virtual void Serialise (void *Data, int Length);
   virtual void SerialiseBits (void *Data, int Length);
   virtual void SerialiseInt (vuint32 &, vuint32);
