@@ -23,45 +23,25 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_tex.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VWarpTexture::VWarpTexture
 //
 //==========================================================================
-
-VWarpTexture::VWarpTexture(VTexture* ASrcTex)
-: SrcTex(ASrcTex)
-, Pixels(NULL)
-, GenTime(0)
-, WarpXScale(1.0)
-, WarpYScale(1.0)
-, XSin1(NULL)
-, XSin2(NULL)
-, YSin1(NULL)
-, YSin2(NULL)
+VWarpTexture::VWarpTexture (VTexture *ASrcTex)
+  : SrcTex(ASrcTex)
+  , Pixels(nullptr)
+  , GenTime(0)
+  , WarpXScale(1.0)
+  , WarpYScale(1.0)
+  , XSin1(nullptr)
+  , XSin2(nullptr)
+  , YSin1(nullptr)
+  , YSin2(nullptr)
 {
   Width = SrcTex->GetWidth();
   Height = SrcTex->GetHeight();
@@ -72,141 +52,106 @@ VWarpTexture::VWarpTexture(VTexture* ASrcTex)
   WarpType = 1;
 }
 
+
 //==========================================================================
 //
 //  VWarpTexture::~VWarpTexture
 //
 //==========================================================================
-
-VWarpTexture::~VWarpTexture() noexcept(false)
-{
+VWarpTexture::~VWarpTexture () noexcept(false) {
   guard(VWarpTexture::~VWarpTexture);
-  if (Pixels)
-  {
+  if (Pixels) {
     delete[] Pixels;
-    Pixels = NULL;
+    Pixels = nullptr;
   }
-  if (SrcTex)
-  {
+  if (SrcTex) {
     delete SrcTex;
-    SrcTex = NULL;
+    SrcTex = nullptr;
   }
-  if (XSin1)
-  {
+  if (XSin1) {
     delete[] XSin1;
-    XSin1 = NULL;
+    XSin1 = nullptr;
   }
-  if (XSin2)
-  {
+  if (XSin2) {
     delete[] XSin2;
-    XSin2 = NULL;
+    XSin2 = nullptr;
   }
-  if (YSin1)
-  {
+  if (YSin1) {
     delete[] YSin1;
-    YSin1 = NULL;
+    YSin1 = nullptr;
   }
-  if (YSin2)
-  {
+  if (YSin2) {
     delete[] YSin2;
-    YSin2 = NULL;
+    YSin2 = nullptr;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWarpTexture::SetFrontSkyLayer
 //
 //==========================================================================
-
-void VWarpTexture::SetFrontSkyLayer()
-{
+void VWarpTexture::SetFrontSkyLayer () {
   guardSlow(VWarpTexture::SetFrontSkyLayer);
   SrcTex->SetFrontSkyLayer();
   unguardSlow;
 }
+
 
 //==========================================================================
 //
 //  VWarpTexture::CheckModified
 //
 //==========================================================================
-
-bool VWarpTexture::CheckModified()
-{
-  return GenTime != GTextureManager.Time;
+bool VWarpTexture::CheckModified () {
+  return (GenTime != GTextureManager.Time);
 }
+
 
 //==========================================================================
 //
 //  VWarpTexture::GetPixels
 //
 //==========================================================================
-
-vuint8* VWarpTexture::GetPixels()
-{
+vuint8 *VWarpTexture::GetPixels () {
   guard(VWarpTexture::GetPixels);
-  if (Pixels && GenTime == GTextureManager.Time)
-  {
-    return Pixels;
-  }
+  if (Pixels && GenTime == GTextureManager.Time) return Pixels;
 
-  const vuint8* SrcPixels = SrcTex->GetPixels();
+  const vuint8 *SrcPixels = SrcTex->GetPixels();
   Format = SrcTex->Format;
 
   GenTime = GTextureManager.Time;
   Pixels8BitValid = false;
 
-  if (!XSin1)
-  {
+  if (!XSin1) {
     XSin1 = new float[Width];
     YSin1 = new float[Height];
   }
 
-  //  Precalculate sine values.
-  for (int x = 0; x < Width; x++)
-  {
-    XSin1[x] = msin(GenTime * 44 + x / WarpXScale * 5.625 + 95.625) *
-      8 * WarpYScale + 8 * WarpYScale * Height;
+  // precalculate sine values
+  for (int x = 0; x < Width; ++x) {
+    XSin1[x] = msin(GenTime*44+x/WarpXScale*5.625+95.625)*8*WarpYScale+8*WarpYScale*Height;
   }
-  for (int y = 0; y < Height; y++)
-  {
-    YSin1[y] = msin(GenTime * 50 + y / WarpYScale * 5.625) *
-      8 * WarpXScale + 8 * WarpXScale * Width;
+  for (int y = 0; y < Height; ++y) {
+    YSin1[y] = msin(GenTime*50+y/WarpYScale*5.625)*8*WarpXScale+8*WarpXScale*Width;
   }
 
-  if (Format == TEXFMT_8 || Format == TEXFMT_8Pal)
-  {
-    if (!Pixels)
-    {
-      Pixels = new vuint8[Width * Height];
-    }
-
-    vuint8* Dst = Pixels;
-    for (int y = 0; y < Height; y++)
-    {
-      for (int x = 0; x < Width; x++)
-      {
-        *Dst++ = SrcPixels[(((int)YSin1[y] + x) % Width) +
-          (((int)XSin1[x] + y) % Height) * Width];
+  if (Format == TEXFMT_8 || Format == TEXFMT_8Pal) {
+    if (!Pixels) Pixels = new vuint8[Width*Height];
+    vuint8 *Dst = Pixels;
+    for (int y = 0; y < Height; ++y) {
+      for (int x = 0; x < Width; ++x) {
+        *Dst++ = SrcPixels[(((int)YSin1[y]+x)%Width)+(((int)XSin1[x]+y)%Height)*Width];
       }
     }
-  }
-  else
-  {
-    if (!Pixels)
-    {
-      Pixels = new vuint8[Width * Height * 4];
-    }
-
-    vuint32* Dst = (vuint32*)Pixels;
-    for (int y = 0; y < Height; y++)
-    {
-      for (int x = 0; x < Width; x++)
-      {
-        *Dst++ = ((vuint32*)SrcPixels)[(((int)YSin1[y] + x) % Width) +
-          (((int)XSin1[x] + y) % Height) * Width];
+  } else {
+    if (!Pixels) Pixels = new vuint8[Width*Height*4];
+    vuint32 *Dst = (vuint32*)Pixels;
+    for (int y = 0; y < Height; ++y) {
+      for (int x = 0; x < Width; ++x) {
+        *Dst++ = ((vuint32*)SrcPixels)[(((int)YSin1[y]+x)%Width)+(((int)XSin1[x]+y)%Height)*Width];
       }
     }
   }
@@ -215,101 +160,79 @@ vuint8* VWarpTexture::GetPixels()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWarpTexture::GetPalette
 //
 //==========================================================================
-
-rgba_t* VWarpTexture::GetPalette()
-{
+rgba_t *VWarpTexture::GetPalette () {
   guard(VWarpTexture::GetPalette);
   return SrcTex->GetPalette();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWarpTexture::GetHighResolutionTexture
 //
 //==========================================================================
-
-VTexture* VWarpTexture::GetHighResolutionTexture()
-{
+VTexture *VWarpTexture::GetHighResolutionTexture () {
   guard(VWarpTexture::GetHighResolutionTexture);
-  if (!r_hirestex)
-  {
-    return NULL;
-  }
-  //  If high resolution texture is already created, then just return it.
-  if (HiResTexture)
-  {
-    return HiResTexture;
-  }
+  if (!r_hirestex) return nullptr;
+  // if high resolution texture is already created, then just return it
+  if (HiResTexture) return HiResTexture;
 
-  VTexture* SrcTex = VTexture::GetHighResolutionTexture();
-  if (!SrcTex)
-  {
-    return NULL;
-  }
+  VTexture *SrcTex = VTexture::GetHighResolutionTexture();
+  if (!SrcTex) return nullptr;
 
   VWarpTexture* NewTex;
-  if (WarpType == 1)
-    NewTex = new VWarpTexture(SrcTex);
-  else
-    NewTex = new VWarp2Texture(SrcTex);
+  if (WarpType == 1) NewTex = new VWarpTexture(SrcTex); else NewTex = new VWarp2Texture(SrcTex);
   NewTex->Name = Name;
   NewTex->Type = Type;
-  NewTex->WarpXScale = NewTex->GetWidth() / GetWidth();
-  NewTex->WarpYScale = NewTex->GetHeight() / GetHeight();
+  NewTex->WarpXScale = NewTex->GetWidth()/GetWidth();
+  NewTex->WarpYScale = NewTex->GetHeight()/GetHeight();
   HiResTexture = NewTex;
   return HiResTexture;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWarpTexture::Unload
 //
 //==========================================================================
-
-void VWarpTexture::Unload()
-{
+void VWarpTexture::Unload () {
   guard(VWarpTexture::Unload);
-  if (Pixels)
-  {
+  if (Pixels) {
     delete[] Pixels;
-    Pixels = NULL;
+    Pixels = nullptr;
   }
   SrcTex->Unload();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWarp2Texture::VWarp2Texture
 //
 //==========================================================================
-
-VWarp2Texture::VWarp2Texture(VTexture* ASrcTex)
-: VWarpTexture(ASrcTex)
-{
+VWarp2Texture::VWarp2Texture (VTexture *ASrcTex) : VWarpTexture(ASrcTex) {
   WarpType = 2;
 }
+
 
 //==========================================================================
 //
 //  VWarp2Texture::GetPixels
 //
 //==========================================================================
-
-vuint8* VWarp2Texture::GetPixels()
-{
+vuint8 *VWarp2Texture::GetPixels () {
   guard(VWarp2Texture::GetPixels);
-  if (Pixels && GenTime == GTextureManager.Time)
-  {
-    return Pixels;
-  }
+  if (Pixels && GenTime == GTextureManager.Time) return Pixels;
 
   const vuint8* SrcPixels = SrcTex->GetPixels();
   Format = SrcTex->Format;
@@ -317,62 +240,38 @@ vuint8* VWarp2Texture::GetPixels()
   GenTime = GTextureManager.Time;
   Pixels8BitValid = false;
 
-  if (!XSin1)
-  {
+  if (!XSin1) {
     XSin1 = new float[Height];
     XSin2 = new float[Width];
     YSin1 = new float[Height];
     YSin2 = new float[Width];
   }
 
-  //  Precalculate sine values.
-  for (int y = 0; y < Height; y++)
-  {
-    XSin1[y] = msin(y / WarpYScale * 5.625 + GenTime * 313.895 + 39.55) *
-      2 * WarpXScale;
-    YSin1[y] = y + (2 * Height + msin(y / WarpYScale * 5.625 + GenTime *
-      118.337 + 30.76) * 2) * WarpYScale;
+  // precalculate sine values
+  for (int y = 0; y < Height; ++y) {
+    XSin1[y] = msin(y/WarpYScale*5.625+GenTime*313.895+39.55)*2*WarpXScale;
+    YSin1[y] = y+(2*Height+msin(y/WarpYScale*5.625+GenTime*118.337+30.76)*2)*WarpYScale;
   }
-  for (int x = 0; x < Width; x++)
-  {
-    XSin2[x] = x + (2 * Width + msin(x / WarpXScale * 11.25 + GenTime *
-      251.116 + 13.18) * 2) * WarpXScale;
-    YSin2[x] = msin(x / WarpXScale * 11.25 + GenTime * 251.116 + 52.73) *
-      2 * WarpYScale;
+  for (int x = 0; x < Width; ++x) {
+    XSin2[x] = x+(2*Width+msin(x/WarpXScale*11.25+GenTime*251.116+13.18)*2)*WarpXScale;
+    YSin2[x] = msin(x/WarpXScale*11.25+GenTime*251.116+52.73)*2*WarpYScale;
   }
 
-  if (Format == TEXFMT_8 || Format == TEXFMT_8Pal)
-  {
-    if (!Pixels)
-    {
-      Pixels = new vuint8[Width * Height];
-    }
-
-    vuint8* dest = Pixels;
-    for (int y = 0; y < Height; y++)
-    {
-      for (int x = 0; x < Width; x++)
-      {
-        *dest++ = SrcPixels[((int)(XSin1[y] + XSin2[x]) % Width) +
-          ((int)(YSin1[y] + YSin2[x]) % Height) * Width];
+  if (Format == TEXFMT_8 || Format == TEXFMT_8Pal) {
+    if (!Pixels) Pixels = new vuint8[Width*Height];
+    vuint8 *dest = Pixels;
+    for (int y = 0; y < Height; ++y) {
+      for (int x = 0; x < Width; ++x) {
+        *dest++ = SrcPixels[((int)(XSin1[y]+XSin2[x])%Width)+((int)(YSin1[y]+YSin2[x])%Height)*Width];
       }
     }
-  }
-  else
-  {
-    if (!Pixels)
-    {
-      Pixels = new vuint8[Width * Height * 4];
-    }
-
-    vuint32* dest = (vuint32*)Pixels;
-    for (int y = 0; y < Height; y++)
-    {
-      for (int x = 0; x < Width; x++)
-      {
-        int Idx = ((int)(XSin1[y] + XSin2[x]) % Width) * 4 +
-          ((int)(YSin1[y] + YSin2[x]) % Height) * Width * 4;
-        *dest++ = *(vuint32*)(SrcPixels + Idx);
+  } else {
+    if (!Pixels) Pixels = new vuint8[Width*Height*4];
+    vuint32 *dest = (vuint32*)Pixels;
+    for (int y = 0; y < Height; ++y) {
+      for (int x = 0; x < Width; ++x) {
+        int Idx = ((int)(XSin1[y]+XSin2[x])%Width)*4+((int)(YSin1[y]+YSin2[x])%Height)*Width*4;
+        *dest++ = *(vuint32*)(SrcPixels+Idx);
       }
     }
   }

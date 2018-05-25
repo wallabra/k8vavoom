@@ -23,39 +23,19 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_tex.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VCameraTexture::VCameraTexture
 //
 //==========================================================================
-
-VCameraTexture::VCameraTexture(VName AName, int AWidth, int AHeight)
-: Pixels(0)
-, bNeedsUpdate(true)
-, bUpdated(false)
+VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
+  : Pixels(nullptr)
+  , bNeedsUpdate(true)
+  , bUpdated(false)
 {
   Name = AName;
   Type = TEXTYPE_Wall;
@@ -65,34 +45,30 @@ VCameraTexture::VCameraTexture(VName AName, int AWidth, int AHeight)
   bIsCameraTexture = true;
 }
 
+
 //==========================================================================
 //
 //  VCameraTexture::~VCameraTexture
 //
 //==========================================================================
-
-VCameraTexture::~VCameraTexture() noexcept(false)
-{
+VCameraTexture::~VCameraTexture () noexcept(false) {
   guard(VCameraTexture::~VCameraTexture);
-  if (Pixels)
-  {
+  if (Pixels) {
     delete[] Pixels;
-    Pixels = NULL;
+    Pixels = nullptr;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VCameraTexture::CheckModified
 //
 //==========================================================================
-
-bool VCameraTexture::CheckModified()
-{
+bool VCameraTexture::CheckModified () {
   guard(VCameraTexture::CheckModified);
-  if (bUpdated)
-  {
+  if (bUpdated) {
     bUpdated = false;
     return true;
   }
@@ -100,45 +76,36 @@ bool VCameraTexture::CheckModified()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VCameraTexture::GetPixels
 //
 //==========================================================================
-
-vuint8* VCameraTexture::GetPixels()
-{
+vuint8 *VCameraTexture::GetPixels () {
   guard(VCameraTexture::GetPixels);
   bNeedsUpdate = true;
-  //  If already got pixels, then just return them.
-  if (Pixels)
-  {
-    return Pixels;
-  }
+  // if already got pixels, then just return them
+  if (Pixels) return Pixels;
 
-  //  Allocate image data.
-  Pixels = new vuint8[Width * Height * 4];
+  // allocate image data
+  Pixels = new vuint8[Width*Height*4];
 
-  rgba_t* pDst = (rgba_t*)Pixels;
-  for (int i = 0; i < Height; i++)
-  {
-    for (int j = 0; j < Width; j++)
-    {
-      if (j < Width / 2)
-      {
+  rgba_t *pDst = (rgba_t *)Pixels;
+  for (int i = 0; i < Height; ++i) {
+    for (int j = 0; j < Width; ++j) {
+      if (j < Width/2) {
         pDst->r = 0;
         pDst->g = 0;
         pDst->b = 0;
         pDst->a = 255;
-      }
-      else
-      {
+      } else {
         pDst->r = 255;
         pDst->g = 255;
         pDst->b = 255;
         pDst->a = 255;
       }
-      pDst++;
+      ++pDst;
     }
   }
 
@@ -146,39 +113,32 @@ vuint8* VCameraTexture::GetPixels()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VCameraTexture::Unload
 //
 //==========================================================================
-
-void VCameraTexture::Unload()
-{
+void VCameraTexture::Unload () {
   guard(VCameraTexture::Unload);
-  if (Pixels)
-  {
+  if (Pixels) {
     delete[] Pixels;
-    Pixels = NULL;
+    Pixels = nullptr;
   }
   unguard;
 }
 
+
+#ifdef CLIENT
 //==========================================================================
 //
 //  VCameraTexture::CopyImage
 //
 //==========================================================================
-
-#ifdef CLIENT
-void VCameraTexture::CopyImage()
-{
+void VCameraTexture::CopyImage () {
   guard(VCameraTexture::CopyImage);
-  if (!Pixels)
-  {
-    Pixels = new vuint8[Width * Height * 4];
-  }
-
-  Drawer->ReadBackScreen(Width, Height, (rgba_t*)Pixels);
+  if (!Pixels) Pixels = new vuint8[Width*Height*4];
+  Drawer->ReadBackScreen(Width, Height, (rgba_t *)Pixels);
   bNeedsUpdate = false;
   bUpdated = true;
   Pixels8BitValid = false;
@@ -186,13 +146,12 @@ void VCameraTexture::CopyImage()
 }
 #endif
 
+
 //==========================================================================
 //
 //  VCameraTexture::GetHighResolutionTexture
 //
 //==========================================================================
-
-VTexture* VCameraTexture::GetHighResolutionTexture()
-{
-  return NULL;
+VTexture *VCameraTexture::GetHighResolutionTexture () {
+  return nullptr;
 }

@@ -23,43 +23,18 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_tex.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VPatchTexture::Create
 //
 //==========================================================================
-
-VTexture* VPatchTexture::Create(VStream& Strm, int LumpNum)
-{
+VTexture *VPatchTexture::Create (VStream &Strm, int LumpNum) {
   guard(VPatchTexture::Create);
-  if (Strm.TotalSize() < 13)
-  {
-    //  Lump is too small.
-    return NULL;
-  }
+  if (Strm.TotalSize() < 13) return nullptr; // lump is too small
 
   Strm.Seek(0);
   int Width = Streamer<vint16>(Strm);
@@ -67,58 +42,36 @@ VTexture* VPatchTexture::Create(VStream& Strm, int LumpNum)
   int SOffset = Streamer<vint16>(Strm);
   int TOffset = Streamer<vint16>(Strm);
 
-  if (Width < 0 || Height < 0 || Width > 2048 || Height > 2048)
-  {
-    //  Not valid dimensions.
-    return NULL;
-  }
-  if (Strm.TotalSize() < Width * 4 + 8)
-  {
-    //  File has no space for offsets table.
-    return NULL;
-  }
+  if (Width < 0 || Height < 0 || Width > 2048 || Height > 2048) return nullptr; // not valid dimensions
+  if (Strm.TotalSize() < Width*4+8) return nullptr; // file has no space for offsets table
 
-  vint32* Offsets = new vint32[Width];
-  for (int i = 0; i < Width; i++)
-  {
-    Strm << Offsets[i];
-  }
-  //  Make sure that all offsets are valid and that at least one is
-  // right at the end of offsets table.
+  vint32 *Offsets = new vint32[Width];
+  for (int i = 0; i < Width; ++i) Strm << Offsets[i];
+  // make sure that all offsets are valid and that at least one is right at the end of offsets table
   bool GapAtStart = true;
-  for (int i = 0; i < Width; i++)
-  {
-    if (Offsets[i] == Width * 4 + 8)
-    {
+  for (int i = 0; i < Width; ++i) {
+    if (Offsets[i] == Width*4+8) {
       GapAtStart = false;
-    }
-    else if (Offsets[i] < Width * 4 + 8 || Offsets[i] >= Strm.TotalSize())
-    {
+    } else if (Offsets[i] < Width*4+8 || Offsets[i] >= Strm.TotalSize()) {
       delete[] Offsets;
-      Offsets = NULL;
-      return NULL;
+      return nullptr;
     }
   }
   delete[] Offsets;
-  Offsets = NULL;
-  if (GapAtStart)
-  {
-    return NULL;
-  }
+  if (GapAtStart) return nullptr;
 
   return new VPatchTexture(LumpNum, Width, Height, SOffset, TOffset);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VPatchTexture::VPatchTexture
 //
 //==========================================================================
-
-VPatchTexture::VPatchTexture(int ALumpNum, int AWidth, int AHeight,
-  int ASOffset, int ATOffset)
-: Pixels(0)
+VPatchTexture::VPatchTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, int ATOffset)
+  : Pixels(nullptr)
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);
@@ -129,44 +82,36 @@ VPatchTexture::VPatchTexture(int ALumpNum, int AWidth, int AHeight,
   TOffset = ATOffset;
 }
 
+
 //==========================================================================
 //
 //  VPatchTexture::~VPatchTexture
 //
 //==========================================================================
-
-VPatchTexture::~VPatchTexture() noexcept(false)
-{
+VPatchTexture::~VPatchTexture () noexcept(false) {
   guard(VPatchTexture::~VPatchTexture);
-  if (Pixels)
-  {
+  if (Pixels) {
     delete[] Pixels;
-    Pixels = NULL;
+    Pixels = nullptr;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VPatchTexture::GetPixels
 //
 //==========================================================================
-
-vuint8* VPatchTexture::GetPixels()
-{
+vuint8 *VPatchTexture::GetPixels () {
   guard(VPatchTexture::GetPixels);
-  //  If already got pixels, then just return them.
-  if (Pixels)
-  {
-    return Pixels;
-  }
+  if (Pixels) return Pixels; // if already got pixels, then just return them
 
-  //  Open stream.
-  VStream* Strm = W_CreateLumpReaderNum(SourceLump);
+  // open stream
+  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
 
-  //  Make sure header is present.
-  if (Strm->TotalSize() < 8)
-  {
+  // make sure header is present
+  if (Strm->TotalSize() < 8) {
     GCon->Logf("Patch %s is too small", *Name);
     Width = 1;
     Height = 1;
@@ -177,123 +122,109 @@ vuint8* VPatchTexture::GetPixels()
     return Pixels;
   }
 
-  //  Read header.
+  // read header
   Width = Streamer<vint16>(*Strm);
   Height = Streamer<vint16>(*Strm);
   SOffset = Streamer<vint16>(*Strm);
   TOffset = Streamer<vint16>(*Strm);
 
-  //  Allocate image data.
-  Pixels = new vuint8[Width * Height];
-  memset(Pixels, 0, Width * Height);
+  // allocate image data
+  Pixels = new vuint8[Width*Height];
+  memset(Pixels, 0, Width*Height);
 
-  //  Make sure all column offsets are there.
-  if (Strm->TotalSize() < 8 + Width * 4)
-  {
+  // make sure all column offsets are there
+  if (Strm->TotalSize() < 8+Width*4) {
     GCon->Logf("Patch %s is too small", *Name);
+    checkerFill8(Pixels, Width, Height);
     return Pixels;
   }
 
-  //  Read data.
-  for (int x = 0; x < Width; x++)
-  {
-    //  Get offset of the column.
-    Strm->Seek(8 + x * 4);
+  // read data
+  for (int x = 0; x < Width; ++x) {
+    // get offset of the column
+    Strm->Seek(8+x*4);
     vint32 Offset = Streamer<vint32>(*Strm);
-    if (Offset < 8 + Width * 4 || Offset > Strm->TotalSize() - 1)
-    {
+    if (Offset < 8+Width*4 || Offset > Strm->TotalSize()-1) {
       GCon->Logf("Bad offset in patch %s", *Name);
+      checkerFillColumn8(Pixels+x, x, Width, Height);
       continue;
     }
     Strm->Seek(Offset);
 
     // step through the posts in a column
-    int top = -1; //  DeepSea tall patches support
+    int top = -1; // DeepSea tall patches support
     vuint8 TopDelta;
     *Strm << TopDelta;
-    while (TopDelta != 0xff)
-    {
-      //  Make sure length is there.
-      if (Strm->TotalSize() - Strm->Tell() < 2)
-      {
+    while (TopDelta != 0xff) {
+      // make sure length is there
+      if (Strm->TotalSize()-Strm->Tell() < 2) {
         GCon->Logf("Broken column in patch %s", *Name);
+        checkerFillColumn8(Pixels+x, x, Width, Height);
         break;
       }
 
-      //  Calculate top offset.
-      if (TopDelta <= top)
-      {
-        top += TopDelta;
-      }
-      else
-      {
-        top = TopDelta;
-      }
+      // calculate top offset
+      if (TopDelta <= top) top += TopDelta; else top = TopDelta;
 
-      //  Read column length and skip unused byte.
+      // read column length and skip unused byte
       vuint8 Len;
       *Strm << Len;
       Streamer<vuint8>(*Strm);
 
-      //  Make sure column doesn't go out of the bounds of the image.
-      if (top + Len > Height)
-      {
+      // make sure column doesn't go out of the bounds of the image
+      if (top+Len > Height) {
         GCon->Logf("Column too long in patch %s", *Name);
+        checkerFillColumn8(Pixels+x, x, Width, Height);
         break;
       }
 
-      //  Make sure all post data is there.
-      if (Strm->TotalSize() - Strm->Tell() < Len)
-      {
+      // make sure all post data is there
+      if (Strm->TotalSize()-Strm->Tell() < Len) {
         GCon->Logf("Broken column in patch %s", *Name);
+        checkerFillColumn8(Pixels+x, x, Width, Height);
         break;
       }
 
-      //  Read post, convert colour 0 to black if needed.
+      // read post, convert colour 0 to black if needed
       int count = Len;
-      vuint8* dest = Pixels + x + top * Width;
-      while (count--)
-      {
+      vuint8* dest = Pixels+x+top*Width;
+      while (count--) {
         *Strm << *dest;
-        if (!*dest && !bNoRemap0)
-          *dest = r_black_colour;
+        if (!*dest && !bNoRemap0) *dest = r_black_colour;
         dest += Width;
       }
 
-      //  Make sure unused byte and next post's top offset is there.
-      if (Strm->TotalSize() - Strm->Tell() < 2)
-      {
+      // make sure unused byte and next post's top offset is there
+      if (Strm->TotalSize()-Strm->Tell() < 2) {
         GCon->Logf("Broken column in patch %s", *Name);
+        checkerFillColumn8(Pixels+x, x, Width, Height);
         break;
       }
 
-      //  Skip unused byte and get top offset of the next post.
+      // skip unused byte and get top offset of the next post
       Streamer<vuint8>(*Strm);
       *Strm << TopDelta;
     }
   }
 
-  //  Close stream.
+  // close stream
   delete Strm;
-  Strm = NULL;
 
   return Pixels;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VPatchTexture::Unload
 //
 //==========================================================================
-
-void VPatchTexture::Unload()
-{
+void VPatchTexture::Unload () {
   guard(VPatchTexture::Unload);
-  if (Pixels)
-  {
+  if (Pixels) {
     delete[] Pixels;
-    Pixels = NULL;
+    Pixels = nullptr;
   }
   unguard;
 }

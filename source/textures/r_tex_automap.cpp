@@ -23,128 +23,88 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_tex.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VAutopageTexture::VAutopageTexture
 //
 //==========================================================================
-
-VTexture* VAutopageTexture::Create(VStream& Strm, int LumpNum)
-{
+VTexture *VAutopageTexture::Create (VStream &Strm, int LumpNum) {
   guard(VAutopageTexture::Create);
-  if (Strm.TotalSize() < 320)
-  {
-    return NULL;
-  }
-
+  if (Strm.TotalSize() < 320) return nullptr;
   return new VAutopageTexture(LumpNum);
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAutopageTexture::VAutopageTexture
 //
 //==========================================================================
-
-VAutopageTexture::VAutopageTexture(int ALumpNum)
-: Pixels(0)
-{
+VAutopageTexture::VAutopageTexture (int ALumpNum) : Pixels(nullptr) {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);
   Width = 320;
-  Height = W_LumpLength(SourceLump) / 320;
+  Height = W_LumpLength(SourceLump)/320;
   Format = TEXFMT_8;
 }
+
 
 //==========================================================================
 //
 //  VAutopageTexture::~VAutopageTexture
 //
 //==========================================================================
-
-VAutopageTexture::~VAutopageTexture() noexcept(false)
-{
+VAutopageTexture::~VAutopageTexture () noexcept(false) {
   guard(VAutopageTexture::~VAutopageTexture);
-  if (Pixels)
-  {
+  if (Pixels) {
     delete[] Pixels;
-    Pixels = NULL;
+    Pixels = nullptr;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAutopageTexture::GetPixels
 //
 //==========================================================================
-
-vuint8* VAutopageTexture::GetPixels()
-{
+vuint8 *VAutopageTexture::GetPixels () {
   guard(VAutopageTexture::GetPixels);
-  //  If already got pixels, then just return them.
-  if (Pixels)
-  {
-    return Pixels;
-  }
+  // if already got pixels, then just return them
+  if (Pixels) return Pixels;
 
-  //  Read data.
-  VStream* Strm = W_CreateLumpReaderNum(SourceLump);
+  // read data
+  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
   int len = Strm->TotalSize();
   Pixels = new vuint8[len];
-  vuint8* dst = Pixels;
-  for (int i = 0; i < len; i++, dst++)
-  {
+  vuint8 *dst = Pixels;
+  for (int i = 0; i < len; ++i, ++dst) {
     *Strm << *dst;
-    if (!*dst)
-    {
-      *dst = r_black_colour;
-    }
+    if (!*dst) *dst = r_black_colour;
   }
   delete Strm;
-  Strm = NULL;
 
   return Pixels;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAutopageTexture::Unload
 //
 //==========================================================================
-
-void VAutopageTexture::Unload()
-{
+void VAutopageTexture::Unload () {
   guard(VAutopageTexture::Unload);
-  if (Pixels)
-  {
+  if (Pixels) {
     delete[] Pixels;
-    Pixels = NULL;
+    Pixels = nullptr;
   }
   unguard;
 }

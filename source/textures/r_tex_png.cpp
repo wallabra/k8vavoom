@@ -89,7 +89,7 @@ VTexture *VPngTexture::Create (VStream &Strm, int LumpNum) {
   // scan other chunks looking for grAb chunk with offsets
   vint32 SOffset = 0;
   vint32 TOffset = 0;
-  while (Strm.TotalSize() - Strm.Tell() >= 12) {
+  while (Strm.TotalSize()-Strm.Tell() >= 12) {
     vuint32 Len;
     Strm.SerialiseBigEndian(&Len, 4);
     Strm.Serialise(Id, 4);
@@ -252,7 +252,9 @@ vuint8 *VPngTexture::GetPixels () {
 
   if (!png->loadIDAT()) Sys_Error("Error reading PNG file '%s'", *Name);
 
-  GCon->Logf("PNG '%s': %dx%d (bitdepth:%u; colortype:%u; interlace:%u)", *Name, png->width, png->height, png->bitdepth, png->colortype, png->interlace);
+  if (r_showinfo) {
+    GCon->Logf("PNG '%s': %dx%d (bitdepth:%u; colortype:%u; interlace:%u)", *Name, png->width, png->height, png->bitdepth, png->colortype, png->interlace);
+  }
 
   Width = png->width;
   Height = png->height;
@@ -349,25 +351,27 @@ void WritePNG(const VStr& FileName, const void* Data, int Width, int Height, int
 
 #else
 
-  if (Bpp != 24) { GCon->Log("Couldn't write png (invalid bpp)"); return; }
+  ESSType ptp = SS_RGB;
+  switch (Bpp) {
+    case 8: ptp = SS_PAL; break;
+    case 24: ptp = SS_RGB; break;
+    case 32: ptp = SS_RGBA; break;
+    default: GCon->Log("Couldn't write png (invalid bpp)"); return;
+  }
 
   VStream *Strm = FL_OpenFileWrite(FileName, true);
   if (!Strm) { GCon->Log("Couldn't write png"); return; }
 
-  if (Bot2top) {
-    // new buffer
-    vuint8 *newbuf = new vuint8[Width*Height*(Bpp/8)];
-    for (int y = 0; y < Height; ++y) {
-      memcpy(newbuf+y*(Width*(Bpp/8)), (const vuint8 *)Data+(Height-y-1)*(Width*(Bpp/8)), Width*(Bpp/8));
-    }
-    if (!M_CreatePNG(Strm, newbuf, nullptr, SS_RGB, Width, Height, Width*(Bpp/8), 1.0f)) {
-      GCon->Log("Error writing png");
-    }
-    delete newbuf;
-  } else {
-    if (!M_CreatePNG(Strm, (const vuint8 *)Data, nullptr, SS_RGB, Width, Height, Width*(Bpp/8), 1.0f)) {
-      GCon->Log("Error writing png");
-    }
+  PalEntry pal[256];
+  for (int f = 0; f < 256; ++f) {
+    pal[f].r = r_palette[f].r;
+    pal[f].g = r_palette[f].g;
+    pal[f].b = r_palette[f].b;
+    pal[f].a = 255;
+  }
+
+  if (!M_CreatePNG(Strm, (const vuint8 *)Data, pal, ptp, Width, (Bot2top ? -Height : Height), Width*(Bpp/8), 1.0f)) {
+    GCon->Log("Error writing png");
   }
 
   Strm->Close();

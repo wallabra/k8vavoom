@@ -23,42 +23,18 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_tex.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 //==========================================================================
 //
 //  VImgzTexture::Create
 //
 //==========================================================================
-
-VTexture* VImgzTexture::Create(VStream& Strm, int LumpNum)
-{
+VTexture *VImgzTexture::Create (VStream &Strm, int LumpNum) {
   guard(VImgzTexture::Create);
-  if (Strm.TotalSize() < 24)
-  {
-    //  Not enough space for IMGZ header.
-    return NULL;
-  }
+  if (Strm.TotalSize() < 24) return nullptr; // not enough space for IMGZ header
 
   vuint8 Id[4];
   vuint16 Width;
@@ -68,25 +44,20 @@ VTexture* VImgzTexture::Create(VStream& Strm, int LumpNum)
 
   Strm.Seek(0);
   Strm.Serialise(Id, 4);
-  if (Id[0] != 'I' || Id[1] != 'M' || Id[2] != 'G' || Id[3] == 'Z')
-  {
-    return NULL;
-  }
+  if (Id[0] != 'I' || Id[1] != 'M' || Id[2] != 'G' || Id[3] == 'Z') return nullptr;
 
   Strm << Width << Height << SOffset << TOffset;
   return new VImgzTexture(LumpNum, Width, Height, SOffset, TOffset);
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VImgzTexture::VImgzTexture
 //
 //==========================================================================
-
-VImgzTexture::VImgzTexture(int ALumpNum, int AWidth, int AHeight,
-  int ASOffset, int ATOffset)
-: Pixels(0)
+VImgzTexture::VImgzTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, int ATOffset) : Pixels(nullptr)
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);
@@ -97,92 +68,74 @@ VImgzTexture::VImgzTexture(int ALumpNum, int AWidth, int AHeight,
   TOffset = ATOffset;
 }
 
+
 //==========================================================================
 //
 //  VImgzTexture::~VImgzTexture
 //
 //==========================================================================
-
-VImgzTexture::~VImgzTexture() noexcept(false)
-{
+VImgzTexture::~VImgzTexture () noexcept(false) {
   guard(VImgzTexture::~VImgzTexture);
-  if (Pixels)
-  {
+  if (Pixels) {
     delete[] Pixels;
-    Pixels = NULL;
+    Pixels = nullptr;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VImgzTexture::GetPixels
 //
 //==========================================================================
-
-vuint8* VImgzTexture::GetPixels()
-{
+vuint8 *VImgzTexture::GetPixels () {
   guard(VImgzTexture::GetPixels);
-  //  If already got pixels, then just return them.
-  if (Pixels)
-  {
-    return Pixels;
-  }
+  // if already got pixels, then just return them
+  if (Pixels) return Pixels;
 
-  VStream* Strm = W_CreateLumpReaderNum(SourceLump);
+  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
 
-  //  Read header.
-  Strm->Seek(4);  //  Skip magic.
+  // read header.
+  Strm->Seek(4); // skip magic
   Width = Streamer<vuint16>(*Strm);
   Height = Streamer<vuint16>(*Strm);
   SOffset = Streamer<vint16>(*Strm);
   TOffset = Streamer<vint16>(*Strm);
   vuint8 Compression = Streamer<vuint8>(*Strm);
-  Strm->Seek(24); //  Skip reserved space.
+  Strm->Seek(24); // skip reserved space
 
-  //  Read data.
-  Pixels = new vuint8[Width * Height];
-  memset(Pixels, 0, Width * Height);
-  if (!Compression)
-  {
-    Strm->Serialise(Pixels, Width * Height);
+  // read data
+  Pixels = new vuint8[Width*Height];
+  memset(Pixels, 0, Width*Height);
+  if (!Compression) {
+    Strm->Serialise(Pixels, Width*Height);
   }
-  else
-  {
-    //  IMGZ compression is the same RLE used by IFF ILBM files
-    vuint8* pDst = Pixels;
+  else {
+    // IMGZ compression is the same RLE used by IFF ILBM files
+    vuint8 *pDst = Pixels;
     int runlen = 0, setlen = 0;
-    vuint8 setval = 0;  // Shut up, GCC
+    vuint8 setval = 0; // shut up, GCC
 
-    for (int y = Height; y != 0; --y)
-    {
-      for (int x = Width; x != 0; )
-      {
-        if (runlen != 0)
-        {
+    for (int y = Height; y != 0; --y) {
+      for (int x = Width; x != 0; ) {
+        if (runlen != 0) {
           *Strm << *pDst;
-          pDst++;
-          x--;
-          runlen--;
-        }
-        else if (setlen != 0)
-        {
+          ++pDst;
+          --x;
+          --runlen;
+        } else if (setlen != 0) {
           *pDst = setval;
-          pDst++;
-          x--;
-          setlen--;
-        }
-        else
-        {
+          ++pDst;
+          --x;
+          --setlen;
+        } else {
           vint8 code;
           *Strm << code;
-          if (code >= 0)
-          {
-            runlen = code + 1;
-          }
-          else if (code != -128)
-          {
-            setlen = (-code) + 1;
+          if (code >= 0) {
+            runlen = code+1;
+          } else if (code != -128) {
+            setlen = (-code)+1;
             *Strm << setval;
           }
         }
@@ -190,25 +143,22 @@ vuint8* VImgzTexture::GetPixels()
     }
   }
   delete Strm;
-  Strm = NULL;
 
   return Pixels;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VImgzTexture::Unload
 //
 //==========================================================================
-
-void VImgzTexture::Unload()
-{
+void VImgzTexture::Unload () {
   guard(VImgzTexture::Unload);
-  if (Pixels)
-  {
+  if (Pixels) {
     delete[] Pixels;
-    Pixels = NULL;
+    Pixels = nullptr;
   }
   unguard;
 }

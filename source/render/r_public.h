@@ -56,6 +56,8 @@ struct rgb_t
   byte  r;
   byte  g;
   byte  b;
+  rgb_t () : r(0), g(0), b(0) {}
+  rgb_t (byte ar, byte ag, byte ab) : r(ar), g(ag), b(ab) {}
 };
 
 struct rgba_t
@@ -64,6 +66,9 @@ struct rgba_t
   byte  g;
   byte  b;
   byte  a;
+
+  rgba_t () : r(0), g(0), b(0), a(0) {}
+  rgba_t (byte ar, byte ag, byte ab, byte aa=255) : r(ar), g(ag), b(ab), a(aa) {}
 };
 
 struct picinfo_t
@@ -91,14 +96,14 @@ struct TSwitch
   bool      Quest;
 
   TSwitch()
-  : Frames(NULL)
+  : Frames(nullptr)
   {}
   ~TSwitch()
   {
     if (Frames)
     {
       delete[] Frames;
-      Frames = NULL;
+      Frames = nullptr;
     }
   }
 };
@@ -175,82 +180,91 @@ public:
   }
 };
 
-class VTexture
-{
-public:
-  int     Type;
-  int     Format;
-  VName   Name;
-  int     Width;
-  int     Height;
-  int     SOffset;
-  int     TOffset;
-  bool    bNoRemap0;
-  bool    bWorldPanning;
-  bool    bIsCameraTexture;
-  vuint8    WarpType;
-  float   SScale;       //  Scaling
-  float   TScale;
-  int     TextureTranslation; // Animation
-  int     HashNext;
-  int     SourceLump;
 
-  //  Driver data.
-  struct VTransData
-  {
-    union
-    {
-      vuint32       Handle;
-      void*       Data;
+class VTexture {
+public:
+  int Type;
+  int Format;
+  VName Name;
+  int Width;
+  int Height;
+  int SOffset;
+  int TOffset;
+  bool bNoRemap0;
+  bool bWorldPanning;
+  bool bIsCameraTexture;
+  vuint8 WarpType;
+  float SScale; // scaling
+  float TScale;
+  int TextureTranslation; // animation
+  int HashNext;
+  int SourceLump;
+
+  // driver data
+  struct VTransData {
+    union {
+      vuint32 Handle;
+      void *Data;
     };
-    VTextureTranslation*  Trans;
-    int           ColourMap;
+    VTextureTranslation *Trans;
+    int ColourMap;
   };
 
-  union
-  {
-    vuint32         DriverHandle;
-    void*         DriverData;
+  union {
+    vuint32 DriverHandle;
+    void *DriverData;
   };
-  TArray<VTransData>      DriverTranslated;
+  TArray<VTransData> DriverTranslated;
 
 protected:
-  vuint8*   Pixels8Bit;
-  VTexture* HiResTexture;
-  bool    Pixels8BitValid;
+  vuint8 *Pixels8Bit;
+  VTexture *HiResTexture;
+  bool Pixels8BitValid;
+
+protected:
+  static void checkerFill8 (vuint8 *dest, int width, int height);
+  static void checkerFillRGB (vuint8 *dest, int width, int height);
+  static void checkerFillRGBA (vuint8 *dest, int width, int height);
+
+  // `dest` points at column, `x` is used only to build checker
+  static void checkerFillColumn8 (vuint8 *dest, int x, int pitch, int height);
 
 public:
-  VTexture();
-  virtual ~VTexture() noexcept(false);
+  VTexture ();
+  virtual ~VTexture () noexcept(false);
 
-  static VTexture* CreateTexture(int, int);
+  static VTexture *CreateTexture (int, int);
 
-  int GetWidth() const { return Width; }
-  int GetHeight() const { return Height; }
+  int GetWidth () const { return Width; }
+  int GetHeight () const { return Height; }
 
-  int GetScaledWidth() const { return (int)(Width / SScale); }
-  int GetScaledHeight() const { return (int)(Height / TScale); }
+  int GetScaledWidth () const { return (int)(Width / SScale); }
+  int GetScaledHeight () const { return (int)(Height / TScale); }
 
-  int GetScaledSOffset() const { return (int)(SOffset / SScale); }
-  int GetScaledTOffset() const { return (int)(TOffset / TScale); }
+  int GetScaledSOffset () const { return (int)(SOffset / SScale); }
+  int GetScaledTOffset () const { return (int)(TOffset / TScale); }
 
-  virtual void SetFrontSkyLayer();
-  virtual bool CheckModified();
-  virtual vuint8* GetPixels() = 0;
-  vuint8* GetPixels8();
-  virtual rgba_t* GetPalette();
-  virtual void Unload() = 0;
-  virtual VTexture* GetHighResolutionTexture();
-  VTransData* FindDriverTrans(VTextureTranslation*, int);
+  // get texture pixel; will call `GetPixels()`
+  rgba_t getPixel (int x, int y);
 
-  static void AdjustGamma(rgba_t*, int);
-  static void SmoothEdges(vuint8*, int, int, vuint8*);
-  static void ResampleTexture(int, int, const vuint8*, int, int, vuint8*, int);
-  static void MipMap(int, int, vuint8*);
+  virtual void SetFrontSkyLayer ();
+  virtual bool CheckModified ();
+  virtual vuint8 *GetPixels () = 0;
+  vuint8 *GetPixels8 ();
+  virtual rgba_t *GetPalette ();
+  virtual void Unload () = 0;
+  virtual VTexture *GetHighResolutionTexture ();
+  VTransData *FindDriverTrans (VTextureTranslation *, int);
+
+  static void AdjustGamma (rgba_t *, int);
+  static void SmoothEdges (vuint8 *, int, int, vuint8 *);
+  static void ResampleTexture (int, int, const vuint8 *, int, int, vuint8 *, int);
+  static void MipMap (int, int, vuint8 *);
 
 protected:
-  void FixupPalette(vuint8* Pixels, rgba_t* Palette);
+  void FixupPalette (vuint8 *Pixels, rgba_t *Palette);
 };
+
 
 class VTextureManager
 {
@@ -283,7 +297,7 @@ public:
   {
     if ((vuint32)TexNum >= (vuint32)Textures.Num())
     {
-      return NULL;
+      return nullptr;
     }
     return Textures[TexNum];
   }
@@ -293,7 +307,7 @@ public:
   {
     if ((vuint32)TexNum >= (vuint32)Textures.Num())
     {
-      return NULL;
+      return nullptr;
     }
     return Textures[TextureAnimation(TexNum)];
   }

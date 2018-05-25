@@ -23,44 +23,37 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_tex.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+struct pcx_t {
+  vint8 manufacturer;
+  vint8 version;
+  vint8 encoding;
+  vint8 bits_per_pixel;
 
-struct pcx_t
-{
-  vint8   manufacturer;
-  vint8   version;
-  vint8   encoding;
-  vint8   bits_per_pixel;
+  vuint16 xmin;
+  vuint16 ymin;
+  vuint16 xmax;
+  vuint16 ymax;
 
-  vuint16   xmin;
-  vuint16   ymin;
-  vuint16   xmax;
-  vuint16   ymax;
+  vuint16 hres;
+  vuint16 vres;
 
-  vuint16   hres;
-  vuint16   vres;
+  vuint8 palette[48];
 
-  vuint8    palette[48];
+  vint8 reserved;
+  vint8 colour_planes;
+  vuint16 bytes_per_line;
+  vuint16 palette_type;
 
-  vint8   reserved;
-  vint8   colour_planes;
-  vuint16   bytes_per_line;
-  vuint16   palette_type;
+  vuint16 horz_screen_size;
+  vuint16 vert_screen_size;
 
-  vuint16   horz_screen_size;
-  vuint16   vert_screen_size;
+  vint8 filler[54];
 
-  vint8   filler[54];
-
-  friend VStream& operator<<(VStream& Strm, pcx_t& h)
-  {
+  friend VStream &operator << (VStream &Strm, pcx_t &h) {
     Strm << h.manufacturer << h.version << h.encoding << h.bits_per_pixel
       << h.xmin << h.ymin << h.xmax << h.ymax << h.hres << h.vres;
     Strm.Serialise(h.palette, 48);
@@ -71,263 +64,204 @@ struct pcx_t
   }
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VPcxTexture::Create
 //
 //==========================================================================
-
-VTexture* VPcxTexture::Create(VStream& Strm, int LumpNum)
-{
+VTexture *VPcxTexture::Create (VStream &Strm, int LumpNum) {
   guard(VPcxTexture::Create);
-  if (Strm.TotalSize() < 128)
-  {
-    //  File is too small.
-    return NULL;
-  }
+  if (Strm.TotalSize() < 128) return nullptr; // file is too small
 
   pcx_t Hdr;
   Strm.Seek(0);
   Strm << Hdr;
 
   if (Hdr.manufacturer != 0x0a || Hdr.encoding != 1 ||
-    Hdr.version == 1 || Hdr.version > 5 || Hdr.reserved != 0 ||
-    (Hdr.bits_per_pixel != 1 && Hdr.bits_per_pixel != 8) ||
-    (Hdr.bits_per_pixel == 1 && Hdr.colour_planes != 1 && Hdr.colour_planes != 4) ||
-    (Hdr.bits_per_pixel == 8 && Hdr.bytes_per_line != (Hdr.xmax - Hdr.xmin + 1)) ||
-    (Hdr.palette_type != 1 && Hdr.palette_type != 2))
+      Hdr.version == 1 || Hdr.version > 5 || Hdr.reserved != 0 ||
+      (/*Hdr.bits_per_pixel != 1 &&*/ Hdr.bits_per_pixel != 8) ||
+      //(Hdr.bits_per_pixel == 1 && Hdr.colour_planes != 1 && Hdr.colour_planes != 4) ||
+      (Hdr.bits_per_pixel == 8 && (Hdr.colour_planes != 1 || Hdr.bytes_per_line != Hdr.xmax-Hdr.xmin+1)) ||
+      (Hdr.palette_type != 1 && Hdr.palette_type != 2))
   {
-    return NULL;
+    return nullptr;
   }
-  for (int i = 0; i < 54; i++)
-  {
-    if (Hdr.filler[i] != 0)
-    {
-      return NULL;
-    }
+
+  /*k8: filler *might* be zero-filled, but it is not required by any spec
+  for (int i = 0; i < 54; ++i) {
+    if (Hdr.filler[i] != 0) return nullptr;
   }
+  */
 
   return new VPcxTexture(LumpNum, Hdr);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VPcxTexture::VPcxTexture
 //
 //==========================================================================
-
-VPcxTexture::VPcxTexture(int ALumpNum, pcx_t& Hdr)
-: Pixels(0)
-, Palette(0)
+VPcxTexture::VPcxTexture (int ALumpNum, pcx_t &Hdr)
+  : Pixels(nullptr)
+  , Palette(nullptr)
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);
-  Width = Hdr.xmax - Hdr.xmin + 1;
-  Height = Hdr.ymax - Hdr.ymin + 1;
+  Width = Hdr.xmax-Hdr.xmin+1;
+  Height = Hdr.ymax-Hdr.ymin+1;
 }
+
 
 //==========================================================================
 //
 //  VPcxTexture::~VPcxTexture
 //
 //==========================================================================
-
-VPcxTexture::~VPcxTexture() noexcept(false)
-{
+VPcxTexture::~VPcxTexture () noexcept(false) {
   guard(VPcxTexture::~VPcxTexture);
-  if (Pixels)
-  {
+  if (Pixels) {
     delete[] Pixels;
-    Pixels = NULL;
+    Pixels = nullptr;
   }
-  if (Palette)
-  {
+  if (Palette) {
     delete[] Palette;
-    Palette = NULL;
+    Palette = nullptr;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VPcxTexture::GetPixels
 //
 //==========================================================================
-
-vuint8* VPcxTexture::GetPixels()
-{
+vuint8 *VPcxTexture::GetPixels () {
   guard(VPcxTexture::GetPixels);
-  int     c;
-  int     bytes_per_line;
-  vint8   ch;
+  int c;
+  int bytes_per_line;
+  vint8 ch;
 
-  //  If we already have loaded pixels, return them.
-  if (Pixels)
-  {
-    return Pixels;
-  }
+  // if we already have loaded pixels, return them
+  if (Pixels) return Pixels;
 
-  //  Open stream.
-  VStream* Strm = W_CreateLumpReaderNum(SourceLump);
+  // open stream
+  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
 
-  //  Read header.
+  // read header
   pcx_t pcx;
   *Strm << pcx;
 
-  //  We only support 8-bit pcx files.
-  if (pcx.bits_per_pixel != 8)
-  {
-    // we like 8 bit colour planes
-    Sys_Error("No 8-bit planes\n");
-  }
-  if (pcx.colour_planes != 1)
-  {
-    Sys_Error("Not 8 bpp\n");
-  }
+  // we only support 8-bit pcx files
+  if (pcx.bits_per_pixel != 8) Sys_Error("No 8-bit planes\n"); // we like 8 bit colour planes
+  if (pcx.colour_planes != 1) Sys_Error("Not 8 bpp\n");
 
-  Width = pcx.xmax - pcx.xmin + 1;
-  Height = pcx.ymax - pcx.ymin + 1;
+  Width = pcx.xmax-pcx.xmin+1;
+  Height = pcx.ymax-pcx.ymin+1;
   Format = TEXFMT_8Pal;
 
   bytes_per_line = pcx.bytes_per_line;
 
-  Pixels = new vuint8[Width * Height];
+  Pixels = new vuint8[Width*Height];
 
-  for (int y = 0; y < Height; y++)
-  {
+  for (int y = 0; y < Height; ++y) {
     // decompress RLE encoded PCX data
     int x = 0;
 
-    while (x < bytes_per_line)
-    {
+    while (x < bytes_per_line) {
       *Strm << ch;
-      if ((ch & 0xC0) == 0xC0)
-      {
-        c = (ch & 0x3F);
+      if ((ch&0xC0) == 0xC0) {
+        c = (ch&0x3F);
         *Strm << ch;
-      }
-      else
-      {
+      } else {
         c = 1;
       }
 
-      while (c--)
-      {
-        if (x < Width)
-          Pixels[y * Width + x] = ch;
-        x++;
+      while (c--) {
+        if (x < Width) Pixels[y*Width+x] = ch;
+        ++x;
       }
     }
   }
 
-  //  If not followed by palette ID, assume palette is at the end of file.
+  // if not followed by palette ID, assume palette is at the end of file
   *Strm << ch;
-  if (ch != 12)
-  {
-    Strm->Seek(Strm->TotalSize() - 768);
-  }
+  if (ch != 12) Strm->Seek(Strm->TotalSize()-768);
 
-  //  Read palette.
+  // read palette
   Palette = new rgba_t[256];
-  for (c = 0; c < 256; c++)
-  {
-    *Strm << Palette[c].r
-      << Palette[c].g
-      << Palette[c].b;
+  for (c = 0; c < 256; ++c) {
+    *Strm << Palette[c].r << Palette[c].g << Palette[c].b;
     Palette[c].a = 255;
   }
   FixupPalette(Pixels, Palette);
 
   delete Strm;
-  Strm = NULL;
   return Pixels;
+
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VPcxTexture::GetPalette
 //
 //==========================================================================
-
-rgba_t* VPcxTexture::GetPalette()
-{
+rgba_t *VPcxTexture::GetPalette () {
   guardSlow(VPcxTexture::GetPalette);
   return Palette;
   unguardSlow;
 }
+
 
 //==========================================================================
 //
 //  VPcxTexture::Unload
 //
 //==========================================================================
-
-void VPcxTexture::Unload()
-{
+void VPcxTexture::Unload () {
   guard(VPcxTexture::Unload);
-  if (Pixels)
-  {
+  if (Pixels) {
     delete[] Pixels;
-    Pixels = NULL;
+    Pixels = nullptr;
   }
-  if (Palette)
-  {
+  if (Palette) {
     delete[] Palette;
-    Palette = NULL;
+    Palette = nullptr;
   }
   unguard;
 }
 
+
+#ifdef CLIENT
 //==========================================================================
 //
 //  WritePCX
 //
 //==========================================================================
-
-#ifdef CLIENT
-void WritePCX(const VStr& FileName, void* data, int width, int height, int bpp,
-  bool bot2top)
-{
+void WritePCX (const VStr &FileName, void* data, int width, int height, int bpp, bool bot2top) {
   guard(WritePCX);
-  int i;
-  int j;
 
-  VStream* Strm = FL_OpenFileWrite(FileName, true);
-  if (!Strm)
-  {
-    GCon->Log("Couldn't write pcx");
-    return;
-  }
+  VStream *Strm = FL_OpenFileWrite(FileName, true);
+  if (!Strm) { GCon->Log("Couldn't write pcx"); return; }
 
   pcx_t pcx;
-  pcx.manufacturer = 0x0a;  // PCX id
-  pcx.version = 5;      // 256 colour
-  pcx.encoding = 1;     // uncompressed
-  pcx.bits_per_pixel = 8;   // 256 colour
+  pcx.manufacturer = 0x0a; // PCX id
+  pcx.version = 5; // 256 colour
+  pcx.encoding = 1; // uncompressed
+  pcx.bits_per_pixel = 8; // 256 colour
   pcx.xmin = 0;
   pcx.ymin = 0;
-  pcx.xmax = width - 1;
-  pcx.ymax = height - 1;
+  pcx.xmax = width-1;
+  pcx.ymax = height-1;
   pcx.hres = width;
   pcx.vres = height;
   memset(pcx.palette, 0, sizeof(pcx.palette));
-  pcx.colour_planes = bpp == 8 ? 1 : 3;
+  pcx.colour_planes = (bpp == 8 ? 1 : 3);
   pcx.bytes_per_line = width;
   pcx.palette_type = 1; // not a grey scale
   pcx.horz_screen_size = 0;
@@ -336,15 +270,11 @@ void WritePCX(const VStr& FileName, void* data, int width, int height, int bpp,
   *Strm << pcx;
 
   // pack the image
-  if (bpp == 8)
-  {
-    for (j = 0; j < height; j++)
-    {
-      byte *src = (byte*)data + j * width;
-      for (i = 0; i < width; i++)
-      {
-        if ((src[i] & 0xc0) == 0xc0)
-        {
+  if (bpp == 8) {
+    for (int j = 0; j < height; ++j) {
+      byte *src = (byte*)data+j*width;
+      for (int i = 0; i < width; ++i) {
+        if ((src[i]&0xc0) == 0xc0) {
           byte tmp = 0xc1;
           *Strm << tmp;
         }
@@ -353,52 +283,29 @@ void WritePCX(const VStr& FileName, void* data, int width, int height, int bpp,
     }
 
     // write the palette
-    byte PalId = 0x0c;  // palette ID byte
+    byte PalId = 0x0c; // palette ID byte
     *Strm << PalId;
-    for (i = 0; i < 256; i++)
-    {
-      *Strm << r_palette[i].r
-        << r_palette[i].g
-        << r_palette[i].b;
+    for (int i = 0; i < 256; ++i) {
+      *Strm << r_palette[i].r << r_palette[i].g << r_palette[i].b;
     }
-  }
-  else if (bpp == 24)
-  {
-    for (j = 0; j < height; j++)
-    {
-      rgb_t *src = (rgb_t*)data + (bot2top ? height - j - 1 : j) * width;
-      for (i = 0; i < width; i++)
-      {
-        if ((src[i].r & 0xc0) == 0xc0)
-        {
-          byte tmp = 0xc1;
-          *Strm << tmp;
+  } else if (bpp == 24 || bpp == 32) {
+    for (int j = 0; j < height; ++j) {
+      const vuint8 *srcb = (const vuint8 *)data+(bot2top ? height-j-1 : j)*(width*(bpp/8));
+      for (int p = 0; p < 3; ++p) {
+        for (int i = 0; i < width; ++i) {
+          const rgb_t *src = (const rgb_t *)(srcb+i*(bpp/8));
+          vuint8 c = (p == 0 ? src->r : p == 1 ? src->g : src->b);
+          if ((c&0xc0) == 0xc0) {
+            byte tmp = 0xc1;
+            *Strm << tmp;
+          }
+          *Strm << c;
         }
-        *Strm << src[i].r;
-      }
-      for (i = 0; i < width; i++)
-      {
-        if ((src[i].g & 0xc0) == 0xc0)
-        {
-          byte tmp = 0xc1;
-          *Strm << tmp;
-        }
-        *Strm << src[i].g;
-      }
-      for (i = 0; i < width; i++)
-      {
-        if ((src[i].b & 0xc0) == 0xc0)
-        {
-          byte tmp = 0xc1;
-          *Strm << tmp;
-        }
-        *Strm << src[i].b;
       }
     }
   }
 
   delete Strm;
-  Strm = NULL;
   unguard;
 }
 #endif

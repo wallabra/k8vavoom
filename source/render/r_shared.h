@@ -241,6 +241,7 @@ extern vuint32      blockaddlightsb[18 * 18];
 
 extern rgba_t     r_palette[256];
 extern vuint8     r_black_colour;
+extern vuint8     r_white_colour;
 
 extern vuint8     r_rgbtable[32 * 32 * 32 + 4];
 

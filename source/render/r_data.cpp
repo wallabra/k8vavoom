@@ -65,6 +65,7 @@ struct VTempClassEffects
 //
 rgba_t                r_palette[256];
 vuint8                r_black_colour;
+vuint8                r_white_colour;
 
 vuint8                r_rgbtable[32 * 32 * 32 + 4];
 
@@ -116,25 +117,24 @@ static void InitPalette()
   VStream* Strm = W_CreateLumpReaderName(NAME_playpal);
   check(Strm);
   rgba_t* pal = r_palette;
-  int best_dist = 0x10000;
-  for (int i = 0; i < 256; i++)
-  {
-    *Strm << pal[i].r
-      << pal[i].g
-      << pal[i].b;
-    if (i == 0)
-    {
+  int best_dist_black = 0x100000;
+  int best_dist_white = 0;
+  for (int i = 0; i < 256; ++i) {
+    *Strm << pal[i].r << pal[i].g << pal[i].b;
+    if (i == 0) {
       pal[i].a = 0;
-    }
-    else
-    {
+    } else {
       pal[i].a = 255;
-      int dist = pal[i].r * pal[i].r + pal[i].g * pal[i].g +
-        pal[i].b * pal[i].b;
-      if (dist < best_dist)
-      {
+      // black
+      int dist = pal[i].r*pal[i].r+pal[i].g*pal[i].g+pal[i].b*pal[i].b;
+      if (dist < best_dist_black) {
         r_black_colour = i;
-        best_dist = dist;
+        best_dist_black = dist;
+      }
+      // white
+      if (dist > best_dist_white) {
+        r_white_colour = i;
+        best_dist_white = dist;
       }
     }
   }

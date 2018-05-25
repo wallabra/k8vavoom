@@ -118,7 +118,8 @@ int         skyflatnum;     // sky mapping
 //  Switches
 TArray<TSwitch*>  Switches;
 
-VCvarB        r_hirestex("r_hirestex", true, "Allow high-resolution texture replacements?", CVAR_Archive);
+VCvarB r_hirestex("r_hirestex", true, "Allow high-resolution texture replacements?", CVAR_Archive);
+VCvarB r_showinfo("r_showinfo", false, "Show some info about loaded textures?", CVAR_Archive);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -221,9 +222,9 @@ int VTextureManager::AddTexture(VTexture* Tex)
     return -1;
   }
   Textures.Append(Tex);
-  Tex->TextureTranslation = Textures.Num() - 1;
-  AddToHash(Textures.Num() - 1);
-  return Textures.Num() - 1;
+  Tex->TextureTranslation = Textures.Num()-1;
+  AddToHash(Textures.Num()-1);
+  return Textures.Num()-1;
   unguard;
 }
 
@@ -257,7 +258,7 @@ void VTextureManager::ReplaceTexture(int Index, VTexture* NewTex)
 void VTextureManager::AddToHash(int Index)
 {
   guard(VTextureManager::AddToHash);
-  int HashIndex = GetTypeHash(Textures[Index]->Name) & (HASH_SIZE - 1);
+  int HashIndex = GetTypeHash(Textures[Index]->Name)&(HASH_SIZE-1);
   Textures[Index]->HashNext = TextureHash[HashIndex];
   TextureHash[HashIndex] = Index;
   unguard;
@@ -272,7 +273,7 @@ void VTextureManager::AddToHash(int Index)
 void VTextureManager::RemoveFromHash(int Index)
 {
   guard(VTextureManager::RemoveFromHash);
-  int HashIndex = GetTypeHash(Textures[Index]->Name) & (HASH_SIZE - 1);
+  int HashIndex = GetTypeHash(Textures[Index]->Name)&(HASH_SIZE-1);
   int* Prev = &TextureHash[HashIndex];
   while (*Prev != -1 && *Prev != Index)
   {
@@ -301,7 +302,7 @@ int VTextureManager::CheckNumForName(VName Name, int Type, bool bOverload,
     return 0;
   }
 
-  int HashIndex = GetTypeHash(Name) & (HASH_SIZE - 1);
+  int HashIndex = GetTypeHash(Name)&(HASH_SIZE-1);
   for (int i = TextureHash[HashIndex]; i >= 0; i = Textures[i]->HashNext)
   {
     if (Textures[i]->Name != Name)
@@ -399,7 +400,7 @@ VName VTextureManager::GetTextureName(int TexNum)
 float VTextureManager::TextureWidth(int TexNum)
 {
   guard(VTextureManager::TextureWidth);
-  return Textures[TexNum]->GetWidth() / Textures[TexNum]->SScale;
+  return Textures[TexNum]->GetWidth()/Textures[TexNum]->SScale;
   unguard;
 }
 
@@ -412,7 +413,7 @@ float VTextureManager::TextureWidth(int TexNum)
 float VTextureManager::TextureHeight(int TexNum)
 {
   guard(VTextureManager::TextureHeight);
-  return Textures[TexNum]->GetHeight() / Textures[TexNum]->TScale;
+  return Textures[TexNum]->GetHeight()/Textures[TexNum]->TScale;
   unguard;
 }
 
@@ -685,10 +686,10 @@ void VTextureManager::AddTexturesLump(int NamesLump, int TexLump,
   //  Check the texture file format.
   bool IsStrife = false;
   vint32 PrevOffset = Streamer<vint32>(*Strm);
-  for (int i = 0; i < NumTex - 1; i++)
+  for (int i = 0; i < NumTex-1; i++)
   {
     vint32 Offset = Streamer<vint32>(*Strm);
-    if (Offset - PrevOffset == 24)
+    if (Offset-PrevOffset == 24)
     {
       IsStrife = true;
       GCon->Log(NAME_Init, "Strife textures detected");
@@ -784,10 +785,10 @@ void VTextureManager::AddHiResTextures()
       //  Repalce existing texture by adjusting scale and offsets.
       VTexture* OldTex = Textures[OldIdx];
       NewTex->bWorldPanning = true;
-      NewTex->SScale = NewTex->GetWidth() / OldTex->GetWidth();
-      NewTex->TScale = NewTex->GetHeight() / OldTex->GetHeight();
-      NewTex->SOffset = (int)floor(OldTex->SOffset * NewTex->SScale);
-      NewTex->TOffset = (int)floor(OldTex->TOffset * NewTex->TScale);
+      NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
+      NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
+      NewTex->SOffset = (int)floor(OldTex->SOffset*NewTex->SScale);
+      NewTex->TOffset = (int)floor(OldTex->TOffset*NewTex->TScale);
       NewTex->Type = OldTex->Type;
       NewTex->TextureTranslation = OldTex->TextureTranslation;
       Textures[OldIdx] = NewTex;
@@ -852,10 +853,10 @@ void VTextureManager::AddHiResTextures()
         //  Repalce existing texture by adjusting scale and offsets.
         VTexture* OldTex = Textures[OldIdx];
         NewTex->bWorldPanning = true;
-        NewTex->SScale = NewTex->GetWidth() / OldTex->GetWidth();
-        NewTex->TScale = NewTex->GetHeight() / OldTex->GetHeight();
-        NewTex->SOffset = (int)floor(OldTex->SOffset * NewTex->SScale);
-        NewTex->TOffset = (int)floor(OldTex->TOffset * NewTex->TScale);
+        NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
+        NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
+        NewTex->SOffset = (int)floor(OldTex->SOffset*NewTex->SScale);
+        NewTex->TOffset = (int)floor(OldTex->TOffset*NewTex->TScale);
         NewTex->Name = OldTex->Name;
         NewTex->Type = OldTex->Type;
         NewTex->TextureTranslation = OldTex->TextureTranslation;
@@ -890,8 +891,8 @@ void VTextureManager::AddHiResTextures()
 
         //  Repalce existing texture by adjusting scale and offsets.
         NewTex->bWorldPanning = true;
-        NewTex->SScale = NewTex->GetWidth() / Width;
-        NewTex->TScale = NewTex->GetHeight() / Height;
+        NewTex->SScale = NewTex->GetWidth()/Width;
+        NewTex->TScale = NewTex->GetHeight()/Height;
         NewTex->Name = Name;
 
         int OldIdx = CheckNumForName(Name, TEXTYPE_Overload, false,
@@ -976,7 +977,7 @@ void P_InitAnimated()
   }
 
   VStream* Strm = W_CreateLumpReaderName(NAME_animated);
-  while (Strm->TotalSize() - Strm->Tell() >= 23)
+  while (Strm->TotalSize()-Strm->Tell() >= 23)
   {
     int pic1, pic2;
     vint8 Type;
@@ -995,7 +996,7 @@ void P_InitAnimated()
       break;
     }
 
-    if (Type & 1)
+    if (Type&1)
     {
       pic1 = GTextureManager.CheckNumForName(VName(TmpName2,
         VName::AddLower8), TEXTYPE_Wall, true, false);
@@ -1033,7 +1034,7 @@ void P_InitAnimated()
       ad.Type = ANIM_Backward;
     }
 
-    if (fd.Index - ad.Index < 1)
+    if (fd.Index-ad.Index < 1)
       Sys_Error("P_InitPicAnims: bad cycle from %s to %s", TmpName2,
         TmpName1);
 
@@ -1041,8 +1042,8 @@ void P_InitAnimated()
     fd.RandomRange = 0;
     FrameDefs.Append(fd);
 
-    ad.NumFrames = FrameDefs[ad.StartFrameDef].Index - ad.Index + 1;
-    ad.CurrentFrame = ad.NumFrames - 1;
+    ad.NumFrames = FrameDefs[ad.StartFrameDef].Index-ad.Index+1;
+    ad.CurrentFrame = ad.NumFrames-1;
     ad.Time = 0.01; // Force 1st game tic to animate
     AnimDefs.Append(ad);
   }
@@ -1129,7 +1130,7 @@ static void ParseFTAnim(VScriptParser* sc, int IsFlat)
     memset(&fd, 0, sizeof(fd));
     if (sc->CheckNumber())
     {
-      fd.Index = ad.Index + sc->Number - 1;
+      fd.Index = ad.Index+sc->Number-1;
     }
     else
     {
@@ -1152,7 +1153,7 @@ static void ParseFTAnim(VScriptParser* sc, int IsFlat)
       sc->ExpectNumber();
       fd.BaseTime = sc->Number;
       sc->ExpectNumber();
-      fd.RandomRange = sc->Number - fd.BaseTime + 1;
+      fd.RandomRange = sc->Number-fd.BaseTime+1;
     }
     else
     {
@@ -1179,7 +1180,7 @@ static void ParseFTAnim(VScriptParser* sc, int IsFlat)
   }
 
   if (!ignore && ad.Type == ANIM_Normal &&
-    FrameDefs.Num() - ad.StartFrameDef < 2)
+    FrameDefs.Num()-ad.StartFrameDef < 2)
   {
     sc->Error("AnimDef has framecount < 2.");
   }
@@ -1188,12 +1189,12 @@ static void ParseFTAnim(VScriptParser* sc, int IsFlat)
   {
     if (ad.Type == ANIM_Normal)
     {
-      ad.NumFrames = FrameDefs.Num() - ad.StartFrameDef;
-      ad.CurrentFrame = ad.NumFrames - 1;
+      ad.NumFrames = FrameDefs.Num()-ad.StartFrameDef;
+      ad.CurrentFrame = ad.NumFrames-1;
     }
     else
     {
-      ad.NumFrames = FrameDefs[ad.StartFrameDef].Index - ad.Index + 1;
+      ad.NumFrames = FrameDefs[ad.StartFrameDef].Index-ad.Index+1;
       ad.CurrentFrame = 0;
     }
     ad.Time = 0.01; // Force 1st game tic to animate
@@ -1275,12 +1276,12 @@ static TSwitch* ParseSwitchState(VScriptParser* sc, bool IgnoreBad)
         if (Min < Max)
         {
           F.BaseTime = Min;
-          F.RandomRange = Max - Min + 1;
+          F.RandomRange = Max-Min+1;
         }
         else
         {
           F.BaseTime = Max;
-          F.RandomRange = Min - Max + 1;
+          F.RandomRange = Min-Max+1;
         }
       }
       else
@@ -1410,7 +1411,7 @@ static void ParseSwitchDef(VScriptParser* sc)
   }
 
   Def1->Tex = t1;
-  Def2->Tex = Def1->Frames[Def1->NumFrames - 1].Texture;
+  Def2->Tex = Def1->Frames[Def1->NumFrames-1].Texture;
   if (Def1->Tex == Def2->Tex)
   {
     sc->Error("On state must not end on base texture");
@@ -1462,7 +1463,7 @@ static void ParseAnimatedDoor(VScriptParser* sc)
       vint32 v;
       if (sc->CheckNumber())
       {
-        v = BaseTex + sc->Number - 1;
+        v = BaseTex+sc->Number-1;
       }
       else
       {
@@ -1589,8 +1590,8 @@ static void ParseCameraTexture(VScriptParser* sc)
     sc->ExpectNumber();
     FitHeight = sc->Number;
   }
-  Tex->SScale = (float)Width / (float)FitWidth;
-  Tex->TScale = (float)Height / (float)FitHeight;
+  Tex->SScale = (float)Width/(float)FitWidth;
+  Tex->TScale = (float)Height/(float)FitHeight;
   unguard;
 }
 
@@ -1698,7 +1699,7 @@ void P_InitSwitchList()
   if (lump != -1)
   {
     VStream* Strm = W_CreateLumpReaderNum(lump);
-    while (Strm->TotalSize() - Strm->Tell() >= 20)
+    while (Strm->TotalSize()-Strm->Tell() >= 20)
     {
       char TmpName1[9];
       char TmpName2[9];
@@ -1802,13 +1803,13 @@ void R_AnimateSurfaces()
     {
     case ANIM_Normal:
     case ANIM_Forward:
-      ad.CurrentFrame = (ad.CurrentFrame + 1) % ad.NumFrames;
+      ad.CurrentFrame = (ad.CurrentFrame+1)%ad.NumFrames;
       break;
 
     case ANIM_Backward:
       if (ad.CurrentFrame == 0)
       {
-        ad.CurrentFrame = ad.NumFrames - 1;
+        ad.CurrentFrame = ad.NumFrames-1;
       }
       else
       {
@@ -1818,7 +1819,7 @@ void R_AnimateSurfaces()
 
     case ANIM_OscillateUp:
       ad.CurrentFrame++;
-      if (ad.CurrentFrame == ad.NumFrames - 1)
+      if (ad.CurrentFrame == ad.NumFrames-1)
       {
         ad.Type = ANIM_OscillateDown;
       }
@@ -1834,11 +1835,11 @@ void R_AnimateSurfaces()
     }
     const frameDef_t& fd = FrameDefs[ad.StartFrameDef +
       (ad.Type == ANIM_Normal ? ad.CurrentFrame : 0)];
-    ad.Time = fd.BaseTime / 35.0;
+    ad.Time = fd.BaseTime/35.0;
     if (fd.RandomRange)
     {
       // Random tics
-      ad.Time += Random() * (fd.RandomRange / 35.0);
+      ad.Time += Random()*(fd.RandomRange/35.0);
     }
     if (ad.Type == ANIM_Normal)
     {
@@ -1848,8 +1849,8 @@ void R_AnimateSurfaces()
     {
       for (int fn = 0; fn < ad.NumFrames; ++fn)
       {
-        GTextureManager[ad.Index + fn]->TextureTranslation =
-          ad.Index + (ad.CurrentFrame + fn) % ad.NumFrames;
+        GTextureManager[ad.Index+fn]->TextureTranslation =
+          ad.Index+(ad.CurrentFrame+fn)%ad.NumFrames;
       }
     }
   }
