@@ -1321,8 +1321,8 @@ generator Chaingun      BulletChip
 generator PlasmaBall      PlasmaScorch
 generator Rocket      Scorch
 generator BFGBall     BFGLightning
-generator PlasmaBall1   GreenPlasmaScorch
-generator PlasmaBall2   RedPlasmaScorch
+//generator PlasmaBall1   GreenPlasmaScorch
+//generator PlasmaBall2   RedPlasmaScorch
 
 generator MarinePistol      BulletChip
 generator MarineShotgun     BulletChip

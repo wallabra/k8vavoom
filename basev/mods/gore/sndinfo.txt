@@ -22,11 +22,11 @@ misc/xdeath4b     dsxdth4b
 misc/xdeath4c     dsxdth4c
 $random misc/xdeath4    { misc/xdeath4a misc/xdeath4b misc/xdeath4c }
 
-$volume misc/xdeath 0.4
-$volume misc/xdeath1 0.4
-$volume misc/xdeath2 0.4
-$volume misc/xdeath3 0.4
-$volume misc/xdeath4 0.4
+//k8: not yet:$volume misc/xdeath 0.4
+//k8: not yet:$volume misc/xdeath1 0.4
+//k8: not yet:$volume misc/xdeath2 0.4
+//k8: not yet:$volume misc/xdeath3 0.4
+//k8: not yet:$volume misc/xdeath4 0.4
 
 
 LQDRIP1 LQDRIP1

@@ -15,7 +15,7 @@ weapons/largemagdrop3       dsaounc3
 weapons/largemagdrop4       dsaounc4
 $random weapons/largemagdrop  { weapons/largemagdrop1 weapons/largemagdrop2 weapons/largemagdrop3 weapons/largemagdrop4 }
 
-$volume weapons/largemagdrop 0.5
+//k8: not yet:$volume weapons/largemagdrop 0.5
 
 
 weapons/casing1  dscasin1
@@ -25,7 +25,7 @@ $random weapons/casing  { weapons/casing2 weapons/casing3 }
 $limit weapons/casing   5
 
 
-$volume  weapons/casing2 0.7
+//k8: not yet:$volume  weapons/casing2 0.7
 //k8: not yet:$rolloff weapons/casing 100 600
 
 
