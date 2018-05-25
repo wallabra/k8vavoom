@@ -5,3 +5,13 @@ native final static bool hasOpenGL ();
 native final static bool isInitialized ();
 native final static int getWidth ();
 native final static int getHeight ();
+
+/* `VideoMode.prop` is not not working yet
+int width {
+  get { return getWidth(); }
+}
+
+int height {
+  get { return getHeight(); }
+}
+*/
