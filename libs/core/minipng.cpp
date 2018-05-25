@@ -228,15 +228,15 @@ bool M_CreatePNG (VStream *file, const vuint8 *buffer, const PalEntry *palette,
   sig[1] = MAKE_ID(13,10,26,10);
 
   ihdr->Width = BigLong(width);
-  ihdr->Height = BigLong(height);
+  ihdr->Height = BigLong((height < 0 ? -height : height));
   ihdr->BitDepth = 8;
-  ihdr->ColorType = color_type == SS_PAL ? 3 : 2;
+  ihdr->ColorType = (color_type == SS_PAL ? 3 : color_type == SS_RGB ? 2 : 6);
   ihdr->Compression = 0;
   ihdr->Filter = 0;
   ihdr->Interlace = 0;
   MakeChunk(ihdr, MAKE_ID('I','H','D','R'), 2*4+5);
 
-  // Assume a display exponent of 2.2 (100000/2.2 ~= 45454.5)
+  // assume a display exponent of 2.2 (100000/2.2 ~= 45454.5)
   *gama = BigLong(int(45454.5f*(png_gamma == 0.0f ? gamma : png_gamma)));
   MakeChunk(gama, MAKE_ID('g','A','M','A'), 4);
 
@@ -895,13 +895,18 @@ static void StuffPalette (const PalEntry *from, vuint8 *to) {
 // Returns true on success.
 //
 //==========================================================================
-#define MAXWIDTH  (12000)
-bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height, int pitch, VStream *file) {
-  Byte temprow[1][1+MAXWIDTH*3];
+//#define MAXWIDTH  (12000)
+bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int heightOrig, int pitch, VStream *file) {
+  //Byte temprow[1][1+MAXWIDTH*4];
   Byte buffer[PNG_WRITE_SIZE];
   z_stream stream;
   int err;
   int y;
+
+  Byte *temprow = new Byte[width*4+8];
+  int height = (heightOrig < 0 ? -heightOrig : heightOrig);
+
+  if (heightOrig < 0) from += pitch*(height-1);
 
   stream.next_in = Z_NULL;
   stream.avail_in = 0;
@@ -915,38 +920,48 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
   stream.next_out = buffer;
   stream.avail_out = sizeof(buffer);
 
-  temprow[0][0] = 0;
+  temprow[0] = 0; // always use filter type 0
 
   while (y-- > 0 && err == Z_OK) {
     switch (color_type) {
       case SS_PAL:
-        memcpy(&temprow[0][1], from, width);
-        // always use filter type 0 for paletted images
-        stream.next_in = temprow[0];
+        memcpy(&temprow[1], from, width);
+        stream.next_in = temprow;
         stream.avail_in = width+1;
         break;
       case SS_RGB:
-        memcpy(&temprow[0][1], from, width*3);
-        stream.next_in = temprow[0];
+        memcpy(&temprow[1], from, width*3);
+        stream.next_in = temprow;
         stream.avail_in = width*3+1;
         break;
       case SS_BGRA:
         for (int x = 0; x < width; ++x) {
-          temprow[0][x*3+1] = from[x*4+2];
-          temprow[0][x*3+2] = from[x*4+1];
-          temprow[0][x*3+3] = from[x*4];
+          temprow[1+x*4+0] = from[x*4+2];
+          temprow[1+x*4+1] = from[x*4+1];
+          temprow[1+x*4+2] = from[x*4+0];
+          temprow[1+x*4+3] = from[x*4+3];
         }
-        stream.next_in = temprow[0];
-        stream.avail_in = width*3+1;
+        stream.next_in = temprow;
+        stream.avail_in = width*4+1;
+        break;
+      case SS_RGBA:
+        for (int x = 0; x < width; ++x) {
+          temprow[1+x*4+0] = from[x*4+0];
+          temprow[1+x*4+1] = from[x*4+1];
+          temprow[1+x*4+2] = from[x*4+2];
+          temprow[1+x*4+3] = from[x*4+3];
+        }
+        stream.next_in = temprow;
+        stream.avail_in = width*4+1;
         break;
     }
 
-    from += pitch;
+    if (heightOrig > 0) from += pitch; else from -= pitch;
 
-    err = deflate (&stream, (y == 0) ? Z_FINISH : 0);
+    err = deflate(&stream, (y == 0) ? Z_FINISH : 0);
     if (err != Z_OK) break;
     while (stream.avail_out == 0) {
-      if (!WriteIDAT (file, buffer, sizeof(buffer))) return false;
+      if (!WriteIDAT(file, buffer, sizeof(buffer))) return false;
       stream.next_out = buffer;
       stream.avail_out = sizeof(buffer);
       if (stream.avail_in != 0) {
@@ -957,7 +972,7 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
   }
 
   while (err == Z_OK) {
-    err = deflate (&stream, Z_FINISH);
+    err = deflate(&stream, Z_FINISH);
     if (err != Z_OK) break;
     if (stream.avail_out == 0) {
       if (!WriteIDAT (file, buffer, sizeof(buffer))) return false;
@@ -970,7 +985,7 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
 
   if (err != Z_STREAM_END) return false;
 
-  return WriteIDAT (file, buffer, sizeof(buffer)-stream.avail_out);
+  return WriteIDAT(file, buffer, sizeof(buffer)-stream.avail_out);
 }
 
 

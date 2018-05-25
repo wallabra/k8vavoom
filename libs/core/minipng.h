@@ -48,6 +48,7 @@ enum ESSType {
   SS_PAL,
   SS_RGB,
   SS_BGRA,
+  SS_RGBA,
 };
 
 struct PalEntry {
@@ -119,6 +120,7 @@ inline int Luminance(int r, int g, int b)
 // The passed file should be a newly created file.
 // This function writes the PNG signature and the IHDR, gAMA, PLTE, and IDAT
 // chunks.
+// if height < 0, the image is from bottom to top
 bool M_CreatePNG (VStream *file, const vuint8 *buffer, const PalEntry *pal,
                   ESSType color_type, int width, int height, int pitch, float gamma);
 
@@ -134,6 +136,7 @@ bool M_AppendPNGText (VStream *file, const char *keyword, const char *text);
 // Appends the IEND chunk to a PNG file.
 bool M_FinishPNG (VStream *file);
 
+// if height < 0, the image is from bottom to top
 bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height, int pitch, VStream *file);
 
 
