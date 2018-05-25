@@ -6,6 +6,12 @@ native final static bool isInitialized ();
 native final static int getWidth ();
 native final static int getHeight ();
 
+native final static bool open (string winname, int width, int height);
+native final static void close ();
+
+native final static void runEventLoop ();
+
+
 /* `VideoMode.prop` is not not working yet
 int width {
   get { return getWidth(); }

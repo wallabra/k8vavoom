@@ -34,6 +34,11 @@ class VVideoMode : public VObject {
   DECLARE_CLASS(VVideoMode, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VVideoMode)
 
+private:
+  static bool mInited;
+  static int mWidth, mHeight;
+
+public:
 #ifdef VCCRUN_HAS_SDL
 #endif
 #ifdef VCCRUN_HAS_OPENGL
@@ -45,12 +50,22 @@ class VVideoMode : public VObject {
   static int getWidth ();
   static int getHeight ();
 
+  static bool open (const VStr &winname, int width, int height);
+  static void close ();
+
+  static void runEventLoop ();
+
   // static
   DECLARE_FUNCTION(canInit)
   DECLARE_FUNCTION(hasOpenGL)
   DECLARE_FUNCTION(isInitialized)
   DECLARE_FUNCTION(getWidth)
   DECLARE_FUNCTION(getHeight)
+
+  DECLARE_FUNCTION(open)
+  DECLARE_FUNCTION(close)
+
+  DECLARE_FUNCTION(runEventLoop)
 };
 
 
