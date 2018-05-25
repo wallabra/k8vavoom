@@ -351,6 +351,8 @@ REGISTER_NAME(Super)
 REGISTER_NAME(Bright)
 REGISTER_NAME(Offset)
 
+REGISTER_NAME(VideoMode)
+
 // Closing -----------------------------------------------------------------
 
 #ifdef REGISTERING_ENUM

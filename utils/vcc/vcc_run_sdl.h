@@ -32,7 +32,7 @@
 
 class VVideoMode : public VObject {
   DECLARE_CLASS(VVideoMode, VObject, 0)
-  NO_DEFAULT_CONSTRUCTOR(VLevel)
+  NO_DEFAULT_CONSTRUCTOR(VVideoMode)
 
 #ifdef VCCRUN_HAS_SDL
 #endif

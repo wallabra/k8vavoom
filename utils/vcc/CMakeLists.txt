@@ -132,6 +132,8 @@ if (ENABLE_VCCRUN)
     ../../source/sc_man.cpp
     vcc_run.cpp
     vcc_run.h
+    vcc_run_sdl.h
+    vcc_run_sdl.cpp
   )
 
   #message(STATUS "LIBS: " ${VCCRUN_LINKLIBS})
