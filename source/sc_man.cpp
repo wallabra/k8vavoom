@@ -35,6 +35,8 @@
 # endif
 #endif
 
+static VCvarB dbg_show_name_remap("dbg_show_name_remap", false, "Show hacky name remapping", 0);
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -449,7 +451,7 @@ void VScriptParser::ExpectName8 () {
     if (strncmp(*String, "$MUSIC_", 7) == 0) {
       VStr nn = VStr("d_")+VStr(*String+7).ToLower();
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-      GCon->Logf("HACK: Converted name '%s' to '%s'", *String, *nn);
+      if (dbg_show_name_remap) GCon->Logf("HACK: Converted name '%s' to '%s'", *String, *nn);
 #endif
       String = nn;
     } else {
