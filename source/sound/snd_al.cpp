@@ -97,8 +97,7 @@ public:
   bool LoadSound(int);
 };
 
-IMPLEMENT_SOUND_DEVICE(VOpenALDevice, SNDDRV_OpenAL, "OpenAL",
-  "OpenAL sound device", "-openal");
+IMPLEMENT_SOUND_DEVICE(VOpenALDevice, SNDDRV_OpenAL, "OpenAL", "OpenAL sound device", "-openal");
 
 VCvarF VOpenALDevice::doppler_factor("snd_al_doppler_factor", "1.0", "OpenAL doppler factor.", CVAR_Archive);
 VCvarF VOpenALDevice::doppler_velocity("snd_al_doppler_velocity", "10000.0", "OpenAL doppler velocity.", CVAR_Archive);
@@ -106,6 +105,9 @@ VCvarF VOpenALDevice::rolloff_factor("snd_al_rolloff_factor", "1.0", "OpenAL rol
 VCvarF VOpenALDevice::reference_distance("snd_al_reference_distance", "64.0", "OpenAL reference distance.", CVAR_Archive);
 VCvarF VOpenALDevice::max_distance("snd_al_max_distance", "2024.0", "OpenAL max distance.", CVAR_Archive);
 VCvarI VOpenALDevice::eax_environment("snd_al_eax_environment", "0", "OpenAL EAX environment id.");
+
+static VCvarB openal_show_extensions("openal_show_extensions", false, "Show available OpenAL extensions?", CVAR_Archive);
+
 
 //==========================================================================
 //
@@ -137,39 +139,31 @@ bool VOpenALDevice::Init()
     return false;
   }
   //  In Linux it's not implemented.
+  if (openal_show_extensions) {
 #ifdef ALC_DEVICE_SPECIFIER
-  GCon->Logf(NAME_Init, "Opened OpenAL device %s", alcGetString(Device, ALC_DEVICE_SPECIFIER));
+    GCon->Logf(NAME_Init, "Opened OpenAL device %s", alcGetString(Device, ALC_DEVICE_SPECIFIER));
 #endif
+  }
 
   //  Create a context and make it current.
   Context = alcCreateContext(Device, NULL);
-  if (!Context)
-  {
-    Sys_Error("Failed to create OpenAL context");
-  }
+  if (!Context) Sys_Error("Failed to create OpenAL context");
   alcMakeContextCurrent(Context);
   E = alGetError();
-  if (E != AL_NO_ERROR)
-  {
-    Sys_Error("OpenAL error: %s", alGetString(E));
-  }
+  if (E != AL_NO_ERROR) Sys_Error("OpenAL error: %s", alGetString(E));
 
   //  Print some information.
-  GCon->Logf(NAME_Init, "AL_VENDOR: %s", alGetString(AL_VENDOR));
-  GCon->Logf(NAME_Init, "AL_RENDERER: %s", alGetString(AL_RENDERER));
-  GCon->Logf(NAME_Init, "AL_VERSION: %s", alGetString(AL_VERSION));
-  GCon->Log(NAME_Init, "AL_EXTENSIONS:");
-  TArray<VStr> Exts;
-  VStr((char*)alGetString(AL_EXTENSIONS)).Split(' ', Exts);
-  for (int i = 0; i < Exts.Num(); i++)
-  {
-    GCon->Log(NAME_Init, VStr("- ") + Exts[i]);
-  }
-  GCon->Log(NAME_Init, "ALC_EXTENSIONS:");
-  VStr((char*)alcGetString(Device, ALC_EXTENSIONS)).Split(' ', Exts);
-  for (int i = 0; i < Exts.Num(); i++)
-  {
-    GCon->Log(NAME_Init, VStr("- ") + Exts[i]);
+  if (openal_show_extensions) {
+    GCon->Logf(NAME_Init, "AL_VENDOR: %s", alGetString(AL_VENDOR));
+    GCon->Logf(NAME_Init, "AL_RENDERER: %s", alGetString(AL_RENDERER));
+    GCon->Logf(NAME_Init, "AL_VERSION: %s", alGetString(AL_VERSION));
+    GCon->Log(NAME_Init, "AL_EXTENSIONS:");
+    TArray<VStr> Exts;
+    VStr((char*)alGetString(AL_EXTENSIONS)).Split(' ', Exts);
+    for (int i = 0; i < Exts.Num(); i++) GCon->Log(NAME_Init, VStr("- ") + Exts[i]);
+    GCon->Log(NAME_Init, "ALC_EXTENSIONS:");
+    VStr((char*)alcGetString(Device, ALC_EXTENSIONS)).Split(' ', Exts);
+    for (int i = 0; i < Exts.Num(); i++) GCon->Log(NAME_Init, VStr("- ") + Exts[i]);
   }
 
   if (alIsExtensionPresent((ALchar*)"EAX"))
