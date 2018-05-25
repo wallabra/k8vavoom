@@ -113,39 +113,61 @@ void VEmitContext::ClearLocalDefs () {
 //==========================================================================
 // allocates new local, sets offset
 VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, const TLocation &aloc) {
+  int ssz = atype.GetStackSize()/4;
+
   // try to find reusable local
+  int besthit = 0x7fffffff, bestidx = -1;
   for (int f = 0; f < LocalDefs.length(); ++f) {
     VLocalVarDef &ll = LocalDefs[f];
     if (ll.Reusable && !ll.Visible) {
-      if (ll.Type.IsSame(atype)) {
+      if (!atype.NeedDtor() && !ll.Type.NeedDtor() && ll.stackSize >= ssz) {
         // i found her!
-        //fprintf(stderr, "method '%s': found reusable local '%s' at index %d (new local is '%s'); type is '%s'; new type is '%s'; oloc:%s:%d; nloc:%s:%d\n", CurrentFunc->GetName(), *ll.Name, f, *aname, *ll.Type.GetName(), *atype.GetName(), *ll.Loc.GetSource(), ll.Loc.GetLine(), *aloc.GetSource(), aloc.GetLine());
-        if (atype.GetStackSize() != ll.Type.GetStackSize()) Sys_Error("VC INTERNAL COMPILER ERROR: invalid type sizes in reused local");
-        ll.Loc = aloc;
-        ll.Reusable = false;
-        ll.Visible = true;
-        ll.Name = aname;
-        ll.Type = atype;
-        ll.ParamFlags = 0;
-        ll.compindex = compindex;
-        return ll;
+        if (ll.stackSize == ssz) {
+          bestidx = f;
+          break;
+        }
+        // if this is better match, use it
+        int points = ll.stackSize-ssz;
+        if (points < besthit) {
+          besthit = points;
+          bestidx = f;
+        }
+      } else if (ll.Type.Type == TYPE_String && atype.Type == TYPE_String) {
+        // string can be safely replaced with another string, they both require dtor
+        bestidx = f;
+        break;
       }
     }
   }
-  // introduce new local
-  VLocalVarDef &loc = LocalDefs.Alloc();
-  loc.Loc = aloc;
-  loc.Name = aname;
-  loc.Type = atype;
-  loc.Offset = localsofs;
-  loc.Reusable = false;
-  loc.Visible = true;
-  loc.ParamFlags = 0;
-  loc.ldindex = LocalDefs.length()-1;
-  loc.compindex = compindex;
-  localsofs += atype.GetStackSize()/4;
-  if (localsofs > 1024) ParseWarning(aloc, "Local vars > 1k");
-  return loc;
+
+  if (bestidx >= 0) {
+    VLocalVarDef &ll = LocalDefs[bestidx];
+    //fprintf(stderr, "method '%s': found reusable local '%s' at index %d (new local is '%s'); type is '%s'; new type is '%s'; oloc:%s:%d; nloc:%s:%d\n", CurrentFunc->GetName(), *ll.Name, bestidx, *aname, *ll.Type.GetName(), *atype.GetName(), *ll.Loc.GetSource(), ll.Loc.GetLine(), *aloc.GetSource(), aloc.GetLine());
+    ll.Loc = aloc;
+    ll.Reusable = false;
+    ll.Visible = true;
+    ll.Name = aname;
+    ll.Type = atype;
+    ll.ParamFlags = 0;
+    ll.compindex = compindex;
+    return ll;
+  } else {
+    // introduce new local
+    VLocalVarDef &loc = LocalDefs.Alloc();
+    loc.Loc = aloc;
+    loc.Name = aname;
+    loc.Type = atype;
+    loc.Offset = localsofs;
+    loc.Reusable = false;
+    loc.Visible = true;
+    loc.ParamFlags = 0;
+    loc.ldindex = LocalDefs.length()-1;
+    loc.compindex = compindex;
+    loc.stackSize = ssz;
+    localsofs += ssz;
+    if (localsofs > 1024) ParseWarning(aloc, "Local vars > 1k");
+    return loc;
+  }
 }
 
 

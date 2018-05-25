@@ -96,6 +96,7 @@ public:
   VStr GetName() const;
 
   bool IsSame (const VFieldType &other) const;
+  bool NeedDtor () const;
 };
 
 //==========================================================================

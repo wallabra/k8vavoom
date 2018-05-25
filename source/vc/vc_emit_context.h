@@ -58,6 +58,7 @@ public:
 
 private:
   int compindex; // for enter/exit compound
+  int stackSize; // for reusing
 
 public:
   VLocalVarDef () {}

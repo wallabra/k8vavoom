@@ -574,6 +574,42 @@ bool VFieldType::IsSame (const VFieldType &other) const {
 }
 
 
+//==========================================================================
+//
+//  VFieldType::NeedDtor
+//
+//==========================================================================
+bool VFieldType::NeedDtor () const {
+  if (PtrLevel > 0) return false; // pointers are ok
+  switch (Type) {
+    // simple types
+    case TYPE_Void:
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Bool:
+    case TYPE_Float:
+    case TYPE_Name:
+    case TYPE_Pointer:
+    case TYPE_State:
+    case TYPE_Vector:
+    case TYPE_Reference: // reference is something like a pointer
+    case TYPE_Class: // classes has no dtors
+    case TYPE_Struct: // structs currently has no dtors too
+      return false;
+    case TYPE_String: // strings require dtors
+      return true;
+    case TYPE_Array: // it depends of inner type, so check it
+      return (ArrayInnerType == TYPE_String || ArrayInnerType == TYPE_Array || ArrayInnerType == TYPE_DynamicArray);
+    case TYPE_DynamicArray: // dynamic arrays should be cleared with dtors
+    case TYPE_Automatic: // this is something that should not be, so let's play safe
+      return true;
+    default:
+      break;
+  }
+  return true; // just in case i forgot something
+}
+
+
 #if !defined(IN_VCC)
 
 //==========================================================================
