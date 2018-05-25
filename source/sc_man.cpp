@@ -35,7 +35,9 @@
 # endif
 #endif
 
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 static VCvarB dbg_show_name_remap("dbg_show_name_remap", false, "Show hacky name remapping", 0);
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -446,13 +448,12 @@ void VScriptParser::ExpectName8 () {
   guard(VScriptParser::ExpectName8);
   ExpectString();
 
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   // "complete" hacks
   if (String.Length() > 1 && String[0] == '$') {
     if (strncmp(*String, "$MUSIC_", 7) == 0) {
       VStr nn = VStr("d_")+VStr(*String+7).ToLower();
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
       if (dbg_show_name_remap) GCon->Logf("HACK: Converted name '%s' to '%s'", *String, *nn);
-#endif
       String = nn;
     } else {
       for (const TKeyValS *ts = CompleteNameHacks; ts->key; ++ts) {
@@ -460,6 +461,7 @@ void VScriptParser::ExpectName8 () {
       }
     }
   }
+#endif
 
   if (String.Length() > 8) {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
