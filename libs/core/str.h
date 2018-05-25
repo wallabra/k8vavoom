@@ -27,8 +27,12 @@
 //
 //**************************************************************************
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 #define TEXT_COLOUR_ESCAPE    '\034'
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 // WARNING! this cannot be bigger than one pointer, or VM will break!
 class VStr {
 private:
@@ -347,10 +351,109 @@ public:
 
   static inline char ToUpper (char c) { return (c >= 'a' && c <= 'z' ? c-32 : c); }
   static inline char ToLower (char c) { return (c >= 'A' && c <= 'Z' ? c+32 : c); }
+
+  static inline char toupper (char c) { return (c >= 'a' && c <= 'z' ? c-32 : c); }
+  static inline char tolower (char c) { return (c >= 'A' && c <= 'Z' ? c+32 : c); }
+
+  bool isUtf8Valid () const;
+
+  // append codepoint to this string, in utf-8
+  VStr &utf8Append (vuint32 code);
+
+  VStr utf2win () const;
+  VStr win2utf () const;
+
+  VStr toLowerCase1251 () const;
+  VStr toUpperCase1251 () const;
+
+public:
+  static inline char wchar2win (vuint32 wc) { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
+
+  static inline int digitInBase (char ch, int base=10) {
+    if (base < 1 || base > 36 || ch < '0') return -1;
+    if (base <= 10) return (ch < 48+base ? ch-48 : -1);
+    if (ch >= '0' && ch <= '9') return ch-48;
+    if (ch >= 'a' && ch <= 'z') ch -= 32; // poor man tolower()
+    if (ch < 'A' || ch >= 65+(base-10)) return -1;
+    return ch-65+10;
+  }
+
+  static inline char upcase1251 (char ch) {
+    if ((vuint8)ch < 128) return ch-(ch >= 'a' && ch <= 'z' ? 32 : 0);
+    if ((vuint8)ch >= 224 && (vuint8)ch <= 255) return (vuint8)ch-32;
+    if ((vuint8)ch == 184 || (vuint8)ch == 186 || (vuint8)ch == 191) return (vuint8)ch-16;
+    if ((vuint8)ch == 162 || (vuint8)ch == 179) return (vuint8)ch-1;
+    return ch;
+  }
+
+  static inline char locase1251 (char ch) {
+    if ((vuint8)ch < 128) return ch+(ch >= 'A' && ch <= 'Z' ? 32 : 0);
+    if ((vuint8)ch >= 192 && (vuint8)ch <= 223) return (vuint8)ch+32;
+    if ((vuint8)ch == 168 || (vuint8)ch == 170 || (vuint8)ch == 175) return (vuint8)ch+16;
+    if ((vuint8)ch == 161 || (vuint8)ch == 178) return (vuint8)ch+1;
+    return ch;
+  }
+
+  // returns length of the following utf-8 sequence from its first char, or -1 for invalid first char
+  static inline int utf8CodeLen (char ch) {
+    if ((vuint8)ch < 0x80) return 1;
+    if ((ch&0xFE) == 0xFC) return 6;
+    if ((ch&0xFC) == 0xF8) return 5;
+    if ((ch&0xF8) == 0xF0) return 4;
+    if ((ch&0xF0) == 0xE0) return 3;
+    if ((ch&0xE0) == 0xC0) return 2;
+    return -1; // invalid
+  }
+
+public:
+  static const vuint16 cp1251[128];
+  static char wc2shitmap[65536];
 };
+
 
 char *va (const char *text, ...) __attribute__ ((format(printf, 1, 2)));
 
 inline vuint32 GetTypeHash (const char *s) { return (s && s[0] ? fnvHashBuf(s, strlen(s)) : 1); }
 inline vuint32 GetTypeHash (const VStr &s) { return (s.length() ? fnvHashBuf(*s, s.length()) : 1); }
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct VUtf8DecoderFast {
+public:
+  enum {
+    Replacement = 0xFFFD, // replacement char for invalid unicode
+    Accept = 0,
+    Reject = 12,
+  };
+
+private:
+  vuint32 state;
+
+public:
+  vuint32 codepoint; // decoded codepoint (valid only when decoder is in "complete" state)
+
+public:
+  VUtf8DecoderFast () : state(Accept), codepoint(0) {}
+
+  inline void reset () { state = Accept; codepoint = 0; }
+
+  // is current character valid and complete? take `codepoint` then
+  inline bool complete () const { return (state == Accept); }
+  // is current character invalid and complete? take `Replacement` then
+  inline bool invalid () const { return (state == Reject); }
+  // is current character complete (valid or invaluid)? take `codepoint` then
+  inline bool hasCodePoint () const { return (state == Accept || state == Reject); }
+
+  // process another input byte; returns `true` if codepoint is complete
+  inline bool put (vuint8 c) {
+    if (state == Reject) { state = Accept; codepoint = 0; } // restart from invalid state
+    vuint8 tp = utf8dfa[c];
+    codepoint = (state != Accept ? (c&0x3f)|(codepoint<<6) : (0xff>>tp)&c);
+    state = utf8dfa[256+state+tp];
+    if (state == Reject) codepoint = Replacement;
+    return (state == Accept || state == Reject);
+  }
+
+private:
+  static const vuint8 utf8dfa[0x16c];
+};
