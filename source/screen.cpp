@@ -23,49 +23,34 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "drawer.h"
 #include "ui/ui.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+void CalcFadetable16 (byte *pal);
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+extern int screenblocks;
 
-void CalcFadetable16(byte *pal);
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+int ScreenWidth = 0;
+int ScreenHeight = 0;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern int        screenblocks;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-int   ScreenWidth = 0;
-int   ScreenHeight = 0;
-
-int   VirtualWidth = 640;
-int   VirtualHeight = 480;
+int VirtualWidth = 640;
+int VirtualHeight = 480;
 
 float fScaleX;
 float fScaleY;
 float fScaleXI;
 float fScaleYI;
 
-int   usegamma = 0;
+int usegamma = 0;
 
-bool  graphics_started = false;
+bool graphics_started = false;
 
 // Table of RGB values in current gamma corection level
-byte  gammatable[5][256] =
-{
+byte gammatable[5][256] = {
   {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
   17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,
   33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,
@@ -148,11 +133,10 @@ byte  gammatable[5][256] =
   251,252,252,253,254,254,255,255}
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static bool   setresolutionneeded = false;
-static int    setwidth;
-static int    setheight;
+static bool setresolutionneeded = false;
+static int setwidth;
+static int setheight;
 
 static VCvarF menu_darkening("menu_darkening", "0.5", "Screen darkening for active menus.", CVAR_Archive);
 static VCvarB draw_pause("draw_pause", true, "Draw \"paused\" text?");
@@ -167,19 +151,17 @@ static VCvarI draw_fps("draw_fps", "0", "Draw FPS counter?", CVAR_Archive);
 static VCvarI draw_fps_posx("draw_fps_posx", "0", "FPS counter position (<0:left; 0:center; >0:right)", CVAR_Archive);
 static double fps_start = 0.0;
 static double ms = 0.0;
-static int    fps_frames = 0;
-static int    show_fps = 0;
+static int fps_frames = 0;
+static int show_fps = 0;
 
-static VCvarB draw_cycles("draw_cycles", false, "Draw cycles counter?", CVAR_Archive);
+static VCvarB draw_cycles("draw_cycles", false, "Draw cycle counter?", CVAR_Archive);
 
-// CODE --------------------------------------------------------------------
 
 //**************************************************************************
 //
 //  Screenshots
 //
 //**************************************************************************
-
 #ifdef VAVOOM_USE_LIBJPG
 static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type (png/jpg/tga/pcx).", CVAR_Archive);
 #else
@@ -194,32 +176,31 @@ extern void WritePNG (const VStr& FileName, const void* Data, int Width, int Hei
 extern void WriteJPG (const VStr& FileName, const void* Data, int Width, int Height, int Bpp, bool Bot2top);
 #endif
 
+
 //==========================================================================
 //
 //  ScreenShot_f
 //
 //==========================================================================
-
-COMMAND(ScreenShot)
-{
+COMMAND(ScreenShot) {
   guard(COMMAND ScreenShot);
-  int   i;
-  int   bpp;
-  bool  bot2top;
-  void  *data;
-  VStr  filename;
-  char  tmpbuf[128];
+  int i;
+  int bpp;
+  bool bot2top;
+  void *data;
+  VStr filename;
+  char tmpbuf[128];
 
   if (strlen(screenshot_type) > 8) {
     GCon->Log("Screenshot extension too long");
     return;
   }
 
-  //  Find a file name to save it to
+  // find a file name to save it to
   VStr BaseDir;
   if (screenshot_in_home_dir) {
 #if !defined(_WIN32)
-    const char* HomeDir = getenv("HOME");
+    const char *HomeDir = getenv("HOME");
     if (HomeDir && HomeDir[0]) {
       BaseDir = VStr(HomeDir)+"/.vavoom";
     } else {
@@ -267,6 +248,7 @@ COMMAND(ScreenShot)
   unguard;
 }
 
+
 //**************************************************************************
 //
 //  Misc drawing stuff
@@ -278,22 +260,15 @@ COMMAND(ScreenShot)
 //  DrawFPS
 //
 //==========================================================================
-
-static void DrawFPS()
-{
+static void DrawFPS () {
   guard(DrawFPS);
-  if (draw_fps)
-  {
+  if (draw_fps) {
     double time = Sys_Time();
-    fps_frames++;
+    ++fps_frames;
 
-    if (time - fps_start > 1.0)
-    {
-      show_fps = (int)(fps_frames / (time - fps_start));
-      if (draw_fps == 2)
-      {
-        ms = 1000.0 / fps_frames / (time - fps_start);
-      }
+    if (time-fps_start > 1.0) {
+      show_fps = (int)(fps_frames/(time-fps_start));
+      if (draw_fps == 2) ms = 1000.0/fps_frames/(time-fps_start);
       fps_start = time;
       fps_frames = 0;
     }
@@ -309,8 +284,8 @@ static void DrawFPS()
       T_SetAlign(hright, vtop);
       T_DrawText(VirtualWidth-2, 0, va("%02d fps", show_fps), CR_UNTRANSLATED);
     }
-    if (draw_fps == 2)
-    {
+
+    if (draw_fps == 2) {
       T_SetAlign(hright, vtop);
       T_DrawText(VirtualWidth-2, 12, va("%.2f ms ", ms), CR_UNTRANSLATED);
     }
@@ -318,28 +293,25 @@ static void DrawFPS()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  DrawCycles
 //
 //==========================================================================
-
-static void DrawCycles()
-{
+static void DrawCycles () {
   guard(DrawCycles);
-  if (draw_cycles)
-  {
+  if (draw_cycles) {
     T_SetFont(ConFont);
     T_SetAlign(hright, vtop);
-    for (int i = 0; i < 16; i++)
-    {
-      T_DrawText(VirtualWidth - 2, 32 + i * 8, va("%d %10u", i,
-        host_cycles[i]), CR_UNTRANSLATED);
+    for (int i = 0; i < 16; ++i) {
+      T_DrawText(VirtualWidth-2, 32+i*8, va("%d %10u", i, host_cycles[i]), CR_UNTRANSLATED);
       host_cycles[i] = 0;
     }
   }
   unguard;
 }
+
 
 //**************************************************************************
 //
@@ -352,9 +324,7 @@ static void DrawCycles()
 //  ChangeResolution
 //
 //==========================================================================
-
-static void ChangeResolution(int InWidth, int InHeight)
-{
+static void ChangeResolution (int InWidth, int InHeight) {
   guard(ChangeResolution);
   int width = InWidth;
   int height = InHeight;
@@ -362,22 +332,20 @@ static void ChangeResolution(int InWidth, int InHeight)
   if (screen_windowed > 0) win = true;
 
   // Changing resolution
-  if (!Drawer->SetResolution(width, height, win))
-  {
+  if (!Drawer->SetResolution(width, height, win)) {
     GCon->Logf("Failed to set resolution %dx%d", width, height);
-    if (ScreenWidth)
-    {
-      if (!Drawer->SetResolution(ScreenWidth, ScreenHeight, win))
+    if (ScreenWidth) {
+      if (!Drawer->SetResolution(ScreenWidth, ScreenHeight, win)) {
         Sys_Error("ChangeResolution: failed to restore resolution");
-      else
+      } else {
         GCon->Log("Restoring previous resolution");
-    }
-    else
-    {
-      if (!Drawer->SetResolution(0, 0, win))
+      }
+    } else {
+      if (!Drawer->SetResolution(0, 0, win)) {
         Sys_Error("ChangeResolution: Failed to set default resolution");
-      else
+      } else {
         GCon->Log("Setting default resolution");
+      }
     }
   }
   GCon->Logf("%dx%d.", ScreenWidth, ScreenHeight);
@@ -387,90 +355,80 @@ static void ChangeResolution(int InWidth, int InHeight)
 
   fScaleX = (float)ScreenWidth / (float)VirtualWidth;
   fScaleY = (float)ScreenHeight / (float)VirtualHeight;
+
   fScaleXI = (float)VirtualWidth / (float)ScreenWidth;
   fScaleYI = (float)VirtualHeight / (float)ScreenHeight;
+
   unguard;
 }
+
 
 //==========================================================================
 //
 //  CheckResolutionChange
 //
 //==========================================================================
-
-static void CheckResolutionChange()
-{
+static void CheckResolutionChange () {
   guard(CheckResolutionChange);
-  bool    res_changed = false;
+  bool res_changed = false;
 
-  if (brightness != usegamma)
-  {
+  if (brightness != usegamma) {
     usegamma = brightness;
-    if (usegamma < 0)
-    {
+    if (usegamma < 0) {
       usegamma = 0;
       brightness = usegamma;
     }
-    if (usegamma > 4)
-    {
+    if (usegamma > 4) {
       usegamma = 4;
       brightness = usegamma;
     }
   }
-  if (setresolutionneeded)
-  {
+  if (setresolutionneeded) {
     ChangeResolution(setwidth, setheight);
     setresolutionneeded = false;
     res_changed = true;
-  }
-  else if (!screen_width || screen_width != ScreenWidth || screen_height != ScreenHeight)
-  {
+  } else if (!screen_width || screen_width != ScreenWidth || screen_height != ScreenHeight) {
     ChangeResolution(screen_width, screen_height);
     res_changed = true;
   }
 
-  if (res_changed)
-  {
+  if (res_changed) {
     Drawer->InitResolution();
-    //  Recalculate view size and other data
+    // recalculate view size and other data
     R_SetViewSize(screenblocks);
   }
   graphics_started = true;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  SetResolution_f
 //
 //==========================================================================
-
-COMMAND(SetResolution)
-{
-  if (Args.Num() == 3)
-  {
+COMMAND(SetResolution) {
+  if (Args.Num() == 3) {
     setwidth = superatoi(*Args[1]);
     setheight = superatoi(*Args[2]);
     setresolutionneeded = true;
-  }
-  else
-  {
-    GCon->Log("SetResolution <width> <height> [<bpp>]:change resolution");
+  } else {
+    GCon->Log("SetResolution <width> <height> -- change resolution");
   }
 }
+
 
 //==========================================================================
 //
 //  COMMAND vid_restart
 //
 //==========================================================================
-
-COMMAND(vid_restart)
-{
+COMMAND(vid_restart) {
   setwidth = ScreenWidth;
   setheight = ScreenHeight;
   setresolutionneeded = true;
 }
+
 
 //**************************************************************************
 //
@@ -483,129 +441,112 @@ COMMAND(vid_restart)
 //  SCR_Init
 //
 //==========================================================================
-
-void SCR_Init()
-{
+void SCR_Init () {
 }
+
 
 //==========================================================================
 //
 //  SCR_Update
 //
 //==========================================================================
-
-void SCR_Update()
-{
+void SCR_Update () {
   guard(SCR_Update);
   CheckResolutionChange();
 
   Drawer->StartUpdate();
 
   // do buffered drawing
-  if (cl && cls.signon && cl->MO)
-  {
-    switch (GClGame->intermission)
-    {
-    case 0:
-      if (automapactive <= 0) R_RenderPlayerView();
-      if (automapactive) AM_Drawer();
-      if (GGameInfo->NetMode != NM_TitleMap)
-      {
-        CT_Drawer();
-        SB_Drawer();
-      }
-      break;
+  if (cl && cls.signon && cl->MO) {
+    switch (GClGame->intermission) {
+      case 0:
+        if (automapactive <= 0) R_RenderPlayerView();
+        if (automapactive) AM_Drawer();
+        if (GGameInfo->NetMode != NM_TitleMap) {
+          CT_Drawer();
+          SB_Drawer();
+        }
+        break;
     }
   }
 
-  //  Draw user interface.
+  // draw user interface
   GRoot->DrawWidgets();
 
-  // Menu drawing
+  // menu drawing
   MN_Drawer();
 
-  // Console drawing
+  // console drawing
   C_Drawer();
 
   DrawFPS();
-
   DrawCycles();
 
-  Drawer->Update();              // page flip or blit buffer
+  Drawer->Update(); // page flip or blit buffer
   unguard;
 }
+
 
 //==========================================================================
 //
 // Draw_TeleportIcon
 //
 //==========================================================================
-
-void Draw_TeleportIcon()
-{
+void Draw_TeleportIcon () {
   guard(Draw_TeleportIcon);
-  if (W_CheckNumForName(NAME_teleicon) >= 0)
-  {
+  if (W_CheckNumForName(NAME_teleicon) >= 0) {
     Drawer->BeginDirectUpdate();
-    R_DrawPic(260, 68, GTextureManager.AddPatch(NAME_teleicon,
-      TEXTYPE_Pic));
+    R_DrawPic(260, 68, GTextureManager.AddPatch(NAME_teleicon, TEXTYPE_Pic));
     Drawer->EndDirectUpdate();
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 // Draw_SaveIcon
 //
 //==========================================================================
-
-void Draw_SaveIcon()
-{
+void Draw_SaveIcon () {
   guard(Draw_SaveIcon);
-  if (W_CheckNumForName(NAME_saveicon) >= 0)
-  {
+  if (W_CheckNumForName(NAME_saveicon) >= 0) {
     Drawer->BeginDirectUpdate();
-    R_DrawPic(260, 68, GTextureManager.AddPatch(NAME_saveicon,
-      TEXTYPE_Pic));
+    R_DrawPic(260, 68, GTextureManager.AddPatch(NAME_saveicon, TEXTYPE_Pic));
     Drawer->EndDirectUpdate();
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 // Draw_LoadIcon
 //
 //==========================================================================
-
-void Draw_LoadIcon()
-{
+void Draw_LoadIcon () {
   guard(Draw_LoadIcon);
-  if (W_CheckNumForName(NAME_loadicon) >= 0)
-  {
+  if (W_CheckNumForName(NAME_loadicon) >= 0) {
     Drawer->BeginDirectUpdate();
-    R_DrawPic(260, 68, GTextureManager.AddPatch(NAME_loadicon,
-      TEXTYPE_Pic));
+    R_DrawPic(260, 68, GTextureManager.AddPatch(NAME_loadicon, TEXTYPE_Pic));
     Drawer->EndDirectUpdate();
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  SCR_SetVirtualScreen
 //
 //==========================================================================
-
-void SCR_SetVirtualScreen(int Width, int Height)
-{
+void SCR_SetVirtualScreen (int Width, int Height) {
   guard(SCR_SetVirtualScreen);
   VirtualWidth = Width;
   VirtualHeight = Height;
-  fScaleX = (float)ScreenWidth / (float)VirtualWidth;
-  fScaleY = (float)ScreenHeight / (float)VirtualHeight;
-  fScaleXI = (float)VirtualWidth / (float)ScreenWidth;
-  fScaleYI = (float)VirtualHeight / (float)ScreenHeight;
+  fScaleX = (float)ScreenWidth/(float)VirtualWidth;
+  fScaleY = (float)ScreenHeight/(float)VirtualHeight;
+  fScaleXI = (float)VirtualWidth/(float)ScreenWidth;
+  fScaleYI = (float)VirtualHeight/(float)ScreenHeight;
   unguard;
 }
