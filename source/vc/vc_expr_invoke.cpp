@@ -351,8 +351,39 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
+  // Class.Method -- for static methods
+  if (SelfExpr->Type.Type == TYPE_Class) {
+    if (!SelfExpr->Type.Class) {
+      ParseError(Loc, "Class name expected at the left side of `.`");
+      delete this;
+      return nullptr;
+    }
+    VMethod *M = SelfExpr->Type.Class->FindMethod(MethodName);
+    if (!M) {
+      ParseError(Loc, "Method `%s` not found in class `%s`", *MethodName, SelfExpr->Type.Class->GetName());
+      delete this;
+      return nullptr;
+    }
+    //fprintf(stderr, "TYPE: %s\n", *SelfExpr->Type.GetName());
+    if (M->Flags&FUNC_Iterator) {
+      ParseError(Loc, "Iterator methods can only be used in foreach statements");
+      delete this;
+      return nullptr;
+    }
+    if ((M->Flags&FUNC_Static) == 0) {
+      ParseError(Loc, "Only static methods can be called with this syntax");
+      delete this;
+      return nullptr;
+    }
+    // statics has no self
+    VExpression *e = new VInvocation(nullptr, M, nullptr, false, false, Loc, NumArgs, Args);
+    NumArgs = 0;
+    delete this;
+    return e->Resolve(ec);
+  }
+
   if (SelfExpr->Type.Type != TYPE_Reference) {
-    ParseError(Loc, "Object reference expected left side of .");
+    ParseError(Loc, "Object reference expected at the left side of `.`");
     delete this;
     return nullptr;
   }
@@ -364,7 +395,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
-    VExpression* e = new VInvocation(SelfExpr, M, nullptr, true, false, Loc, NumArgs, Args);
+    VExpression *e = new VInvocation(SelfExpr, M, nullptr, true, false, Loc, NumArgs, Args);
     SelfExpr = nullptr;
     NumArgs = 0;
     delete this;
@@ -399,7 +430,7 @@ VExpression *VDotInvocation::ResolveIterator (VEmitContext &ec) {
   }
 
   if (SelfExpr->Type.Type != TYPE_Reference) {
-    ParseError(Loc, "Object reference expected left side of .");
+    ParseError(Loc, "Object reference expected at the left side of `.`");
     delete this;
     return nullptr;
   }
