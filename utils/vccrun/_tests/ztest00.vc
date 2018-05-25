@@ -1,0 +1,14 @@
+class Main : Object;
+
+int val;
+
+/*final static*/ void main () {
+  print("hello!");
+  print("val=%d", val);
+}
+
+
+defaultproperties {
+  print("Main ctor!");
+  val = 42;
+}

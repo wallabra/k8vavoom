@@ -1,0 +1,30 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class TestObject : Object;
+
+final static void boo () {
+  print("BOO!");
+}
+
+
+/*
+defaultproperties {
+}
+*/
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+int val;
+
+final static void main () {
+  print("hello!");
+  //TestObject::boo();
+  //print("val=%d", val);
+}
+
+
+defaultproperties {
+  print("Main ctor!");
+  val = 42;
+}

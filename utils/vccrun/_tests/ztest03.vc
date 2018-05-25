@@ -1,0 +1,29 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class TestObject : Object;
+
+final static void boo () {
+  print("BOO!");
+}
+
+
+defaultproperties {
+  print("TestObject ctor!");
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : TestObject;
+
+int val;
+
+final static void main () {
+  print("hello!");
+  boo();
+  print("cos(90)=%f", cos(91.0));
+}
+
+
+defaultproperties {
+  print("Main ctor!");
+  val = 42;
+}

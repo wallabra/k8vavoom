@@ -1,0 +1,31 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+final static int boo (int n) { return n+42; }
+
+final int main () {
+  //print("%f", 3.14f);
+
+  int v = 1000.boo;
+  print("%d", v);
+
+  auto vec = vector(1, 2, 0);
+  print("len=%f : %f", length(vec), vec.length);
+
+  array!string a;
+  print("len=%d", a.length);
+
+  a[0] = "test";
+  print("len=%d(1) <%s>", a.length, a[0]);
+
+  a.length += 3;
+  print("len=%d(4) <%s>", a.length, a[0]);
+
+  a.length -= 2;
+  print("len=%d(2) <%s>", a.length, a[0]);
+
+  a.length = 8;
+  print("len=%d(8) <%s>", a.length, a[0]);
+
+  return 0;
+}

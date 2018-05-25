@@ -1,0 +1,37 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+final int main (array!string *args) {
+  int v = 69;
+  print("v=%d", v);
+
+  {
+    int i = 42;
+    print("i=%d", i);
+  }
+
+  {
+    int n = 666;
+    print("n=%d", n);
+  }
+
+  for (int f = 0; f < 2; ++f) print("f=%d", f);
+
+  {
+    int nn = 999;
+    print("nn=%d", nn);
+    {
+      int n = 52;
+      print("n=%d", n);
+    }
+  }
+
+  for (int f = 0; f < 2; ++f) {
+    int n = f*1000;
+    print("f=%d; n=%d", f, n);
+  }
+
+  print("v=%d", v);
+
+  return 0;
+}

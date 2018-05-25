@@ -1,0 +1,24 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+final int main (array!string *args) {
+  array!string a;
+  print("len=%d", a.length);
+
+  a[$] = "test0";
+  print("len=%d(1) <%s>", a.length, a[0]);
+
+  a[$] = "test1";
+  print("len=%d(2) <%s> <%s>", a.length, a[0], a[1]);
+
+  a.length += 3;
+  print("len=%d(4) <%s>", a.length, a[0]);
+
+  a.length -= 2;
+  print("len=%d(2) <%s>", a.length, a[0]);
+
+  a.length = 8;
+  print("len=%d(8) <%s>", a.length, a[0]);
+
+  return 0;
+}

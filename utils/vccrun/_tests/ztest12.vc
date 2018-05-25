@@ -1,0 +1,17 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+void testArray (array!string *args) {
+}
+
+
+final void main (/*array!string args*/) {
+  //print("script arguments: %s", (*args)[0]);
+  int n = 42;
+  array!string a;
+  int v = 666;
+  print("len=%d", a.Length);
+  a[0] = "test";
+  array!string *b = &a;
+  print("len=%d", (*b).Length);
+}

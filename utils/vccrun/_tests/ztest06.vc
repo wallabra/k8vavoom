@@ -1,0 +1,38 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class TestObject : Object;
+
+final static void boo () {
+  print("BOO!");
+}
+
+
+defaultproperties {
+  print("TestObject ctor!");
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : TestObject;
+
+int val;
+
+final static void classTest (class<Object> cls) {
+  print("cls is '%s'", NameToStr(GetClassName(cls)));
+}
+
+final static void main () {
+  TVec n = vector(1, 2, 3);
+  //TVec n = vector(1, 2);
+  print("hello! defval=%d; vector=%v", Main.default.val, n);
+  auto c = n;
+  print("vector c=%v", c);
+  boo();
+  print("cos(90)=%f", cos(0d91));
+  classTest(Main);
+}
+
+
+defaultproperties {
+  print("Main ctor!");
+  val = 42;
+}

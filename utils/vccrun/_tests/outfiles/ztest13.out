@@ -1,0 +1,6 @@
+len=0
+len=1
+arg len=3
+  #0: boo
+  #1: foo
+  #2: zoo

@@ -8,6 +8,7 @@ add_subdirectory(glbsp)
 add_subdirectory(glvis)
 add_subdirectory(master)
 add_subdirectory(vcc)
+add_subdirectory(vccrun)
 add_subdirectory(vlumpy)
 
 # EXTRA_DIST = \

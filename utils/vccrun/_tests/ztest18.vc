@@ -1,0 +1,13 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+final int main (array!string *args) {
+  int[4] arr;
+
+  arr[0] = 42;
+  arr[1] = 666;
+
+  print("%d, %d", arr[0], arr[1]);
+
+  return 0;
+}

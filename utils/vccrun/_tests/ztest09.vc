@@ -1,0 +1,53 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class TestObject : Object;
+
+struct S {
+  int i;
+  float f;
+}
+
+enum {
+  E1 = 1,
+  E2 = 2,
+}
+
+
+final static void boo () {
+  print("BOO! E2=%d", E2);
+}
+
+
+defaultproperties {
+  print("TestObject ctor!");
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : TestObject;
+
+int val;
+array!(string*) sarr;
+
+
+final static void classTest (class!Object cls) {
+  print("cls is '%s'", NameToStr(GetClassName(cls)));
+  class!Object a = class!Object(cls);
+}
+
+final static void main () {
+  //TVec n = vector(1, 2, 3);
+  TVec n = vector(1, 2);
+  print("hello! defval=%d; vector=%v", Main.default.val, n);
+  auto c = n;
+  print("vector c=%v", c);
+  boo();
+  int dg = 0d91;
+  print("cos(90)=%f", cos(dg));
+  classTest(Main);
+}
+
+
+defaultproperties {
+  print("Main ctor!");
+  val = 42;
+}

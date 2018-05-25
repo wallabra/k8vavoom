@@ -1,0 +1,13 @@
+len=0
+len=1
+slen=6
+str=<ThisIsName>; len=10
+str=<test>; len=4
+name=<ThisIsName>
+arg len=3
+  #0: boo
+  #1: foo
+  #2: zoo
+sfld=<fuck!>; len=5
+mcls.sfld=<fuck!>
+boo!

@@ -1,0 +1,47 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+final int main (array!string *args) {
+  string v = "boo";
+  print("v=%s", v);
+
+  {
+    int i = 42;
+    print("i=%d", i);
+  }
+
+  {
+    int n = 666;
+    print("n=%d", n);
+  }
+
+  {
+    string t = "str666";
+    print("t=%s", t);
+  }
+
+  for (int f = 0; f < 2; ++f) print("f=%d", f);
+
+  {
+    int nn = 999;
+    print("nn=%d", nn);
+    {
+      string n = "str52";
+      print("n=%s", n);
+    }
+  }
+
+  {
+    string n; // = "str99";
+    print("n=%s", n); // old value, should be an error
+  }
+
+  for (int f = 0; f < 2; ++f) {
+    int n = f*1000;
+    print("f=%d; n=%d", f, n);
+  }
+
+  print("v=%s", v);
+
+  return 0;
+}
