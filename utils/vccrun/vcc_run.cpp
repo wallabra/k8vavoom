@@ -51,6 +51,7 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+/*
 class VFileReader : public VStream {
 private:
   FILE* mFile;
@@ -98,6 +99,7 @@ public:
     return !bError;
   }
 };
+*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -161,8 +163,11 @@ void Free (void* ptr) {
 //
 //==========================================================================
 VStream* OpenFile (const VStr& Name) {
+  return fsysOpenFile(Name);
+  /*
   FILE* file = fopen(*Name, "rb");
   return (file ? new VFileReader(file) : nullptr);
+  */
 }
 
 

@@ -69,5 +69,7 @@ extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
 
 extern VStream* OpenFile (const VStr& Name);
 
+#define fsysOpenFile  OpenFile
+
 
 #endif

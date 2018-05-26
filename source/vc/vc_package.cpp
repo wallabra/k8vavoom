@@ -918,11 +918,11 @@ void VPackage::LoadObject (TLocation l) {
 
   // Load PROGS from a specified file
   // fuck you, shitplusplus: no finally
-  VStream* f = OpenFile(va("%s.dat", *Name));
+  VStream* f = fsysOpenFile(va("%s.dat", *Name));
   if (f) { LoadBinaryObject(f, va("%s.dat", *Name), l); return; }
   for (int i = 0; i < GPackagePath.Num(); ++i) {
     VStr fname = GPackagePath[i]+"/"+Name+".dat";
-    f = OpenFile(*fname);
+    f = fsysOpenFile(*fname);
     if (f) { LoadBinaryObject(f, va("%s.dat", *Name), l); return; }
   }
 
@@ -934,18 +934,18 @@ void VPackage::LoadObject (TLocation l) {
   // fuck you, shitplusplus: no finally
   for (int i = 0; i < GPackagePath.Num(); ++i) {
     VStr mainVC = GPackagePath[i]+"/"+Name+"/classes.vc";
-    VStream *Strm = OpenFile(*mainVC);
+    VStream *Strm = fsysOpenFile(*mainVC);
     if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
   }
 
   {
     VStr mainVC = VStr("packages/")+Name+"/classes.vc";
-    VStream *Strm = OpenFile(*mainVC);
+    VStream *Strm = fsysOpenFile(*mainVC);
     if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
   }
 
   VStr mainVC = va("packages/%s.dat", *Name);
-  VStream *Strm = OpenFile(*mainVC);
+  VStream *Strm = fsysOpenFile(*mainVC);
   if (Strm) { dprintf("  '%s'\n", *mainVC); LoadBinaryObject(Strm, mainVC, l); return; }
 
   ParseError(l, "Can't find package %s", *Name);

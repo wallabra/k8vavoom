@@ -117,9 +117,15 @@ if (ENABLE_VCCRUN)
     ../../source/sc_man.cpp
   )
 
+  set(VCCRUN_FSYS_SOURCES
+    filesys/fsys.h
+    filesys/fsys.cpp
+  )
+
   add_executable(vcc_run
     ${VCCRUN_COMPILER_SOURCES}
     ${VCCRUN_RUNTIME_SOURCES}
+    ${VCCRUN_FSYS_SOURCES}
     vcc_run.cpp
     vcc_run.h
     vcc_run_sdl.h

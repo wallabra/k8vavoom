@@ -235,7 +235,7 @@ void VLexer::PushSource (TLocation &Loc, const VStr &FileName) {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   VStream *Strm = FL_OpenFileRead(FileName);
 #else
-  VStream *Strm = OpenFile(FileName);
+  VStream *Strm = fsysOpenFile(FileName);
 #endif
   PushSource(Loc, Strm, FileName);
 }
@@ -754,7 +754,7 @@ void VLexer::ProcessInclude () {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
       VStream *Strm = FL_OpenFileRead(FileName);
 #else
-      VStream *Strm = OpenFile(FileName);
+      VStream *Strm = fsysOpenFile(FileName);
 #endif
       if (Strm) {
         PushSource(Loc, Strm, FileName);
@@ -767,7 +767,7 @@ void VLexer::ProcessInclude () {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
       VStream *Strm = FL_OpenFileRead(FileName);
 #else
-      VStream *Strm = OpenFile(FileName);
+      VStream *Strm = fsysOpenFile(FileName);
 #endif
       if (Strm) {
         PushSource(Loc, Strm, FileName);

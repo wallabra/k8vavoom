@@ -30,6 +30,8 @@
 
 //#define OPCODE_STATS
 
+#include "filesys/fsys.h"
+
 #include "../../libs/core/core.h"
 #include "../../source/common.h"
 #include "../../source/maths.h"
@@ -77,7 +79,7 @@ extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
 
 void Host_Error (const char *error, ...) __attribute__((noreturn, format(printf, 1, 2)));
 
-extern VStream* OpenFile (const VStr& Name);
+//extern VStream *OpenFile (const VStr &Name);
 
 
 #endif
