@@ -158,13 +158,13 @@ VStr VStr::toLowerCase1251 () const {
   if (slen < 1) return VStr();
   for (int f = 0; f < slen; ++f) {
     if (locase1251(data[f]) != data[f]) {
-      VStr res;
-      res.Resize(slen);
-      for (int c = 0; c < slen; ++c) res.data[c] = locase1251(data[c]);
+      VStr res(*this);
+      res.MakeMutable();
+      for (int c = 0; c < slen; ++c) res.data[c] = locase1251(res.data[c]);
       return res;
     }
   }
-  return VStr(this);
+  return VStr(*this);
 }
 
 
@@ -173,13 +173,13 @@ VStr VStr::toUpperCase1251 () const {
   if (slen < 1) return VStr();
   for (int f = 0; f < slen; ++f) {
     if (upcase1251(data[f]) != data[f]) {
-      VStr res;
-      res.Resize(slen);
-      for (int c = 0; c < slen; ++c) res.data[c] = upcase1251(data[c]);
+      VStr res(*this);
+      res.MakeMutable();
+      for (int c = 0; c < slen; ++c) res.data[c] = upcase1251(res.data[c]);
       return res;
     }
   }
-  return VStr(this);
+  return VStr(*this);
 }
 
 
