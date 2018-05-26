@@ -88,7 +88,7 @@ protected:
   }
 
 protected:
-  VStr prefix; // this can be used to open named paks
+  VStr mPrefix; // this can be used to open named paks
   vuint32 htableSize;
   HashTableEntry* htable; // for names, in reverse order; so name lookups will be faster
     // the algo is:
@@ -108,8 +108,10 @@ protected:
   virtual VStream *open (int idx) const = 0;
 
 public:
-  FSysDriverBase () : prefix(VStr()), htableSize(0), htable(nullptr) {}
+  FSysDriverBase () : mPrefix(VStr()), htableSize(0), htable(nullptr) {}
   virtual ~FSysDriverBase ();
+
+  inline const VStr &getPrefix () const { return mPrefix; }
 
   virtual bool hasFile (const VStr &fname) const;
 
@@ -123,6 +125,67 @@ typedef FSysDriverBase* (*FSysOpenPakFn) (VStream *);
 
 // loaders with higher priority will be tried first
 void FSysRegisterDriver (FSysOpenPakFn ldr, int prio=1000);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+#ifdef USE_INTERNAL_ZLIB
+# include "../../../libs/zlib/zlib.h"
+#else
+# include <zlib.h>
+#endif
+
+class VZipStreamReader : public VStream {
+private:
+  enum { BUFFER_SIZE = 16384 };
+
+  VStream* srcStream;
+  Bytef buffer[BUFFER_SIZE];
+  z_stream zStream;
+  bool initialised;
+  vuint32 uncompressedSize;
+  int nextpos;
+  int currpos;
+  bool zipArchive;
+
+private:
+  void setError ();
+
+  // just read, no `nextpos` advancement
+  // returns number of bytes read, -1 on error, or 0 on EOF
+  int readSomeBytes (void *buf, int len);
+
+public:
+  VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false);
+  virtual ~VZipStreamReader () override;
+  virtual void Serialise (void *, int) override;
+  virtual void Seek (int) override;
+  virtual int Tell () override;
+  virtual int TotalSize () override;
+  virtual bool AtEnd () override;
+  virtual bool Close () override;
+};
+
+
+class VZipStreamWriter : public VStream {
+private:
+  enum { BUFFER_SIZE = 16384 };
+
+  VStream* dstStream;
+  Bytef buffer[BUFFER_SIZE];
+  z_stream zStream;
+  bool initialised;
+
+private:
+  void setError ();
+
+public:
+  VZipStreamWriter (VStream *);
+  virtual ~VZipStreamWriter () override;
+  virtual void Serialise (void *, int) override;
+  virtual void Seek (int) override;
+  virtual void Flush () override;
+  virtual bool Close () override;
+};
 
 
 #endif

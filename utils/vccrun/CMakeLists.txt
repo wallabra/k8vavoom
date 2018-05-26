@@ -120,6 +120,7 @@ if (ENABLE_VCCRUN)
   set(VCCRUN_FSYS_SOURCES
     filesys/fsys.h
     filesys/fsys.cpp
+    filesys/pak/zip.cpp
   )
 
   add_executable(vcc_run
@@ -134,6 +135,6 @@ if (ENABLE_VCCRUN)
 
   set_target_properties(vcc_run PROPERTIES OUTPUT_NAME ../../vcc_run)
   target_compile_definitions(vcc_run PRIVATE ${VCCRUN_DEFINES})
-  target_link_libraries(vcc_run core ${VCCRUN_LINKLIBS})
+  target_link_libraries(vcc_run core lzma ${VCCRUN_LINKLIBS})
   add_dependencies(vcc_run core jpeg imago lzma z)
 endif(ENABLE_VCCRUN)
