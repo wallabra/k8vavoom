@@ -463,6 +463,8 @@ public:
 public:
   static const vuint16 cp1251[128];
   static char wc2shitmap[65536];
+
+  static const VStr EmptyString;
 };
 
 
