@@ -245,6 +245,8 @@ static void DisplayUsage () {
   printf("    -D<name>           Define macro\n");
   printf("    -I<directory>      Include files directory\n");
   printf("    -P<directory>      Package import files directory\n");
+  printf("    -base <directory>  Set base directory\n");
+  printf("    -file <name>       Add pak file\n");
   exit(1);
 }
 
@@ -257,6 +259,8 @@ static void DisplayUsage () {
 static void ProcessArgs (int ArgCount, char **ArgVector) {
   int count = 0; // number of file arguments
   bool nomore = false;
+
+  TArray<VStr> paklist;
 
   for (int i = 1; i < ArgCount; ++i) {
     const char *text = ArgVector[i];
@@ -271,7 +275,22 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
         case 'I': VMemberBase::StaticAddIncludePath(text); break;
         case 'D': VMemberBase::StaticAddDefine(text); break;
         case 'P': VMemberBase::StaticAddPackagePath(text); break;
-        default: DisplayUsage(); break;
+        default:
+          --text;
+          if (VStr::Cmp(text, "base") == 0) {
+            ++i;
+            if (i >= ArgCount) DisplayUsage();
+            fsysBaseDir = VStr(ArgVector[i]);
+          } else if (VStr::Cmp(text, "file") == 0) {
+            ++i;
+            if (i >= ArgCount) DisplayUsage();
+            paklist.Append(VStr(ArgVector[i]));
+            //fprintf(stderr, "<%s>\n", ArgVector[i]);
+          } else {
+            //fprintf(stderr, "*<%s>\n", text);
+            DisplayUsage();
+          }
+          break;
       }
       continue;
     }
@@ -293,7 +312,16 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
   }
   */
 
-  SourceFileName = SourceFileName.FixFileSlashes();
+  fsysInit();
+  for (int f = 0; f < paklist.length(); ++f) {
+    if (fsysAppendPak(paklist[f])) {
+      dprintf("added pak file '%s'...\n", *paklist[f]);
+    } else {
+      fprintf(stderr, "CAN'T add pak file '%s'!\n", *paklist[f]);
+    }
+  }
+
+  SourceFileName = SourceFileName.fixSlashes();
   dprintf("Main source file: %s\n", *SourceFileName);
 }
 

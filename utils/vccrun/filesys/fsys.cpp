@@ -301,6 +301,20 @@ bool fsysAppendPak (const VStr &fname) {
 // this will take ownership of `strm` (or kill it on error)
 bool fsysAppendPak (VStream *strm) {
   if (!strm) return false;
+
+  if (openPakCount >= MaxOpenPaks) Sys_Error("too many pak files");
+  //openPaks[openPakCount++] = new FSysDriverDisk(path);
+  for (FSysDriverCreator *cur = creators; cur; cur = cur->next) {
+    strm->Seek(0);
+    if (strm->IsError()) break;
+    auto drv = cur->ldr(strm);
+    //if (strm->IsError()) { delete drv; break; }
+    if (drv) {
+      openPaks[openPakCount++] = drv;
+      return true;
+    }
+  }
+
   delete strm;
   return false;
 }

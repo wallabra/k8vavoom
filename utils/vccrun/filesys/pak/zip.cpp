@@ -129,7 +129,6 @@ private:
   vuint32 bytesBeforeZipFile; // bytes before the zipfile, (>0 for sfx)
 
 private:
-  void removeAtIndex (int idx);
   vuint32 searchCentralDir ();
   void openArchive ();
 
@@ -174,14 +173,6 @@ VZipFile::~VZipFile () {
 }
 
 
-void VZipFile::removeAtIndex (int idx) {
-  if (idx < 0 || idx >= fileCount) return;
-  for (int f = idx+1; f < fileCount; ++f) files[f-1] = files[f];
-  --fileCount;
-  files[fileCount].name.clear();
-}
-
-
 const VStr &VZipFile::getNameByIndex (int idx) const {
   if (idx < 0 || idx >= fileCount) return VStr::EmptyString;
   return files[idx].name;
@@ -198,6 +189,8 @@ void VZipFile::openArchive () {
   if (central_pos == 0) { fileStream = nullptr; return; } // signal failure
   //check(central_pos);
 
+  //fprintf(stderr, "cdpos=0x%08x\n", central_pos);
+
   fileStream->Seek(central_pos);
 
   vuint32 Signature;
@@ -205,6 +198,7 @@ void VZipFile::openArchive () {
   vuint16 number_disk_with_CD; // number the the disk with central dir, used for spaning ZIP, unsupported, always 0
   vuint16 number_entry_CD; // total number of entries in the central dir (same than number_entry on nospan)
   vuint16 size_comment; // size of the global comment of the zipfile
+  vuint16 fcount16;
 
   *fileStream
     // the signature, already checked
@@ -214,13 +208,17 @@ void VZipFile::openArchive () {
     // number of the disk with the start of the central directory
     << number_disk_with_CD
     // total number of entries in the central dir on this disk
-    << fileCount
+    << fcount16
     // total number of entries in the central dir
     << number_entry_CD;
 
   //check(number_entry_CD == fileCount);
   //check(number_disk_with_CD == 0);
   //check(number_disk == 0);
+
+  fileCount = fcount16;
+
+  //fprintf(stderr, "sign==0x%08x; nd=%u; cd=%u; fc=%d; ecd=%u\n", Signature, number_disk, number_disk_with_CD, fileCount, number_entry_CD);
 
   vuint32 size_central_dir; // size of the central directory
   vuint32 offset_central_dir; // offset of start of central directory with respect to the starting disk number
@@ -238,6 +236,7 @@ void VZipFile::openArchive () {
 
   bool canHasPrefix = true;
 
+  //fprintf(stderr, "cdpos=0x%08x; fc=%d\n", central_pos, fileCount);
   // set the current file of the zipfile to the first file
   vuint32 pos_in_central_dir = offset_central_dir;
   for (int i = 0; i < fileCount; ++i) {
@@ -274,20 +273,27 @@ void VZipFile::openArchive () {
       << external_fa
       << file_info.offset_curfile;
 
-    if (Magic != 0x02014b50) { fileCount = i; break; }
+    if (Magic != 0x02014b50) {
+      //fprintf(stderr, "FUCK! #%d: <%08x>\n", i, Magic);
+      fileCount = i;
+      break;
+    }
 
     char *filename_inzip = new char[file_info.size_filename+1];
     filename_inzip[file_info.size_filename] = '\0';
     fileStream->Serialise(filename_inzip, file_info.size_filename);
-    files[i].name = VStr(filename_inzip).toLowerCase1251().fixSlashes();
+    for (int f = 0; f < file_info.size_filename; ++f) if (filename_inzip[f] == '\\') filename_inzip[f] = '/';
+    //fprintf(stderr, "#%d: <%s>\n", i, filename_inzip);
+    //files[i].name = VStr(filename_inzip).toLowerCase1251().fixSlashes();
+    files[i].name = VStr(filename_inzip);
     delete[] filename_inzip;
 
+    //fprintf(stderr, "  #%d: <%s>\n", i, *files[i].name);
+
     if (files[i].name.length() == 0 || files[i].name.endsWith("/")) {
-      removeAtIndex(i);
-      --i;
+      files[i].name.clear();
     } else if (file_info.compression_method != Z_STORE && file_info.compression_method != Z_DEFLATED && file_info.compression_method != Z_LZMA) {
-      removeAtIndex(i);
-      --i;
+      files[i].name.clear();
     } else {
       if (canHasPrefix && files[i].name.IndexOf('/') == -1) canHasPrefix = false;
     }
@@ -309,10 +315,28 @@ void VZipFile::openArchive () {
         // remove prefix
         for (int i = 0; i < fileCount; ++i) {
           files[i].name = VStr(files[i].name, sli+1, files[i].name.Length()-sli-1);
-          if (files[i].name.length() == 0) { removeAtIndex(i); --i; }
+          //if (files[i].name.length() == 0) { removeAtIndex(i); --i; }
         }
       }
     }
+  }
+
+  // remove empty names
+  {
+    int spos = 0, dpos = 0;
+    while (spos < fileCount) {
+      if (files[spos].name.length() == 0) {
+        ++spos;
+      } else {
+        if (spos != dpos) {
+          files[dpos] = files[spos];
+        }
+        ++spos;
+        ++dpos;
+      }
+    }
+    for (int f = dpos; f < fileCount; ++f) files[f].name.clear();
+    fileCount = dpos;
   }
 
   buildNameHashTable();
@@ -345,7 +369,7 @@ vuint32 VZipFile::searchCentralDir () {
     if (fileStream->IsError()) return 0;
 
     for (int i = (int)uReadSize-3; i-- > 0; ) {
-      if (*(buf+i) == 0x50 && *(buf+i+1) == 0x4b && *(buf+i+2) == 0x05 && *(buf+i+3) == 0x06) {
+      if (buf[i] == 0x50 && buf[i+1] == 0x4b && buf[i+2] == 0x05 && buf[i+3] == 0x06) {
         uPosFound = uReadPos+i;
         break;
       }
@@ -746,7 +770,7 @@ void VZipFileReader::Seek (int InPos) {
   // read data into a temporary buffer untill we reach needed position
   int ToSkip = InPos-Tell();
   while (ToSkip > 0) {
-    int Count = ToSkip > 1024 ? 1024 : ToSkip;
+    int Count = (ToSkip > 1024 ? 1024 : ToSkip);
     ToSkip -= Count;
     vuint8 TmpBuf[1024];
     Serialise(TmpBuf, Count);
@@ -789,3 +813,26 @@ bool VZipFileReader::Close () {
   return !bError;
   unguard;
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static FSysDriverBase *zipLoader (VStream *strm) {
+  if (!strm) return nullptr;
+  //fprintf(stderr, "trying <%s> as zip...\n", *strm->GetName());
+  auto res = new VZipFile(strm);
+  if (!res->isOpened()) { delete res; res = nullptr; }
+  return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class ZipVFSRegistrator {
+public:
+  ZipVFSRegistrator (int n) {
+    FSysRegisterDriver(&zipLoader);
+    //fprintf(stderr, "FSYS: added ZIP reader.\n");
+  }
+};
+
+
+static ZipVFSRegistrator ldr(666);
