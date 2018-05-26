@@ -1753,7 +1753,7 @@ func_loop:
 
   goto func_loop;
 
-  unguardf(("(%s %d)", *func->GetFullName(), ip-func->Statements.Ptr()));
+  unguardf(("(%s %d)", *func->GetFullName(), (int)(ip-func->Statements.Ptr())));
 }
 
 
