@@ -98,9 +98,9 @@ class VDatagramDriver : public VNetDriver
 public:
   // I don't think that communication protocol will change, but just in a
   // case
-  enum { NET_PROTOCOL_VERSION = 1 };
+  enum { NET_PROTOCOL_VERSION = 2 };
 
-  enum { MASTER_SERVER_PORT = 26001 };
+  enum { MASTER_SERVER_PORT = 26002 };
 
   //  Client request
   enum
@@ -808,8 +808,9 @@ void VDatagramDriver::UpdateMaster(VNetLanDriver* Drv)
   VBitStreamWriter MsgOut(256 << 3);
   vuint8 TmpByte = MCREQ_JOIN;
   MsgOut << TmpByte;
-  Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(),
-    &sendaddr);
+  TmpByte = NET_PROTOCOL_VERSION;
+  MsgOut << TmpByte;
+  Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
   unguard;
 }
 
@@ -865,8 +866,7 @@ void VDatagramDriver::QuitMaster(VNetLanDriver* Drv)
   VBitStreamWriter MsgOut(256 << 3);
   vuint8 TmpByte = MCREQ_QUIT;
   MsgOut << TmpByte;
-  Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(),
-    &sendaddr);
+  Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
   unguard;
 }
 
@@ -899,6 +899,12 @@ void VDatagramDriver::QuitMaster()
 //  VDatagramDriver::QueryMaster
 //
 //==========================================================================
+/*
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+*/
 
 bool VDatagramDriver::QueryMaster(VNetLanDriver* Drv, bool xmit)
 {
@@ -910,17 +916,13 @@ bool VDatagramDriver::QueryMaster(VNetLanDriver* Drv, bool xmit)
   vuint8    control;
   vuint8    TmpByte;
 
-  if (Drv->MasterQuerySocket < 0)
-  {
-    Drv->MasterQuerySocket = Drv->OpenSocket(0);
-  }
+  if (Drv->MasterQuerySocket < 0) Drv->MasterQuerySocket = Drv->OpenSocket(0);
+
   Drv->GetSocketAddr(Drv->MasterQuerySocket, &myaddr);
-  if (xmit)
-  {
-    sockaddr_t      sendaddr;
+  if (xmit) {
+    sockaddr_t sendaddr;
     // see if we can resolve the host name
-    if (Drv->GetAddrFromName(MasterSrv, &sendaddr, MASTER_SERVER_PORT) == -1)
-    {
+    if (Drv->GetAddrFromName(MasterSrv, &sendaddr, MASTER_SERVER_PORT) == -1) {
       GCon->Logf("Could not resolve server name");
       return false;
     }
@@ -928,51 +930,57 @@ bool VDatagramDriver::QueryMaster(VNetLanDriver* Drv, bool xmit)
     VBitStreamWriter MsgOut(256 << 3);
     TmpByte = MCREQ_LIST;
     MsgOut << TmpByte;
-    Drv->Write(Drv->MasterQuerySocket, MsgOut.GetData(),
-      MsgOut.GetNumBytes(), &sendaddr);
+    Drv->Write(Drv->MasterQuerySocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
     return false;
   }
 
-  while ((len = Drv->Read(Drv->MasterQuerySocket, packetBuffer.data,
-    MAX_MSGLEN, &readaddr)) > 0)
-  {
-    if (len < 1)
-    {
-      continue;
-    }
+  //GCon->Logf("waiting for master reply...");
+  while ((len = Drv->Read(Drv->MasterQuerySocket, packetBuffer.data, MAX_MSGLEN, &readaddr)) > 0) {
+    if (len < 1) continue;
 
+    //GCon->Logf("got master reply...");
     // is the cache full?
-    if (Net->HostCacheCount == HOSTCACHESIZE)
-    {
-      continue;
-    }
+    if (Net->HostCacheCount == HOSTCACHESIZE) continue;
 
+    //GCon->Logf("processing master reply...");
     VBitStreamReader msg(packetBuffer.data, len << 3);
     msg << control;
-    if (control != MCREP_LIST)
-    {
-      continue;
-    }
+    if (control != MCREP_LIST) continue;
 
-    while (!msg.AtEnd())
-    {
+    msg << control; // control byte: bit 0 means "first packet", bit 1 means "last packet"
+    //GCon->Logf(" control byte: 0x%02x", (unsigned)control);
+
+    if ((control&0x01) == 0) continue; // first packed is missing
+
+    while (!msg.AtEnd()) {
+      vuint8 pver;
       tmpaddr = readaddr;
-      msg.Serialise(tmpaddr.sa_data + 2, 4);
+      msg.Serialise(&pver, 1);
+      msg.Serialise(tmpaddr.sa_data+2, 4);
       msg.Serialise(tmpaddr.sa_data, 2);
+      /*{
+        char buffer[28];
+        vuint32 haddr = *((vuint32 *)(tmpaddr.sa_data+2));
+        vuint16 hport = *((vuint16 *)(tmpaddr.sa_data+0));
+        snprintf(buffer, sizeof(buffer), "%u.%u.%u.%u:%u", haddr&0xff, (haddr>>8)&0xff, (haddr>>16)&0xff, (haddr>>24)&0xff, hport);
+        GCon->Logf(" proto %u: %s", (unsigned)pver, buffer);
+      }*/
 
-      VBitStreamWriter Reply(256 << 3);
-      TmpByte = NETPACKET_CTL;
-      Reply << TmpByte;
-      TmpByte = CCREQ_SERVER_INFO;
-      Reply << TmpByte;
-      VStr GameName("VAVOOM");
-      Reply << GameName;
-      TmpByte = NET_PROTOCOL_VERSION;
-      Reply << TmpByte;
-      Drv->Write(Drv->controlSock, Reply.GetData(),
-        Reply.GetNumBytes(), &tmpaddr);
+      if (pver == NET_PROTOCOL_VERSION) {
+        VBitStreamWriter Reply(256 << 3);
+        TmpByte = NETPACKET_CTL;
+        Reply << TmpByte;
+        TmpByte = CCREQ_SERVER_INFO;
+        Reply << TmpByte;
+        VStr GameName("VAVOOM");
+        Reply << GameName;
+        TmpByte = NET_PROTOCOL_VERSION;
+        Reply << TmpByte;
+        Drv->Write(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes(), &tmpaddr);
+      }
     }
-    return true;
+    if (control&0x02) return true;
+    //return true;
   }
   return false;
   unguard;
