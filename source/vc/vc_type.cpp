@@ -594,11 +594,17 @@ bool VFieldType::NeedDtor () const {
     case TYPE_Vector:
     case TYPE_Reference: // reference is something like a pointer
     case TYPE_Class: // classes has no dtors
-    case TYPE_Struct: // structs currently has no dtors too
       return false;
+    case TYPE_Struct: // struct members can require dtors
+      if (!Struct) return true; // let's play safe
+      return Struct->NeedsDestructor();
     case TYPE_String: // strings require dtors
       return true;
     case TYPE_Array: // it depends of inner type, so check it
+      if (ArrayInnerType == TYPE_Struct) {
+        if (!Struct) return true; // let's play safe
+        return Struct->NeedsDestructor();
+      }
       return (ArrayInnerType == TYPE_String || ArrayInnerType == TYPE_Array || ArrayInnerType == TYPE_DynamicArray);
     case TYPE_DynamicArray: // dynamic arrays should be cleared with dtors
     case TYPE_Automatic: // this is something that should not be, so let's play safe
