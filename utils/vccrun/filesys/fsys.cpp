@@ -138,52 +138,29 @@ VStream *FSysDriverBase::open (const VStr &fname) const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VStreamDiskReader : public VStream {
-private:
-  FILE *mFl;
-  VStr mName;
-  int size; // <0: not determined yet
-
-private:
-  void setError ();
-
-public:
-  VStreamDiskReader (FILE *afl, const VStr &aname=VStr(), bool asWriter=false);
-  virtual ~VStreamDiskReader () noexcept(false) override;
-
-  virtual const VStr &GetName () const override;
-  virtual void Seek (int pos) override;
-  virtual int Tell () override;
-  virtual int TotalSize () override;
-  virtual bool AtEnd () override;
-  virtual bool Close () override;
-  virtual void Serialise (void *buf, int len) override;
-};
-
-
-VStreamDiskReader::VStreamDiskReader (FILE* afl, const VStr &aname, bool asWriter) : mFl(afl), mName(aname), size(-1) {
+VStreamDiskFile::VStreamDiskFile (FILE* afl, const VStr &aname, bool asWriter) : VStream(), mFl(afl), mName(aname), size(-1) {
   if (afl) fseek(afl, 0, SEEK_SET);
   bLoading = !asWriter;
 }
 
-VStreamDiskReader::~VStreamDiskReader () noexcept(false) { Close(); }
+VStreamDiskFile::~VStreamDiskFile () noexcept(false) { Close(); }
 
-void VStreamDiskReader::setError () {
+void VStreamDiskFile::setError () {
   if (mFl) { fclose(mFl); mFl = nullptr; }
   mName.clear();
   bError = true;
 }
 
-const VStr &VStreamDiskReader::GetName () const { return mName; }
+const VStr &VStreamDiskFile::GetName () const { return mName; }
 
-void VStreamDiskReader::Seek (int pos) {
+void VStreamDiskFile::Seek (int pos) {
   if (!mFl) { setError(); return; }
   if (fseek(mFl, pos, SEEK_SET)) setError();
 }
 
-int VStreamDiskReader::Tell () { return (bError || !mFl ? 0 : ftell(mFl)); }
+int VStreamDiskFile::Tell () { return (bError || !mFl ? 0 : ftell(mFl)); }
 
-int VStreamDiskReader::TotalSize () {
+int VStreamDiskFile::TotalSize () {
   if (size < 0 && mFl && !bError) {
     auto opos = ftell(mFl);
     fseek(mFl, 0, SEEK_END);
@@ -193,15 +170,15 @@ int VStreamDiskReader::TotalSize () {
   return size;
 }
 
-bool VStreamDiskReader::AtEnd () { return (bError || !mFl || Tell() >= TotalSize()); }
+bool VStreamDiskFile::AtEnd () { return (bError || !mFl || Tell() >= TotalSize()); }
 
-bool VStreamDiskReader::Close () {
+bool VStreamDiskFile::Close () {
   if (mFl) { fclose(mFl); mFl = nullptr; }
   mName.clear();
   return !bError;
 }
 
-void VStreamDiskReader::Serialise (void *buf, int len) {
+void VStreamDiskFile::Serialise (void *buf, int len) {
   if (bError || !mFl || len < 0) { setError(); return; }
   if (len == 0) return;
   if (bLoading) {
@@ -259,7 +236,7 @@ VStream *FSysDriverDisk::open (const VStr &fname) const {
   VStr newname = path+fname;
   FILE *fl = fopen(*newname, "rb");
   if (!fl) return nullptr;
-  return new VStreamDiskReader(fl, fname);
+  return new VStreamDiskFile(fl, fname);
 }
 
 
@@ -294,7 +271,7 @@ bool fsysAppendPak (const VStr &fname) {
   if (fname.length() == 0) return false;
   FILE *fl = fopen(*fname, "rb");
   if (!fl) return false;
-  return fsysAppendPak(new VStreamDiskReader(fl, fname));
+  return fsysAppendPak(new VStreamDiskFile(fl, fname));
 }
 
 
@@ -366,7 +343,7 @@ VStream *fsysOpenDiskFileWrite (const VStr &fname) {
   if (fname.length() == 0) return nullptr;
   FILE *fl = fopen(*fname, "wb");
   if (!fl) return nullptr;
-  return new VStreamDiskReader(fl, fname, true);
+  return new VStreamDiskFile(fl, fname, true);
 }
 
 
@@ -374,7 +351,7 @@ VStream *fsysOpenDiskFile (const VStr &fname) {
   if (fname.length() == 0) return nullptr;
   FILE *fl = fopen(*fname, "rb");
   if (!fl) return nullptr;
-  return new VStreamDiskReader(fl, fname);
+  return new VStreamDiskFile(fl, fname);
 }
 
 
@@ -654,3 +631,152 @@ bool VZipStreamWriter::Close () {
   initialised = false;
   return !bError;
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+#ifndef WIN32
+// normal OS
+#include <dirent.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <time.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+
+
+static DIR *current_dir = nullptr;
+
+
+int fsysDiskFileTime (const VStr &path) {
+  if (path.length() == 0) return -1;
+  struct stat buf;
+  if (stat(*path, &buf) == -1) return -1;
+  return buf.st_mtime;
+}
+
+bool fysCreateDirectory (const VStr& path) {
+  if (path.length() == 0) return false;
+  return mkdir(*path, 0777);
+}
+
+bool fsysDirExists (const VStr &path) {
+  if (path.length() == 0) return false;
+  struct stat s;
+  if (stat(*path, &s) == -1) return false;
+  return !!S_ISDIR(s.st_mode);
+}
+
+
+bool fsysOpenDir (const VStr &path) {
+  if (current_dir) closedir(current_dir);
+  if (path.length() == 0) current_dir = nullptr; else current_dir = opendir(*path);
+  return (current_dir != nullptr);
+}
+
+VStr fsysReadDir () {
+  if (current_dir) {
+    struct dirent *de = readdir(current_dir);
+    if (de) return de->d_name;
+  }
+  return VStr();
+}
+
+void fsysCloseDir () {
+  if (current_dir) {
+    closedir(current_dir);
+    current_dir = nullptr;
+  }
+}
+
+
+double fsysCurrTick () {
+  timeval tp;
+  struct timezone tzp;
+  static int secbase = 0;
+
+  gettimeofday(&tp, &tzp);
+  if (!secbase) {
+    secbase = tp.tv_sec;
+    return tp.tv_usec/1000000.0;
+  }
+
+  return (tp.tv_sec-secbase)+tp.tv_usec/1000000.0;
+}
+
+#else
+// broken os
+#include <windows.h>
+#include <fcntl.h>
+#define ftime fucked_ftime
+#include <io.h>
+#undef ftime
+#include <direct.h>
+#include <sys/timeb.h>
+#include <sys/stat.h>
+
+static HANDLE dir_handle = INVALID_HANDLE_VALUE;
+static WIN32_FIND_DATA dir_buf;
+static bool dir_already_got;
+
+
+int fsysFileTime (const VStr & path) {
+  if (path.length() == 0) return -1;
+  struct stat buf;
+  if (stat(*path, &buf) == -1) return -1;
+  return buf.st_mtime;
+}
+
+bool fsysCreateDirectory (const VStr &path) {
+  if (path.length() == 0) return false;
+  return (mkdir(*path) == 0);
+}
+
+bool fsysDirExists (const VStr &path) {
+  if (path.length() == 0) return false;
+  struct stat s;
+  if (stat(*path, &s) == -1) return false;
+  return !!(s.st_mode & S_IFDIR);
+}
+
+
+bool fsysOpenDir (const VStr &dirname) {
+  if (dir_handle != INVALID_HANDLE_VALUE) { FindClose(dir_handle); dir_handle = INVALID_HANDLE_VALUE; }
+  if (dirname.length() == 0) return false;
+  dir_handle = FindFirstFile(va("%s/*.*", *dirname), &dir_buf);
+  if (dir_handle == INVALID_HANDLE_VALUE) return false;
+  dir_already_got = true;
+  return true;
+}
+
+
+VStr fsysReadDir () {
+  if (!dir_already_got) {
+    if (FindNextFile(dir_handle, &dir_buf) != TRUE) return VStr();
+  }
+  dir_already_got = false;
+  return dir_buf.cFileName;
+}
+
+
+void fsysCloseDir () {
+  if (dir_handle != INVALID_HANDLE_VALUE) {
+    FindClose(dir_handle);
+    dir_handle = INVALID_HANDLE_VALUE;
+  }
+}
+
+
+double fsysCurrTick () {
+  double t;
+  struct timeb tstruct;
+  static int starttime;
+
+  ftime(&tstruct);
+  if (!starttime) starttime = tstruct.time;
+  t = (tstruct.time-starttime)+tstruct.millitm*0.001;
+  return t;
+}
+
+
+#endif

@@ -22,8 +22,8 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-#ifndef VCC_HEADER_FILE
-#define VCC_HEADER_FILE
+#ifndef VCCRUN_HEADER_FILE
+#define VCCRUN_HEADER_FILE
 
 #define Random()  ((float)(rand()&0x7fff)/(float)0x8000)
 

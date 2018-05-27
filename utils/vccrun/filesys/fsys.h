@@ -26,10 +26,12 @@
 #include "../../../libs/core/core.h"
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 extern VStr fsysBaseDir; // always ends with "/" (fill be fixed by `fsysInit()` if necessary)
 extern bool fsysDiskFirst; // default is true
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 // `fsysBaseDir` should be set before calling this
 void fsysInit ();
 void fsysShutdown ();
@@ -128,6 +130,30 @@ void FSysRegisterDriver (FSysOpenPakFn ldr, int prio=1000);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VStreamDiskFile : public VStream {
+private:
+  FILE *mFl;
+  VStr mName;
+  int size; // <0: not determined yet
+
+private:
+  void setError ();
+
+public:
+  VStreamDiskFile (FILE *afl, const VStr &aname=VStr(), bool asWriter=false);
+  virtual ~VStreamDiskFile () noexcept(false) override;
+
+  virtual const VStr &GetName () const override;
+  virtual void Seek (int pos) override;
+  virtual int Tell () override;
+  virtual int TotalSize () override;
+  virtual bool AtEnd () override;
+  virtual bool Close () override;
+  virtual void Serialise (void *buf, int len) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 #ifdef USE_INTERNAL_ZLIB
 # include "../../../libs/zlib/zlib.h"
 #else
@@ -186,6 +212,20 @@ public:
   virtual void Flush () override;
   virtual bool Close () override;
 };
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// returns -1 if not present
+int fsysDiskFileTime (const VStr &path);
+bool fsysDirExists (const VStr &path);
+bool fysCreateDirectory (const VStr &path);
+
+bool fsysOpenDir (const VStr &);
+VStr fsysReadDir ();
+void fsysCloseDir ();
+
+// kinda like `GetTickCount()`, in seconds
+double fsysCurrTick ();
 
 
 #endif
