@@ -1109,9 +1109,7 @@ void R_DrawPic(int x, int y, int handle, float Alpha)
   VTexture* Tex = GTextureManager(handle);
   x -= Tex->GetScaledSOffset();
   y -= Tex->GetScaledTOffset();
-  Drawer->DrawPic(fScaleX * x, fScaleY * y,
-    fScaleX * (x + Tex->GetScaledWidth()), fScaleY * (y + Tex->GetScaledHeight()),
-    0, 0, Tex->GetWidth(), Tex->GetHeight(), Tex, NULL, Alpha);
+  Drawer->DrawPic(fScaleX*x, fScaleY*y, fScaleX*(x+Tex->GetScaledWidth()), fScaleY*(y+Tex->GetScaledHeight()), 0, 0, Tex->GetWidth(), Tex->GetHeight(), Tex, nullptr, Alpha);
   unguard;
 }
 

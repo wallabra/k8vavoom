@@ -104,8 +104,7 @@ void VRootWidget::DrawWidgets()
 void VRootWidget::TickWidgets(float DeltaTime)
 {
   guard(VRootWidget::TickWidgets);
-  if (SizeScaleX != fScaleX || SizeScaleY != fScaleY)
-  {
+  if (SizeScaleX != fScaleX || SizeScaleY != fScaleY) {
     SizeScaleX = fScaleX;
     SizeScaleY = fScaleY;
     ClipTree();
