@@ -23,60 +23,54 @@
 //**
 //**************************************************************************
 
-//==========================================================================
-//
-//  VStruct
-//
-//==========================================================================
 
-class VStruct : public VMemberBase
-{
+class VStruct : public VMemberBase {
 public:
-  //  Persistent fields
-  VStruct*    ParentStruct;
-  vuint8      IsVector;
-  //  Size in stack units when used as local variable.
-  vint32      StackSize;
-  //  Structure fields
-  VField*     Fields;
+  // persistent fields
+  VStruct *ParentStruct;
+  vuint8 IsVector;
+  // size in stack units when used as local variable
+  vint32 StackSize;
+  // structure fields
+  VField *Fields;
 
-  //  Compiler fields
-  VName     ParentStructName;
-  TLocation   ParentStructLoc;
-  bool      Defined;
+  // compiler fields
+  VName ParentStructName;
+  TLocation ParentStructLoc;
+  bool Defined;
 
-  //  Run-time fields
-  bool      PostLoaded;
-  vint32      Size;
-  vuint8      Alignment;
-  VField*     ReferenceFields;
-  VField*     DestructorFields;
+  // run-time fields
+  bool PostLoaded;
+  vint32 Size;
+  vuint8 Alignment;
+  VField *ReferenceFields;
+  VField *DestructorFields;
 
-  VStruct(VName, VMemberBase*, TLocation);
+public:
+  VStruct (VName, VMemberBase *, TLocation);
 
-  void Serialise(VStream&);
-  void PostLoad();
+  virtual void Serialise (VStream &) override;
+  virtual void PostLoad () override;
 
-  void AddField(VField* f);
-  VField* FindField(VName);
-  bool NeedsDestructor() const;
-  bool Define();
-  bool DefineMembers();
+  void AddField (VField *f);
+  VField* FindField (VName);
+  bool NeedsDestructor () const;
+  bool Define ();
+  bool DefineMembers ();
 
-  void CalcFieldOffsets();
-  void InitReferences();
-  void InitDestructorFields();
+  void CalcFieldOffsets ();
+  void InitReferences ();
+  void InitDestructorFields ();
 #if !defined(IN_VCC)
-  void CopyObject(const vuint8*, vuint8*);
-  void SerialiseObject(VStream&, vuint8*);
-  void CleanObject(vuint8*);
-  void DestructObject(vuint8*);
-  bool IdenticalObject(const vuint8*, const vuint8*);
+  void CopyObject (const vuint8 *, vuint8 *);
+  void SerialiseObject (VStream &, vuint8 *);
+  void CleanObject (vuint8 *);
+  void DestructObject (vuint8 *);
+  bool IdenticalObject (const vuint8 *, const vuint8 *);
 #endif
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  bool NetSerialiseObject(VStream&, VNetObjectsMap*, vuint8*);
+  bool NetSerialiseObject (VStream &, VNetObjectsMap *, vuint8 *);
 #endif
 
-  friend inline VStream& operator<<(VStream& Strm, VStruct*& Obj)
-  { return Strm << *(VMemberBase**)&Obj; }
+  friend inline VStream &operator << (VStream &Strm, VStruct *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };

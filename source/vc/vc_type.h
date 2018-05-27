@@ -23,14 +23,9 @@
 //**
 //**************************************************************************
 
-//==========================================================================
-//
-//  EType
-//
-//==========================================================================
 
-enum EType
-{
+// ////////////////////////////////////////////////////////////////////////// //
+enum EType {
   TYPE_Void,
   TYPE_Int,
   TYPE_Byte,
@@ -53,83 +48,68 @@ enum EType
   NUM_BASIC_TYPES
 };
 
-//==========================================================================
-//
-//  VFieldType
-//
-//==========================================================================
 
-class VFieldType
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VFieldType {
 public:
-  vuint8    Type;
-  vuint8    InnerType;    //  For pointers
-  vuint8    ArrayInnerType; //  For arrays
-  vuint8    PtrLevel;
-  vint32    ArrayDim;
-  union
-  {
-    vuint32   BitMask;
-    VClass*   Class;      //  Class of the reference
-    VStruct*  Struct;     //  Struct data.
-    VMethod*  Function;   //  Function of the delegate type.
+  vuint8 Type;
+  vuint8 InnerType; // for pointers
+  vuint8 ArrayInnerType; // for arrays
+  vuint8 PtrLevel;
+  vint32 ArrayDim;
+  union {
+    vuint32 BitMask;
+    VClass *Class; // class of the reference
+    VStruct *Struct; // struct data
+    VMethod *Function; // function of the delegate type
   };
 
-  VFieldType();
-  VFieldType(EType Atype);
-  explicit VFieldType(VClass* InClass);
-  explicit VFieldType(VStruct* InStruct);
+  VFieldType ();
+  VFieldType (EType Atype);
+  explicit VFieldType (VClass *InClass);
+  explicit VFieldType (VStruct *InStruct);
 
-  friend VStream& operator<<(VStream&, VFieldType&);
+  friend VStream &operator << (VStream &, VFieldType &);
 
-  bool Equals(const VFieldType&) const;
-  VFieldType MakePointerType() const;
-  VFieldType GetPointerInnerType() const;
-  VFieldType MakeArrayType(int, TLocation) const;
-  VFieldType MakeDynamicArrayType(TLocation) const;
-  VFieldType GetArrayInnerType() const;
-  int GetStackSize() const;
-  int GetSize() const;
-  int GetAlignment() const;
-  void CheckPassable(TLocation) const;
+  bool Equals (const VFieldType &) const;
+  VFieldType MakePointerType () const;
+  VFieldType GetPointerInnerType () const;
+  VFieldType MakeArrayType (int, const TLocation &) const;
+  VFieldType MakeDynamicArrayType (const TLocation &) const;
+  VFieldType GetArrayInnerType () const;
+  int GetStackSize () const;
+  int GetSize () const;
+  int GetAlignment () const;
+  void CheckPassable (const TLocation &) const;
   bool CheckMatch (const TLocation &loc, const VFieldType &, bool raiseError=true) const;
-  VStr GetName() const;
+  VStr GetName () const;
 
-  bool IsSame (const VFieldType &other) const;
+  //bool IsSame (const VFieldType &other) const;
   bool NeedDtor () const;
 };
 
-//==========================================================================
-//
-//  VObjectDelegate
-//
-//==========================================================================
 
-struct VObjectDelegate
-{
+// ////////////////////////////////////////////////////////////////////////// //
+struct VObjectDelegate {
   VObject*    Obj;
   VMethod*    Func;
 };
 
-//==========================================================================
-//
-//  VScriptArray
-//
-//==========================================================================
 
-class VScriptArray
-{
+// ////////////////////////////////////////////////////////////////////////// //
+// dynamic array object, used in script executor
+class VScriptArray {
 private:
   int ArrNum;
   int ArrSize;
-  vuint8* ArrData;
+  vuint8 *ArrData;
 
 public:
 #if defined(VCC_STANDALONE_EXECUTOR)
-  VScriptArray (const TArray<VStr>& xarr) noexcept(false);
+  VScriptArray (const TArray<VStr> &xarr) noexcept(false);
 #endif
 
-  inline int Num() const { return ArrNum; }
+  inline int Num () const { return ArrNum; }
   inline vuint8 *Ptr() { return ArrData; }
   void Clear (VFieldType& Type);
   void Resize (int NewSize, VFieldType& Type);
@@ -140,16 +120,11 @@ public:
   void Remove (int Index, int Count, VFieldType& Type);
 };
 
-//==========================================================================
-//
-//  FReplacedString
-//
-//==========================================================================
 
-struct FReplacedString
-{
-  int     Index;
-  bool    Replaced;
-  VStr    Old;
-  VStr    New;
+// ////////////////////////////////////////////////////////////////////////// //
+struct FReplacedString {
+  int Index;
+  bool Replaced;
+  VStr Old;
+  VStr New;
 };

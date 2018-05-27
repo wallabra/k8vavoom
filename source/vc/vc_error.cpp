@@ -23,30 +23,13 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+int NumErrors = 0;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-int     NumErrors = 0;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static const char* ErrorNames[NUM_ERRORS] =
-{
+static const char *ErrorNames[NUM_ERRORS] = {
   "No error.",
   //  File errors
   "Couldn't open file.",
@@ -75,21 +58,18 @@ static const char* ErrorNames[NUM_ERRORS] =
   "Expression type mismatch",
 };
 
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  ParseWarning
 //
 //==========================================================================
-
-void ParseWarning(TLocation l, const char *text, ...)
-{
-  char    Buffer[2048];
-  va_list   argPtr;
+__attribute__((format(printf, 2, 3))) void ParseWarning (const TLocation &l, const char *text, ...) {
+  char Buffer[2048];
+  va_list argPtr;
 
   va_start(argPtr, text);
-  vsprintf(Buffer, text, argPtr);
+  vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
   va_end(argPtr);
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   GCon->Logf("%s:%d: warning: %s", *l.GetSource(), l.GetLine(), Buffer);
@@ -98,21 +78,20 @@ void ParseWarning(TLocation l, const char *text, ...)
 #endif
 }
 
+
 //==========================================================================
 //
 //  ParseError
 //
 //==========================================================================
+__attribute__((format(printf, 2, 3))) void ParseError (const TLocation &l, const char *text, ...) {
+  char Buffer[2048];
+  va_list argPtr;
 
-void ParseError(TLocation l, const char *text, ...)
-{
-  char    Buffer[2048];
-  va_list   argPtr;
-
-  NumErrors++;
+  ++NumErrors;
 
   va_start(argPtr, text);
-  vsprintf(Buffer, text, argPtr);
+  vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
   va_end(argPtr);
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   GCon->Logf("%s:%d: %s", *l.GetSource(), l.GetLine(), Buffer);
@@ -120,52 +99,48 @@ void ParseError(TLocation l, const char *text, ...)
   fprintf(stderr, "%s:%d: %s\n", *l.GetSource(), l.GetLine(), Buffer);
 #endif
 
-  if (NumErrors >= 64)
-  {
-    Sys_Error("Too many errors");
-  }
+  if (NumErrors >= 16) Sys_Error("Too many errors");
 }
+
 
 //==========================================================================
 //
 //  ParseError
 //
 //==========================================================================
-
-void ParseError(TLocation l, ECompileError error)
-{
+void ParseError (const TLocation &l, ECompileError error) {
   ParseError(l, "Error #%d - %s", error, ErrorNames[error]);
 }
 
+
 //==========================================================================
 //
 //  ParseError
 //
 //==========================================================================
-
-void ParseError(TLocation l, ECompileError error, const char *text, ...)
-{
-  char    Buffer[2048];
-  va_list   argPtr;
+__attribute__((format(printf, 3, 4))) void ParseError (const TLocation &l, ECompileError error, const char *text, ...) {
+  char Buffer[2048];
+  va_list argPtr;
 
   va_start(argPtr, text);
-  vsprintf(Buffer, text, argPtr);
+  vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
   va_end(argPtr);
   ParseError(l, "Error #%d - %s, %s", error, ErrorNames[error], Buffer);
 }
+
 
 //==========================================================================
 //
 //  BailOut
 //
 //==========================================================================
-
-void BailOut()
-{
+__attribute__((noreturn)) void BailOut () {
   Sys_Error("Confused by previous errors, bailing out\n");
 }
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+
+ // nothing
 
 #else
 
@@ -174,14 +149,12 @@ void BailOut()
 //  FatalError
 //
 //==========================================================================
-
-void FatalError(const char *text, ...)
-{
-  char  workString[256];
+__attribute__((noreturn, format(printf, 1, 2))) void FatalError (const char *text, ...) {
+  char workString[256];
   va_list argPtr;
 
   va_start(argPtr, text);
-  vsprintf(workString, text, argPtr);
+  vsnprintf(workString, sizeof(workString), text, argPtr);
   va_end(argPtr);
   fputs(workString, stderr);
   fputc('\n', stderr);

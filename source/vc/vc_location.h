@@ -23,34 +23,20 @@
 //**
 //**************************************************************************
 
-//==========================================================================
-//
-//  TLocation
-//
-//  Describes location in a source file.
-//
-//==========================================================================
 
-class TLocation
-{
+// ////////////////////////////////////////////////////////////////////////// //
+// describes location in a source file
+class TLocation {
 private:
-  int   Loc;
-
-  static TArray<VStr>   SourceFiles;
+  int Loc;
+  static TArray<VStr> SourceFiles;
 
 public:
-  TLocation()
-  : Loc(0)
-  {}
-  TLocation(int SrcIdx, int Line)
-  : Loc((SrcIdx << 16) | Line)
-  {}
-  int GetLine() const
-  {
-    return Loc & 0xffff;
-  }
-  VStr GetSource() const;
+  TLocation () : Loc(0) {}
+  TLocation (int SrcIdx, int Line) : Loc((SrcIdx<<16)|Line) {}
+  inline int GetLine () const { return (Loc&0xffff); }
+  VStr GetSource () const;
 
-  static int AddSourceFile(const VStr&);
-  static void ClearSourceFiles();
+  static int AddSourceFile (const VStr &);
+  static void ClearSourceFiles ();
 };

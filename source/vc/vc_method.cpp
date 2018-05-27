@@ -340,124 +340,102 @@ void VMethod::Emit () {
 //  Disassembles a method.
 //
 //==========================================================================
-
-void VMethod::DumpAsm()
-{
+void VMethod::DumpAsm () {
   guard(VMethod::DumpAsm);
   VMemberBase* PM = Outer;
-  while (PM->MemberType != MEMBER_Package)
-  {
-    PM = PM->Outer;
-  }
-  VPackage* Package = (VPackage*)PM;
+  while (PM->MemberType != MEMBER_Package) PM = PM->Outer;
+  VPackage *Package = (VPackage *)PM;
 
   dprintf("--------------------------------------------\n");
   dprintf("Dump ASM function %s.%s (%d instructions)\n\n", *Outer->Name, *Name, (Flags&FUNC_Native ? 0 : Instructions.Num()));
-  if (Flags & FUNC_Native)
-  {
+  if (Flags&FUNC_Native) {
     //  Builtin function
     dprintf("Builtin function.\n");
     return;
   }
-  for (int s = 0; s < Instructions.Num(); s++)
-  {
-    //  Opcode
+  for (int s = 0; s < Instructions.Num(); ++s) {
+    // opcode
     int st = Instructions[s].Opcode;
     dprintf("%6d: %s", s, StatementInfo[st].name);
-    switch (StatementInfo[st].Args)
-    {
-    case OPCARGS_None:
-      break;
-    case OPCARGS_Member:
-      //  Name of the object
-      dprintf(" %s", *Instructions[s].Member->GetFullName());
-      break;
-    case OPCARGS_BranchTarget:
-      dprintf(" %6d", Instructions[s].Arg1);
-      break;
-    case OPCARGS_ByteBranchTarget:
-    case OPCARGS_ShortBranchTarget:
-    case OPCARGS_IntBranchTarget:
-      dprintf(" %6d, %6d", Instructions[s].Arg1, Instructions[s].Arg2);
-      break;
-    case OPCARGS_Byte:
-    case OPCARGS_Short:
-    case OPCARGS_Int:
-      dprintf(" %6d (%x)", Instructions[s].Arg1, Instructions[s].Arg1);
-      break;
-    case OPCARGS_Name:
-      //  Name
-      dprintf("\'%s\'", *Instructions[s].NameArg);
-      break;
-    case OPCARGS_String:
-      //  String
-      dprintf("\"%s\"", &Package->Strings[Instructions[s].Arg1]);
-      break;
-    case OPCARGS_FieldOffset:
-      dprintf(" %s", *Instructions[s].Member->Name);
-      break;
-    case OPCARGS_VTableIndex:
-      dprintf(" %s", *Instructions[s].Member->Name);
-      break;
-    case OPCARGS_VTableIndex_Byte:
-    case OPCARGS_FieldOffset_Byte:
-      dprintf(" %s %d", *Instructions[s].Member->Name, Instructions[s].Arg2);
-      break;
-    case OPCARGS_TypeSize:
-    case OPCARGS_Type:
-      {
+    switch (StatementInfo[st].Args) {
+      case OPCARGS_None:
+        break;
+      case OPCARGS_Member:
+        // name of the object
+        dprintf(" %s", *Instructions[s].Member->GetFullName());
+        break;
+      case OPCARGS_BranchTarget:
+        dprintf(" %6d", Instructions[s].Arg1);
+        break;
+      case OPCARGS_ByteBranchTarget:
+      case OPCARGS_ShortBranchTarget:
+      case OPCARGS_IntBranchTarget:
+        dprintf(" %6d, %6d", Instructions[s].Arg1, Instructions[s].Arg2);
+        break;
+      case OPCARGS_Byte:
+      case OPCARGS_Short:
+      case OPCARGS_Int:
+        dprintf(" %6d (%x)", Instructions[s].Arg1, Instructions[s].Arg1);
+        break;
+      case OPCARGS_Name:
+        // name
+        dprintf("\'%s\'", *Instructions[s].NameArg);
+        break;
+      case OPCARGS_String:
+        // string
+        dprintf("\"%s\"", &Package->Strings[Instructions[s].Arg1]);
+        break;
+      case OPCARGS_FieldOffset:
+        dprintf(" %s", *Instructions[s].Member->Name);
+        break;
+      case OPCARGS_VTableIndex:
+        dprintf(" %s", *Instructions[s].Member->Name);
+        break;
+      case OPCARGS_VTableIndex_Byte:
+      case OPCARGS_FieldOffset_Byte:
+        dprintf(" %s %d", *Instructions[s].Member->Name, Instructions[s].Arg2);
+        break;
+      case OPCARGS_TypeSize:
+      case OPCARGS_Type:
         dprintf(" %s", *Instructions[s].TypeArg.GetName());
-      }
-      break;
+        break;
     }
     dprintf("\n");
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VMethod::PostLoad
 //
 //==========================================================================
-
-void VMethod::PostLoad()
-{
+void VMethod::PostLoad () {
   guard(VMethod::PostLoad);
-  //FIXME It should be called only once so it's safe for now.
-  //if (ObjectFlags & CLASSOF_PostLoaded)
-  //{
-  //  return;
-  //}
+  //FIXME It should be called only once so it's safe for now
+  //if (ObjectFlags&CLASSOF_PostLoaded) return;
 
 #if !defined(IN_VCC)
-  //  Set up builtins
-  if (NumParams > VMethod::MAX_PARAMS)
-    Sys_Error("Function has more than %i params", VMethod::MAX_PARAMS);
-  for (FBuiltinInfo* B = FBuiltinInfo::Builtins; B; B = B->Next)
-  {
-    if (Outer == B->OuterClass && !VStr::Cmp(*Name, B->Name))
-    {
-      if (Flags & FUNC_Native)
-      {
+  // set up builtins
+  if (NumParams > VMethod::MAX_PARAMS) Sys_Error("Function has more than %i params", VMethod::MAX_PARAMS);
+  for (FBuiltinInfo *B = FBuiltinInfo::Builtins; B; B = B->Next) {
+    if (Outer == B->OuterClass && !VStr::Cmp(*Name, B->Name)) {
+      if (Flags&FUNC_Native) {
         NativeFunc = B->Func;
         break;
-      }
-      else
-      {
+      } else {
         Sys_Error("PR_LoadProgs: Builtin %s redefined", B->Name);
       }
     }
   }
-  if (!NativeFunc && Flags & FUNC_Native)
-  {
-    //  Default builtin
+  if (!NativeFunc && (Flags&FUNC_Native) != 0) {
+    // default builtin
     NativeFunc = PF_Fixme;
-#if defined CLIENT && defined SERVER
-    //  Don't abort with error, because it will be done, when this
-    // function will be called (if it will be called).
-    GCon->Logf(NAME_Dev, "WARNING: Builtin %s not found!",
-      *GetFullName());
+#if defined(CLIENT) && defined(SERVER)
+    // don't abort with error, because it will be done, when this
+    // function will be called (if it will be called)
+    GCon->Logf(NAME_Dev, "WARNING: Builtin %s not found!", *GetFullName());
 #endif
   }
 #endif
@@ -468,19 +446,16 @@ void VMethod::PostLoad()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VMethod::CompileCode
 //
 //==========================================================================
-
-#define WriteUInt8(p) Statements.Append(p)
-#define WriteInt16(p) Statements.SetNum(Statements.Num() + 2); \
-  *(vint16*)&Statements[Statements.Num() - 2] = (p)
-#define WriteInt32(p) Statements.SetNum(Statements.Num() + 4); \
-  *(vint32*)&Statements[Statements.Num() - 4] = (p)
-#define WritePtr(p)   Statements.SetNum(Statements.Num() + sizeof(void*)); \
-  *(void**)&Statements[Statements.Num() - sizeof(void*)] = (p)
+#define WriteUInt8(p)  Statements.Append(p)
+#define WriteInt16(p)  Statements.SetNum(Statements.Num()+2); *(vint16*)&Statements[Statements.Num()-2] = (p)
+#define WriteInt32(p)  Statements.SetNum(Statements.Num()+4); *(vint32*)&Statements[Statements.Num()-4] = (p)
+#define WritePtr(p)    Statements.SetNum(Statements.Num()+sizeof(void*)); *(void**)&Statements[Statements.Num()-sizeof(void*)] = (p)
 #define WriteType(T) \
   WriteUInt8(T.Type); \
   WriteUInt8(T.ArrayInnerType); \
@@ -489,421 +464,301 @@ void VMethod::PostLoad()
   WriteInt32(T.ArrayDim); \
   WritePtr(T.Class);
 
-void VMethod::CompileCode()
-{
+
+void VMethod::CompileCode () {
   guard(VMethod::CompileCode);
   Statements.Clear();
-  if (!Instructions.Num())
-  {
-    return;
-  }
+  if (!Instructions.Num()) return;
 
   OptimiseInstructions();
-
-  for (int i = 0; i < Instructions.Num() - 1; i++)
-  {
+  for (int i = 0; i < Instructions.Num()-1; ++i) {
     Instructions[i].Address = Statements.Num();
     Statements.Append(Instructions[i].Opcode);
-    switch (StatementInfo[Instructions[i].Opcode].Args)
-    {
-    case OPCARGS_None:
-      break;
-    case OPCARGS_Member:
-      WritePtr(Instructions[i].Member);
-      break;
-    case OPCARGS_BranchTargetB:
-      WriteUInt8(0);
-      break;
-    case OPCARGS_BranchTargetNB:
-      WriteUInt8(0);
-      break;
-    case OPCARGS_BranchTargetS:
-      WriteInt16(0);
-      break;
-    case OPCARGS_BranchTarget:
-      WriteInt32(0);
-      break;
-    case OPCARGS_ByteBranchTarget:
-      WriteUInt8(Instructions[i].Arg1);
-      WriteInt16(0);
-      break;
-    case OPCARGS_ShortBranchTarget:
-      WriteInt16(Instructions[i].Arg1);
-      WriteInt16(0);
-      break;
-    case OPCARGS_IntBranchTarget:
-      WriteInt32(Instructions[i].Arg1);
-      WriteInt16(0);
-      break;
-    case OPCARGS_Byte:
-      WriteUInt8(Instructions[i].Arg1);
-      break;
-    case OPCARGS_Short:
-      WriteInt16(Instructions[i].Arg1);
-      break;
-    case OPCARGS_Int:
-      WriteInt32(Instructions[i].Arg1);
-      break;
-    case OPCARGS_Name:
-      WriteInt32(Instructions[i].NameArg.GetIndex());
-      break;
-    case OPCARGS_NameS:
-      WriteInt16(Instructions[i].NameArg.GetIndex());
-      break;
-    case OPCARGS_NameB:
-      WriteUInt8(Instructions[i].NameArg.GetIndex());
-      break;
-    case OPCARGS_String:
-      WritePtr(&GetPackage()->Strings[Instructions[i].Arg1]);
-      break;
-    case OPCARGS_FieldOffset:
-      //  Make sure struct / class field offsets have been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      WriteInt32(((VField*)Instructions[i].Member)->Ofs);
-      break;
-    case OPCARGS_FieldOffsetS:
-      //  Make sure struct / class field offsets have been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      WriteInt16(((VField*)Instructions[i].Member)->Ofs);
-      break;
-    case OPCARGS_FieldOffsetB:
-      //  Make sure struct / class field offsets have been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      WriteUInt8(((VField*)Instructions[i].Member)->Ofs);
-      break;
-    case OPCARGS_VTableIndex:
-      //  Make sure class virtual table has been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      WriteInt16(((VMethod*)Instructions[i].Member)->VTableIndex);
-      break;
-    case OPCARGS_VTableIndexB:
-      //  Make sure class virtual table has been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      WriteUInt8(((VMethod*)Instructions[i].Member)->VTableIndex);
-      break;
-    case OPCARGS_VTableIndex_Byte:
-      //  Make sure class virtual table has been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      WriteInt16(((VMethod*)Instructions[i].Member)->VTableIndex);
-      WriteUInt8(Instructions[i].Arg2);
-      break;
-    case OPCARGS_VTableIndexB_Byte:
-      //  Make sure class virtual table has been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      WriteUInt8(((VMethod*)Instructions[i].Member)->VTableIndex);
-      WriteUInt8(Instructions[i].Arg2);
-      break;
-    case OPCARGS_FieldOffset_Byte:
-      //  Make sure struct / class field offsets have been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      WriteInt32(((VField*)Instructions[i].Member)->Ofs);
-      WriteUInt8(Instructions[i].Arg2);
-      break;
-    case OPCARGS_FieldOffsetS_Byte:
-      //  Make sure struct / class field offsets have been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      WriteInt16(((VField*)Instructions[i].Member)->Ofs);
-      WriteUInt8(Instructions[i].Arg2);
-      break;
-    case OPCARGS_FieldOffsetB_Byte:
-      //  Make sure struct / class field offsets have been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      WriteUInt8(((VField*)Instructions[i].Member)->Ofs);
-      WriteUInt8(Instructions[i].Arg2);
-      break;
-    case OPCARGS_TypeSize:
-      WriteInt32(Instructions[i].TypeArg.GetSize());
-      break;
-    case OPCARGS_TypeSizeS:
-      WriteInt16(Instructions[i].TypeArg.GetSize());
-      break;
-    case OPCARGS_TypeSizeB:
-      WriteUInt8(Instructions[i].TypeArg.GetSize());
-      break;
-    case OPCARGS_Type:
-      WriteType(Instructions[i].TypeArg);
-      break;
+    switch (StatementInfo[Instructions[i].Opcode].Args) {
+      case OPCARGS_None: break;
+      case OPCARGS_Member: WritePtr(Instructions[i].Member); break;
+      case OPCARGS_BranchTargetB: WriteUInt8(0); break;
+      case OPCARGS_BranchTargetNB: WriteUInt8(0); break;
+      case OPCARGS_BranchTargetS: WriteInt16(0); break;
+      case OPCARGS_BranchTarget: WriteInt32(0); break;
+      case OPCARGS_ByteBranchTarget: WriteUInt8(Instructions[i].Arg1); WriteInt16(0); break;
+      case OPCARGS_ShortBranchTarget: WriteInt16(Instructions[i].Arg1); WriteInt16(0); break;
+      case OPCARGS_IntBranchTarget: WriteInt32(Instructions[i].Arg1); WriteInt16(0); break;
+      case OPCARGS_Byte: WriteUInt8(Instructions[i].Arg1); break;
+      case OPCARGS_Short: WriteInt16(Instructions[i].Arg1); break;
+      case OPCARGS_Int: WriteInt32(Instructions[i].Arg1); break;
+      case OPCARGS_Name: WriteInt32(Instructions[i].NameArg.GetIndex()); break;
+      case OPCARGS_NameS: WriteInt16(Instructions[i].NameArg.GetIndex()); break;
+      case OPCARGS_NameB: WriteUInt8(Instructions[i].NameArg.GetIndex()); break;
+      case OPCARGS_String: WritePtr(&GetPackage()->Strings[Instructions[i].Arg1]); break;
+      case OPCARGS_FieldOffset:
+        // make sure struct / class field offsets have been calculated
+        Instructions[i].Member->Outer->PostLoad();
+        WriteInt32(((VField *)Instructions[i].Member)->Ofs);
+        break;
+      case OPCARGS_FieldOffsetS:
+        // make sure struct / class field offsets have been calculated
+        Instructions[i].Member->Outer->PostLoad();
+        WriteInt16(((VField *)Instructions[i].Member)->Ofs);
+        break;
+      case OPCARGS_FieldOffsetB:
+        // make sure struct / class field offsets have been calculated
+        Instructions[i].Member->Outer->PostLoad();
+        WriteUInt8(((VField *)Instructions[i].Member)->Ofs);
+        break;
+      case OPCARGS_VTableIndex:
+        // make sure class virtual table has been calculated
+        Instructions[i].Member->Outer->PostLoad();
+        WriteInt16(((VMethod *)Instructions[i].Member)->VTableIndex);
+        break;
+      case OPCARGS_VTableIndexB:
+        // make sure class virtual table has been calculated
+        Instructions[i].Member->Outer->PostLoad();
+        WriteUInt8(((VMethod *)Instructions[i].Member)->VTableIndex);
+        break;
+      case OPCARGS_VTableIndex_Byte:
+        // make sure class virtual table has been calculated
+        Instructions[i].Member->Outer->PostLoad();
+        WriteInt16(((VMethod *)Instructions[i].Member)->VTableIndex);
+        WriteUInt8(Instructions[i].Arg2);
+        break;
+      case OPCARGS_VTableIndexB_Byte:
+        // make sure class virtual table has been calculated
+        Instructions[i].Member->Outer->PostLoad();
+        WriteUInt8(((VMethod *)Instructions[i].Member)->VTableIndex);
+        WriteUInt8(Instructions[i].Arg2);
+        break;
+      case OPCARGS_FieldOffset_Byte:
+        // make sure struct / class field offsets have been calculated
+        Instructions[i].Member->Outer->PostLoad();
+        WriteInt32(((VField *)Instructions[i].Member)->Ofs);
+        WriteUInt8(Instructions[i].Arg2);
+        break;
+      case OPCARGS_FieldOffsetS_Byte:
+        // make sure struct / class field offsets have been calculated
+        Instructions[i].Member->Outer->PostLoad();
+        WriteInt16(((VField *)Instructions[i].Member)->Ofs);
+        WriteUInt8(Instructions[i].Arg2);
+        break;
+      case OPCARGS_FieldOffsetB_Byte:
+        // make sure struct / class field offsets have been calculated
+        Instructions[i].Member->Outer->PostLoad();
+        WriteUInt8(((VField *)Instructions[i].Member)->Ofs);
+        WriteUInt8(Instructions[i].Arg2);
+        break;
+      case OPCARGS_TypeSize: WriteInt32(Instructions[i].TypeArg.GetSize()); break;
+      case OPCARGS_TypeSizeS: WriteInt16(Instructions[i].TypeArg.GetSize()); break;
+      case OPCARGS_TypeSizeB: WriteUInt8(Instructions[i].TypeArg.GetSize()); break;
+      case OPCARGS_Type: WriteType(Instructions[i].TypeArg); break;
     }
   }
-  Instructions[Instructions.Num() - 1].Address = Statements.Num();
+  Instructions[Instructions.Num()-1].Address = Statements.Num();
 
-  for (int i = 0; i < Instructions.Num() - 1; i++)
-  {
-    switch (StatementInfo[Instructions[i].Opcode].Args)
-    {
-    case OPCARGS_BranchTargetB:
-      Statements[Instructions[i].Address + 1] =
-        Instructions[Instructions[i].Arg1].Address -
-        Instructions[i].Address;
-      break;
-    case OPCARGS_BranchTargetNB:
-      Statements[Instructions[i].Address + 1] =
-        Instructions[i].Address -
-        Instructions[Instructions[i].Arg1].Address;
-      break;
-    case OPCARGS_BranchTargetS:
-      *(vint16*)&Statements[Instructions[i].Address + 1] =
-        Instructions[Instructions[i].Arg1].Address -
-        Instructions[i].Address;
-      break;
-    case OPCARGS_BranchTarget:
-      *(vint32*)&Statements[Instructions[i].Address + 1] =
-        Instructions[Instructions[i].Arg1].Address -
-        Instructions[i].Address;
-      break;
-    case OPCARGS_ByteBranchTarget:
-      *(vint16*)&Statements[Instructions[i].Address + 2] =
-        Instructions[Instructions[i].Arg2].Address -
-        Instructions[i].Address;
-      break;
-    case OPCARGS_ShortBranchTarget:
-      *(vint16*)&Statements[Instructions[i].Address + 3] =
-        Instructions[Instructions[i].Arg2].Address -
-        Instructions[i].Address;
-      break;
-    case OPCARGS_IntBranchTarget:
-      *(vint16*)&Statements[Instructions[i].Address + 5] =
-        Instructions[Instructions[i].Arg2].Address -
-        Instructions[i].Address;
-      break;
+  for (int i = 0; i < Instructions.Num()-1; ++i) {
+    switch (StatementInfo[Instructions[i].Opcode].Args) {
+      case OPCARGS_BranchTargetB:
+        Statements[Instructions[i].Address+1] = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
+        break;
+      case OPCARGS_BranchTargetNB:
+        Statements[Instructions[i].Address+1] = Instructions[i].Address-Instructions[Instructions[i].Arg1].Address;
+        break;
+      case OPCARGS_BranchTargetS:
+        *(vint16 *)&Statements[Instructions[i].Address+1] = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
+        break;
+      case OPCARGS_BranchTarget:
+        *(vint32 *)&Statements[Instructions[i].Address+1] = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
+        break;
+      case OPCARGS_ByteBranchTarget:
+        *(vint16 *)&Statements[Instructions[i].Address+2] = Instructions[Instructions[i].Arg2].Address-Instructions[i].Address;
+        break;
+      case OPCARGS_ShortBranchTarget:
+        *(vint16 *)&Statements[Instructions[i].Address+3] = Instructions[Instructions[i].Arg2].Address-Instructions[i].Address;
+        break;
+      case OPCARGS_IntBranchTarget:
+        *(vint16 *)&Statements[Instructions[i].Address+5] = Instructions[Instructions[i].Arg2].Address-Instructions[i].Address;
+        break;
     }
   }
 
-  //  We don't need instructions anymore.
+  // we don't need instructions anymore
   Instructions.Clear();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VMethod::OptimiseInstructions
 //
 //==========================================================================
-
-void VMethod::OptimiseInstructions()
-{
+void VMethod::OptimiseInstructions () {
   guard(VMethod::OptimiseInstructions);
   int Addr = 0;
-  for (int i = 0; i < Instructions.Num() - 1; i++)
-  {
-    switch (Instructions[i].Opcode)
-    {
-    case OPC_PushVFunc:
-      //  Make sure class virtual table has been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      if (((VMethod*)Instructions[i].Member)->VTableIndex < 256)
-      {
-        Instructions[i].Opcode = OPC_PushVFuncB;
-      }
-      break;
-
-    case OPC_VCall:
-      //  Make sure class virtual table has been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      if (((VMethod*)Instructions[i].Member)->VTableIndex < 256)
-      {
-        Instructions[i].Opcode = OPC_VCallB;
-      }
-      break;
-
-    case OPC_DelegateCall:
-      //  Make sure struct / class field offsets have been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      if (((VField*)Instructions[i].Member)->Ofs < 256)
-      {
-        Instructions[i].Opcode = OPC_DelegateCallB;
-      }
-      else if (((VField*)Instructions[i].Member)->Ofs <= MAX_VINT16)
-      {
-        Instructions[i].Opcode = OPC_DelegateCallS;
-      }
-      break;
-
-    case OPC_Offset:
-    case OPC_FieldValue:
-    case OPC_VFieldValue:
-    case OPC_PtrFieldValue:
-    case OPC_StrFieldValue:
-    case OPC_ByteFieldValue:
-    case OPC_Bool0FieldValue:
-    case OPC_Bool1FieldValue:
-    case OPC_Bool2FieldValue:
-    case OPC_Bool3FieldValue:
-      //  Make sure struct / class field offsets have been calculated.
-      Instructions[i].Member->Outer->PostLoad();
-      if (((VField*)Instructions[i].Member)->Ofs < 256)
-      {
-        Instructions[i].Opcode += 2;
-      }
-      else if (((VField*)Instructions[i].Member)->Ofs <= MAX_VINT16)
-      {
-        Instructions[i].Opcode++;
-      }
-      break;
-
-    case OPC_ArrayElement:
-      if (Instructions[i].TypeArg.GetSize() < 256)
-      {
-        Instructions[i].Opcode = OPC_ArrayElementB;
-      }
-      else if (Instructions[i].TypeArg.GetSize() < MAX_VINT16)
-      {
-        Instructions[i].Opcode = OPC_ArrayElementS;
-      }
-      break;
-
-    case OPC_PushName:
-      if (Instructions[i].NameArg.GetIndex() < 256)
-      {
-        Instructions[i].Opcode = OPC_PushNameB;
-      }
-      else if (Instructions[i].NameArg.GetIndex() < MAX_VINT16)
-      {
-        Instructions[i].Opcode = OPC_PushNameS;
-      }
-      break;
+  for (int i = 0; i < Instructions.Num()-1; ++i) {
+    switch (Instructions[i].Opcode) {
+      case OPC_PushVFunc:
+        // make sure class virtual table has been calculated
+        Instructions[i].Member->Outer->PostLoad();
+        if (((VMethod *)Instructions[i].Member)->VTableIndex < 256) Instructions[i].Opcode = OPC_PushVFuncB;
+        break;
+      case OPC_VCall:
+        // make sure class virtual table has been calculated
+        Instructions[i].Member->Outer->PostLoad();
+        if (((VMethod *)Instructions[i].Member)->VTableIndex < 256) Instructions[i].Opcode = OPC_VCallB;
+        break;
+      case OPC_DelegateCall:
+        // make sure struct / class field offsets have been calculated
+        Instructions[i].Member->Outer->PostLoad();
+             if (((VField *)Instructions[i].Member)->Ofs < 256) Instructions[i].Opcode = OPC_DelegateCallB;
+        else if (((VField *)Instructions[i].Member)->Ofs <= MAX_VINT16) Instructions[i].Opcode = OPC_DelegateCallS;
+        break;
+      case OPC_Offset:
+      case OPC_FieldValue:
+      case OPC_VFieldValue:
+      case OPC_PtrFieldValue:
+      case OPC_StrFieldValue:
+      case OPC_ByteFieldValue:
+      case OPC_Bool0FieldValue:
+      case OPC_Bool1FieldValue:
+      case OPC_Bool2FieldValue:
+      case OPC_Bool3FieldValue:
+        // make sure struct / class field offsets have been calculated
+        Instructions[i].Member->Outer->PostLoad();
+             if (((VField *)Instructions[i].Member)->Ofs < 256) Instructions[i].Opcode += 2;
+        else if (((VField *)Instructions[i].Member)->Ofs <= MAX_VINT16) ++Instructions[i].Opcode;
+        break;
+      case OPC_ArrayElement:
+             if (Instructions[i].TypeArg.GetSize() < 256) Instructions[i].Opcode = OPC_ArrayElementB;
+        else if (Instructions[i].TypeArg.GetSize() < MAX_VINT16) Instructions[i].Opcode = OPC_ArrayElementS;
+        break;
+      case OPC_PushName:
+             if (Instructions[i].NameArg.GetIndex() < 256) Instructions[i].Opcode = OPC_PushNameB;
+        else if (Instructions[i].NameArg.GetIndex() < MAX_VINT16) Instructions[i].Opcode = OPC_PushNameS;
+        break;
     }
 
-    //  Calculate approximate addresses for jump instructions.
+    // calculate approximate addresses for jump instructions
     Instructions[i].Address = Addr;
-    switch (StatementInfo[Instructions[i].Opcode].Args)
-    {
-    case OPCARGS_None:
-      Addr++;
-      break;
-    case OPCARGS_Member:
-    case OPCARGS_String:
-      Addr += 1 + sizeof(void*);
-      break;
-    case OPCARGS_BranchTargetB:
-    case OPCARGS_BranchTargetNB:
-    case OPCARGS_Byte:
-    case OPCARGS_NameB:
-    case OPCARGS_FieldOffsetB:
-    case OPCARGS_VTableIndexB:
-    case OPCARGS_TypeSizeB:
-      Addr += 2;
-      break;
-    case OPCARGS_BranchTargetS:
-    case OPCARGS_Short:
-    case OPCARGS_NameS:
-    case OPCARGS_FieldOffsetS:
-    case OPCARGS_VTableIndex:
-    case OPCARGS_VTableIndexB_Byte:
-    case OPCARGS_FieldOffsetB_Byte:
-    case OPCARGS_TypeSizeS:
-      Addr += 3;
-      break;
-    case OPCARGS_ByteBranchTarget:
-    case OPCARGS_VTableIndex_Byte:
-    case OPCARGS_FieldOffsetS_Byte:
-      Addr += 4;
-      break;
-    case OPCARGS_BranchTarget:
-    case OPCARGS_ShortBranchTarget:
-    case OPCARGS_Int:
-    case OPCARGS_Name:
-    case OPCARGS_FieldOffset:
-    case OPCARGS_TypeSize:
-      Addr += 5;
-      break;
-    case OPCARGS_FieldOffset_Byte:
-      Addr += 6;
-      break;
-    case OPCARGS_IntBranchTarget:
-      Addr += 7;
-      break;
-    case OPCARGS_Type:
-      Addr += 9 + sizeof(void*);
-      break;
+    switch (StatementInfo[Instructions[i].Opcode].Args) {
+      case OPCARGS_None:
+        ++Addr;
+        break;
+      case OPCARGS_Member:
+      case OPCARGS_String:
+        Addr += 1+sizeof(void*);
+        break;
+      case OPCARGS_BranchTargetB:
+      case OPCARGS_BranchTargetNB:
+      case OPCARGS_Byte:
+      case OPCARGS_NameB:
+      case OPCARGS_FieldOffsetB:
+      case OPCARGS_VTableIndexB:
+      case OPCARGS_TypeSizeB:
+        Addr += 2;
+        break;
+      case OPCARGS_BranchTargetS:
+      case OPCARGS_Short:
+      case OPCARGS_NameS:
+      case OPCARGS_FieldOffsetS:
+      case OPCARGS_VTableIndex:
+      case OPCARGS_VTableIndexB_Byte:
+      case OPCARGS_FieldOffsetB_Byte:
+      case OPCARGS_TypeSizeS:
+        Addr += 3;
+        break;
+      case OPCARGS_ByteBranchTarget:
+      case OPCARGS_VTableIndex_Byte:
+      case OPCARGS_FieldOffsetS_Byte:
+        Addr += 4;
+        break;
+      case OPCARGS_BranchTarget:
+      case OPCARGS_ShortBranchTarget:
+      case OPCARGS_Int:
+      case OPCARGS_Name:
+      case OPCARGS_FieldOffset:
+      case OPCARGS_TypeSize:
+        Addr += 5;
+        break;
+      case OPCARGS_FieldOffset_Byte:
+        Addr += 6;
+        break;
+      case OPCARGS_IntBranchTarget:
+        Addr += 7;
+        break;
+      case OPCARGS_Type:
+        Addr += 9+sizeof(void*);
+        break;
     }
   }
 
-  //  Now do jump instructions.
+  // now do jump instructions
   vint32 Offs;
-  for (int i = 0; i < Instructions.Num() - 1; i++)
-  {
-    switch (StatementInfo[Instructions[i].Opcode].Args)
-    {
+  for (int i = 0; i < Instructions.Num()-1; ++i) {
+    switch (StatementInfo[Instructions[i].Opcode].Args) {
     case OPCARGS_BranchTarget:
-      Offs = Instructions[Instructions[i].Arg1].Address -
-        Instructions[i].Address;
-      if (Offs >= 0 && Offs < 256)
-      {
-        Instructions[i].Opcode -= 3;
-      }
-      else if (Offs < 0 && Offs > -256)
-      {
-        Instructions[i].Opcode -= 2;
-      }
-      else if (Offs >= MIN_VINT16 && Offs <= MAX_VINT16)
-      {
-        Instructions[i].Opcode -= 1;
-      }
+      Offs = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
+           if (Offs >= 0 && Offs < 256) Instructions[i].Opcode -= 3;
+      else if (Offs < 0 && Offs > -256) Instructions[i].Opcode -= 2;
+      else if (Offs >= MIN_VINT16 && Offs <= MAX_VINT16) Instructions[i].Opcode -= 1;
       break;
     }
   }
-  Instructions[Instructions.Num() - 1].Address = Addr;
+  Instructions[Instructions.Num()-1].Address = Addr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  operator <<
 //
 //==========================================================================
-
-VStream& operator << (VStream& Strm, FInstruction& Instr)
-{
+VStream &operator << (VStream &Strm, FInstruction &Instr) {
   vuint8 Opc;
-  if (Strm.IsLoading())
-  {
+  if (Strm.IsLoading()) {
     Strm << Opc;
     Instr.Opcode = Opc;
-  }
-  else
-  {
+  } else {
     Opc = Instr.Opcode;
     Strm << Opc;
   }
-  switch (StatementInfo[Opc].Args)
-  {
-  case OPCARGS_None:
-    break;
-  case OPCARGS_Member:
-  case OPCARGS_FieldOffset:
-  case OPCARGS_VTableIndex:
-    Strm << Instr.Member;
-    break;
-  case OPCARGS_VTableIndex_Byte:
-  case OPCARGS_FieldOffset_Byte:
-    Strm << Instr.Member;
-    Strm << STRM_INDEX(Instr.Arg2);
-    break;
-  case OPCARGS_BranchTarget:
-    Strm << Instr.Arg1;
-    break;
-  case OPCARGS_ByteBranchTarget:
-  case OPCARGS_ShortBranchTarget:
-  case OPCARGS_IntBranchTarget:
-    Strm << STRM_INDEX(Instr.Arg1);
-    Strm << Instr.Arg2;
-    break;
-  case OPCARGS_Byte:
-  case OPCARGS_Short:
-  case OPCARGS_Int:
-    Strm << STRM_INDEX(Instr.Arg1);
-    break;
-  case OPCARGS_Name:
-    Strm << Instr.NameArg;
-    break;
-  case OPCARGS_String:
-    Strm << Instr.Arg1;
-    break;
-  case OPCARGS_TypeSize:
-  case OPCARGS_Type:
-    Strm << Instr.TypeArg;
-    break;
+  switch (StatementInfo[Opc].Args) {
+    case OPCARGS_None:
+      break;
+    case OPCARGS_Member:
+    case OPCARGS_FieldOffset:
+    case OPCARGS_VTableIndex:
+      Strm << Instr.Member;
+      break;
+    case OPCARGS_VTableIndex_Byte:
+    case OPCARGS_FieldOffset_Byte:
+      Strm << Instr.Member;
+      Strm << STRM_INDEX(Instr.Arg2);
+      break;
+    case OPCARGS_BranchTarget:
+      Strm << Instr.Arg1;
+      break;
+    case OPCARGS_ByteBranchTarget:
+    case OPCARGS_ShortBranchTarget:
+    case OPCARGS_IntBranchTarget:
+      Strm << STRM_INDEX(Instr.Arg1);
+      Strm << Instr.Arg2;
+      break;
+    case OPCARGS_Byte:
+    case OPCARGS_Short:
+    case OPCARGS_Int:
+      Strm << STRM_INDEX(Instr.Arg1);
+      break;
+    case OPCARGS_Name:
+      Strm << Instr.NameArg;
+      break;
+    case OPCARGS_String:
+      Strm << Instr.Arg1;
+      break;
+    case OPCARGS_TypeSize:
+    case OPCARGS_Type:
+      Strm << Instr.TypeArg;
+      break;
   }
   return Strm;
 }

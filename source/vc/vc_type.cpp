@@ -23,168 +23,134 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VFieldType::VFieldType
 //
 //==========================================================================
-
 VFieldType::VFieldType()
-: Type(TYPE_Void)
-, InnerType(TYPE_Void)
-, ArrayInnerType(TYPE_Void)
-, PtrLevel(0)
-, ArrayDim(0)
-, Class(0)
+  : Type(TYPE_Void)
+  , InnerType(TYPE_Void)
+  , ArrayInnerType(TYPE_Void)
+  , PtrLevel(0)
+  , ArrayDim(0)
+  , Class(0)
 {
 }
+
 
 //==========================================================================
 //
 //  VFieldType::VFieldType
 //
 //==========================================================================
-
 VFieldType::VFieldType(EType Atype)
-: Type(Atype)
-, InnerType(TYPE_Void)
-, ArrayInnerType(TYPE_Void)
-, PtrLevel(0)
-, ArrayDim(0)
-, Class(0)
+  : Type(Atype)
+  , InnerType(TYPE_Void)
+  , ArrayInnerType(TYPE_Void)
+  , PtrLevel(0)
+  , ArrayDim(0)
+  , Class(0)
 {
 }
+
 
 //==========================================================================
 //
 //  VFieldType::VFieldType
 //
 //==========================================================================
-
-VFieldType::VFieldType(VClass* InClass)
-: Type(TYPE_Reference)
-, InnerType(TYPE_Void)
-, ArrayInnerType(TYPE_Void)
-, PtrLevel(0)
-, ArrayDim(0)
-, Class(InClass)
+VFieldType::VFieldType (VClass *InClass)
+  : Type(TYPE_Reference)
+  , InnerType(TYPE_Void)
+  , ArrayInnerType(TYPE_Void)
+  , PtrLevel(0)
+  , ArrayDim(0)
+  , Class(InClass)
 {
 }
+
 
 //==========================================================================
 //
 //  VFieldType::VFieldType
 //
 //==========================================================================
-
-VFieldType::VFieldType(VStruct* InStruct)
-: Type(InStruct->IsVector ? TYPE_Vector : TYPE_Struct)
-, InnerType(TYPE_Void)
-, ArrayInnerType(TYPE_Void)
-, PtrLevel(0)
-, ArrayDim(0)
-, Struct(InStruct)
+VFieldType::VFieldType (VStruct *InStruct)
+  : Type(InStruct->IsVector ? TYPE_Vector : TYPE_Struct)
+  , InnerType(TYPE_Void)
+  , ArrayInnerType(TYPE_Void)
+  , PtrLevel(0)
+  , ArrayDim(0)
+  , Struct(InStruct)
 {
 }
+
 
 //==========================================================================
 //
 //  operator VStream << FType
 //
 //==========================================================================
-
-VStream& operator<<(VStream& Strm, VFieldType& T)
-{
+VStream &operator << (VStream &Strm, VFieldType &T) {
   guard(operator VStream << VFieldType);
   Strm << T.Type;
   vuint8 RealType = T.Type;
-  if (RealType == TYPE_Array)
-  {
-    Strm << T.ArrayInnerType
-      << STRM_INDEX(T.ArrayDim);
+  if (RealType == TYPE_Array) {
+    Strm << T.ArrayInnerType << STRM_INDEX(T.ArrayDim);
     RealType = T.ArrayInnerType;
-  }
-  else if (RealType == TYPE_DynamicArray)
-  {
+  } else if (RealType == TYPE_DynamicArray) {
     Strm << T.ArrayInnerType;
     RealType = T.ArrayInnerType;
   }
-  if (RealType == TYPE_Pointer)
-  {
-    Strm << T.InnerType
-      << T.PtrLevel;
+  if (RealType == TYPE_Pointer) {
+    Strm << T.InnerType << T.PtrLevel;
     RealType = T.InnerType;
   }
-  if (RealType == TYPE_Reference || RealType == TYPE_Class)
-    Strm << T.Class;
-  else if (RealType == TYPE_Struct || RealType == TYPE_Vector)
-    Strm << T.Struct;
-  else if (RealType == TYPE_Delegate)
-    Strm << T.Function;
-  else if (RealType == TYPE_Bool)
-    Strm << T.BitMask;
+       if (RealType == TYPE_Reference || RealType == TYPE_Class) Strm << T.Class;
+  else if (RealType == TYPE_Struct || RealType == TYPE_Vector) Strm << T.Struct;
+  else if (RealType == TYPE_Delegate) Strm << T.Function;
+  else if (RealType == TYPE_Bool) Strm << T.BitMask;
   return Strm;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VFieldType::Equals
 //
 //==========================================================================
-
-bool VFieldType::Equals(const VFieldType& Other) const
-{
+bool VFieldType::Equals (const VFieldType &Other) const {
   guardSlow(VFieldType::Equals);
   if (Type != Other.Type ||
-    InnerType != Other.InnerType ||
-    ArrayInnerType != Other.ArrayInnerType ||
-    PtrLevel != Other.PtrLevel ||
-    ArrayDim != Other.ArrayDim ||
-    Class != Other.Class)
+      InnerType != Other.InnerType ||
+      ArrayInnerType != Other.ArrayInnerType ||
+      PtrLevel != Other.PtrLevel ||
+      ArrayDim != Other.ArrayDim ||
+      Class != Other.Class)
+  {
     return false;
+  }
   return true;
   unguardSlow;
 }
+
 
 //==========================================================================
 //
 //  VFieldType::MakePointerType
 //
 //==========================================================================
-
-VFieldType VFieldType::MakePointerType() const
-{
+VFieldType VFieldType::MakePointerType () const {
   guard(VFieldType::MakePointerType);
   VFieldType pointer = *this;
-  if (pointer.Type == TYPE_Pointer)
-  {
-    pointer.PtrLevel++;
-  }
-  else
-  {
+  if (pointer.Type == TYPE_Pointer) {
+    ++pointer.PtrLevel;
+  } else {
     pointer.InnerType = pointer.Type;
     pointer.Type = TYPE_Pointer;
     pointer.PtrLevel = 1;
@@ -193,24 +159,21 @@ VFieldType VFieldType::MakePointerType() const
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VFieldType::GetPointerInnerType
 //
 //==========================================================================
-
-VFieldType VFieldType::GetPointerInnerType() const
-{
+VFieldType VFieldType::GetPointerInnerType () const {
   guard(VFieldType::GetPointerInnerType);
-  if (Type != TYPE_Pointer)
-  {
+  if (Type != TYPE_Pointer) {
     FatalError("Not a pointer type");
     return *this;
   }
   VFieldType ret = *this;
-  ret.PtrLevel--;
-  if (ret.PtrLevel <= 0)
-  {
+  --ret.PtrLevel;
+  if (ret.PtrLevel <= 0) {
     ret.Type = InnerType;
     ret.InnerType = TYPE_Void;
   }
@@ -218,19 +181,15 @@ VFieldType VFieldType::GetPointerInnerType() const
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VFieldType::MakeArrayType
 //
 //==========================================================================
-
-VFieldType VFieldType::MakeArrayType(int elcount, TLocation l) const
-{
+VFieldType VFieldType::MakeArrayType (int elcount, const TLocation &l) const {
   guard(VFieldType::MakeArrayType);
-  if (Type == TYPE_Array || Type == TYPE_DynamicArray)
-  {
-    ParseError(l, "Can't have multi-dimensional arrays");
-  }
+  if (Type == TYPE_Array || Type == TYPE_DynamicArray) ParseError(l, "Can't have multi-dimensional arrays");
   VFieldType array = *this;
   array.ArrayInnerType = Type;
   array.Type = TYPE_Array;
@@ -239,19 +198,15 @@ VFieldType VFieldType::MakeArrayType(int elcount, TLocation l) const
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VFieldType::MakeDynamicArrayType
 //
 //==========================================================================
-
-VFieldType VFieldType::MakeDynamicArrayType(TLocation l) const
-{
+VFieldType VFieldType::MakeDynamicArrayType (const TLocation &l) const {
   guard(VFieldType::MakeDynamicArrayType);
-  if (Type == TYPE_Array || Type == TYPE_DynamicArray)
-  {
-    ParseError(l, "Can't have multi-dimensional arrays");
-  }
+  if (Type == TYPE_Array || Type == TYPE_DynamicArray) ParseError(l, "Can't have multi-dimensional arrays");
   VFieldType array = *this;
   array.ArrayInnerType = Type;
   array.Type = TYPE_DynamicArray;
@@ -259,17 +214,15 @@ VFieldType VFieldType::MakeDynamicArrayType(TLocation l) const
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VFieldType::GetArrayInnerType
 //
 //==========================================================================
-
-VFieldType VFieldType::GetArrayInnerType() const
-{
+VFieldType VFieldType::GetArrayInnerType () const {
   guard(VFieldType::GetArrayInnerType);
-  if (Type != TYPE_Array && Type != TYPE_DynamicArray)
-  {
+  if (Type != TYPE_Array && Type != TYPE_DynamicArray) {
     FatalError("Not an array type");
     return *this;
   }
@@ -281,98 +234,93 @@ VFieldType VFieldType::GetArrayInnerType() const
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VFieldType::GetStackSize
 //
 //==========================================================================
-
-int VFieldType::GetStackSize() const
-{
+int VFieldType::GetStackSize () const {
   guard(VFieldType::GetStackSize);
-  switch (Type)
-  {
-  case TYPE_Int:      return 4;
-  case TYPE_Byte:     return 4;
-  case TYPE_Bool:     return 4;
-  case TYPE_Float:    return 4;
-  case TYPE_Name:     return 4;
-  case TYPE_String:   return 4;
-  case TYPE_Pointer:    return 4;
-  case TYPE_Reference:  return 4;
-  case TYPE_Class:    return 4;
-  case TYPE_State:    return 4;
-  case TYPE_Delegate:   return 8;
-  case TYPE_Struct:   return Struct->StackSize * 4;
-  case TYPE_Vector:   return 12;
-  case TYPE_Array:    return ArrayDim * GetArrayInnerType().GetStackSize();
-  case TYPE_DynamicArray: return 12;
+  switch (Type) {
+    case TYPE_Int: return 4;
+    case TYPE_Byte: return 4;
+    case TYPE_Bool: return 4;
+    case TYPE_Float: return 4;
+    case TYPE_Name: return 4;
+    case TYPE_String: return 4;
+    case TYPE_Pointer: return 4;
+    case TYPE_Reference: return 4;
+    case TYPE_Class: return 4;
+    case TYPE_State: return 4;
+    case TYPE_Delegate: return 8;
+    case TYPE_Struct: return Struct->StackSize * 4;
+    case TYPE_Vector: return 12;
+    case TYPE_Array: return ArrayDim*GetArrayInnerType().GetStackSize();
+    case TYPE_DynamicArray: return 12;
   }
   return 0;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VFieldType::GetSize
 //
 //==========================================================================
-
-int VFieldType::GetSize() const
-{
+int VFieldType::GetSize () const {
   guard(VFieldType::GetSize);
-  switch (Type)
-  {
-  case TYPE_Int:      return sizeof(vint32);
-  case TYPE_Byte:     return sizeof(vuint8);
-  case TYPE_Bool:     return sizeof(vuint32);
-  case TYPE_Float:    return sizeof(float);
-  case TYPE_Name:     return sizeof(VName);
-  case TYPE_String:   return sizeof(VStr);
-  case TYPE_Pointer:    return sizeof(void*);
-  case TYPE_Reference:  return sizeof(VObject*);
-  case TYPE_Class:    return sizeof(VClass*);
-  case TYPE_State:    return sizeof(VState*);
-  case TYPE_Delegate:   return sizeof(VObjectDelegate);
-  case TYPE_Struct:   return (Struct->Size + 3) & ~3;
-  case TYPE_Vector:   return sizeof(TVec);
-  case TYPE_Array:    return ArrayDim * GetArrayInnerType().GetSize();
-  case TYPE_DynamicArray: return sizeof(VScriptArray);
+  switch (Type) {
+    case TYPE_Int: return sizeof(vint32);
+    case TYPE_Byte: return sizeof(vuint8);
+    case TYPE_Bool: return sizeof(vuint32);
+    case TYPE_Float: return sizeof(float);
+    case TYPE_Name: return sizeof(VName);
+    case TYPE_String: return sizeof(VStr);
+    case TYPE_Pointer: return sizeof(void*);
+    case TYPE_Reference: return sizeof(VObject*);
+    case TYPE_Class: return sizeof(VClass*);
+    case TYPE_State: return sizeof(VState*);
+    case TYPE_Delegate: return sizeof(VObjectDelegate);
+    case TYPE_Struct: return (Struct->Size+3)&~3;
+    case TYPE_Vector: return sizeof(TVec);
+    case TYPE_Array: return ArrayDim*GetArrayInnerType().GetSize();
+    case TYPE_DynamicArray: return sizeof(VScriptArray);
   }
   return 0;
   unguard;
 }
 
+
 //==========================================================================
- //
+//
 //  VFieldType::GetAlignment
 //
 //==========================================================================
-
-int VFieldType::GetAlignment() const
-{
+int VFieldType::GetAlignment () const {
   guard(VFieldType::GetAlignment);
-  switch (Type)
-  {
-  case TYPE_Int:      return sizeof(vint32);
-  case TYPE_Byte:     return sizeof(vuint8);
-  case TYPE_Bool:     return sizeof(vuint32);
-  case TYPE_Float:    return sizeof(float);
-  case TYPE_Name:     return sizeof(VName);
-  case TYPE_String:   return sizeof(char*);
-  case TYPE_Pointer:    return sizeof(void*);
-  case TYPE_Reference:  return sizeof(VObject*);
-  case TYPE_Class:    return sizeof(VClass*);
-  case TYPE_State:    return sizeof(VState*);
-  case TYPE_Delegate:   return sizeof(VObject*);
-  case TYPE_Struct:   return Struct->Alignment;
-  case TYPE_Vector:   return sizeof(float);
-  case TYPE_Array:    return GetArrayInnerType().GetAlignment();
-  case TYPE_DynamicArray: return sizeof(void*);
+  switch (Type) {
+    case TYPE_Int: return sizeof(vint32);
+    case TYPE_Byte: return sizeof(vuint8);
+    case TYPE_Bool: return sizeof(vuint32);
+    case TYPE_Float: return sizeof(float);
+    case TYPE_Name: return sizeof(VName);
+    case TYPE_String: return sizeof(char*);
+    case TYPE_Pointer: return sizeof(void*);
+    case TYPE_Reference: return sizeof(VObject*);
+    case TYPE_Class: return sizeof(VClass*);
+    case TYPE_State: return sizeof(VState*);
+    case TYPE_Delegate: return sizeof(VObject*);
+    case TYPE_Struct: return Struct->Alignment;
+    case TYPE_Vector: return sizeof(float);
+    case TYPE_Array: return GetArrayInnerType().GetAlignment();
+    case TYPE_DynamicArray: return sizeof(void*);
   }
   return 0;
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -381,16 +329,14 @@ int VFieldType::GetAlignment() const
 //  Check, if type can be pushed into the stack
 //
 //==========================================================================
-
-void VFieldType::CheckPassable(TLocation l) const
-{
+void VFieldType::CheckPassable (const TLocation &l) const {
   guardSlow(VFieldType::CheckPassable);
-  if (GetStackSize() != 4 && Type != TYPE_Vector && Type != TYPE_Delegate)
-  {
+  if (GetStackSize() != 4 && Type != TYPE_Vector && Type != TYPE_Delegate) {
     ParseError(l, "Type %s is not passable", *GetName());
   }
   unguardSlow;
 }
+
 
 //==========================================================================
 //
@@ -402,7 +348,6 @@ void VFieldType::CheckPassable(TLocation l) const
 //  t2 - needed type
 //
 //==========================================================================
-
 bool VFieldType::CheckMatch (const TLocation &l, const VFieldType& Other, bool raiseError) const {
   guard(VFieldType::CheckMatch);
   CheckPassable(l);
@@ -530,6 +475,7 @@ VStr VFieldType::GetName () const {
 //  VFieldType::IsSame
 //
 //==========================================================================
+/*
 bool VFieldType::IsSame (const VFieldType &other) const {
   if (Type != other.Type) return false;
   if (PtrLevel != other.PtrLevel) return false;
@@ -572,6 +518,7 @@ bool VFieldType::IsSame (const VFieldType &other) const {
   }
   return false;
 }
+*/
 
 
 //==========================================================================
@@ -594,6 +541,7 @@ bool VFieldType::NeedDtor () const {
     case TYPE_Vector:
     case TYPE_Reference: // reference is something like a pointer
     case TYPE_Class: // classes has no dtors
+    case TYPE_Delegate: // delegates need no dtor (yet)
       return false;
     case TYPE_Struct: // struct members can require dtors
       if (!Struct) return true; // let's play safe
@@ -633,7 +581,7 @@ VScriptArray::VScriptArray (const TArray<VStr>& xarr) noexcept(false) {
     size_t bytesize = xarr.Num()*sizeof(void*);
     ArrData = new vuint8[bytesize];
     memset(ArrData, 0, bytesize);
-    VStr** aa = (VStr**)ArrData;
+    VStr **aa = (VStr **)ArrData;
     for (int f = 0; f < xarr.Num(); ++f) *(VStr*)(&aa[f]) = xarr[f];
     ArrSize = ArrNum = xarr.Num();
   }
@@ -687,7 +635,6 @@ void VScriptArray::Resize (int NewSize, VFieldType& Type) {
   if (OldData) {
     for (int i = 0; i < OldSize; ++i) VField::DestructField(OldData + i * InnerSize, Type);
     delete[] OldData;
-    //OldData = NULL;
   }
 
   unguard;
@@ -783,4 +730,4 @@ void VScriptArray::Remove (int Index, int Count, VFieldType& Type) {
   unguard;
 }
 
-#endif
+#endif // !defined(IN_VCC)

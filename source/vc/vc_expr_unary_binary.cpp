@@ -369,7 +369,7 @@ void VBinary::DoSyntaxCopyTo (VExpression *e) {
 //  VBinary::DoResolve
 //
 //==========================================================================
-VExpression* VBinary::DoResolve (VEmitContext &ec) {
+VExpression *VBinary::DoResolve (VEmitContext &ec) {
   if (op1) op1 = op1->Resolve(ec);
   if (op2) op2 = op2->Resolve(ec);
   if (!op1 || !op2) { delete this; return nullptr; }

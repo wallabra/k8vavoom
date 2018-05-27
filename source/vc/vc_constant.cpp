@@ -23,134 +23,91 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "vc_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VConstant::VConstant
 //
 //==========================================================================
-
-VConstant::VConstant(VName AName, VMemberBase* AOuter, TLocation ALoc)
-: VMemberBase(MEMBER_Const, AName, AOuter, ALoc)
-, Type(TYPE_Unknown)
-, Value(0)
-, ValueExpr(NULL)
-, PrevEnumValue(NULL)
+VConstant::VConstant (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
+  : VMemberBase(MEMBER_Const, AName, AOuter, ALoc)
+  , Type(TYPE_Unknown)
+  , Value(0)
+  , ValueExpr(nullptr)
+  , PrevEnumValue(nullptr)
 {
 }
+
 
 //==========================================================================
 //
 //  VConstant::~VConstant
 //
 //==========================================================================
-
-VConstant::~VConstant()
-{
-  if (ValueExpr)
-  {
+VConstant::~VConstant () {
+  if (ValueExpr) {
     delete ValueExpr;
-    ValueExpr = NULL;
+    ValueExpr = nullptr;
   }
 }
+
 
 //==========================================================================
 //
 //  VConstant::Serialise
 //
 //==========================================================================
-
-void VConstant::Serialise(VStream& Strm)
-{
+void VConstant::Serialise (VStream &Strm) {
   guard(VConstant::Serialise);
   VMemberBase::Serialise(Strm);
   Strm << Type;
-  switch (Type)
-  {
-  case TYPE_Float:
-    Strm << FloatValue;
-    break;
-
-  case TYPE_Name:
-    Strm << *(VName*)&Value;
-    break;
-
-  default:
-    Strm << STRM_INDEX(Value);
-    break;
+  switch (Type) {
+    case TYPE_Float: Strm << FloatValue; break;
+    case TYPE_Name: Strm << *(VName*)&Value; break;
+    default: Strm << STRM_INDEX(Value); break;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VConstant::Define
 //
 //==========================================================================
-
-bool VConstant::Define()
-{
+bool VConstant::Define () {
   guard(VConstant::Define);
-  if (PrevEnumValue)
-  {
-    Value = PrevEnumValue->Value + 1;
+  if (PrevEnumValue) {
+    Value = PrevEnumValue->Value+1;
     return true;
   }
 
-  if (ValueExpr)
-  {
+  if (ValueExpr) {
     VEmitContext ec(this);
     ValueExpr = ValueExpr->Resolve(ec);
   }
-  if (!ValueExpr)
-  {
-    return false;
-  }
+  if (!ValueExpr) return false;
 
-  switch (Type)
-  {
-  case TYPE_Int:
-    if (!ValueExpr->IsIntConst())
-    {
-      ParseError(ValueExpr->Loc, "Integer constant expected");
+  switch (Type) {
+    case TYPE_Int:
+      if (!ValueExpr->IsIntConst()) {
+        ParseError(ValueExpr->Loc, "Integer constant expected");
+        return false;
+      }
+      Value = ValueExpr->GetIntConst();
+      break;
+    case TYPE_Float:
+      if (!ValueExpr->IsFloatConst()) {
+        ParseError(ValueExpr->Loc, "Float constant expected");
+        return false;
+      }
+      FloatValue = ValueExpr->GetFloatConst();
+      break;
+    default:
+      ParseError(Loc, "Unsupported type of constant");
       return false;
-    }
-    Value = ValueExpr->GetIntConst();
-    break;
-
-  case TYPE_Float:
-    if (!ValueExpr->IsFloatConst())
-    {
-      ParseError(ValueExpr->Loc, "Float constant expected");
-      return false;
-    }
-    FloatValue = ValueExpr->GetFloatConst();
-    break;
-
-  default:
-    ParseError(Loc, "Unsupported type of constant");
-    return false;
   }
   return true;
   unguard;

@@ -27,4 +27,4 @@
 //**
 //**************************************************************************
 
-void ProcessDehackedFiles();
+void ProcessDehackedFiles ();

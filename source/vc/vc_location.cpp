@@ -23,8 +23,6 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 # include "gamedefs.h"
 #else
@@ -35,63 +33,40 @@
 # endif
 #endif
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+TArray<VStr> TLocation::SourceFiles;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-TArray<VStr>    TLocation::SourceFiles;
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  TLocation::AddSourceFile
 //
 //==========================================================================
-
-int TLocation::AddSourceFile(const VStr& SName)
-{
-  //  Find it.
-  for (int i = 0; i < SourceFiles.Num(); i++)
-    if (SName == SourceFiles[i])
-      return i;
-
-  //  Not found, add it.
+int TLocation::AddSourceFile (const VStr &SName) {
+  // find it
+  for (int i = 0; i < SourceFiles.Num(); ++i) if (SName == SourceFiles[i]) return i;
+  // not found, add it
   return SourceFiles.Append(SName);
 }
+
 
 //==========================================================================
 //
 //  TLocation::GetSource
 //
 //==========================================================================
-
-VStr TLocation::GetSource() const
-{
-  if (!Loc)
-    return "(external)";
-  return SourceFiles[Loc >> 16];
+VStr TLocation::GetSource () const {
+  if (!Loc) return "(external)";
+  return SourceFiles[Loc>>16];
 }
+
 
 //==========================================================================
 //
 //  TLocation::ClearSourceFiles
 //
 //==========================================================================
-
-void TLocation::ClearSourceFiles()
-{
+void TLocation::ClearSourceFiles () {
   SourceFiles.Clear();
 }

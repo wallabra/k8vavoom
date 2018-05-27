@@ -23,33 +23,24 @@
 //**
 //**************************************************************************
 
-//==========================================================================
-//
-//  VConstant
-//
-//==========================================================================
-
-class VConstant : public VMemberBase
-{
+class VConstant : public VMemberBase {
 public:
-  //  Persistent fields
-  vuint8      Type;
-  union
-  {
-    vint32    Value;
-    float   FloatValue;
+  // persistent fields
+  vuint8 Type;
+  union {
+    vint32 Value;
+    float FloatValue;
   };
 
-  //  Compiler fields
-  VExpression*  ValueExpr;
-  VConstant*    PrevEnumValue;
+  // compiler fields
+  VExpression *ValueExpr;
+  VConstant *PrevEnumValue;
 
-  VConstant(VName, VMemberBase*, TLocation);
-  ~VConstant();
+  VConstant (VName, VMemberBase *, const TLocation &);
+  virtual ~VConstant () override;
 
-  void Serialise(VStream&);
-  bool Define();
+  virtual void Serialise (VStream &) override;
+  bool Define ();
 
-  friend inline VStream& operator<<(VStream& Strm, VConstant*& Obj)
-  { return Strm << *(VMemberBase**)&Obj; }
+  friend inline VStream &operator << (VStream &Strm, VConstant *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };

@@ -23,44 +23,34 @@
 //**
 //**************************************************************************
 
-//==========================================================================
-//
-//  Property flags
-//
-//==========================================================================
 
-enum
-{
-  PROP_Native   = 0x0001, // Native get and set methods
-  PROP_Final    = 0x0002, // Final version of a proeprty
+// ////////////////////////////////////////////////////////////////////////// //
+// property flags
+enum {
+  PROP_Native = 0x0001, // Native get and set methods
+  PROP_Final  = 0x0002, // Final version of a proeprty
 };
 
-//==========================================================================
-//
-//  VProperty
-//
-//==========================================================================
 
-class VProperty : public VMemberBase
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VProperty : public VMemberBase {
 public:
-  //  Persistent fields.
-  VFieldType    Type;
-  VMethod*    GetFunc;
-  VMethod*    SetFunc;
-  VField*     DefaultField;
-  vuint32     Flags;
+  // persistent fields
+  VFieldType Type;
+  VMethod *GetFunc;
+  VMethod *SetFunc;
+  VField *DefaultField;
+  vuint32 Flags;
 
-  //  Compiler fields.
-  VExpression*  TypeExpr;
-  VName     DefaultFieldName;
+  // compiler fields
+  VExpression *TypeExpr;
+  VName DefaultFieldName;
 
-  VProperty(VName, VMemberBase*, TLocation);
-  ~VProperty();
+  VProperty (VName, VMemberBase *, TLocation);
+  virtual ~VProperty () override;
 
-  void Serialise(VStream&);
+  virtual void Serialise (VStream &) override;
   bool Define();
 
-  friend inline VStream& operator<<(VStream& Strm, VProperty*& Obj)
-  { return Strm << *(VMemberBase**)&Obj; }
+  friend inline VStream &operator << (VStream &Strm, VProperty *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };

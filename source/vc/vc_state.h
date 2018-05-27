@@ -23,57 +23,48 @@
 //**
 //**************************************************************************
 
-//==========================================================================
-//
-//  VState
-//
-//==========================================================================
 
-class VState : public VMemberBase
-{
+class VState : public VMemberBase {
 public:
-  //
-  //  Frame flags:
-  //  handles maximum brightness (torches, muzzle flare, light sources)
-  //
-  enum { FF_FULLBRIGHT  = 0x80 }; // flag in Frame
-  enum { FF_FRAMEMASK   = 0x7f };
+  // frame flags:
+  // handles maximum brightness (torches, muzzle flare, light sources)
+  enum { FF_FULLBRIGHT = 0x80 }; // flag in Frame
+  enum { FF_FRAMEMASK  = 0x7f };
 
-  //  Persistent fields
-  //  State info
-  VName     SpriteName;
-  vint32      Frame;
-  float     Time;
-  vint32      Misc1;
-  vint32      Misc2;
-  VState*     NextState;
-  VMethod*    Function;
-  //  Linked list of states
-  VState*     Next;
+  // persistent fields
+  // state info
+  VName SpriteName;
+  vint32 Frame;
+  float Time;
+  vint32 Misc1;
+  vint32 Misc2;
+  VState *NextState;
+  VMethod *Function;
+  // linked list of states
+  VState *Next;
 
-  //  Compile time fields
-  VName     GotoLabel;
-  vint32      GotoOffset;
-  VName     FunctionName;
+  // compile time fields
+  VName GotoLabel;
+  vint32 GotoOffset;
+  VName FunctionName;
 
-  //  Run-time fields
-  vint32      SpriteIndex;
-  vint32      InClassIndex;
-  vint32      NetId;
-  VState*     NetNext;
+  // run-time fields
+  vint32 SpriteIndex;
+  vint32 InClassIndex;
+  vint32 NetId;
+  VState *NetNext;
 
-  VState(VName, VMemberBase*, TLocation);
-  ~VState();
+  VState (VName, VMemberBase *, TLocation);
+  virtual ~VState () override;
 
-  void Serialise(VStream&);
-  void PostLoad();
+  virtual void Serialise (VStream &) override;
+  virtual void PostLoad () override;
 
-  bool Define();
-  void Emit();
-  bool IsInRange(VState*, VState*, int);
-  bool IsInSequence(VState*);
-  VState* GetPlus(int, bool);
+  bool Define ();
+  void Emit ();
+  bool IsInRange (VState *, VState *, int);
+  bool IsInSequence (VState *);
+  VState *GetPlus (int, bool);
 
-  friend inline VStream& operator<<(VStream& Strm, VState*& Obj)
-  { return Strm << *(VMemberBase**)&Obj; }
+  friend inline VStream &operator << (VStream &Strm, VState *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };

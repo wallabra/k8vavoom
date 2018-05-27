@@ -22,9 +22,9 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #ifndef __vc_local_h__
 #define __vc_local_h__
+
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 # include "gamedefs.h"
@@ -53,5 +53,6 @@
 #  include "../../utils/vccrun/vcc_run.h"
 # endif
 #endif
+
 
 #endif
