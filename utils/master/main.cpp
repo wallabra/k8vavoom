@@ -7,8 +7,6 @@
 //**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
 //**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**  $Id$
-//**
 //**  Copyright (C) 1999-2006 Jānis Legzdiņš
 //**
 //**  This program is free software; you can redistribute it and/or
@@ -23,11 +21,9 @@
 //**
 //**************************************************************************
 //**
-//**  Vavoom master server.
+//** k8Vavoom master server
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "cmdlib.h"
 using namespace VavoomUtils;
@@ -35,253 +31,243 @@ using namespace VavoomUtils;
 #undef clock
 #include <time.h>
 #ifdef _WIN32
-#include <windows.h>
+# include <windows.h>
 typedef int socklen_t;
 #else
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <errno.h>
-#include <unistd.h>
-
-#define closesocket   close
+# include <sys/ioctl.h>
+# include <sys/types.h>
+# include <sys/socket.h>
+# include <netinet/in.h>
+# include <errno.h>
+# include <unistd.h>
+# define closesocket   close
 #endif
 
-// MACROS ------------------------------------------------------------------
 
-enum
-{
-  MCREQ_JOIN        = 1,
-  MCREQ_QUIT        = 2,
-  MCREQ_LIST        = 3,
+// ////////////////////////////////////////////////////////////////////////// //
+enum {
+  MCREQ_JOIN = 1,
+  MCREQ_QUIT = 2,
+  MCREQ_LIST = 3,
 };
 
-enum
-{
-  MCREP_LIST        = 1,
+enum {
+  MCREP_LIST = 1,
 };
 
-enum
-{
-  MAX_MSGLEN        = 1024,
-  MASTER_SERVER_PORT    = 26001,
+enum {
+  MAX_MSGLEN         = 1024,
+  MASTER_SERVER_PORT = 26002,
 };
 
-// TYPES -------------------------------------------------------------------
 
-struct TSrvItem
-{
-  sockaddr  Addr;
-  time_t    Time;
+struct TSrvItem {
+  sockaddr addr;
+  time_t time;
+  vuint8 pver; // protocol version
 };
 
 #ifdef _WIN32
-class TWinSockHelper
-{
+class TWinSockHelper {
 public:
-  ~TWinSockHelper()
-  {
-    WSACleanup();
-  }
+  ~TWinSockHelper () { WSACleanup(); }
 };
 #endif
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+static int acceptSocket = -1; // socket for fielding new connections
+static TArray<TSrvItem> srvList;
+static TArray<TSrvItem> srvBlocked;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int          AcceptSocket = -1;    // socket for fielding new connections
-static TArray<TSrvItem>   SrvList;
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  AddrCompare
 //
 //==========================================================================
-
-static int AddrCompare(sockaddr* addr1, sockaddr* addr2)
-{
-  if (addr1->sa_family != addr2->sa_family)
-  {
-    return -1;
-  }
-
-  if (((sockaddr_in*)addr1)->sin_addr.s_addr != ((sockaddr_in*)addr2)->sin_addr.s_addr)
-  {
-    return -1;
-  }
-
-  if (((sockaddr_in*)addr1)->sin_port != ((sockaddr_in*)addr2)->sin_port)
-  {
-    return 1;
-  }
-
+static int AddrCompare (const sockaddr *addr1, const sockaddr *addr2) {
+  if (addr1->sa_family != addr2->sa_family) return -1;
+  if (((const sockaddr_in *)addr1)->sin_addr.s_addr != ((const sockaddr_in *)addr2)->sin_addr.s_addr) return -1;
+  if (((const sockaddr_in *)addr1)->sin_port != ((const sockaddr_in *)addr2)->sin_port) return 1;
   return 0;
 }
+
+
 //==========================================================================
 //
 //  ReadNet
 //
 //==========================================================================
+static void ReadNet () {
+  char buf[MAX_MSGLEN];
 
-static void ReadNet()
-{
-  char    Buffer[MAX_MSGLEN];
+  // check if there's any packet waiting
+  if (recvfrom(acceptSocket, buf, MAX_MSGLEN, MSG_PEEK, nullptr, nullptr) < 0) return;
 
-  //  Check if there's any packet waiting.
-  if (recvfrom(AcceptSocket, Buffer, MAX_MSGLEN, MSG_PEEK, NULL, NULL) < 0)
-  {
-    return;
-  }
-
-  //  Read packet.
+  // read packet
   sockaddr clientaddr;
   socklen_t addrlen = sizeof(sockaddr);
-  int len = recvfrom(AcceptSocket, Buffer, MAX_MSGLEN, 0, &clientaddr, &addrlen);
-  if (len < 1)
-  {
-    return;
+  int len = recvfrom(acceptSocket, buf, MAX_MSGLEN, 0, &clientaddr, &addrlen);
+
+  // check if it is not blocked
+  for (int i = 0; i < srvBlocked.length(); ++i) {
+    if (AddrCompare(&srvBlocked[i].addr, &clientaddr) == 0) {
+      return; // ignore it
+    }
   }
 
-  switch (Buffer[0])
-  {
-  case MCREQ_JOIN:
-    {
-      for (int i = 0; i < SrvList.Num(); i++)
-      {
-        if (!AddrCompare(&SrvList[i].Addr, &clientaddr))
-        {
-          SrvList[i].Time = time(0);
+  if (len >= 1) {
+    switch (buf[0]) {
+      case MCREQ_JOIN: // payload: protocol version; can't be 0 or 255
+        if (len == 2 && buf[1] != 0 && buf[1] != 255) {
+          for (int i = 0; i < srvList.length(); ++i) {
+            if (!AddrCompare(&srvList[i].addr, &clientaddr)) {
+              srvList[i].time = time(0);
+              srvList[i].pver = buf[1];
+              return;
+            }
+          }
+          TSrvItem &it = srvList.Alloc();
+          it.addr = clientaddr;
+          it.time = time(0);
+          it.pver = buf[1];
           return;
         }
-      }
-      TSrvItem& I = SrvList.Alloc();
-      I.Addr = clientaddr;
-      I.Time = time(0);
-    }
-    break;
-
-  case MCREQ_QUIT:
-    for (int i = 0; i < SrvList.Num(); i++)
-    {
-      if (!AddrCompare(&SrvList[i].Addr, &clientaddr))
-      {
-        SrvList.RemoveIndex(i);
         break;
-      }
+      case MCREQ_QUIT:
+        if (len == 1) {
+          for (int i = 0; i < srvList.length(); ++i) {
+            if (AddrCompare(&srvList[i].addr, &clientaddr) == 0) {
+              srvList.RemoveIndex(i);
+              break;
+            }
+          }
+          return;
+        }
+        break;
+      case MCREQ_LIST:
+        if (len == 1) {
+          int sidx = 0;
+          while (sidx < srvList.length()) {
+            buf[0] = MCREP_LIST;
+            buf[1] = (sidx == 0 ? 1 : 0); // seq id: bit 0 set means 'first', bit 1 set means 'last'
+            int len = 2;
+            while (sidx < srvList.length()) {
+              if (len+7 > MAX_MSGLEN-1) break;
+              buf[len+0] = srvList[sidx].pver;
+              memcpy(&buf[len+1], srvList[sidx].addr.sa_data+2, 4);
+              memcpy(&buf[len+5], srvList[sidx].addr.sa_data, 2);
+              len += 6;
+              ++sidx;
+            }
+            if (sidx >= srvList.length()) buf[1] |= 0x02; // set "last packet" flag
+            sendto(acceptSocket, buf, len, 0, &clientaddr, sizeof(sockaddr));
+          }
+          return;
+        }
+        break;
     }
-    break;
+  }
 
-  case MCREQ_LIST:
-    {
-      Buffer[0] = MCREP_LIST;
-      int Len = 1;
-      for (int i = 0; i < SrvList.Num() && i < (MAX_MSGLEN - 1) / 6; i++)
-      {
-        memcpy(&Buffer[Len], SrvList[i].Addr.sa_data + 2, 4);
-        memcpy(&Buffer[Len + 4], SrvList[i].Addr.sa_data, 2);
-        Len += 6;
-      }
-      sendto(AcceptSocket, Buffer, Len, 0, &clientaddr, sizeof(sockaddr));
+  // if it sent invalid command, remove it immediately, and block access for 60 seconds
+  for (int i = 0; i < srvList.length(); ++i) {
+    if (AddrCompare(&srvList[i].addr, &clientaddr) == 0) {
+      srvList.RemoveIndex(i);
+      break;
     }
-    break;
+  }
+  // append to blocklist
+  {
+    TSrvItem &it = srvBlocked.Alloc();
+    it.addr = clientaddr;
+    it.time = time(0);
+    it.pver = 0;
   }
 }
+
 
 //==========================================================================
 //
 //  main
 //
 //==========================================================================
-
-int main(int argc, const char** argv)
-{
-  printf("Vavoom master server.\n");
+int main (int argc, const char **argv) {
+  printf("k8Vavoom master server at port %d.\n", MASTER_SERVER_PORT);
 
 #ifdef _WIN32
   WSADATA winsockdata;
   //MAKEWORD(2, 2)
   int r = WSAStartup(MAKEWORD(1, 1), &winsockdata);
-  if (r)
-  {
+  if (r) {
     printf("Winsock initialisation failed.\n");
     return -1;
   }
   TWinSockHelper Helper;
 #endif
 
-  //  Open socket for listening for requests.
-  AcceptSocket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (AcceptSocket == -1)
-  {
+  // open socket for listening for requests
+  acceptSocket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (acceptSocket == -1) {
     printf("Unable to open accept socket\n");
     return -1;
   }
 
-  //  Make socket non-blocking
+  // make socket non-blocking
   int trueval = true;
 #ifdef _WIN32
-  if (ioctlsocket(AcceptSocket, FIONBIO, (u_long*)&trueval) == -1)
+  if (ioctlsocket(acceptSocket, FIONBIO, (u_long*)&trueval) == -1)
 #else
-  if (ioctl(AcceptSocket, FIONBIO, (char*)&trueval) == -1)
+  if (ioctl(acceptSocket, FIONBIO, (char*)&trueval) == -1)
 #endif
   {
-    closesocket(AcceptSocket);
+    closesocket(acceptSocket);
     printf("Unable to make socket non-blocking\n");
     return -1;
   }
 
-  //  Bind socket to the port.
+  // bind socket to the port
   sockaddr_in address;
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = INADDR_ANY;
   address.sin_port = htons(MASTER_SERVER_PORT);
-  if (bind(AcceptSocket, (sockaddr*)&address, sizeof(address)) == -1)
-  {
-    closesocket(AcceptSocket);
+  if (bind(acceptSocket, (sockaddr *)&address, sizeof(address)) == -1) {
+    closesocket(acceptSocket);
     printf("Unable to bind socket to a port\n");
     return -1;
   }
 
-  //  Main loop.
-  while (1)
-  {
-    for (int i = 0; i < 1000; i++)
-    {
+  // main loop
+  for (;;) {
+    for (int i = 0; i < 1000; ++i) {
       ReadNet();
 #ifdef _WIN32
       Sleep(1);
 #else
-//      usleep(1);
+      //usleep(1);
       static const struct timespec sleepTime = {0, 28500000};
-      nanosleep(&sleepTime, NULL);
+      nanosleep(&sleepTime, nullptr);
 #endif
     }
 
-    //  Clean up list from old records.
+    // clean up list from old records
     time_t CurTime = time(0);
-    for (size_t i = 0; i < (unsigned int)SrvList.Num(); i++)
-    {
-      if (CurTime - SrvList[i].Time > 15 * 60)
-      {
-        SrvList.RemoveIndex(i);
-        i--;
+    for (int i = 0; i < srvList.length(); ++i) {
+      if (CurTime-srvList[i].time >= 15*60) {
+        srvList.RemoveIndex(i);
+        --i;
+      }
+    }
+
+    // clean blocklist
+    for (int i = 0; i < srvBlocked.length(); ++i) {
+      if (CurTime-srvBlocked[i].time >= 60) {
+        srvBlocked.RemoveIndex(i);
+        --i;
       }
     }
   }
 
-  //  Close socket.
-  closesocket(AcceptSocket);
+  // close socket
+  closesocket(acceptSocket);
   return 0;
 }

@@ -4,7 +4,7 @@ if(ENABLE_MASTER)
   add_executable(vavoom-master
     main.cpp
   )
-  set_target_properties(vavoom-master PROPERTIES OUTPUT_NAME ../bin/vavoom-master)
+  set_target_properties(vavoom-master PROPERTIES OUTPUT_NAME ../../vavoom-master)
   target_link_libraries(vavoom-master core ${NET_LIBRARIES})
   add_dependencies(vavoom-master core)
 endif(ENABLE_MASTER)
