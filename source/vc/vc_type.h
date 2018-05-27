@@ -84,8 +84,7 @@ public:
   bool CheckMatch (const TLocation &loc, const VFieldType &, bool raiseError=true) const;
   VStr GetName () const;
 
-  //bool IsSame (const VFieldType &other) const;
-  bool NeedDtor () const;
+  bool IsReusingDisabled () const;
 };
 
 

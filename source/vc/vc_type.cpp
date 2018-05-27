@@ -472,76 +472,26 @@ VStr VFieldType::GetName () const {
 
 //==========================================================================
 //
-//  VFieldType::IsSame
+//  VFieldType::CanBeReplaced
 //
 //==========================================================================
-/*
-bool VFieldType::IsSame (const VFieldType &other) const {
-  if (Type != other.Type) return false;
-  if (PtrLevel != other.PtrLevel) return false;
-  switch (Type) {
-    case TYPE_Void:
-    case TYPE_Int:
-    case TYPE_Byte:
-    case TYPE_Bool:
-    case TYPE_Float:
-    case TYPE_Name:
-    case TYPE_String:
-      return true;
-    case TYPE_Pointer:
-      if (InnerType != other.InnerType) return false;
-      return true;
-    case TYPE_Reference:
-      if (Class != other.Class) return false;
-      return true;
-    case TYPE_Class:
-      if (Class != other.Class) return false;
-      return true;
-    case TYPE_State:
-      return true;
-    case TYPE_Struct:
-      if (Struct != other.Struct) return false;
-      return true;
-    case TYPE_Vector:
-      return true;
-    case TYPE_Array:
-      if (ArrayInnerType != other.ArrayInnerType) return false;
-      if (ArrayDim != other.ArrayDim) return false;
-      return true;
-    case TYPE_DynamicArray:
-      if (ArrayInnerType != other.ArrayInnerType) return false;
-      return true;
-    case TYPE_Automatic:
-      return false;
-    default:
-      break;
-  }
-  return false;
-}
-*/
-
-
-//==========================================================================
-//
-//  VFieldType::NeedDtor
-//
-//==========================================================================
-bool VFieldType::NeedDtor () const {
+bool VFieldType::IsReusingDisabled () const {
   if (PtrLevel > 0) return false; // pointers are ok
   switch (Type) {
     // simple types
     case TYPE_Void:
+    case TYPE_Bool: // don't replace boolean vars
+      return true;
     case TYPE_Int:
     case TYPE_Byte:
-    case TYPE_Bool:
     case TYPE_Float:
     case TYPE_Name:
     case TYPE_Pointer:
     case TYPE_State:
     case TYPE_Vector:
-    case TYPE_Reference: // reference is something like a pointer
     case TYPE_Class: // classes has no dtors
     case TYPE_Delegate: // delegates need no dtor (yet)
+    case TYPE_Reference: // reference is something like a pointer
       return false;
     case TYPE_Struct: // struct members can require dtors
       if (!Struct) return true; // let's play safe

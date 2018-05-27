@@ -886,7 +886,7 @@ static void ReadCodePtr (int) {
 static void ReadCheats (int) {
   guard(ReadCheats);
   // old cheat handling is removed
-  while (ParseParam()); {}
+  while (ParseParam()) {}
   unguard;
 }
 

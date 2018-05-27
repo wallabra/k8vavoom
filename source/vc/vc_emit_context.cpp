@@ -117,23 +117,32 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
 
   // try to find reusable local
   int besthit = 0x7fffffff, bestidx = -1;
-  for (int f = 0; f < LocalDefs.length(); ++f) {
-    VLocalVarDef &ll = LocalDefs[f];
-    if (ll.Reusable && !ll.Visible) {
-      if (!atype.NeedDtor() && !ll.Type.NeedDtor() && ll.stackSize >= ssz) {
+  if (!atype.IsReusingDisabled()) {
+    for (int f = 0; f < LocalDefs.length(); ++f) {
+      //break;
+      VLocalVarDef &ll = LocalDefs[f];
+      if (ll.Reusable && !ll.Visible && !ll.Type.IsReusingDisabled()) {
+        if (ll.stackSize >= ssz) {
+          // i found her!
+          if (ll.stackSize == ssz) {
+            bestidx = f;
+            break;
+          }
+          // if this is better match, use it
+          int points = ll.stackSize-ssz;
+          if (points < besthit) {
+            besthit = points;
+            bestidx = f;
+          }
+        }
+      }
+    }
+  } else if (atype.Type == TYPE_String) {
+    // string can be safely replaced with another string, they both require dtor
+    for (int f = 0; f < LocalDefs.length(); ++f) {
+      VLocalVarDef &ll = LocalDefs[f];
+      if (ll.Reusable && !ll.Visible && ll.Type.Type == TYPE_String) {
         // i found her!
-        if (ll.stackSize == ssz) {
-          bestidx = f;
-          break;
-        }
-        // if this is better match, use it
-        int points = ll.stackSize-ssz;
-        if (points < besthit) {
-          besthit = points;
-          bestidx = f;
-        }
-      } else if (ll.Type.Type == TYPE_String && atype.Type == TYPE_String) {
-        // string can be safely replaced with another string, they both require dtor
         bestidx = f;
         break;
       }
