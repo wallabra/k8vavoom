@@ -80,6 +80,18 @@ static TArray<TSrvItem> srvList;
 static TArray<TSrvItem> srvBlocked;
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+char *AddrToString (sockaddr* addr) {
+  static char buffer[22];
+  int haddr = ntohl(((sockaddr_in *)addr)->sin_addr.s_addr);
+  sprintf(buffer, "%d.%d.%d.%d:%d", (haddr >> 24) & 0xff,
+    (haddr >> 16) & 0xff, (haddr >> 8) & 0xff, haddr & 0xff,
+    ntohs(((sockaddr_in *)addr)->sin_port));
+  return buffer;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 //==========================================================================
 //
 //  AddrCompare
@@ -127,6 +139,7 @@ static void ReadNet () {
               return;
             }
           }
+          printf("server at %s is joined, protocol version is %u\n", AddrToString(&clientaddr), (unsigned)buf[1]);
           TSrvItem &it = srvList.Alloc();
           it.addr = clientaddr;
           it.time = time(0);
@@ -138,6 +151,7 @@ static void ReadNet () {
         if (len == 1) {
           for (int i = 0; i < srvList.length(); ++i) {
             if (AddrCompare(&srvList[i].addr, &clientaddr) == 0) {
+              printf("server at %s leaves\n", AddrToString(&srvList[i].addr));
               srvList.RemoveIndex(i);
               break;
             }
@@ -147,6 +161,7 @@ static void ReadNet () {
         break;
       case MCREQ_LIST:
         if (len == 1) {
+          printf("query from %s\n", AddrToString(&clientaddr));
           int sidx = 0;
           while (sidx < srvList.length()) {
             buf[0] = MCREP_LIST;
@@ -156,8 +171,8 @@ static void ReadNet () {
               if (len+7 > MAX_MSGLEN-1) break;
               buf[len+0] = srvList[sidx].pver;
               memcpy(&buf[len+1], srvList[sidx].addr.sa_data+2, 4);
-              memcpy(&buf[len+5], srvList[sidx].addr.sa_data, 2);
-              len += 6;
+              memcpy(&buf[len+5], srvList[sidx].addr.sa_data+0, 2);
+              len += 7;
               ++sidx;
             }
             if (sidx >= srvList.length()) buf[1] |= 0x02; // set "last packet" flag
@@ -178,6 +193,7 @@ static void ReadNet () {
   }
   // append to blocklist
   {
+    printf("something at %s is blocked\n", AddrToString(&clientaddr));
     TSrvItem &it = srvBlocked.Alloc();
     it.addr = clientaddr;
     it.time = time(0);
@@ -253,6 +269,7 @@ int main (int argc, const char **argv) {
     time_t CurTime = time(0);
     for (int i = 0; i < srvList.length(); ++i) {
       if (CurTime-srvList[i].time >= 15*60) {
+        printf("server at %s leaves by timeout\n", AddrToString(&srvList[i].addr));
         srvList.RemoveIndex(i);
         --i;
       }
