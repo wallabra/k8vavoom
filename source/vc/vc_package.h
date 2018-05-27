@@ -25,95 +25,79 @@
 
 class VProgsReader;
 
-//==========================================================================
-//
-//  mobjinfo_t
-//
-//==========================================================================
 
-struct mobjinfo_t
-{
-  int     DoomEdNum;
-  vint32    GameFilter;
-  VClass*   Class;
+// ////////////////////////////////////////////////////////////////////////// //
+struct mobjinfo_t {
+  int DoomEdNum;
+  vint32 GameFilter;
+  VClass *Class;
 
-  friend VStream& operator<<(VStream&, mobjinfo_t&);
+  friend VStream &operator << (VStream &, mobjinfo_t &);
 };
 
-//==========================================================================
-//
-//  VImportedPackage
-//
-//==========================================================================
 
-struct VImportedPackage
-{
-  VName   Name;
+// ////////////////////////////////////////////////////////////////////////// //
+struct VImportedPackage {
+  VName Name;
   TLocation Loc;
-  VPackage* Pkg;
+  VPackage *Pkg;
 };
 
-//==========================================================================
-//
-//  VPackage
-//
-//==========================================================================
 
-class VPackage : public VMemberBase
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VPackage : public VMemberBase {
 private:
-  struct TStringInfo
-  {
-    int   Offs;
-    int   Next;
+  struct TStringInfo {
+    int Offs;
+    int Next;
   };
 
-  TArray<TStringInfo>     StringInfo;
-  int             StringLookup[256];
+  TArray<TStringInfo> StringInfo;
+  int StringLookup[256];
 
-  static int StringHashFunc(const char*);
+  static int StringHashFunc (const char *);
 
 public:
-  //  Shared fields
-  TArray<char>        Strings;
+  // shared fields
+  TArray<char> Strings;
 
-  //  Compiler fields
-  TArray<VImportedPackage>  PackagesToLoad;
+  // compiler fields
+  TArray<VImportedPackage> PackagesToLoad;
 
-  TArray<mobjinfo_t>      MobjInfo;
-  TArray<mobjinfo_t>      ScriptIds;
+  TArray<mobjinfo_t> MobjInfo;
+  TArray<mobjinfo_t> ScriptIds;
 
-  TArray<VConstant*>      ParsedConstants;
-  TArray<VStruct*>      ParsedStructs;
-  TArray<VClass*>       ParsedClasses;
-  TArray<VClass*>       ParsedDecorateImportClasses;
+  TArray<VConstant *> ParsedConstants;
+  TArray<VStruct *> ParsedStructs;
+  TArray<VClass *> ParsedClasses;
+  TArray<VClass *> ParsedDecorateImportClasses;
 
-  int             NumBuiltins;
+  int NumBuiltins;
 
-  //  Run-time fields
-  vuint16           Checksum;
-  VProgsReader*       Reader;
+  // run-time fields
+  vuint16 Checksum;
+  VProgsReader *Reader;
 
-  VPackage();
-  VPackage(VName InName);
-  ~VPackage();
+public:
+  VPackage ();
+  VPackage (VName InName);
+  virtual ~VPackage () override;
 
-  void Serialise(VStream&);
+  virtual void Serialise (VStream &) override;
 
-  int FindString(const char*);
-  VConstant* FindConstant(VName);
+  int FindString (const char *);
+  VConstant *FindConstant (VName);
 
-  VClass* FindDecorateImportClass(VName) const;
+  VClass *FindDecorateImportClass (VName) const;
 
-  void Emit();
-  void WriteObject(const VStr&);
-  void LoadObject(TLocation);
+  void Emit ();
+  void WriteObject (const VStr &);
+  void LoadObject (TLocation);
 
   // will delete `Strm`
   void LoadSourceObject (VStream *Strm, const VStr& filename, TLocation l);
   // will delete `Strm`
   void LoadBinaryObject (VStream *Strm, const VStr& filename, TLocation l);
 
-  friend inline VStream& operator<<(VStream& Strm, VPackage*& Obj)
-  { return Strm << *(VMemberBase**)&Obj; }
+  friend inline VStream &operator << (VStream &Strm, VPackage *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };
