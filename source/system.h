@@ -23,11 +23,11 @@
 //**
 //**************************************************************************
 
-int Sys_FileExists(const VStr&);
+bool Sys_FileExists(const VStr&);
 int Sys_FileTime(const VStr&);
 
-int Sys_CreateDirectory(const VStr&);
-int Sys_OpenDir(const VStr&);
+bool Sys_CreateDirectory(const VStr&);
+bool Sys_OpenDir(const VStr&);
 VStr Sys_ReadDir();
 void Sys_CloseDir();
 bool Sys_DirExists(const VStr&);

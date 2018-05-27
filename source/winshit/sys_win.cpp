@@ -94,12 +94,12 @@ static VCvarI   win_sys_keys("win_sys_keys", "1", "shitdoze.", CVAR_Archive);
 //
 //==========================================================================
 
-int Sys_FileExists(const VStr& filename)
+bool Sys_FileExists(const VStr& filename)
 {
 #ifdef WIN32
-  return !_access(*filename, R_OK);
+  return (_access(*filename, R_OK) == 0);
 #else
-  return !access(*filename, R_OK);
+  return (access(*filename, R_OK) == 0);
 #endif
 }
 
@@ -127,12 +127,12 @@ int Sys_FileTime(const VStr& path)
 //
 //==========================================================================
 
-int Sys_CreateDirectory(const VStr& path)
+bool Sys_CreateDirectory(const VStr& path)
 {
 #ifdef WIN32
-  return _mkdir(*path);
+  return (_mkdir(*path) == 0);
 #else
-  return mkdir(*path);
+  return (mkdir(*path) == 0);
 #endif
 }
 
@@ -142,13 +142,10 @@ int Sys_CreateDirectory(const VStr& path)
 //
 //==========================================================================
 
-int Sys_OpenDir(const VStr& dirname)
+bool Sys_OpenDir(const VStr& dirname)
 {
   dir_handle = FindFirstFile(va("%s/*.*", *dirname), &dir_buf);
-  if (dir_handle == INVALID_HANDLE_VALUE)
-  {
-    return false;
-  }
+  if (dir_handle == INVALID_HANDLE_VALUE) return false;
   dir_already_got = true;
   return true;
 }

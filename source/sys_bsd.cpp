@@ -79,9 +79,9 @@ static DIR *current_dir;
 //
 //==========================================================================
 
-int Sys_FileExists(const VStr& filename)
+bool Sys_FileExists(const VStr& filename)
 {
-    return !access(*filename, R_OK);
+    return (access(*filename, R_OK) == 0);
 }
 
 //==========================================================================
@@ -108,9 +108,9 @@ int Sys_FileTime(const VStr& path)
 //
 //==========================================================================
 
-int Sys_CreateDirectory(const VStr& path)
+bool Sys_CreateDirectory(const VStr& path)
 {
-  return mkdir(*path, 0777);
+  return (mkdir(*path, 0777) == 0);
 }
 
 //==========================================================================
@@ -119,10 +119,10 @@ int Sys_CreateDirectory(const VStr& path)
 //
 //==========================================================================
 
-int Sys_OpenDir(const VStr& path)
+bool Sys_OpenDir(const VStr& path)
 {
   current_dir = opendir(*path);
-  return current_dir != NULL;
+  return (current_dir != NULL);
 }
 
 //==========================================================================

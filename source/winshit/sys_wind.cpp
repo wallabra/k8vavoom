@@ -68,9 +68,9 @@ static bool       dir_already_got;
 //
 //==========================================================================
 
-int Sys_FileExists(const VStr& filename)
+bool Sys_FileExists(const VStr& filename)
 {
-    return !access(*filename, R_OK);
+    return (access(*filename, R_OK) == 0);
 }
 
 //==========================================================================
@@ -97,9 +97,9 @@ int Sys_FileTime(const VStr& path)
 //
 //==========================================================================
 
-int Sys_CreateDirectory(const VStr& path)
+bool Sys_CreateDirectory(const VStr& path)
 {
-  return mkdir(*path);
+  return (mkdir(*path) == 0);
 }
 
 //==========================================================================
@@ -108,13 +108,10 @@ int Sys_CreateDirectory(const VStr& path)
 //
 //==========================================================================
 
-int Sys_OpenDir(const VStr& dirname)
+bool Sys_OpenDir(const VStr& dirname)
 {
   dir_handle = FindFirstFile(va("%s/*.*", *dirname), &dir_buf);
-  if (dir_handle == INVALID_HANDLE_VALUE)
-  {
-    return false;
-  }
+  if (dir_handle == INVALID_HANDLE_VALUE) return false;
   dir_already_got = true;
   return true;
 }
