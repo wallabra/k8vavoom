@@ -1,0 +1,21 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+int field;
+
+delegate int dgfld ();
+
+int boo () { return field; }
+
+void main () {
+  //dgfld = delegate int () { return field; };
+  dgfld = boo;
+  print("dg1: %d", dgfld);
+  dgfld = delegate int () { return field; };
+  print("dg1: %d", dgfld);
+}
+
+
+defaultproperties {
+  field = 666;
+}
