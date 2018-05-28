@@ -214,8 +214,16 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
 
     VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
     if (field) {
-      VExpression *e = new VFieldAccess(op, field, Loc, op->IsDefaultObject() ? FIELD_ReadOnly : 0);
-      op = nullptr;
+      VExpression* e;
+      // "normal" access: call delegate (if it is operand-less)
+      if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
+        //fprintf(stderr, "*** FLD! %s\n", *field->Name);
+        e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
+      } else {
+        // generate field access
+        e = new VFieldAccess(op, field, Loc, op->IsDefaultObject() ? FIELD_ReadOnly : 0);
+        op = nullptr;
+      }
       delete this;
       return e->Resolve(ec);
     }
@@ -504,7 +512,7 @@ VExpression* VFieldAccess::DoResolve (VEmitContext&) {
 //
 //==========================================================================
 void VFieldAccess::RequestAddressOf () {
-  if (Flags & FIELD_ReadOnly) ParseError(op->Loc, "Tried to assign to a read-only field");
+  if (Flags&FIELD_ReadOnly) ParseError(op->Loc, "Tried to assign to a read-only field");
   if (AddressRequested) ParseError(Loc, "Multiple address of");
   AddressRequested = true;
 }
@@ -521,8 +529,7 @@ void VFieldAccess::Emit (VEmitContext& ec) {
   if (AddressRequested) {
     ec.AddStatement(OPC_Offset, field);
   } else {
-    switch (field->Type.Type)
-    {
+    switch (field->Type.Type) {
       case TYPE_Int:
       case TYPE_Float:
       case TYPE_Name:
@@ -532,10 +539,10 @@ void VFieldAccess::Emit (VEmitContext& ec) {
         ec.AddStatement(OPC_ByteFieldValue, field);
         break;
       case TYPE_Bool:
-             if (field->Type.BitMask & 0x000000ff) ec.AddStatement(OPC_Bool0FieldValue, field, (int)(field->Type.BitMask));
-        else if (field->Type.BitMask & 0x0000ff00) ec.AddStatement(OPC_Bool1FieldValue, field, (int)(field->Type.BitMask >> 8));
-        else if (field->Type.BitMask & 0x00ff0000) ec.AddStatement(OPC_Bool2FieldValue, field, (int)(field->Type.BitMask >> 16));
-        else ec.AddStatement(OPC_Bool3FieldValue, field, (int)(field->Type.BitMask >> 24));
+             if (field->Type.BitMask&0x000000ff) ec.AddStatement(OPC_Bool0FieldValue, field, (int)(field->Type.BitMask));
+        else if (field->Type.BitMask&0x0000ff00) ec.AddStatement(OPC_Bool1FieldValue, field, (int)(field->Type.BitMask>>8));
+        else if (field->Type.BitMask&0x00ff0000) ec.AddStatement(OPC_Bool2FieldValue, field, (int)(field->Type.BitMask>>16));
+        else ec.AddStatement(OPC_Bool3FieldValue, field, (int)(field->Type.BitMask>>24));
         break;
       case TYPE_Pointer:
       case TYPE_Reference:

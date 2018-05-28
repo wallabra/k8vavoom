@@ -213,7 +213,14 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
 
     VField *field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
     if (field) {
-      VExpression *e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
+      VExpression *e;
+      // "normal" access: call delegate (if it is operand-less)
+      if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
+        //fprintf(stderr, "*** SNAME! %s\n", *field->Name);
+        e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
+      } else {
+        e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
+      }
       delete this;
       return e->Resolve(ec);
     }
