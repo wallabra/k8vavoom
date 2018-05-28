@@ -88,7 +88,7 @@ void VAssignment::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VAssignment::DoResolve (VEmitContext &ec) {
   if (op1) op1 = op1->ResolveAssignmentTarget(ec);
-  if (op2) op2 = (op1 && op1->Type.Type == TYPE_Float ? op2->ResolveFloat(ec) : op2->Resolve(ec));
+  if (op2) op2 = (op1 && op1->Type.Type == TYPE_Float ? op2->ResolveFloat(ec) : op2->ResolveAssignmentValue(ec));
 
   if (!op1 || !op2) { delete this; return nullptr; }
 

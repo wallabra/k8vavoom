@@ -151,7 +151,7 @@ VExpression *VDotField::SyntaxCopy () {
 //  VDotField::InternalResolve
 //
 //==========================================================================
-VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
+VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType assType) {
   // we need a copy in case this is a pointer thingy
   auto opcopy = (op ? op->SyntaxCopy() : nullptr);
 
@@ -181,16 +181,36 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
   }
 
   if (op->Type.Type == TYPE_Reference) {
-    // we never ever need opcopy here
-    delete opcopy;
-
     VMethod *M = op->Type.Class->FindMethod(FieldName);
     if (M) {
-      VExpression *e = new VDelegateVal(op, M, Loc);
-      op = nullptr;
+      if (M->Flags&FUNC_Iterator) {
+        ParseError(Loc, "Iterator methods can only be used in foreach statements");
+        delete opcopy;
+        delete this;
+        return nullptr;
+      }
+      VExpression *e;
+      // `dg = dgname`?
+      if (assType == AssType::AssValue) {
+        // yes
+        e = new VDelegateVal(op, M, Loc);
+        op = nullptr;
+        delete opcopy;
+      } else {
+        // no; rewrite as invoke
+        if ((M->Flags&FUNC_Static) != 0) {
+          delete opcopy;
+          e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
+        } else {
+          e = new VInvocation(opcopy, M, nullptr, true, false, Loc, 0, nullptr);
+        }
+      }
       delete this;
       return e->Resolve(ec);
     }
+
+    // we never ever need opcopy here
+    delete opcopy;
 
     VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
     if (field) {
@@ -202,7 +222,7 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
 
     VProperty *Prop = op->Type.Class->FindProperty(FieldName);
     if (Prop) {
-      if (AssignTarget) {
+      if (assType == AssType::AssTarget) {
         if (!Prop->SetFunc) {
           ParseError(Loc, "Property %s cannot be set", *FieldName);
           delete this;
@@ -247,7 +267,7 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
     VFieldType type = op->Type;
     if (!type.Struct) {
       // convert to method, 'cause why not?
-      if (!AssignTarget) {
+      if (assType == AssType::Normal) {
         VExpression *ufcsArgs[1];
         ufcsArgs[0] = opcopy;
         VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
@@ -282,7 +302,7 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
     if (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length) {
-      if (AssignTarget) {
+      if (assType == AssType::AssTarget) {
         VExpression *e = new VDynArraySetNum(op, nullptr, Loc);
         op = nullptr;
         delete this;
@@ -303,7 +323,7 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
   if (op->Type.Type == TYPE_String) {
     delete opcopy; // we never ever need opcopy here
     if (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length) {
-      if (AssignTarget) {
+      if (assType == AssType::AssTarget) {
         ParseError(Loc, "Cannot change string length via assign yet.");
         delete this;
         return nullptr;
@@ -324,7 +344,7 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
   }
 
   // convert to method, 'cause why not?
-  if (!AssignTarget) {
+  if (assType == AssType::Normal) {
     // Class.Method -- for static methods
     if (op->Type.Type == TYPE_Class) {
       delete opcopy; // we never ever need opcopy here
@@ -353,15 +373,14 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
       VExpression *e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
       delete this;
       return e->Resolve(ec);
-    } else {
-      // convert to `func(op)`
-      VExpression *ufcsArgs[1];
-      ufcsArgs[0] = opcopy;
-      if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
-        VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
-        delete this;
-        return call->Resolve(ec);
-      }
+    }
+    // convert to `func(op)`
+    VExpression *ufcsArgs[1];
+    ufcsArgs[0] = opcopy;
+    if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
+      VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
+      delete this;
+      return call->Resolve(ec);
     }
   }
 
@@ -378,7 +397,7 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
 //
 //==========================================================================
 VExpression *VDotField::DoResolve (VEmitContext& ec) {
-  return InternalResolve(ec, false);
+  return InternalResolve(ec, AssType::Normal);
 }
 
 
@@ -388,7 +407,17 @@ VExpression *VDotField::DoResolve (VEmitContext& ec) {
 //
 //==========================================================================
 VExpression *VDotField::ResolveAssignmentTarget (VEmitContext& ec) {
-  return InternalResolve(ec, true);
+  return InternalResolve(ec, AssType::AssTarget);
+}
+
+
+//==========================================================================
+//
+//  VDotField::ResolveAssignmentValue
+//
+//==========================================================================
+VExpression *VDotField::ResolveAssignmentValue (VEmitContext& ec) {
+  return InternalResolve(ec, AssType::AssValue);
 }
 
 

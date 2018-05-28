@@ -171,7 +171,7 @@ void VSingleName::DoSyntaxCopyTo (VExpression *e) {
 //  VSingleName::InternalResolve
 //
 //==========================================================================
-VExpression *VSingleName::InternalResolve (VEmitContext &ec, bool AssignTarget) {
+VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssType assType) {
   int num = ec.CheckForLocalVar(Name);
   if (num != -1) {
     VExpression *e = new VLocalVar(num, Loc);
@@ -189,7 +189,24 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, bool AssignTarget) 
 
     VMethod *M = ec.SelfClass->FindMethod(Name);
     if (M) {
-      VExpression *e = new VDelegateVal((new VSelf(Loc))->Resolve(ec), M, Loc);
+      if (M->Flags&FUNC_Iterator) {
+        ParseError(Loc, "Iterator methods can only be used in foreach statements");
+        delete this;
+        return nullptr;
+      }
+      VExpression *e;
+      // `dg = dgname`?
+      if (assType == AssType::AssValue) {
+        // yes
+        e = new VDelegateVal((new VSelf(Loc))->Resolve(ec), M, Loc);
+      } else {
+        // no; rewrite as invoke
+        if ((M->Flags&FUNC_Static) != 0) {
+          e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
+        } else {
+          e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
+        }
+      }
       delete this;
       return e->Resolve(ec);
     }
@@ -203,7 +220,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, bool AssignTarget) 
 
     VProperty *Prop = ec.SelfClass->FindProperty(Name);
     if (Prop) {
-      if (AssignTarget) {
+      if (assType == AssType::AssTarget) {
         if (ec.InDefaultProperties) {
           if (!Prop->DefaultField) {
             ParseError(Loc, "Property %s has no default field set", *Name);
@@ -277,7 +294,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, bool AssignTarget) 
 //
 //==========================================================================
 VExpression *VSingleName::DoResolve (VEmitContext &ec) {
-  return InternalResolve(ec, false);
+  return InternalResolve(ec, AssType::Normal);
 }
 
 
@@ -287,7 +304,17 @@ VExpression *VSingleName::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 VExpression *VSingleName::ResolveAssignmentTarget (VEmitContext &ec) {
-  return InternalResolve(ec, true);
+  return InternalResolve(ec, AssType::AssTarget);
+}
+
+
+//==========================================================================
+//
+//  VSingleName::ResolveAssignmentValue
+//
+//==========================================================================
+VExpression *VSingleName::ResolveAssignmentValue (VEmitContext &ec) {
+  return InternalResolve(ec, AssType::AssValue);
 }
 
 

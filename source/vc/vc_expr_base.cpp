@@ -181,6 +181,16 @@ VExpression *VExpression::ResolveAssignmentTarget (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VExpression::ResolveAssignmentValue
+//
+//==========================================================================
+VExpression *VExpression::ResolveAssignmentValue (VEmitContext &ec) {
+  return Resolve(ec);
+}
+
+
+//==========================================================================
+//
 //  VExpression::ResolveIterator
 //
 //==========================================================================

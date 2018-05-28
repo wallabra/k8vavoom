@@ -53,14 +53,18 @@ protected:
 //
 //==========================================================================
 class VSingleName : public VExpression {
+private:
+  enum AssType { Normal, AssTarget, AssValue };
+
 public:
   VName Name;
 
   VSingleName (VName, const TLocation &);
   virtual VExpression *SyntaxCopy () override;
-  VExpression *InternalResolve (VEmitContext &, bool);
+  VExpression *InternalResolve (VEmitContext &ec, AssType assType);
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &) override;
+  virtual VExpression *ResolveAssignmentValue (VEmitContext &) override;
   virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual bool IsValidTypeExpression () const override;

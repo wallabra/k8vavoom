@@ -67,13 +67,17 @@ protected:
 //
 //==========================================================================
 class VDotField : public VFieldBase {
+private:
+  enum AssType { Normal, AssTarget, AssValue };
+
 public:
   VDotField (VExpression *AOp, VName AFieldName, const TLocation& ALoc);
 
-  VExpression *InternalResolve (VEmitContext &, bool);
+  VExpression *InternalResolve (VEmitContext &ec, AssType assType);
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &) override;
+  virtual VExpression *ResolveAssignmentValue (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
 protected:

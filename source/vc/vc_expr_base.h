@@ -49,6 +49,7 @@ public:
   VExpression *CoerceToFloat (); // expression *MUST* be already resolved
   virtual VTypeExpr *ResolveAsType (VEmitContext &ec);
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &ec);
+  virtual VExpression *ResolveAssignmentValue (VEmitContext &ec);
   virtual VExpression *ResolveIterator (VEmitContext &ec);
   virtual void RequestAddressOf ();
   virtual void Emit (VEmitContext &ec) = 0;
