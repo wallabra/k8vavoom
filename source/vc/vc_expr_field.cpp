@@ -325,12 +325,43 @@ VExpression *VDotField::InternalResolve (VEmitContext& ec, bool AssignTarget) {
 
   // convert to method, 'cause why not?
   if (!AssignTarget) {
-    VExpression *ufcsArgs[1];
-    ufcsArgs[0] = opcopy;
-    if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
-      VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
+    // Class.Method -- for static methods
+    if (op->Type.Type == TYPE_Class) {
+      delete opcopy; // we never ever need opcopy here
+      if (!op->Type.Class) {
+        ParseError(Loc, "Class name expected at the left side of `.`");
+        delete this;
+        return nullptr;
+      }
+      VMethod *M = op->Type.Class->FindMethod(FieldName);
+      if (!M) {
+        ParseError(Loc, "Method `%s` not found in class `%s`", *FieldName, op->Type.Class->GetName());
+        delete this;
+        return nullptr;
+      }
+      if (M->Flags&FUNC_Iterator) {
+        ParseError(Loc, "Iterator methods can only be used in foreach statements");
+        delete this;
+        return nullptr;
+      }
+      if ((M->Flags&FUNC_Static) == 0) {
+        ParseError(Loc, "Only static methods can be called with this syntax");
+        delete this;
+        return nullptr;
+      }
+      // statics has no self
+      VExpression *e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
       delete this;
-      return call->Resolve(ec);
+      return e->Resolve(ec);
+    } else {
+      // convert to `func(op)`
+      VExpression *ufcsArgs[1];
+      ufcsArgs[0] = opcopy;
+      if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
+        VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
+        delete this;
+        return call->Resolve(ec);
+      }
     }
   }
 
