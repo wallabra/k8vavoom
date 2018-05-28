@@ -352,7 +352,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   }
 
   // convert to method, 'cause why not?
-  if (assType == AssType::Normal) {
+  if (assType != AssType::AssTarget) {
     // Class.Method -- for static methods
     if (op->Type.Type == TYPE_Class) {
       delete opcopy; // we never ever need opcopy here
