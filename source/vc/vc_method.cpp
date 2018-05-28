@@ -379,11 +379,11 @@ void VMethod::DumpAsm () {
         break;
       case OPCARGS_Name:
         // name
-        dprintf("\'%s\'", *Instructions[s].NameArg);
+        dprintf(" \'%s\'", *Instructions[s].NameArg);
         break;
       case OPCARGS_String:
         // string
-        dprintf("\"%s\"", &Package->Strings[Instructions[s].Arg1]);
+        dprintf(" \"%s\"", &Package->Strings[Instructions[s].Arg1]);
         break;
       case OPCARGS_FieldOffset:
         dprintf(" %s", *Instructions[s].Member->Name);
