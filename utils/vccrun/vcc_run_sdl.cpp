@@ -311,8 +311,8 @@ void VVideoMode::runEventLoop () {
 IMPLEMENT_FUNCTION(VVideoMode, canInit) { RET_BOOL(VVideoMode::canInit()); }
 IMPLEMENT_FUNCTION(VVideoMode, hasOpenGL) { RET_BOOL(VVideoMode::hasOpenGL()); }
 IMPLEMENT_FUNCTION(VVideoMode, isInitialized) { RET_BOOL(VVideoMode::isInitialized()); }
-IMPLEMENT_FUNCTION(VVideoMode, getWidth) { RET_INT(VVideoMode::getWidth()); }
-IMPLEMENT_FUNCTION(VVideoMode, getHeight) { RET_INT(VVideoMode::getHeight()); }
+IMPLEMENT_FUNCTION(VVideoMode, width) { RET_INT(VVideoMode::getWidth()); }
+IMPLEMENT_FUNCTION(VVideoMode, height) { RET_INT(VVideoMode::getHeight()); }
 
 IMPLEMENT_FUNCTION(VVideoMode, close) { VVideoMode::close(); }
 

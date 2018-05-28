@@ -3,8 +3,8 @@ class VideoMode : Object abstract native;
 native final static bool canInit ();
 native final static bool hasOpenGL ();
 native final static bool isInitialized ();
-native final static int getWidth ();
-native final static int getHeight ();
+native final static int width ();
+native final static int height ();
 
 native final static bool open (string winname, int width, int height);
 native final static void close ();
