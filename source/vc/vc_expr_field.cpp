@@ -536,7 +536,7 @@ void VFieldAccess::Emit (VEmitContext& ec) {
 //  VDelegateVal::VDelegateVal
 //
 //==========================================================================
-VDelegateVal::VDelegateVal (VExpression *AOp, VMethod *AM, const TLocation& ALoc)
+VDelegateVal::VDelegateVal (VExpression *AOp, VMethod *AM, const TLocation &ALoc)
   : VExpression(ALoc)
   , op(AOp)
   , M(AM)
@@ -587,7 +587,7 @@ void VDelegateVal::DoSyntaxCopyTo (VExpression *e) {
 //  VDelegateVal::DoResolve
 //
 //==========================================================================
-VExpression *VDelegateVal::DoResolve (VEmitContext&) {
+VExpression *VDelegateVal::DoResolve (VEmitContext &) {
   Type = TYPE_Delegate;
   Type.Function = M;
   return this;
@@ -599,7 +599,8 @@ VExpression *VDelegateVal::DoResolve (VEmitContext&) {
 //  VDelegateVal::Emit
 //
 //==========================================================================
-void VDelegateVal::Emit (VEmitContext& ec) {
+void VDelegateVal::Emit (VEmitContext &ec) {
+  if (!op) return;
   op->Emit(ec);
   ec.AddStatement(OPC_PushVFunc, M);
 }
