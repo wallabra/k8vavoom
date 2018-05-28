@@ -1,0 +1,15 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Test : Object abstract;
+
+final static int foo () { return 42; }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+final static int boo () { return 666; }
+
+final static void main () {
+  print("%d", Test.foo);
+  print("%d", boo);
+}

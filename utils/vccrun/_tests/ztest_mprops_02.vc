@@ -1,0 +1,32 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Test : Object;
+
+final static int foo () { return 42; }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+int field;
+
+int boo () { return field; }
+
+delegate int dgfld ();
+
+
+void main () {
+  print("%d", Test.foo);
+  print("%d", self.boo);
+  print("%d", boo);
+  dgfld = self.boo;
+  print("dg0: %d", dgfld());
+  dgfld = boo;
+  print("dg1: %d", dgfld);
+  dgfld = dgfld;
+  print("dg2: %d", dgfld);
+}
+
+
+defaultproperties {
+  field = 666;
+}
