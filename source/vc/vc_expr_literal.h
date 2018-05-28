@@ -180,3 +180,28 @@ protected:
   VDollar () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
+
+//==========================================================================
+//
+//  VLambda
+//
+//==========================================================================
+class VLambda : public VExpression {
+public:
+  VExpression *ReturnTypeExpr;
+  vint32 NumParams;
+  VMethodParam Params[VMethod::MAX_PARAMS];
+  VStatement *body;
+
+public:
+  VLambda (const TLocation &);
+  virtual ~VLambda () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VLambda () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};

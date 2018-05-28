@@ -776,8 +776,14 @@ VExpression *VParser::ParseExpressionPriority14 () {
   else if (Lex.Check(TK_LShiftAssign)) oper = VAssignment::LShiftAssign;
   else if (Lex.Check(TK_RShiftAssign)) oper = VAssignment::RShiftAssign;
   else return op1;
-  VExpression *op2 = ParseExpressionPriority13();
-  return new VAssignment(oper, op1, op2, l);
+  // parse `n = delegate ...`
+  if (oper == VAssignment::Assign && Lex.Check(TK_Delegate)) {
+    VExpression *op2 = ParseLambda();
+    return new VAssignment(oper, op1, op2, l);
+  } else {
+    VExpression *op2 = ParseExpressionPriority13();
+    return new VAssignment(oper, op1, op2, l);
+  }
   unguard;
 }
 
@@ -1211,6 +1217,62 @@ void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
   Delegate->Func = Func;
   Delegate->Type = VFieldType(TYPE_Delegate);
   Delegate->Type.Function = Func;
+  unguard;
+}
+
+
+//==========================================================================
+//
+// VParser::ParseLambda
+//
+//==========================================================================
+VExpression *VParser::ParseLambda () {
+  guard(VParser::ParseLambda);
+
+  TLocation stl = Lex.Location;
+  VExpression *Type = ParseType();
+  if (!Type) { ParseError(Lex.Location, "Return type expected."); return new VNullLiteral(stl); }
+  TLocation l = Lex.Location;
+  while (Lex.Check(TK_Asterisk)) {
+    Type = new VPointerType(Type, l);
+    l = Lex.Location;
+  }
+
+  if (Lex.Token != TK_LParen) { ParseError(Lex.Location, "Argument list"); delete Type; return new VNullLiteral(stl); }
+
+  VLambda *lmb = new VLambda(stl);
+  lmb->ReturnTypeExpr = Type;
+
+  Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
+  if (Lex.Token != TK_RParen) {
+    for (;;) {
+      VMethodParam param;
+      param.TypeExpr = ParseType();
+      if (!param.TypeExpr) break;
+      TLocation l = Lex.Location;
+      while (Lex.Check(TK_Asterisk)) {
+        param.TypeExpr = new VPointerType(param.TypeExpr, l);
+        l = Lex.Location;
+      }
+      if (Lex.Token == TK_Identifier) {
+        param.Name = Lex.Name;
+        param.Loc = Lex.Location;
+        Lex.NextToken();
+      }
+      if (lmb->NumParams == VMethod::MAX_PARAMS) {
+        delete param.TypeExpr;
+        ParseError(Lex.Location, "Method parameters overflow");
+        continue;
+      }
+      lmb->Params[lmb->NumParams++] = param;
+      if (Lex.Token == TK_RParen) break;
+      Lex.Expect(TK_Comma, ERR_MISSING_RPAREN);
+    }
+  }
+  Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+  if (Lex.Token != TK_LBrace) { Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE); return lmb; }
+  lmb->body = ParseStatement();
+  return lmb;
   unguard;
 }
 
