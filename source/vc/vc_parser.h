@@ -28,6 +28,8 @@ class VParser
 private:
   VLexer& Lex;
   VPackage *Package;
+  VMethod *currFunc; // for lambdas
+  VClass *currClass; // for lambdas
   bool CheckForLocal;
 
   // not more than `MAX_PARAMS`; returns argc

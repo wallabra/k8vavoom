@@ -1176,7 +1176,10 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
       Lex.Expect(TK_RParen);
     }
     Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
+    auto oldcf = currFunc;
+    currFunc = Func;
     Func->Statement = ParseCompoundStatement();
+    currFunc = oldcf;
   }
   unguard;
 }
@@ -1230,6 +1233,10 @@ VExpression *VParser::ParseLambda () {
   guard(VParser::ParseLambda);
 
   TLocation stl = Lex.Location;
+
+  if (!currFunc) { ParseError(stl, "Lambda outside of method"); return new VNullLiteral(stl); }
+  if (!currClass) { ParseError(stl, "Lambda outside of class"); return new VNullLiteral(stl); }
+
   VExpression *Type = ParseType();
   if (!Type) { ParseError(Lex.Location, "Return type expected."); return new VNullLiteral(stl); }
   TLocation l = Lex.Location;
@@ -1240,8 +1247,14 @@ VExpression *VParser::ParseLambda () {
 
   if (Lex.Token != TK_LParen) { ParseError(Lex.Location, "Argument list"); delete Type; return new VNullLiteral(stl); }
 
-  VLambda *lmb = new VLambda(stl);
-  lmb->ReturnTypeExpr = Type;
+  VStr newname = VStr(*currFunc->Name)+"-lambda-"+VStr(currFunc->lmbCount++);
+  VName lname = VName(*newname);
+  //fprintf(stderr, "*** LAMBDA: <%s>\n", *lname);
+
+  VMethod *Func = new VMethod(lname, currClass, stl);
+  Func->Flags = 0;
+  Func->ReturnTypeExpr = Type;
+  currClass->AddMethod(Func);
 
   Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
   if (Lex.Token != TK_RParen) {
@@ -1259,20 +1272,30 @@ VExpression *VParser::ParseLambda () {
         param.Loc = Lex.Location;
         Lex.NextToken();
       }
-      if (lmb->NumParams == VMethod::MAX_PARAMS) {
+      if (Func->NumParams == VMethod::MAX_PARAMS) {
         delete param.TypeExpr;
         ParseError(Lex.Location, "Method parameters overflow");
         continue;
       }
-      lmb->Params[lmb->NumParams++] = param;
+      Func->Params[Func->NumParams++] = param;
       if (Lex.Token == TK_RParen) break;
       Lex.Expect(TK_Comma, ERR_MISSING_RPAREN);
     }
   }
   Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-  if (Lex.Token != TK_LBrace) { Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE); return lmb; }
-  lmb->body = ParseStatement();
-  return lmb;
+  if (Lex.Token != TK_LBrace) { Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE); return new VNullLiteral(stl); }
+  auto oldcfn = currFunc;
+  currFunc = Func;
+  Func->Statement = ParseStatement();
+  currFunc = oldcfn;
+
+  if ((currFunc->Flags&FUNC_Static) != 0) {
+    ParseError(stl, "Lambdas aren't allowed in static methods");
+  } else if ((currFunc->Flags&(FUNC_Final|FUNC_Override)) == FUNC_Final) {
+    ParseError(stl, "Lambdas aren't allowed in non-virtual methods");
+  }
+
+  return new VDelegateVal(new VSelf(stl), Func, stl);
   unguard;
 }
 
@@ -1826,6 +1849,9 @@ void VParser::ParseClass () {
   Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
 
   // parse class definitions
+  auto oldcc = currClass;
+  currClass = Class;
+
   bool skipDefaultProperties = false;
   while (!Lex.Check(TK_DefaultProperties)) {
     if (Lex.Check(TK_EOF)) { skipDefaultProperties = true; break; }
@@ -2078,6 +2104,8 @@ void VParser::ParseClass () {
   }
 
   ParseDefaultProperties(Class, !skipDefaultProperties);
+
+  currClass = oldcc;
 
   Package->ParsedClasses.Append(Class);
   unguard;

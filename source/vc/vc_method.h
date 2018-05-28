@@ -147,6 +147,7 @@ public:
   VMethodParam Params[MAX_PARAMS];
   VStatement *Statement;
   VName SelfTypeName;
+  vint32 lmbCount; // number of defined lambdas, used to create lambda names
 
   // run-time fields
   vuint32 Profile1;
