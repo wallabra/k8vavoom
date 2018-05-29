@@ -122,7 +122,7 @@ VTypeExpr *VTypeExpr::ResolveAsType (VEmitContext &) {
 //
 //==========================================================================
 void VTypeExpr::Emit (VEmitContext &) {
-  ParseError(Loc, "Should not happen");
+  ParseError(Loc, "Should not happen (VTypeExpr)");
 }
 
 

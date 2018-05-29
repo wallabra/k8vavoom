@@ -204,7 +204,8 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
         if ((M->Flags&FUNC_Static) != 0) {
           e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
         } else {
-          e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
+          //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
+          e = new VDotInvocation(new VSelf(Loc), Name, Loc, 0, nullptr);
         }
       }
       delete this;
@@ -356,7 +357,7 @@ VTypeExpr *VSingleName::ResolveAsType (VEmitContext &ec) {
 //
 //==========================================================================
 void VSingleName::Emit (VEmitContext &) {
-  ParseError(Loc, "Should not happen");
+  ParseError(Loc, "Should not happen (VSingleName)");
 }
 
 
@@ -471,7 +472,7 @@ VTypeExpr *VDoubleName::ResolveAsType (VEmitContext &) {
 //
 //==========================================================================
 void VDoubleName::Emit (VEmitContext &) {
-  ParseError(Loc, "Should not happen");
+  ParseError(Loc, "Should not happen (VDoubleName)");
 }
 
 

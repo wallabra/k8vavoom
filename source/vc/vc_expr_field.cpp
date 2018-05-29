@@ -119,7 +119,7 @@ VExpression* VPointerField::DoResolve (VEmitContext& ec) {
 //
 //==========================================================================
 void VPointerField::Emit (VEmitContext &) {
-  ParseError(Loc, "Should not happen");
+  ParseError(Loc, "Should not happen (VPointerField)");
 }
 
 
@@ -183,6 +183,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   if (op->Type.Type == TYPE_Reference) {
     VMethod *M = op->Type.Class->FindMethod(FieldName);
     if (M) {
+      //fprintf(stderr, "DOTFIELD: <%s> {%s} %u\n", *FieldName, *op->Type.GetName(), op->Type.Type);
       if (M->Flags&FUNC_Iterator) {
         ParseError(Loc, "Iterator methods can only be used in foreach statements");
         delete opcopy;
@@ -202,7 +203,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
           delete opcopy;
           e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
         } else {
-          e = new VInvocation(opcopy, M, nullptr, true, false, Loc, 0, nullptr);
+          e = new VDotInvocation(opcopy, FieldName, Loc, 0, nullptr);
         }
       }
       delete this;
@@ -435,7 +436,7 @@ VExpression *VDotField::ResolveAssignmentValue (VEmitContext& ec) {
 //
 //==========================================================================
 void VDotField::Emit (VEmitContext&) {
-  ParseError(Loc, "Should not happen");
+  ParseError(Loc, "Should not happen (VDotField)");
 }
 
 

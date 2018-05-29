@@ -125,7 +125,7 @@ VExpression *VBaseInvocation::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VBaseInvocation::Emit (VEmitContext &) {
   guard(VBaseInvocation::Emit);
-  ParseError(Loc, "Should not happen");
+  ParseError(Loc, "Should not happen (VBaseInvocation)");
   unguard;
 }
 
@@ -245,7 +245,7 @@ VExpression *VCastOrInvocation::ResolveIterator (VEmitContext &ec) {
 //
 //==========================================================================
 void VCastOrInvocation::Emit (VEmitContext &) {
-  ParseError(Loc, "Should not happen");
+  ParseError(Loc, "Should not happen (VCastOrInvocation)");
 }
 
 
@@ -461,7 +461,7 @@ VExpression *VDotInvocation::ResolveIterator (VEmitContext &ec) {
 //
 //==========================================================================
 void VDotInvocation::Emit (VEmitContext &) {
-  ParseError(Loc, "Should not happen");
+  ParseError(Loc, "Should not happen (VDotInvocation)");
 }
 
 

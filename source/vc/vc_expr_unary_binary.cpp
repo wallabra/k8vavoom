@@ -305,7 +305,7 @@ bool VUnaryMutator::AddDropResult () {
   switch (Oper) {
     case PreInc: case PostInc: Oper = Inc; break;
     case PreDec: case PostDec: Oper = Dec; break;
-    case Inc: case Dec: FatalError("Should not happen");
+    case Inc: case Dec: FatalError("Should not happen (inc/dec)");
   }
   Type = TYPE_Void;
   return true;
