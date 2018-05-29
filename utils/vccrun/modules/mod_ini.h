@@ -20,10 +20,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-#ifndef VCCRUN_INI_HEADER_FILE
-#define VCCRUN_INI_HEADER_FILE
+#ifndef VCCMOD_INI_HEADER_FILE
+#define VCCMOD_INI_HEADER_FILE
 
-#include "vcc_run.h"
+#include "../vcc_run.h"
 
 class VIniFile : public VObject {
   DECLARE_CLASS(VIniFile, VObject, 0)

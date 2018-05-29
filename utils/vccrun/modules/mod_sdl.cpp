@@ -24,7 +24,7 @@
 //**
 //**************************************************************************
 
-#include "vcc_run_sdl.h"
+#include "mod_sdl.h"
 
 #ifdef VCCRUN_HAS_SDL
 # include <SDL.h>

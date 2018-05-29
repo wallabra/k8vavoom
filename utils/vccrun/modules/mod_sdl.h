@@ -23,10 +23,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-#ifndef VCCRUN_SDL_HEADER_FILE
-#define VCCRUN_SDL_HEADER_FILE
+#ifndef VCCMOD_SDL_HEADER_FILE
+#define VCCMOD_SDL_HEADER_FILE
 
-#include "vcc_run.h"
+#include "../vcc_run.h"
 
 #ifdef VCCRUN_HAS_SDL
 
@@ -39,11 +39,6 @@ private:
   static int mWidth, mHeight;
 
 public:
-#ifdef VCCRUN_HAS_SDL
-#endif
-#ifdef VCCRUN_HAS_OPENGL
-#endif
-
   static bool canInit ();
   static bool hasOpenGL ();
   static bool isInitialized ();

@@ -130,10 +130,10 @@ if (ENABLE_VCCRUN)
     ${VCCRUN_FSYS_SOURCES}
     vcc_run.cpp
     vcc_run.h
-    vcc_run_sdl.h
-    vcc_run_sdl.cpp
-    vcc_run_ini.h
-    vcc_run_ini.cpp
+    modules/mod_ini.h
+    modules/mod_ini.cpp
+    modules/mod_sdl.h
+    modules/mod_sdl.cpp
   )
 
   set_target_properties(vcc_run PROPERTIES OUTPUT_NAME ../../vcc_run)
