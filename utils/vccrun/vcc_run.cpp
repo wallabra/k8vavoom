@@ -407,6 +407,18 @@ int main (int argc, char **argv) {
 
     ProcessArgs(argc, argv);
 
+    /*{
+      auto fl = fsysOpenFile("text/model");
+      auto sz = fl->TotalSize();
+      printf("SIZE: %d (%d)\n", sz, fl->Tell());
+      auto buf = new char[sz];
+      fl->Serialize(buf, sz);
+      delete fl;
+      auto fo = fsysOpenDiskFileWrite("_000.ini");
+      fo->Serialize(buf, sz);
+      delete fo;
+    }*/
+
     PR_Init();
 
     VPackage *CurrentPackage = new VPackage(VName("vccrun"));

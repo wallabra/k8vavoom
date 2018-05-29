@@ -121,6 +121,7 @@ if (ENABLE_VCCRUN)
     filesys/fsys.h
     filesys/fsys.cpp
     filesys/pak/zip.cpp
+    filesys/pak/dfwad.cpp
   )
 
   add_executable(vcc_run

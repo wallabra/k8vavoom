@@ -150,6 +150,7 @@ public:
 // takes ownership
 VZipFile::VZipFile (VStream *fstream, const VStr &aname)
   : zipFileName(aname)
+  , fileStream(nullptr)
   , files(nullptr)
   , fileCount(0)
 {
@@ -162,14 +163,8 @@ VZipFile::VZipFile (VStream *fstream, const VStr &aname)
 
 
 VZipFile::~VZipFile () {
-  if (files) {
-    delete[] files;
-    files = nullptr;
-  }
-  if (fileStream) {
-    delete fileStream;
-    fileStream = nullptr;
-  }
+  delete[] files;
+  delete fileStream;
 }
 
 
@@ -242,6 +237,8 @@ void VZipFile::openArchive () {
   for (int i = 0; i < fileCount; ++i) {
     VZipFileInfo &file_info = files[i];
 
+   again:
+    files[i].name = VStr();
     fileStream->Seek(pos_in_central_dir+bytesBeforeZipFile);
 
     vuint32 Magic;
@@ -255,40 +252,91 @@ void VZipFile::openArchive () {
     vuint32 external_fa; // external file attributes
 
     // we check the magic
+    *fileStream << Magic;
+
+    if (fileStream->IsError()) { fileCount = i; break; }
+
+    // digital signature?
+    if (Magic == 0x05054b50) {
+      // yes, skip it
+      vuint16 dslen;
+      *fileStream << dslen;
+      pos_in_central_dir += 4+dslen;
+      goto again;
+    }
+
+    if (Magic == 0x08074b50) {
+      pos_in_central_dir += 4+3*4;
+      goto again;
+    }
+
     *fileStream
-      << Magic
-      << version
-      << version_needed
-      << file_info.flag
-      << file_info.compression_method
-      << dosDate
+      << version // version made by
+      << version_needed // version needed to extract
+      << file_info.flag // general purpose bit flag (gflags)
+      << file_info.compression_method // compression method
+      << dosDate // last mod file time and date
       << file_info.crc
       << file_info.compressed_size
       << file_info.uncompressed_size
       << file_info.size_filename
-      << size_file_extra
-      << size_file_comment
-      << disk_num_start
-      << internal_fa
-      << external_fa
-      << file_info.offset_curfile;
+      << size_file_extra // extra field length
+      << size_file_comment // file comment length
+      << disk_num_start // disk number start
+      << internal_fa // internal file attributes (iattr)
+      << external_fa // external file attributes (attr)
+      << file_info.offset_curfile; // relative offset of local header
 
-    if (Magic != 0x02014b50) {
+    if (Magic != 0x02014b50 || fileStream->IsError()) {
       //fprintf(stderr, "FUCK! #%d: <%08x>\n", i, Magic);
       fileCount = i;
       break;
+    }
+
+    if (file_info.size_filename == 0 || (file_info.flag&0x2061) != 0 || (external_fa&0x58) != 0) {
+      // ignore this
+      // set the current file of the zipfile to the next file
+      pos_in_central_dir += SIZECENTRALDIRITEM+file_info.size_filename+size_file_extra+size_file_comment;
+      continue;
     }
 
     char *filename_inzip = new char[file_info.size_filename+1];
     filename_inzip[file_info.size_filename] = '\0';
     fileStream->Serialise(filename_inzip, file_info.size_filename);
     for (int f = 0; f < file_info.size_filename; ++f) if (filename_inzip[f] == '\\') filename_inzip[f] = '/';
-    //fprintf(stderr, "#%d: <%s>\n", i, filename_inzip);
-    //files[i].name = VStr(filename_inzip).toLowerCase1251().fixSlashes();
     files[i].name = VStr(filename_inzip);
     delete[] filename_inzip;
+    if (files[i].name.isUtf8Valid()) files[i].name = files[i].name.utf2win();
+    //fprintf(stderr, "NAME: <%s>\n", *files[i].name);
 
-    //fprintf(stderr, "  #%d: <%s>\n", i, *files[i].name);
+    if (fileStream->IsError()) { fileCount = i; break; }
+
+    // if we have extra field, parse it to get utf-8 name
+    int extraleft = size_file_extra;
+    while (extraleft >= 4) {
+      vuint16 eid;
+      vuint16 esize;
+      *fileStream << eid << esize;
+      extraleft -= esize+4;
+      //fprintf(stderr, " xtra: 0x%04x %u\n", eid, esize);
+      auto pos = fileStream->Tell();
+      // utf-8 name?
+      if (eid == 0x7075 && esize > 5) {
+        vuint8 ver;
+        vuint32 ecrc;
+        *fileStream << ver << ecrc;
+        //TODO: check crc
+        filename_inzip = new char[esize-5+1];
+        filename_inzip[esize-5] = 0;
+        fileStream->Serialise(filename_inzip, esize-5);
+        for (int f = 0; f < esize-5; ++f) if (filename_inzip[f] == '\\') filename_inzip[f] = '/';
+        files[i].name = VStr(filename_inzip).utf2win();
+        delete[] filename_inzip;
+        //fprintf(stderr, "  UTF: <%s>\n", *files[i].name);
+        break;
+      }
+      fileStream->Seek(pos+esize);
+    }
 
     if (files[i].name.length() == 0 || files[i].name.endsWith("/")) {
       files[i].name.clear();
@@ -426,11 +474,11 @@ VZipFileReader::VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, c
 
     int err = inflateInit2(&stream, -MAX_WBITS);
     if (err != Z_OK) {
-      /* windowBits is passed < 0 to tell that there is no zlib header.
+     /* windowBits is passed < 0 to tell that there is no zlib header.
       * Note that in this case inflate *requires* an extra "dummy" byte
       * after the compressed stream in order to complete decompression and
       * return Z_STREAM_END.
-      * In unzip, i don't wait absolutely Z_STREAM_END because I known the
+      * In unzip, i don't wait absolutely Z_STREAM_END because I know the
       * size of both compressed and uncompressed data
       */
       bError = true;

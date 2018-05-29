@@ -67,6 +67,21 @@ void FSysRegisterDriver (FSysOpenPakFn ldr, int prio) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static __attribute((unused)) inline vuint32 fnameHashBufCI (const VStr &str) {
+  size_t len = str.length();
+  if (len == 0) return 1;
+  // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
+  vuint32 hash = 2166136261U; // fnv offset basis
+  const vuint8 *s = (const vuint8 *)*str;
+  while (len-- > 0) {
+    vuint32 ch = VStr::locase1251(*s++);
+    hash ^= ch;
+    hash *= 16777619U; // 32-bit fnv prime
+  }
+  return (hash ? hash : 1); // this is unlikely, but...
+}
+
+
 FSysDriverBase::~FSysDriverBase () {
   delete htable;
   htable = nullptr;
@@ -83,7 +98,7 @@ void FSysDriverBase::buildNameHashTable () {
   htable = new HashTableEntry[dlen];
   for (int f = 0; f < dlen; ++f) htable[f] = HashTableEntry(); // just in case
   for (int idx = dlen-1; idx >= 0; --idx) {
-    vuint32 nhash = fnvHashBufCI(getNameByIndex(idx)); // never zero
+    vuint32 nhash = fnameHashBufCI(getNameByIndex(idx)); // never zero
     vuint32 hidx = nhash%(vuint32)dlen;
     if (htable[hidx].didx == 0xffffffffU) {
       // first item
@@ -111,7 +126,7 @@ void FSysDriverBase::buildNameHashTable () {
 
 // index or -1
 int FSysDriverBase::findName (const VStr &fname) const {
-  vuint32 nhash = fnvHashBufCI(fname);
+  vuint32 nhash = fnameHashBufCI(fname);
   vuint32 hidx = nhash%htableSize;
   while (hidx != 0xffffffffU && htable[hidx].hash != 0) {
     if (htable[hidx].hash == nhash) {
