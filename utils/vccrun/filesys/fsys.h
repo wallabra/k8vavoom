@@ -57,6 +57,9 @@ VStream *fsysOpenFile (const VStr &fname);
 VStream *fsysOpenDiskFileWrite (const VStr &fname);
 VStream *fsysOpenDiskFile (const VStr &fname);
 
+// find file with any extension
+VStr fsysFileFindAnyExt (const VStr &fname);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 class FSysDriverBase {
@@ -116,6 +119,8 @@ public:
   inline const VStr &getPrefix () const { return mPrefix; }
 
   virtual bool hasFile (const VStr &fname) const;
+
+  virtual VStr findFileWithAnyExt (const VStr &fname) const;
 
   // should return `nullptr` on failure
   virtual VStream *open (const VStr &fname) const;

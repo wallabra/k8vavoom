@@ -419,6 +419,11 @@ int main (int argc, char **argv) {
       delete fo;
     }*/
 
+    /*{
+      VStr s = fsysFileFindAnyExt("a.boo");
+      fprintf(stderr, "%s\n", *s);
+    }*/
+
     PR_Init();
 
     VPackage *CurrentPackage = new VPackage(VName("vccrun"));

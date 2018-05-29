@@ -23,6 +23,27 @@
 
 #include "fsys.h"
 
+#ifndef WIN32
+// normal OS
+# include <dirent.h>
+# include <fcntl.h>
+# include <signal.h>
+# include <time.h>
+# include <unistd.h>
+# include <sys/stat.h>
+# include <sys/time.h>
+#else
+// broken os
+# include <windows.h>
+# include <fcntl.h>
+# define ftime fucked_ftime
+# include <io.h>
+# undef ftime
+# include <direct.h>
+# include <sys/timeb.h>
+# include <sys/stat.h>
+#endif
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 VStr fsysBaseDir = VStr("./"); // always ends with "/" (fill be fixed by `fsysInit()` if necessary)
@@ -145,6 +166,19 @@ bool FSysDriverBase::hasFile (const VStr &fname) const {
 }
 
 
+VStr FSysDriverBase::findFileWithAnyExt (const VStr &fname) const {
+  if (fname.length() == 0) return VStr();
+  if (hasFile(fname)) return fname;
+  for (int f = getNameCount()-1; f >= 0; --f) {
+    VStr name = getNameByIndex(f);
+    if (name.length() < fname.length()) continue;
+    name = name.stripExtension();
+    if (name.length() != fname.length()) continue;
+    if (name.equ1251CI(fname)) return getNameByIndex(f);
+  }
+  return VStr();
+}
+
 VStream *FSysDriverBase::open (const VStr &fname) const {
   int idx = findName(fname);
   if (idx < 0) return nullptr;
@@ -222,6 +256,7 @@ public:
 
   virtual bool hasFile (const VStr &fname) const;
   virtual VStream *open (const VStr &fname) const;
+  virtual VStr findFileWithAnyExt (const VStr &fname) const override;
 };
 
 
@@ -244,6 +279,32 @@ bool FSysDriverDisk::hasFile (const VStr &fname) const {
   if (!fl) return false;
   fclose(fl);
   return true;
+}
+
+VStr FSysDriverDisk::findFileWithAnyExt (const VStr &fname) const {
+  if (fname.length() == 0) return VStr();
+  if (hasFile(fname)) return fname;
+#ifndef WIN32
+  VStr path = fsysBaseDir+fname.extractFilePath();
+  if (path.length() == 0) path = ".";
+  if (!path.endsWith("/")) path += "/";
+  DIR *dir = opendir(*path);
+  if (!dir) return VStr();
+  for (;;) {
+    struct dirent *de = readdir(dir);
+    if (!de) break;
+    if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0) continue;
+    VStr xname = path+de->d_name;
+    VStr yname = xname.mid(fsysBaseDir.length(), xname.length());
+    if (yname.equ1251CI(fname)) {
+      auto fl = fopen(*xname, "rb");
+      if (fl) { fclose(fl); return yname; }
+    }
+    //fprintf(stderr, "<%s>\n", *yname);
+  }
+  closedir(dir);
+#endif
+  return VStr();
 }
 
 VStream *FSysDriverDisk::open (const VStr &fname) const {
@@ -367,6 +428,39 @@ VStream *fsysOpenDiskFile (const VStr &fname) {
   FILE *fl = fopen(*fname, "rb");
   if (!fl) return nullptr;
   return new VStreamDiskFile(fl, fname);
+}
+
+
+// find file with any extension
+static VStr fsysFileFindAnyExtInternal (const VStr &fname) {
+  if (openPakCount == 0) fsysInit();
+  if (fsysFileExists(fname)) return fname;
+  // try basedir first, if the corresponding flag is set
+  if (fsysDiskFirst) {
+    auto res = openPaks[0]->findFileWithAnyExt(fname);
+    if (res.length()) return res;
+  }
+  // do other paks
+  for (int f = openPakCount-1; f > 0; --f) {
+    auto res = openPaks[f]->findFileWithAnyExt(fname);
+    if (res.length()) return res;
+  }
+  // try basedir last, if the corresponding flag is set
+  if (!fsysDiskFirst) {
+    auto res = openPaks[0]->findFileWithAnyExt(fname);
+    if (res.length()) return res;
+  }
+  return VStr();
+}
+
+
+VStr fsysFileFindAnyExt (const VStr &fname) {
+  if (fname.length() == 0) return VStr();
+  VStr res = fsysFileFindAnyExtInternal(fname);
+  if (res.length()) return res;
+  VStr f2 = fname.stripExtension();
+  if (f2.length() == fname.length()) return VStr();
+  return fsysFileFindAnyExtInternal(f2);
 }
 
 
@@ -716,14 +810,6 @@ bool VZipStreamWriter::Close () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 #ifndef WIN32
-// normal OS
-#include <dirent.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <time.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/time.h>
 
 
 static DIR *current_dir = nullptr;
@@ -786,15 +872,6 @@ double fsysCurrTick () {
 }
 
 #else
-// broken os
-#include <windows.h>
-#include <fcntl.h>
-#define ftime fucked_ftime
-#include <io.h>
-#undef ftime
-#include <direct.h>
-#include <sys/timeb.h>
-#include <sys/stat.h>
 
 static HANDLE dir_handle = INVALID_HANDLE_VALUE;
 static WIN32_FIND_DATA dir_buf;
