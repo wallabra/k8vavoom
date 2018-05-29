@@ -132,6 +132,8 @@ if (ENABLE_VCCRUN)
     vcc_run.h
     vcc_run_sdl.h
     vcc_run_sdl.cpp
+    vcc_run_ini.h
+    vcc_run_ini.cpp
   )
 
   set_target_properties(vcc_run PROPERTIES OUTPUT_NAME ../../vcc_run)

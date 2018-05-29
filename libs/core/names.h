@@ -352,6 +352,7 @@ REGISTER_NAME(Bright)
 REGISTER_NAME(Offset)
 
 REGISTER_NAME(VideoMode)
+REGISTER_NAME(IniFile)
 
 // Closing -----------------------------------------------------------------
 

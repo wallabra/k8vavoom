@@ -2,3 +2,4 @@
 #include "../../../../progs/common/engine/ScriptsParser.vc"
 
 #include "VideoMode.vc"
+#include "IniFile.vc"
