@@ -813,6 +813,9 @@ void VVideoMode::runEventLoop () {
     if (doGLSwap) {
       doGLSwap = false;
       SDL_GL_SwapWindow(hw_window);
+
+      VObject::CollectGarbage(); // why not?
+      //fprintf(stderr, "objc=%d\n", VObject::GetObjectsCount());
     }
   }
 }
