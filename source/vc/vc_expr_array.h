@@ -41,6 +41,7 @@ public:
 
   VArrayElement (VExpression *AOp, VExpression *AInd, const TLocation &ALoc);
   virtual ~VArrayElement () override;
+  VExpression *InternalResolve (VEmitContext &ec, bool assTarget);
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &) override;

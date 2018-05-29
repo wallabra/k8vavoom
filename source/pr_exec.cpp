@@ -650,23 +650,23 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VLocalValueB)
-        sp[0].f = ((TVec*)&local_vars[ip[1]])->x;
-        sp[1].f = ((TVec*)&local_vars[ip[1]])->y;
-        sp[2].f = ((TVec*)&local_vars[ip[1]])->z;
+        sp[0].f = ((TVec *)&local_vars[ip[1]])->x;
+        sp[1].f = ((TVec *)&local_vars[ip[1]])->y;
+        sp[2].f = ((TVec *)&local_vars[ip[1]])->z;
         ip += 2;
         sp += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_StrLocalValueB)
         sp->p = nullptr;
-        *(VStr*)&sp->p = *(VStr*)&local_vars[ip[1]];
+        *(VStr *)&sp->p = *(VStr *)&local_vars[ip[1]];
         ip += 2;
         ++sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Offset)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].p = (vuint8*)sp[-1].p+ReadInt32(ip+1);
+        sp[-1].p = (vuint8 *)sp[-1].p+ReadInt32(ip+1);
         ip += 5;
         PR_VM_BREAK;
 
@@ -1478,16 +1478,27 @@ func_loop:
       PR_VM_CASE(OPC_StrLength)
         {
           ++ip;
-          auto len = (*((VStr**)&sp[-1].p))->Length();
+          auto len = (*((VStr **)&sp[-1].p))->Length();
           //((VStr*)&sp[-1].p)->Clean();
           sp[-1].i = (int)len;
         }
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_StrGetChar)
+        {
+          ++ip;
+          int v = sp[-1].i;
+          v = (v >= 0 && (size_t)v < ((VStr *)&sp[-2].p)->length() ? (vuint8)(*((VStr *)&sp[-2].p))[v] : 0);
+          ((VStr *)&sp[-2].p)->Clean();
+          sp -= 1;
+          sp[-1].i = v;
+        }
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_AssignStrDrop)
         ++ip;
-        *(VStr*)sp[-2].p = *(VStr*)&sp[-1].p;
-        ((VStr*)&sp[-1].p)->Clean();
+        *(VStr *)sp[-2].p = *(VStr*)&sp[-1].p;
+        ((VStr *)&sp[-1].p)->Clean();
         sp -= 2;
         PR_VM_BREAK;
 

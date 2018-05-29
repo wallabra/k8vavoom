@@ -85,10 +85,10 @@ void VArrayElement::DoSyntaxCopyTo (VExpression *e) {
 
 //==========================================================================
 //
-//  VArrayElement::DoResolve
+//  VArrayElement::InternalResolve
 //
 //==========================================================================
-VExpression *VArrayElement::DoResolve (VEmitContext &ec) {
+VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
   // we need a copy in case this is a pointer thingy
   opcopy = (op ? op->SyntaxCopy() : nullptr);
 
@@ -114,7 +114,7 @@ VExpression *VArrayElement::DoResolve (VEmitContext &ec) {
   }
 
   // hack: allow indexing of pointers to dynamic arrays without `(*arr)`
-  if (op->Type.Type == TYPE_Pointer && op->Type.InnerType == TYPE_DynamicArray) {
+  if (op->Type.Type == TYPE_Pointer && (op->Type.InnerType == TYPE_DynamicArray || op->Type.InnerType == TYPE_String)) {
     delete op;
     op = nullptr;
     op = (new VPushPointed(opcopy))->Resolve(ec);
@@ -130,6 +130,15 @@ VExpression *VArrayElement::DoResolve (VEmitContext &ec) {
     Type = op->Type.GetArrayInnerType();
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
+  } else if (op->Type.Type == TYPE_String) {
+    if (assTarget) {
+      ParseError(Loc, "Strings are immutable (yet)");
+      delete this;
+      return nullptr;
+    } else {
+      RealType = op->Type;
+      Type = VFieldType(TYPE_Int);
+    }
   } else if (op->Type.Type == TYPE_Pointer) {
     Flags = 0;
     Type = op->Type.GetPointerInnerType();
@@ -147,12 +156,22 @@ VExpression *VArrayElement::DoResolve (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VArrayElement::DoResolve
+//
+//==========================================================================
+VExpression *VArrayElement::DoResolve (VEmitContext &ec) {
+  return InternalResolve(ec, false);
+}
+
+
+//==========================================================================
+//
 //  VArrayElement::ResolveAssignmentTarget
 //
 //==========================================================================
 VExpression* VArrayElement::ResolveAssignmentTarget (VEmitContext &ec) {
   IsAssign = true;
-  return Resolve(ec);
+  return InternalResolve(ec, true);
 }
 
 
@@ -162,7 +181,11 @@ VExpression* VArrayElement::ResolveAssignmentTarget (VEmitContext &ec) {
 //
 //==========================================================================
 void VArrayElement::RequestAddressOf () {
-  if (Flags&FIELD_ReadOnly) ParseError(op->Loc, "Tried to assign to a read-only field");
+  if (op->Type.Type == TYPE_String) {
+    ParseError(Loc, "Cannot get string element address");
+  } else {
+    if (Flags&FIELD_ReadOnly) ParseError(op->Loc, "Tried to assign to a read-only field");
+  }
   if (AddressRequested) ParseError(Loc, "Multiple address of");
   AddressRequested = true;
 }
@@ -181,6 +204,13 @@ void VArrayElement::Emit (VEmitContext &ec) {
       ec.AddStatement(OPC_DynArrayElementGrow, RealType);
     } else {
       ec.AddStatement(OPC_DynArrayElement, RealType);
+    }
+  } else if (op->Type.Type == TYPE_String) {
+    if (IsAssign) {
+      ParseError(Loc, "Strings are immutable (yet) -- codegen");
+    } else {
+      ec.AddStatement(OPC_StrGetChar);
+      return;
     }
   } else {
     ec.AddStatement(OPC_ArrayElement, RealType);
