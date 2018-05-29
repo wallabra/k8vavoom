@@ -26,6 +26,11 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+extern VImage *imagoLoadPNG (VStream *strm);
+extern VImage *imagoLoadTGA (VStream *strm);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct ImagoLoader {
   VImageLoaderFn ldr;
   VStr ext; // without dot
@@ -52,7 +57,7 @@ void ImagoRegisterLoader (const char *fmtext, const char *fmtdesc, VImageLoaderF
 
   desc = VStr(fmtdesc);
   ImagoLoader *prev = nullptr, *cur = loaders;
-  while (cur && cur->prio >= prio) {
+  while (cur && prio <= cur->prio) {
     prev = cur;
     cur = cur->next;
   }
@@ -188,6 +193,7 @@ VImage *VImage::loadFrom (VStream *strm, const VStr &name) {
   if (!strm) return nullptr;
   for (ImagoLoader *it = loaders; it; it = it->next) {
     strm->Seek(0);
+    //fprintf(stderr, ":: trying <%s>\n", *it->ext);
     VImage *res = it->ldr(strm);
     if (res) {
       res->name = name;
@@ -197,3 +203,16 @@ VImage *VImage::loadFrom (VStream *strm, const VStr &name) {
   }
   return nullptr;
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VLoaderReg {
+public:
+  VLoaderReg (int n) {
+    ImagoRegisterLoader("png", "Portable Network Graphics", &imagoLoadPNG);
+    ImagoRegisterLoader("tga", "Targa Image", &imagoLoadTGA, 600);
+  }
+};
+
+
+static VLoaderReg ldreg(666);

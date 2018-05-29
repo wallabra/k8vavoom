@@ -82,7 +82,7 @@ static bool pngReadIDAT (VStream &file, vuint8 *buffer, int width, int height, i
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VImage *loadPNG (VStream *strm) {
+VImage *imagoLoadPNG (VStream *strm) {
   if (!strm || strm->IsError()) return nullptr;
   strm->Seek(0);
   if (strm->IsError()) return nullptr;
@@ -759,6 +759,7 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const vuint8
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+/*
 class VPNGLoaderReg {
 public:
   VPNGLoaderReg (int n) { ImagoRegisterLoader("png", "Portable Network Graphics", &loadPNG); }
@@ -766,3 +767,4 @@ public:
 
 
 static VPNGLoaderReg ldreg(666);
+*/

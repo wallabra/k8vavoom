@@ -87,6 +87,7 @@ private:
   bool getHasPalette () const { return (mPalUsed > 0); }
   int getPalUsed () const { return mPalUsed; }
   const RGBA *getPalette () const { return mPalette; }
+  const vuint8 *getPixels () const { return mPixels; }
 
 public:
   PropertyRO<ImageType, VImage> format {this, &VImage::getFormat};
@@ -98,6 +99,7 @@ public:
   PropertyRO<bool, VImage> hasPalette {this, &VImage::getHasPalette}; // note that non-tc images can still be palette-less
   PropertyRO<int, VImage> palUsed {this, &VImage::getPalUsed};
   PropertyRO<const RGBA *, VImage> palette {this, &VImage::getPalette};
+  PropertyRO<const vuint8 *, VImage> pixels {this, &VImage::getPixels};
 
 private:
   VImage (const VImage &); // no copies

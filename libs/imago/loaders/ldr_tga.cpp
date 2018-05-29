@@ -51,7 +51,7 @@ struct tgaHeader_t {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VImage *loadTGA (VStream *strm) {
+VImage *imagoLoadTGA (VStream *strm) {
   if (!strm || strm->IsError()) return nullptr;
   strm->Seek(0);
   if (strm->IsError()) return nullptr;
@@ -59,6 +59,8 @@ static VImage *loadTGA (VStream *strm) {
 
   tgaHeader_t hdr;
   *strm << hdr;
+
+  fprintf(stderr, "trying TGA...\n");
 
   if ((hdr.pal_type != 0 && hdr.pal_type != 1) || hdr.width <= 0 ||
       hdr.height <= 0 || hdr.width > 2048 || hdr.height > 2048 ||
@@ -75,6 +77,7 @@ static VImage *loadTGA (VStream *strm) {
     return nullptr;
   }
 
+  fprintf(stderr, "loading TGA...\n");
   // load texture
   int count;
   int c;
@@ -364,6 +367,7 @@ static VImage *loadTGA (VStream *strm) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+/*
 class VTGALoaderReg {
 public:
   VTGALoaderReg (int n) { ImagoRegisterLoader("tga", "Targa Image", &loadTGA, 600); } // lesser priority
@@ -371,3 +375,4 @@ public:
 
 
 static VTGALoaderReg ldreg(666);
+*/
