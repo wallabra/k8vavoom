@@ -30,6 +30,10 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+VObject *mainObject = nullptr;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 __attribute__((noreturn, format(printf, 1, 2))) void Host_Error (const char *error, ...) {
   fprintf(stderr, "FATAL: ");
   va_list argPtr;
@@ -453,10 +457,10 @@ int main (int argc, char **argv) {
         int atp = checkArg(mmain);
         if (atp < 0) FatalError("Main::main() should be either arg-less, or have one `array!string*` argument, and should be either `void`, or return `int`!");
         auto sss = pr_stackPtr;
+        mainObject = VObject::StaticSpawnObject(mklass);
         if ((mmain->Flags&FUNC_Static) == 0) {
           //auto imain = Spawn<VLevel>();
-          auto imain = VObject::StaticSpawnObject(mklass);
-          P_PASS_REF((VObject*)imain);
+          P_PASS_REF((VObject *)mainObject);
         }
         if (atp&0x01) P_PASS_REF(&scargs);
         ret = VObject::ExecuteFunction(mmain);

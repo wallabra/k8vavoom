@@ -34,6 +34,8 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct event_t;
+
 class VVideoMode : public VObject {
   DECLARE_CLASS(VVideoMode, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VVideoMode)
@@ -41,6 +43,16 @@ class VVideoMode : public VObject {
 private:
   static bool mInited;
   static int mWidth, mHeight;
+  static bool doGLSwap;
+  static bool doRefresh;
+  static bool quitSignal;
+  static VMethod *onDrawVC;
+  static VMethod *onEventVC;
+
+private:
+  static void initMethods ();
+  static void onDraw ();
+  static void onEvent (event_t &evt);
 
 public:
   static bool canInit ();
@@ -51,6 +63,8 @@ public:
 
   static bool open (const VStr &winname, int width, int height);
   static void close ();
+
+  static void clear ();
 
   static void runEventLoop ();
 
@@ -64,7 +78,12 @@ public:
   DECLARE_FUNCTION(open)
   DECLARE_FUNCTION(close)
 
+  DECLARE_FUNCTION(clear)
+
   DECLARE_FUNCTION(runEventLoop)
+
+  DECLARE_FUNCTION(requestRefresh)
+  DECLARE_FUNCTION(requestQuit)
 };
 
 
@@ -78,6 +97,9 @@ public:
   GLuint tid; // !0: texture loaded
   VTexture *prev;
   VTexture *next;
+
+private:
+  void registerMe ();
 
 public:
   VTexture (VImage *aimg);
@@ -94,6 +116,8 @@ public:
   int getWidth () const { return (img ? img->width : 0); }
   int getHeight () const { return (img ? img->height : 0); }
 
+  void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1);
+
 public:
   //PropertyRO<int, VTexture> width {this, &VTexture::getWidth};
   //PropertyRO<int, VTexture> height {this, &VTexture::getHeight};
@@ -102,6 +126,7 @@ public:
   DECLARE_FUNCTION(load) // Texture load (string fname)
   DECLARE_FUNCTION(width)
   DECLARE_FUNCTION(height)
+  DECLARE_FUNCTION(blitExt)
 };
 
 

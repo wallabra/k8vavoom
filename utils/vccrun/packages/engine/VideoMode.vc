@@ -9,7 +9,12 @@ native final static int height ();
 native final static bool open (string winname, int width, int height);
 native final static void close ();
 
+native final static void clear ();
+
 native final static void runEventLoop ();
+
+native final static void requestRefresh ();
+native final static void requestQuit ();
 
 
 /* `VideoMode.prop` is not not working yet
