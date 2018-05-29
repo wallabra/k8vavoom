@@ -355,8 +355,9 @@ bool fsysAppendPak (const VStr &fname) {
 bool fsysAppendPak (VStream *strm) {
   if (!strm) return false;
 
+  if (openPakCount == 0) fsysInit();
   if (openPakCount >= MaxOpenPaks) Sys_Error("too many pak files");
-  //openPaks[openPakCount++] = new FSysDriverDisk(path);
+
   for (FSysDriverCreator *cur = creators; cur; cur = cur->next) {
     strm->Seek(0);
     if (strm->IsError()) break;

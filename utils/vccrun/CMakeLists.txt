@@ -132,8 +132,8 @@ if (ENABLE_VCCRUN)
     vcc_run.h
     modules/mod_ini.h
     modules/mod_ini.cpp
-    modules/mod_sdl.h
-    modules/mod_sdl.cpp
+    modules/sdlgl/mod_sdlgl.h
+    modules/sdlgl/mod_sdlgl.cpp
   )
 
   set_target_properties(vcc_run PROPERTIES OUTPUT_NAME ../../vcc_run)

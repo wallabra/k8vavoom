@@ -23,13 +23,17 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-#ifndef VCCMOD_SDL_HEADER_FILE
-#define VCCMOD_SDL_HEADER_FILE
+#ifndef VCCMOD_SDLGL_HEADER_FILE
+#define VCCMOD_SDLGL_HEADER_FILE
 
-#include "../vcc_run.h"
+#include "../../../../libs/imago/imago.h"
+#include "../../vcc_run.h"
 
-#ifdef VCCRUN_HAS_SDL
+#if defined (VCCRUN_HAS_SDL) && defined(VCCRUN_HAS_OPENGL)
+#include <GL/gl.h>
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VVideoMode : public VObject {
   DECLARE_CLASS(VVideoMode, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VVideoMode)
@@ -61,6 +65,43 @@ public:
   DECLARE_FUNCTION(close)
 
   DECLARE_FUNCTION(runEventLoop)
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VTexture : public VObject {
+  DECLARE_CLASS(VTexture, VObject, 0)
+  NO_DEFAULT_CONSTRUCTOR(VTexture)
+
+public:
+  VImage *img;
+  GLuint tid; // !0: texture loaded
+  VTexture *prev;
+  VTexture *next;
+
+public:
+  VTexture (VImage *aimg);
+  //virtual ~VTexture () overload;
+
+  void Destroy ();
+
+  void clear ();
+
+  bool loadFrom (VStream *st);
+
+  static VTexture *load (const VStr &fname);
+
+  int getWidth () const { return (img ? img->width : 0); }
+  int getHeight () const { return (img ? img->height : 0); }
+
+public:
+  //PropertyRO<int, VTexture> width {this, &VTexture::getWidth};
+  //PropertyRO<int, VTexture> height {this, &VTexture::getHeight};
+
+  DECLARE_FUNCTION(Destroy)
+  DECLARE_FUNCTION(load) // Texture load (string fname)
+  DECLARE_FUNCTION(width)
+  DECLARE_FUNCTION(height)
 };
 
 

@@ -23,18 +23,160 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+#if defined (VCCRUN_HAS_SDL) && defined(VCCRUN_HAS_OPENGL)
 
-#include "mod_sdl.h"
+#include "mod_sdlgl.h"
+#include "../../filesys/fsys.h"
 
-#ifdef VCCRUN_HAS_SDL
-# include <SDL.h>
-static SDL_Window* hw_window = nullptr;
+#include <SDL.h>
+#include <GL/gl.h>
+static SDL_Window *hw_window = nullptr;
 static SDL_GLContext hw_glctx = nullptr;
-#endif
+static VTexture *txHead = nullptr, *txTail = nullptr;
 
-#ifdef VCCRUN_HAS_OPENGL
-# include <GL/gl.h>
-#endif
+
+// ////////////////////////////////////////////////////////////////////////// //
+static bool texUpload (VTexture *tx) {
+  if (!tx) return false;
+  if (!tx->img) { tx->tid = 0; return false; }
+
+  tx->tid = 0;
+  glGenTextures(1, &tx->tid);
+  if (tx->tid == 0) return false;
+
+  glBindTexture(GL_TEXTURE_2D, tx->tid);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  if (!tx->img->isTrueColor) {
+    VImage *tc = new VImage(VImage::ImageType::IT_RGBA, tx->img->width, tx->img->height);
+    for (int y = 0; y < tx->img->height; ++y) {
+      for (int x = 0; x < tx->img->width; ++x) {
+        tc->setPixel(x, y, tx->img->getPixel(x, y));
+      }
+    }
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tc->width, tc->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tc->pixels);
+    delete tc;
+  } else {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tx->img->width, tx->img->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tx->img->pixels);
+  }
+
+  return true;
+}
+
+
+void deleteAllTextures () {
+  if (!hw_glctx) return;
+  glBindTexture(GL_TEXTURE_2D, 0);
+  for (VTexture *tx = txHead; tx; tx = tx->next) {
+    if (tx->tid) { glDeleteTextures(1, &tx->tid); tx->tid = 0; }
+  }
+}
+
+
+void uploadAllTextures () {
+  if (!hw_glctx) return;
+  for (VTexture *tx = txHead; tx; tx = tx->next) texUpload(tx);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+IMPLEMENT_CLASS(V, Texture);
+
+VTexture::VTexture (VImage *aimg) : img(aimg), tid(0), prev(nullptr), next(nullptr) {
+  if (hw_glctx) texUpload(this);
+  prev = txTail;
+  if (txTail) txTail->next = this; else txHead = this;
+  txTail = this;
+}
+
+
+void VTexture::Destroy () {
+  if (hw_glctx && tid) {
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDeleteTextures(1, &tid);
+  }
+  delete img;
+  if (prev) prev->next = next; else txHead = next;
+  if (next) next->prev = prev; else txTail = prev;
+  tid = 0;
+  img = nullptr;
+  Super::Destroy();
+}
+
+
+void VTexture::clear () {
+  if (hw_glctx && tid) {
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDeleteTextures(1, &tid);
+  }
+  tid = 0;
+  delete img;
+  img = nullptr;
+}
+
+
+bool VTexture::loadFrom (VStream *st) {
+  clear();
+  if (!st || st->IsError()) return false;
+  img = VImage::loadFrom(st);
+  if (st->IsError()) { clear(); return false; }
+  if (!img) return false;
+  if (hw_glctx) texUpload(this);
+  return true;
+}
+
+
+VTexture *VTexture::load (const VStr &fname) {
+  VStr rname = fsysFileFindAnyExt(fname);
+  if (rname.length() == 0) return nullptr;
+  VStream *st = fsysOpenFile(rname);
+  if (!st) return nullptr;
+  VImage *img = VImage::loadFrom(st);
+  delete st;
+  if (!img) return nullptr;
+  return new VTexture(img);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+IMPLEMENT_FUNCTION(VTexture, Destroy) {
+  P_GET_SELF;
+  delete Self;
+}
+
+
+IMPLEMENT_FUNCTION(VTexture, load) {
+  P_GET_STR(fname);
+  VClass *iclass = VClass::FindClass("Texture");
+  if (iclass) {
+    VStr rname = fsysFileFindAnyExt(fname);
+    if (rname.length() != 0) {
+      VStream *st = fsysOpenFile(rname);
+      if (st) {
+        auto ifileo = VObject::StaticSpawnObject(iclass);
+        auto ifile = (VTexture *)ifileo;
+        if (!ifile->loadFrom(st)) { delete ifileo; ifileo = nullptr; }
+        delete st;
+        RET_REF((VObject *)ifileo);
+      }
+    }
+  } else {
+    RET_REF(nullptr);
+  }
+}
+
+
+IMPLEMENT_FUNCTION(VTexture, width) {
+  P_GET_SELF;
+  RET_INT(Self ? Self->getWidth() : 0);
+}
+
+
+IMPLEMENT_FUNCTION(VTexture, height) {
+  P_GET_SELF;
+  RET_INT(Self ? Self->getHeight() : 0);
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -47,20 +189,12 @@ int VVideoMode::mHeight = 0;
 
 // ////////////////////////////////////////////////////////////////////////// //
 bool VVideoMode::canInit () {
-#ifdef VCCRUN_HAS_SDL
   return true;
-#else
-  return false;
-#endif
 }
 
 
 bool VVideoMode::hasOpenGL () {
-#if defined(VCCRUN_HAS_SDL) && defined(VCCRUN_HAS_OPENGL)
   return true;
-#else
-  return false;
-#endif
 }
 
 
@@ -71,10 +205,12 @@ int VVideoMode::getHeight () { return mHeight; }
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VVideoMode::close () {
-#if defined(VCCRUN_HAS_SDL) && defined(VCCRUN_HAS_OPENGL)
   if (mInited) {
     if (hw_glctx) {
-      if (hw_window) SDL_GL_MakeCurrent(hw_window, hw_glctx);
+      if (hw_window) {
+        SDL_GL_MakeCurrent(hw_window, hw_glctx);
+        deleteAllTextures();
+      }
       SDL_GL_DeleteContext(hw_glctx);
       hw_glctx = nullptr;
     }
@@ -86,12 +222,10 @@ void VVideoMode::close () {
     mWidth = 0;
     mHeight = 0;
   }
-#endif
 }
 
 
 bool VVideoMode::open (const VStr &winname, int width, int height) {
-#if defined(VCCRUN_HAS_SDL) && defined(VCCRUN_HAS_OPENGL)
   if (!width || !height) {
     width = 800;
     height = 600;
@@ -137,6 +271,7 @@ bool VVideoMode::open (const VStr &winname, int width, int height) {
   }
 
   SDL_GL_MakeCurrent(hw_window, hw_glctx);
+  uploadAllTextures();
 
   //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
   /*
@@ -171,15 +306,11 @@ bool VVideoMode::open (const VStr &winname, int width, int height) {
   glDisable(GL_BLEND);
 
   return true;
-#else
-  return false;
-#endif
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VVideoMode::runEventLoop () {
-#if defined(VCCRUN_HAS_SDL) && defined(VCCRUN_HAS_OPENGL)
   if (!mInited) return;
 
   bool doQuit = false;
@@ -303,7 +434,6 @@ void VVideoMode::runEventLoop () {
 
     SDL_GL_SwapWindow(hw_window);
   }
-#endif
 }
 
 
@@ -324,3 +454,6 @@ IMPLEMENT_FUNCTION(VVideoMode, open) {
 }
 
 IMPLEMENT_FUNCTION(VVideoMode, runEventLoop) { VVideoMode::runEventLoop(); }
+
+
+#endif

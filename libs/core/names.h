@@ -353,6 +353,7 @@ REGISTER_NAME(Offset)
 
 REGISTER_NAME(VideoMode)
 REGISTER_NAME(IniFile)
+REGISTER_NAME(Texture)
 
 // Closing -----------------------------------------------------------------
 
