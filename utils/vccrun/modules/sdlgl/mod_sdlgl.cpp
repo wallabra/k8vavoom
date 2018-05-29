@@ -685,7 +685,12 @@ void VVideoMode::runEventLoop () {
     event_t evt;
 
     SDL_PumpEvents();
-    while (SDL_PollEvent(&ev)) {
+    bool gotEvent = SDL_PollEvent(&ev);
+    if (!gotEvent) {
+      if (!SDL_WaitEvent(&ev)) break;
+      gotEvent = true;
+    }
+    if (gotEvent) {
       switch (ev.type) {
         case SDL_KEYDOWN:
         case SDL_KEYUP:
