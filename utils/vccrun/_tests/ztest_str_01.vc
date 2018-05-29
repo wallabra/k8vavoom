@@ -1,0 +1,25 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+string sfld;
+
+final int main (array!string *args) {
+  string s = string('ThisIsName');
+
+  print("str=<%s>", s);
+  print("str[1]=%d %d", s[1], 104);
+  print("len=<%d>", s.length);
+  print("str[1]=%d %d", s[1], 104);
+  print("len=<%d>", s.length);
+  print("str[-1]=%d", s[-1]);
+  print("str[100]=%d", s[100]);
+
+  for (int f = 0; f <= s.length; ++f) print("#%d: %d", f, s[f]);
+
+  return 0;
+}
+
+
+defaultproperties {
+  sfld = "fuck!";
+}
