@@ -154,6 +154,30 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VPartialStreamReader : public VStream {
+private:
+  VStream *srcStream;
+  int stpos;
+  int srccurpos;
+  int partlen;
+
+private:
+  void setError ();
+
+public:
+  // doesn't own stream
+  VPartialStreamReader (VStream *ASrcStream, int astpos, int apartlen=-1);
+  virtual ~VPartialStreamReader () override;
+  virtual void Serialise (void *, int) override;
+  virtual void Seek (int) override;
+  virtual int Tell () override;
+  virtual int TotalSize () override;
+  virtual bool AtEnd () override;
+  virtual bool Close () override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 #ifdef USE_INTERNAL_ZLIB
 # include "../../../libs/zlib/zlib.h"
 #else
@@ -164,10 +188,13 @@ class VZipStreamReader : public VStream {
 private:
   enum { BUFFER_SIZE = 16384 };
 
-  VStream* srcStream;
+  VStream *srcStream;
+  int stpos;
+  int srccurpos;
   Bytef buffer[BUFFER_SIZE];
   z_stream zStream;
   bool initialised;
+  vuint32 compressedSize;
   vuint32 uncompressedSize;
   int nextpos;
   int currpos;
@@ -181,7 +208,8 @@ private:
   int readSomeBytes (void *buf, int len);
 
 public:
-  VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false);
+  // doesn't own stream
+  VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false);
   virtual ~VZipStreamReader () override;
   virtual void Serialise (void *, int) override;
   virtual void Seek (int) override;
@@ -196,7 +224,7 @@ class VZipStreamWriter : public VStream {
 private:
   enum { BUFFER_SIZE = 16384 };
 
-  VStream* dstStream;
+  VStream *dstStream;
   Bytef buffer[BUFFER_SIZE];
   z_stream zStream;
   bool initialised;

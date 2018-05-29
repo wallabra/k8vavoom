@@ -356,11 +356,70 @@ VStream *fsysOpenDiskFile (const VStr &fname) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+VPartialStreamReader::VPartialStreamReader (VStream *ASrcStream, int astpos, int apartlen)
+  : VStream()
+  , srcStream(ASrcStream)
+  , stpos(astpos)
+  , srccurpos(astpos)
+  , partlen(apartlen)
+{
+  bLoading = true;
+  if (!srcStream) { bError = true; return; }
+  if (partlen < 0) {
+    partlen = srcStream->TotalSize()-stpos;
+    if (partlen < 0) partlen = 0;
+  }
+}
+
+VPartialStreamReader::~VPartialStreamReader () {
+  Close();
+}
+
+bool VPartialStreamReader::Close () {
+  //if (srcStream) { delete srcStream; srcStream = nullptr; }
+  srcStream = nullptr;
+  return !bError;
+}
+
+void VPartialStreamReader::setError () {
+  //if (srcStream) { delete srcStream; srcStream = nullptr; }
+  srcStream = nullptr;
+  bError = true;
+}
+
+void VPartialStreamReader::Serialise (void *buf, int len) {
+  if (bError) return;
+  if (len < 0) { setError(); return; }
+  if (len == 0) return;
+  if (srccurpos >= stpos+partlen) { setError(); return; }
+  int left = stpos+partlen-srccurpos;
+  if (left < len) { setError(); return; }
+  srcStream->Seek(srccurpos);
+  srcStream->Serialise(buf, len);
+  if (srcStream->IsError()) { setError(); return; }
+  srccurpos += len;
+}
+
+void VPartialStreamReader::Seek (int pos) {
+  if (pos < 0) pos = 0;
+  if (pos > partlen) pos = partlen;
+  srccurpos = stpos+pos;
+}
+
+int VPartialStreamReader::Tell () { return (bError ? 0 : srccurpos-stpos); }
+
+int VPartialStreamReader::TotalSize () { return (bError ? 0 : partlen); }
+
+bool VPartialStreamReader::AtEnd () { return (bError || srccurpos >= stpos+partlen); }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // VZipStreamReader
-VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSize, bool asZipArchive)
+VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, bool asZipArchive)
   : VStream()
   , srcStream(ASrcStream)
   , initialised(false)
+  , compressedSize(ACompressedSize)
   , uncompressedSize(AUncompressedSize)
   , nextpos(0)
   , currpos(0)
@@ -376,13 +435,16 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSi
 
   if (srcStream) {
     // read in some initial data
-    vint32 BytesToRead = BUFFER_SIZE;
-    if (BytesToRead > srcStream->TotalSize()) BytesToRead = srcStream->TotalSize();
-    srcStream->Seek(0);
-    srcStream->Serialise(buffer, BytesToRead);
+    stpos = srcStream->Tell();
+    if (compressedSize == 0xffffffffU) compressedSize = (vuint32)(srcStream->TotalSize()-stpos);
+    vint32 bytesToRead = BUFFER_SIZE;
+    if (bytesToRead > (int)compressedSize) bytesToRead = (int)compressedSize;
+    srcStream->Seek(stpos);
+    srcStream->Serialise(buffer, bytesToRead);
     if (srcStream->IsError()) { setError(); return; }
+    srccurpos = stpos+bytesToRead;
     zStream.next_in = buffer;
-    zStream.avail_in = BytesToRead;
+    zStream.avail_in = bytesToRead;
     // open zip stream
     int err = (zipArchive ? inflateInit2(&zStream, -MAX_WBITS) : inflateInit(&zStream));
     if (err != Z_OK) { setError(); return; }
@@ -400,14 +462,16 @@ VZipStreamReader::~VZipStreamReader () {
 
 bool VZipStreamReader::Close () {
   if (initialised) { inflateEnd(&zStream); initialised = false; }
-  if (srcStream) { delete srcStream; srcStream = nullptr; }
+  //if (srcStream) { delete srcStream; srcStream = nullptr; }
+  srcStream = nullptr;
   return !bError;
 }
 
 
 void VZipStreamReader::setError () {
   if (initialised) { inflateEnd(&zStream); initialised = false; }
-  if (srcStream) { delete srcStream; srcStream = nullptr; }
+  //if (srcStream) { delete srcStream; srcStream = nullptr; }
+  srcStream = nullptr;
   bError = true;
 }
 
@@ -427,12 +491,15 @@ int VZipStreamReader::readSomeBytes (void *buf, int len) {
     // get more compressed data (if necessary)
     if (zStream.avail_in == 0) {
       //if (srcStream->AtEnd()) break;
-      vint32 left = srcStream->TotalSize()-srcStream->Tell();
+      vint32 left = (int)compressedSize-(srccurpos-stpos);
       if (left <= 0) break; // eof
+      srcStream->Seek(srccurpos);
+      if (srcStream->IsError()) return -1;
       vint32 bytesToRead = BUFFER_SIZE;
       if (bytesToRead > left) bytesToRead = left;
       srcStream->Serialise(buffer, bytesToRead);
       if (srcStream->IsError()) return -1;
+      srccurpos += bytesToRead;
       zStream.next_in = buffer;
       zStream.avail_in = bytesToRead;
     }
@@ -453,19 +520,18 @@ void VZipStreamReader::Serialise (void* buf, int len) {
   if (!initialised || len < 0 || !srcStream || srcStream->IsError()) setError();
   if (bError) return;
 
-  if (nextpos < currpos) {
-    // rewing stream
-    if (initialised) {
-      inflateEnd(&zStream);
-      initialised = false;
-    }
-    vint32 BytesToRead = BUFFER_SIZE;
+  if (currpos > nextpos) {
+    // rewind stream
+    if (initialised) { inflateEnd(&zStream); initialised = false; }
+    vint32 bytesToRead = BUFFER_SIZE;
+    if (bytesToRead > (int)compressedSize) bytesToRead = (int)compressedSize;
     memset(&zStream, 0, sizeof(zStream));
-    srcStream->Seek(0);
-    srcStream->Serialise(buffer, BytesToRead);
+    srcStream->Seek(stpos);
+    srcStream->Serialise(buffer, bytesToRead);
     if (srcStream->IsError()) { setError(); return; }
+    srccurpos = stpos+bytesToRead;
     zStream.next_in = buffer;
-    zStream.avail_in = BytesToRead;
+    zStream.avail_in = bytesToRead;
     // open zip stream
     int err = (zipArchive ? inflateInit2(&zStream, -MAX_WBITS) : inflateInit(&zStream));
     if (err != Z_OK) { setError(); return; }
@@ -473,7 +539,7 @@ void VZipStreamReader::Serialise (void* buf, int len) {
     currpos = 0;
   }
 
-  while (nextpos < currpos) {
+  while (currpos < nextpos) {
     char tmpbuf[256];
     int toread = currpos-nextpos;
     if (toread > 256) toread = 256;
