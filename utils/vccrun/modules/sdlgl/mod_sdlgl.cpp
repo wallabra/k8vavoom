@@ -684,7 +684,7 @@ void VVideoMode::runEventLoop () {
     SDL_Event ev;
     event_t evt;
 
-    SDL_PumpEvents();
+    //SDL_PumpEvents();
     bool gotEvent = SDL_PollEvent(&ev);
     if (!gotEvent) {
       if (!SDL_WaitEvent(&ev)) break;
