@@ -142,6 +142,27 @@ public:
 
   VStr mid (int start, int len) const;
 
+  inline VStr left (int len) const {
+    if (len < 1) return VStr();
+    if ((size_t)len >= length()) return VStr(*this);
+    return this->mid(0, len);
+  }
+  inline VStr right (int len) const {
+    if (len < 1) return VStr();
+    if ((size_t)len >= length()) return VStr(*this);
+    return this->mid(length()-len, len);
+  }
+  inline VStr chopLeft (int len) const {
+    if (len < 1) return VStr(*this);
+    if ((size_t)len >= length()) return VStr();
+    return this->mid(len, length()-len);
+  }
+  inline VStr chopRight (int len) const {
+    if (len < 1) return VStr(*this);
+    if ((size_t)len >= length()) return VStr();
+    return this->mid(0, len);
+  }
+
   // assignement operators
   inline VStr &operator = (const char *instr) { SetContent(instr); return *this; }
   inline VStr &operator = (const VStr &instr) { Assign(instr); return *this; }
