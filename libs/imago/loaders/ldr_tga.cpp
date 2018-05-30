@@ -60,7 +60,7 @@ VImage *imagoLoadTGA (VStream *strm) {
   tgaHeader_t hdr;
   *strm << hdr;
 
-  fprintf(stderr, "trying TGA...\n");
+  //fprintf(stderr, "trying TGA...\n");
 
   if ((hdr.pal_type != 0 && hdr.pal_type != 1) || hdr.width <= 0 ||
       hdr.height <= 0 || hdr.width > 2048 || hdr.height > 2048 ||
@@ -77,7 +77,7 @@ VImage *imagoLoadTGA (VStream *strm) {
     return nullptr;
   }
 
-  fprintf(stderr, "loading TGA...\n");
+  //fprintf(stderr, "loading TGA...\n");
   // load texture
   int count;
   int c;
