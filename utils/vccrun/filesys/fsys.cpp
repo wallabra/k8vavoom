@@ -534,6 +534,10 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize
   , nextpos(0)
   , currpos(0)
   , zipArchive(asZipArchive)
+  , origCrc32(0)
+  , currCrc32(0)
+  , doCrcCheck(false)
+  , forceRewind(false)
 {
   bLoading = true;
 
@@ -567,6 +571,16 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize
 
 VZipStreamReader::~VZipStreamReader () {
   Close();
+}
+
+
+// turns on CRC checking
+void VZipStreamReader::setCrc (vuint32 acrc) {
+  if (doCrcCheck && origCrc32 == acrc) return;
+  origCrc32 = acrc;
+  doCrcCheck = true;
+  currCrc32 = 0;
+  forceRewind = true;
 }
 
 
@@ -621,6 +635,7 @@ int VZipStreamReader::readSomeBytes (void *buf, int len) {
     bytesRead += totalOutAfter-totalOutBefore;
     if (err != Z_OK) break;
   }
+  if (bytesRead && doCrcCheck) currCrc32 = crc32(currCrc32, (const Bytef *)buf, bytesRead);
   return bytesRead;
 }
 
@@ -630,7 +645,7 @@ void VZipStreamReader::Serialise (void* buf, int len) {
   if (!initialised || len < 0 || !srcStream || srcStream->IsError()) setError();
   if (bError) return;
 
-  if (currpos > nextpos) {
+  if (currpos > nextpos || forceRewind) {
     // rewind stream
     if (initialised) { inflateEnd(&zStream); initialised = false; }
     vint32 bytesToRead = BUFFER_SIZE;
@@ -647,6 +662,8 @@ void VZipStreamReader::Serialise (void* buf, int len) {
     if (err != Z_OK) { setError(); return; }
     initialised = true;
     currpos = 0;
+    forceRewind = false;
+    currCrc32 = 0; // why not?
   }
 
   while (currpos < nextpos) {
@@ -667,6 +684,10 @@ void VZipStreamReader::Serialise (void* buf, int len) {
     len -= rd;
     nextpos = (currpos += rd);
     dest += rd;
+  }
+
+  if (doCrcCheck && uncompressedSize != 0xffffffffU && (vuint32)nextpos == uncompressedSize) {
+    if (currCrc32 != origCrc32) { setError(); return; } // alas
   }
 }
 
@@ -713,6 +734,8 @@ bool VZipStreamReader::AtEnd () { return (bError ? true : TotalSize() == currpos
 VZipStreamWriter::VZipStreamWriter (VStream *ADstStream)
   : dstStream(ADstStream)
   , initialised(false)
+  , currCrc32(0)
+  , doCrcCalc(false)
 {
   bLoading = false;
 
@@ -736,6 +759,16 @@ VZipStreamWriter::~VZipStreamWriter () {
 }
 
 
+void VZipStreamWriter::setRequireCrc () {
+  if (!doCrcCalc && zStream.total_in == 0) doCrcCalc = true;
+}
+
+
+vuint32 VZipStreamWriter::getCrc32 () const {
+  return currCrc32;
+}
+
+
 void VZipStreamWriter::setError () {
   if (initialised) { deflateEnd(&zStream); initialised = false; }
   if (dstStream) { delete dstStream; dstStream = nullptr; }
@@ -747,6 +780,8 @@ void VZipStreamWriter::Serialise (void *buf, int len) {
   if (len == 0) return;
   if (!initialised || len < 0 || !dstStream || dstStream->IsError()) setError();
   if (bError) return;
+
+  if (doCrcCalc) currCrc32 = crc32(currCrc32, (const Bytef *)buf, len);
 
   zStream.next_in = (Bytef *)buf;
   zStream.avail_in = len;

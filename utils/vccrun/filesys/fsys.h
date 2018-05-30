@@ -188,6 +188,7 @@ public:
 #else
 # include <zlib.h>
 #endif
+#include "lzma.h"
 
 class VZipStreamReader : public VStream {
 private:
@@ -204,6 +205,10 @@ private:
   int nextpos;
   int currpos;
   bool zipArchive;
+  vuint32 origCrc32;
+  vuint32 currCrc32;
+  bool doCrcCheck;
+  bool forceRewind;
 
 private:
   void setError ();
@@ -216,6 +221,9 @@ public:
   // doesn't own stream
   VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false);
   virtual ~VZipStreamReader () override;
+
+  void setCrc (vuint32 acrc); // turns on CRC checking
+
   virtual void Serialise (void *, int) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
@@ -233,6 +241,8 @@ private:
   Bytef buffer[BUFFER_SIZE];
   z_stream zStream;
   bool initialised;
+  vuint32 currCrc32;
+  bool doCrcCalc;
 
 private:
   void setError ();
@@ -240,6 +250,8 @@ private:
 public:
   VZipStreamWriter (VStream *);
   virtual ~VZipStreamWriter () override;
+  void setRequireCrc ();
+  vuint32 getCrc32 () const; // crc32 over uncompressed data (if enabled)
   virtual void Serialise (void *, int) override;
   virtual void Seek (int) override;
   virtual void Flush () override;
