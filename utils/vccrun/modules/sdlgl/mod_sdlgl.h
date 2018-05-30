@@ -87,20 +87,20 @@ public:
   DECLARE_FUNCTION(canInit)
   DECLARE_FUNCTION(hasOpenGL)
   DECLARE_FUNCTION(isInitialized)
-  DECLARE_FUNCTION(width)
-  DECLARE_FUNCTION(height)
+  DECLARE_FUNCTION(screenWidth)
+  DECLARE_FUNCTION(screenHeight)
 
-  DECLARE_FUNCTION(open)
-  DECLARE_FUNCTION(close)
+  DECLARE_FUNCTION(openScreen)
+  DECLARE_FUNCTION(closeScreen)
 
   DECLARE_FUNCTION(loadFont)
-
-  DECLARE_FUNCTION(clear)
 
   DECLARE_FUNCTION(runEventLoop)
 
   DECLARE_FUNCTION(requestRefresh)
   DECLARE_FUNCTION(requestQuit)
+
+  DECLARE_FUNCTION(clearScreen)
 
   DECLARE_FUNCTION(setTextFont)
   DECLARE_FUNCTION(setTextColor)

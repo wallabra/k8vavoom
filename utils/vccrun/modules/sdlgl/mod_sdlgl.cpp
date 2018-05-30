@@ -906,12 +906,12 @@ void VVideoMode::drawTextAt (int x, int y, const VStr &text) {
 IMPLEMENT_FUNCTION(VVideoMode, canInit) { RET_BOOL(VVideoMode::canInit()); }
 IMPLEMENT_FUNCTION(VVideoMode, hasOpenGL) { RET_BOOL(VVideoMode::hasOpenGL()); }
 IMPLEMENT_FUNCTION(VVideoMode, isInitialized) { RET_BOOL(VVideoMode::isInitialized()); }
-IMPLEMENT_FUNCTION(VVideoMode, width) { RET_INT(VVideoMode::getWidth()); }
-IMPLEMENT_FUNCTION(VVideoMode, height) { RET_INT(VVideoMode::getHeight()); }
+IMPLEMENT_FUNCTION(VVideoMode, screenWidth) { RET_INT(VVideoMode::getWidth()); }
+IMPLEMENT_FUNCTION(VVideoMode, screenHeight) { RET_INT(VVideoMode::getHeight()); }
 
-IMPLEMENT_FUNCTION(VVideoMode, close) { VVideoMode::close(); }
+IMPLEMENT_FUNCTION(VVideoMode, closeScreen) { VVideoMode::close(); }
 
-IMPLEMENT_FUNCTION(VVideoMode, open) {
+IMPLEMENT_FUNCTION(VVideoMode, openScreen) {
   P_GET_INT(hgt);
   P_GET_INT(wdt);
   P_GET_STR(wname);
@@ -920,7 +920,7 @@ IMPLEMENT_FUNCTION(VVideoMode, open) {
 
 IMPLEMENT_FUNCTION(VVideoMode, runEventLoop) { VVideoMode::runEventLoop(); }
 
-IMPLEMENT_FUNCTION(VVideoMode, clear) { VVideoMode::clear(); }
+IMPLEMENT_FUNCTION(VVideoMode, clearScreen) { VVideoMode::clear(); }
 
 // aborts if font cannot be loaded
 //native final static loadFont (name fname, string fnameIni, string fnameTexture);
