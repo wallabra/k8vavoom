@@ -35,7 +35,10 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct event_t;
+class VFont;
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VVideoMode : public VObject {
   DECLARE_CLASS(VVideoMode, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VVideoMode)
@@ -48,6 +51,12 @@ private:
   static bool quitSignal;
   static VMethod *onDrawVC;
   static VMethod *onEventVC;
+
+  static int fontR;
+  static int fontG;
+  static int fontB;
+  static int fontA;
+  static VFont *currFont;
 
 private:
   static void initMethods ();
@@ -68,6 +77,12 @@ public:
 
   static void runEventLoop ();
 
+  static void setFont (VName fontname);
+  static void setTextColor (int r, int g, int b);
+  static void setTextAlpha (int a);
+
+  static void drawTextAt (int x, int y, const VStr &text);
+
   // static
   DECLARE_FUNCTION(canInit)
   DECLARE_FUNCTION(hasOpenGL)
@@ -78,12 +93,24 @@ public:
   DECLARE_FUNCTION(open)
   DECLARE_FUNCTION(close)
 
+  DECLARE_FUNCTION(loadFont)
+
   DECLARE_FUNCTION(clear)
 
   DECLARE_FUNCTION(runEventLoop)
 
   DECLARE_FUNCTION(requestRefresh)
   DECLARE_FUNCTION(requestQuit)
+
+  DECLARE_FUNCTION(setTextFont)
+  DECLARE_FUNCTION(setTextColor)
+  DECLARE_FUNCTION(setTextAlpha)
+  DECLARE_FUNCTION(fontHeight)
+  DECLARE_FUNCTION(charWidth)
+  DECLARE_FUNCTION(spaceWidth)
+  DECLARE_FUNCTION(textWidth)
+  DECLARE_FUNCTION(textHeight)
+  DECLARE_FUNCTION(drawTextAt)
 };
 
 
@@ -102,7 +129,7 @@ private:
   void registerMe ();
 
 public:
-  VTexture (VImage *aimg);
+  //VTexture (VImage *aimg);
   //virtual ~VTexture () overload;
 
   void Destroy ();
@@ -112,11 +139,12 @@ public:
   bool loadFrom (VStream *st);
 
   static VTexture *load (const VStr &fname);
+  static VTexture *createFromImage (VImage *aimg);
 
   int getWidth () const { return (img ? img->width : 0); }
   int getHeight () const { return (img ? img->height : 0); }
 
-  void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1);
+  void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const;
 
 public:
   //PropertyRO<int, VTexture> width {this, &VTexture::getWidth};
@@ -127,6 +155,61 @@ public:
   DECLARE_FUNCTION(width)
   DECLARE_FUNCTION(height)
   DECLARE_FUNCTION(blitExt)
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// base class for fonts
+class VFont {
+protected:
+  static VFont *fontList;
+
+public:
+  struct FontChar {
+    int ch;
+    int width, height; // height may differ from font height
+    int advance; // horizontal advance to print next char
+    int topofs; // offset from font top (i.e. y+topofs should be used to draw char)
+    float tx0, ty0; // texture coordinates, [0..1)
+    float tx1, ty1; // texture coordinates, [0..1) -- cached for convenience
+    VTexture *tex; // don't destroy this!
+  };
+
+protected:
+  VName name;
+  VFont *next;
+  VTexture *tex;
+
+  // font characters (cp1251)
+  TArray<FontChar> chars;
+  int spaceWidth; // width of the space character
+  int fontHeight; // height of the font
+
+  // fast look-up for 1251 encoding characters
+  //int chars1251[256];
+  // range of available characters
+  //int firstChar;
+  //int lastChar;
+
+public:
+  //VFont ();
+  VFont (VName aname, const VStr &fnameIni, const VStr &fnameTexture);
+  ~VFont ();
+
+  const FontChar *getChar (int ch) const;
+  int charWidth (int ch) const;
+  int textWidth (const VStr &s) const;
+  int textHeight (const VStr &s) const;
+  // will clear lines; returns maximum text width
+  //int splitTextWidth (const VStr &text, TArray<VSplitLine> &lines, int maxWidth) const;
+
+  inline VName getName () const { return name; }
+  inline int getSpaceWidth () const { return spaceWidth; }
+  inline int getHeight () const { return fontHeight; }
+  inline const VTexture *getTexture () const { return tex; }
+
+public:
+  static VFont *findFont (VName name);
 };
 
 

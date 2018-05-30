@@ -53,6 +53,9 @@ bool fsysFileExists (const VStr &fname);
 // open file for reading, relative to basedir, and look into archives too
 VStream *fsysOpenFile (const VStr &fname);
 
+// open file for reading, relative to basedir, and look into archives too
+VStream *fsysOpenFileAnyExt (const VStr &fname);
+
 // open file for reading, NOT relative to basedir
 VStream *fsysOpenDiskFileWrite (const VStr &fname);
 VStream *fsysOpenDiskFile (const VStr &fname);

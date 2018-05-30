@@ -16,6 +16,19 @@ native final static void runEventLoop ();
 native final static void requestRefresh ();
 native final static void requestQuit ();
 
+// aborts if font cannot be loaded
+native final static void loadFont (name fontname, string fnameIni, string fnameTexture);
+
+native final static void setTextColor (int r, int g, int b);
+native final static void setTextAlpha (int a);
+native final static void setTextFont (name fontname);
+native final static void fontHeight ();
+native final static int spaceWidth ();
+native final static int charWidth (int ch);
+native final static int textWidth (string text);
+native final static int textHeight (string text);
+native final static void drawTextAt (int x, int y, string text);
+
 
 /* `VideoMode.prop` is not not working yet
 int width {

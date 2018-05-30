@@ -338,10 +338,12 @@ void uploadAllTextures () {
 // ////////////////////////////////////////////////////////////////////////// //
 IMPLEMENT_CLASS(V, Texture);
 
+/*
 VTexture::VTexture (VImage *aimg) : img(aimg), tid(0), prev(nullptr), next(nullptr) {
   if (hw_glctx) texUpload(this);
   registerMe();
 }
+*/
 
 
 void VTexture::Destroy () {
@@ -397,11 +399,28 @@ VTexture *VTexture::load (const VStr &fname) {
   VImage *img = VImage::loadFrom(st);
   delete st;
   if (!img) return nullptr;
-  return new VTexture(img);
+  //return new VTexture(img);
+  return VTexture::createFromImage(img);
 }
 
 
-void VTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) {
+VTexture *VTexture::createFromImage (VImage *aimg) {
+  if (!aimg) return nullptr;
+  VClass *iclass = VClass::FindClass("Texture");
+  if (!iclass) { delete aimg; return nullptr; }
+  VTexture *tex = (VTexture *)VObject::StaticSpawnObject(iclass);
+  if (!tex) { delete aimg; return nullptr; }
+  tex->img = aimg;
+  tex->tid = 0;
+  tex->prev = nullptr;
+  tex->next = nullptr;
+  tex->registerMe();
+  if (hw_glctx) texUpload(tex);
+  return tex;
+}
+
+
+void VTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const {
   if (!tid) return;
   if (x1 < 0) x1 = img->width;
   if (y1 < 0) y1 = img->height;
@@ -822,6 +841,68 @@ void VVideoMode::runEventLoop () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+int VVideoMode::fontR = 255;
+int VVideoMode::fontG = 255;
+int VVideoMode::fontB = 255;
+int VVideoMode::fontA = 255;
+VFont *VVideoMode::currFont = nullptr;
+
+
+void VVideoMode::setFont (VName fontname) {
+  if (currFont && currFont->getName() == fontname) return;
+  currFont = VFont::findFont(fontname);
+}
+
+
+void VVideoMode::setTextColor (int r, int g, int b) {
+  fontR = (r < 0 ? 0 : r > 255 ? 255 : r);
+  fontG = (g < 0 ? 0 : g > 255 ? 255 : g);
+  fontB = (b < 0 ? 0 : b > 255 ? 255 : b);
+}
+
+
+void VVideoMode::setTextAlpha (int a) {
+  fontA = (a < 0 ? 0 : a > 255 ? 255 : a);
+}
+
+
+void VVideoMode::drawTextAt (int x, int y, const VStr &text) {
+  if (!currFont || fontA <= 0 || text.isEmpty()) return;
+  if (!mInited) return;
+
+  const VTexture *tex = currFont->getTexture();
+  if (!tex || !tex->tid) return; // oops
+
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, tex->tid);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  glColor4f(fontR/255.0f, fontG/255.0f, fontB/255.0f, fontA/255.0f);
+
+  glBegin(GL_QUADS);
+  int sx = x;
+  for (size_t f = 0; f < text.length(); ++f) {
+    int ch = (vuint8)text[f];
+    if (ch == '\r') { x = sx; continue; }
+    if (ch == '\n') { x = sx; y += currFont->getHeight(); continue; }
+    auto fc = currFont->getChar(ch);
+    if (!fc) continue;
+    // draw char
+    glTexCoord2f(fc->tx0, fc->ty0); glVertex2f(x, y+fc->topofs);
+    glTexCoord2f(fc->tx1, fc->ty0); glVertex2f(x+fc->width, y+fc->topofs);
+    glTexCoord2f(fc->tx1, fc->ty1); glVertex2f(x+fc->width, y+fc->topofs+fc->height);
+    glTexCoord2f(fc->tx0, fc->ty1); glVertex2f(x, y+fc->topofs+fc->height);
+    // advance
+    x += fc->advance;
+  }
+  glEnd();
+
+  glColor4f(1, 1, 1, 1);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 IMPLEMENT_FUNCTION(VVideoMode, canInit) { RET_BOOL(VVideoMode::canInit()); }
 IMPLEMENT_FUNCTION(VVideoMode, hasOpenGL) { RET_BOOL(VVideoMode::hasOpenGL()); }
 IMPLEMENT_FUNCTION(VVideoMode, isInitialized) { RET_BOOL(VVideoMode::isInitialized()); }
@@ -841,8 +922,321 @@ IMPLEMENT_FUNCTION(VVideoMode, runEventLoop) { VVideoMode::runEventLoop(); }
 
 IMPLEMENT_FUNCTION(VVideoMode, clear) { VVideoMode::clear(); }
 
+// aborts if font cannot be loaded
+//native final static loadFont (name fname, string fnameIni, string fnameTexture);
+IMPLEMENT_FUNCTION(VVideoMode, loadFont) {
+  P_GET_STR(fnameTexture);
+  P_GET_STR(fnameIni);
+  P_GET_NAME(fname);
+  if (VFont::findFont(fname)) return;
+  new VFont(fname, fnameIni, fnameTexture);
+}
+
+
 IMPLEMENT_FUNCTION(VVideoMode, requestQuit) { VVideoMode::quitSignal = true; }
 IMPLEMENT_FUNCTION(VVideoMode, requestRefresh) { VVideoMode::doRefresh = true; }
+
+
+//native final static void setTextColor (int r, int g, int b);
+IMPLEMENT_FUNCTION(VVideoMode, setTextColor) {
+  P_GET_INT(b);
+  P_GET_INT(g);
+  P_GET_INT(r);
+  setTextColor(r, g, b);
+}
+
+//native final static void setTextAlpha (int a);
+IMPLEMENT_FUNCTION(VVideoMode, setTextAlpha) {
+  P_GET_INT(a);
+  setTextAlpha(a);
+}
+
+//native final static void setTextFont (name fontname);
+IMPLEMENT_FUNCTION(VVideoMode, setTextFont) {
+  P_GET_NAME(fontname);
+  setFont(fontname);
+}
+
+//native final static void fontHeight ();
+IMPLEMENT_FUNCTION(VVideoMode, fontHeight) {
+  RET_INT(currFont ? currFont->getHeight() : 0);
+}
+
+//native final static int spaceWidth ();
+IMPLEMENT_FUNCTION(VVideoMode, spaceWidth) {
+  RET_INT(currFont ? currFont->getSpaceWidth() : 0);
+}
+
+//native final static int charWidth (int ch);
+IMPLEMENT_FUNCTION(VVideoMode, charWidth) {
+  P_GET_INT(ch);
+  RET_INT(currFont ? currFont->charWidth(ch) : 0);
+}
+
+//native final static int textWidth (string text);
+IMPLEMENT_FUNCTION(VVideoMode, textWidth) {
+  P_GET_STR(text);
+  RET_INT(currFont ? currFont->textWidth(text) : 0);
+}
+
+//native final static int textHeight (string text);
+IMPLEMENT_FUNCTION(VVideoMode, textHeight) {
+  P_GET_STR(text);
+  RET_INT(currFont ? currFont->textHeight(text) : 0);
+}
+
+//native final static void drawText (int x, int y, string text);
+IMPLEMENT_FUNCTION(VVideoMode, drawTextAt) {
+  P_GET_STR(text);
+  P_GET_INT(x);
+  P_GET_INT(y);
+  drawTextAt(x, y, text);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static VStr readLine (VStream *strm, bool allTrim=true) {
+  if (!strm || strm->IsError()) return VStr();
+  VStr res;
+  while (!strm->AtEnd()) {
+    char ch;
+    strm->Serialize(&ch, 1);
+    if (strm->IsError()) return VStr();
+    if (ch == '\r') {
+      if (!strm->AtEnd()) {
+        strm->Serialize(&ch, 1);
+        if (strm->IsError()) return VStr();
+        if (ch != '\n') strm->Seek(strm->Tell()-1);
+      }
+      break;
+    }
+    if (ch == '\n') break;
+    if (ch == 0) ch = ' ';
+    res += ch;
+  }
+  if (allTrim) {
+    while (!res.isEmpty() && (vuint8)res[0] <= ' ') res = res.chopLeft(1);
+    while (!res.isEmpty() && (vuint8)res[res.length()-1] <= ' ') res = res.chopRight(1);
+  }
+  return res;
+}
+
+
+static VStr getKey (const VStr &s) {
+  int epos = s.indexOf('=');
+  if (epos < 0) return s;
+  VStr res = s.left(epos);
+  while (!res.isEmpty() && (vuint8)res[res.length()-1] <= ' ') res = res.chopRight(1);
+  return res;
+}
+
+
+static VStr getValue (const VStr &s) {
+  int epos = s.indexOf('=');
+  if (epos < 0) return VStr();
+  VStr res = s.chopLeft(epos+1);
+  while (!res.isEmpty() && (vuint8)res[0] <= ' ') res = res.chopLeft(1);
+  while (!res.isEmpty() && (vuint8)res[res.length()-1] <= ' ') res = res.chopRight(1);
+  return res;
+}
+
+
+static int getIntValue (const VStr &s) {
+  VStr v = getValue(s);
+  if (v.isEmpty()) return 0;
+  bool neg = v.startsWith("-");
+  if (neg) v = v.chopLeft(1);
+  int res = 0;
+  for (size_t f = 0; f < v.length(); ++f) {
+    int d = VStr::digitInBase(v[f]);
+    if (d < 0) break;
+    res = res*10+d;
+  }
+  if (neg) res = -res;
+  return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VFont *VFont::fontList;
+
+
+//==========================================================================
+//
+//  VFont::findFont
+//
+//==========================================================================
+VFont *VFont::findFont (VName name) {
+  for (VFont *cur = fontList; cur; cur = cur->next) if (cur->name == name) return cur;
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VFont::VFont
+//
+//==========================================================================
+VFont::VFont (VName aname, const VStr &fnameIni, const VStr &fnameTexture)
+  : spaceWidth(0)
+  , fontHeight(0)
+{
+  guard(VFont::VFont);
+
+  //for (int i = 0; i < 256; ++i) chars1251[f] = -1;
+  //firstChar = -1;
+  //lastChar = -1;
+
+  auto img = VImage::loadFrom(fsysOpenFileAnyExt(fnameTexture));
+  if (!img) Sys_Error(va("cannot load font '%s' (texture not found)", *aname));
+
+  auto inif = fsysOpenFileAnyExt(fnameIni);
+  if (!inif) { delete img; Sys_Error(va("cannot load font '%s' (description not found)", *aname)); }
+  //fprintf(stderr, "*** %d %d %d %d\n", (int)inif->AtEnd(), (int)inif->IsError(), inif->TotalSize(), inif->Tell());
+
+  VStr currSection;
+
+  int cwdt = -1, chgt = -1, kern = 0;
+  int xwidth[256];
+  memset(xwidth, 0, sizeof(xwidth));
+
+  // parse ini file
+  while (!inif->AtEnd()) {
+    VStr line = readLine(inif);
+    if (inif->IsError()) { delete inif; delete img; Sys_Error(va("cannot load font '%s' (error loading description)", *aname)); }
+    if (line.isEmpty() || line[0] == ';' || line.startsWith("//")) continue;
+    if (line[0] == '[') { currSection = line; continue; }
+    // fontmap?
+    auto key = getKey(line);
+    //fprintf(stderr, "line:<%s>; key:<%s>; intval=%d\n", *line, *key, getIntValue(line));
+    if (currSection.equ1251CI("[FontMap]")) {
+      if (key.equ1251CI("CharWidth")) { cwdt = getIntValue(line); continue; }
+      if (key.equ1251CI("CharHeight")) { chgt = getIntValue(line); continue; }
+      if (key.equ1251CI("Kerning")) { kern = getIntValue(line); continue; }
+      continue;
+    }
+    if (currSection.length() < 2 || VStr::digitInBase(currSection[1]) < 0 || !currSection.endsWith("]")) continue;
+    if (!key.equ1251CI("Width")) continue;
+    int cidx = 0;
+    for (size_t f = 1; f < currSection.length(); ++f) {
+      int d = VStr::digitInBase(currSection[f]);
+      if (d < 0) {
+        if (f != currSection.length()-1) cidx = -1;
+        break;
+      }
+      cidx = cidx*10+d;
+    }
+    if (cidx >= 0 && cidx < 256) {
+      int w = getIntValue(line);
+      //fprintf(stderr, "cidx=%d; w=%d\n", cidx, w);
+      if (w < 0) w = 0;
+      xwidth[cidx] = w;
+    }
+  }
+
+  delete inif;
+
+  if (cwdt < 1 || chgt < 1) { delete img; Sys_Error(va("cannot load font '%s' (invalid description 00)", *aname)); }
+  int xchars = img->width/cwdt;
+  int ychars = img->height/chgt;
+  if (xchars < 1 || ychars < 1 || xchars*ychars < 128) { delete img; Sys_Error(va("cannot load font '%s' (invalid description 01)", *aname)); }
+  chars.setLength(xchars*ychars);
+
+  //tex = new VTexture(img);
+  tex = VTexture::createFromImage(img);
+  check(tex);
+
+  fontHeight = chgt;
+
+  for (int cx = 0; cx < xchars; ++cx) {
+    for (int cy = 0; cy < ychars; ++cy) {
+      FontChar &fc = chars[cy*xchars+cx];
+      fc.ch = cy*xchars+cx;
+      fc.width = cwdt;
+      fc.height = chgt;
+      fc.advance = xwidth[fc.ch]+kern;
+      if (fc.ch == 32) spaceWidth = fc.advance;
+      fc.topofs = 0;
+      fc.tx0 = (float)(cx*cwdt)/(float)tex->getWidth();
+      fc.ty0 = (float)(cy*chgt)/(float)tex->getHeight();
+      fc.tx1 = (float)(cx*cwdt+cwdt)/(float)tex->getWidth();
+      fc.ty1 = (float)(cy*chgt+chgt)/(float)tex->getHeight();
+      fc.tex = tex;
+    }
+  }
+
+  name = aname;
+  next = fontList;
+  fontList = this;
+
+  unguard;
+}
+
+//==========================================================================
+//
+//  VFont::~VFont
+//
+//==========================================================================
+VFont::~VFont() {
+  delete tex;
+  VFont *prev = nullptr, *cur = fontList;
+  while (cur && cur != this) { prev = cur; cur = cur->next; }
+  if (cur) {
+    if (prev) prev->next = next; else fontList = next;
+  }
+}
+
+
+//==========================================================================
+//
+//  VFont::GetChar
+//
+//==========================================================================
+const VFont::FontChar *VFont::getChar (int ch) const {
+  if (ch < 0 || ch >= chars.length()) {
+    ch = VStr::upcase1251(ch);
+    if (ch < 0 || ch >= chars.length()) return nullptr;
+  }
+  return &chars[ch];
+}
+
+
+//==========================================================================
+//
+//  VFont::charWidth
+//
+//==========================================================================
+int VFont::charWidth (int ch) const {
+  auto fc = getChar(ch);
+  return (fc ? fc->width : 0);
+}
+
+
+//==========================================================================
+//
+//  VFont::textWidth
+//
+//==========================================================================
+int VFont::textWidth (const VStr &s) const {
+  int res = 0;
+  for (size_t f = 0; f < s.length(); ++f) {
+    auto fc = getChar(vuint8(s[f]));
+    if (fc) res += fc->advance;
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VFont::textHeight
+//
+//==========================================================================
+int VFont::textHeight (const VStr &s) const {
+  int res = fontHeight;
+  for (size_t f = 0; f < s.length(); ++f) if (s[f] == '\n') res += fontHeight;
+  return res;
+}
 
 
 #endif

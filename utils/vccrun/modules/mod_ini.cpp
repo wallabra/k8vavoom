@@ -47,6 +47,7 @@ bool VIniFile::loadFrom (VStream &strm) {
     int epos = pos;
     while (epos < sz && buf[epos] != '\n') ++epos;
     if (buf[pos] == ';' || buf[pos] == '\n') { pos = epos+1; continue; }
+    if (buf[pos] == '/' && buf[pos+1] == '/') { pos = epos+1; continue; }
     // new path?
     if (buf[pos] == '[') {
       if (epos-pos < 2) { currPath = "<invalid>"; pos = epos+1; continue; }

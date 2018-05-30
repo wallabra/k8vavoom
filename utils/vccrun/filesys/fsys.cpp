@@ -415,6 +415,14 @@ VStream *fsysOpenFile (const VStr &fname) {
 }
 
 
+// open file for reading, relative to basedir, and look into archives too
+VStream *fsysOpenFileAnyExt (const VStr &fname) {
+  VStr rname = fsysFileFindAnyExt(fname);
+  if (rname.length() == 0) return nullptr;
+  return fsysOpenFile(rname);
+}
+
+
 // open file for reading, NOT relative to basedir
 VStream *fsysOpenDiskFileWrite (const VStr &fname) {
   if (fname.length() == 0) return nullptr;
@@ -727,7 +735,7 @@ int VZipStreamReader::TotalSize () {
 }
 
 
-bool VZipStreamReader::AtEnd () { return (bError ? true : TotalSize() == currpos); }
+bool VZipStreamReader::AtEnd () { return (bError || nextpos >= TotalSize()); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
