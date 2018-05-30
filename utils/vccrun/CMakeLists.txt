@@ -2,23 +2,30 @@ if (ENABLE_VCCRUN)
   # without client, we'll have no gfx and sound libraries
   set(VCCRUN_LINKLIBS "z" "imago")
   set(VCCRUN_SOURCES "")
-  set(VCCRUN_DEFINES "VCC_STANDALONE_EXECUTOR")
+  set(VCCRUN_DEFINES VCC_STANDALONE_EXECUTOR)
+
   if(ENABLE_CLIENT)
     if(NOT WITH_JPG)
       set(VCCRUN_LINKLIBS "jpeg" ${VCCRUN_LINKLIBS})
     endif(NOT WITH_JPG)
 
-    if(WIN32)
-      message(SEND_ERROR "NO SHITDOZE YET")
-      return()
-    else(WIN32)
+    #if(WIN32)
+    #  message(SEND_ERROR "NO SHITDOZE YET")
+    #  return()
+    #else(WIN32)
       if(WITH_SDL2)
         find_package(SDL2 REQUIRED)
       endif(WITH_SDL2)
 
       if(SDL2_FOUND)
+        message(STATUS "VCCRUN: SDL2 found")
         include_directories(${SDL2_INCLUDE_DIRS})
         set(VCCRUN_LINKLIBS ${SDL2_LIBRARIES} ${VCCRUN_LINKLIBS})
+        if(WIN32)
+          set(VCCRUN_LINKLIBS ${VCCRUN_LINKLIBS} -limm32)
+          set(VCCRUN_LINKLIBS ${VCCRUN_LINKLIBS} -lwinmm)
+          set(VCCRUN_LINKLIBS ${VCCRUN_LINKLIBS} -lversion)
+        endif(WIN32)
         set(VCCRUN_DEFINES "VCCRUN_HAS_SDL" ${VCCRUN_DEFINES})
       endif(SDL2_FOUND)
 
@@ -29,6 +36,7 @@ if (ENABLE_VCCRUN)
         endif(NOT SDL2_FOUND)
         find_package(OpenGL)
         if(OPENGL_FOUND)
+          #message(STATUS "VCCRUN: OpenGL found")
           include_directories(${OPENGL_INCLUDE_DIR})
           set(VCCRUN_LINKLIBS ${OPENGL_gl_LIBRARY} ${VCCRUN_LINKLIBS})
           set(VCCRUN_DEFINES "VCCRUN_HAS_OPENGL" ${VCCRUN_DEFINES})
@@ -43,7 +51,7 @@ if (ENABLE_VCCRUN)
           set(VCCRUN_DEFINES "VCCRUN_HAS_OPENAL" ${VCCRUN_DEFINES})
         endif(OPENAL_FOUND)
       endif(WITH_OPENAL)
-    endif(WIN32)
+    #endif(WIN32)
   endif(ENABLE_CLIENT)
 
   set(VCCRUN_COMPILER_SOURCES
@@ -135,6 +143,18 @@ if (ENABLE_VCCRUN)
     modules/sdlgl/mod_sdlgl.h
     modules/sdlgl/mod_sdlgl.cpp
   )
+
+  #message(STATUS "VCCRUN: LIBS: " ${VCCRUN_LINKLIBS})
+  #message(STATUS "VCCRUN: DEFS: " ${VCCRUN_DEFINES})
+
+  #message(STATUS "VCCRUN: XX: " ${TARGET_IMPLIB})
+
+  if(CYGWIN OR MINGW)
+    # Prune --out-implib from executables. It doesn't make sense even
+    # with --export-all-symbols.
+    string(REGEX REPLACE "-Wl,--out-implib,[^ ]+ " " " CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_LINK_EXECUTABLE}")
+    string(REGEX REPLACE "-Wl,--out-implib,[^ ]+ " " " CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
+  endif()
 
   set_target_properties(vcc_run PROPERTIES OUTPUT_NAME ../../vcc_run)
   target_compile_definitions(vcc_run PRIVATE ${VCCRUN_DEFINES})

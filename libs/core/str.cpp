@@ -482,8 +482,14 @@ int VStr::IndexOf (const VStr &s) const {
 int VStr::LastIndexOf (char c) const {
   guard(VStr::LastIndexOf);
   if (data) {
+#ifndef WIN32
     const char *pos = (const char *)memrchr(data, c, *lenp());
     return (pos ? (int)(pos-data) : -1);
+#else
+    size_t pos = length();
+    while (pos > 0 && data[pos-1] != c) --pos;
+    return (pos ? (int)(pos-1) : -1);
+#endif
   } else {
     return -1;
   }

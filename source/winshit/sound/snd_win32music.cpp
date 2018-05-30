@@ -28,7 +28,7 @@
 #include "winshit/winlocal.h"
 #include <mmsystem.h>
 #include "gamedefs.h"
-#include "snd_local.h"
+#include "../../sound/snd_local.h"
 
 // MACROS ------------------------------------------------------------------
 

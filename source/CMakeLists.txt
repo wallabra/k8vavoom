@@ -370,10 +370,10 @@ set(MAIN_WIN32_SOURCES
   winshit/sound/snd_win32.cpp
   winshit/sound/snd_win32music.cpp
   winshit/sys_win.cpp
-  winshit/res/vavoom.ico
-  winshit/res/vavoom_2.ico
-  winshit/res/vavoom_3.ico
-  winshit/res/vavoom.rc
+#  winshit/res/vavoom.ico
+#  winshit/res/vavoom_2.ico
+#  winshit/res/vavoom_3.ico
+#  winshit/res/vavoom.rc
   winshit/winlocal.h
 )
 
@@ -453,7 +453,7 @@ set(SERVER_UNIX_SOURCES
 set(SERVER_WIN32_SOURCES
   winshit/net/net_winsock.cpp
   winshit/sys_wind.cpp
-  winshit/res/vavoom.rc
+#  winshit/res/vavoom.rc
 )
 
 #---------------------------------------
@@ -499,13 +499,14 @@ if(WIN32)
   #  CMake doesn't support automatic building of resource files so
   # we must add a custom command and add object files to the list
   # of source files
-  set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
-  set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom.o)
-  add_custom_command(OUTPUT ${RC_OBJ}
-    DEPENDS ${RC_SRC}
-    COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
-  )
-  set(MAIN_SOURCES ${MAIN_SOURCES} ${RC_OBJ})
+  ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
+  ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom.o)
+  ### add_custom_command(OUTPUT ${RC_OBJ}
+  ###   DEPENDS ${RC_SRC}
+  ###   COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
+  ### )
+  ### set(MAIN_SOURCES ${MAIN_SOURCES} ${RC_OBJ})
+  set(MAIN_SOURCES ${MAIN_SOURCES})
 
   if(WITH_OPENGL)
     set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_SOURCES} ${MAIN_OPENGL_WIN32_SOURCES})
@@ -759,13 +760,14 @@ if(WIN32)
   #  CMake doesn't support automatic building of resource files so
   # we must add a custom command and add object files to the list
   # of source files
-  set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
-  set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom_sv.o)
-  add_custom_command(OUTPUT ${RC_OBJ}
-    DEPENDS ${RC_SRC}
-    COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
-  )
-  set(SERVER_SOURCES ${SERVER_SOURCES} ${RC_OBJ})
+  ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
+  ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom_sv.o)
+  ### add_custom_command(OUTPUT ${RC_OBJ}
+  ###   DEPENDS ${RC_SRC}
+  ###   COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
+  ### )
+  ### set(SERVER_SOURCES ${SERVER_SOURCES} ${RC_OBJ})
+  set(SERVER_SOURCES ${SERVER_SOURCES})
 else(WIN32)
   set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} ${SERVER_UNIX_SOURCES})
 endif(WIN32)

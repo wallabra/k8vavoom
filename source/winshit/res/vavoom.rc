@@ -1,7 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
 //#include "resource.h"
-#include "svnrev.h"
+//#include "svnrev.h"
 #include "build.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -61,9 +61,9 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-APPICON                 ICON                    "Vavoom.ico"
-APPICON2                ICON                    "Vavoom_2.ico"
-APPICON3                ICON                    "Vavoom_3.ico"
+APPICON                 ICON                    "vavoom.ico"
+APPICON2                ICON                    "vavoom_2.ico"
+APPICON3                ICON                    "vavoom_3.ico"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////

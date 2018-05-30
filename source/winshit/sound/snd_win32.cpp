@@ -31,7 +31,7 @@
 #include "winshit/sound/eax.h"
 
 #include "gamedefs.h"
-#include "snd_local.h"
+#include "../../sound/snd_local.h"
 
 // MACROS ------------------------------------------------------------------
 

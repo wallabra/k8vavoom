@@ -50,7 +50,7 @@
 
 #include "gamedefs.h"
 #include "fs_local.h"
-#include "lzma.h"
+#include "../../libs/liblzma/api/lzma.h"
 #ifdef USE_INTERNAL_ZLIB
 # include "../../libs/zlib/zlib.h"
 #else

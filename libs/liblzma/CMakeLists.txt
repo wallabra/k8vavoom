@@ -6,7 +6,11 @@ add_definitions(-DHAVE_STRING_H)
 add_definitions(-DHAVE_STRINGS_H)
 add_definitions(-DHAVE_MEMORY_H)
 
-add_definitions(-DMYTHREAD_POSIX)
+if(NOT WIN32)
+  add_definitions(-DMYTHREAD_POSIX)
+else(NOT WIN32)
+  add_definitions(-DMYTHREAD_VISTA)
+endif(NOT WIN32)
 
 add_definitions(-DHAVE_CHECK_CRC32)
 add_definitions(-DHAVE_CHECK_CRC64)
