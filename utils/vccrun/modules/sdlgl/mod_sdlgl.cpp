@@ -41,6 +41,12 @@ bool VVideo::quitSignal = false;
 extern VObject *mainObject;
 
 
+struct ScissorRect {
+  int x, y, w, h;
+  int enabled;
+};
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // keys and buttons
 enum {
@@ -820,46 +826,6 @@ void VVideo::runEventLoop () {
         default:
           break;
       }
-
-      // read mouse separately
-      /*
-      if (mouse && winactive && Drawer) {
-        if (!ui_active || ui_mouse) {
-          uiwasactive = ui_active;
-          SDL_GetMouseState(&mouse_x, &mouse_y);
-          int dx = mouse_x-ScreenWidth/2;
-          int dy = ScreenHeight/2-mouse_y;
-          if (firsttime) {
-            Drawer->WarpMouseToWindowCenter();
-            SDL_GetMouseState(&mouse_x, &mouse_y);
-            if (mouse_x == mouse_oldx && mouse_y == mouse_oldy) dx = dy = 0;
-          }
-          if (dx || dy) {
-            //SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
-            mouse_oldx = mouse_x;
-            mouse_oldy = mouse_y;
-            //fprintf(stderr, "mx=%d; my=%d; dx=%d, dy=%d\n", mouse_x, mouse_y, dx, dy);
-            evt.type = ev_mouse;
-            evt.data1 = 0;
-            evt.data2 = dx;
-            evt.data3 = dy;
-            GInput->PostEvent(&evt);
-            //SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
-            if (Drawer) { firsttime = false; Drawer->WarpMouseToWindowCenter(); }
-          }
-        } else if (ui_active != uiwasactive) {
-          uiwasactive = ui_active;
-          if (!ui_active) {
-            //SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
-            if (Drawer) {
-              firsttime = true;
-              Drawer->WarpMouseToWindowCenter();
-              SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
-            }
-          }
-        }
-      }
-      */
     }
 
     if (doRefresh) onDraw();
@@ -956,6 +922,7 @@ IMPLEMENT_FUNCTION(VVideo, runEventLoop) { VVideo::runEventLoop(); }
 
 IMPLEMENT_FUNCTION(VVideo, clearScreen) { VVideo::clear(); }
 
+
 // aborts if font cannot be loaded
 //native final static loadFont (name fname, string fnameIni, string fnameTexture);
 IMPLEMENT_FUNCTION(VVideo, loadFont) {
@@ -969,6 +936,66 @@ IMPLEMENT_FUNCTION(VVideo, loadFont) {
 
 IMPLEMENT_FUNCTION(VVideo, requestQuit) { VVideo::quitSignal = true; }
 IMPLEMENT_FUNCTION(VVideo, requestRefresh) { VVideo::doRefresh = true; }
+
+
+IMPLEMENT_FUNCTION(VVideo, setScissorEnabled) {
+  P_GET_BOOL(v);
+  if (mInited) {
+    if (v) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
+  }
+}
+
+IMPLEMENT_FUNCTION(VVideo, copyScissor) {
+  P_GET_PTR(ScissorRect, s);
+  P_GET_PTR(ScissorRect, d);
+  if (d) {
+    if (s) {
+      *d = *s;
+    } else {
+      d->x = d->y = 0;
+      d->w = mWidth;
+      d->h = mHeight;
+      d->enabled = 0;
+    }
+  }
+}
+
+IMPLEMENT_FUNCTION(VVideo, getScissor) {
+  P_GET_PTR(ScissorRect, sr);
+  if (sr) {
+    if (!mInited) { sr->x = sr->y = sr->w = sr->h = sr->enabled = 0; return; }
+    sr->enabled = (glIsEnabled(GL_SCISSOR_TEST) ? 1 : 0);
+    GLint scxywh[4];
+    glGetIntegerv(GL_SCISSOR_BOX, scxywh);
+    int y0 = mHeight-(scxywh[1]+scxywh[3]);
+    int y1 = mHeight-scxywh[1]-1;
+    sr->x = scxywh[0];
+    sr->y = y0;
+    sr->w = scxywh[2];
+    sr->h = y1-y0+1;
+  }
+}
+
+IMPLEMENT_FUNCTION(VVideo, setScissor) {
+  P_GET_PTR(ScissorRect, sr);
+  if (sr) {
+    if (!mInited) return;
+    if (sr->enabled) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
+    //glScissor(sr->x0, mHeight-sr->y0-1, sr->x1, mHeight-sr->y1-1);
+    int w = (sr->w > 0 ? sr->w : 0);
+    int h = (sr->h > 0 ? sr->h : 0);
+    int y1 = mHeight-sr->y-1;
+    int y0 = mHeight-(sr->y+h);
+    glScissor(sr->x, y0, w, y1-y0+1);
+  } else {
+    if (mInited) {
+      glDisable(GL_SCISSOR_TEST);
+      GLint scxywh[4];
+      glGetIntegerv(GL_VIEWPORT, scxywh);
+      glScissor(scxywh[0], scxywh[1], scxywh[2], scxywh[3]);
+    }
+  }
+}
 
 
 IMPLEMENT_FUNCTION(VVideo, setSmoothLine) {

@@ -1,5 +1,12 @@
 class Video : Object abstract native;
 
+struct ScissorRect {
+  int x, y, w, h;
+  int enabled;
+}
+
+native final static void copyScissor (ScissorRect *dest, ScissorRect *src);
+
 native final static bool canInit ();
 native final static bool hasOpenGL ();
 native final static bool isInitialized ();
@@ -10,11 +17,17 @@ native final static bool openScreen (string winname, int width, int height);
 native final static void closeScreen ();
 
 native final static void clearScreen ();
+native final static void clearScreenRGB (int r, int g, int b);
 
 native final static void runEventLoop ();
 
 native final static void requestRefresh ();
 native final static void requestQuit ();
+
+native final static void setScissorEnabled (bool v);
+native final static void getScissor (ScissorRect *sr);
+native final static void setScissor (ScissorRect *sr);
+
 
 // aborts if font cannot be loaded
 native final static void loadFont (name fontname, string fnameIni, string fnameTexture);

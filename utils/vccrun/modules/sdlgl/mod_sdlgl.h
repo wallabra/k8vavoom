@@ -75,6 +75,7 @@ public:
   static void close ();
 
   static void clear ();
+  static void clearColored (int r, int g, int b);
 
   static void runEventLoop ();
 
@@ -100,6 +101,11 @@ public:
 
   DECLARE_FUNCTION(requestRefresh)
   DECLARE_FUNCTION(requestQuit)
+
+  DECLARE_FUNCTION(setScissorEnabled)
+  DECLARE_FUNCTION(getScissor)
+  DECLARE_FUNCTION(setScissor)
+  DECLARE_FUNCTION(copyScissor)
 
   DECLARE_FUNCTION(clearScreen)
 
