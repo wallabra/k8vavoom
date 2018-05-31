@@ -52,11 +52,12 @@ private:
   static VMethod *onDrawVC;
   static VMethod *onEventVC;
 
-  static int fontR;
-  static int fontG;
-  static int fontB;
-  static int fontA;
+  static int colorR;
+  static int colorG;
+  static int colorB;
+  static int colorA;
   static VFont *currFont;
+  friend class VTexture;
 
 private:
   static void initMethods ();
@@ -78,8 +79,8 @@ public:
   static void runEventLoop ();
 
   static void setFont (VName fontname);
-  static void setTextColor (int r, int g, int b);
-  static void setTextAlpha (int a);
+  static void setColor (int r, int g, int b);
+  static void setAlpha (int a);
 
   static void drawTextAt (int x, int y, const VStr &text);
 
@@ -102,15 +103,27 @@ public:
 
   DECLARE_FUNCTION(clearScreen)
 
-  DECLARE_FUNCTION(setTextFont)
-  DECLARE_FUNCTION(setTextColor)
-  DECLARE_FUNCTION(setTextAlpha)
+  DECLARE_FUNCTION(setColor)
+  DECLARE_FUNCTION(setAlpha)
+
+  DECLARE_FUNCTION(setSmoothLine)
+
+  DECLARE_FUNCTION(colorR)
+  DECLARE_FUNCTION(colorG)
+  DECLARE_FUNCTION(colorB)
+  DECLARE_FUNCTION(colorA)
+
+  DECLARE_FUNCTION(setFont)
   DECLARE_FUNCTION(fontHeight)
   DECLARE_FUNCTION(charWidth)
   DECLARE_FUNCTION(spaceWidth)
   DECLARE_FUNCTION(textWidth)
   DECLARE_FUNCTION(textHeight)
   DECLARE_FUNCTION(drawTextAt)
+
+  DECLARE_FUNCTION(drawLine)
+  DECLARE_FUNCTION(drawRect)
+  DECLARE_FUNCTION(fillRect)
 };
 
 
@@ -145,6 +158,7 @@ public:
   int getHeight () const { return (img ? img->height : 0); }
 
   void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const;
+  void blitAt (int dx0, int dy0, float scale=1) const;
 
 public:
   //PropertyRO<int, VTexture> width {this, &VTexture::getWidth};
@@ -155,6 +169,7 @@ public:
   DECLARE_FUNCTION(width)
   DECLARE_FUNCTION(height)
   DECLARE_FUNCTION(blitExt)
+  DECLARE_FUNCTION(blitAt)
 };
 
 
