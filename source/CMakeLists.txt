@@ -1,3 +1,13 @@
+set(VAVOOM_MAIN_DEPS "")
+
+if(NOT WITH_SYS_ZLIB)
+  set(VAVOOM_MAIN_DEPS "z" ${VAVOOM_MAIN_DEPS})
+endif(WITH_SYS_ZLIB)
+
+if(NOT WITH_SYS_LZMA)
+  set(VAVOOM_MAIN_DEPS "lzma" ${VAVOOM_MAIN_DEPS})
+endif(NOT WITH_SYS_LZMA)
+
 #---------------------------------------
 #
 # VaVoom C compiler sources
@@ -364,12 +374,12 @@ set(MAIN_OPENGL_UNIX_SDL_SOURCES
 
 #-- Windows --
 set(MAIN_WIN32_SOURCES
-  winshit/sound/eax.h
   winshit/in_win32.cpp
   winshit/net/net_winsock.cpp
-  winshit/sound/snd_win32.cpp
-  winshit/sound/snd_win32music.cpp
   winshit/sys_win.cpp
+#  winshit/sound/eax.h
+#  winshit/sound/snd_win32.cpp
+#  winshit/sound/snd_win32music.cpp
 #  winshit/res/vavoom.ico
 #  winshit/res/vavoom_2.ico
 #  winshit/res/vavoom_3.ico
@@ -483,8 +493,14 @@ else(WITH_JPG)
   set(JPG_LIBRARY "jpeg")
 endif(WITH_JPG)
 
+if(WITH_GME)
+  set(MAIN_GME_LIB "gme")
+else(WITH_GME)
+  set(MAIN_GME_LIB "")
+endif(WITH_GME)
+
 set(MAIN_SOURCES ${MAIN_COMMON_SOURCES})
-set(MAIN_LIBS glbsp libglvis timidity gme core lzma ${JPG_LIBRARY} ${ZLIB_LIBRARY} ${NET_LIBRARIES})
+set(MAIN_LIBS glbsp libglvis timidity ${MAIN_GME_LIB} core ${VAVOOM_MAIN_DEPS} ${LIBLZMA_LIBRARIES} ${JPG_LIBRARY} ${ZLIB_LIBRARIES} ${NET_LIBRARIES})
 set(MAIN_COMPILE_FLAGS "")
 
 #
@@ -514,9 +530,9 @@ if(WIN32)
   endif(WITH_OPENGL)
 
   if(WITH_OPENAL)
-    find_path(OPENALAL_INCLUDE_DIR AL/al.h)
+    include_directories(${OPENAL_INCLUDE_DIR})
     set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENAL_SOURCES})
-    set(MAIN_LIBS OpenAL32 ${MAIN_LIBS})
+    set(MAIN_LIBS ${OPENAL_LIBRARY} ${MAIN_LIBS})
   endif(WITH_OPENAL)
 else(WIN32)
   # ---------------- Other *NIX platforms ----------------
@@ -553,35 +569,31 @@ else(WIN32)
   endif(WITH_OPENGL)
 
   if(WITH_OPENAL)
-    find_package(OpenAL)
-    if(OPENAL_FOUND)
-      message(STATUS "Found OpenAL")
-      include_directories(${OPENAL_INCLUDE_DIR})
-      set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENAL_SOURCES})
-      set(MAIN_LIBS ${OPENAL_LIBRARY} ${MAIN_LIBS})
-    endif(OPENAL_FOUND)
+    include_directories(${OPENAL_INCLUDE_DIR})
+    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENAL_SOURCES})
+    set(MAIN_LIBS ${OPENAL_LIBRARY} ${MAIN_LIBS})
   endif(WITH_OPENAL)
 endif(WIN32)
 
 #
 #  **** Check for libpng ****
 #
-if(WITH_LIBPNG)
+if(WITH_SYS_LIBPNG)
   find_package(PNG REQUIRED)
   include_directories(${PNG_INCLUDE_DIR})
   set(MAIN_LIBS ${PNG_LIBRARY} ${MAIN_LIBS})
   add_definitions(-DVAVOOM_USE_LIBPNG=1)
-endif(WITH_LIBPNG)
+endif(WITH_SYS_LIBPNG)
 
 #
 #  **** Check for libjpeg ****
 #
-if(WITH_LIBJPG)
+if(WITH_SYS_LIBJPG)
   find_package(JPEG REQUIRED)
   include_directories(${JPEG_INCLUDE_DIR})
   set(MAIN_LIBS ${JPEG_LIBRARY} ${MAIN_LIBS})
   add_definitions(-DVAVOOM_USE_LIBJPG=1)
-endif(WITH_LIBJPG)
+endif(WITH_SYS_LIBJPG)
 
 #
 #  **** Check for Vorbis ****
@@ -715,17 +727,26 @@ if(WITH_GME)
 endif(WITH_GME)
 
 
+if(CYGWIN OR MINGW)
+  # Prune --out-implib from executables. It doesn't make sense even
+  # with --export-all-symbols.
+  string(REGEX REPLACE "-Wl,--out-implib,[^ ]+ " " " CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_LINK_EXECUTABLE}")
+  string(REGEX REPLACE "-Wl,--out-implib,[^ ]+ " " " CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
+endif()
+
+
 add_executable(vavoom ${MAIN_SOURCES})
 if(ENABLE_WRAPPERS)
-set_target_properties(vavoom PROPERTIES OUTPUT_NAME ../vavoom.bin)
+  set_target_properties(vavoom PROPERTIES OUTPUT_NAME ../vavoom.bin)
 else(ENABLE_WRAPPERS)
-set_target_properties(vavoom PROPERTIES OUTPUT_NAME ../vavoom)
+  set_target_properties(vavoom PROPERTIES OUTPUT_NAME ../vavoom)
 endif(ENABLE_WRAPPERS)
 if (MAIN_COMPILE_FLAGS)
   set_target_properties(vavoom PROPERTIES COMPILE_FLAGS ${MAIN_COMPILE_FLAGS})
 endif (MAIN_COMPILE_FLAGS)
+#message(STATUS "MAIN LINKLIBS: " ${MAIN_LIBS})
 target_link_libraries(vavoom ${MAIN_LIBS})
-add_dependencies(vavoom core timidity gme glbsp libglvis lzma ${ZLIB_DEPS})
+add_dependencies(vavoom core timidity gme glbsp libglvis ${VAVOOM_MAIN_DEPS} ${ZLIB_DEPS})
 
 install(TARGETS vavoom DESTINATION ${BINDIR})
 
@@ -779,8 +800,8 @@ else(ENABLE_WRAPPERS)
   set_target_properties(vavoom-dedicated PROPERTIES OUTPUT_NAME ../vavoom-dedicated)
 endif(ENABLE_WRAPPERS)
 set_target_properties(vavoom-dedicated PROPERTIES COMPILE_FLAGS -DSERVER)
-target_link_libraries(vavoom-dedicated glbsp core lzma ${ZLIB_LIBRARY} ${NET_LIBRARIES})
-add_dependencies(vavoom-dedicated core glbsp lzma)
+target_link_libraries(vavoom-dedicated glbsp core ${LIBLZMA_LIBRARIES} ${ZLIB_LIBRARIES} ${NET_LIBRARIES})
+add_dependencies(vavoom-dedicated core glbsp ${VAVOOM_MAIN_DEPS})
 
 install(TARGETS vavoom-dedicated DESTINATION ${BINDIR})
 

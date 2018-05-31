@@ -1,12 +1,25 @@
 if (ENABLE_VCCRUN)
   # without client, we'll have no gfx and sound libraries
-  set(VCCRUN_LINKLIBS "z" "imago")
+  set(VCCRUN_DEPS "")
+  set(VCCRUN_LINKLIBS "imago")
+
+  if(NOT WITH_SYS_ZLIB)
+    set(VCCRUN_DEPS "z" ${VCCRUN_DEPS})
+    set(ZLIB_LIBRARIES "z")
+  endif(WITH_SYS_ZLIB)
+
+  if(NOT WITH_SYS_LZMA)
+    set(VCCRUN_DEPS "lzma" ${VCCRUN_DEPS})
+  endif(NOT WITH_SYS_LZMA)
+
+  set(VCCRUN_LINKLIBS ${ZLIB_LIBRARIES} ${VCCRUN_LINKLIBS})
   set(VCCRUN_SOURCES "")
   set(VCCRUN_DEFINES VCC_STANDALONE_EXECUTOR)
 
   if(ENABLE_CLIENT)
+    set(VCCRUN_LINKLIBS "jpeg" ${VCCRUN_LINKLIBS})
     if(NOT WITH_JPG)
-      set(VCCRUN_LINKLIBS "jpeg" ${VCCRUN_LINKLIBS})
+      set(VCCRUN_DEPS "jpeg" ${VCCRUN_DEPS})
     endif(NOT WITH_JPG)
 
     #if(WIN32)
@@ -158,6 +171,6 @@ if (ENABLE_VCCRUN)
 
   set_target_properties(vcc_run PROPERTIES OUTPUT_NAME ../../vcc_run)
   target_compile_definitions(vcc_run PRIVATE ${VCCRUN_DEFINES})
-  target_link_libraries(vcc_run core lzma ${VCCRUN_LINKLIBS})
-  add_dependencies(vcc_run core jpeg imago lzma z)
+  target_link_libraries(vcc_run core ${LIBLZMA_LIBRARIES} ${VCCRUN_LINKLIBS})
+  add_dependencies(vcc_run core imago ${VCCRUN_DEPS})
 endif(ENABLE_VCCRUN)

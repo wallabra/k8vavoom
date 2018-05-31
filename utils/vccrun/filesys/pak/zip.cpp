@@ -47,14 +47,6 @@
 //**************************************************************************
 
 #include "../fsys.h"
-/*
-#include "lzma.h"
-#ifdef USE_INTERNAL_ZLIB
-# include "../../../../libs/zlib/zlib.h"
-#else
-# include <zlib.h>
-#endif
-*/
 
 #define Z_LZMA  (14)
 #define Z_STORE  (0)

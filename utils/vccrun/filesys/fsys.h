@@ -191,7 +191,11 @@ public:
 #else
 # include <zlib.h>
 #endif
-#include "../../../libs/liblzma/api/lzma.h"
+#ifdef USE_INTERNAL_LZMA
+# include "../../../libs/liblzma/api/lzma.h"
+#else
+# include <lzma.h>
+#endif
 
 class VZipStreamReader : public VStream {
 private:

@@ -1,20 +1,24 @@
 add_subdirectory(core)
-add_subdirectory(liblzma)
+
+if(NOT WITH_SYS_LZMA)
+  add_subdirectory(liblzma)
+endif(NOT WITH_SYS_LZMA)
+
+if(NOT WITH_SYS_LIBJPG)
+  add_subdirectory(jpeg)
+endif(NOT WITH_SYS_LIBJPG)
+
+if(NOT WITH_SYS_ZLIB)
+  add_subdirectory(zlib)
+endif(NOT WITH_SYS_ZLIB)
+
 add_subdirectory(imago)
 
-if(NOT WITH_ZLIB)
-  add_subdirectory(zlib)
-endif(NOT WITH_ZLIB)
-
-if(ENABLE_CLIENT)
+if(ENABLE_CLIENT AND NOT ENABLE_VCCRUN_ONLY)
   if(WITH_GME)
     message(STATUS "GME enabled")
     add_subdirectory(gme)
   endif(WITH_GME)
 
   add_subdirectory(timidity)
-
-  if(NOT WITH_LIBJPG)
-    add_subdirectory(jpeg)
-  endif(NOT WITH_LIBJPG)
 endif(ENABLE_CLIENT)

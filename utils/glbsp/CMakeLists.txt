@@ -24,5 +24,7 @@ add_library(glbsp
   wad.c
   wad.h
 )
-target_link_libraries(glbsp ${ZLIB_LIBRARY})
-add_dependencies(glbsp ${ZLIB_DEPS})
+target_link_libraries(glbsp ${ZLIB_LIBRARIES})
+if(ZLIB_DEPS)
+  add_dependencies(glbsp ${ZLIB_DEPS})
+endif(ZLIB_DEPS)

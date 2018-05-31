@@ -11,4 +11,5 @@ if(NOT ENABLE_VCCRUN_ONLY)
   add_subdirectory(vcc)
   add_subdirectory(vlumpy)
 endif(NOT ENABLE_VCCRUN_ONLY)
+
 add_subdirectory(vccrun)

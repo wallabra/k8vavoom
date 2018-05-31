@@ -25,7 +25,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "gl_local.h"
+#include "../../../render/hwgl/gl_local.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -46,6 +46,7 @@ public:
   void Shutdown();
 
   virtual void WarpMouseToWindowCenter () override;
+  virtual bool SetAdaptiveSwap () override;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -91,6 +92,11 @@ void VWin32OpenGLDrawer::Init()
 //==========================================================================
 
 void VWin32OpenGLDrawer::WarpMouseToWindowCenter () {
+}
+
+
+bool VWin32OpenGLDrawer::SetAdaptiveSwap () {
+  return false;
 }
 
 
