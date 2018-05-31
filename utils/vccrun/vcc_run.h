@@ -65,7 +65,6 @@
 #include "../../source/vc/vc_lexer.h"
 #include "../../source/vc/vc_modifiers.h"
 #include "../../source/vc/vc_parser.h"
-
 #include "../../source/vc/vc_object.h"
 
 #include "../../source/scripts.h"

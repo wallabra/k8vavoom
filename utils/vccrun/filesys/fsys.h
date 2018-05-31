@@ -272,9 +272,9 @@ int fsysDiskFileTime (const VStr &path);
 bool fsysDirExists (const VStr &path);
 bool fysCreateDirectory (const VStr &path);
 
-bool fsysOpenDir (const VStr &);
-VStr fsysReadDir ();
-void fsysCloseDir ();
+void *fsysOpenDir (const VStr &path);
+VStr fsysReadDir (void *adir);
+void fsysCloseDir (void *adir);
 
 // kinda like `GetTickCount()`, in seconds
 double fsysCurrTick ();
