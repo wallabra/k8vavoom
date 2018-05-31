@@ -39,9 +39,9 @@ class VFont;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VVideoMode : public VObject {
-  DECLARE_CLASS(VVideoMode, VObject, 0)
-  NO_DEFAULT_CONSTRUCTOR(VVideoMode)
+class VVideo : public VObject {
+  DECLARE_CLASS(VVideo, VObject, 0)
+  NO_DEFAULT_CONSTRUCTOR(VVideo)
 
 private:
   static bool mInited;

@@ -2,5 +2,5 @@
 #include "../../../../progs/common/engine/ScriptsParser.vc"
 
 #include "IniFile.vc"
-#include "VideoMode.vc"
+#include "Video.vc"
 #include "Texture.vc"

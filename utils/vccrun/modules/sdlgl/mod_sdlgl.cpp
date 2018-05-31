@@ -34,9 +34,9 @@ static SDL_Window *hw_window = nullptr;
 static SDL_GLContext hw_glctx = nullptr;
 static VTexture *txHead = nullptr, *txTail = nullptr;
 
-bool VVideoMode::doGLSwap = false;
-bool VVideoMode::doRefresh = false;
-bool VVideoMode::quitSignal = false;
+bool VVideo::doGLSwap = false;
+bool VVideo::doRefresh = false;
+bool VVideo::quitSignal = false;
 
 extern VObject *mainObject;
 
@@ -495,31 +495,31 @@ IMPLEMENT_FUNCTION(VTexture, blitExt) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-IMPLEMENT_CLASS(V, VideoMode);
+IMPLEMENT_CLASS(V, Video);
 
-bool VVideoMode::mInited = false;
-int VVideoMode::mWidth = 0;
-int VVideoMode::mHeight = 0;
+bool VVideo::mInited = false;
+int VVideo::mWidth = 0;
+int VVideo::mHeight = 0;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-bool VVideoMode::canInit () {
+bool VVideo::canInit () {
   return true;
 }
 
 
-bool VVideoMode::hasOpenGL () {
+bool VVideo::hasOpenGL () {
   return true;
 }
 
 
-bool VVideoMode::isInitialized () { return mInited; }
-int VVideoMode::getWidth () { return mWidth; }
-int VVideoMode::getHeight () { return mHeight; }
+bool VVideo::isInitialized () { return mInited; }
+int VVideo::getWidth () { return mWidth; }
+int VVideo::getHeight () { return mHeight; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VVideoMode::close () {
+void VVideo::close () {
   if (mInited) {
     if (hw_glctx) {
       if (hw_window) {
@@ -540,7 +540,7 @@ void VVideoMode::close () {
 }
 
 
-bool VVideoMode::open (const VStr &winname, int width, int height) {
+bool VVideo::open (const VStr &winname, int width, int height) {
   if (width < 1 || height < 1) {
     width = 800;
     height = 600;
@@ -638,7 +638,7 @@ bool VVideoMode::open (const VStr &winname, int width, int height) {
 }
 
 
-void VVideoMode::clear () {
+void VVideo::clear () {
   if (!mInited) return;
 
   glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -649,10 +649,10 @@ void VVideoMode::clear () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VMethod *VVideoMode::onDrawVC = nullptr;
-VMethod *VVideoMode::onEventVC = nullptr;
+VMethod *VVideo::onDrawVC = nullptr;
+VMethod *VVideo::onEventVC = nullptr;
 
-void VVideoMode::initMethods () {
+void VVideo::initMethods () {
   onDrawVC = nullptr;
   onEventVC = nullptr;
 
@@ -675,7 +675,7 @@ void VVideoMode::initMethods () {
 }
 
 
-void VVideoMode::onDraw () {
+void VVideo::onDraw () {
   doRefresh = false;
   if (!hw_glctx || !onDrawVC) return;
   if ((onDrawVC->Flags&FUNC_Static) == 0) P_PASS_REF((VObject *)mainObject);
@@ -684,14 +684,14 @@ void VVideoMode::onDraw () {
 }
 
 
-void VVideoMode::onEvent (event_t &evt) {
+void VVideo::onEvent (event_t &evt) {
   if ((onEventVC->Flags&FUNC_Static) == 0) P_PASS_REF((VObject *)mainObject);
   P_PASS_REF((event_t *)&evt);
   VObject::ExecuteFunction(onEventVC);
 }
 
 
-void VVideoMode::runEventLoop () {
+void VVideo::runEventLoop () {
   if (!mInited) return;
 
   initMethods();
@@ -841,32 +841,32 @@ void VVideoMode::runEventLoop () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-int VVideoMode::fontR = 255;
-int VVideoMode::fontG = 255;
-int VVideoMode::fontB = 255;
-int VVideoMode::fontA = 255;
-VFont *VVideoMode::currFont = nullptr;
+int VVideo::fontR = 255;
+int VVideo::fontG = 255;
+int VVideo::fontB = 255;
+int VVideo::fontA = 255;
+VFont *VVideo::currFont = nullptr;
 
 
-void VVideoMode::setFont (VName fontname) {
+void VVideo::setFont (VName fontname) {
   if (currFont && currFont->getName() == fontname) return;
   currFont = VFont::findFont(fontname);
 }
 
 
-void VVideoMode::setTextColor (int r, int g, int b) {
+void VVideo::setTextColor (int r, int g, int b) {
   fontR = (r < 0 ? 0 : r > 255 ? 255 : r);
   fontG = (g < 0 ? 0 : g > 255 ? 255 : g);
   fontB = (b < 0 ? 0 : b > 255 ? 255 : b);
 }
 
 
-void VVideoMode::setTextAlpha (int a) {
+void VVideo::setTextAlpha (int a) {
   fontA = (a < 0 ? 0 : a > 255 ? 255 : a);
 }
 
 
-void VVideoMode::drawTextAt (int x, int y, const VStr &text) {
+void VVideo::drawTextAt (int x, int y, const VStr &text) {
   if (!currFont || fontA <= 0 || text.isEmpty()) return;
   if (!mInited) return;
 
@@ -903,28 +903,28 @@ void VVideoMode::drawTextAt (int x, int y, const VStr &text) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-IMPLEMENT_FUNCTION(VVideoMode, canInit) { RET_BOOL(VVideoMode::canInit()); }
-IMPLEMENT_FUNCTION(VVideoMode, hasOpenGL) { RET_BOOL(VVideoMode::hasOpenGL()); }
-IMPLEMENT_FUNCTION(VVideoMode, isInitialized) { RET_BOOL(VVideoMode::isInitialized()); }
-IMPLEMENT_FUNCTION(VVideoMode, screenWidth) { RET_INT(VVideoMode::getWidth()); }
-IMPLEMENT_FUNCTION(VVideoMode, screenHeight) { RET_INT(VVideoMode::getHeight()); }
+IMPLEMENT_FUNCTION(VVideo, canInit) { RET_BOOL(VVideo::canInit()); }
+IMPLEMENT_FUNCTION(VVideo, hasOpenGL) { RET_BOOL(VVideo::hasOpenGL()); }
+IMPLEMENT_FUNCTION(VVideo, isInitialized) { RET_BOOL(VVideo::isInitialized()); }
+IMPLEMENT_FUNCTION(VVideo, screenWidth) { RET_INT(VVideo::getWidth()); }
+IMPLEMENT_FUNCTION(VVideo, screenHeight) { RET_INT(VVideo::getHeight()); }
 
-IMPLEMENT_FUNCTION(VVideoMode, closeScreen) { VVideoMode::close(); }
+IMPLEMENT_FUNCTION(VVideo, closeScreen) { VVideo::close(); }
 
-IMPLEMENT_FUNCTION(VVideoMode, openScreen) {
+IMPLEMENT_FUNCTION(VVideo, openScreen) {
   P_GET_INT(hgt);
   P_GET_INT(wdt);
   P_GET_STR(wname);
-  RET_BOOL(VVideoMode::open(wname, wdt, hgt));
+  RET_BOOL(VVideo::open(wname, wdt, hgt));
 }
 
-IMPLEMENT_FUNCTION(VVideoMode, runEventLoop) { VVideoMode::runEventLoop(); }
+IMPLEMENT_FUNCTION(VVideo, runEventLoop) { VVideo::runEventLoop(); }
 
-IMPLEMENT_FUNCTION(VVideoMode, clearScreen) { VVideoMode::clear(); }
+IMPLEMENT_FUNCTION(VVideo, clearScreen) { VVideo::clear(); }
 
 // aborts if font cannot be loaded
 //native final static loadFont (name fname, string fnameIni, string fnameTexture);
-IMPLEMENT_FUNCTION(VVideoMode, loadFont) {
+IMPLEMENT_FUNCTION(VVideo, loadFont) {
   P_GET_STR(fnameTexture);
   P_GET_STR(fnameIni);
   P_GET_NAME(fname);
@@ -933,12 +933,12 @@ IMPLEMENT_FUNCTION(VVideoMode, loadFont) {
 }
 
 
-IMPLEMENT_FUNCTION(VVideoMode, requestQuit) { VVideoMode::quitSignal = true; }
-IMPLEMENT_FUNCTION(VVideoMode, requestRefresh) { VVideoMode::doRefresh = true; }
+IMPLEMENT_FUNCTION(VVideo, requestQuit) { VVideo::quitSignal = true; }
+IMPLEMENT_FUNCTION(VVideo, requestRefresh) { VVideo::doRefresh = true; }
 
 
 //native final static void setTextColor (int r, int g, int b);
-IMPLEMENT_FUNCTION(VVideoMode, setTextColor) {
+IMPLEMENT_FUNCTION(VVideo, setTextColor) {
   P_GET_INT(b);
   P_GET_INT(g);
   P_GET_INT(r);
@@ -946,47 +946,47 @@ IMPLEMENT_FUNCTION(VVideoMode, setTextColor) {
 }
 
 //native final static void setTextAlpha (int a);
-IMPLEMENT_FUNCTION(VVideoMode, setTextAlpha) {
+IMPLEMENT_FUNCTION(VVideo, setTextAlpha) {
   P_GET_INT(a);
   setTextAlpha(a);
 }
 
 //native final static void setTextFont (name fontname);
-IMPLEMENT_FUNCTION(VVideoMode, setTextFont) {
+IMPLEMENT_FUNCTION(VVideo, setTextFont) {
   P_GET_NAME(fontname);
   setFont(fontname);
 }
 
 //native final static void fontHeight ();
-IMPLEMENT_FUNCTION(VVideoMode, fontHeight) {
+IMPLEMENT_FUNCTION(VVideo, fontHeight) {
   RET_INT(currFont ? currFont->getHeight() : 0);
 }
 
 //native final static int spaceWidth ();
-IMPLEMENT_FUNCTION(VVideoMode, spaceWidth) {
+IMPLEMENT_FUNCTION(VVideo, spaceWidth) {
   RET_INT(currFont ? currFont->getSpaceWidth() : 0);
 }
 
 //native final static int charWidth (int ch);
-IMPLEMENT_FUNCTION(VVideoMode, charWidth) {
+IMPLEMENT_FUNCTION(VVideo, charWidth) {
   P_GET_INT(ch);
   RET_INT(currFont ? currFont->charWidth(ch) : 0);
 }
 
 //native final static int textWidth (string text);
-IMPLEMENT_FUNCTION(VVideoMode, textWidth) {
+IMPLEMENT_FUNCTION(VVideo, textWidth) {
   P_GET_STR(text);
   RET_INT(currFont ? currFont->textWidth(text) : 0);
 }
 
 //native final static int textHeight (string text);
-IMPLEMENT_FUNCTION(VVideoMode, textHeight) {
+IMPLEMENT_FUNCTION(VVideo, textHeight) {
   P_GET_STR(text);
   RET_INT(currFont ? currFont->textHeight(text) : 0);
 }
 
 //native final static void drawText (int x, int y, string text);
-IMPLEMENT_FUNCTION(VVideoMode, drawTextAt) {
+IMPLEMENT_FUNCTION(VVideo, drawTextAt) {
   P_GET_STR(text);
   P_GET_INT(x);
   P_GET_INT(y);

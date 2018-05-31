@@ -1,4 +1,4 @@
-class VideoMode : Object abstract native;
+class Video : Object abstract native;
 
 native final static bool canInit ();
 native final static bool hasOpenGL ();
@@ -30,7 +30,7 @@ native final static int textHeight (string text);
 native final static void drawTextAt (int x, int y, string text);
 
 
-/* `VideoMode.prop` is not not working yet
+/* `Video.prop` is not not working yet
 int width {
   get { return getWidth(); }
 }
