@@ -154,7 +154,7 @@ static double ms = 0.0;
 static int fps_frames = 0;
 static int show_fps = 0;
 
-static VCvarB draw_cycles("draw_cycles", false, "Draw cycle counter?", CVAR_Archive);
+static VCvarB draw_cycles("draw_cycles", false, "Draw cycle counter?", 0); //NOOP
 
 
 //**************************************************************************
@@ -299,6 +299,7 @@ static void DrawFPS () {
 //  DrawCycles
 //
 //==========================================================================
+/*
 static void DrawCycles () {
   guard(DrawCycles);
   if (draw_cycles) {
@@ -311,6 +312,7 @@ static void DrawCycles () {
   }
   unguard;
 }
+*/
 
 
 //**************************************************************************
@@ -480,7 +482,7 @@ void SCR_Update () {
   C_Drawer();
 
   DrawFPS();
-  DrawCycles();
+  //DrawCycles();
 
   Drawer->Update(); // page flip or blit buffer
   unguard;

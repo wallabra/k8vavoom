@@ -23,40 +23,24 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-class VArgs
-{
+class VArgs {
 private:
-  int   Argc;
-  char**  Argv;
+  int Argc;
+  char **Argv;
 
-  void FindResponseFile();
+  void FindResponseFile ();
 
 public:
-  void Init(int, char**);
+  void Init (int argc, char **argv);
 
-  int Count() const
-  {
-    return Argc;
-  }
-  const char* operator[](int i)
-  {
-    return Argv[i];
-  }
+  inline int Count () const { return Argc; }
+  inline const char *operator [] (int i) { return Argv[i]; }
 
   // Returns the position of the given parameter
   // in the arg list (0 if not found).
-  int CheckParm(const char* check) const;
-  const char* CheckValue(const char* check) const;
+  int CheckParm (const char *check) const;
+  const char *CheckValue (const char *check) const;
 };
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
-
-extern VArgs    GArgs;
+extern VArgs GArgs;

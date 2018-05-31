@@ -23,8 +23,6 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <sys/time.h>
 #include <time.h>
 #include <fcntl.h>
@@ -37,172 +35,15 @@
 
 #include "gamedefs.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static DIR *current_dir;
-
-// CODE --------------------------------------------------------------------
-
-//==========================================================================
-//
-//  Sys_FileExists
-//
-//==========================================================================
-
-bool Sys_FileExists(const VStr& filename)
-{
-  return (access(*filename, R_OK) == 0);
-}
-
-//==========================================================================
-//
-//  Sys_FileTime
-//
-//  Returns -1 if not present
-//
-//==========================================================================
-
-int Sys_FileTime(const VStr& path)
-{
-  struct stat   buf;
-
-  if (stat(*path, &buf) == -1)
-    return -1;
-
-  return buf.st_mtime;
-}
-
-//==========================================================================
-//
-//  Sys_CreateDirectory
-//
-//==========================================================================
-
-bool Sys_CreateDirectory(const VStr& path)
-{
-  return (mkdir(*path, 0777) == 0);
-}
-
-//==========================================================================
-//
-//  Sys_OpenDir
-//
-//==========================================================================
-
-bool Sys_OpenDir(const VStr& path)
-{
-  current_dir = opendir(*path);
-  return (current_dir != NULL);
-}
-
-//==========================================================================
-//
-//  Sys_ReadDir
-//
-//==========================================================================
-
-VStr Sys_ReadDir()
-{
-  struct dirent *de = readdir(current_dir);
-  if (de)
-  {
-    return de->d_name;
-  }
-  return VStr();
-}
-
-//==========================================================================
-//
-//  Sys_CloseDir
-//
-//==========================================================================
-
-void Sys_CloseDir()
-{
-  closedir(current_dir);
-}
-
-//==========================================================================
-//
-//  Sys_DirExists
-//
-//==========================================================================
-
-bool Sys_DirExists(const VStr& path)
-{
-  struct stat s;
-
-  if (stat(*path, &s) == -1)
-    return false;
-
-  return !!S_ISDIR(s.st_mode);
-}
-
-//**************************************************************************
-//**
-//**  TIME
-//**
-//**************************************************************************
-
-//==========================================================================
-//
-//  Sys_Time
-//
-//==========================================================================
-
-double Sys_Time()
-{
-  timeval   tp;
-  struct timezone tzp;
-  static int  secbase = 0;
-
-  gettimeofday(&tp, &tzp);
-
-  if (!secbase)
-  {
-    secbase = tp.tv_sec;
-    return tp.tv_usec / 1000000.0;
-  }
-
-  return (tp.tv_sec - secbase) + tp.tv_usec / 1000000.0;
-}
-
-//==========================================================================
-//
-//  Sys_Sleep
-//
-//==========================================================================
-
-void Sys_Sleep()
-{
-//  usleep(1);
-  static const struct timespec sleepTime = {0, 28500000};
-  nanosleep(&sleepTime, NULL);
-}
 
 //==========================================================================
 //
 //  Sys_Shutdown
 //
 //==========================================================================
-
-void Sys_Shutdown()
-{
+void Sys_Shutdown () {
 }
+
 
 //==========================================================================
 //
@@ -216,64 +57,52 @@ void Sys_Shutdown()
 //  Feel free to share and modify.
 //
 //==========================================================================
-
-static void PutEndText(const char* text)
-{
+static void PutEndText (const char *text) {
   int i, j;
   int att = -1;
   int nlflag = 0;
   char *col;
 
-  //  If option -noendtxt is set, don't print the text.
-  if (GArgs.CheckParm("-noendtxt"))
-    return;
+  // if option -noendtxt is set, don't print the text.
+  if (GArgs.CheckParm("-noendtxt")) return;
 
-  //  If the xterm has more then 80 columns we need to add nl's
+  // if the xterm has more then 80 columns we need to add nl's
   col = getenv("COLUMNS");
-  if (col)
-  {
-    if (atoi(col) > 80)
-      nlflag++;
+  if (col) {
+    if (atoi(col) > 80) ++nlflag;
+  } else {
+    ++nlflag;
   }
-  else
-    nlflag++;
 
-  /* print 80x25 text and deal with the attributes too */
-  for (i = 1; i <= 80 * 25; i++, text += 2)
-  {
-    //  Attribute first
+  // print 80x25 text and deal with the attributes too
+  for (i = 1; i <= 80 * 25; ++i, text += 2) {
+    // attribute first
     j = (byte)text[1];
-    //  Attribute changed?
-    if (j != att)
-    {
+    // attribute changed?
+    if (j != att) {
       static const char map[] = "04261537";
-      //  Save current attribute
+      // save current attribute
       att = j;
-      //  Set new attribute: bright, foreground, background
-      // (we don't have bright background)
-      printf("\033[0;%s3%c;4%cm", (j & 0x88) ? "1;" : "", map[j & 7],
-        map[(j & 0x70) >> 4]);
+      // set new attribute: bright, foreground, background (we don't have bright background)
+      printf("\033[0;%s3%c;4%cm", (j & 0x88) ? "1;" : "", map[j & 7], map[(j & 0x70) >> 4]);
     }
 
-    //  Now the text.
-    if (*text < 32)
-      putchar('.');
-    else
-      putchar(*text);
+    // now the text
+    if (*text < 32) putchar('.'); else putchar(*text);
 
-    //  Do we need a nl?
-    if (nlflag && !(i % 80))
-    {
+    // do we need a nl?
+    if (nlflag && !(i % 80)) {
       att = 0;
       puts("\033[0m");
     }
   }
-  //  All attributes off
+
+  // all attributes off
   printf("\033[0m");
 
-  if (nlflag)
-    printf("\n");
+  if (nlflag) printf("\n");
 }
+
 
 //==========================================================================
 //
@@ -283,23 +112,16 @@ static void PutEndText(const char* text)
 // goes to text mode, and exits.
 //
 //==========================================================================
-
-void Sys_Quit(const char* EndText)
-{
-  // Shutdown system
+void Sys_Quit (const char *EndText) {
+  // shutdown system
   Host_Shutdown();
-
   SDL_Quit();
-
-  // Throw the end text at the screen
-  if (EndText)
-  {
-    PutEndText(EndText);
-  }
-
-  // Exit
+  // throw the end text at the screen
+  if (EndText) PutEndText(EndText);
+  // exit
   exit(0);
 }
+
 
 //==========================================================================
 //
@@ -311,7 +133,7 @@ void Sys_Quit(const char* EndText)
 
 #ifdef USE_SIGNAL_HANDLER
 
-#define MAX_STACK_ADDR 40
+#define MAX_STACK_ADDR  (40)
 
 // __builtin_return_address needs a constant, so this cannot be in a loop
 
@@ -327,13 +149,12 @@ void Sys_Quit(const char* EndText)
     continue_stack_trace = false; \
   }
 
-static void stack_trace()
-{
-  FILE      *fff;
-  int       i;
-  static void*  stack_addr[MAX_STACK_ADDR];
+static void stack_trace () {
+  FILE *fff;
+  int i;
+  static void *stack_addr[MAX_STACK_ADDR];
   // can we still print entries on the calling stack or have we finished?
-  static bool   continue_stack_trace = true;
+  static bool continue_stack_trace = true;
 
   // get void*'s for all entries on the stack
   void *array[10];
@@ -342,12 +163,8 @@ static void stack_trace()
   // print out all the frames to stderr
   backtrace_symbols_fd(array, size, STDERR_FILENO);
 
-
   // clean the stack addresses if necessary
-  for (i = 0; i < MAX_STACK_ADDR; i++)
-  {
-    stack_addr[i] = 0;
-  }
+  for (i = 0; i < MAX_STACK_ADDR; ++i) stack_addr[i] = 0;
 
   dprintf("STACK TRACE:\n\n");
 
@@ -399,11 +216,9 @@ static void stack_trace()
   fff = fopen("crash.txt", "w");
 
   // Invalid file
-  if (fff)
-  {
+  if (fff) {
     // dump stack frame
-    for (i = (MAX_STACK_ADDR - 1); i >= 0 ; i--)
-    {
+    for (i = (MAX_STACK_ADDR - 1); i >= 0 ; --i) {
       fprintf(fff,"%8p\n", stack_addr[i]);
     }
     fclose(fff);
@@ -412,17 +227,14 @@ static void stack_trace()
 
 #endif
 
+
 //==========================================================================
 //
 //  Sys_ConsoleInput
 //
 //==========================================================================
-
-char *Sys_ConsoleInput()
+char *Sys_ConsoleInput ()
 {
-#ifdef __BEOS__
-  return NULL;
-#else
   static char text[256];
   int     len;
   fd_set  fdset;
@@ -432,17 +244,15 @@ char *Sys_ConsoleInput()
   FD_SET(0, &fdset); // stdin
   timeout.tv_sec = 0;
   timeout.tv_usec = 0;
-  if (select(1, &fdset, NULL, NULL, &timeout) == -1 || !FD_ISSET(0, &fdset))
-    return NULL;
+  if (select(1, &fdset, nullptr, nullptr, &timeout) == -1 || !FD_ISSET(0, &fdset)) return nullptr;
 
   len = read(0, text, sizeof(text));
-  if (len < 1)
-    return NULL;
+  if (len < 1) return nullptr;
   text[len-1] = 0;    // rip off the /n and terminate
 
   return text;
-#endif
 }
+
 
 //==========================================================================
 //
@@ -454,62 +264,51 @@ char *Sys_ConsoleInput()
 
 #ifdef USE_SIGNAL_HANDLER
 
-static void signal_handler(int s)
-{
-  // Ignore future instances of this signal.
+static void signal_handler (int s) {
+  // ignore future instances of this signal
   signal(s, SIG_IGN);
   stack_trace();
 
-  //  Exit with error message
+  // exit with error message
 #ifdef USE_GUARD_SIGNAL_CONTEXT
-  switch (s)
-  {
-  case SIGABRT:
-    __Context::ErrToThrow = "Aborted";
-    break;
-  case SIGFPE:
-    __Context::ErrToThrow = "Floating Point Exception";
-    break;
-  case SIGILL:
-    __Context::ErrToThrow = "Illegal Instruction";
-    break;
-  case SIGSEGV:
-    __Context::ErrToThrow = "Segmentation Violation";
-    break;
-  case SIGTERM:
-    __Context::ErrToThrow = "Terminated";
-    break;
-  case SIGINT:
-    __Context::ErrToThrow = "Interrupted by User";
-    break;
-  case SIGKILL:
-    __Context::ErrToThrow = "Killed";
-    break;
-  case SIGQUIT:
-    __Context::ErrToThrow = "Quited";
-    break;
-  default:
-    __Context::ErrToThrow = "Terminated by signal";
+  switch (s) {
+    case SIGABRT: __Context::ErrToThrow = "Aborted"; break;
+    case SIGFPE: __Context::ErrToThrow = "Floating Point Exception"; break;
+    case SIGILL: __Context::ErrToThrow = "Illegal Instruction"; break;
+    case SIGSEGV: __Context::ErrToThrow = "Segmentation Violation"; break;
+    case SIGTERM: __Context::ErrToThrow = "Terminated"; break;
+    case SIGINT: __Context::ErrToThrow = "Interrupted by User"; break;
+    case SIGKILL: __Context::ErrToThrow = "Killed"; break;
+    case SIGQUIT: __Context::ErrToThrow = "Quited"; break;
+    default: __Context::ErrToThrow = "Terminated by signal";
   }
   dprintf("signal: %s\n", __Context::ErrToThrow);
   longjmp(__Context::Env, 1);
 #else
-  switch (s)
-  {
-   case SIGABRT:  throw VavoomError("Abnormal termination triggered by abort call");
-   case SIGFPE: throw VavoomError("Floating Point Exception");
-   case SIGILL: throw VavoomError("Illegal Instruction");
-   case SIGINT: throw VavoomError("Interrupted by User");
-   case SIGSEGV:  throw VavoomError("Segmentation Violation");
-   case SIGTERM:  throw VavoomError("Software termination signal from kill");
-   case SIGKILL:  throw VavoomError("Killed");
-   case SIGQUIT:  throw VavoomError("Quited");
-     default:   throw VavoomError("Terminated by signal");
+  switch (s) {
+    case SIGABRT: throw VavoomError("Abnormal termination triggered by abort call");
+    case SIGFPE: throw VavoomError("Floating Point Exception");
+    case SIGILL: throw VavoomError("Illegal Instruction");
+    case SIGINT: throw VavoomError("Interrupted by User");
+    case SIGSEGV: throw VavoomError("Segmentation Violation");
+    case SIGTERM: throw VavoomError("Software termination signal from kill");
+    case SIGKILL: throw VavoomError("Killed");
+    case SIGQUIT: throw VavoomError("Quited");
+    default: throw VavoomError("Terminated by signal");
   }
 #endif
 }
 
+#else
+
+static volatile int sigReceived = 0;
+
+static void signal_handler (int s) {
+  sigReceived = 1;
+}
+
 #endif
+
 
 //==========================================================================
 //
@@ -518,22 +317,16 @@ static void signal_handler(int s)
 //  Main program
 //
 //==========================================================================
-
-int main(int argc,char** argv)
-{
-  try
-  {
+int main (int argc, char **argv) {
+  try {
     GArgs.Init(argc, argv);
 
     // if( SDL_InitSubSystem(SDL_INIT_VIDEO) < 0 )
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
-    {
-      Sys_Error("SDL_InitSubSystem(): %s\n",SDL_GetError());
-    }
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) Sys_Error("SDL_InitSubSystem(): %s\n",SDL_GetError());
     //SDL_WM_SetCaption("VaVoom", "VaVoom");
 
 #ifdef USE_SIGNAL_HANDLER
-    //  Install signal handlers
+    // install signal handlers
     signal(SIGABRT, signal_handler);
     signal(SIGFPE,  signal_handler);
     signal(SIGILL,  signal_handler);
@@ -542,27 +335,31 @@ int main(int argc,char** argv)
     signal(SIGINT,  signal_handler);
     signal(SIGKILL, signal_handler);
     signal(SIGQUIT, signal_handler);
+#else
+    // install signal handlers
+    signal(SIGTERM, signal_handler);
+    signal(SIGINT,  signal_handler);
+    signal(SIGQUIT, signal_handler);
 #endif
 
     Host_Init();
 
-    while (1)
-    {
+    for (;;) {
       Host_Frame();
+      if (sigReceived) {
+        GCon->Logf("*** SIGNAL RECEIVED ***");
+        Host_Shutdown();
+        fprintf(stderr, "*** TERMINATED BY SIGNAL ***\n");
+        break;
+      }
     }
-  }
-  catch (VavoomError &e)
-  {
+  } catch (VavoomError &e) {
     Host_Shutdown();
-
     printf("\n%s\n", e.message);
     dprintf("\n\nERROR: %s\n", e.message);
-
     SDL_Quit();
     exit(1);
-  }
-  catch (...)
-  {
+  } catch (...) {
     Host_Shutdown();
     dprintf("\n\nExiting due to external exception\n");
     fprintf(stderr, "\nExiting due to external exception\n");

@@ -54,4 +54,4 @@ extern double   host_time;
 extern double   realtime;
 extern int      host_framecount;
 
-extern vuint32    host_cycles[16];
+//extern vuint32    host_cycles[16];

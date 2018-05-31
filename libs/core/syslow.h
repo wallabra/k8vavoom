@@ -22,22 +22,21 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+//**
+//**  Low-level OS-dependent functions
+//**
+//**************************************************************************
 
-/*
-bool Sys_FileExists(const VStr&);
-int Sys_FileTime(const VStr&);
 
-bool Sys_CreateDirectory(const VStr&);
-bool Sys_OpenDir(const VStr&);
-VStr Sys_ReadDir();
-void Sys_CloseDir();
-bool Sys_DirExists(const VStr&);
+bool Sys_FileExists (const VStr &filename);
+int Sys_FileTime (const VStr &path); // returns -1 if not present
+bool Sys_CreateDirectory (const VStr &path);
 
-double Sys_Time();
-void Sys_Yield();
-*/
+void *Sys_OpenDir (const VStr &path); // nullptr: error
+VStr Sys_ReadDir (void *adir);
+void Sys_CloseDir (void *adir);
 
-void __attribute__((noreturn)) __declspec(noreturn) Sys_Quit(const char*);
-void Sys_Shutdown();
+bool Sys_DirExists (const VStr &path);
 
-char *Sys_ConsoleInput();
+double Sys_Time ();
+void Sys_Yield ();

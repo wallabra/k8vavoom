@@ -186,13 +186,14 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
   VStr bdx = basedir+"/"+dir;
 
   // first add all .pk3 files in that directory
-  if (Sys_OpenDir(bdx)) {
+  auto dirit = Sys_OpenDir(bdx);
+  if (dirit) {
     TArray<VStr> ZipFiles;
-    for (VStr test = Sys_ReadDir(); test.IsNotEmpty(); test = Sys_ReadDir()) {
+    for (VStr test = Sys_ReadDir(dirit); test.IsNotEmpty(); test = Sys_ReadDir(dirit)) {
       VStr ext = test.ExtractFileExtension().ToLower();
       if (ext == "pk3") ZipFiles.Append(test);
     }
-    Sys_CloseDir();
+    Sys_CloseDir(dirit);
     qsort(ZipFiles.Ptr(), ZipFiles.Num(), sizeof(VStr), cmpfunc);
     for (int i = 0; i < ZipFiles.Num(); ++i) {
       wpklist.Append(dir+"/"+ZipFiles[i]);

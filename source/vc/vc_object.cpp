@@ -1188,6 +1188,7 @@ IMPLEMENT_FUNCTION(VObject, IsMapPresent) {
   RET_BOOL(IsMapPresent(MapName));
 }
 
+/*
 IMPLEMENT_FUNCTION(VObject, Clock) {
   P_GET_INT(Idx);
   if (Idx < 0) ++host_cycles[-Idx]; else clock_cycle(host_cycles[Idx]);
@@ -1197,6 +1198,7 @@ IMPLEMENT_FUNCTION(VObject, Unclock) {
   P_GET_INT(Idx);
   unclock_cycle(host_cycles[Idx]);
 }
+*/
 
 IMPLEMENT_FUNCTION(VObject, HasDecal) {
   P_GET_NAME(name);

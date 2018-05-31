@@ -73,7 +73,7 @@ int       host_framecount;
 bool      host_initialised = false;
 bool      host_request_exit = false;
 
-vuint32     host_cycles[16];
+//vuint32     host_cycles[16];
 
 #ifndef CLIENT
 class VDedLog : public VLogListener
@@ -363,7 +363,7 @@ void Host_Frame()
     {
       //  Don't run too fast, or packets will flood out
 #ifndef CLIENT
-      Sys_Sleep();
+      Sys_Yield();
 #endif
       return;
     }
@@ -396,10 +396,10 @@ void Host_Frame()
     if (GGameInfo->NetMode != NM_None &&
       GGameInfo->NetMode != NM_Client)
     {
-clock_cycle(host_cycles[0]);
+      //clock_cycle(host_cycles[0]);
       //  Server operations
       ServerFrame(host_frametics);
-unclock_cycle(host_cycles[0]);
+      //unclock_cycle(host_cycles[0]);
     }
 #endif
 

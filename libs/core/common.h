@@ -144,8 +144,8 @@ template<class T> T Clamp(T val, T low, T high)
 //
 //==========================================================================
 
-#define clock_cycle(var)    var -= Sys_Cycles()
-#define unclock_cycle(var)    var += Sys_Cycles() - 34
+//#define clock_cycle(var)    var -= Sys_Cycles()
+//#define unclock_cycle(var)    var += Sys_Cycles() - 34
 
 //==========================================================================
 //

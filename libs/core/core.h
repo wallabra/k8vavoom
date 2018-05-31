@@ -60,4 +60,6 @@
 
 #include "minipng.h"
 
+#include "syslow.h"
+
 #endif

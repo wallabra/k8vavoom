@@ -39,4 +39,6 @@ add_library(core STATIC
   zone.h
   minipng.h
   minipng.cpp
+  syslow.h
+  syslow.cpp
 )
