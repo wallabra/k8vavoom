@@ -533,6 +533,8 @@ if(WIN32)
     include_directories(${OPENAL_INCLUDE_DIR})
     set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENAL_SOURCES})
     set(MAIN_LIBS ${OPENAL_LIBRARY} ${MAIN_LIBS})
+    #k8: by MXE builds are static. live with it.
+    add_definitions(-DAL_LIBTYPE_STATIC=1)
   endif(WITH_OPENAL)
 else(WIN32)
   # ---------------- Other *NIX platforms ----------------
