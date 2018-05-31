@@ -176,7 +176,7 @@ struct ShitdozeDir {
   HANDLE dir_handle;
   WIN32_FIND_DATA dir_buf;
   bool gotName;
-}
+};
 
 
 //==========================================================================
@@ -243,7 +243,7 @@ VStr Sys_ReadDir (void *adir) {
   if (!sd->gotName) {
     if (FindNextFile(sd->dir_handle, &sd->dir_buf) != TRUE) return VStr();
   }
-  sd->dir_already_got = false;
+  sd->gotName = false;
   return VStr(sd->dir_buf.cFileName);
 }
 
@@ -281,6 +281,52 @@ bool Sys_DirExists (const VStr &path) {
 //
 //==========================================================================
 double Sys_Time () {
+  static double pfreq;
+  static double curtime = 0.0;
+  static double lastcurtime = 0.0;
+  static vuint32 oldtime;
+  static int lowshift;
+  static bool initialized = false;
+
+  if (!initialized) {
+    LARGE_INTEGER PerformanceFreq;
+    LARGE_INTEGER PerformanceCount;
+    vuint32 lowpart, highpart;
+
+    if (!QueryPerformanceFrequency(&PerformanceFreq)) Sys_Error("No hardware timer available");
+    // get 32 out of the 64 time bits such that we have around
+    // 1 microsecond resolution
+    lowpart = (vuint32)PerformanceFreq.u.LowPart;
+    highpart = (vuint32)PerformanceFreq.u.HighPart;
+    lowshift = 0;
+    while (highpart || lowpart > 2000000.0) {
+      ++lowshift;
+      lowpart >>= 1;
+      lowpart |= (highpart&1)<<31;
+      highpart >>= 1;
+    }
+
+    pfreq = 1.0 / (double)lowpart;
+
+    // read current time and set old time
+    QueryPerformanceCounter(&PerformanceCount);
+
+    oldtime = ((vuint32)PerformanceCount.u.LowPart>>lowshift)|((vuint32)PerformanceCount.u.HighPart<<(32-lowshift));
+
+    // set start time
+    /*
+    const char *p = GArgs.CheckValue("-starttime");
+    if (p) {
+      curtime = (double)atof(p);
+    } else {
+      curtime = 0.0;
+    }
+    */
+    curtime = 0.0;
+    lastcurtime = curtime;
+    initialized = true;
+  }
+
   static int sametimecount;
   LARGE_INTEGER PerformanceCount;
   vuint32 temp, t2;
