@@ -423,43 +423,17 @@ void VScriptParser::ExpectString () {
 //  VScriptParser::ExpectName8
 //
 //==========================================================================
-struct TKeyValS {
-  const char *key;
-  const char *value;
-};
-
-static const TKeyValS CompleteNameHacks[] = {
-  {"$bgflatE1", "FLOOR4_8" },
-  {"$bgflatE2", "SFLR6_1" },
-  {"$bgflatE3", "MFLR8_4" },
-  {"$bgflatE4", "MFLR8_3" },
-  {"$bgflat06", "SLIME16" },
-  {"$bgflat11", "RROCK14" },
-  {"$bgflat20", "RROCK07" },
-  {"$bgflat30", "RROCK17" },
-  {"$bgflat15", "RROCK13" },
-  {"$bgflat31", "RROCK19" },
-  {"$bgcastcall", "BOSSBACK" },
-  { nullptr, nullptr },
-};
-
-
 void VScriptParser::ExpectName8 () {
   guard(VScriptParser::ExpectName8);
   ExpectString();
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  // "complete" hacks
+  // translate "$name" strings
   if (String.Length() > 1 && String[0] == '$') {
-    if (strncmp(*String, "$MUSIC_", 7) == 0) {
-      VStr nn = VStr("d_")+VStr(*String+7).ToLower();
-      if (dbg_show_name_remap) GCon->Logf("HACK: Converted name '%s' to '%s'", *String, *nn);
-      String = nn;
-    } else {
-      for (const TKeyValS *ts = CompleteNameHacks; ts->key; ++ts) {
-        if (String.ICmp(ts->key) == 0) { String = VStr(ts->value); break; }
-      }
-    }
+    VStr qs = String.mid(1, String.length()-1).toLowerCase();
+    qs = *GLanguage[*qs];
+    if (dbg_show_name_remap) GCon->Logf("**** <%s>=<%s>\n", *String, *qs);
+    String = qs;
   }
 #endif
 

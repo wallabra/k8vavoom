@@ -149,6 +149,8 @@ void VLanguage::ParseLanguageScript(vint32 Lump, const char* InCode,
   bool ExactMatch, vint32 PassNum)
 {
   guard(VLanguage::ParseLanguageScript);
+  //fprintf(stderr, "LANG: <%s>\n", *W_LumpName(Lump));
+
   char Code[4];
   Code[0] = VStr::ToLower(InCode[0]);
   Code[1] = VStr::ToLower(InCode[1]);
@@ -264,6 +266,7 @@ void VLanguage::ParseLanguageScript(vint32 Lump, const char* InCode,
         Entry.Value = Value;
         Entry.PassNum = PassNum;
         Table->Set(Key, Entry);
+        //fprintf(stderr, "  LNG<%s>=<%s>\n", *Key, *Value);
       }
     }
   }
