@@ -35,6 +35,7 @@
 struct version_t
 {
   VStr      MainWad;
+  TArray<VStr> OrMainWads;
   VStr      GameDir;
   TArray<VStr>  AddFiles;
   int       ParmFound;
@@ -312,6 +313,11 @@ static void ParseBase(const VStr& name)
       sc->ExpectString();
       dst.MainWad = sc->String;
     }
+    if (sc->Check("oriwad"))
+    {
+      sc->ExpectString();
+      dst.OrMainWads.Append(sc->String);
+    }
     while (sc->Check("addfile"))
     {
       sc->ExpectString();
@@ -372,6 +378,12 @@ static void ParseBase(const VStr& name)
 
     // look for the main wad file
     VStr MainWadPath = FindMainWad(G.MainWad);
+    if (MainWadPath.isEmpty()) {
+      for (int f = 0; f < G.OrMainWads.length(); ++f) {
+        MainWadPath = FindMainWad(G.OrMainWads[f]);
+        if (!MainWadPath.isEmpty()) break;
+      }
+    }
     if (MainWadPath.IsNotEmpty())
     {
       fl_mainwad = G.MainWad;
