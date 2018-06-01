@@ -89,5 +89,6 @@ end
 // Doom:Complete
 game basev/complete
 iwad complete.pk3
+oriwad doom_complete.pk3
 param -complete
 end
