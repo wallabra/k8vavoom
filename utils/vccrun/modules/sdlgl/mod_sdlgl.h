@@ -40,7 +40,7 @@ class VFont;
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VVideo : public VObject {
-  DECLARE_CLASS(VVideo, VObject, 0)
+  DECLARE_ABSTRACT_CLASS(VVideo, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VVideo)
 
 private:
@@ -57,7 +57,7 @@ private:
   static int colorB;
   static int colorA;
   static VFont *currFont;
-  friend class VTexture;
+  friend class VGLTexture;
 
 private:
   static void initMethods ();
@@ -134,42 +134,57 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VTexture : public VObject {
-  DECLARE_CLASS(VTexture, VObject, 0)
-  NO_DEFAULT_CONSTRUCTOR(VTexture)
+// refcounted object
+class VGLTexture {
+private:
+  int rc;
 
 public:
+  VStr path;
   VImage *img;
   GLuint tid; // !0: texture loaded
-  VTexture *prev;
-  VTexture *next;
+  VGLTexture *prev;
+  VGLTexture *next;
 
 private:
   void registerMe ();
 
 public:
-  //VTexture (VImage *aimg);
-  //virtual ~VTexture () overload;
+  VGLTexture ();
+  VGLTexture (VImage *aimg);
+  ~VGLTexture (); // don't call this manually!
 
-  void Destroy ();
-
-  void clear ();
+  void addRef ();
+  void release (); //WARNING: can delete `this`!
 
   bool loadFrom (VStream *st);
 
-  static VTexture *load (const VStr &fname);
-  static VTexture *createFromImage (VImage *aimg);
+  static VGLTexture *load (const VStr &fname);
 
   int getWidth () const { return (img ? img->width : 0); }
   int getHeight () const { return (img ? img->height : 0); }
 
+  PropertyRO<int, VGLTexture> width {this, &VGLTexture::getWidth};
+  PropertyRO<int, VGLTexture> height {this, &VGLTexture::getHeight};
+
   void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const;
   void blitAt (int dx0, int dy0, float scale=1) const;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// VaVoom C wrapper
+class VTexture : public VObject {
+  DECLARE_CLASS(VTexture, VObject, 0)
+  NO_DEFAULT_CONSTRUCTOR(VTexture)
+
+private:
+  VGLTexture *tex;
 
 public:
-  //PropertyRO<int, VTexture> width {this, &VTexture::getWidth};
-  //PropertyRO<int, VTexture> height {this, &VTexture::getHeight};
+  virtual void Destroy () override;
 
+public:
   DECLARE_FUNCTION(Destroy)
   DECLARE_FUNCTION(load) // Texture load (string fname)
   DECLARE_FUNCTION(width)
@@ -193,13 +208,13 @@ public:
     int topofs; // offset from font top (i.e. y+topofs should be used to draw char)
     float tx0, ty0; // texture coordinates, [0..1)
     float tx1, ty1; // texture coordinates, [0..1) -- cached for convenience
-    VTexture *tex; // don't destroy this!
+    VGLTexture *tex; // don't destroy this!
   };
 
 protected:
   VName name;
   VFont *next;
-  VTexture *tex;
+  VGLTexture *tex;
 
   // font characters (cp1251)
   TArray<FontChar> chars;
@@ -227,7 +242,7 @@ public:
   inline VName getName () const { return name; }
   inline int getSpaceWidth () const { return spaceWidth; }
   inline int getHeight () const { return fontHeight; }
-  inline const VTexture *getTexture () const { return tex; }
+  inline const VGLTexture *getTexture () const { return tex; }
 
 public:
   static VFont *findFont (VName name);

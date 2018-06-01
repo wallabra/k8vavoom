@@ -32,7 +32,7 @@
 #include <GL/gl.h>
 static SDL_Window *hw_window = nullptr;
 static SDL_GLContext hw_glctx = nullptr;
-static VTexture *txHead = nullptr, *txTail = nullptr;
+static VGLTexture *txHead = nullptr, *txTail = nullptr;
 
 bool VVideo::doGLSwap = false;
 bool VVideo::doRefresh = false;
@@ -295,7 +295,7 @@ static vuint8 sdl2TranslateKey (SDL_Keycode ksym) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static bool texUpload (VTexture *tx) {
+static bool texUpload (VGLTexture *tx) {
   if (!tx) return false;
   if (!tx->img) { tx->tid = 0; return false; }
 
@@ -329,7 +329,7 @@ static bool texUpload (VTexture *tx) {
 void deleteAllTextures () {
   if (!hw_glctx) return;
   glBindTexture(GL_TEXTURE_2D, 0);
-  for (VTexture *tx = txHead; tx; tx = tx->next) {
+  for (VGLTexture *tx = txHead; tx; tx = tx->next) {
     if (tx->tid) { glDeleteTextures(1, &tx->tid); tx->tid = 0; }
   }
 }
@@ -337,36 +337,40 @@ void deleteAllTextures () {
 
 void uploadAllTextures () {
   if (!hw_glctx) return;
-  for (VTexture *tx = txHead; tx; tx = tx->next) texUpload(tx);
+  for (VGLTexture *tx = txHead; tx; tx = tx->next) texUpload(tx);
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-IMPLEMENT_CLASS(V, Texture);
+VGLTexture::VGLTexture () : rc(1), path(VStr()), img(nullptr), tid(0), prev(nullptr), next(nullptr) {
+  registerMe();
+}
 
-/*
-VTexture::VTexture (VImage *aimg) : img(aimg), tid(0), prev(nullptr), next(nullptr) {
+VGLTexture::VGLTexture (VImage *aimg) : rc(1), path(VStr()), img(aimg), tid(0), prev(nullptr), next(nullptr) {
   if (hw_glctx) texUpload(this);
   registerMe();
 }
-*/
 
-
-void VTexture::Destroy () {
+VGLTexture::~VGLTexture () {
   if (hw_glctx && tid) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glDeleteTextures(1, &tid);
   }
-  delete img;
-  if (prev) prev->next = next; else txHead = next;
-  if (next) next->prev = prev; else txTail = prev;
   tid = 0;
+  delete img;
   img = nullptr;
-  Super::Destroy();
+  path = VStr();
+  if (!prev && !next) {
+    if (txHead == this) { txHead = txTail = nullptr; }
+  } else {
+    if (prev) prev->next = next; else txHead = next;
+    if (next) next->prev = prev; else txTail = prev;
+  }
+  prev = next = nullptr;
 }
 
 
-void VTexture::registerMe () {
+void VGLTexture::registerMe () {
   if (prev || next) return;
   if (txHead == this) return;
   prev = txTail;
@@ -375,7 +379,17 @@ void VTexture::registerMe () {
 }
 
 
-void VTexture::clear () {
+void VGLTexture::addRef () {
+  ++rc;
+}
+
+
+void VGLTexture::release () {
+  if (--rc == 0) delete this;
+}
+
+
+bool VGLTexture::loadFrom (VStream *st) {
   if (hw_glctx && tid) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glDeleteTextures(1, &tid);
@@ -383,50 +397,34 @@ void VTexture::clear () {
   tid = 0;
   delete img;
   img = nullptr;
-}
-
-
-bool VTexture::loadFrom (VStream *st) {
-  clear();
+  path = VStr();
   if (!st || st->IsError()) return false;
   img = VImage::loadFrom(st);
-  if (st->IsError()) { clear(); return false; }
+  if (st->IsError()) { delete img; img = nullptr; return false; }
   if (!img) return false;
   if (hw_glctx) texUpload(this);
   return true;
 }
 
 
-VTexture *VTexture::load (const VStr &fname) {
+VGLTexture *VGLTexture::load (const VStr &fname) {
   VStr rname = fsysFileFindAnyExt(fname);
   if (rname.length() == 0) return nullptr;
+  for (VGLTexture *ct = txTail; ct; ct = ct->prev) {
+    if (ct->path.equ1251CI(rname)) { ct->addRef(); return ct; }
+  }
   VStream *st = fsysOpenFile(rname);
   if (!st) return nullptr;
   VImage *img = VImage::loadFrom(st);
   delete st;
   if (!img) return nullptr;
-  //return new VTexture(img);
-  return VTexture::createFromImage(img);
+  VGLTexture *res = new VGLTexture(img);
+  res->path = rname;
+  return res;
 }
 
 
-VTexture *VTexture::createFromImage (VImage *aimg) {
-  if (!aimg) return nullptr;
-  VClass *iclass = VClass::FindClass("Texture");
-  if (!iclass) { delete aimg; return nullptr; }
-  VTexture *tex = (VTexture *)VObject::StaticSpawnObject(iclass);
-  if (!tex) { delete aimg; return nullptr; }
-  tex->img = aimg;
-  tex->tid = 0;
-  tex->prev = nullptr;
-  tex->next = nullptr;
-  tex->registerMe();
-  if (hw_glctx) texUpload(tex);
-  return tex;
-}
-
-
-void VTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const {
+void VGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const {
   if (!tid || VVideo::colorA <= 0) return;
   if (x1 < 0) x1 = img->width;
   if (y1 < 0) y1 = img->height;
@@ -441,7 +439,7 @@ void VTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int 
 }
 
 
-void VTexture::blitAt (int dx0, int dy0, float scale) const {
+void VGLTexture::blitAt (int dx0, int dy0, float scale) const {
   if (!tid || VVideo::colorA <= 0 || scale <= 0) return;
   int w = img->width;
   int h = img->height;
@@ -457,43 +455,65 @@ void VTexture::blitAt (int dx0, int dy0, float scale) const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+IMPLEMENT_CLASS(V, Texture);
+
+void VTexture::Destroy () {
+  if (tex) {
+    tex->release();
+    tex = nullptr;
+  }
+  Super::Destroy();
+}
+
+
+/*
+VGLTexture *VGLTexture::createFromImage (VImage *aimg) {
+  if (!aimg) return nullptr;
+  VClass *iclass = VClass::FindClass("Texture");
+  if (!iclass) { delete aimg; return nullptr; }
+  VGLTexture *tex = (VGLTexture *)VObject::StaticSpawnObject(iclass);
+  if (!tex) { delete aimg; return nullptr; }
+  tex->img = aimg;
+  tex->tid = 0;
+  tex->prev = nullptr;
+  tex->next = nullptr;
+  tex->registerMe();
+  if (hw_glctx) texUpload(tex);
+  return tex;
+}
+*/
+
+
+
 IMPLEMENT_FUNCTION(VTexture, Destroy) {
   P_GET_SELF;
-  delete Self;
+  if (Self) Self->SetFlags(_OF_DelayedDestroy);
+  //delete Self;
 }
 
 
 IMPLEMENT_FUNCTION(VTexture, load) {
   P_GET_STR(fname);
-  VClass *iclass = VClass::FindClass("Texture");
-  if (iclass) {
-    VStr rname = fsysFileFindAnyExt(fname);
-    if (rname.length() != 0) {
-      VStream *st = fsysOpenFile(rname);
-      if (st) {
-        auto ifileo = VObject::StaticSpawnObject(iclass);
-        auto ifile = (VTexture *)ifileo;
-        ifile->registerMe();
-        if (!ifile->loadFrom(st)) { delete ifileo; ifileo = nullptr; }
-        delete st;
-        RET_REF((VObject *)ifileo);
-      }
-    }
-  } else {
-    RET_REF(nullptr);
+  VGLTexture *tex = VGLTexture::load(fname);
+  if (tex) {
+    VTexture *ifile = Spawn<VTexture>();
+    ifile->tex = tex;
+    RET_REF((VObject *)ifile);
+    return;
   }
+  RET_REF(nullptr);
 }
 
 
 IMPLEMENT_FUNCTION(VTexture, width) {
   P_GET_SELF;
-  RET_INT(Self ? Self->getWidth() : 0);
+  RET_INT(Self && Self->tex ? Self->tex->width : 0);
 }
 
 
 IMPLEMENT_FUNCTION(VTexture, height) {
   P_GET_SELF;
-  RET_INT(Self ? Self->getHeight() : 0);
+  RET_INT(Self && Self->tex ? Self->tex->height : 0);
 }
 
 
@@ -512,7 +532,7 @@ IMPLEMENT_FUNCTION(VTexture, blitExt) {
   P_GET_SELF;
   if (!specifiedX1) x1 = -1;
   if (!specifiedY1) y1 = -1;
-  if (Self) Self->blitExt(dx0, dy0, dx1, dy1, x0, y0, x1, y1);
+  if (Self && Self->tex) Self->tex->blitExt(dx0, dy0, dx1, dy1, x0, y0, x1, y1);
 }
 
 
@@ -524,7 +544,7 @@ IMPLEMENT_FUNCTION(VTexture, blitAt) {
   P_GET_INT(dx0);
   P_GET_SELF;
   if (!specifiedScale) scale = 1;
-  if (Self) Self->blitAt(dx0, dy0, scale);
+  if (Self && Self->tex) Self->tex->blitAt(dx0, dy0, scale);
 }
 
 
@@ -873,7 +893,7 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
   if (!currFont || colorA <= 0 || text.isEmpty()) return;
   if (!mInited) return;
 
-  const VTexture *tex = currFont->getTexture();
+  const VGLTexture *tex = currFont->getTexture();
   if (!tex || !tex->tid) return; // oops
 
   glEnable(GL_TEXTURE_2D);
@@ -1209,11 +1229,11 @@ VFont::VFont (VName aname, const VStr &fnameIni, const VStr &fnameTexture)
   //firstChar = -1;
   //lastChar = -1;
 
-  auto img = VImage::loadFrom(fsysOpenFileAnyExt(fnameTexture));
-  if (!img) Sys_Error(va("cannot load font '%s' (texture not found)", *aname));
+  tex = VGLTexture::load(fnameTexture);
+  if (!tex) Sys_Error(va("cannot load font '%s' (texture not found)", *aname));
 
   auto inif = fsysOpenFileAnyExt(fnameIni);
-  if (!inif) { delete img; Sys_Error(va("cannot load font '%s' (description not found)", *aname)); }
+  if (!inif) { tex->release(); tex = nullptr; Sys_Error(va("cannot load font '%s' (description not found)", *aname)); }
   //fprintf(stderr, "*** %d %d %d %d\n", (int)inif->AtEnd(), (int)inif->IsError(), inif->TotalSize(), inif->Tell());
 
   VStr currSection;
@@ -1225,7 +1245,7 @@ VFont::VFont (VName aname, const VStr &fnameIni, const VStr &fnameTexture)
   // parse ini file
   while (!inif->AtEnd()) {
     VStr line = readLine(inif);
-    if (inif->IsError()) { delete inif; delete img; Sys_Error(va("cannot load font '%s' (error loading description)", *aname)); }
+    if (inif->IsError()) { delete inif; tex->release(); tex = nullptr; Sys_Error(va("cannot load font '%s' (error loading description)", *aname)); }
     if (line.isEmpty() || line[0] == ';' || line.startsWith("//")) continue;
     if (line[0] == '[') { currSection = line; continue; }
     // fontmap?
@@ -1258,15 +1278,11 @@ VFont::VFont (VName aname, const VStr &fnameIni, const VStr &fnameTexture)
 
   delete inif;
 
-  if (cwdt < 1 || chgt < 1) { delete img; Sys_Error(va("cannot load font '%s' (invalid description 00)", *aname)); }
-  int xchars = img->width/cwdt;
-  int ychars = img->height/chgt;
-  if (xchars < 1 || ychars < 1 || xchars*ychars < 128) { delete img; Sys_Error(va("cannot load font '%s' (invalid description 01)", *aname)); }
+  if (cwdt < 1 || chgt < 1) { tex->release(); tex = nullptr; Sys_Error(va("cannot load font '%s' (invalid description 00)", *aname)); }
+  int xchars = tex->width/cwdt;
+  int ychars = tex->height/chgt;
+  if (xchars < 1 || ychars < 1 || xchars*ychars < 128) { tex->release(); tex = nullptr; Sys_Error(va("cannot load font '%s' (invalid description 01)", *aname)); }
   chars.setLength(xchars*ychars);
-
-  //tex = new VTexture(img);
-  tex = VTexture::createFromImage(img);
-  check(tex);
 
   fontHeight = chgt;
 
@@ -1300,7 +1316,7 @@ VFont::VFont (VName aname, const VStr &fnameIni, const VStr &fnameTexture)
 //
 //==========================================================================
 VFont::~VFont() {
-  delete tex;
+  tex->release();
   VFont *prev = nullptr, *cur = fontList;
   while (cur && cur != this) { prev = cur; cur = cur->next; }
   if (cur) {
