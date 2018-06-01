@@ -116,6 +116,8 @@ public:
     }
     unguardSlow;
   }
+  inline void set (const TK &Key, const TV &Value) { Set(Key, Value); }
+  inline void put (const TK &Key, const TV &Value) { Set(Key, Value); }
 
   //FIXME: this is dog slow!
   bool Remove (const TK &Key) {
@@ -133,6 +135,15 @@ public:
     return Removed;
     unguardSlow;
   }
+  inline bool remove (const TK &Key) { return Remove(Key); }
+
+  bool has (const TK &Key) const {
+    int HashIndex = GetTypeHash(Key)&(HashSize-1);
+    for (int i = HashTable[HashIndex]; i != -1; i = Pairs[i].HashNext) {
+      if (Pairs[i].Key == Key) return true;
+    }
+    return false;
+  }
 
   //WARNING! returned pointer will be invalidated by any map mutation
   TV *Find (const TK &Key) {
@@ -144,6 +155,7 @@ public:
     return nullptr;
     unguardSlow;
   }
+  inline TV *find (const TK &Key) { return Find(Key); }
 
   //WARNING! returned pointer will be invalidated by any map mutation
   const TV *Find (const TK &Key) const {
@@ -155,6 +167,7 @@ public:
     return nullptr;
     unguardSlow;
   }
+  inline const TV *find (const TK &Key) const { return Find(Key); }
 
   const TV FindPtr (const TK &Key) const {
     guardSlow(TMap::Find);
@@ -165,6 +178,7 @@ public:
     return nullptr;
     unguardSlow;
   }
+  inline const TV *findptr (const TK &Key) const { return FindPtr(Key); }
 
   class TIterator {
   private:
