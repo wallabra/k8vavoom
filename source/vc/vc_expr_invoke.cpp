@@ -622,6 +622,58 @@ void VInvocation::Emit (VEmitContext &ec) {
     }
   }
 
+  // some special functions will be converted to builtins
+  if ((Func->Flags&(FUNC_Native|FUNC_Static)) == (FUNC_Native|FUNC_Static) && NumArgs == 1 && Func->NumParams == 1) {
+    if (Func->ParamTypes[0].Type == TYPE_Name && Func->ReturnType.Type == TYPE_String && Func->GetVName() == VName("NameToStr")) {
+      ec.AddStatement(OPC_NameToStr);
+      return;
+    }
+    if (Func->ParamTypes[0].Type == TYPE_String && Func->ReturnType.Type == TYPE_Name && Func->GetVName() == VName("StrToName")) {
+      ec.AddStatement(OPC_StrToName);
+      return;
+    }
+    if (Func->ParamTypes[0].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Int && Func->GetVName() == VName("ftoi")) {
+      ec.AddStatement(OPC_FloatToInt);
+      return;
+    }
+    if (Func->ParamTypes[0].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Float && Func->GetVName() == VName("itof")) {
+      ec.AddStatement(OPC_IntToFloat);
+      return;
+    }
+    if (Func->ParamTypes[0].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Int && Func->GetVName() == VName("abs")) {
+      ec.AddStatement(OPC_IntAbs);
+      return;
+    }
+    if (Func->ParamTypes[0].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Float && Func->GetVName() == VName("fabs")) {
+      ec.AddStatement(OPC_FloatAbs);
+      return;
+    }
+  }
+
+  if ((Func->Flags&(FUNC_Native|FUNC_Static)) == (FUNC_Native|FUNC_Static) && NumArgs == 2 && Func->NumParams == 2) {
+    if (Func->ParamTypes[0].Type == TYPE_Int && Func->ParamTypes[1].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Int) {
+      if (Func->GetVName() == VName("Min") || Func->GetVName() == VName("min")) { ec.AddStatement(OPC_IntMin); return; }
+      if (Func->GetVName() == VName("Max") || Func->GetVName() == VName("max")) { ec.AddStatement(OPC_IntMax); return; }
+    }
+    if (Func->ParamTypes[0].Type == TYPE_Float && Func->ParamTypes[1].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Float) {
+      if (Func->GetVName() == VName("FMin") || Func->GetVName() == VName("fmin")) { ec.AddStatement(OPC_FloatMin); return; }
+      if (Func->GetVName() == VName("FMax") || Func->GetVName() == VName("fmax")) { ec.AddStatement(OPC_FloatMax); return; }
+    }
+  }
+
+  if ((Func->Flags&(FUNC_Native|FUNC_Static)) == (FUNC_Native|FUNC_Static) && NumArgs == 3 && Func->NumParams == 3) {
+    if (Func->ParamTypes[0].Type == TYPE_Int && Func->ParamTypes[1].Type == TYPE_Int && Func->ParamTypes[2].Type == TYPE_Int &&
+        Func->ReturnType.Type == TYPE_Int)
+    {
+      if (Func->GetVName() == VName("Clamp") || Func->GetVName() == VName("clamp")) { ec.AddStatement(OPC_IntClamp); return; }
+    }
+    if (Func->ParamTypes[0].Type == TYPE_Float && Func->ParamTypes[1].Type == TYPE_Float && Func->ParamTypes[2].Type == TYPE_Float &&
+        Func->ReturnType.Type == TYPE_Float)
+    {
+      if (Func->GetVName() == VName("FClamp") || Func->GetVName() == VName("fclamp")) { ec.AddStatement(OPC_FloatClamp); return; }
+    }
+  }
+
        if (DirectCall) ec.AddStatement(OPC_Call, Func);
   else if (DelegateField) ec.AddStatement(OPC_DelegateCall, DelegateField, SelfOffset);
   else ec.AddStatement(OPC_VCall, Func, SelfOffset);

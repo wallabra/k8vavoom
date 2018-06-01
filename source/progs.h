@@ -127,7 +127,7 @@ inline void* PR_PopPtr () {
 
 
 inline void PR_PushStr (const VStr& value) {
-  pr_stackPtr->p = NULL;
+  pr_stackPtr->p = nullptr;
   *(VStr*)&pr_stackPtr->p = value;
   pr_stackPtr++;
 }

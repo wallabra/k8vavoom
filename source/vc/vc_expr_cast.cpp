@@ -340,20 +340,34 @@ VExpression *VCastToString::SyntaxCopy () {
 VExpression *VCastToString::DoResolve (VEmitContext& ec) {
   if (!op) return nullptr;
 
+  /*
   if (op->Type.Type != TYPE_String) {
     //TODO: convert it in-place
     VExpression *TmpArgs[1];
     TmpArgs[0] = op;
     op = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("NameToStr"), nullptr, false, false, Loc, 1, TmpArgs); // no self, not base call
   }
+  */
 
   op = op->Resolve(ec);
   if (!op) { delete this; return nullptr; }
 
-  if (op->Type.Type != TYPE_String) {
-    ParseError(Loc, "cannot convert type `%s` to `string`", *op->Type.GetName());
-    delete this;
-    return nullptr;
+  switch (op->Type.Type) {
+    case TYPE_String:
+      break;
+    case TYPE_Name:
+      if (op->IsNameConst()) {
+        // do it inplace
+        int val = ec.Package->FindString(*op->GetNameConst());
+        VExpression *e = (new VStringLiteral(val, Loc))->Resolve(ec);
+        delete op;
+        op = e;
+      }
+      break;
+    default:
+      ParseError(Loc, "cannot convert type `%s` to `string`", *op->Type.GetName());
+      delete this;
+      return nullptr;
   }
 
   return this;
@@ -368,7 +382,15 @@ VExpression *VCastToString::DoResolve (VEmitContext& ec) {
 void VCastToString::Emit (VEmitContext& ec) {
   if (!op) return;
   op->Emit(ec);
-  if (op->Type.Type != TYPE_String) ParseError(Loc, "cannot convert type to `string`");
+  switch (op->Type.Type) {
+    case TYPE_String:
+      break;
+    case TYPE_Name:
+      ec.AddStatement(OPC_NameToStr);
+      break;
+    default:
+      ParseError(Loc, "cannot convert type `%s` to `string` (the thing that should not be)", *op->Type.GetName());
+  }
 }
 
 
@@ -402,20 +424,34 @@ VExpression *VCastToName::SyntaxCopy () {
 VExpression *VCastToName::DoResolve (VEmitContext& ec) {
   if (!op) return nullptr;
 
+  /*
   if (op->Type.Type != TYPE_Name) {
     //TODO: convert it in-place
     VExpression *TmpArgs[1];
     TmpArgs[0] = op;
     op = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("StrToName"), nullptr, false, false, Loc, 1, TmpArgs); // no self, not base call
   }
+  */
 
   op = op->Resolve(ec);
   if (!op) { delete this; return nullptr; }
 
-  if (op->Type.Type != TYPE_Name) {
-    ParseError(Loc, "cannot convert type `%s` to `name`", *op->Type.GetName());
-    delete this;
-    return nullptr;
+  switch (op->Type.Type) {
+    case TYPE_String:
+      if (op->IsStrConst()) {
+        // do it inplace
+        VStr s = op->GetStrConst(ec.Package);
+        VExpression *e = (new VNameLiteral(VName(*s), Loc))->Resolve(ec);
+        delete op;
+        op = e;
+      }
+      break;
+    case TYPE_Name:
+      break;
+    default:
+      ParseError(Loc, "cannot convert type `%s` to `name`", *op->Type.GetName());
+      delete this;
+      return nullptr;
   }
 
   return this;
@@ -430,7 +466,15 @@ VExpression *VCastToName::DoResolve (VEmitContext& ec) {
 void VCastToName::Emit (VEmitContext& ec) {
   if (!op) return;
   op->Emit(ec);
-  if (op->Type.Type != TYPE_Name) ParseError(Loc, "cannot convert type to `name`");
+  switch (op->Type.Type) {
+    case TYPE_String:
+      ec.AddStatement(OPC_StrToName);
+      break;
+    case TYPE_Name:
+      break;
+    default:
+      ParseError(Loc, "cannot convert type `%s` to `name` (the thing that should not be)", *op->Type.GetName());
+  }
 }
 
 

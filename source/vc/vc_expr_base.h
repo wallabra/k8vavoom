@@ -59,9 +59,11 @@ public:
   virtual bool IsIntConst () const;
   virtual bool IsFloatConst () const;
   virtual bool IsStrConst () const;
+  virtual bool IsNameConst () const;
   virtual vint32 GetIntConst () const;
   virtual float GetFloatConst () const;
   virtual VStr GetStrConst (VPackage *) const;
+  virtual VName GetNameConst () const;
   virtual bool IsDefaultObject () const;
   virtual bool IsPropertyAssign () const;
   virtual bool IsDynArraySetNum () const;

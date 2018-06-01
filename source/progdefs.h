@@ -297,8 +297,22 @@ enum {
   DECLARE_OPC(PtrEquals, None),
   DECLARE_OPC(PtrNotEquals, None),
   DECLARE_OPC(PtrToBool, None),
+
+  // conversions
   DECLARE_OPC(IntToFloat, None),
   DECLARE_OPC(FloatToInt, None),
+  DECLARE_OPC(StrToName, None),
+  DECLARE_OPC(NameToStr, None),
+
+  // some more builtins
+  DECLARE_OPC(IntAbs, None),
+  DECLARE_OPC(FloatAbs, None),
+  DECLARE_OPC(IntMin, None),
+  DECLARE_OPC(IntMax, None),
+  DECLARE_OPC(FloatMin, None),
+  DECLARE_OPC(FloatMax, None),
+  DECLARE_OPC(IntClamp, None),
+  DECLARE_OPC(FloatClamp, None),
 
   // cleanup of local variables.
   DECLARE_OPC(ClearPointedStr, None),

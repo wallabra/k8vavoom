@@ -81,6 +81,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+  virtual bool IsNameConst () const override;
+  virtual VName GetNameConst () const;
 
 protected:
   VNameLiteral () {}

@@ -1527,6 +1527,76 @@ func_loop:
         sp[-1].i = itemp;
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_StrToName)
+        {
+          ++ip;
+          VName newname = VName(**((VStr *)&sp[-1].p));
+          ((VStr *)&sp[-1].p)->Clean();
+          sp[-1].i = newname.GetIndex();
+        }
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_NameToStr)
+        {
+          ++ip;
+          VName n = VName((EName)sp[-1].i);
+          sp[-1].p = nullptr;
+          *(VStr *)&sp[-1].p = VStr(*n);
+        }
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_IntAbs)
+        ++ip;
+        if (sp[-1].i < 0) sp[-1].i = -sp[-1].i;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_FloatAbs)
+        ++ip;
+        if (sp[-1].f < 0) sp[-1].f = -sp[-1].f;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_IntMin)
+        ++ip;
+        if (sp[-2].i > sp[-1].i) sp[-2].i = sp[-1].i;
+        sp -= 1;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_IntMax)
+        ++ip;
+        if (sp[-2].i < sp[-1].i) sp[-2].i = sp[-1].i;
+        sp -= 1;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_FloatMin)
+        ++ip;
+        if (sp[-2].f > sp[-1].f) sp[-2].f = sp[-1].f;
+        sp -= 1;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_FloatMax)
+        ++ip;
+        if (sp[-2].f < sp[-1].f) sp[-2].f = sp[-1].f;
+        sp -= 1;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_IntClamp)
+        ++ip;
+        /*
+        #define MID(min, val, max)  MAX(min, MIN(val, max))
+          Max  -1
+          Min  -2
+          Val  -3
+        */
+        sp[-3].i = MID(sp[-2].i, sp[-3].i, sp[-1].i);
+        sp -= 2;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_FloatClamp)
+        ++ip;
+        sp[-3].f = MID(sp[-2].f, sp[-3].f, sp[-1].f);
+        sp -= 2;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_ClearPointedStr)
         ((VStr*)sp[-1].p)->Clean();
         ip += 1;
