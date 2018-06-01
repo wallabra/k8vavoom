@@ -1,0 +1,17 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+bool isBoo () { print("isBoo!"); return true; }
+bool isFoo () { print("isFoo!"); return false; }
+
+final int main () {
+  int n = 42;
+
+  if (n && isBoo) print("n=%d", n);
+  if (n && isBoo()) print("n=%d", n);
+
+  if (n && isFoo) print("n=%d", n);
+  if (n && isFoo()) print("n=%d", n);
+
+  return 0;
+}
