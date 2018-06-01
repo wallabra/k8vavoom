@@ -1,0 +1,25 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+string sfld;
+
+final int main (array!string *args) {
+  string s = string('ThisIsName');
+  name n = name("AnotherName");
+
+  print("<%s>", s);
+  print("<%n>", n);
+
+  name n1 = name(s);
+  print("<%n>", n1);
+
+  string s1 = string(n);
+  print("<%s>", s1);
+
+  return 0;
+}
+
+
+defaultproperties {
+  sfld = "fuck!";
+}

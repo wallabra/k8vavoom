@@ -5,12 +5,12 @@ mdir=`dirname "$0"`
 cd "$mdir"
 mdir=`pwd`
 
-sh ../0build.sh
-res=$?
-if [ $res -ne 0 ]; then
-  cd "$odir"
-  exit $res
-fi
+## sh ../0build.sh
+## res=$?
+## if [ $res -ne 0 ]; then
+##   cd "$odir"
+##   exit $res
+## fi
 
 
 echo "=== RUNNING TESTS ==="

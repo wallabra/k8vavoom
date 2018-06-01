@@ -1,0 +1,27 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+final int main (array!string *args) {
+  int n = -42;
+  float f = -66.6;
+  print("n=%d; |n|=%d", n, abs(n));
+  print("f=%f; |f|=%f", f, fabs(f));
+
+  print("[-4..4]=%d", clamp(n, -4, 4));
+  print("[-40..50]=%d", clamp(n, -40, 50));
+  print("[-50..50]=%d", clamp(n, -50, 50));
+
+  print("[-4..4]=%d", clamp(abs(n), -4, 4));
+  print("[-50..40]=%d", clamp(abs(n), -50, 40));
+  print("[-50..50]=%d", clamp(abs(n), -50, 50));
+
+  print("[-4..4]=%f", fclamp(f, -4, 4));
+  print("[-40..80]=%f", fclamp(f, -40, 80));
+  print("[-80..80]=%f", fclamp(f, -80, 80));
+
+  print("[-4..4]=%f", fclamp(fabs(f), -4, 4));
+  print("[-80..60]=%f", fclamp(fabs(f), -80, 60));
+  print("[-80..80]=%f", fclamp(fabs(f), -80, 80));
+
+  return 0;
+}
