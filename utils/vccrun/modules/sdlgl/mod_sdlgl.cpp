@@ -430,11 +430,8 @@ void VTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int 
   if (!tid || VVideo::colorA <= 0) return;
   if (x1 < 0) x1 = img->width;
   if (y1 < 0) y1 = img->height;
-  glColor4f(VVideo::colorR/255.0f, VVideo::colorG/255.0f, VVideo::colorB/255.0f, VVideo::colorA/255.0f);
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, tid);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glBegin(GL_QUADS);
     glTexCoord2f((float)x0/(float)img->width, (float)y0/(float)img->height); glVertex2f(dx0, dy0);
     glTexCoord2f((float)x1/(float)img->width, (float)y0/(float)img->height); glVertex2f(dx1, dy0);
@@ -448,11 +445,8 @@ void VTexture::blitAt (int dx0, int dy0, float scale) const {
   if (!tid || VVideo::colorA <= 0 || scale <= 0) return;
   int w = img->width;
   int h = img->height;
-  glColor4f(VVideo::colorR/255.0f, VVideo::colorG/255.0f, VVideo::colorB/255.0f, VVideo::colorA/255.0f);
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, tid);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f); glVertex2f(dx0, dy0);
     glTexCoord2f(1.0f, 0.0f); glVertex2f(dx0+w*scale, dy0);
@@ -658,9 +652,14 @@ bool VVideo::open (const VStr &winname, int width, int height) {
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
-  glDisable(GL_BLEND);
+  //glDisable(GL_BLEND);
   glEnable(GL_LINE_SMOOTH);
 
+  glColor4f(VVideo::colorR/255.0f, VVideo::colorG/255.0f, VVideo::colorB/255.0f, VVideo::colorA/255.0f);
+  glDisable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   glViewport(0, 0, width, height);
 
@@ -860,11 +859,13 @@ void VVideo::setColor (int r, int g, int b) {
   colorR = (r < 0 ? 0 : r > 255 ? 255 : r);
   colorG = (g < 0 ? 0 : g > 255 ? 255 : g);
   colorB = (b < 0 ? 0 : b > 255 ? 255 : b);
+  if (mInited) glColor4f(colorR/255.0f, colorG/255.0f, colorB/255.0f, colorA/255.0f);
 }
 
 
 void VVideo::setAlpha (int a) {
   colorA = (a < 0 ? 0 : a > 255 ? 255 : a);
+  if (mInited) glColor4f(colorR/255.0f, colorG/255.0f, colorB/255.0f, colorA/255.0f);
 }
 
 
@@ -877,9 +878,6 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
 
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, tex->tid);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glColor4f(colorR/255.0f, colorG/255.0f, colorB/255.0f, colorA/255.0f);
 
   glBegin(GL_QUADS);
   int sx = x;
@@ -898,8 +896,6 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
     x += fc->advance;
   }
   glEnd();
-
-  //glColor4f(1, 1, 1, 1);
 }
 
 
@@ -1079,9 +1075,6 @@ IMPLEMENT_FUNCTION(VVideo, drawLine) {
   P_GET_INT(x0);
   if (!mInited || colorA <= 0) return;
   glDisable(GL_TEXTURE_2D);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glColor4f(colorR/255.0f, colorG/255.0f, colorB/255.0f, colorA/255.0f);
   glBegin(GL_LINES);
     glVertex2f(x0+0.5f, y0+0.5f);
     glVertex2f(x1+0.5f, y1+0.5f);
@@ -1097,9 +1090,6 @@ IMPLEMENT_FUNCTION(VVideo, drawRect) {
   P_GET_INT(x0);
   if (!mInited || colorA <= 0 || w < 1 || h < 1) return;
   glDisable(GL_TEXTURE_2D);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glColor4f(colorR/255.0f, colorG/255.0f, colorB/255.0f, colorA/255.0f);
   glBegin(GL_LINE_LOOP);
     glVertex2f(x0+0.5f, y0+0.5f);
     glVertex2f(x0+w+0.5f, y0+0.5f);
@@ -1117,9 +1107,6 @@ IMPLEMENT_FUNCTION(VVideo, fillRect) {
   P_GET_INT(x0);
   if (!mInited || colorA <= 0 || w < 1 || h < 1) return;
   glDisable(GL_TEXTURE_2D);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glColor4f(colorR/255.0f, colorG/255.0f, colorB/255.0f, colorA/255.0f);
   glBegin(GL_QUADS);
     glVertex2f(x0+0.5f, y0+0.5f);
     glVertex2f(x0+w+0.5f, y0+0.5f);
