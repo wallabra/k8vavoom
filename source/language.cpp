@@ -23,112 +23,82 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-struct VLanguage::VLangEntry
-{
-  vint32      PassNum;
-  VStr      Value;
+// ////////////////////////////////////////////////////////////////////////// //
+struct VLanguage::VLangEntry {
+  vint32 PassNum;
+  VStr Value;
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+VLanguage GLanguage;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-VLanguage   GLanguage;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VLanguage::VLanguage
 //
 //==========================================================================
-
-VLanguage::VLanguage()
-: Table(NULL)
-{
+VLanguage::VLanguage () : table(nullptr) {
 }
+
 
 //==========================================================================
 //
 //  VLanguage::~VLanguage
 //
 //==========================================================================
-
-VLanguage::~VLanguage()
-{
+VLanguage::~VLanguage () {
   FreeData();
 }
+
 
 //==========================================================================
 //
 //  VLanguage::FreeData
 //
 //==========================================================================
-
-void VLanguage::FreeData()
-{
+void VLanguage::FreeData () {
   guard(VLanguage::FreeData);
-  if (Table)
-  {
-    delete Table;
-    Table = NULL;
-  }
+  delete table;
+  table = nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VLanguage::FreeNonDehackedStrings
 //
 //==========================================================================
-
-void VLanguage::FreeNonDehackedStrings()
-{
+void VLanguage::FreeNonDehackedStrings () {
   guard(VLanguage::FreeNonDehackedStrings);
-  for (TMap<VName, VLangEntry>::TIterator It(*Table); It; ++It)
-    if (It.GetValue().PassNum != 0)
-      It.RemoveCurrent();
+  if (!table) return;
+  for (auto it = table->first(); it; ++it) {
+    if (it.getValue().PassNum != 0) it.removeCurrent();
+  }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VLanguage::LoadStrings
 //
 //==========================================================================
-
-void VLanguage::LoadStrings(const char* LangId)
-{
+void VLanguage::LoadStrings (const char *LangId) {
   guard(VLanguage::LoadStrings);
-  if (!Table)
-    Table = new TMap<VName, VLangEntry>();
+  if (!table) table = new TMap<VName, VLangEntry>();
 
   FreeNonDehackedStrings();
 
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0;
-    Lump = W_IterateNS(Lump, WADNS_Global))
-  {
-    if (W_LumpName(Lump) == NAME_language)
-    {
+  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
+    if (W_LumpName(Lump) == NAME_language) {
       int j = 1;
-      if (VStr::Cmp(LangId, "**"))
-      {
+      if (VStr::Cmp(LangId, "**") != 0) {
         ParseLanguageScript(Lump, "*", true, j++);
         ParseLanguageScript(Lump, LangId, true, j++);
         ParseLanguageScript(Lump, LangId, false, j++);
@@ -139,111 +109,82 @@ void VLanguage::LoadStrings(const char* LangId)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VLanguage::ParseLanguageScript
 //
 //==========================================================================
-
-void VLanguage::ParseLanguageScript(vint32 Lump, const char* InCode,
-  bool ExactMatch, vint32 PassNum)
-{
+void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool ExactMatch, vint32 PassNum) {
   guard(VLanguage::ParseLanguageScript);
   //fprintf(stderr, "LANG: <%s>\n", *W_LumpName(Lump));
 
   char Code[4];
   Code[0] = VStr::ToLower(InCode[0]);
   Code[1] = VStr::ToLower(InCode[1]);
-  Code[2] = ExactMatch ? VStr::ToLower(InCode[2]) : 0;
+  Code[2] = (ExactMatch ? VStr::ToLower(InCode[2]) : 0);
   Code[3] = 0;
 
-  VScriptParser* sc = new VScriptParser(*W_LumpName(Lump),
-    W_CreateLumpReaderNum(Lump));
+  VScriptParser *sc = new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump));
   sc->SetCMode(true);
 
   bool GotLanguageCode = false;
   bool Skip = false;
   bool Finished = false;
 
-  while (!sc->AtEnd())
-  {
-    if (sc->Check("["))
-    {
-      //  Language identifiers.
+  while (!sc->AtEnd()) {
+    if (sc->Check("[")) {
+      // language identifiers
       Skip = true;
-      while (!sc->Check("]"))
-      {
+      while (!sc->Check("]")) {
         sc->ExpectString();
         size_t Len = sc->String.Length();
         char CurCode[4];
-        if (Len != 2 && Len != 3)
-        {
-          if (Len == 1 && sc->String[0] == '*')
-          {
+        if (Len != 2 && Len != 3) {
+          if (Len == 1 && sc->String[0] == '*') {
             CurCode[0] = '*';
             CurCode[1] = 0;
             CurCode[2] = 0;
-          }
-          else if (Len == 7 && !sc->String.ICmp("default"))
-          {
+          } else if (Len == 7 && !sc->String.ICmp("default")) {
             CurCode[0] = '*';
             CurCode[1] = '*';
             CurCode[2] = 0;
-          }
-          else
-          {
-            sc->Error(va("Language code must be 2 or 3 "
-              "characters long, %s is %u characters long",
-              *sc->String, (unsigned)Len));
-            //  Shut up compiler
+          } else {
+            sc->Error(va("Language code must be 2 or 3 characters long, %s is %u characters long", *sc->String, (unsigned)Len));
+            // shut up compiler
             CurCode[0] = 0;
             CurCode[1] = 0;
             CurCode[2] = 0;
           }
-        }
-        else
-        {
+        } else {
           CurCode[0] = VStr::ToLower(sc->String[0]);
           CurCode[1] = VStr::ToLower(sc->String[1]);
-          CurCode[2] = ExactMatch ? VStr::ToLower(sc->String[2]) : 0;
+          CurCode[2] = (ExactMatch ? VStr::ToLower(sc->String[2]) : 0);
           CurCode[3] = 0;
         }
-        if (Code[0] == CurCode[0] && Code[1] == CurCode[1] &&
-          Code[2] == CurCode[2])
-        {
+        if (Code[0] == CurCode[0] && Code[1] == CurCode[1] && Code[2] == CurCode[2]) {
           Skip = false;
         }
         GotLanguageCode = true;
       }
-    }
-    else
-    {
-      if (!GotLanguageCode)
-      {
-        //  Skip old binary LANGUAGE lumps.
-        if (!sc->IsText())
-        {
-          if (!Finished)
-          {
-            GCon->Logf("Skipping binary LANGUAGE lump");
-          }
+    } else {
+      if (!GotLanguageCode) {
+        // skip old binary LANGUAGE lumps
+        if (!sc->IsText()) {
+          if (!Finished) GCon->Logf("Skipping binary LANGUAGE lump");
           Finished = true;
           return;
         }
         sc->Error("Found a string without language specified");
       }
 
-      //  Parse string definitions.
-      if (Skip)
-      {
-        //  We are skipping this language.
+      // parse string definitions
+      if (Skip) {
+        // we are skipping this language
         sc->ExpectString();
         sc->Expect("=");
         sc->ExpectString();
-        while (!sc->Check(";"))
-        {
-          sc->ExpectString();
-        }
+        while (!sc->Check(";")) sc->ExpectString();
         continue;
       }
 
@@ -252,56 +193,49 @@ void VLanguage::ParseLanguageScript(vint32 Lump, const char* InCode,
       sc->Expect("=");
       sc->ExpectString();
       VStr Value = HandleEscapes(sc->String);
-      while (!sc->Check(";"))
-      {
+      while (!sc->Check(";")) {
         sc->ExpectString();
         Value += HandleEscapes(sc->String);
       }
 
-      //  Check for replacement.
-      VLangEntry* Found = Table->Find(Key);
-      if (!Found || Found->PassNum >= PassNum)
-      {
+      // check for replacement
+      VLangEntry* Found = table->Find(Key);
+      if (!Found || Found->PassNum >= PassNum) {
         VLangEntry Entry;
         Entry.Value = Value;
         Entry.PassNum = PassNum;
-        Table->Set(Key, Entry);
+        table->Set(Key, Entry);
         //fprintf(stderr, "  LNG<%s>=<%s>\n", *Key, *Value);
       }
     }
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VLanguage::HandleEscapes
 //
 //==========================================================================
-
-VStr VLanguage::HandleEscapes(VStr Src)
-{
+VStr VLanguage::HandleEscapes (const VStr &Src) {
   guard(VLanguage::HandleEscapes);
+  bool hasWork = false;
+  for (size_t i = Src.Length(); i > 0; --i) if (Src[i] == '\\') { hasWork = true; break; }
+  if (!hasWork) return VStr(Src);
   VStr Ret;
-  for (size_t i = 0; i < Src.Length(); i++)
-  {
+  for (size_t i = 0; i < Src.Length(); ++i) {
     char c = Src[i];
-    if (c == '\\')
-    {
-      i++;
+    if (c == '\\') {
+      ++i;
       c = Src[i];
-      if (c == 'n')
-        c = '\n';
-      else if (c == 'r')
-        c = '\r';
-      else if (c == 't')
-        c = '\t';
-      else if (c == 'c')
-        c = -127;
-      else if (c == '\n')
-        continue;
+           if (c == 'n') c = '\n';
+      else if (c == 'r') c = '\r';
+      else if (c == 't') c = '\t';
+      else if (c == 'c') c = -127;
+      else if (c == '\n') continue;
     }
     Ret += c;
   }
@@ -309,66 +243,59 @@ VStr VLanguage::HandleEscapes(VStr Src)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VLanguage::Find
 //
 //==========================================================================
-
-VStr VLanguage::Find(VName Key) const
-{
+VStr VLanguage::Find (VName Key) const {
   guard(VLanguage::Find);
-  VLangEntry* Found = Table->Find(Key);
-  return Found ? Found->Value : VStr();
+  VLangEntry *Found = table->Find(Key);
+  return (Found ? Found->Value : VStr());
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VLanguage::operator[]
 //
 //==========================================================================
-
-VStr VLanguage::operator[](VName Key) const
-{
+VStr VLanguage::operator [] (VName Key) const {
   guard(VLanguage::operator[]);
-  VLangEntry* Found = Table->Find(Key);
-  return Found ? Found->Value : VStr(Key);
+  VLangEntry *Found = table->Find(Key);
+  return (Found ? Found->Value : VStr(Key));
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VLanguage::GetStringId
 //
 //==========================================================================
-
-VName VLanguage::GetStringId(const VStr& Str)
-{
+VName VLanguage::GetStringId (const VStr &Str) {
   guard(VLanguage::GetStringId);
-  for (TMap<VName, VLangEntry>::TIterator It(*Table); It; ++It)
-  {
-    if (It.GetValue().Value == Str)
-    {
-      return It.GetKey();
-    }
+  if (!table) return NAME_None;
+  for (auto it = table->first(); it; ++it) {
+    if (it.getValue().Value == Str) return it.GetKey();
   }
   return NAME_None;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VLanguage::ReplaceString
 //
 //==========================================================================
-
-void VLanguage::ReplaceString(VName Key, const VStr& Value)
-{
+void VLanguage::ReplaceString (VName Key, const VStr &Value) {
   guard(VLanguage::ReplaceString);
   VLangEntry Entry;
   Entry.Value = Value;
   Entry.PassNum = 0;
-  Table->Set(Key, Entry);
+  table->Set(Key, Entry);
   unguard;
 }

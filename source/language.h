@@ -23,29 +23,29 @@
 //**
 //**************************************************************************
 
-class VLanguage
-{
-public:
-  VLanguage();
-  ~VLanguage();
-
-  void FreeData();
-  void LoadStrings(const char*);
-
-  VStr Find(VName) const;
-  VStr operator[](VName) const;
-
-  VName GetStringId(const VStr&);
-  void ReplaceString(VName, const VStr&);
-
+class VLanguage {
 private:
   struct VLangEntry;
 
-  TMap<VName, VLangEntry>*  Table;
+  TMap<VName, VLangEntry> *table;
 
-  void FreeNonDehackedStrings();
-  void ParseLanguageScript(vint32, const char*, bool, vint32);
-  VStr HandleEscapes(VStr);
+  void FreeNonDehackedStrings ();
+  void ParseLanguageScript (vint32 Lump, const char *InCode, bool ExactMatch, vint32 PassNum);
+  VStr HandleEscapes (const VStr &Src);
+
+public:
+  VLanguage ();
+  ~VLanguage ();
+
+  void FreeData ();
+  void LoadStrings (const char *LangId);
+
+  VStr Find (VName) const;
+  VStr operator [] (VName) const;
+
+  VName GetStringId (const VStr &);
+  void ReplaceString (VName, const VStr &);
 };
 
-extern VLanguage    GLanguage;
+
+extern VLanguage GLanguage;
