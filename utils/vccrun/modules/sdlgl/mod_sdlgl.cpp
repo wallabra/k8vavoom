@@ -726,6 +726,7 @@ void VVideo::onDraw () {
 
 
 void VVideo::onEvent (event_t &evt) {
+  if (!hw_glctx || !onEventVC) return;
   if ((onEventVC->Flags&FUNC_Static) == 0) P_PASS_REF((VObject *)mainObject);
   P_PASS_REF((event_t *)&evt);
   VObject::ExecuteFunction(onEventVC);

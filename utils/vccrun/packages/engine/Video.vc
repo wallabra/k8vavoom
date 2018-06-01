@@ -54,6 +54,38 @@ native final static void drawLine (int x0, int y0, int x1, int y1);
 native final static void drawRect (int x0, int y0, int w, int h);
 native final static void fillRect (int x0, int y0, int w, int h);
 
+// returns `false` if no area left
+final static bool scissorCombine (int x0, int y0, int w, int h) {
+  ScissorRect sr;
+  getScissor(&sr);
+  if (sr.w < 1 || sr.h < 1) return false; // nothing to do
+  if (w < 1 || h < 1) {
+    sr.w = 0;
+    sr.h = 0;
+  } else {
+    int sx1 = sr.x+sr.w-1;
+    int sy1 = sr.y+sr.h-1;
+    int x1 = x0+w-1;
+    int y1 = y0+h-1;
+    // check for overlapping rects
+    if (x0 > sx1 || y0 > sy1 || x1 < sr.x || y1 < sr.y) {
+      // no overlap
+      sr.w = 0;
+      sr.h = 0;
+    } else {
+      // overlaps
+      if (x0 > sr.x) sr.x = x0;
+      if (y0 > sr.y) sr.y = y0;
+      if (x1 < sx1) sx1 = x1;
+      if (y1 < sy1) sy1 = y1;
+      sr.w = sx1-sr.x+1;
+      sr.h = sy1-sr.y+1;
+    }
+  }
+  setScissor(&sr);
+  return (sr.w > 0 && sr.h > 0);
+}
+
 
 /* `Video.prop` is not not working yet
 int width {
