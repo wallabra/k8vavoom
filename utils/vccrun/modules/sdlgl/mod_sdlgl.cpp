@@ -33,6 +33,7 @@
 static SDL_Window *hw_window = nullptr;
 static SDL_GLContext hw_glctx = nullptr;
 static VGLTexture *txHead = nullptr, *txTail = nullptr;
+static TMap<VStr, VGLTexture *> txLoaded;
 
 bool VVideo::doGLSwap = false;
 bool VVideo::doRefresh = false;
@@ -342,11 +343,11 @@ void uploadAllTextures () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VGLTexture::VGLTexture () : rc(1), path(VStr()), img(nullptr), tid(0), prev(nullptr), next(nullptr) {
+VGLTexture::VGLTexture () : rc(1), mPath(VStr()), img(nullptr), tid(0), prev(nullptr), next(nullptr) {
   registerMe();
 }
 
-VGLTexture::VGLTexture (VImage *aimg) : rc(1), path(VStr()), img(aimg), tid(0), prev(nullptr), next(nullptr) {
+VGLTexture::VGLTexture (VImage *aimg) : rc(1), mPath(VStr()), img(aimg), tid(0), prev(nullptr), next(nullptr) {
   if (hw_glctx) texUpload(this);
   registerMe();
 }
@@ -359,7 +360,8 @@ VGLTexture::~VGLTexture () {
   tid = 0;
   delete img;
   img = nullptr;
-  path = VStr();
+  if (mPath.length()) txLoaded.remove(mPath);
+  mPath = VStr();
   if (!prev && !next) {
     if (txHead == this) { txHead = txTail = nullptr; }
   } else {
@@ -389,37 +391,19 @@ void VGLTexture::release () {
 }
 
 
-bool VGLTexture::loadFrom (VStream *st) {
-  if (hw_glctx && tid) {
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glDeleteTextures(1, &tid);
-  }
-  tid = 0;
-  delete img;
-  img = nullptr;
-  path = VStr();
-  if (!st || st->IsError()) return false;
-  img = VImage::loadFrom(st);
-  if (st->IsError()) { delete img; img = nullptr; return false; }
-  if (!img) return false;
-  if (hw_glctx) texUpload(this);
-  return true;
-}
-
-
 VGLTexture *VGLTexture::load (const VStr &fname) {
   VStr rname = fsysFileFindAnyExt(fname);
   if (rname.length() == 0) return nullptr;
-  for (VGLTexture *ct = txTail; ct; ct = ct->prev) {
-    if (ct->path.equ1251CI(rname)) { ct->addRef(); return ct; }
-  }
+  VGLTexture **loaded = txLoaded.find(fname);
+  if (loaded) return *loaded;
   VStream *st = fsysOpenFile(rname);
   if (!st) return nullptr;
   VImage *img = VImage::loadFrom(st);
   delete st;
   if (!img) return nullptr;
   VGLTexture *res = new VGLTexture(img);
-  res->path = rname;
+  res->mPath = rname;
+  txLoaded.put(rname, res);
   return res;
 }
 

@@ -138,9 +138,11 @@ public:
 class VGLTexture {
 private:
   int rc;
+  VStr mPath;
+
+  const VStr &getPath () const { return mPath; }
 
 public:
-  VStr path;
   VImage *img;
   GLuint tid; // !0: texture loaded
   VGLTexture *prev;
@@ -157,13 +159,12 @@ public:
   void addRef ();
   void release (); //WARNING: can delete `this`!
 
-  bool loadFrom (VStream *st);
-
   static VGLTexture *load (const VStr &fname);
 
   int getWidth () const { return (img ? img->width : 0); }
   int getHeight () const { return (img ? img->height : 0); }
 
+  PropertyRO<const VStr &, VGLTexture> path {this, &VGLTexture::getPath};
   PropertyRO<int, VGLTexture> width {this, &VGLTexture::getWidth};
   PropertyRO<int, VGLTexture> height {this, &VGLTexture::getHeight};
 
