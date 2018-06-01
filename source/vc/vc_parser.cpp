@@ -1394,8 +1394,8 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
       VField *fi = new VField(FieldName, Struct, FieldLoc);
       fi->TypeExpr = FieldType;
       fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
-        TModifiers::Native | TModifiers::Private |
-        TModifiers::ReadOnly | TModifiers::Transient, FieldLoc));
+        TModifiers::Native|TModifiers::Private|TModifiers::Protected|
+        TModifiers::ReadOnly|TModifiers::Transient, FieldLoc));
       Struct->AddField(fi);
     } while (Lex.Check(TK_Comma));
     delete Type;
@@ -2091,8 +2091,8 @@ void VParser::ParseClass () {
       VField *fi = new VField(FieldName, Class, FieldLoc);
       fi->TypeExpr = FieldType;
       fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
-        TModifiers::Native | TModifiers::Private |
-        TModifiers::ReadOnly | TModifiers::Transient, FieldLoc));
+        TModifiers::Native|TModifiers::Private|TModifiers::Protected|
+        TModifiers::ReadOnly|TModifiers::Transient, FieldLoc));
       Class->AddField(fi);
     } while (Lex.Check(TK_Comma));
 
