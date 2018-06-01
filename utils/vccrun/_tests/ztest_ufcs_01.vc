@@ -1,0 +1,26 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Test : Object;
+
+int n;
+
+bool isFoo () { print("isFoo(%d)", n); return (n%2 == 0); }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+array!Test arr;
+
+final int main () {
+  for (int f = 0; f < 8; ++f) {
+    arr[$] = Test(SpawnObject(Test));
+    if (f) arr[$-1].n = f;
+  }
+
+  if (arr[0].isFoo) print("0 ok");
+  if (arr[1].isFoo) print("1 fail");
+  if (arr[2].isFoo) print("2 ok");
+  if (arr[3].isFoo) print("3 fail");
+
+  return 0;
+}

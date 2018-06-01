@@ -1,0 +1,6 @@
+isFoo(0)
+0 ok
+isFoo(1)
+isFoo(2)
+2 ok
+isFoo(3)
