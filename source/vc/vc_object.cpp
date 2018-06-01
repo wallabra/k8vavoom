@@ -1122,12 +1122,14 @@ IMPLEMENT_FUNCTION(VObject, WadLumpPresent) {
   P_GET_NAME(name);
   RET_BOOL(W_CheckNumForName(name) >= 0);
 }
+#endif
 
 IMPLEMENT_FUNCTION(VObject, SpawnObject) {
   P_GET_PTR(VClass, Class);
   RET_REF(VObject::StaticSpawnObject(Class));
 }
 
+#ifndef VCC_STANDALONE_EXECUTOR
 IMPLEMENT_FUNCTION(VObject, FindAnimDoor) {
   P_GET_INT(BaseTex);
   RET_PTR(R_FindAnimDoor(BaseTex));

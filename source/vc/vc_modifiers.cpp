@@ -44,6 +44,7 @@ int TModifiers::Parse (VLexer &Lex) {
     {TK_Static, Static},
     {TK_Abstract, Abstract},
     {TK_Private, Private},
+    {TK_Protected, Protected},
     {TK_ReadOnly, ReadOnly},
     {TK_Transient, Transient},
     {TK_Final, Final},
@@ -93,6 +94,7 @@ const char *TModifiers::Name (int Modifier) {
     case Spawner: return "spawner";
     case Override: return "override";
     case Ref: return "ref";
+    case Protected: return "protected";
   }
   return "";
 }
@@ -129,6 +131,8 @@ int TModifiers::MethodAttr (int Modifiers) {
   if (Modifiers&Final) Attributes |= FUNC_Final;
   if (Modifiers&Spawner) Attributes |= FUNC_Spawner;
   if (Modifiers&Override) Attributes |= FUNC_Override;
+  if (Modifiers&Private) Attributes |= FUNC_Private;
+  if (Modifiers&Protected) Attributes |= FUNC_Protected;
   return Attributes;
 }
 
@@ -161,6 +165,7 @@ int TModifiers::FieldAttr (int Modifiers) {
   if (Modifiers&Transient) Attributes |= FIELD_Transient;
   if (Modifiers&Private) Attributes |= FIELD_Private;
   if (Modifiers&ReadOnly) Attributes |= FIELD_ReadOnly;
+  if (Modifiers&Protected) Attributes |= FIELD_Protected;
   return Attributes;
 }
 
@@ -176,6 +181,7 @@ int TModifiers::PropAttr (int Modifiers) {
   int Attributes = 0;
   if (Modifiers&Native) Attributes |= PROP_Native;
   if (Modifiers&Final) Attributes |= PROP_Final;
+  if (Modifiers&Protected) Attributes |= PROP_Protected;
   return Attributes;
 }
 
@@ -191,5 +197,6 @@ int TModifiers::ParmAttr (int Modifiers) {
   int Attributes = 0;
   if (Modifiers&Optional) Attributes |= FPARM_Optional;
   if (Modifiers&Out) Attributes |= FPARM_Out;
+  if (Modifiers&Ref) Attributes |= FPARM_Ref;
   return Attributes;
 }

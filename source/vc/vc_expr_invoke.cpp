@@ -103,9 +103,9 @@ VExpression *VBaseInvocation::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  VMethod *Func = ec.SelfClass->ParentClass->FindMethod(Name);
+  VMethod *Func = ec.SelfClass->ParentClass->FindAccessibleMethod(Name, ec.SelfClass);
   if (!Func) {
-    ParseError(Loc, "No such method %s", *Name);
+    ParseError(Loc, "No such method `%s`", *Name);
     delete this;
     return nullptr;
   }
@@ -186,7 +186,7 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
   }
 
   if (ec.SelfClass) {
-    VMethod *M = ec.SelfClass->FindMethod(Name);
+    VMethod *M = ec.SelfClass->FindAccessibleMethod(Name, ec.SelfClass);
     if (M) {
       if (M->Flags & FUNC_Iterator) {
         ParseError(Loc, "Iterator methods can only be used in foreach statements");
@@ -220,7 +220,7 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 VExpression *VCastOrInvocation::ResolveIterator (VEmitContext &ec) {
-  VMethod *M = ec.SelfClass->FindMethod(Name);
+  VMethod *M = ec.SelfClass->FindAccessibleMethod(Name, ec.SelfClass);
   if (!M) {
     ParseError(Loc, "Unknown method %s", *Name);
     delete this;
@@ -358,7 +358,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
-    VMethod *M = SelfExpr->Type.Class->FindMethod(MethodName);
+    VMethod *M = SelfExpr->Type.Class->FindAccessibleMethod(MethodName, ec.SelfClass);
     if (!M) {
       ParseError(Loc, "Method `%s` not found in class `%s`", *MethodName, SelfExpr->Type.Class->GetName());
       delete this;
@@ -388,7 +388,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  VMethod *M = SelfExpr->Type.Class->FindMethod(MethodName);
+  VMethod *M = SelfExpr->Type.Class->FindAccessibleMethod(MethodName, ec.SelfClass);
   if (M) {
     if (M->Flags & FUNC_Iterator) {
       ParseError(Loc, "Iterator methods can only be used in foreach statements");
@@ -435,7 +435,7 @@ VExpression *VDotInvocation::ResolveIterator (VEmitContext &ec) {
     return nullptr;
   }
 
-  VMethod *M = SelfExpr->Type.Class->FindMethod(MethodName);
+  VMethod *M = SelfExpr->Type.Class->FindAccessibleMethod(MethodName, ec.SelfClass);
   if (!M) {
     ParseError(Loc, "No such method %s", *MethodName);
     delete this;
@@ -637,7 +637,7 @@ void VInvocation::Emit (VEmitContext &ec) {
 VMethod *VInvocation::FindMethodWithSignature (VEmitContext &ec, VName name, int argc, VExpression **argv) {
   if (argc < 0 || argc > VMethod::MAX_PARAMS) return nullptr;
   if (!ec.SelfClass) return nullptr;
-  VMethod *m = ec.SelfClass->FindMethod(name);
+  VMethod *m = ec.SelfClass->FindAccessibleMethod(name, ec.SelfClass);
   if (!m) return nullptr;
   if (!IsGoodMethodParams(ec, m, argc, argv)) return nullptr;
   return m;

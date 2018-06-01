@@ -1121,8 +1121,9 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
 
   VMethod *Func = new VMethod(MName, InClass, MethodLoc);
   Func->Flags = TModifiers::MethodAttr(TModifiers::Check(Modifiers,
-    TModifiers::Native | TModifiers::Static | TModifiers::Final |
-    TModifiers::Spawner | TModifiers::Override, MethodLoc));
+    TModifiers::Native|TModifiers::Static|TModifiers::Final|
+    TModifiers::Spawner|TModifiers::Override|
+    TModifiers::Private|TModifiers::Protected, MethodLoc));
   Func->ReturnTypeExpr = RetType;
   if (Iterator) Func->Flags |= FUNC_Iterator;
   InClass->AddMethod(Func);
@@ -2001,7 +2002,7 @@ void VParser::ParseClass () {
       }
 
       if (Lex.Check(TK_LBrace)) {
-        Modifiers = TModifiers::Check(Modifiers, TModifiers::Native | TModifiers::Final, FieldLoc);
+        Modifiers = TModifiers::Check(Modifiers, TModifiers::Native|TModifiers::Final|TModifiers::Private|TModifiers::Protected, FieldLoc);
         VProperty *Prop = new VProperty(FieldName, Class, FieldLoc);
         Prop->TypeExpr = FieldType;
         Prop->Flags = TModifiers::PropAttr(Modifiers);

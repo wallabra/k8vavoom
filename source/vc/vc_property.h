@@ -27,8 +27,10 @@
 // ////////////////////////////////////////////////////////////////////////// //
 // property flags
 enum {
-  PROP_Native = 0x0001, // Native get and set methods
-  PROP_Final  = 0x0002, // Final version of a proeprty
+  PROP_Native    = 0x0001, // Native get and set methods
+  PROP_Final     = 0x0002, // Final version of a proeprty
+  PROP_Private   = 0x0004,
+  PROP_Protected = 0x0008,
 };
 
 

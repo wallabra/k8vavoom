@@ -38,6 +38,7 @@ public:
     Spawner     = 0x0200,
     Override    = 0x0400,
     Ref         = 0x0800, // not used yet
+    Protected   = 0x1000,
   };
 
   static int Parse (VLexer &);

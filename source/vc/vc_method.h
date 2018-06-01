@@ -40,8 +40,10 @@ enum {
   FUNC_Iterator    = 0x0080, // Can be used in foreach statements
 
   FUNC_Override    = 0x1000, // Used to check overrides
+  FUNC_Private     = 0x2000,
+  FUNC_Protected   = 0x4000,
 
-  FUNC_NetFlags = FUNC_Net | FUNC_NetReliable,
+  FUNC_NetFlags = FUNC_Net|FUNC_NetReliable,
 };
 
 
@@ -53,6 +55,7 @@ enum {
 enum {
   FPARM_Optional = 0x01,
   FPARM_Out      = 0x02,
+  FPARM_Ref      = 0x04,
 };
 
 

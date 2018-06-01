@@ -35,6 +35,7 @@ enum {
   FIELD_Private   = 0x0004, // private field
   FIELD_ReadOnly  = 0x0008, // read-only field
   FIELD_Net       = 0x0010, // network replicated field
+  FIELD_Protected = 0x0100,
 };
 
 

@@ -181,7 +181,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   }
 
   if (op->Type.Type == TYPE_Reference) {
-    VMethod *M = op->Type.Class->FindMethod(FieldName);
+    VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass);
     if (M) {
       //fprintf(stderr, "DOTFIELD: <%s> {%s} %u\n", *FieldName, *op->Type.GetName(), op->Type.Type);
       if (M->Flags&FUNC_Iterator) {
@@ -362,7 +362,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
-      VMethod *M = op->Type.Class->FindMethod(FieldName);
+      VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass);
       if (!M) {
         ParseError(Loc, "Method `%s` not found in class `%s`", *FieldName, op->Type.Class->GetName());
         delete this;

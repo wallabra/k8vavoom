@@ -697,7 +697,9 @@ native static final iterator AllClasses(class BaseClass, out class Class);
 native static final string Info_ValueForKey(string info, string key);
 //  Checks if WAD lump is present, used to check for shareware/extended WADs
 native static final bool WadLumpPresent(name Name);
+#endif
 native static final Object SpawnObject(class cid);
+#ifndef VCC_STANDALONE_EXECUTOR
 native static final GameObject::VAnimDoorDef* FindAnimDoor(int BaseTex);
 native static final string GetLangString(name Id);
 #endif

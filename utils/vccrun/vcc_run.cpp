@@ -451,7 +451,7 @@ int main (int argc, char **argv) {
     VClass *mklass = VClass::FindClass("Main");
     if (mklass) {
       dprintf("Found class 'Main'\n");
-      VMethod *mmain = mklass->FindMethod("main");
+      VMethod *mmain = mklass->FindAccessibleMethod("main");
       if (mmain) {
         dprintf(" Found method 'main()' (return type: %u:%s)\n", mmain->ReturnType.Type, *mmain->ReturnType.GetName());
         int atp = checkArg(mmain);

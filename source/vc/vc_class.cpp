@@ -459,7 +459,8 @@ VField *VClass::FindField (VName Name) {
 VField *VClass::FindField (VName Name, const TLocation &l, VClass *SelfClass) {
   guard(VClass::FindField);
   VField *F = FindField(Name);
-  if (F != nullptr && (F->Flags & FIELD_Private) && this != SelfClass) ParseError(l, "Field %s is private", *F->Name);
+  if (F != nullptr && (F->Flags&FIELD_Private) && this != SelfClass) ParseError(l, "Field `%s` is private", *F->Name);
+  if (F != nullptr && (F->Flags&FIELD_Protected) && (!SelfClass || !SelfClass->IsChildOf(this))) ParseError(l, "Field `%s` is protected", *F->Name);
   return F;
   unguard;
 }
@@ -507,6 +508,34 @@ VMethod *VClass::FindMethod (VName Name, bool bRecursive) {
   if (M) return M;
   if (bRecursive && ParentClass) return ParentClass->FindMethod(Name);
   return nullptr;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VClass::FindAccessibleMethod
+//
+//==========================================================================
+VMethod *VClass::FindAccessibleMethod (VName Name, VClass *self) {
+  guard(VClass::FindAccessibleMethod);
+  if (Name == NAME_None) return nullptr;
+  VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
+  if (M) {
+    //fprintf(stderr, "FAM: <%s>; self=%s; this=%s; child=%d\n", *Name, (self ? *self->Name : "<none>"), *this->Name, (int)(self ? self->IsChildOf(this) : false));
+    if (!self) {
+      if ((M->Flags&(FUNC_Private|FUNC_Protected)) == 0) return M;
+    } else {
+      if (M->Flags&FUNC_Private) {
+        if (self == this) return M;
+      } else if (M->Flags&FUNC_Protected) {
+        if (self->IsChildOf(this)) return M;
+      } else {
+        return M;
+      }
+    }
+  }
+  return (ParentClass ? ParentClass->FindAccessibleMethod(Name, self) : nullptr);
   unguard;
 }
 

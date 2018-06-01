@@ -197,29 +197,46 @@ bool VMethod::Define () {
   if (Outer->MemberType == MEMBER_Class && Name != NAME_None && ((VClass *)Outer)->ParentClass) {
     SuperMethod = ((VClass*)Outer)->ParentClass->FindMethod(Name);
   }
+
   if (SuperMethod) {
     if ((Flags&FUNC_Override) == 0) {
       ParseError(Loc, "Overriding virtual method without `override` keyword");
       Ret = false;
     }
-    if (SuperMethod->Flags&FUNC_Final) {
+    if (Ret && (SuperMethod->Flags&FUNC_Private) != 0) {
+      ParseError(Loc, "Overriding private method is not allowed");
+      Ret = false;
+    }
+    if (Ret && (Flags&FUNC_Private) != 0) {
+      ParseError(Loc, "Overriding with private method is not allowed");
+      Ret = false;
+    }
+    if (Ret && (SuperMethod->Flags&FUNC_Protected) != (Flags&FUNC_Protected)) {
+      if ((SuperMethod->Flags&FUNC_Protected)) {
+        ParseError(Loc, "Cannot override protected method with public");
+      } else {
+        ParseError(Loc, "Cannot override public method with protected");
+      }
+      Ret = false;
+    }
+    if (Ret && (SuperMethod->Flags&FUNC_Final)) {
       ParseError(Loc, "Method already has been declared as final and cannot be overriden");
       Ret = false;
     }
     if (!SuperMethod->ReturnType.Equals(ReturnType)) {
-      ParseError(Loc, "Method redefined with different return type");
+      if (Ret) ParseError(Loc, "Method redefined with different return type");
       Ret = false;
     } else if (SuperMethod->NumParams != NumParams) {
-      ParseError(Loc, "Method redefined with different number of arguments");
+      if (Ret) ParseError(Loc, "Method redefined with different number of arguments");
       Ret = false;
     } else {
       for (int i = 0; i < NumParams; ++i) {
         if (!SuperMethod->ParamTypes[i].Equals(ParamTypes[i])) {
-          ParseError(Loc, "Type of argument %d differs from base class", i+1);
+          if (Ret) ParseError(Loc, "Type of argument %d differs from base class", i+1);
           Ret = false;
         }
         if ((SuperMethod->ParamFlags[i]^ParamFlags[i])&(FPARM_Optional|FPARM_Out)) {
-          ParseError(Loc, "Modifiers of argument %d differs from base class", i+1);
+          if (Ret) ParseError(Loc, "Modifiers of argument %d differs from base class", i+1);
           Ret = false;
         }
       }

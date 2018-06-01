@@ -72,6 +72,7 @@ const char *VLexer::TokenNames[] = {
   "out",
   "override",
   "private",
+  "protected",
   "readonly",
   "ref",
   "reliable",
@@ -1064,6 +1065,7 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
       break;
     case 'p':
       if (checkStrTk("private")) Token = TK_Private;
+      if (checkStrTk("protected")) Token = TK_Protected;
       break;
     case 'r':
            if (checkStrTk("return")) Token = TK_Return;

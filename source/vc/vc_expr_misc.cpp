@@ -187,7 +187,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
       return e->Resolve(ec);
     }
 
-    VMethod *M = ec.SelfClass->FindMethod(Name);
+    VMethod *M = ec.SelfClass->FindAccessibleMethod(Name, ec.SelfClass);
     if (M) {
       if (M->Flags&FUNC_Iterator) {
         ParseError(Loc, "Iterator methods can only be used in foreach statements");

@@ -316,7 +316,9 @@ public:
   // misc
   DECLARE_FUNCTION(Info_ValueForKey)
   DECLARE_FUNCTION(WadLumpPresent)
+#endif
   DECLARE_FUNCTION(SpawnObject)
+#ifndef VCC_STANDALONE_EXECUTOR
   DECLARE_FUNCTION(FindAnimDoor)
   DECLARE_FUNCTION(GetLangString)
 #endif
