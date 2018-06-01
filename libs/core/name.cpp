@@ -73,6 +73,9 @@ VName::VName (const char *Name, ENameFindType FindType) {
   // make sure name is valid
   if (!Name || !*Name) return;
 
+  // map 'none' to 'None'
+  if (VStr::Cmp(Name, "none") == 0) return;
+
   memset(NameBuf, 0, sizeof(NameBuf));
   size_t nlen = strlen(Name);
   if (nlen >= NAME_SIZE) nlen = NAME_SIZE-1;
@@ -107,7 +110,7 @@ VName::VName (const char *Name, ENameFindType FindType) {
   }
 
   // map 'none' to 'None'
-  if (Index == NAME_none) Index = NAME_None;
+  //if (Index == NAME_none) Index = NAME_None;
   unguard;
 }
 
