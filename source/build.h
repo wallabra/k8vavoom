@@ -35,16 +35,8 @@
 #define RC_PRODUCTVERSION2 VERSION_TEXT
 
 #if !defined CLIENT && !defined SERVER
-#define CLIENT
-#define SERVER
-#endif
-
-#if USE_ASM_I386
-#if defined __GNUC__
-#define INLINE_ASM_I386_GAS   1
-#elif (defined _MSC_VER || defined __BORLANDC__)
-#define INLINE_ASM_I386_INTEL 1
-#endif
+# define CLIENT
+# define SERVER
 #endif
 
 // if rangecheck is undefined, most parameter validation debugging code

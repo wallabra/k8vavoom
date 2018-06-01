@@ -23,26 +23,8 @@
 //**
 //**************************************************************************
 
-#ifdef _MSC_VER
-// Disable some unwanted warnings
-#pragma warning(disable : 4097) // typedef-name '' used as synonym for class-name ''
-#pragma warning(disable : 4127) // Conditional expression is constant
-#pragma warning(disable : 4244) // conversion to float, possible loss of data
-#pragma warning(disable : 4284) // return type is not a UDT or reference to a UDT
-#pragma warning(disable : 4291) // no matching operator delete found
-#pragma warning(disable : 4305) // truncation from 'const double' to 'float'
-#pragma warning(disable : 4512) // assignment operator could not be generated
-#pragma warning(disable : 4514) // unreferenced inline function has been removed
-#pragma warning(disable : 4702) // unreachable code in inline expanded function
-#pragma warning(disable : 4710) // inline function not expanded
-#endif
-
-#ifndef __GNUC__
-#define __attribute__(whatever)
-#endif
-
 #ifndef _WIN32
-#define __declspec(whatever)
+# define __declspec(whatever)
 #endif
 
 //==========================================================================
