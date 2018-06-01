@@ -593,9 +593,8 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
 
   // calcutate CRC
 #if !defined(IN_VCC)
-  TCRC crc;
-  crc.Init();
-  for (int i = 0; i < Reader->TotalSize(); ++i) crc + Streamer<vuint8>(*Reader);
+  auto crc = TCRC16();
+  for (int i = 0; i < Reader->TotalSize(); ++i) crc += Streamer<vuint8>(*Reader);
 #endif
 
   // read the header

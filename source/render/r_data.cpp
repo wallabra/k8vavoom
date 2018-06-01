@@ -636,13 +636,12 @@ void VTextureTranslation::Clear()
 void VTextureTranslation::CalcCrc()
 {
   guard(VTextureTranslation::CalcCrc);
-  TCRC Work;
-  Work.Init();
+  auto Work = TCRC16();
   for (int i = 1; i < 256; i++)
   {
-    Work + Palette[i].r;
-    Work + Palette[i].g;
-    Work + Palette[i].b;
+    Work += Palette[i].r;
+    Work += Palette[i].g;
+    Work += Palette[i].b;
   }
   Crc = Work;
   unguard;
