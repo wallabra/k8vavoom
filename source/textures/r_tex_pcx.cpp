@@ -120,8 +120,8 @@ VPcxTexture::VPcxTexture (int ALumpNum, pcx_t &Hdr)
 //  VPcxTexture::~VPcxTexture
 //
 //==========================================================================
-VPcxTexture::~VPcxTexture () noexcept(false) {
-  guard(VPcxTexture::~VPcxTexture);
+VPcxTexture::~VPcxTexture () {
+  //guard(VPcxTexture::~VPcxTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -130,7 +130,7 @@ VPcxTexture::~VPcxTexture () noexcept(false) {
     delete[] Palette;
     Palette = nullptr;
   }
-  unguard;
+  //unguard;
 }
 
 

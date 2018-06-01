@@ -48,7 +48,7 @@ public:
     size_t        DataSize;
 
     FStream(VStream& InStream);
-    //virtual ~FStream () noexcept(false) {}
+    //virtual ~FStream () {}
     void StrmWrite(const FLAC__int32* const Buf[], size_t Offs,
       size_t Len);
 
@@ -324,12 +324,12 @@ VFlacAudioCodec::VFlacAudioCodec(FStream* InStream)
 //
 //==========================================================================
 
-VFlacAudioCodec::~VFlacAudioCodec() noexcept(false)
+VFlacAudioCodec::~VFlacAudioCodec()
 {
-  guard(VFlacAudioCodec::~VFlacAudioCodec);
+  //guard(VFlacAudioCodec::~VFlacAudioCodec);
   delete Stream;
   Stream = NULL;
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

@@ -34,7 +34,7 @@ const VStr VStream::mEmptyName = VStr();
 //  VStream::~VStream
 //
 //==========================================================================
-VStream::~VStream () noexcept(false) {
+VStream::~VStream () {
 }
 
 

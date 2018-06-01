@@ -96,8 +96,8 @@ VRawPicTexture::VRawPicTexture (int ALumpNum, int APalLumpNum)
 //  VRawPicTexture::~VRawPicTexture
 //
 //==========================================================================
-VRawPicTexture::~VRawPicTexture () noexcept(false) {
-  guard(VRawPicTexture::~VRawPicTexture);
+VRawPicTexture::~VRawPicTexture () {
+  //guard(VRawPicTexture::~VRawPicTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -106,7 +106,7 @@ VRawPicTexture::~VRawPicTexture () noexcept(false) {
     delete[] Palette;
     Palette = nullptr;
   }
-  unguard;
+  //unguard;
 }
 
 

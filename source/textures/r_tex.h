@@ -48,7 +48,7 @@ public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
   VPatchTexture (int, int, int, int, int);
-  virtual ~VPatchTexture () noexcept(false) override;
+  virtual ~VPatchTexture () override;
   virtual vuint8 *GetPixels () override;
   virtual void Unload () override;
 };
@@ -90,7 +90,7 @@ private:
 public:
   VMultiPatchTexture (VStream &, int, VTexture **, int, int, bool);
   VMultiPatchTexture (VScriptParser *, int);
-  virtual ~VMultiPatchTexture () noexcept(false) override;
+  virtual ~VMultiPatchTexture () override;
   virtual void SetFrontSkyLayer () override;
   virtual vuint8 *GetPixels () override;
   virtual void Unload() override;
@@ -106,7 +106,7 @@ public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
   VFlatTexture (int);
-  virtual ~VFlatTexture () noexcept(false) override;
+  virtual ~VFlatTexture () override;
   virtual vuint8 *GetPixels () override;
   virtual void Unload () override;
 };
@@ -123,7 +123,7 @@ public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
   VRawPicTexture (int, int);
-  virtual ~VRawPicTexture () noexcept(false) override;
+  virtual ~VRawPicTexture () override;
   virtual vuint8 *GetPixels () override;
   virtual rgba_t *GetPalette () override;
   virtual void Unload () override;
@@ -139,7 +139,7 @@ public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
   VAutopageTexture (int ALumpNum);
-  virtual ~VAutopageTexture () noexcept(false) override;
+  virtual ~VAutopageTexture () override;
   virtual vuint8* GetPixels () override;
   virtual void Unload () override;
 };
@@ -156,7 +156,7 @@ public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
   VImgzTexture (int, int, int, int, int);
-  virtual ~VImgzTexture () noexcept(false) override;
+  virtual ~VImgzTexture () override;
   virtual vuint8 *GetPixels () override;
   virtual void Unload () override;
 };
@@ -172,7 +172,7 @@ public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
   VPcxTexture (int, struct pcx_t &);
-  virtual ~VPcxTexture () noexcept(false) override;
+  virtual ~VPcxTexture () override;
   virtual vuint8 *GetPixels () override;
   virtual rgba_t *GetPalette () override;
   virtual void Unload () override;
@@ -189,7 +189,7 @@ public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
   VTgaTexture (int, struct tgaHeader_t &);
-  virtual ~VTgaTexture () noexcept(false) override;
+  virtual ~VTgaTexture () override;
   virtual vuint8 *GetPixels () override;
   virtual rgba_t *GetPalette () override;
   virtual void Unload () override;
@@ -205,7 +205,7 @@ public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
   VPngTexture (int, int, int, int, int);
-  virtual ~VPngTexture () noexcept(false) override;
+  virtual ~VPngTexture () override;
   virtual vuint8 *GetPixels () override;
   virtual void Unload () override;
 };
@@ -220,7 +220,7 @@ public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
   VJpegTexture(int, int, int);
-  virtual ~VJpegTexture () noexcept(false) override;
+  virtual ~VJpegTexture () override;
   virtual vuint8 *GetPixels () override;
   virtual void Unload () override;
 };
@@ -241,7 +241,7 @@ protected:
 
 public:
   VWarpTexture (VTexture *);
-  virtual ~VWarpTexture () noexcept(false) override;
+  virtual ~VWarpTexture () override;
   virtual void SetFrontSkyLayer () override;
   virtual bool CheckModified () override;
   virtual vuint8 *GetPixels () override;

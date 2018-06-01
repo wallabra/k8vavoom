@@ -101,9 +101,9 @@ VZipStreamReader::VZipStreamReader(VStream* ASrcStream,
 
 VZipStreamReader::~VZipStreamReader()
 {
-  guard(VZipStreamReader::~VZipStreamReader);
+  //guard(VZipStreamReader::~VZipStreamReader);
   Close();
-  unguard;
+  //unguard;
 }
 
 //==========================================================================
@@ -318,9 +318,9 @@ VZipStreamWriter::VZipStreamWriter(VStream* ADstStream)
 
 VZipStreamWriter::~VZipStreamWriter()
 {
-  guard(VZipStreamWriter::~VZipStreamWriter);
+  //guard(VZipStreamWriter::~VZipStreamWriter);
   Close();
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

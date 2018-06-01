@@ -34,7 +34,7 @@ public:
   TLocation Loc;
 
   VStatement (const TLocation &);
-  virtual ~VStatement() noexcept(false);
+  virtual ~VStatement();
   virtual VStatement *SyntaxCopy () = 0;
   virtual bool Resolve (VEmitContext &) = 0;
   virtual void DoEmit (VEmitContext &) = 0;
@@ -310,7 +310,7 @@ public:
   VExpression *Expr;
 
   VExpressionStatement (VExpression *AExpr);
-  virtual ~VExpressionStatement () noexcept(false) override;
+  virtual ~VExpressionStatement () override;
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;

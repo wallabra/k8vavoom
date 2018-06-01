@@ -113,7 +113,7 @@ private:
 
 public:
   VFontChar(VTexture*, rgba_t*);
-  virtual ~VFontChar() noexcept(false);
+  virtual ~VFontChar() override;
   vuint8* GetPixels();
   rgba_t* GetPalette();
   void Unload();
@@ -136,7 +136,7 @@ private:
 
 public:
   VFontChar2(int, int, int, int, rgba_t*, int);
-  virtual ~VFontChar2() noexcept(false);
+  virtual ~VFontChar2() override;
   vuint8* GetPixels();
   rgba_t* GetPalette();
   void Unload();
@@ -759,9 +759,9 @@ VFont::VFont(VName AName, const VStr& FormatStr, int First, int Count,
 //
 //==========================================================================
 
-VFont::~VFont() noexcept(false)
+VFont::~VFont()
 {
-  guard(VFont::~VFont);
+  //guard(VFont::~VFont);
   for (int i = 0; i < Chars.Num(); i++)
   {
     if (Chars[i].Textures)
@@ -776,7 +776,7 @@ VFont::~VFont() noexcept(false)
     delete[] Translation;
     Translation = NULL;
   }
-  unguard;
+  //unguard;
 }
 
 //==========================================================================
@@ -1666,7 +1666,7 @@ VFontChar::VFontChar(VTexture* ATex, rgba_t* APalette)
 //
 //==========================================================================
 
-VFontChar::~VFontChar() noexcept(false)
+VFontChar::~VFontChar()
 {
 }
 
@@ -1761,7 +1761,7 @@ VFontChar2::VFontChar2(int ALumpNum, int AFilePos, int CharW, int CharH,
 //
 //==========================================================================
 
-VFontChar2::~VFontChar2() noexcept(false)
+VFontChar2::~VFontChar2()
 {
   if (Pixels)
   {

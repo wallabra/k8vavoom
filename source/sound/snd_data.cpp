@@ -83,9 +83,9 @@ VSoundManager::VSoundManager()
 //
 //==========================================================================
 
-VSoundManager::~VSoundManager() noexcept(false)
+VSoundManager::~VSoundManager()
 {
-  guard(VSoundManager::~VSoundManager);
+  //guard(VSoundManager::~VSoundManager);
   for (int i = 0; i < S_sfx.Num(); i++)
   {
     if (S_sfx[i].Data)
@@ -129,7 +129,7 @@ VSoundManager::~VSoundManager() noexcept(false)
     }
     R = Next;
   }
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

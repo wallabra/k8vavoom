@@ -70,7 +70,7 @@ VObject::VObject () {
 //
 //==========================================================================
 VObject::~VObject () {
-  guard(VObject::~VObject);
+  //guard(VObject::~VObject);
 
   ConditionalDestroy();
   --GNumDeleted;
@@ -91,7 +91,7 @@ VObject::~VObject () {
     GObjAvailable.Append(Index);
   }
 
-  unguard;
+  //unguard;
 }
 
 

@@ -350,8 +350,8 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
 //  VMultiPatchTexture::~VMultiPatchTexture
 //
 //==========================================================================
-VMultiPatchTexture::~VMultiPatchTexture () noexcept(false) {
-  guard(VMultiPatchTexture::~VMultiPatchTexture);
+VMultiPatchTexture::~VMultiPatchTexture () {
+  //guard(VMultiPatchTexture::~VMultiPatchTexture);
   if (Patches) {
     for (int i = 0; i < PatchCount; ++i) {
       if (Patches[i].bOwnTrans) {
@@ -366,7 +366,7 @@ VMultiPatchTexture::~VMultiPatchTexture () noexcept(false) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
+  //unguard;
 }
 
 

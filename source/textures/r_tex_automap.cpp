@@ -59,13 +59,13 @@ VAutopageTexture::VAutopageTexture (int ALumpNum) : Pixels(nullptr) {
 //  VAutopageTexture::~VAutopageTexture
 //
 //==========================================================================
-VAutopageTexture::~VAutopageTexture () noexcept(false) {
-  guard(VAutopageTexture::~VAutopageTexture);
+VAutopageTexture::~VAutopageTexture () {
+  //guard(VAutopageTexture::~VAutopageTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
+  //unguard;
 }
 
 

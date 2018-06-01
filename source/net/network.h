@@ -181,7 +181,7 @@ public:
   VMessageOut*    OutMsg;
 
   VChannel(VNetConnection*, EChannelType, vint32, vuint8);
-  virtual ~VChannel() noexcept(false);
+  virtual ~VChannel();
 
   //  VChannel interface
   void ReceivedRawMessage(VMessageIn&);

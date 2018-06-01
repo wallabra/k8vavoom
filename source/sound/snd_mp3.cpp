@@ -116,7 +116,7 @@ VMp3AudioCodec::VMp3AudioCodec(VStream* AStrm, bool AFreeStream)
 
 VMp3AudioCodec::~VMp3AudioCodec()
 {
-  guard(VMp3AudioCodec::~VMp3AudioCodec);
+  //guard(VMp3AudioCodec::~VMp3AudioCodec);
   if (Initialised)
   {
     //  Close file only if decoder has been initialised succesfully.
@@ -131,7 +131,7 @@ VMp3AudioCodec::~VMp3AudioCodec()
   mad_synth_finish(&Synth);
   mad_frame_finish(&Frame);
   mad_stream_finish(&Stream);
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

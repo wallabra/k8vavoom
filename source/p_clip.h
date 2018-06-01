@@ -41,7 +41,7 @@ private:
 
 public:
   VViewClipper();
-  virtual ~VViewClipper() noexcept(false);
+  ~VViewClipper();
   void ClearClipNodes(const TVec&, VLevel*);
   void ClipInitFrustrumRange(const TAVec&, const TVec&, const TVec&,
     const TVec&, float, float);

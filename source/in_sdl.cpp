@@ -214,14 +214,14 @@ VSdlInputDevice::VSdlInputDevice ()
 //
 //==========================================================================
 VSdlInputDevice::~VSdlInputDevice () {
-  guard(VSdlInputDevice::~VSdlInputDevice);
+  //guard(VSdlInputDevice::~VSdlInputDevice);
   // on
   SDL_ShowCursor(1);
   if (joystick_started) {
     SDL_JoystickClose(joystick);
     SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
   }
-  unguard;
+  //unguard;
 }
 
 

@@ -47,9 +47,9 @@ private:
   bool Escape;
 
 public:
-  VScriptParser (const VStr &name, VStream *Strm) noexcept(false);
-  VScriptParser (const VStr &name, const char *atext) noexcept(false);
-  ~VScriptParser () noexcept(false);
+  VScriptParser (const VStr &name, VStream *Strm);
+  VScriptParser (const VStr &name, const char *atext);
+  ~VScriptParser ();
 
   bool IsText ();
   bool IsAtEol ();

@@ -750,12 +750,11 @@ public:
     bLoading = false;
     unguard;
   }
-  virtual ~VStreamFileWriter() noexcept(false)
+  virtual ~VStreamFileWriter() override
   {
-    guard(VStreamFileWriter::~VStreamFileWriter);
-    if (File)
-      Close();
-    unguard;
+    //guard(VStreamFileWriter::~VStreamFileWriter);
+    if (File) Close();
+    //unguard;
   }
   void Seek(int InPos)
   {
@@ -861,12 +860,11 @@ VStreamFileReader::VStreamFileReader(FILE* InFile, FOutputDevice *InError)
   bLoading = true;
   unguard;
 }
-VStreamFileReader::~VStreamFileReader() noexcept(false)
+VStreamFileReader::~VStreamFileReader()
 {
-  guard(VStreamFileReader::~VStreamFileReader);
-  if (File)
-    Close();
-  unguard;
+  //guard(VStreamFileReader::~VStreamFileReader);
+  if (File) Close();
+  //unguard;
 }
 void VStreamFileReader::Seek(int InPos)
 {

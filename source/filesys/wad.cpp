@@ -59,7 +59,7 @@ static int          AuxiliaryIndex;
 
 // CODE --------------------------------------------------------------------
 
-VSearchPath::~VSearchPath() noexcept(false)
+VSearchPath::~VSearchPath()
 {
 }
 

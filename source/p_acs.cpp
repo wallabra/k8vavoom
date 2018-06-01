@@ -172,7 +172,7 @@ public:
   vint32*       MapVars[MAX_ACS_MAP_VARS];
 
   VAcsObject(VAcsLevel* ALevel, int Lump);
-  virtual ~VAcsObject() noexcept(false);
+  ~VAcsObject();
 
   vuint8* OffsetToPtr(int);
   int PtrToOffset(vuint8*);
@@ -495,9 +495,9 @@ VAcsObject::VAcsObject(VAcsLevel* ALevel, int Lump)
 //
 //==========================================================================
 
-VAcsObject::~VAcsObject() noexcept(false)
+VAcsObject::~VAcsObject()
 {
-  guard(VAcsObject::~VAcsObject);
+  //guard(VAcsObject::~VAcsObject);
   delete[] Scripts;
   Scripts = NULL;
   delete[] Strings;
@@ -521,7 +521,7 @@ VAcsObject::~VAcsObject() noexcept(false)
   }
   delete[] Data;
   Data = NULL;
-  unguard;
+  //unguard;
 }
 
 //==========================================================================
@@ -1260,16 +1260,16 @@ VAcsLevel::VAcsLevel(VLevel* ALevel)
 //
 //==========================================================================
 
-VAcsLevel::~VAcsLevel() noexcept(false)
+VAcsLevel::~VAcsLevel()
 {
-  guard(VAcsLevel::~VAcsLevel);
+  //guard(VAcsLevel::~VAcsLevel);
   for (int i = 0; i < LoadedObjects.Num(); i++)
   {
     delete LoadedObjects[i];
     LoadedObjects[i] = NULL;
   }
   LoadedObjects.Clear();
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

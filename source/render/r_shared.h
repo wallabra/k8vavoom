@@ -115,7 +115,7 @@ public:
   bool    bUpdated;
 
   VCameraTexture(VName, int, int);
-  virtual ~VCameraTexture() noexcept(false);
+  virtual ~VCameraTexture() override;
   bool CheckModified();
   vuint8* GetPixels();
   void Unload();

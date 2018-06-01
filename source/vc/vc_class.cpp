@@ -136,8 +136,8 @@ VClass::VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *A
 //  VClass::~VClass
 //
 //==========================================================================
-VClass::~VClass() noexcept(false) {
-  guard(VClass::~VClass);
+VClass::~VClass() {
+  //guard(VClass::~VClass);
   if (GameExpr) {
     delete GameExpr;
     GameExpr = nullptr;
@@ -179,7 +179,7 @@ VClass::~VClass() noexcept(false) {
 #endif
     }
   }
-  unguard;
+  //unguard;
 }
 
 

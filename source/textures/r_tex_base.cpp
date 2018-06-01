@@ -108,7 +108,7 @@ VTexture::VTexture ()
 //  VTexture::~VTexture
 //
 //==========================================================================
-VTexture::~VTexture () noexcept(false) {
+VTexture::~VTexture () {
   if (Pixels8Bit) {
     delete[] Pixels8Bit;
     Pixels8Bit = nullptr;

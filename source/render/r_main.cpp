@@ -302,7 +302,7 @@ VAdvancedRenderLevel::VAdvancedRenderLevel(VLevel* ALevel)
 
 VRenderLevelShared::~VRenderLevelShared()
 {
-  guard(VRenderLevelShared::~VRenderLevelShared);
+  //guard(VRenderLevelShared::~VRenderLevelShared);
   //  Free fake floor data.
   for (int i = 0; i < Level->NumSectors; i++)
   {
@@ -379,7 +379,7 @@ VRenderLevelShared::~VRenderLevelShared()
     delete SideSkies[i];
     SideSkies[i] = NULL;
   }
-  unguard;
+  //unguard;
 }
 
 //==========================================================================
@@ -390,12 +390,12 @@ VRenderLevelShared::~VRenderLevelShared()
 
 VAdvancedRenderLevel::~VAdvancedRenderLevel()
 {
-  guard(VAdvancedRenderLevel::~VAdvancedRenderLevel);
+  //guard(VAdvancedRenderLevel::~VAdvancedRenderLevel);
   delete[] LightVis;
   LightVis = NULL;
   delete[] LightBspVis;
   LightBspVis = NULL;
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

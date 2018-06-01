@@ -108,7 +108,7 @@ VTimidityAudioCodec::VTimidityAudioCodec(MidiSong* InSong)
 
 VTimidityAudioCodec::~VTimidityAudioCodec()
 {
-  guard(VTimidityAudioCodec::~VTimidityAudioCodec);
+  //guard(VTimidityAudioCodec::~VTimidityAudioCodec);
   Timidity_Stop(Song);
   if (Song->patches)
     Timidity_FreeDLS(Song->patches);
@@ -116,7 +116,7 @@ VTimidityAudioCodec::~VTimidityAudioCodec()
     Timidity_FreeSf2(Song->sf2_font);
   Timidity_FreeSong(Song);
   Timidity_Close();
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

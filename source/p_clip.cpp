@@ -80,9 +80,9 @@ VViewClipper::VViewClipper()
 //
 //==========================================================================
 
-VViewClipper::~VViewClipper() noexcept(false)
+VViewClipper::~VViewClipper()
 {
-  guard(VViewClipper::~VViewClipper);
+  //guard(VViewClipper::~VViewClipper);
   ClearClipNodes(TVec(), NULL);
   VClipNode* Node = FreeClipNodes;
   while (Node)
@@ -97,7 +97,7 @@ VViewClipper::~VViewClipper() noexcept(false)
       Node = Next;
     }
   }
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

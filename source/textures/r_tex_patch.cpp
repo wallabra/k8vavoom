@@ -88,13 +88,13 @@ VPatchTexture::VPatchTexture (int ALumpNum, int AWidth, int AHeight, int ASOffse
 //  VPatchTexture::~VPatchTexture
 //
 //==========================================================================
-VPatchTexture::~VPatchTexture () noexcept(false) {
-  guard(VPatchTexture::~VPatchTexture);
+VPatchTexture::~VPatchTexture () {
+  //guard(VPatchTexture::~VPatchTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
+  //unguard;
 }
 
 

@@ -58,8 +58,8 @@ VWarpTexture::VWarpTexture (VTexture *ASrcTex)
 //  VWarpTexture::~VWarpTexture
 //
 //==========================================================================
-VWarpTexture::~VWarpTexture () noexcept(false) {
-  guard(VWarpTexture::~VWarpTexture);
+VWarpTexture::~VWarpTexture () {
+  //guard(VWarpTexture::~VWarpTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -84,7 +84,7 @@ VWarpTexture::~VWarpTexture () noexcept(false) {
     delete[] YSin2;
     YSin2 = nullptr;
   }
-  unguard;
+  //unguard;
 }
 
 

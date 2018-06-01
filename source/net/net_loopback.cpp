@@ -47,7 +47,7 @@ public:
   : VSocket(Drv)
   , OtherSock(NULL)
   {}
-  virtual ~VLoopbackSocket() noexcept(false);
+  virtual ~VLoopbackSocket();
 
   int GetMessage(TArray<vuint8>&);
   int SendMessage(vuint8*, vuint32);
@@ -284,16 +284,16 @@ void VLoopbackDriver::Shutdown()
 //
 //==========================================================================
 
-VLoopbackSocket::~VLoopbackSocket() noexcept(false)
+VLoopbackSocket::~VLoopbackSocket()
 {
-  guard(VLoopbackSocket::~VLoopbackSocket);
+  //guard(VLoopbackSocket::~VLoopbackSocket);
   if (OtherSock)
     OtherSock->OtherSock = NULL;
   if (this == ((VLoopbackDriver*)Driver)->loop_client)
     ((VLoopbackDriver*)Driver)->loop_client = NULL;
   else
     ((VLoopbackDriver*)Driver)->loop_server = NULL;
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

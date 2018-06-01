@@ -49,7 +49,7 @@ struct VLumpRename
 class VSearchPath
 {
 public:
-  virtual ~VSearchPath() noexcept(false);
+  virtual ~VSearchPath();
   virtual bool FileExists(const VStr&) = 0;
   virtual VStream* OpenFileRead(const VStr&) = 0;
   virtual void Close() = 0;
@@ -162,7 +162,7 @@ public:
   VZipFile(const VStr&);
   VZipFile(VStream* fstream); // takes ownership
   VZipFile(VStream* fstream, const VStr& name); // takes ownership
-  virtual ~VZipFile() noexcept(false);
+  virtual ~VZipFile() override;
   bool FileExists(const VStr&);
   VStream* OpenFileRead(const VStr&);
   void Close();
@@ -192,7 +192,7 @@ class VStreamFileReader : public VStream
 {
 public:
   VStreamFileReader(FILE*, FOutputDevice*);
-  virtual ~VStreamFileReader() noexcept(false);
+  virtual ~VStreamFileReader() override;
   void Seek(int InPos);
   int Tell();
   int TotalSize();

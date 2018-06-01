@@ -95,9 +95,9 @@ VModPlugAudioCodec::VModPlugAudioCodec(ModPlugFile* InFile)
 
 VModPlugAudioCodec::~VModPlugAudioCodec()
 {
-  guard(VModPlugAudioCodec::~VModPlugAudioCodec);
+  //guard(VModPlugAudioCodec::~VModPlugAudioCodec);
   ModPlug_Unload(file);
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

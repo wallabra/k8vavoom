@@ -137,13 +137,13 @@ VPngTexture::VPngTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, i
 //  VPngTexture::~VPngTexture
 //
 //==========================================================================
-VPngTexture::~VPngTexture () noexcept(false) {
-  guard(VPngTexture::~VPngTexture);
+VPngTexture::~VPngTexture () {
+  //guard(VPngTexture::~VPngTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
+  //unguard;
 }
 
 

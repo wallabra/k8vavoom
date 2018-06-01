@@ -66,9 +66,9 @@ VXmlNode::VXmlNode()
 //
 //==========================================================================
 
-VXmlNode::~VXmlNode() noexcept(false)
+VXmlNode::~VXmlNode()
 {
-  guard(VXmlNode::~VXmlNode);
+  //guard(VXmlNode::~VXmlNode);
   while (FirstChild)
   {
     VXmlNode* Temp = FirstChild;
@@ -76,7 +76,7 @@ VXmlNode::~VXmlNode() noexcept(false)
     delete Temp;
     Temp = NULL;
   }
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

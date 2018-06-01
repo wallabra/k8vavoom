@@ -192,7 +192,7 @@ VStreamDiskFile::VStreamDiskFile (FILE* afl, const VStr &aname, bool asWriter) :
   bLoading = !asWriter;
 }
 
-VStreamDiskFile::~VStreamDiskFile () noexcept(false) { Close(); }
+VStreamDiskFile::~VStreamDiskFile () { Close(); }
 
 void VStreamDiskFile::setError () {
   if (mFl) { fclose(mFl); mFl = nullptr; }

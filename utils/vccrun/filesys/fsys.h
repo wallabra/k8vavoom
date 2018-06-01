@@ -149,7 +149,7 @@ private:
 
 public:
   VStreamDiskFile (FILE *afl, const VStr &aname=VStr(), bool asWriter=false);
-  virtual ~VStreamDiskFile () noexcept(false) override;
+  virtual ~VStreamDiskFile () override;
 
   virtual const VStr &GetName () const override;
   virtual void Seek (int pos) override;

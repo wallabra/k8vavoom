@@ -29,7 +29,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 // VStatement
 VStatement::VStatement (const TLocation &ALoc) : Loc(ALoc) {}
-VStatement::~VStatement () noexcept(false) {}
+VStatement::~VStatement () {}
 void VStatement::Emit (VEmitContext &ec) { DoEmit(ec); }
 bool VStatement::IsBreak () { return false; }
 bool VStatement::IsContinue () { return false; }
@@ -1270,7 +1270,7 @@ VExpressionStatement::VExpressionStatement (VExpression *AExpr)
 //  VExpressionStatement::~VExpressionStatement
 //
 //==========================================================================
-VExpressionStatement::~VExpressionStatement () noexcept(false) {
+VExpressionStatement::~VExpressionStatement () {
   if (Expr) { delete Expr; Expr = nullptr; }
 }
 

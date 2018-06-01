@@ -105,7 +105,7 @@ private:
 
 public:
 #if defined(VCC_STANDALONE_EXECUTOR)
-  VScriptArray (const TArray<VStr> &xarr) noexcept(false);
+  VScriptArray (const TArray<VStr> &xarr);
 #endif
 
   inline int Num () const { return ArrNum; }

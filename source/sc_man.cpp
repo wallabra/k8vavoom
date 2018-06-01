@@ -98,7 +98,7 @@ IMPLEMENT_CLASS(V, ScriptsParser)
 //  VScriptParser::VScriptParser
 //
 //==========================================================================
-VScriptParser::VScriptParser (const VStr &name, VStream *Strm) noexcept(false)
+VScriptParser::VScriptParser (const VStr &name, VStream *Strm)
   : Line(1)
   , End(false)
   , Crossed(false)
@@ -109,7 +109,7 @@ VScriptParser::VScriptParser (const VStr &name, VStream *Strm) noexcept(false)
   , CMode(false)
   , Escape(true)
 {
-  guard(VScriptParser::VScriptParser);
+  //guard(VScriptParser::VScriptParser);
 
   ScriptSize = Strm->TotalSize();
   ScriptBuffer = new char[ScriptSize+1];
@@ -123,7 +123,7 @@ VScriptParser::VScriptParser (const VStr &name, VStream *Strm) noexcept(false)
   // skip garbage some editors add in the begining of UTF-8 files
   if ((vuint8)ScriptPtr[0] == 0xef && (vuint8)ScriptPtr[1] == 0xbb && (vuint8)ScriptPtr[2] == 0xbf) ScriptPtr += 3;
 
-  unguard;
+  //unguard;
 }
 
 
@@ -132,7 +132,7 @@ VScriptParser::VScriptParser (const VStr &name, VStream *Strm) noexcept(false)
 //  VScriptParser::VScriptParser
 //
 //==========================================================================
-VScriptParser::VScriptParser (const VStr& name, const char *atext) noexcept(false)
+VScriptParser::VScriptParser (const VStr& name, const char *atext)
   : Line(1)
   , End(false)
   , Crossed(false)
@@ -143,7 +143,7 @@ VScriptParser::VScriptParser (const VStr& name, const char *atext) noexcept(fals
   , CMode(false)
   , Escape(true)
 {
-  guard(VScriptParser::VScriptParser);
+  //guard(VScriptParser::VScriptParser);
 
   if (atext && atext[0]) {
     ScriptSize = (int)strlen(atext);
@@ -161,7 +161,7 @@ VScriptParser::VScriptParser (const VStr& name, const char *atext) noexcept(fals
   // skip garbage some editors add in the begining of UTF-8 files
   if ((vuint8)ScriptPtr[0] == 0xef && (vuint8)ScriptPtr[1] == 0xbb && (vuint8)ScriptPtr[2] == 0xbf) ScriptPtr += 3;
 
-  unguard;
+  //unguard;
 }
 
 
@@ -170,11 +170,11 @@ VScriptParser::VScriptParser (const VStr& name, const char *atext) noexcept(fals
 //  VScriptParser::~VScriptParser
 //
 //==========================================================================
-VScriptParser::~VScriptParser () noexcept(false) {
-  guard(VScriptParser::~VScriptParser);
+VScriptParser::~VScriptParser () {
+  //guard(VScriptParser::~VScriptParser);
   delete[] ScriptBuffer;
   ScriptBuffer = nullptr;
-  unguard;
+  //unguard;
 }
 
 

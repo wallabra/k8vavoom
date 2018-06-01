@@ -43,7 +43,7 @@ public:
   TArray<VXmlAttribute> Attributes;
 
   VXmlNode();
-  ~VXmlNode() noexcept(false);
+  ~VXmlNode();
 
   VXmlNode* FindChild(const char*) const;
   VXmlNode* FindChild(const VStr&) const;

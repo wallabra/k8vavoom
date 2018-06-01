@@ -118,13 +118,13 @@ VJpegTexture::VJpegTexture (int ALumpNum, int AWidth, int AHeight) : Pixels(null
 //  VJpegTexture::~VJpegTexture
 //
 //==========================================================================
-VJpegTexture::~VJpegTexture () noexcept(false) {
-  guard(VJpegTexture::~VJpegTexture);
+VJpegTexture::~VJpegTexture () {
+  //guard(VJpegTexture::~VJpegTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
+  //unguard;
 }
 
 

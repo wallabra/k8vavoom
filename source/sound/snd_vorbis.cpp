@@ -112,7 +112,7 @@ VVorbisAudioCodec::VVorbisAudioCodec(VStream* AStrm, bool AFreeStream)
 
 VVorbisAudioCodec::~VVorbisAudioCodec()
 {
-  guard(VVorbisAudioCodec::~VVorbisAudioCodec);
+  //guard(VVorbisAudioCodec::~VVorbisAudioCodec);
   if (InitLevel > 0)
   {
     Cleanup();
@@ -125,7 +125,7 @@ VVorbisAudioCodec::~VVorbisAudioCodec()
     Strm = NULL;
   }
   ogg_sync_clear(&oy);
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

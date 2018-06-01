@@ -78,7 +78,7 @@ public:
   TArray<VAcsObject*> LoadedObjects;
 
   VAcsLevel(VLevel* ALevel);
-  virtual ~VAcsLevel() noexcept(false);
+  ~VAcsLevel();
 
   VAcsObject* LoadObject(int Lump);
   VAcsInfo* FindScript(int Number, VAcsObject*& Object);

@@ -102,8 +102,8 @@ VTgaTexture::VTgaTexture (int ALumpNum, tgaHeader_t& Hdr)
 //  VTgaTexture::~VTgaTexture
 //
 //==========================================================================
-VTgaTexture::~VTgaTexture () noexcept(false) {
-  guard(VTgaTexture::~VTgaTexture);
+VTgaTexture::~VTgaTexture () {
+  //guard(VTgaTexture::~VTgaTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -112,7 +112,7 @@ VTgaTexture::~VTgaTexture () noexcept(false) {
     delete[] Palette;
     Palette = nullptr;
   }
-  unguard;
+  //unguard;
 }
 
 

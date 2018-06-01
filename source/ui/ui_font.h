@@ -80,7 +80,7 @@ protected:
 public:
   VFont();
   VFont(VName, const VStr&, int, int, int);
-  ~VFont() noexcept(false);
+  ~VFont();
 
   VTexture* GetChar(int, int*, int) const;
   int GetCharWidth(int) const;

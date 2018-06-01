@@ -96,11 +96,11 @@ VMethod::VMethod (VName AName, VMemberBase *AOuter, TLocation ALoc)
 //  VMethod::~VMethod
 //
 //==========================================================================
-VMethod::~VMethod() noexcept(false) {
-  guard(VMethod::~VMethod);
+VMethod::~VMethod() {
+  //guard(VMethod::~VMethod);
   if (ReturnTypeExpr) { delete ReturnTypeExpr; ReturnTypeExpr = nullptr; }
   if (Statement) { delete Statement; Statement = nullptr; }
-  unguard;
+  //unguard;
 }
 
 

@@ -162,7 +162,7 @@ public:
   VMethod *NextNetMethod;
 
   VMethod (VName, VMemberBase *, TLocation);
-  ~VMethod () noexcept(false);
+  virtual ~VMethod () override;
 
   void Serialise (VStream &);
   bool Define ();

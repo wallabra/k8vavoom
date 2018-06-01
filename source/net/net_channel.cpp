@@ -76,9 +76,9 @@ VChannel::VChannel(VNetConnection* AConnection, EChannelType AType,
 //
 //==========================================================================
 
-VChannel::~VChannel() noexcept(false)
+VChannel::~VChannel()
 {
-  guard(VChannel::~VChannel);
+  //guard(VChannel::~VChannel);
   for (VMessageIn* Msg = InMsg; Msg; )
   {
     VMessageIn* Next = Msg->Next;
@@ -110,7 +110,7 @@ VChannel::~VChannel() noexcept(false)
     Connection->Channels[Index] = NULL;
   }
   Connection->OpenChannels.Remove(this);
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

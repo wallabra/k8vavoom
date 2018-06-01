@@ -257,14 +257,14 @@ VWavAudioCodec::VWavAudioCodec(VStream* InStrm)
 
 VWavAudioCodec::~VWavAudioCodec()
 {
-  guard(VWavAudioCodec::~VWavAudioCodec);
+  //guard(VWavAudioCodec::~VWavAudioCodec);
   if (SamplesLeft != -1)
   {
     Strm->Close();
     delete Strm;
     Strm = NULL;
   }
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

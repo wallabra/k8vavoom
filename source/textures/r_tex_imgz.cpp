@@ -74,13 +74,13 @@ VImgzTexture::VImgzTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset,
 //  VImgzTexture::~VImgzTexture
 //
 //==========================================================================
-VImgzTexture::~VImgzTexture () noexcept(false) {
-  guard(VImgzTexture::~VImgzTexture);
+VImgzTexture::~VImgzTexture () {
+  //guard(VImgzTexture::~VImgzTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
+  //unguard;
 }
 
 

@@ -72,7 +72,7 @@ VThinkerChannel::VThinkerChannel(VNetConnection* AConnection, vint32 AIndex,
 
 VThinkerChannel::~VThinkerChannel()
 {
-  guard(VThinkerChannel::~VThinkerChannel);
+  //guard(VThinkerChannel::~VThinkerChannel);
   //  Mark channel as closing to prevent sending a message.
   Closing = true;
 
@@ -84,7 +84,7 @@ VThinkerChannel::~VThinkerChannel()
     Thinker->ConditionalDestroy();
   }
   SetThinker(NULL);
-  unguard;
+  //unguard;
 }
 
 //==========================================================================

@@ -522,8 +522,8 @@ bool VFieldType::IsReusingDisabled () const {
 //
 //==========================================================================
 #if defined(VCC_STANDALONE_EXECUTOR)
-VScriptArray::VScriptArray (const TArray<VStr>& xarr) noexcept(false) {
-  guard(VScriptArray::VScriptArray);
+VScriptArray::VScriptArray (const TArray<VStr>& xarr) {
+  //guard(VScriptArray::VScriptArray);
   ArrData = nullptr;
   ArrNum = 0;
   ArrSize = 0;
@@ -535,7 +535,7 @@ VScriptArray::VScriptArray (const TArray<VStr>& xarr) noexcept(false) {
     for (int f = 0; f < xarr.Num(); ++f) *(VStr*)(&aa[f]) = xarr[f];
     ArrSize = ArrNum = xarr.Num();
   }
-  unguard;
+  //unguard;
 }
 #endif
 

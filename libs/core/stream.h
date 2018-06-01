@@ -40,7 +40,7 @@ protected:
 
 public:
   VStream () : bLoading(false) , bError(false) {}
-  virtual ~VStream () noexcept(false);
+  virtual ~VStream ();
 
   // status requests
   inline bool IsLoading () const { return bLoading;}

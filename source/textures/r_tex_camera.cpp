@@ -51,13 +51,13 @@ VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
 //  VCameraTexture::~VCameraTexture
 //
 //==========================================================================
-VCameraTexture::~VCameraTexture () noexcept(false) {
-  guard(VCameraTexture::~VCameraTexture);
+VCameraTexture::~VCameraTexture () {
+  //guard(VCameraTexture::~VCameraTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
+  //unguard;
 }
 
 

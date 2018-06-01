@@ -68,13 +68,13 @@ VFlatTexture::VFlatTexture (int InLumpNum) : Pixels(nullptr) {
 //  VFlatTexture::~VFlatTexture
 //
 //==========================================================================
-VFlatTexture::~VFlatTexture () noexcept(false) {
-  guard(VFlatTexture::~VFlatTexture);
+VFlatTexture::~VFlatTexture () {
+  //guard(VFlatTexture::~VFlatTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
+  //unguard;
 }
 
 

@@ -899,7 +899,7 @@ VSocket::VSocket(VNetDriver* Drv)
 //
 //==========================================================================
 
-VSocket::~VSocket() noexcept(false)
+VSocket::~VSocket()
 {
   // remove it from active list
   if (this == Driver->Net->ActiveSockets)

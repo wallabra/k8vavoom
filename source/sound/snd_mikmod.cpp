@@ -157,11 +157,11 @@ VMikModAudioCodec::VMikModAudioCodec(MODULE* InModule)
 
 VMikModAudioCodec::~VMikModAudioCodec()
 {
-  guard(VMikModAudioCodec::~VMikModAudioCodec);
+  //guard(VMikModAudioCodec::~VMikModAudioCodec);
   Player_Stop();
   Player_Free(Module);
   MikMod_Exit();
-  unguard;
+  //unguard;
 }
 
 //==========================================================================
