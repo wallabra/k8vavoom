@@ -200,13 +200,13 @@ VStream &VStream::operator << (VMemberBase *&) {
 //==========================================================================
 void VStream::SerialiseLittleEndian (void *Val, int Len) {
   guard(VStream::SerialiseLittleEndian);
-  if (GBigEndian) {
+#ifdef VAVOOM_BIG_ENDIAN
     // swap byte order
     for (int i = Len-1; i >= 0; --i) Serialise((vuint8*)Val+i, 1);
-  } else {
+#else
     // already in correct byte order
     Serialise(Val, Len);
-  }
+#endif
   unguard;
 }
 
@@ -218,13 +218,13 @@ void VStream::SerialiseLittleEndian (void *Val, int Len) {
 //==========================================================================
 void VStream::SerialiseBigEndian (void *Val, int Len) {
   guard(VStream::SerialiseBigEndian);
-  if (!GBigEndian) {
+#ifdef VAVOOM_LITTLE_ENDIAN
     // swap byte order
     for (int i = Len - 1; i >= 0; i--) Serialise((vuint8*)Val+i, 1);
-  } else {
+#else
     // already in correct byte order
     Serialise(Val, Len);
-  }
+#endif
   unguard;
 }
 

@@ -1319,8 +1319,6 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  M_InitByteOrder();
-
   try
   {
     for (int i = 1; i < argc; i++)

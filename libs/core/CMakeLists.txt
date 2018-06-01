@@ -12,7 +12,6 @@ add_library(core STATIC
   core.h
   crc.cpp
   crc.h
-  endian.cpp
   endian.h
   exception.cpp
   exception.h

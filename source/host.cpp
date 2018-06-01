@@ -142,8 +142,6 @@ void Host_Init()
 
   // init subsystems
 
-  M_InitByteOrder();
-
   VName::StaticInit();
   VObject::StaticInit();
 

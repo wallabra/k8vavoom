@@ -61,9 +61,6 @@
 #include "../../source/vc/vc_parser.h"
 
 
-extern bool GBigEndian;
-
-
 extern int dprintf (const char *text, ...) __attribute__((format(printf, 1, 2)));
 extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
 

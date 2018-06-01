@@ -403,8 +403,6 @@ int main (int argc, char **argv) {
     int starttime;
     int endtime;
 
-    M_InitByteOrder();
-
     starttime = time(0);
 
     initialize();
