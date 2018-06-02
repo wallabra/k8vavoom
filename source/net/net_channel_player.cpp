@@ -23,94 +23,64 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "network.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VPlayerChannel::VPlayerChannel
 //
 //==========================================================================
-
-VPlayerChannel::VPlayerChannel(VNetConnection* AConnection, vint32 AIndex,
-  vuint8 AOpenedLocally)
-: VChannel(AConnection, CHANNEL_Player, AIndex, AOpenedLocally)
-, Plr(NULL)
-, OldData(NULL)
-, NewObj(false)
-, FieldCondValues(NULL)
+VPlayerChannel::VPlayerChannel (VNetConnection *AConnection, vint32 AIndex, vuint8 AOpenedLocally)
+  : VChannel(AConnection, CHANNEL_Player, AIndex, AOpenedLocally)
+  , Plr(nullptr)
+  , OldData(nullptr)
+  , NewObj(false)
+  , FieldCondValues(nullptr)
 {
 }
+
 
 //==========================================================================
 //
 //  VPlayerChannel::~VPlayerChannel
 //
 //==========================================================================
-
-VPlayerChannel::~VPlayerChannel()
-{
-  SetPlayer(NULL);
+VPlayerChannel::~VPlayerChannel () {
+  SetPlayer(nullptr);
 }
+
 
 //==========================================================================
 //
 //  VPlayerChannel::SetPlayer
 //
 //==========================================================================
-
-void VPlayerChannel::SetPlayer(VBasePlayer* APlr)
-{
+void VPlayerChannel::SetPlayer (VBasePlayer *APlr) {
   guard(VPlayerChannel::SetPlayer);
-  if (Plr)
-  {
-    if (OldData)
-    {
-      for (VField* F = Plr->GetClass()->NetFields; F; F = F->NextNetField)
-      {
-        VField::DestructField(OldData + F->Ofs, F->Type);
+  if (Plr) {
+    if (OldData) {
+      for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
+        VField::DestructField(OldData+F->Ofs, F->Type);
       }
       delete[] OldData;
-      OldData = NULL;
+      OldData = nullptr;
     }
-    if (FieldCondValues)
-    {
+    if (FieldCondValues) {
       delete[] FieldCondValues;
-      FieldCondValues = NULL;
+      FieldCondValues = nullptr;
     }
   }
 
   Plr = APlr;
 
-  if (Plr)
-  {
-    VBasePlayer* Def = (VBasePlayer*)Plr->GetClass()->Defaults;
+  if (Plr) {
+    VBasePlayer *Def = (VBasePlayer *)Plr->GetClass()->Defaults;
     OldData = new vuint8[Plr->GetClass()->ClassSize];
     memset(OldData, 0, Plr->GetClass()->ClassSize);
-    for (VField* F = Plr->GetClass()->NetFields; F; F = F->NextNetField)
-    {
-      VField::CopyFieldValue((vuint8*)Def + F->Ofs, OldData + F->Ofs,
-        F->Type);
+    for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
+      VField::CopyFieldValue((vuint8 *)Def+F->Ofs, OldData+F->Ofs, F->Type);
     }
     FieldCondValues = new vuint8[Plr->GetClass()->NumNetFields];
     NewObj = true;
@@ -118,141 +88,96 @@ void VPlayerChannel::SetPlayer(VBasePlayer* APlr)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VPlayerChannel::EvalCondValues
 //
 //==========================================================================
-
-void VPlayerChannel::EvalCondValues(VObject* Obj, VClass* Class, vuint8* Values)
-{
+void VPlayerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values) {
   guard(VPlayerChannel::EvalCondValues);
-  if (Class->GetSuperClass())
-  {
-    EvalCondValues(Obj, Class->GetSuperClass(), Values);
-  }
-  for (int i = 0; i < Class->RepInfos.Num(); i++)
-  {
+  if (Class->GetSuperClass()) EvalCondValues(Obj, Class->GetSuperClass(), Values);
+  for (int i = 0; i < Class->RepInfos.Num(); ++i) {
     P_PASS_REF(Obj);
     bool Val = !!VObject::ExecuteFunction(Class->RepInfos[i].Cond).i;
-    for (int j = 0; j < Class->RepInfos[i].RepFields.Num(); j++)
-    {
-      if (Class->RepInfos[i].RepFields[j].Member->MemberType != MEMBER_Field)
-        continue;
-      Values[((VField*)Class->RepInfos[i].RepFields[j].Member)->NetIndex] = Val;
+    for (int j = 0; j < Class->RepInfos[i].RepFields.Num(); ++j) {
+      if (Class->RepInfos[i].RepFields[j].Member->MemberType != MEMBER_Field) continue;
+      Values[((VField *)Class->RepInfos[i].RepFields[j].Member)->NetIndex] = Val;
     }
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VPlayerChannel::Update
 //
 //==========================================================================
-
-void VPlayerChannel::Update()
-{
+void VPlayerChannel::Update () {
   guard(VPlayerChannel::Update);
   EvalCondValues(Plr, Plr->GetClass(), FieldCondValues);
 
   VMessageOut Msg(this);
   Msg.bReliable = true;
-  vuint8* Data = (vuint8*)Plr;
-  for (VField* F = Plr->GetClass()->NetFields; F; F = F->NextNetField)
-  {
-    if (!FieldCondValues[F->NetIndex])
-    {
-      continue;
-    }
-    if (VField::IdenticalValue(Data + F->Ofs, OldData + F->Ofs, F->Type))
-    {
-      continue;
-    }
-    if (F->Type.Type == TYPE_Array)
-    {
+  vuint8 *Data = (vuint8*)Plr;
+  for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
+    if (!FieldCondValues[F->NetIndex]) continue;
+    if (VField::IdenticalValue(Data+F->Ofs, OldData+F->Ofs, F->Type)) continue;
+    if (F->Type.Type == TYPE_Array) {
       VFieldType IntType = F->Type;
       IntType.Type = F->Type.ArrayInnerType;
       int InnerSize = IntType.GetSize();
-      for (int i = 0; i < F->Type.ArrayDim; i++)
-      {
-        if (VField::IdenticalValue(Data + F->Ofs + i * InnerSize,
-          OldData + F->Ofs + i * InnerSize, IntType))
-        {
-          continue;
-        }
+      for (int i = 0; i < F->Type.ArrayDim; ++i) {
+        if (VField::IdenticalValue(Data+F->Ofs+i*InnerSize, OldData+F->Ofs+i*InnerSize, IntType)) continue;
         Msg.WriteInt(F->NetIndex, Plr->GetClass()->NumNetFields);
         Msg.WriteInt(i, F->Type.ArrayDim);
-        if (VField::NetSerialiseValue(Msg, Connection->ObjMap,
-          Data + F->Ofs + i * InnerSize, IntType))
-        {
-          VField::CopyFieldValue(Data + F->Ofs + i * InnerSize,
-            OldData + F->Ofs + i * InnerSize, IntType);
+        if (VField::NetSerialiseValue(Msg, Connection->ObjMap, Data+F->Ofs+i*InnerSize, IntType)) {
+          VField::CopyFieldValue(Data+F->Ofs+i*InnerSize, OldData+F->Ofs+i*InnerSize, IntType);
         }
       }
-    }
-    else
-    {
+    } else {
       Msg.WriteInt(F->NetIndex, Plr->GetClass()->NumNetFields);
-      if (VField::NetSerialiseValue(Msg, Connection->ObjMap,
-        Data + F->Ofs, F->Type))
-      {
-        VField::CopyFieldValue(Data + F->Ofs, OldData + F->Ofs,
-          F->Type);
+      if (VField::NetSerialiseValue(Msg, Connection->ObjMap, Data+F->Ofs, F->Type)) {
+        VField::CopyFieldValue(Data+F->Ofs, OldData+F->Ofs, F->Type);
       }
     }
   }
 
-  if (Msg.GetNumBits())
-  {
-    SendMessage(&Msg);
-  }
+  if (Msg.GetNumBits()) SendMessage(&Msg);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VPlayerChannel::ParsePacket
 //
 //==========================================================================
-
-void VPlayerChannel::ParsePacket(VMessageIn& Msg)
-{
+void VPlayerChannel::ParsePacket (VMessageIn &Msg) {
   guard(VPlayerChannel::ParsePacket);
-  while (!Msg.AtEnd())
-  {
+  while (!Msg.AtEnd()) {
     int FldIdx = Msg.ReadInt(Plr->GetClass()->NumNetFields);
-    VField* F = NULL;
-    for (VField* CF = Plr->GetClass()->NetFields; CF; CF = CF->NextNetField)
-    {
-      if (CF->NetIndex == FldIdx)
-      {
+    VField *F = nullptr;
+    for (VField *CF = Plr->GetClass()->NetFields; CF; CF = CF->NextNetField) {
+      if (CF->NetIndex == FldIdx) {
         F = CF;
         break;
       }
     }
-    if (F)
-    {
-      if (F->Type.Type == TYPE_Array)
-      {
+    if (F) {
+      if (F->Type.Type == TYPE_Array) {
         int Idx = Msg.ReadInt(F->Type.ArrayDim);
         VFieldType IntType = F->Type;
         IntType.Type = F->Type.ArrayInnerType;
-        VField::NetSerialiseValue(Msg, Connection->ObjMap,
-          (vuint8*)Plr + F->Ofs + Idx * IntType.GetSize(), IntType);
-      }
-      else
-      {
-        VField::NetSerialiseValue(Msg, Connection->ObjMap,
-          (vuint8*)Plr + F->Ofs, F->Type);
+        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Plr+F->Ofs+Idx*IntType.GetSize(), IntType);
+      } else {
+        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Plr+F->Ofs, F->Type);
       }
       continue;
     }
 
-    if (ReadRpc(Msg, FldIdx, Plr))
-    {
-      continue;
-    }
+    if (ReadRpc(Msg, FldIdx, Plr)) continue;
 
     Sys_Error("Bad net field %d", FldIdx);
   }

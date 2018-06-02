@@ -29,45 +29,42 @@
 //**
 //**************************************************************************
 
+// ////////////////////////////////////////////////////////////////////////// //
 class VChannel;
 
-class VMessageIn : public VBitStreamReader
-{
-public:
-  VMessageIn(vuint8* Src = NULL, vint32 Length = 0);
 
-  VMessageIn*   Next;
-  vuint8      ChanType;
-  vint32      ChanIndex;
-  bool      bReliable;    //  Reliable message
-  bool      bOpen;      //  Open channel message
-  bool      bClose;     //  Close channel message
-  vuint32     Sequence;   //  Reliable message sequence ID
+// ////////////////////////////////////////////////////////////////////////// //
+class VMessageIn : public VBitStreamReader {
+public:
+  VMessageIn (vuint8 *Src = nullptr, vint32 Length=0);
+
+  VMessageIn *Next;
+  vuint8 ChanType;
+  vint32 ChanIndex;
+  bool bReliable; // reliable message
+  bool bOpen; // open channel message
+  bool bClose; // close channel message
+  vuint32 Sequence; // reliable message sequence ID
 };
 
-class VMessageOut : public VBitStreamWriter
-{
-public:
-  VMessageOut(VChannel*);
 
-  VMessageOut*  Next;
-  vuint8      ChanType;
-  vint32      ChanIndex;
-  bool      bReliable;    //  Needs ACK or not
-  bool      bOpen;
-  bool      bClose;
-  bool      bReceivedAck;
-  vuint32     Sequence;   //  Reliable message sequence ID
-  double      Time;     //  Time this message has been sent
-  vuint32     PacketId;   //  Packet in which this message was sent
+// ////////////////////////////////////////////////////////////////////////// //
+class VMessageOut : public VBitStreamWriter {
+public:
+  VMessageOut (VChannel *);
+
+  VMessageOut *Next;
+  vuint8 ChanType;
+  vint32 ChanIndex;
+  bool bReliable; // needs ACK or not
+  bool bOpen;
+  bool bClose;
+  bool bReceivedAck;
+  vuint32 Sequence; // reliable message sequence ID
+  double Time; // time this message has been sent
+  vuint32 PacketId; // packet in which this message was sent
 };
 
-inline float ByteToAngle(vuint8 angle)
-{
-  return (float)angle * 360.0 / 256.0;
-}
 
-inline vuint8 AngleToByte(float angle)
-{
-  return (vuint8)(angle * 256.0 / 360.0);
-}
+inline float ByteToAngle (vuint8 angle) { return (float)angle*360.0/256.0; }
+inline vuint8 AngleToByte (float angle) { return (vuint8)(angle*256.0/360.0); }

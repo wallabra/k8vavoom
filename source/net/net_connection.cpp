@@ -23,56 +23,36 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "network.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+static VCvarF net_test_loss("net_test_loss", "0", "Test packet loss code?");
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static VCvarF   net_test_loss("net_test_loss", "0", "Test packet loss code?");
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VNetConnection::VNetConnection
 //
 //==========================================================================
-
-VNetConnection::VNetConnection(VSocketPublic* ANetCon, VNetContext* AContext,
-  VBasePlayer* AOwner)
-: NetCon(ANetCon)
-, Driver(GNet)
-, Context(AContext)
-, Owner(AOwner)
-, State(NETCON_Open)
-, LastSendTime(0)
-, NeedsUpdate(false)
-, AutoAck(false)
-, Out(MAX_MSGLEN * 8)
-, AckSequence(0)
-, UnreliableSendSequence(0)
-, UnreliableReceiveSequence(0)
-, ObjMapSent(false)
-, LevelInfoSent(false)
-, UpdatePvs(NULL)
-, UpdatePvsSize(0)
-, LeafPvs(NULL)
+VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, VBasePlayer *AOwner)
+  : NetCon(ANetCon)
+  , Driver(GNet)
+  , Context(AContext)
+  , Owner(AOwner)
+  , State(NETCON_Open)
+  , LastSendTime(0)
+  , NeedsUpdate(false)
+  , AutoAck(false)
+  , Out(MAX_MSGLEN * 8)
+  , AckSequence(0)
+  , UnreliableSendSequence(0)
+  , UnreliableReceiveSequence(0)
+  , ObjMapSent(false)
+  , LevelInfoSent(false)
+  , UpdatePvs(nullptr)
+  , UpdatePvsSize(0)
+  , LeafPvs(nullptr)
 {
   memset(Channels, 0, sizeof(Channels));
   memset(InSequence, 0, sizeof(InSequence));
@@ -85,15 +65,13 @@ VNetConnection::VNetConnection(VSocketPublic* ANetCon, VNetContext* AContext,
   CreateChannel(CHANNEL_Level, CHANIDX_Level);
 }
 
+
 //==========================================================================
 //
 //  VNetConnection::~VNetConnection
 //
 //==========================================================================
-
-VNetConnection::~VNetConnection()
-{
-  //guard(VNetConnection::~VNetConnection);
+VNetConnection::~VNetConnection () {
   GCon->Logf(NAME_Dev, "Closing connection %s", *GetAddress());
   //GCon->Logf("NET: deleting #%d channels...", OpenChannels.length());
   while (OpenChannels.length()) {
@@ -111,243 +89,172 @@ VNetConnection::~VNetConnection()
     }
   }
   //GCon->Logf("NET: all channels deleted.");
-  if (NetCon)
-  {
+  if (NetCon) {
     delete NetCon;
-    NetCon = NULL;
+    NetCon = nullptr;
   }
-  NetCon = NULL;
-  if (Context->ServerConnection)
-  {
+  NetCon = nullptr;
+  if (Context->ServerConnection) {
     checkSlow(Context->ServerConnection == this);
-    Context->ServerConnection = NULL;
-  }
-  else
-  {
+    Context->ServerConnection = nullptr;
+  } else {
     Context->ClientConnections.Remove(this);
   }
-  if (UpdatePvs)
-  {
+  if (UpdatePvs) {
     delete[] UpdatePvs;
-    UpdatePvs = NULL;
+    UpdatePvs = nullptr;
   }
-  if (ObjMap)
-  {
+  if (ObjMap) {
     delete ObjMap;
-    ObjMap = NULL;
+    ObjMap = nullptr;
   }
-  //unguard;
 }
+
 
 //==========================================================================
 //
 //  VNetConnection::GetMessages
 //
 //==========================================================================
-
-void VNetConnection::GetMessages()
-{
+void VNetConnection::GetMessages () {
   guard(VNetConnection::GetMessages);
   int ret;
-
   Driver->SetNetTime();
-
-  do
-  {
+  do {
     TArray<vuint8> Data;
     ret = GetRawPacket(Data);
-    if (ret == -1)
-    {
+    if (ret == -1) {
       GCon->Log(NAME_DevNet, "Bad read");
       State = NETCON_Closed;
       return;
     }
-
-    if (ret)
-    {
-      if (!IsLocalConnection())
-      {
+    if (ret) {
+      if (!IsLocalConnection()) {
         NetCon->LastMessageTime = Driver->NetTime;
-        if (ret == 1)
-          Driver->MessagesReceived++;
-        else if (ret == 2)
-          Driver->UnreliableMessagesReceived++;
+             if (ret == 1) ++Driver->MessagesReceived;
+        else if (ret == 2) ++Driver->UnreliableMessagesReceived;
       }
-
-      if (Data.Num() > 0)
-      {
-        vuint8 LastByte = Data[Data.Num() - 1];
-        if (LastByte)
-        {
-          //  Find out real length by stepping back until the trailing bit.
-          vuint32 Length = Data.Num() * 8 - 1;
-          for (vuint8 Mask = 0x80; !(LastByte & Mask); Mask >>= 1)
-          {
-            Length--;
-          }
+      if (Data.Num() > 0) {
+        vuint8 LastByte = Data[Data.Num()-1];
+        if (LastByte) {
+          // find out real length by stepping back until the trailing bit
+          vuint32 Length = Data.Num()*8-1;
+          for (vuint8 Mask = 0x80; !(LastByte & Mask); Mask >>= 1) --Length;
           VBitStreamReader Packet(Data.Ptr(), Length);
           ReceivedPacket(Packet);
-        }
-        else
-        {
+        } else {
           GCon->Logf(NAME_DevNet, "Packet is missing trailing bit");
         }
-      }
-      else
-      {
+      } else {
         GCon->Logf(NAME_DevNet, "Packet is too small");
-        Driver->shortPacketCount++;
+        ++Driver->shortPacketCount;
       }
     }
   } while (ret > 0 && State != NETCON_Closed);
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VNetConnection::GetRawMessage
 //
 //==========================================================================
-
-int VNetConnection::GetRawPacket(TArray<vuint8>& Data)
-{
+int VNetConnection::GetRawPacket (TArray<vuint8> &Data) {
   guard(VNetConnection::GetRawMessage);
   checkSlow(NetCon);
   return NetCon->GetMessage(Data);
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VNetConnection::ReceivedPacket
 //
 //==========================================================================
-
-void VNetConnection::ReceivedPacket(VBitStreamReader& Packet)
-{
+void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
   guard(VNetConnection::ReceivedPacket);
-  if (Packet.ReadInt(256) != NETPACKET_DATA)
-    return;
-  Driver->packetsReceived++;
+  if (Packet.ReadInt(256) != NETPACKET_DATA) return;
+  ++Driver->packetsReceived;
 
   NeedsUpdate = true;
 
   vuint32 Sequence;
   Packet << Sequence;
-  if (Packet.IsError())
-  {
+  if (Packet.IsError()) {
     GCon->Log(NAME_DevNet, "Packet is missing packet ID");
     return;
   }
-  if (Sequence < UnreliableReceiveSequence)
-  {
-    GCon->Log(NAME_DevNet, "Got a stale datagram");
-  }
-  if (Sequence != UnreliableReceiveSequence)
-  {
+  if (Sequence < UnreliableReceiveSequence) GCon->Log(NAME_DevNet, "Got a stale datagram");
+  if (Sequence != UnreliableReceiveSequence) {
     int count = Sequence - UnreliableReceiveSequence;
     Driver->droppedDatagrams += count;
     GCon->Logf(NAME_DevNet, "Dropped %d datagram(s)", count);
   }
-  UnreliableReceiveSequence = Sequence + 1;
+  UnreliableReceiveSequence = Sequence+1;
 
   bool NeedsAck = false;
 
-  while (!Packet.AtEnd())
-  {
-    //  Read a flag to see if it's an ACK or a message.
+  while (!Packet.AtEnd()) {
+    // read a flag to see if it's an ACK or a message
     bool IsAck = Packet.ReadBit();
-    if (Packet.IsError())
-    {
+    if (Packet.IsError()) {
       GCon->Log(NAME_DevNet, "Packet is missing ACK flag");
       return;
     }
 
-    if (IsAck)
-    {
+    if (IsAck) {
       vuint32 AckSeq;
       Packet << AckSeq;
-      if (AckSeq == AckSequence)
-      {
-        AckSequence++;
-      }
-      else if (AckSeq > AckSequence)
-      {
-        AckSequence = AckSeq + 1;
-      }
-      else
-      {
-        GCon->Log(NAME_DevNet, "Duplicate ACK received");
-      }
+           if (AckSeq == AckSequence) ++AckSequence;
+      else if (AckSeq > AckSequence) AckSequence = AckSeq+1;
+      else GCon->Log(NAME_DevNet, "Duplicate ACK received");
 
-      //  Mark corrresponding messages as ACK-ed.
-      for (int i = 0; i < OpenChannels.Num(); i++)
-      {
-        for (VMessageOut* Msg = OpenChannels[i]->OutMsg; Msg;
-          Msg = Msg->Next)
-        {
-          if (Msg->PacketId == AckSeq)
-          {
+      // mark corrresponding messages as ACK-ed
+      for (int i = 0; i < OpenChannels.Num(); ++i) {
+        for (VMessageOut *Msg = OpenChannels[i]->OutMsg; Msg; Msg = Msg->Next) {
+          if (Msg->PacketId == AckSeq) {
             Msg->bReceivedAck = true;
-            if (Msg->bOpen)
-            {
-              OpenChannels[i]->OpenAcked = true;
-            }
+            if (Msg->bOpen) OpenChannels[i]->OpenAcked = true;
           }
         }
       }
 
-      //  Notify channels that ACK has been received.
-      for (int i = OpenChannels.Num() - 1; i >= 0; i--)
-      {
-        OpenChannels[i]->ReceivedAck();
-      }
-    }
-    else
-    {
+      // notify channels that ACK has been received
+      for (int i = OpenChannels.Num() - 1; i >= 0; --i) OpenChannels[i]->ReceivedAck();
+    } else {
       NeedsAck = true;
       VMessageIn Msg;
 
-      //  Read message header
+      // read message header
       Msg.ChanIndex = Packet.ReadInt(MAX_CHANNELS);
       Msg.bReliable = Packet.ReadBit();
       Msg.bOpen = Packet.ReadBit();
       Msg.bClose = Packet.ReadBit();
       Msg.Sequence = 0;
       Msg.ChanType = 0;
-      if (Msg.bReliable)
-      {
-        Packet << Msg.Sequence;
-      }
-      if (Msg.bOpen)
-      {
-        Msg.ChanType = Packet.ReadInt(CHANNEL_MAX);
-      }
-      if (Packet.IsError())
-      {
+      if (Msg.bReliable) Packet << Msg.Sequence;
+      if (Msg.bOpen) Msg.ChanType = Packet.ReadInt(CHANNEL_MAX);
+      if (Packet.IsError()) {
         GCon->Logf(NAME_DevNet, "Packet is missing message header");
         break;
       }
 
-      //  Read data
-      int Length = Packet.ReadInt(MAX_MSGLEN * 8);
+      // read data
+      int Length = Packet.ReadInt(MAX_MSGLEN*8);
       Msg.SetData(Packet, Length);
-      if (Packet.IsError())
-      {
+      if (Packet.IsError()) {
         GCon->Logf(NAME_DevNet, "Packet is missing message data");
         break;
       }
 
-      VChannel* Chan = Channels[Msg.ChanIndex];
-      if (!Chan)
-      {
-        if (Msg.bOpen)
-        {
+      VChannel *Chan = Channels[Msg.ChanIndex];
+      if (!Chan) {
+        if (Msg.bOpen) {
           Chan = CreateChannel(Msg.ChanType, Msg.ChanIndex, false);
           Chan->OpenAcked = true;
-        }
-        else
-        {
+        } else {
           GCon->Logf("Channel %d is not open", Msg.ChanIndex);
           continue;
         }
@@ -356,81 +263,56 @@ void VNetConnection::ReceivedPacket(VBitStreamReader& Packet)
     }
   }
 
-  if (NeedsAck)
-  {
-    SendAck(Sequence);
-  }
+  if (NeedsAck) SendAck(Sequence);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VNetConnection::CreateChannel
 //
 //==========================================================================
-
-VChannel* VNetConnection::CreateChannel(vuint8 Type, vint32 AIndex,
-  vuint8 OpenedLocally)
-{
+VChannel *VNetConnection::CreateChannel (vuint8 Type, vint32 AIndex, vuint8 OpenedLocally) {
   guard(VNetConnection::CreateChannel);
-  //  If channel index is -1, find a free channel slot.
+  // if channel index is -1, find a free channel slot
   vint32 Index = AIndex;
-  if (Index == -1)
-  {
+  if (Index == -1) {
     Index = CHANIDX_ThinkersStart;
-    while (Index < MAX_CHANNELS && Channels[Index])
-    {
-      Index++;
-    }
-    if (Index == MAX_CHANNELS)
-    {
-      return NULL;
-    }
+    while (Index < MAX_CHANNELS && Channels[Index]) ++Index;
+    if (Index == MAX_CHANNELS) return nullptr;
   }
 
-  switch (Type)
-  {
-  case CHANNEL_Control:
-    return new VControlChannel(this, Index, OpenedLocally);
-  case CHANNEL_Level:
-    return new VLevelChannel(this, Index, OpenedLocally);
-  case CHANNEL_Player:
-    return new VPlayerChannel(this, Index, OpenedLocally);
-  case CHANNEL_Thinker:
-    return new VThinkerChannel(this, Index, OpenedLocally);
-  case CHANNEL_ObjectMap:
-    return new VObjectMapChannel(this, Index, OpenedLocally);
-  default:
-    GCon->Logf("Unknown channel type %d for channel %d", Type, Index);
-    return NULL;
+  switch (Type) {
+    case CHANNEL_Control: return new VControlChannel(this, Index, OpenedLocally);
+    case CHANNEL_Level: return new VLevelChannel(this, Index, OpenedLocally);
+    case CHANNEL_Player: return new VPlayerChannel(this, Index, OpenedLocally);
+    case CHANNEL_Thinker: return new VThinkerChannel(this, Index, OpenedLocally);
+    case CHANNEL_ObjectMap: return new VObjectMapChannel(this, Index, OpenedLocally);
+    default:
+      GCon->Logf("Unknown channel type %d for channel %d", Type, Index);
+      return nullptr;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VNetConnection::SendRawMessage
 //
 //==========================================================================
-
-void VNetConnection::SendRawMessage(VMessageOut& Msg)
-{
+void VNetConnection::SendRawMessage (VMessageOut &Msg) {
   guard(VNetConnection::SendRawMessage);
-  PrepareOut(MAX_MESSAGE_HEADER_BITS + Msg.GetNumBits());
+  PrepareOut(MAX_MESSAGE_HEADER_BITS+Msg.GetNumBits());
 
   Out.WriteBit(false);
   Out.WriteInt(Msg.ChanIndex, MAX_CHANNELS);
   Out.WriteBit(Msg.bReliable);
   Out.WriteBit(Msg.bOpen);
   Out.WriteBit(Msg.bClose);
-  if (Msg.bReliable)
-  {
-    Out << Msg.Sequence;
-  }
-  if (Msg.bOpen)
-  {
-    Out.WriteInt(Msg.ChanType, CHANNEL_MAX);
-  }
+  if (Msg.bReliable) Out << Msg.Sequence;
+  if (Msg.bOpen) Out.WriteInt(Msg.ChanType, CHANNEL_MAX);
   Out.WriteInt(Msg.GetNumBits(), MAX_MSGLEN * 8);
   Out.SerialiseBits(Msg.GetData(), Msg.GetNumBits());
 
@@ -439,446 +321,310 @@ void VNetConnection::SendRawMessage(VMessageOut& Msg)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VNetConnection::SendAck
 //
 //==========================================================================
-
-void VNetConnection::SendAck(vuint32 Sequence)
-{
+void VNetConnection::SendAck (vuint32 Sequence) {
   guard(VNetConnection::SendAck);
-  if (AutoAck)
-  {
-    return;
-  }
-
+  if (AutoAck) return;
   PrepareOut(33);
-
   Out.WriteBit(true);
   Out << Sequence;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VNetConnection::PrepareOut
 //
 //==========================================================================
-
-void VNetConnection::PrepareOut(int Length)
-{
+void VNetConnection::PrepareOut (int Length) {
   guard(VNetConnection::PrepareOut);
-  //  Send current packet if new message doesn't fit.
-  if (Out.GetNumBits() + Length + MAX_PACKET_TRAILER_BITS > MAX_MSGLEN * 8)
-  {
-    Flush();
-  }
-
-  if (Out.GetNumBits() == 0)
-  {
+  // send current packet if new message doesn't fit
+  if (Out.GetNumBits() + Length + MAX_PACKET_TRAILER_BITS > MAX_MSGLEN*8) Flush();
+  if (Out.GetNumBits() == 0) {
     Out.WriteInt(NETPACKET_DATA, 256);
     Out << UnreliableSendSequence;
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VNetConnection::Flush
 //
 //==========================================================================
-
-void VNetConnection::Flush()
-{
+void VNetConnection::Flush () {
   guard(VNetConnection::Flush);
   Driver->SetNetTime();
-  if (!Out.GetNumBits() && Driver->NetTime - LastSendTime < 5.0)
-  {
-    return;
-  }
+  if (!Out.GetNumBits() && Driver->NetTime-LastSendTime < 5.0) return;
 
-  //  Prepare out for keepalive messages
-  if (!Out.GetNumBits())
-  {
-    PrepareOut(0);
-  }
+  // prepare out for keepalive messages
+  if (!Out.GetNumBits()) PrepareOut(0);
 
-  //  Add trailing bit so we can find out how many bits the message has.
+  // add trailing bit so we can find out how many bits the message has
   Out.WriteBit(true);
-  //  Pad it with zero bits untill byte boundary.
-  while (Out.GetNumBits() & 7)
-  {
-    Out.WriteBit(false);
-  }
+  // pad it with zero bits untill byte boundary
+  while (Out.GetNumBits() & 7) Out.WriteBit(false);
 
-  //  Send the message.
-  if (net_test_loss == 0 || Random() * 100.0 <= net_test_loss)
-  {
-    if (NetCon->SendMessage(Out.GetData(), Out.GetNumBytes()) == -1)
-    {
-      State = NETCON_Closed;
-    }
+  // send the message
+  if (net_test_loss == 0 || Random()*100.0 <= net_test_loss) {
+    if (NetCon->SendMessage(Out.GetData(), Out.GetNumBytes()) == -1) State = NETCON_Closed;
   }
   LastSendTime = Driver->NetTime;
 
-  if (!IsLocalConnection())
-    Driver->MessagesSent++;
-  Driver->packetsSent++;
+  if (!IsLocalConnection()) ++Driver->MessagesSent;
+  ++Driver->packetsSent;
 
-  //  Increment outgoing packet counter
-  UnreliableSendSequence++;
+  // increment outgoing packet counter
+  ++UnreliableSendSequence;
 
-  //  Clear outgoing packet buffer.
-  Out = VBitStreamWriter(MAX_MSGLEN * 8);
+  // clear outgoing packet buffer
+  Out = VBitStreamWriter(MAX_MSGLEN*8);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VNetConnection::IsLocalConnection
 //
 //==========================================================================
-
-bool VNetConnection::IsLocalConnection()
-{
+bool VNetConnection::IsLocalConnection () {
   guard(VNetConnection::IsLocalConnection);
-  //  For demo playback NetCon can be NULL.
-  return NetCon ? NetCon->IsLocalConnection() : true;
+  // for demo playback NetCon can be NULL.
+  return (NetCon ? NetCon->IsLocalConnection() : true);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VNetConnection::Tick
 //
 //==========================================================================
-
-void VNetConnection::Tick()
-{
+void VNetConnection::Tick () {
   guard(VNetConnection::Tick);
-  //  For bots and demo playback there's no other end that will send us
-  // the ACK so just mark all outgoing messages as ACK-ed.
-  if (AutoAck)
-  {
-    for (int i = OpenChannels.Num() - 1; i >= 0; i--)
-    {
-      for (VMessageOut* Msg = OpenChannels[i]->OutMsg; Msg; Msg = Msg->Next)
-      {
-        Msg->bReceivedAck = true;
-      }
+  // for bots and demo playback there's no other end that will send us
+  // the ACK so just mark all outgoing messages as ACK-ed
+  if (AutoAck) {
+    for (int i = OpenChannels.Num()-1; i >= 0; --i) {
+      for (VMessageOut *Msg = OpenChannels[i]->OutMsg; Msg; Msg = Msg->Next) Msg->bReceivedAck = true;
       OpenChannels[i]->OpenAcked = true;
       OpenChannels[i]->ReceivedAck();
     }
   }
 
   // see if this connection has timed out
-  if (!IsLocalConnection() &&
-    Driver->NetTime - NetCon->LastMessageTime > VNetworkPublic::MessageTimeOut)
-  {
-    if (State != NETCON_Closed)
-    {
-      GCon->Logf("Channel timed out");
-    }
+  if (!IsLocalConnection() && Driver->NetTime-NetCon->LastMessageTime > VNetworkPublic::MessageTimeOut) {
+    if (State != NETCON_Closed) GCon->Logf("Channel timed out");
     State = NETCON_Closed;
-  }
-  else
-  {
-    //  Run tick for all of the open channels.
-    for (int i = OpenChannels.Num() - 1; i >= 0; i--)
-    {
-      OpenChannels[i]->Tick();
-    }
-    //  If general channel has been closed, then this connection is closed
-    if (!Channels[CHANIDX_General])
-    {
-      State = NETCON_Closed;
-    }
+  } else {
+    // run tick for all of the open channels
+    for (int i = OpenChannels.Num()-1; i >= 0; --i) OpenChannels[i]->Tick();
+    // if general channel has been closed, then this connection is closed
+    if (!Channels[CHANIDX_General]) State = NETCON_Closed;
   }
 
-  //  Flush any remaining data or send keepalive.
+  // flush any remaining data or send keepalive
   Flush();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VNetConnection::SendCommand
 //
 //==========================================================================
-
-void VNetConnection::SendCommand(VStr Str)
-{
+void VNetConnection::SendCommand (VStr Str) {
   guard(VNetConnection::SendCommand);
-  VMessageOut   Msg(Channels[CHANIDX_General]);
+  VMessageOut Msg(Channels[CHANIDX_General]);
   Msg.bReliable = true;
   Msg << Str;
   Channels[CHANIDX_General]->SendMessage(&Msg);
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VNetConnection::SetUpFatPVS
 //
 //==========================================================================
-
-void VNetConnection::SetUpFatPVS()
-{
+void VNetConnection::SetUpFatPVS () {
   guard(VNetConnection::SetUpFatPVS);
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
-  VLevel* Level = Context->GetLevel();
+  VLevel *Level = Context->GetLevel();
 
   LeafPvs = Level->LeafPVS(Owner->MO->SubSector);
 
-  //  Re-allocate PVS buffer if needed.
-  if (UpdatePvsSize != (Level->NumSubsectors + 7) / 8)
-  {
-    if (UpdatePvs)
-    {
+  // re-allocate PVS buffer if needed
+  if (UpdatePvsSize != (Level->NumSubsectors+7)/8) {
+    if (UpdatePvs) {
       delete[] UpdatePvs;
-      UpdatePvs = NULL;
+      UpdatePvs = nullptr;
     }
-    UpdatePvsSize = (Level->NumSubsectors + 7) / 8;
+    UpdatePvsSize = (Level->NumSubsectors+7)/8;
     UpdatePvs = new vuint8[UpdatePvsSize];
   }
 
-  //  Build view PVS using view clipper.
+  // build view PVS using view clipper
   memset(UpdatePvs, 0, UpdatePvsSize);
   Clipper.ClearClipNodes(Owner->ViewOrg, Level);
-  SetUpPvsNode(Level->NumNodes - 1, dummy_bbox);
+  SetUpPvsNode(Level->NumNodes-1, dummy_bbox);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VNetConnection::SetUpPvsNode
 //
 //==========================================================================
-
-void VNetConnection::SetUpPvsNode(int BspNum, float* BBox)
-{
+void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
   guard(VNetConnection::SetUpPvsNode);
-  VLevel* Level = Context->GetLevel();
-  if (Clipper.ClipIsFull())
-  {
-    return;
-  }
-  if (!Clipper.ClipIsBBoxVisible(BBox, false))
-  {
-    return;
-  }
+  VLevel *Level = Context->GetLevel();
+  if (Clipper.ClipIsFull()) return;
+  if (!Clipper.ClipIsBBoxVisible(BBox, false)) return;
 
-  if (BspNum == -1)
-  {
+  if (BspNum == -1) {
     int SubNum = 0;
-    subsector_t* Sub = &Level->Subsectors[SubNum];
-    if (!Sub->sector->linecount)
-    {
-      //  Skip sectors containing original polyobjs
-      return;
-    }
-    if (!(LeafPvs[SubNum >> 3] & (1 << (SubNum & 7))))
-    {
-      return;
-    }
-
-    if (!Clipper.ClipCheckSubsector(Sub, false))
-    {
-      return;
-    }
+    subsector_t *Sub = &Level->Subsectors[SubNum];
+    if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
+    if (!(LeafPvs[SubNum >> 3] & (1 << (SubNum & 7)))) return;
+    if (!Clipper.ClipCheckSubsector(Sub, false)) return;
     Clipper.ClipAddSubsectorSegs(Sub, false);
     UpdatePvs[SubNum >> 3] |= 1 << (SubNum & 7);
     return;
   }
 
-  // Found a subsector?
-  if (!(BspNum & NF_SUBSECTOR))
-  {
-  node_t* Bsp = &Level->Nodes[BspNum];
-
-  // Decide which side the view point is on.
-  int Side = Bsp->PointOnSide(Owner->ViewOrg);
-
-  // Recursively divide front space.
-  SetUpPvsNode(Bsp->children[Side], Bsp->bbox[Side]);
-
-  // Possibly divide back space.
-  if (!Clipper.ClipIsBBoxVisible(Bsp->bbox[Side ^ 1], false))
-  {
-    return;
-  }
-  SetUpPvsNode(Bsp->children[Side ^ 1], Bsp->bbox[Side ^ 1]);
-
+  // found a subsector?
+  if (!(BspNum & NF_SUBSECTOR)) {
+    node_t *Bsp = &Level->Nodes[BspNum];
+    // decide which side the view point is on
+    int Side = Bsp->PointOnSide(Owner->ViewOrg);
+    // recursively divide front space
+    SetUpPvsNode(Bsp->children[Side], Bsp->bbox[Side]);
+    // possibly divide back space
+    if (!Clipper.ClipIsBBoxVisible(Bsp->bbox[Side^1], false)) return;
+    SetUpPvsNode(Bsp->children[Side^1], Bsp->bbox[Side^1]);
     return;
   }
 
-  int SubNum = BspNum & ~NF_SUBSECTOR;
-  subsector_t* Sub = &Level->Subsectors[SubNum];
-  if (!Sub->sector->linecount)
-  {
-    //  Skip sectors containing original polyobjs
-    return;
-  }
-  if (!(LeafPvs[SubNum >> 3] & (1 << (SubNum & 7))))
-  {
-    return;
-  }
-
-  if (!Clipper.ClipCheckSubsector(Sub, false))
-  {
-    return;
-  }
+  int SubNum = BspNum&~NF_SUBSECTOR;
+  subsector_t *Sub = &Level->Subsectors[SubNum];
+  if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
+  if (!(LeafPvs[SubNum >> 3] & (1 << (SubNum & 7)))) return;
+  if (!Clipper.ClipCheckSubsector(Sub, false)) return;
   Clipper.ClipAddSubsectorSegs(Sub, false);
   UpdatePvs[SubNum >> 3] |= 1 << (SubNum & 7);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VNetConnection::CheckFatPVS
 //
 //==========================================================================
-
-int VNetConnection::CheckFatPVS(subsector_t* Subsector)
-{
+int VNetConnection::CheckFatPVS (subsector_t *Subsector) {
   guardSlow(VNetConnection::CheckFatPVS);
   int ss = Subsector - Context->GetLevel()->Subsectors;
   return UpdatePvs[ss / 8] & (1 << (ss & 7));
   unguardSlow;
 }
 
+
 //==========================================================================
 //
 //  VNetConnection::SecCheckFatPVS
 //
 //==========================================================================
-
-bool VNetConnection::SecCheckFatPVS(sector_t* Sec)
-{
+bool VNetConnection::SecCheckFatPVS (sector_t *Sec) {
   guardSlow(VNetConnection::SecCheckFatPVS);
-  for (subsector_t* Sub = Sec->subsectors; Sub; Sub = Sub->seclink)
-  {
-    if (CheckFatPVS(Sub))
-    {
-      return true;
-    }
+  for (subsector_t *Sub = Sec->subsectors; Sub; Sub = Sub->seclink) {
+    if (CheckFatPVS(Sub)) return true;
   }
   return false;
   unguardSlow;
 }
+
 
 //==========================================================================
 //
 //  VNetConnection::IsRelevant
 //
 //==========================================================================
-
-bool VNetConnection::IsRelevant(VThinker* Th)
-{
+bool VNetConnection::IsRelevant (VThinker *Th) {
   guardSlow(VNetConnection::IsRelevant);
-  if (Th->ThinkerFlags & VThinker::TF_AlwaysRelevant)
-  {
-    return true;
-  }
-  VEntity* Ent = Cast<VEntity>(Th);
-  if (!Ent)
-  {
-    return false;
-  }
-  if (Ent->GetTopOwner() == Owner->MO)
-  {
-    return true;
-  }
-  if (Ent->EntityFlags & VEntity::EF_NoSector)
-  {
-    return false;
-  }
-  if (Ent->EntityFlags & VEntity::EF_Invisible)
-  {
-    return false;
-  }
-  if (!CheckFatPVS(Ent->SubSector))
-  {
-    return false;
-  }
+  if (Th->ThinkerFlags & VThinker::TF_AlwaysRelevant) return true;
+  VEntity *Ent = Cast<VEntity>(Th);
+  if (!Ent) return false;
+  if (Ent->GetTopOwner() == Owner->MO) return true;
+  if (Ent->EntityFlags & VEntity::EF_NoSector) return false;
+  if (Ent->EntityFlags & VEntity::EF_Invisible) return false;
+  if (!CheckFatPVS(Ent->SubSector)) return false;
   return true;
   unguardSlow;
 }
+
 
 //==========================================================================
 //
 //  VNetConnection::UpdateLevel
 //
 //==========================================================================
-
-void VNetConnection::UpdateLevel()
-{
+void VNetConnection::UpdateLevel () {
   guard(VNetConnection::UpdateLevel);
   SetUpFatPVS();
 
-  ((VLevelChannel*)Channels[CHANIDX_Level])->Update();
+  ((VLevelChannel *)Channels[CHANIDX_Level])->Update();
 
-  //  Mark all entity channels as not updated in this frame.
-  for (int i = OpenChannels.Num() - 1; i >= 0; i--)
-  {
-    VChannel* Chan = OpenChannels[i];
-    if (Chan->Type == CHANNEL_Thinker)
-    {
-      ((VThinkerChannel*)Chan)->UpdatedThisFrame = false;
-    }
+  // mark all entity channels as not updated in this frame
+  for (int i = OpenChannels.Num()-1; i >= 0; --i) {
+    VChannel *Chan = OpenChannels[i];
+    if (Chan->Type == CHANNEL_Thinker) ((VThinkerChannel *)Chan)->UpdatedThisFrame = false;
   }
 
-  //  Update mobjs in sight
-  for (TThinkerIterator<VThinker> Th(Context->GetLevel()); Th; ++Th)
-  {
-    if (!IsRelevant(*Th))
-    {
-      continue;
-    }
-    VThinkerChannel* Chan = ThinkerChannels.FindPtr(*Th);
-    if (!Chan)
-    {
+  // update mobjs in sight
+  for (TThinkerIterator<VThinker> Th(Context->GetLevel()); Th; ++Th) {
+    if (!IsRelevant(*Th)) continue;
+    VThinkerChannel *Chan = ThinkerChannels.FindPtr(*Th);
+    if (!Chan) {
       Chan = (VThinkerChannel*)CreateChannel(CHANNEL_Thinker, -1);
-      if (!Chan)
-      {
-        continue;
-      }
+      if (!Chan) continue;
       Chan->SetThinker(*Th);
     }
     Chan->Update();
   }
 
-  //  Close entity channels that were not updated in this frame.
-  for (int i = OpenChannels.Num() - 1; i >= 0; i--)
-  {
-    VChannel* Chan = OpenChannels[i];
-    if (Chan->Type == CHANNEL_Thinker &&
-      !((VThinkerChannel*)Chan)->UpdatedThisFrame)
-    {
-      Chan->Close();
-    }
+  // close entity channels that were not updated in this frame
+  for (int i = OpenChannels.Num()-1; i >= 0; --i) {
+    VChannel *Chan = OpenChannels[i];
+    if (Chan->Type == CHANNEL_Thinker && !((VThinkerChannel*)Chan)->UpdatedThisFrame) Chan->Close();
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VNetConnection::SendServerInfo
 //
 //==========================================================================
-
-void VNetConnection::SendServerInfo()
-{
+void VNetConnection::SendServerInfo () {
   guard(VNetConnection::SendServerInfo);
-  if (!ObjMapSent)
-  {
-    return;
-  }
+  if (!ObjMapSent) return;
 
-  //  This will load level on client side.
-  ((VLevelChannel*)Channels[CHANIDX_Level])->SetLevel(GLevel);
-  ((VLevelChannel*)Channels[CHANIDX_Level])->SendNewLevel();
+  // this will load level on client side
+  ((VLevelChannel *)Channels[CHANIDX_Level])->SetLevel(GLevel);
+  ((VLevelChannel *)Channels[CHANIDX_Level])->SendNewLevel();
   LevelInfoSent = true;
   unguard;
 }

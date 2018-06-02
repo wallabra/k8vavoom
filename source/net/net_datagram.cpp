@@ -27,7 +27,7 @@
 //**
 //**************************************************************************
 //
-//  This is the network info/connection protocol. It is used to find Vavoom
+// This is the network info/connection protocol. It is used to find Vavoom
 // servers, get info about them, and connect to them. Once connected, the
 // Vavoom game protocol (documented elsewhere) is used.
 //
@@ -58,8 +58,6 @@
 //
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "net_local.h"
 #ifdef USE_INTERNAL_ZLIB
@@ -68,146 +66,119 @@
 # include <zlib.h>
 #endif
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-class VDatagramSocket : public VSocket
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VDatagramSocket : public VSocket {
 public:
-  VNetLanDriver*  LanDriver;
-  int       LanSocket;
-  sockaddr_t    Addr;
-  bool      Invalid;
+  VNetLanDriver *LanDriver;
+  int LanSocket;
+  sockaddr_t Addr;
+  bool Invalid;
 
-  VDatagramSocket(VNetDriver* Drv)
-  : VSocket(Drv)
-  , LanDriver(NULL)
-  , LanSocket(0)
-  , Invalid(false)
-  {}
+public:
+  VDatagramSocket (VNetDriver *Drv) : VSocket(Drv), LanDriver(nullptr), LanSocket(0), Invalid(false) {}
   virtual ~VDatagramSocket() override;
 
-  int GetMessage(TArray<vuint8>&);
-  int SendMessage(vuint8*, vuint32);
-  bool IsLocalConnection();
+  virtual int GetMessage (TArray<vuint8> &) override;
+  virtual int SendMessage (const vuint8 *, vuint32) override;
+  virtual bool IsLocalConnection () override;
 };
 
-class VDatagramDriver : public VNetDriver
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VDatagramDriver : public VNetDriver {
 public:
-  // I don't think that communication protocol will change, but just in a
-  // case
+  // I don't think that communication protocol will change, but just in a case
+  // k8: and it did
   enum { NET_PROTOCOL_VERSION = 2 };
 
   enum { MASTER_SERVER_PORT = 26002 };
 
-  //  Client request
-  enum
-  {
+  // client request
+  enum {
     CCREQ_CONNECT     = 1,
-    CCREQ_SERVER_INFO   = 2
+    CCREQ_SERVER_INFO = 2,
   };
 
-  //  Server reply
-  enum
-  {
+  // server reply
+  enum {
     CCREP_ACCEPT      = 11,
     CCREP_REJECT      = 12,
-    CCREP_SERVER_INFO   = 13
+    CCREP_SERVER_INFO = 13
   };
 
-  //  Master server request
-  enum
-  {
-    MCREQ_JOIN        = 1,
-    MCREQ_QUIT        = 2,
-    MCREQ_LIST        = 3,
+  // master server request
+  enum {
+    MCREQ_JOIN = 1,
+    MCREQ_QUIT = 2,
+    MCREQ_LIST = 3,
   };
 
-  //  Master server reply
-  enum
-  {
-    MCREP_LIST        = 1,
+  // master server reply
+  enum {
+    MCREP_LIST = 1,
   };
 
-  struct
-  {
-    vuint8    data[MAX_MSGLEN];
+  struct {
+    vuint8 data[MAX_MSGLEN];
   } packetBuffer;
 
-  VDatagramDriver();
-  int Init();
-  void Listen(bool);
-  void SearchForHosts(bool, bool);
-  VSocket* Connect(const char*);
-  VSocket* CheckNewConnections();
-  void UpdateMaster();
-  void QuitMaster();
-  bool QueryMaster(bool);
-  void EndQueryMaster();
-  void Shutdown();
+public:
+  VDatagramDriver ();
 
-  void SearchForHosts(VNetLanDriver*, bool, bool);
-  VSocket* Connect(VNetLanDriver*, const char*);
-  VSocket* CheckNewConnections(VNetLanDriver*);
-  void UpdateMaster(VNetLanDriver*);
-  void QuitMaster(VNetLanDriver*);
-  bool QueryMaster(VNetLanDriver*, bool);
+  virtual int Init () override;
+  virtual void Listen (bool) override;
+  virtual void SearchForHosts (bool, bool) override;
+  virtual VSocket *Connect (const char *) override;
+  virtual VSocket *CheckNewConnections () override;
+  virtual void UpdateMaster () override;
+  virtual void QuitMaster () override;
+  virtual bool QueryMaster (bool) override;
+  virtual void EndQueryMaster () override;
+  virtual void Shutdown () override;
+
+  void SearchForHosts (VNetLanDriver *, bool, bool);
+  VSocket *Connect (VNetLanDriver *, const char *);
+  VSocket *CheckNewConnections (VNetLanDriver *);
+  void UpdateMaster (VNetLanDriver *);
+  void QuitMaster (VNetLanDriver *);
+  bool QueryMaster (VNetLanDriver *, bool);
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern int      num_connected;
+// ////////////////////////////////////////////////////////////////////////// //
+extern int num_connected;
 extern TArray<VStr> wadfiles;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+static VCvarB UseMaster("use_master", false, "Use master server?", CVAR_Archive);
+static VCvarS MasterSrv("master_srv", "ketmar.no-ip.org", "Master server domain name.", CVAR_Archive);
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+static VDatagramDriver Impl;
 
-static VCvarB     UseMaster("use_master", false, "Use master server?", CVAR_Archive);
-static VCvarS     MasterSrv("master_srv", "ketmar.no-ip.org", "Master server domain name.", CVAR_Archive);
-
-static VDatagramDriver  Impl;
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VDatagramDriver::VDatagramDriver
 //
 //==========================================================================
-
-VDatagramDriver::VDatagramDriver()
-: VNetDriver(1, "Datagram")
-{
+VDatagramDriver::VDatagramDriver () : VNetDriver(1, "Datagram") {
   memset(&packetBuffer, 0, sizeof(packetBuffer));
 }
+
 
 //==========================================================================
 //
 //  VDatagramDriver::Init
 //
 //==========================================================================
-
-int VDatagramDriver::Init()
-{
+int VDatagramDriver::Init () {
   guard(Datagram_Init);
-  if (GArgs.CheckParm("-nolan"))
-    return -1;
+  if (GArgs.CheckParm("-nolan")) return -1;
 
-  for (int i = 0; i < VNetworkLocal::NumLanDrivers; i++)
-  {
+  for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
     VNetworkLocal::LanDrivers[i]->Net = Net;
     int csock = VNetworkLocal::LanDrivers[i]->Init();
-    if (csock == -1)
-      continue;
+    if (csock == -1) continue;
     VNetworkLocal::LanDrivers[i]->initialised = true;
     VNetworkLocal::LanDrivers[i]->controlSock = csock;
   }
@@ -216,43 +187,39 @@ int VDatagramDriver::Init()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VDatagramDriver::Listen
 //
 //==========================================================================
-
-void VDatagramDriver::Listen(bool state)
-{
+void VDatagramDriver::Listen (bool state) {
   guard(VDatagramDriver::Listen);
-  for (int i = 0; i < VNetworkLocal::NumLanDrivers; i++)
-    if (VNetworkLocal::LanDrivers[i]->initialised)
-      VNetworkLocal::LanDrivers[i]->Listen(state);
+  for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
+    if (VNetworkLocal::LanDrivers[i]->initialised) VNetworkLocal::LanDrivers[i]->Listen(state);
+  }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VDatagramDriver::SearchForHosts
 //
 //==========================================================================
-
-void VDatagramDriver::SearchForHosts(VNetLanDriver* Drv, bool xmit,
-  bool ForMaster)
-{
+void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMaster) {
   guard(VDatagramDriver::SearchForHosts);
-  sockaddr_t  myaddr;
-  sockaddr_t  readaddr;
-  int     len;
-  vuint8    control;
-  vuint8    msgtype;
-  int     n;
-  int     i;
-  vuint8    TmpByte;
+  sockaddr_t myaddr;
+  sockaddr_t readaddr;
+  int len;
+  vuint8 control;
+  vuint8 msgtype;
+  int n;
+  int i;
+  vuint8 TmpByte;
 
   Drv->GetSocketAddr(Drv->controlSock, &myaddr);
-  if (xmit)
-  {
+  if (xmit) {
     VBitStreamWriter Reply(256 << 3);
     TmpByte = NETPACKET_CTL;
     Reply << TmpByte;
@@ -265,57 +232,34 @@ void VDatagramDriver::SearchForHosts(VNetLanDriver* Drv, bool xmit,
     Drv->Broadcast(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes());
   }
 
-  while ((len = Drv->Read(Drv->controlSock, packetBuffer.data, MAX_MSGLEN, &readaddr)) > 0)
-  {
-    if (len < (int)sizeof(int))
-    {
-      continue;
-    }
+  while ((len = Drv->Read(Drv->controlSock, packetBuffer.data, MAX_MSGLEN, &readaddr)) > 0) {
+    if (len < (int)sizeof(int)) continue;
 
     // don't answer our own query
-    if (!ForMaster && Drv->AddrCompare(&readaddr, &myaddr) >= 0)
-    {
-      continue;
-    }
+    if (!ForMaster && Drv->AddrCompare(&readaddr, &myaddr) >= 0) continue;
 
     // is the cache full?
-    if (Net->HostCacheCount == HOSTCACHESIZE)
-    {
-      continue;
-    }
+    if (Net->HostCacheCount == HOSTCACHESIZE) continue;
 
     VBitStreamReader msg(packetBuffer.data, len << 3);
     msg << control;
-    if (control != NETPACKET_CTL)
-    {
-      continue;
-    }
+    if (control != NETPACKET_CTL) continue;
 
     msg << msgtype;
-    if (msgtype != CCREP_SERVER_INFO)
-    {
-      continue;
-    }
+    if (msgtype != CCREP_SERVER_INFO) continue;
 
-    char*     addr;
-    VStr      str;
+    char *addr;
+    VStr str;
 
     addr = Drv->AddrToString(&readaddr);
 
     // search the cache for this server
-    for (n = 0; n < Net->HostCacheCount; n++)
-    {
-      if (Net->HostCache[n].CName == addr)
-      {
-        break;
-      }
+    for (n = 0; n < Net->HostCacheCount; ++n) {
+      if (Net->HostCache[n].CName == addr) break;
     }
 
     // is it already there?
-    if (n < Net->HostCacheCount)
-    {
-      continue;
-    }
+    if (n < Net->HostCacheCount) continue;
 
     // add it
     Net->HostCacheCount++;
@@ -328,34 +272,22 @@ void VDatagramDriver::SearchForHosts(VNetLanDriver* Drv, bool xmit,
     msg << TmpByte;
     Net->HostCache[n].MaxUsers = TmpByte;
     msg << TmpByte;
-    if (TmpByte != NET_PROTOCOL_VERSION)
-    {
-      Net->HostCache[n].Name = VStr("*") + Net->HostCache[n].Name;
-    }
+    if (TmpByte != NET_PROTOCOL_VERSION) Net->HostCache[n].Name = VStr("*") + Net->HostCache[n].Name;
     Net->HostCache[n].CName = addr;
     i = 0;
-    do
-    {
+    do {
       msg << str;
       Net->HostCache[n].WadFiles[i++] = str;
-    }  while (str.IsNotEmpty());
+    } while (str.IsNotEmpty());
 
     // check for a name conflict
-    for (i = 0; i < Net->HostCacheCount; i++)
-    {
-      if (i == n)
-      {
-        continue;
-      }
-      if (Net->HostCache[n].Name.ICmp(Net->HostCache[i].Name) == 0)
-      {
+    for (i = 0; i < Net->HostCacheCount; ++i) {
+      if (i == n) continue;
+      if (Net->HostCache[n].Name.ICmp(Net->HostCache[i].Name) == 0) {
         i = Net->HostCache[n].Name.Length();
-        if (i < 15 && Net->HostCache[n].Name[i - 1] > '8')
-        {
+        if (i < 15 && Net->HostCache[n].Name[i - 1] > '8') {
           Net->HostCache[n].Name += '0';
-        }
-        else
-        {
+        } else {
           ++(*Net->HostCache[n].Name.GetMutableCharPointer(i-1));
           //Net->HostCache[n].Name[i - 1]++;
         }
@@ -366,72 +298,63 @@ void VDatagramDriver::SearchForHosts(VNetLanDriver* Drv, bool xmit,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VDatagramDriver::SearchForHosts
 //
 //==========================================================================
-
-void VDatagramDriver::SearchForHosts(bool xmit, bool ForMaster)
-{
+void VDatagramDriver::SearchForHosts (bool xmit, bool ForMaster) {
   guard(Datagram_SearchForHosts);
-  for (int i = 0; i < VNetworkLocal::NumLanDrivers; i++)
-  {
-    if (Net->HostCacheCount == HOSTCACHESIZE)
-      break;
-    if (VNetworkLocal::LanDrivers[i]->initialised)
-      SearchForHosts(VNetworkLocal::LanDrivers[i], xmit, ForMaster);
+  for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
+    if (Net->HostCacheCount == HOSTCACHESIZE) break;
+    if (VNetworkLocal::LanDrivers[i]->initialised) SearchForHosts(VNetworkLocal::LanDrivers[i], xmit, ForMaster);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VDatagramDriver::Connect
 //
 //==========================================================================
-
-VSocket* VDatagramDriver::Connect(VNetLanDriver* Drv, const char* host)
-{
+VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   guard(VDatagramDriver::Connect);
 #ifdef CLIENT
-  sockaddr_t      sendaddr;
-  sockaddr_t      readaddr;
-  VDatagramSocket*  sock;
-  int         newsock;
-  double        start_time;
-  int         reps;
-  int         ret;
-  vuint8        control;
-  VStr        reason;
-  vuint8        msgtype;
-  int         newport;
-  VBitStreamReader* msg = NULL;
-  vuint8        TmpByte;
+  sockaddr_t sendaddr;
+  sockaddr_t readaddr;
+  VDatagramSocket *sock;
+  int newsock;
+  double start_time;
+  int reps;
+  int ret;
+  vuint8 control;
+  VStr reason;
+  vuint8 msgtype;
+  int newport;
+  VBitStreamReader *msg = nullptr;
+  vuint8 TmpByte;
 
   // see if we can resolve the host name
-  if (Drv->GetAddrFromName(host, &sendaddr, Net->HostPort) == -1)
-    return NULL;
+  if (Drv->GetAddrFromName(host, &sendaddr, Net->HostPort) == -1) return nullptr;
 
   newsock = Drv->OpenSocket(0);
-  if (newsock == -1)
-    return NULL;
+  if (newsock == -1) return nullptr;
 
   sock = new VDatagramSocket(this);
   sock->LanSocket = newsock;
   sock->LanDriver = Drv;
 
   // connect to the host
-  if (Drv->Connect(newsock, &sendaddr) == -1)
-    goto ErrorReturn;
+  if (Drv->Connect(newsock, &sendaddr) == -1) goto ErrorReturn;
 
   // send the connection request
   GCon->Log("trying..."); SCR_Update();
   start_time = Net->NetTime;
 
-  for (reps = 0; reps < 3; reps++)
-  {
-    VBitStreamWriter MsgOut(256 << 3);
+  for (reps = 0; reps < 3; ++reps) {
+    VBitStreamWriter MsgOut(256<<3);
     // save space for the header, filled in later
     TmpByte = NETPACKET_CTL;
     MsgOut << TmpByte;
@@ -442,22 +365,17 @@ VSocket* VDatagramDriver::Connect(VNetLanDriver* Drv, const char* host)
     TmpByte = NET_PROTOCOL_VERSION;
     MsgOut << TmpByte;
     Drv->Write(newsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
-
-    do
-    {
+    do {
       ret = Drv->Read(newsock, packetBuffer.data, MAX_MSGLEN, &readaddr);
       // if we got something, validate it
-      if (ret > 0)
-      {
+      if (ret > 0) {
         // is it from the right place?
-        if (sock->LanDriver->AddrCompare(&readaddr, &sendaddr) != 0)
-        {
+        if (sock->LanDriver->AddrCompare(&readaddr, &sendaddr) != 0) {
           ret = 0;
           continue;
         }
 
-        if (ret < (int)sizeof(vint32))
-        {
+        if (ret < (int)sizeof(vint32)) {
           ret = 0;
           continue;
         }
@@ -465,32 +383,27 @@ VSocket* VDatagramDriver::Connect(VNetLanDriver* Drv, const char* host)
         msg = new VBitStreamReader(packetBuffer.data, ret << 3);
 
         *msg << control;
-        if (control !=  NETPACKET_CTL)
-        {
+        if (control !=  NETPACKET_CTL) {
           ret = 0;
           delete msg;
-          msg = NULL;
+          msg = nullptr;
           continue;
         }
       }
-    }
-    while (ret == 0 && (Net->SetNetTime() - start_time) < 2.5);
-    if (ret)
-      break;
+    } while (ret == 0 && (Net->SetNetTime() - start_time) < 2.5);
+    if (ret) break;
     GCon->Log("still trying..."); SCR_Update();
     start_time = Net->SetNetTime();
   }
 
-  if (ret == 0)
-  {
+  if (ret == 0) {
     reason = "No Response";
     GCon->Log(reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
 
-  if (ret == -1)
-  {
+  if (ret == -1) {
     reason = "Network Error";
     GCon->Log(reason);
     VStr::Cpy(Net->ReturnReason, *reason);
@@ -498,16 +411,14 @@ VSocket* VDatagramDriver::Connect(VNetLanDriver* Drv, const char* host)
   }
 
   *msg << msgtype;
-  if (msgtype == CCREP_REJECT)
-  {
+  if (msgtype == CCREP_REJECT) {
     *msg << reason;
     GCon->Log(reason);
     VStr::NCpy(Net->ReturnReason, *reason, 31);
     goto ErrorReturn;
   }
 
-  if (msgtype != CCREP_ACCEPT)
-  {
+  if (msgtype != CCREP_ACCEPT) {
     reason = "Bad Response";
     GCon->Log(reason);
     VStr::Cpy(Net->ReturnReason, *reason);
@@ -525,8 +436,7 @@ VSocket* VDatagramDriver::Connect(VNetLanDriver* Drv, const char* host)
   sock->LastMessageTime = Net->SetNetTime();
 
   // switch the connection to the specified address
-  if (Drv->Connect(newsock, &sock->Addr) == -1)
-  {
+  if (Drv->Connect(newsock, &sock->Addr) == -1) {
     reason = "Connect to Game failed";
     GCon->Log(reason);
     VStr::Cpy(Net->ReturnReason, *reason);
@@ -534,96 +444,82 @@ VSocket* VDatagramDriver::Connect(VNetLanDriver* Drv, const char* host)
   }
 
   delete msg;
-  msg = NULL;
-//  m_return_onerror = false;
+  msg = nullptr;
+  //m_return_onerror = false;
   return sock;
 
 ErrorReturn:
   delete sock;
-  sock = NULL;
+  sock = nullptr;
   Drv->CloseSocket(newsock);
-  if (msg)
-  {
+  if (msg) {
     delete msg;
-    msg = NULL;
+    msg = nullptr;
   }
-//  if (m_return_onerror)
-//  {
-//    key_dest = key_menu;
-//    m_state = m_return_state;
-//    m_return_onerror = false;
-//  }
+  //if (m_return_onerror) {
+  //  key_dest = key_menu;
+  //  m_state = m_return_state;
+  //  m_return_onerror = false;
+  //}
 #endif
-  return NULL;
+  return nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VDatagramDriver::Connect
 //
 //==========================================================================
-
-VSocket* VDatagramDriver::Connect(const char* host)
-{
+VSocket *VDatagramDriver::Connect (const char *host) {
   guard(Datagram_Connect);
-  for (int i = 0; i < VNetworkLocal::NumLanDrivers; i++)
-  {
-    if (VNetworkLocal::LanDrivers[i]->initialised)
-    {
-      VSocket* ret = Connect(VNetworkLocal::LanDrivers[i], host);
-      if (ret)
-      {
-        return ret;
-      }
+  for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
+    if (VNetworkLocal::LanDrivers[i]->initialised) {
+      VSocket *ret = Connect(VNetworkLocal::LanDrivers[i], host);
+      if (ret) return ret;
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VDatagramDriver::CheckNewConnections
 //
 //==========================================================================
-
-VSocket* VDatagramDriver::CheckNewConnections(VNetLanDriver* Drv)
-{
+VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   guard(VDatagramDriver::CheckNewConnections);
 #ifdef SERVER
-  sockaddr_t  clientaddr;
-  sockaddr_t  newaddr;
-  int     acceptsock;
-  int     newsock;
-  int     len;
-  vuint8    control;
-  vuint8    command;
-  VDatagramSocket*  sock;
-  int     ret;
-  VStr    gamename;
-  vuint8    TmpByte;
-  VStr    TmpStr;
+  sockaddr_t clientaddr;
+  sockaddr_t newaddr;
+  int acceptsock;
+  int newsock;
+  int len;
+  vuint8 control;
+  vuint8 command;
+  VDatagramSocket *sock;
+  int ret;
+  VStr gamename;
+  vuint8 TmpByte;
+  VStr TmpStr;
 
   acceptsock = Drv->CheckNewConnections();
-  if (acceptsock == -1)
-    return NULL;
+  if (acceptsock == -1) return nullptr;
 
   len = Drv->Read(acceptsock, packetBuffer.data, MAX_MSGLEN, &clientaddr);
-  if (len < (int)sizeof(vint32))
-    return NULL;
+  if (len < (int)sizeof(vint32)) return nullptr;
   VBitStreamReader msg(packetBuffer.data, len << 3);
 
   msg << control;
-  if (control != NETPACKET_CTL)
-    return NULL;
+  if (control != NETPACKET_CTL) return nullptr;
 
   msg << command;
-  if (command == CCREQ_SERVER_INFO)
-  {
+  if (command == CCREQ_SERVER_INFO) {
     msg << gamename;
-    if (gamename != "VAVOOM")
-      return NULL;
+    if (gamename != "VAVOOM") return nullptr;
 
     VBitStreamWriter MsgOut(MAX_MSGLEN << 3);
     TmpByte = NETPACKET_CTL;
@@ -640,8 +536,7 @@ VSocket* VDatagramDriver::CheckNewConnections(VNetLanDriver* Drv)
     MsgOut << TmpByte;
     TmpByte = NET_PROTOCOL_VERSION;
     MsgOut << TmpByte;
-    for (int i = 0; i < wadfiles.Num(); i++)
-    {
+    for (int i = 0; i < wadfiles.Num(); ++i) {
       TmpStr = wadfiles[i];
       MsgOut << TmpStr;
     }
@@ -649,18 +544,16 @@ VSocket* VDatagramDriver::CheckNewConnections(VNetLanDriver* Drv)
     MsgOut << TmpStr;
 
     Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
-    return NULL;
+    return nullptr;
   }
 
-  if (command != CCREQ_CONNECT)
-    return NULL;
+  if (command != CCREQ_CONNECT) return nullptr;
 
   msg << gamename;
-  if (gamename != "VAVOOM")
-    return NULL;
+  if (gamename != "VAVOOM") return nullptr;
 
-/*  if (MSG_ReadByte() != NET_PROTOCOL_VERSION)
-  {
+  /*
+  if (MSG_ReadByte() != NET_PROTOCOL_VERSION) {
     SZ_Clear(&net_message);
     // save space for the header, filled in later
     MSG_WriteLong(&net_message, 0);
@@ -671,19 +564,16 @@ VSocket* VDatagramDriver::CheckNewConnections(VNetLanDriver* Drv)
     SZ_Clear(&net_message);
     return NULL;
   }
-*/
+  */
+
   // see if this guy is already connected
-  for (VSocket* as = Net->ActiveSockets; as; as = as->Next)
-  {
-    if (as->Driver != this)
-      continue;
-    VDatagramSocket* s = (VDatagramSocket*)as;
+  for (VSocket *as = Net->ActiveSockets; as; as = as->Next) {
+    if (as->Driver != this) continue;
+    VDatagramSocket *s = (VDatagramSocket *)as;
     ret = Drv->AddrCompare(&clientaddr, &s->Addr);
-    if (ret >= 0)
-    {
+    if (ret >= 0) {
       // is this a duplicate connection reqeust?
-      if (ret == 0 && Net->NetTime - s->ConnectTime < 2.0)
-      {
+      if (ret == 0 && Net->NetTime-s->ConnectTime < 2.0) {
         // yes, so send a duplicate reply
         VBitStreamWriter MsgOut(32 << 3);
         Drv->GetSocketAddr(s->LanSocket, &newaddr);
@@ -694,17 +584,16 @@ VSocket* VDatagramDriver::CheckNewConnections(VNetLanDriver* Drv)
         vint32 TmpPort = Drv->GetSocketPort(&newaddr);
         MsgOut << TmpPort;
         Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
-        return NULL;
+        return nullptr;
       }
       // it's somebody coming back in from a crash/disconnect
       // so close the old socket and let their retry get them back in
       s->Invalid = true;
-      return NULL;
+      return nullptr;
     }
   }
 
-  if (svs.num_connected >= svs.max_clients)
-  {
+  if (svs.num_connected >= svs.max_clients) {
     // no room; try to let him know
     VBitStreamWriter MsgOut(256 << 3);
     TmpByte = NETPACKET_CTL;
@@ -714,21 +603,17 @@ VSocket* VDatagramDriver::CheckNewConnections(VNetLanDriver* Drv)
     TmpStr = "Server is full.\n";
     MsgOut << TmpStr;
     Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
-    return NULL;
+    return nullptr;
   }
 
   // allocate a network socket
   newsock = Drv->OpenSocket(0);
-  if (newsock == -1)
-  {
-    return NULL;
-  }
+  if (newsock == -1) return nullptr;
 
   // connect to the client
-  if (Drv->Connect(newsock, &clientaddr) == -1)
-  {
+  if (Drv->Connect(newsock, &clientaddr) == -1) {
     Drv->CloseSocket(newsock);
-    return NULL;
+    return nullptr;
   }
 
   // allocate a VSocket
@@ -753,53 +638,46 @@ VSocket* VDatagramDriver::CheckNewConnections(VNetLanDriver* Drv)
 
   return sock;
 #else
-  return NULL;
+  return nullptr;
 #endif
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VDatagramDriver::CheckNewConnections
 //
 //==========================================================================
-
-VSocket* VDatagramDriver::CheckNewConnections()
-{
+VSocket *VDatagramDriver::CheckNewConnections () {
   guard(VDatagramDriver::CheckNewConnections);
-  for (int i = 0; i < Net->NumLanDrivers; i++)
-  {
-    if (Net->LanDrivers[i]->initialised)
-    {
-      VSocket* ret = CheckNewConnections(Net->LanDrivers[i]);
-      if (ret != NULL)
-        return ret;
+  for (int i = 0; i < Net->NumLanDrivers; ++i) {
+    if (Net->LanDrivers[i]->initialised) {
+      VSocket *ret = CheckNewConnections(Net->LanDrivers[i]);
+      if (ret != nullptr) return ret;
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VDatagramDriver::UpdateMaster
 //
 //==========================================================================
-
-void VDatagramDriver::UpdateMaster(VNetLanDriver* Drv)
-{
+void VDatagramDriver::UpdateMaster (VNetLanDriver *Drv) {
   guard(VDatagramDriver::UpdateMaster);
-  sockaddr_t      sendaddr;
+  sockaddr_t sendaddr;
 
   // see if we can resolve the host name
-  if (Drv->GetAddrFromName(MasterSrv, &sendaddr, MASTER_SERVER_PORT) == -1)
-  {
+  if (Drv->GetAddrFromName(MasterSrv, &sendaddr, MASTER_SERVER_PORT) == -1) {
     GCon->Logf("Could not resolve server name");
     return;
   }
 
-  if (Drv->net_acceptsocket == -1)
-  {
+  if (Drv->net_acceptsocket == -1) {
     GCon->Logf("Listen socket not open");
     return;
   }
@@ -814,50 +692,38 @@ void VDatagramDriver::UpdateMaster(VNetLanDriver* Drv)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VDatagramDriver::UpdateMaster
 //
 //==========================================================================
-
-void VDatagramDriver::UpdateMaster()
-{
+void VDatagramDriver::UpdateMaster () {
   guard(VDatagramDriver::UpdateMaster);
-  if (!UseMaster)
-  {
-    return;
-  }
-
-  for (int i = 0; i < VNetworkLocal::NumLanDrivers; i++)
-  {
-    if (VNetworkLocal::LanDrivers[i]->initialised)
-    {
-      UpdateMaster(VNetworkLocal::LanDrivers[i]);
-    }
+  if (!UseMaster) return;
+  for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
+    if (VNetworkLocal::LanDrivers[i]->initialised) UpdateMaster(VNetworkLocal::LanDrivers[i]);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VDatagramDriver::QuitMaster
 //
 //==========================================================================
-
-void VDatagramDriver::QuitMaster(VNetLanDriver* Drv)
-{
+void VDatagramDriver::QuitMaster (VNetLanDriver *Drv) {
   guard(VDatagramDriver::QuitMaster);
-  sockaddr_t      sendaddr;
+  sockaddr_t sendaddr;
 
   // see if we can resolve the host name
-  if (Drv->GetAddrFromName(MasterSrv, &sendaddr, MASTER_SERVER_PORT) == -1)
-  {
+  if (Drv->GetAddrFromName(MasterSrv, &sendaddr, MASTER_SERVER_PORT) == -1) {
     GCon->Logf("Could not resolve server name");
     return;
   }
 
-  if (Drv->net_acceptsocket == -1)
-  {
+  if (Drv->net_acceptsocket == -1) {
     GCon->Logf("Listen socket not open");
     return;
   }
@@ -870,51 +736,35 @@ void VDatagramDriver::QuitMaster(VNetLanDriver* Drv)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VDatagramDriver::QuitMaster
 //
 //==========================================================================
-
-void VDatagramDriver::QuitMaster()
-{
+void VDatagramDriver::QuitMaster () {
   guard(VDatagramDriver::QuitMaster);
-  if (!UseMaster)
-  {
-    return;
-  }
-
-  for (int i = 0; i < VNetworkLocal::NumLanDrivers; i++)
-  {
-    if (VNetworkLocal::LanDrivers[i]->initialised)
-    {
-      QuitMaster(VNetworkLocal::LanDrivers[i]);
-    }
+  if (!UseMaster) return;
+  for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
+    if (VNetworkLocal::LanDrivers[i]->initialised) QuitMaster(VNetworkLocal::LanDrivers[i]);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VDatagramDriver::QueryMaster
 //
 //==========================================================================
-/*
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-*/
-
-bool VDatagramDriver::QueryMaster(VNetLanDriver* Drv, bool xmit)
-{
+bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
   guard(VDatagramDriver::QueryMaster);
-  sockaddr_t  myaddr;
-  sockaddr_t  readaddr;
-  sockaddr_t  tmpaddr;
-  int     len;
-  vuint8    control;
-  vuint8    TmpByte;
+  sockaddr_t myaddr;
+  sockaddr_t readaddr;
+  sockaddr_t tmpaddr;
+  int len;
+  vuint8 control;
+  vuint8 TmpByte;
 
   if (Drv->MasterQuerySocket < 0) Drv->MasterQuerySocket = Drv->OpenSocket(0);
 
@@ -986,71 +836,52 @@ bool VDatagramDriver::QueryMaster(VNetLanDriver* Drv, bool xmit)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VDatagramDriver::QueryMaster
 //
 //==========================================================================
-
-bool VDatagramDriver::QueryMaster(bool xmit)
-{
+bool VDatagramDriver::QueryMaster (bool xmit) {
   guard(VDatagramDriver::QueryMaster);
-  for (int i = 0; i < VNetworkLocal::NumLanDrivers; i++)
-  {
-    if (Net->HostCacheCount == HOSTCACHESIZE)
-    {
-      break;
-    }
-    if (VNetworkLocal::LanDrivers[i]->initialised)
-    {
-      if (QueryMaster(VNetworkLocal::LanDrivers[i], xmit))
-      {
-        return true;
-      }
+  for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
+    if (Net->HostCacheCount == HOSTCACHESIZE) break;
+    if (VNetworkLocal::LanDrivers[i]->initialised) {
+      if (QueryMaster(VNetworkLocal::LanDrivers[i], xmit)) return true;
     }
   }
   return false;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VDatagramDriver::EndQueryMaster
 //
 //==========================================================================
-
-void VDatagramDriver::EndQueryMaster()
-{
+void VDatagramDriver::EndQueryMaster () {
   guard(VDatagramDriver::EndQueryMaster);
-  for (int i = 0; i < VNetworkLocal::NumLanDrivers; i++)
-  {
-    if (VNetworkLocal::LanDrivers[i]->initialised &&
-      VNetworkLocal::LanDrivers[i]->MasterQuerySocket > 0)
-    {
-      VNetworkLocal::LanDrivers[i]->CloseSocket(
-        VNetworkLocal::LanDrivers[i]->MasterQuerySocket);
+  for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
+    if (VNetworkLocal::LanDrivers[i]->initialised && VNetworkLocal::LanDrivers[i]->MasterQuerySocket > 0) {
+      VNetworkLocal::LanDrivers[i]->CloseSocket(VNetworkLocal::LanDrivers[i]->MasterQuerySocket);
       VNetworkLocal::LanDrivers[i]->MasterQuerySocket = -1;
     }
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VDatagramDriver::Shutdown
 //
 //==========================================================================
-
-void VDatagramDriver::Shutdown()
-{
+void VDatagramDriver::Shutdown () {
   guard(VDatagramDriver::Shutdown);
-  //
   // shutdown the lan drivers
-  //
-  for (int i = 0; i < Net->NumLanDrivers; i++)
-  {
-    if (Net->LanDrivers[i]->initialised)
-    {
+  for (int i = 0; i < Net->NumLanDrivers; ++i) {
+    if (Net->LanDrivers[i]->initialised) {
       Net->LanDrivers[i]->Shutdown();
       Net->LanDrivers[i]->initialised = false;
     }
@@ -1058,67 +889,52 @@ void VDatagramDriver::Shutdown()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VDatagramSocket::~VDatagramSocket
 //
 //==========================================================================
-
-VDatagramSocket::~VDatagramSocket()
-{
-  //guard(VDatagramSocket::~VDatagramSocket);
+VDatagramSocket::~VDatagramSocket () {
   LanDriver->CloseSocket(LanSocket);
-  //unguard;
 }
+
 
 //==========================================================================
 //
 //  VDatagramSocket::GetMessage
 //
-//  If there is a packet, return it.
+// If there is a packet, return it.
 //
-//  returns 0 if no data is waiting
-//  returns 1 if a packet was received
-//  returns -1 if connection is invalid
+// returns 0 if no data is waiting
+// returns 1 if a packet was received
+// returns -1 if connection is invalid
 //
 //==========================================================================
-
-int VDatagramSocket::GetMessage(TArray<vuint8>& Data)
-{
+int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
   guard(VDatagramSocket::GetMessage);
-  vuint32   length;
-  sockaddr_t  readaddr;
-  int     ret = 0;
+  vuint32 length;
+  sockaddr_t readaddr;
+  int ret = 0;
 
-  if (Invalid)
-  {
-    return -1;
-  }
+  if (Invalid) return -1;
 
-  struct
-  {
-    vuint8    data[MAX_MSGLEN];
+  struct {
+    vuint8 data[MAX_MSGLEN];
   } packetBuffer;
 
-  while(1)
-  {
-    //  Read message.
-    length = LanDriver->Read(LanSocket, (vuint8*)&packetBuffer,
-      NET_DATAGRAMSIZE, &readaddr);
+  for (;;) {
+    // read message
+    length = LanDriver->Read(LanSocket, (vuint8*)&packetBuffer, NET_DATAGRAMSIZE, &readaddr);
 
-    if (length == 0)
-      break;
+    if (length == 0) break;
 
-    if ((int)length == -1)
-    {
+    if ((int)length == -1) {
       GCon->Log(NAME_DevNet, "Read error");
       return -1;
     }
 
-    if (LanDriver->AddrCompare(&readaddr, &Addr) != 0)
-    {
-      continue;
-    }
+    if (LanDriver->AddrCompare(&readaddr, &Addr) != 0) continue;
 
     Data.SetNum(length);
     memcpy(Data.Ptr(), packetBuffer.data, length);
@@ -1131,65 +947,57 @@ int VDatagramSocket::GetMessage(TArray<vuint8>& Data)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VDatagramSocket::SendMessage
 //
-//  Send a packet over the net connection.
-//  returns 1 if the packet was sent properly
-//  returns -1 if the connection died
+// Send a packet over the net connection.
+// returns 1 if the packet was sent properly
+// returns -1 if the connection died
 //
 //==========================================================================
-
-int VDatagramSocket::SendMessage(vuint8* Data, vuint32 Length)
-{
+int VDatagramSocket::SendMessage (const vuint8 *Data, vuint32 Length) {
   guard(VDatagramSocket::SendMessage);
   checkSlow(Length > 0);
   checkSlow(Length <= MAX_MSGLEN);
-  if (Invalid)
-  {
-    return -1;
-  }
-  return LanDriver->Write(LanSocket, Data, Length, &Addr) == -1 ? -1 : 1;
+  if (Invalid) return -1;
+  return (LanDriver->Write(LanSocket, Data, Length, &Addr) == -1 ? -1 : 1);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VDatagramSocket::IsLocalConnection
 //
 //==========================================================================
-
-bool VDatagramSocket::IsLocalConnection()
-{
+bool VDatagramSocket::IsLocalConnection () {
   return false;
 }
+
 
 //==========================================================================
 //
 //  PrintStats
 //
 //==========================================================================
-
-static void PrintStats(VSocket*)
-{
+static void PrintStats (VSocket *) {
   GCon->Logf("");
 }
+
 
 //==========================================================================
 //
 //  COMMAND NetStats
 //
 //==========================================================================
-
-COMMAND(NetStats)
-{
+COMMAND(NetStats) {
   guard(COMMAND NetStats);
   VSocket *s;
 
-  VNetworkLocal* Net = (VNetworkLocal*)GNet;
-  if (Args.Num() == 1)
-  {
+  VNetworkLocal *Net = (VNetworkLocal*)GNet;
+  if (Args.Num() == 1) {
     GCon->Logf("unreliable messages sent   = %d", Net->UnreliableMessagesSent);
     GCon->Logf("unreliable messages recv   = %d", Net->UnreliableMessagesReceived);
     GCon->Logf("reliable messages sent     = %d", Net->MessagesSent);
@@ -1200,19 +1008,13 @@ COMMAND(NetStats)
     GCon->Logf("receivedDuplicateCount     = %d", Net->receivedDuplicateCount);
     GCon->Logf("shortPacketCount           = %d", Net->shortPacketCount);
     GCon->Logf("droppedDatagrams           = %d", Net->droppedDatagrams);
-  }
-  else if (Args[1] == "*")
-  {
-    for (s = Net->ActiveSockets; s; s = s->Next)
-      PrintStats(s);
-  }
-  else
-  {
-    for (s = Net->ActiveSockets; s; s = s->Next)
-      if (Args[1].ICmp(s->Address) == 0)
-        break;
-    if (s == NULL)
-      return;
+  } else if (Args[1] == "*") {
+    for (s = Net->ActiveSockets; s; s = s->Next) PrintStats(s);
+  } else {
+    for (s = Net->ActiveSockets; s; s = s->Next) {
+      if (Args[1].ICmp(s->Address) == 0) break;
+    }
+    if (s == nullptr) return;
     PrintStats(s);
   }
   unguard;

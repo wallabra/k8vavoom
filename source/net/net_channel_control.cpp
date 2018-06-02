@@ -23,66 +23,36 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "network.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VControlChannel::VControlChannel
 //
 //==========================================================================
-
-VControlChannel::VControlChannel(VNetConnection* AConnection, vint32 AIndex,
-  vuint8 AOpenedLocally)
-: VChannel(AConnection, CHANNEL_Control, AIndex, AOpenedLocally)
+VControlChannel::VControlChannel (VNetConnection *AConnection, vint32 AIndex, vuint8 AOpenedLocally)
+  : VChannel(AConnection, CHANNEL_Control, AIndex, AOpenedLocally)
 {
 }
+
 
 //==========================================================================
 //
 //  VControlChannel::ParsePacket
 //
 //==========================================================================
-
-void VControlChannel::ParsePacket(VMessageIn& msg)
-{
+void VControlChannel::ParsePacket (VMessageIn &msg) {
   guard(VControlChannel::ParsePacket);
-  while (!msg.AtEnd())
-  {
+  while (!msg.AtEnd()) {
     VStr Cmd;
     msg << Cmd;
-    if (msg.IsError())
-    {
-      break;
-    }
-    if (Connection->Context->ServerConnection)
-    {
+    if (msg.IsError()) break;
+    if (Connection->Context->ServerConnection) {
       GCmdBuf << Cmd;
-    }
-    else
-    {
-      VCommand::ExecuteString(Cmd, VCommand::SRC_Client,
-        Connection->Owner);
+    } else {
+      VCommand::ExecuteString(Cmd, VCommand::SRC_Client, Connection->Owner);
     }
   }
   unguard;

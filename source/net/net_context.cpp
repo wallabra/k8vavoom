@@ -23,119 +23,72 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "network.h"
 #include "sv_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VNetContext::VNetContext
 //
 //==========================================================================
-
-VNetContext::VNetContext()
-: RoleField(NULL)
-, RemoteRoleField(NULL)
-, ServerConnection(NULL)
+VNetContext::VNetContext ()
+  : RoleField(nullptr)
+  , RemoteRoleField(nullptr)
+  , ServerConnection(nullptr)
 {
   RoleField = VThinker::StaticClass()->FindFieldChecked("Role");
   RemoteRoleField = VThinker::StaticClass()->FindFieldChecked("RemoteRole");
 }
+
 
 //==========================================================================
 //
 //  VNetContext::~VNetContext
 //
 //==========================================================================
-
-VNetContext::~VNetContext()
-{
+VNetContext::~VNetContext () {
 }
+
 
 //==========================================================================
 //
 //  VNetContext::ThinkerDestroyed
 //
 //==========================================================================
-
-void VNetContext::ThinkerDestroyed(VThinker* Th)
-{
+void VNetContext::ThinkerDestroyed (VThinker *Th) {
   guard(VNetContext::ThinkerDestroyed);
-  if (ServerConnection)
-  {
-    VThinkerChannel* Chan = ServerConnection->ThinkerChannels.FindPtr(Th);
-    if (Chan)
-    {
-      Chan->Close();
-    }
-  }
-  else
-  {
-    for (int i = 0; i < ClientConnections.Num(); i++)
-    {
+  if (ServerConnection) {
+    VThinkerChannel *Chan = ServerConnection->ThinkerChannels.FindPtr(Th);
+    if (Chan) Chan->Close();
+  } else {
+    for (int i = 0; i < ClientConnections.Num(); ++i) {
       VThinkerChannel* Chan = ClientConnections[i]->ThinkerChannels.FindPtr(Th);
-      if (Chan)
-      {
-        Chan->Close();
-      }
+      if (Chan) Chan->Close();
     }
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VNetContext::Tick
 //
 //==========================================================================
-
-void VNetContext::Tick()
-{
+void VNetContext::Tick () {
   guard(VNetContext::Tick);
-  for (int i = 0; i < ClientConnections.Num(); i++)
-  {
-    VNetConnection* Conn = ClientConnections[i];
-    // Don't update level if the player isn't totally in the game yet
-    if (Conn->Channels[CHANIDX_General] &&
-      (Conn->Owner->PlayerFlags & VBasePlayer::PF_Spawned))
-    {
-      if (Conn->NeedsUpdate)
-      {
-        Conn->UpdateLevel();
-      }
-
-      ((VPlayerChannel*)Conn->Channels[CHANIDX_Player])->Update();
+  for (int i = 0; i < ClientConnections.Num(); ++i) {
+    VNetConnection *Conn = ClientConnections[i];
+    // don't update level if the player isn't totally in the game yet
+    if (Conn->Channels[CHANIDX_General] && (Conn->Owner->PlayerFlags & VBasePlayer::PF_Spawned)) {
+      if (Conn->NeedsUpdate) Conn->UpdateLevel();
+      ((VPlayerChannel *)Conn->Channels[CHANIDX_Player])->Update();
     }
-
-    if (Conn->ObjMapSent && !Conn->LevelInfoSent)
-    {
-      Conn->SendServerInfo();
-    }
+    if (Conn->ObjMapSent && !Conn->LevelInfoSent) Conn->SendServerInfo();
     Conn->Tick();
-    if (Conn->State == NETCON_Closed)
-    {
-      SV_DropClient(Conn->Owner, true);
-    }
+    if (Conn->State == NETCON_Closed) SV_DropClient(Conn->Owner, true);
   }
   unguard;
 }
