@@ -729,6 +729,12 @@ void VLevel::Destroy()
     }
   }
 
+  for (int f = 0; f < NumLines; ++f) {
+    line_t *ld = Lines+f;
+    delete ld->v1lines;
+    delete ld->v2lines;
+  }
+
   delete[] Vertexes;
   Vertexes = NULL;
   delete[] Sectors;
@@ -1108,47 +1114,6 @@ line_t* VLevel::FindLine(int lineTag, int* searchPosition)
 
 //==========================================================================
 //
-// VLevel::FindAdjacentLine
-//
-// dir<0: previous; dir>0: next
-//
-//==========================================================================
-
-line_t* VLevel::FindAdjacentLine (line_t* srcline, int side, int dir) {
-  if (!srcline || dir == 0 || side < 0 || side > 1) return nullptr; // sanity checks
-  sector_t* sec = (side == 0 ? srcline->frontsector : srcline->backsector);
-  if (!sec) return nullptr; // wtf?!
-  TVec *lv1 = (side == 0 ? srcline->v1 : srcline->v2);
-  TVec *lv2 = (side == 0 ? srcline->v2 : srcline->v1);
-  // loop over all sector lines, trying to match prev/next
-  for (int lidx = 0; lidx < sec->linecount; ++lidx) {
-    line_t* line = sec->lines[lidx];
-    // get vertices
-    TVec *v1, *v2;
-    if (line->frontsector == sec) {
-      v1 = line->v1;
-      v2 = line->v2;
-    } else if (line->backsector == sec) {
-      v1 = line->v2;
-      v2 = line->v1;
-    } else {
-      // wtf?!
-      continue;
-    }
-    // check vertices
-    if (dir < 0) {
-      // want previous
-      if (v2 == lv1) return line;
-    } else {
-      // want next
-      if (v1 == lv2) return line;
-    }
-  }
-  return nullptr;
-}
-
-//==========================================================================
-//
 // VLevel::AddAnimatedDecal
 //
 //==========================================================================
@@ -1241,6 +1206,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
     segd0 = segdist-tw2;
     segd1 = segd0+tw;
   }
+
+  //TODO: check if decal cannot be visible (i.e. it is on empty midtex, for example)
 
   // find segs for this decal (there may be several segs)
   for (seg_t *seg = li->firstseg; seg; seg = seg->lsnext) {
@@ -1360,14 +1327,43 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
   //        be used, but another linedef from another sector with such texture
   //        is ok.
 
+  if ((segd0 < 0 && prevdir <= 0) || (segd1 > linelen && prevdir >= 0)) {
+    for (int vn = 0; vn < 2; ++vn) {
+      line_t **ngb = (vn == 0 ? li->v1lines : li->v2lines);
+      int ngbCount = (vn == 0 ? li->v1linesCount : li->v2linesCount);
+      for (int f = 0; f < ngbCount; ++f) {
+        line_t *spline = ngb[f];
+        //if (spline->frontsector && spline->backsector) continue;
+        if (spline->frontsector && segd0 < 0 && prevdir <= 0 && *spline->v2 == *v1) {
+          //printf("found v2->v1 (f)\n");
+          PutDecalAtLine(tex, orgz, segd0, dec, spline->frontsector, spline, -1, flips);
+        }
+        if (spline->backsector && segd0 < 0 && prevdir <= 0 && *spline->v1 == *v1) {
+          //printf("found v2->v1 (b)\n");
+          PutDecalAtLine(tex, orgz, segd0, dec, spline->backsector, spline, -1, flips);
+        }
+        if (spline->frontsector && segd1 > linelen && prevdir >= 0 && *spline->v1 == *v2) {
+          //printf("found v1->v2 (f)\n");
+          PutDecalAtLine(tex, orgz, segd1-linelen, dec, spline->frontsector, spline, 1, flips);
+        }
+        if (spline->backsector && segd1 > linelen && prevdir >= 0 && *spline->v2 == *v2) {
+          //printf("found v1->v2 (f)\n");
+          PutDecalAtLine(tex, orgz, segd1-linelen, dec, spline->backsector, spline, 1, flips);
+        }
+      }
+    }
+  }
+
+  /*
+  line_t **ngb;
+  int ngbCount;
   // left spread?
   if (segd0 < 0 && prevdir <= 0) {
-    line_t* spline = FindAdjacentLine(li, sidenum, -1);
-    if (spline) {
-      //GCon->Logf("  WANT LEFT SPREAD, found linedef");
-      PutDecalAtLine(tex, orgz, segd0, dec, sec, spline, -1, flips);
-    } else {
-      //GCon->Logf("  WANT LEFT SPREAD, but no left line found");
+    if (sidenum == 0) { ngb = li->v1lines; ngbCount = li->v1linesCount; } else { ngb = li->v2lines; ngbCount = li->v2linesCount; }
+    for (int f = 0; f < ngbCount; ++f) {
+      line_t *spline = ngb[f];
+      if (spline->frontsector && spline->backsector) continue;
+      PutDecalAtLine(tex, orgz, segd0, dec, (spline->frontsector ? spline->frontsector : spline->backsector), spline, -1, flips);
     }
   }
 
@@ -1375,14 +1371,14 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
 
   // right spread?
   if (segd1 > linelen && prevdir >= 0) {
-    line_t* spline = FindAdjacentLine(li, sidenum, 1);
-    if (spline) {
-      //GCon->Logf("  WANT RIGHT SPREAD, found linedef");
-      PutDecalAtLine(tex, orgz, segd1-linelen, dec, sec, spline, 1, flips);
-    } else {
-      //GCon->Logf("  WANT RIGHT SPREAD, but no right line found");
+    if (sidenum == 1) { ngb = li->v1lines; ngbCount = li->v1linesCount; } else { ngb = li->v2lines; ngbCount = li->v2linesCount; }
+    for (int f = 0; f < ngbCount; ++f) {
+      line_t *spline = ngb[f];
+      if (spline->frontsector && spline->backsector) continue;
+      PutDecalAtLine(tex, orgz, segd1-linelen, dec, (spline->frontsector ? spline->frontsector : spline->backsector), spline, 1, flips);
     }
   }
+  */
 
   unguard;
 }
@@ -1396,12 +1392,15 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
 void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, line_t *li) {
   if (!dec || !sec || !li) return;
 
-  if (level > 64) {
-    GCon->Logf("WARNING: too many lower decals!");
+  if (level > 16) {
+    GCon->Logf("WARNING: too many lower decals '%s'", *dec->name);
     return;
   }
 
-  if (dec->lowername != NAME_None) AddDecal(org, dec->lowername, (sec == li->backsector ? 1 : 0), li, level+1);
+  if (dec->lowername != NAME_None) {
+    //GCon->Logf("adding lower decal '%s' for decal '%s' (level %d)", *dec->lowername, *dec->name, level);
+    AddDecal(org, dec->lowername, (sec == li->backsector ? 1 : 0), li, level+1);
+  }
 
   if (dec->scaleX <= 0 || dec->scaleY <= 0) {
     GCon->Logf("Decal '%s' has zero scale", *dec->name);
@@ -1488,7 +1487,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
 //
 //==========================================================================
 
-void VLevel::AddDecal (TVec org, const VName& dectype, int side, line_t *li, int level) {
+void VLevel::AddDecal (TVec org, const VName &dectype, int side, line_t *li, int level) {
   guard(VLevel::AddDecal);
 
   if (!decals_enabled) return;
@@ -1580,6 +1579,7 @@ void VLevel::AddDecal (TVec org, const VName& dectype, int side, line_t *li, int
   static TStrSet baddecals;
 
   VDecalDef *dec = VDecalDef::getDecal(dectype);
+  //VDecalDef *dec = VDecalDef::getDecal(VName("K8GoreBloodSplat01"));
   if (dec) {
     AddOneDecal(level, org, dec, sec, li);
   } else {
@@ -2059,5 +2059,5 @@ IMPLEMENT_FUNCTION(VLevel, AddDecal)
   P_GET_NAME(dectype);
   P_GET_VEC(org);
   P_GET_SELF;
-  Self->AddDecal(org, dectype, side, li);
+  Self->AddDecal(org, dectype, side, li, 0);
 }

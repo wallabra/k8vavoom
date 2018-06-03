@@ -479,6 +479,39 @@ void VLevel::LoadMap(VName AMapName)
   CreateRepBase();
   RepBaseTime += Sys_Time();
 
+  // build v1 and v2 lists
+  for (int i = 0; i < NumLines; ++i) {
+    line_t *ld = Lines+i;
+    ld->v1linesCount = ld->v2linesCount = 0;
+    ld->v1lines = ld->v2lines = nullptr;
+    for (int vn = 0; vn < 2; ++vn) {
+      // count number of lines
+      TVec *v = (vn == 0 ? ld->v1 : ld->v2);
+      int count = 0;
+      for (int f = 0; f < NumLines; ++f) {
+        if (f == i) continue;
+        line_t *l2 = Lines+f;
+        if (*l2->v1 == *v || *l2->v2 == *v) ++count;
+      }
+      if (count) {
+        line_t **list = new line_t *[count];
+        count = 0;
+        for (int f = 0; f < NumLines; ++f) {
+          if (f == i) continue;
+          line_t *l2 = Lines+f;
+          if (*l2->v1 == *v || *l2->v2 == *v) list[count++] = l2;
+        }
+        if (vn == 0) {
+          ld->v1linesCount = count;
+          ld->v1lines = list;
+        } else {
+          ld->v2linesCount = count;
+          ld->v2lines = list;
+        }
+      }
+    }
+  }
+
   //
   // End of map lump processing
   //

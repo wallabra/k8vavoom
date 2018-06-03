@@ -222,6 +222,14 @@ struct line_t : public TPlane
   int     HashNext;
 
   seg_t *firstseg; // linked by lsnext
+
+  // lines connected to `v1`
+  line_t **v1lines;
+  int v1linesCount;
+
+  // lines connected to `v2`
+  line_t **v2lines;
+  int v2linesCount;
 };
 
 //==========================================================================

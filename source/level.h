@@ -361,9 +361,6 @@ private:
   void FloodZones();
   void FloodZone(sector_t*, int);
 
-  // dir<0: previous; dir>0: next
-  line_t* FindAdjacentLine (line_t* srcline, int side, int dir);
-
   //  Loader of the Strife conversations.
   void LoadRogueConScript(VName, int, FRogueConSpeech*&, int&) const;
 
@@ -385,7 +382,7 @@ private:
 
   int SetBodyQueueTrans(int, int);
 
-  void AddDecal (TVec org, const VName& dectype, int side, line_t *li, int level=0);
+  void AddDecal (TVec org, const VName& dectype, int side, line_t *li, int level);
   // called by `AddDecal()`
   void AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, line_t *li);
   void PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, vuint32 flips);
