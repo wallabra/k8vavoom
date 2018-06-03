@@ -28,7 +28,7 @@
 
 //==========================================================================
 //
-//  VBaseInvocation::VBaseInvocation
+//  VSuperInvocation::VSuperInvocation
 //
 //==========================================================================
 VInvocationBase::VInvocationBase (int ANumArgs, VExpression **AArgs, const TLocation& ALoc)
@@ -55,10 +55,10 @@ void VInvocationBase::DoSyntaxCopyTo (VExpression *e) {
 
 //==========================================================================
 //
-//  VBaseInvocation::VBaseInvocation
+//  VSuperInvocation::VSuperInvocation
 //
 //==========================================================================
-VBaseInvocation::VBaseInvocation(VName AName, int ANumArgs, VExpression **AArgs, const TLocation& ALoc)
+VSuperInvocation::VSuperInvocation(VName AName, int ANumArgs, VExpression **AArgs, const TLocation& ALoc)
   : VInvocationBase(ANumArgs, AArgs, ALoc)
   , Name(AName)
 {
@@ -67,11 +67,11 @@ VBaseInvocation::VBaseInvocation(VName AName, int ANumArgs, VExpression **AArgs,
 
 //==========================================================================
 //
-//  VBaseInvocation::SyntaxCopy
+//  VSuperInvocation::SyntaxCopy
 //
 //==========================================================================
-VExpression *VBaseInvocation::SyntaxCopy () {
-  auto res = new VBaseInvocation();
+VExpression *VSuperInvocation::SyntaxCopy () {
+  auto res = new VSuperInvocation();
   DoSyntaxCopyTo(res);
   return res;
 }
@@ -79,23 +79,23 @@ VExpression *VBaseInvocation::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VBaseInvocation::DoSyntaxCopyTo
+//  VSuperInvocation::DoSyntaxCopyTo
 //
 //==========================================================================
-void VBaseInvocation::DoSyntaxCopyTo (VExpression *e) {
+void VSuperInvocation::DoSyntaxCopyTo (VExpression *e) {
   VInvocationBase::DoSyntaxCopyTo(e);
-  auto res = (VBaseInvocation *)e;
+  auto res = (VSuperInvocation *)e;
   res->Name = Name;
 }
 
 
 //==========================================================================
 //
-//  VBaseInvocation::DoResolve
+//  VSuperInvocation::DoResolve
 //
 //==========================================================================
-VExpression *VBaseInvocation::DoResolve (VEmitContext &ec) {
-  guard(VBaseInvocation::DoResolve);
+VExpression *VSuperInvocation::DoResolve (VEmitContext &ec) {
+  guard(VSuperInvocation::DoResolve);
 
   if (!ec.SelfClass) {
     ParseError(Loc, ":: not in method");
@@ -120,12 +120,12 @@ VExpression *VBaseInvocation::DoResolve (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VBaseInvocation::Emit
+//  VSuperInvocation::Emit
 //
 //==========================================================================
-void VBaseInvocation::Emit (VEmitContext &) {
-  guard(VBaseInvocation::Emit);
-  ParseError(Loc, "Should not happen (VBaseInvocation)");
+void VSuperInvocation::Emit (VEmitContext &) {
+  guard(VSuperInvocation::Emit);
+  ParseError(Loc, "Should not happen (VSuperInvocation)");
   unguard;
 }
 

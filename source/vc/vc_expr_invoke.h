@@ -45,20 +45,20 @@ protected:
 
 //==========================================================================
 //
-//  VBaseInvocation
+//  VSuperInvocation
 //
 //==========================================================================
-class VBaseInvocation : public VInvocationBase {
+class VSuperInvocation : public VInvocationBase {
 public:
   VName Name;
 
-  VBaseInvocation(VName, int, VExpression**, const TLocation&);
+  VSuperInvocation (VName, int, VExpression **, const TLocation &);
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
 protected:
-  VBaseInvocation () {}
+  VSuperInvocation () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 

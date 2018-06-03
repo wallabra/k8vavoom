@@ -74,7 +74,7 @@ VExpression *VParser::ParseBaseMethodCall (VName Name, const TLocation &Loc) {
   guard(VParser::ParseBaseMethodCall);
   VExpression *Args[VMethod::MAX_PARAMS+1];
   int NumArgs = ParseArgList(Loc, Args);
-  return new VBaseInvocation(Name, NumArgs, Args, Loc);
+  return new VSuperInvocation(Name, NumArgs, Args, Loc);
   unguard;
 }
 
