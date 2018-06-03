@@ -361,6 +361,7 @@ enum {
   NUM_OPCODES
 };
 
+static_assert(NUM_OPCODES < 256, "VaVoomC: too many opcodes!");
 
 struct dprograms_t {
   char magic[4]; // "VPRG"
