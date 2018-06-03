@@ -486,12 +486,15 @@ void VLevel::LoadMap(VName AMapName)
     ld->v1lines = ld->v2lines = nullptr;
     for (int vn = 0; vn < 2; ++vn) {
       // count number of lines
-      TVec *v = (vn == 0 ? ld->v1 : ld->v2);
+      TVec v = *(vn == 0 ? ld->v1 : ld->v2);
+      v.z = 0;
       int count = 0;
       for (int f = 0; f < NumLines; ++f) {
         if (f == i) continue;
         line_t *l2 = Lines+f;
-        if (*l2->v1 == *v || *l2->v2 == *v) ++count;
+        TVec l2v1 = *l2->v1, l2v2 = *l2->v2;
+        l2v1.z = l2v2.z = 0;
+        if (l2v1 == v || l2v2 == v) ++count;
       }
       if (count) {
         line_t **list = new line_t *[count];
@@ -499,7 +502,9 @@ void VLevel::LoadMap(VName AMapName)
         for (int f = 0; f < NumLines; ++f) {
           if (f == i) continue;
           line_t *l2 = Lines+f;
-          if (*l2->v1 == *v || *l2->v2 == *v) list[count++] = l2;
+          TVec l2v1 = *l2->v1, l2v2 = *l2->v2;
+          l2v1.z = l2v2.z = 0;
+          if (l2v1 == v || l2v2 == v) list[count++] = l2;
         }
         if (vn == 0) {
           ld->v1linesCount = count;

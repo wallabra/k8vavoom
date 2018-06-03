@@ -209,9 +209,9 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, surfca
     }
 
     // use origScale to get the original starting point
-    float txwC = dtex->SOffset*dc->origScaleX;
+    //float txwC = dtex->SOffset*dc->origScaleX;
     float txhC = dtex->TOffset*dc->origScaleY;
-    //float txwC = dtex->SOffset*dc->scaleX;
+    float txwC = dtex->SOffset*dc->scaleX;
     //float txhC = dtex->TOffset*dc->scaleY;
 
     float txw = dtex->GetWidth()*dc->scaleX;
@@ -252,6 +252,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, surfca
     TVec lv2 = *(dc->seg->side ? dc->seg->linedef->v1 : dc->seg->linedef->v2);
 
     TVec dir = (lv2-lv1)/dc->linelen;
+    //fprintf(stderr, "txwC=%f\n", txwC);
     float xstofs = dc->xdist-txwC+dc->ofsX;
     TVec v0 = lv1+dir*xstofs;
     TVec v2 = lv1+dir*(xstofs+txw);

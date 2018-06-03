@@ -1152,7 +1152,10 @@ void VLevel::RemoveAnimatedDecal (decal_t* dc) {
 //
 //==========================================================================
 
-static bool isDecalsOverlap (VDecalDef *dec, float segd0, float segd1, float orgz, decal_t* cur, const picinfo_t& tinf) {
+static bool isDecalsOverlap (VDecalDef *dec, float segdist, float orgz, decal_t* cur, const picinfo_t& tinf) {
+  float two = tinf.xoffset*dec->scaleX;
+  float segd0 = segdist-two;
+  float segd1 = segd0+tinf.width*dec->scaleX;
   float cco = cur->xdist-tinf.xoffset*cur->scaleX+cur->ofsX;
   float ccz = cur->curz-cur->ofsY+tinf.yoffset*cur->scaleY;
   orgz += tinf.yoffset*dec->scaleY;
@@ -1171,9 +1174,12 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
   float tw2 = tw*0.5f;
   //float th2 = tinf.height*dec->scaleY*0.5f;
 
+  float txofs = tinf.xoffset*dec->scaleX;
+  segdist += txofs;
+
   int sidenum = 0;
-  vertex_t* v1;
-  vertex_t* v2;
+  vertex_t *v1;
+  vertex_t *v2;
 
   if (li->frontsector == sec) {
     v1 = li->v1;
@@ -1189,13 +1195,15 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
   lv2.z = 0;
   float linelen = Length(lv2-lv1);
 
+  //printf("***PutDecalAtLine***: segdist=%f; prevdir=%d\n", segdist, prevdir);
+
   float segd0, segd1;
   if (prevdir < 0) {
     if (segdist >= 0) return; // just in case
     segd0 = segdist+linelen;
     segd1 = segd0+tw;
     segdist = (segd0+segd1)*0.5f;
-    //GCon->Logf("left spread; segdist=%f; segd0=%f; segd1=%f", segdist, segd0, segd1);
+    //printf("  ** left spread; segdist=%f; segd0=%f; segd1=%f", segdist, segd0, segd1);
   } else if (prevdir > 0) {
     if (segdist <= 0) return; // just in case
     segd1 = segdist;
@@ -1212,8 +1220,11 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
   // find segs for this decal (there may be several segs)
   for (seg_t *seg = li->firstseg; seg; seg = seg->lsnext) {
     if (/*seg->linedef == li &&*/ seg->frontsector == sec) {
-      if (segd0 >= seg->offset+seg->length || segd1 < seg->offset) continue;
-      //if (prevdir < 0) GCon->Logf("  found seg #%d (segd=%f:%f; seg=%f:%f)", sidx, segd0, segd1, seg->offset, seg->offset+seg->length);
+      if (segd0 >= seg->offset+seg->length || segd1 < seg->offset) {
+        //printf("* SKIP seg: (segd=%f:%f; seg=%f:%f)\n", segd0, segd1, seg->offset, seg->offset+seg->length);
+        continue;
+      }
+      //printf("** found seg: (segd=%f:%f; seg=%f:%f)\n", segd0, segd1, seg->offset, seg->offset+seg->length);
       int dcmaxcount = decal_onetype_max;
            if (tinf.width >= 128 || tinf.height >= 128) dcmaxcount = 8;
       else if (tinf.width >= 64 || tinf.height >= 64) dcmaxcount = 16;
@@ -1221,12 +1232,12 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       // remove old same-typed decals, if necessary
       if (dcmaxcount > 0 && dcmaxcount < 10000) {
         int count = 0;
-        decal_t* prev = nullptr;
-        decal_t* first = nullptr;
-        decal_t* cur = seg->decals;
+        decal_t *prev = nullptr;
+        decal_t *first = nullptr;
+        decal_t *cur = seg->decals;
         while (cur) {
           // also, check if this decal is touching our one
-          if (cur->dectype == dec->name && isDecalsOverlap(dec, segd0, segd1, orgz, cur, tinf)) {
+          if (cur->dectype == dec->name && isDecalsOverlap(dec, segdist, orgz, cur, tinf)) {
             if (!first) first = cur;
             ++count;
           }
@@ -1236,15 +1247,15 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
         if (count >= dcmaxcount) {
           //GCon->Logf("removing %d extra '%s' decals", count-dcmaxcount+1, *dec->name);
           // do removal
-          decal_t* cur = first;
+          decal_t *cur = first;
           if (prev) {
             if (prev->next != cur) Sys_Error("decal oops(0)");
           } else {
             if (seg->decals != cur) Sys_Error("decal oops(1)");
           }
           while (cur) {
-            decal_t* n = cur->next;
-            if (cur->dectype == dec->name && isDecalsOverlap(dec, segd0, segd1, orgz, cur, tinf)) {
+            decal_t *n = cur->next;
+            if (cur->dectype == dec->name && isDecalsOverlap(dec, segdist, orgz, cur, tinf)) {
               /*
               GCon->Logf("removing extra '%s' decal; org=(%f:%f,%f:%f); neworg=(%f:%f,%f:%f)", *dec->name,
                 cur->xdist-tw2, cur->xdist+tw2, cur->orgz-th2, cur->orgz+th2,
@@ -1260,22 +1271,23 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
           }
         }
       }
-      // create decals
-      decal_t* decal = new decal_t;
+      // create decal
+      decal_t *decal = new decal_t;
       memset(decal, 0, sizeof(decal_t));
-      decal_t* cdec = seg->decals;
+      decal_t *cdec = seg->decals;
       if (cdec) {
         while (cdec->next) cdec = cdec->next;
         cdec->next = decal;
       } else {
         seg->decals = decal;
       }
+      //printf("seg: ofs=%f; end=%f; d0=%f; d1=%f\n", (float)seg->offset, (float)(seg->offset+seg->length), segd0, segd1);
       decal->seg = seg;
       decal->dectype = dec->name;
       decal->picname = dec->pic;
       decal->texture = tex;
       decal->orgz = decal->curz = orgz;
-      decal->xdist = segd0+tinf.width*0.5f;
+      decal->xdist = /*segd0+tw2*/segdist/*-txofs*/; //tinf.width*0.5f;
       decal->linelen = linelen;
       decal->shade[0] = dec->shade[0];
       decal->shade[1] = dec->shade[1];
@@ -1328,6 +1340,15 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
   //        be used, but another linedef from another sector with such texture
   //        is ok.
 
+  /*
+  printf("0: segd0=%f; segd1=%f; linelen=%f; prevdir=%d\n", segd0, segd1, linelen, prevdir);
+  segd0 += txofs;
+  segd1 += txofs;
+  printf("1: segd0=%f; segd1=%f; linelen=%f; prevdir=%d; pos=%f\n", segd0, segd1, linelen, prevdir, segdist);
+  */
+  segd0 = segdist-txofs;
+  segd1 = segd0+tw;
+  //printf("1: segd0=%f; segd1=%f; linelen=%f; prevdir=%d; pos=%f; tw=%f; tw2=%f\n", segd0, segd1, linelen, prevdir, segdist, tw, tw2);
   if ((segd0 < 0 && prevdir <= 0) || (segd1 > linelen && prevdir >= 0)) {
     for (int vn = 0; vn < 2; ++vn) {
       line_t **ngb = (vn == 0 ? li->v1lines : li->v2lines);
@@ -1335,51 +1356,31 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       for (int f = 0; f < ngbCount; ++f) {
         line_t *spline = ngb[f];
         //if (spline->frontsector && spline->backsector) continue;
-        if (spline->frontsector && segd0 < 0 && prevdir <= 0 && *spline->v2 == *v1) {
-          //printf("found v2->v1 (f)\n");
-          PutDecalAtLine(tex, orgz, segd0, dec, spline->frontsector, spline, -1, flips);
+        TVec sv1 = *spline->v1, sv2 = *spline->v2;
+        sv1.z = sv2.z = 0;
+        if (segd0 < 0 && prevdir <= 0) {
+          if (spline->frontsector && sv2 == lv1) {
+            //printf("found v2->v1 (f) segd0=%f; segd1=%f\n", segd0, segd1);
+            PutDecalAtLine(tex, orgz, segd0-txofs, dec, spline->frontsector, spline, -1, flips);
+          }
+          if (spline->backsector && sv1 == lv1) {
+            //printf("found v2->v1 (b) segd0=%f; segd1=%f\n", segd0, segd1);
+            PutDecalAtLine(tex, orgz, segd0-txofs, dec, spline->backsector, spline, -1, flips);
+          }
         }
-        if (spline->backsector && segd0 < 0 && prevdir <= 0 && *spline->v1 == *v1) {
-          //printf("found v2->v1 (b)\n");
-          PutDecalAtLine(tex, orgz, segd0, dec, spline->backsector, spline, -1, flips);
-        }
-        if (spline->frontsector && segd1 > linelen && prevdir >= 0 && *spline->v1 == *v2) {
-          //printf("found v1->v2 (f)\n");
-          PutDecalAtLine(tex, orgz, segd1-linelen, dec, spline->frontsector, spline, 1, flips);
-        }
-        if (spline->backsector && segd1 > linelen && prevdir >= 0 && *spline->v2 == *v2) {
-          //printf("found v1->v2 (f)\n");
-          PutDecalAtLine(tex, orgz, segd1-linelen, dec, spline->backsector, spline, 1, flips);
+        if (segd1 > linelen && prevdir >= 0) {
+          if (spline->frontsector && sv1 == lv2) {
+            //printf("found v1->v2 (f) segd0=%f; segd1=%f; segd1-linelen=%f\n", segd0, segd1, segd1-linelen);
+            PutDecalAtLine(tex, orgz, segd1-linelen-txofs, dec, spline->frontsector, spline, 1, flips);
+          }
+          if (spline->backsector && sv2 == lv2) {
+            //printf("found v1->v2 (f) segd0=%f; segd1=%f\n", segd0, segd1);
+            PutDecalAtLine(tex, orgz, /*segd1-linelen*/linelen-(segdist-txofs), dec, spline->backsector, spline, 1, flips);
+          }
         }
       }
     }
   }
-
-  /*
-  line_t **ngb;
-  int ngbCount;
-  // left spread?
-  if (segd0 < 0 && prevdir <= 0) {
-    if (sidenum == 0) { ngb = li->v1lines; ngbCount = li->v1linesCount; } else { ngb = li->v2lines; ngbCount = li->v2linesCount; }
-    for (int f = 0; f < ngbCount; ++f) {
-      line_t *spline = ngb[f];
-      if (spline->frontsector && spline->backsector) continue;
-      PutDecalAtLine(tex, orgz, segd0, dec, (spline->frontsector ? spline->frontsector : spline->backsector), spline, -1, flips);
-    }
-  }
-
-  //if (prevdir == 0) GCon->Logf("RSP TEST: segd1=%f; linelen=%f", segd1, linelen);
-
-  // right spread?
-  if (segd1 > linelen && prevdir >= 0) {
-    if (sidenum == 1) { ngb = li->v1lines; ngbCount = li->v1linesCount; } else { ngb = li->v2lines; ngbCount = li->v2linesCount; }
-    for (int f = 0; f < ngbCount; ++f) {
-      line_t *spline = ngb[f];
-      if (spline->frontsector && spline->backsector) continue;
-      PutDecalAtLine(tex, orgz, segd1-linelen, dec, (spline->frontsector ? spline->frontsector : spline->backsector), spline, 1, flips);
-    }
-  }
-  */
 
   unguard;
 }
@@ -1447,8 +1448,8 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
 
   // calculate `dist` -- distance from wall start
   //int sidenum = 0;
-  vertex_t* v1;
-  vertex_t* v2;
+  vertex_t *v1;
+  vertex_t *v2;
 
   if (li->frontsector == sec) {
     v1 = li->v1;
@@ -1474,8 +1475,11 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
 
   //GCon->Logf("Want to spawn decal '%s' (%s); pic=<%s>; dist=%f (linelen=%f)", *dec->name, (li->frontsector == sec ? "front" : "back"), *dec->pic, dist, linelen);
 
-  float segd0 = segdist-tinf.width/2.0f;
-  float segd1 = segd0+tinf.width;
+  segdist -= tinf.xoffset*dec->scaleX;
+  float tw = tinf.width*dec->scaleX;
+
+  float segd0 = segdist-tw/2.0f;
+  float segd1 = segd0+tw;
 
   if (segd1 <= 0 || segd0 >= linelen) return; // out of linedef
 
