@@ -170,10 +170,12 @@ final bool ExplodeMissile(EntityEx Victim, optional line_t *line)
     }
   } else {
     if (GetCvarB('k8ExplodeMissleTest')) {
-      if (Victim) print("MISSILE VICTIM: <%s>", NameToStr(GetClassName(Victim.Class)));
+      if (Victim) print("MISSILE VICTIM: <%n>", GetClassName(Victim.Class));
       else if (DecalName) {
-        print("MISSILE DECAL, BUT NO LINE: <%s>", NameToStr(DecalName));
-        print("%p", line->frontsector);
+        print("MISSILE DECAL, BUT NO LINE: <%n>", DecalName);
+        //print("%p", line->frontsector);
+      } else {
+        print("MISSILE WITHOUT DECAL (%n) %n %n", GetClassName(Class), DecalName, self.default.DecalName);
       }
     }
   }
@@ -287,6 +289,7 @@ final EntityEx SpawnMissile(EntityEx dest, class<EntityEx> type,
     org.z -= FloorClip;
   }
   A = Spawn(type, org);
+  if (A) A.DecalName = A.default.DecalName;
 
   A.PlayMissileSpawnSound(self);
 
@@ -346,6 +349,7 @@ final EntityEx SpawnMissileXYZ(TVec org, EntityEx dest, class<EntityEx> type)
     org.z -= FloorClip;
   }
   A = Spawn(type, org);
+  if (A) A.DecalName = A.default.DecalName;
   A.PlayMissileSpawnSound(self);
   A.Target = self;  // Originator
   dir = dest.Origin - Origin;
@@ -390,6 +394,7 @@ final EntityEx SpawnMissileZAimed(float z, EntityEx dest, class<EntityEx> type)
   org = Origin + vector(0.0, 0.0, z != ONFLOORZ ? z - FloorClip : z);
 
   A = Spawn(type, org);
+  if (A) A.DecalName = A.default.DecalName;
 
   A.PlayMissileSpawnSound(self);
 
@@ -463,6 +468,7 @@ final EntityEx SpawnMissileAngles(class<EntityEx> type, float yaw, float pitch,
     org.z -= FloorClip;
   }
   A = Spawn(type, org);
+  if (A) A.DecalName = A.default.DecalName;
   A.PlayMissileSpawnSound(self);
   A.Target = self;  // Originator
   A.Angles.yaw = yaw;
@@ -515,6 +521,7 @@ final EntityEx SpawnMissileAngle(class<EntityEx> type, float angle,
     org.z -= FloorClip;
   }
   mo = Spawn(type, org);
+  if (mo) mo.DecalName = mo.default.DecalName;
   mo.PlayMissileSpawnSound(self);
   mo.Target = self; // Originator
   mo.Angles.yaw = angle;
@@ -545,6 +552,7 @@ final EntityEx SpawnMissileAngleSpeed(class<EntityEx> type, float angle,
     org.z -= FloorClip;
   }
   mo = Spawn(type, org);
+  if (mo) mo.DecalName = mo.default.DecalName;
   mo.Tracer = self; // Originator
   mo.Angles.yaw = angle;
   mo.Velocity.x = speed * cos(angle);
@@ -573,6 +581,7 @@ final EntityEx SpawnSubMissile(class<EntityEx> type, EntityEx AInstigator)
 
   other.Target = AInstigator;
   other.Angles = Angles;
+  other.DecalName = other.default.DecalName;
 
   other.Velocity.x = other.Speed * cos(Angles.yaw);
   other.Velocity.y = other.Speed * sin(Angles.yaw);
@@ -675,8 +684,9 @@ final EntityEx SpawnPlayerMissileEx(class<EntityEx> type, bool RetExploded,
     }
   }
   A = Spawn(type, org);
+  if (A) A.DecalName = A.default.DecalName;
   if (specified_decalType && decalType) {
-    print("missile decal set to <%s>", NameToStr(decalType));
+    if (GetCvarB('k8ExplodeMissleTest')) print("missile decal set to <%n>", decalType);
     A.DecalName = decalType;
   }
 

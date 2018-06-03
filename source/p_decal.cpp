@@ -764,10 +764,10 @@ void VDecalAnim::Serialise (VStream& Strm, VDecalAnim*& aptr) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static void SetClassFieldName (VClass* Class, VName FieldName, VName Value) {
+static void SetClassFieldName (VClass *Class, VName FieldName, VName Value) {
   guard(SetClassFieldName);
-  VField* F = Class->FindFieldChecked(FieldName);
-  F->SetName((VObject*)Class->Defaults, Value);
+  VField *F = Class->FindFieldChecked(FieldName);
+  F->SetName((VObject *)Class->Defaults, Value);
   unguard;
 }
 
@@ -813,9 +813,15 @@ void ParseDecalDef (VScriptParser* sc) {
         sc->ExpectString();
         VStr decname = sc->String;
         // find class
-        VClass* klass = VClass::FindClassLowerCase(*clsname.ToLower());
+        VClass *klass = VClass::FindClassLowerCase(*clsname.ToLower());
         if (klass) {
+          //GCon->Logf("class '%s': set decal '%s'", klass->GetName(), *decname);
           SetClassFieldName(klass, VName("DecalName"), VName(*decname));
+          VClass *k2 = klass->GetReplacee();
+          if (k2 && k2 != klass) {
+            //GCon->Logf("  repclass '%s': set decal '%s'", k2->GetName(), *decname);
+            SetClassFieldName(k2, VName("DecalName"), VName(*decname));
+          }
         } else {
           sc->Message(va("WARNING: ignored 'generator' definition for class '%s'", *clsname));
         }
