@@ -356,6 +356,10 @@ enum {
   DECLARE_OPC(IteratorNext, None),
   DECLARE_OPC(IteratorPop, None),
 
+  // `write` and `writeln`
+  DECLARE_OPC(DoWriteOne, None),
+  DECLARE_OPC(DoWriteFlush, None),
+
 #undef DECLARE_OPC
 #ifndef OPCODE_INFO
   NUM_OPCODES

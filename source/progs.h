@@ -120,7 +120,7 @@ inline void PR_PushPtr (void* value) {
 }
 
 
-inline void* PR_PopPtr () {
+inline void *PR_PopPtr () {
   --pr_stackPtr;
   return pr_stackPtr->p;
 }
@@ -143,3 +143,6 @@ inline VStr PR_PopStr () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VStr PF_FormatString ();
+
+extern void PR_WriteOne ();
+extern void PR_WriteFlush ();

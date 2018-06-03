@@ -1826,6 +1826,18 @@ func_loop:
         }
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_DoWriteOne)
+        ++ip;
+        pr_stackPtr = sp;
+        PR_WriteOne(); // this will pop everything
+        sp = pr_stackPtr;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_DoWriteFlush)
+        ++ip;
+        PR_WriteFlush();
+        PR_VM_BREAK;
+
       PR_VM_DEFAULT
         cstDump();
         Sys_Error("Invalid opcode %d", *ip);

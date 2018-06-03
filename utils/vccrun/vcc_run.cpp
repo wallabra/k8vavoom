@@ -46,6 +46,26 @@ __attribute__((noreturn, format(printf, 1, 2))) void Host_Error (const char *err
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+void PR_WriteOne () {
+  P_GET_INT(type);
+  switch (type) {
+    case TYPE_Int: case TYPE_Byte: printf("%d", PR_Pop()); break;
+    case TYPE_Bool: printf("%s", (PR_Pop() ? "true" : "false")); break;
+    case TYPE_Float: printf("%f", PR_Popf()); break;
+    case TYPE_Name: printf("%s", *PR_PopName()); break;
+    case TYPE_String: printf("%s", *PR_PopStr()); break;
+    case TYPE_Pointer: printf("%p", PR_PopPtr()); break;
+    case TYPE_Vector: { TVec v = PR_Popv(); printf("(%f,%f,%f)", v.x, v.y, v.z); } break;
+    default: Sys_Error("Tried to print something strange...");
+  }
+}
+
+void PR_WriteFlush () {
+  printf("\n");
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VVccLog : public VLogListener {
 public:
   virtual void Serialise (const char* text, EName event) override {

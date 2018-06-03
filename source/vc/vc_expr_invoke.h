@@ -141,3 +141,23 @@ protected:
   VInvocation () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
+
+//==========================================================================
+//
+//  VInvokeWrite
+//
+//==========================================================================
+class VInvokeWrite : public VInvocationBase {
+public:
+  bool isWriteln;
+
+  VInvokeWrite (bool aIsWriteln, const TLocation &ALoc, int ANumArgs, VExpression **AArgs);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VInvokeWrite () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};

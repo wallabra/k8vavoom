@@ -97,23 +97,32 @@ void VSuperInvocation::DoSyntaxCopyTo (VExpression *e) {
 VExpression *VSuperInvocation::DoResolve (VEmitContext &ec) {
   guard(VSuperInvocation::DoResolve);
 
+  if (ec.SelfClass) {
+    VMethod *Func = ec.SelfClass->ParentClass->FindAccessibleMethod(Name, ec.SelfClass);
+    if (Func) {
+      VInvocation *e = new VInvocation(nullptr, Func, nullptr, false, true, Loc, NumArgs, Args);
+      NumArgs = 0;
+      delete this;
+      return e->Resolve(ec);
+    }
+  }
+
+  if (VStr::Cmp(*Name, "write") == 0 || VStr::Cmp(*Name, "writeln") == 0) {
+    VExpression *e = new VInvokeWrite((VStr::Cmp(*Name, "writeln") == 0), Loc, NumArgs, Args);
+    NumArgs = 0;
+    delete this;
+    return e->Resolve(ec);
+  }
+
   if (!ec.SelfClass) {
     ParseError(Loc, ":: not in method");
     delete this;
     return nullptr;
   }
 
-  VMethod *Func = ec.SelfClass->ParentClass->FindAccessibleMethod(Name, ec.SelfClass);
-  if (!Func) {
-    ParseError(Loc, "No such method `%s`", *Name);
-    delete this;
-    return nullptr;
-  }
-
-  VInvocation *e = new VInvocation(nullptr, Func, nullptr, false, true, Loc, NumArgs, Args);
-  NumArgs = 0;
+  ParseError(Loc, "No such method `%s`", *Name);
   delete this;
-  return e->Resolve(ec);
+  return nullptr;
   unguard;
 }
 
@@ -206,6 +215,13 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
       delete this;
       return e->Resolve(ec);
     }
+  }
+
+  if (VStr::Cmp(*Name, "write") == 0 || VStr::Cmp(*Name, "writeln") == 0) {
+    VExpression *e = new VInvokeWrite((VStr::Cmp(*Name, "writeln") == 0), Loc, NumArgs, Args);
+    NumArgs = 0;
+    delete this;
+    return e->Resolve(ec);
   }
 
   ParseError(Loc, "Unknown method %s", *Name);
@@ -994,4 +1010,104 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
     }
   }
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VInvokeWrite::VInvokeWrite
+//
+//==========================================================================
+VInvokeWrite::VInvokeWrite (bool aIsWriteln, const TLocation &ALoc, int ANumArgs, VExpression **AArgs)
+  : VInvocationBase(ANumArgs, AArgs, ALoc)
+  , isWriteln(aIsWriteln)
+{
+}
+
+
+//==========================================================================
+//
+//  VInvokeWrite::SyntaxCopy
+//
+//==========================================================================
+VExpression *VInvokeWrite::SyntaxCopy () {
+  auto res = new VInvokeWrite();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VInvokeWrite::DoResolve
+//
+//==========================================================================
+VExpression *VInvokeWrite::DoResolve (VEmitContext &ec) {
+  guard(VInvokeWrite::DoResolve);
+
+  // resolve arguments
+  bool ArgsOk = true;
+  for (int i = 0; i < NumArgs; ++i) {
+    if (Args[i]) {
+      Args[i] = Args[i]->Resolve(ec);
+      if (!Args[i]) {
+        ArgsOk = false;
+      } else {
+        switch (Args[i]->Type.Type) {
+          case TYPE_Int:
+          case TYPE_Byte:
+          case TYPE_Bool:
+          case TYPE_Float:
+          case TYPE_Name:
+          case TYPE_String:
+          case TYPE_Pointer:
+          case TYPE_Vector:
+            break;
+          default:
+            ParseError(Args[i]->Loc, "Cannot write type `%s`", *Args[i]->Type.GetName());
+            ArgsOk = false;
+        }
+      }
+    }
+  }
+
+  if (!ArgsOk) {
+    delete this;
+    return nullptr;
+  }
+
+  Type = VFieldType(TYPE_Void);
+
+  return this;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VInvokeWrite::Emit
+//
+//==========================================================================
+void VInvokeWrite::Emit (VEmitContext &ec) {
+  guard(VInvokeWrite::Emit);
+  for (int i = 0; i < NumArgs; ++i) {
+    if (!Args[i]) continue;
+    Args[i]->Emit(ec);
+    ec.EmitPushNumber(Args[i]->Type.Type);
+    ec.AddStatement(OPC_DoWriteOne);
+  }
+  if (isWriteln) ec.AddStatement(OPC_DoWriteFlush);
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VInvokeWrite::DoSyntaxCopyTo
+//
+//==========================================================================
+void VInvokeWrite::DoSyntaxCopyTo (VExpression *e) {
+  VInvocationBase::DoSyntaxCopyTo(e);
+  auto res = (VInvokeWrite *)e;
+  res->isWriteln = isWriteln;
 }

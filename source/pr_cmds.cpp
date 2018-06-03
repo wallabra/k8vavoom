@@ -691,4 +691,28 @@ IMPLEMENT_FUNCTION(VObject, StartSearch) {
 
 #endif // CLIENT
 
+static char wrbuffer[1024] = {0};
+
+void PR_WriteOne () {
+  P_GET_INT(type);
+  char *sptr = (char *)memchr(wrbuffer, 0, sizeof(wrbuffer));
+  if (!sptr) { sptr = wrbuffer; wrbuffer[0] = 0; } // just in case
+  size_t maxlen = (size_t)(sptr-wrbuffer);
+  switch (type) {
+    case TYPE_Int: case TYPE_Byte: snprintf(sptr, maxlen, "%d", PR_Pop()); break;
+    case TYPE_Bool: snprintf(sptr, maxlen, "%s", (PR_Pop() ? "true" : "false")); break;
+    case TYPE_Float: snprintf(sptr, maxlen, "%f", PR_Popf()); break;
+    case TYPE_Name: snprintf(sptr, maxlen, "%s", *PR_PopName()); break;
+    case TYPE_String: snprintf(sptr, maxlen, "%s", *PR_PopStr()); break;
+    case TYPE_Pointer: snprintf(sptr, maxlen, "%p", PR_PopPtr()); break;
+    case TYPE_Vector: { TVec v = PR_Popv(); snprintf(sptr, maxlen, "(%f,%f,%f)", v.x, v.y, v.z); } break;
+    default: Sys_Error("Tried to print something strange...");
+  }
+}
+
+void PR_WriteFlush () {
+  GCon->Logf("%s", wrbuffer);
+  wrbuffer[0] = 0;
+}
+
 #endif // !VCC_STANDALONE_EXECUTOR
