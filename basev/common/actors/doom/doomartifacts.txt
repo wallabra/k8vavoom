@@ -128,13 +128,6 @@ actor MegasphereHealth : Health
   +Inventory.AlwaysPickup
 }
 
-// DeHackEd can only modify the blue armor's type, not the megasphere's.
-actor BlueArmorForMegasphere : BlueArmor
-{
-  Armor.SavePercent 50
-  Armor.SaveAmount 200
-}
-
 //------------------------------------------------------------------------------
 actor Megasphere : CustomInventory 83
 {
@@ -152,8 +145,7 @@ actor Megasphere : CustomInventory 83
     MEGA ABCD 6 Bright
     Loop
   Pickup:
-    //TNT1 A 0 A_GiveInventory("BlueArmor")
-    TNT1 A 0 A_GiveInventory("BlueArmorForMegasphere")
+    TNT1 A 0 A_GiveInventory("BlueArmor")
     TNT1 A 0 A_GiveInventory("MegasphereHealth")
     Stop
   }
