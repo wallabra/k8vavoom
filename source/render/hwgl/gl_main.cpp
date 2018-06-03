@@ -427,6 +427,17 @@ void VOpenGLDrawer::InitResolution()
   SurfDecalFogStartLoc = p_glGetUniformLocationARB(SurfDecalProgram, "FogStart");
   SurfDecalFogEndLoc = p_glGetUniformLocationARB(SurfDecalProgram, "FogEnd");
 
+  SurfDecalSAxisLoc = p_glGetUniformLocationARB(SurfDecalProgram, "SAxis");
+  SurfDecalTAxisLoc = p_glGetUniformLocationARB(SurfDecalProgram, "TAxis");
+  SurfDecalSOffsLoc = p_glGetUniformLocationARB(SurfDecalProgram, "SOffs");
+  SurfDecalTOffsLoc = p_glGetUniformLocationARB(SurfDecalProgram, "TOffs");
+  SurfDecalTexMinSLoc = p_glGetUniformLocationARB(SurfDecalProgram, "TexMinS");
+  SurfDecalTexMinTLoc = p_glGetUniformLocationARB(SurfDecalProgram, "TexMinT");
+  SurfDecalCacheSLoc = p_glGetUniformLocationARB(SurfDecalProgram, "CacheS");
+  SurfDecalCacheTLoc = p_glGetUniformLocationARB(SurfDecalProgram, "CacheT");
+  SurfDecalLightMapLoc = p_glGetUniformLocationARB(SurfDecalProgram, "LightMap");
+  SurfDecalSpecularMapLoc = p_glGetUniformLocationARB(SurfDecalProgram, "SpecularMap");
+
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_simple.vs");
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_simple.fs");
   SurfSimpleProgram = CreateProgram(VertexShader, FragmentShader);

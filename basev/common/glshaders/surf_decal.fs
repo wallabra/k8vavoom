@@ -3,6 +3,8 @@
 // fragment shader for simple (non-lightmapped) surfaces
 
 uniform sampler2D Texture;
+uniform sampler2D LightMap;
+uniform sampler2D SpecularMap;
 uniform vec4 Light;
 uniform vec4 SplatColour; // do recolor if .a is not zero
 uniform float SplatAlpha; // image alpha will be multiplied by this
@@ -15,6 +17,7 @@ uniform float FogEnd;
 uniform bool IsLightmap;
 
 varying vec2 TextureCoordinate;
+varying vec2 LightmapCoordinate;
 
 
 void main () {
@@ -50,9 +53,17 @@ void main () {
 
   if (FinalColour_1.a <= 0.0) discard;
 
-  FinalColour_1.r = clamp(FinalColour_1.r*Light.r*Light.a, 0.0, 1.0);
-  FinalColour_1.g = clamp(FinalColour_1.g*Light.g*Light.a, 0.0, 1.0);
-  FinalColour_1.b = clamp(FinalColour_1.b*Light.b*Light.a, 0.0, 1.0);
+  if (IsLightmap) {
+    vec4 lmc = texture2D(LightMap, LightmapCoordinate);
+    vec4 spc = texture2D(SpecularMap, LightmapCoordinate);
+    FinalColour_1.r = clamp(FinalColour_1.r*lmc.r+spc.r, 0.0, 1.0);
+    FinalColour_1.g = clamp(FinalColour_1.g*lmc.g+spc.g, 0.0, 1.0);
+    FinalColour_1.b = clamp(FinalColour_1.b*lmc.b+spc.b, 0.0, 1.0);
+  } else {
+    FinalColour_1.r = clamp(FinalColour_1.r*Light.r*Light.a, 0.0, 1.0);
+    FinalColour_1.g = clamp(FinalColour_1.g*Light.g*Light.a, 0.0, 1.0);
+    FinalColour_1.b = clamp(FinalColour_1.b*Light.b*Light.a, 0.0, 1.0);
+  }
 
   //FinalColour_1.r = clamp(FinalColour_1.r*Light.r, 0.0, 1.0);
   //FinalColour_1.g = clamp(FinalColour_1.g*Light.g, 0.0, 1.0);

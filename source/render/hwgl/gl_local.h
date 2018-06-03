@@ -435,7 +435,7 @@ private:
   void RenderShaderDecalsStart ();
   void RenderShaderDecalsEnd ();
   void RenderPrepareShaderDecals (surface_t *surf, bool lmap);
-  bool RenderFinishShaderDecals (surface_t *surf, bool lmap);
+  bool RenderFinishShaderDecals (surface_t *surf, bool lmap, surfcache_t *cache);
 
 protected:
   enum { M_INFINITY = 8000 };
@@ -502,6 +502,17 @@ protected:
   GLint         SurfDecalFogDensityLoc;
   GLint         SurfDecalFogStartLoc;
   GLint         SurfDecalFogEndLoc;
+
+  GLint         SurfDecalSAxisLoc;
+  GLint         SurfDecalTAxisLoc;
+  GLint         SurfDecalSOffsLoc;
+  GLint         SurfDecalTOffsLoc;
+  GLint         SurfDecalTexMinSLoc;
+  GLint         SurfDecalTexMinTLoc;
+  GLint         SurfDecalCacheSLoc;
+  GLint         SurfDecalCacheTLoc;
+  GLint         SurfDecalLightMapLoc;
+  GLint         SurfDecalSpecularMapLoc;
 
   GLhandleARB       SurfSimpleProgram;
   GLint         SurfSimpleSAxisLoc;
