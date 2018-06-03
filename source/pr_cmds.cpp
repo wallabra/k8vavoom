@@ -697,7 +697,7 @@ void PR_WriteOne () {
   P_GET_INT(type);
   char *sptr = (char *)memchr(wrbuffer, 0, sizeof(wrbuffer));
   if (!sptr) { sptr = wrbuffer; wrbuffer[0] = 0; } // just in case
-  size_t maxlen = (size_t)(sptr-wrbuffer);
+  size_t maxlen = (size_t)(wrbuffer+sizeof(wrbuffer)-sptr);
   switch (type) {
     case TYPE_Int: case TYPE_Byte: snprintf(sptr, maxlen, "%d", PR_Pop()); break;
     case TYPE_Bool: snprintf(sptr, maxlen, "%s", (PR_Pop() ? "true" : "false")); break;
