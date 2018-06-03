@@ -950,11 +950,11 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
     }
     else if (sc->Check("resethealth"))
     {
-      sc->Message("WARNING: ignored ResetHealth");
+      //sc->Message("WARNING: ignored ResetHealth");
     }
     else if (sc->Check("resetinventory"))
     {
-      sc->Message("WARNING: ignored ResetInventory");
+      //sc->Message("WARNING: ignored ResetInventory");
     }
     else if (sc->Check("unfreezesingleplayerconversations"))
     {
