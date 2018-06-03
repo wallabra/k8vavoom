@@ -843,6 +843,7 @@ void VLexer::ProcessNumberToken () {
         }
         NextChr();
       }
+      if (isAlpha(currCh)) ParseError(Location, "Invalid number");
       return;
     }
   }
@@ -869,14 +870,14 @@ void VLexer::ProcessNumberToken () {
           if (ASCIIToChrCode[(vuint8)currCh] != CHR_Number) break;
           Float += (currCh-'0')*fmul;
           fmul /= 10.0;
-        } else {
-          //ParseError(Location, "RADIX!");
         }
         NextChr();
       }
       if (currCh == 'f') NextChr();
     }
   }
+
+  if (isAlpha(currCh)) ParseError(Location, "Invalid number");
 }
 
 

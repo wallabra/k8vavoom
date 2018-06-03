@@ -247,6 +247,9 @@ public:
 
   static const char *TokenNames[];
 
+  static inline bool isAlpha (char ch) { return ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')); }
+  static inline bool isDigit (char ch) { return (ch >= '0' && ch <= '9'); }
+
 public:
   VLexer ();
   ~VLexer ();
