@@ -1297,11 +1297,12 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       if (li->sidenum[1-sidenum] >= 0) {
         side_t *sb = &Sides[li->sidenum[1-sidenum]];
         sector_t *bsec = sb->Sector;
-        // this check is just in case of something is really fucked up
+        // this check is just in case of something really fucked up
         if (bsec) {
+          //GCon->Logf("bs.floorZ=%f; bs.ceilZ=%f; sec.floorZ=%f; sec.ceilZ=%f", bsec->floor.TexZ, bsec->ceiling.TexZ, sec->floor.TexZ, sec->ceiling.TexZ);
           // back floor has higher z: has bottom, check for [myfloorz..backfloorz]
           if (bsec->floor.TexZ > sec->floor.TexZ && orgz >= sec->floor.TexZ && orgz <= bsec->floor.TexZ) {
-            if ((li->flags&ML_DONTPEGTOP) == 0) {
+            if ((li->flags&/*ML_DONTPEGTOP*/ML_DONTPEGBOTTOM) == 0) {
               decal->curz -= bsec->floor.TexZ;
               decal->flags |= decal_t::SlideFloor|(sidenum == 0 ? decal_t::SideDefOne : 0);
               decal->bsec = bsec;
