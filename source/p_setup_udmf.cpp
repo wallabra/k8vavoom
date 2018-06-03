@@ -387,11 +387,19 @@ void VUdmfParser::ParseSector(VLevel* Level)
       }
       else if (!Key.ICmp("lightcolor"))
       {
-        S.params.LightColour = ParseHex(*CheckString());
+        if (ValType == TK_Int) {
+          S.params.LightColour = ValInt&0xffffff;
+        } else {
+          S.params.LightColour = ParseHex(*CheckString());
+        }
       }
       else if (!Key.ICmp("fadecolor"))
       {
-        S.params.Fade = ParseHex(*CheckString());
+        if (ValType == TK_Int) {
+          S.params.Fade = ValInt&0xffffff;
+        } else {
+          S.params.Fade = ParseHex(*CheckString());
+        }
       }
       else if (!Key.ICmp("silent"))
       {
@@ -1012,7 +1020,12 @@ void VUdmfParser::ParseKey()
   sc.Expect("=");
 
   ValType = TK_None;
-  if (sc.Check("+"))
+  if (sc.CheckQuotedString())
+  {
+    ValType = TK_String;
+    Val = sc.String;
+  }
+  else if (sc.Check("+"))
   {
     if (sc.CheckNumber())
     {
@@ -1026,7 +1039,7 @@ void VUdmfParser::ParseKey()
     }
     else
     {
-      sc.Message("Numeric constant expected");
+      sc.Message(va("Numeric constant expected (0) (%s)", *Key));
     }
   }
   else if (sc.Check("-"))
@@ -1043,7 +1056,7 @@ void VUdmfParser::ParseKey()
     }
     else
     {
-      sc.Message("Numeric constant expected");
+      sc.Message(va("Numeric constant expected (1) (%s)", *Key));
     }
   }
   else if (sc.CheckNumber())
@@ -1055,11 +1068,6 @@ void VUdmfParser::ParseKey()
   {
     ValType = TK_Float;
     ValFloat = sc.Float;
-  }
-  else if (sc.CheckQuotedString())
-  {
-    ValType = TK_String;
-    Val = sc.String;
   }
   else
   {
