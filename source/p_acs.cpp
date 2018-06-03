@@ -364,7 +364,7 @@ private:
     }
     else
     {
-      return Level->FindMobjFromTID(TID, NULL);
+      return Level->FindMobjFromTID(TID, nullptr);
     }
   }
   int FindSectorFromTag(int, int);
@@ -400,58 +400,55 @@ VAcsObject::VAcsObject(VAcsLevel* ALevel, int Lump)
   LumpNum = Lump;
   LibraryID = 0;
   DataSize = 0;
-  Data = NULL;
-  Chunks = NULL;
+  Data = nullptr;
+  Chunks = nullptr;
   NumScripts = 0;
-  Scripts = NULL;
+  Scripts = nullptr;
   NumFunctions = 0;
-  Functions = NULL;
+  Functions = nullptr;
   NumStrings = 0;
-  Strings = NULL;
-  LowerCaseNames = NULL;
+  Strings = nullptr;
+  LowerCaseNames = nullptr;
   NumArrays = 0;
-  ArrayStore = NULL;
+  ArrayStore = nullptr;
   NumTotalArrays = 0;
-  Arrays = NULL;
+  Arrays = nullptr;
   memset(MapVarStore, 0, sizeof(MapVarStore));
 
-  if (Lump < 0)
-    {
-    return;
-    }
-  if (W_LumpLength(Lump) < (int)sizeof(VAcsHeader))
-    {
+  if (Lump < 0) return;
+  if (W_LumpLength(Lump) < (int)sizeof(VAcsHeader)) {
     GCon->Log("Behavior lump too small");
     return;
-    }
+  }
 
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
   Data = new vuint8[Strm->TotalSize()];
   Strm->Serialise(Data, Strm->TotalSize());
   delete Strm;
-  Strm = NULL;
-  VAcsHeader* header = (VAcsHeader*)Data;
+  Strm = nullptr;
+  VAcsHeader *header = (VAcsHeader*)Data;
 
-  //  Check header.
-  if (header->Marker[0] != 'A' || header->Marker[1] != 'C' ||
-    header->Marker[2] != 'S')
-  {
+  // check header
+  if (header->Marker[0] != 'A' || header->Marker[1] != 'C' || header->Marker[2] != 'S') {
+    GCon->Log("Behavior lump has invalid signature");
     return;
   }
   //  Determine format.
-  switch (header->Marker[3])
-  {
-  case 0:
-    Format = ACS_Old;
-    break;
-  case 'E':
-    Format = ACS_Enhanced;
-    break;
-  case 'e':
-    Format = ACS_LittleEnhanced;
-    break;
-  default:
-    return;
+  switch (header->Marker[3]) {
+    case 0:
+      GCon->Log("Behavior lump: standard");
+      Format = ACS_Old;
+      break;
+    case 'E':
+      GCon->Log("Behavior lump: enhanced");
+      Format = ACS_Enhanced;
+      break;
+    case 'e':
+      GCon->Log("Behavior lump: enhancedext");
+      Format = ACS_LittleEnhanced;
+      break;
+    default:
+      return;
   }
 
   DataSize = W_LumpLength(Lump);
@@ -499,28 +496,28 @@ VAcsObject::~VAcsObject()
 {
   //guard(VAcsObject::~VAcsObject);
   delete[] Scripts;
-  Scripts = NULL;
+  Scripts = nullptr;
   delete[] Strings;
-  Strings = NULL;
+  Strings = nullptr;
   delete[] LowerCaseNames;
-  LowerCaseNames = NULL;
+  LowerCaseNames = nullptr;
   for (int i = 0; i < NumArrays; i++)
   {
     delete[] ArrayStore[i].Data;
-    ArrayStore[i].Data = NULL;
+    ArrayStore[i].Data = nullptr;
   }
   if (ArrayStore)
   {
     delete[] ArrayStore;
-    ArrayStore = NULL;
+    ArrayStore = nullptr;
   }
   if (Arrays)
   {
     delete[] Arrays;
-    Arrays = NULL;
+    Arrays = nullptr;
   }
   delete[] Data;
-  Data = NULL;
+  Data = nullptr;
   //unguard;
 }
 
@@ -819,7 +816,7 @@ void VAcsObject::LoadEnhancedObject()
     {
       if (parse[i])
       {
-        VAcsObject* Object = NULL;
+        VAcsObject* Object = nullptr;
         int Lump = W_CheckNumForName(VName(&parse[i],
           VName::AddLower8), WADNS_ACSLibrary);
         if (Lump < 0)
@@ -945,7 +942,7 @@ void VAcsObject::LoadEnhancedObject()
 void VAcsObject::UnencryptStrings()
 {
   guard(VAcsObject::UnencryptStrings);
-  vuint8 *prevchunk = NULL;
+  vuint8 *prevchunk = nullptr;
   vuint32* chunk = (vuint32*)FindChunk("STRE");
   while (chunk)
   {
@@ -1060,7 +1057,7 @@ vuint8* VAcsObject::FindChunk(const char* id) const
     }
     chunk = chunk + LittleLong(((int*)chunk)[1]) + 8;
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -1083,7 +1080,7 @@ vuint8* VAcsObject::NextChunk(vuint8* prev) const
     }
     chunk = chunk + LittleLong(((int*)chunk)[1]) + 8;
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -1154,7 +1151,7 @@ VAcsInfo* VAcsObject::FindScript(int Number) const
       return Scripts + i;
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -1170,7 +1167,7 @@ VAcsFunction* VAcsObject::GetFunction(int funcnum,
   guard(VAcsObject::GetFunction);
   if ((unsigned)funcnum >= (unsigned)NumFunctions)
   {
-    return NULL;
+    return nullptr;
   }
   VAcsFunction* Func = Functions + funcnum;
   if (Func->ImportNum)
@@ -1233,7 +1230,7 @@ void VAcsObject::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
     {
       // Auto-activate
       VAcs* Script = Level->SpawnScript(&Scripts[i], this, Activator,
-        NULL, 0, Arg1, Arg2, Arg3, Always, !RunNow);
+        nullptr, 0, Arg1, Arg2, Arg3, Always, !RunNow);
       if (RunNow)
       {
         Script->RunScript(host_frametime);
@@ -1266,7 +1263,7 @@ VAcsLevel::~VAcsLevel()
   for (int i = 0; i < LoadedObjects.Num(); i++)
   {
     delete LoadedObjects[i];
-    LoadedObjects[i] = NULL;
+    LoadedObjects[i] = nullptr;
   }
   LoadedObjects.Clear();
   //unguard;
@@ -1310,7 +1307,7 @@ VAcsInfo* VAcsLevel::FindScript(int Number, VAcsObject*& Object)
       return Found;
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -1361,7 +1358,7 @@ VAcsObject* VAcsLevel::GetObject(int Index)
   guard(VAcsLevel::GetObject);
   if ((unsigned)Index >= (unsigned)LoadedObjects.Num())
   {
-    return NULL;
+    return nullptr;
   }
   return LoadedObjects[Index];
   unguard;
@@ -1461,7 +1458,7 @@ void VAcsLevel::CheckAcsStore()
           GGameInfo->Players[store->PlayerNum] &&
           (GGameInfo->Players[store->PlayerNum]->PlayerFlags &
           VBasePlayer::PF_Spawned) ?
-          GGameInfo->Players[store->PlayerNum]->MO : NULL, NULL, 0,
+          GGameInfo->Players[store->PlayerNum]->MO : nullptr, nullptr, 0,
           store->Args[0], store->Args[1], store->Args[2],
           store->Type == VAcsStore::StartAlways, true);
         break;
@@ -1673,7 +1670,7 @@ VAcs* VAcsLevel::SpawnScript(VAcsInfo* Info, VAcsObject* Object,
 
 VAcsGrowingArray::VAcsGrowingArray()
 : Size(0)
-, Data(NULL)
+, Data(nullptr)
 {
 }
 
@@ -1689,7 +1686,7 @@ void VAcsGrowingArray::Redim(int NewSize)
   if (!NewSize && Data)
   {
     delete[] Data;
-    Data = NULL;
+    Data = nullptr;
   }
   else if (NewSize)
   {
@@ -1699,7 +1696,7 @@ void VAcsGrowingArray::Redim(int NewSize)
     {
       memcpy(Data, Temp, Min(Size, NewSize) * sizeof(int));
       delete[] Temp;
-      Temp = NULL;
+      Temp = nullptr;
     }
     //  Clear newly allocated elements.
     if (NewSize > Size)
@@ -1781,7 +1778,7 @@ void VAcs::Destroy()
   if (LocalVars)
   {
     delete[] LocalVars;
-    LocalVars = NULL;
+    LocalVars = nullptr;
   }
   unguard;
 }
@@ -1802,7 +1799,7 @@ void VAcs::Serialise(VStream& Strm)
   if (Strm.IsLoading())
   {
     Strm << STRM_INDEX(TmpInt);
-    line = TmpInt == -1 ? NULL : &XLevel->Lines[TmpInt];
+    line = TmpInt == -1 ? nullptr : &XLevel->Lines[TmpInt];
   }
   else
   {
@@ -1852,7 +1849,7 @@ void VAcs::ClearReferences()
   Super::ClearReferences();
   if (Activator && Activator->GetFlags() & _OF_CleanupRef)
   {
-    Activator = NULL;
+    Activator = nullptr;
   }
   unguard;
 }
@@ -1931,7 +1928,7 @@ int VAcs::RunScript(float DeltaTime)
   {
     if (info->RunningScript == this)
     {
-      info->RunningScript = NULL;
+      info->RunningScript = nullptr;
     }
     DestroyThinker();
     return 1;
@@ -1978,14 +1975,14 @@ int VAcs::RunScript(float DeltaTime)
   VStr PrintStr;
   vint32 resultValue = 1;
   vint32 *stack = (vint32 *)Z_Calloc(ACS_STACK_DEPTH);
-  vint32* optstart = NULL;
+  vint32* optstart = nullptr;
   vint32* locals = LocalVars;
-  VAcsFunction* activeFunction = NULL;
+  VAcsFunction* activeFunction = nullptr;
   EAcsFormat fmt = ActiveObject->GetFormat();
   int action = SCRIPT_Continue;
   vuint8* ip = InstructionPointer;
   vint32* sp = stack;
-  VTextureTranslation* Translation = NULL;
+  VTextureTranslation* Translation = nullptr;
   do
   {
     vint32 cmd;
@@ -2675,7 +2672,7 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SectorSound)
-      Level->SectorStartSound(line ? line->frontsector : NULL,
+      Level->SectorStartSound(line ? line->frontsector : nullptr,
         GSoundManager->GetSoundID(GetName(sp[-2])), 0, sp[-1] / 127.0,
         1.0);
       sp -= 2;
@@ -2688,7 +2685,7 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SoundSequence)
-      Level->SectorStartSequence(line ? line->frontsector : NULL,
+      Level->SectorStartSequence(line ? line->frontsector : nullptr,
         GetName(sp[-1]), 0);
       sp--;
       ACSVM_BREAK;
@@ -2699,7 +2696,7 @@ int VAcs::RunScript(float DeltaTime)
           TEXTYPE_Wall, true, true);
         int searcher = -1;
         for (line_t *line = XLevel->FindLine(sp[-4], &searcher);
-          line != NULL; line = XLevel->FindLine(sp[-4], &searcher))
+          line != nullptr; line = XLevel->FindLine(sp[-4], &searcher))
         {
           if (sp[-2] == TEXTURE_MIDDLE)
           {
@@ -2723,7 +2720,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         int searcher = -1;
         for (line_t* line = XLevel->FindLine(sp[-2], &searcher);
-          line != NULL; line = XLevel->FindLine(sp[-2], &searcher))
+          line != nullptr; line = XLevel->FindLine(sp[-2], &searcher))
         {
           switch (sp[-1])
           {
@@ -2760,7 +2757,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         int searcher = -1;
         for (line_t* line = XLevel->FindLine(sp[-7], &searcher);
-          line != NULL; line = XLevel->FindLine(sp[-7], &searcher))
+          line != nullptr; line = XLevel->FindLine(sp[-7], &searcher))
         {
           line->special = sp[-6];
           line->arg1 = sp[-5];
@@ -2776,7 +2773,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_ThingSound)
       {
         VName sound = GetName(sp[-2]);
-        for (VEntity* mobj = Level->FindMobjFromTID(sp[-3], NULL);
+        for (VEntity* mobj = Level->FindMobjFromTID(sp[-3], nullptr);
           mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj))
         {
           mobj->StartSound(sound, 0, sp[-1] / 127.0, 1.0, false);
@@ -2817,7 +2814,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         int searcher = -1;
         for (line_t* line = XLevel->FindLine(sp[-2], &searcher);
-          line != NULL; line = XLevel->FindLine(sp[-2], &searcher))
+          line != nullptr; line = XLevel->FindLine(sp[-2], &searcher))
         {
           if (sp[-1])
             line->flags |= ML_BLOCKMONSTERS;
@@ -2869,7 +2866,7 @@ int VAcs::RunScript(float DeltaTime)
         VBasePlayer* Plr;
         if (sp[-1] <= 0 || sp[-1] > MAXPLAYERS)
         {
-          Plr = Activator ? Activator->Player : NULL;
+          Plr = Activator ? Activator->Player : nullptr;
         }
         else
         {
@@ -3133,7 +3130,7 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_MoreHudMessage)
       PrintStr = PrintStr.EvalEscapeSequences();
-      optstart = NULL;
+      optstart = nullptr;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_OptHudMessage)
@@ -3309,7 +3306,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         if (sp[-7] != 0)
         {
-          for (VEntity* Ent = Level->FindMobjFromTID(sp[-7], NULL);
+          for (VEntity* Ent = Level->FindMobjFromTID(sp[-7], nullptr);
             Ent; Ent = Level->FindMobjFromTID(sp[-7], Ent))
           {
             Ent->Special = sp[-6];
@@ -3474,7 +3471,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         while (XLevel->Translations.Num() < sp[-1])
         {
-          XLevel->Translations.Append(NULL);
+          XLevel->Translations.Append(nullptr);
         }
         Translation = XLevel->Translations[sp[-1] - 1];
         if (!Translation)
@@ -3913,7 +3910,7 @@ int VAcs::RunScript(float DeltaTime)
       }
       else
       {
-        for (VEntity* Ent = Level->FindMobjFromTID(sp[-3], NULL);
+        for (VEntity* Ent = Level->FindMobjFromTID(sp[-3], nullptr);
           Ent; Ent = Level->FindMobjFromTID(sp[-3], Ent))
         {
           Ent->eventSetActorProperty(sp[-2], sp[-1], GetStr(sp[-1]));
@@ -3924,7 +3921,7 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_GetActorProperty)
       {
-        VEntity* Ent = EntityFromTID(sp[-2], NULL);
+        VEntity* Ent = EntityFromTID(sp[-2], nullptr);
         if (!Ent)
         {
           sp[-2] = 0;
@@ -4223,7 +4220,7 @@ int VAcs::RunScript(float DeltaTime)
       }
       else
       {
-        for (VEntity* Ent = Level->FindMobjFromTID(sp[-2], NULL);
+        for (VEntity* Ent = Level->FindMobjFromTID(sp[-2], nullptr);
           Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent))
         {
           Ent->Angles.yaw = (float)(sp[-1] & 0xffff) * 360.0 / (float)0x10000;
@@ -4265,7 +4262,7 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_ClearActorInventory)
       {
-        for (VEntity* mobj = Level->FindMobjFromTID(sp[-1], NULL);
+        for (VEntity* mobj = Level->FindMobjFromTID(sp[-1], nullptr);
           mobj; mobj = Level->FindMobjFromTID(sp[-1], mobj))
         {
           mobj->eventClearInventory();
@@ -4276,7 +4273,7 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_GiveActorInventory)
       {
-        for (VEntity* mobj = Level->FindMobjFromTID(sp[-3], NULL);
+        for (VEntity* mobj = Level->FindMobjFromTID(sp[-3], nullptr);
           mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj))
         {
           mobj->eventGiveInventory(GetNameLowerCase(sp[-2]), sp[-1]);
@@ -4288,7 +4285,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_TakeActorInventory)
       {
         //int searcher = -1;
-        for (VEntity* mobj = Level->FindMobjFromTID(sp[-3], NULL);
+        for (VEntity* mobj = Level->FindMobjFromTID(sp[-3], nullptr);
           mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj))
         {
           mobj->eventTakeInventory(GetNameLowerCase(sp[-2]), sp[-1]);
@@ -4299,7 +4296,7 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_CheckActorInventory)
       {
-        VEntity* Ent = EntityFromTID(sp[-2], NULL);
+        VEntity* Ent = EntityFromTID(sp[-2], nullptr);
         if (!Ent)
         {
           sp[-2] = 0;
@@ -4703,7 +4700,7 @@ int VAcs::RunScript(float DeltaTime)
       }
       else
       {
-        for (VEntity* Ent = Level->FindMobjFromTID(sp[-2], NULL);
+        for (VEntity* Ent = Level->FindMobjFromTID(sp[-2], nullptr);
           Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent))
         {
           Ent->Angles.pitch = AngleMod180(
@@ -4725,7 +4722,7 @@ int VAcs::RunScript(float DeltaTime)
         VMemberBase::StaticSplitStateLabel(GetStr(sp[-2]), Names);
         if (!sp[-3])
         {
-          VStateLabel* Lbl = !Activator ? NULL :
+          VStateLabel* Lbl = !Activator ? nullptr :
             Activator->GetClass()->FindStateLabel(Names, !!sp[-1]);
           if (Lbl && Lbl->State)
           {
@@ -4740,7 +4737,7 @@ int VAcs::RunScript(float DeltaTime)
         else
         {
           int Count = 0;
-          for (VEntity* Ent = Level->FindMobjFromTID(sp[-3], NULL);
+          for (VEntity* Ent = Level->FindMobjFromTID(sp[-3], nullptr);
             Ent; Ent = Level->FindMobjFromTID(sp[-3], Ent))
           {
             VStateLabel* Lbl = Ent->GetClass()->FindStateLabel(
@@ -4788,7 +4785,7 @@ int VAcs::RunScript(float DeltaTime)
       if (sp[-2])
       {
         int Ret = 0;
-        for (VEntity* Ent = Level->FindMobjFromTID(sp[-2], NULL);
+        for (VEntity* Ent = Level->FindMobjFromTID(sp[-2], nullptr);
           Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent))
         {
           Ret += Ent->eventUseInventoryName(GetNameLowerCase(sp[-1]));
@@ -4895,7 +4892,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         //int searcher = -1;
         int Res = 0;
-        for (VEntity* Ent = Level->FindMobjFromTID(sp[-7], NULL);
+        for (VEntity* Ent = Level->FindMobjFromTID(sp[-7], nullptr);
           Ent; Ent = Level->FindMobjFromTID(sp[-7], Ent))
         {
           Res += Ent->eventMorphActor(GetNameLowerCase(sp[-6]),
@@ -4922,7 +4919,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         //int searcher = -1;
         int Res = 0;
-        for (VEntity* Ent = Level->FindMobjFromTID(sp[-2], NULL);
+        for (VEntity* Ent = Level->FindMobjFromTID(sp[-2], nullptr);
           Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent))
         {
           Res += Ent->eventUnmorphActor(Activator, sp[-1]);
@@ -4967,7 +4964,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_ClassifyActor)
       if (sp[-1])
       {
-        VEntity* Ent = EntityFromTID(sp[-1], NULL);
+        VEntity* Ent = EntityFromTID(sp[-1], nullptr);
         if (Ent)
         {
           sp[-1] = Ent->eventClassifyActor();
@@ -5061,7 +5058,7 @@ LblFuncStop:
   {
     if (info->RunningScript == this)
     {
-      info->RunningScript = NULL;
+      info->RunningScript = nullptr;
     }
     DestroyThinker();
   }
@@ -5239,6 +5236,6 @@ COMMAND(Puke)
   }
 
   Player->Level->XLevel->Acs->Start(abs(Script), 0, ScArgs[0], ScArgs[1],
-    ScArgs[2], GGameInfo->Players[0]->MO, NULL, 0, Script < 0, false, true);
+    ScArgs[2], GGameInfo->Players[0]->MO, nullptr, 0, Script < 0, false, true);
   unguard;
 }
