@@ -605,6 +605,8 @@ struct line_t : TPlane
 
   seg_t *firstseg; // linked by lsnext
 
+  int decalMark;
+
   // lines connected to `v1`
   line_t **v1lines;
   int v1linesCount;

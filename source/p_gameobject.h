@@ -223,6 +223,8 @@ struct line_t : public TPlane
 
   seg_t *firstseg; // linked by lsnext
 
+  int decalMark; // uid of current decal placement loop, to avoid endless looping
+
   // lines connected to `v1`
   line_t **v1lines;
   int v1linesCount;

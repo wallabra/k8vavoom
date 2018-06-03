@@ -121,6 +121,7 @@ void VLevel::LoadMap(VName AMapName)
   int lumpnum;
   VName MapLumpName;
   decanimlist = nullptr;
+  decanimuid = 0;
 
   double TotalTime = -Sys_Time();
   double InitTime = -Sys_Time();
@@ -482,6 +483,7 @@ void VLevel::LoadMap(VName AMapName)
   // build v1 and v2 lists
   for (int i = 0; i < NumLines; ++i) {
     line_t *ld = Lines+i;
+    ld->decalMark = 0;
     ld->v1linesCount = ld->v2linesCount = 0;
     ld->v1lines = ld->v2lines = nullptr;
     for (int vn = 0; vn < 2; ++vn) {

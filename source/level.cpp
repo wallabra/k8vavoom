@@ -1168,6 +1168,11 @@ static bool isDecalsOverlap (VDecalDef *dec, float segdist, float orgz, decal_t*
 void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, vuint32 flips) {
   guard(VLevel::PutDecalAtLine);
 
+  if (tex < 0 || tex >= GTextureManager.GetNumTextures()) return;
+
+  if (li->decalMark == decanimuid) return;
+  li->decalMark = decanimuid;
+
   picinfo_t tinf;
   GTextureManager.GetTextureInfo(tex, &tinf);
   float tw = tinf.width*dec->scaleX;
@@ -1404,6 +1409,14 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
     AddDecal(org, dec->lowername, (sec == li->backsector ? 1 : 0), li, level+1);
   }
 
+  if (++decanimuid == 0x7fffffff) {
+    decanimuid = 1;
+    for (int f = 0; f < NumLines; ++f) {
+      line_t *ld = Lines+f;
+      ld->decalMark = 0;
+    }
+  }
+
   if (dec->scaleX <= 0 || dec->scaleY <= 0) {
     GCon->Logf("Decal '%s' has zero scale", *dec->name);
     return;
@@ -1417,7 +1430,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
 
   int tex = GTextureManager.AddPatch(dec->pic, TEXTYPE_Pic);
   //if (dec->pic == VName("scorch1")) tex = GTextureManager.AddPatch(VName("bulde1"), TEXTYPE_Pic);
-  if (tex < 0) {
+  if (tex < 0 || tex >= GTextureManager.GetNumTextures()) {
     // no decal gfx, nothing to do
     GCon->Logf("Decal '%s' has no pic (%s)", *dec->name, *dec->pic);
     return;
