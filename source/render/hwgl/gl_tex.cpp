@@ -186,10 +186,9 @@ void VOpenGLDrawer::SetTexture(VTexture* Tex, int CMap)
 {
   guard(VOpenGLDrawer::SetTexture);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
-  if (Tex->Type == TEXTYPE_WallPatch || Tex->Type == TEXTYPE_Wall ||
-    Tex->Type == TEXTYPE_Flat)
+  if (Tex->Type == TEXTYPE_WallPatch || Tex->Type == TEXTYPE_Wall || Tex->Type == TEXTYPE_Flat)
   {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR /*GL_NEAREST*/ /*GL_LINEAR_MIPMAP_NEAREST*/);
   }
   else
   {
@@ -417,7 +416,6 @@ void VOpenGLDrawer::UploadTexture(int width, int height, const rgba_t* data)
   guard(VOpenGLDrawer::UploadTexture);
   int   w, h;
   vuint8* image;
-  int   level;
   vuint8* stackbuf = (vuint8 *)Z_Malloc(256 * 128 * 4);
 
   w = ToPowerOf2(width);
@@ -447,13 +445,15 @@ void VOpenGLDrawer::UploadTexture(int width, int height, const rgba_t* data)
   VTexture::AdjustGamma((rgba_t*)image, w * h);
   glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 
-  for (level = 1; w > 1 || h > 1; level++)
+//#ifdef VAVOOM_USE_MIPMAPS
+  for (int level = 1; w > 1 || h > 1; level++)
   {
     VTexture::MipMap(w, h, image);
     if (w > 1) w >>= 1;
     if (h > 1) h >>= 1;
     glTexImage2D(GL_TEXTURE_2D, level, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
   }
+//#endif
 
   if (image != stackbuf) Z_Free(image);
   Z_Free(stackbuf);

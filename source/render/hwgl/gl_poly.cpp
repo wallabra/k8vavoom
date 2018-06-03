@@ -1043,22 +1043,22 @@ void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture* Tex, float Alpha,
     case 2:
       spr_maxfilter = GL_LINEAR;
       spr_minfilter = GL_LINEAR;
-      spr_mipfilter = GL_LINEAR_MIPMAP_NEAREST;
+      spr_mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
       break;
     case 3:
       spr_maxfilter = GL_LINEAR;
       spr_minfilter = GL_LINEAR;
-      spr_mipfilter = GL_LINEAR_MIPMAP_LINEAR;
+      spr_mipfilter = GL_LINEAR /*GL_LINEAR_MIPMAP_LINEAR*/;
       break;
     case 4: // BILINEAR
       spr_maxfilter = GL_NEAREST;
-      spr_minfilter = GL_LINEAR_MIPMAP_NEAREST;
-      spr_mipfilter = GL_LINEAR_MIPMAP_NEAREST;
+      spr_minfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
+      spr_mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
       break;
     case 5: // TRILINEAR
       spr_maxfilter = GL_NEAREST;
-      spr_minfilter = GL_LINEAR_MIPMAP_LINEAR;
-      spr_mipfilter = GL_LINEAR_MIPMAP_LINEAR;
+      spr_minfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_LINEAR*/;
+      spr_mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_LINEAR*/;
       break;
     default:
       spr_maxfilter = GL_NEAREST;

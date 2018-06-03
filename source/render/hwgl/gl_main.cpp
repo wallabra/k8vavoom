@@ -787,28 +787,28 @@ void VOpenGLDrawer::StartUpdate()
     {
       maxfilter = GL_LINEAR;
       minfilter = GL_LINEAR;
-      mipfilter = GL_LINEAR_MIPMAP_NEAREST;
+      mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
       break;
     }
     case 3:
     {
       maxfilter = GL_LINEAR;
       minfilter = GL_LINEAR;
-      mipfilter = GL_LINEAR_MIPMAP_LINEAR;
+      mipfilter = GL_LINEAR /*GL_LINEAR_MIPMAP_LINEAR*/;
       break;
     }
     case 4: // BILINEAR
     {
       maxfilter = GL_NEAREST;
-      minfilter = GL_LINEAR_MIPMAP_NEAREST;
-      mipfilter = GL_LINEAR_MIPMAP_NEAREST;
+      minfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
+      mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
       break;
     }
     case 5: // TRILINEAR
     {
       maxfilter = GL_NEAREST;
-      minfilter = GL_LINEAR_MIPMAP_LINEAR;
-      mipfilter = GL_LINEAR_MIPMAP_LINEAR;
+      minfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_LINEAR*/;
+      mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_LINEAR*/;
       break;
     }
     default:
