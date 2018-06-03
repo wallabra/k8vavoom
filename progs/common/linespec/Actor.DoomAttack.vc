@@ -726,7 +726,7 @@ final void A_VileTarget()
 //
 //==========================================================================
 
-final void A_VileAttack()
+final void A_VileAttack(optional string sound, optional int initialdamage, optional int blastdamage, optional int blastradius, optional float thrustfactor, optional string damagetype, optional int flags)
 {
   EntityEx fire;
 
@@ -742,8 +742,16 @@ final void A_VileAttack()
     return;
   }
 
-  PlaySound('vile/stop', CHAN_WEAPON);
-  Target.Damage(self, self, 20);
+  if (specified_sound) {
+    if (sound.length > 0) {
+      PlaySound(name(sound), CHAN_WEAPON);
+    }
+  } else {
+    PlaySound('vile/stop', CHAN_WEAPON);
+  }
+  if (!specified_initialdamage) initialdamage = 20;
+  if (initialdamage < 0) initialdamage = 0;
+  Target.Damage(self, self, /*20*/initialdamage);
 
   fire = Tracer;
 
@@ -757,9 +765,21 @@ final void A_VileAttack()
   fire.Origin.x = Target.Origin.x - 24.0 * cos(Angles.yaw);
   fire.Origin.y = Target.Origin.y - 24.0 * sin(Angles.yaw);
   fire.LinkToWorld();
-  fire.RadiusAttack(self, 70, 70.0, true);
+
+  if (!specified_blastdamage) blastdamage = 70;
+  if (blastdamage < 0) blastdamage = 0;
+
+  if (!specified_blastradius) blastradius = 70;
+  if (blastradius < 0) blastradius = 0;
+  if (blastradius > 0) {
+    fire.RadiusAttack(self, blastdamage, float(blastradius), true);
+  }
+
   // change velocity Z component before doing RadiusAttack
-  Target.Velocity.z = (1000.0 / Target.Mass) * 35.0;
+  if (!specified_thrustfactor) thrustfactor = 1.0;
+  if (thrustfactor > 0) {
+    Target.Velocity.z = (1000.0*thrustfactor / Target.Mass) * 35.0;
+  }
 }
 
 //==========================================================================
