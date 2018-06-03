@@ -82,6 +82,7 @@ public:
 
   VAcsObject* LoadObject(int Lump);
   VAcsInfo* FindScript(int Number, VAcsObject*& Object);
+  VAcsInfo* FindScriptByName(int Number, VAcsObject*& Object);
   VStr GetString(int Index);
   VName GetNameLowerCase(int Index);
   VAcsObject* GetObject(int Index);

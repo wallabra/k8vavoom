@@ -99,6 +99,7 @@ struct VAcsInfo
   vuint8*   Address;
   vuint16   Flags;
   vuint16   VarCount;
+  VName     Name; // NAME_None for unnamed scripts
   VAcs*   RunningScript;
 };
 
@@ -214,6 +215,7 @@ public:
     return LibraryID;
   }
   VAcsInfo* FindScript(int Number) const;
+  VAcsInfo* FindScriptByName (int nameidx) const;
   VAcsFunction* GetFunction(int funcnum, VAcsObject*& Object);
   int GetArrayVal(int ArrayIdx, int Index);
   void SetArrayVal(int ArrayIdx, int Index, int Value);
@@ -435,20 +437,10 @@ VAcsObject::VAcsObject(VAcsLevel* ALevel, int Lump)
   }
   //  Determine format.
   switch (header->Marker[3]) {
-    case 0:
-      GCon->Log("Behavior lump: standard");
-      Format = ACS_Old;
-      break;
-    case 'E':
-      GCon->Log("Behavior lump: enhanced");
-      Format = ACS_Enhanced;
-      break;
-    case 'e':
-      GCon->Log("Behavior lump: enhancedext");
-      Format = ACS_LittleEnhanced;
-      break;
-    default:
-      return;
+    case 0: Format = ACS_Old; break;
+    case 'E': Format = ACS_Enhanced; break;
+    case 'e': Format = ACS_LittleEnhanced; break;
+    default: return;
   }
 
   DataSize = W_LumpLength(Lump);
@@ -473,6 +465,13 @@ VAcsObject::VAcsObject(VAcsLevel* ALevel, int Lump)
   else
   {
     Chunks = Data + LittleLong(header->InfoOffset);
+  }
+
+  switch (Format) {
+    case ACS_Old: GCon->Log("Behavior lump: standard"); break;
+    case ACS_Enhanced: GCon->Log("Behavior lump: enhanced-ext"); break;
+    case ACS_LittleEnhanced: GCon->Log("Behavior lump: enhanced-ext"); break;
+    default: break;
   }
 
   if (Format == ACS_Old)
@@ -559,6 +558,7 @@ void VAcsObject::LoadOldObject()
     info->ArgCount = LittleLong(*buffer++);
     info->Flags = 0;
     info->VarCount = MAX_ACS_SCRIPT_VARS;
+    info->Name = NAME_None;
   }
 
   //  Load strings.
@@ -611,6 +611,7 @@ void VAcsObject::LoadEnhancedObject()
       info->ArgCount = LittleLong(*buffer++);
       info->Flags = 0;
       info->VarCount = MAX_ACS_SCRIPT_VARS;
+      info->Name = NAME_None;
     }
   }
   else
@@ -629,6 +630,7 @@ void VAcsObject::LoadEnhancedObject()
       info->Address = OffsetToPtr(LittleLong(*buffer++));
       info->Flags = 0;
       info->VarCount = MAX_ACS_SCRIPT_VARS;
+      info->Name = NAME_None;
     }
   }
 
@@ -930,6 +932,37 @@ void VAcsObject::LoadEnhancedObject()
       }
     }
   }
+
+  // Load script names (if any)
+  buffer = (int*)FindChunk("SNAM");
+  if (buffer) {
+    int size = LittleLong(buffer[1]);
+    buffer += 2; // skip name and size
+    int count = LittleLong(buffer[0]);
+    if (count > 0 && size > 0) {
+      bool valid = true;
+      char **sbuf = new char *[count];
+      for (int f = 0; f < count; ++f) {
+        int ofs = LittleLong(buffer[1+f]);
+        if (ofs < 0 || ofs >= size) { valid = false; break; }
+        char *e = (char *)memchr(((vuint8 *)buffer)+ofs, 0, size-ofs);
+        if (!e) { valid = false; break; }
+        sbuf[f] = ((char *)buffer)+ofs;
+      }
+      if (valid) {
+        //GCon->Logf("ACS SNAM: %d names found", count);
+        for (int f = 0; f < count; ++f) {
+          //GCon->Logf("  #%d: <%s>", f, sbuf[f]);
+          if (f < NumScripts) Scripts[f].Name = VName(sbuf[f]);
+          //else GCon->Logf("    OOPS!");
+        }
+      } else {
+        GCon->Logf("ACS ERROR: invalid `SNAM` chunk!");
+      }
+      delete sbuf;
+    }
+  }
+
   unguard;
 }
 
@@ -1157,6 +1190,27 @@ VAcsInfo* VAcsObject::FindScript(int Number) const
 
 //==========================================================================
 //
+//  VAcsObject::FindScriptByName
+//
+//==========================================================================
+
+VAcsInfo* VAcsObject::FindScriptByName (int nameidx) const
+{
+  guard(VAcsObject::FindScriptByName);
+  if (nameidx == 0) return nullptr;
+  if (nameidx < 0) {
+    nameidx = -nameidx;
+    if (nameidx < 0) return nullptr;
+  }
+  for (int i = 0; i < NumScripts; i++) {
+    if (Scripts[i].Name.GetIndex() == nameidx) return Scripts + i;
+  }
+  return nullptr;
+  unguard;
+}
+
+//==========================================================================
+//
 //  VAcsObject::GetFunction
 //
 //==========================================================================
@@ -1301,6 +1355,28 @@ VAcsInfo* VAcsLevel::FindScript(int Number, VAcsObject*& Object)
   for (int i = 0; i < LoadedObjects.Num(); i++)
   {
     VAcsInfo* Found = LoadedObjects[i]->FindScript(Number);
+    if (Found)
+    {
+      Object = LoadedObjects[i];
+      return Found;
+    }
+  }
+  return nullptr;
+  unguard;
+}
+
+//==========================================================================
+//
+//  VAcsLevel::FindScriptByName
+//
+//==========================================================================
+
+VAcsInfo* VAcsLevel::FindScriptByName (int Number, VAcsObject*& Object)
+{
+  guard(VAcsLevel::FindScriptByName);
+  for (int i = 0; i < LoadedObjects.Num(); i++)
+  {
+    VAcsInfo* Found = LoadedObjects[i]->FindScriptByName(Number);
     if (Found)
     {
       Object = LoadedObjects[i];
@@ -1513,7 +1589,12 @@ bool VAcsLevel::Start(int Number, int MapNum, int Arg1, int Arg2, int Arg3,
   }
 
   VAcsObject* Object;
-  VAcsInfo* Info = FindScript(Number, Object);
+  VAcsInfo* Info;
+  if (Number >= 0) {
+    Info = FindScript(Number, Object);
+  } else {
+    Info = FindScriptByName(Number, Object);
+  }
   if (!Info)
   {
     //  Script not found
