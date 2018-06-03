@@ -381,15 +381,17 @@ void VOpenGLDrawer::WorldDrawing () {
         p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_FALSE);
       }
 
+      bool doDecals = tex->Tex && !tex->Tex->noDecals && surf->dcseg && surf->dcseg->decals;
+
       // fill stencil buffer for decals
-      if (surf->dcseg && surf->dcseg->decals) RenderPrepareShaderDecals(surf, false);
+      if (doDecals) RenderPrepareShaderDecals(surf, false);
 
       glBegin(GL_POLYGON);
       for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
       glEnd();
 
       // draw decals
-      if (surf->dcseg && surf->dcseg->decals) RenderFinishShaderDecals(surf, false, nullptr);
+      if (doDecals) RenderFinishShaderDecals(surf, false, nullptr);
     }
   }
 
@@ -454,15 +456,17 @@ void VOpenGLDrawer::WorldDrawing () {
         p_glUniform1iARB(SurfLightmapFogEnabledLoc, GL_FALSE);
       }
 
+      bool doDecals = tex->Tex && !tex->Tex->noDecals && surf->dcseg && surf->dcseg->decals;
+
       // fill stencil buffer for decals
-      if (surf->dcseg && surf->dcseg->decals) RenderPrepareShaderDecals(surf, true);
+      if (doDecals) RenderPrepareShaderDecals(surf, true);
 
       glBegin(GL_POLYGON);
       for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
       glEnd();
 
       // draw decals
-      if (surf->dcseg && surf->dcseg->decals) {
+      if (doDecals) {
         if (RenderFinishShaderDecals(surf, true, cache)) {
           /*
           SelectTexture(1);
@@ -531,15 +535,17 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       ((surf->Light >> 8) & 255) * lev / 255.0,
       (surf->Light & 255) * lev / 255.0, 1.0);
 
+    bool doDecals = tex->Tex && !tex->Tex->noDecals && surf->dcseg && surf->dcseg->decals;
+
     // fill stencil buffer for decals
-    if (surf->dcseg && surf->dcseg->decals) RenderPrepareShaderDecals(surf, true);
+    if (doDecals) RenderPrepareShaderDecals(surf, true);
 
     glBegin(GL_POLYGON);
     for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
     glEnd();
 
     // draw decals
-    if (surf->dcseg && surf->dcseg->decals) {
+    if (doDecals) {
       if (RenderFinishShaderDecals(surf, false, nullptr)) {
         p_glUseProgramObjectARB(ShadowsAmbientProgram);
       }

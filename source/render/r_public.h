@@ -200,6 +200,8 @@ public:
   int HashNext;
   int SourceLump;
 
+  bool noDecals;
+
   // driver data
   struct VTransData {
     union {

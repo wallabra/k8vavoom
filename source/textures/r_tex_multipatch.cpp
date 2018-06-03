@@ -175,7 +175,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
       } else if (sc->Check("nulltexture")) {
         Type = TEXTYPE_Null;
       } else if (sc->Check("nodecals")) {
-        //FIXME: support this!
+        noDecals = true;
       }
       else if (sc->Check("patch")) {
         VTexPatch &P = Parts.Alloc();
