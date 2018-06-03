@@ -83,6 +83,9 @@ public:
   static void ForwardToServer();
   static int CheckParm(const char*);
 
+  static int GetArgC ();
+  static VStr GetArgV (int idx);
+
   friend class VCmdBuf;
   friend class TCmdCmdList;
   friend class TCmdAlias;

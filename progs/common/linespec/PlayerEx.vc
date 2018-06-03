@@ -3758,6 +3758,49 @@ final override void Cheat_Buddha () {
 
 //==========================================================================
 //
+//  Cheat_Summon
+//
+//==========================================================================
+
+final override void Cheat_Summon () {
+  //print("SUMMON: argc=%d", Cmd_GetArgC());
+  if (!MO.bIsPlayer || !Level) return;
+  auto plr = PlayerEx(MO.Player);
+  if (!plr) return;
+
+  if (Cmd_GetArgC() != 2) {
+    cprint("Summon: class name expected");
+    return;
+  }
+
+  // find which type to spawn
+  auto moClass = class!EntityEx(FindClassLowerCase(name(Cmd_GetArgV(1))));
+  if (!moClass) {
+    // Can't find thing type
+    print("Summon: unknown class '%s'", Cmd_GetArgV(1));
+    return;
+  }
+
+  moClass = class!EntityEx(GetClassReplacement(moClass));
+
+  // if actor has no sprites, also map it to the unknown thing
+  if (FindClassState(moClass, 'Spawn') && !AreStateSpritesPresent(FindClassState(moClass, 'Spawn'))) {
+    print("Summon: class '%s' has no frames", Cmd_GetArgV(1));
+    return;
+  }
+
+  //if (Level.Game.nomonsters && moClass.default.bMonster) return;
+
+  // spawn it
+  TAVec ang = MO.Angles; //vector(plr.pitch, plr.yaw, plr.roll);
+  TVec dir;
+  AngleVector(&ang, &dir);
+  TVec dst = MO.Origin+84*dir;
+  Level.Spawn(moClass, dst); // optional TAVec AAngles, optional mthing_t* mthing, optional bool AllowReplace
+}
+
+//==========================================================================
+//
 //  Cheat_NoClip
 //
 //==========================================================================

@@ -648,6 +648,8 @@ native static final string NameToStr(name Name);
 //  Console command functions
 //
 native static final int Cmd_CheckParm(string str);
+native static final int Cmd_GetArgC();
+native static final string Cmd_GetArgV(int idx);
 //  Adds text to command buffer, same as typing it in console
 native static final void CmdBuf_AddText(string format, ...);
 #endif

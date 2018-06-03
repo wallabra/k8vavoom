@@ -336,6 +336,11 @@ class VBasePlayer : public VGameObject
     P_PASS_SELF;
     EV_RET_VOID(NAME_Cheat_Buddha);
   }
+  void eventCheat_Summon()
+  {
+    P_PASS_SELF;
+    EV_RET_VOID(NAME_Cheat_Summon);
+  }
   void eventCheat_NoClip()
   {
     P_PASS_SELF;

@@ -283,6 +283,8 @@ public:
 #ifndef VCC_STANDALONE_EXECUTOR
   // console command functions
   DECLARE_FUNCTION(Cmd_CheckParm)
+  DECLARE_FUNCTION(Cmd_GetArgC)
+  DECLARE_FUNCTION(Cmd_GetArgV)
   DECLARE_FUNCTION(CmdBuf_AddText)
 #endif
 

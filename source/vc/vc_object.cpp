@@ -929,6 +929,15 @@ IMPLEMENT_FUNCTION(VObject, Cmd_CheckParm) {
   RET_INT(VCommand::CheckParm(*str));
 }
 
+IMPLEMENT_FUNCTION(VObject, Cmd_GetArgC) {
+  RET_INT(VCommand::GetArgC());
+}
+
+IMPLEMENT_FUNCTION(VObject, Cmd_GetArgV) {
+  P_GET_INT(idx);
+  RET_STR(VCommand::GetArgV(idx));
+}
+
 IMPLEMENT_FUNCTION(VObject, CmdBuf_AddText) {
   GCmdBuf << PF_FormatString();
 }

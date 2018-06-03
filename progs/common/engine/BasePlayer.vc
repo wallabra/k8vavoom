@@ -254,6 +254,10 @@ void Cheat_Buddha()
 {
 }
 
+void Cheat_Summon()
+{
+}
+
 void Cheat_NoClip()
 {
 }
