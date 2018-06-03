@@ -858,8 +858,9 @@ void VLexer::ProcessNumberToken () {
 
   if (currCh == '.') {
     char nch = Peek(1);
-    if ((nch >= 'A' && nch <= 'Z') || (nch >= 'a' && nch <= 'z') || nch == '_') {
+    if (isAlpha(nch) || nch == '_') {
       // num dot smth
+      return; // so 10.seconds is allowed
     } else {
       Token = TK_FloatLiteral;
       NextChr(); // skip dot
