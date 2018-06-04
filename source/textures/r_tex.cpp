@@ -348,6 +348,7 @@ int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bChe
   {
     if (!numForNameWarned.put(*Name)) {
       GCon->Logf("VTextureManager::NumForName: '%s' not found (type:%d; over:%d; any:%d)", *Name, (int)Type, (int)bOverload, (int)bCheckAny);
+      /*
       if (VStr::ICmp(*Name, "ml_sky1") == 0) {
         GCon->Logf("!!!!!!!!!!!!!!!!!!");
         for (int f = 0; f < Textures.length(); ++f) {
@@ -356,6 +357,7 @@ int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bChe
           }
         }
       }
+      */
     }
     i = DefaultTexture;
   }
