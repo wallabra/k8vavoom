@@ -57,7 +57,7 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum) {
   VStream *Strm = W_CreateLumpReaderNum(LumpNum);
 
   for (size_t i = 0; i < ARRAY_COUNT(TexTable); ++i) {
-    if (TexTable[i].Type == Type || TexTable[i].Type == TEXTYPE_Any) {
+    if (TexTable[i].Type == Type || TexTable[i].Type == TEXTYPE_Any || Type == TEXTYPE_Any) {
       VTexture *Tex = TexTable[i].Create(*Strm, LumpNum);
       if (Tex) {
         Tex->Type = Type;

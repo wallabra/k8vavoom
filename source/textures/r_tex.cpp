@@ -292,39 +292,40 @@ void VTextureManager::RemoveFromHash(int Index)
 //
 //==========================================================================
 
-int VTextureManager::CheckNumForName(VName Name, int Type, bool bOverload,
-  bool bCheckAny)
-{
+int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool bCheckAny) {
   guard(VTextureManager::CheckNumForName);
-  //  Check for "NoTexture" marker.
-  if ((*Name)[0] == '-' && (*Name)[1] == 0)
-  {
-    return 0;
-  }
+  // check for "NoTexture" marker
+  if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
 
   int HashIndex = GetTypeHash(Name)&(HASH_SIZE-1);
-  for (int i = TextureHash[HashIndex]; i >= 0; i = Textures[i]->HashNext)
-  {
-    if (Textures[i]->Name != Name)
-    {
-      continue;
-    }
+  for (int i = TextureHash[HashIndex]; i >= 0; i = Textures[i]->HashNext) {
+    if (Textures[i]->Name != Name) continue;
 
     if (Type == TEXTYPE_Any || Textures[i]->Type == Type ||
-      (bOverload && Textures[i]->Type == TEXTYPE_Overload))
+        (bOverload && Textures[i]->Type == TEXTYPE_Overload))
     {
-      if (Textures[i]->Type == TEXTYPE_Null)
-      {
-        return 0;
-      }
+      if (Textures[i]->Type == TEXTYPE_Null) return 0;
       return i;
     }
+    /*
+    if ((Type == TEXTYPE_Wall && Textures[i]->Type == TEXTYPE_WallPatch) ||
+        (Type == TEXTYPE_WallPatch && Textures[i]->Type == TEXTYPE_Wall))
+    {
+      if (Textures[i]->Type == TEXTYPE_Null) return 0;
+      return i;
+    }
+    */
   }
 
-  if (bCheckAny)
-  {
-    return CheckNumForName(Name, TEXTYPE_Any, bOverload, false);
+  if (bCheckAny) return CheckNumForName(Name, TEXTYPE_Any, bOverload, false);
+
+#if 0
+  if (VStr::Cmp(*Name, "ml_sky1") == 0 /*|| VStr::Cmp(*Name, "ml_sky2") == 0 || VStr::Cmp(*Name, "ml_sky3") == 0*/) {
+    for (int f = 0; f < Textures.length(); ++f) {
+      fprintf(stderr, "#%d: %d:<%s>\n", f, Textures[f]->Type, *Textures[f]->Name);
+    }
   }
+#endif
 
   return -1;
   unguard;
@@ -340,14 +341,22 @@ int VTextureManager::CheckNumForName(VName Name, int Type, bool bOverload,
 
 static TStrSet numForNameWarned;
 
-int VTextureManager::NumForName(VName Name, int Type, bool bOverload,
-  bool bCheckAny)
-{
+int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bCheckAny) {
   guard(VTextureManager::NumForName);
   int i = CheckNumForName(Name, Type, bOverload, bCheckAny);
   if (i == -1)
   {
-    if (!numForNameWarned.put(*Name)) GCon->Logf("VTextureManager::NumForName: %s not found", *Name);
+    if (!numForNameWarned.put(*Name)) {
+      GCon->Logf("VTextureManager::NumForName: '%s' not found (type:%d; over:%d; any:%d)", *Name, (int)Type, (int)bOverload, (int)bCheckAny);
+      if (VStr::ICmp(*Name, "ml_sky1") == 0) {
+        GCon->Logf("!!!!!!!!!!!!!!!!!!");
+        for (int f = 0; f < Textures.length(); ++f) {
+          if (VStr::ICmp(*Name, *Textures[f]->Name) == 0) {
+            GCon->Logf("****************** FOUND ******************");
+          }
+        }
+      }
+    }
     i = DefaultTexture;
   }
   return i;

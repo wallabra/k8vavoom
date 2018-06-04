@@ -42,7 +42,7 @@ VTexture *VPatchTexture::Create (VStream &Strm, int LumpNum) {
   int SOffset = Streamer<vint16>(Strm);
   int TOffset = Streamer<vint16>(Strm);
 
-  if (Width < 0 || Height < 0 || Width > 2048 || Height > 2048) return nullptr; // not valid dimensions
+  if (Width < 1 || Height < 1 || Width > 2048 || Height > 2048) return nullptr; // not valid dimensions
   if (Strm.TotalSize() < Width*4+8) return nullptr; // file has no space for offsets table
 
   vint32 *Offsets = new vint32[Width];
@@ -146,7 +146,8 @@ vuint8 *VPatchTexture::GetPixels () {
     vint32 Offset = Streamer<vint32>(*Strm);
     if (Offset < 8+Width*4 || Offset > Strm->TotalSize()-1) {
       GCon->Logf("Bad offset in patch %s", *Name);
-      checkerFillColumn8(Pixels+x, x, Width, Height);
+      //checkerFillColumn8(Pixels+x, x, Width, Height);
+      checkerFill8(Pixels, Width, Height);
       continue;
     }
     Strm->Seek(Offset);
@@ -159,7 +160,9 @@ vuint8 *VPatchTexture::GetPixels () {
       // make sure length is there
       if (Strm->TotalSize()-Strm->Tell() < 2) {
         GCon->Logf("Broken column in patch %s", *Name);
-        checkerFillColumn8(Pixels+x, x, Width, Height);
+        //checkerFillColumn8(Pixels+x, x, Width, Height);
+        checkerFill8(Pixels, Width, Height);
+        x = Width;
         break;
       }
 
@@ -174,20 +177,24 @@ vuint8 *VPatchTexture::GetPixels () {
       // make sure column doesn't go out of the bounds of the image
       if (top+Len > Height) {
         GCon->Logf("Column too long in patch %s", *Name);
-        checkerFillColumn8(Pixels+x, x, Width, Height);
+        //checkerFillColumn8(Pixels+x, x, Width, Height);
+        checkerFill8(Pixels, Width, Height);
+        x = Width;
         break;
       }
 
       // make sure all post data is there
       if (Strm->TotalSize()-Strm->Tell() < Len) {
         GCon->Logf("Broken column in patch %s", *Name);
-        checkerFillColumn8(Pixels+x, x, Width, Height);
+        //checkerFillColumn8(Pixels+x, x, Width, Height);
+        checkerFill8(Pixels, Width, Height);
+        x = Width;
         break;
       }
 
       // read post, convert colour 0 to black if needed
       int count = Len;
-      vuint8* dest = Pixels+x+top*Width;
+      vuint8 *dest = Pixels+top*Width+x;
       while (count--) {
         *Strm << *dest;
         if (!*dest && !bNoRemap0) *dest = r_black_colour;
@@ -197,7 +204,9 @@ vuint8 *VPatchTexture::GetPixels () {
       // make sure unused byte and next post's top offset is there
       if (Strm->TotalSize()-Strm->Tell() < 2) {
         GCon->Logf("Broken column in patch %s", *Name);
-        checkerFillColumn8(Pixels+x, x, Width, Height);
+        //checkerFillColumn8(Pixels+x, x, Width, Height);
+        checkerFill8(Pixels, Width, Height);
+        x = Width;
         break;
       }
 

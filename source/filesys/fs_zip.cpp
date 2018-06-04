@@ -403,10 +403,10 @@ void VZipFile::OpenArchive (VStream* fstream) {
   // build lump names
   for (int i = 0; i < NumFiles; ++i) {
     if (Files[i].Name.Length() > 0) {
-      //  Set up lump name for WAD-like access.
+      // set up lump name for WAD-like access
       VStr LumpName = Files[i].Name.ExtractFileName().StripExtension();
 
-      // Map some directories to WAD namespaces.
+      // map some directories to WAD namespaces
       if (Files[i].Name.IndexOf('/') == -1) {
         Files[i].LumpNamespace = WADNS_Global;
       } else {
@@ -416,7 +416,7 @@ void VZipFile::OpenArchive (VStream* fstream) {
         }
       }
 
-      // Anything from other directories won't be accessed as lump.
+      // anything from other directories won't be accessed as lump
       if (Files[i].LumpNamespace == -1) LumpName = VStr();
 
       // For sprites \ is a valid frame character but is not allowed to
@@ -430,7 +430,10 @@ void VZipFile::OpenArchive (VStream* fstream) {
         LumpName = LumpName.Replace("^", "\\");
       }
 
-      // Final lump name;
+      //if (LumpName.length() == 0) fprintf(stderr, "ZIP <%s> mapped to nothing\n", *Files[i].Name);
+      //fprintf(stderr, "ZIP <%s> mapped to <%s> (%d)\n", *Files[i].Name, *LumpName, Files[i].LumpNamespace);
+
+      // Final lump name
       Files[i].LumpName = VName(*LumpName, VName::AddLower8);
     } else {
       Files[i].LumpName = VName("", VName::AddLower8);

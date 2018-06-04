@@ -181,6 +181,13 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         VTexPatch &P = Parts.Alloc();
         sc->ExpectString();
         VName PatchName = VName(*sc->String.ToLower());
+        /*
+        bool warn = false;
+        if (VStr::ICmp(*PatchName, "BOSFA0") == 0) {
+          fprintf(stderr, "!!!!!!!!!!!!!!!!!!!!!!!\n");
+          warn = true;
+        }
+        */
         int Tex = GTextureManager.CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
         if (Tex < 0) {
           int LumpNum = W_CheckNumForTextureFileName(sc->String);
@@ -188,16 +195,24 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
             Tex = GTextureManager.FindTextureByLumpNum(LumpNum);
             if (Tex < 0) {
               VTexture *T = CreateTexture(TEXTYPE_WallPatch, LumpNum);
+              if (!T) T = CreateTexture(TEXTYPE_Any, LumpNum);
               if (T) {
                 Tex = GTextureManager.AddTexture(T);
                 T->Name = NAME_None;
               }
             }
           } else if (sc->String.Length() <= 8) {
+            //if (warn) fprintf(stderr, "*********************\n");
             LumpNum = W_CheckNumForName(PatchName, WADNS_Patches);
             if (LumpNum < 0) LumpNum = W_CheckNumForTextureFileName(*PatchName);
             if (LumpNum >= 0) {
               Tex = GTextureManager.AddTexture(CreateTexture(TEXTYPE_WallPatch, LumpNum));
+            } else {
+              // DooM:Complete has some patches in "sprites/"
+              LumpNum = W_CheckNumForName(PatchName, WADNS_Sprites);
+              if (LumpNum >= 0) {
+                Tex = GTextureManager.AddTexture(CreateTexture(TEXTYPE_Any, LumpNum));
+              }
             }
           }
         }

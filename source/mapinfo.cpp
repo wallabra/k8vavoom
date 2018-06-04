@@ -300,6 +300,46 @@ static void DoCompatFlag(VScriptParser* sc, mapInfo_t* info, int Flag)
 //
 //==========================================================================
 
+static int loadSkyTexture (VName name) {
+  if (name == NAME_None) return GTextureManager.DefaultTexture;
+  //int Tex = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+  //info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+  int Tex = GTextureManager.CheckNumForName(name, TEXTYPE_Wall, true, false);
+  if (Tex >= 0) return Tex;
+  Tex = GTextureManager.CheckNumForName(name, TEXTYPE_WallPatch, false, false);
+  if (Tex < 0) {
+    int LumpNum = W_CheckNumForTextureFileName(*name);
+    if (LumpNum >= 0) {
+      Tex = GTextureManager.FindTextureByLumpNum(LumpNum);
+      if (Tex < 0) {
+        VTexture *T = VTexture::CreateTexture(TEXTYPE_WallPatch, LumpNum);
+        if (!T) T = VTexture::CreateTexture(TEXTYPE_Any, LumpNum);
+        if (T) {
+          Tex = GTextureManager.AddTexture(T);
+          T->Name = NAME_None;
+        }
+      }
+    } else {
+      LumpNum = W_CheckNumForName(name, WADNS_Patches);
+      if (LumpNum < 0) LumpNum = W_CheckNumForTextureFileName(*name);
+      if (LumpNum >= 0) {
+        Tex = GTextureManager.AddTexture(VTexture::CreateTexture(TEXTYPE_WallPatch, LumpNum));
+      } else {
+        // DooM:Complete has some patches in "sprites/"
+        LumpNum = W_CheckNumForName(name, WADNS_Sprites);
+        if (LumpNum >= 0) Tex = GTextureManager.AddTexture(VTexture::CreateTexture(TEXTYPE_Any, LumpNum));
+      }
+    }
+  }
+  if (Tex < 0) {
+    GCon->Logf("WARNING: sky '%s' not found", *name);
+    return GTextureManager.DefaultTexture;
+  }
+  GCon->Logf("WARNING: force-loaded sky '%s'", *name);
+  return Tex;
+}
+
+
 static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 {
   guard(ParseMapCommon);
@@ -368,7 +408,8 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
       auto ocm = sc->IsCMode();
       sc->ExpectName8();
       sc->SetCMode(true);
-      info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+      //info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+      info->Sky1Texture = loadSkyTexture(sc->Name8);
       info->Sky1ScrollDelta = 0;
       if (newFormat) {
         if (!sc->IsAtEol()) {
@@ -393,7 +434,8 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
       auto ocm = sc->IsCMode();
       sc->ExpectName8();
       sc->SetCMode(true);
-      info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+      //info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+      info->Sky2Texture = loadSkyTexture(sc->Name8);
       info->Sky2ScrollDelta = 0;
       if (newFormat) {
         if (!sc->IsAtEol()) {
