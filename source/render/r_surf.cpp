@@ -172,63 +172,51 @@ void VRenderLevelShared::SetupSky()
 //  VRenderLevel::InitSurfs
 //
 //==========================================================================
-
-void VRenderLevel::InitSurfs(surface_t* ASurfs, texinfo_t *texinfo,
-  TPlane *plane, subsector_t* sub)
-{
+void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *plane, subsector_t *sub) {
   guard(VRenderLevel::InitSurfs);
-  surface_t* surfs = ASurfs;
-  int i;
-  float dot;
-  float mins;
-  float maxs;
-  int bmins;
-  int bmaxs;
+  surface_t *surfs = ASurfs;
+  //float dot, mins, maxs;
+  //int bmins, bmaxs;
 
-  while (surfs)
-  {
-    if (plane)
-    {
+  while (surfs) {
+    if (plane) {
       surfs->texinfo = texinfo;
       surfs->plane = plane;
     }
 
-    mins = 99999.0;
-    maxs = -99999.0;
-    for (i = 0; i < surfs->count; i++)
-    {
-      dot = DotProduct(surfs->verts[i], texinfo->saxis) + texinfo->soffs;
-      if (dot < mins)
-        mins = dot;
-      if (dot > maxs)
-        maxs = dot;
+    float mins = 99999.0;
+    float maxs = -99999.0;
+    for (int i = 0; i < surfs->count; ++i) {
+      float dot = DotProduct(surfs->verts[i], texinfo->saxis)+texinfo->soffs;
+      if (dot < mins) mins = dot;
+      if (dot > maxs) maxs = dot;
     }
-    bmins = (int)floor(mins / 16);
-    bmaxs = (int)ceil(maxs / 16);
-    surfs->texturemins[0] = bmins * 16;
-    surfs->extents[0] = (bmaxs - bmins) * 16;
-    if (surfs->extents[0] > 256)
-    {
-      Sys_Error("Bad extents");
+
+    int bmins = (int)floor(mins/16);
+    int bmaxs = (int)ceil(maxs/16);
+    surfs->texturemins[0] = bmins*16;
+    surfs->extents[0] = (bmaxs-bmins)*16;
+    if (surfs->extents[0] > 256) {
+      //Sys_Error(va("Bad extents (0): %d", (int)surfs->extents[0]));
+      GCon->Logf("Bad extents (0): %d", (int)surfs->extents[0]);
+      surfs->extents[0] = 256;
     }
 
     mins = 99999.0;
     maxs = -99999.0;
-    for (i = 0; i < surfs->count; i++)
-    {
-      dot = DotProduct(surfs->verts[i], texinfo->taxis) + texinfo->toffs;
-      if (dot < mins)
-        mins = dot;
-      if (dot > maxs)
-        maxs = dot;
+    for (int i = 0; i < surfs->count; ++i) {
+      float dot = DotProduct(surfs->verts[i], texinfo->taxis)+texinfo->toffs;
+      if (dot < mins) mins = dot;
+      if (dot > maxs) maxs = dot;
     }
-    bmins = (int)floor(mins / 16);
-    bmaxs = (int)ceil(maxs / 16);
-    surfs->texturemins[1] = bmins * 16;
-    surfs->extents[1] = (bmaxs - bmins) * 16;
-    if (surfs->extents[1] > 256)
-    {
-      Sys_Error("Bad extents");
+    bmins = (int)floor(mins/16);
+    bmaxs = (int)ceil(maxs/16);
+    surfs->texturemins[1] = bmins*16;
+    surfs->extents[1] = (bmaxs-bmins)*16;
+    if (surfs->extents[1] > 256) {
+      //Sys_Error(va("Bad extents (1): %d", (int)surfs->extents[1]));
+      GCon->Logf("Bad extents (1): %d", (int)surfs->extents[1]);
+      surfs->extents[1] = 256;
     }
 
     LightFace(surfs, sub);
