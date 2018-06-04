@@ -45,7 +45,7 @@ void main () {
   FinalColour_1.a = clamp(SplatAlpha, 0.0, 1.0);
   */
 
-  if (TexColour.r == TexColour.g && TexColour.r == TexColour.b) {
+  if (TexColour.r == TexColour.g && TexColour.r == TexColour.b && TexColour.a == 1.0) {
     FinalColour_1.a = clamp(lumi*SplatAlpha, 0.0, 1.0);
   } else {
     FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
