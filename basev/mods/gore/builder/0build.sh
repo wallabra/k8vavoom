@@ -1,0 +1,105 @@
+#!/bin/sh
+
+rm decorate.txt decaldef.txt 2>/dev/null
+
+echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
+echo "// RED BLOOD" >>decorate.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
+
+echo "////////////////////////////////////////////////////////////////////////////////" >>decaldef.txt
+echo "// RED BLOOD" >>decaldef.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decaldef.txt
+
+rdmd zprepro.d Shade=af --append Color= tpl.decorate.txt decorate.txt
+rdmd zprepro.d Shade=af --append Color= tpl.decaldef.txt decaldef.txt
+
+
+echo "" >>decorate.txt
+echo "" >>decorate.txt
+echo "" >>decorate.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
+echo "// RED TRANSIENT BLOOD" >>decorate.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
+
+echo "" >>decaldef.txt
+echo "" >>decaldef.txt
+echo "" >>decaldef.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decaldef.txt
+echo "// RED TRANSIENT BLOOD" >>decaldef.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decaldef.txt
+
+rdmd zprepro.d Shade=af -DTRANSIENT --append Color=Transient tpl.decorate.txt decorate.txt
+rdmd zprepro.d Shade=af -DTRANSIENT --append Color=Transient tpl.decaldef.txt decaldef.txt
+
+
+
+echo "" >>decorate.txt
+echo "" >>decorate.txt
+echo "" >>decorate.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
+echo "// GREEN BLOOD" >>decorate.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
+
+echo "" >>decaldef.txt
+echo "" >>decaldef.txt
+echo "" >>decaldef.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decaldef.txt
+echo "// GREEN BLOOD" >>decaldef.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decaldef.txt
+
+rdmd zprepro.d Shade=6f -DGREEN --append Color=Green tpl.decorate.txt decorate.txt
+rdmd zprepro.d Shade=6f -DGREEN --append Color=Green tpl.decaldef.txt decaldef.txt
+
+
+echo "" >>decorate.txt
+echo "" >>decorate.txt
+echo "" >>decorate.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
+echo "// GREEN TRANSIENT BLOOD" >>decorate.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
+
+echo "" >>decaldef.txt
+echo "" >>decaldef.txt
+echo "" >>decaldef.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decaldef.txt
+echo "// GREEN TRANSIENT BLOOD" >>decaldef.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decaldef.txt
+
+rdmd zprepro.d Shade=6f -DGREEN -DTRANSIENT --append Color=Transient_Green tpl.decorate.txt decorate.txt
+rdmd zprepro.d Shade=6f -DGREEN -DTRANSIENT --append Color=Transient_Green tpl.decaldef.txt decaldef.txt
+
+
+echo "" >>decorate.txt
+echo "" >>decorate.txt
+echo "" >>decorate.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
+echo "// BLUE BLOOD" >>decorate.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
+
+echo "" >>decaldef.txt
+echo "" >>decaldef.txt
+echo "" >>decaldef.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decaldef.txt
+echo "// BLUE BLOOD" >>decaldef.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decaldef.txt
+
+rdmd zprepro.d Shade=af -DBLUE --append Color=Blue tpl.decorate.txt decorate.txt
+rdmd zprepro.d Shade=af -DBLUE --append Color=Blue tpl.decaldef.txt decaldef.txt
+
+
+echo "" >>decorate.txt
+echo "" >>decorate.txt
+echo "" >>decorate.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
+echo "// BLUE TRANSIENT BLOOD" >>decorate.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
+
+echo "" >>decaldef.txt
+echo "" >>decaldef.txt
+echo "" >>decaldef.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decaldef.txt
+echo "// BLUE TRANSIENT BLOOD" >>decaldef.txt
+echo "////////////////////////////////////////////////////////////////////////////////" >>decaldef.txt
+
+rdmd zprepro.d Shade=af -DBLUE -DTRANSIENT --append Color=Transient_Blue tpl.decorate.txt decorate.txt
+rdmd zprepro.d Shade=af -DBLUE -DTRANSIENT --append Color=Transient_Blue tpl.decaldef.txt decaldef.txt

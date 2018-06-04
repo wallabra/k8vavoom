@@ -1,0 +1,293 @@
+/// +++++++++++++++++////
+/// Blood Base
+/// +++++++++++++++++////
+decalgroup BloodSplat${Color} {
+  K8GoreBloodSplat01${Color} 6
+  K8GoreBloodSplat02${Color} 6
+
+  K8GoreBloodSuper01${Color} 1
+  K8GoreBloodSuper02${Color} 1
+}
+
+decalgroup BloodSmear${Color} {
+  K8GoreBloodSmearSmall1${Color}  3
+  K8GoreBloodSmearSmall2${Color}  3
+
+  K8GoreBloodSmear1${Color} 1
+  K8GoreBloodSmear2${Color} 1
+}
+
+// radius damage
+decalgroup BloodSmearRadius${Color} {
+  K8GoreBloodSmear1${Color} 1
+  K8GoreBloodSmear2${Color} 1
+}
+
+decalgroup BloodSplatRadius${Color} {
+  K8GoreBloodSplat01${Color} 6
+  K8GoreBloodSplat02${Color} 6
+
+  K8GoreBloodSuper01${Color} 3
+  K8GoreBloodSuper02${Color} 3
+}
+
+
+/// +++++++++++++++++////
+/// Blood Animators
+/// +++++++++++++++++////
+fader K8GoreBloodSmearer_Fader${Color} {
+  DecayStart 9.0
+  DecayTime 16.0
+}
+
+
+fader K8GoreBlood_Fader${Color} {
+  DecayStart 14.0
+  DecayTime 23.0
+}
+
+slider K8GoreBSlide1${Color} {
+  DistY -26
+  SlideStart 0
+  SlideTime 9
+}
+
+stretcher K8GoreBStretch1${Color} {
+  GoalX 1.0
+  GoalY 3.5
+  StretchStart 0
+  StretchTime 9
+}
+
+slider K8GoreBSlide2${Color} {
+  DistY -20
+  SlideStart 0
+  SlideTime 12
+}
+
+stretcher K8GoreBStretch2${Color} {
+  GoalX 1.0
+  GoalY 3.2
+  StretchStart 0
+  StretchTime 12
+}
+
+combiner K8GoreBloodSlide1${Color} {
+  K8GoreBSlide1${Color}
+  K8GoreBStretch1${Color}
+}
+
+combiner K8GoreBloodSlide2${Color} {
+  K8GoreBSlide2${Color}
+  K8GoreBStretch2${Color}
+}
+
+stretcher K8GoreBloodSmearer_Stretcher${Color} {
+  GoalX 0.4
+  GoalY 2.0
+  StretchStart 1
+  StretchTime 24
+}
+
+
+combiner K8GoreBloodSmearer${Color} {
+  K8GoreBloodSmearer_Stretcher${Color}
+#ifdef TRANSIENT
+  K8GoreBloodSmearer_Fader${Color}
+#endif
+}
+
+
+/// +++++++++++++++++////
+/// Gore Blood Decals
+/// +++++++++++++++++////
+decal K8GoreBloodSmear1${Color} {
+  pic BSPLNEW4
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  x-scale 0.6
+  y-scale 0.6
+  randomflipx
+  animator K8GoreBloodSmearer${Color}
+}
+
+decal K8GoreBloodSmear2${Color} {
+  pic BSPLNEW5
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  x-scale 0.6
+  y-scale 0.6
+  randomflipx
+  animator K8GoreBloodSmearer${Color}
+}
+
+decalgroup K8GoreBloodSmear${Color} {
+  K8GoreBloodSmear1${Color} 1
+  K8GoreBloodSmear2${Color} 1
+}
+
+
+
+decal K8GoreBloodSmearSmall1${Color} {
+  pic BSPLNEW8
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  x-scale 0.6
+  y-scale 0.6
+  randomflipx
+  animator K8GoreBloodSmearer${Color}
+}
+
+decal K8GoreBloodSmearSmall2${Color} {
+  pic BSPLNEW7
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  x-scale 0.6
+  y-scale 0.6
+  randomflipx
+  animator K8GoreBloodSmearer${Color}
+}
+
+decalgroup K8GoreBloodSmearSmall${Color} {
+  K8GoreBloodSmearSmall1${Color} 1
+  K8GoreBloodSmearSmall2${Color} 1
+}
+
+
+decal K8GoreBloodSplat01${Color} {
+  pic BSPLNEW1
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  x-scale 0.6
+  y-scale 0.6
+  randomflipx
+  randomflipy
+  lowerdecal K8GoreBloodSmearSmall${Color}
+#ifdef TRANSIENT
+  animator K8GoreBlood_Fader${Color}
+#endif
+}
+
+decal K8GoreBloodSplat02${Color} {
+  pic BSPLNEW2
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  x-scale 0.6
+  y-scale 0.6
+  randomflipx
+  randomflipy
+  lowerdecal K8GoreBloodSmear${Color}
+#ifdef TRANSIENT
+  animator K8GoreBlood_Fader${Color}
+#endif
+}
+
+decalgroup K8GoreBloodSplat${Color} {
+  K8GoreBloodSplat01${Color} 6
+  K8GoreBloodSplat02${Color} 6
+}
+
+
+decal K8GoreBloodSuper01${Color} {
+  pic BSPLBIG1
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  x-scale 0.9
+  y-scale 0.9
+  randomflipx
+  randomflipy
+  lowerdecal K8GoreBloodSmear${Color}
+#ifdef TRANSIENT
+  animator K8GoreBlood_Fader${Color}
+#endif
+}
+
+decal K8GoreBloodSuper02${Color} {
+  pic BSPLBIG2
+#ifndef BLUE
+# ifndef GREEN
+  shade "$(Shade) 00 00"
+# endif
+#endif
+#ifdef BLUE
+  shade "00 00 $(Shade)"
+#endif
+#ifdef GREEN
+  shade "00 $(Shade) 00"
+#endif
+  x-scale 0.9
+  y-scale 0.9
+  randomflipx
+  lowerdecal K8GoreBloodSmear${Color}
+#ifdef TRANSIENT
+  animator K8GoreBlood_Fader${Color}
+#endif
+}
+
+decalgroup K8GoreBloodSuper${Color} {
+  K8GoreBloodSuper01${Color} 6
+  K8GoreBloodSuper02${Color} 6
+}
