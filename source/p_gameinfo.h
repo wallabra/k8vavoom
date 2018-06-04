@@ -55,12 +55,12 @@ class VGameInfo : public VGameObject
   vuint8      nomonsters;
   vuint8      fastparm;
 
-  vint32*     validcount;
+  vint32 *validcount;
   vint32      skyflatnum;
 
-  VWorldInfo*   WorldInfo;
+  VWorldInfo *WorldInfo;
 
-  VBasePlayer*  Players[MAXPLAYERS]; // Bookkeeping on players - state.
+  VBasePlayer *Players[MAXPLAYERS]; // Bookkeeping on players - state.
 
   vint32      RebornPosition;
 
@@ -69,8 +69,8 @@ class VGameInfo : public VGameObject
   float     FloatBobOffsets[64];
   vint32      PhaseTable[64];
 
-  VClass*     LevelInfoClass;
-  VClass*     PlayerReplicationInfoClass;
+  VClass *LevelInfoClass;
+  VClass *PlayerReplicationInfoClass;
 
   vint32      GameFilterFlag;
 
@@ -99,18 +99,18 @@ class VGameInfo : public VGameObject
     P_PASS_INT(skill);
     EV_RET_VOID("InitNewGame");
   }
-  VWorldInfo* eventCreateWorldInfo()
+  VWorldInfo *eventCreateWorldInfo()
   {
     P_PASS_SELF;
     EV_RET_REF(VWorldInfo, "CreateWorldInfo");
   }
-  void eventTranslateLevel(VLevel* InLevel)
+  void eventTranslateLevel(VLevel *InLevel)
   {
     P_PASS_SELF;
     P_PASS_REF(InLevel);
     EV_RET_VOID("TranslateLevel");
   }
-  void eventSpawnWorld(VLevel* InLevel)
+  void eventSpawnWorld(VLevel *InLevel)
   {
     P_PASS_SELF;
     P_PASS_REF(InLevel);
@@ -122,7 +122,7 @@ class VGameInfo : public VGameObject
     P_PASS_NAME(LevelName);
     EV_RET_NAME("GetConScriptName");
   }
-  void eventCmdWeaponSection(const VStr& Section)
+  void eventCmdWeaponSection(const VStr &Section)
   {
     P_PASS_SELF;
     P_PASS_STR(Section);
@@ -142,4 +142,4 @@ class VGameInfo : public VGameObject
   }
 };
 
-extern VGameInfo*   GGameInfo;
+extern VGameInfo *GGameInfo;

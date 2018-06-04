@@ -63,7 +63,7 @@ VMemoryStream::VMemoryStream()
 //
 //==========================================================================
 
-VMemoryStream::VMemoryStream(void* InData, int InLen)
+VMemoryStream::VMemoryStream(void *InData, int InLen)
 : Pos(0)
 {
   guard(VMemoryStream::VMemoryStream);
@@ -94,7 +94,7 @@ VMemoryStream::VMemoryStream(const TArray<vuint8>& InArray)
 //
 //==========================================================================
 
-void VMemoryStream::Serialise(void* Data, int Len)
+void VMemoryStream::Serialise(void *Data, int Len)
 {
   guard(VMemoryStream::Serialise);
   if (bLoading)

@@ -46,11 +46,11 @@
 class VBlockLinesIterator
 {
 private:
-  VLevel*     Level;
-  line_t**    LinePtr;
-  polyblock_t*  PolyLink;
+  VLevel *Level;
+  line_t **LinePtr;
+  polyblock_t *PolyLink;
   vint32      PolySegIdx;
-  vint32*     List;
+  vint32 *List;
 
 public:
   VBlockLinesIterator(VLevel*, int, int, line_t**);
@@ -66,15 +66,15 @@ public:
 class VBlockThingsIterator
 {
 private:
-  VEntity*  Ent;
+  VEntity *Ent;
 
 public:
-  VBlockThingsIterator(VLevel* Level, int x, int y)
+  VBlockThingsIterator(VLevel *Level, int x, int y)
   {
     if (x < 0 || x >= Level->BlockMapWidth ||
       y < 0 || y >= Level->BlockMapHeight)
     {
-      Ent = NULL;
+      Ent = nullptr;
     }
     else
     {
@@ -89,11 +89,11 @@ public:
   {
     Ent = Ent->BlockMapNext;
   }
-  VEntity* operator *() const
+  VEntity *operator *() const
   {
     return Ent;
   }
-  VEntity* operator ->() const
+  VEntity *operator ->() const
   {
     return Ent;
   }
@@ -108,9 +108,9 @@ public:
 class VRadiusThingsIterator : public VScriptIterator
 {
 private:
-  VThinker* Self;
-  VEntity** EntPtr;
-  VEntity*  Ent;
+  VThinker *Self;
+  VEntity **EntPtr;
+  VEntity *Ent;
   int     x;
   int     y;
   int     xl;
@@ -145,8 +145,8 @@ private:
   float         trace_len;
 
   int           Count;
-  intercept_t*      In;
-  intercept_t**     InPtr;
+  intercept_t *In;
+  intercept_t **InPtr;
 
 public:
   VPathTraverse(VThinker*, intercept_t**, float, float, float, float, int);

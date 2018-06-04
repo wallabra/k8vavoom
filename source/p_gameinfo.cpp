@@ -45,7 +45,7 @@
 
 IMPLEMENT_CLASS(V, GameInfo)
 
-VGameInfo*    GGameInfo;
+VGameInfo *GGameInfo;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -122,14 +122,14 @@ COMMAND(AddPlayerClass)
     return;
   }
 
-  VClass* Class = VClass::FindClassNoCase(*Args[1]);
+  VClass *Class = VClass::FindClassNoCase(*Args[1]);
   if (!Class)
   {
     GCon->Logf("No such class %s", *Args[1]);
     return;
   }
 
-  VClass* PPClass = VClass::FindClass("PlayerPawn");
+  VClass *PPClass = VClass::FindClass("PlayerPawn");
   if (!PPClass)
   {
     GCon->Logf("Can't find PlayerPawn class");

@@ -471,9 +471,9 @@ void VLevelChannel::Update () {
     // grow replication array if needed
     if (BodyQueueTrans.Num() == i) BodyQueueTrans.Alloc().TranslStart = 0;
     if (!Level->BodyQueueTrans[i]) continue;
-    VTextureTranslation* Tr = Level->BodyQueueTrans[i];
+    VTextureTranslation *Tr = Level->BodyQueueTrans[i];
     if (!Tr->TranslStart) continue;
-    VBodyQueueTrInfo& Rep = BodyQueueTrans[i];
+    VBodyQueueTrInfo &Rep = BodyQueueTrans[i];
     if (Tr->TranslStart == Rep.TranslStart && Tr->TranslEnd == Rep.TranslEnd && Tr->Colour == Rep.Colour) continue;
 
     // send message

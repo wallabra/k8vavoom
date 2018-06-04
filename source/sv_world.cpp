@@ -118,17 +118,17 @@ TVec P_SectorClosestPoint (sector_t *sec, TVec in) {
 //
 //==========================================================================
 
-opening_t *SV_LineOpenings(const line_t* linedef, const TVec& point, int NoBlockFlags)
+opening_t *SV_LineOpenings(const line_t *linedef, const TVec &point, int NoBlockFlags)
 {
   guard(SV_LineOpenings);
   opening_t   *op;
   int       opsused;
   sec_region_t  *frontreg;
   sec_region_t  *backreg;
-  sec_plane_t   *frontfloor = NULL;
-  sec_plane_t   *backfloor = NULL;
-  sec_plane_t   *frontceil = NULL;
-  sec_plane_t   *backceil = NULL;
+  sec_plane_t   *frontfloor = nullptr;
+  sec_plane_t   *backfloor = nullptr;
+  sec_plane_t   *frontceil = nullptr;
+  sec_plane_t   *backceil = nullptr;
   float     frontfloorz;
   float     backfloorz;
   float     frontceilz;
@@ -137,10 +137,10 @@ opening_t *SV_LineOpenings(const line_t* linedef, const TVec& point, int NoBlock
   if (linedef->sidenum[1] == -1)
   {
     // single sided line
-    return NULL;
+    return nullptr;
   }
 
-  op = NULL;
+  op = nullptr;
   opsused = 0;
   frontreg = linedef->frontsector->botregion;
   backreg = linedef->backsector->botregion;
@@ -227,7 +227,7 @@ opening_t *SV_LineOpenings(const line_t* linedef, const TVec& point, int NoBlock
 //
 //==========================================================================
 
-int P_BoxOnLineSide(float* tmbox, line_t* ld)
+int P_BoxOnLineSide(float *tmbox, line_t *ld)
 {
   guard(P_BoxOnLineSide);
   int   p1 = 0;
@@ -295,36 +295,36 @@ int P_BoxOnLineSide(float* tmbox, line_t* ld)
 //
 //==========================================================================
 
-sec_region_t *SV_FindThingGap(sec_region_t* InGaps, const TVec &point, float z1, float z2)
+sec_region_t *SV_FindThingGap(sec_region_t *InGaps, const TVec &point, float z1, float z2)
 {
   guard(SV_FindThingGap);
-  sec_region_t* gaps = InGaps;
+  sec_region_t *gaps = InGaps;
   float dist;
 
   int fit_num = 0;
-  sec_region_t *fit_last = NULL;
+  sec_region_t *fit_last = nullptr;
 
-  sec_region_t *fit_closest = NULL;
+  sec_region_t *fit_closest = nullptr;
   float fit_mindist = 200000.0;
 
-  sec_region_t *nofit_closest = NULL;
+  sec_region_t *nofit_closest = nullptr;
   float nofit_mindist = 200000.0;
 
   // check for trivial gaps...
-  if (gaps == NULL)
+  if (gaps == nullptr)
   {
-    return NULL;
+    return nullptr;
   }
-  if (gaps->next == NULL)
+  if (gaps->next == nullptr)
   {
     return gaps;
   }
 
-  sec_plane_t *floor = NULL;
-  sec_plane_t *ceil = NULL;
+  sec_plane_t *floor = nullptr;
+  sec_plane_t *ceil = nullptr;
 
   // There are 2 or more gaps. Now it gets interesting :-)
-  while (gaps != NULL)
+  while (gaps != nullptr)
   {
     float f;
     float c;
@@ -408,25 +408,25 @@ sec_region_t *SV_FindThingGap(sec_region_t* InGaps, const TVec &point, float z1,
 //
 //==========================================================================
 
-opening_t *SV_FindOpening(opening_t* InGaps, float z1, float z2)
+opening_t *SV_FindOpening(opening_t *InGaps, float z1, float z2)
 {
   guard(SV_FindOpening);
-  opening_t* gaps = InGaps;
+  opening_t *gaps = InGaps;
   float dist;
 
   int fit_num = 0;
-  opening_t *fit_last = NULL;
+  opening_t *fit_last = nullptr;
 
-  opening_t *fit_closest = NULL;
+  opening_t *fit_closest = nullptr;
   float fit_mindist = 99999.0;
 
-  opening_t *nofit_closest = NULL;
+  opening_t *nofit_closest = nullptr;
   float nofit_mindist = 99999.0;
 
   // check for trivial gaps...
   if (!gaps)
   {
-    return NULL;
+    return nullptr;
   }
   if (!gaps->next)
   {
@@ -523,7 +523,7 @@ int SV_PointContents(const sector_t *sector, const TVec &p)
 
   if (sector->SectorFlags & sector_t::SF_HasExtrafloors)
   {
-    for (sec_region_t* reg = sector->botregion; reg; reg = reg->next)
+    for (sec_region_t *reg = sector->botregion; reg; reg = reg->next)
     {
       if (p.z <= reg->ceiling->GetPointZ(p) &&
         p.z >= reg->floor->GetPointZ(p))
@@ -563,12 +563,12 @@ int SV_PointContents(const sector_t *sector, const TVec &p)
 //
 //==========================================================================
 
-bool VLevel::ChangeSector(sector_t* sector, int crunch)
+bool VLevel::ChangeSector(sector_t *sector, int crunch)
 {
   guard(VLevel::ChangeSector);
-  sector_t* sec2;
-  sec_region_t* reg;
-  msecnode_t* n;
+  sector_t *sec2;
+  sec_region_t *reg;
+  msecnode_t *n;
 
   CalcSecMinMaxs(sector);
 

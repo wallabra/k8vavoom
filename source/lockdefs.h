@@ -39,4 +39,4 @@ struct VLockDef
 
 void InitLockDefs();
 void ShutdownLockDefs();
-VLockDef* GetLockDef(int Lock);
+VLockDef *GetLockDef(int Lock);

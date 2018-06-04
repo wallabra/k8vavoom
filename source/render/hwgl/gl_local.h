@@ -165,7 +165,7 @@ typedef void (APIENTRY*glDeleteObjectARB_t)(GLhandleARB);
 typedef GLhandleARB (APIENTRY*glGetHandleARB_t)(GLenum);
 typedef void (APIENTRY*glDetachObjectARB_t)(GLhandleARB, GLhandleARB);
 typedef GLhandleARB (APIENTRY*glCreateShaderObjectARB_t)(GLenum);
-typedef void (APIENTRY*glShaderSourceARB_t)(GLhandleARB, GLsizei, const GLcharARB* *, const GLint *);
+typedef void (APIENTRY*glShaderSourceARB_t)(GLhandleARB, GLsizei, const GLcharARB **, const GLint *);
 typedef void (APIENTRY*glCompileShaderARB_t)(GLhandleARB);
 typedef GLhandleARB (APIENTRY*glCreateProgramObjectARB_t)(void);
 typedef void (APIENTRY*glAttachObjectARB_t)(GLhandleARB, GLhandleARB);
@@ -268,7 +268,7 @@ typedef GLint (APIENTRY*glGetAttribLocationARB_t)(GLhandleARB, const GLcharARB *
 typedef void (APIENTRY*glGetVertexAttribdvARB_t)(GLuint, GLenum, GLdouble *);
 typedef void (APIENTRY*glGetVertexAttribfvARB_t)(GLuint, GLenum, GLfloat *);
 typedef void (APIENTRY*glGetVertexAttribivARB_t)(GLuint, GLenum, GLint *);
-typedef void (APIENTRY*glGetVertexAttribPointervARB_t)(GLuint, GLenum, GLvoid* *);
+typedef void (APIENTRY*glGetVertexAttribPointervARB_t)(GLuint, GLenum, GLvoid **);
 
 #ifndef GL_ARB_fragment_shader
 #define GL_FRAGMENT_SHADER_ARB        0x8B30
@@ -329,10 +329,10 @@ typedef GLboolean (APIENTRY*glIsBufferARB_t)(GLuint);
 typedef void (APIENTRY*glBufferDataARB_t)(GLenum, GLsizeiptrARB, const GLvoid *, GLenum);
 typedef void (APIENTRY*glBufferSubDataARB_t)(GLenum, GLintptrARB, GLsizeiptrARB, const GLvoid *);
 typedef void (APIENTRY*glGetBufferSubDataARB_t)(GLenum, GLintptrARB, GLsizeiptrARB, GLvoid *);
-typedef GLvoid* (APIENTRY*glMapBufferARB_t)(GLenum, GLenum);
+typedef GLvoid *(APIENTRY*glMapBufferARB_t)(GLenum, GLenum);
 typedef GLboolean (APIENTRY*glUnmapBufferARB_t)(GLenum);
 typedef void (APIENTRY*glGetBufferParameterivARB_t)(GLenum, GLenum, GLint *);
-typedef void (APIENTRY*glGetBufferPointervARB_t)(GLenum, GLenum, GLvoid* *);
+typedef void (APIENTRY*glGetBufferPointervARB_t)(GLenum, GLenum, GLvoid **);
 
 #ifndef GL_EXT_draw_range_elements
 #define GL_MAX_ELEMENTS_VERTICES_EXT    0x80E8
@@ -353,7 +353,7 @@ public:
   void Setup2D();
   void BeginDirectUpdate();
   void EndDirectUpdate();
-  void* ReadScreen(int*, bool*);
+  void *ReadScreen(int*, bool*);
   void ReadBackScreen(int, int, rgba_t*);
 
   //  Rendering stuff
@@ -721,7 +721,7 @@ protected:
   //  Extensions
   bool CheckExtension(const char*);
   bool CheckGLXExtension(const char*);
-  virtual void* GetExtFuncPtr(const char*) = 0;
+  virtual void *GetExtFuncPtr(const char*) = 0;
   virtual bool SetAdaptiveSwap () = 0;
 
   void SetFade(vuint32 NewFade);
@@ -741,10 +741,10 @@ protected:
   void DoHorizonPolygon(surface_t*);
   void DrawPortalArea(VPortal*);
 
-  GLhandleARB LoadShader(GLenum Type, const VStr& FileName);
+  GLhandleARB LoadShader(GLenum Type, const VStr &FileName);
   GLhandleARB CreateProgram(GLhandleARB VertexShader, GLhandleARB FragmentShader);
 
-  void UploadModel(VMeshModel* Mdl);
+  void UploadModel(VMeshModel *Mdl);
   void UnloadModels();
 
 #define _(x)  x##_t p_##x

@@ -36,7 +36,7 @@ override void CreateChoices()
   MenuChoiceEpisode Epi;
   int         currentY;
   int         i;
-  EpisodeDef*     EDef;
+  EpisodeDef *EDef;
 
   currentY = ChoicesStartY;
   for (i = 0; i < P_GetNumEpisodes(); i++)

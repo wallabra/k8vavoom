@@ -52,7 +52,7 @@
 //
 //==========================================================================
 
-VZipStreamReader::VZipStreamReader(VStream* ASrcStream,
+VZipStreamReader::VZipStreamReader(VStream *ASrcStream,
   vuint32 AUncompressedSize)
 : SrcStream(ASrcStream)
 , Initialised(false)
@@ -112,7 +112,7 @@ VZipStreamReader::~VZipStreamReader()
 //
 //==========================================================================
 
-void VZipStreamReader::Serialise(void* V, int Length)
+void VZipStreamReader::Serialise(void *V, int Length)
 {
   guard(VZipStreamReader::Serialise);
   if (bError)
@@ -157,7 +157,7 @@ void VZipStreamReader::Serialise(void* V, int Length)
 
     vuint32 TotalOutBefore = ZStream.total_out;
     int err = inflate(&ZStream, Z_SYNC_FLUSH);
-    if (err >= 0 && ZStream.msg != NULL)
+    if (err >= 0 && ZStream.msg != nullptr)
     {
       bError = true;
       GCon->Logf("Decompression failed: %s", ZStream.msg);
@@ -283,7 +283,7 @@ bool VZipStreamReader::Close()
 //
 //==========================================================================
 
-VZipStreamWriter::VZipStreamWriter(VStream* ADstStream)
+VZipStreamWriter::VZipStreamWriter(VStream *ADstStream)
 : DstStream(ADstStream)
 , Initialised(false)
 {
@@ -329,7 +329,7 @@ VZipStreamWriter::~VZipStreamWriter()
 //
 //==========================================================================
 
-void VZipStreamWriter::Serialise(void* V, int Length)
+void VZipStreamWriter::Serialise(void *V, int Length)
 {
   guard(VZipStreamWriter::Serialise);
   if (bError)

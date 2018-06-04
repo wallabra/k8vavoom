@@ -255,12 +255,12 @@ native final void AddStaticLightRGB(TVec origin, float radius, int colour);
 //
 //  Sound sequences
 //
-native final void SectorStartSequence(sector_t* sector, name sequence,
+native final void SectorStartSequence(sector_t *sector, name sequence,
   int ModeNum);
-native final void SectorStopSequence(sector_t* sector);
-native final void PolyobjStartSequence(polyobj_t* mobj, name sequence,
+native final void SectorStopSequence(sector_t *sector);
+native final void PolyobjStartSequence(polyobj_t *mobj, name sequence,
   int ModeNum);
-native final void PolyobjStopSequence(polyobj_t* mobj);
+native final void PolyobjStopSequence(polyobj_t *mobj);
 
 //
 //  Exiting the level
@@ -380,7 +380,7 @@ int ThingCount(int type, name TypeName, int tid, int SectorTag)
 //==========================================================================
 
 int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
-  int Arg4, int Arg5, line_t* line, int side, Entity A)
+  int Arg4, int Arg5, line_t *line, int side, Entity A)
 {
   return false;
 }
@@ -403,7 +403,7 @@ bool EV_ThingProjectile(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //
 //==========================================================================
 
-void StartPlaneWatcher(Entity it, line_t* line, int lineSide, bool ceiling,
+void StartPlaneWatcher(Entity it, line_t *line, int lineSide, bool ceiling,
   int tag, int height, int special, int arg0, int arg1, int arg2, int arg3,
   int arg4)
 {
@@ -419,7 +419,7 @@ void StartPlaneWatcher(Entity it, line_t* line, int lineSide, bool ceiling,
 //
 //  getNextSector
 //
-//  Return sector_t * of sector next to current. NULL if not two-sided line
+//  Return sector_t * of sector next to current. nullptr if not two-sided line
 //
 //==========================================================================
 
@@ -427,14 +427,14 @@ final sector_t *getNextSector(line_t * line, sector_t * sec)
 {
   if (!(line->flags & ML_TWOSIDED))
   {
-    return NULL;
+    return nullptr;
   }
 
   if (line->frontsector == sec)
   {
     if (line->backsector == sec)
     {
-      return NULL;
+      return nullptr;
     }
     return line->backsector;
   }
@@ -450,11 +450,11 @@ final sector_t *getNextSector(line_t * line, sector_t * sec)
 //
 //==========================================================================
 
-final float FindLowestFloorSurrounding(sector_t* sec, TVec* v)
+final float FindLowestFloorSurrounding(sector_t *sec, TVec *v)
 {
   int     i;
-  line_t*   check;
-  sector_t* other;
+  line_t *check;
+  sector_t *other;
   float   floor;
   float   ofloor;
   TVec    spot;
@@ -497,11 +497,11 @@ final float FindLowestFloorSurrounding(sector_t* sec, TVec* v)
 //
 //==========================================================================
 
-final float FindHighestFloorSurrounding(sector_t* sec, TVec* v)
+final float FindHighestFloorSurrounding(sector_t *sec, TVec *v)
 {
   int     i;
-  line_t*   check;
-  sector_t* other;
+  line_t *check;
+  sector_t *other;
   float   floor;
   float   ofloor;
   TVec    spot;
@@ -546,11 +546,11 @@ final float FindHighestFloorSurrounding(sector_t* sec, TVec* v)
 //
 //==========================================================================
 
-final float FindNextHighestFloor(sector_t* sec, TVec* v)
+final float FindNextHighestFloor(sector_t *sec, TVec *v)
 {
   int     i;
-  line_t*   check;
-  sector_t* other;
+  line_t *check;
+  sector_t *other;
   float   floor;
   float   ofloor;
   TVec    spot;
@@ -602,11 +602,11 @@ final float FindNextHighestFloor(sector_t* sec, TVec* v)
 //
 //==========================================================================
 
-final float FindNextLowestFloor(sector_t* sec, TVec* v)
+final float FindNextLowestFloor(sector_t *sec, TVec *v)
 {
   int     i;
-  line_t*   check;
-  sector_t* other;
+  line_t *check;
+  sector_t *other;
   float   floor;
   float   ofloor;
   TVec    spot;
@@ -658,11 +658,11 @@ final float FindNextLowestFloor(sector_t* sec, TVec* v)
 //
 //==========================================================================
 
-final float FindNextLowestCeiling(sector_t* sec, TVec* v)
+final float FindNextLowestCeiling(sector_t *sec, TVec *v)
 {
   int     i;
-  line_t*   check;
-  sector_t* other;
+  line_t *check;
+  sector_t *other;
   float   ceil;
   float   oceil;
   TVec    spot;
@@ -714,11 +714,11 @@ final float FindNextLowestCeiling(sector_t* sec, TVec* v)
 //
 //==========================================================================
 
-final float FindNextHighestCeiling(sector_t* sec, TVec* v)
+final float FindNextHighestCeiling(sector_t *sec, TVec *v)
 {
   int     i;
-  line_t*   check;
-  sector_t* other;
+  line_t *check;
+  sector_t *other;
   float   ceil;
   float   oceil;
   TVec    spot;
@@ -766,11 +766,11 @@ final float FindNextHighestCeiling(sector_t* sec, TVec* v)
 //
 //==========================================================================
 
-final float FindLowestCeilingSurrounding(sector_t* sec, TVec* v)
+final float FindLowestCeilingSurrounding(sector_t *sec, TVec *v)
 {
   int     i;
-  line_t*   check;
-  sector_t* other;
+  line_t *check;
+  sector_t *other;
   float   height;
   float   oceil;
   TVec    spot;
@@ -811,11 +811,11 @@ final float FindLowestCeilingSurrounding(sector_t* sec, TVec* v)
 //
 //==========================================================================
 
-final float FindHighestCeilingSurrounding(sector_t* sec, TVec* v)
+final float FindHighestCeilingSurrounding(sector_t *sec, TVec *v)
 {
   int     i;
-  line_t*   check;
-  sector_t* other;
+  line_t *check;
+  sector_t *other;
   float   height;
   float   oceil;
   TVec    spot;
@@ -859,7 +859,7 @@ final float FindHighestCeilingSurrounding(sector_t* sec, TVec* v)
 //
 //==========================================================================
 
-final float FindShortestTextureAround(sector_t* sec)
+final float FindShortestTextureAround(sector_t *sec)
 {
   int     i;
   float   minsize;
@@ -904,7 +904,7 @@ final float FindShortestTextureAround(sector_t* sec)
 //
 //==========================================================================
 
-final float FindShortestUpperAround(sector_t* sec)
+final float FindShortestUpperAround(sector_t *sec)
 {
   int     i;
   float   minsize;
@@ -944,7 +944,7 @@ final float FindShortestUpperAround(sector_t* sec)
 // a sector with that floor height across the lowest numbered two sided
 // line surrounding the sector.
 //
-//  Note: If no sector at that height bounds the sector passed, return NULL
+//  Note: If no sector at that height bounds the sector passed, return nullptr
 //
 //  jff 02/03/98 Add routine to find numeric model floor
 // around a sector specified by sector number
@@ -953,11 +953,11 @@ final float FindShortestUpperAround(sector_t* sec)
 //
 //==========================================================================
 
-final sector_t* FindModelFloorSector(sector_t* sec, float height)
+final sector_t *FindModelFloorSector(sector_t *sec, float height)
 {
   int     i;
-  line_t*   check;
-  sector_t* other;
+  line_t *check;
+  sector_t *other;
 
   //jff 5/23/98 don't disturb sec->linecount while searching
   // but allow early exit in old demos
@@ -972,7 +972,7 @@ final sector_t* FindModelFloorSector(sector_t* sec, float height)
       return other;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 //==========================================================================
@@ -983,7 +983,7 @@ final sector_t* FindModelFloorSector(sector_t* sec, float height)
 // a sector with that ceiling height across the lowest numbered two sided
 // line surrounding the sector.
 //
-//  Note: If no sector at that height bounds the sector passed, return NULL
+//  Note: If no sector at that height bounds the sector passed, return nullptr
 //
 //  jff 02/03/98 Add routine to find numeric model ceiling
 // around a sector specified by sector number
@@ -993,11 +993,11 @@ final sector_t* FindModelFloorSector(sector_t* sec, float height)
 //
 //==========================================================================
 
-final sector_t* FindModelCeilingSector(sector_t* sec, float height)
+final sector_t *FindModelCeilingSector(sector_t *sec, float height)
 {
   int     i;
-  line_t*   check;
-  sector_t* other;
+  line_t *check;
+  sector_t *other;
 
   //jff 5/23/98 don't disturb sec->linecount while searching
   // but allow early exit in old demos
@@ -1012,7 +1012,7 @@ final sector_t* FindModelCeilingSector(sector_t* sec, float height)
       return other;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 //==========================================================================
@@ -1023,11 +1023,11 @@ final sector_t* FindModelCeilingSector(sector_t* sec, float height)
 //
 //==========================================================================
 
-final int FindMinSurroundingLight(sector_t* sector, int min)
+final int FindMinSurroundingLight(sector_t *sector, int min)
 {
   int     i;
-  line_t*   line;
-  sector_t* check;
+  line_t *line;
+  sector_t *check;
 
   for (i = 0; i < sector->linecount; i++)
   {
@@ -1051,10 +1051,10 @@ final int FindMinSurroundingLight(sector_t* sector, int min)
 //
 //==========================================================================
 
-final float FindHighestFloorPoint(sector_t* sec, TVec* v)
+final float FindHighestFloorPoint(sector_t *sec, TVec *v)
 {
   int     i;
-  line_t*   line;
+  line_t *line;
   float   height;
   float   probeheight;
   TVec    spot;
@@ -1096,10 +1096,10 @@ final float FindHighestFloorPoint(sector_t* sec, TVec* v)
 //
 //==========================================================================
 
-final float FindLowestCeilingPoint(sector_t* sec, TVec* v)
+final float FindLowestCeilingPoint(sector_t *sec, TVec *v)
 {
   int     i;
-  line_t*   line;
+  line_t *line;
   float   height;
   float   probeheight;
   TVec    spot;
@@ -1139,7 +1139,7 @@ final float FindLowestCeilingPoint(sector_t* sec, TVec* v)
 //
 //==========================================================================
 
-void SpawnMapThing(mthing_t* mthing)
+void SpawnMapThing(mthing_t *mthing)
 {
 }
 
@@ -1173,9 +1173,9 @@ final void CopyMThing(mthing_t * from, mthing_t * to)
 //
 //==========================================================================
 
-final mthing_t* GetPlayerStart(int PNum, int Position)
+final mthing_t *GetPlayerStart(int PNum, int Position)
 {
-  mthing_t* Best = NULL;
+  mthing_t *Best = nullptr;
   int i;
   for (i = PlayerStarts.Num - 1; i >= 0; i--)
   {
@@ -1218,7 +1218,7 @@ void ParticleEffect(int count, int type1, int type2, TVec origin, float ornd,
 //
 //==========================================================================
 
-void UpdateParticle(particle_t* p, float DeltaTime)
+void UpdateParticle(particle_t *p, float DeltaTime)
 {
 }
 

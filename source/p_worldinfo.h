@@ -29,7 +29,7 @@ class VWorldInfo : public VGameObject
 {
   DECLARE_CLASS(VWorldInfo, VGameObject, 0)
 
-  VAcsGlobal*   Acs;
+  VAcsGlobal *Acs;
 
   vuint8      GameSkill;
   float     SkillAmmoFactor;
@@ -52,7 +52,7 @@ class VWorldInfo : public VGameObject
 
   VWorldInfo();
 
-  void Serialise(VStream& Strm);
+  void Serialise(VStream &Strm);
   void Destroy();
 
   void SetSkill(int);

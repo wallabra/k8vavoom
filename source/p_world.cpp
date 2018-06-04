@@ -71,13 +71,13 @@ typedef int fixed_t;
 //
 //==========================================================================
 
-VBlockLinesIterator::VBlockLinesIterator(VLevel* ALevel, int x, int y,
-  line_t** ALinePtr)
+VBlockLinesIterator::VBlockLinesIterator(VLevel *ALevel, int x, int y,
+  line_t **ALinePtr)
 : Level(ALevel)
 , LinePtr(ALinePtr)
-, PolyLink(NULL)
+, PolyLink(nullptr)
 , PolySegIdx(-1)
-, List(NULL)
+, List(nullptr)
 {
   guard(VBlockLinesIterator::VBlockLinesIterator);
   if (x < 0 || x >= Level->BlockMapWidth ||
@@ -117,7 +117,7 @@ bool VBlockLinesIterator::GetNext()
     {
       while (PolySegIdx < PolyLink->polyobj->numsegs)
       {
-        seg_t* Seg = PolyLink->polyobj->segs[PolySegIdx];
+        seg_t *Seg = PolyLink->polyobj->segs[PolySegIdx];
         PolySegIdx++;
         if (Seg->linedef->validcount == validcount)
         {
@@ -149,7 +149,7 @@ bool VBlockLinesIterator::GetNext()
       Host_Error("Broken blockmap - line %d", *List);
     }
 #endif
-    line_t* Line = &Level->Lines[*List];
+    line_t *Line = &Level->Lines[*List];
     List++;
 
     if (Line->validcount == validcount)
@@ -171,8 +171,8 @@ bool VBlockLinesIterator::GetNext()
 //
 //==========================================================================
 
-VRadiusThingsIterator::VRadiusThingsIterator(VThinker* ASelf,
-  VEntity** AEntPtr, TVec Org, float Radius)
+VRadiusThingsIterator::VRadiusThingsIterator(VThinker *ASelf,
+  VEntity **AEntPtr, TVec Org, float Radius)
 : Self(ASelf)
 , EntPtr(AEntPtr)
 {
@@ -186,7 +186,7 @@ VRadiusThingsIterator::VRadiusThingsIterator(VThinker* ASelf,
   if (x < 0 || x >= Self->XLevel->BlockMapWidth ||
     y < 0 || y >= Self->XLevel->BlockMapHeight)
   {
-    Ent = NULL;
+    Ent = nullptr;
   }
   else
   {
@@ -227,7 +227,7 @@ bool VRadiusThingsIterator::GetNext()
     if (x < 0 || x >= Self->XLevel->BlockMapWidth ||
       y < 0 || y >= Self->XLevel->BlockMapHeight)
     {
-      Ent = NULL;
+      Ent = nullptr;
     }
     else
     {
@@ -243,10 +243,10 @@ bool VRadiusThingsIterator::GetNext()
 //
 //==========================================================================
 
-VPathTraverse::VPathTraverse(VThinker* Self, intercept_t** AInPtr, float InX1,
+VPathTraverse::VPathTraverse(VThinker *Self, intercept_t **AInPtr, float InX1,
   float InY1, float x2, float y2, int flags)
 : Count(0)
-, In(NULL)
+, In(nullptr)
 , InPtr(AInPtr)
 {
   Init(Self, InX1, InY1, x2, y2, flags);
@@ -258,7 +258,7 @@ VPathTraverse::VPathTraverse(VThinker* Self, intercept_t** AInPtr, float InX1,
 //
 //==========================================================================
 
-void VPathTraverse::Init(VThinker* Self, float InX1, float InY1, float x2,
+void VPathTraverse::Init(VThinker *Self, float InX1, float InY1, float x2,
   float y2, int flags)
 {
   guard(VPathTraverse::Init);
@@ -460,11 +460,11 @@ void VPathTraverse::Init(VThinker* Self, float InX1, float InY1, float x2,
 //
 //==========================================================================
 
-bool VPathTraverse::AddLineIntercepts(VThinker* Self, int mapx, int mapy,
+bool VPathTraverse::AddLineIntercepts(VThinker *Self, int mapx, int mapy,
   bool EarlyOut)
 {
   guard(VPathTraverse::AddLineIntercepts);
-  line_t*   ld;
+  line_t *ld;
 
   for (VBlockLinesIterator It(Self->XLevel, mapx, mapy, &ld); It.GetNext(); )
   {
@@ -503,11 +503,11 @@ bool VPathTraverse::AddLineIntercepts(VThinker* Self, int mapx, int mapy,
       return false; // stop checking
     }
 
-    intercept_t& In = Intercepts.Alloc();
+    intercept_t &In = Intercepts.Alloc();
     In.frac = frac;
     In.Flags = intercept_t::IF_IsALine;
     In.line = ld;
-    In.thing = NULL;
+    In.thing = nullptr;
   }
   return true;
   unguard;
@@ -519,7 +519,7 @@ bool VPathTraverse::AddLineIntercepts(VThinker* Self, int mapx, int mapy,
 //
 //==========================================================================
 
-void VPathTraverse::AddThingIntercepts(VThinker* Self, int mapx, int mapy)
+void VPathTraverse::AddThingIntercepts(VThinker *Self, int mapx, int mapy)
 {
   guard(VPathTraverse::AddThingIntercepts);
   for (VBlockThingsIterator It(Self->XLevel, mapx, mapy); Self && It; ++It)
@@ -539,10 +539,10 @@ void VPathTraverse::AddThingIntercepts(VThinker* Self, int mapx, int mapy)
     }
     float frac = dist / trace_len;
 
-    intercept_t& In = Intercepts.Alloc();
+    intercept_t &In = Intercepts.Alloc();
     In.frac = frac;
     In.Flags = 0;
-    In.line = NULL;
+    In.line = nullptr;
     In.thing = *It;
   }
   unguard;
@@ -572,8 +572,8 @@ bool VPathTraverse::GetNext()
 
   //  Go through the sorted list.
   float Dist = 99999.0;
-  intercept_t* EndIn = Intercepts.Ptr() + Intercepts.Num();
-  for (intercept_t* Scan = Intercepts.Ptr(); Scan < EndIn; Scan++)
+  intercept_t *EndIn = Intercepts.Ptr() + Intercepts.Num();
+  for (intercept_t *Scan = Intercepts.Ptr(); Scan < EndIn; Scan++)
   {
     if (Scan->frac < Dist)
     {

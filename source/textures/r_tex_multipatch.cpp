@@ -406,7 +406,7 @@ void VMultiPatchTexture::SetFrontSkyLayer () {
 // patches, and each column is cached
 //
 //==========================================================================
-vuint8* VMultiPatchTexture::GetPixels () {
+vuint8 *VMultiPatchTexture::GetPixels () {
   guard(VMultiPatchTexture::GetPixels);
   // if already got pixels, then just return them.
   if (Pixels) return Pixels;

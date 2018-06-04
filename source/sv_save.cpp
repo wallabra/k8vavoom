@@ -290,7 +290,7 @@ bool VSaveSlot::LoadSlot (int Slot) {
   int NumMaps;
   *Strm << STRM_INDEX(NumMaps);
   for (int i = 0; i < NumMaps; ++i) {
-    VSavedMap* Map = new VSavedMap();
+    VSavedMap *Map = new VSavedMap();
     Maps.Append(Map);
     vint32 DataLen;
     *Strm << TmpName << Map->DecompressedSize << STRM_INDEX(DataLen);
@@ -689,7 +689,7 @@ static void SV_LoadMap (VName MapName) {
   // load a base level
   SV_SpawnServer(*MapName, false, false);
 
-  VSavedMap* Map = BaseSlot.FindMap(MapName);
+  VSavedMap *Map = BaseSlot.FindMap(MapName);
   check(Map);
 
   // decompress map data

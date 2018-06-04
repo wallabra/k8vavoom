@@ -187,7 +187,7 @@ VTexture *VWarpTexture::GetHighResolutionTexture () {
   VTexture *SrcTex = VTexture::GetHighResolutionTexture();
   if (!SrcTex) return nullptr;
 
-  VWarpTexture* NewTex;
+  VWarpTexture *NewTex;
   if (WarpType == 1) NewTex = new VWarpTexture(SrcTex); else NewTex = new VWarp2Texture(SrcTex);
   NewTex->Name = Name;
   NewTex->Type = Type;
@@ -234,7 +234,7 @@ vuint8 *VWarp2Texture::GetPixels () {
   guard(VWarp2Texture::GetPixels);
   if (Pixels && GenTime == GTextureManager.Time) return Pixels;
 
-  const vuint8* SrcPixels = SrcTex->GetPixels();
+  const vuint8 *SrcPixels = SrcTex->GetPixels();
   Format = SrcTex->Format;
 
   GenTime = GTextureManager.Time;

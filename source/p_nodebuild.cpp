@@ -180,13 +180,13 @@ static const nodebuildfuncs_t build_funcs =
 //
 //==========================================================================
 
-static void SetUpVertices(VLevel* Level)
+static void SetUpVertices(VLevel *Level)
 {
   guard(SetUpVertices);
-  vertex_t* pSrc = Level->Vertexes;
+  vertex_t *pSrc = Level->Vertexes;
   for (int i = 0; i < Level->NumVertexes; i++, pSrc++)
   {
-    glbsp_vertex_t* Vert = NewVertex();
+    glbsp_vertex_t *Vert = NewVertex();
     Vert->x = pSrc->x;
     Vert->y = pSrc->y;
     Vert->index = i;
@@ -204,13 +204,13 @@ static void SetUpVertices(VLevel* Level)
 //
 //==========================================================================
 
-static void SetUpSectors(VLevel* Level)
+static void SetUpSectors(VLevel *Level)
 {
   guard(SetUpSectors);
-  sector_t* pSrc = Level->Sectors;
+  sector_t *pSrc = Level->Sectors;
   for (int i = 0; i < Level->NumSectors; i++, pSrc++)
   {
-    glbsp_sector_t* Sector = NewSector();
+    glbsp_sector_t *Sector = NewSector();
     Sector->coalesce = (pSrc->tag >= 900 && pSrc->tag < 1000) ?
       TRUE : FALSE;
     Sector->index = i;
@@ -225,14 +225,14 @@ static void SetUpSectors(VLevel* Level)
 //
 //==========================================================================
 
-static void SetUpSidedefs(VLevel* Level)
+static void SetUpSidedefs(VLevel *Level)
 {
   guard(SetUpSidedefs);
-  side_t* pSrc = Level->Sides;
+  side_t *pSrc = Level->Sides;
   for (int i = 0; i < Level->NumSides; i++, pSrc++)
   {
-    sidedef_t* Side = NewSidedef();
-    Side->sector = !pSrc->Sector ? NULL :
+    sidedef_t *Side = NewSidedef();
+    Side->sector = !pSrc->Sector ? nullptr :
       LookupSector(pSrc->Sector - Level->Sectors);
     if (Side->sector)
     {
@@ -249,14 +249,14 @@ static void SetUpSidedefs(VLevel* Level)
 //
 //==========================================================================
 
-static void SetUpLinedefs(VLevel* Level)
+static void SetUpLinedefs(VLevel *Level)
 {
   guard(SetUpLinedefs);
-  line_t* pSrc = Level->Lines;
+  line_t *pSrc = Level->Lines;
   for (int i = 0; i < Level->NumLines; i++, pSrc++)
   {
-    linedef_t* Line = NewLinedef();
-    if (Line == NULL)
+    linedef_t *Line = NewLinedef();
+    if (Line == nullptr)
     {
       continue;
     }
@@ -269,19 +269,19 @@ static void SetUpLinedefs(VLevel* Level)
     Line->flags = pSrc->flags;
     Line->type = pSrc->special;
     Line->two_sided = (Line->flags & LINEFLAG_TWO_SIDED) ? TRUE : FALSE;
-    Line->right = pSrc->sidenum[0] < 0 ? NULL : LookupSidedef(pSrc->sidenum[0]);
-    Line->left = pSrc->sidenum[1] < 0 ? NULL : LookupSidedef(pSrc->sidenum[1]);
-    if (Line->right != NULL)
+    Line->right = pSrc->sidenum[0] < 0 ? nullptr : LookupSidedef(pSrc->sidenum[0]);
+    Line->left = pSrc->sidenum[1] < 0 ? nullptr : LookupSidedef(pSrc->sidenum[1]);
+    if (Line->right != nullptr)
     {
       Line->right->ref_count++;
       Line->right->on_special |= (Line->type > 0) ? 1 : 0;
     }
-    if (Line->left != NULL)
+    if (Line->left != nullptr)
     {
       Line->left->ref_count++;
       Line->left->on_special |= (Line->type > 0) ? 1 : 0;
     }
-    Line->self_ref = (Line->left != NULL && Line->right != NULL &&
+    Line->self_ref = (Line->left != nullptr && Line->right != nullptr &&
       (Line->left->sector == Line->right->sector));
     Line->index = i;
   }
@@ -294,13 +294,13 @@ static void SetUpLinedefs(VLevel* Level)
 //
 //==========================================================================
 
-static void SetUpThings(VLevel* Level)
+static void SetUpThings(VLevel *Level)
 {
   guard(SetUpThings);
-  mthing_t* pSrc = Level->Things;
+  mthing_t *pSrc = Level->Things;
   for (int i = 0; i < Level->NumThings; i++, pSrc++)
   {
-    thing_t* Thing = NewThing();
+    thing_t *Thing = NewThing();
     Thing->x = (int)pSrc->x;
     Thing->y = (int)pSrc->y;
     Thing->type = pSrc->type;
@@ -316,19 +316,19 @@ static void SetUpThings(VLevel* Level)
 //
 //==========================================================================
 
-static void CopyGLVerts(VLevel* Level, vertex_t*& GLVertexes)
+static void CopyGLVerts(VLevel *Level, vertex_t *&GLVertexes)
 {
   guard(CopyGLVerts);
   int NumBaseVerts = Level->NumVertexes;
-  vertex_t* OldVertexes = Level->Vertexes;
+  vertex_t *OldVertexes = Level->Vertexes;
   Level->NumVertexes = NumBaseVerts + num_gl_vert;
   Level->Vertexes = new vertex_t[Level->NumVertexes];
   GLVertexes = Level->Vertexes + NumBaseVerts;
   memcpy(Level->Vertexes, OldVertexes, NumBaseVerts * sizeof(vertex_t));
-  vertex_t* pDst = GLVertexes;
+  vertex_t *pDst = GLVertexes;
   for (int i = 0; i < num_vertices; i++)
   {
-    glbsp_vertex_t* vert = LookupVertex(i);
+    glbsp_vertex_t *vert = LookupVertex(i);
     if (!(vert->index & IS_GL_VERTEX))
       continue;
     *pDst = TVec(vert->x, vert->y, 0);
@@ -338,12 +338,12 @@ static void CopyGLVerts(VLevel* Level, vertex_t*& GLVertexes)
   //  Update pointers to vertexes in lines.
   for (int i = 0; i < Level->NumLines; i++)
   {
-    line_t* ld = &Level->Lines[i];
+    line_t *ld = &Level->Lines[i];
     ld->v1 = &Level->Vertexes[ld->v1 - OldVertexes];
     ld->v2 = &Level->Vertexes[ld->v2 - OldVertexes];
   }
   delete[] OldVertexes;
-  OldVertexes = NULL;
+  OldVertexes = nullptr;
   unguard;
 }
 
@@ -353,14 +353,14 @@ static void CopyGLVerts(VLevel* Level, vertex_t*& GLVertexes)
 //
 //==========================================================================
 
-static void CopySegs(VLevel* Level, vertex_t* GLVertexes)
+static void CopySegs(VLevel *Level, vertex_t *GLVertexes)
 {
   guard(CopySegs);
   //  Build ordered list of source segs.
-  glbsp_seg_t** SrcSegs = new glbsp_seg_t*[num_complete_seg];
+  glbsp_seg_t **SrcSegs = new glbsp_seg_t*[num_complete_seg];
   for (int i = 0; i < num_segs; i++)
   {
-    glbsp_seg_t* Seg = LookupSeg(i);
+    glbsp_seg_t *Seg = LookupSeg(i);
     // ignore degenerate segs
     if (Seg->degenerate)
       continue;
@@ -370,10 +370,10 @@ static void CopySegs(VLevel* Level, vertex_t* GLVertexes)
   Level->NumSegs = num_complete_seg;
   Level->Segs = new seg_t[Level->NumSegs];
   memset(Level->Segs, 0, sizeof(seg_t) * Level->NumSegs);
-  seg_t* li = Level->Segs;
+  seg_t *li = Level->Segs;
   for (int i = 0; i < Level->NumSegs; i++, li++)
   {
-    glbsp_seg_t* SrcSeg = SrcSegs[i];
+    glbsp_seg_t *SrcSeg = SrcSegs[i];
     li->partner = nullptr;
     li->front_sub = nullptr;
 
@@ -407,7 +407,7 @@ static void CopySegs(VLevel* Level, vertex_t* GLVertexes)
 
     if (SrcSeg->linedef)
     {
-      line_t* ldef = &Level->Lines[SrcSeg->linedef->index];
+      line_t *ldef = &Level->Lines[SrcSeg->linedef->index];
       li->linedef = ldef;
       li->sidedef = &Level->Sides[ldef->sidenum[SrcSeg->side]];
       li->frontsector = Level->Sides[ldef->sidenum[SrcSeg->side]].Sector;
@@ -434,7 +434,7 @@ static void CopySegs(VLevel* Level, vertex_t* GLVertexes)
   }
 
   delete[] SrcSegs;
-  SrcSegs = NULL;
+  SrcSegs = nullptr;
   unguard;
 }
 
@@ -444,21 +444,21 @@ static void CopySegs(VLevel* Level, vertex_t* GLVertexes)
 //
 //==========================================================================
 
-static void CopySubsectors(VLevel* Level)
+static void CopySubsectors(VLevel *Level)
 {
   guard(CopySubsectors);
   Level->NumSubsectors = num_subsecs;
   Level->Subsectors = new subsector_t[Level->NumSubsectors];
   memset(Level->Subsectors, 0, sizeof(subsector_t) * Level->NumSubsectors);
-  subsector_t* ss = Level->Subsectors;
+  subsector_t *ss = Level->Subsectors;
   for (int i = 0; i < Level->NumSubsectors; i++, ss++)
   {
-    subsec_t* SrcSub = LookupSubsec(i);
+    subsec_t *SrcSub = LookupSubsec(i);
     ss->numlines = SrcSub->seg_count;
     ss->firstline = SrcSub->seg_list->index;
 
     //  Look up sector number for each subsector
-    seg_t* seg = &Level->Segs[ss->firstline];
+    seg_t *seg = &Level->Segs[ss->firstline];
     for (int j = 0; j < ss->numlines; j++)
     {
       if (seg[j].linedef)
@@ -489,7 +489,7 @@ static void CopySubsectors(VLevel* Level)
 //
 //==========================================================================
 
-static void CopyNode(int& NodeIndex, glbsp_node_t* SrcNode, node_t* Nodes)
+static void CopyNode(int &NodeIndex, glbsp_node_t *SrcNode, node_t *Nodes)
 {
   if (SrcNode->r.node)
   {
@@ -503,7 +503,7 @@ static void CopyNode(int& NodeIndex, glbsp_node_t* SrcNode, node_t* Nodes)
 
   SrcNode->index = NodeIndex;
 
-  node_t* Node = &Nodes[NodeIndex];
+  node_t *Node = &Nodes[NodeIndex];
   Node->SetPointDir(TVec(SrcNode->x, SrcNode->y, 0),
     TVec(SrcNode->dx, SrcNode->dy, 0));
 
@@ -548,7 +548,7 @@ static void CopyNode(int& NodeIndex, glbsp_node_t* SrcNode, node_t* Nodes)
 //
 //==========================================================================
 
-static void CopyNodes(VLevel* Level, glbsp_node_t* root_node)
+static void CopyNodes(VLevel *Level, glbsp_node_t *root_node)
 {
   guard(CopyNodes);
   //  Copy nodes.
@@ -606,10 +606,10 @@ void VLevel::BuildNodes()
   InitBlockmap();
 
   //  Build nodes.
-  superblock_t* SegList = CreateSegs();
-  glbsp_node_t* root_node;
-  subsec_t* root_sub;
-  glbsp_ret_e ret = ::BuildNodes(SegList, &root_node, &root_sub, 0, NULL);
+  superblock_t *SegList = CreateSegs();
+  glbsp_node_t *root_node;
+  subsec_t *root_sub;
+  glbsp_ret_e ret = ::BuildNodes(SegList, &root_node, &root_sub, 0, nullptr);
   FreeSuper(SegList);
 
   if (ret == GLBSP_E_OK)
@@ -617,7 +617,7 @@ void VLevel::BuildNodes()
     ClockwiseBspTree(root_node);
 
     //  Copy nodes into internal structures.
-    vertex_t* GLVertexes;
+    vertex_t *GLVertexes;
 
     CopyGLVerts(this, GLVertexes);
     CopySegs(this, GLVertexes);
@@ -630,9 +630,9 @@ void VLevel::BuildNodes()
   FreeQuickAllocCuts();
   FreeQuickAllocSupers();
 
-  cur_info  = NULL;
-  cur_comms = NULL;
-  cur_funcs = NULL;
+  cur_info  = nullptr;
+  cur_comms = nullptr;
+  cur_funcs = nullptr;
 
   if (ret != GLBSP_E_OK)
   {
@@ -640,7 +640,7 @@ void VLevel::BuildNodes()
   }
 
   //  Create dummy VIS data.
-  VisData = NULL;
+  VisData = nullptr;
   NoVis = new vuint8[(NumSubsectors + 7) / 8];
   memset(NoVis, 0xff, (NumSubsectors + 7) / 8);
   unguard;

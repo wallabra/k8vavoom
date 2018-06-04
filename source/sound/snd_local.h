@@ -89,7 +89,7 @@ struct sfxinfo_t
   float ChangePitch;
   int   UseCount;
   int   Link;
-  int*  Sounds;     // For random sounds, Link is count.
+  int *Sounds;     // For random sounds, Link is count.
 
   bool  bRandomHeader;
   bool  bPlayerReserve;
@@ -98,14 +98,14 @@ struct sfxinfo_t
   vuint32 SampleRate;
   int   SampleBits;
   vuint32 DataSize;
-  void* Data;
+  void *Data;
 };
 
 struct seq_info_t
 {
   VName   Name;
   VName   Slot;
-  vint32*   Data;
+  vint32 *Data;
   vint32    StopSound;
 };
 
@@ -157,8 +157,8 @@ struct VReverbProperties
 
 struct VReverbInfo
 {
-  VReverbInfo*    Next;
-  const char*     Name;
+  VReverbInfo *Next;
+  const char *Name;
   int         Id;
   bool        Builtin;
   VReverbProperties Props;
@@ -195,7 +195,7 @@ public:
   virtual bool OpenStream(int, int, int) = 0;
   virtual void CloseStream() = 0;
   virtual int GetStreamAvailable() = 0;
-  virtual short* GetStreamBuffer() = 0;
+  virtual short *GetStreamBuffer() = 0;
   virtual void SetStreamData(short*, int) = 0;
   virtual void SetStreamVolume(float) = 0;
   virtual void PauseStream() = 0;
@@ -205,18 +205,18 @@ public:
 //  Describtion of a sound driver.
 struct FSoundDeviceDesc
 {
-  const char*   Name;
-  const char*   Description;
-  const char*   CmdLineArg;
-  VSoundDevice* (*Creator)();
+  const char *Name;
+  const char *Description;
+  const char *CmdLineArg;
+  VSoundDevice *(*Creator)();
 
-  FSoundDeviceDesc(int Type, const char* AName, const char* ADescription,
-    const char* ACmdLineArg, VSoundDevice* (*ACreator)());
+  FSoundDeviceDesc(int Type, const char *AName, const char *ADescription,
+    const char *ACmdLineArg, VSoundDevice *(*ACreator)());
 };
 
 //  Sound device registration helper.
 #define IMPLEMENT_SOUND_DEVICE(TClass, Type, Name, Description, CmdLineArg) \
-VSoundDevice* Create##TClass() \
+VSoundDevice *Create##TClass() \
 { \
   return new TClass(); \
 } \
@@ -255,18 +255,18 @@ public:
 //  Describtion of a midi driver.
 struct FMidiDeviceDesc
 {
-  const char*   Name;
-  const char*   Description;
-  const char*   CmdLineArg;
-  VMidiDevice*  (*Creator)();
+  const char *Name;
+  const char *Description;
+  const char *CmdLineArg;
+  VMidiDevice *(*Creator)();
 
-  FMidiDeviceDesc(int Type, const char* AName, const char* ADescription,
-    const char* ACmdLineArg, VMidiDevice* (*ACreator)());
+  FMidiDeviceDesc(int Type, const char *AName, const char *ADescription,
+    const char *ACmdLineArg, VMidiDevice *(*ACreator)());
 };
 
 //  Midi device registration helper.
 #define IMPLEMENT_MIDI_DEVICE(TClass, Type, Name, Description, CmdLineArg) \
-VMidiDevice* Create##TClass() \
+VMidiDevice *Create##TClass() \
 { \
   return new TClass(); \
 } \
@@ -317,18 +317,18 @@ public:
 //  Describtion of a CD driver.
 struct FCDAudioDeviceDesc
 {
-  const char*   Name;
-  const char*   Description;
-  const char*   CmdLineArg;
-  VCDAudioDevice* (*Creator)();
+  const char *Name;
+  const char *Description;
+  const char *CmdLineArg;
+  VCDAudioDevice *(*Creator)();
 
-  FCDAudioDeviceDesc(int Type, const char* AName, const char* ADescription,
-    const char* ACmdLineArg, VCDAudioDevice* (*ACreator)());
+  FCDAudioDeviceDesc(int Type, const char *AName, const char *ADescription,
+    const char *ACmdLineArg, VCDAudioDevice *(*ACreator)());
 };
 
 //  CD audio device registration helper.
 #define IMPLEMENT_CD_AUDIO_DEVICE(TClass, Type, Name, Description, CmdLineArg) \
-VCDAudioDevice* Create##TClass() \
+VCDAudioDevice *Create##TClass() \
 { \
   return new TClass(); \
 } \
@@ -338,9 +338,9 @@ FCDAudioDeviceDesc TClass##Desc(Type, Name, Description, CmdLineArg, Create##TCl
 class VSampleLoader : public VInterface
 {
 public:
-  VSampleLoader*      Next;
+  VSampleLoader *Next;
 
-  static VSampleLoader* List;
+  static VSampleLoader *List;
 
   VSampleLoader()
   {
@@ -371,13 +371,13 @@ public:
 //  Description of an audio codec.
 struct FAudioCodecDesc
 {
-  const char*         Description;
-  VAudioCodec*        (*Creator)(VStream*);
-  FAudioCodecDesc*      Next;
+  const char *Description;
+  VAudioCodec *(*Creator)(VStream*);
+  FAudioCodecDesc *Next;
 
-  static FAudioCodecDesc*   List;
+  static FAudioCodecDesc *List;
 
-  FAudioCodecDesc(const char* InDescription, VAudioCodec* (*InCreator)(VStream*))
+  FAudioCodecDesc(const char *InDescription, VAudioCodec *(*InCreator)(VStream*))
   : Description(InDescription)
   , Creator(InCreator)
   {
@@ -428,18 +428,18 @@ class VStreamMusicPlayer
 {
 public:
   bool      StrmOpened;
-  VAudioCodec*  Codec;
+  VAudioCodec *Codec;
   //  Current playing song info.
   bool      CurrLoop;
   VName     CurrSong;
   bool      Stopping;
   bool      Paused;
   double      FinishTime;
-  VSoundDevice* SoundDevice;
+  VSoundDevice *SoundDevice;
 
-  VStreamMusicPlayer(VSoundDevice* InSoundDevice)
+  VStreamMusicPlayer(VSoundDevice *InSoundDevice)
   : StrmOpened(false)
-  , Codec(NULL)
+  , Codec(nullptr)
   , CurrLoop(false)
   , Stopping(false)
   , Paused(false)
@@ -451,7 +451,7 @@ public:
   void Init();
   void Shutdown();
   void Tick(float);
-  void Play(VAudioCodec* InCodec, const char* InName, bool InLoop);
+  void Play(VAudioCodec *InCodec, const char *InName, bool InLoop);
   void Pause();
   void Resume();
   void Stop();

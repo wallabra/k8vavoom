@@ -402,9 +402,9 @@ struct VProgsImport {
   VMemberBase *Obj;
 
   VProgsImport () : Type(0), Name(NAME_None), OuterIndex(0), Obj(0) {}
-  VProgsImport (VMemberBase* InObj, vint32 InOuterIndex);
+  VProgsImport (VMemberBase *InObj, vint32 InOuterIndex);
 
-  friend VStream& operator << (VStream& Strm, VProgsImport& I) {
+  friend VStream &operator << (VStream &Strm, VProgsImport &I) {
     Strm << I.Type << I.Name << STRM_INDEX(I.OuterIndex);
     if (I.Type == MEMBER_DecorateClass) Strm << I.ParentClassName;
     return Strm;
@@ -420,9 +420,9 @@ struct VProgsExport {
   VMemberBase *Obj;
 
   VProgsExport () : Type(0), Name(NAME_None), Obj(0) {}
-  VProgsExport(VMemberBase* InObj);
+  VProgsExport(VMemberBase *InObj);
 
-  friend VStream& operator << (VStream& Strm, VProgsExport& E) {
+  friend VStream &operator << (VStream &Strm, VProgsExport &E) {
     return Strm << E.Type << E.Name;
   }
 };

@@ -159,7 +159,7 @@ void VLevel::LoadMap(VName AMapName)
   int CompressedGLNodesLump = -1;
   bool UseComprGLNodes = false;
   bool NeedNodesBuild = false;
-  const mapInfo_t& MInfo = P_GetMapInfo(MapName);
+  const mapInfo_t &MInfo = P_GetMapInfo(MapName);
 
   //  Check for UDMF map
   if (W_LumpName(lumpnum + 1) == NAME_textmap)
@@ -262,7 +262,7 @@ void VLevel::LoadMap(VName AMapName)
 
     if (SubsectorsLump != -1)
     {
-      VStream* TmpStrm = W_CreateLumpReaderNum(SubsectorsLump);
+      VStream *TmpStrm = W_CreateLumpReaderNum(SubsectorsLump);
       if (TmpStrm->TotalSize() > 4)
       {
         char Hdr[4];
@@ -274,7 +274,7 @@ void VLevel::LoadMap(VName AMapName)
         }
       }
       delete TmpStrm;
-      TmpStrm = NULL;
+      TmpStrm = nullptr;
     }
   }
   InitTime += Sys_Time();
@@ -456,7 +456,7 @@ void VLevel::LoadMap(VName AMapName)
   double WallShadesTime = -Sys_Time();
   for (int i = 0; i < NumLines; i++)
   {
-    line_t* Line = Lines + i;
+    line_t *Line = Lines + i;
     if (!Line->normal.x)
     {
       Sides[Line->sidenum[0]].Light = MInfo.HorizWallShade;
@@ -588,10 +588,10 @@ int VLevel::FindGLNodes(VName name) const
       continue;
     }
     char Buf[16];
-    VStream* Strm = W_CreateLumpReaderNum(Lump);
+    VStream *Strm = W_CreateLumpReaderNum(Lump);
     Strm->Serialise(Buf, Strm->TotalSize() < 16 ? Strm->TotalSize() : 16);
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
     if (memcmp(Buf, "LEVEL=", 6))
     {
       //  LEVEL keyword expected, but missing.
@@ -621,7 +621,7 @@ int VLevel::FindGLNodes(VName name) const
 //
 //==========================================================================
 
-void VLevel::LoadVertexes(int Lump, int GLLump, int& NumBaseVerts)
+void VLevel::LoadVertexes(int Lump, int GLLump, int &NumBaseVerts)
 {
   guard(VLevel::LoadVertexes);
   int GlFormat = 0;
@@ -648,8 +648,8 @@ void VLevel::LoadVertexes(int Lump, int GLLump, int& NumBaseVerts)
   Vertexes = new vertex_t[NumVertexes];
 
   //  Load base vertexes.
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
-  vertex_t* pDst = Vertexes;
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  vertex_t *pDst = Vertexes;
   for (int i = 0; i < NumBaseVerts; i++, pDst++)
   {
     vint16 x, y;
@@ -657,7 +657,7 @@ void VLevel::LoadVertexes(int Lump, int GLLump, int& NumBaseVerts)
     *pDst = TVec(x, y, 0);
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
 
   if (GLLump >= 0)
   {
@@ -685,7 +685,7 @@ void VLevel::LoadVertexes(int Lump, int GLLump, int& NumBaseVerts)
       }
     }
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
   }
   unguard;
 }
@@ -705,8 +705,8 @@ void VLevel::LoadSectors(int Lump)
   memset(Sectors, 0, sizeof(sector_t) * NumSectors);
 
   //  Load sectors.
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
-  sector_t* ss = Sectors;
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  sector_t *ss = Sectors;
   for (int i = 0; i < NumSectors; i++, ss++)
   {
     //  Read data.
@@ -752,7 +752,7 @@ void VLevel::LoadSectors(int Lump)
     ss->params.lightlevel = lightlevel;
     ss->params.LightColour = 0x00ffffff;
     //  Region
-    sec_region_t* region = new sec_region_t;
+    sec_region_t *region = new sec_region_t;
     memset(region, 0, sizeof(*region));
     region->floor = &ss->floor;
     region->ceiling = &ss->ceiling;
@@ -768,7 +768,7 @@ void VLevel::LoadSectors(int Lump)
     ss->Zone = -1;
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   HashSectors();
   unguard;
 }
@@ -785,7 +785,7 @@ void VLevel::CreateSides()
   //  Perform side index and two-sided flag checks and count number of
   // sides needed.
   int NumNewSides = 0;
-  line_t* Line = Lines;
+  line_t *Line = Lines;
   for (int i = 0; i < NumLines; i++, Line++)
   {
     if (Line->sidenum[0] == -1)
@@ -887,8 +887,8 @@ void VLevel::LoadSideDefs(int Lump)
   CreateSides();
 
   //  Load data.
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
-  side_t* sd = Sides;
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  side_t *sd = Sides;
   for (int i = 0; i < NumSides; i++, sd++)
   {
     Strm->Seek(sd->BottomTexture * 30);
@@ -978,7 +978,7 @@ void VLevel::LoadSideDefs(int Lump)
     }
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -990,15 +990,15 @@ void VLevel::LoadSideDefs(int Lump)
 //
 //==========================================================================
 
-void VLevel::LoadLineDefs1(int Lump, int NumBaseVerts, const mapInfo_t& MInfo)
+void VLevel::LoadLineDefs1(int Lump, int NumBaseVerts, const mapInfo_t &MInfo)
 {
   guard(VLevel::LoadLineDefs1);
   NumLines = W_LumpLength(Lump) / 14;
   Lines = new line_t[NumLines];
   memset(Lines, 0, sizeof(line_t) * NumLines);
 
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
-  line_t* ld = Lines;
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  line_t *ld = Lines;
   for (int i = 0; i < NumLines; i++, ld++)
   {
     vint16 v1, v2, flags, special, tag;
@@ -1035,7 +1035,7 @@ void VLevel::LoadLineDefs1(int Lump, int NumBaseVerts, const mapInfo_t& MInfo)
     }
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -1047,15 +1047,15 @@ void VLevel::LoadLineDefs1(int Lump, int NumBaseVerts, const mapInfo_t& MInfo)
 //
 //==========================================================================
 
-void VLevel::LoadLineDefs2(int Lump, int NumBaseVerts, const mapInfo_t& MInfo)
+void VLevel::LoadLineDefs2(int Lump, int NumBaseVerts, const mapInfo_t &MInfo)
 {
   guard(VLevel::LoadLineDefs2);
   NumLines = W_LumpLength(Lump) / 16;
   Lines = new line_t[NumLines];
   memset(Lines, 0, sizeof(line_t) * NumLines);
 
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
-  line_t* ld = Lines;
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  line_t *ld = Lines;
   for (int i = 0; i < NumLines; i++, ld++)
   {
     vint16 v1, v2, flags;
@@ -1110,7 +1110,7 @@ void VLevel::LoadLineDefs2(int Lump, int NumBaseVerts, const mapInfo_t& MInfo)
     }
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -1123,7 +1123,7 @@ void VLevel::LoadLineDefs2(int Lump, int NumBaseVerts, const mapInfo_t& MInfo)
 void VLevel::FinaliseLines()
 {
   guard(VLevel::FinaliseLines);
-  line_t* Line = Lines;
+  line_t *Line = Lines;
   for (int i = 0; i < NumLines; i++, Line++)
   {
     //  Calculate line's plane, slopetype, etc.
@@ -1137,7 +1137,7 @@ void VLevel::FinaliseLines()
     }
     else
     {
-      Line->backsector = NULL;
+      Line->backsector = nullptr;
     }
   }
   unguard;
@@ -1152,7 +1152,7 @@ void VLevel::FinaliseLines()
 void VLevel::LoadGLSegs(int Lump, int NumBaseVerts)
 {
   guard(VLevel::LoadGLSegs);
-  vertex_t* GLVertexes = Vertexes + NumBaseVerts;
+  vertex_t *GLVertexes = Vertexes + NumBaseVerts;
   int NumGLVertexes = NumVertexes - NumBaseVerts;
 
   //  Determine format of the segs data.
@@ -1187,12 +1187,12 @@ void VLevel::LoadGLSegs(int Lump, int NumBaseVerts)
   memset(Segs, 0, sizeof(seg_t) * NumSegs);
 
   //  Read data.
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
   if (Format == 3)
   {
     Strm->Seek(4);
   }
-  seg_t* li = Segs;
+  seg_t *li = Segs;
   for (int i = 0; i < NumSegs; i++, li++)
   {
     vuint32 v1num;
@@ -1247,7 +1247,7 @@ void VLevel::LoadGLSegs(int Lump, int NumBaseVerts)
 
     if (linedef >= 0)
     {
-      line_t* ldef = &Lines[linedef];
+      line_t *ldef = &Lines[linedef];
       li->linedef = ldef;
       li->sidedef = &Sides[ldef->sidenum[side]];
       li->frontsector = Sides[ldef->sidenum[side]].Sector;
@@ -1276,7 +1276,7 @@ void VLevel::LoadGLSegs(int Lump, int NumBaseVerts)
     CalcSeg(li);
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -1317,12 +1317,12 @@ void VLevel::LoadSubsectors(int Lump)
   memset(Subsectors, 0, sizeof(subsector_t) * NumSubsectors);
 
   //  Read data.
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
   if (Format == 3)
   {
     Strm->Seek(4);
   }
-  subsector_t* ss = Subsectors;
+  subsector_t *ss = Subsectors;
   for (int i = 0; i < NumSubsectors; i++, ss++)
   {
     if (Format < 3)
@@ -1346,7 +1346,7 @@ void VLevel::LoadSubsectors(int Lump)
       Host_Error("Bad segs range %d %d", ss->firstline, ss->numlines);
 
       // look up sector number for each subsector
-    seg_t* seg = &Segs[ss->firstline];
+    seg_t *seg = &Segs[ss->firstline];
     for (int j = 0; j < ss->numlines; j++)
     {
       if (seg[j].linedef)
@@ -1367,7 +1367,7 @@ void VLevel::LoadSubsectors(int Lump)
     if (!Segs[f].front_sub) GCon->Logf("Seg %d: front_sub is not set!", f);
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -1391,8 +1391,8 @@ void VLevel::LoadNodes(int Lump)
   Nodes = new node_t[NumNodes];
   memset(Nodes, 0, sizeof(node_t) * NumNodes);
 
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
-  node_t* no = Nodes;
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  node_t *no = Nodes;
   for (int i = 0; i < NumNodes; i++, no++)
   {
     vint16 x, y, dx, dy;
@@ -1431,7 +1431,7 @@ void VLevel::LoadNodes(int Lump)
     }
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -1447,17 +1447,17 @@ void VLevel::LoadPVS(int Lump)
   if (W_LumpName(Lump) != NAME_gl_pvs || W_LumpLength(Lump) == 0)
   {
     GCon->Logf(NAME_Dev, "Empty or missing PVS lump");
-    VisData = NULL;
+    VisData = nullptr;
     NoVis = new vuint8[(NumSubsectors + 7) / 8];
     memset(NoVis, 0xff, (NumSubsectors + 7) / 8);
   }
   else
   {
     VisData = new byte[W_LumpLength(Lump)];
-    VStream* Strm = W_CreateLumpReaderNum(Lump);
+    VStream *Strm = W_CreateLumpReaderNum(Lump);
     Strm->Serialise(VisData, W_LumpLength(Lump));
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
   }
   unguard;
 }
@@ -1472,18 +1472,18 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
 {
   return false; //k8:FIXME: dunno, this seems to read some shit in one of my test maps; will investigate it later
   guard(VLevel::LoadCompressedGLNodes);
-  VStream* BaseStrm = W_CreateLumpReaderNum(Lump);
+  VStream *BaseStrm = W_CreateLumpReaderNum(Lump);
   //  Skip header.
   BaseStrm->Seek(4);
   //  Create reader stream for the zipped data.
-  vuint8* TmpData = new vuint8[BaseStrm->TotalSize() - 4];
+  vuint8 *TmpData = new vuint8[BaseStrm->TotalSize() - 4];
   BaseStrm->Serialise(TmpData, BaseStrm->TotalSize() - 4);
-  VStream* DataStrm = new VMemoryStream(TmpData, BaseStrm->TotalSize() - 4);
+  VStream *DataStrm = new VMemoryStream(TmpData, BaseStrm->TotalSize() - 4);
   delete[] TmpData;
-  TmpData = NULL;
+  TmpData = nullptr;
   delete BaseStrm;
-  BaseStrm = NULL;
-  VStream* Strm = new VZipStreamReader(DataStrm);
+  BaseStrm = nullptr;
+  VStream *Strm = new VZipStreamReader(DataStrm);
 
   //  Read extra vertex data
   guard(VLevel::LoadCompressedGLNodes::Vertexes);
@@ -1493,24 +1493,24 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
 
   if (OrgVerts + NewVerts != (vuint32)NumVertexes)
   {
-    vertex_t* OldVerts = Vertexes;
+    vertex_t *OldVerts = Vertexes;
     NumVertexes = OrgVerts + NewVerts;
     Vertexes = new vertex_t[NumVertexes];
     memcpy(Vertexes, OldVerts, OrgVerts * sizeof(vertex_t));
     //  Fix up vertex pointers in linedefs
     for (int i = 0; i < NumLines; i++)
     {
-      line_t& L = Lines[i];
+      line_t &L = Lines[i];
       int v1 = L.v1 - OldVerts;
       int v2 = L.v2 - OldVerts;
       L.v1 = &Vertexes[v1];
       L.v2 = &Vertexes[v2];
     }
     delete[] OldVerts;
-    OldVerts = NULL;
+    OldVerts = nullptr;
   }
 
-  vertex_t* DstVert = Vertexes + OrgVerts;
+  vertex_t *DstVert = Vertexes + OrgVerts;
   for (vuint32 i = 0; i < NewVerts; i++, DstVert++)
   {
     vint32 x, y;
@@ -1524,7 +1524,7 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
   NumSubsectors = Streamer<vuint32>(*Strm);
   Subsectors = new subsector_t[NumSubsectors];
   memset(Subsectors, 0, sizeof(subsector_t) * NumSubsectors);
-  subsector_t* ss = Subsectors;
+  subsector_t *ss = Subsectors;
   int FirstSeg = 0;
   for (int i = 0; i < NumSubsectors; i++, ss++)
   {
@@ -1541,7 +1541,7 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
   NumSegs = Streamer<vuint32>(*Strm);
   Segs = new seg_t[NumSegs];
   memset(Segs, 0, sizeof(seg_t) * NumSegs);
-  seg_t* li = Segs;
+  seg_t *li = Segs;
   for (int i = 0; i < NumSegs; i++, li++)
   {
     vuint32 v1;
@@ -1570,7 +1570,7 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
       {
         Host_Error("Bad seg side %d", side);
       }
-      line_t* ldef = &Lines[linedef];
+      line_t *ldef = &Lines[linedef];
       li->linedef = ldef;
       li->sidedef = &Sides[ldef->sidenum[side]];
       li->frontsector = Sides[ldef->sidenum[side]].Sector;
@@ -1604,7 +1604,7 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
   NumNodes = Streamer<vuint32>(*Strm);
   Nodes = new node_t[NumNodes];
   memset(Nodes, 0, sizeof(node_t) * NumNodes);
-  node_t* no = Nodes;
+  node_t *no = Nodes;
   for (int i = 0; i < NumNodes; i++, no++)
   {
     vint16 x, y, dx, dy;
@@ -1632,10 +1632,10 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
 
   //  Set v2 of the segs.
   guard(VLevel::LoadCompressedGLNodes::Set up seg v2);
-  subsector_t* Sub = Subsectors;
+  subsector_t *Sub = Subsectors;
   for (int i = 0; i < NumSubsectors; i++, Sub++)
   {
-    seg_t* Seg = Segs + Sub->firstline;
+    seg_t *Seg = Segs + Sub->firstline;
     for (int j = 0; j < Sub->numlines - 1; j++, Seg++)
     {
       Seg->v2 = Seg[1].v1;
@@ -1645,7 +1645,7 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
   unguard;
 
   guard(VLevel::LoadCompressedGLNodes::Calc segs);
-  seg_t* li = Segs;
+  seg_t *li = Segs;
   for (int i = 0; i < NumSegs; i++, li++)
   {
     //  Calc seg's plane params
@@ -1655,11 +1655,11 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
   unguard;
 
   guard(Calc subsectors);
-  subsector_t* ss = Subsectors;
+  subsector_t *ss = Subsectors;
   for (int i = 0; i < NumSubsectors; i++, ss++)
   {
     // look up sector number for each subsector
-    seg_t* seg = &Segs[ss->firstline];
+    seg_t *seg = &Segs[ss->firstline];
     for (int j = 0; j < ss->numlines; j++)
     {
       if (seg[j].linedef)
@@ -1676,14 +1676,14 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
   unguard;
 
   //  Create dummy VIS data.
-  VisData = NULL;
+  VisData = nullptr;
   NoVis = new vuint8[(NumSubsectors + 7) / 8];
   memset(NoVis, 0xff, (NumSubsectors + 7) / 8);
 
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   delete DataStrm;
-  DataStrm = NULL;
+  DataStrm = nullptr;
   unguard;
 }
 
@@ -1696,7 +1696,7 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
 void VLevel::LoadBlockMap(int Lump)
 {
   guard(VLevel::LoadBlockMap);
-  VStream* Strm = NULL;
+  VStream *Strm = nullptr;
   if (Lump >= 0 && !build_blockmap)
   {
     Strm = W_CreateLumpReaderNum(Lump);
@@ -1734,7 +1734,7 @@ void VLevel::LoadBlockMap(int Lump)
   if (Strm)
   {
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
   }
 
   //  Read blockmap origin and size.
@@ -1799,7 +1799,7 @@ void VLevel::CreateBlockMap()
   for (int i = 0; i < NumLines; i++)
   {
     //  Determine starting and ending blocks.
-    line_t& Line = Lines[i];
+    line_t &Line = Lines[i];
     int X1 = MapBlock(Line.v1->x - MinX);
     int Y1 = MapBlock(Line.v1->y - MinY);
     int X2 = MapBlock(Line.v2->x - MinX);
@@ -1899,7 +1899,7 @@ void VLevel::CreateBlockMap()
   memcpy(BlockMapLump, BMap.Ptr(), BMap.Num() * sizeof(vint32));
 
   delete[] BlockLines;
-  BlockLines = NULL;
+  BlockLines = nullptr;
   unguard;
 }
 
@@ -1916,7 +1916,7 @@ void VLevel::LoadReject(int Lump)
   {
     return;
   }
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
   //  Check for empty reject lump
   if (Strm->TotalSize())
   {
@@ -1947,12 +1947,12 @@ void VLevel::LoadReject(int Lump)
       if (Blank)
       {
         delete[] RejectMatrix;
-        RejectMatrix = NULL;
+        RejectMatrix = nullptr;
       }
     }
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -1969,8 +1969,8 @@ void VLevel::LoadThings1(int Lump)
   Things = new mthing_t[NumThings];
   memset(Things, 0, sizeof(mthing_t) * NumThings);
 
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
-  mthing_t* th = Things;
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  mthing_t *th = Things;
   for (int i = 0; i < NumThings; i++, th++)
   {
     vint16 x, y, angle, type, options;
@@ -1996,7 +1996,7 @@ void VLevel::LoadThings1(int Lump)
     }
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -2013,8 +2013,8 @@ void VLevel::LoadThings2(int Lump)
   Things = new mthing_t[NumThings];
   memset(Things, 0, sizeof(mthing_t) * NumThings);
 
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
-  mthing_t* th = Things;
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  mthing_t *th = Things;
   for (int i = 0; i < NumThings; i++, th++)
   {
     vint16 tid, x, y, height, angle, type, options;
@@ -2050,7 +2050,7 @@ void VLevel::LoadThings2(int Lump)
     th->arg5 = arg5;
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -2087,7 +2087,7 @@ void VLevel::LoadACScripts(int Lump)
       continue;
     }
 
-    VScriptParser* sc = new VScriptParser(*W_LumpName(ScLump),
+    VScriptParser *sc = new VScriptParser(*W_LumpName(ScLump),
       W_CreateLumpReaderNum(ScLump));
     while (!sc->AtEnd())
     {
@@ -2103,7 +2103,7 @@ void VLevel::LoadACScripts(int Lump)
       }
     }
     delete sc;
-    sc = NULL;
+    sc = nullptr;
   }
   unguard;
 }
@@ -2139,8 +2139,8 @@ int VLevel::TexNumForName(const char *name, int Type, bool CMap) const
 //
 //==========================================================================
 
-int VLevel::TexNumOrColour(const char *name, int Type, bool& GotColour,
-  vuint32& Col) const
+int VLevel::TexNumOrColour(const char *name, int Type, bool &GotColour,
+  vuint32 &Col) const
 {
   guard(VLevel::TexNumOrColour);
   VName Name(name, VName::AddLower8);
@@ -2150,7 +2150,7 @@ int VLevel::TexNumOrColour(const char *name, int Type, bool& GotColour,
     char TmpName[9];
     memcpy(TmpName, name, 8);
     TmpName[8] = 0;
-    char* Stop;
+    char *Stop;
     Col = strtoul(TmpName, &Stop, 16);
     GotColour = (*Stop == 0) && (Stop >= TmpName + 2) &&
       (Stop <= TmpName + 6);
@@ -2168,12 +2168,12 @@ int VLevel::TexNumOrColour(const char *name, int Type, bool& GotColour,
 //==========================================================================
 
 void VLevel::LoadRogueConScript(VName LumpName, int ALumpNum,
-  FRogueConSpeech*& SpeechList, int& NumSpeeches) const
+  FRogueConSpeech *&SpeechList, int &NumSpeeches) const
 {
   guard(VLevel::LoadRogueConScript);
   bool teaser = false;
   //  Clear variables.
-  SpeechList = NULL;
+  SpeechList = nullptr;
   NumSpeeches = 0;
 
   int LumpNum = ALumpNum;
@@ -2209,12 +2209,12 @@ void VLevel::LoadRogueConScript(VName LumpName, int ALumpNum,
   }
   SpeechList = new FRogueConSpeech[NumSpeeches];
 
-  VStream* Strm = W_CreateLumpReaderNum(LumpNum);
+  VStream *Strm = W_CreateLumpReaderNum(LumpNum);
   for (int i = 0; i < NumSpeeches; i++)
   {
     char Tmp[324];
 
-    FRogueConSpeech& S = SpeechList[i];
+    FRogueConSpeech &S = SpeechList[i];
     if (!teaser)
     {
       // Parse non teaser speech
@@ -2275,7 +2275,7 @@ void VLevel::LoadRogueConScript(VName LumpName, int ALumpNum,
     // Parse conversation options for PC
     for (int j = 0; j < 5; j++)
     {
-      FRogueConChoice& C = S.Choices[j];
+      FRogueConChoice &C = S.Choices[j];
       *Strm << C.GiveItem << C.NeedItem1 << C.NeedItem2 << C.NeedItem3
         << C.NeedAmount1 << C.NeedAmount2 << C.NeedAmount3;
       Strm->Serialise(Tmp, 32);
@@ -2291,7 +2291,7 @@ void VLevel::LoadRogueConScript(VName LumpName, int ALumpNum,
     }
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -2301,7 +2301,7 @@ void VLevel::LoadRogueConScript(VName LumpName, int ALumpNum,
 //
 //==========================================================================
 
-inline void VLevel::ClearBox(float* box) const
+inline void VLevel::ClearBox(float *box) const
 {
   guardSlow(VLevel::ClearBox);
   box[BOXTOP] = box[BOXRIGHT] = -99999.0;
@@ -2315,7 +2315,7 @@ inline void VLevel::ClearBox(float* box) const
 //
 //==========================================================================
 
-inline void VLevel::AddToBox(float* box, float x, float y) const
+inline void VLevel::AddToBox(float *box, float x, float y) const
 {
   guardSlow(VLevel::AddToBox);
   if (x < box[BOXLEFT])
@@ -2344,7 +2344,7 @@ void VLevel::PostProcessForDecals () {
   // collect segments, so we won't go thru the all segs in decal spawner
   for (int sidx = 0; sidx < NumSegs; ++sidx) {
     seg_t *seg = &Segs[sidx];
-    line_t* li = seg->linedef;
+    line_t *li = seg->linedef;
     if (!li) continue;
     seg->lsnext = li->firstseg;
     li->firstseg = seg;
@@ -2371,7 +2371,7 @@ void VLevel::GroupLines() const
   float bbox[4];
   int block;
 
-  LinkNode(NumNodes - 1, NULL);
+  LinkNode(NumNodes - 1, nullptr);
 
   // count number of lines in each sector
   li = Lines;
@@ -2398,7 +2398,7 @@ void VLevel::GroupLines() const
   }
 
   //  Assign lines for each sector.
-  int* SecLineCount = new int[NumSectors];
+  int *SecLineCount = new int[NumSectors];
   memset(SecLineCount, 0, sizeof(int) * NumSectors);
   li = Lines;
   for (i = 0; i < NumLines; i++, li++)
@@ -2452,7 +2452,7 @@ void VLevel::GroupLines() const
     sector->blockbox[BOXLEFT] = block;
   }
   delete[] SecLineCount;
-  SecLineCount = NULL;
+  SecLineCount = nullptr;
 
   unguard;
 }
@@ -2463,7 +2463,7 @@ void VLevel::GroupLines() const
 //
 //==========================================================================
 
-void VLevel::LinkNode(int BSPNum, node_t* pParent) const
+void VLevel::LinkNode(int BSPNum, node_t *pParent) const
 {
   guardSlow(LinkNode);
   if (BSPNum & NF_SUBSECTOR)
@@ -2482,7 +2482,7 @@ void VLevel::LinkNode(int BSPNum, node_t* pParent) const
   {
     if (BSPNum < 0 || BSPNum >= NumNodes)
       Host_Error("bsp %i with numnodes = %i", NumNodes, NumNodes);
-    node_t* bsp = &Nodes[BSPNum];
+    node_t *bsp = &Nodes[BSPNum];
     bsp->parent = pParent;
 
     LinkNode(bsp->children[0], bsp);
@@ -2503,16 +2503,16 @@ void VLevel::CreateRepBase()
   BaseLines = new rep_line_t[NumLines];
   for (int i = 0; i < NumLines; i++)
   {
-    line_t& L = Lines[i];
-    rep_line_t& B = BaseLines[i];
+    line_t &L = Lines[i];
+    rep_line_t &B = BaseLines[i];
     B.alpha = L.alpha;
   }
 
   BaseSides = new rep_side_t[NumSides];
   for (int i = 0; i < NumSides; i++)
   {
-    side_t& S = Sides[i];
-    rep_side_t& B = BaseSides[i];
+    side_t &S = Sides[i];
+    rep_side_t &B = BaseSides[i];
     B.TopTextureOffset = S.TopTextureOffset;
     B.BotTextureOffset = S.BotTextureOffset;
     B.MidTextureOffset = S.MidTextureOffset;
@@ -2529,8 +2529,8 @@ void VLevel::CreateRepBase()
   BaseSectors = new rep_sector_t[NumSectors];
   for (int i = 0; i < NumSectors; i++)
   {
-    sector_t& S = Sectors[i];
-    rep_sector_t& B = BaseSectors[i];
+    sector_t &S = Sectors[i];
+    rep_sector_t &B = BaseSectors[i];
     B.floor_pic = S.floor.pic;
     B.floor_dist = S.floor.dist;
     B.floor_xoffs = S.floor.xoffs;
@@ -2540,7 +2540,7 @@ void VLevel::CreateRepBase()
     B.floor_Angle = S.floor.Angle;
     B.floor_BaseAngle = S.floor.BaseAngle;
     B.floor_BaseYOffs = S.floor.BaseYOffs;
-    B.floor_SkyBox = NULL;
+    B.floor_SkyBox = nullptr;
     B.floor_MirrorAlpha = S.floor.MirrorAlpha;
     B.ceil_pic = S.ceiling.pic;
     B.ceil_dist = S.ceiling.dist;
@@ -2551,7 +2551,7 @@ void VLevel::CreateRepBase()
     B.ceil_Angle = S.ceiling.Angle;
     B.ceil_BaseAngle = S.ceiling.BaseAngle;
     B.ceil_BaseYOffs = S.ceiling.BaseYOffs;
-    B.ceil_SkyBox = NULL;
+    B.ceil_SkyBox = nullptr;
     B.ceil_MirrorAlpha = S.ceiling.MirrorAlpha;
     B.lightlevel = S.params.lightlevel;
     B.Fade = S.params.Fade;
@@ -2561,8 +2561,8 @@ void VLevel::CreateRepBase()
   BasePolyObjs = new rep_polyobj_t[NumPolyObjs];
   for (int i = 0; i < NumPolyObjs; i++)
   {
-    polyobj_t& P = PolyObjs[i];
-    rep_polyobj_t& B = BasePolyObjs[i];
+    polyobj_t &P = PolyObjs[i];
+    rep_polyobj_t &B = BasePolyObjs[i];
     B.startSpot = P.startSpot;
     B.angle = P.angle;
   }
@@ -2651,13 +2651,13 @@ void VLevel::FloodZones()
 //
 //==========================================================================
 
-void VLevel::FloodZone(sector_t* Sec, int Zone)
+void VLevel::FloodZone(sector_t *Sec, int Zone)
 {
   guard(VLevel::FloodZone);
   Sec->Zone = Zone;
   for (int i = 0; i < Sec->linecount; i++)
   {
-    line_t* Line = Sec->lines[i];
+    line_t *Line = Sec->lines[i];
     if (Line->flags & ML_ZONEBOUNDARY)
     {
       continue;
@@ -2748,12 +2748,12 @@ void VLevel::FixSelfRefDeepWater () {
   } while (pass < 100);
 
   for (int i = 0; i < NumSubsectors; ++i) {
-    subsector_t* sub = &Subsectors[i];
-    sector_t* hs = sub->deepref;
+    subsector_t *sub = &Subsectors[i];
+    sector_t *hs = sub->deepref;
     if (!hs) continue;
     //while (hs->deepref && hs->deepref != sub->deepref) hs = hs->deepref;
     //if (hs->deepref == sub->deepref) hs = sub->deepref;
-    sector_t* ss = sub->sector;
+    sector_t *ss = sub->sector;
     if (!ss) { GCon->Logf("WTF(0)?!"); continue; }
     if (ss->deepref) {
       if (ss->deepref != hs) { GCon->Logf("WTF(1) %d : %d?!", (int)(hs-Sectors), (int)(ss->deepref-Sectors)); continue; }
@@ -2807,7 +2807,7 @@ int VLevel::IsDeepWater (line_t *line) {
 //
 //==========================================================================
 
-bool VLevel::IsDeepOk (sector_t* sec) {
+bool VLevel::IsDeepOk (sector_t *sec) {
   if (!sec || sec->linecount < 2) return false;
   int dwt = 0, xidx = -1;
   for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
@@ -2816,7 +2816,7 @@ bool VLevel::IsDeepOk (sector_t* sec) {
   }
   if (!dwt) return false;
   for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
-    line_t* ld = sec->lines[lidx];
+    line_t *ld = sec->lines[lidx];
     if (!ld) return false; // just in case
     int xdwt = IsDeepWater(sec->lines[lidx]);
     if (!xdwt) continue;
@@ -2882,7 +2882,7 @@ void VLevel::FixDeepWaters () {
     GCon->Logf("DWSEC=%d", sidx);
 #endif
     for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
-      line_t* ld = sec->lines[lidx];
+      line_t *ld = sec->lines[lidx];
       FixDeepWater(ld, (int)(ld-Lines));
     }
   }

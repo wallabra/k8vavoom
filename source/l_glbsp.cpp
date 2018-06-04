@@ -301,7 +301,7 @@ const nodebuildfuncs_t edge_build_funcs =
 //
 //==========================================================================
 
-bool GLBSP_BuildNodes(const char *name, const char* gwafile)
+bool GLBSP_BuildNodes(const char *name, const char *gwafile)
 {
   nodebuildinfo_t nb_info;
   nodebuildcomms_t nb_comms;
@@ -353,7 +353,7 @@ COMMAND(glBSP)
     nb_info = default_buildinfo;
     nb_comms = default_buildcomms;
 
-    const char** TmpArgs = new const char*[Args.Num() - 1];
+    const char **TmpArgs = new const char*[Args.Num() - 1];
     for (int i = 0; i < Args.Num() - 1; i++)
       TmpArgs[i] = *Args[i + 1];
     if (GlbspParseArgs(&nb_info, &nb_comms, TmpArgs,
@@ -384,6 +384,6 @@ COMMAND(glBSP)
       GCon->Log("Bad arguments");
     }
     delete[] TmpArgs;
-    TmpArgs = NULL;
+    TmpArgs = nullptr;
   }
 }

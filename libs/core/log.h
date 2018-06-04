@@ -32,7 +32,7 @@
 class VLogListener : VInterface
 {
 public:
-  virtual void Serialise(const char* Text, EName Event) = 0;
+  virtual void Serialise(const char *Text, EName Event) = 0;
 };
 
 //==========================================================================
@@ -46,22 +46,22 @@ class VLog
 private:
   enum { MAX_LISTENERS  = 8 };
 
-  VLogListener* Listeners[MAX_LISTENERS];
+  VLogListener *Listeners[MAX_LISTENERS];
 
 public:
   VLog();
 
-  void AddListener(VLogListener* Listener);
-  void RemoveListener(VLogListener* Listener);
+  void AddListener(VLogListener *Listener);
+  void RemoveListener(VLogListener *Listener);
 
-  void Write(EName Type, const char* Fmt, ...);
-  void WriteLine(EName Type, const char* Fmt, ...);
+  void Write(EName Type, const char *Fmt, ...);
+  void WriteLine(EName Type, const char *Fmt, ...);
 
-  void Write(const char* Fmt, ...);
-  void WriteLine(const char* Fmt, ...);
+  void Write(const char *Fmt, ...);
+  void WriteLine(const char *Fmt, ...);
 
-  void DWrite(const char* Fmt, ...);
-  void DWriteLine(const char* Fmt, ...);
+  void DWrite(const char *Fmt, ...);
+  void DWriteLine(const char *Fmt, ...);
 };
 
 extern VLog     GLog;

@@ -85,10 +85,10 @@ VUdpDriver::VUdpDriver () : VNetLanDriver(0, "UDP") {
 int VUdpDriver::Init () {
   guard(VUdpDriver::Init);
 
-  hostent* local;
+  hostent *local;
   char buff[MAXHOSTNAMELEN];
   sockaddr_t addr;
-  char* colon;
+  char *colon;
 
   if (GArgs.CheckParm("-noudp")) return -1;
 

@@ -55,7 +55,7 @@ final void A_BossDeath()
         Level.SpecialActions[i].Args[1],
         Level.SpecialActions[i].Args[2],
         Level.SpecialActions[i].Args[3],
-        Level.SpecialActions[i].Args[4], NULL, 0, self);
+        Level.SpecialActions[i].Args[4], nullptr, 0, self);
     }
   }
 
@@ -83,26 +83,26 @@ final void A_BossDeath()
     if (GetClassName(GetClassReplacee(Class)) == 'Fatso')
     {
       Level.ExecuteActionSpecial(LNSPEC_FloorLowerToLowest, 666, 8,
-        0, 0, 0, NULL, 0, none);
+        0, 0, 0, nullptr, 0, none);
       return;
     }
     if (GetClassName(GetClassReplacee(Class)) == 'Arachnotron')
     {
       Level.ExecuteActionSpecial(LNSPEC_FloorRaiseByTexture, 667, 8,
-        0, 0, 0, NULL, 0, none);
+        0, 0, 0, nullptr, 0, none);
       return;
     }
   }
   else if (Level.bSpecialActionOpenDoor)
   {
     Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 666, 64, 150, 0, 0,
-      NULL, 0, none);
+      nullptr, 0, none);
     return;
   }
   else if (Level.bSpecialActionLowerFloor)
   {
     Level.ExecuteActionSpecial(LNSPEC_FloorLowerToLowest, 666, 8, 0, 0,
-      0, NULL, 0, none);
+      0, nullptr, 0, none);
     return;
   }
   Level.ExitLevel(0);
@@ -131,7 +131,7 @@ final void A_KeenDie()
       return;
     }
   }
-  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 666, 16, 150, 0, 0, NULL, 0,
+  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 666, 16, 150, 0, 0, nullptr, 0,
     none);
 }
 

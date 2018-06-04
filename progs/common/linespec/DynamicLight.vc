@@ -45,7 +45,7 @@ float     Intensity;
 //
 //==========================================================================
 
-override void OnMapSpawn(mthing_t* mthing)
+override void OnMapSpawn(mthing_t *mthing)
 {
   ::OnMapSpawn(mthing);
 
@@ -177,7 +177,7 @@ override void ClientTick(float DeltaTime)
   }
   }
 
-  dlight_t* dl = AllocDlight(self);
+  dlight_t *dl = AllocDlight(self);
   dl->origin = Origin;
   dl->colour = RGB(Args[0], Args[1], Args[2]);
   dl->radius = IntensityToRadius(Intensity);

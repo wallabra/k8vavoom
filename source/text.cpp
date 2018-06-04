@@ -75,7 +75,7 @@ void T_Shutdown()
 //
 //==========================================================================
 
-void T_SetFont(VFont* AFont)
+void T_SetFont(VFont *AFont)
 {
   GRoot->SetFont(AFont);
 }
@@ -97,7 +97,7 @@ void T_SetAlign(halign_e NewHAlign, valign_e NewVAlign)
 //
 //==========================================================================
 
-void T_DrawText(int x, int y, const VStr& String, int col)
+void T_DrawText(int x, int y, const VStr &String, int col)
 {
   GRoot->DrawText(x, y, String, col, CR_YELLOW, 1.0);
 }

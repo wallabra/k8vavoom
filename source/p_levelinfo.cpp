@@ -83,10 +83,10 @@ VLevelInfo::VLevelInfo()
 //
 //==========================================================================
 
-void VLevelInfo::SetMapInfo(const mapInfo_t& Info)
+void VLevelInfo::SetMapInfo(const mapInfo_t &Info)
 {
   guard(VLevelInfo::SetMapInfo);
-  const VClusterDef* CInfo = P_GetClusterDef(Info.Cluster);
+  const VClusterDef *CInfo = P_GetClusterDef(Info.Cluster);
 
   LevelName = Info.Name;
   LevelNum = Info.LevelNum;
@@ -166,7 +166,7 @@ void VLevelInfo::SetMapInfo(const mapInfo_t& Info)
 //
 //==========================================================================
 
-void VLevelInfo::SectorStartSound(const sector_t* Sector, int SoundId,
+void VLevelInfo::SectorStartSound(const sector_t *Sector, int SoundId,
   int Channel, float Volume, float Attenuation)
 {
   guard(VLevelInfo::SectorStartSound);
@@ -207,7 +207,7 @@ void VLevelInfo::SectorStopSound(const sector_t *sector, int channel)
 //
 //==========================================================================
 
-void VLevelInfo::SectorStartSequence(const sector_t* Sector, VName Name,
+void VLevelInfo::SectorStartSequence(const sector_t *Sector, VName Name,
   int ModeNum)
 {
   guard(VLevelInfo::SectorStartSequence);
@@ -246,7 +246,7 @@ void VLevelInfo::SectorStopSequence(const sector_t *sector)
 //
 //==========================================================================
 
-void VLevelInfo::PolyobjStartSequence(const polyobj_t* Poly, VName Name,
+void VLevelInfo::PolyobjStartSequence(const polyobj_t *Poly, VName Name,
   int ModeNum)
 {
   guard(VLevelInfo::PolyobjStartSequence);
@@ -362,10 +362,10 @@ void VLevelInfo::Completed(int InMap, int InPosition, int SaveAngle)
 //
 //==========================================================================
 
-VEntity* VLevelInfo::FindMobjFromTID(int tid, VEntity* Prev)
+VEntity *VLevelInfo::FindMobjFromTID(int tid, VEntity *Prev)
 {
   guard(VLevelInfo::FindMobjFromTID);
-  for (VEntity* E = Prev ? Prev->TIDHashNext : TIDHash[tid &
+  for (VEntity *E = Prev ? Prev->TIDHashNext : TIDHash[tid &
     (TID_HASH_SIZE - 1)]; E; E = E->TIDHashNext)
   {
     if (E->TID == tid)
@@ -373,7 +373,7 @@ VEntity* VLevelInfo::FindMobjFromTID(int tid, VEntity* Prev)
       return E;
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -401,7 +401,7 @@ IMPLEMENT_FUNCTION(VLevelInfo, AddStaticLight)
   P_GET_FLOAT(Radius);
   P_GET_VEC(Origin);
   P_GET_SELF;
-  rep_light_t* OldLights = Self->XLevel->StaticLights;
+  rep_light_t *OldLights = Self->XLevel->StaticLights;
   Self->XLevel->NumStaticLights++;
   Self->XLevel->StaticLights = new rep_light_t[Self->XLevel->NumStaticLights];
   if (OldLights)
@@ -409,9 +409,9 @@ IMPLEMENT_FUNCTION(VLevelInfo, AddStaticLight)
     memcpy(Self->XLevel->StaticLights, OldLights,
       (Self->XLevel->NumStaticLights - 1) * sizeof(rep_light_t));
     delete[] OldLights;
-    OldLights = NULL;
+    OldLights = nullptr;
   }
-  rep_light_t& L = Self->XLevel->StaticLights[Self->XLevel->NumStaticLights - 1];
+  rep_light_t &L = Self->XLevel->StaticLights[Self->XLevel->NumStaticLights - 1];
   L.Origin = Origin;
   L.Radius = Radius;
   L.Colour = 0xffffffff;
@@ -423,7 +423,7 @@ IMPLEMENT_FUNCTION(VLevelInfo, AddStaticLightRGB)
   P_GET_FLOAT(Radius);
   P_GET_VEC(Origin);
   P_GET_SELF;
-  rep_light_t* OldLights = Self->XLevel->StaticLights;
+  rep_light_t *OldLights = Self->XLevel->StaticLights;
   Self->XLevel->NumStaticLights++;
   Self->XLevel->StaticLights = new rep_light_t[Self->XLevel->NumStaticLights];
   if (OldLights)
@@ -431,9 +431,9 @@ IMPLEMENT_FUNCTION(VLevelInfo, AddStaticLightRGB)
     memcpy(Self->XLevel->StaticLights, OldLights,
       (Self->XLevel->NumStaticLights - 1) * sizeof(rep_light_t));
     delete[] OldLights;
-    OldLights = NULL;
+    OldLights = nullptr;
   }
-  rep_light_t& L = Self->XLevel->StaticLights[Self->XLevel->NumStaticLights - 1];
+  rep_light_t &L = Self->XLevel->StaticLights[Self->XLevel->NumStaticLights - 1];
   L.Origin = Origin;
   L.Radius = Radius;
   L.Colour = Colour;

@@ -41,7 +41,7 @@ public:
 
   void Init();
   bool SetResolution(int, int, bool);
-  void* GetExtFuncPtr(const char*);
+  void *GetExtFuncPtr(const char*);
   void Update();
   void Shutdown();
 
@@ -77,9 +77,9 @@ IMPLEMENT_DRAWER(VWin32OpenGLDrawer, DRAWER_OpenGL, "OpenGL",
 void VWin32OpenGLDrawer::Init()
 {
   Windowed = true;
-  DeviceContext = NULL;
-  RenderContext = NULL;
-  RenderWindow = NULL;
+  DeviceContext = nullptr;
+  RenderContext = nullptr;
+  RenderWindow = nullptr;
 }
 
 
@@ -150,7 +150,7 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
     Windowed ? (WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX) |
     WS_CLIPCHILDREN | WS_CLIPSIBLINGS : WS_POPUP |
     WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
-    0, 0, 2, 2, hwnd, NULL, hInst, NULL);
+    0, 0, 2, 2, hwnd, nullptr, hInst, nullptr);
   if (!RenderWindow)
   {
     GCon->Log(NAME_Init, "Couldn't create window");
@@ -172,7 +172,7 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
   //  Who knows if it helps, but it probably doesn't hurt
   SetForegroundWindow(RenderWindow);
 
-  while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+  while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
   {
     TranslateMessage(&msg);
     DispatchMessage(&msg);
@@ -208,7 +208,7 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
     return false;
   }
 
-  //  Because we have set the background brush for the window to NULL
+  //  Because we have set the background brush for the window to nullptr
   // (to avoid flickering when re-sizing the window on the desktop), we
   // clear the window to black when created, otherwise it will be
   // empty while Vavoom starts up.
@@ -291,7 +291,7 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
 //
 //==========================================================================
 
-void* VWin32OpenGLDrawer::GetExtFuncPtr(const char *name)
+void *VWin32OpenGLDrawer::GetExtFuncPtr(const char *name)
 {
   guard(VWin32OpenGLDrawer::GetExtFuncPtr);
   return (void*)wglGetProcAddress(name);
@@ -328,7 +328,7 @@ void VWin32OpenGLDrawer::Shutdown()
 
   if (RenderContext)
   {
-    wglMakeCurrent(NULL, NULL);
+    wglMakeCurrent(nullptr, nullptr);
     wglDeleteContext(RenderContext);
     RenderContext = 0;
   }
@@ -344,17 +344,17 @@ void VWin32OpenGLDrawer::Shutdown()
     IN_SetActiveWindow(hwnd);
     SetForegroundWindow(hwnd);
     DestroyWindow(RenderWindow);
-    RenderWindow = NULL;
+    RenderWindow = nullptr;
   }
 
   if (!Windowed)
   {
-    ChangeDisplaySettings(NULL, 0);
+    ChangeDisplaySettings(nullptr, 0);
   }
 
   MSG msg;
 
-  while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+  while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
   {
     TranslateMessage(&msg);
     DispatchMessage(&msg);

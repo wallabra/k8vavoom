@@ -56,8 +56,8 @@
 //==========================================================================
 
 void VOpenGLDrawer::DrawPic(float x1, float y1, float x2, float y2,
-  float s1, float t1, float s2, float t2, VTexture* Tex,
-  VTextureTranslation* Trans, float Alpha)
+  float s1, float t1, float s2, float t2, VTexture *Tex,
+  VTextureTranslation *Trans, float Alpha)
 {
   guard(VOpenGLDrawer::DrawPic);
   SetPic(Tex, Trans, CM_Default);
@@ -92,10 +92,10 @@ void VOpenGLDrawer::DrawPic(float x1, float y1, float x2, float y2,
 //==========================================================================
 
 void VOpenGLDrawer::DrawPicShadow(float x1, float y1, float x2, float y2,
-  float s1, float t1, float s2, float t2, VTexture* Tex, float shade)
+  float s1, float t1, float s2, float t2, VTexture *Tex, float shade)
 {
   guard(VOpenGLDrawer::DrawPicShadow);
-  SetPic(Tex, NULL, CM_Default);
+  SetPic(Tex, nullptr, CM_Default);
   p_glUseProgramObjectARB(DrawShadowProgram);
   p_glUniform1iARB(DrawSimpleTextureLoc, 0);
   p_glUniform1fARB(DrawSimpleAlphaLoc, shade);
@@ -123,7 +123,7 @@ void VOpenGLDrawer::DrawPicShadow(float x1, float y1, float x2, float y2,
 //==========================================================================
 
 void VOpenGLDrawer::FillRectWithFlat(float x1, float y1, float x2, float y2,
-  float s1, float t1, float s2, float t2, VTexture* Tex)
+  float s1, float t1, float s2, float t2, VTexture *Tex)
 {
   guard(VOpenGLDrawer::FillRectWithFlat);
   SetTexture(Tex, CM_Default);
@@ -224,7 +224,7 @@ void VOpenGLDrawer::DrawConsoleBackground(int h)
 //==========================================================================
 
 void VOpenGLDrawer::DrawSpriteLump(float x1, float y1, float x2, float y2,
-  VTexture* Tex, VTextureTranslation* Translation, bool flip)
+  VTexture *Tex, VTextureTranslation *Translation, bool flip)
 {
   guard(VOpenGLDrawer::DrawSpriteLump);
   SetSpriteLump(Tex, Translation, CM_Default);

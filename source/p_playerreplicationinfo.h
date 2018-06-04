@@ -29,7 +29,7 @@ class VPlayerReplicationInfo : public VThinker
   NO_DEFAULT_CONSTRUCTOR(VPlayerReplicationInfo);
 
   //  Player we are replicating
-  VBasePlayer*    Player;
+  VBasePlayer *Player;
   vint32        PlayerNum;
 
   VStr        PlayerName;

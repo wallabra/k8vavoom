@@ -55,7 +55,7 @@ byte        respawn;
 byte        nomonsters;
 byte        fastparm;
 
-readonly int*   validcount;
+readonly int *validcount;
 readonly int    skyflatnum;
 
 readonly WorldInfo  WorldInfo;

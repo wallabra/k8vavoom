@@ -92,7 +92,7 @@ extern VCvarI     r_max_model_shadows;
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderThingAmbient(VEntity* mobj)
+void VAdvancedRenderLevel::RenderThingAmbient(VEntity *mobj)
 {
   guard(VAdvancedRenderLevel::RenderThingAmbient);
   int RendStyle = mobj->RenderStyle;
@@ -218,7 +218,7 @@ void VAdvancedRenderLevel::RenderMobjsAmbient()
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderThingTextures(VEntity* mobj)
+void VAdvancedRenderLevel::RenderThingTextures(VEntity *mobj)
 {
   guard(VAdvancedRenderLevel::RenderThingAmbient);
   int RendStyle = mobj->RenderStyle;
@@ -324,7 +324,7 @@ void VAdvancedRenderLevel::RenderMobjsTextures()
 //
 //==========================================================================
 
-bool VAdvancedRenderLevel::IsTouchedByLight(VEntity* Ent, bool Count)
+bool VAdvancedRenderLevel::IsTouchedByLight(VEntity *Ent, bool Count)
 {
   guard(VAdvancedRenderLevel::IsTouchedByLight);
   TVec Delta = Ent->Origin - CurrLightPos;
@@ -361,7 +361,7 @@ bool VAdvancedRenderLevel::IsTouchedByLight(VEntity* Ent, bool Count)
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderThingLight(VEntity* mobj)
+void VAdvancedRenderLevel::RenderThingLight(VEntity *mobj)
 {
   guard(VAdvancedRenderLevel::RenderThingLight);
   // Use advanced lighting style
@@ -523,7 +523,7 @@ void VAdvancedRenderLevel::RenderMobjsLight()
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderThingShadow(VEntity* mobj)
+void VAdvancedRenderLevel::RenderThingShadow(VEntity *mobj)
 {
   guard(VAdvancedRenderLevel::RenderThingShadow);
   int RendStyle = mobj->RenderStyle;
@@ -630,7 +630,7 @@ void VAdvancedRenderLevel::RenderMobjsShadow()
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderThingFog(VEntity* mobj)
+void VAdvancedRenderLevel::RenderThingFog(VEntity *mobj)
 {
   guard(VAdvancedRenderLevel::RenderThingFog);
   int RendStyle = mobj->RenderStyle;

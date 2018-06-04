@@ -86,7 +86,7 @@ override void Tick(float DeltaTime)
 void DoLightningFlash(float DeltaTime)
 {
   int     i;
-  sector_t* tempSec;
+  sector_t *tempSec;
   bool    foundSec;
   int     flashLight;
 

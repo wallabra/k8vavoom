@@ -172,7 +172,7 @@ void VThinkerChannel::Update () {
     if (!FieldCondValues[F->NetIndex]) continue;
 
     // set up pointer to the value and do swapping for the role fields
-    vuint8* FieldValue = Data+F->Ofs;
+    vuint8 *FieldValue = Data+F->Ofs;
          if (F == Connection->Context->RoleField) FieldValue = Data+Connection->Context->RemoteRoleField->Ofs;
     else if (F == Connection->Context->RemoteRoleField) FieldValue = Data+Connection->Context->RoleField->Ofs;
 
@@ -186,9 +186,9 @@ void VThinkerChannel::Update () {
         vuint8 *OldVal = OldData+F->Ofs+i*InnerSize;
         if (VField::IdenticalValue(Val, OldVal, IntType)) continue;
 
-        // if it's an object reference that cannot be serialised, send it as NULL reference
+        // if it's an object reference that cannot be serialised, send it as nullptr reference
         if (IntType.Type == TYPE_Reference && !Connection->ObjMap->CanSerialiseObject(*(VObject **)Val)) {
-          if (!*(VObject **)OldVal) continue; // already sent as NULL
+          if (!*(VObject **)OldVal) continue; // already sent as nullptr
           Val = (vuint8 *)&NullObj;
         }
 
@@ -199,9 +199,9 @@ void VThinkerChannel::Update () {
         }
       }
     } else {
-      // if it's an object reference that cannot be serialised, send it as NULL reference
+      // if it's an object reference that cannot be serialised, send it as nullptr reference
       if (F->Type.Type == TYPE_Reference && !Connection->ObjMap->CanSerialiseObject(*(VObject**)FieldValue)) {
-        if (!*(VObject **)(OldData+F->Ofs)) continue; // already sent as NULL
+        if (!*(VObject **)(OldData+F->Ofs)) continue; // already sent as nullptr
         FieldValue = (vuint8 *)&NullObj;
       }
 
@@ -249,7 +249,7 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
     SetThinker(Th);
   }
 
-  VEntity* Ent = Cast<VEntity>(Thinker);
+  VEntity *Ent = Cast<VEntity>(Thinker);
   if (Ent) Ent->UnlinkFromWorld();
   while (!Msg.AtEnd()) {
     int FldIdx = Msg.ReadInt(Thinker->GetClass()->NumNetFields);

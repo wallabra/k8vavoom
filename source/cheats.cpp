@@ -56,7 +56,7 @@
 //
 //==========================================================================
 
-static bool CheatAllowed(VBasePlayer* Player)
+static bool CheatAllowed(VBasePlayer *Player)
 {
   if (sv.intermission)
   {
@@ -295,7 +295,7 @@ COMMAND(Script)
       return;
 
     if (Player->Level->XLevel->Acs->Start(script, 0, 0, 0, 0, Player->MO,
-      NULL, 0, false, false))
+      nullptr, 0, false, false))
     {
       GCon->Logf("Running script %d", script);
     }

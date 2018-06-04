@@ -51,10 +51,10 @@ void CL_ReadFromServerInfo();
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 client_static_t   cls;
-VBasePlayer*    cl;
-VClientNetContext*  ClientNetContext;
+VBasePlayer *cl;
+VClientNetContext *ClientNetContext;
 
-VClientGameBase*  GClGame;
+VClientGameBase *GClGame;
 
 bool        UserInfoSent;
 
@@ -134,7 +134,7 @@ void CL_Shutdown()
     GRoot->ConditionalDestroy();
   cls.userinfo.Clean();
   delete ClientNetContext;
-  ClientNetContext = NULL;
+  ClientNetContext = nullptr;
   unguard;
 }
 
@@ -250,7 +250,7 @@ void CL_KeepaliveMessage()
 //
 //==========================================================================
 
-void CL_EstablishConnection(const char* host)
+void CL_EstablishConnection(const char *host)
 {
   guard(CL_EstablishConnection);
   if (GGameInfo->NetMode == NM_DedicatedServer)
@@ -260,7 +260,7 @@ void CL_EstablishConnection(const char* host)
 
   SV_ShutdownGame();
 
-  VSocketPublic* Sock = GNet->Connect(host);
+  VSocketPublic *Sock = GNet->Connect(host);
   if (!Sock)
   {
     GCon->Log("Failed to connect to the server");
@@ -294,7 +294,7 @@ void CL_SetUpLocalPlayer()
     return;
   }
 
-  VBasePlayer* Player = GPlayersBase[0];
+  VBasePlayer *Player = GPlayersBase[0];
   SV_ConnectClient(Player);
   svs.num_connected++;
 
@@ -330,7 +330,7 @@ void CL_SetUpStandaloneClient()
   GClGame->maxclients = svs.max_clients;
   GClGame->deathmatch = deathmatch;
 
-  const mapInfo_t& LInfo = P_GetMapInfo(*GLevel->MapName);
+  const mapInfo_t &LInfo = P_GetMapInfo(*GLevel->MapName);
   GCon->Log("---------------------------------------");
   GCon->Log(LInfo.GetName());
   GCon->Log("");
@@ -345,7 +345,7 @@ void CL_SetUpStandaloneClient()
 
   for (int i = 0; i < GClLevel->NumStaticLights; i++)
   {
-    rep_light_t& L = GClLevel->StaticLights[i];
+    rep_light_t &L = GClLevel->StaticLights[i];
     GClLevel->RenderData->AddStaticLight(L.Origin, L.Radius, L.Colour);
   }
   GClLevel->RenderData->PreRender();
@@ -404,7 +404,7 @@ void CL_SendMove()
 //
 //==========================================================================
 
-bool CL_Responder(event_t* ev)
+bool CL_Responder(event_t *ev)
 {
   guard(CL_Responder);
   if (GGameInfo->NetMode == NM_TitleMap)
@@ -463,7 +463,7 @@ void CL_ReadFromServerInfo()
 //
 //==========================================================================
 
-void CL_ParseServerInfo(VMessageIn& msg)
+void CL_ParseServerInfo(VMessageIn &msg)
 {
   guard(CL_ParseServerInfo);
   CL_Clear();
@@ -478,7 +478,7 @@ void CL_ParseServerInfo(VMessageIn& msg)
   GClGame->maxclients = msg.ReadInt(MAXPLAYERS + 1);
   GClGame->deathmatch = msg.ReadInt(256);
 
-  const mapInfo_t& LInfo = P_GetMapInfo(MapName);
+  const mapInfo_t &LInfo = P_GetMapInfo(MapName);
   GCon->Log("---------------------------------------");
   GCon->Log(LInfo.GetName());
   GCon->Log("");
@@ -503,7 +503,7 @@ void CL_ParseServerInfo(VMessageIn& msg)
 //
 //==========================================================================
 
-VLevel* VClientNetContext::GetLevel()
+VLevel *VClientNetContext::GetLevel()
 {
   return GClLevel;
 }
@@ -514,7 +514,7 @@ VLevel* VClientNetContext::GetLevel()
 //
 //==========================================================================
 
-void CL_SetUpNetClient(VSocketPublic* Sock)
+void CL_SetUpNetClient(VSocketPublic *Sock)
 {
   guard(CL_SetUpNetClient);
   //  Create player structure.
@@ -543,7 +543,7 @@ void CL_SetUpNetClient(VSocketPublic* Sock)
 //
 //==========================================================================
 
-void CL_PlayDemo(const VStr& DemoName, bool IsTimeDemo)
+void CL_PlayDemo(const VStr &DemoName, bool IsTimeDemo)
 {
   guard(CL_PlayDemo);
   char  magic[8];
@@ -554,7 +554,7 @@ void CL_PlayDemo(const VStr& DemoName, bool IsTimeDemo)
   VStr name = VStr("demos/") + DemoName.DefaultExtension(".dem");
 
   GCon->Logf("Playing demo from %s.", *name);
-  VStream* Strm = FL_OpenFileRead(name);
+  VStream *Strm = FL_OpenFileRead(name);
   if (!Strm)
   {
     GCon->Log("ERROR: couldn't open.");
@@ -566,7 +566,7 @@ void CL_PlayDemo(const VStr& DemoName, bool IsTimeDemo)
   if (VStr::Cmp(magic, "VDEM"))
   {
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
     GCon->Log("ERROR: not a Vavoom demo.");
     return;
   }
@@ -606,12 +606,12 @@ void CL_StopRecording()
   guard(CL_StopRecording);
   // finish up
   delete cls.demofile;
-  cls.demofile = NULL;
+  cls.demofile = nullptr;
   cls.demorecording = false;
   if (GDemoRecordingContext)
   {
     delete GDemoRecordingContext;
-    GDemoRecordingContext = NULL;
+    GDemoRecordingContext = nullptr;
   }
   GCon->Log("Completed demo");
   unguard;
@@ -713,7 +713,7 @@ COMMAND(Record)
   //
   if (c > 2)
   {
-    VCommand::ExecuteString(VStr("map ") + Args[2], SRC_Command, NULL);
+    VCommand::ExecuteString(VStr("map ") + Args[2], SRC_Command, nullptr);
   }
 
   //
@@ -736,14 +736,12 @@ COMMAND(Record)
     GGameInfo->NetMode == NM_ListenServer)
   {
     GDemoRecordingContext = new VServerNetContext();
-    VSocketPublic* Sock = new VDemoRecordingSocket();
-    VNetConnection* Conn = new VNetConnection(Sock,
-      GDemoRecordingContext, cl);
+    VSocketPublic *Sock = new VDemoRecordingSocket();
+    VNetConnection *Conn = new VNetConnection(Sock, GDemoRecordingContext, cl);
     Conn->AutoAck = true;
     GDemoRecordingContext->ClientConnections.Append(Conn);
     Conn->ObjMap->SetUpClassLookup();
-    VObjectMapChannel* Chan = (VObjectMapChannel*)Conn->CreateChannel(
-      CHANNEL_ObjectMap, -1);
+    VObjectMapChannel *Chan = (VObjectMapChannel*)Conn->CreateChannel(CHANNEL_ObjectMap, -1);
     (void)Chan; //k8:???
     while (!Conn->ObjMapSent)
     {

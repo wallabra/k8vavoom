@@ -126,7 +126,7 @@ void VQMus2Mid::TWriteByte(int MIDItrack, vuint8 data)
 //
 //==========================================================================
 
-void VQMus2Mid::TWriteBuf(int MIDItrack, const vuint8* buf, int size)
+void VQMus2Mid::TWriteBuf(int MIDItrack, const vuint8 *buf, int size)
 {
   guard(VQMus2Mid::TWriteBuf);
   for (int i = 0; i < size; i++)
@@ -169,7 +169,7 @@ void VQMus2Mid::TWriteVarLen(int tracknum, vuint32 value)
 //
 //==========================================================================
 
-vuint32 VQMus2Mid::ReadTime(VStream& Strm)
+vuint32 VQMus2Mid::ReadTime(VStream &Strm)
 {
   guard(VQMus2Mid::ReadTime);
   vuint32   time = 0;
@@ -193,7 +193,7 @@ vuint32 VQMus2Mid::ReadTime(VStream& Strm)
 //
 //==========================================================================
 
-bool VQMus2Mid::Convert(VStream& Strm)
+bool VQMus2Mid::Convert(VStream &Strm)
 {
   guard(VQMus2Mid::Convert);
   vuint8        et;
@@ -383,7 +383,7 @@ bool VQMus2Mid::Convert(VStream& Strm)
 //
 //==========================================================================
 
-void VQMus2Mid::WriteMIDIFile(VStream& Strm)
+void VQMus2Mid::WriteMIDIFile(VStream &Strm)
 {
   guard(VQMus2Mid::WriteMIDIFile);
   //  Header
@@ -422,7 +422,7 @@ void VQMus2Mid::WriteMIDIFile(VStream& Strm)
 //
 //==========================================================================
 
-int VQMus2Mid::Run(VStream& InStrm, VStream& OutStrm)
+int VQMus2Mid::Run(VStream &InStrm, VStream &OutStrm)
 {
   guard(VQMus2Mid::Run);
   if (Convert(InStrm))

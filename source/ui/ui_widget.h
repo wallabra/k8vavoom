@@ -49,13 +49,13 @@ class VWidget : public VObject
 
 private:
   //  Parent container widget.
-  VWidget*      ParentWidget;
+  VWidget *ParentWidget;
   //  Linked list of child widgets.
-  VWidget*      FirstChildWidget;
-  VWidget*      LastChildWidget;
+  VWidget *FirstChildWidget;
+  VWidget *LastChildWidget;
   //  Links in the linked list of widgets.
-  VWidget*      PrevWidget;
-  VWidget*      NextWidget;
+  VWidget *PrevWidget;
+  VWidget *NextWidget;
 
   //  Position of the widget in the parent widget.
   int         PosX;
@@ -73,9 +73,9 @@ private:
   VClipRect     ClipRect;
 
   //  Currently focused child widget.
-  VWidget*      CurrentFocusChild;
+  VWidget *CurrentFocusChild;
 
-  VFont*        Font;
+  VFont *Font;
 
   //  Text alignements
   vuint8        HAlign;
@@ -120,7 +120,7 @@ private:
 
   void FindNewFocus();
 
-  VWidget* GetWidgetAt(float, float);
+  VWidget *GetWidgetAt(float, float);
 
   bool TransferAndClipRect(float&, float&, float&, float&, float&, float&,
     float&, float&) const;
@@ -134,7 +134,7 @@ public:
   void Destroy();
   void DestroyAllChildren();
 
-  VRootWidget* GetRootWidget();
+  VRootWidget *GetRootWidget();
 
   //  Methods to move widget on top or bottom.
   void Lower();
@@ -197,7 +197,7 @@ public:
   {
     if (bRecurse)
     {
-      const VWidget* pParent = this;
+      const VWidget *pParent = this;
       while (pParent)
       {
         if (!(pParent->WidgetFlags & WF_IsVisible))
@@ -228,7 +228,7 @@ public:
   {
     if (bRecurse)
     {
-      const VWidget* pParent = this;
+      const VWidget *pParent = this;
       while (pParent)
       {
         if (!(pParent->WidgetFlags & WF_IsEnabled))
@@ -254,7 +254,7 @@ public:
 
   //  Focus methods.
   void SetCurrentFocusChild(VWidget*);
-  VWidget* GetCurrentFocus() const
+  VWidget *GetCurrentFocus() const
   {
     return CurrentFocusChild;
   }
@@ -289,13 +289,13 @@ public:
     P_PASS_SELF;
     EV_RET_VOID(NAME_OnDestroy);
   }
-  virtual void OnChildAdded(VWidget* Child)
+  virtual void OnChildAdded(VWidget *Child)
   {
     P_PASS_SELF;
     P_PASS_REF(Child);
     EV_RET_VOID(NAME_OnChildAdded);
   }
-  virtual void OnChildRemoved(VWidget* Child)
+  virtual void OnChildRemoved(VWidget *Child)
   {
     P_PASS_SELF;
     P_PASS_REF(Child);

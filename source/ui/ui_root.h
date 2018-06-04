@@ -52,7 +52,7 @@ public:
 
   void DrawWidgets();
   void TickWidgets(float DeltaTime);
-  bool Responder(event_t* Event);
+  bool Responder(event_t *Event);
 
   void SetMouse(bool MouseOn);
 
@@ -61,4 +61,4 @@ public:
   DECLARE_FUNCTION(SetMouse)
 };
 
-extern VRootWidget*   GRoot;
+extern VRootWidget *GRoot;

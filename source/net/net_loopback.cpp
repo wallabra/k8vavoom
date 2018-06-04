@@ -286,7 +286,7 @@ int VLoopbackSocket::GetMessage (TArray<vuint8> &Data) {
 int VLoopbackSocket::SendMessage (const vuint8 *Data, vuint32 Length) {
   guard(VLoopbackSocket::SendMessage);
   if (!OtherSock) return -1;
-  VLoopbackMessage& Msg = OtherSock->LoopbackMessages.Alloc();
+  VLoopbackMessage &Msg = OtherSock->LoopbackMessages.Alloc();
   Msg.Data.SetNum(Length);
   memcpy(Msg.Data.Ptr(), Data, Length);
   return 1;

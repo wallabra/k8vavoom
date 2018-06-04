@@ -2287,7 +2287,7 @@ final void A_KoraxChase()
       Teleport(spot.Origin, spot.Angles.yaw, true, true, false);
     }
 
-    XLevel.StartACS(249, 0, 0, 0, 0, self, NULL, 0, false, false);
+    XLevel.StartACS(249, 0, 0, 0, 0, self, nullptr, 0, false, false);
     Special2 = true;  // Don't run again
 
     return;
@@ -2545,19 +2545,19 @@ final void A_KoraxCommand()
   switch (P_Random() % numcommands)
   {
   case 0:
-    XLevel.StartACS(250, 0, 0, 0, 0, self, NULL, 0, false, false);
+    XLevel.StartACS(250, 0, 0, 0, 0, self, nullptr, 0, false, false);
     break;
   case 1:
-    XLevel.StartACS(251, 0, 0, 0, 0, self, NULL, 0, false, false);
+    XLevel.StartACS(251, 0, 0, 0, 0, self, nullptr, 0, false, false);
     break;
   case 2:
-    XLevel.StartACS(252, 0, 0, 0, 0, self, NULL, 0, false, false);
+    XLevel.StartACS(252, 0, 0, 0, 0, self, nullptr, 0, false, false);
     break;
   case 3:
-    XLevel.StartACS(253, 0, 0, 0, 0, self, NULL, 0, false, false);
+    XLevel.StartACS(253, 0, 0, 0, 0, self, nullptr, 0, false, false);
     break;
   case 4:
-    XLevel.StartACS(254, 0, 0, 0, 0, self, NULL, 0, false, false);
+    XLevel.StartACS(254, 0, 0, 0, 0, self, nullptr, 0, false, false);
     break;
   }
 }
@@ -2604,7 +2604,7 @@ final void A_KoraxBonePop()
     KSpiritInit(mo);
   }
 
-  XLevel.StartACS(255, 0, 0, 0, 0, self, NULL, 0, false, false);  // Death script
+  XLevel.StartACS(255, 0, 0, 0, 0, self, nullptr, 0, false, false);  // Death script
 }
 
 //==========================================================================

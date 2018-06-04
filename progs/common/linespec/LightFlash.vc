@@ -41,7 +41,7 @@ int     MinTime;
 //
 //==========================================================================
 
-void Init(sector_t* InSector)
+void Init(sector_t *InSector)
 {
   Sector = InSector;
   Sector->LightingData = self;

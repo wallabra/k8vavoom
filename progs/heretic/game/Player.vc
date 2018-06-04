@@ -336,7 +336,7 @@ override void Cheat_Gimme()
       }
       for (j = 0; j < 16; j++)
       {
-        P_GiveArtifact(player, i, NULL);
+        P_GiveArtifact(player, i, nullptr);
       }
     }
     P_SetMessage(player, "YOU GOT IT", false);
@@ -351,7 +351,7 @@ override void Cheat_Gimme()
     }
     for (i = 0; i < count; i++)
     {
-      P_GiveArtifact(player, type, NULL);
+      P_GiveArtifact(player, type, nullptr);
     }
     P_SetMessage(player, "YOU GOT IT", false);
   }

@@ -95,7 +95,7 @@ IMPLEMENT_CLASS(V, Button)
 //==========================================================================
 
 bool VLevelInfo::ChangeSwitchTexture(int sidenum, bool useAgain,
-  VName DefaultSound, bool& Quest)
+  VName DefaultSound, bool &Quest)
 {
   guard(VLevelInfo::ChangeSwitchTexture);
   int texTop = XLevel->Sides[sidenum].TopTexture;
@@ -105,7 +105,7 @@ bool VLevelInfo::ChangeSwitchTexture(int sidenum, bool useAgain,
   for (int  i = 0; i < Switches.Num(); i++)
   {
     EBWhere where;
-    TSwitch* sw = Switches[i];
+    TSwitch *sw = Switches[i];
 
     if (sw->Tex == texTop)
     {
@@ -174,7 +174,7 @@ bool VLevelInfo::StartButton(int sidenum, vuint8 w, int SwitchDef,
     }
   }
 
-  VButton* But = (VButton*)XLevel->SpawnThinker(VButton::StaticClass());
+  VButton *But = (VButton*)XLevel->SpawnThinker(VButton::StaticClass());
   But->Side = sidenum;
   But->Where = w;
   But->SwitchDef = SwitchDef;
@@ -192,7 +192,7 @@ bool VLevelInfo::StartButton(int sidenum, vuint8 w, int SwitchDef,
 //
 //==========================================================================
 
-void VButton::Serialise(VStream& Strm)
+void VButton::Serialise(VStream &Strm)
 {
   guard(VButton::Serialise);
   Super::Serialise(Strm);
@@ -217,7 +217,7 @@ void VButton::Tick(float DeltaTime)
   Timer -= DeltaTime;
   if (Timer <= 0.0)
   {
-    TSwitch* Def = Switches[SwitchDef];
+    TSwitch *Def = Switches[SwitchDef];
     if (Frame == Def->NumFrames - 1)
     {
       SwitchDef = Def->PairIndex;
@@ -261,7 +261,7 @@ bool VButton::AdvanceFrame()
   guard(VButton::AdvanceFrame);
   Frame++;
   bool Ret = false;
-  TSwitch* Def = Switches[SwitchDef];
+  TSwitch *Def = Switches[SwitchDef];
   if (Frame == Def->NumFrames - 1)
   {
     if (UseAgain)

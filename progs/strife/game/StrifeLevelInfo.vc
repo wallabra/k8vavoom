@@ -31,7 +31,7 @@ class StrifeLevelInfo : LineSpecialLevelInfo;
 //
 //==========================================================================
 
-override name GetDefaultDoorSound(sector_t* Sector)
+override name GetDefaultDoorSound(sector_t *Sector)
 {
   int     i;
   name    SeqName = DefaultDoorSound;

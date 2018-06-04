@@ -116,7 +116,7 @@ bool PNGHandle::loadIDAT () {
 }
 
 
-const vuint8* PNGHandle::pixaddr (int x, int y) const {
+const vuint8 *PNGHandle::pixaddr (int x, int y) const {
   if (width < 1 || height < 1 || x < 0 || y < 0 || x >= width || y >= height) return nullptr;
   int xmul;
   switch (colortype) {
@@ -409,7 +409,7 @@ bool M_FindPNGIDAT (PNGHandle *png, vuint32 *chunkLen) {
 // M_GetPNGText
 //
 // Finds a PNG text chunk with the given signature and returns a pointer
-// to a NULL-terminated string if present. Returns NULL on failure.
+// to a nullptr-terminated string if present. Returns nullptr on failure.
 //
 //==========================================================================
 char *M_GetPNGText (PNGHandle *png, const char *keyword) {
@@ -493,7 +493,7 @@ static vuint8 convertBPP (vuint16 v, vuint8 bitdepth) {
 //
 // M_VerifyPNG
 //
-// Returns a PNGHandle if the file is a PNG or NULL if not. CRC checking of
+// Returns a PNGHandle if the file is a PNG or nullptr if not. CRC checking of
 // chunks is not done in order to save time.
 //
 //==========================================================================

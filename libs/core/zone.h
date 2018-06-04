@@ -27,14 +27,14 @@
 //**
 //**************************************************************************
 
-inline void* Z_Malloc (size_t size) {
+inline void *Z_Malloc (size_t size) {
   void *res = malloc(size > 0 ? size : size+1);
   if (!res) { fprintf(stdout, "FATAL: out of memory!\n"); *(int*)0 = 0; }
   return res;
 }
 
 
-inline void* Z_Calloc (size_t size) {
+inline void *Z_Calloc (size_t size) {
   void *res = malloc(size > 0 ? size : size+1);
   if (!res) { fprintf(stdout, "FATAL: out of memory!\n"); *(int*)0 = 0; }
   memset(res, 0, size > 0 ? size : size+1);
@@ -42,6 +42,6 @@ inline void* Z_Calloc (size_t size) {
 }
 
 
-inline void Z_Free (void* ptr) {
+inline void Z_Free (void *ptr) {
   if (ptr) free(ptr);
 }

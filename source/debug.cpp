@@ -36,7 +36,7 @@
 class VDebugLog : public VLogListener
 {
 public:
-  void Serialise(const char* Text, EName Event)
+  void Serialise(const char *Text, EName Event)
   {
     dprintf("%s: %s", VName::SafeString(Event), *VStr(Text).RemoveColours());
   }
@@ -54,8 +54,8 @@ public:
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static FILE*    df = NULL;
-static const char*  debug_file_name;
+static FILE *df = nullptr;
+static const char *debug_file_name;
 static VDebugLog  DebugLog;
 
 // CODE --------------------------------------------------------------------
@@ -66,7 +66,7 @@ static VDebugLog  DebugLog;
 //
 //==========================================================================
 
-void OpenDebugFile(const char* name)
+void OpenDebugFile(const char *name)
 {
     debug_file_name = name;
 #ifdef CLOSEDDF

@@ -59,8 +59,8 @@ public:
   int   down[2];    // key nums holding it down
   int   state;      // low bit is down state
 
-  void KeyDown(const char* c);
-  void KeyUp(const char* c);
+  void KeyDown(const char *c);
+  void KeyUp(const char *c);
   float KeyState();
 };
 
@@ -188,7 +188,7 @@ BUTTON(MouseLook)
 //
 //==========================================================================
 
-void TKButton::KeyDown(const char* c)
+void TKButton::KeyDown(const char *c)
 {
   guard(TKButton::KeyDown);
   int   k;
@@ -235,7 +235,7 @@ void TKButton::KeyDown(const char* c)
 //
 //==========================================================================
 
-void TKButton::KeyUp(const char* c)
+void TKButton::KeyUp(const char *c)
 {
   guard(TKButton::KeyUp);
   int   k;
@@ -702,7 +702,7 @@ void VBasePlayer::HandleInput()
 //
 //==========================================================================
 
-bool VBasePlayer::Responder(event_t* ev)
+bool VBasePlayer::Responder(event_t *ev)
 {
   guard(VBasePlayer::Responder);
   switch (ev->type)

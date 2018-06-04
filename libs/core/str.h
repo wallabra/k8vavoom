@@ -136,7 +136,7 @@ public:
 
   // character accessors
   inline char operator [] (int Idx) const { return data[Idx]; }
-  //char& operator [] (int Idx) { return data[Idx]; }
+  //char &operator [] (int Idx) { return data[Idx]; }
 
   inline char *GetMutableCharPointer (int Idx) { MakeMutable(); return &data[Idx]; }
 
@@ -240,9 +240,9 @@ public:
   friend VStr operator + (const VStr &S1, const VName &InName) { VStr res(S1); res += InName; return res; }
 
   // comparison operators
-  friend bool operator == (const VStr &S1, const char* S2) { return (Cmp(*S1, S2) == 0); }
+  friend bool operator == (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) == 0); }
   friend bool operator == (const VStr &S1, const VStr &S2) { return (S1.data == S2.data ? true : (Cmp(*S1, *S2) == 0)); }
-  friend bool operator != (const VStr &S1, const char* S2) { return (Cmp(*S1, S2) != 0); }
+  friend bool operator != (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) != 0); }
   friend bool operator != (const VStr &S1, const VStr &S2) { return (S1.data == S2.data ? false : (Cmp(*S1, *S2) != 0)); }
 
   // comparison functions

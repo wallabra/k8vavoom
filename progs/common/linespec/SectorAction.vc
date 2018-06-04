@@ -143,7 +143,7 @@ final bool CheckTrigger(EntityEx Triggerer)
     (bDormant && Triggerer.bActivatePCross)))
   {
     return !!Level.ExecuteActionSpecial(Special, Args[0], Args[1],
-      Args[2], Args[3], Args[4], NULL, 0, Triggerer);
+      Args[2], Args[3], Args[4], nullptr, 0, Triggerer);
   }
   return false;
 }

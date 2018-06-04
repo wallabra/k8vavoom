@@ -39,7 +39,7 @@ override void CreateChoices()
   for (i = 0; i < P_GetNumSkills(); i++)
   {
     MenuChoiceSkill Btn = MenuChoiceSkill(NewChild(MenuChoiceSkill));
-    SkillDef* SDef = P_GetSkillDef(i);
+    SkillDef *SDef = P_GetSkillDef(i);
     Btn.SetPos(ChoicesStartX, CurY);
     if (SDef->bMenuNameIsPic)
     {

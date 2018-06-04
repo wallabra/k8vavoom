@@ -45,7 +45,7 @@
 
 IMPLEMENT_CLASS(V, RootWidget);
 
-VRootWidget*    GRoot;
+VRootWidget *GRoot;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -70,7 +70,7 @@ VRootWidget::VRootWidget()
 void VRootWidget::Init()
 {
   guard(VRootWidget::Init);
-  Super::Init(NULL);
+  Super::Init(nullptr);
   SetSize(640, 480);
 
   MouseCursorPic = GTextureManager.AddPatch("mc_arrow", TEXTYPE_Pic);
@@ -119,7 +119,7 @@ void VRootWidget::TickWidgets(float DeltaTime)
 //
 //==========================================================================
 
-bool VRootWidget::Responder(event_t* Event)
+bool VRootWidget::Responder(event_t *Event)
 {
   guard(VRootWidget::Responder);
   if (RootFlags & RWF_MouseEnabled)
@@ -143,7 +143,7 @@ bool VRootWidget::Responder(event_t* Event)
   if (Event->type == ev_keydown || Event->type == ev_keyup)
   {
     //  Find the top-most focused widget.
-    VWidget* W = CurrentFocusChild;
+    VWidget *W = CurrentFocusChild;
     while (W && W->CurrentFocusChild)
     {
       W = W->CurrentFocusChild;
@@ -236,8 +236,8 @@ void VRootWidget::MouseMoveEvent(int NewX, int NewY)
   float ScaledOldY = OldMouseY * SizeScaleY;
   float ScaledNewX = MouseX * SizeScaleX;
   float ScaledNewY = MouseY * SizeScaleY;
-  VWidget* OldFocus = GetWidgetAt(ScaledOldX, ScaledOldY);
-  for (VWidget* W = OldFocus; W != NULL; W = W->ParentWidget)
+  VWidget *OldFocus = GetWidgetAt(ScaledOldX, ScaledOldY);
+  for (VWidget *W = OldFocus; W != nullptr; W = W->ParentWidget)
   {
     if (W->OnMouseMove(
       (int)((ScaledOldX - W->ClipRect.OriginX) / W->ClipRect.ScaleX),
@@ -248,8 +248,8 @@ void VRootWidget::MouseMoveEvent(int NewX, int NewY)
       break;
     }
   }
-  VWidget* NewFocus = GetWidgetAt(ScaledNewX, ScaledNewY);
-  if (OldFocus != NULL && OldFocus != NewFocus)
+  VWidget *NewFocus = GetWidgetAt(ScaledNewX, ScaledNewY);
+  if (OldFocus != nullptr && OldFocus != NewFocus)
   {
     OldFocus->WidgetFlags &= ~(WF_LMouseDown | WF_MMouseDown |
       WF_RMouseDown);
@@ -271,7 +271,7 @@ bool VRootWidget::MouseButtonEvent(int Button, bool Down)
   //  Find widget under mouse.
   float ScaledX = MouseX * SizeScaleX;
   float ScaledY = MouseY * SizeScaleY;
-  VWidget* Focus = GetWidgetAt(ScaledX, ScaledY);
+  VWidget *Focus = GetWidgetAt(ScaledX, ScaledY);
 
   if (Down)
   {
@@ -311,7 +311,7 @@ bool VRootWidget::MouseButtonEvent(int Button, bool Down)
     }
   }
 
-  for (VWidget* W = Focus; W; W = W->ParentWidget)
+  for (VWidget *W = Focus; W; W = W->ParentWidget)
   {
     int LocalX = (int)((ScaledX - W->ClipRect.OriginX) / W->ClipRect.ScaleX);
     int LocalY = (int)((ScaledY - W->ClipRect.OriginY) / W->ClipRect.ScaleY);

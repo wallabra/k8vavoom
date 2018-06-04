@@ -214,7 +214,7 @@ void VTextureManager::Shutdown()
 //
 //==========================================================================
 
-int VTextureManager::AddTexture(VTexture* Tex)
+int VTextureManager::AddTexture(VTexture *Tex)
 {
   guard(VTextureManager::AddTexture);
   if (!Tex)
@@ -234,13 +234,13 @@ int VTextureManager::AddTexture(VTexture* Tex)
 //
 //==========================================================================
 
-void VTextureManager::ReplaceTexture(int Index, VTexture* NewTex)
+void VTextureManager::ReplaceTexture(int Index, VTexture *NewTex)
 {
   guard(VTextureManager::ReplaceTexture);
   check(Index >= 0);
   check(Index < Textures.Num());
   check(NewTex);
-  VTexture* OldTex = Textures[Index];
+  VTexture *OldTex = Textures[Index];
   NewTex->Name = OldTex->Name;
   NewTex->Type = OldTex->Type;
   NewTex->TextureTranslation = OldTex->TextureTranslation;
@@ -274,7 +274,7 @@ void VTextureManager::RemoveFromHash(int Index)
 {
   guard(VTextureManager::RemoveFromHash);
   int HashIndex = GetTypeHash(Textures[Index]->Name)&(HASH_SIZE-1);
-  int* Prev = &TextureHash[HashIndex];
+  int *Prev = &TextureHash[HashIndex];
   while (*Prev != -1 && *Prev != Index)
   {
     Prev = &Textures[*Prev]->HashNext;
@@ -460,7 +460,7 @@ void VTextureManager::SetFrontSkyLayer(int tex)
 //
 //==========================================================================
 
-void VTextureManager::GetTextureInfo(int TexNum, picinfo_t* info)
+void VTextureManager::GetTextureInfo(int TexNum, picinfo_t *info)
 {
   guard(VTextureManager::GetTextureInfo);
   if (TexNum < 0)
@@ -469,7 +469,7 @@ void VTextureManager::GetTextureInfo(int TexNum, picinfo_t* info)
   }
   else
   {
-    VTexture* Tex = Textures[TexNum];
+    VTexture *Tex = Textures[TexNum];
     info->width = Tex->GetWidth();
     info->height = Tex->GetHeight();
     info->xoffset = Tex->SOffset;
@@ -567,7 +567,7 @@ int VTextureManager::AddFileTexture(VName Name, int Type)
   i = W_CheckNumForFileName(*Name);
   if (i >= 0)
   {
-    VTexture* Tex = VTexture::CreateTexture(Type, i);
+    VTexture *Tex = VTexture::CreateTexture(Type, i);
     if (Tex)
     {
       Tex->Name = Name;
@@ -648,9 +648,9 @@ void VTextureManager::AddTexturesLump(int NamesLump, int TexLump,
   }
 
   //  Load the patch names from pnames.lmp.
-  VStream* Strm = W_CreateLumpReaderNum(NamesLump);
+  VStream *Strm = W_CreateLumpReaderNum(NamesLump);
   vint32 nummappatches = Streamer<vint32>(*Strm);
-  VTexture** patchtexlookup = new VTexture*[nummappatches];
+  VTexture **patchtexlookup = new VTexture*[nummappatches];
   for (int i = 0; i < nummappatches; i++)
   {
     //  Read patch name.
@@ -676,7 +676,7 @@ void VTextureManager::AddTexturesLump(int NamesLump, int TexLump,
     //  Add it to textures.
     if (LNum < 0)
     {
-      patchtexlookup[i] = NULL;
+      patchtexlookup[i] = nullptr;
     }
     else
     {
@@ -686,7 +686,7 @@ void VTextureManager::AddTexturesLump(int NamesLump, int TexLump,
     }
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
 
   //  Load the map texture definitions from textures.lmp.
   //  The data is contained in one or two lumps, TEXTURE1 for shareware,
@@ -711,7 +711,7 @@ void VTextureManager::AddTexturesLump(int NamesLump, int TexLump,
 
   for (int i = 0; i < NumTex; i++)
   {
-    VMultiPatchTexture* Tex = new VMultiPatchTexture(*Strm, i,
+    VMultiPatchTexture *Tex = new VMultiPatchTexture(*Strm, i,
       patchtexlookup, nummappatches, FirstTex, IsStrife);
     AddTexture(Tex);
     if (i == 0 && First)
@@ -724,9 +724,9 @@ void VTextureManager::AddTexturesLump(int NamesLump, int TexLump,
     }
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   delete[] patchtexlookup;
-  patchtexlookup = NULL;
+  patchtexlookup = nullptr;
   unguard;
 }
 
@@ -772,7 +772,7 @@ void VTextureManager::AddHiResTextures()
     }
 
     //  Create new texture.
-    VTexture* NewTex = VTexture::CreateTexture(TEXTYPE_Any, Lump);
+    VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Any, Lump);
     if (!NewTex)
     {
       continue;
@@ -794,7 +794,7 @@ void VTextureManager::AddHiResTextures()
     else
     {
       //  Repalce existing texture by adjusting scale and offsets.
-      VTexture* OldTex = Textures[OldIdx];
+      VTexture *OldTex = Textures[OldIdx];
       NewTex->bWorldPanning = true;
       NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
       NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
@@ -804,7 +804,7 @@ void VTextureManager::AddHiResTextures()
       NewTex->TextureTranslation = OldTex->TextureTranslation;
       Textures[OldIdx] = NewTex;
       delete OldTex;
-      OldTex = NULL;
+      OldTex = nullptr;
     }
   }
 
@@ -817,7 +817,7 @@ void VTextureManager::AddHiResTextures()
       continue;
     }
 
-    VScriptParser* sc = new VScriptParser(*W_LumpName(Lump),
+    VScriptParser *sc = new VScriptParser(*W_LumpName(Lump),
       W_CreateLumpReaderNum(Lump));
     while (!sc->AtEnd())
     {
@@ -855,14 +855,14 @@ void VTextureManager::AddHiResTextures()
         }
 
         //  Create new texture.
-        VTexture* NewTex = VTexture::CreateTexture(TEXTYPE_Any,
+        VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Any,
           LumpIdx);
         if (!NewTex)
         {
           continue;
         }
         //  Repalce existing texture by adjusting scale and offsets.
-        VTexture* OldTex = Textures[OldIdx];
+        VTexture *OldTex = Textures[OldIdx];
         NewTex->bWorldPanning = true;
         NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
         NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
@@ -873,7 +873,7 @@ void VTextureManager::AddHiResTextures()
         NewTex->TextureTranslation = OldTex->TextureTranslation;
         Textures[OldIdx] = NewTex;
         delete OldTex;
-        OldTex = NULL;
+        OldTex = nullptr;
       }
       else if (sc->Check("define"))
       {
@@ -893,7 +893,7 @@ void VTextureManager::AddHiResTextures()
         }
 
         //  Create new texture.
-        VTexture* NewTex = VTexture::CreateTexture(TEXTYPE_Overload,
+        VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Overload,
           LumpIdx);
         if (!NewTex)
         {
@@ -910,11 +910,11 @@ void VTextureManager::AddHiResTextures()
           false);
         if (OldIdx >= 0)
         {
-          VTexture* OldTex = Textures[OldIdx];
+          VTexture *OldTex = Textures[OldIdx];
           NewTex->TextureTranslation = OldTex->TextureTranslation;
           Textures[OldIdx] = NewTex;
           delete OldTex;
-          OldTex = NULL;
+          OldTex = nullptr;
         }
         else
         {
@@ -947,7 +947,7 @@ void VTextureManager::AddHiResTextures()
       }
     }
     delete sc;
-    sc = NULL;
+    sc = nullptr;
   }
   unguard;
 }
@@ -987,7 +987,7 @@ void P_InitAnimated()
     return;
   }
 
-  VStream* Strm = W_CreateLumpReaderName(NAME_animated);
+  VStream *Strm = W_CreateLumpReaderName(NAME_animated);
   while (Strm->TotalSize()-Strm->Tell() >= 23)
   {
     int pic1, pic2;
@@ -1059,7 +1059,7 @@ void P_InitAnimated()
     AnimDefs.Append(ad);
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -1071,7 +1071,7 @@ void P_InitAnimated()
 //
 //==========================================================================
 
-static void ParseFTAnim(VScriptParser* sc, int IsFlat)
+static void ParseFTAnim(VScriptParser *sc, int IsFlat)
 {
   guard(ParseFTAnim);
   animDef_t   ad;
@@ -1220,7 +1220,7 @@ static void ParseFTAnim(VScriptParser* sc, int IsFlat)
 //
 //==========================================================================
 
-static int AddSwitchDef(TSwitch* Switch)
+static int AddSwitchDef(TSwitch *Switch)
 {
   guard(AddSwitchDef);
   for (int i = 0; i < Switches.Num(); i++)
@@ -1228,7 +1228,7 @@ static int AddSwitchDef(TSwitch* Switch)
     if (Switches[i]->Tex == Switch->Tex)
     {
       delete Switches[i];
-      Switches[i] = NULL;
+      Switches[i] = nullptr;
       Switches[i] = Switch;
       return i;
     }
@@ -1243,7 +1243,7 @@ static int AddSwitchDef(TSwitch* Switch)
 //
 //==========================================================================
 
-static TSwitch* ParseSwitchState(VScriptParser* sc, bool IgnoreBad)
+static TSwitch *ParseSwitchState(VScriptParser *sc, bool IgnoreBad)
 {
   guard(ParseSwitchState);
   TArray<TSwitchFrame>  Frames;
@@ -1270,7 +1270,7 @@ static TSwitch* ParseSwitchState(VScriptParser* sc, bool IgnoreBad)
       {
         Bad = true;
       }
-      TSwitchFrame& F = Frames.Alloc();
+      TSwitchFrame &F = Frames.Alloc();
       F.Texture = Tex;
       if (sc->Check("tics"))
       {
@@ -1312,10 +1312,10 @@ static TSwitch* ParseSwitchState(VScriptParser* sc, bool IgnoreBad)
   }
   if (Bad)
   {
-    return NULL;
+    return nullptr;
   }
 
-  TSwitch* Def = new TSwitch();
+  TSwitch *Def = new TSwitch();
   Def->Sound = Sound;
   Def->NumFrames = Frames.Num();
   Def->Frames = new TSwitchFrame[Frames.Num()];
@@ -1335,7 +1335,7 @@ static TSwitch* ParseSwitchState(VScriptParser* sc, bool IgnoreBad)
 //
 //==========================================================================
 
-static void ParseSwitchDef(VScriptParser* sc)
+static void ParseSwitchDef(VScriptParser *sc)
 {
   guard(ParseSwitchDef);
   //  Skip game specifier.
@@ -1361,8 +1361,8 @@ static void ParseSwitchDef(VScriptParser* sc)
   int t1 = GTextureManager.CheckNumForName(sc->Name8, TEXTYPE_Wall, true,
     false);
   bool Quest = false;
-  TSwitch* Def1 = NULL;
-  TSwitch* Def2 = NULL;
+  TSwitch *Def1 = nullptr;
+  TSwitch *Def2 = nullptr;
 
   //  Currently only basic switch definition is supported.
   while (1)
@@ -1398,12 +1398,12 @@ static void ParseSwitchDef(VScriptParser* sc)
     if (Def1)
     {
       delete Def1;
-      Def1 = NULL;
+      Def1 = nullptr;
     }
     if (Def2)
     {
       delete Def2;
-      Def2 = NULL;
+      Def2 = nullptr;
     }
     return;
   }
@@ -1440,7 +1440,7 @@ static void ParseSwitchDef(VScriptParser* sc)
 //
 //==========================================================================
 
-static void ParseAnimatedDoor(VScriptParser* sc)
+static void ParseAnimatedDoor(VScriptParser *sc)
 {
   guard(ParseAnimatedDoor);
   //  Get base texture name.
@@ -1496,7 +1496,7 @@ static void ParseAnimatedDoor(VScriptParser* sc)
 
   if (!ignore)
   {
-    VAnimDoorDef& A = AnimDoorDefs.Alloc();
+    VAnimDoorDef &A = AnimDoorDefs.Alloc();
     A.Texture = BaseTex;
     A.OpenSound = OpenSound;
     A.CloseSound = CloseSound;
@@ -1514,7 +1514,7 @@ static void ParseAnimatedDoor(VScriptParser* sc)
 //
 //==========================================================================
 
-static void ParseWarp(VScriptParser* sc, int Type)
+static void ParseWarp(VScriptParser *sc, int Type)
 {
   guard(ParseWarp);
   int TexType = TEXTYPE_Wall;
@@ -1538,8 +1538,8 @@ static void ParseWarp(VScriptParser* sc, int Type)
     return;
   }
 
-  VTexture* SrcTex = GTextureManager[TexNum];
-  VTexture* WarpTex = SrcTex;
+  VTexture *SrcTex = GTextureManager[TexNum];
+  VTexture *WarpTex = SrcTex;
   //  Warp only once.
   if (!SrcTex->WarpType)
   {
@@ -1560,7 +1560,7 @@ static void ParseWarp(VScriptParser* sc, int Type)
 //
 //==========================================================================
 
-static void ParseCameraTexture(VScriptParser* sc)
+static void ParseCameraTexture(VScriptParser *sc)
 {
   guard(ParseCameraTexture);
   //  Name
@@ -1575,18 +1575,18 @@ static void ParseCameraTexture(VScriptParser* sc)
   int FitHeight = Height;
 
   //  Check for replacing an existing texture
-  VCameraTexture* Tex = new VCameraTexture(Name, Width, Height);
+  VCameraTexture *Tex = new VCameraTexture(Name, Width, Height);
   int TexNum = GTextureManager.CheckNumForName(Name, TEXTYPE_Flat, true,
     true);
   if (TexNum != -1)
   {
     //  By default camera texture will fit in old texture.
-    VTexture* OldTex = GTextureManager[TexNum];
+    VTexture *OldTex = GTextureManager[TexNum];
     FitWidth = OldTex->GetScaledWidth();
     FitHeight = OldTex->GetScaledHeight();
     GTextureManager.ReplaceTexture(TexNum, Tex);
     delete OldTex;
-    OldTex = NULL;
+    OldTex = nullptr;
   }
   else
   {
@@ -1614,7 +1614,7 @@ static void ParseCameraTexture(VScriptParser* sc)
 //
 //==========================================================================
 
-static void ParseFTAnims(VScriptParser* sc)
+static void ParseFTAnims(VScriptParser *sc)
 {
   guard(ParseFTAnims);
   while (!sc->AtEnd())
@@ -1653,7 +1653,7 @@ static void ParseFTAnims(VScriptParser* sc)
     }
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
   unguard;
 }
 
@@ -1709,7 +1709,7 @@ void P_InitSwitchList()
   int lump = W_CheckNumForName(NAME_switches);
   if (lump != -1)
   {
-    VStream* Strm = W_CreateLumpReaderNum(lump);
+    VStream *Strm = W_CreateLumpReaderNum(lump);
     while (Strm->TotalSize()-Strm->Tell() >= 20)
     {
       char TmpName1[9];
@@ -1742,8 +1742,8 @@ void P_InitSwitchList()
       {
         continue;
       }
-      TSwitch* Def1 = new TSwitch();
-      TSwitch* Def2 = new TSwitch();
+      TSwitch *Def1 = new TSwitch();
+      TSwitch *Def2 = new TSwitch();
       Def1->Sound = 0;
       Def2->Sound = 0;
       Def1->Tex = t1;
@@ -1764,7 +1764,7 @@ void P_InitSwitchList()
       Def1->PairIndex = AddSwitchDef(Def2);
     }
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
   }
   Switches.Condense();
   unguard;
@@ -1776,7 +1776,7 @@ void P_InitSwitchList()
 //
 //==========================================================================
 
-VAnimDoorDef* R_FindAnimDoor(vint32 BaseTex)
+VAnimDoorDef *R_FindAnimDoor(vint32 BaseTex)
 {
   guard(R_FindAnimDoor);
   for (int i = 0; i < AnimDoorDefs.Num(); i++)
@@ -1786,7 +1786,7 @@ VAnimDoorDef* R_FindAnimDoor(vint32 BaseTex)
       return &AnimDoorDefs[i];
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -1803,7 +1803,7 @@ void R_AnimateSurfaces()
   //  Animate flats and textures
   for (int i = 0; i < AnimDefs.Num(); i++)
   {
-    animDef_t& ad = AnimDefs[i];
+    animDef_t &ad = AnimDefs[i];
     ad.Time -= host_frametime;
     if (ad.Time > 0.0)
     {
@@ -1844,7 +1844,7 @@ void R_AnimateSurfaces()
       }
       break;
     }
-    const frameDef_t& fd = FrameDefs[ad.StartFrameDef +
+    const frameDef_t &fd = FrameDefs[ad.StartFrameDef +
       (ad.Type == ANIM_Normal ? ad.CurrentFrame : 0)];
     ad.Time = fd.BaseTime/35.0;
     if (fd.RandomRange)
@@ -1896,7 +1896,7 @@ void R_ShutdownTexture()
   for (int i = 0; i < Switches.Num(); i++)
   {
     delete Switches[i];
-    Switches[i] = NULL;
+    Switches[i] = nullptr;
   }
   Switches.Clear();
   AnimDefs.Clear();
@@ -1904,7 +1904,7 @@ void R_ShutdownTexture()
   for (int i = 0; i < AnimDoorDefs.Num(); i++)
   {
     delete[] AnimDoorDefs[i].Frames;
-    AnimDoorDefs[i].Frames = NULL;
+    AnimDoorDefs[i].Frames = nullptr;
   }
   AnimDoorDefs.Clear();
 

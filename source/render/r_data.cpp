@@ -75,7 +75,7 @@ vuint8                r_rgbtable[32 * 32 * 32 + 4];
 // and range check thing_t sprites patches
 spritedef_t             sprites[MAX_SPRITE_MODELS];
 
-VTextureTranslation**       TranslationTables;
+VTextureTranslation **TranslationTables;
 int                 NumTranslationTables;
 VTextureTranslation         IceTranslation;
 TArray<VTextureTranslation*>    DecorateTranslations;
@@ -89,7 +89,7 @@ VTextureTranslation         ColourMaps[CM_Max];
 //  Temporary variables for sprite installing
 static spriteframe_t        sprtemp[30];
 static int              maxframe;
-static const char*          spritename;
+static const char *spritename;
 
 static TArray<VLightEffectDef>    GLightEffectDefs;
 static TArray<VParticleEffectDef> GParticleEffectDefs;
@@ -116,9 +116,9 @@ static void InitPalette()
   // with modified graphics.
   //  Strife uses colour 0 as transparent. I already had problems with fact
   // that colour 255 is normal colour, now there shouldn't be any problems.
-  VStream* Strm = W_CreateLumpReaderName(NAME_playpal);
+  VStream *Strm = W_CreateLumpReaderName(NAME_playpal);
   check(Strm);
-  rgba_t* pal = r_palette;
+  rgba_t *pal = r_palette;
   int best_dist_black = 0x100000;
   int best_dist_white = 0;
   for (int i = 0; i < 256; ++i) {
@@ -141,7 +141,7 @@ static void InitPalette()
     }
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -195,12 +195,12 @@ static void InitRgbTable()
 static void InitTranslationTables()
 {
   guard(InitTranslationTables);
-  VStream* Strm = W_CreateLumpReaderName(NAME_translat);
+  VStream *Strm = W_CreateLumpReaderName(NAME_translat);
   NumTranslationTables = Strm->TotalSize() / 256;
   TranslationTables = new VTextureTranslation*[NumTranslationTables];
   for (int j = 0; j < NumTranslationTables; j++)
   {
-    VTextureTranslation* Trans = new VTextureTranslation;
+    VTextureTranslation *Trans = new VTextureTranslation;
     TranslationTables[j] = Trans;
     Strm->Serialise(Trans->Table, 256);
     //  Make sure that 0 always maps to 0.
@@ -217,7 +217,7 @@ static void InitTranslationTables()
     }
   }
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
 
   //  Calculate ice translation.
   IceTranslation.Table[0] = 0;
@@ -246,7 +246,7 @@ static void InitColourMaps()
 {
   guard(InitColourMaps);
   //  Calculate inverse colourmap.
-  VTextureTranslation* T = &ColourMaps[CM_Inverse];
+  VTextureTranslation *T = &ColourMaps[CM_Inverse];
   T->Table[0] = 0;
   T->Palette[0] = r_palette[0];
   for (int i = 1; i < 256; i++)
@@ -338,7 +338,7 @@ static void InstallSpriteLump(int lumpnr, int frame, char Rot, bool flipped)
     rotation = 17;
   }
 
-  VTexture* Tex = GTextureManager[lumpnr];
+  VTexture *Tex = GTextureManager[lumpnr];
   if ((vuint32)frame >= 30 || (vuint32)rotation > 16)
   {
     Sys_Error("InstallSpriteLump: Bad frame characters in lump '%s'", *Tex->Name);
@@ -418,7 +418,7 @@ void R_InstallSprite(const char *name, int index)
   {
     if (GTextureManager[l]->Type == TEXTYPE_Sprite)
     {
-      const char* lumpname = *GTextureManager[l]->Name;
+      const char *lumpname = *GTextureManager[l]->Name;
       if (*(int*)lumpname == intname)
       {
         InstallSpriteLump(l, VStr::ToUpper(lumpname[4]) - 'A',
@@ -494,7 +494,7 @@ void R_InstallSprite(const char *name, int index)
   if (sprites[index].spriteframes)
   {
     Z_Free(sprites[index].spriteframes);
-    sprites[index].spriteframes = NULL;
+    sprites[index].spriteframes = nullptr;
   }
   // allocate space for the frames present and copy sprtemp to it
   sprites[index].numframes = maxframe;
@@ -573,16 +573,16 @@ void R_ShutdownData()
     for (int i = 0; i < NumTranslationTables; i++)
     {
       delete TranslationTables[i];
-      TranslationTables[i] = NULL;
+      TranslationTables[i] = nullptr;
     }
     delete[] TranslationTables;
-    TranslationTables = NULL;
+    TranslationTables = nullptr;
   }
 
   for (int i = 0; i < DecorateTranslations.Num(); i++)
   {
     delete DecorateTranslations[i];
-    DecorateTranslations[i] = NULL;
+    DecorateTranslations[i] = nullptr;
   }
   DecorateTranslations.Clear();
 
@@ -653,7 +653,7 @@ void VTextureTranslation::CalcCrc()
 //
 //==========================================================================
 
-void VTextureTranslation::Serialise(VStream& Strm)
+void VTextureTranslation::Serialise(VStream &Strm)
 {
   guard(VTextureTranslation::Serialise);
   Strm.Serialise(Table, 256);
@@ -670,7 +670,7 @@ void VTextureTranslation::Serialise(VStream& Strm)
   }
   for (int i = 0; i < CmdsSize; i++)
   {
-    VTransCmd& C = Commands[i];
+    VTransCmd &C = Commands[i];
     Strm << C.Type << C.Start << C.End << C.R1 << C.G1 << C.B1 <<
       C.R2 << C.G2 << C.B2;
   }
@@ -753,7 +753,7 @@ void VTextureTranslation::MapToRange(int AStart, int AEnd, int ASrcStart,
     Table[i] = int(CurCol);
     Palette[i] = r_palette[Table[i]];
   }
-  VTransCmd& C = Commands.Alloc();
+  VTransCmd &C = Commands.Alloc();
   C.Type = 0;
   C.Start = Start;
   C.End = End;
@@ -827,7 +827,7 @@ void VTextureTranslation::MapToColours(int AStart, int AEnd, int AR1, int AG1,
     Palette[i].b = int(CurB);
     Table[i] = R_LookupRGB(Palette[i].r, Palette[i].g, Palette[i].b);
   }
-  VTransCmd& C = Commands.Alloc();
+  VTransCmd &C = Commands.Alloc();
   C.Type = 1;
   C.Start = Start;
   C.End = End;
@@ -873,7 +873,7 @@ void VTextureTranslation::BuildBloodTrans(int Col)
 //
 //==========================================================================
 
-static bool CheckChar(char*& pStr, char Chr)
+static bool CheckChar(char *&pStr, char Chr)
 {
   //  Skip whitespace
   while (*pStr && *pStr <= ' ')
@@ -894,10 +894,10 @@ static bool CheckChar(char*& pStr, char Chr)
 //
 //==========================================================================
 
-void VTextureTranslation::AddTransString(const VStr& Str)
+void VTextureTranslation::AddTransString(const VStr &Str)
 {
   guard(VTextureTranslation::AddTransString);
-  char* pStr = const_cast<char*>(*Str);
+  char *pStr = const_cast<char*>(*Str);
 
   //  Parse start and end of the range
   int Start = strtol(pStr, &pStr, 10);
@@ -971,7 +971,7 @@ void VTextureTranslation::AddTransString(const VStr& Str)
 //
 //==========================================================================
 
-int R_ParseDecorateTranslation(VScriptParser* sc, int GameMax)
+int R_ParseDecorateTranslation(VScriptParser *sc, int GameMax)
 {
   guard(R_ParseDecorateTranslation);
   //  First check for standard translation.
@@ -991,7 +991,7 @@ int R_ParseDecorateTranslation(VScriptParser* sc, int GameMax)
     return (TRANSL_Standard << TRANSL_TYPE_SHIFT) + 7;
   }
 
-  VTextureTranslation* Tr = new VTextureTranslation;
+  VTextureTranslation *Tr = new VTextureTranslation;
 
   do
   {
@@ -1014,7 +1014,7 @@ int R_ParseDecorateTranslation(VScriptParser* sc, int GameMax)
     }
     //  Found a match.
     delete Tr;
-    Tr = NULL;
+    Tr = nullptr;
     return (TRANSL_Decorate << TRANSL_TYPE_SHIFT) + i;
   }
 
@@ -1048,7 +1048,7 @@ int R_GetBloodTranslation(int Col)
   }
 
   //  Create new translation.
-  VTextureTranslation* Tr = new VTextureTranslation;
+  VTextureTranslation *Tr = new VTextureTranslation;
   Tr->BuildBloodTrans(Col);
 
   //  Add it.
@@ -1068,7 +1068,7 @@ int R_GetBloodTranslation(int Col)
 //
 //==========================================================================
 
-static VLightEffectDef* FindLightEffect(const VStr& Name)
+static VLightEffectDef *FindLightEffect(const VStr &Name)
 {
   guard(FindLightEffect);
   for (int i = 0; i < GLightEffectDefs.Num(); i++)
@@ -1078,7 +1078,7 @@ static VLightEffectDef* FindLightEffect(const VStr& Name)
       return &GLightEffectDefs[i];
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -1088,12 +1088,12 @@ static VLightEffectDef* FindLightEffect(const VStr& Name)
 //
 //==========================================================================
 
-static void ParseLightDef(VScriptParser* sc, int LightType)
+static void ParseLightDef(VScriptParser *sc, int LightType)
 {
   guard(ParseLightDef);
   //  Get name, find it in the list or add it if it's not there yet.
   sc->ExpectString();
-  VLightEffectDef* L = FindLightEffect(sc->String);
+  VLightEffectDef *L = FindLightEffect(sc->String);
   if (!L)
   {
     L = &GLightEffectDefs.Alloc();
@@ -1191,12 +1191,12 @@ float IntensityToRadius(float Val)
 //
 //==========================================================================
 
-static void ParseGZLightDef(VScriptParser* sc, int LightType)
+static void ParseGZLightDef(VScriptParser *sc, int LightType)
 {
   guard(ParseGZLightDef);
   //  Get name, find it in the list or add it if it's not there yet.
   sc->ExpectString();
-  VLightEffectDef* L = FindLightEffect(sc->String);
+  VLightEffectDef *L = FindLightEffect(sc->String);
   if (!L)
   {
     L = &GLightEffectDefs.Alloc();
@@ -1298,7 +1298,7 @@ static void ParseGZLightDef(VScriptParser* sc, int LightType)
 //
 //==========================================================================
 
-static VParticleEffectDef* FindParticleEffect(const VStr& Name)
+static VParticleEffectDef *FindParticleEffect(const VStr &Name)
 {
   guard(FindParticleEffect);
   for (int i = 0; i < GParticleEffectDefs.Num(); i++)
@@ -1308,7 +1308,7 @@ static VParticleEffectDef* FindParticleEffect(const VStr& Name)
       return &GParticleEffectDefs[i];
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -1318,12 +1318,12 @@ static VParticleEffectDef* FindParticleEffect(const VStr& Name)
 //
 //==========================================================================
 
-static void ParseParticleEffect(VScriptParser* sc)
+static void ParseParticleEffect(VScriptParser *sc)
 {
   guard(ParseParticleEffect);
   //  Get name, find it in the list or add it if it's not there yet.
   sc->ExpectString();
-  VParticleEffectDef* P = FindParticleEffect(sc->String);
+  VParticleEffectDef *P = FindParticleEffect(sc->String);
   if (!P)
   {
     P = &GParticleEffectDefs.Alloc();
@@ -1464,13 +1464,13 @@ static void ParseParticleEffect(VScriptParser* sc)
 //
 //==========================================================================
 
-static void ParseClassEffects(VScriptParser* sc,
+static void ParseClassEffects(VScriptParser *sc,
   TArray<VTempClassEffects>& ClassDefs)
 {
   guard(ParseClassEffects);
   //  Get name, find it in the list or add it if it's not there yet.
   sc->ExpectString();
-  VTempClassEffects* C = NULL;
+  VTempClassEffects *C = nullptr;
   for (int i = 0; i < ClassDefs.Num(); i++)
   {
     if (ClassDefs[i].ClassName == sc->String)
@@ -1496,7 +1496,7 @@ static void ParseClassEffects(VScriptParser* sc,
     if (sc->Check("frame"))
     {
       sc->ExpectString();
-      VTempSpriteEffectDef& S = C->SpriteEffects.Alloc();
+      VTempSpriteEffectDef &S = C->SpriteEffects.Alloc();
       S.Sprite = sc->String;
       sc->Expect("{");
       while (!sc->Check("}"))
@@ -1536,7 +1536,7 @@ static void ParseClassEffects(VScriptParser* sc,
 //
 //==========================================================================
 
-static void ParseEffectDefs(VScriptParser* sc,
+static void ParseEffectDefs(VScriptParser *sc,
   TArray<VTempClassEffects>& ClassDefs)
 {
   guard(ParseEffectDefs);
@@ -1592,7 +1592,7 @@ static void ParseEffectDefs(VScriptParser* sc,
     }
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
   unguard;
 }
 
@@ -1602,7 +1602,7 @@ static void ParseEffectDefs(VScriptParser* sc,
 //
 //==========================================================================
 
-static void ParseGZDoomEffectDefs(VScriptParser* sc,
+static void ParseGZDoomEffectDefs(VScriptParser *sc,
   TArray<VTempClassEffects>& ClassDefs)
 {
   guard(ParseEffectDefs);
@@ -1684,7 +1684,7 @@ static void ParseGZDoomEffectDefs(VScriptParser* sc,
     }
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
   unguard;
 }
 
@@ -1694,12 +1694,12 @@ static void ParseGZDoomEffectDefs(VScriptParser* sc,
 //
 //==========================================================================
 
-static void SetClassFieldInt(VClass* Class, const char* FieldName,
+static void SetClassFieldInt(VClass *Class, const char *FieldName,
   int Value, int Idx = 0)
 {
   guard(SetClassFieldInt);
-  VField* F = Class->FindFieldChecked(FieldName);
-  vint32* Ptr = (vint32*)(Class->Defaults + F->Ofs);
+  VField *F = Class->FindFieldChecked(FieldName);
+  vint32 *Ptr = (vint32*)(Class->Defaults + F->Ofs);
   Ptr[Idx] = Value;
   unguard;
 }
@@ -1710,11 +1710,11 @@ static void SetClassFieldInt(VClass* Class, const char* FieldName,
 //
 //==========================================================================
 
-static void SetClassFieldBool(VClass* Class, const char* FieldName, int Value)
+static void SetClassFieldBool(VClass *Class, const char *FieldName, int Value)
 {
   guard(SetClassFieldBool);
-  VField* F = Class->FindFieldChecked(FieldName);
-  vuint32* Ptr = (vuint32*)(Class->Defaults + F->Ofs);
+  VField *F = Class->FindFieldChecked(FieldName);
+  vuint32 *Ptr = (vuint32*)(Class->Defaults + F->Ofs);
   if (Value)
     *Ptr |= F->Type.BitMask;
   else
@@ -1728,12 +1728,12 @@ static void SetClassFieldBool(VClass* Class, const char* FieldName, int Value)
 //
 //==========================================================================
 
-static void SetClassFieldFloat(VClass* Class, const char* FieldName,
+static void SetClassFieldFloat(VClass *Class, const char *FieldName,
   float Value)
 {
   guard(SetClassFieldFloat);
-  VField* F = Class->FindFieldChecked(FieldName);
-  float* Ptr = (float*)(Class->Defaults + F->Ofs);
+  VField *F = Class->FindFieldChecked(FieldName);
+  float *Ptr = (float*)(Class->Defaults + F->Ofs);
   *Ptr = Value;
   unguard;
 }
@@ -1744,12 +1744,12 @@ static void SetClassFieldFloat(VClass* Class, const char* FieldName,
 //
 //==========================================================================
 
-static void SetClassFieldVec(VClass* Class, const char* FieldName,
-  const TVec& Value)
+static void SetClassFieldVec(VClass *Class, const char *FieldName,
+  const TVec &Value)
 {
   guard(SetClassFieldVec);
-  VField* F = Class->FindFieldChecked(FieldName);
-  TVec* Ptr = (TVec*)(Class->Defaults + F->Ofs);
+  VField *F = Class->FindFieldChecked(FieldName);
+  TVec *Ptr = (TVec*)(Class->Defaults + F->Ofs);
   *Ptr = Value;
   unguard;
 }
@@ -1788,8 +1788,8 @@ void R_ParseEffectDefs()
   //  Add effects to the classes.
   for (int i = 0; i < ClassDefs.Num(); i++)
   {
-    VTempClassEffects& CD = ClassDefs[i];
-    VClass* Cls = VClass::FindClass(*CD.ClassName);
+    VTempClassEffects &CD = ClassDefs[i];
+    VClass *Cls = VClass::FindClass(*CD.ClassName);
     if (Cls)
     {
       // Get class replacement
@@ -1803,7 +1803,7 @@ void R_ParseEffectDefs()
 
     if (CD.StaticLight.IsNotEmpty())
     {
-      VLightEffectDef* SLight = FindLightEffect(CD.StaticLight);
+      VLightEffectDef *SLight = FindLightEffect(CD.StaticLight);
       if (SLight)
       {
         SetClassFieldBool(Cls, "bStaticLight", true);
@@ -1819,7 +1819,7 @@ void R_ParseEffectDefs()
 
     for (int j = 0; j < CD.SpriteEffects.Num(); j++)
     {
-      VTempSpriteEffectDef& SprDef = CD.SpriteEffects[j];
+      VTempSpriteEffectDef &SprDef = CD.SpriteEffects[j];
       //  Sprite name must be either 4 or 5 chars.
       if (SprDef.Sprite.Length() != 4 && SprDef.Sprite.Length() != 5)
       {
@@ -1841,11 +1841,11 @@ void R_ParseEffectDefs()
         continue;
       }
 
-      VSpriteEffect& SprFx = Cls->SpriteEffects.Alloc();
+      VSpriteEffect &SprFx = Cls->SpriteEffects.Alloc();
       SprFx.SpriteIndex = SprIdx;
       SprFx.Frame = SprDef.Sprite.Length() == 4 ? -1 :
         (VStr::ToUpper(SprDef.Sprite[4]) - 'A');
-      SprFx.LightDef = NULL;
+      SprFx.LightDef = nullptr;
       if (SprDef.Light.IsNotEmpty())
       {
         SprFx.LightDef = FindLightEffect(SprDef.Light);
@@ -1854,7 +1854,7 @@ void R_ParseEffectDefs()
           GCon->Logf("Light \"%s\" not found", *SprDef.Light);
         }
       }
-      SprFx.PartDef = NULL;
+      SprFx.PartDef = nullptr;
       if (SprDef.Part.IsNotEmpty())
       {
         SprFx.PartDef = FindParticleEffect(SprDef.Part);

@@ -230,7 +230,7 @@ vuint8 *VPngTexture::GetPixels () {
   // set up unpacking buffer and row pointers
   Format = TEXFMT_RGBA;
   Pixels = new vuint8[Width*Height*4];
-  png_bytep* RowPtrs = new png_bytep[Height];
+  png_bytep *RowPtrs = new png_bytep[Height];
   for (int i = 0; i < Height; i++) RowPtrs[i] = Pixels+i*Width*4;
   png_read_image(png_ptr, RowPtrs);
 
@@ -308,7 +308,7 @@ void VPngTexture::Unload () {
 //
 //==========================================================================
 #ifdef CLIENT
-void WritePNG(const VStr& FileName, const void* Data, int Width, int Height, int Bpp, bool Bot2top) {
+void WritePNG(const VStr &FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top) {
   guard(WritePNG);
 
 #if 0

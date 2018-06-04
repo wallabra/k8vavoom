@@ -44,7 +44,7 @@ class VRotMatrix
 public:
   float m[3][3];
 
-  VRotMatrix(const TVec& Axis, float Angle)
+  VRotMatrix(const TVec &Axis, float Angle)
   {
     float s = msin(Angle);
     float c = mcos(Angle);
@@ -63,7 +63,7 @@ public:
     m[2][2] = t * Axis.z * Axis.z + c;
   }
 
-  friend TVec operator * (const TVec& v, const VRotMatrix& m)
+  friend TVec operator * (const TVec &v, const VRotMatrix &m)
   {
     return TVec(
       m.m[0][0] * v.x + m.m[0][1] * v.y + m.m[0][2] * v.z,
@@ -226,7 +226,7 @@ void AngleVector(const TAVec &angles, TVec &forward)
 //
 //==========================================================================
 
-void VectorAngles(const TVec& vec, TAVec& angles)
+void VectorAngles(const TVec &vec, TAVec &angles)
 {
   double length = sqrt(vec.x * vec.x + vec.y * vec.y);
   if (!length)
@@ -247,8 +247,8 @@ void VectorAngles(const TVec& vec, TAVec& angles)
 //
 //==========================================================================
 
-void VectorsAngles(const TVec& forward, const TVec& right, const TVec& up,
-  TAVec& angles)
+void VectorsAngles(const TVec &forward, const TVec &right, const TVec &up,
+  TAVec &angles)
 {
   if (!forward.x && !forward.y)
   {
@@ -337,7 +337,7 @@ void PerpendicularVector(TVec &dst, const TVec &src)
 //
 //==========================================================================
 
-TVec RotateVectorAroundVector(const TVec& Vector, const TVec& Axis,
+TVec RotateVectorAroundVector(const TVec &Vector, const TVec &Axis,
   float Angle)
 {
   guard(RotateVectorAroundVector);

@@ -213,7 +213,7 @@ override void StartFinale(name FinaleType)
 //
 //===========================================================================
 
-override bool FinaleResponder(event_t* event)
+override bool FinaleResponder(event_t *event)
 {
   return false;
 }

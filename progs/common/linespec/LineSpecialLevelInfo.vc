@@ -302,7 +302,7 @@ override void SpawnSpecials()
 //
 //==========================================================================
 
-final bool ActivateLine(line_t* Line, EntityEx A, int Side,
+final bool ActivateLine(line_t *Line, EntityEx A, int Side,
   int ActivationType)
 {
   int lineActivation;
@@ -351,7 +351,7 @@ final bool ActivateLine(line_t* Line, EntityEx A, int Side,
 //
 //==========================================================================
 
-final bool CheckActivation(int activationType, line_t* line, int Side,
+final bool CheckActivation(int activationType, line_t *line, int Side,
   EntityEx A)
 {
   if ((line->flags & ML_FIRSTSIDEONLY) && Side == 1)
@@ -476,7 +476,7 @@ final bool CheckActivation(int activationType, line_t* line, int Side,
 //==========================================================================
 
 override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
-  int Arg4, int Arg5, line_t* Line, int Side, Entity E)
+  int Arg4, int Arg5, line_t *Line, int Side, Entity E)
 {
   EntityEx A = EntityEx(E);
   int buttonSuccess = false;
@@ -1254,7 +1254,7 @@ override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
 //
 //==========================================================================
 
-final override void StartPlaneWatcher(Entity it, line_t* line, int lineSide,
+final override void StartPlaneWatcher(Entity it, line_t *line, int lineSide,
   bool ceiling, int tag, int height, int special, int arg0, int arg1,
   int arg2, int arg3, int arg4)
 {
@@ -1280,11 +1280,11 @@ final override void StartPlaneWatcher(Entity it, line_t* line, int lineSide,
 //==========================================================================
 
 final int EV_DoDoor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  int Type, line_t* Line, Entity Thing)
+  int Type, line_t *Line, Entity Thing)
 {
   int       SecNum;
   int       RetCode;
-  sector_t*   Sec;
+  sector_t *Sec;
   VerticalDoor  Door;
 
   RetCode = false;
@@ -1342,7 +1342,7 @@ final int EV_DoDoor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //==========================================================================
 
 final int EV_GenericDoor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  line_t* Line, Entity Thing)
+  line_t *Line, Entity Thing)
 {
   int     Tag;
   int     LightTag;
@@ -1391,7 +1391,7 @@ final int EV_GenericDoor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //
 //==========================================================================
 
-final void SpawnDoorCloseIn30(sector_t* sec)
+final void SpawnDoorCloseIn30(sector_t *sec)
 {
   VerticalDoor  Door;
 
@@ -1408,7 +1408,7 @@ final void SpawnDoorCloseIn30(sector_t* sec)
 //
 //==========================================================================
 
-final void SpawnDoorRaiseIn5Mins(sector_t* sec)
+final void SpawnDoorRaiseIn5Mins(sector_t *sec)
 {
   VerticalDoor Door;
 
@@ -1424,12 +1424,12 @@ final void SpawnDoorRaiseIn5Mins(sector_t* sec)
 //==========================================================================
 
 final int EV_TextureChangeDoor(int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, line_t* Line, Entity E)
+  int Arg5, line_t *Line, Entity E)
 {
   int         i;
   int         SecNum;
   int         Rtn;
-  sector_t*     Sec;
+  sector_t *Sec;
   TextureChangeDoor Door;
 
   Rtn = false;
@@ -1508,11 +1508,11 @@ final int EV_TextureChangeDoor(int Arg1, int Arg2, int Arg3, int Arg4,
 //==========================================================================
 
 final int EV_DoCeiling(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  int Type, line_t* Line)
+  int Type, line_t *Line)
 {
   int       SecNum;
   int       Rtn;
-  sector_t*   Sec;
+  sector_t *Sec;
   CeilingMover  Ceiling;
 
   Rtn = false;
@@ -1575,7 +1575,7 @@ final int EV_DoCeiling(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //
 //==========================================================================
 
-final int EV_CeilingCrushStop(line_t* line, int Arg1, int Arg2, int Arg3,
+final int EV_CeilingCrushStop(line_t *line, int Arg1, int Arg2, int Arg3,
   int Arg4, int Arg5)
 {
   int       rtn;
@@ -1602,7 +1602,7 @@ final bool EV_StartCeilingWaggle(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int       SectorIndex;
-  sector_t*   Sector;
+  sector_t *Sector;
   CeilingWaggle Waggle;
   bool      RetCode;
 
@@ -1638,11 +1638,11 @@ final bool EV_StartCeilingWaggle(int Arg1, int Arg2, int Arg3, int Arg4,
 //==========================================================================
 
 final int EV_DoFloor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  int Type, line_t* Line)
+  int Type, line_t *Line)
 {
   int     SecNum;
   int     Rtn;
-  sector_t* Sec;
+  sector_t *Sec;
   FloorMover  Floor;
 
   Rtn = false;
@@ -1715,9 +1715,9 @@ final int EV_FloorCrushStop(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 
 final int EV_DoDonut(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 {
-  sector_t* s1;
-  sector_t* s2;
-  sector_t* s3;
+  sector_t *s1;
+  sector_t *s2;
+  sector_t *s3;
   int     secnum;
   int     rtn;
   int     i;
@@ -1771,7 +1771,7 @@ final bool EV_StartFloorWaggle(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int       SectorIndex;
-  sector_t*   Sector;
+  sector_t *Sector;
   FloorWaggle   Waggle;
   bool      RetCode;
 
@@ -1807,7 +1807,7 @@ final bool EV_StartFloorWaggle(int Arg1, int Arg2, int Arg3, int Arg4,
 //==========================================================================
 
 final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  bool Generic, line_t* Line)
+  bool Generic, line_t *Line)
 {
   int     SecNum;
   float   Height;
@@ -1816,10 +1816,10 @@ final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   int     Ok;
   int     Texture;
   int     Rtn;
-  sector_t* Sec;
-  sector_t* TSec;
+  sector_t *Sec;
+  sector_t *TSec;
   FloorMover  Floor;
-  line_t*   SecLine;
+  line_t *SecLine;
   int     Direction;
   float   StairSize;
   bool    IgnTxt;
@@ -1931,7 +1931,7 @@ final int EV_BuildStairs(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   int StairsType)
 {
   int       SecNum;
-  sector_t*   Sec;
+  sector_t *Sec;
   StairStepMover  StairStep;
   StairStepMover  StairQueueHead;
 
@@ -1983,12 +1983,12 @@ final int EV_BuildStairs(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //==========================================================================
 
 final int EV_DoPlat(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  int Type, line_t* Line)
+  int Type, line_t *Line)
 {
   Platform  Plat;
   int     SecNum;
   int     Rtn;
-  sector_t* Sec;
+  sector_t *Sec;
 
   Rtn = false;
 
@@ -2085,7 +2085,7 @@ final int EV_BuildPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   bool Crush)
 {
   int     SecNum;
-  sector_t* Sec;
+  sector_t *Sec;
   Pillar    pillar;
   int     Rtn;
 
@@ -2112,7 +2112,7 @@ final int EV_BuildPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 final int EV_OpenPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 {
   int     SecNum;
-  sector_t* Sec;
+  sector_t *Sec;
   Pillar    pillar;
   int     Rtn;
 
@@ -2143,11 +2143,11 @@ final int EV_OpenPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 //==========================================================================
 
 final int EV_DoElevator(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  int Type, line_t* Line)
+  int Type, line_t *Line)
 {
   int     SecNum;
   int     Rtn;
-  sector_t* Sec;
+  sector_t *Sec;
   Elevator  Elev;
 
   if (!Line && (Type == Elevator::ELEVEV_Current))
@@ -2185,7 +2185,7 @@ final int EV_DoElevator(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //
 //==========================================================================
 
-final bool EV_RotatePoly(line_t* line, int Arg1, int Arg2, int Arg3,
+final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
   int Arg4, int Arg5, int direction, bool overRide)
 {
   int mirror;
@@ -2472,7 +2472,7 @@ final bool EV_OpenPolyDoor(line_t * line, int Arg1, int Arg2, int Arg3,
 //
 //==========================================================================
 
-final void SpawnFireFlicker(sector_t* sector)
+final void SpawnFireFlicker(sector_t *sector)
 {
   FireFlicker Flick;
 
@@ -2488,7 +2488,7 @@ final void SpawnFireFlicker(sector_t* sector)
 //
 //==========================================================================
 
-final void SpawnGlowingLight(sector_t* sector)
+final void SpawnGlowingLight(sector_t *sector)
 {
   GlowingLight G;
 
@@ -2502,7 +2502,7 @@ final void SpawnGlowingLight(sector_t* sector)
 //
 //==========================================================================
 
-final void SpawnLightFlash(sector_t* sector)
+final void SpawnLightFlash(sector_t *sector)
 {
   LightFlash Flash;
 
@@ -2516,7 +2516,7 @@ final void SpawnLightFlash(sector_t* sector)
 //
 //==========================================================================
 
-final void SpawnStrobeFlash(sector_t* sector, int fastOrSlow, int maxtime,
+final void SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int maxtime,
   int inSync)
 {
   Strobe Flash;
@@ -2562,7 +2562,7 @@ final void SpawnLightSequence(sector_t * sector, float indexStep)
   count = 1.0;
   do
   {
-    nextSec = NULL;
+    nextSec = nullptr;
     //  Make sure that the search doesn't back up.
     sec->special = (sec->special & ~SECSPEC_BASE_MASK) |
       SECSPEC_LightSequenceStart;
@@ -2598,7 +2598,7 @@ final void SpawnLightSequence(sector_t * sector, float indexStep)
   base = sector->params.lightlevel;
   do
   {
-    nextSec = NULL;
+    nextSec = nullptr;
     if (sec->params.lightlevel)
     {
       base = sec->params.lightlevel;
@@ -2638,7 +2638,7 @@ final int EV_StartLightStrobing(int Arg1, int Arg2, int Arg3, int Arg4,
 {
   int     Ret;
   int     SecNum;
-  sector_t* Sec;
+  sector_t *Sec;
   Strobe    Flash;
 
   Ret = false;
@@ -2667,9 +2667,9 @@ final int EV_StartLightStrobing(int Arg1, int Arg2, int Arg3, int Arg4,
 final int EV_TagLightTurnOn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 {
   int     SecNum;
-  sector_t* Sec;
+  sector_t *Sec;
   int     j;
-  sector_t* TSec;
+  sector_t *TSec;
   int     Max;
 
   for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
@@ -2702,10 +2702,10 @@ final int EV_TurnTagLightsOff(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int     SecNum;
-  sector_t* Sec;
+  sector_t *Sec;
   int     i;
   int     Min;
-  sector_t* TSec;
+  sector_t *TSec;
 
   for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
     SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
@@ -2734,7 +2734,7 @@ final int EV_TurnTagLightsOff(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_LightRaiseByValue(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  sector_t* Sec;
+  sector_t *Sec;
   int     SecNum;
   bool    Rtn;
 
@@ -2762,7 +2762,7 @@ final bool EV_LightRaiseByValue(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_LightLowerByValue(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  sector_t* Sec;
+  sector_t *Sec;
   int     SecNum;
   bool    Rtn;
 
@@ -2790,7 +2790,7 @@ final bool EV_LightLowerByValue(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_LightChangeToValue(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
-  sector_t* Sec;
+  sector_t *Sec;
   int     SecNum;
   bool    Rtn;
 
@@ -2823,7 +2823,7 @@ final bool EV_SpawnLight(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   int Type)
 {
   LightEffect Light;
-  sector_t* Sec;
+  sector_t *Sec;
   int     SecNum;
   bool    Rtn;
 
@@ -2867,7 +2867,7 @@ final bool EV_LightStop(int Tag)
 //
 //==========================================================================
 
-final void SpawnTransferWallLight(line_t* Line)
+final void SpawnTransferWallLight(line_t *Line)
 {
   WallLightTransfer Tr;
 
@@ -2888,7 +2888,7 @@ final void SpawnTransferWallLight(line_t* Line)
 //
 //==========================================================================
 
-final void SpawnScrollingFloor(sector_t* Sector, int XDir, int YDir,
+final void SpawnScrollingFloor(sector_t *Sector, int XDir, int YDir,
   int Speed)
 {
   Scroller  Scroll;
@@ -2903,7 +2903,7 @@ final void SpawnScrollingFloor(sector_t* Sector, int XDir, int YDir,
 //
 //==========================================================================
 
-final void SpawnWallScroller(line_t* Line, int XDir, int YDir)
+final void SpawnWallScroller(line_t *Line, int XDir, int YDir)
 {
   Scroller  Scroll;
 
@@ -2917,7 +2917,7 @@ final void SpawnWallScroller(line_t* Line, int XDir, int YDir)
 //
 //==========================================================================
 
-final void SpawnWallOffsetsScroller(line_t* Line)
+final void SpawnWallOffsetsScroller(line_t *Line)
 {
   Scroller  Scroll;
 
@@ -2931,7 +2931,7 @@ final void SpawnWallOffsetsScroller(line_t* Line)
 //
 //==========================================================================
 
-final void SpawnTextureBothScroller(line_t* Line)
+final void SpawnTextureBothScroller(line_t *Line)
 {
   Scroller  Scroll;
 
@@ -2946,7 +2946,7 @@ final void SpawnTextureBothScroller(line_t* Line)
 //
 //==========================================================================
 
-final void SpawnScrollCeiling(line_t* Line)
+final void SpawnScrollCeiling(line_t *Line)
 {
   Scroller  Scroll;
   int     SecNum;
@@ -2965,7 +2965,7 @@ final void SpawnScrollCeiling(line_t* Line)
 //
 //==========================================================================
 
-final void SpawnScrollFloor(line_t* Line)
+final void SpawnScrollFloor(line_t *Line)
 {
   Scroller  Scroll;
   int     SecNum;
@@ -2998,11 +2998,11 @@ final void SpawnScrollFloor(line_t* Line)
 //
 //==========================================================================
 
-final void SpawnScrollTextureModel(line_t* Line)
+final void SpawnScrollTextureModel(line_t *Line)
 {
   Scroller  Scroll;
   int     Searcher;
-  line_t*   Other;
+  line_t *Other;
 
   Searcher = -1;
   for (Other = XLevel.FindLine(Line->arg1, &Searcher); Other;
@@ -3140,7 +3140,7 @@ final void SetWallScroller(int LineId, float XSpeed, float YSpeed,
     }
 
     int     Searcher;
-    line_t*   Other;
+    line_t *Other;
 
     Searcher = -1;
     for (Other = XLevel.FindLine(LineId, &Searcher); Other;
@@ -3261,11 +3261,11 @@ final void SetScroller(int Type, int Arg1, int Arg2, int Arg3)
 //==========================================================================
 
 final bool EV_FloorTransferTrigger(int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, line_t* Line)
+  int Arg5, line_t *Line)
 {
   int     SecNum;
   bool    Rtn;
-  sector_t* Sec;
+  sector_t *Sec;
 
   if (!Line)
   {
@@ -3297,8 +3297,8 @@ final bool EV_FloorTransferNumeric(int Arg1, int Arg2, int Arg3, int Arg4,
 {
   int     SecNum;
   bool    Rtn;
-  sector_t* Sec;
-  sector_t* MdlSec;
+  sector_t *Sec;
+  sector_t *MdlSec;
 
   Rtn = false;
   for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
@@ -3540,7 +3540,7 @@ final bool EV_SectorChangeFlags(int Arg1, int Arg2, int Arg3, int Arg4,
   for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
     SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
   {
-    sector_t* Sec = &XLevel.Sectors[SecNum];
+    sector_t *Sec = &XLevel.Sectors[SecNum];
     if (Arg3 & SECF_SILENT)
     {
       Sec->bSilent = false;
@@ -3775,9 +3775,9 @@ final bool EV_LineAlignFloor(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int     Searcher;
-  line_t*   Line;
+  line_t *Line;
   bool    Ret;
-  sector_t* Sec;
+  sector_t *Sec;
 
   Searcher = -1;
   Ret = false;
@@ -3828,9 +3828,9 @@ final bool EV_LineAlignCeiling(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int     Searcher;
-  line_t*   Line;
+  line_t *Line;
   bool    Ret;
-  sector_t* Sec;
+  sector_t *Sec;
 
   Searcher = -1;
   Ret = false;
@@ -3881,7 +3881,7 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int     Searcher;
-  line_t*   Line;
+  line_t *Line;
 
   //  Check if side is valid.
   if (Arg4 < 0 || Arg4 > 1)
@@ -3899,7 +3899,7 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
     {
       continue;
     }
-    side_t* Side = &XLevel.Sides[Line->sidenum[Arg4]];
+    side_t *Side = &XLevel.Sides[Line->sidenum[Arg4]];
 
     //  X offset
     if (Arg2 != NoChange)
@@ -3987,7 +3987,7 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
 //
 //==========================================================================
 
-final void ClampSideOffsets(side_t* Side)
+final void ClampSideOffsets(side_t *Side)
 {
   if (Side->TopTextureOffset > 32767.0 || Side->TopTextureOffset < -32768.0)
   {
@@ -4021,7 +4021,7 @@ final void ClampSideOffsets(side_t* Side)
 //
 //==========================================================================
 
-final void ClampSecPlaneOffsets(sec_plane_t* Plane)
+final void ClampSecPlaneOffsets(sec_plane_t *Plane)
 {
   if (Plane->xoffs > 32767.0 || Plane->xoffs < -32768.0)
   {
@@ -4797,7 +4797,7 @@ final bool EV_ThingHate(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     // Can't hate if can't attack.
     if (Hater.SeeState)
     {
-      // If hating a group of things, record the TID and NULL
+      // If hating a group of things, record the TID and nullptr
       // the target (if its TID doesn't match). A_Look will
       // find an appropriate thing to go chase after.
       if (Arg3)
@@ -5186,8 +5186,8 @@ final bool EV_RemoveForceField(int Arg1, int Arg2, int Arg3, int Arg4,
 {
   int     i;
   int     secnum;
-  sector_t* sec;
-  line_t*   secline;
+  sector_t *sec;
+  line_t *secline;
 
   for (secnum = XLevel.FindSectorFromTag(Arg1, -1); secnum >= 0;
     secnum = XLevel.FindSectorFromTag(Arg1, secnum))
@@ -5223,14 +5223,14 @@ final bool EV_RemoveForceField(int Arg1, int Arg2, int Arg3, int Arg4,
 //==========================================================================
 
 final bool EV_Teleport(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  EntityEx thing, line_t* Line, bool fog)
+  EntityEx thing, line_t *Line, bool fog)
 {
   int     i;
   int     count;
   EntityEx  A;
   int     SecTag;
   int     SecNum;
-  sector_t* Sec;
+  sector_t *Sec;
   bool    SrcFog;
   bool    KeepOrient;
   TVec    DstOrg;
@@ -5370,7 +5370,7 @@ final bool EV_TeleportOther(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
     for (A = EntityEx(FindMobjFromTID(Arg1, none)); A;
       A = EntityEx(FindMobjFromTID(Arg1, A)))
     {
-      Ret |= EV_Teleport(Arg2, 0, 0, 0, 0, A, NULL, !!Arg3);
+      Ret |= EV_Teleport(Arg2, 0, 0, 0, 0, A, nullptr, !!Arg3);
     }
   }
   return Ret;
@@ -5488,7 +5488,7 @@ final bool EV_TeleportSector(int tag, int source_tid, int dest_tid, bool fog,
   bool    didSomething;
   bool    floorz;
   int     secnum;
-  sector_t* sec;
+  sector_t *sec;
   EntityEx  A;
 
   sourceOrigin = EntityEx(FindMobjFromTID(source_tid, none));
@@ -5650,12 +5650,12 @@ final bool EV_SilentLineTeleport(line_t *line, int side, EntityEx thing,
 //
 //==========================================================================
 
-final void RecursiveSound(sector_t* sec, int soundblocks, Entity soundtarget,
+final void RecursiveSound(sector_t *sec, int soundblocks, Entity soundtarget,
       bool Splash)
 {
   int     i;
-  line_t*   check;
-  sector_t* other;
+  line_t *check;
+  sector_t *other;
   Entity    Ent;
 
   // wake up all monsters in this sector
@@ -5830,14 +5830,14 @@ final bool EV_LineSearchForPuzzleItem(int Arg1, int Arg2, int Arg3, int Arg4,
 //
 //  GetPushThing
 //
-//  Returns a pointer to an MT_PUSH or MT_PULL thing, NULL otherwise.
+//  Returns a pointer to an MT_PUSH or MT_PULL thing, nullptr otherwise.
 //
 //==========================================================================
 
 final EntityEx GetPushThing(int s)
 {
   Entity    thing;
-  sector_t* sec;
+  sector_t *sec;
 
   sec = &XLevel.Sectors[s];
   for (thing = sec->ThingList; thing; thing = thing.SNext)
@@ -5861,7 +5861,7 @@ final EntityEx GetPushThing(int s)
 final void SpawnPushers()
 {
   int     i;
-  line_t*   l;
+  line_t *l;
   int     s;
   Pusher    P;
   EntityEx  thing;
@@ -5876,7 +5876,7 @@ final void SpawnPushers()
         s = XLevel.FindSectorFromTag(l->arg1, s))
       {
         P = Spawn(Pusher);
-        P.Init(Pusher::PUSHER_Wind, l->arg4 ? l : NULL, l->arg2,
+        P.Init(Pusher::PUSHER_Wind, l->arg4 ? l : nullptr, l->arg2,
           l->arg3, none, s);
       }
       break;
@@ -5886,7 +5886,7 @@ final void SpawnPushers()
         s = XLevel.FindSectorFromTag(l->arg1, s))
       {
         P = Spawn(Pusher);
-        P.Init(Pusher::PUSHER_Current, l->arg4 ? l : NULL, l->arg2,
+        P.Init(Pusher::PUSHER_Current, l->arg4 ? l : nullptr, l->arg2,
           l->arg3, none, s);
       }
       break;
@@ -5906,7 +5906,7 @@ final void SpawnPushers()
             if (!l->arg2 || l->arg2 == thing.TID)
             {
               P = Spawn(Pusher);
-              P.Init(Pusher::PUSHER_Push, l->arg4 ? l : NULL,
+              P.Init(Pusher::PUSHER_Push, l->arg4 ? l : nullptr,
                 l->arg3, 0, thing, s);
             }
           }
@@ -5925,7 +5925,7 @@ final void SpawnPushers()
               if (&XLevel.Sectors[s] == thing.Sector)
                 break;
             P = Spawn(Pusher);
-            P.Init(Pusher::PUSHER_Push, l->arg4 ? l : NULL,
+            P.Init(Pusher::PUSHER_Push, l->arg4 ? l : nullptr,
               l->arg3, 0, thing, s);
           }
         }
@@ -5942,7 +5942,7 @@ final void SpawnPushers()
 //==========================================================================
 
 final bool AdjustPusher(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  line_t* Line, int Type)
+  line_t *Line, int Type)
 {
   int   tag;
   int   magnitude;
@@ -5982,7 +5982,7 @@ final bool AdjustPusher(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     if (!P)
     {
       P = Spawn(Pusher);
-      P.Init(Type, NULL, magnitude, angle, none, secnum);
+      P.Init(Type, nullptr, magnitude, angle, none, secnum);
     }
   }
   return true;
@@ -5998,7 +5998,7 @@ final bool EV_LineTranslucent(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int     Searcher;
-  line_t*   Other;
+  line_t *Other;
 
   Searcher = -1;
   for (Other = XLevel.FindLine(Arg1, &Searcher); Other;
@@ -6048,7 +6048,7 @@ int EV_SectorSetPlaneReflection(int Arg1, int Arg2, int Arg3, int Arg4,
 //==========================================================================
 
 final bool EV_GlassBreak(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  line_t* Line, EntityEx A)
+  line_t *Line, EntityEx A)
 {
   bool    switched;
   byte    Quest1;
@@ -6318,7 +6318,7 @@ final name ModToDamageType(int Mod)
 //
 //==========================================================================
 
-final override void PolyThrustMobj(Entity Other, TVec thrustDir, polyobj_t* po)
+final override void PolyThrustMobj(Entity Other, TVec thrustDir, polyobj_t *po)
 {
   float force;
   PolyobjThinker pe;
@@ -6374,7 +6374,7 @@ final override void PolyThrustMobj(Entity Other, TVec thrustDir, polyobj_t* po)
 //
 //==========================================================================
 
-final override void PolyCrushMobj(Entity Other, polyobj_t* po)
+final override void PolyCrushMobj(Entity Other, polyobj_t *po)
 {
   if (po->bCrush)
   {
@@ -6446,7 +6446,7 @@ final override void PolyCrushMobj(Entity Other, polyobj_t* po)
 
 final override bool PolyBusy(int polyobj)
 {
-  polyobj_t* poly = XLevel.GetPolyobj(polyobj);
+  polyobj_t *poly = XLevel.GetPolyobj(polyobj);
   if (!poly || !poly->SpecialData)
   {
     return false;
@@ -6589,7 +6589,7 @@ final override void SectorDamage(int Tag, int Amount, name DamageType,
   for (SecNum = XLevel.FindSectorFromTag(Tag, -1); SecNum >= 0;
     SecNum = XLevel.FindSectorFromTag(Tag, SecNum))
   {
-    sector_t* Sec = &XLevel.Sectors[SecNum];
+    sector_t *Sec = &XLevel.Sectors[SecNum];
     Entity Ent;
     Entity Next;
 
@@ -6656,7 +6656,7 @@ final override void SectorDamage(int Tag, int Amount, name DamageType,
 //
 //==========================================================================
 
-final override void SpawnMapThing(mthing_t* mthing)
+final override void SpawnMapThing(mthing_t *mthing)
 {
   int       spawnMask;
   class<EntityEx> moClass;
@@ -6822,7 +6822,7 @@ final bool CheckLock(Entity user, int lock, bool door)
   {
     return true;
   }
-  LockDef* Lock = GetLockDef(lock);
+  LockDef *Lock = GetLockDef(lock);
   if (!Lock)
   {
     if (lock == 103)
@@ -6851,7 +6851,7 @@ final bool CheckLock(Entity user, int lock, bool door)
 //
 //==========================================================================
 
-final bool CheckLockDef(LockDef* Lock, EntityEx User)
+final bool CheckLockDef(LockDef *Lock, EntityEx User)
 {
   int     i;
   int     j;
@@ -7547,7 +7547,7 @@ final override void SetMarineSprite(int Tid, name SrcClassName, Entity Activator
 //
 //==========================================================================
 
-name GetDefaultDoorSound(sector_t* Sector)
+name GetDefaultDoorSound(sector_t *Sector)
 {
   return DefaultDoorSound;
 }

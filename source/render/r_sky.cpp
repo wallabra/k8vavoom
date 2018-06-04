@@ -75,12 +75,12 @@ static VCvarB   r_skyboxes("r_skyboxes", true, "Allow skyboxes?", CVAR_Archive);
 //
 //==========================================================================
 
-static void ParseSkyBoxesScript(VScriptParser* sc)
+static void ParseSkyBoxesScript(VScriptParser *sc)
 {
   guard(ParseSkyBoxesScript);
   while (!sc->AtEnd())
   {
-    skyboxinfo_t& info = skyboxinfo.Alloc();
+    skyboxinfo_t &info = skyboxinfo.Alloc();
     memset(&info, 0, sizeof(info));
 
     sc->ExpectString();
@@ -98,7 +98,7 @@ static void ParseSkyBoxesScript(VScriptParser* sc)
     sc->Expect("}");
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
   unguard;
 }
 
@@ -214,7 +214,7 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
     float vradius = vcosa1 * RADIUS;
     for (int i = 0; i < HDIVS; i++)
     {
-      sky_t& s = sky[j * HDIVS + i];
+      sky_t &s = sky[j * HDIVS + i];
       float a0 = 45 - i * (360.0 / HDIVS);
       float a1 = 45 - (i + 1) * (360.0 / HDIVS);
       float sina0 = msin(a0);
@@ -222,7 +222,7 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
       float sina1 = msin(a1);
       float cosa1 = mcos(a1);
 
-      TVec* surfverts = &s.surf.verts[0]; //k8: cache it, and silence compiler warnings
+      TVec *surfverts = &s.surf.verts[0]; //k8: cache it, and silence compiler warnings
       surfverts[0] = TVec(cosa0 * vradius, sina0 * vradius, bheight);
       surfverts[1] = TVec(cosa0 * tradius, sina0 * tradius, theight);
       surfverts[2] = TVec(cosa1 * tradius, sina1 * tradius, theight);
@@ -323,7 +323,7 @@ void VSky::InitSkyBox(VName Name1, VName Name2)
   {
     Host_Error("No such skybox %s", *Name1);
   }
-  skyboxinfo_t& s1info = skyboxinfo[num];
+  skyboxinfo_t &s1info = skyboxinfo[num];
   if (Name2 != NAME_None)
   {
     num = CheckSkyboxNumForName(Name2);
@@ -332,7 +332,7 @@ void VSky::InitSkyBox(VName Name1, VName Name2)
       Host_Error("No such skybox %s", *Name2);
     }
   }
-//  skyboxinfo_t& s2info = skyboxinfo[num];
+//  skyboxinfo_t &s2info = skyboxinfo[num];
 
   memset(sky, 0, sizeof(sky));
 
@@ -414,7 +414,7 @@ void VSky::InitSkyBox(VName Name1, VName Name2)
     //  Precache texture
     Drawer->PrecacheTexture(GTextureManager[sky[j].texture1]);
 
-    VTexture* STex = GTextureManager[sky[j].texture1];
+    VTexture *STex = GTextureManager[sky[j].texture1];
 
     sky[j].surf.extents[0] = STex->GetWidth();
     sky[j].surf.extents[1] = STex->GetHeight();

@@ -50,9 +50,9 @@ struct trsplat_t {
 // `dir` must be normalized
 //
 //==========================================================================
-final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t* tr) {
+final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *tr) {
   TVec dst;
-  intercept_t* in;
+  intercept_t *in;
   TVec lineStart;
   TVec lineEnd;
   TVec shootOrigin;
@@ -77,7 +77,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t* t
   lineStart = shootOrigin;
   foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES/*|PT_EARLYOUT*/) {
     TVec hit_point, real_hit_point;
-    line_t* li;
+    line_t *li;
 
     if (in->bIsALine) {
       int side;
@@ -170,9 +170,9 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t* t
 // Returns `false` if floor/ceiling was hit, or nothing was hit.
 //
 //==========================================================================
-final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, optional trsplat_t* tr) {
+final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, optional trsplat_t *tr) {
   TVec dst;
-  intercept_t* in;
+  intercept_t *in;
   TVec lineStart;
   TVec lineEnd;
   TVec shootOrigin;
@@ -195,7 +195,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
   lineStart = shootOrigin;
   foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES|(allowEntities ? PT_ADDTHINGS : 0)) {
     TVec hit_point, real_hit_point;
-    line_t* li;
+    line_t *li;
 
     if (in->bIsALine) {
       int side;
@@ -390,7 +390,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance) {
   float topangle, botangle;
   TVec dir;
   intercept_t *in;
-  EntityEx linetarget; // who got hit (or NULL)
+  EntityEx linetarget; // who got hit (or nullptr)
 
   // height if not aiming up or down
   // ???: use slope for monsters?

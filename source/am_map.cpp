@@ -698,7 +698,7 @@ static void AM_maxOutWindowScale()
 //
 //==========================================================================
 
-bool AM_Responder(event_t* ev)
+bool AM_Responder(event_t *ev)
 {
   bool    rc;
   static int  bigstate = 0;
@@ -891,7 +891,7 @@ static void AM_changeWindowScale()
 //
 //==========================================================================
 
-static void AM_rotate(float* x, float* y, float a)
+static void AM_rotate(float *x, float *y, float a)
 {
   float tmpx;
 
@@ -1062,7 +1062,7 @@ static void AM_clearFB()
 //
 //==========================================================================
 
-static bool AM_clipMline(mline_t* ml, fline_t* fl)
+static bool AM_clipMline(mline_t *ml, fline_t *fl)
 {
   enum
   {
@@ -1213,7 +1213,7 @@ static bool AM_clipMline(mline_t* ml, fline_t* fl)
 //
 //==========================================================================
 
-static void AM_drawFline(fline_t* fl, vuint32 colour)
+static void AM_drawFline(fline_t *fl, vuint32 colour)
 {
   Drawer->DrawLine(fl->a.x, fl->a.y, colour, fl->b.x, fl->b.y, colour);
 }
@@ -1408,7 +1408,7 @@ static void AM_drawWalls()
 //
 //==========================================================================
 
-static void AM_drawLineCharacter(mline_t* lineguy, int lineguylines,
+static void AM_drawLineCharacter(mline_t *lineguy, int lineguylines,
   float scale, float angle, vuint32 colour, float x, float y)
 {
   float msinAngle = msin(angle);

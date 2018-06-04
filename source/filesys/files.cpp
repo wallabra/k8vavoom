@@ -48,7 +48,7 @@ struct version_t
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void SetupGameDir(const VStr& dirname);
+static void SetupGameDir(const VStr &dirname);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -103,7 +103,7 @@ TArray<VStr> GetWadPk3List () {
 //
 //==========================================================================
 
-static void AddZipFile (VStr ZipName, VZipFile* Zip, bool allowpk3) {
+static void AddZipFile (VStr ZipName, VZipFile *Zip, bool allowpk3) {
   SearchPaths.Append(Zip);
 
   // Add all WAD files in the root of the ZIP file.
@@ -111,29 +111,29 @@ static void AddZipFile (VStr ZipName, VZipFile* Zip, bool allowpk3) {
   Zip->ListWadFiles(Wads);
   for (int i = 0; i < Wads.Num(); ++i) {
     VStr GwaName = Wads[i].StripExtension()+".gwa";
-    VStream* WadStrm = Zip->OpenFileRead(Wads[i]);
-    VStream* GwaStrm = Zip->OpenFileRead(GwaName);
+    VStream *WadStrm = Zip->OpenFileRead(Wads[i]);
+    VStream *GwaStrm = Zip->OpenFileRead(GwaName);
 
     // Decompress WAD and GWA files into a memory stream since
     // reading from ZIP will be very slow.
     size_t Len = WadStrm->TotalSize();
-    vuint8* Buf = new vuint8[Len];
+    vuint8 *Buf = new vuint8[Len];
     WadStrm->Serialise(Buf, Len);
     delete WadStrm;
-    WadStrm = NULL;
+    WadStrm = nullptr;
     WadStrm = new VMemoryStream(Buf, Len);
     delete[] Buf;
-    Buf = NULL;
+    Buf = nullptr;
 
     if (GwaStrm) {
       Len = GwaStrm->TotalSize();
       Buf = new vuint8[Len];
       GwaStrm->Serialise(Buf, Len);
       delete GwaStrm;
-      GwaStrm = NULL;
+      GwaStrm = nullptr;
       GwaStrm = new VMemoryStream(Buf, Len);
       delete[] Buf;
-      Buf = NULL;
+      Buf = nullptr;
     }
 
     W_AddFileFromZip(ZipName+":"+Wads[i], WadStrm, ZipName+":"+GwaName, GwaStrm);
@@ -145,22 +145,22 @@ static void AddZipFile (VStr ZipName, VZipFile* Zip, bool allowpk3) {
   TArray<VStr> pk3s;
   Zip->ListPk3Files(pk3s);
   for (int i = 0; i < pk3s.Num(); ++i) {
-    VStream* ZipStrm = Zip->OpenFileRead(pk3s[i]);
+    VStream *ZipStrm = Zip->OpenFileRead(pk3s[i]);
 
     // Decompress file into a memory stream since
     // reading from ZIP will be very slow.
     size_t Len = ZipStrm->TotalSize();
-    vuint8* Buf = new vuint8[Len];
+    vuint8 *Buf = new vuint8[Len];
     ZipStrm->Serialise(Buf, Len);
     delete ZipStrm;
-    ZipStrm = NULL;
+    ZipStrm = nullptr;
 
     ZipStrm = new VMemoryStream(Buf, Len);
     delete[] Buf;
-    Buf = NULL;
+    Buf = nullptr;
 
     GCon->Logf("Adding nested pk3 '%s:%s'...", *ZipName, *pk3s[i]);
-    VZipFile* pk3 = new VZipFile(ZipStrm, ZipName+":"+pk3s[i]);
+    VZipFile *pk3 = new VZipFile(ZipStrm, ZipName+":"+pk3s[i]);
     AddZipFile(ZipName+":"+pk3s[i], pk3, false);
   }
 }
@@ -228,7 +228,7 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
 //
 //==========================================================================
 
-static void AddGameDir(const VStr& dir)
+static void AddGameDir(const VStr &dir)
 {
   guard(AddGameDir);
   AddGameDir(fl_basedir, dir);
@@ -278,7 +278,7 @@ static VStr FindMainWad(VStr MainWad)
 //
 //==========================================================================
 
-static void ParseBase(const VStr& name)
+static void ParseBase(const VStr &name)
 {
   guard(ParseBase);
   TArray<version_t> games;
@@ -299,7 +299,7 @@ static void ParseBase(const VStr& name)
   }
 
   select_game = false;
-  VScriptParser* sc = new VScriptParser(UseName, FL_OpenSysFileRead(UseName));
+  VScriptParser *sc = new VScriptParser(UseName, FL_OpenSysFileRead(UseName));
   while (!sc->AtEnd())
   {
     version_t &dst = games.Alloc();
@@ -340,11 +340,11 @@ static void ParseBase(const VStr& name)
     sc->Expect("end");
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
 
   for (int gi = games.Num() - 1; gi >= 0; gi--)
   {
-    version_t& G = games[gi];
+    version_t &G = games[gi];
     if (select_game && !G.ParmFound)
     {
       continue;
@@ -426,7 +426,7 @@ static void ParseBase(const VStr& name)
 //
 //==========================================================================
 
-static void SetupGameDir(const VStr& dirname)
+static void SetupGameDir(const VStr &dirname)
 {
   guard(SetupGameDir);
   ParseBase(dirname + "/base.txt");
@@ -443,13 +443,13 @@ static void SetupGameDir(const VStr& dirname)
 static void RenameSprites()
 {
   guard(RenameSprites);
-  VStream* Strm = FL_OpenFileRead("sprite_rename.txt");
+  VStream *Strm = FL_OpenFileRead("sprite_rename.txt");
   if (!Strm)
   {
     return;
   }
 
-  VScriptParser* sc = new VScriptParser("sprite_rename.txt", Strm);
+  VScriptParser *sc = new VScriptParser("sprite_rename.txt", Strm);
   TArray<VSpriteRename> Renames;
   TArray<VSpriteRename> AlwaysRenames;
   TArray<VLumpRename> LumpRenames;
@@ -464,7 +464,7 @@ static void RenameSprites()
       VStr Old = sc->String.ToLower();
       sc->ExpectString();
       VStr New = sc->String.ToLower();
-      VLumpRename& R = Always ? AlwaysLumpRenames.Alloc() :
+      VLumpRename &R = Always ? AlwaysLumpRenames.Alloc() :
         LumpRenames.Alloc();
       R.Old = *Old;
       R.New = *New;
@@ -485,7 +485,7 @@ static void RenameSprites()
     }
     VStr New = sc->String.ToLower();
 
-    VSpriteRename& R = Always ? AlwaysRenames.Alloc() : Renames.Alloc();
+    VSpriteRename &R = Always ? AlwaysRenames.Alloc() : Renames.Alloc();
     R.Old[0] = Old[0];
     R.Old[1] = Old[1];
     R.Old[2] = Old[2];
@@ -496,7 +496,7 @@ static void RenameSprites()
     R.New[3] = New[3];
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
 
   bool RenameAll = !!GArgs.CheckParm("-oldsprites");
   for (int i = 0; i < SearchPaths.Num(); i++)
@@ -519,7 +519,7 @@ static void RenameSprites()
 void FL_Init()
 {
   guard(FL_Init);
-  const char* p;
+  const char *p;
 
   //  Set up base directory (main data files).
   fl_basedir = ".";
@@ -538,7 +538,7 @@ void FL_Init()
 #if !defined(_WIN32)
   else
   {
-    const char* HomeDir = getenv("HOME");
+    const char *HomeDir = getenv("HOME");
     if (HomeDir)
     {
       fl_savedir = VStr(HomeDir) + "/.vavoom";
@@ -626,7 +626,7 @@ void FL_Shutdown()
   for (int i = 0; i < SearchPaths.Num(); i++)
   {
     delete SearchPaths[i];
-    SearchPaths[i] = NULL;
+    SearchPaths[i] = nullptr;
   }
   SearchPaths.Clear();
   fl_basedir.Clean();
@@ -644,7 +644,7 @@ void FL_Shutdown()
 //
 //==========================================================================
 
-bool FL_FileExists(const VStr& fname)
+bool FL_FileExists(const VStr &fname)
 {
   guard(FL_FileExists);
   for (int i = SearchPaths.Num() - 1; i >= 0 ; i--)
@@ -664,7 +664,7 @@ bool FL_FileExists(const VStr& fname)
 //
 //==========================================================================
 
-void FL_CreatePath(const VStr& Path)
+void FL_CreatePath(const VStr &Path)
 {
   guard(FL_CreatePath);
   TArray<VStr> spp;
@@ -701,18 +701,18 @@ void FL_CreatePath(const VStr& Path)
 //
 //==========================================================================
 
-VStream* FL_OpenFileRead(const VStr& Name)
+VStream *FL_OpenFileRead(const VStr &Name)
 {
   guard(FL_OpenFileRead);
   for (int i = SearchPaths.Num() - 1; i >= 0; i--)
   {
-    VStream* Strm = SearchPaths[i]->OpenFileRead(Name);
+    VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
     if (Strm)
     {
       return Strm;
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -722,13 +722,13 @@ VStream* FL_OpenFileRead(const VStr& Name)
 //
 //==========================================================================
 
-VStream* FL_OpenSysFileRead(const VStr& Name)
+VStream *FL_OpenSysFileRead(const VStr &Name)
 {
   guard(FL_OpenSysFileRead);
   FILE *File = fopen(*Name, "rb");
   if (!File)
   {
-    return NULL;
+    return nullptr;
   }
   return new VStreamFileReader(File, GCon);
   unguard;
@@ -790,11 +790,11 @@ public:
       bError = true;
       Error->Logf("fclose failed");
     }
-    File = NULL;
+    File = nullptr;
     return !bError;
     unguardSlow;
   }
-  void Serialise(void* V, int Length)
+  void Serialise(void *V, int Length)
   {
     guardSlow(VStreamFileWriter::Serialise);
     if (fwrite(V, Length, 1, File) != 1)
@@ -823,7 +823,7 @@ protected:
 //
 //==========================================================================
 
-VStream* FL_OpenFileWrite(const VStr& Name, bool isFullName)
+VStream *FL_OpenFileWrite(const VStr &Name, bool isFullName)
 {
   guard(FL_OpenFileWrite);
   VStr TmpName;
@@ -840,7 +840,7 @@ VStream* FL_OpenFileWrite(const VStr& Name, bool isFullName)
   FILE *File = fopen(*TmpName, "wb");
   if (!File)
   {
-    return NULL;
+    return nullptr;
   }
   return new VStreamFileWriter(File, GCon);
   unguard;
@@ -852,7 +852,7 @@ VStream* FL_OpenFileWrite(const VStr& Name, bool isFullName)
 //
 //==========================================================================
 
-VStreamFileReader::VStreamFileReader(FILE* InFile, FOutputDevice *InError)
+VStreamFileReader::VStreamFileReader(FILE *InFile, FOutputDevice *InError)
   : File(InFile), Error(InError)
 {
   guard(VStreamFileReader::VStreamFileReader);
@@ -897,11 +897,11 @@ bool VStreamFileReader::Close()
   guardSlow(VStreamFileReader::Close);
   if (File)
     fclose(File);
-  File = NULL;
+  File = nullptr;
   return !bError;
   unguardSlow;
 }
-void VStreamFileReader::Serialise(void* V, int Length)
+void VStreamFileReader::Serialise(void *V, int Length)
 {
   guardSlow(VStreamFileReader::Serialise);
   if (fread(V, Length, 1, File) != 1)

@@ -39,9 +39,9 @@ class VSDLMidiDevice : public VMidiDevice
 {
 public:
   bool    DidInitMixer;
-  Mix_Music*  music;
+  Mix_Music *music;
 
-  void*   Mus_SndPtr;
+  void *Mus_SndPtr;
   bool    MusicPaused;
   float   MusVolume;
 
@@ -70,7 +70,7 @@ extern bool         sdl_mixer_initialised;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 IMPLEMENT_MIDI_DEVICE(VSDLMidiDevice, MIDIDRV_Default, "Default",
-  "SDL midi device", NULL);
+  "SDL midi device", nullptr);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -84,8 +84,8 @@ IMPLEMENT_MIDI_DEVICE(VSDLMidiDevice, MIDIDRV_Default, "Default",
 
 VSDLMidiDevice::VSDLMidiDevice()
 : DidInitMixer(false)
-, music(NULL)
-, Mus_SndPtr(NULL)
+, music(nullptr)
+, Mus_SndPtr(nullptr)
 , MusicPaused(false)
 , MusVolume(-1)
 {
@@ -172,13 +172,13 @@ void VSDLMidiDevice::Tick(float)
 //
 //==========================================================================
 
-void VSDLMidiDevice::Play(void* Data, int len, const char* song, bool loop)
+void VSDLMidiDevice::Play(void *Data, int len, const char *song, bool loop)
 {
   guard(VSDLMidiDevice::Play);
   Mus_SndPtr = Data;
   VStr TmpFileName = fl_savedir.IsNotEmpty() ? fl_savedir + "/vv_temp.mid" :
     "vv_temp.mid";
-  FILE* f = fopen(*TmpFileName, "wb");
+  FILE *f = fopen(*TmpFileName, "wb");
   if (!f)
   {
     return;
@@ -192,7 +192,7 @@ void VSDLMidiDevice::Play(void* Data, int len, const char* song, bool loop)
   if (!music)
   {
     Z_Free(Mus_SndPtr);
-    Mus_SndPtr = NULL;
+    Mus_SndPtr = nullptr;
     return;
   }
 
@@ -249,12 +249,12 @@ void VSDLMidiDevice::Stop()
   {
     Mix_HaltMusic();
     Mix_FreeMusic(music);
-    music = NULL;
+    music = nullptr;
   }
   if (Mus_SndPtr)
   {
     Z_Free(Mus_SndPtr);
-    Mus_SndPtr = NULL;
+    Mus_SndPtr = nullptr;
   }
   CurrSong = NAME_None;
   unguard;

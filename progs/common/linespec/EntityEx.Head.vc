@@ -350,7 +350,7 @@ byte      BounceCount;
 float     BounceFactor;
 float     WallBounceFactor;
 
-// Thing being chased/attacked (or NULL).
+// Thing being chased/attacked (or nullptr).
 // Also the originator for missiles.
 EntityEx    Target;
 // For monster families

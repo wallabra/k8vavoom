@@ -366,7 +366,7 @@ void SetLineTrans(int i, int special, int arg1, int arg2, int arg3,
 //
 //==========================================================================
 
-void TranslateLine(line_t* line)
+void TranslateLine(line_t *line)
 {
   int     OldSpec;
   int     OldTag;
@@ -490,7 +490,7 @@ void TranslateLine(line_t* line)
 //
 //==========================================================================
 
-void TranslateSector(sector_t* sector)
+void TranslateSector(sector_t *sector)
 {
   int special;
   int high;
@@ -534,7 +534,7 @@ void TranslateSector(sector_t* sector)
 //
 //==========================================================================
 
-void TranslateThing(mthing_t* mthing)
+void TranslateThing(mthing_t *mthing)
 {
   int flags;
 

@@ -33,7 +33,7 @@ class CloseDoor222 : DummyStrifeItem;
 
 override bool TryPickup(EntityEx Toucher)
 {
-  Level.ExecuteActionSpecial(LNSPEC_DoorClose, 222, 16, 0, 0, 0, NULL, 0,
+  Level.ExecuteActionSpecial(LNSPEC_DoorClose, 222, 16, 0, 0, 0, nullptr, 0,
     Toucher);
   GoAwayAndDie();
   return true;
@@ -47,7 +47,7 @@ override bool TryPickup(EntityEx Toucher)
 
 override bool SpecialDropAction(EntityEx Dropper)
 {
-  Level.ExecuteActionSpecial(LNSPEC_DoorClose, 222, 16, 0, 0, 0, NULL, 0,
+  Level.ExecuteActionSpecial(LNSPEC_DoorClose, 222, 16, 0, 0, 0, nullptr, 0,
     Dropper.Target);
   if (Dropper.Target.bIsPlayer)
     Dropper.Target.Player.cprint("You\'re dead!  You set off the alarm.");

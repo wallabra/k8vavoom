@@ -51,7 +51,7 @@ class VSearchPath
 public:
   virtual ~VSearchPath();
   virtual bool FileExists(const VStr&) = 0;
-  virtual VStream* OpenFileRead(const VStr&) = 0;
+  virtual VStream *OpenFileRead(const VStr&) = 0;
   virtual void Close() = 0;
   virtual int CheckNumForName(VName, EWadNamespace) = 0;
   virtual int CheckNumForFileName(VStr) = 0;
@@ -61,7 +61,7 @@ public:
   virtual int IterateNS(int, EWadNamespace) = 0;
   virtual void BuildGLNodes(VSearchPath*) = 0;
   virtual void BuildPVS(VSearchPath*) = 0;
-  virtual VStream* CreateLumpReaderNum(int) = 0;
+  virtual VStream *CreateLumpReaderNum(int) = 0;
   virtual void RenameSprites(const TArray<VSpriteRename>&, const TArray<VLumpRename>&) = 0;
   virtual VStr GetPrefix () = 0; // for logging
 };
@@ -77,11 +77,11 @@ private:
   TArray<VStr>  CachedFiles;
 
 public:
-  VFilesDir(const VStr& aPath)
+  VFilesDir(const VStr &aPath)
   : Path(aPath)
   {}
   bool FileExists(const VStr&);
-  VStream* OpenFileRead(const VStr&);
+  VStream *OpenFileRead(const VStr&);
   void Close();
   int CheckNumForName(VName, EWadNamespace);
   int CheckNumForFileName(VStr);
@@ -91,7 +91,7 @@ public:
   int IterateNS(int, EWadNamespace);
   void BuildGLNodes(VSearchPath*);
   void BuildPVS(VSearchPath*);
-  VStream* CreateLumpReaderNum(int);
+  VStream *CreateLumpReaderNum(int);
   void RenameSprites(const TArray<VSpriteRename>&,
     const TArray<VLumpRename>&);
   virtual VStr GetPrefix () { return Path; }
@@ -107,9 +107,9 @@ class VWadFile : public VSearchPath
 {
 private:
   VStr      Name;
-  VStream*    Stream;
+  VStream *Stream;
   int       NumLumps;
-  lumpinfo_t*   LumpInfo; // Location of each lump on disk.
+  lumpinfo_t *LumpInfo; // Location of each lump on disk.
   VStr      GwaDir;
 
   void InitNamespaces();
@@ -121,19 +121,19 @@ public:
   VWadFile();
   ~VWadFile();
   void Open(const VStr&, const VStr&, bool, VStream*);
-  void OpenSingleLump(const VStr& FileName);
+  void OpenSingleLump(const VStr &FileName);
   void Close();
   int CheckNumForName(VName LumpName, EWadNamespace NS);
   int CheckNumForFileName(VStr);
-  void ReadFromLump(int lump, void* dest, int pos, int size);
+  void ReadFromLump(int lump, void *dest, int pos, int size);
   int LumpLength(int);
   VName LumpName(int);
   int IterateNS(int, EWadNamespace);
   void BuildGLNodes(VSearchPath*);
   void BuildPVS(VSearchPath*);
   bool FileExists(const VStr&);
-  VStream* OpenFileRead(const VStr&);
-  VStream* CreateLumpReaderNum(int);
+  VStream *OpenFileRead(const VStr&);
+  VStream *CreateLumpReaderNum(int);
   void RenameSprites(const TArray<VSpriteRename>&, const TArray<VLumpRename>&);
   virtual VStr GetPrefix () { return Name; }
 };
@@ -149,22 +149,22 @@ class VZipFile : public VSearchPath
 {
 private:
   VStr      ZipFileName;
-  VStream*    FileStream;     //  Source stream of the zipfile
-  VZipFileInfo* Files;
+  VStream *FileStream;     //  Source stream of the zipfile
+  VZipFileInfo *Files;
   vuint16     NumFiles;     //  Total number of files
   vuint32     BytesBeforeZipFile; //  Byte before the zipfile, (>0 for sfx)
 
   vuint32 SearchCentralDir();
   static int FileCmpFunc(const void*, const void*);
-  void OpenArchive (VStream* fstream);
+  void OpenArchive (VStream *fstream);
 
 public:
   VZipFile(const VStr&);
-  VZipFile(VStream* fstream); // takes ownership
-  VZipFile(VStream* fstream, const VStr& name); // takes ownership
+  VZipFile(VStream *fstream); // takes ownership
+  VZipFile(VStream *fstream, const VStr &name); // takes ownership
   virtual ~VZipFile() override;
   bool FileExists(const VStr&);
-  VStream* OpenFileRead(const VStr&);
+  VStream *OpenFileRead(const VStr&);
   void Close();
   int CheckNumForName(VName, EWadNamespace);
   int CheckNumForFileName(VStr);
@@ -172,7 +172,7 @@ public:
   int LumpLength(int);
   VName LumpName(int);
   int IterateNS(int, EWadNamespace);
-  VStream* CreateLumpReaderNum(int);
+  VStream *CreateLumpReaderNum(int);
   void RenameSprites(const TArray<VSpriteRename>&, const TArray<VLumpRename>&);
 
   void BuildGLNodes(VSearchPath*);
@@ -198,7 +198,7 @@ public:
   int TotalSize();
   bool AtEnd();
   bool Close();
-  void Serialise(void* V, int Length);
+  void Serialise(void *V, int Length);
 
 protected:
   FILE *File;
@@ -207,8 +207,8 @@ protected:
 
 void W_AddFileFromZip(const VStr&, VStream*, const VStr&, VStream*);
 
-bool GLBSP_BuildNodes(const char *name, const char* gwafile);
-void GLVis_BuildPVS(const char *srcfile, const char* gwafile);
+bool GLBSP_BuildNodes(const char *name, const char *gwafile);
+void GLVis_BuildPVS(const char *srcfile, const char *gwafile);
 
 extern TArray<VSearchPath*> SearchPaths;
 

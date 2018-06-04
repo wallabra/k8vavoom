@@ -481,7 +481,7 @@ static VCvarB m_filter("m_filter", true, "Filter input?", CVAR_Archive);
 static VCvarB ui_mouse("ui_mouse", false, "Allow using mouse in UI?", CVAR_Archive);
 static VCvarB ui_active("ui_active", false, "Is UI active (used to stop mouse warping if \"ui_mouse\" is false)?", 0);
 
-static VDirectInputDevice*  CurrentDevice;
+static VDirectInputDevice *CurrentDevice;
 
 // CODE --------------------------------------------------------------------
 
@@ -492,20 +492,20 @@ static VDirectInputDevice*  CurrentDevice;
 //==========================================================================
 
 VDirectInputDevice::VDirectInputDevice()
-: DInput(NULL)
-, lpKeyboard(NULL)
-, lpMouse(NULL)
+: DInput(nullptr)
+, lpKeyboard(nullptr)
+, lpMouse(nullptr)
 , mousepresent(false)
 , old_mouse_x(0)
 , old_mouse_y(0)
 , old_mouse_z(0)
-, lpJoystick(NULL)
+, lpJoystick(nullptr)
 , joystick_started(false)
 {
   guard(VDirectInputDevice::VDirectInputDevice);
   HRESULT   result;
 
-  result = CoCreateInstance(CLSID_DirectInput8, NULL,
+  result = CoCreateInstance(CLSID_DirectInput8, nullptr,
     CLSCTX_INPROC_SERVER, IID_IDirectInput8, (void**)&DInput);
   if (result != DI_OK)
     Sys_Error("Failed to create DirectInput object");
@@ -538,7 +538,7 @@ VDirectInputDevice::~VDirectInputDevice()
   if (DInput)
   {
     DInput->Release();
-    DInput = NULL;
+    DInput = nullptr;
   }
   unguard;
 }
@@ -612,7 +612,7 @@ void VDirectInputDevice::StartupKeyboard()
   HRESULT   Result;
 
   //  Create keyboard device
-  Result = DInput->CreateDevice(GUID_SysKeyboard, &lpKeyboard, NULL);
+  Result = DInput->CreateDevice(GUID_SysKeyboard, &lpKeyboard, nullptr);
   if (Result != DI_OK)
     Sys_Error("Failed to initialise keyboard");
 
@@ -707,7 +707,7 @@ void VDirectInputDevice::ShutdownKeyboard()
   {
     lpKeyboard->Unacquire();
     lpKeyboard->Release();
-    lpKeyboard = NULL;
+    lpKeyboard = nullptr;
   }
   unguard;
 }
@@ -734,7 +734,7 @@ void VDirectInputDevice::StartupMouse()
   if (GArgs.CheckParm("-nomouse"))
     return;
 
-  Result = DInput->CreateDevice(GUID_SysMouse, &lpMouse, NULL);
+  Result = DInput->CreateDevice(GUID_SysMouse, &lpMouse, nullptr);
   if (Result != DI_OK)
     return;
 
@@ -874,7 +874,7 @@ void VDirectInputDevice::ShutdownMouse()
   {
     lpMouse->Unacquire();
     lpMouse->Release();
-    lpMouse = NULL;
+    lpMouse = nullptr;
   }
   mousepresent = false;
   unguard;
@@ -930,7 +930,7 @@ int VDirectInputDevice::JoystickEnumCallback(LPCDIDEVICEINSTANCE pdinst)
   DIPROPRANGE       diprg;
   DIPROPDWORD       dipdw;
 
-  Result = DInput->CreateDevice(pdinst->guidInstance, &lpJoystick1, NULL);
+  Result = DInput->CreateDevice(pdinst->guidInstance, &lpJoystick1, nullptr);
   if (Result != DI_OK)
     return DIENUM_CONTINUE;
 
@@ -1084,7 +1084,7 @@ void VDirectInputDevice::ShutdownJoystick()
   {
     lpJoystick->Unacquire();
     lpJoystick->Release();
-    lpJoystick = NULL;
+    lpJoystick = nullptr;
   }
   joystick_started = false;
   unguard;
@@ -1102,7 +1102,7 @@ void VDirectInputDevice::ShutdownJoystick()
 //
 //==========================================================================
 
-VInputDevice* VInputDevice::CreateDevice()
+VInputDevice *VInputDevice::CreateDevice()
 {
   return new VDirectInputDevice();
 }

@@ -32,7 +32,7 @@
   if (iface) \
   { \
     iface->Release(); \
-    iface = NULL; \
+    iface = nullptr; \
   }
 
 class VWinMessageHandler
@@ -45,6 +45,6 @@ void IN_SetActiveWindow(HWND window);
 
 extern HWND         hwnd;
 extern HINSTANCE      hInst;
-extern VWinMessageHandler*  GCDMsgHandler;
+extern VWinMessageHandler *GCDMsgHandler;
 
 #endif

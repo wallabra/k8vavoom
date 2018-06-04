@@ -67,7 +67,7 @@ public:
 
   int TranslateKey(int);
 
-  int KeyNumForName(const VStr& Name);
+  int KeyNumForName(const VStr &Name);
   VStr KeyNameForNum(int KeyNr);
 
   void RegrabMouse (); // called by UI when mouse cursor is turned off
@@ -75,7 +75,7 @@ public:
 private:
   enum { MAXEVENTS = 64 };
 
-  VInputDevice* Device;
+  VInputDevice *Device;
 
   event_t     Events[MAXEVENTS];
   int       EventHead;
@@ -85,7 +85,7 @@ private:
   VStr      KeyBindingsUp[256];
   bool      KeyBindingsSave[256];
 
-  static const char*  KeyNames[SCANCODECOUNT];
+  static const char *KeyNames[SCANCODECOUNT];
   static const char ShiftXForm[];
 };
 
@@ -99,11 +99,11 @@ private:
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-VInputPublic*   GInput;
+VInputPublic *GInput;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-const char*   VInput::KeyNames[SCANCODECOUNT] =
+const char *VInput::KeyNames[SCANCODECOUNT] =
 {
   "UP",
   "LEFT",
@@ -258,7 +258,7 @@ const char    VInput::ShiftXForm[] =
 //
 //==========================================================================
 
-VInputPublic* VInputPublic::Create()
+VInputPublic *VInputPublic::Create()
 {
   return new VInput();
 }
@@ -313,7 +313,7 @@ void VInput::Shutdown()
   if (Device)
   {
     delete Device;
-    Device = NULL;
+    Device = nullptr;
   }
   unguard;
 }
@@ -326,7 +326,7 @@ void VInput::Shutdown()
 //
 //==========================================================================
 
-void VInput::PostEvent(event_t* ev)
+void VInput::PostEvent(event_t *ev)
 {
   guard(VInput::PostEvent);
   Events[EventHead] = *ev;
@@ -372,7 +372,7 @@ void VInput::ProcessEvents()
 
   for (; EventTail != EventHead; EventTail = (EventTail + 1) & (MAXEVENTS - 1))
   {
-    event_t* ev = &Events[EventTail];
+    event_t *ev = &Events[EventTail];
 
     // Shift key state
     if (ev->data1 == K_RSHIFT)
@@ -516,7 +516,7 @@ int VInput::ReadKey()
 //
 //==========================================================================
 
-void VInput::GetBindingKeys(const VStr& Binding, int& Key1, int& Key2)
+void VInput::GetBindingKeys(const VStr &Binding, int &Key1, int &Key2)
 {
   guard(VInput::GetBindingKeys);
   Key1 = -1;
@@ -542,7 +542,7 @@ void VInput::GetBindingKeys(const VStr& Binding, int& Key1, int& Key2)
 //
 //==========================================================================
 
-void VInput::GetBinding(int KeyNum, VStr& Down, VStr& Up)
+void VInput::GetBinding(int KeyNum, VStr &Down, VStr &Up)
 {
   guard(VInput::GetBinding);
   Down = KeyBindingsDown[KeyNum];
@@ -556,7 +556,7 @@ void VInput::GetBinding(int KeyNum, VStr& Down, VStr& Up)
 //
 //==========================================================================
 
-void VInput::SetBinding(int KeyNum, const VStr& Down, const VStr& Up,
+void VInput::SetBinding(int KeyNum, const VStr &Down, const VStr &Up,
   bool Save)
 {
   guard(VInput::SetBinding);
@@ -583,7 +583,7 @@ void VInput::SetBinding(int KeyNum, const VStr& Down, const VStr& Up,
 //
 //==========================================================================
 
-void VInput::WriteBindings(FILE* f)
+void VInput::WriteBindings(FILE *f)
 {
   guard(VInput::WriteBindings);
   fprintf(f, "UnbindAll\n");
@@ -622,7 +622,7 @@ int VInput::TranslateKey(int ch)
 //
 //==========================================================================
 
-int VInput::KeyNumForName(const VStr& Name)
+int VInput::KeyNumForName(const VStr &Name)
 {
   guard(VInput::KeyNumForName);
   if (Name.IsEmpty())

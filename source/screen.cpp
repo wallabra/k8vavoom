@@ -169,11 +169,11 @@ static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type (png/tg
 #endif
 static VCvarB screenshot_in_home_dir("screenshot_in_home_dir", true, "Save screenshots in ~/.vavoom?", CVAR_Archive);
 
-extern void WriteTGA (const VStr& FileName, void* data, int width, int height, int bpp, bool bot2top);
-extern void WritePCX (const VStr& FileName, void* data, int width, int height, int bpp, bool bot2top);
-extern void WritePNG (const VStr& FileName, const void* Data, int Width, int Height, int Bpp, bool Bot2top);
+extern void WriteTGA (const VStr &FileName, void *data, int width, int height, int bpp, bool bot2top);
+extern void WritePCX (const VStr &FileName, void *data, int width, int height, int bpp, bool bot2top);
+extern void WritePNG (const VStr &FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top);
 #ifdef VAVOOM_USE_LIBJPG
-extern void WriteJPG (const VStr& FileName, const void* Data, int Width, int Height, int Bpp, bool Bot2top);
+extern void WriteJPG (const VStr &FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top);
 #endif
 
 

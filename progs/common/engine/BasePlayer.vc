@@ -68,7 +68,7 @@ bool          bAutomapRevealed;
 bool          bAutomapShowThings;
 bool          bReloadQueued;      // True if "reload" was pressed
 
-native readonly private void* Net;
+native readonly private void *Net;
 
 string          UserInfo;
 

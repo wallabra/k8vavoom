@@ -52,7 +52,7 @@ struct cptrace_t
 
 struct tmtrace_t
 {
-  VEntity* StepThing;
+  VEntity *StepThing;
   TVec End;
   float BBox[4];
   float FloorZ;
@@ -89,10 +89,10 @@ struct tmtrace_t
 class VRoughBlockSearchIterator : public VScriptIterator
 {
 private:
-  VEntity*  Self;
+  VEntity *Self;
   int     Distance;
-  VEntity*  Ent;
-  VEntity** EntPtr;
+  VEntity *Ent;
+  VEntity **EntPtr;
 
   int     StartX;
   int     StartY;
@@ -145,17 +145,17 @@ void VEntity::CreateSecNodeList()
 {
   guard(VEntity::CreateSecNodeList);
   int xl, xh, yl, yh, bx, by;
-  msecnode_t* Node;
+  msecnode_t *Node;
 
   // First, clear out the existing Thing fields. As each node is
   // added or verified as needed, Thing will be set properly. When
-  // finished, delete all nodes where Thing is still NULL. These
+  // finished, delete all nodes where Thing is still nullptr. These
   // represent the sectors the Thing has vacated.
 
   Node = XLevel->SectorList;
   while (Node)
   {
-    Node->Thing = NULL;
+    Node->Thing = nullptr;
     Node = Node->TNext;
   }
 
@@ -176,7 +176,7 @@ void VEntity::CreateSecNodeList()
   {
     for (by = yl; by <= yh; by++)
     {
-      line_t* ld;
+      line_t *ld;
       for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); )
       {
         //  Locates all the sectors the object is in by looking at
@@ -226,12 +226,12 @@ void VEntity::CreateSecNodeList()
   XLevel->SectorList = XLevel->AddSecnode(Sector, this, XLevel->SectorList);
 
   // Now delete any nodes that won't be used. These are the ones where
-  // Thing is still NULL.
+  // Thing is still nullptr.
 
   Node = XLevel->SectorList;
   while (Node)
   {
-    if (Node->Thing == NULL)
+    if (Node->Thing == nullptr)
     {
       if (Node == XLevel->SectorList)
       {
@@ -281,8 +281,8 @@ void VEntity::UnlinkFromWorld()
     {
       Sector->ThingList = SNext;
     }
-    SNext = NULL;
-    SPrev = NULL;
+    SNext = nullptr;
+    SPrev = nullptr;
 
     // phares 3/14/98
     //
@@ -299,7 +299,7 @@ void VEntity::UnlinkFromWorld()
     //
     XLevel->DelSectorList();
     XLevel->SectorList = TouchingSectorList;
-    TouchingSectorList = NULL; //to be restored by LinkToWorld
+    TouchingSectorList = nullptr; //to be restored by LinkToWorld
   }
 
   if (!(EntityFlags & EF_NoBlockmap))
@@ -332,8 +332,8 @@ void VEntity::UnlinkFromWorld()
       }
     }
   }
-  SubSector = NULL;
-  Sector = NULL;
+  SubSector = nullptr;
+  Sector = nullptr;
   unguardf(("(%s)", GetClass()->GetName()));
 }
 
@@ -349,9 +349,9 @@ void VEntity::UnlinkFromWorld()
 void VEntity::LinkToWorld()
 {
   guard(VEntity::LinkToWorld);
-  subsector_t*  ss;
-  sec_region_t* reg;
-  sec_region_t* r;
+  subsector_t *ss;
+  sec_region_t *reg;
+  sec_region_t *r;
 
   if (SubSector)
   {
@@ -385,8 +385,8 @@ void VEntity::LinkToWorld()
   if (!(EntityFlags & EF_NoSector))
   {
     // invisible things don't go into the sector links
-    VEntity** Link = &Sector->ThingList;
-    SPrev = NULL;
+    VEntity **Link = &Sector->ThingList;
+    SPrev = nullptr;
     SNext = *Link;
     if (*Link)
     {
@@ -396,7 +396,7 @@ void VEntity::LinkToWorld()
 
     // phares 3/16/98
     //
-    // If sector_list isn't NULL, it has a collection of sector
+    // If sector_list isn't nullptr, it has a collection of sector
     // nodes that were just removed from this Thing.
     //
     // Collect the sectors the object will live in by looking at
@@ -408,7 +408,7 @@ void VEntity::LinkToWorld()
     // added, new sector links are created.
     CreateSecNodeList();
     TouchingSectorList = XLevel->SectorList;  // Attach to thing
-    XLevel->SectorList = NULL;    // clear for next time
+    XLevel->SectorList = nullptr;    // clear for next time
   }
   else
   {
@@ -425,9 +425,9 @@ void VEntity::LinkToWorld()
     if (blockx >= 0 && blockx < XLevel->BlockMapWidth &&
       blocky >= 0 && blocky < XLevel->BlockMapHeight)
     {
-      VEntity** link = &XLevel->BlockLinks[
+      VEntity **link = &XLevel->BlockLinks[
         blocky * XLevel->BlockMapWidth + blockx];
-      BlockMapPrev = NULL;
+      BlockMapPrev = nullptr;
       BlockMapNext = *link;
       if (*link)
       {
@@ -439,7 +439,7 @@ void VEntity::LinkToWorld()
     else
     {
       // thing is off the map
-      BlockMapNext = BlockMapPrev = NULL;
+      BlockMapNext = BlockMapPrev = nullptr;
     }
   }
   unguard;
@@ -600,7 +600,7 @@ bool VEntity::CheckPosition(TVec Pos)
     {
       for (by = yl; by <= yh; by++)
       {
-        line_t*   ld;
+        line_t *ld;
         for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); )
         {
           good &= CheckLine(cptrace, ld);
@@ -624,7 +624,7 @@ bool VEntity::CheckPosition(TVec Pos)
 //
 //==========================================================================
 
-bool VEntity::CheckThing(cptrace_t& cptrace, VEntity *Other)
+bool VEntity::CheckThing(cptrace_t &cptrace, VEntity *Other)
 {
   guardSlow(VEntity::CheckThing);
   // don't clip against self
@@ -683,7 +683,7 @@ bool VEntity::CheckThing(cptrace_t& cptrace, VEntity *Other)
 //
 //==========================================================================
 
-bool VEntity::CheckLine(cptrace_t& cptrace, line_t* ld)
+bool VEntity::CheckLine(cptrace_t &cptrace, line_t *ld)
 {
   guardSlow(VEntity::CheckLine);
   if (cptrace.bbox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
@@ -745,7 +745,7 @@ bool VEntity::CheckLine(cptrace_t& cptrace, line_t* ld)
 
   // set openrange, opentop, openbottom
   TVec hit_point = cptrace.Pos - (DotProduct(cptrace.Pos, ld->normal)-ld->dist)*ld->normal;
-  opening_t* open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING);
+  opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING);
   open = SV_FindOpening(open, cptrace.Pos.z, cptrace.Pos.z+Height);
 
   if (open)
@@ -813,12 +813,12 @@ bool VEntity::CheckLine(cptrace_t& cptrace, line_t* ld)
 //   (monsters won't move to a dropoff)
 //  speciallines[]
 //  numspeciallines
-//  VEntity *BlockingMobj = pointer to thing that blocked position (NULL if not
+//  VEntity *BlockingMobj = pointer to thing that blocked position (nullptr if not
 //   blocked, or blocked by a line).
 //
 //==========================================================================
 
-bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
+bool VEntity::CheckRelPosition(tmtrace_t &tmtrace, TVec Pos)
 {
   guard(VEntity::CheckRelPosition);
   int xl;
@@ -828,8 +828,8 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
   int bx;
   int by;
   subsector_t *newsubsec;
-  VEntity* thingblocker;
-//  VEntity* fakedblocker;
+  VEntity *thingblocker;
+//  VEntity *fakedblocker;
   bool good = true;
 
   tmtrace.End = Pos;
@@ -840,7 +840,7 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
   tmtrace.BBox[BOXLEFT] = Pos.x - Radius;
 
   newsubsec = XLevel->PointInSubsector(Pos);
-  tmtrace.CeilingLine = NULL;
+  tmtrace.CeilingLine = nullptr;
 
   // The base floor / ceiling is from the subsector
   // that contains the point.
@@ -848,9 +848,9 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
   // will adjust them.
   if (newsubsec->sector->SectorFlags & sector_t::SF_HasExtrafloors)
   {
-    sec_region_t* gap = SV_FindThingGap(newsubsec->sector->botregion,
+    sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion,
       tmtrace.End, tmtrace.End.z, tmtrace.End.z + (Height ? 1.0 : Height));
-    sec_region_t* reg = gap;
+    sec_region_t *reg = gap;
     while (reg->prev && reg->floor->flags & SPF_NOBLOCKING)
     {
       reg = reg->prev;
@@ -868,7 +868,7 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
   }
   else
   {
-    sec_region_t* reg = newsubsec->sector->botregion;
+    sec_region_t *reg = newsubsec->sector->botregion;
     tmtrace.Floor = reg->floor;
     tmtrace.FloorZ = reg->floor->GetPointZ(tmtrace.End);
     tmtrace.DropOffZ = tmtrace.FloorZ;
@@ -879,10 +879,10 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
   validcount++;
   tmtrace.SpecHit.Clear();
 
-  tmtrace.BlockingMobj = NULL;
-  tmtrace.StepThing = NULL;
-  thingblocker = NULL;
-//  fakedblocker = NULL;
+  tmtrace.BlockingMobj = nullptr;
+  tmtrace.StepThing = nullptr;
+  thingblocker = nullptr;
+//  fakedblocker = nullptr;
 
   // Check things first, possibly picking things up.
   // The bounding box is extended by MAXRADIUS
@@ -920,7 +920,7 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
               {
                 thingblocker = tmtrace.BlockingMobj;
               }
-              tmtrace.BlockingMobj = NULL;
+              tmtrace.BlockingMobj = nullptr;
             }
             else if (Player && tmtrace.End.z + Height - tmtrace.BlockingMobj->Origin.z <= MaxStepHeight)
             {
@@ -932,7 +932,7 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
               // nothing is blocking, but this object potentially could
               // if there is something else to step on
               //fakedblocker = tmtrace.BlockingMobj;
-              tmtrace.BlockingMobj = NULL;
+              tmtrace.BlockingMobj = nullptr;
             }
             else
             { // blocking
@@ -949,7 +949,7 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
 
   float thingdropoffz = tmtrace.FloorZ;
   tmtrace.FloorZ = tmtrace.DropOffZ;
-  tmtrace.BlockingMobj = NULL;
+  tmtrace.BlockingMobj = nullptr;
 
   if (EntityFlags & EF_ColideWithWorld)
   {
@@ -963,7 +963,7 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
     {
       for (by = yl; by <= yh; by++)
       {
-        line_t*   ld;
+        line_t *ld;
         for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); )
         {
           //good &= CheckRelLine(tmtrace, ld);
@@ -1013,7 +1013,7 @@ bool VEntity::CheckRelPosition(tmtrace_t& tmtrace, TVec Pos)
 //
 //==========================================================================
 
-bool VEntity::CheckRelThing(tmtrace_t& tmtrace, VEntity *Other)
+bool VEntity::CheckRelThing(tmtrace_t &tmtrace, VEntity *Other)
 {
   guardSlow(VEntity::CheckRelThing);
   // don't clip against self
@@ -1091,7 +1091,7 @@ bool VEntity::CheckRelThing(tmtrace_t& tmtrace, VEntity *Other)
 //
 //==========================================================================
 
-bool VEntity::CheckRelLine(tmtrace_t& tmtrace, line_t* ld)
+bool VEntity::CheckRelLine(tmtrace_t &tmtrace, line_t *ld)
 {
   guardSlow(VEntity::CheckRelLine);
   if (tmtrace.BBox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
@@ -1178,7 +1178,7 @@ bool VEntity::CheckRelLine(tmtrace_t& tmtrace, line_t* ld)
 
   // set openrange, opentop, openbottom
   TVec hit_point = tmtrace.End - (DotProduct(tmtrace.End, ld->normal)-ld->dist)*ld->normal;
-  opening_t* open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING);
+  opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING);
   open = SV_FindOpening(open, tmtrace.End.z, tmtrace.End.z+Height);
 
   if (open)
@@ -1230,7 +1230,7 @@ bool VEntity::CheckRelLine(tmtrace_t& tmtrace, line_t* ld)
 //
 //==========================================================================
 
-void VEntity::BlockedByLine(line_t* ld)
+void VEntity::BlockedByLine(line_t *ld)
 {
   guardSlow(VEntity::BlockedByLine);
   if (EntityFlags & EF_Blasted)
@@ -1252,13 +1252,13 @@ void VEntity::BlockedByLine(line_t* ld)
 //
 //==========================================================================
 
-bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
+bool VEntity::TryMove(tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff)
 {
   guard(VEntity::TryMove);
   bool check;
   TVec oldorg;
   line_t *ld;
-  sector_t* OldSec = Sector;
+  sector_t *OldSec = Sector;
 
   check = CheckRelPosition(tmtrace, newPos);
   tmtrace.TraceFlags &= ~tmtrace_t::TF_FloatOk;
@@ -1506,7 +1506,7 @@ bool VEntity::TryMove(tmtrace_t& tmtrace, TVec newPos, bool AllowDropOff)
 //
 //==========================================================================
 
-void VEntity::PushLine(const tmtrace_t& tmtrace)
+void VEntity::PushLine(const tmtrace_t &tmtrace)
 {
   guardSlow(VEntity::PushLine);
   if (EntityFlags & EF_ColideWithWorld)
@@ -1520,7 +1520,7 @@ void VEntity::PushLine(const tmtrace_t& tmtrace)
     {
       NumSpecHitTemp--;
       // see if the line was crossed
-      line_t* ld = tmtrace.SpecHit[NumSpecHitTemp];
+      line_t *ld = tmtrace.SpecHit[NumSpecHitTemp];
       int side = ld->PointOnSide(Origin);
       eventCheckForPushSpecial(ld, side);
     }
@@ -1544,7 +1544,7 @@ void VEntity::PushLine(const tmtrace_t& tmtrace)
 //
 //==========================================================================
 
-TVec VEntity::ClipVelocity(const TVec& in, const TVec& normal, float overbounce)
+TVec VEntity::ClipVelocity(const TVec &in, const TVec &normal, float overbounce)
 {
   return in - normal * (DotProduct(in, normal) * overbounce);
 }
@@ -1555,13 +1555,13 @@ TVec VEntity::ClipVelocity(const TVec& in, const TVec& normal, float overbounce)
 //
 //==========================================================================
 
-void VEntity::SlidePathTraverse(float& BestSlideFrac, line_t*& BestSlideLine,
+void VEntity::SlidePathTraverse(float &BestSlideFrac, line_t *&BestSlideLine,
   float x, float y, float StepVelScale)
 {
   guard(VEntity::SlidePathTraverse);
   TVec SlideOrg(x, y, Origin.z);
   TVec SlideDir = Velocity * StepVelScale;
-  intercept_t*  in;
+  intercept_t *in;
   for (VPathTraverse It(this, &in, x, y, x + SlideDir.x,
     y + SlideDir.y, PT_ADDLINES); It.GetNext(); )
   {
@@ -1570,7 +1570,7 @@ void VEntity::SlidePathTraverse(float& BestSlideFrac, line_t*& BestSlideLine,
       Host_Error("PTR_SlideTraverse: not a line?");
     }
 
-    line_t* li = in->line;
+    line_t *li = in->line;
 
     bool IsBlocked = false;
     if (!(li->flags & ML_TWOSIDED) || !li->backsector)
@@ -1599,7 +1599,7 @@ void VEntity::SlidePathTraverse(float& BestSlideFrac, line_t*& BestSlideLine,
     {
       // set openrange, opentop, openbottom
       TVec hit_point = SlideOrg + in->frac * SlideDir;
-      opening_t* open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING);
+      opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING);
       open = SV_FindOpening(open, Origin.z, Origin.z + Height);
 
       if (open && (open->range >= Height) &&  //  fits
@@ -1701,7 +1701,7 @@ void VEntity::SlideMove(float StepVelScale)
     }
 
     float BestSlideFrac = 1.00001f;
-    line_t* BestSlideLine = NULL;
+    line_t *BestSlideLine = nullptr;
 
     SlidePathTraverse(BestSlideFrac, BestSlideLine, leadx, leady, StepVelScale);
     SlidePathTraverse(BestSlideFrac, BestSlideLine, trailx, leady, StepVelScale);
@@ -1802,8 +1802,8 @@ void VEntity::BounceWall(float overbounce, float bouncefactor)
   }
   SlideOrg.z = Origin.z;
   TVec SlideDir = Velocity * host_frametime;
-  line_t* BestSlideLine = NULL;
-  intercept_t* in;
+  line_t *BestSlideLine = nullptr;
+  intercept_t *in;
 
   for (VPathTraverse It(this, &in, SlideOrg.x, SlideOrg.y, SlideOrg.x +
     SlideDir.x, SlideOrg.y + SlideDir.y, PT_ADDLINES); It.GetNext(); )
@@ -1812,16 +1812,16 @@ void VEntity::BounceWall(float overbounce, float bouncefactor)
     {
       Host_Error("PTR_BounceTraverse: not a line?");
     }
-    line_t* li = in->line;
+    line_t *li = in->line;
     TVec hit_point = SlideOrg + in->frac * SlideDir;
 
     if (li->flags & ML_TWOSIDED)
     {
       // set openrange, opentop, openbottom
-      opening_t* open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING);
+      opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING);
       open = SV_FindOpening(open, Origin.z, Origin.z + Height);
 
-      if (open != NULL && open->range >= Height &&  // fits
+      if (open != nullptr && open->range >= Height &&  // fits
         Origin.z + Height <= open->top &&
         Origin.z >= open->bottom) // mobj is not too high
       {
@@ -1947,7 +1947,7 @@ void VEntity::UpdateVelocity()
 //
 //=============================================================================
 
-VEntity* VEntity::TestMobjZ(const TVec& TryOrg)
+VEntity *VEntity::TestMobjZ(const TVec &TryOrg)
 {
   guard(VEntity::TestMobjZ);
   int xl, xh, yl, yh, bx, by;
@@ -1955,12 +1955,12 @@ VEntity* VEntity::TestMobjZ(const TVec& TryOrg)
   // can't hit thing
   if (!(EntityFlags & EF_ColideWithThings))
   {
-    return NULL;
+    return nullptr;
   }
   // Not Solid
   if (!(EntityFlags & EF_Solid))
   {
-    return NULL;
+    return nullptr;
   }
 
   //
@@ -2017,7 +2017,7 @@ VEntity* VEntity::TestMobjZ(const TVec& TryOrg)
     }
   }
 
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -2060,7 +2060,7 @@ TVec VEntity::FakeZMovement()
 //
 //=============================================================================
 
-VEntity* VEntity::CheckOnmobj()
+VEntity *VEntity::CheckOnmobj()
 {
   guard(VEntity::CheckOnmobj);
   return TestMobjZ(FakeZMovement());
@@ -2110,7 +2110,7 @@ bool VEntity::CheckSides(TVec lsPos)
   {
     for (by = yl; by <= yh; by++)
     {
-      line_t* ld;
+      line_t *ld;
       for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); )
       {
         // Checks to see if a PE->LS trajectory line crosses a blocking
@@ -2166,7 +2166,7 @@ bool VEntity::CheckSides(TVec lsPos)
 //
 //=============================================================================
 
-void VEntity::CheckDropOff(float& DeltaX, float& DeltaY)
+void VEntity::CheckDropOff(float &DeltaX, float &DeltaY)
 {
   guard(VEntity::CheckDropOff);
   float t_bbox[4];
@@ -2197,7 +2197,7 @@ void VEntity::CheckDropOff(float& DeltaX, float& DeltaY)
   {
     for (by = yl; by <= yh; by++)
     {
-      line_t* line;
+      line_t *line;
       for (VBlockLinesIterator It(XLevel, bx, by, &line); It.GetNext(); )
       {
         // Ignore one-sided linedefs
@@ -2259,11 +2259,11 @@ void VEntity::CheckDropOff(float& DeltaX, float& DeltaY)
 //
 //==========================================================================
 
-VRoughBlockSearchIterator::VRoughBlockSearchIterator(VEntity* ASelf,
-  int ADistance, VEntity** AEntPtr)
+VRoughBlockSearchIterator::VRoughBlockSearchIterator(VEntity *ASelf,
+  int ADistance, VEntity **AEntPtr)
 : Self(ASelf)
 , Distance(ADistance)
-, Ent(NULL)
+, Ent(nullptr)
 , EntPtr(AEntPtr)
 , Count(1)
 , CurrentEdge(-1)

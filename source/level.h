@@ -71,7 +71,7 @@ struct rep_sector_t
   float   floor_Angle;
   float   floor_BaseAngle;
   float   floor_BaseYOffs;
-  VEntity*  floor_SkyBox;
+  VEntity *floor_SkyBox;
   float   floor_MirrorAlpha;
   int     ceil_pic;
   float   ceil_dist;
@@ -82,7 +82,7 @@ struct rep_sector_t
   float   ceil_Angle;
   float   ceil_BaseAngle;
   float   ceil_BaseYOffs;
-  VEntity*  ceil_SkyBox;
+  VEntity *ceil_SkyBox;
   float   ceil_MirrorAlpha;
   int     lightlevel;
   int     Fade;
@@ -113,7 +113,7 @@ struct VSndSeqInfo
 
 struct VCameraTextureInfo
 {
-  VEntity*    Camera;
+  VEntity *Camera;
   int       TexNum;
   int       FOV;
 };
@@ -155,32 +155,32 @@ class VLevel : public VGameObject
   //
 
   vint32        NumVertexes;
-  vertex_t*     Vertexes;
+  vertex_t *Vertexes;
 
   vint32        NumSectors;
-  sector_t*     Sectors;
+  sector_t *Sectors;
 
   vint32        NumSides;
-  side_t*       Sides;
+  side_t *Sides;
 
   vint32        NumLines;
-  line_t*       Lines;
+  line_t *Lines;
 
   vint32        NumSegs;
-  seg_t*        Segs;
+  seg_t *Segs;
 
   vint32        NumSubsectors;
-  subsector_t*    Subsectors;
+  subsector_t *Subsectors;
 
   vint32        NumNodes;
-  node_t*       Nodes;
+  node_t *Nodes;
 
-  vuint8*       VisData;
-  vuint8*       NoVis;
+  vuint8 *VisData;
+  vuint8 *NoVis;
 
   // !!! Used only during level loading
   vint32        NumThings;
-  mthing_t*     Things;
+  mthing_t *Things;
 
   //
   //  BLOCKMAP
@@ -188,14 +188,14 @@ class VLevel : public VGameObject
   // array of blocks of size ...
   // Used to speed up collision detection by spatial subdivision in 2D.
   //
-  vint32*       BlockMapLump; // offsets in blockmap are from here
-  vint32*       BlockMap;   // int for larger maps
+  vint32 *BlockMapLump; // offsets in blockmap are from here
+  vint32 *BlockMap;   // int for larger maps
   vint32        BlockMapWidth;  // Blockmap size.
   vint32        BlockMapHeight; // size in mapblocks
   float       BlockMapOrgX; // origin of block map
   float       BlockMapOrgY;
-  VEntity**     BlockLinks;   // for thing chains
-  polyblock_t**   PolyBlockMap;
+  VEntity **BlockLinks;   // for thing chains
+  polyblock_t **PolyBlockMap;
 
   //
   //  REJECT
@@ -203,45 +203,45 @@ class VLevel : public VGameObject
   //  Speeds up enemy AI by skipping detailed LineOf Sight calculation.
   //  Without special effect, this could be used as a PVS lookup as well.
   //
-  vuint8*       RejectMatrix;
+  vuint8 *RejectMatrix;
 
   //  Strife conversations.
   vint32        NumGenericSpeeches;
-  FRogueConSpeech*  GenericSpeeches;
+  FRogueConSpeech *GenericSpeeches;
 
   vint32        NumLevelSpeeches;
-  FRogueConSpeech*  LevelSpeeches;
+  FRogueConSpeech *LevelSpeeches;
 
   //  List of all poly-objects on the level
   vint32        NumPolyObjs;
-  polyobj_t*      PolyObjs;
+  polyobj_t *PolyObjs;
 
   //  Anchor points of poly-objects
   vint32        NumPolyAnchorPoints;
-  PolyAnchorPoint_t*  PolyAnchorPoints;
+  PolyAnchorPoint_t *PolyAnchorPoints;
 
   //  Sound environments for sector zones.
   vint32        NumZones;
-  vint32*       Zones;
+  vint32 *Zones;
 
-  VThinker*     ThinkerHead;
-  VThinker*     ThinkerTail;
+  VThinker *ThinkerHead;
+  VThinker *ThinkerTail;
 
-  VLevelInfo*     LevelInfo;
-  VWorldInfo*     WorldInfo;
+  VLevelInfo *LevelInfo;
+  VWorldInfo *WorldInfo;
 
-  VAcsLevel*      Acs;
+  VAcsLevel *Acs;
 
-  VRenderLevelPublic* RenderData;
-  VNetContext*    NetContext;
+  VRenderLevelPublic *RenderData;
+  VNetContext *NetContext;
 
-  rep_line_t*     BaseLines;
-  rep_side_t*     BaseSides;
-  rep_sector_t*   BaseSectors;
-  rep_polyobj_t*    BasePolyObjs;
+  rep_line_t *BaseLines;
+  rep_side_t *BaseSides;
+  rep_sector_t *BaseSectors;
+  rep_polyobj_t *BasePolyObjs;
 
   vint32        NumStaticLights;
-  rep_light_t*    StaticLights;
+  rep_light_t *StaticLights;
 
   TArray<VSndSeqInfo> ActiveSequences;
 
@@ -250,36 +250,36 @@ class VLevel : public VGameObject
   float       Time;
   int         TicTime;
 
-  msecnode_t*     SectorList;
+  msecnode_t *SectorList;
   // phares 3/21/98
   //
   // Maintain a freelist of msecnode_t's to reduce memory allocs and frees.
-  msecnode_t*     HeadSecNode;
+  msecnode_t *HeadSecNode;
 
   //  Translations controlled by ACS scripts.
   TArray<VTextureTranslation*>  Translations;
   TArray<VTextureTranslation*>  BodyQueueTrans;
 
-  VState*       CallingState;
-  VStateCall*     StateCall;
+  VState *CallingState;
+  VStateCall *StateCall;
 
   int         NextSoundOriginID;
 
-  decal_t* decanimlist;
+  decal_t *decanimlist;
   int decanimuid;
 
-  void Serialise(VStream& Strm);
+  void Serialise(VStream &Strm);
   void ClearReferences();
   void Destroy();
 
   //  Map loader.
   void LoadMap(VName MapName);
 
-  subsector_t* PointInSubsector(const TVec& point) const;
-  vuint8* LeafPVS(const subsector_t* ss) const;
+  subsector_t *PointInSubsector(const TVec &point) const;
+  vuint8 *LeafPVS(const subsector_t *ss) const;
 
-  VThinker* SpawnThinker(VClass*, const TVec& = TVec(0, 0, 0),
-    const TAVec& = TAVec(0, 0, 0), mthing_t* = NULL,
+  VThinker *SpawnThinker(VClass*, const TVec& = TVec(0, 0, 0),
+    const TAVec& = TAVec(0, 0, 0), mthing_t* = nullptr,
     bool AllowReplace = true);
   void AddThinker(VThinker*);
   void RemoveThinker(VThinker*);
@@ -290,7 +290,7 @@ class VLevel : public VGameObject
   void SpawnPolyobj(float, float, int, bool, bool);
   void AddPolyAnchorPoint(float, float, int);
   void InitPolyobjs();
-  polyobj_t* GetPolyobj(int);
+  polyobj_t *GetPolyobj(int);
   int GetPolyobjMirror(int);
   bool MovePolyobj(int, float, float);
   bool RotatePolyobj(int, float);
@@ -301,12 +301,12 @@ class VLevel : public VGameObject
 
   void SetCameraToTexture(VEntity*, VName, int);
 
-  msecnode_t* AddSecnode(sector_t*, VEntity*, msecnode_t*);
-  msecnode_t* DelSecnode(msecnode_t*);
+  msecnode_t *AddSecnode(sector_t*, VEntity*, msecnode_t*);
+  msecnode_t *DelSecnode(msecnode_t*);
   void DelSectorList();
 
   int FindSectorFromTag(int, int);
-  line_t* FindLine(int, int*);
+  line_t *FindLine(int, int*);
 
   bool IsForServer() const
   {
@@ -383,13 +383,13 @@ private:
 
   int SetBodyQueueTrans(int, int);
 
-  void AddDecal (TVec org, const VName& dectype, int side, line_t *li, int level);
+  void AddDecal (TVec org, const VName &dectype, int side, line_t *li, int level);
   // called by `AddDecal()`
   void AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, line_t *li);
   void PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, vuint32 flips);
 
-  void AddAnimatedDecal (decal_t* dc);
-  void RemoveAnimatedDecal (decal_t* dc); // this will also kill animator
+  void AddAnimatedDecal (decal_t *dc);
+  void RemoveAnimatedDecal (decal_t *dc); // this will also kill animator
 
   void PostProcessForDecals ();
 
@@ -439,5 +439,5 @@ sec_region_t *AddExtraFloor(line_t *line, sector_t *dst);
 void SwapPlanes(sector_t *);
 void CalcSecMinMaxs(sector_t *sector);
 
-extern VLevel*      GLevel;
-extern VLevel*      GClLevel;
+extern VLevel *GLevel;
+extern VLevel *GClLevel;

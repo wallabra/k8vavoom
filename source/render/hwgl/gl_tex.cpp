@@ -147,7 +147,7 @@ void VOpenGLDrawer::DeleteTextures()
 //
 //==========================================================================
 
-void VOpenGLDrawer::FlushTexture(VTexture* Tex)
+void VOpenGLDrawer::FlushTexture(VTexture *Tex)
 {
   guard(VOpenGLDrawer::FlushTexture);
   if (Tex->DriverHandle)
@@ -169,7 +169,7 @@ void VOpenGLDrawer::FlushTexture(VTexture* Tex)
 //
 //==========================================================================
 
-void VOpenGLDrawer::PrecacheTexture(VTexture* Tex)
+void VOpenGLDrawer::PrecacheTexture(VTexture *Tex)
 {
   guard(VOpenGLDrawer::PrecacheTexture);
   SetTexture(Tex, 0);
@@ -182,7 +182,7 @@ void VOpenGLDrawer::PrecacheTexture(VTexture* Tex)
 //
 //==========================================================================
 
-void VOpenGLDrawer::SetTexture(VTexture* Tex, int CMap)
+void VOpenGLDrawer::SetTexture(VTexture *Tex, int CMap)
 {
   guard(VOpenGLDrawer::SetTexture);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
@@ -199,7 +199,7 @@ void VOpenGLDrawer::SetTexture(VTexture* Tex, int CMap)
     glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(gl_texture_filter_anisotropic < 0 ? 0 : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic));
   }
 
-  SetSpriteLump(Tex, NULL, CMap);
+  SetSpriteLump(Tex, nullptr, CMap);
   unguard;
 }
 
@@ -209,8 +209,8 @@ void VOpenGLDrawer::SetTexture(VTexture* Tex, int CMap)
 //
 //==========================================================================
 
-void VOpenGLDrawer::SetSpriteLump(VTexture* Tex,
-  VTextureTranslation* Translation, int CMap)
+void VOpenGLDrawer::SetSpriteLump(VTexture *Tex,
+  VTextureTranslation *Translation, int CMap)
 {
   guard(VOpenGLDrawer::SetSpriteLump);
   if (Tex->CheckModified())
@@ -219,7 +219,7 @@ void VOpenGLDrawer::SetSpriteLump(VTexture* Tex,
   }
   if (Translation || CMap)
   {
-    VTexture::VTransData* TData = Tex->FindDriverTrans(Translation, CMap);
+    VTexture::VTransData *TData = Tex->FindDriverTrans(Translation, CMap);
     if (TData)
     {
       glBindTexture(GL_TEXTURE_2D, TData->Handle);
@@ -237,7 +237,7 @@ void VOpenGLDrawer::SetSpriteLump(VTexture* Tex,
   {
     if (!Tex->DriverHandle)
     {
-      GenerateTexture(Tex, &Tex->DriverHandle, NULL, 0);
+      GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0);
     }
     else
     {
@@ -308,8 +308,8 @@ void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int 
 //
 //==========================================================================
 
-void VOpenGLDrawer::GenerateTexture(VTexture* Tex, GLuint* pHandle,
-  VTextureTranslation* Translation, int CMap)
+void VOpenGLDrawer::GenerateTexture(VTexture *Tex, GLuint *pHandle,
+  VTextureTranslation *Translation, int CMap)
 {
   guard(VOpenGLDrawer::GenerateTexture);
   if (!*pHandle)
@@ -319,7 +319,7 @@ void VOpenGLDrawer::GenerateTexture(VTexture* Tex, GLuint* pHandle,
   glBindTexture(GL_TEXTURE_2D, *pHandle);
 
   //  Try to load high resolution version.
-  VTexture* SrcTex = Tex->GetHighResolutionTexture();
+  VTexture *SrcTex = Tex->GetHighResolutionTexture();
   if (!SrcTex)
   {
     SrcTex = Tex;
@@ -329,8 +329,8 @@ void VOpenGLDrawer::GenerateTexture(VTexture* Tex, GLuint* pHandle,
   if (Translation && CMap)
   {
     rgba_t TmpPal[256];
-    const vuint8* TrTab = Translation->GetTable();
-    const rgba_t* CMPal = ColourMaps[CMap].GetPalette();
+    const vuint8 *TrTab = Translation->GetTable();
+    const rgba_t *CMPal = ColourMaps[CMap].GetPalette();
     for (int i = 0; i < 256; i++)
     {
       TmpPal[i] = CMPal[TrTab[i]];
@@ -350,7 +350,7 @@ void VOpenGLDrawer::GenerateTexture(VTexture* Tex, GLuint* pHandle,
   }
   else
   {
-    vuint8* block = SrcTex->GetPixels();
+    vuint8 *block = SrcTex->GetPixels();
     if (SrcTex->Format == TEXFMT_8 || SrcTex->Format == TEXFMT_8Pal)
     {
       UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block,
@@ -390,10 +390,10 @@ void VOpenGLDrawer::GenerateTexture(VTexture* Tex, GLuint* pHandle,
 //
 //==========================================================================
 
-void VOpenGLDrawer::UploadTexture8(int Width, int Height, const vuint8* Data,
-  const rgba_t* Pal)
+void VOpenGLDrawer::UploadTexture8(int Width, int Height, const vuint8 *Data,
+  const rgba_t *Pal)
 {
-  rgba_t* NewData = (rgba_t*)Z_Calloc(Width * Height * 4);
+  rgba_t *NewData = (rgba_t*)Z_Calloc(Width * Height * 4);
   for (int i = 0; i < Width * Height; i++)
   {
     if (Data[i])
@@ -411,12 +411,12 @@ void VOpenGLDrawer::UploadTexture8(int Width, int Height, const vuint8* Data,
 //
 //==========================================================================
 
-void VOpenGLDrawer::UploadTexture(int width, int height, const rgba_t* data)
+void VOpenGLDrawer::UploadTexture(int width, int height, const rgba_t *data)
 {
   guard(VOpenGLDrawer::UploadTexture);
   int   w, h;
-  vuint8* image;
-  vuint8* stackbuf = (vuint8 *)Z_Malloc(256 * 128 * 4);
+  vuint8 *image;
+  vuint8 *stackbuf = (vuint8 *)Z_Malloc(256 * 128 * 4);
 
   w = ToPowerOf2(width);
   if (w > maxTexSize) w = maxTexSize;

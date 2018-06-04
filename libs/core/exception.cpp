@@ -82,7 +82,7 @@ void Host_CoreDump (const char *fmt, ...) {
   if (first) first = false; else strcat(new_string, " <- ");
   strcat(new_string, string);
   delete[] host_error_string;
-  host_error_string = NULL;
+  host_error_string = nullptr;
   host_error_string = new_string;
 }
 

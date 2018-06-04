@@ -59,7 +59,7 @@ void VLevel::SpawnPolyobj(float x, float y, int tag, bool crush, bool hurt)
 {
   guard(VLevel::SpawnPolyobj);
   int index = NumPolyObjs++;
-  polyobj_t* Temp = PolyObjs;
+  polyobj_t *Temp = PolyObjs;
   PolyObjs = new polyobj_t[NumPolyObjs];
   if (Temp)
     {
@@ -68,7 +68,7 @@ void VLevel::SpawnPolyobj(float x, float y, int tag, bool crush, bool hurt)
       PolyObjs[i] = Temp[i];
     }
     delete[] Temp;
-    Temp = NULL;
+    Temp = nullptr;
     }
   memset(&PolyObjs[index], 0, sizeof(polyobj_t));
 
@@ -85,7 +85,7 @@ void VLevel::SpawnPolyobj(float x, float y, int tag, bool crush, bool hurt)
       Segs[i].linedef->arg1 = 0;
       int PolySegCount = 1;
       TVec PolyStart = *Segs[i].v1;
-      IterFindPolySegs(*Segs[i].v2, NULL, PolySegCount, PolyStart);
+      IterFindPolySegs(*Segs[i].v2, nullptr, PolySegCount, PolyStart);
 
       PolyObjs[index].numsegs = PolySegCount;
       PolyObjs[index].segs = new seg_t*[PolySegCount];
@@ -126,7 +126,7 @@ void VLevel::SpawnPolyobj(float x, float y, int tag, bool crush, bool hurt)
   {
     // didn't find a polyobj through PO_LINE_START
     int psIndex = 0;
-    seg_t* polySegList[PO_MAXPOLYSEGS];
+    seg_t *polySegList[PO_MAXPOLYSEGS];
     PolyObjs[index].numsegs = 0;
     for (int j = 1; j < PO_MAXPOLYSEGS; j++)
     {
@@ -215,13 +215,13 @@ void VLevel::SpawnPolyobj(float x, float y, int tag, bool crush, bool hurt)
 //
 //  VLevel::IterFindPolySegs
 //
-//  Passing NULL for segList will cause IterFindPolySegs to count the number
+//  Passing nullptr for segList will cause IterFindPolySegs to count the number
 // of segs in the polyobj
 //
 //==========================================================================
 
-void VLevel::IterFindPolySegs(const TVec& From, seg_t** segList,
-  int& PolySegCount, const TVec& PolyStart)
+void VLevel::IterFindPolySegs(const TVec &From, seg_t **segList,
+  int &PolySegCount, const TVec &PolyStart)
 {
   guard(VLevel::IterFindPolySegs);
   if (From == PolyStart)
@@ -268,7 +268,7 @@ void VLevel::AddPolyAnchorPoint(float x, float y, int tag)
 {
   guard(VLevel::AddPolyAnchorPoint);
   NumPolyAnchorPoints++;
-  PolyAnchorPoint_t* Temp = PolyAnchorPoints;
+  PolyAnchorPoint_t *Temp = PolyAnchorPoints;
   PolyAnchorPoints = new PolyAnchorPoint_t[NumPolyAnchorPoints];
   if (Temp)
   {
@@ -277,10 +277,10 @@ void VLevel::AddPolyAnchorPoint(float x, float y, int tag)
       PolyAnchorPoints[i] = Temp[i];
     }
     delete[] Temp;
-    Temp = NULL;
+    Temp = nullptr;
   }
 
-  PolyAnchorPoint_t& A = PolyAnchorPoints[NumPolyAnchorPoints - 1];
+  PolyAnchorPoint_t &A = PolyAnchorPoints[NumPolyAnchorPoints - 1];
   A.x = x;
   A.y = y;
   A.tag = tag;
@@ -325,7 +325,7 @@ void VLevel::InitPolyobjs()
 void VLevel::TranslatePolyobjToStartSpot(float originX, float originY, int tag)
 {
   guard(VLevel::TranslatePolyobjToStartSpot);
-  polyobj_t* po = NULL;
+  polyobj_t *po = nullptr;
   for (int i = 0; i < NumPolyObjs; i++)
   {
     if (PolyObjs[i].tag == tag)
@@ -339,7 +339,7 @@ void VLevel::TranslatePolyobjToStartSpot(float originX, float originY, int tag)
     // didn't match the tag with a polyobj tag
     Host_Error("Unable to match polyobj tag: %d", tag);
   }
-  if (po->segs == NULL)
+  if (po->segs == nullptr)
   {
     Host_Error("Anchor point located without a StartSpot point: %d", tag);
   }
@@ -348,13 +348,13 @@ void VLevel::TranslatePolyobjToStartSpot(float originX, float originY, int tag)
   float deltaX = originX - po->startSpot.x;
   float deltaY = originY - po->startSpot.y;
 
-  seg_t** tempSeg = po->segs;
-  vertex_t* tempPt = po->originalPts;
+  seg_t **tempSeg = po->segs;
+  vertex_t *tempPt = po->originalPts;
   vertex_t avg(0, 0, 0); // used to find a polyobj's centre, and hence subsector
 
   for (int i = 0; i < po->numsegs; i++, tempSeg++, tempPt++)
   {
-    seg_t** veryTempSeg = po->segs;
+    seg_t **veryTempSeg = po->segs;
     for (; veryTempSeg != tempSeg; veryTempSeg++)
     {
       if ((*veryTempSeg)->v1 == (*tempSeg)->v1)
@@ -376,8 +376,8 @@ void VLevel::TranslatePolyobjToStartSpot(float originX, float originY, int tag)
   }
   avg.x /= po->numsegs;
   avg.y /= po->numsegs;
-  subsector_t* sub = PointInSubsector(avg);
-  if (sub->poly != NULL)
+  subsector_t *sub = PointInSubsector(avg);
+  if (sub->poly != nullptr)
   {
     Sys_Error("Multiple polyobjs in a single subsector.\n");
   }
@@ -394,11 +394,11 @@ void VLevel::TranslatePolyobjToStartSpot(float originX, float originY, int tag)
 //
 //==========================================================================
 
-void VLevel::UpdatePolySegs(polyobj_t* po)
+void VLevel::UpdatePolySegs(polyobj_t *po)
 {
   guard(VLevel::UpdatePolySegs);
   validcount++;
-  seg_t** segList = po->segs;
+  seg_t **segList = po->segs;
   for (int count = po->numsegs; count; count--, segList++)
   {
     if ((*segList)->linedef->validcount != validcount)
@@ -443,11 +443,11 @@ void VLevel::InitPolyBlockMap()
 //
 //==========================================================================
 
-void VLevel::LinkPolyobj(polyobj_t* po)
+void VLevel::LinkPolyobj(polyobj_t *po)
 {
   guard(VLevel::LinkPolyobj);
   // calculate the polyobj bbox
-  seg_t** tempSeg = po->segs;
+  seg_t **tempSeg = po->segs;
   float rightX = (*tempSeg)->v1->x;
   float leftX = (*tempSeg)->v1->x;
   float topY = (*tempSeg)->v1->y;
@@ -486,23 +486,23 @@ void VLevel::LinkPolyobj(polyobj_t* po)
       if (i >= 0 && i < BlockMapWidth &&
         j >= 0 && j < BlockMapHeight * BlockMapWidth)
       {
-        polyblock_t** link = &PolyBlockMap[j + i];
+        polyblock_t **link = &PolyBlockMap[j + i];
         if (!(*link))
         {
           // Create a new link at the current block cell
           *link = new polyblock_t;
-          (*link)->next = NULL;
-          (*link)->prev = NULL;
+          (*link)->next = nullptr;
+          (*link)->prev = nullptr;
           (*link)->polyobj = po;
           continue;
         }
 
-        polyblock_t* tempLink = *link;
-        while (tempLink->next != NULL && tempLink->polyobj != NULL)
+        polyblock_t *tempLink = *link;
+        while (tempLink->next != nullptr && tempLink->polyobj != nullptr)
         {
           tempLink = tempLink->next;
         }
-        if (tempLink->polyobj == NULL)
+        if (tempLink->polyobj == nullptr)
         {
           tempLink->polyobj = po;
           continue;
@@ -510,7 +510,7 @@ void VLevel::LinkPolyobj(polyobj_t* po)
         else
         {
           tempLink->next = new polyblock_t;
-          tempLink->next->next = NULL;
+          tempLink->next->next = nullptr;
           tempLink->next->prev = tempLink;
           tempLink->next->polyobj = po;
         }
@@ -527,7 +527,7 @@ void VLevel::LinkPolyobj(polyobj_t* po)
 //
 //==========================================================================
 
-void VLevel::UnLinkPolyobj(polyobj_t* po)
+void VLevel::UnLinkPolyobj(polyobj_t *po)
 {
   guard(VLevel::UnLinkPolyobj);
   // remove the polyobj from each blockmap section
@@ -539,17 +539,17 @@ void VLevel::UnLinkPolyobj(polyobj_t* po)
       if (i >= 0 && i < BlockMapWidth &&
         j >= 0 && j < BlockMapHeight)
       {
-        polyblock_t* link = PolyBlockMap[index + i];
-        while (link != NULL && link->polyobj != po)
+        polyblock_t *link = PolyBlockMap[index + i];
+        while (link != nullptr && link->polyobj != po)
         {
           link = link->next;
         }
-        if (link == NULL)
+        if (link == nullptr)
         {
           // polyobj not located in the link cell
           continue;
         }
-        link->polyobj = NULL;
+        link->polyobj = nullptr;
       }
     }
   }
@@ -562,7 +562,7 @@ void VLevel::UnLinkPolyobj(polyobj_t* po)
 //
 //==========================================================================
 
-polyobj_t* VLevel::GetPolyobj(int polyNum)
+polyobj_t *VLevel::GetPolyobj(int polyNum)
 {
   guard(VLevel::GetPolyobj);
   for (int i = 0; i < NumPolyObjs; i++)
@@ -572,7 +572,7 @@ polyobj_t* VLevel::GetPolyobj(int polyNum)
       return &PolyObjs[i];
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -725,9 +725,9 @@ bool VLevel::RotatePolyobj(int num, float angle)
     UnLinkPolyobj(po);
   }
 
-  seg_t** segList = po->segs;
-  vertex_t* originalPts = po->originalPts;
-  vertex_t* prevPts = po->prevPts;
+  seg_t **segList = po->segs;
+  vertex_t *originalPts = po->originalPts;
+  vertex_t *prevPts = po->prevPts;
 
   for (int count = po->numsegs; count; count--, segList++, originalPts++,
     prevPts++)
@@ -792,7 +792,7 @@ bool VLevel::RotatePolyobj(int num, float angle)
 //
 //==========================================================================
 
-bool VLevel::PolyCheckMobjBlocking(seg_t* seg, polyobj_t* po)
+bool VLevel::PolyCheckMobjBlocking(seg_t *seg, polyobj_t *po)
 {
   guard(VLevel::PolyCheckMobjBlocking);
   VEntity *mobj;

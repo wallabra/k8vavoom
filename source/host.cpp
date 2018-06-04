@@ -79,7 +79,7 @@ bool      host_request_exit = false;
 class VDedLog : public VLogListener
 {
 public:
-  void Serialise(const char* Text, EName)
+  void Serialise(const char *Text, EName)
   {
     printf("%s", Text);
   }
@@ -122,7 +122,7 @@ void Host_Init()
 #endif
 
 #if !defined(_WIN32)
-  const char* HomeDir = getenv("HOME");
+  const char *HomeDir = getenv("HOME");
   if (HomeDir)
   {
     Sys_CreateDirectory(va("%s/.vavoom", HomeDir));
@@ -138,7 +138,7 @@ void Host_Init()
 
   // Seed the random-number generator with the current time so that
   // the numbers will be different every time we run.
-  srand((unsigned)time(NULL));
+  srand((unsigned)time(nullptr));
 
   // init subsystems
 
@@ -615,7 +615,7 @@ void Host_Quit()
   if (!GArgs.CheckParm("-noendtxt"))
   {
     //  Find end text lump.
-    VStream* Strm = NULL;
+    VStream *Strm = nullptr;
     if (W_CheckNumForName(NAME_endoom) >= 0)
     {
       Strm = W_CreateLumpReaderName(NAME_endoom);
@@ -640,12 +640,12 @@ void Host_Quit()
       }
       Strm->Serialise(EndText, Len);
       delete Strm;
-      Strm = NULL;
+      Strm = nullptr;
       GotEndText = true;
     }
   }
 
-  Sys_Quit(GotEndText ? EndText : NULL);
+  Sys_Quit(GotEndText ? EndText : nullptr);
   unguard;
 }
 
@@ -692,19 +692,19 @@ void Host_Shutdown()
   if (GNet)
   {
     SAFE_SHUTDOWN(delete GNet,)
-    GNet = NULL;
+    GNet = nullptr;
   }
 #ifdef CLIENT
   if (GInput)
   {
     SAFE_SHUTDOWN(delete GInput,)
-    GInput = NULL;
+    GInput = nullptr;
   }
   SAFE_SHUTDOWN(V_Shutdown, ())
   if (GAudio)
   {
     SAFE_SHUTDOWN(delete GAudio,)
-    GAudio = NULL;
+    GAudio = nullptr;
   }
   SAFE_SHUTDOWN(T_Shutdown, ())
 #endif
@@ -713,7 +713,7 @@ void Host_Shutdown()
   if (GSoundManager)
   {
     SAFE_SHUTDOWN(delete GSoundManager,)
-    GSoundManager = NULL;
+    GSoundManager = nullptr;
   }
   SAFE_SHUTDOWN(R_ShutdownTexture, ())
   SAFE_SHUTDOWN(R_ShutdownData, ())

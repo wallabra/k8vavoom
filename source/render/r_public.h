@@ -92,7 +92,7 @@ struct TSwitch
   vint16      PairIndex;
   vint16      Sound;
   vint16      NumFrames;
-  TSwitchFrame* Frames;
+  TSwitchFrame *Frames;
   bool      Quest;
 
   TSwitch()
@@ -114,7 +114,7 @@ struct VAnimDoorDef
   VName   OpenSound;
   VName   CloseSound;
   vint32    NumFrames;
-  vint32*   Frames;
+  vint32 *Frames;
 };
 
 class VRenderLevelPublic : public VInterface
@@ -126,10 +126,10 @@ public:
   virtual void RenderPlayerView() = 0;
 
   virtual void AddStaticLight(const TVec&, float, vuint32) = 0;
-  virtual dlight_t* AllocDlight(VThinker*) = 0;
+  virtual dlight_t *AllocDlight(VThinker*) = 0;
   virtual void DecayLights(float) = 0;
 
-  virtual particle_t* NewParticle() = 0;
+  virtual particle_t *NewParticle() = 0;
 };
 
 class VTextureTranslation
@@ -170,11 +170,11 @@ public:
   void BuildBloodTrans(int);
   void AddTransString(const VStr&);
 
-  const vuint8* GetTable() const
+  const vuint8 *GetTable() const
   {
     return Table;
   }
-  const rgba_t* GetPalette() const
+  const rgba_t *GetPalette() const
   {
     return Palette;
   }
@@ -277,8 +277,8 @@ public:
   VTextureManager();
   void Init();
   void Shutdown();
-  int AddTexture(VTexture* Tex);
-  void ReplaceTexture(int Index, VTexture* Tex);
+  int AddTexture(VTexture *Tex);
+  void ReplaceTexture(int Index, VTexture *Tex);
   int CheckNumForName(VName Name, int Type, bool bOverload = false,
     bool bCheckAny = false);
   int NumForName(VName Name, int Type, bool bOverload = false,
@@ -289,13 +289,13 @@ public:
   float TextureHeight(int TexNum);
   int TextureAnimation(int InTex);
   void SetFrontSkyLayer(int tex);
-  void GetTextureInfo(int TexNum, picinfo_t* info);
+  void GetTextureInfo(int TexNum, picinfo_t *info);
   int AddPatch(VName Name, int Type, bool Silent = false);
   int AddRawWithPal(VName Name, VName PalName);
   int AddFileTexture(VName Name, int Type);
 
   //  Get unanimated texture
-  VTexture* operator[](int TexNum)
+  VTexture *operator[](int TexNum)
   {
     if ((vuint32)TexNum >= (vuint32)Textures.Num())
     {
@@ -305,7 +305,7 @@ public:
   }
 
   //  Get animated texture
-  VTexture* operator()(int TexNum)
+  VTexture *operator()(int TexNum)
   {
     if ((vuint32)TexNum >= (vuint32)Textures.Num())
     {
@@ -347,12 +347,12 @@ void R_Init(); // Called by startup code.
 void R_Start(VLevel*);
 void R_SetViewSize(int blocks);
 void R_RenderPlayerView();
-VTextureTranslation* R_GetCachedTranslation(int, VLevel*);
+VTextureTranslation *R_GetCachedTranslation(int, VLevel*);
 
 // r_tex
 void R_InitTexture();
 void R_ShutdownTexture();
-VAnimDoorDef* R_FindAnimDoor(vint32);
+VAnimDoorDef *R_FindAnimDoor(vint32);
 void R_AnimateSurfaces();
 
 // r_things

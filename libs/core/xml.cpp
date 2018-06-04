@@ -52,11 +52,11 @@
 //==========================================================================
 
 VXmlNode::VXmlNode()
-: Parent(NULL)
-, FirstChild(NULL)
-, LastChild(NULL)
-, PrevSibling(NULL)
-, NextSibling(NULL)
+: Parent(nullptr)
+, FirstChild(nullptr)
+, LastChild(nullptr)
+, PrevSibling(nullptr)
+, NextSibling(nullptr)
 {
 }
 
@@ -71,10 +71,10 @@ VXmlNode::~VXmlNode()
   //guard(VXmlNode::~VXmlNode);
   while (FirstChild)
   {
-    VXmlNode* Temp = FirstChild;
+    VXmlNode *Temp = FirstChild;
     FirstChild = FirstChild->NextSibling;
     delete Temp;
-    Temp = NULL;
+    Temp = nullptr;
   }
   //unguard;
 }
@@ -85,13 +85,13 @@ VXmlNode::~VXmlNode()
 //
 //==========================================================================
 
-VXmlNode* VXmlNode::FindChild(const char* AName) const
+VXmlNode *VXmlNode::FindChild(const char *AName) const
 {
   guard(VXmlNode::FindChild);
-  for (VXmlNode* N = FirstChild; N; N = N->NextSibling)
+  for (VXmlNode *N = FirstChild; N; N = N->NextSibling)
     if (N->Name == AName)
       return N;
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -101,13 +101,13 @@ VXmlNode* VXmlNode::FindChild(const char* AName) const
 //
 //==========================================================================
 
-VXmlNode* VXmlNode::FindChild(const VStr& AName) const
+VXmlNode *VXmlNode::FindChild(const VStr &AName) const
 {
   guard(VXmlNode::FindChild);
-  for (VXmlNode* N = FirstChild; N; N = N->NextSibling)
+  for (VXmlNode *N = FirstChild; N; N = N->NextSibling)
     if (N->Name == AName)
       return N;
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -117,10 +117,10 @@ VXmlNode* VXmlNode::FindChild(const VStr& AName) const
 //
 //==========================================================================
 
-VXmlNode* VXmlNode::GetChild(const char* AName) const
+VXmlNode *VXmlNode::GetChild(const char *AName) const
 {
   guard(VXmlNode::GetChild);
-  VXmlNode* N = FindChild(AName);
+  VXmlNode *N = FindChild(AName);
   if (!N)
     Sys_Error("XML node %s not found", AName);
   return N;
@@ -133,10 +133,10 @@ VXmlNode* VXmlNode::GetChild(const char* AName) const
 //
 //==========================================================================
 
-VXmlNode* VXmlNode::GetChild(const VStr& AName) const
+VXmlNode *VXmlNode::GetChild(const VStr &AName) const
 {
   guard(VXmlNode::GetChild);
-  VXmlNode* N = FindChild(AName);
+  VXmlNode *N = FindChild(AName);
   if (!N)
     Sys_Error("XML node %s not found", *AName);
   return N;
@@ -149,13 +149,13 @@ VXmlNode* VXmlNode::GetChild(const VStr& AName) const
 //
 //==========================================================================
 
-VXmlNode* VXmlNode::FindNext(const char* AName) const
+VXmlNode *VXmlNode::FindNext(const char *AName) const
 {
   guard(VXmlNode::FindNext);
-  for (VXmlNode* N = NextSibling; N; N = N->NextSibling)
+  for (VXmlNode *N = NextSibling; N; N = N->NextSibling)
     if (N->Name == AName)
       return N;
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -165,13 +165,13 @@ VXmlNode* VXmlNode::FindNext(const char* AName) const
 //
 //==========================================================================
 
-VXmlNode* VXmlNode::FindNext(const VStr& AName) const
+VXmlNode *VXmlNode::FindNext(const VStr &AName) const
 {
   guard(VXmlNode::FindNext);
-  for (VXmlNode* N = NextSibling; N; N = N->NextSibling)
+  for (VXmlNode *N = NextSibling; N; N = N->NextSibling)
     if (N->Name == AName)
       return N;
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -181,13 +181,13 @@ VXmlNode* VXmlNode::FindNext(const VStr& AName) const
 //
 //==========================================================================
 
-VXmlNode* VXmlNode::FindNext() const
+VXmlNode *VXmlNode::FindNext() const
 {
   guard(VXmlNode::FindNext);
-  for (VXmlNode* N = NextSibling; N; N = N->NextSibling)
+  for (VXmlNode *N = NextSibling; N; N = N->NextSibling)
     if (N->Name == Name)
       return N;
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -197,7 +197,7 @@ VXmlNode* VXmlNode::FindNext() const
 //
 //==========================================================================
 
-bool VXmlNode::HasAttribute(const char* AttrName) const
+bool VXmlNode::HasAttribute(const char *AttrName) const
 {
   guard(VXmlNode::HasAttribute);
   for (int i = 0; i < Attributes.Num(); i++)
@@ -213,7 +213,7 @@ bool VXmlNode::HasAttribute(const char* AttrName) const
 //
 //==========================================================================
 
-bool VXmlNode::HasAttribute(const VStr& AttrName) const
+bool VXmlNode::HasAttribute(const VStr &AttrName) const
 {
   guard(VXmlNode::HasAttribute);
   for (int i = 0; i < Attributes.Num(); i++)
@@ -229,7 +229,7 @@ bool VXmlNode::HasAttribute(const VStr& AttrName) const
 //
 //==========================================================================
 
-VStr VXmlNode::GetAttribute(const char* AttrName, bool Required) const
+VStr VXmlNode::GetAttribute(const char *AttrName, bool Required) const
 {
   guard(VXmlNode::GetAttribute);
   for (int i = 0; i < Attributes.Num(); i++)
@@ -247,7 +247,7 @@ VStr VXmlNode::GetAttribute(const char* AttrName, bool Required) const
 //
 //==========================================================================
 
-VStr VXmlNode::GetAttribute(const VStr& AttrName, bool Required) const
+VStr VXmlNode::GetAttribute(const VStr &AttrName, bool Required) const
 {
   guard(VXmlNode::GetAttribute);
   for (int i = 0; i < Attributes.Num(); i++)
@@ -265,7 +265,7 @@ VStr VXmlNode::GetAttribute(const VStr& AttrName, bool Required) const
 //
 //==========================================================================
 
-void VXmlDocument::Parse(VStream& Strm, VStr AName)
+void VXmlDocument::Parse(VStream &Strm, VStr AName)
 {
   guard(VXmlDocument::Parse);
   Name = AName;
@@ -365,7 +365,7 @@ void VXmlDocument::Parse(VStream& Strm, VStr AName)
   }
 
   delete[] Buf;
-  Buf = NULL;
+  Buf = nullptr;
   unguard;
 }
 
@@ -421,7 +421,7 @@ bool VXmlDocument::SkipComment()
 //
 //==========================================================================
 
-void VXmlDocument::Error(const char* Msg)
+void VXmlDocument::Error(const char *Msg)
 {
   guard(VXmlDocument::Error);
   Sys_Error("%s: %s", *Name, Msg);
@@ -488,7 +488,7 @@ VStr VXmlDocument::ParseAttrValue(char EndChar)
 //
 //==========================================================================
 
-bool VXmlDocument::ParseAttribute(VStr& AttrName, VStr& AttrValue)
+bool VXmlDocument::ParseAttribute(VStr &AttrName, VStr &AttrValue)
 {
   guard(VXmlDocument::ParseAttribute);
   AttrName = ParseName();
@@ -526,7 +526,7 @@ bool VXmlDocument::ParseAttribute(VStr& AttrName, VStr& AttrValue)
 //
 //==========================================================================
 
-void VXmlDocument::ParseNode(VXmlNode* Node)
+void VXmlDocument::ParseNode(VXmlNode *Node)
 {
   guard(VXmlDocument::ParseNode);
   if (Buf[CurPos] != '<')
@@ -545,7 +545,7 @@ void VXmlDocument::ParseNode(VXmlNode* Node)
   VStr AttrValue;
   while (ParseAttribute(AttrName, AttrValue))
   {
-    VXmlAttribute& A = Node->Attributes.Alloc();
+    VXmlAttribute &A = Node->Attributes.Alloc();
     A.Name = AttrName;
     A.Value = AttrValue;
     SkipWhitespace();
@@ -590,7 +590,7 @@ void VXmlDocument::ParseNode(VXmlNode* Node)
         }
         else
         {
-          VXmlNode* NewChild = new VXmlNode();
+          VXmlNode *NewChild = new VXmlNode();
           NewChild->PrevSibling = Node->LastChild;
           if (Node->LastChild)
             Node->LastChild->NextSibling = NewChild;
@@ -649,7 +649,7 @@ void VXmlDocument::ParseNode(VXmlNode* Node)
 //
 //==========================================================================
 
-VStr VXmlDocument::HandleReferences(const VStr& AStr)
+VStr VXmlDocument::HandleReferences(const VStr &AStr)
 {
   guard(VXmlDocument::HandleReferences);
   VStr Ret = AStr;

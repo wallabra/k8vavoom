@@ -56,7 +56,7 @@ VName P_TranslateMap(int map);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void ParseMapInfo(VScriptParser* sc);
+static void ParseMapInfo(VScriptParser *sc);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -146,7 +146,7 @@ void InitMapInfo()
 //
 //==========================================================================
 
-static void SetMapDefaults(mapInfo_t& Info)
+static void SetMapDefaults(mapInfo_t &Info)
 {
   guard(SetMapDefaults);
   Info.LumpName = NAME_None;
@@ -196,7 +196,7 @@ static void SetMapDefaults(mapInfo_t& Info)
 //
 //==========================================================================
 
-static VName ParseNextMapName(VScriptParser* sc, bool HexenMode)
+static VName ParseNextMapName(VScriptParser *sc, bool HexenMode)
 {
   guard(ParseNextMapName);
   if (sc->CheckNumber())
@@ -275,7 +275,7 @@ static VName ParseNextMapName(VScriptParser* sc, bool HexenMode)
 //
 //==========================================================================
 
-static void DoCompatFlag(VScriptParser* sc, mapInfo_t* info, int Flag)
+static void DoCompatFlag(VScriptParser *sc, mapInfo_t *info, int Flag)
 {
   guard(DoCompatFlag);
   int Set = 1;
@@ -340,7 +340,7 @@ static int loadSkyTexture (VName name) {
 }
 
 
-static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
+static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
 {
   guard(ParseMapCommon);
   bool newFormat = sc->Check("{");
@@ -362,7 +362,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
       if (P_GetClusterDef(info->Cluster) == &DefaultClusterDef)
       {
         //  Add empty cluster def if it doesn't exist yet.
-        VClusterDef& C = ClusterDefs.Alloc();
+        VClusterDef &C = ClusterDefs.Alloc();
         C.Cluster = info->Cluster;
         C.Flags = 0;
         C.EnterText = VStr();
@@ -783,7 +783,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
     else if (sc->Check("specialaction"))
     {
       if (newFormat) sc->Expect("=");
-      VMapSpecialAction& A = info->SpecialActions.Alloc();
+      VMapSpecialAction &A = info->SpecialActions.Alloc();
       sc->SetCMode(true);
       sc->ExpectString();
       A.TypeName = *sc->String.ToLower();
@@ -1024,7 +1024,7 @@ static void ParseMapCommon(VScriptParser* sc, mapInfo_t* info, bool& HexenMode)
 }
 
 
-static void ParseNameOrLookup (VScriptParser* sc, vuint32 lookupFlag, VStr* name, vuint32* flags) {
+static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name, vuint32 *flags) {
   if (sc->Check("lookup")) {
     if (sc->IsCMode()) sc->Check(",");
     *flags |= lookupFlag;
@@ -1042,7 +1042,7 @@ static void ParseNameOrLookup (VScriptParser* sc, vuint32 lookupFlag, VStr* name
   }
 }
 
-static void ParseNameOrLookup (VScriptParser* sc, vint32 lookupFlag, VStr* name, vint32* flags) {
+static void ParseNameOrLookup (VScriptParser *sc, vint32 lookupFlag, VStr *name, vint32 *flags) {
   vuint32 lf = (vuint32)lookupFlag;
   vuint32 flg = (vuint32)*flags;
   ParseNameOrLookup(sc, lf, name, &flg);
@@ -1056,10 +1056,10 @@ static void ParseNameOrLookup (VScriptParser* sc, vint32 lookupFlag, VStr* name,
 //
 //==========================================================================
 
-static void ParseMap(VScriptParser* sc, bool& HexenMode, mapInfo_t& Default)
+static void ParseMap(VScriptParser *sc, bool &HexenMode, mapInfo_t &Default)
 {
   guard(ParseMap);
-  mapInfo_t* info = NULL;
+  mapInfo_t *info = nullptr;
   VName MapLumpName;
   if (sc->CheckNumber())
   {
@@ -1164,7 +1164,7 @@ static void ParseMap(VScriptParser* sc, bool& HexenMode, mapInfo_t& Default)
   }
 
   //  Set default levelnum for this map.
-  const char* mn = *MapLumpName;
+  const char *mn = *MapLumpName;
   if (mn[0] == 'm' && mn[1] == 'a' && mn[2] == 'p' && mn[5] == 0)
   {
     int num = atoi(mn + 3);
@@ -1197,10 +1197,10 @@ static void ParseMap(VScriptParser* sc, bool& HexenMode, mapInfo_t& Default)
 //
 //==========================================================================
 
-static void ParseClusterDef(VScriptParser* sc)
+static void ParseClusterDef(VScriptParser *sc)
 {
   guard(ParseClusterDef);
-  VClusterDef* CDef = NULL;
+  VClusterDef *CDef = nullptr;
   sc->ExpectNumber();
 
   //  Check for replaced cluster def.
@@ -1352,10 +1352,10 @@ static void ParseClusterDef(VScriptParser* sc)
 //
 //==========================================================================
 
-static void ParseEpisodeDef(VScriptParser* sc)
+static void ParseEpisodeDef(VScriptParser *sc)
 {
   guard(ParseEpisodeDef);
-  VEpisodeDef* EDef = NULL;
+  VEpisodeDef *EDef = nullptr;
   int EIdx = 0;
   sc->ExpectName8();
 
@@ -1461,10 +1461,10 @@ static void ParseEpisodeDef(VScriptParser* sc)
 //
 //==========================================================================
 
-static void ParseSkillDef(VScriptParser* sc)
+static void ParseSkillDef(VScriptParser *sc)
 {
   guard(ParseSkillDef);
-  VSkillDef* SDef = NULL;
+  VSkillDef *SDef = nullptr;
   sc->ExpectString();
 
   //  Check for replaced skill.
@@ -1596,7 +1596,7 @@ static void ParseSkillDef(VScriptParser* sc)
     }
     else if (sc->Check("PlayerClassName"))
     {
-      VSkillPlayerClassName& CN = SDef->PlayerClassNames.Alloc();
+      VSkillPlayerClassName &CN = SDef->PlayerClassNames.Alloc();
       sc->ExpectString();
       CN.ClassName = sc->String;
       sc->ExpectString();
@@ -1640,12 +1640,12 @@ static void ParseSkillDef(VScriptParser* sc)
 //
 //==========================================================================
 
-static void ParseMapInfo(VScriptParser* sc)
+static void ParseMapInfo(VScriptParser *sc)
 {
   guard(ParseMapInfo);
   const unsigned int MaxStack = 64;
   bool HexenMode = false;
-  VScriptParser* scstack[MaxStack];
+  VScriptParser *scstack[MaxStack];
   unsigned int scsp = 0;
   bool error = false;
 
@@ -1739,7 +1739,7 @@ static void ParseMapInfo(VScriptParser* sc)
     sc = scstack[--scsp];
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
   unguard;
 }
 
@@ -1760,7 +1760,7 @@ static int QualifyMap(int map)
 //
 //==========================================================================
 
-const mapInfo_t& P_GetMapInfo(VName map)
+const mapInfo_t &P_GetMapInfo(VName map)
 {
   guard(P_GetMapInfo);
   for (int i = 0; i < MapInfo.Num(); i++)
@@ -1874,7 +1874,7 @@ VName P_GetMapLumpNameByLevelNum(int map)
 void P_PutMapSongLump(int map, VName lumpName)
 {
   guard(P_PutMapSongLump);
-  FMapSongInfo& ms = MapSongList.Alloc();
+  FMapSongInfo &ms = MapSongList.Alloc();
   ms.MapName = va("map%02d", map);
   ms.SongName = lumpName;
   unguard;
@@ -1886,7 +1886,7 @@ void P_PutMapSongLump(int map, VName lumpName)
 //
 //==========================================================================
 
-const VClusterDef* P_GetClusterDef(int Cluster)
+const VClusterDef *P_GetClusterDef(int Cluster)
 {
   guard(P_GetClusterDef);
   for (int i = 0; i < ClusterDefs.Num(); i++)
@@ -1943,7 +1943,7 @@ mapInfo_t *P_GetMapInfoPtr (int mapidx)
 //
 //==========================================================================
 
-VEpisodeDef* P_GetEpisodeDef(int Index)
+VEpisodeDef *P_GetEpisodeDef(int Index)
 {
   return &EpisodeDefs[Index];
 }
@@ -1965,7 +1965,7 @@ int P_GetNumSkills()
 //
 //==========================================================================
 
-const VSkillDef* P_GetSkillDef(int Index)
+const VSkillDef *P_GetSkillDef(int Index)
 {
   return &SkillDefs[Index];
 }
@@ -1981,10 +1981,10 @@ void P_GetMusicLumpNames(TArray<FReplacedString>& List)
   guard(P_GetMusicLumpNames);
   for (int i = 0; i < MapInfo.Num(); i++)
   {
-    const char* MName = *MapInfo[i].SongLump;
+    const char *MName = *MapInfo[i].SongLump;
     if (MName[0] == 'd' && MName[1] == '_')
     {
-      FReplacedString& R = List.Alloc();
+      FReplacedString &R = List.Alloc();
       R.Index = i;
       R.Replaced = false;
       R.Old = MName + 2;

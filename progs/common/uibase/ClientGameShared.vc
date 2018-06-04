@@ -476,7 +476,7 @@ final void SetPClass(int PClass)
 //
 //==========================================================================
 
-final void SetEpisode(EpisodeDef* EDef)
+final void SetEpisode(EpisodeDef *EDef)
 {
   MenuStartMap = EDef->Name;
   if (EDef->TeaserName && !IsMapPresent(EDef->Name))

@@ -479,7 +479,7 @@ final void SetNextCastState(float StateTime, state NextState)
 //
 //==========================================================================
 
-final bool CastResponder(event_t* ev)
+final bool CastResponder(event_t *ev)
 {
   if (ev->type != ev_keydown)
   {

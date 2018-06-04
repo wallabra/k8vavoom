@@ -156,7 +156,7 @@ VUdmfParser::VUdmfParser(int Lump)
 //
 //==========================================================================
 
-void VUdmfParser::Parse(VLevel* Level, const mapInfo_t& MInfo)
+void VUdmfParser::Parse(VLevel *Level, const mapInfo_t &MInfo)
 {
   guard(VUdmfParser::Parse);
   sc.SetCMode(true);
@@ -249,7 +249,7 @@ void VUdmfParser::ParseVertex()
 {
   guard(VUdmfParser::ParseVertex);
   //  Allocate a new vertex.
-  vertex_t& V = ParsedVertexes.Alloc();
+  vertex_t &V = ParsedVertexes.Alloc();
   V = TVec(0, 0, 0);
 
   sc.Expect("{");
@@ -274,10 +274,10 @@ void VUdmfParser::ParseVertex()
 //
 //==========================================================================
 
-void VUdmfParser::ParseSector(VLevel* Level)
+void VUdmfParser::ParseSector(VLevel *Level)
 {
   guard(VUdmfParser::ParseSector);
-  sector_t& S = ParsedSectors.Alloc();
+  sector_t &S = ParsedSectors.Alloc();
   memset(&S, 0, sizeof(sector_t));
   S.floor.Set(TVec(0, 0, 1), 0);
   S.floor.XScale = 1.0;
@@ -420,10 +420,10 @@ void VUdmfParser::ParseSector(VLevel* Level)
 //
 //==========================================================================
 
-void VUdmfParser::ParseLineDef(const mapInfo_t& MInfo)
+void VUdmfParser::ParseLineDef(const mapInfo_t &MInfo)
 {
   guard(VUdmfParser::ParseLineDef);
-  VParsedLine& L = ParsedLines.Alloc();
+  VParsedLine &L = ParsedLines.Alloc();
   memset(&L, 0, sizeof(VParsedLine));
   L.V1Index = -1;
   L.V2Index = -1;
@@ -699,7 +699,7 @@ void VUdmfParser::ParseLineDef(const mapInfo_t& MInfo)
 void VUdmfParser::ParseSideDef()
 {
   guard(VUdmfParser::ParseSideDef);
-  VParsedSide& S = ParsedSides.Alloc();
+  VParsedSide &S = ParsedSides.Alloc();
   memset(&S, 0, sizeof(VParsedSide));
   S.TopTexture = "-";
   S.MidTexture = "-";
@@ -792,7 +792,7 @@ void VUdmfParser::ParseSideDef()
 void VUdmfParser::ParseThing()
 {
   guard(VUdmfParser::ParseThing);
-  mthing_t& T = ParsedThings.Alloc();
+  mthing_t &T = ParsedThings.Alloc();
   memset(&T, 0, sizeof(mthing_t));
 
   sc.Expect("{");
@@ -1190,7 +1190,7 @@ VStr VUdmfParser::CheckString()
 //
 //==========================================================================
 
-void VUdmfParser::Flag(int& Field, int Mask)
+void VUdmfParser::Flag(int &Field, int Mask)
 {
   guard(VUdmfParser::Flag);
   if (CheckBool())
@@ -1210,7 +1210,7 @@ void VUdmfParser::Flag(int& Field, int Mask)
 //
 //==========================================================================
 
-void VUdmfParser::Flag(vuint32& Field, int Mask)
+void VUdmfParser::Flag(vuint32 &Field, int Mask)
 {
   guard(VUdmfParser::Flag);
   if (CheckBool())
@@ -1230,7 +1230,7 @@ void VUdmfParser::Flag(vuint32& Field, int Mask)
 //
 //==========================================================================
 
-void VLevel::LoadTextMap(int Lump, const mapInfo_t& MInfo)
+void VLevel::LoadTextMap(int Lump, const mapInfo_t &MInfo)
 {
   guard(VLevel::LoadTextMap);
   VUdmfParser Parser(Lump);
@@ -1251,11 +1251,11 @@ void VLevel::LoadTextMap(int Lump, const mapInfo_t& MInfo)
   Sectors = new sector_t[NumSectors];
   for (int i = 0; i < NumSectors; i++)
   {
-    sector_t& S = Sectors[i];
+    sector_t &S = Sectors[i];
     Sectors[i] = Parser.ParsedSectors[i];
 
     //  Region
-    sec_region_t* region = new sec_region_t;
+    sec_region_t *region = new sec_region_t;
     memset(region, 0, sizeof(*region));
     region->floor = &S.floor;
     region->ceiling = &S.ceiling;
@@ -1294,10 +1294,10 @@ void VLevel::LoadTextMap(int Lump, const mapInfo_t& MInfo)
   //  Copy side defs.
   NumSides = Parser.ParsedSides.Num();
   CreateSides();
-  side_t* sd = Sides;
+  side_t *sd = Sides;
   for (int i = 0; i < NumSides; i++, sd++)
   {
-    VUdmfParser::VParsedSide& Src = Parser.ParsedSides[sd->BottomTexture];
+    VUdmfParser::VParsedSide &Src = Parser.ParsedSides[sd->BottomTexture];
     int Spec = sd->MidTexture;
     int Tag = sd->TopTexture;
     *sd = Src.S;

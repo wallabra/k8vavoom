@@ -89,7 +89,7 @@ struct sight_trace_t
 //
 //==========================================================================
 
-static bool SightCheckPlane(sight_trace_t& Trace, const sec_plane_t* Plane)
+static bool SightCheckPlane(sight_trace_t &Trace, const sec_plane_t *Plane)
 {
   guard(SightCheckPlane);
   if (Plane->flags & SPF_NOBLOCKSIGHT)
@@ -129,7 +129,7 @@ static bool SightCheckPlane(sight_trace_t& Trace, const sec_plane_t* Plane)
 //
 //==========================================================================
 
-static bool SightCheckPlanes(sight_trace_t& Trace, sector_t* Sec)
+static bool SightCheckPlanes(sight_trace_t &Trace, sector_t *Sec)
 {
   guard(SightCheckPlanes);
   if (Sec->topregion == Sec->botregion)
@@ -138,11 +138,11 @@ static bool SightCheckPlanes(sight_trace_t& Trace, sector_t* Sec)
     return true;
   }
 
-  sec_region_t* StartReg = SV_PointInRegion(Sec, Trace.LineStart);
+  sec_region_t *StartReg = SV_PointInRegion(Sec, Trace.LineStart);
 
-  if (StartReg != NULL)
+  if (StartReg != nullptr)
   {
-    for (sec_region_t* Reg = StartReg; Reg; Reg = Reg->next)
+    for (sec_region_t *Reg = StartReg; Reg; Reg = Reg->next)
     {
       if (!SightCheckPlane(Trace, Reg->floor))
       {
@@ -156,7 +156,7 @@ static bool SightCheckPlanes(sight_trace_t& Trace, sector_t* Sec)
       }
     }
 
-    for (sec_region_t* Reg = StartReg->prev; Reg != NULL; Reg = Reg->prev)
+    for (sec_region_t *Reg = StartReg->prev; Reg != nullptr; Reg = Reg->prev)
     {
       if (!SightCheckPlane(Trace, Reg->floor))
       {
@@ -181,13 +181,13 @@ static bool SightCheckPlanes(sight_trace_t& Trace, sector_t* Sec)
 //
 //==========================================================================
 
-static bool SightTraverse(sight_trace_t& Trace, intercept_t* in)
+static bool SightTraverse(sight_trace_t &Trace, intercept_t *in)
 {
   guard(SightTraverse);
-  line_t* li = in->line;
+  line_t *li = in->line;
 
   int s1 = li->PointOnSide2(Trace.Start);
-  sector_t* front;
+  sector_t *front;
   if (s1 == 0 || s1 == 2)
   {
     front = li->frontsector;
@@ -208,7 +208,7 @@ static bool SightTraverse(sight_trace_t& Trace, intercept_t* in)
   //
   // crosses a two sided line
   //
-  opening_t* open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKSIGHT);
+  opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKSIGHT);
   while (open)
   {
     if (open->bottom <= hit_point.z && open->top >= hit_point.z)
@@ -230,14 +230,14 @@ static bool SightTraverse(sight_trace_t& Trace, intercept_t* in)
 //
 //==========================================================================
 
-static bool SightTraverseIntercepts(sight_trace_t& Trace, VThinker* Self,
-  sector_t* EndSector)
+static bool SightTraverseIntercepts(sight_trace_t &Trace, VThinker *Self,
+  sector_t *EndSector)
 {
   guard(SightTraverseIntercepts);
   int       count;
   float     dist;
-  intercept_t*  scan;
-  intercept_t*  in;
+  intercept_t *scan;
+  intercept_t *in;
 
   count = Trace.Intercepts.Num();
 
@@ -256,7 +256,7 @@ static bool SightTraverseIntercepts(sight_trace_t& Trace, VThinker* Self,
   //
   // go through in order
   //
-  in = NULL;      // shut up compiler warning
+  in = nullptr;      // shut up compiler warning
 
   while (count--)
   {
@@ -288,7 +288,7 @@ static bool SightTraverseIntercepts(sight_trace_t& Trace, VThinker* Self,
 //
 //==========================================================================
 
-static bool SightCheckLine(sight_trace_t& Trace, line_t *ld)
+static bool SightCheckLine(sight_trace_t &Trace, line_t *ld)
 {
   if (ld->validcount == validcount)
   {
@@ -320,7 +320,7 @@ static bool SightCheckLine(sight_trace_t& Trace, line_t *ld)
   }
 
   // store the line for later intersection testing
-  intercept_t& In = Trace.Intercepts.Alloc();
+  intercept_t &In = Trace.Intercepts.Alloc();
   In.line = ld;
 
   return true;
@@ -332,14 +332,14 @@ static bool SightCheckLine(sight_trace_t& Trace, line_t *ld)
 //
 //==========================================================================
 
-static bool SightBlockLinesIterator(sight_trace_t& Trace, VThinker* Self,
+static bool SightBlockLinesIterator(sight_trace_t &Trace, VThinker *Self,
   int x, int y)
 {
   guard(SightBlockLinesIterator);
   int       offset;
-  vint32*     list;
-  polyblock_t*  polyLink;
-  seg_t**     segList;
+  vint32 *list;
+  polyblock_t *polyLink;
+  seg_t **segList;
   int       i;
 
   offset = y * Self->XLevel->BlockMapWidth + x;
@@ -385,8 +385,8 @@ static bool SightBlockLinesIterator(sight_trace_t& Trace, VThinker* Self,
 //
 //==========================================================================
 
-static bool SightPathTraverse(sight_trace_t& Trace, VThinker* Self,
-  sector_t* EndSector)
+static bool SightPathTraverse(sight_trace_t &Trace, VThinker *Self,
+  sector_t *EndSector)
 {
   guard(SightPathTraverse);
   float   x1 = Trace.Start.x;
@@ -568,8 +568,8 @@ static bool SightPathTraverse(sight_trace_t& Trace, VThinker* Self,
 //
 //==========================================================================
 
-static bool SightPathTraverse2(sight_trace_t& Trace, VThinker* Self,
-  sector_t* EndSector)
+static bool SightPathTraverse2(sight_trace_t &Trace, VThinker *Self,
+  sector_t *EndSector)
 {
   guard(SightPathTraverse2);
   Trace.Delta = Trace.End - Trace.Start;
@@ -591,7 +591,7 @@ static bool SightPathTraverse2(sight_trace_t& Trace, VThinker* Self,
 //
 //==========================================================================
 
-bool VEntity::CanSee(VEntity* Other)
+bool VEntity::CanSee(VEntity *Other)
 {
   guard(VEntity::CanSee);
   int       s2;

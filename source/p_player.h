@@ -82,7 +82,7 @@ enum
 
 struct VViewState
 {
-  VState*     State;
+  VState *State;
   float     StateTime;
   float     SX;
   float     SY;
@@ -97,7 +97,7 @@ class VBasePlayer : public VGameObject
 
   enum { TOCENTRE = -128 };
 
-  VLevelInfo*   Level;
+  VLevelInfo *Level;
 
   enum
   {
@@ -116,7 +116,7 @@ class VBasePlayer : public VGameObject
   };
   vuint32     PlayerFlags;
 
-  VNetConnection* Net;
+  VNetConnection *Net;
 
   VStr      UserInfo;
 
@@ -138,8 +138,8 @@ class VBasePlayer : public VGameObject
   vuint8      OldButtons;
   TAVec     OldViewAngles;
 
-  VEntity*    MO;
-  VEntity*    Camera;
+  VEntity *MO;
+  VEntity *Camera;
   vint32      PlayerState;
 
   // Determine POV,
@@ -181,9 +181,9 @@ class VBasePlayer : public VGameObject
 
   vint32      SoundEnvironment;
 
-  VClientGameBase*  ClGame;
+  VClientGameBase *ClGame;
 
-  VPlayerReplicationInfo* PlayerReplicationInfo;
+  VPlayerReplicationInfo *PlayerReplicationInfo;
 
   VBasePlayer()
   : UserInfo(E_NoInit)
@@ -491,8 +491,8 @@ class VBasePlayer : public VGameObject
     P_PASS_STR(Value);
     EV_RET_VOID(NAME_ClientSetServerInfo);
   }
-  void eventClientHudMessage(const VStr& Message, VName Font, int Type,
-    int Id, int Colour, const VStr& ColourName, float x, float y,
+  void eventClientHudMessage(const VStr &Message, VName Font, int Type,
+    int Id, int Colour, const VStr &ColourName, float x, float y,
     int HudWidth, int HudHeight, float HoldTime, float Time1, float Time2)
   {
     P_PASS_SELF;

@@ -33,7 +33,7 @@ class OpenDoor222 : DummyStrifeItem;
 
 override bool TryPickup(EntityEx Toucher)
 {
-  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 222, 16, 0, 0, 0, NULL, 0,
+  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 222, 16, 0, 0, 0, nullptr, 0,
     Toucher);
   GoAwayAndDie();
   return true;

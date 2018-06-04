@@ -49,7 +49,7 @@ VTexture *VRawPicTexture::Create (VStream &Strm, int LumpNum) {
     // we expect at least one column to start exactly right after the directory
     bool GapAtStart = true;
     bool IsValid = true;
-    vint32* Offsets = new vint32[Width];
+    vint32 *Offsets = new vint32[Width];
     for (int i = 0; i < Width; ++i) {
       Strm << Offsets[i];
       if (Offsets[i] == 8+Width*4) {

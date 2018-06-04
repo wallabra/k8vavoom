@@ -90,17 +90,17 @@ typedef TVec vertex_t;
 
 struct drawseg_t
 {
-  seg_t*      seg;
-  drawseg_t*    next;
+  seg_t *seg;
+  drawseg_t *next;
 
-  segpart_t*    top;
-  segpart_t*    mid;
-  segpart_t*    bot;
-  segpart_t*    topsky;
-  segpart_t*    extra;
+  segpart_t *top;
+  segpart_t *mid;
+  segpart_t *bot;
+  segpart_t *topsky;
+  segpart_t *extra;
 
-  surface_t*    HorizonTop;
-  surface_t*    HorizonBot;
+  surface_t *HorizonTop;
+  surface_t *HorizonBot;
 };
 
 //==========================================================================
@@ -179,8 +179,8 @@ enum
 struct line_t : public TPlane
 {
   // Vertices, from v1 to v2.
-  vertex_t* v1;
-  vertex_t* v2;
+  vertex_t *v1;
+  vertex_t *v2;
 
   // Precalculated v2 - v1 for side checking.
   TVec    dir;
@@ -202,8 +202,8 @@ struct line_t : public TPlane
 
   // Front and back sector.
   // Note: redundant? Can be retrieved from SideDefs.
-  sector_t* frontsector;
-  sector_t* backsector;
+  sector_t *frontsector;
+  sector_t *backsector;
 
   // if == validcount, already checked
   int     validcount;
@@ -263,7 +263,7 @@ struct side_t
   int     MidTexture;
 
   //  Sector the SideDef is facing.
-  sector_t* Sector;
+  sector_t *Sector;
 
   int     LineNum;
 
@@ -317,7 +317,7 @@ struct sec_plane_t : public TPlane
   float   MirrorAlpha;
 
   int     LightSourceSector;
-  VEntity*  SkyBox;
+  VEntity *SkyBox;
 };
 
 struct sec_params_t
@@ -331,15 +331,15 @@ struct sec_params_t
 struct sec_region_t
 {
   //  Linked list of regions in bottom to top order
-  sec_region_t* prev;
-  sec_region_t* next;
+  sec_region_t *prev;
+  sec_region_t *next;
 
   //  Planes
-  sec_plane_t*  floor;
-  sec_plane_t*  ceiling;
+  sec_plane_t *floor;
+  sec_plane_t *ceiling;
 
-  sec_params_t* params;
-  line_t*     extraline;
+  sec_params_t *params;
+  line_t *extraline;
 };
 
 //
@@ -357,16 +357,16 @@ struct sec_region_t
 // As an mobj moves through the world, these nodes are created and
 // destroyed, with the links changed appropriately.
 //
-// For the links, NULL means top or end of list.
+// For the links, nullptr means top or end of list.
 //
 struct msecnode_t
 {
-  sector_t*   Sector; // a sector containing this object
-  VEntity*    Thing;  // this object
-  msecnode_t*   TPrev;  // prev msecnode_t for this thing
-  msecnode_t*   TNext;  // next msecnode_t for this thing
-  msecnode_t*   SPrev;  // prev msecnode_t for this sector
-  msecnode_t*   SNext;  // next msecnode_t for this sector
+  sector_t *Sector; // a sector containing this object
+  VEntity *Thing;  // this object
+  msecnode_t *TPrev;  // prev msecnode_t for this thing
+  msecnode_t *TNext;  // next msecnode_t for this thing
+  msecnode_t *SPrev;  // prev msecnode_t for this sector
+  msecnode_t *SNext;  // next msecnode_t for this sector
   bool      Visited;// killough 4/4/98, 4/7/98: used in search algorithms
 };
 
@@ -406,18 +406,18 @@ struct sector_t
 
   // list of subsectors in sector
   // used to check if client can see this sector (it needs to be updated)
-  subsector_t*  subsectors;
+  subsector_t *subsectors;
 
   //  List of things in sector.
-  VEntity*    ThingList;
-  msecnode_t*   TouchingThingList;
+  VEntity *ThingList;
+  msecnode_t *TouchingThingList;
 
   int       linecount;
-  line_t**    lines;  // [linecount] size
+  line_t **lines;  // [linecount] size
 
   //  Boom's fake floors.
-  sector_t*   heightsec;
-  fakefloor_t*  fakefloors;     //  Info for rendering.
+  sector_t *heightsec;
+  fakefloor_t *fakefloors;     //  Info for rendering.
 
   //  Flags.
   enum
@@ -440,16 +440,16 @@ struct sector_t
   vint32      soundtraversed;
 
   // thing that made a sound (or null)
-  VEntity*    SoundTarget;
+  VEntity *SoundTarget;
 
   // Thinker for reversable actions
-  VThinker*   FloorData;
-  VThinker*   CeilingData;
-  VThinker*   LightingData;
-  VThinker*   AffectorData;
+  VThinker *FloorData;
+  VThinker *CeilingData;
+  VThinker *LightingData;
+  VThinker *AffectorData;
 
   //  Sector action triggers.
-  VEntity*    ActionList;
+  VEntity *ActionList;
 
   vint32      Damage;
 
@@ -474,10 +474,10 @@ struct sector_t
 struct polyobj_t
 {
   int       numsegs;
-  seg_t**     segs;
+  seg_t **segs;
   TVec      startSpot;
-  vertex_t*   originalPts;  // used as the base for the rotations
-  vertex_t*   prevPts;    // use to restore the old point values
+  vertex_t *originalPts;  // used as the base for the rotations
+  vertex_t *prevPts;    // use to restore the old point values
   float     angle;
   int       tag;      // reference tag assigned in HereticEd
   int       bbox[4];
@@ -489,8 +489,8 @@ struct polyobj_t
   };
   vuint32     PolyFlags;
   int       seqType;
-  subsector_t*  subsector;
-  VThinker*   SpecialData;  // pointer a thinker, if the poly is moving
+  subsector_t *subsector;
+  VThinker *SpecialData;  // pointer a thinker, if the poly is moving
 };
 
 //
@@ -498,9 +498,9 @@ struct polyobj_t
 //
 struct polyblock_t
 {
-  polyobj_t*    polyobj;
-  polyblock_t*  prev;
-  polyblock_t*  next;
+  polyobj_t *polyobj;
+  polyblock_t *prev;
+  polyblock_t *next;
 };
 
 struct PolyAnchorPoint_t
@@ -530,7 +530,7 @@ struct seg_t : public TPlane
 
   // Sector references.
   // Could be retrieved from linedef, too.
-  // backsector is NULL for one sided lines
+  // backsector is nullptr for one sided lines
   sector_t  *frontsector;
   sector_t  *backsector;
 
@@ -552,14 +552,14 @@ struct seg_t : public TPlane
 
 struct subregion_t
 {
-  sec_region_t* secregion;
-  subregion_t*  next;
-  sec_plane_t*  floorplane;
-  sec_plane_t*  ceilplane;
-  sec_surface_t*  floor;
-  sec_surface_t*  ceil;
+  sec_region_t *secregion;
+  subregion_t *next;
+  sec_plane_t *floorplane;
+  sec_plane_t *ceilplane;
+  sec_surface_t *floor;
+  sec_surface_t *ceil;
   int       count;
-  drawseg_t*    lines;
+  drawseg_t *lines;
 };
 
 //==========================================================================
@@ -575,21 +575,21 @@ struct subregion_t
 //
 struct subsector_t
 {
-  sector_t*   sector;
-  subsector_t*  seclink;
+  sector_t *sector;
+  subsector_t *seclink;
   int       numlines;
   int       firstline;
-  polyobj_t*    poly;
+  polyobj_t *poly;
 
-  node_t*     parent;
+  node_t *parent;
   int       VisFrame;
   int       SkyVisFrame;
 
-  sector_t* deepref;
+  sector_t *deepref;
 
   vuint32     dlightbits;
   int       dlightframe;
-  subregion_t*  regions;
+  subregion_t *regions;
 };
 
 //==========================================================================
@@ -711,8 +711,8 @@ struct intercept_t
     IF_BackSide = 0x02, // not yet
   };
   vuint32   Flags;
-  VEntity*  thing;
-  line_t*   line;
+  VEntity *thing;
+  line_t *line;
 };
 
 struct linetrace_t
@@ -730,8 +730,8 @@ struct linetrace_t
 
 struct VStateCall
 {
-  VEntity*  Item;
-  VState*   State;
+  VEntity *Item;
+  VState *State;
   vuint8    Result;
 };
 

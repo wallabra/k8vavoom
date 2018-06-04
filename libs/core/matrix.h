@@ -36,21 +36,21 @@ public:
     float m10, float m11, float m12, float m13,
     float m20, float m21, float m22, float m23,
     float m30, float m31, float m32, float m33);
-  VMatrix4(float* m2);
+  VMatrix4(const float *m2);
   float Determinant() const;
   VMatrix4 Inverse() const;
   VMatrix4 Transpose() const;
-  TVec Transform(const TVec& V) const;
-  TVec Transform2(const TVec& V) const;
+  TVec Transform(const TVec &V) const;
+  TVec Transform2(const TVec &V) const;
 
-  float* operator[] (int i)
+  float *operator[] (int i)
   {
     return m[i];
   }
-  const float* operator[] (int i) const
+  const float *operator[] (int i) const
   {
     return m[i];
   }
 
-  friend VMatrix4 operator * (const VMatrix4& M1, const VMatrix4& M2);
+  friend VMatrix4 operator * (const VMatrix4 &M1, const VMatrix4 &M2);
 };

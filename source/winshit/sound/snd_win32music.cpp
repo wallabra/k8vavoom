@@ -107,7 +107,7 @@ public:
     DWORD     Delta;
     byte      Event[3];
     DWORD     ParmCount;
-    const byte*   Parm;
+    const byte *Parm;
   };
 
   struct FTrack
@@ -117,7 +117,7 @@ public:
 
     DWORD     Position;
     DWORD     BytesLeft;
-    const byte*   ImagePtr;
+    const byte *ImagePtr;
     byte      RunningStatus;
 
     DWORD     TrackFlags;
@@ -126,7 +126,7 @@ public:
   bool      MusicPaused;
   float     MusVolume;
 
-  const byte*   MidiImage;
+  const byte *MidiImage;
   DWORD     MidiImageSize;
 
   int       State;        //  Sequencer state (SEQ_S_xxx)
@@ -144,7 +144,7 @@ public:
 
   DWORD     PendingUserEvent;
   DWORD     PendingUserEventCount;
-  const byte*   PendingUserEvents;
+  const byte *PendingUserEvents;
 
   FTrack      Tracks[MAX_TRACKS];
 
@@ -184,7 +184,7 @@ public:
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 IMPLEMENT_MIDI_DEVICE(VMMSystemMidiDevice, MIDIDRV_Default, "Default",
-  "Windows multimedia system midi device", NULL);
+  "Windows multimedia system midi device", nullptr);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -217,7 +217,7 @@ const int VMMSystemMidiDevice::ChanMsgLen[] =
 //==========================================================================
 
 VMMSystemMidiDevice::VMMSystemMidiDevice()
-: MidiImage(NULL)
+: MidiImage(nullptr)
 , MusicPaused(false)
 , MusVolume(-1)
 {
@@ -233,8 +233,8 @@ void VMMSystemMidiDevice::Init()
 {
   guard(VMMSystemMidiDevice::Init);
   State = STATE_NoFile;
-  FreeBuffers = NULL;
-  hMidi = NULL;
+  FreeBuffers = nullptr;
+  hMidi = nullptr;
   BuffersInMMSYSTEM = 0;
   SeqFlags = 0;
 
@@ -312,7 +312,7 @@ void VMMSystemMidiDevice::Tick(float)
 //
 //==========================================================================
 
-void VMMSystemMidiDevice::Play(void* Data, int len, const char* song, bool loop)
+void VMMSystemMidiDevice::Play(void *Data, int len, const char *song, bool loop)
 {
   guard(VMMSystemMidiDevice::Play);
   //  Stop, close, etc. if we're still playing
@@ -322,7 +322,7 @@ void VMMSystemMidiDevice::Play(void* Data, int len, const char* song, bool loop)
   SmfFlags = 0;
   PendingUserEvent = 0;
   PendingUserEventCount = 0;
-  PendingUserEvents = NULL;
+  PendingUserEvents = nullptr;
 
   MidiImage = (byte*)Data;
   MidiImageSize = len;
@@ -426,7 +426,7 @@ void VMMSystemMidiDevice::Stop()
   guard(VMMSystemMidiDevice::Stop);
   if (MidiImage)
   {
-    if (hMidi != NULL)
+    if (hMidi != nullptr)
     {
       if (MusicPaused)
       {
@@ -464,12 +464,12 @@ void VMMSystemMidiDevice::Stop()
       if (hMidi)
       {
         midiStreamClose((HMIDISTRM)hMidi);
-        hMidi = NULL;
+        hMidi = nullptr;
       }
     }
     State = STATE_NoFile;
     Z_Free((void*)MidiImage);
-    MidiImage = NULL;
+    MidiImage = nullptr;
     CurrSong = NAME_None;
   }
   unguard;
@@ -489,7 +489,7 @@ MMRESULT VMMSystemMidiDevice::Preroll()
   EResult       smfrc;
   MMRESULT      mmrc = MMSYSERR_NOERROR;
   MIDIPROPTIMEDIV   mptd;
-  LPMIDIHDR     lpmh = NULL;
+  LPMIDIHDR     lpmh = nullptr;
   UINT        uDeviceID;
 
   if (hMidi)
@@ -515,7 +515,7 @@ MMRESULT VMMSystemMidiDevice::Preroll()
     if ((mmrc = midiStreamOpen((HMIDISTRM*)&hMidi, &uDeviceID, 1,
       (DWORD)StaticCallback, (DWORD)this, CALLBACK_FUNCTION)) != MMSYSERR_NOERROR)
     {
-      hMidi = NULL;
+      hMidi = nullptr;
       goto seq_Preroll_Cleanup;
     }
 
@@ -528,7 +528,7 @@ MMRESULT VMMSystemMidiDevice::Preroll()
       (LPBYTE)&mptd, MIDIPROP_SET | MIDIPROP_TIMEDIV)) != MMSYSERR_NOERROR)
     {
       midiStreamClose((HMIDISTRM)hMidi);
-      hMidi = NULL;
+      hMidi = nullptr;
       mmrc = MCIERR_DEVICE_NOT_READY;
       goto seq_Preroll_Cleanup;
     }
@@ -640,7 +640,7 @@ void VMMSystemMidiDevice::Callback(UINT uMsg, DWORD dw1)
         //  Totally done! Free device.
         midiStreamClose((HMIDISTRM)hMidi);
 
-        hMidi = NULL;
+        hMidi = nullptr;
         State = STATE_Opened;
       }
     }
@@ -892,7 +892,7 @@ bool VMMSystemMidiDevice::InsertParmData(DWORD Delta, LPMIDIHDR lpmh)
 void VMMSystemMidiDevice::SeekStart()
 {
   guard(VMMSystemMidiDevice::SeekStart);
-  FTrack*         ptrk;
+  FTrack *ptrk;
   DWORD                   idxTrack;
 
   MidiPosition = 0;
@@ -929,12 +929,12 @@ bool VMMSystemMidiDevice::BuildFileIndex()
 {
   guard(VMMSystemMidiDevice::BuildFileIndex);
   EResult         smfrc;
-  const FChunkHdr*    pCh;
-  const FMidiFileHdr*   pFh;
+  const FChunkHdr *pCh;
+  const FMidiFileHdr *pFh;
   DWORD         idx;
-  FTrack*         pTrk;
+  FTrack *pTrk;
   DWORD         dwLeft;
-  const byte*       hpbImage;
+  const byte *hpbImage;
   DWORD         idxTrack;
   FEvent          event;
   DWORD         dwLength;
@@ -1093,11 +1093,11 @@ bool VMMSystemMidiDevice::BuildFileIndex()
 //
 //==========================================================================
 
-VMMSystemMidiDevice::EResult VMMSystemMidiDevice::GetNextEvent(FEvent& Event)
+VMMSystemMidiDevice::EResult VMMSystemMidiDevice::GetNextEvent(FEvent &Event)
 {
   guard(VMMSystemMidiDevice::GetNextEvent);
-  FTrack*   pTrk;
-  FTrack*   pTrkFound;
+  FTrack *pTrk;
+  FTrack *pTrkFound;
   DWORD   idxTrack;
   DWORD   tkEventDelta;
   DWORD   tkRelTime;
@@ -1112,7 +1112,7 @@ VMMSystemMidiDevice::EResult VMMSystemMidiDevice::GetNextEvent(FEvent& Event)
     return RES_EndOfFile;
   }
 
-  pTrkFound = NULL;
+  pTrkFound = nullptr;
   tkMinRelTime = MAX_TICKS;
 
   for (pTrk = Tracks, idxTrack = NumTracks; idxTrack--; pTrk++)
@@ -1247,8 +1247,8 @@ VMMSystemMidiDevice::EResult VMMSystemMidiDevice::GetNextEvent(FEvent& Event)
 //
 //==========================================================================
 
-DWORD VMMSystemMidiDevice::GetVDword(const byte* ImagePtr, DWORD Left,
-  DWORD& Out)
+DWORD VMMSystemMidiDevice::GetVDword(const byte *ImagePtr, DWORD Left,
+  DWORD &Out)
 {
   guard(VMMSystemMidiDevice::GetVDword);
   byte    b;

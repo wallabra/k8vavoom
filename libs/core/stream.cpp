@@ -169,7 +169,7 @@ VStream &VStream::operator << (VName &) {
 //  VStream::operator<<
 //
 //==========================================================================
-VStream& VStream::operator << (VObject *&) {
+VStream &VStream::operator << (VObject *&) {
   return *this;
 }
 

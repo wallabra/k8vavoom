@@ -59,20 +59,20 @@ public:
 class VWavAudioCodec : public VAudioCodec
 {
 public:
-  VStream*    Strm;
+  VStream *Strm;
   int       SamplesLeft;
 
   int       WavChannels;
   int       WavBits;
   int       BlockAlign;
 
-  VWavAudioCodec(VStream* InStrm);
+  VWavAudioCodec(VStream *InStrm);
   ~VWavAudioCodec();
-  int Decode(short* Data, int NumSamples);
+  int Decode(short *Data, int NumSamples);
   bool Finished();
   void Restart();
 
-  static VAudioCodec* Create(VStream* InStrm);
+  static VAudioCodec *Create(VStream *InStrm);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -99,7 +99,7 @@ IMPLEMENT_AUDIO_CODEC(VWavAudioCodec, "Wav");
 //
 //==========================================================================
 
-static int FindRiffChunk(VStream& Strm, const char* ID)
+static int FindRiffChunk(VStream &Strm, const char *ID)
 {
   guard(VWavAudioCodec::FindChunk);
   Strm.Seek(12);
@@ -131,7 +131,7 @@ static int FindRiffChunk(VStream& Strm, const char* ID)
 //
 //==========================================================================
 
-void VWaveSampleLoader::Load(sfxinfo_t& Sfx, VStream& Strm)
+void VWaveSampleLoader::Load(sfxinfo_t &Sfx, VStream &Strm)
 {
   guard(VWaveSampleLoader::Load);
   //  Check header to see if it's a wave file.
@@ -182,15 +182,15 @@ void VWaveSampleLoader::Load(sfxinfo_t& Sfx, VStream& Strm)
   Sfx.Data = Z_Malloc(Sfx.DataSize);
 
   //  Read wav data.
-  void* WavData = Z_Malloc(DataSize);
+  void *WavData = Z_Malloc(DataSize);
   Strm.Serialise(WavData, DataSize);
 
   //  Copy sample data.
   DataSize /= BlockAlign;
   if (WavBits == 8)
   {
-    byte* pSrc = (byte*)WavData;
-    byte* pDst = (byte*)Sfx.Data;
+    byte *pSrc = (byte*)WavData;
+    byte *pDst = (byte*)Sfx.Data;
     for (int i = 0; i < DataSize; i++, pSrc += BlockAlign, pDst++)
     {
       *pDst = *pSrc;
@@ -198,8 +198,8 @@ void VWaveSampleLoader::Load(sfxinfo_t& Sfx, VStream& Strm)
   }
   else
   {
-    byte* pSrc = (byte*)WavData;
-    short* pDst = (short*)Sfx.Data;
+    byte *pSrc = (byte*)WavData;
+    short *pDst = (short*)Sfx.Data;
     for (int i = 0; i < DataSize; i++, pSrc += BlockAlign, pDst++)
     {
       *pDst = LittleShort(*(short*)pSrc);
@@ -216,7 +216,7 @@ void VWaveSampleLoader::Load(sfxinfo_t& Sfx, VStream& Strm)
 //
 //==========================================================================
 
-VWavAudioCodec::VWavAudioCodec(VStream* InStrm)
+VWavAudioCodec::VWavAudioCodec(VStream *InStrm)
 : Strm(InStrm)
 , SamplesLeft(-1)
 {
@@ -262,7 +262,7 @@ VWavAudioCodec::~VWavAudioCodec()
   {
     Strm->Close();
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
   }
   //unguard;
 }
@@ -273,7 +273,7 @@ VWavAudioCodec::~VWavAudioCodec()
 //
 //==========================================================================
 
-int VWavAudioCodec::Decode(short* Data, int NumSamples)
+int VWavAudioCodec::Decode(short *Data, int NumSamples)
 {
   guard(VWavAudioCodec::Decode);
   int CurSample = 0;
@@ -288,10 +288,10 @@ int VWavAudioCodec::Decode(short* Data, int NumSamples)
     Strm->Serialise(Buf, ReadSamples * BlockAlign);
     for (int i = 0; i < 2; i++)
     {
-      byte* pSrc = Buf;
+      byte *pSrc = Buf;
       if (i && WavChannels > 1)
         pSrc += WavBits / 8;
-      short* pDst = Data + CurSample * 2 + i;
+      short *pDst = Data + CurSample * 2 + i;
       if (WavBits == 8)
       {
         for (int j = 0; j < ReadSamples; j++, pSrc += BlockAlign, pDst += 2)
@@ -344,7 +344,7 @@ void VWavAudioCodec::Restart()
 //
 //==========================================================================
 
-VAudioCodec* VWavAudioCodec::Create(VStream* InStrm)
+VAudioCodec *VWavAudioCodec::Create(VStream *InStrm)
 {
   guard(VWavAudioCodec::Create);
   char Header[12];
@@ -353,15 +353,15 @@ VAudioCodec* VWavAudioCodec::Create(VStream* InStrm)
   if (!memcmp(Header, "RIFF", 4) && !memcmp(Header + 8, "WAVE", 4))
   {
     //  It's a WAVE file.
-    VWavAudioCodec* Codec = new VWavAudioCodec(InStrm);
+    VWavAudioCodec *Codec = new VWavAudioCodec(InStrm);
     if (Codec->SamplesLeft != -1)
     {
       return Codec;
     }
     //  File seams to be broken.
     delete Codec;
-    Codec = NULL;
+    Codec = nullptr;
   }
-  return NULL;
+  return nullptr;
   unguard;
 }

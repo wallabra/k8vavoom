@@ -62,9 +62,9 @@ struct lumpinfo_t
 //==========================================================================
 
 VWadFile::VWadFile()
-: Stream(NULL)
+: Stream(nullptr)
 , NumLumps(0)
-, LumpInfo(NULL)
+, LumpInfo(nullptr)
 {
 }
 
@@ -85,16 +85,16 @@ VWadFile::~VWadFile()
 //
 //==========================================================================
 
-void VWadFile::Open(const VStr& FileName, const VStr& AGwaDir, bool FixVoices,
-  VStream* InStream)
+void VWadFile::Open(const VStr &FileName, const VStr &AGwaDir, bool FixVoices,
+  VStream *InStream)
 {
   guard(VWadFile::Open);
   wadinfo_t   header;
-  lumpinfo_t*   lump_p;
+  lumpinfo_t *lump_p;
   int       i, j;
   int       length;
-  filelump_t*   fileinfo;
-  filelump_t*   fi_p;
+  filelump_t *fileinfo;
+  filelump_t *fi_p;
 
   Name = FileName;
   GwaDir = AGwaDir;
@@ -171,7 +171,7 @@ void VWadFile::Open(const VStr& FileName, const VStr& AGwaDir, bool FixVoices,
 //
 //==========================================================================
 
-void VWadFile::OpenSingleLump(const VStr& FileName)
+void VWadFile::OpenSingleLump(const VStr &FileName)
 {
   guard(VWadFile::OpenSingleLump);
   // open the file and add to directory
@@ -209,7 +209,7 @@ void VWadFile::Close()
   if (LumpInfo)
   {
     delete[] LumpInfo;
-    LumpInfo = NULL;
+    LumpInfo = nullptr;
   }
   NumLumps = 0;
   Name.Clean();
@@ -217,7 +217,7 @@ void VWadFile::Close()
   if (Stream)
   {
     delete Stream;
-    Stream = NULL;
+    Stream = nullptr;
   }
   unguard;
 }
@@ -261,7 +261,7 @@ int VWadFile::CheckNumForName(VName LumpName, EWadNamespace InNS)
 //
 //==========================================================================
 
-void VWadFile::ReadFromLump(int lump, void* dest, int pos, int size)
+void VWadFile::ReadFromLump(int lump, void *dest, int pos, int size)
 {
   guard(VWadFile::ReadFromLump);
   if ((vuint32)lump >= (vuint32)NumLumps)
@@ -313,7 +313,7 @@ void VWadFile::InitNamespace(EWadNamespace NS, VName Start, VName End,
   bool InNS = false;
   for (int i = 0; i < NumLumps; i++)
   {
-    lumpinfo_t& L = LumpInfo[i];
+    lumpinfo_t &L = LumpInfo[i];
 
     //  Skip if lump is already in other namespace.
     if (L.Namespace != WADNS_Global)
@@ -354,13 +354,13 @@ void VWadFile::FixVoiceNamespaces()
   guard(VWadFile::FixVoiceNamespaces);
   for (int i = 0; i < NumLumps; i++)
   {
-    lumpinfo_t& L = LumpInfo[i];
+    lumpinfo_t &L = LumpInfo[i];
 
     //  Skip if lump is already in other namespace.
     if (L.Namespace != WADNS_Global)
       continue;
 
-    const char* LName = *L.Name;
+    const char *LName = *L.Name;
     if (LName[0] == 'v' && LName[1] == 'o' && LName[2] == 'c' &&
       LName[3] >= '0' && LName[3] <= '9' &&
       (LName[4] == 0 || (LName[4] >= '0' && LName[4] <= '9' &&
@@ -432,7 +432,7 @@ int VWadFile::IterateNS(int Start, EWadNamespace NS)
 //
 //==========================================================================
 
-void VWadFile::BuildGLNodes(VSearchPath* GlWad)
+void VWadFile::BuildGLNodes(VSearchPath *GlWad)
 {
   guard(VWadFile::BuildGLNodes);
 #ifdef CLIENT
@@ -458,7 +458,7 @@ void VWadFile::BuildGLNodes(VSearchPath* GlWad)
   GLVis_BuildPVS(*Name, *gwaname);
 
   // Add GWA file
-  ((VWadFile*)GlWad)->Open(gwaname, VStr(), false, NULL);
+  ((VWadFile*)GlWad)->Open(gwaname, VStr(), false, nullptr);
 #endif
   unguard;
 }
@@ -469,7 +469,7 @@ void VWadFile::BuildGLNodes(VSearchPath* GlWad)
 //
 //==========================================================================
 
-void VWadFile::BuildPVS(VSearchPath* BaseWad)
+void VWadFile::BuildPVS(VSearchPath *BaseWad)
 {
   guard(VWadFile::BuildPVS);
 #ifdef CLIENT
@@ -481,10 +481,10 @@ void VWadFile::BuildPVS(VSearchPath* BaseWad)
   Close();
 
   // Build PVS
-  GLVis_BuildPVS(*name, BaseWad != this ? *glname : NULL);
+  GLVis_BuildPVS(*name, BaseWad != this ? *glname : nullptr);
 
   // Add GWA file
-  Open(glname, VStr(), false, NULL);
+  Open(glname, VStr(), false, nullptr);
 #endif
   unguard;
 }
@@ -495,14 +495,14 @@ void VWadFile::BuildPVS(VSearchPath* BaseWad)
 //
 //==========================================================================
 
-VStream* VWadFile::CreateLumpReaderNum(int lump)
+VStream *VWadFile::CreateLumpReaderNum(int lump)
 {
   guard(VWadFile::CreateLumpReaderNum);
   check((vuint32)lump < (vuint32)NumLumps);
   lumpinfo_t &l = LumpInfo[lump];
 
   // read the lump in
-  void* ptr = Z_Malloc(l.Size);
+  void *ptr = Z_Malloc(l.Size);
   if (l.Size)
   {
     Stream->Seek(l.Position);
@@ -511,7 +511,7 @@ VStream* VWadFile::CreateLumpReaderNum(int lump)
 
 
   //  Create stream.
-  VStream* S = new VMemoryStream(ptr, l.Size);
+  VStream *S = new VMemoryStream(ptr, l.Size);
   Z_Free(ptr);
   return S;
   unguard;
@@ -529,7 +529,7 @@ void VWadFile::RenameSprites(const TArray<VSpriteRename>& A,
   guard(VWadFile::RenameSprites);
   for (int i = 0; i < NumLumps; i++)
   {
-    lumpinfo_t& L = LumpInfo[i];
+    lumpinfo_t &L = LumpInfo[i];
     if (L.Namespace != WADNS_Sprites)
     {
       continue;
@@ -570,7 +570,7 @@ bool VWadFile::FileExists(const VStr&)
   return false;
 }
 
-VStream* VWadFile::OpenFileRead(const VStr&)
+VStream *VWadFile::OpenFileRead(const VStr&)
 {
-  return NULL;
+  return nullptr;
 }

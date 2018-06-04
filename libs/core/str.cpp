@@ -371,7 +371,7 @@ void VStr::SetContent (const char *s, int len) {
 }
 
 
-bool VStr::StartsWith (const char* s) const {
+bool VStr::StartsWith (const char *s) const {
   guard(VStr::StartsWith);
   if (!s || !s[0]) return false;
   size_t l = Length(s);
@@ -390,7 +390,7 @@ bool VStr::StartsWith (const VStr &s) const {
 }
 
 
-bool VStr::EndsWith (const char* s) const {
+bool VStr::EndsWith (const char *s) const {
   guard(VStr::EndsWith);
   if (!s || !s[0]) return false;
   size_t l = Length(s);
@@ -497,7 +497,7 @@ int VStr::LastIndexOf (char c) const {
 }
 
 
-int VStr::LastIndexOf (const char* s) const {
+int VStr::LastIndexOf (const char *s) const {
   guard(VStr::LastIndexOf);
   if (!s || !s[0]) return -1;
   int sl = int(Length(s));
@@ -624,7 +624,7 @@ void VStr::Split (const char *chars, TArray<VStr>& A) const {
   int len = int(length());
   for (int i = 0; i <= len; ++i) {
     bool DoSplit = (i == len);
-    for (const char* pChar = chars; !DoSplit && *pChar; ++pChar) DoSplit = (data[i] == *pChar);
+    for (const char *pChar = chars; !DoSplit && *pChar; ++pChar) DoSplit = (data[i] == *pChar);
     if (DoSplit) {
       if (start != i) A.Append(VStr(*this, start, i-start));
       start = i+1;
@@ -677,7 +677,7 @@ void VStr::SplitPath (TArray<VStr>& arr) const {
 bool VStr::IsValidUtf8 () const {
   guard(VStr::IsValidUtf8);
   if (!data) return true;
-  for (const char* c = data; *c;) {
+  for (const char *c = data; *c;) {
     if ((*c&0x80) == 0) {
       ++c;
     } else if ((*c&0xe0) == 0xc0) {
@@ -711,7 +711,7 @@ VStr VStr::EvalEscapeSequences () const {
   guard(VStr::EvalEscapeSequences);
   VStr res;
   char val;
-  for (const char* c = data; *c; ++c) {
+  for (const char *c = data; *c; ++c) {
     if (*c == '\\') {
       ++c;
       switch (*c) {
@@ -928,11 +928,11 @@ VStr VStr::DefaultExtension (const VStr &extension) const {
 VStr VStr::FixFileSlashes () const {
   guard(VStr::FixFileSlashes);
   bool hasWork = false;
-  for (const char* c = data; *c; ++c) if (*c == '\\') { hasWork = true; break; }
+  for (const char *c = data; *c; ++c) if (*c == '\\') { hasWork = true; break; }
   if (hasWork) {
     VStr res(*this);
     res.MakeMutable();
-    for (char* c = res.data; *c; ++c) if (*c == '\\') *c = '/';
+    for (char *c = res.data; *c; ++c) if (*c == '\\') *c = '/';
     return res;
   } else {
     return VStr(*this);
@@ -945,7 +945,7 @@ size_t VStr::Utf8Length (const char *s) {
   guard(VStr::Utf8Length);
   size_t count = 0;
   if (s) {
-    for (const char* c = s; *c; ++c) if ((*c&0xc0) != 0x80) ++count;
+    for (const char *c = s; *c; ++c) if ((*c&0xc0) != 0x80) ++count;
   }
   return count;
   unguard;
@@ -956,7 +956,7 @@ size_t VStr::ByteLengthForUtf8 (const char *s, size_t N) {
   guard(VStr::ByteLengthForUtf8);
   if (s) {
     size_t count = 0;
-    const char* c;
+    const char *c;
     for (c = s; *c; ++c) {
       if ((*c&0xc0) != 0x80) {
         if (count == N) return c-s;

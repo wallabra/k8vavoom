@@ -35,23 +35,23 @@ class VXmlNode
 public:
   VStr          Name;
   VStr          Value;
-  VXmlNode*       Parent;
-  VXmlNode*       FirstChild;
-  VXmlNode*       LastChild;
-  VXmlNode*       PrevSibling;
-  VXmlNode*       NextSibling;
+  VXmlNode *Parent;
+  VXmlNode *FirstChild;
+  VXmlNode *LastChild;
+  VXmlNode *PrevSibling;
+  VXmlNode *NextSibling;
   TArray<VXmlAttribute> Attributes;
 
   VXmlNode();
   ~VXmlNode();
 
-  VXmlNode* FindChild(const char*) const;
-  VXmlNode* FindChild(const VStr&) const;
-  VXmlNode* GetChild(const char*) const;
-  VXmlNode* GetChild(const VStr&) const;
-  VXmlNode* FindNext(const char*) const;
-  VXmlNode* FindNext(const VStr&) const;
-  VXmlNode* FindNext() const;
+  VXmlNode *FindChild(const char*) const;
+  VXmlNode *FindChild(const VStr&) const;
+  VXmlNode *GetChild(const char*) const;
+  VXmlNode *GetChild(const VStr&) const;
+  VXmlNode *FindNext(const char*) const;
+  VXmlNode *FindNext(const VStr&) const;
+  VXmlNode *FindNext() const;
   bool HasAttribute(const char*) const;
   bool HasAttribute(const VStr&) const;
   VStr GetAttribute(const char*, bool = true) const;
@@ -67,7 +67,7 @@ public:
   void Parse(VStream&, VStr);
 
 private:
-  char*         Buf;
+  char *Buf;
   int           CurPos;
   int           EndPos;
 

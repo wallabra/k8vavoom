@@ -76,14 +76,14 @@ struct spriteframe_t
 struct spritedef_t
 {
   int       numframes;
-  spriteframe_t*  spriteframes;
+  spriteframe_t *spriteframes;
 };
 
 struct segpart_t
 {
-  segpart_t*    next;
+  segpart_t *next;
   texinfo_t   texinfo;
-  surface_t*    surfs;
+  surface_t *surfs;
   float     frontTopDist;
   float     frontBotDist;
   float     backTopDist;
@@ -94,13 +94,13 @@ struct segpart_t
 
 struct sec_surface_t
 {
-  sec_plane_t*  secplane;
+  sec_plane_t *secplane;
   texinfo_t   texinfo;
   float     dist;
   float     XScale;
   float     YScale;
   float     Angle;
-  surface_t*    surfs;
+  surface_t *surfs;
 };
 
 struct fakefloor_t
@@ -139,9 +139,9 @@ struct decal_t
     Fuzzy = 0x0200U,
     SideDefOne = 0x0800U,
   };
-  decal_t* next; // in this seg
-  seg_t* seg;
-  sector_t* bsec; // backsector for SlideXXX
+  decal_t *next; // in this seg
+  seg_t *seg;
+  sector_t *bsec; // backsector for SlideXXX
   VName dectype;
   VName picname;
   int texture;
@@ -157,9 +157,9 @@ struct decal_t
   float origAlpha; // for animators
   float alpha; // decal alpha
   float addAlpha; // alpha for additive translucency (not supported yet)
-  VDecalAnim* animator; // decal animator (can be nullptr)
-  decal_t* prevanimated; // so we can skip static decals
-  decal_t* nextanimated; // so we can skip static decals
+  VDecalAnim *animator; // decal animator (can be nullptr)
+  decal_t *prevanimated; // so we can skip static decals
+  decal_t *nextanimated; // so we can skip static decals
 };
 
 class VSky
@@ -186,9 +186,9 @@ public:
 class VSkyPortal : public VPortal
 {
 public:
-  VSky*     Sky;
+  VSky *Sky;
 
-  VSkyPortal(VRenderLevelShared* ARLev, VSky* ASky)
+  VSkyPortal(VRenderLevelShared *ARLev, VSky *ASky)
   : VPortal(ARLev)
   , Sky(ASky)
   {}
@@ -201,9 +201,9 @@ public:
 class VSkyBoxPortal : public VPortal
 {
 public:
-  VEntity*    Viewport;
+  VEntity *Viewport;
 
-  VSkyBoxPortal(VRenderLevelShared* ARLev, VEntity* AViewport)
+  VSkyBoxPortal(VRenderLevelShared *ARLev, VEntity *AViewport)
   : VPortal(ARLev)
   , Viewport(AViewport)
   {}
@@ -215,9 +215,9 @@ public:
 class VSectorStackPortal : public VPortal
 {
 public:
-  VEntity*    Viewport;
+  VEntity *Viewport;
 
-  VSectorStackPortal(VRenderLevelShared* ARLev, VEntity* AViewport)
+  VSectorStackPortal(VRenderLevelShared *ARLev, VEntity *AViewport)
   : VPortal(ARLev)
   , Viewport(AViewport)
   {}
@@ -228,9 +228,9 @@ public:
 class VMirrorPortal : public VPortal
 {
 public:
-  TPlane*     Plane;
+  TPlane *Plane;
 
-  VMirrorPortal(VRenderLevelShared* ARLev, TPlane* APlane)
+  VMirrorPortal(VRenderLevelShared *ARLev, TPlane *APlane)
   : VPortal(ARLev)
   , Plane(APlane)
   {}
@@ -276,8 +276,8 @@ protected:
     TVec      Verts[4];
     union
     {
-      surface_t*  surf;
-      VEntity*  Ent;
+      surface_t *surf;
+      VEntity *Ent;
     };
     int       lump;
     TVec      normal;
@@ -300,7 +300,7 @@ protected:
 
   struct world_surf_t
   {
-    surface_t*    Surf;
+    surface_t *Surf;
     vuint8      Type;
   };
 
@@ -312,18 +312,18 @@ protected:
     int       leafnum;
   };
 
-  VLevel*     Level;
+  VLevel *Level;
 
-  VEntity*    ViewEnt;
+  VEntity *ViewEnt;
 
   int       FrustumIndexes[5][6];
   int       MirrorLevel;
   int       PortalLevel;
   int       VisSize;
-  vuint8*     BspVis;
+  vuint8 *BspVis;
 
-  subsector_t*  r_viewleaf;
-  subsector_t*  r_oldviewleaf;
+  subsector_t *r_viewleaf;
+  subsector_t *r_oldviewleaf;
   float     old_fov;
   int       prev_aspect_ratio;
 
@@ -333,9 +333,9 @@ protected:
   int       ColourMap;
 
   int       NumParticles;
-  particle_t*   Particles;
-  particle_t*   ActiveParticles;
-  particle_t*   FreeParticles;
+  particle_t *Particles;
+  particle_t *ActiveParticles;
+  particle_t *FreeParticles;
 
   //  Sky variables
   int       CurrentSky1Texture;
@@ -350,16 +350,16 @@ protected:
   TArray<VPortal*>    Portals;
   TArray<VSky*>     SideSkies;
 
-  trans_sprite_t* trans_sprites;
+  trans_sprite_t *trans_sprites;
   trans_sprite_t  MainTransSprites[MAX_TRANS_SPRITES];
 
   sec_plane_t   sky_plane;
   float     skyheight;
-  surface_t*    free_wsurfs;
-  void*     AllocatedWSurfBlocks;
-  subregion_t*  AllocatedSubRegions;
-  drawseg_t*    AllocatedDrawSegs;
-  segpart_t*    AllocatedSegParts;
+  surface_t *free_wsurfs;
+  void *AllocatedWSurfBlocks;
+  subregion_t *AllocatedSubRegions;
+  drawseg_t *AllocatedDrawSegs;
+  segpart_t *AllocatedSegParts;
 
   //  Light variables
   TArray<light_t> Lights;
@@ -374,15 +374,15 @@ protected:
   int             CurrLightsNumber;
   int             CurrShadowsNumber;
 
-  VRenderLevelShared(VLevel* ALevel);
+  VRenderLevelShared(VLevel *ALevel);
   ~VRenderLevelShared();
 
   virtual void RenderScene(const refdef_t*, const VViewClipper*) = 0;
   virtual void PushDlights() = 0;
   virtual vuint32 LightPoint(const TVec &p) = 0;
   virtual void InitSurfs(surface_t*, texinfo_t*, TPlane*, subsector_t*) = 0;
-  virtual surface_t* SubdivideFace(surface_t*, const TVec&, const TVec*) = 0;
-  virtual surface_t* SubdivideSeg(surface_t*, const TVec&, const TVec*) = 0;
+  virtual surface_t *SubdivideFace(surface_t*, const TVec&, const TVec*) = 0;
+  virtual surface_t *SubdivideSeg(surface_t*, const TVec&, const TVec*) = 0;
   virtual void QueueWorldSurface(seg_t*, surface_t*) = 0;
   virtual void FreeSurfCache(surfcache_t*);
 
@@ -395,7 +395,7 @@ protected:
   void UpdateCameraTexture(VEntity*, int, int);
   vuint32 GetFade(sec_region_t*);
   void PrecacheLevel();
-  VTextureTranslation* GetTranslation(int);
+  VTextureTranslation *GetTranslation(int);
   void BuildPlayerTranslations();
 
   //  Particles
@@ -427,11 +427,11 @@ protected:
   //  Surf methods
   void SetupSky();
   void FlushSurfCaches(surface_t*);
-  sec_surface_t* CreateSecSurface(subsector_t*, sec_plane_t*);
+  sec_surface_t *CreateSecSurface(subsector_t*, sec_plane_t*);
   void UpdateSecSurface(sec_surface_t*, sec_plane_t*, subsector_t*);
-  surface_t* NewWSurf();
+  surface_t *NewWSurf();
   void FreeWSurfs(surface_t*);
-  surface_t* CreateWSurfs(TVec*, texinfo_t*, seg_t*, subsector_t*);
+  surface_t *CreateWSurfs(TVec*, texinfo_t*, seg_t*, subsector_t*);
   int CountSegParts(seg_t*);
   void CreateSegParts(drawseg_t*, seg_t*);
   void UpdateRowOffset(segpart_t*, float);
@@ -475,7 +475,7 @@ protected:
   void DrawCrosshair();
 
 public:
-  particle_t* NewParticle();
+  particle_t *NewParticle();
 
   void RenderPlayerView();
 
@@ -483,7 +483,7 @@ public:
   void SetupFakeFloors(sector_t*);
 
   void AddStaticLight(const TVec&, float, vuint32);
-  dlight_t* AllocDlight(VThinker*);
+  dlight_t *AllocDlight(VThinker*);
   void DecayLights(float);
 };
 
@@ -494,8 +494,8 @@ private:
   int       c_seg_div;
 
   //  Surface cache.
-  surfcache_t*  freeblocks;
-  surfcache_t*  cacheblocks[NUM_BLOCK_SURFS];
+  surfcache_t *freeblocks;
+  surfcache_t *cacheblocks[NUM_BLOCK_SURFS];
   surfcache_t   blockbuf[NUM_CACHE_BLOCKS];
 
   //  General
@@ -503,8 +503,8 @@ private:
 
   //  Surf methods
   void InitSurfs(surface_t*, texinfo_t*, TPlane*, subsector_t*);
-  surface_t* SubdivideFace(surface_t*, const TVec&, const TVec*);
-  surface_t* SubdivideSeg(surface_t*, const TVec&, const TVec*);
+  surface_t *SubdivideFace(surface_t*, const TVec&, const TVec*);
+  surface_t *SubdivideSeg(surface_t*, const TVec&, const TVec*);
   void UpdateSubsector(int, float*);
   void UpdateBSPNode(int, float*);
   void UpdateWorld(const refdef_t*, const VViewClipper*);
@@ -521,7 +521,7 @@ private:
   void PushDlights();
   void FlushCaches();
   void FlushOldCaches();
-  surfcache_t* AllocBlock(int, int);
+  surfcache_t *AllocBlock(int, int);
   surfcache_t *FreeBlock(surfcache_t*, bool);
   void FreeSurfCache(surfcache_t*);
   void CacheSurface(surface_t*);
@@ -543,8 +543,8 @@ class VAdvancedRenderLevel : public VRenderLevelShared
 {
 private:
   VViewClipper      LightClip;
-  byte*         LightVis;
-  byte*         LightBspVis;
+  byte *LightVis;
+  byte *LightBspVis;
   vuint32         CurrLightColour;
 
   //  General
@@ -552,8 +552,8 @@ private:
 
   //  Surf methods
   void InitSurfs(surface_t*, texinfo_t*, TPlane*, subsector_t*);
-  surface_t* SubdivideFace(surface_t*, const TVec&, const TVec*);
-  surface_t* SubdivideSeg(surface_t*, const TVec&, const TVec*);
+  surface_t *SubdivideFace(surface_t*, const TVec&, const TVec*);
+  surface_t *SubdivideSeg(surface_t*, const TVec&, const TVec*);
   void UpdateSubsector(int, float*);
   void UpdateBSPNode(int, float*);
   void UpdateWorld(const refdef_t*, const VViewClipper*);
@@ -566,23 +566,23 @@ private:
   void QueueWorldSurface(seg_t*, surface_t*);
   void RenderWorld(const refdef_t*, const VViewClipper*);
 
-  void BuildLightVis(int bspnum, float* bbox);
-  void DrawShadowSurfaces(surface_t* InSurfs, texinfo_t *texinfo,
+  void BuildLightVis(int bspnum, float *bbox);
+  void DrawShadowSurfaces(surface_t *InSurfs, texinfo_t *texinfo,
     bool CheckSkyBoxAlways, bool LightCanCross);
-  void RenderShadowLine(drawseg_t* dseg);
-  void RenderShadowSecSurface(sec_surface_t* ssurf, VEntity* SkyBox);
-  void RenderShadowSubRegion(subregion_t* region);
+  void RenderShadowLine(drawseg_t *dseg);
+  void RenderShadowSecSurface(sec_surface_t *ssurf, VEntity *SkyBox);
+  void RenderShadowSubRegion(subregion_t *region);
   void RenderShadowSubsector(int num);
-  void RenderShadowBSPNode(int bspnum, float* bbox, bool LimitLights);
-  void DrawLightSurfaces(surface_t* InSurfs, texinfo_t *texinfo,
-    VEntity* SkyBox, bool CheckSkyBoxAlways, bool LightCanCross);
-  void RenderLightLine(drawseg_t* dseg);
-  void RenderLightSecSurface(sec_surface_t* ssurf, VEntity* SkyBox);
-  void RenderLightSubRegion(subregion_t* region);
+  void RenderShadowBSPNode(int bspnum, float *bbox, bool LimitLights);
+  void DrawLightSurfaces(surface_t *InSurfs, texinfo_t *texinfo,
+    VEntity *SkyBox, bool CheckSkyBoxAlways, bool LightCanCross);
+  void RenderLightLine(drawseg_t *dseg);
+  void RenderLightSecSurface(sec_surface_t *ssurf, VEntity *SkyBox);
+  void RenderLightSubRegion(subregion_t *region);
   void RenderLightSubsector(int num);
-  void RenderLightBSPNode(int bspnum, float* bbox, bool LimitLights);
-  void RenderLightShadows(const refdef_t* RD, const VViewClipper* Range,
-    TVec& Pos, float Radius, vuint32 Colour, bool LimitLights);
+  void RenderLightBSPNode(int bspnum, float *bbox, bool LimitLights);
+  void RenderLightShadows(const refdef_t *RD, const VViewClipper *Range,
+    TVec &Pos, float Radius, vuint32 Colour, bool LimitLights);
 
   //  Things
   void ResetMobjsLightCount();
@@ -643,7 +643,7 @@ extern refdef_t     refdef;
 extern VCvarI     aspect_ratio;
 extern VCvarB     r_interpolate_frames;
 
-extern VTextureTranslation**    TranslationTables;
+extern VTextureTranslation **TranslationTables;
 extern int              NumTranslationTables;
 extern VTextureTranslation      IceTranslation;
 extern TArray<VTextureTranslation*> DecorateTranslations;

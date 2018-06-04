@@ -29,12 +29,12 @@
 
 class VSdlOpenGLDrawer : public VOpenGLDrawer {
 public:
-  SDL_Window* hw_window;
+  SDL_Window *hw_window;
   SDL_GLContext hw_glctx;
 
   void Init ();
   bool SetResolution (int, int, bool);
-  void* GetExtFuncPtr (const char *);
+  void *GetExtFuncPtr (const char *);
   bool SetAdaptiveSwap ();
   void Update ();
   void Shutdown ();
@@ -174,10 +174,10 @@ void *VSdlOpenGLDrawer::GetExtFuncPtr (const char *name) {
 //==========================================================================
 enum { GLX_LATE_SWAPS_TEAR_EXT = 0x20F3 };
 
-typedef const char *(APIENTRY* glXQueryExtensionsString)(void* dpy, int screen);
-typedef void (APIENTRY* glXSwapIntervalEXT) (void* dpy, /*GLXDrawable*/long drawable, int interval); //64bit?
-typedef void* (APIENTRY* glXGetCurrentDisplay) ();
-typedef long (APIENTRY* glXGetCurrentDrawable) ();
+typedef const char *(APIENTRY *glXQueryExtensionsString)(void *dpy, int screen);
+typedef void (APIENTRY *glXSwapIntervalEXT) (void *dpy, /*GLXDrawable*/long drawable, int interval); //64bit?
+typedef void *(APIENTRY *glXGetCurrentDisplay) ();
+typedef long (APIENTRY *glXGetCurrentDrawable) ();
 
 bool VSdlOpenGLDrawer::SetAdaptiveSwap () {
   guard(VSdlOpenGLDrawer::SetAdaptiveSwap);

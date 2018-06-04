@@ -99,7 +99,7 @@ replication
 //
 //==========================================================================
 
-override void OnMapSpawn(mthing_t* mthing)
+override void OnMapSpawn(mthing_t *mthing)
 {
   if (!mthing)
   {
@@ -584,7 +584,7 @@ void DoPickupSpecial(EntityEx Toucher)
   if (Special)
   {
     Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2],
-      Args[3], Args[4], NULL, 0, Toucher);
+      Args[3], Args[4], nullptr, 0, Toucher);
     Special = 0;
   }
 }

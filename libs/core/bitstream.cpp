@@ -65,7 +65,7 @@ VBitStreamWriter::VBitStreamWriter(vint32 AMax)
 //
 //==========================================================================
 
-void VBitStreamWriter::Serialise(void* data, vint32 length)
+void VBitStreamWriter::Serialise(void *data, vint32 length)
 {
   SerialiseBits(data, length << 3);
 }
@@ -76,7 +76,7 @@ void VBitStreamWriter::Serialise(void* data, vint32 length)
 //
 //==========================================================================
 
-void VBitStreamWriter::SerialiseBits(void* Src, vint32 Length)
+void VBitStreamWriter::SerialiseBits(void *Src, vint32 Length)
 {
   guard(VBitStreamWriter::SerialiseBits);
   if (!Length)
@@ -115,8 +115,8 @@ void VBitStreamWriter::SerialiseBits(void* Src, vint32 Length)
   {
     if (Pos & 7)
     {
-      vuint8* pSrc = (vuint8*)Src;
-      vuint8* pDst = (vuint8*)Data.Ptr() + (Pos >> 3);
+      vuint8 *pSrc = (vuint8*)Src;
+      vuint8 *pDst = (vuint8*)Data.Ptr() + (Pos >> 3);
       for (int i = 0; i < Bytes; i++, pSrc++, pDst++)
       {
         pDst[0] |= *pSrc << (Pos & 7);
@@ -156,7 +156,7 @@ void VBitStreamWriter::SerialiseBits(void* Src, vint32 Length)
 //
 //==========================================================================
 
-void VBitStreamWriter::SerialiseInt(vuint32& Value, vuint32 Max)
+void VBitStreamWriter::SerialiseInt(vuint32 &Value, vuint32 Max)
 {
   guardSlow(VBitStreamWriter::SerialiseInt);
   WriteInt(Value, Max);
@@ -231,7 +231,7 @@ void VBitStreamWriter::WriteInt(vuint32 Val, vuint32 Maximum)
 //
 //==========================================================================
 
-VBitStreamReader::VBitStreamReader(vuint8* Src, vint32 Length)
+VBitStreamReader::VBitStreamReader(vuint8 *Src, vint32 Length)
 : Num(Length)
 , Pos(0)
 {
@@ -249,7 +249,7 @@ VBitStreamReader::VBitStreamReader(vuint8* Src, vint32 Length)
 //
 //==========================================================================
 
-void VBitStreamReader::SetData(VBitStreamReader& Src, int Length)
+void VBitStreamReader::SetData(VBitStreamReader &Src, int Length)
 {
   guard(VBitStreamReader::SetData);
   Data.SetNum((Length + 7) >> 3);
@@ -265,7 +265,7 @@ void VBitStreamReader::SetData(VBitStreamReader& Src, int Length)
 //
 //==========================================================================
 
-void VBitStreamReader::Serialise(void* AData, int ALen)
+void VBitStreamReader::Serialise(void *AData, int ALen)
 {
   SerialiseBits(AData, ALen << 3);
 }
@@ -276,7 +276,7 @@ void VBitStreamReader::Serialise(void* AData, int ALen)
 //
 //==========================================================================
 
-void VBitStreamReader::SerialiseBits(void* Dst, int Length)
+void VBitStreamReader::SerialiseBits(void *Dst, int Length)
 {
   guard(VBitStreamReader::SerialiseBits);
   if (!Length)
@@ -335,7 +335,7 @@ void VBitStreamReader::SerialiseBits(void* Dst, int Length)
 //
 //==========================================================================
 
-void VBitStreamReader::SerialiseInt(vuint32& Value, vuint32 Max)
+void VBitStreamReader::SerialiseInt(vuint32 &Value, vuint32 Max)
 {
   guardSlow(VBitStreamReader::SerialiseInt);
   Value = ReadInt(Max);

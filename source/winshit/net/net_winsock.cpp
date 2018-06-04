@@ -55,7 +55,7 @@ public:
   int Read(int, vuint8*, int, sockaddr_t*);
   int Write(int, vuint8*, int, sockaddr_t*);
   int Broadcast(int, vuint8*, int);
-  char* AddrToString(sockaddr_t*);
+  char *AddrToString(sockaddr_t*);
   int StringToAddr(const char*, sockaddr_t*);
   int GetSocketAddr(int, sockaddr_t*);
   VStr GetNameFromAddr(sockaddr_t*);
@@ -158,7 +158,7 @@ int VWinSockDriver::Init()
     Net->HostName = buff;
   }
 
-  const char* pp = GArgs.CheckValue("-ip");
+  const char *pp = GArgs.CheckValue("-ip");
   if (pp)
   {
     myAddr = inet_addr(pp);
@@ -227,7 +227,7 @@ BOOL PASCAL FAR VWinSockDriver::BlockingHook()
   }
 
   // get the next message, if any
-  ret = (BOOL)PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+  ret = (BOOL)PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE);
 
   // if we got one, process it
   if (ret)
@@ -264,7 +264,7 @@ void VWinSockDriver::GetLocalAddress()
   WSASetBlockingHook(FARPROC(BlockingHook));
   local = gethostbyname(buff);
   WSAUnhookBlockingHook();
-  if (local == NULL)
+  if (local == nullptr)
     return;
 
   myAddr = *(int *)local->h_addr_list[0];
@@ -382,7 +382,7 @@ int VWinSockDriver::CheckNewConnections()
   if (net_acceptsocket == -1)
     return -1;
 
-  if (recvfrom(net_acceptsocket, buf, sizeof(buf), MSG_PEEK, NULL, NULL) >= 0)
+  if (recvfrom(net_acceptsocket, buf, sizeof(buf), MSG_PEEK, nullptr, nullptr) >= 0)
   {
     return net_acceptsocket;
   }
@@ -396,7 +396,7 @@ int VWinSockDriver::CheckNewConnections()
 //
 //==========================================================================
 
-int VWinSockDriver::Read(int socket, vuint8* buf, int len, sockaddr_t* addr)
+int VWinSockDriver::Read(int socket, vuint8 *buf, int len, sockaddr_t *addr)
 {
   guard(VWinSockDriver::Read);
   int addrlen = sizeof(sockaddr_t);
@@ -420,7 +420,7 @@ int VWinSockDriver::Read(int socket, vuint8* buf, int len, sockaddr_t* addr)
 //
 //==========================================================================
 
-int VWinSockDriver::Write(int socket, vuint8* buf, int len, sockaddr_t* addr)
+int VWinSockDriver::Write(int socket, vuint8 *buf, int len, sockaddr_t *addr)
 {
   guard(VWinSockDriver::Write);
   int ret = sendto(socket, (char*)buf, len, 0, (sockaddr*)addr, sizeof(sockaddr_t));
@@ -438,7 +438,7 @@ int VWinSockDriver::Write(int socket, vuint8* buf, int len, sockaddr_t* addr)
 //
 //==========================================================================
 
-int VWinSockDriver::Broadcast(int socket, vuint8* buf, int len)
+int VWinSockDriver::Broadcast(int socket, vuint8 *buf, int len)
 {
   guard(VWinSockDriver::Broadcast);
   int i = 1;
@@ -469,7 +469,7 @@ int VWinSockDriver::Broadcast(int socket, vuint8* buf, int len)
 //
 //==========================================================================
 
-char* VWinSockDriver::AddrToString(sockaddr_t* addr)
+char *VWinSockDriver::AddrToString(sockaddr_t *addr)
 {
   guard(VWinSockDriver::AddrToString);
   static char buffer[22];
@@ -489,7 +489,7 @@ char* VWinSockDriver::AddrToString(sockaddr_t* addr)
 //
 //==========================================================================
 
-int VWinSockDriver::StringToAddr(const char* string, sockaddr_t* addr)
+int VWinSockDriver::StringToAddr(const char *string, sockaddr_t *addr)
 {
   guard(VWinSockDriver::StringToAddr);
   int ha1, ha2, ha3, ha4, hp;
@@ -533,10 +533,10 @@ int VWinSockDriver::GetSocketAddr(int socket, sockaddr_t *addr)
 //
 //==========================================================================
 
-VStr VWinSockDriver::GetNameFromAddr(sockaddr_t* addr)
+VStr VWinSockDriver::GetNameFromAddr(sockaddr_t *addr)
 {
   guard(VWinSockDriver::GetNameFromAddr);
-  hostent* hostentry = gethostbyaddr((char*)&((sockaddr_in*)addr)->sin_addr,
+  hostent *hostentry = gethostbyaddr((char*)&((sockaddr_in*)addr)->sin_addr,
     sizeof(struct in_addr), AF_INET);
   if (hostentry)
   {
@@ -618,7 +618,7 @@ int VWinSockDriver::GetAddrFromName(const char *name, sockaddr_t *addr,
   int DefaultPort)
 {
   guard(VWinSockDriver::GetAddrFromName);
-  hostent*  hostentry;
+  hostent *hostentry;
 
   if (name[0] >= '0' && name[0] <= '9')
     return PartialIPAddress(name, addr, DefaultPort);
@@ -641,7 +641,7 @@ int VWinSockDriver::GetAddrFromName(const char *name, sockaddr_t *addr,
 //
 //==========================================================================
 
-int VWinSockDriver::AddrCompare(sockaddr_t* addr1, sockaddr_t* addr2)
+int VWinSockDriver::AddrCompare(sockaddr_t *addr1, sockaddr_t *addr2)
 {
   guard(VWinSockDriver::AddrCompare);
   if (addr1->sa_family != addr2->sa_family)
@@ -663,7 +663,7 @@ int VWinSockDriver::AddrCompare(sockaddr_t* addr1, sockaddr_t* addr2)
 //
 //==========================================================================
 
-int VWinSockDriver::GetSocketPort(sockaddr_t* addr)
+int VWinSockDriver::GetSocketPort(sockaddr_t *addr)
 {
   guard(VWinSockDriver::GetSocketPort);
   return ntohs(((sockaddr_in*)addr)->sin_port);
@@ -676,7 +676,7 @@ int VWinSockDriver::GetSocketPort(sockaddr_t* addr)
 //
 //==========================================================================
 
-int VWinSockDriver::SetSocketPort(sockaddr_t* addr, int port)
+int VWinSockDriver::SetSocketPort(sockaddr_t *addr, int port)
 {
   guard(VWinSockDriver::SetSocketPort);
   ((sockaddr_in*)addr)->sin_port = htons((word)port);

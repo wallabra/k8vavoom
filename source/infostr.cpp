@@ -61,7 +61,7 @@
 //
 //==========================================================================
 
-VStr Info_ValueForKey(const VStr& s, const VStr& key)
+VStr Info_ValueForKey(const VStr &s, const VStr &key)
 {
   guard(Info_ValueForKey);
   if (s.IsEmpty() || key.IsEmpty())
@@ -111,7 +111,7 @@ VStr Info_ValueForKey(const VStr& s, const VStr& key)
 //
 //==========================================================================
 
-void Info_RemoveKey(VStr& s, const VStr& key)
+void Info_RemoveKey(VStr &s, const VStr &key)
 {
   guard(Info_RemoveKey);
   if (s.IsEmpty())
@@ -172,7 +172,7 @@ void Info_RemoveKey(VStr& s, const VStr& key)
 //
 //==========================================================================
 
-void Info_SetValueForKey(VStr& s, const VStr& key, const VStr& value)
+void Info_SetValueForKey(VStr &s, const VStr &key, const VStr &value)
 {
   guard(Info_SetValueForKey);
   if (s.Length() >= MAX_INFO_STRING)

@@ -62,7 +62,7 @@ void Finished()
 //
 //==========================================================================
 
-int MovePlane(sector_t* sector, float amount, float dest, int crush,
+int MovePlane(sector_t *sector, float amount, float dest, int crush,
   int floorOrCeiling, int direction, bool StopOnCrush)
 {
   bool    flag;

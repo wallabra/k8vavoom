@@ -48,10 +48,10 @@ enum EWadNamespace
   WADNS_Music,
 };
 
-void W_AddFile(const VStr& FileName, const VStr& GwaDir, bool FixVoices);
+void W_AddFile(const VStr &FileName, const VStr &GwaDir, bool FixVoices);
 void W_Shutdown();
 
-int W_OpenAuxiliary(const VStr& FileName);
+int W_OpenAuxiliary(const VStr &FileName);
 void W_CloseAuxiliary();
 
 void W_BuildGLNodes(int lump);
@@ -64,7 +64,7 @@ int W_CheckNumForNameInFile(VName Name, int File, EWadNamespace NS = WADNS_Globa
 int W_CheckNumForFileName(VStr Name);
 int W_CheckNumForTextureFileName(VStr Name);
 int W_GetNumForFileName(VStr Name);
-int W_FindLumpByFileNameWithExts(VStr BaseName, const char** Exts);
+int W_FindLumpByFileNameWithExts(VStr BaseName, const char **Exts);
 
 int W_LumpLength(int lump);
 VName W_LumpName(int lump);
@@ -74,8 +74,8 @@ int W_LumpFile(int lump);
 void W_ReadFromLump(int lump, void *dest, int pos, int size);
 VStr W_LoadTextLump(VName name);
 void W_LoadLumpIntoArray(VName Lump, TArray<vuint8>& Array);
-VStream* W_CreateLumpReaderNum(int lump);
-VStream* W_CreateLumpReaderName(VName Name, EWadNamespace NS = WADNS_Global);
+VStream *W_CreateLumpReaderNum(int lump);
+VStream *W_CreateLumpReaderName(VName Name, EWadNamespace NS = WADNS_Global);
 
 int W_IterateNS(int Prev, EWadNamespace NS);
-int W_IterateFile(int Prev, const VStr& Name);
+int W_IterateFile(int Prev, const VStr &Name);

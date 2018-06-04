@@ -88,7 +88,7 @@ VMatrix4::VMatrix4(float m00, float m01, float m02, float m03,
 //
 //==========================================================================
 
-VMatrix4::VMatrix4(float* m2)
+VMatrix4::VMatrix4(const float *m2)
 {
   m[0][0] = m2[0];
   m[0][1] = m2[1];
@@ -114,7 +114,7 @@ VMatrix4::VMatrix4(float* m2)
 //
 //==========================================================================
 
-VMatrix4 operator *(const VMatrix4& in1, const VMatrix4& in2)
+VMatrix4 operator *(const VMatrix4 &in1, const VMatrix4 &in2)
 {
   guard(operator VMatrix4 * VMatrix4);
   VMatrix4 out;
@@ -136,7 +136,7 @@ VMatrix4 operator *(const VMatrix4& in1, const VMatrix4& in2)
 //
 //==========================================================================
 
-inline static float MINOR(const VMatrix4& m,
+inline static float MINOR(const VMatrix4 &m,
   const size_t r0, const size_t r1, const size_t r2,
   const size_t c0, const size_t c1, const size_t c2)
 {
@@ -252,7 +252,7 @@ VMatrix4 VMatrix4::Transpose() const
 //
 //==========================================================================
 
-TVec VMatrix4::Transform(const TVec& V) const
+TVec VMatrix4::Transform(const TVec &V) const
 {
   TVec Out;
   Out.x = m[0][0] * V.x + m[0][1] * V.y + m[0][2] * V.z + m[0][3];
@@ -267,7 +267,7 @@ TVec VMatrix4::Transform(const TVec& V) const
 //
 //==========================================================================
 
-TVec VMatrix4::Transform2(const TVec& V) const
+TVec VMatrix4::Transform2(const TVec &V) const
 {
   TVec Out;
   Out.x = m[0][0] * V.x + m[1][0] * V.y + m[2][0] * V.z + m[3][0];

@@ -31,6 +31,6 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-bool F_Responder(event_t* ev);
+bool F_Responder(event_t *ev);
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------

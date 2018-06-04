@@ -53,14 +53,14 @@ VStr          VCommand::Original;
 
 TArray<VStr>      VCommand::Args;
 VCommand::ECmdSource  VCommand::Source;
-VBasePlayer*      VCommand::Player;
+VBasePlayer *VCommand::Player;
 
 TArray<const char*>   VCommand::AutoCompleteTable;
 
-VCommand*       VCommand::Cmds = NULL;
-VCommand::VAlias*   VCommand::Alias = NULL;
+VCommand *VCommand::Cmds = nullptr;
+VCommand::VAlias *VCommand::Alias = nullptr;
 
-static const char*    KeyConfCommands[] =
+static const char *KeyConfCommands[] =
 {
   "alias",
   "bind",
@@ -169,7 +169,7 @@ void VCommand::Init()
 //
 //==========================================================================
 
-void VCommand::WriteAlias(FILE* f)
+void VCommand::WriteAlias(FILE *f)
 {
   guard(VCommand::WriteAlias);
   for (VAlias *a = Alias; a; a = a->Next)
@@ -190,7 +190,7 @@ void VCommand::Shutdown()
   guard(VCommand::Shutdown);
   for (VAlias *a = Alias; a;)
   {
-    VAlias* Next = a->Next;
+    VAlias *Next = a->Next;
     delete a;
     if (Next)
     {
@@ -198,7 +198,7 @@ void VCommand::Shutdown()
     }
     else
     {
-      a = NULL;
+      a = nullptr;
     }
   }
   AutoCompleteTable.Clear();
@@ -225,19 +225,19 @@ void VCommand::ProcessKeyConf()
     if (W_LumpName(Lump) == NAME_keyconf)
     {
       //  Read it.
-      VStream* Strm = W_CreateLumpReaderNum(Lump);
-      char* Buf = new char[Strm->TotalSize() + 1];
+      VStream *Strm = W_CreateLumpReaderNum(Lump);
+      char *Buf = new char[Strm->TotalSize() + 1];
       Strm->Serialise(Buf, Strm->TotalSize());
       Buf[Strm->TotalSize()] = 0;
       delete Strm;
-      Strm = NULL;
+      Strm = nullptr;
 
       //  Parse it
       VCmdBuf CmdBuf;
       CmdBuf << Buf;
       CmdBuf.Exec();
       delete[] Buf;
-      Buf = NULL;
+      Buf = nullptr;
     }
   }
 
@@ -280,7 +280,7 @@ void VCommand::AddToAutoComplete (const char *string) {
 //
 //==========================================================================
 
-VStr VCommand::GetAutoComplete (const VStr& String, int& Index, bool Backward) {
+VStr VCommand::GetAutoComplete (const VStr &String, int &Index, bool Backward) {
   guard(VCommand::GetAutoComplete);
   int i;
 
@@ -314,7 +314,7 @@ VStr VCommand::GetAutoComplete (const VStr& String, int& Index, bool Backward) {
 //
 //==========================================================================
 
-void VCommand::TokeniseString(const VStr& str)
+void VCommand::TokeniseString(const VStr &str)
 {
   guard(VCommand::TokeniseString);
   Args.Clear();
@@ -370,8 +370,8 @@ void VCommand::TokeniseString(const VStr& str)
 //
 //==========================================================================
 
-void VCommand::ExecuteString(const VStr& Acmd, ECmdSource src,
-  VBasePlayer* APlayer)
+void VCommand::ExecuteString(const VStr &Acmd, ECmdSource src,
+  VBasePlayer *APlayer)
 {
   guard(VCommand::ExecuteString);
 
@@ -408,7 +408,7 @@ void VCommand::ExecuteString(const VStr& Acmd, ECmdSource src,
   //
   //  Check for command
   //
-  for (VCommand* cmd = Cmds; cmd; cmd = cmd->Next)
+  for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next)
   {
     if (Args[0].ICmp(cmd->Name) == 0) {
       //fprintf(stderr, "+++ COMMAND FOUND: [%s] [%s] +++\n", *Args[0], cmd->Name);
@@ -426,7 +426,7 @@ void VCommand::ExecuteString(const VStr& Acmd, ECmdSource src,
   //
   // Command defined with ALIAS.
   //
-  for (VAlias* a = Alias; a; a = a->Next)
+  for (VAlias *a = Alias; a; a = a->Next)
   {
     if (!Args[0].ICmp(a->Name))
     {
@@ -483,7 +483,7 @@ void VCommand::ForwardToServer()
 //
 //==========================================================================
 
-int VCommand::CheckParm(const char* check)
+int VCommand::CheckParm(const char *check)
 {
   guard(VCommand::CheckParm);
   for (int i = 1; i < Args.Num(); i++)
@@ -529,7 +529,7 @@ VStr VCommand::GetArgV (int idx) {
 //
 //==========================================================================
 
-void VCmdBuf::Insert(const char* text)
+void VCmdBuf::Insert(const char *text)
 {
   guard(VCmdBuf::Insert);
   Buffer = VStr(text) + Buffer;
@@ -542,7 +542,7 @@ void VCmdBuf::Insert(const char* text)
 //
 //==========================================================================
 
-void VCmdBuf::Insert(const VStr& text)
+void VCmdBuf::Insert(const VStr &text)
 {
   guard(VCmdBuf::Insert);
   Buffer = text + Buffer;
@@ -555,7 +555,7 @@ void VCmdBuf::Insert(const VStr& text)
 //
 //==========================================================================
 
-void VCmdBuf::Print(const char* data)
+void VCmdBuf::Print(const char *data)
 {
   guard(VCmdBuf::Print);
   Buffer += data;
@@ -568,7 +568,7 @@ void VCmdBuf::Print(const char* data)
 //
 //==========================================================================
 
-void VCmdBuf::Print(const VStr& data)
+void VCmdBuf::Print(const VStr &data)
 {
   guard(VCmdBuf::Print);
   Buffer += data;
@@ -621,7 +621,7 @@ void VCmdBuf::Exec()
 
     Buffer = VStr(Buffer, len, Buffer.Length() - len);
 
-    VCommand::ExecuteString(ParsedCmd, VCommand::SRC_Command, NULL);
+    VCommand::ExecuteString(ParsedCmd, VCommand::SRC_Command, nullptr);
 
     if (host_request_exit)
     {
@@ -677,7 +677,7 @@ COMMAND(CmdList)
 COMMAND(Alias)
 {
   guard(COMMAND Alias);
-  VCommand::VAlias* a;
+  VCommand::VAlias *a;
   VStr    tmp;
   int     i;
   int     c;
@@ -777,18 +777,18 @@ COMMAND(Exec)
 
   GCon->Log(VStr("Executing ") + Args[1]);
 
-  VStream* Strm = FL_OpenFileRead(Args[1]);
+  VStream *Strm = FL_OpenFileRead(Args[1]);
   int Len = Strm->TotalSize();
-  char* buf = new char[Len + 1];
+  char *buf = new char[Len + 1];
   Strm->Serialise(buf, Len);
   buf[Len] = 0;
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
 
   GCmdBuf.Insert(buf);
 
   delete[] buf;
-  buf = NULL;
+  buf = nullptr;
   unguard;
 }
 

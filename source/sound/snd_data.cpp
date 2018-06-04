@@ -50,9 +50,9 @@ public:
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-VSampleLoader*    VSampleLoader::List;
+VSampleLoader *VSampleLoader::List;
 
-VSoundManager*    GSoundManager;
+VSoundManager *GSoundManager;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -95,7 +95,7 @@ VSoundManager::~VSoundManager()
     if (S_sfx[i].Sounds)
     {
       delete[] S_sfx[i].Sounds;
-      S_sfx[i].Sounds = NULL;
+      S_sfx[i].Sounds = nullptr;
     }
   }
 
@@ -104,7 +104,7 @@ VSoundManager::~VSoundManager()
     if (AmbientSounds[i])
     {
       delete AmbientSounds[i];
-      AmbientSounds[i] = NULL;
+      AmbientSounds[i] = nullptr;
     }
   }
 
@@ -113,19 +113,19 @@ VSoundManager::~VSoundManager()
     if (SeqInfo[i].Data)
     {
       delete[] SeqInfo[i].Data;
-      SeqInfo[i].Data = NULL;
+      SeqInfo[i].Data = nullptr;
     }
   }
 
-  for (VReverbInfo* R = Environments; R;)
+  for (VReverbInfo *R = Environments; R;)
   {
-    VReverbInfo* Next = R->Next;
+    VReverbInfo *Next = R->Next;
     if (!R->Builtin)
     {
       delete[] const_cast<char*>(R->Name);
-      R->Name = NULL;
+      R->Name = nullptr;
       delete R;
-      R = NULL;
+      R = nullptr;
     }
     R = Next;
   }
@@ -185,7 +185,7 @@ void VSoundManager::Init()
   }
 
   //  Load script REVERBS
-  Environments = NULL;
+  Environments = nullptr;
   for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0;
     Lump = W_IterateNS(Lump, WADNS_Global))
   {
@@ -204,7 +204,7 @@ void VSoundManager::Init()
 //
 //==========================================================================
 
-void VSoundManager::ParseSndinfo(VScriptParser* sc)
+void VSoundManager::ParseSndinfo(VScriptParser *sc)
 {
   guard(VSoundManager::ParseSndinfo);
   TArray<int>   list;
@@ -310,7 +310,7 @@ void VSoundManager::ParseSndinfo(VScriptParser* sc)
 
       id = AddSoundLump(FakeName, W_CheckNumForName(
         VName(*sc->String, VName::AddLower), WADNS_Sounds));
-      FPlayerSound& PlrSnd = PlayerSounds.Alloc();
+      FPlayerSound &PlrSnd = PlayerSounds.Alloc();
       PlrSnd.ClassId = PClass;
       PlrSnd.GenderId = Gender;
       PlrSnd.RefId = RefId;
@@ -334,7 +334,7 @@ void VSoundManager::ParseSndinfo(VScriptParser* sc)
         sc->Error(va("%s is not a player sound", *sc->String));
       }
       int AliasTo = FindPlayerSound(PClass, Gender, TargId);
-      FPlayerSound& PlrSnd = PlayerSounds.Alloc();
+      FPlayerSound &PlrSnd = PlayerSounds.Alloc();
       PlrSnd.ClassId = PClass;
       PlrSnd.GenderId = Gender;
       PlrSnd.RefId = RefId;
@@ -347,7 +347,7 @@ void VSoundManager::ParseSndinfo(VScriptParser* sc)
 
       ParsePlayerSoundCommon(sc, PClass, Gender, RefId);
       int AliasTo = FindOrAddSound(*sc->String);
-      FPlayerSound& PlrSnd = PlayerSounds.Alloc();
+      FPlayerSound &PlrSnd = PlayerSounds.Alloc();
       PlrSnd.ClassId = PClass;
       PlrSnd.GenderId = Gender;
       PlrSnd.RefId = RefId;
@@ -365,7 +365,7 @@ void VSoundManager::ParseSndinfo(VScriptParser* sc)
       // $ambient <num> <logical name> [point [atten] | surround | [world]]
       //      <continuous | random <minsecs> <maxsecs> | periodic <secs>>
       //      <volume>
-      FAmbientSound* ambient, dummy;
+      FAmbientSound *ambient, dummy;
 
       sc->ExpectNumber();
       if (sc->Number < 0 || sc->Number >= NUM_AMBIENT_SOUNDS)
@@ -464,7 +464,7 @@ void VSoundManager::ParseSndinfo(VScriptParser* sc)
       }
       if (i == MusicVolumes.Num())
       {
-        VMusicVolume& V = MusicVolumes.Alloc();
+        VMusicVolume &V = MusicVolumes.Alloc();
         V.SongName = SongName;
         V.Volume = sc->Float;
       }
@@ -492,7 +492,7 @@ void VSoundManager::ParseSndinfo(VScriptParser* sc)
     }
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
   unguard;
 }
 
@@ -508,7 +508,7 @@ int VSoundManager::AddSoundLump(VName TagName, int Lump)
   sfxinfo_t S;
   memset(&S, 0, sizeof(S));
   S.TagName = TagName;
-  S.Data = NULL;
+  S.Data = nullptr;
   S.Priority = 127;
   S.NumChannels = 2;
   S.ChangePitch = CurrentChangePitch;
@@ -532,7 +532,7 @@ int VSoundManager::AddSound(VName TagName, int Lump)
   if (id > 0)
   {
     // If the sound has already been defined, change the old definition
-    sfxinfo_t* sfx = &S_sfx[id];
+    sfxinfo_t *sfx = &S_sfx[id];
 
     //if (sfx->bPlayerReserve)
     //{
@@ -546,7 +546,7 @@ int VSoundManager::AddSound(VName TagName, int Lump)
     if (sfx->bRandomHeader)
     {
       delete[] sfx->Sounds;
-      sfx->Sounds = NULL;
+      sfx->Sounds = nullptr;
     }
     sfx->LumpNum = Lump;
     sfx->bRandomHeader = false;
@@ -605,8 +605,8 @@ int VSoundManager::FindOrAddSound(VName TagName)
 //
 //==========================================================================
 
-void VSoundManager::ParsePlayerSoundCommon(VScriptParser* sc, int& PClass,
-  int& Gender, int& RefId)
+void VSoundManager::ParsePlayerSoundCommon(VScriptParser *sc, int &PClass,
+  int &Gender, int &RefId)
 {
   guard(VSoundManager::ParsePlayerSoundCommon);
   sc->ExpectString();
@@ -883,7 +883,7 @@ bool VSoundManager::IsSoundPresent(VName ClassName, VName GenderName,
 bool VSoundManager::LoadSound(int sound_id)
 {
   guard(VSoundManager::LoadSound);
-  static const char* Exts[] = { "flac", "wav", "raw", "ogg", "mp3", NULL };
+  static const char *Exts[] = { "flac", "wav", "raw", "ogg", "mp3", nullptr };
 
   if (!S_sfx[sound_id].Data)
   {
@@ -897,14 +897,14 @@ bool VSoundManager::LoadSound(int sound_id)
     }
     int FileLump = W_FindLumpByFileNameWithExts(va("sound/%s", *W_LumpName(Lump)), Exts);
     if (Lump < FileLump) Lump = FileLump;
-    VStream* Strm = W_CreateLumpReaderNum(Lump);
-    for (VSampleLoader* Ldr = VSampleLoader::List;
+    VStream *Strm = W_CreateLumpReaderNum(Lump);
+    for (VSampleLoader *Ldr = VSampleLoader::List;
       Ldr && !S_sfx[sound_id].Data; Ldr = Ldr->Next)
     {
       Ldr->Load(S_sfx[sound_id], *Strm);
     }
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
     if (!S_sfx[sound_id].Data) {
       if (!soundsWarned.put(*S_sfx[sound_id].TagName)) {
         GCon->Logf(NAME_Dev, "Failed to load sound %s", *S_sfx[sound_id].TagName);
@@ -939,7 +939,7 @@ void VSoundManager::DoneWithLump(int sound_id)
     return;
   }
   Z_Free(sfx.Data);
-  sfx.Data = NULL;
+  sfx.Data = nullptr;
   unguard;
 }
 
@@ -969,12 +969,12 @@ float VSoundManager::GetMusicVolume(VName SongName)
 //
 //==========================================================================
 
-FAmbientSound* VSoundManager::GetAmbientSound(int Idx)
+FAmbientSound *VSoundManager::GetAmbientSound(int Idx)
 {
   guardSlow(VSoundManager::GetAmbientSound);
   if (Idx < 0 || Idx >= NUM_AMBIENT_SOUNDS)
   {
-    return NULL;
+    return nullptr;
   }
   return AmbientSounds[Idx];
   unguardSlow;
@@ -986,7 +986,7 @@ FAmbientSound* VSoundManager::GetAmbientSound(int Idx)
 //
 //==========================================================================
 
-void VSoundManager::ParseSequenceScript(VScriptParser* sc)
+void VSoundManager::ParseSequenceScript(VScriptParser *sc)
 {
   guard(VSoundManager::ParseSequenceScript);
   TArray<vint32>  TempData;
@@ -1022,7 +1022,7 @@ void VSoundManager::ParseSequenceScript(VScriptParser* sc)
       SeqType = sc->String[0];
       SeqInfo[SeqId].Name = *sc->String + 1;
       SeqInfo[SeqId].Slot = NAME_None;
-      SeqInfo[SeqId].Data = NULL;
+      SeqInfo[SeqId].Data = nullptr;
       SeqInfo[SeqId].StopSound = 0;
       if (SeqType == '[')
       {
@@ -1233,7 +1233,7 @@ void VSoundManager::ParseSequenceScript(VScriptParser* sc)
     }
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
   unguard;
 }
 
@@ -1243,7 +1243,7 @@ void VSoundManager::ParseSequenceScript(VScriptParser* sc)
 //
 //==========================================================================
 
-void VSoundManager::AssignSeqTranslations(VScriptParser* sc, int SeqId,
+void VSoundManager::AssignSeqTranslations(VScriptParser *sc, int SeqId,
   seqtype_t SeqType)
 {
   guard(VSoundManager::AssignSeqTranslations);
@@ -1251,7 +1251,7 @@ void VSoundManager::AssignSeqTranslations(VScriptParser* sc, int SeqId,
 
   while (sc->GetString() && !sc->Crossed)
   {
-    char* Stopper;
+    char *Stopper;
     int Num = strtol(*sc->String, &Stopper, 0);
     if (*Stopper == 0)
     {
@@ -1355,10 +1355,10 @@ void VSoundManager::GetSoundLumpNames(TArray<FReplacedString>& List)
     {
       continue;
     }
-    const char* LName = *W_LumpName(S_sfx[i].LumpNum);
+    const char *LName = *W_LumpName(S_sfx[i].LumpNum);
     if (LName[0] == 'd' && LName[1] == 's')
     {
-      FReplacedString& R = List.Alloc();
+      FReplacedString &R = List.Alloc();
       R.Index = i;
       R.Replaced = false;
       R.Old = LName + 2;
@@ -1396,7 +1396,7 @@ void VSoundManager::ReplaceSoundLumpNames(TArray<FReplacedString>& List)
 //
 //==========================================================================
 
-void VRawSampleLoader::Load(sfxinfo_t& Sfx, VStream& Strm)
+void VRawSampleLoader::Load(sfxinfo_t &Sfx, VStream &Strm)
 {
   guard(VRawSampleLoader::Load);
   //  Read header and see if it's a valid raw sample.

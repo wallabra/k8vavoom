@@ -149,7 +149,7 @@ static void my_init_source (j_decompress_ptr cinfo) {
 //==========================================================================
 static boolean my_fill_input_buffer (j_decompress_ptr cinfo) {
   guard(my_fill_input_buffer);
-  VJpegClientData* cdata = (VJpegClientData*)cinfo->client_data;
+  VJpegClientData *cdata = (VJpegClientData*)cinfo->client_data;
   if (cdata->Strm->AtEnd()) {
     // insert a fake EOI marker
     cdata->Buffer[0] = 0xff;
@@ -183,7 +183,7 @@ static void my_skip_input_data (j_decompress_ptr cinfo, long num_bytes) {
     cinfo->src->bytes_in_buffer -= num_bytes;
     cinfo->src->next_input_byte += num_bytes;
   } else {
-    VJpegClientData* cdata = (VJpegClientData*)cinfo->client_data;
+    VJpegClientData *cdata = (VJpegClientData*)cinfo->client_data;
     int Pos = cdata->Strm->Tell()+num_bytes-cinfo->src->bytes_in_buffer;
     if (Pos > cdata->Strm->TotalSize()) Pos = cdata->Strm->TotalSize();
     cdata->Strm->Seek(Pos);
@@ -251,7 +251,7 @@ vuint8 *VJpegTexture::GetPixels () {
   VJpegClientData cdata;
 
   // open stream
-  VStream* Strm = W_CreateLumpReaderNum(SourceLump);
+  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
   check(Strm);
 
   try {
@@ -381,7 +381,7 @@ void VJpegTexture::Unload () {
 //==========================================================================
 static void my_init_destination (j_compress_ptr cinfo) {
   guard(my_init_destination);
-  VJpegClientData* cdata = (VJpegClientData*)cinfo->client_data;
+  VJpegClientData *cdata = (VJpegClientData*)cinfo->client_data;
   cinfo->dest->next_output_byte = cdata->Buffer;
   cinfo->dest->free_in_buffer = 4096;
   unguard;
@@ -424,7 +424,7 @@ static void my_term_destination (j_compress_ptr cinfo) {
 //==========================================================================
 void WriteJPG (const VStr &FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top) {
   guard(WriteJPG);
-  VStream* Strm = FL_OpenFileWrite(FileName, true);
+  VStream *Strm = FL_OpenFileWrite(FileName, true);
   if (!Strm) {
     GCon->Log("Couldn't write jpg");
     return;

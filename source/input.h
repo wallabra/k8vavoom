@@ -161,7 +161,7 @@ public:
   virtual void RegrabMouse () = 0; // called by UI when mouse cursor is turned off
 
   //  Implemented in corresponding system module.
-  static VInputDevice* CreateDevice();
+  static VInputDevice *CreateDevice();
 };
 
 //
@@ -198,13 +198,13 @@ public:
 
   virtual int TranslateKey(int) = 0;
 
-  virtual int KeyNumForName(const VStr& Name) = 0;
+  virtual int KeyNumForName(const VStr &Name) = 0;
   virtual VStr KeyNameForNum(int KeyNr) = 0;
 
   virtual void RegrabMouse () = 0; // called by UI when mouse cursor is turned off
 
-  static VInputPublic* Create();
+  static VInputPublic *Create();
 };
 
 //  Global input handler.
-extern VInputPublic*  GInput;
+extern VInputPublic *GInput;

@@ -38,7 +38,7 @@ struct client_static_t
   // entering a map (and clearing client_state_t)
   bool      demorecording;
   bool      demoplayback;
-  VStream*    demofile;
+  VStream *demofile;
 
   // connection information
   int       signon;     // 0 to SIGNONS
@@ -49,7 +49,7 @@ struct client_static_t
 void CL_Init();
 void CL_Shutdown();
 void CL_SendMove();
-bool CL_Responder(event_t* ev);
+bool CL_Responder(event_t *ev);
 void CL_ReadFromServer();
 void CL_SetUpLocalPlayer();
 void CL_SetUpStandaloneClient();
@@ -57,4 +57,4 @@ void CL_SetUpStandaloneClient();
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
 extern client_static_t  cls;
-extern VBasePlayer*   cl;
+extern VBasePlayer *cl;

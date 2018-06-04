@@ -55,7 +55,7 @@ override void Died(EntityEx source, EntityEx inflictor)
 
   if (Script)
   {
-    XLevel.StartACS(Script, 0, 0, 0, 0, self, NULL, 0, false, false);
+    XLevel.StartACS(Script, 0, 0, 0, 0, self, nullptr, 0, false, false);
   }
 }
 

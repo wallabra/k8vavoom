@@ -40,7 +40,7 @@ extern void PR_OnAbort ();
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-extern VStack*      pr_stackPtr;
+extern VStack *pr_stackPtr;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -114,7 +114,7 @@ inline VName PR_PopName () {
 }
 
 
-inline void PR_PushPtr (void* value) {
+inline void PR_PushPtr (void *value) {
   pr_stackPtr->p = value;
   ++pr_stackPtr;
 }
@@ -126,7 +126,7 @@ inline void *PR_PopPtr () {
 }
 
 
-inline void PR_PushStr (const VStr& value) {
+inline void PR_PushStr (const VStr &value) {
   pr_stackPtr->p = nullptr;
   *(VStr*)&pr_stackPtr->p = value;
   pr_stackPtr++;

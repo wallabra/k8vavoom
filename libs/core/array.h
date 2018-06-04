@@ -75,7 +75,7 @@ public:
     if (NewSize <= 0) { clear(); return; }
     if (NewSize == ArrSize) return;
 
-    T* OldData = ArrData;
+    T *OldData = ArrData;
     int OldSize = ArrSize;
     ArrSize = NewSize;
     if (ArrNum > NewSize) ArrNum = NewSize;

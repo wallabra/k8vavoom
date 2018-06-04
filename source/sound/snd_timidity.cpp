@@ -39,20 +39,20 @@ using namespace LibTimidity;
 class VTimidityAudioCodec : public VAudioCodec
 {
 public:
-  MidiSong*     Song;
+  MidiSong *Song;
 
   static ControlMode  MyControlMode;
 
-  VTimidityAudioCodec(MidiSong* InSong);
+  VTimidityAudioCodec(MidiSong *InSong);
   ~VTimidityAudioCodec();
-  int Decode(short* Data, int NumSamples);
+  int Decode(short *Data, int NumSamples);
   bool Finished();
   void Restart();
 
   //  Control mode functions.
   static int ctl_msg(int, int, const char*, ...);
 
-  static VAudioCodec* Create(VStream* InStrm);
+  static VAudioCodec *Create(VStream *InStrm);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -91,7 +91,7 @@ static VCvarI s_timidity_verbosity("snd_timidity_verbosity", "0", "Some timidity
 //
 //==========================================================================
 
-VTimidityAudioCodec::VTimidityAudioCodec(MidiSong* InSong)
+VTimidityAudioCodec::VTimidityAudioCodec(MidiSong *InSong)
 : Song(InSong)
 {
   guard(VTimidityAudioCodec::VTimidityAudioCodec);
@@ -125,7 +125,7 @@ VTimidityAudioCodec::~VTimidityAudioCodec()
 //
 //==========================================================================
 
-int VTimidityAudioCodec::Decode(short* Data, int NumSamples)
+int VTimidityAudioCodec::Decode(short *Data, int NumSamples)
 {
   guard(VTimidityAudioCodec::Decode);
   return Timidity_PlaySome(Song, Data, NumSamples);
@@ -186,12 +186,12 @@ int VTimidityAudioCodec::ctl_msg(int type, int verbosity_level, const char *fmt,
 //
 //==========================================================================
 
-VAudioCodec* VTimidityAudioCodec::Create(VStream* InStrm)
+VAudioCodec *VTimidityAudioCodec::Create(VStream *InStrm)
 {
   guard(VTimidityAudioCodec::Create);
   if (snd_mid_player != 1)
   {
-    return NULL;
+    return nullptr;
   }
   //  Check if it's a MIDI file.
   char Header[4];
@@ -199,7 +199,7 @@ VAudioCodec* VTimidityAudioCodec::Create(VStream* InStrm)
   InStrm->Serialise(Header, 4);
   if (memcmp(Header, MIDIMAGIC, 4))
   {
-    return NULL;
+    return nullptr;
   }
 
   //  Register our control mode.
@@ -207,12 +207,12 @@ VAudioCodec* VTimidityAudioCodec::Create(VStream* InStrm)
 
   //  Initialise Timidity.
   add_to_pathlist(s_timidity_patches);
-  DLS_Data* patches = NULL;
+  DLS_Data *patches = nullptr;
   if (Timidity_Init())
   {
 #ifdef _WIN32
         VStr GMPath = VStr(getenv("WINDIR")) + "/system32/drivers/gm.dls";
-    FILE* f = fopen(*GMPath, "rb");
+    FILE *f = fopen(*GMPath, "rb");
     if (f)
     {
       patches = Timidity_LoadDLS(f);
@@ -225,17 +225,17 @@ VAudioCodec* VTimidityAudioCodec::Create(VStream* InStrm)
         if (!patches)
         {
         GCon->Logf("Timidity init failed");
-        return NULL;
+        return nullptr;
         }
 #else
     GCon->Logf("Timidity init failed");
-    return NULL;
+    return nullptr;
 #endif
   }
 
   if (s_timidity_test_dls)
   {
-    FILE* f = fopen("gm.dls", "rb");
+    FILE *f = fopen("gm.dls", "rb");
     if (f)
     {
       patches = Timidity_LoadDLS(f);
@@ -247,7 +247,7 @@ VAudioCodec* VTimidityAudioCodec::Create(VStream* InStrm)
     }
   }
 
-  Sf2Data* sf2_data = NULL;
+  Sf2Data *sf2_data = nullptr;
   if (s_timidity_test_sf2)
   {
     sf2_data = Timidity_LoadSF2("gm.sf2");
@@ -259,20 +259,20 @@ VAudioCodec* VTimidityAudioCodec::Create(VStream* InStrm)
 
   //  Load song.
   int Size = InStrm->TotalSize();
-  void* Data = Z_Malloc(Size);
+  void *Data = Z_Malloc(Size);
   InStrm->Seek(0);
   InStrm->Serialise(Data, Size);
-  MidiSong* Song = Timidity_LoadSongMem(Data, Size, patches, sf2_data);
+  MidiSong *Song = Timidity_LoadSongMem(Data, Size, patches, sf2_data);
   Z_Free(Data);
   if (!Song)
   {
     GCon->Logf("Failed to load MIDI song");
     Timidity_Close();
-    return NULL;
+    return nullptr;
   }
   InStrm->Close();
   delete InStrm;
-  InStrm = NULL;
+  InStrm = nullptr;
 
   //  Create codec.
   return new VTimidityAudioCodec(Song);

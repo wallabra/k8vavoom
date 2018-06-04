@@ -91,10 +91,10 @@ static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0:
 //
 //==========================================================================
 
-void VRenderLevelShared::DrawTranslucentPoly(surface_t* surf, TVec* sv,
+void VRenderLevelShared::DrawTranslucentPoly(surface_t *surf, TVec *sv,
   int count, int lump, float Alpha, bool Additive, int translation,
-  bool type, vuint32 light, vuint32 Fade, const TVec& normal, float pdist,
-  const TVec& saxis, const TVec& taxis, const TVec& texorg)
+  bool type, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
+  const TVec &saxis, const TVec &taxis, const TVec &texorg)
 {
   guard(VRenderLevelShared::DrawTranslucentPoly);
   int i;
@@ -199,7 +199,7 @@ void VRenderLevelShared::DrawTranslucentPoly(surface_t* surf, TVec* sv,
 //
 //==========================================================================
 
-void VRenderLevelShared::RenderSprite(VEntity* thing, vuint32 light,
+void VRenderLevelShared::RenderSprite(VEntity *thing, vuint32 light,
   vuint32 Fade, float Alpha, bool Additive)
 {
   guard(VRenderLevelShared::RenderSprite);
@@ -316,10 +316,10 @@ void VRenderLevelShared::RenderSprite(VEntity* thing, vuint32 light,
     Sys_Error("RenderSprite: Bad sprite type %d", spr_type);
   }
 
-  spritedef_t*  sprdef;
-  spriteframe_t*  sprframe;
+  spritedef_t *sprdef;
+  spriteframe_t *sprframe;
 
-  VState* DispState = (thing->EntityFlags & VEntity::EF_UseDispState) ?
+  VState *DispState = (thing->EntityFlags & VEntity::EF_UseDispState) ?
     thing->DispState : thing->State;
   int SpriteIndex = DispState->SpriteIndex;
   if (thing->FixedSpriteName != NAME_None)
@@ -384,7 +384,7 @@ void VRenderLevelShared::RenderSprite(VEntity* thing, vuint32 light,
     // Sprite lump is not present
     return;
   }
-  VTexture* Tex = GTextureManager[lump];
+  VTexture *Tex = GTextureManager[lump];
   int TexWidth = Tex->GetWidth();
   int TexHeight = Tex->GetHeight();
   int TexSOffset = Tex->SOffset;
@@ -410,7 +410,7 @@ void VRenderLevelShared::RenderSprite(VEntity* thing, vuint32 light,
 
   if (Alpha < 1.0 || Additive || r_sort_sprites)
   {
-    DrawTranslucentPoly(NULL, sv, 4, lump, Alpha, Additive,
+    DrawTranslucentPoly(nullptr, sv, 4, lump, Alpha, Additive,
       thing->Translation, true, light, Fade, -sprforward, DotProduct(
       sprorigin, -sprforward), (flip ? -sprright : sprright) /
       thing->ScaleX, -sprup / thing->ScaleY, flip ? sv[2] : sv[1]);
@@ -432,7 +432,7 @@ void VRenderLevelShared::RenderSprite(VEntity* thing, vuint32 light,
 //
 //==========================================================================
 
-void VRenderLevelShared::RenderTranslucentAliasModel(VEntity* mobj,
+void VRenderLevelShared::RenderTranslucentAliasModel(VEntity *mobj,
   vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac)
 {
   guard(VRenderLevelShared::RenderTranslucentAliasModel);
@@ -503,7 +503,7 @@ void VRenderLevelShared::RenderTranslucentAliasModel(VEntity* mobj,
 //
 //==========================================================================
 
-bool VRenderLevelShared::RenderAliasModel(VEntity* mobj, vuint32 light,
+bool VRenderLevelShared::RenderAliasModel(VEntity *mobj, vuint32 light,
   vuint32 Fade, float Alpha, bool Additive, ERenderPass Pass)
 {
   guard(VRenderLevelShared::RenderAliasModel);
@@ -544,7 +544,7 @@ bool VRenderLevelShared::RenderAliasModel(VEntity* mobj, vuint32 light,
 //
 //==========================================================================
 
-void VRenderLevelShared::RenderThing(VEntity* mobj, ERenderPass Pass)
+void VRenderLevelShared::RenderThing(VEntity *mobj, ERenderPass Pass)
 {
   guard(VRenderLevelShared::RenderThing);
   if (mobj == ViewEnt && (!r_chasecam || ViewEnt != cl->MO))
@@ -716,12 +716,12 @@ void VRenderLevelShared::DrawTranslucentPolys()
 //
 //==========================================================================
 
-void VRenderLevelShared::RenderPSprite(VViewState* VSt, float PSP_DIST,
+void VRenderLevelShared::RenderPSprite(VViewState *VSt, float PSP_DIST,
   vuint32 light, vuint32 Fade, float Alpha, bool Additive)
 {
   guard(VRenderLevelShared::RenderPSprite);
-  spritedef_t*    sprdef;
-  spriteframe_t*    sprframe;
+  spritedef_t *sprdef;
+  spriteframe_t *sprframe;
   int         lump;
   bool        flip;
 
@@ -747,7 +747,7 @@ void VRenderLevelShared::RenderPSprite(VViewState* VSt, float PSP_DIST,
 
   lump = sprframe->lump[0];
   flip = sprframe->flip[0];
-  VTexture* Tex = GTextureManager[lump];
+  VTexture *Tex = GTextureManager[lump];
 
   int TexWidth = Tex->GetWidth();
   int TexHeight = Tex->GetHeight();
@@ -824,7 +824,7 @@ void VRenderLevelShared::RenderPSprite(VViewState* VSt, float PSP_DIST,
 //
 //==========================================================================
 
-bool VRenderLevelShared::RenderViewModel(VViewState* VSt, vuint32 light,
+bool VRenderLevelShared::RenderViewModel(VViewState *VSt, vuint32 light,
   vuint32 Fade, float Alpha, bool Additive)
 {
   guard(VRenderLevelShared::RenderViewModel);
@@ -854,7 +854,7 @@ bool VRenderLevelShared::RenderViewModel(VViewState* VSt, vuint32 light,
     Interpolate = true;
   }
   return DrawAliasModel(origin, cl->ViewAngles, 1.0, 1.0, VSt->State,
-    VSt->State->NextState ? VSt->State->NextState : VSt->State, NULL,
+    VSt->State->NextState ? VSt->State->NextState : VSt->State, nullptr,
     0, light, Fade, Alpha, Additive, true, TimeFrac, Interpolate,
     RPASS_Normal);
   unguard;
@@ -985,7 +985,7 @@ void R_DrawSpritePatch(int x, int y, int sprite, int frame, int rot,
   spriteframe_t *sprframe = &sprites[sprite].spriteframes[frame & VState::FF_FRAMEMASK];
   flip = sprframe->flip[rot];
   lump = sprframe->lump[rot];
-  VTexture* Tex = GTextureManager[lump];
+  VTexture *Tex = GTextureManager[lump];
 
   Tex->GetWidth();
 
@@ -1000,6 +1000,6 @@ void R_DrawSpritePatch(int x, int y, int sprite, int frame, int rot,
   y2 *= fScaleY;
 
   Drawer->DrawSpriteLump(x1, y1, x2, y2, Tex, R_GetCachedTranslation(
-    R_SetMenuPlayerTrans(TranslStart, TranslEnd, Colour), NULL), flip);
+    R_SetMenuPlayerTrans(TranslStart, TranslEnd, Colour), nullptr), flip);
   unguard;
 }

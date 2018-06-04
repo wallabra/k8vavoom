@@ -32,7 +32,7 @@
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void AM_Init();
-bool AM_Responder(event_t* ev);
+bool AM_Responder(event_t *ev);
 void AM_Ticker();
 void AM_Drawer();
 // Called to force the automap to quit

@@ -187,7 +187,7 @@ void TGLVisGUI::DisplayMapDone(int accepts, int total)
 //
 //==========================================================================
 
-void GLVis_BuildPVS(const char *srcfile, const char* gwafile)
+void GLVis_BuildPVS(const char *srcfile, const char *gwafile)
 {
   try
   {
@@ -218,6 +218,6 @@ COMMAND(glVIS)
 {
   if (Args.Num() > 1)
   {
-    GLVis_BuildPVS(*Args[1], NULL);
+    GLVis_BuildPVS(*Args[1], nullptr);
   }
 }

@@ -60,7 +60,7 @@ int     LightTag;
 //
 //==========================================================================
 
-void Init(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
+void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, int InType)
 {
   float   Height;
@@ -152,7 +152,7 @@ void Init(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 //
 //==========================================================================
 
-void InitCloseIn30(sector_t* InSector)
+void InitCloseIn30(sector_t *InSector)
 {
   float   Height;
 
@@ -177,7 +177,7 @@ void InitCloseIn30(sector_t* InSector)
 //
 //==========================================================================
 
-bool ReUse(int InType, line_t* Line, Entity Thing)
+bool ReUse(int InType, line_t *Line, Entity Thing)
 {
   if ((InType == DOOREV_RaiseLocked && Type == DOOREV_RaiseLocked) ||
     (InType == DOOREV_Raise && Type == DOOREV_Raise))
@@ -363,8 +363,8 @@ override void Tick(float deltaTime)
 
 void EV_LightTurnOnPartway(int Tag, float Frac)
 {
-  sector_t* temp;
-  sector_t* sector;
+  sector_t *temp;
+  sector_t *sector;
   int     i;
   int     j;
   int     bright;

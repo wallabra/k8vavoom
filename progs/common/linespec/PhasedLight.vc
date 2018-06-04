@@ -34,7 +34,7 @@ int     Base;
 //
 //==========================================================================
 
-void Init(sector_t* InSector, int InBase, int InIndex)
+void Init(sector_t *InSector, int InBase, int InIndex)
 {
   Sector = InSector;
   Sector->LightingData = self;

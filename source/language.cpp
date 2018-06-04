@@ -199,7 +199,7 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
       }
 
       // check for replacement
-      VLangEntry* Found = table->Find(Key);
+      VLangEntry *Found = table->Find(Key);
       if (!Found || Found->PassNum >= PassNum) {
         VLangEntry Entry;
         Entry.Value = Value;

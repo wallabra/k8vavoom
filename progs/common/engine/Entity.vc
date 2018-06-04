@@ -182,26 +182,26 @@ struct tmtrace_t
   float     FloorZ;
   float     CeilingZ;
   float     DropOffZ;
-  sec_plane_t*  Floor;
-  sec_plane_t*  Ceiling;
+  sec_plane_t *Floor;
+  sec_plane_t *Ceiling;
 
   bool      bFloatOk; // if true, move would be ok if
                 // within tmtrace.FloorZ - tmtrace.CeilingZ
 
   // keep track of the line that lowers the ceiling,
   // so missiles don't explode against sky hack walls
-  line_t*     CeilingLine;
-  line_t*     FloorLine;
+  line_t *CeilingLine;
+  line_t *FloorLine;
   // also keep track of the blocking line, for checking
   // against doortracks
-  line_t*     BlockingLine; // only lines without backsector
+  line_t *BlockingLine; // only lines without backsector
 
   // keep track of special lines as they are hit,
   // but don't process them until the move is proven valid
   array<line_t*>  SpecHit;
 
   Entity      BlockingMobj;
-  line_t*     AnyBlockingLine; // any blocking line
+  line_t *AnyBlockingLine; // any blocking line
 };
 
 // Info for drawing: position.
@@ -233,8 +233,8 @@ float     FloorClip;  // value to use for floor clipping
 float     ScaleX;
 float     ScaleY;
 
-native readonly subsector_t*  SubSector;
-native readonly sector_t*   Sector;
+native readonly subsector_t *SubSector;
+native readonly sector_t *Sector;
 
 // Interaction info, by BLOCKMAP.
 // Links in blocks (if needed).
@@ -245,7 +245,7 @@ native readonly private Entity  BlockMapPrev;
 native readonly Entity      SNext;
 native readonly Entity      SPrev;
 
-native readonly msecnode_t*   TouchingSectorList;
+native readonly msecnode_t *TouchingSectorList;
 
 // The closest interval over all contacted Sectors.
 native float  FloorZ;
@@ -253,8 +253,8 @@ native float  CeilingZ;
 native float  DropOffZ;
 
 //  Closest floor and ceiling, source of floorz and ceilingz
-native sec_plane_t* Floor;
-native sec_plane_t* Ceiling;
+native sec_plane_t *Floor;
+native sec_plane_t *Ceiling;
 
 // If == validcount, already checked.
 int       ValidCount;
@@ -383,9 +383,9 @@ native final void StopSoundSequence();
 native final bool CheckSides(TVec lsPos);
 native final void CheckDropOff(out float DeltaX, out float DeltaY);
 native final bool CheckPosition(TVec Pos);
-native final bool CheckRelPosition(tmtrace_t* tmtrace, TVec Pos);
+native final bool CheckRelPosition(tmtrace_t *tmtrace, TVec Pos);
 native final bool TryMove(TVec newPos, bool AllowDropOff);
-native final bool TryMoveEx(tmtrace_t* tmtrace, TVec newPos, bool AllowDropOff);
+native final bool TryMoveEx(tmtrace_t *tmtrace, TVec newPos, bool AllowDropOff);
 native final bool TestMobjZ();
 
 native final void SlideMove(float StepVelScale);
@@ -412,7 +412,7 @@ native final void SetDecorateFlag(string Name, bool Value);
 //
 //===========================================================================
 
-void OnMapSpawn(mthing_t* mthing)
+void OnMapSpawn(mthing_t *mthing)
 {
   InitialHealth = Health;
 }
@@ -454,7 +454,7 @@ bool Touch(Entity Other)
 //
 //===========================================================================
 
-void CheckForPushSpecial(line_t* line, int side)
+void CheckForPushSpecial(line_t *line, int side)
 {
 }
 
@@ -474,7 +474,7 @@ void BlastedHitLine()
 //
 //==========================================================================
 
-void PushLine(tmtrace_t* tmtrace)
+void PushLine(tmtrace_t *tmtrace)
 {
 }
 
@@ -494,7 +494,7 @@ void HandleFloorclip()
 //
 //==========================================================================
 
-void CrossSpecialLine(line_t* ld, int side)
+void CrossSpecialLine(line_t *ld, int side)
 {
 }
 
@@ -685,7 +685,7 @@ int GetActorProperty(int Prop)
 //
 //==========================================================================
 
-void CheckForSectorActions(sector_t* OldSec, bool OldAboveFakeFloor,
+void CheckForSectorActions(sector_t *OldSec, bool OldAboveFakeFloor,
   bool OldAboveFakeCeiling)
 {
 }

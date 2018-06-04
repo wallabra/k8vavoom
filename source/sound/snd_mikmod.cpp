@@ -43,19 +43,19 @@ public:
   struct FMikModArchiveReader
   {
     MREADER   Core;
-    VStream*  Strm;
+    VStream *Strm;
     bool    AtEof;
   };
 
-  MODULE*     Module;
+  MODULE *Module;
 
   static bool   MikModInitialised;
   static MDRIVER  Driver;
 
   //  VAudioCodec interface.
-  VMikModAudioCodec(MODULE* InModule);
+  VMikModAudioCodec(MODULE *InModule);
   ~VMikModAudioCodec();
-  int Decode(short* Data, int NumSamples);
+  int Decode(short *Data, int NumSamples);
   bool Finished();
   void Restart();
 
@@ -65,13 +65,13 @@ public:
   static BOOL Drv_Reset();
 
   //  Archive reader functions.
-  static BOOL ArchiveReader_Seek(MREADER* rd, long offset, int whence);
-  static long ArchiveReader_Tell(MREADER* rd);
-  static BOOL ArchiveReader_Read(MREADER* rd, void *dest, size_t length);
-  static int ArchiveReader_Get(MREADER* rd);
-  static BOOL ArchiveReader_Eof(MREADER* rd);
+  static BOOL ArchiveReader_Seek(MREADER *rd, long offset, int whence);
+  static long ArchiveReader_Tell(MREADER *rd);
+  static BOOL ArchiveReader_Read(MREADER *rd, void *dest, size_t length);
+  static int ArchiveReader_Get(MREADER *rd);
+  static BOOL ArchiveReader_Eof(MREADER *rd);
 
-  static VAudioCodec* Create(VStream* InStrm);
+  static VAudioCodec *Create(VStream *InStrm);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -91,7 +91,7 @@ IMPLEMENT_AUDIO_CODEC(VMikModAudioCodec, "MikMod");
 bool      VMikModAudioCodec::MikModInitialised;
 MDRIVER     VMikModAudioCodec::Driver =
 {
-  NULL,
+  nullptr,
   (CHAR*)"vavoom",
   (CHAR*)"vavoom output driver",
   0,
@@ -101,7 +101,7 @@ MDRIVER     VMikModAudioCodec::Driver =
 #  if (LIBMIKMOD_VERSION >= 0x030200)
   (CHAR*)"",
 #  endif  /* libmikmod-3.2.x */
-  NULL,
+  nullptr,
 #endif
   VMikModAudioCodec::Drv_IsThere,
   VC_SampleLoad,
@@ -115,7 +115,7 @@ MDRIVER     VMikModAudioCodec::Driver =
   VC_PlayStart,
   VC_PlayStop,
   VMikModAudioCodec::Drv_Update,
-  NULL,
+  nullptr,
   VC_VoiceSetVolume,
   VC_VoiceGetVolume,
   VC_VoiceSetFrequency,
@@ -144,7 +144,7 @@ static VCvarB s_mikmod_lowpass("snd_mikmod_lowpass", true, "MikMod: lowpass filt
 //
 //==========================================================================
 
-VMikModAudioCodec::VMikModAudioCodec(MODULE* InModule)
+VMikModAudioCodec::VMikModAudioCodec(MODULE *InModule)
 : Module(InModule)
 {
 }
@@ -170,7 +170,7 @@ VMikModAudioCodec::~VMikModAudioCodec()
 //
 //==========================================================================
 
-int VMikModAudioCodec::Decode(short* Data, int NumSamples)
+int VMikModAudioCodec::Decode(short *Data, int NumSamples)
 {
   guard(VMikModAudioCodec::Decode);
   return VC_WriteBytes((SBYTE*)Data, NumSamples * 4) / 4;
@@ -242,10 +242,10 @@ BOOL VMikModAudioCodec::Drv_Reset()
 //
 //==========================================================================
 
-BOOL VMikModAudioCodec::ArchiveReader_Seek(MREADER* rd, long offset, int whence)
+BOOL VMikModAudioCodec::ArchiveReader_Seek(MREADER *rd, long offset, int whence)
 {
   guard(VMikModAudioCodec::ArchiveReader_Seek);
-  VStream* Strm = ((FMikModArchiveReader*)rd)->Strm;
+  VStream *Strm = ((FMikModArchiveReader*)rd)->Strm;
   int NewPos = 0;
   switch (whence)
   {
@@ -274,10 +274,10 @@ BOOL VMikModAudioCodec::ArchiveReader_Seek(MREADER* rd, long offset, int whence)
 //
 //==========================================================================
 
-long VMikModAudioCodec::ArchiveReader_Tell(MREADER* rd)
+long VMikModAudioCodec::ArchiveReader_Tell(MREADER *rd)
 {
   guard(VMikModAudioCodec::ArchiveReader_Tell);
-  VStream* Strm = ((FMikModArchiveReader*)rd)->Strm;
+  VStream *Strm = ((FMikModArchiveReader*)rd)->Strm;
   return Strm->Tell();
   unguard;
 }
@@ -288,10 +288,10 @@ long VMikModAudioCodec::ArchiveReader_Tell(MREADER* rd)
 //
 //==========================================================================
 
-BOOL VMikModAudioCodec::ArchiveReader_Read(MREADER* rd, void *dest, size_t length)
+BOOL VMikModAudioCodec::ArchiveReader_Read(MREADER *rd, void *dest, size_t length)
 {
   guard(VMikModAudioCodec::ArchiveReader_Read);
-  VStream* Strm = ((FMikModArchiveReader*)rd)->Strm;
+  VStream *Strm = ((FMikModArchiveReader*)rd)->Strm;
   if (Strm->Tell() + (int)length > Strm->TotalSize())
   {
     ((FMikModArchiveReader*)rd)->AtEof = true;
@@ -308,10 +308,10 @@ BOOL VMikModAudioCodec::ArchiveReader_Read(MREADER* rd, void *dest, size_t lengt
 //
 //==========================================================================
 
-int VMikModAudioCodec::ArchiveReader_Get(MREADER* rd)
+int VMikModAudioCodec::ArchiveReader_Get(MREADER *rd)
 {
   guard(VMikModAudioCodec::ArchiveReader_Get);
-  VStream* Strm = ((FMikModArchiveReader*)rd)->Strm;
+  VStream *Strm = ((FMikModArchiveReader*)rd)->Strm;
   if (Strm->AtEnd())
   {
     ((FMikModArchiveReader*)rd)->AtEof = true;
@@ -332,7 +332,7 @@ int VMikModAudioCodec::ArchiveReader_Get(MREADER* rd)
 //
 //==========================================================================
 
-BOOL VMikModAudioCodec::ArchiveReader_Eof(MREADER* rd)
+BOOL VMikModAudioCodec::ArchiveReader_Eof(MREADER *rd)
 {
   guard(VMikModAudioCodec::ArchiveReader_Eof);
   return ((FMikModArchiveReader*)rd)->AtEof;
@@ -345,12 +345,12 @@ BOOL VMikModAudioCodec::ArchiveReader_Eof(MREADER* rd)
 //
 //==========================================================================
 
-VAudioCodec* VMikModAudioCodec::Create(VStream* InStrm)
+VAudioCodec *VMikModAudioCodec::Create(VStream *InStrm)
 {
   guard(VMikModAudioCodec::Create);
   if (snd_mod_player != 0)
   {
-    return NULL;
+    return nullptr;
   }
   if (!MikModInitialised)
   {
@@ -421,7 +421,7 @@ VAudioCodec* VMikModAudioCodec::Create(VStream* InStrm)
   if (MikMod_Init((CHAR*)""))
   {
     GCon->Logf("MikMod init failed");
-    return NULL;
+    return nullptr;
   }
 
   //  Create a reader.
@@ -436,18 +436,18 @@ VAudioCodec* VMikModAudioCodec::Create(VStream* InStrm)
   InStrm->Seek(0);
 
   //  Try to load the song.
-  MODULE* module = Player_LoadGeneric(&Reader.Core, 256, 0);
+  MODULE *module = Player_LoadGeneric(&Reader.Core, 256, 0);
   if (!module)
   {
     //  Not a module file.
     MikMod_Exit();
-    return NULL;
+    return nullptr;
   }
 
   //  Close stream.
   InStrm->Close();
   delete InStrm;
-  InStrm = NULL;
+  InStrm = nullptr;
 
   //  Start playback.
   Player_Start(module);

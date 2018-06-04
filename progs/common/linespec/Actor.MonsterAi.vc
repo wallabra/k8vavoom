@@ -643,7 +643,7 @@ void DoChase(bool FastChase, state AMeleeState, state AMissileState,
         }
         Level.ExecuteActionSpecial(Ent.Special, Ent.Args[0],
           Ent.Args[1], Ent.Args[2], Ent.Args[3], Ent.Args[4],
-          NULL, 0, self);
+          nullptr, 0, self);
       }
 
       float LastGoalAng = Goal.Angles.yaw;

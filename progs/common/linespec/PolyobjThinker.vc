@@ -34,7 +34,7 @@ float thrust_force;
 //
 //==========================================================================
 
-final void PolyobjStartSequence(polyobj_t* mobj, name sequence, int ModeNum)
+final void PolyobjStartSequence(polyobj_t *mobj, name sequence, int ModeNum)
 {
   Level.PolyobjStartSequence(mobj, sequence, ModeNum);
 }
@@ -45,7 +45,7 @@ final void PolyobjStartSequence(polyobj_t* mobj, name sequence, int ModeNum)
 //
 //==========================================================================
 
-final void PolyobjStopSequence(polyobj_t* mobj)
+final void PolyobjStopSequence(polyobj_t *mobj)
 {
   Level.PolyobjStopSequence(mobj);
 }

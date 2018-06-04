@@ -94,7 +94,7 @@ void VStreamMusicPlayer::Tick(float)
   for (int Len = SoundDevice->GetStreamAvailable(); Len;
     Len = SoundDevice->GetStreamAvailable())
   {
-    short* Data = SoundDevice->GetStreamBuffer();
+    short *Data = SoundDevice->GetStreamBuffer();
     int StartPos = 0;
     while (!Stopping && StartPos < Len)
     {
@@ -138,7 +138,7 @@ void VStreamMusicPlayer::Tick(float)
 //
 //==========================================================================
 
-void VStreamMusicPlayer::Play(VAudioCodec* InCodec, const char* InName,
+void VStreamMusicPlayer::Play(VAudioCodec *InCodec, const char *InName,
   bool InLoop)
 {
   guard(VStreamMusicPlayer::Play);
@@ -201,7 +201,7 @@ void VStreamMusicPlayer::Stop()
   if (!StrmOpened)
     return;
   delete Codec;
-  Codec = NULL;
+  Codec = nullptr;
   SoundDevice->CloseStream();
   StrmOpened = false;
   unguard;

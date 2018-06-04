@@ -39,7 +39,7 @@ class VMp3AudioCodec : public VAudioCodec
 public:
   enum { INPUT_BUFFER_SIZE = 5 * 8192 };
 
-  VStream*      Strm;
+  VStream *Strm;
   bool        FreeStream;
   int         BytesLeft;
   bool        Initialised;
@@ -58,7 +58,7 @@ public:
   int ReadData();
   bool Finished();
   void Restart();
-  static VAudioCodec* Create(VStream*);
+  static VAudioCodec *Create(VStream*);
 };
 
 class VMp3SampleLoader : public VSampleLoader
@@ -91,7 +91,7 @@ VMp3SampleLoader    Mp3SampleLoader;
 //
 //==========================================================================
 
-VMp3AudioCodec::VMp3AudioCodec(VStream* AStrm, bool AFreeStream)
+VMp3AudioCodec::VMp3AudioCodec(VStream *AStrm, bool AFreeStream)
 : Strm(AStrm)
 , FreeStream(AFreeStream)
 , Initialised(false)
@@ -125,7 +125,7 @@ VMp3AudioCodec::~VMp3AudioCodec()
       Strm->Close();
       delete Strm;
     }
-    Strm = NULL;
+    Strm = nullptr;
   }
   //  Clear structs used by libmad.
   mad_synth_finish(&Synth);
@@ -192,7 +192,7 @@ bool VMp3AudioCodec::Init()
 //
 //==========================================================================
 
-int VMp3AudioCodec::Decode(short* Data, int NumSamples)
+int VMp3AudioCodec::Decode(short *Data, int NumSamples)
 {
   guard(VMp3AudioCodec::Decode);
   int CurSample = 0;
@@ -237,7 +237,7 @@ int VMp3AudioCodec::Decode(short* Data, int NumSamples)
     }
 
     //  Fill in input buffer if it becomes empty.
-    if (Stream.buffer == NULL || Stream.error == MAD_ERROR_BUFLEN)
+    if (Stream.buffer == nullptr || Stream.error == MAD_ERROR_BUFLEN)
     {
       if (!ReadData())
         break;
@@ -277,11 +277,11 @@ int VMp3AudioCodec::ReadData()
   guard(VMp3AudioCodec::ReadData);
   int     ReadSize;
   int     Remaining;
-  byte*   ReadStart;
+  byte *ReadStart;
 
   //  If there are some bytes left, move them to the beginning of the
   // buffer.
-  if (Stream.next_frame != NULL)
+  if (Stream.next_frame != nullptr)
   {
     Remaining = Stream.bufend - Stream.next_frame;
     memmove(InputBuffer, Stream.next_frame, Remaining);
@@ -352,15 +352,15 @@ void VMp3AudioCodec::Restart()
 //
 //==========================================================================
 
-VAudioCodec* VMp3AudioCodec::Create(VStream* InStrm)
+VAudioCodec *VMp3AudioCodec::Create(VStream *InStrm)
 {
   guard(VMp3AudioCodec::Create);
-  VMp3AudioCodec* Codec = new VMp3AudioCodec(InStrm, true);
+  VMp3AudioCodec *Codec = new VMp3AudioCodec(InStrm, true);
   if (!Codec->Init())
   {
     delete Codec;
-    Codec = NULL;
-    return NULL;
+    Codec = nullptr;
+    return nullptr;
   }
   return Codec;
   unguard;
@@ -372,14 +372,14 @@ VAudioCodec* VMp3AudioCodec::Create(VStream* InStrm)
 //
 //==========================================================================
 
-void VMp3SampleLoader::Load(sfxinfo_t& Sfx, VStream& Stream)
+void VMp3SampleLoader::Load(sfxinfo_t &Sfx, VStream &Stream)
 {
   guard(VMp3SampleLoader::Load);
-  VMp3AudioCodec* Codec = new VMp3AudioCodec(&Stream, false);
+  VMp3AudioCodec *Codec = new VMp3AudioCodec(&Stream, false);
   if (!Codec->Init())
   {
     delete Codec;
-    Codec = NULL;
+    Codec = nullptr;
     return;
   }
 
@@ -402,7 +402,7 @@ void VMp3SampleLoader::Load(sfxinfo_t& Sfx, VStream& Stream)
   if (!Data.Num())
   {
     delete Codec;
-    Codec = NULL;
+    Codec = nullptr;
     return;
   }
 
@@ -416,6 +416,6 @@ void VMp3SampleLoader::Load(sfxinfo_t& Sfx, VStream& Stream)
   memcpy(Sfx.Data, Data.Ptr(), Data.Num() * 2);
 
   delete Codec;
-  Codec = NULL;
+  Codec = nullptr;
   unguard;
 }

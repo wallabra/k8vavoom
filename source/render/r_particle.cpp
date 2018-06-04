@@ -61,7 +61,7 @@ VCvarB        r_draw_particles("r_draw_particles", true, "Draw particles?", CVAR
 void VRenderLevelShared::InitParticles()
 {
   guard(VRenderLevelShared::InitParticles);
-  const char* p = GArgs.CheckValue("-particles");
+  const char *p = GArgs.CheckValue("-particles");
 
   if (p)
   {
@@ -88,11 +88,11 @@ void VRenderLevelShared::ClearParticles()
 {
   guard(VRenderLevelShared::ClearParticles);
   FreeParticles = &Particles[0];
-  ActiveParticles = NULL;
+  ActiveParticles = nullptr;
 
   for (int i = 0; i < NumParticles; i++)
     Particles[i].next = &Particles[i + 1];
-  Particles[NumParticles - 1].next = NULL;
+  Particles[NumParticles - 1].next = nullptr;
   unguard;
 }
 
@@ -102,16 +102,16 @@ void VRenderLevelShared::ClearParticles()
 //
 //==========================================================================
 
-particle_t* VRenderLevelShared::NewParticle()
+particle_t *VRenderLevelShared::NewParticle()
 {
   guard(VRenderLevelShared::NewParticle);
   if (!FreeParticles)
   {
     //  No free particles
-    return NULL;
+    return nullptr;
   }
   //  Remove from list of free particles
-  particle_t* p = FreeParticles;
+  particle_t *p = FreeParticles;
   FreeParticles = p->next;
   //  Clean
   memset(p, 0, sizeof(*p));
@@ -179,7 +179,7 @@ void VRenderLevelShared::DrawParticles()
     return;
   }
   Drawer->StartParticles();
-  for (particle_t* p = ActiveParticles; p; p = p->next)
+  for (particle_t *p = ActiveParticles; p; p = p->next)
   {
     if (ColourMap)
     {

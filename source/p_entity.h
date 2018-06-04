@@ -116,7 +116,7 @@ enum
 
 struct VDropItemInfo
 {
-  VClass*     Type;
+  VClass *Type;
   VName     TypeName;
   vint32      Amount;
   float     Chance;
@@ -147,8 +147,8 @@ class VEntity : public VThinker
 
   TAVec     Angles;     // orientation
 
-  VState*     State;
-  VState*     DispState;
+  VState *State;
+  VState *DispState;
   float     StateTime;    // state tic counter
 
   //More drawing info.
@@ -168,19 +168,19 @@ class VEntity : public VThinker
   float     ScaleX;
   float     ScaleY;
 
-  subsector_t*  SubSector;
-  sector_t*   Sector;
+  subsector_t *SubSector;
+  sector_t *Sector;
 
   // Interaction info, by BLOCKMAP.
   // Links in blocks (if needed).
-  VEntity*    BlockMapNext;
-  VEntity*    BlockMapPrev;
+  VEntity *BlockMapNext;
+  VEntity *BlockMapPrev;
 
   // Links in sector (if needed).
-  VEntity*    SNext;
-  VEntity*    SPrev;
+  VEntity *SNext;
+  VEntity *SPrev;
 
-  msecnode_t*   TouchingSectorList;
+  msecnode_t *TouchingSectorList;
 
   // The closest interval over all contacted Sectors.
   float     FloorZ;
@@ -248,8 +248,8 @@ class VEntity : public VThinker
   VBasePlayer   *Player;
 
   int       TID;      // thing identifier
-  VEntity*    TIDHashNext;
-  VEntity*    TIDHashPrev;
+  VEntity *TIDHashNext;
+  VEntity *TIDHashPrev;
 
   int       Special;    // special
   int       Args[5];    // special arguments
@@ -271,7 +271,7 @@ class VEntity : public VThinker
   VName     SoundGender;
 
   //  Owner entity of inventory item
-  VEntity*    Owner;
+  VEntity *Owner;
 
   VName DecalName;
 
@@ -306,9 +306,9 @@ class VEntity : public VThinker
   void InsertIntoTIDList(int);
   void RemoveFromTIDList();
 
-  VEntity* GetTopOwner()
+  VEntity *GetTopOwner()
   {
-    VEntity* Ret = this;
+    VEntity *Ret = this;
     while (Ret->Owner)
     {
       Ret = Ret->Owner;
@@ -316,7 +316,7 @@ class VEntity : public VThinker
     return Ret;
   }
 
-  void eventOnMapSpawn(mthing_t* mthing)
+  void eventOnMapSpawn(mthing_t *mthing)
   {
     P_PASS_SELF;
     P_PASS_PTR(mthing);
@@ -338,7 +338,7 @@ class VEntity : public VThinker
     P_PASS_REF(Other);
     EV_RET_BOOL_IDX(FIndex_Touch);
   }
-  void eventCheckForPushSpecial(line_t* line, int side)
+  void eventCheckForPushSpecial(line_t *line, int side)
   {
     P_PASS_SELF;
     P_PASS_PTR(line);
@@ -446,7 +446,7 @@ class VEntity : public VThinker
     P_PASS_BOOL(Fog);
     EV_RET_BOOL_IDX(FIndex_MoveThing);
   }
-  float eventGetStateTime(VState* State, float StateTime)
+  float eventGetStateTime(VState *State, float StateTime)
   {
     P_PASS_SELF;
     P_PASS_PTR(State);
@@ -467,7 +467,7 @@ class VEntity : public VThinker
     P_PASS_INT(Prop);
     EV_RET_INT(NAME_GetActorProperty);
   }
-  void eventCheckForSectorActions(sector_t* OldSec, bool OldAboveFakeFloor,
+  void eventCheckForSectorActions(sector_t *OldSec, bool OldAboveFakeFloor,
     bool OldAboveFakeCeiling)
   {
     P_PASS_SELF;
@@ -481,7 +481,7 @@ class VEntity : public VThinker
     P_PASS_SELF;
     EV_RET_BOOL(NAME_SkyBoxGetAlways);
   }
-  VEntity* eventSkyBoxGetMate()
+  VEntity *eventSkyBoxGetMate()
   {
     P_PASS_SELF;
     EV_RET_REF(VEntity, NAME_SkyBoxGetMate);
@@ -491,7 +491,7 @@ class VEntity : public VThinker
     P_PASS_SELF;
     EV_RET_FLOAT(NAME_SkyBoxGetPlaneAlpha);
   }
-  void eventCalcFakeZMovement(TVec& Ret, float DeltaTime)
+  void eventCalcFakeZMovement(TVec &Ret, float DeltaTime)
   {
     P_PASS_SELF;
     P_PASS_PTR(&Ret);
@@ -515,14 +515,14 @@ class VEntity : public VThinker
     P_PASS_NAME(UnmorphFlash);
     EV_RET_INT(NAME_MorphActor);
   }
-  int eventUnmorphActor(VEntity* Activator, int Force)
+  int eventUnmorphActor(VEntity *Activator, int Force)
   {
     P_PASS_SELF;
     P_PASS_REF(Activator);
     P_PASS_INT(Force);
     EV_RET_INT(NAME_UnmorphActor);
   }
-  void eventGetViewEntRenderParams(float& OutAlpha, int& OutRenderStyle)
+  void eventGetViewEntRenderParams(float &OutAlpha, int &OutRenderStyle)
   {
     P_PASS_SELF;
     P_PASS_PTR(&OutAlpha);
@@ -533,8 +533,8 @@ class VEntity : public VThinker
   bool SetState(VState*);
   void SetInitialState(VState*);
   bool AdvanceState(float);
-  VState* FindState(VName, VName = NAME_None, bool = false);
-  VState* FindStateEx(const VStr&, bool);
+  VState *FindState(VName, VName = NAME_None, bool = false);
+  VState *FindStateEx(const VStr&, bool);
   bool HasSpecialStates(VName);
   void GetStateEffects(TArray<VLightEffectDef*>&,
     TArray<VParticleEffectDef*>&) const;
@@ -544,7 +544,7 @@ class VEntity : public VThinker
   bool CheckPosition(TVec);
   bool CheckRelPosition(tmtrace_t&, TVec);
   bool TryMove(tmtrace_t&, TVec, bool);
-  VEntity* TestMobjZ(const TVec&);
+  VEntity *TestMobjZ(const TVec&);
   void SlideMove(float);
   void BounceWall(float, float);
   void UpdateVelocity();
@@ -560,7 +560,7 @@ private:
   bool CheckRelThing(tmtrace_t&, VEntity*);
   bool CheckRelLine(tmtrace_t&, line_t*);
   void BlockedByLine(line_t*);
-  void PushLine(const tmtrace_t& tmtrace);
+  void PushLine(const tmtrace_t &tmtrace);
   static TVec ClipVelocity(const TVec&, const TVec&, float);
   void SlidePathTraverse(float&, line_t*&, float, float, float);
 

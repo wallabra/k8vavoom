@@ -63,19 +63,19 @@ bool      sv_map_travel = false;
 int       sv_load_num_players;
 bool      run_open_scripts;
 
-VBasePlayer*  GPlayersBase[MAXPLAYERS];
+VBasePlayer *GPlayersBase[MAXPLAYERS];
 
 vuint8      deathmatch = false;     // only if started as net death
 
 int       TimerGame;
 
-VLevelInfo*   GLevelInfo;
+VLevelInfo *GLevelInfo;
 
 int       LeavePosition;
 
 bool      completed;
 
-VNetContext*  GDemoRecordingContext;
+VNetContext *GDemoRecordingContext;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -92,7 +92,7 @@ static VCvarB split_frame("split_frame", true, "Splitframe mode?", CVAR_Archive)
 static VCvarI sv_maxmove("sv_maxmove", "400", "Maximum allowed network movement.", CVAR_Archive);
 static VCvarF master_heartbeat_time("master_heartbeat_time", "300", "Master server heartbit interval.", CVAR_Archive);
 
-static VServerNetContext* ServerNetContext;
+static VServerNetContext *ServerNetContext;
 
 static double LastMasterUpdate;
 
@@ -167,7 +167,7 @@ void SV_Shutdown()
     if (GPlayersBase[i])
     {
       delete GPlayersBase[i]->Net;
-      GPlayersBase[i]->Net = NULL;
+      GPlayersBase[i]->Net = nullptr;
       GPlayersBase[i]->ConditionalDestroy();
     }
   }
@@ -177,7 +177,7 @@ void SV_Shutdown()
   svs.serverinfo.Clean();
 
   delete ServerNetContext;
-  ServerNetContext = NULL;
+  ServerNetContext = nullptr;
   unguard;
 }
 
@@ -193,7 +193,7 @@ void SV_Clear()
   if (GLevel)
   {
     GLevel->ConditionalDestroy();
-    GLevel = NULL;
+    GLevel = nullptr;
     VObject::CollectGarbage();
   }
   memset(&sv, 0, sizeof(sv));
@@ -221,9 +221,9 @@ void SV_SendClientMessages()
       continue;
     }
 
-    VBasePlayer* Player = GGameInfo->Players[i];
+    VBasePlayer *Player = GGameInfo->Players[i];
 
-    VPlayerReplicationInfo* RepInfo = Player->PlayerReplicationInfo;
+    VPlayerReplicationInfo *RepInfo = Player->PlayerReplicationInfo;
     RepInfo->PlayerName = Player->PlayerName;
     RepInfo->UserInfo = Player->UserInfo;
     RepInfo->TranslStart = Player->TranslStart;
@@ -343,7 +343,7 @@ void SV_RunClients()
   // get commands
   for (int i = 0; i < MAXPLAYERS; i++)
   {
-    VBasePlayer* Player = GGameInfo->Players[i];
+    VBasePlayer *Player = GGameInfo->Players[i];
     if (!Player)
     {
       continue;
@@ -498,7 +498,7 @@ void SV_Ticker()
 static VName CheckRedirects(VName Map)
 {
   guard(CheckRedirects);
-  const mapInfo_t& Info = P_GetMapInfo(Map);
+  const mapInfo_t &Info = P_GetMapInfo(Map);
   if (Info.RedirectType == NAME_None || Info.RedirectMap == NAME_None)
   {
     //  No redirect for this map.
@@ -508,7 +508,7 @@ static VName CheckRedirects(VName Map)
   //  Check all players.
   for (int i = 0; i < MAXPLAYERS; i++)
   {
-    VBasePlayer* P = GGameInfo->Players[i];
+    VBasePlayer *P = GGameInfo->Players[i];
     if (!P || !(P->PlayerFlags & VBasePlayer::PF_Spawned))
     {
       continue;
@@ -549,14 +549,14 @@ static void G_DoCompleted()
   sv.intertime = 0;
   GLevelInfo->CompletitionTime = GLevel->Time;
 
-  GLevel->Acs->StartTypedACScripts(SCRIPT_Unloading, 0, 0, 0, NULL, false,
+  GLevel->Acs->StartTypedACScripts(SCRIPT_Unloading, 0, 0, 0, nullptr, false,
     true);
 
   GLevelInfo->NextMap = CheckRedirects(GLevelInfo->NextMap);
 
-  const mapInfo_t& old_info = P_GetMapInfo(GLevel->MapName);
-  const mapInfo_t& new_info = P_GetMapInfo(GLevelInfo->NextMap);
-  const VClusterDef* ClusterD = P_GetClusterDef(old_info.Cluster);
+  const mapInfo_t &old_info = P_GetMapInfo(GLevel->MapName);
+  const mapInfo_t &new_info = P_GetMapInfo(GLevelInfo->NextMap);
+  const VClusterDef *ClusterD = P_GetClusterDef(old_info.Cluster);
   bool HubChange = !old_info.Cluster || !(ClusterD->Flags & CLUSTERF_Hub) ||
     old_info.Cluster != new_info.Cluster;
 
@@ -681,7 +681,7 @@ int NET_SendToAll(int blocktime)
 
   for (i = 0; i < svs.max_clients; i++)
   {
-    VBasePlayer* Player = GGameInfo->Players[i];
+    VBasePlayer *Player = GGameInfo->Players[i];
     if (Player && Player->Net)
     {
       if (Player->Net->IsLocalConnection())
@@ -707,7 +707,7 @@ int NET_SendToAll(int blocktime)
     count = 0;
     for (i = 0; i < svs.max_clients; i++)
     {
-      VBasePlayer* Player = GGameInfo->Players[i];
+      VBasePlayer *Player = GGameInfo->Players[i];
       if (!state1[i])
       {
         state1[i] = true;
@@ -749,7 +749,7 @@ void SV_SendServerInfoToClients()
   guard(SV_SendServerInfoToClients);
   for (int i = 0; i < svs.max_clients; i++)
   {
-    VBasePlayer* Player = GGameInfo->Players[i];
+    VBasePlayer *Player = GGameInfo->Players[i];
     if (!Player)
     {
       continue;
@@ -792,7 +792,7 @@ void SV_SpawnServer(const char *mapname, bool spawn_thinkers, bool titlemap)
       GGameInfo->Players[i]->ItemCount = 0;
 
       GGameInfo->Players[i]->PlayerFlags &= ~VBasePlayer::PF_Spawned;
-      GGameInfo->Players[i]->MO = NULL;
+      GGameInfo->Players[i]->MO = nullptr;
       GGameInfo->Players[i]->Frags = 0;
       GGameInfo->Players[i]->Deaths = 0;
       if (GGameInfo->Players[i]->PlayerState == PST_DEAD)
@@ -828,7 +828,7 @@ void SV_SpawnServer(const char *mapname, bool spawn_thinkers, bool titlemap)
   GLevel->NetContext = ServerNetContext;
   GLevel->WorldInfo = GGameInfo->WorldInfo;
 
-  const mapInfo_t& info = P_GetMapInfo(GLevel->MapName);
+  const mapInfo_t &info = P_GetMapInfo(GLevel->MapName);
 
   if (spawn_thinkers)
   {
@@ -897,7 +897,7 @@ void SV_SpawnServer(const char *mapname, bool spawn_thinkers, bool titlemap)
     GLevel->TickWorld(host_frametime);
 
     //  Start open scripts.
-    GLevel->Acs->StartTypedACScripts(SCRIPT_Open, 0, 0, 0, NULL, false,
+    GLevel->Acs->StartTypedACScripts(SCRIPT_Open, 0, 0, 0, nullptr, false,
       false);
   }
 
@@ -922,7 +922,7 @@ COMMAND(PreSpawn)
 
   //  Make sure level info is spawned on client side, since there
   // could be some RPCs that depend on it.
-  VThinkerChannel* Chan = Player->Net->ThinkerChannels.FindPtr(GLevelInfo);
+  VThinkerChannel *Chan = Player->Net->ThinkerChannels.FindPtr(GLevelInfo);
   if (!Chan)
   {
     Chan = (VThinkerChannel*)Player->Net->CreateChannel(CHANNEL_Thinker,
@@ -961,7 +961,7 @@ COMMAND(Spawn)
 //
 //==========================================================================
 
-void SV_DropClient(VBasePlayer* Player, bool crash)
+void SV_DropClient(VBasePlayer *Player, bool crash)
 {
   guard(SV_DropClient);
   if (!crash)
@@ -969,7 +969,7 @@ void SV_DropClient(VBasePlayer* Player, bool crash)
     if (GLevel && GLevel->Acs)
     {
       GLevel->Acs->StartTypedACScripts(SCRIPT_Disconnect,
-        SV_GetPlayerNum(Player), 0, 0, NULL, true, false);
+        SV_GetPlayerNum(Player), 0, 0, nullptr, true, false);
     }
     if (Player->PlayerFlags & VBasePlayer::PF_Spawned)
     {
@@ -977,13 +977,13 @@ void SV_DropClient(VBasePlayer* Player, bool crash)
     }
   }
   Player->PlayerFlags &= ~VBasePlayer::PF_Active;
-  GGameInfo->Players[SV_GetPlayerNum(Player)] = NULL;
+  GGameInfo->Players[SV_GetPlayerNum(Player)] = nullptr;
   Player->PlayerFlags &= ~VBasePlayer::PF_Spawned;
 
   Player->PlayerReplicationInfo->DestroyThinker();
 
   delete Player->Net;
-  Player->Net = NULL;
+  Player->Net = nullptr;
 
   svs.num_connected--;
   Player->UserInfo = VStr();
@@ -1040,13 +1040,13 @@ void SV_ShutdownGame()
     }
 
     delete cl->Net;
-    cl->Net = NULL;
+    cl->Net = nullptr;
     cl->ConditionalDestroy();
 
     if (GClLevel)
     {
       delete GClLevel;
-      GClLevel = NULL;
+      GClLevel = nullptr;
     }
 #endif
   }
@@ -1076,17 +1076,17 @@ void SV_ShutdownGame()
     if (GLevel)
     {
       delete GLevel;
-      GLevel = NULL;
+      GLevel = nullptr;
     }
     if (GGameInfo->WorldInfo)
     {
       delete GGameInfo->WorldInfo;
-      GGameInfo->WorldInfo = NULL;
+      GGameInfo->WorldInfo = nullptr;
     }
     for (int i = 0; i < MAXPLAYERS; i++)
     {
       //  Save net pointer
-      VNetConnection* OldNet = GPlayersBase[i]->Net;
+      VNetConnection *OldNet = GPlayersBase[i]->Net;
       GPlayersBase[i]->GetClass()->DestructObject(GPlayersBase[i]);
       memset((vuint8*)GPlayersBase[i] + sizeof(VObject), 0,
         GPlayersBase[i]->GetClass()->ClassSize - sizeof(VObject));
@@ -1105,8 +1105,8 @@ void SV_ShutdownGame()
   }
 
 #ifdef CLIENT
-  GClLevel = NULL;
-  cl = NULL;
+  GClLevel = nullptr;
+  cl = nullptr;
   cls.demoplayback = false;
   cls.signon = 0;
 
@@ -1232,7 +1232,7 @@ void SV_ConnectClient(VBasePlayer *player)
   player->Level = GLevelInfo;
   if (!sv_loading)
   {
-    player->MO = NULL;
+    player->MO = nullptr;
     player->PlayerState = PST_REBORN;
     player->eventPutClientIntoServer();
   }
@@ -1255,7 +1255,7 @@ void SV_ConnectClient(VBasePlayer *player)
 void SV_CheckForNewClients()
 {
   guard(SV_CheckForNewClients);
-  VSocketPublic*  sock;
+  VSocketPublic *sock;
   int       i;
 
   //
@@ -1284,7 +1284,7 @@ void SV_CheckForNewClients()
       Sys_Error("Host_CheckForNewClients: no free clients");
     }
 
-    VBasePlayer* Player = GPlayersBase[i];
+    VBasePlayer *Player = GPlayersBase[i];
     Player->Net = new VNetConnection(sock, ServerNetContext, Player);
     Player->Net->ObjMap->SetUpClassLookup();
     ((VPlayerChannel*)Player->Net->Channels[CHANIDX_Player])->SetPlayer(Player);
@@ -1327,7 +1327,7 @@ void SV_ConnectBot(const char *name)
   if (i == svs.max_clients)
     Sys_Error("SV_ConnectBot: no free clients");
 
-  VBasePlayer* Player = GPlayersBase[i];
+  VBasePlayer *Player = GPlayersBase[i];
   Player->PlayerFlags |= VBasePlayer::PF_IsBot;
   Player->PlayerName = name;
   SV_ConnectClient(Player);
@@ -1509,7 +1509,7 @@ void ServerFrame(int realtics)
 //
 //==========================================================================
 
-VClass* SV_FindClassFromEditorId(int Id, int GameFilter)
+VClass *SV_FindClassFromEditorId(int Id, int GameFilter)
 {
   guard(SV_FindClassFromEditorId);
   for (int i = VClass::GMobjInfos.Num() - 1; i >= 0; i--)
@@ -1521,7 +1521,7 @@ VClass* SV_FindClassFromEditorId(int Id, int GameFilter)
       return VClass::GMobjInfos[i].Class;
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -1531,7 +1531,7 @@ VClass* SV_FindClassFromEditorId(int Id, int GameFilter)
 //
 //==========================================================================
 
-VClass* SV_FindClassFromScriptId(int Id, int GameFilter)
+VClass *SV_FindClassFromScriptId(int Id, int GameFilter)
 {
   guard(SV_FindClassFromScriptId);
   for (int i = VClass::GScriptIds.Num() - 1; i >= 0; i--)
@@ -1543,7 +1543,7 @@ VClass* SV_FindClassFromScriptId(int Id, int GameFilter)
       return VClass::GScriptIds[i].Class;
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -1583,7 +1583,7 @@ COMMAND(Say)
 //
 //==========================================================================
 
-VLevel* VServerNetContext::GetLevel()
+VLevel *VServerNetContext::GetLevel()
 {
   return GLevel;
 }
@@ -1599,7 +1599,7 @@ VLevel* VServerNetContext::GetLevel()
 class FConsoleDevice : public FOutputDevice
 {
 public:
-  void Serialise(const char* V, EName)
+  void Serialise(const char *V, EName)
   {
     printf("%s\n", V);
   }

@@ -47,11 +47,11 @@ class VThinker : public VGameObject
 {
   DECLARE_CLASS(VThinker, VGameObject, 0)
 
-  VLevel*     XLevel;   //  Level object.
-  VLevelInfo*   Level;    //  Level info object.
+  VLevel *XLevel;   //  Level object.
+  VLevelInfo *Level;    //  Level info object.
 
-  VThinker*   Prev;
-  VThinker*   Next;
+  VThinker *Prev;
+  VThinker *Next;
 
   vuint8      Role;
   vuint8      RemoteRole;
@@ -116,7 +116,7 @@ class VThinker : public VGameObject
 template <class T> class TThinkerIterator
 {
 private:
-  VThinker* Th;
+  VThinker *Th;
   void GetNext()
   {
     while (Th && (!Th->IsA(T::StaticClass()) ||
@@ -126,14 +126,14 @@ private:
     }
   }
 public:
-  TThinkerIterator(const VLevel* Level)
+  TThinkerIterator(const VLevel *Level)
   {
     Th = Level->ThinkerHead;
     GetNext();
   }
   operator bool()
   {
-    return Th != NULL;
+    return Th != nullptr;
   }
   void operator ++()
   {
@@ -143,11 +143,11 @@ public:
       GetNext();
     }
   }
-  T* operator ->()
+  T *operator ->()
   {
     return (T*)Th;
   }
-  T* operator *()
+  T *operator *()
   {
     return (T*)Th;
   }

@@ -41,12 +41,12 @@ struct VSplashInfo
 {
   VName   Name;
 
-  VClass*   SmallClass;
+  VClass *SmallClass;
   float   SmallClip;
   VName   SmallSound;
 
-  VClass*   BaseClass;
-  VClass*   ChunkClass;
+  VClass *BaseClass;
+  VClass *ChunkClass;
   float   ChunkXVelMul;
   float   ChunkYVelMul;
   float   ChunkZVelMul;
@@ -86,7 +86,7 @@ struct VTerrainType
 {
   int       Pic;
   VName     TypeName;
-  VTerrainInfo* Info;
+  VTerrainInfo *Info;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -114,7 +114,7 @@ static TArray<VTerrainType>   TerrainTypes;
 //
 //==========================================================================
 
-static VSplashInfo* GetSplashInfo(VName Name)
+static VSplashInfo *GetSplashInfo(VName Name)
 {
   guard(GetSplashInfo);
   for (int i = 0; i < SplashInfos.Num(); i++)
@@ -124,7 +124,7 @@ static VSplashInfo* GetSplashInfo(VName Name)
       return &SplashInfos[i];
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -134,7 +134,7 @@ static VSplashInfo* GetSplashInfo(VName Name)
 //
 //==========================================================================
 
-static VTerrainInfo* GetTerrainInfo(VName Name)
+static VTerrainInfo *GetTerrainInfo(VName Name)
 {
   guard(GetTerrainInfo);
   for (int i = 0; i < TerrainInfos.Num(); i++)
@@ -144,7 +144,7 @@ static VTerrainInfo* GetTerrainInfo(VName Name)
       return &TerrainInfos[i];
     }
   }
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -154,7 +154,7 @@ static VTerrainInfo* GetTerrainInfo(VName Name)
 //
 //==========================================================================
 
-static void ParseTerrainScript(VScriptParser* sc)
+static void ParseTerrainScript(VScriptParser *sc)
 {
   guard(ParseTerrainScript);
   while (!sc->AtEnd())
@@ -162,17 +162,17 @@ static void ParseTerrainScript(VScriptParser* sc)
     if (sc->Check("splash"))
     {
       sc->ExpectString();
-      VSplashInfo* SInfo = GetSplashInfo(*sc->String);
+      VSplashInfo *SInfo = GetSplashInfo(*sc->String);
       if (!SInfo)
       {
         SInfo = &SplashInfos.Alloc();
       }
       SInfo->Name = *sc->String;
-      SInfo->SmallClass = NULL;
+      SInfo->SmallClass = nullptr;
       SInfo->SmallClip = 0;
       SInfo->SmallSound = NAME_None;
-      SInfo->BaseClass = NULL;
-      SInfo->ChunkClass = NULL;
+      SInfo->BaseClass = nullptr;
+      SInfo->ChunkClass = nullptr;
       SInfo->ChunkXVelMul = 0;
       SInfo->ChunkYVelMul = 0;
       SInfo->ChunkZVelMul = 0;
@@ -248,7 +248,7 @@ static void ParseTerrainScript(VScriptParser* sc)
     else if (sc->Check("terrain"))
     {
       sc->ExpectString();
-      VTerrainInfo* TInfo = GetTerrainInfo(*sc->String);
+      VTerrainInfo *TInfo = GetTerrainInfo(*sc->String);
       if (!TInfo)
       {
         TInfo = &TerrainInfos.Alloc();
@@ -368,7 +368,7 @@ static void ParseTerrainScript(VScriptParser* sc)
       }
       if (!Found)
       {
-        VTerrainType& T = TerrainTypes.Alloc();
+        VTerrainType &T = TerrainTypes.Alloc();
         T.Pic = Pic;
         T.TypeName = *sc->String;
       }
@@ -384,7 +384,7 @@ static void ParseTerrainScript(VScriptParser* sc)
     }
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
   unguard;
 }
 
@@ -398,7 +398,7 @@ void P_InitTerrainTypes()
 {
   guard(P_InitTerrainTypes);
   //  Create default terrain
-  VTerrainInfo& DefT = TerrainInfos.Alloc();
+  VTerrainInfo &DefT = TerrainInfos.Alloc();
   DefT.Name = "Solid";
   DefT.Splash = NAME_None;
   DefT.Flags = 0;
@@ -434,7 +434,7 @@ void P_InitTerrainTypes()
 //
 //==========================================================================
 
-VTerrainInfo* SV_TerrainType(int pic)
+VTerrainInfo *SV_TerrainType(int pic)
 {
   guard(SV_TerrainType);
   for (int i = 0; i < TerrainTypes.Num(); i++)

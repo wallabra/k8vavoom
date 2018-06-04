@@ -97,7 +97,7 @@ Pusher    AdjustLink;
 //
 //==========================================================================
 
-void Init(int InType, line_t* l, int magnitude, int angle, EntityEx source,
+void Init(int InType, line_t *l, int magnitude, int angle, EntityEx source,
   int affectee)
 {
   Source = source;
@@ -162,12 +162,12 @@ void ChangeValues(int magnitude, int angle)
 
 override void Tick(float DeltaTime)
 {
-  sector_t*   sec;
+  sector_t *sec;
   EntityEx    thing;
   int       xspeed, yspeed;
   float     ht;
-  sec_plane_t*  floor;
-  msecnode_t*   Node;
+  sec_plane_t *floor;
+  msecnode_t *Node;
 
 //  if (!var_pushers)
 //    return;

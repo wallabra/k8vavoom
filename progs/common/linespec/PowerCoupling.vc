@@ -63,9 +63,9 @@ override void Died(EntityEx source, EntityEx inflictor)
     UnlinkFromWorld();
   }
   LineSpecialLevelInfo(Level).EV_DoDoor(225, 16, 0, 0, 0,
-    VerticalDoor::DOOREV_Close, NULL, Actor(Level.Game.Players[i].MO));
+    VerticalDoor::DOOREV_Close, nullptr, Actor(Level.Game.Players[i].MO));
   LineSpecialLevelInfo(Level).EV_DoFloor(44, 8, 128, 0, 0,
-    FloorMover::FLOOREV_LowerToHighest, NULL);
+    FloorMover::FLOOREV_LowerToHighest, nullptr);
   EntityEx(Level.Game.Players[i].MO).GiveInventoryType(QuestItem6);
   PlayerEx(Level.Game.Players[i]).ClientVoice(13);
   PlayerEx(Level.Game.Players[i]).SetObjectives(13);

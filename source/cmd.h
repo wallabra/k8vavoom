@@ -41,27 +41,27 @@ private:
   {
     VStr    Name;
     VStr    CmdLine;
-    VAlias*   Next;
+    VAlias *Next;
     bool    Save;
   };
 
-  const char*         Name;
-  VCommand*         Next;
+  const char *Name;
+  VCommand *Next;
 
   static bool         Initialised;
   static VStr         Original;
 
   static TArray<const char*>  AutoCompleteTable;
 
-  static VCommand*      Cmds;
-  static VAlias*        Alias;
+  static VCommand *Cmds;
+  static VAlias *Alias;
 
   static void TokeniseString(const VStr&);
 
 protected:
   static TArray<VStr>     Args;
   static ECmdSource     Source;
-  static VBasePlayer*     Player; //  For SRC_Client
+  static VBasePlayer *Player; //  For SRC_Client
 
 public:
   static bool         ParsingKeyConf;
@@ -123,13 +123,13 @@ public:
   void Print(const VStr&);
   void Exec();
 
-  VCmdBuf& operator << (const char* data)
+  VCmdBuf &operator << (const char *data)
   {
     Print(data);
     return *this;
   }
 
-  VCmdBuf& operator << (const VStr& data)
+  VCmdBuf &operator << (const VStr &data)
   {
     Print(data);
     return *this;

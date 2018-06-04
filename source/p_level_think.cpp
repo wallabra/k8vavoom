@@ -53,13 +53,13 @@ extern VCvarB decals_enabled;
 //
 //==========================================================================
 
-void VLevel::AddThinker(VThinker* Th)
+void VLevel::AddThinker(VThinker *Th)
 {
   guard(VLevel::AddThinker);
   Th->XLevel = this;
   Th->Level = LevelInfo;
   Th->Prev = ThinkerTail;
-  Th->Next = NULL;
+  Th->Next = nullptr;
   if (ThinkerTail)
     ThinkerTail->Next = Th;
   else
@@ -77,7 +77,7 @@ void VLevel::AddThinker(VThinker* Th)
 //
 //==========================================================================
 
-void VLevel::RemoveThinker(VThinker* Th)
+void VLevel::RemoveThinker(VThinker *Th)
 {
   guard(VLevel::RemoveThinker);
   //  Notify that thinker is being removed from level.
@@ -103,21 +103,21 @@ void VLevel::RemoveThinker(VThinker* Th)
 void VLevel::DestroyAllThinkers()
 {
   guard(VLevel::DestroyAllThinkers);
-  for (VThinker* Th = ThinkerHead; Th; Th = Th->Next)
+  for (VThinker *Th = ThinkerHead; Th; Th = Th->Next)
   {
     if (!(Th->GetFlags() & _OF_DelayedDestroy))
     {
       Th->DestroyThinker();
     }
   }
-  for (VThinker* Th = ThinkerHead; Th;)
+  for (VThinker *Th = ThinkerHead; Th;)
   {
-    VThinker* Next = Th->Next;
+    VThinker *Next = Th->Next;
     Th->ConditionalDestroy();
     Th = Next;
   }
-  ThinkerHead = NULL;
-  ThinkerTail = NULL;
+  ThinkerHead = nullptr;
+  ThinkerTail = nullptr;
   unguard;
 }
 
@@ -133,18 +133,18 @@ void VLevel::TickWorld(float DeltaTime)
 
   // Run decal thinkers
   if (DeltaTime > 0 && decals_enabled) {
-    decal_t* dc = decanimlist;
+    decal_t *dc = decanimlist;
     while (dc) {
       bool removeIt = true;
       if (dc->animator) removeIt = !dc->animator->animate(dc, DeltaTime);
-      decal_t* c = dc;
+      decal_t *c = dc;
       dc = dc->nextanimated;
       if (removeIt) RemoveAnimatedDecal(c);
     }
   }
 
   // Run thinkers
-  for (VThinker* Th = ThinkerHead; Th; Th = Th->Next)
+  for (VThinker *Th = ThinkerHead; Th; Th = Th->Next)
   {
     if (!(Th->GetFlags() & _OF_DelayedDestroy))
     {
@@ -183,13 +183,13 @@ void VLevel::TickWorld(float DeltaTime)
 //
 //==========================================================================
 
-VThinker* VLevel::SpawnThinker(VClass* AClass, const TVec& AOrigin,
-  const TAVec& AAngles, mthing_t* mthing, bool AllowReplace)
+VThinker *VLevel::SpawnThinker(VClass *AClass, const TVec &AOrigin,
+  const TAVec &AAngles, mthing_t *mthing, bool AllowReplace)
 {
   guard(VLevel::SpawnThinker);
   check(AClass);
-  VClass* Class = AllowReplace ? AClass->GetReplacement() : AClass;
-  VThinker* Ret = (VThinker*)StaticSpawnObject(Class);
+  VClass *Class = AllowReplace ? AClass->GetReplacement() : AClass;
+  VThinker *Ret = (VThinker*)StaticSpawnObject(Class);
   AddThinker(Ret);
 
   if (IsForServer() && Class->IsChildOf(VEntity::StaticClass()))

@@ -85,7 +85,7 @@ bool VNetObjectsMap::CanSerialiseObject (VObject *Obj) {
     // thinker can be serialised only if it has an open channel
     return !!Connection->ThinkerChannels.FindPtr(Thinker);
   } else {
-    // we can always serialise NULL object
+    // we can always serialise nullptr object
     return !Obj;
   }
 }

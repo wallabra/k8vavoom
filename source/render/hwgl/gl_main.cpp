@@ -686,9 +686,9 @@ bool VOpenGLDrawer::CheckExtension(const char *ext)
 //
 //==========================================================================
 
-typedef const char *(APIENTRY* glXQueryExtensionsString)(void* dpy, int screen);
-typedef void* (APIENTRY* glXGetCurrentDisplay) ();
-typedef long (APIENTRY* glXGetCurrentDrawable) ();
+typedef const char *(APIENTRY *glXQueryExtensionsString)(void *dpy, int screen);
+typedef void *(APIENTRY *glXGetCurrentDisplay) ();
+typedef long (APIENTRY *glXGetCurrentDrawable) ();
 
 bool VOpenGLDrawer::CheckGLXExtension(const char *ext)
 {
@@ -862,7 +862,7 @@ void VOpenGLDrawer::EndDirectUpdate()
 //
 //==========================================================================
 
-void VOpenGLDrawer::SetupView(VRenderLevelDrawer* ARLev, const refdef_t *rd)
+void VOpenGLDrawer::SetupView(VRenderLevelDrawer *ARLev, const refdef_t *rd)
 {
   guard(VOpenGLDrawer::SetupView);
   RendLev = ARLev;
@@ -956,12 +956,12 @@ void VOpenGLDrawer::SetupViewOrg()
   {
     memset(RendLev->light_chain, 0, sizeof(RendLev->light_chain));
     memset(RendLev->add_chain, 0, sizeof(RendLev->add_chain));
-    RendLev->SimpleSurfsHead = NULL;
-    RendLev->SimpleSurfsTail = NULL;
-    RendLev->SkyPortalsHead = NULL;
-    RendLev->SkyPortalsTail = NULL;
-    RendLev->HorizonPortalsHead = NULL;
-    RendLev->HorizonPortalsTail = NULL;
+    RendLev->SimpleSurfsHead = nullptr;
+    RendLev->SimpleSurfsTail = nullptr;
+    RendLev->SkyPortalsHead = nullptr;
+    RendLev->SkyPortalsTail = nullptr;
+    RendLev->HorizonPortalsHead = nullptr;
+    RendLev->HorizonPortalsTail = nullptr;
   }
   unguard;
 }
@@ -1008,7 +1008,7 @@ void VOpenGLDrawer::EndView()
 void *VOpenGLDrawer::ReadScreen(int *bpp, bool *bot2top)
 {
   guard(VOpenGLDrawer::ReadScreen);
-  void* dst = Z_Malloc(ScreenWidth * ScreenHeight * 3);
+  void *dst = Z_Malloc(ScreenWidth * ScreenHeight * 3);
   glReadBuffer(GL_FRONT);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glReadPixels(0, 0, ScreenWidth, ScreenHeight, GL_RGB, GL_UNSIGNED_BYTE, dst);
@@ -1024,13 +1024,13 @@ void *VOpenGLDrawer::ReadScreen(int *bpp, bool *bot2top)
 //
 //==========================================================================
 
-void VOpenGLDrawer::ReadBackScreen(int Width, int Height, rgba_t* Dest)
+void VOpenGLDrawer::ReadBackScreen(int Width, int Height, rgba_t *Dest)
 {
   guard(VOpenGLDrawer::ReadBackScreen);
   glReadBuffer(GL_BACK);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glReadPixels(0, ScreenHeight - Height, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Dest);
-  rgba_t* Temp = new rgba_t[Width];
+  rgba_t *Temp = new rgba_t[Width];
 
   for (int i = 0; i < Height / 2; i++)
   {
@@ -1041,7 +1041,7 @@ void VOpenGLDrawer::ReadBackScreen(int Width, int Height, rgba_t* Dest)
       Width * sizeof(rgba_t));
   }
   delete[] Temp;
-  Temp = NULL;
+  Temp = nullptr;
   unguard;
 }
 
@@ -1099,7 +1099,7 @@ void VOpenGLDrawer::SetFade(vuint32 NewFade)
 //
 //==========================================================================
 
-GLhandleARB VOpenGLDrawer::LoadShader(GLenum Type, const VStr& FileName)
+GLhandleARB VOpenGLDrawer::LoadShader(GLenum Type, const VStr &FileName)
 {
   guard(VOpenGLDrawer::LoadShader);
   //  Create shader object.
@@ -1111,7 +1111,7 @@ GLhandleARB VOpenGLDrawer::LoadShader(GLenum Type, const VStr& FileName)
   CreatedShaderObjects.Append(Shader);
 
   //  Load source file.
-  VStream* Strm = FL_OpenFileRead(FileName);
+  VStream *Strm = FL_OpenFileRead(FileName);
   if (!Strm)
   {
     Sys_Error("Failed to open %s", *FileName);
@@ -1121,12 +1121,12 @@ GLhandleARB VOpenGLDrawer::LoadShader(GLenum Type, const VStr& FileName)
   Buf.SetNum(Size + 1);
   Strm->Serialise(Buf.Ptr(), Size);
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   Buf[Size] = 0; // Append terminator
 
   //  Upload source text.
-  const GLcharARB* ShaderText = Buf.Ptr();
-  p_glShaderSourceARB(Shader, 1, &ShaderText, NULL);
+  const GLcharARB *ShaderText = Buf.Ptr();
+  p_glShaderSourceARB(Shader, 1, &ShaderText, nullptr);
 
   //  Compile it.
   p_glCompileShaderARB(Shader);

@@ -47,9 +47,9 @@ private:
   enum { NUM_STRM_BUFFERS = 8 };
   enum { STRM_BUFFER_SIZE = 1024 };
 
-  ALCdevice*  Device;
-  ALCcontext* Context;
-  ALuint*   Buffers;
+  ALCdevice *Device;
+  ALCcontext *Context;
+  ALuint *Buffers;
 
   bool    supportEAX;
   EAXGet    pEAXGet;
@@ -88,7 +88,7 @@ public:
   bool OpenStream(int, int, int);
   void CloseStream();
   int GetStreamAvailable();
-  short* GetStreamBuffer();
+  short *GetStreamBuffer();
   void SetStreamData(short*, int);
   void SetStreamVolume(float);
   void PauseStream();
@@ -122,17 +122,17 @@ bool VOpenALDevice::Init()
   guard(VOpenALDevice::Init);
   ALenum E;
 
-  Device = NULL;
-  Context = NULL;
-  Buffers = NULL;
+  Device = nullptr;
+  Context = nullptr;
+  Buffers = nullptr;
   supportEAX = false;
-  pEAXGet = NULL;
-  pEAXSet = NULL;
+  pEAXGet = nullptr;
+  pEAXSet = nullptr;
   StrmSource = 0;
   StrmNumAvailableBuffers = 0;
 
   //  Connect to a device.
-  Device = alcOpenDevice(NULL);
+  Device = alcOpenDevice(nullptr);
   if (!Device)
   {
     GCon->Log(NAME_Init, "Couldn't open OpenAL device");
@@ -146,7 +146,7 @@ bool VOpenALDevice::Init()
   }
 
   //  Create a context and make it current.
-  Context = alcCreateContext(Device, NULL);
+  Context = alcCreateContext(Device, nullptr);
   if (!Context) Sys_Error("Failed to create OpenAL context");
   alcMakeContextCurrent(Context);
   E = alGetError();
@@ -216,7 +216,7 @@ void VOpenALDevice::Shutdown()
   {
     alDeleteBuffers(GSoundManager->S_sfx.Num(), Buffers);
     delete[] Buffers;
-    Buffers = NULL;
+    Buffers = nullptr;
   }
 
   //  Destroy context.
@@ -224,16 +224,16 @@ void VOpenALDevice::Shutdown()
   {
 #ifndef __linux__
     // This causes a freeze in Linux
-    alcMakeContextCurrent(NULL);
+    alcMakeContextCurrent(nullptr);
 #endif
     alcDestroyContext(Context);
-    Context = NULL;
+    Context = nullptr;
   }
   //  Disconnect from a device.
   if (Device)
   {
     alcCloseDevice(Device);
-    Device = NULL;
+    Device = nullptr;
   }
   unguard;
 }
@@ -399,8 +399,8 @@ void VOpenALDevice::UpdateChannel(int, float, float)
 //
 //==========================================================================
 
-void VOpenALDevice::UpdateChannel3D(int Handle, const TVec& Org,
-  const TVec& Vel)
+void VOpenALDevice::UpdateChannel3D(int Handle, const TVec &Org,
+  const TVec &Vel)
 {
   guard(VOpenALDevice::UpdateChannel3D);
   if (Handle == -1)
@@ -460,8 +460,8 @@ void VOpenALDevice::StopChannel(int Handle)
 //
 //==========================================================================
 
-void VOpenALDevice::UpdateListener(const TVec& org, const TVec& vel,
-  const TVec& fwd, const TVec&, const TVec& up, VReverbInfo* Env)
+void VOpenALDevice::UpdateListener(const TVec &org, const TVec &vel,
+  const TVec &fwd, const TVec&, const TVec &up, VReverbInfo *Env)
 {
   guard(VOpenALDevice::UpdateListener);
   alListener3f(AL_POSITION, org.x, org.y, org.z);
@@ -587,7 +587,7 @@ int VOpenALDevice::GetStreamAvailable()
 //
 //==========================================================================
 
-short* VOpenALDevice::GetStreamBuffer()
+short *VOpenALDevice::GetStreamBuffer()
 {
   guard(VOpenALDevice::GetStreamBuffer);
   return StrmDataBuffer;
@@ -600,7 +600,7 @@ short* VOpenALDevice::GetStreamBuffer()
 //
 //==========================================================================
 
-void VOpenALDevice::SetStreamData(short* Data, int Len)
+void VOpenALDevice::SetStreamData(short *Data, int Len)
 {
   guard(VOpenALDevice::SetStreamData);
   ALuint Buf;

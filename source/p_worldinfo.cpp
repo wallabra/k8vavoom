@@ -65,7 +65,7 @@ VWorldInfo::VWorldInfo()
 //
 //==========================================================================
 
-void VWorldInfo::Serialise(VStream& Strm)
+void VWorldInfo::Serialise(VStream &Strm)
 {
   guard(VWorldInfo::Serialise);
   //  Serialise global script info.
@@ -85,7 +85,7 @@ void VWorldInfo::Destroy()
 {
   guard(VWorldInfo::Destroy);
   delete Acs;
-  Acs = NULL;
+  Acs = nullptr;
 
   Super::Destroy();
   unguard;
@@ -112,7 +112,7 @@ void VWorldInfo::SetSkill(int ASkill)
   {
     GameSkill = ASkill;
   }
-  const VSkillDef* SDef = P_GetSkillDef(GameSkill);
+  const VSkillDef *SDef = P_GetSkillDef(GameSkill);
 
   SkillAmmoFactor = SDef->AmmoFactor;
   SkillDoubleAmmoFactor = SDef->DoubleAmmoFactor;

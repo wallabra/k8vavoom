@@ -27,7 +27,7 @@ class MenuModel : Widget;
 
 TVec  Origin;
 float Angle;
-void* Model;
+void *Model;
 int   Frame;
 int   NextFrame;
 string  Skin;

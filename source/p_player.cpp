@@ -62,13 +62,13 @@ static VCvarI     font_colour2("font_colour2", "11", "Secondary font color.", CV
 //
 //==========================================================================
 
-bool VBasePlayer::ExecuteNetMethod(VMethod* Func)
+bool VBasePlayer::ExecuteNetMethod(VMethod *Func)
 {
   guard(VBasePlayer::ExecuteNetMethod);
   if (GDemoRecordingContext)
   {
     //  Find initial version of the method.
-    VMethod* Base = Func;
+    VMethod *Base = Func;
     while (Base->SuperMethod)
     {
       Base = Base->SuperMethod;
@@ -103,7 +103,7 @@ bool VBasePlayer::ExecuteNetMethod(VMethod* Func)
 #endif
 
   //  Find initial version of the method.
-  VMethod* Base = Func;
+  VMethod *Base = Func;
   while (Base->SuperMethod)
   {
     Base = Base->SuperMethod;
@@ -124,7 +124,7 @@ bool VBasePlayer::ExecuteNetMethod(VMethod* Func)
 
   //  Clean up parameters
   guard(VBasePlayer::ExecuteNetMethod::CleanUp);
-  VStack* Param = pr_stackPtr - Func->ParamsSize + 1; //  Skip self
+  VStack *Param = pr_stackPtr - Func->ParamsSize + 1; //  Skip self
   for (int i = 0; i < Func->NumParams; i++)
   {
     switch (Func->ParamTypes[i].Type)
@@ -180,7 +180,7 @@ bool VBasePlayer::ExecuteNetMethod(VMethod* Func)
   case TYPE_Reference:
   case TYPE_Class:
   case TYPE_State:
-    PR_PushPtr(NULL);
+    PR_PushPtr(nullptr);
     break;
   case TYPE_Vector:
     PR_Pushf(0);
@@ -250,7 +250,7 @@ void VBasePlayer::SpawnClient()
     GGameInfo->NetMode == NM_Standalone) && run_open_scripts)
   {
     //  Start open scripts.
-    Level->XLevel->Acs->StartTypedACScripts(SCRIPT_Open, 0, 0, 0, NULL,
+    Level->XLevel->Acs->StartTypedACScripts(SCRIPT_Open, 0, 0, 0, nullptr,
       false, false);
   }
 
@@ -326,17 +326,17 @@ void VBasePlayer::CentrePrintf(const char *s, ...)
 //
 //===========================================================================
 
-void VBasePlayer::SetViewState(int position, VState* stnum)
+void VBasePlayer::SetViewState(int position, VState *stnum)
 {
   guard(VBasePlayer::SetViewState);
-  VViewState& VSt = ViewStates[position];
+  VViewState &VSt = ViewStates[position];
   VState *state = stnum;
   do
   {
     if (!state)
     {
       // Object removed itself.
-      VSt.State = NULL;
+      VSt.State = nullptr;
       VSt.StateTime = -1;
       break;
     }
@@ -377,7 +377,7 @@ void VBasePlayer::AdvanceViewStates(float deltaTime)
 {
   for (int i = 0; i < NUMPSPRITES; i++)
   {
-    VViewState& St = ViewStates[i];
+    VViewState &St = ViewStates[i];
     // a null state means not active
     if (St.State)
     {
@@ -408,7 +408,7 @@ void VBasePlayer::AdvanceViewStates(float deltaTime)
 //
 //==========================================================================
 
-void VBasePlayer::SetUserInfo(const VStr& info)
+void VBasePlayer::SetUserInfo(const VStr &info)
 {
   guard(VBasePlayer::SetUserInfo);
   if (!sv_loading)
@@ -601,12 +601,12 @@ void VBasePlayer::DoClientSetAngles(TAVec Angles)
 void VBasePlayer::DoClientIntermission(VName NextMap)
 {
   guard(VBasePlayer::DoClientIntermission);
-  im_t& im = ClGame->im;
+  im_t &im = ClGame->im;
 
   im.Text.Clean();
   im.IMFlags = 0;
 
-  const mapInfo_t& linfo = P_GetMapInfo(Level->XLevel->MapName);
+  const mapInfo_t &linfo = P_GetMapInfo(Level->XLevel->MapName);
   im.LeaveMap = Level->XLevel->MapName;
   im.LeaveCluster = linfo.Cluster;
   im.LeaveName = linfo.GetName();
@@ -614,7 +614,7 @@ void VBasePlayer::DoClientIntermission(VName NextMap)
   im.ExitPic = linfo.ExitPic;
   im.InterMusic = linfo.InterMusic;
 
-  const mapInfo_t& einfo = P_GetMapInfo(NextMap);
+  const mapInfo_t &einfo = P_GetMapInfo(NextMap);
   im.EnterMap = NextMap;
   im.EnterCluster = einfo.Cluster;
   im.EnterName = einfo.GetName();
@@ -625,7 +625,7 @@ void VBasePlayer::DoClientIntermission(VName NextMap)
   {
     if (einfo.Cluster)
     {
-      const VClusterDef* CDef = P_GetClusterDef(einfo.Cluster);
+      const VClusterDef *CDef = P_GetClusterDef(einfo.Cluster);
       if (CDef->EnterText.Length())
       {
         if (CDef->Flags & CLUSTERF_LookupEnterText)
@@ -657,7 +657,7 @@ void VBasePlayer::DoClientIntermission(VName NextMap)
     }
     if (im.Text.Length() == 0 && linfo.Cluster)
     {
-      const VClusterDef* CDef = P_GetClusterDef(linfo.Cluster);
+      const VClusterDef *CDef = P_GetClusterDef(linfo.Cluster);
       if (CDef->ExitText.Length())
       {
         if (CDef->Flags & CLUSTERF_LookupExitText)
@@ -793,8 +793,8 @@ void VBasePlayer::DoClientSetServerInfo(VStr Key, VStr Value)
 //
 //==========================================================================
 
-void VBasePlayer::DoClientHudMessage(const VStr& Message, VName Font, int Type,
-  int Id, int Colour, const VStr& ColourName, float x, float y,
+void VBasePlayer::DoClientHudMessage(const VStr &Message, VName Font, int Type,
+  int Id, int Colour, const VStr &ColourName, float x, float y,
   int HudWidth, int HudHeight, float HoldTime, float Time1, float Time2)
 {
   guard(VBasePlayer::DoClientHudMessage);
@@ -882,7 +882,7 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer)
   Self->FlyMove = 0;
   Self->Buttons = 0;
   Self->Impulse = 0;
-  Self->MO = NULL;
+  Self->MO = nullptr;
   Self->PlayerState = 0;
   Self->ViewOrg = TVec(0, 0, 0);
   Self->PlayerFlags &= ~VBasePlayer::PF_FixAngle;
@@ -896,8 +896,8 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer)
   Self->CShift = 0;
   Self->PSpriteSY = 0;
 
-  vuint8* Def = Self->GetClass()->Defaults;
-  for (VField* F = Self->GetClass()->Fields; F; F = F->Next)
+  vuint8 *Def = Self->GetClass()->Defaults;
+  for (VField *F = Self->GetClass()->Fields; F; F = F->Next)
   {
     VField::CopyFieldValue(Def + F->Ofs, (vuint8*)Self + F->Ofs, F->Type);
   }

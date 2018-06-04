@@ -550,7 +550,7 @@ final void ZMovement(float DeltaTime, float OldFloorZ)
 //
 //==========================================================================
 
-final void HitLine(tmtrace_t* tmtrace, float StepVelScale)
+final void HitLine(tmtrace_t *tmtrace, float StepVelScale)
 {
   if (bMissile)
   {
@@ -635,15 +635,15 @@ final void HitLine(tmtrace_t* tmtrace, float StepVelScale)
       }
       return;
     }
-    line_t* hitline = tmtrace->BlockingLine;
+    line_t *hitline = tmtrace->BlockingLine;
     if (!hitline) hitline = tmtrace->CeilingLine;
     if (!hitline) hitline = tmtrace->FloorLine;
     if (!hitline) hitline = tmtrace->AnyBlockingLine;
     if (!hitline && tmtrace->SpecHit.Length) {
       bool wasBlockAll = false;
-      line_t* blockall;
+      line_t *blockall;
       for (int f = 0; f < tmtrace->SpecHit.Length; ++f) {
-        line_t* ln = tmtrace->SpecHit[f];
+        line_t *ln = tmtrace->SpecHit[f];
         if (ln->flags&ML_BLOCKING) { hitline = ln; break; }
         if (!wasBlockAll && (ln->flags&ML_BLOCKEVERYTHING) != 0) { blockall = ln; wasBlockAll = true; }
       }
@@ -1343,8 +1343,8 @@ final bool HitFloorType()
   EntityEx    A;
   TVec      org;
   bool      smallsplash = false;
-  VTerrainInfo* TInfo;
-  VSplashInfo*  SInfo;
+  VTerrainInfo *TInfo;
+  VSplashInfo *SInfo;
 
   if (FloorZ != GetPlanePointZ(&Sector->floor, Origin))
   {
@@ -1432,7 +1432,7 @@ final bool HitFloorType()
 //
 //===========================================================================
 
-final VTerrainInfo* GetFloorType()
+final VTerrainInfo *GetFloorType()
 {
   return TerrainType(Floor->pic);
 }
@@ -1447,7 +1447,7 @@ final override void HandleFloorclip()
 {
   if (bFloorClip)
   {
-    VTerrainInfo* TInfo = GetFloorType();
+    VTerrainInfo *TInfo = GetFloorType();
     if (Origin.z == FloorZ && TInfo->bLiquid)
     {
       FloorClip = TInfo->FootClip;
@@ -1553,7 +1553,7 @@ final float GetFriction()
   {
     return FRICTION_LOW;
   }
-  VTerrainInfo* TInfo = GetFloorType();
+  VTerrainInfo *TInfo = GetFloorType();
   if (TInfo->Friction)
   {
     return TInfo->Friction;

@@ -46,8 +46,8 @@ extern VCvarB       r_darken;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static subsector_t*   r_sub;
-static sec_region_t*  r_region;
+static subsector_t *r_sub;
+static sec_region_t *r_region;
 VCvarF          r_lights_radius("r_lights_radius", "4096", "Maximum light radius.", CVAR_Archive);
 VCvarI          r_max_model_lights("r_max_model_lights", "32", "Maximum model lights.", CVAR_Archive);
 VCvarI          r_max_model_shadows("r_max_model_shadows", "2", "Maximum model shadows.", CVAR_Archive);
@@ -119,7 +119,7 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p)
   //  Add static lights
   if (r_static_lights)
   {
-    vuint8* dyn_facevis = Level->LeafPVS(sub);
+    vuint8 *dyn_facevis = Level->LeafPVS(sub);
     for (int i = 0; i < Lights.Num(); i++)
     {
       if (!Lights[i].radius)
@@ -147,7 +147,7 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p)
   //  Add dynamic lights
   if (r_dynamic)
   {
-    vuint8* dyn_facevis = Level->LeafPVS(sub);
+    vuint8 *dyn_facevis = Level->LeafPVS(sub);
     for (int i = 0; i < MAX_DLIGHTS; i++)
     {
       if (!DLights[i].radius || DLights[i].die < Level->Time)
@@ -251,7 +251,7 @@ bool VAdvancedRenderLevel::BuildLightMap(surface_t *surf, int shift)
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::BuildLightVis(int bspnum, float* bbox)
+void VAdvancedRenderLevel::BuildLightVis(int bspnum, float *bbox)
 {
   guard(VAdvancedRenderLevel::BuildLightVis);
   if (LightClip.ClipIsFull())
@@ -267,7 +267,7 @@ void VAdvancedRenderLevel::BuildLightVis(int bspnum, float* bbox)
   if (bspnum == -1)
   {
     int SubNum = 0;
-    subsector_t* Sub = &Level->Subsectors[SubNum];
+    subsector_t *Sub = &Level->Subsectors[SubNum];
     if (!Sub->sector->linecount)
     {
       //  Skip sectors containing original polyobjs
@@ -280,14 +280,14 @@ void VAdvancedRenderLevel::BuildLightVis(int bspnum, float* bbox)
     }
 
     LightVis[SubNum >> 3] |= 1 << (SubNum & 7);
-    LightClip.ClipAddSubsectorSegs(Sub, true, NULL, CurrLightPos, CurrLightRadius);
+    LightClip.ClipAddSubsectorSegs(Sub, true, nullptr, CurrLightPos, CurrLightRadius);
     return;
   }
 
   // Found a subsector?
   if (!(bspnum & NF_SUBSECTOR))
   {
-    node_t* bsp = &Level->Nodes[bspnum];
+    node_t *bsp = &Level->Nodes[bspnum];
 
     // Decide which side the view point is on.
     float Dist = DotProduct(CurrLightPos, bsp->normal) - bsp->dist;
@@ -320,7 +320,7 @@ void VAdvancedRenderLevel::BuildLightVis(int bspnum, float* bbox)
   }
 
   int SubNum = bspnum & (~NF_SUBSECTOR);
-  subsector_t* Sub = &Level->Subsectors[SubNum];
+  subsector_t *Sub = &Level->Subsectors[SubNum];
   if (!Sub->sector->linecount)
   {
     //  Skip sectors containing original polyobjs
@@ -333,7 +333,7 @@ void VAdvancedRenderLevel::BuildLightVis(int bspnum, float* bbox)
   }
 
   LightVis[SubNum >> 3] |= 1 << (SubNum & 7);
-  LightClip.ClipAddSubsectorSegs(Sub, true, NULL, CurrLightPos, CurrLightRadius);
+  LightClip.ClipAddSubsectorSegs(Sub, true, nullptr, CurrLightPos, CurrLightRadius);
   unguard;
 }
 
@@ -343,11 +343,11 @@ void VAdvancedRenderLevel::BuildLightVis(int bspnum, float* bbox)
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::DrawShadowSurfaces(surface_t* InSurfs, texinfo_t *texinfo,
+void VAdvancedRenderLevel::DrawShadowSurfaces(surface_t *InSurfs, texinfo_t *texinfo,
   bool CheckSkyBoxAlways, bool LightCanCross)
 {
   guard(VAdvancedRenderLevel::DrawShadowSurfaces);
-  surface_t* surfs = InSurfs;
+  surface_t *surfs = InSurfs;
   if (!surfs)
   {
     return;
@@ -379,7 +379,7 @@ void VAdvancedRenderLevel::DrawShadowSurfaces(surface_t* InSurfs, texinfo_t *tex
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderShadowLine(drawseg_t* dseg)
+void VAdvancedRenderLevel::RenderShadowLine(drawseg_t *dseg)
 {
   guard(VAdvancedRenderLevel::RenderShadowLine);
   seg_t *line = dseg->seg;
@@ -454,10 +454,10 @@ void VAdvancedRenderLevel::RenderShadowLine(drawseg_t* dseg)
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderShadowSecSurface(sec_surface_t* ssurf, VEntity* SkyBox)
+void VAdvancedRenderLevel::RenderShadowSecSurface(sec_surface_t *ssurf, VEntity *SkyBox)
 {
   guard(VAdvancedRenderLevel::RenderShadowSecSurface);
-  sec_plane_t& plane = *ssurf->secplane;
+  sec_plane_t &plane = *ssurf->secplane;
 
   if (!plane.pic)
   {
@@ -485,12 +485,12 @@ void VAdvancedRenderLevel::RenderShadowSecSurface(sec_surface_t* ssurf, VEntity*
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderShadowSubRegion(subregion_t* region)
+void VAdvancedRenderLevel::RenderShadowSubRegion(subregion_t *region)
 {
   guard(VAdvancedRenderLevel::RenderShadowSubRegion);
   int       count;
   int       polyCount;
-  seg_t**     polySeg;
+  seg_t **polySeg;
   float     d;
 
   d = DotProduct(CurrLightPos, region->floor->secplane->normal) -
@@ -549,7 +549,7 @@ void VAdvancedRenderLevel::RenderShadowSubRegion(subregion_t* region)
 void VAdvancedRenderLevel::RenderShadowSubsector(int num)
 {
   guard(VAdvancedRenderLevel::RenderShadowSubsector);
-  subsector_t* Sub = &Level->Subsectors[num];
+  subsector_t *Sub = &Level->Subsectors[num];
   r_sub = Sub;
 
   // Don't do this check for shadows
@@ -574,7 +574,7 @@ void VAdvancedRenderLevel::RenderShadowSubsector(int num)
 
   //  Add subsector's segs to the clipper. Clipping against mirror
   // is done only for vertical mirror planes.
-  LightClip.ClipAddSubsectorSegs(Sub, true, NULL, CurrLightPos, CurrLightRadius);
+  LightClip.ClipAddSubsectorSegs(Sub, true, nullptr, CurrLightPos, CurrLightRadius);
   unguard;
 }
 
@@ -587,7 +587,7 @@ void VAdvancedRenderLevel::RenderShadowSubsector(int num)
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderShadowBSPNode(int bspnum, float* bbox, bool LimitLights)
+void VAdvancedRenderLevel::RenderShadowBSPNode(int bspnum, float *bbox, bool LimitLights)
 {
   guard(VAdvancedRenderLevel::RenderShadowBSPNode);
   if (LimitLights && CurrShadowsNumber > r_max_shadows)
@@ -618,7 +618,7 @@ void VAdvancedRenderLevel::RenderShadowBSPNode(int bspnum, float* bbox, bool Lim
   // Found a subsector?
   if (!(bspnum & NF_SUBSECTOR))
   {
-    node_t* bsp = &Level->Nodes[bspnum];
+    node_t *bsp = &Level->Nodes[bspnum];
 
     // Decide which side the light is on.
     float Dist = DotProduct(CurrLightPos, bsp->normal) - bsp->dist;
@@ -665,11 +665,11 @@ void VAdvancedRenderLevel::RenderShadowBSPNode(int bspnum, float* bbox, bool Lim
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::DrawLightSurfaces(surface_t* InSurfs, texinfo_t *texinfo,
-  VEntity* SkyBox, bool CheckSkyBoxAlways, bool LightCanCross)
+void VAdvancedRenderLevel::DrawLightSurfaces(surface_t *InSurfs, texinfo_t *texinfo,
+  VEntity *SkyBox, bool CheckSkyBoxAlways, bool LightCanCross)
 {
   guard(VAdvancedRenderLevel::DrawLightSurfaces);
-  surface_t* surfs = InSurfs;
+  surface_t *surfs = InSurfs;
   if (!surfs)
   {
     return;
@@ -687,7 +687,7 @@ void VAdvancedRenderLevel::DrawLightSurfaces(surface_t* InSurfs, texinfo_t *texi
 
   if (SkyBox && (SkyBox->EntityFlags & VEntity::EF_FixedModel))
   {
-    SkyBox = NULL;
+    SkyBox = nullptr;
   }
   bool IsStack = SkyBox && SkyBox->eventSkyBoxGetAlways();
   if (texinfo->Tex == GTextureManager[skyflatnum] ||
@@ -712,7 +712,7 @@ void VAdvancedRenderLevel::DrawLightSurfaces(surface_t* InSurfs, texinfo_t *texi
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderLightLine(drawseg_t* dseg)
+void VAdvancedRenderLevel::RenderLightLine(drawseg_t *dseg)
 {
   guard(VAdvancedRenderLevel::RenderLightLine);
   seg_t *line = dseg->seg;
@@ -793,10 +793,10 @@ void VAdvancedRenderLevel::RenderLightLine(drawseg_t* dseg)
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderLightSecSurface(sec_surface_t* ssurf, VEntity* SkyBox)
+void VAdvancedRenderLevel::RenderLightSecSurface(sec_surface_t *ssurf, VEntity *SkyBox)
 {
   guard(VAdvancedRenderLevel::RenderLightSecSurface);
-  sec_plane_t& plane = *ssurf->secplane;
+  sec_plane_t &plane = *ssurf->secplane;
 
   if (!plane.pic)
   {
@@ -823,12 +823,12 @@ void VAdvancedRenderLevel::RenderLightSecSurface(sec_surface_t* ssurf, VEntity* 
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderLightSubRegion(subregion_t* region)
+void VAdvancedRenderLevel::RenderLightSubRegion(subregion_t *region)
 {
   guard(VAdvancedRenderLevel::RenderLightSubRegion);
   int       count;
   int       polyCount;
-  seg_t**     polySeg;
+  seg_t **polySeg;
   float     d;
 
   d = DotProduct(CurrLightPos, region->floor->secplane->normal) -
@@ -887,7 +887,7 @@ void VAdvancedRenderLevel::RenderLightSubRegion(subregion_t* region)
 void VAdvancedRenderLevel::RenderLightSubsector(int num)
 {
   guard(VAdvancedRenderLevel::RenderLightSubsector);
-  subsector_t* Sub = &Level->Subsectors[num];
+  subsector_t *Sub = &Level->Subsectors[num];
   r_sub = Sub;
 
   if (!(LightBspVis[num >> 3] & (1 << (num & 7))) ||
@@ -911,7 +911,7 @@ void VAdvancedRenderLevel::RenderLightSubsector(int num)
 
   //  Add subsector's segs to the clipper. Clipping against mirror
   // is done only for vertical mirror planes.
-  LightClip.ClipAddSubsectorSegs(Sub, true, NULL, CurrLightPos, CurrLightRadius);
+  LightClip.ClipAddSubsectorSegs(Sub, true, nullptr, CurrLightPos, CurrLightRadius);
   unguard;
 }
 
@@ -924,7 +924,7 @@ void VAdvancedRenderLevel::RenderLightSubsector(int num)
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderLightBSPNode(int bspnum, float* bbox, bool LimitLights)
+void VAdvancedRenderLevel::RenderLightBSPNode(int bspnum, float *bbox, bool LimitLights)
 {
   guard(VAdvancedRenderLevel::RenderLightBSPNode);
   if (LimitLights && CurrLightsNumber > r_max_lights)
@@ -955,7 +955,7 @@ void VAdvancedRenderLevel::RenderLightBSPNode(int bspnum, float* bbox, bool Limi
   // Found a subsector?
   if (!(bspnum & NF_SUBSECTOR))
   {
-    node_t* bsp = &Level->Nodes[bspnum];
+    node_t *bsp = &Level->Nodes[bspnum];
 
     // Decide which side the light is on.
     float Dist = DotProduct(CurrLightPos, bsp->normal) - bsp->dist;
@@ -1010,8 +1010,8 @@ void VAdvancedRenderLevel::RenderLightBSPNode(int bspnum, float* bbox, bool Limi
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderLightShadows(const refdef_t* RD,
-  const VViewClipper* Range, TVec& Pos, float Radius, vuint32 Colour, bool LimitLights)
+void VAdvancedRenderLevel::RenderLightShadows(const refdef_t *RD,
+  const VViewClipper *Range, TVec &Pos, float Radius, vuint32 Colour, bool LimitLights)
 {
   guard(VAdvancedRenderLevel::RenderLightShadows);
   CurrLightPos = Pos;

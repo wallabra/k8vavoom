@@ -176,7 +176,7 @@ struct slist_t
 {
   bool      bInProgress;
   int       Count;
-  hostcache_t*  Cache;
+  hostcache_t *Cache;
   string      ReturnReason;
 };
 
@@ -417,8 +417,8 @@ struct event_t
   int data3;  // mouse / joystick y move
 };
 
-native readonly private void* CxxVTable;
-native readonly private void* VTable;
+native readonly private void *CxxVTable;
+native readonly private void *VTable;
 native readonly private int ObjectIndex;
 native readonly private int ObjectFlags;
 native readonly class Class;
@@ -702,13 +702,13 @@ native static final bool WadLumpPresent(name Name);
 #endif
 native static final Object SpawnObject(class cid);
 #ifndef VCC_STANDALONE_EXECUTOR
-native static final GameObject::VAnimDoorDef* FindAnimDoor(int BaseTex);
+native static final GameObject::VAnimDoorDef *FindAnimDoor(int BaseTex);
 native static final string GetLangString(name Id);
 #endif
 native static final int RGB(byte r, byte g, byte b);
 native static final int RGBA(byte r, byte g, byte b, byte a);
 #ifndef VCC_STANDALONE_EXECUTOR
-native static final GameObject::LockDef* GetLockDef(int Lock);
+native static final GameObject::LockDef *GetLockDef(int Lock);
 native static final int ParseColour(string Name);
 native static final string TextColourString(int Colour);
 native static final bool StartTitleMap();
@@ -799,10 +799,10 @@ native static final void R_InstallSprite(string Name, int index);
 native static final void R_DrawSpritePatch(int x, int y, int sprite,
   int frame, int rot, int TranslStart, int TranslEnd, int Colour);
 //  Installs model
-native static final void* InstallModel(string Name);
+native static final void *InstallModel(string Name);
 //  Draws a model
 native static final void R_DrawModelFrame(TVec origin, float angle,
-  void* model, int frame, int nextframe, string skin, int TranslStart,
+  void *model, int frame, int nextframe, string skin, int TranslStart,
   int TranslEnd, int Colour);
 //  Draws a coloured rectangle
 native static final void R_FillRect(int x, int y, int w, int h, int colour);
@@ -824,10 +824,10 @@ native static final string P_GetMapName(int map);
 native static final name P_GetMapLumpName(int map);
 native static final name P_TranslateMap(int map);
 native static final int P_GetNumEpisodes();
-native static final EpisodeDef* P_GetEpisodeDef(int i);
+native static final EpisodeDef *P_GetEpisodeDef(int i);
 native static final int P_GetNumSkills();
-native static final SkillDef* P_GetSkillDef(int i);
-native static final bool SV_GetSaveString(int i, string* buf);
+native static final SkillDef *P_GetSkillDef(int i);
+native static final bool SV_GetSaveString(int i, string *buf);
 native static final void StartSearch(bool Master);
 native static final slist_t * GetSlist();
 native static final string KeyNameForNum(int KeyNr);
@@ -871,9 +871,9 @@ native static final name GetSeqTrans(int Num, int SeqType);
 native static final name GetSeqSlot(name Sequence);
 native static final void StopAllSounds();
 
-native static final GameObject::VTerrainInfo* TerrainType(int pic);
-native static final GameObject::VSplashInfo* GetSplashInfo(name Name);
-native static final GameObject::VTerrainInfo* GetTerrainInfo(name Name);
+native static final GameObject::VTerrainInfo *TerrainType(int pic);
+native static final GameObject::VSplashInfo *GetSplashInfo(name Name);
+native static final GameObject::VTerrainInfo *GetTerrainInfo(name Name);
 native static final void SB_Start();
 native static final class FindClassFromEditorId(int Id, int GameFilter);
 native static final class FindClassFromScriptId(int Id, int GameFilter);

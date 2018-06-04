@@ -76,7 +76,7 @@ private readonly ClipRect   ClipRect;
 //  Currently focused child widget.
 private readonly Widget     CurrentFocusChild;
 
-private readonly void*      Font;
+private readonly void *Font;
 
 //  Text alignements
 private readonly byte     HAlign;

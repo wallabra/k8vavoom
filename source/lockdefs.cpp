@@ -45,7 +45,7 @@ extern VCvarB dbg_show_missing_class;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static VLockDef*    LockDefs[256];
+static VLockDef *LockDefs[256];
 
 // CODE --------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ static VLockDef*    LockDefs[256];
 //
 //==========================================================================
 
-static void ParseLockDefs(VScriptParser* sc)
+static void ParseLockDefs(VScriptParser *sc)
 {
   guard(ParseLockDefs);
   while (!sc->AtEnd())
@@ -67,7 +67,7 @@ static void ParseLockDefs(VScriptParser* sc)
         if (LockDefs[i])
         {
           delete LockDefs[i];
-          LockDefs[i] = NULL;
+          LockDefs[i] = nullptr;
         }
       }
     }
@@ -83,9 +83,9 @@ static void ParseLockDefs(VScriptParser* sc)
       if (LockDefs[Lock])
       {
         delete LockDefs[Lock];
-        LockDefs[Lock] = NULL;
+        LockDefs[Lock] = nullptr;
       }
-      VLockDef* LDef = new VLockDef;
+      VLockDef *LDef = new VLockDef;
       LockDefs[Lock] = LDef;
       LDef->MapColour = 0;
       LDef->LockedSound = "misc/keytry";
@@ -125,11 +125,11 @@ static void ParseLockDefs(VScriptParser* sc)
         else if (sc->Check("Any"))
         {
           sc->Expect("{");
-          VLockGroup& Grp = LDef->Locks.Alloc();
+          VLockGroup &Grp = LDef->Locks.Alloc();
           while (!sc->Check("}"))
           {
             sc->ExpectString();
-            VClass* Cls = VClass::FindClass(*sc->String);
+            VClass *Cls = VClass::FindClass(*sc->String);
             if (!Cls)
             {
               if (dbg_show_missing_class) GCon->Logf("No such class %s", *sc->String);
@@ -143,7 +143,7 @@ static void ParseLockDefs(VScriptParser* sc)
         else
         {
           sc->ExpectString();
-          VClass* Cls = VClass::FindClass(*sc->String);
+          VClass *Cls = VClass::FindClass(*sc->String);
           if (!Cls)
           {
             if (dbg_show_missing_class) GCon->Logf("No such class %s", *sc->String);
@@ -170,7 +170,7 @@ static void ParseLockDefs(VScriptParser* sc)
     }
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
   unguard;
 }
 
@@ -209,7 +209,7 @@ void ShutdownLockDefs()
     if (LockDefs[i])
     {
       delete LockDefs[i];
-      LockDefs[i] = NULL;
+      LockDefs[i] = nullptr;
     }
   }
   unguard;
@@ -221,9 +221,9 @@ void ShutdownLockDefs()
 //
 //==========================================================================
 
-VLockDef* GetLockDef(int Lock)
+VLockDef *GetLockDef(int Lock)
 {
   guard(GetLockDef);
-  return Lock < 0 || Lock > 255 ? NULL : LockDefs[Lock];
+  return Lock < 0 || Lock > 255 ? nullptr : LockDefs[Lock];
   unguard;
 }

@@ -46,7 +46,7 @@ public:
   void SerialiseInt(vuint32&, vuint32);
   void WriteBit(bool);
   void WriteInt(vuint32, vuint32);
-  vuint8* GetData()
+  vuint8 *GetData()
   {
     return Data.Ptr();
   }
@@ -71,7 +71,7 @@ protected:
   vint32        Pos;
 
 public:
-  VBitStreamReader(vuint8* = NULL, vint32 = 0);
+  VBitStreamReader(vuint8* = nullptr, vint32 = 0);
   void SetData(VBitStreamReader&, int);
   void Serialise(void*, int);
   void SerialiseBits(void*, int);
@@ -79,7 +79,7 @@ public:
   bool ReadBit();
   vuint32 ReadInt(vuint32);
   bool AtEnd();
-  vuint8* GetData()
+  vuint8 *GetData()
   {
     return Data.Ptr();
   }

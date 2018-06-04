@@ -49,8 +49,8 @@ extern VCvarB decals_enabled;
 
 IMPLEMENT_CLASS(V, Level);
 
-VLevel*     GLevel;
-VLevel*     GClLevel;
+VLevel *GLevel;
+VLevel *GClLevel;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -64,7 +64,7 @@ static VCvarI decal_onetype_max("decal_onetype_max", "128", "Maximum decals of o
 //
 //==========================================================================
 
-subsector_t* VLevel::PointInSubsector(const TVec &point) const
+subsector_t *VLevel::PointInSubsector(const TVec &point) const
 {
   guard(VLevel::PointInSubsector);
   // single subsector is a special case
@@ -76,7 +76,7 @@ subsector_t* VLevel::PointInSubsector(const TVec &point) const
   int nodenum = NumNodes - 1;
   do
   {
-    const node_t* node = Nodes + nodenum;
+    const node_t *node = Nodes + nodenum;
     nodenum = node->children[node->PointOnSide(point)];
   }
   while (!(nodenum & NF_SUBSECTOR));
@@ -111,7 +111,7 @@ byte *VLevel::LeafPVS(const subsector_t *ss) const
 //
 //==========================================================================
 
-static void DecalIO (VStream& Strm, decal_t *dc) {
+static void DecalIO (VStream &Strm, decal_t *dc) {
   if (!dc) return;
   char namebuf[64];
   vuint32 namelen = 0;
@@ -170,7 +170,7 @@ static void DecalIO (VStream& Strm, decal_t *dc) {
 //
 //==========================================================================
 
-static void writeOrCheckName (VStream& Strm, const VName& value, const char *errmsg) {
+static void writeOrCheckName (VStream &Strm, const VName &value, const char *errmsg) {
   if (Strm.IsLoading()) {
     auto slen = strlen(*value);
     vuint32 v;
@@ -191,7 +191,7 @@ static void writeOrCheckName (VStream& Strm, const VName& value, const char *err
   }
 }
 
-static void writeOrCheckUInt (VStream& Strm, vuint32 value, const char *errmsg) {
+static void writeOrCheckUInt (VStream &Strm, vuint32 value, const char *errmsg) {
   if (Strm.IsLoading()) {
     vuint32 v;
     Strm << v;
@@ -201,7 +201,7 @@ static void writeOrCheckUInt (VStream& Strm, vuint32 value, const char *errmsg) 
   }
 }
 
-static void writeOrCheckInt (VStream& Strm, int value, const char *errmsg) {
+static void writeOrCheckInt (VStream &Strm, int value, const char *errmsg) {
   if (Strm.IsLoading()) {
     int v;
     Strm << v;
@@ -211,7 +211,7 @@ static void writeOrCheckInt (VStream& Strm, int value, const char *errmsg) {
   }
 }
 
-static void writeOrCheckFloat (VStream& Strm, float value, const char *errmsg) {
+static void writeOrCheckFloat (VStream &Strm, float value, const char *errmsg) {
   if (Strm.IsLoading()) {
     float v;
     Strm << v;
@@ -221,13 +221,13 @@ static void writeOrCheckFloat (VStream& Strm, float value, const char *errmsg) {
   }
 }
 
-void VLevel::Serialise(VStream& Strm)
+void VLevel::Serialise(VStream &Strm)
 {
   guard(VLevel::Serialise);
   int i;
-  sector_t* sec;
-  line_t* li;
-  side_t* si;
+  sector_t *sec;
+  line_t *li;
+  side_t *si;
 
   // write/check various numbers, so we won't load invalid save accidentally
   // this is not the best or most reliable way to check it, but it is better
@@ -265,9 +265,9 @@ void VLevel::Serialise(VStream& Strm)
       for (int f = 0; f < NumSegs; ++f) {
         vuint32 dcount = 0;
         // remove old decals
-        decal_t* decal = Segs[f].decals;
+        decal_t *decal = Segs[f].decals;
         while (decal) {
-          decal_t* c = decal;
+          decal_t *c = decal;
           decal = c->next;
           delete c->animator;
           delete c;
@@ -277,7 +277,7 @@ void VLevel::Serialise(VStream& Strm)
         Strm << dcount;
         decal = nullptr; // previous
         while (dcount-- > 0) {
-          decal_t* dc = new decal_t;
+          decal_t *dc = new decal_t;
           memset(dc, 0, sizeof(decal_t));
           dc->seg = &Segs[f];
           DecalIO(Strm, dc);
@@ -287,7 +287,7 @@ void VLevel::Serialise(VStream& Strm)
           } else {
             // fix backsector
             if (dc->flags&(decal_t::SlideFloor|decal_t::SlideCeil)) {
-              line_t* li = Segs[f].linedef;
+              line_t *li = Segs[f].linedef;
               if (!li) Sys_Error("Save loader: invalid seg linedef (0)!");
               int bsidenum = (dc->flags&decal_t::SideDefOne ? 1 : 0);
               if (li->sidenum[bsidenum] < 0) Sys_Error("Save loader: invalid seg linedef (1)!");
@@ -314,9 +314,9 @@ void VLevel::Serialise(VStream& Strm)
       for (int f = 0; f < NumSegs; ++f) {
         // count decals
         vuint32 dcount = 0;
-        for (decal_t* decal = Segs[f].decals; decal; decal = decal->next) ++dcount;
+        for (decal_t *decal = Segs[f].decals; decal; decal = decal->next) ++dcount;
         Strm << dcount;
-        for (decal_t* decal = Segs[f].decals; decal; decal = decal->next) {
+        for (decal_t *decal = Segs[f].decals; decal; decal = decal->next) {
           DecalIO(Strm, decal);
           ++dctotal;
         }
@@ -383,7 +383,7 @@ void VLevel::Serialise(VStream& Strm)
     if (Strm.IsLoading())
     {
       CalcSecMinMaxs(sec);
-      sec->ThingList = NULL;
+      sec->ThingList = nullptr;
     }
   }
   if (Strm.IsLoading())
@@ -472,7 +472,7 @@ void VLevel::Serialise(VStream& Strm)
     if (StaticLights)
     {
       delete[] StaticLights;
-      StaticLights = NULL;
+      StaticLights = nullptr;
     }
     if (NumStaticLights)
     {
@@ -534,7 +534,7 @@ void VLevel::Serialise(VStream& Strm)
       }
       else
       {
-        Translations[i] = NULL;
+        Translations[i] = nullptr;
       }
     }
     if (Present)
@@ -566,7 +566,7 @@ void VLevel::Serialise(VStream& Strm)
       }
       else
       {
-        BodyQueueTrans[i] = NULL;
+        BodyQueueTrans[i] = nullptr;
       }
     }
     if (Present)
@@ -600,29 +600,29 @@ void VLevel::ClearReferences()
   Super::ClearReferences();
   for (int i = 0; i < NumSectors; i++)
   {
-    sector_t* sec = Sectors + i;
+    sector_t *sec = Sectors + i;
     if (sec->SoundTarget && sec->SoundTarget->GetFlags() & _OF_CleanupRef)
-      sec->SoundTarget = NULL;
+      sec->SoundTarget = nullptr;
     if (sec->FloorData && sec->FloorData->GetFlags() & _OF_CleanupRef)
-      sec->FloorData = NULL;
+      sec->FloorData = nullptr;
     if (sec->CeilingData && sec->CeilingData->GetFlags() & _OF_CleanupRef)
-      sec->CeilingData = NULL;
+      sec->CeilingData = nullptr;
     if (sec->LightingData && sec->LightingData->GetFlags() & _OF_CleanupRef)
-      sec->LightingData = NULL;
+      sec->LightingData = nullptr;
     if (sec->AffectorData && sec->AffectorData->GetFlags() & _OF_CleanupRef)
-      sec->AffectorData = NULL;
+      sec->AffectorData = nullptr;
     if (sec->ActionList && sec->ActionList->GetFlags() & _OF_CleanupRef)
-      sec->ActionList = NULL;
+      sec->ActionList = nullptr;
   }
   for (int i = 0; i < NumPolyObjs; i++)
   {
     if (PolyObjs[i].SpecialData && PolyObjs[i].SpecialData->GetFlags() & _OF_CleanupRef)
-      PolyObjs[i].SpecialData = NULL;
+      PolyObjs[i].SpecialData = nullptr;
   }
   for (int i = 0; i < CameraTextures.Num(); i++)
   {
     if (CameraTextures[i].Camera && CameraTextures[i].Camera->GetFlags() & _OF_CleanupRef)
-      CameraTextures[i].Camera = NULL;
+      CameraTextures[i].Camera = nullptr;
   }
   unguard;
 }
@@ -644,38 +644,38 @@ void VLevel::Destroy()
 
   while (HeadSecNode)
   {
-    msecnode_t* Node = HeadSecNode;
+    msecnode_t *Node = HeadSecNode;
     HeadSecNode = Node->SNext;
     delete Node;
-    Node = NULL;
+    Node = nullptr;
   }
 
   //  Free level data.
   if (RenderData)
   {
     delete RenderData;
-    RenderData = NULL;
+    RenderData = nullptr;
   }
 
   for (int i = 0; i < NumPolyObjs; i++)
   {
     delete[] PolyObjs[i].segs;
-    PolyObjs[i].segs = NULL;
+    PolyObjs[i].segs = nullptr;
     delete[] PolyObjs[i].originalPts;
-    PolyObjs[i].originalPts = NULL;
+    PolyObjs[i].originalPts = nullptr;
     if (PolyObjs[i].prevPts)
     {
       delete[] PolyObjs[i].prevPts;
-      PolyObjs[i].prevPts = NULL;
+      PolyObjs[i].prevPts = nullptr;
     }
   }
   if (PolyBlockMap)
   {
     for (int i = 0; i < BlockMapWidth * BlockMapHeight; i++)
     {
-      for (polyblock_t* pb = PolyBlockMap[i]; pb;)
+      for (polyblock_t *pb = PolyBlockMap[i]; pb;)
       {
-        polyblock_t* Next = pb->next;
+        polyblock_t *Next = pb->next;
         delete pb;
         if (Next)
         {
@@ -683,45 +683,45 @@ void VLevel::Destroy()
         }
         else
         {
-          pb = NULL;
+          pb = nullptr;
         }
       }
     }
     delete[] PolyBlockMap;
-    PolyBlockMap = NULL;
+    PolyBlockMap = nullptr;
   }
   if (PolyObjs)
   {
     delete[] PolyObjs;
-    PolyObjs = NULL;
+    PolyObjs = nullptr;
   }
   if (PolyAnchorPoints)
   {
     delete[] PolyAnchorPoints;
-    PolyAnchorPoints = NULL;
+    PolyAnchorPoints = nullptr;
   }
 
   if (Sectors)
   {
     for (int i = 0; i < NumSectors; i++)
     {
-      sec_region_t* Next;
-      for (sec_region_t* r = Sectors[i].botregion; r; r = Next)
+      sec_region_t *Next;
+      for (sec_region_t *r = Sectors[i].botregion; r; r = Next)
       {
         Next = r->next;
         delete r;
-        r = NULL;
+        r = nullptr;
       }
     }
     delete[] Sectors[0].lines;
-    Sectors[0].lines = NULL;
+    Sectors[0].lines = nullptr;
   }
 
   if (Segs && NumSegs) {
     for (int f = 0; f < NumSegs; ++f) {
-      decal_t* decal = Segs[f].decals;
+      decal_t *decal = Segs[f].decals;
       while (decal) {
-        decal_t* c = decal;
+        decal_t *c = decal;
         decal = c->next;
         delete c->animator;
         delete c;
@@ -736,68 +736,68 @@ void VLevel::Destroy()
   }
 
   delete[] Vertexes;
-  Vertexes = NULL;
+  Vertexes = nullptr;
   delete[] Sectors;
-  Sectors = NULL;
+  Sectors = nullptr;
   delete[] Sides;
-  Sides = NULL;
+  Sides = nullptr;
   delete[] Lines;
-  Lines = NULL;
+  Lines = nullptr;
   delete[] Segs;
-  Segs = NULL;
+  Segs = nullptr;
   delete[] Subsectors;
-  Subsectors = NULL;
+  Subsectors = nullptr;
   delete[] Nodes;
-  Nodes = NULL;
+  Nodes = nullptr;
   if (VisData)
   {
     delete[] VisData;
-    VisData = NULL;
+    VisData = nullptr;
   }
   else
   {
     delete[] NoVis;
-    NoVis = NULL;
+    NoVis = nullptr;
   }
   delete[] BlockMapLump;
-  BlockMapLump = NULL;
+  BlockMapLump = nullptr;
   delete[] BlockLinks;
-  BlockLinks = NULL;
+  BlockLinks = nullptr;
   delete[] RejectMatrix;
-  RejectMatrix = NULL;
+  RejectMatrix = nullptr;
   delete[] Things;
-  Things = NULL;
+  Things = nullptr;
   delete[] Zones;
-  Zones = NULL;
+  Zones = nullptr;
 
   delete[] BaseLines;
-  BaseLines = NULL;
+  BaseLines = nullptr;
   delete[] BaseSides;
-  BaseSides = NULL;
+  BaseSides = nullptr;
   delete[] BaseSectors;
-  BaseSectors = NULL;
+  BaseSectors = nullptr;
   delete[] BasePolyObjs;
-  BasePolyObjs = NULL;
+  BasePolyObjs = nullptr;
 
   if (Acs)
   {
     delete Acs;
-    Acs = NULL;
+    Acs = nullptr;
   }
   if (GenericSpeeches)
   {
     delete[] GenericSpeeches;
-    GenericSpeeches = NULL;
+    GenericSpeeches = nullptr;
   }
   if (LevelSpeeches)
   {
     delete[] LevelSpeeches;
-    LevelSpeeches = NULL;
+    LevelSpeeches = nullptr;
   }
   if (StaticLights)
   {
     delete[] StaticLights;
-    StaticLights = NULL;
+    StaticLights = nullptr;
   }
 
   ActiveSequences.Clear();
@@ -807,7 +807,7 @@ void VLevel::Destroy()
     if (Translations[i])
     {
       delete Translations[i];
-      Translations[i] = NULL;
+      Translations[i] = nullptr;
     }
   }
   Translations.Clear();
@@ -816,7 +816,7 @@ void VLevel::Destroy()
     if (BodyQueueTrans[i])
     {
       delete BodyQueueTrans[i];
-      BodyQueueTrans[i] = NULL;
+      BodyQueueTrans[i] = nullptr;
     }
   }
   BodyQueueTrans.Clear();
@@ -832,7 +832,7 @@ void VLevel::Destroy()
 //
 //==========================================================================
 
-void VLevel::SetCameraToTexture(VEntity* Ent, VName TexName, int FOV)
+void VLevel::SetCameraToTexture(VEntity *Ent, VName TexName, int FOV)
 {
   guard(VLevel::SetCameraToTexture);
   if (!Ent)
@@ -862,7 +862,7 @@ void VLevel::SetCameraToTexture(VEntity* Ent, VName TexName, int FOV)
       return;
     }
   }
-  VCameraTextureInfo& C = CameraTextures.Alloc();
+  VCameraTextureInfo &C = CameraTextures.Alloc();
   C.Camera = Ent;
   C.TexNum = TexNum;
   C.FOV = FOV;
@@ -882,11 +882,11 @@ void VLevel::SetCameraToTexture(VEntity* Ent, VName TexName, int FOV)
 //
 //=============================================================================
 
-msecnode_t* VLevel::AddSecnode(sector_t* Sec, VEntity* Thing,
-  msecnode_t* NextNode)
+msecnode_t *VLevel::AddSecnode(sector_t *Sec, VEntity *Thing,
+  msecnode_t *NextNode)
 {
   guard(VLevel::AddSecnode);
-  msecnode_t* Node;
+  msecnode_t *Node;
 
   if (!Sec)
   {
@@ -923,7 +923,7 @@ msecnode_t* VLevel::AddSecnode(sector_t* Sec, VEntity* Thing,
 
   Node->Sector = Sec;     // sector
   Node->Thing = Thing;    // mobj
-  Node->TPrev = NULL;     // prev node on Thing thread
+  Node->TPrev = nullptr;     // prev node on Thing thread
   Node->TNext = NextNode;   // next node on Thing thread
   if (NextNode)
   {
@@ -932,7 +932,7 @@ msecnode_t* VLevel::AddSecnode(sector_t* Sec, VEntity* Thing,
 
   // Add new node at head of sector thread starting at Sec->TouchingThingList
 
-  Node->SPrev = NULL;     // prev node on sector thread
+  Node->SPrev = nullptr;     // prev node on sector thread
   Node->SNext = Sec->TouchingThingList; // next node on sector thread
   if (Sec->TouchingThingList)
   {
@@ -948,17 +948,17 @@ msecnode_t* VLevel::AddSecnode(sector_t* Sec, VEntity* Thing,
 //  VLevel::DelSecnode
 //
 //  Deletes a sector node from the list of sectors this object appears in.
-// Returns a pointer to the next node on the linked list, or NULL.
+// Returns a pointer to the next node on the linked list, or nullptr.
 //
 //=============================================================================
 
-msecnode_t* VLevel::DelSecnode(msecnode_t* Node)
+msecnode_t *VLevel::DelSecnode(msecnode_t *Node)
 {
   guard(VLevel::DelSecnode);
-  msecnode_t*   tp;  // prev node on thing thread
-  msecnode_t*   tn;  // next node on thing thread
-  msecnode_t*   sp;  // prev node on sector thread
-  msecnode_t*   sn;  // next node on sector thread
+  msecnode_t *tp;  // prev node on thing thread
+  msecnode_t *tn;  // next node on thing thread
+  msecnode_t *sp;  // prev node on sector thread
+  msecnode_t *sn;  // next node on sector thread
 
   if (Node)
   {
@@ -1000,7 +1000,7 @@ msecnode_t* VLevel::DelSecnode(msecnode_t* Node)
     HeadSecNode = Node;
     return tn;
   }
-  return NULL;
+  return nullptr;
   unguard;
 }                             // phares 3/13/98
 
@@ -1017,12 +1017,12 @@ void VLevel::DelSectorList()
   guard(VLevel::DelSectorList);
   if (SectorList)
   {
-    msecnode_t* Node = SectorList;
+    msecnode_t *Node = SectorList;
     while (Node)
     {
       Node = DelSecnode(Node);
     }
-    SectorList = NULL;
+    SectorList = nullptr;
   }
   unguard;
 }
@@ -1051,16 +1051,16 @@ int VLevel::SetBodyQueueTrans(int Slot, int Trans)
   //  Add it.
   while (BodyQueueTrans.Num() <= Slot)
   {
-    BodyQueueTrans.Append(NULL);
+    BodyQueueTrans.Append(nullptr);
   }
-  VTextureTranslation* Tr = BodyQueueTrans[Slot];
+  VTextureTranslation *Tr = BodyQueueTrans[Slot];
   if (!Tr)
   {
     Tr = new VTextureTranslation;
     BodyQueueTrans[Slot] = Tr;
   }
   Tr->Clear();
-  VBasePlayer* P = LevelInfo->Game->Players[Index];
+  VBasePlayer *P = LevelInfo->Game->Players[Index];
   Tr->BuildPlayerTrans(P->TranslStart, P->TranslEnd, P->Colour);
   return (TRANSL_BodyQueue << TRANSL_TYPE_SHIFT) + Slot;
   unguard;
@@ -1094,7 +1094,7 @@ int VLevel::FindSectorFromTag(int tag, int start)
 //
 //==========================================================================
 
-line_t* VLevel::FindLine(int lineTag, int* searchPosition)
+line_t *VLevel::FindLine(int lineTag, int *searchPosition)
 {
   guard(VLevel::FindLine);
   for (int i = *searchPosition < 0 ? Lines[(vuint32)lineTag %
@@ -1108,7 +1108,7 @@ line_t* VLevel::FindLine(int lineTag, int* searchPosition)
     }
   }
   *searchPosition = -1;
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -1118,7 +1118,7 @@ line_t* VLevel::FindLine(int lineTag, int* searchPosition)
 //
 //==========================================================================
 
-void VLevel::AddAnimatedDecal (decal_t* dc) {
+void VLevel::AddAnimatedDecal (decal_t *dc) {
   if (!dc || dc->prevanimated || dc->nextanimated || decanimlist == dc || !dc->animator) return;
   if (decanimlist) decanimlist->prevanimated = dc;
   dc->nextanimated = decanimlist;
@@ -1133,7 +1133,7 @@ void VLevel::AddAnimatedDecal (decal_t* dc) {
 //
 //==========================================================================
 
-void VLevel::RemoveAnimatedDecal (decal_t* dc) {
+void VLevel::RemoveAnimatedDecal (decal_t *dc) {
   if (!dc || (!dc->prevanimated && !dc->nextanimated && decanimlist != dc)) return;
   if (dc->prevanimated) dc->prevanimated->nextanimated = dc->nextanimated; else decanimlist = dc->nextanimated;
   if (dc->nextanimated) dc->nextanimated->prevanimated = dc->prevanimated;
@@ -1152,7 +1152,7 @@ void VLevel::RemoveAnimatedDecal (decal_t* dc) {
 //
 //==========================================================================
 
-static bool isDecalsOverlap (VDecalDef *dec, float segdist, float orgz, decal_t* cur, const picinfo_t& tinf) {
+static bool isDecalsOverlap (VDecalDef *dec, float segdist, float orgz, decal_t *cur, const picinfo_t &tinf) {
   float two = tinf.xoffset*dec->scaleX;
   float segd0 = segdist-two;
   float segd1 = segd0+tinf.width*dec->scaleX;
@@ -1689,12 +1689,12 @@ void SV_LoadLevel(VName MapName)
 {
   guard(SV_LoadLevel);
 #ifdef CLIENT
-  GClLevel = NULL;
+  GClLevel = nullptr;
 #endif
   if (GLevel)
   {
     delete GLevel;
-    GLevel = NULL;
+    GLevel = nullptr;
   }
 
   GLevel = Spawn<VLevel>();
@@ -1719,7 +1719,7 @@ void CL_LoadLevel(VName MapName)
   if (GClLevel)
   {
     delete GClLevel;
-    GClLevel = NULL;
+    GClLevel = nullptr;
   }
 
   GClLevel = Spawn<VLevel>();
@@ -1860,7 +1860,7 @@ sec_region_t *AddExtraFloor(line_t *line, sector_t *dst)
   }
   GCon->Logf("Invalid extra floor, tag %d", dst->tag);
 
-  return NULL;
+  return nullptr;
   unguard;
 }
 

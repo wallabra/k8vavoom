@@ -38,7 +38,7 @@ class VVorbisAudioCodec : public VAudioCodec
 {
 public:
   int         InitLevel;
-  VStream*      Strm;
+  VStream *Strm;
   bool        FreeStream;
   int         BytesLeft;
 
@@ -59,7 +59,7 @@ public:
   int ReadData();
   bool Finished();
   void Restart();
-  static VAudioCodec* Create(VStream*);
+  static VAudioCodec *Create(VStream*);
 };
 
 class VVorbisSampleLoader : public VSampleLoader
@@ -92,7 +92,7 @@ VVorbisSampleLoader   VorbisSampleLoader;
 //
 //==========================================================================
 
-VVorbisAudioCodec::VVorbisAudioCodec(VStream* AStrm, bool AFreeStream)
+VVorbisAudioCodec::VVorbisAudioCodec(VStream *AStrm, bool AFreeStream)
 : Strm(AStrm)
 , FreeStream(AFreeStream)
 {
@@ -122,7 +122,7 @@ VVorbisAudioCodec::~VVorbisAudioCodec()
       Strm->Close();
       delete Strm;
     }
-    Strm = NULL;
+    Strm = nullptr;
   }
   ogg_sync_clear(&oy);
   //unguard;
@@ -248,7 +248,7 @@ void VVorbisAudioCodec::Cleanup()
 //
 //==========================================================================
 
-int VVorbisAudioCodec::Decode(short* Data, int NumSamples)
+int VVorbisAudioCodec::Decode(short *Data, int NumSamples)
 {
   guard(VVorbisAudioCodec::Decode);
   ogg_page      og;
@@ -258,15 +258,15 @@ int VVorbisAudioCodec::Decode(short* Data, int NumSamples)
   while (!eos)
   {
     //  While we have data ready, read it.
-    float** pcm;
+    float **pcm;
     int samples = vorbis_synthesis_pcmout(&vd, &pcm);
     if (samples > 0)
     {
       int bout = (CurSample + samples < NumSamples ? samples : NumSamples - CurSample);
       for (int i = 0; i < 2; i++)
       {
-        short* ptr = Data + CurSample * 2 + (vi.channels > 1 ? i : 0);
-        float* mono = pcm[vi.channels > 1 ? i : 0];
+        short *ptr = Data + CurSample * 2 + (vi.channels > 1 ? i : 0);
+        float *mono = pcm[vi.channels > 1 ? i : 0];
         for (int j = 0; j < bout; j++)
         {
           int val = int(mono[j] * 32767.f);
@@ -320,7 +320,7 @@ int VVorbisAudioCodec::ReadData()
   guard(VVorbisAudioCodec::ReadData);
   if (!BytesLeft)
     return 0;
-  char* buffer = ogg_sync_buffer(&oy, 4096);
+  char *buffer = ogg_sync_buffer(&oy, 4096);
   int bytes = 4096;
   if (bytes > BytesLeft)
     bytes = BytesLeft;
@@ -366,16 +366,16 @@ void VVorbisAudioCodec::Restart()
 //
 //==========================================================================
 
-VAudioCodec* VVorbisAudioCodec::Create(VStream* InStrm)
+VAudioCodec *VVorbisAudioCodec::Create(VStream *InStrm)
 {
   guard(VVorbisAudioCodec::Create);
-  VVorbisAudioCodec* Codec = new VVorbisAudioCodec(InStrm, true);
+  VVorbisAudioCodec *Codec = new VVorbisAudioCodec(InStrm, true);
   if (!Codec->Init())
   {
     Codec->Cleanup();
     delete Codec;
-    Codec = NULL;
-    return NULL;
+    Codec = nullptr;
+    return nullptr;
   }
   return Codec;
   unguard;
@@ -387,15 +387,15 @@ VAudioCodec* VVorbisAudioCodec::Create(VStream* InStrm)
 //
 //==========================================================================
 
-void VVorbisSampleLoader::Load(sfxinfo_t& Sfx, VStream& Stream)
+void VVorbisSampleLoader::Load(sfxinfo_t &Sfx, VStream &Stream)
 {
   guard(VVorbisSampleLoader::Load);
-  VVorbisAudioCodec* Codec = new VVorbisAudioCodec(&Stream, false);
+  VVorbisAudioCodec *Codec = new VVorbisAudioCodec(&Stream, false);
   if (!Codec->Init())
   {
     Codec->Cleanup();
     delete Codec;
-    Codec = NULL;
+    Codec = nullptr;
     return;
   }
 
@@ -418,7 +418,7 @@ void VVorbisSampleLoader::Load(sfxinfo_t& Sfx, VStream& Stream)
   if (!Data.Num())
   {
     delete Codec;
-    Codec = NULL;
+    Codec = nullptr;
     return;
   }
 
@@ -432,6 +432,6 @@ void VVorbisSampleLoader::Load(sfxinfo_t& Sfx, VStream& Stream)
   memcpy(Sfx.Data, Data.Ptr(), Data.Num() * 2);
 
   delete Codec;
-  Codec = NULL;
+  Codec = nullptr;
   unguard;
 }

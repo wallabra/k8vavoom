@@ -30,7 +30,7 @@
 //  SpawnDecal
 //
 //==========================================================================
-final void SpawnDecal (TVec org, name dectype, int side, line_t* li) {
+final void SpawnDecal (TVec org, name dectype, int side, line_t *li) {
   //writeln("DECAL: ", dectype);
   if (!dectype || !li || !XLevel) return; // just in case
   if (!GetCvarB('decals_enabled')) return;

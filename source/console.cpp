@@ -48,13 +48,13 @@ enum cons_state_t
 class FConsoleDevice : public FOutputDevice
 {
 public:
-  void Serialise(const char* V, EName Event);
+  void Serialise(const char *V, EName Event);
 };
 
 class FConsoleLog : public VLogListener
 {
 public:
-  void Serialise(const char* V, EName Event);
+  void Serialise(const char *V, EName Event);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -289,9 +289,9 @@ void C_Drawer()
 //
 //==========================================================================
 
-bool C_Responder(event_t* ev)
+bool C_Responder(event_t *ev)
 {
-  const char* cp;
+  const char *cp;
   VStr    str;
   int     i;
   bool    eat;
@@ -452,7 +452,7 @@ COMMAND(Cls)
 //
 //==========================================================================
 
-static void AddLine(char* Data)
+static void AddLine(char *Data)
 {
   if (num_lines >= MAX_LINES)
   {
@@ -557,7 +557,7 @@ static void DoPrint(const char *buf)
 //
 //==========================================================================
 
-void FConsoleDevice::Serialise(const char* V, EName Event)
+void FConsoleDevice::Serialise(const char *V, EName Event)
 {
   dprintf("%s: %s\n", VName::SafeString(Event), *VStr(V).RemoveColours());
   printf("%s: %s\n", VName::SafeString(Event), *VStr(V).RemoveColours()); //k8
@@ -575,7 +575,7 @@ void FConsoleDevice::Serialise(const char* V, EName Event)
 //
 //==========================================================================
 
-void FConsoleLog::Serialise(const char* Text, EName Event)
+void FConsoleLog::Serialise(const char *Text, EName Event)
 {
   if (Event == NAME_Dev && !developer)
   {

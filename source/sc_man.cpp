@@ -132,7 +132,7 @@ VScriptParser::VScriptParser (const VStr &name, VStream *Strm)
 //  VScriptParser::VScriptParser
 //
 //==========================================================================
-VScriptParser::VScriptParser (const VStr& name, const char *atext)
+VScriptParser::VScriptParser (const VStr &name, const char *atext)
   : Line(1)
   , End(false)
   , Crossed(false)
@@ -742,7 +742,7 @@ void VScriptParser::Message (const char *message) {
 //  VScriptParser::Error
 //
 //==========================================================================
-void VScriptParser::Error (const char* message) {
+void VScriptParser::Error (const char *message) {
   guard(VScriptParser::Error)
   const char *Msg = (message ? message : "Bad syntax.");
   Sys_Error("Script error, \"%s\" line %d: %s", *ScriptName, Line, Msg);

@@ -201,20 +201,20 @@ struct VSkillDef
 
 void InitMapInfo();
 void ShutdownMapInfo();
-const mapInfo_t& P_GetMapInfo(VName);
+const mapInfo_t &P_GetMapInfo(VName);
 VStr P_GetMapName(int);
 VName P_GetMapLumpName(int);
 int P_GetMapIndexByLevelNum(int);
 VName P_TranslateMap(int);
 VName P_GetMapLumpNameByLevelNum(int);
 void P_PutMapSongLump(int, VName);
-const VClusterDef* P_GetClusterDef(int);
+const VClusterDef *P_GetClusterDef(int);
 int P_GetNumEpisodes();
 int P_GetNumMaps();
 mapInfo_t *P_GetMapInfoPtr(int mapidx);
-VEpisodeDef* P_GetEpisodeDef(int);
+VEpisodeDef *P_GetEpisodeDef(int);
 int P_GetNumSkills();
-const VSkillDef* P_GetSkillDef(int);
+const VSkillDef *P_GetSkillDef(int);
 void P_GetMusicLumpNames(TArray<FReplacedString>&);
 void P_ReplaceMusicLumpNames(TArray<FReplacedString>&);
 void P_SetParTime(VName, int);

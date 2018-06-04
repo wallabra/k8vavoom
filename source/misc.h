@@ -33,23 +33,23 @@ public:
   virtual ~FOutputDevice();
 
   // Simple text printing.
-  void Log(const char* S);
-  void Log(EName Type, const char* S);
-  void Log(const VStr& S);
-  void Log(EName Type, const VStr& S);
-  void Logf(const char* Fmt, ...);
-  void Logf(EName Type, const char* Fmt, ...);
+  void Log(const char *S);
+  void Log(EName Type, const char *S);
+  void Log(const VStr &S);
+  void Log(EName Type, const VStr &S);
+  void Logf(const char *Fmt, ...);
+  void Logf(EName Type, const char *Fmt, ...);
 };
 
 //  Error logs.
-extern FOutputDevice*   GLogSysError;
-extern FOutputDevice*   GLogHostError;
+extern FOutputDevice *GLogSysError;
+extern FOutputDevice *GLogHostError;
 
 int superatoi(const char *s);
 
 int PassFloat(float f);
 
-int ParseHex(const char* Str);
+int ParseHex(const char *Str);
 vuint32 M_ParseColour(VStr Name);
 
 void M_RgbToHsv(vuint8, vuint8, vuint8, vuint8&, vuint8&, vuint8&);

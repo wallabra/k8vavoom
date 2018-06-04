@@ -42,7 +42,7 @@ float   CeilingDest;
 //
 //==========================================================================
 
-void Init(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
+void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, bool InCrush)
 {
   float   NewHeight;
@@ -107,7 +107,7 @@ void Init(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 //
 //==========================================================================
 
-void InitOpen(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
+void InitOpen(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   TVec    Spot1;

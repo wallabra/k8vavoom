@@ -562,7 +562,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     *((int *)net_message.data) = BigLong(NETPACKET_CTL | (net_message.cursize & NETFLAG_LENGTH_MASK));
     Drv.Write (acceptsock, net_message.data, net_message.cursize, &clientaddr);
     SZ_Clear(&net_message);
-    return NULL;
+    return nullptr;
   }
   */
 

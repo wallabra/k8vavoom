@@ -64,52 +64,52 @@ public:
   virtual bool Close ();
 
   //  Interface functions for objects and classes streams.
-  virtual VStream& operator<<(VName&);
-  virtual VStream& operator<<(VObject*&);
-  virtual void SerialiseStructPointer(void*&, VStruct*);
-  virtual VStream& operator<<(VMemberBase*&);
+  virtual VStream &operator << (VName &);
+  virtual VStream &operator << (VObject *&);
+  virtual void SerialiseStructPointer (void *&, VStruct *);
+  virtual VStream &operator << (VMemberBase *&);
 
   //  Serialise integers in particular byte order.
-  void SerialiseLittleEndian(void*, int);
-  void SerialiseBigEndian(void*, int);
+  void SerialiseLittleEndian (void *, int);
+  void SerialiseBigEndian (void*, int);
 
   //  Stream serialisation operators.
-  friend VStream& operator<<(VStream& Strm, vint8& Val)
+  friend VStream &operator << (VStream &Strm, vint8 &Val)
   {
     Strm.Serialise(&Val, 1);
     return Strm;
   }
-  friend VStream& operator<<(VStream& Strm, vuint8& Val)
+  friend VStream &operator << (VStream &Strm, vuint8 &Val)
   {
     Strm.Serialise(&Val, 1);
     return Strm;
   }
-  friend VStream& operator<<(VStream& Strm, vint16& Val)
+  friend VStream &operator << (VStream &Strm, vint16 &Val)
   {
     Strm.SerialiseLittleEndian(&Val, sizeof(Val));
     return Strm;
   }
-  friend VStream& operator<<(VStream& Strm, vuint16& Val)
+  friend VStream &operator << (VStream &Strm, vuint16 &Val)
   {
     Strm.SerialiseLittleEndian(&Val, sizeof(Val));
     return Strm;
   }
-  friend VStream& operator<<(VStream& Strm, vint32& Val)
+  friend VStream &operator << (VStream &Strm, vint32 &Val)
   {
     Strm.SerialiseLittleEndian(&Val, sizeof(Val));
     return Strm;
   }
-  friend VStream& operator<<(VStream& Strm, vuint32& Val)
+  friend VStream &operator << (VStream &Strm, vuint32 &Val)
   {
     Strm.SerialiseLittleEndian(&Val, sizeof(Val));
     return Strm;
   }
-  friend VStream& operator<<(VStream& Strm, float& Val)
+  friend VStream &operator << (VStream &Strm, float &Val)
   {
     Strm.SerialiseLittleEndian(&Val, sizeof(Val));
     return Strm;
   }
-  friend VStream& operator<<(VStream& Strm, double& Val)
+  friend VStream &operator << (VStream &Strm, double &Val)
   {
     Strm.SerialiseLittleEndian(&Val, sizeof(Val));
     return Strm;
@@ -119,7 +119,7 @@ public:
 //
 //  Stream reader helper.
 //
-template<class T> T Streamer(VStream& Strm)
+template<class T> T Streamer (VStream &Strm)
 {
   T Val;
   Strm << Val;
@@ -131,11 +131,9 @@ template<class T> T Streamer(VStream& Strm)
 //
 //  Class for serialising integer values in a compact way.
 //
-class VStreamCompactIndex
-{
+class VStreamCompactIndex {
 public:
-  vint32    Val;
-  friend VStream& operator<<(VStream&, VStreamCompactIndex&);
+  vint32 Val;
+  friend VStream &operator << (VStream &, VStreamCompactIndex &);
 };
-#define STRM_INDEX(val) \
-  (*(VStreamCompactIndex*)&(val))
+#define STRM_INDEX(val)  (*(VStreamCompactIndex *)&(val))

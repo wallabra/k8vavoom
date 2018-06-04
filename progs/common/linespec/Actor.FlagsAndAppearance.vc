@@ -213,7 +213,7 @@ final void A_LowGravity()
 final void A_NoBlocking()
 {
   int         SpeechNum;
-  RogueConSpeech*   Speech;
+  RogueConSpeech *Speech;
   class<EntityEx>   DropItemType;
   int         i;
 

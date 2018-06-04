@@ -44,7 +44,7 @@ struct dlight_t
   float   die;    // stop lighting after this time
   float   decay;    // drop this each second
   float   minlight; // don't add when contributing less
-  VThinker* Owner;    // used to identify owner to reuse the same light
+  VThinker *Owner;    // used to identify owner to reuse the same light
   vuint32   colour;   // for coloured lights
 };
 
@@ -90,13 +90,13 @@ class VClientGameBase : public VObject
   };
   vuint32       ClientFlags;
 
-  VGameInfo*      Game;
-  VBasePlayer*    cl;
-  VLevel*       GLevel;
+  VGameInfo *Game;
+  VBasePlayer *cl;
+  VLevel *GLevel;
 
   im_t        im;
 
-  VRootWidget*    GRoot;
+  VRootWidget *GRoot;
 
   int         sb_height;
 
@@ -174,7 +174,7 @@ class VClientGameBase : public VObject
     P_PASS_NAME(FinaleType);
     EV_RET_VOID(NAME_StartFinale);
   }
-  bool eventFinaleResponder(event_t* event)
+  bool eventFinaleResponder(event_t *event)
   {
     P_PASS_SELF;
     P_PASS_PTR(event);
@@ -185,7 +185,7 @@ class VClientGameBase : public VObject
     P_PASS_SELF;
     EV_RET_VOID(NAME_DeactivateMenu);
   }
-  bool eventMenuResponder(event_t* event)
+  bool eventMenuResponder(event_t *event)
   {
     P_PASS_SELF;
     P_PASS_PTR(event);
@@ -196,7 +196,7 @@ class VClientGameBase : public VObject
     P_PASS_SELF;
     EV_RET_BOOL(NAME_MenuActive);
   }
-  void eventSetMenu(const VStr& Name)
+  void eventSetMenu(const VStr &Name)
   {
     P_PASS_SELF;
     P_PASS_STR(Name);
@@ -207,7 +207,7 @@ class VClientGameBase : public VObject
     P_PASS_SELF;
     EV_RET_VOID(NAME_MessageBoxDrawer);
   }
-  bool eventMessageBoxResponder(event_t* event)
+  bool eventMessageBoxResponder(event_t *event)
   {
     P_PASS_SELF;
     P_PASS_PTR(event);
@@ -227,20 +227,20 @@ class VClientGameBase : public VObject
     P_PASS_INT(h);
     EV_RET_VOID(NAME_DrawViewBorder);
   }
-  void eventAddNotifyMessage(const VStr& Str)
+  void eventAddNotifyMessage(const VStr &Str)
   {
     P_PASS_SELF;
     P_PASS_STR(Str);
     EV_RET_VOID(NAME_AddNotifyMessage);
   }
-  void eventAddCentreMessage(const VStr& Msg)
+  void eventAddCentreMessage(const VStr &Msg)
   {
     P_PASS_SELF;
     P_PASS_STR(Msg);
     EV_RET_VOID(NAME_AddCentreMessage);
   }
-  void eventAddHudMessage(const VStr& Message, VName Font, int Type, int Id,
-    int Colour, const VStr& ColourName, float x, float y, int HudWidth,
+  void eventAddHudMessage(const VStr &Message, VName Font, int Type, int Id,
+    int Colour, const VStr &ColourName, float x, float y, int HudWidth,
     int HudHeight, float HoldTime, float Time1, float Time2)
   {
     P_PASS_SELF;
@@ -266,20 +266,20 @@ class VClientGameBase : public VObject
 void CL_DecayLights();
 
 void CL_KeepaliveMessage();
-void CL_ParseServerInfo(class VMessageIn& msg);
+void CL_ParseServerInfo(class VMessageIn &msg);
 void CL_ReadFromServerInfo();
 void CL_StopRecording();
 
 void R_DrawModelFrame(const TVec&, float, VModel*, int, int, const char*, int,
   int, int, float);
 
-VModel* Mod_FindName(const VStr&);
+VModel *Mod_FindName(const VStr&);
 
 void SCR_SetVirtualScreen(int, int);
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
-extern VClientGameBase*   GClGame;
+extern VClientGameBase *GClGame;
 
 extern int          VirtualWidth;
 extern int          VirtualHeight;

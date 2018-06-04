@@ -37,7 +37,7 @@ struct VNameEntry {
   vint32 Index; // index of the name
   char Name[NAME_SIZE]; // name value
 
-  friend VStream& operator << (VStream &, VNameEntry &);
+  friend VStream &operator << (VStream &, VNameEntry &);
   friend VNameEntry *AllocateNameEntry (const char *Name, vint32 Index, VNameEntry *HashNext);
 };
 

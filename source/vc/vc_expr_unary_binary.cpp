@@ -400,8 +400,8 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       /*
       VExpression *TmpArgs[1];
       TmpArgs[0] = op1;
-      op1 = new VInvocation(NULL, ec.SelfClass->FindMethodChecked(
-        "itof"), NULL, false, false, op1->Loc, 1, TmpArgs);
+      op1 = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked(
+        "itof"), nullptr, false, false, op1->Loc, 1, TmpArgs);
       op1 = op1->Resolve(ec);
       */
       op1 = (new VScalarToFloat(op1))->Resolve(ec);
@@ -410,8 +410,8 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       /*
       VExpression *TmpArgs[1];
       TmpArgs[0] = op2;
-      op2 = new VInvocation(NULL, ec.SelfClass->FindMethodChecked(
-        "itof"), NULL, false, false, op2->Loc, 1, TmpArgs);
+      op2 = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked(
+        "itof"), nullptr, false, false, op2->Loc, 1, TmpArgs);
       op2 = op2->Resolve(ec);
       */
       op2 = (new VScalarToFloat(op2))->Resolve(ec);

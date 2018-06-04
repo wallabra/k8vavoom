@@ -28,13 +28,13 @@ class VViewClipper
 private:
   struct VClipNode;
 
-  VClipNode*    FreeClipNodes;
-  VClipNode*    ClipHead;
-  VClipNode*    ClipTail;
+  VClipNode *FreeClipNodes;
+  VClipNode *ClipHead;
+  VClipNode *ClipTail;
   TVec      Origin;
-  VLevel*     Level;
+  VLevel *Level;
 
-  VClipNode* NewClipNode();
+  VClipNode *NewClipNode();
   void RemoveClipNode(VClipNode*);
   void DoAddClipRange(float, float);
   bool DoIsRangeVisible(float, float);
@@ -53,5 +53,5 @@ public:
   bool ClipIsBBoxVisible(float*, bool, const TVec& = TVec(0, 0, 0), float = 0);
   bool ClipCheckRegion(subregion_t*, subsector_t*, bool, const TVec& = TVec(0, 0, 0), float = 0);
   bool ClipCheckSubsector(subsector_t*, bool, const TVec& = TVec(0, 0, 0), float = 0);
-  void ClipAddSubsectorSegs(subsector_t*, bool, TPlane* = NULL, const TVec& = TVec(0, 0, 0), float = 0);
+  void ClipAddSubsectorSegs(subsector_t*, bool, TPlane* = nullptr, const TVec& = TVec(0, 0, 0), float = 0);
 };

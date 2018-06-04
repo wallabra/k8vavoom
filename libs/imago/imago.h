@@ -127,7 +127,7 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-typedef VImage* (*VImageLoaderFn) (VStream *);
+typedef VImage *(*VImageLoaderFn) (VStream *);
 
 // `ext` may, or may not include dot
 // loaders with higher priority will be tried first

@@ -140,7 +140,7 @@ public:
 
   VAutopageTexture (int ALumpNum);
   virtual ~VAutopageTexture () override;
-  virtual vuint8* GetPixels () override;
+  virtual vuint8 *GetPixels () override;
   virtual void Unload () override;
 };
 

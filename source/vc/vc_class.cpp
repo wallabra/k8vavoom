@@ -1470,7 +1470,7 @@ VClass *VClass::GetReplacement () {
   guard(VClass::GetReplacement);
   check(this);
   if (!Replacement) return this;
-  // avoid looping recursion by temporarely NULL-ing the field
+  // avoid looping recursion by temporarely nullptr-ing the field
   VClass *Temp = Replacement;
   Replacement = nullptr;
   VClass *Ret = Temp->GetReplacement();
@@ -1488,7 +1488,7 @@ VClass *VClass::GetReplacement () {
 VClass *VClass::GetReplacee () {
   guard(VClass::GetReplacee);
   if (!Replacee) return this;
-  // avoid looping recursion by temporarely NULL-ing the field
+  // avoid looping recursion by temporarely nullptr-ing the field
   VClass *Temp = Replacee;
   Replacee = nullptr;
   VClass *Ret = Temp->GetReplacee();

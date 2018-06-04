@@ -85,7 +85,7 @@ final void SetOrigin2(TVec origin)
       Origin.z = FloorZ + Origin.z; // artifact z passed in as height
     }
 
-    VTerrainInfo* TInfo = GetFloorType();
+    VTerrainInfo *TInfo = GetFloorType();
     if (bFloorClip && TInfo->bLiquid && Origin.z == FloorZ)
     {
       FloorClip = TInfo->FootClip;
@@ -321,7 +321,7 @@ final bool Teleport(TVec Dst, float angle, bool DstFog, bool SrcFog,
   aboveFloor = Origin.z - FloorZ;
   if (Dst.z == ONFLOORZ)
   {
-    sector_t* DstSec = XLevel.PointInSector(Dst);
+    sector_t *DstSec = XLevel.PointInSector(Dst);
     float DstFloorZ = GetPlanePointZ(&DstSec->floor, Dst);
     float DstCeilZ = GetPlanePointZ(&DstSec->floor, Dst);
     if (bIsPlayer)
@@ -1064,7 +1064,7 @@ name GetSpecies()
 //
 //===========================================================================
 
-final override void CheckForPushSpecial(line_t* line, int side)
+final override void CheckForPushSpecial(line_t *line, int side)
 {
   if (!bNoTrigger)
   {
@@ -1222,7 +1222,7 @@ final void FaceMovementDirection()
 //
 //==========================================================================
 
-override void OnMapSpawn(mthing_t* mthing)
+override void OnMapSpawn(mthing_t *mthing)
 {
   InitialHealth = Health;
 
@@ -1873,7 +1873,7 @@ final override bool SectorChanged(int CrushChange)
 
 override void ClientTick(float DeltaTime)
 {
-  dlight_t* dl;
+  dlight_t *dl;
   TVec    fv;
   int     i, c;
   float   r = 0.0;
@@ -1952,8 +1952,8 @@ final void DoStateEffects(float DeltaTime)
     //  Dynamic lights.
     for (i = 0; i < Lights.Num; i++)
     {
-      LightEffectDef* L = Lights[i];
-      dlight_t* dl = AllocDlight(self);
+      LightEffectDef *L = Lights[i];
+      dlight_t *dl = AllocDlight(self);
       dl->origin = Origin + Forward * L->Offset.x - Right * L->Offset.y +
         Up * L->Offset.z;
       switch (L->Type)
@@ -2033,7 +2033,7 @@ final void DoStateEffects(float DeltaTime)
     //  Particle effects
     for (i = 0; i < Particles.Num; i++)
     {
-      ParticleEffectDef* P = Particles[i];
+      ParticleEffectDef *P = Particles[i];
       Level.ParticleEffect(P->Count, P->Type, P->Type2, Origin +
         Forward * P->Offset.x - Right * P->Offset.y +
         Up * P->Offset.z, P->OrgRnd, P->Velocity, P->VelRnd,
@@ -2091,7 +2091,7 @@ final void TouchDehackedSpecial(EntityEx Toucher)
   if (Special)
   {
     Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2], Args[3],
-      Args[4], NULL, 0, Toucher);
+      Args[4], nullptr, 0, Toucher);
     Special = 0;
   }
   if (bCountItem)
@@ -2196,7 +2196,7 @@ final bool GiveBody(int num)
 //==========================================================================
 
 final void SpawnPuff(TVec Org, float Range, class<EntityEx> PuffType,
-  bool HitThing, optional sector_t* sec, optional line_t* li, optional TVec realOrg, optional name decalType)
+  bool HitThing, optional sector_t *sec, optional line_t *li, optional TVec realOrg, optional name decalType)
 {
   int i, c;
   EntityEx puff;
@@ -3586,7 +3586,7 @@ final void DoJump(state State)
 //
 //==========================================================================
 
-override void CheckForSectorActions(sector_t* OldSec, bool OldAboveFakeFloor,
+override void CheckForSectorActions(sector_t *OldSec, bool OldAboveFakeFloor,
   bool OldAboveFakeCeiling)
 {
   //  Check for crossing fake floor or ceiling
@@ -3721,7 +3721,7 @@ final bool UseLines(float UseRange, float UseThingRange, name FailSound)
   float x2;
   float y2;
   TVec useDir;
-  intercept_t* in;
+  intercept_t *in;
   TVec hit_point;
   opening_t *open;
 
@@ -3772,7 +3772,7 @@ final bool UseLines(float UseRange, float UseThingRange, name FailSound)
   bool FoundLine = false;
   foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES)
   {
-    line_t* line;
+    line_t *line;
     float pheight;
 
     line = in->line;
@@ -3795,7 +3795,7 @@ final bool UseLines(float UseRange, float UseThingRange, name FailSound)
           break;
         }
 
-        sector_t* Sec = PointOnPlaneSide(Origin, line) == 0 ?
+        sector_t *Sec = PointOnPlaneSide(Origin, line) == 0 ?
           line->frontsector : line->backsector;
         if (Sec->ActionList &&
           SectorAction(Sec->ActionList).TriggerAction(
@@ -3822,7 +3822,7 @@ final bool UseLines(float UseRange, float UseThingRange, name FailSound)
     if (PointOnPlaneSide(Origin, line) == 1)
     {
       //  Don't use back side unless it's a two-sided line.
-      if (line->backsector != NULL)
+      if (line->backsector != nullptr)
       {
         continue;
       }
@@ -3875,7 +3875,7 @@ bool UseThing(EntityEx Other)
 {
   if (Other.bUseSpecial && Other.Special && Level.ExecuteActionSpecial(
     Other.Special, Other.Args[0], Other.Args[1], Other.Args[2],
-    Other.Args[3], Other.Args[4], NULL, 0, self))
+    Other.Args[3], Other.Args[4], nullptr, 0, self))
   {
     return true;
   }
@@ -4360,7 +4360,7 @@ float decorate_angle
   get { return AngleMod360(Angles.yaw); }
 }
 
-int* decorate_args
+int *decorate_args
 {
   get { return &Args[0]; }
 }

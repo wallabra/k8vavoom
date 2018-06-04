@@ -64,7 +64,7 @@ VArrayStream::VArrayStream(TArray<vuint8>& InArray)
 //
 //==========================================================================
 
-void VArrayStream::Serialise(void* Data, int Len)
+void VArrayStream::Serialise(void *Data, int Len)
 {
   guard(VArrayStream::Serialise);
   if (bLoading)

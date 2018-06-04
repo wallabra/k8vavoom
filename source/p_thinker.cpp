@@ -94,7 +94,7 @@ void VThinker::Destroy()
 //
 //==========================================================================
 
-void VThinker::Serialise(VStream& Strm)
+void VThinker::Serialise(VStream &Strm)
 {
   guard(VThinker::Serialise);
   Super::Serialise(Strm);
@@ -202,7 +202,7 @@ void VThinker::StopSound(vint32 origin_id, vint32 channel)
 //
 //==========================================================================
 
-void VThinker::StartSoundSequence(const TVec& Origin, vint32 OriginId,
+void VThinker::StartSoundSequence(const TVec &Origin, vint32 OriginId,
   VName Name, vint32 ModeNum)
 {
   guard(VThinker::StartSoundSequence);
@@ -215,7 +215,7 @@ void VThinker::StartSoundSequence(const TVec& Origin, vint32 OriginId,
       i--;
     }
   }
-  VSndSeqInfo& Seq = XLevel->ActiveSequences.Alloc();
+  VSndSeqInfo &Seq = XLevel->ActiveSequences.Alloc();
   Seq.Name = Name;
   Seq.OriginId = OriginId;
   Seq.Origin = Origin;
@@ -372,17 +372,17 @@ void VThinker::BroadcastCentrePrintf(const char *s, ...)
 class VScriptThinkerIterator : public VScriptIterator
 {
 private:
-  VThinker* Self;
-  VClass*   Class;
-  VThinker**  Out;
-  VThinker* Current;
+  VThinker *Self;
+  VClass *Class;
+  VThinker **Out;
+  VThinker *Current;
 
 public:
-  VScriptThinkerIterator(VThinker* ASelf, VClass* AClass, VThinker** AOut)
+  VScriptThinkerIterator(VThinker *ASelf, VClass *AClass, VThinker **AOut)
   : Self(ASelf)
   , Class(AClass)
   , Out(AOut)
-  , Current(NULL)
+  , Current(nullptr)
   {}
   bool GetNext()
   {
@@ -394,7 +394,7 @@ public:
     {
       Current = Current->Next;
     }
-    *Out = NULL;
+    *Out = nullptr;
     while (Current)
     {
       if (Current->IsA(Class) && !(Current->GetFlags() & _OF_DelayedDestroy))
@@ -411,12 +411,12 @@ public:
 class VActivePlayersIterator : public VScriptIterator
 {
 private:
-  VThinker*   Self;
-  VBasePlayer** Out;
+  VThinker *Self;
+  VBasePlayer **Out;
   int       Index;
 
 public:
-  VActivePlayersIterator(VThinker* ASelf, VBasePlayer** AOut)
+  VActivePlayersIterator(VThinker *ASelf, VBasePlayer **AOut)
   : Self(ASelf)
   , Out(AOut)
   , Index(0)
@@ -425,7 +425,7 @@ public:
   {
     while (Index < MAXPLAYERS)
     {
-      VBasePlayer* P = Self->Level->Game->Players[Index];
+      VBasePlayer *P = Self->Level->Game->Players[Index];
       Index++;
       if (P && (P->PlayerFlags & VBasePlayer::PF_Spawned))
       {
@@ -446,12 +446,12 @@ public:
 IMPLEMENT_FUNCTION(VThinker, Spawn)
 {
   P_GET_BOOL_OPT(AllowReplace, true);
-  P_GET_PTR_OPT(mthing_t, mthing, NULL);
+  P_GET_PTR_OPT(mthing_t, mthing, nullptr);
   P_GET_AVEC_OPT(AAngles, TAVec(0, 0, 0));
   P_GET_VEC_OPT(AOrigin, TVec(0, 0, 0));
   P_GET_PTR(VClass, Class);
   P_GET_SELF;
-  VEntity* SelfEnt = Cast<VEntity>(Self);
+  VEntity *SelfEnt = Cast<VEntity>(Self);
   //  If spawner is entity, default to it's origin and angles.
   if (SelfEnt)
   {

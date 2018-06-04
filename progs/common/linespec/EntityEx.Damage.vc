@@ -319,7 +319,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
               spos.x = Origin.x+((Random()*51-25)/10.0);
               spos.y = Origin.y+((Random()*51-25)/10.0);
               spos.z = Origin.z+Height+((Random()*29-14)/10.0);
-              Level.Spawn(bloodClass, spos); // optional TAVec AAngles, optional mthing_t* mthing, optional bool AllowReplace
+              Level.Spawn(bloodClass, spos); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
             }
           }
 
@@ -350,9 +350,9 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 //
 //  Damages both enemies and players.
 //  "inflictor" is the thing that caused the damage, creature or missile,
-// can be NULL (slime, etc).
-//  "source" is the thing to target after taking damage, creature or NULL.
-//  Source and inflictor are the same for melee attacks. Source can be NULL
+// can be nullptr (slime, etc).
+//  "source" is the thing to target after taking damage, creature or nullptr.
+//  Source and inflictor are the same for melee attacks. Source can be nullptr
 // for slime, barrel explosions and other environmental stuff.
 //
 //==========================================================================
@@ -1007,7 +1007,7 @@ void Died(EntityEx source, EntityEx inflictor)
   {
     // Initiate monster death actions
     Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2],
-      Args[3], Args[4], NULL, 0, Level.bActivateOwnSpecial ? self :
+      Args[3], Args[4], nullptr, 0, Level.bActivateOwnSpecial ? self :
       source);
   }
   if (CountsAsKill())

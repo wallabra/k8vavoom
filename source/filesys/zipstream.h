@@ -37,7 +37,7 @@ class VZipStreamReader : public VStream
 private:
   enum { BUFFER_SIZE = 16384 };
 
-  VStream*    SrcStream;
+  VStream *SrcStream;
   Bytef     Buffer[BUFFER_SIZE];
   z_stream    ZStream;
   bool      Initialised;
@@ -59,7 +59,7 @@ class VZipStreamWriter : public VStream
 private:
   enum { BUFFER_SIZE = 16384 };
 
-  VStream*    DstStream;
+  VStream *DstStream;
   Bytef     Buffer[BUFFER_SIZE];
   z_stream    ZStream;
   bool      Initialised;

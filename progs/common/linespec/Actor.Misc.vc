@@ -359,7 +359,7 @@ final void decorate_A_GiveQuestItem(int QuestType)
 final void A_RemoveForceField()
 {
   int i;
-  line_t* line;
+  line_t *line;
 
   bSpecial = false;
   for (i = 0; i < Sector->linecount; i++)
@@ -508,7 +508,7 @@ final void A_FreeTargMobj()
 final void A_ExecActionSpecial(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, int Special)
 {
-  Level.ExecuteActionSpecial(Special, Arg1, Arg2, Arg3, Arg4, Arg5, NULL,
+  Level.ExecuteActionSpecial(Special, Arg1, Arg2, Arg3, Arg4, Arg5, nullptr,
     0, self);
 
 }

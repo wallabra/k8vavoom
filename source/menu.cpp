@@ -108,7 +108,7 @@ void MN_DeactivateMenu()
 //
 //==========================================================================
 
-bool MN_Responder(event_t* event)
+bool MN_Responder(event_t *event)
 {
   if (GClGame->eventMessageBoxResponder(event))
   {

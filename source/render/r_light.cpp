@@ -95,7 +95,7 @@ void VRenderLevelShared::AddStaticLight(const TVec &origin, float radius,
   vuint32 colour)
 {
   guard(VRenderLevelShared::AddStaticLight);
-  light_t& L = Lights.Alloc();
+  light_t &L = Lights.Alloc();
   L.origin = origin;
   L.radius = radius;
   L.colour = colour;
@@ -249,7 +249,7 @@ void VRenderLevel::CalcPoints(surface_t *surf)
   int     step;
   float   starts, startt, us, ut;
   float   mids, midt;
-  TVec*   spt;
+  TVec *spt;
   TVec    facemid;
   linetrace_t Trace;
 
@@ -480,12 +480,12 @@ void VRenderLevel::LightFace(surface_t *surf, subsector_t *leaf)
     if (surf->lightmap)
     {
       Z_Free(surf->lightmap);
-      surf->lightmap = NULL;
+      surf->lightmap = nullptr;
     }
     if (surf->lightmap_rgb)
     {
       Z_Free(surf->lightmap_rgb);
-      surf->lightmap_rgb = NULL;
+      surf->lightmap_rgb = nullptr;
     }
     return;
   }
@@ -585,7 +585,7 @@ void VRenderLevel::LightFace(surface_t *surf, subsector_t *leaf)
     if (surf->lightmap_rgb)
     {
       Z_Free(surf->lightmap_rgb);
-      surf->lightmap_rgb = NULL;
+      surf->lightmap_rgb = nullptr;
     }
   }
 
@@ -640,11 +640,11 @@ void VRenderLevel::LightFace(surface_t *surf, subsector_t *leaf)
 //
 //==========================================================================
 
-dlight_t* VRenderLevelShared::AllocDlight(VThinker* Owner)
+dlight_t *VRenderLevelShared::AllocDlight(VThinker *Owner)
 {
   guard(VRenderLevelShared::AllocDlight);
   int     i;
-  dlight_t* dl;
+  dlight_t *dl;
 
   // first look for an exact key match
   if (Owner)
@@ -701,7 +701,7 @@ dlight_t* VRenderLevelShared::AllocDlight(VThinker* Owner)
 void VRenderLevelShared::DecayLights(float time)
 {
   guard(VRenderLevelShared::DecayLights);
-  dlight_t* dl = DLights;
+  dlight_t *dl = DLights;
   for (int i = 0; i < MAX_DLIGHTS; i++, dl++)
   {
     if (!dl->radius || dl->die < Level->Time)
@@ -743,7 +743,7 @@ void VRenderLevel::MarkLights(dlight_t *light, int bit, int bspnum)
 
     if (r_dynamic_clip)
     {
-      vuint8* dyn_facevis = Level->LeafPVS(ss);
+      vuint8 *dyn_facevis = Level->LeafPVS(ss);
       int leafnum = Level->PointInSubsector(light->origin) -
         Level->Subsectors;
 
@@ -763,7 +763,7 @@ void VRenderLevel::MarkLights(dlight_t *light, int bit, int bspnum)
   }
   else
   {
-    node_t* node = &Level->Nodes[bspnum];
+    node_t *node = &Level->Nodes[bspnum];
     float dist = DotProduct(light->origin, node->normal) - node->dist;
 
     if (dist > -light->radius + light->minlight)
@@ -799,7 +799,7 @@ void VRenderLevel::PushDlights()
     return;
   }
 
-  dlight_t* l = DLights;
+  dlight_t *l = DLights;
   for (int i = 0; i < MAX_DLIGHTS; i++, l++)
   {
     if (!l->radius || l->die < Level->Time)
@@ -913,7 +913,7 @@ vuint32 VRenderLevel::LightPoint(const TVec &p)
       }
       if (r_dynamic_clip)
       {
-        vuint8* dyn_facevis = Level->LeafPVS(sub);
+        vuint8 *dyn_facevis = Level->LeafPVS(sub);
         int leafnum = Level->PointInSubsector(DLights[i].origin) -
           Level->Subsectors;
 
@@ -1011,7 +1011,7 @@ void VRenderLevel::AddDynamicLights(surface_t *surf)
     if (r_dynamic_clip)
     {
       sub = Level->PointInSubsector(impact);
-      vuint8* dyn_facevis = Level->LeafPVS(sub);
+      vuint8 *dyn_facevis = Level->LeafPVS(sub);
       leafnum = Level->PointInSubsector(DLights[lnum].origin) -
         Level->Subsectors;
 
@@ -1275,7 +1275,7 @@ void VRenderLevel::FlushCaches()
 {
   guard(VRenderLevel::FlushCaches);
   memset(blockbuf, 0, sizeof(blockbuf));
-  freeblocks = NULL;
+  freeblocks = nullptr;
   for (int i = 0; i < NUM_CACHE_BLOCKS; i++)
   {
     blockbuf[i].chain = freeblocks;
@@ -1335,13 +1335,13 @@ void VRenderLevel::FlushOldCaches()
 //
 //==========================================================================
 
-surfcache_t* VRenderLevel::AllocBlock(int width, int height)
+surfcache_t *VRenderLevel::AllocBlock(int width, int height)
 {
   guard(VRenderLevel::AllocBlock);
   int       i;
-  surfcache_t*  blines;
-  surfcache_t*  block;
-  surfcache_t*  other;
+  surfcache_t *blines;
+  surfcache_t *block;
+  surfcache_t *other;
 
   for (i = 0; i < NUM_BLOCK_SURFS; i++)
   {
@@ -1381,7 +1381,7 @@ surfcache_t* VRenderLevel::AllocBlock(int width, int height)
           block->lnext = other;
           other->lprev = block;
           block->width = width;
-          other->owner = NULL;
+          other->owner = nullptr;
           other->blocknum = i;
         }
         return block;
@@ -1415,8 +1415,8 @@ surfcache_t* VRenderLevel::AllocBlock(int width, int height)
         other->t = block->t + height;
         other->width = block->width;
         other->height = block->height - height;
-        other->lnext = NULL;
-        other->lprev = NULL;
+        other->lnext = nullptr;
+        other->lprev = nullptr;
         other->bnext = block->bnext;
         if (other->bnext)
         {
@@ -1425,7 +1425,7 @@ surfcache_t* VRenderLevel::AllocBlock(int width, int height)
         block->bnext = other;
         other->bprev = block;
         block->height = height;
-        other->owner = NULL;
+        other->owner = nullptr;
         other->blocknum = i;
       }
 
@@ -1439,11 +1439,11 @@ surfcache_t* VRenderLevel::AllocBlock(int width, int height)
       other->t = block->t;
       other->width = block->width - width;
       other->height = block->height;
-      other->lnext = NULL;
+      other->lnext = nullptr;
       block->lnext = other;
       other->lprev = block;
       block->width = width;
-      other->owner = NULL;
+      other->owner = nullptr;
       other->blocknum = i;
 
       return block;
@@ -1452,7 +1452,7 @@ surfcache_t* VRenderLevel::AllocBlock(int width, int height)
 
   //Sys_Error("Surface cache overflow");
   GCon->Logf("ERROR! ERROR! ERROR! Surface cache overflow!");
-  return NULL;
+  return nullptr;
   unguard;
 }
 
@@ -1462,15 +1462,15 @@ surfcache_t* VRenderLevel::AllocBlock(int width, int height)
 //
 //==========================================================================
 
-surfcache_t* VRenderLevel::FreeBlock(surfcache_t *block, bool check_lines)
+surfcache_t *VRenderLevel::FreeBlock(surfcache_t *block, bool check_lines)
 {
   guard(VRenderLevel::FreeBlock);
   surfcache_t   *other;
 
   if (block->owner)
   {
-    *block->owner = NULL;
-    block->owner = NULL;
+    *block->owner = nullptr;
+    block->owner = nullptr;
   }
   if (block->lnext && !block->lnext->owner)
   {

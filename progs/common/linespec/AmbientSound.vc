@@ -51,7 +51,7 @@ override bool Activate(EntityEx Activator)
 {
   ::Activate(Activator);
 
-  FAmbientSound* Amb = GetAmbientSound(Args[0]);
+  FAmbientSound *Amb = GetAmbientSound(Args[0]);
   if (!Amb || !Amb->Sound)
   {
     Destroy();
@@ -78,7 +78,7 @@ override bool Deactivate(EntityEx Activator)
   if (bActive)
   {
     bActive = false;
-    FAmbientSound* Amb = GetAmbientSound(Args[0]);
+    FAmbientSound *Amb = GetAmbientSound(Args[0]);
     if ((Amb->Type & SNDTYPE_PlaybackMask) == SNDTYPE_Continuous)
     {
       StopSound(CHAN_AUTO);
@@ -108,7 +108,7 @@ override void Tick(float DeltaTime)
     return;
   }
 
-  FAmbientSound* Amb = GetAmbientSound(Args[0]);
+  FAmbientSound *Amb = GetAmbientSound(Args[0]);
   if (!Amb || !Amb->Sound)
   {
     Destroy();
@@ -137,7 +137,7 @@ override void Tick(float DeltaTime)
 //
 //==========================================================================
 
-void SetTimer(FAmbientSound* Amb)
+void SetTimer(FAmbientSound *Amb)
 {
   switch (Amb->Type & SNDTYPE_PlaybackMask)
   {

@@ -40,17 +40,17 @@
 class VModPlugAudioCodec : public VAudioCodec
 {
 public:
-  ModPlugFile*    file;
+  ModPlugFile *file;
   bool      playing;
 
   //  VAudioCodec interface.
-  VModPlugAudioCodec(ModPlugFile* InFile);
+  VModPlugAudioCodec(ModPlugFile *InFile);
   ~VModPlugAudioCodec();
-  int Decode(short* Data, int NumSamples);
+  int Decode(short *Data, int NumSamples);
   bool Finished();
   void Restart();
 
-  static VAudioCodec* Create(VStream* InStrm);
+  static VAudioCodec *Create(VStream *InStrm);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -82,7 +82,7 @@ static VCvarB s_modplug_surround("snd_modplug_surround", false, "ModPlug paramet
 //
 //==========================================================================
 
-VModPlugAudioCodec::VModPlugAudioCodec(ModPlugFile* InFile)
+VModPlugAudioCodec::VModPlugAudioCodec(ModPlugFile *InFile)
 : file(InFile), playing(true)
 {
 }
@@ -106,7 +106,7 @@ VModPlugAudioCodec::~VModPlugAudioCodec()
 //
 //==========================================================================
 
-int VModPlugAudioCodec::Decode(short* Data, int NumSamples)
+int VModPlugAudioCodec::Decode(short *Data, int NumSamples)
 {
   guard(VModPlugAudioCodec::Decode);
   int count = ModPlug_Read(file, Data, NumSamples * 4);
@@ -152,12 +152,12 @@ void VModPlugAudioCodec::Restart()
 //
 //==========================================================================
 
-VAudioCodec* VModPlugAudioCodec::Create(VStream* InStrm)
+VAudioCodec *VModPlugAudioCodec::Create(VStream *InStrm)
 {
   guard(VModPlugAudioCodec::Create);
   if (snd_mod_player != 1)
   {
-    return NULL;
+    return nullptr;
   }
   //  Set up playback parameters.
   ModPlug_Settings settings;
@@ -225,14 +225,14 @@ VAudioCodec* VModPlugAudioCodec::Create(VStream* InStrm)
 
   //  Start playback.
   int Size = InStrm->TotalSize();
-  void* Data = Z_Malloc(Size);
+  void *Data = Z_Malloc(Size);
   InStrm->Seek(0);
   InStrm->Serialise(Data, Size);
-  ModPlugFile* file = ModPlug_Load(Data, Size);
+  ModPlugFile *file = ModPlug_Load(Data, Size);
   Z_Free(Data);
   if (!file)
   {
-    return NULL;
+    return nullptr;
   }
 
   // Check the file type, we don't want to use ModPlug for
@@ -241,7 +241,7 @@ VAudioCodec* VModPlugAudioCodec::Create(VStream* InStrm)
   if (ModPlug_GetModuleType(file) == 0x00 /*MOD_TYPE_NONE*/ ||
     ModPlug_GetModuleType(file) == 0x10000 /*MOD_TYPE_MID*/)
   {
-    return NULL;
+    return nullptr;
   }
 
   if (ModPlug_GetModuleType(file) == 0x01 /*MOD_TYPE_MOD*/)
@@ -264,8 +264,8 @@ VAudioCodec* VModPlugAudioCodec::Create(VStream* InStrm)
       memcmp(Hdr, "SNES", 4) || memcmp(Hdr, "Vgm ", 4))
     {
       // Incompatible file
-      file = NULL;
-      return NULL;
+      file = nullptr;
+      return nullptr;
     }
   }
 
@@ -275,7 +275,7 @@ VAudioCodec* VModPlugAudioCodec::Create(VStream* InStrm)
   ModPlug_SetMasterVolume(file, 512);
   InStrm->Close();
   delete InStrm;
-  InStrm = NULL;
+  InStrm = nullptr;
 
   return new VModPlugAudioCodec(file);
   unguard;

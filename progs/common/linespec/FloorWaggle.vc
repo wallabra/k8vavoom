@@ -51,7 +51,7 @@ int   State;
 //
 //==========================================================================
 
-void Init(sector_t* InSector, int InTag, int InHeight, int InSpeed,
+void Init(sector_t *InSector, int InTag, int InHeight, int InSpeed,
   int InOffset, int InTimer)
 {
   Sector = InSector;

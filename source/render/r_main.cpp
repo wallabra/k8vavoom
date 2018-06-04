@@ -103,7 +103,7 @@ TVec          clip_base[4];
 //
 //  Translation tables
 //
-VTextureTranslation*  PlayerTranslations[MAXPLAYERS + 1];
+VTextureTranslation *PlayerTranslations[MAXPLAYERS + 1];
 static TArray<VTextureTranslation*> CachedTranslations;
 
 // if true, load all graphics at start
@@ -119,8 +119,8 @@ static VCvarI     r_level_renderer("r_level_renderer", "1", "Level renderer type
 //
 //==========================================================================
 
-FDrawerDesc::FDrawerDesc(int Type, const char* AName, const char* ADescription,
-  const char* ACmdLineArg, VDrawer* (*ACreator)())
+FDrawerDesc::FDrawerDesc(int Type, const char *AName, const char *ADescription,
+  const char *ACmdLineArg, VDrawer *(*ACreator)())
 : Name(AName)
 , Description(ADescription)
 , CmdLineArg(ACmdLineArg)
@@ -156,7 +156,7 @@ void R_Init()
 //
 //==========================================================================
 
-void R_Start(VLevel* ALevel)
+void R_Start(VLevel *ALevel)
 {
   guard(R_Start);
   switch (r_level_renderer)
@@ -186,15 +186,15 @@ void R_Start(VLevel* ALevel)
 //
 //==========================================================================
 
-VRenderLevelShared::VRenderLevelShared(VLevel* ALevel)
+VRenderLevelShared::VRenderLevelShared(VLevel *ALevel)
 : Level(ALevel)
-, ViewEnt(NULL)
+, ViewEnt(nullptr)
 , MirrorLevel(0)
 , PortalLevel(0)
 , VisSize(0)
-, BspVis(NULL)
-, r_viewleaf(NULL)
-, r_oldviewleaf(NULL)
+, BspVis(nullptr)
+, r_viewleaf(nullptr)
+, r_oldviewleaf(nullptr)
 , old_fov(90.0)
 , prev_aspect_ratio(0)
 , ExtraLight(0)
@@ -207,11 +207,11 @@ VRenderLevelShared::VRenderLevelShared(VLevel* ALevel)
 , CurrentDoubleSky(false)
 , CurrentLightning(false)
 , trans_sprites(MainTransSprites)
-, free_wsurfs(NULL)
-, AllocatedWSurfBlocks(NULL)
-, AllocatedSubRegions(NULL)
-, AllocatedDrawSegs(NULL)
-, AllocatedSegParts(NULL)
+, free_wsurfs(nullptr)
+, AllocatedWSurfBlocks(nullptr)
+, AllocatedSubRegions(nullptr)
+, AllocatedDrawSegs(nullptr)
+, AllocatedSegParts(nullptr)
 , cacheframecount(0)
 {
   guard(VRenderLevelShared::VRenderLevelShared);
@@ -223,12 +223,12 @@ VRenderLevelShared::VRenderLevelShared(VLevel* ALevel)
   memset(add_block, 0, sizeof(add_block));
   memset(add_changed, 0, sizeof(add_changed));
   memset(add_chain, 0, sizeof(add_chain));
-  SimpleSurfsHead = NULL;
-  SimpleSurfsTail = NULL;
-  SkyPortalsHead = NULL;
-  SkyPortalsTail = NULL;
-  HorizonPortalsHead = NULL;
-  HorizonPortalsTail = NULL;
+  SimpleSurfsHead = nullptr;
+  SimpleSurfsTail = nullptr;
+  SkyPortalsHead = nullptr;
+  SkyPortalsTail = nullptr;
+  HorizonPortalsHead = nullptr;
+  HorizonPortalsTail = nullptr;
   PortalDepth = 0;
 
   VisSize = (Level->NumSubsectors + 7) >> 3;
@@ -253,11 +253,11 @@ VRenderLevelShared::VRenderLevelShared(VLevel* ALevel)
 //
 //==========================================================================
 
-VRenderLevel::VRenderLevel(VLevel* ALevel)
+VRenderLevel::VRenderLevel(VLevel *ALevel)
 : VRenderLevelShared(ALevel)
 , c_subdivides(0)
 , c_seg_div(0)
-, freeblocks(NULL)
+, freeblocks(nullptr)
 {
   guard(VRenderLevel::VRenderLevel);
   NeedsInfiniteFarClip = false;
@@ -277,9 +277,9 @@ VRenderLevel::VRenderLevel(VLevel* ALevel)
 //
 //==========================================================================
 
-VAdvancedRenderLevel::VAdvancedRenderLevel(VLevel* ALevel)
+VAdvancedRenderLevel::VAdvancedRenderLevel(VLevel *ALevel)
 : VRenderLevelShared(ALevel)
-, LightVis(NULL)
+, LightVis(nullptr)
 {
   guard(VAdvancedRenderLevel::VAdvancedRenderLevel);
   NeedsInfiniteFarClip = true;
@@ -306,25 +306,25 @@ VRenderLevelShared::~VRenderLevelShared()
     if (Level->Sectors[i].fakefloors)
     {
       delete Level->Sectors[i].fakefloors;
-      Level->Sectors[i].fakefloors = NULL;
+      Level->Sectors[i].fakefloors = nullptr;
     }
   }
 
   for (int i = 0; i < Level->NumSubsectors; i++)
   {
-    for (subregion_t* r = Level->Subsectors[i].regions; r != NULL; r = r->next)
+    for (subregion_t *r = Level->Subsectors[i].regions; r != nullptr; r = r->next)
     {
-      if (r->floor != NULL)
+      if (r->floor != nullptr)
       {
         FreeSurfaces(r->floor->surfs);
         delete r->floor;
-        r->floor = NULL;
+        r->floor = nullptr;
       }
-      if (r->ceil != NULL)
+      if (r->ceil != nullptr)
       {
         FreeSurfaces(r->ceil->surfs);
         delete r->ceil;
-        r->ceil = NULL;
+        r->ceil = nullptr;
       }
     }
   }
@@ -332,7 +332,7 @@ VRenderLevelShared::~VRenderLevelShared()
   //  Free seg parts.
   for (int i = 0; i < Level->NumSegs; i++)
   {
-    for (drawseg_t* ds = Level->Segs[i].drawsegs; ds; ds = ds->next)
+    for (drawseg_t *ds = Level->Segs[i].drawsegs; ds; ds = ds->next)
     {
       FreeSegParts(ds->top);
       FreeSegParts(ds->mid);
@@ -350,31 +350,31 @@ VRenderLevelShared::~VRenderLevelShared()
     }
   }
   //  Free allocated wall surface blocks.
-  for (void* Block = AllocatedWSurfBlocks; Block;)
+  for (void *Block = AllocatedWSurfBlocks; Block;)
   {
-    void* Next = *(void**)Block;
+    void *Next = *(void**)Block;
     Z_Free(Block);
     Block = Next;
   }
-  AllocatedWSurfBlocks = NULL;
+  AllocatedWSurfBlocks = nullptr;
 
   //  Free big blocks.
   delete[] AllocatedSubRegions;
-  AllocatedSubRegions = NULL;
+  AllocatedSubRegions = nullptr;
   delete[] AllocatedDrawSegs;
-  AllocatedDrawSegs = NULL;
+  AllocatedDrawSegs = nullptr;
   delete[] AllocatedSegParts;
-  AllocatedSegParts = NULL;
+  AllocatedSegParts = nullptr;
 
   delete[] Particles;
-  Particles = NULL;
+  Particles = nullptr;
   delete[] BspVis;
-  BspVis = NULL;
+  BspVis = nullptr;
 
   for (int i = 0; i < SideSkies.Num(); i++)
   {
     delete SideSkies[i];
-    SideSkies[i] = NULL;
+    SideSkies[i] = nullptr;
   }
   //unguard;
 }
@@ -389,9 +389,9 @@ VAdvancedRenderLevel::~VAdvancedRenderLevel()
 {
   //guard(VAdvancedRenderLevel::~VAdvancedRenderLevel);
   delete[] LightVis;
-  LightVis = NULL;
+  LightVis = nullptr;
   delete[] LightBspVis;
-  LightBspVis = NULL;
+  LightBspVis = nullptr;
   //unguard;
 }
 
@@ -577,7 +577,7 @@ void VRenderLevelShared::TransformFrustum()
 
     view_clipplanes[i].Set(v2, DotProduct(vieworg, v2));
 
-    view_clipplanes[i].next = i == 3 ? NULL : &view_clipplanes[i + 1];
+    view_clipplanes[i].next = i == 3 ? nullptr : &view_clipplanes[i + 1];
     view_clipplanes[i].clipflag = 1 << i;
   }
   unguard;
@@ -689,8 +689,8 @@ void VRenderLevelShared::SetupFrame()
 //
 //==========================================================================
 
-void VRenderLevelShared::SetupCameraFrame(VEntity* Camera, VTexture* Tex,
-  int FOV, refdef_t* rd)
+void VRenderLevelShared::SetupCameraFrame(VEntity *Camera, VTexture *Tex,
+  int FOV, refdef_t *rd)
 {
   guard(VRenderLevelShared::SetupCameraFrame);
   rd->width = Tex->GetWidth();
@@ -795,7 +795,7 @@ void VRenderLevelShared::MarkLeaves()
 //
 //==========================================================================
 
-void VRenderLevel::RenderScene(const refdef_t* RD, const VViewClipper* Range)
+void VRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *Range)
 {
   guard(VRenderLevel::RenderScene);
   r_viewleaf = Level->PointInSubsector(vieworg);
@@ -824,7 +824,7 @@ void VRenderLevel::RenderScene(const refdef_t* RD, const VViewClipper* Range)
 //
 //==========================================================================
 
-void VAdvancedRenderLevel::RenderScene(const refdef_t* RD, const VViewClipper* Range)
+void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *Range)
 {
   guard(VAdvancedRenderLevel::RenderScene);
   if (!Drawer->SupportsAdvancedRendering())
@@ -849,7 +849,7 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t* RD, const VViewClipper* R
 
   subsector_t   *sub;
   int       leafnum;
-  vuint8*         dyn_facevis;
+  vuint8 *dyn_facevis;
   linetrace_t   Trace;
   TVec      Delta;
 
@@ -893,7 +893,7 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t* RD, const VViewClipper* R
 
   if (!FixedLight && r_dynamic)
   {
-    dlight_t* l = DLights;
+    dlight_t *l = DLights;
 
     for (int i = 0; i < MAX_DLIGHTS; i++, l++)
     {
@@ -990,7 +990,7 @@ void VRenderLevelShared::RenderPlayerView()
 
   SetupFrame();
 
-  RenderScene(&refdef, NULL);
+  RenderScene(&refdef, nullptr);
 
   // draw the psprites on top of everything
   if (fov <= 90.0 && cl->MO == cl->Camera &&
@@ -1015,7 +1015,7 @@ void VRenderLevelShared::RenderPlayerView()
 //
 //==========================================================================
 
-void VRenderLevelShared::UpdateCameraTexture(VEntity* Camera, int TexNum,
+void VRenderLevelShared::UpdateCameraTexture(VEntity *Camera, int TexNum,
   int FOV)
 {
   guard(VRenderLevelShared::UpdateCameraTexture);
@@ -1028,7 +1028,7 @@ void VRenderLevelShared::UpdateCameraTexture(VEntity* Camera, int TexNum,
   {
     return;
   }
-  VCameraTexture* Tex = (VCameraTexture*)GTextureManager[TexNum];
+  VCameraTexture *Tex = (VCameraTexture*)GTextureManager[TexNum];
   if (!Tex->bNeedsUpdate)
   {
     return;
@@ -1039,7 +1039,7 @@ void VRenderLevelShared::UpdateCameraTexture(VEntity* Camera, int TexNum,
 
   SetupCameraFrame(Camera, Tex, FOV, &CameraRefDef);
 
-  RenderScene(&CameraRefDef, NULL);
+  RenderScene(&CameraRefDef, nullptr);
 
   Drawer->EndView();
 
@@ -1053,7 +1053,7 @@ void VRenderLevelShared::UpdateCameraTexture(VEntity* Camera, int TexNum,
 //
 //==========================================================================
 
-vuint32 VRenderLevelShared::GetFade(sec_region_t* Reg)
+vuint32 VRenderLevelShared::GetFade(sec_region_t *Reg)
 {
   guard(VRenderLevelShared::GetFade);
   if (r_fog_test)
@@ -1103,7 +1103,7 @@ void R_DrawPic(int x, int y, int handle, float Alpha)
     return;
   }
 
-  VTexture* Tex = GTextureManager(handle);
+  VTexture *Tex = GTextureManager(handle);
   x -= Tex->GetScaledSOffset();
   y -= Tex->GetScaledTOffset();
   Drawer->DrawPic(fScaleX*x, fScaleY*y, fScaleX*(x+Tex->GetScaledWidth()), fScaleY*(y+Tex->GetScaledHeight()), 0, 0, Tex->GetWidth(), Tex->GetHeight(), Tex, nullptr, Alpha);
@@ -1129,7 +1129,7 @@ void VRenderLevelShared::PrecacheLevel()
 #ifdef __GNUC__
   char texturepresent[GTextureManager.GetNumTextures()];
 #else
-  char* texturepresent = (char*)Z_Malloc(GTextureManager.GetNumTextures());
+  char *texturepresent = (char*)Z_Malloc(GTextureManager.GetNumTextures());
 #endif
   memset(texturepresent, 0, GTextureManager.GetNumTextures());
 
@@ -1167,7 +1167,7 @@ void VRenderLevelShared::PrecacheLevel()
 //
 //==========================================================================
 
-VTextureTranslation* VRenderLevelShared::GetTranslation(int TransNum)
+VTextureTranslation *VRenderLevelShared::GetTranslation(int TransNum)
 {
   guard(VRenderLevelShared::GetTranslation);
   return R_GetCachedTranslation(TransNum, Level);
@@ -1195,7 +1195,7 @@ void VRenderLevelShared::BuildPlayerTranslations()
       continue;
     }
 
-    VTextureTranslation* Tr = PlayerTranslations[It->PlayerNum];
+    VTextureTranslation *Tr = PlayerTranslations[It->PlayerNum];
     if (Tr && Tr->TranslStart == It->TranslStart &&
       Tr->TranslEnd == It->TranslEnd && Tr->Colour == It->Colour)
     {
@@ -1232,7 +1232,7 @@ int R_SetMenuPlayerTrans(int Start, int End, int Col)
     return 0;
   }
 
-  VTextureTranslation* Tr = PlayerTranslations[MAXPLAYERS];
+  VTextureTranslation *Tr = PlayerTranslations[MAXPLAYERS];
   if (Tr && Tr->TranslStart == Start && Tr->TranslEnd == End &&
     Tr->Colour == Col)
   {
@@ -1259,12 +1259,12 @@ int R_SetMenuPlayerTrans(int Start, int End, int Col)
 //
 //==========================================================================
 
-VTextureTranslation* R_GetCachedTranslation(int TransNum, VLevel* Level)
+VTextureTranslation *R_GetCachedTranslation(int TransNum, VLevel *Level)
 {
   guard(R_GetCachedTranslation);
   int Type = TransNum >> TRANSL_TYPE_SHIFT;
   int Index = TransNum & ((1 << TRANSL_TYPE_SHIFT) - 1);
-  VTextureTranslation* Tr;
+  VTextureTranslation *Tr;
   switch (Type)
   {
   case TRANSL_Standard:
@@ -1276,7 +1276,7 @@ VTextureTranslation* R_GetCachedTranslation(int TransNum, VLevel* Level)
     {
       if (Index < 0 || Index >= NumTranslationTables)
       {
-        return NULL;
+        return nullptr;
       }
       Tr = TranslationTables[Index];
     }
@@ -1285,7 +1285,7 @@ VTextureTranslation* R_GetCachedTranslation(int TransNum, VLevel* Level)
   case TRANSL_Player:
     if (Index < 0 || Index >= MAXPLAYERS + 1)
     {
-      return NULL;
+      return nullptr;
     }
     Tr = PlayerTranslations[Index];
     break;
@@ -1293,7 +1293,7 @@ VTextureTranslation* R_GetCachedTranslation(int TransNum, VLevel* Level)
   case TRANSL_Level:
     if (!Level || Index < 0 || Index >= Level->Translations.Num())
     {
-      return NULL;
+      return nullptr;
     }
     Tr = Level->Translations[Index];
     break;
@@ -1301,7 +1301,7 @@ VTextureTranslation* R_GetCachedTranslation(int TransNum, VLevel* Level)
   case TRANSL_BodyQueue:
     if (!Level || Index < 0 || Index >= Level->BodyQueueTrans.Num())
     {
-      return NULL;
+      return nullptr;
     }
     Tr = Level->BodyQueueTrans[Index];
     break;
@@ -1309,7 +1309,7 @@ VTextureTranslation* R_GetCachedTranslation(int TransNum, VLevel* Level)
   case TRANSL_Decorate:
     if (Index < 0 || Index >= DecorateTranslations.Num())
     {
-      return NULL;
+      return nullptr;
     }
     Tr = DecorateTranslations[Index];
     break;
@@ -1317,23 +1317,23 @@ VTextureTranslation* R_GetCachedTranslation(int TransNum, VLevel* Level)
   case TRANSL_Blood:
     if (Index < 0 || Index >= BloodTranslations.Num())
     {
-      return NULL;
+      return nullptr;
     }
     Tr = BloodTranslations[Index];
     break;
 
   default:
-    return NULL;
+    return nullptr;
   }
 
   if (!Tr)
   {
-    return NULL;
+    return nullptr;
   }
 
   for (int i = 0; i < CachedTranslations.Num(); i++)
   {
-    VTextureTranslation* Check = CachedTranslations[i];
+    VTextureTranslation *Check = CachedTranslations[i];
     if (Check->Crc != Tr->Crc)
     {
       continue;
@@ -1345,7 +1345,7 @@ VTextureTranslation* R_GetCachedTranslation(int TransNum, VLevel* Level)
     return Check;
   }
 
-  VTextureTranslation* Copy = new VTextureTranslation;
+  VTextureTranslation *Copy = new VTextureTranslation;
   *Copy = *Tr;
   CachedTranslations.Append(Copy);
   return Copy;
@@ -1443,7 +1443,7 @@ void V_Shutdown()
   {
     Drawer->Shutdown();
     delete Drawer;
-    Drawer = NULL;
+    Drawer = nullptr;
   }
   R_FreeModels();
   for (int i = 0; i < MAXPLAYERS + 1; i++)
@@ -1451,13 +1451,13 @@ void V_Shutdown()
     if (PlayerTranslations[i])
     {
       delete PlayerTranslations[i];
-      PlayerTranslations[i] = NULL;
+      PlayerTranslations[i] = nullptr;
     }
   }
   for (int i = 0; i < CachedTranslations.Num(); i++)
   {
     delete CachedTranslations[i];
-    CachedTranslations[i] = NULL;
+    CachedTranslations[i] = nullptr;
   }
   CachedTranslations.Clear();
   R_FreeSkyboxData();

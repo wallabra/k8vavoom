@@ -55,8 +55,8 @@
 //
 //==========================================================================
 
-static void AliasSetUpTransform(const TVec& modelorg, const TAVec& angles,
-  const TVec& Offset, const TVec& Scale, VMatrix4& RotationMatrix)
+static void AliasSetUpTransform(const TVec &modelorg, const TAVec &angles,
+  const TVec &Offset, const TVec &Scale, VMatrix4 &RotationMatrix)
 {
   VMatrix4 t3matrix = VMatrix4::Identity;
   t3matrix[0][0] = Scale.x;
@@ -91,8 +91,8 @@ static void AliasSetUpTransform(const TVec& modelorg, const TAVec& angles,
 //
 //==========================================================================
 
-static void AliasSetUpNormalTransform(const TAVec& angles, const TVec& Scale,
-  VMatrix4& RotationMatrix)
+static void AliasSetUpNormalTransform(const TAVec &angles, const TVec &Scale,
+  VMatrix4 &RotationMatrix)
 {
   TVec alias_forward, alias_right, alias_up;
   AngleVectors(angles, alias_forward, alias_right, alias_up);
@@ -125,7 +125,7 @@ static void AliasSetUpNormalTransform(const TAVec& angles, const TVec& Scale,
 //
 //==========================================================================
 
-void VOpenGLDrawer::UploadModel(VMeshModel* Mdl)
+void VOpenGLDrawer::UploadModel(VMeshModel *Mdl)
 {
   guard(VOpenGLDrawer::UploadModel);
   if (Mdl->Uploaded)
@@ -138,7 +138,7 @@ void VOpenGLDrawer::UploadModel(VMeshModel* Mdl)
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
   int Size = sizeof(VMeshSTVert) * Mdl->STVerts.Num() +
     sizeof(TVec) * Mdl->STVerts.Num() * 2 * Mdl->Frames.Num();
-  p_glBufferDataARB(GL_ARRAY_BUFFER_ARB, Size, NULL, GL_STATIC_DRAW_ARB);
+  p_glBufferDataARB(GL_ARRAY_BUFFER_ARB, Size, nullptr, GL_STATIC_DRAW_ARB);
 
   //  Upload data
   p_glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(VMeshSTVert) * Mdl->STVerts.Num(),
@@ -198,8 +198,8 @@ void VOpenGLDrawer::UnloadModels()
 //==========================================================================
 
 void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
-  const TVec& Offset, const TVec& Scale, VMeshModel* Mdl, int frame, int nextframe,
-  VTexture* Skin, VTextureTranslation* Trans, int CMap, vuint32 light,
+  const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
+  VTexture *Skin, VTextureTranslation *Trans, int CMap, vuint32 light,
   vuint32 Fade, float Alpha, bool Additive, bool is_view_model, float Inter,
   bool Interpolate, bool ForceDepthUse, bool AllowTransparency)
 {
@@ -223,9 +223,9 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
   glScalef(Scale.x, Scale.y, Scale.z);
   glTranslatef(Offset.x, Offset.y, Offset.z);
 
-  //mmdl_t* pmdl = Mdl->Data;
-  //mframe_t* framedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + frame * pmdl->framesize);
-  //mframe_t* nextframedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + nextframe * pmdl->framesize);
+  //mmdl_t *pmdl = Mdl->Data;
+  //mframe_t *framedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + frame * pmdl->framesize);
+  //mframe_t *nextframedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + nextframe * pmdl->framesize);
 
   SetPicModel(Skin, Trans, CMap);
 
@@ -280,8 +280,8 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
 
   {
     UploadModel(Mdl);
-    VMeshFrame* FrameDesc = &Mdl->Frames[frame];
-    VMeshFrame* NextFrameDesc = &Mdl->Frames[nextframe];
+    VMeshFrame *FrameDesc = &Mdl->Frames[frame];
+    VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
     p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
     p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)(size_t)FrameDesc->VertsOffset);
@@ -339,16 +339,16 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
 //==========================================================================
 
 void VOpenGLDrawer::DrawAliasModelAmbient(const TVec &origin, const TAVec &angles,
-  const TVec& Offset, const TVec& Scale, VMeshModel* Mdl, int frame, int nextframe,
-  VTexture* Skin, vuint32 light, float Alpha, float Inter, bool Interpolate,
+  const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
+  VTexture *Skin, vuint32 light, float Alpha, float Inter, bool Interpolate,
   bool ForceDepth, bool AllowTransparency)
 {
   guard(VOpenGLDrawer::DrawAliasModelAmbient);
   UploadModel(Mdl);
-  VMeshFrame* FrameDesc = &Mdl->Frames[frame];
-  VMeshFrame* NextFrameDesc = &Mdl->Frames[nextframe];
+  VMeshFrame *FrameDesc = &Mdl->Frames[frame];
+  VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
-  SetPicModel(Skin, NULL, CM_Default);
+  SetPicModel(Skin, nullptr, CM_Default);
 
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);
@@ -439,14 +439,14 @@ void VOpenGLDrawer::DrawAliasModelAmbient(const TVec &origin, const TAVec &angle
 //==========================================================================
 
 void VOpenGLDrawer::DrawAliasModelTextures(const TVec &origin, const TAVec &angles,
-  const TVec& Offset, const TVec& Scale, VMeshModel* Mdl, int frame, int nextframe,
-  VTexture* Skin, VTextureTranslation* Trans, int CMap, float Alpha, float Inter,
+  const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
+  VTexture *Skin, VTextureTranslation *Trans, int CMap, float Alpha, float Inter,
   bool Interpolate, bool ForceDepth, bool AllowTransparency)
 {
   guard(VOpenGLDrawer::DrawAliasModelTextures);
   UploadModel(Mdl);
-  VMeshFrame* FrameDesc = &Mdl->Frames[frame];
-  VMeshFrame* NextFrameDesc = &Mdl->Frames[nextframe];
+  VMeshFrame *FrameDesc = &Mdl->Frames[frame];
+  VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
   SetPicModel(Skin, Trans, CMap);
 
@@ -533,7 +533,7 @@ void VOpenGLDrawer::DrawAliasModelTextures(const TVec &origin, const TAVec &angl
 //
 //==========================================================================
 
-void VOpenGLDrawer::BeginModelsLightPass(TVec& LightPos, float Radius, vuint32 Colour)
+void VOpenGLDrawer::BeginModelsLightPass(TVec &LightPos, float Radius, vuint32 Colour)
 {
   guard(VOpenGLDrawer::BeginModelsLightPass);
   p_glUseProgramObjectARB(ShadowsModelLightProgram);
@@ -554,13 +554,13 @@ void VOpenGLDrawer::BeginModelsLightPass(TVec& LightPos, float Radius, vuint32 C
 //==========================================================================
 
 void VOpenGLDrawer::DrawAliasModelLight(const TVec &origin, const TAVec &angles,
-  const TVec& Offset, const TVec& Scale, VMeshModel* Mdl, int frame, int nextframe,
-  VTexture* Skin, float Alpha, float Inter, bool Interpolate, bool AllowTransparency)
+  const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
+  VTexture *Skin, float Alpha, float Inter, bool Interpolate, bool AllowTransparency)
 {
   guard(VOpenGLDrawer::DrawAliasModelLight);
   UploadModel(Mdl);
-  VMeshFrame* FrameDesc = &Mdl->Frames[frame];
-  VMeshFrame* NextFrameDesc = &Mdl->Frames[nextframe];
+  VMeshFrame *FrameDesc = &Mdl->Frames[frame];
+  VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);
@@ -577,7 +577,7 @@ void VOpenGLDrawer::DrawAliasModelLight(const TVec &origin, const TAVec &angles,
   NormalMat[2][1] = normalmatrix[2][1];
   NormalMat[2][2] = normalmatrix[2][2];
 
-  SetPicModel(Skin, NULL, CM_Default);
+  SetPicModel(Skin, nullptr, CM_Default);
 
   p_glUniform1fARB(ShadowsModelLightInterLoc, Inter);
   p_glUniformMatrix4fvARB(ShadowsModelLightModelToWorldMatLoc, 1, GL_FALSE, RotationMatrix[0]);
@@ -636,7 +636,7 @@ void VOpenGLDrawer::DrawAliasModelLight(const TVec &origin, const TAVec &angles,
 //
 //==========================================================================
 
-void VOpenGLDrawer::BeginModelsShadowsPass(TVec& LightPos, float LightRadius)
+void VOpenGLDrawer::BeginModelsShadowsPass(TVec &LightPos, float LightRadius)
 {
   guard(VOpenGLDrawer::BeginModelsShadowsPass);
   p_glUseProgramObjectARB(ShadowsModelShadowProgram);
@@ -651,13 +651,13 @@ void VOpenGLDrawer::BeginModelsShadowsPass(TVec& LightPos, float LightRadius)
 //==========================================================================
 
 void VOpenGLDrawer::DrawAliasModelShadow(const TVec &origin, const TAVec &angles,
-  const TVec& Offset, const TVec& Scale, VMeshModel* Mdl, int frame, int nextframe,
-  float Inter, bool Interpolate, const TVec& LightPos, float LightRadius)
+  const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
+  float Inter, bool Interpolate, const TVec &LightPos, float LightRadius)
 {
   guard(VOpenGLDrawer::DrawAliasModelShadow);
   UploadModel(Mdl);
-  VMeshFrame* FrameDesc = &Mdl->Frames[frame];
-  VMeshFrame* NextFrameDesc = &Mdl->Frames[nextframe];
+  VMeshFrame *FrameDesc = &Mdl->Frames[frame];
+  VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);
@@ -667,8 +667,8 @@ void VOpenGLDrawer::DrawAliasModelShadow(const TVec &origin, const TAVec &angles
 
   TArray<bool> PlaneSides;
   PlaneSides.SetNum(Mdl->Tris.Num());
-  VMeshFrame* PlanesFrame = Inter >= 0.5 ? NextFrameDesc : FrameDesc;
-  TPlane* P = PlanesFrame->Planes;
+  VMeshFrame *PlanesFrame = Inter >= 0.5 ? NextFrameDesc : FrameDesc;
+  TPlane *P = PlanesFrame->Planes;
   for (int i = 0; i < Mdl->Tris.Num(); i++, P++)
   {
     // Planes facing to the light
@@ -755,16 +755,16 @@ void VOpenGLDrawer::DrawAliasModelShadow(const TVec &origin, const TAVec &angles
 //==========================================================================
 
 void VOpenGLDrawer::DrawAliasModelFog(const TVec &origin, const TAVec &angles,
-  const TVec& Offset, const TVec& Scale, VMeshModel* Mdl, int frame, int nextframe,
-  VTexture* Skin, vuint32 Fade, float Alpha, float Inter, bool Interpolate,
+  const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
+  VTexture *Skin, vuint32 Fade, float Alpha, float Inter, bool Interpolate,
   bool AllowTransparency)
 {
   guard(VOpenGLDrawer::DrawAliasModelFog);
   UploadModel(Mdl);
-  VMeshFrame* FrameDesc = &Mdl->Frames[frame];
-  VMeshFrame* NextFrameDesc = &Mdl->Frames[nextframe];
+  VMeshFrame *FrameDesc = &Mdl->Frames[frame];
+  VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
-  SetPicModel(Skin, NULL, CM_Default);
+  SetPicModel(Skin, nullptr, CM_Default);
 
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);

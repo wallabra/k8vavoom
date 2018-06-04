@@ -533,7 +533,7 @@ bool IsDangerous(sector_t *sec)
 bool CheckPath(float ang, float dist)
 {
   float x1, y1, x2, y2;
-  intercept_t* in;
+  intercept_t *in;
   float bottracerange;
   TVec bottracedir;
 

@@ -55,15 +55,15 @@ public:
   LPDIRECTSOUND8        DSound;
   LPDIRECTSOUNDBUFFER8    PrimarySoundBuffer;
   LPDIRECTSOUND3DLISTENER8  Listener;
-  IKsPropertySet*       PropertySet;
+  IKsPropertySet *PropertySet;
 
-  FBuffer*        Buffers;
+  FBuffer *Buffers;
   int           NumBuffers;   // number of buffers available
 
   LPDIRECTSOUNDBUFFER8  StrmBuffer;
   int           StrmNextUpdatePart;
-  void*         StrmLockBuffer1;
-  void*         StrmLockBuffer2;
+  void *StrmLockBuffer1;
+  void *StrmLockBuffer2;
   DWORD         StrmLockSize1;
   DWORD         StrmLockSize2;
 
@@ -83,13 +83,13 @@ public:
   bool OpenStream(int, int, int);
   void CloseStream();
   int GetStreamAvailable();
-  short* GetStreamBuffer();
+  short *GetStreamBuffer();
   void SetStreamData(short*, int);
   void SetStreamVolume(float);
   void PauseStream();
   void ResumeStream();
 
-  const char* DS_Error(HRESULT);
+  const char *DS_Error(HRESULT);
 
   int CreateBuffer(int);
 };
@@ -105,7 +105,7 @@ public:
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 IMPLEMENT_SOUND_DEVICE(VDirectSoundDevice, SNDDRV_Default, "Default",
-  "DirectSound sound device", NULL);
+  "DirectSound sound device", nullptr);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -141,31 +141,31 @@ bool VDirectSoundDevice::Init()
   WAVEFORMATEX  wfx;
   DSCAPS      caps;
 
-  Buffers = NULL;
+  Buffers = nullptr;
   NumBuffers = 0;
   SupportEAX = false;
-  DSound = NULL;
-  PrimarySoundBuffer = NULL;
-  Listener = NULL;
-  PropertySet = NULL;
-  StrmBuffer = NULL;
+  DSound = nullptr;
+  PrimarySoundBuffer = nullptr;
+  Listener = nullptr;
+  PropertySet = nullptr;
+  StrmBuffer = nullptr;
   StrmNextUpdatePart = 0;
 
   GCon->Log(NAME_Init, "======================================");
   GCon->Log(NAME_Init, "Initialising DirectSound driver.");
 
   // Create DirectSound object
-  result = CoCreateInstance(CLSID_DirectSound8, NULL,
+  result = CoCreateInstance(CLSID_DirectSound8, nullptr,
     CLSCTX_INPROC_SERVER, IID_IDirectSound8, (void**)&DSound);
   if (result != DS_OK)
     Sys_Error("Failed to create DirectSound object");
 
-  result = DSound->Initialize(NULL);
+  result = DSound->Initialize(nullptr);
   if (result == DSERR_NODRIVER)
   {
     //  User don't have a sound card
     DSound->Release();
-    DSound = NULL;
+    DSound = nullptr;
     GCon->Log(NAME_Init, "Sound driver not found");
     return false;
   }
@@ -200,13 +200,13 @@ bool VDirectSoundDevice::Init()
   dsbdesc.dwSize        = sizeof(DSBUFFERDESC);
   dsbdesc.dwFlags       = DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRLVOLUME;
   dsbdesc.dwBufferBytes = 0;
-  dsbdesc.lpwfxFormat   = NULL;
+  dsbdesc.lpwfxFormat   = nullptr;
   if (Sound3D)
   {
     dsbdesc.dwFlags |= DSBCAPS_CTRL3D;
   }
 
-  result = DSound->CreateSoundBuffer(&dsbdesc, (LPDIRECTSOUNDBUFFER *)&PrimarySoundBuffer, NULL);
+  result = DSound->CreateSoundBuffer(&dsbdesc, (LPDIRECTSOUNDBUFFER *)&PrimarySoundBuffer, nullptr);
   if (result != DS_OK)
     Sys_Error("Failed to create primary sound buffer\n%s", DS_Error(result));
 
@@ -259,7 +259,7 @@ bool VDirectSoundDevice::Init()
     dsbdesc.dwBufferBytes = frequency[snd_mix_frequency]; //44100;
     dsbdesc.lpwfxFormat   = &pcmwf;
 
-    if (SUCCEEDED(DSound->CreateSoundBuffer(&dsbdesc, &tempBuffer, NULL)))
+    if (SUCCEEDED(DSound->CreateSoundBuffer(&dsbdesc, &tempBuffer, nullptr)))
     {
       if (FAILED(tempBuffer->QueryInterface(IID_IKsPropertySet,
         (void **)&PropertySet)))
@@ -280,7 +280,7 @@ bool VDirectSoundDevice::Init()
         {
           GCon->Log(NAME_Init, "EAX 2.0 not supported");
           PropertySet->Release();
-          PropertySet = NULL;
+          PropertySet = nullptr;
         }
         else
         {
@@ -348,12 +348,12 @@ void VDirectSoundDevice::Shutdown()
   if (DSound)
   {
     DSound->Release();
-    DSound = NULL;
+    DSound = nullptr;
   }
   if (Buffers)
   {
     delete[] Buffers;
-    Buffers = NULL;
+    Buffers = nullptr;
   }
   unguard;
 }
@@ -374,7 +374,7 @@ void VDirectSoundDevice::Tick(float)
 //
 //==========================================================================
 
-const char* VDirectSoundDevice::DS_Error(HRESULT result)
+const char *VDirectSoundDevice::DS_Error(HRESULT result)
 {
   static char errmsg[128];
 
@@ -499,7 +499,7 @@ int VDirectSoundDevice::CreateBuffer(int sound_id)
     if (!Buffers[Handle].SoundID)
       break;
   }
-  result = DSound->CreateSoundBuffer(&dsbdesc, (LPDIRECTSOUNDBUFFER *)&dsbuffer, NULL);
+  result = DSound->CreateSoundBuffer(&dsbdesc, (LPDIRECTSOUNDBUFFER *)&dsbuffer, nullptr);
   if (Handle == NumBuffers || result != DS_OK)
   {
     int   best = -1;
@@ -521,7 +521,7 @@ int VDirectSoundDevice::CreateBuffer(int sound_id)
       if (Handle == NumBuffers)
         Handle = best;
       if (result != DS_OK)
-        result = DSound->CreateSoundBuffer(&dsbdesc, (LPDIRECTSOUNDBUFFER *)&dsbuffer, NULL);
+        result = DSound->CreateSoundBuffer(&dsbdesc, (LPDIRECTSOUNDBUFFER *)&dsbuffer, nullptr);
     }
     else
     {
@@ -693,8 +693,8 @@ void VDirectSoundDevice::UpdateChannel(int Handle, float vol, float sep)
 //
 //==========================================================================
 
-void VDirectSoundDevice::UpdateChannel3D(int Handle, const TVec& Org,
-  const TVec& Vel)
+void VDirectSoundDevice::UpdateChannel3D(int Handle, const TVec &Org,
+  const TVec &Vel)
 {
   guard(VDirectSoundDevice::PlaySound3D);
   HRESULT         result;
@@ -775,8 +775,8 @@ void VDirectSoundDevice::StopChannel(int Handle)
 //
 //==========================================================================
 
-void VDirectSoundDevice::UpdateListener(const TVec& org, const TVec& vel,
-  const TVec& fwd, const TVec&, const TVec& up, VReverbInfo* Env)
+void VDirectSoundDevice::UpdateListener(const TVec &org, const TVec &vel,
+  const TVec &fwd, const TVec&, const TVec &up, VReverbInfo *Env)
 {
   guard(VDirectSoundDevice::UpdateListener);
   //  Set position, velocity and orientation.
@@ -809,7 +809,7 @@ void VDirectSoundDevice::UpdateListener(const TVec& org, const TVec& vel,
     Prop.dwFlags = Env->Props.Flags & 0x3f;
     PropertySet->Set(DSPROPSETID_EAX_ListenerProperties,
       DSPROPERTY_EAXLISTENER_ALLPARAMETERS |
-      DSPROPERTY_EAXLISTENER_DEFERRED, NULL, 0, &Prop, sizeof(Prop));
+      DSPROPERTY_EAXLISTENER_DEFERRED, nullptr, 0, &Prop, sizeof(Prop));
 
     if (Env->Id == 1)
     {
@@ -818,12 +818,12 @@ void VDirectSoundDevice::UpdateListener(const TVec& org, const TVec& vel,
         envId = EAX_ENVIRONMENT_GENERIC;
       PropertySet->Set(DSPROPSETID_EAX_ListenerProperties,
         DSPROPERTY_EAXLISTENER_ENVIRONMENT |
-        DSPROPERTY_EAXLISTENER_DEFERRED, NULL, 0, &envId, sizeof(DWORD));
+        DSPROPERTY_EAXLISTENER_DEFERRED, nullptr, 0, &envId, sizeof(DWORD));
 
       float envSize = GAudio->EAX_CalcEnvSize();
       PropertySet->Set(DSPROPSETID_EAX_ListenerProperties,
         DSPROPERTY_EAXLISTENER_ENVIRONMENTSIZE |
-        DSPROPERTY_EAXLISTENER_DEFERRED, NULL, 0, &envSize, sizeof(float));
+        DSPROPERTY_EAXLISTENER_DEFERRED, nullptr, 0, &envSize, sizeof(float));
     }
   }
 
@@ -862,7 +862,7 @@ bool VDirectSoundDevice::OpenStream(int Rate, int Bits, int Channels)
   dsbdesc.dwBufferBytes = STRM_LEN * 4;
   dsbdesc.lpwfxFormat = &pcmwf;
 
-  result = DSound->CreateSoundBuffer(&dsbdesc, (LPDIRECTSOUNDBUFFER *)&StrmBuffer, NULL);
+  result = DSound->CreateSoundBuffer(&dsbdesc, (LPDIRECTSOUNDBUFFER *)&StrmBuffer, nullptr);
   if (result != DS_OK)
   {
     int   best = -1;
@@ -881,7 +881,7 @@ bool VDirectSoundDevice::OpenStream(int Rate, int Bits, int Channels)
     {
       Buffers[best].Buffer->Release();
       Buffers[best].SoundID = 0;
-      result = DSound->CreateSoundBuffer(&dsbdesc, (LPDIRECTSOUNDBUFFER *)&StrmBuffer, NULL);
+      result = DSound->CreateSoundBuffer(&dsbdesc, (LPDIRECTSOUNDBUFFER *)&StrmBuffer, nullptr);
     }
   }
   if (result != DS_OK)
@@ -907,7 +907,7 @@ void VDirectSoundDevice::CloseStream()
   {
     StrmBuffer->Stop();
     StrmBuffer->Release();
-    StrmBuffer = NULL;
+    StrmBuffer = nullptr;
   }
   unguard;
 }
@@ -952,7 +952,7 @@ int VDirectSoundDevice::GetStreamAvailable()
 //
 //==========================================================================
 
-short* VDirectSoundDevice::GetStreamBuffer()
+short *VDirectSoundDevice::GetStreamBuffer()
 {
   guard(VDirectSoundDevice::GetStreamBuffer);
   return (short*)StrmLockBuffer1;

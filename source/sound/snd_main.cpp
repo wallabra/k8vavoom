@@ -37,7 +37,7 @@ class VSoundSeqNode
 {
 public:
   vint32      Sequence;
-  vint32*     SequencePtr;
+  vint32 *SequencePtr;
   vint32      OriginId;
   TVec      Origin;
   vint32      CurrentSoundID;
@@ -48,10 +48,10 @@ public:
   vuint32     DidDelayOnce;
   TArray<vint32>  SeqChoices;
   vint32      ModeNum;
-  VSoundSeqNode*  Prev;
-  VSoundSeqNode*  Next;
-  VSoundSeqNode*  ParentSeq;
-  VSoundSeqNode*  ChildSeq;
+  VSoundSeqNode *Prev;
+  VSoundSeqNode *Next;
+  VSoundSeqNode *ParentSeq;
+  VSoundSeqNode *ChildSeq;
 
   VSoundSeqNode(int, const TVec&, int, int);
   ~VSoundSeqNode();
@@ -69,7 +69,7 @@ class VAudio : public VAudioPublic
 public:
   //  Sound sequence list
   int         ActiveSequences;
-  VSoundSeqNode*    SequenceListHead;
+  VSoundSeqNode *SequenceListHead;
 
   //  Structors.
   VAudio();
@@ -128,7 +128,7 @@ private:
   };
 
   //  Sound curve
-  vuint8*       SoundCurve;
+  vuint8 *SoundCurve;
   int         MaxSoundDist;
 
   //  Map's music lump and CD track
@@ -139,7 +139,7 @@ private:
   //  Stream music player
   bool        MusicEnabled;
   bool        StreamPlaying;
-  VStreamMusicPlayer* StreamMusicPlayer;
+  VStreamMusicPlayer *StreamMusicPlayer;
 
   //  List of currently playing sounds
   FChannel      Channel[MAX_CHANNELS];
@@ -155,9 +155,9 @@ private:
   TVec        ListenerUp;
 
   //  Hardware devices
-  VSoundDevice*   SoundDevice;
-  VMidiDevice*    MidiDevice;
-  VCDAudioDevice*   CDAudioDevice;
+  VSoundDevice *SoundDevice;
+  VMidiDevice *MidiDevice;
+  VCDAudioDevice *CDAudioDevice;
 
   //  Console variables
   static VCvarF   snd_sfx_volume;
@@ -197,7 +197,7 @@ private:
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-VAudioPublic*   GAudio;
+VAudioPublic *GAudio;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -216,11 +216,11 @@ VCvarB        snd_mid_player("snd_mid_player", true, "Allow MIDI?", CVAR_Archive
 #endif
 VCvarB        snd_mod_player("snd_mod_player", true, "Allow music modules?", CVAR_Archive);
 
-FAudioCodecDesc*  FAudioCodecDesc::List;
+FAudioCodecDesc *FAudioCodecDesc::List;
 
-static FSoundDeviceDesc*  SoundDeviceList[SNDDRV_MAX];
-static FMidiDeviceDesc*   MidiDeviceList[MIDIDRV_MAX];
-static FCDAudioDeviceDesc*  CDAudioDeviceList[CDDRV_MAX];
+static FSoundDeviceDesc *SoundDeviceList[SNDDRV_MAX];
+static FMidiDeviceDesc *MidiDeviceList[MIDIDRV_MAX];
+static FCDAudioDeviceDesc *CDAudioDeviceList[CDDRV_MAX];
 
 // CODE --------------------------------------------------------------------
 
@@ -230,7 +230,7 @@ static FCDAudioDeviceDesc*  CDAudioDeviceList[CDDRV_MAX];
 //
 //==========================================================================
 
-VAudioPublic* VAudioPublic::Create()
+VAudioPublic *VAudioPublic::Create()
 {
   return new VAudio();
 }
@@ -242,22 +242,22 @@ VAudioPublic* VAudioPublic::Create()
 //==========================================================================
 
 VAudio::VAudio()
-: SoundCurve(NULL)
+: SoundCurve(nullptr)
 , MaxSoundDist(0)
 , MapSong(NAME_None)
 , MapCDTrack(0)
 , MusicEnabled(true)
 , StreamPlaying(false)
-, StreamMusicPlayer(NULL)
+, StreamMusicPlayer(nullptr)
 , NumChannels(0)
 , SndCount(0)
 , MaxVolume(0)
-, SoundDevice(NULL)
-, MidiDevice(NULL)
-, CDAudioDevice(NULL)
+, SoundDevice(nullptr)
+, MidiDevice(nullptr)
+, CDAudioDevice(nullptr)
 {
   ActiveSequences = 0;
-  SequenceListHead = NULL;
+  SequenceListHead = nullptr;
   memset(Channel, 0, sizeof(Channel));
 }
 
@@ -308,7 +308,7 @@ void VAudio::Init()
     if (!SoundDevice->Init())
     {
       delete SoundDevice;
-      SoundDevice = NULL;
+      SoundDevice = nullptr;
     }
   }
 
@@ -337,7 +337,7 @@ void VAudio::Init()
     if (!MidiDevice->Initialised)
     {
       delete MidiDevice;
-      MidiDevice = NULL;
+      MidiDevice = nullptr;
     }
   }
 
@@ -366,7 +366,7 @@ void VAudio::Init()
     if (!CDAudioDevice->Initialised)
     {
       delete CDAudioDevice;
-      CDAudioDevice = NULL;
+      CDAudioDevice = nullptr;
     }
   }
 
@@ -380,12 +380,12 @@ void VAudio::Init()
   int Lump = W_CheckNumForName(NAME_sndcurve);
   if (Lump >= 0)
   {
-    VStream* Strm = W_CreateLumpReaderNum(Lump);
+    VStream *Strm = W_CreateLumpReaderNum(Lump);
     MaxSoundDist = Strm->TotalSize();
     SoundCurve = new vuint8[MaxSoundDist];
     Strm->Serialise(SoundCurve, MaxSoundDist);
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
   }
   else
   {
@@ -424,30 +424,30 @@ void VAudio::Shutdown()
   {
     StreamMusicPlayer->Shutdown();
     delete StreamMusicPlayer;
-    StreamMusicPlayer = NULL;
+    StreamMusicPlayer = nullptr;
   }
   if (CDAudioDevice)
   {
     CDAudioDevice->Shutdown();
     delete CDAudioDevice;
-    CDAudioDevice = NULL;
+    CDAudioDevice = nullptr;
   }
   if (MidiDevice)
   {
     MidiDevice->Shutdown();
     delete MidiDevice;
-    MidiDevice = NULL;
+    MidiDevice = nullptr;
   }
   if (SoundDevice)
   {
     SoundDevice->Shutdown();
     delete SoundDevice;
-    SoundDevice = NULL;
+    SoundDevice = nullptr;
   }
   if (SoundCurve)
   {
     delete[] SoundCurve;
-    SoundCurve = NULL;
+    SoundCurve = nullptr;
   }
   unguard;
 }
@@ -461,8 +461,8 @@ void VAudio::Shutdown()
 //
 //==========================================================================
 
-void VAudio::PlaySound(int InSoundId, const TVec& origin,
-  const TVec& velocity, int origin_id, int channel, float volume,
+void VAudio::PlaySound(int InSoundId, const TVec &origin,
+  const TVec &velocity, int origin_id, int channel, float volume,
   float Attenuation, bool Loop)
 {
   guard(VAudio::PlaySound);
@@ -769,7 +769,7 @@ void VAudio::AddSeqChoice(int OriginId, VName Name)
   {
     return;
   }
-  for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
+  for (VSoundSeqNode *node = SequenceListHead; node; node = node->Next)
   {
     if (node->OriginId == OriginId)
     {
@@ -789,7 +789,7 @@ void VAudio::AddSeqChoice(int OriginId, VName Name)
 void VAudio::StopSequence(int origin_id)
 {
   guard(VAudio::StopSequence);
-  for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
+  for (VSoundSeqNode *node = SequenceListHead; node; node = node->Next)
   {
     if (node->OriginId == origin_id)
     {
@@ -814,7 +814,7 @@ void VAudio::UpdateActiveSequences(float DeltaTime)
     //  or there's no player in the map
     return;
   }
-  for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
+  for (VSoundSeqNode *node = SequenceListHead; node; node = node->Next)
   {
     node->Update(DeltaTime);
   }
@@ -830,7 +830,7 @@ void VAudio::UpdateActiveSequences(float DeltaTime)
 void VAudio::StopAllSequences()
 {
   guard(VAudio::StopAllSequences);
-  for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
+  for (VSoundSeqNode *node = SequenceListHead; node; node = node->Next)
   {
     node->StopSound = 0; // don't play any stop sounds
     delete node;
@@ -844,7 +844,7 @@ void VAudio::StopAllSequences()
 //
 //==========================================================================
 
-void VAudio::SerialiseSounds(VStream& Strm)
+void VAudio::SerialiseSounds(VStream &Strm)
 {
   guard(VAudio::SerialiseSounds);
   if (Strm.IsLoading())
@@ -855,7 +855,7 @@ void VAudio::SerialiseSounds(VStream& Strm)
     {
       new VSoundSeqNode(0, TVec(0, 0, 0), -1, 0);
     }
-    VSoundSeqNode* node = SequenceListHead;
+    VSoundSeqNode *node = SequenceListHead;
     for (int i = 0; i < numSequences; i++, node = node->Next)
     {
       node->Serialise(Strm);
@@ -865,7 +865,7 @@ void VAudio::SerialiseSounds(VStream& Strm)
   {
     // Save the sound sequences
     Strm << ActiveSequences;
-    for (VSoundSeqNode* node = SequenceListHead; node; node = node->Next)
+    for (VSoundSeqNode *node = SequenceListHead; node; node = node->Next)
     {
       node->Serialise(Strm);
     }
@@ -1128,14 +1128,14 @@ void VAudio::UpdateSounds()
 //
 //==========================================================================
 
-void VAudio::PlaySong(const char* Song, bool Loop)
+void VAudio::PlaySong(const char *Song, bool Loop)
 {
   guard(VAudio::PlaySong);
-  static const char* Exts[] = { "ogg", "mp3", "wav", "mid", "mus", "669",
+  static const char *Exts[] = { "ogg", "mp3", "wav", "mid", "mus", "669",
     "amf", "dsm", "far", "gdm", "imf", "it", "m15", "med", "mod", "mtm",
     "okt", "s3m", "stm", "stx", "ult", "uni", "xm", "flac", "ay", "gbs",
-    "gym", "hes", "kss", "nsf", "nsfe", "sap", "sgc", "spc", "vgm", NULL };
-  static const char* ExtraExts[] = { "ogg", "mp3", NULL };
+    "gym", "hes", "kss", "nsf", "nsfe", "sap", "sgc", "spc", "vgm", nullptr };
+  static const char *ExtraExts[] = { "ogg", "mp3", nullptr };
 
   if (!Song || !Song[0])
   {
@@ -1168,14 +1168,14 @@ void VAudio::PlaySong(const char* Song, bool Loop)
   if (snd_external_music)
   {
     //  Check external music definition file.
-    VStream* XmlStrm = FL_OpenFileRead("extras/music/remap.xml");
+    VStream *XmlStrm = FL_OpenFileRead("extras/music/remap.xml");
     if (XmlStrm)
     {
-      VXmlDocument* Doc = new VXmlDocument();
+      VXmlDocument *Doc = new VXmlDocument();
       Doc->Parse(*XmlStrm, "extras/music/remap.xml");
       delete XmlStrm;
-      XmlStrm = NULL;
-      for (VXmlNode* N = Doc->Root.FirstChild; N; N = N->NextSibling)
+      XmlStrm = nullptr;
+      for (VXmlNode *N = Doc->Root.FirstChild; N; N = N->NextSibling)
       {
         if (N->Name != "song")
         {
@@ -1192,7 +1192,7 @@ void VAudio::PlaySong(const char* Song, bool Loop)
         }
       }
       delete Doc;
-      Doc = NULL;
+      Doc = nullptr;
     }
     //  Also try OGG or MP3 directly.
     if (Lump < 0)
@@ -1212,12 +1212,12 @@ void VAudio::PlaySong(const char* Song, bool Loop)
     GCon->Logf("Can't find song %s", Song);
     return;
   }
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
 
   if (Strm->TotalSize() < 4)
   {
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
     return;
   }
 
@@ -1228,16 +1228,16 @@ void VAudio::PlaySong(const char* Song, bool Loop)
     // convert mus to mid with a wonderfull function
     // thanks to S.Bacquet for the source of qmus2mid
     Strm->Seek(0);
-    VMemoryStream* MidStrm = new VMemoryStream();
+    VMemoryStream *MidStrm = new VMemoryStream();
     MidStrm->BeginWrite();
     VQMus2Mid Conv;
     int MidLength = Conv.Run(*Strm, *MidStrm);
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
     if (!MidLength)
     {
       delete MidStrm;
-      MidStrm = NULL;
+      MidStrm = nullptr;
       return;
     }
     MidStrm->Seek(0);
@@ -1246,8 +1246,8 @@ void VAudio::PlaySong(const char* Song, bool Loop)
   }
 
   //  Try to create audio codec.
-  VAudioCodec* Codec = NULL;
-  for (FAudioCodecDesc* Desc = FAudioCodecDesc::List; Desc && !Codec; Desc = Desc->Next)
+  VAudioCodec *Codec = nullptr;
+  for (FAudioCodecDesc *Desc = FAudioCodecDesc::List; Desc && !Codec; Desc = Desc->Next)
   {
 //    GCon->Logf(va("Using %s to open the stream", Desc->Description));
     Codec = Desc->Creator(Strm);
@@ -1262,12 +1262,12 @@ void VAudio::PlaySong(const char* Song, bool Loop)
   else if (MidiDevice)
   {
     int Length = Strm->TotalSize();
-    void* Data = Z_Malloc(Length);
+    void *Data = Z_Malloc(Length);
     Strm->Seek(0);
     Strm->Serialise(Data, Length);
     Strm->Close();
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
 
     if (!memcmp(Data, MIDIMAGIC, 4))
     {
@@ -1282,7 +1282,7 @@ void VAudio::PlaySong(const char* Song, bool Loop)
   else
   {
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
   }
   unguard;
 }
@@ -1626,7 +1626,7 @@ float VAudio::CalcDirSize(const TVec &dir)
 //
 //==========================================================================
 
-VSoundSeqNode::VSoundSeqNode(int AOriginId, const TVec& AOrigin,
+VSoundSeqNode::VSoundSeqNode(int AOriginId, const TVec &AOrigin,
   int ASequence, int AModeNum)
 : Sequence(ASequence)
 , OriginId(AOriginId)
@@ -1637,10 +1637,10 @@ VSoundSeqNode::VSoundSeqNode(int AOriginId, const TVec& AOrigin,
 , Attenuation(1.0)
 , DidDelayOnce(0)
 , ModeNum(AModeNum)
-, Prev(NULL)
-, Next(NULL)
-, ParentSeq(NULL)
-, ChildSeq(NULL)
+, Prev(nullptr)
+, Next(nullptr)
+, ParentSeq(nullptr)
+, ChildSeq(nullptr)
 {
   if (Sequence >= 0)
   {
@@ -1674,14 +1674,14 @@ VSoundSeqNode::~VSoundSeqNode()
   {
     //  Re-activate parent sequence.
     ParentSeq->SequencePtr++;
-    ParentSeq->ChildSeq = NULL;
-    ParentSeq = NULL;
+    ParentSeq->ChildSeq = nullptr;
+    ParentSeq = nullptr;
   }
 
   if (ChildSeq)
   {
     delete ChildSeq;
-    ChildSeq = NULL;
+    ChildSeq = nullptr;
   }
 
   //  Play stop sound.
@@ -1889,7 +1889,7 @@ void VSoundSeqNode::Update(float DeltaTime)
 //
 //==========================================================================
 
-void VSoundSeqNode::Serialise(VStream& Strm)
+void VSoundSeqNode::Serialise(VStream &Strm)
 {
   guard(VSoundSeqNode::Serialise);
   Strm << STRM_INDEX(Sequence)
@@ -1925,7 +1925,7 @@ void VSoundSeqNode::Serialise(VStream& Strm)
     if (ParentSeqIdx != -1 || ChildSeqIdx != -1)
     {
       int i = 0;
-      for (VSoundSeqNode* n = ((VAudio*)GAudio)->SequenceListHead;
+      for (VSoundSeqNode *n = ((VAudio*)GAudio)->SequenceListHead;
         n; n = n->Next, i++)
       {
         if (ParentSeqIdx == i)
@@ -1954,7 +1954,7 @@ void VSoundSeqNode::Serialise(VStream& Strm)
     if (ParentSeq || ChildSeq)
     {
       int i = 0;
-      for (VSoundSeqNode* n = ((VAudio*)GAudio)->SequenceListHead;
+      for (VSoundSeqNode *n = ((VAudio*)GAudio)->SequenceListHead;
         n; n = n->Next, i++)
       {
         if (ParentSeq == n)
@@ -1979,9 +1979,9 @@ void VSoundSeqNode::Serialise(VStream& Strm)
 //
 //==========================================================================
 
-FSoundDeviceDesc::FSoundDeviceDesc(int Type, const char* AName,
-  const char* ADescription, const char* ACmdLineArg,
-  VSoundDevice* (*ACreator)())
+FSoundDeviceDesc::FSoundDeviceDesc(int Type, const char *AName,
+  const char *ADescription, const char *ACmdLineArg,
+  VSoundDevice *(*ACreator)())
 : Name(AName)
 , Description(ADescription)
 , CmdLineArg(ACmdLineArg)
@@ -1996,9 +1996,9 @@ FSoundDeviceDesc::FSoundDeviceDesc(int Type, const char* AName,
 //
 //==========================================================================
 
-FMidiDeviceDesc::FMidiDeviceDesc(int Type, const char* AName,
-  const char* ADescription, const char* ACmdLineArg,
-  VMidiDevice* (*ACreator)())
+FMidiDeviceDesc::FMidiDeviceDesc(int Type, const char *AName,
+  const char *ADescription, const char *ACmdLineArg,
+  VMidiDevice *(*ACreator)())
 : Name(AName)
 , Description(ADescription)
 , CmdLineArg(ACmdLineArg)
@@ -2013,9 +2013,9 @@ FMidiDeviceDesc::FMidiDeviceDesc(int Type, const char* AName,
 //
 //==========================================================================
 
-FCDAudioDeviceDesc::FCDAudioDeviceDesc(int Type, const char* AName,
-  const char* ADescription, const char* ACmdLineArg,
-  VCDAudioDevice* (*ACreator)())
+FCDAudioDeviceDesc::FCDAudioDeviceDesc(int Type, const char *AName,
+  const char *ADescription, const char *ACmdLineArg,
+  VCDAudioDevice *(*ACreator)())
 : Name(AName)
 , Description(ADescription)
 , CmdLineArg(ACmdLineArg)

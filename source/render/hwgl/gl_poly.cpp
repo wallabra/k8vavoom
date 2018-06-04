@@ -197,7 +197,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, surfca
     auto dtex = GTextureManager[dc->texture];
     if (!dtex || dtex->Width < 1 || dtex->Height < 1) {
       // remove it
-      decal_t* n = dc->next;
+      decal_t *n = dc->next;
       if (!dc->animator) {
         if (prev) prev->next = n; else surf->dcseg->decals = n;
         delete dc;
@@ -1031,7 +1031,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 //  VOpenGLDrawer::DrawSpritePolygon
 //
 //==========================================================================
-void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture* Tex, float Alpha,
+void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
   bool Additive, VTextureTranslation *Translation, int CMap, vuint32 light,
   vuint32 Fade, const TVec &, float, const TVec &saxis, const TVec &taxis,
   const TVec &texorg)

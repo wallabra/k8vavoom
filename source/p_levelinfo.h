@@ -29,8 +29,8 @@ class VLevelInfo : public VThinker
 
   enum { TID_HASH_SIZE = 128 };
 
-  VGameInfo*    Game;
-  VWorldInfo*   World;
+  VGameInfo *Game;
+  VWorldInfo *World;
 
   VStr      LevelName;
   vint32      LevelNum;
@@ -128,7 +128,7 @@ class VLevelInfo : public VThinker
   TArray<mthing_t>  DeathmatchStarts; // Player spawn spots for deathmatch.
   TArray<mthing_t>  PlayerStarts;   // Player spawn spots.
 
-  VEntity*    TIDHash[TID_HASH_SIZE];
+  VEntity *TIDHash[TID_HASH_SIZE];
 
   float     Gravity;                // Level Gravity
   float     AirControl;
@@ -153,7 +153,7 @@ class VLevelInfo : public VThinker
   bool ChangeSwitchTexture(int, bool, VName, bool&);
   bool StartButton(int, vuint8, int, VName, bool);
 
-  VEntity* FindMobjFromTID(int, VEntity*);
+  VEntity *FindMobjFromTID(int, VEntity*);
 
   void ChangeMusic(VName);
 
@@ -199,7 +199,7 @@ class VLevelInfo : public VThinker
     P_PASS_SELF;
     EV_RET_VOID(NAME_AfterUnarchiveThinkers);
   }
-  void eventPolyThrustMobj(VEntity* A, TVec thrustDir, polyobj_t* po)
+  void eventPolyThrustMobj(VEntity *A, TVec thrustDir, polyobj_t *po)
   {
     P_PASS_SELF;
     P_PASS_REF(A);
@@ -207,7 +207,7 @@ class VLevelInfo : public VThinker
     P_PASS_PTR(po);
     EV_RET_VOID(NAME_PolyThrustMobj);
   }
-  void eventPolyCrushMobj(VEntity* A, polyobj_t* po)
+  void eventPolyCrushMobj(VEntity *A, polyobj_t *po)
   {
     P_PASS_SELF;
     P_PASS_REF(A);
@@ -236,7 +236,7 @@ class VLevelInfo : public VThinker
     EV_RET_INT(NAME_ThingCount);
   }
   int eventExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
-    int Arg4, int Arg5, line_t* Line, int Side, VEntity* A)
+    int Arg4, int Arg5, line_t *Line, int Side, VEntity *A)
   {
     P_PASS_SELF;
     P_PASS_INT(Special);
@@ -251,7 +251,7 @@ class VLevelInfo : public VThinker
     EV_RET_INT(NAME_ExecuteActionSpecial);
   }
   int eventEV_ThingProjectile(int tid, int type, int angle, int speed,
-    int vspeed, int gravity, int newtid, VName TypeName, VEntity* Activator)
+    int vspeed, int gravity, int newtid, VName TypeName, VEntity *Activator)
   {
     P_PASS_SELF;
     P_PASS_INT(tid);
@@ -265,7 +265,7 @@ class VLevelInfo : public VThinker
     P_PASS_REF(Activator);
     EV_RET_INT(NAME_EV_ThingProjectile);
   }
-  void eventStartPlaneWatcher(VEntity* it, line_t* line, int lineSide,
+  void eventStartPlaneWatcher(VEntity *it, line_t *line, int lineSide,
     bool ceiling, int tag, int height, int special, int arg1, int arg2,
     int arg3, int arg4, int arg5)
   {
@@ -284,13 +284,13 @@ class VLevelInfo : public VThinker
     P_PASS_INT(arg5);
     EV_RET_VOID(NAME_StartPlaneWatcher);
   }
-  void eventSpawnMapThing(mthing_t* mthing)
+  void eventSpawnMapThing(mthing_t *mthing)
   {
     P_PASS_SELF;
     P_PASS_PTR(mthing);
     EV_RET_VOID(NAME_SpawnMapThing);
   }
-  void eventUpdateParticle(particle_t* p, float DeltaTime)
+  void eventUpdateParticle(particle_t *p, float DeltaTime)
   {
     P_PASS_SELF;
     P_PASS_PTR(p);
@@ -334,7 +334,7 @@ class VLevelInfo : public VThinker
     P_PASS_INT(Flags);
     EV_RET_VOID(NAME_SectorDamage);
   }
-  int eventDoThingDamage(int Tid, int Amount, VName DmgType, VEntity* Activator)
+  int eventDoThingDamage(int Tid, int Amount, VName DmgType, VEntity *Activator)
   {
     P_PASS_SELF;
     P_PASS_INT(Tid);
@@ -343,7 +343,7 @@ class VLevelInfo : public VThinker
     P_PASS_REF(Activator);
     EV_RET_INT(NAME_DoThingDamage);
   }
-  void eventSetMarineWeapon(int Tid, int Weapon, VEntity* Activator)
+  void eventSetMarineWeapon(int Tid, int Weapon, VEntity *Activator)
   {
     P_PASS_SELF;
     P_PASS_INT(Tid);
@@ -351,7 +351,7 @@ class VLevelInfo : public VThinker
     P_PASS_REF(Activator);
     EV_RET_VOID(NAME_SetMarineWeapon);
   }
-  void eventSetMarineSprite(int Tid, VName SrcClass, VEntity* Activator)
+  void eventSetMarineSprite(int Tid, VName SrcClass, VEntity *Activator)
   {
     P_PASS_SELF;
     P_PASS_INT(Tid);
@@ -361,7 +361,7 @@ class VLevelInfo : public VThinker
   }
   void eventAcsFadeRange(float BlendR1, float BlendG1, float BlendB1,
     float BlendA1, float BlendR2, float BlendG2, float BlendB2,
-    float BlendA2, float Duration, VEntity* Activator)
+    float BlendA2, float Duration, VEntity *Activator)
   {
     P_PASS_SELF;
     P_PASS_FLOAT(BlendR1);
@@ -376,7 +376,7 @@ class VLevelInfo : public VThinker
     P_PASS_REF(Activator);
     EV_RET_VOID(NAME_AcsFadeRange);
   }
-  void eventAcsCancelFade(VEntity* Activator)
+  void eventAcsCancelFade(VEntity *Activator)
   {
     P_PASS_SELF;
     P_PASS_REF(Activator);

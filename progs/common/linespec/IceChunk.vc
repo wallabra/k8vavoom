@@ -33,7 +33,7 @@ class IceChunk : Actor;
 
 final void A_IceSetTics()
 {
-  VTerrainInfo* floor;
+  VTerrainInfo *floor;
 
   StateTime = 2.0 + Random() * 2.0;
   floor = GetFloorType();

@@ -63,7 +63,7 @@ float     StairStartHeight;
 //
 //==========================================================================
 
-void Init(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
+void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, int InStairsType)
 {
   int     Dir;
@@ -114,7 +114,7 @@ void Init(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 //
 //==========================================================================
 
-void QueueInit(sector_t* InSector, int InType, float InHeight, int InStairsType,
+void QueueInit(sector_t *InSector, int InType, float InHeight, int InStairsType,
   float InStairStepDelta, int InDirection, float InStairSpeed,
   int InStairTexture, float InStairStartHeight,
   float InDelay, float InResetDelay)
@@ -171,7 +171,7 @@ void QueueInit(sector_t* InSector, int InType, float InHeight, int InStairsType,
 //
 //==========================================================================
 
-void QueueStairSector(sector_t* sec, float height)
+void QueueStairSector(sector_t *sec, float height)
 {
   StairStepMover  Other;
 
@@ -207,8 +207,8 @@ void AppendToQueue(StairStepMover Other)
 void ProcessStairSector()
 {
   int     i;
-  sector_t* tsec;
-  line_t*   line;
+  sector_t *tsec;
+  line_t *line;
 
   //
   // Find next sector to raise

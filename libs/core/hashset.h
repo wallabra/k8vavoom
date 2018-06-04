@@ -41,12 +41,12 @@ private:
     vuint32 hash;
   };
 
-  BucketItem* mData;
+  BucketItem *mData;
   vuint32 mDataSize; // in items
   vuint32 mCount;
 
 public:
-  TStrSet () : mData(NULL), mDataSize(0), mCount(0) {}
+  TStrSet () : mData(nullptr), mDataSize(0), mCount(0) {}
   ~TStrSet () { clear(); }
 
   void clear () {
@@ -56,14 +56,14 @@ public:
     }
     */
     delete[] mData;
-    mData = NULL;
+    mData = nullptr;
     mDataSize = mCount = 0;
   }
 
   vuint32 count () const { return mCount; }
 
   // return `true` if replaced
-  bool put (const VStr& key, bool value=true) {
+  bool put (const VStr &key, bool value=true) {
     if (mDataSize == 0) {
       mDataSize = 512;
       mData = new BucketItem[mDataSize];
@@ -88,7 +88,7 @@ public:
     if (mDataSize-mCount < mDataSize/3) {
       // grow it
       vuint32 newsz = mDataSize*2;
-      BucketItem* newarr = new BucketItem[newsz];
+      BucketItem *newarr = new BucketItem[newsz];
       for (vuint32 n = 0; n < newsz; ++n) {
         newarr[n].key = VStr("");
         newarr[n].value = false;
@@ -96,7 +96,7 @@ public:
       }
       // put items in new hash
       vuint32 oldsz = mDataSize;
-      BucketItem* oldarr = mData;
+      BucketItem *oldarr = mData;
       mData = newarr;
       mDataSize = newsz;
       mCount = 0;
@@ -115,7 +115,7 @@ public:
     }
   }
 
-  bool has (const VStr& key) {
+  bool has (const VStr &key) {
     vuint32 hash = TSTRSET_HASH(*key, key.Length());
     vuint32 bnum = hash%mDataSize;
     for (vuint32 n = mDataSize; n > 0; --n) {
@@ -126,7 +126,7 @@ public:
     return false;
   }
 
-  bool get (const VStr& key, bool defval=false) {
+  bool get (const VStr &key, bool defval=false) {
     vuint32 hash = TSTRSET_HASH(*key, key.Length());
     vuint32 bnum = hash%mDataSize;
     for (vuint32 n = mDataSize; n > 0; --n) {

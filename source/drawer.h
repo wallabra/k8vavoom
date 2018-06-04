@@ -44,7 +44,7 @@ struct particle_t
   vuint32   colour; //  ARGB colour
   float   Size;
   //  Handled by refresh
-  particle_t* next; //  next in the list
+  particle_t *next; //  next in the list
   TVec    vel;  //  velocity
   TVec    accel;  //  acceleration
   float   die;  //  cl.time when particle will be removed
@@ -71,17 +71,17 @@ struct surfcache_t
   int       t;
   int       width;    // size
   int       height;
-  surfcache_t*  bprev;    // line list in block
-  surfcache_t*  bnext;
-  surfcache_t*  lprev;    // cache list in line
-  surfcache_t*  lnext;
-  surfcache_t*  chain;    // list of drawable surfaces
-  surfcache_t*  addchain; // list of specular surfaces
+  surfcache_t *bprev;    // line list in block
+  surfcache_t *bnext;
+  surfcache_t *lprev;    // cache list in line
+  surfcache_t *lnext;
+  surfcache_t *chain;    // list of drawable surfaces
+  surfcache_t *addchain; // list of specular surfaces
   int       blocknum; // light surface index
-  surfcache_t** owner;
+  surfcache_t **owner;
   vuint32     Light;    // checked for strobe flash
   int       dlight;
-  surface_t*    surf;
+  surface_t *surf;
   vuint32     lastframe;
 };
 
@@ -93,19 +93,19 @@ public:
   //  Lightmaps.
   rgba_t      light_block[NUM_BLOCK_SURFS][BLOCK_WIDTH * BLOCK_HEIGHT];
   bool      block_changed[NUM_BLOCK_SURFS];
-  surfcache_t*  light_chain[NUM_BLOCK_SURFS];
+  surfcache_t *light_chain[NUM_BLOCK_SURFS];
 
   //  Specular lightmaps.
   rgba_t      add_block[NUM_BLOCK_SURFS][BLOCK_WIDTH * BLOCK_HEIGHT];
   bool      add_changed[NUM_BLOCK_SURFS];
-  surfcache_t*  add_chain[NUM_BLOCK_SURFS];
+  surfcache_t *add_chain[NUM_BLOCK_SURFS];
 
-  surface_t*    SimpleSurfsHead;
-  surface_t*    SimpleSurfsTail;
-  surface_t*    SkyPortalsHead;
-  surface_t*    SkyPortalsTail;
-  surface_t*    HorizonPortalsHead;
-  surface_t*    HorizonPortalsTail;
+  surface_t *SimpleSurfsHead;
+  surface_t *SimpleSurfsTail;
+  surface_t *SkyPortalsHead;
+  surface_t *SkyPortalsTail;
+  surface_t *HorizonPortalsHead;
+  surface_t *HorizonPortalsTail;
 
   int         PortalDepth;
 
@@ -115,10 +115,10 @@ public:
 class VDrawer
 {
 public:
-  VRenderLevelDrawer* RendLev;
+  VRenderLevelDrawer *RendLev;
 
   VDrawer()
-  : RendLev(NULL)
+  : RendLev(nullptr)
   {}
   virtual ~VDrawer()
   {}
@@ -131,7 +131,7 @@ public:
   virtual void BeginDirectUpdate() = 0;
   virtual void EndDirectUpdate() = 0;
   virtual void Shutdown() = 0;
-  virtual void* ReadScreen(int*, bool*) = 0;
+  virtual void *ReadScreen(int*, bool*) = 0;
   virtual void ReadBackScreen(int, int, rgba_t*) = 0;
   virtual void WarpMouseToWindowCenter () = 0;
 
@@ -220,23 +220,23 @@ enum
 //  Drawer description.
 struct FDrawerDesc
 {
-  const char*   Name;
-  const char*   Description;
-  const char*   CmdLineArg;
-  VDrawer*    (*Creator)();
+  const char *Name;
+  const char *Description;
+  const char *CmdLineArg;
+  VDrawer *(*Creator)();
 
-  FDrawerDesc(int Type, const char* AName, const char* ADescription,
-    const char* ACmdLineArg, VDrawer* (*ACreator)());
+  FDrawerDesc(int Type, const char *AName, const char *ADescription,
+    const char *ACmdLineArg, VDrawer *(*ACreator)());
 };
 
 //  Drawer driver declaration macro.
 #define IMPLEMENT_DRAWER(TClass, Type, Name, Description, CmdLineArg) \
-static VDrawer* Create##TClass() \
+static VDrawer *Create##TClass() \
 { \
   return new TClass(); \
 } \
 FDrawerDesc TClass##Desc(Type, Name, Description, CmdLineArg, Create##TClass);
 
-extern VDrawer      *Drawer;
+extern VDrawer *Drawer;
 
 #endif

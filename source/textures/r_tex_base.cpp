@@ -28,7 +28,7 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-typedef VTexture* (*VTexCreateFunc) (VStream &, int);
+typedef VTexture *(*VTexCreateFunc) (VStream &, int);
 
 
 //==========================================================================
@@ -427,7 +427,7 @@ void VTexture::ResampleTexture (int widthin, int heightin, const vuint8 *datain,
       float alpha, beta;
       const vuint8 *src00, *src01, *src10, *src11;
       float s1, s2;
-      vuint8* dst;
+      vuint8 *dst;
 
       for (i = 0; i < heightout; ++i) {
         i0 = int(i*sy);

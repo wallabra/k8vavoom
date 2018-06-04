@@ -173,7 +173,7 @@ final void A_AlienSpectreDeath()
   {
     //  Specter in ruined temple.
     LineSpecialLevelInfo(Level).EV_DoFloor(999, 8, 0, 0, 0,
-      FloorMover::FLOOREV_LowerToLowest, NULL);
+      FloorMover::FLOOREV_LowerToLowest, nullptr);
     PlayerEx(Target.Player).SetObjectives(95);
     PlayerEx(Target.Player).ClientVoice(95);
   }
@@ -222,7 +222,7 @@ final void A_AlienSpectreDeath()
       PlayerEx(Target.Player).SetObjectives(87);
       PlayerEx(Target.Player).ClientVoice(87);
     }
-    Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 222, 256, 0, 0, 0, NULL, 0, none);
+    Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 222, 256, 0, 0, 0, nullptr, 0, none);
   }
   else if (Class == AlienSpectre4)
   {
@@ -264,7 +264,7 @@ final void A_AlienSpectreDeath()
       PlayerEx(Target.Player).ClientVoice(83);
     }
     LineSpecialLevelInfo(Level).EV_DoFloor(666, 8, 0, 0, 0,
-      FloorMover::FLOOREV_LowerToLowest, NULL);
+      FloorMover::FLOOREV_LowerToLowest, nullptr);
   }
 }
 

@@ -285,7 +285,7 @@ void NewNode()
     if (S.TID == CurrNode.TID)
     {
       Level.ExecuteActionSpecial(S.Special, S.Args[0], S.Args[1],
-        S.Args[2], S.Args[3], S.Args[4], NULL, 0, none);
+        S.Args[2], S.Args[3], S.Args[4], nullptr, 0, none);
     }
   }
 }

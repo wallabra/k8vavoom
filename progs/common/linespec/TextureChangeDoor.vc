@@ -25,8 +25,8 @@
 
 class TextureChangeDoor : SectorMover;
 
-line_t*   Line1;
-line_t*   Line2;
+line_t *Line1;
+line_t *Line2;
 float   TopDist;
 float   BotDist;
 int     Direction;    // 1 = up, 0 = waiting, -1 = down
@@ -41,8 +41,8 @@ int     CurrentFrame;
 //
 //==========================================================================
 
-void Init(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, line_t* InLine)
+void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
+  int Arg5, line_t *InLine)
 {
   float   Height;
   TVec    Spot;
@@ -68,7 +68,7 @@ void Init(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   }
 
   int texTop = XLevel.Sides[Line1->sidenum[0]].TopTexture;
-  VAnimDoorDef* Def = FindAnimDoor(texTop);
+  VAnimDoorDef *Def = FindAnimDoor(texTop);
 
   Height = Level.FindLowestCeilingSurrounding(Sector, &Spot);
   Spot.z = Height;
@@ -124,7 +124,7 @@ bool StartClosing()
   }
 
   int texTop = XLevel.Sides[Line1->sidenum[0]].TopTexture;
-  VAnimDoorDef* Def = FindAnimDoor(texTop);
+  VAnimDoorDef *Def = FindAnimDoor(texTop);
 
   Direction = -1; // time to go back down
   if (Def->CloseSound)
@@ -150,7 +150,7 @@ override void Tick(float deltaTime)
   int   texTop;
 
   texTop = XLevel.Sides[Line1->sidenum[0]].TopTexture;
-  VAnimDoorDef* Def = FindAnimDoor(texTop);
+  VAnimDoorDef *Def = FindAnimDoor(texTop);
   switch (Direction)
   {
   case 1:

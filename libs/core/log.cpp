@@ -64,7 +64,7 @@ VLog::VLog()
 //
 //==========================================================================
 
-void VLog::AddListener(VLogListener* Listener)
+void VLog::AddListener(VLogListener *Listener)
 {
   for (int i = 0; i < MAX_LISTENERS; i++)
   {
@@ -82,13 +82,13 @@ void VLog::AddListener(VLogListener* Listener)
 //
 //==========================================================================
 
-void VLog::RemoveListener(VLogListener* Listener)
+void VLog::RemoveListener(VLogListener *Listener)
 {
   for (int i = 0; i < MAX_LISTENERS; i++)
   {
     if (Listeners[i] == Listener)
     {
-      Listeners[i] = NULL;
+      Listeners[i] = nullptr;
     }
   }
 }
@@ -99,7 +99,7 @@ void VLog::RemoveListener(VLogListener* Listener)
 //
 //==========================================================================
 
-void VLog::Write(EName Type, const char* Fmt, ...)
+void VLog::Write(EName Type, const char *Fmt, ...)
 {
   va_list   ArgPtr;
   char    String[1024];
@@ -129,7 +129,7 @@ void VLog::Write(EName Type, const char* Fmt, ...)
 //
 //==========================================================================
 
-void VLog::WriteLine(EName Type, const char* Fmt, ...)
+void VLog::WriteLine(EName Type, const char *Fmt, ...)
 {
   va_list   ArgPtr;
   char    String[1024];
@@ -160,7 +160,7 @@ void VLog::WriteLine(EName Type, const char* Fmt, ...)
 //
 //==========================================================================
 
-void VLog::Write(const char* Fmt, ...)
+void VLog::Write(const char *Fmt, ...)
 {
   va_list   ArgPtr;
   char    String[1024];
@@ -190,7 +190,7 @@ void VLog::Write(const char* Fmt, ...)
 //
 //==========================================================================
 
-void VLog::WriteLine(const char* Fmt, ...)
+void VLog::WriteLine(const char *Fmt, ...)
 {
   va_list   ArgPtr;
   char    String[1024];
@@ -221,7 +221,7 @@ void VLog::WriteLine(const char* Fmt, ...)
 //
 //==========================================================================
 
-void VLog::DWrite(const char* Fmt, ...)
+void VLog::DWrite(const char *Fmt, ...)
 {
   va_list   ArgPtr;
   char    String[1024];
@@ -251,7 +251,7 @@ void VLog::DWrite(const char* Fmt, ...)
 //
 //==========================================================================
 
-void VLog::DWriteLine(const char* Fmt, ...)
+void VLog::DWriteLine(const char *Fmt, ...)
 {
   va_list   ArgPtr;
   char    String[1024];

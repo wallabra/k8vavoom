@@ -25,13 +25,13 @@
 
 class PlaneWatcher : Thinker;
 
-sector_t* Sector;
+sector_t *Sector;
 float   WatchD;
 float   LastD;
 int     Special;
 int     Args[5];
 Entity    Activator;
-line_t*   Line;
+line_t *Line;
 int     LineSide;
 bool    bCeiling;
 
@@ -41,11 +41,11 @@ bool    bCeiling;
 //
 //==========================================================================
 
-void Start(Entity it, line_t* line, int lineSide, bool ceiling, int tag,
+void Start(Entity it, line_t *line, int lineSide, bool ceiling, int tag,
   int height, int special, int arg0, int arg1, int arg2, int arg3, int arg4)
 {
   int       secnum;
-  sec_plane_t*  plane;
+  sec_plane_t *plane;
 
   Special = special;
   Args[0] = arg0;
@@ -76,7 +76,7 @@ void Start(Entity it, line_t* line, int lineSide, bool ceiling, int tag,
   }
   else
   {
-    Sector = NULL;
+    Sector = nullptr;
     WatchD = 0.0;
     LastD = 0.0;
   }
@@ -92,7 +92,7 @@ override void Tick(float DeltaTime)
 {
   float   NewDist;
 
-  if (Sector == NULL)
+  if (Sector == nullptr)
   {
     Destroy();
     return;

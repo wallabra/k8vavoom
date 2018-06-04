@@ -356,7 +356,7 @@ void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
     sec_surface_t *Floor = r_subregion->floor;
 
     // calculate light and fade
-    sec_params_t* LightParams = Floor->secplane->LightSourceSector != -1 ?
+    sec_params_t *LightParams = Floor->secplane->LightSourceSector != -1 ?
       &Level->Sectors[Floor->secplane->LightSourceSector].params :
       r_region->params;
     int lLev = (FixedLight ? FixedLight : MIN(255, LightParams->lightlevel+ExtraLight));
@@ -370,7 +370,7 @@ void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
     Surf->Light = (lLev << 24) | LightParams->LightColour;
     Surf->Fade = Fade;
     Surf->count = 4;
-    TVec* svs = &Surf->verts[0];
+    TVec *svs = &Surf->verts[0];
     svs[0] = *Seg->v1; svs[0].z = BotZ;
     svs[1] = *Seg->v1; svs[1].z = MIN(TopZ, HorizonZ);
     svs[2] = *Seg->v2; svs[2].z = MIN(TopZ, HorizonZ);
@@ -769,7 +769,7 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
       switch (WorldSurfs[i].Type) {
         case 0:
           {
-            seg_t* dcseg = (WorldSurfs[i].Surf->dcseg ? WorldSurfs[i].Surf->dcseg : nullptr);
+            seg_t *dcseg = (WorldSurfs[i].Surf->dcseg ? WorldSurfs[i].Surf->dcseg : nullptr);
             //if (dcseg) printf("world surface! %p\n", dcseg);
             QueueWorldSurface(dcseg, WorldSurfs[i].Surf);
           }

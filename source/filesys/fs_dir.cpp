@@ -79,7 +79,7 @@ int VFilesDir::CheckNumForFileName(VStr Name)
 //
 //==========================================================================
 
-bool VFilesDir::FileExists(const VStr& fname)
+bool VFilesDir::FileExists(const VStr &fname)
 {
   guard(VFilesDir::FileExists);
   if (Sys_FileExists(Path + "/" + fname))
@@ -96,18 +96,18 @@ bool VFilesDir::FileExists(const VStr& fname)
 //
 //==========================================================================
 
-VStream* VFilesDir::OpenFileRead(const VStr& Name)
+VStream *VFilesDir::OpenFileRead(const VStr &Name)
 {
   guard(FL_OpenFileRead);
   VStr TmpName = Path + "/" + Name;
   if (!Sys_FileExists(TmpName))
   {
-    return NULL;
+    return nullptr;
   }
   FILE *File = fopen(*TmpName, "rb");
   if (!File)
   {
-    return NULL;
+    return nullptr;
   }
   return new VStreamFileReader(File, GCon);
   unguard;
@@ -119,17 +119,17 @@ VStream* VFilesDir::OpenFileRead(const VStr& Name)
 //
 //==========================================================================
 
-void VFilesDir::ReadFromLump(int Lump, void* Dest, int Pos, int Size)
+void VFilesDir::ReadFromLump(int Lump, void *Dest, int Pos, int Size)
 {
   guard(VFilesDir::ReadFromLump);
   check(Lump >= 0);
   check(Lump < CachedFiles.Num());
-  VStream* Strm = CreateLumpReaderNum(Lump);
+  VStream *Strm = CreateLumpReaderNum(Lump);
   check(Strm);
   Strm->Seek(Pos);
   Strm->Serialise(Dest, Size);
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -144,11 +144,11 @@ int VFilesDir::LumpLength(int Lump)
   guard(VFilesDir::LumpLength);
   check(Lump >= 0);
   check(Lump < CachedFiles.Num());
-  VStream* Strm = CreateLumpReaderNum(Lump);
+  VStream *Strm = CreateLumpReaderNum(Lump);
   check(Strm);
   int Ret = Strm->TotalSize();
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   return Ret;
   unguard;
 }
@@ -159,12 +159,12 @@ int VFilesDir::LumpLength(int Lump)
 //
 //==========================================================================
 
-VStream* VFilesDir::CreateLumpReaderNum(int LumpNum)
+VStream *VFilesDir::CreateLumpReaderNum(int LumpNum)
 {
   guard(VFilesDir::CreateLumpReaderNum);
   check(LumpNum >= 0);
   check(LumpNum < CachedFiles.Num());
-  VStream* Strm = OpenFileRead(CachedFiles[LumpNum]);
+  VStream *Strm = OpenFileRead(CachedFiles[LumpNum]);
   check(Strm);
   return Strm;
   unguard;

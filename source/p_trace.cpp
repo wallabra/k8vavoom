@@ -52,7 +52,7 @@
 //
 //==========================================================================
 
-bool VLevel::CheckPlane(linetrace_t& Trace, const sec_plane_t* Plane) const
+bool VLevel::CheckPlane(linetrace_t &Trace, const sec_plane_t *Plane) const
 {
   guard(VLevel::CheckPlane);
   if (Plane->flags & Trace.PlaneNoBlockFlags)
@@ -96,14 +96,14 @@ bool VLevel::CheckPlane(linetrace_t& Trace, const sec_plane_t* Plane) const
 //
 //==========================================================================
 
-bool VLevel::CheckPlanes(linetrace_t& Trace, sector_t* Sec) const
+bool VLevel::CheckPlanes(linetrace_t &Trace, sector_t *Sec) const
 {
   guard(VLevel::CheckPlanes);
-  sec_region_t* StartReg = SV_PointInRegion(Sec, Trace.LineStart);
+  sec_region_t *StartReg = SV_PointInRegion(Sec, Trace.LineStart);
 
-  if (StartReg != NULL)
+  if (StartReg != nullptr)
   {
-    for (sec_region_t* Reg = StartReg; Reg != NULL; Reg = Reg->next)
+    for (sec_region_t *Reg = StartReg; Reg != nullptr; Reg = Reg->next)
     {
       if (!CheckPlane(Trace, Reg->floor))
       {
@@ -117,7 +117,7 @@ bool VLevel::CheckPlanes(linetrace_t& Trace, sector_t* Sec) const
       }
     }
 
-    for (sec_region_t* Reg = StartReg->prev; Reg != NULL; Reg = Reg->prev)
+    for (sec_region_t *Reg = StartReg->prev; Reg != nullptr; Reg = Reg->prev)
     {
       if (!CheckPlane(Trace, Reg->floor))
       {
@@ -142,13 +142,13 @@ bool VLevel::CheckPlanes(linetrace_t& Trace, sector_t* Sec) const
 //
 //==========================================================================
 
-bool VLevel::CheckLine(linetrace_t& Trace, seg_t* Seg) const
+bool VLevel::CheckLine(linetrace_t &Trace, seg_t *Seg) const
 {
   guard(VLevel::CheckLine);
-  line_t*     line;
+  line_t *line;
   int       s1;
   int       s2;
-  sector_t*   front;
+  sector_t *front;
   float     frac;
   float     num;
   float     den;
@@ -249,14 +249,14 @@ bool VLevel::CheckLine(linetrace_t& Trace, seg_t* Seg) const
 //
 //==========================================================================
 
-bool VLevel::CrossSubsector(linetrace_t& Trace, int num) const
+bool VLevel::CrossSubsector(linetrace_t &Trace, int num) const
 {
   guard(VLevel::CrossSubsector);
-  subsector_t*  sub;
+  subsector_t *sub;
   int       count;
-  seg_t*      seg;
+  seg_t *seg;
   int       polyCount;
-  seg_t**     polySeg;
+  seg_t **polySeg;
 
   sub = &Subsectors[num];
 
@@ -298,7 +298,7 @@ bool VLevel::CrossSubsector(linetrace_t& Trace, int num) const
 //
 //==========================================================================
 
-bool VLevel::CrossBSPNode(linetrace_t& Trace, int BspNum) const
+bool VLevel::CrossBSPNode(linetrace_t &Trace, int BspNum) const
 {
   guard(VLevel::CrossBSPNode);
   if (BspNum == -1)
@@ -308,7 +308,7 @@ bool VLevel::CrossBSPNode(linetrace_t& Trace, int BspNum) const
 
   if (!(BspNum & NF_SUBSECTOR))
   {
-    node_t* Bsp = &Nodes[BspNum];
+    node_t *Bsp = &Nodes[BspNum];
 
     // decide which side the start point is on
     int Side = Bsp->PointOnSide2(Trace.Start);
@@ -344,7 +344,7 @@ bool VLevel::CrossBSPNode(linetrace_t& Trace, int BspNum) const
 //
 //==========================================================================
 
-bool VLevel::TraceLine(linetrace_t& Trace, const TVec& Start, const TVec& End,
+bool VLevel::TraceLine(linetrace_t &Trace, const TVec &Start, const TVec &End,
   int PlaneNoBlockFlags) const
 {
   guard(VLevel::TraceLine);

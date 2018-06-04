@@ -74,7 +74,7 @@ VSearchPath::~VSearchPath()
 //
 //==========================================================================
 
-void W_AddFile(const VStr& FileName, const VStr& GwaDir, bool FixVoices)
+void W_AddFile(const VStr &FileName, const VStr &GwaDir, bool FixVoices)
 {
   guard(W_AddFile);
   int wadtime;
@@ -88,14 +88,14 @@ void W_AddFile(const VStr& FileName, const VStr& GwaDir, bool FixVoices)
   wadfiles.Append(FileName);
 
   VStr ext = FileName.ExtractFileExtension().ToLower();
-  VWadFile* Wad = new VWadFile;
+  VWadFile *Wad = new VWadFile;
   if (ext != "wad" && ext != "gwa")
   {
     Wad->OpenSingleLump(FileName);
   }
   else
   {
-    Wad->Open(FileName, GwaDir, FixVoices, NULL);
+    Wad->Open(FileName, GwaDir, FixVoices, nullptr);
   }
   SearchPaths.Append(Wad);
 
@@ -138,13 +138,13 @@ void W_AddFile(const VStr& FileName, const VStr& GwaDir, bool FixVoices)
 //
 //==========================================================================
 
-void W_AddFileFromZip(const VStr& WadName, VStream* WadStrm,
-  const VStr& GwaName, VStream* GwaStrm)
+void W_AddFileFromZip(const VStr &WadName, VStream *WadStrm,
+  const VStr &GwaName, VStream *GwaStrm)
 {
   guard(W_AddFileFromZip);
   //  Add WAD file.
   wadfiles.Append(WadName);
-  VWadFile* Wad = new VWadFile;
+  VWadFile *Wad = new VWadFile;
   Wad->Open(WadName, VStr(), false, WadStrm);
   SearchPaths.Append(Wad);
 
@@ -152,7 +152,7 @@ void W_AddFileFromZip(const VStr& WadName, VStream* WadStrm,
   {
     //  Add GWA file
     wadfiles.Append(GwaName);
-    VWadFile* Gwa = new VWadFile;
+    VWadFile *Gwa = new VWadFile;
     Gwa->Open(GwaName, VStr(), false, GwaStrm);
     SearchPaths.Append(Gwa);
   }
@@ -170,7 +170,7 @@ void W_AddFileFromZip(const VStr& WadName, VStream* WadStrm,
 //
 //==========================================================================
 
-int W_OpenAuxiliary(const VStr& FileName)
+int W_OpenAuxiliary(const VStr &FileName)
 {
   guard(W_OpenAuxiliary);
   W_CloseAuxiliary();
@@ -178,8 +178,8 @@ int W_OpenAuxiliary(const VStr& FileName)
   AuxiliaryIndex = SearchPaths.Num();
 
   VStr GwaName = FileName.StripExtension() + ".gwa";
-  VStream* WadStrm = FL_OpenFileRead(FileName);
-  VStream* GwaStrm = FL_OpenFileRead(GwaName);
+  VStream *WadStrm = FL_OpenFileRead(FileName);
+  VStream *GwaStrm = FL_OpenFileRead(GwaName);
   W_AddFileFromZip(FileName, WadStrm, GwaName, GwaStrm);
   return MAKE_HANDLE(AuxiliaryIndex, 0);
   unguard;
@@ -199,9 +199,9 @@ void W_CloseAuxiliary()
     SearchPaths[AuxiliaryIndex]->Close();
     SearchPaths[AuxiliaryIndex + 1]->Close();
     delete SearchPaths[AuxiliaryIndex];
-    SearchPaths[AuxiliaryIndex] = NULL;
+    SearchPaths[AuxiliaryIndex] = nullptr;
     delete SearchPaths[AuxiliaryIndex + 1];
-    SearchPaths[AuxiliaryIndex + 1] = NULL;
+    SearchPaths[AuxiliaryIndex + 1] = nullptr;
     SearchPaths.SetNum(AuxiliaryIndex);
     AuxiliaryIndex = 0;
   }
@@ -366,11 +366,11 @@ int W_CheckNumForTextureFileName(VStr Name) {
 
   int res = -1;
 
-  if ((res = tryWithExtension(Name, NULL)) >= 0) return res;
+  if ((res = tryWithExtension(Name, nullptr)) >= 0) return res;
 
   // try "textures/..."
   Name = VStr("textures/")+Name;
-  if ((res = tryWithExtension(Name, NULL)) >= 0) return res;
+  if ((res = tryWithExtension(Name, nullptr)) >= 0) return res;
   // various other image extensions
   if ((res = tryWithExtension(Name, ".png")) >= 0) return res;
   if ((res = tryWithExtension(Name, ".jpg")) >= 0) return res;
@@ -416,7 +416,7 @@ int W_LumpLength(int lump)
   {
     Sys_Error("W_LumpLength: %i >= num_wad_files", FILE_INDEX(lump));
   }
-  VSearchPath* w = GET_LUMP_FILE(lump);
+  VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
   return w->LumpLength(lumpindex);
   unguard;
@@ -435,7 +435,7 @@ VName W_LumpName(int lump)
   {
     return NAME_None;
   }
-  VSearchPath* w = GET_LUMP_FILE(lump);
+  VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
   return w->LumpName(lumpindex);
   unguard;
@@ -450,7 +450,7 @@ VName W_LumpName(int lump)
 VStr W_FullLumpName (int lump) {
   guard(W_FullLumpName);
   if (FILE_INDEX(lump) >= SearchPaths.Num()) return VStr("<invalid>");
-  VSearchPath* w = GET_LUMP_FILE(lump);
+  VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
   return w->GetPrefix()+":"+*(w->LumpName(lumpindex));
   unguard;
@@ -475,7 +475,7 @@ int W_LumpFile(int lump)
 //
 //==========================================================================
 
-void W_ReadFromLump(int lump, void* dest, int pos, int size)
+void W_ReadFromLump(int lump, void *dest, int pos, int size)
 {
   guard(W_ReadFromLump);
   if (FILE_INDEX(lump) >= SearchPaths.Num())
@@ -483,7 +483,7 @@ void W_ReadFromLump(int lump, void* dest, int pos, int size)
     Sys_Error("W_ReadFromLump: %i >= num_wad_files", FILE_INDEX(lump));
   }
 
-  VSearchPath* w = GET_LUMP_FILE(lump);
+  VSearchPath *w = GET_LUMP_FILE(lump);
   w->ReadFromLump(LUMP_INDEX(lump), dest, pos, size);
   unguard;
 }
@@ -494,7 +494,7 @@ void W_ReadFromLump(int lump, void* dest, int pos, int size)
 //
 //==========================================================================
 
-VStream* W_CreateLumpReaderNum(int lump)
+VStream *W_CreateLumpReaderNum(int lump)
 {
   guard(W_CreateLumpReaderNum);
   return GET_LUMP_FILE(lump)->CreateLumpReaderNum(LUMP_INDEX(lump));
@@ -507,7 +507,7 @@ VStream* W_CreateLumpReaderNum(int lump)
 //
 //==========================================================================
 
-VStream* W_CreateLumpReaderName(VName Name, EWadNamespace NS)
+VStream *W_CreateLumpReaderName(VName Name, EWadNamespace NS)
 {
   guard(W_CreateLumpReaderName);
   return W_CreateLumpReaderNum(W_GetNumForName(Name, NS));
@@ -543,7 +543,7 @@ int W_IterateNS(int Prev, EWadNamespace NS)
 //
 //==========================================================================
 
-int W_IterateFile(int Prev, const VStr& Name)
+int W_IterateFile(int Prev, const VStr &Name)
 {
   guard(W_IterateFile);
   for (int wi = FILE_INDEX(Prev) + 1; wi < SearchPaths.Num(); wi++)
@@ -564,11 +564,11 @@ int W_IterateFile(int Prev, const VStr& Name)
 //
 //==========================================================================
 
-int W_FindLumpByFileNameWithExts(VStr BaseName, const char** Exts)
+int W_FindLumpByFileNameWithExts(VStr BaseName, const char **Exts)
 {
   guard(W_FindLumpByFileNameWithExts);
   int Found = -1;
-  for (const char** Ext = Exts; *Ext; Ext++)
+  for (const char **Ext = Exts; *Ext; Ext++)
   {
     VStr Check = BaseName + "." + *Ext;
     int Lump = W_CheckNumForFileName(Check);
@@ -597,16 +597,16 @@ int W_FindLumpByFileNameWithExts(VStr BaseName, const char** Exts)
 VStr W_LoadTextLump(VName name)
 {
   guard(W_LoadTextLump);
-  VStream* Strm = W_CreateLumpReaderName(name);
+  VStream *Strm = W_CreateLumpReaderName(name);
   int msgSize = Strm->TotalSize();
-  char* buf = new char[msgSize + 1];
+  char *buf = new char[msgSize + 1];
   Strm->Serialise(buf, msgSize);
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   buf[msgSize] = 0; // Append terminator
   VStr Ret = buf;
   delete[] buf;
-  buf = NULL;
+  buf = nullptr;
   if (!Ret.IsValidUtf8())
   {
     GCon->Logf("%s is not a valid UTF-8 text lump, assuming Latin 1",
@@ -630,12 +630,12 @@ void W_LoadLumpIntoArray(VName LumpName, TArray<vuint8>& Array)
   {
     Lump = W_GetNumForName(LumpName);
   }
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
   check(Strm);
   Array.SetNum(Strm->TotalSize());
   Strm->Serialise(Array.Ptr(), Strm->TotalSize());
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
 }
 
 //==========================================================================
@@ -650,10 +650,10 @@ void W_Profile()
   static int  info[2500][10];
   static int  profilecount = 0;
   int     i;
-  memblock_t* block;
-  void*   ptr;
+  memblock_t *block;
+  void *ptr;
   char    ch;
-  FILE*   f;
+  FILE *f;
   int     j;
   char    name[16];
 
@@ -716,7 +716,7 @@ void W_Shutdown()
   for (int i = 0; i < SearchPaths.Num(); i++)
   {
     delete SearchPaths[i];
-    SearchPaths[i] = NULL;
+    SearchPaths[i] = nullptr;
   }
   SearchPaths.Clear();
   unguard;

@@ -86,7 +86,7 @@ VTexture *VTgaTexture::Create (VStream &Strm, int LumpNum) {
 //  VTgaTexture::VTgaTexture
 //
 //==========================================================================
-VTgaTexture::VTgaTexture (int ALumpNum, tgaHeader_t& Hdr)
+VTgaTexture::VTgaTexture (int ALumpNum, tgaHeader_t &Hdr)
   : Pixels(nullptr)
   , Palette(nullptr)
 {
@@ -185,7 +185,7 @@ vuint8 *VTgaTexture::GetPixels () {
     // 8-bit, uncompressed
     for (int y = Height; y; --y) {
       int yc = (hdr.descriptor_bits&0x20 ? Height-y : y-1);
-      vuint8* dst = Pixels+yc*Width;
+      vuint8 *dst = Pixels+yc*Width;
       Strm->Serialise(dst, Width);
     }
   } else if (hdr.img_type == 2 && hdr.pal_type == 0 && hdr.bpp == 16) {

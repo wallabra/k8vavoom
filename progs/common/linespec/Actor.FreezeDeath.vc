@@ -67,7 +67,7 @@ final void A_FreezeDeath()
     {
       // Initiate monster death actions
       Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2],
-        Args[3], Args[4], NULL, 0, self);
+        Args[3], Args[4], nullptr, 0, self);
     }
   }
 }

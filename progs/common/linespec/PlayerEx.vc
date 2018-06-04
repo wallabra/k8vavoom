@@ -758,7 +758,7 @@ final void PlayerInSpecialSector(float deltaTime)
 //
 //============================================================================
 
-final void PlayerOnSpecialFlat(VTerrainInfo* floorType)
+final void PlayerOnSpecialFlat(VTerrainInfo *floorType)
 {
   if (MO.Origin.z != MO.FloorZ)
   {
@@ -1375,7 +1375,7 @@ final bool UsePuzzleItem(int PuzzleItemType)
       continue;
     }
     MO.XLevel.StartACS(mobj.Args[1], 0, mobj.Args[2], mobj.Args[3],
-      mobj.Args[4], MO, NULL, 0, false, false);
+      mobj.Args[4], MO, nullptr, 0, false, false);
     mobj.Special = 0;
     return true;  // Stop searching
   }
@@ -1467,7 +1467,7 @@ void ParticleEffect(int count, int type1, int type2, TVec origin, float ornd,
 //
 //==========================================================================
 
-void DecalEffect (TVec org, name dectype, int side, /*line_t* li*/int lineidx) {
+void DecalEffect (TVec org, name dectype, int side, /*line_t *li*/int lineidx) {
   if (!dectype || lineidx < 0 || !Level.XLevel) return; // just in case
   if (!GetCvarB('decals_enabled')) return;
   if (lineidx >= Level.XLevel.NumLines) return;
@@ -1482,7 +1482,7 @@ void DecalEffect (TVec org, name dectype, int side, /*line_t* li*/int lineidx) {
 
 void ClientExplosion(int colour, float rad, TVec org)
 {
-  dlight_t* dl;
+  dlight_t *dl;
 
   dl = Level.AllocDlight(none);
   dl->origin = org;
@@ -2200,7 +2200,7 @@ override void SpawnClient()
   }
   else
   {
-    mthing_t* Best = NULL;
+    mthing_t *Best = nullptr;
     bool Spawned = false;
     int i;
     for (i = 0; i < Level.PlayerStarts.Num; i++)
@@ -3805,7 +3805,7 @@ final override void Cheat_Summon () {
   TVec dir;
   AngleVector(&ang, &dir);
   TVec dst = MO.Origin+84*dir;
-  Level.Spawn(moClass, dst); // optional TAVec AAngles, optional mthing_t* mthing, optional bool AllowReplace
+  Level.Spawn(moClass, dst); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
 }
 
 //==========================================================================

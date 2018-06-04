@@ -243,7 +243,7 @@ void VPcxTexture::Unload () {
 //  WritePCX
 //
 //==========================================================================
-void WritePCX (const VStr &FileName, void* data, int width, int height, int bpp, bool bot2top) {
+void WritePCX (const VStr &FileName, void *data, int width, int height, int bpp, bool bot2top) {
   guard(WritePCX);
 
   VStream *Strm = FL_OpenFileWrite(FileName, true);

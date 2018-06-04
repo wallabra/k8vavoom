@@ -221,12 +221,12 @@ void SetSkill(int NewSkill)
 //
 //==========================================================================
 
-void MakeSlope(Level InLevel, mthing_t* mthing, bool IsCeiling)
+void MakeSlope(Level InLevel, mthing_t *mthing, bool IsCeiling)
 {
-  sector_t*   sec;
-  line_t*     line;
+  sector_t *sec;
+  line_t *line;
   int       i;
-  sec_plane_t*  plane;
+  sec_plane_t *plane;
 
   sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
   for (i = 0; i < sec->linecount; i++)
@@ -284,10 +284,10 @@ void MakeSlope(Level InLevel, mthing_t* mthing, bool IsCeiling)
 //
 //===========================================================================
 
-void SlopeLineToPoint(Level InLevel, mthing_t* mthing, bool IsCeiling)
+void SlopeLineToPoint(Level InLevel, mthing_t *mthing, bool IsCeiling)
 {
-  sector_t*   sec;
-  sec_plane_t*  plane;
+  sector_t *sec;
+  sec_plane_t *plane;
   TVec      p1;
   TVec      p2;
   int       i;
@@ -309,7 +309,7 @@ void SlopeLineToPoint(Level InLevel, mthing_t* mthing, bool IsCeiling)
 
   for (i = 0; i < InLevel.NumLines; i++)
   {
-    line_t* line = &InLevel.Lines[i];
+    line_t *line = &InLevel.Lines[i];
     if (line->LineTag != mthing->arg1)
     {
       continue;
@@ -323,7 +323,7 @@ void SlopeLineToPoint(Level InLevel, mthing_t* mthing, bool IsCeiling)
     {
       sec = line->backsector;
     }
-    if (sec == NULL)
+    if (sec == nullptr)
     {
       continue;
     }
@@ -369,11 +369,11 @@ void SlopeLineToPoint(Level InLevel, mthing_t* mthing, bool IsCeiling)
 //
 //===========================================================================
 
-void SetSlope(Level InLevel, mthing_t* mthing, bool IsCeiling)
+void SetSlope(Level InLevel, mthing_t *mthing, bool IsCeiling)
 {
   TVec      p1;
-  sec_plane_t*  plane;
-  sector_t*   sec;
+  sec_plane_t *plane;
+  sector_t *sec;
   float     xyang;
   float     zang;
   TVec      norm;
@@ -643,7 +643,7 @@ void AlignPlane(Level InLevel, sector_t *sec, line_t *line, int which)
   sec_plane_t *srcplane;
   float srcheight, destheight;
 
-  if (line->backsector == NULL)
+  if (line->backsector == nullptr)
     return;
 
   //  Find furthest vertex from the reference line. It, along with the two
@@ -710,7 +710,7 @@ void SetSlopes(Level InLevel)
     {
       InLevel.Lines[i].special = 0;
       InLevel.Lines[i].LineTag = InLevel.Lines[i].arg3;
-      if (InLevel.Lines[i].backsector != NULL)
+      if (InLevel.Lines[i].backsector != nullptr)
       {
         // args[0] is for floor, args[1] is for ceiling
         //
@@ -742,10 +742,10 @@ void SetSlopes(Level InLevel)
 //
 //===========================================================================
 
-void CopyPlane(Level InLevel, mthing_t* mthing, bool IsCeiling)
+void CopyPlane(Level InLevel, mthing_t *mthing, bool IsCeiling)
 {
-  sector_t* dst;
-  sector_t* src;
+  sector_t *dst;
+  sector_t *src;
   int     secnum;
 
   dst = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
@@ -835,9 +835,9 @@ void MakeContents(line_t * line)
 //
 //==========================================================================
 
-void MakeHeightSec(Level InLevel, line_t* Line)
+void MakeHeightSec(Level InLevel, line_t *Line)
 {
-  sector_t* Sec;
+  sector_t *Sec;
   int     s;
 
   Sec = Line->frontsector;
@@ -950,7 +950,7 @@ void SetSectorFriction(Level InLevel, int tag, int amount, bool alterFlag)
 //
 //==========================================================================
 
-void StaticInit(Level InLevel, line_t* line)
+void StaticInit(Level InLevel, line_t *line)
 {
   int     s;
   float   Grav;
@@ -1111,8 +1111,8 @@ override void SpawnWorld(Level InLevel)
   int     length;
   int     SecNum;
   float   alpha;
-  mthing_t* mthing;
-  line_t*   line;
+  mthing_t *mthing;
+  line_t *line;
 
   //  Set up tagged lines.
   if (!InLevel.bTextMap)

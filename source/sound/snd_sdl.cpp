@@ -44,10 +44,10 @@ public:
   int       CurChannels;
   int       CurFrequency;
 
-  Mix_Chunk**   Chunks;
+  Mix_Chunk **Chunks;
 
   SDL_AudioCVT  StrmCvt;
-  vuint8*     StrmBuffer;
+  vuint8 *StrmBuffer;
   int       StrmBufferUsed;
   float     StrmVol;
 
@@ -67,14 +67,14 @@ public:
   bool OpenStream(int, int, int);
   void CloseStream();
   int GetStreamAvailable();
-  short* GetStreamBuffer();
+  short *GetStreamBuffer();
   void SetStreamData(short*, int);
   void SetStreamVolume(float);
   void PauseStream();
   void ResumeStream();
 
   int know_value(int, const int*);
-  Mix_Chunk* LoadSound(int);
+  Mix_Chunk *LoadSound(int);
 
   static void StrmCallback(void*, Uint8*, int);
 };
@@ -90,7 +90,7 @@ public:
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 IMPLEMENT_SOUND_DEVICE(VSDLSoundDevice, SNDDRV_Default, "Default",
-  "SDL sound device", NULL);
+  "SDL sound device", nullptr);
 
 bool              sdl_mixer_initialised;
 
@@ -120,15 +120,15 @@ static const int  voices[] = {        4,     8,    16,   32,   64, 0};
 bool VSDLSoundDevice::Init()
 {
   guard(VSDLSoundDevice::Init);
-  const char* p;
+  const char *p;
   int    freq;
   Uint16 fmt;
   int    ch;  /* audio */
   int    cksz;
   //char   dname[32];
 
-  Chunks = NULL;
-  StrmBuffer = NULL;
+  Chunks = nullptr;
+  StrmBuffer = nullptr;
   StrmBufferUsed = 0;
   StrmVol = 1;
 
@@ -207,7 +207,7 @@ int VSDLSoundDevice::SetChannels(int InNumChannels)
 //
 //==========================================================================
 
-int VSDLSoundDevice::know_value(int val, const int* vals)
+int VSDLSoundDevice::know_value(int val, const int *vals)
 {
   int i;
 
@@ -240,7 +240,7 @@ void VSDLSoundDevice::Shutdown()
       }
     }
     delete[] Chunks;
-    Chunks = NULL;
+    Chunks = nullptr;
   }
   if (sdl_mixer_initialised)
   {
@@ -268,7 +268,7 @@ void VSDLSoundDevice::Tick(float)
 //
 //==========================================================================
 
-Mix_Chunk* VSDLSoundDevice::LoadSound(int sound_id)
+Mix_Chunk *VSDLSoundDevice::LoadSound(int sound_id)
 {
   guard(VSDLSoundDevice::LoadSound);
   Mix_Chunk *chunk;
@@ -282,7 +282,7 @@ Mix_Chunk* VSDLSoundDevice::LoadSound(int sound_id)
   if (!GSoundManager->LoadSound(sound_id))
   {
     //  Missing sound.
-    return NULL;
+    return nullptr;
   }
 
   //  Set up audio converter.
@@ -291,7 +291,7 @@ Mix_Chunk* VSDLSoundDevice::LoadSound(int sound_id)
     CurFormat, CurChannels, CurFrequency) < 0)
   {
     GSoundManager->DoneWithLump(sound_id);
-    return NULL;
+    return nullptr;
   }
 
   //  Copy data.
@@ -304,8 +304,8 @@ Mix_Chunk* VSDLSoundDevice::LoadSound(int sound_id)
   if (SDL_ConvertAudio(&cvt) < 0)
   {
     Z_Free(cvt.buf);
-    cvt.buf = NULL;
-    return NULL;
+    cvt.buf = nullptr;
+    return nullptr;
   }
 
   //  Allocate chunk.
@@ -332,7 +332,7 @@ int VSDLSoundDevice::PlaySound(int sound_id, float vol, float sep, float,
   bool Loop)
 {
   guard(VSDLSoundDevice::PlaySound);
-  Mix_Chunk* chunk;
+  Mix_Chunk *chunk;
   int voice;
 
   // copy the lump to a SDL_Mixer chunk...
@@ -478,11 +478,11 @@ bool VSDLSoundDevice::OpenStream(int Rate, int Bits, int Channels)
 void VSDLSoundDevice::CloseStream()
 {
   guard(VSDLSoundDevice::CloseStream);
-  Mix_HookMusic(NULL, NULL);
+  Mix_HookMusic(nullptr, nullptr);
   if (StrmBuffer)
   {
     delete[] StrmBuffer;
-    StrmBuffer = NULL;
+    StrmBuffer = nullptr;
   }
   unguard;
 }
@@ -508,7 +508,7 @@ int VSDLSoundDevice::GetStreamAvailable()
 //
 //==========================================================================
 
-short* VSDLSoundDevice::GetStreamBuffer()
+short *VSDLSoundDevice::GetStreamBuffer()
 {
   guard(VSDLSoundDevice::GetStreamBuffer);
   return (short*)(StrmBuffer + StrmBufferUsed);
@@ -521,7 +521,7 @@ short* VSDLSoundDevice::GetStreamBuffer()
 //
 //==========================================================================
 
-void VSDLSoundDevice::SetStreamData(short* Data, int Len)
+void VSDLSoundDevice::SetStreamData(short *Data, int Len)
 {
   guard(VSDLSoundDevice::SetStreamData);
   //  Apply volume.
@@ -591,10 +591,10 @@ void VSDLSoundDevice::ResumeStream()
 //
 //==========================================================================
 
-void VSDLSoundDevice::StrmCallback(void* ptr, Uint8* stream, int len)
+void VSDLSoundDevice::StrmCallback(void *ptr, Uint8 *stream, int len)
 {
   guard(VSDLSoundDevice::StrmCallback);
-  VSDLSoundDevice* Self = (VSDLSoundDevice*)ptr;
+  VSDLSoundDevice *Self = (VSDLSoundDevice*)ptr;
   if (Self->StrmBufferUsed >= len)
   {
     memcpy(stream, Self->StrmBuffer, len);

@@ -37,10 +37,10 @@ class VActorDisplayWindow : public VWidget
 {
   DECLARE_CLASS(VActorDisplayWindow, VWidget, 0)
 
-  VState*   CastState;
+  VState *CastState;
   float   CastTime;
   float   StateTime;
-  VState*   NextState;
+  VState *NextState;
 
   VActorDisplayWindow();
 
@@ -52,8 +52,8 @@ class VActorDisplayWindow : public VWidget
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-bool R_DrawStateModelFrame(VState* State, VState* NextState, float Inter,
-  const TVec& Origin, float Angle);
+bool R_DrawStateModelFrame(VState *State, VState *NextState, float Inter,
+  const TVec &Origin, float Angle);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -85,7 +85,7 @@ VActorDisplayWindow::VActorDisplayWindow()
 //
 //==========================================================================
 
-void VActorDisplayWindow::SetState(VState* AState)
+void VActorDisplayWindow::SetState(VState *AState)
 {
   guard(VActorDisplayWindow::SetState);
   CastState = AState;

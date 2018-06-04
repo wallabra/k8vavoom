@@ -148,7 +148,7 @@ struct PNGHandle {
     vuint32 Size;
   };
 
-  VStream* File; // doesn't own
+  VStream *File; // doesn't own
   TArray<Chunk> Chunks;
 #ifdef MINIPNG_LOAD_TEXT_CHUNKS
   TArray<char *> TextChunks;
@@ -177,7 +177,7 @@ struct PNGHandle {
   vuint8 getA (int x, int y) const;
 
 private:
-  const vuint8* pixaddr (int x, int y) const;
+  const vuint8 *pixaddr (int x, int y) const;
 };
 
 
@@ -200,7 +200,7 @@ bool M_FindPNGIDAT (PNGHandle *png, vuint32 *chunkLen);
 
 #ifdef MINIPNG_LOAD_TEXT_CHUNKS
 // Finds a PNG text chunk with the given signature and returns a pointer
-// to a NULL-terminated string if present. Returns NULL on failure.
+// to a nullptr-terminated string if present. Returns nullptr on failure.
 // (Note: tEXt, not zTXt.)
 char *M_GetPNGText (PNGHandle *png, const char *keyword);
 bool M_GetPNGText (PNGHandle *png, const char *keyword, char *buffer, size_t buffsize);

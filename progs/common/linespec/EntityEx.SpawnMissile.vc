@@ -255,7 +255,7 @@ final bool ExplodeMissile(EntityEx Victim, optional line_t *line)
 //
 //  SpawnMissile
 //
-//  Returns NULL if the missile exploded immediately, otherwise returns
+//  Returns nullptr if the missile exploded immediately, otherwise returns
 // a Actor reference to the missile.
 //
 //==========================================================================
@@ -334,7 +334,7 @@ final EntityEx SpawnMissile(EntityEx dest, class<EntityEx> type,
 //
 //  SpawnMissileXYZ
 //
-//  Returns NULL if the missile exploded immediately, otherwise returns
+//  Returns nullptr if the missile exploded immediately, otherwise returns
 // a Actor reference to the missile.
 //
 //==========================================================================
@@ -434,7 +434,7 @@ final EntityEx SpawnMissileZAimed(float z, EntityEx dest, class<EntityEx> type)
 //
 //  SpawnMissileAngles
 //
-//  Returns NULL if the missile exploded immediately, otherwise returns
+//  Returns nullptr if the missile exploded immediately, otherwise returns
 // a Actor reference to the missile.
 //
 //==========================================================================
@@ -487,7 +487,7 @@ final EntityEx SpawnMissileAngles(class<EntityEx> type, float yaw, float pitch,
 //
 //  SpawnMissileAngle
 //
-//  Returns NULL if the missile exploded immediately, otherwise returns
+//  Returns nullptr if the missile exploded immediately, otherwise returns
 // a Actor reference to the missile.
 //
 //==========================================================================
@@ -535,7 +535,7 @@ final EntityEx SpawnMissileAngle(class<EntityEx> type, float angle,
 //
 //  SpawnMissileAngleSpeed
 //
-//  Returns NULL if the missile exploded immediately, otherwise returns
+//  Returns nullptr if the missile exploded immediately, otherwise returns
 // a Actor reference to the missile.
 //
 //==========================================================================

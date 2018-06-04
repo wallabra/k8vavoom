@@ -46,7 +46,7 @@
 
 static VReverbInfo Psychotic =
 {
-  NULL,
+  nullptr,
   "Psychotic",
   0x1900,
   true,
@@ -287,7 +287,7 @@ static VReverbInfo Off =
   { 0, 7.5f,  1.00f, -10000, -10000, 0,   1.00f,  1.00f, 1.0f,  -2602, 0.007f, 0.0f,0.0f,0.0f,   200, 0.011f, 0.0f,0.0f,0.0f, 0.250f, 0.00f, 0.25f, 0.000f, -5.0f, 5000.0f, 250.0f, 0.0f,   0.0f,   0.0f, 0x33f }
 };
 
-static const VReverbInfo* const DefaultEnvironments[26] =
+static const VReverbInfo *const DefaultEnvironments[26] =
 {
   &Off, &PaddedCell, &Room, &Bathroom, &LivingRoom, &StoneRoom, &Auditorium,
   &ConcertHall, &Cave, &Arena, &Hangar, &CarpettedHallway, &Hallway,
@@ -303,7 +303,7 @@ static const VReverbInfo* const DefaultEnvironments[26] =
 //
 //==========================================================================
 
-static void DoInt(VScriptParser* sc, int& Val, int Min, int Max)
+static void DoInt(VScriptParser *sc, int &Val, int Min, int Max)
 {
   sc->ExpectNumber();
   Val = MID(Min, sc->Number, Max);
@@ -315,7 +315,7 @@ static void DoInt(VScriptParser* sc, int& Val, int Min, int Max)
 //
 //==========================================================================
 
-static void DoFloat(VScriptParser* sc, float& Val, float Min, float Max)
+static void DoFloat(VScriptParser *sc, float &Val, float Min, float Max)
 {
   sc->ExpectFloat();
   Val = MID(Min, sc->Float, Max);
@@ -327,7 +327,7 @@ static void DoFloat(VScriptParser* sc, float& Val, float Min, float Max)
 //
 //==========================================================================
 
-static void DoBool(VScriptParser* sc, int& Flags, int Mask)
+static void DoBool(VScriptParser *sc, int &Flags, int Mask)
 {
   if (sc->Check("true"))
   {
@@ -349,7 +349,7 @@ static void DoBool(VScriptParser* sc, int& Flags, int Mask)
 //
 //==========================================================================
 
-void VSoundManager::ParseReverbs(VScriptParser* sc)
+void VSoundManager::ParseReverbs(VScriptParser *sc)
 {
   guard(VSoundManager::ParseReverbs);
   if (!Environments)
@@ -605,7 +605,7 @@ void VSoundManager::ParseReverbs(VScriptParser* sc)
       sc->Error(va("Environment %s is mising an Environment field", *Name));
     }
 
-    const VReverbProperties& Def = DefaultEnvironments[Prop.Environment]->Props;
+    const VReverbProperties &Def = DefaultEnvironments[Prop.Environment]->Props;
     if (!HaveEnvironmentSize)
     {
       Prop.EnvironmentSize = Def.EnvironmentSize;
@@ -720,18 +720,18 @@ void VSoundManager::ParseReverbs(VScriptParser* sc)
     }
     Prop.Flags |= Def.Flags & ~HaveFlags;
 
-    VReverbInfo* NewEnv = new VReverbInfo;
-    char* NewName = new char[Name.Length() + 1];
+    VReverbInfo *NewEnv = new VReverbInfo;
+    char *NewName = new char[Name.Length() + 1];
     strcpy(NewName, *Name);
-    NewEnv->Next = NULL;
+    NewEnv->Next = nullptr;
     NewEnv->Name = NewName;
     NewEnv->Id = (Id1 << 8) | Id2;
     NewEnv->Builtin = false;
     NewEnv->Props = Prop;
 
     //  Find a slot for the new environment.
-    VReverbInfo* Check = Environments;
-    VReverbInfo** Ptr = &Environments;
+    VReverbInfo *Check = Environments;
+    VReverbInfo **Ptr = &Environments;
     while (Check && Check->Id < NewEnv->Id)
     {
       Ptr = &Check->Next;
@@ -747,15 +747,15 @@ void VSoundManager::ParseReverbs(VScriptParser* sc)
         NewEnv->Next = Check->Next;
         *Ptr = NewEnv;
         delete[] const_cast<char*>(Check->Name);
-        Check->Name = NULL;
+        Check->Name = nullptr;
         delete Check;
-        Check = NULL;
+        Check = nullptr;
       }
       else
       {
         delete[] NewName;
         delete NewEnv;
-        NewEnv = NULL;
+        NewEnv = nullptr;
       }
     }
     else
@@ -765,7 +765,7 @@ void VSoundManager::ParseReverbs(VScriptParser* sc)
     }
   }
   delete sc;
-  sc = NULL;
+  sc = nullptr;
   unguard;
 }
 
@@ -775,10 +775,10 @@ void VSoundManager::ParseReverbs(VScriptParser* sc)
 //
 //==========================================================================
 
-VReverbInfo* VSoundManager::FindEnvironment(int Id)
+VReverbInfo *VSoundManager::FindEnvironment(int Id)
 {
   guard(VSoundManager::FindEnvironment);
-  VReverbInfo* Check = Environments;
+  VReverbInfo *Check = Environments;
   while (Check->Next && Check->Next->Id <= Id)
   {
     Check = Check->Next;

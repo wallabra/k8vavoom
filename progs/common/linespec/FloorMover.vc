@@ -77,10 +77,10 @@ float PerStepTime;
 //
 //==========================================================================
 
-void Init(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, int InType, line_t* Line)
+void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
+  int Arg5, int InType, line_t *Line)
 {
-  sector_t*   ModelSec;
+  sector_t *ModelSec;
   float     DestHeight;
   float     CeilHeight;
   TVec      Spot;
@@ -399,7 +399,7 @@ void Init(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 //
 //==========================================================================
 
-void InitStair(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
+void InitStair(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, bool Generic, float InHeight)
 {
   Sector = InSector;
@@ -440,7 +440,7 @@ void InitStair(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 //
 //==========================================================================
 
-void InitDonut(sector_t* InSector, sector_t* OtherSector, int Arg2)
+void InitDonut(sector_t *InSector, sector_t *OtherSector, int Arg2)
 {
   float   DestHeight;
   TVec    Spot;
@@ -466,7 +466,7 @@ void InitDonut(sector_t* InSector, sector_t* OtherSector, int Arg2)
 //
 //==========================================================================
 
-void InitDonut2(sector_t* InSector, sector_t* OtherSector, int Arg3)
+void InitDonut2(sector_t *InSector, sector_t *OtherSector, int Arg3)
 {
   float   DestHeight;
   TVec    Spot;

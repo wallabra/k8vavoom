@@ -78,7 +78,7 @@ public:
   bool LoadSound(int);
   void DoneWithLump(int);
   float GetMusicVolume(VName);
-  FAmbientSound* GetAmbientSound(int);
+  FAmbientSound *GetAmbientSound(int);
 
   void SetSeqTrans(VName, int, int);
   VName GetSeqTrans(int, int);
@@ -88,7 +88,7 @@ public:
   void GetSoundLumpNames(TArray<FReplacedString>&);
   void ReplaceSoundLumpNames(TArray<FReplacedString>&);
 
-  VReverbInfo* FindEnvironment(int);
+  VReverbInfo *FindEnvironment(int);
 
 private:
   struct FPlayerSound
@@ -112,10 +112,10 @@ private:
   TArray<FPlayerSound>  PlayerSounds;
   int           NumPlayerReserves;
   float         CurrentChangePitch;
-  FAmbientSound*      AmbientSounds[NUM_AMBIENT_SOUNDS];
+  FAmbientSound *AmbientSounds[NUM_AMBIENT_SOUNDS];
   TArray<VMusicVolume>  MusicVolumes;
   int           SeqTrans[64 * 3];
-  VReverbInfo*      Environments;
+  VReverbInfo *Environments;
 
   void ParseSndinfo(VScriptParser*);
   int AddSoundLump(VName, int);
@@ -175,10 +175,10 @@ public:
   //  EAX utilites
   virtual float EAX_CalcEnvSize() = 0;
 
-  static VAudioPublic* Create();
+  static VAudioPublic *Create();
 };
 extern VCvarB       snd_mid_player;
 extern VCvarB       snd_mod_player;
 
-extern VSoundManager*   GSoundManager;
-extern VAudioPublic*    GAudio;
+extern VSoundManager *GSoundManager;
+extern VAudioPublic *GAudio;

@@ -41,7 +41,7 @@ float   MinTime;
 //
 //==========================================================================
 
-void Init(sector_t* InSector, int FastOrSlow, int InMaxTime, int InSync)
+void Init(sector_t *InSector, int FastOrSlow, int InMaxTime, int InSync)
 {
   Sector = InSector;
   Sector->LightingData = self;

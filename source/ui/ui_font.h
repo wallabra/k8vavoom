@@ -44,12 +44,12 @@ protected:
   {
     int       Char;
     int       TexNum;
-    VTexture*   BaseTex;
-    VTexture**    Textures;
+    VTexture *BaseTex;
+    VTexture **Textures;
   };
 
   VName       Name;
-  VFont*        Next;
+  VFont *Next;
 
   //  Font characters
   TArray<FFontChar> Chars;
@@ -66,9 +66,9 @@ protected:
   //  Additional distance betweeen characters.
   int         Kerning;
 
-  rgba_t*       Translation;
+  rgba_t *Translation;
 
-  static VFont*   Fonts;
+  static VFont *Fonts;
 
   void BuildTranslations(const bool*, rgba_t*, bool, bool);
   int FindChar(int) const;
@@ -82,7 +82,7 @@ public:
   VFont(VName, const VStr&, int, int, int);
   ~VFont();
 
-  VTexture* GetChar(int, int*, int) const;
+  VTexture *GetChar(int, int*, int) const;
   int GetCharWidth(int) const;
   int StringWidth(const VStr&) const;
   int TextWidth(const VStr&) const;
@@ -105,8 +105,8 @@ public:
 
   static void StaticInit();
   static void StaticShutdown();
-  static VFont* FindFont(VName);
-  static VFont* GetFont(VName, VName);
+  static VFont *FindFont(VName);
+  static VFont *GetFont(VName, VName);
   static int ParseColourEscape(const char*&, int, int);
   static int FindTextColour(VName);
 };

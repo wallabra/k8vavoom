@@ -65,7 +65,7 @@
 
 HWND        hwnd; //  Needed for all DirectX interfaces
 HINSTANCE     hInst;  //  Needed for DirectInput
-VWinMessageHandler* GCDMsgHandler;
+VWinMessageHandler *GCDMsgHandler;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -162,7 +162,7 @@ static void signal_handler(int s)
 char *Sys_ConsoleInput()
 {
 //FIXME
-  return NULL;
+  return nullptr;
 }
 
 //==========================================================================
@@ -312,25 +312,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, int iCmdShow)
     wndclass.cbWndExtra    = 0;
     wndclass.hInstance     = hInst;
     wndclass.hIcon         = LoadIcon(hInstance, "APPICON");
-    wndclass.hCursor       = LoadCursor(NULL, IDC_ARROW);
-    wndclass.hbrBackground = NULL;
-    wndclass.lpszMenuName  = NULL;
+    wndclass.hCursor       = LoadCursor(nullptr, IDC_ARROW);
+    wndclass.hbrBackground = nullptr;
+    wndclass.lpszMenuName  = nullptr;
     wndclass.lpszClassName = "VAVOOM";
     wndclass.hIconSm       = LoadIcon(hInstance, "APPICON");
 
     if (!RegisterClassEx(&wndclass))
     {
-      MessageBox(NULL, "Failed to register class", "Error", MB_OK);
+      MessageBox(nullptr, "Failed to register class", "Error", MB_OK);
       return 1;
     }
 
     //  Create window
     hwnd = CreateWindowEx(WS_EX_APPWINDOW, "VAVOOM", "VAVOOM for Windows",
       (WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX) | WS_CLIPCHILDREN |
-       WS_CLIPSIBLINGS, 0, 0, 2, 2, NULL, NULL, hInst, NULL);
+       WS_CLIPSIBLINGS, 0, 0, 2, 2, nullptr, nullptr, hInst, nullptr);
     if (!hwnd)
     {
-      MessageBox(NULL, "Couldn't create window", "Error", MB_OK);
+      MessageBox(nullptr, "Couldn't create window", "Error", MB_OK);
       return 1;
     }
 
@@ -339,14 +339,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, int iCmdShow)
     UpdateWindow(hwnd);
 
     //  Initialise COM
-    if (FAILED(CoInitialize(NULL)))
+    if (FAILED(CoInitialize(nullptr)))
     {
       MessageBox(hwnd, "Failed to initialise COM", "Error", MB_OK);
       return 1;
     }
 
     //  Create event
-    tevent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    tevent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
     if (!tevent)
     {
       CoUninitialize();
@@ -374,12 +374,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, int iCmdShow)
     Host_Init();
     while (1)
     {
-      while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+      while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
       {
         if (msg.message == WM_QUIT)
         {
           dprintf("Quit message\n");
-          Sys_Quit(NULL);
+          Sys_Quit(nullptr);
         }
         else if (!win_sys_keys && (msg.message == WM_SYSKEYDOWN ||
           msg.message == WM_SYSKEYUP))
@@ -413,7 +413,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, int iCmdShow)
     sprintf(tmp_msg, "%s\n\n%s", e.message, Host_GetCoreDump());
     MessageBox(hwnd, tmp_msg, "Error", MB_OK);
     delete[] tmp_msg;
-    tmp_msg = NULL;
+    tmp_msg = nullptr;
 
     SendMessage(hwnd, WM_CLOSE, 0, 0);
     return 1;
@@ -430,7 +430,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, int iCmdShow)
     sprintf(tmp_msg, "Received external exception\n\n%s", Host_GetCoreDump());
     MessageBox(hwnd, tmp_msg, "Error", MB_OK);
     delete[] tmp_msg;
-    tmp_msg = NULL;
+    tmp_msg = nullptr;
 
 //    throw;
     SendMessage(hwnd, WM_CLOSE, 0, 0);

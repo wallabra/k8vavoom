@@ -75,7 +75,7 @@ struct texinfo_t
   float     soffs;
   TVec      taxis;
   float     toffs;
-  VTexture*   Tex;
+  VTexture *Tex;
   //  1.1 for solid surfaces
   // Alpha for masked surfaces
   float     Alpha;
@@ -85,22 +85,22 @@ struct texinfo_t
 
 struct surface_t
 {
-  surface_t*    next;
-  surface_t*    DrawNext;
-  texinfo_t*    texinfo;
-  TPlane*     plane;
-  sec_plane_t*  HorizonPlane;
+  surface_t *next;
+  surface_t *DrawNext;
+  texinfo_t *texinfo;
+  TPlane *plane;
+  sec_plane_t *HorizonPlane;
   vuint32     Light;    //  Light level and colour.
   vuint32     Fade;
-  vuint8*     lightmap;
-  rgb_t*      lightmap_rgb;
+  vuint8 *lightmap;
+  rgb_t *lightmap_rgb;
   int       dlightframe;
   int       dlightbits;
   int       count;
   short     texturemins[2];
   short     extents[2];
-  surfcache_t*  CacheSurf;
-  seg_t*  dcseg; // seg with decals for this surface
+  surfcache_t *CacheSurf;
+  seg_t *dcseg; // seg with decals for this surface
   TVec      verts[1];
 };
 
@@ -110,17 +110,17 @@ struct surface_t
 class VCameraTexture : public VTexture
 {
 public:
-  vuint8*   Pixels;
+  vuint8 *Pixels;
   bool    bNeedsUpdate;
   bool    bUpdated;
 
   VCameraTexture(VName, int, int);
   virtual ~VCameraTexture() override;
   bool CheckModified();
-  vuint8* GetPixels();
+  vuint8 *GetPixels();
   void Unload();
   void CopyImage();
-  VTexture* GetHighResolutionTexture();
+  VTexture *GetHighResolutionTexture();
 };
 
 class VRenderLevelShared;
@@ -131,11 +131,11 @@ class VRenderLevelShared;
 class VPortal
 {
 public:
-  VRenderLevelShared*   RLev;
+  VRenderLevelShared *RLev;
   TArray<surface_t*>    Surfs;
   int           Level;
 
-  VPortal(VRenderLevelShared* ARLev);
+  VPortal(VRenderLevelShared *ARLev);
   virtual ~VPortal();
   virtual bool NeedsDepthBuffer() const;
   virtual bool IsSky() const;
@@ -151,9 +151,9 @@ protected:
 
 struct VMeshFrame
 {
-  TVec*     Verts;
-  TVec*     Normals;
-  TPlane*     Planes;
+  TVec *Verts;
+  TVec *Normals;
+  TPlane *Planes;
   vuint32     VertsOffset;
   vuint32     NormalsOffset;
 };
@@ -180,7 +180,7 @@ struct VMeshEdge
 struct VMeshModel
 {
   VStr        Name;
-  mmdl_t*       Data;   // only access through Mod_Extradata
+  mmdl_t *Data;   // only access through Mod_Extradata
   TArray<VName>   Skins;
   TArray<VMeshFrame>  Frames;
   TArray<TVec>    AllVerts;

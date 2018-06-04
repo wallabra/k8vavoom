@@ -101,7 +101,7 @@ void VEntity::InitFuncIndexes()
 //
 //==========================================================================
 
-void VEntity::Serialise(VStream& Strm)
+void VEntity::Serialise(VStream &Strm)
 {
   guard(VEntity::Serialise);
   Super::Serialise(Strm);
@@ -112,7 +112,7 @@ void VEntity::Serialise(VStream& Strm)
     {
       Player->MO = this;
     }
-    SubSector = NULL; //  Must mark as not linked
+    SubSector = nullptr; //  Must mark as not linked
     LinkToWorld();
   }
   unguard;
@@ -195,7 +195,7 @@ void VEntity::InsertIntoTIDList(int tid)
   guard(VEntity::InsertIntoTIDList);
   TID = tid;
   int HashIndex = tid & (VLevelInfo::TID_HASH_SIZE - 1);
-  TIDHashPrev = NULL;
+  TIDHashPrev = nullptr;
   TIDHashNext = Level->TIDHash[HashIndex];
   if (TIDHashNext)
   {
@@ -246,7 +246,7 @@ void VEntity::RemoveFromTIDList()
 //
 //==========================================================================
 
-bool VEntity::SetState(VState* InState)
+bool VEntity::SetState(VState *InState)
 {
   guard(VEntity::SetState);
   VState *st = InState;
@@ -261,7 +261,7 @@ bool VEntity::SetState(VState* InState)
     if (!st)
     {
       // Remove mobj
-      State = NULL;
+      State = nullptr;
       StateTime = -1;
       DestroyThinker();
       return false;
@@ -314,7 +314,7 @@ bool VEntity::SetState(VState* InState)
 //
 //==========================================================================
 
-void VEntity::SetInitialState(VState* InState)
+void VEntity::SetInitialState(VState *InState)
 {
   guard(VEntity::SetInitialState);
   State = InState;
@@ -360,11 +360,11 @@ bool VEntity::AdvanceState(float deltaTime)
 //
 //==========================================================================
 
-VState* VEntity::FindState(VName StateName, VName SubLabel, bool Exact)
+VState *VEntity::FindState(VName StateName, VName SubLabel, bool Exact)
 {
   guard(VEntity::FindState);
-  VStateLabel* Lbl = GetClass()->FindStateLabel(StateName, SubLabel, Exact);
-  return Lbl ? Lbl->State : NULL;
+  VStateLabel *Lbl = GetClass()->FindStateLabel(StateName, SubLabel, Exact);
+  return Lbl ? Lbl->State : nullptr;
   unguard;
 }
 
@@ -374,13 +374,13 @@ VState* VEntity::FindState(VName StateName, VName SubLabel, bool Exact)
 //
 //==========================================================================
 
-VState* VEntity::FindStateEx(const VStr& StateName, bool Exact)
+VState *VEntity::FindStateEx(const VStr &StateName, bool Exact)
 {
   guard(VEntity::FindStateEx);
   TArray<VName> Names;
   VMemberBase::StaticSplitStateLabel(StateName, Names);
-  VStateLabel* Lbl = GetClass()->FindStateLabel(Names, Exact);
-  return Lbl ? Lbl->State : NULL;
+  VStateLabel *Lbl = GetClass()->FindStateLabel(Names, Exact);
+  return Lbl ? Lbl->State : nullptr;
   unguard;
 }
 
@@ -393,8 +393,8 @@ VState* VEntity::FindStateEx(const VStr& StateName, bool Exact)
 bool VEntity::HasSpecialStates(VName StateName)
 {
   guard(VEntity::HasSpecialStates);
-  VStateLabel* Lbl = GetClass()->FindStateLabel(StateName);
-  return Lbl != NULL && Lbl->SubLabels.Num() > 0;
+  VStateLabel *Lbl = GetClass()->FindStateLabel(StateName);
+  return Lbl != nullptr && Lbl->SubLabels.Num() > 0;
   unguard;
 }
 
@@ -420,7 +420,7 @@ void VEntity::GetStateEffects(TArray<VLightEffectDef*>& Lights,
   //  Find all matching effects.
   for (int i = 0; i < GetClass()->SpriteEffects.Num(); i++)
   {
-    VSpriteEffect& SprFx = GetClass()->SpriteEffects[i];
+    VSpriteEffect &SprFx = GetClass()->SpriteEffects[i];
     if (SprFx.SpriteIndex != State->SpriteIndex)
     {
       continue;
@@ -449,18 +449,18 @@ void VEntity::GetStateEffects(TArray<VLightEffectDef*>& Lights,
 //
 //==========================================================================
 
-bool VEntity::CallStateChain(VEntity* Actor, VState* AState)
+bool VEntity::CallStateChain(VEntity *Actor, VState *AState)
 {
   guard(VEntity::CallStateChain);
   //  Set up state call structure.
-  VStateCall* PrevCall = XLevel->StateCall;
+  VStateCall *PrevCall = XLevel->StateCall;
   VStateCall Call;
   Call.Item = this;
   bool Ret = false;
   XLevel->StateCall = &Call;
 
   int RunAway = 0;
-  VState* S = AState;
+  VState *S = AState;
   while (S)
   {
     Call.State = S;

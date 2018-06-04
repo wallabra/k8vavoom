@@ -64,7 +64,7 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
     if (Chan) Chan->Close();
   } else {
     for (int i = 0; i < ClientConnections.Num(); ++i) {
-      VThinkerChannel* Chan = ClientConnections[i]->ThinkerChannels.FindPtr(Th);
+      VThinkerChannel *Chan = ClientConnections[i]->ThinkerChannels.FindPtr(Th);
       if (Chan) Chan->Close();
     }
   }

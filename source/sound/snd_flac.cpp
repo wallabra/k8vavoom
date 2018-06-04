@@ -40,16 +40,16 @@ public:
   class FStream : public FLAC::Decoder::Stream
   {
   public:
-    VStream&      Strm;
+    VStream &Strm;
     size_t        BytesLeft;
     int         SampleBits;
     int         SampleRate;
-    void*       Data;
+    void *Data;
     size_t        DataSize;
 
-    FStream(VStream& InStream);
+    FStream(VStream &InStream);
     //virtual ~FStream () {}
-    void StrmWrite(const FLAC__int32* const Buf[], size_t Offs,
+    void StrmWrite(const FLAC__int32 *const Buf[], size_t Offs,
       size_t Len);
 
   protected:
@@ -71,43 +71,43 @@ public:
   class FStream : public FLAC::Decoder::Stream
   {
   public:
-    VStream*      Strm;
+    VStream *Strm;
     size_t        BytesLeft;
     int         NumChannels;
     int         SampleBits;
     int         SampleRate;
 
-    FLAC__int32*    SamplePool[2];
+    FLAC__int32 *SamplePool[2];
     size_t        PoolSize;
     size_t        PoolUsed;
     size_t        PoolPos;
 
-    short*        StrmBuf;
+    short *StrmBuf;
     size_t        StrmSize;
 
-    FStream(VStream* InStream);
+    FStream(VStream *InStream);
     virtual ~FStream();
-    void StrmWrite(const FLAC__int32* const Buf[], size_t Offs,
+    void StrmWrite(const FLAC__int32 *const Buf[], size_t Offs,
       size_t Len);
 
   protected:
     //  FLAC decoder callbacks.
     ::FLAC__StreamDecoderReadStatus read_callback(FLAC__byte buffer[],
-      size_t* bytes);
+      size_t *bytes);
     ::FLAC__StreamDecoderWriteStatus write_callback(
       const ::FLAC__Frame *frame, const FLAC__int32 * const buffer[]);
     void metadata_callback(const ::FLAC__StreamMetadata *metadata);
     void error_callback(::FLAC__StreamDecoderErrorStatus status);
   };
 
-  FStream*      Stream;
+  FStream *Stream;
 
-  VFlacAudioCodec(FStream* InStream);
+  VFlacAudioCodec(FStream *InStream);
   ~VFlacAudioCodec();
-  int Decode(short* Data, int NumSamples);
+  int Decode(short *Data, int NumSamples);
   bool Finished();
   void Restart();
-  static VAudioCodec* Create(VStream* InStream);
+  static VAudioCodec *Create(VStream *InStream);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -134,7 +134,7 @@ IMPLEMENT_AUDIO_CODEC(VFlacAudioCodec, "FLAC");
 //
 //==========================================================================
 
-void VFlacSampleLoader::Load(sfxinfo_t& Sfx, VStream& Stream)
+void VFlacSampleLoader::Load(sfxinfo_t &Sfx, VStream &Stream)
 {
   guard(VFlacSampleLoader::Load);
   //  Check if it's a FLAC file
@@ -147,25 +147,25 @@ void VFlacSampleLoader::Load(sfxinfo_t& Sfx, VStream& Stream)
   }
 
   //  Create reader sream.
-  FStream* Strm = new FStream(Stream);
+  FStream *Strm = new FStream(Stream);
   Strm->Data = Z_Malloc(1);
   Strm->init();
   Strm->process_until_end_of_metadata();
   if (!Strm->SampleRate)
   {
     Z_Free(Strm->Data);
-    Sfx.Data = NULL;
+    Sfx.Data = nullptr;
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
     return;
   }
   if (!Strm->process_until_end_of_stream())
   {
     GCon->Logf("Failed to process FLAC file");
     Z_Free(Strm->Data);
-    Sfx.Data = NULL;
+    Sfx.Data = nullptr;
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
     return;
   }
   Sfx.SampleRate = Strm->SampleRate;
@@ -173,7 +173,7 @@ void VFlacSampleLoader::Load(sfxinfo_t& Sfx, VStream& Stream)
   Sfx.DataSize = Strm->DataSize;
   Sfx.Data = Strm->Data;
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
   unguard;
 }
 
@@ -183,7 +183,7 @@ void VFlacSampleLoader::Load(sfxinfo_t& Sfx, VStream& Stream)
 //
 //==========================================================================
 
-VFlacSampleLoader::FStream::FStream(VStream& InStream)
+VFlacSampleLoader::FStream::FStream(VStream &InStream)
 : Strm(InStream)
 , SampleBits(0)
 , SampleRate(0)
@@ -203,7 +203,7 @@ VFlacSampleLoader::FStream::FStream(VStream& InStream)
 //==========================================================================
 
 ::FLAC__StreamDecoderReadStatus VFlacSampleLoader::FStream::read_callback(
-  FLAC__byte buffer[], size_t* bytes)
+  FLAC__byte buffer[], size_t *bytes)
 {
   guard(VFlacSampleLoader::FStream::read_callback);
   if (*bytes > 0)
@@ -237,18 +237,18 @@ VFlacSampleLoader::FStream::FStream(VStream& InStream)
 //==========================================================================
 
 ::FLAC__StreamDecoderWriteStatus VFlacSampleLoader::FStream::write_callback(
-  const ::FLAC__Frame* frame, const FLAC__int32* const buffer[])
+  const ::FLAC__Frame *frame, const FLAC__int32 *const buffer[])
 {
   guard(VFlacSampleLoader::FStream::write_callback);
-  void* Temp = Data;
+  void *Temp = Data;
   Data = Z_Malloc(DataSize + frame->header.blocksize * SampleBits / 8);
   memcpy(Data, Temp, DataSize);
   Z_Free(Temp);
 
-  const FLAC__int32* pSrc = buffer[0];
+  const FLAC__int32 *pSrc = buffer[0];
   if (SampleBits == 8)
   {
-    vuint8* pDst = (vuint8*)Data + DataSize;
+    vuint8 *pDst = (vuint8*)Data + DataSize;
     for (size_t j = 0; j < frame->header.blocksize; j++, pSrc++, pDst++)
     {
       *pDst = vuint8(*pSrc) ^ 0x80;
@@ -256,7 +256,7 @@ VFlacSampleLoader::FStream::FStream(VStream& InStream)
   }
   else
   {
-    vint16* pDst = (vint16*)((vuint8*)Data + DataSize);
+    vint16 *pDst = (vint16*)((vuint8*)Data + DataSize);
     for (size_t j = 0; j < frame->header.blocksize; j++, pSrc++, pDst++)
     {
       *pDst = vint16(*pSrc);
@@ -274,7 +274,7 @@ VFlacSampleLoader::FStream::FStream(VStream& InStream)
 //==========================================================================
 
 void VFlacSampleLoader::FStream::metadata_callback(
-  const ::FLAC__StreamMetadata* metadata)
+  const ::FLAC__StreamMetadata *metadata)
 {
   guard(VFlacSampleLoader::FStream::metadata_callback);
   if (metadata->type == FLAC__METADATA_TYPE_STREAMINFO)
@@ -312,7 +312,7 @@ void VFlacSampleLoader::FStream::error_callback(
 //
 //==========================================================================
 
-VFlacAudioCodec::VFlacAudioCodec(FStream* InStream)
+VFlacAudioCodec::VFlacAudioCodec(FStream *InStream)
 : Stream(InStream)
 {
   SampleRate = Stream->SampleRate;
@@ -328,7 +328,7 @@ VFlacAudioCodec::~VFlacAudioCodec()
 {
   //guard(VFlacAudioCodec::~VFlacAudioCodec);
   delete Stream;
-  Stream = NULL;
+  Stream = nullptr;
   //unguard;
 }
 
@@ -338,7 +338,7 @@ VFlacAudioCodec::~VFlacAudioCodec()
 //
 //==========================================================================
 
-int VFlacAudioCodec::Decode(short* Data, int NumSamples)
+int VFlacAudioCodec::Decode(short *Data, int NumSamples)
 {
   guard(VFlacAudioCodec::Decode);
   Stream->StrmBuf = Data;
@@ -403,7 +403,7 @@ void VFlacAudioCodec::Restart()
 //
 //==========================================================================
 
-VFlacAudioCodec::FStream::FStream(VStream* InStream)
+VFlacAudioCodec::FStream::FStream(VStream *InStream)
 : Strm(InStream)
 , NumChannels(0)
 , SampleBits(0)
@@ -431,13 +431,13 @@ VFlacAudioCodec::FStream::FStream(VStream* InStream)
 VFlacAudioCodec::FStream::~FStream()
 {
   //guard(VFlacAudioCodec::FStream::~FStream);
-  if (PoolSize > 0 && SamplePool[0] != NULL)
+  if (PoolSize > 0 && SamplePool[0] != nullptr)
   {
     Z_Free(SamplePool[0]);
-    SamplePool[0] = NULL;
+    SamplePool[0] = nullptr;
     Strm->Close();
     delete Strm;
-    Strm = NULL;
+    Strm = nullptr;
   }
   //unguard;
 }
@@ -448,14 +448,14 @@ VFlacAudioCodec::FStream::~FStream()
 //
 //==========================================================================
 
-void VFlacAudioCodec::FStream::StrmWrite(const FLAC__int32* const Buf[],
+void VFlacAudioCodec::FStream::StrmWrite(const FLAC__int32 *const Buf[],
   size_t Offs, size_t Len)
 {
   guard(VFlacAudioCodec::FStream::StrmWrite);
   for (int i = 0; i < 2; i++)
   {
-    const FLAC__int32* pSrc = Buf[NumChannels == 1 ? 0 : i] + Offs;
-    short* pDst = StrmBuf + i;
+    const FLAC__int32 *pSrc = Buf[NumChannels == 1 ? 0 : i] + Offs;
+    short *pDst = StrmBuf + i;
     if (SampleBits == 8)
     {
       for (size_t j = 0; j < Len; j++, pSrc++, pDst += 2)
@@ -483,7 +483,7 @@ void VFlacAudioCodec::FStream::StrmWrite(const FLAC__int32* const Buf[],
 //==========================================================================
 
 ::FLAC__StreamDecoderReadStatus VFlacAudioCodec::FStream::read_callback(
-  FLAC__byte buffer[], size_t* bytes)
+  FLAC__byte buffer[], size_t *bytes)
 {
   guard(VFlacAudioCodec::FStream::read_callback);
   if (*bytes > 0)
@@ -517,7 +517,7 @@ void VFlacAudioCodec::FStream::StrmWrite(const FLAC__int32* const Buf[],
 //==========================================================================
 
 ::FLAC__StreamDecoderWriteStatus VFlacAudioCodec::FStream::write_callback(
-  const ::FLAC__Frame* frame, const FLAC__int32* const buffer[])
+  const ::FLAC__Frame *frame, const FLAC__int32 *const buffer[])
 {
   guard(VFlacAudioCodec::FStream::write_callback);
   size_t blockSize = frame->header.blocksize;
@@ -555,7 +555,7 @@ void VFlacAudioCodec::FStream::StrmWrite(const FLAC__int32* const Buf[],
 //==========================================================================
 
 void VFlacAudioCodec::FStream::metadata_callback(
-  const ::FLAC__StreamMetadata* metadata)
+  const ::FLAC__StreamMetadata *metadata)
 {
   guard(VFlacAudioCodec::FStream::metadata_callback);
   if (metadata->type == FLAC__METADATA_TYPE_STREAMINFO && PoolSize == 0)
@@ -595,7 +595,7 @@ void VFlacAudioCodec::FStream::error_callback(
 //
 //==========================================================================
 
-VAudioCodec* VFlacAudioCodec::Create(VStream* InStream)
+VAudioCodec *VFlacAudioCodec::Create(VStream *InStream)
 {
   guard(VFlacAudioCodec::Create);
   //  Check if it's a FLAC file
@@ -604,15 +604,15 @@ VAudioCodec* VFlacAudioCodec::Create(VStream* InStream)
   InStream->Serialise(Hdr, 4);
   if (Hdr[0] != 'f' || Hdr[1] != 'L' || Hdr[2] != 'a' || Hdr[3] != 'C')
   {
-    return NULL;
+    return nullptr;
   }
 
-  FStream* Strm = new FStream(InStream);
+  FStream *Strm = new FStream(InStream);
   if (!Strm->SampleRate)
   {
     delete Strm;
-    Strm = NULL;
-    return NULL;
+    Strm = nullptr;
+    return nullptr;
   }
   return new VFlacAudioCodec(Strm);
   unguard;

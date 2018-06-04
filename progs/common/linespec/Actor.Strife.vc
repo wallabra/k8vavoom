@@ -197,7 +197,7 @@ final void A_LightGoesOut()
   EntityEx foo;
 
   Sector->params.lightlevel = 0;
-  Sector->floor.dist = Level.FindLowestFloorSurrounding(Sector, NULL);
+  Sector->floor.dist = Level.FindLowestFloorSurrounding(Sector, nullptr);
   for (i = 0; i < 8; i++)
   {
     foo = Spawn(Rubble1, Origin);
@@ -241,7 +241,7 @@ final void A_ExtraLightOff()
 final void A_HideDecepticon()
 {
   LineSpecialLevelInfo(Level).EV_DoDoor(999, 64, 0, 0, 0,
-    VerticalDoor::DOOREV_Close, NULL, none);
+    VerticalDoor::DOOREV_Close, nullptr, none);
   if (Target && Target.bIsPlayer)
   {
     LineSpecialLevelInfo(Level).NoiseAlert(Target, self);
@@ -589,7 +589,7 @@ final void A_CrusaderDeath()
     return;
   }
   LineSpecialLevelInfo(Level).EV_DoFloor(667, 8, 0, 0, 0,
-    FloorMover::FLOOREV_LowerToLowest, NULL);
+    FloorMover::FLOOREV_LowerToLowest, nullptr);
 }
 
 //==========================================================================
@@ -858,7 +858,7 @@ final void A_ProgrammerDeath()
     return;
   }
 
-  Level.ExecuteActionSpecial(LNSPEC_ExitNormal, 0, 0, 0, 0, 0, NULL, 0,
+  Level.ExecuteActionSpecial(LNSPEC_ExitNormal, 0, 0, 0, 0, 0, nullptr, 0,
     self);
   //  This will execute sky changes.
   A_BossDeath();

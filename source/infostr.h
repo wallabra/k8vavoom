@@ -31,8 +31,8 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-VStr Info_ValueForKey(const VStr& s, const VStr& key);
-void Info_RemoveKey(VStr& s, const VStr& key);
-void Info_SetValueForKey(VStr& s, const VStr& key, const VStr& value);
+VStr Info_ValueForKey(const VStr &s, const VStr &key);
+void Info_RemoveKey(VStr &s, const VStr &key);
+void Info_SetValueForKey(VStr &s, const VStr &key, const VStr &value);
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------

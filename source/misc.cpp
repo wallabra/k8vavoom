@@ -34,13 +34,13 @@
 class VLogSysError : public FOutputDevice
 {
 public:
-  void Serialise(const char* V, EName Event);
+  void Serialise(const char *V, EName Event);
 };
 
 class VLogHostError : public FOutputDevice
 {
 public:
-  void Serialise(const char* V, EName Event);
+  void Serialise(const char *V, EName Event);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -56,8 +56,8 @@ public:
 static VLogSysError   LogSysError;
 static VLogHostError  LogHostError;
 
-FOutputDevice*      GLogSysError = &LogSysError;
-FOutputDevice*      GLogHostError = &LogHostError;
+FOutputDevice *GLogSysError = &LogSysError;
+FOutputDevice *GLogHostError = &LogHostError;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -72,23 +72,23 @@ FOutputDevice*      GLogHostError = &LogHostError;
 FOutputDevice::~FOutputDevice()
 {
 }
-void FOutputDevice::Log(const char* S)
+void FOutputDevice::Log(const char *S)
 {
   Serialise(S, NAME_Log);
 }
-void FOutputDevice::Log(EName Type, const char* S)
+void FOutputDevice::Log(EName Type, const char *S)
 {
   Serialise(S, Type);
 }
-void FOutputDevice::Log(const VStr& S)
+void FOutputDevice::Log(const VStr &S)
 {
   Serialise(*S, NAME_Log);
 }
-void FOutputDevice::Log(EName Type, const VStr& S)
+void FOutputDevice::Log(EName Type, const VStr &S)
 {
   Serialise(*S, Type);
 }
-void FOutputDevice::Logf(const char* Fmt, ...)
+void FOutputDevice::Logf(const char *Fmt, ...)
 {
   va_list argptr;
   char string[1024];
@@ -99,7 +99,7 @@ void FOutputDevice::Logf(const char* Fmt, ...)
 
   Serialise(string, NAME_Log);
 }
-void FOutputDevice::Logf(EName Type, const char* Fmt, ...)
+void FOutputDevice::Logf(EName Type, const char *Fmt, ...)
 {
   va_list argptr;
   char string[1024];
@@ -117,7 +117,7 @@ void FOutputDevice::Logf(EName Type, const char* Fmt, ...)
 //
 //==========================================================================
 
-void VLogSysError::Serialise(const char* V, EName)
+void VLogSysError::Serialise(const char *V, EName)
 {
   Sys_Error("%s", V);
 }
@@ -128,7 +128,7 @@ void VLogSysError::Serialise(const char* V, EName)
 //
 //==========================================================================
 
-void VLogHostError::Serialise(const char* V, EName)
+void VLogHostError::Serialise(const char *V, EName)
 {
   Host_Error("%s", V);
 }
@@ -192,7 +192,7 @@ int PassFloat(float f)
 //
 //==========================================================================
 
-static VStr LookupColourName(VStr& Name)
+static VStr LookupColourName(VStr &Name)
 {
   guard(LookupColourName);
   //  Check that X111R6RGB lump exists.
@@ -204,17 +204,17 @@ static VStr LookupColourName(VStr& Name)
   }
 
   //  Read the lump.
-  VStream* Strm = W_CreateLumpReaderNum(Lump);
-  char* Buf = new char[Strm->TotalSize() + 1];
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  char *Buf = new char[Strm->TotalSize() + 1];
   Strm->Serialise(Buf, Strm->TotalSize());
   Buf[Strm->TotalSize()] = 0;
-  char* BufEnd = Buf + Strm->TotalSize();
+  char *BufEnd = Buf + Strm->TotalSize();
   delete Strm;
-  Strm = NULL;
+  Strm = nullptr;
 
   vuint8 Col[3];
   int Count = 0;
-  for (char* pBuf = Buf; pBuf < BufEnd;)
+  for (char *pBuf = Buf; pBuf < BufEnd;)
   {
     if ((vuint8)*pBuf <= ' ')
     {
@@ -232,7 +232,7 @@ static VStr LookupColourName(VStr& Name)
     else if (Count < 3)
     {
       //  Parse colour component
-      char* pEnd;
+      char *pEnd;
       Col[Count] = strtoul(pBuf, &pEnd, 10);
       if (pEnd == pBuf)
       {
@@ -245,7 +245,7 @@ static VStr LookupColourName(VStr& Name)
     else
     {
       //  Colour name
-      char* Start = pBuf;
+      char *Start = pBuf;
       while (pBuf < BufEnd && *pBuf != '\n')
       {
         pBuf++;
@@ -266,14 +266,14 @@ static VStr LookupColourName(VStr& Name)
         char ValBuf[8];
         sprintf(ValBuf, "#%02x%02x%02x", Col[0], Col[1], Col[2]);
         delete[] Buf;
-        Buf = NULL;
+        Buf = nullptr;
         return ValBuf;
       }
       Count = 0;
     }
   }
   delete[] Buf;
-  Buf = NULL;
+  Buf = nullptr;
   return Name;
   unguard;
 }
@@ -284,12 +284,12 @@ static VStr LookupColourName(VStr& Name)
 //
 //==========================================================================
 
-int ParseHex(const char* Str)
+int ParseHex(const char *Str)
 {
   guard(ParseHex);
   int Ret = 0;
   int Mul = 1;
-  const char* c = Str;
+  const char *c = Str;
   if (*c == '-')
   {
     c++;
@@ -412,7 +412,7 @@ vuint32 M_ParseColour(VStr Name)
 //
 //==========================================================================
 
-void M_RgbToHsv(vuint8 r, vuint8 g, vuint8 b, vuint8& h, vuint8& s, vuint8& v)
+void M_RgbToHsv(vuint8 r, vuint8 g, vuint8 b, vuint8 &h, vuint8 &s, vuint8 &v)
 {
   guardSlow(M_RgbToHsv);
   vuint8 min = MIN(MIN(r, g), b);
@@ -447,7 +447,7 @@ void M_RgbToHsv(vuint8 r, vuint8 g, vuint8 b, vuint8& h, vuint8& s, vuint8& v)
 //
 //==========================================================================
 
-void M_RgbToHsv(float r, float g, float b, float& h, float& s, float& v)
+void M_RgbToHsv(float r, float g, float b, float &h, float &s, float &v)
 {
   guardSlow(M_RgbToHsv);
   float min = MIN(MIN(r, g), b);
@@ -486,7 +486,7 @@ void M_RgbToHsv(float r, float g, float b, float& h, float& s, float& v)
 //
 //==========================================================================
 
-void M_HsvToRgb(vuint8 h, vuint8 s, vuint8 v, vuint8& r, vuint8& g, vuint8& b)
+void M_HsvToRgb(vuint8 h, vuint8 s, vuint8 v, vuint8 &r, vuint8 &g, vuint8 &b)
 {
   guardSlow(M_HsvToRgb);
   if (s == 0)
@@ -544,7 +544,7 @@ void M_HsvToRgb(vuint8 h, vuint8 s, vuint8 v, vuint8& r, vuint8& g, vuint8& b)
 //
 //==========================================================================
 
-void M_HsvToRgb(float h, float s, float v, float& r, float& g, float& b)
+void M_HsvToRgb(float h, float s, float v, float &r, float &g, float &b)
 {
   guardSlow(M_HsvToRgb);
   if (s == 0)

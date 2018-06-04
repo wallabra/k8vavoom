@@ -40,18 +40,18 @@
 class VGMEAudioCodec : public VAudioCodec
 {
 public:
-  Music_Emu*    emu;
-  gme_info_t*   info;
+  Music_Emu *emu;
+  gme_info_t *info;
   long      length;
   bool      playing;
 
-  VGMEAudioCodec(void* Data, int Size, gme_type_t in_file);
+  VGMEAudioCodec(void *Data, int Size, gme_type_t in_file);
   ~VGMEAudioCodec();
-  int Decode(short* Data, int NumSamples);
+  int Decode(short *Data, int NumSamples);
   bool Finished();
   void Restart();
 
-  static VAudioCodec* Create(VStream* InStrm);
+  static VAudioCodec *Create(VStream *InStrm);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -76,11 +76,11 @@ IMPLEMENT_AUDIO_CODEC(VGMEAudioCodec, "Game Music Emu");
 //
 //==========================================================================
 
-VGMEAudioCodec::VGMEAudioCodec(void* Data, int Size, gme_type_t in_file)
+VGMEAudioCodec::VGMEAudioCodec(void *Data, int Size, gme_type_t in_file)
 : emu(in_file->new_emu()), playing(false)
 {
   // Create emulator and set up playback parameters
-  if (emu == NULL)
+  if (emu == nullptr)
   {
     GCon->Log("Couldn't create Emulator, Out of memory.");
   }
@@ -137,10 +137,10 @@ VGMEAudioCodec::~VGMEAudioCodec()
   playing = false;
 
   gme_free_info(info);
-  info = NULL;
+  info = nullptr;
 
   gme_delete(emu);
-  emu = NULL;
+  emu = nullptr;
   unguard;
 }
 
@@ -150,7 +150,7 @@ VGMEAudioCodec::~VGMEAudioCodec()
 //
 //==========================================================================
 
-int VGMEAudioCodec::Decode(short* Data, int NumSamples)
+int VGMEAudioCodec::Decode(short *Data, int NumSamples)
 {
   guard(VGMEAudioCodec::Decode);
   // Are we done yet?
@@ -210,7 +210,7 @@ void VGMEAudioCodec::Restart()
 //
 //==========================================================================
 
-VAudioCodec* VGMEAudioCodec::Create(VStream* InStrm)
+VAudioCodec *VGMEAudioCodec::Create(VStream *InStrm)
 {
   guard(VGMEAudioCodec::Create);
   // Scan file's header to determine it's a playable type
@@ -221,18 +221,18 @@ VAudioCodec* VGMEAudioCodec::Create(VStream* InStrm)
   if (!file)
   {
     // Incorrect header or incompatible file
-    return NULL;
+    return nullptr;
   }
 
   //  Start playback.
   int Size = InStrm->TotalSize();
-  void* Data = Z_Malloc(Size);
+  void *Data = Z_Malloc(Size);
   InStrm->Seek(0);
   InStrm->Serialise(Data, Size);
 
   InStrm->Close();
   delete InStrm;
-  InStrm = NULL;
+  InStrm = nullptr;
 
   return new VGMEAudioCodec(Data, Size, file);
   unguard;

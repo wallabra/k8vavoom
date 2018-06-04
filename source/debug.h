@@ -31,8 +31,8 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void OpenDebugFile(const char* name);
+void OpenDebugFile (const char *name);
 // Print into debug file
-int dprintf(const char *s, ...) __attribute__((format(printf, 1, 2)));
+int dprintf (const char *s, ...) __attribute__((format(printf, 1, 2)));
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------

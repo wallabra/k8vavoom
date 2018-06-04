@@ -64,7 +64,7 @@ struct PNGData {
   vuint8 getA (int x, int y) const;
 
 private:
-  const vuint8* pixaddr (int x, int y) const;
+  const vuint8 *pixaddr (int x, int y) const;
 };
 
 
@@ -137,7 +137,7 @@ PNGData::~PNGData () {
 }
 
 
-const vuint8* PNGData::pixaddr (int x, int y) const {
+const vuint8 *PNGData::pixaddr (int x, int y) const {
   if (width < 1 || height < 1 || x < 0 || y < 0 || x >= width || y >= height) return nullptr;
   int xmul;
   switch (colortype) {

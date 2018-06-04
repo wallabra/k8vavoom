@@ -48,7 +48,7 @@ float   Delta;
 //
 //============================================================================
 
-void Init(sector_t* InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
+void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   int InType)
 {
   Sector = InSector;

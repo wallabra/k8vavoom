@@ -71,8 +71,8 @@ private:
 
 private:
   vuint32 mEBSize;
-  TEntry* mEntries;
-  TEntry** mBuckets;
+  TEntry *mEntries;
+  TEntry **mBuckets;
   int mBucketsUsed;
   TEntry *mFreeEntryHead;
   int mFirstEntry, mLastEntry;
