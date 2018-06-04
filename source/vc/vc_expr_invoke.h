@@ -34,7 +34,7 @@ public:
   int NumArgs;
   VExpression *Args[VMethod::MAX_PARAMS+1];
 
-  VInvocationBase (int ANumArgs, VExpression **AArgs, const TLocation& ALoc);
+  VInvocationBase (int ANumArgs, VExpression **AArgs, const TLocation &ALoc);
   virtual ~VInvocationBase () override;
 
 protected:

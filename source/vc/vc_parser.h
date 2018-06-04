@@ -26,7 +26,7 @@
 class VParser
 {
 private:
-  VLexer& Lex;
+  VLexer &Lex;
   VPackage *Package;
   VMethod *currFunc; // for lambdas
   VClass *currClass; // for lambdas

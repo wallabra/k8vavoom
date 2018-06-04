@@ -278,9 +278,9 @@ void VClass::ReplaceSpriteNames (TArray<FReplacedString> &List) {
 void VClass::StaticReinitStatesLookup () {
   guard(VClass::StaticReinitStatesLookup);
   // clear states lookup tables
-  for (VClass* C = GClasses; C; C = C->LinkNext) C->StatesLookup.Clear();
+  for (VClass *C = GClasses; C; C = C->LinkNext) C->StatesLookup.Clear();
   // now init states lookup tables again
-  for (VClass* C = GClasses; C; C = C->LinkNext) C->InitStatesLookup();
+  for (VClass *C = GClasses; C; C = C->LinkNext) C->InitStatesLookup();
   unguard;
 }
 
@@ -716,7 +716,7 @@ bool VClass::Define () {
   guard(VClass::Define);
   // check for duplicates
   int HashIndex = Name.GetIndex()&4095;
-  for (VMemberBase* m = GMembersHash[HashIndex]; m; m = m->HashNext) {
+  for (VMemberBase *m = GMembersHash[HashIndex]; m; m = m->HashNext) {
     if (m->Name == Name && m->MemberType == MEMBER_Class && ((VClass *)m)->Defined) {
       ParseError(Loc, "Class %s already has been declared", *Name);
     }
@@ -1311,7 +1311,7 @@ void VClass::CreateVTable () {
   if (!ClassVTable) ClassVTable = new VMethod*[ClassNumMethods];
   if (ParentClass) memcpy(ClassVTable, ParentClass->ClassVTable, ParentClass->ClassNumMethods*sizeof(VMethod *));
   for (int i = 0; i < Methods.Num(); ++i) {
-    VMethod* M = Methods[i];
+    VMethod *M = Methods[i];
     if (M->VTableIndex == -1) continue;
     ClassVTable[M->VTableIndex] = M;
   }

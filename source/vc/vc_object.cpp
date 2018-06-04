@@ -172,7 +172,7 @@ VObject *VObject::StaticSpawnObject (VClass *AClass) {
 
   check(AClass);
   // allocate memory
-  VObject* Obj = (VObject*)Z_Calloc(AClass->ClassSize);
+  VObject *Obj = (VObject*)Z_Calloc(AClass->ClassSize);
 
   // copy values from the default object
   check(AClass->Defaults);
@@ -342,7 +342,7 @@ int VObject::GetObjectsCount () {
 //  VObject::Serialise
 //
 //==========================================================================
-void VObject::Serialise (VStream& Strm) {
+void VObject::Serialise (VStream &Strm) {
   guard(VObject::Serialise);
   GetClass()->SerialiseObject(Strm, this);
   unguard;
@@ -988,14 +988,14 @@ IMPLEMENT_FUNCTION(VObject, GetClassReplacee) {
 IMPLEMENT_FUNCTION(VObject, FindClassState) {
   P_GET_NAME(StateName);
   P_GET_PTR(VClass, Cls);
-  VStateLabel* Lbl = Cls->FindStateLabel(StateName);
+  VStateLabel *Lbl = Cls->FindStateLabel(StateName);
   RET_PTR(Lbl ? Lbl->State : nullptr);
 }
 
 IMPLEMENT_FUNCTION(VObject, GetClassNumOwnedStates) {
   P_GET_PTR(VClass, Cls);
   int Ret = 0;
-  for (VState* S = Cls->States; S; S = S->Next) ++Ret;
+  for (VState *S = Cls->States; S; S = S->Next) ++Ret;
   RET_INT(Ret);
 }
 

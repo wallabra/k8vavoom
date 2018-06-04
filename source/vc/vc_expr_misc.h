@@ -133,7 +133,7 @@ public:
   VPushPointed (VExpression *);
   virtual ~VPushPointed () override;
   virtual VExpression *SyntaxCopy () override;
-  virtual VExpression* DoResolve (VEmitContext &) override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &) override;
 

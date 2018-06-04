@@ -360,7 +360,7 @@ void VMethod::Emit () {
 //==========================================================================
 void VMethod::DumpAsm () {
   guard(VMethod::DumpAsm);
-  VMemberBase* PM = Outer;
+  VMemberBase *PM = Outer;
   while (PM->MemberType != MEMBER_Package) PM = PM->Outer;
   VPackage *Package = (VPackage *)PM;
 

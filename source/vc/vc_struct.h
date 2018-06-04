@@ -53,7 +53,7 @@ public:
   virtual void PostLoad () override;
 
   void AddField (VField *f);
-  VField* FindField (VName);
+  VField *FindField (VName);
   bool NeedsDestructor () const;
   bool Define ();
   bool DefineMembers ();

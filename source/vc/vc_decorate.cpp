@@ -247,7 +247,7 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
     Lst.Class = VClass::FindClass(*ClassName);
     for (int i = 0; i < PROPS_HASH_SIZE; ++i) Lst.PropsHash[i] = -1;
     for (int i = 0; i < FLAGS_HASH_SIZE; ++i) Lst.FlagsHash[i] = -1;
-    for (VXmlNode* PN = N->FirstChild; PN; PN = PN->NextSibling) {
+    for (VXmlNode *PN = N->FirstChild; PN; PN = PN->NextSibling) {
       if (PN->Name == "prop_int") {
         VPropDef &P = Lst.NewProp(PROP_Int, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -256,9 +256,9 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
         P.IConst = atoi(*PN->GetAttribute("value")); //FIXME
       } else if (PN->Name == "prop_int_unsupported") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_IntUnsupported, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_IntUnsupported, PN);
       } else if (PN->Name == "prop_int_id_unsupported") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_IntIdUnsupported, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_IntIdUnsupported, PN);
       } else if (PN->Name == "prop_bit_index") {
         VPropDef &P = Lst.NewProp(PROP_BitIndex, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -302,7 +302,7 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         VPropDef &P = Lst.NewProp(PROP_Str, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "prop_string_unsupported") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_StrUnsupported, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_StrUnsupported, PN);
       } else if (PN->Name == "prop_class") {
         VPropDef &P = Lst.NewProp(PROP_Class, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -319,9 +319,9 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         VPropDef &P = Lst.NewProp(PROP_State, PN);
         P.PropName = *PN->GetAttribute("property");
       } else if (PN->Name == "prop_game") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_Game, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_Game, PN);
       } else if (PN->Name == "prop_spawn_id") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_SpawnId, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_SpawnId, PN);
       } else if (PN->Name == "prop_conversation_id") {
         VPropDef &P = Lst.NewProp(PROP_ConversationId, PN);
         P.SetField(Lst.Class, "ConversationID");
@@ -329,7 +329,7 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         VPropDef &P = Lst.NewProp(PROP_PainChance, PN);
         P.SetField(Lst.Class, "PainChance");
       } else if (PN->Name == "prop_damage_factor") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_DamageFactor, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_DamageFactor, PN);
       } else if (PN->Name == "prop_missile_damage") {
         VPropDef &P = Lst.NewProp(PROP_MissileDamage, PN);
         P.SetField(Lst.Class, "MissileDamage");
@@ -351,21 +351,21 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         P.SetField(Lst.Class, "BloodType");
         P.SetField2(Lst.Class, "BloodSplatterType");
       } else if (PN->Name == "prop_stencil_colour") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_StencilColour, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_StencilColour, PN);
       } else if (PN->Name == "prop_monster") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_Monster, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_Monster, PN);
       } else if (PN->Name == "prop_projectile") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_Projectile, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_Projectile, PN);
       } else if (PN->Name == "prop_bouncetype") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_BounceType, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_BounceType, PN);
       } else if (PN->Name == "prop_clear_flags") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_ClearFlags, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_ClearFlags, PN);
       } else if (PN->Name == "prop_drop_item") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_DropItem, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_DropItem, PN);
       } else if (PN->Name == "prop_states") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_States, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_States, PN);
       } else if (PN->Name == "prop_skip_super") {
-        /*VPropDef& P =*/(void)Lst.NewProp(PROP_SkipSuper, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_SkipSuper, PN);
       } else if (PN->Name == "prop_args") {
         VPropDef &P = Lst.NewProp(PROP_Args, PN);
         P.SetField(Lst.Class, "Args");
@@ -397,7 +397,7 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         VFlagDef &F = Lst.NewFlag(FLAG_Bool, PN);
         F.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "flag_unsupported") {
-        /*VFlagDef& F =*/(void)Lst.NewFlag(FLAG_Unsupported, PN);
+        /*VFlagDef &F =*/(void)Lst.NewFlag(FLAG_Unsupported, PN);
       } else if (PN->Name == "flag_byte") {
         VFlagDef &F = Lst.NewFlag(FLAG_Byte, PN);
         F.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -571,7 +571,7 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
   if (ec.SelfClass) {
     VConstant *Const = ec.SelfClass->FindConstant(CheckName);
     if (Const) {
-      VExpression* e = new VConstantValue(Const, Loc);
+      VExpression *e = new VConstantValue(Const, Loc);
       delete this;
       return e->Resolve(ec);
     }
@@ -591,7 +591,7 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
 
   CheckName = *Name.ToLower();
   // look only for constants defined in DECORATE scripts
-  VConstant* Const = ec.Package->FindConstant(CheckName);
+  VConstant *Const = ec.Package->FindConstant(CheckName);
   if (Const) {
     VExpression *e = new VConstantValue(Const, Loc);
     delete this;
@@ -690,7 +690,7 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
   guard(VDecorateInvocation::DoResolve);
   if (ec.SelfClass) {
     // first try with decorate_ prefix, then without.
-    VMethod* M = ec.SelfClass->FindMethod(va("decorate_%s", *Name));
+    VMethod *M = ec.SelfClass->FindMethod(va("decorate_%s", *Name));
     if (!M) M = ec.SelfClass->FindMethod(Name);
     if (M) {
       if (M->Flags&FUNC_Iterator) {
@@ -951,7 +951,7 @@ __attribute__((unused)) static void SetFieldClass (VObject *Obj, VName FieldName
 static void AddClassFixup (VClass *Class, VName FieldName, const VStr &ClassName, TArray<VClassFixup> &ClassFixups) {
   guard(AddClassFixup);
   VField *F = Class->FindFieldChecked(FieldName);
-  VClassFixup& CF = ClassFixups.Alloc();
+  VClassFixup &CF = ClassFixups.Alloc();
   CF.Offset = F->Ofs;
   CF.Name = ClassName;
   CF.ReqParent = F->Type.Class;
@@ -1446,7 +1446,7 @@ static void ParseAction (VScriptParser *sc, VClass *Class) {
   sc->Expect("native");
   // find the method. First try with decorate_ prefix, then without
   sc->ExpectIdentifier();
-  VMethod* M = Class->FindMethod(va("decorate_%s", *sc->String));
+  VMethod *M = Class->FindMethod(va("decorate_%s", *sc->String));
   if (!M) M = Class->FindMethod(*sc->String);
   if (!M) sc->Error(va("Method %s not found in class %s", *sc->String, Class->GetName()));
   if (M && M->ReturnType.Type != TYPE_Void) sc->Error(va("State action %s doesn't return void", *sc->String));
@@ -1471,7 +1471,7 @@ static void ParseClass (VScriptParser *sc) {
   sc->SetCMode(true);
   // get class name and find the class
   sc->ExpectString();
-  VClass* Class = VClass::FindClass(*sc->String);
+  VClass *Class = VClass::FindClass(*sc->String);
   if (!Class) sc->Error("Class not found");
   // I don't care about parent class name because in Vavoom it can be different
   sc->Expect("extends");
@@ -1656,7 +1656,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     // check for label
     if (sc->Check(":")) {
       LastState = nullptr;
-      VStateLabelDef& Lbl = Class->StateLabelDefs.Alloc();
+      VStateLabelDef &Lbl = Class->StateLabelDefs.Alloc();
       Lbl.Loc = TmpLoc;
       Lbl.Name = TmpName;
       continue;
@@ -1713,7 +1713,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       // get function name and parse arguments
       VStr FuncName = sc->String;
       VStr FuncNameLower = sc->String.ToLower();
-      VExpression* Args[VMethod::MAX_PARAMS+1];
+      VExpression *Args[VMethod::MAX_PARAMS+1];
       int NumArgs = 0;
       if (sc->Check("(")) {
         if (!sc->Check(")")) {
@@ -1799,7 +1799,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       if (FSChar < 'A' || FSChar > ']') sc->Error("Frames must be A-Z, [, \\ or ]");
 
       // create a new state
-      VState* s2 = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
+      VState *s2 = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
       States.Append(s2);
       s2->SpriteName = State->SpriteName;
       s2->Frame = (State->Frame&VState::FF_FULLBRIGHT)|(FSChar-'A');
@@ -1840,7 +1840,7 @@ static void ParseParentState (VScriptParser *sc, VClass *Class, const char *LblN
     } else if (sc->Check("parent")) {
       // find state in parent class
       sc->ExpectString();
-      VStateLabel* SLbl = Class->ParentClass->FindStateLabel(*sc->String);
+      VStateLabel *SLbl = Class->ParentClass->FindStateLabel(*sc->String);
       State = (SLbl ? SLbl->State : nullptr);
 
       // check for offset
@@ -1894,7 +1894,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
 
   if (GArgs.CheckParm("-debug_decorate")) sc->Message(va("Parsing class %s", *NameStr));
 
-  VClass* DupCheck = VClass::FindClassLowerCase(*NameStr.ToLower());
+  VClass *DupCheck = VClass::FindClassLowerCase(*NameStr.ToLower());
   if (DupCheck != nullptr && DupCheck->MemberType == MEMBER_Class) {
     sc->Message(va("Warning: Redeclared class %s", *NameStr));
   }
@@ -1935,7 +1935,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
     for (int i = 0; i < ClassFixups.Num(); ++i) {
       VClassFixup &CF = ClassFixups[i];
       if (CF.Class == ParentClass) {
-        VClassFixup& NewCF = ClassFixups.Alloc();
+        VClassFixup &NewCF = ClassFixups.Alloc();
         NewCF.Offset = CF.Offset;
         NewCF.Name = CF.Name;
         NewCF.ReqParent = CF.ReqParent;
@@ -2143,7 +2143,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
 
               // check pain chances array for replacements
               TArray<VPainChanceInfo> &PainChances = GetClassPainChances(Class);
-              VPainChanceInfo* PC = nullptr;
+              VPainChanceInfo *PC = nullptr;
               for (i = 0; i < PainChances.Num(); ++i) {
                 if (PainChances[i].DamageType == DamageType) {
                   PC = &PainChances[i];
@@ -2172,7 +2172,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
 
               // check damage factors array for replacements
               TArray<VDamageFactor> DamageFactors = GetClassDamageFactors(Class);
-              VDamageFactor* DF = nullptr;
+              VDamageFactor *DF = nullptr;
               for (i = 0; i < DamageFactors.Num(); ++i) {
                 if (DamageFactors[i].DamageType == DamageType) {
                   DF = &DamageFactors[i];
@@ -2188,7 +2188,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
             break;
           case PROP_MissileDamage:
             if (sc->Check("(")) {
-              VExpression* Expr = ParseExpression(sc);
+              VExpression *Expr = ParseExpression(sc);
               if (!Expr) {
                 ParseError(sc->GetLoc(), "Damage expression expected");
               } else {
@@ -2634,7 +2634,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
   VName ClassName = *sc->String;
 
   // create class
-  VClass* Class = Type == OLDDEC_Pickup ?
+  VClass *Class = Type == OLDDEC_Pickup ?
     FakeInventoryClass->CreateDerivedClass(ClassName, DecPkg, sc->GetLoc()) :
     ActorClass->CreateDerivedClass(ClassName, DecPkg, sc->GetLoc());
   DecPkg->ParsedClasses.Append(Class);
@@ -2723,7 +2723,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
       ParseOldDecStates(sc, States, Class);
 
       // make a copy of the last state for A_FreezeDeathChunks
-      VState* State = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
+      VState *State = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
       States.Append(State);
       State->Frame = States[States.Num()-2]->Frame;
 
@@ -3136,9 +3136,9 @@ void ProcessDecorateScripts () {
   for (int i = 0; i < DecPkg->ParsedClasses.Num(); ++i) {
     TArray<VDropItemInfo> &List = *(TArray<VDropItemInfo>*)DropItemListField->GetFieldPtr((VObject*)DecPkg->ParsedClasses[i]->Defaults);
     for (int j = 0; j < List.Num(); ++j) {
-      VDropItemInfo& DI = List[j];
+      VDropItemInfo &DI = List[j];
       if (DI.TypeName == NAME_None) continue;
-      VClass* C = VClass::FindClassLowerCase(DI.TypeName);
+      VClass *C = VClass::FindClassLowerCase(DI.TypeName);
            if (!C) { if (dbg_show_missing_class) GCon->Logf("WARNING: No such class %s", *DI.TypeName); }
       else if (!C->IsChildOf(ActorClass)) GCon->Logf("WARNING: Class %s is not an actor class", *DI.TypeName);
       else DI.Type = C;
@@ -3198,7 +3198,7 @@ void VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
     FlagName = *Flag.ToLower();
   }
   for (int j = 0; j < FlagList.Num(); ++j) {
-    VFlagList& ClassDef = FlagList[j];
+    VFlagList &ClassDef = FlagList[j];
     if (ClassFilter != NAME_None && ClassDef.Class->LowerCaseName != ClassFilter) continue;
     if (!IsA(ClassDef.Class)) continue;
     for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {

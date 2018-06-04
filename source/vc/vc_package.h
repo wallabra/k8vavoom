@@ -95,9 +95,9 @@ public:
   void LoadObject (TLocation);
 
   // will delete `Strm`
-  void LoadSourceObject (VStream *Strm, const VStr& filename, TLocation l);
+  void LoadSourceObject (VStream *Strm, const VStr &filename, TLocation l);
   // will delete `Strm`
-  void LoadBinaryObject (VStream *Strm, const VStr& filename, TLocation l);
+  void LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation l);
 
   friend inline VStream &operator << (VStream &Strm, VPackage *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };

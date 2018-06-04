@@ -348,7 +348,7 @@ void VFieldType::CheckPassable (const TLocation &l) const {
 //  t2 - needed type
 //
 //==========================================================================
-bool VFieldType::CheckMatch (const TLocation &l, const VFieldType& Other, bool raiseError) const {
+bool VFieldType::CheckMatch (const TLocation &l, const VFieldType &Other, bool raiseError) const {
   guard(VFieldType::CheckMatch);
   CheckPassable(l);
   Other.CheckPassable(l);
@@ -545,7 +545,7 @@ VScriptArray::VScriptArray (const TArray<VStr>& xarr) {
 //  VScriptArray::Clear
 //
 //==========================================================================
-void VScriptArray::Clear (VFieldType& Type) {
+void VScriptArray::Clear (VFieldType &Type) {
   guard(VScriptArray::Clear);
   if (ArrData) {
     int InnerSize = Type.GetSize();
@@ -564,7 +564,7 @@ void VScriptArray::Clear (VFieldType& Type) {
 //  VScriptArray::Resize
 //
 //==========================================================================
-void VScriptArray::Resize (int NewSize, VFieldType& Type) {
+void VScriptArray::Resize (int NewSize, VFieldType &Type) {
   guard(VScriptArray::Resize);
   check(NewSize >= 0);
 
@@ -596,7 +596,7 @@ void VScriptArray::Resize (int NewSize, VFieldType& Type) {
 //  VScriptArray::SetNum
 //
 //==========================================================================
-void VScriptArray::SetNum (int NewNum, VFieldType& Type) {
+void VScriptArray::SetNum (int NewNum, VFieldType &Type) {
   guard(VScriptArray::SetNum);
   check(NewNum >= 0);
   // as a special case setting size to 0 should clear the array
@@ -612,7 +612,7 @@ void VScriptArray::SetNum (int NewNum, VFieldType& Type) {
 //  VScriptArray::SetNumMinus
 //
 //==========================================================================
-void VScriptArray::SetNumMinus (int NewNum, VFieldType& Type) {
+void VScriptArray::SetNumMinus (int NewNum, VFieldType &Type) {
   guard(VScriptArray::SetNumMinus);
   NewNum = ArrNum-NewNum;
   if (NewNum < 0) NewNum = 0;
@@ -626,7 +626,7 @@ void VScriptArray::SetNumMinus (int NewNum, VFieldType& Type) {
 //  VScriptArray::SetNumPlus
 //
 //==========================================================================
-void VScriptArray::SetNumPlus (int NewNum, VFieldType& Type) {
+void VScriptArray::SetNumPlus (int NewNum, VFieldType &Type) {
   guard(VScriptArray::SetNumPlus);
   NewNum += ArrNum;
   if (NewNum < 0) NewNum = 0;
@@ -640,7 +640,7 @@ void VScriptArray::SetNumPlus (int NewNum, VFieldType& Type) {
 //  VScriptArray
 //
 //==========================================================================
-void VScriptArray::Insert (int Index, int Count, VFieldType& Type) {
+void VScriptArray::Insert (int Index, int Count, VFieldType &Type) {
   guard(VScriptArray::Insert);
   check(ArrData != nullptr);
   check(Index >= 0);
@@ -662,7 +662,7 @@ void VScriptArray::Insert (int Index, int Count, VFieldType& Type) {
 //  VScriptArray::Remove
 //
 //==========================================================================
-void VScriptArray::Remove (int Index, int Count, VFieldType& Type) {
+void VScriptArray::Remove (int Index, int Count, VFieldType &Type) {
   guard(VScriptArray::Remove);
   check(ArrData != nullptr);
   check(Index >= 0);

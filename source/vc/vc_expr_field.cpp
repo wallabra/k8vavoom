@@ -31,7 +31,7 @@
 //  VFieldBase
 //
 //==========================================================================
-VFieldBase::VFieldBase (VExpression *AOp, VName AFieldName, const TLocation& ALoc)
+VFieldBase::VFieldBase (VExpression *AOp, VName AFieldName, const TLocation &ALoc)
   : VExpression(ALoc)
   , op(AOp)
   , FieldName(AFieldName)
@@ -55,7 +55,7 @@ void VFieldBase::DoSyntaxCopyTo (VExpression *e) {
 //  VPointerField::VPointerField
 //
 //==========================================================================
-VPointerField::VPointerField (VExpression *AOp, VName AFieldName, const TLocation& ALoc)
+VPointerField::VPointerField (VExpression *AOp, VName AFieldName, const TLocation &ALoc)
   : VFieldBase(AOp, AFieldName, ALoc)
 {
 }
@@ -78,7 +78,7 @@ VExpression *VPointerField::SyntaxCopy () {
 //  VPointerField::DoResolve
 //
 //==========================================================================
-VExpression* VPointerField::DoResolve (VEmitContext& ec) {
+VExpression *VPointerField::DoResolve (VEmitContext &ec) {
   if (op) op = op->Resolve(ec);
   if (!op) {
     delete this;
@@ -128,7 +128,7 @@ void VPointerField::Emit (VEmitContext &) {
 //  VDotField::VDotField
 //
 //==========================================================================
-VDotField::VDotField (VExpression* AOp, VName AFieldName, const TLocation& ALoc)
+VDotField::VDotField (VExpression *AOp, VName AFieldName, const TLocation &ALoc)
   : VFieldBase(AOp, AFieldName, ALoc)
 {
 }
@@ -215,7 +215,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
 
     VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
     if (field) {
-      VExpression* e;
+      VExpression *e;
       // "normal" access: call delegate (if it is operand-less)
       if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
         //fprintf(stderr, "*** FLD! %s\n", *field->Name);
@@ -405,7 +405,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
 //  VDotField::DoResolve
 //
 //==========================================================================
-VExpression *VDotField::DoResolve (VEmitContext& ec) {
+VExpression *VDotField::DoResolve (VEmitContext &ec) {
   return InternalResolve(ec, AssType::Normal);
 }
 
@@ -415,7 +415,7 @@ VExpression *VDotField::DoResolve (VEmitContext& ec) {
 //  VDotField::ResolveAssignmentTarget
 //
 //==========================================================================
-VExpression *VDotField::ResolveAssignmentTarget (VEmitContext& ec) {
+VExpression *VDotField::ResolveAssignmentTarget (VEmitContext &ec) {
   return InternalResolve(ec, AssType::AssTarget);
 }
 
@@ -425,7 +425,7 @@ VExpression *VDotField::ResolveAssignmentTarget (VEmitContext& ec) {
 //  VDotField::ResolveAssignmentValue
 //
 //==========================================================================
-VExpression *VDotField::ResolveAssignmentValue (VEmitContext& ec) {
+VExpression *VDotField::ResolveAssignmentValue (VEmitContext &ec) {
   return InternalResolve(ec, AssType::AssValue);
 }
 
@@ -445,7 +445,7 @@ void VDotField::Emit (VEmitContext&) {
 //  VFieldAccess::VFieldAccess
 //
 //==========================================================================
-VFieldAccess::VFieldAccess (VExpression *AOp, VField *AField, const TLocation& ALoc, int ExtraFlags)
+VFieldAccess::VFieldAccess (VExpression *AOp, VField *AField, const TLocation &ALoc, int ExtraFlags)
   : VExpression(ALoc)
   , op(AOp)
   , field(AField)
@@ -499,7 +499,7 @@ void VFieldAccess::DoSyntaxCopyTo (VExpression *e) {
 //  VFieldAccess::DoResolve
 //
 //==========================================================================
-VExpression* VFieldAccess::DoResolve (VEmitContext&) {
+VExpression *VFieldAccess::DoResolve (VEmitContext&) {
   Type = field->Type;
   RealType = field->Type;
   if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
@@ -524,7 +524,7 @@ void VFieldAccess::RequestAddressOf () {
 //  VFieldAccess::Emit
 //
 //==========================================================================
-void VFieldAccess::Emit (VEmitContext& ec) {
+void VFieldAccess::Emit (VEmitContext &ec) {
   if (!op) return; //k8: don't segfault
   op->Emit(ec);
   if (AddressRequested) {

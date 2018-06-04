@@ -43,7 +43,7 @@ enum {
   MEMBER_Struct,
   MEMBER_Class,
 
-  //  A fake type for DECORATE class imports.
+  // a fake type for DECORATE class imports
   MEMBER_DecorateClass,
 };
 
@@ -83,7 +83,7 @@ public:
   inline const char *GetName () const { return *Name; }
   inline const VName GetVName () const { return Name; }
   VStr GetFullName () const;
-  VPackage* GetPackage () const;
+  VPackage *GetPackage () const;
   bool IsIn (VMemberBase *) const;
 
   virtual void Serialise (VStream &);

@@ -31,7 +31,7 @@
 //  VSuperInvocation::VSuperInvocation
 //
 //==========================================================================
-VInvocationBase::VInvocationBase (int ANumArgs, VExpression **AArgs, const TLocation& ALoc)
+VInvocationBase::VInvocationBase (int ANumArgs, VExpression **AArgs, const TLocation &ALoc)
   : VExpression(ALoc)
   , NumArgs(ANumArgs)
 {
@@ -58,7 +58,7 @@ void VInvocationBase::DoSyntaxCopyTo (VExpression *e) {
 //  VSuperInvocation::VSuperInvocation
 //
 //==========================================================================
-VSuperInvocation::VSuperInvocation(VName AName, int ANumArgs, VExpression **AArgs, const TLocation& ALoc)
+VSuperInvocation::VSuperInvocation(VName AName, int ANumArgs, VExpression **AArgs, const TLocation &ALoc)
   : VInvocationBase(ANumArgs, AArgs, ALoc)
   , Name(AName)
 {
@@ -188,7 +188,7 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
-    VExpression* e = new VDynamicCast(Class, Args[0], Loc);
+    VExpression *e = new VDynamicCast(Class, Args[0], Loc);
     NumArgs = 0;
     delete this;
     return e->Resolve(ec);
@@ -202,7 +202,7 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
         delete this;
         return nullptr;
       }
-      VInvocation* e = new VInvocation(nullptr, M, nullptr, false, false, Loc, NumArgs, Args);
+      VInvocation *e = new VInvocation(nullptr, M, nullptr, false, false, Loc, NumArgs, Args);
       NumArgs = 0;
       delete this;
       return e->Resolve(ec);
@@ -210,7 +210,7 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
 
     VField *field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
     if (field != nullptr && field->Type.Type == TYPE_Delegate) {
-      VInvocation* e = new VInvocation(nullptr, field->Func, field, false, false, Loc, NumArgs, Args);
+      VInvocation *e = new VInvocation(nullptr, field->Func, field, false, false, Loc, NumArgs, Args);
       NumArgs = 0;
       delete this;
       return e->Resolve(ec);
@@ -487,9 +487,9 @@ void VDotInvocation::Emit (VEmitContext &) {
 //
 //==========================================================================
 
-VInvocation::VInvocation (VExpression* ASelfExpr, VMethod* AFunc, VField* ADelegateField,
-                          bool AHaveSelf, bool ABaseCall, const TLocation& ALoc, int ANumArgs,
-                          VExpression** AArgs)
+VInvocation::VInvocation (VExpression *ASelfExpr, VMethod *AFunc, VField *ADelegateField,
+                          bool AHaveSelf, bool ABaseCall, const TLocation &ALoc, int ANumArgs,
+                          VExpression **AArgs)
   : VInvocationBase(ANumArgs, AArgs, ALoc)
   , SelfExpr(ASelfExpr)
   , Func(AFunc)
@@ -958,7 +958,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             Args[i] = new VNoneLiteral(ALoc);
           } else {
             check(CallerState);
-            VState* S = CallerState->GetPlus(Offs, true);
+            VState *S = CallerState->GetPlus(Offs, true);
             if (!S) {
               ParseError(ALoc, "Bad state jump offset");
             } else {
@@ -1001,7 +1001,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             }
           } else {
             // it's a virtual state jump
-            VExpression* TmpArgs[1];
+            VExpression *TmpArgs[1];
             TmpArgs[0] = Args[i];
             Args[i] = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpState"), nullptr, false, false, Args[i]->Loc, 1, TmpArgs);
           }

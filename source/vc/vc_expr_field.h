@@ -35,7 +35,7 @@ public:
   VName FieldName;
 
 public:
-  VFieldBase (VExpression *AOp, VName AFieldName, const TLocation& ALoc);
+  VFieldBase (VExpression *AOp, VName AFieldName, const TLocation &ALoc);
   virtual ~VFieldBase () override;
 
 protected:
@@ -51,7 +51,7 @@ protected:
 //==========================================================================
 class VPointerField : public VFieldBase {
 public:
-  VPointerField (VExpression *AOp, VName AFieldName, const TLocation& ALoc);
+  VPointerField (VExpression *AOp, VName AFieldName, const TLocation &ALoc);
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
@@ -71,7 +71,7 @@ private:
   enum AssType { Normal, AssTarget, AssValue };
 
 public:
-  VDotField (VExpression *AOp, VName AFieldName, const TLocation& ALoc);
+  VDotField (VExpression *AOp, VName AFieldName, const TLocation &ALoc);
 
   VExpression *InternalResolve (VEmitContext &ec, AssType assType);
   virtual VExpression *SyntaxCopy () override;

@@ -272,7 +272,7 @@ public:
   VField *FindField (VName);
   VField *FindField (VName, const TLocation &, VClass *);
   VField *FindFieldChecked (VName);
-  VProperty* FindProperty (VName);
+  VProperty *FindProperty (VName);
   VMethod *FindMethod (VName Name, bool bRecursive=true);
   VMethod *FindMethodChecked (VName);
   VMethod *FindAccessibleMethod (VName Name, VClass *self=nullptr);

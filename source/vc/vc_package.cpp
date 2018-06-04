@@ -151,7 +151,7 @@ public:
   }
 
   // stream interface
-  virtual void Serialise (void* Data, int Len) override { Stream->Serialise(Data, Len); }
+  virtual void Serialise (void *Data, int Len) override { Stream->Serialise(Data, Len); }
   virtual void Seek (int Pos) override { Stream->Seek(Pos); }
   virtual int Tell () override { return Stream->Tell(); }
   virtual int TotalSize () override { return Stream->TotalSize(); }
@@ -628,7 +628,7 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
   for (int i = 0; i < Progs.num_imports; ++i) *Reader << Reader->Imports[i];
   Reader->ResolveImports();
 
-  VProgsExport* Exports = new VProgsExport[Progs.num_exports];
+  VProgsExport *Exports = new VProgsExport[Progs.num_exports];
   Reader->Exports = Exports;
   Reader->NumExports = Progs.num_exports;
 
@@ -690,7 +690,7 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
   }
 
   if (Name == NAME_engine) {
-    for (VClass* Cls = GClasses; Cls; Cls = Cls->LinkNext) {
+    for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
       if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
         Cls->PostLoad();
         Cls->CreateDefaults();
@@ -757,7 +757,7 @@ void VPackage::LoadObject (TLocation l) {
 
   // load PROGS from a specified file
   VStr mainVC = va("progs/%s.dat", *Name);
-  VStream* Strm = FL_OpenFileRead(*mainVC);
+  VStream *Strm = FL_OpenFileRead(*mainVC);
   if (!Strm) {
     mainVC = va("progs/%s/classes.vc", *Name);
     if (FL_FileExists(*mainVC)) {

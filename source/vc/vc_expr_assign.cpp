@@ -98,7 +98,7 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
-    VPropertyAssign* e = (VPropertyAssign*)op1;
+    VPropertyAssign *e = (VPropertyAssign*)op1;
     e->NumArgs = 1;
     e->Args[0] = op2;
     op1 = nullptr;

@@ -179,7 +179,7 @@ VExpression *VScalarToFloat::SyntaxCopy () {
 //  VScalarToFloat::DoResolve
 //
 //==========================================================================
-VExpression *VScalarToFloat::DoResolve (VEmitContext& ec) {
+VExpression *VScalarToFloat::DoResolve (VEmitContext &ec) {
   //printf("VScalarToFloat::DoResolve!\n");
   if (!op) return nullptr;
   op = op->Resolve(ec);
@@ -211,7 +211,7 @@ VExpression *VScalarToFloat::DoResolve (VEmitContext& ec) {
 //  VScalarToFloat::Emit
 //
 //==========================================================================
-void VScalarToFloat::Emit (VEmitContext& ec) {
+void VScalarToFloat::Emit (VEmitContext &ec) {
   op->Emit(ec);
   switch (op->Type.Type) {
     case TYPE_Int:
@@ -260,7 +260,7 @@ VExpression *VScalarToInt::SyntaxCopy () {
 //  VScalarToInt::DoResolve
 //
 //==========================================================================
-VExpression *VScalarToInt::DoResolve (VEmitContext& ec) {
+VExpression *VScalarToInt::DoResolve (VEmitContext &ec) {
   //printf("VScalarToInt::DoResolve!\n");
   if (!op) return nullptr;
   op = op->Resolve(ec);
@@ -292,7 +292,7 @@ VExpression *VScalarToInt::DoResolve (VEmitContext& ec) {
 //  VScalarToInt::Emit
 //
 //==========================================================================
-void VScalarToInt::Emit (VEmitContext& ec) {
+void VScalarToInt::Emit (VEmitContext &ec) {
   op->Emit(ec);
   switch (op->Type.Type) {
     case TYPE_Int:
@@ -337,7 +337,7 @@ VExpression *VCastToString::SyntaxCopy () {
 //  VCastToString::DoResolve
 //
 //==========================================================================
-VExpression *VCastToString::DoResolve (VEmitContext& ec) {
+VExpression *VCastToString::DoResolve (VEmitContext &ec) {
   if (!op) return nullptr;
 
   /*
@@ -379,7 +379,7 @@ VExpression *VCastToString::DoResolve (VEmitContext& ec) {
 //  VCastToString::Emit
 //
 //==========================================================================
-void VCastToString::Emit (VEmitContext& ec) {
+void VCastToString::Emit (VEmitContext &ec) {
   if (!op) return;
   op->Emit(ec);
   switch (op->Type.Type) {
@@ -421,7 +421,7 @@ VExpression *VCastToName::SyntaxCopy () {
 //  VCastToName::DoResolve
 //
 //==========================================================================
-VExpression *VCastToName::DoResolve (VEmitContext& ec) {
+VExpression *VCastToName::DoResolve (VEmitContext &ec) {
   if (!op) return nullptr;
 
   /*
@@ -463,7 +463,7 @@ VExpression *VCastToName::DoResolve (VEmitContext& ec) {
 //  VCastToName::Emit
 //
 //==========================================================================
-void VCastToName::Emit (VEmitContext& ec) {
+void VCastToName::Emit (VEmitContext &ec) {
   if (!op) return;
   op->Emit(ec);
   switch (op->Type.Type) {
@@ -484,7 +484,7 @@ void VCastToName::Emit (VEmitContext& ec) {
 //
 //==========================================================================
 
-VDynamicCast::VDynamicCast(VClass* AClass, VExpression* AOp, const TLocation& ALoc)
+VDynamicCast::VDynamicCast (VClass *AClass, VExpression *AOp, const TLocation &ALoc)
   : VCastExpressionBase(ALoc)
   , Class(AClass)
 {
@@ -556,7 +556,7 @@ void VDynamicCast::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 
-VDynamicClassCast::VDynamicClassCast(VName AClassName, VExpression* AOp, const TLocation& ALoc)
+VDynamicClassCast::VDynamicClassCast (VName AClassName, VExpression *AOp, const TLocation &ALoc)
   : VCastExpressionBase(ALoc)
   , ClassName(AClassName)
 {

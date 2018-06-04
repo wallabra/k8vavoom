@@ -1340,7 +1340,7 @@ void ProcessDehackedFiles () {
   if (!p && LumpNum < 0) return;
 
   // open dehinfo script
-  VStream* Strm = FL_OpenFileRead("dehinfo.txt");
+  VStream *Strm = FL_OpenFileRead("dehinfo.txt");
   if (!Strm) Sys_Error("dehinfo.txt is required to parse dehacked patches");
 
   VScriptParser *sc = new VScriptParser("dehinfo.txt", Strm);
@@ -1359,7 +1359,7 @@ void ProcessDehackedFiles () {
   sc->Expect("{");
   States.Append(nullptr);
   StateActions.Append(nullptr);
-  VState** StatesTail = &VClass::FindClass("Entity")->NetStates;
+  VState **StatesTail = &VClass::FindClass("Entity")->NetStates;
   while (*StatesTail) StatesTail = &(*StatesTail)->NetNext;
   while (!sc->Check("}")) {
     // class name
@@ -1408,7 +1408,7 @@ void ProcessDehackedFiles () {
   // read code pointers
   sc->Expect("code_pointers");
   sc->Expect("{");
-  VCodePtrInfo& ANull = CodePtrs.Alloc();
+  VCodePtrInfo &ANull = CodePtrs.Alloc();
   ANull.Name = "nullptr";
   ANull.Method = nullptr;
   while (!sc->Check("}")) {
@@ -1422,7 +1422,7 @@ void ProcessDehackedFiles () {
     if (Class == nullptr) sc->Error("No such class");
     VMethod *Method = Class->FindMethod(*MethodName);
     if (Method == nullptr) sc->Error(va("No such method %s", *MethodName));
-    VCodePtrInfo& P = CodePtrs.Alloc();
+    VCodePtrInfo &P = CodePtrs.Alloc();
     P.Name = Name;
     P.Method = Method;
   }

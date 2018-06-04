@@ -43,7 +43,7 @@ public: \
   private: static VClass PrivateStaticClass; public: \
   typedef TSuperClass Super;\
   typedef TClass ThisClass;\
-  static VClass* StaticClass() \
+  static VClass *StaticClass() \
     { return &PrivateStaticClass; }
 
 // Declare a concrete class.
@@ -51,7 +51,7 @@ public: \
   DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags) \
   virtual ~TClass() \
     { ConditionalDestroy(); } \
-  friend inline VStream& operator<<(VStream& Strm, TClass*& Obj) \
+  friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) \
     { return Strm << *(VObject**)&Obj; } \
   static void InternalConstructor() \
     { new TClass(); }
@@ -61,7 +61,7 @@ public: \
   DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags | CLASS_Abstract) \
   virtual ~TClass() \
     { ConditionalDestroy(); } \
-  friend inline VStream& operator<<(VStream& Strm, TClass*& Obj) \
+  friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) \
     { return Strm << *(VObject**)&Obj; }
 
 // Register a class at startup time.
@@ -75,7 +75,7 @@ public: \
     NAME_##TClass, \
     Pre##TClass::InternalConstructor \
   ); \
-  VClass* autoclass##Pre##TClass = Pre##TClass::StaticClass();
+  VClass *autoclass##Pre##TClass = Pre##TClass::StaticClass();
 
 #define DECLARE_FUNCTION(func) \
   static FBuiltinInfo funcinfo##func; \
@@ -138,8 +138,8 @@ public:
   // destructors
   virtual ~VObject ();
 
-  void* operator new (size_t);
-  void* operator new (size_t, const char *, int);
+  void *operator new (size_t);
+  void *operator new (size_t, const char *, int);
   void operator delete (void *);
   void operator delete (void *, const char *, int);
 
@@ -504,7 +504,7 @@ inline vuint32 GetTypeHash (VObject *Obj) { return (Obj ? Obj->GetIndex() : 0); 
 #define P_GET_AVEC(v)    TAVec v = PR_Popav()
 #define P_GET_REF(c, v)  c *v = (c*)PR_PopPtr()
 #define P_GET_PTR(t, v)  t *v = (t*)PR_PopPtr()
-#define P_GET_SELF       ThisClass* Self = (ThisClass*)PR_PopPtr()
+#define P_GET_SELF       ThisClass *Self = (ThisClass*)PR_PopPtr()
 
 #define P_GET_INT_OPT(v, d)     bool specified_##v = !!PR_Pop(); vint32 v = PR_Pop(); if (!specified_##v) v = d
 #define P_GET_BYTE_OPT(v, d)    bool specified_##v = !!PR_Pop(); vuint8 v = PR_Pop(); if (!specified_##v) v = d

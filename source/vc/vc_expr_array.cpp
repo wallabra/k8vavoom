@@ -169,7 +169,7 @@ VExpression *VArrayElement::DoResolve (VEmitContext &ec) {
 //  VArrayElement::ResolveAssignmentTarget
 //
 //==========================================================================
-VExpression* VArrayElement::ResolveAssignmentTarget (VEmitContext &ec) {
+VExpression *VArrayElement::ResolveAssignmentTarget (VEmitContext &ec) {
   IsAssign = true;
   return InternalResolve(ec, true);
 }
@@ -224,7 +224,7 @@ void VArrayElement::Emit (VEmitContext &ec) {
 //  VDynArrayGetNum::VDynArrayGetNum
 //
 //==========================================================================
-VDynArrayGetNum::VDynArrayGetNum (VExpression *AArrayExpr, const TLocation& ALoc)
+VDynArrayGetNum::VDynArrayGetNum (VExpression *AArrayExpr, const TLocation &ALoc)
   : VExpression(ALoc)
   , ArrayExpr(AArrayExpr)
 {
@@ -582,7 +582,7 @@ void VDynArrayRemove::Emit (VEmitContext &ec) {
 //  VStringGetLength::VStringGetLength
 //
 //==========================================================================
-VStringGetLength::VStringGetLength(VExpression *AStrExpr, const TLocation& ALoc)
+VStringGetLength::VStringGetLength(VExpression *AStrExpr, const TLocation &ALoc)
   : VExpression(ALoc)
   , StrExpr(AStrExpr)
 {
@@ -651,7 +651,7 @@ VExpression *VStringGetLength::DoResolve (VEmitContext &ec) {
 //  VStringGetLength::Emit
 //
 //==========================================================================
-void VStringGetLength::Emit (VEmitContext& ec) {
+void VStringGetLength::Emit (VEmitContext &ec) {
   StrExpr->Emit(ec);
   ec.AddStatement(OPC_StrLength);
 }

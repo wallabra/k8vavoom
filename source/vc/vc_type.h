@@ -90,8 +90,8 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct VObjectDelegate {
-  VObject*    Obj;
-  VMethod*    Func;
+  VObject *Obj;
+  VMethod *Func;
 };
 
 
@@ -109,14 +109,14 @@ public:
 #endif
 
   inline int Num () const { return ArrNum; }
-  inline vuint8 *Ptr() { return ArrData; }
-  void Clear (VFieldType& Type);
-  void Resize (int NewSize, VFieldType& Type);
-  void SetNum (int NewNum, VFieldType& Type);
-  void SetNumMinus (int NewNum, VFieldType& Type);
-  void SetNumPlus (int NewNum, VFieldType& Type);
-  void Insert (int Index, int Count, VFieldType& Type);
-  void Remove (int Index, int Count, VFieldType& Type);
+  inline vuint8 *Ptr () { return ArrData; }
+  void Clear (VFieldType &Type);
+  void Resize (int NewSize, VFieldType &Type);
+  void SetNum (int NewNum, VFieldType &Type);
+  void SetNumMinus (int NewNum, VFieldType &Type);
+  void SetNumPlus (int NewNum, VFieldType &Type);
+  void Insert (int Index, int Count, VFieldType &Type);
+  void Remove (int Index, int Count, VFieldType &Type);
 };
 
 

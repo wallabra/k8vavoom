@@ -74,7 +74,7 @@ typedef void (*builtin_t) ();
 //==========================================================================
 class FBuiltinInfo {
   const char *Name;
-  VClass* OuterClass;
+  VClass *OuterClass;
   builtin_t Func;
   FBuiltinInfo *Next;
 

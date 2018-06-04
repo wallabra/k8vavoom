@@ -138,7 +138,7 @@ VExpression *VUnary::DoResolve (VEmitContext &ec) {
   // optimise integer constants
   if (op->IsIntConst()) {
     vint32 Value = op->GetIntConst();
-    VExpression* e = nullptr;
+    VExpression *e = nullptr;
     switch (Oper) {
       case Minus: e = new VIntLiteral(-Value, Loc); break;
       case Not: e = new VIntLiteral(!Value, Loc); break;
@@ -398,7 +398,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   if (ec.Package->Name == NAME_decorate) {
     if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Float) {
       /*
-      VExpression* TmpArgs[1];
+      VExpression *TmpArgs[1];
       TmpArgs[0] = op1;
       op1 = new VInvocation(NULL, ec.SelfClass->FindMethodChecked(
         "itof"), NULL, false, false, op1->Loc, 1, TmpArgs);
@@ -408,7 +408,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       if (!op1) { delete this; return nullptr; } // oops
     } else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Int) {
       /*
-      VExpression* TmpArgs[1];
+      VExpression *TmpArgs[1];
       TmpArgs[0] = op2;
       op2 = new VInvocation(NULL, ec.SelfClass->FindMethodChecked(
         "itof"), NULL, false, false, op2->Loc, 1, TmpArgs);
@@ -545,7 +545,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   if (op1->IsFloatConst() && op2->IsFloatConst()) {
     float Value1 = op1->GetFloatConst();
     float Value2 = op2->GetFloatConst();
-    VExpression* e = nullptr;
+    VExpression *e = nullptr;
     switch (Oper) {
       case Add: e = new VFloatLiteral(Value1+Value2, Loc); break;
       case Subtract: e = new VFloatLiteral(Value1-Value2, Loc); break;

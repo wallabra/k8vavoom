@@ -147,7 +147,7 @@ VSingleName::VSingleName (VName AName, const TLocation &ALoc)
 //  VSingleName::SyntaxCopy
 //
 //==========================================================================
-VExpression* VSingleName::SyntaxCopy () {
+VExpression *VSingleName::SyntaxCopy () {
   auto res = new VSingleName();
   DoSyntaxCopyTo(res);
   return res;
@@ -235,7 +235,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
             delete this;
             return nullptr;
           }
-          VExpression* e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), Prop->DefaultField, Loc, 0);
+          VExpression *e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), Prop->DefaultField, Loc, 0);
           delete this;
           return e->Resolve(ec);
         } else {
@@ -697,7 +697,7 @@ void VPushPointed::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 
-VConditional::VConditional(VExpression* AOp, VExpression* AOp1, VExpression* AOp2, const TLocation& ALoc)
+VConditional::VConditional (VExpression *AOp, VExpression *AOp1, VExpression *AOp2, const TLocation &ALoc)
   : VExpression(ALoc)
   , op(AOp)
   , op1(AOp1)

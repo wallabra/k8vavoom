@@ -78,7 +78,7 @@ public:
 
   VLocalVar (int ANum, const TLocation &ALoc);
   virtual VExpression *SyntaxCopy () override;
-  virtual VExpression* DoResolve (VEmitContext &) override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &) override;
   virtual bool IsLocalVarExpr () const override;

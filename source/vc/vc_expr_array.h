@@ -65,8 +65,8 @@ class VDynArrayGetNum : public VExpression {
 public:
   VExpression *ArrayExpr;
 
-  VDynArrayGetNum (VExpression *AArrayExpr, const TLocation& ALoc);
-  virtual ~VDynArrayGetNum() override;
+  VDynArrayGetNum (VExpression *AArrayExpr, const TLocation &ALoc);
+  virtual ~VDynArrayGetNum () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;

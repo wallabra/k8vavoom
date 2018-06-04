@@ -31,7 +31,7 @@
 //  VExpression::VExpression
 //
 //==========================================================================
-VExpression::VExpression (const TLocation& ALoc)
+VExpression::VExpression (const TLocation &ALoc)
   : Type(TYPE_Void)
   , RealType(TYPE_Void)
   , Flags(0)
@@ -231,7 +231,7 @@ void VExpression::EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue) {
 //  VExpression::EmitPushPointedCode
 //
 //==========================================================================
-void VExpression::EmitPushPointedCode (VFieldType type, VEmitContext& ec) {
+void VExpression::EmitPushPointedCode (VFieldType type, VEmitContext &ec) {
   switch (type.Type) {
     case TYPE_Int:
     case TYPE_Float:

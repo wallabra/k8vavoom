@@ -401,7 +401,7 @@ void VSelf::Emit (VEmitContext &ec) {
 //  VNoneLiteral::VNoneLiteral
 //
 //==========================================================================
-VNoneLiteral::VNoneLiteral (const TLocation& ALoc) : VExpression(ALoc) {
+VNoneLiteral::VNoneLiteral (const TLocation &ALoc) : VExpression(ALoc) {
   Type = VFieldType((VClass*)nullptr);
 }
 
