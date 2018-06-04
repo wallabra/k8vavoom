@@ -34,11 +34,11 @@ decalgroup BloodSplatRadius {
 
 ///////////////////////////////////////////////
 decalgroup BloodSplatGreen {
-  K8GoreBloodSplat001_Green 6
-  K8GoreBloodSplat002_Green 6
+  K8GoreBloodSplat1_Green 6
+  K8GoreBloodSplat2_Green 6
 
-  K8GoreBloodSuper01_Green 1
-  K8GoreBloodSuper02_Green 1
+  K8GoreBloodSuper1_Green 1
+  K8GoreBloodSuper2_Green 1
 }
 
 decalgroup BloodSmearGreen {
@@ -56,20 +56,20 @@ decalgroup BloodSmearRadiusGreen {
 }
 
 decalgroup BloodSplatRadiusGreen {
-  K8GoreBloodSplat001_Green 6
-  K8GoreBloodSplat002_Green 6
+  K8GoreBloodSplat1_Green 6
+  K8GoreBloodSplat2_Green 6
 
-  K8GoreBloodSuper01_Green 3
-  K8GoreBloodSuper02_Green 3
+  K8GoreBloodSuper1_Green 3
+  K8GoreBloodSuper2_Green 3
 }
 
 ///////////////////////////////////////////////
 decalgroup BloodSplatBlue {
-  K8GoreBloodSplat001_Blue 6
-  K8GoreBloodSplat002_Blue 6
+  K8GoreBloodSplat1_Blue 6
+  K8GoreBloodSplat2_Blue 6
 
-  K8GoreBloodSuper01_Blue 1
-  K8GoreBloodSuper02_Blue 1
+  K8GoreBloodSuper1_Blue 1
+  K8GoreBloodSuper2_Blue 1
 }
 
 decalgroup BloodSmearBlue {
@@ -87,11 +87,11 @@ decalgroup BloodSmearRadiusBlue {
 }
 
 decalgroup BloodSplatRadiusBlue {
-  K8GoreBloodSplat001_Blue 6
-  K8GoreBloodSplat002_Blue 6
+  K8GoreBloodSplat1_Blue 6
+  K8GoreBloodSplat2_Blue 6
 
-  K8GoreBloodSuper01_Blue 3
-  K8GoreBloodSuper02_Blue 3
+  K8GoreBloodSuper1_Blue 3
+  K8GoreBloodSuper2_Blue 3
 }
 
 
@@ -262,7 +262,7 @@ decalgroup K8GoreBloodSmear_Green {
 }
 
 
-decal K8GoreBloodSplat001_Green {
+decal K8GoreBloodSplat1_Green {
   pic BGPLNEW
   x-scale 0.5
   y-scale 0.5
@@ -271,7 +271,7 @@ decal K8GoreBloodSplat001_Green {
   lowerdecal K8GoreBloodSmear_Green
 }
 
-decal K8GoreBloodSplat002_Green {
+decal K8GoreBloodSplat2_Green {
   pic BGPLNEW2
   x-scale 0.5
   y-scale 0.5
@@ -281,12 +281,12 @@ decal K8GoreBloodSplat002_Green {
 }
 
 decalgroup K8GoreBloodSplat_Green {
-  K8GoreBloodSplat001_Green 6
-  K8GoreBloodSplat002_Green 6
+  K8GoreBloodSplat1_Green 6
+  K8GoreBloodSplat2_Green 6
 }
 
 
-decal K8GoreBloodSuper01_Green {
+decal K8GoreBloodSuper1_Green {
   pic BGPLNEW2
   x-scale 0.8
   y-scale 0.8
@@ -295,7 +295,7 @@ decal K8GoreBloodSuper01_Green {
   lowerdecal K8GoreBloodSmear_Green
 }
 
-decal K8GoreBloodSuper02_Green {
+decal K8GoreBloodSuper2_Green {
   pic BGPLNEW
   x-scale 0.8
   y-scale 0.8
@@ -304,8 +304,8 @@ decal K8GoreBloodSuper02_Green {
 }
 
 decalgroup K8GoreBloodSuper_Green {
-  K8GoreBloodSuper01_Green 6
-  K8GoreBloodSuper02_Green 6
+  K8GoreBloodSuper1_Green 6
+  K8GoreBloodSuper2_Green 6
 }
 
 
@@ -334,7 +334,7 @@ decalgroup K8GoreBloodSmear_Blue {
 }
 
 
-decal K8GoreBloodSplat001_Blue {
+decal K8GoreBloodSplat1_Blue {
   pic BBPLNEW
   x-scale 0.5
   y-scale 0.5
@@ -343,7 +343,7 @@ decal K8GoreBloodSplat001_Blue {
   lowerdecal K8GoreBloodSmear_Blue
 }
 
-decal K8GoreBloodSplat002_Blue {
+decal K8GoreBloodSplat2_Blue {
   pic BBPLNEW2
   x-scale 0.5
   y-scale 0.5
@@ -353,12 +353,12 @@ decal K8GoreBloodSplat002_Blue {
 }
 
 decalgroup K8GoreBloodSplat_Blue {
-  K8GoreBloodSplat001_Blue 6
-  K8GoreBloodSplat002_Blue 6
+  K8GoreBloodSplat1_Blue 6
+  K8GoreBloodSplat2_Blue 6
 }
 
 
-decal K8GoreBloodSuper01_Blue {
+decal K8GoreBloodSuper1_Blue {
   pic BBPLNEW2
   x-scale 0.8
   y-scale 0.8
@@ -367,7 +367,7 @@ decal K8GoreBloodSuper01_Blue {
   lowerdecal K8GoreBloodSmear_Blue
 }
 
-decal K8GoreBloodSuper02_Blue {
+decal K8GoreBloodSuper2_Blue {
   pic BBPLNEW
   x-scale 0.8
   y-scale 0.8
@@ -376,8 +376,8 @@ decal K8GoreBloodSuper02_Blue {
 }
 
 decalgroup K8GoreBloodSuper_Blue {
-  K8GoreBloodSuper01_Blue 6
-  K8GoreBloodSuper02_Blue 6
+  K8GoreBloodSuper1_Blue 6
+  K8GoreBloodSuper2_Blue 6
 }
 
 

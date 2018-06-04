@@ -108,6 +108,9 @@ sprites/gore/xdt3h0   @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/xdt3h0.png
 sprites/gore/xdt5b0   @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/xdt5b0.png
 sprites/gore/xdt5o0   @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/xdt5o0.png
 
+graphics/decals/bbplbig1.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplbig1.png
+graphics/decals/bbplbig2.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplbig2.png
+graphics/decals/bbplbig3.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplbig3.png
 graphics/decals/bbplnew.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplnew.png
 graphics/decals/bbplnew2.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplnew2.png
 graphics/decals/bbplnew3.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplnew3.png
@@ -115,6 +118,9 @@ graphics/decals/bbplnew4.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbpln
 graphics/decals/bbplnew5.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplnew5.png
 graphics/decals/bbplnew7.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplnew7.png
 graphics/decals/bbplnew8.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bbplnew8.png
+graphics/decals/bgplbig1.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bgplbig1.png
+graphics/decals/bgplbig2.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bgplbig2.png
+graphics/decals/bgplbig3.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bgplbig3.png
 graphics/decals/bgplnew.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bgplnew.png
 graphics/decals/bgplnew2.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bgplnew2.png
 graphics/decals/bgplnew3.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/decals/bgplnew3.png
