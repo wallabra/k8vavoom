@@ -22,6 +22,7 @@ actor LostSoul 3006
   +Float
   +MissileMore
   +DontFall
+  +NoBlood
   states
   {
   Spawn:
