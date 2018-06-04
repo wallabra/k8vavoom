@@ -862,80 +862,100 @@ void TranslateLine(Level InLevel, line_t* line)
     return;
   case 403:
     line->special = 160;
-    line->frontsector->params.contents = CONTENTS_WATER;
-    line->frontsector->ceiling.flags = 7;
-    line->frontsector->floor.flags = 7;
+    if (line->frontsector) {
+      line->frontsector->params.contents = CONTENTS_WATER;
+      line->frontsector->ceiling.flags = 7;
+      line->frontsector->floor.flags = 7;
+    }
     return;
   case 404:
     line->special = 160;
-    line->frontsector->params.contents = CONTENTS_WATER;
-    line->frontsector->floor.Alpha = 0.8;
-    line->frontsector->ceiling.Alpha = 0.8;
-    line->frontsector->ceiling.flags = 7;
-    line->frontsector->floor.flags = 7;
+    if (line->frontsector) {
+      line->frontsector->params.contents = CONTENTS_WATER;
+      line->frontsector->floor.Alpha = 0.8;
+      line->frontsector->ceiling.Alpha = 0.8;
+      line->frontsector->ceiling.flags = 7;
+      line->frontsector->floor.flags = 7;
+    }
     return;
   case 405:
     line->special = 160;
-    line->frontsector->params.contents = CONTENTS_WATER;
-    line->frontsector->floor.Alpha = 0.6;
-    line->frontsector->ceiling.Alpha = 0.6;
-    line->frontsector->ceiling.flags = 7;
-    line->frontsector->floor.flags = 7;
+    if (line->frontsector) {
+      line->frontsector->params.contents = CONTENTS_WATER;
+      line->frontsector->floor.Alpha = 0.6;
+      line->frontsector->ceiling.Alpha = 0.6;
+      line->frontsector->ceiling.flags = 7;
+      line->frontsector->floor.flags = 7;
+    }
     return;
   case 406:
     line->special = 160;
-    line->frontsector->params.contents = CONTENTS_WATER;
-    line->frontsector->floor.Alpha = 0.4;
-    line->frontsector->ceiling.Alpha = 0.4;
-    line->frontsector->ceiling.flags = 7;
-    line->frontsector->floor.flags = 7;
+    if (line->frontsector) {
+      line->frontsector->params.contents = CONTENTS_WATER;
+      line->frontsector->floor.Alpha = 0.4;
+      line->frontsector->ceiling.Alpha = 0.4;
+      line->frontsector->ceiling.flags = 7;
+      line->frontsector->floor.flags = 7;
+    }
     return;
   case 407:
     line->special = 160;
-    line->frontsector->params.contents = CONTENTS_WATER;
-    line->frontsector->floor.Alpha = 0.2;
-    line->frontsector->ceiling.Alpha = 0.2;
-    line->frontsector->ceiling.flags = 7;
-    line->frontsector->floor.flags = 7;
+    if (line->frontsector) {
+      line->frontsector->params.contents = CONTENTS_WATER;
+      line->frontsector->floor.Alpha = 0.2;
+      line->frontsector->ceiling.Alpha = 0.2;
+      line->frontsector->ceiling.flags = 7;
+      line->frontsector->floor.flags = 7;
+    }
     return;
   case 408:
     line->special = 160;
-    line->frontsector->params.contents = CONTENTS_WATER;
-    line->frontsector->floor.Alpha = 0.0;
-    line->frontsector->ceiling.Alpha = 0.0;
-    line->frontsector->ceiling.flags = 7;
-    line->frontsector->floor.flags = 7;
+    if (line->frontsector) {
+      line->frontsector->params.contents = CONTENTS_WATER;
+      line->frontsector->floor.Alpha = 0.0;
+      line->frontsector->ceiling.Alpha = 0.0;
+      line->frontsector->ceiling.flags = 7;
+      line->frontsector->floor.flags = 7;
+    }
     return;
   case 413:
     line->special = 160;
     return;
   case 414:
     line->special = 160;
-    line->frontsector->floor.Alpha = 0.8;
-    line->frontsector->ceiling.Alpha = 0.8;
-    line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
-    line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
+    if (line->frontsector) {
+      line->frontsector->floor.Alpha = 0.8;
+      line->frontsector->ceiling.Alpha = 0.8;
+      line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
+      line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
+    }
     return;
   case 415:
     line->special = 160;
-    line->frontsector->floor.Alpha = 0.6;
-    line->frontsector->ceiling.Alpha = 0.6;
-    line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
-    line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
+    if (line->frontsector) {
+      line->frontsector->floor.Alpha = 0.6;
+      line->frontsector->ceiling.Alpha = 0.6;
+      line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
+      line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
+    }
     return;
   case 416:
     line->special = 160;
-    line->frontsector->floor.Alpha = 0.4;
-    line->frontsector->ceiling.Alpha = 0.4;
-    line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
-    line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
+    if (line->frontsector) {
+      line->frontsector->floor.Alpha = 0.4;
+      line->frontsector->ceiling.Alpha = 0.4;
+      line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
+      line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
+    }
     return;
   case 417:
     line->special = 160;
-    line->frontsector->floor.Alpha = 0.2;
-    line->frontsector->ceiling.Alpha = 0.2;
-    line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
-    line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
+    if (line->frontsector) {
+      line->frontsector->floor.Alpha = 0.2;
+      line->frontsector->ceiling.Alpha = 0.2;
+      line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
+      line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
+    }
     return;
   }
 
