@@ -731,8 +731,8 @@ void VLevel::Destroy()
 
   for (int f = 0; f < NumLines; ++f) {
     line_t *ld = Lines+f;
-    delete ld->v1lines;
-    delete ld->v2lines;
+    delete[] ld->v1lines;
+    delete[] ld->v2lines;
   }
 
   delete[] Vertexes;
