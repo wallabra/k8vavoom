@@ -3781,11 +3781,20 @@ final override void Cheat_Summon () {
     return;
   }
 
+  //writeln("summon 0: ", GetClassName(moClass));
   moClass = class!EntityEx(GetClassReplacement(moClass));
+  //writeln("summon 1: ", GetClassName(moClass));
+
+  auto spwspate = FindClassState(moClass, 'Spawn');
 
   // if actor has no sprites, also map it to the unknown thing
-  if (FindClassState(moClass, 'Spawn') && !AreStateSpritesPresent(FindClassState(moClass, 'Spawn'))) {
+  if (spwspate && !AreStateSpritesPresent(spwspate)) {
     print("Summon: class '%s' has no frames", Cmd_GetArgV(1));
+    return;
+  }
+
+  if (!spwspate) {
+    print("Summon: class '%s' has no spawn state", Cmd_GetArgV(1));
     return;
   }
 

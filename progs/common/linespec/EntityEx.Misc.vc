@@ -2267,8 +2267,8 @@ final name GetBloodSplatDecalName () {
   if (bNoBlood || !self.BloodType) return '';
   if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatGreen';
   if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSplatBlue';
-  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatGreen';
-  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatBlue';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatGreen';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatBlue';
   return 'BloodSplat';
 }
 
@@ -2282,8 +2282,8 @@ final name GetBloodSmearDecalName () {
   if (bNoBlood || !self.BloodType) return '';
   if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSmearGreen';
   if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSmearBlue';
-  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSmearGreen';
-  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSmearBlue';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSmearGreen';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSmearBlue';
   return 'BloodSmear';
 }
 
@@ -2297,8 +2297,8 @@ final name GetBloodSplatRadiusDecalName () {
   if (bNoBlood || !self.BloodType) return '';
   if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatRadiusGreen';
   if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSplatRadiusBlue';
-  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatRadiusGreen';
-  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatRadiusBlue';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatRadiusGreen';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatRadiusBlue';
   return 'BloodSplatRadius';
 }
 
