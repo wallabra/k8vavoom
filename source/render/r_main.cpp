@@ -170,14 +170,11 @@ void R_Start(VLevel* ALevel)
     break;
 
   default:
-    if (Drawer->SupportsAdvancedRendering())
-    {
-      ALevel->RenderData = new VAdvancedRenderLevel(ALevel);
+    if (Drawer->SupportsAdvancedRendering()) {
+      //ALevel->RenderData = new VAdvancedRenderLevel(ALevel);
+      GCon->Logf("Your GPU supports Advanced Renderer, but it is slow and unfinished, so i won't use it.");
     }
-    else
-    {
-      ALevel->RenderData = new VRenderLevel(ALevel);
-    }
+    ALevel->RenderData = new VRenderLevel(ALevel);
     break;
   }
   unguard;
