@@ -19,6 +19,7 @@ add_library(core STATIC
   hashset.h
   log.cpp
   log.h
+  map_impl.h
   map.h
   matrix.cpp
   matrix.h
