@@ -1,0 +1,24 @@
+n=42
+v=0 (specified=0)
+z=0 (specified=0)
+n=42
+v=0 (specified=0)
+z=666 (specified=1)
+n=42
+v=0 (specified=0)
+z=666 (specified=1)
+n=42
+v=666 (specified=1)
+z=0 (specified=0)
+n=42
+v=666 (specified=1)
+z=0 (specified=0)
+n=42
+v=69 (specified=1)
+z=0 (specified=0)
+n=42
+v=69 (specified=1)
+z=0 (specified=0)
+n=42
+v=69 (specified=1)
+z=69 (specified=1)

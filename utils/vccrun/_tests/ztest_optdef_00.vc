@@ -1,0 +1,26 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+int iv;
+
+void test (int n, optional int v, optional int z) {
+  writeln("n=", n);
+  writeln("v=", v, " (specified=", specified_v, ")");
+  writeln("z=", z, " (specified=", specified_z, ")");
+}
+
+final void main () {
+  test(42);
+  test(42,, 666);
+  test(42, default, 666);
+  test(42, 666, default);
+  test(42, 666, );
+  test(42, default.iv);
+  test(42, default.iv, default);
+  test(42, default.iv, default.iv);
+}
+
+
+defaultproperties {
+  iv = 69;
+}
