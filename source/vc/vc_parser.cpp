@@ -36,12 +36,18 @@ int VParser::ParseArgList (const TLocation &stloc, VExpression **argv) {
   int count = 0;
   if (!Lex.Check(TK_RParen)) {
     do {
+      VExpression *arg;
+      if (Lex.Token == TK_Default && Lex.peekNextNonBlankChar() != '.') {
+        Lex.Expect(TK_Default);
+        arg = nullptr;
+      } else {
+        arg = ParseExpressionPriority13();
+      }
       if (count == VMethod::MAX_PARAMS) {
         ParseError(stloc, "Too many arguments");
-        auto arg = ParseExpressionPriority13();
         delete arg;
       } else {
-        argv[count++] = ParseExpressionPriority13();
+        argv[count++] = arg;
       }
     } while (Lex.Check(TK_Comma));
     Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
