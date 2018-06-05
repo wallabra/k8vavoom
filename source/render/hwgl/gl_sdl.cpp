@@ -73,9 +73,10 @@ void VSdlOpenGLDrawer::WarpMouseToWindowCenter () {
     SDL_WarpMouseInWindow(hw_window, ScreenWidth/2, ScreenHeight/2);
   }
   */
-  int wx, wy;
-  SDL_GetWindowPosition(hw_window, &wx, &wy);
-  SDL_WarpMouseGlobal(wx+ScreenWidth/2, wy+ScreenHeight/2);
+  //int wx, wy;
+  //SDL_GetWindowPosition(hw_window, &wx, &wy);
+  //SDL_WarpMouseGlobal(wx+ScreenWidth/2, wy+ScreenHeight/2);
+  SDL_WarpMouseInWindow(hw_window, ScreenWidth/2, ScreenHeight/2);
 }
 
 

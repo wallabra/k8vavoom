@@ -69,6 +69,8 @@ private:
 static VCvarB m_filter("m_filter", true, "Filter input?", CVAR_Archive);
 static VCvarB ui_mouse("ui_mouse", false, "Allow using mouse in UI?", CVAR_Archive);
 static VCvarB ui_active("ui_active", false, "Is UI active (used to stop mouse warping if \"ui_mouse\" is false)?", 0);
+static VCvarB m_nograb("m_nograb", false, "Do not grab mouse?", CVAR_Archive);
+static VCvarB m_dbg_cursor("m_dbg_cursor", false, "Do not hide (true) mouse cursor on startup?", 0);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -184,7 +186,7 @@ VSdlInputDevice::VSdlInputDevice ()
 {
   guard(VSdlInputDevice::VSdlInputDevice);
   // always off
-  SDL_ShowCursor(0);
+  if (!m_dbg_cursor) SDL_ShowCursor(0);
   // mouse and keyboard are setup using SDL's video interface
   mouse = 1;
   if (GArgs.CheckParm("-nomouse")) {
@@ -195,10 +197,7 @@ VSdlInputDevice::VSdlInputDevice ()
   } else {
     // ignore mouse motion events in any case...
     SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
-    //mouse_oldx = ScreenWidth/2;
-    //mouse_oldy = ScreenHeight/2;
     SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
-    //SDL_WarpMouse(mouse_oldx, mouse_oldy);
     if (Drawer) Drawer->WarpMouseToWindowCenter();
   }
 
@@ -235,7 +234,6 @@ VSdlInputDevice::~VSdlInputDevice () {
 void VSdlInputDevice::RegrabMouse () {
   //FIXME: ignore winactive here, 'cause when mouse is off-window, it may be `false`
   if (mouse /*&& winactive*/) {
-    //SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
     firsttime = true;
     if (Drawer) Drawer->WarpMouseToWindowCenter();
     SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
@@ -253,10 +251,8 @@ void VSdlInputDevice::ReadInput () {
   guard(VSdlInputDevice::ReadInput);
   SDL_Event ev;
   event_t vev;
-  //int rel_x;
-  //int rel_y;
-  int mouse_x;
-  int mouse_y;
+  //int rel_x = 0, rel_y = 0;
+  int mouse_x, mouse_y;
   int normal_value;
 
   SDL_PumpEvents();
@@ -269,15 +265,15 @@ void VSdlInputDevice::ReadInput () {
           if (kk > 0) GInput->KeyEvent(kk, (ev.key.state == SDL_PRESSED) ? 1 : 0);
         }
         break;
-#if 0
+      /*
       case SDL_MOUSEMOTION:
-        vev.type = ev_mouse;
-        vev.data1 = 0;
-        vev.data2 = ev.motion.xrel;
-        vev.data3 = ev.motion.yrel;
-        GInput->PostEvent(&vev);
+        if (!m_oldmode) {
+          //fprintf(stderr, "MOTION: x=%d; y=%d\n", ev.motion.xrel, ev.motion.yrel);
+          rel_x += ev.motion.xrel;
+          rel_y += -ev.motion.yrel;
+        }
         break;
-#endif /* 0 */
+      */
       case SDL_MOUSEBUTTONDOWN:
       case SDL_MOUSEBUTTONUP:
         vev.type = (ev.button.state == SDL_PRESSED) ? ev_keydown : ev_keyup;
@@ -327,11 +323,13 @@ void VSdlInputDevice::ReadInput () {
             }
             firsttime = true;
             winactive = true;
+            if (!m_nograb) SDL_CaptureMouse(SDL_TRUE);
             break;
           case SDL_WINDOWEVENT_FOCUS_LOST:
             //fprintf(stderr, "***FOCUS LOST; first=%d; drawer=%p\n", (int)firsttime, Drawer);
             winactive = false;
             firsttime = true;
+            SDL_CaptureMouse(SDL_FALSE);
             break;
           //case SDL_WINDOWEVENT_TAKE_FOCUS: Drawer->SDL_SetWindowInputFocus();
         }
@@ -344,50 +342,38 @@ void VSdlInputDevice::ReadInput () {
     }
   }
 
-  //  Read mouse separately
+  // read mouse separately
   if (mouse && winactive && Drawer) {
+    SDL_GetMouseState(&mouse_x, &mouse_y);
     if (!ui_active || ui_mouse) {
-      uiwasactive = ui_active;
-      SDL_GetMouseState(&mouse_x, &mouse_y);
-      int dx = mouse_x-ScreenWidth/2;
-      int dy = ScreenHeight/2-mouse_y;
-      if (firsttime) {
-        Drawer->WarpMouseToWindowCenter();
-        SDL_GetMouseState(&mouse_x, &mouse_y);
-        if (mouse_x == mouse_oldx && mouse_y == mouse_oldy) dx = dy = 0;
-      }
+      if (Drawer) Drawer->WarpMouseToWindowCenter();
+      int dx = mouse_x-mouse_oldx;
+      int dy = mouse_oldy-mouse_y;
       if (dx || dy) {
-        //SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
-        mouse_oldx = mouse_x;
-        mouse_oldy = mouse_y;
-        //fprintf(stderr, "mx=%d; my=%d; dx=%d, dy=%d\n", mouse_x, mouse_y, dx, dy);
-        vev.type = ev_mouse;
-        vev.data1 = 0;
-        vev.data2 = dx;
-        vev.data3 = dy;
-        GInput->PostEvent(&vev);
-        //SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
-        if (Drawer) { firsttime = false; Drawer->WarpMouseToWindowCenter(); /*fprintf(stderr, "!!!\n");*/ }
+        if (!firsttime) {
+          vev.type = ev_mouse;
+          vev.data1 = 0;
+          vev.data2 = dx;
+          vev.data3 = dy;
+          GInput->PostEvent(&vev);
+        }
+        firsttime = false;
+        mouse_oldx = ScreenWidth/2;
+        mouse_oldy = ScreenHeight/2;
       }
-    } else if (ui_active != uiwasactive) {
-      uiwasactive = ui_active;
-      if (!ui_active) {
-        //SDL_WarpMouse(ScreenWidth / 2, ScreenHeight / 2);
-        if (Drawer) {
+    } else {
+      if (ui_active != uiwasactive) {
+        uiwasactive = ui_active;
+        if (!ui_active) {
+          if (!m_nograb) SDL_CaptureMouse(SDL_TRUE);
           firsttime = true;
-          Drawer->WarpMouseToWindowCenter();
-          SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
+        } else {
+          SDL_CaptureMouse(SDL_FALSE);
         }
       }
+      mouse_oldx = mouse_x;
+      mouse_oldy = mouse_y;
     }
-#if 0
-    SDL_GetRelativeMouseState(&rel_x, &rel_y);
-    vev.type = ev_mouse;
-    vev.data1 = 0;
-    vev.data2 = rel_x;
-    vev.data3 = rel_y;
-    GInput->PostEvent(&vev);
-#endif
   }
 
   PostJoystick();
