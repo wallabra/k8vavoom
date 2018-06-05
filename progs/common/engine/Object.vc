@@ -534,6 +534,10 @@ native static final float sqrt(float x);
 native static final float Length(TVec vec);
 //  Vector length
 native static final float length(TVec vec);
+//  Vector length without z component
+native static final float Length2D(TVec vec);
+//  Vector length without z component
+native static final float length2D(TVec vec);
 //  Normalises vector
 native static final TVec Normalise(TVec vec);
 //  Normalises vector

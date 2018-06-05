@@ -639,6 +639,16 @@ IMPLEMENT_FUNCTION(VObject, length) {
   RET_FLOAT(Length(vec));
 }
 
+IMPLEMENT_FUNCTION(VObject, Length2D) {
+  P_GET_VEC(vec);
+  RET_FLOAT(Length2D(vec));
+}
+
+IMPLEMENT_FUNCTION(VObject, length2D) {
+  P_GET_VEC(vec);
+  RET_FLOAT(length2D(vec));
+}
+
 IMPLEMENT_FUNCTION(VObject, Normalise) {
   P_GET_VEC(vec);
   RET_VEC(Normalise(vec));
