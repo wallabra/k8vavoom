@@ -46,6 +46,7 @@ private:
   bool winactive;
   bool firsttime;
   bool uiwasactive;
+  bool curHidden;
 
   int mouse_oldx;
   int mouse_oldy;
@@ -174,6 +175,7 @@ VSdlInputDevice::VSdlInputDevice ()
   , winactive(false)
   , firsttime(true)
   , uiwasactive(false)
+  , curHidden(false)
   , mouse_oldx(0)
   , mouse_oldy(0)
   , joystick(nullptr)
@@ -186,7 +188,7 @@ VSdlInputDevice::VSdlInputDevice ()
 {
   guard(VSdlInputDevice::VSdlInputDevice);
   // always off
-  if (!m_dbg_cursor) SDL_ShowCursor(0);
+  if (!m_dbg_cursor) { curHidden = true; SDL_ShowCursor(0); }
   // mouse and keyboard are setup using SDL's video interface
   mouse = 1;
   if (GArgs.CheckParm("-nomouse")) {
@@ -346,6 +348,7 @@ void VSdlInputDevice::ReadInput () {
   if (mouse && winactive && Drawer) {
     SDL_GetMouseState(&mouse_x, &mouse_y);
     if (!ui_active || ui_mouse) {
+      if (!m_dbg_cursor && !curHidden) { curHidden = true; SDL_ShowCursor(0); }
       if (Drawer) Drawer->WarpMouseToWindowCenter();
       int dx = mouse_x-mouse_oldx;
       int dy = mouse_oldy-mouse_y;
@@ -361,14 +364,17 @@ void VSdlInputDevice::ReadInput () {
         mouse_oldx = ScreenWidth/2;
         mouse_oldy = ScreenHeight/2;
       }
+      uiwasactive = ui_active;
     } else {
       if (ui_active != uiwasactive) {
         uiwasactive = ui_active;
         if (!ui_active) {
           if (!m_nograb) SDL_CaptureMouse(SDL_TRUE);
           firsttime = true;
+          if (!m_dbg_cursor && !curHidden) { curHidden = true; SDL_ShowCursor(0); }
         } else {
           SDL_CaptureMouse(SDL_FALSE);
+          if (!m_dbg_cursor && curHidden) { curHidden = false; SDL_ShowCursor(1); }
         }
       }
       mouse_oldx = mouse_x;
