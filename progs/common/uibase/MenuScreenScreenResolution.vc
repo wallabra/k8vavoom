@@ -173,8 +173,8 @@ void ActivateSetMode(Object Sender)
 {
   SetCvar('screen_windowed', Windowed.Value);
   SetCvar('r_vsync', VSync.Value);
-  CmdBuf_AddText("SetResolution %d %d %d\n", atoi(Width.Value) ? atoi(Width.Value) : modes[Mode.Value].width,
-    atoi(Height.Value) ? atoi(Height.Value) : modes[Mode.Value].height, depths[Depth.Value]);
+  CmdBuf_AddText("SetResolution %d %d\n", atoi(Width.Value) ? atoi(Width.Value) : modes[Mode.Value].width,
+    atoi(Height.Value) ? atoi(Height.Value) : modes[Mode.Value].height);
 }
 
 defaultproperties
