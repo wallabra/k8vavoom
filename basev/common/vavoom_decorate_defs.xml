@@ -431,6 +431,12 @@
     <flag name="CheatNotWeapon" property="bCheatNotWeapon" />
     <flag name="No_Auto_Switch" property="bNoAutoSwitch" />
     <flag name="NoAutoAim" property="bNoAutoaim" />
+
+    <prop_string_unsupported name="Weapon.BobStyle" />
+    <prop_float_unsupported name="Weapon.BobRangeX" />
+    <prop_float_unsupported name="Weapon.BobRangeY" />
+    <prop_float_unsupported name="Weapon.BobSpeed" />
+
     <!-- SkulTag Specific weapon flags -->
     <flag_unsupported name="Allow_With_Respawn_Ivul" />
     <flag_unsupported name="NoLMS" />
