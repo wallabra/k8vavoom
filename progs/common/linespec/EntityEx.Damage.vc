@@ -1,4 +1,4 @@
-﻿//**************************************************************************
+//**************************************************************************
 //**
 //**    ##   ##    ##    ##   ##   ####     ####   ###     ###
 //**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
@@ -22,6 +22,12 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+
+final static name k8GetBloodClassName (name newblood, name oldblood) {
+  if (FindClass(newblood)) return newblood;
+  return oldblood;
+}
+
 
 //==========================================================================
 //
@@ -282,27 +288,21 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
         bool doSpray = !bNoBlood && GetCvarB('k8HSHeadKillBloodSpray');
 
         if (doSpray) {
-          // HellKnight is a kind of Hell Baron
-          bool restoreRedBlood = true;
-          name bloodClassName;
-          name poolClassName;
+          name bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient', 'Blood');
+          name poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool', 'None');
+          //writeln("bloodtype: ", GetClassName(self.BloodType), "; ", GetClassName(GetClassReplacee(self.BloodType)));
 
           if (self.BloodType && GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') {
-            bloodClassName = 'K8Gore_BloodTransientGreen';
+            bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient_Green', bloodClassName);
             //mistClassName = 'K8Gore_BloodmistBigTransientGreen';
-            poolClassName = 'K8Gore_GrowingBloodPoolGreen';
-            restoreRedBlood = (!FindClass(bloodClassName) || !FindClass(poolClassName));
+            poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool_Green', poolClassName);
           } else if (self.BloodType && GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') {
-            bloodClassName = 'K8Gore_BloodTransientBlue';
+            bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient_Blue', bloodClassName);
             //mistClassName = 'K8Gore_BloodmistBigTransientBlue';
-            poolClassName = 'K8Gore_GrowingBloodPoolBlue';
-            restoreRedBlood = (!FindClass(bloodClassName) || !FindClass(poolClassName));
+            poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool_Blue', poolClassName);
           }
 
-          if (restoreRedBlood) {
-            bloodClassName = 'K8Gore_BloodTransient';
-            poolClassName = 'K8Gore_GrowingBloodPool';
-          }
+          //writeln("  bloodclass: ", bloodClassName);
 
           class<Actor> bloodClass = class<Actor>(FindClass(bloodClassName));
 
