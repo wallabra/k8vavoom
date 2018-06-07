@@ -123,6 +123,24 @@ final void A_CustomMissile(class<Actor> MissileType, optional float SpawnHeight,
 
 //==========================================================================
 //
+//  FireSuperBullet
+//
+//==========================================================================
+
+final void FireSuperBullet () {
+  //Actor(MO).A_FireBullets(0, 0, 1, 10000, BulletPuff);
+  bool noAAim = true;
+  name decal = '';
+  TVec aimDir;
+
+  Aim(aimDir, 16.0*64.0, default, noAAim);
+  LineAttack(aimDir, /*Range*/10000, /*damage*/10000,
+    BulletPuff, default, default,
+    BulletPuff.default.DamageType, false, decal);
+}
+
+//==========================================================================
+//
 //  A_CustomBulletAttack
 //
 //==========================================================================

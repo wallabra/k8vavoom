@@ -193,6 +193,10 @@ override void PlayerImpulse()
   {
     NextWeapon();
   }
+  else if (impulse == 43)
+  {
+    Actor(MO).FireSuperBullet();
+  }
   else if (impulse == 56)
   {
     bReloadQueued = true;
