@@ -2785,15 +2785,18 @@ int VLevel::IsDeepWater (line_t *line) {
 
   int res = 0;
   // floor: back sidedef should have no texture
-  if (Sides[line->sidenum[1]].BottomTexture == 0 && !line->backsector->heightsec) {
+  if (Sides[line->sidenum[1]].BottomTexture == 0 && !line->backsector->heightsec &&
+      Sides[line->sidenum[0]].TopTexture > 0 && Sides[line->sidenum[0]].MidTexture == 0) {
     // it should be lower than front
     if (line->frontsector->floor.minz > line->backsector->floor.minz) res |= 1;
   }
+  /*
   // ceiling: front sidedef should have no texture
   if (Sides[line->sidenum[1]].TopTexture == 0 && !line->frontsector->heightsec) {
-    // it should be upper than front
+    // it should be higher than front
     if (line->frontsector->ceiling.minz < line->backsector->ceiling.minz) res |= 2;
   }
+  */
 
   // done
   return res;
@@ -2838,6 +2841,7 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
 
   int type = IsDeepWater(line);
   if (type == 0) return; // not a deep water
+  if (type == 3) return; //k8: i am not sure, but...
 
   // mark as deep water
   sector_t *hs;
@@ -2849,7 +2853,7 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
     hs = (line->frontsector->heightsec = line->backsector);
   }
 #ifdef DEBUG_DEEP_WATERS
-  GCon->Logf("*** DEEP WATER; LINEDEF #%d; type=%d", lidx, type);
+  GCon->Logf("*** DEEP WATER; LINEDEF #%d; type=%d; fsf=%f; bsf=%f; type=%d", lidx, type, line->frontsector->floor.minz, line->backsector->floor.minz, type);
 #endif
   hs->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
   hs->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
