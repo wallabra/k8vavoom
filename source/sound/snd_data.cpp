@@ -748,6 +748,7 @@ int VSoundManager::LookupPlayerSound(int ClassId, int GenderId, int RefId)
 
 int VSoundManager::GetSoundID(VName Name)
 {
+  /*
   guard(VSoundManager::GetSoundID);
   for (int i = 0; i < S_sfx.Num(); i++)
   {
@@ -759,6 +760,9 @@ int VSoundManager::GetSoundID(VName Name)
   GCon->Logf("WARNING! Can't find sound %s", *Name);
   return 0;
   unguard;
+  */
+  if (Name == NAME_None) return 0;
+  return GetSoundID(*Name);
 }
 
 //==========================================================================
@@ -770,13 +774,31 @@ int VSoundManager::GetSoundID(VName Name)
 int VSoundManager::GetSoundID(const char *name)
 {
   guard(VSoundManager::GetSoundID);
-  for (int i = 0; i < S_sfx.Num(); i++)
-  {
-    if (!VStr::ICmp(*S_sfx[i].TagName, name))
-    {
-      return i;
+  if (!name || !name[0]) return 0;
+  for (int i = 0; i < S_sfx.Num(); ++i) {
+    if (VStr::ICmp(*S_sfx[i].TagName, name) == 0) return i;
+  }
+
+  if (strchr(name, '/') != nullptr) {
+    VStr vs = VStr(name);
+    int lump = W_CheckNumForFileName(vs+".flac");
+    //if (lump < 0) lump = W_CheckNumForFileName(vs+".flac");
+    if (lump < 0) lump = W_CheckNumForFileName(vs+".wav");
+    if (lump < 0) lump = W_CheckNumForFileName(vs+".ogg");
+    if (lump < 0) lump = W_CheckNumForFileName(vs+".mp3");
+    if (lump < 0) lump = W_CheckNumForFileName(vs);
+    if (lump >= 0) {
+      //GCon->Logf("sound '%s' is %s", name, *W_FullLumpName(lump));
+      int id = AddSoundLump(VName(name), lump);
+      //S_sfx[id].ChangePitch = 0;
+      S_sfx[id].Data = nullptr;
+      if (LoadSound(id)) {
+        GCon->Logf("loaded sound '%s' (lump %d, id %d)", name, lump, id);
+        return id;
+      }
     }
   }
+
   GCon->Logf("WARNING! Can't find sound named %s", name);
   return 0;
   unguard;
@@ -879,6 +901,7 @@ bool VSoundManager::IsSoundPresent(VName ClassName, VName GenderName,
 //  VSoundManager::LoadSound
 //
 //==========================================================================
+//#include <typeinfo>
 
 bool VSoundManager::LoadSound(int sound_id)
 {
@@ -901,7 +924,12 @@ bool VSoundManager::LoadSound(int sound_id)
     for (VSampleLoader *Ldr = VSampleLoader::List;
       Ldr && !S_sfx[sound_id].Data; Ldr = Ldr->Next)
     {
+      Strm->Seek(0);
       Ldr->Load(S_sfx[sound_id], *Strm);
+      if (S_sfx[sound_id].Data) {
+        //GCon->Logf("sound '%s' is %s", *W_FullLumpName(Lump), typeid(*Ldr).name());
+        break;
+      }
     }
     delete Strm;
     Strm = nullptr;
