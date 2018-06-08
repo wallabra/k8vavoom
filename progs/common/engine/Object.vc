@@ -32,25 +32,24 @@ class Object
   abstract;
 
 #ifndef VCC_STANDALONE_EXECUTOR
-enum
-{
-  CVAR_ARCHIVE    = 1,  //  Set to cause it to be saved to vavoom.cfg
-  CVAR_USERINFO   = 2,  //  Added to userinfo  when changed
-  CVAR_SERVERINFO   = 4,  //  Added to serverinfo when changed
-  CVAR_INIT     = 8,  //  Don't allow change from console at all,
-                // but can be set from the command line
-  CVAR_LATCH      = 16, //  Save changes until server restart
-  CVAR_ROM      = 32, //  Display only, cannot be set by user at all
-  CVAR_CHEAT      = 64, //  Can not be changed if cheats are disabled
-  CVAR_MODIFIED   = 128 //  Set each time the cvar is changed
+enum {
+  CVAR_ARCHIVE    = 1,  // Set to cause it to be saved to vavoom.cfg
+  CVAR_USERINFO   = 2,  // Added to userinfo  when changed
+  CVAR_SERVERINFO = 4,  // Added to serverinfo when changed
+  CVAR_INIT       = 8,  // Don't allow change from console at all,
+                        // but can be set from the command line
+  CVAR_LATCH      = 16, // Save changes until server restart
+  CVAR_ROM        = 32, // Display only, cannot be set by user at all
+  CVAR_CHEAT      = 64, // Can not be changed if cheats are disabled
+  CVAR_MODIFIED   = 128 // Set each time the cvar is changed
 };
 #endif
 
-const int MININT        = 0x80000000;
-const int MAXINT        = 0x7fffffff;
+const int MININT = 0x80000000;
+const int MAXINT = 0x7fffffff;
 
 #ifndef VCC_STANDALONE_EXECUTOR
-const int MAXPLAYERS      = 8;
+const int MAXPLAYERS = 8;
 #endif
 
 
@@ -63,26 +62,23 @@ const int MAXPLAYERS      = 8;
 //
 // Horisontal text alignement
 //
-enum
-{
-  hleft,    //Left
-  hcentre,  //Centred
-  hright    //Right
+enum {
+  hleft,   //Left
+  hcentre, //Centred
+  hright   //Right
 };
 
 //
 // Vertical text alignement
 //
-enum
-{
-  vtop,   //Top
-  vcentre,  //Centre
-  vbottom   //Bottom
+enum {
+  vtop,    //Top
+  vcentre, //Centre
+  vbottom  //Bottom
 };
 
-//  Text colours.
-enum
-{
+// Text colours.
+enum {
   CR_UNDEFINED = -1,
   CR_BRICK,
   CR_TAN,
@@ -109,37 +105,33 @@ enum
 };
 
 //
-//  STATUS BAR VIEW TYPE
+// STATUS BAR VIEW TYPE
 //
-enum
-{
+enum {
   SB_VIEW_NORMAL,
   SB_VIEW_AUTOMAP,
   SB_VIEW_FULLSCREEN
 };
+
 
 //==========================================================================
 //
 //  3D math - vectors and planes
 //
 //==========================================================================
-
-vector TVec
-{
+vector TVec {
   float x;
   float y;
   float z;
 };
 
-vector TAVec
-{
+vector TAVec {
   float pitch;
   float yaw;
   float roll;
 };
 
-struct TPlane
-{
+struct TPlane {
   TVec normal;
   float dist;
   int __type;
@@ -160,109 +152,101 @@ struct TPlane
 //  Server list
 //
 
-enum { HOSTCACHESIZE    = 8 };
+enum { HOSTCACHESIZE = 8 };
 
-struct hostcache_t
-{
-  string      Name;
-  string      Map;
-  string      CName;
-  string      WadFiles[20];
-  int       Users;
-  int       MaxUsers;
+struct hostcache_t {
+  string Name;
+  string Map;
+  string CName;
+  string WadFiles[20];
+  int Users;
+  int MaxUsers;
 };
 
-struct slist_t
-{
-  bool      bInProgress;
-  int       Count;
+struct slist_t {
+  bool bInProgress;
+  int Count;
   hostcache_t *Cache;
-  string      ReturnReason;
+  string ReturnReason;
 };
 
-struct im_t
-{
-  name  LeaveMap;
-  int   LeaveCluster;
-  string  LeaveName;
-  name  LeaveTitlePatch;
-  name  ExitPic;
+struct im_t {
+  name LeaveMap;
+  int LeaveCluster;
+  string LeaveName;
+  name LeaveTitlePatch;
+  name ExitPic;
 
-  name  EnterMap;
-  int   EnterCluster;
-  string  EnterName;
-  name  EnterTitlePatch;
-  name  EnterPic;
+  name EnterMap;
+  int  EnterCluster;
+  string EnterName;
+  name EnterTitlePatch;
+  name EnterPic;
 
-  name  InterMusic;
+  name InterMusic;
 
-  string  Text;
-  name  TextFlat;
-  name  TextPic;
-  name  TextMusic;
-  int   TextCDTrack;
-  int   TextCDId;
+  string Text;
+  name TextFlat;
+  name TextPic;
+  name TextMusic;
+  int TextCDTrack;
+  int TextCDId;
 
-  bool  bTextIsLump;
+  bool bTextIsLump;
 };
 
-struct picinfo_t
-{
+struct picinfo_t {
   int width;
   int height;
   int xoffset;
   int yoffset;
 };
 
-struct EpisodeDef
-{
-  name    Name;
-  name    TeaserName;
-  string    Text;
-  name    PicName;
-  bool    bLookupText;
-  bool    bNoSkillMenu;
-  bool    bOptional;
-  string    Key;
+struct EpisodeDef {
+  name Name;
+  name TeaserName;
+  string Text;
+  name PicName;
+  bool bLookupText;
+  bool bNoSkillMenu;
+  bool bOptional;
+  string Key;
 };
 
-struct SkillPlayerClassName
-{
-  string    ClassName;
-  string    MenuName;
+struct SkillPlayerClassName {
+  string ClassName;
+  string MenuName;
 };
 
-struct SkillDef
-{
-  string    Name;
-  float   AmmoFactor;
-  float   DoubleAmmoFactor;
-  float   DamageFactor;
-  float   RespawnTime;
-  int     RespawnLimit;
-  float   Aggressiveness;
-  int     SpawnFilter;
-  int     AcsReturn;
-  string    MenuName;
+struct SkillDef {
+  string Name;
+  float AmmoFactor;
+  float DoubleAmmoFactor;
+  float DamageFactor;
+  float RespawnTime;
+  int RespawnLimit;
+  float Aggressiveness;
+  int SpawnFilter;
+  int AcsReturn;
+  string MenuName;
   array<SkillPlayerClassName> PlayerClassNames;
-  string    ConfirmationText;
-  string    Key;
-  string    TextColour;
-  bool    bFastMonsters;
-  bool    bDisableCheats;
-  bool    bEasyBossBrain;
-  bool    bAutoUseHealth;
-  bool    bMenuNameIsPic;
-  bool    bMustConfirm;
+  string ConfirmationText;
+  string Key;
+  string TextColour;
+  bool bFastMonsters;
+  bool bDisableCheats;
+  bool bEasyBossBrain;
+  bool bAutoUseHealth;
+  bool bMenuNameIsPic;
+  bool bMustConfirm;
 };
 #endif
 
 
 //**************************************************************************
 
-//  Keys and buttons
-enum
-{
+// Keys and buttons
+enum {
   K_SPACE = 32,
 
   K_a = 97,
@@ -399,22 +383,23 @@ enum
   SCANCODECOUNT = KEY_COUNT - 0x80
 };
 
-//  Input event types.
-enum
-{
+// [Input] event types.
+enum {
   ev_keydown,
   ev_keyup,
-  ev_mouse,
-  ev_joystick
+  ev_mouse, // for vcc_run: data2/data3 are coords, otherwise deltas
+  ev_joystick,
+  // extended events for vcc_run
+  ev_winfocus, // data1: focused
+  ev_timer, // data1: timer id
 };
 
-//  Event structure.
-struct event_t
-{
-  int type; // event type
-  int data1;  // keys / mouse / joystick buttons
-  int data2;  // mouse / joystick x move
-  int data3;  // mouse / joystick y move
+// Event structure.
+struct event_t {
+  int type;  // event type
+  int data1; // keys / mouse / joystick buttons
+  int data2; // mouse / joystick x move
+  int data3; // mouse / joystick y move
 };
 
 native readonly private void *CxxVTable;
@@ -423,9 +408,9 @@ native readonly private int ObjectIndex;
 native readonly private int ObjectFlags;
 native readonly class Class;
 
-native void Destroy();
-native final bool IsA(name CheckName);
-native final bool IsDestroyed();
+native void Destroy ();
+native final bool IsA (name CheckName);
+native final bool IsDestroyed ();
 
 
 //==========================================================================
@@ -439,9 +424,9 @@ native final bool IsDestroyed();
 //
 
 //  Shut down client and server, go to title
-native static final void Error(string format, ...);
+native static final void Error (string format, ...);
 //  Exit programm with error
-native static final void FatalError(string format, ...);
+native static final void FatalError (string format, ...);
 
 
 #ifndef VCC_STANDALONE_EXECUTOR
@@ -485,151 +470,149 @@ final bool IsNerve { get { return (GetCvarS('game_name') == "nerve"); } }
 //
 
 //  Normalises angle in range 0..360
-native static final float AngleMod360(float angle);
+native static final float AngleMod360 (float angle);
 //  Normalises angle in range -180..180
-native static final float AngleMod180(float angle);
+native static final float AngleMod180 (float angle);
 //  degrees --> radians
 native static final float deg2rad (float angle);
 //  radians -> degrees
 native static final float rad2deg (float angle);
 //  Absolute value
-native static final int abs(int val);
+native static final int abs (int val);
 //  Absolute value
-native static final float fabs(float val);
+native static final float fabs (float val);
 //  Minimal value
-native static final int Min(int v1, int v2);
-native static final int min(int v1, int v2);
+native static final int Min (int v1, int v2);
+native static final int min (int v1, int v2);
 //  Minimal value
-native static final float FMin(float v1, float v2);
-native static final float fmin(float v1, float v2);
+native static final float FMin (float v1, float v2);
+native static final float fmin (float v1, float v2);
 //  Maximal value
-native static final int Max(int v1, int v2);
-native static final int max(int v1, int v2);
+native static final int Max (int v1, int v2);
+native static final int max (int v1, int v2);
 //  Maximal value
-native static final float FMax(float v1, float v2);
-native static final float fmax(float v1, float v2);
+native static final float FMax (float v1, float v2);
+native static final float fmax (float v1, float v2);
 //  Clamped value
-native static final int Clamp(int Val, int Min, int Max);
-native static final int clamp(int Val, int Min, int Max);
+native static final int Clamp (int Val, int Min, int Max);
+native static final int clamp (int Val, int Min, int Max);
 //  Clamped value
-native static final float FClamp(float Val, float Min, float Max);
-native static final float fclamp(float Val, float Min, float Max);
+native static final float FClamp (float Val, float Min, float Max);
+native static final float fclamp (float Val, float Min, float Max);
 //  Sine
-native static final float sin(float angle);
+native static final float sin (float angle);
 //  Cosine
-native static final float cos(float angle);
+native static final float cos (float angle);
 //  Tangent
-native static final float tan(float angle);
+native static final float tan (float angle);
 //  Arcsine
-native static final float asin(float x);
+native static final float asin (float x);
 //  Arccosine
-native static final float acos(float x);
+native static final float acos (float x);
 //  Arctangent
-native static final float atan(float slope);
+native static final float atan (float slope);
 //  Arctangent
-native static final float atan2(float y, float x);
+native static final float atan2 (float y, float x);
 //  Square root
-native static final float sqrt(float x);
+native static final float sqrt (float x);
 //  Vector length
-native static final float Length(TVec vec);
+native static final float Length (TVec vec);
 //  Vector length
-native static final float length(TVec vec);
+native static final float length (TVec vec);
 //  Vector length without z component
-native static final float Length2D(TVec vec);
+native static final float Length2D (TVec vec);
 //  Vector length without z component
-native static final float length2D(TVec vec);
+native static final float length2D (TVec vec);
 //  Normalises vector
-native static final TVec Normalise(TVec vec);
+native static final TVec Normalise (TVec vec);
 //  Normalises vector
-native static final TVec normalise(TVec vec);
+native static final TVec normalise (TVec vec);
 //  Dot product
-native static final float DotProduct(TVec v1, TVec v2);
+native static final float DotProduct (TVec v1, TVec v2);
 //  Dot product
-native static final float dot(TVec v1, TVec v2);
+native static final float dot (TVec v1, TVec v2);
 //  Cross product (perpendicular vector)
-native static final TVec CrossProduct(TVec v1, TVec v2);
+native static final TVec CrossProduct (TVec v1, TVec v2);
 //  Cross product (perpendicular vector)
-native static final TVec cross(TVec v1, TVec v2);
+native static final TVec cross (TVec v1, TVec v2);
 //  Creates vectors for given angle vector
-native static final void AngleVectors(TAVec * angles, TVec * forward, TVec * right,
-  TVec * up);
+native static final void AngleVectors (TAVec *angles, TVec *forward, TVec *right, TVec *up);
 //  Simplified version of AngleVectors, creates only forward vector
-native static final void AngleVector(TAVec * angles, TVec * forward);
+native static final void AngleVector (TAVec *angles, TVec *forward);
 //  Create angle vector for a vector
-native static final void VectorAngles(TVec * vec, TAVec * angles);
+native static final void VectorAngles (TVec *vec, TAVec *angles);
 //  Get z of point with given x and y coords
 // Don't try to use it on a vertical plane
-native static final float GetPlanePointZ(TPlane * plane, TVec point);
+native static final float GetPlanePointZ (TPlane *plane, TVec point);
 //  Returns side 0 (front) or 1 (back).
-native static final int PointOnPlaneSide(TVec point, TPlane * plane);
+native static final int PointOnPlaneSide (TVec point, TPlane *plane);
 //  Rotates a direction vector
-native static final TVec RotateDirectionVector(TVec vec, TAVec rot);
+native static final TVec RotateDirectionVector (TVec vec, TAVec rot);
 //  Rotates vector around Z axis
-native static final void VectorRotateAroundZ(TVec * vec, float angle);
+native static final void VectorRotateAroundZ (TVec *vec, float angle);
 //  Rotates vector around another vector
-native static final TVec RotateVectorAroundVector(TVec Vector, TVec Axis,
-  float angle);
+native static final TVec RotateVectorAroundVector (TVec Vector, TVec Axis, float angle);
 
 //
 //  Random numbers
 //
 
 //  Floating random number 0.0 ... 0.999999
-native static final float Random();
+native static final float Random ();
 //  Integer random number 1 .. 255
-native static final int P_Random();
+native static final int P_Random ();
 
 //
 //  String functions
 //
 
 //  String length
-native static final int strlen(string s);
+native static final int strlen (string s);
 //  Compare strings
-native static final int strcmp(string s1, string s2);
+native static final int strcmp (string s1, string s2);
 //  Compare strings ingnoring case
-native static final int stricmp(string s1, string s2);
+native static final int stricmp (string s1, string s2);
 //  Append string to string
-native static final string strcat(string s1, string s2);
+native static final string strcat (string s1, string s2);
 //  Convert string to lowercase
-native static final string strlwr(string s);
+native static final string strlwr (string s);
 //  Convert string to uppercase
-native static final string strupr(string s);
+native static final string strupr (string s);
 //  Gets a substring
-native static final string substr(string Str, int Start, int Len);
+native static final string substr (string Str, int Start, int Len);
 //  Does varargs print into a temporary buffer
-native static final string va(string format, ...);
+native static final string va (string format, ...);
 //  Converts string to integer
-native static final int atoi(string str);
+native static final int atoi (string str);
 //  Converts string to float
-native static final float atof(string str);
+native static final float atof (string str);
 //  Checks if string starts with given string
-native static final bool StrStartsWith(string Str, string Check);
+native static final bool StrStartsWith (string Str, string Check);
 //  Checks if string ends with given string
-native static final bool StrEndsWith(string Str, string Check);
+native static final bool StrEndsWith (string Str, string Check);
 //  Replaces substrings with another string
-native static final string StrReplace(string Str, string Search, string Replacement);
+native static final string StrReplace (string Str, string Search, string Replacement);
 
 //
 //  Printing to console
 //
 
 //  Print to console
-native static final void print(string format, ...);
+native static final void print (string format, ...);
 //  Print to console only when developer == 1
-native static final void dprint(string format, ...);
+native static final void dprint (string format, ...);
 
 
 #ifndef VCC_STANDALONE_EXECUTOR
 //
 //  Texture / flat number retrieval
 //
-native static final int CheckTextureNumForName(name Name);
-native static final int TextureNumForName(name Name);
-native static final int CheckFlatNumForName(name Name);
-native static final int FlatNumForName(name Name);
-native static final float TextureHeight(int pic);
-native static final name GetTextureName(int Handle);
+native static final int CheckTextureNumForName (name Name);
+native static final int TextureNumForName (name Name);
+native static final int CheckFlatNumForName (name Name);
+native static final int FlatNumForName (name Name);
+native static final float TextureHeight (int pic);
+native static final name GetTextureName (int Handle);
 #endif
 
 
@@ -638,24 +621,24 @@ native static final name GetTextureName(int Handle);
 //
 
 //  float -> int
-native static final int ftoi(float f);
+native static final int ftoi (float f);
 //  int -> float
-native static final float itof(int f);
+native static final float itof (int f);
 //  Converts string to name
-native static final name StrToName(string Str);
+native static final name StrToName (string Str);
 //  Converts name to string
-native static final string NameToStr(name Name);
+native static final string NameToStr (name Name);
 
 
 #ifndef VCC_STANDALONE_EXECUTOR
 //
 //  Console command functions
 //
-native static final int Cmd_CheckParm(string str);
-native static final int Cmd_GetArgC();
-native static final string Cmd_GetArgV(int idx);
+native static final int Cmd_CheckParm (string str);
+native static final int Cmd_GetArgC ();
+native static final string Cmd_GetArgV (int idx);
 //  Adds text to command buffer, same as typing it in console
-native static final void CmdBuf_AddText(string format, ...);
+native static final void CmdBuf_AddText (string format, ...);
 #endif
 
 
@@ -663,117 +646,110 @@ native static final void CmdBuf_AddText(string format, ...);
 //  Class methods
 //
 
-native static final class FindClass(name Name);
-native static final class FindClassLowerCase(name Name);
-native static final bool ClassIsChildOf(class SomeClass, class BaseClass);
-native static final name GetClassName(class C);
-native static final class GetClassParent(class C);
-native static final class GetClassReplacement(class C);
-native static final class GetClassReplacee(class C);
-native static final state FindClassState(class C, name StateName);
-native static final int GetClassNumOwnedStates(class C);
-native static final state GetClassFirstState(class C);
+native static final class FindClass (name Name);
+native static final class FindClassLowerCase (name Name);
+native static final bool ClassIsChildOf (class SomeClass, class BaseClass);
+native static final name GetClassName (class C);
+native static final class GetClassParent (class C);
+native static final class GetClassReplacement (class C);
+native static final class GetClassReplacee (class C);
+native static final state FindClassState (class C, name StateName);
+native static final int GetClassNumOwnedStates (class C);
+native static final state GetClassFirstState (class C);
 
 //
 //  State methods
 //
 
-native static final bool StateIsInRange(state State, state Start, state End, int MaxDepth);
-native static final bool StateIsInSequence(state State, state Start);
-native static final name GetStateSpriteName(state State);
-native static final float GetStateDuration(state State);
-native static final state GetStatePlus(state S, int Offset, optional bool IgnoreJump);
+native static final bool StateIsInRange (state State, state Start, state End, int MaxDepth);
+native static final bool StateIsInSequence (state State, state Start);
+native static final name GetStateSpriteName (state State);
+native static final float GetStateDuration (state State);
+native static final state GetStatePlus (state S, int Offset, optional bool IgnoreJump);
 #ifndef VCC_STANDALONE_EXECUTOR
-native static final bool AreStateSpritesPresent(state State);
+native static final bool AreStateSpritesPresent (state State);
 #endif
 
 //
 //  Iterators
 //
 
-native static final iterator AllObjects(class BaseClass, out Object Obj);
-native static final iterator AllClasses(class BaseClass, out class Class);
+native static final iterator AllObjects (class BaseClass, out Object Obj);
+native static final iterator AllClasses (class BaseClass, out class Class);
 
 //
 //  Misc
 //
 
+native static final Object SpawnObject (class cid);
+native static final int RGB (byte r, byte g, byte b);
+native static final int RGBA (byte r, byte g, byte b, byte a);
+
 #ifndef VCC_STANDALONE_EXECUTOR
 //  Reads key value from info string (userinfo or serverinfo)
-native static final string Info_ValueForKey(string info, string key);
+native static final string Info_ValueForKey (string info, string key);
 //  Checks if WAD lump is present, used to check for shareware/extended WADs
-native static final bool WadLumpPresent(name Name);
-#endif
-native static final Object SpawnObject(class cid);
-#ifndef VCC_STANDALONE_EXECUTOR
-native static final GameObject::VAnimDoorDef *FindAnimDoor(int BaseTex);
-native static final string GetLangString(name Id);
-#endif
-native static final int RGB(byte r, byte g, byte b);
-native static final int RGBA(byte r, byte g, byte b, byte a);
-#ifndef VCC_STANDALONE_EXECUTOR
-native static final GameObject::LockDef *GetLockDef(int Lock);
-native static final int ParseColour(string Name);
-native static final string TextColourString(int Colour);
-native static final bool StartTitleMap();
-native static final void LoadBinaryLump(name LumpName, out array<byte> Array);
-native static final bool IsMapPresent(name MapName);
-//native static final void Clock(int Idx);
-//native static final void Unclock(int Idx);
+native static final bool WadLumpPresent (name Name);
+native static final GameObject::VAnimDoorDef *FindAnimDoor (int BaseTex);
+native static final string GetLangString (name Id);
+native static final GameObject::LockDef *GetLockDef (int Lock);
+native static final int ParseColour (string Name);
+native static final string TextColourString (int Colour);
+native static final bool StartTitleMap ();
+native static final void LoadBinaryLump (name LumpName, out array<byte> Array);
+native static final bool IsMapPresent (name MapName);
 
-native static final int P_GetMapIndexByLevelNum(int map);
-native static final int P_GetNumMaps();
+native static final int P_GetMapIndexByLevelNum (int map);
+native static final int P_GetNumMaps ();
 
 native static final bool HasDecal (name aname);
 #endif
 
 
 #ifndef VCC_STANDALONE_EXECUTOR
-struct VMapSpecialAction
-{
-  name    TypeName;
-  int   Special;
-  int   Args[5];
+struct VMapSpecialAction {
+  name TypeName;
+  int Special;
+  int Args[5];
 };
 
-struct mapInfo_t
-{
-  name    LumpName;
-  string    Name;     // Name of map
-  int   LevelNum;   // Level number for action specials
-  int   Cluster;    // Defines what cluster level belongs to
-  int   WarpTrans;    // Actual map number in case maps are not sequential
-  name    NextMap;    // Map to teleport to upon exit of timed deathmatch
-  name    SecretMap;    // Map to teleport upon secret exit
-  name    SongLump;   // Background music (MUS or MIDI)
-  int   CDTrack;    // CD track to play during level
-  int   Sky1Texture;  // Default sky texture
-  int   Sky2Texture;  // Alternate sky displayed in Sky2 sectors
-  float   Sky1ScrollDelta;// Default sky texture speed
-  float   Sky2ScrollDelta;// Alternate sky texture speed
-  name    SkyBox;     // Sky box
-  name    FadeTable;    // Fade table {fogmap}
-  int   Fade; // unsigned
-  int   OutsideFog; // unsigned
-  float   Gravity;    // Map gravity
-  float   AirControl;   // Air control in this map.
-  int   Flags;// unsigned
-  int   Flags2;// unsigned
-  name    TitlePatch;
-  int   ParTime;
-  int   SuckTime;
-  byte    HorizWallShade;
-  byte    VertWallShade;
-  byte    Infighting;
-  array<VMapSpecialAction>  SpecialActions;
-  name    RedirectType;
-  name    RedirectMap;
-  name    ExitPic;
-  name    EnterPic;
-  name    InterMusic;
+struct mapInfo_t {
+  name LumpName;
+  string Name;     // Name of map
+  int LevelNum;   // Level number for action specials
+  int Cluster;    // Defines what cluster level belongs to
+  int WarpTrans;    // Actual map number in case maps are not sequential
+  name NextMap;    // Map to teleport to upon exit of timed deathmatch
+  name SecretMap;    // Map to teleport upon secret exit
+  name SongLump;   // Background music (MUS or MIDI)
+  int CDTrack;    // CD track to play during level
+  int Sky1Texture;  // Default sky texture
+  int Sky2Texture;  // Alternate sky displayed in Sky2 sectors
+  float Sky1ScrollDelta;// Default sky texture speed
+  float Sky2ScrollDelta;// Alternate sky texture speed
+  name SkyBox;     // Sky box
+  name FadeTable;    // Fade table {fogmap}
+  int Fade; // unsigned
+  int OutsideFog; // unsigned
+  float Gravity;    // Map gravity
+  float AirControl;   // Air control in this map.
+  int Flags;// unsigned
+  int Flags2;// unsigned
+  name TitlePatch;
+  int ParTime;
+  int SuckTime;
+  byte HorizWallShade;
+  byte VertWallShade;
+  byte Infighting;
+  array!VMapSpecialAction SpecialActions;
+  name RedirectType;
+  name RedirectMap;
+  name ExitPic;
+  name EnterPic;
+  name InterMusic;
 };
 
-native static final mapInfo_t *P_GetMapInfo(int map);
+native static final mapInfo_t *P_GetMapInfo (int map);
 #endif
 
 
@@ -788,56 +764,56 @@ native static final mapInfo_t *P_GetMapInfo(int map);
 //  Graphics
 //
 
-native static final void SetVirtualScreen(int Width, int Height);
+native static final void SetVirtualScreen (int Width, int Height);
 //  Registers a graphic, returns handle
-native static final int R_RegisterPic(name Name);
+native static final int R_RegisterPic (name Name);
 //  Registers a graphic with custom palette, returns handle
-native static final int R_RegisterPicPal(name Name, name palname);
+native static final int R_RegisterPicPal (name Name, name palname);
 //  Retrieves pic info
-native static final void R_GetPicInfo(int handle, picinfo_t * info);
+native static final void R_GetPicInfo (int handle, picinfo_t *info);
 //  Draws a pic
-native static final void R_DrawPic(int x, int y, int handle);
+native static final void R_DrawPic (int x, int y, int handle);
 //  Installs a sprite model
-native static final void R_InstallSprite(string Name, int index);
+native static final void R_InstallSprite (string Name, int index);
 //  Draws a sprite
-native static final void R_DrawSpritePatch(int x, int y, int sprite,
+native static final void R_DrawSpritePatch (int x, int y, int sprite,
   int frame, int rot, int TranslStart, int TranslEnd, int Colour);
 //  Installs model
-native static final void *InstallModel(string Name);
+native static final void *InstallModel (string Name);
 //  Draws a model
-native static final void R_DrawModelFrame(TVec origin, float angle,
+native static final void R_DrawModelFrame (TVec origin, float angle,
   void *model, int frame, int nextframe, string skin, int TranslStart,
   int TranslEnd, int Colour);
 //  Draws a coloured rectangle
-native static final void R_FillRect(int x, int y, int w, int h, int colour);
+native static final void R_FillRect (int x, int y, int w, int h, int colour);
 
 //
 //  Client sound stuff
 //
 
 //  Plays a sound
-native static final void LocalSound(name Name);
+native static final void LocalSound (name Name);
 //  Checks if sound is still playing.
-native static final bool IsLocalSoundPlaying(name Name);
+native static final bool IsLocalSoundPlaying (name Name);
 //  Stops all local sounds.
-native static final void StopLocalSounds();
+native static final void StopLocalSounds ();
 
 //  Handle shift+key
-native static final string TranslateKey(int c);
-native static final string P_GetMapName(int map);
-native static final name P_GetMapLumpName(int map);
-native static final name P_TranslateMap(int map);
-native static final int P_GetNumEpisodes();
-native static final EpisodeDef *P_GetEpisodeDef(int i);
-native static final int P_GetNumSkills();
-native static final SkillDef *P_GetSkillDef(int i);
-native static final bool SV_GetSaveString(int i, string *buf);
-native static final void StartSearch(bool Master);
-native static final slist_t * GetSlist();
-native static final string KeyNameForNum(int KeyNr);
-native static final void IN_GetBindingKeys(string cmd, int *key1, int *key2);
-native static final void IN_SetBinding(int key, string ondown, string onup);
-native static final string LoadTextLump(name Name);
+native static final string TranslateKey (int c);
+native static final string P_GetMapName (int map);
+native static final name P_GetMapLumpName (int map);
+native static final name P_TranslateMap (int map);
+native static final int P_GetNumEpisodes ();
+native static final EpisodeDef *P_GetEpisodeDef (int i);
+native static final int P_GetNumSkills ();
+native static final SkillDef *P_GetSkillDef (int i);
+native static final bool SV_GetSaveString (int i, string *buf);
+native static final void StartSearch (bool Master);
+native static final slist_t *GetSlist ();
+native static final string KeyNameForNum (int KeyNr);
+native static final void IN_GetBindingKeys (string cmd, int *key1, int *key2);
+native static final void IN_SetBinding (int key, string ondown, string onup);
+native static final string LoadTextLump (name Name);
 
 //==========================================================================
 //
@@ -849,16 +825,16 @@ native static final string LoadTextLump(name Name);
 //  Map utilites
 //
 
-native static final GameObject::opening_t *LineOpenings(GameObject::line_t * linedef, TVec point);
-//  Returns 0 - front, 1 - back, -1 - on
-native static final int P_BoxOnLineSide(float *tmbox, GameObject::line_t * ld);
-//  Find the best gap that the thing could fit in, given a certain Z
+native static final GameObject::opening_t *LineOpenings (GameObject::line_t *linedef, TVec point);
+// Returns 0 - front, 1 - back, -1 - on
+native static final int P_BoxOnLineSide (float *tmbox, GameObject::line_t *ld);
+// Find the best gap that the thing could fit in, given a certain Z
 // position (z1 is foot, z2 is head).
-native static final GameObject::sec_region_t *FindThingGap(GameObject::sec_region_t * gaps, TVec point, float z1, float z2);
+native static final GameObject::sec_region_t *FindThingGap (GameObject::sec_region_t *gaps, TVec point, float z1, float z2);
 //  Find the best opening
-native static final GameObject::opening_t *FindOpening(GameObject::opening_t * gaps, float z1, float z2);
+native static final GameObject::opening_t *FindOpening (GameObject::opening_t *gaps, float z1, float z2);
 //  Find best region in sector for a given point
-native static final GameObject::sec_region_t *PointInRegion(GameObject::sector_t * sector, TVec p);
+native static final GameObject::sec_region_t *PointInRegion (GameObject::sector_t *sector, TVec p);
 // Given a point (x,y), returns the point (ox,oy) on the sector's defining
 // lines that is nearest to (x,y).
 // Ignores `z`.
@@ -868,19 +844,19 @@ native static final TVec SectorClosestPoint (GameObject::sector_t *sec, TVec in)
 //  Sound functions
 //
 
-native static final bool GetSoundPlayingInfo(Entity mobj, int sound_id);
-native static final int GetSoundID(name Name);
-native static final void SetSeqTrans(name Name, int Num, int SeqType);
-native static final name GetSeqTrans(int Num, int SeqType);
-native static final name GetSeqSlot(name Sequence);
-native static final void StopAllSounds();
+native static final bool GetSoundPlayingInfo (Entity mobj, int sound_id);
+native static final int GetSoundID (name Name);
+native static final void SetSeqTrans (name Name, int Num, int SeqType);
+native static final name GetSeqTrans (int Num, int SeqType);
+native static final name GetSeqSlot (name Sequence);
+native static final void StopAllSounds ();
 
-native static final GameObject::VTerrainInfo *TerrainType(int pic);
-native static final GameObject::VSplashInfo *GetSplashInfo(name Name);
-native static final GameObject::VTerrainInfo *GetTerrainInfo(name Name);
-native static final void SB_Start();
-native static final class FindClassFromEditorId(int Id, int GameFilter);
-native static final class FindClassFromScriptId(int Id, int GameFilter);
+native static final GameObject::VTerrainInfo *TerrainType (int pic);
+native static final GameObject::VSplashInfo *GetSplashInfo (name Name);
+native static final GameObject::VTerrainInfo *GetTerrainInfo (name Name);
+native static final void SB_Start ();
+native static final class FindClassFromEditorId (int Id, int GameFilter);
+native static final class FindClassFromScriptId (int Id, int GameFilter);
 #endif
 
 

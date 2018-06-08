@@ -175,7 +175,7 @@ void StartFinale(name FinaleType)
 //
 //===========================================================================
 
-bool FinaleResponder(event_t * event)
+bool FinaleResponder(event_t *event)
 {
   return false;
 }
@@ -196,7 +196,7 @@ void DeactivateMenu()
 //
 //==========================================================================
 
-bool MenuResponder(event_t * event)
+bool MenuResponder(event_t *event)
 {
   return false;
 }
@@ -238,7 +238,7 @@ void MessageBoxDrawer()
 //
 //==========================================================================
 
-bool MessageBoxResponder(event_t * event)
+bool MessageBoxResponder(event_t *event)
 {
   return false;
 }
