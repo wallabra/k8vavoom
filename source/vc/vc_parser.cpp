@@ -266,6 +266,7 @@ VExpression *VParser::ParseExpressionPriority0 () {
       {
         Lex.NextToken();
         VExpression *op = ParseExpressionPriority13();
+        //VExpression *op = ParseExpressionPriority14(false);
         if (!op) ParseError(l, "Expression expected");
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
         return op;
@@ -806,6 +807,7 @@ VExpression *VParser::ParseExpressionPriority14 (bool allowAssign) {
 VExpression *VParser::ParseExpression (bool allowAssign) {
   guard(VParser::ParseExpression);
   CheckForLocal = false;
+  if (!allowAssign && Lex.Token == TK_LParen) allowAssign = true;
   return ParseExpressionPriority14(allowAssign);
   unguard;
 }
