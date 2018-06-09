@@ -1,0 +1,20 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+int boo (ref int r, out int o) {
+  int res = r+o;
+  ++r;
+  ++o;
+  return res;
+}
+
+final int main (array!string *args) {
+  int r = 42;
+  int o = 1000;
+
+  writeln("r=", r, "; o=", o);
+  writeln(boo(r, o));
+  writeln("r=", r, "; o=", o);
+
+  return 0;
+}
