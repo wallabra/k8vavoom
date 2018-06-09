@@ -81,6 +81,8 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   , Defaults(nullptr)
   , Replacement(nullptr)
   , Replacee(nullptr)
+  , AliasList()
+  , AliasFrameNum(0)
 {
   guard(VClass::VClass);
   LinkNext = GClasses;
@@ -180,6 +182,31 @@ VClass::~VClass() {
     }
   }
   //unguard;
+}
+
+
+//==========================================================================
+//
+//  VClass::resolveAlias
+//
+//  returns NAME_None for unknown alias, or for alias loop
+//
+//==========================================================================
+VName VClass::ResolveAlias (VName aname) {
+  if (aname == NAME_None) return NAME_None;
+  if (++AliasFrameNum == 0x7fffffff) {
+    for (auto it = AliasList.first(); it; ++it) it.getValue().aframe = 0;
+    AliasFrameNum = 1;
+  }
+  VName res = NAME_None;
+  for (;;) {
+    auto ai = AliasList.get(aname);
+    if (!ai) return res;
+    if (ai->aframe == AliasFrameNum) return NAME_None; // loop
+    res = ai->origName;
+    ai->aframe = AliasFrameNum;
+    aname = res;
+  }
 }
 
 

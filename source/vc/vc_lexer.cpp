@@ -37,6 +37,7 @@ const char *VLexer::TokenNames[] = {
   "FLOAT LITERAL",
   // keywords
   "abstract",
+  "alias",
   "array",
   "auto",
   "bool",
@@ -1013,6 +1014,7 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
            if (checkStrTk("abstract")) Token = TK_Abstract;
       else if (checkStrTk("array")) Token = TK_Array;
       else if (checkStrTk("auto")) Token = TK_Auto;
+      else if (checkStrTk("alias")) Token = TK_Alias;
       break;
     case 'b':
            if (checkStrTk("bool")) Token = TK_Bool;

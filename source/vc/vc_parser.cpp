@@ -1967,6 +1967,35 @@ void VParser::ParseClass () {
       continue;
     }
 
+    if (Lex.Check(TK_Alias)) {
+      if (!currClass) ParseError(Lex.Location, "cannot create aliases outside of class");
+      for (;;) {
+        if (Lex.Token != TK_Identifier) { ParseError(Lex.Location, "Identifier name expected"); break; }
+        VName aliasName = Lex.Name;
+        TLocation aliasLoc = Lex.Location;
+        Lex.NextToken();
+        if (!Lex.Check(TK_Assign)) { ParseError(Lex.Location, "`=` expected"); break; }
+        if (Lex.Token != TK_Identifier) { ParseError(Lex.Location, "Identifier name expected"); break; }
+        VName origName = Lex.Name;
+        Lex.NextToken();
+        auto ainfo = currClass->AliasList.get(aliasName);
+        if (ainfo) {
+          ParseError(Lex.Location, "alias '%s' redeclaration; previous declaration at %s:%d", *aliasName, *ainfo->loc.GetSource(), ainfo->loc.GetLine());
+        } else {
+          VClass::AliasInfo ai;
+          ai.aliasName = aliasName;
+          ai.origName = origName;
+          ai.loc = aliasLoc;
+          ai.aframe = currClass->AliasFrameNum;
+          currClass->AliasList.put(aliasName, ai);
+        }
+        if (Lex.Check(TK_Semicolon)) break;
+        Lex.Expect(TK_Comma, ERR_MISSING_SEMICOLON);
+        if (Lex.Check(TK_Semicolon)) break; // alias a = b,; is allowed, 'cause why not?
+      }
+      continue;
+    }
+
     int Modifiers = TModifiers::Parse(Lex);
 
     if (Lex.Check(TK_Iterator)) {

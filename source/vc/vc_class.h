@@ -244,6 +244,18 @@ public:
   static TArray<VName> GSpriteNames;
   static VClass *GLowerCaseHashTable[LOWER_CASE_HASH_SIZE];
 
+  struct AliasInfo {
+    VName aliasName;
+    VName origName;
+    TLocation loc;
+    int aframe; // for loop checking
+  };
+
+  TMap<VName, AliasInfo> AliasList; // key: alias
+  int AliasFrameNum;
+
+  VName ResolveAlias (VName aname); // returns NAME_None for unknown alias, or for alias loop
+
 public:
   VClass (VName, VMemberBase *, const TLocation &);
   VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *AParent, EName AName, void (*ACtor) ());

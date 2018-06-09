@@ -136,8 +136,8 @@ void VVector::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 VSingleName::VSingleName (VName AName, const TLocation &ALoc)
-: VExpression(ALoc)
-, Name(AName)
+  : VExpression(ALoc)
+  , Name(AName)
 {
 }
 
@@ -180,14 +180,17 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
   }
 
   if (ec.SelfClass) {
-    VConstant *Const = ec.SelfClass->FindConstant(Name);
+    VName destName = ec.SelfClass->ResolveAlias(Name);
+    if (destName == NAME_None) destName = Name;
+
+    VConstant *Const = ec.SelfClass->FindConstant(destName);
     if (Const) {
       VExpression *e = new VConstantValue(Const, Loc);
       delete this;
       return e->Resolve(ec);
     }
 
-    VMethod *M = ec.SelfClass->FindAccessibleMethod(Name, ec.SelfClass);
+    VMethod *M = ec.SelfClass->FindAccessibleMethod(destName, ec.SelfClass);
     if (M) {
       if (M->Flags&FUNC_Iterator) {
         ParseError(Loc, "Iterator methods can only be used in foreach statements");
@@ -205,19 +208,19 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
           e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
         } else {
           //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
-          e = new VDotInvocation(new VSelf(Loc), Name, Loc, 0, nullptr);
+          e = new VDotInvocation(new VSelf(Loc), destName, Loc, 0, nullptr);
         }
       }
       delete this;
       return e->Resolve(ec);
     }
 
-    VField *field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
+    VField *field = ec.SelfClass->FindField(destName, Loc, ec.SelfClass);
     if (field) {
       VExpression *e;
       // "normal" access: call delegate (if it is operand-less)
       if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
-        //fprintf(stderr, "*** SNAME! %s\n", *field->Name);
+        //fprintf(stderr, "*** SNAME! %s\n", *field->destName);
         e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
       } else {
         e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
@@ -226,12 +229,12 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
       return e->Resolve(ec);
     }
 
-    VProperty *Prop = ec.SelfClass->FindProperty(Name);
+    VProperty *Prop = ec.SelfClass->FindProperty(destName);
     if (Prop) {
       if (assType == AssType::AssTarget) {
         if (ec.InDefaultProperties) {
           if (!Prop->DefaultField) {
-            ParseError(Loc, "Property %s has no default field set", *Name);
+            ParseError(Loc, "Property %s has no default field set", *destName);
             delete this;
             return nullptr;
           }
@@ -240,7 +243,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
           return e->Resolve(ec);
         } else {
           if (!Prop->SetFunc) {
-            ParseError(Loc, "Property %s cannot be set", *Name);
+            ParseError(Loc, "Property %s cannot be set", *destName);
             delete this;
             return nullptr;
           }
@@ -251,7 +254,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
         }
       } else {
         if (!Prop->GetFunc) {
-          ParseError(Loc, "Property %s cannot be read", *Name);
+          ParseError(Loc, "Property %s cannot be read", *destName);
           delete this;
           return nullptr;
         }
@@ -421,14 +424,18 @@ VExpression *VDoubleName::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  VConstant *Const = Class->FindConstant(Name2);
+  VName destName = ec.SelfClass->ResolveAlias(Name2);
+  if (destName == NAME_None) destName = Name2;
+
+
+  VConstant *Const = Class->FindConstant(destName);
   if (Const) {
     VExpression *e = new VConstantValue(Const, Loc);
     delete this;
     return e->Resolve(ec);
   }
 
-  ParseError(Loc, "No such constant or state %s", *Name2);
+  ParseError(Loc, "No such constant or state %s", *destName);
   delete this;
   return nullptr;
 }

@@ -41,6 +41,7 @@ enum EToken {
 
   // keywords
   TK_Abstract,
+  TK_Alias,
   TK_Array,
   TK_Auto,
   TK_Bool,
