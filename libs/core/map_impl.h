@@ -106,8 +106,10 @@ public:
     }
     inline const TK &GetKey () const { return map.mEntries[index].key; }
     inline const TV &GetValue () const { return map.mEntries[index].value; }
+    inline TV &GetValue () { return map.mEntries[index].value; }
     inline const TK &getKey () const { return map.mEntries[index].key; }
     inline const TV &getValue () const { return map.mEntries[index].value; }
+    inline TV &getValue () { return map.mEntries[index].value; }
     inline void removeCurrent () {
       if (index < map.mEBSize && !map.mEntries[index].empty) {
         map.del(map.mEntries[index].key);
