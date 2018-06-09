@@ -121,6 +121,9 @@ public:
 
   VMethodParam ();
   ~VMethodParam ();
+
+private:
+  VMethodParam &operator = (const VMethodParam &v);
 };
 
 

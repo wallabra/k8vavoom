@@ -1259,32 +1259,33 @@ VExpression *VParser::ParseLambda () {
   //fprintf(stderr, "*** LAMBDA: <%s>\n", *lname);
 
   VMethod *Func = new VMethod(lname, currClass, stl);
-  Func->Flags = 0;
+  Func->Flags = currFunc->Flags&(FUNC_Static|FUNC_Final);
   Func->ReturnTypeExpr = Type;
   currClass->AddMethod(Func);
 
   Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
   if (Lex.Token != TK_RParen) {
     for (;;) {
-      VMethodParam param;
-      param.TypeExpr = ParseType();
-      if (!param.TypeExpr) break;
+      VMethodParam &P = Func->Params[Func->NumParams];
+      P.TypeExpr = ParseType();
+      if (!P.TypeExpr) break;
       TLocation l = Lex.Location;
       while (Lex.Check(TK_Asterisk)) {
-        param.TypeExpr = new VPointerType(param.TypeExpr, l);
+        P.TypeExpr = new VPointerType(P.TypeExpr, l);
         l = Lex.Location;
       }
       if (Lex.Token == TK_Identifier) {
-        param.Name = Lex.Name;
-        param.Loc = Lex.Location;
+        P.Name = Lex.Name;
+        P.Loc = Lex.Location;
         Lex.NextToken();
       }
       if (Func->NumParams == VMethod::MAX_PARAMS) {
-        delete param.TypeExpr;
+        delete P.TypeExpr;
+        P.TypeExpr = nullptr;
         ParseError(Lex.Location, "Method parameters overflow");
-        continue;
+      } else {
+        ++Func->NumParams;
       }
-      Func->Params[Func->NumParams++] = param;
       if (Lex.Token == TK_RParen) break;
       Lex.Expect(TK_Comma, ERR_MISSING_RPAREN);
     }

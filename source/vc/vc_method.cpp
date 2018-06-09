@@ -182,6 +182,7 @@ bool VMethod::Define () {
 
     ParamTypes[i] = type;
     if ((ParamFlags[i]&FPARM_Optional) != 0 && (ParamFlags[i]&FPARM_Out) != 0) ParseError(P.Loc, "Modifiers optional and out are mutually exclusive");
+    if ((ParamFlags[i]&FPARM_Ref) != 0) ParseError(P.Loc, "Modifier `ref` is not implemented yet");
 
     if (ParamFlags[i]&FPARM_Out) {
       ++ParamsSize;
