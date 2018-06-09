@@ -210,10 +210,7 @@ set(NETSUB_SOURCES
   net/net_message.cpp
   net/net_message.h
   net/net_object_map.cpp
-  # "net_udp" is POSIX driver
   net/net_udp.cpp
-  # "net_winsock" is shitdoze driver
-  net/net_winsock.cpp
 )
 
 #---------------------------------------
