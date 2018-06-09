@@ -110,7 +110,7 @@ const char *TModifiers::Name (int Modifier) {
 int TModifiers::Check (int Modifers, int Allowed, const TLocation &l) {
   int Bad = Modifers&~Allowed;
   if (Bad) {
-    for (int i = 0; i < 32; ++i) if (Bad&(1<<i)) ParseError(l, "%s modifier is not allowed", Name(1<<i));
+    for (int i = 0; i < 32; ++i) if (Bad&(1<<i)) ParseError(l, "`%s` modifier is not allowed", Name(1<<i));
     return (Modifers&Allowed);
   }
   return Modifers;

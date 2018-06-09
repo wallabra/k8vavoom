@@ -181,10 +181,11 @@ bool VMethod::Define () {
     }
 
     ParamTypes[i] = type;
-    if ((ParamFlags[i]&FPARM_Optional) != 0 && (ParamFlags[i]&FPARM_Out) != 0) ParseError(P.Loc, "Modifiers optional and out are mutually exclusive");
-    if ((ParamFlags[i]&FPARM_Ref) != 0) ParseError(P.Loc, "Modifier `ref` is not implemented yet");
+    if ((ParamFlags[i]&FPARM_Optional) != 0 && (ParamFlags[i]&FPARM_Out) != 0) ParseError(P.Loc, "Modifiers `optional` and `out` are mutually exclusive");
+    if ((ParamFlags[i]&FPARM_Optional) != 0 && (ParamFlags[i]&FPARM_Ref) != 0) ParseError(P.Loc, "Modifiers `optional` and `ref` are mutually exclusive");
+    if ((ParamFlags[i]&FPARM_Out) != 0 && (ParamFlags[i]&FPARM_Ref) != 0) ParseError(P.Loc, "Modifiers `out` and `ref` are mutually exclusive");
 
-    if (ParamFlags[i]&FPARM_Out) {
+    if (ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
       ++ParamsSize;
     } else {
       type.CheckPassable(P.TypeExpr->Loc);
@@ -236,7 +237,7 @@ bool VMethod::Define () {
           if (Ret) ParseError(Loc, "Type of argument %d differs from base class", i+1);
           Ret = false;
         }
-        if ((SuperMethod->ParamFlags[i]^ParamFlags[i])&(FPARM_Optional|FPARM_Out)) {
+        if ((SuperMethod->ParamFlags[i]^ParamFlags[i])&(FPARM_Optional|FPARM_Out|FPARM_Ref)) {
           if (Ret) ParseError(Loc, "Modifiers of argument %d differs from base class", i+1);
           Ret = false;
         }
@@ -312,7 +313,7 @@ void VMethod::Emit () {
       L.Visible = true;
       L.ParamFlags = ParamFlags[i];
     }
-    if (ParamFlags[i]&FPARM_Out) {
+    if (ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
       ++ec.localsofs;
     } else {
       ec.localsofs += ParamTypes[i].GetStackSize()/4;
@@ -332,7 +333,7 @@ void VMethod::Emit () {
 
   for (int i = 0; i < ec.GetLocalDefCount(); ++i) {
     VLocalVarDef &loc = ec.GetLocalByIndex(i);
-    if (loc.Type.Type == TYPE_Vector && (ParamFlags[i]&FPARM_Out) == 0) {
+    if (loc.Type.Type == TYPE_Vector && (ParamFlags[i]&(FPARM_Out|FPARM_Ref)) == 0) {
       ec.AddStatement(OPC_VFixParam, loc.Offset);
     }
   }

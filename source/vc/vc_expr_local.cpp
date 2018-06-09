@@ -226,7 +226,7 @@ VExpression *VLocalVar::DoResolve (VEmitContext &ec) {
   Type = loc.Type;
   RealType = loc.Type;
   if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
-  PushOutParam = !!(loc.ParamFlags&FPARM_Out);
+  PushOutParam = !!(loc.ParamFlags&(FPARM_Out|FPARM_Ref));
   return this;
 }
 
@@ -255,7 +255,7 @@ void VLocalVar::Emit (VEmitContext &ec) {
   VLocalVarDef &loc = ec.GetLocalByIndex(num);
   if (AddressRequested) {
     ec.EmitLocalAddress(loc.Offset);
-  } else if (loc.ParamFlags&FPARM_Out) {
+  } else if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) {
     if (loc.Offset < 256) {
       int Ofs = loc.Offset;
            if (Ofs == 0) ec.AddStatement(OPC_LocalValue0);

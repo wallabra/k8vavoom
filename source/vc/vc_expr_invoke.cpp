@@ -739,7 +739,7 @@ bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VE
             break;
         }
       }
-      if (m->ParamFlags[i]&FPARM_Out) {
+      if (m->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
         if (!argv[i]->Type.Equals(m->ParamTypes[i])) {
           //FIXME: This should be error
           if (!(m->ParamFlags[argc]&FPARM_Optional)) {
@@ -816,7 +816,7 @@ void VInvocation::CheckParams (VEmitContext &ec) {
               break;
           }
         }
-        if (Func->ParamFlags[i]&FPARM_Out) {
+        if (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
           if (!Args[i]->Type.Equals(Func->ParamTypes[i])) {
             //FIXME: This should be error
             if (!(Func->ParamFlags[NumArgs]&FPARM_Optional)) {

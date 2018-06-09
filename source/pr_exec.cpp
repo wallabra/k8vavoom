@@ -1379,7 +1379,7 @@ func_loop:
         {
           vint32 Idx = ip[1];
           ip += 2;
-          TVec *v = (TVec*)&local_vars[Idx];
+          TVec *v = (TVec *)&local_vars[Idx];
           v->y = local_vars[Idx+1].f;
           v->z = local_vars[Idx+2].f;
         }

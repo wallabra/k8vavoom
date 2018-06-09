@@ -458,8 +458,8 @@ void VEmitContext::EmitLocalAddress (int Ofs) {
 //==========================================================================
 void VEmitContext::EmitClearStrings (int Start, int End) {
   for (int i = Start; i < End; ++i) {
-    // don't touch out parameters
-    if (LocalDefs[i].ParamFlags & FPARM_Out) continue;
+    // don't touch out/ref parameters
+    if (LocalDefs[i].ParamFlags&(FPARM_Out|FPARM_Ref)) continue;
 
     if (LocalDefs[i].Type.Type == TYPE_String) {
       EmitLocalAddress(LocalDefs[i].Offset);

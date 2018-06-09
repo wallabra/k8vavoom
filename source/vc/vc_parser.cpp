@@ -1147,9 +1147,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
     VMethodParam &P = Func->Params[Func->NumParams];
 
     int ParmModifiers = TModifiers::Parse(Lex);
-    Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(
-      TModifiers::Check(ParmModifiers, TModifiers::Optional |
-      TModifiers::Out, Lex.Location));
+    Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref, Lex.Location));
 
     P.TypeExpr = ParseType();
     if (!P.TypeExpr && Func->NumParams == 0) break;
@@ -1208,6 +1206,8 @@ void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
   Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
   do {
     VMethodParam &P = Func->Params[Func->NumParams];
+    int ParmModifiers = TModifiers::Parse(Lex);
+    Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref, Lex.Location));
     P.TypeExpr = ParseType();
     if (!P.TypeExpr && Func->NumParams == 0) break;
     TLocation l = Lex.Location;
