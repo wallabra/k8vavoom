@@ -69,6 +69,7 @@ VWinMessageHandler *GCDMsgHandler;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+/*
 static HANDLE     dir_handle;
 static WIN32_FIND_DATA  dir_buf;
 static bool       dir_already_got;
@@ -78,6 +79,7 @@ static double   curtime = 0.0;
 static double   lastcurtime = 0.0;
 static vuint32    oldtime;
 static int      lowshift;
+*/
 
 static HANDLE   tevent;
 

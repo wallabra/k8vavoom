@@ -36,7 +36,8 @@ enum { GBigEndian = 1 };
     defined(__ARMEL__) || \
     defined(__THUMBEL__) || \
     defined(__AARCH64EL__) || \
-    defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
+    defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__) || \
+    defined(_WIN32)
 # define VAVOOM_LITTLE_ENDIAN
 enum { GBigEndian = 0 };
 #else

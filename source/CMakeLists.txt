@@ -210,6 +210,10 @@ set(NETSUB_SOURCES
   net/net_message.cpp
   net/net_message.h
   net/net_object_map.cpp
+  # "net_udp" is POSIX driver
+  net/net_udp.cpp
+  # "net_winsock" is shitdoze driver
+  net/net_winsock.cpp
 )
 
 #---------------------------------------
@@ -363,7 +367,6 @@ set(MAIN_OPENGL_SOURCES
 #-- Linux with SDL --
 set(MAIN_UNIX_SDL_SOURCES
   in_sdl.cpp
-  net/net_udp.cpp
   #sound/snd_sdl.cpp
   #sound/snd_sdlmusic.cpp
   sys_sdl.cpp
@@ -375,7 +378,6 @@ set(MAIN_OPENGL_UNIX_SDL_SOURCES
 #-- Windows --
 set(MAIN_WIN32_SOURCES
   winshit/in_win32.cpp
-  winshit/net/net_winsock.cpp
   winshit/sys_win.cpp
 #  winshit/sound/eax.h
 #  winshit/sound/snd_win32.cpp
@@ -456,12 +458,10 @@ set(SERVER_COMMON_SOURCES
 )
 
 set(SERVER_UNIX_SOURCES
-  net/net_udp.cpp
   sys_bsd.cpp
 )
 
 set(SERVER_WIN32_SOURCES
-  winshit/net/net_winsock.cpp
   winshit/sys_wind.cpp
 #  winshit/res/vavoom.rc
 )

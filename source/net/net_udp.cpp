@@ -22,6 +22,7 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+#ifndef WIN32
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -471,3 +472,5 @@ int VUdpDriver::SetSocketPort (sockaddr_t *addr, int port) {
   return 0;
   unguard;
 }
+
+#endif
