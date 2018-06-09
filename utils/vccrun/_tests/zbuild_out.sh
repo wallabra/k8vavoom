@@ -19,13 +19,17 @@ for fn in *.vc; do
   echo -n "$fn: "
   ofname=`basename "$fn" .vc`
   ofname="outfiles/${ofname}.out"
-  sh ../0run.sh -P../packages "$fn" boo foo zoo >"$ofname"
-  res=$?
-  if [ $res -ne 0 ]; then
-    echo "FAILED"
-    break
+  if [ -f "$ofname" ]; then
+    echo "SKIP"
+  else
+    sh ../0run.sh -P../packages "$fn" boo foo zoo >"$ofname"
+    res=$?
+    if [ $res -ne 0 ]; then
+      echo "FAILED"
+      break
+    fi
+    echo "OK"
   fi
-  echo "OK"
 done
 
 
