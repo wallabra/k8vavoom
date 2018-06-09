@@ -877,6 +877,8 @@ native static final bool IsTimerOneShot (int id); // `false`: no timer, or not o
 native static final int GetTimerInterval (int id); // 0: no such timer
 // returns success flag; won't do anything if interval is < 1
 native static final bool SetTimerInterval (int id, int intervalms);
+
+native static final float GetTickCount ();
 #endif
 
 

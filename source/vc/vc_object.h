@@ -417,6 +417,7 @@ public:
   DECLARE_FUNCTION(IsTimerOneShot)
   DECLARE_FUNCTION(GetTimerInterval)
   DECLARE_FUNCTION(SetTimerInterval)
+  DECLARE_FUNCTION(GetTickCount)
 #endif
 };
 

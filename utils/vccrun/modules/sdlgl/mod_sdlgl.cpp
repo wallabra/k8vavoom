@@ -65,7 +65,7 @@ IMPLEMENT_FUNCTION(VObject, CreateTimerWithId) {
   P_GET_INT(intervalms);
   P_GET_INT(id);
   if (!specifiedOneShot) oneShot = false; // just in case
-  RET_INT(VVideo::CreateTimerWithId(id, intervalms, oneShot));
+  RET_BOOL(VVideo::CreateTimerWithId(id, intervalms, oneShot) > 0);
 }
 
 //native static final bool DeleteTimer (int id);
@@ -97,6 +97,12 @@ IMPLEMENT_FUNCTION(VObject, SetTimerInterval) {
   P_GET_INT(intervalms);
   P_GET_INT(id);
   RET_BOOL(VVideo::SetTimerInterval(id, intervalms));
+}
+
+
+//native static final float GetTickCount ();
+IMPLEMENT_FUNCTION(VObject, GetTickCount) {
+  RET_FLOAT((float)fsysCurrTick());
 }
 
 
@@ -609,6 +615,7 @@ static int timerLastUsedId = 0;
 // doesn't insert anything in `timerMap`!
 static int timerAllocId () {
   int res = 0;
+  if (timerLastUsedId == 0) timerLastUsedId = 1;
   if (timerLastUsedId < 0x7ffffff && timerMap.has(timerLastUsedId)) ++timerLastUsedId;
   if (timerLastUsedId < 0x7ffffff) {
     res = timerLastUsedId++;
@@ -638,11 +645,13 @@ static Uint32 sdlTimerCallback (Uint32 interval, void *param) {
   SDL_UserEvent userevent;
 
   int id = (int)param;
+
   TimerInfo *ti = timerMap.get(id);
   if (ti) {
+    //fprintf(stderr, "timer cb: id=%d\n", id);
     userevent.type = SDL_USEREVENT;
     userevent.code = 1;
-    userevent.data2 = (void *)ti->id;
+    userevent.data1 = (void *)ti->id;
 
     event.type = SDL_USEREVENT;
     event.user = userevent;
@@ -667,8 +676,14 @@ int VVideo::CreateTimerWithId (int id, int intervalms, bool oneShot) {
   } else {
     if (timerMap.has(id)) return 0;
   }
+  //fprintf(stderr, "id=%d; interval=%d; one=%d\n", id, intervalms, (int)oneShot);
   TimerInfo ti;
   ti.sdlid = SDL_AddTimer(intervalms, &sdlTimerCallback, (void *)id);
+  if (ti.sdlid == 0) {
+    fprintf(stderr, "CANNOT create timer: id=%d; interval=%d; one=%d\n", id, intervalms, (int)oneShot);
+    timerFreeId(id);
+    return 0;
+  }
   ti.id = id;
   ti.interval = intervalms;
   ti.oneShot = oneShot;
@@ -863,7 +878,7 @@ void VVideo::clear () {
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClearDepth(1.0);
   glClearStencil(0);
-  glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 }
 
 
@@ -998,6 +1013,7 @@ void VVideo::runEventLoop () {
           doQuit = true;
           break;
         case SDL_USEREVENT:
+          //fprintf(stderr, "SDL: userevent, code=%d\n", ev.user.code);
           if (ev.user.code == 1) {
             TimerInfo *ti = timerMap.get((int)ev.user.data1);
             if (ti) {
@@ -1255,8 +1271,8 @@ IMPLEMENT_FUNCTION(VVideo, textHeight) {
 //native final static void drawText (int x, int y, string text);
 IMPLEMENT_FUNCTION(VVideo, drawTextAt) {
   P_GET_STR(text);
-  P_GET_INT(x);
   P_GET_INT(y);
+  P_GET_INT(x);
   drawTextAt(x, y, text);
 }
 
