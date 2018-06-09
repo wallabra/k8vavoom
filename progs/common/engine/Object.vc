@@ -390,8 +390,11 @@ enum {
   ev_mouse, // for vcc_run: data2/data3 are coords, otherwise deltas
   ev_joystick,
   // extended events for vcc_run
+#ifdef VCC_STANDALONE_EXECUTOR
   ev_winfocus, // data1: focused
   ev_timer, // data1: timer id
+  ev_closequery,
+#endif
 };
 
 // Event structure.

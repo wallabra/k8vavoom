@@ -254,6 +254,7 @@ enum {
   // extended events for vcc_run
   ev_winfocus, // data1: focused
   ev_timer, // data1: timer id
+  ev_closequery, // data1: !=0 -- system shutdown
 };
 
 // event structure
@@ -1012,7 +1013,12 @@ void VVideo::runEventLoop () {
           }
           break;
         case SDL_QUIT:
-          doQuit = true;
+          //doQuit = true;
+          evt.type = ev_closequery;
+          evt.data1 = 0; // alas, there is no way to tell why we're quiting; fuck you, sdl!
+          evt.data2 = 0;
+          evt.data3 = 0;
+          onEvent(evt);
           break;
         case SDL_USEREVENT:
           //fprintf(stderr, "SDL: userevent, code=%d\n", ev.user.code);
@@ -1112,13 +1118,29 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+void VVideo::sendPing () {
+  if (!mInited) return;
+
+  SDL_Event event;
+  SDL_UserEvent userevent;
+
+  userevent.type = SDL_USEREVENT;
+  userevent.code = 0;
+
+  event.type = SDL_USEREVENT;
+  event.user = userevent;
+
+  SDL_PushEvent(&event);
+}
+
+
 IMPLEMENT_FUNCTION(VVideo, canInit) { RET_BOOL(VVideo::canInit()); }
 IMPLEMENT_FUNCTION(VVideo, hasOpenGL) { RET_BOOL(VVideo::hasOpenGL()); }
 IMPLEMENT_FUNCTION(VVideo, isInitialized) { RET_BOOL(VVideo::isInitialized()); }
 IMPLEMENT_FUNCTION(VVideo, screenWidth) { RET_INT(VVideo::getWidth()); }
 IMPLEMENT_FUNCTION(VVideo, screenHeight) { RET_INT(VVideo::getHeight()); }
 
-IMPLEMENT_FUNCTION(VVideo, closeScreen) { VVideo::close(); }
+IMPLEMENT_FUNCTION(VVideo, closeScreen) { VVideo::close(); VVideo::sendPing(); }
 
 IMPLEMENT_FUNCTION(VVideo, openScreen) {
   P_GET_INT(hgt);
@@ -1143,8 +1165,15 @@ IMPLEMENT_FUNCTION(VVideo, loadFont) {
 }
 
 
-IMPLEMENT_FUNCTION(VVideo, requestQuit) { VVideo::quitSignal = true; }
-IMPLEMENT_FUNCTION(VVideo, requestRefresh) { VVideo::doRefresh = true; }
+IMPLEMENT_FUNCTION(VVideo, requestQuit) {
+  VVideo::quitSignal = true;
+  VVideo::sendPing();
+}
+
+IMPLEMENT_FUNCTION(VVideo, requestRefresh) {
+  VVideo::doRefresh = true;
+  VVideo::sendPing();
+}
 
 
 IMPLEMENT_FUNCTION(VVideo, setScissorEnabled) {

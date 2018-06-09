@@ -96,6 +96,8 @@ public:
   // returns success flag; won't do anything if interval is < 1
   static bool SetTimerInterval (int id, int intervalms);
 
+  static void sendPing ();
+
   // static
   DECLARE_FUNCTION(canInit)
   DECLARE_FUNCTION(hasOpenGL)
