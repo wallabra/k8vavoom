@@ -1369,6 +1369,40 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
 
   Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
   while (!Lex.Check(TK_RBrace)) {
+    // do `alias new = old;`
+    if (Lex.Check(TK_Alias)) {
+      bool error = false;
+      for (;;) {
+        if (Lex.Token != TK_Identifier) { ParseError(Lex.Location, "Identifier name expected"); error = true; break; }
+        VName aliasName = Lex.Name;
+        TLocation aliasLoc = Lex.Location;
+        Lex.NextToken();
+        if (!Lex.Check(TK_Assign)) { ParseError(Lex.Location, "`=` expected"); break; }
+        if (Lex.Token != TK_Identifier) { ParseError(Lex.Location, "Identifier name expected"); error = true; break; }
+        VName origName = Lex.Name;
+        Lex.NextToken();
+        auto ainfo = Struct->AliasList.get(aliasName);
+        if (ainfo) {
+          ParseError(Lex.Location, "alias '%s' redeclaration; previous declaration at %s:%d", *aliasName, *ainfo->loc.GetSource(), ainfo->loc.GetLine());
+        } else {
+          VStruct::AliasInfo ai;
+          ai.aliasName = aliasName;
+          ai.origName = origName;
+          ai.loc = aliasLoc;
+          ai.aframe = Struct->AliasFrameNum;
+          Struct->AliasList.put(aliasName, ai);
+        }
+        if (Lex.Check(TK_Semicolon)) { error = false; break; }
+        Lex.Expect(TK_Comma, ERR_MISSING_SEMICOLON);
+        if (Lex.Check(TK_Semicolon)) { error = false; break; } // alias a = b,; is allowed, 'cause why not?
+      }
+      if (error && Lex.Token != TK_EOF) {
+        if (Lex.Check(TK_Semicolon)) break;
+        Lex.NextToken();
+      }
+      continue;
+    }
+
     vint32 Modifiers = TModifiers::Parse(Lex);
 
     VExpression *Type = ParseType();
@@ -2164,7 +2198,7 @@ void VParser::Parse () {
   Lex.NextToken();
   bool done = false;
   while (!done) {
-    switch(Lex.Token) {
+    switch (Lex.Token) {
       case TK_EOF:
         done = true;
         break;

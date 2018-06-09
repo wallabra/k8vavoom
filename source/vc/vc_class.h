@@ -254,7 +254,7 @@ public:
   TMap<VName, AliasInfo> AliasList; // key: alias
   int AliasFrameNum;
 
-  VName ResolveAlias (VName aname); // returns NAME_None for unknown alias, or for alias loop
+  VName ResolveAlias (VName aname); // returns `aname` for unknown alias, or `NAME_None` for alias loop
 
 public:
   VClass (VName, VMemberBase *, const TLocation &);

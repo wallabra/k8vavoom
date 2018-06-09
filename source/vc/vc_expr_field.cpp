@@ -98,7 +98,7 @@ VExpression *VPointerField::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  VField *field = type.Struct->FindField(FieldName);
+  VField *field = type.Struct->FindField(type.Struct->ResolveAlias(FieldName));
   if (!field) {
     ParseError(Loc, "No such field %s", *FieldName);
     delete this;
@@ -213,7 +213,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     // we never ever need opcopy here
     delete opcopy;
 
-    VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
+    VField *field = op->Type.Class->FindField(op->Type.Class->ResolveAlias(FieldName), Loc, ec.SelfClass);
     if (field) {
       VExpression *e;
       // "normal" access: call delegate (if it is operand-less)
@@ -293,7 +293,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     int Flags = op->Flags;
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
-    VField *field = type.Struct->FindField(FieldName);
+    VField *field = type.Struct->FindField(type.Struct->ResolveAlias(FieldName));
     if (!field) {
       ParseError(Loc, "No such field %s", *FieldName);
       delete this;

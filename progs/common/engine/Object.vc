@@ -403,6 +403,17 @@ struct event_t {
   int data1; // keys / mouse / joystick buttons
   int data2; // mouse / joystick x move
   int data3; // mouse / joystick y move
+  // for key
+  alias keycode = data1;
+  // for mouse
+  alias x = data2;
+  alias y = data3;
+#ifdef VCC_STANDALONE_EXECUTOR
+  // for focus
+  alias focused = data1;
+  // for timer
+  alias timerid = data1;
+#endif
 };
 
 native readonly private void *CxxVTable;

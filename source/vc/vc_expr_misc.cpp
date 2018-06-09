@@ -181,7 +181,6 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
 
   if (ec.SelfClass) {
     VName destName = ec.SelfClass->ResolveAlias(Name);
-    if (destName == NAME_None) destName = Name;
 
     VConstant *Const = ec.SelfClass->FindConstant(destName);
     if (Const) {
@@ -424,18 +423,14 @@ VExpression *VDoubleName::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  VName destName = ec.SelfClass->ResolveAlias(Name2);
-  if (destName == NAME_None) destName = Name2;
-
-
-  VConstant *Const = Class->FindConstant(destName);
+  VConstant *Const = Class->FindConstant(ec.SelfClass->ResolveAlias(Name2));
   if (Const) {
     VExpression *e = new VConstantValue(Const, Loc);
     delete this;
     return e->Resolve(ec);
   }
 
-  ParseError(Loc, "No such constant or state %s", *destName);
+  ParseError(Loc, "No such constant or state %s", *Name2);
   delete this;
   return nullptr;
 }

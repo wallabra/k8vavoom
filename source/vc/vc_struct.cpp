@@ -44,7 +44,34 @@ VStruct::VStruct (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , Alignment(0)
   , ReferenceFields(0)
   , DestructorFields(0)
+  , AliasList()
+  , AliasFrameNum(0)
 {
+}
+
+
+//==========================================================================
+//
+//  VStruct::resolveAlias
+//
+//  returns `aname` for unknown alias, or `NAME_None` for alias loop
+//
+//==========================================================================
+VName VStruct::ResolveAlias (VName aname) {
+  if (aname == NAME_None) return NAME_None;
+  if (++AliasFrameNum == 0x7fffffff) {
+    for (auto it = AliasList.first(); it; ++it) it.getValue().aframe = 0;
+    AliasFrameNum = 1;
+  }
+  VName res = aname;
+  for (;;) {
+    auto ai = AliasList.get(aname);
+    if (!ai) return res;
+    if (ai->aframe == AliasFrameNum) return NAME_None; // loop
+    res = ai->origName;
+    ai->aframe = AliasFrameNum;
+    aname = res;
+  }
 }
 
 

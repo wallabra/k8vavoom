@@ -189,7 +189,7 @@ VClass::~VClass() {
 //
 //  VClass::resolveAlias
 //
-//  returns NAME_None for unknown alias, or for alias loop
+//  returns `aname` for unknown alias, or `NAME_None` for alias loop
 //
 //==========================================================================
 VName VClass::ResolveAlias (VName aname) {
@@ -198,7 +198,7 @@ VName VClass::ResolveAlias (VName aname) {
     for (auto it = AliasList.first(); it; ++it) it.getValue().aframe = 0;
     AliasFrameNum = 1;
   }
-  VName res = NAME_None;
+  VName res = aname;
   for (;;) {
     auto ai = AliasList.get(aname);
     if (!ai) return res;

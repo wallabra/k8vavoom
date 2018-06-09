@@ -46,6 +46,18 @@ public:
   VField *ReferenceFields;
   VField *DestructorFields;
 
+  struct AliasInfo {
+    VName aliasName;
+    VName origName;
+    TLocation loc;
+    int aframe; // for loop checking
+  };
+
+  TMap<VName, AliasInfo> AliasList; // key: alias
+  int AliasFrameNum;
+
+  VName ResolveAlias (VName aname); // returns `aname` for unknown alias, or `NAME_None` for alias loop
+
 public:
   VStruct (VName, VMemberBase *, TLocation);
 
