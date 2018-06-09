@@ -696,10 +696,10 @@ native static final iterator AllClasses (class BaseClass, out class Class);
 //
 
 native static final Object SpawnObject (class cid);
-native static final int RGB (byte r, byte g, byte b);
-native static final int RGBA (byte r, byte g, byte b, byte a);
 
 #ifndef VCC_STANDALONE_EXECUTOR
+native static final int RGB (byte r, byte g, byte b);
+native static final int RGBA (byte r, byte g, byte b, byte a);
 //  Reads key value from info string (userinfo or serverinfo)
 native static final string Info_ValueForKey (string info, string key);
 //  Checks if WAD lump is present, used to check for shareware/extended WADs
@@ -717,6 +717,9 @@ native static final int P_GetMapIndexByLevelNum (int map);
 native static final int P_GetNumMaps ();
 
 native static final bool HasDecal (name aname);
+#else
+native static final int RGB (int r, int g, int b);
+native static final int RGBA (int r, int g, int b, optional int a);
 #endif
 
 

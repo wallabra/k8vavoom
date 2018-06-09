@@ -36,6 +36,7 @@ native final static void setSmoothLine (bool v);
 
 native final static void setColor (int r, int g, int b, optional int a);
 native final static void setAlpha (int a);
+final static void setColorRGBA (int rgba) { setColor(rgba&0xff, (rgba>>8)&0xff, (rgba>>16)&0xff, (rgba>>24)&0xff); }
 
 native final static int colorR ();
 native final static int colorG ();
@@ -84,6 +85,16 @@ final static bool scissorCombine (int x0, int y0, int w, int h) {
   }
   setScissor(&sr);
   return (sr.w > 0 && sr.h > 0);
+}
+
+
+final static void drawBevel (int x0, int y0, int awidth, int aheight, int rgbaup, int rgbadown) {
+  setColorRGBA(rgbaup);
+  drawLine(x0, y0, x0+awidth, y0);
+  drawLine(x0, y0+1, x0, y0+aheight);
+  setColorRGBA(rgbadown);
+  drawLine(x0+1, y0+aheight-1, x0+awidth, y0+aheight-1);
+  drawLine(x0+awidth-1, y0+1, x0+awidth-1, y0+aheight-1);
 }
 
 
