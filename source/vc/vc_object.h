@@ -408,6 +408,16 @@ public:
   DECLARE_FUNCTION(HasDecal)
 #endif // SERVER
 #endif // !VCC_STANDALONE_EXECUTOR
+
+#ifdef VCC_STANDALONE_EXECUTOR
+  DECLARE_FUNCTION(CreateTimer)
+  DECLARE_FUNCTION(CreateTimerWithId)
+  DECLARE_FUNCTION(DeleteTimer)
+  DECLARE_FUNCTION(IsTimerExists)
+  DECLARE_FUNCTION(IsTimerOneShot)
+  DECLARE_FUNCTION(GetTimerInterval)
+  DECLARE_FUNCTION(SetTimerInterval)
+#endif
 };
 
 

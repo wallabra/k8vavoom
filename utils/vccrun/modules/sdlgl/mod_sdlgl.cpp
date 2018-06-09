@@ -49,6 +49,58 @@ struct ScissorRect {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+//native static final int CreateTimer (int intervalms, optional bool oneShot);
+IMPLEMENT_FUNCTION(VObject, CreateTimer) {
+  P_GET_INT(specifiedOneShot);
+  P_GET_BOOL(oneShot);
+  P_GET_INT(intervalms);
+  if (!specifiedOneShot) oneShot = false; // just in case
+  RET_INT(VVideo::CreateTimerWithId(0, intervalms, oneShot));
+}
+
+//native static final bool CreateTimerWithId (int id, int intervalms, optional bool oneShot);
+IMPLEMENT_FUNCTION(VObject, CreateTimerWithId) {
+  P_GET_INT(specifiedOneShot);
+  P_GET_BOOL(oneShot);
+  P_GET_INT(intervalms);
+  P_GET_INT(id);
+  if (!specifiedOneShot) oneShot = false; // just in case
+  RET_INT(VVideo::CreateTimerWithId(id, intervalms, oneShot));
+}
+
+//native static final bool DeleteTimer (int id);
+IMPLEMENT_FUNCTION(VObject, DeleteTimer) {
+  P_GET_INT(id);
+  RET_BOOL(VVideo::DeleteTimer(id));
+}
+
+//native static final bool IsTimerExists (int id);
+IMPLEMENT_FUNCTION(VObject, IsTimerExists) {
+  P_GET_INT(id);
+  RET_BOOL(VVideo::IsTimerExists(id));
+}
+
+//native static final bool IsTimerOneShot (int id);
+IMPLEMENT_FUNCTION(VObject, IsTimerOneShot) {
+  P_GET_INT(id);
+  RET_BOOL(VVideo::IsTimerOneShot(id));
+}
+
+//native static final int GetTimerInterval (int id);
+IMPLEMENT_FUNCTION(VObject, GetTimerInterval) {
+  P_GET_INT(id);
+  RET_INT(VVideo::GetTimerInterval(id));
+}
+
+//native static final bool SetTimerInterval (int id, int intervalms);
+IMPLEMENT_FUNCTION(VObject, SetTimerInterval) {
+  P_GET_INT(intervalms);
+  P_GET_INT(id);
+  RET_BOOL(VVideo::SetTimerInterval(id, intervalms));
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // keys and buttons
 enum {
   K_SPACE = 32,
@@ -193,6 +245,9 @@ enum {
   ev_keyup,
   ev_mouse,
   ev_joystick,
+  // extended events for vcc_run
+  ev_winfocus, // data1: focused
+  ev_timer, // data1: timer id
 };
 
 // event structure
@@ -540,6 +595,126 @@ int VVideo::mWidth = 0;
 int VVideo::mHeight = 0;
 
 
+struct TimerInfo {
+  SDL_TimerID sdlid;
+  int id; // script id (0: not used)
+  int interval;
+  bool oneShot;
+};
+
+static TMap<int, TimerInfo> timerMap; // key: timer id; value: timer info
+static int timerLastUsedId = 0;
+
+
+// doesn't insert anything in `timerMap`!
+static int timerAllocId () {
+  int res = 0;
+  if (timerLastUsedId < 0x7ffffff && timerMap.has(timerLastUsedId)) ++timerLastUsedId;
+  if (timerLastUsedId < 0x7ffffff) {
+    res = timerLastUsedId++;
+  } else {
+    for (int f = 1; f < timerLastUsedId; ++f) if (!timerMap.has(f)) { res = f; break; }
+  }
+  return res;
+}
+
+
+// removes element from `timerMap`!
+static void timerFreeId (int id) {
+  if (id <= 0) return;
+  TimerInfo *ti = timerMap.get(id);
+  if (ti) {
+    SDL_RemoveTimer(ti->sdlid);
+    timerMap.del(id);
+  }
+  if (id == timerLastUsedId) {
+    while (timerLastUsedId > 0 && !timerMap.has(timerLastUsedId)) --timerLastUsedId;
+  }
+}
+
+
+static Uint32 sdlTimerCallback (Uint32 interval, void *param) {
+  SDL_Event event;
+  SDL_UserEvent userevent;
+
+  int id = (int)param;
+  TimerInfo *ti = timerMap.get(id);
+  if (ti) {
+    userevent.type = SDL_USEREVENT;
+    userevent.code = 1;
+    userevent.data2 = (void *)ti->id;
+
+    event.type = SDL_USEREVENT;
+    event.user = userevent;
+
+    SDL_PushEvent(&event);
+    // don't delete timer here, 'cause callback is running in separate thread
+    return (ti->oneShot ? 0 : ti->interval);
+  }
+
+  return 0; // this timer is dead
+}
+
+
+// returns timer id or 0
+// if id <= 0, creates new unique timer id
+// if interval is < 1, returns with error and won't create timer
+int VVideo::CreateTimerWithId (int id, int intervalms, bool oneShot) {
+  if (intervalms < 1) return 0;
+  if (id <= 0) {
+    // get new id
+    id = timerAllocId();
+  } else {
+    if (timerMap.has(id)) return 0;
+  }
+  TimerInfo ti;
+  ti.sdlid = SDL_AddTimer(intervalms, &sdlTimerCallback, (void *)id);
+  ti.id = id;
+  ti.interval = intervalms;
+  ti.oneShot = oneShot;
+  timerMap.put(id, ti);
+  return id;
+}
+
+
+// `true`: deleted, `false`: no such timer
+bool VVideo::DeleteTimer (int id) {
+  if (id <= 0 || !timerMap.has(id)) return false;
+  timerFreeId(id);
+  return true;
+}
+
+
+bool VVideo::IsTimerExists (int id) {
+  return (id > 0 && timerMap.has(id));
+}
+
+
+bool VVideo::IsTimerOneShot (int id) {
+  TimerInfo *ti = timerMap.get(id);
+  return (ti && ti->oneShot);
+}
+
+
+// 0: no such timer
+int VVideo::GetTimerInterval (int id) {
+  TimerInfo *ti = timerMap.get(id);
+  return (ti ? ti->interval : 0);
+}
+
+
+// returns success flag; won't do anything if interval is < 1
+bool VVideo::SetTimerInterval (int id, int intervalms) {
+  if (intervalms < 1) return false;
+  TimerInfo *ti = timerMap.get(id);
+  if (ti) {
+    ti->interval = intervalms;
+    return true;
+  }
+  return false;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 bool VVideo::canInit () {
   return true;
@@ -800,25 +975,20 @@ void VVideo::runEventLoop () {
           break;
         case SDL_WINDOWEVENT:
           switch (ev.window.event) {
-            /*
             case SDL_WINDOWEVENT_FOCUS_GAINED:
-              //fprintf(stderr, "***FOCUS GAIN; wa=%d; first=%d; drawer=%p\n", (int)winactive, (int)firsttime, Drawer);
-              if (!winactive && mouse) {
-                if (Drawer) {
-                  Drawer->WarpMouseToWindowCenter();
-                  SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
-                }
-              }
-              firsttime = true;
-              winactive = true;
+              evt.type = ev_winfocus;
+              evt.data1 = 1;
+              evt.data2 = 0;
+              evt.data3 = 0;
+              onEvent(evt);
               break;
             case SDL_WINDOWEVENT_FOCUS_LOST:
-              //fprintf(stderr, "***FOCUS LOST; first=%d; drawer=%p\n", (int)firsttime, Drawer);
-              winactive = false;
-              firsttime = true;
+              evt.type = ev_winfocus;
+              evt.data1 = 0;
+              evt.data2 = 0;
+              evt.data3 = 0;
+              onEvent(evt);
               break;
-            //case SDL_WINDOWEVENT_TAKE_FOCUS: Drawer->SDL_SetWindowInputFocus();
-            */
             case SDL_WINDOWEVENT_EXPOSED:
               onDraw();
               break;
@@ -826,6 +996,21 @@ void VVideo::runEventLoop () {
           break;
         case SDL_QUIT:
           doQuit = true;
+          break;
+        case SDL_USEREVENT:
+          if (ev.user.code == 1) {
+            TimerInfo *ti = timerMap.get((int)ev.user.data1);
+            if (ti) {
+              int id = ti->id; // save id
+              // remove one-shot timer
+              if (ti->oneShot) timerFreeId(ti->id);
+              evt.type = ev_timer;
+              evt.data1 = id;
+              evt.data2 = 0;
+              evt.data3 = 0;
+              onEvent(evt);
+            }
+          }
           break;
         default:
           break;
@@ -835,11 +1020,16 @@ void VVideo::runEventLoop () {
     if (doRefresh) onDraw();
 
     if (doGLSwap) {
+      static double lastCollect = 0.0;
       doGLSwap = false;
       SDL_GL_SwapWindow(hw_window);
 
-      VObject::CollectGarbage(); // why not?
-      //fprintf(stderr, "objc=%d\n", VObject::GetObjectsCount());
+      double currTick = fsysCurrTick();
+      if (currTick-lastCollect >= 3) {
+        lastCollect = currTick;
+        VObject::CollectGarbage(); // why not?
+        //fprintf(stderr, "objc=%d\n", VObject::GetObjectsCount());
+      }
     }
   }
 }

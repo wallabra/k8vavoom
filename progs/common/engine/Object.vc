@@ -860,6 +860,26 @@ native static final class FindClassFromScriptId (int Id, int GameFilter);
 #endif
 
 
+#ifdef VCC_STANDALONE_EXECUTOR
+//==========================================================================
+//
+//              MISC BUILTINS
+//
+//==========================================================================
+// returns new timer id
+// if interval is < 1, returns with error and won't create timer
+native static final int CreateTimer (int intervalms, optional bool oneshot);
+// creates timer with the given id, or returns `false` if id is n/a
+native static final bool CreateTimerWithId (int id, int intervalms, optional bool oneshot);
+native static final bool DeleteTimer (int id); // `true`: deleted, `false`: no such timer
+native static final bool IsTimerExists (int id);
+native static final bool IsTimerOneShot (int id); // `false`: no timer, or not oneshot
+native static final int GetTimerInterval (int id); // 0: no such timer
+// returns success flag; won't do anything if interval is < 1
+native static final bool SetTimerInterval (int id, int intervalms);
+#endif
+
+
 defaultproperties
 {
 }

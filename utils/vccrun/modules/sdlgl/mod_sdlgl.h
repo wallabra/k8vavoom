@@ -85,6 +85,17 @@ public:
 
   static void drawTextAt (int x, int y, const VStr &text);
 
+  // returns timer id or 0
+  // if id <= 0, creates new unique timer id
+  // if interval is < 1, returns with error and won't create timer
+  static int CreateTimerWithId (int id, int intervalms, bool oneshot=false);
+  static bool DeleteTimer (int id); // `true`: deleted, `false`: no such timer
+  static bool IsTimerExists (int id);
+  static bool IsTimerOneShot (int id);
+  static int GetTimerInterval (int id); // 0: no such timer
+  // returns success flag; won't do anything if interval is < 1
+  static bool SetTimerInterval (int id, int intervalms);
+
   // static
   DECLARE_FUNCTION(canInit)
   DECLARE_FUNCTION(hasOpenGL)
