@@ -29,7 +29,7 @@ int NumControls;
 
 
 // We'll create some arrays here for special controls
-struct alias {
+struct alias_t {
   string alias_name; // name of the alias
   string command; // command to type from console
 };
@@ -49,7 +49,7 @@ struct menukey {
 
 // jeep dynamic arrays of each of these so that we "build"
 // the special control sections in the menu
-array<alias> aliases_list;
+array<alias_t> aliases_list;
 array<bind> dbinds_list;
 array<bind> binds_list;
 array<menukey> menukeys_list;
