@@ -962,8 +962,10 @@ void VVideo::runEventLoop () {
         case SDL_MOUSEMOTION:
           evt.type = ev_mouse;
           evt.data1 = 0;
-          evt.data2 = ev.motion.xrel;
-          evt.data3 = ev.motion.yrel;
+          //evt.data2 = ev.motion.xrel;
+          //evt.data3 = ev.motion.yrel;
+          evt.data2 = ev.motion.x;
+          evt.data3 = ev.motion.y;
           onEvent(evt);
           break;
         case SDL_MOUSEBUTTONDOWN:
@@ -975,8 +977,8 @@ void VVideo::runEventLoop () {
           //else if (ev.button.button == SDL_BUTTON_WHEELUP) evt.data1 = K_MWHEELUP;
           //else if (ev.button.button == SDL_BUTTON_WHEELDOWN) evt.data1 = K_MWHEELDOWN;
           else break;
-          evt.data2 = 0;
-          evt.data3 = 0;
+          evt.data2 = ev.button.x;
+          evt.data3 = ev.button.y;
           onEvent(evt);
           break;
         case SDL_MOUSEWHEEL:
@@ -984,8 +986,8 @@ void VVideo::runEventLoop () {
                if (ev.wheel.y > 0) evt.data1 = K_MWHEELUP;
           else if (ev.wheel.y < 0) evt.data1 = K_MWHEELDOWN;
           else break;
-          evt.data2 = 0;
-          evt.data3 = 0;
+          evt.data2 = ev.wheel.x;
+          evt.data3 = ev.wheel.y;
           onEvent(evt);
           break;
         case SDL_WINDOWEVENT:
