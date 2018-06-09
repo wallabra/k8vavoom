@@ -321,7 +321,8 @@ int VPackage::FindString (const char *str) {
 
   // add new string
   TStringInfo &SI = StringInfo.Alloc();
-  int AddLen = (VStr::Length(str)+4)&~3;
+  int AddLen = VStr::Length(str)+1;
+  while (AddLen&3) ++AddLen;
   int Ofs = Strings.Num();
   Strings.SetNum(Strings.Num()+AddLen);
   memset(&Strings[Ofs], 0, AddLen);

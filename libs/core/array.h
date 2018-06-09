@@ -80,7 +80,8 @@ public:
     ArrSize = NewSize;
     if (ArrNum > NewSize) ArrNum = NewSize;
 
-    ArrData = (T*)Z_Malloc(ArrSize*sizeof(T));
+    ArrData = (T *)Z_Malloc(ArrSize*sizeof(T));
+    memset(ArrData, 0, ArrSize*sizeof(T));
     for (int i = 0; i < ArrSize; ++i) new(&ArrData[i], E_ArrayNew, E_ArrayNew)T;
     for (int i = 0; i < ArrNum; ++i) ArrData[i] = OldData[i];
 
@@ -115,6 +116,7 @@ public:
     ArrSize = Other.ArrSize;
     if (ArrSize) {
       ArrData = (T*)Z_Malloc(ArrSize*sizeof(T));
+      memset(ArrData, 0, ArrSize*sizeof(T));
       for (int i = 0; i < ArrSize; ++i) new(&ArrData[i], E_ArrayNew, E_ArrayNew)T;
       for (int i = 0; i < ArrNum; ++i) ArrData[i] = Other.ArrData[i];
     }

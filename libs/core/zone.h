@@ -34,6 +34,18 @@ inline void *Z_Malloc (size_t size) {
 }
 
 
+inline void *Z_Realloc (void *ptr, size_t size) {
+  if (size) {
+    void *res = realloc(ptr, size);
+    if (!res) { fprintf(stdout, "FATAL: out of memory!\n"); *(int*)0 = 0; }
+    return res;
+  } else {
+    if (ptr) free(ptr);
+    return nullptr;
+  }
+}
+
+
 inline void *Z_Calloc (size_t size) {
   void *res = malloc(size > 0 ? size : size+1);
   if (!res) { fprintf(stdout, "FATAL: out of memory!\n"); *(int*)0 = 0; }
