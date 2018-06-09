@@ -158,4 +158,7 @@ static __attribute((unused)) inline vuint32 joaatHashBufCI (const void *buf, siz
 }
 
 
+static __attribute((unused)) inline vuint32 GetTypeHash (int n) { return hashU32((vuint32)n); }
+static __attribute((unused)) inline vuint32 GetTypeHash (vuint32 n) { return hashU32(n); }
+
 #endif
