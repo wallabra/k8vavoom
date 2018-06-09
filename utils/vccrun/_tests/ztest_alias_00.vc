@@ -1,0 +1,10 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+int boo () { return 42; }
+alias foo = boo;
+
+final void main () {
+  writeln(boo);
+  writeln(foo);
+}
