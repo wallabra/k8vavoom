@@ -381,6 +381,7 @@ static void initialize () {
 static int checkArg (VMethod *mmain) {
   if (!mmain) return -1;
   if ((mmain->Flags&FUNC_VarArgs) != 0) return -1;
+  if (mmain->NumParams > 0 && mmain->ParamFlags[0] != 0) return -1;
   int res = 0;
   if (mmain->ReturnType.Type != TYPE_Void && mmain->ReturnType.Type != TYPE_Int) return -1;
   if (mmain->ReturnType.Type == TYPE_Int) res |= 0x02;

@@ -901,11 +901,19 @@ void VVideo::initMethods () {
 
   mmain = mklass->FindMethod("onEvent");
   if (mmain && (mmain->Flags&FUNC_VarArgs) == 0 && mmain->ReturnType.Type == TYPE_Void && mmain->NumParams == 1 &&
-      mmain->ParamTypes[0].Type == TYPE_Pointer &&
-      mmain->ParamTypes[0].GetPointerInnerType().Type == TYPE_Struct &&
-      mmain->ParamTypes[0].GetPointerInnerType().Struct->Name == "event_t")
+      ((mmain->ParamTypes[0].Type == TYPE_Pointer &&
+        mmain->ParamFlags[0] == 0 &&
+        mmain->ParamTypes[0].GetPointerInnerType().Type == TYPE_Struct &&
+        mmain->ParamTypes[0].GetPointerInnerType().Struct->Name == "event_t") ||
+       ((mmain->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) != 0 &&
+        mmain->ParamTypes[0].Type == TYPE_Struct &&
+        mmain->ParamTypes[0].Struct->Name == "event_t")))
   {
+    //fprintf(stderr, "onevent found\n");
     onEventVC = mmain;
+  } else {
+    //fprintf(stderr, ":: (%d) %s\n", mmain->ParamFlags[0], *mmain->ParamTypes[0].GetName());
+    //abort();
   }
 }
 
