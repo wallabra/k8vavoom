@@ -52,8 +52,8 @@ private:
   VExpression *ParseExpressionPriority11 ();
   VExpression *ParseExpressionPriority12 ();
   VExpression *ParseExpressionPriority13 ();
-  VExpression *ParseExpressionPriority14 ();
-  VExpression *ParseExpression ();
+  VExpression *ParseExpressionPriority14 (bool allowAssign=false);
+  VExpression *ParseExpression (bool allowAssign=false);
   VStatement *ParseStatement ();
   VCompound *ParseCompoundStatement ();
   VExpression *ParseType ();

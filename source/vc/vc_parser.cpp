@@ -764,7 +764,7 @@ VExpression *VParser::ParseExpressionPriority13 () {
 // assignmnets: `=`, and various `op=`
 //
 //==========================================================================
-VExpression *VParser::ParseExpressionPriority14 () {
+VExpression *VParser::ParseExpressionPriority14 (bool allowAssign) {
   guard(VParser::ParseExpressionPriority14);
   VExpression *op1 = ParseExpressionPriority13();
   if (!op1) return nullptr;
@@ -785,11 +785,13 @@ VExpression *VParser::ParseExpressionPriority14 () {
   // parse `n = delegate ...`
   if (oper == VAssignment::Assign && Lex.Check(TK_Delegate)) {
     VExpression *op2 = ParseLambda();
-    return new VAssignment(oper, op1, op2, l);
+    op1 = new VAssignment(oper, op1, op2, l);
   } else {
     VExpression *op2 = ParseExpressionPriority13();
-    return new VAssignment(oper, op1, op2, l);
+    op1 = new VAssignment(oper, op1, op2, l);
   }
+  if (!allowAssign) ParseError(l, "assignment is not allowed here");
+  return op1;
   unguard;
 }
 
@@ -801,10 +803,10 @@ VExpression *VParser::ParseExpressionPriority14 () {
 // general expression parser
 //
 //==========================================================================
-VExpression *VParser::ParseExpression () {
+VExpression *VParser::ParseExpression (bool allowAssign) {
   guard(VParser::ParseExpression);
   CheckForLocal = false;
-  return ParseExpressionPriority14();
+  return ParseExpressionPriority14(allowAssign);
   unguard;
 }
 
@@ -886,7 +888,7 @@ VStatement *VParser::ParseStatement () {
             break;
           default:
             do {
-              VExpression *Expr = ParseExpression();
+              VExpression *Expr = ParseExpression(true);
               if (!Expr) break;
               For->InitExpr.Append(new VDropResult(Expr));
             } while (Lex.Check(TK_Comma));
@@ -898,7 +900,7 @@ VStatement *VParser::ParseStatement () {
 
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
         do {
-          VExpression *Expr = ParseExpression();
+          VExpression *Expr = ParseExpression(true);
           if (!Expr) break;
           For->LoopExpr.Append(new VDropResult(Expr));
         } while (Lex.Check(TK_Comma));
@@ -987,7 +989,7 @@ VStatement *VParser::ParseStatement () {
       }
     default:
       CheckForLocal = true;
-      VExpression *Expr = ParseExpressionPriority14();
+      VExpression *Expr = ParseExpressionPriority14(true);
       if (!Expr) {
         if (!Lex.Check(TK_Semicolon)) {
           ParseError(l, "Token %s makes no sense here", VLexer::TokenNames[Lex.Token]);
