@@ -119,7 +119,8 @@ int VIniFile::findKey (const VStr &path, const VStr &key) const {
 void VIniFile::setKey (const VStr &path, const VStr &key, const VStr &value) {
   int lastOurPath = -1;
   for (int f = 0; f < items.length(); ++f) {
-    if (!path.equ1251CI(items[f].path)) continue;
+    //if (!path.equ1251CI(items[f].path)) continue;
+    if (!isPathEqu(items[f].path, path)) continue;
     lastOurPath = f;
     if (key.equ1251CI(items[f].key)) { items[f].value = value; return; }
   }
@@ -132,6 +133,7 @@ void VIniFile::setKey (const VStr &path, const VStr &key, const VStr &value) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 bool VIniFile::load (const VStr &fname) {
   VStream *st = fsysOpenFile(fname);
   if (!st) return false;
@@ -190,10 +192,16 @@ void VIniFile::clear () {
 
 
 void VIniFile::knsplit (const VStr &keyname, VStr &path, VStr &key) {
-  auto pos = keyname.length();
-  while (pos > 0 && keyname[pos-1] != '/') --pos;
-  path = keyname.mid(0, pos);
-  key = keyname.mid(pos+1, (int)keyname.length()-(pos+1));
+  auto pos = keyname.lastIndexOf('/');
+  if (pos < 0) {
+    path = VStr();
+    key = keyname;
+  } else {
+    path = keyname.mid(0, pos);
+    key = keyname.mid(pos+1, (int)keyname.length()-(pos+1));
+    while (path.startsWith("/")) path = path.chopLeft(1);
+    while (path.endsWith("/")) path = path.chopRight(1);
+  }
 }
 
 
