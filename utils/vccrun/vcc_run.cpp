@@ -449,9 +449,10 @@ int main (int argc, char **argv) {
 
     PR_Init();
 
-    VPackage *CurrentPackage = new VPackage(VName("vccrun"));
-
     VMemberBase::StaticLoadPackage(VName("engine"), TLocation());
+    //VMemberBase::StaticLoadPackage(VName("ui"), TLocation());
+
+    VPackage *CurrentPackage = new VPackage(VName("vccrun"));
 
     dprintf("Compiling '%s'...\n", *SourceFileName);
 

@@ -1,0 +1,672 @@
+class Widget : Object;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+enum {
+  AlignLeft = 0,
+  AlignTop = 0,
+  AlignRight = 1,
+  AlignBottom = 1,
+  AlignCenter = 2,
+  AlignExpand = 3,
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+protected name mId;
+protected int mX, mY; // local
+protected int mBaseWidth, mBaseHeight;
+protected int mWidth, mHeight;
+protected Widget mParent;
+protected array!Widget mChildren;
+protected Widget mFocused; // valid only for root widget
+protected bool mAsRoot;
+protected bool mDirty;
+protected bool mFocusable;
+protected bool mCanAdoptChildren;
+protected bool mHoriz; // box direction
+protected name mFont;
+
+int flex;
+int align; // on the direction opposite to the box orientation
+int hpadding, vpadding;
+
+delegate void onAction (Widget w);
+
+final void doOnAction () { if (onAction) onAction(self); }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void onFocus () {}
+void onBlur () {}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+protected final int findChildIdx (Widget w) {
+  if (!w) return -1;
+  for (int f = mChildren.length-1; f >= 0; --f) if (mChildren[f] == w) return f;
+  return -1;
+}
+
+protected final void resetDirty () {
+  mDirty = false;
+  for (int f = mChildren.length-1; f >= 0; --f) {
+    Widget w = mChildren[f];
+    w.resetDirty();
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Widget findById (name id) {
+  if (!id) return none;
+  if (id == mId) return self;
+  for (int f = mChildren.length-1; f >= 0; --f) {
+    auto res = mChildren[f].findById(id);
+    if (res) return res;
+  }
+  return none;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void setXY (int ax, int ay) { if (ax != mX || ay != mY) { mX = ax; mY = ay; setDirty(); } }
+void setSize (int aw, int ah) { if (aw < 0) aw = 0; if (ah < 0) ah = 0; if (aw != mWidth || ah != mHeight) { mWidth = aw; mHeight = ah; setDirty(); } }
+
+Widget getRoot () {
+  Widget res = self;
+  while (res.mParent) res = res.mParent;
+  return res;
+}
+
+bool isFocusable () {
+  if (mFocusable) return true;
+  for (int f = mChildren.length-1; f >= 0; --f) if (mChildren[f].isFocusable) return true;
+  return false;
+}
+
+bool isFocused () {
+  return (getRoot().mFocused == self);
+}
+
+Widget getFocused () {
+  Widget w = getRoot();
+  return w.mFocused;
+}
+
+bool isDirty () {
+  return mDirty;
+}
+
+final void setDirty () {
+  Widget w = self;
+  while (w) {
+    if (w.mDirty) return;
+    w.mDirty = true;
+    w = w.mParent;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void focusSelf () {
+  auto root = getRoot();
+  if (root.mFocused == self) return;
+  if (!isFocusable) return;
+  if (mFocusable) {
+    for (int f = 0; f < mChildren.length; ++f) {
+      Widget w = mChildren[f].findFocusFirst();
+      if (w && w.mFocusable) { w.focusSelf(); return; }
+    }
+  }
+  if (root.mFocused) {
+    root.mFocused.setDirty();
+    root.mFocused.onBlur();
+  }
+  root.mFocused = self;
+  onFocus();
+  setDirty();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+Widget findFocusFirst () {
+  Widget fw = none;
+  for (int f = 0; f < mChildren.length; ++f) {
+    Widget w = mChildren[f].findFocusFirst();
+    if (w) return w;
+    if (!fw && mChildren[f].mFocusable) fw = w;
+  }
+  if (fw) return fw;
+  if (!mFocusable) return none;
+  return self;
+}
+
+
+Widget findFocusLast () {
+  Widget lw = none;
+  for (int f = mChildren.length-1; f >= 0; --f) {
+    Widget w = mChildren[f].findFocusLast();
+    if (w) return w;
+    if (!lw && mChildren[f].mFocusable) lw = w;
+  }
+  if (lw) return lw;
+  if (!mFocusable) return none;
+  return self;
+}
+
+
+final Widget findFocusPrev (Widget w) {
+  int idx = findChildIdx(w);
+  if (idx < 1) return none;
+  --idx;
+  while (idx >= 0) {
+    if (mChildren[idx].isFocusable) {
+      w = mChildren[idx].findFocusLast();
+      if (w) return w;
+    }
+    --idx;
+  }
+  return none;
+}
+
+
+final Widget findFocusNext (Widget w) {
+  int idx = findChildIdx(w);
+  if (idx < 0 || idx == mChildren.length) return none;
+  ++idx;
+  while (idx < mChildren.length) {
+    if (mChildren[idx].isFocusable) {
+      w = mChildren[idx].findFocusFirst();
+      if (w) return w;
+    }
+    ++idx;
+  }
+  return none;
+}
+
+
+Widget findFocusPrevHereAndDown () {
+  Widget cw = mFocused;
+  while (cw && cw.mParent) {
+    if (!cw.mParent) break;
+    Widget w = cw.mParent.findFocusPrev(cw);
+    if (w) return w;
+    cw = cw.mParent;
+  }
+  return none;
+}
+
+
+Widget findFocusNextHereAndDown () {
+  Widget cw = mFocused;
+  while (cw && cw.mParent) {
+    if (!cw.mParent) break;
+    Widget w = cw.mParent.findFocusNext(cw);
+    if (w) return w;
+    cw = cw.mParent;
+  }
+  return none;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// coords are local
+final Widget findFocusableAt (int x, int y) {
+  if (x < 0 || y < 0 || x >= mWidth || y >= mHeight) return none;
+  for (int f = mChildren.length-1; f >= 0; --f) {
+    Widget w = mChildren[f];
+    if (x >= w.mX && y >= w.mY && x < w.mX+w.mWidth && y < w.mY+w.mHeight) {
+      if (!w.isFocusable) return none;
+      return w.findFocusableAt(x-w.mX, y-w.mY);
+    }
+  }
+  if (mFocusable) return self;
+  return none;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final int xToLocal (int x) { return x-xToGlobal(0); }
+final int yToLocal (int y) { return y-yToGlobal(0); }
+
+
+final int xToGlobal (int x) {
+  Widget w = self;
+  while (w) { x += w.mX; w = w.mParent; }
+  //for (Widget w = self; w; w = w.mParent) x += w.mX;
+  return x;
+}
+
+final int yToGlobal (int y) {
+  //for (Widget w = self; w; w = w.mParent) y += w.mY;
+  Widget w = self;
+  while (w) { y += w.mY; w = w.mParent; }
+  return y;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void appendChild (Widget w) {
+  if (!w) return;
+  if (w.mParent) FatalError("cannot adopt already adopted child");
+  if (!mCanAdoptChildren) FatalError(va("'%n' cannot adopt children", GetClassName(Class)));
+  w.mParent = self;
+  mChildren[$] = w;
+  if (w.mFocusable && !getRoot().mFocused) {
+    getRoot().mFocused = w;
+    w.onFocus();
+  }
+  setDirty();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// this is called with global coordinates (i.e. it should be drawn at the specified coords)
+// called before painting children
+protected void prePaintAt (int x0, int y0) {
+}
+
+// this is called with global coordinates (i.e. it should be drawn at the specified coords)
+// called after painting children
+protected void postPaintAt (int x0, int y0) {
+}
+
+// this is called with global coordinates (i.e. it should be drawn at the specified coords)
+// called to paint the widget itself, before painting any children
+// override this to do real work
+protected void selfPaintAt (int x0, int y0) {
+}
+
+
+// this is called with global coordinates (i.e. it should be drawn at the specified coords)
+// this should clear `dirty` flag
+void paintAt (int x0, int y0) {
+  mDirty = false;
+  if (mWidth < 1 || mHeight < 1) return; // nothing to do
+  Video::ScissorRect osr;
+  Video.getScissor(&osr);
+  // if scissor was disabled, combiner will use screen dimensions, and enable it
+  if (Video.scissorCombine(x0, y0, mWidth, mHeight)) {
+    prePaintAt(x0, y0);
+    selfPaintAt(x0, y0);
+    int mlen = mChildren.length;
+    for (int f = 0; f < mlen; ++f) {
+      Widget w = mChildren[f];
+      w.paintAt(x0+w.mX, y0+w.mY);
+    }
+    postPaintAt(x0, y0);
+  } else {
+    resetDirty();
+  }
+  // restore scissor
+  Video.setScissor(&osr);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final static bool isMouseEvent (ref event_t evt) {
+  if (evt.type == ev_mouse) return true;
+  if (evt.type == ev_keydown || evt.type == ev_keyup) {
+    switch (evt.data1) {
+      case K_MOUSE1:
+      case K_MOUSE2:
+      case K_MOUSE3:
+      case K_MWHEELUP:
+      case K_MWHEELDOWN:
+        return true;
+    }
+  }
+  return false;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+bool onEvent (ref event_t evt) {
+  if (!mCanAdoptChildren) return false;
+  Widget w;
+  // root?
+  if (!mParent && mFocused) {
+    bool doDispatchToFocused = true;
+    bool msevent = isMouseEvent(evt);
+    // don't pass mousedown events to focused element
+    if (msevent && evt.type == ev_keydown) doDispatchToFocused = false;
+    if (doDispatchToFocused) {
+      int ox = evt.x, oy = evt.y;
+      if (msevent) {
+        evt.x = mFocused.xToLocal(ox);
+        evt.y = mFocused.yToLocal(oy);
+      }
+      bool res = mFocused.onEvent(evt);
+      if (msevent) {
+        evt.x = ox;
+        evt.y = oy;
+      }
+      if (res) return true;
+    }
+  }
+  if (evt.type == ev_keydown) {
+    switch (evt.data1) {
+      case K_TAB:
+      case K_DOWNARROW: case K_PAD2:
+      case K_RIGHTARROW: case K_PAD6:
+        w = getRoot().findFocusNextHereAndDown();
+        if (!w) w = getRoot().findFocusFirst();
+        if (w) w.focusSelf();
+        return true;
+      case K_UPARROW: case K_PAD8:
+      case K_LEFTARROW: case K_PAD4:
+        w = getRoot().findFocusPrevHereAndDown();
+        if (!w) w = getRoot().findFocusLast();
+        if (w) w.focusSelf();
+        return true;
+      }
+    }
+    if (evt.type == ev_keydown || evt.type == ev_keyup) {
+      switch (evt.data1) {
+        case K_MOUSE1:
+        case K_MOUSE2:
+        case K_MOUSE3:
+          if (evt.x >= 0 && evt.y >= 0 && evt.x < mWidth && evt.y < mHeight) {
+            w = findFocusableAt(evt.x, evt.y);
+            if (w) {
+              if (evt.type == ev_keydown && !w.focused) w.focusSelf();
+              int ox = evt.x, oy = evt.y;
+              evt.x = w.xToLocal(xToGlobal(ox));
+              evt.y = w.yToLocal(yToGlobal(oy));
+              //writeln("on evt; global=(", ox, ",", oy, "); local=(", evt.x, ",", evt.y, ")");
+              w.onEvent(evt);
+              evt.x = ox;
+              evt.y = oy;
+              return true;
+            }
+          }
+          break;
+    }
+  }
+  return false;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// returns occupied dimensions
+protected final void calcFixMinDims (out int w, out int h) {
+  w = 0;
+  h = 0;
+  for (int f = 0; f < mChildren.length; ++f) {
+    Widget c = mChildren[f];
+    int cw, ch;
+    c.calcFixMinDims(cw, ch);
+    if (mHoriz) {
+      if (f && cw) cw += max(0, hpadding);
+      w += max(0, cw);
+      h = max(h, ch);
+    } else {
+      if (f && ch) ch += max(0, vpadding);
+      w = max(w, cw);
+      h += max(0, ch);
+    }
+  }
+  w = max(w, max(mWidth, mBaseWidth));
+  h = max(h, max(mHeight, mBaseHeight));
+  setSize(w, h);
+  //writeln(GetClassName(Class), "<", mId, ">: w=", w, "; h=", h);
+}
+
+
+protected final void layoutInternal () {
+  setDirty(); // i'm lazy
+  int mlen = mChildren.length;
+  if (mlen == 0) return; // nothing to do here
+
+  int pad = max(0, (mHoriz ? hpadding : vpadding));
+
+  // calc children size and flex numbers
+  int w = 0, h = 0;
+  int flexTotal = 0;
+  for (int f = 0; f < mlen; ++f) {
+    Widget c = mChildren[f];
+    int cw = max(0, c.mWidth), ch = max(0, c.mHeight);
+    if (mHoriz) {
+      if (f) cw += pad;
+      w += max(0, cw);
+      h = max(h, ch);
+    } else {
+      if (f) ch += pad;
+      w = max(w, cw);
+      h += max(0, ch);
+    }
+    flexTotal += max(0, c.flex);
+  }
+
+  /*
+  the size of box is equal to the free size in its parent multiplied by
+  the value of the its box-flex property divided by the sum of all
+  the box-flex properties values of all boxes included in its parent.
+  */
+  //writeln("flexTotal=", flexTotal, "; mWidth=", mWidth, "; w=", w, "; mHeight=", mHeight, "; h=", h, "; mHoriz=", mHoriz);
+  // fix children sizes
+  int spaceLeft = (mHoriz ? mWidth-w : mHeight-h);
+  while (flexTotal && spaceLeft > 0) {
+    //writeln(" flexpass: spaceLeft=", spaceLeft);
+    int origSpace = spaceLeft;
+    for (int f = 0; f < mlen; ++f) {
+      Widget c = mChildren[f];
+      if (c.flex > 0) {
+        int n = origSpace*c.flex/flexTotal;
+        //writeln(" child #", f, ": n=", n);
+        if (mHoriz) c.mWidth += n; else c.mHeight += n;
+        spaceLeft -= n;
+      }
+    }
+    if (origSpace == spaceLeft) {
+      for (int f = 0; f < mlen; ++f) {
+        Widget c = mChildren[f];
+        if (c.flex > 0) {
+          if (mHoriz) c.mWidth += 1; else c.mHeight += 1;
+          spaceLeft -= 1;
+          if (spaceLeft <= 0) break;
+        }
+      }
+      break;
+    }
+  }
+
+  // fix children positions
+  int curpos = 0;
+  for (int f = 0; f < mlen; ++f) {
+    Widget c = mChildren[f];
+    if (mHoriz) {
+      c.mX = curpos;
+      curpos += max(0, c.mWidth)+pad;
+      switch (c.align) {
+        case AlignExpand:
+          if (c.mHeight <= mHeight) c.mHeight = mHeight;
+          /* fallthrough */
+        case AlignCenter:
+          c.mY = (mHeight-c.mHeight)/2;
+          break;
+        case AlignBottom:
+          c.mY = mHeight-c.mHeight;
+          break;
+        case AlignTop:
+        default:
+          c.mY = 0;
+          break;
+      }
+    } else {
+      c.mY = curpos;
+      curpos += max(0, c.mHeight)+pad;
+      switch (c.align) {
+        case AlignExpand:
+          if (c.mWidth <= mWidth) c.mWidth = mWidth;
+          /* fallthrough */
+        case AlignCenter:
+          c.mX = (mWidth-c.mWidth)/2;
+          break;
+        case AlignRight:
+          c.mX = mWidth-c.mWidth;
+          break;
+        case AlignLeft:
+        default:
+          c.mX = 0;
+          break;
+      }
+    }
+  }
+
+  // and ask children to layout their children
+  for (int f = 0; f < mlen; ++f) mChildren[f].layoutInternal();
+}
+
+
+final void layout () {
+  int w, h;
+  calcFixMinDims(w, h);
+  layoutInternal();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// properties
+int x {
+  get { return mX; }
+  set { setXY(value, mY); }
+}
+
+int y {
+  get { return mY; }
+  set { setXY(mX, value); }
+}
+
+int width {
+  get { return mWidth; }
+  set { setSize(value, mHeight); }
+}
+
+int height {
+  get { return mHeight; }
+  set { setSize(mWidth, value); }
+}
+
+int childCount {
+  get { return mChildren.length; }
+}
+
+bool focused {
+  get { return isFocused(); }
+  set { focusSelf(); }
+}
+
+name id {
+  get { return mId; }
+  set { mId = value; }
+}
+
+bool horizontal { get { return mHoriz; } }
+bool vertical { get { return !mHoriz; } }
+
+name fontName { get { Widget w = self; while (w) { if (w.mFont) return w.mFont; w = w.mParent; } return ''; } }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+private final static void fixDimensions (Widget w) {
+  if (w) {
+    if (w.mWidth < 1 && w.mBaseWidth > 0) w.mWidth = w.mBaseWidth;
+    if (w.mHeight < 1 && w.mBaseHeight > 0) w.mHeight = w.mBaseHeight;
+  }
+}
+
+
+private final static void fixDimensionsFromActual (Widget w) {
+  if (w) {
+    if (w.mWidth > 0 && w.mBaseWidth < 1) w.mBaseWidth = w.mWidth;
+    if (w.mHeight > 0 && w.mBaseHeight < 1) w.mBaseHeight = w.mHeight;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final static Widget CreateRoot () {
+  auto res = WidgetRoot(SpawnObject(WidgetRoot));
+  res.onCreated();
+  fixDimensions(res);
+  return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final static Widget CreateBox (Widget parent, bool horiz, optional name aid) {
+  auto res = WidgetBox(SpawnObject(WidgetBox));
+  if (specified_aid) res.id = aid;
+  res.onCreated(horiz);
+  fixDimensions(res);
+  if (parent) parent.appendChild(res);
+  return res;
+}
+
+final static Widget CreateHBox (Widget parent, optional name aid) {
+  return (specified_aid ? CreateBox(parent, true, aid) : CreateBox(parent, true));
+}
+
+final static Widget CreateVBox (Widget parent, optional name aid) {
+  return (specified_aid ? CreateBox(parent, false, aid) : CreateBox(parent, false));
+}
+
+
+final static Widget CreateSpan (Widget parent, int defsize) {
+  auto res = WidgetSpan(SpawnObject(WidgetSpan));
+  res.onCreated();
+  res.align = AlignExpand;
+  if (parent) {
+    parent.appendChild(res);
+    if (parent.horizontal) res.setSize(defsize, 0); else res.setSize(0, defsize);
+  } else {
+    res.setSize(defsize, defsize);
+  }
+  fixDimensionsFromActual(res);
+  return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final static Widget CreateLabel (Widget parent, string atext, optional name aid) {
+  auto res = WidgetLabel(SpawnObject(WidgetLabel));
+  if (specified_aid) res.id = aid;
+  res.onCreated(atext);
+  fixDimensions(res);
+  if (parent) parent.appendChild(res);
+  return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final static Widget CreateButton (Widget parent, string atext, optional name aid) {
+  auto res = WidgetButton(SpawnObject(WidgetButton));
+  if (specified_aid) res.id = aid;
+  res.onCreated(atext);
+  fixDimensions(res);
+  if (parent) parent.appendChild(res);
+  return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+defaultproperties {
+  mId = '';
+  mParent = none;
+  mFocused = none;
+  mAsRoot = false;
+  mDirty = true;
+  mFocusable = false;
+  mCanAdoptChildren = false;
+  mFont = '';
+  mWidth = 0;
+  mHeight = 0;
+  mBaseWidth = 0;
+  mBaseHeight = 0;
+  flex = 0;
+  align = AlignLeft; // or top
+  hpadding = 0;
+  vpadding = 0;
+}

@@ -1,0 +1,25 @@
+class WidgetBox : Widget;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void onCreated (bool ahoriz) {
+  mHoriz = ahoriz;
+}
+
+protected override void selfPaintAt (int x0, int y0) {
+  //Video.setColor(32, 32, 32);
+  Video.setColor(0, 0, 0);
+  Video.colorRGB = 0x202020;
+  //int c = Video.colorRGB;
+  //writeln(c);
+  Video.fillRect(x0, y0, mWidth, mHeight);
+  //Video.drawRect(x0, y0, mWidth, mHeight);
+  //Video.setColor(255, 255, 255);
+  //Video.drawLine(x0, y0, x0+mWidth, y0);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+defaultproperties {
+  mCanAdoptChildren = true;
+}

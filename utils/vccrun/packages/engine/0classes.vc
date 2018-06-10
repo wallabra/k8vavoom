@@ -1,3 +1,5 @@
+// only 'engine' package can have "native" classes
+
 #include "../../../../progs/common/engine/Object.vc"
 #include "../../../../progs/common/engine/ScriptsParser.vc"
 

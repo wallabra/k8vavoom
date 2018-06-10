@@ -1,0 +1,94 @@
+// text button
+class WidgetButton : Widget;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+protected string mText;
+protected bool mWaitRelease;
+
+
+void onCreated (string atext) {
+  mText = atext;
+  mBaseWidth = Video.textWidth(atext)+6;
+  mBaseHeight = Video.textHeight(atext)+6;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+protected override void selfPaintAt (int x0, int y0) {
+  if (mText.length == 0) return;
+  Video.setColor(64, 64, 64);
+  Video.fillRect(x0, y0, mWidth, mHeight);
+  if (mWaitRelease) {
+    Video.drawBevel(x0, y0, mWidth, mHeight, RGB(64-32, 64-32, 64-32), RGB(64+32, 64+32, 64+32));
+  } else {
+    Video.drawBevel(x0, y0, mWidth, mHeight, RGB(64+32, 64+32, 64+32), RGB(64-32, 64-32, 64-32));
+  }
+  if (focused) {
+    Video.setColor(255, 255, 255);
+  } else {
+    Video.setColor(255, 127, 0);
+  }
+  Video.setFont(fontName);
+  Video.drawTextAt(x0+3+(mWaitRelease ? 1 : 0), y0+3+(mWaitRelease ? 1 : 0), mText);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+override void onFocus () { if (mWaitRelease) setDirty(); mWaitRelease = false; }
+override void onBlur () { if (mWaitRelease) setDirty(); mWaitRelease = false; }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+override bool onEvent (ref event_t evt) {
+  if (evt.type == ev_mouse) return false;
+  //writeln(GetClassName(Class), ":<", mId, ">: event: ", evt.type);
+  if (evt.type == ev_keydown) {
+    if (!focused) return false;
+    switch (evt.data1) {
+      case K_SPACE:
+      case K_ENTER:
+        if (!mWaitRelease) setDirty();
+        mWaitRelease = true;
+        return true;
+      case K_MOUSE1:
+        //writeln("mdown: (", evt.x, ",", evt.y, ")");
+        if (evt.x >= 0 && evt.y >= 0 && evt.x < mWidth && evt.y < mHeight) {
+          if (!mWaitRelease) setDirty();
+          mWaitRelease = true;
+          return true;
+        }
+        break;
+    }
+    return false;
+  }
+
+  if (evt.type == ev_keyup) {
+    if (!focused) return false;
+    switch (evt.data1) {
+      case K_SPACE:
+      case K_ENTER:
+        if (mWaitRelease) { mWaitRelease = false; setDirty(); doOnAction(); }
+        return true;
+      case K_MOUSE1:
+        //writeln("mup: (", evt.x, ",", evt.y, "); ", mWaitRelease);
+        if (mWaitRelease) {
+          mWaitRelease = false;
+          setDirty();
+          if (evt.x >= 0 && evt.y >= 0 && evt.x < mWidth && evt.y < mHeight) doOnAction();
+          return true;
+        }
+        break;
+    }
+    return false;
+  }
+
+  return false;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+defaultproperties {
+  mFocusable = true;
+  mWaitRelease = false;
+}

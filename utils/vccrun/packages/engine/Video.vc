@@ -67,8 +67,8 @@ final static bool scissorCombine (int x0, int y0, int w, int h) {
   if (!sr.enabled) {
     sr.x = 0;
     sr.y = 0;
-    sr.w = Video.screenWidth;
-    sr.h = Video.screenHeight;
+    sr.w = screenWidth;
+    sr.h = screenHeight;
     sr.enabled = true;
   }
   if (sr.w < 1 || sr.h < 1) return false; // nothing to do
