@@ -23,10 +23,10 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "../../../render/hwgl/gl_local.h"
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 enum {
   WGL_CONTEXT_MAJOR_VERSION_ARB = 0x2091,
   WGL_CONTEXT_MINOR_VERSION_ARB = 0x2092,
@@ -42,45 +42,26 @@ enum {
 };
 
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-class VWin32OpenGLDrawer : public VOpenGLDrawer
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VWin32OpenGLDrawer : public VOpenGLDrawer {
 public:
-  bool    Windowed;
-  HDC     DeviceContext;
-  HGLRC   RenderContext;
-  HWND    RenderWindow;
+  bool Windowed;
+  HDC DeviceContext;
+  HGLRC RenderContext;
+  HWND RenderWindow;
 
-  void Init();
-  bool SetResolution(int, int, bool);
-  void *GetExtFuncPtr(const char*);
-  void Update();
-  void Shutdown();
+  virtual void Init () override;
+  virtual bool SetResolution (int AWidth, int AHeight, bool AWindowed) override;
+  virtual void *GetExtFuncPtr (const char *name) override;
+  virtual void Update () override;
+  virtual void Shutdown () override;
 
   virtual void WarpMouseToWindowCenter () override;
   virtual bool SetAdaptiveSwap () override;
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+IMPLEMENT_DRAWER(VWin32OpenGLDrawer, DRAWER_OpenGL, "OpenGL", "Win32 OpenGL rasteriser device", "-opengl");
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-IMPLEMENT_DRAWER(VWin32OpenGLDrawer, DRAWER_OpenGL, "OpenGL",
-  "Win32 OpenGL rasteriser device", "-opengl");
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
@@ -89,9 +70,7 @@ IMPLEMENT_DRAWER(VWin32OpenGLDrawer, DRAWER_OpenGL, "OpenGL",
 //  Determine the hardware configuration
 //
 //==========================================================================
-
-void VWin32OpenGLDrawer::Init()
-{
+void VWin32OpenGLDrawer::Init () {
   Windowed = true;
   DeviceContext = nullptr;
   RenderContext = nullptr;
@@ -103,14 +82,20 @@ void VWin32OpenGLDrawer::Init()
 //
 //  VWin32OpenGLDrawer::WarpMouseToWindowCenter
 //
-//  k8: omebody should fix this; i don't care
+//  k8: somebody should fix this; i don't care
 //
 //==========================================================================
-
 void VWin32OpenGLDrawer::WarpMouseToWindowCenter () {
 }
 
 
+//==========================================================================
+//
+//  VWin32OpenGLDrawer::SetAdaptiveSwap
+//
+//  k8: somebody should fix this; i don't care
+//
+//==========================================================================
 bool VWin32OpenGLDrawer::SetAdaptiveSwap () {
   return false;
 }
@@ -123,112 +108,101 @@ bool VWin32OpenGLDrawer::SetAdaptiveSwap () {
 //  Set up the video mode
 //
 //==========================================================================
-
-bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
-{
+bool VWin32OpenGLDrawer::SetResolution (int AWidth, int AHeight, bool AWindowed) {
   guard(VWin32OpenGLDrawer::SetResolution);
 
   typedef HGLRC (APIENTRY *wglCreateContextAttribsARB_fna) (HDC hDC, HGLRC hShareContext, const int *attribList);
   wglCreateContextAttribsARB_fna wglCreateContextAttribsARB = nullptr;
 
-  int     Width = AWidth;
-  int     Height = AHeight;
-  int     pixelformat;
-  MSG     msg;
+  int Width = AWidth;
+  int Height = AHeight;
+  int pixelformat;
+  MSG msg;
 
-  if (!Width || !Height)
-  {
-    //  Set defaults
+  if (!Width || !Height) {
+    // set defaults
     Width = 640;
     Height = 480;
   }
 
-  //  Shut down current mode
+  // shut down current mode
   Shutdown();
 
   Windowed = AWindowed;
 
-  if (!Windowed)
-  {
-    //  Try to switch to the new mode
+  if (!Windowed) {
+    // try to switch to the new mode
     DEVMODE dmScreenSettings;
     memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
     dmScreenSettings.dmSize = sizeof(dmScreenSettings);
     dmScreenSettings.dmPelsWidth = Width;
     dmScreenSettings.dmPelsHeight = Height;
     dmScreenSettings.dmBitsPerPel = 32/*BPP*/;
-    dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-
-    if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
-    {
-      return false;
+    dmScreenSettings.dmFields = DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
+    if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) {
+      memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
+      dmScreenSettings.dmSize = sizeof(dmScreenSettings);
+      dmScreenSettings.dmPelsWidth = Width;
+      dmScreenSettings.dmPelsHeight = Height;
+      dmScreenSettings.dmBitsPerPel = 24/*BPP*/;
+      dmScreenSettings.dmFields = DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
+      if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) return false;
     }
   }
 
-  //  Create window
+  // create window
   RenderWindow = CreateWindow("VAVOOM", "VAVOOM for Windows",
-    Windowed ? (WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX) |
-    WS_CLIPCHILDREN | WS_CLIPSIBLINGS : WS_POPUP |
-    WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+    (Windowed ? (WS_OVERLAPPEDWINDOW&~WS_MAXIMIZEBOX)|WS_CLIPCHILDREN|WS_CLIPSIBLINGS : WS_POPUP)|WS_CLIPCHILDREN|WS_CLIPSIBLINGS,
     0, 0, 2, 2, hwnd, nullptr, hInst, nullptr);
-  if (!RenderWindow)
-  {
+  if (!RenderWindow) {
     GCon->Log(NAME_Init, "Couldn't create window");
     return false;
   }
 
-  //  Make the window visible & update its client area
+  // make the window visible & update its client area
   ShowWindow(RenderWindow, SW_SHOWDEFAULT);
   UpdateWindow(RenderWindow);
 
-  //  Switch input to this window
+  // switch input to this window
   IN_SetActiveWindow(RenderWindow);
 
-  //  Now we try to make sure we get the focus on the mode switch, because
+  // Now we try to make sure we get the focus on the mode switch, because
   // sometimes in some systems we don't. We grab the foreground, pump all
   // our messages, and sleep for a little while to let messages finish
   // bouncing around the system, then we put ourselves at the top of the z
   // order, then grab the foreground again.
-  //  Who knows if it helps, but it probably doesn't hurt
+  // Who knows if it helps, but it probably doesn't hurt
   SetForegroundWindow(RenderWindow);
 
-  while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-  {
+  while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
 
   Sleep(10);
 
-  if (Windowed)
-  {
+  if (Windowed) {
     RECT WindowRect;
-    WindowRect.left=(long)0;
-    WindowRect.right=(long)Width;
-    WindowRect.top=(long)0;
-    WindowRect.bottom=(long)Height;
-    AdjustWindowRectEx(&WindowRect, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
-      FALSE, WS_EX_APPWINDOW | WS_EX_WINDOWEDGE);
-    SetWindowPos(RenderWindow, HWND_TOP, 0, 0,
-      WindowRect.right-WindowRect.left,
-      WindowRect.bottom-WindowRect.top, SWP_NOMOVE);
-  }
-  else
-  {
+    WindowRect.left = (long)0;
+    WindowRect.right = (long)Width;
+    WindowRect.top = (long)0;
+    WindowRect.bottom = (long)Height;
+    AdjustWindowRectEx(&WindowRect, WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN|WS_CLIPSIBLINGS, FALSE, WS_EX_APPWINDOW|WS_EX_WINDOWEDGE);
+    SetWindowPos(RenderWindow, HWND_TOP, 0, 0, WindowRect.right-WindowRect.left, WindowRect.bottom-WindowRect.top, SWP_NOMOVE);
+  } else {
     SetWindowPos(RenderWindow, HWND_TOP, 0, 0, Width, Height, SWP_NOMOVE);
   }
 
   SetForegroundWindow(RenderWindow);
 
-  //  Get device context
+  // get device context
   DeviceContext = GetDC(RenderWindow);
-  if (!DeviceContext)
-  {
+  if (!DeviceContext) {
     GCon->Log(NAME_Init, "Failed to get device context");
     return false;
   }
 
-  //  Because we have set the background brush for the window to nullptr
+  // Because we have set the background brush for the window to nullptr
   // (to avoid flickering when re-sizing the window on the desktop), we
   // clear the window to black when created, otherwise it will be
   // empty while Vavoom starts up.
@@ -257,7 +231,30 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
   };
 
   pixelformat = ChoosePixelFormat(DeviceContext, &pfd);
-  if (pixelformat == 0) Sys_Error("ChoosePixelFormat failed");
+  if (pixelformat == 0) {
+    pfd = {
+      sizeof(PIXELFORMATDESCRIPTOR),  // Size Of This Pixel Format Descriptor
+      1,                // Version Number
+      PFD_DRAW_TO_WINDOW |      // Format Must Support Window
+      PFD_SUPPORT_OPENGL |      // Format Must Support OpenGL
+      PFD_DOUBLEBUFFER,       // Must Support Double Buffering
+      PFD_TYPE_RGBA,          // Request An RGBA Format
+      byte(32/*BPP*/),            // Select Our Colour Depth
+      0, 0, 0, 0, 0, 0,       // Colour Bits Ignored
+      0,                // No Alpha Buffer
+      0,                // Shift Bit Ignored
+      0,                // No Accumulation Buffer
+      0, 0, 0, 0,           // Accumulation Bits Ignored
+      24,               // 24 bit Z-Buffer (Depth Buffer)
+      8,                // 8 bit Stencil Buffer
+      0,                // No Auxiliary Buffer
+      PFD_MAIN_PLANE,         // Main Drawing Layer
+      0,                // Reserved
+      0, 0, 0             // Layer Masks Ignored
+    };
+    pixelformat = ChoosePixelFormat(DeviceContext, &pfd);
+    if (pixelformat == 0) Sys_Error("ChoosePixelFormat failed");
+  }
 
   if (SetPixelFormat(DeviceContext, pixelformat, &pfd) == FALSE) Sys_Error("SetPixelFormat failed");
 
@@ -280,7 +277,7 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
     0
   };
 
-  //  Create rendering context
+  // create rendering context
   //RenderContext = wglCreateContext(DeviceContext);
   RenderContext = wglCreateContextAttribsARB(DeviceContext, nullptr, contextAttribs);
   if (!RenderContext) {
@@ -288,13 +285,13 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
     return false;
   }
 
-  //  Make this context current
+  // make this context current
   if (!wglMakeCurrent(DeviceContext, RenderContext)) {
     GCon->Log(NAME_Init, "Make current failed");
     return false;
   }
 
-  //  Swap control extension (VSync)
+  // swap control extension (VSync)
   if (CheckExtension("WGL_EXT_swap_control")) {
     GCon->Log(NAME_Init, "Swap control extension found.");
     typedef bool (APIENTRY *PFNWGLSWAPINTERVALFARPROC)(int);
@@ -303,7 +300,7 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
     if (wglSwapIntervalEXT) wglSwapIntervalEXT(r_vsync);
   }
 
-  //  Everything is fine, set some globals and finish
+  // everything is fine, set some globals and finish
   ScreenWidth = Width;
   ScreenHeight = Height;
 
@@ -311,14 +308,13 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWin32OpenGLDrawer::GetExtFuncPtr
 //
 //==========================================================================
-
-void *VWin32OpenGLDrawer::GetExtFuncPtr(const char *name)
-{
+void *VWin32OpenGLDrawer::GetExtFuncPtr (const char *name) {
   guard(VWin32OpenGLDrawer::GetExtFuncPtr);
   if (!name || !name[0]) return nullptr;
   void *res = (void *)wglGetProcAddress(name);
@@ -334,6 +330,7 @@ void *VWin32OpenGLDrawer::GetExtFuncPtr(const char *name)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWin32OpenGLDrawer::Update
@@ -341,13 +338,12 @@ void *VWin32OpenGLDrawer::GetExtFuncPtr(const char *name)
 //  Blit to the screen / Flip surfaces
 //
 //==========================================================================
-
-void VWin32OpenGLDrawer::Update()
-{
+void VWin32OpenGLDrawer::Update () {
   guard(VWin32OpenGLDrawer::Update);
   SwapBuffers(DeviceContext);
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -356,42 +352,33 @@ void VWin32OpenGLDrawer::Update()
 //  Close the graphics
 //
 //==========================================================================
-
-void VWin32OpenGLDrawer::Shutdown()
-{
+void VWin32OpenGLDrawer::Shutdown () {
   guard(VWin32OpenGLDrawer::Shutdown);
   DeleteTextures();
 
-  if (RenderContext)
-  {
+  if (RenderContext) {
     wglMakeCurrent(nullptr, nullptr);
     wglDeleteContext(RenderContext);
     RenderContext = 0;
   }
 
-  if (DeviceContext)
-  {
+  if (DeviceContext) {
     ReleaseDC(RenderWindow, DeviceContext);
     DeviceContext = 0;
   }
 
-  if (RenderWindow)
-  {
+  if (RenderWindow) {
     IN_SetActiveWindow(hwnd);
     SetForegroundWindow(hwnd);
     DestroyWindow(RenderWindow);
     RenderWindow = nullptr;
   }
 
-  if (!Windowed)
-  {
-    ChangeDisplaySettings(nullptr, 0);
-  }
+  if (!Windowed) ChangeDisplaySettings(nullptr, 0);
 
   MSG msg;
 
-  while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-  {
+  while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
