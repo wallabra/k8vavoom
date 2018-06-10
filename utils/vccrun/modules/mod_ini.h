@@ -25,6 +25,8 @@
 
 #include "../vcc_run.h"
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VIniFile : public VObject {
   DECLARE_CLASS(VIniFile, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VIniFile)
@@ -42,6 +44,9 @@ private:
   bool loadFrom (VStream &strm);
   int findKey (const VStr &path, const VStr &key) const;
   void setKey (const VStr &path, const VStr &key, const VStr &value);
+
+  // `path`: path from `KVItem`; `pat`: pattern
+  static bool isPathEqu (const VStr &path, const VStr &pat);
 
   static bool write (VStream &strm, const VStr &s);
   static bool writeln (VStream &strm, const VStr &s);
@@ -68,6 +73,51 @@ public:
   DECLARE_FUNCTION(getValue)
   DECLARE_FUNCTION(setValue)
   DECLARE_FUNCTION(remove)
+
+  DECLARE_FUNCTION(allPathes)
+  DECLARE_FUNCTION(allKeys)
+  DECLARE_FUNCTION(allKeysValues)
+
+  friend class VIniPathIterator;
+  friend class VIniKeyValueIterator;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VIniPathIterator : public VScriptIterator {
+private:
+  TArray<VStr> mItems;
+  int mIndex;
+  VStr *sptr;
+
+public:
+  VIniPathIterator (const VIniFile *aini, VStr *asptr);
+
+  virtual ~VIniPathIterator () override;
+
+  virtual bool GetNext () override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VIniKeyValueIterator : public VScriptIterator {
+private:
+  struct KeyValue {
+    VStr key;
+    VStr value;
+  };
+
+  TArray<KeyValue> mItems;
+  int mIndex;
+  VStr *pkey;
+  VStr *pvalue;
+
+public:
+  VIniKeyValueIterator (const VIniFile *aini, const VStr &path, VStr *apkey, VStr *apvalue);
+
+  virtual ~VIniKeyValueIterator () override;
+
+  virtual bool GetNext () override;
 };
 
 

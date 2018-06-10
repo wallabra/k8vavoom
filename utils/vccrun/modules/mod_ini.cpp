@@ -75,6 +75,38 @@ bool VIniFile::loadFrom (VStream &strm) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// `path`: path from `KVItem`; `pat`: pattern
+bool VIniFile::isPathEqu (const VStr &path, const VStr &pat) {
+  const char *pp = *path;
+  const char *ppat = *pat;
+  while (*pp == '/') ++pp;
+  while (*ppat == '/') ++ppat;
+  while (*pp && *ppat) {
+    if (*pp == '/' || *ppat == '/') {
+      if (*pp == '/') {
+        if (!ppat[0]) break;
+        if (*ppat != '/') return false;
+      } else {
+        if (!pp[0]) break;
+        if (*pp != '/') return false;
+      }
+      while (*pp == '/') ++pp;
+      while (*ppat == '/') ++ppat;
+      continue;
+    }
+
+    if (VStr::locase1251(*pp) != VStr::locase1251(*ppat)) return false;
+    ++pp;
+    ++ppat;
+  }
+  while (*pp == '/') ++pp;
+  while (*ppat == '/') ++ppat;
+  return (pp[0] == 0 && ppat[0] == 0);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 int VIniFile::findKey (const VStr &path, const VStr &key) const {
   for (int f = 0; f < items.length(); ++f) {
     if (!path.equ1251CI(items[f].path)) continue;
@@ -261,4 +293,108 @@ IMPLEMENT_FUNCTION(VIniFile, remove) {
   P_GET_STR(key);
   P_GET_SELF;
   Self->remove(key);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VIniPathIterator::VIniPathIterator (const VIniFile *aini, VStr *asptr) : mItems(), mIndex(0), sptr(asptr) {
+  if (aini) {
+    TMap<VStr, bool> known;
+    for (int f = 0; f < aini->items.length(); ++f) {
+      VStr path = aini->items[f].path;
+      VStr lwpath = path.toLowerCase1251();
+      if (!known.has(lwpath)) {
+        known.put(lwpath, true);
+        mItems.append(path);
+      }
+    }
+  }
+}
+
+
+VIniPathIterator::~VIniPathIterator () {
+  if (sptr) sptr->clear();
+  mItems.clear();
+}
+
+
+bool VIniPathIterator::GetNext () {
+  if (sptr && mIndex < mItems.length()) {
+    *sptr = mItems[mIndex++];
+    return true;
+  } else {
+    if (sptr) sptr->clear();
+    mItems.clear();
+    return false;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VIniKeyValueIterator::VIniKeyValueIterator (const VIniFile *aini, const VStr &path, VStr *apkey, VStr *apvalue)
+  : mItems()
+  , mIndex(0)
+  , pkey(apkey)
+  , pvalue(apvalue)
+{
+  if (aini) {
+    for (int f = 0; f < aini->items.length(); ++f) {
+      if (VIniFile::isPathEqu(aini->items[f].path, path)) {
+        KeyValue kv;
+        kv.key = aini->items[f].key;
+        kv.value = aini->items[f].value;
+        mItems.append(kv);
+      } else {
+        //fprintf(stderr, "<%s> != <%s>\n", *aini->items[f].path, *path);
+      }
+    }
+  }
+}
+
+
+VIniKeyValueIterator::~VIniKeyValueIterator () {
+  if (pkey) pkey->clear();
+  if (pvalue) pvalue->clear();
+  mItems.clear();
+}
+
+
+bool VIniKeyValueIterator::GetNext () {
+  if ((pkey || pvalue) && mIndex < mItems.length()) {
+    if (pkey) *pkey = mItems[mIndex].key;
+    if (pvalue) *pvalue = mItems[mIndex].value;
+    ++mIndex;
+    return true;
+  } else {
+    if (pkey) pkey->clear();
+    if (pvalue) pvalue->clear();
+    mItems.clear();
+    return false;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// native iterator allPathes (out string path);
+IMPLEMENT_FUNCTION(VIniFile, allPathes) {
+  P_GET_PTR(VStr, pstr);
+  P_GET_SELF;
+  RET_PTR(new VIniPathIterator(Self, pstr));
+}
+
+//native iterator allKeys (out string key, string path);
+IMPLEMENT_FUNCTION(VIniFile, allKeys) {
+  P_GET_STR(path);
+  P_GET_PTR(VStr, pkey);
+  P_GET_SELF;
+  RET_PTR(new VIniKeyValueIterator(Self, path, pkey, nullptr));
+}
+
+//native iterator allKeysValues (out string key, out string value, string path);
+IMPLEMENT_FUNCTION(VIniFile, allKeysValues) {
+  P_GET_STR(path);
+  P_GET_PTR(VStr, pvalue);
+  P_GET_PTR(VStr, pkey);
+  P_GET_SELF;
+  RET_PTR(new VIniKeyValueIterator(Self, path, pkey, pvalue));
 }

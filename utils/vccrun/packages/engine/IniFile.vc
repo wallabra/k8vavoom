@@ -1,11 +1,6 @@
 class IniFile : Object abstract native;
 
 private readonly array!(void *) __items;
-/*
-private readonly void *__items0;
-private readonly void *__items1;
-private readonly void *__items2;
-*/
 
 native final static IniFile load (string fname);
 native bool save (string fname);
@@ -16,3 +11,7 @@ native string keyAt (int idx);
 native string getValue (string key);
 native void setValue (string key, string value);
 native void remove (string key);
+
+native iterator allPathes (out string path);
+native iterator allKeys (out string key, string path);
+native iterator allKeysValues (out string key, out string value, string path);
