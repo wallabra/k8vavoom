@@ -229,7 +229,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       return e->Resolve(ec);
     }
 
-    VProperty *Prop = op->Type.Class->FindProperty(FieldName);
+    VProperty *Prop = op->Type.Class->FindProperty(op->Type.Class->ResolveAlias(FieldName));
     if (Prop) {
       if (assType == AssType::AssTarget) {
         if (!Prop->SetFunc) {
@@ -362,7 +362,34 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
-      VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass);
+      VName origName = op->Type.Class->ResolveAlias(FieldName);
+      // read property
+      VProperty *Prop = op->Type.Class->FindProperty(origName);
+      if (Prop) {
+        if (op->IsDefaultObject()) {
+          if (!Prop->DefaultField) {
+            ParseError(Loc, "Property `%s` has no default field set", *FieldName);
+            delete this;
+            return nullptr;
+          }
+          VExpression *e = new VFieldAccess(op, Prop->DefaultField, Loc, FIELD_ReadOnly);
+          op = nullptr;
+          delete this;
+          return e->Resolve(ec);
+        } else {
+          if (!Prop->GetFunc) {
+            ParseError(Loc, "Property `%s` cannot be read", *FieldName);
+            delete this;
+            return nullptr;
+          }
+          VExpression *e = new VInvocation(op, Prop->GetFunc, nullptr, true, false, Loc, 0, nullptr);
+          op = nullptr;
+          delete this;
+          return e->Resolve(ec);
+        }
+      }
+      // method
+      VMethod *M = op->Type.Class->FindAccessibleMethod(origName, ec.SelfClass);
       if (!M) {
         ParseError(Loc, "Method `%s` not found in class `%s`", *FieldName, op->Type.Class->GetName());
         delete this;
@@ -384,17 +411,43 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       return e->Resolve(ec);
     }
     // convert to `func(op)`
-    VExpression *ufcsArgs[1];
-    ufcsArgs[0] = opcopy;
-    if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
-      VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
-      delete this;
-      return call->Resolve(ec);
+    if (ec.SelfClass) {
+      VExpression *ufcsArgs[1];
+      ufcsArgs[0] = opcopy;
+      if (VInvocation::FindMethodWithSignature(ec, ec.SelfClass->ResolveAlias(FieldName), 1, ufcsArgs)) {
+        VCastOrInvocation *call = new VCastOrInvocation(ec.SelfClass->ResolveAlias(FieldName), Loc, 1, ufcsArgs);
+        delete this;
+        return call->Resolve(ec);
+      }
+    }
+  } else if (assType == AssType::AssTarget) {
+    if (op->Type.Type == TYPE_Class) {
+      delete opcopy; // we never ever need opcopy here
+      if (!op->Type.Class) {
+        ParseError(Loc, "Class name expected at the left side of `.`");
+        delete this;
+        return nullptr;
+      }
+      VName origName = op->Type.Class->ResolveAlias(FieldName);
+      // property
+      VProperty *Prop = op->Type.Class->FindProperty(origName);
+      if (Prop) {
+        if (!Prop->SetFunc) {
+          ParseError(Loc, "Property `%s` cannot be set", *FieldName);
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VPropertyAssign(op, Prop->SetFunc, true, Loc);
+        op = nullptr;
+        delete this;
+        // assignment will call resolve
+        return e;
+      }
     }
   }
 
   delete opcopy; // we never ever need opcopy here
-  ParseError(Loc, "Reference, struct or vector expected on left side of . %d", op->Type.Type);
+  ParseError(Loc, "Reference, struct or vector expected on left side of `.` (got `%s`)", *op->Type.GetName());
   delete this;
   return nullptr;
 }
