@@ -2055,6 +2055,7 @@ void VParser::ParseClass () {
     }
 
     bool need_semicolon = true;
+    bool firstField = true;
     do {
       VExpression *FieldType = Type->SyntaxCopy();
       TLocation l = Lex.Location;
@@ -2062,6 +2063,44 @@ void VParser::ParseClass () {
         FieldType = new VPointerType(FieldType, l);
         l = Lex.Location;
       }
+
+      if (firstField && Lex.Check(TK_LBracket)) {
+        firstField = false; // it is safe to reset it here
+        TLocation SLoc = Lex.Location;
+        VExpression *e = ParseExpression();
+        Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
+
+        if (Lex.Token != TK_Identifier) {
+          delete e;
+          ParseError(Lex.Location, "Field name expected");
+          continue;
+        }
+
+        VName FieldName = Lex.Name;
+        TLocation FieldLoc = Lex.Location;
+        Lex.NextToken();
+
+        if (Class->FindField(FieldName)) {
+          delete e;
+          ParseError(Lex.Location, "Redeclared field `%s`", *FieldName);
+          continue;
+        }
+
+        FieldType = new VFixedArrayType(FieldType, e, SLoc);
+
+        VField *fi = new VField(FieldName, Class, FieldLoc);
+        fi->TypeExpr = FieldType;
+        fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
+          TModifiers::Native|TModifiers::Private|TModifiers::Protected|
+          TModifiers::ReadOnly|TModifiers::Transient, FieldLoc));
+        Class->AddField(fi);
+        //Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        need_semicolon = true;
+        break;
+      }
+
+      firstField = false; // it is safe to reset it here
+
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "Field name expected");
         continue;
@@ -2071,7 +2110,7 @@ void VParser::ParseClass () {
       Lex.NextToken();
 
       if (Class->FindField(FieldName)) {
-        ParseError(Lex.Location, "Redeclared field");
+        ParseError(Lex.Location, "Redeclared field `%s`", *FieldName);
         continue;
       }
 
