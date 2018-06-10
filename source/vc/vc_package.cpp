@@ -714,6 +714,7 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
 // VPackage::LoadObject
 //
 //==========================================================================
+#if !defined(IN_VCC)
 static const char *pkgImportFiles[] = {
   "0package.vc",
   "package.vc",
@@ -721,6 +722,7 @@ static const char *pkgImportFiles[] = {
   "classes.vc",
   nullptr
 };
+#endif
 
 
 void VPackage::LoadObject (TLocation l) {
