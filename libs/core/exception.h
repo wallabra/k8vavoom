@@ -145,8 +145,10 @@ void Sys_Error (const char *, ...) __attribute__((noreturn, format(printf, 1, 2)
 //==========================================================================
 
 #if DO_CHECK
-# define check(e)  if (!(e)) throw VavoomError("Assertion failed: " #e)
-# define verify(e) if (!(e)) throw VavoomError("Assertion failed: " #e)
+//# define check(e)  if (!(e)) throw VavoomError("Assertion failed: " #e)
+//# define verify(e) if (!(e)) throw VavoomError("Assertion failed: " #e)
+# define check(e)  if (!(e)) do { fprintf(stderr, "Assertion failed: %s\n", #e); *(int *)0 = 0; } while (0)
+# define verify(e) if (!(e)) do { fprintf(stderr, "Assertion failed: %s\n", #e); *(int *)0 = 0; } while (0)
 #else
 #define check(e)
 #define verify(e) (e)
