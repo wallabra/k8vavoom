@@ -27,6 +27,21 @@
 
 #include "../../../render/hwgl/gl_local.h"
 
+enum {
+  WGL_CONTEXT_MAJOR_VERSION_ARB = 0x2091,
+  WGL_CONTEXT_MINOR_VERSION_ARB = 0x2092,
+  WGL_CONTEXT_LAYER_PLANE_ARB = 0x2093,
+  WGL_CONTEXT_FLAGS_ARB = 0x2094,
+  WGL_CONTEXT_PROFILE_MASK_ARB = 0x9126,
+
+  WGL_CONTEXT_DEBUG_BIT_ARB = 0x0001,
+  WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB = 0x0002,
+
+  WGL_CONTEXT_CORE_PROFILE_BIT_ARB = 0x00000001,
+  WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB = 0x00000002,
+};
+
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -63,6 +78,7 @@ IMPLEMENT_DRAWER(VWin32OpenGLDrawer, DRAWER_OpenGL, "OpenGL",
   "Win32 OpenGL rasteriser device", "-opengl");
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
 
 // CODE --------------------------------------------------------------------
 
@@ -111,6 +127,10 @@ bool VWin32OpenGLDrawer::SetAdaptiveSwap () {
 bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
 {
   guard(VWin32OpenGLDrawer::SetResolution);
+
+  typedef HGLRC (APIENTRY *wglCreateContextAttribsARB_fna) (HDC hDC, HGLRC hShareContext, const int *attribList);
+  wglCreateContextAttribsARB_fna wglCreateContextAttribsARB = nullptr;
+
   int     Width = AWidth;
   int     Height = AHeight;
   int     pixelformat;
@@ -215,15 +235,14 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
   PatBlt(DeviceContext, 0, 0, Width, Height, BLACKNESS);
 
   //  Set up pixel format
-  PIXELFORMATDESCRIPTOR pfd = // pfd Tells Windows How We Want Things To Be
-  {
+  PIXELFORMATDESCRIPTOR pfd = { // pfd Tells Windows How We Want Things To Be
     sizeof(PIXELFORMATDESCRIPTOR),  // Size Of This Pixel Format Descriptor
     1,                // Version Number
     PFD_DRAW_TO_WINDOW |      // Format Must Support Window
     PFD_SUPPORT_OPENGL |      // Format Must Support OpenGL
     PFD_DOUBLEBUFFER,       // Must Support Double Buffering
     PFD_TYPE_RGBA,          // Request An RGBA Format
-    byte(32/*BPP*/),            // Select Our Colour Depth
+    byte(24/*32*//*BPP*/),            // Select Our Colour Depth
     0, 0, 0, 0, 0, 0,       // Colour Bits Ignored
     0,                // No Alpha Buffer
     0,                // Shift Bit Ignored
@@ -238,43 +257,50 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
   };
 
   pixelformat = ChoosePixelFormat(DeviceContext, &pfd);
-  if (pixelformat == 0)
+  if (pixelformat == 0) Sys_Error("ChoosePixelFormat failed");
+
+  if (SetPixelFormat(DeviceContext, pixelformat, &pfd) == FALSE) Sys_Error("SetPixelFormat failed");
+
+  // k8: windoze is idiotic: we have to have OpenGL context to get function addresses
+  // so we will create fake context to get that stupid address
   {
-    Sys_Error("ChoosePixelFormat failed");
+    auto tmpcc = wglCreateContext(DeviceContext);
+    if (!tmpcc) Sys_Error("Failed to create OpenGL context");
+    wglMakeCurrent(DeviceContext, tmpcc);
+    wglCreateContextAttribsARB = (wglCreateContextAttribsARB_fna)GetExtFuncPtr("wglCreateContextAttribsARB");
+    if (!wglCreateContextAttribsARB) Sys_Error("Can't get address of `wglCreateContextAttribsARB`");
+    wglMakeCurrent(DeviceContext, nullptr);
+    wglDeleteContext(tmpcc);
   }
 
-  if (SetPixelFormat(DeviceContext, pixelformat, &pfd) == FALSE)
-  {
-    Sys_Error("SetPixelFormat failed");
-  }
+  int contextAttribs[7] = {
+    WGL_CONTEXT_MAJOR_VERSION_ARB, 2,
+    WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+    WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, // allow "deprecated" API
+    0
+  };
 
   //  Create rendering context
-  RenderContext = wglCreateContext(DeviceContext);
-  if (!RenderContext)
-  {
+  //RenderContext = wglCreateContext(DeviceContext);
+  RenderContext = wglCreateContextAttribsARB(DeviceContext, nullptr, contextAttribs);
+  if (!RenderContext) {
     GCon->Log(NAME_Init, "Failed to create context");
     return false;
   }
 
   //  Make this context current
-  if (!wglMakeCurrent(DeviceContext, RenderContext))
-  {
+  if (!wglMakeCurrent(DeviceContext, RenderContext)) {
     GCon->Log(NAME_Init, "Make current failed");
     return false;
   }
 
   //  Swap control extension (VSync)
-  if (CheckExtension("WGL_EXT_swap_control"))
-  {
+  if (CheckExtension("WGL_EXT_swap_control")) {
     GCon->Log(NAME_Init, "Swap control extension found.");
     typedef bool (APIENTRY *PFNWGLSWAPINTERVALFARPROC)(int);
-
     PFNWGLSWAPINTERVALFARPROC wglSwapIntervalEXT;
-
     wglSwapIntervalEXT = (PFNWGLSWAPINTERVALFARPROC)GetExtFuncPtr("wglSwapIntervalEXT");
-
-    if( wglSwapIntervalEXT )
-      wglSwapIntervalEXT(r_vsync);
+    if (wglSwapIntervalEXT) wglSwapIntervalEXT(r_vsync);
   }
 
   //  Everything is fine, set some globals and finish
@@ -294,7 +320,17 @@ bool VWin32OpenGLDrawer::SetResolution(int AWidth, int AHeight, bool AWindowed)
 void *VWin32OpenGLDrawer::GetExtFuncPtr(const char *name)
 {
   guard(VWin32OpenGLDrawer::GetExtFuncPtr);
-  return (void*)wglGetProcAddress(name);
+  if (!name || !name[0]) return nullptr;
+  void *res = (void *)wglGetProcAddress(name);
+  if (!res) {
+    static HINSTANCE dll = nullptr;
+    if (!dll) {
+      dll = LoadLibraryA("opengl32.dll");
+      if (!dll) return nullptr; // <32, but idc
+    }
+    res = (void *)GetProcAddress(dll, name);
+  }
+  return res;
   unguard;
 }
 
