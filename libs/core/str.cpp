@@ -109,6 +109,32 @@ const vuint8 VUtf8DecoderFast::utf8dfa[0x16c] = {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+VStr::VStr (int v) : data(nullptr) {
+  char buf[64];
+  int len = (int)snprintf(buf, sizeof(buf), "%d", v);
+  SetContent(buf, len);
+}
+
+VStr::VStr (unsigned v) : data(nullptr) {
+  char buf[64];
+  int len = (int)snprintf(buf, sizeof(buf), "%u", v);
+  SetContent(buf, len);
+}
+
+VStr::VStr (float v) : data(nullptr) {
+  char buf[64];
+  int len = (int)snprintf(buf, sizeof(buf), "%f", v);
+  SetContent(buf, len);
+}
+
+VStr::VStr (double v) : data(nullptr) {
+  char buf[64];
+  int len = (int)snprintf(buf, sizeof(buf), "%f", v);
+  SetContent(buf, len);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 VStr &VStr::utf8Append (vuint32 code) {
   if (code < 0 || code > 0x10FFFF) return operator+=('?');
   if (code <= 0x7f) return operator+=((char)(code&0xff));
@@ -248,6 +274,35 @@ VStr VStr::mid (int start, int len) const {
 }
 
 
+VStr VStr::left (int len) const {
+  if (len < 1) return VStr();
+  if ((size_t)len >= length()) return VStr(*this);
+  return this->mid(0, len);
+}
+
+
+VStr VStr::right (int len) const {
+  if (len < 1) return VStr();
+  if ((size_t)len >= length()) return VStr(*this);
+  return this->mid(length()-len, len);
+}
+
+
+VStr VStr::chopLeft (int len) const {
+  if (len < 1) return VStr(*this);
+  if ((size_t)len >= length()) return VStr();
+  return this->mid(len, length()-len);
+}
+
+
+VStr VStr::chopRight (int len) const {
+  if (len < 1) return VStr(*this);
+  if ((size_t)len >= length()) return VStr();
+  return this->mid(0, len);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 void VStr::MakeMutable () {
   guard(VStr::MakeMutable);
   if (!data || *refp() == 1) return; // nothing to do
