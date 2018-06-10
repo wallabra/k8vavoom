@@ -23,79 +23,63 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
-#define DIRECTINPUT_VERSION   0x0800
+#define DIRECTINPUT_VERSION   (0x0800)
 #include "winlocal.h"
 #include <dinput.h>
 #include "gamedefs.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-class VDirectInputDevice : public VInputDevice
-{
+// ////////////////////////////////////////////////////////////////////////// //
+class VDirectInputDevice : public VInputDevice {
 public:
-  VDirectInputDevice();
-  ~VDirectInputDevice();
+  VDirectInputDevice ();
+  virtual ~VDirectInputDevice () override;
 
-  void ReadInput();
-  void SetActiveWindow(HWND window);
-  void RegrabMouse (); // called by UI when mouse cursor is turned off
+  virtual void ReadInput () override;
+  virtual void RegrabMouse () override; // called by UI when mouse cursor is turned off
+  void SetActiveWindow (HWND window);
 
 private:
-  LPDIRECTINPUT8      DInput;
+  LPDIRECTINPUT8 DInput;
 
   LPDIRECTINPUTDEVICE8A lpKeyboard;
 
   LPDIRECTINPUTDEVICE8A lpMouse;
-  bool          mousepresent;
-  int           old_mouse_x;
-  int           old_mouse_y;
-  int           old_mouse_z;
+  bool mousepresent;
+  int old_mouse_x;
+  int old_mouse_y;
+  int old_mouse_z;
 
   LPDIRECTINPUTDEVICE8A lpJoystick;
-  bool          joystick_started;
+  bool joystick_started;
 
-  static const vuint8     scan2key[256];
+  static const vuint8 scan2key[256];
   static DIOBJECTDATAFORMAT rgodf_Keyboard[];
-  static DIDATAFORMAT     df_Keyboard;
+  static DIDATAFORMAT df_Keyboard;
   static DIOBJECTDATAFORMAT rgodf_Mouse[];
-  static DIDATAFORMAT     df_Mouse;
+  static DIDATAFORMAT df_Mouse;
   static DIOBJECTDATAFORMAT rgodf_Joy[];
-  static DIDATAFORMAT     df_Joystick;
+  static DIDATAFORMAT df_Joystick;
 
-  void StartupKeyboard();
-  void ReadKeyboard();
-  void ShutdownKeyboard();
+  void StartupKeyboard ();
+  void ReadKeyboard ();
+  void ShutdownKeyboard ();
 
-  void StartupMouse();
-  void ReadMouse();
-  void ShutdownMouse();
+  void StartupMouse ();
+  void ReadMouse ();
+  void ShutdownMouse ();
 
-  void StartupJoystick();
+  void StartupJoystick ();
   static int FAR PASCAL JoystickEnumCallback(LPCDIDEVICEINSTANCE, LPVOID);
-  int JoystickEnumCallback(LPCDIDEVICEINSTANCE);
-  void ReadJoystick();
-  void ShutdownJoystick();
+  int JoystickEnumCallback (LPCDIDEVICEINSTANCE);
+  void ReadJoystick ();
+  void ShutdownJoystick ();
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// Key code translation table
-const vuint8 VDirectInputDevice::scan2key[256] =
-{
+// ////////////////////////////////////////////////////////////////////////// //
+// key code translation table
+const vuint8 VDirectInputDevice::scan2key[256] = {
   0, K_ESCAPE, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', K_BACKSPACE, K_TAB,
   'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', K_ENTER, K_LCTRL, 'a', 's',
   'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', K_LSHIFT, '\\', 'z', 'x', 'c', 'v',
@@ -114,8 +98,8 @@ const vuint8 VDirectInputDevice::scan2key[256] =
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-DIOBJECTDATAFORMAT VDirectInputDevice::rgodf_Keyboard[] =
-{
+
+DIOBJECTDATAFORMAT VDirectInputDevice::rgodf_Keyboard[] = {
   { &GUID_Key,   0, 0x8000000c, 0},
   { &GUID_Key,   1, 0x8000010c, 0},
   { &GUID_Key,   2, 0x8000020c, 0},
@@ -374,30 +358,29 @@ DIOBJECTDATAFORMAT VDirectInputDevice::rgodf_Keyboard[] =
   { &GUID_Key, 255, 0x8000ff0c, 0}
 };
 
-DIDATAFORMAT  VDirectInputDevice::df_Keyboard =
-{
-  sizeof(DIDATAFORMAT),       // this structure
-  sizeof(DIOBJECTDATAFORMAT),     // size of object data format
-  DIDF_RELAXIS,           // absolute axis coordinates
-  256,                // device data size
-  sizeof(VDirectInputDevice::rgodf_Keyboard) /
-    sizeof(VDirectInputDevice::rgodf_Keyboard[0]),  // number of objects
+
+DIDATAFORMAT VDirectInputDevice::df_Keyboard = {
+  sizeof(DIDATAFORMAT), // this structure
+  sizeof(DIOBJECTDATAFORMAT), // size of object data format
+  DIDF_RELAXIS, // absolute axis coordinates
+  256, // device data size
+  sizeof(VDirectInputDevice::rgodf_Keyboard)/sizeof(VDirectInputDevice::rgodf_Keyboard[0]), // number of objects
   VDirectInputDevice::rgodf_Keyboard, // and here they are
 };
 
-typedef struct
-{
-  LONG  lX;         // X axis goes here
-  LONG  lY;         // Y axis goes here
-  LONG  lZ;         // Z axis goes here
-  BYTE  bButtonA;       // One button goes here
-  BYTE  bButtonB;       // Another button goes here
-  BYTE  bButtonC;       // Another button goes here
-  BYTE  bButtonD;       // Another button goes here
+
+typedef struct {
+  LONG  lX; // X axis goes here
+  LONG  lY; // Y axis goes here
+  LONG  lZ; // Z axis goes here
+  BYTE  bButtonA; // One button goes here
+  BYTE  bButtonB; // Another button goes here
+  BYTE  bButtonC; // Another button goes here
+  BYTE  bButtonD; // Another button goes here
 } MOUSE_DATA;
 
-DIOBJECTDATAFORMAT VDirectInputDevice::rgodf_Mouse[] =
-{
+
+DIOBJECTDATAFORMAT VDirectInputDevice::rgodf_Mouse[] = {
   { &GUID_XAxis,  FIELD_OFFSET(MOUSE_DATA, lX),   DIDFT_AXIS | DIDFT_ANYINSTANCE, 0},
   { &GUID_YAxis,  FIELD_OFFSET(MOUSE_DATA, lY),   DIDFT_AXIS | DIDFT_ANYINSTANCE, 0},
   { &GUID_ZAxis,  FIELD_OFFSET(MOUSE_DATA, lZ),   0x80000000 | DIDFT_AXIS | DIDFT_ANYINSTANCE, 0},
@@ -407,19 +390,18 @@ DIOBJECTDATAFORMAT VDirectInputDevice::rgodf_Mouse[] =
   { 0,      FIELD_OFFSET(MOUSE_DATA, bButtonD), 0x80000000 | DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0}
 };
 
-DIDATAFORMAT  VDirectInputDevice::df_Mouse =
-{
-  sizeof(DIDATAFORMAT),       // this structure
-  sizeof(DIOBJECTDATAFORMAT),     // size of object data format
-  DIDF_RELAXIS,           // absolute axis coordinates
-  sizeof(MOUSE_DATA),         // device data size
-  sizeof(VDirectInputDevice::rgodf_Mouse) /
-    sizeof(VDirectInputDevice::rgodf_Mouse[0]), // number of objects
-  VDirectInputDevice::rgodf_Mouse,  // and here they are
+
+DIDATAFORMAT VDirectInputDevice::df_Mouse = {
+  sizeof(DIDATAFORMAT), // this structure
+  sizeof(DIOBJECTDATAFORMAT), // size of object data format
+  DIDF_RELAXIS, // absolute axis coordinates
+  sizeof(MOUSE_DATA), // device data size
+  sizeof(VDirectInputDevice::rgodf_Mouse)/sizeof(VDirectInputDevice::rgodf_Mouse[0]), // number of objects
+  VDirectInputDevice::rgodf_Mouse, // and here they are
 };
 
-DIOBJECTDATAFORMAT VDirectInputDevice::rgodf_Joy[] =
-{
+
+DIOBJECTDATAFORMAT VDirectInputDevice::rgodf_Joy[] = {
   { &GUID_XAxis,   0, 0x80ffff03, 256},
   { &GUID_YAxis,   4, 0x80ffff03, 256},
   { &GUID_ZAxis,   8, 0x80ffff03, 256},
@@ -466,53 +448,47 @@ DIOBJECTDATAFORMAT VDirectInputDevice::rgodf_Joy[] =
   { 0,      79, 0x80ffff0c, 0},
 };
 
-DIDATAFORMAT  VDirectInputDevice::df_Joystick =
-{
-  sizeof(DIDATAFORMAT),     // this structure
-  sizeof(DIOBJECTDATAFORMAT),   // size of object data format
-  DIDF_ABSAXIS,         // absolute axis coordinates
-  80,               // device data size
-  sizeof(VDirectInputDevice::rgodf_Joy) /
-    sizeof(VDirectInputDevice::rgodf_Joy[0]), // number of objects
-  VDirectInputDevice::rgodf_Joy,  // and here they are
+DIDATAFORMAT VDirectInputDevice::df_Joystick = {
+  sizeof(DIDATAFORMAT), // this structure
+  sizeof(DIOBJECTDATAFORMAT), // size of object data format
+  DIDF_ABSAXIS, // absolute axis coordinates
+  80, // device data size
+  sizeof(VDirectInputDevice::rgodf_Joy)/sizeof(VDirectInputDevice::rgodf_Joy[0]), // number of objects
+  VDirectInputDevice::rgodf_Joy, // and here they are
 };
 
-static VCvarB m_filter("m_filter", true, "Filter input?", CVAR_Archive);
+
+static VCvarI m_filter("m_filter", "1", "Filter mouse input?", CVAR_Archive);
 static VCvarB ui_mouse("ui_mouse", false, "Allow using mouse in UI?", CVAR_Archive);
 static VCvarB ui_active("ui_active", false, "Is UI active (used to stop mouse warping if \"ui_mouse\" is false)?", 0);
 
 static VDirectInputDevice *CurrentDevice;
 
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VDirectInputDevice::VDirectInputDevice
 //
 //==========================================================================
-
-VDirectInputDevice::VDirectInputDevice()
-: DInput(nullptr)
-, lpKeyboard(nullptr)
-, lpMouse(nullptr)
-, mousepresent(false)
-, old_mouse_x(0)
-, old_mouse_y(0)
-, old_mouse_z(0)
-, lpJoystick(nullptr)
-, joystick_started(false)
+VDirectInputDevice::VDirectInputDevice ()
+  : DInput(nullptr)
+  , lpKeyboard(nullptr)
+  , lpMouse(nullptr)
+  , mousepresent(false)
+  , old_mouse_x(0)
+  , old_mouse_y(0)
+  , old_mouse_z(0)
+  , lpJoystick(nullptr)
+  , joystick_started(false)
 {
   guard(VDirectInputDevice::VDirectInputDevice);
-  HRESULT   result;
+  HRESULT result;
 
-  result = CoCreateInstance(CLSID_DirectInput8, nullptr,
-    CLSCTX_INPROC_SERVER, IID_IDirectInput8, (void**)&DInput);
-  if (result != DI_OK)
-    Sys_Error("Failed to create DirectInput object");
+  result = CoCreateInstance(CLSID_DirectInput8, nullptr, CLSCTX_INPROC_SERVER, IID_IDirectInput8, (void **)&DInput);
+  if (result != DI_OK) Sys_Error("Failed to create DirectInput object");
 
   result = DInput->Initialize(hInst, DIRECTINPUT_VERSION);
-  if (result != DI_OK)
-    Sys_Error("Failed to initialise DirectInput object");
+  if (result != DI_OK) Sys_Error("Failed to initialise DirectInput object");
 
   StartupKeyboard();
   StartupMouse();
@@ -522,26 +498,24 @@ VDirectInputDevice::VDirectInputDevice()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VDirectInputDevice::~VDirectInputDevice
 //
 //==========================================================================
-
-VDirectInputDevice::~VDirectInputDevice()
-{
+VDirectInputDevice::~VDirectInputDevice () {
   guard(VDirectInputDevice::~VDirectInputDevice);
   ShutdownJoystick();
   ShutdownMouse();
   ShutdownKeyboard();
-
-  if (DInput)
-  {
+  if (DInput) {
     DInput->Release();
     DInput = nullptr;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -550,9 +524,7 @@ VDirectInputDevice::~VDirectInputDevice()
 //  Reads input from the input devices.
 //
 //==========================================================================
-
-void VDirectInputDevice::ReadInput()
-{
+void VDirectInputDevice::ReadInput () {
   guard(VDirectInputDevice::ReadInput);
   ReadKeyboard();
   ReadMouse();
@@ -560,37 +532,32 @@ void VDirectInputDevice::ReadInput()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VDirectInputDevice::SetActiveWindow
 //
 //==========================================================================
-
-void VDirectInputDevice::SetActiveWindow(HWND window)
-{
+void VDirectInputDevice::SetActiveWindow (HWND window) {
   guard(VDirectInputDevice::SetActiveWindow);
-  if (lpKeyboard)
-  {
+  if (lpKeyboard) {
     lpKeyboard->Unacquire();
-    lpKeyboard->SetCooperativeLevel(window, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
+    lpKeyboard->SetCooperativeLevel(window, DISCL_FOREGROUND|DISCL_NONEXCLUSIVE);
     lpKeyboard->Acquire();
   }
-
-  if (mousepresent)
-  {
+  if (mousepresent) {
     lpMouse->Unacquire();
-    lpMouse->SetCooperativeLevel(window, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
+    lpMouse->SetCooperativeLevel(window, DISCL_EXCLUSIVE|DISCL_FOREGROUND);
     lpMouse->Acquire();
   }
-
-  if (joystick_started)
-  {
+  if (joystick_started) {
     lpJoystick->Unacquire();
-    lpJoystick->SetCooperativeLevel(window, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
+    lpJoystick->SetCooperativeLevel(window, DISCL_EXCLUSIVE|DISCL_FOREGROUND);
     lpJoystick->Acquire();
   }
   unguard;
 }
+
 
 //**************************************************************************
 //**
@@ -605,92 +572,77 @@ void VDirectInputDevice::SetActiveWindow(HWND window)
 //  Installs the keyboard handler.
 //
 //==========================================================================
-
-void VDirectInputDevice::StartupKeyboard()
-{
+void VDirectInputDevice::StartupKeyboard () {
   guard(VDirectInputDevice::StartupKeyboard);
-  HRESULT   Result;
+  HRESULT Result;
 
-  //  Create keyboard device
+  // create keyboard device
   Result = DInput->CreateDevice(GUID_SysKeyboard, &lpKeyboard, nullptr);
-  if (Result != DI_OK)
-    Sys_Error("Failed to initialise keyboard");
+  if (Result != DI_OK) Sys_Error("Failed to initialise keyboard");
 
-  //  Set data format
+  // set data format
   Result = lpKeyboard->SetDataFormat(&df_Keyboard);
-  if (Result != DI_OK)
-    Sys_Error("Failed to set keyboard data format");
+  if (Result != DI_OK) Sys_Error("Failed to set keyboard data format");
 
-  //  Set cooperative level
+  // set cooperative level
   Result = lpKeyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
-  if (Result != DI_OK)
-    Sys_Error("Failed to set keyboard cooperative level");
+  if (Result != DI_OK) Sys_Error("Failed to set keyboard cooperative level");
 
-  //  Set buffer size
-  DIPROPDWORD   dipdw;
+  // set buffer size
+  DIPROPDWORD dipdw;
   dipdw.diph.dwSize = sizeof(DIPROPDWORD);
   dipdw.diph.dwHeaderSize = sizeof(DIPROPHEADER);
   dipdw.diph.dwObj = 0;
   dipdw.diph.dwHow = DIPH_DEVICE;
   dipdw.dwData = 32;
   Result = lpKeyboard->SetProperty(DIPROP_BUFFERSIZE, &dipdw.diph);
-  if (Result != DI_OK)
-    Sys_Error("Failed to set keyboard buffer size");
+  if (Result != DI_OK) Sys_Error("Failed to set keyboard buffer size");
 
-  //  Acquire device
+  // acquire device
   lpKeyboard->Acquire();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VDirectInputDevice::ReadKeyboard
 //
 //==========================================================================
-
-void VDirectInputDevice::ReadKeyboard()
-{
+void VDirectInputDevice::ReadKeyboard () {
   guard(VDirectInputDevice::ReadKeyboard);
 
-  // Attempt to get the device data.
+  // attempt to get the device data
   DIDEVICEOBJECTDATA DevData[32];
   DWORD NumItems = 32;
-  HRESULT Result = lpKeyboard->GetDeviceData(sizeof(DIDEVICEOBJECTDATA),
-    DevData, &NumItems, 0);
+  HRESULT Result = lpKeyboard->GetDeviceData(sizeof(DIDEVICEOBJECTDATA), DevData, &NumItems, 0);
 
-  // Check the return code.
-  switch (Result)
-  {
-  case DI_OK:
-    break;
-
-  case DI_BUFFEROVERFLOW:
-    GCon->Log(NAME_Dev, "Keyboard buffer overflowed.");
-    break;
-
-  case DIERR_INPUTLOST:
-  case DIERR_NOTACQUIRED:
-    lpKeyboard->Acquire();
-    return;
-
-  case E_ACCESSDENIED:
-    return;
-
-  default:
-    Sys_Error("Failed to read keyboard state");
+  // check the return code
+  switch (Result) {
+    case DI_OK:
+      break;
+    case DI_BUFFEROVERFLOW:
+      GCon->Log(NAME_Dev, "Keyboard buffer overflowed.");
+      break;
+    case DIERR_INPUTLOST:
+    case DIERR_NOTACQUIRED:
+      lpKeyboard->Acquire();
+      return;
+    case E_ACCESSDENIED:
+      return;
+    default:
+      Sys_Error("Failed to read keyboard state");
   }
 
-  // Process the data.
-  for (size_t i = 0; i < NumItems; i++)
-  {
-    if (scan2key[DevData[i].dwOfs])
-    {
-      GInput->KeyEvent(scan2key[DevData[i].dwOfs],
-        !!(DevData[i].dwData & 0x80));
+  // process the data
+  for (size_t i = 0; i < NumItems; ++i) {
+    if (scan2key[DevData[i].dwOfs]) {
+      GInput->KeyEvent(scan2key[DevData[i].dwOfs], !!(DevData[i].dwData&0x80));
     }
   }
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -699,18 +651,16 @@ void VDirectInputDevice::ReadKeyboard()
 //  Removes the keyboard handler.
 //
 //==========================================================================
-
-void VDirectInputDevice::ShutdownKeyboard()
-{
+void VDirectInputDevice::ShutdownKeyboard () {
   guard(VDirectInputDevice::ShutdownKeyboard);
-  if (lpKeyboard)
-  {
+  if (lpKeyboard) {
     lpKeyboard->Unacquire();
     lpKeyboard->Release();
     lpKeyboard = nullptr;
   }
   unguard;
 }
+
 
 //**************************************************************************
 //**
@@ -725,32 +675,38 @@ void VDirectInputDevice::ShutdownKeyboard()
 //  Initialises mouse
 //
 //==========================================================================
-
-void VDirectInputDevice::StartupMouse()
-{
+void VDirectInputDevice::StartupMouse () {
   guard(VDirectInputDevice::StartupMouse);
-  HRESULT   Result;
+  HRESULT Result;
 
-  if (GArgs.CheckParm("-nomouse"))
-    return;
+  if (GArgs.CheckParm("-nomouse")) return;
 
   Result = DInput->CreateDevice(GUID_SysMouse, &lpMouse, nullptr);
-  if (Result != DI_OK)
-    return;
+  if (Result != DI_OK) return;
 
   Result = lpMouse->SetDataFormat(&df_Mouse);
-  if (Result != DI_OK)
-    return;
+  if (Result != DI_OK) return;
 
   Result = lpMouse->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
-  if (Result != DI_OK)
-    return;
+  if (Result != DI_OK) return;
 
   lpMouse->Acquire();
 
   mousepresent = true;
   unguard;
 }
+
+
+//==========================================================================
+//
+//  VDirectInputDevice::RegrabMouse
+//
+//  Called by UI when mouse cursor is turned off.
+//
+//==========================================================================
+void VDirectInputDevice::RegrabMouse () {
+}
+
 
 //==========================================================================
 //
@@ -759,119 +715,93 @@ void VDirectInputDevice::StartupMouse()
 //  Reads mouse.
 //
 //==========================================================================
-
-void VDirectInputDevice::ReadMouse()
-{
+void VDirectInputDevice::ReadMouse () {
   guard(VDirectInputDevice::ReadMouse);
 
-  // Static mouse last button state.
+  // static mouse last button state
   static byte lastbuttons[4] = {0, 0, 0, 0};
 
-  // If we don't have a mouse then skip.
-  if (!mousepresent)
-  {
-    return;
-  }
+  // if we don't have a mouse then skip
+  if (!mousepresent) return;
 
-  // Read the mouse state.
+  // read the mouse state
   DIMOUSESTATE MouseState;
   HRESULT Result = lpMouse->GetDeviceState(sizeof(DIMOUSESTATE), &MouseState);
 
-  // Check the return code.
-  switch (Result)
-  {
-  case DI_OK:
-    break;
-
-  case DI_BUFFEROVERFLOW:
-    GCon->Log(NAME_Dev, "Mouse buffer overflowed.");
-    break;
-
-  case DIERR_INPUTLOST:
-  case DIERR_NOTACQUIRED:
-    lpMouse->Acquire();
-    return;
-
-  case E_ACCESSDENIED:
-    return;
-
-  default:
-    Sys_Error("Failed to read mouse state");
+  // check the return code
+  switch (Result) {
+    case DI_OK:
+      break;
+    case DI_BUFFEROVERFLOW:
+      GCon->Log(NAME_Dev, "Mouse buffer overflowed.");
+      break;
+    case DIERR_INPUTLOST:
+    case DIERR_NOTACQUIRED:
+      lpMouse->Acquire();
+      return;
+    case E_ACCESSDENIED:
+      return;
+    default:
+      Sys_Error("Failed to read mouse state");
   }
 
-  // Update the mouse x and y positions.
+  // update the mouse x and y positions
   int xmickeys = MouseState.lX;
   int ymickeys = MouseState.lY;
   int mouse_x;
   int mouse_y;
-  if (m_filter == 2)
-  {
-    mouse_x = (xmickeys + old_mouse_x) / 2;
-    mouse_y = (ymickeys + old_mouse_y) / 2;
+  if (m_filter == 2) {
+    mouse_x = (xmickeys+old_mouse_x)/2;
+    mouse_y = (ymickeys+old_mouse_y)/2;
     old_mouse_x = mouse_x;
     old_mouse_y = mouse_y;
-  }
-  else if (m_filter == 1)
-  {
-    mouse_x = (xmickeys + old_mouse_x) / 2;
-    mouse_y = (ymickeys + old_mouse_y) / 2;
+  } else if (m_filter == 1) {
+    mouse_x = (xmickeys+old_mouse_x)/2;
+    mouse_y = (ymickeys+old_mouse_y)/2;
     old_mouse_x = xmickeys;
     old_mouse_y = ymickeys;
-  }
-  else
-  {
+  } else {
     mouse_x = xmickeys;
     mouse_y = ymickeys;
     old_mouse_x = mouse_x;
     old_mouse_y = mouse_y;
   }
 
-  // Handle mouse move.
-  if (mouse_x || mouse_y)
-  {
-    // Build and post mouse event.
+  // handle mouse move
+  if (mouse_x || mouse_y) {
+    // build and post mouse event
     event_t event;
-    event.type  = ev_mouse;
+    event.type = ev_mouse;
     event.data1 = 0;
     event.data2 = mouse_x;
     event.data3 = -mouse_y;
     GInput->PostEvent(&event);
   }
 
-  // Handle mouse buttons.
-  for (int i = 0; i < 3; i++)
-  {
-    if ((MouseState.rgbButtons[i] ^ lastbuttons[i]) & 0x80)
-    {
-      GInput->KeyEvent(K_MOUSE1 + i, MouseState.rgbButtons[i] & 0x80);
+  // handle mouse buttons.
+  for (int i = 0; i < 3; ++i) {
+    if ((MouseState.rgbButtons[i]^lastbuttons[i])&0x80) {
+      GInput->KeyEvent(K_MOUSE1+i, MouseState.rgbButtons[i]&0x80);
     }
     lastbuttons[i] = MouseState.rgbButtons[i];
   }
 
-  //  Handle mouse wheel.
-  if (MouseState.lZ > 0 || old_mouse_z > 0)
-  {
-    GInput->KeyEvent(K_MWHEELUP, MouseState.lZ > 0);
-  }
-  if (MouseState.lZ < 0 || old_mouse_z < 0)
-  {
-    GInput->KeyEvent(K_MWHEELDOWN, MouseState.lZ < 0);
-  }
+  // handle mouse wheel
+  if (MouseState.lZ > 0 || old_mouse_z > 0) GInput->KeyEvent(K_MWHEELUP, MouseState.lZ > 0);
+  if (MouseState.lZ < 0 || old_mouse_z < 0) GInput->KeyEvent(K_MWHEELDOWN, MouseState.lZ < 0);
   old_mouse_z = MouseState.lZ;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VDirectInputDevice::ShutdownMouse
 //
 //==========================================================================
-
-void VDirectInputDevice::ShutdownMouse()
-{
+void VDirectInputDevice::ShutdownMouse () {
   guard(VDirectInputDevice::ShutdownMouse);
-  if (lpMouse)
-  {
+  if (lpMouse) {
     lpMouse->Unacquire();
     lpMouse->Release();
     lpMouse = nullptr;
@@ -879,6 +809,7 @@ void VDirectInputDevice::ShutdownMouse()
   mousepresent = false;
   unguard;
 }
+
 
 //**************************************************************************
 //**
@@ -893,92 +824,76 @@ void VDirectInputDevice::ShutdownMouse()
 //  Initialises joystick
 //
 //==========================================================================
-
-void VDirectInputDevice::StartupJoystick()
-{
+void VDirectInputDevice::StartupJoystick () {
   guard(VDirectInputDevice::StartupJoystick);
-    if (GArgs.CheckParm("-nojoy"))
-    return;
-
-  DInput->EnumDevices(DI8DEVCLASS_GAMECTRL, JoystickEnumCallback, this,
-    DIEDFL_ATTACHEDONLY);
+  if (GArgs.CheckParm("-nojoy")) return;
+  DInput->EnumDevices(DI8DEVCLASS_GAMECTRL, JoystickEnumCallback, this, DIEDFL_ATTACHEDONLY);
   unguard;
 }
 
+
 //==========================================================================
 //
 //  JoystickEnumCallback
 //
 //==========================================================================
-
-int FAR PASCAL VDirectInputDevice::JoystickEnumCallback(
-    LPCDIDEVICEINSTANCE pdinst, LPVOID UsrPtr)
-{
-  return ((VDirectInputDevice*)UsrPtr)->JoystickEnumCallback(pdinst);
+int FAR PASCAL VDirectInputDevice::JoystickEnumCallback (LPCDIDEVICEINSTANCE pdinst, LPVOID UsrPtr) {
+  return ((VDirectInputDevice *)UsrPtr)->JoystickEnumCallback(pdinst);
 }
 
+
 //==========================================================================
 //
 //  JoystickEnumCallback
 //
 //==========================================================================
-
-int VDirectInputDevice::JoystickEnumCallback(LPCDIDEVICEINSTANCE pdinst)
-{
-  HRESULT         Result;
+int VDirectInputDevice::JoystickEnumCallback (LPCDIDEVICEINSTANCE pdinst) {
+  HRESULT Result;
   LPDIRECTINPUTDEVICE8A lpJoystick1;
-  DIPROPRANGE       diprg;
-  DIPROPDWORD       dipdw;
+  DIPROPRANGE diprg;
+  DIPROPDWORD dipdw;
 
   Result = DInput->CreateDevice(pdinst->guidInstance, &lpJoystick1, nullptr);
-  if (Result != DI_OK)
-    return DIENUM_CONTINUE;
+  if (Result != DI_OK) return DIENUM_CONTINUE;
 
   Result = lpJoystick1->QueryInterface(IID_IDirectInputDevice2,(LPVOID *)&lpJoystick);
   IDirectInputDevice_Release(lpJoystick1);
-  if (Result != DI_OK)
-    return DIENUM_CONTINUE;
+  if (Result != DI_OK) return DIENUM_CONTINUE;
 
   Result = lpJoystick->SetDataFormat(&df_Joystick);
-  if (Result != DI_OK)
-    return DIENUM_CONTINUE;
+  if (Result != DI_OK) return DIENUM_CONTINUE;
 
   Result = lpJoystick->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
-  if (Result != DI_OK)
-    return DIENUM_CONTINUE;
+  if (Result != DI_OK) return DIENUM_CONTINUE;
 
-  diprg.diph.dwSize   = sizeof(diprg);
+  diprg.diph.dwSize = sizeof(diprg);
   diprg.diph.dwHeaderSize = sizeof(diprg.diph);
-  diprg.diph.dwObj    = DIJOFS_X;
-  diprg.diph.dwHow    = DIPH_BYOFFSET;
-  diprg.lMin        = -1000;
-  diprg.lMax        = +1000;
+  diprg.diph.dwObj = DIJOFS_X;
+  diprg.diph.dwHow = DIPH_BYOFFSET;
+  diprg.lMin = -1000;
+  diprg.lMax = +1000;
 
   Result = lpJoystick->SetProperty(DIPROP_RANGE, &diprg.diph);
-  if (Result != DI_OK)
-    return DIENUM_CONTINUE;
+  if (Result != DI_OK) return DIENUM_CONTINUE;
 
-  diprg.diph.dwObj    = DIJOFS_Y;
+  diprg.diph.dwObj = DIJOFS_Y;
 
   Result = lpJoystick->SetProperty(DIPROP_RANGE, &diprg.diph);
-  if (Result != DI_OK)
-    return DIENUM_CONTINUE;
+  if (Result != DI_OK) return DIENUM_CONTINUE;
 
-  dipdw.diph.dwSize   = sizeof(DIPROPDWORD);
+  dipdw.diph.dwSize = sizeof(DIPROPDWORD);
   dipdw.diph.dwHeaderSize = sizeof(dipdw.diph);
-  dipdw.diph.dwHow    = DIPH_BYOFFSET;
-  dipdw.dwData      = 1500;
-  dipdw.diph.dwObj    = DIJOFS_X;
+  dipdw.diph.dwHow = DIPH_BYOFFSET;
+  dipdw.dwData = 1500;
+  dipdw.diph.dwObj = DIJOFS_X;
 
   Result = lpJoystick->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
-  if (Result != DI_OK)
-    return DIENUM_CONTINUE;
+  if (Result != DI_OK) return DIENUM_CONTINUE;
 
-  dipdw.diph.dwObj    = DIJOFS_Y;
+  dipdw.diph.dwObj = DIJOFS_Y;
 
   Result = lpJoystick->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
-  if (Result != DI_OK)
-    return DIENUM_CONTINUE;
+  if (Result != DI_OK) return DIENUM_CONTINUE;
 
   lpJoystick->Acquire();
 
@@ -986,69 +901,49 @@ int VDirectInputDevice::JoystickEnumCallback(LPCDIDEVICEINSTANCE pdinst)
   return DIENUM_STOP;
 }
 
-//==========================================================================
-//
-//  VDirectInputDevice::RegrabMouse
-//
-//  Called by UI when mouse cursor is turned off.
-//
-//==========================================================================
-void VDirectInputDevice::RegrabMouse () {
-}
 
 //==========================================================================
 //
 //  VDirectInputDevice::ReadJoystick
 //
 //==========================================================================
-
-void VDirectInputDevice::ReadJoystick()
-{
+void VDirectInputDevice::ReadJoystick () {
   guard(VDirectInputDevice::StartupJoystick);
 
-  // Static previous joystick state.
+  // static previous joystick state
   static int oldx = 0;
   static int oldy = 0;
   static byte oldb[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-  // If we don't have a jpystick then skip.
-  if (!joystick_started)
-  {
-    return;
-  }
+  // if we don't have a jpystick then skip
+  if (!joystick_started) return;
 
-  // Poll joystick.
+  // poll joystick
   lpJoystick->Poll();
 
-  // Try to read joystick state.
+  // try to read joystick state
   DIJOYSTATE JoyState;
   HRESULT Result = lpJoystick->GetDeviceState(sizeof(DIJOYSTATE), &JoyState);
 
-  // Check the result code.
-  switch (Result)
-  {
-  case DI_OK:
-    break;
-
-  case DI_BUFFEROVERFLOW:
-    GCon->Log(NAME_Dev, "Joystick buffer overflowed.");
-    break;
-
-  case DIERR_INPUTLOST:
-  case DIERR_NOTACQUIRED:
-    lpJoystick->Acquire();
-    return;
-
-  case E_ACCESSDENIED:
-    return;
-
-  default:
-    Sys_Error("Failed to read joystick state");
+  // check the result code
+  switch (Result) {
+    case DI_OK:
+      break;
+    case DI_BUFFEROVERFLOW:
+      GCon->Log(NAME_Dev, "Joystick buffer overflowed.");
+      break;
+    case DIERR_INPUTLOST:
+    case DIERR_NOTACQUIRED:
+      lpJoystick->Acquire();
+      return;
+    case E_ACCESSDENIED:
+      return;
+    default:
+      Sys_Error("Failed to read joystick state");
   }
 
-  // Handle joystick move.
-  if ((oldx != JoyState.lX) || (oldy != JoyState.lY))
-  {
+  // handle joystick move
+  if (oldx != JoyState.lX || oldy != JoyState.lY) {
     event_t event;
     event.type = ev_joystick;
     event.data1 = 0;
@@ -1059,29 +954,25 @@ void VDirectInputDevice::ReadJoystick()
   oldx = JoyState.lX;
   oldy = JoyState.lY;
 
-  // Handle joystick buttons.
-  for (int i = 0; i < 16; i++)
-  {
-    if ((JoyState.rgbButtons[i] ^ oldb[i]) & 0x80)
-    {
-      GInput->KeyEvent(K_JOY1 + i, JoyState.rgbButtons[i] & 0x80);
+  // handle joystick buttons
+  for (int i = 0; i < 16; ++i) {
+    if ((JoyState.rgbButtons[i]^oldb[i])&0x80) {
+      GInput->KeyEvent(K_JOY1+i, JoyState.rgbButtons[i]&0x80);
     }
     oldb[i] = JoyState.rgbButtons[i];
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VDirectInputDevice::ShutdownJoystick
 //
 //==========================================================================
-
-void VDirectInputDevice::ShutdownJoystick()
-{
+void VDirectInputDevice::ShutdownJoystick () {
   guard(VDirectInputDevice::ShutdownJoystick);
-  if (lpJoystick)
-  {
+  if (lpJoystick) {
     lpJoystick->Unacquire();
     lpJoystick->Release();
     lpJoystick = nullptr;
@@ -1089,6 +980,7 @@ void VDirectInputDevice::ShutdownJoystick()
   joystick_started = false;
   unguard;
 }
+
 
 //**************************************************************************
 //**
@@ -1101,19 +993,16 @@ void VDirectInputDevice::ShutdownJoystick()
 //  VInputDevice::CreateDevice
 //
 //==========================================================================
-
-VInputDevice *VInputDevice::CreateDevice()
-{
+VInputDevice *VInputDevice::CreateDevice () {
   return new VDirectInputDevice();
 }
+
 
 //==========================================================================
 //
 //  IN_SetActiveWindow
 //
 //==========================================================================
-
-void IN_SetActiveWindow(HWND window)
-{
+void IN_SetActiveWindow (HWND window) {
   CurrentDevice->SetActiveWindow(window);
 }

@@ -22,29 +22,27 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-#ifndef _WIN_LOCAL_H
-#define _WIN_LOCAL_H
+#ifndef VAVOOM_WIN_LOCAL_HEADER
+#define VAVOOM_WIN_LOCAL_HEADER
 
 #include <windows.h>
 
 #define SAFE_RELEASE(iface) \
-  if (iface) \
-  { \
+  if (iface) { \
     iface->Release(); \
     iface = nullptr; \
   }
 
-class VWinMessageHandler
-{
+
+class VWinMessageHandler {
 public:
-  virtual LONG OnMessage(HWND, UINT, WPARAM, LPARAM) = 0;
+  virtual LONG OnMessage (HWND, UINT, WPARAM, LPARAM) = 0;
 };
 
-void IN_SetActiveWindow(HWND window);
+void IN_SetActiveWindow (HWND window);
 
-extern HWND         hwnd;
-extern HINSTANCE      hInst;
+extern HWND hwnd;
+extern HINSTANCE hInst;
 extern VWinMessageHandler *GCDMsgHandler;
 
 #endif
