@@ -18,9 +18,9 @@ void main () {
   print("%d", Test.foo);
   print("%d", self.boo);
   print("%d", boo);
-  dgfld = self.boo;
+  dgfld = &self.boo;
   print("dg0: %d", dgfld());
-  dgfld = boo;
+  dgfld = &boo;
   print("dg1: %d", dgfld);
   dgfld = dgfld;
   print("dg2: %d", dgfld);
