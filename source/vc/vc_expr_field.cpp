@@ -136,6 +136,14 @@ VDotField::VDotField (VExpression *AOp, VName AFieldName, const TLocation &ALoc)
 
 //==========================================================================
 //
+//  VDotField::IsDotField
+//
+//==========================================================================
+bool VDotField::IsDotField () const { return true; }
+
+
+//==========================================================================
+//
 //  VDotField::SyntaxCopy
 //
 //==========================================================================
@@ -181,7 +189,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   }
 
   if (op->Type.Type == TYPE_Reference) {
-    VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass);
+    VMethod *M = op->Type.Class->FindAccessibleMethod(op->Type.Class->ResolveAlias(FieldName), ec.SelfClass);
     if (M) {
       //fprintf(stderr, "DOTFIELD: <%s> {%s} %u\n", *FieldName, *op->Type.GetName(), op->Type.Type);
       if (M->Flags&FUNC_Iterator) {
@@ -192,18 +200,19 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       }
       VExpression *e;
       // `dg = dgname`?
-      if (assType == AssType::AssValue) {
+      /*if (assType == AssType::AssValue) {
         // yes
+        ParseWarning(Loc, "prepend delegate with `&`, please");
         e = new VDelegateVal(op, M, Loc);
         op = nullptr;
         delete opcopy;
-      } else {
+      } else*/ {
         // no; rewrite as invoke
         if ((M->Flags&FUNC_Static) != 0) {
           delete opcopy;
           e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
         } else {
-          e = new VDotInvocation(opcopy, FieldName, Loc, 0, nullptr);
+          e = new VDotInvocation(opcopy, op->Type.Class->ResolveAlias(FieldName), Loc, 0, nullptr);
         }
       }
       delete this;

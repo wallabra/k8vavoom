@@ -289,6 +289,8 @@ bool VExpression::IsLocalVarDecl () const { return false; }
 bool VExpression::IsLocalVarExpr () const { return false; }
 bool VExpression::IsAssignExpr () const { return false; }
 bool VExpression::IsBinaryMath () const { return false; }
+bool VExpression::IsSingleName () const { return false; }
+bool VExpression::IsDotField () const { return false; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

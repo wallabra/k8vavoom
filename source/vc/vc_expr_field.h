@@ -79,6 +79,7 @@ public:
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &) override;
   virtual VExpression *ResolveAssignmentValue (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+  virtual bool IsDotField () const override;
 
 protected:
   VDotField () {}

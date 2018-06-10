@@ -423,7 +423,7 @@ bool VFieldType::CheckMatch (const TLocation &l, const VFieldType &Other, bool r
   }
 
   if (raiseError) {
-    ParseError(l, "Type mismatch, types %s and %s are not compatible %d %d", *GetName(), *Other.GetName(), Type, Other.Type);
+    ParseError(l, "Type mismatch, types `%s` and `%s` are not compatible", *GetName(), *Other.GetName());
   }
 
   return false;

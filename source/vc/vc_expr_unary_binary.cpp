@@ -81,13 +81,44 @@ void VUnary::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VUnary::DoResolve (VEmitContext &ec) {
+  if (Oper == TakeAddress && op && ec.SelfClass) {
+    if (op->IsSingleName()) {
+      VMethod *M = ec.SelfClass->FindAccessibleMethod(ec.SelfClass->ResolveAlias(((VSingleName *)op)->Name), ec.SelfClass);
+      if (M && (M->Flags&FUNC_Iterator) == 0) {
+        //fprintf(stderr, "SINGLE NAME GETADDR! <%s>\n", *((VSingleName *)op)->Name);
+        VExpression *e = new VDelegateVal((new VSelf(Loc))->Resolve(ec), M, Loc);
+        delete this;
+        return e->Resolve(ec);
+      }
+    } else if (op->IsDotField()) {
+      VExpression *xop = ((VDotField *)op)->op;
+      VName fname = *((VDotField *)op)->FieldName;
+      if (xop) {
+        xop = xop->SyntaxCopy();
+        xop = xop->Resolve(ec);
+        if (xop) {
+          if (xop->Type.Type == TYPE_Reference) {
+            fname = xop->Type.Class->ResolveAlias(fname);
+            VMethod *M = xop->Type.Class->FindAccessibleMethod(fname, ec.SelfClass);
+            if (M && (M->Flags&FUNC_Iterator) == 0) {
+              //fprintf(stderr, "DOTFIELD NAME GETADDR! <%s>\n", *((VDotField *)op)->FieldName);
+              VExpression *e = new VDelegateVal(xop, M, Loc);
+              delete this;
+              return e->Resolve(ec);
+            } else {
+              //fprintf(stderr, "FUCK DOTFIELD NAME GETADDR! <%s> %p\n", *((VDotField *)op)->FieldName, M);
+            }
+          }
+          delete xop;
+        }
+      }
+    }
+  }
+
   if (op) {
     if (Oper == Not) op = op->ResolveBoolean(ec); else op = op->Resolve(ec);
   }
-  if (!op) {
-    delete this;
-    return nullptr;
-  }
+  if (!op) { delete this; return nullptr; }
 
   switch (Oper) {
     case Plus:

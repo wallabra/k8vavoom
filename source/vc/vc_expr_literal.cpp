@@ -372,12 +372,12 @@ void VSelf::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VSelf::DoResolve (VEmitContext &ec) {
   if (!ec.SelfClass) {
-    ParseError(Loc, "self used outside of member function\n");
+    ParseError(Loc, "self used outside of member function");
     delete this;
     return nullptr;
   }
   if (ec.CurrentFunc->Flags&FUNC_Static) {
-    ParseError(Loc, "self used in a static method\n");
+    ParseError(Loc, "self used in a static method");
     delete this;
     return nullptr;
   }

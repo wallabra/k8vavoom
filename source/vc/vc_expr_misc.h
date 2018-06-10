@@ -68,6 +68,7 @@ public:
   virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual bool IsValidTypeExpression () const override;
+  virtual bool IsSingleName () const override;
 
 protected:
   VSingleName () {}

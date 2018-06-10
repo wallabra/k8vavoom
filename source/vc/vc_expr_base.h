@@ -73,6 +73,8 @@ public:
   virtual bool IsLocalVarExpr () const;
   virtual bool IsAssignExpr () const;
   virtual bool IsBinaryMath () const;
+  virtual bool IsSingleName () const;
+  virtual bool IsDotField () const;
 
   void *operator new (size_t size);
   void *operator new[] (size_t size);

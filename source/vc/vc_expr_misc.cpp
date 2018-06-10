@@ -144,6 +144,14 @@ VSingleName::VSingleName (VName AName, const TLocation &ALoc)
 
 //==========================================================================
 //
+//  VSingleName::IsSingleName
+//
+//==========================================================================
+bool VSingleName::IsSingleName () const { return true; }
+
+
+//==========================================================================
+//
 //  VSingleName::SyntaxCopy
 //
 //==========================================================================
@@ -198,10 +206,11 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
       }
       VExpression *e;
       // `dg = dgname`?
-      if (assType == AssType::AssValue) {
+      /*if (assType == AssType::AssValue) {
         // yes
+        ParseWarning(Loc, "prepend delegate with `&`, please");
         e = new VDelegateVal((new VSelf(Loc))->Resolve(ec), M, Loc);
-      } else {
+      } else*/ {
         // no; rewrite as invoke
         if ((M->Flags&FUNC_Static) != 0) {
           e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
