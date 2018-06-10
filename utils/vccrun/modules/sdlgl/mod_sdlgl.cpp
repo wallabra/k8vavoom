@@ -1340,10 +1340,10 @@ IMPLEMENT_FUNCTION(VVideo, drawRect) {
   if (!mInited || colorA <= 0 || w < 1 || h < 1) return;
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_LINE_LOOP);
-    glVertex2f(x0+0.5f, y0+0.5f);
-    glVertex2f(x0+w+0.5f, y0+0.5f);
-    glVertex2f(x0+w+0.5f, y0+h+0.5f);
-    glVertex2f(x0+0.5f, y0+h+0.5f);
+    glVertex2f(x0+0+0.5f, y0+0+0.5f);
+    glVertex2f(x0+w-0.5f, y0+0+0.5f);
+    glVertex2f(x0+w-0.5f, y0+h-0.5f);
+    glVertex2f(x0+0+0.5f, y0+h-0.5f);
   glEnd();
 }
 
@@ -1356,11 +1356,12 @@ IMPLEMENT_FUNCTION(VVideo, fillRect) {
   P_GET_INT(x0);
   if (!mInited || colorA <= 0 || w < 1 || h < 1) return;
   glDisable(GL_TEXTURE_2D);
+  // no need for 0.5f here, or rect will be offset
   glBegin(GL_QUADS);
-    glVertex2f(x0+0.5f, y0+0.5f);
-    glVertex2f(x0+w+0.5f, y0+0.5f);
-    glVertex2f(x0+w+0.5f, y0+h+0.5f);
-    glVertex2f(x0+0.5f, y0+h+0.5f);
+    glVertex2f(x0+0, y0+0);
+    glVertex2f(x0+w, y0+0);
+    glVertex2f(x0+w, y0+h);
+    glVertex2f(x0+0, y0+h);
   glEnd();
 }
 
