@@ -1851,8 +1851,8 @@ void VParser::ParseClass () {
     Class->ParentClassLoc = ParentClassLoc;
   }
 
-  int ClassAttr = TModifiers::ClassAttr(TModifiers::Check(TModifiers::Parse(Lex), TModifiers::Native | TModifiers::Abstract, Lex.Location));
-  (void)ClassAttr; //k8: don't even ask me!
+  int ClassAttr = TModifiers::ClassAttr(TModifiers::Check(TModifiers::Parse(Lex), TModifiers::Native|TModifiers::Abstract, Lex.Location));
+  Class->ClassFlags = ClassAttr;
   // parse class attributes
   do {
     if (Lex.Check(TK_MobjInfo)) {
