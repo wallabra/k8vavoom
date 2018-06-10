@@ -56,7 +56,7 @@ static int k8edIndent = 0;
 
 static void printIndent () { for (int f = k8edIndent; f > 0; --f) fputc(' ', stdout); }
 static void enterIndent () { ++k8edIndent; }
-static void leaveIndent () { if (--k8edIndent < 0) *(int*)0 = 0; }
+static void leaveIndent () { if (--k8edIndent < 0) *(int *)0 = 0; }
 #endif
 
 
@@ -129,7 +129,7 @@ static void cstPush (VMethod *func) {
   if (cstUsed == cstSize) {
     //FIXME: handle OOM here
     cstSize += 16384;
-    callStack = (VMethod**)realloc(callStack, sizeof(callStack[0])*cstSize);
+    callStack = (VMethod **)realloc(callStack, sizeof(callStack[0])*cstSize);
   }
   callStack[cstUsed++] = func;
 }
@@ -174,16 +174,16 @@ static void cstDump () {
 # define PR_VM_DEFAULT   default:
 #endif
 
-#define ReadInt16(ip)   (*(vint16*)(ip))
-#define ReadInt32(ip)   (*(vint32*)(ip))
-#define ReadPtr(ip)     (*(void**)(ip))
+#define ReadInt16(ip)   (*(vint16 *)(ip))
+#define ReadInt32(ip)   (*(vint32 *)(ip))
+#define ReadPtr(ip)     (*(void **)(ip))
 #define ReadType(T, ip) do { \
   T.Type = (ip)[0]; \
   T.ArrayInnerType = (ip)[1]; \
   T.InnerType = (ip)[2]; \
   T.PtrLevel = (ip)[3]; \
   T.ArrayDim = ReadInt32((ip)+4); \
-  T.Class = (VClass*)ReadPtr((ip)+8); \
+  T.Class = (VClass *)ReadPtr((ip)+8); \
 } while (0)
 
 
@@ -200,7 +200,7 @@ static void RunFunction (VMethod *func) {
 
   if (func->Flags&FUNC_Net) {
     VStack *Params = pr_stackPtr-func->ParamsSize;
-    if (((VObject*)Params[0].p)->ExecuteNetMethod(func)) return;
+    if (((VObject *)Params[0].p)->ExecuteNetMethod(func)) return;
   }
 
   if (func->Flags&FUNC_Native) {
@@ -245,20 +245,20 @@ func_loop:
 
       PR_VM_CASE(OPC_Call)
         pr_stackPtr = sp;
-        RunFunction((VMethod*)ReadPtr(ip+1));
+        RunFunction((VMethod *)ReadPtr(ip+1));
         current_func = func;
-        ip += 1+sizeof(void*);
+        ip += 1+sizeof(void *);
         sp = pr_stackPtr;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PushVFunc)
-        sp[0].p = ((VObject*)sp[-1].p)->GetVFunctionIdx(ReadInt16(ip+1));
+        sp[0].p = ((VObject *)sp[-1].p)->GetVFunctionIdx(ReadInt16(ip+1));
         ip += 3;
         ++sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PushVFuncB)
-        sp[0].p = ((VObject*)sp[-1].p)->GetVFunctionIdx(ip[1]);
+        sp[0].p = ((VObject *)sp[-1].p)->GetVFunctionIdx(ip[1]);
         ip += 2;
         ++sp;
         PR_VM_BREAK;
@@ -266,7 +266,7 @@ func_loop:
       PR_VM_CASE(OPC_VCall)
         pr_stackPtr = sp;
         if (!sp[-ip[3]].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        RunFunction(((VObject*)sp[-ip[3]].p)->GetVFunctionIdx(ReadInt16(ip+1)));
+        RunFunction(((VObject *)sp[-ip[3]].p)->GetVFunctionIdx(ReadInt16(ip+1)));
         ip += 4;
         current_func = func;
         sp = pr_stackPtr;
@@ -275,7 +275,7 @@ func_loop:
       PR_VM_CASE(OPC_VCallB)
         pr_stackPtr = sp;
         if (!sp[-ip[2]].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        RunFunction(((VObject*)sp[-ip[2]].p)->GetVFunctionIdx(ip[1]));
+        RunFunction(((VObject *)sp[-ip[2]].p)->GetVFunctionIdx(ip[1]));
         ip += 3;
         current_func = func;
         sp = pr_stackPtr;
@@ -284,12 +284,12 @@ func_loop:
       PR_VM_CASE(OPC_DelegateCall)
         {
           // get pointer to the delegate
-          void **pDelegate = (void**)((vuint8*)sp[-ip[5]].p+ReadInt32(ip+1));
+          void **pDelegate = (void **)((vuint8 *)sp[-ip[5]].p+ReadInt32(ip+1));
           // push proper self object
           if (!pDelegate[0]) { cstDump(); Sys_Error("Delegate is not initialised"); }
           sp[-ip[5]].p = pDelegate[0];
           pr_stackPtr = sp;
-          RunFunction((VMethod*)pDelegate[1]);
+          RunFunction((VMethod *)pDelegate[1]);
         }
         ip += 6;
         current_func = func;
@@ -299,12 +299,12 @@ func_loop:
       PR_VM_CASE(OPC_DelegateCallS)
         {
           // get pointer to the delegate
-          void **pDelegate = (void**)((vuint8*)sp[-ip[3]].p+ReadInt16(ip+1));
+          void **pDelegate = (void **)((vuint8 *)sp[-ip[3]].p+ReadInt16(ip+1));
           // push proper self object
           if (!pDelegate[0]) { cstDump(); Sys_Error("Delegate is not initialised"); }
           sp[-ip[3]].p = pDelegate[0];
           pr_stackPtr = sp;
-          RunFunction((VMethod*)pDelegate[1]);
+          RunFunction((VMethod *)pDelegate[1]);
         }
         ip += 4;
         current_func = func;
@@ -314,12 +314,12 @@ func_loop:
       PR_VM_CASE(OPC_DelegateCallB)
         {
           // get pointer to the delegate
-          void **pDelegate = (void**)((vuint8*)sp[-ip[2]].p+ip[1]);
+          void **pDelegate = (void **)((vuint8 *)sp[-ip[2]].p+ip[1]);
           // push proper self object
           if (!pDelegate[0]) { cstDump(); Sys_Error("Delegate is not initialised"); }
           sp[-ip[2]].p = pDelegate[0];
           pr_stackPtr = sp;
-          RunFunction((VMethod*)pDelegate[1]);
+          RunFunction((VMethod *)pDelegate[1]);
         }
         ip += 3;
         current_func = func;
@@ -343,7 +343,7 @@ func_loop:
 
       PR_VM_CASE(OPC_ReturnL)
         checkSlow(sp == local_vars+func->NumLocals+1);
-        ((VStack*)local_vars)[0] = sp[-1];
+        ((VStack *)local_vars)[0] = sp[-1];
         pr_stackPtr = local_vars+1;
         while (ActiveIterators) {
           VScriptIterator *Tmp = ActiveIterators;
@@ -359,9 +359,9 @@ func_loop:
 
       PR_VM_CASE(OPC_ReturnV)
         checkSlow(sp == local_vars+func->NumLocals+3);
-        ((VStack*)local_vars)[0] = sp[-3];
-        ((VStack*)local_vars)[1] = sp[-2];
-        ((VStack*)local_vars)[2] = sp[-1];
+        ((VStack *)local_vars)[0] = sp[-3];
+        ((VStack *)local_vars)[1] = sp[-2];
+        ((VStack *)local_vars)[2] = sp[-1];
         pr_stackPtr = local_vars+3;
         while (ActiveIterators) {
           VScriptIterator *Tmp = ActiveIterators;
@@ -508,18 +508,18 @@ func_loop:
 
       PR_VM_CASE(OPC_PushString)
         sp->p = ReadPtr(ip+1);
-        ip += 1+sizeof(void*);
+        ip += 1+sizeof(void *);
         ++sp; {
-          const char *S = (const char*)sp[-1].p;
+          const char *S = (const char *)sp[-1].p;
           sp[-1].p = nullptr;
-          *(VStr*)&sp[-1].p = S;
+          *(VStr *)&sp[-1].p = S;
         }
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PushClassId)
       PR_VM_CASE(OPC_PushState)
         sp->p = ReadPtr(ip+1);
-        ip += 1+sizeof(void*);
+        ip += 1+sizeof(void *);
         ++sp;
         PR_VM_BREAK;
 
@@ -672,38 +672,38 @@ func_loop:
 
       PR_VM_CASE(OPC_OffsetS)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].p = (vuint8*)sp[-1].p+ReadInt16(ip+1);
+        sp[-1].p = (vuint8 *)sp[-1].p+ReadInt16(ip+1);
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_OffsetB)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].p = (vuint8*)sp[-1].p+ip[1];
+        sp[-1].p = (vuint8 *)sp[-1].p+ip[1];
         ip += 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FieldValue)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = *(vint32*)((vuint8*)sp[-1].p+ReadInt32(ip+1));
+        sp[-1].i = *(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1));
         ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FieldValueS)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = *(vint32*)((vuint8*)sp[-1].p+ReadInt16(ip+1));
+        sp[-1].i = *(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FieldValueB)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = *(vint32*)((vuint8*)sp[-1].p+ip[1]);
+        sp[-1].i = *(vint32 *)((vuint8 *)sp[-1].p+ip[1]);
         ip += 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VFieldValue)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
         {
-          TVec *vp = (TVec*)((vuint8*)sp[-1].p+ReadInt32(ip+1));
+          TVec *vp = (TVec *)((vuint8 *)sp[-1].p+ReadInt32(ip+1));
           sp[1].f = vp->z;
           sp[0].f = vp->y;
           sp[-1].f = vp->x;
@@ -715,7 +715,7 @@ func_loop:
       PR_VM_CASE(OPC_VFieldValueS)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
         {
-          TVec *vp = (TVec*)((vuint8*)sp[-1].p+ReadInt16(ip+1));
+          TVec *vp = (TVec *)((vuint8 *)sp[-1].p+ReadInt16(ip+1));
           sp[1].f = vp->z;
           sp[0].f = vp->y;
           sp[-1].f = vp->x;
@@ -727,7 +727,7 @@ func_loop:
       PR_VM_CASE(OPC_VFieldValueB)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
         {
-          TVec *vp = (TVec*)((vuint8*)sp[-1].p+ip[1]);
+          TVec *vp = (TVec *)((vuint8 *)sp[-1].p+ip[1]);
           sp[1].f = vp->z;
           sp[0].f = vp->y;
           sp[-1].f = vp->x;
@@ -738,28 +738,28 @@ func_loop:
 
       PR_VM_CASE(OPC_PtrFieldValue)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].p = *(void**)((vuint8*)sp[-1].p+ReadInt32(ip+1));
+        sp[-1].p = *(void **)((vuint8 *)sp[-1].p+ReadInt32(ip+1));
         ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PtrFieldValueS)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].p = *(void**)((vuint8*)sp[-1].p+ReadInt16(ip+1));
+        sp[-1].p = *(void **)((vuint8 *)sp[-1].p+ReadInt16(ip+1));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PtrFieldValueB)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].p = *(void**)((vuint8*)sp[-1].p+ip[1]);
+        sp[-1].p = *(void **)((vuint8 *)sp[-1].p+ip[1]);
         ip += 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_StrFieldValue)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
         {
-          VStr *Ptr = (VStr*)((vuint8*)sp[-1].p+ReadInt32(ip+1));
+          VStr *Ptr = (VStr *)((vuint8 *)sp[-1].p+ReadInt32(ip+1));
           sp[-1].p = nullptr;
-          *(VStr*)&sp[-1].p = *Ptr;
+          *(VStr *)&sp[-1].p = *Ptr;
         }
         ip += 5;
         PR_VM_BREAK;
@@ -767,9 +767,9 @@ func_loop:
       PR_VM_CASE(OPC_StrFieldValueS)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
         {
-          VStr *Ptr = (VStr*)((vuint8*)sp[-1].p+ReadInt16(ip+1));
+          VStr *Ptr = (VStr *)((vuint8 *)sp[-1].p+ReadInt16(ip+1));
           sp[-1].p = nullptr;
-          *(VStr*)&sp[-1].p = *Ptr;
+          *(VStr *)&sp[-1].p = *Ptr;
         }
         ip += 3;
         PR_VM_BREAK;
@@ -777,149 +777,149 @@ func_loop:
       PR_VM_CASE(OPC_StrFieldValueB)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
         {
-          VStr *Ptr = (VStr*)((vuint8*)sp[-1].p+ip[1]);
+          VStr *Ptr = (VStr *)((vuint8 *)sp[-1].p+ip[1]);
           sp[-1].p = nullptr;
-          *(VStr*)&sp[-1].p = *Ptr;
+          *(VStr *)&sp[-1].p = *Ptr;
         }
         ip += 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteFieldValue)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = *((vuint8*)sp[-1].p+ReadInt32(ip+1));
+        sp[-1].i = *((vuint8 *)sp[-1].p+ReadInt32(ip+1));
         ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteFieldValueS)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = *((vuint8*)sp[-1].p+ReadInt16(ip+1));
+        sp[-1].i = *((vuint8 *)sp[-1].p+ReadInt16(ip+1));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteFieldValueB)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = *((vuint8*)sp[-1].p+ip[1]);
+        sp[-1].i = *((vuint8 *)sp[-1].p+ip[1]);
         ip += 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool0FieldValue)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = !!(*(vint32*)((vuint8*)sp[-1].p+ReadInt32(ip+1))&ip[5]);
+        sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1))&ip[5]);
         ip += 6;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool0FieldValueS)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = !!(*(vint32*)((vuint8*)sp[-1].p+ReadInt16(ip+1))&ip[3]);
+        sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1))&ip[3]);
         ip += 4;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool0FieldValueB)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = !!(*(vint32*)((vuint8*)sp[-1].p+ip[1])&ip[2]);
+        sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ip[1])&ip[2]);
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool1FieldValue)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = !!(*(vint32*)((vuint8*)sp[-1].p+ReadInt32(ip+1))&(ip[5]<<8));
+        sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1))&(ip[5]<<8));
         ip += 6;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool1FieldValueS)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = !!(*(vint32*)((vuint8*)sp[-1].p+ReadInt16(ip+1))&(ip[3]<<8));
+        sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1))&(ip[3]<<8));
         ip += 4;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool1FieldValueB)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = !!(*(vint32*)((vuint8*)sp[-1].p+ip[1])&(ip[2]<<8));
+        sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ip[1])&(ip[2]<<8));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool2FieldValue)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = !!(*(vint32*)((vuint8*)sp[-1].p+ReadInt32(ip+1))&(ip[5]<<16));
+        sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1))&(ip[5]<<16));
         ip += 6;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool2FieldValueS)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = !!(*(vint32*)((vuint8*)sp[-1].p+ReadInt16(ip+1))&(ip[3]<<16));
+        sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1))&(ip[3]<<16));
         ip += 4;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool2FieldValueB)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = !!(*(vint32*)((vuint8*)sp[-1].p+ip[1])&(ip[2]<<16));
+        sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ip[1])&(ip[2]<<16));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool3FieldValue)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = !!(*(vint32*)((vuint8*)sp[-1].p+ReadInt32(ip+1))&(ip[5]<<24));
+        sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1))&(ip[5]<<24));
         ip += 6;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool3FieldValueS)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = !!(*(vint32*)((vuint8*)sp[-1].p+ReadInt16(ip+1))&(ip[3]<<24));
+        sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1))&(ip[3]<<24));
         ip += 4;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool3FieldValueB)
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].i = !!(*(vint32*)((vuint8*)sp[-1].p+ip[1])&(ip[2]<<24));
+        sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ip[1])&(ip[2]<<24));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ArrayElement)
-        sp[-2].p = (vuint8*)sp[-2].p+sp[-1].i*ReadInt32(ip+1);
+        sp[-2].p = (vuint8 *)sp[-2].p+sp[-1].i*ReadInt32(ip+1);
         ip += 5;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ArrayElementS)
-        sp[-2].p = (vuint8*)sp[-2].p+sp[-1].i*ReadInt16(ip+1);
+        sp[-2].p = (vuint8 *)sp[-2].p+sp[-1].i*ReadInt16(ip+1);
         ip += 3;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ArrayElementB)
-        sp[-2].p = (vuint8*)sp[-2].p+sp[-1].i*ip[1];
+        sp[-2].p = (vuint8 *)sp[-2].p+sp[-1].i*ip[1];
         ip += 2;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PushPointed)
         ++ip;
-        sp[-1].i = *(vint32*)sp[-1].p;
+        sp[-1].i = *(vint32 *)sp[-1].p;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VPushPointed)
         ++ip;
-        sp[1].f = ((TVec*)sp[-1].p)->z;
-        sp[0].f = ((TVec*)sp[-1].p)->y;
-        sp[-1].f = ((TVec*)sp[-1].p)->x;
+        sp[1].f = ((TVec *)sp[-1].p)->z;
+        sp[0].f = ((TVec *)sp[-1].p)->y;
+        sp[-1].f = ((TVec *)sp[-1].p)->x;
         sp += 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PushPointedPtr)
         ++ip;
-        sp[-1].p = *(void**)sp[-1].p;
+        sp[-1].p = *(void **)sp[-1].p;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PushPointedByte)
         ++ip;
-        sp[-1].i = *(vuint8*)sp[-1].p;
+        sp[-1].i = *(vuint8 *)sp[-1].p;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PushBool0)
         {
           vuint32 mask = ip[1];
           ip += 2;
-          sp[-1].i = !!(*(vint32*)sp[-1].p&mask);
+          sp[-1].i = !!(*(vint32 *)sp[-1].p&mask);
         }
         PR_VM_BREAK;
 
@@ -927,7 +927,7 @@ func_loop:
         {
           vuint32 mask = ip[1]<<8;
           ip += 2;
-          sp[-1].i = !!(*(vint32*)sp[-1].p&mask);
+          sp[-1].i = !!(*(vint32 *)sp[-1].p&mask);
         }
         PR_VM_BREAK;
 
@@ -935,7 +935,7 @@ func_loop:
         {
           vuint32 mask = ip[1]<<16;
           ip += 2;
-          sp[-1].i = !!(*(vint32*)sp[-1].p&mask);
+          sp[-1].i = !!(*(vint32 *)sp[-1].p&mask);
         }
         PR_VM_BREAK;
 
@@ -943,23 +943,23 @@ func_loop:
         {
           vuint32 mask = ip[1]<<24;
           ip += 2;
-          sp[-1].i = !!(*(vint32*)sp[-1].p&mask);
+          sp[-1].i = !!(*(vint32 *)sp[-1].p&mask);
         }
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PushPointedStr)
         {
           ++ip;
-          VStr *Ptr = (VStr*)sp[-1].p;
+          VStr *Ptr = (VStr *)sp[-1].p;
           sp[-1].p = nullptr;
-          *(VStr*)&sp[-1].p = *Ptr;
+          *(VStr *)&sp[-1].p = *Ptr;
         }
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PushPointedDelegate)
         ++ip;
-        sp[0].p = ((void**)sp[-1].p)[1];
-        sp[-1].p = ((void**)sp[-1].p)[0];
+        sp[0].p = ((void **)sp[-1].p)[1];
+        sp[-1].p = ((void **)sp[-1].p)[0];
         ++sp;
         PR_VM_BREAK;
 
@@ -1061,7 +1061,7 @@ func_loop:
       PR_VM_CASE(OPC_PreInc)
         ++ip;
         {
-          vint32 *ptr = (vint32*)sp[-1].p;
+          vint32 *ptr = (vint32 *)sp[-1].p;
           ++(*ptr);
           sp[-1].i = *ptr;
         }
@@ -1070,7 +1070,7 @@ func_loop:
       PR_VM_CASE(OPC_PreDec)
         ++ip;
         {
-          vint32 *ptr = (vint32*)sp[-1].p;
+          vint32 *ptr = (vint32 *)sp[-1].p;
           --(*ptr);
           sp[-1].i = *ptr;
         }
@@ -1079,7 +1079,7 @@ func_loop:
       PR_VM_CASE(OPC_PostInc)
         ++ip;
         {
-          vint32 *ptr = (vint32*)sp[-1].p;
+          vint32 *ptr = (vint32 *)sp[-1].p;
           sp[-1].i = *ptr;
           (*ptr)++;
         }
@@ -1088,7 +1088,7 @@ func_loop:
       PR_VM_CASE(OPC_PostDec)
         ++ip;
         {
-          vint32 *ptr = (vint32*)sp[-1].p;
+          vint32 *ptr = (vint32 *)sp[-1].p;
           sp[-1].i = *ptr;
           (*ptr)--;
         }
@@ -1096,19 +1096,19 @@ func_loop:
 
       PR_VM_CASE(OPC_IncDrop)
         ++ip;
-        ++(*(vint32*)sp[-1].p);
+        ++(*(vint32 *)sp[-1].p);
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DecDrop)
         ++ip;
-        --(*(vint32*)sp[-1].p);
+        --(*(vint32 *)sp[-1].p);
         --sp;
         PR_VM_BREAK;
 
     #define ASSIGNOP(type, mem, op) \
       ++ip; \
-      *(type*)sp[-2].p op sp[-1].mem; \
+      *(type *)sp[-2].p op sp[-1].mem; \
       sp -= 2;
 
       PR_VM_CASE(OPC_AssignDrop)
@@ -1160,7 +1160,7 @@ func_loop:
       PR_VM_CASE(OPC_BytePreInc)
         ++ip;
         {
-          vuint8 *ptr = (vuint8*)sp[-1].p;
+          vuint8 *ptr = (vuint8 *)sp[-1].p;
           ++(*ptr);
           sp[-1].i = *ptr;
         }
@@ -1169,7 +1169,7 @@ func_loop:
       PR_VM_CASE(OPC_BytePreDec)
         ++ip;
         {
-          vuint8 *ptr = (vuint8*)sp[-1].p;
+          vuint8 *ptr = (vuint8 *)sp[-1].p;
           --(*ptr);
           sp[-1].i = *ptr;
         }
@@ -1178,7 +1178,7 @@ func_loop:
       PR_VM_CASE(OPC_BytePostInc)
         ++ip;
         {
-          vuint8 *ptr = (vuint8*)sp[-1].p;
+          vuint8 *ptr = (vuint8 *)sp[-1].p;
           sp[-1].i = *ptr;
           (*ptr)++;
         }
@@ -1187,7 +1187,7 @@ func_loop:
       PR_VM_CASE(OPC_BytePostDec)
         ++ip;
         {
-          vuint8 *ptr = (vuint8*)sp[-1].p;
+          vuint8 *ptr = (vuint8 *)sp[-1].p;
           sp[-1].i = *ptr;
           (*ptr)--;
         }
@@ -1195,13 +1195,13 @@ func_loop:
 
       PR_VM_CASE(OPC_ByteIncDrop)
         ++ip;
-        (*(vuint8*)sp[-1].p)++;
+        (*(vuint8 *)sp[-1].p)++;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteDecDrop)
         ++ip;
-        (*(vuint8*)sp[-1].p)--;
+        (*(vuint8 *)sp[-1].p)--;
         --sp;
         PR_VM_BREAK;
 
@@ -1388,7 +1388,7 @@ func_loop:
     #define VASSIGNOP(op) \
       { \
         ++ip; \
-        TVec *ptr = (TVec*)sp[-4].p; \
+        TVec *ptr = (TVec *)sp[-4].p; \
         ptr->x op sp[-3].f; \
         ptr->y op sp[-2].f; \
         ptr->z op sp[-1].f; \
@@ -1409,21 +1409,21 @@ func_loop:
 
       PR_VM_CASE(OPC_VScaleVarDrop)
         ++ip;
-        *(TVec*)sp[-2].p *= sp[-1].f;
+        *(TVec *)sp[-2].p *= sp[-1].f;
         sp -= 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VIScaleVarDrop)
         ++ip;
-        *(TVec*)sp[-2].p /= sp[-1].f;
+        *(TVec *)sp[-2].p /= sp[-1].f;
         sp -= 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_StrToBool)
         {
           ++ip;
-          bool Val = ((VStr*)&sp[-1].p)->IsNotEmpty();
-          ((VStr*)&sp[-1].p)->Clean();
+          bool Val = ((VStr *)&sp[-1].p)->IsNotEmpty();
+          ((VStr *)&sp[-1].p)->Clean();
           sp[-1].i = Val;
         }
         PR_VM_BREAK;
@@ -1431,9 +1431,9 @@ func_loop:
     #define STRCMPOP(cmpop) \
       { \
         ++ip; \
-        int cmp = ((VStr*)&sp[-2].p)->Cmp(*((VStr*)&sp[-1].p)); \
-        ((VStr*)&sp[-2].p)->Clean(); \
-        ((VStr*)&sp[-1].p)->Clean(); \
+        int cmp = ((VStr *)&sp[-2].p)->Cmp(*((VStr *)&sp[-1].p)); \
+        ((VStr *)&sp[-2].p)->Clean(); \
+        ((VStr *)&sp[-1].p)->Clean(); \
         sp -= 1; \
         sp[-1].i = (cmp cmpop 0); \
       }
@@ -1443,9 +1443,9 @@ func_loop:
         // the following is slightly faster for the same strings
         {
           ++ip;
-          bool cmp = *((VStr*)&sp[-2].p) == *((VStr*)&sp[-1].p);
-          ((VStr*)&sp[-2].p)->Clean();
-          ((VStr*)&sp[-1].p)->Clean();
+          bool cmp = *((VStr *)&sp[-2].p) == *((VStr *)&sp[-1].p);
+          ((VStr *)&sp[-2].p)->Clean();
+          ((VStr *)&sp[-1].p)->Clean();
           sp -= 1;
           sp[-1].i = int(cmp);
         }
@@ -1455,9 +1455,9 @@ func_loop:
         // the following is slightly faster for the same strings
         {
           ++ip;
-          bool cmp = *((VStr*)&sp[-2].p) != *((VStr*)&sp[-1].p);
-          ((VStr*)&sp[-2].p)->Clean();
-          ((VStr*)&sp[-1].p)->Clean();
+          bool cmp = *((VStr *)&sp[-2].p) != *((VStr *)&sp[-1].p);
+          ((VStr *)&sp[-2].p)->Clean();
+          ((VStr *)&sp[-1].p)->Clean();
           sp -= 1;
           sp[-1].i = int(cmp);
         }
@@ -1479,7 +1479,7 @@ func_loop:
         {
           ++ip;
           auto len = (*((VStr **)&sp[-1].p))->Length();
-          //((VStr*)&sp[-1].p)->Clean();
+          //((VStr *)&sp[-1].p)->Clean();
           sp[-1].i = (int)len;
         }
         PR_VM_BREAK;
@@ -1497,7 +1497,7 @@ func_loop:
 
       PR_VM_CASE(OPC_AssignStrDrop)
         ++ip;
-        *(VStr *)sp[-2].p = *(VStr*)&sp[-1].p;
+        *(VStr *)sp[-2].p = *(VStr *)&sp[-1].p;
         ((VStr *)&sp[-1].p)->Clean();
         sp -= 2;
         PR_VM_BREAK;
@@ -1598,14 +1598,14 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ClearPointedStr)
-        ((VStr*)sp[-1].p)->Clean();
+        ((VStr *)sp[-1].p)->Clean();
         ip += 1;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ClearPointedStruct)
-        ((VStruct*)ReadPtr(ip+1))->DestructObject((byte*)sp[-1].p);
-        ip += 1+sizeof(void*);
+        ((VStruct *)ReadPtr(ip+1))->DestructObject((byte *)sp[-1].p);
+        ip += 1+sizeof(void *);
         --sp;
         PR_VM_BREAK;
 
@@ -1621,7 +1621,7 @@ func_loop:
 
       PR_VM_CASE(OPC_DropStr)
         ++ip;
-        ((VStr*)&sp[-1].p)->Clean();
+        ((VStr *)&sp[-1].p)->Clean();
         --sp;
         PR_VM_BREAK;
 
@@ -1633,9 +1633,9 @@ func_loop:
         {
           vuint32 mask = ip[1];
           if (sp[-1].i) {
-            *(vint32*)sp[-2].p |= mask;
+            *(vint32 *)sp[-2].p |= mask;
           } else {
-            *(vint32*)sp[-2].p &= ~mask;
+            *(vint32 *)sp[-2].p &= ~mask;
           }
           ip += 2;
           sp -= 2;
@@ -1646,9 +1646,9 @@ func_loop:
         {
           vuint32 mask = ip[1]<<8;
           if (sp[-1].i) {
-            *(vint32*)sp[-2].p |= mask;
+            *(vint32 *)sp[-2].p |= mask;
           } else {
-            *(vint32*)sp[-2].p &= ~mask;
+            *(vint32 *)sp[-2].p &= ~mask;
           }
           ip += 2;
           sp -= 2;
@@ -1659,9 +1659,9 @@ func_loop:
         {
           vuint32 mask = ip[1]<<16;
           if (sp[-1].i) {
-            *(vint32*)sp[-2].p |= mask;
+            *(vint32 *)sp[-2].p |= mask;
           } else {
-            *(vint32*)sp[-2].p &= ~mask;
+            *(vint32 *)sp[-2].p &= ~mask;
           }
           ip += 2;
           sp -= 2;
@@ -1672,9 +1672,9 @@ func_loop:
         {
           vuint32 mask = ip[1]<<24;
           if (sp[-1].i) {
-            *(vint32*)sp[-2].p |= mask;
+            *(vint32 *)sp[-2].p |= mask;
           } else {
-            *(vint32*)sp[-2].p &= ~mask;
+            *(vint32 *)sp[-2].p &= ~mask;
           }
           ip += 2;
           sp -= 2;
@@ -1683,28 +1683,28 @@ func_loop:
 
       PR_VM_CASE(OPC_AssignDelegate)
         ++ip;
-        ((void**)sp[-3].p)[0] = sp[-2].p;
-        ((void**)sp[-3].p)[1] = sp[-1].p;
+        ((void **)sp[-3].p)[0] = sp[-2].p;
+        ((void **)sp[-3].p)[1] = sp[-1].p;
         sp -= 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynArrayElement)
-        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray*)sp[-2].p)->Num()) { cstDump(); Sys_Error("Index outside the bounds of an array"); }
-        sp[-2].p = ((VScriptArray*)sp[-2].p)->Ptr()+sp[-1].i*ReadInt32(ip+1);
+        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) { cstDump(); Sys_Error("Index outside the bounds of an array"); }
+        sp[-2].p = ((VScriptArray *)sp[-2].p)->Ptr()+sp[-1].i*ReadInt32(ip+1);
         ip += 5;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynArrayElementS)
-        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray*)sp[-2].p)->Num()) { cstDump(); Sys_Error("Index outside the bounds of an array"); }
-        sp[-2].p = ((VScriptArray*)sp[-2].p)->Ptr()+sp[-1].i*ReadInt16(ip+1);
+        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) { cstDump(); Sys_Error("Index outside the bounds of an array"); }
+        sp[-2].p = ((VScriptArray *)sp[-2].p)->Ptr()+sp[-1].i*ReadInt16(ip+1);
         ip += 3;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynArrayElementB)
-        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray*)sp[-2].p)->Num()) { cstDump(); Sys_Error("Index outside the bounds of an array"); }
-        sp[-2].p = ((VScriptArray*)sp[-2].p)->Ptr()+sp[-1].i*ip[1];
+        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) { cstDump(); Sys_Error("Index outside the bounds of an array"); }
+        sp[-2].p = ((VScriptArray *)sp[-2].p)->Ptr()+sp[-1].i*ip[1];
         ip += 2;
         --sp;
         PR_VM_BREAK;
@@ -1713,9 +1713,9 @@ func_loop:
         {
           VFieldType Type;
           ReadType(Type, ip+1);
-          ip += 9+sizeof(VClass*);
+          ip += 9+sizeof(VClass *);
           if (sp[-1].i < 0) { cstDump(); Sys_Error("Array index is negative"); }
-          VScriptArray &A = *(VScriptArray*)sp[-2].p;
+          VScriptArray &A = *(VScriptArray *)sp[-2].p;
           if (sp[-1].i >= A.Num()) A.SetNum(sp[-1].i+1, Type);
           sp[-2].p = A.Ptr()+sp[-1].i*Type.GetSize();
           --sp;
@@ -1724,15 +1724,15 @@ func_loop:
 
       PR_VM_CASE(OPC_DynArrayGetNum)
         ++ip;
-        sp[-1].i = ((VScriptArray*)sp[-1].p)->Num();
+        sp[-1].i = ((VScriptArray *)sp[-1].p)->Num();
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynArraySetNum)
         {
           VFieldType Type;
           ReadType(Type, ip+1);
-          ip += 9+sizeof(VClass*);
-          ((VScriptArray*)sp[-2].p)->SetNum(sp[-1].i, Type);
+          ip += 9+sizeof(VClass *);
+          ((VScriptArray *)sp[-2].p)->SetNum(sp[-1].i, Type);
           sp -= 2;
         }
         PR_VM_BREAK;
@@ -1741,8 +1741,8 @@ func_loop:
         {
           VFieldType Type;
           ReadType(Type, ip+1);
-          ip += 9+sizeof(VClass*);
-          ((VScriptArray*)sp[-2].p)->SetNumMinus(sp[-1].i, Type);
+          ip += 9+sizeof(VClass *);
+          ((VScriptArray *)sp[-2].p)->SetNumMinus(sp[-1].i, Type);
           sp -= 2;
         }
         PR_VM_BREAK;
@@ -1751,8 +1751,8 @@ func_loop:
         {
           VFieldType Type;
           ReadType(Type, ip+1);
-          ip += 9+sizeof(VClass*);
-          ((VScriptArray*)sp[-2].p)->SetNumPlus(sp[-1].i, Type);
+          ip += 9+sizeof(VClass *);
+          ((VScriptArray *)sp[-2].p)->SetNumPlus(sp[-1].i, Type);
           sp -= 2;
         }
         PR_VM_BREAK;
@@ -1761,8 +1761,8 @@ func_loop:
         {
           VFieldType Type;
           ReadType(Type, ip+1);
-          ip += 9+sizeof(VClass*);
-          ((VScriptArray*)sp[-3].p)->Insert(sp[-2].i, sp[-1].i, Type);
+          ip += 9+sizeof(VClass *);
+          ((VScriptArray *)sp[-3].p)->Insert(sp[-2].i, sp[-1].i, Type);
           sp -= 3;
         }
         PR_VM_BREAK;
@@ -1771,40 +1771,40 @@ func_loop:
         {
           VFieldType Type;
           ReadType(Type, ip+1);
-          ip += 9+sizeof(VClass*);
-          ((VScriptArray*)sp[-3].p)->Remove(sp[-2].i, sp[-1].i, Type);
+          ip += 9+sizeof(VClass *);
+          ((VScriptArray *)sp[-3].p)->Remove(sp[-2].i, sp[-1].i, Type);
           sp -= 3;
         }
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynamicCast)
-        sp[-1].p = sp[-1].p && ((VObject*)sp[-1].p)->IsA(
-          (VClass*)ReadPtr(ip+1)) ? sp[-1].p : 0;
-        ip += 1+sizeof(void*);
+        sp[-1].p = sp[-1].p && ((VObject *)sp[-1].p)->IsA(
+          (VClass *)ReadPtr(ip+1)) ? sp[-1].p : 0;
+        ip += 1+sizeof(void *);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynamicClassCast)
-        sp[-1].p = sp[-1].p && ((VClass*)sp[-1].p)->IsChildOf(
-          (VClass*)ReadPtr(ip+1)) ? sp[-1].p : 0;
-        ip += 1+sizeof(void*);
+        sp[-1].p = sp[-1].p && ((VClass *)sp[-1].p)->IsChildOf(
+          (VClass *)ReadPtr(ip+1)) ? sp[-1].p : 0;
+        ip += 1+sizeof(void *);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_GetDefaultObj)
         ++ip;
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].p = ((VObject*)sp[-1].p)->GetClass()->Defaults;
+        sp[-1].p = ((VObject *)sp[-1].p)->GetClass()->Defaults;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_GetClassDefaultObj)
         ++ip;
         if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
-        sp[-1].p = ((VClass*)sp[-1].p)->Defaults;
+        sp[-1].p = ((VClass *)sp[-1].p)->Defaults;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_IteratorInit)
         ++ip;
-        ((VScriptIterator*)sp[-1].p)->Next = ActiveIterators;
-        ActiveIterators = (VScriptIterator*)sp[-1].p;
+        ((VScriptIterator *)sp[-1].p)->Next = ActiveIterators;
+        ActiveIterators = (VScriptIterator *)sp[-1].p;
         --sp;
         PR_VM_BREAK;
 
@@ -1822,7 +1822,6 @@ func_loop:
           VScriptIterator *Temp = ActiveIterators;
           ActiveIterators = Temp->Next;
           delete Temp;
-          Temp = nullptr;
         }
         PR_VM_BREAK;
 
@@ -1886,7 +1885,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
     cstDump();
     Sys_Error("ExecuteFunction: Stack is not empty after executing function:\n%s\nstack = %p, oldsp = %p", *func->Name, pr_stack, pr_stackPtr);
     #ifdef VMEXEC_RUNDUMP
-    *(int*)0 = 0;
+    *(int *)0 = 0;
     #endif
   }
 #endif
@@ -1897,7 +1896,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
     cstDump();
     Sys_Error("ExecuteFunction: Stack underflow in %s", *func->Name);
     #ifdef VMEXEC_RUNDUMP
-    *(int*)0 = 0;
+    *(int *)0 = 0;
     #endif
   }
 #endif
@@ -1908,7 +1907,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
     cstDump();
     Sys_Error("ExecuteFunction: Stack overflow in %s", *func->Name);
     #ifdef VMEXEC_RUNDUMP
-    *(int*)0 = 0;
+    *(int *)0 = 0;
     #endif
   }
 #endif
@@ -1942,11 +1941,11 @@ void VObject::DumpProfile () {
   memset(profsort, 0, sizeof(profsort));
   for (int i = 0; i < VMemberBase::GMembers.Num(); ++i) {
     if (VMemberBase::GMembers[i]->MemberType != MEMBER_Method) continue;
-    VMethod *Func = (VMethod*)VMemberBase::GMembers[i];
+    VMethod *Func = (VMethod *)VMemberBase::GMembers[i];
     if (!Func->Profile1) continue; // never called
     for (int j = 0; j < MAX_PROF; ++j) {
       totalcount += Func->Profile2;
-      if (((VMethod*)VMemberBase::GMembers[profsort[j]])->Profile2 <= Func->Profile2) {
+      if (((VMethod *)VMemberBase::GMembers[profsort[j]])->Profile2 <= Func->Profile2) {
         for (int k = MAX_PROF-1; k > j; --k) profsort[k] = profsort[k-1];
         profsort[j] = i;
         break;
@@ -1955,7 +1954,7 @@ void VObject::DumpProfile () {
   }
   if (!totalcount) return;
   for (int i = 0; i < MAX_PROF && profsort[i]; ++i) {
-    VMethod *Func = (VMethod*)VMemberBase::GMembers[profsort[i]];
+    VMethod *Func = (VMethod *)VMemberBase::GMembers[profsort[i]];
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     GCon->Logf("%3.2f%% (%9d) %9d %s",
       (double)Func->Profile2*100.0/(double)totalcount,
