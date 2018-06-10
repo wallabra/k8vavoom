@@ -41,19 +41,19 @@ override void CreateChoices()
   Btn = MenuTextButton(NewChild(MenuBigTextButton));
   Btn.SetPos(ChoicesStartX, currentY);
   Btn.Text = "New Game";
-  Btn.Activated = ActivateNewGame;
+  Btn.Activated = &ActivateNewGame;
   currentY += Btn.Height;
 
   Btn = MenuTextButton(NewChild(MenuBigTextButton));
   Btn.SetPos(ChoicesStartX, currentY);
   Btn.Text = "Join Game";
-  Btn.Activated = ActivateJoin;
+  Btn.Activated = &ActivateJoin;
   currentY += Btn.Height;
 
   Btn = MenuTextButton(NewChild(MenuBigTextButton));
   Btn.SetPos(ChoicesStartX, currentY);
   Btn.Text = "Player Setup";
-  Btn.Activated = ActivatePlayerSetup;
+  Btn.Activated = &ActivatePlayerSetup;
   currentY += Btn.Height;
 }
 

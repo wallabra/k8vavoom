@@ -52,7 +52,7 @@ override void CreateChoices () {
   MenuBigTextButton btn = MenuBigTextButton(NewChild(MenuBigTextButton));
   btn.SetPos(ChoicesStartX, currentY);
   btn.Text = "Quit game";
-  btn.Activated = ActivateQuit;
+  btn.Activated = &ActivateQuit;
 }
 
 

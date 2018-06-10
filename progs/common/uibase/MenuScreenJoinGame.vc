@@ -44,14 +44,14 @@ override void CreateChoices()
   Btn.SetPos(ChoicesStartX, currentY);
   Btn.Text = "Search for internet games...";
   Btn.TextHAlign = hleft;
-  Btn.Activated = ActivateMasterSearch;
+  Btn.Activated = &ActivateMasterSearch;
   currentY += Btn.Height;
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetPos(ChoicesStartX, currentY);
   Btn.Text = "Search for LAN games...";
   Btn.TextHAlign = hleft;
-  Btn.Activated = ActivateSearch;
+  Btn.Activated = &ActivateSearch;
   currentY += Btn.Height;
 
   JoinAt = MenuInputLine(NewChild(MenuInputLine));
@@ -62,7 +62,7 @@ override void CreateChoices()
   } else {
     JoinAt.Value = "127.0.0.1";
   }
-  JoinAt.ValueChanged = ChangedJoinAt;
+  JoinAt.ValueChanged = &ChangedJoinAt;
   currentY += JoinAt.Height;
 }
 

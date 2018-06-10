@@ -44,7 +44,7 @@ override void CreateChoices()
   Slider.MinValue = 3.0;
   Slider.MaxValue = 11.0;
   Slider.SetInitialValue(itof(GetCvar('screen_size')));
-  Slider.ValueChanging = ChangeScreenSize;
+  Slider.ValueChanging = &ChangeScreenSize;
   currentY += Slider.Height;
 
   Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
@@ -52,7 +52,7 @@ override void CreateChoices()
   Slider.Text = "Brightness";
   Slider.MaxValue = 4.0;
   Slider.SetInitialValue(itof(GetCvar('brightness')));
-  Slider.ValueChanging = ChangeBrightness;
+  Slider.ValueChanging = &ChangeBrightness;
   currentY += Slider.Height;
 
   Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
@@ -60,7 +60,7 @@ override void CreateChoices()
   Slider.Text = "Menu darkness";
   Slider.ValueDelta = 0.1;
   Slider.SetInitialValue(GetCvarF('menu_darkening'));
-  Slider.ValueChanging = ChangeDarkening;
+  Slider.ValueChanging = &ChangeDarkening;
   currentY += Slider.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -71,7 +71,7 @@ override void CreateChoices()
   Enum.AddItem("Angle");
   Enum.AddItem("Dot");
   Enum.SetInitialValue(GetCvar('crosshair'));
-  Enum.ValueChanging = ChangeCrosshair;
+  Enum.ValueChanging = &ChangeCrosshair;
   currentY += Enum.Height;
 
   Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
@@ -79,7 +79,7 @@ override void CreateChoices()
   Slider.Text = "Crosshair Transparency";
   Slider.ValueDelta = 0.1;
   Slider.SetInitialValue(GetCvarF('crosshair_alpha'));
-  Slider.ValueChanging = ChangeCrosshairAlpha;
+  Slider.ValueChanging = &ChangeCrosshairAlpha;
   currentY += Slider.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -90,42 +90,42 @@ override void CreateChoices()
   Enum.EnumNames[1] = "Regular";
   Enum.EnumNames[2] = "Advanced";
   Enum.SetInitialValue(GetCvar('r_level_renderer'));
-  Enum.ValueChanging = ChangeLevelRenderer;
+  Enum.ValueChanging = &ChangeLevelRenderer;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Smooth particles";
   Enum.SetInitialValue(GetCvar('gl_smooth_particles'));
-  Enum.ValueChanging = ChangeSmoothParticles;
+  Enum.ValueChanging = &ChangeSmoothParticles;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "High Resolution Textures";
   Enum.SetInitialValue(GetCvar('r_hirestex'));
-  Enum.ValueChanging = ChangeHiRestex;
+  Enum.ValueChanging = &ChangeHiRestex;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Render Enemy Models";
   Enum.SetInitialValue(GetCvar('r_models'));
-  Enum.ValueChanging = ChangeModels;
+  Enum.ValueChanging = &ChangeModels;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Render Weapon Models";
   Enum.SetInitialValue(GetCvar('r_view_models'));
-  Enum.ValueChanging = ChangeViewModels;
+  Enum.ValueChanging = &ChangeViewModels;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Sprites Offset";
   Enum.SetInitialValue(GetCvar('r_fix_sprite_offsets'));
-  Enum.ValueChanging = ChangeFixSpriteOffsets;
+  Enum.ValueChanging = &ChangeFixSpriteOffsets;
   currentY += Enum.Height;
 
   Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
@@ -134,14 +134,14 @@ override void CreateChoices()
   Slider.MinValue = -255.0;
   Slider.MaxValue = 255.0;
   Slider.SetInitialValue(itof(GetCvar('r_sprite_fix_delta')));
-  Slider.ValueChanging = ChangeSpriteFixDelta;
+  Slider.ValueChanging = &ChangeSpriteFixDelta;
   currentY += Slider.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "FPS Counter";
   Enum.SetInitialValue(GetCvar('draw_fps'));
-  Enum.ValueChanging = ChangeDrawFps;
+  Enum.ValueChanging = &ChangeDrawFps;
   currentY += Enum.Height;
 
   CreateOnOffCvar("Interface filtering", 'gl_2d_filtering');
@@ -149,7 +149,7 @@ override void CreateChoices()
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Advanced Video options";
-  Btn.Activated = ActivateAdvanced;
+  Btn.Activated = &ActivateAdvanced;
 }
 
 //==========================================================================

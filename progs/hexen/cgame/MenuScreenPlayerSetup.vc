@@ -54,7 +54,7 @@ override void CreateChoices()
   PName.CursorXOffs = -10;
   PName.Text = "Name";
   PName.Value = GetCvarS('Name');
-  PName.ValueChanged = ChangeName;
+  PName.ValueChanged = &ChangeName;
   currentY += PName.Height;
 
   EPClass = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -64,7 +64,7 @@ override void CreateChoices()
   EPClass.AddItem("cleric");
   EPClass.AddItem("mage");
   EPClass.SetInitialValue(GetCvar('class'));
-  EPClass.ValueChanging = ChangeClass;
+  EPClass.ValueChanging = &ChangeClass;
   currentY += EPClass.Height;
 
   int Col = ParseColour(GetCvarS('colour'));
@@ -74,7 +74,7 @@ override void CreateChoices()
   ColR.Text = "Red";
   ColR.ValueDelta = 0.1;
   ColR.SetInitialValue(itof((Col >> 16) & 0xff) / 255.0);
-  ColR.ValueChanging = ChangeColour;
+  ColR.ValueChanging = &ChangeColour;
   currentY += ColR.Height;
 
   ColG = NewChild(MenuChoiceSlider);
@@ -82,7 +82,7 @@ override void CreateChoices()
   ColG.Text = "Green";
   ColG.ValueDelta = 0.1;
   ColG.SetInitialValue(itof((Col >> 8) & 0xff) / 255.0);
-  ColG.ValueChanging = ChangeColour;
+  ColG.ValueChanging = &ChangeColour;
   currentY += ColG.Height;
 
   ColB = NewChild(MenuChoiceSlider);
@@ -90,7 +90,7 @@ override void CreateChoices()
   ColB.Text = "Blue";
   ColB.ValueDelta = 0.1;
   ColB.SetInitialValue(itof(Col & 0xff) / 255.0);
-  ColB.ValueChanging = ChangeColour;
+  ColB.ValueChanging = &ChangeColour;
   currentY += ColB.Height;
 
   Anim = MenuSpriteAnim(NewChild(MenuSpriteAnim));

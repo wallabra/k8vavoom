@@ -40,7 +40,7 @@ override void CreateChoices () {
   startGame = MenuTextButton(NewChild(MenuSmallTextButton));
   startGame.SetOrigin(ChoicesStartX, currentY);
   startGame.Text = "Start Game";
-  startGame.Activated = ActivateStartNewGame;
+  startGame.Activated = &ActivateStartNewGame;
   currentY += startGame.Height;
 
   Players = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -108,7 +108,7 @@ override void CreateChoices () {
       if (WadLumpPresent('e4m1')) Episode.AddItem("Thy Flesh Consumed");
     }
     Episode.SetSessionCvar('_netgame_episode_', 0);
-    Episode.ValueChanging = ChangedEpisode;
+    Episode.ValueChanging = &ChangedEpisode;
     currentY += Episode.Height;
   }
 

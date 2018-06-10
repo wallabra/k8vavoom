@@ -47,7 +47,7 @@ override void CreateChoices()
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currY);
   Btn.Text = "Start Game";
-  Btn.Activated = ActivateStartNewGame;
+  Btn.Activated = &ActivateStartNewGame;
   currY += Btn.Height;
 
   Players = MenuChoiceEnum(NewChild(MenuChoiceEnum));

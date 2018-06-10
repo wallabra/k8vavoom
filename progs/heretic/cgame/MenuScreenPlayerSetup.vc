@@ -46,7 +46,7 @@ override void CreateChoices()
   PlayerName.CursorXOffs = -10;
   PlayerName.Text = "Name";
   PlayerName.Value = GetCvarS('Name');
-  PlayerName.ValueChanged = ChangeName;
+  PlayerName.ValueChanged = &ChangeName;
   currY += PlayerName.Height;
 
   int Col = ParseColour(GetCvarS('colour'));
@@ -56,7 +56,7 @@ override void CreateChoices()
   ColR.Text = "Red";
   ColR.ValueDelta = 0.1;
   ColR.SetInitialValue(itof((Col >> 16) & 0xff) / 255.0);
-  ColR.ValueChanging = ChangeColour;
+  ColR.ValueChanging = &ChangeColour;
   currY += ColR.Height;
 
   ColG = NewChild(MenuChoiceSlider);
@@ -64,7 +64,7 @@ override void CreateChoices()
   ColG.Text = "Green";
   ColG.ValueDelta = 0.1;
   ColG.SetInitialValue(itof((Col >> 8) & 0xff) / 255.0);
-  ColG.ValueChanging = ChangeColour;
+  ColG.ValueChanging = &ChangeColour;
   currY += ColG.Height;
 
   ColB = NewChild(MenuChoiceSlider);
@@ -72,7 +72,7 @@ override void CreateChoices()
   ColB.Text = "Blue";
   ColB.ValueDelta = 0.1;
   ColB.SetInitialValue(itof(Col & 0xff) / 255.0);
-  ColB.ValueChanging = ChangeColour;
+  ColB.ValueChanging = &ChangeColour;
   currY += ColB.Height;
 
   R_InstallSprite("PLAY", 500);

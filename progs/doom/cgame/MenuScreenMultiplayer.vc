@@ -35,7 +35,7 @@ override void CreateChoices () {
   auto Btn = MenuTextButton(NewChild(MenuBigTextButton));
   Btn.SetPos(ChoicesStartX, currentY);
   Btn.Text = "New Game";
-  Btn.Activated = ActivateNewGame;
+  Btn.Activated = &ActivateNewGame;
   currentY += Btn.Height;
 
   CreateSubMenuBigText("Join Game", MenuScreenJoinGame);

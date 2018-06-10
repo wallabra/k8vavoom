@@ -48,7 +48,7 @@ override void CreateChoices()
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currY);
   Btn.Text = "Start Game";
-  Btn.Activated = ActivateStartNewGame;
+  Btn.Activated = &ActivateStartNewGame;
   currY += Btn.Height;
 
   Players = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -119,7 +119,7 @@ override void CreateChoices()
       Episode.AddItem("THE STAGNANT DEMESNE");
     }
   }
-  Episode.ValueChanging = ChangeEpisode;
+  Episode.ValueChanging = &ChangeEpisode;
   currY += Episode.Height;
 
   Level = MenuChoiceEnum(NewChild(MenuChoiceEnum));

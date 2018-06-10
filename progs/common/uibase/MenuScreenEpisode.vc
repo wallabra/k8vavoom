@@ -61,7 +61,7 @@ override void CreateChoices()
       Epi.Text = EDef->Text;
     }
     Epi.EDef = EDef;
-    Epi.Activated = ActivateEpisode;
+    Epi.Activated = &ActivateEpisode;
     currentY += Epi.Height;
   }
 }

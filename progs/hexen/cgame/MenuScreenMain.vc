@@ -80,31 +80,31 @@ override void CreateChoices()
   btn = MenuBigTextButton(NewChild(MenuBigTextButton));
   btn.SetPos(ChoicesStartX, currentY);
   btn.Text = "Single Player";
-  btn.Activated = ActivateSP;
+  btn.Activated = &ActivateSP;
   currentY += btn.Height;
 
   btn = MenuBigTextButton(NewChild(MenuBigTextButton));
   btn.SetPos(ChoicesStartX, currentY);
   btn.Text = "Multiplayer";
-  btn.Activated = ActivateMP;
+  btn.Activated = &ActivateMP;
   currentY += btn.Height;
 
   btn = MenuBigTextButton(NewChild(MenuBigTextButton));
   btn.SetPos(ChoicesStartX, currentY);
   btn.Text = "Options";
-  btn.Activated = ActivateOpt;
+  btn.Activated = &ActivateOpt;
   currentY += btn.Height;
 
   btn = MenuBigTextButton(NewChild(MenuBigTextButton));
   btn.SetPos(ChoicesStartX, currentY);
   btn.Text = "Help";
-  btn.Activated = ActivateHelp;
+  btn.Activated = &ActivateHelp;
   currentY += btn.Height;
 
   btn = MenuBigTextButton(NewChild(MenuBigTextButton));
   btn.SetPos(ChoicesStartX, currentY);
   btn.Text = "Quit game";
-  btn.Activated = ActivateQuit;
+  btn.Activated = &ActivateQuit;
 }
 
 //==========================================================================

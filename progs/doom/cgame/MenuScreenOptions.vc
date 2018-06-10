@@ -70,7 +70,7 @@ override void CreateChoices()
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Go to console";
-  Btn.Activated = ActivateConsole;
+  Btn.Activated = &ActivateConsole;
   currentY += Btn.Height;
 }
 

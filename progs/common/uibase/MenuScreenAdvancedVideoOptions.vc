@@ -43,21 +43,21 @@ override void CreateChoices()
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Decals";
   Enum.SetInitialValue(GetCvar('decals_enabled'));
-  Enum.ValueChanging = ChangeDecals;
+  Enum.ValueChanging = &ChangeDecals;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Darken lights";
   Enum.SetInitialValue(GetCvar('r_darken'));
-  Enum.ValueChanging = ChangeDarken;
+  Enum.ValueChanging = &ChangeDarken;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Simulate Faded lights";
   Enum.SetInitialValue(GetCvar('r_fade_light'));
-  Enum.ValueChanging = ChangeFade;
+  Enum.ValueChanging = &ChangeFade;
   currentY += Enum.Height;
 
   Slider = NewChild(MenuChoiceSlider);
@@ -67,7 +67,7 @@ override void CreateChoices()
   Slider.MaxValue = 10.0;
   Slider.MinValue = 1.0;
   Slider.SetInitialValue(GetCvarF('r_fade_factor'));
-  Slider.ValueChanging = ChangeFactor;
+  Slider.ValueChanging = &ChangeFactor;
   currentY += Slider.Height;
 
   Slider = NewChild(MenuChoiceSlider);
@@ -77,28 +77,28 @@ override void CreateChoices()
   Slider.MaxValue = 1.0;
   Slider.MinValue = 0.1;
   Slider.SetInitialValue(GetCvarF('r_sky_bright_factor'));
-  Slider.ValueChanging = ChangeSkyFactor;
+  Slider.ValueChanging = &ChangeSkyFactor;
   currentY += Slider.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Extra samples";
   Enum.SetInitialValue(GetCvar('r_extrasamples'));
-  Enum.ValueChanging = ChangeExtraSamples;
+  Enum.ValueChanging = &ChangeExtraSamples;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Dynamic lights";
   Enum.SetInitialValue(GetCvar('r_dynamic'));
-  Enum.ValueChanging = ChangeDynamic;
+  Enum.ValueChanging = &ChangeDynamic;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Clip Dynamic Lights";
   Enum.SetInitialValue(GetCvar('r_dynamic_clip'));
-  Enum.ValueChanging = ChangeDynamicClip;
+  Enum.ValueChanging = &ChangeDynamicClip;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -109,28 +109,28 @@ override void CreateChoices()
   Enum.AddItem("Wide Screen 1 (16:9)");
   Enum.AddItem("Wide Screen 2 (16:10)");
   Enum.SetInitialValue(GetCvar('r_aspect_ratio'));
-  Enum.ValueChanging = ChangeAspectRation;
+  Enum.ValueChanging = &ChangeAspectRation;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Model Dynamic lighting";
   Enum.SetInitialValue(GetCvar('r_model_light'));
-  Enum.ValueChanging = ChangeModelLights;
+  Enum.ValueChanging = &ChangeModelLights;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Model shadows";
   Enum.SetInitialValue(GetCvar('r_model_shadows'));
-  Enum.ValueChanging = ChangeModelShadows;
+  Enum.ValueChanging = &ChangeModelShadows;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Additive Lights";
   Enum.SetInitialValue(GetCvar('r_static_add'));
-  Enum.ValueChanging = ChangeStaticAdd;
+  Enum.ValueChanging = &ChangeStaticAdd;
   currentY += Enum.Height;
 
   Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
@@ -139,14 +139,14 @@ override void CreateChoices()
   Slider.ValueDelta = 0.1;
   Slider.MaxValue = 2.0;
   Slider.SetInitialValue(GetCvarF('r_specular'));
-  Slider.ValueChanging = ChangeSpecular;
+  Slider.ValueChanging = &ChangeSpecular;
   currentY += Slider.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Blend sprite borders";
   Enum.SetInitialValue(GetCvar('gl_blend_sprites'));
-  Enum.ValueChanging = ChangeGlBlendSprites;
+  Enum.ValueChanging = &ChangeGlBlendSprites;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -159,7 +159,7 @@ override void CreateChoices()
   Enum.AddItem("Bilinear");
   Enum.AddItem("Trilinear");
   Enum.SetInitialValue(GetCvar('gl_tex_linear'));
-  Enum.ValueChanging = ChangeGlTexLinear;
+  Enum.ValueChanging = &ChangeGlTexLinear;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -172,21 +172,21 @@ override void CreateChoices()
   Enum.AddItem("Bilinear");
   Enum.AddItem("Trilinear");
   Enum.SetInitialValue(GetCvar('gl_sprite_tex_linear'));
-  Enum.ValueChanging = ChangeGlSprTexLinear;
+  Enum.ValueChanging = &ChangeGlSprTexLinear;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Model Sector Lightning";
   Enum.SetInitialValue(GetCvar('gl_model_lighting'));
-  Enum.ValueChanging = ChangeGlModelLighting;
+  Enum.ValueChanging = &ChangeGlModelLighting;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Specular Highlights";
   Enum.SetInitialValue(GetCvar('gl_specular_highlights'));
-  Enum.ValueChanging = ChangeGlSpecularHighlights;
+  Enum.ValueChanging = &ChangeGlSpecularHighlights;
   currentY += Enum.Height;
 }
 

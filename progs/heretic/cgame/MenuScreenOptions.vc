@@ -42,7 +42,7 @@ override void CreateChoices()
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Controls";
-  Btn.Activated = ActivateControls;
+  Btn.Activated = &ActivateControls;
   currentY += Btn.Height;
 
   /*
@@ -80,44 +80,44 @@ override void CreateChoices()
     Btn = MenuTextButton(NewChild(MenuSmallTextButton));
     Btn.SetOrigin(ChoicesStartX, currentY);
     Btn.Text = "Special Controls";
-    Btn.Activated = ActivateSpecialControls;
+    Btn.Activated = &ActivateSpecialControls;
     currentY += Btn.Height;
   }
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Mouse Options";
-  Btn.Activated = ActivateMouseOpt;
+  Btn.Activated = &ActivateMouseOpt;
   currentY += Btn.Height;
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Screen Resolution";
-  Btn.Activated = ActivateScreenResolution;
+  Btn.Activated = &ActivateScreenResolution;
   currentY += Btn.Height;
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Video options";
-  Btn.Activated = ActivateVideoOpt;
+  Btn.Activated = &ActivateVideoOpt;
   currentY += Btn.Height;
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Sound Settings";
-  Btn.Activated = ActivateSoundOpt;
+  Btn.Activated = &ActivateSoundOpt;
   currentY += Btn.Height;
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Gameplay options";
-  Btn.Activated = ActivateGameplayOpt;
+  Btn.Activated = &ActivateGameplayOpt;
   currentY += Btn.Height;
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Go to console";
-  Btn.Activated = ActivateConsole;
+  Btn.Activated = &ActivateConsole;
   currentY += Btn.Height;
 }
 

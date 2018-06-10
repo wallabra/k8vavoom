@@ -44,7 +44,7 @@ override void CreateChoices()
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "External Music";
   Enum.SetInitialValue(GetCvar('snd_external_music'));
-  Enum.ValueChanging = ChangeExternalMusic;
+  Enum.ValueChanging = &ChangeExternalMusic;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -53,7 +53,7 @@ override void CreateChoices()
   Enum.AddItem("System MIDI Device");
   Enum.AddItem("Timidity");
   Enum.SetInitialValue(GetCvar('snd_mid_player'));
-  Enum.ValueChanging = ChangeMIDIPlayer;
+  Enum.ValueChanging = &ChangeMIDIPlayer;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -62,13 +62,13 @@ override void CreateChoices()
   Enum.AddItem("MikMod");
   Enum.AddItem("MODPlug");
   Enum.SetInitialValue(GetCvar('snd_mod_player'));
-  Enum.ValueChanging = ChangeMODPlayer;
+  Enum.ValueChanging = &ChangeMODPlayer;
   currentY += Enum.Height;
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "MOD Output Options";
-  Btn.Activated = ActivateMODOptions;
+  Btn.Activated = &ActivateMODOptions;
   currentY += Btn.Height + 10;
 
   Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
@@ -76,7 +76,7 @@ override void CreateChoices()
   Slider.Text = "Music volume";
   Slider.ValueDelta = 0.1;
   Slider.SetInitialValue(GetCvarF('snd_music_volume'));
-  Slider.ValueChanging = ChangeMusicVolume;
+  Slider.ValueChanging = &ChangeMusicVolume;
   currentY += Slider.Height;
 
   Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
@@ -84,7 +84,7 @@ override void CreateChoices()
   Slider.Text = "Sound volume";
   Slider.ValueDelta = 0.1;
   Slider.SetInitialValue(GetCvarF('snd_sfx_volume'));
-  Slider.ValueChanging = ChangeSoundVolume;
+  Slider.ValueChanging = &ChangeSoundVolume;
   currentY += Slider.Height;
 
   Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
@@ -94,14 +94,14 @@ override void CreateChoices()
   Slider.MaxValue = 256.0;
   Slider.ValueDelta = 8.0;
   Slider.SetInitialValue(itof(GetCvar('snd_channels')));
-  Slider.ValueChanging = ChangeSoundChannels;
+  Slider.ValueChanging = &ChangeSoundChannels;
   currentY += Slider.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Swap stereo";
   Enum.SetInitialValue(GetCvar('snd_swap_stereo'));
-  Enum.ValueChanging = ChangeSwapStereo;
+  Enum.ValueChanging = &ChangeSwapStereo;
 }
 
 //==========================================================================

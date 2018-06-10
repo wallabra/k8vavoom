@@ -104,7 +104,7 @@ override void CreateChoices()
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currY);
   Btn.Text = "Set Resolution";
-  Btn.Activated = ActivateSetMode;
+  Btn.Activated = &ActivateSetMode;
 }
 
 //==========================================================================

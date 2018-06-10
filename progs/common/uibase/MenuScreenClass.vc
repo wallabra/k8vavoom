@@ -93,9 +93,9 @@ override void CreateChoices()
     Btn.SetPos(ChoicesStartX, currentY);
     Btn.Text = class<PlayerPawn>(ClGame.Game.PlayerClasses[
       i]).default.DisplayName;
-    Btn.FocusLost = PClassItemFocusLost;
-    Btn.FocusReceived = PClassItemFocusReceived;
-    Btn.Activated = PClassItemActivate;
+    Btn.FocusLost = &PClassItemFocusLost;
+    Btn.FocusReceived = &PClassItemFocusReceived;
+    Btn.Activated = &PClassItemActivate;
     Btn.Index = i;
     currentY += Btn.Height;
     if (i == 0)

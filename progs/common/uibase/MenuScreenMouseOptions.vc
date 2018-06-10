@@ -45,7 +45,7 @@ override void CreateChoices()
   Slider.ValueDelta = 0.25;
   Slider.MaxValue = 10.0;
   Slider.SetInitialValue(GetCvarF('mouse_x_sensitivity'));
-  Slider.ValueChanging = ChangeMouseXSens;
+  Slider.ValueChanging = &ChangeMouseXSens;
   currentY += Slider.Height;
 
   Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
@@ -54,42 +54,42 @@ override void CreateChoices()
   Slider.ValueDelta = 0.25;
   Slider.MaxValue = 10.0;
   Slider.SetInitialValue(GetCvarF('mouse_y_sensitivity'));
-  Slider.ValueChanging = ChangeMouseYSens;
+  Slider.ValueChanging = &ChangeMouseYSens;
   currentY += Slider.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Mouse look";
   Enum.SetInitialValue(GetCvar('mouse_look'));
-  Enum.ValueChanging = ChangeMouseLook;
+  Enum.ValueChanging = &ChangeMouseLook;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Invert mouse";
   Enum.SetInitialValue(GetCvar('invert_mouse'));
-  Enum.ValueChanging = ChangeInvertMouse;
+  Enum.ValueChanging = &ChangeInvertMouse;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Look spring";
   Enum.SetInitialValue(GetCvar('lookspring'));
-  Enum.ValueChanging = ChangeLookSpring;
+  Enum.ValueChanging = &ChangeLookSpring;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Look strafe";
   Enum.SetInitialValue(GetCvar('lookstrafe'));
-  Enum.ValueChanging = ChangeLookStrafe;
+  Enum.ValueChanging = &ChangeLookStrafe;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Allow mouse in UI";
   Enum.SetInitialValue(GetCvar('ui_mouse'));
-  Enum.ValueChanging = ChangeUIMouse;
+  Enum.ValueChanging = &ChangeUIMouse;
   currentY += Enum.Height;
 }
 

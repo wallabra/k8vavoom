@@ -64,7 +64,7 @@ override void CreateChoices()
   Enum.AddItem("Purple");
   Enum.AddItem("Dark Gray");
   Enum.SetInitialValue(GetCvar('font_colour'));
-  Enum.ValueChanging = ChangeFontColour;
+  Enum.ValueChanging = &ChangeFontColour;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -92,35 +92,35 @@ override void CreateChoices()
   Enum.AddItem("Purple");
   Enum.AddItem("Dark Gray");
   Enum.SetInitialValue(GetCvar('font_colour2'));
-  Enum.ValueChanging = ChangeFontColour2;
+  Enum.ValueChanging = &ChangeFontColour2;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Monsters Backing Off";
   Enum.SetInitialValue(GetCvar('monster_backing'));
-  Enum.ValueChanging = ChangeMonstersBacking;
+  Enum.ValueChanging = &ChangeMonstersBacking;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Damage Thrust";
   Enum.SetInitialValue(GetCvar('damage_thrust'));
-  Enum.ValueChanging = ChangeDamageThrust;
+  Enum.ValueChanging = &ChangeDamageThrust;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Monsters can drop off";
   Enum.SetInitialValue(GetCvar('monster_dropoff'));
-  Enum.ValueChanging = ChangeDropOff;
+  Enum.ValueChanging = &ChangeDropOff;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Optional Fuzzy Effect";
   Enum.SetInitialValue(GetCvar('r_drawfuzz'));
-  Enum.ValueChanging = ChangeFuzz;
+  Enum.ValueChanging = &ChangeFuzz;
   currentY += Enum.Height;
 
   Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
@@ -128,7 +128,7 @@ override void CreateChoices()
   Slider.Text = "Optional Translucency";
   Slider.ValueDelta = 0.05;
   Slider.SetInitialValue(GetCvarF('transsouls'));
-  Slider.ValueChanging = ChangeTrans;
+  Slider.ValueChanging = &ChangeTrans;
   currentY += Slider.Height;
 }
 

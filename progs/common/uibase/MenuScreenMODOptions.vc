@@ -48,42 +48,42 @@ override void CreateChoices()
     Enum.AddItem("Spline");
     Enum.AddItem("FIR");
     Enum.SetInitialValue(GetCvar('snd_modplug_hqmixer'));
-    Enum.ValueChanging = ChangeModplugHQMixer;
+    Enum.ValueChanging = &ChangeModplugHQMixer;
     currentY += Enum.Height;
 
     Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
     Enum.SetOrigin(ChoicesStartX, currentY);
     Enum.Text = "Modplug oversampling";
     Enum.SetInitialValue(GetCvar('snd_modplug_oversampling'));
-    Enum.ValueChanging = ChangeModplugOversampling;
+    Enum.ValueChanging = &ChangeModplugOversampling;
     currentY += Enum.Height;
 
     Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
     Enum.SetOrigin(ChoicesStartX, currentY);
     Enum.Text = "Modplug Noise Reduction";
     Enum.SetInitialValue(GetCvar('snd_modplug_noise_reduction'));
-    Enum.ValueChanging = ChangeModplugNoiseReduction;
+    Enum.ValueChanging = &ChangeModplugNoiseReduction;
     currentY += Enum.Height;
 
     Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
     Enum.SetOrigin(ChoicesStartX, currentY);
     Enum.Text = "Modplug Reverb";
     Enum.SetInitialValue(GetCvar('snd_modplug_reverb'));
-    Enum.ValueChanging = ChangeModplugReverb;
+    Enum.ValueChanging = &ChangeModplugReverb;
     currentY += Enum.Height;
 
     Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
     Enum.SetOrigin(ChoicesStartX, currentY);
     Enum.Text = "Modplug Mega Bass";
     Enum.SetInitialValue(GetCvar('snd_modplug_megabass'));
-    Enum.ValueChanging = ChangeModplugMegaBass;
+    Enum.ValueChanging = &ChangeModplugMegaBass;
     currentY += Enum.Height;
 
     Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
     Enum.SetOrigin(ChoicesStartX, currentY);
     Enum.Text = "Modplug Surround";
     Enum.SetInitialValue(GetCvar('snd_modplug_surround'));
-    Enum.ValueChanging = ChangeModplugSurround;
+    Enum.ValueChanging = &ChangeModplugSurround;
     currentY += Enum.Height + 10;
   }
   if (GetCvar('snd_mod_player') == 0)
@@ -92,42 +92,42 @@ override void CreateChoices()
     Enum.SetOrigin(ChoicesStartX, currentY);
     Enum.Text = "MikMod HQ Mixer";
     Enum.SetInitialValue(GetCvar('snd_mikmod_hqmixer'));
-    Enum.ValueChanging = ChangeMikModHQMixer;
+    Enum.ValueChanging = &ChangeMikModHQMixer;
     currentY += Enum.Height;
 
     Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
     Enum.SetOrigin(ChoicesStartX, currentY);
     Enum.Text = "MikMod Float Output";
     Enum.SetInitialValue(GetCvar('snd_mikmod_float'));
-    Enum.ValueChanging = ChangeMikModFloatOutput;
+    Enum.ValueChanging = &ChangeMikModFloatOutput;
     currentY += Enum.Height;
 
     Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
     Enum.SetOrigin(ChoicesStartX, currentY);
     Enum.Text = "MikMod Surround Sound";
     Enum.SetInitialValue(GetCvar('snd_mikmod_surround'));
-    Enum.ValueChanging = ChangeMikModSurroundSound;
+    Enum.ValueChanging = &ChangeMikModSurroundSound;
     currentY += Enum.Height;
 
     Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
     Enum.SetOrigin(ChoicesStartX, currentY);
     Enum.Text = "MikMod Interpolation";
     Enum.SetInitialValue(GetCvar('snd_mikmod_interpolation'));
-    Enum.ValueChanging = ChangeMikModInterpolation;
+    Enum.ValueChanging = &ChangeMikModInterpolation;
     currentY += Enum.Height;
 
     Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
     Enum.SetOrigin(ChoicesStartX, currentY);
     Enum.Text = "MikMod Reverse Stereo";
     Enum.SetInitialValue(GetCvar('snd_mikmod_reverse_stereo'));
-    Enum.ValueChanging = ChangeMikModReverseStereo;
+    Enum.ValueChanging = &ChangeMikModReverseStereo;
     currentY += Enum.Height;
 
     Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
     Enum.SetOrigin(ChoicesStartX, currentY);
     Enum.Text = "MikMod Noise Reduction";
     Enum.SetInitialValue(GetCvar('snd_mikmod_lowpass'));
-    Enum.ValueChanging = ChangeMikModLowPass;
+    Enum.ValueChanging = &ChangeMikModLowPass;
   }
 }
 
