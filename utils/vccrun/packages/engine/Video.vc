@@ -36,7 +36,11 @@ native final static void setSmoothLine (bool v);
 
 native final static void setColor (int r, int g, int b, optional int a);
 native final static void setAlpha (int a);
+// r is low byte
 final static void setColorRGBA (int rgba) { setColor(rgba&0xff, (rgba>>8)&0xff, (rgba>>16)&0xff, (rgba>>24)&0xff); }
+// b is low byte
+final static void setColorARGB (int rgba) { setColor((rgba>>16)&0xff, (rgba>>8)&0xff, rgba&0xff, (rgba>>24)&0xff); }
+final static void setColorRGB (int rgba) { setColor((rgba>>16)&0xff, (rgba>>8)&0xff, rgba&0xff, 255); }
 
 native final static int colorR ();
 native final static int colorG ();
@@ -98,12 +102,12 @@ final static void drawBevel (int x0, int y0, int awidth, int aheight, int rgbaup
 }
 
 
-/* `Video.prop` is not not working yet
-int width {
-  get { return getWidth(); }
+final int colorRGBA {
+  get { return Video.colorB|(Video.colorG<<8)|(Video.colorR<<16)|(Video.colorA<<24); }
+  set { Video.setColorARGB(value); }
 }
 
-int height {
-  get { return getHeight(); }
+final int colorRGB {
+  get { return Video.colorB|(Video.colorG<<8)|(Video.colorR<<16); }
+  set { Video.setColorRGB(value); }
 }
-*/
