@@ -298,7 +298,7 @@ VStr VStr::chopLeft (int len) const {
 VStr VStr::chopRight (int len) const {
   if (len < 1) return VStr(*this);
   if ((size_t)len >= length()) return VStr();
-  return this->mid(0, len);
+  return this->mid(0, length()-len);
 }
 
 
