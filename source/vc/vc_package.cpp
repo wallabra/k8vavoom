@@ -714,6 +714,15 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
 // VPackage::LoadObject
 //
 //==========================================================================
+static const char *pkgImportFiles[] = {
+  "0package.vc",
+  "package.vc",
+  "0classes.vc",
+  "classes.vc",
+  nullptr
+};
+
+
 void VPackage::LoadObject (TLocation l) {
   guard(VPackage::LoadObject);
 
@@ -736,13 +745,15 @@ void VPackage::LoadObject (TLocation l) {
   dprintf("Loading package '%s'...\n", *Name);
 
   for (int i = 0; i < GPackagePath.Num(); ++i) {
-    VStr mainVC = GPackagePath[i]+"/"+Name+"/classes.vc";
-    VStream *Strm = fsysOpenFile(*mainVC);
-    if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+    for (const char **pif = pkgImportFiles; *pif; ++pif) {
+      VStr mainVC = GPackagePath[i]+"/"+Name+"/"+(*pif);
+      VStream *Strm = fsysOpenFile(*mainVC);
+      if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+    }
   }
 
-  {
-    VStr mainVC = VStr("packages/")+Name+"/classes.vc";
+  for (const char **pif = pkgImportFiles; *pif; ++pif) {
+    VStr mainVC = VStr("packages/")+Name+"/"+(*pif);
     VStream *Strm = fsysOpenFile(*mainVC);
     if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
   }
@@ -760,12 +771,14 @@ void VPackage::LoadObject (TLocation l) {
   VStr mainVC = va("progs/%s.dat", *Name);
   VStream *Strm = FL_OpenFileRead(*mainVC);
   if (!Strm) {
-    mainVC = va("progs/%s/classes.vc", *Name);
-    if (FL_FileExists(*mainVC)) {
-      // compile package
-      Strm = FL_OpenFileRead(*mainVC);
-      LoadSourceObject(Strm, mainVC, l);
-      return;
+    for (const char **pif = pkgImportFiles; *pif; ++pif) {
+      mainVC = va("progs/%s/%s", *Name, *pif);
+      if (FL_FileExists(*mainVC)) {
+        // compile package
+        Strm = FL_OpenFileRead(*mainVC);
+        LoadSourceObject(Strm, mainVC, l);
+        return;
+      }
     }
     Sys_Error("Progs package %s not found", *Name);
   }
