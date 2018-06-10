@@ -1184,6 +1184,14 @@ IMPLEMENT_FUNCTION(VVideo, requestRefresh) {
 }
 
 
+IMPLEMENT_FUNCTION(VVideo, getScissorEnabled) {
+  if (mInited) {
+    RET_BOOL((glIsEnabled(GL_SCISSOR_TEST) ? 1 : 0));
+  } else {
+    RET_BOOL(0);
+  }
+}
+
 IMPLEMENT_FUNCTION(VVideo, setScissorEnabled) {
   P_GET_BOOL(v);
   if (mInited) {

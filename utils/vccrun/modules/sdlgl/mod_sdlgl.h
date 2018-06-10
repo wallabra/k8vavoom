@@ -115,6 +115,7 @@ public:
   DECLARE_FUNCTION(requestRefresh)
   DECLARE_FUNCTION(requestQuit)
 
+  DECLARE_FUNCTION(getScissorEnabled)
   DECLARE_FUNCTION(setScissorEnabled)
   DECLARE_FUNCTION(getScissor)
   DECLARE_FUNCTION(setScissor)

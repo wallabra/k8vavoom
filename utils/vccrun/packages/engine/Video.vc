@@ -24,6 +24,7 @@ native final static void runEventLoop ();
 native final static void requestRefresh ();
 native final static void requestQuit ();
 
+native final static bool getScissorEnabled ();
 native final static void setScissorEnabled (bool v);
 native final static void getScissor (ScissorRect *sr);
 native final static void setScissor (ScissorRect *sr);
@@ -63,6 +64,13 @@ native final static void fillRect (int x0, int y0, int w, int h);
 final static bool scissorCombine (int x0, int y0, int w, int h) {
   ScissorRect sr;
   getScissor(&sr);
+  if (!sr.enabled) {
+    sr.x = 0;
+    sr.y = 0;
+    sr.w = Video.screenWidth;
+    sr.h = Video.screenHeight;
+    sr.enabled = true;
+  }
   if (sr.w < 1 || sr.h < 1) return false; // nothing to do
   if (w < 1 || h < 1) {
     sr.w = 0;
@@ -110,4 +118,9 @@ final int colorRGBA {
 final int colorRGB {
   get { return Video.colorB|(Video.colorG<<8)|(Video.colorR<<16); }
   set { Video.setColorRGB(value); }
+}
+
+final bool scissorEnabled {
+  get { return Video.getScissorEnabled(); }
+  set { Video.setScissorEnabled(value); }
 }
