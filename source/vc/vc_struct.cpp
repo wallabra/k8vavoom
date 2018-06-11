@@ -87,6 +87,26 @@ VName VStruct::ResolveAlias (VName aname) {
 void VStruct::Serialise (VStream &Strm) {
   guard(VStruct::Serialise);
   VMemberBase::Serialise(Strm);
+  vuint32 acount = AliasList.count();
+  Strm << acount;
+  if (Strm.IsLoading()) {
+    AliasFrameNum = 0;
+    AliasList.clear();
+    while (acount-- > 0) {
+      VName key;
+      AliasInfo ai;
+      Strm << key << ai.aliasName << ai.origName;
+      ai.aframe = 0;
+      AliasList.put(key, ai);
+    }
+  } else {
+    for (auto it = AliasList.first(); it; ++it) {
+      VName key = it.getKey();
+      Strm << key;
+      auto ai = it.getValue();
+      Strm << ai.aliasName << ai.origName;
+    }
+  }
   Strm << ParentStruct
     << IsVector
     << STRM_INDEX(StackSize)

@@ -327,6 +327,26 @@ void VClass::Serialise (VStream &Strm) {
 #if !defined(IN_VCC)
   VClass *PrevParent = ParentClass;
 #endif
+  vuint32 acount = AliasList.count();
+  Strm << acount;
+  if (Strm.IsLoading()) {
+    AliasFrameNum = 0;
+    AliasList.clear();
+    while (acount-- > 0) {
+      VName key;
+      AliasInfo ai;
+      Strm << key << ai.aliasName << ai.origName;
+      ai.aframe = 0;
+      AliasList.put(key, ai);
+    }
+  } else {
+    for (auto it = AliasList.first(); it; ++it) {
+      VName key = it.getKey();
+      Strm << key;
+      auto ai = it.getValue();
+      Strm << ai.aliasName << ai.origName;
+    }
+  }
   Strm << ParentClass
     << Fields
     << States
@@ -335,7 +355,7 @@ void VClass::Serialise (VStream &Strm) {
     << RepInfos
     << StateLabels;
 #if !defined(IN_VCC)
-  if ((ObjectFlags & CLASSOF_Native) && ParentClass != PrevParent) {
+  if ((ObjectFlags&CLASSOF_Native) != 0 && ParentClass != PrevParent) {
     Sys_Error("Bad parent class, class %s, C++ %s, VavoomC %s)",
       GetName(), PrevParent ? PrevParent->GetName() : "(none)",
       ParentClass ? ParentClass->GetName() : "(none)");
