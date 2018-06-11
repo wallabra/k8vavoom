@@ -859,7 +859,7 @@ void VLexer::ProcessNumberToken () {
 
   if (currCh == '.') {
     char nch = Peek(1);
-    if (isAlpha(nch) || nch == '_') {
+    if (isAlpha(nch) || nch == '_' || nch == '.') {
       // num dot smth
       return; // so 10.seconds is allowed
     } else {
