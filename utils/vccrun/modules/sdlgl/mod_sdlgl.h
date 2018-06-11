@@ -154,7 +154,9 @@ private:
   int rc;
   VStr mPath;
 
+public:
   const VStr &getPath () const { return mPath; }
+  int getRC () const { return rc; }
 
 public:
   VImage *img;

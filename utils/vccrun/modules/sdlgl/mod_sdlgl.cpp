@@ -457,7 +457,10 @@ VGLTexture *VGLTexture::load (const VStr &fname) {
   VStr rname = fsysFileFindAnyExt(fname);
   if (rname.length() == 0) return nullptr;
   VGLTexture **loaded = txLoaded.find(fname);
-  if (loaded) return *loaded;
+  if (loaded) {
+    (*loaded)->addRef();
+    return *loaded;
+  }
   VStream *st = fsysOpenFile(rname);
   if (!st) return nullptr;
   VImage *img = VImage::loadFrom(st);
@@ -466,6 +469,7 @@ VGLTexture *VGLTexture::load (const VStr &fname) {
   VGLTexture *res = new VGLTexture(img);
   res->mPath = rname;
   txLoaded.put(rname, res);
+  //fprintf(stderr, "TXLOADED: '%s' rc=%d, (%p)\n", *res->mPath, res->rc, res);
   return res;
 }
 
@@ -504,7 +508,9 @@ void VGLTexture::blitAt (int dx0, int dy0, float scale) const {
 IMPLEMENT_CLASS(V, Texture);
 
 void VTexture::Destroy () {
+  //fprintf(stderr, "destroying texture object %p\n", this);
   if (tex) {
+    //fprintf(stderr, "  releasing texture '%s'... rc=%d, (%p)\n", *tex->getPath(), tex->getRC(), tex);
     tex->release();
     tex = nullptr;
   }
@@ -544,6 +550,7 @@ IMPLEMENT_FUNCTION(VTexture, load) {
   if (tex) {
     VTexture *ifile = Spawn<VTexture>();
     ifile->tex = tex;
+    //fprintf(stderr, "created texture object %p (%p)\n", ifile, ifile->tex);
     RET_REF((VObject *)ifile);
     return;
   }
