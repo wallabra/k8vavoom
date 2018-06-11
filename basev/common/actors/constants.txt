@@ -11,6 +11,13 @@ const int CMF_AIMDIRECTION      = 2;
 const int CMF_TRACKOWNER      = 4;
 const int CMF_CHECKTARGETDEAD   = 8;
 
+// NOT IMPLEMENTED!
+const int CMF_ABSOLUTEPITCH = 16;
+const int CMF_OFFSETPITCH = 32;
+const int CMF_SAVEPITCH = 64;
+const int CMF_ABSOLUTEANGLE = 128;
+const int CMF_BADPITCH = 256; // for compatibility handling only - avoid!
+
 //  Flags for A_SeekerMissile
 const int SMF_LOOK          = 1;
 const int SMF_PRECISE       = 2;
