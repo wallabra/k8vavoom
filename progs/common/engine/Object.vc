@@ -580,7 +580,7 @@ native static final int P_Random ();
 //  String functions
 //
 
-//  String length
+//  String length (utf8-aware)
 native static final int strlen (string s);
 //  Compare strings
 native static final int strcmp (string s1, string s2);
@@ -592,20 +592,30 @@ native static final string strcat (string s1, string s2);
 native static final string strlwr (string s);
 //  Convert string to uppercase
 native static final string strupr (string s);
-//  Gets a substring
+//  Gets a substring (utf8-aware)
 native static final string substr (string Str, int Start, int Len);
+//  Creates one-char non-utf8 string from the given char code&0xff; 0 is allowed
+native static final string strFromChar (int ch);
+//  Creates one-char utf8 string from the given char code (or empty string if char code is invalid); 0 is allowed
+native static final string strFromCharUtf8 (int ch);
+
 //  Does varargs print into a temporary buffer
 native static final string va (string format, ...);
+
 //  Converts string to integer
 native static final int atoi (string str);
 //  Converts string to float
 native static final float atof (string str);
+
 //  Checks if string starts with given string
 native static final bool StrStartsWith (string Str, string Check);
+alias strStartsWith = StrStartsWith;
 //  Checks if string ends with given string
 native static final bool StrEndsWith (string Str, string Check);
+alias strEndsWith = StrEndsWith;
 //  Replaces substrings with another string
 native static final string StrReplace (string Str, string Search, string Replacement);
+alias strReplace = StrReplace;
 
 //
 //  Printing to console

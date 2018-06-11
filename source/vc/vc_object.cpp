@@ -794,6 +794,24 @@ IMPLEMENT_FUNCTION(VObject, substr) {
   RET_STR(Str.Utf8Substring(Start, Len));
 }
 
+//  Creates one-char non-utf8 string from the given char code&0xff; 0 is allowed
+//native static final string strFromChar (int ch);
+IMPLEMENT_FUNCTION(VObject, strFromChar) {
+  P_GET_INT(ch);
+  ch &= 0xff;
+  VStr s((char)ch);
+  RET_STR(s);
+}
+
+//  Creates one-char utf8 string from the given char code (or empty string if char code is invalid); 0 is allowed
+//native static final string strFromCharUtf8 (int ch);
+IMPLEMENT_FUNCTION(VObject, strFromCharUtf8) {
+  P_GET_INT(ch);
+  VStr s;
+  if (ch >= 0 && ch <= 0x10FFFF) s.utf8Append((vuint32)ch);
+  RET_STR(s);
+}
+
 IMPLEMENT_FUNCTION(VObject, va) {
   RET_STR(PF_FormatString());
 }
