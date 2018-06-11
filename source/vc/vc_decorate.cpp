@@ -1546,8 +1546,20 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
       }
     }
   }
-  sc->Error(va("Unknown flag %s", *FlagName));
-  return false;
+  if (decorate_fail_on_unknown) {
+    sc->Error(va("Unknown flag \"%s\"", *FlagName));
+    return false;
+  }
+  GCon->Logf("WARNING: Unknown flag \"%s\"", *FlagName);
+  /*
+  if (!sc->IsAtEol()) {
+    sc->Crossed = false;
+    while (!sc->AtEnd() && !sc->Crossed) sc->GetString();
+  } else {
+    sc->GetString();
+  }
+  */
+  return true;
   unguard;
 }
 
@@ -2555,7 +2567,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
     if (decorate_fail_on_unknown) {
       sc->Error(va("Unknown property \"%s\"", *Prop));
     } else {
-      GCon->Logf("Unknown property \"%s\"", *Prop);
+      GCon->Logf("WARNING: Unknown property \"%s\"", *Prop);
     }
     if (!sc->IsAtEol()) {
       sc->Crossed = false;
@@ -2892,7 +2904,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
       if (decorate_fail_on_unknown) {
         Sys_Error("Unknown property '%s'", *sc->String);
       } else {
-        GCon->Logf("Unknown property '%s'", *sc->String);
+        GCon->Logf("WARNING: Unknown property '%s'", *sc->String);
       }
       if (!sc->IsAtEol()) {
         sc->Crossed = false;
@@ -3256,7 +3268,7 @@ void VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
       }
     }
   }
-  GCon->Logf("Unknown flag %s", *Flag);
+  GCon->Logf("Unknown flag '%s'", *Flag);
   unguard;
 }
 
