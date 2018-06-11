@@ -405,14 +405,12 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   if (op2) op2 = op2->Resolve(ec);
   if (!op1 || !op2) { delete this; return nullptr; }
 
-  // coerce both to floats
-  //k8:FIXME: simplify this!
+  // coerce both to floats, if necessary
 
   // if op1 is `float` or `vector`, and op2 is integral -> coerce op2
   if ((op1->Type.Type == TYPE_Float || op1->Type.Type == TYPE_Vector) &&
       (op2->Type.Type == TYPE_Int || op2->Type.Type == TYPE_Byte))
   {
-    //printf("*** OP1 require float, and OP2 is integral: COERCING OP2\n");
     op2 = op2->CoerceToFloat();
     if (!op2) { delete this; return nullptr; }
   }
@@ -421,30 +419,16 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   if ((op2->Type.Type == TYPE_Float || op2->Type.Type == TYPE_Vector) &&
       (op1->Type.Type == TYPE_Int || op1->Type.Type == TYPE_Byte))
   {
-    //printf("*** OP2 require float, and OP1 is integral: COERCING OP1\n");
     op1 = op1->CoerceToFloat();
     if (!op1) { delete this; return nullptr; }
   }
 
+  // decorate coercion to float
   if (ec.Package->Name == NAME_decorate) {
     if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Float) {
-      /*
-      VExpression *TmpArgs[1];
-      TmpArgs[0] = op1;
-      op1 = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked(
-        "itof"), nullptr, false, false, op1->Loc, 1, TmpArgs);
-      op1 = op1->Resolve(ec);
-      */
       op1 = (new VScalarToFloat(op1))->Resolve(ec);
       if (!op1) { delete this; return nullptr; } // oops
     } else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Int) {
-      /*
-      VExpression *TmpArgs[1];
-      TmpArgs[0] = op2;
-      op2 = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked(
-        "itof"), nullptr, false, false, op2->Loc, 1, TmpArgs);
-      op2 = op2->Resolve(ec);
-      */
       op2 = (new VScalarToFloat(op2))->Resolve(ec);
       if (!op2) { delete this; return nullptr; } // oops
     }
