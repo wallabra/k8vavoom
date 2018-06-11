@@ -1,0 +1,16 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+static final void main () {
+  string s = "abcdef";
+  for (int f = 0; f < s.length; ++f) {
+    if (s[f] == 'b') writeln("A found at ", f);
+    if (s[f] == "c") writeln("C found at ", f);
+    if ('d' == s[f]) writeln("D found at ", f);
+    if ("e" == s[f]) writeln("E found at ", f);
+  }
+}
+
+
+defaultproperties {
+}
