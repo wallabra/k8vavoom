@@ -359,14 +359,16 @@ void VZipFile::openArchive () {
     int sli = xpfx.IndexOf('/');
     if (sli > 0) {
       xpfx = VStr(xpfx, 0, sli+1); // extract prefix
-      for (int i = 0; i < fileCount; ++i) {
-        if (!files[i].name.startsWith(xpfx)) { canHasPrefix = false; break; }
-      }
-      if (canHasPrefix) {
-        // remove prefix
+      if (!xpfx.startsWith("packages/")) {
         for (int i = 0; i < fileCount; ++i) {
-          files[i].name = VStr(files[i].name, sli+1, files[i].name.Length()-sli-1);
-          //if (files[i].name.length() == 0) { removeAtIndex(i); --i; }
+          if (!files[i].name.startsWith(xpfx)) { canHasPrefix = false; break; }
+        }
+        if (canHasPrefix) {
+          // remove prefix
+          for (int i = 0; i < fileCount; ++i) {
+            files[i].name = VStr(files[i].name, sli+1, files[i].name.Length()-sli-1);
+            //if (files[i].name.length() == 0) { removeAtIndex(i); --i; }
+          }
         }
       }
     }
