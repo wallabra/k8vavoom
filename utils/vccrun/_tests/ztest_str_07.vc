@@ -1,0 +1,13 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+static final void main () {
+  string s = "abc";
+  writeln(s);
+  s[1] = "Z";
+  writeln(s);
+  s[2] = 48;
+  writeln(s);
+  s[0] = '!';
+  writeln(s);
+}
