@@ -47,8 +47,7 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &) override;
-  virtual bool WantsToResolveAssign (VEmitContext &ec, VExpression *val) override;
-  virtual VExpression *ResolveCompleteAssign (VEmitContext &ec, VExpression *val) override;
+  virtual VExpression *ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) override;
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &) override;
 
@@ -74,7 +73,7 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &ec) override;
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &ec) override;
-  virtual bool WantsToResolveAssign (VEmitContext &ec, VExpression *val) override;
+  virtual VExpression *ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) override;
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &ec) override;
 

@@ -294,7 +294,7 @@ enum {
 
   // string slicing
   DECLARE_OPC(StrSlice, None),
-
+  DECLARE_OPC(StrSliceAssign, None),
 
   // string assignment operators
   DECLARE_OPC(AssignStrDrop, None),

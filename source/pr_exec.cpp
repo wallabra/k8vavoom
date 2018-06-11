@@ -1508,7 +1508,7 @@ func_loop:
 
       // [-1]: char
       // [-2]: index
-      // [-3]: string
+      // [-3]: *string
       PR_VM_CASE(OPC_StrSetChar)
         {
           ++ip;
@@ -1540,6 +1540,34 @@ func_loop:
             VStr ns = s->mid(lo, hi-lo);
             s->clear();
             *s = ns;
+          }
+        }
+        PR_VM_BREAK;
+
+      // [-1]: newstr
+      // [-2]: hi
+      // [-3]: lo
+      // [-4]: *string
+      PR_VM_CASE(OPC_StrSliceAssign)
+        {
+          ++ip;
+          int hi = sp[-2].i;
+          int lo = sp[-3].i;
+          VStr ns = *(VStr *)&sp[-1].p;
+          VStr *s = *(VStr **)&sp[-4].p;
+          sp -= 4; // drop everything
+          if (lo < 0 || hi <= lo || lo >= (int)s->length()) {
+            // do nothing
+          } else {
+            if (hi > (int)s->length()) hi = (int)s->length();
+            // get left part
+            VStr ds = (lo > 0 ? s->mid(0, lo) : VStr());
+            // append middle part
+            ds += ns;
+            // append right part
+            if (hi < (int)s->length()) ds += s->mid(hi, (int)s->length()-hi);
+            s->clear();
+            *s = ds;
           }
         }
         PR_VM_BREAK;
