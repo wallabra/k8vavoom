@@ -63,6 +63,10 @@ VName VStruct::ResolveAlias (VName aname) {
     for (auto it = AliasList.first(); it; ++it) it.getValue().aframe = 0;
     AliasFrameNum = 1;
   }
+  if (!AliasList.has(aname)) {
+    if (!ParentStruct) return aname;
+    return ParentStruct->ResolveAlias(aname);
+  }
   VName res = aname;
   for (;;) {
     auto ai = AliasList.get(aname);
