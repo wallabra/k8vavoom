@@ -280,12 +280,20 @@ VExpression *VStringSlice::DoResolve (VEmitContext &ec) {
     ec.SetIndexArray(oldIndArray);
   }
 
-  // we don't need it anymore
-  delete opcopy;
-
   if (!op || !ind || !hi) {
+    delete opcopy;
     delete this;
     return nullptr;
+  }
+
+  // hack: allow indexing of pointers to strings without `(*str)`
+  if (op->Type.Type == TYPE_Pointer && op->Type.InnerType == TYPE_String) {
+    delete op;
+    op = new VPushPointed(opcopy);
+    op = op->Resolve(ec);
+    if (!op) { delete this; return nullptr; }
+  } else {
+    delete opcopy;
   }
 
   if (op->Type.Type != TYPE_String) {
