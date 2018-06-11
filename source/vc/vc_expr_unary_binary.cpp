@@ -405,6 +405,57 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   if (op2) op2 = op2->Resolve(ec);
   if (!op1 || !op2) { delete this; return nullptr; }
 
+  // if we're doung comparisons, and one operand is int, and second is
+  // one-char name or one-char string, convert it to int too, as this
+  // is something like `str[1] == "a"`
+  switch (Oper) {
+    case Less:
+    case LessEquals:
+    case Greater:
+    case GreaterEquals:
+    case Equals:
+    case NotEquals:
+      // first is int, second is one-char string
+      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_String &&
+          op2->IsStrConst() && op2->GetStrConst(ec.Package).length() == 1)
+      {
+        const char *s = *op2->GetStrConst(ec.Package);
+        VExpression *e = new VIntLiteral((vuint8)s[0], op2->Loc);
+        delete op2;
+        op2 = e->Resolve(ec); // will never fail
+      }
+      else // first is int, second is one-char name
+      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Name &&
+          op2->IsNameConst() && VStr::length(*op2->GetNameConst()) == 1)
+      {
+        const char *s = *op2->GetNameConst();
+        VExpression *e = new VIntLiteral((vuint8)s[0], op2->Loc);
+        delete op2;
+        op2 = e->Resolve(ec); // will never fail
+      }
+      else // second is int, first is one-char string
+      if (op2->Type.Type == TYPE_Int && op1->Type.Type == TYPE_String &&
+          op1->IsStrConst() && op1->GetStrConst(ec.Package).length() == 1)
+      {
+        const char *s = *op1->GetStrConst(ec.Package);
+        VExpression *e = new VIntLiteral((vuint8)s[0], op1->Loc);
+        delete op1;
+        op1 = e->Resolve(ec); // will never fail
+      }
+      else // second is int, first is one-char name
+      if (op2->Type.Type == TYPE_Int && op1->Type.Type == TYPE_Name &&
+          op1->IsNameConst() && VStr::length(*op1->GetNameConst()) == 1)
+      {
+        const char *s = *op1->GetNameConst();
+        VExpression *e = new VIntLiteral((vuint8)s[0], op1->Loc);
+        delete op1;
+        op1 = e->Resolve(ec); // will never fail
+      }
+      break;
+    default:
+      break;
+  }
+
   // coerce both to floats, if necessary
 
   // if op1 is `float` or `vector`, and op2 is integral -> coerce op2
