@@ -33,6 +33,8 @@
 //==========================================================================
 VArrayElement::VArrayElement (VExpression *AOp, VExpression *AInd, const TLocation &ALoc)
   : VExpression(ALoc)
+  , genStringAssign(false)
+  , sval(nullptr)
   , op(AOp)
   , ind(AInd)
   , AddressRequested(false)
@@ -53,6 +55,7 @@ VArrayElement::VArrayElement (VExpression *AOp, VExpression *AInd, const TLocati
 VArrayElement::~VArrayElement () {
   if (op) { delete op; op = nullptr; }
   if (ind) { delete ind; ind = nullptr; }
+  if (sval) { delete sval; sval = nullptr; }
 }
 
 
@@ -76,6 +79,8 @@ VExpression *VArrayElement::SyntaxCopy () {
 void VArrayElement::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
   auto res = (VArrayElement *)e;
+  res->genStringAssign = genStringAssign;
+  res->sval = sval;
   res->op = (op ? op->SyntaxCopy() : nullptr);
   res->ind = (ind ? ind->SyntaxCopy() : nullptr);
   res->AddressRequested = AddressRequested;
@@ -180,6 +185,103 @@ VExpression *VArrayElement::ResolveAssignmentTarget (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VArrayElement::WantResolveAssign
+//
+//==========================================================================
+bool VArrayElement::WantsToResolveAssign (VEmitContext &ec, VExpression *val) {
+  VExpression *rop = op->SyntaxCopy()->Resolve(ec);
+  if (!rop) {
+    delete op;
+    op = nullptr;
+    return true;
+  }
+
+  // hack: allow indexing of pointers to strings without `(*str)`
+  if (rop->Type.Type == TYPE_Pointer && rop->Type.InnerType == TYPE_String) {
+    delete rop;
+    op = new VPushPointed(op);
+    return true;
+  }
+
+  if (rop->Type.Type == TYPE_String) {
+    delete rop;
+    return true;
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VArrayElement::ResolveCompleteAssign
+//
+//==========================================================================
+VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression *val) {
+  if (!op || !val) {
+    delete this;
+    return nullptr;
+  }
+  // we need a copy in case this is a pointer thingy
+  opcopy = op->SyntaxCopy();
+
+  op = op->Resolve(ec);
+  if (op) {
+    // resolve index expression
+    auto oldIndArray = ec.SetIndexArray(this);
+    ind = ind->Resolve(ec);
+    ec.SetIndexArray(oldIndArray);
+  }
+  sval = (val ? val->Resolve(ec) : nullptr);
+
+  // we don't need this anymore
+  delete opcopy;
+
+  if (!op || !ind || !sval) {
+    delete this;
+    return nullptr;
+  }
+
+  if (op->Type.Type != TYPE_String) {
+    ParseError(Loc, "Something is *very* wrong with the compiler");
+    delete this;
+    return nullptr;
+  }
+
+  if (ind->Type.Type != TYPE_Int) {
+    ParseError(Loc, "String index must be of integer type");
+    delete this;
+    return nullptr;
+  }
+
+  if (sval->Type.Type == TYPE_String && sval->IsStrConst() && sval->GetStrConst(ec.Package).length() == 1) {
+    const char *s = *sval->GetStrConst(ec.Package);
+    val = new VIntLiteral((vuint8)s[0], sval->Loc);
+    delete sval;
+    sval = val->Resolve(ec); // will never fail
+  } else if (sval->Type.Type == TYPE_Name && sval->IsNameConst() && VStr::length(*sval->GetNameConst()) == 1) {
+    const char *s = *sval->GetNameConst();
+    val = new VIntLiteral((vuint8)s[0], sval->Loc);
+    delete sval;
+    sval = val->Resolve(ec); // will never fail
+  }
+
+  if (sval->Type.Type != TYPE_Int && sval->Type.Type != TYPE_Byte) {
+    ParseError(Loc, "Cannot assign type '%s' to string element", *sval->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+
+  op->RequestAddressOf();
+
+  genStringAssign = true;
+  Type = VFieldType(TYPE_Void);
+  return this;
+}
+
+
+//==========================================================================
+//
 //  VArrayElement::RequestAddressOf
 //
 //==========================================================================
@@ -202,23 +304,28 @@ void VArrayElement::RequestAddressOf () {
 void VArrayElement::Emit (VEmitContext &ec) {
   op->Emit(ec);
   ind->Emit(ec);
-  if (op->Type.Type == TYPE_DynamicArray) {
-    if (IsAssign) {
-      ec.AddStatement(OPC_DynArrayElementGrow, RealType);
-    } else {
-      ec.AddStatement(OPC_DynArrayElement, RealType);
-    }
-  } else if (op->Type.Type == TYPE_String) {
-    if (IsAssign) {
-      ParseError(Loc, "Strings are immutable (yet) -- codegen");
-    } else {
-      ec.AddStatement(OPC_StrGetChar);
-      return;
-    }
+  if (genStringAssign) {
+    sval->Emit(ec);
+    ec.AddStatement(OPC_StrSetChar);
   } else {
-    ec.AddStatement(OPC_ArrayElement, RealType);
+    if (op->Type.Type == TYPE_DynamicArray) {
+      if (IsAssign) {
+        ec.AddStatement(OPC_DynArrayElementGrow, RealType);
+      } else {
+        ec.AddStatement(OPC_DynArrayElement, RealType);
+      }
+    } else if (op->Type.Type == TYPE_String) {
+      if (IsAssign) {
+        ParseError(Loc, "Strings are immutable (yet) -- codegen");
+      } else {
+        ec.AddStatement(OPC_StrGetChar);
+        return;
+      }
+    } else {
+      ec.AddStatement(OPC_ArrayElement, RealType);
+    }
+    if (!AddressRequested) EmitPushPointedCode(RealType, ec);
   }
-  if (!AddressRequested) EmitPushPointedCode(RealType, ec);
 }
 
 
@@ -321,6 +428,16 @@ VExpression *VStringSlice::DoResolve (VEmitContext &ec) {
 VExpression *VStringSlice::ResolveAssignmentTarget (VEmitContext &ec) {
   ParseError(Loc, "Cannot assign to string slice (yet)");
   return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VStringSlice::WantResolveAssign
+//
+//==========================================================================
+bool VStringSlice::WantsToResolveAssign (VEmitContext &ec, VExpression *val) {
+  return false;
 }
 
 

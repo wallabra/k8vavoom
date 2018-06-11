@@ -203,6 +203,29 @@ VExpression *VExpression::ResolveIterator (VEmitContext &) {
 
 //==========================================================================
 //
+//  VExpression::WantResolveAssign
+//
+//==========================================================================
+bool VExpression::WantsToResolveAssign (VEmitContext &ec, VExpression *val) {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VExpression::ResolveCompleteAssign
+//
+//==========================================================================
+VExpression *VExpression::ResolveCompleteAssign (VEmitContext &ec, VExpression *val) {
+  ParseError(Loc, "The thing that should not be");
+  delete val;
+  delete this;
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VExpression::RequestAddressOf
 //
 //==========================================================================

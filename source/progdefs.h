@@ -290,6 +290,7 @@ enum {
   DECLARE_OPC(StrCat, None),
 
   DECLARE_OPC(StrGetChar, None),
+  DECLARE_OPC(StrSetChar, None),
 
   // string slicing
   DECLARE_OPC(StrSlice, None),

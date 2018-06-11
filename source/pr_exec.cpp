@@ -1506,6 +1506,23 @@ func_loop:
         }
         PR_VM_BREAK;
 
+      // [-1]: char
+      // [-2]: index
+      // [-3]: string
+      PR_VM_CASE(OPC_StrSetChar)
+        {
+          ++ip;
+          vuint8 ch = sp[-1].i&0xff;
+          int idx = sp[-2].i;
+          VStr *s = *(VStr **)&sp[-3].p;
+          if (idx >= 0 && idx < (int)(s->length())) {
+            char *data = s->GetMutableCharPointer(idx);
+            *data = ch;
+          }
+          sp -= 3; // drop it all
+        }
+        PR_VM_BREAK;
+
       // [-1]: hi
       // [-2]: lo
       // [-3]: string

@@ -51,6 +51,10 @@ public:
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &ec);
   virtual VExpression *ResolveAssignmentValue (VEmitContext &ec);
   virtual VExpression *ResolveIterator (VEmitContext &ec);
+  // return `true` if the following should be called instead of normal assign processing
+  // `val` is not resolved yet, and should not be destroyed/modified
+  virtual bool WantsToResolveAssign (VEmitContext &ec, VExpression *val);
+  virtual VExpression *ResolveCompleteAssign (VEmitContext &ec, VExpression *val);
   virtual void RequestAddressOf ();
   virtual void Emit (VEmitContext &ec) = 0;
   virtual void EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue);
