@@ -381,20 +381,29 @@ static void initialize () {
 static int checkArg (VMethod *mmain) {
   if (!mmain) return -1;
   if ((mmain->Flags&FUNC_VarArgs) != 0) return -1;
-  if (mmain->NumParams > 0 && mmain->ParamFlags[0] != 0) return -1;
+  //if (mmain->NumParams > 0 && mmain->ParamFlags[0] != 0) return -1;
   int res = 0;
   if (mmain->ReturnType.Type != TYPE_Void && mmain->ReturnType.Type != TYPE_Int) return -1;
   if (mmain->ReturnType.Type == TYPE_Int) res |= 0x02;
   if (mmain->NumParams != 0) {
     if (mmain->NumParams != 1) return -1;
-    VFieldType atp = mmain->ParamTypes[0];
-    dprintf("  ptype0: %s\n", *atp.GetName());
-    if (atp.Type != TYPE_Pointer) return -1;
-    atp = atp.GetPointerInnerType();
-    if (atp.Type != TYPE_DynamicArray) return -1;
-    atp = atp.GetArrayInnerType();
-    if (atp.Type != TYPE_String) return -1;
-    res |= 0x01;
+    if (mmain->ParamFlags[0] == 0) {
+      VFieldType atp = mmain->ParamTypes[0];
+      dprintf("  ptype0: %s\n", *atp.GetName());
+      if (atp.Type != TYPE_Pointer) return -1;
+      atp = atp.GetPointerInnerType();
+      if (atp.Type != TYPE_DynamicArray) return -1;
+      atp = atp.GetArrayInnerType();
+      if (atp.Type != TYPE_String) return -1;
+      res |= 0x01;
+    } else if ((mmain->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) != 0) {
+      VFieldType atp = mmain->ParamTypes[0];
+      dprintf("  ptype1: %s\n", *atp.GetName());
+      if (atp.Type != TYPE_DynamicArray) return -1;
+      atp = atp.GetArrayInnerType();
+      if (atp.Type != TYPE_String) return -1;
+      res |= 0x01;
+    }
   }
   return res;
 }
