@@ -28,7 +28,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 bool VMemberBase::GObjInitialised;
-TArray<VMemberBase *>  VMemberBase::GMembers;
+TArray<VMemberBase *> VMemberBase::GMembers;
 VMemberBase *VMemberBase::GMembersHash[4096];
 
 TArray<VStr> VMemberBase::GPackagePath;

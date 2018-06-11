@@ -555,23 +555,40 @@ void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation 
   Emit();
 
 #if !defined(IN_VCC)
+  //fprintf(stderr, "*** PACKAGE: %s\n", *Name);
   // copy mobj infos and spawn IDs
   for (int i = 0; i < MobjInfo.Num(); ++i) VClass::GMobjInfos.Alloc() = MobjInfo[i];
   for (int i = 0; i < ScriptIds.Num(); ++i) VClass::GScriptIds.Alloc() = ScriptIds[i];
-  for (int i = 0; i < GMembers.Num(); ++i) if (GMembers[i]->IsIn(this)) GMembers[i]->PostLoad();
+  for (int i = 0; i < GMembers.Num(); ++i) {
+    if (GMembers[i]->IsIn(this)) {
+      //fprintf(stderr, "  *** postload for '%s'...\n", *GMembers[i]->Name);
+      GMembers[i]->PostLoad();
+    }
+  }
 
   // create default objects
-  for (int i = 0; i < ParsedClasses.Num(); ++i) ParsedClasses[i]->CreateDefaults();
+  for (int i = 0; i < ParsedClasses.Num(); ++i) {
+    //fprintf(stderr, "  *** creating defaults for '%s'... (%d)\n", *ParsedClasses[i]->Name, (int)ParsedClasses[i]->Defined);
+    ParsedClasses[i]->CreateDefaults();
+    if (!ParsedClasses[i]->Outer) {
+      //fprintf(stderr, "    *** setting outer\n");
+      ParsedClasses[i]->Outer = this;
+    }
+  }
 
-  /*if (Name == NAME_engine)*/ {
+# if !defined(VCC_STANDALONE_EXECUTOR)
+  // we need to do this, 'cause VaVoom 'engine' package has some classes w/o definitions (`Acs`, `Button`)
+  if (Name == NAME_engine) {
     for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
       if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
+        GCon->Logf("WARNING! package `engine` has hidden class `%s` (this is harmless)", *Cls->Name);
         Cls->PostLoad();
         Cls->CreateDefaults();
         Cls->Outer = this;
       }
     }
   }
+# endif
 #endif
 
   unguard;
@@ -687,10 +704,16 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
 
   // create default objects
   for (int i = 0; i < Progs.num_exports; ++i) {
-    if (Exports[i].Obj->MemberType == MEMBER_Class) ((VClass*)Exports[i].Obj)->CreateDefaults();
+    if (Exports[i].Obj->MemberType == MEMBER_Class) {
+      VClass *vc = (VClass *)Exports[i].Obj;
+      vc->CreateDefaults();
+      if (!vc->Outer) vc->Outer = this;
+    }
   }
 
-  /*if (Name == NAME_engine)*/ {
+# if !defined(VCC_STANDALONE_EXECUTOR)
+  // we need to do this, 'cause VaVoom 'engine' package has some classes w/o definitions (`Acs`, `Button`)
+  if (Name == NAME_engine) {
     for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
       if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
         Cls->PostLoad();
@@ -699,6 +722,7 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
       }
     }
   }
+# endif
 #endif
 
   //k8: fuck you, shitplusplus: no finally
