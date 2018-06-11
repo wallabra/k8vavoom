@@ -26,6 +26,59 @@
 
 //==========================================================================
 //
+//  VRefOutArg
+//
+//==========================================================================
+class VRefOutArg : public VExpression {
+public:
+  VExpression *e;
+
+public:
+  VRefOutArg (VExpression *ae);
+  virtual ~VRefOutArg () override;
+  virtual VExpression *DoResolve (VEmitContext &ec) override;
+  virtual void Emit (VEmitContext &ec) override;
+
+protected:
+  VRefOutArg () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VRefArg
+//
+//==========================================================================
+class VRefArg : public VRefOutArg {
+public:
+  VRefArg (VExpression *ae);
+  virtual VExpression *SyntaxCopy () override;
+  virtual bool IsRefArg () const override;
+
+protected:
+  VRefArg () {}
+};
+
+
+//==========================================================================
+//
+//  VOutArg
+//
+//==========================================================================
+class VOutArg : public VRefOutArg {
+public:
+  VOutArg (VExpression *ae);
+  virtual VExpression *SyntaxCopy () override;
+  virtual bool IsOutArg () const override;
+
+protected:
+  VOutArg () {}
+};
+
+
+//==========================================================================
+//
 //  VInvocationBase
 //
 //==========================================================================

@@ -28,6 +28,127 @@
 
 //==========================================================================
 //
+//  VRefOutArg::VRefOutArg
+//
+//==========================================================================
+VRefOutArg::VRefOutArg (VExpression *ae)
+  : VExpression(ae->Loc)
+  , e(ae)
+{
+}
+
+
+//==========================================================================
+//
+//  VRefOutArg::~VRefOutArg
+//
+//==========================================================================
+VRefOutArg::~VRefOutArg () {
+  delete e;
+}
+
+
+//==========================================================================
+//
+//  VRefOutArg::DoSyntaxCopyTo
+//
+//==========================================================================
+void VRefOutArg::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VRefOutArg *)e;
+  res->e = (e ? e->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VRefOutArg::DoSyntaxCopyTo
+//
+//==========================================================================
+VExpression *VRefOutArg::DoResolve (VEmitContext &ec) {
+  if (e) e = e->Resolve(ec);
+  if (!e) { delete this; return nullptr; }
+  VExpression *res = e;
+  e = nullptr;
+  delete this;
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VRefOutArg::DoSyntaxCopyTo
+//
+//==========================================================================
+void VRefOutArg::Emit (VEmitContext &ec) {
+  Sys_Error("The thing that should not be (VRefOutArg::Emit)");
+}
+
+
+//==========================================================================
+//
+//  VRefArg::VRefArg
+//
+//==========================================================================
+VRefArg::VRefArg (VExpression *ae) : VRefOutArg(ae) {
+}
+
+
+//==========================================================================
+//
+//  VRefArg::IsRefArg
+//
+//==========================================================================
+bool VRefArg::IsRefArg () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VRefArg::SyntaxCopy
+//
+//==========================================================================
+VExpression *VRefArg::SyntaxCopy () {
+  auto res = new VRefArg();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VOutArg::VOutArg
+//
+//==========================================================================
+VOutArg::VOutArg (VExpression *ae) : VRefOutArg(ae) {
+}
+
+
+//==========================================================================
+//
+//  VOutArg::VOutArg
+//
+//==========================================================================
+bool VOutArg::IsOutArg () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VOutArg::SyntaxCopy
+//
+//==========================================================================
+VExpression *VOutArg::SyntaxCopy () {
+  auto res = new VOutArg();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VSuperInvocation::VSuperInvocation
 //
 //==========================================================================
@@ -337,6 +458,16 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         delete this;
         return nullptr;
       }
+      if (Args[0] && (Args[0]->IsRefArg() || Args[0]->IsOutArg())) {
+        ParseError(Args[0]->Loc, "Insert cannot has `ref`/`out` argument");
+        delete this;
+        return nullptr;
+      }
+      if (Args[1] && (Args[1]->IsRefArg() || Args[1]->IsOutArg())) {
+        ParseError(Args[1]->Loc, "Insert cannot has `ref`/`out` argument");
+        delete this;
+        return nullptr;
+      }
       VExpression *e = new VDynArrayInsert(SelfExpr, Args[0], Args[1], Loc);
       SelfExpr = nullptr;
       NumArgs = 0;
@@ -352,6 +483,16 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       }
       if (NumArgs != 2) {
         ParseError(Loc, "Insert requires 1 or 2 arguments");
+        delete this;
+        return nullptr;
+      }
+      if (Args[0] && (Args[0]->IsRefArg() || Args[0]->IsOutArg())) {
+        ParseError(Args[0]->Loc, "Remove cannot has `ref`/`out` argument");
+        delete this;
+        return nullptr;
+      }
+      if (Args[1] && (Args[1]->IsRefArg() || Args[1]->IsOutArg())) {
+        ParseError(Args[1]->Loc, "Remove cannot has `ref`/`out` argument");
         delete this;
         return nullptr;
       }
@@ -552,11 +693,37 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   if (ec.Package->Name == NAME_decorate) CheckDecorateParams(ec);
 
   // resolve arguments
+  int requiredParams = Func->NumParams;
+  int maxParams = (Func->Flags&FUNC_VarArgs ? VMethod::MAX_PARAMS-1 : Func->NumParams);
   bool ArgsOk = true;
   for (int i = 0; i < NumArgs; ++i) {
+    if (i >= maxParams) {
+      ParseError((Args[i] ? Args[i]->Loc : Loc), "Too many method arguments");
+      ArgsOk = false;
+      break;
+    }
     if (Args[i]) {
+      // check for `ref`/`out` validness
+      if (Args[i]->IsRefArg() && (i >= requiredParams || (Func->ParamFlags[i]&FPARM_Ref) == 0)) {
+        ParseError(Args[i]->Loc, "`ref` argument for non-ref parameter");
+        ArgsOk = false;
+        break;
+      }
+      if (Args[i]->IsOutArg() && (i >= requiredParams || (Func->ParamFlags[i]&FPARM_Out) == 0)) {
+        ParseError(Args[i]->Loc, "`out` argument for non-ref parameter");
+        ArgsOk = false;
+        break;
+      }
       Args[i] = Args[i]->Resolve(ec);
-      if (!Args[i]) ArgsOk = false;
+      if (!Args[i]) { ArgsOk = false; break; }
+    } else {
+      /*
+      if (!(Func->ParamFlags[i]&FPARM_Optional)) {
+        ParseError(Loc, "Cannot omit non-optional argument");
+        ArgsOk = false;
+        break;
+      }
+      */
     }
   }
 
@@ -731,6 +898,10 @@ bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VE
         if (!(m->ParamFlags[i]&FPARM_Optional)) return false; // ommited non-optional
         continue;
       }
+      // check for `ref`/`out` validness
+      //if (argv[i]->IsRefArg() && (m->ParamFlags[i]&FPARM_Ref) == 0) return false;
+      //if (argv[i]->IsOutArg() && (m->ParamFlags[i]&FPARM_Out) == 0) return false;
+      // other checks
       if (ec.Package->Name == NAME_decorate) {
         switch (m->ParamTypes[i].Type) {
           case TYPE_Int:
@@ -788,6 +959,9 @@ void VInvocation::CheckParams (VEmitContext &ec) {
         if (!(Func->ParamFlags[i] & FPARM_Optional)) ParseError(Loc, "Cannot omit non-optional argument");
         argsize += Func->ParamTypes[i].GetStackSize();
       } else {
+        // check for `ref`/`out` validness
+        //if (Args[i]->IsRefArg() && (Func->ParamFlags[i]&FPARM_Ref) == 0) ParseError(Args[i]->Loc, "`ref` argument for non-ref parameter");
+        //if (Args[i]->IsOutArg() && (Func->ParamFlags[i]&FPARM_Out) == 0) ParseError(Args[i]->Loc, "`out` argument for non-ref parameter");
         if (ec.Package->Name == NAME_decorate) {
           switch (Func->ParamTypes[i].Type) {
             case TYPE_Int:

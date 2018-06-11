@@ -36,12 +36,21 @@ int VParser::ParseArgList (const TLocation &stloc, VExpression **argv) {
   int count = 0;
   if (!Lex.Check(TK_RParen)) {
     do {
+      bool isRef = false, isOut = false;
+           if (Lex.Check(TK_Ref)) isRef = true;
+      else if (Lex.Check(TK_Out)) isOut = true;
       VExpression *arg;
       if (Lex.Token == TK_Default && Lex.peekNextNonBlankChar() != '.') {
+             if (isRef) ParseError(Lex.Location, "`ref` is not allowed for `default` arg");
+        else if (isOut) ParseError(Lex.Location, "`out` is not allowed for `default` arg");
         Lex.Expect(TK_Default);
         arg = nullptr;
       } else {
         arg = ParseExpressionPriority13();
+        if (arg) {
+               if (isRef) arg = new VRefArg(arg);
+          else if (isOut) arg = new VOutArg(arg);
+        }
       }
       if (count == VMethod::MAX_PARAMS) {
         ParseError(stloc, "Too many arguments");

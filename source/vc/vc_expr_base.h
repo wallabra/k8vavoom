@@ -79,6 +79,8 @@ public:
   virtual bool IsBinaryMath () const;
   virtual bool IsSingleName () const;
   virtual bool IsDotField () const;
+  virtual bool IsRefArg () const;
+  virtual bool IsOutArg () const;
 
   void *operator new (size_t size);
   void *operator new[] (size_t size);
