@@ -423,8 +423,15 @@ VExpression *VParser::ParseExpressionPriority1 () {
       }
     } else if (Lex.Check(TK_LBracket)) {
       VExpression *ind = ParseExpressionPriority13();
-      Lex.Expect(TK_RBracket, ERR_BAD_ARRAY);
-      op = new VArrayElement(op, ind, l);
+      // slice?
+      if (Lex.Check(TK_DotDot)) {
+        VExpression *hi = ParseExpressionPriority13();
+        Lex.Expect(TK_RBracket, ERR_BAD_ARRAY);
+        op = new VStringSlice(op, ind, hi, l);
+      } else {
+        Lex.Expect(TK_RBracket, ERR_BAD_ARRAY);
+        op = new VArrayElement(op, ind, l);
+      }
     } else {
       break;
     }

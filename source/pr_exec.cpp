@@ -1495,6 +1495,27 @@ func_loop:
         }
         PR_VM_BREAK;
 
+      // [-1]: hi
+      // [-2]: lo
+      // [-3]: string
+      PR_VM_CASE(OPC_StrSlice)
+        {
+          ++ip;
+          int hi = sp[-1].i;
+          int lo = sp[-2].i;
+          VStr *s = (VStr *)&sp[-3].p;
+          sp -= 2; // drop limits
+          if (lo < 0 || hi <= lo || lo >= (int)s->length()) {
+            s->clear();
+          } else {
+            if (hi > (int)s->length()) hi = (int)s->length();
+            VStr ns = s->mid(lo, hi-lo);
+            s->clear();
+            *s = ns;
+          }
+        }
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_AssignStrDrop)
         ++ip;
         *(VStr *)sp[-2].p = *(VStr *)&sp[-1].p;

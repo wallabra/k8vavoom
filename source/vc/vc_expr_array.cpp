@@ -89,18 +89,24 @@ void VArrayElement::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
-  // we need a copy in case this is a pointer thingy
-  opcopy = (op ? op->SyntaxCopy() : nullptr);
+  if (!op || !ind) {
+    delete this;
+    return nullptr;
+  }
 
-  if (op) op = op->Resolve(ec);
-  // resolve index expression
-  auto oldIndArray = ec.SetIndexArray(this);
-  if (ind) ind = ind->Resolve(ec);
-  ec.SetIndexArray(oldIndArray);
+  // we need a copy in case this is a pointer thingy
+  opcopy = op->SyntaxCopy();
+
+  op = op->Resolve(ec);
+  if (op) {
+    // resolve index expression
+    auto oldIndArray = ec.SetIndexArray(this);
+    ind = ind->Resolve(ec);
+    ec.SetIndexArray(oldIndArray);
+  }
 
   if (!op || !ind) {
     delete opcopy;
-    opcopy = nullptr;
     delete this;
     return nullptr;
   }
@@ -108,7 +114,6 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
   if (ind->Type.Type != TYPE_Int) {
     ParseError(Loc, "Array index must be of integer type");
     delete opcopy;
-    opcopy = nullptr;
     delete this;
     return nullptr;
   }
@@ -116,12 +121,10 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
   // hack: allow indexing of pointers to dynamic arrays without `(*arr)`
   if (op->Type.Type == TYPE_Pointer && (op->Type.InnerType == TYPE_DynamicArray || op->Type.InnerType == TYPE_String)) {
     delete op;
-    op = nullptr;
-    op = (new VPushPointed(opcopy))->Resolve(ec);
-    opcopy = nullptr;
+    op = new VPushPointed(opcopy);
+    op = op->Resolve(ec);
     if (!op) { delete this; return nullptr; }
   } else {
-    opcopy = nullptr;
     delete opcopy;
   }
 
@@ -216,6 +219,136 @@ void VArrayElement::Emit (VEmitContext &ec) {
     ec.AddStatement(OPC_ArrayElement, RealType);
   }
   if (!AddressRequested) EmitPushPointedCode(RealType, ec);
+}
+
+
+//==========================================================================
+//
+//  VStringSlice::VStringSlice
+//
+//==========================================================================
+VStringSlice::VStringSlice (VExpression *aop, VExpression *alo, VExpression *ahi, const TLocation &aloc)
+  : VArrayElement(aop, alo, aloc)
+  , hi(ahi)
+{
+  Flags = FIELD_ReadOnly;
+}
+
+
+//==========================================================================
+//
+//  VStringSlice::~VStringSlice
+//
+//==========================================================================
+VStringSlice::~VStringSlice () {
+  delete hi;
+}
+
+
+//==========================================================================
+//
+//  VStringSlice::SyntaxCopy
+//
+//==========================================================================
+VExpression *VStringSlice::SyntaxCopy () {
+  auto res = new VStringSlice();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VStringSlice::DoResolve
+//
+//==========================================================================
+VExpression *VStringSlice::DoResolve (VEmitContext &ec) {
+  if (!op || !ind || !hi) {
+    delete this;
+    return nullptr;
+  }
+
+  // we need a copy in case this is a pointer thingy
+  opcopy = op->SyntaxCopy();
+
+  op = op->Resolve(ec);
+  if (op) {
+    // resolve index expressions
+    auto oldIndArray = ec.SetIndexArray(this);
+    ind = ind->Resolve(ec);
+    hi = hi->Resolve(ec);
+    ec.SetIndexArray(oldIndArray);
+  }
+
+  // we don't need it anymore
+  delete opcopy;
+
+  if (!op || !ind || !hi) {
+    delete this;
+    return nullptr;
+  }
+
+  if (op->Type.Type != TYPE_String) {
+    ParseError(Loc, "Only string slices are supported (for now)");
+    delete this;
+    return nullptr;
+  }
+
+  if (ind->Type.Type != TYPE_Int || hi->Type.Type != TYPE_Int) {
+    ParseError(Loc, "String slice indicies must be of integer type");
+    delete this;
+    return nullptr;
+  }
+
+  Type = VFieldType(TYPE_String);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VStringSlice::ResolveAssignmentTarget
+//
+//==========================================================================
+VExpression *VStringSlice::ResolveAssignmentTarget (VEmitContext &ec) {
+  ParseError(Loc, "Cannot assign to string slice (yet)");
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VStringSlice::RequestAddressOf
+//
+//==========================================================================
+void VStringSlice::RequestAddressOf () {
+  ParseError(Loc, "Cannot get string slice address");
+}
+
+
+//==========================================================================
+//
+//  VStringSlice::Emit
+//
+//==========================================================================
+void VStringSlice::Emit (VEmitContext &ec) {
+  if (!op || !ind || !hi) return;
+  op->Emit(ec);
+  ind->Emit(ec);
+  hi->Emit(ec);
+  ec.AddStatement(OPC_StrSlice);
+}
+
+
+//==========================================================================
+//
+//  VStringSlice::DoSyntaxCopyTo
+//
+//==========================================================================
+void VStringSlice::DoSyntaxCopyTo (VExpression *e) {
+  VArrayElement::DoSyntaxCopyTo(e);
+  auto res = (VStringSlice *)e;
+  res->hi = (hi ? hi->SyntaxCopy() : nullptr);
 }
 
 

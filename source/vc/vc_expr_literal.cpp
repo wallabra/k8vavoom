@@ -538,7 +538,7 @@ void VDollar::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VDollar::DoResolve (VEmitContext &ec) {
   if (!ec.IndArray) {
-    ParseError(Loc, "`$` used outside of array indexing\n");
+    ParseError(Loc, "`$` used outside of array/string indexing");
     delete this;
     return nullptr;
   }

@@ -30,7 +30,7 @@
 //
 //==========================================================================
 class VArrayElement : public VExpression {
-private:
+protected:
   VExpression *opcopy; // valid only in `DoResolve()`
 
 public:
@@ -53,6 +53,29 @@ protected:
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 
   friend class VDollar; // to access opcopy
+};
+
+
+//==========================================================================
+//
+//  VStringSlice
+//
+//==========================================================================
+class VStringSlice : public VArrayElement {
+public:
+  VExpression *hi;
+
+  VStringSlice (VExpression *aop, VExpression *alo, VExpression *ahi, const TLocation &aloc);
+  virtual ~VStringSlice () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &ec) override;
+  virtual VExpression *ResolveAssignmentTarget (VEmitContext &ec) override;
+  virtual void RequestAddressOf () override;
+  virtual void Emit (VEmitContext &ec) override;
+
+protected:
+  VStringSlice () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 
 
