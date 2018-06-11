@@ -1828,15 +1828,24 @@ void VParser::ParseClass () {
     return;
   }
 
-  // for engine package use native class objects
+  // for engine package use native class objects (k8: not necessary anymore)
   VClass *Class;
 #if !defined(IN_VCC)
   Class = nullptr;
-  if (Package->Name == NAME_engine) Class = VClass::FindClass(*ClassName);
+  /*if (Package->Name == NAME_engine)*/ Class = VClass::FindClass(*ClassName);
   if (Class) {
-    // if `Defined `is not set, it's a duplicate
-    check(Class->Defined);
-    Class->Outer = Package;
+    // if `Defined `is not set, and this is not a native class -- it's a duplicate
+    if (Class->ClassFlags&CLASS_Native) {
+      if (!Class->Defined) {
+        ParseError(ClassLoc, "duplicate class declaration `%s` (%d)", *ClassName, Class->ClassFlags);
+      } else {
+        //fprintf(stderr, "BOOO! <%s>\n", *ClassName);
+      }
+      //check(Class->Defined);
+      Class->Outer = Package;
+    } else {
+      ParseError(ClassLoc, "duplicate class declaration `%s`", *ClassName);
+    }
   }
   else
 #endif

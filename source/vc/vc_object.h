@@ -39,7 +39,7 @@
 #define DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags) \
 public: \
   /* Identification */ \
-  enum {StaticClassFlags = TStaticFlags}; \
+  enum {StaticClassFlags = TStaticFlags|CLASS_Native}; \
   private: static VClass PrivateStaticClass; public: \
   typedef TSuperClass Super;\
   typedef TClass ThisClass;\
@@ -48,7 +48,7 @@ public: \
 
 // Declare a concrete class.
 #define DECLARE_CLASS(TClass, TSuperClass, TStaticFlags) \
-  DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags) \
+  DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags|CLASS_Native) \
   virtual ~TClass() \
     { ConditionalDestroy(); } \
   friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) \
@@ -58,7 +58,7 @@ public: \
 
 // Declare an abstract class.
 #define DECLARE_ABSTRACT_CLASS(TClass, TSuperClass, TStaticFlags) \
-  DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags | CLASS_Abstract) \
+  DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags|CLASS_Abstract) \
   virtual ~TClass() \
     { ConditionalDestroy(); } \
   friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) \
@@ -108,7 +108,7 @@ enum EObjectFlags {
 // the base class of all objects
 class VObject : public VInterface {
   // declarations
-  DECLARE_BASE_CLASS(VObject, VObject, CLASS_Abstract)
+  DECLARE_BASE_CLASS(VObject, VObject, CLASS_Abstract|CLASS_Native)
 
   // friends
   friend class FObjectIterator;

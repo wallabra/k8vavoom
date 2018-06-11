@@ -563,7 +563,7 @@ void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation 
   // create default objects
   for (int i = 0; i < ParsedClasses.Num(); ++i) ParsedClasses[i]->CreateDefaults();
 
-  if (Name == NAME_engine) {
+  /*if (Name == NAME_engine)*/ {
     for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
       if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
         Cls->PostLoad();
@@ -690,7 +690,7 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
     if (Exports[i].Obj->MemberType == MEMBER_Class) ((VClass*)Exports[i].Obj)->CreateDefaults();
   }
 
-  if (Name == NAME_engine) {
+  /*if (Name == NAME_engine)*/ {
     for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
       if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
         Cls->PostLoad();
