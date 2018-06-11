@@ -1,0 +1,10 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+static final void main () {
+  string s = "abcdef";
+  writeln(s[$-1]);
+  writeln(s[1..$-1]);
+  writeln(s[2..$-2]);
+  writeln(s[2..$]);
+}

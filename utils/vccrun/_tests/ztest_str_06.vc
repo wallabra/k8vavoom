@@ -1,0 +1,9 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+static final void main () {
+  string s = strFromChar(65);
+  writeln(s.length, ": <", s, ">");
+  s = strFromCharUtf8(0x42f);
+  writeln(s.length, ": <", s, "> : ", (s == "Я"));
+}
