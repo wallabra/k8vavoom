@@ -1,0 +1,13 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+static final void main () {
+  string s = "abcdef";
+  writeln(s);
+  s[2..5] = "!";
+  writeln(s, " : ", (s == "ab!f"));
+  s[2..3] = "NEWSTR";
+  writeln(s, " : ", (s == "abNEWSTRf"));
+  s[5..$] = "";
+  writeln(s, " : ", (s == "abNEW"));
+}
