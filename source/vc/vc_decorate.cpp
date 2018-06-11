@@ -29,6 +29,7 @@
 
 static VCvarB dbg_show_decorate_unsupported("dbg_show_decorate_unsupported", false, "Show unsupported decorate props/flags?", 0);
 VCvarB dbg_show_missing_class("dbg_show_missing_class", false, "Show missing classes?", 0);
+VCvarB decorate_fail_on_unknown("decorate_fail_on_unknown", false, "Fail on unknown decorate properties?", 0);
 
 
 enum {
@@ -2551,7 +2552,17 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
     }
     if (FoundProp) continue;
 
-    sc->Error(va("Unknown property \"%s\"", *Prop));
+    if (decorate_fail_on_unknown) {
+      sc->Error(va("Unknown property \"%s\"", *Prop));
+    } else {
+      GCon->Logf("Unknown property \"%s\"", *Prop);
+    }
+    if (!sc->IsAtEol()) {
+      sc->Crossed = false;
+      while (!sc->AtEnd() && !sc->Crossed) sc->GetString();
+    } else {
+      sc->GetString();
+    }
   }
 
   sc->SetCMode(false);
@@ -2877,7 +2888,20 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     else if (sc->Check("FloorHugger")) SetClassFieldBool(Class, "bIgnoreFloorStep", true);
     else if (sc->Check("CeilingHugger")) SetClassFieldBool(Class, "bIgnoreCeilingStep", true);
     else if (sc->Check("DontSplash")) SetClassFieldBool(Class, "bNoSplash", true);
-    else Sys_Error("Unknown property %s", *sc->String);
+    else {
+      if (decorate_fail_on_unknown) {
+        Sys_Error("Unknown property '%s'", *sc->String);
+      } else {
+        GCon->Logf("Unknown property '%s'", *sc->String);
+      }
+      if (!sc->IsAtEol()) {
+        sc->Crossed = false;
+        while (!sc->AtEnd() && !sc->Crossed) sc->GetString();
+      } else {
+        sc->GetString();
+      }
+      continue;
+    }
   }
 
   if (SpawnEnd == 0) sc->Error(va("%s has no Frames definition", *ClassName));
