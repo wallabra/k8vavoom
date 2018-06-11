@@ -201,11 +201,14 @@ static void writeOrCheckUInt (VStream &Strm, vuint32 value, const char *errmsg) 
   }
 }
 
-static void writeOrCheckInt (VStream &Strm, int value, const char *errmsg) {
+static void writeOrCheckInt (VStream &Strm, int value, const char *errmsg, bool dofail=true) {
   if (Strm.IsLoading()) {
     int v;
     Strm << v;
-    if (v != value) Host_Error(va("Save loader: invalid value for %s; got %d, but expected %d", errmsg, v, value));
+    if (v != value) {
+      if (dofail) Host_Error(va("Save loader: invalid value for %s; got %d, but expected %d", errmsg, v, value));
+      GCon->Logf("Save loader: invalid value for %s; got %d, but expected %d (should be harmless)", errmsg, v, value);
+    }
   } else {
     Strm << value;
   }
@@ -236,13 +239,13 @@ void VLevel::Serialise(VStream &Strm)
   writeOrCheckName(Strm, MapName, "map name");
   writeOrCheckUInt(Strm, LevelFlags, "level flags");
 
-  writeOrCheckInt(Strm, NumVertexes, "vertex count");
+  writeOrCheckInt(Strm, NumVertexes, "vertex count", false);
   writeOrCheckInt(Strm, NumSectors, "sector count");
   writeOrCheckInt(Strm, NumSides, "side count");
   writeOrCheckInt(Strm, NumLines, "line count");
   writeOrCheckInt(Strm, NumSegs, "seg count");
   writeOrCheckInt(Strm, NumSubsectors, "subsector count");
-  writeOrCheckInt(Strm, NumNodes, "node count");
+  writeOrCheckInt(Strm, NumNodes, "node count", false);
   writeOrCheckInt(Strm, NumPolyObjs, "polyobj count");
   writeOrCheckInt(Strm, NumZones, "zone count");
 
