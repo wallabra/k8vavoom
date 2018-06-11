@@ -1,3 +1,5 @@
+import 'video';
+
 #include "base.vc"
 #include "root.vc"
 #include "span.vc"

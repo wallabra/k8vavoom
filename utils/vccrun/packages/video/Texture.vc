@@ -1,11 +1,5 @@
-class Texture : Object abstract native;
+class Texture : Object /*abstract*/ native;
 
-/*
-private readonly void *__img;
-private readonly int __tid;
-private readonly void * __prev;
-private readonly void *__next;
-*/
 private readonly void *__tex;
 
 
