@@ -512,7 +512,7 @@ VExpression *VParser::ParseExpressionPriority3 () {
 //
 // VParser::ParseExpressionPriority4
 //
-// binary: `+`, `-`
+// binary: `+`, `-`, `~`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority4 () {
@@ -527,6 +527,9 @@ VExpression *VParser::ParseExpressionPriority4 () {
     } else if (Lex.Check(TK_Minus)) {
       VExpression *op2 = ParseExpressionPriority3();
       op1 = new VBinary(VBinary::Subtract, op1, op2, l);
+    } else if (Lex.Check(TK_Tilde)) {
+      VExpression *op2 = ParseExpressionPriority3();
+      op1 = new VBinary(VBinary::StrCat, op1, op2, l);
     } else {
       break;
     }

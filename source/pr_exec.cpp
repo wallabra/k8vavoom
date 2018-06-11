@@ -1484,6 +1484,17 @@ func_loop:
         }
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_StrCat)
+        {
+          ++ip;
+          VStr s = *((VStr *)&sp[-2].p)+*((VStr *)&sp[-1].p);
+          ((VStr *)&sp[-2].p)->Clean();
+          ((VStr *)&sp[-1].p)->Clean();
+          sp -= 1;
+          *((VStr *)&sp[-1].p) = s;
+        }
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_StrGetChar)
         {
           ++ip;

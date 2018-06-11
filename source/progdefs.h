@@ -287,6 +287,7 @@ enum {
   DECLARE_OPC(StrGreat, None),
   DECLARE_OPC(StrGreatEqu, None),
   DECLARE_OPC(StrLength, None),
+  DECLARE_OPC(StrCat, None),
 
   DECLARE_OPC(StrGetChar, None),
 

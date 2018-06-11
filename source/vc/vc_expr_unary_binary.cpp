@@ -564,6 +564,22 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       }
       Type = TYPE_Int;
       break;
+    case StrCat:
+      if (op1->Type.Type != TYPE_String || op2->Type.Type != TYPE_String) {
+        ParseError(Loc, "String concatenation expects two strings");
+        delete this;
+        return nullptr;
+      }
+      // optimise literals
+      if (op1->IsStrConst() && op2->IsStrConst()) {
+        VStr s = op1->GetStrConst(ec.Package)+op2->GetStrConst(ec.Package);
+        int val = ec.Package->FindString(*s);
+        VExpression *e = new VStringLiteral(val, Loc);
+        delete this;
+        return e->Resolve(ec);
+      }
+      Type = TYPE_String;
+      break;
   }
 
   // optimise integer constants
@@ -672,6 +688,8 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VBinary::Emit (VEmitContext &ec) {
+  if (!op1 || !op2) return;
+
   op1->Emit(ec);
   op2->Emit(ec);
 
@@ -757,6 +775,8 @@ void VBinary::Emit (VEmitContext &ec) {
     case Or:
       if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_OrBitwise);
       break;
+    case StrCat:
+      if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrCat);
   }
 }
 

@@ -113,6 +113,7 @@ public:
     LessEquals,
     Greater,
     GreaterEquals,
+    StrCat,
   };
 
 public:
