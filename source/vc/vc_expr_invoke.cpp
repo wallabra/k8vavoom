@@ -693,7 +693,7 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   if (ec.Package->Name == NAME_decorate) CheckDecorateParams(ec);
 
   int argc = (NumArgs > 0 ? NumArgs : 0);
-  VExpression** argv = (argc > 0 ? new VExpression*[argc] : nullptr);
+  VExpression **argv = (argc > 0 ? new VExpression *[argc] : nullptr);
   for (int f = 0; f < argc; ++f) argv[f] = nullptr;
 
   // resolve arguments
@@ -709,12 +709,12 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
     if (Args[i]) {
       // check for `ref`/`out` validness
       if (Args[i]->IsRefArg() && (i >= requiredParams || (Func->ParamFlags[i]&FPARM_Ref) == 0)) {
-        ParseError(Args[i]->Loc, "`ref` argument for non-ref parameter");
+        ParseError(Args[i]->Loc, "`ref` argument for non-ref parameter #%d", i+1);
         ArgsOk = false;
         break;
       }
       if (Args[i]->IsOutArg() && (i >= requiredParams || (Func->ParamFlags[i]&FPARM_Out) == 0)) {
-        ParseError(Args[i]->Loc, "`out` argument for non-ref parameter");
+        ParseError(Args[i]->Loc, "`out` argument for non-ref parameter #%d", i+1);
         ArgsOk = false;
         break;
       }
@@ -892,6 +892,8 @@ VMethod *VInvocation::FindMethodWithSignature (VEmitContext &ec, VName name, int
 //
 //  VInvocation::IsGoodMethodParams
 //
+//  argv are not resolved, but should be resolvable without errors
+//
 //==========================================================================
 bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VExpression **argv) {
   if (argc < 0 || argc > VMethod::MAX_PARAMS) return false;
@@ -901,6 +903,8 @@ bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VE
   int requiredParams = m->NumParams;
   int maxParams = (m->Flags&FUNC_VarArgs ? VMethod::MAX_PARAMS-1 : m->NumParams);
 
+  if (argc > maxParams) return false;
+
   for (int i = 0; i < argc; ++i) {
     if (i < requiredParams) {
       if (!argv[i]) {
@@ -908,37 +912,36 @@ bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VE
         continue;
       }
       // check for `ref`/`out` validness
-      //if (argv[i]->IsRefArg() && (m->ParamFlags[i]&FPARM_Ref) == 0) return false;
-      //if (argv[i]->IsOutArg() && (m->ParamFlags[i]&FPARM_Out) == 0) return false;
+      if (argv[i]->IsRefArg() && (m->ParamFlags[i]&FPARM_Ref) == 0) return false;
+      if (argv[i]->IsOutArg() && (m->ParamFlags[i]&FPARM_Out) == 0) return false;
+      // resolve it
+      VExpression *aa = argv[i]->SyntaxCopy()->Resolve(ec);
+      if (!aa) return false;
       // other checks
       if (ec.Package->Name == NAME_decorate) {
         switch (m->ParamTypes[i].Type) {
           case TYPE_Int:
           case TYPE_Float:
-            if (argv[i]->Type.Type == TYPE_Float || argv[i]->Type.Type == TYPE_Int) continue;
+            if (aa->Type.Type == TYPE_Float || aa->Type.Type == TYPE_Int) { delete aa; continue; }
             break;
         }
       }
       if (m->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
-        if (!argv[i]->Type.Equals(m->ParamTypes[i])) {
-          //FIXME: This should be error
-          if (!(m->ParamFlags[argc]&FPARM_Optional)) {
-            // check, but don't raise any errors
-            if (!argv[i]->Type.CheckMatch(argv[i]->Loc, m->ParamTypes[i], false)) return false;
-            //ParseError(Args[i]->Loc, "Out parameter types must be equal");
-          }
+        if (!aa->Type.Equals(m->ParamTypes[i])) {
+          // check, but don't raise any errors
+          if (!aa->Type.CheckMatch(aa->Loc, m->ParamTypes[i], false)) { delete aa; return false; }
         }
       } else {
-        if (m->ParamTypes[i].Type == TYPE_Float && argv[i]->Type.Type == TYPE_Int) continue;
+        if (m->ParamTypes[i].Type == TYPE_Float && aa->Type.Type == TYPE_Int) { delete aa; continue; }
         // check, but don't raise any errors
-        if (!argv[i]->Type.CheckMatch(argv[i]->Loc, m->ParamTypes[i], false)) return false;;
+        if (!aa->Type.CheckMatch(aa->Loc, m->ParamTypes[i], false)) { delete aa; return false; }
       }
-    } else if (!argv[i]) {
-      return false;
+      delete aa;
+    } else {
+      // vararg
+      if (!argv[i]) return false;
     }
   }
-
-  if (argc > maxParams) return false;
 
   while (argc < requiredParams) {
     if (!(m->ParamFlags[argc]&FPARM_Optional)) return false;
@@ -1005,9 +1008,13 @@ void VInvocation::CheckParams (VEmitContext &ec, int argc, VExpression **argv) {
         if (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
           if (!Args[i]->Type.Equals(Func->ParamTypes[i])) {
             //FIXME: This should be error
+            /*
             if (!(Func->ParamFlags[NumArgs]&FPARM_Optional)) {
               Args[i]->Type.CheckMatch(Args[i]->Loc, Func->ParamTypes[i]);
-              //ParseError(Args[i]->Loc, "Out parameter types must be equal");
+            }
+            */
+            if (!Args[i]->Type.CheckMatch(Args[i]->Loc, Func->ParamTypes[i])) {
+              ParseError(Args[i]->Loc, "Out parameter types must be equal for arg #%d (want `%s`, but got `%s`)", i+1, *Func->ParamTypes[i].GetName(), *Args[i]->Type.GetName());
             }
           }
           Args[i]->RequestAddressOf();
@@ -1015,14 +1022,18 @@ void VInvocation::CheckParams (VEmitContext &ec, int argc, VExpression **argv) {
           // normal args: do int->float conversion
           if (Func->ParamTypes[i].Type == TYPE_Float) {
             if (Args[i]->IsIntConst()) {
-              int Val = Args[i]->GetIntConst();
+              int val = Args[i]->GetIntConst();
               TLocation Loc = Args[i]->Loc;
               delete Args[i];
-              Args[i] = (new VFloatLiteral(Val, Loc))->Resolve(ec); // literal's `Reslove()` does nothing, but...
+              Args[i] = (new VFloatLiteral(val, Loc))->Resolve(ec); // literal's `Reslove()` does nothing, but...
             } else if (Args[i]->Type.Type == TYPE_Int) {
-              delete Args[i];
-              Args[i] = (new VScalarToFloat(argv[i]->SyntaxCopy()))->Resolve(ec);
-              if (!Args[i]) ParseError(argv[i]->Loc, "Cannot convert argument to float");
+              VExpression *e = (new VScalarToFloat(argv[i]->SyntaxCopy()))->Resolve(ec);
+              if (!e) {
+                ParseError(argv[i]->Loc, "Cannot convert argument to float for arg #%d (want `%s`, but got `%s`)", i+1, *Func->ParamTypes[i].GetName(), *Args[i]->Type.GetName());
+              } else {
+                delete Args[i];
+                Args[i] = e;
+              }
             }
           }
           Args[i]->Type.CheckMatch(Args[i]->Loc, Func->ParamTypes[i]);
