@@ -141,6 +141,12 @@ int currItemIndex {
 }
 
 
+int currItemTag {
+  get { return (mCurrItem >= 0 && mCurrItem < mItems.length ? mItems[mCurrItem].tag : 0); }
+  set { if (mCurrItem >= 0 && mCurrItem < mItems.length) mItems[mCurrItem].tag = value; }
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 defaultproperties {
   mCurrItem = 0;
