@@ -883,7 +883,9 @@ VStatement *VParser::ParseStatement () {
       }
     case TK_For:
       {
-        bool needCompound = false; // to hide inline `for` variable declarations, we need to wrap it into compound statement
+        // to hide inline `for` variable declarations, we need to wrap `for` into compound statement
+        bool needCompound = false;
+
         Lex.NextToken();
         VFor *For = new VFor(l);
         Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
@@ -892,11 +894,14 @@ VStatement *VParser::ParseStatement () {
         switch (Lex.Token) {
           case TK_Bool:
           case TK_Byte:
+          //case TK_Class: //k8:???
           case TK_Float:
           case TK_Int:
           case TK_Name:
+          case TK_State:
           case TK_String:
           case TK_Auto:
+           do_for_init_decls:
             {
               needCompound = true; // wrap it
               // indirections are processed in `ParseLocalVar()`, 'cause they belongs to vars
@@ -908,6 +913,17 @@ VStatement *VParser::ParseStatement () {
               } while (Lex.Check(TK_Comma));
             }
             break;
+          case TK_Identifier: // this can be something like `Type var = ...`, so check for it
+            {
+              int ofs = 1;
+              //fprintf(stderr, "TT0: %s; TT1: %s\n", VLexer::TokenNames[Lex.peekTokenType(ofs)], VLexer::TokenNames[Lex.peekTokenType(ofs+1)]);
+              while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs;
+              if (Lex.peekTokenType(ofs) == TK_Identifier && Lex.peekTokenType(ofs+1) == TK_Assign) {
+                // yep, declarations
+                goto do_for_init_decls;
+              }
+            }
+            /* fallthrough */
           default:
             do {
               VExpression *Expr = ParseExpression(true);
