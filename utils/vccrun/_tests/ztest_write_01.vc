@@ -1,0 +1,31 @@
+class Main : Object;
+
+struct S { int n; }
+
+void delegate (int n) dg;
+
+final void main () {
+  array!int da;
+  float[4] fa;
+  S s;
+
+  writeln(da);
+  writeln(fa);
+  class!Main cc;
+  writeln(cc);
+  cc = Main;
+  writeln(cc);
+
+  Object o;
+  writeln(o);
+
+  writeln(s);
+
+  writeln(dg);
+
+  state st;
+  writeln(st);
+
+  writeln("====");
+  writeln(dg, st, da, fa, o, cc, st);
+}

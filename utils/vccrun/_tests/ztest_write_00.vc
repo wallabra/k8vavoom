@@ -1,0 +1,10 @@
+class Main : Object;
+
+final static void main () {
+  TVec v = vector(1, 2, 3);
+  writeln("hey, this is `writeln`! and i am a number: ", 42);
+  writeln("i am a vector: ", v);
+  name n = 'ThisIsName';
+  writeln("i am a name: ", n);
+  writeln("i am a float: ", 6.9);
+}
