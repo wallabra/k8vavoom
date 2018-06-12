@@ -618,7 +618,7 @@ private final static void fixDimensionsFromActual (Widget w) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-final static Widget CreateRoot () {
+final static WidgetRoot CreateRoot () {
   auto res = WidgetRoot(SpawnObject(WidgetRoot));
   Video.setFont(res.fontName);
   res.onCreated();
