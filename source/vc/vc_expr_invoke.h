@@ -182,7 +182,7 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
-  void CheckParams (VEmitContext &);
+  void CheckParams (VEmitContext &ec, int argc, VExpression **argv); // argc/argv: non-resolved argument copies
   void CheckDecorateParams (VEmitContext &);
 
   // arguments should be already resolved (i.e. has type)

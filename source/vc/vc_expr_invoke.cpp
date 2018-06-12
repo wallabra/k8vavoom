@@ -692,6 +692,10 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   guard(VInvocation::DoResolve);
   if (ec.Package->Name == NAME_decorate) CheckDecorateParams(ec);
 
+  int argc = (NumArgs > 0 ? NumArgs : 0);
+  VExpression** argv = (argc > 0 ? new VExpression*[argc] : nullptr);
+  for (int f = 0; f < argc; ++f) argv[f] = nullptr;
+
   // resolve arguments
   int requiredParams = Func->NumParams;
   int maxParams = (Func->Flags&FUNC_VarArgs ? VMethod::MAX_PARAMS-1 : Func->NumParams);
@@ -714,6 +718,7 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
         ArgsOk = false;
         break;
       }
+      argv[i] = Args[i]->SyntaxCopy(); // save it for checker
       Args[i] = Args[i]->Resolve(ec);
       if (!Args[i]) { ArgsOk = false; break; }
     } else {
@@ -728,16 +733,20 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   }
 
   if (!ArgsOk) {
+    for (int f = 0; f < argc; ++f) delete argv[f];
+    delete[] argv;
     delete this;
     return nullptr;
   }
 
-  CheckParams(ec);
+  CheckParams(ec, argc, argv);
 
   Type = Func->ReturnType;
   if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
   if (Func->Flags&FUNC_Spawner) Type.Class = Args[0]->Type.Class;
 
+  for (int f = 0; f < argc; ++f) delete argv[f];
+  delete[] argv;
   return this;
   unguard;
 }
@@ -944,8 +953,10 @@ bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VE
 //
 //  VInvocation::CheckParams
 //
+//  argc/argv: non-resolved argument copies)
+//
 //==========================================================================
-void VInvocation::CheckParams (VEmitContext &ec) {
+void VInvocation::CheckParams (VEmitContext &ec, int argc, VExpression **argv) {
   guard(VInvocation::CheckParams);
 
   // determine parameter count
@@ -956,7 +967,7 @@ void VInvocation::CheckParams (VEmitContext &ec) {
   for (int i = 0; i < NumArgs; ++i) {
     if (i < requiredParams) {
       if (!Args[i]) {
-        if (!(Func->ParamFlags[i] & FPARM_Optional)) ParseError(Loc, "Cannot omit non-optional argument");
+        if (!(Func->ParamFlags[i]&FPARM_Optional)) ParseError(Loc, "Cannot omit non-optional argument");
         argsize += Func->ParamTypes[i].GetStackSize();
       } else {
         // check for `ref`/`out` validness
@@ -990,6 +1001,7 @@ void VInvocation::CheckParams (VEmitContext &ec) {
               break;
           }
         }
+        // ref/out args: no int->float conversion allowed
         if (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
           if (!Args[i]->Type.Equals(Func->ParamTypes[i])) {
             //FIXME: This should be error
@@ -1000,21 +1012,20 @@ void VInvocation::CheckParams (VEmitContext &ec) {
           }
           Args[i]->RequestAddressOf();
         } else {
-          if (!(Func->ParamFlags[NumArgs]&FPARM_Optional)) {
-            if (Func->ParamTypes[i].Type == TYPE_Float) {
-              if (Args[i]->IsIntConst()) {
-                int Val = Args[i]->GetIntConst();
-                TLocation Loc = Args[i]->Loc;
-                delete Args[i];
-                Args[i] = nullptr;
-                Args[i] = new VFloatLiteral(Val, Loc);
-                Args[i] = Args[i]->Resolve(ec);
-              } else if (Args[i]->Type.Type == TYPE_Int) {
-                Args[i] = (new VScalarToFloat(Args[i]))->Resolve(ec);
-              }
+          // normal args: do int->float conversion
+          if (Func->ParamTypes[i].Type == TYPE_Float) {
+            if (Args[i]->IsIntConst()) {
+              int Val = Args[i]->GetIntConst();
+              TLocation Loc = Args[i]->Loc;
+              delete Args[i];
+              Args[i] = (new VFloatLiteral(Val, Loc))->Resolve(ec); // literal's `Reslove()` does nothing, but...
+            } else if (Args[i]->Type.Type == TYPE_Int) {
+              delete Args[i];
+              Args[i] = (new VScalarToFloat(argv[i]->SyntaxCopy()))->Resolve(ec);
+              if (!Args[i]) ParseError(argv[i]->Loc, "Cannot convert argument to float");
             }
-            Args[i]->Type.CheckMatch(Args[i]->Loc, Func->ParamTypes[i]);
           }
+          Args[i]->Type.CheckMatch(Args[i]->Loc, Func->ParamTypes[i]);
         }
         argsize += Args[i]->Type.GetStackSize();
       }
@@ -1030,7 +1041,7 @@ void VInvocation::CheckParams (VEmitContext &ec) {
   if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments, need %d, got %d.", maxParams, NumArgs);
 
   while (NumArgs < requiredParams) {
-    if (Func->ParamFlags[NumArgs] & FPARM_Optional) {
+    if (Func->ParamFlags[NumArgs]&FPARM_Optional) {
       Args[NumArgs] = nullptr;
       ++NumArgs;
     } else {
