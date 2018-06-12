@@ -1002,9 +1002,14 @@ void VVideo::runEventLoop () {
                if (ev.wheel.y > 0) evt.data1 = K_MWHEELUP;
           else if (ev.wheel.y < 0) evt.data1 = K_MWHEELDOWN;
           else break;
-          evt.data2 = ev.wheel.x;
-          evt.data3 = ev.wheel.y;
-          onEvent(evt);
+          {
+            int mx, my;
+            //SDL_GetGlobalMouseState(&mx, &my);
+            SDL_GetMouseState(&mx, &my);
+            evt.data2 = mx;
+            evt.data3 = my;
+            onEvent(evt);
+          }
           break;
         case SDL_WINDOWEVENT:
           switch (ev.window.event) {
