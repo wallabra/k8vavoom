@@ -639,6 +639,7 @@ VDecorateInvocation::VDecorateInvocation (VName AName, const TLocation &ALoc, in
   , Name(AName)
   , NumArgs(ANumArgs)
 {
+  memset(Args, 0, sizeof(Args));
   for (int i = 0; i < NumArgs; ++i) Args[i] = AArgs[i];
 }
 
@@ -678,7 +679,7 @@ VExpression *VDecorateInvocation::SyntaxCopy () {
 void VDecorateInvocation::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
   auto res = (VDecorateInvocation *)e;
-  memset(res, 0, sizeof(Args));
+  memset(res->Args, 0, sizeof(res->Args));
   res->Name = Name;
   res->NumArgs = NumArgs;
   for (int f = 0; f < NumArgs; ++f) res->Args[f] = (Args[f] ? Args[f]->SyntaxCopy() : nullptr);
