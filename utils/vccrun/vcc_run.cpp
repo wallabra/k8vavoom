@@ -46,17 +46,37 @@ __attribute__((noreturn, format(printf, 1, 2))) void Host_Error (const char *err
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void PR_WriteOne () {
-  P_GET_INT(type);
-  switch (type) {
+void PR_WriteOne (const VFieldType &type) {
+  switch (type.Type) {
     case TYPE_Int: case TYPE_Byte: printf("%d", PR_Pop()); break;
     case TYPE_Bool: printf("%s", (PR_Pop() ? "true" : "false")); break;
     case TYPE_Float: printf("%f", PR_Popf()); break;
     case TYPE_Name: printf("%s", *PR_PopName()); break;
     case TYPE_String: printf("%s", *PR_PopStr()); break;
-    case TYPE_Pointer: printf("%p", PR_PopPtr()); break;
     case TYPE_Vector: { TVec v = PR_Popv(); printf("(%f,%f,%f)", v.x, v.y, v.z); } break;
-    default: Sys_Error("Tried to print something strange...");
+    case TYPE_Pointer: printf("<%s>(%p)", *type.GetName(), PR_PopPtr()); break;
+    case TYPE_Class: if (PR_PopPtr()) printf("<%s>", *type.GetName()); else printf("<none>"); break;
+    case TYPE_State:
+      {
+        VState *st = (VState *)PR_PopPtr();
+        if (st) {
+          printf("<state:%s %d %f>", *st->SpriteName, st->Frame, st->Time);
+        } else {
+          printf("<state>");
+        }
+      }
+      break;
+    case TYPE_Reference: printf("<%s>", (type.Class ? *type.Class->Name : "none")); break;
+    case TYPE_Delegate: printf("<%s:%p:%p>", *type.GetName(), PR_PopPtr(), PR_PopPtr()); break;
+    case TYPE_Struct: PR_PopPtr(); printf("<%s>", *type.Struct->Name); break;
+    case TYPE_Array: PR_PopPtr(); printf("<%s>", *type.GetName()); break;
+    case TYPE_DynamicArray:
+      {
+        VScriptArray *a = (VScriptArray *)PR_PopPtr();
+        printf("%s(%d)", *type.GetName(), a->Num());
+      }
+      break;
+    default: Sys_Error(va("Tried to print something strange: `%s`", *type.GetName()));
   }
 }
 
