@@ -1510,7 +1510,7 @@ EToken VLexer::peekTokenType (int offset) const {
   if (offset == 0) return Token;
   if (src->FilePtr >= src->FileEnd) return TK_NoToken; // no more
   EToken tkres = TK_NoToken;
-  int cpos = (int)(src->FilePtr-src->FileStart);
+  int cpos = (int)(src->FilePtr-src->FileStart)-1; // current char is eaten
   //fprintf(stderr, "cpos=%d\n", cpos);
   while (offset-- > 0) {
     tkres = skipTokenFrom(cpos);
