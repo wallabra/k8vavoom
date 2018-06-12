@@ -112,6 +112,17 @@ IMPLEMENT_FUNCTION(VObject, GetTickCount) {
 enum {
   K_SPACE = 32,
 
+  K_N0 = 48,
+  K_N1,
+  K_N2,
+  K_N3,
+  K_N4,
+  K_N5,
+  K_N6,
+  K_N7,
+  K_N8,
+  K_N9,
+
   K_a = 97,
   K_b,
   K_c,
