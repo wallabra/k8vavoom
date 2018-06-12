@@ -2627,8 +2627,10 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
 //===========================================================================
 
 final bool AddElvenGift (name Klass) {
-  if (FindClass(Klass)) {
-    Actor act = Level.Spawn(FindClass(Klass));
+  class!Thinker th = class!Thinker(FindClass(Klass));
+  if (th) {
+    Actor act = Actor(Level.Spawn(th));
+    if (!act) return false;
     if (Klass == 'BDW_Rifle') {
       Weapon(act).AmmoGive2 = 31;
       PendingWeapon = Weapon(act);
