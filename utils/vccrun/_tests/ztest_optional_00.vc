@@ -1,0 +1,21 @@
+class Main : Object;
+
+struct AnimState { int n; }
+struct WeaponState { int n; }
+
+
+final void blitAll (ref AnimState ast, ref WeaponState wst, int x0, int y0, optional float scale) {
+  writeln("ast.n=", ast.n);
+  writeln("wst.n=", wst.n);
+  writeln("x0=", x0, "; y0=", y0);
+  writeln("scale=", scale, "; ", specified_scale);
+}
+
+
+final void main () {
+  AnimState ast;
+  ast.n = 42;
+  WeaponState wst;
+  wst.n = 666;
+  blitAll(ast, wst, 10, 20, 2);
+}
