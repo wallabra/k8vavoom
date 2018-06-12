@@ -899,7 +899,8 @@ VStatement *VParser::ParseStatement () {
           case TK_Auto:
             {
               needCompound = true; // wrap it
-              VExpression *TypeExpr = ParseTypeWithPtrs();
+              // indirections are processed in `ParseLocalVar()`, 'cause they belongs to vars
+              VExpression *TypeExpr = ParseType();
               do {
                 VLocalDecl *Decl = ParseLocalVar(TypeExpr, true);
                 if (!Decl) break;
@@ -1003,7 +1004,8 @@ VStatement *VParser::ParseStatement () {
     case TK_Array:
     case TK_Auto:
       {
-        VExpression *TypeExpr = ParseTypeWithPtrs();
+        // indirections are processed in `ParseLocalVar()`, 'cause they belongs to vars
+        VExpression *TypeExpr = ParseType();
         VLocalDecl *Decl = ParseLocalVar(TypeExpr);
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
         return new VLocalVarStatement(Decl);
@@ -1486,8 +1488,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
     delete Type;
     Type = nullptr;
     Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-  }
-  while (Lex.Check(TK_Semicolon)) {}
+  } while (Lex.Check(TK_Semicolon)) {}
   //Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
 
   if (InClass) {
