@@ -1287,3 +1287,235 @@ void VLexer::Expect (EToken tk, ECompileError error) {
   if (Token != tk) ParseError(Location, error, "expected %s, found %s", TokenNames[tk], TokenNames[Token]);
   NextToken();
 }
+
+
+//==========================================================================
+//
+// VLexer::isNStrEqu
+//
+//==========================================================================
+bool VLexer::isNStrEqu (int spos, int epos, const char *s) const {
+  if (!s) s = "";
+  if (spos >= epos) return (s[0] == 0);
+  if (spos < 0 || epos > src->FileEnd-src->FileStart) return false;
+  auto slen = (int)strlen(s);
+  if (epos-spos != slen) return false;
+  return (memcmp(src->FileStart+spos, s, slen) == 0);
+}
+
+
+//==========================================================================
+//
+// VLexer::posAtEOS
+//
+//==========================================================================
+bool VLexer::posAtEOS (int cpos) const {
+  if (cpos < 0) cpos = 0;
+  return (cpos >= src->FileEnd-src->FileStart);
+}
+
+
+//==========================================================================
+//
+// VLexer::peekChar
+//
+// returns 0 on EOS
+//
+//==========================================================================
+vuint8 VLexer::peekChar (int cpos) const {
+  if (cpos < 0) cpos = 0;
+  if (cpos >= src->FileEnd-src->FileStart) return 0;
+  vuint8 ch = src->FileStart[cpos];
+  if (ch == 0) ch = ' ';
+  return ch;
+}
+
+
+//==========================================================================
+//
+// VLexer::skipBlanksFrom
+//
+// returns `false` on EOS
+//
+//==========================================================================
+bool VLexer::skipBlanksFrom (int &cpos) const {
+  if (cpos < 0) cpos = 0; // just in case
+  for (;;) {
+    vuint8 ch = peekChar(cpos);
+    if (!ch) break; // EOS
+    if (ch <= ' ') { ++cpos; continue; }
+    if (ch != '/') return true; // not a comment
+    ch = peekChar(cpos+1);
+    // block comment?
+    if (ch == '*') {
+      cpos += 2;
+      for (;;) {
+        ch = peekChar(cpos);
+        if (!ch) return false;
+        if (ch == '*' && peekChar(cpos+1) == '/') { cpos += 2; break; }
+        ++cpos;
+      }
+      continue;
+    }
+    // nested block comment?
+    if (ch == '+') {
+      int level = 1;
+      cpos += 2;
+      for (;;) {
+        ch = peekChar(cpos);
+        if (!ch) return false;
+        if (ch == '+' && peekChar(cpos+1) == '/') {
+          cpos += 2;
+          if (--level == 0) break;
+        } else if (ch == '/' && peekChar(cpos+1) == '+') {
+          cpos += 2;
+          ++level;
+        } else {
+          ++cpos;
+        }
+      }
+      continue;
+    }
+    // c++ style comment
+    if (ch == '/') {
+      for (;;) {
+        ch = peekChar(cpos);
+        if (!ch) return false;
+        ++cpos;
+        if (ch == '\n') break;
+      }
+      continue;
+    }
+    return true; // nonblank
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+// VLexer::skipTokenFrom
+//
+// calls skipBlanksFrom, returns token type or TK_NoToken
+//
+//==========================================================================
+EToken VLexer::skipTokenFrom (int &cpos) const {
+  if (!skipBlanksFrom(cpos)) return TK_NoToken;
+  // classify token
+  vuint8 ch = peekChar(cpos);
+  if (!ch) return TK_NoToken; // just in case
+
+  //fprintf(stderr, " tkstart=%d; ch=%c\n", cpos, ch);
+
+  // quoted string?
+  if (ch == '"' || ch == '\'') {
+    vuint8 ech = ch;
+    ++cpos;
+    for (;;) {
+      vuint8 ch = peekChar(cpos++);
+      if (ch == '\\') {
+        ++cpos; // unconditionally skip next char
+      } else {
+        if (ch == ech) break;
+      }
+    }
+    return (ech == '"' ? TK_StringLiteral : TK_NameLiteral);
+  }
+
+  // number?
+  if (ch >= '0' && ch <= '9') {
+    int base = 0;
+    if (ch == '0') {
+      switch (peekChar(cpos+1)) {
+        case 'b': case 'B': base = 2; break;
+        case 'o': case 'O': base = 8; break;
+        case 'd': case 'D': base = 10; break;
+        case 'x': case 'X': base = 16; break;
+      }
+    }
+    for (;;) {
+      ch = peekChar(cpos);
+      if (ch != '_' && VStr::digitInBase(ch, (base ? base : 10)) < 0) break;
+      ++cpos;
+    }
+    if (base != 0) return TK_IntLiteral; // for now, there is no non-decimal floating literals
+    if (peekChar(cpos) == '.') {
+      vuint8 nch = peekChar(cpos+1);
+      if (isAlpha(nch) || nch == '_' || nch == '.' || nch == 0) return TK_IntLiteral; // num dot smth
+      // floating literal
+      ++cpos;
+      for (;;) {
+        ch = peekChar(cpos);
+        if (ch != '_' && VStr::digitInBase(ch, 10) < 0) break;
+        ++cpos;
+      }
+      if (peekChar(cpos) == 'f') ++cpos;
+      return TK_FloatLiteral;
+    }
+  }
+
+  // identifier?
+  if (isAlpha(ch) || ch >= 128 || ch == '_') {
+    // find identifier end
+    int spos = cpos;
+    for (;;) {
+      ch = peekChar(cpos);
+      if (!ch) break;
+      if (isAlpha(ch) || ch >= 128 || ch == '_' || (ch >= '0' && ch <= '9')) { ++cpos; continue; }
+      break;
+    }
+    // check for synonyms
+    if (isNStrEqu(spos, cpos, "NULL")) return TK_Null;
+    if (isNStrEqu(spos, cpos, "null")) return TK_Null;
+    // look in tokens
+    for (unsigned f = TK_Abstract; f < TK_VarArgs; ++f) {
+      if (isNStrEqu(spos, cpos, TokenNames[f])) return (EToken)f;
+    }
+    return TK_Identifier;
+  }
+
+  // now collect the longest punctuation
+  EToken tkres = TK_NoToken;
+  int spos = cpos;
+  //fprintf(stderr, " delimstart=%d; ch=%c\n", cpos, ch);
+  for (;;) {
+    // look in tokens
+    bool found = false;
+    for (unsigned f = TK_VarArgs; f < TK_TotalTokenCount; ++f) {
+      if (isNStrEqu(spos, cpos+1, TokenNames[f])) {
+        tkres = (EToken)f;
+        found = true;
+        //fprintf(stderr, "  delimend=%d; tk=<%s>\n", cpos+1, TokenNames[f]);
+        break;
+      }
+    }
+    if (!found) return tkres;
+    ++cpos;
+  }
+}
+
+
+//==========================================================================
+//
+// VLexer::peekTokenType
+//
+// this is freakin' slow, and won't cross "include" boundaries
+// offset==0 means "current token"
+// this doesn't process conditional directives,
+// so it is useful only for limited lookups
+//
+//==========================================================================
+EToken VLexer::peekTokenType (int offset) const {
+  if (offset < 0) return TK_NoToken;
+  if (offset == 0) return Token;
+  if (src->FilePtr >= src->FileEnd) return TK_NoToken; // no more
+  EToken tkres = TK_NoToken;
+  int cpos = (int)(src->FilePtr-src->FileStart);
+  //fprintf(stderr, "cpos=%d\n", cpos);
+  while (offset-- > 0) {
+    tkres = skipTokenFrom(cpos);
+    //fprintf(stderr, "  cpos=%d; <%s>\n", cpos, TokenNames[tkres]);
+    if (tkres == TK_NoToken) break; // EOS or some error
+  }
+  return tkres;
+}
