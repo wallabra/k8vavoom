@@ -1,0 +1,29 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Test : Object;
+
+string id;
+Test next;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+static final Test spawnList () {
+  Test head = none, prev = none;
+  for (int f = 0; f < 4; ++f) {
+    auto t = Test(SpawnObject(Test));
+    t.id = va("%d", f);
+    t.next = none;
+    if (prev) prev.next = t; else head = t;
+    prev = t;
+  }
+  return head;
+}
+
+
+static final void main () {
+  Test head = spawnList();
+  for (Test t = head; t; t = t.next) {
+    writeln("id: <", t.id, ">");
+  }
+}
