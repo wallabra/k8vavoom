@@ -459,12 +459,13 @@ VStr VFieldType::GetName () const {
     case TYPE_State: return "state";
     case TYPE_Struct: return *Struct->Name;
     case TYPE_Vector: return "vector";
-    case TYPE_Array: return GetArrayInnerType().GetName() + "[]";
+    case TYPE_Array: return GetArrayInnerType().GetName()+"["+VStr(ArrayDim)+"]";
     case TYPE_DynamicArray:
       Ret = GetArrayInnerType().GetName();
       return (Ret.IndexOf('*') < 0 ? VStr("array!")+Ret : VStr("array!(")+Ret+")");
     case TYPE_Automatic: return "auto";
-    default: return "unknown";
+    case TYPE_Delegate: return "delegate";
+    default: return VStr("unknown:")+VStr((vuint32)Type);
   }
   unguard;
 }

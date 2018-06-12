@@ -1236,10 +1236,25 @@ VExpression *VInvokeWrite::DoResolve (VEmitContext &ec) {
           case TYPE_String:
           case TYPE_Pointer:
           case TYPE_Vector:
+          case TYPE_Class:
+          case TYPE_State:
+          case TYPE_Reference:
+          case TYPE_Delegate:
             break;
+          case TYPE_Struct:
+          case TYPE_Array:
+          case TYPE_DynamicArray:
+            Args[i]->RequestAddressOf();
+            break;
+          case TYPE_Void:
+          case TYPE_Unknown:
+          case TYPE_Automatic:
           default:
             ParseError(Args[i]->Loc, "Cannot write type `%s`", *Args[i]->Type.GetName());
             ArgsOk = false;
+            break;
+
+
         }
       }
     }
@@ -1267,8 +1282,8 @@ void VInvokeWrite::Emit (VEmitContext &ec) {
   for (int i = 0; i < NumArgs; ++i) {
     if (!Args[i]) continue;
     Args[i]->Emit(ec);
-    ec.EmitPushNumber(Args[i]->Type.Type);
-    ec.AddStatement(OPC_DoWriteOne);
+    //ec.EmitPushNumber(Args[i]->Type.Type);
+    ec.AddStatement(OPC_DoWriteOne, Args[i]->Type);
   }
   if (isWriteln) ec.AddStatement(OPC_DoWriteFlush);
   unguard;

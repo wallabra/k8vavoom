@@ -144,5 +144,6 @@ inline VStr PR_PopStr () {
 // ////////////////////////////////////////////////////////////////////////// //
 extern VStr PF_FormatString ();
 
-extern void PR_WriteOne ();
+class VFieldType;
+extern void PR_WriteOne (const VFieldType &type);
 extern void PR_WriteFlush ();

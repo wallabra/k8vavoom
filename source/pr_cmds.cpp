@@ -693,19 +693,39 @@ IMPLEMENT_FUNCTION(VObject, StartSearch) {
 
 static char wrbuffer[1024] = {0};
 
-void PR_WriteOne () {
-  P_GET_INT(type);
+void PR_WriteOne (const VFieldType &type) {
   char *sptr = (char *)memchr(wrbuffer, 0, sizeof(wrbuffer));
   if (!sptr) { sptr = wrbuffer; wrbuffer[0] = 0; } // just in case
   size_t maxlen = (size_t)(wrbuffer+sizeof(wrbuffer)-sptr);
-  switch (type) {
+  switch (type.Type) {
     case TYPE_Int: case TYPE_Byte: snprintf(sptr, maxlen, "%d", PR_Pop()); break;
     case TYPE_Bool: snprintf(sptr, maxlen, "%s", (PR_Pop() ? "true" : "false")); break;
     case TYPE_Float: snprintf(sptr, maxlen, "%f", PR_Popf()); break;
     case TYPE_Name: snprintf(sptr, maxlen, "%s", *PR_PopName()); break;
     case TYPE_String: snprintf(sptr, maxlen, "%s", *PR_PopStr()); break;
-    case TYPE_Pointer: snprintf(sptr, maxlen, "%p", PR_PopPtr()); break;
     case TYPE_Vector: { TVec v = PR_Popv(); snprintf(sptr, maxlen, "(%f,%f,%f)", v.x, v.y, v.z); } break;
+    case TYPE_Pointer: snprintf(sptr, maxlen, "<%s>(%p)", *type.GetName(), PR_PopPtr()); break;
+    case TYPE_Class: if (PR_PopPtr()) snprintf(sptr, maxlen, "<%s>", *type.GetName()); else snprintf(sptr, maxlen, "<none>"); break;
+    case TYPE_State:
+      {
+        VState *st = (VState *)PR_PopPtr();
+        if (st) {
+          snprintf(sptr, maxlen, "<state:%s %d %f>", *st->SpriteName, st->Frame, st->Time);
+        } else {
+          snprintf(sptr, maxlen, "<state>");
+        }
+      }
+      break;
+    case TYPE_Reference: snprintf(sptr, maxlen, "<%s>", (type.Class ? *type.Class->Name : "none")); break;
+    case TYPE_Delegate: snprintf(sptr, maxlen, "<%s:%p:%p>", *type.GetName(), PR_PopPtr(), PR_PopPtr()); break;
+    case TYPE_Struct: PR_PopPtr(); snprintf(sptr, maxlen, "<%s>", *type.Struct->Name); break;
+    case TYPE_Array: PR_PopPtr(); snprintf(sptr, maxlen, "<%s>", *type.GetName()); break;
+    case TYPE_DynamicArray:
+      {
+        VScriptArray *a = (VScriptArray *)PR_PopPtr();
+        snprintf(sptr, maxlen, "%s(%d)", *type.GetName(), a->Num());
+      }
+      break;
     default: Sys_Error("Tried to print something strange...");
   }
 }

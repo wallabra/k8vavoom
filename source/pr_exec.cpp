@@ -184,6 +184,7 @@ static void cstDump () {
   T.PtrLevel = (ip)[3]; \
   T.ArrayDim = ReadInt32((ip)+4); \
   T.Class = (VClass *)ReadPtr((ip)+8); \
+  ip += 8+sizeof(VClass *); \
 } while (0)
 
 
@@ -1789,8 +1790,9 @@ func_loop:
       PR_VM_CASE(OPC_DynArrayElementGrow)
         {
           VFieldType Type;
-          ReadType(Type, ip+1);
-          ip += 9+sizeof(VClass *);
+          ++ip;
+          ReadType(Type, ip);
+          //ip += 9+sizeof(VClass *);
           if (sp[-1].i < 0) { cstDump(); Sys_Error("Array index is negative"); }
           VScriptArray &A = *(VScriptArray *)sp[-2].p;
           if (sp[-1].i >= A.Num()) A.SetNum(sp[-1].i+1, Type);
@@ -1807,8 +1809,9 @@ func_loop:
       PR_VM_CASE(OPC_DynArraySetNum)
         {
           VFieldType Type;
-          ReadType(Type, ip+1);
-          ip += 9+sizeof(VClass *);
+          ++ip;
+          ReadType(Type, ip);
+          //ip += 9+sizeof(VClass *);
           ((VScriptArray *)sp[-2].p)->SetNum(sp[-1].i, Type);
           sp -= 2;
         }
@@ -1817,8 +1820,9 @@ func_loop:
       PR_VM_CASE(OPC_DynArraySetNumMinus)
         {
           VFieldType Type;
-          ReadType(Type, ip+1);
-          ip += 9+sizeof(VClass *);
+          ++ip;
+          ReadType(Type, ip);
+          //ip += 9+sizeof(VClass *);
           ((VScriptArray *)sp[-2].p)->SetNumMinus(sp[-1].i, Type);
           sp -= 2;
         }
@@ -1827,8 +1831,9 @@ func_loop:
       PR_VM_CASE(OPC_DynArraySetNumPlus)
         {
           VFieldType Type;
-          ReadType(Type, ip+1);
-          ip += 9+sizeof(VClass *);
+          ++ip;
+          ReadType(Type, ip);
+          //ip += 9+sizeof(VClass *);
           ((VScriptArray *)sp[-2].p)->SetNumPlus(sp[-1].i, Type);
           sp -= 2;
         }
@@ -1837,8 +1842,9 @@ func_loop:
       PR_VM_CASE(OPC_DynArrayInsert)
         {
           VFieldType Type;
-          ReadType(Type, ip+1);
-          ip += 9+sizeof(VClass *);
+          ++ip;
+          ReadType(Type, ip);
+          //ip += 9+sizeof(VClass *);
           ((VScriptArray *)sp[-3].p)->Insert(sp[-2].i, sp[-1].i, Type);
           sp -= 3;
         }
@@ -1847,8 +1853,9 @@ func_loop:
       PR_VM_CASE(OPC_DynArrayRemove)
         {
           VFieldType Type;
-          ReadType(Type, ip+1);
-          ip += 9+sizeof(VClass *);
+          ++ip;
+          ReadType(Type, ip);
+          //ip += 9+sizeof(VClass *);
           ((VScriptArray *)sp[-3].p)->Remove(sp[-2].i, sp[-1].i, Type);
           sp -= 3;
         }
@@ -1903,10 +1910,16 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DoWriteOne)
-        ++ip;
-        pr_stackPtr = sp;
-        PR_WriteOne(); // this will pop everything
-        sp = pr_stackPtr;
+        {
+          VFieldType Type;
+          ++ip;
+          ReadType(Type, ip);
+          //ip += 9+sizeof(VClass *);
+          pr_stackPtr = sp;
+          PR_WriteOne(Type); // this will pop everything
+          if (pr_stackPtr < pr_stack) { pr_stackPtr = pr_stack; cstDump(); Sys_Error("Stack underflow in `write`"); }
+          sp = pr_stackPtr;
+        }
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DoWriteFlush)

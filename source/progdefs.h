@@ -363,7 +363,7 @@ enum {
   DECLARE_OPC(IteratorPop, None),
 
   // `write` and `writeln`
-  DECLARE_OPC(DoWriteOne, None),
+  DECLARE_OPC(DoWriteOne, Type),
   DECLARE_OPC(DoWriteFlush, None),
 
 #undef DECLARE_OPC
