@@ -54,6 +54,9 @@ private:
   static void knsplit (const VStr &keyname, VStr &path, VStr &key);
 
 public:
+  virtual void Destroy () override;
+
+public:
   bool load (const VStr &fname);
   bool save (const VStr &fname) const;
   void clear ();

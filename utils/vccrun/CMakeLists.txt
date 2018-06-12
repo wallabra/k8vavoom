@@ -155,6 +155,9 @@ if (ENABLE_VCCRUN)
     modules/mod_ini.cpp
     modules/sdlgl/mod_sdlgl.h
     modules/sdlgl/mod_sdlgl.cpp
+    modules/dfmap/dfmap.h
+    modules/dfmap/mod_dfmap.h
+    modules/dfmap/mod_dfmap.cpp
   )
 
   #message(STATUS "VCCRUN: LIBS: " ${VCCRUN_LINKLIBS})

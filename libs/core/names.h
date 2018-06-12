@@ -358,6 +358,8 @@ REGISTER_NAME(Video)
 REGISTER_NAME(IniFile)
 REGISTER_NAME(Texture)
 
+REGISTER_NAME(DFMap)
+
 // Closing -----------------------------------------------------------------
 
 #ifdef REGISTERING_ENUM
