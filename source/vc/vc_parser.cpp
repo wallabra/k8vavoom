@@ -899,7 +899,7 @@ VStatement *VParser::ParseStatement () {
           case TK_Auto:
             {
               needCompound = true; // wrap it
-              VExpression *TypeExpr = ParseType();
+              VExpression *TypeExpr = ParseTypeWithPtrs();
               do {
                 VLocalDecl *Decl = ParseLocalVar(TypeExpr, true);
                 if (!Decl) break;
@@ -1003,7 +1003,7 @@ VStatement *VParser::ParseStatement () {
     case TK_Array:
     case TK_Auto:
       {
-        VExpression *TypeExpr = ParseType();
+        VExpression *TypeExpr = ParseTypeWithPtrs();
         VLocalDecl *Decl = ParseLocalVar(TypeExpr);
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
         return new VLocalVarStatement(Decl);
@@ -1073,12 +1073,20 @@ VExpression *VParser::ParseType () {
         Lex.NextToken();
         VName MetaClassName = NAME_None;
         if (Lex.Check(TK_Not)) {
-          // class!type
+          // class!type or class!(type)
+          int parenCount = 0;
+          while (Lex.Check(TK_LParen)) ++parenCount;
           if (Lex.Token != TK_Identifier) {
             ParseError(Lex.Location, "Invalid identifier, class name expected");
           } else {
             MetaClassName = Lex.Name;
             Lex.NextToken();
+          }
+          while (parenCount-- > 0) {
+            if (!Lex.Check(TK_RParen)) {
+              ParseError(Lex.Location, "')' expected");
+              break;
+            }
           }
         } else if (Lex.Check(TK_Less)) {
           // class<type>
@@ -1113,19 +1121,22 @@ VExpression *VParser::ParseType () {
         VExpression *Inner = nullptr;
         if (Lex.Check(TK_Not)) {
           // array!type
-          bool hasParen = Lex.Check(TK_LParen);
+          int parenCount = 0;
+          while (Lex.Check(TK_LParen)) ++parenCount;
           Inner = ParseType();
           if (!Inner) ParseError(Lex.Location, "Inner type declaration expected");
-          if (hasParen) {
-            while (Lex.Check(TK_Asterisk)) Inner = new VPointerType(Inner, Lex.Location);
-            Lex.Expect(TK_RParen);
+          if (parenCount) Inner = ParseTypePtrs(Inner);
+          while (parenCount-- > 0) {
+            if (!Lex.Check(TK_RParen)) {
+              ParseError(Lex.Location, "')' expected");
+              break;
+            }
           }
         } else {
           // array<type>
           Lex.Expect(TK_Less);
-          Inner = ParseType();
+          Inner = ParseTypeWithPtrs();
           if (!Inner) ParseError(Lex.Location, "Inner type declaration expected");
-          while (Lex.Check(TK_Asterisk)) Inner = new VPointerType(Inner, Lex.Location);
           Lex.Expect(TK_Greater);
         }
         return new VDynamicArrayType(Inner, l);
@@ -1134,6 +1145,36 @@ VExpression *VParser::ParseType () {
       return nullptr;
   }
   unguard;
+}
+
+
+//==========================================================================
+//
+// VParser::ParseTypePtrs
+//
+// call this after `ParseType` to parse asterisks
+//
+//==========================================================================
+VExpression *VParser::ParseTypePtrs (VExpression *type) {
+  if (!type) return nullptr;
+  TLocation l = Lex.Location;
+  while (Lex.Check(TK_Asterisk)) {
+    type = new VPointerType(type, l);
+    l = Lex.Location;
+  }
+  return type;
+}
+
+
+//==========================================================================
+//
+// VParser::ParseTypeWithPtrs
+//
+// convenient wrapper
+//
+//==========================================================================
+VExpression *VParser::ParseTypeWithPtrs () {
+  return ParseTypePtrs(ParseType());
 }
 
 
@@ -1168,13 +1209,8 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
     int ParmModifiers = TModifiers::Parse(Lex);
     Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref, Lex.Location));
 
-    P.TypeExpr = ParseType();
+    P.TypeExpr = ParseTypeWithPtrs();
     if (!P.TypeExpr && Func->NumParams == 0) break;
-    TLocation l = Lex.Location;
-    while (Lex.Check(TK_Asterisk)) {
-      P.TypeExpr = new VPointerType(P.TypeExpr, l);
-      l = Lex.Location;
-    }
     if (Lex.Token == TK_Identifier) {
       P.Name = Lex.Name;
       P.Loc = Lex.Location;
@@ -1227,13 +1263,8 @@ void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
     VMethodParam &P = Func->Params[Func->NumParams];
     int ParmModifiers = TModifiers::Parse(Lex);
     Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref, Lex.Location));
-    P.TypeExpr = ParseType();
+    P.TypeExpr = ParseTypeWithPtrs();
     if (!P.TypeExpr && Func->NumParams == 0) break;
-    TLocation l = Lex.Location;
-    while (Lex.Check(TK_Asterisk)) {
-      P.TypeExpr = new VPointerType(P.TypeExpr, l);
-      l = Lex.Location;
-    }
     if (Lex.Token == TK_Identifier) {
       P.Name = Lex.Name;
       P.Loc = Lex.Location;
@@ -1267,13 +1298,8 @@ VExpression *VParser::ParseLambda () {
   if (!currFunc) { ParseError(stl, "Lambda outside of method"); return new VNullLiteral(stl); }
   if (!currClass) { ParseError(stl, "Lambda outside of class"); return new VNullLiteral(stl); }
 
-  VExpression *Type = ParseType();
+  VExpression *Type = ParseTypeWithPtrs();
   if (!Type) { ParseError(Lex.Location, "Return type expected."); return new VNullLiteral(stl); }
-  TLocation l = Lex.Location;
-  while (Lex.Check(TK_Asterisk)) {
-    Type = new VPointerType(Type, l);
-    l = Lex.Location;
-  }
 
   if (Lex.Token != TK_LParen) { ParseError(Lex.Location, "Argument list"); delete Type; return new VNullLiteral(stl); }
 
@@ -1290,13 +1316,8 @@ VExpression *VParser::ParseLambda () {
   if (Lex.Token != TK_RParen) {
     for (;;) {
       VMethodParam &P = Func->Params[Func->NumParams];
-      P.TypeExpr = ParseType();
+      P.TypeExpr = ParseTypeWithPtrs();
       if (!P.TypeExpr) break;
-      TLocation l = Lex.Location;
-      while (Lex.Check(TK_Asterisk)) {
-        P.TypeExpr = new VPointerType(P.TypeExpr, l);
-        l = Lex.Location;
-      }
       if (Lex.Token == TK_Identifier) {
         P.Name = Lex.Name;
         P.Loc = Lex.Location;
@@ -2007,15 +2028,10 @@ void VParser::ParseClass () {
     }
 
     if (Lex.Check(TK_Delegate)) {
-      VExpression *Type = ParseType();
+      VExpression *Type = ParseTypeWithPtrs();
       if (!Type) {
         ParseError(Lex.Location, "Field type expected.");
         continue;
-      }
-      TLocation l = Lex.Location;
-      while (Lex.Check(TK_Asterisk)) {
-        Type = new VPointerType(Type, l);
-        l = Lex.Location;
       }
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "Field name expected");

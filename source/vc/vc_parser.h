@@ -56,7 +56,9 @@ private:
   VExpression *ParseExpression (bool allowAssign=false);
   VStatement *ParseStatement ();
   VCompound *ParseCompoundStatement ();
-  VExpression *ParseType ();
+  VExpression *ParseType (); // this won't parse `type*`
+  VExpression *ParseTypePtrs (VExpression *type); // call this after `ParseType` to parse asterisks
+  VExpression *ParseTypeWithPtrs (); // convenient wrapper
   void ParseMethodDef (VExpression *, VName, const TLocation &, VClass *, vint32, bool);
   void ParseDelegate (VExpression *, VField *);
   VExpression *ParseLambda ();
