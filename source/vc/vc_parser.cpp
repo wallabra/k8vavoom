@@ -1295,7 +1295,6 @@ void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
     ++Func->NumParams;
   } while (Lex.Check(TK_Comma));
   Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-  Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
   Delegate->Func = Func;
   Delegate->Type = VFieldType(TYPE_Delegate);
   Delegate->Type.Function = Func;
@@ -2044,6 +2043,7 @@ void VParser::ParseClass () {
       continue;
     }
 
+    // old-style delegate syntax
     if (Lex.Check(TK_Delegate)) {
       VExpression *Type = ParseTypeWithPtrs();
       if (!Type) {
@@ -2059,6 +2059,7 @@ void VParser::ParseClass () {
       Lex.NextToken();
       Class->AddField(fi);
       ParseDelegate(Type, fi);
+      Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
       continue;
     }
 
@@ -2113,6 +2114,57 @@ void VParser::ParseClass () {
       ParseError(Lex.Location, "Field type expected.");
       Lex.NextToken();
       continue;
+    }
+
+    // new-style delegate syntax: `type delegate (args) name;`
+    {
+      int ofs = 0;
+      while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs;
+      if (Lex.peekTokenType(ofs) == TK_Delegate) {
+        // find delegate name
+        if (Lex.peekTokenType(ofs+1) == TK_LParen) {
+          //fprintf(stderr, "*** trying new delegate syntax... (%s)\n", VLexer::TokenNames[Lex.peekTokenType(ofs+1)]);
+          bool validDelegate = true;
+          int level = 1;
+          ofs += 2; // skip opening paren
+          while (level) {
+            auto tk = Lex.peekTokenType(ofs++);
+            if (tk == TK_NoToken) { validDelegate = false; break; }
+            //fprintf(stderr, "  <%s>\n", VLexer::TokenNames[tk]);
+            if (tk == TK_LParen) {
+              ++level;
+            } else if (tk == TK_RParen) {
+              if (--level == 0) break;
+            } else if (tk == TK_LBracket) {
+              validDelegate = false;
+              break;
+            }
+          }
+          if (validDelegate) {
+            // this must be an identifier
+            VStr dgstr;
+            if (Lex.peekTokenType(ofs, &dgstr) == TK_Identifier) {
+              //fprintf(stderr, "dgstr: <%s>\n", *dgstr);
+              // ok, this looks like a valid delegate declaration, process it
+              VName dgname = VName(*dgstr);
+              Type = ParseTypePtrs(Type);
+              if (!Lex.Check(TK_Delegate)) ParseError(Lex.Location, "Invalid delegate syntax (parser is confused)");
+              VField *fi = new VField(dgname, Class, Lex.Location);
+              if (Class->FindField(dgname) || Class->FindMethod(dgname)) ParseError(Lex.Location, "Redeclared field");
+              Class->AddField(fi);
+              ParseDelegate(Type, fi);
+              if (Lex.Token != TK_Identifier) {
+                ParseError(Lex.Location, "Field name expected");
+              } else {
+                if (Lex.Name != dgname) ParseError(Lex.Location, "Invalid delegate syntax (parser is confused)");
+                Lex.NextToken(); // skip it
+              }
+              Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+              continue;
+            }
+          }
+        }
+      }
     }
 
     bool need_semicolon = true;

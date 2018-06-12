@@ -60,7 +60,7 @@ private:
   VExpression *ParseTypePtrs (VExpression *type); // call this after `ParseType` to parse asterisks
   VExpression *ParseTypeWithPtrs (); // convenient wrapper
   void ParseMethodDef (VExpression *, VName, const TLocation &, VClass *, vint32, bool);
-  void ParseDelegate (VExpression *, VField *);
+  void ParseDelegate (VExpression *RetType, VField *Delegate);
   VExpression *ParseLambda ();
   void ParseDefaultProperties (VClass *, bool doparse);
   void ParseStruct (VClass *, bool);
