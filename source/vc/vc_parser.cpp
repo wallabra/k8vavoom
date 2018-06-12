@@ -1399,6 +1399,8 @@ void VParser::ParseDefaultProperties (VClass *InClass, bool doparse) {
 void VParser::ParseStruct (VClass *InClass, bool IsVector) {
   guard(VParser::ParseStruct);
 
+  bool globalRO = Lex.Check(TK_ReadOnly);
+
   VName Name = Lex.Name;
   TLocation StrLoc = Lex.Location;
   if (Lex.Token != TK_Identifier) {
@@ -1416,7 +1418,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
 
   if (!IsVector && Lex.Check(TK_Colon)) {
     if (Lex.Token != TK_Identifier) {
-      ParseError(Lex.Location, "Parent class name expected");
+      ParseError(Lex.Location, "Parent struct name expected");
     } else {
       Struct->ParentStructName = Lex.Name;
       Struct->ParentStructLoc = Lex.Location;
@@ -1461,6 +1463,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
     }
 
     vint32 Modifiers = TModifiers::Parse(Lex);
+    if (globalRO) Modifiers |= TModifiers::ReadOnly;
 
     VExpression *Type = ParseType();
     if (!Type) {
