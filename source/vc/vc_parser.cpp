@@ -2135,7 +2135,7 @@ void VParser::ParseClass () {
               ++level;
             } else if (tk == TK_RParen) {
               if (--level == 0) break;
-            } else if (tk == TK_LBracket) {
+            } else if (tk == TK_LBracket || tk == TK_Semicolon) {
               validDelegate = false;
               break;
             }
