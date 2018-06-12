@@ -26,8 +26,9 @@ delegate void onSelectionChanged (WidgetListBox me);
 
 // ////////////////////////////////////////////////////////////////////////// //
 void onCreated () {
+  int th = Video.textHeight("W");
   mBaseWidth = Video.textWidth("W")*24+4;
-  mBaseHeight = Video.textHeight("W")*8+4;
+  mBaseHeight = th*8+2+th/2;
 }
 
 
@@ -84,7 +85,7 @@ protected override void selfPaintAt (int x0, int y0) {
   for (int f = 0; f < mItems.length; ++f) {
     if (f == mCurrItem) {
       Video.colorRGB = (focused ? mFcSelBackColor : mSelBackColor);
-      Video.fillRect(x0+1, y, mWidth, th);
+      Video.fillRect(x0+1, y, mWidth, th-1);
       Video.colorRGB = (focused ? mFcSelTextColor : mSelTextColor);
     } else {
       Video.colorRGB = (focused ? mFcTextColor : mTextColor);
