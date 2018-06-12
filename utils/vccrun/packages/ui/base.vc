@@ -31,7 +31,7 @@ int flex;
 int align; // on the direction opposite to the box orientation
 int hpadding, vpadding;
 
-delegate void onAction (Widget me);
+void delegate (Widget me) onAction;
 
 final void doOnAction () { if (onAction) onAction(self); }
 
@@ -245,16 +245,12 @@ final int yToLocal (int y) { return y-yToGlobal(0); }
 
 
 final int xToGlobal (int x) {
-  Widget w = self;
-  while (w) { x += w.mX; w = w.mParent; }
-  //for (Widget w = self; w; w = w.mParent) x += w.mX;
+  for (Widget w = self; w; w = w.mParent) x += w.mX;
   return x;
 }
 
 final int yToGlobal (int y) {
-  //for (Widget w = self; w; w = w.mParent) y += w.mY;
-  Widget w = self;
-  while (w) { y += w.mY; w = w.mParent; }
+  for (Widget w = self; w; w = w.mParent) y += w.mY;
   return y;
 }
 

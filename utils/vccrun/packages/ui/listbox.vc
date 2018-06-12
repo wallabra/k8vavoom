@@ -22,7 +22,7 @@ protected int mSkipY;
 protected bool mMultiselect; // not yet
 
 
-delegate void onSelectionChanged (WidgetListBox me, int curidx, int curtag);
+void delegate (WidgetListBox me, int curidx, int curtag) onSelectionChanged;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
