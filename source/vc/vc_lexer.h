@@ -245,7 +245,7 @@ private:
   bool posAtEOS (int cpos) const;
   vuint8 peekChar (int cpos) const; // returns 0 on EOS
   bool skipBlanksFrom (int &cpos) const; // returns `false` on EOS
-  EToken skipTokenFrom (int &cpos) const; // calls skipBlanksFrom, returns token type or TK_NoToken
+  EToken skipTokenFrom (int &cpos, VStr *str) const; // calls skipBlanksFrom, returns token type or TK_NoToken
 
 public:
   EToken Token;
@@ -276,7 +276,7 @@ public:
   // offset==0 means "current token"
   // this doesn't process conditional directives,
   // so it is useful only for limited lookups
-  EToken peekTokenType (int offset=1) const;
+  EToken peekTokenType (int offset=1, VStr *tkstr=nullptr) const;
 
   void NextToken ();
   bool Check (EToken tk);

@@ -1399,7 +1399,8 @@ bool VLexer::skipBlanksFrom (int &cpos) const {
 // calls skipBlanksFrom, returns token type or TK_NoToken
 //
 //==========================================================================
-EToken VLexer::skipTokenFrom (int &cpos) const {
+EToken VLexer::skipTokenFrom (int &cpos, VStr *str=nullptr) const {
+  if (str) str->clear();
   if (!skipBlanksFrom(cpos)) return TK_NoToken;
   // classify token
   vuint8 ch = peekChar(cpos);
@@ -1409,10 +1410,12 @@ EToken VLexer::skipTokenFrom (int &cpos) const {
 
   // quoted string?
   if (ch == '"' || ch == '\'') {
+    if (str) (*str) += (char)ch;
     vuint8 ech = ch;
     ++cpos;
     for (;;) {
       vuint8 ch = peekChar(cpos++);
+      if (str) (*str) += (char)ch;
       if (ch == '\\') {
         ++cpos; // unconditionally skip next char
       } else {
@@ -1424,6 +1427,7 @@ EToken VLexer::skipTokenFrom (int &cpos) const {
 
   // number?
   if (ch >= '0' && ch <= '9') {
+    if (str) (*str) += (char)ch;
     int base = 0;
     if (ch == '0') {
       switch (peekChar(cpos+1)) {
@@ -1432,10 +1436,15 @@ EToken VLexer::skipTokenFrom (int &cpos) const {
         case 'd': case 'D': base = 10; break;
         case 'x': case 'X': base = 16; break;
       }
+      if (base) {
+        if (str) (*str) += (char)peekChar(cpos+1);
+        cpos += 2;
+      }
     }
     for (;;) {
       ch = peekChar(cpos);
       if (ch != '_' && VStr::digitInBase(ch, (base ? base : 10)) < 0) break;
+      if (str) (*str) += (char)ch;
       ++cpos;
     }
     if (base != 0) return TK_IntLiteral; // for now, there is no non-decimal floating literals
@@ -1443,13 +1452,18 @@ EToken VLexer::skipTokenFrom (int &cpos) const {
       vuint8 nch = peekChar(cpos+1);
       if (isAlpha(nch) || nch == '_' || nch == '.' || nch == 0) return TK_IntLiteral; // num dot smth
       // floating literal
+      if (str) (*str) += '.';
       ++cpos;
       for (;;) {
         ch = peekChar(cpos);
         if (ch != '_' && VStr::digitInBase(ch, 10) < 0) break;
+        if (str) (*str) += (char)ch;
         ++cpos;
       }
-      if (peekChar(cpos) == 'f') ++cpos;
+      if (peekChar(cpos) == 'f') {
+        if (str) (*str) += '.';
+        ++cpos;
+      }
       return TK_FloatLiteral;
     }
   }
@@ -1461,7 +1475,11 @@ EToken VLexer::skipTokenFrom (int &cpos) const {
     for (;;) {
       ch = peekChar(cpos);
       if (!ch) break;
-      if (isAlpha(ch) || ch >= 128 || ch == '_' || (ch >= '0' && ch <= '9')) { ++cpos; continue; }
+      if (isAlpha(ch) || ch >= 128 || ch == '_' || (ch >= '0' && ch <= '9')) {
+        if (str) (*str) += (char)ch;
+        ++cpos;
+        continue;
+      }
       break;
     }
     // check for synonyms
@@ -1489,7 +1507,12 @@ EToken VLexer::skipTokenFrom (int &cpos) const {
         break;
       }
     }
-    if (!found) return tkres;
+    if (!found) {
+      if (str) {
+        while (spos < cpos) (*str) += (char)src->FileStart[spos++];
+      }
+      return tkres;
+    }
     ++cpos;
   }
 }
@@ -1505,7 +1528,8 @@ EToken VLexer::skipTokenFrom (int &cpos) const {
 // so it is useful only for limited lookups
 //
 //==========================================================================
-EToken VLexer::peekTokenType (int offset) const {
+EToken VLexer::peekTokenType (int offset, VStr *tkstr) const {
+  if (tkstr) tkstr->clear();
   if (offset < 0) return TK_NoToken;
   if (offset == 0) return Token;
   if (src->FilePtr >= src->FileEnd) return TK_NoToken; // no more
@@ -1513,7 +1537,7 @@ EToken VLexer::peekTokenType (int offset) const {
   int cpos = (int)(src->FilePtr-src->FileStart)-1; // current char is eaten
   //fprintf(stderr, "cpos=%d\n", cpos);
   while (offset-- > 0) {
-    tkres = skipTokenFrom(cpos);
+    tkres = skipTokenFrom(cpos, (offset == 0 ? tkstr : nullptr));
     //fprintf(stderr, "  cpos=%d; <%s>\n", cpos, TokenNames[tkres]);
     if (tkres == TK_NoToken) break; // EOS or some error
   }
