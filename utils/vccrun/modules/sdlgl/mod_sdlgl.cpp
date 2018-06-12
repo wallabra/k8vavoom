@@ -42,6 +42,7 @@ bool VVideo::quitSignal = false;
 extern VObject *mainObject;
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 struct ScissorRect {
   int x, y, w, h;
   int enabled;
@@ -361,10 +362,13 @@ static vuint8 sdl2TranslateKey (SDL_Keycode ksym) {
 static bool texUpload (VGLTexture *tx) {
   if (!tx) return false;
   if (!tx->img) { tx->tid = 0; return false; }
+  if (tx->tid) return true;
 
   tx->tid = 0;
   glGenTextures(1, &tx->tid);
   if (tx->tid == 0) return false;
+
+  //fprintf(stderr, "uploading texture '%s'\n", *tx->getPath());
 
   glBindTexture(GL_TEXTURE_2D, tx->tid);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -389,7 +393,7 @@ static bool texUpload (VGLTexture *tx) {
 }
 
 
-void deleteAllTextures () {
+void unloadAllTextures () {
   if (!hw_glctx) return;
   glBindTexture(GL_TEXTURE_2D, 0);
   for (VGLTexture *tx = txHead; tx; tx = tx->next) {
@@ -409,7 +413,7 @@ VGLTexture::VGLTexture () : rc(1), mPath(VStr()), img(nullptr), tid(0), prev(nul
   registerMe();
 }
 
-VGLTexture::VGLTexture (VImage *aimg) : rc(1), mPath(VStr()), img(aimg), tid(0), prev(nullptr), next(nullptr) {
+VGLTexture::VGLTexture (VImage *aimg, const VStr &apath) : rc(1), mPath(apath), img(aimg), tid(0), prev(nullptr), next(nullptr) {
   if (hw_glctx) texUpload(this);
   registerMe();
 }
@@ -466,8 +470,7 @@ VGLTexture *VGLTexture::load (const VStr &fname) {
   VImage *img = VImage::loadFrom(st);
   delete st;
   if (!img) return nullptr;
-  VGLTexture *res = new VGLTexture(img);
-  res->mPath = rname;
+  VGLTexture *res = new VGLTexture(img, rname);
   txLoaded.put(rname, res);
   //fprintf(stderr, "TXLOADED: '%s' rc=%d, (%p)\n", *res->mPath, res->rc, res);
   return res;
@@ -760,7 +763,7 @@ void VVideo::close () {
     if (hw_glctx) {
       if (hw_window) {
         SDL_GL_MakeCurrent(hw_window, hw_glctx);
-        deleteAllTextures();
+        unloadAllTextures();
       }
       SDL_GL_DeleteContext(hw_glctx);
       hw_glctx = nullptr;

@@ -169,7 +169,7 @@ private:
 
 public:
   VGLTexture ();
-  VGLTexture (VImage *aimg);
+  VGLTexture (VImage *aimg, const VStr &apath);
   ~VGLTexture (); // don't call this manually!
 
   void addRef ();
