@@ -34,6 +34,7 @@
 VConstant::VConstant (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   : VMemberBase(MEMBER_Const, AName, AOuter, ALoc)
   , Type(TYPE_Unknown)
+  , bitconstant(false)
   , Value(0)
   , ValueExpr(nullptr)
   , PrevEnumValue(nullptr)
@@ -80,7 +81,11 @@ void VConstant::Serialise (VStream &Strm) {
 bool VConstant::Define () {
   guard(VConstant::Define);
   if (PrevEnumValue) {
-    Value = PrevEnumValue->Value+1;
+    if (bitconstant) {
+      Value = PrevEnumValue->Value<<1;
+    } else {
+      Value = PrevEnumValue->Value+1;
+    }
     return true;
   }
 
@@ -97,6 +102,7 @@ bool VConstant::Define () {
         return false;
       }
       Value = ValueExpr->GetIntConst();
+      if (bitconstant) Value = 1<<Value;
       break;
     case TYPE_Float:
       if (!ValueExpr->IsFloatConst()) {

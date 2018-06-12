@@ -27,6 +27,7 @@ class VConstant : public VMemberBase {
 public:
   // persistent fields
   vuint8 Type;
+  bool bitconstant; // used in `Define`
   union {
     vint32 Value;
     float FloatValue;

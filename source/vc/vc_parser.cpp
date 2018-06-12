@@ -1979,30 +1979,48 @@ void VParser::ParseClass () {
       continue;
     }
 
-    if (Lex.Check(TK_Enum)) {
+    if (Lex.Token == TK_Enum || Lex.Token == TK_BitEnum) {
+      bool bitconst = (Lex.Token == TK_BitEnum);
+      Lex.NextToken();
       VConstant *PrevValue = nullptr;
-      Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
-      for (;;) {
-        if (Lex.Token != TK_Identifier) {
-          ParseError(Lex.Location, "Identifier expected");
-          Lex.NextToken();
-          continue;
-        }
-        if (Class->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier %s", *Lex.Name);
+      // check for `enum const = val;`
+      if (Lex.Token == TK_Identifier) {
+        if (Class->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier `%s`", *Lex.Name);
         VConstant *cDef = new VConstant(Lex.Name, Class, Lex.Location);
         cDef->Type = TYPE_Int;
-        Lex.NextToken();
-             if (Lex.Check(TK_Assign)) cDef->ValueExpr = ParseExpression();
-        else if (PrevValue) cDef->PrevEnumValue = PrevValue;
-        else cDef->ValueExpr = new VIntLiteral(0, Lex.Location);
-        PrevValue = cDef;
+        cDef->bitconstant = bitconst;
         Class->AddConstant(cDef);
-        // get comma
-        if (!Lex.Check(TK_Comma)) break;
-        // this can be last "orphan" comma
-        if (Lex.Token == TK_RBrace) break;
+        Lex.NextToken();
+        if (Lex.Check(TK_Assign)) {
+          cDef->ValueExpr = ParseExpression();
+          Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        } else {
+          ParseError(Lex.Location, "`=` expected");
+        }
+      } else {
+        Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
+        for (;;) {
+          if (Lex.Token != TK_Identifier) {
+            ParseError(Lex.Location, "Identifier expected");
+            break;
+          }
+          if (Class->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier `%s`", *Lex.Name);
+          VConstant *cDef = new VConstant(Lex.Name, Class, Lex.Location);
+          cDef->bitconstant = bitconst;
+          cDef->Type = TYPE_Int;
+          Lex.NextToken();
+               if (Lex.Check(TK_Assign)) cDef->ValueExpr = ParseExpression();
+          else if (PrevValue) cDef->PrevEnumValue = PrevValue;
+          else cDef->ValueExpr = new VIntLiteral(0, Lex.Location);
+          PrevValue = cDef;
+          Class->AddConstant(cDef);
+          // get comma
+          if (!Lex.Check(TK_Comma)) break;
+          // this can be last "orphan" comma
+          if (Lex.Token == TK_RBrace) break;
+        }
+        Lex.Expect(TK_RBrace, ERR_MISSING_RBRACE);
       }
-      Lex.Expect(TK_RBrace, ERR_MISSING_RBRACE);
       while (Lex.Check(TK_Semicolon)) {}
       //Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
       continue;

@@ -35,11 +35,13 @@ const char *VLexer::TokenNames[] = {
   "STRING LITERAL",
   "INTEGER LITERAL",
   "FLOAT LITERAL",
+
   // keywords
   "abstract",
   "alias",
   "array",
   "auto",
+  "bitenum",
   "bool",
   "break",
   "byte",
@@ -96,6 +98,7 @@ const char *VLexer::TokenNames[] = {
   "while",
   "__mobjinfo__",
   "__scriptid__",
+
   // punctuation
   "...",
   "<<=",
@@ -1020,6 +1023,7 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
            if (checkStrTk("bool")) Token = TK_Bool;
       else if (checkStrTk("break")) Token = TK_Break;
       else if (checkStrTk("byte")) Token = TK_Byte;
+      else if (checkStrTk("bitenum")) Token = TK_BitEnum;
       break;
     case 'c':
            if (checkStrTk("case")) Token = TK_Case;

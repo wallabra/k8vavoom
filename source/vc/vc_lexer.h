@@ -44,6 +44,7 @@ enum EToken {
   TK_Alias,
   TK_Array,
   TK_Auto,
+  TK_BitEnum,
   TK_Bool,
   TK_Break,
   TK_Byte,
