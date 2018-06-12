@@ -340,6 +340,7 @@ void *VWin32OpenGLDrawer::GetExtFuncPtr (const char *name) {
 //==========================================================================
 void VWin32OpenGLDrawer::Update () {
   guard(VWin32OpenGLDrawer::Update);
+  FinishUpdate();
   SwapBuffers(DeviceContext);
   unguard;
 }

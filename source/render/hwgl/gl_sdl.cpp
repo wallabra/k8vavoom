@@ -209,6 +209,7 @@ bool VSdlOpenGLDrawer::SetAdaptiveSwap () {
 //==========================================================================
 void VSdlOpenGLDrawer::Update () {
   guard(VSdlOpenGLDrawer::Update);
+  FinishUpdate();
   if (hw_window) SDL_GL_SwapWindow(hw_window);
   unguard;
 }

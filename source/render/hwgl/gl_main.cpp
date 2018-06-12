@@ -27,24 +27,10 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gl_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
+// ////////////////////////////////////////////////////////////////////////// //
 VCvarI VOpenGLDrawer::tex_linear("gl_tex_linear", "0", "Texture interpolation mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::sprite_tex_linear("gl_sprite_tex_linear", "0", "Sprite interpolation mode.", CVAR_Archive);
 VCvarB VOpenGLDrawer::gl_2d_filtering("gl_2d_filtering", true, "Filter 2D interface.", CVAR_Archive);
@@ -63,34 +49,34 @@ VCvarB VOpenGLDrawer::gl_smooth_particles("gl_smooth_particles", false, "Draw sm
 VCvarB VOpenGLDrawer::gl_dump_vendor("gl_dump_vendor", false, "Dump OpenGL vendor?", 0);
 VCvarB VOpenGLDrawer::gl_dump_extensions("gl_dump_extensions", false, "Dump available OpenGL extensions?", 0);
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VOpenGLDrawer::VOpenGLDrawer
 //
 //==========================================================================
-
-VOpenGLDrawer::VOpenGLDrawer()
-: texturesGenerated(false)
-, lastgamma(0)
-, CurrentFade(0)
+VOpenGLDrawer::VOpenGLDrawer ()
+  : texturesGenerated(false)
+  , lastgamma(0)
+  , CurrentFade(0)
 {
   MaxTextureUnits = 1;
   HaveTearControl = false;
+
+  mainFBO = 0;
+  mainFBOColorTid = 0;
+  mainFBODepthStencilTid = 0;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::InitResolution
 //
 //==========================================================================
-
-void VOpenGLDrawer::InitResolution()
-{
+void VOpenGLDrawer::InitResolution () {
   guard(VOpenGLDrawer::InitResolution);
+
   if (gl_dump_vendor) {
     GCon->Logf(NAME_Init, "GL_VENDOR: %s", glGetString(GL_VENDOR));
     GCon->Logf(NAME_Init, "GL_RENDERER: %s", glGetString(GL_RENDERER));
@@ -100,11 +86,11 @@ void VOpenGLDrawer::InitResolution()
   if (gl_dump_extensions) {
     GCon->Log(NAME_Init, "GL_EXTENSIONS:");
     TArray<VStr> Exts;
-    VStr((char*)glGetString(GL_EXTENSIONS)).Split(' ', Exts);
-    for (int i = 0; i < Exts.Num(); ++i) GCon->Log(NAME_Init, VStr("- ") + Exts[i]);
+    VStr((char *)glGetString(GL_EXTENSIONS)).Split(' ', Exts);
+    for (int i = 0; i < Exts.Num(); ++i) GCon->Log(NAME_Init, VStr("- ")+Exts[i]);
   }
 
-  // Check the maximum texture size.
+  // check the maximum texture size
   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
   GCon->Logf(NAME_Init, "Maximum texture size: %d", maxTexSize);
 
@@ -123,9 +109,8 @@ void VOpenGLDrawer::InitResolution()
 
 #define _(x)  p_##x = x##_t(GetExtFuncPtr(#x)); if (!p_##x) found = false
 
-  //  Check multi-texture extensions
-  if (!CheckExtension("GL_ARB_multitexture"))
-  {
+  // check multi-texture extensions
+  if (!CheckExtension("GL_ARB_multitexture")) {
     Sys_Error("OpenGL FATAL: Multitexture extensions not found.");
   } else {
     bool found = true;
@@ -142,26 +127,23 @@ void VOpenGLDrawer::InitResolution()
     if (tmp > 1) MaxTextureUnits = tmp;
   }
 
-  //  Anisotropy extension
+  // anisotropy extension
   max_anisotropy = 1.0;
-  if (ext_anisotropy && CheckExtension("GL_EXT_texture_filter_anisotropic"))
-  {
+  if (ext_anisotropy && CheckExtension("GL_EXT_texture_filter_anisotropic")) {
     glGetFloatv(GLenum(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT), &max_anisotropy);
     GCon->Logf(NAME_Init, "Max anisotropy %f", max_anisotropy);
   }
 
-  //  Clamp to edge extension
-  if (CheckExtension("GL_SGIS_texture_edge_clamp") || CheckExtension("GL_EXT_texture_edge_clamp"))
-  {
+  // clamp to edge extension
+  if (CheckExtension("GL_SGIS_texture_edge_clamp") || CheckExtension("GL_EXT_texture_edge_clamp")) {
     GCon->Log(NAME_Init, "Clamp to edge extension found.");
     ClampToEdge = GL_CLAMP_TO_EDGE_SGIS;
   }
-  else
-  {
+  else {
     ClampToEdge = GL_CLAMP;
   }
 
-  //  Check for shader extensions
+  // check for shader extensions
   if (CheckExtension("GL_ARB_shader_objects") && CheckExtension("GL_ARB_shading_language_100") &&
       CheckExtension("GL_ARB_vertex_shader") && CheckExtension("GL_ARB_fragment_shader"))
   {
@@ -277,51 +259,36 @@ void VOpenGLDrawer::InitResolution()
     bool found = true;
     _(glStencilFuncSeparate);
     _(glStencilOpSeparate);
-    if (found)
-    {
+    if (found) {
       GCon->Log(NAME_Init, "Found OpenGL 2.0 separate stencil methods");
-    }
-    else if (CheckExtension("GL_ATI_separate_stencil"))
-    {
+    } else if (CheckExtension("GL_ATI_separate_stencil")) {
       GCon->Log(NAME_Init, "Found GL_ATI_separate_stencil...");
       p_glStencilFuncSeparate = glStencilFuncSeparate_t(GetExtFuncPtr("glStencilFuncSeparateATI"));
       p_glStencilOpSeparate = glStencilOpSeparate_t(GetExtFuncPtr("glStencilOpSeparateATI"));
-      if (p_glStencilFuncSeparate && p_glStencilOpSeparate)
-      {
-        GCon->Log(NAME_Init, "Separate stencil extensions found");
-      }
+      if (p_glStencilFuncSeparate && p_glStencilOpSeparate) GCon->Log(NAME_Init, "Separate stencil extensions found");
     }
   }
 
-  if (CheckExtension("GL_ARB_depth_clamp"))
-  {
+  if (CheckExtension("GL_ARB_depth_clamp")) {
     GCon->Log(NAME_Init, "Found GL_ARB_depth_clamp...");
     HaveDepthClamp = true;
-  }
-  else if (CheckExtension("GL_NV_depth_clamp"))
-  {
+  } else if (CheckExtension("GL_NV_depth_clamp")) {
     GCon->Log(NAME_Init, "Found GL_NV_depth_clamp...");
     HaveDepthClamp = true;
-  }
-  else
-  {
+  } else {
     GCon->Log(NAME_Init, "Symbol not found, depth clamp extensions disabled.");
     HaveDepthClamp = false;
   }
 
-  if (CheckExtension("GL_EXT_stencil_wrap"))
-  {
+  if (CheckExtension("GL_EXT_stencil_wrap")) {
     GCon->Log(NAME_Init, "Found GL_EXT_stencil_wrap...");
     HaveStencilWrap = true;
-  }
-  else
-  {
+  } else {
     GCon->Log(NAME_Init, "Symbol not found, stencil wrap extensions disabled.");
     HaveStencilWrap = false;
   }
 
-  if (!CheckExtension("GL_ARB_vertex_buffer_object"))
-  {
+  if (!CheckExtension("GL_ARB_vertex_buffer_object")) {
     Sys_Error("OpenGL FATAL: VBO not found.");
   } else {
     bool found = true;
@@ -341,30 +308,116 @@ void VOpenGLDrawer::InitResolution()
     if (!found) Sys_Error("OpenGL FATAL: VBO not found.");
   }
 
-  if (CheckExtension("GL_EXT_draw_range_elements"))
-  {
+  if (CheckExtension("GL_EXT_draw_range_elements")) {
     GCon->Log(NAME_Init, "Found GL_EXT_draw_range_elements...");
 
     bool found = true;
     _(glDrawRangeElementsEXT);
 
-    if (found)
-    {
+    if (found) {
       GCon->Log(NAME_Init, "Draw range elements extensions found.");
       HaveDrawRangeElements = true;
-    }
-    else
-    {
+    } else {
       GCon->Log(NAME_Init, "Symbol not found, draw range elements extensions disabled.");
       HaveDrawRangeElements = false;
     }
-  }
-  else
-  {
+  } else {
     HaveDrawRangeElements = false;
   }
 
 #undef _
+
+  glFramebufferTexture2D = (glFramebufferTexture2DFn)GetExtFuncPtr("glFramebufferTexture2D");
+  glDeleteFramebuffers = (glDeleteFramebuffersFn)GetExtFuncPtr("glDeleteFramebuffers");
+  glGenFramebuffers = (glGenFramebuffersFn)GetExtFuncPtr("glGenFramebuffers");
+  glCheckFramebufferStatus = (glCheckFramebufferStatusFn)GetExtFuncPtr("glCheckFramebufferStatus");
+  glBindFramebuffer = (glBindFramebufferFn)GetExtFuncPtr("glBindFramebuffer");
+
+  if (!glFramebufferTexture2D || !glDeleteFramebuffers || !glGenFramebuffers ||
+      !glCheckFramebufferStatus || !glBindFramebuffer)
+  {
+    Sys_Error("OpenGL FBO API not found");
+  }
+
+  //GCon->Logf("********* %d : %d *********", ScreenWidth, ScreenHeight);
+
+  if (mainFBO) {
+    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (mainFBOColorTid) glDeleteTextures(1, &mainFBOColorTid);
+    if (mainFBODepthStencilTid) glDeleteTextures(1, &mainFBODepthStencilTid);
+    glDeleteFramebuffers(1, &mainFBO);
+    mainFBO = 0;
+    mainFBOColorTid = 0;
+    mainFBODepthStencilTid = 0;
+  }
+
+  // allocate FBO object
+  glGenFramebuffers(1, &mainFBO);
+  if (mainFBO == 0) Sys_Error("OpenGL: cannot create main FBO");
+  //glnvg__checkError(gl, "glnvg__allocFBO: glGenFramebuffers");
+  glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
+  //scope(exit) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  // attach 2D texture to this mainFBO
+  glGenTextures(1, &mainFBOColorTid);
+  if (mainFBOColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for main FBO");
+  glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
+  //scope(exit) glBindTexture(GL_TEXTURE_2D, 0);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
+  //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_WRAP_S");
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
+  //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_WRAP_T");
+  //FIXME: linear or nearest?
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_MIN_FILTER");
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_MAG_FILTER");
+  // empty texture
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ScreenWidth, ScreenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+  // create texture with only one color channel
+  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, gl.fboWidth, gl.fboHeight, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gl.fboWidth, gl.fboHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+  //glnvg__checkError(gl, "glnvg__allocFBO: glTexImage2D (color)");
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mainFBOColorTid, 0);
+  //glnvg__checkError(gl, "glnvg__allocFBO: glFramebufferTexture2D (color)");
+
+  // attach stencil texture to this FBO
+  glGenTextures(1, &mainFBODepthStencilTid);
+  if (mainFBODepthStencilTid == 0) Sys_Error("OpenGL: cannot create stencil texture for main FBO");
+  glBindTexture(GL_TEXTURE_2D, mainFBODepthStencilTid);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL, ScreenWidth, ScreenHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+  //glnvg__checkError(gl, "glnvg__allocFBO: glTexImage2D (stencil)");
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mainFBODepthStencilTid, 0);
+  //glnvg__checkError(gl, "glnvg__allocFBO: glFramebufferTexture2D (stencil)");
+
+  {
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+      /*
+      import core.stdc.stdio;
+      if (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT) printf("fucked attachement\n");
+      if (status == GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS) printf("fucked dimensions\n");
+      if (status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT) printf("missing attachement\n");
+      if (status == GL_FRAMEBUFFER_UNSUPPORTED) printf("unsupported\n");
+      */
+      Sys_Error("OpenGL: framebuffer creation failed");
+    }
+  }
+
+
+  glClearColor(0.0, 0.0, 0.0, 0.0); // Black Background
+  glClearDepth(1.0);          // Depth Buffer Setup
+  glClearStencil(0);
+  glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 
   glClearColor(0.0, 0.0, 0.0, 0.0); // Black Background
   glClearDepth(1.0);          // Depth Buffer Setup
@@ -657,41 +710,33 @@ void VOpenGLDrawer::InitResolution()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::CheckExtension
 //
 //==========================================================================
-
-bool VOpenGLDrawer::CheckExtension(const char *ext)
-{
+bool VOpenGLDrawer::CheckExtension (const char *ext) {
   guard(VOpenGLDrawer::CheckExtension);
   if (!ext || !ext[0]) return false;
   TArray<VStr> Exts;
   VStr((char*)glGetString(GL_EXTENSIONS)).Split(' ', Exts);
-  for (int i = 0; i < Exts.Num(); i++)
-  {
-    if (Exts[i] == ext)
-    {
-      return true;
-    }
-  }
+  for (int i = 0; i < Exts.Num(); ++i) if (Exts[i] == ext) return true;
   return false;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::CheckGLXExtension
 //
 //==========================================================================
-
 typedef const char *(APIENTRY *glXQueryExtensionsString)(void *dpy, int screen);
 typedef void *(APIENTRY *glXGetCurrentDisplay) ();
 typedef long (APIENTRY *glXGetCurrentDrawable) ();
 
-bool VOpenGLDrawer::CheckGLXExtension(const char *ext)
-{
+bool VOpenGLDrawer::CheckGLXExtension (const char *ext) {
   guard(VOpenGLDrawer::CheckGLXExtension);
   if (!ext || !ext[0]) return false;
 
@@ -711,32 +756,30 @@ bool VOpenGLDrawer::CheckGLXExtension(const char *ext)
   */
 
   TArray<VStr> Exts;
-  VStr((char*)(gextstr(getdpy(), 0))).Split(' ', Exts);
+  VStr((char *)(gextstr(getdpy(), 0))).Split(' ', Exts);
   //for (int i = 0; i < Exts.Num(); ++i) GCon->Logf("GLX EXTENSION: %s", *Exts[i]);
   for (int i = 0; i < Exts.Num(); ++i) if (Exts[i] == ext) return true;
   return false;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::SupportsAdvancedRendering
 //
 //==========================================================================
-
-bool VOpenGLDrawer::SupportsAdvancedRendering()
-{
+bool VOpenGLDrawer::SupportsAdvancedRendering () {
   return HaveStencilWrap && p_glStencilFuncSeparate && HaveDrawRangeElements;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::Setup2D
 //
 //==========================================================================
-
-void VOpenGLDrawer::Setup2D()
-{
+void VOpenGLDrawer::Setup2D () {
   guard(VOpenGLDrawer::Setup2D);
   glViewport(0, 0, ScreenWidth, ScreenHeight);
 
@@ -752,75 +795,60 @@ void VOpenGLDrawer::Setup2D()
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
   glDisable(GL_BLEND);
-  if (HaveDepthClamp)
-  {
-    glDisable(GL_DEPTH_CLAMP);
-  }
+  if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::StartUpdate
 //
 //==========================================================================
-
-void VOpenGLDrawer::StartUpdate()
-{
+void VOpenGLDrawer::StartUpdate () {
   guard(VOpenGLDrawer::StartUpdate);
   glFinish();
-  if (clear)
-  {
-    glClear(GL_COLOR_BUFFER_BIT);
+
+  if (mainFBO) {
+    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
   }
 
-  switch (tex_linear)
-  {
+  if (clear) glClear(GL_COLOR_BUFFER_BIT);
+
+  switch (tex_linear) {
     case 1:
-    {
       maxfilter = GL_LINEAR;
       minfilter = GL_LINEAR;
       mipfilter = GL_NEAREST;
       break;
-    }
     case 2:
-    {
       maxfilter = GL_LINEAR;
       minfilter = GL_LINEAR;
       mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
       break;
-    }
     case 3:
-    {
       maxfilter = GL_LINEAR;
       minfilter = GL_LINEAR;
       mipfilter = GL_LINEAR /*GL_LINEAR_MIPMAP_LINEAR*/;
       break;
-    }
     case 4: // BILINEAR
-    {
       maxfilter = GL_NEAREST;
       minfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
       mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
       break;
-    }
     case 5: // TRILINEAR
-    {
       maxfilter = GL_NEAREST;
       minfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_LINEAR*/;
       mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_LINEAR*/;
       break;
-    }
     default:
-    {
       maxfilter = GL_NEAREST;
       minfilter = GL_NEAREST;
       mipfilter = GL_NEAREST;
-    }
+      break;
   }
 
-  if (usegamma != lastgamma)
-  {
+  if (usegamma != lastgamma) {
     FlushTextures();
     lastgamma = usegamma;
   }
@@ -829,47 +857,76 @@ void VOpenGLDrawer::StartUpdate()
   unguard;
 }
 
+
+//==========================================================================
+//
+//  VOpenGLDrawer::Update
+//
+//==========================================================================
+void VOpenGLDrawer::FinishUpdate () {
+  if (mainFBO) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
+
+    glColor4f(1.0, 1.0, 1.0, 1.0);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_SCISSOR_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    p_glUseProgramObjectARB(0);
+
+    // copy texture by drawing full quad
+    glBegin(GL_QUADS);
+      glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+      glTexCoord2f(1.0f, 1.0f); glVertex2i(ScreenWidth, 0);
+      glTexCoord2f(1.0f, 0.0f); glVertex2i(ScreenWidth, ScreenHeight);
+      glTexCoord2f(0.0f, 0.0f); glVertex2i(0, ScreenHeight);
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glFlush();
+  }
+}
+
+
 //==========================================================================
 //
 //  VOpenGLDrawer::BeginDirectUpdate
 //
 //==========================================================================
-
-void VOpenGLDrawer::BeginDirectUpdate()
-{
+void VOpenGLDrawer::BeginDirectUpdate () {
   guard(VOpenGLDrawer::BeginDirectUpdate);
   glFinish();
   glDrawBuffer(GL_FRONT);
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::EndDirectUpdate
 //
 //==========================================================================
-
-void VOpenGLDrawer::EndDirectUpdate()
-{
+void VOpenGLDrawer::EndDirectUpdate () {
   guard(VOpenGLDrawer::EndDirectUpdate);
   glDrawBuffer(GL_BACK);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::SetupView
 //
 //==========================================================================
-
-void VOpenGLDrawer::SetupView(VRenderLevelDrawer *ARLev, const refdef_t *rd)
-{
+void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   guard(VOpenGLDrawer::SetupView);
   RendLev = ARLev;
 
-  if (!rd->DrawCamera && rd->drawworld && rd->width != ScreenWidth)
-  {
-    //  Draws the border around the view for different size windows
+  if (!rd->DrawCamera && rd->drawworld && rd->width != ScreenWidth) {
+    // draws the border around the view for different size windows
     R_DrawViewBorder();
   }
 
@@ -883,13 +940,10 @@ void VOpenGLDrawer::SetupView(VRenderLevelDrawer *ARLev, const refdef_t *rd)
   ProjMat[1][1] = 1.0 / rd->fovy;
   ProjMat[2][3] = -1.0;
   ProjMat[3][3] = 0.0;
-  if (RendLev && RendLev->NeedsInfiniteFarClip && !HaveDepthClamp)
-  {
+  if (RendLev && RendLev->NeedsInfiniteFarClip && !HaveDepthClamp) {
     ProjMat[2][2] = -1.0;
     ProjMat[3][2] = -2.0;
-  }
-  else
-  {
+  } else {
     ProjMat[2][2] = -(maxdist + 1.0) / (maxdist - 1.0);
     ProjMat[3][2] = -2.0 * maxdist / (maxdist - 1.0);
   }
@@ -905,33 +959,28 @@ void VOpenGLDrawer::SetupView(VRenderLevelDrawer *ARLev, const refdef_t *rd)
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
   glDisable(GL_ALPHA_TEST);
-  if (RendLev && RendLev->NeedsInfiniteFarClip && HaveDepthClamp)
-  {
+  if (RendLev && RendLev->NeedsInfiniteFarClip && HaveDepthClamp) {
     glEnable(GL_DEPTH_CLAMP);
   }
 
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::SetupViewOrg
 //
 //==========================================================================
-
-void VOpenGLDrawer::SetupViewOrg()
-{
+void VOpenGLDrawer::SetupViewOrg () {
   guard(VOpenGLDrawer::SetupViewOrg);
   glLoadIdentity();
   glRotatef(-90, 1, 0, 0);
   glRotatef(90, 0, 0, 1);
-  if (MirrorFlip)
-  {
+  if (MirrorFlip) {
     glScalef(1, -1, 1);
     glCullFace(GL_BACK);
-  }
-  else
-  {
+  } else {
     glCullFace(GL_FRONT);
   }
   glRotatef(-viewangles.roll, 1, 0, 0);
@@ -939,21 +988,17 @@ void VOpenGLDrawer::SetupViewOrg()
   glRotatef(-viewangles.yaw, 0, 0, 1);
   glTranslatef(-vieworg.x, -vieworg.y, -vieworg.z);
 
-  if (MirrorClip)
-  {
+  if (MirrorClip) {
     glEnable(GL_CLIP_PLANE0);
     GLdouble eq[4] = { view_clipplanes[4].normal.x,
       view_clipplanes[4].normal.y, view_clipplanes[4].normal.z,
       -view_clipplanes[4].dist };
     glClipPlane(GL_CLIP_PLANE0, eq);
-  }
-  else
-  {
+  } else {
     glDisable(GL_CLIP_PLANE0);
   }
 
-  if (RendLev)
-  {
+  if (RendLev) {
     memset(RendLev->light_chain, 0, sizeof(RendLev->light_chain));
     memset(RendLev->add_chain, 0, sizeof(RendLev->add_chain));
     RendLev->SimpleSurfsHead = nullptr;
@@ -966,19 +1011,17 @@ void VOpenGLDrawer::SetupViewOrg()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::EndView
 //
 //==========================================================================
-
-void VOpenGLDrawer::EndView()
-{
+void VOpenGLDrawer::EndView () {
   guard(VOpenGLDrawer::EndView);
   Setup2D();
 
-  if (cl && cl->CShift)
-  {
+  if (cl && cl->CShift) {
     p_glUseProgramObjectARB(DrawFixedColProgram);
     p_glUniform4fARB(DrawFixedColColourLoc,
       (float)((cl->CShift >> 16) & 255) / 255.0,
@@ -999,68 +1042,80 @@ void VOpenGLDrawer::EndView()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::ReadScreen
 //
 //==========================================================================
-
-void *VOpenGLDrawer::ReadScreen(int *bpp, bool *bot2top)
-{
+void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
   guard(VOpenGLDrawer::ReadScreen);
-  void *dst = Z_Malloc(ScreenWidth * ScreenHeight * 3);
-  glReadBuffer(GL_FRONT);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glReadPixels(0, 0, ScreenWidth, ScreenHeight, GL_RGB, GL_UNSIGNED_BYTE, dst);
-  *bpp = 24;
-  *bot2top = true;
-  return dst;
+  if (mainFBO == 0) {
+    void *dst = Z_Malloc(ScreenWidth*ScreenHeight*3);
+    glReadBuffer(GL_FRONT);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, ScreenWidth, ScreenHeight, GL_RGB, GL_UNSIGNED_BYTE, dst);
+    *bpp = 24;
+    *bot2top = true;
+    return dst;
+  } else {
+    glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    void *dst = Z_Malloc(ScreenWidth*ScreenHeight*3);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, dst);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    *bpp = 24;
+    *bot2top = true;
+    return dst;
+  }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::ReadBackScreen
 //
 //==========================================================================
-
-void VOpenGLDrawer::ReadBackScreen(int Width, int Height, rgba_t *Dest)
-{
+void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
   guard(VOpenGLDrawer::ReadBackScreen);
-  glReadBuffer(GL_BACK);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glReadPixels(0, ScreenHeight - Height, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Dest);
-  rgba_t *Temp = new rgba_t[Width];
-
-  for (int i = 0; i < Height / 2; i++)
-  {
-    memcpy(Temp, Dest + i * Width, Width * sizeof(rgba_t));
-    memcpy(Dest + i * Width, Dest + (Height - 1 - i) * Width,
-      Width * sizeof(rgba_t));
-    memcpy(Dest + (Height - 1 - i) * Width, Temp,
-      Width * sizeof(rgba_t));
+  if (mainFBO == 0) {
+    glReadBuffer(GL_BACK);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glReadPixels(0, ScreenHeight-Height, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Dest);
+    rgba_t *Temp = new rgba_t[Width];
+    for (int i = 0; i < Height/2; ++i) {
+      memcpy(Temp, Dest+i*Width, Width*sizeof(rgba_t));
+      memcpy(Dest+i*Width, Dest+(Height-1-i)*Width, Width*sizeof(rgba_t));
+      memcpy(Dest+(Height-1-i)*Width, Temp, Width*sizeof(rgba_t));
+    }
+    delete[] Temp;
+    Temp = nullptr;
+  } else {
+    glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    rgba_t *temp = new rgba_t[ScreenWidth*ScreenHeight];
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    for (int y = 0; y < Height; ++y) {
+      memcpy(Dest+y*Width, temp+(ScreenHeight-y-1)*ScreenWidth, Width*sizeof(rgba_t));
+    }
+    delete[] temp;
   }
-  delete[] Temp;
-  Temp = nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::SetFade
 //
 //==========================================================================
-
-void VOpenGLDrawer::SetFade(vuint32 NewFade)
-{
+void VOpenGLDrawer::SetFade (vuint32 NewFade) {
   guard(VOpenGLDrawer::SetFade);
-  if ((vuint32)CurrentFade == NewFade)
-  {
-    return;
-  }
+  if ((vuint32)CurrentFade == NewFade) return;
 
-  if (NewFade)
-  {
+  if (NewFade) {
     static GLenum fogMode[4] = { GL_LINEAR, GL_LINEAR, GL_EXP, GL_EXP2 };
     float fogColour[4];
 
@@ -1070,75 +1125,62 @@ void VOpenGLDrawer::SetFade(vuint32 NewFade)
     fogColour[3] = float((NewFade >> 24) & 255) / 255.0;
     glFogi(GL_FOG_MODE, fogMode[r_fog & 3]);
     glFogfv(GL_FOG_COLOR, fogColour);
-    if (NewFade == FADE_LIGHT)
-    {
+    if (NewFade == FADE_LIGHT) {
       glFogf(GL_FOG_DENSITY, 0.3);
       glFogf(GL_FOG_START, 1.0);
-      glFogf(GL_FOG_END, 1024.0 * r_fade_factor);
-    }
-    else
-    {
+      glFogf(GL_FOG_END, 1024.0*r_fade_factor);
+    } else {
       glFogf(GL_FOG_DENSITY, r_fog_density);
       glFogf(GL_FOG_START, r_fog_start);
       glFogf(GL_FOG_END, r_fog_end);
     }
     glHint(GL_FOG_HINT, r_fog < 4 ? GL_DONT_CARE : GL_NICEST);
     glEnable(GL_FOG);
-  }
-  else
-  {
+  } else {
     glDisable(GL_FOG);
   }
   CurrentFade = NewFade;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::LoadShader
 //
 //==========================================================================
-
-GLhandleARB VOpenGLDrawer::LoadShader(GLenum Type, const VStr &FileName)
-{
+GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName) {
   guard(VOpenGLDrawer::LoadShader);
-  //  Create shader object.
+  // create shader object
   GLhandleARB Shader = p_glCreateShaderObjectARB(Type);
-  if (!Shader)
-  {
-    Sys_Error("Failed to create shader object");
-  }
+  if (!Shader) Sys_Error("Failed to create shader object");
   CreatedShaderObjects.Append(Shader);
 
-  //  Load source file.
+  // load source file
   VStream *Strm = FL_OpenFileRead(FileName);
-  if (!Strm)
-  {
-    Sys_Error("Failed to open %s", *FileName);
-  }
+  if (!Strm) Sys_Error("Failed to open %s", *FileName);
   int Size = Strm->TotalSize();
   TArray<char> Buf;
-  Buf.SetNum(Size + 1);
+  Buf.SetNum(Size+1);
   Strm->Serialise(Buf.Ptr(), Size);
   delete Strm;
   Strm = nullptr;
-  Buf[Size] = 0; // Append terminator
+  Buf[Size] = 0; // append terminator
 
-  //  Upload source text.
+  // upload source text
   const GLcharARB *ShaderText = Buf.Ptr();
   p_glShaderSourceARB(Shader, 1, &ShaderText, nullptr);
 
-  //  Compile it.
+  // compile it
   p_glCompileShaderARB(Shader);
 
-  //  Check id it is compiled successfully.
+  // check id it is compiled successfully
   GLint Status;
   p_glGetObjectParameterivARB(Shader, GL_OBJECT_COMPILE_STATUS_ARB, &Status);
-  if (!Status)
-  {
+  if (!Status) {
     GLcharARB LogText[1024];
     GLsizei LogLen;
-    p_glGetInfoLogARB(Shader, sizeof(LogText) - 1, &LogLen, LogText);
+    p_glGetInfoLogARB(Shader, sizeof(LogText)-1, &LogLen, LogText);
     LogText[LogLen] = 0;
     Sys_Error("Failed to compile shader %s: %s", *FileName, LogText);
   }
@@ -1146,38 +1188,33 @@ GLhandleARB VOpenGLDrawer::LoadShader(GLenum Type, const VStr &FileName)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::CreateProgram
 //
 //==========================================================================
-
-GLhandleARB VOpenGLDrawer::CreateProgram(GLhandleARB VertexShader, GLhandleARB FragmentShader)
-{
+GLhandleARB VOpenGLDrawer::CreateProgram (GLhandleARB VertexShader, GLhandleARB FragmentShader) {
   guard(VOpenGLDrawer::CreateProgram);
-  //  Create program object.
+  // create program object
   GLhandleARB Program = p_glCreateProgramObjectARB();
-  if (!Program)
-  {
-    Sys_Error("Failed to create program object");
-  }
+  if (!Program) Sys_Error("Failed to create program object");
   CreatedShaderObjects.Append(Program);
 
-  //  Attach shaders.
+  // attach shaders
   p_glAttachObjectARB(Program, VertexShader);
   p_glAttachObjectARB(Program, FragmentShader);
 
-  //  Link program.
+  // link program
   p_glLinkProgramARB(Program);
 
-  //  Check if it was linked successfully.
+  // check if it was linked successfully
   GLint Status;
   p_glGetObjectParameterivARB(Program, GL_OBJECT_LINK_STATUS_ARB, &Status);
-  if (!Status)
-  {
+  if (!Status) {
     GLcharARB LogText[1024];
     GLsizei LogLen;
-    p_glGetInfoLogARB(Program, sizeof(LogText) - 1, &LogLen, LogText);
+    p_glGetInfoLogARB(Program, sizeof(LogText)-1, &LogLen, LogText);
     LogText[LogLen] = 0;
     Sys_Error("Failed to link program %s", LogText);
   }
