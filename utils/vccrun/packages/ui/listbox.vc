@@ -6,6 +6,7 @@ class WidgetListBox : Widget;
 struct Item {
   string text;
   bool checked;
+  int tag;
 }
 
 protected int mTextColor;
@@ -21,7 +22,7 @@ protected int mSkipY;
 protected bool mMultiselect; // not yet
 
 
-delegate void onSelectionChanged (WidgetListBox me);
+delegate void onSelectionChanged (WidgetListBox me, int curidx, int curtag);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -42,10 +43,11 @@ final void setDefWidthInChars (int chars) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-final void appendItem (string text, optional bool checked) {
+final void appendItem (string text, optional int tag, optional bool checked) {
   mItems.length += 1;
   mItems[$-1].text = text;
   mItems[$-1].checked = checked;
+  mItems[$-1].tag = tag;
 }
 
 
@@ -101,18 +103,10 @@ override bool onEvent (ref event_t evt) {
   if (evt.type == ev_keydown) {
     switch (evt.keycode) {
       case K_UPARROW: case K_PAD8: case K_MWHEELUP:
-        if (mCurrItem > 0) {
-          --mCurrItem;
-          setDirty();
-          if (onSelectionChanged) onSelectionChanged(self);
-        }
+        currItemIndex = mCurrItem-1;
         return true;
       case K_DOWNARROW: case K_PAD2: case K_MWHEELDOWN:
-        if (mCurrItem+1 < mItems.length) {
-          ++mCurrItem;
-          setDirty();
-          if (onSelectionChanged) onSelectionChanged(self);
-        }
+        currItemIndex = mCurrItem+1;
         return true;
       case K_MOUSE1:
         if (mItems.length > 0) {
@@ -121,10 +115,8 @@ override bool onEvent (ref event_t evt) {
           int th = Video.textHeight("W");
           int my = evt.y-1+mSkipY;
           int idx = my/th;
-          if (idx < 0 || idx >= mItems.length || mCurrItem == idx) return true;
-          mCurrItem = idx;
-          setDirty();
-          if (onSelectionChanged) onSelectionChanged(self);
+          //if (idx < 0 || idx >= mItems.length || mCurrItem == idx) return true;
+          currItemIndex = idx;
         }
         return true;
     }
@@ -142,7 +134,7 @@ int currItemIndex {
       if (value != mCurrItem) {
         mCurrItem = value;
         setDirty();
-        if (onSelectionChanged) onSelectionChanged(self);
+        if (onSelectionChanged) onSelectionChanged(self, mCurrItem, mItems[mCurrItem].tag);
       }
     }
   }
