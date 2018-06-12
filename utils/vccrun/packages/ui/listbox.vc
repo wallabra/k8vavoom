@@ -1,0 +1,163 @@
+// listbox
+class WidgetListBox : Widget;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct Item {
+  string text;
+  bool checked;
+}
+
+protected int mTextColor;
+protected int mSelTextColor;
+protected int mSelBackColor;
+protected int mFcTextColor;
+protected int mFcSelTextColor;
+protected int mFcSelBackColor;
+
+protected array!Item mItems;
+protected int mCurrItem;
+protected int mSkipY;
+protected bool mMultiselect; // not yet
+
+
+delegate void onSelectionChanged (WidgetListBox me);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void onCreated () {
+  mBaseWidth = Video.textWidth("W")*24+4;
+  mBaseHeight = Video.textHeight("W")*8+4;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final void setDefWidthInChars (int chars) {
+  if (chars < 1) return;
+  Video.setFont(fontName);
+  mBaseWidth = Video.textWidth("W")*chars+4;
+  mWidth = mBaseWidth;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final void appendItem (string text, optional bool checked) {
+  mItems.length += 1;
+  mItems[$-1].text = text;
+  mItems[$-1].checked = checked;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final void makeCurrentVisible () {
+  int mlen = mItems.length;
+  if (mlen == 0) { mSkipY = 0; return; }
+  Video.setFont(fontName);
+  int th = Video.textHeight("W");
+  int y0 = th*mCurrItem-mSkipY;
+  if (y0 < 0) {
+    mSkipY = th*mCurrItem;
+    setDirty();
+    return;
+  }
+  int y1 = y0+th-1;
+  if (y1 >= mHeight-2) {
+    mSkipY = th*mCurrItem;
+    mSkipY -= mHeight-th-1;
+    if (mSkipY < 0) mSkipY = 0;
+    setDirty();
+    return;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+protected override void selfPaintAt (int x0, int y0) {
+  Video.colorRGB = (focused ? 0x10_10_10 : 0x20_20_20);
+  Video.fillRect(x0, y0, mWidth, mHeight);
+  Video.drawBevel(x0, y0, mWidth, mHeight, RGB(0x10, 0x10, 0x10), RGB(0x40, 0x40, 0x40));
+  if (!Video.scissorCombine(x0+1, y0+1, mWidth-2, mHeight-2)) return;
+  makeCurrentVisible();
+  Video.setFont(fontName);
+  int th = Video.textHeight("W");
+  int y = y0+1-mSkipY;
+  for (int f = 0; f < mItems.length; ++f) {
+    if (f == mCurrItem) {
+      Video.colorRGB = (focused ? mFcSelBackColor : mSelBackColor);
+      Video.fillRect(x0+1, y, mWidth, th);
+      Video.colorRGB = (focused ? mFcSelTextColor : mSelTextColor);
+    } else {
+      Video.colorRGB = (focused ? mFcTextColor : mTextColor);
+    }
+    Video.drawTextAt(x0+1, y, mItems[f].text);
+    y += th;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+override bool onEvent (ref event_t evt) {
+  if (evt.type == ev_keydown) {
+    switch (evt.keycode) {
+      case K_UPARROW: case K_PAD8: case K_MWHEELUP:
+        if (mCurrItem > 0) {
+          --mCurrItem;
+          setDirty();
+          if (onSelectionChanged) onSelectionChanged(self);
+        }
+        return true;
+      case K_DOWNARROW: case K_PAD2: case K_MWHEELDOWN:
+        if (mCurrItem+1 < mItems.length) {
+          ++mCurrItem;
+          setDirty();
+          if (onSelectionChanged) onSelectionChanged(self);
+        }
+        return true;
+      case K_MOUSE1:
+        if (mItems.length > 0) {
+          makeCurrentVisible();
+          Video.setFont(fontName);
+          int th = Video.textHeight("W");
+          int my = evt.y-1+mSkipY;
+          int idx = my/th;
+          if (idx < 0 || idx >= mItems.length || mCurrItem == idx) return true;
+          mCurrItem = idx;
+          setDirty();
+          if (onSelectionChanged) onSelectionChanged(self);
+        }
+        return true;
+    }
+  }
+  return false;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+int currItemIndex {
+  get { return mCurrItem; }
+  set {
+    if (mItems.length) {
+      value = clamp(value, 0, mItems.length-1);
+      if (value != mCurrItem) {
+        mCurrItem = value;
+        setDirty();
+        if (onSelectionChanged) onSelectionChanged(self);
+      }
+    }
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+defaultproperties {
+  mCurrItem = 0;
+  mSkipY = 0;
+  mMultiselect = false;
+  mTextColor = 0xff_7f_00;
+  mSelTextColor = 0x8f_8f_8f;
+  mSelBackColor = 0x30_30_30;
+  mFcTextColor = 0xff_7f_00;
+  mFcSelTextColor = 0xff_ff_ff;
+  mFcSelBackColor = 0x40_40_40;
+  mFocusable = true;
+}

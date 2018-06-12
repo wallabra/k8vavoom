@@ -31,7 +31,7 @@ int flex;
 int align; // on the direction opposite to the box orientation
 int hpadding, vpadding;
 
-delegate void onAction (Widget w);
+delegate void onAction (Widget me);
 
 final void doOnAction () { if (onAction) onAction(self); }
 
@@ -226,6 +226,19 @@ final Widget findFocusableAt (int x, int y) {
 }
 
 
+// coords are local
+final Widget findControlAt (int x, int y) {
+  if (x < 0 || y < 0 || x >= mWidth || y >= mHeight) return none;
+  for (int f = mChildren.length-1; f >= 0; --f) {
+    Widget w = mChildren[f];
+    if (x >= w.mX && y >= w.mY && x < w.mX+w.mWidth && y < w.mY+w.mHeight) {
+      return w.findControlAt(x-w.mX, y-w.mY);
+    }
+  }
+  return self;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 final int xToLocal (int x) { return x-xToGlobal(0); }
 final int yToLocal (int y) { return y-yToGlobal(0); }
@@ -308,7 +321,7 @@ void paintAt (int x0, int y0) {
 final static bool isMouseEvent (ref event_t evt) {
   if (evt.type == ev_mouse) return true;
   if (evt.type == ev_keydown || evt.type == ev_keyup) {
-    switch (evt.data1) {
+    switch (evt.keycode) {
       case K_MOUSE1:
       case K_MOUSE2:
       case K_MOUSE3:
@@ -346,7 +359,7 @@ bool onEvent (ref event_t evt) {
     }
   }
   if (evt.type == ev_keydown) {
-    switch (evt.data1) {
+    switch (evt.keycode) {
       case K_TAB:
       case K_DOWNARROW: case K_PAD2:
       case K_RIGHTARROW: case K_PAD6:
@@ -361,16 +374,17 @@ bool onEvent (ref event_t evt) {
         if (w) w.focusSelf();
         return true;
       }
-    }
-    if (evt.type == ev_keydown || evt.type == ev_keyup) {
-      switch (evt.data1) {
-        case K_MOUSE1:
-        case K_MOUSE2:
-        case K_MOUSE3:
-          if (evt.x >= 0 && evt.y >= 0 && evt.x < mWidth && evt.y < mHeight) {
-            w = findFocusableAt(evt.x, evt.y);
-            if (w) {
-              if (evt.type == ev_keydown && !w.focused) w.focusSelf();
+  }
+  if (evt.type == ev_keydown || evt.type == ev_keyup) {
+    switch (evt.keycode) {
+      case K_MOUSE1:
+      case K_MOUSE2:
+      case K_MOUSE3:
+        if (evt.x >= 0 && evt.y >= 0 && evt.x < mWidth && evt.y < mHeight) {
+          w = findFocusableAt(evt.x, evt.y);
+          if (w) {
+            if (evt.type == ev_keydown && !w.focused) w.focusSelf();
+            if (w != self) {
               int ox = evt.x, oy = evt.y;
               evt.x = w.xToLocal(xToGlobal(ox));
               evt.y = w.yToLocal(yToGlobal(oy));
@@ -378,10 +392,27 @@ bool onEvent (ref event_t evt) {
               w.onEvent(evt);
               evt.x = ox;
               evt.y = oy;
-              return true;
             }
+            return true;
           }
-          break;
+        }
+        break;
+      case K_MWHEELUP:
+      case K_MWHEELDOWN:
+        if (evt.x >= 0 && evt.y >= 0 && evt.x < mWidth && evt.y < mHeight) {
+          w = findControlAt(evt.x, evt.y);
+          if (w && w != self) {
+            int ox = evt.x, oy = evt.y;
+            evt.x = w.xToLocal(xToGlobal(ox));
+            evt.y = w.yToLocal(yToGlobal(oy));
+            //writeln("on evt; global=(", xToGlobal(ox), ",", xToGlobal(oy), "); local=(", evt.x, ",", evt.y, ")");
+            w.onEvent(evt);
+            evt.x = ox;
+            evt.y = oy;
+            return true;
+          }
+        }
+        break;
     }
   }
   return false;
@@ -589,6 +620,7 @@ private final static void fixDimensionsFromActual (Widget w) {
 // ////////////////////////////////////////////////////////////////////////// //
 final static Widget CreateRoot () {
   auto res = WidgetRoot(SpawnObject(WidgetRoot));
+  Video.setFont(res.fontName);
   res.onCreated();
   fixDimensions(res);
   return res;
@@ -596,26 +628,28 @@ final static Widget CreateRoot () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-final static Widget CreateBox (Widget parent, bool horiz, optional name aid) {
+final static WidgetBox CreateBox (Widget parent, bool horiz, optional name aid) {
   auto res = WidgetBox(SpawnObject(WidgetBox));
   if (specified_aid) res.id = aid;
+  if (parent) Video.setFont(parent.fontName);
   res.onCreated(horiz);
   fixDimensions(res);
   if (parent) parent.appendChild(res);
   return res;
 }
 
-final static Widget CreateHBox (Widget parent, optional name aid) {
+final static WidgetBox CreateHBox (Widget parent, optional name aid) {
   return (specified_aid ? CreateBox(parent, true, aid) : CreateBox(parent, true));
 }
 
-final static Widget CreateVBox (Widget parent, optional name aid) {
+final static WidgetBox CreateVBox (Widget parent, optional name aid) {
   return (specified_aid ? CreateBox(parent, false, aid) : CreateBox(parent, false));
 }
 
 
-final static Widget CreateSpan (Widget parent, int defsize) {
+final static WidgetSpan CreateSpan (Widget parent, int defsize) {
   auto res = WidgetSpan(SpawnObject(WidgetSpan));
+  if (parent) Video.setFont(parent.fontName);
   res.onCreated();
   res.align = AlignExpand;
   if (parent) {
@@ -630,9 +664,10 @@ final static Widget CreateSpan (Widget parent, int defsize) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-final static Widget CreateLabel (Widget parent, string atext, optional name aid) {
+final static WidgetLabel CreateLabel (Widget parent, string atext, optional name aid) {
   auto res = WidgetLabel(SpawnObject(WidgetLabel));
   if (specified_aid) res.id = aid;
+  if (parent) Video.setFont(parent.fontName);
   res.onCreated(atext);
   fixDimensions(res);
   if (parent) parent.appendChild(res);
@@ -641,10 +676,23 @@ final static Widget CreateLabel (Widget parent, string atext, optional name aid)
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-final static Widget CreateButton (Widget parent, string atext, optional name aid) {
+final static WidgetButton CreateButton (Widget parent, string atext, optional name aid) {
   auto res = WidgetButton(SpawnObject(WidgetButton));
   if (specified_aid) res.id = aid;
+  if (parent) Video.setFont(parent.fontName);
   res.onCreated(atext);
+  fixDimensions(res);
+  if (parent) parent.appendChild(res);
+  return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final static WidgetListBox CreateListBox (Widget parent, optional name aid) {
+  auto res = WidgetListBox(SpawnObject(WidgetListBox));
+  if (specified_aid) res.id = aid;
+  if (parent) Video.setFont(parent.fontName);
+  res.onCreated();
   fixDimensions(res);
   if (parent) parent.appendChild(res);
   return res;
