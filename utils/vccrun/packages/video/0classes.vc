@@ -1,2 +1,2 @@
 #include "Video.vc"
-#include "Texture.vc"
+#include "GLTexture.vc"

@@ -32,8 +32,8 @@
 #include <GL/gl.h>
 static SDL_Window *hw_window = nullptr;
 static SDL_GLContext hw_glctx = nullptr;
-static VGLTexture *txHead = nullptr, *txTail = nullptr;
-static TMap<VStr, VGLTexture *> txLoaded;
+static VOpenGLTexture *txHead = nullptr, *txTail = nullptr;
+static TMap<VStr, VOpenGLTexture *> txLoaded;
 
 bool VVideo::doGLSwap = false;
 bool VVideo::doRefresh = false;
@@ -370,7 +370,7 @@ static vuint8 sdl2TranslateKey (SDL_Keycode ksym) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static bool texUpload (VGLTexture *tx) {
+static bool texUpload (VOpenGLTexture *tx) {
   if (!tx) return false;
   if (!tx->img) { tx->tid = 0; return false; }
   if (tx->tid) return true;
@@ -407,7 +407,7 @@ static bool texUpload (VGLTexture *tx) {
 void unloadAllTextures () {
   if (!hw_glctx) return;
   glBindTexture(GL_TEXTURE_2D, 0);
-  for (VGLTexture *tx = txHead; tx; tx = tx->next) {
+  for (VOpenGLTexture *tx = txHead; tx; tx = tx->next) {
     if (tx->tid) { glDeleteTextures(1, &tx->tid); tx->tid = 0; }
   }
 }
@@ -415,21 +415,21 @@ void unloadAllTextures () {
 
 void uploadAllTextures () {
   if (!hw_glctx) return;
-  for (VGLTexture *tx = txHead; tx; tx = tx->next) texUpload(tx);
+  for (VOpenGLTexture *tx = txHead; tx; tx = tx->next) texUpload(tx);
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VGLTexture::VGLTexture () : rc(1), mPath(VStr()), img(nullptr), tid(0), prev(nullptr), next(nullptr) {
+VOpenGLTexture::VOpenGLTexture () : rc(1), mPath(VStr()), img(nullptr), tid(0), prev(nullptr), next(nullptr) {
   registerMe();
 }
 
-VGLTexture::VGLTexture (VImage *aimg, const VStr &apath) : rc(1), mPath(apath), img(aimg), tid(0), prev(nullptr), next(nullptr) {
+VOpenGLTexture::VOpenGLTexture (VImage *aimg, const VStr &apath) : rc(1), mPath(apath), img(aimg), tid(0), prev(nullptr), next(nullptr) {
   if (hw_glctx) texUpload(this);
   registerMe();
 }
 
-VGLTexture::~VGLTexture () {
+VOpenGLTexture::~VOpenGLTexture () {
   if (hw_glctx && tid) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glDeleteTextures(1, &tid);
@@ -449,7 +449,7 @@ VGLTexture::~VGLTexture () {
 }
 
 
-void VGLTexture::registerMe () {
+void VOpenGLTexture::registerMe () {
   if (prev || next) return;
   if (txHead == this) return;
   prev = txTail;
@@ -458,20 +458,20 @@ void VGLTexture::registerMe () {
 }
 
 
-void VGLTexture::addRef () {
+void VOpenGLTexture::addRef () {
   ++rc;
 }
 
 
-void VGLTexture::release () {
+void VOpenGLTexture::release () {
   if (--rc == 0) delete this;
 }
 
 
-VGLTexture *VGLTexture::Load (const VStr &fname) {
+VOpenGLTexture *VOpenGLTexture::Load (const VStr &fname) {
   VStr rname = fsysFileFindAnyExt(fname);
   if (rname.length() == 0) return nullptr;
-  VGLTexture **loaded = txLoaded.find(fname);
+  VOpenGLTexture **loaded = txLoaded.find(fname);
   if (loaded) {
     (*loaded)->addRef();
     return *loaded;
@@ -481,14 +481,14 @@ VGLTexture *VGLTexture::Load (const VStr &fname) {
   VImage *img = VImage::loadFrom(st);
   delete st;
   if (!img) return nullptr;
-  VGLTexture *res = new VGLTexture(img, rname);
+  VOpenGLTexture *res = new VOpenGLTexture(img, rname);
   txLoaded.put(rname, res);
   //fprintf(stderr, "TXLOADED: '%s' rc=%d, (%p)\n", *res->mPath, res->rc, res);
   return res;
 }
 
 
-void VGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const {
+void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const {
   if (!tid || VVideo::colorA <= 0) return;
   if (x1 < 0) x1 = img->width;
   if (y1 < 0) y1 = img->height;
@@ -503,7 +503,7 @@ void VGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, in
 }
 
 
-void VGLTexture::blitAt (int dx0, int dy0, float scale) const {
+void VOpenGLTexture::blitAt (int dx0, int dy0, float scale) const {
   if (!tid || VVideo::colorA <= 0 || scale <= 0) return;
   int w = img->width;
   int h = img->height;
@@ -519,9 +519,9 @@ void VGLTexture::blitAt (int dx0, int dy0, float scale) const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-IMPLEMENT_CLASS(V, Texture);
+IMPLEMENT_CLASS(V, GLTexture);
 
-void VTexture::Destroy () {
+void VGLTexture::Destroy () {
   //fprintf(stderr, "destroying texture object %p\n", this);
   if (tex) {
     //fprintf(stderr, "  releasing texture '%s'... rc=%d, (%p)\n", *tex->getPath(), tex->getRC(), tex);
@@ -533,11 +533,11 @@ void VTexture::Destroy () {
 
 
 /*
-VGLTexture *VGLTexture::createFromImage (VImage *aimg) {
+VOpenGLTexture *VOpenGLTexture::createFromImage (VImage *aimg) {
   if (!aimg) return nullptr;
-  VClass *iclass = VClass::FindClass("Texture");
+  VClass *iclass = VClass::FindClass("GLTexture");
   if (!iclass) { delete aimg; return nullptr; }
-  VGLTexture *tex = (VGLTexture *)VObject::StaticSpawnObject(iclass);
+  VOpenGLTexture *tex = (VOpenGLTexture *)VObject::StaticSpawnObject(iclass);
   if (!tex) { delete aimg; return nullptr; }
   tex->img = aimg;
   tex->tid = 0;
@@ -551,18 +551,18 @@ VGLTexture *VGLTexture::createFromImage (VImage *aimg) {
 
 
 
-IMPLEMENT_FUNCTION(VTexture, Destroy) {
+IMPLEMENT_FUNCTION(VGLTexture, Destroy) {
   P_GET_SELF;
   if (Self) Self->SetFlags(_OF_DelayedDestroy);
   //delete Self;
 }
 
 
-IMPLEMENT_FUNCTION(VTexture, Load) {
+IMPLEMENT_FUNCTION(VGLTexture, Load) {
   P_GET_STR(fname);
-  VGLTexture *tex = VGLTexture::Load(fname);
+  VOpenGLTexture *tex = VOpenGLTexture::Load(fname);
   if (tex) {
-    VTexture *ifile = Spawn<VTexture>();
+    VGLTexture *ifile = Spawn<VGLTexture>();
     ifile->tex = tex;
     //fprintf(stderr, "created texture object %p (%p)\n", ifile, ifile->tex);
     RET_REF((VObject *)ifile);
@@ -572,20 +572,20 @@ IMPLEMENT_FUNCTION(VTexture, Load) {
 }
 
 
-IMPLEMENT_FUNCTION(VTexture, width) {
+IMPLEMENT_FUNCTION(VGLTexture, width) {
   P_GET_SELF;
   RET_INT(Self && Self->tex ? Self->tex->width : 0);
 }
 
 
-IMPLEMENT_FUNCTION(VTexture, height) {
+IMPLEMENT_FUNCTION(VGLTexture, height) {
   P_GET_SELF;
   RET_INT(Self && Self->tex ? Self->tex->height : 0);
 }
 
 
 // void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
-IMPLEMENT_FUNCTION(VTexture, blitExt) {
+IMPLEMENT_FUNCTION(VGLTexture, blitExt) {
   P_GET_INT(specifiedY1);
   P_GET_INT(y1);
   P_GET_INT(specifiedX1);
@@ -604,7 +604,7 @@ IMPLEMENT_FUNCTION(VTexture, blitExt) {
 
 
 // void blitAt (int dx0, int dy0, optional float scale);
-IMPLEMENT_FUNCTION(VTexture, blitAt) {
+IMPLEMENT_FUNCTION(VGLTexture, blitAt) {
   P_GET_INT(specifiedScale);
   P_GET_FLOAT(scale);
   P_GET_INT(dy0);
@@ -1125,7 +1125,7 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
   if (!currFont || colorA <= 0 || text.isEmpty()) return;
   if (!mInited) return;
 
-  const VGLTexture *tex = currFont->getTexture();
+  const VOpenGLTexture *tex = currFont->getTexture();
   if (!tex || !tex->tid) return; // oops
 
   glEnable(GL_TEXTURE_2D);
@@ -1493,7 +1493,7 @@ VFont::VFont (VName aname, const VStr &fnameIni, const VStr &fnameTexture)
   //firstChar = -1;
   //lastChar = -1;
 
-  tex = VGLTexture::Load(fnameTexture);
+  tex = VOpenGLTexture::Load(fnameTexture);
   if (!tex) Sys_Error(va("cannot load font '%s' (texture not found)", *aname));
 
   auto inif = fsysOpenFileAnyExt(fnameIni);
