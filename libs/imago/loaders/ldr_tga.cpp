@@ -63,7 +63,7 @@ VImage *imagoLoadTGA (VStream *strm) {
   //fprintf(stderr, "trying TGA...\n");
 
   if ((hdr.pal_type != 0 && hdr.pal_type != 1) || hdr.width <= 0 ||
-      hdr.height <= 0 || hdr.width > 2048 || hdr.height > 2048 ||
+      hdr.height <= 0 || hdr.width > 32768 || hdr.height > 32768 ||
       (hdr.pal_type == 0 && hdr.bpp != 15 && hdr.bpp != 16 &&
       hdr.bpp != 24 && hdr.bpp != 32) ||
       (hdr.pal_type == 1 && hdr.bpp != 8) ||
