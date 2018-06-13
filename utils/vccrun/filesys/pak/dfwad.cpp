@@ -151,14 +151,14 @@ bool VDFWadFile::openArchive () {
 VStream *VDFWadFile::open (int idx) {
   if (idx < 0 || idx >= fileCount) return nullptr;
   fileStream->Seek(files[idx].pkofs);
-  return new VZipStreamReader(fileStream, files[idx].pksize);
+  return new VZipStreamReader(files[idx].name, fileStream, files[idx].pksize);
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 static FSysDriverBase *dfwadLoader (VStream *strm) {
   if (!strm) return nullptr;
-  //fprintf(stderr, "trying <%s> as dfwad...\n", *strm->GetName());
+  //fprintf(stderr, "*** trying <%s> as dfwad...\n", *strm->GetName());
   auto res = new VDFWadFile(strm);
   if (!res->isOpened()) { delete res; res = nullptr; }
   return res;
@@ -169,7 +169,7 @@ static FSysDriverBase *dfwadLoader (VStream *strm) {
 class DFWadVFSRegistrator {
 public:
   DFWadVFSRegistrator (int n) {
-    FSysRegisterDriver(&dfwadLoader);
+    FSysRegisterDriver(&dfwadLoader, 6666);
     //fprintf(stderr, "FSYS: added DFWAD reader.\n");
   }
 };

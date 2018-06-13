@@ -263,8 +263,11 @@ private:
   vuint32 currCrc32;
   bool doCrcCheck;
   bool forceRewind;
+  VStr mFileName;
 
 private:
+  void initialize ();
+
   void setError ();
 
   // just read, no `nextpos` advancement
@@ -274,7 +277,10 @@ private:
 public:
   // doesn't own passed stream
   VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false, FSysDriverBase *aDriver=nullptr);
+  VZipStreamReader (const VStr &fname, VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false, FSysDriverBase *aDriver=nullptr);
   virtual ~VZipStreamReader () override;
+
+  virtual const VStr &GetName () const override;
 
   void setCrc (vuint32 acrc); // turns on CRC checking
 

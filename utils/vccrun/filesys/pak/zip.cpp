@@ -405,6 +405,7 @@ vuint32 VZipFile::searchCentralDir () {
   vuint32 uSizeFile = fileStream->TotalSize();
 
   if (uMaxBack > uSizeFile) uMaxBack = uSizeFile;
+  //fprintf(stderr, " fsz=%u; maxback=%u\n", uSizeFile, uMaxBack);
 
   vuint32 uBackRead = 4;
   while (uBackRead < uMaxBack) {
@@ -414,11 +415,19 @@ vuint32 VZipFile::searchCentralDir () {
       uBackRead += BUFREADCOMMENT;
     }
     vuint32 uReadPos = uSizeFile-uBackRead;
-
     vuint32 uReadSize = (BUFREADCOMMENT+4 < uSizeFile-uReadPos ? BUFREADCOMMENT+4 : uSizeFile-uReadPos);
+    //fprintf(stderr, "  rdpos=%u; rdsize=%u\n", uReadPos, uReadSize);
+
     fileStream->Seek(uReadPos);
+    if (fileStream->IsError()) {
+      //fprintf(stderr, "   OOPS 000\n");
+      return 0;
+    }
     fileStream->Serialise(buf, uReadSize);
-    if (fileStream->IsError()) return 0;
+    if (fileStream->IsError()) {
+      //fprintf(stderr, "   OOPS 001\n");
+      return 0;
+    }
 
     for (int i = (int)uReadSize-3; i-- > 0; ) {
       if (buf[i] == 0x50 && buf[i+1] == 0x4b && buf[i+2] == 0x05 && buf[i+3] == 0x06) {
@@ -816,7 +825,7 @@ void VZipFileReader::Serialise (void* buf, int len) {
 
   while (currpos < nextpos) {
     char tmpbuf[256];
-    int toread = currpos-nextpos;
+    int toread = nextpos-currpos;
     if (toread > 256) toread = 256;
     int rd = readSomeBytes(tmpbuf, toread);
     if (rd <= 0) { setError(); return; }

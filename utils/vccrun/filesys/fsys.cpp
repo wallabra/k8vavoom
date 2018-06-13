@@ -390,6 +390,7 @@ FSysDriverDisk::FSysDriverDisk (const VStr &apath) : FSysDriverBase() {
   path = apath;
   if (path.length() == 0) path = "./";
   if (!path.endsWith("/")) path += "/";
+  setFilePath(path);
 }
 
 FSysDriverDisk::~FSysDriverDisk () {}
@@ -514,18 +515,21 @@ int fsysAppendPak (VStream *strm, const VStr &apfx) {
   if (openPakCount == 0) fsysInit();
   if (openPakCount >= MaxOpenPaks) { delete strm; Sys_Error("too many pak files"); }
 
+  //fprintf(stderr, "trying <%s> : pfx=<%s>\n", *strm->GetName(), *apfx);
   for (FSysDriverCreator *cur = creators; cur; cur = cur->next) {
     strm->Seek(0);
     if (strm->IsError()) break;
+    //fprintf(stderr, " !!! %d\n", strm->TotalSize());
     auto drv = cur->ldr(strm);
     //if (strm->IsError()) { delete drv; break; }
     if (drv) {
-      //fprintf(stderr, ":: <%s>\n", *apfx);
+      //fprintf(stderr, "  :: <%s>\n", *strm->GetName());
       drv->setPrefix(apfx);
       drv->setFilePath(strm->GetName());
       openPaks[openPakCount++] = drv;
       return openPakCount;
     }
+    //fprintf(stderr, " +++ %d\n", (int)(strm->IsError()));
   }
 
   delete strm;
@@ -692,8 +696,12 @@ VStream *fsysOpenFile (const VStr &fname, int pakid) {
     if (!openPaks[f]->active()) continue;
     if (pfx.length()) {
       if (isPrefixEqu(openPaks[f]->getPrefix(), pfx)) {
+        //fprintf(stderr, "checking PAK #%d for <%s>\n", f, *fn);
         auto res = openPaks[f]->open(fn);
-        if (res) return res;
+        if (res) {
+          //fprintf(stderr, "  FOUND!\n");
+          return res;
+        }
       }
     } else {
       auto res = openPaks[f]->open(fname);
@@ -871,14 +879,47 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize
   , currCrc32(0)
   , doCrcCheck(false)
   , forceRewind(false)
+  , mFileName(VStr())
 {
+  initialize();
+}
+
+
+VZipStreamReader::VZipStreamReader (const VStr &fname, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, bool asZipArchive, FSysDriverBase *aDriver)
+  : VStreamPakFile(aDriver)
+  , srcStream(ASrcStream)
+  , initialised(false)
+  , compressedSize(ACompressedSize)
+  , uncompressedSize(AUncompressedSize)
+  , nextpos(0)
+  , currpos(0)
+  , zipArchive(asZipArchive)
+  , origCrc32(0)
+  , currCrc32(0)
+  , doCrcCheck(false)
+  , forceRewind(false)
+  , mFileName(fname)
+{
+  initialize();
+}
+
+
+VZipStreamReader::~VZipStreamReader () {
+  Close();
+}
+
+
+void VZipStreamReader::initialize () {
   bLoading = true;
 
   // initialise zip stream structure
+  memset(&zStream, 0, sizeof(zStream));
+  /*
   zStream.total_out = 0;
   zStream.zalloc = (alloc_func)0;
   zStream.zfree = (free_func)0;
   zStream.opaque = (voidpf)0;
+  */
 
   if (srcStream) {
     // read in some initial data
@@ -902,10 +943,7 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize
 }
 
 
-VZipStreamReader::~VZipStreamReader () {
-  Close();
-}
-
+const VStr &VZipStreamReader::GetName () const { return mFileName; }
 
 // turns on CRC checking
 void VZipStreamReader::setCrc (vuint32 acrc) {
@@ -947,7 +985,6 @@ int VZipStreamReader::readSomeBytes (void *buf, int len) {
   while (zStream.avail_out > 0) {
     // get more compressed data (if necessary)
     if (zStream.avail_in == 0) {
-      //if (srcStream->AtEnd()) break;
       vint32 left = (int)compressedSize-(srccurpos-stpos);
       if (left <= 0) break; // eof
       srcStream->Seek(srccurpos);
@@ -979,6 +1016,7 @@ void VZipStreamReader::Serialise (void* buf, int len) {
   if (bError) return;
 
   if (currpos > nextpos || forceRewind) {
+    //fprintf(stderr, "+++ REWIND <%s>: currpos=%d; nextpos=%d\n", *GetName(), currpos, nextpos);
     // rewind stream
     if (initialised) { inflateEnd(&zStream); initialised = false; }
     vint32 bytesToRead = BUFFER_SIZE;
@@ -999,16 +1037,20 @@ void VZipStreamReader::Serialise (void* buf, int len) {
     currCrc32 = 0; // why not?
   }
 
+  //if (currpos < nextpos) fprintf(stderr, "+++ SKIPPING <%s>: currpos=%d; nextpos=%d; toskip=%d\n", *GetName(), currpos, nextpos, nextpos-currpos);
   while (currpos < nextpos) {
     char tmpbuf[256];
-    int toread = currpos-nextpos;
+    int toread = nextpos-currpos;
     if (toread > 256) toread = 256;
     int rd = readSomeBytes(tmpbuf, toread);
+    //fprintf(stderr, "+++   SKIPREAD <%s>: currpos=%d; nextpos=%d; rd=%d; read=%d\n", *GetName(), currpos, nextpos, rd, toread);
     if (rd <= 0) { setError(); return; }
     currpos += rd;
   }
 
   if (nextpos != currpos) { setError(); return; } // just in case
+
+  //fprintf(stderr, "+++ ZREAD <%s>: pos=%d; len=%d; end=%d (%u)\n", *GetName(), currpos, len, currpos+len, uncompressedSize);
 
   vuint8 *dest = (vuint8 *)buf;
   while (len > 0) {
@@ -1055,6 +1097,7 @@ int VZipStreamReader::TotalSize () {
       currpos += rd;
     }
     uncompressedSize = (vuint32)currpos;
+    //fprintf(stderr, "+++ scanned <%s>: size=%u\n", *GetName(), uncompressedSize);
   }
   return uncompressedSize;
 }
