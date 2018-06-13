@@ -451,7 +451,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
 
   if (SelfExpr->Type.Type == TYPE_DynamicArray) {
     delete selfCopy;
-    if (MethodName == NAME_Insert) {
+    if (MethodName == NAME_Insert || VStr::Cmp(*MethodName, "insert") == 0) {
       if (NumArgs == 1) {
         // default count is 1
         Args[1] = new VIntLiteral(1, Loc);
@@ -479,7 +479,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
 
-    if (MethodName == NAME_Remove) {
+    if (MethodName == NAME_Remove || VStr::Cmp(*MethodName, "remove") == 0) {
       if (NumArgs == 1) {
         // default count is 1
         Args[1] = new VIntLiteral(1, Loc);
