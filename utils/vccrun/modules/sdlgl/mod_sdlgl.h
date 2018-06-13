@@ -175,7 +175,7 @@ public:
   void addRef ();
   void release (); //WARNING: can delete `this`!
 
-  static VGLTexture *load (const VStr &fname);
+  static VGLTexture *Load (const VStr &fname);
 
   int getWidth () const { return (img ? img->width : 0); }
   int getHeight () const { return (img ? img->height : 0); }
@@ -203,7 +203,7 @@ public:
 
 public:
   DECLARE_FUNCTION(Destroy)
-  DECLARE_FUNCTION(load) // Texture load (string fname)
+  DECLARE_FUNCTION(Load) // Texture load (string fname)
   DECLARE_FUNCTION(width)
   DECLARE_FUNCTION(height)
   DECLARE_FUNCTION(blitExt)

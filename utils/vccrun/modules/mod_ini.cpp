@@ -249,9 +249,8 @@ void VIniFile::remove (const VStr &key) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-IMPLEMENT_FUNCTION(VIniFile, load) {
+IMPLEMENT_FUNCTION(VIniFile, Load) {
   P_GET_STR(fname);
-
   VClass *iclass = VClass::FindClass("IniFile");
   if (iclass) {
     auto ifileo = VObject::StaticSpawnObject(iclass);

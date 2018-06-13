@@ -468,7 +468,7 @@ void VGLTexture::release () {
 }
 
 
-VGLTexture *VGLTexture::load (const VStr &fname) {
+VGLTexture *VGLTexture::Load (const VStr &fname) {
   VStr rname = fsysFileFindAnyExt(fname);
   if (rname.length() == 0) return nullptr;
   VGLTexture **loaded = txLoaded.find(fname);
@@ -558,9 +558,9 @@ IMPLEMENT_FUNCTION(VTexture, Destroy) {
 }
 
 
-IMPLEMENT_FUNCTION(VTexture, load) {
+IMPLEMENT_FUNCTION(VTexture, Load) {
   P_GET_STR(fname);
-  VGLTexture *tex = VGLTexture::load(fname);
+  VGLTexture *tex = VGLTexture::Load(fname);
   if (tex) {
     VTexture *ifile = Spawn<VTexture>();
     ifile->tex = tex;
@@ -1493,7 +1493,7 @@ VFont::VFont (VName aname, const VStr &fnameIni, const VStr &fnameTexture)
   //firstChar = -1;
   //lastChar = -1;
 
-  tex = VGLTexture::load(fnameTexture);
+  tex = VGLTexture::Load(fnameTexture);
   if (!tex) Sys_Error(va("cannot load font '%s' (texture not found)", *aname));
 
   auto inif = fsysOpenFileAnyExt(fnameIni);

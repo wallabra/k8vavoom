@@ -67,7 +67,7 @@ public:
   void set (const VStr &key, const VStr &value);
   void remove (const VStr &key);
 
-  DECLARE_FUNCTION(load)
+  DECLARE_FUNCTION(Load)
   DECLARE_FUNCTION(save)
   DECLARE_FUNCTION(clear)
   DECLARE_FUNCTION(count)

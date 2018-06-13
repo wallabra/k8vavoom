@@ -2,7 +2,7 @@ class IniFile : Object abstract native;
 
 private readonly array!(void *) __items;
 
-native final static IniFile load (string fname);
+native final static IniFile Load (string fname);
 native bool save (string fname);
 native void clear ();
 native int count ();

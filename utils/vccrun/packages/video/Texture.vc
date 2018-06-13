@@ -3,7 +3,7 @@ class Texture : Object /*abstract*/ native;
 private readonly void *__tex;
 
 
-native final static Texture load (string fname);
+native final static Texture Load (string fname);
 native override void Destroy ();
 native int width ();
 native int height ();
