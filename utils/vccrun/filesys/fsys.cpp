@@ -510,7 +510,7 @@ static void splitFileName (const VStr &infname, VStr &pfx, VStr &fname) {
     if (infname[pos] == '/' || infname[pos] == '\\') break;
     if (infname[pos] == ':') {
       pfx = infname.left(pos);
-      fname = infname.right(pos+1);
+      fname = infname.chopLeft(pos+1);
       return;
     }
     ++pos;
@@ -654,6 +654,7 @@ static VStr fsysFileFindAnyExtInternal (const VStr &fname) {
   if (fsysFileExists(fname)) return fname;
   VStr pfx, fn;
   splitFileName(fname, pfx, fn);
+  //fprintf(stderr, "fsysFileFindAnyExtInternal: <%s>; fn=<%s>; pfx=<%s>\n", *fname, *fn, *pfx);
   // try basedir first, if the corresponding flag is set
   if (fsysDiskFirst && openPaks[0]->active() &&
 #ifdef WIN32
