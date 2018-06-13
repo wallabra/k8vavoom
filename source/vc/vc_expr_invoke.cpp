@@ -56,7 +56,7 @@ VRefOutArg::~VRefOutArg () {
 void VRefOutArg::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
   auto res = (VRefOutArg *)e;
-  res->e = (e ? e->SyntaxCopy() : nullptr);
+  res->e = (this->e ? this->e->SyntaxCopy() : nullptr);
 }
 
 
