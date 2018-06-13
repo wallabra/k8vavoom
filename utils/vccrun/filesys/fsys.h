@@ -31,18 +31,21 @@ extern VStr fsysBaseDir; // always ends with "/" (fill be fixed by `fsysInit()` 
 extern bool fsysDiskFirst; // default is true
 
 
+enum { fsysAnyPak = -666 };
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // `fsysBaseDir` should be set before calling this
 void fsysInit ();
 void fsysShutdown ();
 
 // append disk directory to the list of archives
-void fsysAppendDir (const VStr &path);
+int fsysAppendDir (const VStr &path, const VStr &apfx=VStr());
 
 // append archive to the list of archives
 // it will be searched in the current dir, and then in `fsysBaseDir`
 // returns pack id or 0
-int fsysAppendPak (const VStr &fname);
+int fsysAppendPak (const VStr &fname, int pakid=fsysAnyPak);
 
 // this will take ownership of `strm` (or kill it on error)
 // returns pack id or 0
@@ -65,21 +68,21 @@ VStr fsysGetPakPrefix (int pakid);
 
 int fsysGetLastPakId ();
 
-bool fsysFileExists (const VStr &fname);
+bool fsysFileExists (const VStr &fname, int pakid=fsysAnyPak);
 //void fsysCreatePath (const VStr &path);
 
 // open file for reading, relative to basedir, and look into archives too
-VStream *fsysOpenFile (const VStr &fname);
+VStream *fsysOpenFile (const VStr &fname, int pakid=fsysAnyPak);
 
 // open file for reading, relative to basedir, and look into archives too
-VStream *fsysOpenFileAnyExt (const VStr &fname);
+VStream *fsysOpenFileAnyExt (const VStr &fname, int pakid=fsysAnyPak);
 
 // open file for reading, NOT relative to basedir
 VStream *fsysOpenDiskFileWrite (const VStr &fname);
 VStream *fsysOpenDiskFile (const VStr &fname);
 
 // find file with any extension
-VStr fsysFileFindAnyExt (const VStr &fname);
+VStr fsysFileFindAnyExt (const VStr &fname, int pakid=fsysAnyPak);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

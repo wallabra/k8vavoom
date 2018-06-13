@@ -1,4 +1,4 @@
-#include "../../../../progs/common/engine/Object.vc"
-#include "../../../../progs/common/engine/ScriptsParser.vc"
+#include "Object.vc"
+#include "ScriptsParser.vc"
 
 #include "IniFile.vc"

@@ -421,6 +421,7 @@ public:
   DECLARE_FUNCTION(SetTimerInterval)
   DECLARE_FUNCTION(GetTickCount)
 
+  DECLARE_FUNCTION(fsysAppendDir)
   DECLARE_FUNCTION(fsysAppendPak)
   DECLARE_FUNCTION(fsysRemovePak)
   DECLARE_FUNCTION(fsysRemovePaksFrom)

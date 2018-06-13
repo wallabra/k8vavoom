@@ -478,13 +478,32 @@ int main (int argc, char **argv) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+//native static final int fsysAppendDir (string path, optional string pfx);
+IMPLEMENT_FUNCTION(VObject, fsysAppendDir) {
+  P_GET_STR_OPT(pfx, VStr());
+  P_GET_STR(fname);
+  //fprintf(stderr, "pakid(%d)=%d; fname=<%s>\n", (int)specified_pakid, pakid, *fname);
+  if (specified_pfx) {
+    RET_INT(fsysAppendDir(fname, pfx));
+  } else {
+    RET_INT(fsysAppendDir(fname));
+  }
+}
+
+
 // append archive to the list of archives
 // it will be searched in the current dir, and then in `fsysBaseDir`
 // returns pack id or 0
-//native static final int fsysAppendPak (string fname);
+//native static final int fsysAppendPak (string fname, optional int pakid);
 IMPLEMENT_FUNCTION(VObject, fsysAppendPak) {
+  P_GET_INT_OPT(pakid, -1);
   P_GET_STR(fname);
-  RET_INT(fsysAppendPak(fname));
+  //fprintf(stderr, "pakid(%d)=%d; fname=<%s>\n", (int)specified_pakid, pakid, *fname);
+  if (specified_pakid) {
+    RET_INT(fsysAppendPak(fname, pakid));
+  } else {
+    RET_INT(fsysAppendPak(fname));
+  }
 }
 
 // remove given pack from pack list
@@ -508,17 +527,27 @@ IMPLEMENT_FUNCTION(VObject, fsysFindPakByPrefix) {
   RET_BOOL(fsysFindPakByPrefix(pfx));
 }
 
-//native static final bool fsysFileExists (string fname);
+//native static final bool fsysFileExists (string fname, optional int pakid);
 IMPLEMENT_FUNCTION(VObject, fsysFileExists) {
+  P_GET_INT_OPT(pakid, -1);
   P_GET_STR(fname);
-  RET_BOOL(fsysFileExists(fname));
+  if (specified_pakid) {
+    RET_BOOL(fsysFileExists(fname, pakid));
+  } else {
+    RET_BOOL(fsysFileExists(fname));
+  }
 }
 
 // find file with any extension
-//native static final string fsysFileFindAnyExt (string fname);
+//native static final string fsysFileFindAnyExt (string fname, optional int pakid);
 IMPLEMENT_FUNCTION(VObject, fsysFileFindAnyExt) {
+  P_GET_INT_OPT(pakid, -1);
   P_GET_STR(fname);
-  RET_STR(fsysFileFindAnyExt(fname));
+  if (specified_pakid) {
+    RET_STR(fsysFileFindAnyExt(fname, pakid));
+  } else {
+    RET_STR(fsysFileFindAnyExt(fname));
+  }
 }
 
 
