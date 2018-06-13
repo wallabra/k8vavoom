@@ -5,7 +5,17 @@ private readonly void *__tex;
 
 native final static GLTexture Load (string fname);
 native override void Destroy ();
+
 native int width ();
 native int height ();
+
+// that is:
+//  isTransparent==true: no need to draw anything
+//  isOpaque==true: no need to do alpha-blending
+//  isOneBitAlpha==true: no need to do advanced alpha-blending
+native bool isTransparent ();
+native bool isOpaque ();
+native bool isOneBitAlpha ();
+
 native void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
 native void blitAt (int dx0, int dy0, optional float scale);

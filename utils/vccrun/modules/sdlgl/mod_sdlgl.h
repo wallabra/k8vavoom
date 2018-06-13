@@ -44,6 +44,14 @@ class VVideo : public VObject {
   DECLARE_ABSTRACT_CLASS(VVideo, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VVideo)
 
+public:
+  enum {
+    BlendNormal, // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    BlendBlend, // glBlendFunc(GL_SRC_ALPHA, GL_ONE)
+    BlendFilter, // glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR)
+    BlendInvert, // glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO)
+  };
+
 private:
   static bool mInited;
   static int mWidth, mHeight;
@@ -56,6 +64,7 @@ private:
 
   static int currFrameTime;
   static int prevFrameTime;
+  static int mBlendMode;
 
   static vuint32 colorARGB; // a==0: opaque
   static VFont *currFont;
@@ -70,6 +79,29 @@ private:
         (colorARGB&0xff)/255.0f,
         1.0f-(((colorARGB>>24)&0xff)/255.0f)
       );
+      setupBlending();
+    }
+  }
+
+  // returns `true` if drawing will has any effect
+  static inline bool setupBlending () {
+    if (mBlendMode == BlendNormal) {
+      if ((colorARGB&0xff0000) == 0) {
+        // opaque
+        glDisable(GL_BLEND);
+        return true;
+      } else {
+        // either alpha, or completely transparent
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        return ((colorARGB&0xff0000) != 0xff0000);
+      }
+    } else {
+      glEnable(GL_BLEND);
+           if (mBlendMode == BlendBlend) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+      else if (mBlendMode == BlendFilter) glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+      else if (mBlendMode == BlendInvert) glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+      return ((colorARGB&0xff0000) != 0xff0000);
     }
   }
 
@@ -99,8 +131,11 @@ public:
 
   static void setFont (VName fontname);
 
-  static inline void setColor (vuint32 clr) { if (colorARGB != clr) { colorARGB = clr;realiseGLColor(); } }
+  static inline void setColor (vuint32 clr) { if (colorARGB != clr) { colorARGB = clr; realiseGLColor(); } }
   static inline vuint32 getColor () { return colorARGB; }
+
+  static inline int getBlendMode () { return mBlendMode; }
+  static inline void setBlendMode (int v) { if (v >= BlendNormal && v <= BlendInvert && v != mBlendMode) { mBlendMode = v; setupBlending(); } }
 
   static inline bool isFullyOpaque () { return ((colorARGB&0xff000000) == 0); }
   static inline bool isFullyTransparent () { return ((colorARGB&0xff000000) == 0xff000000); }
@@ -156,6 +191,9 @@ public:
   DECLARE_FUNCTION(getColorARGB) // aarrggbb
   DECLARE_FUNCTION(setColorARGB) // aarrggbb
 
+  DECLARE_FUNCTION(getBlendMode)
+  DECLARE_FUNCTION(setBlendMode)
+
   DECLARE_FUNCTION(getFont)
   DECLARE_FUNCTION(setFont)
   DECLARE_FUNCTION(fontHeight)
@@ -185,14 +223,21 @@ public:
 public:
   VImage *img;
   GLuint tid; // !0: texture loaded
+  bool mTransparent; // fully
+  bool mOpaque; // fully
+  bool mOneBitAlpha; // this means that the only alpha values are 255 or 0
   VOpenGLTexture *prev;
   VOpenGLTexture *next;
 
+  bool getTransparent () const { return mTransparent; }
+  bool getOpaque () const { return mOpaque; }
+  bool get1BitAlpha () const { return mOneBitAlpha; }
+
 private:
   void registerMe ();
+  void analyzeImage ();
 
 public:
-  VOpenGLTexture ();
   VOpenGLTexture (VImage *aimg, const VStr &apath);
   ~VOpenGLTexture (); // don't call this manually!
 
@@ -201,12 +246,22 @@ public:
 
   static VOpenGLTexture *Load (const VStr &fname);
 
-  int getWidth () const { return (img ? img->width : 0); }
-  int getHeight () const { return (img ? img->height : 0); }
+  inline int getWidth () const { return (img ? img->width : 0); }
+  inline int getHeight () const { return (img ? img->height : 0); }
 
   PropertyRO<const VStr &, VOpenGLTexture> path {this, &VOpenGLTexture::getPath};
   PropertyRO<int, VOpenGLTexture> width {this, &VOpenGLTexture::getWidth};
   PropertyRO<int, VOpenGLTexture> height {this, &VOpenGLTexture::getHeight};
+
+  // that is:
+  //  isTransparent==true: no need to draw anything
+  //  isOpaque==true: no need to do alpha-blending
+  //  isOneBitAlpha==true: no need to do advanced alpha-blending
+
+  PropertyRO<bool, VOpenGLTexture> isTransparent {this, &VOpenGLTexture::getTransparent};
+  PropertyRO<bool, VOpenGLTexture> isOpaque {this, &VOpenGLTexture::getOpaque};
+  // this means that the only alpha values are 255 or 0
+  PropertyRO<bool, VOpenGLTexture> isOneBitAlpha {this, &VOpenGLTexture::get1BitAlpha};
 
   void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const;
   void blitAt (int dx0, int dy0, float scale=1) const;
@@ -230,6 +285,9 @@ public:
   DECLARE_FUNCTION(Load) // GLTexture load (string fname)
   DECLARE_FUNCTION(width)
   DECLARE_FUNCTION(height)
+  DECLARE_FUNCTION(isTransparent)
+  DECLARE_FUNCTION(isOpaque)
+  DECLARE_FUNCTION(isOneBitAlpha)
   DECLARE_FUNCTION(blitExt)
   DECLARE_FUNCTION(blitAt)
 };

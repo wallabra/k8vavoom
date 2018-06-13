@@ -420,11 +420,18 @@ void uploadAllTextures () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VOpenGLTexture::VOpenGLTexture () : rc(1), mPath(VStr()), img(nullptr), tid(0), prev(nullptr), next(nullptr) {
-  registerMe();
-}
-
-VOpenGLTexture::VOpenGLTexture (VImage *aimg, const VStr &apath) : rc(1), mPath(apath), img(aimg), tid(0), prev(nullptr), next(nullptr) {
+VOpenGLTexture::VOpenGLTexture (VImage *aimg, const VStr &apath)
+  : rc(1)
+  , mPath(apath)
+  , img(aimg)
+  , tid(0)
+  , mTransparent(false)
+  , mOpaque(false)
+  , mOneBitAlpha(false)
+  , prev(nullptr)
+  , next(nullptr)
+{
+  analyzeImage();
   if (hw_glctx) texUpload(this);
   registerMe();
 }
@@ -455,6 +462,27 @@ void VOpenGLTexture::registerMe () {
   prev = txTail;
   if (txTail) txTail->next = this; else txHead = this;
   txTail = this;
+}
+
+
+void VOpenGLTexture::analyzeImage () {
+  if (img) {
+    mTransparent = true;
+    mOpaque = true;
+    mOneBitAlpha = true;
+    for (int y = 0; y < img->height; ++y) {
+      for (int x = 0; x < img->width; ++x) {
+        VImage::RGBA pix = img->getPixel(x, y);
+        if (pix.a != 0 && pix.a != 255) mOneBitAlpha = false;
+             if (pix.a != 0) mTransparent = false;
+        else if (pix.a != 255) mOpaque = false;
+      }
+    }
+  } else {
+    mTransparent = false;
+    mOpaque = false;
+    mOneBitAlpha = false;
+  }
 }
 
 
@@ -489,26 +517,50 @@ VOpenGLTexture *VOpenGLTexture::Load (const VStr &fname) {
 
 
 void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const {
-  if (!tid || VVideo::isFullyTransparent()) return;
+  if (!tid || VVideo::isFullyTransparent() || mTransparent) return;
   if (x1 < 0) x1 = img->width;
   if (y1 < 0) y1 = img->height;
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, tid);
+  if (VVideo::getBlendMode() == VVideo::BlendNormal) {
+    if (mOpaque && VVideo::isFullyOpaque()) {
+      glDisable(GL_BLEND);
+    } else {
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+  } else {
+    VVideo::setupBlending();
+  }
+  const float fx0 = (float)x0/(float)img->width;
+  const float fx1 = (float)x1/(float)img->width;
+  const float fy0 = (float)y0/(float)img->height;
+  const float fy1 = (float)y1/(float)img->height;
   glBegin(GL_QUADS);
-    glTexCoord2f((float)x0/(float)img->width, (float)y0/(float)img->height); glVertex2f(dx0, dy0);
-    glTexCoord2f((float)x1/(float)img->width, (float)y0/(float)img->height); glVertex2f(dx1, dy0);
-    glTexCoord2f((float)x1/(float)img->width, (float)y1/(float)img->height); glVertex2f(dx1, dy1);
-    glTexCoord2f((float)x0/(float)img->width, (float)y1/(float)img->height); glVertex2f(dx0, dy1);
+    glTexCoord2f(fx0, fy0); glVertex2f(dx0, dy0);
+    glTexCoord2f(fx1, fy0); glVertex2f(dx1, dy0);
+    glTexCoord2f(fx1, fy1); glVertex2f(dx1, dy1);
+    glTexCoord2f(fx0, fy1); glVertex2f(dx0, dy1);
   glEnd();
 }
 
 
 void VOpenGLTexture::blitAt (int dx0, int dy0, float scale) const {
-  if (!tid || VVideo::isFullyTransparent() || scale <= 0) return;
+  if (!tid || VVideo::isFullyTransparent() || scale <= 0 || mTransparent) return;
   int w = img->width;
   int h = img->height;
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, tid);
+  if (VVideo::getBlendMode() == VVideo::BlendNormal) {
+    if (mOpaque && VVideo::isFullyOpaque()) {
+      glDisable(GL_BLEND);
+    } else {
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+  } else {
+    VVideo::setupBlending();
+  }
   glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f); glVertex2f(dx0, dy0);
     glTexCoord2f(1.0f, 0.0f); glVertex2f(dx0+w*scale, dy0);
@@ -530,25 +582,6 @@ void VGLTexture::Destroy () {
   }
   Super::Destroy();
 }
-
-
-/*
-VOpenGLTexture *VOpenGLTexture::createFromImage (VImage *aimg) {
-  if (!aimg) return nullptr;
-  VClass *iclass = VClass::FindClass("GLTexture");
-  if (!iclass) { delete aimg; return nullptr; }
-  VOpenGLTexture *tex = (VOpenGLTexture *)VObject::StaticSpawnObject(iclass);
-  if (!tex) { delete aimg; return nullptr; }
-  tex->img = aimg;
-  tex->tid = 0;
-  tex->prev = nullptr;
-  tex->next = nullptr;
-  tex->registerMe();
-  if (hw_glctx) texUpload(tex);
-  return tex;
-}
-*/
-
 
 
 IMPLEMENT_FUNCTION(VGLTexture, Destroy) {
@@ -577,10 +610,24 @@ IMPLEMENT_FUNCTION(VGLTexture, width) {
   RET_INT(Self && Self->tex ? Self->tex->width : 0);
 }
 
-
 IMPLEMENT_FUNCTION(VGLTexture, height) {
   P_GET_SELF;
   RET_INT(Self && Self->tex ? Self->tex->height : 0);
+}
+
+IMPLEMENT_FUNCTION(VGLTexture, isTransparent) {
+  P_GET_SELF;
+  RET_BOOL(Self && Self->tex ? Self->tex->isTransparent : true);
+}
+
+IMPLEMENT_FUNCTION(VGLTexture, isOpaque) {
+  P_GET_SELF;
+  RET_BOOL(Self && Self->tex ? Self->tex->isOpaque : false);
+}
+
+IMPLEMENT_FUNCTION(VGLTexture, isOneBitAlpha) {
+  P_GET_SELF;
+  RET_BOOL(Self && Self->tex ? Self->tex->isOneBitAlpha : true);
 }
 
 
@@ -871,11 +918,11 @@ bool VVideo::open (const VStr &winname, int width, int height) {
   //glDisable(GL_BLEND);
   glEnable(GL_LINE_SMOOTH);
 
-  realiseGLColor();
   glDisable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, 0);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  realiseGLColor(); // this will setup blending
+  //glEnable(GL_BLEND);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   glViewport(0, 0, width, height);
 
@@ -1156,6 +1203,7 @@ void VVideo::runEventLoop () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 vuint32 VVideo::colorARGB = 0xffffff;
+int VVideo::mBlendMode = VVideo::BlendNormal;
 VFont *VVideo::currFont = nullptr;
 
 
@@ -1174,6 +1222,7 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
 
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, tex->tid);
+  glEnable(GL_BLEND); // font is rarely fully opaque, so don't bother checking
 
   glBegin(GL_QUADS);
   int sx = x;
@@ -1352,6 +1401,17 @@ IMPLEMENT_FUNCTION(VVideo, setColorARGB) {
   setColor((vuint32)c);
 }
 
+//native final static int getBlendMode ();
+IMPLEMENT_FUNCTION(VVideo, getBlendMode) {
+  RET_INT(getBlendMode());
+}
+
+//native final static void setBlendMode (int v);
+IMPLEMENT_FUNCTION(VVideo, setBlendMode) {
+  P_GET_INT(c);
+  setBlendMode(c);
+}
+
 //native final static void setFont (name fontname);
 IMPLEMENT_FUNCTION(VVideo, setFont) {
   P_GET_NAME(fontname);
@@ -1411,6 +1471,7 @@ IMPLEMENT_FUNCTION(VVideo, drawLine) {
   P_GET_INT(y0);
   P_GET_INT(x0);
   if (!mInited || isFullyTransparent()) return;
+  setupBlending();
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_LINES);
     glVertex2f(x0+0.5f, y0+0.5f);
@@ -1426,6 +1487,7 @@ IMPLEMENT_FUNCTION(VVideo, drawRect) {
   P_GET_INT(y0);
   P_GET_INT(x0);
   if (!mInited || isFullyTransparent() || w < 1 || h < 1) return;
+  setupBlending();
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_LINE_LOOP);
     glVertex2f(x0+0+0.5f, y0+0+0.5f);
@@ -1443,6 +1505,7 @@ IMPLEMENT_FUNCTION(VVideo, fillRect) {
   P_GET_INT(y0);
   P_GET_INT(x0);
   if (!mInited || isFullyTransparent() || w < 1 || h < 1) return;
+  setupBlending();
   glDisable(GL_TEXTURE_2D);
   // no need for 0.5f here, or rect will be offset
   glBegin(GL_QUADS);

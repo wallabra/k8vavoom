@@ -1,5 +1,13 @@
 class Video : Object abstract native;
 
+// default mode is `BlendNormal`
+enum {
+  BlendNormal, // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  BlendBlend, // glBlendFunc(GL_SRC_ALPHA, GL_ONE)
+  BlendFilter, // glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR)
+  BlendInvert, // glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO)
+}
+
 
 native final static bool canInit ();
 native final static bool hasOpenGL ();
@@ -32,6 +40,10 @@ native final static void setSmoothLine (bool v);
 //          it is easier this way, even if it may look conunterintuitive for you
 native final static int getColorARGB ();
 native final static void setColorARGB (int argb);
+
+// BlendXXX
+native final static int getBlendMode ();
+native final static void setBlendMode (int v);
 
 native final static name getFont ();
 native final static void setFont (name fontname);
@@ -121,11 +133,16 @@ final int colorRGB {
 }
 */
 final int colorARGB {
-  get { return Video.getColorARGB(); }
-  set { Video.setColorARGB(value); }
+  get { return getColorARGB(); }
+  set { setColorARGB(value); }
 }
 alias colorRGB = colorARGB;
 alias color = colorARGB;
+
+final int blendMode {
+  get { return getBlendMode(); }
+  set { setBlendMode(value); }
+}
 
 
 final name fontName {
