@@ -440,13 +440,17 @@ void VDotInvocation::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
+  VExpression *selfCopy = (SelfExpr ? SelfExpr->SyntaxCopy() : nullptr);
+
   if (SelfExpr) SelfExpr = SelfExpr->Resolve(ec);
   if (!SelfExpr) {
+    delete selfCopy;
     delete this;
     return nullptr;
   }
 
   if (SelfExpr->Type.Type == TYPE_DynamicArray) {
+    delete selfCopy;
     if (MethodName == NAME_Insert) {
       if (NumArgs == 1) {
         // default count is 1
@@ -510,6 +514,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
 
   // Class.Method -- for static methods
   if (SelfExpr->Type.Type == TYPE_Class) {
+    delete selfCopy;
     if (!SelfExpr->Type.Class) {
       ParseError(Loc, "Class name expected at the left side of `.`");
       delete this;
@@ -540,13 +545,30 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
   }
 
   if (SelfExpr->Type.Type != TYPE_Reference) {
+    // try UFCS
+    if (NumArgs+1 <= VMethod::MAX_PARAMS) {
+      int newArgC = NumArgs+1;
+      VExpression *ufcsArgs[VMethod::MAX_PARAMS+1];
+      for (int f = 0; f < NumArgs; ++f) ufcsArgs[f+1] = Args[f];
+      ufcsArgs[0] = selfCopy;
+      if (VInvocation::FindMethodWithSignature(ec, MethodName, newArgC, ufcsArgs)) {
+        VCastOrInvocation *call = new VCastOrInvocation(MethodName, Loc, newArgC, ufcsArgs);
+        // don't delete `selfCopy`, it is used
+        NumArgs = 0; // also, don't delete args
+        delete this;
+        return call->Resolve(ec);
+      }
+    }
     ParseError(Loc, "Object reference expected at the left side of `.`");
+    delete selfCopy;
     delete this;
     return nullptr;
   }
 
   VMethod *M = SelfExpr->Type.Class->FindAccessibleMethod(MethodName, ec.SelfClass);
   if (M) {
+    // don't need it anymore
+    delete selfCopy;
     if (M->Flags & FUNC_Iterator) {
       ParseError(Loc, "Iterator methods can only be used in foreach statements");
       delete this;
@@ -561,12 +583,32 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
 
   VField *field = SelfExpr->Type.Class->FindField(MethodName, Loc, ec.SelfClass);
   if (field && field->Type.Type == TYPE_Delegate) {
+    // don't need it anymore
+    delete selfCopy;
     VExpression *e = new VInvocation(SelfExpr, field->Func, field, true, false, Loc, NumArgs, Args);
     SelfExpr = nullptr;
     NumArgs = 0;
     delete this;
     return e->Resolve(ec);
   }
+
+  // try UFCS
+  if (NumArgs+1 <= VMethod::MAX_PARAMS) {
+    int newArgC = NumArgs+1;
+    VExpression *ufcsArgs[VMethod::MAX_PARAMS+1];
+    for (int f = 0; f < NumArgs; ++f) ufcsArgs[f+1] = Args[f];
+    ufcsArgs[0] = selfCopy;
+    if (VInvocation::FindMethodWithSignature(ec, MethodName, newArgC, ufcsArgs)) {
+      VCastOrInvocation *call = new VCastOrInvocation(MethodName, Loc, newArgC, ufcsArgs);
+      // don't delete `selfCopy`, it is used
+      NumArgs = 0; // also, don't delete args
+      delete this;
+      return call->Resolve(ec);
+    }
+  }
+
+  // don't need it anymore
+  delete selfCopy;
 
   ParseError(Loc, "No such method %s", *MethodName);
   delete this;
