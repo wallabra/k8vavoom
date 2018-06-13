@@ -352,7 +352,21 @@ struct readonly Panel /*size 18 bytes binblock 2*/ {
   int width; // type short offset 8 as wh as wh writedefault;
   int height; // type short offset 10 as wh as wh writedefault;
   int texture; // type ushort offset 12 texture writedefault;
-  int type; // type ushort offset 14 bitenum unique PanelType writedefault;
+  //int type; // type ushort offset 14 bitenum unique PanelType writedefault;
+  bool bWall;
+  bool bBack;
+  bool bFore;
+  bool bWater;
+  bool bAcid1;
+  bool bAcid2;
+  bool bStep;
+  bool bLiftUp;
+  bool bLiftDown;
+  bool bOpenDoor;
+  bool bCloseDoor;
+  bool bBlockMon;
+  bool bLiftLeft;
+  bool bLiftRight;
   int alpha; // type ubyte offset 16 default 0;
   //"flags" type ubyte offset 17 bitenum PanelFlag default PANEL_FLAG_NONE;
   bool bBlending; // PANEL_FLAG_BLENDING
