@@ -30,6 +30,7 @@
 #include "../../vcc_run.h"
 
 #if defined (VCCRUN_HAS_SDL) && defined(VCCRUN_HAS_OPENGL)
+#include <SDL.h>
 #include <GL/gl.h>
 
 
@@ -51,6 +52,10 @@ private:
   static bool quitSignal;
   static VMethod *onDrawVC;
   static VMethod *onEventVC;
+  static VMethod *onNewFrameVC;
+
+  static int currFrameTime;
+  static int prevFrameTime;
 
   static int colorR;
   static int colorG;
@@ -61,8 +66,12 @@ private:
 
 private:
   static void initMethods ();
+  static void onNewFrame ();
   static void onDraw ();
   static void onEvent (event_t &evt);
+
+  // returns `true`, if there is SDL event
+  static bool doFrameBusiness (SDL_Event &ev);
 
 public:
   static bool canInit ();
@@ -98,12 +107,18 @@ public:
 
   static void sendPing ();
 
+  static int getFrameTime ();
+  static void setFrameTime (int newft);
+
   // static
   DECLARE_FUNCTION(canInit)
   DECLARE_FUNCTION(hasOpenGL)
   DECLARE_FUNCTION(isInitialized)
   DECLARE_FUNCTION(screenWidth)
   DECLARE_FUNCTION(screenHeight)
+
+  DECLARE_FUNCTION(getFrameTime)
+  DECLARE_FUNCTION(setFrameTime)
 
   DECLARE_FUNCTION(openScreen)
   DECLARE_FUNCTION(closeScreen)

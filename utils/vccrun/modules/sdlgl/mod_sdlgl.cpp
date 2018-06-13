@@ -907,6 +907,8 @@ void VVideo::clear () {
 // ////////////////////////////////////////////////////////////////////////// //
 VMethod *VVideo::onDrawVC = nullptr;
 VMethod *VVideo::onEventVC = nullptr;
+VMethod *VVideo::onNewFrameVC = nullptr;
+
 
 void VVideo::initMethods () {
   onDrawVC = nullptr;
@@ -936,6 +938,11 @@ void VVideo::initMethods () {
     //fprintf(stderr, ":: (%d) %s\n", mmain->ParamFlags[0], *mmain->ParamTypes[0].GetName());
     //abort();
   }
+
+  mmain = mklass->FindMethod("onNewFrame");
+  if (mmain && (mmain->Flags&FUNC_VarArgs) == 0 && mmain->ReturnType.Type == TYPE_Void && mmain->NumParams == 0) {
+    onNewFrameVC = mmain;
+  }
 }
 
 
@@ -956,6 +963,63 @@ void VVideo::onEvent (event_t &evt) {
 }
 
 
+void VVideo::onNewFrame () {
+  if (!hw_glctx || !onNewFrameVC) return;
+  if ((onNewFrameVC->Flags&FUNC_Static) == 0) P_PASS_REF((VObject *)mainObject);
+  VObject::ExecuteFunction(onNewFrameVC);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+int VVideo::currFrameTime = 0;
+int VVideo::prevFrameTime = 0;
+
+
+int VVideo::getFrameTime () {
+  return currFrameTime;
+}
+
+
+void VVideo::setFrameTime (int newft) {
+  if (newft < 0) newft = 0;
+  if (currFrameTime == newft) return;
+  prevFrameTime = 0;
+  currFrameTime = newft;
+}
+
+
+bool VVideo::doFrameBusiness (SDL_Event &ev) {
+  if (currFrameTime <= 0) {
+    SDL_WaitEvent(&ev);
+    return true;
+  }
+
+  int cticks = SDL_GetTicks();
+  if (cticks < 0) { fprintf(stderr, "Tick overflow!"); abort(); }
+
+  if (prevFrameTime == 0) {
+    prevFrameTime = cticks;
+    onNewFrame();
+    cticks = SDL_GetTicks();
+  }
+
+  bool gotEvent = false;
+  if (prevFrameTime+currFrameTime > cticks) {
+    if (SDL_WaitEventTimeout(&ev, prevFrameTime+currFrameTime-cticks)) gotEvent = true;
+    cticks = SDL_GetTicks();
+  }
+
+  //fprintf(stderr, "pt=%d; nt=%d; ct=%d\n", prevFrameTime, prevFrameTime+currFrameTime, cticks);
+  while (prevFrameTime+currFrameTime <= cticks) {
+    prevFrameTime += currFrameTime;
+    onNewFrame();
+  }
+
+  return (gotEvent || SDL_PollEvent(&ev));
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 void VVideo::runEventLoop () {
   if (!mInited) return;
 
@@ -968,12 +1032,9 @@ void VVideo::runEventLoop () {
     SDL_Event ev;
     event_t evt;
 
-    //SDL_PumpEvents();
-    bool gotEvent = SDL_PollEvent(&ev);
-    if (!gotEvent) {
-      if (!SDL_WaitEvent(&ev)) break;
-      gotEvent = true;
-    }
+    SDL_PumpEvents();
+    bool gotEvent = doFrameBusiness(ev);
+
     if (gotEvent) {
       switch (ev.type) {
         case SDL_KEYDOWN:
@@ -1173,6 +1234,10 @@ IMPLEMENT_FUNCTION(VVideo, hasOpenGL) { RET_BOOL(VVideo::hasOpenGL()); }
 IMPLEMENT_FUNCTION(VVideo, isInitialized) { RET_BOOL(VVideo::isInitialized()); }
 IMPLEMENT_FUNCTION(VVideo, screenWidth) { RET_INT(VVideo::getWidth()); }
 IMPLEMENT_FUNCTION(VVideo, screenHeight) { RET_INT(VVideo::getHeight()); }
+
+IMPLEMENT_FUNCTION(VVideo, getFrameTime) { RET_BOOL(VVideo::getFrameTime()); }
+IMPLEMENT_FUNCTION(VVideo, setFrameTime) { P_GET_INT(newft); VVideo::setFrameTime(newft); }
+
 
 IMPLEMENT_FUNCTION(VVideo, closeScreen) { VVideo::close(); VVideo::sendPing(); }
 

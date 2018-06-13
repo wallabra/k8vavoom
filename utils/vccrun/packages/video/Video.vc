@@ -13,6 +13,9 @@ native final static bool isInitialized ();
 native final static int screenWidth ();
 native final static int screenHeight ();
 
+native final static int getFrameTime ();
+native final static void setFrameTime (int newframetime); // in msecs
+
 native final static bool openScreen (string winname, int width, int height);
 native final static void closeScreen ();
 
