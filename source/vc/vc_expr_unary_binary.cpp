@@ -83,7 +83,7 @@ void VUnary::DoSyntaxCopyTo (VExpression *e) {
 VExpression *VUnary::DoResolve (VEmitContext &ec) {
   if (Oper == TakeAddress && op && ec.SelfClass) {
     if (op->IsSingleName()) {
-      VMethod *M = ec.SelfClass->FindAccessibleMethod(ec.SelfClass->ResolveAlias(((VSingleName *)op)->Name), ec.SelfClass);
+      VMethod *M = ec.SelfClass->FindAccessibleMethod(((VSingleName *)op)->Name, ec.SelfClass);
       if (M && (M->Flags&FUNC_Iterator) == 0) {
         //fprintf(stderr, "SINGLE NAME GETADDR! <%s>\n", *((VSingleName *)op)->Name);
         VExpression *e = new VDelegateVal((new VSelf(Loc))->Resolve(ec), M, Loc);
@@ -98,7 +98,6 @@ VExpression *VUnary::DoResolve (VEmitContext &ec) {
         xop = xop->Resolve(ec);
         if (xop) {
           if (xop->Type.Type == TYPE_Reference) {
-            fname = xop->Type.Class->ResolveAlias(fname);
             VMethod *M = xop->Type.Class->FindAccessibleMethod(fname, ec.SelfClass);
             if (M && (M->Flags&FUNC_Iterator) == 0) {
               //fprintf(stderr, "DOTFIELD NAME GETADDR! <%s>\n", *((VDotField *)op)->FieldName);

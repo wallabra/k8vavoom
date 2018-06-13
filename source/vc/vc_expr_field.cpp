@@ -98,7 +98,7 @@ VExpression *VPointerField::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  VField *field = type.Struct->FindField(type.Struct->ResolveAlias(FieldName));
+  VField *field = type.Struct->FindField(FieldName);
   if (!field) {
     ParseError(Loc, "No such field %s", *FieldName);
     delete this;
@@ -189,7 +189,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   }
 
   if (op->Type.Type == TYPE_Reference) {
-    VMethod *M = op->Type.Class->FindAccessibleMethod(op->Type.Class->ResolveAlias(FieldName), ec.SelfClass);
+    VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass);
     if (M) {
       //fprintf(stderr, "DOTFIELD: <%s> {%s} %u\n", *FieldName, *op->Type.GetName(), op->Type.Type);
       if (M->Flags&FUNC_Iterator) {
@@ -212,7 +212,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
           delete opcopy;
           e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
         } else {
-          e = new VDotInvocation(opcopy, op->Type.Class->ResolveAlias(FieldName), Loc, 0, nullptr);
+          e = new VDotInvocation(opcopy, FieldName, Loc, 0, nullptr);
         }
       }
       delete this;
@@ -222,7 +222,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     // we never ever need opcopy here
     delete opcopy;
 
-    VField *field = op->Type.Class->FindField(op->Type.Class->ResolveAlias(FieldName), Loc, ec.SelfClass);
+    VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
     if (field) {
       VExpression *e;
       // "normal" access: call delegate (if it is operand-less)
@@ -238,7 +238,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       return e->Resolve(ec);
     }
 
-    VProperty *Prop = op->Type.Class->FindProperty(op->Type.Class->ResolveAlias(FieldName));
+    VProperty *Prop = op->Type.Class->FindProperty(FieldName);
     if (Prop) {
       if (assType == AssType::AssTarget) {
         if (!Prop->SetFunc) {
@@ -302,7 +302,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     int Flags = op->Flags;
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
-    VField *field = type.Struct->FindField(type.Struct->ResolveAlias(FieldName));
+    VField *field = type.Struct->FindField(FieldName);
     if (!field) {
       ParseError(Loc, "No such field %s", *FieldName);
       delete this;
@@ -371,9 +371,8 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
-      VName origName = op->Type.Class->ResolveAlias(FieldName);
       // read property
-      VProperty *Prop = op->Type.Class->FindProperty(origName);
+      VProperty *Prop = op->Type.Class->FindProperty(FieldName);
       if (Prop) {
         if (op->IsDefaultObject()) {
           if (!Prop->DefaultField) {
@@ -398,7 +397,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         }
       }
       // method
-      VMethod *M = op->Type.Class->FindAccessibleMethod(origName, ec.SelfClass);
+      VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass);
       if (!M) {
         ParseError(Loc, "Method `%s` not found in class `%s`", *FieldName, op->Type.Class->GetName());
         delete this;
@@ -423,8 +422,8 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     if (ec.SelfClass) {
       VExpression *ufcsArgs[1];
       ufcsArgs[0] = opcopy;
-      if (VInvocation::FindMethodWithSignature(ec, ec.SelfClass->ResolveAlias(FieldName), 1, ufcsArgs)) {
-        VCastOrInvocation *call = new VCastOrInvocation(ec.SelfClass->ResolveAlias(FieldName), Loc, 1, ufcsArgs);
+      if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
+        VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
         delete this;
         return call->Resolve(ec);
       }
@@ -437,9 +436,8 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
-      VName origName = op->Type.Class->ResolveAlias(FieldName);
       // property
-      VProperty *Prop = op->Type.Class->FindProperty(origName);
+      VProperty *Prop = op->Type.Class->FindProperty(FieldName);
       if (Prop) {
         if (!Prop->SetFunc) {
           ParseError(Loc, "Property `%s` cannot be set", *FieldName);

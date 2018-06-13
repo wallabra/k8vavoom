@@ -198,14 +198,13 @@ VName VClass::ResolveAlias (VName aname) {
     for (auto it = AliasList.first(); it; ++it) it.getValue().aframe = 0;
     AliasFrameNum = 1;
   }
-  if (!AliasList.has(aname)) {
-    if (!ParentClass) return aname;
-    return ParentClass->ResolveAlias(aname);
-  }
   VName res = aname;
   for (;;) {
     auto ai = AliasList.get(aname);
-    if (!ai) return res;
+    if (!ai) {
+      if (!ParentClass) return res;
+      return ParentClass->ResolveAlias(res);
+    }
     if (ai->aframe == AliasFrameNum) return NAME_None; // loop
     res = ai->origName;
     ai->aframe = AliasFrameNum;
@@ -479,6 +478,8 @@ void VClass::AddMethod (VMethod *m) {
 //==========================================================================
 VConstant *VClass::FindConstant (VName Name) {
   guard(VClass::FindConstant);
+  if (Name == NAME_None) return nullptr;
+  Name = ResolveAlias(Name);
   VMemberBase *m = StaticFindMember(Name, this, MEMBER_Const);
   if (m) return (VConstant *)m;
   if (ParentClass) return ParentClass->FindConstant(Name);
@@ -495,6 +496,7 @@ VConstant *VClass::FindConstant (VName Name) {
 VField *VClass::FindField (VName Name) {
   guard(VClass::FindField);
   if (Name == NAME_None) return nullptr;
+  Name = ResolveAlias(Name);
   for (VField *F = Fields; F; F = F->Next) if (Name == F->Name) return F;
   if (ParentClass) return ParentClass->FindField(Name);
   return nullptr;
@@ -539,6 +541,7 @@ VField *VClass::FindFieldChecked (VName AName) {
 VProperty *VClass::FindProperty (VName Name) {
   guard(VClass::FindProperty);
   if (Name == NAME_None) return nullptr;
+  Name = ResolveAlias(Name);
   VProperty *P = (VProperty*)StaticFindMember(Name, this, MEMBER_Property);
   if (P) return P;
   if (ParentClass) return ParentClass->FindProperty(Name);
@@ -555,6 +558,7 @@ VProperty *VClass::FindProperty (VName Name) {
 VMethod *VClass::FindMethod (VName Name, bool bRecursive) {
   guard(VClass::FindMethod);
   if (Name == NAME_None) return nullptr;
+  Name = ResolveAlias(Name);
   VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
   if (M) return M;
   if (bRecursive && ParentClass) return ParentClass->FindMethod(Name);
@@ -571,6 +575,7 @@ VMethod *VClass::FindMethod (VName Name, bool bRecursive) {
 VMethod *VClass::FindAccessibleMethod (VName Name, VClass *self) {
   guard(VClass::FindAccessibleMethod);
   if (Name == NAME_None) return nullptr;
+  Name = ResolveAlias(Name);
   VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
   if (M) {
     //fprintf(stderr, "FAM: <%s>; self=%s; this=%s; child=%d\n", *Name, (self ? *self->Name : "<none>"), *this->Name, (int)(self ? self->IsChildOf(this) : false));

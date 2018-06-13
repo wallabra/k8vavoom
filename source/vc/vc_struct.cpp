@@ -63,14 +63,13 @@ VName VStruct::ResolveAlias (VName aname) {
     for (auto it = AliasList.first(); it; ++it) it.getValue().aframe = 0;
     AliasFrameNum = 1;
   }
-  if (!AliasList.has(aname)) {
-    if (!ParentStruct) return aname;
-    return ParentStruct->ResolveAlias(aname);
-  }
   VName res = aname;
   for (;;) {
     auto ai = AliasList.get(aname);
-    if (!ai) return res;
+    if (!ai) {
+      if (!ParentStruct) return res;
+      return ParentStruct->ResolveAlias(res);
+    }
     if (ai->aframe == AliasFrameNum) return NAME_None; // loop
     res = ai->origName;
     ai->aframe = AliasFrameNum;
@@ -148,6 +147,8 @@ void VStruct::AddField (VField *f) {
 //==========================================================================
 VField *VStruct::FindField (VName FieldName) {
   guard(VStruct::FindField);
+  if (FieldName == NAME_None) return nullptr;
+  FieldName = ResolveAlias(FieldName);
   for (VField *fi = Fields; fi; fi = fi->Next) if (fi->Name == FieldName) return fi;
   if (ParentStruct) return ParentStruct->FindField(FieldName);
   return nullptr;

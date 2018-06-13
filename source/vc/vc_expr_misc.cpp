@@ -188,16 +188,14 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
   }
 
   if (ec.SelfClass) {
-    VName destName = ec.SelfClass->ResolveAlias(Name);
-
-    VConstant *Const = ec.SelfClass->FindConstant(destName);
+    VConstant *Const = ec.SelfClass->FindConstant(Name);
     if (Const) {
       VExpression *e = new VConstantValue(Const, Loc);
       delete this;
       return e->Resolve(ec);
     }
 
-    VMethod *M = ec.SelfClass->FindAccessibleMethod(destName, ec.SelfClass);
+    VMethod *M = ec.SelfClass->FindAccessibleMethod(Name, ec.SelfClass);
     if (M) {
       if (M->Flags&FUNC_Iterator) {
         ParseError(Loc, "Iterator methods can only be used in foreach statements");
@@ -216,19 +214,19 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
           e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
         } else {
           //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
-          e = new VDotInvocation(new VSelf(Loc), destName, Loc, 0, nullptr);
+          e = new VDotInvocation(new VSelf(Loc), Name, Loc, 0, nullptr);
         }
       }
       delete this;
       return e->Resolve(ec);
     }
 
-    VField *field = ec.SelfClass->FindField(destName, Loc, ec.SelfClass);
+    VField *field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
     if (field) {
       VExpression *e;
       // "normal" access: call delegate (if it is operand-less)
       if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
-        //fprintf(stderr, "*** SNAME! %s\n", *field->destName);
+        //fprintf(stderr, "*** SNAME! %s\n", *field->Name);
         e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
       } else {
         e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
@@ -237,12 +235,12 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
       return e->Resolve(ec);
     }
 
-    VProperty *Prop = ec.SelfClass->FindProperty(destName);
+    VProperty *Prop = ec.SelfClass->FindProperty(Name);
     if (Prop) {
       if (assType == AssType::AssTarget) {
         if (ec.InDefaultProperties) {
           if (!Prop->DefaultField) {
-            ParseError(Loc, "Property %s has no default field set", *destName);
+            ParseError(Loc, "Property %s has no default field set", *Name);
             delete this;
             return nullptr;
           }
@@ -251,7 +249,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
           return e->Resolve(ec);
         } else {
           if (!Prop->SetFunc) {
-            ParseError(Loc, "Property %s cannot be set", *destName);
+            ParseError(Loc, "Property %s cannot be set", *Name);
             delete this;
             return nullptr;
           }
@@ -262,7 +260,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
         }
       } else {
         if (!Prop->GetFunc) {
-          ParseError(Loc, "Property %s cannot be read", *destName);
+          ParseError(Loc, "Property %s cannot be read", *Name);
           delete this;
           return nullptr;
         }
@@ -432,7 +430,7 @@ VExpression *VDoubleName::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  VConstant *Const = Class->FindConstant(ec.SelfClass->ResolveAlias(Name2));
+  VConstant *Const = Class->FindConstant(Name2);
   if (Const) {
     VExpression *e = new VConstantValue(Const, Loc);
     delete this;
