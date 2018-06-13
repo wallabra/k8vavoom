@@ -240,11 +240,14 @@ void *Sys_OpenDir (const VStr &dirname) {
 VStr Sys_ReadDir (void *adir) {
   if (!adir) return VStr();
   auto sd = (ShitdozeDir *)adir;
-  if (!sd->gotName) {
-    if (FindNextFile(sd->dir_handle, &sd->dir_buf) != TRUE) return VStr();
+  for (;;) {
+    if (!sd->gotName) {
+      if (FindNextFile(sd->dir_handle, &sd->dir_buf) != TRUE) return VStr();
+    }
+    sd->gotName = false;
+    auto res = VStr(sd->dir_buf.cFileName);
+    if (res != "." && res != "..") return res;
   }
-  sd->gotName = false;
-  return VStr(sd->dir_buf.cFileName);
 }
 
 
