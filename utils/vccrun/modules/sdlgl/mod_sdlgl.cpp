@@ -489,7 +489,7 @@ VOpenGLTexture *VOpenGLTexture::Load (const VStr &fname) {
 
 
 void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const {
-  if (!tid || VVideo::colorA <= 0) return;
+  if (!tid || VVideo::isFullyTransparent()) return;
   if (x1 < 0) x1 = img->width;
   if (y1 < 0) y1 = img->height;
   glEnable(GL_TEXTURE_2D);
@@ -504,7 +504,7 @@ void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0
 
 
 void VOpenGLTexture::blitAt (int dx0, int dy0, float scale) const {
-  if (!tid || VVideo::colorA <= 0 || scale <= 0) return;
+  if (!tid || VVideo::isFullyTransparent() || scale <= 0) return;
   int w = img->width;
   int h = img->height;
   glEnable(GL_TEXTURE_2D);
@@ -871,7 +871,7 @@ bool VVideo::open (const VStr &winname, int width, int height) {
   //glDisable(GL_BLEND);
   glEnable(GL_LINE_SMOOTH);
 
-  glColor4f(VVideo::colorR/255.0f, VVideo::colorG/255.0f, VVideo::colorB/255.0f, VVideo::colorA/255.0f);
+  realiseGLColor();
   glDisable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, 0);
   glEnable(GL_BLEND);
@@ -1155,10 +1155,7 @@ void VVideo::runEventLoop () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-int VVideo::colorR = 255;
-int VVideo::colorG = 255;
-int VVideo::colorB = 255;
-int VVideo::colorA = 255;
+vuint32 VVideo::colorARGB = 0xffffff;
 VFont *VVideo::currFont = nullptr;
 
 
@@ -1168,22 +1165,8 @@ void VVideo::setFont (VName fontname) {
 }
 
 
-void VVideo::setColor (int r, int g, int b) {
-  colorR = (r < 0 ? 0 : r > 255 ? 255 : r);
-  colorG = (g < 0 ? 0 : g > 255 ? 255 : g);
-  colorB = (b < 0 ? 0 : b > 255 ? 255 : b);
-  if (mInited) glColor4f(colorR/255.0f, colorG/255.0f, colorB/255.0f, colorA/255.0f);
-}
-
-
-void VVideo::setAlpha (int a) {
-  colorA = (a < 0 ? 0 : a > 255 ? 255 : a);
-  if (mInited) glColor4f(colorR/255.0f, colorG/255.0f, colorB/255.0f, colorA/255.0f);
-}
-
-
 void VVideo::drawTextAt (int x, int y, const VStr &text) {
-  if (!currFont || colorA <= 0 || text.isEmpty()) return;
+  if (!currFont || isFullyTransparent() || text.isEmpty()) return;
   if (!mInited) return;
 
   const VOpenGLTexture *tex = currFont->getTexture();
@@ -1236,10 +1219,7 @@ IMPLEMENT_FUNCTION(VVideo, screenWidth) { RET_INT(VVideo::getWidth()); }
 IMPLEMENT_FUNCTION(VVideo, screenHeight) { RET_INT(VVideo::getHeight()); }
 
 IMPLEMENT_FUNCTION(VVideo, getFrameTime) { RET_BOOL(VVideo::getFrameTime()); }
-IMPLEMENT_FUNCTION(VVideo, setFrameTime) { P_GET_INT(newft); VVideo::setFrameTime(newft); }
-
-
-IMPLEMENT_FUNCTION(VVideo, closeScreen) { VVideo::close(); VVideo::sendPing(); }
+IMPLEMENT_FUNCTION(VVideo, setFrameTime) { P_GET_INT(newft); VVideo::setFrameTime(newft); VVideo::sendPing(); }
 
 IMPLEMENT_FUNCTION(VVideo, openScreen) {
   P_GET_INT(hgt);
@@ -1247,6 +1227,12 @@ IMPLEMENT_FUNCTION(VVideo, openScreen) {
   P_GET_STR(wname);
   RET_BOOL(VVideo::open(wname, wdt, hgt));
 }
+
+IMPLEMENT_FUNCTION(VVideo, closeScreen) {
+  VVideo::close();
+  VVideo::sendPing();
+}
+
 
 IMPLEMENT_FUNCTION(VVideo, runEventLoop) { VVideo::runEventLoop(); }
 
@@ -1265,13 +1251,17 @@ IMPLEMENT_FUNCTION(VVideo, loadFont) {
 
 
 IMPLEMENT_FUNCTION(VVideo, requestQuit) {
-  VVideo::quitSignal = true;
-  VVideo::sendPing();
+  if (!VVideo::quitSignal) {
+    VVideo::quitSignal = true;
+    VVideo::sendPing();
+  }
 }
 
 IMPLEMENT_FUNCTION(VVideo, requestRefresh) {
-  VVideo::doRefresh = true;
-  VVideo::sendPing();
+  if (!VVideo::doRefresh) {
+    VVideo::doRefresh = true;
+    VVideo::sendPing();
+  }
 }
 
 
@@ -1350,32 +1340,31 @@ IMPLEMENT_FUNCTION(VVideo, setSmoothLine) {
   }
 }
 
-//native final static void setColor (int r, int g, int b, optional int a);
-IMPLEMENT_FUNCTION(VVideo, setColor) {
-  P_GET_INT(specifiedA);
-  P_GET_INT(a);
-  P_GET_INT(b);
-  P_GET_INT(g);
-  P_GET_INT(r);
-  setColor(r, g, b);
-  if (specifiedA) setAlpha(a); else setAlpha(255);
+
+//native final static int getColorARGB ();
+IMPLEMENT_FUNCTION(VVideo, getColorARGB) {
+  RET_INT(colorARGB);
 }
 
-//native final static void setAlpha (int a);
-IMPLEMENT_FUNCTION(VVideo, setAlpha) {
-  P_GET_INT(a);
-  setAlpha(a);
+//native final static void setColorARGB (int v);
+IMPLEMENT_FUNCTION(VVideo, setColorARGB) {
+  P_GET_INT(c);
+  setColor((vuint32)c);
 }
-
-IMPLEMENT_FUNCTION(VVideo, colorR) { RET_INT(colorR); }
-IMPLEMENT_FUNCTION(VVideo, colorG) { RET_INT(colorG); }
-IMPLEMENT_FUNCTION(VVideo, colorB) { RET_INT(colorB); }
-IMPLEMENT_FUNCTION(VVideo, colorA) { RET_INT(colorA); }
 
 //native final static void setFont (name fontname);
 IMPLEMENT_FUNCTION(VVideo, setFont) {
   P_GET_NAME(fontname);
   setFont(fontname);
+}
+
+//native final static name getFont ();
+IMPLEMENT_FUNCTION(VVideo, getFont) {
+  if (!currFont) {
+    RET_NAME(NAME_None);
+  } else {
+    RET_NAME(currFont->getName());
+  }
 }
 
 //native final static void fontHeight ();
@@ -1421,7 +1410,7 @@ IMPLEMENT_FUNCTION(VVideo, drawLine) {
   P_GET_INT(x1);
   P_GET_INT(y0);
   P_GET_INT(x0);
-  if (!mInited || colorA <= 0) return;
+  if (!mInited || isFullyTransparent()) return;
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_LINES);
     glVertex2f(x0+0.5f, y0+0.5f);
@@ -1436,7 +1425,7 @@ IMPLEMENT_FUNCTION(VVideo, drawRect) {
   P_GET_INT(w);
   P_GET_INT(y0);
   P_GET_INT(x0);
-  if (!mInited || colorA <= 0 || w < 1 || h < 1) return;
+  if (!mInited || isFullyTransparent() || w < 1 || h < 1) return;
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_LINE_LOOP);
     glVertex2f(x0+0+0.5f, y0+0+0.5f);
@@ -1453,7 +1442,7 @@ IMPLEMENT_FUNCTION(VVideo, fillRect) {
   P_GET_INT(w);
   P_GET_INT(y0);
   P_GET_INT(x0);
-  if (!mInited || colorA <= 0 || w < 1 || h < 1) return;
+  if (!mInited || isFullyTransparent() || w < 1 || h < 1) return;
   glDisable(GL_TEXTURE_2D);
   // no need for 0.5f here, or rect will be offset
   glBegin(GL_QUADS);

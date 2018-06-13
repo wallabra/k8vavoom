@@ -738,9 +738,6 @@ native static final int P_GetMapIndexByLevelNum (int map);
 native static final int P_GetNumMaps ();
 
 native static final bool HasDecal (name aname);
-#else
-native static final int RGB (int r, int g, int b);
-native static final int RGBA (int r, int g, int b, optional int a);
 #endif
 
 

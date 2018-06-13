@@ -57,12 +57,21 @@ private:
   static int currFrameTime;
   static int prevFrameTime;
 
-  static int colorR;
-  static int colorG;
-  static int colorB;
-  static int colorA;
+  static vuint32 colorARGB; // a==0: opaque
   static VFont *currFont;
   friend class VOpenGLTexture;
+
+private:
+  static inline void realiseGLColor () {
+    if (mInited) {
+      glColor4f(
+        ((colorARGB>>16)&0xff)/255.0f,
+        ((colorARGB>>8)&0xff)/255.0f,
+        (colorARGB&0xff)/255.0f,
+        1.0f-(((colorARGB>>24)&0xff)/255.0f)
+      );
+    }
+  }
 
 private:
   static void initMethods ();
@@ -89,8 +98,12 @@ public:
   static void runEventLoop ();
 
   static void setFont (VName fontname);
-  static void setColor (int r, int g, int b);
-  static void setAlpha (int a);
+
+  static inline void setColor (vuint32 clr) { if (colorARGB != clr) { colorARGB = clr;realiseGLColor(); } }
+  static inline vuint32 getColor () { return colorARGB; }
+
+  static inline bool isFullyOpaque () { return ((colorARGB&0xff000000) == 0); }
+  static inline bool isFullyTransparent () { return ((colorARGB&0xff000000) == 0xff000000); }
 
   static void drawTextAt (int x, int y, const VStr &text);
 
@@ -138,16 +151,12 @@ public:
 
   DECLARE_FUNCTION(clearScreen)
 
-  DECLARE_FUNCTION(setColor)
-  DECLARE_FUNCTION(setAlpha)
-
   DECLARE_FUNCTION(setSmoothLine)
 
-  DECLARE_FUNCTION(colorR)
-  DECLARE_FUNCTION(colorG)
-  DECLARE_FUNCTION(colorB)
-  DECLARE_FUNCTION(colorA)
+  DECLARE_FUNCTION(getColorARGB) // aarrggbb
+  DECLARE_FUNCTION(setColorARGB) // aarrggbb
 
+  DECLARE_FUNCTION(getFont)
   DECLARE_FUNCTION(setFont)
   DECLARE_FUNCTION(fontHeight)
   DECLARE_FUNCTION(charWidth)

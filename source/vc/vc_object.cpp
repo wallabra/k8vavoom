@@ -1193,33 +1193,7 @@ IMPLEMENT_FUNCTION(VObject, RGBA) {
   P_GET_BYTE(r);
   RET_INT((a<<24)+(r<<16)+(g<<8)+b);
 }
-#else
-IMPLEMENT_FUNCTION(VObject, RGB) {
-  P_GET_INT(b);
-  P_GET_INT(g);
-  P_GET_INT(r);
-  if (r < 0) r = 0; else if (r > 255) r = 255;
-  if (g < 0) g = 0; else if (g > 255) g = 255;
-  if (b < 0) b = 0; else if (b > 255) b = 255;
-  RET_INT(0xff000000+(r<<16)+(g<<8)+b);
-}
 
-IMPLEMENT_FUNCTION(VObject, RGBA) {
-  P_GET_INT(specifiedA);
-  P_GET_INT(a);
-  P_GET_INT(b);
-  P_GET_INT(g);
-  P_GET_INT(r);
-  if (!specifiedA) a = 255;
-  if (r < 0) r = 0; else if (r > 255) r = 255;
-  if (g < 0) g = 0; else if (g > 255) g = 255;
-  if (b < 0) b = 0; else if (b > 255) b = 255;
-  if (a < 0) a = 0; else if (a > 255) a = 255;
-  RET_INT((a<<24)+(r<<16)+(g<<8)+b);
-}
-#endif // VCC_STANDALONE_EXECUTOR
-
-#ifndef VCC_STANDALONE_EXECUTOR
 IMPLEMENT_FUNCTION(VObject, GetLockDef) {
   P_GET_INT(Lock);
   RET_PTR(GetLockDef(Lock));

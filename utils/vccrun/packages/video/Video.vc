@@ -1,11 +1,5 @@
 class Video : Object abstract native;
 
-struct ScissorRect {
-  int x, y, w, h;
-  int enabled;
-}
-
-native final static void copyScissor (ScissorRect *dest, ScissorRect *src);
 
 native final static bool canInit ();
 native final static bool hasOpenGL ();
@@ -27,30 +21,19 @@ native final static void runEventLoop ();
 native final static void requestRefresh ();
 native final static void requestQuit ();
 
-native final static bool getScissorEnabled ();
-native final static void setScissorEnabled (bool v);
-native final static void getScissor (ScissorRect *sr);
-native final static void setScissor (ScissorRect *sr);
-
-
 // aborts if font cannot be loaded
 native final static void loadFont (name fontname, string fnameIni, string fnameTexture);
 
 native final static void setSmoothLine (bool v);
 
-native final static void setColor (int r, int g, int b, optional int a);
-native final static void setAlpha (int a);
-// r is low byte
-final static void setColorRGBA (int rgba) { setColor(rgba&0xff, (rgba>>8)&0xff, (rgba>>16)&0xff, (rgba>>24)&0xff); }
-// b is low byte
-final static void setColorARGB (int rgba) { setColor((rgba>>16)&0xff, (rgba>>8)&0xff, rgba&0xff, (rgba>>24)&0xff); }
-final static void setColorRGB (int rgba) { setColor((rgba>>16)&0xff, (rgba>>8)&0xff, rgba&0xff, 255); }
+// color: aarrggbb
+// WARNING: "a" is inverted, and actually means "transparency"
+//          i.e. a==0 is completely opaque
+//          it is easier this way, even if it may look conunterintuitive for you
+native final static int getColorARGB ();
+native final static void setColorARGB (int argb);
 
-native final static int colorR ();
-native final static int colorG ();
-native final static int colorB ();
-native final static int colorA ();
-
+native final static name getFont ();
 native final static void setFont (name fontname);
 native final static void fontHeight ();
 native final static int spaceWidth ();
@@ -62,6 +45,22 @@ native final static void drawTextAt (int x, int y, string text);
 native final static void drawLine (int x0, int y0, int x1, int y1);
 native final static void drawRect (int x0, int y0, int w, int h);
 native final static void fillRect (int x0, int y0, int w, int h);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct ScissorRect {
+  int x, y, w, h;
+  int enabled;
+}
+
+
+native final static bool getScissorEnabled ();
+native final static void setScissorEnabled (bool v);
+native final static void getScissor (ScissorRect *sr);
+native final static void setScissor (ScissorRect *sr);
+
+native final static void copyScissor (ScissorRect *dest, ScissorRect *src);
+
 
 // returns `false` if no area left
 final static bool scissorCombine (int x0, int y0, int w, int h) {
@@ -103,24 +102,35 @@ final static bool scissorCombine (int x0, int y0, int w, int h) {
 }
 
 
-final static void drawBevel (int x0, int y0, int awidth, int aheight, int rgbaup, int rgbadown) {
-  setColorRGBA(rgbaup);
+final static void drawBevel (int x0, int y0, int awidth, int aheight, int argbUp, int argbDown) {
+  setColorARGB(argbUp);
   drawLine(x0, y0, x0+awidth, y0);
   drawLine(x0, y0+1, x0, y0+aheight);
-  setColorRGBA(rgbadown);
+  setColorARGB(argbDown);
   drawLine(x0+1, y0+aheight-1, x0+awidth, y0+aheight-1);
   drawLine(x0+awidth-1, y0+1, x0+awidth-1, y0+aheight-1);
 }
 
 
-final int colorRGBA {
-  get { return Video.colorB|(Video.colorG<<8)|(Video.colorR<<16)|(Video.colorA<<24); }
+// ////////////////////////////////////////////////////////////////////////// //
+/*
+// will set alpha to opaque, and return alpha as 0
+final int colorRGB {
+  get { return Video.getColorARGB()&0xff_ff_ff; }
+  set { Video.setColorARGB(value|(value&0xff_00_00_00 ? 0 : 0xff_00_00_00)); }
+}
+*/
+final int colorARGB {
+  get { return Video.getColorARGB(); }
   set { Video.setColorARGB(value); }
 }
+alias colorRGB = colorARGB;
+alias color = colorARGB;
 
-final int colorRGB {
-  get { return Video.colorB|(Video.colorG<<8)|(Video.colorR<<16); }
-  set { Video.setColorRGB(value); }
+
+final name fontName {
+  get { return getFont(); }
+  set { setFont(value); }
 }
 
 final bool scissorEnabled {

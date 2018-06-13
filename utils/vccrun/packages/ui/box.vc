@@ -7,14 +7,11 @@ void onCreated (bool ahoriz) {
 }
 
 protected override void selfPaintAt (int x0, int y0) {
-  //Video.setColor(32, 32, 32);
-  Video.setColor(0, 0, 0);
-  Video.colorRGB = 0x202020;
-  //int c = Video.colorRGB;
-  //writeln(c);
+  Video.color = 0;
+  Video.color = 0x20_20_20;
   Video.fillRect(x0, y0, mWidth, mHeight);
   //Video.drawRect(x0, y0, mWidth, mHeight);
-  //Video.setColor(255, 255, 255);
+  //Video.color = 0xff_ff_ff;
   //Video.drawLine(x0, y0, x0+mWidth, y0);
 }
 

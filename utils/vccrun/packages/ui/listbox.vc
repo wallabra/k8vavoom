@@ -78,7 +78,7 @@ final void makeCurrentVisible () {
 protected override void selfPaintAt (int x0, int y0) {
   Video.colorRGB = (focused ? 0x10_10_10 : 0x20_20_20);
   Video.fillRect(x0, y0, mWidth, mHeight);
-  Video.drawBevel(x0, y0, mWidth, mHeight, RGB(0x10, 0x10, 0x10), RGB(0x40, 0x40, 0x40));
+  Video.drawBevel(x0, y0, mWidth, mHeight, 0x10_10_10, 0x40_40_40);
   if (!Video.scissorCombine(x0+1, y0+1, mWidth-2, mHeight-2)) return;
   makeCurrentVisible();
   Video.setFont(fontName);
@@ -126,6 +126,38 @@ override bool onEvent (ref event_t evt) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+int textColor {
+  get { return mTextColor; }
+  set { if (mTextColor != value) { mTextColor = value; setDirty(); } }
+}
+
+int selTextColor {
+  get { return mSelTextColor; }
+  set { if (mSelTextColor != value) { mSelTextColor = value; setDirty(); } }
+}
+
+int selBackColor {
+  get { return mSelBackColor; }
+  set { if (mSelBackColor != value) { mSelBackColor = value; setDirty(); } }
+}
+
+int textColorFocused {
+  get { return mFcTextColor; }
+  set { if (mFcTextColor != value) { mFcTextColor = value; setDirty(); } }
+}
+
+int selTextColorFocused {
+  get { return mFcSelTextColor; }
+  set { if (mFcSelTextColor != value) { mFcSelTextColor = value; setDirty(); } }
+}
+
+int selBackColorFocused {
+  get { return mFcSelBackColor; }
+  set { if (mFcSelBackColor != value) { mFcSelBackColor = value; setDirty(); } }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 int currItemIndex {
   get { return mCurrItem; }
   set {
@@ -140,12 +172,10 @@ int currItemIndex {
   }
 }
 
-
 int currItemTag {
   get { return (mCurrItem >= 0 && mCurrItem < mItems.length ? mItems[mCurrItem].tag : 0); }
   set { if (mCurrItem >= 0 && mCurrItem < mItems.length) mItems[mCurrItem].tag = value; }
 }
-
 
 // ////////////////////////////////////////////////////////////////////////// //
 defaultproperties {

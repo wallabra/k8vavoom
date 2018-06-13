@@ -11,33 +11,26 @@ void onCreated (string atext) {
   mText = atext;
   mBaseWidth = Video.textWidth(atext);
   mBaseHeight = Video.textHeight(atext);
-  mColor = RGB(255, 255, 255);
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 protected override void selfPaintAt (int x0, int y0) {
   if (mText.length == 0) return;
-  if (((mColor>>24)&0xff) == 0) return;
-  Video.setColor(mColor&0xff, (mColor>>8)&0xff, (mColor>>16)&0xff, (mColor>>24)&0xff);
+  Video.colorRGB = mColor;
   Video.setFont(fontName);
   Video.drawTextAt(x0, y0, mText);
 }
 
-void setColor (int r, int g, int b, optional int a) {
-  if (r < 0) r = 0; else if (r > 255) r = 255;
-  if (g < 0) g = 0; else if (g > 255) g = 255;
-  if (b < 0) b = 0; else if (b > 255) b = 255;
-  if (specified_a) {
-    if (a < 0) a = 0; else if (a > 255) a = 255;
-  } else {
-    a = 255;
-  }
-  int c = RGBA(r, g, b, a);
-  if (c != mColor) { mColor = c; setDirty(); }
+
+// ////////////////////////////////////////////////////////////////////////// //
+int color {
+  get { return mColor; }
+  set { if (mColor != value) { mColor = value; setDirty(); } }
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 defaultproperties {
+  mColor = 0xff_ff_ff;
 }
