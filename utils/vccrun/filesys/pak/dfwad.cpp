@@ -7,9 +7,7 @@
 //**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
 //**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**  $Id$
-//**
-//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018 Ketmar Dark
 //**
 //**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
@@ -22,30 +20,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-//**
-//**  Based on sources from zlib with following notice:
-//**
-//**  Copyright (C) 1998-2004 Gilles Vollant
-//**
-//**  This software is provided 'as-is', without any express or implied
-//**  warranty.  In no event will the authors be held liable for any damages
-//**  arising from the use of this software.
-//**
-//**  Permission is granted to anyone to use this software for any purpose,
-//**  including commercial applications, and to alter it and redistribute it
-//**  freely, subject to the following restrictions:
-//**
-//**  1. The origin of this software must not be misrepresented; you must
-//**  not claim that you wrote the original software. If you use this
-//**  software in a product, an acknowledgment in the product documentation
-//**  would be appreciated but is not required.
-//**  2. Altered source versions must be plainly marked as such, and must
-//**  not be misrepresented as being the original software.
-//**  3. This notice may not be removed or altered from any source
-//**  distribution.
-//**
-//**************************************************************************
-
 #include "../fsys.h"
 
 
@@ -70,7 +44,7 @@ protected:
   virtual const VStr &getNameByIndex (int idx) const override;
   virtual int getNameCount () const override;
   // should return `nullptr` on failure
-  virtual VStream *open (int idx) const override;
+  virtual VStream *open (int idx) override;
 
 public:
   VDFWadFile (VStream* fstream, const VStr &aname=VStr("<memory>")); // takes ownership on success
@@ -174,7 +148,7 @@ bool VDFWadFile::openArchive () {
 }
 
 
-VStream *VDFWadFile::open (int idx) const {
+VStream *VDFWadFile::open (int idx) {
   if (idx < 0 || idx >= fileCount) return nullptr;
   fileStream->Seek(files[idx].pkofs);
   return new VZipStreamReader(fileStream, files[idx].pksize);
@@ -196,7 +170,7 @@ class DFWadVFSRegistrator {
 public:
   DFWadVFSRegistrator (int n) {
     FSysRegisterDriver(&dfwadLoader);
-    //fprintf(stderr, "FSYS: added ZIP reader.\n");
+    //fprintf(stderr, "FSYS: added DFWAD reader.\n");
   }
 };
 

@@ -51,7 +51,7 @@ bool fsysDiskFirst = true; // default is true
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-enum { MaxOpenPaks = 1024 };
+enum { MaxOpenPaks = 65536 };
 
 static FSysDriverBase *openPaks[MaxOpenPaks]; // 0 is always basedir
 static int openPakCount = 0;
@@ -108,6 +108,28 @@ FSysDriverBase::~FSysDriverBase () {
   htable = nullptr;
   htableSize = 0;
 }
+
+
+void FSysDriverBase::fileClosed (VStream *s) {
+  if (s) {
+    --mOpenedFiles;
+    if (mOpenedFiles == 0 && !active() && canBeDestroyed()) {
+      // kill it
+      int pakid = 1;
+      while (pakid < openPakCount && openPaks[pakid] != this) ++pakid;
+      if (pakid < openPakCount) {
+        openPaks[pakid] = nullptr;
+        while (openPakCount > 1 && !openPaks[openPakCount-1]) --openPakCount;
+      }
+      delete this;
+    }
+  }
+}
+
+
+bool FSysDriverBase::canBeDestroyed () const { return (mOpenedFiles == 0); }
+bool FSysDriverBase::active () const { return mActive; }
+void FSysDriverBase::deactivate () { mActive = false; }
 
 
 void FSysDriverBase::buildNameHashTable () {
@@ -179,7 +201,7 @@ VStr FSysDriverBase::findFileWithAnyExt (const VStr &fname) const {
   return VStr();
 }
 
-VStream *FSysDriverBase::open (const VStr &fname) const {
+VStream *FSysDriverBase::open (const VStr &fname) {
   int idx = findName(fname);
   if (idx < 0) return nullptr;
   return open(idx);
@@ -187,7 +209,12 @@ VStream *FSysDriverBase::open (const VStr &fname) const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VStreamDiskFile::VStreamDiskFile (FILE* afl, const VStr &aname, bool asWriter) : VStream(), mFl(afl), mName(aname), size(-1) {
+VStreamDiskFile::VStreamDiskFile (FILE* afl, const VStr &aname, bool asWriter, FSysDriverBase *aDriver)
+  : VStreamPakFile(aDriver)
+  , mFl(afl)
+  , mName(aname)
+  , size(-1)
+{
   if (afl) fseek(afl, 0, SEEK_SET);
   bLoading = !asWriter;
 }
@@ -248,14 +275,16 @@ protected:
   virtual int getNameCount () const override;
 
 protected:
-  virtual VStream *open (int idx) const override;
+  virtual VStream *open (int idx) override;
 
 public:
   FSysDriverDisk (const VStr &apath);
   virtual ~FSysDriverDisk () override;
 
+  virtual bool canBeDestroyed () const override;
+
   virtual bool hasFile (const VStr &fname) const;
-  virtual VStream *open (const VStr &fname) const;
+  virtual VStream *open (const VStr &fname);
   virtual VStr findFileWithAnyExt (const VStr &fname) const override;
 };
 
@@ -268,9 +297,14 @@ FSysDriverDisk::FSysDriverDisk (const VStr &apath) : FSysDriverBase() {
 
 FSysDriverDisk::~FSysDriverDisk () {}
 
+// no need to destroy disk paks
+bool FSysDriverDisk::canBeDestroyed () const {
+  return false;
+}
+
 const VStr &FSysDriverDisk::getNameByIndex (int idx) const { *(int *)0 = 0; return VStr::EmptyString; } // the thing that should not be
 int FSysDriverDisk::getNameCount () const { *(int *)0 = 0; return 0; } // the thing that should not be
-VStream *FSysDriverDisk::open (int idx) const { *(int *)0 = 0; return nullptr; } // the thing that should not be
+VStream *FSysDriverDisk::open (int idx) { *(int *)0 = 0; return nullptr; } // the thing that should not be
 
 bool FSysDriverDisk::hasFile (const VStr &fname) const {
   if (fname.length() == 0) return false;
@@ -307,12 +341,26 @@ VStr FSysDriverDisk::findFileWithAnyExt (const VStr &fname) const {
   return VStr();
 }
 
-VStream *FSysDriverDisk::open (const VStr &fname) const {
+VStream *FSysDriverDisk::open (const VStr &fname) {
   if (fname.length() == 0) return nullptr;
   VStr newname = path+fname;
   FILE *fl = fopen(*newname, "rb");
   if (!fl) return nullptr;
   return new VStreamDiskFile(fl, fname);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VStreamPakFile::VStreamPakFile (FSysDriverBase *aDriver)
+  : VStream()
+  , mDriver(aDriver)
+{
+  if (aDriver) ++aDriver->mOpenedFiles;
+}
+
+
+VStreamPakFile::~VStreamPakFile () {
+  if (mDriver) mDriver->fileClosed(this);
 }
 
 
@@ -343,16 +391,40 @@ void fsysAppendDir (const VStr &path) {
 
 // append archive to the list of archives
 // it will be searched in the current dir, and then in `fsysBaseDir`
-bool fsysAppendPak (const VStr &fname) {
+// returns pack id or 0
+int fsysAppendPak (const VStr &fname) {
   if (fname.length() == 0) return false;
-  FILE *fl = fopen(*fname, "rb");
-  if (!fl) return false;
-  return fsysAppendPak(new VStreamDiskFile(fl, fname));
+  VStr fn = fname;
+  FILE *fl = fopen(*fn, "rb");
+  if (!fl) {
+    VStr ext = fname.extractFileExtension();
+    if (ext.equ1251CI("pk3")) {
+      fn = fname.stripExtension()+".wad";
+      fl = fopen(*fn, "rb");
+    } else if (ext.equ1251CI("wad")) {
+      fn = fname.stripExtension()+".pk3";
+      fl = fopen(*fn, "rb");
+    }
+    if (!fl) return false;
+  }
+  int pos = (int)fn.length();
+  while (pos > 0 && fn[pos-1] != '/' && fn[pos-1] != '\\') --pos;
+#if 0
+  int epos = (int)fn.length()-1;
+  while (epos >= pos && fn[epos] != '.') --epos;
+  if (epos < pos) epos = (int)fn.length();
+  VStr pfx = fn.mid(pos, epos-pos);
+  pfx += ".wad";
+#else
+  VStr pfx = fn.mid(pos, (int)fn.length()-pos);
+#endif
+  return fsysAppendPak(new VStreamDiskFile(fl, fn), pfx);
 }
 
 
 // this will take ownership of `strm` (or kill it on error)
-bool fsysAppendPak (VStream *strm) {
+// returns pack id or 0
+int fsysAppendPak (VStream *strm, const VStr &apfx) {
   if (!strm) return false;
 
   if (openPakCount == 0) fsysInit();
@@ -364,30 +436,146 @@ bool fsysAppendPak (VStream *strm) {
     auto drv = cur->ldr(strm);
     //if (strm->IsError()) { delete drv; break; }
     if (drv) {
+      //fprintf(stderr, ":: <%s>\n", *apfx);
+      drv->setPrefix(apfx);
+      drv->setFilePath(strm->GetName());
       openPaks[openPakCount++] = drv;
-      return true;
+      return openPakCount;
     }
   }
 
   delete strm;
-  return false;
+  return 0;
+}
+
+
+// remove given pack from pack list
+void fsysRemovePak (int pakid) {
+  if (pakid < 2 || pakid > openPakCount || !openPaks[pakid-1]) return;
+  --pakid;
+  if (openPaks[pakid]->canBeDestroyed()) {
+    delete openPaks[pakid];
+    openPaks[pakid] = nullptr;
+    while (openPakCount > 1 && !openPaks[openPakCount-1]) --openPakCount;
+  } else {
+    openPaks[pakid]->deactivate();
+  }
+}
+
+
+// remove all packs from pakid and later
+void fsysRemovePaksFrom (int pakid) {
+  if (pakid < 2 || pakid > openPakCount) return;
+  --pakid;
+  for (int f = openPakCount-1; f >= pakid; --f) {
+    if (!openPaks[f]) continue;
+    if (openPaks[f]->canBeDestroyed()) {
+      delete openPaks[f];
+      openPaks[f] = nullptr;
+    } else {
+      openPaks[f]->deactivate();
+    }
+  }
+  while (openPakCount > 1 && !openPaks[openPakCount-1]) --openPakCount;
+}
+
+
+// return pack file path for the given pack id (or empty string)
+VStr fsysGetPakPath (int pakid) {
+  if (pakid < 1 || pakid > openPakCount) return VStr();
+  --pakid;
+  if (!openPaks[pakid] || !openPaks[pakid]->active()) return VStr();
+  return openPaks[pakid]->getFilePath();
+}
+
+
+// return pack prefix for the given pack id (or empty string)
+VStr fsysGetPakPrefix (int pakid) {
+  if (pakid < 1 || pakid > openPakCount) return VStr();
+  --pakid;
+  if (!openPaks[pakid] || !openPaks[pakid]->active()) return VStr();
+  return openPaks[pakid]->getPrefix();
+}
+
+
+int fsysGetLastPakId () {
+  return openPakCount;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static void splitFileName (const VStr &infname, VStr &pfx, VStr &fname) {
+  int pos = 0;
+  while (pos < (int)infname.length()) {
+    if (infname[pos] == '/' || infname[pos] == '\\') break;
+    if (infname[pos] == ':') {
+      pfx = infname.left(pos);
+      fname = infname.right(pos+1);
+      return;
+    }
+    ++pos;
+  }
+  pfx = VStr();
+  fname = infname;
+}
+
+
+static bool isPrefixEqu (const VStr &p0, const VStr &p1) {
+  if (p0.length() == p1.length() && p0.equ1251CI(p1)) return true;
+  VStr ext0 = p0.extractFileExtension();
+  VStr ext1 = p0.extractFileExtension();
+  if (ext0.equ1251CI("pk3")) ext0 = "wad";
+  if (ext1.equ1251CI("pk3")) ext1 = "wad";
+  VStr s0 = p0.stripExtension()+"."+ext0;
+  VStr s1 = p1.stripExtension()+"."+ext1;
+  return (s0.length() == s1.length() && s0.equ1251CI(s1));
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// 0: no such pack
+int fsysFindPakByPrefix (const VStr &pfx) {
+  if (pfx.length() == 0) return 0;
+  // check non-basedir packs
+  for (int f = openPakCount-1; f > 0; --f) {
+    if (isPrefixEqu(openPaks[f]->getPrefix(), pfx)) return f+1;
+  }
+  return 0;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 bool fsysFileExists (const VStr &fname) {
   if (openPakCount == 0) fsysInit();
+  VStr pfx, fn;
+  splitFileName(fname, pfx, fn);
   // try basedir first, if the corresponding flag is set
-  if (fsysDiskFirst) {
-    if (openPaks[0]->hasFile(fname)) return true;
+#ifdef WIN32
+  if (fsysDiskFirst && pfx.length() < 2)
+#else
+  if (fsysDiskFirst && pfx.length() == 0)
+#endif
+  {
+    if (openPaks[0]->active() && openPaks[0]->hasFile(fname)) return true;
   }
   // do other paks
   for (int f = openPakCount-1; f > 0; --f) {
-    if (openPaks[f]->hasFile(fname)) return true;
+    if (pfx.length()) {
+      if (isPrefixEqu(openPaks[f]->getPrefix(), pfx)) {
+        if (openPaks[f]->active() && openPaks[f]->hasFile(fn)) return true;
+      }
+    } else {
+      if (openPaks[f]->active() && openPaks[f]->hasFile(fname)) return true;
+    }
   }
   // try basedir last, if the corresponding flag is set
-  if (!fsysDiskFirst) {
-    if (openPaks[0]->hasFile(fname)) return true;
+#ifdef WIN32
+  if (!fsysDiskFirst && pfx.length() < 2)
+#else
+  if (!fsysDiskFirst && pfx.length() == 0)
+#endif
+  {
+    if (openPaks[0]->active() && openPaks[0]->hasFile(fname)) return true;
   }
   return false;
 }
@@ -396,18 +584,38 @@ bool fsysFileExists (const VStr &fname) {
 // open file for reading, relative to basedir, and look into archives too
 VStream *fsysOpenFile (const VStr &fname) {
   if (openPakCount == 0) fsysInit();
+  VStr pfx, fn;
+  splitFileName(fname, pfx, fn);
   // try basedir first, if the corresponding flag is set
-  if (fsysDiskFirst) {
+#ifdef WIN32
+  if (fsysDiskFirst && pfx.length() < 2 && openPaks[0]->active())
+#else
+  if (fsysDiskFirst && pfx.length() == 0 && openPaks[0]->active())
+#endif
+  {
     auto res = openPaks[0]->open(fname);
     if (res) return res;
   }
   // do other paks
   for (int f = openPakCount-1; f > 0; --f) {
-    auto res = openPaks[f]->open(fname);
-    if (res) return res;
+    if (!openPaks[f]->active()) continue;
+    if (pfx.length()) {
+      if (isPrefixEqu(openPaks[f]->getPrefix(), pfx)) {
+        auto res = openPaks[f]->open(fn);
+        if (res) return res;
+      }
+    } else {
+      auto res = openPaks[f]->open(fname);
+      if (res) return res;
+    }
   }
   // try basedir last, if the corresponding flag is set
-  if (!fsysDiskFirst) {
+#ifdef WIN32
+  if (!fsysDiskFirst && pfx.length() < 2 && openPaks[0]->active())
+#else
+  if (!fsysDiskFirst && pfx.length() == 0 && openPaks[0]->active())
+#endif
+  {
     auto res = openPaks[0]->open(fname);
     if (res) return res;
   }
@@ -444,18 +652,40 @@ VStream *fsysOpenDiskFile (const VStr &fname) {
 static VStr fsysFileFindAnyExtInternal (const VStr &fname) {
   if (openPakCount == 0) fsysInit();
   if (fsysFileExists(fname)) return fname;
+  VStr pfx, fn;
+  splitFileName(fname, pfx, fn);
   // try basedir first, if the corresponding flag is set
-  if (fsysDiskFirst) {
+  if (fsysDiskFirst && openPaks[0]->active() &&
+#ifdef WIN32
+    pfx.length() < 2
+#else
+    pfx.length() == 0
+#endif
+  ) {
     auto res = openPaks[0]->findFileWithAnyExt(fname);
     if (res.length()) return res;
   }
   // do other paks
   for (int f = openPakCount-1; f > 0; --f) {
-    auto res = openPaks[f]->findFileWithAnyExt(fname);
-    if (res.length()) return res;
+    if (!openPaks[f]->active()) continue;
+    if (pfx.length()) {
+      if (isPrefixEqu(openPaks[f]->getPrefix(), pfx)) {
+        auto res = openPaks[f]->findFileWithAnyExt(fn);
+        if (res.length()) return (pfx.length() ? pfx+":"+res : res);
+      }
+    } else {
+      auto res = openPaks[f]->findFileWithAnyExt(fname);
+      if (res.length()) return res;
+    }
   }
   // try basedir last, if the corresponding flag is set
-  if (!fsysDiskFirst) {
+  if (!fsysDiskFirst && openPaks[0]->active() &&
+#ifdef WIN32
+    pfx.length() < 2
+#else
+    pfx.length() == 0
+#endif
+  ) {
     auto res = openPaks[0]->findFileWithAnyExt(fname);
     if (res.length()) return res;
   }
@@ -474,8 +704,8 @@ VStr fsysFileFindAnyExt (const VStr &fname) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VPartialStreamReader::VPartialStreamReader (VStream *ASrcStream, int astpos, int apartlen)
-  : VStream()
+VPartialStreamReader::VPartialStreamReader (VStream *ASrcStream, int astpos, int apartlen, FSysDriverBase *aDriver)
+  : VStreamPakFile(aDriver)
   , srcStream(ASrcStream)
   , stpos(astpos)
   , srccurpos(astpos)
@@ -533,8 +763,8 @@ bool VPartialStreamReader::AtEnd () { return (bError || srccurpos >= stpos+partl
 
 // ////////////////////////////////////////////////////////////////////////// //
 // VZipStreamReader
-VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, bool asZipArchive)
-  : VStream()
+VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, bool asZipArchive, FSysDriverBase *aDriver)
+  : VStreamPakFile(aDriver)
   , srcStream(ASrcStream)
   , initialised(false)
   , compressedSize(ACompressedSize)
@@ -779,7 +1009,8 @@ vuint32 VZipStreamWriter::getCrc32 () const {
 
 void VZipStreamWriter::setError () {
   if (initialised) { deflateEnd(&zStream); initialised = false; }
-  if (dstStream) { delete dstStream; dstStream = nullptr; }
+  //if (dstStream) { delete dstStream; dstStream = nullptr; }
+  dstStream = nullptr;
   bError = true;
 }
 

@@ -7,9 +7,8 @@
 //**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
 //**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**  $Id$
-//**
 //**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018 Ketmar Dark
 //**
 //**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
@@ -74,7 +73,7 @@ struct VZipFileInfo {
 };
 
 
-class VZipFileReader : public VStream {
+class VZipFileReader : public VStreamPakFile {
 private:
   enum { UNZ_BUFSIZE = 16384 };
   //enum { UNZ_BUFSIZE = 65536 };
@@ -110,7 +109,7 @@ private:
   int readSomeBytes (void *buf, int len);
 
 public:
-  VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, const VZipFileInfo &aInfo);
+  VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, const VZipFileInfo &aInfo, FSysDriverBase *aDriver);
   virtual ~VZipFileReader () override;
 
   virtual void Serialise (void*, int) override;
@@ -139,7 +138,7 @@ protected:
   virtual const VStr &getNameByIndex (int idx) const override;
   virtual int getNameCount () const override;
   // should return `nullptr` on failure
-  virtual VStream *open (int idx) const override;
+  virtual VStream *open (int idx) override;
 
 public:
   VZipFile (VStream* fstream, const VStr &aname=VStr("<memory>")); // takes ownership on success
@@ -435,15 +434,16 @@ vuint32 VZipFile::searchCentralDir () {
 }
 
 
-VStream *VZipFile::open (int idx) const {
+VStream *VZipFile::open (int idx) {
   if (idx < 0 || idx >= fileCount) return nullptr;
-  return new VZipFileReader(fileStream, bytesBeforeZipFile, files[idx]);
+  return new VZipFileReader(fileStream, bytesBeforeZipFile, files[idx], this);
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VZipFileReader::VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, const VZipFileInfo &aInfo)
-  : fileStream(InStream)
+VZipFileReader::VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, const VZipFileInfo &aInfo, FSysDriverBase *aDriver)
+  : VStreamPakFile(aDriver)
+  , fileStream(InStream)
   , info(aInfo)
 {
   // open the file in the zip

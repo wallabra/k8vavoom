@@ -41,11 +41,29 @@ void fsysAppendDir (const VStr &path);
 
 // append archive to the list of archives
 // it will be searched in the current dir, and then in `fsysBaseDir`
-bool fsysAppendPak (const VStr &fname);
+// returns pack id or 0
+int fsysAppendPak (const VStr &fname);
 
 // this will take ownership of `strm` (or kill it on error)
-bool fsysAppendPak (VStream *strm);
+// returns pack id or 0
+int fsysAppendPak (VStream *strm, const VStr &apfx=VStr());
 
+// remove given pack from pack list
+void fsysRemovePak (int pakid);
+
+// remove all packs from pakid and later
+void fsysRemovePaksFrom (int pakid);
+
+// 0: no such pack
+int fsysFindPakByPrefix (const VStr &pfx);
+
+// return pack file path for the given pack id (or empty string)
+VStr fsysGetPakPath (int pakid);
+
+// return pack prefix for the given pack id (or empty string)
+VStr fsysGetPakPrefix (int pakid);
+
+int fsysGetLastPakId ();
 
 bool fsysFileExists (const VStr &fname);
 //void fsysCreatePath (const VStr &path);
@@ -66,6 +84,8 @@ VStr fsysFileFindAnyExt (const VStr &fname);
 
 // ////////////////////////////////////////////////////////////////////////// //
 class FSysDriverBase {
+  friend class VStreamPakFile;
+
 protected:
   virtual const VStr &getNameByIndex (int idx) const = 0;
   virtual int getNameCount () const = 0;
@@ -96,12 +116,15 @@ protected:
   }
 
 protected:
+  int mOpenedFiles;
   VStr mPrefix; // this can be used to open named paks
+  VStr mFilePath; // if opened from file
   vuint32 htableSize;
   HashTableEntry* htable; // for names, in reverse order; so name lookups will be faster
     // the algo is:
     //   htable[hashStr(name)%htable.length]: check if hash is ok, and name is ok
     //   if not ok, jump to htable[curht.prev], repeat
+  bool mActive;
 
 protected:
   // call this after you done building directory
@@ -113,20 +136,30 @@ protected:
 
 protected:
   // should return `nullptr` on failure
-  virtual VStream *open (int idx) const = 0;
+  virtual VStream *open (int idx) = 0;
+  virtual void fileClosed (VStream *s);
 
 public:
-  FSysDriverBase () : mPrefix(VStr()), htableSize(0), htable(nullptr) {}
+  FSysDriverBase () : mOpenedFiles(0), mPrefix(VStr()), htableSize(0), htable(nullptr), mActive(true) {}
   virtual ~FSysDriverBase ();
 
+  virtual bool canBeDestroyed () const;
+
+  virtual bool active () const;
+  virtual void deactivate ();
+
+  inline void setPrefix (const VStr &apfx) { mPrefix = apfx; }
   inline const VStr &getPrefix () const { return mPrefix; }
+
+  inline void setFilePath (const VStr &s) { mFilePath = s; }
+  inline const VStr &getFilePath () const { return mFilePath; }
 
   virtual bool hasFile (const VStr &fname) const;
 
   virtual VStr findFileWithAnyExt (const VStr &fname) const;
 
   // should return `nullptr` on failure
-  virtual VStream *open (const VStr &fname) const;
+  virtual VStream *open (const VStr &fname);
 };
 
 
@@ -138,7 +171,18 @@ void FSysRegisterDriver (FSysOpenPakFn ldr, int prio=1000);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VStreamDiskFile : public VStream {
+class VStreamPakFile : public VStream {
+private:
+  FSysDriverBase *mDriver;
+
+public:
+  VStreamPakFile (FSysDriverBase *aDriver);
+  virtual ~VStreamPakFile () override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VStreamDiskFile : public VStreamPakFile {
 private:
   FILE *mFl;
   VStr mName;
@@ -148,7 +192,7 @@ private:
   void setError ();
 
 public:
-  VStreamDiskFile (FILE *afl, const VStr &aname=VStr(), bool asWriter=false);
+  VStreamDiskFile (FILE *afl, const VStr &aname=VStr(), bool asWriter=false, FSysDriverBase *aDriver=nullptr);
   virtual ~VStreamDiskFile () override;
 
   virtual const VStr &GetName () const override;
@@ -162,7 +206,7 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VPartialStreamReader : public VStream {
+class VPartialStreamReader : public VStreamPakFile {
 private:
   VStream *srcStream;
   int stpos;
@@ -173,8 +217,8 @@ private:
   void setError ();
 
 public:
-  // doesn't own stream
-  VPartialStreamReader (VStream *ASrcStream, int astpos, int apartlen=-1);
+  // doesn't own passed stream
+  VPartialStreamReader (VStream *ASrcStream, int astpos, int apartlen=-1, FSysDriverBase *aDriver=nullptr);
   virtual ~VPartialStreamReader () override;
   virtual void Serialise (void *, int) override;
   virtual void Seek (int) override;
@@ -197,7 +241,7 @@ public:
 # include <lzma.h>
 #endif
 
-class VZipStreamReader : public VStream {
+class VZipStreamReader : public VStreamPakFile {
 private:
   enum { BUFFER_SIZE = 16384 };
 
@@ -225,8 +269,8 @@ private:
   int readSomeBytes (void *buf, int len);
 
 public:
-  // doesn't own stream
-  VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false);
+  // doesn't own passed stream
+  VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false, FSysDriverBase *aDriver=nullptr);
   virtual ~VZipStreamReader () override;
 
   void setCrc (vuint32 acrc); // turns on CRC checking
@@ -255,7 +299,7 @@ private:
   void setError ();
 
 public:
-  VZipStreamWriter (VStream *);
+  VZipStreamWriter (VStream *); // doesn't own passed stream
   virtual ~VZipStreamWriter () override;
   void setRequireCrc ();
   vuint32 getCrc32 () const; // crc32 over uncompressed data (if enabled)

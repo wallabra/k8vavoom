@@ -95,58 +95,6 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-/*
-class VFileReader : public VStream {
-private:
-  FILE* mFile;
-
-public:
-  VFileReader (FILE* InFile) : mFile(InFile) { bLoading = true; }
-
-  virtual ~VFileReader () { Close(); }
-
-  // stream interface
-  virtual void Serialise (void* V, int Length) override {
-    if (bError) return;
-    if (!mFile || fread(V, Length, 1, mFile) != 1) bError = true;
-  }
-
-  virtual void Seek (int InPos) override {
-    if (bError) return;
-    if (!mFile || fseek(mFile, InPos, SEEK_SET)) bError = true;
-  }
-
-  virtual int Tell() override {
-    return (mFile ? ftell(mFile) : 0);
-  }
-
-  virtual int TotalSize () override {
-    if (bError || !mFile) return 0;
-    auto curpos = ftell(mFile);
-    if (fseek(mFile, 0, SEEK_END)) { bError = true; return 0; }
-    auto size = ftell(mFile);
-    if (fseek(mFile, curpos, SEEK_SET)) { bError = true; return 0; }
-    return (int)size;
-  }
-
-  virtual bool AtEnd () override {
-    if (bError || !mFile) return true;
-    return !!feof(mFile);
-  }
-
-  virtual void Flush () override {
-    if (!mFile && fflush(mFile)) bError = true;
-  }
-
-  virtual bool Close() override {
-    if (mFile) { fclose(mFile); mFile = nullptr; }
-    return !bError;
-  }
-};
-*/
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 static VStr SourceFileName;
 static TArray<VStr> scriptArgs;
 
@@ -526,4 +474,70 @@ int main (int argc, char **argv) {
   }
 
   return ret.i;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// append archive to the list of archives
+// it will be searched in the current dir, and then in `fsysBaseDir`
+// returns pack id or 0
+//native static final int fsysAppendPak (string fname);
+IMPLEMENT_FUNCTION(VObject, fsysAppendPak) {
+  P_GET_STR(fname);
+  RET_INT(fsysAppendPak(fname));
+}
+
+// remove given pack from pack list
+//native static final void fsysRemovePak (int pakid);
+IMPLEMENT_FUNCTION(VObject, fsysRemovePak) {
+  P_GET_INT(pakid);
+  fsysRemovePak(pakid);
+}
+
+// remove all packs from pakid and later
+//native static final void fsysRemovePaksFrom (int pakid);
+IMPLEMENT_FUNCTION(VObject, fsysRemovePaksFrom) {
+  P_GET_INT(pakid);
+  fsysRemovePaksFrom(pakid);
+}
+
+// 0: no such pack
+//native static final int fsysFindPakByPrefix (string pfx);
+IMPLEMENT_FUNCTION(VObject, fsysFindPakByPrefix) {
+  P_GET_STR(pfx);
+  RET_BOOL(fsysFindPakByPrefix(pfx));
+}
+
+//native static final bool fsysFileExists (string fname);
+IMPLEMENT_FUNCTION(VObject, fsysFileExists) {
+  P_GET_STR(fname);
+  RET_BOOL(fsysFileExists(fname));
+}
+
+// find file with any extension
+//native static final string fsysFileFindAnyExt (string fname);
+IMPLEMENT_FUNCTION(VObject, fsysFileFindAnyExt) {
+  P_GET_STR(fname);
+  RET_STR(fsysFileFindAnyExt(fname));
+}
+
+
+// return pack file path for the given pack id (or empty string)
+//native static final string fsysGetPakPath (int pakid);
+IMPLEMENT_FUNCTION(VObject, fsysGetPakPath) {
+  P_GET_INT(pakid);
+  RET_STR(fsysGetPakPath(pakid));
+}
+
+// return pack prefix for the given pack id (or empty string)
+//native static final string fsysGetPakPrefix (int pakid);
+IMPLEMENT_FUNCTION(VObject, fsysGetPakPrefix) {
+  P_GET_INT(pakid);
+  RET_STR(fsysGetPakPrefix(pakid));
+}
+
+
+//native static final int fsysGetLastPakId ();
+IMPLEMENT_FUNCTION(VObject, fsysGetLastPakId) {
+  RET_INT(fsysGetLastPakId());
 }

@@ -714,7 +714,12 @@ bool VDFMap::loadFrom (VStream &strm) {
 bool VDFMap::load (const VStr &fname) {
   VStream *st = fsysOpenFile(fname);
   if (!st) {
-    st = fsysOpenFile(fname+".map");
+    VStr ext = fname.extractFileExtension();
+    if (ext.equ1251CI(".map")) {
+      st = fsysOpenFile(fname.stripExtension());
+    } else {
+      st = fsysOpenFile(fname+".map");
+    }
     if (!st) return false;
   }
   auto res = loadFrom(*st);

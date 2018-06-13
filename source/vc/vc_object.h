@@ -420,6 +420,16 @@ public:
   DECLARE_FUNCTION(GetTimerInterval)
   DECLARE_FUNCTION(SetTimerInterval)
   DECLARE_FUNCTION(GetTickCount)
+
+  DECLARE_FUNCTION(fsysAppendPak)
+  DECLARE_FUNCTION(fsysRemovePak)
+  DECLARE_FUNCTION(fsysRemovePaksFrom)
+  DECLARE_FUNCTION(fsysFindPakByPrefix)
+  DECLARE_FUNCTION(fsysFileExists)
+  DECLARE_FUNCTION(fsysFileFindAnyExt)
+  DECLARE_FUNCTION(fsysGetPakPath)
+  DECLARE_FUNCTION(fsysGetPakPrefix)
+  DECLARE_FUNCTION(fsysGetLastPakId)
 #endif
 };
 
