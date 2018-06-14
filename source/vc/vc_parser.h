@@ -63,10 +63,10 @@ private:
   void ParseDelegate (VExpression *RetType, VField *Delegate);
   VExpression *ParseLambda ();
   void ParseDefaultProperties (VClass *InClass, bool doparse, int defcount, VStatement **stats);
-  void ParseStruct (VClass *, bool);
+  void ParseStruct (VClass *InClass, bool IsVector);
   VName ParseStateString ();
-  void ParseStates (VClass *);
-  void ParseReplication (VClass *);
+  void ParseStates (VClass *InClass);
+  void ParseReplication (VClass *InClass);
   void ParseClass ();
 
 public:
