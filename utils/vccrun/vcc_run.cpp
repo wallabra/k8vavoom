@@ -276,7 +276,12 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
           } else if (VStr::Cmp(text, "file") == 0) {
             ++i;
             if (i >= ArgCount) DisplayUsage();
-            paklist.Append(VStr(ArgVector[i]));
+            paklist.append(VStr(":")+VStr(ArgVector[i]));
+            //fprintf(stderr, "<%s>\n", ArgVector[i]);
+          } else if (VStr::Cmp(text, "pakdir") == 0) {
+            ++i;
+            if (i >= ArgCount) DisplayUsage();
+            paklist.append(VStr("/")+VStr(ArgVector[i]));
             //fprintf(stderr, "<%s>\n", ArgVector[i]);
           } else {
             //fprintf(stderr, "*<%s>\n", text);
@@ -306,10 +311,22 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
 
   fsysInit();
   for (int f = 0; f < paklist.length(); ++f) {
-    if (fsysAppendPak(paklist[f])) {
-      dprintf("added pak file '%s'...\n", *paklist[f]);
-    } else {
-      fprintf(stderr, "CAN'T add pak file '%s'!\n", *paklist[f]);
+    VStr pname = paklist[f];
+    if (pname.length() < 2) continue;
+    char type = pname[0];
+    pname = pname.chopLeft(1);
+    if (type == ':') {
+      if (fsysAppendPak(pname)) {
+        dprintf("added pak file '%s'...\n", *pname);
+      } else {
+        fprintf(stderr, "CAN'T add pak file '%s'!\n", *pname);
+      }
+    } else if (type == '/') {
+      if (fsysAppendDir(pname)) {
+        dprintf("added pak directory '%s'...\n", *pname);
+      } else {
+        fprintf(stderr, "CAN'T add pak directory '%s'!\n", *pname);
+      }
     }
   }
 

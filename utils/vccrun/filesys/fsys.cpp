@@ -51,6 +51,53 @@ bool fsysDiskFirst = true; // default is true
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static VStr normalizeFilePath (VStr path) {
+  //fprintf(stderr, "0: <%s>\n", *path);
+  int spos = 0;
+  int slen = (int)path.length();
+  // first, replace all slashes
+  path = path.fixSlashes();
+  bool hasLastSlash = path.endsWith("/");
+  // first, remove things like ":/" (DF can have those)
+  // also, remove root prefix
+  while (spos < slen && (path[spos] == ':' || path[spos] == '/')) ++spos;
+  // simply rebuild it
+  VStr res;
+  while (spos < slen) {
+    if (path[spos] == '/') { ++spos; continue; }
+    int epos = spos+1;
+    while (epos < slen && path[epos] != '/') ++epos;
+    // "."?
+    if (epos-spos == 1 && path[spos] == '.') {
+      // ignore it
+      spos = epos;
+      continue;
+    }
+    // ".."?
+    if (epos-spos == 2 && path[spos] == '.' && path[spos+1] == '.') {
+      // go up one dir (if there is any)
+      auto dpos = res.lastIndexOf('/');
+      if (dpos < 0) {
+        res.clear();
+      } else {
+        res = res.left(dpos); // we don't need any slash
+      }
+      spos = epos;
+      continue;
+    }
+    // normal name, just append it
+    if (!res.isEmpty()) res += "/";
+    res += path.mid(spos, epos-spos);
+    spos = epos;
+  }
+  // append last slash, if there is any
+  if (hasLastSlash && !res.isEmpty()) res += "/";
+  //fprintf(stderr, "1: <%s>\n", *res);
+  return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 enum { MaxOpenPaks = 65536 };
 
 static FSysDriverBase *openPaks[MaxOpenPaks]; // 0 is always basedir
@@ -293,6 +340,8 @@ public:
 
 
 bool FSysDriverDisk::isGoodPath (const VStr &path) {
+  return !path.isEmpty();
+/*
   if (path.length() == 0) return false;
   if (path == "/") return false;
   if (path == "." || path == "..") return false;
@@ -311,6 +360,7 @@ bool FSysDriverDisk::isGoodPath (const VStr &path) {
   if (path.indexOf("/..\\") >= 0) return false;
 #endif
   return true;
+*/
 }
 
 
@@ -635,8 +685,9 @@ int fsysFindPakByPrefix (const VStr &pfx) {
 // ////////////////////////////////////////////////////////////////////////// //
 bool fsysFileExists (const VStr &fname, int pakid) {
   if (openPakCount == 0) fsysInit();
+  VStr goodname = normalizeFilePath(fname);
   VStr pfx, fn;
-  splitFileName(fname, pfx, fn);
+  splitFileName(goodname, pfx, fn);
   // try basedir first, if the corresponding flag is set
 #ifdef WIN32
   if ((pakid == fsysAnyPak || pakid == 1) && fsysDiskFirst && pfx.length() < 2)
@@ -644,7 +695,7 @@ bool fsysFileExists (const VStr &fname, int pakid) {
   if ((pakid == fsysAnyPak || pakid == 1) && fsysDiskFirst && pfx.length() == 0)
 #endif
   {
-    if (openPaks[0]->active() && openPaks[0]->hasFile(fname)) return true;
+    if (openPaks[0]->active() && openPaks[0]->hasFile(goodname)) return true;
   }
   // do other paks
   for (int f = openPakCount-1; f > 0; --f) {
@@ -657,7 +708,7 @@ bool fsysFileExists (const VStr &fname, int pakid) {
         if (openPaks[f]->hasFile(fn)) return true;
       }
     } else {
-      if (openPaks[f]->hasFile(fname)) return true;
+      if (openPaks[f]->hasFile(goodname)) return true;
     }
   }
   // try basedir last, if the corresponding flag is set
@@ -667,7 +718,7 @@ bool fsysFileExists (const VStr &fname, int pakid) {
   if ((pakid == fsysAnyPak || pakid == 1) && !fsysDiskFirst && pfx.length() == 0)
 #endif
   {
-    if (openPaks[0]->active() && openPaks[0]->hasFile(fname)) return true;
+    if (openPaks[0]->active() && openPaks[0]->hasFile(goodname)) return true;
   }
   return false;
 }
@@ -676,8 +727,9 @@ bool fsysFileExists (const VStr &fname, int pakid) {
 // open file for reading, relative to basedir, and look into archives too
 VStream *fsysOpenFile (const VStr &fname, int pakid) {
   if (openPakCount == 0) fsysInit();
+  VStr goodname = normalizeFilePath(fname);
   VStr pfx, fn;
-  splitFileName(fname, pfx, fn);
+  splitFileName(goodname, pfx, fn);
   // try basedir first, if the corresponding flag is set
 #ifdef WIN32
   if ((pakid == fsysAnyPak || pakid == 1) && fsysDiskFirst && pfx.length() < 2 && openPaks[0]->active())
@@ -685,7 +737,7 @@ VStream *fsysOpenFile (const VStr &fname, int pakid) {
   if ((pakid == fsysAnyPak || pakid == 1) && fsysDiskFirst && pfx.length() == 0 && openPaks[0]->active())
 #endif
   {
-    auto res = openPaks[0]->open(fname);
+    auto res = openPaks[0]->open(goodname);
     if (res) return res;
   }
   // do other paks
@@ -704,7 +756,7 @@ VStream *fsysOpenFile (const VStr &fname, int pakid) {
         }
       }
     } else {
-      auto res = openPaks[f]->open(fname);
+      auto res = openPaks[f]->open(goodname);
       if (res) return res;
     }
   }
@@ -715,7 +767,7 @@ VStream *fsysOpenFile (const VStr &fname, int pakid) {
   if ((pakid == fsysAnyPak || pakid == 1) && !fsysDiskFirst && pfx.length() == 0 && openPaks[0]->active())
 #endif
   {
-    auto res = openPaks[0]->open(fname);
+    auto res = openPaks[0]->open(goodname);
     if (res) return res;
   }
   return nullptr;
@@ -751,8 +803,9 @@ VStream *fsysOpenDiskFile (const VStr &fname) {
 static VStr fsysFileFindAnyExtInternal (const VStr &fname, int pakid) {
   if (openPakCount == 0) fsysInit();
   if (fsysFileExists(fname, pakid)) return fname;
+  VStr goodname = normalizeFilePath(fname);
   VStr pfx, fn;
-  splitFileName(fname, pfx, fn);
+  splitFileName(goodname, pfx, fn);
   //fprintf(stderr, "fsysFileFindAnyExtInternal: <%s>; fn=<%s>; pfx=<%s>\n", *fname, *fn, *pfx);
   // try basedir first, if the corresponding flag is set
   if ((pakid == fsysAnyPak || pakid == 1) && fsysDiskFirst && openPaks[0]->active() &&
@@ -762,7 +815,7 @@ static VStr fsysFileFindAnyExtInternal (const VStr &fname, int pakid) {
     pfx.length() == 0
 #endif
   ) {
-    auto res = openPaks[0]->findFileWithAnyExt(fname);
+    auto res = openPaks[0]->findFileWithAnyExt(goodname);
     if (res.length()) return res;
   }
   // do other paks
@@ -777,7 +830,7 @@ static VStr fsysFileFindAnyExtInternal (const VStr &fname, int pakid) {
         if (res.length()) return (pfx.length() ? pfx+":"+res : res);
       }
     } else {
-      auto res = openPaks[f]->findFileWithAnyExt(fname);
+      auto res = openPaks[f]->findFileWithAnyExt(goodname);
       if (res.length()) return res;
     }
   }
@@ -789,7 +842,7 @@ static VStr fsysFileFindAnyExtInternal (const VStr &fname, int pakid) {
     pfx.length() == 0
 #endif
   ) {
-    auto res = openPaks[0]->findFileWithAnyExt(fname);
+    auto res = openPaks[0]->findFileWithAnyExt(goodname);
     if (res.length()) return res;
   }
   return VStr();
