@@ -62,7 +62,7 @@ private:
   void ParseMethodDef (VExpression *, VName, const TLocation &, VClass *, vint32, bool);
   void ParseDelegate (VExpression *RetType, VField *Delegate);
   VExpression *ParseLambda ();
-  void ParseDefaultProperties (VClass *, bool doparse);
+  void ParseDefaultProperties (VClass *InClass, bool doparse, int defcount, VStatement **stats);
   void ParseStruct (VClass *, bool);
   VName ParseStateString ();
   void ParseStates (VClass *);

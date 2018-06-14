@@ -1374,7 +1374,7 @@ VExpression *VParser::ParseLambda () {
 // VParser::ParseDefaultProperties
 //
 //==========================================================================
-void VParser::ParseDefaultProperties (VClass *InClass, bool doparse) {
+void VParser::ParseDefaultProperties (VClass *InClass, bool doparse, int defcount, VStatement **stats) {
   guard(VParser::ParseDefaultProperties);
   VMethod *Func = new VMethod(NAME_None, InClass, Lex.Location);
   Func->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
@@ -1383,9 +1383,17 @@ void VParser::ParseDefaultProperties (VClass *InClass, bool doparse) {
   if (doparse) {
     Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
     Func->Statement = ParseCompoundStatement();
+    if (defcount > 0) {
+      VCompound *cst = new VCompound(Func->Statement->Loc);
+      for (int f = 0; f < defcount; ++f) cst->Statements.Append(stats[f]);
+      // this should be last
+      cst->Statements.Append(Func->Statement);
+      Func->Statement = cst;
+    }
   } else {
     // if we have no 'defaultproperties', create empty compound statement
     Func->Statement = new VCompound(Lex.Location);
+    for (int f = 0; f < defcount; ++f) ((VCompound *)Func->Statement)->Statements.Append(stats[f]);
   }
   unguard;
 }
@@ -1919,6 +1927,11 @@ void VParser::ParseClass () {
     Class->ParentClassLoc = ParentClassLoc;
   }
 
+  // we will collect default field values, and insert 'em in `defaultproperties` block
+  VStatement **defstats = nullptr;
+  int defcount = 0;
+  int defallot = 0;
+
   int ClassAttr = TModifiers::ClassAttr(TModifiers::Check(TModifiers::Parse(Lex), TModifiers::Native|TModifiers::Abstract, Lex.Location));
   Class->ClassFlags = ClassAttr;
   // parse class attributes
@@ -2198,6 +2211,7 @@ void VParser::ParseClass () {
         l = Lex.Location;
       }
 
+      // `type[size] name` declaration
       if (firstField && Lex.Check(TK_LBracket)) {
         firstField = false; // it is safe to reset it here
         TLocation SLoc = Lex.Location;
@@ -2248,6 +2262,7 @@ void VParser::ParseClass () {
         continue;
       }
 
+      // property?
       if (Lex.Check(TK_LBrace)) {
         Modifiers = TModifiers::Check(Modifiers, TModifiers::Native|TModifiers::Final|TModifiers::Private|TModifiers::Protected, FieldLoc);
         VProperty *Prop = new VProperty(FieldName, Class, FieldLoc);
@@ -2322,17 +2337,24 @@ void VParser::ParseClass () {
         break;
       }
 
+      // method?
       if (Lex.Check(TK_LParen)) {
         ParseMethodDef(FieldType, FieldName, FieldLoc, Class, Modifiers, false);
         need_semicolon = false;
         break;
       }
 
+      VExpression *initr = nullptr; // field initializer
+
+      // `type name[size]` declaration
       if (Lex.Check(TK_LBracket)) {
         TLocation SLoc = Lex.Location;
         VExpression *e = ParseExpression();
         Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
         FieldType = new VFixedArrayType(FieldType, e, SLoc);
+      } else if (Lex.Check(TK_Assign)) {
+        // not an array, and has initialiser
+        initr = ParseExpression();
       }
 
       VField *fi = new VField(FieldName, Class, FieldLoc);
@@ -2341,6 +2363,21 @@ void VParser::ParseClass () {
         TModifiers::Native|TModifiers::Private|TModifiers::Protected|
         TModifiers::ReadOnly|TModifiers::Transient, FieldLoc));
       Class->AddField(fi);
+
+      // append initializer
+      if (initr) {
+        // convert to `field = value`
+        initr = new VAssignment(VAssignment::Assign, new VSingleName(FieldName, initr->Loc), initr, initr->Loc);
+        // convert to statement
+        VStatement *st = new VExpressionStatement(initr);
+        // append it to the list
+        if (defallot == defcount) {
+          defallot += 1024;
+          defstats = (VStatement **)realloc(defstats, defallot*sizeof(VStatement *));
+          if (!defstats) Sys_Error("VC: out of memory!");
+        }
+        defstats[defcount++] = st;
+      }
     } while (Lex.Check(TK_Comma));
 
     delete Type;
@@ -2351,7 +2388,8 @@ void VParser::ParseClass () {
     }
   }
 
-  ParseDefaultProperties(Class, !skipDefaultProperties);
+  ParseDefaultProperties(Class, !skipDefaultProperties, defcount, defstats);
+  if (defstats) free(defstats);
 
   currClass = oldcc;
 
