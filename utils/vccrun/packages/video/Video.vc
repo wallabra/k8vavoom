@@ -49,7 +49,7 @@ native final static void setBlendMode (int v);
 
 native final static name getFont ();
 native final static void setFont (name fontname);
-native final static void fontHeight ();
+native final static int fontHeight ();
 native final static int spaceWidth ();
 native final static int charWidth (int ch);
 native final static int textWidth (string text);
