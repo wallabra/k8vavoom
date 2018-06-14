@@ -38,16 +38,19 @@ VState::VState (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , Time(0)
   , Misc1(0)
   , Misc2(0)
-  , NextState(0)
-  , Function(0)
-  , Next(0)
+  , NextState(nullptr)
+  , Function(nullptr)
+  , FuncReturnsName(false)
+  , Next(nullptr)
   , GotoLabel(NAME_None)
   , GotoOffset(0)
   , FunctionName(NAME_None)
+  , frameWidth(-1)
+  , frameHeight(-1)
   , SpriteIndex(0)
   , InClassIndex(-1)
   , NetId(-1)
-  , NetNext(0)
+  , NetNext(nullptr)
 {
 }
 
@@ -122,10 +125,13 @@ void VState::Emit () {
 
   if (Function) {
     Function->Emit();
+    if (FuncReturnsName) {
+      if (Function->ReturnType.Type != TYPE_Name) ParseError(Loc, "State method must return `name`");
+    }
   } else if (FunctionName != NAME_None) {
     Function = ((VClass *)Outer)->FindMethod(FunctionName);
     if (!Function) {
-      ParseError(Loc, "No such method %s", *FunctionName);
+      ParseError(Loc, "No such method `%s`", *FunctionName);
     } else {
       if (Function->ReturnType.Type != TYPE_Void) ParseError(Loc, "State method must not return a value");
       if (Function->NumParams) ParseError(Loc, "State method must not take any arguments");

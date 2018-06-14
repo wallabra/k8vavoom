@@ -1574,6 +1574,11 @@ VName VParser::ParseStateString () {
 //==========================================================================
 void VParser::ParseStates (VClass *InClass) {
   guard(VParser::ParseStates);
+  if (Lex.Token == TK_Identifier && VStr::ICmp(*Lex.Name, "d2df") == 0) {
+    Lex.NextToken();
+    ParseStatesNewStyle(InClass);
+    return;
+  }
   Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
   int StateIdx = 0;
   VState *PrevState = nullptr;
@@ -1775,6 +1780,450 @@ void VParser::ParseStates (VClass *InClass) {
   // make sure all state labels have corresponding states
   if (NewLabelsStart != InClass->StateLabelDefs.Num()) ParseError(Lex.Location, "State label at the end of state block");
   if (PrevState) ParseError(Lex.Location, "State block not ended");
+
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VParser::ParseStatesNewStyle
+//
+//==========================================================================
+void VParser::ParseStatesNewStyle (VClass *inClass) {
+  guard(VParser::ParseStatesNewStyle);
+
+  Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
+
+  int stateIdx = 0;
+  VState *prevState = nullptr;
+  VState *loopStart = nullptr;
+  int newLabelsStart = inClass->StateLabelDefs.Num();
+  bool stateSeen = false;
+  bool optOptionsSeen = false;
+
+  struct TextureInfo {
+    VStr texImage;
+    int frameWidth;
+    int frameHeight;
+  };
+  TMapDtor<VStr, TextureInfo> texlist;
+
+  VStr texDir;
+  float tickTime = 28.0f/1000.0f*2; //DF does it once per two frames
+
+  while (!Lex.Check(TK_RBrace)) {
+    TLocation tmpLoc = Lex.Location;
+
+    if (!stateSeen && Lex.Token == TK_Identifier && VStr::Cmp(*Lex.Name, "texture") == 0) {
+      auto stloc = Lex.Location;
+      Lex.NextToken();
+      VStr txname;
+      // name
+           if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { txname = VStr(*Lex.Name); Lex.NextToken(); }
+      else if (Lex.Token == TK_StringLiteral) { txname = Lex.String; Lex.NextToken(); }
+      else ParseError(Lex.Location, "Texture name expected");
+      txname = txname.toLowerCase();
+      // subblock
+      if (!Lex.Check(TK_LBrace)) {
+        Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
+        continue;
+      }
+      TextureInfo ti;
+      ti.texImage = VStr();
+      ti.frameWidth = -1;
+      ti.frameHeight = -1;
+      while (!Lex.Check(TK_RBrace)) {
+        if (Lex.Token != TK_Identifier) {
+          ParseError(Lex.Location, "Texture option expected");
+          break;
+        }
+        if (VStr::ICmp(*Lex.Name, "image") == 0) {
+          Lex.NextToken();
+               if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { ti.texImage = VStr(*Lex.Name); Lex.NextToken(); }
+          else if (Lex.Token == TK_StringLiteral) { ti.texImage = Lex.String; Lex.NextToken(); }
+          else ParseError(Lex.Location, "String expected");
+          Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        } else if (VStr::ICmp(*Lex.Name, "frame_width") == 0) {
+          Lex.NextToken();
+          if (Lex.Token == TK_IntLiteral) { ti.frameWidth = Lex.Number; Lex.NextToken(); }
+          else ParseError(Lex.Location, "Integer expected");
+          Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        } else if (VStr::ICmp(*Lex.Name, "frame_height") == 0) {
+          Lex.NextToken();
+          if (Lex.Token == TK_IntLiteral) { ti.frameHeight = Lex.Number; Lex.NextToken(); }
+          else ParseError(Lex.Location, "Integer expected");
+          Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        } else {
+          ParseError(Lex.Location, "Uknown texture option '%s'", *Lex.Name);
+          Lex.NextToken();
+        }
+      }
+      if (ti.texImage.isEmpty()) {
+        ParseError(stloc, "No texture image specified");
+      } else if (txname.isEmpty()) {
+        ParseError(stloc, "No texture name specified");
+      } else {
+        ti.texImage = ti.texImage.toLowerCase();
+        texlist.remove(txname);
+        texlist.put(txname, ti);
+      }
+      continue;
+    }
+
+    if (!stateSeen && Lex.Token == TK_Identifier && VStr::Cmp(*Lex.Name, "options") == 0) {
+      if (optOptionsSeen) ParseError(Lex.Location, "Duplicate `options` subblock"); else optOptionsSeen = true;
+      Lex.NextToken();
+      if (!Lex.Check(TK_LBrace)) {
+        Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
+        continue;
+      }
+      while (!Lex.Check(TK_RBrace)) {
+        if (Lex.Token != TK_Identifier) {
+          ParseError(Lex.Location, "Option name expected");
+          break;
+        }
+        if (VStr::ICmp(*Lex.Name, "texture_dir") == 0) {
+          Lex.NextToken();
+               if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { texDir = VStr(*Lex.Name); Lex.NextToken(); }
+          else if (Lex.Token == TK_StringLiteral) { texDir = Lex.String; Lex.NextToken(); }
+          else ParseError(Lex.Location, "String expected");
+          Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        } else if (VStr::ICmp(*Lex.Name, "tick_time") == 0) {
+          Lex.NextToken();
+               if (Lex.Token == TK_IntLiteral) { tickTime = Lex.Number; Lex.NextToken(); }
+          else if (Lex.Token == TK_FloatLiteral) { tickTime = Lex.Float; Lex.NextToken(); }
+          else ParseError(Lex.Location, "Float expected");
+          Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        } else {
+          ParseError(Lex.Location, "Uknown option '%s'", *Lex.Name);
+          Lex.NextToken();
+        }
+      }
+      if (!texDir.isEmpty() && !texDir.endsWith("/")) texDir += "/";
+      continue;
+    }
+
+    stateSeen = true;
+
+    // parse first token
+    VStr tmpName;
+
+    if (Lex.Token != TK_Identifier && Lex.Token != TK_StringLiteral) {
+      ParseError(Lex.Location, "Identifier expected");
+    } else {
+      tmpName = (Lex.Token == TK_Identifier ? VStr(*Lex.Name) : Lex.String);
+      Lex.NextToken();
+
+      if (Lex.Check(TK_Dot)) {
+        if (Lex.Token != TK_Identifier) {
+          ParseError(Lex.Location, "Identifier after dot expected");
+          tmpName.clear();
+        } else {
+          tmpName += ".";
+          tmpName += *Lex.Name;
+          Lex.NextToken();
+        }
+      }
+    }
+
+    // goto command
+    if (VStr::ICmp(*tmpName, "goto") == 0) {
+      VName gotoLabel; // = ParseStateString();
+
+      VStr tmpStateStr;
+      if (Lex.Token != TK_Identifier && Lex.Token != TK_StringLiteral) {
+        ParseError(Lex.Location, "Identifier expected in `goto`");
+        //tmpStateStr NAME_None;
+      } else {
+        tmpStateStr = Lex.String;
+        Lex.NextToken();
+
+        if (Lex.Check(TK_DColon)) {
+          if (Lex.Token != TK_Identifier) {
+            ParseError(Lex.Location, "Identifier after `::` expected in `goto`");
+            tmpStateStr.clear();
+          } else {
+            tmpStateStr += "::";
+            tmpStateStr += *Lex.Name;
+            Lex.NextToken();
+            if (Lex.Token != TK_Identifier) {
+              ParseError(Lex.Location, "Identifier expected in `goto`");
+              tmpStateStr.clear();
+            } else {
+              tmpStateStr += *Lex.Name;
+              Lex.NextToken();
+            }
+          }
+        }
+
+        if (Lex.Check(TK_Dot)) {
+          if (Lex.Token != TK_Identifier) {
+            ParseError(Lex.Location, "Identifier after dot expected in `goto`");
+            tmpStateStr.clear();
+          } else {
+            if (!tmpStateStr.isEmpty()) {
+              tmpStateStr += ".";
+              tmpStateStr += *Lex.Name;
+            }
+            Lex.NextToken();
+          }
+        }
+
+        gotoLabel = VName(*tmpStateStr);
+      }
+      // no offsets allowed
+
+      if (!prevState && newLabelsStart == inClass->StateLabelDefs.Num()) {
+        ParseError(Lex.Location, "`goto` before first state");
+        continue;
+      }
+      if (prevState) {
+        prevState->GotoLabel = gotoLabel;
+        prevState->GotoOffset = 0;
+      }
+      for (int i = newLabelsStart; i < inClass->StateLabelDefs.Num(); ++i) {
+        inClass->StateLabelDefs[i].GotoLabel = gotoLabel;
+        inClass->StateLabelDefs[i].GotoOffset = 0;
+      }
+      newLabelsStart = inClass->StateLabelDefs.Num();
+      prevState = nullptr;
+
+      Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+      while (Lex.Check(TK_Semicolon)) {}
+      continue;
+    }
+
+    // stop command
+    if (VStr::ICmp(*tmpName, "stop") == 0) {
+      if (!prevState && newLabelsStart == inClass->StateLabelDefs.Num()) {
+        ParseError(Lex.Location, "`stop` before first state");
+        continue;
+      }
+      if (prevState) prevState->NextState = nullptr;
+      for (int i = newLabelsStart; i < inClass->StateLabelDefs.Num(); ++i) {
+        inClass->StateLabelDefs[i].State = nullptr;
+      }
+      newLabelsStart = inClass->StateLabelDefs.Num();
+      prevState = nullptr;
+
+      Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+      while (Lex.Check(TK_Semicolon)) {}
+      continue;
+    }
+
+    // wait command
+    if (VStr::ICmp(*tmpName, "wait") == 0) {
+      if (!prevState) {
+        ParseError(Lex.Location, "`wait` before first state");
+        continue;
+      }
+      prevState->NextState = prevState;
+      prevState = nullptr;
+
+      Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+      while (Lex.Check(TK_Semicolon)) {}
+      continue;
+    }
+
+    // loop command
+    if (VStr::ICmp(*tmpName, "loop") == 0) {
+      if (!prevState) {
+        ParseError(Lex.Location, "`loop` before first state");
+        continue;
+      }
+      prevState->NextState = loopStart;
+      prevState = nullptr;
+
+      Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+      while (Lex.Check(TK_Semicolon)) {}
+      continue;
+    }
+
+    //fprintf(stderr, "*** <%s>\n", *tmpName);
+
+    // check for label
+    if (Lex.Check(TK_Colon)) {
+      VStateLabelDef &Lbl = inClass->StateLabelDefs.Alloc();
+      Lbl.Loc = tmpLoc;
+      Lbl.Name = tmpName;
+      continue;
+    }
+
+    // create new state
+    char StateName[64];
+    snprintf(StateName, sizeof(StateName), "S_%d", stateIdx);
+    VState *s = new VState(StateName, inClass, tmpLoc);
+    s->FuncReturnsName = true;
+    inClass->AddState(s);
+
+    // sprite name
+    VStr sprName = tmpName.toLowerCase();
+    if (texlist.has(sprName)) {
+      TextureInfo *ti = texlist.get(sprName);
+      sprName = ti->texImage;
+    }
+    if (!texDir.isEmpty()) sprName = texDir+sprName;
+    s->SpriteName = VName(*sprName);
+
+    // frames
+    int frameArr[512];
+    int frameUsed = 0;
+
+    // [framelist]
+    if (Lex.Check(TK_LBracket)) {
+      bool wasError = false;
+      for (;;) {
+        if (Lex.Token != TK_IntLiteral) {
+          if (!wasError) ParseError(Lex.Location, "Integer expected"); else wasError = true;
+          break;
+        }
+        int frm = Lex.Number;
+        Lex.NextToken();
+        int frmEnd = frm;
+        if (frm >= 32768) {
+          if (!wasError) ParseError(Lex.Location, "Frame number too big"); else wasError = true;
+          frm = 0;
+        }
+        // check for '..'
+        if (Lex.Check(TK_DotDot)) {
+          if (Lex.Token != TK_IntLiteral) {
+            if (!wasError) ParseError(Lex.Location, "Integer expected"); else wasError = true;
+            break;
+          }
+          frmEnd = Lex.Number;
+          Lex.NextToken();
+          if (frmEnd >= 32768) {
+            if (!wasError) ParseError(Lex.Location, "Frame number too big"); else wasError = true;
+            frmEnd = 0;
+          }
+          if (frmEnd < frm) {
+            if (!wasError) ParseError(Lex.Location, "Invalid frame range"); else wasError = true;
+          } else if (frmEnd-frm > 512-frameUsed) {
+            if (!wasError) ParseError(Lex.Location, "Frame range too long"); else wasError = true;
+            frmEnd = -666;
+          }
+        }
+        if (!wasError) {
+          while (frm <= frmEnd) {
+            if (frameUsed >= 512) {
+              ParseError(Lex.Location, "Too many frames");
+              break;
+            }
+            frameArr[frameUsed++] = frm++;
+          }
+        }
+        if (Lex.Token != TK_Comma) break;
+        Lex.NextToken();
+        if (Lex.Token == TK_RBracket) break;
+      }
+      if (Lex.Token != TK_RBracket) {
+        if (!wasError) ParseError(Lex.Location, "`]` expected");
+      } else {
+        Lex.NextToken();
+      }
+      if (wasError) frameUsed = 0; // it doesn't matter
+    }
+
+    if (frameUsed < 1) {
+      frameArr[0] = 0;
+      frameUsed = 1;
+    }
+
+    s->Frame = frameArr[0];
+
+    // tics
+    bool neg = Lex.Check(TK_Minus);
+    if (Lex.Token == TK_IntLiteral) {
+      s->Time = Lex.Number*tickTime;
+      Lex.NextToken();
+    } else if (Lex.Token == TK_FloatLiteral) {
+      s->Time = Lex.Float;
+      Lex.NextToken();
+    } else {
+      ParseError(Lex.Location, "State duration expected");
+    }
+    if (neg) s->Time = -s->Time;
+
+    /*
+    {
+      fprintf(stderr, "state: sprite=<%s>; time=%f; frame", *s->SpriteName, s->Time);
+      if (frameUsed == 1) {
+        fprintf(stderr, "=%d\n", frameArr[0]);
+      } else {
+        fprintf(stderr, "s=[");
+        for (int f = 0; f < frameUsed; ++f) {
+          if (f) fprintf(stderr, ",");
+          fprintf(stderr, "%d", frameArr[f]);
+        }
+        fprintf(stderr, "]\n");
+      }
+    }
+    */
+
+    //Lex.NewLine
+
+    // code
+    if (Lex.Check(TK_LBrace)) {
+      //if (frameUsed != 1) ParseError(Lex.Location, "Only states with single frame can have code block");
+      s->Function = new VMethod(NAME_None, s, s->Loc);
+      s->Function->ReturnTypeExpr = new VTypeExpr(TYPE_Name, Lex.Location);
+      s->Function->ReturnType = VFieldType(TYPE_Name);
+      s->Function->Statement = ParseCompoundStatement();
+    } else if (!Lex.NewLine) {
+      //FIXME -- function call
+      if (Lex.Token != TK_Identifier) {
+        ParseError(Lex.Location, "State method name expected");
+      } else {
+        s->FunctionName = Lex.Name;
+        Lex.NextToken();
+      }
+      Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+    }
+    while (Lex.Check(TK_Semicolon)) {}
+
+    // link to previous state
+    if (prevState) prevState->NextState = s;
+
+    // assign state to the labels
+    for (int i = newLabelsStart; i < inClass->StateLabelDefs.Num(); ++i) {
+      inClass->StateLabelDefs[i].State = s;
+      loopStart = s;
+    }
+    newLabelsStart = inClass->StateLabelDefs.Num();
+    prevState = s;
+    ++stateIdx;
+
+    // create states for frames
+    for (int f = 1; f < frameUsed; ++f) {
+      // create a new state
+      snprintf(StateName, sizeof(StateName), "S_%d", stateIdx);
+      VState *s2 = new VState(StateName, inClass, tmpLoc);
+      inClass->AddState(s2);
+      s2->SpriteName = s->SpriteName;
+      s2->Frame = frameArr[f]; //(s->Frame & VState::FF_FULLBRIGHT)|(FSChar-'A');
+      s2->Time = s->Time;
+      s2->Misc1 = s->Misc1;
+      s2->Misc2 = s->Misc2;
+      s2->FunctionName = s->FunctionName;
+      s2->FuncReturnsName = s->FuncReturnsName;
+      if (s->Function) {
+        s2->Function = new VMethod(NAME_None, s2, s->Loc);
+        s2->Function->ReturnTypeExpr = s->Function->ReturnTypeExpr->SyntaxCopy();
+        s2->Function->ReturnType = VFieldType(TYPE_Name);
+        s2->Function->Statement = s->Function->Statement->SyntaxCopy();
+      }
+
+      // link to previous state
+      prevState->NextState = s2;
+      prevState = s2;
+      ++stateIdx;
+    }
+  }
+
+  // make sure all state labels have corresponding states
+  if (newLabelsStart != inClass->StateLabelDefs.Num()) ParseError(Lex.Location, "State label at the end of state block");
+  if (prevState) ParseError(Lex.Location, "State block not ended");
 
   unguard;
 }

@@ -40,6 +40,7 @@ public:
   vint32 Misc2;
   VState *NextState;
   VMethod *Function;
+  bool FuncReturnsName; // new-style states returns `name`
   // linked list of states
   VState *Next;
 
@@ -47,6 +48,9 @@ public:
   VName GotoLabel;
   vint32 GotoOffset;
   VName FunctionName;
+  // <0: use texture size
+  int frameWidth;
+  int frameHeight;
 
   // run-time fields
   vint32 SpriteIndex;
@@ -54,7 +58,7 @@ public:
   vint32 NetId;
   VState *NetNext;
 
-  VState (VName, VMemberBase *, TLocation);
+  VState (VName AName, VMemberBase *AOuter, TLocation ALoc);
   virtual ~VState () override;
 
   virtual void Serialise (VStream &) override;
@@ -62,9 +66,9 @@ public:
 
   bool Define ();
   void Emit ();
-  bool IsInRange (VState *, VState *, int);
-  bool IsInSequence (VState *);
-  VState *GetPlus (int, bool);
+  bool IsInRange (VState *Start, VState *End, int MaxDepth);
+  bool IsInSequence (VState *Start);
+  VState *GetPlus (int Offset, bool IgnoreJump);
 
   friend inline VStream &operator << (VStream &Strm, VState *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };
