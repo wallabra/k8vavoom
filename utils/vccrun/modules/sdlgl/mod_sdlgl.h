@@ -267,6 +267,9 @@ public:
 
   void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const;
   void blitAt (int dx0, int dy0, float scale=1) const;
+
+  // this uses integer texture coords
+  void blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const;
 };
 
 
@@ -291,6 +294,7 @@ public:
   DECLARE_FUNCTION(isOpaque)
   DECLARE_FUNCTION(isOneBitAlpha)
   DECLARE_FUNCTION(blitExt)
+  DECLARE_FUNCTION(blitExtRep)
   DECLARE_FUNCTION(blitAt)
 };
 

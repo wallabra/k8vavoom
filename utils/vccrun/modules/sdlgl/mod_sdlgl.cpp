@@ -522,6 +522,8 @@ void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0
   if (y1 < 0) y1 = img->height;
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, tid);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   if (VVideo::getBlendMode() == VVideo::BlendNormal) {
     if (mOpaque && VVideo::isFullyOpaque()) {
       glDisable(GL_BLEND);
@@ -545,12 +547,41 @@ void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0
 }
 
 
+void VOpenGLTexture::blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const {
+  if (!tid || VVideo::isFullyTransparent() || mTransparent) return;
+  if (x1 < 0) x1 = img->width;
+  if (y1 < 0) y1 = img->height;
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, tid);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  if (VVideo::getBlendMode() == VVideo::BlendNormal) {
+    if (mOpaque && VVideo::isFullyOpaque()) {
+      glDisable(GL_BLEND);
+    } else {
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+  } else {
+    VVideo::setupBlending();
+  }
+  glBegin(GL_QUADS);
+    glTexCoord2i(x0, y0); glVertex2f(dx0, dy0);
+    glTexCoord2i(x1, y0); glVertex2f(dx1, dy0);
+    glTexCoord2i(x1, y1); glVertex2f(dx1, dy1);
+    glTexCoord2i(x0, y1); glVertex2f(dx0, dy1);
+  glEnd();
+}
+
+
 void VOpenGLTexture::blitAt (int dx0, int dy0, float scale) const {
   if (!tid || VVideo::isFullyTransparent() || scale <= 0 || mTransparent) return;
   int w = img->width;
   int h = img->height;
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, tid);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   if (VVideo::getBlendMode() == VVideo::BlendNormal) {
     if (mOpaque && VVideo::isFullyOpaque()) {
       glDisable(GL_BLEND);
@@ -591,6 +622,7 @@ IMPLEMENT_FUNCTION(VGLTexture, Destroy) {
 }
 
 
+//native final static GLTexture Load (string fname);
 IMPLEMENT_FUNCTION(VGLTexture, Load) {
   P_GET_STR(fname);
   VOpenGLTexture *tex = VOpenGLTexture::Load(fname);
@@ -647,6 +679,25 @@ IMPLEMENT_FUNCTION(VGLTexture, blitExt) {
   if (!specifiedX1) x1 = -1;
   if (!specifiedY1) y1 = -1;
   if (Self && Self->tex) Self->tex->blitExt(dx0, dy0, dx1, dy1, x0, y0, x1, y1);
+}
+
+
+// void blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
+IMPLEMENT_FUNCTION(VGLTexture, blitExtRep) {
+  P_GET_INT(specifiedY1);
+  P_GET_INT(y1);
+  P_GET_INT(specifiedX1);
+  P_GET_INT(x1);
+  P_GET_INT(y0);
+  P_GET_INT(x0);
+  P_GET_INT(dy1);
+  P_GET_INT(dx1);
+  P_GET_INT(dy0);
+  P_GET_INT(dx0);
+  P_GET_SELF;
+  if (!specifiedX1) x1 = -1;
+  if (!specifiedY1) y1 = -1;
+  if (Self && Self->tex) Self->tex->blitExtRep(dx0, dy0, dx1, dy1, x0, y0, x1, y1);
 }
 
 

@@ -17,5 +17,9 @@ native bool isTransparent ();
 native bool isOpaque ();
 native bool isOneBitAlpha ();
 
+// the following two clamps
 native void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
 native void blitAt (int dx0, int dy0, optional float scale);
+
+// this one repeats
+native void blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
