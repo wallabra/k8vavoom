@@ -1,0 +1,106 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    Copyright (C) 2018 Ketmar Dark
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+//
+//  vccrun things
+//
+//==========================================================================
+
+
+//==========================================================================
+//
+//              MISC BUILTINS
+//
+//==========================================================================
+
+// ////////////////////////////////////////////////////////////////////////// //
+// timer API
+
+// returns new timer id
+// if interval is < 1, returns with error and won't create timer
+native static final int CreateTimer (int intervalms, optional bool oneshot);
+// creates timer with the given id, or returns `false` if id is n/a
+native static final bool CreateTimerWithId (int id, int intervalms, optional bool oneshot);
+native static final bool DeleteTimer (int id); // `true`: deleted, `false`: no such timer
+native static final bool IsTimerExists (int id);
+native static final bool IsTimerOneShot (int id); // `false`: no timer, or not oneshot
+native static final int GetTimerInterval (int id); // 0: no such timer
+// returns success flag; won't do anything if interval is < 1
+native static final bool SetTimerInterval (int id, int intervalms);
+
+native static final float GetTickCount ();
+
+
+//==========================================================================
+//
+//              FILESYSTEM BUILTINS
+//
+//==========================================================================
+// append disk directory to the list of archives
+//native static final void fsysAppendDir (string path);
+
+enum fsysAnyPak = -666;
+
+native static final int fsysAppendDir (string path, optional string pfx);
+
+// append archive to the list of archives
+// it will be searched in the current dir, and then in `fsysBaseDir`
+// returns pack id or 0
+native static final int fsysAppendPak (string fname, optional int pakid);
+
+// this will take ownership of `strm` (or kill it on error)
+// returns pack id or 0
+//native static final int fsysAppendPak (VStream *strm, string apfx=VStr());
+
+// remove given pack from pack list
+native static final void fsysRemovePak (int pakid);
+
+// remove all packs from pakid and later
+native static final void fsysRemovePaksFrom (int pakid);
+
+// return pack file path for the given pack id (or empty string)
+native static final string fsysGetPakPath (int pakid);
+
+// return pack prefix for the given pack id (or empty string)
+native static final string fsysGetPakPrefix (int pakid);
+
+// 0: no such pack
+native static final int fsysFindPakByPrefix (string pfx);
+
+native static final bool fsysFileExists (string fname, optional int pakid);
+
+// find file with any extension
+native static final string fsysFileFindAnyExt (string fname, optional int pakid);
+
+native static final int fsysGetLastPakId ();
+
+//void fsysCreatePath (const VStr &path);
+
+// open file for reading, relative to basedir, and look into archives too
+//native static final VStream *fsysOpenFile (string fname);
+
+// open file for reading, relative to basedir, and look into archives too
+//native static final VStream *fsysOpenFileAnyExt (string fname);
+
+// open file for reading, NOT relative to basedir
+//native static final VStream *fsysOpenDiskFileWrite (string fname);
+//native static final VStream *fsysOpenDiskFile (string fname);
