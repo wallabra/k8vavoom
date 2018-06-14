@@ -171,6 +171,8 @@ public:
   DECLARE_FUNCTION(openScreen)
   DECLARE_FUNCTION(closeScreen)
 
+  DECLARE_FUNCTION(setScale)
+
   DECLARE_FUNCTION(loadFont)
 
   DECLARE_FUNCTION(runEventLoop)

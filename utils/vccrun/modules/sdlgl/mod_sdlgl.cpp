@@ -902,15 +902,6 @@ bool VVideo::open (const VStr &winname, int width, int height) {
 
   //SDL_DisableScreenSaver();
 
-  glViewport(0, 0, width, height);
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(0, width, height, 0, -99999, 99999);
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
   glDisable(GL_DEPTH_TEST);
@@ -1288,8 +1279,19 @@ IMPLEMENT_FUNCTION(VVideo, runEventLoop) { VVideo::runEventLoop(); }
 IMPLEMENT_FUNCTION(VVideo, clearScreen) { VVideo::clear(); }
 
 
+//native final static void setScale (float sx, float sy);
+IMPLEMENT_FUNCTION(VVideo, setScale) {
+  P_GET_FLOAT(sy);
+  P_GET_FLOAT(sx);
+  if (mInited) {
+    glLoadIdentity();
+    glScalef(sx, sy, 1);
+  }
+}
+
+
 // aborts if font cannot be loaded
-//native final static loadFont (name fname, string fnameIni, string fnameTexture);
+//native final static void loadFont (name fname, string fnameIni, string fnameTexture);
 IMPLEMENT_FUNCTION(VVideo, loadFont) {
   P_GET_STR(fnameTexture);
   P_GET_STR(fnameIni);
