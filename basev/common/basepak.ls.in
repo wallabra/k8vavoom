@@ -15,6 +15,8 @@ progs/engine/GameObject.vc        @CMAKE_SOURCE_DIR@/progs/common/engine/GameObj
 progs/engine/Level.vc         @CMAKE_SOURCE_DIR@/progs/common/engine/Level.vc
 progs/engine/LevelInfo.vc       @CMAKE_SOURCE_DIR@/progs/common/engine/LevelInfo.vc
 progs/engine/Object.vc          @CMAKE_SOURCE_DIR@/progs/common/engine/Object.vc
+progs/engine/Object_common.vc          @CMAKE_SOURCE_DIR@/progs/common/engine/Object_common.vc
+progs/engine/Object_vavoom.vc          @CMAKE_SOURCE_DIR@/progs/common/engine/Object_vavoom.vc
 progs/engine/PlayerReplicationInfo.vc @CMAKE_SOURCE_DIR@/progs/common/engine/PlayerReplicationInfo.vc
 progs/engine/RootWidget.vc        @CMAKE_SOURCE_DIR@/progs/common/engine/RootWidget.vc
 progs/engine/ScriptsParser.vc     @CMAKE_SOURCE_DIR@/progs/common/engine/ScriptsParser.vc

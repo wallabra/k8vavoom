@@ -1,0 +1,376 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+//
+//  common Object things, shared between VaVoom and vccrun
+//
+//==========================================================================
+
+native readonly private void *CxxVTable;
+native readonly private void *VTable;
+native readonly private int ObjectIndex;
+native readonly private int ObjectFlags;
+native readonly class Class;
+
+native void Destroy ();
+native final bool IsA (name CheckName);
+native final bool IsDestroyed ();
+
+
+//**************************************************************************
+
+const int MININT = 0x80000000;
+const int MAXINT = 0x7fffffff;
+
+
+//==========================================================================
+//
+//  3D math - vectors and planes
+//
+//==========================================================================
+vector TVec {
+  float x;
+  float y;
+  float z;
+};
+
+
+vector TAVec {
+  float pitch;
+  float yaw;
+  float roll;
+};
+
+
+struct TPlane {
+  TVec normal;
+  float dist;
+  int __type;
+  int __signbits;
+  int __reserved1;
+  int __reserved2;
+};
+
+
+//**************************************************************************
+// Keys and buttons
+enum {
+  K_SPACE = 32,
+
+  K_N0 = 48, K_N1, K_N2, K_N3, K_N4, K_N5, K_N6, K_N7, K_N8, K_N9,
+
+  K_a = 97, K_b, K_c, K_d, K_e, K_f,  K_g, K_h, K_i, K_j, K_k, K_l,
+  K_m, K_n, K_o, K_p, K_q, K_r, K_s, K_t, K_u, K_v, K_w, K_x, K_y, K_z,
+
+  K_UPARROW = 0x80, K_LEFTARROW, K_RIGHTARROW, K_DOWNARROW,
+  K_INSERT, K_DELETE,
+  K_HOME, K_END,
+  K_PAGEUP, K_PAGEDOWN,
+
+  K_PAD0, K_PAD1, K_PAD2, K_PAD3,K_PAD4, K_PAD5, K_PAD6, K_PAD7, K_PAD8, K_PAD9,
+
+  K_NUMLOCK,
+  K_PADDIVIDE, K_PADMULTIPLE,
+  K_PADMINUS, K_PADPLUS,
+  K_PADENTER, K_PADDOT,
+
+  K_ESCAPE,
+  K_ENTER,
+  K_TAB,
+  K_BACKSPACE,
+  K_CAPSLOCK,
+
+  K_F1, K_F2, K_F3, K_F4, K_F5, K_F6, K_F7, K_F8, K_F9, K_F10, K_F11, K_F12,
+
+  K_LSHIFT, K_RSHIFT,
+  K_LCTRL, K_RCTRL,
+  K_LALT, K_RALT,
+
+  K_LWIN, K_RWIN,
+  K_MENU,
+
+  K_PRINTSCRN,
+  K_SCROLLLOCK,
+  K_PAUSE,
+
+  K_ABNT_C1,
+  K_YEN,
+  K_KANA,
+  K_CONVERT,
+  K_NOCONVERT,
+  K_AT,
+  K_CIRCUMFLEX,
+  K_COLON2,
+  K_KANJI,
+
+  K_MOUSE1, K_MOUSE2, K_MOUSE3,
+  K_MOUSED1, K_MOUSED2, K_MOUSED3,
+
+  K_MWHEELUP, K_MWHEELDOWN,
+
+  K_JOY1, K_JOY2, K_JOY3, K_JOY4, K_JOY5, K_JOY6, K_JOY7, K_JOY8, K_JOY9,
+  K_JOY10, K_JOY11, K_JOY12, K_JOY13, K_JOY14, K_JOY15, K_JOY16,
+
+  KEY_COUNT,
+
+  SCANCODECOUNT = KEY_COUNT - 0x80
+};
+
+
+// [Input] event types.
+enum {
+  ev_keydown,
+  ev_keyup,
+  ev_mouse, // for vcc_run: data2/data3 are coords, otherwise deltas
+  ev_joystick,
+  // extended events for vcc_run
+  ev_winfocus, // data1: focused
+  ev_timer, // data1: timer id
+  ev_closequery,
+};
+
+
+// Event structure.
+struct event_t {
+  int type;  // event type
+  int data1; // keys / mouse / joystick buttons
+  int data2; // mouse / joystick x move
+  int data3; // mouse / joystick y move
+  // for key
+  alias keycode = data1;
+  // for mouse
+  alias x = data2;
+  alias y = data3;
+  // for focus
+  alias focused = data1;
+  // for timer
+  alias timerid = data1;
+};
+
+
+//==========================================================================
+//
+//              COMMON BUILTINS
+//
+//==========================================================================
+
+// ////////////////////////////////////////////////////////////////////////// //
+// error functions
+
+// shut down client and server, go to title
+native static final void Error (string format, ...);
+// exit programm with error
+native static final void FatalError (string format, ...);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// math functions (angles are in degrees)
+
+// normalises angle in range 0..360
+native static final float AngleMod360 (float angle);
+// normalises angle in range -180..180
+native static final float AngleMod180 (float angle);
+// degrees --> radians
+native static final float deg2rad (float angle);
+// radians -> degrees
+native static final float rad2deg (float angle);
+// absolute value (autoconverted to VM opcode)
+native static final int abs (int val);
+native static final float fabs (float val);
+// minimal value (autoconverted to VM opcode)
+native static final int Min (int v1, int v2);
+native static final int min (int v1, int v2);
+// minimal value (autoconverted to VM opcode)
+native static final float FMin (float v1, float v2);
+native static final float fmin (float v1, float v2);
+// maximal value (autoconverted to VM opcode)
+native static final int Max (int v1, int v2);
+native static final int max (int v1, int v2);
+// maximal value (autoconverted to VM opcode)
+native static final float FMax (float v1, float v2);
+native static final float fmax (float v1, float v2);
+// clamped value (autoconverted to VM opcode)
+native static final int Clamp (int Val, int Min, int Max);
+native static final int clamp (int Val, int Min, int Max);
+// clamped value (autoconverted to VM opcode)
+native static final float FClamp (float Val, float Min, float Max);
+native static final float fclamp (float Val, float Min, float Max);
+// sine
+native static final float sin (float angle);
+// cosine
+native static final float cos (float angle);
+// tangent
+native static final float tan (float angle);
+// arcsine
+native static final float asin (float x);
+// arccosine
+native static final float acos (float x);
+// arctangent
+native static final float atan (float slope);
+// arctangent
+native static final float atan2 (float y, float x);
+// square root
+native static final float sqrt (float x);
+// vector length
+native static final float Length (TVec vec);
+native static final float length (TVec vec);
+// vector length without z component
+native static final float Length2D (TVec vec);
+native static final float length2D (TVec vec);
+// normalises vector
+native static final TVec Normalise (TVec vec);
+// normalises vector
+native static final TVec normalise (TVec vec);
+// dot product
+native static final float DotProduct (TVec v1, TVec v2);
+native static final float dot (TVec v1, TVec v2);
+// cross product (perpendicular vector)
+native static final TVec CrossProduct (TVec v1, TVec v2);
+native static final TVec cross (TVec v1, TVec v2);
+// creates vectors for given angle vector
+native static final void AngleVectors (TAVec *angles, TVec *forward, TVec *right, TVec *up);
+// simplified version of AngleVectors, creates only forward vector
+native static final void AngleVector (TAVec *angles, TVec *forward);
+// create angle vector for a vector
+native static final void VectorAngles (TVec *vec, TAVec *angles);
+// get z of point with given x and y coords (don't try to use it on a vertical plane)
+native static final float GetPlanePointZ (TPlane *plane, TVec point);
+// returns side 0 (front) or 1 (back)
+native static final int PointOnPlaneSide (TVec point, TPlane *plane);
+// rotates a direction vector
+native static final TVec RotateDirectionVector (TVec vec, TAVec rot);
+// rotates vector around Z axis
+native static final void VectorRotateAroundZ (TVec *vec, float angle);
+// rotates vector around another vector
+native static final TVec RotateVectorAroundVector (TVec Vector, TVec Axis, float angle);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// random numbers
+
+// floating random number 0.0 ... 0.999999
+native static final float Random ();
+// integer random number 1 .. 255
+native static final int P_Random ();
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// string functions
+
+// string length (utf8-aware)
+native static final int strlen (string s);
+// compare strings
+native static final int strcmp (string s1, string s2);
+// compare strings ingnoring case
+native static final int stricmp (string s1, string s2);
+// append string to string
+native static final string strcat (string s1, string s2);
+// convert string to lowercase
+native static final string strlwr (string s);
+// convert string to uppercase
+native static final string strupr (string s);
+// gets a substring (utf8-aware)
+native static final string substr (string Str, int Start, int Len);
+// creates one-char non-utf8 string from the given char code&0xff; 0 is allowed
+native static final string strFromChar (int ch);
+// creates one-char utf8 string from the given char code (or empty string if char code is invalid); 0 is allowed
+native static final string strFromCharUtf8 (int ch);
+
+// does varargs print into a temporary buffer
+native static final string va (string format, ...);
+
+// converts string to integer
+native static final int atoi (string str);
+// converts string to float
+native static final float atof (string str);
+
+// checks if string starts with given string
+native static final bool StrStartsWith (string Str, string Check);
+alias strStartsWith = StrStartsWith;
+// checks if string ends with given string
+native static final bool StrEndsWith (string Str, string Check);
+alias strEndsWith = StrEndsWith;
+// replaces substrings with another string
+native static final string StrReplace (string Str, string Search, string Replacement);
+alias strReplace = StrReplace;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+//  Printing to console
+
+// print to console
+native static final void print (string format, ...);
+// print to console only when developer == 1
+native static final void dprint (string format, ...);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// type conversions
+
+// float -> int (use `int(val)` instead)
+native static final int ftoi (float f);
+// int -> float (use `float(val)` instead)
+native static final float itof (int f);
+// converts string to name (use `string(val)` instead)
+native static final name StrToName (string Str);
+// converts name to string (use `name(val)` instead)
+native static final string NameToStr (name Name);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// class methods
+
+native static final class FindClass (name Name);
+native static final class FindClassLowerCase (name Name);
+native static final bool ClassIsChildOf (class SomeClass, class BaseClass);
+native static final name GetClassName (class C);
+native static final class GetClassParent (class C);
+native static final class GetClassReplacement (class C);
+native static final class GetClassReplacee (class C);
+native static final state FindClassState (class C, name StateName);
+native static final int GetClassNumOwnedStates (class C);
+native static final state GetClassFirstState (class C);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// state methods
+
+native static final bool StateIsInRange (state State, state Start, state End, int MaxDepth);
+native static final bool StateIsInSequence (state State, state Start);
+native static final name GetStateSpriteName (state State);
+native static final float GetStateDuration (state State);
+native static final state GetStatePlus (state S, int Offset, optional bool IgnoreJump);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// iterators
+
+native static final iterator AllObjects (class BaseClass, out Object Obj);
+native static final iterator AllClasses (class BaseClass, out class Class);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// misc
+
+native static final Object SpawnObject (class cid);
