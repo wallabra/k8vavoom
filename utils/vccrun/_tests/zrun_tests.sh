@@ -20,7 +20,7 @@ for fn in *.vc; do
   ofname=`basename "$fn" .vc`
   ifname="outfiles/${ofname}.out"
   ofname="_xout/${ofname}.out"
-  sh ../0run.sh -P../packages "$fn" boo foo zoo >"$ofname"
+  sh ../0run.sh -pakdir ../packages -P. "$fn" boo foo zoo >"$ofname"
   res=$?
   if [ $res -ne 0 ]; then
     echo "FAILED (retcode)"

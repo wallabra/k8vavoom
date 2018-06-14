@@ -22,7 +22,7 @@ for fn in *.vc; do
   if [ -f "$ofname" ]; then
     echo "SKIP"
   else
-    sh ../0run.sh -P../packages "$fn" boo foo zoo >"$ofname"
+    sh ../0run.sh -pakdir ../packages -P. "$fn" boo foo zoo >"$ofname"
     res=$?
     if [ $res -ne 0 ]; then
       echo "FAILED"
