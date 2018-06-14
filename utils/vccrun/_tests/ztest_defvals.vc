@@ -1,0 +1,17 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+int x = 42, y = 666;
+int t = 68;
+
+
+void main () {
+  writeln("x=", x);
+  writeln("y=", y);
+  writeln("t=", t);
+}
+
+
+defaultproperties {
+  t = 69;
+}
