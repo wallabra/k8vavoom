@@ -773,20 +773,26 @@ void VPackage::LoadObject (TLocation l) {
   for (int i = 0; i < GPackagePath.Num(); ++i) {
     for (const char **pif = pkgImportFiles; *pif; ++pif) {
       VStr mainVC = GPackagePath[i]+"/"+Name+"/"+(*pif);
-      VStream *Strm = fsysOpenFile(*mainVC);
+      VStream *Strm = fsysOpenFile(mainVC);
       if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
     }
   }
 
-  for (const char **pif = pkgImportFiles; *pif; ++pif) {
-    VStr mainVC = VStr("packages/")+Name+"/"+(*pif);
-    VStream *Strm = fsysOpenFile(*mainVC);
-    if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+  // if no package pathes specified, try "packages/"
+  if (GPackagePath.length() == 0) {
+    for (const char **pif = pkgImportFiles; *pif; ++pif) {
+      VStr mainVC = VStr("packages/")+Name+"/"+(*pif);
+      VStream *Strm = fsysOpenFile(mainVC);
+      if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+    }
   }
 
+  // don't even try to load binary packages
+  /*
   VStr mainVC = va("packages/%s.dat", *Name);
-  VStream *Strm = fsysOpenFile(*mainVC);
+  VStream *Strm = (tnum ? fsysOpenFile(mainVC) : fsysOpenDiskFile(mainVC));
   if (Strm) { dprintf("  '%s'\n", *mainVC); LoadBinaryObject(Strm, mainVC, l); return; }
+  */
 
   ParseError(l, "Can't find package %s", *Name);
   BailOut();
