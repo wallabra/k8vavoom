@@ -2230,16 +2230,20 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
         VExpression *Args[VMethod::MAX_PARAMS+1];
         int NumArgs = 0;
         // function call?
-        if (Lex.Check(TK_LParen)) NumArgs = ParseArgList(Lex.Location, Args);
-        VExpression *e = new VCastOrInvocation(s->FunctionName, stloc, NumArgs, Args);
-        auto cst = new VCompound(stloc);
-        cst->Statements.Append(new VExpressionStatement(e));
-        // create function
-        s->Function = new VMethod(NAME_None, s, s->Loc);
-        s->Function->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
-        s->Function->ReturnType = VFieldType(TYPE_Void);
-        s->Function->Statement = cst;
-        s->FunctionName = NAME_None;
+        if (Lex.Check(TK_LParen)) {
+          NumArgs = ParseArgList(Lex.Location, Args);
+          if (NumArgs > 0) {
+            VExpression *e = new VCastOrInvocation(s->FunctionName, stloc, NumArgs, Args);
+            auto cst = new VCompound(stloc);
+            cst->Statements.Append(new VExpressionStatement(e));
+            // create function
+            s->Function = new VMethod(NAME_None, s, s->Loc);
+            s->Function->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
+            s->Function->ReturnType = VFieldType(TYPE_Void);
+            s->Function->Statement = cst;
+            s->FunctionName = NAME_None;
+          }
+        }
       }
       Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
     }

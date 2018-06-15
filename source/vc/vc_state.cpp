@@ -139,7 +139,7 @@ void VState::Emit () {
       if (Function->NumParams) ParseError(Loc, "State method must not take any arguments");
       if (Function->Flags&FUNC_Static) ParseError(Loc, "State method must not be static");
       if (Function->Flags&FUNC_VarArgs) ParseError(Loc, "State method must not have varargs");
-      if (!(Function->Flags&FUNC_Final)) ParseError(Loc, "State method must be final"); //k8: why?
+      //if (!(Function->Flags&FUNC_Final)) ParseError(Loc, "State method must be final"); //k8: why?
     }
   }
   unguard;
