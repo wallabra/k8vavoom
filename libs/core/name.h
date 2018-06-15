@@ -76,6 +76,10 @@ public:
   // comparisons
   inline bool operator == (const VName &Other) const { return (Index == Other.Index); }
   inline bool operator != (const VName &Other) const { return (Index != Other.Index); }
+  bool operator == (const VStr &s) const;
+  bool operator != (const VStr &s) const;
+  bool operator == (const char *s) const;
+  bool operator != (const char *s) const;
 
   // global functions
   static void StaticInit ();

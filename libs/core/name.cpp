@@ -115,6 +115,13 @@ VName::VName (const char *Name, ENameFindType FindType) {
 }
 
 
+bool VName::operator == (const VStr &s) const { return (Index == 0 ? (s.isEmpty() || s == "none" || s == "None") : (s == Names[Index]->Name)); }
+bool VName::operator != (const VStr &s) const { return !(*this == s); }
+
+bool VName::operator == (const char *s) const { return (Index == 0 ? (!s || !s[0] || VStr::Cmp(s, "none") == 0 || VStr::Cmp(s, "None") == 0) : (VStr::Cmp(s, Names[Index]->Name) == 0)); }
+bool VName::operator != (const char *s) const { return !(*this == s); }
+
+
 void VName::StaticInit () {
   guard(VName::StaticInit);
   // register hardcoded names
