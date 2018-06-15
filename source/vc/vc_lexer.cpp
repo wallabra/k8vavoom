@@ -429,14 +429,10 @@ void VLexer::SkipWhitespaceAndComments () {
         }
         if (currCh == '+' && *src->FilePtr == '/') {
           NextChr();
-          NextChr();
-          if (--level == 0) break;
+          if (--level == 0) { NextChr(); break; }
         } else if (currCh == '/' && *src->FilePtr == '+') {
           NextChr();
-          NextChr();
           ++level;
-        } else {
-          NextChr();
         }
       }
       Done = false;
