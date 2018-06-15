@@ -321,6 +321,10 @@ public:
   DECLARE_FUNCTION(GetStateSpriteFrameOfsX)
   DECLARE_FUNCTION(GetStateSpriteFrameOfsY)
   DECLARE_FUNCTION(GetStateSpriteFrameOffset)
+  DECLARE_FUNCTION(GetStateMisc1)
+  DECLARE_FUNCTION(GetStateMisc2)
+  DECLARE_FUNCTION(SetStateMisc1)
+  DECLARE_FUNCTION(SetStateMisc2)
 #ifndef VCC_STANDALONE_EXECUTOR
   DECLARE_FUNCTION(AreStateSpritesPresent)
 #endif

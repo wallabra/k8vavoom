@@ -372,6 +372,10 @@ native static final void CallStateAction (Object actobj, state State);
 native static final int GetStateSpriteFrameOfsX (state State);
 native static final int GetStateSpriteFrameOfsY (state State);
 native static final void GetStateSpriteFrameOffset (state State, out int dx, out int dy);
+native static final int GetStateMisc1 (state State);
+native static final int GetStateMisc2 (state State);
+native static final void SetStateMisc1 (state State, int v);
+native static final void SetStateMisc2 (state State, int v);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

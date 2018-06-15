@@ -1144,6 +1144,28 @@ IMPLEMENT_FUNCTION(VObject, GetStateSpriteFrameOffset) {
   }
 }
 
+IMPLEMENT_FUNCTION(VObject, GetStateMisc1) {
+  P_GET_PTR(VState, State);
+  RET_INT(State ? State->Misc1 : 0);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetStateMisc2) {
+  P_GET_PTR(VState, State);
+  RET_INT(State ? State->Misc2 : 0);
+}
+
+IMPLEMENT_FUNCTION(VObject, SetStateMisc1) {
+  P_GET_INT(v);
+  P_GET_PTR(VState, State);
+  if (State) State->Misc1 = v;
+}
+
+IMPLEMENT_FUNCTION(VObject, SetStateMisc2) {
+  P_GET_INT(v);
+  P_GET_PTR(VState, State);
+  if (State) State->Misc2 = v;
+}
+
 #ifndef VCC_STANDALONE_EXECUTOR
 IMPLEMENT_FUNCTION(VObject, AreStateSpritesPresent) {
   P_GET_PTR(VState, State);
