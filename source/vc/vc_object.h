@@ -311,12 +311,16 @@ public:
   DECLARE_FUNCTION(GetStateSpriteFrame)
   DECLARE_FUNCTION(GetStateSpriteFrameWidth)
   DECLARE_FUNCTION(GetStateSpriteFrameHeight)
+  DECLARE_FUNCTION(GetStateSpriteFrameSize)
   DECLARE_FUNCTION(GetStateDuration)
   DECLARE_FUNCTION(GetStatePlus)
   DECLARE_FUNCTION(GetNextState)
   DECLARE_FUNCTION(GetNextStateInProg)
   DECLARE_FUNCTION(StateHasAction)
   DECLARE_FUNCTION(CallStateAction)
+  DECLARE_FUNCTION(GetStateSpriteFrameOfsX)
+  DECLARE_FUNCTION(GetStateSpriteFrameOfsY)
+  DECLARE_FUNCTION(GetStateSpriteFrameOffset)
 #ifndef VCC_STANDALONE_EXECUTOR
   DECLARE_FUNCTION(AreStateSpritesPresent)
 #endif

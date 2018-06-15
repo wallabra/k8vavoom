@@ -1072,6 +1072,19 @@ IMPLEMENT_FUNCTION(VObject, GetStateSpriteFrameHeight) {
   RET_INT(State ? State->frameHeight : 0);
 }
 
+IMPLEMENT_FUNCTION(VObject, GetStateSpriteFrameSize) {
+  P_GET_REF(int, h);
+  P_GET_REF(int, w);
+  P_GET_PTR(VState, State);
+  if (State) {
+    *w = State->frameWidth;
+    *h = State->frameHeight;
+  } else {
+    *w = 0;
+    *h = 0;
+  }
+}
+
 IMPLEMENT_FUNCTION(VObject, GetStateDuration) {
   P_GET_PTR(VState, State);
   RET_FLOAT(State ? State->Time : 0.0);
@@ -1106,6 +1119,29 @@ IMPLEMENT_FUNCTION(VObject, GetNextState) {
 IMPLEMENT_FUNCTION(VObject, GetNextStateInProg) {
   P_GET_PTR(VState, State);
   RET_PTR(State ? State->Next : nullptr);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetStateSpriteFrameOfsX) {
+  P_GET_PTR(VState, State);
+  RET_INT(State ? State->frameOfsX : 0);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetStateSpriteFrameOfsY) {
+  P_GET_PTR(VState, State);
+  RET_INT(State ? State->frameOfsY : 0);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetStateSpriteFrameOffset) {
+  P_GET_REF(int, dy);
+  P_GET_REF(int, dx);
+  P_GET_PTR(VState, State);
+  if (State) {
+    *dx = State->frameOfsX;
+    *dy = State->frameOfsY;
+  } else {
+    *dx = 0;
+    *dy = 0;
+  }
 }
 
 #ifndef VCC_STANDALONE_EXECUTOR

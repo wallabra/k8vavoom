@@ -50,6 +50,8 @@ public:
   // <0: use texture size
   vint32 frameWidth;
   vint32 frameHeight;
+  vint32 frameOfsX;
+  vint32 frameOfsY;
 
   // run-time fields
   vint32 SpriteIndex;

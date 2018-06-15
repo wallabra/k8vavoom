@@ -1806,6 +1806,8 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     VStr texImage;
     int frameWidth;
     int frameHeight;
+    int frameOfsX;
+    int frameOfsY;
   };
   TMapDtor<VStr, TextureInfo> texlist;
 
@@ -1833,6 +1835,8 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
       ti.texImage = VStr();
       ti.frameWidth = -1;
       ti.frameHeight = -1;
+      ti.frameOfsX = 0;
+      ti.frameOfsY = 0;
       while (!Lex.Check(TK_RBrace)) {
         if (Lex.Token != TK_Identifier) {
           ParseError(Lex.Location, "Texture option expected");
@@ -1852,6 +1856,20 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
         } else if (VStr::ICmp(*Lex.Name, "frame_height") == 0) {
           Lex.NextToken();
           if (Lex.Token == TK_IntLiteral) { ti.frameHeight = Lex.Number; Lex.NextToken(); }
+          else ParseError(Lex.Location, "Integer expected");
+          Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        } else if (VStr::ICmp(*Lex.Name, "frame_offset_x") == 0) {
+          Lex.NextToken();
+          bool neg = Lex.Check(TK_Minus);
+          if (!neg) Lex.Check(TK_Plus);
+          if (Lex.Token == TK_IntLiteral) { ti.frameOfsX = Lex.Number*(neg ? -1 : 1); Lex.NextToken(); }
+          else ParseError(Lex.Location, "Integer expected");
+          Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        } else if (VStr::ICmp(*Lex.Name, "frame_offset_y") == 0) {
+          Lex.NextToken();
+          bool neg = Lex.Check(TK_Minus);
+          if (!neg) Lex.Check(TK_Plus);
+          if (Lex.Token == TK_IntLiteral) { ti.frameOfsY = Lex.Number*(neg ? -1 : 1); Lex.NextToken(); }
           else ParseError(Lex.Location, "Integer expected");
           Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
         } else {
@@ -2063,6 +2081,8 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
       sprName = ti->texImage;
       s->frameWidth = ti->frameWidth;
       s->frameHeight = ti->frameHeight;
+      s->frameOfsX = ti->frameOfsX;
+      s->frameOfsY = ti->frameOfsY;
     }
     if (!texDir.isEmpty()) sprName = texDir+sprName;
     s->SpriteName = VName(*sprName);
@@ -2146,6 +2166,32 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     }
     if (neg) s->Time = -s->Time;
 
+    // options
+    while (Lex.Token == TK_Identifier) {
+      if (Lex.Name == "_ofs") {
+        Lex.NextToken();
+        if (!Lex.Check(TK_Assign) && !Lex.Check(TK_Colon)) ParseError(Lex.Location, "`:` expected");
+        Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
+        for (int f = 0; f < 2; ++f) {
+          bool neg = Lex.Check(TK_Minus);
+          if (!neg) Lex.Check(TK_Plus);
+          if (Lex.Token == TK_IntLiteral) {
+            if (neg) Lex.Number = -Lex.Number;
+            if (f == 0) s->frameOfsX += Lex.Number; else s->frameOfsY += Lex.Number;
+            Lex.NextToken();
+          } else {
+            ParseError(Lex.Location, "Integer expected");
+          }
+          if (f == 0) {
+            if (!Lex.Check(TK_Comma)) ParseError(Lex.Location, "`,` expected");
+          }
+        }
+        Lex.Expect(TK_RParen, ERR_MISSING_LPAREN);
+        continue;
+      }
+      break;
+    }
+
     /*
     {
       fprintf(stderr, "state: sprite=<%s>; time=%f; frame", *s->SpriteName, s->Time);
@@ -2215,6 +2261,8 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
       }
       s2->frameWidth = s->frameWidth;
       s2->frameHeight = s->frameHeight;
+      s2->frameOfsX = s->frameOfsX;
+      s2->frameOfsY = s->frameOfsY;
       // link to previous state
       prevState->NextState = s2;
       prevState = s2;
