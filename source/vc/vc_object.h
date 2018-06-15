@@ -308,8 +308,12 @@ public:
   DECLARE_FUNCTION(StateIsInRange)
   DECLARE_FUNCTION(StateIsInSequence)
   DECLARE_FUNCTION(GetStateSpriteName)
+  DECLARE_FUNCTION(GetStateSpriteFrame)
+  DECLARE_FUNCTION(GetStateSpriteFrameWidth)
+  DECLARE_FUNCTION(GetStateSpriteFrameHeight)
   DECLARE_FUNCTION(GetStateDuration)
   DECLARE_FUNCTION(GetStatePlus)
+  DECLARE_FUNCTION(GetNextStateInProg)
 #ifndef VCC_STANDALONE_EXECUTOR
   DECLARE_FUNCTION(AreStateSpritesPresent)
 #endif
@@ -317,6 +321,7 @@ public:
   // Iterators
   DECLARE_FUNCTION(AllObjects)
   DECLARE_FUNCTION(AllClasses)
+  DECLARE_FUNCTION(AllClassStates)
 
 #ifndef VCC_STANDALONE_EXECUTOR
   // misc

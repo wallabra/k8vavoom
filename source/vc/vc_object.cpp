@@ -1043,18 +1043,33 @@ IMPLEMENT_FUNCTION(VObject, StateIsInRange) {
   P_GET_PTR(VState, End);
   P_GET_PTR(VState, Start);
   P_GET_PTR(VState, State);
-  RET_BOOL(State->IsInRange(Start, End, MaxDepth));
+  RET_BOOL(State ? State->IsInRange(Start, End, MaxDepth) : false);
 }
 
 IMPLEMENT_FUNCTION(VObject, StateIsInSequence) {
   P_GET_PTR(VState, Start);
   P_GET_PTR(VState, State);
-  RET_BOOL(State->IsInSequence(Start));
+  RET_BOOL(State ? State->IsInSequence(Start) : false);
 }
 
 IMPLEMENT_FUNCTION(VObject, GetStateSpriteName) {
   P_GET_PTR(VState, State);
   RET_NAME(State ? State->SpriteName : NAME_None);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetStateSpriteFrame) {
+  P_GET_PTR(VState, State);
+  RET_INT(State ? State->Frame : 0);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetStateSpriteFrameWidth) {
+  P_GET_PTR(VState, State);
+  RET_INT(State ? State->frameWidth : 0);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetStateSpriteFrameHeight) {
+  P_GET_PTR(VState, State);
+  RET_INT(State ? State->frameHeight : 0);
 }
 
 IMPLEMENT_FUNCTION(VObject, GetStateDuration) {
@@ -1066,7 +1081,12 @@ IMPLEMENT_FUNCTION(VObject, GetStatePlus) {
   P_GET_BOOL_OPT(IgnoreJump, false);
   P_GET_INT(Offset);
   P_GET_PTR(VState, State);
-  RET_PTR(State->GetPlus(Offset, IgnoreJump));
+  RET_PTR(State ? State->GetPlus(Offset, IgnoreJump) : nullptr);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetNextStateInProg) {
+  P_GET_PTR(VState, State);
+  RET_PTR(State ? State->Next : nullptr);
 }
 
 #ifndef VCC_STANDALONE_EXECUTOR
@@ -1140,6 +1160,34 @@ IMPLEMENT_FUNCTION(VObject, AllClasses) {
   P_GET_PTR(VClass*, Class);
   P_GET_PTR(VClass, BaseClass);
   RET_PTR(new VClassesIterator(BaseClass, Class));
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VClassStatesIterator : public VScriptIterator {
+private:
+  VState *curr;
+  VState **out;
+
+public:
+  VClassStatesIterator (VClass *aclass, VState **aout) : curr(nullptr), out(aout) {
+    if (aclass) curr = aclass->States;
+  }
+
+  bool GetNext () {
+    *out = curr;
+    if (curr) {
+      curr = curr->Next;
+      return true;
+    }
+    return false;
+  }
+};
+
+IMPLEMENT_FUNCTION(VObject, AllClassStates) {
+  P_GET_PTR(VState *, aout);
+  P_GET_PTR(VClass, BaseClass);
+  RET_PTR(new VClassStatesIterator(BaseClass, aout));
 }
 
 

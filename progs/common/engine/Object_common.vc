@@ -359,8 +359,12 @@ native static final state GetClassFirstState (class C);
 native static final bool StateIsInRange (state State, state Start, state End, int MaxDepth);
 native static final bool StateIsInSequence (state State, state Start);
 native static final name GetStateSpriteName (state State);
+native static final int GetStateSpriteFrame (state State);
+native static final int GetStateSpriteFrameWidth (state State);
+native static final int GetStateSpriteFrameHeight (state State);
 native static final float GetStateDuration (state State);
 native static final state GetStatePlus (state S, int Offset, optional bool IgnoreJump);
+native static final state GetNextStateInProg (state State);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -368,6 +372,7 @@ native static final state GetStatePlus (state S, int Offset, optional bool Ignor
 
 native static final iterator AllObjects (class BaseClass, out Object Obj);
 native static final iterator AllClasses (class BaseClass, out class Class);
+native static final iterator AllClassStates (class BaseClass, out state State);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
