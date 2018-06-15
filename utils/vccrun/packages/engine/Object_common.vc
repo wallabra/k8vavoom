@@ -373,4 +373,4 @@ native static final iterator AllClasses (class BaseClass, out class Class);
 // ////////////////////////////////////////////////////////////////////////// //
 // misc
 
-native static final Object SpawnObject (class cid);
+native static final spawner Object SpawnObject (class cid);
