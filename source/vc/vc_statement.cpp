@@ -175,8 +175,6 @@ void VIf::DoEmit (VEmitContext &ec) {
 //==========================================================================
 bool VIf::IsEndsWithReturn () {
   if (TrueStatement && FalseStatement) return (TrueStatement->IsEndsWithReturn() && FalseStatement->IsEndsWithReturn());
-  if (TrueStatement) return TrueStatement->IsEndsWithReturn();
-  if (FalseStatement) return FalseStatement->IsEndsWithReturn();
   return false;
 }
 
