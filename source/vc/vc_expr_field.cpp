@@ -684,7 +684,15 @@ void VDelegateVal::DoSyntaxCopyTo (VExpression *e) {
 //  VDelegateVal::DoResolve
 //
 //==========================================================================
-VExpression *VDelegateVal::DoResolve (VEmitContext &) {
+VExpression *VDelegateVal::DoResolve (VEmitContext &ec) {
+  if (!ec.SelfClass) { ParseError(Loc, "delegate should be in class"); delete this; return nullptr; }
+  bool wasError = false;
+  if ((M->Flags&FUNC_Static) != 0) { wasError = true; ParseError(Loc, "delegate should not be static"); }
+  if ((M->Flags&FUNC_VarArgs) != 0) { wasError = true; ParseError(Loc, "delegate should not be vararg"); }
+  if ((M->Flags&FUNC_Iterator) != 0) { wasError = true; ParseError(Loc, "delegate should not be iterator"); }
+  // sadly, `FUNC_RealFinal` is not set yet, so use slower check
+  if (ec.SelfClass->isRealFinalMethod(M->Name)) { wasError = true; ParseError(Loc, "delegate should not be final"); }
+  if (wasError) { delete this; return nullptr; }
   Type = TYPE_Delegate;
   Type.Function = M;
   return this;

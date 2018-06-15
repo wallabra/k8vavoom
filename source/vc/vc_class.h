@@ -297,6 +297,9 @@ public:
   VStateLabel *FindStateLabelChecked (TArray<VName> &, bool);
   VDecorateStateAction *FindDecorateStateAction (VName);
 
+  // WARNING! method with such name should exist, or return value will be invalid
+  bool isRealFinalMethod (VName Name);
+
   bool Define ();
   bool DefineMembers ();
   void Emit ();

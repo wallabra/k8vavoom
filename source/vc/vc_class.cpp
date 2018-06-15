@@ -765,6 +765,22 @@ VDecorateStateAction *VClass::FindDecorateStateAction (VName ActName) {
 
 //==========================================================================
 //
+//  VClass::isRealFinalMethod
+//
+//==========================================================================
+bool VClass::isRealFinalMethod (VName Name) {
+  VMethod *M = FindMethod(Name, false); // don't do recursive search
+  if (!M) return false;
+  if ((M->Flags&FUNC_Final) == 0) return false; // no way
+  if ((M->Flags&FUNC_RealFinal) != 0) return true; // just in case
+  // check if parent class has method with the same name
+  if (!ParentClass) return true; // no parent class (why?) -- real final
+  return (ParentClass->GetMethodIndex(M->Name) == -1);
+}
+
+
+//==========================================================================
+//
 //  VClass::Define
 //
 //==========================================================================
@@ -1178,7 +1194,10 @@ void VClass::CalcFieldOffsets () {
     VMethod *M = (VMethod *)Methods[i];
     int MOfs = -1;
     if (ParentClass) MOfs = ParentClass->GetMethodIndex(M->Name);
-    if (MOfs == -1 && (M->Flags&FUNC_Final) == 0) MOfs = numMethods++;
+    if (MOfs == -1 && (M->Flags&FUNC_Final) == 0) {
+      M->Flags |= FUNC_RealFinal;
+      MOfs = numMethods++;
+    }
     M->VTableIndex = MOfs;
   }
   if (ClassVTable && PrevClassNumMethods != ClassNumMethods) {

@@ -43,6 +43,9 @@ enum {
   FUNC_Private     = 0x2000,
   FUNC_Protected   = 0x4000,
 
+  // "real final" method -- i.e. it has `FUNC_Final` set, and it is not in VMT
+  FUNC_RealFinal   = 0x8000, // set in postload processor
+
   FUNC_NetFlags = FUNC_Net|FUNC_NetReliable,
 };
 
@@ -133,6 +136,9 @@ private:
 //
 //==========================================================================
 class VMethod : public VMemberBase {
+private:
+  bool mPostLoaded;
+
 public:
   enum { MAX_PARAMS = 16 };
 

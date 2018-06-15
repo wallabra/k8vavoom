@@ -809,7 +809,7 @@ void VInvocation::Emit (VEmitContext &ec) {
     if (HaveSelf) ParseError(Loc, "Invalid static function call");
   } else {
     if (!HaveSelf) {
-      if (ec.CurrentFunc->Flags & FUNC_Static) ParseError(Loc, "An object is required to call non-static methods");
+      if (ec.CurrentFunc->Flags&FUNC_Static) ParseError(Loc, "An object is required to call non-static methods");
       ec.AddStatement(OPC_LocalValue0);
     }
   }

@@ -69,6 +69,7 @@ VMethodParam::~VMethodParam () {
 //==========================================================================
 VMethod::VMethod (VName AName, VMemberBase *AOuter, TLocation ALoc)
   : VMemberBase(MEMBER_Method, AName, AOuter, ALoc)
+  , mPostLoaded(false)
   , NumLocals(0)
   , Flags(0)
   , ReturnType(TYPE_Void)
@@ -136,7 +137,7 @@ bool VMethod::Define () {
 
   if (Flags&FUNC_Static) {
     if ((Flags&FUNC_Final) == 0) {
-      ParseError(Loc, "Currently static methods must be final.");
+      ParseError(Loc, "Currently static methods must be final");
       Ret = false;
     }
   }
@@ -146,7 +147,7 @@ bool VMethod::Define () {
     Ret = false;
   }
 
-  if ((Flags&FUNC_Iterator) != 0 && (Flags&FUNC_Native) == 0) {
+  if ((Flags&(FUNC_Iterator|FUNC_Native)) == FUNC_Iterator) {
     ParseError(Loc, "Iterators can only be native");
     Ret = false;
   }
@@ -435,8 +436,8 @@ void VMethod::DumpAsm () {
 //==========================================================================
 void VMethod::PostLoad () {
   guard(VMethod::PostLoad);
-  //FIXME It should be called only once so it's safe for now
-  //if (ObjectFlags&CLASSOF_PostLoaded) return;
+  //k8: it should be called only once, but let's play safe here
+  if (mPostLoaded) return;
 
 #if !defined(IN_VCC)
   // set up builtins
@@ -464,7 +465,7 @@ void VMethod::PostLoad () {
 
   CompileCode();
 
-  //ObjectFlags |= CLASSOF_PostLoaded;
+  mPostLoaded = true;
   unguard;
 }
 
