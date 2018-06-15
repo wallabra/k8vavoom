@@ -30,6 +30,8 @@
 //
 //  VParser::ParseArgList
 //
+//  `(` already eaten
+//
 //==========================================================================
 int VParser::ParseArgList (const TLocation &stloc, VExpression **argv) {
   guard(VParser::ParseArgList);
@@ -2218,12 +2220,26 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
       s->Function->ReturnType = VFieldType(TYPE_Void);
       s->Function->Statement = ParseCompoundStatement();
     } else if (!Lex.NewLine) {
-      //FIXME -- function call
+      auto stloc = Lex.Location;
+      // function call
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "State method name expected");
       } else {
         s->FunctionName = Lex.Name;
         Lex.NextToken();
+        VExpression *Args[VMethod::MAX_PARAMS+1];
+        int NumArgs = 0;
+        // function call?
+        if (Lex.Check(TK_LParen)) NumArgs = ParseArgList(Lex.Location, Args);
+        VExpression *e = new VCastOrInvocation(s->FunctionName, stloc, NumArgs, Args);
+        auto cst = new VCompound(stloc);
+        cst->Statements.Append(new VExpressionStatement(e));
+        // create function
+        s->Function = new VMethod(NAME_None, s, s->Loc);
+        s->Function->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
+        s->Function->ReturnType = VFieldType(TYPE_Void);
+        s->Function->Statement = cst;
+        s->FunctionName = NAME_None;
       }
       Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
     }
