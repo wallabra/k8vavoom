@@ -145,7 +145,7 @@ VExpression *VExpression::ResolveFloat (VEmitContext &ec) {
 //
 //  VExpression::CoerceToFloat
 //
-// Expression MUST be already resolved here.
+//  Expression MUST be already resolved here.
 //
 //==========================================================================
 VExpression *VExpression::CoerceToFloat () {
