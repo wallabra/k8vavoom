@@ -1819,6 +1819,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
   while (!Lex.Check(TK_RBrace)) {
     TLocation tmpLoc = Lex.Location;
 
+    // "texture"
     if (!stateSeen && Lex.Token == TK_Identifier && VStr::Cmp(*Lex.Name, "texture") == 0) {
       auto stloc = Lex.Location;
       Lex.NextToken();
@@ -1891,6 +1892,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
       continue;
     }
 
+    // "options"
     if (!stateSeen && Lex.Token == TK_Identifier && VStr::Cmp(*Lex.Name, "options") == 0) {
       if (optOptionsSeen) ParseError(Lex.Location, "Duplicate `options` subblock"); else optOptionsSeen = true;
       Lex.NextToken();
@@ -1929,13 +1931,18 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     // parse first token
     VStr tmpName;
 
-    if (Lex.Token != TK_Identifier && Lex.Token != TK_StringLiteral) {
-      ParseError(Lex.Location, "Identifier expected");
+    if (Lex.Token != TK_Identifier && Lex.Token != TK_StringLiteral && Lex.Token != TK_NameLiteral) {
+      if (Lex.Token == TK_None) {
+        tmpName = VStr("none");
+        Lex.NextToken();
+      } else {
+        ParseError(Lex.Location, "Identifier expected");
+      }
     } else {
-      tmpName = (Lex.Token == TK_Identifier ? VStr(*Lex.Name) : Lex.String);
+      bool wasString = (Lex.Token == TK_StringLiteral);
+      tmpName = (Lex.Token == TK_StringLiteral ? Lex.String : VStr(*Lex.Name));
       Lex.NextToken();
-
-      if (Lex.Check(TK_Dot)) {
+      if (!wasString && Lex.Check(TK_Dot)) {
         if (Lex.Token != TK_Identifier) {
           ParseError(Lex.Location, "Identifier after dot expected");
           tmpName.clear();
@@ -2077,17 +2084,21 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     inClass->AddState(s);
 
     // sprite name
-    VStr sprName = tmpName.toLowerCase();
-    if (texlist.has(sprName)) {
-      TextureInfo *ti = texlist.get(sprName);
-      sprName = ti->texImage;
-      s->frameWidth = ti->frameWidth;
-      s->frameHeight = ti->frameHeight;
-      s->frameOfsX = ti->frameOfsX;
-      s->frameOfsY = ti->frameOfsY;
+    if (!tmpName.isEmpty() && tmpName.ICmp("none") != 0) {
+      VStr sprName = tmpName.toLowerCase();
+      if (texlist.has(sprName)) {
+        TextureInfo *ti = texlist.get(sprName);
+        sprName = ti->texImage;
+        s->frameWidth = ti->frameWidth;
+        s->frameHeight = ti->frameHeight;
+        s->frameOfsX = ti->frameOfsX;
+        s->frameOfsY = ti->frameOfsY;
+      }
+      if (!texDir.isEmpty()) sprName = texDir+sprName;
+      s->SpriteName = VName(*sprName);
+    } else {
+      s->SpriteName = NAME_None;
     }
-    if (!texDir.isEmpty()) sprName = texDir+sprName;
-    s->SpriteName = VName(*sprName);
 
     // frames
     int frameArr[512];
