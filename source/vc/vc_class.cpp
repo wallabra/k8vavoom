@@ -835,7 +835,7 @@ bool VClass::DefineMembers () {
 
   for (int ri = 0; ri < RepInfos.Num(); ++ri) {
     if (!RepInfos[ri].Cond->Define()) Ret = false;
-    TArray<VRepField>& RepFields = RepInfos[ri].RepFields;
+    TArray<VRepField> &RepFields = RepInfos[ri].RepFields;
     for (int i = 0; i < RepFields.Num(); ++i) {
       VField *RepField = nullptr;
       for (VField *F = Fields; F; F = F->Next) {
@@ -1141,11 +1141,9 @@ void VClass::PostLoad () {
 //==========================================================================
 void VClass::DecoratePostLoad () {
   guard(VClass::DecoratePostLoad);
-  // compile.
+  // compile
   for (int i = 0; i < Methods.Num(); ++i) Methods[i]->PostLoad();
-
   for (VState *S = States; S; S = S->Next) S->PostLoad();
-
   NetStates = States;
 
   // set state in-class indexes
@@ -1170,12 +1168,12 @@ void VClass::CalcFieldOffsets () {
   guard(VClass::CalcFieldOffsets);
   // skip this for C++ only classes
   if (!Outer && (ObjectFlags&CLASSOF_Native) != 0) {
-    ClassNumMethods = ParentClass ? ParentClass->ClassNumMethods : 0;
+    ClassNumMethods = (ParentClass ? ParentClass->ClassNumMethods : 0);
     return;
   }
 
   int PrevClassNumMethods = ClassNumMethods;
-  int numMethods = ParentClass ? ParentClass->ClassNumMethods : 0;
+  int numMethods = (ParentClass ? ParentClass->ClassNumMethods : 0);
   for (int i = 0; i < Methods.Num(); ++i) {
     VMethod *M = (VMethod *)Methods[i];
     int MOfs = -1;
@@ -1207,7 +1205,7 @@ void VClass::CalcFieldOffsets () {
         PrevField->Type.Type == TYPE_Bool &&
         PrevField->Type.BitMask != 0x80000000)
     {
-      vuint32 bit_mask = PrevField->Type.BitMask << 1;
+      vuint32 bit_mask = PrevField->Type.BitMask<<1;
       if (fi->Type.BitMask != bit_mask) Sys_Error("Wrong bit mask");
       fi->Type.BitMask = bit_mask;
       fi->Ofs = PrevField->Ofs;
@@ -1228,7 +1226,7 @@ void VClass::CalcFieldOffsets () {
   ClassSize = size;
   ClassNumMethods = numMethods;
   if ((ObjectFlags&CLASSOF_Native) != 0 && ClassSize != PrevSize) {
-    Sys_Error("Bad class size, class %s, C++ %d, VavoomC %d)", GetName(), PrevSize, ClassSize);
+    Sys_Error("Bad class size for class `%s`: C++: %d, VavoomC: %d", GetName(), PrevSize, ClassSize);
   }
   unguard;
 }
