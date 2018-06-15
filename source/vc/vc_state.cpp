@@ -40,7 +40,6 @@ VState::VState (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , Misc2(0)
   , NextState(nullptr)
   , Function(nullptr)
-  , FuncReturnsName(false)
   , Next(nullptr)
   , GotoLabel(NAME_None)
   , GotoOffset(0)
@@ -77,6 +76,8 @@ void VState::Serialise (VStream &Strm) {
     << Time
     << STRM_INDEX(Misc1)
     << STRM_INDEX(Misc2)
+    << STRM_INDEX(frameWidth)
+    << STRM_INDEX(frameHeight)
     << NextState
     << Function
     << Next;
@@ -125,9 +126,6 @@ void VState::Emit () {
 
   if (Function) {
     Function->Emit();
-    if (FuncReturnsName) {
-      if (Function->ReturnType.Type != TYPE_Name) ParseError(Loc, "State method must return `name`");
-    }
   } else if (FunctionName != NAME_None) {
     Function = ((VClass *)Outer)->FindMethod(FunctionName);
     if (!Function) {
@@ -137,7 +135,7 @@ void VState::Emit () {
       if (Function->NumParams) ParseError(Loc, "State method must not take any arguments");
       if (Function->Flags&FUNC_Static) ParseError(Loc, "State method must not be static");
       if (Function->Flags&FUNC_VarArgs) ParseError(Loc, "State method must not have varargs");
-      if (!(Function->Flags&FUNC_Final)) ParseError(Loc, "State method must be final");
+      //if (!(Function->Flags&FUNC_Final)) ParseError(Loc, "State method must be final"); //k8: why?
     }
   }
   unguard;

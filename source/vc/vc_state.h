@@ -40,7 +40,6 @@ public:
   vint32 Misc2;
   VState *NextState;
   VMethod *Function;
-  bool FuncReturnsName; // new-style states returns `name`
   // linked list of states
   VState *Next;
 
@@ -49,8 +48,8 @@ public:
   vint32 GotoOffset;
   VName FunctionName;
   // <0: use texture size
-  int frameWidth;
-  int frameHeight;
+  vint32 frameWidth;
+  vint32 frameHeight;
 
   // run-time fields
   vint32 SpriteIndex;

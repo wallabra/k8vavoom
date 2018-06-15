@@ -1084,6 +1084,25 @@ IMPLEMENT_FUNCTION(VObject, GetStatePlus) {
   RET_PTR(State ? State->GetPlus(Offset, IgnoreJump) : nullptr);
 }
 
+IMPLEMENT_FUNCTION(VObject, StateHasAction) {
+  P_GET_PTR(VState, State);
+  RET_BOOL(State ? !!State->Function : false);
+}
+
+IMPLEMENT_FUNCTION(VObject, CallStateAction) {
+  P_GET_PTR(VState, State);
+  P_GET_PTR(VObject, obj);
+  if (State && State->Function) {
+    P_PASS_REF(obj);
+    ExecuteFunction(State->Function);
+  }
+}
+
+IMPLEMENT_FUNCTION(VObject, GetNextState) {
+  P_GET_PTR(VState, State);
+  RET_PTR(State ? State->NextState : nullptr);
+}
+
 IMPLEMENT_FUNCTION(VObject, GetNextStateInProg) {
   P_GET_PTR(VState, State);
   RET_PTR(State ? State->Next : nullptr);

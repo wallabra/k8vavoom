@@ -364,7 +364,10 @@ native static final int GetStateSpriteFrameWidth (state State);
 native static final int GetStateSpriteFrameHeight (state State);
 native static final float GetStateDuration (state State);
 native static final state GetStatePlus (state S, int Offset, optional bool IgnoreJump);
+native static final state GetNextState (state State);
 native static final state GetNextStateInProg (state State);
+native static final bool StateHasAction (state State);
+native static final void CallStateAction (Object actobj, state State);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

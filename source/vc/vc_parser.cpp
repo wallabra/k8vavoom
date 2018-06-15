@@ -1810,7 +1810,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
   TMapDtor<VStr, TextureInfo> texlist;
 
   VStr texDir;
-  float tickTime = 28.0f/1000.0f*2; //DF does it once per two frames
+  float tickTime = 28.0f*2/1000.0f; //DF does it once per two frames
 
   while (!Lex.Check(TK_RBrace)) {
     TLocation tmpLoc = Lex.Location;
@@ -2054,7 +2054,6 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     char StateName[64];
     snprintf(StateName, sizeof(StateName), "S_%d", stateIdx);
     VState *s = new VState(StateName, inClass, tmpLoc);
-    s->FuncReturnsName = true;
     inClass->AddState(s);
 
     // sprite name
@@ -2062,6 +2061,8 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     if (texlist.has(sprName)) {
       TextureInfo *ti = texlist.get(sprName);
       sprName = ti->texImage;
+      s->frameWidth = ti->frameWidth;
+      s->frameHeight = ti->frameHeight;
     }
     if (!texDir.isEmpty()) sprName = texDir+sprName;
     s->SpriteName = VName(*sprName);
@@ -2167,8 +2168,8 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     if (Lex.Check(TK_LBrace)) {
       //if (frameUsed != 1) ParseError(Lex.Location, "Only states with single frame can have code block");
       s->Function = new VMethod(NAME_None, s, s->Loc);
-      s->Function->ReturnTypeExpr = new VTypeExpr(TYPE_Name, Lex.Location);
-      s->Function->ReturnType = VFieldType(TYPE_Name);
+      s->Function->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
+      s->Function->ReturnType = VFieldType(TYPE_Void);
       s->Function->Statement = ParseCompoundStatement();
     } else if (!Lex.NewLine) {
       //FIXME -- function call
@@ -2206,14 +2207,14 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
       s2->Misc1 = s->Misc1;
       s2->Misc2 = s->Misc2;
       s2->FunctionName = s->FunctionName;
-      s2->FuncReturnsName = s->FuncReturnsName;
       if (s->Function) {
         s2->Function = new VMethod(NAME_None, s2, s->Loc);
         s2->Function->ReturnTypeExpr = s->Function->ReturnTypeExpr->SyntaxCopy();
         s2->Function->ReturnType = VFieldType(TYPE_Name);
         s2->Function->Statement = s->Function->Statement->SyntaxCopy();
       }
-
+      s2->frameWidth = s->frameWidth;
+      s2->frameHeight = s->frameHeight;
       // link to previous state
       prevState->NextState = s2;
       prevState = s2;
