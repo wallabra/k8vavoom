@@ -126,7 +126,7 @@ VExpression *VExpression::ResolveFloat (VEmitContext &ec) {
   switch (e->Type.Type) {
     case TYPE_Int:
     case TYPE_Byte:
-    case TYPE_Bool:
+    //case TYPE_Bool:
       e = new VScalarToFloat(e);
       break;
     case TYPE_Float:
