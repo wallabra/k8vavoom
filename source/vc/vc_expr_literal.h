@@ -132,6 +132,24 @@ protected:
 
 //==========================================================================
 //
+//  VSelfClass
+//
+//==========================================================================
+class VSelfClass : public VExpression {
+public:
+  VSelfClass (const TLocation &);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VSelfClass () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
 //  VNoneLiteral
 //
 //==========================================================================

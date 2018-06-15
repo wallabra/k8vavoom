@@ -310,7 +310,7 @@ VExpression *VParser::ParseExpressionPriority0 () {
       }
     case TK_Default:
       {
-        VExpression *Expr = new VDefaultObject(new VSelf(l), l);
+        VExpression *Expr = new VDefaultObject(new VSelfClass(l), l);
         Lex.NextToken();
         Lex.Expect(TK_Dot);
         if (Lex.Token != TK_Identifier) ParseError(Lex.Location, "Invalid identifier, field name expected");

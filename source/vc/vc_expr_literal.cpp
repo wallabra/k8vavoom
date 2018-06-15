@@ -398,6 +398,64 @@ void VSelf::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VSelfClass::VSelfClass
+//
+//==========================================================================
+VSelfClass::VSelfClass (const TLocation &ALoc) : VExpression(ALoc) {
+}
+
+
+//==========================================================================
+//
+//  VSelfClass::SyntaxCopy
+//
+//==========================================================================
+VExpression *VSelfClass::SyntaxCopy () {
+  auto res = new VSelfClass();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VSelfClass::DoSyntaxCopyTo
+//
+//==========================================================================
+void VSelfClass::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+}
+
+
+//==========================================================================
+//
+//  VSelfClass::DoResolve
+//
+//==========================================================================
+VExpression *VSelfClass::DoResolve (VEmitContext &ec) {
+  if (!ec.SelfClass) {
+    ParseError(Loc, "self used outside of member function");
+    delete this;
+    return nullptr;
+  }
+  Type = VFieldType(ec.SelfClass);
+  Type.Type = TYPE_Class;
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VSelfClass::Emit
+//
+//==========================================================================
+void VSelfClass::Emit (VEmitContext &ec) {
+  ec.AddStatement(OPC_PushClassId, ec.SelfClass);
+}
+
+
+//==========================================================================
+//
 //  VNoneLiteral::VNoneLiteral
 //
 //==========================================================================

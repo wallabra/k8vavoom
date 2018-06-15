@@ -264,7 +264,6 @@ bool VMethod::Define () {
     } else if (ReturnType.Class != ParamTypes[0].Class) {
       if (ParamTypes[0].Class || ReturnType.Class->Name != "Object") {
         ParseError(Loc, "Spawner method must return an object of the same type as class");
-        fprintf(stderr, "<%s> <%s>\n", *ReturnType.GetName(), *ParamTypes[0].GetName());
       }
     }
   }
