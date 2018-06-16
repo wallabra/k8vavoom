@@ -1,0 +1,34 @@
+class Test0 : Object;
+
+int n = 42;
+int v = 666;
+
+int fldn {
+  //default n;
+  get n;
+  set(v) { n = v+1000; }
+}
+
+int fldv {
+  set v;
+  get { return v+1000; }
+}
+
+
+class Main : Object;
+
+static final void main () {
+  auto t0 = SpawnObject(Test0);
+
+  writeln(t0.n, " : ", 42);
+  writeln(t0.fldn, " : ", 42);
+  t0.fldn = 69;
+  writeln(t0.n, " : ", 1069);
+  writeln(t0.fldn, " : ", 1069);
+
+  writeln(t0.v, " : ", 666);
+  writeln(t0.fldv, " : ", 1666);
+  t0.fldv = 69;
+  writeln(t0.v, " : ", 69);
+  writeln(t0.fldv, " : ", 1069);
+}
