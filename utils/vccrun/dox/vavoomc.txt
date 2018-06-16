@@ -81,7 +81,7 @@ You can also mark fields as `readonly`. It is not really useful for
 VC code (as you cannot do anything with such fields, not even assign
 default values to them).
 
-Changing field protection is not supported: you''ll just get a new field.
+Changing field protection is not supported: you'll just get a new field.
 
 
 
