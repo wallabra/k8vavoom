@@ -1,0 +1,238 @@
+Brief introduction to VaVoom C for C (and C++) people
+=====================================================
+
+Initially, VC was designed to mimic Unreal Script 1, so many Unreal tutorials
+will apply (sans class hierarchy, of course).
+
+But you are here not to read "fuck off, your tutorial is in another castle",
+aren't you? Ok, ok, I'll describe some things you have to know. Most of the
+time your C background will apply, tho.
+
+
+
+Class declarations
+==================
+
+Classes are started with the usual `class Foo : Boo;` thingy. But we have one
+thing to remember here: class declaration marks all the following code as
+belonging to a newly declared class. I.e. there is no need to use `{}` (and
+you actually can't; class declaration should end with `;`).
+
+Also note that you cannot globally change protection for inherited things, i.e.
+`class Foo : protected Boo;` is not supported.
+
+Just like in Unreal Script, `defaultproperties` part is supported, but it is
+optional. Yet if it is present, it must be the last thing declared, and it must
+be immediately followed by new class declaration (or end of source code -- not
+just source file).
+
+
+
+Default field values
+====================
+
+By default, all fields are initialized to 0/false/none/nullptr. But you can
+use `defaultproperties` part to change default values:
+
+  defaultproperties {
+    myfield = 666;
+  }
+
+Or, you can simply assign default value in field declaration:
+
+  int myfield = 666;
+
+Note that while it is technically the same now, and you can use complex
+expressions with "inline" form, support for this (complex expressions) will
+be dropped somewhere in the future. I.e. don't do this:
+
+  int flda = 666;
+  int fldb = 42;
+  bool fldc = (flda > fldb);
+
+Initializing `fldc` *will* break without further notice. You've been warned.
+
+Also, redeclaring field in subclass will actually redeclare it, not
+change its default value.
+
+Of course, you *can* use complex expressions it in `defaultproperties` part,
+it is allowed. Yes, contrary to Unreal Script, `defaultproperties` doesn't
+meant to be easily machine-parsable, and can contain arbitrary VC code.
+Just note that it is NOT a constructor, it is executed only once by the
+complier, and not all classes might be properly defined at that time. So
+don't use complex code there: restrict yourself to calculating some tables
+and such.
+
+You can access default values with `default.name` syntax. Most of the
+time things like `ClassName.default.field` and `obj.default.field` are
+working as they should.
+
+
+Field and method protection
+===========================
+
+VC supports `public`, `protected`, and `private` protection both for
+fields, and for methods. By default, everything is public. To change
+protection, just use the corresponding modifier keyword, like this:
+
+  protected int myfield;
+
+You can also mark fields as `readonly`. It is not really useful for
+VC code (as you cannot do anything with such fields, not even assign
+default values to them).
+
+Changing field protection is not supported: you''ll just get a new field.
+
+
+
+Method types
+============
+
+VC has several types of methods. There are `final static` methods, `final`
+methods, and "normal" (aka "virtual") methods.
+
+`final static` is your usual `static` method from C++. Note that it *must*
+be `final` for now.
+
+`final` method locks you from overriding it in subclasses. Note that you
+can "seal" a method at any point in the class hierarchy, but doing it on
+introduction will "devirtualize" such method, and the code will be slightly
+faster.
+
+if neither `final`, nor `static` keywords are specified, you will get a good
+old virtual method, which you can override in subclasses. Note that you *must*
+use `override` keyword for overriden methods.
+
+Changing method protection is not supported.
+
+
+
+Optional method arguments
+=========================
+
+VC supports optional arguments with the following syntax:
+
+  void mymethod (int n, optional float f, string s);
+
+Note that you can freely mix optional and required arguments.
+
+In method body, you can check if optional argument was specified with
+automatically declared `specified_argname` identifier. I.e. for the
+example above, it will be `specified_f`.
+
+Default value for optional argument is 0/false/none/nullptr.
+
+To call a method with optional arguments, use this syntax:
+
+  mymethod(42, default, "boo");
+
+Note the `default` keyword. It is not required now, but it *will* be
+required in the future, so you'd better not omit it.
+
+
+
+Delegates
+=========
+
+VC supports delegate fields. You can declare delegate field like this:
+
+  int delegate (float n) myDelegateField;
+
+Later, you can assign any *virtual* method with the matching signature to
+such field:
+
+  myDelegateField = &methodName;
+
+Note the `&`.
+
+
+
+UFCS and paren-less calls
+=========================
+
+VC supports limited forms of UFCS and paren-less calls.
+
+For paren-less calls, "assign form" is not supported. I.e. you can do:
+
+  int foo () { return 42; }
+  ...
+  myvar = obj.foo;
+
+but you *cannot* do (yet):
+
+  void foo (int v) { ... }
+  ...
+  obj.foo = 69;
+
+This form might be supported in the future, tho.
+
+The same limitation is applied to UFCS. Ah, what is "UFCS", you may ask.
+This is a handy rule which allows to call something as a method of an
+object, even if it isn't. Still confused? Just look at the example:
+
+  static final float msecs (int v) { return v*1000.0; }
+
+  float time = 10.msecs;
+
+I.e. if compiler will not find a property/method specified, it will try
+to rewrite your code as a function call. In the example, as integer doesn't
+have `.msecs` property, but there is `msecs` method that accepts integers,
+compiler will rewrite your code to: `msecs(10)`.
+
+Of course, it works for more complex cases too:
+
+  if (s.strStartsWith("abc")) { ... }
+
+
+
+Calling superclass methods, and referring to self
+=================================================
+
+To call superclass' method from an overriden one, use `::name()` syntax.
+To refer to self, use `self` keyword (and not `this`).
+
+
+
+Names and strings
+=================
+
+VC has `name` type, which is a... well, name. Internally it is just a number,
+so comparing names are much faster than comparing strings. Use names for various
+long-lived identifiers. To create a name, use single quotes.
+
+Strings in VC are... strings.
+You can use string in conditionals: any non-empty string will be treated as `true`.
+String has built-in `.length` property.
+You can get substring by slicing: `s[lo..hi]` will return substring from `lo` up to
+(but not including) `hi` character. Note that VC doesn't care about encoding, so be
+careful with multibyte encodings.
+You can concatenate strings with `~` operator: `newstr = s0~s1;`.
+You can use `$` as substiture for `.length` in string indexing.
+You can replace substring with `ns = s[lo..hi] = "newstr";`, which is the same as:
+  ns = s[0..lo]~"newstr"~s[hi..$];
+Getting string character with `s[n]` will return integer.
+Setting string character with `s[n]` accepts integers, one-char strings, and
+one-char names.
+To make your life slightly easier, `==` and `!=` can compare integers with one-char
+strings, and one-char names. I.e. you can write `if (s[n] == "a")` and it will work.
+
+
+
+Dynamic arrays
+==============
+
+VC supports dynamic arrays. To declare a dynamic array, use `array!type` syntax.
+Dynamic arrays has built-in `.length` property.
+You can use `$` as substiture for `.length` in indexing.
+Assigning to non-existing index will grow an array. I.e. to append element to an
+array, you can use `arr[$] = value;`.
+To make room in an array, use `.insert(idx[, count])` built-in method.
+To remove items from an array, use `.remove(idx[, count])` built-in method.
+
+
+
+`.` and `->`
+============
+
+VC supports pointers to structs and `->` operation, but it will happily accept `.` too.
+Actually, `->` will be deprecated in the future, so you'd better forget that it exists.
