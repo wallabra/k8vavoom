@@ -372,12 +372,12 @@ void VSelf::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VSelf::DoResolve (VEmitContext &ec) {
   if (!ec.SelfClass) {
-    ParseError(Loc, "self used outside of member function");
+    ParseError(Loc, "`self` used outside of member function");
     delete this;
     return nullptr;
   }
   if (ec.CurrentFunc->Flags&FUNC_Static) {
-    ParseError(Loc, "self used in a static method");
+    ParseError(Loc, "`self` used in a static method");
     delete this;
     return nullptr;
   }
@@ -439,7 +439,7 @@ VExpression *VSelfClass::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
   Type = VFieldType(ec.SelfClass);
-  Type.Type = TYPE_Class;
+  if (ec.CurrentFunc->Flags&FUNC_Static) Type.Type = TYPE_Class;
   return this;
 }
 
@@ -450,7 +450,11 @@ VExpression *VSelfClass::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VSelfClass::Emit (VEmitContext &ec) {
-  ec.AddStatement(OPC_PushClassId, ec.SelfClass);
+  if (ec.CurrentFunc->Flags&FUNC_Static) {
+    ec.AddStatement(OPC_PushClassId, ec.SelfClass);
+  } else {
+    ec.AddStatement(OPC_LocalValue0);
+  }
 }
 
 
@@ -460,7 +464,7 @@ void VSelfClass::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 VNoneLiteral::VNoneLiteral (const TLocation &ALoc) : VExpression(ALoc) {
-  Type = VFieldType((VClass*)nullptr);
+  Type = VFieldType((VClass *)nullptr);
 }
 
 
