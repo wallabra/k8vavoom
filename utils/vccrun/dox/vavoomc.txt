@@ -147,6 +147,43 @@ Note the `&`.
 
 
 
+Class properties
+================
+
+You can define class properties, which will look and work almost like ordinary
+fields, but will use getter/setter methods instead. The syntax is:
+
+  type propname {
+    get { return v; }
+    set { internalfld = value; }
+  }
+
+You can "redirect" setter or getter to any class field:
+
+  type propname {
+    get fldname;
+    set fldname;
+  }
+
+Redirection is free -- that is, it is as effective as direct field access.
+You can create public read-only fields by specifying only getter.
+
+Also, default argument name for setter is `value`, but it can be changed with:
+
+  type propname {
+    set(v) { internalfld = v; }
+  }
+
+Here, setter's argument name will be `v`.
+
+You can define "static properties" with `final static`:
+
+  final static int staticField {
+    get { return 42; }
+  }
+
+
+
 UFCS and paren-less calls
 =========================
 
