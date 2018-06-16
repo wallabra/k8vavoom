@@ -127,7 +127,7 @@ int TModifiers::Check (int Modifers, int Allowed, const TLocation &l) {
 int TModifiers::MethodAttr (int Modifiers) {
   int Attributes = 0;
   if (Modifiers&Native) Attributes |= FUNC_Native;
-  if (Modifiers&Static) Attributes |= FUNC_Static;
+  if (Modifiers&Static) Attributes |= FUNC_Static|FUNC_Final; // anyway for now
   if (Modifiers&Final) Attributes |= FUNC_Final;
   if (Modifiers&Spawner) Attributes |= FUNC_Spawner;
   if (Modifiers&Override) Attributes |= FUNC_Override;
@@ -181,6 +181,7 @@ int TModifiers::PropAttr (int Modifiers) {
   int Attributes = 0;
   if (Modifiers&Native) Attributes |= PROP_Native;
   if (Modifiers&Final) Attributes |= PROP_Final;
+  if (Modifiers&Static) Attributes |= PROP_Final; // anyway for now
   if (Modifiers&Protected) Attributes |= PROP_Protected;
   return Attributes;
 }

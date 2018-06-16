@@ -162,12 +162,33 @@ VExpression *VDotField::SyntaxCopy () {
 VExpression *VDotField::DoPropertyResolve (VEmitContext &ec, VProperty *Prop, AssType assType) {
   if (assType == AssType::AssTarget) {
     if (Prop->SetFunc) {
-      VExpression *e = new VPropertyAssign(op, Prop->SetFunc, true, Loc);
-      op = nullptr;
+      VExpression *e;
+      if ((Prop->SetFunc->Flags&FUNC_Static) != 0) {
+        if (op->Type.Type != TYPE_Class || !op->Type.Class) {
+          ParseError(Loc, "Class name expected at the left side of `.`");
+          delete this;
+          return nullptr;
+        }
+        // statics has no self
+        e = new VPropertyAssign(nullptr, Prop->SetFunc, false, Loc);
+      } else {
+        if (op->Type.Type == TYPE_Class) {
+          ParseError(Loc, "Trying to use non-static property as static");
+          delete this;
+          return nullptr;
+        }
+        e = new VPropertyAssign(op, Prop->SetFunc, true, Loc);
+        op = nullptr;
+      }
       delete this;
       // assignment will call resolve
       return e;
     } else if (Prop->WriteField) {
+      if (op->Type.Type == TYPE_Class) {
+        ParseError(Loc, "Static fields are not supported yet");
+        delete this;
+        return nullptr;
+      }
       VExpression *e = new VFieldAccess(op, Prop->WriteField, Loc, 0);
       op = nullptr;
       delete this;
@@ -190,8 +211,25 @@ VExpression *VDotField::DoPropertyResolve (VEmitContext &ec, VProperty *Prop, As
       return e->Resolve(ec);
     } else {
       if (Prop->GetFunc) {
-        VExpression *e = new VInvocation(op, Prop->GetFunc, nullptr, true, false, Loc, 0, nullptr);
-        op = nullptr;
+        VExpression *e;
+        if ((Prop->GetFunc->Flags&FUNC_Static) != 0) {
+          //e = new VInvocation(op, Prop->GetFunc, nullptr, true, false, Loc, 0, nullptr);
+          if (op->Type.Type != TYPE_Class || !op->Type.Class) {
+            ParseError(Loc, "Class name expected at the left side of `.`");
+            delete this;
+            return nullptr;
+          }
+          // statics has no self
+          e = new VInvocation(nullptr, Prop->GetFunc, nullptr, false, false, Loc, 0, nullptr);
+        } else {
+          if (op->Type.Type == TYPE_Class) {
+            ParseError(Loc, "Trying to use non-static property as static");
+            delete this;
+            return nullptr;
+          }
+          e = new VInvocation(op, Prop->GetFunc, nullptr, true, false, Loc, 0, nullptr);
+          op = nullptr;
+        }
         delete this;
         return e->Resolve(ec);
       } else if (Prop->ReadField) {

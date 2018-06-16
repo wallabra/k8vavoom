@@ -249,12 +249,25 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
           return e->Resolve(ec);
         } else {
           if (Prop->SetFunc) {
-            VExpression *e = new VPropertyAssign(nullptr, Prop->SetFunc, false, Loc);
+            VExpression *e;
+            if ((Prop->SetFunc->Flags&FUNC_Static) != 0) {
+              e = new VPropertyAssign(nullptr, Prop->SetFunc, false, Loc);
+            } else {
+              e = new VPropertyAssign((new VSelf(Loc))->Resolve(ec), Prop->SetFunc, true, Loc);
+            }
             delete this;
             // assignment will call resolve
             return e;
           } else if (Prop->WriteField) {
-            VExpression *e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), Prop->WriteField, Loc, 0);
+            VExpression *e;
+            if (ec.SelfClass && ec.CurrentFunc && (ec.CurrentFunc->Flags&FUNC_Static) != 0) {
+              //e = new VFieldAccess(new VClassConstant(ec.SelfClass, Loc), Prop->WriteField, Loc, 0);
+              ParseError(Loc, "Static fields are not supported yet");
+              delete this;
+              return nullptr;
+            } else {
+              e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), Prop->WriteField, Loc, 0);
+            }
             delete this;
             return e->ResolveAssignmentTarget(ec);
           } else {
@@ -265,11 +278,24 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
         }
       } else {
         if (Prop->GetFunc) {
-          VExpression *e = new VInvocation(nullptr, Prop->GetFunc, nullptr, false, false, Loc, 0, nullptr);
+          VExpression *e;
+          if ((Prop->SetFunc->Flags&FUNC_Static) != 0) {
+            e = new VInvocation(nullptr, Prop->GetFunc, nullptr, false, false, Loc, 0, nullptr);
+          } else {
+            e = new VInvocation(new VSelf(Loc), Prop->GetFunc, nullptr, true, false, Loc, 0, nullptr);
+          }
           delete this;
           return e->Resolve(ec);
         } else if (Prop->ReadField) {
-          VExpression *e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), Prop->ReadField, Loc, 0);
+          VExpression *e;
+          if (ec.SelfClass && ec.CurrentFunc && (ec.CurrentFunc->Flags&FUNC_Static) != 0) {
+            //e = new VFieldAccess(new VClassConstant(ec.SelfClass, Loc), Prop->ReadField, Loc, 0);
+            ParseError(Loc, "Static fields are not supported yet");
+            delete this;
+            return nullptr;
+          } else {
+            e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), Prop->ReadField, Loc, 0);
+          }
           delete this;
           return e->Resolve(ec);
         } else {
