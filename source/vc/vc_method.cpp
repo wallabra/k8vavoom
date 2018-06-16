@@ -198,7 +198,7 @@ bool VMethod::Define () {
   // if this is a overriden method, verify that return type and argument types match
   SuperMethod = nullptr;
   if (Outer->MemberType == MEMBER_Class && Name != NAME_None && ((VClass *)Outer)->ParentClass) {
-    SuperMethod = ((VClass*)Outer)->ParentClass->FindMethod(Name);
+    SuperMethod = ((VClass *)Outer)->ParentClass->FindMethod(Name);
   }
 
   if (SuperMethod) {
@@ -217,10 +217,12 @@ bool VMethod::Define () {
     if (Ret && (SuperMethod->Flags&FUNC_Protected) != (Flags&FUNC_Protected)) {
       if ((SuperMethod->Flags&FUNC_Protected)) {
         ParseError(Loc, "Cannot override protected method with public");
+        Ret = false;
       } else {
+        //FIXME: not yet implemented
         ParseError(Loc, "Cannot override public method with protected");
+        Ret = false;
       }
-      Ret = false;
     }
     if (Ret && (SuperMethod->Flags&FUNC_Final)) {
       ParseError(Loc, "Method already has been declared as final and cannot be overriden");
@@ -235,11 +237,14 @@ bool VMethod::Define () {
     } else {
       for (int i = 0; i < NumParams; ++i) {
         if (!SuperMethod->ParamTypes[i].Equals(ParamTypes[i])) {
-          if (Ret) ParseError(Loc, "Type of argument %d differs from base class", i+1);
+          if (Ret) {
+            ParseError(Loc, "Type of argument #%d differs from base class (expected `%s`, got `%s`)", i+1,
+              *SuperMethod->ParamTypes[i].GetName(), *ParamTypes[i].GetName());
+          }
           Ret = false;
         }
         if ((SuperMethod->ParamFlags[i]^ParamFlags[i])&(FPARM_Optional|FPARM_Out|FPARM_Ref)) {
-          if (Ret) ParseError(Loc, "Modifiers of argument %d differs from base class", i+1);
+          if (Ret) ParseError(Loc, "Modifiers of argument #%d differs from base class", i+1);
           Ret = false;
         }
       }
@@ -259,10 +264,11 @@ bool VMethod::Define () {
     if (NumParams < 1) {
       ParseError(Loc, "Spawner method must have at least 1 argument");
     } else if (ParamTypes[0].Type != TYPE_Class) {
-      ParseError(Loc, "Spawner method must have class as it's first argument");
+      ParseError(Loc, "Spawner method must have class as first argument");
     } else if (ReturnType.Type != TYPE_Reference) {
       ParseError(Loc, "Spawner method must return an object reference");
     } else if (ReturnType.Class != ParamTypes[0].Class) {
+      // hack for `SpawnObject (class)`
       if (ParamTypes[0].Class || ReturnType.Class->Name != "Object") {
         ParseError(Loc, "Spawner method must return an object of the same type as class");
       }
