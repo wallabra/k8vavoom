@@ -1,0 +1,17 @@
+class Main : Object;
+
+int n = 42;
+
+int fld {
+  get { return n+1000; }
+  set(v) { writeln("v=", v); n = v; }
+}
+
+
+void main () {
+  writeln(fld);
+  fld = 666;
+  //writeln(Main.fld);
+  //Main.fld = 666;
+  writeln(n);
+}

@@ -22,11 +22,26 @@ for fn in *.vc; do
   if [ -f "$ofname" ]; then
     echo "SKIP"
   else
-    sh ../0run.sh -pakdir ../packages -P. "$fn" boo foo zoo >"$ofname"
+    sh ../0run.sh -pakdir ../packages -P. "$fn" boo foo zoo >"$ofname" 2>"$ofname.err"
     res=$?
-    if [ $res -ne 0 ]; then
-      echo "FAILED"
-      break
+    fline=`head -n 1 "$fn"`
+    expectfail="ona"
+    if [ "z$fline" = "z// FAIL" ]; then
+      expectfail="tan"
+    elif [ "z$fline" = "z//FAIL" ]; then
+      expectfail="tan"
+    fi
+    #echo "expectfail: $expectfail; fline=$fline|"
+    if [ $expectfail = ona ]; then
+      if [ $res -ne 0 ]; then
+        echo "FAILED"
+        break
+      fi
+    else
+      if [ $res -eq 0 ]; then
+        echo "FAILED"
+        break
+      fi
     fi
     echo "OK"
   fi

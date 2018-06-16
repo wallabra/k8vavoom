@@ -1,0 +1,14 @@
+class Main : Object;
+
+final static int fld {
+  get { return 42; }
+  set(v) { writeln("v=", v); }
+}
+
+
+void main () {
+  writeln(fld);
+  fld = 666;
+  writeln(Main.fld);
+  Main.fld = 666;
+}

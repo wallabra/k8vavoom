@@ -1,0 +1,15 @@
+// FAIL
+class Main : Object;
+
+int n = 42;
+
+final int fld {
+  get { return n+1000; }
+  set(v) { writeln("v=", v); }
+}
+
+
+static final void main () {
+  writeln(Main.fld);
+  Main.fld = 666;
+}
