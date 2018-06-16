@@ -129,30 +129,30 @@ final static void drawBevel (int x0, int y0, int awidth, int aheight, int argbUp
 // ////////////////////////////////////////////////////////////////////////// //
 /*
 // will set alpha to opaque, and return alpha as 0
-final int colorRGB {
+final static int colorRGB {
   get { return Video.getColorARGB()&0xff_ff_ff; }
   set { Video.setColorARGB(value|(value&0xff_00_00_00 ? 0 : 0xff_00_00_00)); }
 }
 */
-final int colorARGB {
+final static int colorARGB {
   get { return getColorARGB(); }
   set { setColorARGB(value); }
 }
 alias colorRGB = colorARGB;
 alias color = colorARGB;
 
-final int blendMode {
+final static int blendMode {
   get { return getBlendMode(); }
   set { setBlendMode(value); }
 }
 
 
-final name fontName {
+final static name fontName {
   get { return getFont(); }
   set { setFont(value); }
 }
 
-final bool scissorEnabled {
+final static bool scissorEnabled {
   get { return Video.getScissorEnabled(); }
   set { Video.setScissorEnabled(value); }
 }
