@@ -1167,12 +1167,12 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
           TLocation ALoc = Args[i]->Loc;
           VClass *Cls = VClass::FindClassNoCase(*CName);
           if (!Cls) {
-            ParseWarning(ALoc, "No such class %s", *CName);
+            ParseWarning(ALoc, "No such class `%s`", *CName);
             delete Args[i];
             Args[i] = nullptr;
             Args[i] = new VNoneLiteral(ALoc);
           } else if (Func->ParamTypes[i].Class && !Cls->IsChildOf(Func->ParamTypes[i].Class)) {
-            ParseWarning(ALoc, "Class %s is not a descendant of %s", *CName, Func->ParamTypes[i].Class->GetName());
+            ParseWarning(ALoc, "Class `%s` is not a descendant of `%s`", *CName, Func->ParamTypes[i].Class->GetName());
             delete Args[i];
             Args[i] = nullptr;
             Args[i] = new VNoneLiteral(ALoc);

@@ -174,7 +174,10 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
     loc.compindex = compindex;
     loc.stackSize = ssz;
     localsofs += ssz;
-    if (localsofs > 1024) ParseWarning(aloc, "Local vars > 1k");
+    if (localsofs > 1024) {
+      ParseError(aloc, "Local vars > 1k");
+      FatalError("VC: too many locals");
+    }
     return loc;
   }
 }

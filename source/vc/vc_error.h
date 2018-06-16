@@ -66,4 +66,27 @@ void BailOut () __attribute__((noreturn));
 void FatalError (const char *text, ...) __attribute__((noreturn, format(printf, 1, 2)));
 #endif
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 extern int vcErrorCount;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// "gag mode" counter; incremented only when errors are "gagged"
+extern int vcGagErrorCount;
+extern int vcGagErrors; // !0: errors are gagged
+
+// handy class to automatically "ungag" on scope/function exit
+class VGagErrors {
+private:
+  int mGagErrCount;
+  int mGagCount; // consistency checks
+public:
+  VGagErrors () : mGagErrCount(vcGagErrorCount), mGagCount(vcGagErrors) { ++vcGagErrors; }
+  ~VGagErrors () { --vcGagErrors; if (vcGagErrors != mGagCount) FatalError("unbalanced `VGagErrors`"); }
+  // check if there were some new errors since gagging with this object
+  inline bool wasErrors () const { return (vcGagErrorCount > mGagErrCount); }
+private: // no copies
+  VGagErrors (const VGagErrors &v);
+  void operator = (const VGagErrors &v);
+};
