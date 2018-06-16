@@ -273,3 +273,16 @@ To remove items from an array, use `.remove(idx[, count])` built-in method.
 
 VC supports pointers to structs and `->` operation, but it will happily accept `.` too.
 Actually, `->` will be deprecated in the future, so you'd better forget that it exists.
+
+
+
+`auto` keyword
+==============
+
+VC supports limited form of type inference. You can use `auto` as a type placeholder for
+local variable declaraion, if that declaraion includes initializer expression. I.e.:
+
+  auto a = 42; // int
+  auto b = 6.9; // float
+  auto c = "str"; // guess what
+  auto e = funcall(); // should be pretty obvious
