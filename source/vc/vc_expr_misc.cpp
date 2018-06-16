@@ -202,20 +202,13 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
         delete this;
         return nullptr;
       }
+      // rewrite as invoke
       VExpression *e;
-      // `dg = dgname`?
-      /*if (assType == AssType::AssValue) {
-        // yes
-        ParseWarning(Loc, "prepend delegate with `&`, please");
-        e = new VDelegateVal((new VSelf(Loc))->Resolve(ec), M, Loc);
-      } else*/ {
-        // no; rewrite as invoke
-        if ((M->Flags&FUNC_Static) != 0) {
-          e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
-        } else {
-          //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
-          e = new VDotInvocation(new VSelf(Loc), Name, Loc, 0, nullptr);
-        }
+      if ((M->Flags&FUNC_Static) != 0) {
+        e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
+      } else {
+        //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
+        e = new VDotInvocation(new VSelf(Loc), Name, Loc, 0, nullptr);
       }
       delete this;
       return e->Resolve(ec);
@@ -226,7 +219,6 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
       VExpression *e;
       // "normal" access: call delegate (if it is operand-less)
       if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
-        //fprintf(stderr, "*** SNAME! %s\n", *field->Name);
         e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
       } else {
         e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
@@ -247,6 +239,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
           VExpression *e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), Prop->DefaultField, Loc, 0);
           delete this;
           return e->Resolve(ec);
+          //return e->ResolveAssignmentTarget(ec); //k8:??? why not this?
         } else {
           if (Prop->SetFunc) {
             VExpression *e;
@@ -279,7 +272,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
       } else {
         if (Prop->GetFunc) {
           VExpression *e;
-          if ((Prop->SetFunc->Flags&FUNC_Static) != 0) {
+          if ((Prop->GetFunc->Flags&FUNC_Static) != 0) {
             e = new VInvocation(nullptr, Prop->GetFunc, nullptr, false, false, Loc, 0, nullptr);
           } else {
             e = new VInvocation(new VSelf(Loc), Prop->GetFunc, nullptr, true, false, Loc, 0, nullptr);
