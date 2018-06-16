@@ -17,14 +17,15 @@ native final static int screenHeight ();
 
 native final static void setScale (float sx, float sy);
 
-native final static int getFrameTime ();
-native final static void setFrameTime (int newframetime); // in msecs
+//native final static int getFrameTime ();
+//native final static void setFrameTime (int newframetime); // in msecs
+native final static bool frameTime { get; set; }
 
 native final static bool openScreen (string winname, int width, int height);
 native final static void closeScreen ();
 
 native final static void clearScreen ();
-native final static void clearScreenRGB (int r, int g, int b);
+//native final static void clearScreenRGB (int r, int g, int b);
 
 native final static void runEventLoop ();
 
@@ -34,21 +35,27 @@ native final static void requestQuit ();
 // aborts if font cannot be loaded
 native final static void loadFont (name fontname, string fnameIni, string fnameTexture);
 
-native final static void setSmoothLine (bool v);
+//native final static void setSmoothLine (bool v);
+native final static bool smoothLine { get; set; }
 
 // color: aarrggbb
 // WARNING: "a" is inverted, and actually means "transparency"
 //          i.e. a==0 is completely opaque
 //          it is easier this way, even if it may look conunterintuitive for you
-native final static int getColorARGB ();
-native final static void setColorARGB (int argb);
+//native final static int getColorARGB ();
+//native final static void setColorARGB (int argb);
+native final static int colorARGB { get; set; }
 
 // BlendXXX
-native final static int getBlendMode ();
-native final static void setBlendMode (int v);
+//native final static int getBlendMode ();
+//native final static void setBlendMode (int v);
+native final static int blendMode { get; set; }
 
-native final static name getFont ();
-native final static void setFont (name fontname);
+
+//native final static name getFont ();
+//native final static void setFont (name fontname);
+native final static name fontName { get; set; }
+
 native final static int fontHeight ();
 native final static int spaceWidth ();
 native final static int charWidth (int ch);
@@ -68,8 +75,10 @@ struct ScissorRect {
 }
 
 
-native final static bool getScissorEnabled ();
-native final static void setScissorEnabled (bool v);
+//native final static bool getScissorEnabled ();
+//native final static void setScissorEnabled (bool v);
+native final static bool scissorEnabled { get; set; }
+
 native final static void getScissor (ScissorRect *sr);
 native final static void setScissor (ScissorRect *sr);
 
@@ -117,10 +126,10 @@ final static bool scissorCombine (int x0, int y0, int w, int h) {
 
 
 final static void drawBevel (int x0, int y0, int awidth, int aheight, int argbUp, int argbDown) {
-  setColorARGB(argbUp);
+  colorARGB = argbUp;
   drawLine(x0, y0, x0+awidth, y0);
   drawLine(x0, y0+1, x0, y0+aheight);
-  setColorARGB(argbDown);
+  colorARGB = argbDown;
   drawLine(x0+1, y0+aheight-1, x0+awidth, y0+aheight-1);
   drawLine(x0+awidth-1, y0+1, x0+awidth-1, y0+aheight-1);
 }
@@ -134,25 +143,5 @@ final static int colorRGB {
   set { Video.setColorARGB(value|(value&0xff_00_00_00 ? 0 : 0xff_00_00_00)); }
 }
 */
-final static int colorARGB {
-  get { return getColorARGB(); }
-  set { setColorARGB(value); }
-}
-alias colorRGB = colorARGB;
+//alias colorRGB = colorARGB;
 alias color = colorARGB;
-
-final static int blendMode {
-  get { return getBlendMode(); }
-  set { setBlendMode(value); }
-}
-
-
-final static name fontName {
-  get { return getFont(); }
-  set { setFont(value); }
-}
-
-final static bool scissorEnabled {
-  get { return Video.getScissorEnabled(); }
-  set { Video.setScissorEnabled(value); }
-}

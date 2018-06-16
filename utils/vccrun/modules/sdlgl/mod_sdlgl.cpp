@@ -719,6 +719,7 @@ IMPLEMENT_CLASS(V, Video);
 bool VVideo::mInited = false;
 int VVideo::mWidth = 0;
 int VVideo::mHeight = 0;
+bool VVideo::smoothLine = false;
 
 
 struct TimerInfo {
@@ -958,7 +959,8 @@ bool VVideo::open (const VStr &winname, int width, int height) {
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
   //glDisable(GL_BLEND);
-  glEnable(GL_LINE_SMOOTH);
+  //glEnable(GL_LINE_SMOOTH);
+  if (smoothLine) glEnable(GL_LINE_SMOOTH); else glDisable(GL_LINE_SMOOTH);
 
   glDisable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -1309,8 +1311,8 @@ IMPLEMENT_FUNCTION(VVideo, isInitialized) { RET_BOOL(VVideo::isInitialized()); }
 IMPLEMENT_FUNCTION(VVideo, screenWidth) { RET_INT(VVideo::getWidth()); }
 IMPLEMENT_FUNCTION(VVideo, screenHeight) { RET_INT(VVideo::getHeight()); }
 
-IMPLEMENT_FUNCTION(VVideo, getFrameTime) { RET_BOOL(VVideo::getFrameTime()); }
-IMPLEMENT_FUNCTION(VVideo, setFrameTime) { P_GET_INT(newft); VVideo::setFrameTime(newft); VVideo::sendPing(); }
+IMPLEMENT_FUNCTION(VVideo, get_frameTime) { RET_BOOL(VVideo::getFrameTime()); }
+IMPLEMENT_FUNCTION(VVideo, set_frameTime) { P_GET_INT(newft); VVideo::setFrameTime(newft); VVideo::sendPing(); }
 
 IMPLEMENT_FUNCTION(VVideo, openScreen) {
   P_GET_INT(hgt);
@@ -1367,7 +1369,7 @@ IMPLEMENT_FUNCTION(VVideo, requestRefresh) {
 }
 
 
-IMPLEMENT_FUNCTION(VVideo, getScissorEnabled) {
+IMPLEMENT_FUNCTION(VVideo, get_scissorEnabled) {
   if (mInited) {
     RET_BOOL((glIsEnabled(GL_SCISSOR_TEST) ? 1 : 0));
   } else {
@@ -1375,7 +1377,7 @@ IMPLEMENT_FUNCTION(VVideo, getScissorEnabled) {
   }
 }
 
-IMPLEMENT_FUNCTION(VVideo, setScissorEnabled) {
+IMPLEMENT_FUNCTION(VVideo, set_scissorEnabled) {
   P_GET_BOOL(v);
   if (mInited) {
     if (v) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
@@ -1435,44 +1437,52 @@ IMPLEMENT_FUNCTION(VVideo, setScissor) {
 }
 
 
-IMPLEMENT_FUNCTION(VVideo, setSmoothLine) {
+IMPLEMENT_FUNCTION(VVideo, get_smoothLine) {
+  RET_BOOL(smoothLine);
+}
+
+
+IMPLEMENT_FUNCTION(VVideo, set_smoothLine) {
   P_GET_BOOL(v);
-  if (mInited) {
-    if (v) glEnable(GL_LINE_SMOOTH); else glDisable(GL_LINE_SMOOTH);
+  if (smoothLine != v) {
+    smoothLine = v;
+    if (mInited) {
+      if (v) glEnable(GL_LINE_SMOOTH); else glDisable(GL_LINE_SMOOTH);
+    }
   }
 }
 
 
 //native final static int getColorARGB ();
-IMPLEMENT_FUNCTION(VVideo, getColorARGB) {
+IMPLEMENT_FUNCTION(VVideo, get_colorARGB) {
   RET_INT(colorARGB);
 }
 
 //native final static void setColorARGB (int v);
-IMPLEMENT_FUNCTION(VVideo, setColorARGB) {
+IMPLEMENT_FUNCTION(VVideo, set_colorARGB) {
   P_GET_INT(c);
   setColor((vuint32)c);
 }
 
 //native final static int getBlendMode ();
-IMPLEMENT_FUNCTION(VVideo, getBlendMode) {
+IMPLEMENT_FUNCTION(VVideo, get_blendMode) {
   RET_INT(getBlendMode());
 }
 
-//native final static void setBlendMode (int v);
-IMPLEMENT_FUNCTION(VVideo, setBlendMode) {
+//native final static void set_blendMode (int v);
+IMPLEMENT_FUNCTION(VVideo, set_blendMode) {
   P_GET_INT(c);
   setBlendMode(c);
 }
 
 //native final static void setFont (name fontname);
-IMPLEMENT_FUNCTION(VVideo, setFont) {
+IMPLEMENT_FUNCTION(VVideo, set_fontName) {
   P_GET_NAME(fontname);
   setFont(fontname);
 }
 
 //native final static name getFont ();
-IMPLEMENT_FUNCTION(VVideo, getFont) {
+IMPLEMENT_FUNCTION(VVideo, get_fontName) {
   if (!currFont) {
     RET_NAME(NAME_None);
   } else {

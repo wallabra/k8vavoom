@@ -68,6 +68,7 @@ private:
 
   static vuint32 colorARGB; // a==0: opaque
   static VFont *currFont;
+  static bool smoothLine;
   friend class VOpenGLTexture;
 
 private:
@@ -165,8 +166,8 @@ public:
   DECLARE_FUNCTION(screenWidth)
   DECLARE_FUNCTION(screenHeight)
 
-  DECLARE_FUNCTION(getFrameTime)
-  DECLARE_FUNCTION(setFrameTime)
+  DECLARE_FUNCTION(get_frameTime)
+  DECLARE_FUNCTION(set_frameTime)
 
   DECLARE_FUNCTION(openScreen)
   DECLARE_FUNCTION(closeScreen)
@@ -180,24 +181,25 @@ public:
   DECLARE_FUNCTION(requestRefresh)
   DECLARE_FUNCTION(requestQuit)
 
-  DECLARE_FUNCTION(getScissorEnabled)
-  DECLARE_FUNCTION(setScissorEnabled)
+  DECLARE_FUNCTION(get_scissorEnabled)
+  DECLARE_FUNCTION(set_scissorEnabled)
   DECLARE_FUNCTION(getScissor)
   DECLARE_FUNCTION(setScissor)
   DECLARE_FUNCTION(copyScissor)
 
   DECLARE_FUNCTION(clearScreen)
 
-  DECLARE_FUNCTION(setSmoothLine)
+  DECLARE_FUNCTION(get_smoothLine)
+  DECLARE_FUNCTION(set_smoothLine)
 
-  DECLARE_FUNCTION(getColorARGB) // aarrggbb
-  DECLARE_FUNCTION(setColorARGB) // aarrggbb
+  DECLARE_FUNCTION(get_colorARGB) // aarrggbb
+  DECLARE_FUNCTION(set_colorARGB) // aarrggbb
 
-  DECLARE_FUNCTION(getBlendMode)
-  DECLARE_FUNCTION(setBlendMode)
+  DECLARE_FUNCTION(get_blendMode)
+  DECLARE_FUNCTION(set_blendMode)
 
-  DECLARE_FUNCTION(getFont)
-  DECLARE_FUNCTION(setFont)
+  DECLARE_FUNCTION(get_fontName)
+  DECLARE_FUNCTION(set_fontName)
   DECLARE_FUNCTION(fontHeight)
   DECLARE_FUNCTION(charWidth)
   DECLARE_FUNCTION(spaceWidth)
