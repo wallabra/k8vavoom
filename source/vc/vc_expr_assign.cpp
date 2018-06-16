@@ -115,7 +115,7 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
-    VPropertyAssign *e = (VPropertyAssign*)op1;
+    VPropertyAssign *e = (VPropertyAssign *)op1;
     e->NumArgs = 1;
     e->Args[0] = op2;
     op1 = nullptr;
@@ -126,12 +126,12 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
 
   if (op1->IsDynArraySetNum()) {
     if (Oper != Assign && Oper != AddAssign && Oper != MinusAssign) {
-      ParseError(Loc, "Only `=`, `+=`, or `-=` can be used to resize an array");
+      ParseError(Loc, "Only `=`, `+=`, or `-=` can be used to resize a dynamic array");
       delete this;
       return nullptr;
     }
     op2->Type.CheckMatch(Loc, VFieldType(TYPE_Int));
-    VDynArraySetNum *e = (VDynArraySetNum*)op1;
+    VDynArraySetNum *e = (VDynArraySetNum *)op1;
     e->NumExpr = op2;
          if (Oper == Assign) e->opsign = 0;
     else if (Oper == AddAssign) e->opsign = 1;

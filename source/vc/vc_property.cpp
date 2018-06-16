@@ -37,9 +37,13 @@ VProperty::VProperty (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , GetFunc(nullptr)
   , SetFunc(nullptr)
   , DefaultField(nullptr)
+  , ReadField(nullptr)
+  , WriteField(nullptr)
   , Flags(0)
   , TypeExpr(nullptr)
   , DefaultFieldName(NAME_None)
+  , ReadFieldName(NAME_None)
+  , WriteFieldName(NAME_None)
 {
 }
 
@@ -65,7 +69,7 @@ VProperty::~VProperty () {
 void VProperty::Serialise (VStream &Strm) {
   guard(VProperty::Serialise);
   VMemberBase::Serialise(Strm);
-  Strm << Type << GetFunc << SetFunc << DefaultField << Flags;
+  Strm << Type << GetFunc << SetFunc << DefaultField << ReadField << WriteField << Flags;
   unguard;
 }
 
@@ -91,7 +95,23 @@ bool VProperty::Define () {
   if (DefaultFieldName != NAME_None) {
     DefaultField = ((VClass *)Outer)->FindField(DefaultFieldName, Loc, (VClass *)Outer);
     if (!DefaultField) {
-      ParseError(Loc, "No such field %s", *DefaultFieldName);
+      ParseError(Loc, "No such field `%s`", *DefaultFieldName);
+      return false;
+    }
+  }
+
+  if (ReadFieldName != NAME_None) {
+    ReadField = ((VClass *)Outer)->FindField(ReadFieldName, Loc, (VClass *)Outer);
+    if (!ReadField) {
+      ParseError(Loc, "No such field `%s`", *ReadFieldName);
+      return false;
+    }
+  }
+
+  if (WriteFieldName != NAME_None) {
+    WriteField = ((VClass *)Outer)->FindField(WriteFieldName, Loc, (VClass *)Outer);
+    if (!WriteField) {
+      ParseError(Loc, "No such field `%s`", *WriteFieldName);
       return false;
     }
   }

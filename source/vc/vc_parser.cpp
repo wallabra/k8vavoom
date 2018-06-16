@@ -2799,54 +2799,98 @@ void VParser::ParseClass () {
         Prop->Flags = TModifiers::PropAttr(Modifiers);
         do {
           if (Lex.Check(TK_Get)) {
-            char TmpName[NAME_SIZE];
-            sprintf(TmpName, "get_%s", *FieldName);
-            VMethod *Func = new VMethod(TmpName, Class, Lex.Location);
-            Func->Flags = TModifiers::MethodAttr(Modifiers);
-            Func->ReturnTypeExpr = FieldType->SyntaxCopy();
-
-            if (Modifiers & TModifiers::Native) {
+            // `get fldname;`?
+            if (Lex.Token == TK_Identifier) {
+              if (Prop->GetFunc) {
+                ParseError(FieldLoc, "Property already has a get method");
+                ParseError(Prop->GetFunc->Loc, "Previous get method here");
+              }
+              if (Prop->ReadFieldName != NAME_None) {
+                ParseError(FieldLoc, "Property already has a get field");
+              } else {
+                Prop->ReadFieldName = Lex.Name;
+              }
+              Lex.NextToken();
               Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-              ++Package->NumBuiltins;
             } else {
-              Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
-              Func->Statement = ParseCompoundStatement();
-            }
+              char TmpName[NAME_SIZE];
+              sprintf(TmpName, "get_%s", *FieldName);
+              VMethod *Func = new VMethod(TmpName, Class, Lex.Location);
+              Func->Flags = TModifiers::MethodAttr(Modifiers);
+              Func->ReturnTypeExpr = FieldType->SyntaxCopy();
 
-            if (Prop->GetFunc) {
-              ParseError(FieldLoc, "Property already has a get method");
-              ParseError(Prop->GetFunc->Loc, "Previous get method here");
+              if (Modifiers&TModifiers::Native) {
+                Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+                ++Package->NumBuiltins;
+              } else {
+                Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
+                Func->Statement = ParseCompoundStatement();
+              }
+
+              if (Prop->GetFunc) {
+                ParseError(FieldLoc, "Property already has a get method");
+                ParseError(Prop->GetFunc->Loc, "Previous get method here");
+              } else if (Prop->ReadFieldName != NAME_None) {
+                ParseError(FieldLoc, "Property already has a get field");
+              }
+              Prop->GetFunc = Func;
+              Class->AddMethod(Func);
             }
-            Prop->GetFunc = Func;
-            Class->AddMethod(Func);
           } else if (Lex.Check(TK_Set)) {
-            char TmpName[NAME_SIZE];
-            sprintf(TmpName, "set_%s", *FieldName);
-            VMethod *Func = new VMethod(TmpName, Class, Lex.Location);
-            Func->Flags = TModifiers::MethodAttr(Modifiers);
-            Func->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
-
-            VMethodParam &P = Func->Params[Func->NumParams];
-            P.TypeExpr = FieldType->SyntaxCopy();
-            P.Name = "value";
-            P.Loc = Lex.Location;
-            Func->ParamFlags[Func->NumParams] = 0;
-            ++Func->NumParams;
-
-            if (Modifiers & TModifiers::Native) {
+            // `set fldname;`?
+            if (Lex.Token == TK_Identifier) {
+              if (Prop->SetFunc) {
+                ParseError(FieldLoc, "Property already has a set method");
+                ParseError(Prop->SetFunc->Loc, "Previous set method here");
+              }
+              if (Prop->WriteFieldName != NAME_None) {
+                ParseError(FieldLoc, "Property already has a get field");
+              } else {
+                Prop->WriteFieldName = Lex.Name;
+              }
+              Lex.NextToken();
               Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-              ++Package->NumBuiltins;
             } else {
-              Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
-              Func->Statement = ParseCompoundStatement();
-            }
+              char TmpName[NAME_SIZE];
+              sprintf(TmpName, "set_%s", *FieldName);
+              VMethod *Func = new VMethod(TmpName, Class, Lex.Location);
+              Func->Flags = TModifiers::MethodAttr(Modifiers);
+              Func->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
 
-            if (Prop->SetFunc) {
-              ParseError(FieldLoc, "Property already has a set method");
-              ParseError(Prop->SetFunc->Loc, "Previous set method here");
+              VMethodParam &P = Func->Params[Func->NumParams];
+              P.TypeExpr = FieldType->SyntaxCopy();
+              P.Name = "value";
+              P.Loc = Lex.Location;
+              // support for `set(valname)` syntax
+              if (Lex.Check(TK_LParen)) {
+                if (Lex.Token != TK_Identifier) {
+                  ParseError(Lex.Location, "value name expected");
+                } else {
+                  P.Name = Lex.Name;
+                  Lex.NextToken();
+                }
+                Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+              }
+              Func->ParamFlags[Func->NumParams] = 0;
+              ++Func->NumParams;
+
+              if (Modifiers&TModifiers::Native) {
+                Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+                ++Package->NumBuiltins;
+              } else {
+                Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
+                Func->Statement = ParseCompoundStatement();
+              }
+
+              if (Prop->SetFunc) {
+                ParseError(FieldLoc, "Property already has a set method");
+                ParseError(Prop->SetFunc->Loc, "Previous set method here");
+              } else if (Prop->WriteFieldName != NAME_None) {
+                ParseError(FieldLoc, "Property already has a set field");
+              }
+              Prop->SetFunc = Func;
+              Class->AddMethod(Func);
             }
-            Prop->SetFunc = Func;
-            Class->AddMethod(Func);
           } else if (Lex.Check(TK_Default)) {
             if (Lex.Token != TK_Identifier) {
               ParseError(Lex.Location, "Default field name expected");

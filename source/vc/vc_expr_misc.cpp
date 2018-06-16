@@ -240,7 +240,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
       if (assType == AssType::AssTarget) {
         if (ec.InDefaultProperties) {
           if (!Prop->DefaultField) {
-            ParseError(Loc, "Property %s has no default field set", *Name);
+            ParseError(Loc, "Property `%s` has no default field set", *Name);
             delete this;
             return nullptr;
           }
@@ -248,25 +248,35 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
           delete this;
           return e->Resolve(ec);
         } else {
-          if (!Prop->SetFunc) {
-            ParseError(Loc, "Property %s cannot be set", *Name);
+          if (Prop->SetFunc) {
+            VExpression *e = new VPropertyAssign(nullptr, Prop->SetFunc, false, Loc);
+            delete this;
+            // assignment will call resolve
+            return e;
+          } else if (Prop->WriteField) {
+            VExpression *e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), Prop->WriteField, Loc, 0);
+            delete this;
+            return e->ResolveAssignmentTarget(ec);
+          } else {
+            ParseError(Loc, "Property `%s` cannot be set", *Name);
             delete this;
             return nullptr;
           }
-          VExpression *e = new VPropertyAssign(nullptr, Prop->SetFunc, false, Loc);
-          delete this;
-          // assignment will call resolve
-          return e;
         }
       } else {
-        if (!Prop->GetFunc) {
-          ParseError(Loc, "Property %s cannot be read", *Name);
+        if (Prop->GetFunc) {
+          VExpression *e = new VInvocation(nullptr, Prop->GetFunc, nullptr, false, false, Loc, 0, nullptr);
+          delete this;
+          return e->Resolve(ec);
+        } else if (Prop->ReadField) {
+          VExpression *e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), Prop->ReadField, Loc, 0);
+          delete this;
+          return e->Resolve(ec);
+        } else {
+          ParseError(Loc, "Property `%s` cannot be read", *Name);
           delete this;
           return nullptr;
         }
-        VExpression *e = new VInvocation(nullptr, Prop->GetFunc, nullptr, false, false, Loc, 0, nullptr);
-        delete this;
-        return e->Resolve(ec);
       }
     }
   }

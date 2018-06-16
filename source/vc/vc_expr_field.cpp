@@ -159,6 +159,61 @@ VExpression *VDotField::SyntaxCopy () {
 //  VDotField::InternalResolve
 //
 //==========================================================================
+VExpression *VDotField::DoPropertyResolve (VEmitContext &ec, VProperty *Prop, AssType assType) {
+  if (assType == AssType::AssTarget) {
+    if (Prop->SetFunc) {
+      VExpression *e = new VPropertyAssign(op, Prop->SetFunc, true, Loc);
+      op = nullptr;
+      delete this;
+      // assignment will call resolve
+      return e;
+    } else if (Prop->WriteField) {
+      VExpression *e = new VFieldAccess(op, Prop->WriteField, Loc, 0);
+      op = nullptr;
+      delete this;
+      return e->ResolveAssignmentTarget(ec);
+    } else {
+      ParseError(Loc, "Property `%s` cannot be set", *FieldName);
+      delete this;
+      return nullptr;
+    }
+  } else {
+    if (op->IsDefaultObject()) {
+      if (!Prop->DefaultField) {
+        ParseError(Loc, "Property `%s` has no default field set", *FieldName);
+        delete this;
+        return nullptr;
+      }
+      VExpression *e = new VFieldAccess(op, Prop->DefaultField, Loc, FIELD_ReadOnly);
+      op = nullptr;
+      delete this;
+      return e->Resolve(ec);
+    } else {
+      if (Prop->GetFunc) {
+        VExpression *e = new VInvocation(op, Prop->GetFunc, nullptr, true, false, Loc, 0, nullptr);
+        op = nullptr;
+        delete this;
+        return e->Resolve(ec);
+      } else if (Prop->ReadField) {
+        VExpression *e = new VFieldAccess(op, Prop->ReadField, Loc, 0);
+        op = nullptr;
+        delete this;
+        return e->Resolve(ec);
+      } else {
+        ParseError(Loc, "Property `%s` cannot be read", *FieldName);
+        delete this;
+        return nullptr;
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VDotField::InternalResolve
+//
+//==========================================================================
 VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType assType) {
   // we need a copy in case this is a pointer thingy
   auto opcopy = (op ? op->SyntaxCopy() : nullptr);
@@ -239,44 +294,9 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     }
 
     VProperty *Prop = op->Type.Class->FindProperty(FieldName);
-    if (Prop) {
-      if (assType == AssType::AssTarget) {
-        if (!Prop->SetFunc) {
-          ParseError(Loc, "Property %s cannot be set", *FieldName);
-          delete this;
-          return nullptr;
-        }
-        VExpression *e = new VPropertyAssign(op, Prop->SetFunc, true, Loc);
-        op = nullptr;
-        delete this;
-        // assignment will call resolve
-        return e;
-      } else {
-        if (op->IsDefaultObject()) {
-          if (!Prop->DefaultField) {
-            ParseError(Loc, "Property %s has no default field set", *FieldName);
-            delete this;
-            return nullptr;
-          }
-          VExpression *e = new VFieldAccess(op, Prop->DefaultField, Loc, FIELD_ReadOnly);
-          op = nullptr;
-          delete this;
-          return e->Resolve(ec);
-        } else {
-          if (!Prop->GetFunc) {
-            ParseError(Loc, "Property %s cannot be read", *FieldName);
-            delete this;
-            return nullptr;
-          }
-          VExpression *e = new VInvocation(op, Prop->GetFunc, nullptr, true, false, Loc, 0, nullptr);
-          op = nullptr;
-          delete this;
-          return e->Resolve(ec);
-        }
-      }
-    }
+    if (Prop) return DoPropertyResolve(ec, Prop, assType);
 
-    ParseError(Loc, "No such field %s", *FieldName);
+    ParseError(Loc, "No such field `%s`", *FieldName);
     delete this;
     return nullptr;
   }
@@ -373,29 +393,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       }
       // read property
       VProperty *Prop = op->Type.Class->FindProperty(FieldName);
-      if (Prop) {
-        if (op->IsDefaultObject()) {
-          if (!Prop->DefaultField) {
-            ParseError(Loc, "Property `%s` has no default field set", *FieldName);
-            delete this;
-            return nullptr;
-          }
-          VExpression *e = new VFieldAccess(op, Prop->DefaultField, Loc, FIELD_ReadOnly);
-          op = nullptr;
-          delete this;
-          return e->Resolve(ec);
-        } else {
-          if (!Prop->GetFunc) {
-            ParseError(Loc, "Property `%s` cannot be read", *FieldName);
-            delete this;
-            return nullptr;
-          }
-          VExpression *e = new VInvocation(op, Prop->GetFunc, nullptr, true, false, Loc, 0, nullptr);
-          op = nullptr;
-          delete this;
-          return e->Resolve(ec);
-        }
-      }
+      if (Prop) return DoPropertyResolve(ec, Prop, assType);
       // method
       VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass);
       if (!M) {
@@ -436,20 +434,9 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
-      // property
+      // write property
       VProperty *Prop = op->Type.Class->FindProperty(FieldName);
-      if (Prop) {
-        if (!Prop->SetFunc) {
-          ParseError(Loc, "Property `%s` cannot be set", *FieldName);
-          delete this;
-          return nullptr;
-        }
-        VExpression *e = new VPropertyAssign(op, Prop->SetFunc, true, Loc);
-        op = nullptr;
-        delete this;
-        // assignment will call resolve
-        return e;
-      }
+      if (Prop) return DoPropertyResolve(ec, Prop, assType);
     }
   }
 

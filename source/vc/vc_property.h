@@ -42,11 +42,15 @@ public:
   VMethod *GetFunc;
   VMethod *SetFunc;
   VField *DefaultField;
+  VField *ReadField; // !null: property read will use this field
+  VField *WriteField; // !null: property write will use this field
   vuint32 Flags;
 
   // compiler fields
   VExpression *TypeExpr;
   VName DefaultFieldName;
+  VName ReadFieldName;
+  VName WriteFieldName;
 
   VProperty (VName, VMemberBase *, TLocation);
   virtual ~VProperty () override;
