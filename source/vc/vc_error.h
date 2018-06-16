@@ -66,4 +66,4 @@ void BailOut () __attribute__((noreturn));
 void FatalError (const char *text, ...) __attribute__((noreturn, format(printf, 1, 2)));
 #endif
 
-extern int NumErrors;
+extern int vcErrorCount;

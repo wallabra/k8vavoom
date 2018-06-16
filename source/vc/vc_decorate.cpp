@@ -3204,7 +3204,7 @@ void ProcessDecorateScripts () {
     DecPkg->ParsedClasses[i]->DecoratePostLoad();
   }
 
-  if (NumErrors) BailOut();
+  if (vcErrorCount) BailOut();
 
   VClass::StaticReinitStatesLookup();
 

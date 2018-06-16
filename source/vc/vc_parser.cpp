@@ -2989,6 +2989,6 @@ void VParser::Parse () {
         break;
       }
   }
-  if (NumErrors) BailOut();
+  if (vcErrorCount) BailOut();
   unguard;
 }

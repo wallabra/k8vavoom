@@ -27,7 +27,7 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-int NumErrors = 0;
+int vcErrorCount = 0;
 
 static const char *ErrorNames[NUM_ERRORS] = {
   "No error.",
@@ -88,7 +88,7 @@ __attribute__((format(printf, 2, 3))) void ParseError (const TLocation &l, const
   char Buffer[2048];
   va_list argPtr;
 
-  ++NumErrors;
+  ++vcErrorCount;
 
   va_start(argPtr, text);
   vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
@@ -99,7 +99,7 @@ __attribute__((format(printf, 2, 3))) void ParseError (const TLocation &l, const
   fprintf(stderr, "%s:%d: %s\n", *l.GetSource(), l.GetLine(), Buffer);
 #endif
 
-  if (NumErrors >= 16) Sys_Error("Too many errors");
+  if (vcErrorCount >= 16) Sys_Error("Too many errors");
 }
 
 

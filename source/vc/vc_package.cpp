@@ -380,7 +380,7 @@ void VPackage::Emit () {
     PackagesToLoad[i].Pkg = StaticLoadPackage(PackagesToLoad[i].Name, PackagesToLoad[i].Loc);
   }
 
-  if (NumErrors) BailOut();
+  if (vcErrorCount) BailOut();
 
   dprintf("Defining constants\n");
   for (int i = 0; i < ParsedConstants.Num(); ++i) {
@@ -405,7 +405,7 @@ void VPackage::Emit () {
     ParsedDecorateImportClasses[i]->Define();
   }
 
-  if (NumErrors) BailOut();
+  if (vcErrorCount) BailOut();
 
   dprintf("Defining struct members\n");
   for (int i = 0; i < ParsedStructs.Num(); ++i) {
@@ -417,14 +417,14 @@ void VPackage::Emit () {
     ParsedClasses[i]->DefineMembers();
   }
 
-  if (NumErrors) BailOut();
+  if (vcErrorCount) BailOut();
 
   dprintf("Emiting classes\n");
   for (int i = 0; i < ParsedClasses.Num(); ++i) {
     ParsedClasses[i]->Emit();
   }
 
-  if (NumErrors) BailOut();
+  if (vcErrorCount) BailOut();
 
   unguard;
 }
