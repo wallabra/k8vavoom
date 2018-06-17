@@ -285,6 +285,7 @@ void VLocalVar::Emit (VEmitContext &ec) {
       case TYPE_Reference:
       case TYPE_Class:
       case TYPE_State:
+      case TYPE_Delegate:
              if (Ofs == 0) ec.AddStatement(OPC_LocalValue0);
         else if (Ofs == 1) ec.AddStatement(OPC_LocalValue1);
         else if (Ofs == 2) ec.AddStatement(OPC_LocalValue2);
@@ -294,6 +295,17 @@ void VLocalVar::Emit (VEmitContext &ec) {
         else if (Ofs == 6) ec.AddStatement(OPC_LocalValue6);
         else if (Ofs == 7) ec.AddStatement(OPC_LocalValue7);
         else ec.AddStatement(OPC_LocalValueB, Ofs);
+        if (loc.Type.Type == TYPE_Delegate) {
+               if (Ofs+1 == 0) ec.AddStatement(OPC_LocalValue0);
+          else if (Ofs+1 == 1) ec.AddStatement(OPC_LocalValue1);
+          else if (Ofs+1 == 2) ec.AddStatement(OPC_LocalValue2);
+          else if (Ofs+1 == 3) ec.AddStatement(OPC_LocalValue3);
+          else if (Ofs+1 == 4) ec.AddStatement(OPC_LocalValue4);
+          else if (Ofs+1 == 5) ec.AddStatement(OPC_LocalValue5);
+          else if (Ofs+1 == 6) ec.AddStatement(OPC_LocalValue6);
+          else if (Ofs+1 == 7) ec.AddStatement(OPC_LocalValue7);
+          else ec.AddStatement(OPC_LocalValueB, Ofs+1);
+        }
         break;
       case TYPE_Vector:
         ec.AddStatement(OPC_VLocalValueB, Ofs);
