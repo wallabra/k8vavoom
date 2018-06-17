@@ -394,7 +394,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     opcopy = nullptr; // just in case
     if (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length) {
       if (assType == AssType::AssTarget) {
-        ParseError(Loc, "Cannot change string length via assign yet.");
+        ParseError(Loc, "Cannot change string length via assign yet");
         delete this;
         return nullptr;
       }

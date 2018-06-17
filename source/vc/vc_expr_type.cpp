@@ -489,7 +489,6 @@ VDelegateType::VDelegateType (VExpression *aexpr, const TLocation &aloc)
   : VTypeExpr(TYPE_Unknown, aloc)
   , Flags(0)
   , NumParams(0)
-  , freeParams(true)
 {
   Expr = aexpr;
   memset(Params, 0, sizeof(Params));
@@ -503,9 +502,11 @@ VDelegateType::VDelegateType (VExpression *aexpr, const TLocation &aloc)
 //
 //==========================================================================
 VDelegateType::~VDelegateType () {
-  if (freeParams) {
-    for (int f = NumParams-1; f >= 0; --f) delete Params[f].TypeExpr;
+  for (int f = 0; f < NumParams; ++f) {
+    delete Params[f].TypeExpr;
+    Params[f].TypeExpr = nullptr;
   }
+  NumParams = 0;
 }
 
 
@@ -523,19 +524,6 @@ VExpression *VDelegateType::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VDelegateType::ResolveAsType
-//
-//==========================================================================
-VTypeExpr *VDelegateType::ResolveAsType (VEmitContext &ec) {
-  if (Expr) Expr = Expr->ResolveAsType(ec);
-  if (!Expr) { delete this; return nullptr; }
-  Type = Expr->Type;
-  return this;
-}
-
-
-//==========================================================================
-//
 //  VDelegateType::DoSyntaxCopyTo
 //
 //==========================================================================
@@ -544,12 +532,42 @@ void VDelegateType::DoSyntaxCopyTo (VExpression *e) {
   auto res = (VDelegateType *)e;
   res->Flags = Flags;
   res->NumParams = NumParams;
-  memcpy(res->ParamFlags, ParamFlags, sizeof(ParamFlags));
   for (int f = 0; f < NumParams; ++f) {
-    res->Params[f] = Params[f];
+    res->ParamFlags[f] = ParamFlags[f];
     res->Params[f].TypeExpr = (Params[f].TypeExpr ? Params[f].TypeExpr->SyntaxCopy() : nullptr);
+    res->Params[f].Name = Params[f].Name;
+    res->Params[f].Loc = Params[f].Loc;
   }
-  res->freeParams = true;
+}
+
+
+//==========================================================================
+//
+//  VDelegateType::ResolveAsType
+//
+//==========================================================================
+VTypeExpr *VDelegateType::ResolveAsType (VEmitContext &ec) {
+  if (Expr) Expr = Expr->ResolveAsType(ec);
+  if (!Expr) { delete this; return nullptr; }
+  Type = Expr->Type;
+  //RealType = create delegate type here
+  return this;
+}
+
+
+VMethod *VDelegateType::CreateDelegateMethod (VMemberBase *aowner) {
+  VMethod *Func = new VMethod(NAME_None, aowner, Loc);
+  Func->ReturnTypeExpr = Expr->SyntaxCopy();
+  Func->Flags = Flags;
+  Func->NumParams = NumParams;
+  // copy params
+  for (int f = 0; f < NumParams; ++f) {
+    Func->ParamFlags[f] = ParamFlags[f];
+    Func->Params[f].TypeExpr = (Params[f].TypeExpr ? Params[f].TypeExpr->SyntaxCopy() : nullptr);
+    Func->Params[f].Name = Params[f].Name;
+    Func->Params[f].Loc = Params[f].Loc;
+  }
+  return Func;
 }
 
 

@@ -509,14 +509,15 @@ char VLexer::peekNextNonBlankChar () const {
 //==========================================================================
 void VLexer::ProcessPreprocessor () {
   NextChr();
+  while (currCh != EOF_CHARACTER && !src->NewLine && (vuint8)currCh <= ' ') NextChr();
 
   if (src->NewLine || currCh == EOF_CHARACTER) {
-    ParseError(Location, "Bad directive.");
+    ParseError(Location, "Compiler directive expected");
     return;
   }
 
   if (ASCIIToChrCode[(vuint8)currCh] != CHR_Letter) {
-    ParseError(Location, "Bad directive.");
+    ParseError(Location, "Compiler directive expected");
     while (!src->NewLine && currCh != EOF_CHARACTER) NextChr();
     return;
   }
@@ -526,13 +527,13 @@ void VLexer::ProcessPreprocessor () {
   if (!VStr::Cmp(tokenStringBuffer, "line")) {
     // read line number
     SkipWhitespaceAndComments();
-    if (ASCIIToChrCode[(vuint8)currCh] != CHR_Number) ParseError(Location, "Bad directive.");
+    if (ASCIIToChrCode[(vuint8)currCh] != CHR_Number) ParseError(Location, "`#line`: line number expected");
     ProcessNumberToken();
     src->Line = Number-1;
 
     // read file name
     SkipWhitespaceAndComments();
-    if (ASCIIToChrCode[(vuint8)currCh] != CHR_Quote) ParseError(Location, "Bad directive.");
+    if (ASCIIToChrCode[(vuint8)currCh] != CHR_Quote) ParseError(Location, "`#line`: file name expected");
     ProcessFileName();
     src->SourceIdx = TLocation::AddSourceFile(String);
     Location = TLocation(src->SourceIdx, src->Line);
@@ -553,14 +554,14 @@ void VLexer::ProcessPreprocessor () {
     ProcessInclude();
     return;
   } else {
-    ParseError(Location, "Bad directive.");
+    ParseError(Location, "Unknown compiler directive `%s`", tokenStringBuffer);
     while (!src->NewLine && currCh != EOF_CHARACTER) NextChr();
   }
   Token = TK_NoToken;
 
   SkipWhitespaceAndComments();
   // a new-line is expected at the end of preprocessor directive.
-  if (!src->NewLine) ParseError(Location, "Bad directive.");
+  if (!src->NewLine) ParseError(Location, "Compiler directive contains extra code");
 }
 
 
@@ -574,13 +575,13 @@ void VLexer::ProcessDefine () {
 
   // argument to the #define must be on the same line.
   if (src->NewLine || currCh == EOF_CHARACTER) {
-    ParseError(Location, "Bad directive.");
+    ParseError(Location, "`#define`: missing argument");
     return;
   }
 
   // parse name to be defined
   if (ASCIIToChrCode[(vuint8)currCh] != CHR_Letter) {
-    ParseError(Location, "Bad directive.");
+    ParseError(Location, "`#define`: invalid define name");
     while (!src->NewLine && currCh != EOF_CHARACTER) NextChr();
     return;
   }
@@ -602,7 +603,7 @@ void VLexer::AddDefine (const VStr &CondName, bool showWarning) {
   // check for redefined names
   for (int i = 0; i < defines.length(); ++i) {
     if (defines[i] == CondName) {
-      if (showWarning) ParseWarning(Location, "Redefined conditional");
+      if (showWarning) ParseWarning(Location, "Redefined conditional '%s'", *CondName);
       return;
     }
   }
@@ -620,13 +621,13 @@ void VLexer::ProcessIf (bool OnTrue) {
 
   // argument to the #ifdef must be on the same line
   if (src->NewLine || currCh == EOF_CHARACTER) {
-    ParseError(Location, "Bad directive.");
+    ParseError(Location, "`#if`: missing argument");
     return;
   }
 
   // parse condition name
   if (ASCIIToChrCode[(vuint8)currCh] != CHR_Letter) {
-    ParseError(Location, "Bad directive.");
+    ParseError(Location, "`#if`: invalid argument");
     while (!src->NewLine && currCh != EOF_CHARACTER) NextChr();
     return;
   }
@@ -661,7 +662,7 @@ void VLexer::ProcessIf (bool OnTrue) {
 //==========================================================================
 void VLexer::ProcessElse () {
   if (!src->IfStates.Num()) {
-    ParseError(Location, "#else without an #ifdef/#ifndef");
+    ParseError(Location, "`#else` without an `#ifdef`/`#ifndef`");
     return;
   }
   switch (src->IfStates[src->IfStates.Num()-1]) {
@@ -679,7 +680,7 @@ void VLexer::ProcessElse () {
     case IF_ElseTrue:
     case IF_ElseFalse:
     case IF_ElseSkip:
-      ParseError(Location, "Multiple #else directives for a single #ifdef");
+      ParseError(Location, "Multiple `#else` directives for a single `#ifdef`");
       src->Skipping = true;
       break;
   }
@@ -693,7 +694,7 @@ void VLexer::ProcessElse () {
 //==========================================================================
 void VLexer::ProcessEndIf () {
   if (!src->IfStates.Num()) {
-    ParseError(Location, "#endif without an #ifdef/#ifndef");
+    ParseError(Location, "`#endif` without an `#ifdef`/`#ifndef`");
     return;
   }
   src->IfStates.RemoveIndex(src->IfStates.Num()-1);
@@ -727,13 +728,13 @@ void VLexer::ProcessInclude () {
 
   // file name must be on the same line
   if (src->NewLine || currCh == EOF_CHARACTER) {
-    ParseError(Location, "Bad directive.");
+    ParseError(Location, "`#include`: file name expected");
     return;
   }
 
   // parse file name
   if (currCh != '\"') {
-    ParseError(Location, "Bad directive.");
+    ParseError(Location, "`#include`: string expected");
     while (!src->NewLine && currCh != EOF_CHARACTER) NextChr();
     return;
   }
@@ -743,7 +744,7 @@ void VLexer::ProcessInclude () {
   Token = TK_NoToken;
   SkipWhitespaceAndComments();
   // a new-line is expected at the end of preprocessor directive.
-  if (!src->NewLine) ParseError(Location, "Bad directive.");
+  if (!src->NewLine) ParseError(Location, "`#include`: extra arguments");
 
   if (src->Skipping) return;
 

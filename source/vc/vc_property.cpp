@@ -87,7 +87,7 @@ bool VProperty::Define () {
   if (!TypeExpr) return false;
 
   if (TypeExpr->Type.Type == TYPE_Void) {
-    ParseError(TypeExpr->Loc, "Property cannot have void type.");
+    ParseError(TypeExpr->Loc, "Property cannot have `void` type");
     return false;
   }
   Type = TypeExpr->Type;

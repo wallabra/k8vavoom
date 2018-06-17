@@ -1091,7 +1091,7 @@ void VInvocation::CheckParams (VEmitContext &ec, int argc, VExpression **argv) {
     }
   }
 
-  if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments, need %d, got %d.", maxParams, NumArgs);
+  if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments, need %d, got %d", maxParams, NumArgs);
 
   while (NumArgs < requiredParams) {
     if (Func->ParamFlags[NumArgs]&FPARM_Optional) {
@@ -1127,7 +1127,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
     maxParams = Func->NumParams;
   }
 
-  if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments, need %d, got %d.", maxParams, NumArgs);
+  if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments, need %d, got %d", maxParams, NumArgs);
 
   for (int i = 0; i < NumArgs; ++i) {
     if (i >= requiredParams) continue;

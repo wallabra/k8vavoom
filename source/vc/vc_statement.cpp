@@ -993,7 +993,7 @@ void VSwitchDefault::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //==========================================================================
 bool VSwitchDefault::Resolve (VEmitContext &) {
   if (Switch->HaveDefault) {
-    ParseError(Loc, "Only 1 DEFAULT per switch allowed.");
+    ParseError(Loc, "Only one `default` per switch allowed");
     return false;
   }
   Switch->HaveDefault = true;
@@ -1060,7 +1060,7 @@ bool VBreak::Resolve (VEmitContext &) {
 //==========================================================================
 void VBreak::DoEmit (VEmitContext &ec) {
   if (!ec.LoopEnd.IsDefined()) {
-    ParseError(Loc, "Misplaced BREAK statement.");
+    ParseError(Loc, "Misplaced `break` statement");
     return;
   }
   ec.AddStatement(OPC_Goto, ec.LoopEnd);
@@ -1116,7 +1116,7 @@ bool VContinue::Resolve (VEmitContext &) {
 //==========================================================================
 void VContinue::DoEmit (VEmitContext &ec) {
   if (!ec.LoopStart.IsDefined()) {
-    ParseError(Loc, "Misplaced CONTINUE statement.");
+    ParseError(Loc, "Misplaced `continue` statement");
     return;
   }
   ec.AddStatement(OPC_Goto, ec.LoopStart);
@@ -1191,7 +1191,7 @@ bool VReturn::Resolve (VEmitContext &ec) {
   if (Expr) {
     Expr = (ec.FuncRetType.Type == TYPE_Float ? Expr->ResolveFloat(ec) : Expr->Resolve(ec));
     if (ec.FuncRetType.Type == TYPE_Void) {
-      ParseError(Loc, "void function cannot return a value.");
+      ParseError(Loc, "void function cannot return a value");
       Ret = false;
     } else if (Expr) {
       Expr->Type.CheckMatch(Expr->Loc, ec.FuncRetType);
@@ -1200,7 +1200,7 @@ bool VReturn::Resolve (VEmitContext &ec) {
     }
   } else {
     if (ec.FuncRetType.Type != TYPE_Void) {
-      ParseError(Loc, "Return value expected.");
+      ParseError(Loc, "Return value expected");
       Ret = false;
     }
   }

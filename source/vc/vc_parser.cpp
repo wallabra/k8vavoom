@@ -123,12 +123,7 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, bool requireInit) {
   do {
     VLocalEntry e;
     e.TypeExpr = TypeExpr->SyntaxCopy();
-    TLocation l = Lex.Location;
-    // parse `*`
-    while (Lex.Check(TK_Asterisk)) {
-      e.TypeExpr = new VPointerType(e.TypeExpr, l);
-      l = Lex.Location;
-    }
+    e.TypeExpr = ParseTypePtrs(e.TypeExpr);
     // check for `type[size] arr` syntax
     if (Lex.Check(TK_LBracket)) {
       // arrays cannot be initialized (it seems), so they cannot be automatic
@@ -285,7 +280,7 @@ VExpression *VParser::ParseExpressionPriority0 () {
     case TK_DColon:
       {
         Lex.NextToken();
-        if (Lex.Token != TK_Identifier) { ParseError(l, "Method name expected."); break; }
+        if (Lex.Token != TK_Identifier) { ParseError(l, "Method name expected"); break; }
         l = Lex.Location;
         VName Name = Lex.Name;
         Lex.NextToken();
@@ -907,7 +902,7 @@ VStatement *VParser::ParseStatement () {
             {
               needCompound = true; // wrap it
               // indirections are processed in `ParseLocalVar()`, 'cause they belongs to vars
-              VExpression *TypeExpr = ParseType();
+              VExpression *TypeExpr = ParseType(true);
               do {
                 VLocalDecl *Decl = ParseLocalVar(TypeExpr, true);
                 if (!Decl) break;
@@ -1023,7 +1018,7 @@ VStatement *VParser::ParseStatement () {
     case TK_Auto:
       {
         // indirections are processed in `ParseLocalVar()`, 'cause they belongs to vars
-        VExpression *TypeExpr = ParseType();
+        VExpression *TypeExpr = ParseType(true);
         VLocalDecl *Decl = ParseLocalVar(TypeExpr);
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
         return new VLocalVarStatement(Decl);
@@ -1145,7 +1140,7 @@ VExpression *VParser::ParsePrimitiveType () {
           // `array!type` or `array!(type)`
           int parenCount = 0;
           while (Lex.Check(TK_LParen)) ++parenCount;
-          Inner = ParseType();
+          Inner = ParseType(); // no delegates yet
           if (!Inner) ParseError(Lex.Location, "Inner type declaration expected");
           while (parenCount-- > 0) {
             Inner = ParseTypePtrs(Inner);
@@ -1380,7 +1375,7 @@ VExpression *VParser::ParseLambda () {
   if (!currClass) { ParseError(stl, "Lambda outside of class"); return new VNullLiteral(stl); }
 
   VExpression *Type = ParseTypeWithPtrs();
-  if (!Type) { ParseError(Lex.Location, "Return type expected."); return new VNullLiteral(stl); }
+  if (!Type) { ParseError(Lex.Location, "Return type expected"); return new VNullLiteral(stl); }
 
   if (Lex.Token != TK_LParen) { ParseError(Lex.Location, "Argument list"); delete Type; return new VNullLiteral(stl); }
 
@@ -1537,20 +1532,16 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
     vint32 Modifiers = TModifiers::Parse(Lex);
     if (globalRO) Modifiers |= TModifiers::ReadOnly;
 
-    VExpression *Type = ParseType();
+    VExpression *Type = ParseType(true); // delegates allowed
     if (!Type) {
-      ParseError(Lex.Location, "Field type expected.");
+      ParseError(Lex.Location, "Field type expected");
       Lex.NextToken();
       continue;
     }
 
     do {
       VExpression *FieldType = Type->SyntaxCopy();
-      TLocation l = Lex.Location;
-      while (Lex.Check(TK_Asterisk)) {
-        FieldType = new VPointerType(FieldType, l);
-        l = Lex.Location;
-      }
+      FieldType = ParseTypePtrs(FieldType);
 
       VName FieldName(NAME_None);
       TLocation FieldLoc = Lex.Location;
@@ -1573,6 +1564,14 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
       fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
         TModifiers::Native|TModifiers::Private|TModifiers::Protected|
         TModifiers::ReadOnly|TModifiers::Transient, FieldLoc));
+      // delegate?
+      if (FieldType->IsDelegateType()) {
+        fi->Func = ((VDelegateType *)FieldType)->CreateDelegateMethod(Struct);
+        fi->Type = VFieldType(TYPE_Delegate);
+        fi->Type.Function = fi->Func;
+        fi->TypeExpr = nullptr;
+        delete FieldType;
+      }
       Struct->AddField(fi);
     } while (Lex.Check(TK_Comma));
     delete Type;
@@ -2672,7 +2671,7 @@ void VParser::ParseClass () {
     if (Lex.Check(TK_Delegate)) {
       VExpression *Type = ParseTypeWithPtrs();
       if (!Type) {
-        ParseError(Lex.Location, "Field type expected.");
+        ParseError(Lex.Location, "Field type expected");
         continue;
       }
       if (Lex.Token != TK_Identifier) {
@@ -2680,7 +2679,7 @@ void VParser::ParseClass () {
         continue;
       }
       VField *fi = new VField(Lex.Name, Class, Lex.Location);
-      if (Class->FindField(Lex.Name) || Class->FindMethod(Lex.Name)) ParseError(Lex.Location, "Redeclared field");
+      if (Class->FindField(Lex.Name) || Class->FindMethod(Lex.Name)) ParseError(Lex.Location, "Redeclared field `%s`", *Lex.Name);
       Lex.NextToken();
       Class->AddField(fi);
       ParseDelegate(Type, fi);
@@ -2735,76 +2734,22 @@ void VParser::ParseClass () {
       continue;
     }
 
-    VExpression *Type = ParseType();
+    VExpression *Type = ParseType(true);
     if (!Type) {
-      ParseError(Lex.Location, "Field type expected.");
+      ParseError(Lex.Location, "Field type expected");
       Lex.NextToken();
       continue;
-    }
-
-    // new-style delegate syntax: `type delegate (args) name;`
-    {
-      int ofs = 0;
-      while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs;
-      if (Lex.peekTokenType(ofs) == TK_Delegate) {
-        // find delegate name
-        if (Lex.peekTokenType(ofs+1) == TK_LParen) {
-          //fprintf(stderr, "*** trying new delegate syntax... (%s)\n", VLexer::TokenNames[Lex.peekTokenType(ofs+1)]);
-          bool validDelegate = true;
-          int level = 1;
-          ofs += 2; // skip opening paren
-          while (level) {
-            auto tk = Lex.peekTokenType(ofs++);
-            if (tk == TK_NoToken) { validDelegate = false; break; }
-            //fprintf(stderr, "  <%s>\n", VLexer::TokenNames[tk]);
-            if (tk == TK_LParen) {
-              ++level;
-            } else if (tk == TK_RParen) {
-              if (--level == 0) break;
-            } else if (tk == TK_LBracket || tk == TK_Semicolon) {
-              validDelegate = false;
-              break;
-            }
-          }
-          if (validDelegate) {
-            // this must be an identifier
-            VStr dgstr;
-            if (Lex.peekTokenType(ofs, &dgstr) == TK_Identifier) {
-              //fprintf(stderr, "dgstr: <%s>\n", *dgstr);
-              // ok, this looks like a valid delegate declaration, process it
-              VName dgname = VName(*dgstr);
-              Type = ParseTypePtrs(Type);
-              if (!Lex.Check(TK_Delegate)) ParseError(Lex.Location, "Invalid delegate syntax (parser is confused)");
-              VField *fi = new VField(dgname, Class, Lex.Location);
-              if (Class->FindField(dgname) || Class->FindMethod(dgname)) ParseError(Lex.Location, "Redeclared field");
-              Class->AddField(fi);
-              ParseDelegate(Type, fi);
-              if (Lex.Token != TK_Identifier) {
-                ParseError(Lex.Location, "Field name expected");
-              } else {
-                if (Lex.Name != dgname) ParseError(Lex.Location, "Invalid delegate syntax (parser is confused)");
-                Lex.NextToken(); // skip it
-              }
-              Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-              continue;
-            }
-          }
-        }
-      }
     }
 
     bool need_semicolon = true;
     bool firstField = true;
     do {
       VExpression *FieldType = Type->SyntaxCopy();
-      TLocation l = Lex.Location;
-      while (Lex.Check(TK_Asterisk)) {
-        FieldType = new VPointerType(FieldType, l);
-        l = Lex.Location;
-      }
+      FieldType = ParseTypePtrs(FieldType);
 
       // `type[size] name` declaration
       if (firstField && Lex.Check(TK_LBracket)) {
+        if (Type->IsDelegateType()) ParseError(Lex.Location, "No arrays of delegates are allowed (yet)");
         firstField = false; // it is safe to reset it here
         TLocation SLoc = Lex.Location;
         VExpression *e = ParseExpression();
@@ -2978,6 +2923,7 @@ void VParser::ParseClass () {
 
       // method?
       if (Lex.Check(TK_LParen)) {
+        if (Type->IsDelegateType()) ParseError(Lex.Location, "Invalid delegate declaration");
         ParseMethodDef(FieldType, FieldName, FieldLoc, Class, Modifiers, false);
         need_semicolon = false;
         break;
@@ -2987,11 +2933,12 @@ void VParser::ParseClass () {
 
       // `type name[size]` declaration
       if (Lex.Check(TK_LBracket)) {
+        if (Type->IsDelegateType()) ParseError(Lex.Location, "No arrays of delegates are allowed (yet)");
         TLocation SLoc = Lex.Location;
         VExpression *e = ParseExpression();
         Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
         FieldType = new VFixedArrayType(FieldType, e, SLoc);
-      } else if (Lex.Check(TK_Assign)) {
+      } else if (!Type->IsDelegateType() && Lex.Check(TK_Assign)) {
         // not an array, and has initialiser
         initr = ParseExpression();
       }
@@ -3002,6 +2949,15 @@ void VParser::ParseClass () {
         TModifiers::Native|TModifiers::Private|TModifiers::Protected|
         TModifiers::ReadOnly|TModifiers::Transient, FieldLoc));
       Class->AddField(fi);
+
+      // new-style delegate syntax: `type delegate (args) name;`
+      if (FieldType->IsDelegateType()) {
+        fi->Func = ((VDelegateType *)FieldType)->CreateDelegateMethod(fi);
+        fi->Type = VFieldType(TYPE_Delegate);
+        fi->Type.Function = fi->Func;
+        delete FieldType;
+        fi->TypeExpr = nullptr;
+      }
 
       // append initializer
       if (initr) {

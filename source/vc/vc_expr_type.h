@@ -162,7 +162,6 @@ public:
   vint32 NumParams;
   VMethodParam Params[VMethod::MAX_PARAMS];
   vuint8 ParamFlags[VMethod::MAX_PARAMS];
-  bool freeParams; // `true` by default
 
   // aexpr: return type
   VDelegateType (VExpression *aexpr, const TLocation &aloc);
@@ -171,6 +170,8 @@ public:
   virtual VTypeExpr *ResolveAsType (VEmitContext &ec) override;
 
   virtual bool IsDelegateType () const override;
+
+  VMethod *CreateDelegateMethod (VMemberBase *aowner);
 
 protected:
   VDelegateType () {}
