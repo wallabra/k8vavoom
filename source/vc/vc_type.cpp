@@ -409,7 +409,7 @@ bool VFieldType::CheckMatch (const TLocation &l, const VFieldType &Other, bool r
     }
     if (!F1.ReturnType.Equals(F2.ReturnType)) {
       result = false;
-      if (raiseError) ParseError(l, "Delegate has different return type");
+      if (raiseError) ParseError(l, "Delegate has different return type (got '%s', expected '%s')", *F1.ReturnType.GetName(), *F2.ReturnType.GetName());
     } else if (F1.NumParams != F2.NumParams) {
       result = false;
       if (raiseError) ParseError(l, "Delegate has different number of arguments");

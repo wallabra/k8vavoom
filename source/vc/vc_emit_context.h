@@ -119,6 +119,7 @@ public:
 
   // returns index in `LocalDefs`
   int CheckForLocalVar (VName Name);
+  VFieldType GetLocalVarType (int idx);
 
   VLabel DefineLabel ();
   void MarkLabel (VLabel l);

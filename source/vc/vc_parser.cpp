@@ -1152,7 +1152,7 @@ VExpression *VParser::ParsePrimitiveType () {
         } else {
           // array<type>
           Lex.Expect(TK_Less);
-          Inner = ParseTypeWithPtrs();
+          Inner = ParseTypeWithPtrs(true);
           if (!Inner) ParseError(Lex.Location, "Inner type declaration expected");
           Lex.Expect(TK_Greater);
         }
@@ -1198,7 +1198,7 @@ VExpression *VParser::ParseType (bool allowDelegates) {
         VMethodParam &P = dg->Params[dg->NumParams];
         int ParmModifiers = TModifiers::Parse(Lex);
         dg->ParamFlags[dg->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref, Lex.Location));
-        P.TypeExpr = ParseTypeWithPtrs();
+        P.TypeExpr = ParseTypeWithPtrs(true);
         if (!P.TypeExpr && dg->NumParams == 0) break;
         if (Lex.Token == TK_Identifier) {
           P.Name = Lex.Name;
@@ -1248,9 +1248,9 @@ VExpression *VParser::ParseTypePtrs (VExpression *type) {
 // convenient wrapper
 //
 //==========================================================================
-VExpression *VParser::ParseTypeWithPtrs () {
+VExpression *VParser::ParseTypeWithPtrs (bool allowDelegates) {
   guard(VParser::ParseTypePtrs);
-  return ParseTypePtrs(ParseType());
+  return ParseTypePtrs(ParseType(allowDelegates));
   unguard;
 }
 
@@ -1286,7 +1286,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
     int ParmModifiers = TModifiers::Parse(Lex);
     Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref, Lex.Location));
 
-    P.TypeExpr = ParseTypeWithPtrs();
+    P.TypeExpr = ParseTypeWithPtrs(true);
     if (!P.TypeExpr && Func->NumParams == 0) break;
     if (Lex.Token == TK_Identifier) {
       P.Name = Lex.Name;
@@ -1340,7 +1340,7 @@ void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
     VMethodParam &P = Func->Params[Func->NumParams];
     int ParmModifiers = TModifiers::Parse(Lex);
     Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref, Lex.Location));
-    P.TypeExpr = ParseTypeWithPtrs();
+    P.TypeExpr = ParseTypeWithPtrs(true);
     if (!P.TypeExpr && Func->NumParams == 0) break;
     if (Lex.Token == TK_Identifier) {
       P.Name = Lex.Name;
@@ -1374,7 +1374,7 @@ VExpression *VParser::ParseLambda () {
   if (!currFunc) { ParseError(stl, "Lambda outside of method"); return new VNullLiteral(stl); }
   if (!currClass) { ParseError(stl, "Lambda outside of class"); return new VNullLiteral(stl); }
 
-  VExpression *Type = ParseTypeWithPtrs();
+  VExpression *Type = ParseTypeWithPtrs(true);
   if (!Type) { ParseError(Lex.Location, "Return type expected"); return new VNullLiteral(stl); }
 
   if (Lex.Token != TK_LParen) { ParseError(Lex.Location, "Argument list"); delete Type; return new VNullLiteral(stl); }
@@ -1392,7 +1392,7 @@ VExpression *VParser::ParseLambda () {
   if (Lex.Token != TK_RParen) {
     for (;;) {
       VMethodParam &P = Func->Params[Func->NumParams];
-      P.TypeExpr = ParseTypeWithPtrs();
+      P.TypeExpr = ParseTypeWithPtrs(true);
       if (!P.TypeExpr) break;
       if (Lex.Token == TK_Identifier) {
         P.Name = Lex.Name;

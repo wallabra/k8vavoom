@@ -302,6 +302,23 @@ void VCastOrInvocation::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
+  // look for delegate-typed local var
+  int num = ec.CheckForLocalVar(Name);
+  if (num != -1) {
+    VFieldType tp = ec.GetLocalVarType(num);
+    if (tp.Type != TYPE_Delegate) {
+      ParseError(Loc, "Cannot call non-delegate");
+      delete this;
+      return nullptr;
+    }
+    //VExpression *e = new VLocalVar(num, Loc);
+    //VField *field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
+    VInvocation *e = new VInvocation(tp.Function, num, Loc, NumArgs, Args);
+    NumArgs = 0;
+    delete this;
+    return e->Resolve(ec);
+  }
+
   VClass *Class = VMemberBase::StaticFindClass(Name);
   if (Class) {
     if (NumArgs != 1 || !Args[0]) {
@@ -345,7 +362,7 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
     return e->Resolve(ec);
   }
 
-  ParseError(Loc, "Unknown method %s", *Name);
+  ParseError(Loc, "Unknown method `%s`", *Name);
   delete this;
   return nullptr;
 }
@@ -669,7 +686,6 @@ void VDotInvocation::Emit (VEmitContext &) {
 //  VInvocation::VInvocation
 //
 //==========================================================================
-
 VInvocation::VInvocation (VExpression *ASelfExpr, VMethod *AFunc, VField *ADelegateField,
                           bool AHaveSelf, bool ABaseCall, const TLocation &ALoc, int ANumArgs,
                           VExpression **AArgs)
@@ -677,8 +693,28 @@ VInvocation::VInvocation (VExpression *ASelfExpr, VMethod *AFunc, VField *ADeleg
   , SelfExpr(ASelfExpr)
   , Func(AFunc)
   , DelegateField(ADelegateField)
+  , DelegateLocal(-666)
   , HaveSelf(AHaveSelf)
   , BaseCall(ABaseCall)
+  , CallerState(nullptr)
+  , MultiFrameState(false)
+{
+}
+
+
+//==========================================================================
+//
+//  VInvocation::VInvocation
+//
+//==========================================================================
+VInvocation::VInvocation (VMethod *AFunc, int ADelegateLocal, const TLocation &ALoc, int ANumArgs, VExpression **AArgs)
+  : VInvocationBase(ANumArgs, AArgs, ALoc)
+  , SelfExpr(nullptr)
+  , Func(AFunc)
+  , DelegateField(nullptr)
+  , DelegateLocal(ADelegateLocal)
+  , HaveSelf(nullptr)
+  , BaseCall(nullptr)
   , CallerState(nullptr)
   , MultiFrameState(false)
 {
@@ -718,6 +754,7 @@ void VInvocation::DoSyntaxCopyTo (VExpression *e) {
   res->SelfExpr = (SelfExpr ? SelfExpr->SyntaxCopy() : nullptr);
   res->Func = Func;
   res->DelegateField = DelegateField;
+  res->DelegateLocal = DelegateLocal;
   res->HaveSelf = HaveSelf;
   res->BaseCall = BaseCall;
   res->CallerState = CallerState;
@@ -787,7 +824,7 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
   if (Func->Flags&FUNC_Spawner) Type.Class = Args[0]->Type.Class;
 
-  for (int f = 0; f < argc; ++f) delete argv[f];
+  for (int f = 0; f < argc; ++f) { delete argv[f]; argv[f] = nullptr; }
   delete[] argv;
   return this;
   unguard;
@@ -805,12 +842,16 @@ void VInvocation::Emit (VEmitContext &ec) {
 
   bool DirectCall = (BaseCall || (Func->Flags&FUNC_Final) != 0);
 
-  if (Func->Flags&FUNC_Static) {
-    if (HaveSelf) ParseError(Loc, "Invalid static function call");
+  if (DelegateLocal >= 0) {
+    ec.EmitPushNumber(0); // `self`, will be replaced by executor
   } else {
-    if (!HaveSelf) {
-      if (ec.CurrentFunc->Flags&FUNC_Static) ParseError(Loc, "An object is required to call non-static methods");
-      ec.AddStatement(OPC_LocalValue0);
+    if (Func->Flags&FUNC_Static) {
+      if (HaveSelf) ParseError(Loc, "Invalid static function call");
+    } else {
+      if (!HaveSelf) {
+        if (ec.CurrentFunc->Flags&FUNC_Static) ParseError(Loc, "An object is required to call non-static methods");
+        ec.AddStatement(OPC_LocalValue0);
+      }
     }
   }
 
@@ -857,60 +898,74 @@ void VInvocation::Emit (VEmitContext &ec) {
   }
 
   // some special functions will be converted to builtins
-  if ((Func->Flags&(FUNC_Native|FUNC_Static)) == (FUNC_Native|FUNC_Static) && NumArgs == 1 && Func->NumParams == 1) {
-    if (Func->ParamTypes[0].Type == TYPE_Name && Func->ReturnType.Type == TYPE_String && Func->GetVName() == VName("NameToStr")) {
-      ec.AddStatement(OPC_NameToStr);
-      return;
+  if ((Func->Flags&(FUNC_Native|FUNC_Static)) == (FUNC_Native|FUNC_Static)) {
+    if (NumArgs == 1 && Func->NumParams == 1) {
+      if (Func->ParamTypes[0].Type == TYPE_Name && Func->ReturnType.Type == TYPE_String && Func->GetVName() == VName("NameToStr")) {
+        ec.AddStatement(OPC_NameToStr);
+        return;
+      }
+      if (Func->ParamTypes[0].Type == TYPE_String && Func->ReturnType.Type == TYPE_Name && Func->GetVName() == VName("StrToName")) {
+        ec.AddStatement(OPC_StrToName);
+        return;
+      }
+      if (Func->ParamTypes[0].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Int && Func->GetVName() == VName("ftoi")) {
+        ec.AddStatement(OPC_FloatToInt);
+        return;
+      }
+      if (Func->ParamTypes[0].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Float && Func->GetVName() == VName("itof")) {
+        ec.AddStatement(OPC_IntToFloat);
+        return;
+      }
+      if (Func->ParamTypes[0].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Int && Func->GetVName() == VName("abs")) {
+        ec.AddStatement(OPC_IntAbs);
+        return;
+      }
+      if (Func->ParamTypes[0].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Float && Func->GetVName() == VName("fabs")) {
+        ec.AddStatement(OPC_FloatAbs);
+        return;
+      }
     }
-    if (Func->ParamTypes[0].Type == TYPE_String && Func->ReturnType.Type == TYPE_Name && Func->GetVName() == VName("StrToName")) {
-      ec.AddStatement(OPC_StrToName);
-      return;
+
+    if (NumArgs == 2 && Func->NumParams == 2) {
+      if (Func->ParamTypes[0].Type == TYPE_Int && Func->ParamTypes[1].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Int) {
+        if (Func->GetVName() == VName("Min") || Func->GetVName() == VName("min")) { ec.AddStatement(OPC_IntMin); return; }
+        if (Func->GetVName() == VName("Max") || Func->GetVName() == VName("max")) { ec.AddStatement(OPC_IntMax); return; }
+      }
+      if (Func->ParamTypes[0].Type == TYPE_Float && Func->ParamTypes[1].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Float) {
+        if (Func->GetVName() == VName("FMin") || Func->GetVName() == VName("fmin")) { ec.AddStatement(OPC_FloatMin); return; }
+        if (Func->GetVName() == VName("FMax") || Func->GetVName() == VName("fmax")) { ec.AddStatement(OPC_FloatMax); return; }
+      }
     }
-    if (Func->ParamTypes[0].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Int && Func->GetVName() == VName("ftoi")) {
-      ec.AddStatement(OPC_FloatToInt);
-      return;
-    }
-    if (Func->ParamTypes[0].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Float && Func->GetVName() == VName("itof")) {
-      ec.AddStatement(OPC_IntToFloat);
-      return;
-    }
-    if (Func->ParamTypes[0].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Int && Func->GetVName() == VName("abs")) {
-      ec.AddStatement(OPC_IntAbs);
-      return;
-    }
-    if (Func->ParamTypes[0].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Float && Func->GetVName() == VName("fabs")) {
-      ec.AddStatement(OPC_FloatAbs);
-      return;
+
+    if (NumArgs == 3 && Func->NumParams == 3) {
+      if (Func->ParamTypes[0].Type == TYPE_Int && Func->ParamTypes[1].Type == TYPE_Int && Func->ParamTypes[2].Type == TYPE_Int &&
+          Func->ReturnType.Type == TYPE_Int)
+      {
+        if (Func->GetVName() == VName("Clamp") || Func->GetVName() == VName("clamp")) { ec.AddStatement(OPC_IntClamp); return; }
+      }
+      if (Func->ParamTypes[0].Type == TYPE_Float && Func->ParamTypes[1].Type == TYPE_Float && Func->ParamTypes[2].Type == TYPE_Float &&
+          Func->ReturnType.Type == TYPE_Float)
+      {
+        if (Func->GetVName() == VName("FClamp") || Func->GetVName() == VName("fclamp")) { ec.AddStatement(OPC_FloatClamp); return; }
+      }
     }
   }
 
-  if ((Func->Flags&(FUNC_Native|FUNC_Static)) == (FUNC_Native|FUNC_Static) && NumArgs == 2 && Func->NumParams == 2) {
-    if (Func->ParamTypes[0].Type == TYPE_Int && Func->ParamTypes[1].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Int) {
-      if (Func->GetVName() == VName("Min") || Func->GetVName() == VName("min")) { ec.AddStatement(OPC_IntMin); return; }
-      if (Func->GetVName() == VName("Max") || Func->GetVName() == VName("max")) { ec.AddStatement(OPC_IntMax); return; }
-    }
-    if (Func->ParamTypes[0].Type == TYPE_Float && Func->ParamTypes[1].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Float) {
-      if (Func->GetVName() == VName("FMin") || Func->GetVName() == VName("fmin")) { ec.AddStatement(OPC_FloatMin); return; }
-      if (Func->GetVName() == VName("FMax") || Func->GetVName() == VName("fmax")) { ec.AddStatement(OPC_FloatMax); return; }
-    }
+  if (DirectCall) {
+    ec.AddStatement(OPC_Call, Func);
+  } else if (DelegateField) {
+    ec.AddStatement(OPC_DelegateCall, DelegateField, SelfOffset);
+  } else if (DelegateLocal >= 0) {
+    // get address of local
+    VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
+    ec.EmitLocalAddress(loc.Offset);
+    // push self offset
+    //ec.EmitPushNumber(SelfOffset);
+    // emit call
+    ec.AddStatement(OPC_DelegateCallPtr, SelfOffset);
+  } else {
+    ec.AddStatement(OPC_VCall, Func, SelfOffset);
   }
-
-  if ((Func->Flags&(FUNC_Native|FUNC_Static)) == (FUNC_Native|FUNC_Static) && NumArgs == 3 && Func->NumParams == 3) {
-    if (Func->ParamTypes[0].Type == TYPE_Int && Func->ParamTypes[1].Type == TYPE_Int && Func->ParamTypes[2].Type == TYPE_Int &&
-        Func->ReturnType.Type == TYPE_Int)
-    {
-      if (Func->GetVName() == VName("Clamp") || Func->GetVName() == VName("clamp")) { ec.AddStatement(OPC_IntClamp); return; }
-    }
-    if (Func->ParamTypes[0].Type == TYPE_Float && Func->ParamTypes[1].Type == TYPE_Float && Func->ParamTypes[2].Type == TYPE_Float &&
-        Func->ReturnType.Type == TYPE_Float)
-    {
-      if (Func->GetVName() == VName("FClamp") || Func->GetVName() == VName("fclamp")) { ec.AddStatement(OPC_FloatClamp); return; }
-    }
-  }
-
-       if (DirectCall) ec.AddStatement(OPC_Call, Func);
-  else if (DelegateField) ec.AddStatement(OPC_DelegateCall, DelegateField, SelfOffset);
-  else ec.AddStatement(OPC_VCall, Func, SelfOffset);
   unguard;
 }
 

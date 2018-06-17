@@ -243,6 +243,17 @@ int VEmitContext::CheckForLocalVar (VName Name) {
 
 //==========================================================================
 //
+//  VEmitContext::GetLocalVarType
+//
+//==========================================================================
+VFieldType VEmitContext::GetLocalVarType (int idx) {
+  if (idx < 0 || idx >= LocalDefs.length()) return VFieldType(TYPE_Unknown);
+  return LocalDefs[idx].Type;
+}
+
+
+//==========================================================================
+//
 //  VEmitContext::DefineLabel
 //
 //==========================================================================

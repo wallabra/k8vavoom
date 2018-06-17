@@ -327,6 +327,26 @@ func_loop:
         sp = pr_stackPtr;
         PR_VM_BREAK;
 
+      // call delegate by a pushed pointer to it
+      PR_VM_CASE(OPC_DelegateCallPtr)
+        {
+          // get args size (to get `self` offset)
+          int sofs = ReadInt32(ip+1);
+          ip += 5;
+          // get pointer to the delegate
+          void **pDelegate = (void **)sp[-1].p;
+          // drop delegate argument
+          sp -= 1;
+          // push proper self object
+          if (!pDelegate[0]) { cstDump(); Sys_Error("Delegate is not initialised"); }
+          sp[-sofs].p = pDelegate[0];
+          pr_stackPtr = sp;
+          RunFunction((VMethod *)pDelegate[1]);
+        }
+        current_func = func;
+        sp = pr_stackPtr;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_Return)
         checkSlow(sp == local_vars+func->NumLocals);
         pr_stackPtr = local_vars;

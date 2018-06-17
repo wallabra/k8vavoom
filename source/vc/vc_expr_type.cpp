@@ -547,10 +547,20 @@ void VDelegateType::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VTypeExpr *VDelegateType::ResolveAsType (VEmitContext &ec) {
+  /*
   if (Expr) Expr = Expr->ResolveAsType(ec);
   if (!Expr) { delete this; return nullptr; }
+  */
+  /*
   Type = Expr->Type;
   //RealType = create delegate type here
+  */
+  //if (Expr) Expr = Expr->ResolveAsType(ec);
+  //if (!Expr) { delete this; return nullptr; }
+  VMethod *Func = CreateDelegateMethod(ec.CurrentFunc);
+  Func->Define();
+  Type = VFieldType(TYPE_Delegate);
+  Type.Function = Func;
   return this;
 }
 

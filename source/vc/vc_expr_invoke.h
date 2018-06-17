@@ -170,6 +170,7 @@ public:
   VExpression *SelfExpr;
   VMethod *Func;
   VField *DelegateField;
+  int DelegateLocal;
   bool HaveSelf;
   bool BaseCall;
   VState *CallerState;
@@ -178,6 +179,7 @@ public:
   VInvocation (VExpression *ASelfExpr, VMethod *AFunc, VField *ADelegateField,
                bool AHaveSelf, bool ABaseCall, const TLocation &ALoc, int ANumArgs,
                VExpression **AArgs);
+  VInvocation (VMethod *AFunc, int ADelegateLocal, const TLocation &ALoc, int ANumArgs, VExpression **AArgs);
   virtual ~VInvocation () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
