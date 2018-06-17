@@ -602,9 +602,43 @@ void VOpenGLTexture::blitAt (int dx0, int dy0, float scale) const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static TMap<int, VGLTexture *> vcGLTexMap;
+//FIXME: rewrite id management
+static TArray<int> vcGLFreeIds;
+static int vcGLFreeIdsUsed = 0;
+static int vcGLLastUsedId = 0;
+
+
+static int vcGLAllocId (VGLTexture *obj) {
+  int res;
+  if (vcGLFreeIdsUsed > 0) {
+    res = vcGLFreeIds[--vcGLFreeIdsUsed];
+  } else {
+    // no free ids
+    res = ++vcGLLastUsedId;
+  }
+  vcGLTexMap.put(res, obj);
+  return res;
+}
+
+
+static void vcGLFreeId (int id) {
+  if (id < 1 || id > vcGLLastUsedId) return;
+  vcGLTexMap.remove(id);
+  if (vcGLFreeIdsUsed == vcGLFreeIds.length()) {
+    vcGLFreeIds.append(id);
+    ++vcGLFreeIdsUsed;
+  } else {
+    vcGLFreeIds[vcGLFreeIdsUsed++] = id;
+  }
+}
+
+
 IMPLEMENT_CLASS(V, GLTexture);
 
+
 void VGLTexture::Destroy () {
+  vcGLFreeId(id);
   //fprintf(stderr, "destroying texture object %p\n", this);
   if (tex) {
     //fprintf(stderr, "  releasing texture '%s'... rc=%d, (%p)\n", *tex->getPath(), tex->getRC(), tex);
@@ -629,11 +663,24 @@ IMPLEMENT_FUNCTION(VGLTexture, Load) {
   if (tex) {
     VGLTexture *ifile = Spawn<VGLTexture>();
     ifile->tex = tex;
+    ifile->id = vcGLAllocId(ifile);
     //fprintf(stderr, "created texture object %p (%p)\n", ifile, ifile->tex);
     RET_REF((VObject *)ifile);
     return;
   }
   RET_REF(nullptr);
+}
+
+
+// native final static GLTexture GetById (int id);
+IMPLEMENT_FUNCTION(VGLTexture, GetById) {
+  P_GET_INT(id);
+  if (id > 0 && id <= vcGLLastUsedId) {
+    auto opp = vcGLTexMap.find(id);
+    if (opp) RET_REF((VGLTexture *)(*opp)); else RET_REF(nullptr);
+  } else {
+    RET_REF(nullptr);
+  }
 }
 
 

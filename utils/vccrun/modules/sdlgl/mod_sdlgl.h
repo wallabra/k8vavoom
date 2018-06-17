@@ -283,13 +283,15 @@ class VGLTexture : public VObject {
 
 private:
   VOpenGLTexture *tex;
+  int id;
 
 public:
   virtual void Destroy () override;
 
 public:
   DECLARE_FUNCTION(Destroy)
-  DECLARE_FUNCTION(Load) // GLTexture load (string fname)
+  DECLARE_FUNCTION(Load) // native final static GLTexture Load (string fname);
+  DECLARE_FUNCTION(GetById); // native final static GLTexture GetById (int id);
   DECLARE_FUNCTION(width)
   DECLARE_FUNCTION(height)
   DECLARE_FUNCTION(isTransparent)

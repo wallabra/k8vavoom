@@ -1,9 +1,11 @@
 class GLTexture : Object /*abstract*/ native;
 
 private readonly void *__tex;
+readonly int id; // internal texture id
 
 
 native final static GLTexture Load (string fname);
+native final static GLTexture GetById (int id);
 native override void Destroy ();
 
 native int width ();
