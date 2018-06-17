@@ -52,6 +52,35 @@ VMethodParam::VMethodParam () : TypeExpr(nullptr), Name(NAME_None) {
 }
 
 
+/*
+//==========================================================================
+//
+//  VMethodParam::VMethodParam
+//
+//==========================================================================
+VMethodParam::VMethodParam (const VMethodParam &v)
+  : TypeExpr(v.TypeExpr ? v.TypeExpr->SyntaxCopy() : nullptr)
+  , Name(v.Name)
+  , Loc(v.Loc)
+{
+}
+
+
+//==========================================================================
+//
+//  VMethodParam::VMethodParam
+//
+//==========================================================================
+VMethodParam &VMethodParam::operator = (const VMethodParam &v) {
+  if (&v != this) {
+    TypeExpr = (v.TypeExpr ? v.TypeExpr->SyntaxCopy() : nullptr);
+    Name = v.Name;
+    Loc = v.Loc;
+  }
+}
+*/
+
+
 //==========================================================================
 //
 //  VMethodParam::~VMethodParam

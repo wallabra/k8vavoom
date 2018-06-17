@@ -81,6 +81,15 @@ public:
   virtual bool IsDotField () const;
   virtual bool IsRefArg () const;
   virtual bool IsOutArg () const;
+  virtual bool IsTypeExpr () const;
+  virtual bool IsSimpleType () const;
+  virtual bool IsReferenceType () const;
+  virtual bool IsClassType () const;
+  virtual bool IsPointerType () const;
+  virtual bool IsAnyArrayType () const;
+  virtual bool IsStaticArrayType () const;
+  virtual bool IsDynamicArrayType () const;
+  virtual bool IsDelegateType () const;
 
   void *operator new (size_t size);
   void *operator new[] (size_t size);

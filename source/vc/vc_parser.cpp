@@ -1066,34 +1066,36 @@ VCompound *VParser::ParseCompoundStatement () {
 
 //==========================================================================
 //
-// VParser::ParseType
+// VParser::ParsePrimitiveType
+//
+// this won't parse `type*` and delegates
 //
 //==========================================================================
-VExpression *VParser::ParseType () {
-  guard(VParser::ParseType);
+VExpression *VParser::ParsePrimitiveType () {
+  guard(VParser::ParsePrimitiveType);
   TLocation l = Lex.Location;
   switch (Lex.Token) {
-    case TK_Void: Lex.NextToken(); return new VTypeExpr(TYPE_Void, l);
-    case TK_Auto: Lex.NextToken(); return new VTypeExpr(TYPE_Automatic, l);
-    case TK_Int: Lex.NextToken(); return new VTypeExpr(TYPE_Int, l);
-    case TK_Byte: Lex.NextToken(); return new VTypeExpr(TYPE_Byte, l);
-    case TK_Float: Lex.NextToken(); return new VTypeExpr(TYPE_Float, l);
-    case TK_Name: Lex.NextToken(); return new VTypeExpr(TYPE_Name, l);
-    case TK_String: Lex.NextToken(); return new VTypeExpr(TYPE_String, l);
-    case TK_State: Lex.NextToken(); return new VTypeExpr(TYPE_State, l);
+    case TK_Void: Lex.NextToken(); return new VTypeExprSimple(TYPE_Void, l);
+    case TK_Auto: Lex.NextToken(); return new VTypeExprSimple(TYPE_Automatic, l);
+    case TK_Int: Lex.NextToken(); return new VTypeExprSimple(TYPE_Int, l);
+    case TK_Byte: Lex.NextToken(); return new VTypeExprSimple(TYPE_Byte, l);
+    case TK_Float: Lex.NextToken(); return new VTypeExprSimple(TYPE_Float, l);
+    case TK_Name: Lex.NextToken(); return new VTypeExprSimple(TYPE_Name, l);
+    case TK_String: Lex.NextToken(); return new VTypeExprSimple(TYPE_String, l);
+    case TK_State: Lex.NextToken(); return new VTypeExprSimple(TYPE_State, l);
     case TK_Bool:
       {
         Lex.NextToken();
         VFieldType ret(TYPE_Bool);
         ret.BitMask = 1;
-        return new VTypeExpr(ret, l);
+        return new VTypeExprSimple(ret, l);
       }
     case TK_Class:
       {
         Lex.NextToken();
         VName MetaClassName = NAME_None;
         if (Lex.Check(TK_Not)) {
-          // class!type or class!(type)
+          // `class!type` or `class!(type)`
           int parenCount = 0;
           while (Lex.Check(TK_LParen)) ++parenCount;
           if (Lex.Token != TK_Identifier) {
@@ -1118,7 +1120,7 @@ VExpression *VParser::ParseType () {
           }
           Lex.Expect(TK_Greater);
         }
-        return new VTypeExpr(TYPE_Class, l, MetaClassName);
+        return new VTypeExprClass(MetaClassName, l);
       }
     case TK_Identifier:
       {
@@ -1140,13 +1142,13 @@ VExpression *VParser::ParseType () {
         Lex.NextToken();
         VExpression *Inner = nullptr;
         if (Lex.Check(TK_Not)) {
-          // array!type
+          // `array!type` or `array!(type)`
           int parenCount = 0;
           while (Lex.Check(TK_LParen)) ++parenCount;
           Inner = ParseType();
           if (!Inner) ParseError(Lex.Location, "Inner type declaration expected");
-          if (parenCount) Inner = ParseTypePtrs(Inner);
           while (parenCount-- > 0) {
+            Inner = ParseTypePtrs(Inner);
             if (!Lex.Check(TK_RParen)) {
               ParseError(Lex.Location, "')' expected");
               break;
@@ -1170,12 +1172,69 @@ VExpression *VParser::ParseType () {
 
 //==========================================================================
 //
+// VParser::ParseType
+//
+//==========================================================================
+VExpression *VParser::ParseType (bool allowDelegates) {
+  guard(VParser::ParseType);
+  auto stloc = Lex.Location;
+  auto Type = ParsePrimitiveType();
+  if (!Type) return nullptr; // either error, or not a type
+
+  if (allowDelegates) {
+    int ofs = 0;
+    while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs;
+    if (Lex.peekTokenType(ofs) == TK_Delegate) {
+      // this must be `type delegate (args)`
+      Type = ParseTypePtrs(Type);
+      if (!Lex.Check(TK_Delegate)) {
+        ParseError(Lex.Location, "Invalid delegate syntax (parser is confused)");
+        delete Type;
+        return nullptr;
+      }
+      if (!Lex.Check(TK_LParen)) {
+        ParseError(Lex.Location, "Missing delegate arguments");
+        delete Type;
+        return nullptr;
+      }
+      // parse delegate args
+      VDelegateType *dg = new VDelegateType(Type, stloc);
+      do {
+        VMethodParam &P = dg->Params[dg->NumParams];
+        int ParmModifiers = TModifiers::Parse(Lex);
+        dg->ParamFlags[dg->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref, Lex.Location));
+        P.TypeExpr = ParseTypeWithPtrs();
+        if (!P.TypeExpr && dg->NumParams == 0) break;
+        if (Lex.Token == TK_Identifier) {
+          P.Name = Lex.Name;
+          P.Loc = Lex.Location;
+          Lex.NextToken();
+        }
+        if (dg->NumParams == VMethod::MAX_PARAMS) {
+          ParseError(Lex.Location, "Delegate parameters overflow");
+        } else {
+          ++dg->NumParams;
+        }
+      } while (Lex.Check(TK_Comma));
+      Type = dg;
+      Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+    }
+  }
+
+  return Type;
+  unguard;
+}
+
+
+//==========================================================================
+//
 // VParser::ParseTypePtrs
 //
 // call this after `ParseType` to parse asterisks
 //
 //==========================================================================
 VExpression *VParser::ParseTypePtrs (VExpression *type) {
+  guard(VParser::ParseTypePtrs);
   if (!type) return nullptr;
   TLocation l = Lex.Location;
   while (Lex.Check(TK_Asterisk)) {
@@ -1183,6 +1242,7 @@ VExpression *VParser::ParseTypePtrs (VExpression *type) {
     l = Lex.Location;
   }
   return type;
+  unguard;
 }
 
 
@@ -1194,7 +1254,9 @@ VExpression *VParser::ParseTypePtrs (VExpression *type) {
 //
 //==========================================================================
 VExpression *VParser::ParseTypeWithPtrs () {
+  guard(VParser::ParseTypePtrs);
   return ParseTypePtrs(ParseType());
+  unguard;
 }
 
 
@@ -1379,7 +1441,7 @@ VExpression *VParser::ParseLambda () {
 void VParser::ParseDefaultProperties (VClass *InClass, bool doparse, int defcount, VStatement **stats) {
   guard(VParser::ParseDefaultProperties);
   VMethod *Func = new VMethod(NAME_None, InClass, Lex.Location);
-  Func->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
+  Func->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
   Func->ReturnType = VFieldType(TYPE_Void);
   InClass->DefaultProperties = Func;
   if (doparse) {
@@ -1735,7 +1797,7 @@ void VParser::ParseStates (VClass *InClass) {
     if (Lex.Check(TK_LBrace)) {
       if (VStr::Length(*FramesString) > 1) ParseError(Lex.Location, "Only states with single frame can have code block");
       s->Function = new VMethod(NAME_None, s, s->Loc);
-      s->Function->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
+      s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
       s->Function->ReturnType = VFieldType(TYPE_Void);
       s->Function->Statement = ParseCompoundStatement();
     } else if (!Lex.NewLine) {
@@ -2227,7 +2289,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     if (Lex.Check(TK_LBrace)) {
       //if (frameUsed != 1) ParseError(Lex.Location, "Only states with single frame can have code block");
       s->Function = new VMethod(NAME_None, s, s->Loc);
-      s->Function->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
+      s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
       s->Function->ReturnType = VFieldType(TYPE_Void);
       s->Function->Statement = ParseCompoundStatement();
     } else if (!Lex.NewLine) {
@@ -2249,7 +2311,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
             cst->Statements.Append(new VExpressionStatement(e));
             // create function
             s->Function = new VMethod(NAME_None, s, s->Loc);
-            s->Function->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
+            s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
             s->Function->ReturnType = VFieldType(TYPE_Void);
             s->Function->Statement = cst;
             s->FunctionName = NAME_None;
@@ -2329,7 +2391,7 @@ void VParser::ParseReplication (VClass *Class) {
     RI.Cond = new VMethod(NAME_None, Class, Lex.Location);
     RI.Cond->ReturnType = VFieldType(TYPE_Bool);
     RI.Cond->ReturnType.BitMask = 1;
-    RI.Cond->ReturnTypeExpr = new VTypeExpr(RI.Cond->ReturnType, Lex.Location);
+    RI.Cond->ReturnTypeExpr = new VTypeExprSimple(RI.Cond->ReturnType, Lex.Location);
     Lex.Expect(TK_If);
     Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
     VExpression *e = ParseExpression();
@@ -2668,7 +2730,8 @@ void VParser::ParseClass () {
       TLocation FieldLoc = Lex.Location;
       Lex.NextToken();
       Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
-      ParseMethodDef(new VTypeExpr(VFieldType(TYPE_Void).MakePointerType(), Lex.Location), FieldName, FieldLoc, Class, Modifiers, true);
+      //!!!
+      ParseMethodDef(VTypeExpr::NewTypeExpr(VFieldType(TYPE_Void).MakePointerType(), Lex.Location), FieldName, FieldLoc, Class, Modifiers, true);
       continue;
     }
 
@@ -2858,7 +2921,7 @@ void VParser::ParseClass () {
               sprintf(TmpName, "set_%s", *FieldName);
               VMethod *Func = new VMethod(TmpName, Class, Lex.Location);
               Func->Flags = TModifiers::MethodAttr(Modifiers);
-              Func->ReturnTypeExpr = new VTypeExpr(TYPE_Void, Lex.Location);
+              Func->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
 
               VMethodParam &P = Func->Params[Func->NumParams];
               P.TypeExpr = FieldType->SyntaxCopy();

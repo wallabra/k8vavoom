@@ -254,7 +254,7 @@ int VFieldType::GetStackSize () const {
     case TYPE_Class: return 4;
     case TYPE_State: return 4;
     case TYPE_Delegate: return 8;
-    case TYPE_Struct: return Struct->StackSize * 4;
+    case TYPE_Struct: return Struct->StackSize*4;
     case TYPE_Vector: return 12;
     case TYPE_Array: return ArrayDim*GetArrayInnerType().GetStackSize();
     case TYPE_DynamicArray: return 12;
@@ -306,16 +306,16 @@ int VFieldType::GetAlignment () const {
     case TYPE_Bool: return sizeof(vuint32);
     case TYPE_Float: return sizeof(float);
     case TYPE_Name: return sizeof(VName);
-    case TYPE_String: return sizeof(char*);
-    case TYPE_Pointer: return sizeof(void*);
-    case TYPE_Reference: return sizeof(VObject*);
-    case TYPE_Class: return sizeof(VClass*);
-    case TYPE_State: return sizeof(VState*);
-    case TYPE_Delegate: return sizeof(VObject*);
+    case TYPE_String: return sizeof(char *);
+    case TYPE_Pointer: return sizeof(void *);
+    case TYPE_Reference: return sizeof(VObject *);
+    case TYPE_Class: return sizeof(VClass *);
+    case TYPE_State: return sizeof(VState *);
+    case TYPE_Delegate: return sizeof(VObject *);
     case TYPE_Struct: return Struct->Alignment;
     case TYPE_Vector: return sizeof(float);
     case TYPE_Array: return GetArrayInnerType().GetAlignment();
-    case TYPE_DynamicArray: return sizeof(void*);
+    case TYPE_DynamicArray: return sizeof(void *);
   }
   return 0;
   unguard;

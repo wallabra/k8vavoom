@@ -31,36 +31,63 @@
 //  VTypeExpr::VTypeExpr
 //
 //==========================================================================
-VTypeExpr::VTypeExpr (VFieldType AType, const TLocation &ALoc)
-  : VExpression(ALoc)
+VTypeExpr::VTypeExpr (VFieldType atype, const TLocation &aloc)
+  : VExpression(aloc)
+  , Expr(nullptr)
   , MetaClassName(NAME_None)
 {
-  Type = AType;
+  Type = atype;
 }
 
 
 //==========================================================================
 //
-//  VTypeExpr::VTypeExpr
+//  VTypeExpr::NewTypeExpr
 //
 //==========================================================================
-VTypeExpr::VTypeExpr (VFieldType AType, const TLocation &ALoc, VName AMetaClassName)
-  : VExpression(ALoc)
-  , MetaClassName(AMetaClassName)
-{
-  Type = AType;
-}
+VTypeExpr *VTypeExpr::NewTypeExpr (VFieldType atype, const TLocation &aloc) {
+  switch (atype.Type) {
+    case TYPE_Void:
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Bool:
+    case TYPE_Float:
+    case TYPE_Name:
+    case TYPE_String:
+    case TYPE_Reference:
+    case TYPE_State:
+    case TYPE_Struct:
+    case TYPE_Vector:
+      return new VTypeExprSimple(atype, aloc);
+    case TYPE_Pointer:
+      return new VPointerType(NewTypeExpr(atype.GetPointerInnerType(), aloc), aloc);
+    case TYPE_Class:
+      return new VTypeExprClass((atype.Class ? atype.Class->Name : NAME_None), aloc);
+    case TYPE_Delegate:
+      FatalError("VC: VTypeExpr::NewTypeExpr: no delegates yet");
+    case TYPE_Array:
+      return new VFixedArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc), new VIntLiteral(atype.ArrayDim, aloc), aloc);
+    case TYPE_DynamicArray:
+      return new VDynamicArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc), aloc);
+    case TYPE_Unknown:
+    case TYPE_Automatic: // this is valid only for variable declarations, and will be resolved to actual type
+      fprintf(stderr, "VC: VTypeExpr::NewTypeExpr: internal compiler error\n");
+      *(int *)0 = 0;
+    default: break;
+  }
+  fprintf(stderr, "VC: VTypeExpr::NewTypeExpr: internal compiler error\n");
+  *(int *)0 = 0;
+  return nullptr;
+};
 
 
 //==========================================================================
 //
-//  VTypeExpr::SyntaxCopy
+//  VTypeExpr::~VTypeExpr
 //
 //==========================================================================
-VExpression *VTypeExpr::SyntaxCopy () {
-  auto res = new VTypeExpr();
-  DoSyntaxCopyTo(res);
-  return res;
+VTypeExpr::~VTypeExpr () {
+  delete Expr;
 }
 
 
@@ -73,6 +100,7 @@ void VTypeExpr::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
   auto res = (VTypeExpr *)e;
   res->MetaClassName = MetaClassName;
+  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
 }
 
 
@@ -83,36 +111,6 @@ void VTypeExpr::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VTypeExpr::DoResolve (VEmitContext &ec) {
   return ResolveAsType(ec);
-}
-
-
-//==========================================================================
-//
-//  VTypeExpr::ResolveAsType
-//
-//==========================================================================
-VTypeExpr *VTypeExpr::ResolveAsType (VEmitContext &) {
-  if (Type.Type == TYPE_Unknown) {
-    ParseError(Loc, "Bad type");
-    delete this;
-    return nullptr;
-  }
-
-  if (Type.Type == TYPE_Automatic) {
-    fprintf(stderr, "VC INTERNAL COMPILER ERROR: unresolved automatic type (0)!\n");
-    *(int*)0 = 0;
-  }
-
-  if (Type.Type == TYPE_Class && MetaClassName != NAME_None) {
-    Type.Class = VMemberBase::StaticFindClass(MetaClassName);
-    if (!Type.Class) {
-      ParseError(Loc, "No such class %s", *MetaClassName);
-      delete this;
-      return nullptr;
-    }
-  }
-
-  return this;
 }
 
 
@@ -138,23 +136,146 @@ VStr VTypeExpr::GetName () const {
 
 //==========================================================================
 //
-//  VPointerType::VPointerType
+//  VTypeExpr::IsTypeExpr
 //
 //==========================================================================
-VPointerType::VPointerType (VExpression *AExpr, const TLocation &ALoc)
-  : VTypeExpr(TYPE_Unknown, ALoc)
-  , Expr(AExpr)
+bool VTypeExpr::IsTypeExpr () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VTypeExprSimple::VTypeExprSimple
+//
+//==========================================================================
+VTypeExprSimple::VTypeExprSimple (EType atype, const TLocation &aloc)
+  : VTypeExpr(VFieldType(atype), aloc)
 {
 }
 
 
 //==========================================================================
 //
-//  VPointerType::~VPointerType
+//  VTypeExprSimple::VTypeExprSimple
 //
 //==========================================================================
-VPointerType::~VPointerType () {
-  if (Expr) { delete Expr; Expr = nullptr; }
+VTypeExprSimple::VTypeExprSimple (VFieldType atype, const TLocation &aloc)
+  : VTypeExpr(atype, aloc)
+{
+}
+
+
+//==========================================================================
+//
+//  VTypeExprSimple::SyntaxCopy
+//
+//==========================================================================
+VExpression *VTypeExprSimple::SyntaxCopy () {
+  auto res = new VTypeExprSimple();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VTypeExprSimple::ResolveAsType
+//
+//==========================================================================
+VTypeExpr *VTypeExprSimple::ResolveAsType (VEmitContext &) {
+  if (Type.Type == TYPE_Unknown) {
+    ParseError(Loc, "Bad type");
+    delete this;
+    return nullptr;
+  }
+
+  if (Type.Type == TYPE_Automatic) {
+    fprintf(stderr, "VC INTERNAL COMPILER ERROR: unresolved automatic type (0)!\n");
+    *(int*)0 = 0;
+  }
+
+  if (Type.Type == TYPE_Class) {
+    fprintf(stderr, "VC INTERNAL COMPILER ERROR: 19463!\n");
+    *(int*)0 = 0;
+  }
+
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VTypeExprSimple::IsSimpleType
+//
+//==========================================================================
+bool VTypeExprSimple::IsSimpleType () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VTypeExprClass::VTypeExprClass
+//
+//==========================================================================
+VTypeExprClass::VTypeExprClass (VName AMetaClassName, const TLocation &aloc)
+  : VTypeExpr(TYPE_Class, aloc)
+{
+  MetaClassName = AMetaClassName;
+}
+
+
+//==========================================================================
+//
+//  VTypeExprClass::SyntaxCopy
+//
+//==========================================================================
+VExpression *VTypeExprClass::SyntaxCopy () {
+  auto res = new VTypeExprClass();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VTypeExprClass::ResolveAsType
+//
+//==========================================================================
+VTypeExpr *VTypeExprClass::ResolveAsType (VEmitContext &) {
+  if (MetaClassName != NAME_None) {
+    Type.Class = VMemberBase::StaticFindClass(MetaClassName);
+    if (!Type.Class) {
+      ParseError(Loc, "No such class `%s`", *MetaClassName);
+      delete this;
+      return nullptr;
+    }
+  }
+
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VTypeExprClass::IsClassType
+//
+//==========================================================================
+bool VTypeExprClass::IsClassType () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VPointerType::VPointerType
+//
+//==========================================================================
+VPointerType::VPointerType (VExpression *AExpr, const TLocation &ALoc)
+  : VTypeExpr(TYPE_Unknown, ALoc)
+{
+  Expr = AExpr;
 }
 
 
@@ -172,30 +293,24 @@ VExpression *VPointerType::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VPointerType::DoSyntaxCopyTo
-//
-//==========================================================================
-void VPointerType::DoSyntaxCopyTo (VExpression *e) {
-  VTypeExpr::DoSyntaxCopyTo(e);
-  auto res = (VPointerType *)e;
-  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
-}
-
-
-//==========================================================================
-//
 //  VPointerType::ResolveAsType
 //
 //==========================================================================
 VTypeExpr *VPointerType::ResolveAsType (VEmitContext &ec) {
   if (Expr) Expr = Expr->ResolveAsType(ec);
-  if (!Expr) {
-    delete this;
-    return nullptr;
-  }
-
+  if (!Expr) { delete this; return nullptr; }
   Type = Expr->Type.MakePointerType();
   return this;
+}
+
+
+//==========================================================================
+//
+//  VPointerType::IsPointerType
+//
+//==========================================================================
+bool VPointerType::IsPointerType () const {
+  return true;
 }
 
 
@@ -206,9 +321,9 @@ VTypeExpr *VPointerType::ResolveAsType (VEmitContext &ec) {
 //==========================================================================
 VFixedArrayType::VFixedArrayType (VExpression *AExpr, VExpression *ASizeExpr, const TLocation &ALoc)
   : VTypeExpr(TYPE_Unknown, ALoc)
-  , Expr(AExpr)
   , SizeExpr(ASizeExpr)
 {
+  Expr = AExpr;
   if (!SizeExpr) ParseError(Loc, "Array size expected");
 }
 
@@ -219,7 +334,6 @@ VFixedArrayType::VFixedArrayType (VExpression *AExpr, VExpression *ASizeExpr, co
 //
 //==========================================================================
 VFixedArrayType::~VFixedArrayType () {
-  if (Expr) { delete Expr; Expr = nullptr; }
   if (SizeExpr) { delete SizeExpr; SizeExpr = nullptr; }
 }
 
@@ -244,7 +358,6 @@ VExpression *VFixedArrayType::SyntaxCopy () {
 void VFixedArrayType::DoSyntaxCopyTo (VExpression *e) {
   VTypeExpr::DoSyntaxCopyTo(e);
   auto res = (VFixedArrayType *)e;
-  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
   res->SizeExpr = (SizeExpr ? SizeExpr->SyntaxCopy() : nullptr);
 }
 
@@ -257,7 +370,10 @@ void VFixedArrayType::DoSyntaxCopyTo (VExpression *e) {
 VTypeExpr *VFixedArrayType::ResolveAsType (VEmitContext &ec) {
   if (Expr) Expr = Expr->ResolveAsType(ec);
   if (SizeExpr) SizeExpr = SizeExpr->Resolve(ec);
-  if (!Expr || !SizeExpr) {
+  if (!Expr || !SizeExpr) { delete this; return nullptr; }
+
+  if (Expr->IsAnyArrayType()) {
+    ParseError(Expr->Loc, "Arrays of arrays are not allowed (yet)");
     delete this;
     return nullptr;
   }
@@ -269,8 +385,34 @@ VTypeExpr *VFixedArrayType::ResolveAsType (VEmitContext &ec) {
   }
 
   vint32 Size = SizeExpr->GetIntConst();
+  if (Size < 0) {
+    ParseError(SizeExpr->Loc, "Static array cannot be of negative size");
+    delete this;
+    return nullptr;
+  }
+
   Type = Expr->Type.MakeArrayType(Size, Loc);
   return this;
+}
+
+
+//==========================================================================
+//
+//  VFixedArrayType::IsAnyArrayType
+//
+//==========================================================================
+bool VFixedArrayType::IsAnyArrayType () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VFixedArrayType::IsStaticArrayType
+//
+//==========================================================================
+bool VFixedArrayType::IsStaticArrayType () const {
+  return true;
 }
 
 
@@ -281,18 +423,8 @@ VTypeExpr *VFixedArrayType::ResolveAsType (VEmitContext &ec) {
 //==========================================================================
 VDynamicArrayType::VDynamicArrayType (VExpression *AExpr, const TLocation &ALoc)
   : VTypeExpr(TYPE_Unknown, ALoc)
-  , Expr(AExpr)
 {
-}
-
-
-//==========================================================================
-//
-//  VDynamicArrayType::~VDynamicArrayType
-//
-//==========================================================================
-VDynamicArrayType::~VDynamicArrayType () {
-  if (Expr) { delete Expr; Expr = nullptr; }
+  Expr = AExpr;
 }
 
 
@@ -310,28 +442,122 @@ VExpression *VDynamicArrayType::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VPointerType::DoSyntaxCopyTo
-//
-//==========================================================================
-void VDynamicArrayType::DoSyntaxCopyTo (VExpression *e) {
-  VTypeExpr::DoSyntaxCopyTo(e);
-  auto res = (VDynamicArrayType *)e;
-  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
-}
-
-
-//==========================================================================
-//
 //  VDynamicArrayType::ResolveAsType
 //
 //==========================================================================
 VTypeExpr *VDynamicArrayType::ResolveAsType (VEmitContext &ec) {
   if (Expr) Expr = Expr->ResolveAsType(ec);
-  if (!Expr) {
+  if (!Expr) { delete this; return nullptr; }
+
+  if (Expr->IsAnyArrayType()) {
+    ParseError(Expr->Loc, "Arrays of arrays are not allowed (yet)");
     delete this;
     return nullptr;
   }
 
   Type = Expr->Type.MakeDynamicArrayType(Loc);
   return this;
+}
+
+
+//==========================================================================
+//
+//  VDynamicArrayType::IsAnyArrayType
+//
+//==========================================================================
+bool VDynamicArrayType::IsAnyArrayType () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VDynamicArrayType::IsDynamicArrayType
+//
+//==========================================================================
+bool VDynamicArrayType::IsDynamicArrayType () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VDelegateType::VDelegateType
+//
+//==========================================================================
+VDelegateType::VDelegateType (VExpression *aexpr, const TLocation &aloc)
+  : VTypeExpr(TYPE_Unknown, aloc)
+  , Flags(0)
+  , NumParams(0)
+  , freeParams(true)
+{
+  Expr = aexpr;
+  memset(Params, 0, sizeof(Params));
+  memset(ParamFlags, 0, sizeof(ParamFlags));
+}
+
+
+//==========================================================================
+//
+//  VDelegateType::~VDelegateType
+//
+//==========================================================================
+VDelegateType::~VDelegateType () {
+  if (freeParams) {
+    for (int f = NumParams-1; f >= 0; --f) delete Params[f].TypeExpr;
+  }
+}
+
+
+//==========================================================================
+//
+//  VDelegateType::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDelegateType::SyntaxCopy () {
+  auto res = new VDelegateType();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDelegateType::ResolveAsType
+//
+//==========================================================================
+VTypeExpr *VDelegateType::ResolveAsType (VEmitContext &ec) {
+  if (Expr) Expr = Expr->ResolveAsType(ec);
+  if (!Expr) { delete this; return nullptr; }
+  Type = Expr->Type;
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDelegateType::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDelegateType::DoSyntaxCopyTo (VExpression *e) {
+  VTypeExpr::DoSyntaxCopyTo(e);
+  auto res = (VDelegateType *)e;
+  res->Flags = Flags;
+  res->NumParams = NumParams;
+  memcpy(res->ParamFlags, ParamFlags, sizeof(ParamFlags));
+  for (int f = 0; f < NumParams; ++f) {
+    res->Params[f] = Params[f];
+    res->Params[f].TypeExpr = (Params[f].TypeExpr ? Params[f].TypeExpr->SyntaxCopy() : nullptr);
+  }
+  res->freeParams = true;
+}
+
+
+//==========================================================================
+//
+//  VDelegateType::IsDelegateType
+//
+//==========================================================================
+bool VDelegateType::IsDelegateType () const {
+  return true;
 }

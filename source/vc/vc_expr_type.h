@@ -31,19 +31,63 @@
 //==========================================================================
 class VTypeExpr : public VExpression {
 public:
+  VExpression *Expr;
   VName MetaClassName;
 
-  VTypeExpr (VFieldType, const TLocation &);
-  VTypeExpr (VFieldType, const TLocation &, VName);
-  virtual VExpression *SyntaxCopy () override;
+  VTypeExpr (VFieldType atype, const TLocation &aloc);
+  virtual ~VTypeExpr () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
-  virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
   VStr GetName () const;
+
+  virtual bool IsTypeExpr () const override;
+
+  static VTypeExpr *NewTypeExpr (VFieldType atype, const TLocation &aloc);
 
 protected:
   VTypeExpr () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VTypeExprSimple
+//
+//  Not class, not array, not delegate, not pointer
+//
+//==========================================================================
+class VTypeExprSimple : public VTypeExpr {
+public:
+  VTypeExprSimple (EType atype, const TLocation &aloc);
+  VTypeExprSimple (VFieldType atype, const TLocation &aloc);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
+
+  virtual bool IsSimpleType () const override;
+
+protected:
+  VTypeExprSimple () {}
+};
+
+
+//==========================================================================
+//
+//  VTypeExprClass
+//
+//==========================================================================
+class VTypeExprClass : public VTypeExpr {
+public:
+  VTypeExprClass (VName AMetaClassName, const TLocation &aloc);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
+  //virtual void Emit (VEmitContext &) override;
+
+  virtual bool IsClassType () const override;
+
+protected:
+  VTypeExprClass () {}
 };
 
 
@@ -54,16 +98,14 @@ protected:
 //==========================================================================
 class VPointerType : public VTypeExpr {
 public:
-  VExpression *Expr;
-
-  VPointerType (VExpression *, const TLocation &);
-  virtual ~VPointerType () override;
+  VPointerType (VExpression *AExpr, const TLocation &ALoc);
   virtual VExpression *SyntaxCopy () override;
   virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
 
+  virtual bool IsPointerType () const override;
+
 protected:
   VPointerType () {}
-  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 
 
@@ -74,13 +116,15 @@ protected:
 //==========================================================================
 class VFixedArrayType : public VTypeExpr {
 public:
-  VExpression *Expr;
   VExpression *SizeExpr;
 
-  VFixedArrayType (VExpression *, VExpression *, const TLocation &);
+  VFixedArrayType (VExpression *AExpr, VExpression *ASizeExpr, const TLocation &ALoc);
   virtual ~VFixedArrayType () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
+
+  virtual bool IsAnyArrayType () const override;
+  virtual bool IsStaticArrayType () const override;
 
 protected:
   VFixedArrayType () {}
@@ -95,14 +139,40 @@ protected:
 //==========================================================================
 class VDynamicArrayType : public VTypeExpr {
 public:
-  VExpression *Expr;
-
-  VDynamicArrayType (VExpression *, const TLocation &);
-  virtual ~VDynamicArrayType () override;
+  VDynamicArrayType (VExpression *AExpr, const TLocation &ALoc);
   virtual VExpression *SyntaxCopy () override;
   virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
 
+  virtual bool IsAnyArrayType () const override;
+  virtual bool IsDynamicArrayType () const override;
+
 protected:
   VDynamicArrayType () {}
+};
+
+
+//==========================================================================
+//
+//  VDelegateType
+//
+//==========================================================================
+class VDelegateType : public VTypeExpr {
+public:
+  vint32 Flags; // FUNC_XXX
+  vint32 NumParams;
+  VMethodParam Params[VMethod::MAX_PARAMS];
+  vuint8 ParamFlags[VMethod::MAX_PARAMS];
+  bool freeParams; // `true` by default
+
+  // aexpr: return type
+  VDelegateType (VExpression *aexpr, const TLocation &aloc);
+  virtual ~VDelegateType () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VTypeExpr *ResolveAsType (VEmitContext &ec) override;
+
+  virtual bool IsDelegateType () const override;
+
+protected:
+  VDelegateType () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };

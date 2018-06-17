@@ -123,10 +123,11 @@ public:
   TLocation Loc;
 
   VMethodParam ();
+  //VMethodParam (const VMethodParam &v);
   ~VMethodParam ();
 
-private:
-  VMethodParam &operator = (const VMethodParam &v);
+  // WARNING: assignment and copy ctors WILL CREATE syntax copy of `TypeExpr`!!!
+  //VMethodParam &operator = (const VMethodParam &v);
 };
 
 
@@ -142,7 +143,7 @@ private:
 public:
   enum { MAX_PARAMS = 16 };
 
-  //  Persistent fields
+  // persistent fields
   vint32 NumLocals;
   vint32 Flags;
   VFieldType ReturnType;

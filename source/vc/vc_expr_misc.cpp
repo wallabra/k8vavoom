@@ -383,7 +383,7 @@ VTypeExpr *VSingleName::ResolveAsType (VEmitContext &ec) {
     *(int*)0 = 0;
   }
 
-  VTypeExpr *e = new VTypeExpr(Type, Loc);
+  auto e = new VTypeExprSimple(Type, Loc);
   delete this;
   return e;
 }
@@ -498,7 +498,7 @@ VTypeExpr *VDoubleName::ResolveAsType (VEmitContext &) {
     *(int*)0 = 0;
   }
 
-  VTypeExpr *e = new VTypeExpr(Type, Loc);
+  auto e = new VTypeExprSimple(Type, Loc);
   delete this;
   return e;
 }

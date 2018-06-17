@@ -2215,15 +2215,15 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
                 ParseError(sc->GetLoc(), "Damage expression expected");
               } else {
                 VMethod *M = new VMethod("GetMissileDamage", Class, sc->GetLoc());
-                M->ReturnTypeExpr = new VTypeExpr(TYPE_Int, sc->GetLoc());
+                M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Int, sc->GetLoc());
                 M->ReturnType = TYPE_Int;
                 M->NumParams = 2;
                 M->Params[0].Name = "Mask";
                 M->Params[0].Loc = sc->GetLoc();
-                M->Params[0].TypeExpr = new VTypeExpr(TYPE_Int, sc->GetLoc());
+                M->Params[0].TypeExpr = new VTypeExprSimple(TYPE_Int, sc->GetLoc());
                 M->Params[1].Name = "Add";
                 M->Params[1].Loc = sc->GetLoc();
-                M->Params[1].TypeExpr = new VTypeExpr(TYPE_Int, sc->GetLoc());
+                M->Params[1].TypeExpr = new VTypeExprSimple(TYPE_Int, sc->GetLoc());
                 M->Statement = new VReturn(Expr, sc->GetLoc());
                 Class->AddMethod(M);
                 M->Define();
