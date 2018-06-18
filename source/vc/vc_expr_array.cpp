@@ -156,6 +156,19 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
     return nullptr;
   }
 
+  // check for unsafe pointer access
+  if (op->Type.Type == TYPE_Pointer) {
+    if (ind->IsIntConst() && ind->GetIntConst() == 0) {
+      // the only safe case, do nothing
+    } else {
+      if (!VMemberBase::unsafeCodeAllowed) {
+        ParseError(Loc, "Unsafe pointer access is forbidden");
+      } else if (VMemberBase::unsafeCodeWarning) {
+        ParseWarning(Loc, "Unsafe pointer access");
+      }
+    }
+  }
+
   RealType = Type;
   if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
   return this;

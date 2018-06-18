@@ -75,6 +75,9 @@ public:
 
   static VClass *GClasses; // linked list of all classes
 
+  static bool unsafeCodeAllowed; // true by default
+  static bool unsafeCodeWarning; // false by default
+
   // srtuctors
   VMemberBase (vuint8, VName, VMemberBase *, const TLocation &);
   virtual ~VMemberBase ();

@@ -42,6 +42,9 @@ TArray<VStr> VMemberBase::definelist;
 
 bool VMemberBase::doAsmDump = false;
 
+bool VMemberBase::unsafeCodeAllowed = true;
+bool VMemberBase::unsafeCodeWarning = false;
+
 
 //==========================================================================
 //
