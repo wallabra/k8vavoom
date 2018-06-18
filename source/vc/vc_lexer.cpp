@@ -81,6 +81,7 @@ const char *VLexer::TokenNames[] = {
   "reliable",
   "replication",
   "return",
+  "scope",
   "self",
   "set",
   "spawner",
@@ -96,6 +97,7 @@ const char *VLexer::TokenNames[] = {
   "vector",
   "void",
   "while",
+
   "__mobjinfo__",
   "__scriptid__",
 
@@ -1089,6 +1091,7 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
       else if (checkStrTk("static")) Token = TK_Static;
       else if (checkStrTk("state")) Token = TK_State;
       else if (checkStrTk("states")) Token = TK_States;
+      else if (checkStrTk("scope")) Token = TK_Scope;
       break;
     case 't':
            if (checkStrTk("true")) Token = TK_True;

@@ -84,6 +84,7 @@ enum EToken {
   TK_Reliable,
   TK_Replication,
   TK_Return,
+  TK_Scope,
   TK_Self,
   TK_Set,
   TK_Spawner,
@@ -99,6 +100,7 @@ enum EToken {
   TK_Vector,
   TK_Void,
   TK_While,
+
   TK_MobjInfo,
   TK_ScriptId,
 
