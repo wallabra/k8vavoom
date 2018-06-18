@@ -34,7 +34,7 @@ private:
 
 public:
   TLocation () : Loc(0) {}
-  TLocation (int SrcIdx, int Line) : Loc((SrcIdx<<16)|Line) {}
+  TLocation (int SrcIdx, int Line) : Loc(((SrcIdx&0xffff)<<16)|(Line&0xffff)) {}
   inline int GetLine () const { return (Loc&0xffff); }
   VStr GetSource () const;
   inline bool isInternal () const { return (Loc == 0); }

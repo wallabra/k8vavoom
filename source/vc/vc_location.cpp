@@ -70,7 +70,9 @@ int TLocation::AddSourceFile (const VStr &SName) {
 //==========================================================================
 VStr TLocation::GetSource () const {
   if (!Loc) return "(external)";
-  return SourceFiles[Loc>>16];
+  int sidx = (Loc>>16)&0xffff;
+  if (sidx >= SourceFiles.length()) return "<wutafuck>";
+  return SourceFiles[sidx];
 }
 
 
