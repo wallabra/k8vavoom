@@ -121,21 +121,38 @@ extern "C" void PR_Profile2_end () {}
 // ////////////////////////////////////////////////////////////////////////// //
 // stack trace utilities
 
-static VMethod **callStack = nullptr;
+struct CallStackItem {
+  VMethod *func;
+  const vuint8 *ip;
+  VStack *sp;
+};
+
+static CallStackItem *callStack = nullptr;
 static vuint32 cstUsed = 0, cstSize = 0;
+
+
+static inline void cstFixTopIPSP (const vuint8 *ip) {
+  if (cstUsed > 0) {
+    callStack[cstUsed-1].ip = ip;
+    callStack[cstUsed-1].sp = pr_stackPtr;
+  }
+}
 
 
 static void cstPush (VMethod *func) {
   if (cstUsed == cstSize) {
     //FIXME: handle OOM here
     cstSize += 16384;
-    callStack = (VMethod **)realloc(callStack, sizeof(callStack[0])*cstSize);
+    callStack = (CallStackItem *)realloc(callStack, sizeof(callStack[0])*cstSize);
   }
-  callStack[cstUsed++] = func;
+  callStack[cstUsed].func = func;
+  callStack[cstUsed].ip = nullptr;
+  callStack[cstUsed].sp = pr_stackPtr;
+  ++cstUsed;
 }
 
 
-static void cstPop () {
+static inline void cstPop () {
   if (cstUsed > 0) --cstUsed;
 }
 
@@ -145,15 +162,13 @@ static void cstDump (const vuint8 *ip) {
   //ip = func->Statements.Ptr();
   fprintf(stderr, "\n\n=== VaVoomScript Call Stack (%u) ===\n", cstUsed);
   if (cstUsed > 0) {
+    // do the best thing we can
+    if (!ip && callStack[cstUsed-1].ip) ip = callStack[cstUsed-1].ip;
     for (vuint32 sp = cstUsed; sp > 0; --sp) {
-      VMethod *func = callStack[sp-1];
-      if (sp == cstUsed) {
-        TLocation loc = func->FindPCLocation(ip);
-        if (!loc.isInternal()) {
-          fprintf(stderr, "  %03u: %s (%s:%d)\n", cstUsed-sp, *func->GetFullName(), *loc.GetSource(), loc.GetLine());
-        } else {
-          fprintf(stderr, "  %03u: %s\n", cstUsed-sp, *func->GetFullName());
-        }
+      VMethod *func = callStack[sp-1].func;
+      TLocation loc = func->FindPCLocation(sp == cstUsed ? ip : callStack[sp-1].ip);
+      if (!loc.isInternal()) {
+        fprintf(stderr, "  %03u: %s (%s:%d)\n", cstUsed-sp, *func->GetFullName(), *loc.GetSource(), loc.GetLine());
       } else {
         fprintf(stderr, "  %03u: %s\n", cstUsed-sp, *func->GetFullName());
       }
@@ -257,6 +272,7 @@ func_loop:
 
       PR_VM_CASE(OPC_Call)
         pr_stackPtr = sp;
+        cstFixTopIPSP(ip);
         RunFunction((VMethod *)ReadPtr(ip+1));
         current_func = func;
         ip += 1+sizeof(void *);
@@ -278,6 +294,7 @@ func_loop:
       PR_VM_CASE(OPC_VCall)
         pr_stackPtr = sp;
         if (!sp[-ip[3]].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        cstFixTopIPSP(ip);
         RunFunction(((VObject *)sp[-ip[3]].p)->GetVFunctionIdx(ReadInt16(ip+1)));
         ip += 4;
         current_func = func;
@@ -287,6 +304,7 @@ func_loop:
       PR_VM_CASE(OPC_VCallB)
         pr_stackPtr = sp;
         if (!sp[-ip[2]].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        cstFixTopIPSP(ip);
         RunFunction(((VObject *)sp[-ip[2]].p)->GetVFunctionIdx(ip[1]));
         ip += 3;
         current_func = func;
@@ -301,6 +319,7 @@ func_loop:
           if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
           sp[-ip[5]].p = pDelegate[0];
           pr_stackPtr = sp;
+          cstFixTopIPSP(ip);
           RunFunction((VMethod *)pDelegate[1]);
         }
         ip += 6;
@@ -316,6 +335,7 @@ func_loop:
           if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
           sp[-ip[3]].p = pDelegate[0];
           pr_stackPtr = sp;
+          cstFixTopIPSP(ip);
           RunFunction((VMethod *)pDelegate[1]);
         }
         ip += 4;
@@ -331,6 +351,7 @@ func_loop:
           if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
           sp[-ip[2]].p = pDelegate[0];
           pr_stackPtr = sp;
+          cstFixTopIPSP(ip);
           RunFunction((VMethod *)pDelegate[1]);
         }
         ip += 3;
@@ -352,6 +373,7 @@ func_loop:
           if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
           sp[-sofs].p = pDelegate[0];
           pr_stackPtr = sp;
+          cstFixTopIPSP(ip);
           RunFunction((VMethod *)pDelegate[1]);
         }
         current_func = func;
