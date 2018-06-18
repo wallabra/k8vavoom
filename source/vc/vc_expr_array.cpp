@@ -105,12 +105,14 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
   op = op->Resolve(ec);
 
   // hack: allow indexing of pointers to dynamic arrays without `(*arr)`
+  /*
   if (op && op->Type.Type == TYPE_Pointer && (op->Type.InnerType == TYPE_DynamicArray || op->Type.InnerType == TYPE_String)) {
     delete op;
     op = new VPushPointed(opcopy);
     opcopy = op->SyntaxCopy();
     op = op->Resolve(ec);
   }
+  */
 
   if (op) {
     // resolve index expression
@@ -213,14 +215,14 @@ VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression
   resolved = true; // anyway
 
   // hack: allow indexing of pointers to strings without `(*str)`
-  if (rop->Type.Type == TYPE_Pointer) {
+  /*if (rop->Type.Type == TYPE_Pointer) {
     delete rop;
     op = new VPushPointed(op);
     // we need a copy for opDollar
     opcopy = op->SyntaxCopy();
     op = op->Resolve(ec);
     if (!op) { delete opcopy; delete val; delete this; return nullptr; }
-  } else {
+  } else*/ {
     // we need a copy for opDollar
     opcopy = op;
     op = rop;
@@ -393,6 +395,7 @@ VExpression *VStringSlice::DoResolve (VEmitContext &ec) {
   op = op->Resolve(ec);
 
   // hack: allow indexing of pointers to strings without `(*str)`
+  /*
   if (op && op->Type.Type == TYPE_Pointer && op->Type.InnerType == TYPE_String) {
     delete op;
     op = new VPushPointed(opcopy);
@@ -400,6 +403,7 @@ VExpression *VStringSlice::DoResolve (VEmitContext &ec) {
     op = op->Resolve(ec);
     if (!op) { delete opcopy; delete this; return nullptr; }
   }
+  */
 
   if (op) {
     // resolve index expressions
@@ -465,6 +469,7 @@ VExpression *VStringSlice::ResolveCompleteAssign (VEmitContext &ec, VExpression 
   }
 
   // hack: allow indexing of pointers to strings without `(*str)`
+  /*
   if (rop->Type.Type == TYPE_Pointer) {
     delete rop;
     op = new VPushPointed(op);
@@ -472,7 +477,7 @@ VExpression *VStringSlice::ResolveCompleteAssign (VEmitContext &ec, VExpression 
     opcopy = op->SyntaxCopy();
     op = op->Resolve(ec);
     if (!op) { delete opcopy; delete val; delete this; return nullptr; }
-  } else {
+  } else*/ {
     // we need a copy for opDollar
     opcopy = op;
     op = rop;
