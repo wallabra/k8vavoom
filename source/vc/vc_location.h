@@ -30,12 +30,14 @@ class TLocation {
 private:
   int Loc;
   static TArray<VStr> SourceFiles;
+  static TMapDtor<VStr, vint32> SourceFilesMap; // to avoid Schlemiel's curse
 
 public:
   TLocation () : Loc(0) {}
   TLocation (int SrcIdx, int Line) : Loc((SrcIdx<<16)|Line) {}
   inline int GetLine () const { return (Loc&0xffff); }
   VStr GetSource () const;
+  inline bool isInternal () const { return (Loc == 0); }
 
   static int AddSourceFile (const VStr &);
   static void ClearSourceFiles ();

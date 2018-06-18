@@ -147,7 +147,16 @@ static void cstDump (const vuint8 *ip) {
   if (cstUsed > 0) {
     for (vuint32 sp = cstUsed; sp > 0; --sp) {
       VMethod *func = callStack[sp-1];
-      fprintf(stderr, "  %03u: %s\n", cstUsed-sp, *func->GetFullName());
+      if (sp == cstUsed) {
+        TLocation loc = func->FindPCLocation(ip);
+        if (!loc.isInternal()) {
+          fprintf(stderr, "  %03u: %s (%s:%d)\n", cstUsed-sp, *func->GetFullName(), *loc.GetSource(), loc.GetLine());
+        } else {
+          fprintf(stderr, "  %03u: %s\n", cstUsed-sp, *func->GetFullName());
+        }
+      } else {
+        fprintf(stderr, "  %03u: %s\n", cstUsed-sp, *func->GetFullName());
+      }
     }
   }
   fprintf(stderr, "=============================\n\n");

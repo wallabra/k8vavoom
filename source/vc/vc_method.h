@@ -167,6 +167,7 @@ public:
   vuint32 Profile1;
   vuint32 Profile2;
   TArray<vuint8> Statements;
+  TArray<TLocation> StatLocs; // locations for each code point
   builtin_t NativeFunc;
   vint16 VTableIndex;
   vint32 NetIndex;
@@ -180,6 +181,8 @@ public:
   void Emit ();
   void DumpAsm ();
   void PostLoad ();
+
+  TLocation FindPCLocation (const vuint8 *pc);
 
   friend inline VStream &operator << (VStream &Strm, VMethod *&Obj) { return Strm << *(VMemberBase**)&Obj; }
 

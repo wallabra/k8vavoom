@@ -36,18 +36,30 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 TArray<VStr> TLocation::SourceFiles;
+TMapDtor<VStr, vint32> TLocation::SourceFilesMap;
 
 
 //==========================================================================
 //
 //  TLocation::AddSourceFile
 //
+//  FIXME: kill Schlemiel
+//
 //==========================================================================
 int TLocation::AddSourceFile (const VStr &SName) {
+  if (SourceFiles.length() == 0) {
+    // add dummy source file
+    SourceFiles.Append("<err>");
+    SourceFilesMap.put("<err>", 0);
+  }
   // find it
-  for (int i = 0; i < SourceFiles.Num(); ++i) if (SName == SourceFiles[i]) return i;
+  auto val = SourceFilesMap.get(SName);
+  if (val) return *val;
   // not found, add it
-  return SourceFiles.Append(SName);
+  int idx = SourceFiles.length();
+  SourceFiles.Append(SName);
+  SourceFilesMap.put(SName, idx);
+  return idx;
 }
 
 
@@ -69,6 +81,7 @@ VStr TLocation::GetSource () const {
 //==========================================================================
 void TLocation::ClearSourceFiles () {
   SourceFiles.Clear();
+  SourceFilesMap.clear();
 }
 
 
@@ -87,18 +100,7 @@ VStream &operator << (VStream &Strm, TLocation &loc) {
   VStr sfn;
   if (Strm.IsLoading()) {
     Strm << sfn;
-    int sidx = -1;
-    for (int f = 0; f < loc.SourceFiles.length(); ++f) {
-      if (loc.SourceFiles[f].Cmp(sfn) == 0) {
-        sidx = f;
-        break;
-      }
-    }
-    if (sidx == -1) {
-      if (loc.SourceFiles.length() >= 65535) { loc.Loc = 0; return Strm; }
-      sidx = loc.SourceFiles.length();
-      loc.SourceFiles.append(sfn);
-    }
+    int sidx = loc.AddSourceFile(sfn);
     loc.Loc = (sidx<<16)|line;
   } else {
     sfn = loc.GetSource();

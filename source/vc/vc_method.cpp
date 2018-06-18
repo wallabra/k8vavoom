@@ -613,6 +613,7 @@ void VMethod::CompileCode () {
       case OPCARGS_TypeSizeB: WriteUInt8(Instructions[i].TypeArg.GetSize()); break;
       case OPCARGS_Type: WriteType(Instructions[i].TypeArg); break;
     }
+    while (StatLocs.length() < Statements.length()) StatLocs.Append(Instructions[i].loc);
   }
   Instructions[Instructions.Num()-1].Address = Statements.Num();
 
@@ -767,6 +768,21 @@ void VMethod::OptimiseInstructions () {
   }
   Instructions[Instructions.Num()-1].Address = Addr;
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VMethod::FindPCLocation
+//
+//==========================================================================
+TLocation VMethod::FindPCLocation (const vuint8 *pc) {
+  if (!pc || Statements.length() == 0) return TLocation();
+  if (pc < Statements.Ptr()) return TLocation();
+  size_t stidx = (size_t)(pc-Statements.Ptr());
+  if (stidx >= (size_t)Statements.length()) return TLocation();
+  if (stidx >= (size_t)StatLocs.length()) return TLocation(); // just in case
+  return StatLocs[(int)stidx];
 }
 
 
