@@ -286,3 +286,20 @@ local variable declaraion, if that declaraion includes initializer expression. I
   auto b = 6.9; // float
   auto c = "str"; // guess what
   auto e = funcall(); // should be pretty obvious
+
+
+
+Field/method aliases
+====================
+
+VC doesn't support unions or method overloading, but it has a (limited) way to assign
+several names to one field/method: aliases. Alias is exactly what you may think: a
+name substitute.
+
+  int blood;
+  alias gore = blood;
+
+Here, both `blood` and `gore` will refer to `blood` field.
+
+Alias can be aliased by itself, therefore creating a "chain" of aliases. Aliases are
+inheritable. Alias resolving is done as a first step of name resolving.
