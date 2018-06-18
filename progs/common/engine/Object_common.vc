@@ -179,9 +179,9 @@ struct event_t {
 // error functions
 
 // shut down client and server, go to title
-native static final void Error (string format, ...);
+native static final void Error (string format, ...) [printf,1];
 // exit programm with error
-native static final void FatalError (string format, ...);
+native static final void FatalError (string format, ...) [printf,1];
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -298,7 +298,7 @@ native static final string strFromChar (int ch);
 native static final string strFromCharUtf8 (int ch);
 
 // does varargs print into a temporary buffer
-native static final string va (string format, ...);
+native static final string va (string format, ...) [printf,1];
 
 // converts string to integer
 native static final int atoi (string str);
@@ -320,9 +320,9 @@ alias strReplace = StrReplace;
 //  Printing to console
 
 // print to console
-native static final void print (string format, ...);
+native static final void print (string format, ...) [printf,1];
 // print to console only when developer == 1
-native static final void dprint (string format, ...);
+native static final void dprint (string format, ...) [printf,1];
 
 
 // ////////////////////////////////////////////////////////////////////////// //

@@ -1301,7 +1301,36 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
   } while (Lex.Check(TK_Comma));
   Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
 
+  // parse attributes
+  while (Lex.Check(TK_LBracket)) {
+    // for now, there is only one attribute: `[printf,idx]`, so check its prerequisites
+    if (Lex.Token != TK_Identifier) {
+      ParseError(Lex.Location, "Attribute name expected");
+    } else {
+      if (Lex.Name == "printf") {
+        if ((Func->Flags&FUNC_Native) == 0) ParseError(Func->Loc, "Non-native methods can't have attributes");
+        if ((Func->Flags&FUNC_VarArgs) == 0) ParseError(Func->Loc, "Non-vararg methods can't have attributes");
+        Lex.NextToken();
+        Lex.Expect(TK_Comma, ERR_MISSING_COMMA);
+        if (Lex.Token != TK_IntLiteral) {
+          ParseError(Func->Loc, "Argument number expected for 'printf' attribute");
+        } else {
+          if (Lex.Number < 1 || Lex.Number > Func->NumParams) {
+            ParseError(Func->Loc, "Invalid argument number for 'printf' attribute (did you forget that counter is 1-based?)");
+          } else {
+            Func->printfFmtArgIdx = Lex.Number-1;
+          }
+          Lex.NextToken();
+        }
+      } else {
+        ParseError(Lex.Location, "Unknown attribute '%s'", *Lex.Name);
+      }
+    }
+    Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
+  }
+
   if (Lex.Check(TK_Semicolon)) {
+    if ((Func->Flags&FUNC_Native) == 0) ParseError(Func->Loc, "Non-native methods should have a body");
     ++Package->NumBuiltins;
   } else {
     // self type specifier

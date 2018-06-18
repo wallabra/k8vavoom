@@ -110,6 +110,7 @@ VMethod::VMethod (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , Statement(nullptr)
   , SelfTypeName(NAME_None)
   , lmbCount(0)
+  , printfFmtArgIdx(-1)
   , Profile1(0)
   , Profile2(0)
   , NativeFunc(0)
@@ -148,7 +149,9 @@ void VMethod::Serialise (VStream &Strm) {
     << STRM_INDEX(Flags)
     << ReturnType
     << STRM_INDEX(NumParams)
-    << STRM_INDEX(ParamsSize);
+    << STRM_INDEX(ParamsSize)
+    << lmbCount
+    << printfFmtArgIdx;
   for (int i = 0; i < NumParams; ++i) Strm << ParamTypes[i] << ParamFlags[i];
   Strm << ReplCond << Instructions;
   unguard;

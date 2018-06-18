@@ -82,7 +82,7 @@ native final spawner Thinker Spawn(class<Thinker> Type, optional TVec AOrigin,
 override native void Destroy();
 
 //  Broadcast message (print to all clients)
-native final void bprint(string format, ...);
+native final void bprint(string format, ...) [printf,1];
 
 native final dlight_t *AllocDlight(Thinker Owner);
 native final particle_t *NewParticle();

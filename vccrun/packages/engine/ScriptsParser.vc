@@ -48,7 +48,7 @@ native void ExpectNumber ();
 native bool CheckFloat ();
 native void ExpectFloat ();
 native void UnGet ();
-native void ScriptError (string Text, ...);
+native void ScriptError (string Text, ...) [printf,1];
 
 defaultproperties
 {

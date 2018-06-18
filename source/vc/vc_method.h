@@ -162,6 +162,8 @@ public:
   VStatement *Statement;
   VName SelfTypeName;
   vint32 lmbCount; // number of defined lambdas, used to create lambda names
+  // native vararg method can have `printf` attribute
+  vint32 printfFmtArgIdx; // -1 if no, or local index
 
   // run-time fields
   vuint32 Profile1;

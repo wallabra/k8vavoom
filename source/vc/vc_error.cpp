@@ -59,6 +59,7 @@ static const char *ErrorNames[NUM_ERRORS] = {
   "Missing ']'",
   "Invalid operation with array",
   "Expression type mismatch",
+  "Missing comma",
 };
 
 
