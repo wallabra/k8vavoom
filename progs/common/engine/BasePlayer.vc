@@ -167,6 +167,7 @@ replication
 native final void cprint(string format, ...) [printf,1];
 //  Client's centre message
 native final void centreprint(string format, ...) [printf,1];
+alias centerprint = centreprint;
 native final int GetPlayerNum();
 native final void ClearPlayer();
 
