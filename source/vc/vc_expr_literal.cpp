@@ -79,7 +79,7 @@ VExpression *VIntLiteral::DoResolve (VEmitContext &) {
 //
 //==========================================================================
 void VIntLiteral::Emit (VEmitContext &ec) {
-  ec.EmitPushNumber(Value);
+  ec.EmitPushNumber(Value, Loc);
 }
 
 
@@ -156,7 +156,7 @@ VExpression *VFloatLiteral::DoResolve (VEmitContext &) {
 //
 //==========================================================================
 void VFloatLiteral::Emit (VEmitContext &ec) {
-  ec.AddStatement(OPC_PushNumber, Value);
+  ec.AddStatement(OPC_PushNumber, Value, Loc);
 }
 
 
@@ -253,7 +253,7 @@ VExpression *VNameLiteral::DoResolve (VEmitContext &) {
 //
 //==========================================================================
 void VNameLiteral::Emit (VEmitContext &ec) {
-  ec.AddStatement(OPC_PushName, Value);
+  ec.AddStatement(OPC_PushName, Value, Loc);
 }
 
 
@@ -310,7 +310,7 @@ VExpression *VStringLiteral::DoResolve (VEmitContext &) {
 //
 //==========================================================================
 void VStringLiteral::Emit (VEmitContext &ec) {
-  ec.AddStatement(OPC_PushString, Value);
+  ec.AddStatement(OPC_PushString, Value, Loc);
 }
 
 
@@ -392,7 +392,7 @@ VExpression *VSelf::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VSelf::Emit (VEmitContext &ec) {
-  ec.AddStatement(OPC_LocalValue0);
+  ec.AddStatement(OPC_LocalValue0, Loc);
 }
 
 
@@ -451,9 +451,9 @@ VExpression *VSelfClass::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VSelfClass::Emit (VEmitContext &ec) {
   if (ec.CurrentFunc->Flags&FUNC_Static) {
-    ec.AddStatement(OPC_PushClassId, ec.SelfClass);
+    ec.AddStatement(OPC_PushClassId, ec.SelfClass, Loc);
   } else {
-    ec.AddStatement(OPC_LocalValue0);
+    ec.AddStatement(OPC_LocalValue0, Loc);
   }
 }
 
@@ -506,7 +506,7 @@ VExpression *VNoneLiteral::DoResolve (VEmitContext &) {
 //
 //==========================================================================
 void VNoneLiteral::Emit (VEmitContext &ec) {
-  ec.AddStatement(OPC_PushNull);
+  ec.AddStatement(OPC_PushNull, Loc);
 }
 
 
@@ -558,7 +558,7 @@ VExpression *VNullLiteral::DoResolve (VEmitContext &) {
 //
 //==========================================================================
 void VNullLiteral::Emit (VEmitContext &ec) {
-  ec.AddStatement(OPC_PushNull);
+  ec.AddStatement(OPC_PushNull, Loc);
 }
 
 

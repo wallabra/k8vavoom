@@ -254,22 +254,22 @@ void VLocalVar::RequestAddressOf () {
 void VLocalVar::Emit (VEmitContext &ec) {
   VLocalVarDef &loc = ec.GetLocalByIndex(num);
   if (AddressRequested) {
-    ec.EmitLocalAddress(loc.Offset);
+    ec.EmitLocalAddress(loc.Offset, Loc);
   } else if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) {
     if (loc.Offset < 256) {
       int Ofs = loc.Offset;
-           if (Ofs == 0) ec.AddStatement(OPC_LocalValue0);
-      else if (Ofs == 1) ec.AddStatement(OPC_LocalValue1);
-      else if (Ofs == 2) ec.AddStatement(OPC_LocalValue2);
-      else if (Ofs == 3) ec.AddStatement(OPC_LocalValue3);
-      else if (Ofs == 4) ec.AddStatement(OPC_LocalValue4);
-      else if (Ofs == 5) ec.AddStatement(OPC_LocalValue5);
-      else if (Ofs == 6) ec.AddStatement(OPC_LocalValue6);
-      else if (Ofs == 7) ec.AddStatement(OPC_LocalValue7);
-      else ec.AddStatement(OPC_LocalValueB, Ofs);
+           if (Ofs == 0) ec.AddStatement(OPC_LocalValue0, Loc);
+      else if (Ofs == 1) ec.AddStatement(OPC_LocalValue1, Loc);
+      else if (Ofs == 2) ec.AddStatement(OPC_LocalValue2, Loc);
+      else if (Ofs == 3) ec.AddStatement(OPC_LocalValue3, Loc);
+      else if (Ofs == 4) ec.AddStatement(OPC_LocalValue4, Loc);
+      else if (Ofs == 5) ec.AddStatement(OPC_LocalValue5, Loc);
+      else if (Ofs == 6) ec.AddStatement(OPC_LocalValue6, Loc);
+      else if (Ofs == 7) ec.AddStatement(OPC_LocalValue7, Loc);
+      else ec.AddStatement(OPC_LocalValueB, Ofs, Loc);
     } else {
-      ec.EmitLocalAddress(loc.Offset);
-      ec.AddStatement(OPC_PushPointedPtr);
+      ec.EmitLocalAddress(loc.Offset, Loc);
+      ec.AddStatement(OPC_PushPointedPtr, Loc);
     }
     if (PushOutParam) EmitPushPointedCode(loc.Type, ec);
   } else if (loc.Offset < 256) {
@@ -286,39 +286,39 @@ void VLocalVar::Emit (VEmitContext &ec) {
       case TYPE_Class:
       case TYPE_State:
       case TYPE_Delegate:
-             if (Ofs == 0) ec.AddStatement(OPC_LocalValue0);
-        else if (Ofs == 1) ec.AddStatement(OPC_LocalValue1);
-        else if (Ofs == 2) ec.AddStatement(OPC_LocalValue2);
-        else if (Ofs == 3) ec.AddStatement(OPC_LocalValue3);
-        else if (Ofs == 4) ec.AddStatement(OPC_LocalValue4);
-        else if (Ofs == 5) ec.AddStatement(OPC_LocalValue5);
-        else if (Ofs == 6) ec.AddStatement(OPC_LocalValue6);
-        else if (Ofs == 7) ec.AddStatement(OPC_LocalValue7);
-        else ec.AddStatement(OPC_LocalValueB, Ofs);
+             if (Ofs == 0) ec.AddStatement(OPC_LocalValue0, Loc);
+        else if (Ofs == 1) ec.AddStatement(OPC_LocalValue1, Loc);
+        else if (Ofs == 2) ec.AddStatement(OPC_LocalValue2, Loc);
+        else if (Ofs == 3) ec.AddStatement(OPC_LocalValue3, Loc);
+        else if (Ofs == 4) ec.AddStatement(OPC_LocalValue4, Loc);
+        else if (Ofs == 5) ec.AddStatement(OPC_LocalValue5, Loc);
+        else if (Ofs == 6) ec.AddStatement(OPC_LocalValue6, Loc);
+        else if (Ofs == 7) ec.AddStatement(OPC_LocalValue7, Loc);
+        else ec.AddStatement(OPC_LocalValueB, Ofs, Loc);
         if (loc.Type.Type == TYPE_Delegate) {
-               if (Ofs+1 == 0) ec.AddStatement(OPC_LocalValue0);
-          else if (Ofs+1 == 1) ec.AddStatement(OPC_LocalValue1);
-          else if (Ofs+1 == 2) ec.AddStatement(OPC_LocalValue2);
-          else if (Ofs+1 == 3) ec.AddStatement(OPC_LocalValue3);
-          else if (Ofs+1 == 4) ec.AddStatement(OPC_LocalValue4);
-          else if (Ofs+1 == 5) ec.AddStatement(OPC_LocalValue5);
-          else if (Ofs+1 == 6) ec.AddStatement(OPC_LocalValue6);
-          else if (Ofs+1 == 7) ec.AddStatement(OPC_LocalValue7);
-          else ec.AddStatement(OPC_LocalValueB, Ofs+1);
+               if (Ofs+1 == 0) ec.AddStatement(OPC_LocalValue0, Loc);
+          else if (Ofs+1 == 1) ec.AddStatement(OPC_LocalValue1, Loc);
+          else if (Ofs+1 == 2) ec.AddStatement(OPC_LocalValue2, Loc);
+          else if (Ofs+1 == 3) ec.AddStatement(OPC_LocalValue3, Loc);
+          else if (Ofs+1 == 4) ec.AddStatement(OPC_LocalValue4, Loc);
+          else if (Ofs+1 == 5) ec.AddStatement(OPC_LocalValue5, Loc);
+          else if (Ofs+1 == 6) ec.AddStatement(OPC_LocalValue6, Loc);
+          else if (Ofs+1 == 7) ec.AddStatement(OPC_LocalValue7, Loc);
+          else ec.AddStatement(OPC_LocalValueB, Ofs+1, Loc);
         }
         break;
       case TYPE_Vector:
-        ec.AddStatement(OPC_VLocalValueB, Ofs);
+        ec.AddStatement(OPC_VLocalValueB, Ofs, Loc);
         break;
       case TYPE_String:
-        ec.AddStatement(OPC_StrLocalValueB, Ofs);
+        ec.AddStatement(OPC_StrLocalValueB, Ofs, Loc);
         break;
       default:
         ParseError(Loc, "Invalid operation of this variable type");
         break;
     }
   } else {
-    ec.EmitLocalAddress(loc.Offset);
+    ec.EmitLocalAddress(loc.Offset, Loc);
     EmitPushPointedCode(loc.Type, ec);
   }
 }

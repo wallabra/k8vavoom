@@ -843,14 +843,15 @@ void VInvocation::Emit (VEmitContext &ec) {
   bool DirectCall = (BaseCall || (Func->Flags&FUNC_Final) != 0);
 
   if (DelegateLocal >= 0) {
-    ec.EmitPushNumber(0); // `self`, will be replaced by executor
+    //ec.EmitPushNumber(0, Loc); // `self`, will be replaced by executor
+    ec.AddStatement(OPC_PushNull, Loc); // `self`, will be replaced by executor
   } else {
     if (Func->Flags&FUNC_Static) {
       if (HaveSelf) ParseError(Loc, "Invalid static function call");
     } else {
       if (!HaveSelf) {
         if (ec.CurrentFunc->Flags&FUNC_Static) ParseError(Loc, "An object is required to call non-static methods");
-        ec.AddStatement(OPC_LocalValue0);
+        ec.AddStatement(OPC_LocalValue0, Loc);
       }
     }
   }
@@ -864,7 +865,7 @@ void VInvocation::Emit (VEmitContext &ec) {
         case TYPE_Bool:
         case TYPE_Float:
         case TYPE_Name:
-          ec.EmitPushNumber(0);
+          ec.EmitPushNumber(0, Loc);
           ++SelfOffset;
           break;
         case TYPE_String:
@@ -872,26 +873,26 @@ void VInvocation::Emit (VEmitContext &ec) {
         case TYPE_Reference:
         case TYPE_Class:
         case TYPE_State:
-          ec.AddStatement(OPC_PushNull);
+          ec.AddStatement(OPC_PushNull, Loc);
           ++SelfOffset;
           break;
         case TYPE_Vector:
-          ec.EmitPushNumber(0);
-          ec.EmitPushNumber(0);
-          ec.EmitPushNumber(0);
+          ec.EmitPushNumber(0, Loc);
+          ec.EmitPushNumber(0, Loc);
+          ec.EmitPushNumber(0, Loc);
           SelfOffset += 3;
           break;
         default:
           ParseError(Loc, "Bad optional parameter type");
           break;
       }
-      ec.EmitPushNumber(0);
+      ec.EmitPushNumber(0, Loc);
       ++SelfOffset;
     } else {
       Args[i]->Emit(ec);
       SelfOffset += (Args[i]->Type.Type == TYPE_Vector ? 3 : 1);
       if (Func->ParamFlags[i]&FPARM_Optional) {
-        ec.EmitPushNumber(1);
+        ec.EmitPushNumber(1, Loc);
         ++SelfOffset;
       }
     }
@@ -901,39 +902,39 @@ void VInvocation::Emit (VEmitContext &ec) {
   if ((Func->Flags&(FUNC_Native|FUNC_Static)) == (FUNC_Native|FUNC_Static)) {
     if (NumArgs == 1 && Func->NumParams == 1) {
       if (Func->ParamTypes[0].Type == TYPE_Name && Func->ReturnType.Type == TYPE_String && Func->GetVName() == VName("NameToStr")) {
-        ec.AddStatement(OPC_NameToStr);
+        ec.AddStatement(OPC_NameToStr, Loc);
         return;
       }
       if (Func->ParamTypes[0].Type == TYPE_String && Func->ReturnType.Type == TYPE_Name && Func->GetVName() == VName("StrToName")) {
-        ec.AddStatement(OPC_StrToName);
+        ec.AddStatement(OPC_StrToName, Loc);
         return;
       }
       if (Func->ParamTypes[0].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Int && Func->GetVName() == VName("ftoi")) {
-        ec.AddStatement(OPC_FloatToInt);
+        ec.AddStatement(OPC_FloatToInt, Loc);
         return;
       }
       if (Func->ParamTypes[0].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Float && Func->GetVName() == VName("itof")) {
-        ec.AddStatement(OPC_IntToFloat);
+        ec.AddStatement(OPC_IntToFloat, Loc);
         return;
       }
       if (Func->ParamTypes[0].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Int && Func->GetVName() == VName("abs")) {
-        ec.AddStatement(OPC_IntAbs);
+        ec.AddStatement(OPC_IntAbs, Loc);
         return;
       }
       if (Func->ParamTypes[0].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Float && Func->GetVName() == VName("fabs")) {
-        ec.AddStatement(OPC_FloatAbs);
+        ec.AddStatement(OPC_FloatAbs, Loc);
         return;
       }
     }
 
     if (NumArgs == 2 && Func->NumParams == 2) {
       if (Func->ParamTypes[0].Type == TYPE_Int && Func->ParamTypes[1].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Int) {
-        if (Func->GetVName() == VName("Min") || Func->GetVName() == VName("min")) { ec.AddStatement(OPC_IntMin); return; }
-        if (Func->GetVName() == VName("Max") || Func->GetVName() == VName("max")) { ec.AddStatement(OPC_IntMax); return; }
+        if (Func->GetVName() == VName("Min") || Func->GetVName() == VName("min")) { ec.AddStatement(OPC_IntMin, Loc); return; }
+        if (Func->GetVName() == VName("Max") || Func->GetVName() == VName("max")) { ec.AddStatement(OPC_IntMax, Loc); return; }
       }
       if (Func->ParamTypes[0].Type == TYPE_Float && Func->ParamTypes[1].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Float) {
-        if (Func->GetVName() == VName("FMin") || Func->GetVName() == VName("fmin")) { ec.AddStatement(OPC_FloatMin); return; }
-        if (Func->GetVName() == VName("FMax") || Func->GetVName() == VName("fmax")) { ec.AddStatement(OPC_FloatMax); return; }
+        if (Func->GetVName() == VName("FMin") || Func->GetVName() == VName("fmin")) { ec.AddStatement(OPC_FloatMin, Loc); return; }
+        if (Func->GetVName() == VName("FMax") || Func->GetVName() == VName("fmax")) { ec.AddStatement(OPC_FloatMax, Loc); return; }
       }
     }
 
@@ -941,30 +942,30 @@ void VInvocation::Emit (VEmitContext &ec) {
       if (Func->ParamTypes[0].Type == TYPE_Int && Func->ParamTypes[1].Type == TYPE_Int && Func->ParamTypes[2].Type == TYPE_Int &&
           Func->ReturnType.Type == TYPE_Int)
       {
-        if (Func->GetVName() == VName("Clamp") || Func->GetVName() == VName("clamp")) { ec.AddStatement(OPC_IntClamp); return; }
+        if (Func->GetVName() == VName("Clamp") || Func->GetVName() == VName("clamp")) { ec.AddStatement(OPC_IntClamp, Loc); return; }
       }
       if (Func->ParamTypes[0].Type == TYPE_Float && Func->ParamTypes[1].Type == TYPE_Float && Func->ParamTypes[2].Type == TYPE_Float &&
           Func->ReturnType.Type == TYPE_Float)
       {
-        if (Func->GetVName() == VName("FClamp") || Func->GetVName() == VName("fclamp")) { ec.AddStatement(OPC_FloatClamp); return; }
+        if (Func->GetVName() == VName("FClamp") || Func->GetVName() == VName("fclamp")) { ec.AddStatement(OPC_FloatClamp, Loc); return; }
       }
     }
   }
 
   if (DirectCall) {
-    ec.AddStatement(OPC_Call, Func);
+    ec.AddStatement(OPC_Call, Func, Loc);
   } else if (DelegateField) {
-    ec.AddStatement(OPC_DelegateCall, DelegateField, SelfOffset);
+    ec.AddStatement(OPC_DelegateCall, DelegateField, SelfOffset, Loc);
   } else if (DelegateLocal >= 0) {
     // get address of local
     VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
-    ec.EmitLocalAddress(loc.Offset);
+    ec.EmitLocalAddress(loc.Offset, Loc);
     // push self offset
-    //ec.EmitPushNumber(SelfOffset);
+    //ec.EmitPushNumber(SelfOffset, Loc);
     // emit call
-    ec.AddStatement(OPC_DelegateCallPtr, SelfOffset);
+    ec.AddStatement(OPC_DelegateCallPtr, SelfOffset, Loc);
   } else {
-    ec.AddStatement(OPC_VCall, Func, SelfOffset);
+    ec.AddStatement(OPC_VCall, Func, SelfOffset, Loc);
   }
   unguard;
 }
@@ -1401,10 +1402,10 @@ void VInvokeWrite::Emit (VEmitContext &ec) {
   for (int i = 0; i < NumArgs; ++i) {
     if (!Args[i]) continue;
     Args[i]->Emit(ec);
-    //ec.EmitPushNumber(Args[i]->Type.Type);
-    ec.AddStatement(OPC_DoWriteOne, Args[i]->Type);
+    //ec.EmitPushNumber(Args[i]->Type.Type, Loc);
+    ec.AddStatement(OPC_DoWriteOne, Args[i]->Type, Loc);
   }
-  if (isWriteln) ec.AddStatement(OPC_DoWriteFlush);
+  if (isWriteln) ec.AddStatement(OPC_DoWriteFlush, Loc);
   unguard;
 }
 

@@ -158,7 +158,7 @@ void VIf::DoEmit (VEmitContext &ec) {
   if (FalseStatement) {
     // false statement
     VLabel End = ec.DefineLabel();
-    ec.AddStatement(OPC_Goto, End);
+    ec.AddStatement(OPC_Goto, End, Loc);
     ec.MarkLabel(FalseTarget);
     FalseStatement->Emit(ec);
     ec.MarkLabel(End);
@@ -265,7 +265,7 @@ void VWhile::DoEmit (VEmitContext &ec) {
   ec.LoopStart = ec.DefineLabel();
   ec.LoopEnd = ec.DefineLabel();
 
-  ec.AddStatement(OPC_Goto, ec.LoopStart);
+  ec.AddStatement(OPC_Goto, ec.LoopStart, Loc);
   ec.MarkLabel(Loop);
   Statement->Emit(ec);
   ec.MarkLabel(ec.LoopStart);
@@ -512,7 +512,7 @@ void VFor::DoEmit (VEmitContext &ec) {
   for (int i = 0; i < InitExpr.length(); ++i) InitExpr[i]->Emit(ec);
 
   // jump to test if it's present
-  if (CondExpr) ec.AddStatement(OPC_Goto, Test);
+  if (CondExpr) ec.AddStatement(OPC_Goto, Test, Loc);
 
   // emit embeded statement
   ec.MarkLabel(Loop);
@@ -525,7 +525,7 @@ void VFor::DoEmit (VEmitContext &ec) {
   // loop test
   ec.MarkLabel(Test);
   if (!CondExpr) {
-    ec.AddStatement(OPC_Goto, Loop);
+    ec.AddStatement(OPC_Goto, Loop, Loc);
   } else {
     CondExpr->EmitBranchable(ec, Loop, true);
   }
@@ -631,20 +631,20 @@ void VForeach::DoEmit (VEmitContext &ec) {
   VLabel OldEnd = ec.LoopEnd;
 
   Expr->Emit(ec);
-  ec.AddStatement(OPC_IteratorInit);
+  ec.AddStatement(OPC_IteratorInit, Loc);
 
   VLabel Loop = ec.DefineLabel();
   ec.LoopStart = ec.DefineLabel();
   ec.LoopEnd = ec.DefineLabel();
 
-  ec.AddStatement(OPC_Goto, ec.LoopStart);
+  ec.AddStatement(OPC_Goto, ec.LoopStart, Loc);
   ec.MarkLabel(Loop);
   Statement->Emit(ec);
   ec.MarkLabel(ec.LoopStart);
-  ec.AddStatement(OPC_IteratorNext);
-  ec.AddStatement(OPC_IfGoto, Loop);
+  ec.AddStatement(OPC_IteratorNext, Loc);
+  ec.AddStatement(OPC_IfGoto, Loop, Loc);
   ec.MarkLabel(ec.LoopEnd);
-  ec.AddStatement(OPC_IteratorPop);
+  ec.AddStatement(OPC_IteratorPop, Loc);
 
   ec.LoopStart = OldStart;
   ec.LoopEnd = OldEnd;
@@ -765,21 +765,21 @@ void VSwitch::DoEmit (VEmitContext &ec) {
   for (int i = 0; i < CaseInfo.length(); ++i) {
     CaseInfo[i].Address = ec.DefineLabel();
     if (CaseInfo[i].Value >= 0 && CaseInfo[i].Value < 256) {
-      ec.AddStatement(OPC_CaseGotoB, CaseInfo[i].Value, CaseInfo[i].Address);
+      ec.AddStatement(OPC_CaseGotoB, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
     } else if (CaseInfo[i].Value >= MIN_VINT16 && CaseInfo[i].Value < MAX_VINT16) {
-      ec.AddStatement(OPC_CaseGotoS, CaseInfo[i].Value, CaseInfo[i].Address);
+      ec.AddStatement(OPC_CaseGotoS, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
     } else {
-      ec.AddStatement(OPC_CaseGoto, CaseInfo[i].Value, CaseInfo[i].Address);
+      ec.AddStatement(OPC_CaseGoto, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
     }
   }
-  ec.AddStatement(OPC_Drop);
+  ec.AddStatement(OPC_Drop, Loc);
 
   // go to default case if we have one, otherwise to the end of switch
   if (HaveDefault) {
     DefaultAddress = ec.DefineLabel();
-    ec.AddStatement(OPC_Goto, DefaultAddress);
+    ec.AddStatement(OPC_Goto, DefaultAddress, Loc);
   } else {
-    ec.AddStatement(OPC_Goto, ec.LoopEnd);
+    ec.AddStatement(OPC_Goto, ec.LoopEnd, Loc);
   }
 
   // switch statements
@@ -1063,7 +1063,7 @@ void VBreak::DoEmit (VEmitContext &ec) {
     ParseError(Loc, "Misplaced `break` statement");
     return;
   }
-  ec.AddStatement(OPC_Goto, ec.LoopEnd);
+  ec.AddStatement(OPC_Goto, ec.LoopEnd, Loc);
 }
 
 
@@ -1119,7 +1119,7 @@ void VContinue::DoEmit (VEmitContext &ec) {
     ParseError(Loc, "Misplaced `continue` statement");
     return;
   }
-  ec.AddStatement(OPC_Goto, ec.LoopStart);
+  ec.AddStatement(OPC_Goto, ec.LoopStart, Loc);
 }
 
 
@@ -1216,17 +1216,17 @@ bool VReturn::Resolve (VEmitContext &ec) {
 void VReturn::DoEmit (VEmitContext &ec) {
   if (Expr) {
     Expr->Emit(ec);
-    ec.EmitClearStrings(0, NumLocalsToClear);
+    ec.EmitClearStrings(0, NumLocalsToClear, Loc);
     if (Expr->Type.GetStackSize() == 4) {
-      ec.AddStatement(OPC_ReturnL);
+      ec.AddStatement(OPC_ReturnL, Loc);
     } else if (Expr->Type.Type == TYPE_Vector) {
-      ec.AddStatement(OPC_ReturnV);
+      ec.AddStatement(OPC_ReturnV, Loc);
     } else {
       ParseError(Loc, "Bad return type");
     }
   } else {
-    ec.EmitClearStrings(0, NumLocalsToClear);
-    ec.AddStatement(OPC_Return);
+    ec.EmitClearStrings(0, NumLocalsToClear, Loc);
+    ec.AddStatement(OPC_Return, Loc);
   }
 }
 

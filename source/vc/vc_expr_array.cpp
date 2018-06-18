@@ -293,23 +293,23 @@ void VArrayElement::Emit (VEmitContext &ec) {
   ind->Emit(ec);
   if (genStringAssign) {
     sval->Emit(ec);
-    ec.AddStatement(OPC_StrSetChar);
+    ec.AddStatement(OPC_StrSetChar, Loc);
   } else {
     if (op->Type.Type == TYPE_DynamicArray) {
       if (IsAssign) {
-        ec.AddStatement(OPC_DynArrayElementGrow, RealType);
+        ec.AddStatement(OPC_DynArrayElementGrow, RealType, Loc);
       } else {
-        ec.AddStatement(OPC_DynArrayElement, RealType);
+        ec.AddStatement(OPC_DynArrayElement, RealType, Loc);
       }
     } else if (op->Type.Type == TYPE_String) {
       if (IsAssign) {
         ParseError(Loc, "Strings are immutable (yet) -- codegen");
       } else {
-        ec.AddStatement(OPC_StrGetChar);
+        ec.AddStatement(OPC_StrGetChar, Loc);
         return;
       }
     } else {
-      ec.AddStatement(OPC_ArrayElement, RealType);
+      ec.AddStatement(OPC_ArrayElement, RealType, Loc);
     }
     if (!AddressRequested) EmitPushPointedCode(RealType, ec);
   }
@@ -524,9 +524,9 @@ void VStringSlice::Emit (VEmitContext &ec) {
   hi->Emit(ec);
   if (genStringAssign) {
     sval->Emit(ec);
-    ec.AddStatement(OPC_StrSliceAssign);
+    ec.AddStatement(OPC_StrSliceAssign, Loc);
   } else {
-    ec.AddStatement(OPC_StrSlice);
+    ec.AddStatement(OPC_StrSlice, Loc);
   }
 }
 
@@ -596,7 +596,7 @@ VExpression *VDynArrayGetNum::DoResolve (VEmitContext &) {
 //==========================================================================
 void VDynArrayGetNum::Emit (VEmitContext &ec) {
   ArrayExpr->Emit(ec);
-  ec.AddStatement(OPC_DynArrayGetNum);
+  ec.AddStatement(OPC_DynArrayGetNum, Loc);
 }
 
 
@@ -672,13 +672,13 @@ void VDynArraySetNum::Emit (VEmitContext &ec) {
   NumExpr->Emit(ec);
   if (opsign == 0) {
     // normal assign
-    ec.AddStatement(OPC_DynArraySetNum, ArrayExpr->Type.GetArrayInnerType());
+    ec.AddStatement(OPC_DynArraySetNum, ArrayExpr->Type.GetArrayInnerType(), Loc);
   } else if (opsign < 0) {
     // -=
-    ec.AddStatement(OPC_DynArraySetNumMinus, ArrayExpr->Type.GetArrayInnerType());
+    ec.AddStatement(OPC_DynArraySetNumMinus, ArrayExpr->Type.GetArrayInnerType(), Loc);
   } else {
     // +=
-    ec.AddStatement(OPC_DynArraySetNumPlus, ArrayExpr->Type.GetArrayInnerType());
+    ec.AddStatement(OPC_DynArraySetNumPlus, ArrayExpr->Type.GetArrayInnerType(), Loc);
   }
 }
 
@@ -787,7 +787,7 @@ void VDynArrayInsert::Emit (VEmitContext &ec) {
   ArrayExpr->Emit(ec);
   IndexExpr->Emit(ec);
   CountExpr->Emit(ec);
-  ec.AddStatement(OPC_DynArrayInsert, ArrayExpr->Type.GetArrayInnerType());
+  ec.AddStatement(OPC_DynArrayInsert, ArrayExpr->Type.GetArrayInnerType(), Loc);
 }
 
 
@@ -885,7 +885,7 @@ void VDynArrayRemove::Emit (VEmitContext &ec) {
   ArrayExpr->Emit(ec);
   IndexExpr->Emit(ec);
   CountExpr->Emit(ec);
-  ec.AddStatement(OPC_DynArrayRemove, ArrayExpr->Type.GetArrayInnerType());
+  ec.AddStatement(OPC_DynArrayRemove, ArrayExpr->Type.GetArrayInnerType(), Loc);
 }
 
 
@@ -965,5 +965,5 @@ VExpression *VStringGetLength::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VStringGetLength::Emit (VEmitContext &ec) {
   StrExpr->Emit(ec);
-  ec.AddStatement(OPC_StrLength);
+  ec.AddStatement(OPC_StrLength, Loc);
 }

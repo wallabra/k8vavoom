@@ -106,6 +106,7 @@ struct FInstruction {
   VMemberBase *Member;
   VName NameArg;
   VFieldType TypeArg;
+  TLocation loc;
 
   friend VStream &operator << (VStream &, FInstruction &);
 };

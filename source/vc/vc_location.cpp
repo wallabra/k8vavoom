@@ -70,3 +70,39 @@ VStr TLocation::GetSource () const {
 void TLocation::ClearSourceFiles () {
   SourceFiles.Clear();
 }
+
+
+//==========================================================================
+//
+//  operator << (TLocation)
+//
+//==========================================================================
+VStream &operator << (VStream &Strm, TLocation &loc) {
+  //FIXME: kill Schlemiel
+  vint8 ll = (loc.Loc ? 1 : 0);
+  Strm << ll;
+  if (!ll) return Strm;
+  vuint16 line = loc.Loc&0xffff;
+  Strm << line;
+  VStr sfn;
+  if (Strm.IsLoading()) {
+    Strm << sfn;
+    int sidx = -1;
+    for (int f = 0; f < loc.SourceFiles.length(); ++f) {
+      if (loc.SourceFiles[f].Cmp(sfn) == 0) {
+        sidx = f;
+        break;
+      }
+    }
+    if (sidx == -1) {
+      if (loc.SourceFiles.length() >= 65535) { loc.Loc = 0; return Strm; }
+      sidx = loc.SourceFiles.length();
+      loc.SourceFiles.append(sfn);
+    }
+    loc.Loc = (sidx<<16)|line;
+  } else {
+    sfn = loc.GetSource();
+    Strm << sfn;
+  }
+  return Strm;
+}

@@ -230,9 +230,9 @@ void VExpression::RequestAddressOf () {
 void VExpression::EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue) {
   Emit(ec);
   if (OnTrue) {
-    ec.AddStatement(OPC_IfGoto, Lbl);
+    ec.AddStatement(OPC_IfGoto, Lbl, Loc);
   } else {
-    ec.AddStatement(OPC_IfNotGoto, Lbl);
+    ec.AddStatement(OPC_IfNotGoto, Lbl, Loc);
   }
 }
 
@@ -247,31 +247,31 @@ void VExpression::EmitPushPointedCode (VFieldType type, VEmitContext &ec) {
     case TYPE_Int:
     case TYPE_Float:
     case TYPE_Name:
-      ec.AddStatement(OPC_PushPointed);
+      ec.AddStatement(OPC_PushPointed, Loc);
       break;
     case TYPE_Byte:
-      ec.AddStatement(OPC_PushPointedByte);
+      ec.AddStatement(OPC_PushPointedByte, Loc);
       break;
     case TYPE_Bool:
-           if (type.BitMask&0x000000ff) ec.AddStatement(OPC_PushBool0, (int)(type.BitMask));
-      else if (type.BitMask&0x0000ff00) ec.AddStatement(OPC_PushBool1, (int)(type.BitMask >> 8));
-      else if (type.BitMask&0x00ff0000) ec.AddStatement(OPC_PushBool2, (int)(type.BitMask >> 16));
-      else ec.AddStatement(OPC_PushBool3, (int)(type.BitMask >> 24));
+           if (type.BitMask&0x000000ff) ec.AddStatement(OPC_PushBool0, (int)(type.BitMask), Loc);
+      else if (type.BitMask&0x0000ff00) ec.AddStatement(OPC_PushBool1, (int)(type.BitMask>>8), Loc);
+      else if (type.BitMask&0x00ff0000) ec.AddStatement(OPC_PushBool2, (int)(type.BitMask>>16), Loc);
+      else ec.AddStatement(OPC_PushBool3, (int)(type.BitMask>>24), Loc);
       break;
     case TYPE_Pointer:
     case TYPE_Reference:
     case TYPE_Class:
     case TYPE_State:
-      ec.AddStatement(OPC_PushPointedPtr);
+      ec.AddStatement(OPC_PushPointedPtr, Loc);
       break;
     case TYPE_Vector:
-      ec.AddStatement(OPC_VPushPointed);
+      ec.AddStatement(OPC_VPushPointed, Loc);
       break;
     case TYPE_String:
-      ec.AddStatement(OPC_PushPointedStr);
+      ec.AddStatement(OPC_PushPointedStr, Loc);
       break;
     case TYPE_Delegate:
-      ec.AddStatement(OPC_PushPointedDelegate);
+      ec.AddStatement(OPC_PushPointedDelegate, Loc);
       break;
     default:
       ParseError(Loc, "Bad push pointed");

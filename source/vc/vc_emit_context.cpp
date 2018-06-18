@@ -280,12 +280,13 @@ void VEmitContext::MarkLabel (VLabel l) {
 //  VEmitContext::AddStatement
 //
 //==========================================================================
-void VEmitContext::AddStatement (int statement) {
+void VEmitContext::AddStatement (int statement, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_None) FatalError("Opcode doesn't take 0 params");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.Arg1 = 0;
   I.Arg2 = 0;
+  I.loc = aloc;
 }
 
 
@@ -294,7 +295,7 @@ void VEmitContext::AddStatement (int statement) {
 //  VEmitContext::AddStatement
 //
 //==========================================================================
-void VEmitContext::AddStatement (int statement, int parm1) {
+void VEmitContext::AddStatement (int statement, int parm1, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_Byte &&
       StatementInfo[statement].Args != OPCARGS_Short &&
       StatementInfo[statement].Args != OPCARGS_Int &&
@@ -306,6 +307,7 @@ void VEmitContext::AddStatement (int statement, int parm1) {
   I.Opcode = statement;
   I.Arg1 = parm1;
   I.Arg2 = 0;
+  I.loc = aloc;
 }
 
 
@@ -314,11 +316,12 @@ void VEmitContext::AddStatement (int statement, int parm1) {
 //  VEmitContext::AddStatement
 //
 //==========================================================================
-void VEmitContext::AddStatement (int statement, float FloatArg) {
+void VEmitContext::AddStatement (int statement, float FloatArg, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_Int) FatalError("Opcode does\'t take float argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.Arg1 = *(vint32*)&FloatArg;
+  I.loc = aloc;
 }
 
 
@@ -327,11 +330,12 @@ void VEmitContext::AddStatement (int statement, float FloatArg) {
 //  VEmitContext::AddStatement
 //
 //==========================================================================
-void VEmitContext::AddStatement (int statement, VName NameArg) {
+void VEmitContext::AddStatement (int statement, VName NameArg, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_Name) FatalError("Opcode does\'t take name argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.NameArg = NameArg;
+  I.loc = aloc;
 }
 
 
@@ -340,7 +344,7 @@ void VEmitContext::AddStatement (int statement, VName NameArg) {
 //  VEmitContext::AddStatement
 //
 //==========================================================================
-void VEmitContext::AddStatement (int statement, VMemberBase *Member) {
+void VEmitContext::AddStatement (int statement, VMemberBase *Member, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_Member &&
       StatementInfo[statement].Args != OPCARGS_FieldOffset &&
       StatementInfo[statement].Args != OPCARGS_VTableIndex)
@@ -350,6 +354,7 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member) {
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.Member = Member;
+  I.loc = aloc;
 }
 
 
@@ -358,7 +363,7 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member) {
 //  VEmitContext::AddStatement
 //
 //==========================================================================
-void VEmitContext::AddStatement (int statement, VMemberBase *Member, int Arg) {
+void VEmitContext::AddStatement (int statement, VMemberBase *Member, int Arg, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_VTableIndex_Byte &&
       StatementInfo[statement].Args != OPCARGS_FieldOffset_Byte)
   {
@@ -368,6 +373,7 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member, int Arg) {
   I.Opcode = statement;
   I.Member = Member;
   I.Arg2 = Arg;
+  I.loc = aloc;
 }
 
 
@@ -376,7 +382,7 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member, int Arg) {
 //  VEmitContext::AddStatement
 //
 //==========================================================================
-void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg) {
+void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_TypeSize &&
       StatementInfo[statement].Args != OPCARGS_Type)
   {
@@ -385,6 +391,7 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg) {
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.TypeArg = TypeArg;
+  I.loc = aloc;
 }
 
 
@@ -393,7 +400,7 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg) {
 //  VEmitContext::AddStatement
 //
 //==========================================================================
-void VEmitContext::AddStatement (int statement, VLabel Lbl) {
+void VEmitContext::AddStatement (int statement, VLabel Lbl, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_BranchTarget) FatalError("Opcode does\'t take label as argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -404,6 +411,7 @@ void VEmitContext::AddStatement (int statement, VLabel Lbl) {
   Fix.Pos = CurrentFunc->Instructions.Num()-1;
   Fix.Arg = 1;
   Fix.LabelIdx = Lbl.Index;
+  I.loc = aloc;
 }
 
 
@@ -412,7 +420,7 @@ void VEmitContext::AddStatement (int statement, VLabel Lbl) {
 //  VEmitContext::AddStatement
 //
 //==========================================================================
-void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl) {
+void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_ByteBranchTarget &&
       StatementInfo[statement].Args != OPCARGS_ShortBranchTarget &&
       StatementInfo[statement].Args != OPCARGS_IntBranchTarget)
@@ -428,6 +436,7 @@ void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl) {
   Fix.Pos = CurrentFunc->Instructions.Num()-1;
   Fix.Arg = 2;
   Fix.LabelIdx = Lbl.Index;
+  I.loc = aloc;
 }
 
 
@@ -436,12 +445,12 @@ void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl) {
 //  VEmitContext::EmitPushNumber
 //
 //==========================================================================
-void VEmitContext::EmitPushNumber (int Val) {
-       if (Val == 0) AddStatement(OPC_PushNumber0);
-  else if (Val == 1) AddStatement(OPC_PushNumber1);
-  else if (Val >= 0 && Val < 256) AddStatement(OPC_PushNumberB, Val);
-  else if (Val >= MIN_VINT16 && Val <= MAX_VINT16) AddStatement(OPC_PushNumberS, Val);
-  else AddStatement(OPC_PushNumber, Val);
+void VEmitContext::EmitPushNumber (int Val, const TLocation &aloc) {
+       if (Val == 0) AddStatement(OPC_PushNumber0, aloc);
+  else if (Val == 1) AddStatement(OPC_PushNumber1, aloc);
+  else if (Val >= 0 && Val < 256) AddStatement(OPC_PushNumberB, Val, aloc);
+  else if (Val >= MIN_VINT16 && Val <= MAX_VINT16) AddStatement(OPC_PushNumberS, Val, aloc);
+  else AddStatement(OPC_PushNumber, Val, aloc);
 }
 
 
@@ -450,18 +459,18 @@ void VEmitContext::EmitPushNumber (int Val) {
 //  VEmitContext::EmitLocalAddress
 //
 //==========================================================================
-void VEmitContext::EmitLocalAddress (int Ofs) {
-       if (Ofs == 0) AddStatement(OPC_LocalAddress0);
-  else if (Ofs == 1) AddStatement(OPC_LocalAddress1);
-  else if (Ofs == 2) AddStatement(OPC_LocalAddress2);
-  else if (Ofs == 3) AddStatement(OPC_LocalAddress3);
-  else if (Ofs == 4) AddStatement(OPC_LocalAddress4);
-  else if (Ofs == 5) AddStatement(OPC_LocalAddress5);
-  else if (Ofs == 6) AddStatement(OPC_LocalAddress6);
-  else if (Ofs == 7) AddStatement(OPC_LocalAddress7);
-  else if (Ofs < 256) AddStatement(OPC_LocalAddressB, Ofs);
-  else if (Ofs < MAX_VINT16) AddStatement(OPC_LocalAddressS, Ofs);
-  else AddStatement(OPC_LocalAddress, Ofs);
+void VEmitContext::EmitLocalAddress (int Ofs, const TLocation &aloc) {
+       if (Ofs == 0) AddStatement(OPC_LocalAddress0, aloc);
+  else if (Ofs == 1) AddStatement(OPC_LocalAddress1, aloc);
+  else if (Ofs == 2) AddStatement(OPC_LocalAddress2, aloc);
+  else if (Ofs == 3) AddStatement(OPC_LocalAddress3, aloc);
+  else if (Ofs == 4) AddStatement(OPC_LocalAddress4, aloc);
+  else if (Ofs == 5) AddStatement(OPC_LocalAddress5, aloc);
+  else if (Ofs == 6) AddStatement(OPC_LocalAddress6, aloc);
+  else if (Ofs == 7) AddStatement(OPC_LocalAddress7, aloc);
+  else if (Ofs < 256) AddStatement(OPC_LocalAddressB, Ofs, aloc);
+  else if (Ofs < MAX_VINT16) AddStatement(OPC_LocalAddressS, Ofs, aloc);
+  else AddStatement(OPC_LocalAddress, Ofs, aloc);
 }
 
 
@@ -470,41 +479,41 @@ void VEmitContext::EmitLocalAddress (int Ofs) {
 //  VEmitContext::EmitClearStrings
 //
 //==========================================================================
-void VEmitContext::EmitClearStrings (int Start, int End) {
+void VEmitContext::EmitClearStrings (int Start, int End, const TLocation &aloc) {
   for (int i = Start; i < End; ++i) {
     // don't touch out/ref parameters
     if (LocalDefs[i].ParamFlags&(FPARM_Out|FPARM_Ref)) continue;
 
     if (LocalDefs[i].Type.Type == TYPE_String) {
-      EmitLocalAddress(LocalDefs[i].Offset);
-      AddStatement(OPC_ClearPointedStr);
+      EmitLocalAddress(LocalDefs[i].Offset, aloc);
+      AddStatement(OPC_ClearPointedStr, aloc);
     }
 
     if (LocalDefs[i].Type.Type == TYPE_DynamicArray) {
-      EmitLocalAddress(LocalDefs[i].Offset);
-      AddStatement(OPC_PushNumber0);
-      AddStatement(OPC_DynArraySetNum, LocalDefs[i].Type.GetArrayInnerType());
+      EmitLocalAddress(LocalDefs[i].Offset, aloc);
+      AddStatement(OPC_PushNumber0, aloc);
+      AddStatement(OPC_DynArraySetNum, LocalDefs[i].Type.GetArrayInnerType(), aloc);
     }
 
     if (LocalDefs[i].Type.Type == TYPE_Struct && LocalDefs[i].Type.Struct->NeedsDestructor()) {
-      EmitLocalAddress(LocalDefs[i].Offset);
-      AddStatement(OPC_ClearPointedStruct, LocalDefs[i].Type.Struct);
+      EmitLocalAddress(LocalDefs[i].Offset, aloc);
+      AddStatement(OPC_ClearPointedStruct, LocalDefs[i].Type.Struct, aloc);
     }
 
     if (LocalDefs[i].Type.Type == TYPE_Array) {
       if (LocalDefs[i].Type.ArrayInnerType == TYPE_String) {
         for (int j = 0; j < LocalDefs[i].Type.ArrayDim; ++j) {
-          EmitLocalAddress(LocalDefs[i].Offset);
-          EmitPushNumber(j);
-          AddStatement(OPC_ArrayElement, LocalDefs[i].Type.GetArrayInnerType());
-          AddStatement(OPC_ClearPointedStr);
+          EmitLocalAddress(LocalDefs[i].Offset, aloc);
+          EmitPushNumber(j, aloc);
+          AddStatement(OPC_ArrayElement, LocalDefs[i].Type.GetArrayInnerType(), aloc);
+          AddStatement(OPC_ClearPointedStr, aloc);
         }
       } else if (LocalDefs[i].Type.ArrayInnerType == TYPE_Struct && LocalDefs[i].Type.Struct->NeedsDestructor()) {
         for (int j = 0; j < LocalDefs[i].Type.ArrayDim; ++j) {
-          EmitLocalAddress(LocalDefs[i].Offset);
-          EmitPushNumber(j);
-          AddStatement(OPC_ArrayElement, LocalDefs[i].Type.GetArrayInnerType());
-          AddStatement(OPC_ClearPointedStruct, LocalDefs[i].Type.Struct);
+          EmitLocalAddress(LocalDefs[i].Offset, aloc);
+          EmitPushNumber(j, aloc);
+          AddStatement(OPC_ArrayElement, LocalDefs[i].Type.GetArrayInnerType(), aloc);
+          AddStatement(OPC_ClearPointedStruct, LocalDefs[i].Type.Struct, aloc);
         }
       }
     }

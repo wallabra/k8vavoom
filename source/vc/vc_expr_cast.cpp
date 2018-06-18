@@ -74,8 +74,8 @@ VExpression *VDelegateToBool::SyntaxCopy () {
 //==========================================================================
 void VDelegateToBool::Emit (VEmitContext &ec) {
   op->Emit(ec);
-  ec.AddStatement(OPC_PushPointedPtr);
-  ec.AddStatement(OPC_PtrToBool);
+  ec.AddStatement(OPC_PushPointedPtr, Loc);
+  ec.AddStatement(OPC_PtrToBool, Loc);
 }
 
 
@@ -108,7 +108,7 @@ VExpression *VStringToBool::SyntaxCopy () {
 //==========================================================================
 void VStringToBool::Emit (VEmitContext &ec) {
   op->Emit(ec);
-  ec.AddStatement(OPC_StrToBool);
+  ec.AddStatement(OPC_StrToBool, Loc);
 }
 
 
@@ -141,7 +141,7 @@ VExpression *VPointerToBool::SyntaxCopy () {
 //==========================================================================
 void VPointerToBool::Emit (VEmitContext &ec) {
   op->Emit(ec);
-  ec.AddStatement(OPC_PtrToBool);
+  ec.AddStatement(OPC_PtrToBool, Loc);
 }
 
 
@@ -217,7 +217,7 @@ void VScalarToFloat::Emit (VEmitContext &ec) {
     case TYPE_Int:
     case TYPE_Byte:
     case TYPE_Bool:
-      ec.AddStatement(OPC_IntToFloat);
+      ec.AddStatement(OPC_IntToFloat, Loc);
       break;
     case TYPE_Float: // nothing to do
       break;
@@ -301,7 +301,7 @@ void VScalarToInt::Emit (VEmitContext &ec) {
       // nothing to do
       break;
     case TYPE_Float:
-      ec.AddStatement(OPC_FloatToInt);
+      ec.AddStatement(OPC_FloatToInt, Loc);
       break;
     default:
       ParseError(Loc, "Internal compiler error (VScalarToInt::Emit)");
@@ -386,7 +386,7 @@ void VCastToString::Emit (VEmitContext &ec) {
     case TYPE_String:
       break;
     case TYPE_Name:
-      ec.AddStatement(OPC_NameToStr);
+      ec.AddStatement(OPC_NameToStr, Loc);
       break;
     default:
       ParseError(Loc, "cannot convert type `%s` to `string` (the thing that should not be)", *op->Type.GetName());
@@ -468,7 +468,7 @@ void VCastToName::Emit (VEmitContext &ec) {
   op->Emit(ec);
   switch (op->Type.Type) {
     case TYPE_String:
-      ec.AddStatement(OPC_StrToName);
+      ec.AddStatement(OPC_StrToName, Loc);
       break;
     case TYPE_Name:
       break;
@@ -546,7 +546,7 @@ VExpression *VDynamicCast::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VDynamicCast::Emit (VEmitContext &ec) {
   op->Emit(ec);
-  ec.AddStatement(OPC_DynamicCast, Class);
+  ec.AddStatement(OPC_DynamicCast, Class, Loc);
 }
 
 
@@ -625,5 +625,5 @@ VExpression *VDynamicClassCast::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VDynamicClassCast::Emit (VEmitContext &ec) {
   op->Emit(ec);
-  ec.AddStatement(OPC_DynamicClassCast, Type.Class);
+  ec.AddStatement(OPC_DynamicClassCast, Type.Class, Loc);
 }

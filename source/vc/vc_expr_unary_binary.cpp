@@ -205,15 +205,15 @@ void VUnary::Emit (VEmitContext &ec) {
     case Plus:
       break;
     case Minus:
-           if (op->Type.Type == TYPE_Int) ec.AddStatement(OPC_UnaryMinus);
-      else if (op->Type.Type == TYPE_Float) ec.AddStatement(OPC_FUnaryMinus);
-      else if (op->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VUnaryMinus);
+           if (op->Type.Type == TYPE_Int) ec.AddStatement(OPC_UnaryMinus, Loc);
+      else if (op->Type.Type == TYPE_Float) ec.AddStatement(OPC_FUnaryMinus, Loc);
+      else if (op->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VUnaryMinus, Loc);
       break;
     case Not:
-      ec.AddStatement(OPC_NegateLogical);
+      ec.AddStatement(OPC_NegateLogical, Loc);
       break;
     case BitInvert:
-      ec.AddStatement(OPC_BitInverse);
+      ec.AddStatement(OPC_BitInverse, Loc);
       break;
     case TakeAddress:
       break;
@@ -316,12 +316,12 @@ VExpression *VUnaryMutator::DoResolve (VEmitContext &ec) {
 void VUnaryMutator::Emit (VEmitContext &ec) {
   op->Emit(ec);
   switch (Oper) {
-    case PreInc: ec.AddStatement(OPC_PreInc); break;
-    case PreDec: ec.AddStatement(OPC_PreDec); break;
-    case PostInc: ec.AddStatement(OPC_PostInc); break;
-    case PostDec: ec.AddStatement(OPC_PostDec); break;
-    case Inc: ec.AddStatement(OPC_IncDrop); break;
-    case Dec: ec.AddStatement(OPC_DecDrop); break;
+    case PreInc: ec.AddStatement(OPC_PreInc, Loc); break;
+    case PreDec: ec.AddStatement(OPC_PreDec, Loc); break;
+    case PostInc: ec.AddStatement(OPC_PostInc, Loc); break;
+    case PostDec: ec.AddStatement(OPC_PostDec, Loc); break;
+    case Inc: ec.AddStatement(OPC_IncDrop, Loc); break;
+    case Dec: ec.AddStatement(OPC_DecDrop, Loc); break;
   }
 }
 
@@ -694,88 +694,88 @@ void VBinary::Emit (VEmitContext &ec) {
 
   switch (Oper) {
     case Add:
-           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Add);
-      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FAdd);
-      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VAdd);
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Add, Loc);
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FAdd, Loc);
+      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VAdd, Loc);
       break;
     case Subtract:
-           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Subtract);
-      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FSubtract);
-      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VSubtract);
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Subtract, Loc);
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FSubtract, Loc);
+      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VSubtract, Loc);
       break;
     case Multiply:
-           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Multiply);
-      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FMultiply);
-      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_VPostScale);
-      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VPreScale);
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Multiply, Loc);
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FMultiply, Loc);
+      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_VPostScale, Loc);
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VPreScale, Loc);
       break;
     case Divide:
-           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Divide);
-      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FDivide);
-      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_VIScale);
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Divide, Loc);
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FDivide, Loc);
+      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_VIScale, Loc);
       break;
     case Modulus:
-      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Modulus);
+      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Modulus, Loc);
       break;
     case LShift:
-      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_LShift);
+      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_LShift, Loc);
       break;
     case RShift:
-      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_RShift);
+      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_RShift, Loc);
       break;
     case Less:
-           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Less);
-      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FLess);
-      else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrLess);
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Less, Loc);
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FLess, Loc);
+      else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrLess, Loc);
       break;
     case LessEquals:
-           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_LessEquals);
-      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FLessEquals);
-      else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrLessEqu);
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_LessEquals, Loc);
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FLessEquals, Loc);
+      else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrLessEqu, Loc);
       break;
     case Greater:
-           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Greater);
-      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FGreater);
-      else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrGreat);
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Greater, Loc);
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FGreater, Loc);
+      else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrGreat, Loc);
       break;
     case GreaterEquals:
-           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_GreaterEquals);
-      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FGreaterEquals);
-      else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrGreatEqu);
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_GreaterEquals, Loc);
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FGreaterEquals, Loc);
+      else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrGreatEqu, Loc);
       break;
     case Equals:
-           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Equals);
-      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FEquals);
-      else if (op1->Type.Type == TYPE_Name && op2->Type.Type == TYPE_Name) ec.AddStatement(OPC_Equals);
-      else if (op1->Type.Type == TYPE_Pointer && op2->Type.Type == TYPE_Pointer) ec.AddStatement(OPC_PtrEquals);
-      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VEquals);
-      else if (op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) ec.AddStatement(OPC_PtrEquals);
-      else if (op1->Type.Type == TYPE_State && op2->Type.Type == TYPE_State) ec.AddStatement(OPC_PtrEquals);
-      else if (op1->Type.Type == TYPE_Reference && op2->Type.Type == TYPE_Reference) ec.AddStatement(OPC_PtrEquals);
-      else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrEquals);
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Equals, Loc);
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FEquals, Loc);
+      else if (op1->Type.Type == TYPE_Name && op2->Type.Type == TYPE_Name) ec.AddStatement(OPC_Equals, Loc);
+      else if (op1->Type.Type == TYPE_Pointer && op2->Type.Type == TYPE_Pointer) ec.AddStatement(OPC_PtrEquals, Loc);
+      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VEquals, Loc);
+      else if (op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) ec.AddStatement(OPC_PtrEquals, Loc);
+      else if (op1->Type.Type == TYPE_State && op2->Type.Type == TYPE_State) ec.AddStatement(OPC_PtrEquals, Loc);
+      else if (op1->Type.Type == TYPE_Reference && op2->Type.Type == TYPE_Reference) ec.AddStatement(OPC_PtrEquals, Loc);
+      else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrEquals, Loc);
       break;
     case NotEquals:
-           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_NotEquals);
-      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FNotEquals);
-      else if (op1->Type.Type == TYPE_Name && op2->Type.Type == TYPE_Name) ec.AddStatement(OPC_NotEquals);
-      else if (op1->Type.Type == TYPE_Pointer && op2->Type.Type == TYPE_Pointer) ec.AddStatement(OPC_PtrNotEquals);
-      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VNotEquals);
-      else if (op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) ec.AddStatement(OPC_PtrNotEquals);
-      else if (op1->Type.Type == TYPE_State && op2->Type.Type == TYPE_State) ec.AddStatement(OPC_PtrNotEquals);
-      else if (op1->Type.Type == TYPE_Reference && op2->Type.Type == TYPE_Reference) ec.AddStatement(OPC_PtrNotEquals);
-      else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrNotEquals);
+           if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_NotEquals, Loc);
+      else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FNotEquals, Loc);
+      else if (op1->Type.Type == TYPE_Name && op2->Type.Type == TYPE_Name) ec.AddStatement(OPC_NotEquals, Loc);
+      else if (op1->Type.Type == TYPE_Pointer && op2->Type.Type == TYPE_Pointer) ec.AddStatement(OPC_PtrNotEquals, Loc);
+      else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VNotEquals, Loc);
+      else if (op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) ec.AddStatement(OPC_PtrNotEquals, Loc);
+      else if (op1->Type.Type == TYPE_State && op2->Type.Type == TYPE_State) ec.AddStatement(OPC_PtrNotEquals, Loc);
+      else if (op1->Type.Type == TYPE_Reference && op2->Type.Type == TYPE_Reference) ec.AddStatement(OPC_PtrNotEquals, Loc);
+      else if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrNotEquals, Loc);
       break;
     case And:
-      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_AndBitwise);
+      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_AndBitwise, Loc);
       break;
     case XOr:
-      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_XOrBitwise);
+      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_XOrBitwise, Loc);
       break;
     case Or:
-      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_OrBitwise);
+      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_OrBitwise, Loc);
       break;
     case StrCat:
-      if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrCat);
+      if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrCat, Loc);
   }
 }
 
@@ -888,10 +888,10 @@ void VBinaryLogical::Emit (VEmitContext &ec) {
   op1->EmitBranchable(ec, Push01, Oper == Or);
 
   op2->Emit(ec);
-  ec.AddStatement(OPC_Goto, End);
+  ec.AddStatement(OPC_Goto, End, Loc);
 
   ec.MarkLabel(Push01);
-  ec.AddStatement(Oper == And ? OPC_PushNumber0 : OPC_PushNumber1);
+  ec.AddStatement((Oper == And ? OPC_PushNumber0 : OPC_PushNumber1), Loc);
 
   ec.MarkLabel(End);
 }

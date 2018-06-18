@@ -609,38 +609,38 @@ void VFieldAccess::Emit (VEmitContext &ec) {
   if (!op) return; //k8: don't segfault
   op->Emit(ec);
   if (AddressRequested) {
-    ec.AddStatement(OPC_Offset, field);
+    ec.AddStatement(OPC_Offset, field, Loc);
   } else {
     switch (field->Type.Type) {
       case TYPE_Int:
       case TYPE_Float:
       case TYPE_Name:
-        ec.AddStatement(OPC_FieldValue, field);
+        ec.AddStatement(OPC_FieldValue, field, Loc);
         break;
       case TYPE_Byte:
-        ec.AddStatement(OPC_ByteFieldValue, field);
+        ec.AddStatement(OPC_ByteFieldValue, field, Loc);
         break;
       case TYPE_Bool:
-             if (field->Type.BitMask&0x000000ff) ec.AddStatement(OPC_Bool0FieldValue, field, (int)(field->Type.BitMask));
-        else if (field->Type.BitMask&0x0000ff00) ec.AddStatement(OPC_Bool1FieldValue, field, (int)(field->Type.BitMask>>8));
-        else if (field->Type.BitMask&0x00ff0000) ec.AddStatement(OPC_Bool2FieldValue, field, (int)(field->Type.BitMask>>16));
-        else ec.AddStatement(OPC_Bool3FieldValue, field, (int)(field->Type.BitMask>>24));
+             if (field->Type.BitMask&0x000000ff) ec.AddStatement(OPC_Bool0FieldValue, field, (int)(field->Type.BitMask), Loc);
+        else if (field->Type.BitMask&0x0000ff00) ec.AddStatement(OPC_Bool1FieldValue, field, (int)(field->Type.BitMask>>8), Loc);
+        else if (field->Type.BitMask&0x00ff0000) ec.AddStatement(OPC_Bool2FieldValue, field, (int)(field->Type.BitMask>>16), Loc);
+        else ec.AddStatement(OPC_Bool3FieldValue, field, (int)(field->Type.BitMask>>24), Loc);
         break;
       case TYPE_Pointer:
       case TYPE_Reference:
       case TYPE_Class:
       case TYPE_State:
-        ec.AddStatement(OPC_PtrFieldValue, field);
+        ec.AddStatement(OPC_PtrFieldValue, field, Loc);
         break;
       case TYPE_Vector:
-        ec.AddStatement(OPC_VFieldValue, field);
+        ec.AddStatement(OPC_VFieldValue, field, Loc);
         break;
       case TYPE_String:
-        ec.AddStatement(OPC_StrFieldValue, field);
+        ec.AddStatement(OPC_StrFieldValue, field, Loc);
         break;
       case TYPE_Delegate:
-        ec.AddStatement(OPC_Offset, field);
-        ec.AddStatement(OPC_PushPointedDelegate);
+        ec.AddStatement(OPC_Offset, field, Loc);
+        ec.AddStatement(OPC_PushPointedDelegate, Loc);
         break;
       default:
         ParseError(Loc, "Invalid operation on field of this type");
@@ -728,5 +728,5 @@ VExpression *VDelegateVal::DoResolve (VEmitContext &ec) {
 void VDelegateVal::Emit (VEmitContext &ec) {
   if (!op) return;
   op->Emit(ec);
-  ec.AddStatement(OPC_PushVFunc, M);
+  ec.AddStatement(OPC_PushVFunc, M, Loc);
 }

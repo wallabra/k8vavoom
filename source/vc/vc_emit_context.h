@@ -124,18 +124,18 @@ public:
   VLabel DefineLabel ();
   void MarkLabel (VLabel l);
 
-  void AddStatement (int statement);
-  void AddStatement (int statement, int parm1);
-  void AddStatement (int statement, float FloatArg);
-  void AddStatement (int statement, VName NameArg);
-  void AddStatement (int statement, VMemberBase *Member);
-  void AddStatement (int statement, VMemberBase *Member, int Arg);
-  void AddStatement (int statement, const VFieldType &TypeArg);
-  void AddStatement (int statement, VLabel Lbl);
-  void AddStatement (int statement, int p, VLabel Lbl);
-  void EmitPushNumber (int Val);
-  void EmitLocalAddress (int Ofs);
-  void EmitClearStrings (int Start, int End);
+  void AddStatement (int statement, const TLocation &aloc);
+  void AddStatement (int statement, int parm1, const TLocation &aloc);
+  void AddStatement (int statement, float FloatArg, const TLocation &aloc);
+  void AddStatement (int statement, VName NameArg, const TLocation &aloc);
+  void AddStatement (int statement, VMemberBase *Member, const TLocation &aloc);
+  void AddStatement (int statement, VMemberBase *Member, int Arg, const TLocation &aloc);
+  void AddStatement (int statement, const VFieldType &TypeArg, const TLocation &aloc);
+  void AddStatement (int statement, VLabel Lbl, const TLocation &aloc);
+  void AddStatement (int statement, int p, VLabel Lbl, const TLocation &aloc);
+  void EmitPushNumber (int Val, const TLocation &aloc);
+  void EmitLocalAddress (int Ofs, const TLocation &aloc);
+  void EmitClearStrings (int Start, int End, const TLocation &aloc);
 
   VArrayElement *SetIndexArray (VArrayElement *el); // returns previous
 };

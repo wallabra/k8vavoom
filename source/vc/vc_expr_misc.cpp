@@ -610,8 +610,8 @@ VExpression *VDefaultObject::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VDefaultObject::Emit (VEmitContext &ec) {
   op->Emit(ec);
-       if (op->Type.Type == TYPE_Reference) ec.AddStatement(OPC_GetDefaultObj);
-  else if (op->Type.Type == TYPE_Class) ec.AddStatement(OPC_GetClassDefaultObj);
+       if (op->Type.Type == TYPE_Reference) ec.AddStatement(OPC_GetDefaultObj, Loc);
+  else if (op->Type.Type == TYPE_Class) ec.AddStatement(OPC_GetClassDefaultObj, Loc);
 }
 
 
@@ -819,7 +819,7 @@ void VConditional::Emit (VEmitContext &ec) {
 
   op->EmitBranchable(ec, FalseTarget, false);
   op1->Emit(ec);
-  ec.AddStatement(OPC_Goto, End);
+  ec.AddStatement(OPC_Goto, End, Loc);
   ec.MarkLabel(FalseTarget);
   op2->Emit(ec);
   ec.MarkLabel(End);
@@ -917,9 +917,9 @@ VExpression *VDropResult::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VDropResult::Emit (VEmitContext &ec) {
   op->Emit(ec);
-       if (op->Type.Type == TYPE_String) ec.AddStatement(OPC_DropStr);
-  else if (op->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VDrop);
-  else if (op->Type.GetStackSize() == 4) ec.AddStatement(OPC_Drop);
+       if (op->Type.Type == TYPE_String) ec.AddStatement(OPC_DropStr, Loc);
+  else if (op->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VDrop, Loc);
+  else if (op->Type.GetStackSize() == 4) ec.AddStatement(OPC_Drop, Loc);
 }
 
 
@@ -977,7 +977,7 @@ VExpression *VClassConstant::DoResolve (VEmitContext &) {
 //
 //==========================================================================
 void VClassConstant::Emit (VEmitContext &ec) {
-  ec.AddStatement(OPC_PushClassId, Class);
+  ec.AddStatement(OPC_PushClassId, Class, Loc);
 }
 
 
@@ -1034,7 +1034,7 @@ VExpression *VStateConstant::DoResolve (VEmitContext &) {
 //
 //==========================================================================
 void VStateConstant::Emit (VEmitContext &ec) {
-  ec.AddStatement(OPC_PushState, State);
+  ec.AddStatement(OPC_PushState, State, Loc);
 }
 
 
@@ -1091,7 +1091,7 @@ VExpression *VConstantValue::DoResolve (VEmitContext &) {
 //
 //==========================================================================
 void VConstantValue::Emit (VEmitContext &ec) {
-  ec.EmitPushNumber(Const->Value);
+  ec.EmitPushNumber(Const->Value, Loc);
 }
 
 

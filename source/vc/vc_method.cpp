@@ -372,7 +372,7 @@ void VMethod::Emit () {
   for (int i = 0; i < ec.GetLocalDefCount(); ++i) {
     VLocalVarDef &loc = ec.GetLocalByIndex(i);
     if (loc.Type.Type == TYPE_Vector && (ParamFlags[i]&(FPARM_Out|FPARM_Ref)) == 0) {
-      ec.AddStatement(OPC_VFixParam, loc.Offset);
+      ec.AddStatement(OPC_VFixParam, loc.Offset, Loc);
     }
   }
 
@@ -381,8 +381,8 @@ void VMethod::Emit () {
   Statement->Emit(ec);
 
   if (ReturnType.Type == TYPE_Void) {
-    ec.EmitClearStrings(0, ec.GetLocalDefCount());
-    ec.AddStatement(OPC_Return);
+    ec.EmitClearStrings(0, ec.GetLocalDefCount(), Loc);
+    ec.AddStatement(OPC_Return, Loc);
   }
   NumLocals = ec.localsofs;
   ec.EndCode();
@@ -784,6 +784,7 @@ VStream &operator << (VStream &Strm, FInstruction &Instr) {
     Opc = Instr.Opcode;
     Strm << Opc;
   }
+  Strm << Instr.loc;
   switch (StatementInfo[Opc].Args) {
     case OPCARGS_None:
       break;
