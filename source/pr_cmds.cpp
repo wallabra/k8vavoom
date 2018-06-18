@@ -81,7 +81,7 @@ VStr PF_FormatString () {
   int pi;
 
   P_GET_INT(count);
-  if (count > MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Too many arguments to string formatting function"); }
+  //if (count > MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Too many arguments to string formatting function"); }
   for (pi = count-1; pi >= 0; --pi) params[pi] = *(--pr_stackPtr);
   P_GET_STR(str);
 
@@ -96,45 +96,63 @@ VStr PF_FormatString () {
           break;
         case 'i':
         case 'd':
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
-          Ret += va("%d", params[pi].i);
-          ++pi;
+          //if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi < count) {
+            Ret += va("%d", params[pi].i);
+            ++pi;
+          }
           break;
         case 'x':
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
-          Ret += va("%x", params[pi].i);
-          ++pi;
+          //if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi < count) {
+            Ret += va("%x", params[pi].i);
+            ++pi;
+          }
           break;
         case 'f':
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
-          Ret += va("%f", params[pi].f);
-          ++pi;
+          //if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi < count) {
+            Ret += va("%f", params[pi].f);
+            ++pi;
+          }
           break;
         case 'n':
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
-          Ret += *(VName*)&params[pi].i;
-          ++pi;
+          //if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi < count) {
+            Ret += *(VName*)&params[pi].i;
+            ++pi;
+          }
           break;
         case 's':
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
-          Ret += *(VStr*)&params[pi].p;
-          ((VStr*)&params[pi].p)->Clean();
-          ++pi;
+          //if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi < count) {
+            Ret += *(VStr*)&params[pi].p;
+            ((VStr*)&params[pi].p)->Clean();
+            ++pi;
+          }
           break;
         case 'p':
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
-          Ret += va("%p", params[pi].p);
-          ++pi;
+          //if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi < count) {
+            Ret += va("%p", params[pi].p);
+            ++pi;
+          }
           break;
         case 'v':
-          if (count-pi < 3) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
-          Ret += va("(%f,%f,%f)", params[pi].f, params[pi+1].f, params[pi+2].f);
-          pi += 3;
+          //if (count-pi < 3) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (count-pi >= 3) {
+            Ret += va("(%f,%f,%f)", params[pi].f, params[pi+1].f, params[pi+2].f);
+            pi += 3;
+          } else {
+            pi = count;
+          }
           break;
         case 'B': // boolean
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
-          Ret += (params[pi].i ? "true" : "false");
-          ++pi;
+          //if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi < count) {
+            Ret += (params[pi].i ? "true" : "false");
+            ++pi;
+          }
           break;
 
         default:

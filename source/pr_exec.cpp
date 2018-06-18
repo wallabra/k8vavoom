@@ -140,7 +140,9 @@ static void cstPop () {
 }
 
 
-static void cstDump () {
+// `ip` can be null
+static void cstDump (const vuint8 *ip) {
+  //ip = func->Statements.Ptr();
   fprintf(stderr, "\n\n=== VaVoomScript Call Stack (%u) ===\n", cstUsed);
   if (cstUsed > 0) {
     for (vuint32 sp = cstUsed; sp > 0; --sp) {
@@ -240,7 +242,7 @@ func_loop:
 
     PR_VM_SWITCH(*ip) {
       PR_VM_CASE(OPC_Done)
-        cstDump();
+        cstDump(ip);
         Sys_Error("Empty function or invalid opcode");
         PR_VM_BREAK;
 
@@ -266,7 +268,7 @@ func_loop:
 
       PR_VM_CASE(OPC_VCall)
         pr_stackPtr = sp;
-        if (!sp[-ip[3]].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-ip[3]].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         RunFunction(((VObject *)sp[-ip[3]].p)->GetVFunctionIdx(ReadInt16(ip+1)));
         ip += 4;
         current_func = func;
@@ -275,7 +277,7 @@ func_loop:
 
       PR_VM_CASE(OPC_VCallB)
         pr_stackPtr = sp;
-        if (!sp[-ip[2]].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-ip[2]].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         RunFunction(((VObject *)sp[-ip[2]].p)->GetVFunctionIdx(ip[1]));
         ip += 3;
         current_func = func;
@@ -287,7 +289,7 @@ func_loop:
           // get pointer to the delegate
           void **pDelegate = (void **)((vuint8 *)sp[-ip[5]].p+ReadInt32(ip+1));
           // push proper self object
-          if (!pDelegate[0]) { cstDump(); Sys_Error("Delegate is not initialised"); }
+          if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
           sp[-ip[5]].p = pDelegate[0];
           pr_stackPtr = sp;
           RunFunction((VMethod *)pDelegate[1]);
@@ -302,7 +304,7 @@ func_loop:
           // get pointer to the delegate
           void **pDelegate = (void **)((vuint8 *)sp[-ip[3]].p+ReadInt16(ip+1));
           // push proper self object
-          if (!pDelegate[0]) { cstDump(); Sys_Error("Delegate is not initialised"); }
+          if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
           sp[-ip[3]].p = pDelegate[0];
           pr_stackPtr = sp;
           RunFunction((VMethod *)pDelegate[1]);
@@ -317,7 +319,7 @@ func_loop:
           // get pointer to the delegate
           void **pDelegate = (void **)((vuint8 *)sp[-ip[2]].p+ip[1]);
           // push proper self object
-          if (!pDelegate[0]) { cstDump(); Sys_Error("Delegate is not initialised"); }
+          if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
           sp[-ip[2]].p = pDelegate[0];
           pr_stackPtr = sp;
           RunFunction((VMethod *)pDelegate[1]);
@@ -338,7 +340,7 @@ func_loop:
           // drop delegate argument
           sp -= 1;
           // push proper self object
-          if (!pDelegate[0]) { cstDump(); Sys_Error("Delegate is not initialised"); }
+          if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
           sp[-sofs].p = pDelegate[0];
           pr_stackPtr = sp;
           RunFunction((VMethod *)pDelegate[1]);
@@ -686,43 +688,43 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Offset)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].p = (vuint8 *)sp[-1].p+ReadInt32(ip+1);
         ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_OffsetS)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].p = (vuint8 *)sp[-1].p+ReadInt16(ip+1);
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_OffsetB)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].p = (vuint8 *)sp[-1].p+ip[1];
         ip += 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FieldValue)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = *(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1));
         ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FieldValueS)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = *(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FieldValueB)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = *(vint32 *)((vuint8 *)sp[-1].p+ip[1]);
         ip += 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VFieldValue)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         {
           TVec *vp = (TVec *)((vuint8 *)sp[-1].p+ReadInt32(ip+1));
           sp[1].f = vp->z;
@@ -734,7 +736,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VFieldValueS)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         {
           TVec *vp = (TVec *)((vuint8 *)sp[-1].p+ReadInt16(ip+1));
           sp[1].f = vp->z;
@@ -746,7 +748,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VFieldValueB)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         {
           TVec *vp = (TVec *)((vuint8 *)sp[-1].p+ip[1]);
           sp[1].f = vp->z;
@@ -758,25 +760,25 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PtrFieldValue)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].p = *(void **)((vuint8 *)sp[-1].p+ReadInt32(ip+1));
         ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PtrFieldValueS)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].p = *(void **)((vuint8 *)sp[-1].p+ReadInt16(ip+1));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PtrFieldValueB)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].p = *(void **)((vuint8 *)sp[-1].p+ip[1]);
         ip += 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_StrFieldValue)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         {
           VStr *Ptr = (VStr *)((vuint8 *)sp[-1].p+ReadInt32(ip+1));
           sp[-1].p = nullptr;
@@ -786,7 +788,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_StrFieldValueS)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         {
           VStr *Ptr = (VStr *)((vuint8 *)sp[-1].p+ReadInt16(ip+1));
           sp[-1].p = nullptr;
@@ -796,7 +798,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_StrFieldValueB)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         {
           VStr *Ptr = (VStr *)((vuint8 *)sp[-1].p+ip[1]);
           sp[-1].p = nullptr;
@@ -806,91 +808,91 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteFieldValue)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = *((vuint8 *)sp[-1].p+ReadInt32(ip+1));
         ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteFieldValueS)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = *((vuint8 *)sp[-1].p+ReadInt16(ip+1));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteFieldValueB)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = *((vuint8 *)sp[-1].p+ip[1]);
         ip += 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool0FieldValue)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1))&ip[5]);
         ip += 6;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool0FieldValueS)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1))&ip[3]);
         ip += 4;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool0FieldValueB)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ip[1])&ip[2]);
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool1FieldValue)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1))&(ip[5]<<8));
         ip += 6;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool1FieldValueS)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1))&(ip[3]<<8));
         ip += 4;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool1FieldValueB)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ip[1])&(ip[2]<<8));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool2FieldValue)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1))&(ip[5]<<16));
         ip += 6;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool2FieldValueS)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1))&(ip[3]<<16));
         ip += 4;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool2FieldValueB)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ip[1])&(ip[2]<<16));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool3FieldValue)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1))&(ip[5]<<24));
         ip += 6;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool3FieldValueS)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1))&(ip[3]<<24));
         ip += 4;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool3FieldValueB)
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ip[1])&(ip[2]<<24));
         ip += 3;
         PR_VM_BREAK;
@@ -1006,12 +1008,12 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Divide)
-        if (!sp[-1].i) { cstDump(); Sys_Error("Division by 0"); }
+        if (!sp[-1].i) { cstDump(ip); Sys_Error("Division by 0"); }
         BINOP_Q(i, /=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Modulus)
-        if (!sp[-1].i) { cstDump(); Sys_Error("Division by 0"); }
+        if (!sp[-1].i) { cstDump(ip); Sys_Error("Division by 0"); }
         BINOP_Q(i, %=);
         PR_VM_BREAK;
 
@@ -1149,12 +1151,12 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DivVarDrop)
-        if (!sp[-1].i) { cstDump(); Sys_Error("Division by 0"); }
+        if (!sp[-1].i) { cstDump(ip); Sys_Error("Division by 0"); }
         ASSIGNOP(vint32, i, /=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ModVarDrop)
-        if (!sp[-1].i) { cstDump(); Sys_Error("Division by 0"); }
+        if (!sp[-1].i) { cstDump(ip); Sys_Error("Division by 0"); }
         ASSIGNOP(vint32, i, %=);
         PR_VM_BREAK;
 
@@ -1243,12 +1245,12 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteDivVarDrop)
-        if (!sp[-1].i) { cstDump(); Sys_Error("Division by 0"); }
+        if (!sp[-1].i) { cstDump(ip); Sys_Error("Division by 0"); }
         ASSIGNOP(vuint8, i, /=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteModVarDrop)
-        if (!sp[-1].i) { cstDump(); Sys_Error("Division by 0"); }
+        if (!sp[-1].i) { cstDump(ip); Sys_Error("Division by 0"); }
         ASSIGNOP(vuint8, i, %=);
         PR_VM_BREAK;
 
@@ -1285,7 +1287,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FDivide)
-        if (!sp[-1].f) { cstDump(); Sys_Error("Division by 0"); }
+        if (!sp[-1].f) { cstDump(ip); Sys_Error("Division by 0"); }
         BINOP_Q(f, /=);
         PR_VM_BREAK;
 
@@ -1787,21 +1789,21 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynArrayElement)
-        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) { cstDump(); Sys_Error("Index outside the bounds of an array"); }
+        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) { cstDump(ip); Sys_Error("Index outside the bounds of an array"); }
         sp[-2].p = ((VScriptArray *)sp[-2].p)->Ptr()+sp[-1].i*ReadInt32(ip+1);
         ip += 5;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynArrayElementS)
-        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) { cstDump(); Sys_Error("Index outside the bounds of an array"); }
+        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) { cstDump(ip); Sys_Error("Index outside the bounds of an array"); }
         sp[-2].p = ((VScriptArray *)sp[-2].p)->Ptr()+sp[-1].i*ReadInt16(ip+1);
         ip += 3;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynArrayElementB)
-        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) { cstDump(); Sys_Error("Index outside the bounds of an array"); }
+        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) { cstDump(ip); Sys_Error("Index outside the bounds of an array"); }
         sp[-2].p = ((VScriptArray *)sp[-2].p)->Ptr()+sp[-1].i*ip[1];
         ip += 2;
         --sp;
@@ -1813,7 +1815,7 @@ func_loop:
           ++ip;
           ReadType(Type, ip);
           //ip += 9+sizeof(VClass *);
-          if (sp[-1].i < 0) { cstDump(); Sys_Error("Array index is negative"); }
+          if (sp[-1].i < 0) { cstDump(ip); Sys_Error("Array index is negative"); }
           VScriptArray &A = *(VScriptArray *)sp[-2].p;
           if (sp[-1].i >= A.Num()) A.SetNum(sp[-1].i+1, Type);
           sp[-2].p = A.Ptr()+sp[-1].i*Type.GetSize();
@@ -1895,13 +1897,13 @@ func_loop:
 
       PR_VM_CASE(OPC_GetDefaultObj)
         ++ip;
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].p = ((VObject *)sp[-1].p)->GetClass()->Defaults;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_GetClassDefaultObj)
         ++ip;
-        if (!sp[-1].p) { cstDump(); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].p = ((VClass *)sp[-1].p)->Defaults;
         PR_VM_BREAK;
 
@@ -1937,7 +1939,7 @@ func_loop:
           //ip += 9+sizeof(VClass *);
           pr_stackPtr = sp;
           PR_WriteOne(Type); // this will pop everything
-          if (pr_stackPtr < pr_stack) { pr_stackPtr = pr_stack; cstDump(); Sys_Error("Stack underflow in `write`"); }
+          if (pr_stackPtr < pr_stack) { pr_stackPtr = pr_stack; cstDump(ip); Sys_Error("Stack underflow in `write`"); }
           sp = pr_stackPtr;
         }
         PR_VM_BREAK;
@@ -1948,7 +1950,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_DEFAULT
-        cstDump();
+        cstDump(ip);
         Sys_Error("Invalid opcode %d", *ip);
     }
   }
@@ -1992,7 +1994,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
 #ifdef CHECK_FOR_EMPTY_STACK
   // after executing base function stack must be empty
   if (!current_func && pr_stackPtr != pr_stack+1) {
-    cstDump();
+    cstDump(nullptr);
     Sys_Error("ExecuteFunction: Stack is not empty after executing function:\n%s\nstack = %p, oldsp = %p", *func->Name, pr_stack, pr_stackPtr);
     #ifdef VMEXEC_RUNDUMP
     *(int *)0 = 0;
@@ -2003,7 +2005,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
 #ifdef CHECK_STACK_UNDERFLOW
   // check if stack wasn't underflowed
   if (pr_stack[0].i != STACK_ID) {
-    cstDump();
+    cstDump(nullptr);
     Sys_Error("ExecuteFunction: Stack underflow in %s", *func->Name);
     #ifdef VMEXEC_RUNDUMP
     *(int *)0 = 0;
@@ -2014,7 +2016,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
 #ifdef CHECK_STACK_OVERFLOW
   // check if stack wasn't overflowed
   if (pr_stack[MAX_PROG_STACK-1].i != STACK_ID) {
-    cstDump();
+    cstDump(nullptr);
     Sys_Error("ExecuteFunction: Stack overflow in %s", *func->Name);
     #ifdef VMEXEC_RUNDUMP
     *(int *)0 = 0;
@@ -2034,7 +2036,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
 //
 //==========================================================================
 void VObject::VMDumpCallStack () {
-  cstDump();
+  cstDump(nullptr);
 }
 
 
