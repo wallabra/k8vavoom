@@ -367,6 +367,9 @@ enum {
   DECLARE_OPC(DoWriteOne, Type),
   DECLARE_OPC(DoWriteFlush, None),
 
+  // for printf-like varargs
+  DECLARE_OPC(DoPushTypePtr, Type),
+
 #undef DECLARE_OPC
 #ifndef OPCODE_INFO
   NUM_OPCODES

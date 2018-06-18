@@ -1319,6 +1319,15 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
             ParseError(Func->Loc, "Invalid argument number for 'printf' attribute (did you forget that counter is 1-based?)");
           } else {
             Func->printfFmtArgIdx = Lex.Number-1;
+            if (Func->ParamFlags[Func->printfFmtArgIdx] != 0 ||
+                !Func->Params[Func->printfFmtArgIdx].TypeExpr ||
+                !Func->Params[Func->printfFmtArgIdx].TypeExpr->IsSimpleType() ||
+                ((VTypeExprSimple *)Func->Params[Func->printfFmtArgIdx].TypeExpr)->Type.Type != TYPE_String ||
+                Func->printfFmtArgIdx != Func->NumParams-1)
+            {
+              ParseError(Func->Loc, "printf-like format argument must be `string`");
+            }
+            //fprintf(stderr, "`%s`: printf, fmtidx=%d\n", *MName, Func->printfFmtArgIdx);
           }
           Lex.NextToken();
         }

@@ -896,6 +896,16 @@ void VInvocation::Emit (VEmitContext &ec) {
         ++SelfOffset;
       }
     }
+    // push type for varargs (except the last arg, as it is a simple int counter)
+    if (Func->printfFmtArgIdx >= 0 && (Func->Flags&FUNC_VarArgs) != 0 && i >= Func->NumParams && i != NumArgs-1) {
+      if (Args[i]) {
+        ec.AddStatement(OPC_DoPushTypePtr, Args[i]->Type, Loc);
+      } else {
+        auto vtp = VFieldType(TYPE_Void);
+        ec.AddStatement(OPC_DoPushTypePtr, vtp, Loc);
+      }
+      ++SelfOffset;
+    }
   }
 
   // some special functions will be converted to builtins
@@ -1177,7 +1187,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
 
   int maxParams;
   int requiredParams = Func->NumParams;
-  if (Func->Flags & FUNC_VarArgs) {
+  if (Func->Flags&FUNC_VarArgs) {
     maxParams = VMethod::MAX_PARAMS-1;
   } else {
     maxParams = Func->NumParams;
@@ -1373,8 +1383,6 @@ VExpression *VInvokeWrite::DoResolve (VEmitContext &ec) {
             ParseError(Args[i]->Loc, "Cannot write type `%s`", *Args[i]->Type.GetName());
             ArgsOk = false;
             break;
-
-
         }
       }
     }

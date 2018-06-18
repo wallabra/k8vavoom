@@ -1980,6 +1980,16 @@ func_loop:
         PR_WriteFlush();
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_DoPushTypePtr)
+        ++ip;
+        sp->p = ip;
+        sp += 1;
+        // skip type
+        //VFieldType Type;
+        //ReadType(Type, ip);
+        ip += 8+sizeof(VClass *);
+        PR_VM_BREAK;
+
       PR_VM_DEFAULT
         cstDump(ip);
         Sys_Error("Invalid opcode %d", *ip);
