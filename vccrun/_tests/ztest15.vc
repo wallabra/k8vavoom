@@ -20,11 +20,11 @@ final void main (array!string *args) {
   print("slen=%d", "boofoo".length);
   string s = "fooboo";
   print("str=<%s>; len=%d", s, s.length);
-  print("str=<%s>; len=%d", b[0], b[0].length);
+  print("str=<%s>; len=%d", (*b)[0], (*b)[0].length);
 
   //print("[0]=%s", args[0]);
   print("arg len=%d", args.length);
-  for (int f = 0; f < args.length; ++f) print("  #%d: %s", f, args[f]);
+  for (int f = 0; f < args.length; ++f) print("  #%d: %s", f, (*args)[f]);
 
   print("sfld=<%s>; len=%d", sfld, sfld.length);
 }

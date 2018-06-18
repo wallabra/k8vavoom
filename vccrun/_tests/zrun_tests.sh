@@ -32,6 +32,8 @@ for fn in *.vc; do
   if [ $expectfail = ona ]; then
     if [ $res -ne 0 ]; then
       echo "FAILED (retcode)"
+      echo "=========================="
+      cat "$ofname.err"
       break
     fi
     cmp "$ifname" "$ofname"

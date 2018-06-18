@@ -18,5 +18,5 @@ final static void main (array!string *args) {
 
   //print("[0]=%s", args[0]);
   print("arg len=%d", args.length);
-  for (int f = 0; f < args.length; ++f) print("  #%d: %s", f, args[f]);
+  for (int f = 0; f < args.length; ++f) print("  #%d: %s", f, (*args)[f]);
 }
