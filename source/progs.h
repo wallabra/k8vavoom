@@ -141,19 +141,6 @@ inline VStr PR_PopStr () {
 }
 
 
-inline VFieldType PR_ReadTypeFromPtr (const void *pp) {
-  const vuint8 *p = (const vuint8 *)pp;
-  VFieldType t;
-  t.Type = p[0];
-  t.ArrayInnerType = p[1];
-  t.InnerType = p[2];
-  t.PtrLevel = p[3];
-  t.ArrayDim = *(vint16 *)(p+4);
-  t.Class = (VClass *)(*(void **)(p+8));
-  return t;
-}
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 extern VStr PF_FormatString ();
 

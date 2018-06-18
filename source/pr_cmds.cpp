@@ -27,8 +27,6 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 # include "gamedefs.h"
 # include "net/network.h"
@@ -44,26 +42,23 @@
 # endif
 #endif
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
 VClass *SV_FindClassFromEditorId (int Id, int GameFilter);
 VClass *SV_FindClassFromScriptId (int Id, int GameFilter);
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+static inline VFieldType PR_ReadTypeFromPtr (const void *pp) {
+  const vuint8 *p = (const vuint8 *)pp;
+  VFieldType t;
+  t.Type = p[0];
+  t.ArrayInnerType = p[1];
+  t.InnerType = p[2];
+  t.PtrLevel = p[3];
+  t.ArrayDim = *(vint16 *)(p+4);
+  t.Class = (VClass *)(*(void **)(p+8));
+  return t;
+}
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //**************************************************************************
 //
