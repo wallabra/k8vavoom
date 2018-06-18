@@ -17,8 +17,8 @@ void onCreated (string atext) {
 // ////////////////////////////////////////////////////////////////////////// //
 protected override void selfPaintAt (int x0, int y0) {
   if (mText.length == 0) return;
-  Video.colorRGB = mColor;
-  Video.setFont(fontName);
+  Video.color = mColor;
+  Video.fontName = fontName;
   Video.drawTextAt(x0, y0, mText);
 }
 

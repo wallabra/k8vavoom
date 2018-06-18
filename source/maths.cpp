@@ -31,7 +31,7 @@
 # if defined(IN_VCC)
 #  include "../utils/vcc/vcc.h"
 # elif defined(VCC_STANDALONE_EXECUTOR)
-#  include "../utils/vccrun/vcc_run.h"
+#  include "../vccrun/vcc_run.h"
 # endif
 #endif
 

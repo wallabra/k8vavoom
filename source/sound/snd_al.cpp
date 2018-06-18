@@ -133,8 +133,7 @@ bool VOpenALDevice::Init()
 
   //  Connect to a device.
   Device = alcOpenDevice(nullptr);
-  if (!Device)
-  {
+  if (!Device) {
     GCon->Log(NAME_Init, "Couldn't open OpenAL device");
     return false;
   }
@@ -166,8 +165,7 @@ bool VOpenALDevice::Init()
     for (int i = 0; i < Exts.Num(); i++) GCon->Log(NAME_Init, VStr("- ") + Exts[i]);
   }
 
-  if (alIsExtensionPresent((ALchar*)"EAX"))
-  {
+  if (alIsExtensionPresent((ALchar*)"EAX")) {
     GCon->Log(NAME_Init, "EAX 2.0 supported");
     pEAXSet = (EAXSet)alGetProcAddress((ALchar*)"EAXSet");
     pEAXGet = (EAXGet)alGetProcAddress((ALchar*)"EAXGet");
@@ -177,11 +175,12 @@ bool VOpenALDevice::Init()
   //  Allocate array for buffers.
   Buffers = new ALuint[GSoundManager->S_sfx.Num()];
   memset(Buffers, 0, sizeof(ALuint) * GSoundManager->S_sfx.Num());
-  if (GArgs.CheckParm("-3dsound"))
-  {
+  if (GArgs.CheckParm("-3dsound")) {
     Sound3D = true;
     GCon->Log(NAME_Init, "3D sound on");
   }
+
+  GCon->Log(NAME_Init, "OpenAL initialized.");
   return true;
   unguard;
 }

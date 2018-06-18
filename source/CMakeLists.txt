@@ -1,13 +1,3 @@
-set(VAVOOM_MAIN_DEPS "")
-
-if(NOT WITH_SYS_ZLIB)
-  set(VAVOOM_MAIN_DEPS "z" ${VAVOOM_MAIN_DEPS})
-endif(WITH_SYS_ZLIB)
-
-if(NOT WITH_SYS_LZMA)
-  set(VAVOOM_MAIN_DEPS "lzma" ${VAVOOM_MAIN_DEPS})
-endif(NOT WITH_SYS_LZMA)
-
 #---------------------------------------
 #
 # VaVoom C compiler sources
@@ -476,342 +466,168 @@ set(SERVER_WIN32_SOURCES
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+
 #---------------------------------------
 #
 # Main executable
 #
 #---------------------------------------
-
 if(ENABLE_CLIENT)
 
-if(WITH_JPG)
-  set(JPG_LIBRARY "")
-else(WITH_JPG)
-  set(JPG_LIBRARY "jpeg")
-endif(WITH_JPG)
+  set(MAIN_SOURCES ${MAIN_COMMON_SOURCES})
+  set(MAIN_LIBS glbsp libglvis timidity core ${VAVOOM_MAIN_DEPS} ${NET_LIBRARIES} ${MAIN_LIBS})
+  set(MAIN_COMPILE_FLAGS "")
 
-if(WITH_GME)
-  set(MAIN_GME_LIB "gme")
-else(WITH_GME)
-  set(MAIN_GME_LIB "")
-endif(WITH_GME)
-
-set(MAIN_SOURCES ${MAIN_COMMON_SOURCES})
-set(MAIN_LIBS glbsp libglvis timidity ${MAIN_GME_LIB} core ${VAVOOM_MAIN_DEPS} ${LIBLZMA_LIBRARIES} ${JPG_LIBRARY} ${ZLIB_LIBRARIES} ${NET_LIBRARIES})
-set(MAIN_COMPILE_FLAGS "")
-
-#
-#  **** Platform specific library checks ****
-#
-
-if(WIN32)
-  # ---------------- Windows ----------------
-  set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_WIN32_SOURCES})
-  set(MAIN_LIBS gdi32 ole32 winmm ${MAIN_LIBS})
-
-  #  CMake doesn't support automatic building of resource files so
-  # we must add a custom command and add object files to the list
-  # of source files
-  ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
-  ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom.o)
-  ### add_custom_command(OUTPUT ${RC_OBJ}
-  ###   DEPENDS ${RC_SRC}
-  ###   COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
-  ### )
-  ### set(MAIN_SOURCES ${MAIN_SOURCES} ${RC_OBJ})
-  set(MAIN_SOURCES ${MAIN_SOURCES})
-
-  if(WITH_OPENGL)
-    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_SOURCES} ${MAIN_OPENGL_WIN32_SOURCES})
-    set(MAIN_LIBS opengl32 ${MAIN_LIBS})
-  endif(WITH_OPENGL)
-
-  if(WITH_OPENAL)
-    include_directories(${OPENAL_INCLUDE_DIR})
+  if(OPENAL_FOUND)
     set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENAL_SOURCES})
-    set(MAIN_LIBS ${OPENAL_LIBRARY} ${MAIN_LIBS})
-    #k8: by MXE builds are static. live with it.
-    add_definitions(-DAL_LIBTYPE_STATIC=1)
-  endif(WITH_OPENAL)
-else(WIN32)
-  # ---------------- Other *NIX platforms ----------------
-  if(WITH_SDL2)
-    find_package(SDL2 REQUIRED)
-    #PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
-  endif(WITH_SDL2)
+  endif(OPENAL_FOUND)
+
+  if(VORBIS_FOUND)
+    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_VORBIS_SOURCES})
+  endif(VORBIS_FOUND)
+
+  if(LIBMAD_FOUND)
+    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_MP3_SOURCES})
+  endif(LIBMAD_FOUND)
+
+  if(MIKMOD_FOUND)
+    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_MIKMOD_SOURCES})
+  endif(MIKMOD_FOUND)
+
+  if(MODPLUG_FOUND)
+    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_MODPLUG_SOURCES})
+  endif(MODPLUG_FOUND)
+
+  if(FLAC_FOUND)
+    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_FLAC_SOURCES})
+  endif(FLAC_FOUND)
+
+
+  if(WIN32)
+    # ---------------- Windows ----------------
+    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_WIN32_SOURCES})
+    set(MAIN_LIBS gdi32 ole32 winmm ${MAIN_LIBS})
+
+    #  CMake doesn't support automatic building of resource files so
+    # we must add a custom command and add object files to the list
+    # of source files
+    ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
+    ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom.o)
+    ### add_custom_command(OUTPUT ${RC_OBJ}
+    ###   DEPENDS ${RC_SRC}
+    ###   COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
+    ### )
+    ### set(MAIN_SOURCES ${MAIN_SOURCES} ${RC_OBJ})
+    #set(MAIN_SOURCES ${MAIN_SOURCES})
+  endif(WIN32)
 
   if(SDL2_FOUND)
-    message(STATUS "Using SDL2")
-    include_directories(${SDL2_INCLUDE_DIRS})
     set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_UNIX_SDL_SOURCES})
-    set(MAIN_LIBS ${SDL2_LIBRARIES} ${MAIN_LIBS})
-  else(SDL2_FOUND)
-    if(WITH_SDL2)
-      message(SEND_ERROR "SDL NOT FOUND")
-      return()
-    endif(WITH_SDL2)
   endif(SDL2_FOUND)
 
-  if(WITH_OPENGL)
-    if(NOT SDL2_FOUND)
-      message(SEND_ERROR "SDL2 required for OpenGL")
-      return()
-    endif(NOT SDL2_FOUND)
-    find_package(OpenGL)
-    if(OPENGL_FOUND)
-      message(STATUS "Found OpenGL")
-      include_directories(${OPENGL_INCLUDE_DIR})
-      set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_SOURCES})
-      set(MAIN_LIBS ${OPENGL_gl_LIBRARY} ${MAIN_LIBS})
+  if(OPENGL_FOUND)
+    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_SOURCES})
+    if(WIN32)
+      set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_WIN32_SOURCES})
+      set(MAIN_LIBS opengl32 ${MAIN_LIBS})
+    else(WIN32)
       set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_UNIX_SDL_SOURCES})
-    endif(OPENGL_FOUND)
-  endif(WITH_OPENGL)
-
-  if(WITH_OPENAL)
-    include_directories(${OPENAL_INCLUDE_DIR})
-    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENAL_SOURCES})
-    set(MAIN_LIBS ${OPENAL_LIBRARY} ${MAIN_LIBS})
-  endif(WITH_OPENAL)
-endif(WIN32)
-
-#
-#  **** Check for libpng ****
-#
-if(WITH_SYS_LIBPNG)
-  find_package(PNG REQUIRED)
-  include_directories(${PNG_INCLUDE_DIR})
-  set(MAIN_LIBS ${PNG_LIBRARY} ${MAIN_LIBS})
-  add_definitions(-DVAVOOM_USE_LIBPNG=1)
-endif(WITH_SYS_LIBPNG)
-
-#
-#  **** Check for libjpeg ****
-#
-if(WITH_SYS_LIBJPG)
-  find_package(JPEG REQUIRED)
-  include_directories(${JPEG_INCLUDE_DIR})
-  set(MAIN_LIBS ${JPEG_LIBRARY} ${MAIN_LIBS})
-  add_definitions(-DVAVOOM_USE_LIBJPG=1)
-endif(WITH_SYS_LIBJPG)
-
-#
-#  **** Check for Vorbis ****
-#
-
-if(WITH_VORBIS)
-  find_path(OGG_INCLUDE_DIR ogg/ogg.h)
-  find_path(VORBIS_INCLUDE_DIR vorbis/codec.h)
-  find_library(OGG_LIBRARY NAMES ogg)
-  find_library(VORBIS_LIBRARY NAMES vorbis)
-  if (OGG_INCLUDE_DIR AND VORBIS_INCLUDE_DIR AND OGG_LIBRARY AND VORBIS_LIBRARY)
-    message(STATUS "Found OggVorbis: ${OGG_LIBRARY} ${VORBIS_LIBRARY}")
-    include_directories(${OGG_INCLUDE_DIR})
-    include_directories(${VORBIS_INCLUDE_DIR})
-    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_VORBIS_SOURCES})
-    set(MAIN_LIBS ${VORBIS_LIBRARY} ${OGG_LIBRARY} ${MAIN_LIBS})
-  else (OGG_INCLUDE_DIR AND VORBIS_INCLUDE_DIR AND OGG_LIBRARY AND VORBIS_LIBRARY)
-    message(STATUS "Could NOT find OggVorbis libraries")
-  endif (OGG_INCLUDE_DIR AND VORBIS_INCLUDE_DIR AND OGG_LIBRARY AND VORBIS_LIBRARY)
-endif(WITH_VORBIS)
-
-#
-#  **** Check for libmad ****
-#
-
-if(WITH_LIBMAD)
-  find_path(MAD_INCLUDE_DIR mad.h)
-  find_library(MAD_LIBRARY NAMES mad)
-  if(MAD_INCLUDE_DIR AND MAD_LIBRARY)
-    message(STATUS "Found LibMAD: ${MAD_LIBRARY}")
-    include_directories(${MAD_INCLUDE_DIR})
-    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_MP3_SOURCES})
-    set(MAIN_LIBS ${MAD_LIBRARY} ${MAIN_LIBS})
-  else(MAD_INCLUDE_DIR AND MAD_LIBRARY)
-    message(STATUS "Could NOT find LibMAD libraries")
-  endif(MAD_INCLUDE_DIR AND MAD_LIBRARY)
-endif(WITH_LIBMAD)
-
-#
-#  **** Check for MikMod ****
-#
-
-if(WITH_MIKMOD)
-  # Find libmikmod-config script
-  if(NOT DEFINED LIBMIKMOD_CONFIG)
-    set(LIBMIKMOD_CONFIG libmikmod-config)
-  endif(NOT DEFINED LIBMIKMOD_CONFIG)
-  find_program(LIBMIKMOD_CONFIG_EXECUTABLE ${LIBMIKMOD_CONFIG})
-  if(LIBMIKMOD_CONFIG_EXECUTABLE)
-    # run the libmikmod-config program to get cxxflags
-    exec_program(sh
-      ARGS "${LIBMIKMOD_CONFIG_EXECUTABLE} --cflags"
-      OUTPUT_VARIABLE MIKMOD_CXX_FLAGS
-      RETURN_VALUE RET)
-    if(RET EQUAL 0)
-      # parse definitions from cxxflags
-      string(REGEX MATCHALL "-D.*[^ ;]+" MIKMOD_DEFINITIONS ${MIKMOD_CXX_FLAGS})
-      # drop -D* from CXXFLAGS
-      string(REGEX REPLACE "-D[^ ;]*" "" MIKMOD_CXX_FLAGS ${MIKMOD_CXX_FLAGS})
-      # parse incdirs from cxxflags, drop -I prefix
-      string(REGEX MATCHALL "-I.*[^ ;]+" MIKMOD_INCLUDE_DIRS ${MIKMOD_CXX_FLAGS})
-      string(REGEX REPLACE "-I" "" MIKMOD_INCLUDE_DIRS "${MIKMOD_CXX_FLAGS}")
-      # convert space to semicolons for list
-      string(REGEX REPLACE " " ";" MIKMOD_INCLUDE_DIRS "${MIKMOD_INCLUDE_DIRS}")
-    endif(RET EQUAL 0)
-
-    # run the libmikmod-config program to get the libs
-    exec_program(sh
-      ARGS "${LIBMIKMOD_CONFIG_EXECUTABLE} --libs"
-      OUTPUT_VARIABLE MIKMOD_LIBRARIES
-      RETURN_VALUE RET)
-    if(RET EQUAL 0)
-      string(REGEX REPLACE " " ";" MIKMOD_LIBRARIES "${MIKMOD_LIBRARIES}")
-      # extract linkdirs (-L) for rpath (i.e., LINK_DIRECTORIES)
-      string(REGEX MATCHALL "-L[^ ;]+" MIKMOD_LIBRARY_DIRS "${MIKMOD_LIBRARIES}")
-      string(REGEX REPLACE "-L" "" MIKMOD_LIBRARY_DIRS "${MIKMOD_LIBRARY_DIRS}")
-      # convert space to semicolons for list
-      STRING(REGEX REPLACE " " ";" MIKMOD_LIBRARY_DIRS "${MIKMOD_LIBRARY_DIRS}")
-    endif(RET EQUAL 0)
-
-    if(MIKMOD_INCLUDE_DIRS AND MIKMOD_LIBRARIES)
-      message(STATUS "Found MIKMOD: ${MIKMOD_LIBRARIES}")
-      include_directories(${MIKMOD_INCLUDE_DIRS})
-      set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_MIKMOD_SOURCES})
-      set(MAIN_LIBS ${MIKMOD_LIBRARIES} ${MAIN_LIBS})
-    else(MIKMOD_INCLUDE_DIRS AND MIKMOD_LIBRARIES)
-      message(STATUS "Could NOT find MIKMOD libraries")
-    endif(MIKMOD_INCLUDE_DIRS AND MIKMOD_LIBRARIES)
-  endif(LIBMIKMOD_CONFIG_EXECUTABLE)
-endif(WITH_MIKMOD)
-
-#
-#  **** Check for ModPlug ****
-#
-
-if(WITH_MODPLUG)
-  FIND_PACKAGE ( PkgConfig REQUIRED )
-  PKG_CHECK_MODULES ( MODPLUG libmodplug )
-    if(MODPLUG_INCLUDE_DIRS AND MODPLUG_LIBRARIES)
-      message(STATUS "Found MODPLUG: ${MODPLUG_LIBRARIES}")
-      include_directories(${MODPLUG_INCLUDE_DIRS})
-      set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_MODPLUG_SOURCES})
-      set(MAIN_LIBS ${MODPLUG_LIBRARIES} ${MAIN_LIBS})
-    else(MODPLUG_INCLUDE_DIRS AND MODPLUG_LIBRARIES)
-      message(STATUS "Could NOT find MODPLUG libraries")
-    endif(MODPLUG_INCLUDE_DIRS AND MODPLUG_LIBRARIES)
-endif(WITH_MODPLUG)
-
-#
-#  **** Check for FLAC ****
-#
-
-if(WITH_FLAC)
-  find_path(FLAC_INCLUDE_DIR FLAC++/decoder.h)
-  find_library(FLAC_LIBRARY NAMES FLAC)
-  find_library(FLACPP_LIBRARY NAMES FLAC++)
-  if(FLAC_INCLUDE_DIR AND FLAC_LIBRARY AND FLACPP_LIBRARY)
-    message(STATUS "Found FLAC: ${FLAC_LIBRARY} ${FLACPP_LIBRARY}")
-    include_directories(${FLAC_INCLUDE_DIR})
-    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_FLAC_SOURCES})
-    set(MAIN_LIBS ${FLACPP_LIBRARY} ${FLAC_LIBRARY} ${MAIN_LIBS})
-  else(FLAC_INCLUDE_DIR AND FLAC_LIBRARY AND FLACPP_LIBRARY)
-    message(STATUS "Could NOT find FLAC libraries")
-  endif(FLAC_INCLUDE_DIR AND FLAC_LIBRARY AND FLACPP_LIBRARY)
-endif(WITH_FLAC)
+    endif(WIN32)
+  endif(OPENGL_FOUND)
 
 
-if(WITH_GME)
-  add_subdirectory(gme)
-  set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_gme.cpp)
-endif(WITH_GME)
+  if(WITH_GME)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_gme.cpp)
+    set(VAVOOM_MAIN_DEPS ${VAVOOM_MAIN_DEPS} gme)
+  endif(WITH_GME)
 
 
-if(CYGWIN OR MINGW)
-  # Prune --out-implib from executables. It doesn't make sense even
-  # with --export-all-symbols.
-  string(REGEX REPLACE "-Wl,--out-implib,[^ ]+ " " " CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_LINK_EXECUTABLE}")
-  string(REGEX REPLACE "-Wl,--out-implib,[^ ]+ " " " CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
-endif()
+  if(CYGWIN OR MINGW)
+    # prune --out-implib from executables: it doesn't make sense, even with --export-all-symbols
+    string(REGEX REPLACE "-Wl,--out-implib,[^ ]+ " " " CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_LINK_EXECUTABLE}")
+    string(REGEX REPLACE "-Wl,--out-implib,[^ ]+ " " " CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
+  endif()
 
 
-add_executable(vavoom ${MAIN_SOURCES})
-if(ENABLE_WRAPPERS)
-  set_target_properties(vavoom PROPERTIES OUTPUT_NAME ../vavoom.bin)
-else(ENABLE_WRAPPERS)
-  set_target_properties(vavoom PROPERTIES OUTPUT_NAME ../vavoom)
-endif(ENABLE_WRAPPERS)
-if (MAIN_COMPILE_FLAGS)
-  set_target_properties(vavoom PROPERTIES COMPILE_FLAGS ${MAIN_COMPILE_FLAGS})
-endif (MAIN_COMPILE_FLAGS)
-#message(STATUS "MAIN LINKLIBS: " ${MAIN_LIBS})
-target_link_libraries(vavoom ${MAIN_LIBS})
-add_dependencies(vavoom core timidity gme glbsp libglvis ${VAVOOM_MAIN_DEPS} ${ZLIB_DEPS})
+  add_executable(vavoom ${MAIN_SOURCES})
+  if(ENABLE_WRAPPERS)
+    set_target_properties(vavoom PROPERTIES OUTPUT_NAME ../vavoom.bin)
+  else(ENABLE_WRAPPERS)
+    set_target_properties(vavoom PROPERTIES OUTPUT_NAME ../vavoom)
+  endif(ENABLE_WRAPPERS)
+  if (MAIN_COMPILE_FLAGS)
+    set_target_properties(vavoom PROPERTIES COMPILE_FLAGS ${MAIN_COMPILE_FLAGS})
+  endif (MAIN_COMPILE_FLAGS)
+  #message(STATUS "MAIN LINKLIBS: " ${MAIN_LIBS})
+  target_link_libraries(vavoom ${MAIN_LIBS})
+  add_dependencies(vavoom core timidity glbsp libglvis ${VAVOOM_MAIN_DEPS})
 
-install(TARGETS vavoom DESTINATION ${BINDIR})
+  install(TARGETS vavoom DESTINATION ${BINDIR})
 
-#
-# Icon
-#
-install(FILES ../res/vavoom.png DESTINATION ${DATADIR})
+  #
+  # Icon
+  #
+  install(FILES ../res/vavoom.png DESTINATION ${DATADIR})
 
-if(ENABLE_WRAPPERS)
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/vavoom
+  if(ENABLE_WRAPPERS)
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/vavoom
 "#!/bin/sh
 # Needed to make symlinks/shortcuts work.
 # the binaries must run with correct working directory
 exec \"${CMAKE_INSTALL_PREFIX}/${BINDIR}/vavoom.bin\" $* -basedir \"${CMAKE_INSTALL_PREFIX}/${DATADIR}\" ${IWADDIR}
 ")
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/vavoom DESTINATION ${BINDIR})
-endif(ENABLE_WRAPPERS)
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/vavoom DESTINATION ${BINDIR})
+  endif(ENABLE_WRAPPERS)
 
 endif(ENABLE_CLIENT)
+
 
 #---------------------------------------
 #
 # Dedicated server
 #
 #---------------------------------------
-
 if(ENABLE_SERVER)
 
-if(WIN32)
-  set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} ${SERVER_WIN32_SOURCES})
+  if(WIN32)
+    set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} ${SERVER_WIN32_SOURCES})
 
-  #  CMake doesn't support automatic building of resource files so
-  # we must add a custom command and add object files to the list
-  # of source files
-  ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
-  ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom_sv.o)
-  ### add_custom_command(OUTPUT ${RC_OBJ}
-  ###   DEPENDS ${RC_SRC}
-  ###   COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
-  ### )
-  ### set(SERVER_SOURCES ${SERVER_SOURCES} ${RC_OBJ})
-  set(SERVER_SOURCES ${SERVER_SOURCES})
-else(WIN32)
-  set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} ${SERVER_UNIX_SOURCES})
-endif(WIN32)
+    #  CMake doesn't support automatic building of resource files so
+    # we must add a custom command and add object files to the list
+    # of source files
+    ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
+    ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom_sv.o)
+    ### add_custom_command(OUTPUT ${RC_OBJ}
+    ###   DEPENDS ${RC_SRC}
+    ###   COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
+    ### )
+    ### set(SERVER_SOURCES ${SERVER_SOURCES} ${RC_OBJ})
+    #set(SERVER_SOURCES ${SERVER_SOURCES})
+  else(WIN32)
+    set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} ${SERVER_UNIX_SOURCES})
+  endif(WIN32)
 
-add_executable(vavoom-dedicated ${SERVER_SOURCES})
-if(ENABLE_WRAPPERS)
-  set_target_properties(vavoom-dedicated PROPERTIES OUTPUT_NAME ../vavoom-dedicated.bin)
-else(ENABLE_WRAPPERS)
-  set_target_properties(vavoom-dedicated PROPERTIES OUTPUT_NAME ../vavoom-dedicated)
-endif(ENABLE_WRAPPERS)
-set_target_properties(vavoom-dedicated PROPERTIES COMPILE_FLAGS -DSERVER)
-target_link_libraries(vavoom-dedicated glbsp core ${LIBLZMA_LIBRARIES} ${ZLIB_LIBRARIES} ${NET_LIBRARIES})
-add_dependencies(vavoom-dedicated core glbsp ${VAVOOM_MAIN_DEPS})
+  add_executable(vavoom-dedicated ${SERVER_SOURCES})
+  if(ENABLE_WRAPPERS)
+    set_target_properties(vavoom-dedicated PROPERTIES OUTPUT_NAME ../vavoom-dedicated.bin)
+  else(ENABLE_WRAPPERS)
+    set_target_properties(vavoom-dedicated PROPERTIES OUTPUT_NAME ../vavoom-dedicated)
+  endif(ENABLE_WRAPPERS)
+  set_target_properties(vavoom-dedicated PROPERTIES COMPILE_FLAGS -DSERVER)
+  #FIXME: create separate from MAIN_LIBS link list
+  target_link_libraries(vavoom-dedicated glbsp core ${MAIN_LIBS} ${NET_LIBRARIES})
+  add_dependencies(vavoom-dedicated core glbsp ${VAVOOM_MAIN_DEPS})
 
-install(TARGETS vavoom-dedicated DESTINATION ${BINDIR})
+  install(TARGETS vavoom-dedicated DESTINATION ${BINDIR})
 
-if(ENABLE_WRAPPERS)
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/vavoom-dedicated
+  if(ENABLE_WRAPPERS)
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/vavoom-dedicated
 "#!/bin/sh
 # Needed to make symlinks/shortcuts work.
 # the binaries must run with correct working directory
 exec \"${CMAKE_INSTALL_PREFIX}/${BINDIR}/vavoom-dedicated.bin\" $* -basedir \"${CMAKE_INSTALL_PREFIX}/${DATADIR}\" ${IWADDIR}
 ")
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/vavoom-dedicated DESTINATION ${BINDIR})
-endif(ENABLE_WRAPPERS)
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/vavoom-dedicated DESTINATION ${BINDIR})
+  endif(ENABLE_WRAPPERS)
 
 endif(ENABLE_SERVER)

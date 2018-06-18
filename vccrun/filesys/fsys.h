@@ -23,7 +23,7 @@
 #ifndef FSYS_HEADER_FILE
 #define FSYS_HEADER_FILE
 
-#include "../../../libs/core/core.h"
+#include "../../libs/core/core.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -234,12 +234,12 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 #ifdef USE_INTERNAL_ZLIB
-# include "../../../libs/zlib/zlib.h"
+# include "../../libs/zlib/zlib.h"
 #else
 # include <zlib.h>
 #endif
 #ifdef USE_INTERNAL_LZMA
-# include "../../../libs/liblzma/api/lzma.h"
+# include "../../libs/liblzma/api/lzma.h"
 #else
 # include <lzma.h>
 #endif

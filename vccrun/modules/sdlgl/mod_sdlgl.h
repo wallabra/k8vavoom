@@ -26,7 +26,7 @@
 #ifndef VCCMOD_SDLGL_HEADER_FILE
 #define VCCMOD_SDLGL_HEADER_FILE
 
-#include "../../../../libs/imago/imago.h"
+#include "../../../libs/imago/imago.h"
 #include "../../vcc_run.h"
 
 #if defined (VCCRUN_HAS_SDL) && defined(VCCRUN_HAS_OPENGL)

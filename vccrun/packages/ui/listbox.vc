@@ -36,7 +36,7 @@ void onCreated () {
 // ////////////////////////////////////////////////////////////////////////// //
 final void setDefWidthInChars (int chars) {
   if (chars < 1) return;
-  Video.setFont(fontName);
+  Video.fontName = fontName;
   mBaseWidth = Video.textWidth("W")*chars+4;
   mWidth = mBaseWidth;
 }
@@ -55,7 +55,7 @@ final void appendItem (string text, optional int tag, optional bool checked) {
 final void makeCurrentVisible () {
   int mlen = mItems.length;
   if (mlen == 0) { mSkipY = 0; return; }
-  Video.setFont(fontName);
+  Video.fontName = fontName;
   int th = Video.textHeight("W");
   int y0 = th*mCurrItem-mSkipY;
   if (y0 < 0) {
@@ -76,21 +76,21 @@ final void makeCurrentVisible () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 protected override void selfPaintAt (int x0, int y0) {
-  Video.colorRGB = (focused ? 0x10_10_10 : 0x20_20_20);
+  Video.color = (focused ? 0x10_10_10 : 0x20_20_20);
   Video.fillRect(x0, y0, mWidth, mHeight);
   Video.drawBevel(x0, y0, mWidth, mHeight, 0x10_10_10, 0x40_40_40);
   if (!Video.scissorCombine(x0+1, y0+1, mWidth-2, mHeight-2)) return;
   makeCurrentVisible();
-  Video.setFont(fontName);
+  Video.fontName = fontName;
   int th = Video.textHeight("W");
   int y = y0+1-mSkipY;
   for (int f = 0; f < mItems.length; ++f) {
     if (f == mCurrItem) {
-      Video.colorRGB = (focused ? mFcSelBackColor : mSelBackColor);
+      Video.color = (focused ? mFcSelBackColor : mSelBackColor);
       Video.fillRect(x0+1, y, mWidth, th-1);
-      Video.colorRGB = (focused ? mFcSelTextColor : mSelTextColor);
+      Video.color = (focused ? mFcSelTextColor : mSelTextColor);
     } else {
-      Video.colorRGB = (focused ? mFcTextColor : mTextColor);
+      Video.color = (focused ? mFcTextColor : mTextColor);
     }
     Video.drawTextAt(x0+1, y, mItems[f].text);
     y += th;
@@ -111,7 +111,7 @@ override bool onEvent (ref event_t evt) {
       case K_MOUSE1:
         if (mItems.length > 0) {
           makeCurrentVisible();
-          Video.setFont(fontName);
+          Video.fontName = fontName;
           int th = Video.textHeight("W");
           int my = evt.y-1+mSkipY;
           int idx = my/th;

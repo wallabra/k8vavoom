@@ -1,5 +1,5 @@
-get_target_property(VLUMPY vlumpy LOCATION)
-get_target_property(ACC acc LOCATION)
+#get_target_property(VLUMPY vlumpy $<TARGET_FILE>)
+#get_target_property(ACC acc $<TARGET_FILE>)
 
 add_subdirectory(common)
 add_subdirectory(complete)

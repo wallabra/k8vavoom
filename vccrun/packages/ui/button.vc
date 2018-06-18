@@ -18,7 +18,7 @@ void onCreated (string atext) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 protected override void selfPaintAt (int x0, int y0) {
-  Video.colorRGB = 0x40_40_40;
+  Video.color = 0x40_40_40;
   Video.fillRect(x0, y0, mWidth, mHeight);
   if (mWaitRelease) {
     Video.drawBevel(x0, y0, mWidth, mHeight, 0x20_20_20, 0x60_60_60);
@@ -26,8 +26,8 @@ protected override void selfPaintAt (int x0, int y0) {
     Video.drawBevel(x0, y0, mWidth, mHeight, 0x60_60_60, 0x20_20_20);
   }
   if (mText) {
-    Video.colorRGB = (focused ? mSelColor : mColor);
-    Video.setFont(fontName);
+    Video.color = (focused ? mSelColor : mColor);
+    Video.fontName = fontName;
     Video.drawTextAt(x0+3+(mWaitRelease ? 1 : 0), y0+3+(mWaitRelease ? 1 : 0), mText);
   }
 }

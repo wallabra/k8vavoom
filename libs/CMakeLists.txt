@@ -12,7 +12,9 @@ if(NOT WITH_SYS_ZLIB)
   add_subdirectory(zlib)
 endif(NOT WITH_SYS_ZLIB)
 
-add_subdirectory(imago)
+if(ENABLE_VCCRUN)
+  add_subdirectory(imago)
+endif(ENABLE_VCCRUN)
 
 if(ENABLE_CLIENT AND NOT ENABLE_VCCRUN_ONLY)
   if(WITH_GME)
@@ -21,4 +23,4 @@ if(ENABLE_CLIENT AND NOT ENABLE_VCCRUN_ONLY)
   endif(WITH_GME)
 
   add_subdirectory(timidity)
-endif(ENABLE_CLIENT)
+endif(ENABLE_CLIENT AND NOT ENABLE_VCCRUN_ONLY)
