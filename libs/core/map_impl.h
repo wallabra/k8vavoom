@@ -140,7 +140,7 @@ private:
       }
     }
     if (mEBSize > 0) {
-      memset(mEntries, 0, mEBSize*sizeof(TEntry));
+      memset(&mEntries[0], 0, mEBSize*sizeof(TEntry));
       for (vuint32 f = 0; f < mEBSize; ++f) {
         TEntry *e = &mEntries[f];
         e->empty = true;
@@ -284,14 +284,18 @@ public:
   }
 
   void clear () {
+#if defined(TMAP_DO_DTOR) || defined(TMAP_NO_CLEAR)
     freeEntries();
+#endif
     mFreeEntryHead = nullptr;
     free(mBuckets);
+    mBucketsUsed = 0;
     mBuckets = nullptr;
     free(mEntries);
+    mEBSize = 0;
     mEntries = nullptr;
+    mFreeEntryHead = nullptr;
     mFirstEntry = mLastEntry = -1;
-    mBucketsUsed = 0;
   }
 
   // won't shrink buckets
