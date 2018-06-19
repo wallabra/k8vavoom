@@ -1,24 +1,24 @@
 class DFMap : Object abstract native;
 
-readonly Header *header;
-readonly Texture*[] textures;
-//readonly Texture **textures;
-//readonly int textureCount;
-readonly Panel*[] panels;
-//readonly Panel **panels;
-//readonly int panelCount;
-readonly Item*[] items;
-//readonly Item **items;
-//readonly int itemCount;
-readonly Monster*[] monsters;
-//readonly Monster **monsters;
-//readonly int monsterCount;
-readonly Area*[] areas;
-//readonly Area **areas;
-//readonly int areaCount;
-readonly Trigger*[] triggers;
-//readonly Trigger **triggers;
-//readonly int triggerCount;
+native readonly Header *header;
+native readonly Texture*[] textures;
+//native readonly Texture **textures;
+//native readonly int textureCount;
+native readonly Panel*[] panels;
+//native readonly Panel **panels;
+//native readonly int panelCount;
+native readonly Item*[] items;
+//native readonly Item **items;
+//native readonly int itemCount;
+native readonly Monster*[] monsters;
+//native readonly Monster **monsters;
+//native readonly int monsterCount;
+native readonly Area*[] areas;
+//native readonly Area **areas;
+//native readonly int areaCount;
+native readonly Trigger*[] triggers;
+//native readonly Trigger **triggers;
+//native readonly int triggerCount;
 
 
 ////////////////////////////////////////////////////////////////////////////////

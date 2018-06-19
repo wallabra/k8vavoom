@@ -1589,9 +1589,47 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
       continue;
     }
 
+    bool firstField = true;
     do {
       VExpression *FieldType = Type->SyntaxCopy();
       FieldType = ParseTypePtrs(FieldType);
+
+      // check for new array syntax
+      if (Lex.Check(TK_LBracket)) {
+        if (!firstField) ParseError(Lex.Location, "Invalid array declaration");
+        // size
+        TLocation SLoc = Lex.Location;
+        VExpression *e = ParseExpression();
+        Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
+        FieldType = new VFixedArrayType(FieldType, e, SLoc);
+        // name
+        VName FieldName(NAME_None);
+        TLocation FieldLoc = Lex.Location;
+        if (Lex.Token != TK_Identifier) {
+          ParseError(Lex.Location, "Field name expected");
+        } else {
+          FieldName = Lex.Name;
+        }
+        Lex.NextToken();
+        // create field
+        VField *fi = new VField(FieldName, Struct, FieldLoc);
+        fi->TypeExpr = FieldType;
+        fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
+          TModifiers::Native|TModifiers::Private|TModifiers::Protected|
+          TModifiers::ReadOnly|TModifiers::Transient, FieldLoc));
+        // delegate?
+        if (FieldType->IsDelegateType()) {
+          fi->Func = ((VDelegateType *)FieldType)->CreateDelegateMethod(Struct);
+          fi->Type = VFieldType(TYPE_Delegate);
+          fi->Type.Function = fi->Func;
+          fi->TypeExpr = nullptr;
+          delete FieldType;
+        }
+        Struct->AddField(fi);
+        break;
+      }
+
+      firstField = false;
 
       VName FieldName(NAME_None);
       TLocation FieldLoc = Lex.Location;

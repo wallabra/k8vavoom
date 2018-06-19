@@ -229,7 +229,7 @@ void MakeSlope(Level InLevel, mthing_t *mthing, bool IsCeiling)
   sec_plane_t *plane;
 
   sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
-  for (i = 0; i < sec->linecount; i++)
+  for (i = 0; i < sec.lines.length; i++)
   {
     line = sec->lines[i];
     if (mthing->tid == line->arg1)
@@ -307,7 +307,7 @@ void SlopeLineToPoint(Level InLevel, mthing_t *mthing, bool IsCeiling)
   p1 = vector(mthing->x, mthing->y, 0.0);
   p1.z = GetPlanePointZ(plane, p1) + mthing->height;
 
-  for (i = 0; i < InLevel.NumLines; i++)
+  for (i = 0; i < InLevel.Lines.length; i++)
   {
     line_t *line = &InLevel.Lines[i];
     if (line->LineTag != mthing->arg1)
@@ -432,16 +432,16 @@ bool SetVertexHeights(Level InLevel, int ThingID)
 
   ret = false;
   //  Clean all
-  for (i = 0; i < InLevel.NumVertexes; i++)
+  for (i = 0; i < InLevel.Vertexes.length; i++)
   {
     InLevel.Vertexes[i].z = 0.1;
   }
-  for (j = 0; j < InLevel.NumThings; j++)
+  for (j = 0; j < InLevel.Things.length; j++)
   {
     mthing = &InLevel.Things[j];
     if (mthing->type == ThingID)
     {
-      for (i = 0; i < InLevel.NumVertexes; i++)
+      for (i = 0; i < InLevel.Vertexes.length; i++)
       {
         if (InLevel.Vertexes[i].x == mthing->x &&
           InLevel.Vertexes[i].y == mthing->y)
@@ -466,7 +466,7 @@ void CleanVertexHeights(Level InLevel)
 {
   int i;
 
-  for (i = 0; i < InLevel.NumVertexes; i++)
+  for (i = 0; i < InLevel.Vertexes.length; i++)
   {
     InLevel.Vertexes[i].z = 0.0;
   }
@@ -492,10 +492,10 @@ void MakeVertexFloorHeights(Level InLevel)
   {
     return;
   }
-  for (i = 0; i < InLevel.NumSectors; i++)
+  for (i = 0; i < InLevel.Sectors.length; i++)
   {
     sec = &InLevel.Sectors[i];
-    if (sec->linecount != 3)
+    if (sec.lines.length != 3)
       continue;
     p1 = *sec->lines[0]->v1;
     p2 = *sec->lines[0]->v2;
@@ -563,10 +563,10 @@ void MakeVertexCeilingHeights(Level InLevel)
   {
     return;
   }
-  for (i = 0; i < InLevel.NumSectors; i++)
+  for (i = 0; i < InLevel.Sectors.length; i++)
   {
     sec = &InLevel.Sectors[i];
-    if (sec->linecount != 3)
+    if (sec.lines.length != 3)
       continue;
     p1 = *sec->lines[0]->v1;
     p2 = *sec->lines[0]->v2;
@@ -633,9 +633,9 @@ void AlignPlane(Level InLevel, sector_t *sec, line_t *line, int which)
 {
   sector_t *refsec;
   float bestdist;
-  TVec *refvert = (*sec->lines)->v1;
+  TVec *refvert = (sec->lines[0])->v1;
   int i;
-  line_t **probe;
+  //line_t **probe;
   float dist;
   TVec *vert;
   TVec p, v1, v2, cross;
@@ -646,10 +646,11 @@ void AlignPlane(Level InLevel, sector_t *sec, line_t *line, int which)
   if (line->backsector == nullptr)
     return;
 
-  //  Find furthest vertex from the reference line. It, along with the two
+  // Find furthest vertex from the reference line. It, along with the two
   // ends of the line will define the plane.
   bestdist = 0.0;
-  for (i = sec->linecount * 2, probe = sec->lines; i > 0; i--)
+  /*
+  for (i = sec.lines.length * 2, probe = sec->lines.ptr; i > 0; i--)
   {
     if (i & 1)
     {
@@ -665,6 +666,18 @@ void AlignPlane(Level InLevel, sector_t *sec, line_t *line, int which)
       bestdist = dist;
       refvert = vert;
     }
+  }
+  */
+  int lnum = sec.lines.length;
+  for (i = 0; i < lnum; ++i) {
+    // v1
+    vert = sec.lines[i]->v1;
+    dist = fabs(DotProduct(*vert, line->normal)-line->dist);
+    if (dist > bestdist) { bestdist = dist; refvert = vert; }
+    // v2
+    vert = sec.lines[i]->v2;
+    dist = fabs(DotProduct(*vert, line->normal)-line->dist);
+    if (dist > bestdist) { bestdist = dist; refvert = vert; }
   }
 
   refsec = line->frontsector == sec ? line->backsector : line->frontsector;
@@ -704,7 +717,7 @@ void SetSlopes(Level InLevel)
 {
   int i, s;
 
-  for (i = 0; i < InLevel.NumLines; i++)
+  for (i = 0; i < InLevel.Lines.length; i++)
   {
     if (InLevel.Lines[i].special == LNSPEC_PlaneAlign)
     {
@@ -779,7 +792,7 @@ void SpawnExtraFloors(Level InLevel, line_t * line)
 {
   int j;
 
-  for (j = 0; j < InLevel.NumSectors; j++)
+  for (j = 0; j < InLevel.Sectors.length; j++)
   {
     if (line->arg1 == InLevel.Sectors[j].tag)
     {
@@ -1117,7 +1130,7 @@ override void SpawnWorld(Level InLevel)
   //  Set up tagged lines.
   if (!InLevel.bTextMap)
   {
-    for (i = 0; i < InLevel.NumLines; i++)
+    for (i = 0; i < InLevel.Lines.length; i++)
     {
       line = &InLevel.Lines[i];
       switch (line->special)
@@ -1153,7 +1166,7 @@ override void SpawnWorld(Level InLevel)
 
   //  Spawn slopes.
   SetSlopes(InLevel);
-  for (i = 0; i < InLevel.NumThings; i++)
+  for (i = 0; i < InLevel.Things.length; i++)
   {
     mthing = &InLevel.Things[i];
     switch (mthing->type)
@@ -1187,7 +1200,7 @@ override void SpawnWorld(Level InLevel)
   MakeVertexFloorHeights(InLevel);
   MakeVertexCeilingHeights(InLevel);
   CleanVertexHeights(InLevel);
-  for (i = 0; i < InLevel.NumThings; i++)
+  for (i = 0; i < InLevel.Things.length; i++)
   {
     mthing = &InLevel.Things[i];
     if (mthing->type == COPY_FLOOR_PLANE_TYPE ||
@@ -1199,8 +1212,8 @@ override void SpawnWorld(Level InLevel)
   }
 
   //  Set up 3D floors, transfers of light, etc.
-  print("******* LINES: %d", InLevel.NumLines);
-  for (i = 0; i < InLevel.NumLines; i++)
+  print("******* LINES: %d", InLevel.Lines.length);
+  for (i = 0; i < InLevel.Lines.length; i++)
   {
     line = &InLevel.Lines[i];
     FixDeepWater(InLevel, i, line);
@@ -1261,7 +1274,7 @@ override void SpawnWorld(Level InLevel)
   }
 
   //  Initialise initial friction values.
-  for (i = 0; i < InLevel.NumSectors; i++)
+  for (i = 0; i < InLevel.Sectors.length; i++)
   {
     InLevel.Sectors[i].Friction = EntityEx::FRICTION_NORMAL;
     //  Handle Sky2 sector special.
@@ -1272,7 +1285,7 @@ override void SpawnWorld(Level InLevel)
   }
 
   //  Process translucent lines
-  for (i = 0; i < InLevel.NumLines; i++)
+  for (i = 0; i < InLevel.Lines.length; i++)
   {
     line = &InLevel.Lines[i];
     switch (line->special)
@@ -1281,7 +1294,7 @@ override void SpawnWorld(Level InLevel)
       alpha = itof(line->arg2) / 255.0;
       if (line->arg1)
       {
-        for (j = 0; j < InLevel.NumLines; j++)
+        for (j = 0; j < InLevel.Lines.length; j++)
         {
           if (InLevel.Lines[j].LineTag == line->arg1)
           {
@@ -1314,7 +1327,7 @@ override void SpawnWorld(Level InLevel)
   }
 
   //  Spawn polyobjects.
-  for (i = 0; i < InLevel.NumThings; i++)
+  for (i = 0; i < InLevel.Things.length; i++)
   {
     mthing = &InLevel.Things[i];
     switch (mthing->type)

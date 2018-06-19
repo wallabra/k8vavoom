@@ -69,7 +69,7 @@ override void OnDraw()
   slist = GetSlist();
 
   SetTextAlign(hleft, vtop);
-  for (i = 0; i < slist->Count; i++)
+  for (i = 0; i < slist->Cache.length; i++)
   {
     DrawText(16, 32 + 10 * i, slist->Cache[i].Name);
     DrawText(16 + 128, 32 + 10 * i, slist->Cache[i].Map);
@@ -84,7 +84,7 @@ override void OnDraw()
   if (slist->ReturnReason)
     DrawText(16, 116, slist->ReturnReason);
 
-  if (slist->Count)
+  if (slist->Cache.length)
   {
     x = 8;
     y = 124;
@@ -107,7 +107,7 @@ override void OnDraw()
   {
     DrawTextBox("Searching...");
   }
-  else if (!slist->Count)
+  else if (!slist->Cache.length)
   {
     DrawTextBox("No servers found");
   }
@@ -125,28 +125,28 @@ override bool OnKeyDown(int key)
   switch (key)
   {
   case K_DOWNARROW:
-    if (slist->Count)
+    if (slist->Cache.length)
     {
       Cursor++;
-      if (Cursor >= slist->Count)
+      if (Cursor >= slist->Cache.length)
         Cursor = 0;
       LocalSound('menu/cursor');
     }
     return true;
 
   case K_UPARROW:
-    if (slist->Count)
+    if (slist->Cache.length)
     {
       Cursor--;
       if (Cursor < 0)
-        Cursor = slist->Count - 1;
+        Cursor = slist->Cache.length - 1;
       LocalSound('menu/cursor');
     }
     return true;
 
   case K_ENTER:
   case K_PADENTER:
-    if (slist->Count)
+    if (slist->Cache.length)
     {
       LocalSound('menu/choose');
       CmdBuf_AddText("connect \"%s\"\n", slist->Cache[Cursor].CName);

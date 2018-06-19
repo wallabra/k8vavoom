@@ -60,7 +60,7 @@ void InitSkyBox()
   {
     //  Set this as a default sky box.
     int i;
-    for (i = 0; i < XLevel.NumSectors; i++)
+    for (i = 0; i < XLevel.Sectors.length; i++)
     {
       if (!XLevel.Sectors[i].floor.SkyBox)
       {
@@ -84,7 +84,7 @@ override void Destroyed()
 {
   //  Removed all references to this sky box.
   int i;
-  for (i = 0; i < XLevel.NumSectors; i++)
+  for (i = 0; i < XLevel.Sectors.length; i++)
   {
     if (XLevel.Sectors[i].floor.SkyBox == self)
     {

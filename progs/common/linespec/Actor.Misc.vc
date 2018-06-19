@@ -362,7 +362,7 @@ final void A_RemoveForceField()
   line_t *line;
 
   bSpecial = false;
-  for (i = 0; i < Sector->linecount; i++)
+  for (i = 0; i < Sector.lines.length; i++)
   {
     line = Sector->lines[i];
     if (line->backsector && line->special == LNSPEC_ForceField)

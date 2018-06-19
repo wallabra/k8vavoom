@@ -412,8 +412,8 @@ struct sector_t
   VEntity *ThingList;
   msecnode_t *TouchingThingList;
 
-  int       linecount;
   line_t **lines;  // [linecount] size
+  int linecount;
 
   //  Boom's fake floors.
   sector_t *heightsec;
@@ -473,8 +473,8 @@ struct sector_t
 //
 struct polyobj_t
 {
-  int       numsegs;
   seg_t **segs;
+  int numsegs;
   TVec      startSpot;
   vertex_t *originalPts;  // used as the base for the rotations
   vertex_t *prevPts;    // use to restore the old point values

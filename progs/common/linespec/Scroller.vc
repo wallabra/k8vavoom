@@ -58,7 +58,7 @@ void InitFloor(sector_t *InSector, int XDir, int YDir, int InSpeed)
   int   i;
 
   Sector = InSector;
-  for (i = 0; i < XLevel.NumSectors; i++)
+  for (i = 0; i < XLevel.Sectors.length; i++)
   {
     if (&XLevel.Sectors[i] == InSector)
     {
@@ -192,7 +192,7 @@ void InitTextureModel(line_t *Line, line_t *SrcLine)
   {
     // if 1, then displacement
     // if 2, then accelerative (also if 3)
-    for (i = 0; i < XLevel.NumSectors; i++)
+    for (i = 0; i < XLevel.Sectors.length; i++)
     {
       if (&XLevel.Sectors[i] == SrcLine->frontsector)
       {
@@ -270,7 +270,7 @@ void InitGen(int InType, line_t *SrcLine, int InAffectee)
   {
     // if 1, then displacement
     // if 2, then accelerative (also if 3)
-    for (i = 0; i < XLevel.NumSectors; i++)
+    for (i = 0; i < XLevel.Sectors.length; i++)
     {
       if (&XLevel.Sectors[i] == SrcLine->frontsector)
       {

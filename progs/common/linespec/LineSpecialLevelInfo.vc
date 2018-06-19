@@ -122,7 +122,7 @@ override void SpawnSpecials()
   }
 
   //  Init special SECTORs.
-  for (i = 0; i < XLevel.NumSectors; i++)
+  for (i = 0; i < XLevel.Sectors.length; i++)
   {
     sector = &XLevel.Sectors[i];
     if (!sector->special)
@@ -246,7 +246,7 @@ override void SpawnSpecials()
   }
 
   //  Init line EFFECTs
-  for (i = 0; i < XLevel.NumLines; i++)
+  for (i = 0; i < XLevel.Lines.length; i++)
   {
     switch (XLevel.Lines[i].special)
     {
@@ -1472,7 +1472,7 @@ final int EV_TextureChangeDoor(int Arg1, int Arg2, int Arg3, int Arg4,
       {
         continue;
       }
-      for (i = 0; i < Sec->linecount; i++)
+      for (i = 0; i < Sec.lines.length; i++)
       {
         Line = Sec->lines[i];
         if (!Line->backsector)
@@ -1740,7 +1740,7 @@ final int EV_DoDonut(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
     rtn = 1;
 
     // find a two sided line around the pool whose other side isn't the pillar
-    for (i = 0; i < s2->linecount; i++)
+    for (i = 0; i < s2.lines.length; i++)
     {
       if ((!s2->lines[i]->flags & ML_TWOSIDED) ||
         (s2->lines[i]->backsector == s1))
@@ -1870,7 +1870,7 @@ final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     do
     {
       Ok = false;
-      for (i = 0; i < Sec->linecount; i++)
+      for (i = 0; i < Sec.lines.length; i++)
       {
         SecLine = Sec->lines[i];
 
@@ -1892,7 +1892,7 @@ final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 
         Sec = TSec;
         //  SecNum = TSec - XLevel.Sectors;
-        for (j = 0; j < XLevel.NumSectors; j++)
+        for (j = 0; j < XLevel.Sectors.length; j++)
         {
           if (TSec == &XLevel.Sectors[j])
           {
@@ -2566,7 +2566,7 @@ final void SpawnLightSequence(sector_t * sector, float indexStep)
     //  Make sure that the search doesn't back up.
     sec->special = (sec->special & ~SECSPEC_BASE_MASK) |
       SECSPEC_LightSequenceStart;
-    for (i = 0; i < sec->linecount; i++)
+    for (i = 0; i < sec.lines.length; i++)
     {
       tempSec = getNextSector(sec->lines[i], sec);
       if (!tempSec)
@@ -2607,7 +2607,7 @@ final void SpawnLightSequence(sector_t * sector, float indexStep)
     //  Clear sector special.
     sec->special &= ~SECSPEC_BASE_MASK;
     index += indexDelta;
-    for (i = 0; i < sec->linecount; i++)
+    for (i = 0; i < sec.lines.length; i++)
     {
       tempSec = getNextSector(sec->lines[i], sec);
       if (!tempSec)
@@ -2677,7 +2677,7 @@ final int EV_TagLightTurnOn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
   {
     Sec = &XLevel.Sectors[SecNum];
     Max = 0;
-    for (j = 0; j < Sec->linecount; j++)
+    for (j = 0; j < Sec.lines.length; j++)
     {
       TSec = getNextSector(Sec->lines[j], Sec);
       if (!TSec)
@@ -2712,7 +2712,7 @@ final int EV_TurnTagLightsOff(int Arg1, int Arg2, int Arg3, int Arg4,
   {
     Sec = &XLevel.Sectors[SecNum];
     Min = Sec->params.lightlevel;
-    for (i = 0; i < Sec->linecount; i++)
+    for (i = 0; i < Sec.lines.length; i++)
     {
       TSec = getNextSector(Sec->lines[i], Sec);
       if (!TSec)
@@ -5193,7 +5193,7 @@ final bool EV_RemoveForceField(int Arg1, int Arg2, int Arg3, int Arg4,
     secnum = XLevel.FindSectorFromTag(Arg1, secnum))
   {
     sec = &XLevel.Sectors[secnum];
-    for (i = 0; i < sec->linecount; i++)
+    for (i = 0; i < sec.lines.length; i++)
     {
       secline = sec->lines[i];
       if (secline->special != LNSPEC_ForceField)
@@ -5677,7 +5677,7 @@ final void RecursiveSound(sector_t *sec, int soundblocks, Entity soundtarget,
     }
   }
 
-  for (i = 0; i < sec->linecount; i++)
+  for (i = 0; i < sec.lines.length; i++)
   {
     check = sec->lines[i];
     if (check->sidenum[1] == -1 || !(check->flags & ML_TWOSIDED))
@@ -5866,7 +5866,7 @@ final void SpawnPushers()
   Pusher    P;
   EntityEx  thing;
 
-  for (i = 0; i < XLevel.NumLines; i++)
+  for (i = 0; i < XLevel.Lines.length; i++)
   {
     l = &XLevel.Lines[i];
     switch (l->special)
@@ -5921,7 +5921,7 @@ final void SpawnPushers()
         {
           if (PointPuller(thing) || PointPusher(thing))
           {
-            for (s = 0; s < XLevel.NumSectors; s++)
+            for (s = 0; s < XLevel.Sectors.length; s++)
               if (&XLevel.Sectors[s] == thing.Sector)
                 break;
             P = Spawn(Pusher);

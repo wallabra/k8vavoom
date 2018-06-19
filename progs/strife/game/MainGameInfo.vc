@@ -577,17 +577,17 @@ override void TranslateLevel(Level InLevel)
 {
   int i;
 
-  for (i = 0; i < InLevel.NumLines; i++)
+  for (i = 0; i < InLevel.Lines.length; i++)
   {
     TranslateLine(&InLevel.Lines[i]);
   }
 
-  for (i = 0; i < InLevel.NumSectors; i++)
+  for (i = 0; i < InLevel.Sectors.length; i++)
   {
     TranslateSector(&InLevel.Sectors[i]);
   }
 
-  for (i = 0; i < InLevel.NumThings; i++)
+  for (i = 0; i < InLevel.Things.length; i++)
   {
     TranslateThing(&InLevel.Things[i]);
   }

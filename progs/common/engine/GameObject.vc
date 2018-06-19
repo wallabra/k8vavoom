@@ -27,27 +27,26 @@ class GameObject : Object
   native
   abstract;
 
-const int TICRATE       = 35;
+const int TICRATE = 35;
 
-enum
-{
-  //  Generate the sprite's axes, with sprup straight up in worldspace,
+enum {
+  // Generate the sprite's axes, with sprup straight up in worldspace,
   // and sprright parallel to the viewplane.
   SPR_VP_PARALLEL_UPRIGHT,
-  //  Generate the sprite's axes, with sprup straight up in worldspace,
+  // Generate the sprite's axes, with sprup straight up in worldspace,
   // and sprright perpendicular to sprorigin.
   SPR_FACING_UPRIGHT,
-  //  Generate the sprite's axes, completely parallel to the viewplane.
+  // Generate the sprite's axes, completely parallel to the viewplane.
   SPR_VP_PARALLEL,
-  //  Generate the sprite's axes, according to the sprite's world
+  // Generate the sprite's axes, according to the sprite's world
   // orientation
   SPR_ORIENTED,
-  //  Generate the sprite's axes, parallel to the viewplane, but
+  // Generate the sprite's axes, parallel to the viewplane, but
   // rotated in that plane around the centre according to the sprite
   // entity's roll angle. So sprforward stays the same, but sprright
   // and sprup rotate
   SPR_VP_PARALLEL_ORIENTED,
-  //  Generate the sprite's axes, with sprup straight up in worldspace,
+  // Generate the sprite's axes, with sprup straight up in worldspace,
   // and sprright parallel to the viewplane and then rotated in that
   // plane around the centre according to the sprite entity's roll
   // angle. So sprforward stays the same, but sprright and sprup rotate
@@ -58,14 +57,12 @@ enum
 //  Frame flags:
 //  handles maximum brightness (torches, muzzle flare, light sources)
 //
-enum
-{
+enum {
   FF_FULLBRIGHT = 0x80, // flag in thing->frame
   FF_FRAMEMASK  = 0x7f
 };
 
-enum
-{
+enum {
   ps_weapon,
   ps_flash,
   NUMPSPRITES
@@ -74,19 +71,17 @@ enum
 //
 // Button/action code definitions.
 //
-enum
-{
-  BT_ATTACK   = 1,  // Press "Fire".
-  BT_USE      = 2,  // Use button, to open doors, activate switches.
-  BT_JUMP     = 4,
-  BT_ALT_ATTACK = 8
+enum {
+  BT_ATTACK     = 1,  // Press "Fire".
+  BT_USE        = 2,  // Use button, to open doors, activate switches.
+  BT_JUMP       = 4,
+  BT_ALT_ATTACK = 8,
 };
 
 //
 // Player states.
 //
-enum
-{
+enum {
   // Playing or camping.
   PST_LIVE,
   // Dead on the ground, view follows killer.
@@ -95,8 +90,7 @@ enum
   PST_REBORN
 };
 
-enum
-{
+enum {
   DI_EAST,
   DI_NORTHEAST,
   DI_NORTH,
@@ -109,77 +103,74 @@ enum
   NUMDIRS
 };
 
-enum
-{
+enum {
   RES_OK,
   RES_CRUSHED,
   RES_PASTDEST
 };
 
-const float MAXRADIUS     = 32.0;
+const float MAXRADIUS = 32.0;
 
 //
 // LineDef attributes.
 //
 const int
-  ML_BLOCKING       = 0x00000001, // Solid, is an obstacle.
-  ML_BLOCKMONSTERS    = 0x00000002, // Blocks monsters only.
-  ML_TWOSIDED       = 0x00000004, // Backside will not be present at all
-  ML_DONTPEGTOP     = 0x00000008, // upper texture unpegged
-  ML_DONTPEGBOTTOM    = 0x00000010, // lower texture unpegged
-  ML_SECRET       = 0x00000020, // don't map as two sided: IT'S A SECRET!
-  ML_SOUNDBLOCK     = 0x00000040, // don't let sound cross two of these
-  ML_DONTDRAW       = 0x00000080, // don't draw on the automap
-  ML_MAPPED       = 0x00000100, // set if already drawn in automap
-  ML_REPEAT_SPECIAL   = 0x00000200, // special is repeatable
-  ML_ADDITIVE       = 0x00000400, //  Additive translucency.
-  ML_MONSTERSCANACTIVATE  = 0x00002000, //  Monsters (as well as players) can activate the line
-  ML_BLOCKPLAYERS     = 0x00004000, //  Blocks players only.
-  ML_BLOCKEVERYTHING    = 0x00008000, //  Line blocks everything.
-  ML_ZONEBOUNDARY     = 0x00010000, //  Boundary of reverb zones.
-  ML_RAILING        = 0x00020000,
-  ML_BLOCK_FLOATERS   = 0x00040000,
-  ML_CLIP_MIDTEX      = 0x00080000, // Automatic for every Strife line
-  ML_WRAP_MIDTEX      = 0x00100000,
-  ML_FIRSTSIDEONLY    = 0x00800000, // Actiavte only when crossed from front side.
-  ML_KEEPDATA       = 0x01000000; // Keep FloorData or CeilingData after activating them.
-                      // Used to simulate original Heretic behaviour.
+  ML_BLOCKING            = 0x00000001, // Solid, is an obstacle.
+  ML_BLOCKMONSTERS       = 0x00000002, // Blocks monsters only.
+  ML_TWOSIDED            = 0x00000004, // Backside will not be present at all
+  ML_DONTPEGTOP          = 0x00000008, // upper texture unpegged
+  ML_DONTPEGBOTTOM       = 0x00000010, // lower texture unpegged
+  ML_SECRET              = 0x00000020, // don't map as two sided: IT'S A SECRET!
+  ML_SOUNDBLOCK          = 0x00000040, // don't let sound cross two of these
+  ML_DONTDRAW            = 0x00000080, // don't draw on the automap
+  ML_MAPPED              = 0x00000100, // set if already drawn in automap
+  ML_REPEAT_SPECIAL      = 0x00000200, // special is repeatable
+  ML_ADDITIVE            = 0x00000400, // Additive translucency.
+  ML_MONSTERSCANACTIVATE = 0x00002000, // Monsters (as well as players) can activate the line
+  ML_BLOCKPLAYERS        = 0x00004000, // Blocks players only.
+  ML_BLOCKEVERYTHING     = 0x00008000, // Line blocks everything.
+  ML_ZONEBOUNDARY        = 0x00010000, // Boundary of reverb zones.
+  ML_RAILING             = 0x00020000,
+  ML_BLOCK_FLOATERS      = 0x00040000,
+  ML_CLIP_MIDTEX         = 0x00080000, // Automatic for every Strife line
+  ML_WRAP_MIDTEX         = 0x00100000,
+  ML_FIRSTSIDEONLY       = 0x00800000, // Actiavte only when crossed from front side.
+  ML_KEEPDATA            = 0x01000000; // Keep FloorData or CeilingData after activating them.
+                                        // Used to simulate original Heretic behaviour.
 
 //  These will be converted.
 const int
-  ML_PASSUSE_BOOM       = 0x0200, //  Boom's ML_PASSUSE flag (conflicts with ML_REPEAT_SPECIAL)
-  ML_RAILING_STRIFE     = 0x0200,
-  ML_BLOCK_FLOATERS_STRIFE  = 0x0400,
-  ML_UNKNOWN2_STRIFE      = 0x0800,
-  ML_TRANSLUCENT_STRIFE   = 0x1000;
+  ML_PASSUSE_BOOM          = 0x0200, //  Boom's ML_PASSUSE flag (conflicts with ML_REPEAT_SPECIAL)
+  ML_RAILING_STRIFE        = 0x0200,
+  ML_BLOCK_FLOATERS_STRIFE = 0x0400,
+  ML_UNKNOWN2_STRIFE       = 0x0800,
+  ML_TRANSLUCENT_STRIFE    = 0x1000;
 
 //
 // Special activation types
 //
-enum
-{
-  SPAC_Cross    = 0x0001, // when player crosses line
-  SPAC_Use    = 0x0002, // when player uses line
-  SPAC_MCross   = 0x0004, // when monster crosses line
-  SPAC_Impact   = 0x0008, // when projectile hits line
-  SPAC_Push   = 0x0010, // when player pushes line
-  SPAC_PCross   = 0x0020, // when projectile crosses line
+enum {
+  SPAC_Cross      = 0x0001, // when player crosses line
+  SPAC_Use        = 0x0002, // when player uses line
+  SPAC_MCross     = 0x0004, // when monster crosses line
+  SPAC_Impact     = 0x0008, // when projectile hits line
+  SPAC_Push       = 0x0010, // when player pushes line
+  SPAC_PCross     = 0x0020, // when projectile crosses line
   SPAC_UseThrough = 0x0040, // SPAC_USE, but passes it through
   //  SPAC_PTouch is remapped as SPAC_Impact | SPAC_PCross
-  SPAC_AnyCross = 0x0080,
-  SPAC_MUse   = 0x0100, // when monster uses line
-  SPAC_MPush    = 0x0200  // when monster pushes line
+  SPAC_AnyCross   = 0x0080,
+  SPAC_MUse       = 0x0100, // when monster uses line
+  SPAC_MPush      = 0x0200, // when monster pushes line
 };
 
 //
 //  SECTOR PLANE FLAGS
 //
-enum
-{
+enum {
   SPF_NOBLOCKING    = 1,
   SPF_NOBLOCKSIGHT  = 2,
   SPF_NOBLOCKSHOOT  = 4,
-  SPF_ADDITIVE    = 8
+  SPF_ADDITIVE      = 8,
 };
 
 const int SKY_FROM_SIDE = 0x8000;
@@ -188,31 +179,28 @@ const int SKY_FROM_SIDE = 0x8000;
 //  Sidedef flags.
 //
 const int
-  SDF_ABSLIGHT    = 0x0001; //  Light is absolute value.
+  SDF_ABSLIGHT = 0x0001; //  Light is absolute value.
 
 const float ATTN_NONE   = 0.0;
-const float ATTN_NORMAL   = 1.0;
+const float ATTN_NORMAL = 1.0;
 const float ATTN_IDLE   = 2.0;
-const float ATTN_STATIC   = 3.0;
+const float ATTN_STATIC = 3.0;
 
-enum
-{
-  PT_ADDLINES   = 1,
-  PT_ADDTHINGS  = 2,
-  PT_EARLYOUT   = 4
+enum {
+  PT_ADDLINES  = 1,
+  PT_ADDTHINGS = 2,
+  PT_EARLYOUT  = 4,
 };
 
-const float DEFAULT_GRAVITY     = 1225.0;
+const float DEFAULT_GRAVITY = 1225.0;
 
-enum
-{
+enum {
   SEQ_Door,
   SEQ_Platform,
   SEQ_Environment
 };
 
-enum
-{
+enum {
   SECSPEC_None,
   SECSPEC_LightPhased,
   SECSPEC_LightSequenceStart,
@@ -316,17 +304,15 @@ enum
   SECSPEC_Max
 };
 
-enum
-{
-  SECSPEC_BASE_MASK   = 0x00ff,
+enum {
+  SECSPEC_BASE_MASK     = 0x00ff,
   SECSPEC_DAMAGE_MASK   = 0x0300,
   SECSPEC_SECRET_MASK   = 0x0400,
   SECSPEC_FRICTION_MASK = 0x0800,
-  SECSPEC_PUSH_MASK   = 0x1000
+  SECSPEC_PUSH_MASK     = 0x1000,
 };
 
-enum
-{
+enum {
   LNSPEC_None,
   LNSPEC_PolyStartLine,
   LNSPEC_PolyRotateLeft,
@@ -558,8 +544,7 @@ enum
 //
 // LineDef
 //
-struct line_t : TPlane
-{
+struct line_t : TPlane {
   // Vertices, from v1 to v2.
   TVec *v1;
   TVec *v2;
@@ -568,8 +553,8 @@ struct line_t : TPlane
   TVec __dir;
 
   // Animation related.
-  int     flags;
-  int     SpacFlags;
+  int flags;
+  int SpacFlags;
 
   // Visual appearance: SideDefs.
   //  sidenum[1] will be -1 if one sided
@@ -599,93 +584,91 @@ struct line_t : TPlane
   int arg4;
   int arg5;
 
-  int     LineTag;
-  int     HashFirst;
-  int     HashNext;
+  int LineTag;
+  int HashFirst;
+  int HashNext;
 
   seg_t *firstseg; // linked by lsnext
 
   int decalMark;
 
   // lines connected to `v1`
-  line_t **v1lines;
-  int v1linesCount;
+  line_t*[] v1lines;
+  //line_t **v1lines;
+  //int v1linesCount;
 
   // lines connected to `v2`
-  line_t **v2lines;
-  int v2linesCount;
+  line_t*[] v2lines;
+  //line_t **v2lines;
+  //int v2linesCount;
 };
 
 //
 // The SideDef.
 //
-struct side_t
-{
+struct side_t {
   //  Add this to the calculated texture column
-  float   TopTextureOffset;
-  float   BotTextureOffset;
-  float   MidTextureOffset;
+  float TopTextureOffset;
+  float BotTextureOffset;
+  float MidTextureOffset;
 
   //  Add this to the calculated texture top
-  float   TopRowOffset;
-  float   BotRowOffset;
-  float   MidRowOffset;
+  float TopRowOffset;
+  float BotRowOffset;
+  float MidRowOffset;
 
   //  Texture indices. We do not maintain names here.
-  int     TopTexture;
-  int     BottomTexture;
-  int     MidTexture;
+  int TopTexture;
+  int BottomTexture;
+  int MidTexture;
 
   //  Sector the SideDef is facing.
   sector_t *Sector;
 
-  int     LineNum;
+  int LineNum;
 
-  int     Flags;
+  int Flags;
 
-  int     Light;
+  int Light;
 };
 
-struct sec_plane_t : TPlane
-{
-  float   minz;
-  float   maxz;
+struct sec_plane_t : TPlane {
+  float minz;
+  float maxz;
 
-  //  Use for wall texture mapping.
-  float   TexZ;
+  // use for wall texture mapping
+  float TexZ;
 
-  int     pic;
+  int pic;
 
-  float   xoffs;
-  float   yoffs;
+  float xoffs;
+  float yoffs;
 
-  float   XScale;
-  float   YScale;
+  float XScale;
+  float YScale;
 
-  float   Angle;
+  float Angle;
 
-  float   BaseAngle;
-  float   BaseYOffs;
+  float BaseAngle;
+  float BaseYOffs;
 
-  int     flags;
-  float   Alpha;
-  float   MirrorAlpha;
+  int flags;
+  float Alpha;
+  float MirrorAlpha;
 
-  int     LightSourceSector;
+  int LightSourceSector;
 
-  Entity    SkyBox;
+  Entity SkyBox;
 };
 
-struct sec_params_t
-{
-  int     lightlevel;
-  int     LightColour;
-  int     Fade;
-  int     contents;
+struct sec_params_t {
+  int lightlevel;
+  int LightColour;
+  int Fade;
+  int contents;
 };
 
-struct sec_region_t
-{
+struct sec_region_t {
   //  Linked list of regions in bottom to top order
   sec_region_t *prev;
   sec_region_t *next;
@@ -715,10 +698,9 @@ struct sec_region_t
 //
 // For the links, nullptr means top or end of list.
 //
-struct msecnode_t
-{
+struct msecnode_t {
   sector_t *Sector; // a sector containing this object
-  Entity      Thing;  // this object
+  Entity Thing;  // this object
   msecnode_t *TPrev;  // prev msecnode_t for this thing
   msecnode_t *TNext;  // next msecnode_t for this thing
   msecnode_t *SPrev;  // prev msecnode_t for this sector
@@ -729,117 +711,116 @@ struct msecnode_t
 //  The SECTORS record, at runtime.
 //  Stores things/mobjs.
 //
-struct sector_t
-{
-  sec_plane_t   floor;
-  sec_plane_t   ceiling;
-  sec_params_t  params;
+struct sector_t {
+  sec_plane_t floor;
+  sec_plane_t ceiling;
+  sec_params_t params;
 
   sec_region_t *topregion;  //  Highest region
   sec_region_t *botregion;  //  Lowest region
 
-  sector_t  *deepref; // deep water hack
+  sector_t *deepref; // deep water hack
 
-  int       special;
-  int       tag;
-  int       HashFirst;
-  int       HashNext;
+  int special;
+  int tag;
+  int HashFirst;
+  int HashNext;
 
-  float     skyheight;
+  float skyheight;
 
   // stone, metal, heavy, etc...
-  int       seqType;
+  int seqType;
 
   // mapblock bounding box for height changes
-  int       blockbox[4];
+  int[4] blockbox;
 
   // origin for any sounds played by the sector
-  TVec      soundorg;
+  TVec soundorg;
 
   // if == validcount, already checked
-  int       validcount;
+  int validcount;
 
   // list of subsectors in sector
   // used to check if client can see this sector (it needs to be updated)
   void *__subsectors;
 
   //  List of things in sector.
-  Entity      ThingList;
+  Entity ThingList;
   msecnode_t *TouchingThingList;
 
-  int       linecount;
-  line_t **lines;  // [linecount] size
+  line_t*[] lines;  // [linecount] size
+  //line_t **lines;  // [linecount] size
+  //int linecount;
 
   //  Boom's fake floors.
   sector_t *heightsec;
   void *fakefloorinfo;    //  Info for rendering.
 
   //  Flags.
-  bool      bHasExtrafloors;  //  This sector has extrafloors.
-  bool      bExtrafloorSource;  //  This sector is a source of an extrafloor.
-  bool      bTransferSource;  //  Source of an heightsec or transfer light.
-  bool      bFakeFloorOnly;   //  When used as heightsec in R_FakeFlat, only copies floor
-  bool      bClipFakePlanes;  //  As a heightsec, clip planes to target sector's planes
-  bool      bNoFakeLight;   //  heightsec does not change lighting
-  bool      bIgnoreHeightSec; //  heightsec is only for triggering sector actions
-  bool      bUnderWater;    //  Sector is underwater
-  bool      bSilent;      //  Actors don't make noise in this sector.
-  bool      bNoFallingDamage; //  No falling damage in this sector.
-  bool      bFakeCeilingOnly;   //  When used as heightsec in R_FakeFlat, only copies ceiling
+  bool bHasExtrafloors;  //  This sector has extrafloors.
+  bool bExtrafloorSource;  //  This sector is a source of an extrafloor.
+  bool bTransferSource;  //  Source of an heightsec or transfer light.
+  bool bFakeFloorOnly;   //  When used as heightsec in R_FakeFlat, only copies floor
+  bool bClipFakePlanes;  //  As a heightsec, clip planes to target sector's planes
+  bool bNoFakeLight;   //  heightsec does not change lighting
+  bool bIgnoreHeightSec; //  heightsec is only for triggering sector actions
+  bool bUnderWater;    //  Sector is underwater
+  bool bSilent;      //  Actors don't make noise in this sector.
+  bool bNoFallingDamage; //  No falling damage in this sector.
+  bool bFakeCeilingOnly;   //  When used as heightsec in R_FakeFlat, only copies ceiling
 
   // 0 = untraversed, 1,2 = sndlines -1
-  int       soundtraversed;
+  int soundtraversed;
 
   // thing that made a sound (or null)
-  Entity      SoundTarget;
+  Entity SoundTarget;
 
   // Thinker for reversable actions
-  Thinker     FloorData;
-  Thinker     CeilingData;
-  Thinker     LightingData;
-  Thinker     AffectorData;
+  Thinker FloorData;
+  Thinker CeilingData;
+  Thinker LightingData;
+  Thinker AffectorData;
 
   //  Sector action triggers.
-  Entity      ActionList;
+  Entity ActionList;
 
-  int       Damage;
+  int Damage;
 
-  float     Friction;
-  float     MoveFactor;
-  float     Gravity;
+  float Friction;
+  float MoveFactor;
+  float Gravity;
 
-  int       Sky;
+  int Sky;
 
-  int       Zone;
+  int Zone;
 };
 
 //
 // LineSeg
 //
 
-struct seg_t : TPlane
-{
+struct seg_t : TPlane {
   TVec  *v1;
   TVec  *v2;
 
-  float   offset;
-  float   length;
+  float offset;
+  float length;
 
-  side_t    *sidedef;
-  line_t    *linedef;
+  side_t *sidedef;
+  line_t *linedef;
   seg_t *lsnext; // next seg in linedef
 
   // Sector references.
   // Could be retrieved from linedef, too.
   // backsector is nullptr for one sided lines
-  sector_t  *frontsector;
-  sector_t  *backsector;
+  sector_t *frontsector;
+  sector_t *backsector;
 
   seg_t *partner; // from glnodes
   subsector_t *front_sub; // front subsector (we need this for self-referencing deep water)
 
   //  Side of line (for light calculations)
-  int     side;
+  int side;
 
   void/*drawseg_t*/ *drawsegs;
   void/*decal_t*/ *decals;
@@ -848,38 +829,36 @@ struct seg_t : TPlane
 //
 //  Polyobj data
 //
-struct polyobj_t
-{
-  int       __numsegs;
+struct polyobj_t {
   void *__segs;
-  TVec      startSpot;
+  int __numsegs;
+  TVec startSpot;
   void *__originalPts;  // used as the base for the rotations
   void *__prevPts;    // use to restore the old point values
-  float     angle;
-  int       tag;      // reference tag assigned in HereticEd
-  int       __bbox[4];
-  int       validcount;
-  bool      bCrush;     // should the polyobj attempt to crush mobjs?
-  bool      bHurtOnTouch;
-  int       seqType;
+  float angle;
+  int tag;      // reference tag assigned in HereticEd
+  int[4] __bbox;
+  int validcount;
+  bool bCrush;     // should the polyobj attempt to crush mobjs?
+  bool bHurtOnTouch;
+  int seqType;
   subsector_t *__subsector;
-  Thinker     SpecialData;  // pointer a thinker, if the poly is moving
+  Thinker SpecialData;  // pointer a thinker, if the poly is moving
 };
 
 //
 // SubRegion
 //
 
-struct subregion_t
-{
+struct subregion_t {
   sec_region_t *secregion;
   subregion_t *next;
   sec_plane_t *floorplane;
   sec_plane_t *ceilplane;
-  void/*sec_surface_t*/*  floor;
-  void/*sec_surface_t*/*  ceil;
-  int       count;
-  void/*drawseg_t*/*    lines;
+  void/*sec_surface_t*/ *floor;
+  void/*sec_surface_t*/ *ceil;
+  int count;
+  void/*drawseg_t*/ *lines;
 };
 
 //
@@ -891,18 +870,18 @@ struct subsector_t
 {
   sector_t *sector;
   void *__seclink;
-  int     __numlines;
-  int     __firstline;
+  int __numlines;
+  int __firstline;
   polyobj_t *__poly;
 
   void *__parent;
-  int     __VisFrame;
-  int     __SkyVisFrame;
+  int __VisFrame;
+  int __SkyVisFrame;
 
   sector_t *__deepref;
 
-  int     __dlightbits;
-  int       __dlightframe;
+  int __dlightbits;
+  int __dlightframe;
 
   subregion_t *__regions;
 };
@@ -910,60 +889,56 @@ struct subsector_t
 //
 // Map thing definition with initialised fields for global use.
 //
-struct mthing_t
-{
-  int     tid;
-  float   x;
-  float   y;
-  float   height;
-  int     angle;
-  int     type;
-  int     options;
-  int     SkillClassFilter;
-  int     special;
-  int     arg1;
-  int     arg2;
-  int     arg3;
-  int     arg4;
-  int     arg5;
+struct mthing_t {
+  int tid;
+  float x;
+  float y;
+  float height;
+  int angle;
+  int type;
+  int options;
+  int SkillClassFilter;
+  int special;
+  int arg1;
+  int arg2;
+  int arg3;
+  int arg4;
+  int arg5;
 };
 
 //
 //  Strife conversation scripts
 //
 
-struct RogueConChoice
-{
-  int   GiveItem; //  Item given on success
-  int   NeedItem1;  //  Required item 1
-  int   NeedItem2;  //  Required item 2
-  int   NeedItem3;  //  Required item 3
-  int   NeedAmount1;//  Amount of item 1
-  int   NeedAmount2;//  Amount of item 2
-  int   NeedAmount3;//  Amount of item 3
-  string  Text;   //  Text of the answer
-  string  TextOK;   //  Message displayed on success
-  int   Next;   //  Dialog to go on success, negative values to go
-            // here immediately
-  int   Objectives; //  Mission objectives, LOGxxxx lump
-  string  TextNo;   //  Message displayed on failure (player doesn't
+struct RogueConChoice {
+  int GiveItem; //  Item given on success
+  int NeedItem1;  //  Required item 1
+  int NeedItem2;  //  Required item 2
+  int NeedItem3;  //  Required item 3
+  int NeedAmount1;//  Amount of item 1
+  int NeedAmount2;//  Amount of item 2
+  int NeedAmount3;//  Amount of item 3
+  string Text;   //  Text of the answer
+  string TextOK;   //  Message displayed on success
+  int Next;   //  Dialog to go on success, negative values to go here immediately
+  int Objectives; //  Mission objectives, LOGxxxx lump
+  string TextNo;   //  Message displayed on failure (player doesn't
             // have needed thing, it haves enough health/ammo,
             // item is not ready, quest is not completed)
 };
 
-struct RogueConSpeech
-{
-  int   SpeakerID;  //  Type of the object (MT_xxx)
-  int   DropItem; //  Item dropped when killed
-  int   CheckItem1; //  Item 1 to check for jump
-  int   CheckItem2; //  Item 2 to check for jump
-  int   CheckItem3; //  Item 3 to check for jump
-  int   JumpToConv; //  Jump to conversation if have certain item(s)
-  string  Name;   //  Name of the character
-  name  Voice;    //  Voice to play
-  name  BackPic;  //  Picture of the speaker
-  string  Text;   //  Message
-  RogueConChoice Choices[5];  //  Choices
+struct RogueConSpeech {
+  int SpeakerID;  //  Type of the object (MT_xxx)
+  int DropItem; //  Item dropped when killed
+  int CheckItem1; //  Item 1 to check for jump
+  int CheckItem2; //  Item 2 to check for jump
+  int CheckItem3; //  Item 3 to check for jump
+  int JumpToConv; //  Jump to conversation if have certain item(s)
+  string Name;   //  Name of the character
+  name Voice;    //  Voice to play
+  name BackPic;  //  Picture of the speaker
+  string Text;   //  Message
+  RogueConChoice[5] Choices;  //  Choices
 };
 
 //==========================================================================
@@ -972,13 +947,12 @@ struct RogueConSpeech
 //
 //==========================================================================
 
-struct opening_t
-{
-  float     top;
-  float     bottom;
-  float     range;
-  float     lowfloor;
-  float     highceiling;
+struct opening_t {
+  float top;
+  float bottom;
+  float range;
+  float lowfloor;
+  float highceiling;
   sec_plane_t *floor;
   sec_plane_t *ceiling;
   sec_plane_t *lowfloorplane;
@@ -986,98 +960,91 @@ struct opening_t
   opening_t *next;
 };
 
-struct intercept_t
-{
-  float     frac; // along trace line
-  bool      bIsALine;
-  bool      bIsABackSide; // not yet
-  Entity      Thing;
+struct intercept_t {
+  float frac; // along trace line
+  bool bIsALine;
+  bool bIsABackSide; // not yet
+  Entity Thing;
   line_t *line;
 };
 
-struct VAnimDoorDef
-{
-  int     Texture;
-  name    OpenSound;
-  name    CloseSound;
-  int     NumFrames;
-  int *Frames;
+struct VAnimDoorDef {
+  int Texture;
+  name OpenSound;
+  name CloseSound;
+  int[] Frames;
+  //int *Frames;
+  //int NumFrames;
 };
 
-struct VSplashInfo
-{
-  name    Name;
+struct VSplashInfo {
+  name Name;
 
-  class   SmallClass;
-  float   SmallClip;
-  name    SmallSound;
+  class SmallClass;
+  float SmallClip;
+  name SmallSound;
 
-  class   BaseClass;
-  class   ChunkClass;
-  float   ChunkXVelMul;
-  float   ChunkYVelMul;
-  float   ChunkZVelMul;
-  float   ChunkBaseZVel;
-  name    Sound;
-  bool    bNoAlert;
+  class BaseClass;
+  class ChunkClass;
+  float ChunkXVelMul;
+  float ChunkYVelMul;
+  float ChunkZVelMul;
+  float ChunkBaseZVel;
+  name Sound;
+  bool bNoAlert;
 };
 
-struct VTerrainInfo
-{
-  name    Name;
-  name    Splash;
-  bool    bLiquid;
-  bool    bAllowProtection;
-  float   FootClip;
-  int     DamageTimeMask;
-  int     DamageAmount;
-  name    DamageType;
-  float   Friction;
-  float   MoveFactor;
-  float   StepVolume;
-  float   WalkingStepTime;
-  float   RunningStepTime;
-  name    LeftStepSounds;
-  name    RightStepSounds;
+struct VTerrainInfo {
+  name Name;
+  name Splash;
+  bool bLiquid;
+  bool bAllowProtection;
+  float FootClip;
+  int DamageTimeMask;
+  int DamageAmount;
+  name DamageType;
+  float Friction;
+  float MoveFactor;
+  float StepVolume;
+  float WalkingStepTime;
+  float RunningStepTime;
+  name LeftStepSounds;
+  name RightStepSounds;
 };
 
-struct LockGroup
-{
-  array<class>    AnyKeyList;
+struct LockGroup {
+  array!class AnyKeyList;
 };
 
-struct LockDef
-{
-  array<LockGroup>  Locks;
-  string        Message;
-  string        RemoteMessage;
-  int         MapColour;
-  name        LockedSound;
+struct LockDef {
+  array!LockGroup Locks;
+  string Message;
+  string RemoteMessage;
+  int MapColour;
+  name LockedSound;
 };
 
-struct dlight_t
-{
-  TVec    origin;
-  float   radius;
-  float   die;    // stop lighting after this time
-  float   decay;    // drop this each second
-  float   minlight; // don't add when contributing less
-  int     key;
-  int     colour;
+struct dlight_t {
+  TVec origin;
+  float radius;
+  float die;    // stop lighting after this time
+  float decay;    // drop this each second
+  float minlight; // don't add when contributing less
+  int key;
+  int colour;
 };
 
-struct particle_t
-{
-  TVec    org;
-  int     colour;
-  float   Size;
+struct particle_t {
+  TVec org;
+  int colour;
+  float Size;
   particle_t *next;
-  TVec    vel;
-  TVec    accel;
-  float   die;
-  int     type;
-  float   ramp;
-  float   gravity;
+  TVec vel;
+  TVec accel;
+  float die;
+  int type;
+  float ramp;
+  float gravity;
 };
 
 defaultproperties

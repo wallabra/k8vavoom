@@ -51,7 +51,7 @@ final void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 
   //  Do a manual search, because tags hash is not yet set up.
   int i;
-  for (i = 0; i < XLevel.NumLines; i++)
+  for (i = 0; i < XLevel.Lines.length; i++)
   {
     if (XLevel.Lines[i].LineTag == TargetId)
     {

@@ -38,7 +38,7 @@ override name GetDefaultDoorSound(sector_t *Sector)
 
   //  Search the front top textures of 2-sided lines on the door sector
   // for a door sound to use.
-  for (i = 0; i < Sector->linecount; i++)
+  for (i = 0; i < Sector.lines.length; i++)
   {
     if (!Sector->lines[i]->backsector)
     {

@@ -52,51 +52,57 @@ struct StateCall
   byte    Result;
 };
 
-native readonly name      MapName;
+native readonly name MapName;
 
 //  Flags.
-native readonly private bool  bForServer; //  True if this level belongs to the server.
-native readonly bool      bExtended;  //  True if level was in Hexen format.
-native readonly private bool  bGLNodesV5; //  True if using version 5 GL nodes.
-native readonly bool      bTextMap; //  UDMF format map.
+native readonly private bool bForServer; // true if this level belongs to the server
+native readonly bool bExtended;  // true if level was in Hexen format
+native readonly private bool bGLNodesV5; // true if using version 5 GL nodes
+native readonly bool bTextMap; // UDMF format map
 
-//
 //  MAP related Lookup tables.
 //  Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
-//
 
-native readonly int       NumVertexes;
-native readonly TVec *Vertexes;
+native /*readonly*/ TVec[] Vertexes;
+//native readonly TVec *Vertexes;
+//native readonly int NumVertexes;
 
-native readonly int       NumSectors;
-native readonly sector_t *Sectors;
+native /*readonly*/ sector_t[] Sectors;
+//native readonly sector_t *Sectors;
+//native readonly int NumSectors;
 
-native readonly int       NumSides;
-native readonly side_t *Sides;
+native /*readonly*/ side_t[] Sides;
+//native readonly side_t *Sides;
+//native readonly int NumSides;
 
-native readonly int       NumLines;
-native readonly line_t *Lines;
+native /*readonly*/ line_t[] Lines;
+//native readonly line_t *Lines;
+//native readonly int NumLines;
 
-native readonly int   NumSegs;
-native readonly seg_t *Segs;
+native readonly seg_t[] Segs;
+//native readonly seg_t *Segs;
+//native readonly int NumSegs;
 
-native readonly int   NumSubsectors;
-native readonly subsector_t *Subsectors;
+native readonly subsector_t[] Subsectors;
+//native readonly subsector_t *Subsectors;
+//native readonly int NumSubsectors;
 
-native readonly private int   NumNodes;
-native readonly private void/*node_t*/* Nodes;
+native readonly private int/*node_t*/[] Nodes;
+//native readonly private void/*node_t*/* Nodes;
+//native readonly private int NumNodes;
 
 native readonly private void *VisData;
 native readonly private void *NoVis;
 
 // !!! Used only during level loading
-native readonly int       NumThings;
-native readonly mthing_t *Things;
+native /*readonly*/ mthing_t[] Things;
+//native readonly mthing_t *Things;
+//native readonly int NumThings;
 
 native readonly private void *BlockMapLump;
 native readonly private void *BlockMap;
-native readonly private int   BlockMapWidth;
-native readonly private int   BlockMapHeight;
+native readonly private int BlockMapWidth;
+native readonly private int BlockMapHeight;
 native readonly private float BlockMapOrgX;
 native readonly private float BlockMapOrgY;
 native readonly private void *BlockLinks;
@@ -105,28 +111,33 @@ native readonly private void *PolyBlockMap;
 native readonly private void *RejectMatrix;
 
 //  Strife conversations.
-native readonly int       NumGenericSpeeches;
-native readonly RogueConSpeech *GenericSpeeches;
+native /*readonly*/ RogueConSpeech[] GenericSpeeches;
+//native readonly RogueConSpeech *GenericSpeeches;
+//native readonly int NumGenericSpeeches;
 
-native readonly int       NumLevelSpeeches;
-native readonly RogueConSpeech *LevelSpeeches;
+native /*readonly*/ RogueConSpeech[] LevelSpeeches;
+//native readonly RogueConSpeech *LevelSpeeches;
+//native readonly int NumLevelSpeeches;
 
 //  List of all poly-objects on the level.
-native readonly private int   NumPolyObjs;
-native readonly private void *PolyObjs;
+native readonly private int[] PolyObjs;
+//native readonly private void *PolyObjs;
+//native readonly private int NumPolyObjs;
 
-native readonly private int   NumPolyAnchorPoints;
-native readonly private void *PolyAnchorPoints;
+native readonly private int[] PolyAnchorPoints;
+//native readonly private void *PolyAnchorPoints;
+//native readonly private int NumPolyAnchorPoints;
 
 //  Sound environments for sector zones.
-native readonly int       NumZones;
-native readonly int *Zones;
+native /*readonly*/ int[] Zones;
+//native readonly int *Zones;
+//native readonly int NumZones;
 
 native readonly private Thinker ThinkerHead;
 native readonly private Thinker ThinkerTail;
 
-native readonly LevelInfo   LevelInfo;
-native readonly WorldInfo   WorldInfo;
+native readonly LevelInfo LevelInfo;
+native readonly WorldInfo WorldInfo;
 
 native readonly private void *Acs;
 
@@ -138,26 +149,27 @@ native readonly private void *BaseSides;
 native readonly private void *BaseSectors;
 native readonly private void *BasePolyObjs;
 
-native readonly private int   NumStaticLights;
-native readonly private void *StaticLights;
+native readonly private int[] StaticLights;
+//native readonly private void *StaticLights;
+//native readonly private int NumStaticLights;
 
-native readonly private array<int>  ActiveSequences;
+native readonly private array<int> ActiveSequences;
 
-native readonly private array<int>  CameraTextures;
+native readonly private array<int> CameraTextures;
 
-native readonly float     Time;
-native readonly int       TicTime;
+native readonly float Time;
+native readonly int TicTime;
 
 native readonly private void *SectorList;
 native readonly private void *HeadSecNode;
 
-native readonly private array<int>  Translations;
-native readonly private array<int>  BodyQueueTransl;
+native readonly private array<void *> Translations;
+native readonly private array<void *> BodyQueueTransl;
 
-native readonly state     CallingState;
+native readonly state CallingState;
 native readonly StateCall *StateCall;
 
-native readonly private int   NextSoundOriginID;
+native readonly private int NextSoundOriginID;
 
 native readonly private void *__decanimlist;
 native readonly private int __decanimuid;

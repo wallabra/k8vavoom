@@ -354,7 +354,7 @@ final float FindLowestFloorSurrounding (sector_t *sec, TVec *v) {
 
   spot = *sec->lines[0]->v1;
   floor = GetPlanePointZ(&sec->floor, spot);
-  for (int i = 0; i < sec->linecount; ++i) {
+  for (int i = 0; i < sec.lines.length; ++i) {
     check = sec->lines[i];
     other = getNextSector(check, sec);
 
@@ -392,7 +392,7 @@ final float FindHighestFloorSurrounding (sector_t *sec, TVec *v) {
 
   spot = *sec->lines[0]->v1;
   floor = -99999.0;
-  for (int i = 0; i < sec->linecount; ++i) {
+  for (int i = 0; i < sec.lines.length; ++i) {
     check = sec->lines[i];
     other = getNextSector(check, sec);
 
@@ -437,7 +437,7 @@ final float FindNextHighestFloor (sector_t *sec, TVec *v) {
   spot = *sec->lines[0]->v1;
   height = GetPlanePointZ(&sec->floor, spot);
   heightdiff = 99999.0;
-  for (int i = 0; i < sec->linecount; ++i) {
+  for (int i = 0; i < sec.lines.length; ++i) {
     check = sec->lines[i];
     other = getNextSector(check, sec);
 
@@ -486,7 +486,7 @@ final float FindNextLowestFloor (sector_t *sec, TVec *v) {
   spot = *sec->lines[0]->v1;
   height = GetPlanePointZ(&sec->floor, spot);
   heightdiff = 99999.0;
-  for (int i = 0; i < sec->linecount; ++i) {
+  for (int i = 0; i < sec.lines.length; ++i) {
     check = sec->lines[i];
     other = getNextSector(check, sec);
 
@@ -535,7 +535,7 @@ final float FindNextLowestCeiling (sector_t *sec, TVec *v) {
   spot = *sec->lines[0]->v1;
   height = GetPlanePointZ(&sec->ceiling, spot);
   heightdiff = 99999.0;
-  for (int i = 0; i < sec->linecount; ++i) {
+  for (int i = 0; i < sec.lines.length; ++i) {
     check = sec->lines[i];
     other = getNextSector(check, sec);
 
@@ -587,7 +587,7 @@ final float FindNextHighestCeiling(sector_t *sec, TVec *v)
   spot = *sec->lines[0]->v1;
   height = GetPlanePointZ(&sec->ceiling, spot);
   heightdiff = 99999.0;
-  for (i = 0; i < sec->linecount; i++)
+  for (i = 0; i < sec.lines.length; i++)
   {
     check = sec->lines[i];
     other = getNextSector(check, sec);
@@ -636,7 +636,7 @@ final float FindLowestCeilingSurrounding(sector_t *sec, TVec *v)
 
   spot = *sec->lines[0]->v1;
   height = 99999.0;
-  for (i = 0; i < sec->linecount; i++)
+  for (i = 0; i < sec.lines.length; i++)
   {
     check = sec->lines[i];
     other = getNextSector(check, sec);
@@ -681,7 +681,7 @@ final float FindHighestCeilingSurrounding(sector_t *sec, TVec *v)
 
   spot = *sec->lines[0]->v1;
   height = -99999.0;
-  for (i = 0; i < sec->linecount; i++)
+  for (i = 0; i < sec.lines.length; i++)
   {
     check = sec->lines[i];
     other = getNextSector(check, sec);
@@ -725,7 +725,7 @@ final float FindShortestTextureAround(sector_t *sec)
   int     texnum;
 
   minsize = 99999.0;
-  for (i = 0; i < sec->linecount; i++)
+  for (i = 0; i < sec.lines.length; i++)
   {
     if (!(sec->lines[i]->flags & ML_TWOSIDED))
       continue;
@@ -770,7 +770,7 @@ final float FindShortestUpperAround(sector_t *sec)
   int     texnum;
 
   minsize = 99999.0;
-  for (i = 0; i < sec->linecount; i++)
+  for (i = 0; i < sec.lines.length; i++)
   {
     if ((sec->lines[i]->flags & ML_TWOSIDED))
       continue;
@@ -818,9 +818,9 @@ final sector_t *FindModelFloorSector(sector_t *sec, float height)
   line_t *check;
   sector_t *other;
 
-  //jff 5/23/98 don't disturb sec->linecount while searching
+  //jff 5/23/98 don't disturb sec.lines.length while searching
   // but allow early exit in old demos
-  for (i = 0; i < sec->linecount; i++)
+  for (i = 0; i < sec.lines.length; i++)
   {
     check = sec->lines[i];
     other = getNextSector(check, sec);
@@ -858,9 +858,9 @@ final sector_t *FindModelCeilingSector(sector_t *sec, float height)
   line_t *check;
   sector_t *other;
 
-  //jff 5/23/98 don't disturb sec->linecount while searching
+  //jff 5/23/98 don't disturb sec.lines.length while searching
   // but allow early exit in old demos
-  for (i = 0; i < sec->linecount; i++)
+  for (i = 0; i < sec.lines.length; i++)
   {
     check = sec->lines[i];
     other = getNextSector(check, sec);
@@ -888,7 +888,7 @@ final int FindMinSurroundingLight(sector_t *sector, int min)
   line_t *line;
   sector_t *check;
 
-  for (i = 0; i < sector->linecount; i++)
+  for (i = 0; i < sector.lines.length; i++)
   {
     line = sector->lines[i];
     check = getNextSector(line, sector);
@@ -926,7 +926,7 @@ final float FindHighestFloorPoint(sector_t *sec, TVec *v)
   }
 
   height = -99999.0;
-  for (i = 0; i < sec->linecount; i++)
+  for (i = 0; i < sec.lines.length; i++)
   {
     line = sec->lines[i];
     probeheight = GetPlanePointZ(&sec->floor, *line->v1);
@@ -971,7 +971,7 @@ final float FindLowestCeilingPoint(sector_t *sec, TVec *v)
   }
 
   height = 99999.0;
-  for (i = 0; i < sec->linecount; i++)
+  for (i = 0; i < sec.lines.length; i++)
   {
     line = sec->lines[i];
     probeheight = GetPlanePointZ(&sec->ceiling, *line->v1);

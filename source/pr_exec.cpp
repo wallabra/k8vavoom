@@ -963,9 +963,9 @@ func_loop:
       PR_VM_CASE(OPC_SliceElement)
         {
           int idx = sp[-1].i;
-          vint32 len = *(vint32 *)((vuint8 *)sp[-2].p+sizeof(void *));
-          if (idx < 0 || idx >= len) { cstDump(ip); Sys_Error("Slice index %d out of range (%d)", idx, len); }
-          if (!sp[-2].p) { cstDump(ip); Sys_Error("Trying to index empty slice"); }
+          vint32 len = (sp[-2].p && *(void **)sp[-2].p ? *(vint32 *)((vuint8 *)sp[-2].p+sizeof(void *)) : 0);
+          if (idx < 0 || idx >= len) { cstDump(ip); Sys_Error("Slice index %d is out of range (%d)", idx, len); }
+          //if (!sp[-2].p) { cstDump(ip); Sys_Error("Trying to index empty slice"); }
           sp[-2].p = (*(vuint8 **)sp[-2].p)+idx*ReadInt32(ip+1);
         }
         ip += 5;
@@ -985,7 +985,7 @@ func_loop:
 
       PR_VM_CASE(OPC_PushPointedSliceLen)
         ++ip;
-        sp[-1].i = (*(void **)sp[-1].p ? *(vint32 *)((vuint8 *)sp[-1].p+sizeof(void *)) : 0);
+        sp[-1].i = (sp[-1].p && *(void **)sp[-1].p ? *(vint32 *)((vuint8 *)sp[-1].p+sizeof(void *)) : 0);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VPushPointed)

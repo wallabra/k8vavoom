@@ -64,13 +64,13 @@ void SetSpeech(EntityEx Speaker, int SpeechNum)
   if (SpeechNum < 0)
   {
     SpeechNum = -SpeechNum;
-    if (SpeechNum > ClGame.GLevel.NumGenericSpeeches)
+    if (SpeechNum > ClGame.GLevel.GenericSpeeches.length)
       return;
     Speech = &ClGame.GLevel.GenericSpeeches[SpeechNum - 1];
   }
   else
   {
-    if (SpeechNum > ClGame.GLevel.NumLevelSpeeches)
+    if (SpeechNum > ClGame.GLevel.LevelSpeeches.length)
       return;
     Speech = &ClGame.GLevel.LevelSpeeches[SpeechNum - 1];
   }

@@ -1470,7 +1470,7 @@ void ParticleEffect(int count, int type1, int type2, TVec origin, float ornd,
 void DecalEffect (TVec org, name dectype, int side, /*line_t *li*/int lineidx) {
   if (!dectype || lineidx < 0 || !Level.XLevel) return; // just in case
   if (!GetCvarB('decals_enabled')) return;
-  if (lineidx >= Level.XLevel.NumLines) return;
+  if (lineidx >= Level.XLevel.Lines.length) return;
   Level.XLevel.AddDecal(org, dectype, side, &Level.XLevel.Lines[lineidx]);
 }
 

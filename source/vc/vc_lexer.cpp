@@ -1472,6 +1472,7 @@ EToken VLexer::skipTokenFrom (int &cpos, VStr *str=nullptr) const {
       }
       return TK_FloatLiteral;
     }
+    return TK_IntLiteral;
   }
 
   // identifier?

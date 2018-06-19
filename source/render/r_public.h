@@ -91,8 +91,8 @@ struct TSwitch
   vint16      Tex;
   vint16      PairIndex;
   vint16      Sound;
-  vint16      NumFrames;
   TSwitchFrame *Frames;
+  vint16      NumFrames;
   bool      Quest;
 
   TSwitch()
@@ -113,8 +113,8 @@ struct VAnimDoorDef
   vint32    Texture;
   VName   OpenSound;
   VName   CloseSound;
-  vint32    NumFrames;
   vint32 *Frames;
+  vint32 NumFrames;
 };
 
 class VRenderLevelPublic : public VInterface

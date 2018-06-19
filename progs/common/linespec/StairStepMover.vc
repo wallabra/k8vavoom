@@ -214,7 +214,7 @@ void ProcessStairSector()
   // Find next sector to raise
   // Find nearby sector with sector special equal to type
   //
-  for (i = 0; i < Sector->linecount; i++)
+  for (i = 0; i < Sector.lines.length; i++)
   {
     line = Sector->lines[i];
     if (!(line->flags & ML_TWOSIDED))

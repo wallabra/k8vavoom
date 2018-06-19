@@ -384,7 +384,7 @@ void EV_LightTurnOnPartway(int Tag, float Frac)
     bright = 0;
     min = sector->params.lightlevel;
 
-    for (j = 0; j < sector->linecount; j++)
+    for (j = 0; j < sector.lines.length; j++)
     {
       temp = Level.getNextSector(sector->lines[j], sector);
       if (temp)

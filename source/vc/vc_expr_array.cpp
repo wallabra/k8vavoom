@@ -207,7 +207,7 @@ VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression
   VExpression *rop = op->SyntaxCopy()->Resolve(ec);
   if (!rop) { delete val; delete this; return nullptr; }
 
-  if (rop->Type.Type != TYPE_String && !(rop->Type.Type == TYPE_Pointer && rop->Type.InnerType == TYPE_String)) {
+  if (rop->Type.Type != TYPE_String) {
     delete rop;
     return this; // go on with the normal assignment
   }
@@ -1062,8 +1062,9 @@ void VSliceGetPtr::DoSyntaxCopyTo (VExpression *e) {
 }
 
 VExpression *VSliceGetPtr::DoResolve (VEmitContext &ec) {
-  Type = VFieldType(TYPE_Int);
-  Type = Type.MakePointerType();
+  //fprintf(stderr, "setype: <%s>\n", *sexpr->Type.GetName());
+  Type = sexpr->Type.GetArrayInnerType();
+  //Type = Type.MakePointerType();
   return this;
 }
 

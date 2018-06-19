@@ -170,7 +170,7 @@ void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &T
       }
       break;
     case TYPE_SliceArray:
-      memcpy(Dst, Src, sizeof(vint32)+sizeof(void *));
+      memcpy(Dst, Src, (size_t)Type.GetSize());
       break;
   }
   unguardSlow;
@@ -294,6 +294,7 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
         Strm << *(int *)Data;
       }
       */
+      dprintf("Don't know how to serialise slice type `%s`\n", *Type.GetName());
       break;
   }
   unguard;
@@ -336,9 +337,6 @@ void VField::CleanField (vuint8 *Data, const VFieldType &Type) {
         InnerSize = IntType.GetSize();
         for (int i = 0; i < A.Num(); ++i) CleanField(A.Ptr()+i*InnerSize, IntType);
       }
-      break;
-    case TYPE_SliceArray:
-      memset(Data, 0, sizeof(vint32)+sizeof(void *));
       break;
   }
   unguard;
@@ -420,7 +418,7 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
       }
       return true;
     case TYPE_SliceArray:
-      return (memcmp(Val1, Val2, sizeof(vint32)+sizeof(void *)) == 0);
+      return (memcmp(Val1, Val2, Type.GetSize()) == 0);
   }
   Sys_Error("Bad field type");
   return false;

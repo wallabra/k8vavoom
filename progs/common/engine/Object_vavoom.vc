@@ -127,8 +127,9 @@ struct hostcache_t {
 
 struct slist_t {
   bool bInProgress;
-  int Count;
-  hostcache_t *Cache;
+  hostcache_t[] Cache;
+  //hostcache_t *Cache;
+  //int Count;
   string ReturnReason;
 };
 

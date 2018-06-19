@@ -312,7 +312,7 @@ int VFieldType::GetSize () const {
     case TYPE_Struct: return (Struct->Size+3)&~3;
     case TYPE_Vector: return sizeof(TVec);
     case TYPE_Array: return ArrayDim*GetArrayInnerType().GetSize();
-    case TYPE_SliceArray: return sizeof(vint32)+sizeof(void *); // ptr and length
+    case TYPE_SliceArray: return sizeof(void *)+sizeof(vint32); // ptr and length
     case TYPE_DynamicArray: return sizeof(VScriptArray);
   }
   return 0;
@@ -342,7 +342,7 @@ int VFieldType::GetAlignment () const {
     case TYPE_Struct: return Struct->Alignment;
     case TYPE_Vector: return sizeof(float);
     case TYPE_Array: return GetArrayInnerType().GetAlignment();
-    case TYPE_SliceArray: return sizeof(vint32); //???
+    case TYPE_SliceArray: return sizeof(void *); //???
     case TYPE_DynamicArray: return sizeof(void *);
   }
   return 0;

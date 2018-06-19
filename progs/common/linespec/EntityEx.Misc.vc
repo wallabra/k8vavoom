@@ -2646,13 +2646,13 @@ final bool CheckBossDeath()
 //
 //==========================================================================
 
-final int GetSpeechIndex(RogueConSpeech *List, int Count, int ID, int Num)
+final int GetSpeechIndex(RogueConSpeech[] List, int ID, int Num)
 {
   int Found;
   int i;
 
   Found = 0;
-  for (i = 0; i < Count; i++)
+  for (i = 0; i < List.length; i++)
   {
     if (List[i].SpeakerID == ID)
     {
@@ -2680,14 +2680,12 @@ final int GetSpeech()
   {
     CurrentSpeech = 1;
   }
-  Index = GetSpeechIndex(XLevel.LevelSpeeches, XLevel.NumLevelSpeeches,
-    ConversationID, CurrentSpeech);
+  Index = GetSpeechIndex(XLevel.LevelSpeeches, ConversationID, CurrentSpeech);
   if (Index)
   {
     return Index;
   }
-  return -GetSpeechIndex(XLevel.GenericSpeeches, XLevel.NumGenericSpeeches,
-    ConversationID, CurrentSpeech);
+  return -GetSpeechIndex(XLevel.GenericSpeeches, ConversationID, CurrentSpeech);
 }
 
 //==========================================================================

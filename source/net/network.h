@@ -99,8 +99,8 @@ struct hostcache_t {
 struct slist_t {
   enum { SF_InProgress = 0x01 };
   vuint32 Flags;
-  vint32 Count;
   hostcache_t *Cache;
+  vint32 Count;
   VStr ReturnReason;
 };
 

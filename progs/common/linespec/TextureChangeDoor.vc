@@ -53,7 +53,7 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 
   Line1 = InLine;
   Line2 = InLine;
-  for (i = 0; i < Sector->linecount; i++)
+  for (i = 0; i < Sector.lines.length; i++)
   {
     if (Sector->lines[i] == Line1)
     {
@@ -159,7 +159,7 @@ override void Tick(float deltaTime)
     if (Timer <= 0.0)
     {
       CurrentFrame++;
-      if (CurrentFrame >= Def->NumFrames)
+      if (CurrentFrame >= Def->Frames.length)
       {
         Line1->flags &= ~ML_BLOCKING;
         Line2->flags &= ~ML_BLOCKING;
