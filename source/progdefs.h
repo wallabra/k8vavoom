@@ -172,6 +172,7 @@ enum {
   DECLARE_OPC(SliceElement, TypeSize),
   DECLARE_OPC(OffsetPtr, Int),
   DECLARE_OPC(PushPointed, None),
+  DECLARE_OPC(PushPointedSlice, None),
   DECLARE_OPC(PushPointedSliceLen, None),
   DECLARE_OPC(VPushPointed, None),
   DECLARE_OPC(PushPointedPtr, None),

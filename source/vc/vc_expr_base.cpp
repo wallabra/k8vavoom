@@ -273,6 +273,9 @@ void VExpression::EmitPushPointedCode (VFieldType type, VEmitContext &ec) {
     case TYPE_Delegate:
       ec.AddStatement(OPC_PushPointedDelegate, Loc);
       break;
+    case TYPE_SliceArray:
+      ec.AddStatement(OPC_PushPointedSlice, Loc);
+      break;
     default:
       ParseError(Loc, "Bad push pointed");
       break;

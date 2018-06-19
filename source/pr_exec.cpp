@@ -983,9 +983,23 @@ func_loop:
         sp[-1].i = *(vint32 *)sp[-1].p;
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_PushPointedSlice)
+        if (sp[-1].p) {
+          vint32 len = (*(void **)sp[-1].p ? *(vint32 *)((vuint8 *)sp[-1].p+sizeof(void *)) : 0);
+          sp[-1].p = *(void **)sp[-1].p;
+          sp[0].i = (len > 0 ? len : 0);
+        } else {
+          sp[-1].p = nullptr;
+          sp[0].i = 0;
+        }
+        ip += 5;
+        ++sp;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_PushPointedSliceLen)
         ++ip;
         sp[-1].i = (sp[-1].p && *(void **)sp[-1].p ? *(vint32 *)((vuint8 *)sp[-1].p+sizeof(void *)) : 0);
+        if (sp[-1].i < 0) sp[-1].i = 0;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VPushPointed)
