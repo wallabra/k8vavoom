@@ -286,14 +286,6 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
       break;
     case TYPE_SliceArray:
       //FIXME:SLICE
-      /*
-      if (Type.InnerType == TYPE_Struct) {
-        Strm.SerialiseStructPointer(*(void **)Data, Type.Struct);
-      } else {
-        dprintf("Don't know how to serialise pointer type `%d`\n", *Type.GetName());
-        Strm << *(int *)Data;
-      }
-      */
       dprintf("Don't know how to serialise slice type `%s`\n", *Type.GetName());
       break;
   }

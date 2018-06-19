@@ -195,7 +195,7 @@ VFieldType VFieldType::GetPointerInnerType () const {
 //==========================================================================
 VFieldType VFieldType::MakeArrayType (int elcount, const TLocation &l) const {
   guard(VFieldType::MakeArrayType);
-  if (Type == TYPE_Array || Type == TYPE_DynamicArray || Type == TYPE_SliceArray) ParseError(l, "Can't have multi-dimensional arrays");
+  if (IsAnyArray()) ParseError(l, "Can't have multi-dimensional arrays");
   VFieldType array = *this;
   array.ArrayInnerType = Type;
   array.Type = TYPE_Array;
@@ -212,7 +212,7 @@ VFieldType VFieldType::MakeArrayType (int elcount, const TLocation &l) const {
 //==========================================================================
 VFieldType VFieldType::MakeDynamicArrayType (const TLocation &l) const {
   guard(VFieldType::MakeDynamicArrayType);
-  if (Type == TYPE_Array || Type == TYPE_DynamicArray || Type == TYPE_SliceArray) ParseError(l, "Can't have multi-dimensional arrays");
+  if (IsAnyArray()) ParseError(l, "Can't have multi-dimensional arrays");
   VFieldType array = *this;
   array.ArrayInnerType = Type;
   array.Type = TYPE_DynamicArray;
@@ -228,9 +228,7 @@ VFieldType VFieldType::MakeDynamicArrayType (const TLocation &l) const {
 //==========================================================================
 VFieldType VFieldType::MakeSliceType (bool aPtrFirst, const TLocation &l) const {
   guard(VFieldType::MakeSliceType);
-  if (Type == TYPE_Array || Type == TYPE_DynamicArray || Type == TYPE_SliceArray) ParseError(l, "Can't have multi-dimensional arrays");
-  //if (Type == TYPE_Struct) ParseError(l, "Can't have slices of structs yet");
-  //if (Type == TYPE_String) ParseError(l, "Can't have slices of strings yet");
+  if (IsAnyArray()) ParseError(l, "Can't have multi-dimensional slices or slices of arrays");
   VFieldType array = *this;
   array.ArrayInnerType = Type;
   array.Type = TYPE_SliceArray;
@@ -342,7 +340,7 @@ int VFieldType::GetAlignment () const {
     case TYPE_Struct: return Struct->Alignment;
     case TYPE_Vector: return sizeof(float);
     case TYPE_Array: return GetArrayInnerType().GetAlignment();
-    case TYPE_SliceArray: return sizeof(void *); //???
+    case TYPE_SliceArray: return (SlicePtrFirst ? sizeof(void *) : sizeof(vint32)); //???
     case TYPE_DynamicArray: return sizeof(void *);
   }
   return 0;
@@ -491,7 +489,7 @@ VStr VFieldType::GetName () const {
     case TYPE_DynamicArray:
       Ret = GetArrayInnerType().GetName();
       return (Ret.IndexOf('*') < 0 ? VStr("array!")+Ret : VStr("array!(")+Ret+")");
-    case TYPE_SliceArray: return VStr("[")+GetArrayInnerType().GetName()+":"+VStr(SlicePtrFirst)+"]";
+    case TYPE_SliceArray: return GetArrayInnerType().GetName()+(SlicePtrFirst ? "[]" : "[#]");
     case TYPE_Automatic: return "auto";
     case TYPE_Delegate: return "delegate";
     default: return VStr("unknown:")+VStr((vuint32)Type);

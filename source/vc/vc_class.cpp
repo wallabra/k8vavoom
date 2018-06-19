@@ -1313,7 +1313,6 @@ void VClass::InitReferences () {
         break;
       case TYPE_Array:
       case TYPE_DynamicArray:
-      //case TYPE_SliceArray:
         if (F->Type.ArrayInnerType == TYPE_Reference) {
           F->NextReference = ReferenceFields;
           ReferenceFields = F;
