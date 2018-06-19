@@ -48,7 +48,9 @@ void VDFMap::initialize () {
 void VDFMap::clear () {
   delete header;
 
+#ifndef DFMAP_FLAT_TEXTURE_ARRAY
   for (int f = 0; f < textureCount; ++f) delete textures[f];
+#endif
   delete[] textures;
 
   for (int f = 0; f < panelCount; ++f) delete panels[f];
@@ -198,6 +200,7 @@ bool VDFMap::loadFrom (VStream &strm) {
       case BT_Textures:
         if (textures) { delete[] buf; return false; }
         textureCount = rd.size/65;
+#ifndef DFMAP_FLAT_TEXTURE_ARRAY
         textures = new Texture *[textureCount+1];
         memset(textures, 0, sizeof(Texture *)*(textureCount+1));
         for (int f = 0; f < textureCount; ++f) {
@@ -207,6 +210,20 @@ bool VDFMap::loadFrom (VStream &strm) {
           textures[f] = it;
           if (rd.wasError) break;
         }
+#else
+        if (textureCount) {
+          textures = new Texture [textureCount+1];
+          memset(textures, 0, sizeof(Texture)*(textureCount+1));
+          for (int f = 0; f < textureCount; ++f) {
+            auto it = &textures[f];
+            it->path = rd.readStrFixed(64, true);
+            it->animated = (rd.readU8() ? 1 : 0);
+            if (rd.wasError) break;
+          }
+        } else {
+          textures = nullptr;
+        }
+#endif
         break;
       case BT_Panels:
         if (panels) { delete[] buf; return false; }

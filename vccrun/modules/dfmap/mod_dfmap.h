@@ -26,6 +26,8 @@
 #include "../../vcc_run.h"
 #include "dfmap.h"
 
+//#define DFMAP_FLAT_TEXTURE_ARRAY
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VDFMap : public VObject {
@@ -34,7 +36,11 @@ class VDFMap : public VObject {
 
 public:
   Header *header;
+#ifndef DFMAP_FLAT_TEXTURE_ARRAY
   Texture **textures;
+#else
+  Texture *textures;
+#endif
   int textureCount;
   Panel **panels;
   int panelCount;
