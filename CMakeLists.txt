@@ -282,6 +282,7 @@ if(WITH_OPENAL)
       #k8: my MXE builds are static. live with it.
       add_definitions(-DAL_LIBTYPE_STATIC=1)
     endif(WITH_STATIC_OPENAL)
+    set(MAIN_LIBS ${OPENAL_LIBRARY} winmm ${MAIN_LIBS})
   endif(WIN32)
 endif(WITH_OPENAL)
 
