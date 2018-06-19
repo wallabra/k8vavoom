@@ -838,6 +838,20 @@ func_loop:
         ip += 2;
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_SliceFieldValue)
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        {
+          vint32 ofs = ReadInt32(ip+1);
+          void *p = *(void **)((vuint8 *)sp[-1].p+ofs);
+          vint32 l = *(vint32 *)((vuint8 *)sp[-1].p+ofs+sizeof(void *));
+          if (!p) l = 0; // just in case
+          sp[-1].p = p;
+          sp[0].i = l;
+          ++sp;
+        }
+        ip += 5;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_ByteFieldValue)
         if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         sp[-1].i = *((vuint8 *)sp[-1].p+ReadInt32(ip+1));
@@ -946,9 +960,32 @@ func_loop:
         --sp;
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_SliceElement)
+        {
+          int idx = sp[-1].i;
+          vint32 len = *(vint32 *)((vuint8 *)sp[-2].p+sizeof(void *));
+          if (idx < 0 || idx >= len) { cstDump(ip); Sys_Error("Slice index %d out of range (%d)", idx, len); }
+          if (!sp[-2].p) { cstDump(ip); Sys_Error("Trying to index empty slice"); }
+          sp[-2].p = (*(vuint8 **)sp[-2].p)+idx*ReadInt32(ip+1);
+        }
+        ip += 5;
+        --sp;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_OffsetPtr)
+        if (!sp[-1].p) { cstDump(ip); Sys_Error("Cannot offset null pointer"); }
+        sp[-1].p = (vuint8 *)sp[-1].p+ReadInt32(ip+1);
+        ip += 5;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_PushPointed)
         ++ip;
         sp[-1].i = *(vint32 *)sp[-1].p;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_PushPointedSliceLen)
+        ++ip;
+        sp[-1].i = (*(void **)sp[-1].p ? *(vint32 *)((vuint8 *)sp[-1].p+sizeof(void *)) : 0);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VPushPointed)

@@ -135,7 +135,7 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
     return nullptr;
   }
 
-  if (op->Type.Type == TYPE_Array || op->Type.Type == TYPE_DynamicArray) {
+  if (op->Type.IsAnyArray()) {
     Flags = op->Flags;
     Type = op->Type.GetArrayInnerType();
     op->Flags &= ~FIELD_ReadOnly;
@@ -323,6 +323,8 @@ void VArrayElement::Emit (VEmitContext &ec) {
         ec.AddStatement(OPC_StrGetChar, Loc);
         return;
       }
+    } else if (op->Type.Type == TYPE_SliceArray) {
+      ec.AddStatement(OPC_SliceElement, RealType, Loc);
     } else {
       ec.AddStatement(OPC_ArrayElement, RealType, Loc);
     }
@@ -984,4 +986,88 @@ VExpression *VStringGetLength::DoResolve (VEmitContext &ec) {
 void VStringGetLength::Emit (VEmitContext &ec) {
   StrExpr->Emit(ec);
   ec.AddStatement(OPC_StrLength, Loc);
+}
+
+
+//==========================================================================
+//
+//  VSliceGetLength
+//
+//==========================================================================
+VSliceGetLength::VSliceGetLength (VExpression *asexpr, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+{
+  Flags = FIELD_ReadOnly;
+}
+
+VSliceGetLength::~VSliceGetLength () {
+  delete sexpr;
+}
+
+VExpression *VSliceGetLength::SyntaxCopy () {
+  auto res = new VSliceGetLength();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+void VSliceGetLength::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VSliceGetLength *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+}
+
+VExpression *VSliceGetLength::DoResolve (VEmitContext &ec) {
+  Type = VFieldType(TYPE_Int);
+  return this;
+}
+
+void VSliceGetLength::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  /*
+  ec.AddStatement(OPC_OffsetPtr, (int)sizeof(void *), Loc);
+  ec.AddStatement(OPC_PushPointed, Loc);
+  */
+  // use special instruction, so we can check for null ptr
+  ec.AddStatement(OPC_PushPointedSliceLen, Loc);
+}
+
+
+//==========================================================================
+//
+//  VSliceGetPtr
+//
+//==========================================================================
+VSliceGetPtr::VSliceGetPtr (VExpression *asexpr, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+{
+  Flags = FIELD_ReadOnly;
+}
+
+VSliceGetPtr::~VSliceGetPtr () {
+  delete sexpr;
+}
+
+VExpression *VSliceGetPtr::SyntaxCopy () {
+  auto res = new VSliceGetPtr();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+void VSliceGetPtr::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VSliceGetPtr *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+}
+
+VExpression *VSliceGetPtr::DoResolve (VEmitContext &ec) {
+  Type = VFieldType(TYPE_Int);
+  Type = Type.MakePointerType();
+  return this;
+}
+
+void VSliceGetPtr::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  ec.AddStatement(OPC_PushPointedPtr, Loc);
 }

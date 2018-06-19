@@ -70,6 +70,7 @@ void PR_WriteOne (const VFieldType &type) {
     case TYPE_Delegate: printf("<%s:%p:%p>", *type.GetName(), PR_PopPtr(), PR_PopPtr()); break;
     case TYPE_Struct: PR_PopPtr(); printf("<%s>", *type.Struct->Name); break;
     case TYPE_Array: PR_PopPtr(); printf("<%s>", *type.GetName()); break;
+    case TYPE_SliceArray: printf("<%s:%d>", *type.GetName(), PR_Pop()); PR_PopPtr(); break;
     case TYPE_DynamicArray:
       {
         VScriptArray *a = (VScriptArray *)PR_PopPtr();

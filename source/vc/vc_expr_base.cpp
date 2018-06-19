@@ -313,6 +313,7 @@ bool VExpression::IsAnyArrayType () const { return false; }
 bool VExpression::IsStaticArrayType () const { return false; }
 bool VExpression::IsDynamicArrayType () const { return false; }
 bool VExpression::IsDelegateType () const { return false; }
+bool VExpression::IsSliceType () const { return false; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

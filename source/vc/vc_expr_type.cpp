@@ -69,6 +69,8 @@ VTypeExpr *VTypeExpr::NewTypeExpr (VFieldType atype, const TLocation &aloc) {
       return new VFixedArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc), new VIntLiteral(atype.ArrayDim, aloc), aloc);
     case TYPE_DynamicArray:
       return new VDynamicArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc), aloc);
+    case TYPE_SliceArray:
+      return new VSliceType(NewTypeExpr(atype.GetArrayInnerType(), aloc), atype.SlicePtrFirst, aloc);
     case TYPE_Unknown:
     case TYPE_Automatic: // this is valid only for variable declarations, and will be resolved to actual type
       fprintf(stderr, "VC: VTypeExpr::NewTypeExpr: internal compiler error\n");
@@ -144,6 +146,7 @@ bool VTypeExpr::IsTypeExpr () const {
 }
 
 
+
 //==========================================================================
 //
 //  VTypeExprSimple::VTypeExprSimple
@@ -214,6 +217,7 @@ bool VTypeExprSimple::IsSimpleType () const {
 }
 
 
+
 //==========================================================================
 //
 //  VTypeExprClass::VTypeExprClass
@@ -267,6 +271,7 @@ bool VTypeExprClass::IsClassType () const {
 }
 
 
+
 //==========================================================================
 //
 //  VPointerType::VPointerType
@@ -312,6 +317,7 @@ VTypeExpr *VPointerType::ResolveAsType (VEmitContext &ec) {
 bool VPointerType::IsPointerType () const {
   return true;
 }
+
 
 
 //==========================================================================
@@ -416,6 +422,7 @@ bool VFixedArrayType::IsStaticArrayType () const {
 }
 
 
+
 //==========================================================================
 //
 //  VDynamicArrayType::VDynamicArrayType
@@ -478,6 +485,85 @@ bool VDynamicArrayType::IsAnyArrayType () const {
 bool VDynamicArrayType::IsDynamicArrayType () const {
   return true;
 }
+
+
+
+//==========================================================================
+//
+//  VSliceType::VSliceType
+//
+//==========================================================================
+VSliceType::VSliceType (VExpression *AExpr, bool aPtrFirst, const TLocation &ALoc)
+  : VTypeExpr(TYPE_Unknown, ALoc)
+  , ptrFirst(aPtrFirst)
+{
+  Expr = AExpr;
+}
+
+
+//==========================================================================
+//
+//  VSliceType::SyntaxCopy
+//
+//==========================================================================
+VExpression *VSliceType::SyntaxCopy () {
+  auto res = new VSliceType();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VSliceType::DoSyntaxCopyTo
+//
+//==========================================================================
+void VSliceType::DoSyntaxCopyTo (VExpression *e) {
+  VTypeExpr::DoSyntaxCopyTo(e);
+  auto res = (VSliceType *)e;
+  res->ptrFirst = ptrFirst;
+}
+
+
+//==========================================================================
+//
+//  VSliceType::ResolveAsType
+//
+//==========================================================================
+VTypeExpr *VSliceType::ResolveAsType (VEmitContext &ec) {
+  if (Expr) Expr = Expr->ResolveAsType(ec);
+  if (!Expr) { delete this; return nullptr; }
+
+  if (Expr->IsAnyArrayType()) {
+    ParseError(Expr->Loc, "Arrays of arrays are not allowed (yet)");
+    delete this;
+    return nullptr;
+  }
+
+  Type = Expr->Type.MakeSliceType(ptrFirst, Loc);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VSliceType::IsAnyArrayType
+//
+//==========================================================================
+bool VSliceType::IsAnyArrayType () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VSliceType::IsSliceType
+//
+//==========================================================================
+bool VSliceType::IsSliceType () const {
+  return true;
+}
+
 
 
 //==========================================================================
@@ -547,16 +633,6 @@ void VDelegateType::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VTypeExpr *VDelegateType::ResolveAsType (VEmitContext &ec) {
-  /*
-  if (Expr) Expr = Expr->ResolveAsType(ec);
-  if (!Expr) { delete this; return nullptr; }
-  */
-  /*
-  Type = Expr->Type;
-  //RealType = create delegate type here
-  */
-  //if (Expr) Expr = Expr->ResolveAsType(ec);
-  //if (!Expr) { delete this; return nullptr; }
   VMethod *Func = CreateDelegateMethod(ec.CurrentFunc);
   Func->Define();
   Type = VFieldType(TYPE_Delegate);

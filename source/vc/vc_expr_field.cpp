@@ -407,7 +407,40 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       delete this;
       return e->Resolve(ec);
     } else {
-      ParseError(Loc, "No field '%s' for string", *FieldName);
+      ParseError(Loc, "No field `%s` for string", *FieldName);
+      delete this;
+      return nullptr;
+    }
+  }
+
+  // slice properties
+  if (op->Type.Type == TYPE_SliceArray) {
+    if (FieldName == NAME_length) {
+      if (assType == AssType::AssTarget) {
+        ParseError(Loc, "Cannot change slice length");
+        delete this;
+        return nullptr;
+      }
+      op->Flags &= ~FIELD_ReadOnly;
+      op->RequestAddressOf();
+      VExpression *e = new VSliceGetLength(op, Loc);
+      op = nullptr;
+      delete this;
+      return e->Resolve(ec);
+    } else if (FieldName == "ptr") {
+      if (assType == AssType::AssTarget) {
+        ParseError(Loc, "Cannot change slice ptr");
+        delete this;
+        return nullptr;
+      }
+      op->Flags &= ~FIELD_ReadOnly;
+      op->RequestAddressOf();
+      VExpression *e = new VSliceGetPtr(op, Loc);
+      op = nullptr;
+      delete this;
+      return e->Resolve(ec);
+    } else {
+      ParseError(Loc, "No field `%s` in slice", *FieldName);
       delete this;
       return nullptr;
     }
@@ -641,6 +674,9 @@ void VFieldAccess::Emit (VEmitContext &ec) {
       case TYPE_Delegate:
         ec.AddStatement(OPC_Offset, field, Loc);
         ec.AddStatement(OPC_PushPointedDelegate, Loc);
+        break;
+      case TYPE_SliceArray:
+        ec.AddStatement(OPC_SliceFieldValue, field, Loc);
         break;
       default:
         ParseError(Loc, "Invalid operation on field of this type");

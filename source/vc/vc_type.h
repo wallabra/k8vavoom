@@ -42,6 +42,7 @@ enum EType {
   TYPE_Vector,
   TYPE_Array,
   TYPE_DynamicArray,
+  TYPE_SliceArray, // array consisting of pointer and length, with immutable length
   TYPE_Unknown,
   TYPE_Automatic, // this is valid only for variable declarations, and will be resolved to actual type
 
@@ -57,6 +58,7 @@ public:
   vuint8 ArrayInnerType; // for arrays
   vuint8 PtrLevel;
   vint32 ArrayDim;
+  bool SlicePtrFirst; // is slice pointer comes before length?
   union {
     vuint32 BitMask;
     VClass *Class; // class of the reference
@@ -76,6 +78,7 @@ public:
   VFieldType GetPointerInnerType () const;
   VFieldType MakeArrayType (int, const TLocation &) const;
   VFieldType MakeDynamicArrayType (const TLocation &) const;
+  VFieldType MakeSliceType (bool aPtrFirst, const TLocation &) const;
   VFieldType GetArrayInnerType () const;
   int GetStackSize () const;
   int GetSize () const;
@@ -83,6 +86,8 @@ public:
   void CheckPassable (const TLocation &) const;
   bool CheckMatch (const TLocation &loc, const VFieldType &, bool raiseError=true) const;
   VStr GetName () const;
+
+  bool IsAnyArray () const;
 
   bool IsReusingDisabled () const;
 };

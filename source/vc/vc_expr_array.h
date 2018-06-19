@@ -183,13 +183,58 @@ class VStringGetLength : public VExpression {
 public:
   VExpression *StrExpr;
 
-  VStringGetLength (VExpression *, const TLocation&);
+  // `AStrExpr` should be already resolved
+  VStringGetLength (VExpression *AStrExpr, const TLocation &ALoc);
   virtual ~VStringGetLength () override;
   virtual VExpression *SyntaxCopy () override;
-  virtual VExpression *DoResolve (VEmitContext&) override;
-  virtual void Emit (VEmitContext&) override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
 
 protected:
   VStringGetLength () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VSliceGetLength
+//
+//==========================================================================
+class VSliceGetLength : public VExpression {
+public:
+  VExpression *sexpr;
+
+  // `asexpr` should be already resolved
+  VSliceGetLength (VExpression *asexpr, const TLocation &aloc);
+  virtual ~VSliceGetLength () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VSliceGetLength () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VSliceGetPtr
+//
+//==========================================================================
+class VSliceGetPtr : public VExpression {
+public:
+  VExpression *sexpr;
+
+  // `asexpr` should be already resolved
+  VSliceGetPtr (VExpression *asexpr, const TLocation &aloc);
+  virtual ~VSliceGetPtr () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VSliceGetPtr () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };

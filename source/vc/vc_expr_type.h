@@ -153,6 +153,29 @@ protected:
 
 //==========================================================================
 //
+//  VSliceType
+//
+//==========================================================================
+class VSliceType : public VTypeExpr {
+public:
+  bool ptrFirst;
+
+public:
+  VSliceType (VExpression *AExpr, bool aPtrFirst, const TLocation &ALoc);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
+
+  virtual bool IsAnyArrayType () const override;
+  virtual bool IsSliceType () const override;
+
+protected:
+  VSliceType () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
 //  VDelegateType
 //
 //==========================================================================

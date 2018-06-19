@@ -1176,8 +1176,20 @@ VExpression *VParser::ParseType (bool allowDelegates) {
   auto Type = ParsePrimitiveType();
   if (!Type) return nullptr; // either error, or not a type
 
+  // skip `*`
+  int ofs = 0;
+  while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs;
+
+  // check for slice: `type[]`
+  if (Lex.peekTokenType(ofs) == TK_LBracket && Lex.peekTokenType(ofs+1) == TK_RBracket) {
+    Type = ParseTypePtrs(Type);
+    Lex.Expect(TK_LBracket);
+    Lex.Expect(TK_RBracket);
+    Type = new VSliceType(Type, true, stloc);
+  }
+
   if (allowDelegates) {
-    int ofs = 0;
+    ofs = 0;
     while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs;
     if (Lex.peekTokenType(ofs) == TK_Delegate) {
       // this must be `type delegate (args)`

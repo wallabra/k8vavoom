@@ -89,6 +89,7 @@ public:
   virtual bool IsAnyArrayType () const;
   virtual bool IsStaticArrayType () const;
   virtual bool IsDynamicArrayType () const;
+  virtual bool IsSliceType () const;
   virtual bool IsDelegateType () const;
 
   void *operator new (size_t size);

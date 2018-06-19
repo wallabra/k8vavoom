@@ -1376,6 +1376,7 @@ VExpression *VInvokeWrite::DoResolve (VEmitContext &ec) {
           case TYPE_DynamicArray:
             Args[i]->RequestAddressOf();
             break;
+          case TYPE_SliceArray:
           case TYPE_Void:
           case TYPE_Unknown:
           case TYPE_Automatic:

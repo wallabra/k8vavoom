@@ -105,6 +105,12 @@ VStream &operator << (VStream &Strm, VFieldType &T) {
   } else if (RealType == TYPE_DynamicArray) {
     Strm << T.ArrayInnerType;
     RealType = T.ArrayInnerType;
+  } else if (RealType == TYPE_SliceArray) {
+    Strm << T.ArrayInnerType;
+    RealType = T.ArrayInnerType;
+    vuint8 spf = (T.SlicePtrFirst ? 1 : 0);
+    Strm << spf;
+    if (Strm.IsLoading()) T.SlicePtrFirst = (spf != 0);
   }
   if (RealType == TYPE_Pointer) {
     Strm << T.InnerType << T.PtrLevel;
@@ -189,7 +195,7 @@ VFieldType VFieldType::GetPointerInnerType () const {
 //==========================================================================
 VFieldType VFieldType::MakeArrayType (int elcount, const TLocation &l) const {
   guard(VFieldType::MakeArrayType);
-  if (Type == TYPE_Array || Type == TYPE_DynamicArray) ParseError(l, "Can't have multi-dimensional arrays");
+  if (Type == TYPE_Array || Type == TYPE_DynamicArray || Type == TYPE_SliceArray) ParseError(l, "Can't have multi-dimensional arrays");
   VFieldType array = *this;
   array.ArrayInnerType = Type;
   array.Type = TYPE_Array;
@@ -206,10 +212,29 @@ VFieldType VFieldType::MakeArrayType (int elcount, const TLocation &l) const {
 //==========================================================================
 VFieldType VFieldType::MakeDynamicArrayType (const TLocation &l) const {
   guard(VFieldType::MakeDynamicArrayType);
-  if (Type == TYPE_Array || Type == TYPE_DynamicArray) ParseError(l, "Can't have multi-dimensional arrays");
+  if (Type == TYPE_Array || Type == TYPE_DynamicArray || Type == TYPE_SliceArray) ParseError(l, "Can't have multi-dimensional arrays");
   VFieldType array = *this;
   array.ArrayInnerType = Type;
   array.Type = TYPE_DynamicArray;
+  return array;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VFieldType::MakeSliceType
+//
+//==========================================================================
+VFieldType VFieldType::MakeSliceType (bool aPtrFirst, const TLocation &l) const {
+  guard(VFieldType::MakeSliceType);
+  if (Type == TYPE_Array || Type == TYPE_DynamicArray || Type == TYPE_SliceArray) ParseError(l, "Can't have multi-dimensional arrays");
+  //if (Type == TYPE_Struct) ParseError(l, "Can't have slices of structs yet");
+  //if (Type == TYPE_String) ParseError(l, "Can't have slices of strings yet");
+  VFieldType array = *this;
+  array.ArrayInnerType = Type;
+  array.Type = TYPE_SliceArray;
+  array.SlicePtrFirst = aPtrFirst;
   return array;
   unguard;
 }
@@ -222,7 +247,7 @@ VFieldType VFieldType::MakeDynamicArrayType (const TLocation &l) const {
 //==========================================================================
 VFieldType VFieldType::GetArrayInnerType () const {
   guard(VFieldType::GetArrayInnerType);
-  if (Type != TYPE_Array && Type != TYPE_DynamicArray) {
+  if (Type != TYPE_Array && Type != TYPE_DynamicArray && Type != TYPE_SliceArray) {
     FatalError("Not an array type");
     return *this;
   }
@@ -257,6 +282,7 @@ int VFieldType::GetStackSize () const {
     case TYPE_Struct: return Struct->StackSize*4;
     case TYPE_Vector: return 12;
     case TYPE_Array: return ArrayDim*GetArrayInnerType().GetStackSize();
+    case TYPE_SliceArray: return 8; // ptr and length
     case TYPE_DynamicArray: return 12;
   }
   return 0;
@@ -286,6 +312,7 @@ int VFieldType::GetSize () const {
     case TYPE_Struct: return (Struct->Size+3)&~3;
     case TYPE_Vector: return sizeof(TVec);
     case TYPE_Array: return ArrayDim*GetArrayInnerType().GetSize();
+    case TYPE_SliceArray: return sizeof(vint32)+sizeof(void *); // ptr and length
     case TYPE_DynamicArray: return sizeof(VScriptArray);
   }
   return 0;
@@ -315,6 +342,7 @@ int VFieldType::GetAlignment () const {
     case TYPE_Struct: return Struct->Alignment;
     case TYPE_Vector: return sizeof(float);
     case TYPE_Array: return GetArrayInnerType().GetAlignment();
+    case TYPE_SliceArray: return sizeof(vint32); //???
     case TYPE_DynamicArray: return sizeof(void *);
   }
   return 0;
@@ -331,8 +359,8 @@ int VFieldType::GetAlignment () const {
 //==========================================================================
 void VFieldType::CheckPassable (const TLocation &l) const {
   guardSlow(VFieldType::CheckPassable);
-  if (GetStackSize() != 4 && Type != TYPE_Vector && Type != TYPE_Delegate) {
-    ParseError(l, "Type %s is not passable", *GetName());
+  if (GetStackSize() != 4 && Type != TYPE_Vector && Type != TYPE_Delegate && Type != TYPE_SliceArray) {
+    ParseError(l, "Type `%s` is not passable", *GetName());
   }
   unguardSlow;
 }
@@ -463,11 +491,22 @@ VStr VFieldType::GetName () const {
     case TYPE_DynamicArray:
       Ret = GetArrayInnerType().GetName();
       return (Ret.IndexOf('*') < 0 ? VStr("array!")+Ret : VStr("array!(")+Ret+")");
+    case TYPE_SliceArray: return VStr("[")+GetArrayInnerType().GetName()+":"+VStr(SlicePtrFirst)+"]";
     case TYPE_Automatic: return "auto";
     case TYPE_Delegate: return "delegate";
     default: return VStr("unknown:")+VStr((vuint32)Type);
   }
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VFieldType::CanBeReplaced
+//
+//==========================================================================
+bool VFieldType::IsAnyArray () const {
+  return (Type == TYPE_Array || Type == TYPE_DynamicArray || Type == TYPE_SliceArray);
 }
 
 
@@ -493,6 +532,7 @@ bool VFieldType::IsReusingDisabled () const {
     case TYPE_Class: // classes has no dtors
     case TYPE_Delegate: // delegates need no dtor (yet)
     case TYPE_Reference: // reference is something like a pointer
+    case TYPE_SliceArray: // slices require no dtors as of yet
       return false;
     case TYPE_Struct: // struct members can require dtors
       if (!Struct) return true; // let's play safe

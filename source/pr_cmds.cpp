@@ -292,6 +292,7 @@ VStr PF_FormatString () {
             //case TYPE_Struct:
             case TYPE_Array:
             case TYPE_DynamicArray:
+            case TYPE_SliceArray:
             //case TYPE_Unknown:
             //case TYPE_Automatic:
               pbuf.putStr(ptypes[pi].GetName());
@@ -892,6 +893,7 @@ void PR_WriteOne (const VFieldType &type) {
     case TYPE_Delegate: snprintf(sptr, maxlen, "<%s:%p:%p>", *type.GetName(), PR_PopPtr(), PR_PopPtr()); break;
     case TYPE_Struct: PR_PopPtr(); snprintf(sptr, maxlen, "<%s>", *type.Struct->Name); break;
     case TYPE_Array: PR_PopPtr(); snprintf(sptr, maxlen, "<%s>", *type.GetName()); break;
+    case TYPE_SliceArray: snprintf(sptr, maxlen, "<%s:%d>", *type.GetName(), PR_Pop()); PR_PopPtr(); break;
     case TYPE_DynamicArray:
       {
         VScriptArray *a = (VScriptArray *)PR_PopPtr();

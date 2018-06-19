@@ -683,6 +683,7 @@ void VMethod::OptimiseInstructions () {
       case OPC_VFieldValue:
       case OPC_PtrFieldValue:
       case OPC_StrFieldValue:
+      case OPC_SliceFieldValue:
       case OPC_ByteFieldValue:
       case OPC_Bool0FieldValue:
       case OPC_Bool1FieldValue:
@@ -690,8 +691,11 @@ void VMethod::OptimiseInstructions () {
       case OPC_Bool3FieldValue:
         // make sure struct / class field offsets have been calculated
         Instructions[i].Member->Outer->PostLoad();
-             if (((VField *)Instructions[i].Member)->Ofs < 256) Instructions[i].Opcode += 2;
-        else if (((VField *)Instructions[i].Member)->Ofs <= MAX_VINT16) ++Instructions[i].Opcode;
+        // no short form for slices
+        if (Instructions[i].Opcode != OPC_SliceFieldValue) {
+               if (((VField *)Instructions[i].Member)->Ofs < 256) Instructions[i].Opcode += 2;
+          else if (((VField *)Instructions[i].Member)->Ofs <= MAX_VINT16) ++Instructions[i].Opcode;
+        }
         break;
       case OPC_ArrayElement:
              if (Instructions[i].TypeArg.GetSize() < 256) Instructions[i].Opcode = OPC_ArrayElementB;
@@ -803,7 +807,7 @@ VStream &operator << (VStream &Strm, FInstruction &Instr) {
     Opc = Instr.Opcode;
     Strm << Opc;
   }
-  Strm << Instr.loc;
+  //Strm << Instr.loc;
   switch (StatementInfo[Opc].Args) {
     case OPCARGS_None:
       break;

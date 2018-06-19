@@ -169,6 +169,9 @@ void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &T
         for (int i = 0; i < ASrc.Num(); ++i) CopyFieldValue(ASrc.Ptr()+i*InnerSize, ADst.Ptr()+i*InnerSize, IntType);
       }
       break;
+    case TYPE_SliceArray:
+      memcpy(Dst, Src, sizeof(vint32)+sizeof(void *));
+      break;
   }
   unguardSlow;
 }
@@ -208,7 +211,7 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
       if (Type.InnerType == TYPE_Struct) {
         Strm.SerialiseStructPointer(*(void **)Data, Type.Struct);
       } else {
-        dprintf("Don't know how to serialise pointer type %d\n", Type.InnerType);
+        dprintf("Don't know how to serialise pointer type `%s`\n", *Type.GetName());
         Strm << *(int *)Data;
       }
       break;
@@ -281,6 +284,17 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
         for (int i = 0; i < A.Num(); ++i) SerialiseFieldValue(Strm, A.Ptr()+i*InnerSize, IntType);
       }
       break;
+    case TYPE_SliceArray:
+      //FIXME:SLICE
+      /*
+      if (Type.InnerType == TYPE_Struct) {
+        Strm.SerialiseStructPointer(*(void **)Data, Type.Struct);
+      } else {
+        dprintf("Don't know how to serialise pointer type `%d`\n", *Type.GetName());
+        Strm << *(int *)Data;
+      }
+      */
+      break;
   }
   unguard;
 }
@@ -322,6 +336,9 @@ void VField::CleanField (vuint8 *Data, const VFieldType &Type) {
         InnerSize = IntType.GetSize();
         for (int i = 0; i < A.Num(); ++i) CleanField(A.Ptr()+i*InnerSize, IntType);
       }
+      break;
+    case TYPE_SliceArray:
+      memset(Data, 0, sizeof(vint32)+sizeof(void *));
       break;
   }
   unguard;
@@ -402,6 +419,8 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
         }
       }
       return true;
+    case TYPE_SliceArray:
+      return (memcmp(Val1, Val2, sizeof(vint32)+sizeof(void *)) == 0);
   }
   Sys_Error("Bad field type");
   return false;
@@ -490,6 +509,7 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMap *Map, vuint8 *Data
         if (!NetSerialiseValue(Strm, Map, Data+i*InnerSize, IntType)) Ret = false;
       }
       break;
+    //TODO: dynarrays, slices?
     default:
       Sys_Error("Replication of field type %d is not supported", Type.Type);
   }

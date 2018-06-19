@@ -1229,7 +1229,7 @@ void VClass::CalcFieldOffsets () {
       fi->Type.BitMask = bit_mask;
       fi->Ofs = PrevField->Ofs;
     } else {
-      if (fi->Type.Type == TYPE_Struct || (fi->Type.Type == TYPE_Array && fi->Type.ArrayInnerType == TYPE_Struct)) {
+      if (fi->Type.Type == TYPE_Struct || (fi->Type.IsAnyArray() && fi->Type.ArrayInnerType == TYPE_Struct)) {
         // make sure struct size has been calculated
         fi->Type.Struct->PostLoad();
       }
@@ -1313,6 +1313,7 @@ void VClass::InitReferences () {
         break;
       case TYPE_Array:
       case TYPE_DynamicArray:
+      case TYPE_SliceArray:
         if (F->Type.ArrayInnerType == TYPE_Reference) {
           F->NextReference = ReferenceFields;
           ReferenceFields = F;
