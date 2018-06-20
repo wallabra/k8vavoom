@@ -61,15 +61,15 @@ protected:
 
 //==========================================================================
 //
-//  VStringSlice
+//  VSliceOp
 //
 //==========================================================================
-class VStringSlice : public VArrayElement {
+class VSliceOp : public VArrayElement {
 public:
   VExpression *hi;
 
-  VStringSlice (VExpression *aop, VExpression *alo, VExpression *ahi, const TLocation &aloc);
-  virtual ~VStringSlice () override;
+  VSliceOp (VExpression *aop, VExpression *alo, VExpression *ahi, const TLocation &aloc);
+  virtual ~VSliceOp () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &ec) override;
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &ec) override;
@@ -78,7 +78,7 @@ public:
   virtual void Emit (VEmitContext &ec) override;
 
 protected:
-  VStringSlice () {}
+  VSliceOp () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 

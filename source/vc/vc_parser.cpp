@@ -433,7 +433,7 @@ VExpression *VParser::ParseExpressionPriority1 () {
       if (Lex.Check(TK_DotDot)) {
         VExpression *hi = ParseExpressionPriority13();
         Lex.Expect(TK_RBracket, ERR_BAD_ARRAY);
-        op = new VStringSlice(op, ind, hi, l);
+        op = new VSliceOp(op, ind, hi, l);
       } else {
         Lex.Expect(TK_RBracket, ERR_BAD_ARRAY);
         op = new VArrayElement(op, ind, l);

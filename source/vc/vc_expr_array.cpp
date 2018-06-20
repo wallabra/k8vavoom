@@ -335,10 +335,10 @@ void VArrayElement::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VStringSlice::VStringSlice
+//  VSliceOp::VSliceOp
 //
 //==========================================================================
-VStringSlice::VStringSlice (VExpression *aop, VExpression *alo, VExpression *ahi, const TLocation &aloc)
+VSliceOp::VSliceOp (VExpression *aop, VExpression *alo, VExpression *ahi, const TLocation &aloc)
   : VArrayElement(aop, alo, aloc)
   , hi(ahi)
 {
@@ -348,21 +348,21 @@ VStringSlice::VStringSlice (VExpression *aop, VExpression *alo, VExpression *ahi
 
 //==========================================================================
 //
-//  VStringSlice::~VStringSlice
+//  VSliceOp::~VSliceOp
 //
 //==========================================================================
-VStringSlice::~VStringSlice () {
+VSliceOp::~VSliceOp () {
   delete hi;
 }
 
 
 //==========================================================================
 //
-//  VStringSlice::SyntaxCopy
+//  VSliceOp::SyntaxCopy
 //
 //==========================================================================
-VExpression *VStringSlice::SyntaxCopy () {
-  auto res = new VStringSlice();
+VExpression *VSliceOp::SyntaxCopy () {
+  auto res = new VSliceOp();
   DoSyntaxCopyTo(res);
   return res;
 }
@@ -370,22 +370,22 @@ VExpression *VStringSlice::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VStringSlice::DoSyntaxCopyTo
+//  VSliceOp::DoSyntaxCopyTo
 //
 //==========================================================================
-void VStringSlice::DoSyntaxCopyTo (VExpression *e) {
+void VSliceOp::DoSyntaxCopyTo (VExpression *e) {
   VArrayElement::DoSyntaxCopyTo(e);
-  auto res = (VStringSlice *)e;
+  auto res = (VSliceOp *)e;
   res->hi = (hi ? hi->SyntaxCopy() : nullptr);
 }
 
 
 //==========================================================================
 //
-//  VStringSlice::DoResolve
+//  VSliceOp::DoResolve
 //
 //==========================================================================
-VExpression *VStringSlice::DoResolve (VEmitContext &ec) {
+VExpression *VSliceOp::DoResolve (VEmitContext &ec) {
   if (!op || !ind || !hi) {
     delete this;
     return nullptr;
@@ -442,10 +442,10 @@ VExpression *VStringSlice::DoResolve (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VStringSlice::ResolveAssignmentTarget
+//  VSliceOp::ResolveAssignmentTarget
 //
 //==========================================================================
-VExpression *VStringSlice::ResolveAssignmentTarget (VEmitContext &ec) {
+VExpression *VSliceOp::ResolveAssignmentTarget (VEmitContext &ec) {
   ParseError(Loc, "Cannot assign to string slice (yet)");
   return nullptr;
 }
@@ -456,7 +456,7 @@ VExpression *VStringSlice::ResolveAssignmentTarget (VEmitContext &ec) {
 //  VArrayElement::ResolveCompleteAssign
 //
 //==========================================================================
-VExpression *VStringSlice::ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) {
+VExpression *VSliceOp::ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) {
   resolved = true; // anyway
 
   VExpression *rop = op->SyntaxCopy()->Resolve(ec);
@@ -524,20 +524,20 @@ VExpression *VStringSlice::ResolveCompleteAssign (VEmitContext &ec, VExpression 
 
 //==========================================================================
 //
-//  VStringSlice::RequestAddressOf
+//  VSliceOp::RequestAddressOf
 //
 //==========================================================================
-void VStringSlice::RequestAddressOf () {
+void VSliceOp::RequestAddressOf () {
   ParseError(Loc, "Cannot get string slice address");
 }
 
 
 //==========================================================================
 //
-//  VStringSlice::Emit
+//  VSliceOp::Emit
 //
 //==========================================================================
-void VStringSlice::Emit (VEmitContext &ec) {
+void VSliceOp::Emit (VEmitContext &ec) {
   if (!op || !ind || !hi) return;
   op->Emit(ec);
   ind->Emit(ec);
