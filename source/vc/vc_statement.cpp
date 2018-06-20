@@ -1632,11 +1632,112 @@ void VLocalVarStatement::DoEmit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VDeleteStatement::VDeleteStatement
+//
+//==========================================================================
+VDeleteStatement::VDeleteStatement (VExpression *avar, const TLocation &aloc)
+  : VStatement(aloc)
+  , delexpr(nullptr)
+  , assexpr(nullptr)
+  , checkexpr(nullptr)
+  , var(avar)
+{
+}
+
+
+//==========================================================================
+//
+//  VDeleteStatement::~VDeleteStatement
+//
+//==========================================================================
+VDeleteStatement::~VDeleteStatement () {
+  delete delexpr; delexpr = nullptr;
+  delete assexpr; assexpr = nullptr;
+  delete checkexpr; checkexpr = nullptr;
+  delete var; var = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VDeleteStatement::SyntaxCopy
+//
+//==========================================================================
+VStatement *VDeleteStatement::SyntaxCopy () {
+  auto res = new VDeleteStatement();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDeleteStatement::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDeleteStatement::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VDeleteStatement *)e;
+  res->var = (var ? var->SyntaxCopy() : nullptr);
+  // no need to copy private fields
+}
+
+
+//==========================================================================
+//
+//  VDeleteStatement::Resolve
+//
+//==========================================================================
+bool VDeleteStatement::Resolve (VEmitContext &ec) {
+  if (!var) return false;
+
+  // build check expression
+  checkexpr = var->SyntaxCopy()->ResolveBoolean(ec);
+  if (!checkexpr) return false;
+
+  // build delete expression
+  delexpr = new VDotInvocation(var->SyntaxCopy(), VName("Destroy"), var->Loc, 0, nullptr);
+  delexpr = new VDropResult(delexpr);
+  delexpr = delexpr->Resolve(ec);
+  if (!delexpr) return false;
+
+  // build clear expression
+  assexpr = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), new VNoneLiteral(var->Loc), var->Loc);
+  assexpr = new VDropResult(assexpr);
+  assexpr = assexpr->Resolve(ec);
+  if (!assexpr) return false;
+
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VDeleteStatement::DoEmit
+//
+//==========================================================================
+void VDeleteStatement::DoEmit (VEmitContext &ec) {
+  if (!checkexpr || !delexpr || !assexpr) return;
+
+  // emit check
+  VLabel skipLabel = ec.DefineLabel();
+  checkexpr->EmitBranchable(ec, skipLabel, false);
+
+  // emit delete and clear
+  delexpr->Emit(ec);
+  assexpr->Emit(ec);
+
+  // done
+  ec.MarkLabel(skipLabel);
+}
+
+
+//==========================================================================
+//
 //  VCompound::VCompound
 //
 //==========================================================================
-VCompound::VCompound (const TLocation &ALoc) : VStatement(ALoc)
-{
+VCompound::VCompound (const TLocation &ALoc) : VStatement(ALoc) {
 }
 
 

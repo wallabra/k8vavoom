@@ -1083,6 +1083,9 @@ VStatement *VParser::ParseStatement () {
         } while (!Lex.Check(TK_RBrace));
         return Switch;
       }
+    case TK_Delete:
+      Lex.NextToken();
+      return new VDeleteStatement(ParseExpression(false), l); // no assignments
     case TK_LBrace:
       Lex.NextToken();
       return ParseCompoundStatement();

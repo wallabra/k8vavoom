@@ -53,6 +53,7 @@ const char *VLexer::TokenNames[] = {
   "default",
   "defaultproperties",
   "delegate",
+  "delete",
   "do",
   "else",
   "enum",
@@ -1036,6 +1037,7 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
       else if (checkStrTk("default")) Token = TK_Default;
       else if (checkStrTk("defaultproperties")) Token = TK_DefaultProperties;
       else if (checkStrTk("delegate")) Token = TK_Delegate;
+      else if (checkStrTk("delete")) Token = TK_Delete;
       else if (checkStrTk("do")) Token = TK_Do;
       break;
     case 'e':

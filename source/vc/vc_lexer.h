@@ -56,6 +56,7 @@ enum EToken {
   TK_Default,
   TK_DefaultProperties,
   TK_Delegate,
+  TK_Delete,
   TK_Do,
   TK_Else,
   TK_Enum,

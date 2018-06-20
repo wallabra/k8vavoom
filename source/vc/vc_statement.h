@@ -369,6 +369,29 @@ protected:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VDeleteStatement : public VStatement {
+private:
+  // resolved expressions
+  VExpression *delexpr; // var.Destroy()
+  VExpression *assexpr; // var = none;
+  VExpression *checkexpr; // bool(var)
+
+public:
+  VExpression *var;
+
+  VDeleteStatement (VExpression *avar, const TLocation &aloc);
+  virtual ~VDeleteStatement () override;
+  virtual VStatement *SyntaxCopy () override;
+  virtual bool Resolve (VEmitContext &ec) override;
+  virtual void DoEmit (VEmitContext &ec) override;
+
+protected:
+  VDeleteStatement () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VCompound : public VStatement {
 public:
   TArray<VStatement *> Statements;
