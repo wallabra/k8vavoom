@@ -225,7 +225,7 @@ void VObject::Register () {
 //
 //==========================================================================
 bool VObject::ConditionalDestroy () {
-  if (!(ObjectFlags & _OF_Destroyed)) {
+  if (!(ObjectFlags&_OF_Destroyed)) {
     ++GNumDeleted;
     SetFlags(_OF_Destroyed);
     Destroy();

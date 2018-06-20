@@ -1359,7 +1359,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
                               VClass *InClass, vint32 Modifiers, bool Iterator)
 {
   guard(VParser::ParseMethodDef);
-  if (InClass->FindMethod(MName, false)) ParseError(MethodLoc, "Redeclared method %s.%s", *InClass->Name, *MName);
+  if (InClass->FindMethod(MName, false)) ParseError(MethodLoc, "Redeclared method `%s.%s`", *InClass->Name, *MName);
 
   VMethod *Func = new VMethod(MName, InClass, MethodLoc);
   Func->Flags = TModifiers::MethodAttr(TModifiers::Check(Modifiers,
@@ -1370,6 +1370,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
   if (Iterator) Func->Flags |= FUNC_Iterator;
   InClass->AddMethod(Func);
 
+  // parse params
   do {
     if (Lex.Check(TK_VarArgs)) {
       Func->Flags |= FUNC_VarArgs;
