@@ -84,7 +84,7 @@ protected override void selfPaintAt (int x0, int y0) {
   Video.fontName = fontName;
   int th = Video.textHeight("W");
   int y = y0+1-mSkipY;
-  for (int f = 0; f < mItems.length; ++f) {
+  foreach (int f; 0..mItems.length) {
     if (f == mCurrItem) {
       Video.color = (focused ? mFcSelBackColor : mSelBackColor);
       Video.fillRect(x0+1, y, mWidth, th-1);

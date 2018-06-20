@@ -37,6 +37,14 @@ final void doOnAction () { if (onAction) onAction(self); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+override void Destroy () {
+  foreach (int f; 0..mChildren.length) delete mChildren[f];
+  mChildren.length = 0; // just in case
+  ::Destroy();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 void onFocus () {}
 void onBlur () {}
 
@@ -44,15 +52,15 @@ void onBlur () {}
 // ////////////////////////////////////////////////////////////////////////// //
 protected final int findChildIdx (Widget w) {
   if (!w) return -1;
-  for (int f = mChildren.length-1; f >= 0; --f) if (mChildren[f] == w) return f;
+  foreach (int f; 0..mChildren.length; reverse) if (mChildren[f] == w) return f;
   return -1;
 }
 
 protected final void resetDirty () {
   mDirty = false;
-  for (int f = mChildren.length-1; f >= 0; --f) {
+  foreach (int f; 0..mChildren.length; reverse) {
     Widget w = mChildren[f];
-    w.resetDirty();
+    if (w) w.resetDirty();
   }
 }
 
@@ -61,7 +69,7 @@ protected final void resetDirty () {
 Widget findById (name id) {
   if (!id) return none;
   if (id == mId) return self;
-  for (int f = mChildren.length-1; f >= 0; --f) {
+  foreach (int f; 0..mChildren.length; reverse) {
     auto res = mChildren[f].findById(id);
     if (res) return res;
   }
@@ -81,7 +89,7 @@ Widget getRoot () {
 
 bool isFocusable () {
   if (mFocusable) return true;
-  for (int f = mChildren.length-1; f >= 0; --f) if (mChildren[f].isFocusable) return true;
+  foreach (int f; 0..mChildren.length; reverse) if (mChildren[f].isFocusable) return true;
   return false;
 }
 
@@ -114,7 +122,7 @@ void focusSelf () {
   if (root.mFocused == self) return;
   if (!isFocusable) return;
   if (mFocusable) {
-    for (int f = 0; f < mChildren.length; ++f) {
+    foreach (int f; 0..mChildren.length) {
       Widget w = mChildren[f].findFocusFirst();
       if (w && w.mFocusable) { w.focusSelf(); return; }
     }
@@ -132,7 +140,7 @@ void focusSelf () {
 // ////////////////////////////////////////////////////////////////////////// //
 Widget findFocusFirst () {
   Widget fw = none;
-  for (int f = 0; f < mChildren.length; ++f) {
+  foreach (int f; 0..mChildren.length) {
     Widget w = mChildren[f].findFocusFirst();
     if (w) return w;
     if (!fw && mChildren[f].mFocusable) fw = w;
@@ -145,7 +153,7 @@ Widget findFocusFirst () {
 
 Widget findFocusLast () {
   Widget lw = none;
-  for (int f = mChildren.length-1; f >= 0; --f) {
+  foreach (int f; 0..mChildren.length; reverse) {
     Widget w = mChildren[f].findFocusLast();
     if (w) return w;
     if (!lw && mChildren[f].mFocusable) lw = w;
@@ -214,7 +222,7 @@ Widget findFocusNextHereAndDown () {
 // coords are local
 final Widget findFocusableAt (int x, int y) {
   if (x < 0 || y < 0 || x >= mWidth || y >= mHeight) return none;
-  for (int f = mChildren.length-1; f >= 0; --f) {
+  foreach (int f; 0..mChildren.length; reverse) {
     Widget w = mChildren[f];
     if (x >= w.mX && y >= w.mY && x < w.mX+w.mWidth && y < w.mY+w.mHeight) {
       if (!w.isFocusable) return none;
@@ -229,7 +237,7 @@ final Widget findFocusableAt (int x, int y) {
 // coords are local
 final Widget findControlAt (int x, int y) {
   if (x < 0 || y < 0 || x >= mWidth || y >= mHeight) return none;
-  for (int f = mChildren.length-1; f >= 0; --f) {
+  foreach (int f; 0..mChildren.length; reverse) {
     Widget w = mChildren[f];
     if (x >= w.mX && y >= w.mY && x < w.mX+w.mWidth && y < w.mY+w.mHeight) {
       return w.findControlAt(x-w.mX, y-w.mY);
@@ -299,10 +307,9 @@ void paintAt (int x0, int y0) {
   if (Video.scissorCombine(x0, y0, mWidth, mHeight)) {
     prePaintAt(x0, y0);
     selfPaintAt(x0, y0);
-    int mlen = mChildren.length;
-    for (int f = 0; f < mlen; ++f) {
+    foreach (int f; 0..mChildren.length) {
       Widget w = mChildren[f];
-      w.paintAt(x0+w.mX, y0+w.mY);
+      if (w) w.paintAt(x0+w.mX, y0+w.mY);
     }
     postPaintAt(x0, y0);
   } else {
@@ -420,7 +427,7 @@ bool onEvent (ref event_t evt) {
 protected final void calcFixMinDims (out int w, out int h) {
   w = 0;
   h = 0;
-  for (int f = 0; f < mChildren.length; ++f) {
+  foreach (int f; 0..mChildren.length) {
     Widget c = mChildren[f];
     int cw, ch;
     c.calcFixMinDims(cw, ch);
@@ -451,7 +458,7 @@ protected final void layoutInternal () {
   // calc children size and flex numbers
   int w = 0, h = 0;
   int flexTotal = 0;
-  for (int f = 0; f < mlen; ++f) {
+  foreach (int f; 0..mlen) {
     Widget c = mChildren[f];
     int cw = max(0, c.mWidth), ch = max(0, c.mHeight);
     if (mHoriz) {
@@ -477,7 +484,7 @@ protected final void layoutInternal () {
   while (flexTotal && spaceLeft > 0) {
     //writeln(" flexpass: spaceLeft=", spaceLeft);
     int origSpace = spaceLeft;
-    for (int f = 0; f < mlen; ++f) {
+    foreach (int f; 0..mlen) {
       Widget c = mChildren[f];
       if (c.flex > 0) {
         int n = origSpace*c.flex/flexTotal;
@@ -487,7 +494,7 @@ protected final void layoutInternal () {
       }
     }
     if (origSpace == spaceLeft) {
-      for (int f = 0; f < mlen; ++f) {
+      foreach (int f; 0..mlen) {
         Widget c = mChildren[f];
         if (c.flex > 0) {
           if (mHoriz) c.mWidth += 1; else c.mHeight += 1;
@@ -501,7 +508,7 @@ protected final void layoutInternal () {
 
   // fix children positions
   int curpos = 0;
-  for (int f = 0; f < mlen; ++f) {
+  foreach (int f; 0..mlen) {
     Widget c = mChildren[f];
     if (mHoriz) {
       c.mX = curpos;
@@ -543,7 +550,7 @@ protected final void layoutInternal () {
   }
 
   // and ask children to layout their children
-  for (int f = 0; f < mlen; ++f) mChildren[f].layoutInternal();
+  foreach (int f; 0..mlen) mChildren[f].layoutInternal();
 }
 
 
