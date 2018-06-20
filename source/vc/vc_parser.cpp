@@ -831,6 +831,45 @@ VExpression *VParser::ParseExpression (bool allowAssign) {
 
 //==========================================================================
 //
+//  VParser::ParseOptionalTypeDecl
+//
+//  used in things like `for (type var = ...)`
+//  returns null if this is not a type decl
+//
+//==========================================================================
+VExpression *VParser::ParseOptionalTypeDecl () {
+  // allow local declaration here
+  switch (Lex.Token) {
+    case TK_Bool:
+    case TK_Byte:
+    case TK_Class:
+    case TK_Float:
+    case TK_Int:
+    case TK_Name:
+    case TK_State:
+    case TK_String:
+    case TK_Auto:
+      // indirections are processed in `ParseLocalVar()`, 'cause they belongs to vars
+      return ParseType(true);
+    case TK_Identifier: // this can be something like `Type var = ...`, so check for it
+      {
+        int ofs = 1; // skip identifier
+        while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs;
+        if (Lex.peekTokenType(ofs) == TK_Identifier && Lex.peekTokenType(ofs+1) == TK_Assign) {
+          // yep, declarations
+          return ParseType(true);
+        }
+      }
+      /* fallthrough */
+    default:
+      break;
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VParser::ParseStatement
 //
 //==========================================================================
@@ -887,57 +926,42 @@ VStatement *VParser::ParseStatement () {
         VFor *For = new VFor(l);
         Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
 
-        // allow local declaration here
-        switch (Lex.Token) {
-          case TK_Bool:
-          case TK_Byte:
-          //case TK_Class: //k8:???
-          case TK_Float:
-          case TK_Int:
-          case TK_Name:
-          case TK_State:
-          case TK_String:
-          case TK_Auto:
-           do_for_init_decls:
-            {
-              needCompound = true; // wrap it
-              // indirections are processed in `ParseLocalVar()`, 'cause they belongs to vars
-              VExpression *TypeExpr = ParseType(true);
-              do {
-                VLocalDecl *Decl = ParseLocalVar(TypeExpr, true);
-                if (!Decl) break;
-                For->InitExpr.Append(new VDropResult(Decl));
-              } while (Lex.Check(TK_Comma));
-            }
-            break;
-          case TK_Identifier: // this can be something like `Type var = ...`, so check for it
-            {
-              int ofs = 1;
-              //fprintf(stderr, "TT0: %s; TT1: %s\n", VLexer::TokenNames[Lex.peekTokenType(ofs)], VLexer::TokenNames[Lex.peekTokenType(ofs+1)]);
-              while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs;
-              if (Lex.peekTokenType(ofs) == TK_Identifier && Lex.peekTokenType(ofs+1) == TK_Assign) {
-                // yep, declarations
-                goto do_for_init_decls;
-              }
-            }
-            /* fallthrough */
-          default:
-            do {
-              VExpression *Expr = ParseExpression(true);
-              if (!Expr) break;
-              For->InitExpr.Append(new VDropResult(Expr));
-            } while (Lex.Check(TK_Comma));
-            break;
+        // parse init expr(s)
+        while (Lex.Token != TK_Semicolon) {
+          auto vtype = ParseOptionalTypeDecl();
+          if (vtype) {
+            needCompound = true; // wrap it
+            VLocalDecl *decl = ParseLocalVar(vtype, true);
+            if (!decl) break;
+            For->InitExpr.append(new VDropResult(decl));
+          } else {
+            VExpression *expr = ParseExpression(true);
+            if (!expr) break;
+            For->InitExpr.append(new VDropResult(expr));
+          }
+          // here should be a comma or a semicolon
+          if (!Lex.Check(TK_Comma)) break;
         }
-
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-        For->CondExpr = ParseExpression();
 
+        // parse cond expr(s)
+        VExpression *lastCondExpr = nullptr;
+        while (Lex.Token != TK_Semicolon) {
+          VExpression *expr = ParseExpression(true);
+          if (!expr) break;
+          if (lastCondExpr) For->CondExpr.append(new VDropResult(lastCondExpr));
+          lastCondExpr = expr;
+          // here should be a comma or a semicolon
+          if (!Lex.Check(TK_Comma)) break;
+        }
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        if (lastCondExpr) For->CondExpr.append(lastCondExpr);
+
+        // parse loop expr(s)
         do {
-          VExpression *Expr = ParseExpression(true);
-          if (!Expr) break;
-          For->LoopExpr.Append(new VDropResult(Expr));
+          VExpression *expr = ParseExpression(true);
+          if (!expr) break;
+          For->LoopExpr.append(new VDropResult(expr));
         } while (Lex.Check(TK_Comma));
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
 

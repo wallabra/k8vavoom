@@ -56,6 +56,7 @@ private:
   VExpression *ParseExpression (bool allowAssign=false);
   VStatement *ParseStatement ();
   VCompound *ParseCompoundStatement ();
+  VExpression *ParseOptionalTypeDecl (); // used in things like `for (type var = ...)`
   VExpression *ParsePrimitiveType (); // this won't parse `type*` and delegates
   VExpression *ParseType (bool allowDelegates=false); // this won't parse `type*`
   VExpression *ParseTypePtrs (VExpression *type); // call this after `ParseType` to parse asterisks

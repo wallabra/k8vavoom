@@ -401,7 +401,9 @@ bool VDo::IsEndsWithReturn () {
 //==========================================================================
 VFor::VFor (const TLocation &ALoc)
   : VStatement(ALoc)
-  , CondExpr(nullptr)
+  , InitExpr()
+  , CondExpr()
+  , LoopExpr()
   , Statement(nullptr)
 {
 }
@@ -416,7 +418,9 @@ VFor::~VFor () {
   for (int i = 0; i < InitExpr.length(); ++i) {
     if (InitExpr[i]) { delete InitExpr[i]; InitExpr[i] = nullptr; }
   }
-  if (CondExpr) { delete CondExpr; CondExpr = nullptr; }
+  for (int i = 0; i < CondExpr.length(); ++i) {
+    if (CondExpr[i]) { delete CondExpr[i]; CondExpr[i] = nullptr; }
+  }
   for (int i = 0; i < LoopExpr.length(); ++i) {
     if (LoopExpr[i]) { delete LoopExpr[i]; LoopExpr[i] = nullptr; }
   }
@@ -444,12 +448,13 @@ VStatement *VFor::SyntaxCopy () {
 void VFor::DoSyntaxCopyTo (VStatement *e) {
   VStatement::DoSyntaxCopyTo(e);
   auto res = (VFor *)e;
-  res->CondExpr = (CondExpr ? CondExpr->SyntaxCopy() : nullptr);
-  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
   res->InitExpr.SetNum(InitExpr.length());
   for (int f = 0; f < InitExpr.length(); ++f) res->InitExpr[f] = (InitExpr[f] ? InitExpr[f]->SyntaxCopy() : nullptr);
+  res->CondExpr.SetNum(CondExpr.length());
+  for (int f = 0; f < CondExpr.length(); ++f) res->CondExpr[f] = (CondExpr[f] ? CondExpr[f]->SyntaxCopy() : nullptr);
   res->LoopExpr.SetNum(LoopExpr.length());
   for (int f = 0; f < LoopExpr.length(); ++f) res->LoopExpr[f] = (LoopExpr[f] ? LoopExpr[f]->SyntaxCopy() : nullptr);
+  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
 }
 
 
@@ -476,9 +481,13 @@ bool VFor::Resolve (VEmitContext &ec) {
     if (!InitExpr[i]) Ret = false;
   }
 
-  if (CondExpr) {
-    CondExpr = CondExpr->ResolveBoolean(ec);
-    if (!CondExpr) Ret = false;
+  for (int i = 0; i < CondExpr.length(); ++i) {
+    if (i != CondExpr.length()-1) {
+      CondExpr[i] = CondExpr[i]->Resolve(ec);
+    } else {
+      CondExpr[i] = CondExpr[i]->ResolveBoolean(ec);
+    }
+    if (!CondExpr[i]) Ret = false;
   }
 
   for (int i = 0; i < LoopExpr.length(); ++i) {
@@ -512,7 +521,7 @@ void VFor::DoEmit (VEmitContext &ec) {
   for (int i = 0; i < InitExpr.length(); ++i) InitExpr[i]->Emit(ec);
 
   // jump to test if it's present
-  if (CondExpr) ec.AddStatement(OPC_Goto, Test, Loc);
+  if (CondExpr.length()) ec.AddStatement(OPC_Goto, Test, Loc);
 
   // emit embeded statement
   ec.MarkLabel(Loop);
@@ -524,10 +533,11 @@ void VFor::DoEmit (VEmitContext &ec) {
 
   // loop test
   ec.MarkLabel(Test);
-  if (!CondExpr) {
+  if (CondExpr.length() == 0) {
     ec.AddStatement(OPC_Goto, Loop, Loc);
   } else {
-    CondExpr->EmitBranchable(ec, Loop, true);
+    for (int i = 0; i < CondExpr.length()-1; ++i) CondExpr[i]->Emit(ec);
+    CondExpr[CondExpr.length()-1]->EmitBranchable(ec, Loop, true);
   }
 
   // end of loop
@@ -545,6 +555,7 @@ void VFor::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 bool VFor::IsEndsWithReturn () {
+  //TODO: endless fors should have at least one return instead
   return (Statement && Statement->IsEndsWithReturn());
 }
 

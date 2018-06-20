@@ -140,7 +140,8 @@ public:
 class VFor : public VStatement {
 public:
   TArray<VExpression *> InitExpr;
-  VExpression *CondExpr;
+  //VExpression *CondExpr;
+  TArray<VExpression *> CondExpr;
   TArray<VExpression *> LoopExpr;
   VStatement *Statement;
 
