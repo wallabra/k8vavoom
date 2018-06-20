@@ -1,0 +1,21 @@
+class Test : Object;
+
+void foo () { writeln("alive and kicking!"); }
+
+override void Destroy () {
+  writeln("goodbye, cruel world...");
+  ::Destroy();
+}
+
+
+class Main : Object;
+
+void main () {
+  Test t;
+  delete t;
+  t = SpawnObject(Test);
+  t.foo();
+  delete t;
+  if (t) writeln("FUUUUUUU");
+  writeln("assassination complete.");
+}
