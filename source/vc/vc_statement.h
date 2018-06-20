@@ -140,7 +140,6 @@ public:
 class VFor : public VStatement {
 public:
   TArray<VExpression *> InitExpr;
-  //VExpression *CondExpr;
   TArray<VExpression *> CondExpr;
   TArray<VExpression *> LoopExpr;
   VStatement *Statement;
@@ -176,6 +175,35 @@ public:
 
 protected:
   VForeach () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VForeachIota : public VStatement {
+private:
+  VExpression *varinit; // var initializer expression
+  VExpression *varnext; // loop expression
+  VExpression *hiinit; // hivar initializer
+
+public:
+  VExpression *var; // loop variable (resolved to condition expression)
+  VExpression *lo; // low bound
+  VExpression *hi; // high bound
+  VStatement *statement;
+
+  VForeachIota (const TLocation &ALoc);
+  virtual ~VForeachIota () override;
+  virtual VStatement *SyntaxCopy () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsEndsWithReturn () override;
+
+protected:
+  VForeachIota () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
 
 public:

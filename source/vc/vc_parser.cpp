@@ -837,7 +837,7 @@ VExpression *VParser::ParseExpression (bool allowAssign) {
 //  returns null if this is not a type decl
 //
 //==========================================================================
-VExpression *VParser::ParseOptionalTypeDecl () {
+VExpression *VParser::ParseOptionalTypeDecl (EToken tkend) {
   // allow local declaration here
   switch (Lex.Token) {
     case TK_Bool:
@@ -855,7 +855,7 @@ VExpression *VParser::ParseOptionalTypeDecl () {
       {
         int ofs = 1; // skip identifier
         while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs;
-        if (Lex.peekTokenType(ofs) == TK_Identifier && Lex.peekTokenType(ofs+1) == TK_Assign) {
+        if (Lex.peekTokenType(ofs) == TK_Identifier && Lex.peekTokenType(ofs+1) == tkend) {
           // yep, declarations
           return ParseType(true);
         }
@@ -879,6 +879,7 @@ VStatement *VParser::ParseStatement () {
   switch(Lex.Token) {
     case TK_EOF:
       ParseError(Lex.Location, ERR_UNEXPECTED_EOF);
+      if (!vcGagErrors) Sys_Error("Cannot continue");
       return nullptr;
     case TK_If:
       {
@@ -928,7 +929,7 @@ VStatement *VParser::ParseStatement () {
 
         // parse init expr(s)
         while (Lex.Token != TK_Semicolon) {
-          auto vtype = ParseOptionalTypeDecl();
+          auto vtype = ParseOptionalTypeDecl(TK_Assign);
           if (vtype) {
             needCompound = true; // wrap it
             VLocalDecl *decl = ParseLocalVar(vtype, true);
@@ -977,8 +978,47 @@ VStatement *VParser::ParseStatement () {
         }
       }
     case TK_Foreach:
-      {
-        Lex.NextToken();
+      Lex.NextToken();
+      // `foreach (var; lo..hi)`?
+      if (Lex.Check(TK_LParen)) {
+        VForeachIota *fei = new VForeachIota(l);
+        // parse var
+        VLocalDecl *decl = nullptr;
+        auto vtype = ParseOptionalTypeDecl(TK_Semicolon);
+        if (vtype) {
+          // fix type
+          if (vtype->Type.Type == TYPE_Automatic) vtype->Type.Type = TYPE_Int;
+          //fprintf(stderr, "type: <%s>\n", *vtype->Type.GetName()); abort();
+          decl = ParseLocalVar(vtype, false);
+          if (!decl) ParseError(Lex.Location, "Variable declaration expected");
+          fei->var = decl;
+        } else {
+          fei->var = ParseExpression(false);
+        }
+        Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        // lo
+        fei->lo = ParseExpression(false);
+        // `..`
+        if (!Lex.Check(TK_DotDot)) ParseError(Lex.Location, "`..` expected");
+        // hi
+        fei->hi = ParseExpression(false);
+        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+        // body
+        fei->statement = ParseStatement();
+        // if we have a declaration, rewrite it all a little:
+        // { decl var; for (var; ..) }
+        if (decl) {
+          VCompound *body = new VCompound(fei->Loc);
+          VLocalVarStatement *vdc = new VLocalVarStatement(decl);
+          body->Statements.append(vdc);
+          fei->var = new VSingleName(decl->Vars[0].Name, decl->Loc);
+          body->Statements.append(fei);
+          return body;
+        } else {
+          return fei;
+        }
+      } else {
+        // `foreach expr statement`
         VExpression *Expr = ParseExpression();
         if (!Expr) ParseError(Lex.Location, "Iterator expression expected");
         VStatement *Statement = ParseStatement();
@@ -1217,6 +1257,7 @@ VExpression *VParser::ParseType (bool allowDelegates) {
     while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs;
     if (Lex.peekTokenType(ofs) == TK_Delegate) {
       // this must be `type delegate (args)`
+      if (Type->Type.Type == TYPE_Automatic) ParseError(Lex.Location, "Delegate cannot have `auto` return type");
       Type = ParseTypePtrs(Type);
       if (!Lex.Check(TK_Delegate)) {
         ParseError(Lex.Location, "Invalid delegate syntax (parser is confused)");
@@ -1269,6 +1310,7 @@ VExpression *VParser::ParseTypePtrs (VExpression *type) {
   if (!type) return nullptr;
   TLocation l = Lex.Location;
   while (Lex.Check(TK_Asterisk)) {
+    if (type->Type.Type == TYPE_Automatic) ParseError(Lex.Location, "Automatic variable cannot be a pointer");
     type = new VPointerType(type, l);
     l = Lex.Location;
   }

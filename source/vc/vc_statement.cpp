@@ -674,6 +674,213 @@ bool VForeach::IsEndsWithReturn () {
 
 //==========================================================================
 //
+//  VForeachIota::VForeachIota
+//
+//==========================================================================
+VForeachIota::VForeachIota (const TLocation &ALoc)
+  : VStatement(ALoc)
+  , varinit(nullptr)
+  , varnext(nullptr)
+  , hiinit(nullptr)
+  , var(nullptr)
+  , lo(nullptr)
+  , hi(nullptr)
+  , statement(nullptr)
+{
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::~VForeachIota
+//
+//==========================================================================
+VForeachIota::~VForeachIota () {
+  delete varinit; varinit = nullptr;
+  delete varnext; varnext = nullptr;
+  delete hiinit; hiinit = nullptr;
+  delete var; var = nullptr;
+  delete lo; lo = nullptr;
+  delete hi; hi = nullptr;
+  delete statement; statement = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::SyntaxCopy
+//
+//==========================================================================
+VStatement *VForeachIota::SyntaxCopy () {
+  if (varinit || varnext || hiinit) FatalError("VC: `VForeachIota::SyntaxCopy()` called on resolved statement");
+  auto res = new VForeachIota();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::DoSyntaxCopyTo
+//
+//==========================================================================
+void VForeachIota::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VForeachIota *)e;
+  res->var = (var ? var->SyntaxCopy() : nullptr);
+  res->lo = (lo ? lo->SyntaxCopy() : nullptr);
+  res->hi = (hi ? hi->SyntaxCopy() : nullptr);
+  res->statement = (statement ? statement->SyntaxCopy() : nullptr);
+  // no need to copy private data here, as `SyntaxCopy()` should be called only on unresolved things
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::DoFixSwitch
+//
+//==========================================================================
+void VForeachIota::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (statement) statement->DoFixSwitch(aold, anew);
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::Resolve
+//
+//==========================================================================
+bool VForeachIota::Resolve (VEmitContext &ec) {
+  // we will rewrite 'em later
+  auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
+  auto loR = (lo ? lo->SyntaxCopy()->Resolve(ec) : nullptr);
+  auto hiR = (hi ? hi->SyntaxCopy()->Resolve(ec) : nullptr);
+  if (!statement->Resolve(ec) || !varR || !loR || !hiR) {
+    delete varR;
+    delete loR;
+    delete hiR;
+    return false;
+  }
+
+  if (varR->Type.Type != TYPE_Int) {
+    ParseError(var->Loc, "Loop variable should be integer (got `%s`)", *varR->Type.GetName());
+    delete varR;
+    delete loR;
+    delete hiR;
+    return false;
+  }
+
+  if (loR->Type.Type != TYPE_Int) {
+    ParseError(lo->Loc, "Loop lower bound should be integer (got `%s`)", *loR->Type.GetName());
+    delete varR;
+    delete loR;
+    delete hiR;
+    return false;
+  }
+
+  if (hiR->Type.Type != TYPE_Int) {
+    ParseError(hi->Loc, "Loop higher bound should be integer (got `%s`)", *hiR->Type.GetName());
+    delete varR;
+    delete loR;
+    delete hiR;
+    return false;
+  }
+
+  // we don't need 'em anymore
+  delete varR;
+  delete loR;
+  delete hiR;
+
+  // create hidden local for higher bound
+  VFieldType Type = VFieldType(TYPE_Int);
+  VLocalVarDef &L = ec.AllocLocal(NAME_None, Type, hi->Loc);
+  L.Visible = false; // it is unnamed, and hidden ;-)
+  L.Reusable = true; // mark it as reusable, as statement is aready resolved
+  L.ParamFlags = 0;
+
+  // initialize hidden local with higher bound
+  hiinit = new VAssignment(VAssignment::Assign, new VLocalVar(L.ldindex, hi->Loc), hi->SyntaxCopy(), hi->Loc);
+  hiinit = hiinit->Resolve(ec);
+  if (!hiinit) return false; // oops
+
+  // create initializer expression: `var = lo`
+  varinit = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), lo->SyntaxCopy(), hi->Loc);
+  varinit = varinit->Resolve(ec);
+  if (!varinit) return false; // oops
+
+  // create loop expression: `++var`
+  varnext = new VUnaryMutator(VUnaryMutator::PreInc, var->SyntaxCopy(), hi->Loc);
+  varnext = new VDropResult(varnext);
+  varnext = varnext->Resolve(ec);
+  if (!varnext) return false; // oops
+
+  // create condition expression: `var < hivar`
+  var = new VBinary(VBinary::EBinOp::Less, var, new VLocalVar(L.ldindex, hi->Loc), hi->Loc);
+  var = var->ResolveBoolean(ec);
+  if (!var) return false; // oops
+
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::DoEmit
+//
+//==========================================================================
+void VForeachIota::DoEmit (VEmitContext &ec) {
+  // set-up continues and breaks
+  VLabel OldStart = ec.LoopStart;
+  VLabel OldEnd = ec.LoopEnd;
+
+  // define labels
+  ec.LoopStart = ec.DefineLabel();
+  ec.LoopEnd = ec.DefineLabel();
+
+  VLabel Test = ec.DefineLabel();
+  VLabel Loop = ec.DefineLabel();
+
+  // emit initialisation expressions
+  hiinit->Emit(ec);
+  varinit->Emit(ec);
+
+  // jump to test
+  ec.AddStatement(OPC_Goto, Test, Loc);
+
+  // emit embeded statement
+  ec.MarkLabel(Loop);
+  statement->Emit(ec);
+
+  // emit per-loop expression statements
+  ec.MarkLabel(ec.LoopStart);
+  varnext->Emit(ec);
+
+  // loop test
+  ec.MarkLabel(Test);
+  var->EmitBranchable(ec, Loop, true);
+
+  // end of loop
+  ec.MarkLabel(ec.LoopEnd);
+
+  // restore continue and break state
+  ec.LoopStart = OldStart;
+  ec.LoopEnd = OldEnd;
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::IsEndsWithReturn
+//
+//==========================================================================
+bool VForeachIota::IsEndsWithReturn () {
+  //TODO: endless fors should have at least one return instead
+  return (statement && statement->IsEndsWithReturn());
+}
+
+
+//==========================================================================
+//
 //  VSwitch::VSwitch
 //
 //==========================================================================
