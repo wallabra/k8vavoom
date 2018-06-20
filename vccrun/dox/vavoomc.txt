@@ -303,3 +303,19 @@ Here, both `blood` and `gore` will refer to `blood` field.
 
 Alias can be aliased by itself, therefore creating a "chain" of aliases. Aliases are
 inheritable. Alias resolving is done as a first step of name resolving.
+
+
+
+Slices and pointers
+===================
+
+VaVoom C supports pointer, and pointer indexing. This is absolutely unsafe, of course,
+and at least pointer indexing can be disabled via compiler variable. Yet native classes
+may require it, so I introduced so-called "slices". This is just a pointer/length pair,
+so VM can do bounds checking on pointer indexing. You cannot create slices in VaVoom C
+code, so as long as native code does its job ok, VC code can use slices instead of
+pointers and still be considered safe. Of course, you can pass slices to functions.
+Slice declaraion is: `type[]` -- i.e. it looks like an array, but without dimensions.
+For now slices are immutable (not slice contents, just slice itself), but in the future
+this restriction can be relaxed, so you'll be able to "slice a slice", to create a
+smaller slice "view" (this is obviously safe).
