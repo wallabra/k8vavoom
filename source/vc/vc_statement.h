@@ -194,6 +194,7 @@ public:
   VExpression *lo; // low bound
   VExpression *hi; // high bound
   VStatement *statement;
+  bool reversed;
 
   VForeachIota (const TLocation &ALoc);
   virtual ~VForeachIota () override;

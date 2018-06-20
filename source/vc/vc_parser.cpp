@@ -1002,6 +1002,23 @@ VStatement *VParser::ParseStatement () {
         if (!Lex.Check(TK_DotDot)) ParseError(Lex.Location, "`..` expected");
         // hi
         fei->hi = ParseExpression(false);
+        // check for reversed
+        if (Lex.Check(TK_Semicolon)) {
+          if (Lex.Token != TK_RParen) {
+            if (Lex.Token != TK_Identifier) {
+              ParseError(Lex.Location, "`reverse` expected");
+            } else {
+              if (Lex.Name == "reverse" || Lex.Name == "reversed") {
+                fei->reversed = true;
+              } else if (Lex.Name == "forward") {
+                fei->reversed = false; // just4fun
+              } else {
+                ParseError(Lex.Location, "`reverse` expected, got `%s`", *Lex.Name);
+              }
+              Lex.NextToken();
+            }
+          }
+        }
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
         // body
         fei->statement = ParseStatement();

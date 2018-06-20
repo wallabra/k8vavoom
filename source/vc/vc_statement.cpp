@@ -686,6 +686,7 @@ VForeachIota::VForeachIota (const TLocation &ALoc)
   , lo(nullptr)
   , hi(nullptr)
   , statement(nullptr)
+  , reversed(false)
 {
 }
 
@@ -731,6 +732,7 @@ void VForeachIota::DoSyntaxCopyTo (VStatement *e) {
   res->lo = (lo ? lo->SyntaxCopy() : nullptr);
   res->hi = (hi ? hi->SyntaxCopy() : nullptr);
   res->statement = (statement ? statement->SyntaxCopy() : nullptr);
+  res->reversed = reversed;
   // no need to copy private data here, as `SyntaxCopy()` should be called only on unresolved things
 }
 
@@ -786,39 +788,65 @@ bool VForeachIota::Resolve (VEmitContext &ec) {
     return false;
   }
 
+  // create hidden local for higher bound (if necessary)
+  VExpression *limit;
+  if ((reversed ? loR : hiR)->IsIntConst()) {
+    limit = new VIntLiteral((reversed ? loR : hiR)->GetIntConst(), (reversed ? lo : hi)->Loc);
+  } else {
+    VLocalVarDef &L = ec.AllocLocal(NAME_None, VFieldType(TYPE_Int), (reversed ? lo : hi)->Loc);
+    L.Visible = false; // it is unnamed, and hidden ;-)
+    L.Reusable = true; // mark it as reusable, as statement is aready resolved
+    L.ParamFlags = 0;
+    limit = new VLocalVar(L.ldindex, L.Loc);
+    // initialize hidden local with higher/lower bound
+    hiinit = new VAssignment(VAssignment::Assign, limit->SyntaxCopy(), (reversed ? lo : hi)->SyntaxCopy(), L.Loc);
+  }
+
   // we don't need 'em anymore
   delete varR;
   delete loR;
   delete hiR;
 
-  // create hidden local for higher bound
-  VFieldType Type = VFieldType(TYPE_Int);
-  VLocalVarDef &L = ec.AllocLocal(NAME_None, Type, hi->Loc);
-  L.Visible = false; // it is unnamed, and hidden ;-)
-  L.Reusable = true; // mark it as reusable, as statement is aready resolved
-  L.ParamFlags = 0;
+  if (hiinit) {
+    hiinit = hiinit->Resolve(ec);
+    if (!hiinit) { delete limit; return false; }
+  }
 
-  // initialize hidden local with higher bound
-  hiinit = new VAssignment(VAssignment::Assign, new VLocalVar(L.ldindex, hi->Loc), hi->SyntaxCopy(), hi->Loc);
-  hiinit = hiinit->Resolve(ec);
-  if (!hiinit) return false; // oops
+  if (!reversed) {
+    // normal
+    // create initializer expression: `var = lo`
+    varinit = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), lo->SyntaxCopy(), hi->Loc);
 
-  // create initializer expression: `var = lo`
-  varinit = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), lo->SyntaxCopy(), hi->Loc);
+    // create loop/check expression: `++var < limit`
+    varnext = new VUnaryMutator(VUnaryMutator::PreInc, var->SyntaxCopy(), hi->Loc);
+    varnext = new VBinary(VBinary::EBinOp::Less, varnext, limit->SyntaxCopy(), hi->Loc);
+
+    // create condition expression: `var < limit`
+    var = new VBinary(VBinary::EBinOp::Less, var, limit->SyntaxCopy(), hi->Loc);
+  } else {
+    // reversed
+    // create initializer expression: `var = hi-1`
+    VExpression *vminus = new VBinary(VBinary::EBinOp::Subtract, hi->SyntaxCopy(), new VIntLiteral(1, hi->Loc), hi->Loc);
+    varinit = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), vminus, hi->Loc);
+
+    // create loop/check expression: `var-- > limit`
+    varnext = new VUnaryMutator(VUnaryMutator::PostDec, var->SyntaxCopy(), hi->Loc);
+    varnext = new VBinary(VBinary::EBinOp::Greater, varnext, limit->SyntaxCopy(), hi->Loc);
+
+    // create condition expression: `var >= limit`
+    var = new VBinary(VBinary::EBinOp::GreaterEquals, var, limit->SyntaxCopy(), hi->Loc);
+  }
+
+  delete limit;
+
   varinit = varinit->Resolve(ec);
-  if (!varinit) return false; // oops
+  if (!varinit) return false;
 
-  // create loop/check expression: `++var < hi`
-  varnext = new VUnaryMutator(VUnaryMutator::PreInc, var->SyntaxCopy(), hi->Loc);
-  //varnext = new VDropResult(varnext);
-  varnext = new VBinary(VBinary::EBinOp::Less, varnext, new VLocalVar(L.ldindex, hi->Loc), hi->Loc);
   varnext = varnext->ResolveBoolean(ec);
-  if (!varnext) return false; // oops
+  if (!varnext) return false;
 
-  // create condition expression: `var < hivar`
-  var = new VBinary(VBinary::EBinOp::Less, var, new VLocalVar(L.ldindex, hi->Loc), hi->Loc);
   var = var->ResolveBoolean(ec);
-  if (!var) return false; // oops
+  if (!var) return false;
 
   return true;
 }
@@ -841,7 +869,7 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
   VLabel Loop = ec.DefineLabel();
 
   // emit initialisation expressions
-  hiinit->Emit(ec);
+  if (hiinit) hiinit->Emit(ec); // may be absent for iota with literals
   varinit->Emit(ec);
 
   // do first check
