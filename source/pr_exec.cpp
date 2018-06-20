@@ -27,8 +27,6 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 # include "gamedefs.h"
 # include "progdefs.h"
@@ -40,7 +38,7 @@
 # endif
 #endif
 
-// MACROS ------------------------------------------------------------------
+//#define VCC_STUPID_TRACER
 
 #define MAX_PROG_STACK  (10000)
 #define STACK_ID  (0x45f6cd4b)
@@ -189,7 +187,7 @@ static void cstDump (const vuint8 *ip) {
 //
 //==========================================================================
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(VCC_STUPID_TRACER)
 # define USE_COMPUTED_GOTO  1
 #endif
 
@@ -267,6 +265,10 @@ func_loop:
 #define OPCODE_INFO
 #include "progdefs.h"
     0 };
+#endif
+
+#ifdef VCC_STUPID_TRACER
+    fprintf(stderr, "*** %s: %6u: %s\n", *func->GetFullName(), (unsigned)(ip-func->Statements.Ptr()), StatementInfo[*ip].name);
 #endif
 
     PR_VM_SWITCH(*ip) {

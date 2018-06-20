@@ -757,7 +757,7 @@ bool VForeachIota::Resolve (VEmitContext &ec) {
   auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
   auto loR = (lo ? lo->SyntaxCopy()->Resolve(ec) : nullptr);
   auto hiR = (hi ? hi->SyntaxCopy()->Resolve(ec) : nullptr);
-  if (!statement->Resolve(ec) || !varR || !loR || !hiR) {
+  if (!statement || !varR || !loR || !hiR) {
     delete varR;
     delete loR;
     delete hiR;
@@ -795,7 +795,6 @@ bool VForeachIota::Resolve (VEmitContext &ec) {
   } else {
     VLocalVarDef &L = ec.AllocLocal(NAME_None, VFieldType(TYPE_Int), (reversed ? lo : hi)->Loc);
     L.Visible = false; // it is unnamed, and hidden ;-)
-    L.Reusable = true; // mark it as reusable, as statement is aready resolved
     L.ParamFlags = 0;
     limit = new VLocalVar(L.ldindex, L.Loc);
     // initialize hidden local with higher/lower bound
@@ -848,7 +847,8 @@ bool VForeachIota::Resolve (VEmitContext &ec) {
   var = var->ResolveBoolean(ec);
   if (!var) return false;
 
-  return true;
+  // finally, resolve statement (last, so local reusing will work as expected)
+  return statement->Resolve(ec);
 }
 
 
