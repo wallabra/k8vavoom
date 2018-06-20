@@ -808,10 +808,11 @@ bool VForeachIota::Resolve (VEmitContext &ec) {
   varinit = varinit->Resolve(ec);
   if (!varinit) return false; // oops
 
-  // create loop expression: `++var`
+  // create loop/check expression: `++var < hi`
   varnext = new VUnaryMutator(VUnaryMutator::PreInc, var->SyntaxCopy(), hi->Loc);
-  varnext = new VDropResult(varnext);
-  varnext = varnext->Resolve(ec);
+  //varnext = new VDropResult(varnext);
+  varnext = new VBinary(VBinary::EBinOp::Less, varnext, new VLocalVar(L.ldindex, hi->Loc), hi->Loc);
+  varnext = varnext->ResolveBoolean(ec);
   if (!varnext) return false; // oops
 
   // create condition expression: `var < hivar`
@@ -837,27 +838,22 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
   ec.LoopStart = ec.DefineLabel();
   ec.LoopEnd = ec.DefineLabel();
 
-  VLabel Test = ec.DefineLabel();
   VLabel Loop = ec.DefineLabel();
 
   // emit initialisation expressions
   hiinit->Emit(ec);
   varinit->Emit(ec);
 
-  // jump to test
-  ec.AddStatement(OPC_Goto, Test, Loc);
+  // do first check
+  var->EmitBranchable(ec, ec.LoopEnd, false);
 
   // emit embeded statement
   ec.MarkLabel(Loop);
   statement->Emit(ec);
 
-  // emit per-loop expression statements
-  ec.MarkLabel(ec.LoopStart);
-  varnext->Emit(ec);
-
-  // loop test
-  ec.MarkLabel(Test);
-  var->EmitBranchable(ec, Loop, true);
+  // loop next and test
+  ec.MarkLabel(ec.LoopStart); // continue will jump here
+  varnext->EmitBranchable(ec, Loop, true);
 
   // end of loop
   ec.MarkLabel(ec.LoopEnd);

@@ -186,11 +186,11 @@ public:
 class VForeachIota : public VStatement {
 private:
   VExpression *varinit; // var initializer expression
-  VExpression *varnext; // loop expression
+  VExpression *varnext; // loop/check expression (++var < hi)
   VExpression *hiinit; // hivar initializer
 
 public:
-  VExpression *var; // loop variable (resolved to condition expression)
+  VExpression *var; // loop variable (resolved to first-check expression)
   VExpression *lo; // low bound
   VExpression *hi; // high bound
   VStatement *statement;
