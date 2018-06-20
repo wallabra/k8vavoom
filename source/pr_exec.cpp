@@ -66,6 +66,11 @@ VStack *pr_stackPtr;
 static VMethod *current_func = nullptr;
 static VStack pr_stack[MAX_PROG_STACK];
 
+struct VCSlice {
+  vuint8 *ptr; // it is easier to index this way
+  vint32 length;
+};
+
 
 //==========================================================================
 //
@@ -839,15 +844,15 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_SliceFieldValue)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
-        {
+        if (sp[-1].p) {
           vint32 ofs = ReadInt32(ip+1);
-          void *p = *(void **)((vuint8 *)sp[-1].p+ofs);
-          vint32 l = *(vint32 *)((vuint8 *)sp[-1].p+ofs+sizeof(void *));
-          if (!p) l = 0; // just in case
-          sp[-1].p = p;
-          sp[0].i = l;
+          VCSlice vs = *(VCSlice *)((vuint8 *)sp[-1].p+ofs);
+          if (!vs.ptr) vs.length = 0; else if (vs.length < 0) vs.length = 0; // just in case
+          sp[-1].p = vs.ptr;
+          sp[0].i = vs.length;
           ++sp;
+        } else {
+          cstDump(ip); Sys_Error("Reference not set to an instance of an object");
         }
         ip += 5;
         PR_VM_BREAK;
@@ -960,13 +965,18 @@ func_loop:
         --sp;
         PR_VM_BREAK;
 
+      // [-1]: index
+      // [-2]: ptr to VCSlice
       PR_VM_CASE(OPC_SliceElement)
-        {
+        if (sp[-2].p) {
           int idx = sp[-1].i;
-          vint32 len = (sp[-2].p && *(void **)sp[-2].p ? *(vint32 *)((vuint8 *)sp[-2].p+sizeof(void *)) : 0);
-          if (idx < 0 || idx >= len) { cstDump(ip); Sys_Error("Slice index %d is out of range (%d)", idx, len); }
-          //if (!sp[-2].p) { cstDump(ip); Sys_Error("Trying to index empty slice"); }
-          sp[-2].p = (*(vuint8 **)sp[-2].p)+idx*ReadInt32(ip+1);
+          VCSlice vs = *(VCSlice *)sp[-2].p;
+          if (!vs.ptr) vs.length = 0; else if (vs.length < 0) vs.length = 0; // just in case
+          if (idx < 0 || idx >= vs.length) { cstDump(ip); Sys_Error("Slice index %d is out of range (%d)", idx, vs.length); }
+          sp[-2].p = vs.ptr+idx*ReadInt32(ip+1);
+        } else {
+          cstDump(ip);
+          Sys_Error("Slice index %d is out of range (0)", sp[-1].i);
         }
         ip += 5;
         --sp;
@@ -983,11 +993,13 @@ func_loop:
         sp[-1].i = *(vint32 *)sp[-1].p;
         PR_VM_BREAK;
 
+      // [-1]: ptr to VCSlice
       PR_VM_CASE(OPC_PushPointedSlice)
         if (sp[-1].p) {
-          vint32 len = (*(void **)sp[-1].p ? *(vint32 *)((vuint8 *)sp[-1].p+sizeof(void *)) : 0);
-          sp[-1].p = *(void **)sp[-1].p;
-          sp[0].i = (len > 0 ? len : 0);
+          VCSlice vs = *(VCSlice *)sp[-1].p;
+          if (!vs.ptr) vs.length = 0; else if (vs.length < 0) vs.length = 0; // just in case
+          sp[-1].p = vs.ptr;
+          sp[0].i = vs.length;
         } else {
           sp[-1].p = nullptr;
           sp[0].i = 0;
@@ -996,10 +1008,16 @@ func_loop:
         ++sp;
         PR_VM_BREAK;
 
+      // [-1]: ptr to VCSlice
       PR_VM_CASE(OPC_PushPointedSliceLen)
         ++ip;
-        sp[-1].i = (sp[-1].p && *(void **)sp[-1].p ? *(vint32 *)((vuint8 *)sp[-1].p+sizeof(void *)) : 0);
-        if (sp[-1].i < 0) sp[-1].i = 0;
+        if (sp[-1].p) {
+          VCSlice vs = *(VCSlice *)sp[-1].p;
+          if (!vs.ptr) vs.length = 0; else if (vs.length < 0) vs.length = 0; // just in case
+          sp[-1].i = vs.length;
+        } else {
+          sp[-1].i = 0;
+        }
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VPushPointed)
@@ -1653,6 +1671,7 @@ func_loop:
       // [-2]: hi
       // [-3]: lo
       // [-4]: *string
+      // res: string
       PR_VM_CASE(OPC_StrSliceAssign)
         {
           ++ip;
@@ -1675,6 +1694,31 @@ func_loop:
             *s = ds;
           }
         }
+        PR_VM_BREAK;
+
+      // [-1]: hi
+      // [-2]: lo
+      // [-3]: sliceptr
+      // res: slice (ptr, len)
+      PR_VM_CASE(OPC_SliceSlice)
+        if (sp[-3].p) {
+          int hi = sp[-1].i;
+          int lo = sp[-2].i;
+          VCSlice vs = *(VCSlice *)sp[-3].p;
+          if (!vs.ptr) vs.length = 0; else if (vs.length < 0) vs.length = 0; // just in case
+          if (lo < 0 || hi < lo || lo > vs.length || hi > vs.length) {
+            cstDump(ip);
+            Sys_Error("Slice [%d..%d] is out of range (%d)", lo, hi, vs.length);
+          } else {
+            sp -= 1; // drop one unused limit
+            // push slice
+            sp[-2].p = vs.ptr+lo*ReadInt32(ip+1);
+            sp[-1].i = hi-lo;
+          }
+        } else {
+          cstDump(ip); Sys_Error("Cannot operate on none-slice");
+        }
+        ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_AssignStrDrop)

@@ -214,19 +214,9 @@ VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression
 
   resolved = true; // anyway
 
-  // hack: allow indexing of pointers to strings without `(*str)`
-  /*if (rop->Type.Type == TYPE_Pointer) {
-    delete rop;
-    op = new VPushPointed(op);
-    // we need a copy for opDollar
-    opcopy = op->SyntaxCopy();
-    op = op->Resolve(ec);
-    if (!op) { delete opcopy; delete val; delete this; return nullptr; }
-  } else*/ {
-    // we need a copy for opDollar
-    opcopy = op;
-    op = rop;
-  }
+  // we need a copy for opDollar
+  opcopy = op;
+  op = rop;
 
   if (op) {
     // resolve index expression
@@ -395,18 +385,6 @@ VExpression *VSliceOp::DoResolve (VEmitContext &ec) {
   opcopy = op->SyntaxCopy();
 
   op = op->Resolve(ec);
-
-  // hack: allow indexing of pointers to strings without `(*str)`
-  /*
-  if (op && op->Type.Type == TYPE_Pointer && op->Type.InnerType == TYPE_String) {
-    delete op;
-    op = new VPushPointed(opcopy);
-    opcopy = op->SyntaxCopy();
-    op = op->Resolve(ec);
-    if (!op) { delete opcopy; delete this; return nullptr; }
-  }
-  */
-
   if (op) {
     // resolve index expressions
     auto oldIndArray = ec.SetIndexArray(this);
@@ -423,19 +401,24 @@ VExpression *VSliceOp::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  if (op->Type.Type != TYPE_String) {
-    ParseError(Loc, "Only string slices are supported (for now)");
+  if (op->Type.Type != TYPE_String && op->Type.Type != TYPE_SliceArray) {
+    ParseError(Loc, "You can slice only string or another slice");
     delete this;
     return nullptr;
   }
 
   if (ind->Type.Type != TYPE_Int || hi->Type.Type != TYPE_Int) {
-    ParseError(Loc, "String slice indicies must be of integer type");
+    ParseError(Loc, "Slice indicies must be of integer type");
     delete this;
     return nullptr;
   }
 
-  Type = VFieldType(TYPE_String);
+  if (op->Type.Type == TYPE_SliceArray) {
+    op->Flags &= ~FIELD_ReadOnly;
+    op->RequestAddressOf();
+  }
+
+  Type = op->Type;
   return this;
 }
 
@@ -446,7 +429,8 @@ VExpression *VSliceOp::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 VExpression *VSliceOp::ResolveAssignmentTarget (VEmitContext &ec) {
-  ParseError(Loc, "Cannot assign to string slice (yet)");
+  // actually, this is handled in `ResolveCompleteAssign()`
+  ParseError(Loc, "Cannot assign to slices");
   return nullptr;
 }
 
@@ -462,30 +446,19 @@ VExpression *VSliceOp::ResolveCompleteAssign (VEmitContext &ec, VExpression *val
   VExpression *rop = op->SyntaxCopy()->Resolve(ec);
   if (!rop) { delete val; delete this; return nullptr; }
 
-  if (rop->Type.Type != TYPE_String && !(rop->Type.Type == TYPE_Pointer && rop->Type.InnerType == TYPE_String)) {
-    ParseError(Loc, "Only string slices are supported (for now)");
+  if (rop->Type.Type != TYPE_String) {
+    ParseError(Loc, "Only string slices are allowed in assign operation");
     delete rop;
     delete val;
     delete this;
     return nullptr;
   }
 
-  // hack: allow indexing of pointers to strings without `(*str)`
-  /*
-  if (rop->Type.Type == TYPE_Pointer) {
-    delete rop;
-    op = new VPushPointed(op);
-    // we need a copy for opDollar
-    opcopy = op->SyntaxCopy();
-    op = op->Resolve(ec);
-    if (!op) { delete opcopy; delete val; delete this; return nullptr; }
-  } else*/ {
-    // we need a copy for opDollar
-    opcopy = op;
-    op = rop;
-  }
+  // we need a copy for opDollar
+  opcopy = op;
+  op = rop;
 
-  if (op) {
+  {
     // resolve index expression
     auto oldIndArray = ec.SetIndexArray(this);
     ind = ind->Resolve(ec);
@@ -545,8 +518,12 @@ void VSliceOp::Emit (VEmitContext &ec) {
   if (genStringAssign) {
     sval->Emit(ec);
     ec.AddStatement(OPC_StrSliceAssign, Loc);
-  } else {
+  } else if (op->Type.Type == TYPE_String) {
     ec.AddStatement(OPC_StrSlice, Loc);
+  } else if (op->Type.Type == TYPE_SliceArray) {
+    ec.AddStatement(OPC_SliceSlice, op->Type.GetArrayInnerType(), Loc);
+  } else {
+    FatalError("VC: the thing that should not be (VSliceOp::Emit)");
   }
 }
 
