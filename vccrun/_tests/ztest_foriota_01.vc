@@ -1,0 +1,26 @@
+class Main : Object;
+
+int v;
+
+void main () {
+  writeln("============");
+  foreach (auto n; 0..8) {
+    writeln(n);
+    continue;
+  }
+
+  writeln("============");
+  foreach (v; 4..7) {
+    if (v == 5) continue;
+    writeln(v);
+  }
+
+  writeln("============");
+  writeln(v);
+
+  writeln("============");
+  // yes, this works, as `v` value is read before assign
+  foreach (v; 0..v) {
+    writeln(v);
+  }
+}
