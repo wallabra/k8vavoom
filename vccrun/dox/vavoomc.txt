@@ -316,6 +316,4 @@ so VM can do bounds checking on pointer indexing. You cannot create slices in Va
 code, so as long as native code does its job ok, VC code can use slices instead of
 pointers and still be considered safe. Of course, you can pass slices to functions.
 Slice declaraion is: `type[]` -- i.e. it looks like an array, but without dimensions.
-For now slices are immutable (not slice contents, just slice itself), but in the future
-this restriction can be relaxed, so you'll be able to "slice a slice", to create a
-smaller slice "view" (this is obviously safe).
+You can "slice a slice", to create a smaller view onto slice contents.
