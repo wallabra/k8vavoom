@@ -317,3 +317,34 @@ code, so as long as native code does its job ok, VC code can use slices instead 
 pointers and still be considered safe. Of course, you can pass slices to functions.
 Slice declaraion is: `type[]` -- i.e. it looks like an array, but without dimensions.
 You can "slice a slice", to create a smaller view onto slice contents.
+
+
+
+Foreach statement (iota form)
+=============================
+
+To do simple integer loops, you can use "foreach iota" statement:
+
+  foreach (auto var; 0..8) { ... }
+
+This is *almost* the same as (note the `<`):
+
+  for (auto var = 0; var < 8; ++var) { ... }
+
+The main difference is that high loop limit is evaluated only once, so any in-loop changes
+of it will go unnoticed. The second difference is that this form is slightly faster.
+
+Note that mutating loop variable inside a loop body is working as expected now, but it is
+just an accident. Consider such code as UB.
+
+
+
+Foreach statement (iterator form)
+=================================
+
+VC has iterators (currently, only native code can define iterators):
+
+  foreach IterFunc(<args>) { ... }
+
+Look at the respective VC script sources to find available iterators. They are marked
+with `iterator` keyword, and usually contains one or more `out` parameters.
