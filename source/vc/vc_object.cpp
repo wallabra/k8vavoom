@@ -169,10 +169,10 @@ void VObject::StaticExit () {
 //==========================================================================
 VObject *VObject::StaticSpawnObject (VClass *AClass) {
   guard(VObject::StaticSpawnObject);
-
   check(AClass);
+
   // allocate memory
-  VObject *Obj = (VObject*)Z_Calloc(AClass->ClassSize);
+  VObject *Obj = (VObject *)Z_Calloc(AClass->ClassSize);
 
   // copy values from the default object
   check(AClass->Defaults);
@@ -180,7 +180,7 @@ VObject *VObject::StaticSpawnObject (VClass *AClass) {
 
   // find native class
   VClass *NativeClass = AClass;
-  while (NativeClass != nullptr && !(NativeClass->ObjectFlags & CLASSOF_Native)) {
+  while (NativeClass != nullptr && !(NativeClass->ObjectFlags&CLASSOF_Native)) {
     NativeClass = NativeClass->GetSuperClass();
   }
   check(NativeClass);
@@ -1288,6 +1288,8 @@ IMPLEMENT_FUNCTION(VObject, WadLumpPresent) {
 
 IMPLEMENT_FUNCTION(VObject, SpawnObject) {
   P_GET_PTR(VClass, Class);
+  if (!Class) { VMDumpCallStack(); Sys_Error("Cannot spawn `none`"); }
+  if (Class->ClassFlags&CLASS_Abstract) { VMDumpCallStack(); Sys_Error("Cannot spawn abstract object"); }
   RET_REF(VObject::StaticSpawnObject(Class));
 }
 

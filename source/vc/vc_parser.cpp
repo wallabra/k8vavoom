@@ -2610,8 +2610,7 @@ void VParser::ParseClass () {
   int defcount = 0;
   int defallot = 0;
 
-  int ClassAttr = TModifiers::ClassAttr(TModifiers::Check(TModifiers::Parse(Lex), TModifiers::Native|TModifiers::Abstract, Lex.Location));
-  Class->ClassFlags = ClassAttr;
+  Class->ClassFlags = TModifiers::ClassAttr(TModifiers::Check(TModifiers::Parse(Lex), TModifiers::Native|TModifiers::Abstract, Lex.Location));
   // parse class attributes
   do {
     if (Lex.Check(TK_MobjInfo)) {
