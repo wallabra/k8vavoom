@@ -331,12 +331,18 @@ This is *almost* the same as (note the `<`):
 
   for (auto var = 0; var < 8; ++var) { ... }
 
-The main difference is that high loop limit is evaluated only once, so any in-loop changes
-of it will go unnoticed. The second difference is that this form is slightly faster.
+The main difference is that high loop limit is evaluated only once, so any in-loop
+changes of it will go unnoticed. The second difference is that this form is slightly
+faster.
 
-Note that mutating loop variable inside a loop body is working as expected now, but it is
-just an accident. Consider such code as UB.
+Note that mutating the loop variable inside a loop body is working as expected now,
+but it is just an accident. Consider such code UB.
 
+You can do backward iteration too:
+
+  foreach (auto var; 0..8; reverse) { ... }
+
+This goes from 7 to 0 inclusive.
 
 
 Foreach statement (iterator form)
