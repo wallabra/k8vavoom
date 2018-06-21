@@ -949,6 +949,15 @@ func_loop:
         ip += 3;
         PR_VM_BREAK;
 
+      // won't pop index
+      PR_VM_CASE(OPC_CheckArrayBounds)
+        if (sp[-1].i < 0 || sp[-1].i >= ReadInt32(ip+1)) {
+          cstDump(ip);
+          Sys_Error("Array index %d is out of bounds (%d)", sp[-1].i, ReadInt32(ip+1));
+        }
+        ip += 5;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_ArrayElement)
         sp[-2].p = (vuint8 *)sp[-2].p+sp[-1].i*ReadInt32(ip+1);
         ip += 5;

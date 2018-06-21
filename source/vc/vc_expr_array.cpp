@@ -104,16 +104,6 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
 
   op = op->Resolve(ec);
 
-  // hack: allow indexing of pointers to dynamic arrays without `(*arr)`
-  /*
-  if (op && op->Type.Type == TYPE_Pointer && (op->Type.InnerType == TYPE_DynamicArray || op->Type.InnerType == TYPE_String)) {
-    delete op;
-    op = new VPushPointed(opcopy);
-    opcopy = op->SyntaxCopy();
-    op = op->Resolve(ec);
-  }
-  */
-
   if (op) {
     // resolve index expression
     auto oldIndArray = ec.SetIndexArray(this);
@@ -136,11 +126,31 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
   }
 
   if (op->Type.IsAnyArray()) {
+    // check bounds for static arrays
+    if (ind->IsIntConst()) {
+      if (ind->GetIntConst() < 0) {
+        ParseError(Loc, "Negative array index");
+        delete this;
+        return nullptr;
+      } else if (op->Type.Type == TYPE_Array && ind->GetIntConst() >= op->Type.ArrayDim) {
+        ParseError(Loc, "Array index %d out of bounds (%d)", ind->GetIntConst(), op->Type.ArrayDim);
+        delete this;
+        return nullptr;
+      }
+    }
     Flags = op->Flags;
     Type = op->Type.GetArrayInnerType();
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
   } else if (op->Type.Type == TYPE_String) {
+    // check bounds
+    /*k8: it is tolerant to this
+    if (ind->IsIntConst() && ind->GetIntConst() < 0) {
+      ParseError(Loc, "Negative string index");
+      delete this;
+      return nullptr;
+    }
+    */
     if (assTarget) {
       ParseError(Loc, "Strings are immutable (yet)");
       delete this;
@@ -316,6 +326,10 @@ void VArrayElement::Emit (VEmitContext &ec) {
     } else if (op->Type.Type == TYPE_SliceArray) {
       ec.AddStatement(OPC_SliceElement, RealType, Loc);
     } else {
+      // skip bounds checking for integer literals: it is already done in `Resolve()`
+      if (!ind->IsIntConst()) {
+        ec.AddStatement(OPC_CheckArrayBounds, op->Type.ArrayDim, Loc);
+      }
       ec.AddStatement(OPC_ArrayElement, RealType, Loc);
     }
     if (!AddressRequested) EmitPushPointedCode(RealType, ec);

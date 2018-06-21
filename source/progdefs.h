@@ -166,6 +166,7 @@ enum {
   DECLARE_OPC(Bool3FieldValue, FieldOffset_Byte),
   DECLARE_OPC(Bool3FieldValueS, FieldOffsetS_Byte),
   DECLARE_OPC(Bool3FieldValueB, FieldOffsetB_Byte),
+  DECLARE_OPC(CheckArrayBounds, Int), /* won't pop index */
   DECLARE_OPC(ArrayElement, TypeSize),
   DECLARE_OPC(ArrayElementS, TypeSizeS),
   DECLARE_OPC(ArrayElementB, TypeSizeB),
