@@ -40,8 +40,9 @@ public:
   VExpression *ind;
   bool AddressRequested;
   bool IsAssign;
+  bool skipBoundsChecking; // in range foreach, we can skip this
 
-  VArrayElement (VExpression *AOp, VExpression *AInd, const TLocation &ALoc);
+  VArrayElement (VExpression *AOp, VExpression *AInd, const TLocation &ALoc, bool aSkipBounds=false);
   virtual ~VArrayElement () override;
   VExpression *InternalResolve (VEmitContext &ec, bool assTarget);
   virtual VExpression *SyntaxCopy () override;

@@ -31,7 +31,7 @@
 //  VArrayElement::VArrayElement
 //
 //==========================================================================
-VArrayElement::VArrayElement (VExpression *AOp, VExpression *AInd, const TLocation &ALoc)
+VArrayElement::VArrayElement (VExpression *AOp, VExpression *AInd, const TLocation &ALoc, bool aSkipBounds)
   : VExpression(ALoc)
   , genStringAssign(false)
   , sval(nullptr)
@@ -39,6 +39,7 @@ VArrayElement::VArrayElement (VExpression *AOp, VExpression *AInd, const TLocati
   , ind(AInd)
   , AddressRequested(false)
   , IsAssign(false)
+  , skipBoundsChecking(aSkipBounds)
 {
   if (!ind) {
     ParseError(Loc, "Expression expected");
@@ -85,6 +86,7 @@ void VArrayElement::DoSyntaxCopyTo (VExpression *e) {
   res->ind = (ind ? ind->SyntaxCopy() : nullptr);
   res->AddressRequested = AddressRequested;
   res->IsAssign = IsAssign;
+  res->skipBoundsChecking = skipBoundsChecking;
 }
 
 
@@ -127,7 +129,7 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
 
   if (op->Type.IsAnyArray()) {
     // check bounds for static arrays
-    if (ind->IsIntConst()) {
+    if (!skipBoundsChecking && ind->IsIntConst()) {
       if (ind->GetIntConst() < 0) {
         ParseError(Loc, "Negative array index");
         delete this;
@@ -326,9 +328,9 @@ void VArrayElement::Emit (VEmitContext &ec) {
     } else if (op->Type.Type == TYPE_SliceArray) {
       ec.AddStatement(OPC_SliceElement, RealType, Loc);
     } else {
-      // skip bounds checking for integer literals: it is already done in `Resolve()`
-      if (!ind->IsIntConst()) {
-        ec.AddStatement(OPC_CheckArrayBounds, op->Type.ArrayDim, Loc);
+      if (!skipBoundsChecking) {
+        // skip bounds checking for integer literals: it is already done in `Resolve()`
+        if (!ind->IsIntConst()) ec.AddStatement(OPC_CheckArrayBounds, op->Type.ArrayDim, Loc);
       }
       ec.AddStatement(OPC_ArrayElement, RealType, Loc);
     }
