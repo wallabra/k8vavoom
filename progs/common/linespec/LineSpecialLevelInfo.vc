@@ -6995,7 +6995,7 @@ final class<EntityEx> GetClassFromID(int ID)
   class Cls;
   if (ID)
   {
-    foreach (AllClasses(EntityEx, Cls))
+    foreach AllClasses(EntityEx, Cls)
     {
       if (class<EntityEx>(Cls).default.ConversationID == ID)
       {

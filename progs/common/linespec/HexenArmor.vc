@@ -111,9 +111,8 @@ bool AddArmorToSlot(EntityEx Toucher, int armortype, int amount)
   else
   {
     hits = itof(amount) * 5.0;
-    float total = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
-    float max = SlotsIncrement[0] + SlotsIncrement[1] +
-      SlotsIncrement[2] + SlotsIncrement[3] + SlotsIncrement[4] + 20.0;
+    float total = Slots[0]+Slots[1]+Slots[2]+Slots[3]+Slots[4];
+    float max = SlotsIncrement[0]+SlotsIncrement[1]+SlotsIncrement[2]+SlotsIncrement[3]/*+SlotsIncrement[4]*/+20.0; //k8: [4]?
     if (total < max)
     {
       Slots[armortype] += hits;
