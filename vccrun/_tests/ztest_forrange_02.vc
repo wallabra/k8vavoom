@@ -1,0 +1,32 @@
+class Main : Object;
+
+struct Item {
+  string text;
+  bool checked;
+  int tag;
+}
+
+protected array!Item mItems;
+
+void main () {
+  mItems.length += 1;
+  mItems[$-1].tag = 666;
+  mItems.length += 1;
+  mItems[$-1].tag = 42;
+  mItems.length += 1;
+  mItems[$-1].tag = 69;
+  mItems.length += 1;
+  mItems[$-1].tag = 999;
+
+  //writeln(arr.length);
+
+  //writeln("============"); foreach (auto idx, auto val; arr) writeln("idx=", idx, "; val=", val);
+
+  writeln("============");
+  foreach (auto idx, ref auto val; mItems) {
+    val.tag += 1000;
+    writeln("idx=", idx, "; tag=", val.tag);
+  }
+
+  writeln("============"); foreach (auto idx, ref auto val; mItems) writeln("idx=", idx, "; tag=", val.tag);
+}
