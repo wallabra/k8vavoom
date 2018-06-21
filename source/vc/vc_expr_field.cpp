@@ -364,29 +364,40 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     return e->Resolve(ec);
   }
 
-  if (op->Type.Type == TYPE_DynamicArray) {
+  if (op->Type.Type == TYPE_DynamicArray &&
+      (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length))
+  {
     delete opcopy; // we never ever need opcopy here
     opcopy = nullptr; // just in case
     //VFieldType type = op->Type;
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
-    if (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length) {
-      if (assType == AssType::AssTarget) {
-        VExpression *e = new VDynArraySetNum(op, nullptr, Loc);
-        op = nullptr;
-        delete this;
-        return e->Resolve(ec);
-      } else {
-        VExpression *e = new VDynArrayGetNum(op, Loc);
-        op = nullptr;
-        delete this;
-        return e->Resolve(ec);
-      }
+    if (assType == AssType::AssTarget) {
+      VExpression *e = new VDynArraySetNum(op, nullptr, Loc);
+      op = nullptr;
+      delete this;
+      return e->Resolve(ec);
     } else {
-      ParseError(Loc, "No such field %s", *FieldName);
+      VExpression *e = new VDynArrayGetNum(op, Loc);
+      op = nullptr;
+      delete this;
+      return e->Resolve(ec);
+    }
+  }
+
+  if (op->Type.Type == TYPE_Array &&
+      (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length))
+  {
+    delete opcopy; // we never ever need opcopy here
+    opcopy = nullptr; // just in case
+    if (assType == AssType::AssTarget) {
+      ParseError(Loc, "Cannot change length of static array");
       delete this;
       return nullptr;
     }
+    VExpression *e = new VIntLiteral(op->Type.ArrayDim, Loc);
+    delete this;
+    return e->Resolve(ec);
   }
 
   if (op->Type.Type == TYPE_String) {
