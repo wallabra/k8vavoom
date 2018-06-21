@@ -23,7 +23,7 @@
 //**
 //**************************************************************************
 
-#define DO_GUARD    1
+#define DO_GUARD    0
 #define DO_CHECK    1
 
 #ifdef PARANOID
@@ -102,10 +102,13 @@ protected:
 #endif
 
 
-#if defined(_DEBUG) || !DO_GUARD
-# define guard(name)    { static const char __FUNC_NAME__[] = #name; {
-# define unguard        }}
-# define unguardf(msg)  }}
+/* #if defined(_DEBUG) || !DO_GUARD */
+
+
+#if !DO_GUARD
+# define guard(name)    {
+# define unguard        }
+# define unguardf(msg)  }
 #elif defined(USE_GUARD_SIGNAL_CONTEXT)
 # define guard(name)    { \
     static const char __FUNC_NAME__[] = #name; \
