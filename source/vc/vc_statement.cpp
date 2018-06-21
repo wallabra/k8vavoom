@@ -1010,7 +1010,13 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
     wasError = true;
   }
 
-  if (!wasError && !varR->Type.CheckMatch(Loc, arrR->Type.GetArrayInnerType())) wasError = true;
+  if (!wasError) {
+    if (isRef) {
+      wasError = !varR->Type.MakePointerType().CheckMatch(Loc, arrR->Type.GetArrayInnerType().MakePointerType());
+    } else {
+      wasError = !varR->Type.CheckMatch(Loc, arrR->Type.GetArrayInnerType());
+    }
+  }
 
   // generate faster code for static arrays
   bool isStaticArray = (arrR->Type.Type == TYPE_Array);

@@ -1926,21 +1926,30 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynArrayElement)
-        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) { cstDump(ip); Sys_Error("Index outside the bounds of an array"); }
+        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) {
+          cstDump(ip);
+          Sys_Error("Index %d outside the bounds of an array (%d)", sp[-1].i, ((VScriptArray *)sp[-2].p)->Num());
+        }
         sp[-2].p = ((VScriptArray *)sp[-2].p)->Ptr()+sp[-1].i*ReadInt32(ip+1);
         ip += 5;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynArrayElementS)
-        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) { cstDump(ip); Sys_Error("Index outside the bounds of an array"); }
+        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) {
+          cstDump(ip);
+          Sys_Error("Index %d outside the bounds of an array (%d)", sp[-1].i, ((VScriptArray *)sp[-2].p)->Num());
+        }
         sp[-2].p = ((VScriptArray *)sp[-2].p)->Ptr()+sp[-1].i*ReadInt16(ip+1);
         ip += 3;
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynArrayElementB)
-        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) { cstDump(ip); Sys_Error("Index outside the bounds of an array"); }
+        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) {
+          cstDump(ip);
+          Sys_Error("Index %d outside the bounds of an array (%d)", sp[-1].i, ((VScriptArray *)sp[-2].p)->Num());
+        }
         sp[-2].p = ((VScriptArray *)sp[-2].p)->Ptr()+sp[-1].i*ip[1];
         ip += 2;
         --sp;
