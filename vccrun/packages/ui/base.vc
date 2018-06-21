@@ -1,3 +1,14 @@
+/**************************************************************************
+ *    This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 3
+ *  of the License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ **************************************************************************/
 class Widget : Object;
 
 
@@ -122,8 +133,9 @@ void focusSelf () {
   if (root.mFocused == self) return;
   if (!isFocusable) return;
   if (mFocusable) {
-    foreach (int f; 0..mChildren.length) {
-      Widget w = mChildren[f].findFocusFirst();
+    foreach (auto w; mChildren) {
+      if (!w) continue;
+      w = w.findFocusFirst();
       if (w && w.mFocusable) { w.focusSelf(); return; }
     }
   }
@@ -140,7 +152,7 @@ void focusSelf () {
 // ////////////////////////////////////////////////////////////////////////// //
 Widget findFocusFirst () {
   Widget fw = none;
-  foreach (int f; 0..mChildren.length) {
+  foreach (auto f; 0..mChildren.length) {
     Widget w = mChildren[f].findFocusFirst();
     if (w) return w;
     if (!fw && mChildren[f].mFocusable) fw = w;
@@ -222,9 +234,8 @@ Widget findFocusNextHereAndDown () {
 // coords are local
 final Widget findFocusableAt (int x, int y) {
   if (x < 0 || y < 0 || x >= mWidth || y >= mHeight) return none;
-  foreach (int f; 0..mChildren.length; reverse) {
-    Widget w = mChildren[f];
-    if (x >= w.mX && y >= w.mY && x < w.mX+w.mWidth && y < w.mY+w.mHeight) {
+  foreach (auto w; mChildren; reverse) {
+    if (w && x >= w.mX && y >= w.mY && x < w.mX+w.mWidth && y < w.mY+w.mHeight) {
       if (!w.isFocusable) return none;
       return w.findFocusableAt(x-w.mX, y-w.mY);
     }
@@ -237,9 +248,8 @@ final Widget findFocusableAt (int x, int y) {
 // coords are local
 final Widget findControlAt (int x, int y) {
   if (x < 0 || y < 0 || x >= mWidth || y >= mHeight) return none;
-  foreach (int f; 0..mChildren.length; reverse) {
-    Widget w = mChildren[f];
-    if (x >= w.mX && y >= w.mY && x < w.mX+w.mWidth && y < w.mY+w.mHeight) {
+  foreach (auto w; mChildren; reverse) {
+    if (w && x >= w.mX && y >= w.mY && x < w.mX+w.mWidth && y < w.mY+w.mHeight) {
       return w.findControlAt(x-w.mX, y-w.mY);
     }
   }
@@ -307,8 +317,7 @@ void paintAt (int x0, int y0) {
   if (Video.scissorCombine(x0, y0, mWidth, mHeight)) {
     prePaintAt(x0, y0);
     selfPaintAt(x0, y0);
-    foreach (int f; 0..mChildren.length) {
-      Widget w = mChildren[f];
+    foreach (auto w; mChildren) {
       if (w) w.paintAt(x0+w.mX, y0+w.mY);
     }
     postPaintAt(x0, y0);
@@ -427,19 +436,21 @@ bool onEvent (ref event_t evt) {
 protected final void calcFixMinDims (out int w, out int h) {
   w = 0;
   h = 0;
-  foreach (int f; 0..mChildren.length) {
-    Widget c = mChildren[f];
+  bool first = true;
+  foreach (auto c; mChildren) {
+    if (!c) continue;
     int cw, ch;
     c.calcFixMinDims(cw, ch);
     if (mHoriz) {
-      if (f && cw) cw += max(0, hpadding);
+      if (!first && cw) cw += max(0, hpadding);
       w += max(0, cw);
       h = max(h, ch);
     } else {
-      if (f && ch) ch += max(0, vpadding);
+      if (first && ch) ch += max(0, vpadding);
       w = max(w, cw);
       h += max(0, ch);
     }
+    first = false;
   }
   w = max(w, max(mWidth, mBaseWidth));
   h = max(h, max(mHeight, mBaseHeight));
@@ -458,19 +469,21 @@ protected final void layoutInternal () {
   // calc children size and flex numbers
   int w = 0, h = 0;
   int flexTotal = 0;
-  foreach (int f; 0..mlen) {
-    Widget c = mChildren[f];
+  bool first = true;
+  foreach (auto c; mChildren) {
+    if (!c) continue;
     int cw = max(0, c.mWidth), ch = max(0, c.mHeight);
     if (mHoriz) {
-      if (f) cw += pad;
+      if (!first) cw += pad;
       w += max(0, cw);
       h = max(h, ch);
     } else {
-      if (f) ch += pad;
+      if (!first) ch += pad;
       w = max(w, cw);
       h += max(0, ch);
     }
     flexTotal += max(0, c.flex);
+    first = false;
   }
 
   /*
@@ -484,8 +497,8 @@ protected final void layoutInternal () {
   while (flexTotal && spaceLeft > 0) {
     //writeln(" flexpass: spaceLeft=", spaceLeft);
     int origSpace = spaceLeft;
-    foreach (int f; 0..mlen) {
-      Widget c = mChildren[f];
+    foreach (auto c; mChildren) {
+      if (!c) continue;
       if (c.flex > 0) {
         int n = origSpace*c.flex/flexTotal;
         //writeln(" child #", f, ": n=", n);
@@ -494,8 +507,8 @@ protected final void layoutInternal () {
       }
     }
     if (origSpace == spaceLeft) {
-      foreach (int f; 0..mlen) {
-        Widget c = mChildren[f];
+      foreach (auto c; mChildren) {
+        if (!c) continue;
         if (c.flex > 0) {
           if (mHoriz) c.mWidth += 1; else c.mHeight += 1;
           spaceLeft -= 1;
@@ -508,8 +521,8 @@ protected final void layoutInternal () {
 
   // fix children positions
   int curpos = 0;
-  foreach (int f; 0..mlen) {
-    Widget c = mChildren[f];
+  foreach (auto c; mChildren) {
+    if (!c) continue;
     if (mHoriz) {
       c.mX = curpos;
       curpos += max(0, c.mWidth)+pad;
@@ -550,7 +563,7 @@ protected final void layoutInternal () {
   }
 
   // and ask children to layout their children
-  foreach (int f; 0..mlen) mChildren[f].layoutInternal();
+  foreach (auto c; mChildren) if (c) c.layoutInternal();
 }
 
 

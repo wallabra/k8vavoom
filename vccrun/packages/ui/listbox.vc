@@ -1,3 +1,14 @@
+/**************************************************************************
+ *    This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 3
+ *  of the License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ **************************************************************************/
 // listbox
 class WidgetListBox : Widget;
 
@@ -84,7 +95,7 @@ protected override void selfPaintAt (int x0, int y0) {
   Video.fontName = fontName;
   int th = Video.textHeight("W");
   int y = y0+1-mSkipY;
-  foreach (int f; 0..mItems.length) {
+  foreach (int f, ref auto it; mItems) {
     if (f == mCurrItem) {
       Video.color = (focused ? mFcSelBackColor : mSelBackColor);
       Video.fillRect(x0+1, y, mWidth, th-1);
@@ -92,7 +103,7 @@ protected override void selfPaintAt (int x0, int y0) {
     } else {
       Video.color = (focused ? mFcTextColor : mTextColor);
     }
-    Video.drawTextAt(x0+1, y, mItems[f].text);
+    Video.drawTextAt(x0+1, y, it.text);
     y += th;
   }
 }
@@ -127,39 +138,39 @@ override bool onEvent (ref event_t evt) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 int textColor {
-  get { return mTextColor; }
+  get mTextColor;
   set { if (mTextColor != value) { mTextColor = value; setDirty(); } }
 }
 
 int selTextColor {
-  get { return mSelTextColor; }
+  get mSelTextColor;
   set { if (mSelTextColor != value) { mSelTextColor = value; setDirty(); } }
 }
 
 int selBackColor {
-  get { return mSelBackColor; }
+  get mSelBackColor;
   set { if (mSelBackColor != value) { mSelBackColor = value; setDirty(); } }
 }
 
 int textColorFocused {
-  get { return mFcTextColor; }
+  get mFcTextColor;
   set { if (mFcTextColor != value) { mFcTextColor = value; setDirty(); } }
 }
 
 int selTextColorFocused {
-  get { return mFcSelTextColor; }
+  get mFcSelTextColor;
   set { if (mFcSelTextColor != value) { mFcSelTextColor = value; setDirty(); } }
 }
 
 int selBackColorFocused {
-  get { return mFcSelBackColor; }
+  get mFcSelBackColor;
   set { if (mFcSelBackColor != value) { mFcSelBackColor = value; setDirty(); } }
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 int currItemIndex {
-  get { return mCurrItem; }
+  get mCurrItem;
   set {
     if (mItems.length) {
       value = clamp(value, 0, mItems.length-1);
