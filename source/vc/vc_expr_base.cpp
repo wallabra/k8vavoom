@@ -322,32 +322,53 @@ bool VExpression::IsSliceType () const { return false; }
 // ////////////////////////////////////////////////////////////////////////// //
 // memory allocation
 vuint32 VExpression::TotalMemoryUsed = 0;
+vuint32 VExpression::CurrMemoryUsed = 0;
+vuint32 VExpression::PeakMemoryUsed = 0;
+vuint32 VExpression::TotalMemoryFreed = 0;
+bool VExpression::InCompilerCleanup = false;
+
 
 void *VExpression::operator new (size_t size) {
-  if (size == 0) size = 1;
-  void *res = malloc(size);
+  //if (size == 0) size = 1;
+  size_t *res = (size_t *)malloc(size+sizeof(size_t));
   if (!res) { fprintf(stderr, "\nFATAL: OUT OF MEMORY!\n"); *(int *)0 = 0; }
-  memset(res, 0, size);
+  *res = size;
+  ++res;
+  if (size) memset(res, 0, size);
   TotalMemoryUsed += (vuint32)size;
+  CurrMemoryUsed += (vuint32)size;
+  if (PeakMemoryUsed < CurrMemoryUsed) PeakMemoryUsed = CurrMemoryUsed;
   return res;
 }
 
 
 void *VExpression::operator new[] (size_t size) {
-  if (size == 0) size = 1;
-  void *res = malloc(size);
+  //if (size == 0) size = 1;
+  size_t *res = (size_t *)malloc(size+sizeof(size_t));
   if (!res) { fprintf(stderr, "\nFATAL: OUT OF MEMORY!\n"); *(int *)0 = 0; }
-  memset(res, 0, size);
+  *res = size;
+  ++res;
+  if (size) memset(res, 0, size);
   TotalMemoryUsed += (vuint32)size;
+  CurrMemoryUsed += (vuint32)size;
+  if (PeakMemoryUsed < CurrMemoryUsed) PeakMemoryUsed = CurrMemoryUsed;
   return res;
 }
 
 
 void VExpression::operator delete (void *p) {
-  if (p) free(p);
+  if (p) {
+    if (InCompilerCleanup) TotalMemoryFreed += (vuint32)*((size_t *)p-1);
+    CurrMemoryUsed -= (vuint32)*((size_t *)p-1);
+    free(((size_t *)p-1));
+  }
 }
 
 
 void VExpression::operator delete[] (void *p) {
-  if (p) free(p);
+  if (p) {
+    if (InCompilerCleanup) TotalMemoryFreed += (vuint32)*((size_t *)p-1);
+    CurrMemoryUsed -= (vuint32)*((size_t *)p-1);
+    free(((size_t *)p-1));
+  }
 }

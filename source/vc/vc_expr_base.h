@@ -34,6 +34,10 @@ public:
   int Flags;
   TLocation Loc;
   static vuint32 TotalMemoryUsed;
+  static vuint32 CurrMemoryUsed;
+  static vuint32 PeakMemoryUsed;
+  static vuint32 TotalMemoryFreed;
+  static bool InCompilerCleanup;
 
 protected:
   VExpression () {} // used in SyntaxCopy
@@ -92,10 +96,10 @@ public:
   virtual bool IsSliceType () const;
   virtual bool IsDelegateType () const;
 
-  void *operator new (size_t size);
-  void *operator new[] (size_t size);
-  void operator delete (void *p);
-  void operator delete[] (void *p);
+  static void *operator new (size_t size);
+  static void *operator new[] (size_t size);
+  static void operator delete (void *p);
+  static void operator delete[] (void *p);
 
 protected:
   // `e` should be of correct type

@@ -54,10 +54,18 @@ VProperty::VProperty (VName AName, VMemberBase *AOuter, TLocation ALoc)
 //
 //==========================================================================
 VProperty::~VProperty () {
-  if (TypeExpr) {
-    delete TypeExpr;
-    TypeExpr = nullptr;
-  }
+  delete TypeExpr; TypeExpr = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VProperty::CompilerShutdown
+//
+//==========================================================================
+void VProperty::CompilerShutdown () {
+  VMemberBase::CompilerShutdown();
+  delete TypeExpr; TypeExpr = nullptr;
 }
 
 

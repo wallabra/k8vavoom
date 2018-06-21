@@ -48,10 +48,18 @@ VConstant::VConstant (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
 //
 //==========================================================================
 VConstant::~VConstant () {
-  if (ValueExpr) {
-    delete ValueExpr;
-    ValueExpr = nullptr;
-  }
+  delete ValueExpr; ValueExpr = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VConstant::CompilerShutdown
+//
+//==========================================================================
+void VConstant::CompilerShutdown () {
+  VMemberBase::CompilerShutdown();
+  delete ValueExpr; ValueExpr = nullptr;
 }
 
 

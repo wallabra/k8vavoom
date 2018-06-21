@@ -281,6 +281,20 @@ VPackage::~VPackage () {
 
 //==========================================================================
 //
+//  VPackage::CompilerShutdown
+//
+//==========================================================================
+void VPackage::CompilerShutdown () {
+  VMemberBase::CompilerShutdown();
+  ParsedConstants.clear();
+  ParsedStructs.clear();
+  ParsedClasses.clear();
+  ParsedDecorateImportClasses.clear();
+}
+
+
+//==========================================================================
+//
 //  VPackage::Serialise
 //
 //==========================================================================

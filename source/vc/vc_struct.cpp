@@ -52,7 +52,18 @@ VStruct::VStruct (VName AName, VMemberBase *AOuter, TLocation ALoc)
 
 //==========================================================================
 //
-//  VStruct::resolveAlias
+//  VStruct::CompilerShutdown
+//
+//==========================================================================
+void VStruct::CompilerShutdown () {
+  VMemberBase::CompilerShutdown();
+  AliasList.clear();
+}
+
+
+//==========================================================================
+//
+//  VStruct::ResolveAlias
 //
 //  returns `aname` for unknown alias, or `NAME_None` for alias loop
 //

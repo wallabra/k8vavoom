@@ -127,6 +127,8 @@ public:
   //VMethodParam (const VMethodParam &v);
   ~VMethodParam ();
 
+  void clear ();
+
   // WARNING: assignment and copy ctors WILL CREATE syntax copy of `TypeExpr`!!!
   //VMethodParam &operator = (const VMethodParam &v);
 };
@@ -177,6 +179,7 @@ public:
 
   VMethod (VName, VMemberBase *, TLocation);
   virtual ~VMethod () override;
+  virtual void CompilerShutdown () override;
 
   void Serialise (VStream &);
   bool Define ();

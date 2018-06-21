@@ -260,6 +260,7 @@ public:
   VClass (VName, VMemberBase *, const TLocation &);
   VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *AParent, EName AName, void (*ACtor) ());
   virtual ~VClass () override;
+  virtual void CompilerShutdown () override;
 
   // systemwide functions
   static VClass *FindClass (const char *);

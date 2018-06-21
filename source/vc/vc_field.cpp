@@ -57,10 +57,18 @@ VField::VField (VName AName, VMemberBase *AOuter, TLocation ALoc)
 //
 //==========================================================================
 VField::~VField () {
-  if (TypeExpr) {
-    delete TypeExpr;
-    TypeExpr = nullptr;
-  }
+  delete TypeExpr; TypeExpr = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VField::CompilerShutdown
+//
+//==========================================================================
+void VField::CompilerShutdown () {
+  VMemberBase::CompilerShutdown();
+  delete TypeExpr; TypeExpr = nullptr;
 }
 
 

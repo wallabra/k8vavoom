@@ -3276,9 +3276,33 @@ void VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
 
 //==========================================================================
 //
+//  comatoze
+//
+//==========================================================================
+static const char *comatoze (vuint32 n) {
+  static char buf[128];
+  int bpos = (int)sizeof(buf);
+  buf[--bpos] = 0;
+  int xcount = 0;
+  do {
+    if (xcount == 3) { buf[--bpos] = ','; xcount = 0; }
+    buf[--bpos] = '0'+n%10;
+    ++xcount;
+  } while ((n /= 10) != 0);
+  return &buf[bpos];
+}
+
+
+//==========================================================================
+//
 //  CompilerReportMemory
 //
 //==========================================================================
 void CompilerReportMemory () {
-  GCon->Logf("Compiler allocated %u bytes.", VExpression::TotalMemoryUsed);
+  //GCon->Logf("Compiler allocated %u bytes.", VExpression::TotalMemoryUsed);
+  GCon->Logf(NAME_Init, "Peak compiler memory usage: %s bytes.", comatoze(VExpression::PeakMemoryUsed));
+  GCon->Logf(NAME_Init, "Released compiler memory  : %s bytes.", comatoze(VExpression::TotalMemoryFreed));
+  if (VExpression::CurrMemoryUsed != 0) {
+    GCon->Logf(NAME_Init, "Compiler leaks %s bytes (this is harmless).", comatoze(VExpression::CurrMemoryUsed));
+  }
 }

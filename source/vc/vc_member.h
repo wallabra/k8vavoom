@@ -82,6 +82,8 @@ public:
   VMemberBase (vuint8, VName, VMemberBase *, const TLocation &);
   virtual ~VMemberBase ();
 
+  virtual void CompilerShutdown ();
+
   // accessors
   inline const char *GetName () const { return *Name; }
   inline const VName GetVName () const { return Name; }
@@ -109,6 +111,10 @@ public:
   static void StaticAddDefine (const char *);
 
   static void InitLexer (VLexer &lex);
+
+  // call this when you will definitely won't compile anything anymore
+  // this will free some AST leftovers and other intermediate compiler data
+  static void StaticCompilerShutdown ();
 
   static bool doAsmDump;
 

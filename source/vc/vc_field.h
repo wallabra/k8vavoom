@@ -65,6 +65,7 @@ public:
 
   VField (VName, VMemberBase *, TLocation);
   virtual ~VField () override;
+  virtual void CompilerShutdown () override;
 
   virtual void Serialise (VStream &) override;
   bool NeedsDestructor () const;

@@ -54,6 +54,7 @@ public:
 
   VProperty (VName, VMemberBase *, TLocation);
   virtual ~VProperty () override;
+  virtual void CompilerShutdown () override;
 
   virtual void Serialise (VStream &) override;
   bool Define();

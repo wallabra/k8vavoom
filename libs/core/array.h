@@ -99,6 +99,7 @@ public:
   }
   inline void setNum (int NewNum, bool bResize=true) { SetNum(NewNum, bResize); }
   inline void setLength (int NewNum, bool bResize=true) { SetNum(NewNum, bResize); }
+  inline void SetLength (int NewNum, bool bResize=true) { SetNum(NewNum, bResize); }
 
   void SetNumWithReserve (int NewNum) {
     check(NewNum >= 0);

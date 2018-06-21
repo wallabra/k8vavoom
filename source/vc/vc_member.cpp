@@ -104,6 +104,15 @@ VMemberBase::~VMemberBase () {
 
 //==========================================================================
 //
+//  VMemberBase::CompilerShutdown
+//
+//==========================================================================
+void VMemberBase::CompilerShutdown () {
+}
+
+
+//==========================================================================
+//
 //  VMemberBase::GetFullName
 //
 //==========================================================================
@@ -217,6 +226,18 @@ void VMemberBase::StaticExit () {
   VClass::GScriptIds.Clear();
   VClass::GSpriteNames.Clear();
   GObjInitialised = false;
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::StaticCompilerShutdown
+//
+//==========================================================================
+void VMemberBase::StaticCompilerShutdown () {
+  VExpression::InCompilerCleanup = true;
+  for (int i = 0; i < GMembers.length(); ++i) GMembers[i]->CompilerShutdown();
+  VExpression::InCompilerCleanup = false;
 }
 
 

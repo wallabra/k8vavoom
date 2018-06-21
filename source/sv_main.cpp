@@ -118,7 +118,6 @@ void SV_Init()
   ProcessDecorateScripts();
   ProcessDecalDefs();
   ProcessDehackedFiles();
-  CompilerReportMemory();
 
   for (int i = 0; i < VClass::GSpriteNames.Num(); ++i) R_InstallSprite(*VClass::GSpriteNames[i], i);
 
@@ -134,6 +133,10 @@ void SV_Init()
   P_InitSwitchList();
   P_InitTerrainTypes();
   InitLockDefs();
+
+  VMemberBase::StaticCompilerShutdown();
+  CompilerReportMemory();
+
   unguard;
 }
 

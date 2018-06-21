@@ -39,6 +39,7 @@ public:
 
   VConstant (VName, VMemberBase *, const TLocation &);
   virtual ~VConstant () override;
+  virtual void CompilerShutdown () override;
 
   virtual void Serialise (VStream &) override;
   bool Define ();

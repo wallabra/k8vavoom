@@ -140,18 +140,9 @@ VClass::VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *A
 //==========================================================================
 VClass::~VClass() {
   //guard(VClass::~VClass);
-  if (GameExpr) {
-    delete GameExpr;
-    GameExpr = nullptr;
-  }
-  if (MobjInfoExpr) {
-    delete MobjInfoExpr;
-    MobjInfoExpr = nullptr;
-  }
-  if (ScriptIdExpr) {
-    delete ScriptIdExpr;
-    ScriptIdExpr = nullptr;
-  }
+  delete GameExpr; GameExpr = nullptr;
+  delete MobjInfoExpr; MobjInfoExpr = nullptr;
+  delete ScriptIdExpr; ScriptIdExpr = nullptr;
 
   if (ClassVTable) {
     delete[] ClassVTable;
@@ -182,6 +173,24 @@ VClass::~VClass() {
     }
   }
   //unguard;
+}
+
+
+//==========================================================================
+//
+//  VClass::CompilerShutdown
+//
+//==========================================================================
+void VClass::CompilerShutdown () {
+  VMemberBase::CompilerShutdown();
+  delete GameExpr; GameExpr = nullptr;
+  delete MobjInfoExpr; MobjInfoExpr = nullptr;
+  delete ScriptIdExpr; ScriptIdExpr = nullptr;
+  Structs.clear();
+  Constants.clear();
+  Properties.clear();
+  StateLabelDefs.clear();
+  AliasList.clear();
 }
 
 

@@ -45,6 +45,20 @@ __attribute__((noreturn, format(printf, 1, 2))) void Host_Error (const char *err
 }
 
 
+static const char *comatoze (vuint32 n) {
+  static char buf[128];
+  int bpos = (int)sizeof(buf);
+  buf[--bpos] = 0;
+  int xcount = 0;
+  do {
+    if (xcount == 3) { buf[--bpos] = ','; xcount = 0; }
+    buf[--bpos] = '0'+n%10;
+    ++xcount;
+  } while ((n /= 10) != 0);
+  return &buf[bpos];
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 void PR_WriteOne (const VFieldType &type) {
   switch (type.Type) {
@@ -461,6 +475,13 @@ int main (int argc, char **argv) {
     DumpAsm();
     endtime = time(0);
     dprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
+    // free compiler memory
+    VMemberBase::StaticCompilerShutdown();
+    dprintf("Peak compiler memory usage: %s bytes.\n", comatoze(VExpression::PeakMemoryUsed));
+    dprintf("Released compiler memory  : %s bytes.\n", comatoze(VExpression::TotalMemoryFreed));
+    if (VExpression::CurrMemoryUsed != 0) {
+      dprintf("Compiler leaks %s bytes (this is harmless).\n", comatoze(VExpression::CurrMemoryUsed));
+    }
 
     VScriptArray scargs(scriptArgs);
     VClass *mklass = VClass::FindClass("Main");

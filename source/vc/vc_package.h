@@ -82,6 +82,7 @@ public:
   VPackage ();
   VPackage (VName InName);
   virtual ~VPackage () override;
+  virtual void CompilerShutdown () override;
 
   virtual void Serialise (VStream &) override;
 

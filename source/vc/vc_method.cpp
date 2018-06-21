@@ -87,7 +87,17 @@ VMethodParam &VMethodParam::operator = (const VMethodParam &v) {
 //
 //==========================================================================
 VMethodParam::~VMethodParam () {
-  if (TypeExpr) { delete TypeExpr; TypeExpr = nullptr; }
+  delete TypeExpr; TypeExpr = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VMethodParam::clear
+//
+//==========================================================================
+void VMethodParam::clear () {
+  delete TypeExpr; TypeExpr = nullptr;
 }
 
 
@@ -129,9 +139,22 @@ VMethod::VMethod (VName AName, VMemberBase *AOuter, TLocation ALoc)
 //==========================================================================
 VMethod::~VMethod() {
   //guard(VMethod::~VMethod);
-  if (ReturnTypeExpr) { delete ReturnTypeExpr; ReturnTypeExpr = nullptr; }
-  if (Statement) { delete Statement; Statement = nullptr; }
+  delete ReturnTypeExpr; ReturnTypeExpr = nullptr;
+  delete Statement; Statement = nullptr;
   //unguard;
+}
+
+
+//==========================================================================
+//
+//  VMethod::CompilerShutdown
+//
+//==========================================================================
+void VMethod::CompilerShutdown () {
+  VMemberBase::CompilerShutdown();
+  for (int f = 0; f < NumParams; ++f) Params[f].clear();
+  delete ReturnTypeExpr; ReturnTypeExpr = nullptr;
+  delete Statement; Statement = nullptr;
 }
 
 
@@ -392,8 +415,10 @@ void VMethod::Emit () {
   if (VMemberBase::doAsmDump) DumpAsm();
 
   // clear it here, 'cause why not?
+  /*
   delete Statement;
   Statement = nullptr;
+  */
 
   unguard;
 }
