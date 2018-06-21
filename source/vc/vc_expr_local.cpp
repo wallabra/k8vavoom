@@ -44,6 +44,7 @@ VLocalDecl::~VLocalDecl () {
   for (int i = 0; i < Vars.length(); ++i) {
     if (Vars[i].TypeExpr) { delete Vars[i].TypeExpr; Vars[i].TypeExpr = nullptr; }
     if (Vars[i].Value) { delete Vars[i].Value; Vars[i].Value = nullptr; }
+    if (Vars[i].TypeOfExpr) { delete Vars[i].TypeOfExpr; Vars[i].TypeOfExpr = nullptr; }
   }
 }
 
@@ -73,6 +74,7 @@ void VLocalDecl::DoSyntaxCopyTo (VExpression *e) {
     res->Vars[f] = Vars[f];
     if (res->Vars[f].TypeExpr) res->Vars[f].TypeExpr = Vars[f].TypeExpr->SyntaxCopy();
     if (res->Vars[f].Value) res->Vars[f].Value = Vars[f].Value->SyntaxCopy();
+    if (res->Vars[f].TypeOfExpr) res->Vars[f].TypeOfExpr = Vars[f].TypeOfExpr->SyntaxCopy();
   }
 }
 
@@ -118,17 +120,18 @@ void VLocalDecl::Declare (VEmitContext &ec) {
 
     // resolve automatic type
     if (e.TypeExpr->Type.Type == TYPE_Automatic) {
-      if (!e.Value) { fprintf(stderr, "VC INTERNAL COMPILER ERROR: automatic type without initializer!\n"); *(int*)0 = 0; }
+      VExpression *te = (e.Value ? e.Value : e.TypeOfExpr);
+      if (!te) { fprintf(stderr, "VC INTERNAL COMPILER ERROR: automatic type without initializer!\n"); *(int*)0 = 0; }
       // resolve type
-      auto res = e.Value->SyntaxCopy()->Resolve(ec);
+      auto res = te->SyntaxCopy()->Resolve(ec);
       if (!res) {
-        ParseError(e.Loc, "Cannot resolve type for identifier %s", *e.Name);
+        ParseError(e.Loc, "Cannot resolve type for identifier `%s`", *e.Name);
         delete e.TypeExpr; // delete old `automatic` type
-        e.TypeExpr = new VTypeExprSimple(TYPE_Void, e.Value->Loc);
+        e.TypeExpr = new VTypeExprSimple(TYPE_Void, te->Loc);
       } else {
         //fprintf(stderr, "*** automatic type resolved to `%s`\n", *(res->Type.GetName()));
         delete e.TypeExpr; // delete old `automatic` type
-        e.TypeExpr = VTypeExpr::NewTypeExpr(res->Type, e.Value->Loc);
+        e.TypeExpr = VTypeExpr::NewTypeExpr(res->Type, te->Loc);
         delete res;
       }
     }
@@ -137,10 +140,10 @@ void VLocalDecl::Declare (VEmitContext &ec) {
     if (!e.TypeExpr) continue;
 
     VFieldType Type = e.TypeExpr->Type;
-    if (Type.Type == TYPE_Void || Type.Type == TYPE_Automatic) ParseError(e.TypeExpr->Loc, "Bad variable type");
+    if (Type.Type == TYPE_Void || Type.Type == TYPE_Automatic) ParseError(e.TypeExpr->Loc, "Bad variable type for variable `%s`", *e.Name);
 
     VLocalVarDef &L = ec.AllocLocal(e.Name, Type, e.Loc);
-    L.ParamFlags = 0;
+    L.ParamFlags = (e.isRef ? FPARM_Ref : 0);
 
     // resolve initialisation
     if (e.Value) {

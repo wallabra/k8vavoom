@@ -23,8 +23,14 @@
 //**
 //**************************************************************************
 
-class VParser
-{
+class VParser {
+private:
+  enum LocalType {
+    LocalNormal,
+    LocalFor,
+    LocalForeach,
+  };
+
 private:
   VLexer &Lex;
   VPackage *Package;
@@ -37,7 +43,7 @@ private:
   VExpression *ParseDotMethodCall (VExpression *, VName, const TLocation &);
   VExpression *ParseBaseMethodCall (VName, const TLocation &);
   VExpression *ParseMethodCallOrCast (VName, const TLocation &);
-  VLocalDecl *ParseLocalVar (VExpression *TypeExpr, bool requireInit=false);
+  VLocalDecl *ParseLocalVar (VExpression *TypeExpr, LocalType lt=LocalNormal);
   VExpression *ParseExpressionPriority0 ();
   VExpression *ParseExpressionPriority1 ();
   VExpression *ParseExpressionPriority2 ();
@@ -54,6 +60,10 @@ private:
   VExpression *ParseExpressionPriority13 ();
   VExpression *ParseExpressionPriority14 (bool allowAssign=false);
   VExpression *ParseExpression (bool allowAssign=false);
+  VStatement *ParseForeachIterator (const TLocation &l);
+  bool ParseForeachOptions (); // returns `true` if `reversed` was found
+  VStatement *ParseForeachRange (const TLocation &l); // array or iota
+  VStatement *ParseForeach ();
   VStatement *ParseStatement ();
   VCompound *ParseCompoundStatement ();
   VExpression *ParseOptionalTypeDecl (EToken tkend); // used in things like `for (type var = ...)`

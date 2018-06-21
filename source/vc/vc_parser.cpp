@@ -115,7 +115,7 @@ VExpression *VParser::ParseMethodCallOrCast (VName Name, const TLocation &Loc) {
 //  VParser::ParseLocalVar
 //
 //==========================================================================
-VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, bool requireInit) {
+VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt) {
   guard(VParser::ParseLocalVar);
   VLocalDecl *Decl = new VLocalDecl(Lex.Location);
   bool isFirstVar = true;
@@ -126,13 +126,15 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, bool requireInit) {
     e.TypeExpr = ParseTypePtrs(e.TypeExpr);
     // check for `type[size] arr` syntax
     if (Lex.Check(TK_LBracket)) {
+      if (lt != LocalNormal) ParseError(Lex.Location, "Loop variable cannot be an array");
       // arrays cannot be initialized (it seems), so they cannot be automatic
-      if (TypeExpr->Type.Type == TYPE_Automatic) {
+      if (lt != LocalForeach && TypeExpr->Type.Type == TYPE_Automatic) {
         ParseError(Lex.Location, "Automatic variable requires initializer");
-        continue;
       }
       if (!isFirstVar) {
         ParseError(Lex.Location, "Only one array can be declared with `type[size] name` syntex");
+        delete e.TypeExpr;
+        e.TypeExpr = nullptr;
         continue;
       }
       isFirstVar = false;
@@ -143,6 +145,8 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, bool requireInit) {
       // name
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "Invalid identifier, variable name expected");
+        delete e.TypeExpr;
+        e.TypeExpr = nullptr;
         continue;
       }
       e.Loc = Lex.Location;
@@ -151,10 +155,7 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, bool requireInit) {
       // create it
       e.TypeExpr = new VFixedArrayType(e.TypeExpr, SE, SLoc);
       wasNewArray = true;
-      if (requireInit) {
-        ParseError(Lex.Location, "Initializer required, but arrays doesn't support initialization");
-        continue;
-      }
+      if (lt == LocalFor) ParseError(Lex.Location, "Initializer required, but arrays doesn't support initialization");
     } else {
       // normal (and old-style array) syntax
       if (wasNewArray) {
@@ -165,41 +166,47 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, bool requireInit) {
 
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "Invalid identifier, variable name expected");
+        delete e.TypeExpr;
+        e.TypeExpr = nullptr;
         continue;
       }
       e.Loc = Lex.Location;
       e.Name = Lex.Name;
       Lex.NextToken();
 
-      if (requireInit && Lex.Token != TK_Assign) {
+      if (lt == LocalFor && Lex.Token != TK_Assign) {
         ParseError(Lex.Location, "Initializer required");
+        delete e.TypeExpr;
+        e.TypeExpr = nullptr;
         continue;
       }
 
       if (Lex.Check(TK_LBracket)) {
+        if (lt != LocalNormal) ParseError(Lex.Location, "Foreach variable cannot be an array");
         // arrays cannot be initialized (it seems), so they cannot be automatic
-        if (TypeExpr->Type.Type == TYPE_Automatic) {
+        if (lt != LocalForeach && TypeExpr->Type.Type == TYPE_Automatic) {
           ParseError(Lex.Location, "Automatic variable requires initializer");
-          continue;
         }
         TLocation SLoc = Lex.Location;
         VExpression *SE = ParseExpression();
         Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
         e.TypeExpr = new VFixedArrayType(e.TypeExpr, SE, SLoc);
       }
-      // Initialisation
-      else if (Lex.Check(TK_Assign)) {
+
+      // initialisation
+      if (Lex.Token == TK_Assign) {
+        if (lt == LocalForeach) ParseError(Lex.Location, "Foreach variable cannot be initialized");
+        Lex.NextToken();
         e.Value = ParseExpressionPriority13();
-      }
-      else {
-        // automatic type cannot be declared without initializer
-        if (TypeExpr->Type.Type == TYPE_Automatic) {
+      } else {
+        // automatic type cannot be declared without initializer if it is outside `foreach`
+        if (lt != LocalForeach && TypeExpr->Type.Type == TYPE_Automatic) {
           ParseError(Lex.Location, "Automatic variable requires initializer");
-          continue;
         }
       }
     }
     Decl->Vars.Append(e);
+    if (lt != LocalNormal) break; // only one
   } while (Lex.Check(TK_Comma));
   delete TypeExpr;
   TypeExpr = nullptr;
@@ -870,6 +877,205 @@ VExpression *VParser::ParseOptionalTypeDecl (EToken tkend) {
 
 //==========================================================================
 //
+//  VParser::ParseForeachIterator
+//
+//  `foreach` is just eaten
+//  `l` is `foreach` location
+//
+//==========================================================================
+VStatement *VParser::ParseForeachIterator (const TLocation &l) {
+  // `foreach expr statement`
+  VExpression *expr = ParseExpression();
+  if (!expr) ParseError(Lex.Location, "Iterator expression expected");
+  VStatement *st = ParseStatement();
+  return new VForeach(expr, st, l);
+}
+
+
+//==========================================================================
+//
+//  VParser::ParseForeachIterator
+//
+//  returns `true` if `reversed` was found
+//  lexer should be at semicolon on rparen
+//
+//==========================================================================
+bool VParser::ParseForeachOptions () {
+  if (!Lex.Check(TK_Semicolon)) return false;
+  // allow empty options
+  if (Lex.Token == TK_RParen) return false;
+  if (Lex.Token != TK_Identifier) {
+    ParseError(Lex.Location, "`reverse` expected");
+    return false;
+  }
+  if (Lex.Name == "reverse" || Lex.Name == "reversed" || Lex.Name == "backward") {
+    Lex.NextToken();
+    return true;
+  }
+  if (Lex.Name == "forward") {
+    Lex.NextToken();
+    return false;
+  }
+  ParseError(Lex.Location, "`reverse` expected, got `%s`", *Lex.Name);
+  Lex.NextToken();
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VParser::ParseForeachIterator
+//
+//  `foreach` and lparen are just eaten
+//  `l` is `foreach` location
+//
+//==========================================================================
+VStatement *VParser::ParseForeachRange (const TLocation &l) {
+  // optional `ref`
+  auto refloc = Lex.Location;
+  bool hasRef = Lex.Check(TK_Ref);
+
+  // parse loop var
+  VLocalDecl *decl = nullptr;
+  VExpression *vexpr = nullptr;
+  auto vtype = ParseOptionalTypeDecl(TK_Semicolon);
+  if (vtype) {
+    decl = ParseLocalVar(vtype, LocalForeach);
+    if (decl && decl->Vars.length() != 1) {
+      ParseError(decl->Loc, "Only one variable declaration expected");
+      vexpr = new VIntLiteral(0, decl->Loc);
+      delete decl;
+      decl = nullptr;
+    } else if (!decl) {
+      ParseError(Lex.Location, "Variable declaration expected");
+      vexpr = new VIntLiteral(0, Lex.Location);
+    } else {
+      // create vexpr to make the following code cleaner
+      vexpr = new VSingleName(decl->Vars[0].Name, decl->Loc);
+    }
+  } else {
+    vexpr = ParseExpression(false);
+  }
+
+  // range foreach can have second var, check for it
+  VLocalDecl *decl2 = nullptr;
+  VExpression *vexpr2 = nullptr;
+  if (Lex.Check(TK_Comma)) {
+    // first is index, it should not have `ref`
+    if (hasRef) ParseError(refloc, "`ref` is not allowed for range index");
+    // but value var can has ref
+    refloc = Lex.Location;
+    hasRef = Lex.Check(TK_Ref);
+    vtype = ParseOptionalTypeDecl(TK_Semicolon);
+    if (vtype) {
+      decl2 = ParseLocalVar(vtype, LocalForeach);
+      if (decl2 && decl2->Vars.length() != 1) {
+        ParseError(decl2->Loc, "Only one variable declaration expected");
+        vexpr2 = new VIntLiteral(0, decl2->Loc);
+        delete decl2;
+        decl2 = nullptr;
+      } else if (!decl2) {
+        ParseError(Lex.Location, "Variable declaration expected");
+        vexpr2 = new VIntLiteral(0, Lex.Location);
+      } else {
+        // create vexpr to make the following code cleaner
+        vexpr2 = new VSingleName(decl2->Vars[0].Name, decl2->Loc);
+      }
+    } else {
+      vexpr2 = ParseExpression(false);
+    }
+  }
+
+  Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+
+  // lo or arr
+  VExpression *loarr = ParseExpression(false);
+
+  VStatement *res = nullptr; // for rewriting
+
+  // if we have `..`, this is iota
+  if (Lex.Check(TK_DotDot)) {
+    // fix loop var type
+    if (decl) decl->Vars[0].TypeOfExpr = new VIntLiteral(0, decl->Vars[0].Loc);
+    if (vexpr2) { ParseError(vexpr2->Loc, "No second variable allowed in iota foreach"); delete vexpr2; delete decl2; }
+    // iota
+    if (hasRef) { ParseError(refloc, "`ref` is not allowed for iota foreach index"); hasRef = false; }
+    VForeachIota *fei = new VForeachIota(l);
+    fei->var = vexpr;
+    fei->lo = loarr;
+    // parse limit
+    fei->hi = ParseExpression(false);
+    // check for `reversed`
+    fei->reversed = ParseForeachOptions();
+    Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+    // body
+    fei->statement = ParseStatement();
+    // done
+    res = fei;
+  } else {
+    // if we have no index var, move value var to *2
+    if (!decl2 && !vexpr2) {
+      vexpr2 = vexpr;
+      decl2 = decl;
+      vexpr = nullptr;
+      decl = nullptr;
+    }
+    // fix loop var type
+    if (decl) decl->Vars[0].TypeOfExpr = new VIntLiteral(0, decl->Vars[0].Loc);
+    // fix value var type
+    if (decl2) decl->Vars[0].TypeOfExpr = new VArrayElement(loarr, new VIntLiteral(0, decl->Vars[0].Loc), decl->Vars[0].Loc);
+    // array
+    if (hasRef && !decl2) {
+      ParseError(refloc, "`ref` is not allowed without real declaration");
+    } else {
+      decl2->Vars[0].isRef = hasRef;
+    }
+    VForeachArray *fer = new VForeachArray(vexpr, vexpr2, loarr, hasRef, l);
+    fer->reversed = ParseForeachOptions();
+    Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+    // body
+    fer->statement = ParseStatement();
+    // done
+    res = fer;
+  }
+
+  if (res && (decl || decl2)) {
+    // if we have a declaration, rewrite code a little:
+    //   { decl var; foreach (var; ..) }
+    VCompound *body = new VCompound(res->Loc);
+    if (decl) {
+      VLocalVarStatement *vdc = new VLocalVarStatement(decl);
+      body->Statements.append(vdc);
+    }
+    if (decl2) {
+      VLocalVarStatement *vdc = new VLocalVarStatement(decl2);
+      body->Statements.append(vdc);
+    }
+    body->Statements.append(res);
+    res = body;
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VParser::ParseForeach
+//
+//  `foreach` is NOT eaten
+//
+//==========================================================================
+VStatement *VParser::ParseForeach () {
+  auto l = Lex.Location;
+  Lex.NextToken();
+  // `foreach (var; lo..hi)` or `foreach ([ref] var; arr)`?
+  if (Lex.Check(TK_LParen)) return ParseForeachRange(l);
+  return ParseForeachIterator(l);
+}
+
+
+//==========================================================================
+//
 //  VParser::ParseStatement
 //
 //==========================================================================
@@ -932,7 +1138,7 @@ VStatement *VParser::ParseStatement () {
           auto vtype = ParseOptionalTypeDecl(TK_Assign);
           if (vtype) {
             needCompound = true; // wrap it
-            VLocalDecl *decl = ParseLocalVar(vtype, true);
+            VLocalDecl *decl = ParseLocalVar(vtype, LocalFor);
             if (!decl) break;
             For->InitExpr.append(new VDropResult(decl));
           } else {
@@ -978,69 +1184,7 @@ VStatement *VParser::ParseStatement () {
         }
       }
     case TK_Foreach:
-      Lex.NextToken();
-      // `foreach (var; lo..hi)`?
-      if (Lex.Check(TK_LParen)) {
-        VForeachIota *fei = new VForeachIota(l);
-        // parse var
-        VLocalDecl *decl = nullptr;
-        auto vtype = ParseOptionalTypeDecl(TK_Semicolon);
-        if (vtype) {
-          // fix type
-          if (vtype->Type.Type == TYPE_Automatic) vtype->Type.Type = TYPE_Int;
-          //fprintf(stderr, "type: <%s>\n", *vtype->Type.GetName()); abort();
-          decl = ParseLocalVar(vtype, false);
-          if (!decl) ParseError(Lex.Location, "Variable declaration expected");
-          fei->var = decl;
-        } else {
-          fei->var = ParseExpression(false);
-        }
-        Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-        // lo
-        fei->lo = ParseExpression(false);
-        // `..`
-        if (!Lex.Check(TK_DotDot)) ParseError(Lex.Location, "`..` expected");
-        // hi
-        fei->hi = ParseExpression(false);
-        // check for reversed
-        if (Lex.Check(TK_Semicolon)) {
-          if (Lex.Token != TK_RParen) {
-            if (Lex.Token != TK_Identifier) {
-              ParseError(Lex.Location, "`reverse` expected");
-            } else {
-              if (Lex.Name == "reverse" || Lex.Name == "reversed") {
-                fei->reversed = true;
-              } else if (Lex.Name == "forward") {
-                fei->reversed = false; // just4fun
-              } else {
-                ParseError(Lex.Location, "`reverse` expected, got `%s`", *Lex.Name);
-              }
-              Lex.NextToken();
-            }
-          }
-        }
-        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-        // body
-        fei->statement = ParseStatement();
-        // if we have a declaration, rewrite it all a little:
-        // { decl var; for (var; ..) }
-        if (decl) {
-          VCompound *body = new VCompound(fei->Loc);
-          VLocalVarStatement *vdc = new VLocalVarStatement(decl);
-          body->Statements.append(vdc);
-          fei->var = new VSingleName(decl->Vars[0].Name, decl->Loc);
-          body->Statements.append(fei);
-          return body;
-        } else {
-          return fei;
-        }
-      } else {
-        // `foreach expr statement`
-        VExpression *Expr = ParseExpression();
-        if (!Expr) ParseError(Lex.Location, "Iterator expression expected");
-        VStatement *Statement = ParseStatement();
-        return new VForeach(Expr, Statement, l);
-      }
+      return ParseForeach();
     case TK_Break:
       Lex.NextToken();
       Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);

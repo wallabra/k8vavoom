@@ -35,8 +35,10 @@ public:
   VName Name;
   TLocation Loc;
   VExpression *Value;
+  VExpression *TypeOfExpr; // for automatic vars w/o initializer, resolve this, and use its type
+  bool isRef; // for range foreach
 
-  VLocalEntry () : TypeExpr(nullptr), Name(NAME_None), Value(nullptr) {}
+  VLocalEntry () : TypeExpr(nullptr), Name(NAME_None), Value(nullptr), TypeOfExpr(nullptr), isRef(false) {}
 };
 
 

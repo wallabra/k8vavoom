@@ -213,6 +213,39 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VForeachArray : public VStatement {
+private:
+  VExpression *idxinit;
+  VExpression *hiinit;
+  VExpression *loopPreCheck;
+  VExpression *loopNext;
+  VExpression *loopLoad;
+
+public:
+  VExpression *idxvar; // index variable (can be null if hidden)
+  VExpression *var; // value variable
+  VExpression *arr; // array
+  VStatement *statement;
+  bool reversed;
+  bool isRef; // if `var` a reference?
+
+  VForeachArray (VExpression *aidxvar, VExpression *avar, VExpression *aarr, bool aIsRef, const TLocation &aloc);
+  virtual ~VForeachArray () override;
+  virtual VStatement *SyntaxCopy () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsEndsWithReturn () override;
+
+protected:
+  VForeachArray () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VSwitch : public VStatement {
 public:
   struct VCaseInfo {

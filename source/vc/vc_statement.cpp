@@ -905,6 +905,278 @@ bool VForeachIota::IsEndsWithReturn () {
 
 //==========================================================================
 //
+//  VForeachArray::VForeachArray
+//
+//==========================================================================
+VForeachArray::VForeachArray (VExpression *aidxvar, VExpression *avar, VExpression *aarr, bool aIsRef, const TLocation &aloc)
+  : VStatement(aloc)
+  , idxinit(nullptr)
+  , hiinit(nullptr)
+  , loopPreCheck(nullptr)
+  , loopNext(nullptr)
+  , loopLoad(nullptr)
+  , idxvar(aidxvar)
+  , var(avar)
+  , arr(aarr)
+  , statement(nullptr)
+  , reversed(false)
+  , isRef(aIsRef)
+{
+}
+
+
+//==========================================================================
+//
+//  VForeachArray::~VForeachArray
+//
+//==========================================================================
+VForeachArray::~VForeachArray () {
+  delete idxinit; idxinit = nullptr;
+  delete hiinit; hiinit = nullptr;
+  delete loopPreCheck; loopPreCheck = nullptr;
+  delete loopNext; loopNext = nullptr;
+  delete loopLoad; loopLoad = nullptr;
+  delete idxvar; idxvar = nullptr;
+  delete var; var = nullptr;
+  delete arr; arr = nullptr;
+  delete statement; statement = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VForeachArray::SyntaxCopy
+//
+//==========================================================================
+VStatement *VForeachArray::SyntaxCopy () {
+  //if (varinit || varnext || hiinit) FatalError("VC: `VForeachArray::SyntaxCopy()` called on resolved statement");
+  auto res = new VForeachArray();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VForeachArray::DoSyntaxCopyTo
+//
+//==========================================================================
+void VForeachArray::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VForeachArray *)e;
+  res->idxvar = (idxvar ? idxvar->SyntaxCopy() : nullptr);
+  res->var = (var ? var->SyntaxCopy() : nullptr);
+  res->arr = (arr ? arr->SyntaxCopy() : nullptr);
+  res->statement = (statement ? statement->SyntaxCopy() : nullptr);
+  res->reversed = reversed;
+  res->isRef = isRef;
+  // no need to copy private data here, as `SyntaxCopy()` should be called only on unresolved things
+}
+
+
+//==========================================================================
+//
+//  VForeachArray::DoFixSwitch
+//
+//==========================================================================
+void VForeachArray::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (statement) statement->DoFixSwitch(aold, anew);
+}
+
+
+//==========================================================================
+//
+//  VForeachArray::Resolve
+//
+//==========================================================================
+bool VForeachArray::Resolve (VEmitContext &ec) {
+  // we will rewrite 'em later
+  auto ivarR = (idxvar ? idxvar->SyntaxCopy()->Resolve(ec) : nullptr);
+  auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
+  auto arrR = (arr ? arr->SyntaxCopy()->Resolve(ec) : nullptr);
+  if (!statement || !varR || !arrR || (idxvar && !ivarR)) {
+    delete ivarR;
+    delete varR;
+    delete arrR;
+    return false;
+  }
+
+  if (ivarR && ivarR->Type.Type != TYPE_Int) {
+    ParseError(var->Loc, "Loop variable should be integer (got `%s`)", *ivarR->Type.GetName());
+    delete ivarR;
+    delete varR;
+    delete arrR;
+    return false;
+  }
+
+  if (!arrR->Type.IsAnyArray()) {
+    ParseError(var->Loc, "Array variable should be integer (got `%s`)", *varR->Type.GetName());
+    delete ivarR;
+    delete varR;
+    delete arrR;
+    return false;
+  }
+
+  if (!varR->Type.CheckMatch(Loc, arrR->Type.GetArrayInnerType())) {
+    delete ivarR;
+    delete varR;
+    delete arrR;
+    return false;
+  }
+
+  // we don't need 'em anymore
+  delete ivarR;
+  delete varR;
+  delete arrR;
+
+  /* this will compile to:
+   *   ivar = 0;
+   *   limit = arr.length;
+   *   if (ivar >= limit) goto end;
+   *  loop:
+   *   var = arr[limit];
+   *   body
+   *   if (++ivar < limit) goto loop;
+   */
+
+  // create hidden local for index (if necessary)
+  VExpression *index;
+  if (idxvar) {
+    index = idxvar->SyntaxCopy();
+  } else {
+    VLocalVarDef &L = ec.AllocLocal(NAME_None, VFieldType(TYPE_Int), Loc);
+    L.Visible = false; // it is unnamed, and hidden ;-)
+    L.ParamFlags = 0;
+    index = new VLocalVar(L.ldindex, L.Loc);
+  }
+  // initialize index
+  if (!reversed) {
+    // normal: 0
+    idxinit = new VAssignment(VAssignment::Assign, index->SyntaxCopy(), new VIntLiteral(0, index->Loc), index->Loc);
+  } else {
+    // reversed: $-1
+    VExpression *len = new VDotField(arr->SyntaxCopy(), VName("length"), index->Loc);
+    len = new VBinary(VBinary::EBinOp::Subtract, len, new VIntLiteral(1, index->Loc), len->Loc);
+    idxinit = new VAssignment(VAssignment::Assign, index->SyntaxCopy(), len, index->Loc);
+  }
+  idxinit = idxinit->Resolve(ec);
+  if (!idxinit) { delete index; return false; }
+
+  // create hidden local for higher bound, and initialize it (for reverse, just use 0)
+  VExpression *limit;
+  if (!reversed) {
+    // normal
+    VLocalVarDef &L = ec.AllocLocal(NAME_None, VFieldType(TYPE_Int), arr->Loc);
+    L.Visible = false; // it is unnamed, and hidden ;-)
+    L.ParamFlags = 0;
+    limit = new VLocalVar(L.ldindex, L.Loc);
+    // initialize hidden local with array length
+    VExpression *len = new VDotField(arr->SyntaxCopy(), VName("length"), arr->Loc);
+    hiinit = new VAssignment(VAssignment::Assign, limit->SyntaxCopy(), len, len->Loc);
+    hiinit = hiinit->Resolve(ec);
+    if (!hiinit) { delete limit; delete index; return false; }
+  } else {
+    limit = new VIntLiteral(0, arr->Loc);
+  }
+
+  if (!reversed) {
+    // normal
+    // create condition expression: `index < limit`
+    loopPreCheck = new VBinary(VBinary::EBinOp::Less, index->SyntaxCopy(), limit->SyntaxCopy(), Loc);
+
+    // create loop/check expression: `++index < limit`
+    loopNext = new VUnaryMutator(VUnaryMutator::PreInc, index->SyntaxCopy(), Loc);
+    loopNext = new VBinary(VBinary::EBinOp::Less, loopNext, limit->SyntaxCopy(), loopNext->Loc);
+  } else {
+    // reversed
+    // create condition expression: `index >= limit`
+    loopPreCheck = new VBinary(VBinary::EBinOp::GreaterEquals, index->SyntaxCopy(), limit->SyntaxCopy(), Loc);
+
+    // create loop/check expression: `index-- > limit`
+    loopNext = new VUnaryMutator(VUnaryMutator::PostDec, index->SyntaxCopy(), Loc);
+    loopNext = new VBinary(VBinary::EBinOp::Greater, loopNext, limit->SyntaxCopy(), loopNext->Loc);
+  }
+
+  // we don't need limit anymore
+  delete limit;
+
+  // create value load
+  loopLoad = new VArrayElement(arr->SyntaxCopy(), index->SyntaxCopy(), Loc);
+  loopLoad = new VDropResult(loopLoad);
+
+  // we don't need index anymore
+  delete index;
+
+  loopPreCheck = loopPreCheck->ResolveBoolean(ec);
+  if (!loopPreCheck) return false;
+
+  loopNext = loopNext->ResolveBoolean(ec);
+  if (!loopNext) return false;
+
+  loopLoad = loopLoad->Resolve(ec);
+  if (!loopLoad) return false;
+
+  // finally, resolve statement (last, so local reusing will work as expected)
+  return statement->Resolve(ec);
+}
+
+
+//==========================================================================
+//
+//  VForeachArray::DoEmit
+//
+//==========================================================================
+void VForeachArray::DoEmit (VEmitContext &ec) {
+  // set-up continues and breaks
+  VLabel OldStart = ec.LoopStart;
+  VLabel OldEnd = ec.LoopEnd;
+
+  // define labels
+  ec.LoopStart = ec.DefineLabel();
+  ec.LoopEnd = ec.DefineLabel();
+
+  VLabel Loop = ec.DefineLabel();
+
+  // emit initialisation expressions
+  if (hiinit) hiinit->Emit(ec); // may be absent for reverse loops
+  idxinit->Emit(ec);
+
+  // do first check
+  loopPreCheck->EmitBranchable(ec, ec.LoopEnd, false);
+
+  // actual loop
+  ec.MarkLabel(Loop);
+  // load value
+  loopLoad->Emit(ec);
+  // and emit loop body
+  statement->Emit(ec);
+
+  // loop next and test
+  ec.MarkLabel(ec.LoopStart); // continue will jump here
+  loopNext->EmitBranchable(ec, Loop, true);
+
+  // end of loop
+  ec.MarkLabel(ec.LoopEnd);
+
+  // restore continue and break state
+  ec.LoopStart = OldStart;
+  ec.LoopEnd = OldEnd;
+}
+
+
+//==========================================================================
+//
+//  VForeachArray::IsEndsWithReturn
+//
+//==========================================================================
+bool VForeachArray::IsEndsWithReturn () {
+  //TODO: endless fors should have at least one return instead
+  return (statement && statement->IsEndsWithReturn());
+}
+
+
+//==========================================================================
+//
 //  VSwitch::VSwitch
 //
 //==========================================================================
