@@ -77,6 +77,7 @@ public:
   int num;
   bool AddressRequested;
   bool PushOutParam;
+  vuint32 locSavedFlags; // local reusing can replace 'em
 
   VLocalVar (int ANum, const TLocation &ALoc);
   virtual VExpression *SyntaxCopy () override;
@@ -88,4 +89,6 @@ public:
 protected:
   VLocalVar () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
+
+  void genLocalValue (VEmitContext &ec, VLocalVarDef &loc, int xofs=0);
 };

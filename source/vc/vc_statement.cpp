@@ -915,6 +915,7 @@ VForeachArray::VForeachArray (VExpression *aidxvar, VExpression *avar, VExpressi
   , loopPreCheck(nullptr)
   , loopNext(nullptr)
   , loopLoad(nullptr)
+  , varaddr(nullptr)
   , idxvar(aidxvar)
   , var(avar)
   , arr(aarr)
@@ -936,6 +937,7 @@ VForeachArray::~VForeachArray () {
   delete loopPreCheck; loopPreCheck = nullptr;
   delete loopNext; loopNext = nullptr;
   delete loopLoad; loopLoad = nullptr;
+  delete varaddr; varaddr = nullptr;
   delete idxvar; idxvar = nullptr;
   delete var; var = nullptr;
   delete arr; arr = nullptr;
@@ -1013,6 +1015,17 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   // generate faster code for static arrays
   bool isStaticArray = (arrR->Type.Type == TYPE_Array);
   int staticLen = (isStaticArray ? arrR->Type.ArrayDim : 0);
+
+  // find local for ref
+  int indLocalVal = -1;
+  if (isRef) {
+    if (!varR->IsLocalVarExpr()) {
+      ParseError(var->Loc, "VC: something is very wrong with the compiler (VForeachArray::Resolve)");
+      wasError = true;
+    } else {
+      indLocalVal = ((VLocalVar *)varR)->num;
+    }
+  }
 
   // we don't need 'em anymore
   delete ivarR;
@@ -1097,10 +1110,21 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   // we don't need limit anymore
   delete limit;
 
-  // create value load
   loopLoad = new VArrayElement(arr->SyntaxCopy(), index->SyntaxCopy(), Loc, true); // we can skip bounds checking here
-  loopLoad = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), loopLoad, loopLoad->Loc);
-  loopLoad = new VDropResult(loopLoad);
+  // refvar code will be completed in our codegen
+  if (isRef) {
+    check(indLocalVal >= 0);
+    varaddr = new VLocalVar(indLocalVal, loopLoad->Loc);
+    varaddr = varaddr->Resolve(ec); // should not fail (i hope)
+    if (varaddr) {
+      varaddr->RequestAddressOf();
+      varaddr->RequestAddressOf();
+    }
+    loopLoad = new VUnary(VUnary::TakeAddress, loopLoad, loopLoad->Loc);
+  } else {
+    loopLoad = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), loopLoad, loopLoad->Loc);
+    loopLoad = new VDropResult(loopLoad);
+  }
 
   // we don't need index anymore
   delete index;
@@ -1153,7 +1177,9 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
   // actual loop
   ec.MarkLabel(Loop);
   // load value
+  if (isRef) varaddr->Emit(ec);
   loopLoad->Emit(ec);
+  if (isRef) ec.AddStatement(OPC_AssignPtrDrop, Loc);
   // and emit loop body
   statement->Emit(ec);
 

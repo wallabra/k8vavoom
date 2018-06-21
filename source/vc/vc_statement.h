@@ -220,6 +220,7 @@ private:
   VExpression *loopPreCheck;
   VExpression *loopNext;
   VExpression *loopLoad;
+  VExpression *varaddr;
 
 public:
   VExpression *idxvar; // index variable (can be null if hidden)

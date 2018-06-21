@@ -771,6 +771,16 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   guard(VInvocation::DoResolve);
   if (ec.Package->Name == NAME_decorate) CheckDecorateParams(ec);
 
+  if (DelegateLocal >= 0) {
+    //FIXME
+    VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
+    if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) {
+      ParseError(Loc, "ref locals arent supported yet (sorry)");
+      delete this;
+      return nullptr;
+    }
+  }
+
   int argc = (NumArgs > 0 ? NumArgs : 0);
   VExpression **argv = (argc > 0 ? new VExpression *[argc] : nullptr);
   for (int f = 0; f < argc; ++f) argv[f] = nullptr;

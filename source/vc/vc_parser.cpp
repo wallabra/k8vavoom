@@ -1024,13 +1024,12 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
     // fix loop var type
     if (decl) decl->Vars[0].TypeOfExpr = new VIntLiteral(0, decl->Vars[0].Loc);
     // fix value var type
-    if (decl2) decl2->Vars[0].TypeOfExpr = new VArrayElement(loarr->SyntaxCopy(), new VIntLiteral(0, decl2->Vars[0].Loc), decl2->Vars[0].Loc, true);
-    // array
-    if (hasRef && !decl2) {
-      ParseError(refloc, "`ref` is not allowed without real declaration");
-    } else {
+    if (decl2) {
+      decl2->Vars[0].TypeOfExpr = new VArrayElement(loarr->SyntaxCopy(), new VIntLiteral(0, decl2->Vars[0].Loc), decl2->Vars[0].Loc, true);
       decl2->Vars[0].isRef = hasRef;
     }
+    // array
+    if (hasRef && !decl2) ParseError(refloc, "`ref` is not allowed without real declaration");
     VForeachArray *fer = new VForeachArray(vexpr, vexpr2, loarr, hasRef, l);
     fer->reversed = ParseForeachOptions();
     Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);

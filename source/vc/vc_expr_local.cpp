@@ -113,7 +113,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
     if (ec.CheckForLocalVar(e.Name) != -1) {
       //VLocalVarDef &loc = ec.GetLocalByIndex(ec.CheckForLocalVar(e.Name));
       //fprintf(stderr, "duplicate '%s'(%d) (old(%d) is at %s:%d)\n", *e.Name, ec.GetCurrCompIndex(), loc.GetCompIndex(), *loc.Loc.GetSource(), loc.Loc.GetLine());
-      ParseError(e.Loc, "Redefined identifier %s", *e.Name);
+      ParseError(e.Loc, "Redefined identifier `%s`", *e.Name);
     } else {
       //fprintf(stderr, "NEW '%s'(%d) (%s:%d)\n", *e.Name, ec.GetCurrCompIndex(), *e.Loc.GetSource(), e.Loc.GetLine());
     }
@@ -144,6 +144,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
 
     VLocalVarDef &L = ec.AllocLocal(e.Name, Type, e.Loc);
     L.ParamFlags = (e.isRef ? FPARM_Ref : 0);
+    //if (e.isRef) fprintf(stderr, "*** <%s:%d> is REF\n", *e.Name, L.ldindex);
 
     // resolve initialisation
     if (e.Value) {
@@ -189,6 +190,7 @@ VLocalVar::VLocalVar (int ANum, const TLocation &ALoc)
   , num(ANum)
   , AddressRequested(false)
   , PushOutParam(false)
+  , locSavedFlags(0)
 {
 }
 
@@ -226,10 +228,11 @@ void VLocalVar::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VLocalVar::DoResolve (VEmitContext &ec) {
   VLocalVarDef &loc = ec.GetLocalByIndex(num);
+  locSavedFlags = loc.ParamFlags;
   Type = loc.Type;
   RealType = loc.Type;
   if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
-  PushOutParam = !!(loc.ParamFlags&(FPARM_Out|FPARM_Ref));
+  PushOutParam = !!(locSavedFlags&(FPARM_Out|FPARM_Ref));
   return this;
 }
 
@@ -251,6 +254,30 @@ void VLocalVar::RequestAddressOf () {
 
 //==========================================================================
 //
+//  VLocalVar::genLocalValue
+//
+//==========================================================================
+void VLocalVar::genLocalValue (VEmitContext &ec, VLocalVarDef &loc, int xofs) {
+  int Ofs = loc.Offset+xofs;
+  if (Ofs < 256) {
+         if (Ofs == 0) ec.AddStatement(OPC_LocalValue0, Loc);
+    else if (Ofs == 1) ec.AddStatement(OPC_LocalValue1, Loc);
+    else if (Ofs == 2) ec.AddStatement(OPC_LocalValue2, Loc);
+    else if (Ofs == 3) ec.AddStatement(OPC_LocalValue3, Loc);
+    else if (Ofs == 4) ec.AddStatement(OPC_LocalValue4, Loc);
+    else if (Ofs == 5) ec.AddStatement(OPC_LocalValue5, Loc);
+    else if (Ofs == 6) ec.AddStatement(OPC_LocalValue6, Loc);
+    else if (Ofs == 7) ec.AddStatement(OPC_LocalValue7, Loc);
+    else ec.AddStatement(OPC_LocalValueB, Ofs, Loc);
+  } else {
+    ec.EmitLocalAddress(Ofs, Loc);
+    ec.AddStatement(OPC_PushPointedPtr, Loc);
+  }
+}
+
+
+//==========================================================================
+//
 //  VLocalVar::Emit
 //
 //==========================================================================
@@ -258,25 +285,10 @@ void VLocalVar::Emit (VEmitContext &ec) {
   VLocalVarDef &loc = ec.GetLocalByIndex(num);
   if (AddressRequested) {
     ec.EmitLocalAddress(loc.Offset, Loc);
-  } else if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) {
-    if (loc.Offset < 256) {
-      int Ofs = loc.Offset;
-           if (Ofs == 0) ec.AddStatement(OPC_LocalValue0, Loc);
-      else if (Ofs == 1) ec.AddStatement(OPC_LocalValue1, Loc);
-      else if (Ofs == 2) ec.AddStatement(OPC_LocalValue2, Loc);
-      else if (Ofs == 3) ec.AddStatement(OPC_LocalValue3, Loc);
-      else if (Ofs == 4) ec.AddStatement(OPC_LocalValue4, Loc);
-      else if (Ofs == 5) ec.AddStatement(OPC_LocalValue5, Loc);
-      else if (Ofs == 6) ec.AddStatement(OPC_LocalValue6, Loc);
-      else if (Ofs == 7) ec.AddStatement(OPC_LocalValue7, Loc);
-      else ec.AddStatement(OPC_LocalValueB, Ofs, Loc);
-    } else {
-      ec.EmitLocalAddress(loc.Offset, Loc);
-      ec.AddStatement(OPC_PushPointedPtr, Loc);
-    }
+  } else if (locSavedFlags&(FPARM_Out|FPARM_Ref)) {
+    genLocalValue(ec, loc);
     if (PushOutParam) EmitPushPointedCode(loc.Type, ec);
   } else if (loc.Offset < 256) {
-    int Ofs = loc.Offset;
     if (loc.Type.Type == TYPE_Bool && loc.Type.BitMask != 1) ParseError(Loc, "Strange local bool mask");
     switch (loc.Type.Type) {
       case TYPE_Int:
@@ -288,33 +300,17 @@ void VLocalVar::Emit (VEmitContext &ec) {
       case TYPE_Reference:
       case TYPE_Class:
       case TYPE_State:
+        genLocalValue(ec, loc, 0);
+        break;
       case TYPE_Delegate:
-             if (Ofs == 0) ec.AddStatement(OPC_LocalValue0, Loc);
-        else if (Ofs == 1) ec.AddStatement(OPC_LocalValue1, Loc);
-        else if (Ofs == 2) ec.AddStatement(OPC_LocalValue2, Loc);
-        else if (Ofs == 3) ec.AddStatement(OPC_LocalValue3, Loc);
-        else if (Ofs == 4) ec.AddStatement(OPC_LocalValue4, Loc);
-        else if (Ofs == 5) ec.AddStatement(OPC_LocalValue5, Loc);
-        else if (Ofs == 6) ec.AddStatement(OPC_LocalValue6, Loc);
-        else if (Ofs == 7) ec.AddStatement(OPC_LocalValue7, Loc);
-        else ec.AddStatement(OPC_LocalValueB, Ofs, Loc);
-        if (loc.Type.Type == TYPE_Delegate) {
-               if (Ofs+1 == 0) ec.AddStatement(OPC_LocalValue0, Loc);
-          else if (Ofs+1 == 1) ec.AddStatement(OPC_LocalValue1, Loc);
-          else if (Ofs+1 == 2) ec.AddStatement(OPC_LocalValue2, Loc);
-          else if (Ofs+1 == 3) ec.AddStatement(OPC_LocalValue3, Loc);
-          else if (Ofs+1 == 4) ec.AddStatement(OPC_LocalValue4, Loc);
-          else if (Ofs+1 == 5) ec.AddStatement(OPC_LocalValue5, Loc);
-          else if (Ofs+1 == 6) ec.AddStatement(OPC_LocalValue6, Loc);
-          else if (Ofs+1 == 7) ec.AddStatement(OPC_LocalValue7, Loc);
-          else ec.AddStatement(OPC_LocalValueB, Ofs+1, Loc);
-        }
+        genLocalValue(ec, loc, 0);
+        genLocalValue(ec, loc, 1);
         break;
       case TYPE_Vector:
-        ec.AddStatement(OPC_VLocalValueB, Ofs, Loc);
+        ec.AddStatement(OPC_VLocalValueB, loc.Offset, Loc);
         break;
       case TYPE_String:
-        ec.AddStatement(OPC_StrLocalValueB, Ofs, Loc);
+        ec.AddStatement(OPC_StrLocalValueB, loc.Offset, Loc);
         break;
       default:
         ParseError(Loc, "Invalid operation of this variable type");

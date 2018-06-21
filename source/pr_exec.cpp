@@ -1863,7 +1863,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_AssignPtrDrop)
-        ASSIGNOP(void*, p, =);
+        ASSIGNOP(void *, p, =);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_AssignBool0)
