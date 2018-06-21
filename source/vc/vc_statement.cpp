@@ -994,40 +994,31 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   auto ivarR = (idxvar ? idxvar->SyntaxCopy()->Resolve(ec) : nullptr);
   auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
   auto arrR = (arr ? arr->SyntaxCopy()->Resolve(ec) : nullptr);
-  if (!statement || !varR || !arrR || (idxvar && !ivarR)) {
-    delete ivarR;
-    delete varR;
-    delete arrR;
-    return false;
-  }
 
-  if (ivarR && ivarR->Type.Type != TYPE_Int) {
+  bool wasError = false;
+  if (!statement || !varR || !arrR || (idxvar && !ivarR)) wasError = true;
+
+  if (!wasError && ivarR && ivarR->Type.Type != TYPE_Int) {
     ParseError(var->Loc, "Loop variable should be integer (got `%s`)", *ivarR->Type.GetName());
-    delete ivarR;
-    delete varR;
-    delete arrR;
-    return false;
+    wasError = true;
   }
 
-  if (!arrR->Type.IsAnyArray()) {
+  if (!wasError && !arrR->Type.IsAnyArray()) {
     ParseError(var->Loc, "Array variable should be integer (got `%s`)", *varR->Type.GetName());
-    delete ivarR;
-    delete varR;
-    delete arrR;
-    return false;
+    wasError = true;
   }
 
-  if (!varR->Type.CheckMatch(Loc, arrR->Type.GetArrayInnerType())) {
-    delete ivarR;
-    delete varR;
-    delete arrR;
-    return false;
-  }
+  if (!wasError && !varR->Type.CheckMatch(Loc, arrR->Type.GetArrayInnerType())) wasError = true;
+
+  // generate faster code for static arrays
+  bool isStaticArray = (arrR->Type.Type == TYPE_Array);
+  int staticLen = (isStaticArray ? arrR->Type.ArrayDim : 0);
 
   // we don't need 'em anymore
   delete ivarR;
   delete varR;
   delete arrR;
+  if (wasError) return false;
 
   /* this will compile to:
    *   ivar = 0;
@@ -1055,26 +1046,32 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
     idxinit = new VAssignment(VAssignment::Assign, index->SyntaxCopy(), new VIntLiteral(0, index->Loc), index->Loc);
   } else {
     // reversed: $-1
-    VExpression *len = new VDotField(arr->SyntaxCopy(), VName("length"), index->Loc);
-    len = new VBinary(VBinary::EBinOp::Subtract, len, new VIntLiteral(1, index->Loc), len->Loc);
-    idxinit = new VAssignment(VAssignment::Assign, index->SyntaxCopy(), len, index->Loc);
+    if (isStaticArray) {
+      // for static arrays we know the limit for sure
+      idxinit = new VAssignment(VAssignment::Assign, index->SyntaxCopy(), new VIntLiteral(staticLen-1, index->Loc), index->Loc);
+    } else {
+      VExpression *len = new VDotField(arr->SyntaxCopy(), VName("length"), index->Loc);
+      len = new VBinary(VBinary::EBinOp::Subtract, len, new VIntLiteral(1, index->Loc), len->Loc);
+      idxinit = new VAssignment(VAssignment::Assign, index->SyntaxCopy(), len, index->Loc);
+    }
   }
-  idxinit = idxinit->Resolve(ec);
-  if (!idxinit) { delete index; return false; }
 
   // create hidden local for higher bound, and initialize it (for reverse, just use 0)
   VExpression *limit;
   if (!reversed) {
     // normal
-    VLocalVarDef &L = ec.AllocLocal(NAME_None, VFieldType(TYPE_Int), arr->Loc);
-    L.Visible = false; // it is unnamed, and hidden ;-)
-    L.ParamFlags = 0;
-    limit = new VLocalVar(L.ldindex, L.Loc);
-    // initialize hidden local with array length
-    VExpression *len = new VDotField(arr->SyntaxCopy(), VName("length"), arr->Loc);
-    hiinit = new VAssignment(VAssignment::Assign, limit->SyntaxCopy(), len, len->Loc);
-    hiinit = hiinit->Resolve(ec);
-    if (!hiinit) { delete limit; delete index; return false; }
+    if (isStaticArray) {
+      // for static arrays we know the limit for sure
+      limit = new VIntLiteral(staticLen, arr->Loc);
+    } else {
+      VLocalVarDef &L = ec.AllocLocal(NAME_None, VFieldType(TYPE_Int), arr->Loc);
+      L.Visible = false; // it is unnamed, and hidden ;-)
+      L.ParamFlags = 0;
+      limit = new VLocalVar(L.ldindex, L.Loc);
+      // initialize hidden local with array length
+      VExpression *len = new VDotField(arr->SyntaxCopy(), VName("length"), arr->Loc);
+      hiinit = new VAssignment(VAssignment::Assign, limit->SyntaxCopy(), len, len->Loc);
+    }
   } else {
     limit = new VIntLiteral(0, arr->Loc);
   }
@@ -1101,11 +1098,20 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   delete limit;
 
   // create value load
-  loopLoad = new VArrayElement(arr->SyntaxCopy(), index->SyntaxCopy(), Loc);
+  loopLoad = new VArrayElement(arr->SyntaxCopy(), index->SyntaxCopy(), Loc, true); // we can skip bounds checking here
+  loopLoad = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), loopLoad, loopLoad->Loc);
   loopLoad = new VDropResult(loopLoad);
 
   // we don't need index anymore
   delete index;
+
+  idxinit = idxinit->Resolve(ec);
+  if (!idxinit) return false;
+
+  if (hiinit) {
+    hiinit = hiinit->Resolve(ec);
+    if (!hiinit) return false;
+  }
 
   loopPreCheck = loopPreCheck->ResolveBoolean(ec);
   if (!loopPreCheck) return false;

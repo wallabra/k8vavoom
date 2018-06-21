@@ -177,6 +177,8 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
     } else {
       if (!VMemberBase::unsafeCodeAllowed) {
         ParseError(Loc, "Unsafe pointer access is forbidden");
+        delete this;
+        return nullptr;
       } else if (VMemberBase::unsafeCodeWarning) {
         ParseWarning(Loc, "Unsafe pointer access");
       }

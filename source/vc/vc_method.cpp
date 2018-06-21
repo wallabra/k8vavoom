@@ -390,6 +390,11 @@ void VMethod::Emit () {
   NumLocals = ec.localsofs;
   ec.EndCode();
   if (VMemberBase::doAsmDump) DumpAsm();
+
+  // clear it here, 'cause why not?
+  delete Statement;
+  Statement = nullptr;
+
   unguard;
 }
 

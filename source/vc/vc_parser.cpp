@@ -990,6 +990,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
 
   // lo or arr
   VExpression *loarr = ParseExpression(false);
+  if (!loarr) loarr = new VIntLiteral(0, l); // to avoid later checks
 
   VStatement *res = nullptr; // for rewriting
 
@@ -1023,7 +1024,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
     // fix loop var type
     if (decl) decl->Vars[0].TypeOfExpr = new VIntLiteral(0, decl->Vars[0].Loc);
     // fix value var type
-    if (decl2) decl->Vars[0].TypeOfExpr = new VArrayElement(loarr, new VIntLiteral(0, decl->Vars[0].Loc), decl->Vars[0].Loc);
+    if (decl2) decl2->Vars[0].TypeOfExpr = new VArrayElement(loarr->SyntaxCopy(), new VIntLiteral(0, decl2->Vars[0].Loc), decl2->Vars[0].Loc, true);
     // array
     if (hasRef && !decl2) {
       ParseError(refloc, "`ref` is not allowed without real declaration");
