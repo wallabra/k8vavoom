@@ -1,0 +1,18 @@
+class Main : Object;
+
+array!int arr;
+
+void main () {
+  arr[$] = 42;
+  arr[$] = 666;
+  arr[$] = 69;
+  arr[$] = 999;
+
+  //writeln(arr.length);
+
+  writeln("============"); foreach (auto idx, auto val; arr) writeln("idx=", idx, "; val=", val);
+
+  writeln("============"); foreach (auto idx, ref auto val; arr) { val += 1000; writeln("idx=", idx, "; val=", val); }
+
+  writeln("============"); foreach (auto idx, auto val; arr) writeln("idx=", idx, "; val=", val);
+}
