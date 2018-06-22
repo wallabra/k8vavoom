@@ -1126,11 +1126,19 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
       varaddr->RequestAddressOf();
       varaddr->RequestAddressOf();
     }
-    loopLoad = new VUnary(VUnary::TakeAddress, loopLoad, loopLoad->Loc);
+    // work around r/o fields
+    //loopLoad = new VUnary(VUnary::TakeAddress, loopLoad, loopLoad->Loc);
+    loopLoad = loopLoad->Resolve(ec);
+    auto flg = loopLoad->Flags;
+    loopLoad->Flags &= ~FIELD_ReadOnly;
+    loopLoad->RequestAddressOf();
+    varaddr->Flags = flg;
   } else {
     loopLoad = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), loopLoad, loopLoad->Loc);
     loopLoad = new VDropResult(loopLoad);
+    loopLoad = loopLoad->Resolve(ec);
   }
+
 
   // we don't need index anymore
   delete index;
@@ -1149,7 +1157,6 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   loopNext = loopNext->ResolveBoolean(ec);
   if (!loopNext) return false;
 
-  loopLoad = loopLoad->Resolve(ec);
   if (!loopLoad) return false;
 
   // finally, resolve statement (last, so local reusing will work as expected)
