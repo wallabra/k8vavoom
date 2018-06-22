@@ -12,3 +12,4 @@
 #include "Object.vc"
 #include "ScriptsParser.vc"
 #include "IniFile.vc"
+#include "TextUtil.vc"

@@ -108,6 +108,8 @@ if (ENABLE_VCCRUN)
     modules/dfmap/dfmap.h
     modules/dfmap/mod_dfmap.h
     modules/dfmap/mod_dfmap.cpp
+    modules/mod_textread.h
+    modules/mod_textread.cpp
   )
 
   #message(STATUS "VCCRUN: LIBS: " ${VCCRUN_LINKLIBS})

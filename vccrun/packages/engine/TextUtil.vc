@@ -1,0 +1,64 @@
+/**************************************************************************
+ *
+ * Coded by Ketmar Dark, 2018
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 3
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ **************************************************************************/
+// this can be used to read binary files, but it is not recommended
+class TextReader : Object native;
+
+enum {
+  SeekStart,
+  SeekCur,
+  SeekEnd,
+}
+
+native private readonly void *fstream;
+
+
+// returns `none` on error
+native final static TextReader Open (string filename);
+
+// closes the file, but won't destroy the object
+native void close ();
+
+// returns success flag (false means "error")
+// whence is one of SeekXXX; default is SeekStart
+// return code is not absolutely reliable (actual seek may be delayed)
+native bool seek (int ofs, optional int whence);
+
+// returns 8-bit char or -1 on EOF/error
+native int getch ();
+
+// reads `size` bytes from file
+// always tries to read as max as possible
+// returns empty string on EOF/error
+// if `exact` is `true`, out of data means "error"
+// default is "not exact"
+native string readBuf (int size, optional bool exact);
+
+// returns name of the opened file (it may be empty)
+native string fileName { get; }
+
+// is this object open (if object is error'd, it is not open)
+native bool isOpen { get; }
+
+// `true` if something was error'd
+// there is no reason to continue after an error (and this is UB)
+// closed file is always returns `true`
+native bool error { get; }
+
+// get file size
+native int size { get; }
+
+// get current position
+native int position { get; }
