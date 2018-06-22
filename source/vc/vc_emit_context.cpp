@@ -442,6 +442,20 @@ void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl, const TLo
 
 //==========================================================================
 //
+//  VEmitContext::AddBuiltin
+//
+//==========================================================================
+void VEmitContext::AddBuiltin (int b, const TLocation &aloc) {
+  //if (StatementInfo[statement].Args != OPCARGS_Builtin) FatalError("Opcode does\'t take builtin");
+  FInstruction &I = CurrentFunc->Instructions.Alloc();
+  I.Opcode = OPC_Builtin;
+  I.Arg1 = b;
+  I.Arg2 = 0;
+}
+
+
+//==========================================================================
+//
 //  VEmitContext::EmitPushNumber
 //
 //==========================================================================

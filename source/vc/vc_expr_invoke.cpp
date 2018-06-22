@@ -24,6 +24,9 @@
 //**************************************************************************
 
 #include "vc_local.h"
+#include <limits.h>
+#include <float.h>
+#include <math.h>
 
 
 //==========================================================================
@@ -562,6 +565,37 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
   }
 
   if (SelfExpr->Type.Type != TYPE_Reference) {
+    // translate method name for some built-in types
+    if (SelfExpr->Type.Type == TYPE_String) {
+      static const char *knownStrTrans[] = {
+        "mid", "strmid",
+        "left", "strleft",
+        "right", "strright",
+        "toLowerCase", "strlwr",
+        "toUpperCase", "strupr",
+        //"repeat", "strrepeat",
+        nullptr,
+      };
+      for (const char **tr = knownStrTrans; *tr; tr += 2) {
+        if (MethodName == *tr) {
+          // i found her!
+          MethodName = VName(tr[1]);
+          break;
+        }
+      }
+    } else if (SelfExpr->Type.Type == TYPE_Float) {
+      if (MethodName == "isnan" || MethodName == "isNan" || MethodName == "isNaN" || MethodName == "isNAN" ||
+          MethodName == "isinf" || MethodName == "isInf" || MethodName == "isfinite" || MethodName == "isFinite") {
+        if (NumArgs != 0) {
+          ParseError(Loc, "`float` builtin `%s` cannot have args", *MethodName);
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VDotField(selfCopy, MethodName, Loc);
+        delete this;
+        return e->Resolve(ec);
+      }
+    }
     // try UFCS
     if (NumArgs+1 <= VMethod::MAX_PARAMS) {
       int newArgC = NumArgs+1;
@@ -678,6 +712,180 @@ VExpression *VDotInvocation::ResolveIterator (VEmitContext &ec) {
 //==========================================================================
 void VDotInvocation::Emit (VEmitContext &) {
   ParseError(Loc, "Should not happen (VDotInvocation)");
+}
+
+
+//==========================================================================
+//
+//  VTypeInvocation::VTypeInvocation
+//
+//==========================================================================
+VExpression *TypeExpr;
+VName MethodName;
+
+VTypeInvocation::VTypeInvocation (VExpression *aTypeExpr, VName aMethodName, const TLocation &aloc, int argc, VExpression **argv)
+  : VInvocationBase(argc, argv, aloc)
+  , TypeExpr(aTypeExpr)
+  , MethodName(aMethodName)
+{
+}
+
+
+//==========================================================================
+//
+//  VTypeInvocation::~VTypeInvocation
+//
+//==========================================================================
+VTypeInvocation::~VTypeInvocation () {
+  delete TypeExpr; TypeExpr = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VTypeInvocation::SyntaxCopy
+//
+//==========================================================================
+VExpression *VTypeInvocation::SyntaxCopy () {
+  auto res = new VTypeInvocation();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VTypeInvocation::~VTypeInvocation
+//
+//==========================================================================
+void VTypeInvocation::DoSyntaxCopyTo (VExpression *e) {
+  VInvocationBase::DoSyntaxCopyTo(e);
+  auto res = (VTypeInvocation *)e;
+  res->TypeExpr = (TypeExpr ? TypeExpr->SyntaxCopy() : nullptr);
+  res->MethodName = MethodName;
+}
+
+
+//==========================================================================
+//
+//  VTypeInvocation::DoResolve
+//
+//==========================================================================
+VExpression *VTypeInvocation::DoResolve (VEmitContext &ec) {
+  if (!TypeExpr) return nullptr;
+  TypeExpr = TypeExpr->ResolveAsType(ec);
+  if (!TypeExpr || !TypeExpr->IsTypeExpr()) {
+    ParseError(Loc, "Type expected");
+    delete this;
+    return nullptr;
+  }
+
+  // `int` properties
+  if (TypeExpr->Type.Type == TYPE_Int) {
+    if (MethodName == "min") {
+      if (NumArgs != 0) { ParseError(Loc, "`int.%s` cannot have arguments", *MethodName); delete this; return nullptr; }
+      VExpression *e = (new VIntLiteral((int)0x80000000, Loc))->Resolve(ec);
+      delete this;
+      return e;
+    }
+    if (MethodName == "max") {
+      if (NumArgs != 0) { ParseError(Loc, "`int.%s` cannot have arguments", *MethodName); delete this; return nullptr; }
+      VExpression *e = (new VIntLiteral((int)0x7fffffff, Loc))->Resolve(ec);
+      delete this;
+      return e;
+    }
+    ParseError(Loc, "invalid `int` property `%s`", *MethodName);
+    delete this;
+    return nullptr;
+  }
+
+  // `float` properties
+  if (TypeExpr->Type.Type == TYPE_Float) {
+    if (MethodName == "min") {
+      if (NumArgs != 0) { ParseError(Loc, "`float.%s` cannot have arguments", *MethodName); delete this; return nullptr; }
+      VExpression *e = (new VFloatLiteral(-FLT_MAX, Loc))->Resolve(ec);
+      delete this;
+      return e;
+    }
+    if (MethodName == "max") {
+      if (NumArgs != 0) { ParseError(Loc, "`float.%s` cannot have arguments", *MethodName); delete this; return nullptr; }
+      VExpression *e = (new VFloatLiteral(FLT_MAX, Loc))->Resolve(ec);
+      delete this;
+      return e;
+    }
+    if (MethodName == "min_norm" || MethodName == "min_normal" || MethodName == "min_normalized") {
+      if (NumArgs != 0) { ParseError(Loc, "`float.%s` cannot have arguments", *MethodName); delete this; return nullptr; }
+      VExpression *e = (new VFloatLiteral(FLT_MIN, Loc))->Resolve(ec);
+      delete this;
+      return e;
+    }
+    if (MethodName == "nan") {
+      if (NumArgs != 0) { ParseError(Loc, "`float.%s` cannot have arguments", *MethodName); delete this; return nullptr; }
+      VExpression *e = (new VFloatLiteral(NAN, Loc))->Resolve(ec);
+      delete this;
+      return e;
+    }
+    if (MethodName == "inf" || MethodName == "infinity") {
+      if (NumArgs != 0) { ParseError(Loc, "`float.%s` cannot have arguments", *MethodName); delete this; return nullptr; }
+      VExpression *e = (new VFloatLiteral(INFINITY, Loc))->Resolve(ec);
+      delete this;
+      return e;
+    }
+    ParseError(Loc, "invalid `float` property `%s`", *MethodName);
+    delete this;
+    return nullptr;
+  }
+
+  // `string` properties
+  if (TypeExpr->Type.Type == TYPE_String) {
+    VClass *cls = VClass::FindClass("Object");
+    if (cls) {
+      const char *newMethod = nullptr;
+           if (MethodName == "repeat") newMethod = "strrepeat";
+      else if (MethodName == "fromChar") newMethod = "strFromChar";
+      else if (MethodName == "fromCharUtf8") newMethod = "strFromCharUtf8";
+      else if (MethodName == "fromInt") newMethod = "strFromInt";
+      else if (MethodName == "fromFloat") newMethod = "strFromFloat";
+      if (newMethod) {
+        // convert to invocation
+        VExpression *e = new VInvocation(nullptr, cls->FindMethodChecked("strrepeat"), nullptr, false, false, Loc, NumArgs, Args);
+        NumArgs = 0; // don't clear args
+        e = e->Resolve(ec);
+        delete this;
+        return e;
+      }
+    }
+    ParseError(Loc, "invalid `string` property `%s`", *MethodName);
+    delete this;
+    return nullptr;
+  }
+
+  // `name` properties
+  if (TypeExpr->Type.Type == TYPE_Name) {
+    if (MethodName == "none" || MethodName == "empty") {
+      if (NumArgs != 0) { ParseError(Loc, "`name.%s` cannot have arguments", *MethodName); delete this; return nullptr; }
+      VExpression *e = (new VNameLiteral(NAME_None, Loc))->Resolve(ec);
+      delete this;
+      return e;
+    }
+    ParseError(Loc, "invalid `name` property `%s`", *MethodName);
+    delete this;
+    return nullptr;
+  }
+
+  ParseError(Loc, "invalid `%s` property `%s`", *TypeExpr->Type.GetName(), *MethodName);
+  delete this;
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VTypeInvocation::Emit
+//
+//==========================================================================
+void VTypeInvocation::Emit (VEmitContext &) {
+  ParseError(Loc, "Should not happen (VTypeInvocation)");
 }
 
 
@@ -938,23 +1146,23 @@ void VInvocation::Emit (VEmitContext &ec) {
         return;
       }
       if (Func->ParamTypes[0].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Int && Func->GetVName() == VName("abs")) {
-        ec.AddStatement(OPC_IntAbs, Loc);
+        ec.AddBuiltin(OPC_Builtin_IntAbs, Loc);
         return;
       }
       if (Func->ParamTypes[0].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Float && Func->GetVName() == VName("fabs")) {
-        ec.AddStatement(OPC_FloatAbs, Loc);
+        ec.AddBuiltin(OPC_Builtin_FloatAbs, Loc);
         return;
       }
     }
 
     if (NumArgs == 2 && Func->NumParams == 2) {
       if (Func->ParamTypes[0].Type == TYPE_Int && Func->ParamTypes[1].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Int) {
-        if (Func->GetVName() == VName("Min") || Func->GetVName() == VName("min")) { ec.AddStatement(OPC_IntMin, Loc); return; }
-        if (Func->GetVName() == VName("Max") || Func->GetVName() == VName("max")) { ec.AddStatement(OPC_IntMax, Loc); return; }
+        if (Func->GetVName() == VName("Min") || Func->GetVName() == VName("min")) { ec.AddBuiltin(OPC_Builtin_IntMin, Loc); return; }
+        if (Func->GetVName() == VName("Max") || Func->GetVName() == VName("max")) { ec.AddBuiltin(OPC_Builtin_IntMax, Loc); return; }
       }
       if (Func->ParamTypes[0].Type == TYPE_Float && Func->ParamTypes[1].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Float) {
-        if (Func->GetVName() == VName("FMin") || Func->GetVName() == VName("fmin")) { ec.AddStatement(OPC_FloatMin, Loc); return; }
-        if (Func->GetVName() == VName("FMax") || Func->GetVName() == VName("fmax")) { ec.AddStatement(OPC_FloatMax, Loc); return; }
+        if (Func->GetVName() == VName("FMin") || Func->GetVName() == VName("fmin")) { ec.AddBuiltin(OPC_Builtin_FloatMin, Loc); return; }
+        if (Func->GetVName() == VName("FMax") || Func->GetVName() == VName("fmax")) { ec.AddBuiltin(OPC_Builtin_FloatMax, Loc); return; }
       }
     }
 
@@ -962,12 +1170,12 @@ void VInvocation::Emit (VEmitContext &ec) {
       if (Func->ParamTypes[0].Type == TYPE_Int && Func->ParamTypes[1].Type == TYPE_Int && Func->ParamTypes[2].Type == TYPE_Int &&
           Func->ReturnType.Type == TYPE_Int)
       {
-        if (Func->GetVName() == VName("Clamp") || Func->GetVName() == VName("clamp")) { ec.AddStatement(OPC_IntClamp, Loc); return; }
+        if (Func->GetVName() == VName("Clamp") || Func->GetVName() == VName("clamp")) { ec.AddBuiltin(OPC_Builtin_IntClamp, Loc); return; }
       }
       if (Func->ParamTypes[0].Type == TYPE_Float && Func->ParamTypes[1].Type == TYPE_Float && Func->ParamTypes[2].Type == TYPE_Float &&
           Func->ReturnType.Type == TYPE_Float)
       {
-        if (Func->GetVName() == VName("FClamp") || Func->GetVName() == VName("fclamp")) { ec.AddStatement(OPC_FloatClamp, Loc); return; }
+        if (Func->GetVName() == VName("FClamp") || Func->GetVName() == VName("fclamp")) { ec.AddBuiltin(OPC_Builtin_FloatClamp, Loc); return; }
       }
     }
   }

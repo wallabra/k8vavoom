@@ -133,6 +133,7 @@ public:
   void AddStatement (int statement, const VFieldType &TypeArg, const TLocation &aloc);
   void AddStatement (int statement, VLabel Lbl, const TLocation &aloc);
   void AddStatement (int statement, int p, VLabel Lbl, const TLocation &aloc);
+  void AddBuiltin (int b, const TLocation &aloc);
   void EmitPushNumber (int Val, const TLocation &aloc);
   void EmitLocalAddress (int Ofs, const TLocation &aloc);
   void EmitClearStrings (int Start, int End, const TLocation &aloc);

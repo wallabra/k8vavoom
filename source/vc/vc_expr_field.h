@@ -70,6 +70,8 @@ class VDotField : public VFieldBase {
 private:
   enum AssType { Normal, AssTarget, AssValue };
 
+  int builtin; // >0: generate builtin
+
 private:
   // `Prop` must not be null!
   VExpression *DoPropertyResolve (VEmitContext &ec, VProperty *Prop, AssType assType);

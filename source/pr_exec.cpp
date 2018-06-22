@@ -38,6 +38,8 @@
 # endif
 #endif
 
+#include <math.h>
+
 //#define VCC_STUPID_TRACER
 
 #define MAX_PROG_STACK  (10000)
@@ -203,10 +205,11 @@ static void cstDump (const vuint8 *ip) {
 # define PR_VM_DEFAULT   default:
 #endif
 
-#define ReadInt16(ip)   (*(vint16 *)(ip))
-#define ReadInt32(ip)   (*(vint32 *)(ip))
-#define ReadPtr(ip)     (*(void **)(ip))
-#define ReadType(T, ip) do { \
+#define ReadU8(ip)     (*(vuint8 *)(ip))
+#define ReadInt16(ip)  (*(vint16 *)(ip))
+#define ReadInt32(ip)  (*(vint32 *)(ip))
+#define ReadPtr(ip)    (*(void **)(ip))
+#define ReadType(T, ip)  do { \
   T.Type = (ip)[0]; \
   T.ArrayInnerType = (ip)[1]; \
   T.InnerType = (ip)[2]; \
@@ -1782,58 +1785,6 @@ func_loop:
         }
         PR_VM_BREAK;
 
-      PR_VM_CASE(OPC_IntAbs)
-        ++ip;
-        if (sp[-1].i < 0) sp[-1].i = -sp[-1].i;
-        PR_VM_BREAK;
-
-      PR_VM_CASE(OPC_FloatAbs)
-        ++ip;
-        if (sp[-1].f < 0) sp[-1].f = -sp[-1].f;
-        PR_VM_BREAK;
-
-      PR_VM_CASE(OPC_IntMin)
-        ++ip;
-        if (sp[-2].i > sp[-1].i) sp[-2].i = sp[-1].i;
-        sp -= 1;
-        PR_VM_BREAK;
-
-      PR_VM_CASE(OPC_IntMax)
-        ++ip;
-        if (sp[-2].i < sp[-1].i) sp[-2].i = sp[-1].i;
-        sp -= 1;
-        PR_VM_BREAK;
-
-      PR_VM_CASE(OPC_FloatMin)
-        ++ip;
-        if (sp[-2].f > sp[-1].f) sp[-2].f = sp[-1].f;
-        sp -= 1;
-        PR_VM_BREAK;
-
-      PR_VM_CASE(OPC_FloatMax)
-        ++ip;
-        if (sp[-2].f < sp[-1].f) sp[-2].f = sp[-1].f;
-        sp -= 1;
-        PR_VM_BREAK;
-
-      PR_VM_CASE(OPC_IntClamp)
-        ++ip;
-        /*
-        #define MID(min, val, max)  MAX(min, MIN(val, max))
-          Max  -1
-          Min  -2
-          Val  -3
-        */
-        sp[-3].i = MID(sp[-2].i, sp[-3].i, sp[-1].i);
-        sp -= 2;
-        PR_VM_BREAK;
-
-      PR_VM_CASE(OPC_FloatClamp)
-        ++ip;
-        sp[-3].f = MID(sp[-2].f, sp[-3].f, sp[-1].f);
-        sp -= 2;
-        PR_VM_BREAK;
-
       PR_VM_CASE(OPC_ClearPointedStr)
         ((VStr *)sp[-1].p)->Clean();
         ip += 1;
@@ -2103,6 +2054,24 @@ func_loop:
         //VFieldType Type;
         //ReadType(Type, ip);
         ip += 8+sizeof(VClass *);
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_Builtin)
+        switch (ReadU8(ip+1)) {
+          case OPC_Builtin_IntAbs: if (sp[-1].i < 0) sp[-1].i = -sp[-1].i; break;
+          case OPC_Builtin_FloatAbs: if (sp[-1].f < 0) sp[-1].f = -sp[-1].f; break;
+          case OPC_Builtin_IntMin: if (sp[-2].i > sp[-1].i) sp[-2].i = sp[-1].i; sp -= 1; break;
+          case OPC_Builtin_IntMax: if (sp[-2].i < sp[-1].i) sp[-2].i = sp[-1].i; sp -= 1; break;
+          case OPC_Builtin_FloatMin: if (sp[-2].f > sp[-1].f) sp[-2].f = sp[-1].f; sp -= 1; break;
+          case OPC_Builtin_FloatMax: if (sp[-2].f < sp[-1].f) sp[-2].f = sp[-1].f; sp -= 1; break;
+          case OPC_Builtin_IntClamp: sp[-3].i = MID(sp[-2].i, sp[-3].i, sp[-1].i); sp -= 2; break;
+          case OPC_Builtin_FloatClamp: sp[-3].f = MID(sp[-2].f, sp[-3].f, sp[-1].f); sp -= 2; break;
+          case OPC_Builtin_FloatIsNaN: sp[-1].i = (isnan(sp[-1].f) ? 1 : 0); break;
+          case OPC_Builtin_FloatIsInf: sp[-1].i = (isinf(sp[-1].f) ? 1 : 0); break;
+          case OPC_Builtin_FloatIsFinite: sp[-1].i = (isfinite(sp[-1].f) ? 1 : 0); break;
+          default: cstDump(ip); Sys_Error("Unknown builtin");
+        }
+        ip += 2;
         PR_VM_BREAK;
 
       PR_VM_DEFAULT

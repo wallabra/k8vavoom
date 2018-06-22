@@ -860,7 +860,39 @@ IMPLEMENT_FUNCTION(VObject, substr) {
   RET_STR(Str.Utf8Substring(Start, Len));
 }
 
-//  Creates one-char non-utf8 string from the given char code&0xff; 0 is allowed
+//native static final string strmid (string Str, int Start, optional int Len);
+IMPLEMENT_FUNCTION(VObject, strmid) {
+  P_GET_INT_OPT(len, 0);
+  P_GET_INT(start);
+  P_GET_STR(s);
+  if (!specified_len) { if (start < 0) start = 0; len = s.length(); }
+  RET_STR(s.mid(start, len));
+}
+
+//native static final string strleft (string Str, int len);
+IMPLEMENT_FUNCTION(VObject, strleft) {
+  P_GET_INT(len);
+  P_GET_STR(s);
+  RET_STR(s.left(len));
+}
+
+//native static final string strright (string Str, int len);
+IMPLEMENT_FUNCTION(VObject, strright) {
+  P_GET_INT(len);
+  P_GET_STR(s);
+  RET_STR(s.right(len));
+}
+
+//native static final string strrepeat (int len, optinal int ch);
+IMPLEMENT_FUNCTION(VObject, strrepeat) {
+  P_GET_INT_OPT(ch, 32);
+  P_GET_INT(len);
+  VStr s;
+  s.setLength(len, ch);
+  RET_STR(s);
+}
+
+// Creates one-char non-utf8 string from the given char code&0xff; 0 is allowed
 //native static final string strFromChar (int ch);
 IMPLEMENT_FUNCTION(VObject, strFromChar) {
   P_GET_INT(ch);
@@ -869,12 +901,26 @@ IMPLEMENT_FUNCTION(VObject, strFromChar) {
   RET_STR(s);
 }
 
-//  Creates one-char utf8 string from the given char code (or empty string if char code is invalid); 0 is allowed
+// Creates one-char utf8 string from the given char code (or empty string if char code is invalid); 0 is allowed
 //native static final string strFromCharUtf8 (int ch);
 IMPLEMENT_FUNCTION(VObject, strFromCharUtf8) {
   P_GET_INT(ch);
   VStr s;
   if (ch >= 0 && ch <= 0x10FFFF) s.utf8Append((vuint32)ch);
+  RET_STR(s);
+}
+
+//native static final string strFromInt (int v);
+IMPLEMENT_FUNCTION(VObject, strFromInt) {
+  P_GET_INT(v);
+  VStr s(v);
+  RET_STR(s);
+}
+
+//native static final string strFromFloat (int v);
+IMPLEMENT_FUNCTION(VObject, strFromFloat) {
+  P_GET_FLOAT(v);
+  VStr s(v);
   RET_STR(s);
 }
 

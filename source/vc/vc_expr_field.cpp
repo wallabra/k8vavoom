@@ -130,6 +130,7 @@ void VPointerField::Emit (VEmitContext &) {
 //==========================================================================
 VDotField::VDotField (VExpression *AOp, VName AFieldName, const TLocation &ALoc)
   : VFieldBase(AOp, AFieldName, ALoc)
+  , builtin(-1)
 {
 }
 
@@ -364,6 +365,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     return e->Resolve(ec);
   }
 
+  // dynarray properties
   if (op->Type.Type == TYPE_DynamicArray &&
       (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length))
   {
@@ -385,6 +387,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     }
   }
 
+  // array properties
   if (op->Type.Type == TYPE_Array &&
       (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length))
   {
@@ -400,10 +403,11 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     return e->Resolve(ec);
   }
 
+  // string properties
   if (op->Type.Type == TYPE_String) {
-    delete opcopy; // we never ever need opcopy here
-    opcopy = nullptr; // just in case
     if (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length) {
+      delete opcopy; // we never ever need opcopy here
+      opcopy = nullptr; // just in case
       if (assType == AssType::AssTarget) {
         ParseError(Loc, "Cannot change string length via assign yet");
         delete this;
@@ -417,10 +421,42 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       op = nullptr;
       delete this;
       return e->Resolve(ec);
-    } else {
-      ParseError(Loc, "No field `%s` for string", *FieldName);
-      delete this;
-      return nullptr;
+    }
+    static const char *knownTrans[] = {
+      "toLowerCase", "strlwr",
+      "toUpperCase", "strupr",
+      nullptr,
+    };
+    for (const char **tr = knownTrans; *tr; tr += 2) {
+      if (FieldName == *tr) {
+        if (assType == AssType::AssTarget) {
+          ParseError(Loc, "Cannot assign to read-only property `%s`", *FieldName);
+          delete this;
+          return nullptr;
+        }
+        // let UFCS do the work
+        FieldName = VName(tr[1]);
+        break;
+      }
+    }
+  }
+
+  // float properties
+  if (op->Type.Type == TYPE_Float) {
+         if (FieldName == "isnan" || FieldName == "isNan" || FieldName == "isNaN" || FieldName == "isNAN") builtin = OPC_Builtin_FloatIsNaN;
+    else if (FieldName == "isinf" || FieldName == "isInf") builtin = OPC_Builtin_FloatIsInf;
+    else if (FieldName == "isfinite" || FieldName == "isFinite") builtin = OPC_Builtin_FloatIsFinite;
+    if (builtin >= 0) {
+      delete opcopy; // we never ever need opcopy here
+      if (assType == AssType::AssTarget) {
+        ParseError(Loc, "Cannot assign to read-only property");
+        delete this;
+        return nullptr;
+      }
+      //FIXME: use int instead of bool here, it generates faster opcode, and doesn't matter for now
+      //Type = VFieldType(TYPE_Bool); Type.BitMask = 1;
+      Type = VFieldType(TYPE_Int);
+      return this;
     }
   }
 
@@ -560,8 +596,13 @@ VExpression *VDotField::ResolveAssignmentValue (VEmitContext &ec) {
 //  VDotField::Emit
 //
 //==========================================================================
-void VDotField::Emit (VEmitContext&) {
-  ParseError(Loc, "Should not happen (VDotField)");
+void VDotField::Emit (VEmitContext &ec) {
+  if (builtin < 0) {
+    ParseError(Loc, "Should not happen (VDotField)");
+  } else {
+    if (op) op->Emit(ec);
+    ec.AddBuiltin(builtin, Loc);
+  }
 }
 
 

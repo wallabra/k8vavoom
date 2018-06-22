@@ -490,6 +490,21 @@ void VMethod::DumpAsm () {
       case OPCARGS_Type:
         dprintf(" %s", *Instructions[s].TypeArg.GetName());
         break;
+      case OPCARGS_Builtin:
+        switch (Instructions[s].Arg1) {
+          case OPC_Builtin_IntAbs: dprintf(" abs"); break;
+          case OPC_Builtin_FloatAbs: dprintf(" fabs"); break;
+          case OPC_Builtin_IntMin: dprintf(" min"); break;
+          case OPC_Builtin_IntMax: dprintf(" max"); break;
+          case OPC_Builtin_FloatMin: dprintf(" fmin"); break;
+          case OPC_Builtin_FloatMax: dprintf(" fmax"); break;
+          case OPC_Builtin_IntClamp: dprintf(" clamp"); break;
+          case OPC_Builtin_FloatClamp: dprintf(" fclamp"); break;
+          case OPC_Builtin_FloatIsNaN: dprintf(" isnan"); break;
+          case OPC_Builtin_FloatIsInf: dprintf(" isinf"); break;
+          case OPC_Builtin_FloatIsFinite: dprintf(" isfinite"); break;
+          default: dprintf(" unknown %d", Instructions[s].Arg1); break;
+        }
     }
     dprintf("\n");
   }
@@ -645,6 +660,7 @@ void VMethod::CompileCode () {
       case OPCARGS_TypeSizeS: WriteInt16(Instructions[i].TypeArg.GetSize()); break;
       case OPCARGS_TypeSizeB: WriteUInt8(Instructions[i].TypeArg.GetSize()); break;
       case OPCARGS_Type: WriteType(Instructions[i].TypeArg); break;
+      case OPCARGS_Builtin: WriteUInt8(Instructions[i].Arg1); break;
     }
     while (StatLocs.length() < Statements.length()) StatLocs.Append(Instructions[i].loc);
   }
@@ -788,6 +804,9 @@ void VMethod::OptimiseInstructions () {
       case OPCARGS_Type:
         Addr += 9+sizeof(void*);
         break;
+      case OPCARGS_Builtin:
+        Addr += 2;
+        break;
     }
   }
 
@@ -874,6 +893,9 @@ VStream &operator << (VStream &Strm, FInstruction &Instr) {
     case OPCARGS_TypeSize:
     case OPCARGS_Type:
       Strm << Instr.TypeArg;
+      break;
+    case OPCARGS_Builtin:
+      Strm << STRM_INDEX(Instr.Arg1);
       break;
   }
   return Strm;

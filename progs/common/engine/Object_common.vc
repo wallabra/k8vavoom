@@ -299,6 +299,18 @@ native static final string substr (string Str, int Start, int Len);
 native static final string strFromChar (int ch);
 // creates one-char utf8 string from the given char code (or empty string if char code is invalid); 0 is allowed
 native static final string strFromCharUtf8 (int ch);
+// gets a substring (not utf8-aware)
+native static final string strmid (string Str, int Start, optional int Len);
+// gets left part of a string (not utf8-aware)
+native static final string strleft (string Str, int len);
+// gets right part of a string (not utf8-aware)
+native static final string strright (string Str, int len);
+// gets right part of a string (not utf8-aware); default ch is space
+native static final string strrepeat (int len, optional int ch);
+// creates string from a number
+native static final string strFromInt (int v);
+// creates string from a number
+native static final string strFromFloat (float v);
 
 // does varargs print into a temporary buffer
 native static final string va (string format, ...) [printf,1];

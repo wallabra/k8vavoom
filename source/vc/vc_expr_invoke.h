@@ -162,6 +162,30 @@ protected:
 
 //==========================================================================
 //
+//  VTypeInvocation
+//
+//  This does properties for typeexprs, like `int.max`
+//
+//==========================================================================
+class VTypeInvocation : public VInvocationBase {
+public:
+  VExpression *TypeExpr;
+  VName MethodName;
+
+  VTypeInvocation (VExpression *aTypeExpr, VName aMethodName, const TLocation &aloc, int argc, VExpression **argv);
+  virtual ~VTypeInvocation () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VTypeInvocation () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
 //  VInvocation
 //
 //==========================================================================

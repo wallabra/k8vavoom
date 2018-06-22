@@ -347,46 +347,48 @@ VExpression *VParser::ParseExpressionPriority0 () {
         Lex.Expect(TK_RParen);
         return new VDynamicClassCast(ClassName, Expr, l);
       }
-    // int(val) --> convert bool/int/float to int
     case TK_Int:
-      {
-        Lex.NextToken();
-        Lex.Expect(TK_LParen);
-        VExpression *op = ParseExpressionPriority13(); //k8:???
-        if (!op) ParseError(l, "Expression expected");
-        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-        return new VScalarToInt(op);
-      }
-    // float(val) --> convert bool/int/float to float
     case TK_Float:
-      {
-        Lex.NextToken();
-        Lex.Expect(TK_LParen);
-        VExpression *op = ParseExpressionPriority13(); //k8:???
-        if (!op) ParseError(l, "Expression expected");
-        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-        return new VScalarToFloat(op);
-      }
-    // string(val) --> convert name to string
     case TK_String:
-      {
-        Lex.NextToken();
-        Lex.Expect(TK_LParen);
-        VExpression *op = ParseExpressionPriority13(); //k8:???
-        if (!op) ParseError(l, "Expression expected");
-        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-        return new VCastToString(op);
-      }
-    // name(val) --> convert string to name
     case TK_Name:
       {
+        auto tk = Lex.Token;
         Lex.NextToken();
-        Lex.Expect(TK_LParen);
-        VExpression *op = ParseExpressionPriority13(); //k8:???
-        if (!op) ParseError(l, "Expression expected");
-        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-        return new VCastToName(op);
+        if (Lex.Check(TK_Dot)) {
+          if (Lex.Token != TK_Identifier) { ParseError(Lex.Location, "Identifier expected"); break; }
+          VName mtname = Lex.Name;
+          Lex.NextToken();
+          VExpression *Args[VMethod::MAX_PARAMS+1];
+          int NumArgs = 0;
+          if (Lex.Check(TK_LParen)) NumArgs = ParseArgList(Lex.Location, Args);
+          VExpression *te = nullptr;
+          switch (tk) {
+            case TK_Int: te = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Int), l); break;
+            case TK_Float: te = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Float), l); break;
+            case TK_String: te = VTypeExpr::NewTypeExpr(VFieldType(TYPE_String), l); break;
+            case TK_Name: te = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Name), l); break;
+            default: FatalError("VC: Ketmar forgot to handle some type in `VParser::ParseExpressionPriority0()`");
+          }
+          return new VTypeInvocation(te, mtname, l, NumArgs, Args);
+        } else {
+          // int(val) --> convert bool/int/float to int
+          // float(val) --> convert bool/int/float to float
+          // string(val) --> convert name to string
+          // name(val) --> convert string to name
+          Lex.Expect(TK_LParen);
+          VExpression *op = ParseExpressionPriority13(); //k8:???
+          if (!op) ParseError(l, "Expression expected");
+          Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+          switch (tk) {
+            case TK_Int: return new VScalarToInt(op);
+            case TK_Float: return new VScalarToFloat(op);
+            case TK_String: return new VCastToString(op);
+            case TK_Name: return new VCastToName(op);
+            default: FatalError("VC: Ketmar forgot to handle some type in `VParser::ParseExpressionPriority0()`");
+          }
+        }
       }
+      break;
     default:
       break;
   }

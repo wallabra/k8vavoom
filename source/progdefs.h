@@ -23,10 +23,25 @@
 //**
 //**************************************************************************
 
+
 #ifndef OPCODE_INFO
 
 #define PROG_MAGIC    "VPRG"
 #define PROG_VERSION  (36)
+
+enum {
+  OPC_Builtin_IntAbs,
+  OPC_Builtin_FloatAbs,
+  OPC_Builtin_IntMin,
+  OPC_Builtin_IntMax,
+  OPC_Builtin_FloatMin,
+  OPC_Builtin_FloatMax,
+  OPC_Builtin_IntClamp,
+  OPC_Builtin_FloatClamp,
+  OPC_Builtin_FloatIsNaN,
+  OPC_Builtin_FloatIsInf,
+  OPC_Builtin_FloatIsFinite,
+};
 
 enum {
   OPCARGS_None,
@@ -59,7 +74,9 @@ enum {
   OPCARGS_FieldOffsetS_Byte,
   OPCARGS_FieldOffsetB_Byte,
   OPCARGS_Type,
+  OPCARGS_Builtin,
 };
+
 
 enum {
 #define DECLARE_OPC(name, args)   OPC_##name
@@ -318,16 +335,6 @@ enum {
   DECLARE_OPC(StrToName, None),
   DECLARE_OPC(NameToStr, None),
 
-  // some more builtins
-  DECLARE_OPC(IntAbs, None),
-  DECLARE_OPC(FloatAbs, None),
-  DECLARE_OPC(IntMin, None),
-  DECLARE_OPC(IntMax, None),
-  DECLARE_OPC(FloatMin, None),
-  DECLARE_OPC(FloatMax, None),
-  DECLARE_OPC(IntClamp, None),
-  DECLARE_OPC(FloatClamp, None),
-
   // cleanup of local variables.
   DECLARE_OPC(ClearPointedStr, None),
   DECLARE_OPC(ClearPointedStruct, Member),
@@ -376,6 +383,9 @@ enum {
 
   // for printf-like varargs
   DECLARE_OPC(DoPushTypePtr, Type),
+
+  // builtins (k8: i'm short of opcodes, so...)
+  DECLARE_OPC(Builtin, Builtin),
 
 #undef DECLARE_OPC
 #ifndef OPCODE_INFO
