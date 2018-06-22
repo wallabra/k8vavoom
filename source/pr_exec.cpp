@@ -26,6 +26,7 @@
 //**    Execution of PROGS.
 //**
 //**************************************************************************
+//#define VC_USE_CUSTOM_FLOAT_CHECKERS
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 # include "gamedefs.h"
@@ -38,7 +39,27 @@
 # endif
 #endif
 
-#include <math.h>
+#ifdef VC_USE_CUSTOM_FLOAT_CHECKERS
+# include <math.h>
+# define isFiniteF  isfinite
+# define isNaNF     isnan
+# define isInfF     isinf
+#else
+static inline bool isFiniteF (float v) {
+  union { float f; vuint32 x; } u = {v};
+  return ((u.x&0x7f800000u) != 0x7f800000u);
+}
+
+static inline bool isNaNF (float v) {
+  union { float f; vuint32 x; } u = {v};
+  return ((u.x<<1) > 0xff000000u);
+}
+
+static inline bool isInfF (float v) {
+  union { float f; vuint32 x; } u = {v};
+  return ((u.x<<1) == 0xff000000u);
+}
+#endif
 
 //#define VCC_STUPID_TRACER
 
@@ -2068,9 +2089,9 @@ func_loop:
           case OPC_Builtin_FloatMax: if (sp[-2].f < sp[-1].f) sp[-2].f = sp[-1].f; sp -= 1; break;
           case OPC_Builtin_IntClamp: sp[-3].i = MID(sp[-2].i, sp[-3].i, sp[-1].i); sp -= 2; break;
           case OPC_Builtin_FloatClamp: sp[-3].f = MID(sp[-2].f, sp[-3].f, sp[-1].f); sp -= 2; break;
-          case OPC_Builtin_FloatIsNaN: sp[-1].i = (isnan(sp[-1].f) ? 1 : 0); break;
-          case OPC_Builtin_FloatIsInf: sp[-1].i = (isinf(sp[-1].f) ? 1 : 0); break;
-          case OPC_Builtin_FloatIsFinite: sp[-1].i = (isfinite(sp[-1].f) ? 1 : 0); break;
+          case OPC_Builtin_FloatIsNaN: sp[-1].i = (isNaNF(sp[-1].f) ? 1 : 0); break;
+          case OPC_Builtin_FloatIsInf: sp[-1].i = (isInfF(sp[-1].f) ? 1 : 0); break;
+          case OPC_Builtin_FloatIsFinite: sp[-1].i = (isFiniteF(sp[-1].f) ? 1 : 0); break;
           default: cstDump(ip); Sys_Error("Unknown builtin");
         }
         ip += 2;
