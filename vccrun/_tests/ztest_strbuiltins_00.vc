@@ -17,6 +17,9 @@ void main () {
   t = s.right(2);
   writeln(t.length, ": <", t, ">");
   writeln(0.0.isfinite, " : ", 0.0.isnan, " : ", 0.0.isinf);
+  writeln(1.2.isfinite, " : ", 1.2.isnan, " : ", 1.2.isinf);
+  writeln((-1.2).isfinite, " : ", (-1.2).isnan, " : ", (-1.2).isinf);
   writeln(float.nan.isfinite, " : ", float.nan.isnan, " : ", float.nan.isinf);
   writeln(float.inf.isfinite, " : ", float.inf.isnan, " : ", float.inf.isinf);
+  writeln((-float.inf).isfinite, " : ", (-float.inf).isnan, " : ", (-float.inf).isinf);
 }
