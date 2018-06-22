@@ -1,0 +1,22 @@
+class Main : Object;
+
+void main () {
+  writeln(min(5, 3));
+  writeln(int.min, " : ", int.min == MININT);
+  writeln(int.max, " : ", int.min == MAXINT);
+  writeln(float.min, " : ", float.max, " : ", float.min_norm, " : ", float.nan, " : ", float.inf, " : ", -float.inf);
+  //string s = strrepeat(8, 33);
+  auto s = string.repeat(8, 33);
+  writeln(s.length, ": <", s, ">");
+  s = "0123456789";
+  writeln(s.length, ": <", s, ">");
+  auto t = s.mid(3, 2);
+  writeln(t.length, ": <", t, ">");
+  t = s.left(2);
+  writeln(t.length, ": <", t, ">");
+  t = s.right(2);
+  writeln(t.length, ": <", t, ">");
+  writeln(0.0.isfinite, " : ", 0.0.isnan, " : ", 0.0.isinf);
+  writeln(float.nan.isfinite, " : ", float.nan.isnan, " : ", float.nan.isinf);
+  writeln(float.inf.isfinite, " : ", float.inf.isnan, " : ", float.inf.isinf);
+}
