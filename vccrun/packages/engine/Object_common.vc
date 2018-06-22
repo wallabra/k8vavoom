@@ -36,6 +36,9 @@ native readonly class Class;
 native void Destroy ();
 native final bool IsA (name CheckName);
 native final bool IsDestroyed ();
+native static final void CollectGarbage (optional bool destroyDelayed);
+native static final bool GCMessagesAllowed { get; set; }
+
 
 
 //**************************************************************************

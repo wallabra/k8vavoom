@@ -127,16 +127,21 @@ private:
   static VObject *GObjHash[4096]; // object hash
   static int GNumDeleted;
   static bool GInGarbageCollection;
-  static void *GNewObject;     // for internal constructors
+  static void *GNewObject; // for internal constructors
+
+public:
+#ifdef VCC_STANDALONE_EXECUTOR
+  static bool GImmediadeDelete;
+#endif
+  static bool GGCMessagesAllowed;
 
 public:
   // constructors
-  VObject();
-
+  VObject ();
   static void InternalConstructor () { new VObject(); }
 
   // destructors
-  virtual ~VObject ();
+  virtual ~VObject () override;
 
   void *operator new (size_t);
   void *operator new (size_t, const char *, int);
@@ -154,7 +159,7 @@ public:
   static void StaticInit ();
   static void StaticExit ();
   static VObject *StaticSpawnObject (VClass *);
-  static void CollectGarbage ();
+  static void CollectGarbage (bool destroyDelayed=false);
   static VObject *GetIndexObject (int);
   static int GetObjectsCount ();
 
@@ -179,6 +184,13 @@ public:
   DECLARE_FUNCTION(Destroy)
   DECLARE_FUNCTION(IsA)
   DECLARE_FUNCTION(IsDestroyed)
+  DECLARE_FUNCTION(CollectGarbage)
+#ifdef VCC_STANDALONE_EXECUTOR
+  DECLARE_FUNCTION(get_ImmediateDelete)
+  DECLARE_FUNCTION(set_ImmediateDelete)
+#endif
+  DECLARE_FUNCTION(get_GCMessagesAllowed)
+  DECLARE_FUNCTION(set_GCMessagesAllowed)
 
   // error functions
   DECLARE_FUNCTION(Error)

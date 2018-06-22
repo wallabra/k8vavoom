@@ -46,13 +46,17 @@ VClass VObject::PrivateStaticClass (
 );
 VClass *autoclassVObject = VObject::StaticClass();
 
-bool VObject::GObjInitialised;
+bool VObject::GObjInitialised = false;
 TArray<VObject*> VObject::GObjObjects;
 TArray<int> VObject::GObjAvailable;
 VObject *VObject::GObjHash[4096];
-int VObject::GNumDeleted;
-bool VObject::GInGarbageCollection;
-void *VObject::GNewObject;
+int VObject::GNumDeleted = 0;
+bool VObject::GInGarbageCollection = false;
+void *VObject::GNewObject = nullptr;
+#ifdef VCC_STANDALONE_EXECUTOR
+bool VObject::GImmediadeDelete = true;
+#endif
+bool VObject::GGCMessagesAllowed = false;
 
 
 //==========================================================================
@@ -77,10 +81,12 @@ VObject::~VObject () {
   if (!GObjInitialised) return;
 
   if (!GInGarbageCollection) {
+    //fprintf(stderr, "Cleaning up for `%s`\n", *this->GetClass()->Name);
     SetFlags(_OF_CleanupRef);
     for (int i = 0; i < GObjObjects.Num(); ++i) {
-      if (!GObjObjects[i] || (GObjObjects[i]->GetFlags()&_OF_Destroyed)) continue;
-      GObjObjects[i]->GetClass()->CleanObject(GObjObjects[i]);
+      VObject *Obj = GObjObjects[i];
+      if (!Obj || (Obj->GetFlags()&_OF_Destroyed)) continue;
+      Obj->GetClass()->CleanObject(Obj);
     }
   }
 
@@ -284,34 +290,62 @@ void VObject::ClearReferences () {
 //  VObject::CollectGarbage
 //
 //==========================================================================
-void VObject::CollectGarbage () {
+void VObject::CollectGarbage (bool destroyDelayed) {
   guard(VObject::CollectGarbage);
 
-  if (!GNumDeleted) return;
+  if (!GNumDeleted && !destroyDelayed) return;
 
   GInGarbageCollection = true;
+
+  // destroy all delayed-destroy objects
+  if (destroyDelayed) {
+    for (int i = 0; i < GObjObjects.length(); ++i) {
+      VObject *Obj = GObjObjects[i];
+      if (!Obj) continue;
+      if ((Obj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) == _OF_DelayedDestroy) {
+        Obj->ConditionalDestroy();
+      }
+    }
+    if (!GNumDeleted) {
+      GInGarbageCollection = false;
+      return;
+    }
+  }
+
   // mark objects to be cleaned
   for (int i = 0; i < GObjObjects.Num(); ++i) {
-    if (!GObjObjects[i]) continue;
     VObject *Obj = GObjObjects[i];
+    if (!Obj) continue;
     if (Obj->GetFlags()&_OF_Destroyed) Obj->SetFlags(_OF_CleanupRef);
   }
 
   // clean references
   for (int i = 0; i < GObjObjects.Num(); ++i) {
-    if (!GObjObjects[i] || (GObjObjects[i]->GetFlags()&_OF_Destroyed)) continue;
-    GObjObjects[i]->ClearReferences();
+    VObject *Obj = GObjObjects[i];
+    if (!Obj || (Obj->GetFlags()&_OF_Destroyed)) continue;
+    Obj->ClearReferences();
   }
 
   // now actually delete the objects
+  int count = 0;
   for (int i = 0; i < GObjObjects.Num(); ++i) {
-    if (!GObjObjects[i]) continue;
     VObject *Obj = GObjObjects[i];
+    if (!Obj) continue;
     if (Obj->GetFlags()&_OF_Destroyed) {
+      ++count;
       delete Obj;
-      Obj = nullptr;
     }
   }
+#if !defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
+  if (GGCMessagesAllowed) {
+#if defined(VCC_STANDALONE_EXECUTOR)
+    fprintf(stderr, "GC: %d objects deleted\n", count);
+#else
+    GCon->Logf("GC: %d objects deleted", count);
+#endif
+  }
+#endif
+
   GInGarbageCollection = false;
   unguard;
 }
@@ -365,6 +399,14 @@ bool VObject::ExecuteNetMethod (VMethod *) {
 //
 //**************************************************************************
 
+#ifdef VCC_STANDALONE_EXECUTOR
+IMPLEMENT_FUNCTION(VObject, get_ImmediateDelete) { RET_BOOL(GImmediadeDelete); }
+IMPLEMENT_FUNCTION(VObject, set_ImmediateDelete) { P_GET_BOOL(val); GImmediadeDelete = val; }
+#endif
+IMPLEMENT_FUNCTION(VObject, get_GCMessagesAllowed) { RET_BOOL(GGCMessagesAllowed); }
+IMPLEMENT_FUNCTION(VObject, set_GCMessagesAllowed) { P_GET_BOOL(val); GGCMessagesAllowed = val; }
+
+
 //==========================================================================
 //
 //  Object.Destroy
@@ -372,8 +414,18 @@ bool VObject::ExecuteNetMethod (VMethod *) {
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, Destroy) {
   P_GET_SELF;
-  delete Self;
-  Self = nullptr;
+  if (Self) {
+#ifdef VCC_STANDALONE_EXECUTOR
+    if (GImmediadeDelete) {
+      delete Self;
+    } else {
+      //Self->SetFlags(_OF_DelayedDestroy);
+      Self->ConditionalDestroy();
+    }
+#else
+    delete Self;
+#endif
+  }
 }
 
 
@@ -386,8 +438,10 @@ IMPLEMENT_FUNCTION(VObject, IsA) {
   P_GET_NAME(SomeName);
   P_GET_SELF;
   bool Ret = false;
-  for (const VClass *c = Self->Class; c; c = c->GetSuperClass()) {
-    if (c->GetVName() == SomeName) { Ret = true; break; }
+  if (Self) {
+    for (const VClass *c = Self->Class; c; c = c->GetSuperClass()) {
+      if (c->GetVName() == SomeName) { Ret = true; break; }
+    }
   }
   RET_BOOL(Ret);
 }
@@ -400,7 +454,19 @@ IMPLEMENT_FUNCTION(VObject, IsA) {
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, IsDestroyed) {
   P_GET_SELF;
-  RET_BOOL(Self->GetFlags() & _OF_DelayedDestroy);
+  RET_BOOL(Self ? Self->GetFlags()&_OF_DelayedDestroy : true);
+}
+
+
+//==========================================================================
+//
+//  Object.CollectGarbage
+//
+//==========================================================================
+// static final void CollectGarbage (optional bool destroyDelayed);
+IMPLEMENT_FUNCTION(VObject, CollectGarbage) {
+  P_GET_BOOL_OPT(destroyDelayed, false);
+  CollectGarbage(destroyDelayed);
 }
 
 
