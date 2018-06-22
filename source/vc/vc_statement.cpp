@@ -1123,22 +1123,23 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
     varaddr = new VLocalVar(indLocalVal, loopLoad->Loc);
     varaddr = varaddr->Resolve(ec); // should not fail (i hope)
     if (varaddr) {
-      varaddr->RequestAddressOf();
-      varaddr->RequestAddressOf();
+      varaddr->RequestAddressOf(); // get rid of `ref`
+      varaddr->RequestAddressOf(); // and request a real address
     }
     // work around r/o fields
     //loopLoad = new VUnary(VUnary::TakeAddress, loopLoad, loopLoad->Loc);
     loopLoad = loopLoad->Resolve(ec);
-    auto flg = loopLoad->Flags;
-    loopLoad->Flags &= ~FIELD_ReadOnly;
-    loopLoad->RequestAddressOf();
-    varaddr->Flags = flg;
+    if (loopLoad) {
+      auto flg = loopLoad->Flags;
+      loopLoad->Flags &= ~FIELD_ReadOnly;
+      loopLoad->RequestAddressOf();
+      varaddr->Flags = flg;
+    }
   } else {
     loopLoad = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), loopLoad, loopLoad->Loc);
     loopLoad = new VDropResult(loopLoad);
     loopLoad = loopLoad->Resolve(ec);
   }
-
 
   // we don't need index anymore
   delete index;
