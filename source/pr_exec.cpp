@@ -1633,7 +1633,7 @@ func_loop:
         {
           ++ip;
           int v = sp[-1].i;
-          v = (v >= 0 && (size_t)v < ((VStr *)&sp[-2].p)->length() ? (vuint8)(*((VStr *)&sp[-2].p))[v] : 0);
+          v = (v >= 0 && v < ((VStr *)&sp[-2].p)->length() ? (vuint8)(*((VStr *)&sp[-2].p))[v] : 0);
           ((VStr *)&sp[-2].p)->Clean();
           sp -= 1;
           sp[-1].i = v;

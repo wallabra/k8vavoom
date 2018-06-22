@@ -1811,7 +1811,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     PrevState = State;
     LastState = State;
 
-    for (size_t i = 1; i < FramesString.Length(); ++i) {
+    for (int i = 1; i < FramesString.Length(); ++i) {
       char FSChar = VStr::ToUpper(FramesString[i]);
       if (FSChar < 'A' || FSChar > ']') sc->Error("Frames must be A-Z, [, \\ or ]");
 

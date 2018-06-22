@@ -321,7 +321,7 @@ void VCommand::TokeniseString(const VStr &str)
   //fprintf(stderr, "+++ TKSS(0): orig=<%s>; str=<%s>\n", *Original, *str);
   Original = str;
   //fprintf(stderr, "+++ TKSS(1): orig=<%s>; str=<%s>\n", *Original, *str);
-  size_t i = 0;
+  int i = 0;
   while (i < str.Length())
   {
     //  Whitespace
@@ -584,7 +584,7 @@ void VCmdBuf::Print(const VStr &data)
 void VCmdBuf::Exec()
 {
   guard(VCmdBuf::Exec);
-  size_t    len;
+  int    len;
   int     quotes;
   bool    comment;
   VStr    ParsedCmd;

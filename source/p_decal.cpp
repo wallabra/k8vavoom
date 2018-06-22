@@ -42,7 +42,7 @@ VDecalGroup *VDecalGroup::listHead = nullptr;
 // ////////////////////////////////////////////////////////////////////////// //
 static bool parseHexRGB (const VStr &str, float clr[]) {
   clr[0] = clr[1] = clr[2] = 0;
-  size_t pos = 0;
+  int pos = 0;
   for (int f = 0; f < 3; ++f) {
     while (pos < str.Length() && str[pos] <= ' ') ++pos;
     int n = 0;

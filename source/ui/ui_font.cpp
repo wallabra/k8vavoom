@@ -1084,19 +1084,16 @@ int VFont::StringWidth(const VStr &String) const
 int VFont::TextWidth(const VStr &String) const
 {
   guard(VFont::TextWidth);
-  size_t    i;
-  int     w1;
-  int     w = 0;
-  int     start = 0;
-
-  for (i = 0; i <= String.Length(); i++)
-    if ((String[i] == '\n') || !String[i])
-    {
+  int w1;
+  int w = 0;
+  int start = 0;
+  for (int i = 0; i <= String.Length(); i++) {
+    if ((String[i] == '\n') || !String[i]) {
       w1 = StringWidth(VStr(String, start, i - start));
-      if (w1 > w)
-        w = w1;
+      if (w1 > w) w = w1;
       start = i;
     }
+  }
   return w;
   unguard;
 }
@@ -1111,12 +1108,8 @@ int VFont::TextHeight(const VStr &String) const
 {
   guard(VFont::TextHeight);
   int h = FontHeight;
-  for (size_t i = 0; i < String.Length(); i++)
-  {
-    if (String[i] == '\n')
-    {
-      h += FontHeight;
-    }
+  for (int i = 0; i < String.Length(); i++) {
+    if (String[i] == '\n') h += FontHeight;
   }
   return h;
   unguard;

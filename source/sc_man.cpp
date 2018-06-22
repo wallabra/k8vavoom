@@ -535,7 +535,7 @@ bool VScriptParser::CheckIdentifier () {
   }
 
   // it must be followed by letters, numbers and underscores
-  for (size_t i = 1; i < String.Length(); ++i) {
+  for (int i = 1; i < String.Length(); ++i) {
     c = String[i];
     if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_')) {
       UnGet();

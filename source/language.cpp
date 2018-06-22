@@ -226,7 +226,7 @@ VStr VLanguage::HandleEscapes (const VStr &Src) {
   for (size_t i = Src.Length(); i > 0; --i) if (Src[i] == '\\') { hasWork = true; break; }
   if (!hasWork) return VStr(Src);
   VStr Ret;
-  for (size_t i = 0; i < Src.Length(); ++i) {
+  for (int i = 0; i < Src.Length(); ++i) {
     char c = Src[i];
     if (c == '\\') {
       ++i;

@@ -2139,7 +2139,7 @@ void VParser::ParseStates (VClass *InClass) {
     PrevState = s;
     ++StateIdx;
 
-    for (size_t i = 1; i < VStr::Length(*FramesString); ++i) {
+    for (int i = 1; i < VStr::Length(*FramesString); ++i) {
       char FSChar = VStr::ToUpper((*FramesString)[i]);
       if (FSChar < 'A' || FSChar > ']') ParseError(Lex.Location, "Frames must be A-Z, [, \\ or ]");
       // create a new state

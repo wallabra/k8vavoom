@@ -169,7 +169,7 @@ VStr PF_FormatString () {
   P_GET_STR(str);
 
   PFFmtBuf pbuf((size_t)str.length());
-  size_t spos = 0;
+  int spos = 0;
   pi = 0;
   while (spos < str.length()) {
     if (str[spos] == '%') {

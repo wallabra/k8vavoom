@@ -1071,7 +1071,7 @@ void VWidget::DrawText(int x, int y, const VStr &String, int NormalColour,
   LastX = cx;
   LastY = cy;
 
-  for (size_t i = 0; i < String.Length(); i++)
+  for (int i = 0; i < String.Length(); i++)
   {
     if (String[i] == '\n')
     {

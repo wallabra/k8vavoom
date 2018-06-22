@@ -261,7 +261,7 @@ static VStr LookupColourName(VStr &Name)
         break;
       }
       *pBuf = 0;
-      if ((size_t)(pBuf - Start) == Name.Length() && !Name.ICmp(Start))
+      if ((size_t)(pBuf - Start) == (size_t)Name.Length() && !Name.ICmp(Start))
       {
         char ValBuf[8];
         sprintf(ValBuf, "#%02x%02x%02x", Col[0], Col[1], Col[2]);
@@ -368,7 +368,7 @@ vuint32 M_ParseColour(VStr Name)
   else
   {
     //  Treat like space separated hex values
-    size_t Idx = 0;
+    int Idx = 0;
     for (int i = 0; i < 3; i++)
     {
       //  Skip whitespace and quotes.
