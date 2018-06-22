@@ -453,47 +453,41 @@ void VZipFile::OpenArchive (VStream *fstream) {
 // the global comment)
 //
 //==========================================================================
+struct SelfDestructBuf {
+  vuint8 *buf;
 
-vuint32 VZipFile::SearchCentralDir()
-{
-  enum { BUFREADCOMMENT = 0x400 };
-
-  vuint8 buf[BUFREADCOMMENT + 4];
-  vuint32 uMaxBack = 0xffff; /* maximum size of global comment */
-  vuint32 uPosFound = 0;
-
-  vuint32 uSizeFile = FileStream->TotalSize();
-
-  if (uMaxBack > uSizeFile)
-    uMaxBack = uSizeFile;
-
-  vuint32 uBackRead = 4;
-  while (uBackRead < uMaxBack)
-  {
-    if (uBackRead + BUFREADCOMMENT > uMaxBack)
-      uBackRead = uMaxBack;
-    else
-      uBackRead += BUFREADCOMMENT;
-    vuint32 uReadPos = uSizeFile - uBackRead;
-
-    vuint32 uReadSize = ((BUFREADCOMMENT + 4) < (uSizeFile - uReadPos)) ?
-      (BUFREADCOMMENT + 4) : (uSizeFile - uReadPos);
-    FileStream->Seek(uReadPos);
-    FileStream->Serialise(buf, uReadSize);
-
-    for (int i = (int)uReadSize - 3; i-- > 0;)
-      if (((*(buf + i)) == 0x50) && ((*(buf + i + 1)) == 0x4b) &&
-        ((*(buf + i + 2)) == 0x05) && ((*(buf + i + 3)) == 0x06))
-      {
-        uPosFound = uReadPos + i;
-        break;
-      }
-
-    if (uPosFound != 0)
-      break;
+  SelfDestructBuf (vint32 sz) {
+    buf = (vuint8 *)malloc(sz);
+    if (!buf) Sys_Error("Out of memory!");
   }
-  return uPosFound;
+  ~SelfDestructBuf () { free(buf); }
+};
+
+
+vuint32 VZipFile::SearchCentralDir () {
+  enum { MaxBufSize = 65578 };
+
+  vint32 fsize = FileStream->TotalSize();
+  if (fsize < 16) return 0;
+
+  vuint32 rd = (fsize < MaxBufSize ? fsize : MaxBufSize);
+  SelfDestructBuf sdbuf(rd);
+
+  FileStream->Seek(fsize-rd);
+  if (FileStream->IsError()) return 0;
+  FileStream->Serialise(sdbuf.buf, rd);
+  if (FileStream->IsError()) return 0;
+
+  for (int f = rd-8; f >= 0; --f) {
+    if (sdbuf.buf[f] == 0x50 && sdbuf.buf[f+1] == 0x4b && sdbuf.buf[f+2] == 0x05 && sdbuf.buf[f+3] == 0x06) {
+      // i found her!
+      return fsize-rd+f;
+    }
+  }
+
+  return 0;
 }
+
 
 //==========================================================================
 //
