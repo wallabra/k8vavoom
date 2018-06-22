@@ -114,6 +114,13 @@ public:
   inline int Length () const { return (data ? store()->length : 0); }
   inline int length () const { return (data ? store()->length : 0); }
 
+  inline void setLength (int len, char fillChar=' ') {
+    if (len < 0) len = 0;
+    resize(len);
+    if (len > 0) memset(data, fillChar&0xff, len);
+  }
+  inline void SetLength (int len, char fillChar=' ') { setLength(len, fillChar); }
+
   inline int getRC () const { return (data ? store()->rc : 0); }
   inline int getReserved () const { return (data ? store()->alloted : 0); }
 
