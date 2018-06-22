@@ -473,9 +473,15 @@ void VOpenGLTexture::analyzeImage () {
     for (int y = 0; y < img->height; ++y) {
       for (int x = 0; x < img->width; ++x) {
         VImage::RGBA pix = img->getPixel(x, y);
-        if (pix.a != 0 && pix.a != 255) mOneBitAlpha = false;
-             if (pix.a != 0) mTransparent = false;
-        else if (pix.a != 255) mOpaque = false;
+        if (pix.a != 0 && pix.a != 255) {
+          mOneBitAlpha = false;
+          mTransparent = false;
+          mOpaque = false;
+          break; // no need to analyze more
+        } else {
+               if (pix.a != 0) mTransparent = false;
+          else if (pix.a != 255) mOpaque = false;
+        }
       }
     }
   } else {
