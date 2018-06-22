@@ -1956,9 +1956,7 @@ void VAcs::Tick(float DeltaTime)
 
 #define STUB(cmd) GCon->Log("Executing unimplemented ACS PCODE " #cmd);
 
-#ifdef __GNUC__
 #define USE_COMPUTED_GOTO 1
-#endif
 
 #if USE_COMPUTED_GOTO
 #define ACSVM_SWITCH(op)  goto *vm_labels[op];

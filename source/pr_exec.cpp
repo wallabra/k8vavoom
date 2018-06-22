@@ -189,8 +189,10 @@ static void cstDump (const vuint8 *ip) {
 //
 //==========================================================================
 
-#if defined(__GNUC__) && !defined(VCC_STUPID_TRACER)
+#if !defined(VCC_STUPID_TRACER)
 # define USE_COMPUTED_GOTO  1
+# else
+# warning "computed gotos are off"
 #endif
 
 #if USE_COMPUTED_GOTO

@@ -1126,11 +1126,7 @@ void VRenderLevelShared::PrecacheLevel()
   if (cls.demoplayback)
     return;
 
-#ifdef __GNUC__
-  char texturepresent[GTextureManager.GetNumTextures()];
-#else
-  char *texturepresent = (char*)Z_Malloc(GTextureManager.GetNumTextures());
-#endif
+  char *texturepresent = (char *)Z_Malloc(GTextureManager.GetNumTextures());
   memset(texturepresent, 0, GTextureManager.GetNumTextures());
 
   for (i = 0; i < Level->NumSectors; i++)
@@ -1155,9 +1151,7 @@ void VRenderLevelShared::PrecacheLevel()
     }
   }
 
-#ifndef __GNUC__
   Z_Free(texturepresent);
-#endif
   unguard;
 }
 
