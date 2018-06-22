@@ -1324,7 +1324,7 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
 
   glBegin(GL_QUADS);
   int sx = x;
-  for (size_t f = 0; f < text.length(); ++f) {
+  for (int f = 0; f < text.length(); ++f) {
     int ch = (vuint8)text[f];
     if (ch == '\r') { x = sx; continue; }
     if (ch == '\n') { x = sx; y += currFont->getHeight(); continue; }
@@ -1655,8 +1655,8 @@ static VStr readLine (VStream *strm, bool allTrim=true) {
     res += ch;
   }
   if (allTrim) {
-    while (!res.isEmpty() && (vuint8)res[0] <= ' ') res = res.chopLeft(1);
-    while (!res.isEmpty() && (vuint8)res[res.length()-1] <= ' ') res = res.chopRight(1);
+    while (!res.isEmpty() && (vuint8)res[0] <= ' ') res.chopLeft(1);
+    while (!res.isEmpty() && (vuint8)res[res.length()-1] <= ' ') res.chopRight(1);
   }
   return res;
 }
@@ -1666,7 +1666,7 @@ static VStr getKey (const VStr &s) {
   int epos = s.indexOf('=');
   if (epos < 0) return s;
   VStr res = s.left(epos);
-  while (!res.isEmpty() && (vuint8)res[res.length()-1] <= ' ') res = res.chopRight(1);
+  while (!res.isEmpty() && (vuint8)res[res.length()-1] <= ' ') res.chopRight(1);
   return res;
 }
 
@@ -1674,9 +1674,10 @@ static VStr getKey (const VStr &s) {
 static VStr getValue (const VStr &s) {
   int epos = s.indexOf('=');
   if (epos < 0) return VStr();
-  VStr res = s.chopLeft(epos+1);
-  while (!res.isEmpty() && (vuint8)res[0] <= ' ') res = res.chopLeft(1);
-  while (!res.isEmpty() && (vuint8)res[res.length()-1] <= ' ') res = res.chopRight(1);
+  VStr res = s;
+  res.chopLeft(epos+1);
+  while (!res.isEmpty() && (vuint8)res[0] <= ' ') res.chopLeft(1);
+  while (!res.isEmpty() && (vuint8)res[res.length()-1] <= ' ') res.chopRight(1);
   return res;
 }
 
@@ -1685,9 +1686,9 @@ static int getIntValue (const VStr &s) {
   VStr v = getValue(s);
   if (v.isEmpty()) return 0;
   bool neg = v.startsWith("-");
-  if (neg) v = v.chopLeft(1);
+  if (neg) v.chopLeft(1);
   int res = 0;
-  for (size_t f = 0; f < v.length(); ++f) {
+  for (int f = 0; f < v.length(); ++f) {
     int d = VStr::digitInBase(v[f]);
     if (d < 0) break;
     res = res*10+d;
@@ -1758,7 +1759,7 @@ VFont::VFont (VName aname, const VStr &fnameIni, const VStr &fnameTexture)
     if (currSection.length() < 2 || VStr::digitInBase(currSection[1]) < 0 || !currSection.endsWith("]")) continue;
     if (!key.equ1251CI("Width")) continue;
     int cidx = 0;
-    for (size_t f = 1; f < currSection.length(); ++f) {
+    for (int f = 1; f < currSection.length(); ++f) {
       int d = VStr::digitInBase(currSection[f]);
       if (d < 0) {
         if (f != currSection.length()-1) cidx = -1;
@@ -1855,7 +1856,7 @@ int VFont::charWidth (int ch) const {
 //==========================================================================
 int VFont::textWidth (const VStr &s) const {
   int res = 0;
-  for (size_t f = 0; f < s.length(); ++f) {
+  for (int f = 0; f < s.length(); ++f) {
     auto fc = getChar(vuint8(s[f]));
     if (fc) res += fc->advance;
   }
@@ -1870,7 +1871,7 @@ int VFont::textWidth (const VStr &s) const {
 //==========================================================================
 int VFont::textHeight (const VStr &s) const {
   int res = fontHeight;
-  for (size_t f = 0; f < s.length(); ++f) if (s[f] == '\n') res += fontHeight;
+  for (int f = 0; f < s.length(); ++f) if (s[f] == '\n') res += fontHeight;
   return res;
 }
 

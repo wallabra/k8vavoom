@@ -329,7 +329,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
     VStr pname = paklist[f];
     if (pname.length() < 2) continue;
     char type = pname[0];
-    pname = pname.chopLeft(1);
+    pname.chopLeft(1);
     if (type == ':') {
       if (fsysAppendPak(pname)) {
         dprintf("added pak file '%s'...\n", *pname);

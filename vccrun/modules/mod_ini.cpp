@@ -206,8 +206,8 @@ void VIniFile::knsplit (const VStr &keyname, VStr &path, VStr &key) {
   } else {
     path = keyname.mid(0, pos);
     key = keyname.mid(pos+1, (int)keyname.length()-(pos+1));
-    while (path.startsWith("/")) path = path.chopLeft(1);
-    while (path.endsWith("/")) path = path.chopRight(1);
+    while (path.startsWith("/")) path.chopLeft(1);
+    while (path.endsWith("/")) path.chopRight(1);
   }
 }
 

@@ -368,9 +368,9 @@ bool FSysDriverDisk::isGoodPath (const VStr &path) {
 static VStr findFileNC (VStr fname, bool ignoreExt) {
   if (fname.length() == 0) return VStr();
   VStr res;
-  if (fname[0] == '/') { res = "/"; fname = fname.chopLeft(1); }
+  if (fname[0] == '/') { res = "/"; fname.chopLeft(1); }
   while (fname.length() != 0) {
-    if (fname[0] == '/') { fname = fname.chopLeft(1); continue; }
+    if (fname[0] == '/') { fname.chopLeft(1); continue; }
     auto sle = fname.indexOf('/');
     VStr curname;
     if (sle < 0) {
@@ -379,7 +379,7 @@ static VStr findFileNC (VStr fname, bool ignoreExt) {
       if (ignoreExt) curname = curname.stripExtension();
     } else {
       curname = fname.mid(0, sle);
-      fname = fname.chopLeft(sle+1);
+      fname.chopLeft(sle+1);
     }
     if (sle > 0 || !ignoreExt) {
       VStr fullpath = res;
@@ -648,7 +648,8 @@ static void splitFileName (const VStr &infname, VStr &pfx, VStr &fname) {
     if (infname[pos] == '/' || infname[pos] == '\\') break;
     if (infname[pos] == ':') {
       pfx = infname.left(pos);
-      fname = infname.chopLeft(pos+1);
+      fname = infname;
+      fname.chopLeft(pos+1);
       return;
     }
     ++pos;
