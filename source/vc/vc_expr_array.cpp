@@ -105,6 +105,7 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
   opcopy = op->SyntaxCopy();
 
   op = op->Resolve(ec);
+  VExpression *indcopy = (ind ? ind->SyntaxCopy() : nullptr);
 
   if (op) {
     // resolve index expression
@@ -113,13 +114,45 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
     ec.SetIndexArray(oldIndArray);
   }
 
-  // don't need it anymore
-  delete opcopy;
-
   if (!op || !ind) {
+    delete opcopy;
+    delete indcopy;
     delete this;
     return nullptr;
   }
+
+  // convert `class[idx]` to `opIndex` funcall
+  if (op->Type.Type == TYPE_Reference || op->Type.Type == TYPE_Class) {
+    if (assTarget) FatalError("VC: internal compiler error (VArrayElement::InternalResolve)");
+    VName mtname = VName("opIndex");
+    // try typed method first: opIndex<index>
+    VStr itname = "opIndex";
+    switch (ind->Type.Type) {
+      case TYPE_Int: case TYPE_Byte: case TYPE_Bool: itname += "Int"; break;
+      case TYPE_Float: itname += "Float"; break;
+      case TYPE_Name: itname += "Name"; break;
+      case TYPE_String: itname += "String"; break;
+      case TYPE_Reference: itname += "Object"; break;
+      case TYPE_Class: itname += "Class"; break;
+      case TYPE_State: itname += "State"; break;
+    }
+    if (op->Type.Class->FindAccessibleMethod(*itname, ec.SelfClass)) mtname = VName(*itname);
+    if (!op->Type.Class->FindAccessibleMethod(mtname, ec.SelfClass)) mtname = NAME_None;
+    if (mtname == NAME_None) {
+      delete opcopy;
+      delete indcopy;
+      ParseError(Loc, "Cannot find `opIndex`");
+      delete this;
+      return nullptr;
+    }
+    VExpression *e = new VDotInvocation(opcopy, mtname, Loc, 1, &indcopy);
+    delete this;
+    return e->Resolve(ec);
+  }
+
+  // don't need thos anymore
+  delete opcopy;
+  delete indcopy;
 
   if (ind->Type.Type != TYPE_Int) {
     ParseError(Loc, "Array index must be of integer type");
@@ -216,10 +249,88 @@ VExpression *VArrayElement::ResolveAssignmentTarget (VEmitContext &ec) {
 //
 //  VArrayElement::ResolveCompleteAssign
 //
+//  this will be called before actual assign resolving
+//  return `nullptr` to indicate error, or consume `val` and set `resolved` to `true` if resolved
+//  if `nullptr` is returned, both `this` and `val` should be destroyed
+//
 //==========================================================================
 VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) {
   VExpression *rop = op->SyntaxCopy()->Resolve(ec);
   if (!rop) { delete val; delete this; return nullptr; }
+
+  // convert `class[idx]` to `opIndex` funcall
+  if (rop->Type.Type == TYPE_Reference || rop->Type.Type == TYPE_Class) {
+    resolved = true; // anyway
+    VExpression *rval = val->SyntaxCopy()->Resolve(ec);
+    VExpression *rind = ind->SyntaxCopy()->Resolve(ec);
+    if (!rval || !rind) {
+      delete rval;
+      delete rind;
+      delete rop;
+      delete val;
+      delete this;
+      return nullptr;
+    }
+    VExpression *argv[2];
+    argv[0] = ind;
+    argv[1] = val;
+    VName mtname = NAME_None;
+    // try typed methods first: opIndex<index>Assign<index>
+    VStr itname;
+    switch (rind->Type.Type) {
+      case TYPE_Int: case TYPE_Byte: case TYPE_Bool: itname += "Int"; break;
+      case TYPE_Float: itname += "Float"; break;
+      case TYPE_Name: itname += "Name"; break;
+      case TYPE_String: itname += "String"; break;
+      case TYPE_Reference: itname += "Object"; break;
+      case TYPE_Class: itname += "Class"; break;
+      case TYPE_State: itname += "State"; break;
+    }
+    VStr vtname;
+    switch (rval->Type.Type) {
+      case TYPE_Int: case TYPE_Byte: case TYPE_Bool: vtname += "Int"; break;
+      case TYPE_Float: vtname += "Float"; break;
+      case TYPE_Name: vtname += "Name"; break;
+      case TYPE_String: vtname += "String"; break;
+      case TYPE_Reference: vtname += "Object"; break;
+      case TYPE_Class: vtname += "Class"; break;
+      case TYPE_State: vtname += "State"; break;
+    }
+    //fprintf(stderr, "rind=<%s>; rval=<%s>; itname=<%s>; vtname=<%s>\n", *rind->Type.GetName(), *rval->Type.GetName(), *itname, *vtname);
+    if (!itname.isEmpty() && !vtname.isEmpty()) {
+      VStr n = VStr("opIndex")+itname+"Assign"+vtname;
+      if (rop->Type.Class->FindAccessibleMethod(*n, ec.SelfClass)) mtname = VName(*n);
+    }
+    // try shorter
+    if (mtname == NAME_None && !itname.isEmpty()) {
+      VStr n = VStr("opIndex")+itname+"Assign";
+      if (rop->Type.Class->FindAccessibleMethod(*n, ec.SelfClass)) mtname = VName(*n);
+    }
+    if (mtname == NAME_None && !vtname.isEmpty()) {
+      VStr n = VStr("opIndexAssign")+vtname;
+      if (rop->Type.Class->FindAccessibleMethod(*n, ec.SelfClass)) mtname = VName(*n);
+    }
+    if (mtname == NAME_None) {
+      mtname = VName("opIndexAssign");
+      if (!rop->Type.Class->FindAccessibleMethod(mtname, ec.SelfClass)) mtname = NAME_None;
+    }
+    // don't need those anymore
+    delete rval;
+    delete rind;
+    delete rop;
+    if (mtname == NAME_None) {
+      ParseError(Loc, "Cannot find `opIndexAssign`");
+      delete val;
+      delete this;
+      return nullptr;
+    }
+    // create invocation
+    VExpression *e = new VDotInvocation(op, mtname, Loc, 2, argv);
+    op = nullptr; // it was consumed by invocation
+    ind = nullptr; // it was consumed by invocation
+    delete this;
+    return e->Resolve(ec);
+  }
 
   if (rop->Type.Type != TYPE_String) {
     delete rop;
