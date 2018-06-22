@@ -354,3 +354,29 @@ VC has iterators (currently, only native code can define iterators):
 
 Look at the respective VC script sources to find available iterators. They are marked
 with `iterator` keyword, and usually contains one or more `out` parameters.
+
+
+
+Index operator overloading
+==========================
+
+You can overload array index operator for classes. To do that, define one or several
+`opIndex` methods, like this:
+
+  int opIndex (string idx) { return ... }
+  void opIndexAssign (string idx, int val) { ... }
+
+You can define type-specialized methods too, using pattern `opIndex<indtype>`, and
+`opIndex[<indtype>]Assign[<valtype>]`. Some examples:
+
+  int opIndexFloat (float v)
+  int opIndexName (name n)
+  void opIndexAssignString (int idx, string val)
+  void opIndexNameAssignString (name n, string val)
+
+For indexing, VC fill fallback to `opIndex`, if no specialized method was found.
+For assignin, VC will try methods in this order:
+  opIndex<indtype>Assign<valtype>
+  opIndex<indtype>Assign
+  opIndexAssign<valtype>
+  opIndexAssign
