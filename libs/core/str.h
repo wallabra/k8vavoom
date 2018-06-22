@@ -36,79 +36,96 @@
 // WARNING! this cannot be bigger than one pointer, or VM will break!
 class VStr {
 private:
-  // int at [-1]: length
-  // int at [-2]: refcount
+  struct Store {
+    int length;
+    int alloted;
+    int rc; // has no meaning for slices
+    // actual string data starts after this struct; and this is where `data` points
+  };
+
   char *data; // string, 0-terminated (0 is not in length); can be null
 
-  inline int *refp () { return (data ? ((int *)data)-2 : nullptr); }
-  inline int *lenp () { return (data ? ((int *)data)-1 : nullptr); }
+private:
+  inline Store *store () { return (data ? ((Store *)data)-1 : nullptr); }
+  inline Store *store () const { return (data ? ((Store *)data)-1 : nullptr); }
 
-  inline const int *refp () const { return (data ? ((const int *)data)-2 : nullptr); }
-  inline const int *lenp () const { return (data ? ((const int *)data)-1 : nullptr); }
+  inline void incref () const {
+    if (data) ++store()->rc;
+  }
 
-  void MakeMutable (); // and unique
-  void Resize (int newlen); // always makes string unique
+  // WARNING! may free `data` contents!
+  // this also clears `data`
+  inline void decref () {
+    if (data) {
+      if (--store()->rc == 0) {
+        #ifdef VAVOOM_TEST_VSTR
+        fprintf(stderr, "VStr: freeing %p\n", data);
+        #endif
+        free(store());
+      }
+      data = nullptr;
+    }
+  }
 
-  void SetContent (const char *s, int len=-1); // not necessarily copies anything
-
-  inline bool isMyData (const char *buf) const { return (data && buf && buf >= data && buf < data+length()); }
   inline bool isMyData (const char *buf, int len) const { return (data && buf && buf < data+length() && buf+len >= data); }
 
-public:
-  VStr () : data(nullptr) {}
-  VStr (ENoInit) {}
-  VStr (const VStr &instr) : data(nullptr) { if (instr.data) { data = (char*)instr.data; ++(*refp()); } }
-  VStr (const char *instr, int len=-1) : data(nullptr) { SetContent(instr, len); }
-  VStr (const VStr &instr, int start, int len) : data(nullptr) { Assign(instr.mid(start, len)); }
+  inline void assign (const VStr &instr) {
+    if (&instr != this) {
+      if (instr.data) {
+        if (instr.data != data) {
+          instr.incref();
+          decref();
+          data = (char *)instr.data;
+        }
+      } else {
+        clear();
+      }
+    }
+  }
 
-  explicit VStr (char v) : data(nullptr) { SetContent(&v, 1); }
-  explicit VStr (bool v) : data(nullptr) { SetContent(v ? "true" : "false"); }
+  void makeMutable (); // and unique
+  void resize (int newlen); // always makes string unique; also, always sets [length] to 0; clears string on `newlen == 0`
+  void setContent (const char *s, int len=-1);
+
+public:
+  VStr (ENoInit) {}
+  VStr () : data(nullptr) {}
+  VStr (const VStr &instr) : data(nullptr) { data = instr.data; incref(); }
+  VStr (const char *instr, int len=-1) : data(nullptr) { setContent(instr, len); }
+  VStr (const VStr &instr, int start, int len) : data(nullptr) { assign(instr.mid(start, len)); }
+
+  explicit VStr (const VName &InName) : data(nullptr) { setContent(*InName); }
+
+  explicit VStr (char v) : data(nullptr) { setContent(&v, 1); }
+  explicit VStr (bool v) : data(nullptr) { setContent(v ? "true" : "false"); }
   explicit VStr (int v);
   explicit VStr (unsigned v);
   explicit VStr (float v);
   explicit VStr (double v);
 
-  explicit VStr (const VName &InName) : data(nullptr) { SetContent(*InName); }
-
-  ~VStr () { Clean(); }
-
-  inline void Assign (const VStr &instr) {
-    if (&instr != this) {
-      if (instr.data) {
-        if (instr.data != data) {
-          int *xrp = (int*)instr.data;
-          ++(xrp[-2]); // increment refcounter
-          Clear();
-          data = (char*)instr.data;
-        } else {
-          ++(*refp());
-        }
-      } else {
-        Clear();
-      }
-    }
-  }
+  ~VStr () { clear(); }
 
   // clears the string
-  inline void Clean () { Resize(0); }
-  // clears the string
-  inline void Clear () { Resize(0); }
-  // clears the string
-  inline void clear () { Resize(0); }
+  inline void Clean () { decref(); }
+  inline void Clear () { decref(); }
+  inline void clear () { decref(); }
 
   // returns length of the string
-  inline size_t Length () const { return (data ? *lenp() : 0); }
-  inline size_t length () const { return (data ? *lenp() : 0); }
+  inline int Length () const { return (data ? store()->length : 0); }
+  inline int length () const { return (data ? store()->length : 0); }
+
+  inline int getRC () const { return (data ? store()->rc : 0); }
+  inline int getReserved () const { return (data ? store()->alloted : 0); }
 
   // returns number of characters in a UTF-8 string
-  inline size_t Utf8Length () const { return (data ? Utf8Length(data) : 0); }
-  inline size_t utf8Length () const { return (data ? Utf8Length(data) : 0); }
-  inline size_t utf8length () const { return (data ? Utf8Length(data) : 0); }
+  inline int Utf8Length () const { return (data ? Utf8Length(data, store()->length) : 0); }
+  inline int utf8Length () const { return (data ? Utf8Length(data, store()->length) : 0); }
+  inline int utf8length () const { return (data ? Utf8Length(data, store()->length) : 0); }
 
   // returns C string
   inline const char *operator * () const { return (data ? data : ""); }
 
-  inline bool isUnuqie () const { return (!data || *refp() == 1); }
+  //inline bool isUnuqie () const { return (!data || *refp() == 1); }
 
   // checks if string is empty
   inline bool IsEmpty () const { return !data; }
@@ -117,29 +134,29 @@ public:
   inline bool isNotEmpty () const { return !!data; }
 
   // character accessors
-  inline char operator [] (int Idx) const { return data[Idx]; }
-  inline char *GetMutableCharPointer (int Idx) { MakeMutable(); return &data[Idx]; }
+  inline char operator [] (int idx) const { return data[idx]; }
+  inline char *GetMutableCharPointer (int idx) { makeMutable(); return &data[idx]; }
 
   VStr mid (int start, int len) const;
   VStr left (int len) const;
   VStr right (int len) const;
-  VStr chopLeft (int len) const;
-  VStr chopRight (int len) const;
+  void chopLeft (int len);
+  void chopRight (int len);
 
   // assignement operators
-  inline VStr &operator = (const char *instr) { SetContent(instr); return *this; }
-  inline VStr &operator = (const VStr &instr) { Assign(instr); return *this; }
+  inline VStr &operator = (const char *instr) { setContent(instr); return *this; }
+  inline VStr &operator = (const VStr &instr) { assign(instr); return *this; }
 
   // concatenation operators
   VStr &operator += (const char *instr) {
-    int inl = (int)(instr ? strlen(instr) : 0);
+    int inl = (int)(instr && instr[0] ? strlen(instr) : 0);
     if (inl) {
       if (isMyData(instr, inl)) {
-        VStr s(instr);
+        VStr s(instr, inl);
         operator+=(s);
       } else {
-        int l = (int)length();
-        Resize(l+inl);
+        int l = length();
+        resize(l+inl);
         memcpy(data+l, instr, inl+1);
       }
     }
@@ -147,25 +164,23 @@ public:
   }
 
   VStr &operator += (const VStr &instr) {
-    int inl = (int)instr.length();
+    int inl = instr.length();
     if (inl) {
-      int l = (int)length();
-      if (isMyData(instr.data, inl)) {
-        VStr s(instr);
-        s.MakeMutable(); // ensure unique
-        Resize(int(l+inl));
+      int l = length();
+      if (l) {
+        VStr s(instr); // this is cheap
+        resize(l+inl);
         memcpy(data+l, s.data, inl+1);
       } else {
-        Resize(int(l+inl));
-        memcpy(data+l, instr.data, inl+1);
+        assign(instr);
       }
     }
     return *this;
   }
 
   VStr &operator += (char inchr) {
-    int l = (int)length();
-    Resize(l+1);
+    int l = length();
+    resize(l+1);
     data[l] = inchr;
     return *this;
   }
@@ -274,8 +289,11 @@ public:
       vint32 len;
       Strm << STRM_INDEX(len);
       if (len < 0) len = 0;
-      S.Resize(len);
-      if (len) Strm.Serialise(S.data, len+1);
+      S.resize(len);
+      if (len) {
+        Strm.Serialise(S.data, len+1);
+        S.data[len] = 0; // just in case
+      }
     } else {
       vint32 len = vint32(S.Length());
       Strm << STRM_INDEX(len);
@@ -306,10 +324,10 @@ public:
   inline VStr defaultExtension (const VStr &extension) const { return DefaultExtension(extension); }
   inline VStr fixSlashes () const { return FixFileSlashes(); }
 
-  static inline size_t Length (const char *s) { return (s ? strlen(s) : 0); }
-  static inline size_t length (const char *s) { return (s ? strlen(s) : 0); }
-  static size_t Utf8Length (const char *);
-  static inline size_t utf8Length (const char *s) { return Utf8Length(s); }
+  static inline int Length (const char *s) { return (s ? (int)strlen(s) : 0); }
+  static inline int length (const char *s) { return (s ? (int)strlen(s) : 0); }
+  static int Utf8Length (const char *s, int len=-1);
+  static inline int utf8Length (const char *s, int len=-1) { return (int)Utf8Length(s, len); }
   static size_t ByteLengthForUtf8 (const char *, size_t);
   static int GetChar (const char *&); // utf8
   static VStr FromChar (int);
@@ -383,8 +401,8 @@ public:
   VStr toUpperCase1251 () const;
 
   inline bool equ1251CI (const VStr &s) const {
-    size_t slen = length();
-    if (slen != s.length()) return false;
+    size_t slen = (size_t)length();
+    if (slen != (size_t)s.length()) return false;
     for (size_t f = 0; f < slen; ++f) if (locase1251(data[f]) != locase1251(s.data[f])) return false;
     return true;
   }
