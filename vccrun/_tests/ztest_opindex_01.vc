@@ -1,0 +1,30 @@
+class Test : Object;
+
+int n = 42;
+int v = 666;
+
+int opIndexString (string fld) {
+  if (fld == "n") return n;
+  if (fld == "v") return v;
+  writeln("unknown field: `", fld, "`");
+  return 0;
+}
+
+void opIndexAssignInt (string fld, int val) {
+  if (fld == "n") { n = val; return; }
+  if (fld == "v") { v = val; return; }
+  writeln("unknown assign field: `", fld, "` (v=", val, ")");
+}
+
+class Main : Object;
+
+static final void main () {
+  auto t = SpawnObject(Test);
+  writeln(t["n"]);
+  writeln(t["v"]);
+  writeln(t["fuck"]);
+  t["n"] = 69;
+  t["fuck"] = 999;
+  writeln(t["n"]);
+  writeln(t["v"]);
+}

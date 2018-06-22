@@ -1,0 +1,26 @@
+class Test : Object abstract;
+
+static final int opIndex (string fld) {
+  if (fld == "n") return 42;
+  if (fld == "v") return 666;
+  writeln("unknown field: `", fld, "`");
+  return 0;
+}
+
+static final void opIndexAssign (string fld, int val) {
+  if (fld == "n") { writeln("new n: ", val); return; }
+  if (fld == "v") { writeln("new v: ", val); return; }
+  writeln("unknown assign field: `", fld, "` (v=", val, ")");
+}
+
+class Main : Object;
+
+static final void main () {
+  writeln(Test["n"]);
+  writeln(Test["v"]);
+  writeln(Test["fuck"]);
+  Test["n"] = 69;
+  Test["fuck"] = 999;
+  writeln(Test["n"]);
+  writeln(Test["v"]);
+}
