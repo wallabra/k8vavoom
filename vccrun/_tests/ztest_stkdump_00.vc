@@ -1,0 +1,16 @@
+// FAIL
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+int n = 42;
+
+int getn () { return n; }
+
+void test () {
+  Main c;
+  writeln(c.getn());
+}
+
+void main () {
+  test();
+}

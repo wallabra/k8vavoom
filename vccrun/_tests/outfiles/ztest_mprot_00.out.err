@@ -1,0 +1,3 @@
+ztest_mprot_00.vc:10: Cannot override public method with protected
+FATAL: Confused by previous errors, bailing out
+

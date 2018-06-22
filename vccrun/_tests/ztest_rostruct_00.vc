@@ -1,0 +1,14 @@
+// FAIL
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+struct readonly S {
+  int n;
+}
+
+final int main (array!string *args) {
+  S s;
+  s.n = 42;
+
+  return 0;
+}

@@ -1,0 +1,8 @@
+
+
+=== VaVoomScript Call Stack (2) ===
+  000: vccrun.Main.test (ztest_stkdump_00.vc:11)
+  001: vccrun.Main.main (ztest_stkdump_00.vc:15)
+=============================
+
+FATAL: Reference not set to an instance of an object

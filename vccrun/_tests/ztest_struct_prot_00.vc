@@ -1,0 +1,18 @@
+// FAIL
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+struct S {
+  readonly int n;
+  private int f;
+}
+
+static final void main () {
+  S s;
+  s.n = 42;
+  s.f = 666;
+}
+
+
+defaultproperties {
+}

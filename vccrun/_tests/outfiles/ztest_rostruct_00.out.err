@@ -1,0 +1,3 @@
+ztest_rostruct_00.vc:11: Tried to assign to a read-only field
+FATAL: Confused by previous errors, bailing out
+

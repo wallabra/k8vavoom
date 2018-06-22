@@ -1,0 +1,27 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+struct S {
+  int a;
+  int b;
+}
+
+int boo (ref S s) {
+  int res = s.a+s.b;
+  ++s.a;
+  ++s.b;
+  return res;
+}
+
+final int main (array!string *args) {
+  S s;
+  s.a = 42;
+  s.b = 1000;
+
+  writeln("s.a=", s.a, "; s.b=", s.b);
+  writeln(boo(ref s));
+  //writeln(boo(out s));
+  writeln("s.a=", s.a, "; s.b=", s.b);
+
+  return 0;
+}

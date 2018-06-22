@@ -1,0 +1,3 @@
+ztest_struct_prot_00.vc:12: Tried to assign to a read-only field
+FATAL: Confused by previous errors, bailing out
+

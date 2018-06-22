@@ -1,7 +1,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 class Main : Object;
 
-static final void main () {
+static void main () {
   string s = "abcdef";
   writeln(s);
   s[2..5] = "!";
@@ -10,4 +10,6 @@ static final void main () {
   writeln(s, " : ", (s == "abNEWSTRf"));
   s[5..$] = "";
   writeln(s, " : ", (s == "abNEW"));
+  s[0..$] = "append";
+  writeln(s, " : ", (s == "append"));
 }

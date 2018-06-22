@@ -1,0 +1,23 @@
+// FAIL
+class Test0 : Object;
+
+int foo () { return 42; }
+int bar () { return foo(); }
+
+
+class Test1 : Test0;
+
+protected override int foo () { return 666; }
+
+
+class Main : Object;
+
+static final void main () {
+  auto t0 = SpawnObject(Test0);
+  auto t1 = SpawnObject(Test1);
+  writeln(t0.bar);
+  writeln(t1.bar);
+  writeln(t0.foo);
+  writeln(t1.foo);
+}
+
