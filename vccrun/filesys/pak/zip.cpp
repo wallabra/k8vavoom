@@ -395,51 +395,39 @@ void VZipFile::openArchive () {
 }
 
 
+struct SelfDestructBuf {
+  vuint8 *buf;
+
+  SelfDestructBuf (vint32 sz) {
+    buf = (vuint8 *)malloc(sz);
+    if (!buf) Sys_Error("Out of memory!");
+  }
+  ~SelfDestructBuf () { free(buf); }
+};
+
+
 vuint32 VZipFile::searchCentralDir () {
-  enum { BUFREADCOMMENT = 0x400 };
+  enum { MaxBufSize = 65578 };
 
-  vuint8 buf[BUFREADCOMMENT+4];
-  vuint32 uMaxBack = 0xffff; // maximum size of global comment
-  vuint32 uPosFound = 0;
+  vint32 fsize = fileStream->TotalSize();
+  if (fsize < 16) return 0;
 
-  vuint32 uSizeFile = fileStream->TotalSize();
+  vuint32 rd = (fsize < MaxBufSize ? fsize : MaxBufSize);
+  SelfDestructBuf sdbuf(rd);
 
-  if (uMaxBack > uSizeFile) uMaxBack = uSizeFile;
-  //fprintf(stderr, " fsz=%u; maxback=%u\n", uSizeFile, uMaxBack);
+  fileStream->Seek(fsize-rd);
+  if (fileStream->IsError()) return 0;
+  fileStream->Serialise(sdbuf.buf, rd);
+  if (fileStream->IsError()) return 0;
 
-  vuint32 uBackRead = 4;
-  while (uBackRead < uMaxBack) {
-    if (uBackRead+BUFREADCOMMENT > uMaxBack) {
-      uBackRead = uMaxBack;
-    } else {
-      uBackRead += BUFREADCOMMENT;
+  for (int f = rd-8; f >= 0; --f) {
+    if (sdbuf.buf[f] == 0x50 && sdbuf.buf[f+1] == 0x4b && sdbuf.buf[f+2] == 0x05 && sdbuf.buf[f+3] == 0x06) {
+      // i found her!
+      return fsize-rd+f;
     }
-    vuint32 uReadPos = uSizeFile-uBackRead;
-    vuint32 uReadSize = (BUFREADCOMMENT+4 < uSizeFile-uReadPos ? BUFREADCOMMENT+4 : uSizeFile-uReadPos);
-    //fprintf(stderr, "  rdpos=%u; rdsize=%u\n", uReadPos, uReadSize);
-
-    fileStream->Seek(uReadPos);
-    if (fileStream->IsError()) {
-      //fprintf(stderr, "   OOPS 000\n");
-      return 0;
-    }
-    fileStream->Serialise(buf, uReadSize);
-    if (fileStream->IsError()) {
-      //fprintf(stderr, "   OOPS 001\n");
-      return 0;
-    }
-
-    for (int i = (int)uReadSize-3; i-- > 0; ) {
-      if (buf[i] == 0x50 && buf[i+1] == 0x4b && buf[i+2] == 0x05 && buf[i+3] == 0x06) {
-        uPosFound = uReadPos+i;
-        break;
-      }
-    }
-
-    if (uPosFound != 0) break;
   }
 
-  return uPosFound;
+  return 0;
 }
 
 
