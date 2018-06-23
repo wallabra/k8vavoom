@@ -23,34 +23,30 @@
 //**
 //**************************************************************************
 
-class VMatrix4
-{
+class VMatrix4 {
 public:
-  float   m[4][4];
+  float m[4][4];
 
   static const VMatrix4 Identity;
 
-  VMatrix4()
-  {}
-  VMatrix4(float m00, float m01, float m02, float m03,
+  VMatrix4 () {}
+  VMatrix4 (float m00, float m01, float m02, float m03,
     float m10, float m11, float m12, float m13,
     float m20, float m21, float m22, float m23,
     float m30, float m31, float m32, float m33);
-  VMatrix4(const float *m2);
-  float Determinant() const;
-  VMatrix4 Inverse() const;
-  VMatrix4 Transpose() const;
-  TVec Transform(const TVec &V) const;
-  TVec Transform2(const TVec &V) const;
+  VMatrix4 (const float *m2);
+  VMatrix4 (const VMatrix4 &m2) { memcpy(m, m2.m, sizeof(m)); }
 
-  float *operator[] (int i)
-  {
-    return m[i];
-  }
-  const float *operator[] (int i) const
-  {
-    return m[i];
-  }
+  float Determinant () const;
+  VMatrix4 Inverse () const;
+  VMatrix4 Transpose () const;
+  TVec Transform (const TVec &V) const;
+  TVec Transform2 (const TVec &V) const;
+
+  inline VMatrix4 &operator = (const VMatrix4 &m2) { if (&m2 != this) memcpy(m, m2.m, sizeof(m)); return *this; }
+
+  inline float *operator [] (int i) { return m[i]; }
+  inline const float *operator [] (int i) const { return m[i]; }
 
   friend VMatrix4 operator * (const VMatrix4 &M1, const VMatrix4 &M2);
 };
