@@ -1,0 +1,10 @@
+class Main : Object;
+
+void main () {
+  float deg = 45;
+  float rad = deg2rad(deg);
+  float d2 = rad2deg(rad);
+  writeln(deg);
+  writeln(rad);
+  writeln(d2);
+}

@@ -1,0 +1,8 @@
+class Main : Object;
+
+void main () {
+  float x = 0.5;
+  float y = 0.8;
+  writeln(atan2(y, x));
+  writeln(atan2(x, y));
+}

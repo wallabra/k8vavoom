@@ -1,0 +1,16 @@
+class Main : Object;
+
+void main () {
+  auto v0 = vector(1, 2, 3);
+  auto v1 = vector(6, 10, 7);
+  writeln(v0.length);
+  writeln(v0.length2D);
+  writeln(v1.length);
+  writeln(v1.length2D);
+  writeln(v0.normalise);
+  writeln(v1.normalise);
+  writeln(v0.dot(v1));
+  writeln(v1.dot(v0));
+  writeln(v0.cross(v1));
+  writeln(v1.cross(v0));
+}
