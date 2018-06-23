@@ -43,6 +43,12 @@ native final static void runEventLoop ();
 native final static void requestRefresh ();
 native final static void requestQuit ();
 
+// do forced GLSwap (i.e. show rendered frame)
+native final static void forceSwap ();
+
+// in "direct mode" we are rendering on front (visible) screen buffer
+native final static bool directMode { get; set; }
+
 // aborts if font cannot be loaded
 native final static void loadFont (name fontname, string fnameIni, string fnameTexture);
 

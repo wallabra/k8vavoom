@@ -774,6 +774,7 @@ bool VVideo::mInited = false;
 int VVideo::mWidth = 0;
 int VVideo::mHeight = 0;
 bool VVideo::smoothLine = false;
+bool VVideo::directMode = false;
 
 
 struct TimerInfo {
@@ -939,6 +940,7 @@ void VVideo::close () {
     mInited = false;
     mWidth = 0;
     mHeight = 0;
+    directMode = false;
   }
 }
 
@@ -1422,6 +1424,24 @@ IMPLEMENT_FUNCTION(VVideo, requestRefresh) {
   }
 }
 
+IMPLEMENT_FUNCTION(VVideo, forceSwap) {
+  if (!mInited) return;
+  doGLSwap = false;
+  SDL_GL_SwapWindow(hw_window);
+}
+
+IMPLEMENT_FUNCTION(VVideo, get_directMode) {
+  RET_BOOL(directMode);
+}
+
+IMPLEMENT_FUNCTION(VVideo, set_directMode) {
+  P_GET_BOOL(m);
+  if (!mInited) return;
+  if (m != directMode) {
+    directMode = m;
+    glDrawBuffer(m ? GL_FRONT : GL_BACK);
+  }
+}
 
 IMPLEMENT_FUNCTION(VVideo, get_scissorEnabled) {
   if (mInited) {

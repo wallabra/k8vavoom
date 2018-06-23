@@ -69,6 +69,7 @@ private:
   static vuint32 colorARGB; // a==0: opaque
   static VFont *currFont;
   static bool smoothLine;
+  static bool directMode;
   friend class VOpenGLTexture;
 
 private:
@@ -180,6 +181,11 @@ public:
 
   DECLARE_FUNCTION(requestRefresh)
   DECLARE_FUNCTION(requestQuit)
+
+  DECLARE_FUNCTION(forceSwap)
+
+  DECLARE_FUNCTION(get_directMode)
+  DECLARE_FUNCTION(set_directMode)
 
   DECLARE_FUNCTION(get_scissorEnabled)
   DECLARE_FUNCTION(set_scissorEnabled)
