@@ -1,0 +1,3 @@
+ztest_constparam_01.vc:15: Tried to assign to a read-only field
+FATAL: Confused by previous errors, bailing out
+

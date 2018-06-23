@@ -1,0 +1,20 @@
+// FAIL
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+int boo (const int v) {
+  v = 42;
+  return v;
+}
+
+int foo (const ref int v) {
+  v = 42;
+  return v;
+}
+
+void main () {
+  int n = 666;
+  boo(69);
+  foo(n);
+  writeln(n);
+}

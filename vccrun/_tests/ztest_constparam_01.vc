@@ -1,0 +1,24 @@
+// FAIL
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+struct S {
+  int fld;
+}
+
+
+void foo (const ref S s) {
+  writeln(s.fld);
+}
+
+void boo (const ref S s) {
+  s.fld = 42;
+}
+
+void main () {
+  S s;
+  s.fld = 666;
+  foo(s);
+  boo(s);
+  writeln(s.fld);
+}
