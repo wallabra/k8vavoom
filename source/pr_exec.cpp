@@ -2097,6 +2097,47 @@ func_loop:
           case OPC_Builtin_FloatIsNaN: sp[-1].i = (isNaNF(sp[-1].f) ? 1 : 0); break;
           case OPC_Builtin_FloatIsInf: sp[-1].i = (isInfF(sp[-1].f) ? 1 : 0); break;
           case OPC_Builtin_FloatIsFinite: sp[-1].i = (isFiniteF(sp[-1].f) ? 1 : 0); break;
+          case OPC_Builtin_DegToRad: sp[-1].f = DEG2RAD(sp[-1].f); break;
+          case OPC_Builtin_RadToDeg: sp[-1].f = RAD2DEG(sp[-1].f); break;
+          case OPC_Builtin_Sin: sp[-1].f = msin(sp[-1].f); break;
+          case OPC_Builtin_Cos: sp[-1].f = mcos(sp[-1].f); break;
+          case OPC_Builtin_Tan: sp[-1].f = mtan(sp[-1].f); break;
+          case OPC_Builtin_ASin: sp[-1].f = masin(sp[-1].f); break;
+          case OPC_Builtin_ACos: sp[-1].f = acos(sp[-1].f); break;
+          case OPC_Builtin_ATan: sp[-1].f = RAD2DEG(atan(sp[-1].f)); break;
+          case OPC_Builtin_Sqrt: sp[-1].f = sqrt(sp[-1].f); break;
+          case OPC_Builtin_ATan2: sp[-2].f = matan(sp[-2].f, sp[-1].f); --sp; break;
+          case OPC_Builtin_VecLength: sp[-3].f = sqrt(sp[-1].f*sp[-1].f+sp[-2].f*sp[-2].f+sp[-3].f*sp[-3].f); sp -= 2; break;
+          case OPC_Builtin_VecLength2D: sp[-3].f = sqrt(sp[-2].f*sp[-2].f+sp[-3].f*sp[-3].f); sp -= 2; break;
+          case OPC_Builtin_VecNormalize:
+            {
+              TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
+              v = normalise(v);
+              sp[-1].f = v.z;
+              sp[-2].f = v.y;
+              sp[-3].f = v.x;
+              break;
+            }
+          case OPC_Builtin_VecDot:
+            {
+              TVec v2(sp[-3].f, sp[-2].f, sp[-1].f);
+              sp -= 3;
+              TVec v1(sp[-3].f, sp[-2].f, sp[-1].f);
+              sp -= 2;
+              sp[-1].f = DotProduct(v1, v2);
+              break;
+            }
+          case OPC_Builtin_VecCross:
+            {
+              TVec v2(sp[-3].f, sp[-2].f, sp[-1].f);
+              sp -= 3;
+              TVec v1(sp[-3].f, sp[-2].f, sp[-1].f);
+              v1 = CrossProduct(v1, v2);
+              sp[-1].f = v1.z;
+              sp[-2].f = v1.y;
+              sp[-3].f = v1.x;
+              break;
+            }
           default: cstDump(ip); Sys_Error("Unknown builtin");
         }
         ip += 2;

@@ -195,9 +195,9 @@ native static final float AngleMod360 (float angle);
 // normalises angle in range -180..180
 native static final float AngleMod180 (float angle);
 // degrees --> radians
-native static final float deg2rad (float angle);
+native static final float deg2rad (float angle) [builtin DegToRad];
 // radians -> degrees
-native static final float rad2deg (float angle);
+native static final float rad2deg (float angle) [builtin RadToDeg];
 // absolute value
 native static final int abs (int val) [builtin IntAbs];
 native static final float fabs (float val) [builtin FloatAbs];
@@ -220,37 +220,39 @@ native static final int clamp (int Val, int Min, int Max) [builtin IntClamp];
 native static final float FClamp (float Val, float Min, float Max) [builtin FloatClamp];
 native static final float fclamp (float Val, float Min, float Max) [builtin FloatClamp];
 // sine
-native static final float sin (float angle);
+native static final float sin (float angle) [builtin Sin];
 // cosine
-native static final float cos (float angle);
+native static final float cos (float angle) [builtin Cos];
 // tangent
-native static final float tan (float angle);
+native static final float tan (float angle) [builtin Tan];
 // arcsine
-native static final float asin (float x);
+native static final float asin (float x) [builtin ASin];
 // arccosine
-native static final float acos (float x);
+native static final float acos (float x) [builtin ACos];
 // arctangent
-native static final float atan (float slope);
+native static final float atan (float slope) [builtin ATan];
 // arctangent
-native static final float atan2 (float y, float x);
+native static final float atan2 (float y, float x) [builtin ATan2];
 // square root
-native static final float sqrt (float x);
+native static final float sqrt (float x) [builtin Sqrt];
 // vector length
-native static final float Length (TVec vec);
-native static final float length (TVec vec);
+native static final float length (TVec vec) [builtin VecLength];
+alias Length = length;
 // vector length without z component
-native static final float Length2D (TVec vec);
-native static final float length2D (TVec vec);
+native static final float length2D (TVec vec) [builtin VecLength2D];
+alias Length2D = length2D;
+alias length2d = length2D;
 // normalises vector
-native static final TVec Normalise (TVec vec);
-// normalises vector
-native static final TVec normalise (TVec vec);
+native static final TVec normalise (TVec vec) [builtin VecNormalize];
+alias Normalise = normalise;
+alias Normalize = normalise;
+alias normalize = normalise;
 // dot product
-native static final float DotProduct (TVec v1, TVec v2);
-native static final float dot (TVec v1, TVec v2);
+native static final float dot (TVec v1, TVec v2) [builtin VecDot];
+alias DotProduct = dot;
 // cross product (perpendicular vector)
-native static final TVec CrossProduct (TVec v1, TVec v2);
-native static final TVec cross (TVec v1, TVec v2);
+native static final TVec cross (TVec v1, TVec v2) [builtin VecCross];
+alias CrossProduct = cross;
 // creates vectors for given angle vector
 native static final void AngleVectors (TAVec *angles, TVec *forward, TVec *right, TVec *up);
 // simplified version of AngleVectors, creates only forward vector
