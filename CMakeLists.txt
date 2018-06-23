@@ -98,6 +98,15 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7)
   set(UNFUCK_GXX_FLAGS "${UNFUCK_GXX_FLAGS} -Wno-class-memaccess")
 endif()
 
+# use -ffast-math, 'cause why not?
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -ffast-math")
+# if not shitdoze, use SSE2
+if(NOT WIN32)
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -march=native")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -msse2")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -mfpmath=sse")
+endif(NOT WIN32)
+
 if(ENABLE_SIGNAL_HANDLER)
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-frame-address")
 endif(ENABLE_SIGNAL_HANDLER)
