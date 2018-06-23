@@ -24,24 +24,36 @@
 //**************************************************************************
 
 
+#ifdef BUILTIN_OPCODE_INFO
+# ifndef DECLARE_OPC_BUILTIN
+#  define BUILTIN_OPCODE_INFO_DEFAULT
+#  define DECLARE_OPC_BUILTIN(name)  OPC_Builtin_##name
+enum {
+# endif
+  DECLARE_OPC_BUILTIN(IntAbs),
+  DECLARE_OPC_BUILTIN(FloatAbs),
+  DECLARE_OPC_BUILTIN(IntMin),
+  DECLARE_OPC_BUILTIN(IntMax),
+  DECLARE_OPC_BUILTIN(FloatMin),
+  DECLARE_OPC_BUILTIN(FloatMax),
+  DECLARE_OPC_BUILTIN(IntClamp),
+  DECLARE_OPC_BUILTIN(FloatClamp),
+  DECLARE_OPC_BUILTIN(FloatIsNaN),
+  DECLARE_OPC_BUILTIN(FloatIsInf),
+  DECLARE_OPC_BUILTIN(FloatIsFinite),
+# undef DECLARE_OPC_BUILTIN
+# undef BUILTIN_OPCODE_INFO
+# ifdef BUILTIN_OPCODE_INFO_DEFAULT
+#  undef BUILTIN_OPCODE_INFO_DEFAULT
+};
+# endif
+
+#else
+
 #ifndef OPCODE_INFO
 
 #define PROG_MAGIC    "VPRG"
 #define PROG_VERSION  (36)
-
-enum {
-  OPC_Builtin_IntAbs,
-  OPC_Builtin_FloatAbs,
-  OPC_Builtin_IntMin,
-  OPC_Builtin_IntMax,
-  OPC_Builtin_FloatMin,
-  OPC_Builtin_FloatMax,
-  OPC_Builtin_IntClamp,
-  OPC_Builtin_FloatClamp,
-  OPC_Builtin_FloatIsNaN,
-  OPC_Builtin_FloatIsInf,
-  OPC_Builtin_FloatIsFinite,
-};
 
 enum {
   OPCARGS_None,
@@ -454,5 +466,7 @@ struct VProgsExport {
   }
 };
 
+
+#endif
 
 #endif

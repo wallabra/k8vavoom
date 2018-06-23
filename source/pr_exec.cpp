@@ -39,6 +39,11 @@
 # endif
 #endif
 
+// builtin codes
+#define BUILTIN_OPCODE_INFO
+#include "progdefs.h"
+
+
 #ifdef VC_USE_CUSTOM_FLOAT_CHECKERS
 # include <math.h>
 # define isFiniteF  isfinite
@@ -287,9 +292,9 @@ func_loop:
 
 #if USE_COMPUTED_GOTO
     static void *vm_labels[] = {
-#define DECLARE_OPC(name, args) &&Lbl_OPC_ ## name
-#define OPCODE_INFO
-#include "progdefs.h"
+# define DECLARE_OPC(name, args) &&Lbl_OPC_ ## name
+# define OPCODE_INFO
+# include "progdefs.h"
     0 };
 #endif
 

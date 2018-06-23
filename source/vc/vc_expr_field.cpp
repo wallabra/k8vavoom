@@ -25,6 +25,10 @@
 
 #include "vc_local.h"
 
+// builtin codes
+#define BUILTIN_OPCODE_INFO
+#include "../progdefs.h"
+
 
 //==========================================================================
 //

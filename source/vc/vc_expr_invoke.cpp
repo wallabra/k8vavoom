@@ -959,6 +959,7 @@ VExpression *VInvocation::SyntaxCopy () {
 void VInvocation::DoSyntaxCopyTo (VExpression *e) {
   VInvocationBase::DoSyntaxCopyTo(e);
   auto res = (VInvocation *)e;
+  // no need to copy private fields
   res->SelfExpr = (SelfExpr ? SelfExpr->SyntaxCopy() : nullptr);
   res->Func = Func;
   res->DelegateField = DelegateField;
@@ -977,6 +978,7 @@ void VInvocation::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   guard(VInvocation::DoResolve);
+
   if (ec.Package->Name == NAME_decorate) CheckDecorateParams(ec);
 
   if (DelegateLocal >= 0) {
@@ -1127,57 +1129,9 @@ void VInvocation::Emit (VEmitContext &ec) {
   }
 
   // some special functions will be converted to builtins
-  if ((Func->Flags&(FUNC_Native|FUNC_Static)) == (FUNC_Native|FUNC_Static)) {
-    if (NumArgs == 1 && Func->NumParams == 1) {
-      if (Func->ParamTypes[0].Type == TYPE_Name && Func->ReturnType.Type == TYPE_String && Func->GetVName() == VName("NameToStr")) {
-        ec.AddStatement(OPC_NameToStr, Loc);
-        return;
-      }
-      if (Func->ParamTypes[0].Type == TYPE_String && Func->ReturnType.Type == TYPE_Name && Func->GetVName() == VName("StrToName")) {
-        ec.AddStatement(OPC_StrToName, Loc);
-        return;
-      }
-      if (Func->ParamTypes[0].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Int && Func->GetVName() == VName("ftoi")) {
-        ec.AddStatement(OPC_FloatToInt, Loc);
-        return;
-      }
-      if (Func->ParamTypes[0].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Float && Func->GetVName() == VName("itof")) {
-        ec.AddStatement(OPC_IntToFloat, Loc);
-        return;
-      }
-      if (Func->ParamTypes[0].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Int && Func->GetVName() == VName("abs")) {
-        ec.AddBuiltin(OPC_Builtin_IntAbs, Loc);
-        return;
-      }
-      if (Func->ParamTypes[0].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Float && Func->GetVName() == VName("fabs")) {
-        ec.AddBuiltin(OPC_Builtin_FloatAbs, Loc);
-        return;
-      }
-    }
-
-    if (NumArgs == 2 && Func->NumParams == 2) {
-      if (Func->ParamTypes[0].Type == TYPE_Int && Func->ParamTypes[1].Type == TYPE_Int && Func->ReturnType.Type == TYPE_Int) {
-        if (Func->GetVName() == VName("Min") || Func->GetVName() == VName("min")) { ec.AddBuiltin(OPC_Builtin_IntMin, Loc); return; }
-        if (Func->GetVName() == VName("Max") || Func->GetVName() == VName("max")) { ec.AddBuiltin(OPC_Builtin_IntMax, Loc); return; }
-      }
-      if (Func->ParamTypes[0].Type == TYPE_Float && Func->ParamTypes[1].Type == TYPE_Float && Func->ReturnType.Type == TYPE_Float) {
-        if (Func->GetVName() == VName("FMin") || Func->GetVName() == VName("fmin")) { ec.AddBuiltin(OPC_Builtin_FloatMin, Loc); return; }
-        if (Func->GetVName() == VName("FMax") || Func->GetVName() == VName("fmax")) { ec.AddBuiltin(OPC_Builtin_FloatMax, Loc); return; }
-      }
-    }
-
-    if (NumArgs == 3 && Func->NumParams == 3) {
-      if (Func->ParamTypes[0].Type == TYPE_Int && Func->ParamTypes[1].Type == TYPE_Int && Func->ParamTypes[2].Type == TYPE_Int &&
-          Func->ReturnType.Type == TYPE_Int)
-      {
-        if (Func->GetVName() == VName("Clamp") || Func->GetVName() == VName("clamp")) { ec.AddBuiltin(OPC_Builtin_IntClamp, Loc); return; }
-      }
-      if (Func->ParamTypes[0].Type == TYPE_Float && Func->ParamTypes[1].Type == TYPE_Float && Func->ParamTypes[2].Type == TYPE_Float &&
-          Func->ReturnType.Type == TYPE_Float)
-      {
-        if (Func->GetVName() == VName("FClamp") || Func->GetVName() == VName("fclamp")) { ec.AddBuiltin(OPC_Builtin_FloatClamp, Loc); return; }
-      }
-    }
+  if (Func->builtinOpc >= 0) {
+    ec.AddBuiltin(Func->builtinOpc, Loc);
+    return;
   }
 
   if (DirectCall) {

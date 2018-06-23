@@ -121,6 +121,7 @@ VMethod::VMethod (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , SelfTypeName(NAME_None)
   , lmbCount(0)
   , printfFmtArgIdx(-1)
+  , builtinOpc(-1)
   , Profile1(0)
   , Profile2(0)
   , NativeFunc(0)
@@ -173,8 +174,10 @@ void VMethod::Serialise (VStream &Strm) {
     << ReturnType
     << STRM_INDEX(NumParams)
     << STRM_INDEX(ParamsSize)
-    << lmbCount
-    << printfFmtArgIdx;
+    << STRM_INDEX(lmbCount)
+    << STRM_INDEX(printfFmtArgIdx)
+    << STRM_INDEX(builtinOpc)
+  ;
   for (int i = 0; i < NumParams; ++i) Strm << ParamTypes[i] << ParamFlags[i];
   Strm << ReplCond << Instructions;
   unguard;
@@ -491,20 +494,8 @@ void VMethod::DumpAsm () {
         dprintf(" %s", *Instructions[s].TypeArg.GetName());
         break;
       case OPCARGS_Builtin:
-        switch (Instructions[s].Arg1) {
-          case OPC_Builtin_IntAbs: dprintf(" abs"); break;
-          case OPC_Builtin_FloatAbs: dprintf(" fabs"); break;
-          case OPC_Builtin_IntMin: dprintf(" min"); break;
-          case OPC_Builtin_IntMax: dprintf(" max"); break;
-          case OPC_Builtin_FloatMin: dprintf(" fmin"); break;
-          case OPC_Builtin_FloatMax: dprintf(" fmax"); break;
-          case OPC_Builtin_IntClamp: dprintf(" clamp"); break;
-          case OPC_Builtin_FloatClamp: dprintf(" fclamp"); break;
-          case OPC_Builtin_FloatIsNaN: dprintf(" isnan"); break;
-          case OPC_Builtin_FloatIsInf: dprintf(" isinf"); break;
-          case OPC_Builtin_FloatIsFinite: dprintf(" isfinite"); break;
-          default: dprintf(" unknown %d", Instructions[s].Arg1); break;
-        }
+        dprintf(" %s", StatementBuiltinInfo[Instructions[s].Arg1].name);
+        break;
     }
     dprintf("\n");
   }
@@ -527,7 +518,7 @@ void VMethod::PostLoad () {
   if (NumParams > VMethod::MAX_PARAMS) Sys_Error("Function has more than %i params", VMethod::MAX_PARAMS);
   for (FBuiltinInfo *B = FBuiltinInfo::Builtins; B; B = B->Next) {
     if (Outer == B->OuterClass && !VStr::Cmp(*Name, B->Name)) {
-      if (Flags&FUNC_Native) {
+      if ((Flags&FUNC_Native) != 0 && builtinOpc < 0) {
         NativeFunc = B->Func;
         break;
       } else {
@@ -535,7 +526,7 @@ void VMethod::PostLoad () {
       }
     }
   }
-  if (!NativeFunc && (Flags&FUNC_Native) != 0) {
+  if (builtinOpc < 0 && !NativeFunc && (Flags&FUNC_Native) != 0) {
     // default builtin
     NativeFunc = PF_Fixme;
 #if defined(VCC_STANDALONE_EXECUTOR)

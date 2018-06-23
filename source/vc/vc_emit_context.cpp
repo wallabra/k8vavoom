@@ -32,6 +32,13 @@ VStatementInfo StatementInfo[NUM_OPCODES] = {
 #include "../progdefs.h"
 };
 
+VStatementBuiltinInfo StatementBuiltinInfo[] = {
+#define BUILTIN_OPCODE_INFO
+#define DECLARE_OPC_BUILTIN(name)  { #name }
+#include "../progdefs.h"
+  { nullptr },
+};
+
 
 //==========================================================================
 //

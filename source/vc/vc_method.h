@@ -47,6 +47,7 @@ enum {
   FUNC_RealFinal   = 0x8000, // set in postload processor
 
   FUNC_NetFlags = FUNC_Net|FUNC_NetReliable,
+  FUNC_ProtectionFlags = FUNC_Override|FUNC_Private|FUNC_Protected|FUNC_RealFinal,
 };
 
 
@@ -166,6 +167,7 @@ public:
   vint32 lmbCount; // number of defined lambdas, used to create lambda names
   // native vararg method can have `printf` attribute
   vint32 printfFmtArgIdx; // -1 if no, or local index
+  vint32 builtinOpc; // -1: not a builtin
 
   // run-time fields
   vuint32 Profile1;

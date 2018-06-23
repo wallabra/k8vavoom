@@ -198,27 +198,27 @@ native static final float AngleMod180 (float angle);
 native static final float deg2rad (float angle);
 // radians -> degrees
 native static final float rad2deg (float angle);
-// absolute value (autoconverted to VM opcode)
-native static final int abs (int val);
-native static final float fabs (float val);
-// minimal value (autoconverted to VM opcode)
-native static final int Min (int v1, int v2);
-native static final int min (int v1, int v2);
-// minimal value (autoconverted to VM opcode)
-native static final float FMin (float v1, float v2);
-native static final float fmin (float v1, float v2);
-// maximal value (autoconverted to VM opcode)
-native static final int Max (int v1, int v2);
-native static final int max (int v1, int v2);
-// maximal value (autoconverted to VM opcode)
-native static final float FMax (float v1, float v2);
-native static final float fmax (float v1, float v2);
-// clamped value (autoconverted to VM opcode)
-native static final int Clamp (int Val, int Min, int Max);
-native static final int clamp (int Val, int Min, int Max);
-// clamped value (autoconverted to VM opcode)
-native static final float FClamp (float Val, float Min, float Max);
-native static final float fclamp (float Val, float Min, float Max);
+// absolute value
+native static final int abs (int val) [builtin IntAbs];
+native static final float fabs (float val) [builtin FloatAbs];
+// minimal value
+native static final int Min (int v1, int v2) [builtin IntMin];
+native static final int min (int v1, int v2) [builtin IntMin];
+// minimal value
+native static final float FMin (float v1, float v2) [builtin FloatMin];
+native static final float fmin (float v1, float v2) [builtin FloatMin];
+// maximal value
+native static final int Max (int v1, int v2) [builtin IntMax];
+native static final int max (int v1, int v2) [builtin IntMax];
+// maximal value
+native static final float FMax (float v1, float v2) [builtin FloatMax];
+native static final float fmax (float v1, float v2) [builtin FloatMax];
+// clamped value
+native static final int Clamp (int Val, int Min, int Max) [builtin IntClamp];
+native static final int clamp (int Val, int Min, int Max) [builtin IntClamp];
+// clamped value
+native static final float FClamp (float Val, float Min, float Max) [builtin FloatClamp];
+native static final float fclamp (float Val, float Min, float Max) [builtin FloatClamp];
 // sine
 native static final float sin (float angle);
 // cosine

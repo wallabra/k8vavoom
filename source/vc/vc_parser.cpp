@@ -1548,7 +1548,6 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
 
   // parse attributes
   while (Lex.Check(TK_LBracket)) {
-    // for now, there is only one attribute: `[printf,idx]`, so check its prerequisites
     if (Lex.Token != TK_Identifier) {
       ParseError(Lex.Location, "Attribute name expected");
     } else {
@@ -1576,8 +1575,28 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
           }
           Lex.NextToken();
         }
+      } else if (Lex.Name == "builtin") {
+        // pseudomethod
+        if ((Func->Flags&~FUNC_ProtectionFlags) != (FUNC_Native|FUNC_Static|FUNC_Final)) {
+          ParseError(Func->Loc, "Builtin should be `native static final`");
+        }
+        Lex.NextToken();
+        if (Lex.Token != TK_Identifier) {
+          ParseError(Lex.Location, "Buitin name expected");
+        } else {
+          int idx = -1, num = 0;
+          for (auto bif = StatementBuiltinInfo; bif->name; ++bif, ++num) {
+            if (Lex.Name == bif->name) { idx = num; break; }
+          }
+          if (idx < 0) {
+            ParseError(Lex.Location, "Unknown builtin `%s`", *Lex.Name);
+          } else {
+            Func->builtinOpc = idx;
+          }
+          Lex.NextToken();
+        }
       } else {
-        ParseError(Lex.Location, "Unknown attribute '%s'", *Lex.Name);
+        ParseError(Lex.Location, "Unknown attribute `%s`", *Lex.Name);
       }
     }
     Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
@@ -1587,6 +1606,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
     if ((Func->Flags&FUNC_Native) == 0) ParseError(Func->Loc, "Non-native methods should have a body");
     ++Package->NumBuiltins;
   } else {
+    if ((Func->Flags&FUNC_Native) != 0) ParseError(Func->Loc, "Non-native methods should not have a body");
     // self type specifier
     // func self(type) -- wtf?!
     if (Lex.Check(TK_Self)) {

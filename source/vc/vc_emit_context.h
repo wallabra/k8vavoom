@@ -149,4 +149,9 @@ struct VStatementInfo {
   int usecount;
 };
 
+struct VStatementBuiltinInfo {
+  const char *name;
+};
+
 extern VStatementInfo StatementInfo[NUM_OPCODES];
+extern VStatementBuiltinInfo StatementBuiltinInfo[];
