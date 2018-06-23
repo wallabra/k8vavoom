@@ -60,6 +60,7 @@ enum {
   FPARM_Optional = 0x01,
   FPARM_Out      = 0x02,
   FPARM_Ref      = 0x04,
+  FPARM_Const    = 0x08,
 };
 
 

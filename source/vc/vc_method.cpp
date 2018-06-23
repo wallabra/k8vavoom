@@ -301,7 +301,7 @@ bool VMethod::Define () {
           }
           Ret = false;
         }
-        if ((SuperMethod->ParamFlags[i]^ParamFlags[i])&(FPARM_Optional|FPARM_Out|FPARM_Ref)) {
+        if ((SuperMethod->ParamFlags[i]^ParamFlags[i])&(FPARM_Optional|FPARM_Out|FPARM_Ref|FPARM_Const)) {
           if (Ret) ParseError(Loc, "Modifiers of argument #%d differs from base class", i+1);
           Ret = false;
         }
@@ -373,7 +373,7 @@ void VMethod::Emit () {
     VMethodParam &P = Params[i];
     if (P.Name != NAME_None) {
       auto oldlofs = ec.localsofs;
-      if (ec.CheckForLocalVar(P.Name) != -1) ParseError(P.Loc, "Redefined identifier %s", *P.Name);
+      if (ec.CheckForLocalVar(P.Name) != -1) ParseError(P.Loc, "Redefined argument `%s`", *P.Name);
       VLocalVarDef &L = ec.AllocLocal(P.Name, ParamTypes[i], P.Loc);
       ec.localsofs = oldlofs;
       L.Offset = ec.localsofs;

@@ -39,6 +39,7 @@ public:
     Override    = 0x0400,
     Ref         = 0x0800, // not used yet
     Protected   = 0x1000,
+    Const       = 0x2000,
   };
 
   static int Parse (VLexer &);

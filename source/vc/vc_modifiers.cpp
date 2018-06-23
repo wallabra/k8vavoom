@@ -53,6 +53,7 @@ int TModifiers::Parse (VLexer &Lex) {
     {TK_Spawner, Spawner},
     {TK_Override, Override},
     {TK_Ref, Ref},
+    {TK_Const, Const},
     {TK_EOF, 0},
   };
 
@@ -95,6 +96,7 @@ const char *TModifiers::Name (int Modifier) {
     case Override: return "override";
     case Ref: return "ref";
     case Protected: return "protected";
+    case Const: return "const";
   }
   return "";
 }
@@ -199,5 +201,6 @@ int TModifiers::ParmAttr (int Modifiers) {
   if (Modifiers&Optional) Attributes |= FPARM_Optional;
   if (Modifiers&Out) Attributes |= FPARM_Out;
   if (Modifiers&Ref) Attributes |= FPARM_Ref;
+  if (Modifiers&Const) Attributes |= FPARM_Const;
   return Attributes;
 }

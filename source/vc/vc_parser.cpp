@@ -1529,7 +1529,8 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
     VMethodParam &P = Func->Params[Func->NumParams];
 
     int ParmModifiers = TModifiers::Parse(Lex);
-    Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref, Lex.Location));
+    Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers,
+        TModifiers::Optional|TModifiers::Out|TModifiers::Ref|TModifiers::Const, Lex.Location));
 
     P.TypeExpr = ParseTypeWithPtrs(true);
     if (!P.TypeExpr && Func->NumParams == 0) break;

@@ -363,7 +363,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       delete this;
       return nullptr;
     }
-    VExpression *e = new VFieldAccess(op, field, Loc, Flags & FIELD_ReadOnly);
+    VExpression *e = new VFieldAccess(op, field, Loc, Flags&FIELD_ReadOnly);
     op = nullptr;
     delete this;
     return e->Resolve(ec);
