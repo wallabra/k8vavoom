@@ -518,3 +518,20 @@ public:
 private:
   static const vuint8 utf8dfa[0x16c];
 };
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+#include <string>
+#include <cstdlib>
+#include <cxxabi.h>
+
+template<typename T> VStr shippTypeName () {
+  int status;
+  VStr tpn(typeid(T).name());
+  char *dmn = abi::__cxa_demangle(*tpn, nullptr, nullptr, nullptr);
+  if (dmn) {
+    tpn = VStr(dmn);
+    free(dmn);
+  }
+  return tpn;
+}
