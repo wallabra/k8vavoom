@@ -152,7 +152,7 @@ VExpression *VOutArg::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VSuperInvocation::VSuperInvocation
+//  VInvocationBase::VInvocationBase
 //
 //==========================================================================
 VInvocationBase::VInvocationBase (int ANumArgs, VExpression **AArgs, const TLocation &ALoc)
@@ -163,17 +163,39 @@ VInvocationBase::VInvocationBase (int ANumArgs, VExpression **AArgs, const TLoca
   for (int i = 0; i < NumArgs; ++i) Args[i] = AArgs[i];
 }
 
+
+//==========================================================================
+//
+//  VInvocationBase::~VInvocationBase
+//
+//==========================================================================
 VInvocationBase::~VInvocationBase () {
   for (int i = 0; i < NumArgs; ++i) { delete Args[i]; Args[i] = nullptr; }
   NumArgs = 0;
 }
 
+
+//==========================================================================
+//
+//  VInvocationBase::DoSyntaxCopyTo
+//
+//==========================================================================
 void VInvocationBase::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
   auto res = (VInvocationBase *)e;
   memset(res->Args, 0, sizeof(res->Args));
   res->NumArgs = NumArgs;
   for (int i = 0; i < NumArgs; ++i) res->Args[i] = (Args[i] ? Args[i]->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VInvocationBase::IsInvocation
+//
+//==========================================================================
+bool VInvocationBase::IsInvocation () const {
+  return true;
 }
 
 

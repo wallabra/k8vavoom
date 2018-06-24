@@ -90,6 +90,8 @@ public:
   VInvocationBase (int ANumArgs, VExpression **AArgs, const TLocation &ALoc);
   virtual ~VInvocationBase () override;
 
+  virtual bool IsInvocation () const override;
+
 protected:
   VInvocationBase () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;

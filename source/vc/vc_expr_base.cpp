@@ -307,6 +307,7 @@ bool VExpression::IsSingleName () const { return false; }
 bool VExpression::IsDotField () const { return false; }
 bool VExpression::IsRefArg () const { return false; }
 bool VExpression::IsOutArg () const { return false; }
+bool VExpression::IsInvocation () const { return false; }
 bool VExpression::IsTypeExpr () const { return false; }
 bool VExpression::IsSimpleType () const { return false; }
 bool VExpression::IsReferenceType () const { return false; }

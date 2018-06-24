@@ -1019,12 +1019,12 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   }
 
   // generate faster code for static arrays
-  bool isStaticArray = (arrR->Type.Type == TYPE_Array);
+  bool isStaticArray = (arrR ? arrR->Type.Type == TYPE_Array : false);
   int staticLen = (isStaticArray ? arrR->Type.ArrayDim : 0);
 
   // find local for ref
   int indLocalVal = -1;
-  if (isRef) {
+  if (isRef && !wasError) {
     if (!varR->IsLocalVarExpr()) {
       ParseError(var->Loc, "VC: something is very wrong with the compiler (VForeachArray::Resolve)");
       wasError = true;

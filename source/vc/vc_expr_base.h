@@ -85,6 +85,7 @@ public:
   virtual bool IsDotField () const;
   virtual bool IsRefArg () const;
   virtual bool IsOutArg () const;
+  virtual bool IsInvocation () const;
   virtual bool IsTypeExpr () const;
   virtual bool IsSimpleType () const;
   virtual bool IsReferenceType () const;
