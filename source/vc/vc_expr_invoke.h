@@ -92,6 +92,10 @@ public:
 
   virtual bool IsInvocation () const override;
 
+  virtual bool IsMethodNameChangeable () const = 0;
+  virtual VName GetMethodName () const = 0;
+  virtual void SetMethodName (VName name) = 0;
+
 protected:
   VInvocationBase () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -111,6 +115,10 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual bool IsMethodNameChangeable () const override;
+  virtual VName GetMethodName () const override;
+  virtual void SetMethodName (VName aname) override;
 
 protected:
   VSuperInvocation () {}
@@ -132,6 +140,10 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual VExpression *ResolveIterator (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual bool IsMethodNameChangeable () const override;
+  virtual VName GetMethodName () const override;
+  virtual void SetMethodName (VName aname) override;
 
 protected:
   VCastOrInvocation () {}
@@ -156,6 +168,10 @@ public:
   virtual VExpression *ResolveIterator (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual bool IsMethodNameChangeable () const override;
+  virtual VName GetMethodName () const override;
+  virtual void SetMethodName (VName aname) override;
+
 protected:
   VDotInvocation () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -179,6 +195,10 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual bool IsMethodNameChangeable () const override;
+  virtual VName GetMethodName () const override;
+  virtual void SetMethodName (VName aname) override;
 
 protected:
   VTypeInvocation () {}
@@ -218,6 +238,10 @@ public:
   // arguments should be already resolved (i.e. has type)
   static bool IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VExpression **argv);
 
+  virtual bool IsMethodNameChangeable () const override;
+  virtual VName GetMethodName () const override;
+  virtual void SetMethodName (VName aname) override;
+
 protected:
   VInvocation () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -237,6 +261,10 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual bool IsMethodNameChangeable () const override;
+  virtual VName GetMethodName () const override;
+  virtual void SetMethodName (VName aname) override;
 
 protected:
   VInvokeWrite () {}

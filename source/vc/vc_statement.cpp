@@ -992,6 +992,26 @@ void VForeachArray::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 bool VForeachArray::Resolve (VEmitContext &ec) {
+  /* if iterator is invocation, rewrite it to:
+   *   {
+   *     firstargtype it;
+   *     mtname_Init(allargs);
+   *     itsetup(&mtname_Done(it));
+   *     {
+   *       forvars;
+   *       while (mtname_Next(it, forvars)) {
+   *         body
+   *       }
+   *     }
+   *     itdone(); // this calls `mtname_Done(it)`
+   *   }
+   */
+  if (arr && arr->IsInvocation()) {
+    VInvocationBase *ib = (VInvocationBase *)arr;
+    ParseError(Loc, "VC iterators aren't supported yet (%d:`%s`)", int(ib->IsMethodNameChangeable()), *ib->GetMethodName());
+    return false;
+  }
+
   // we will rewrite 'em later
   auto ivarR = (idxvar ? idxvar->SyntaxCopy()->Resolve(ec) : nullptr);
   auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);

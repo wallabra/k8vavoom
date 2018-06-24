@@ -287,6 +287,36 @@ void VSuperInvocation::Emit (VEmitContext &) {
 
 //==========================================================================
 //
+//  VSuperInvocation::IsMethodNameChangeable
+//
+//==========================================================================
+bool VSuperInvocation::IsMethodNameChangeable () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VSuperInvocation::GetMethodName
+//
+//==========================================================================
+VName VSuperInvocation::GetMethodName () const {
+  return Name;
+}
+
+
+//==========================================================================
+//
+//  VSuperInvocation::SetMethodName
+//
+//==========================================================================
+void VSuperInvocation::SetMethodName (VName aname) {
+  Name = aname;
+}
+
+
+//==========================================================================
+//
 //  VCastOrInvocation::VCastOrInvocation
 //
 //==========================================================================
@@ -425,6 +455,36 @@ VExpression *VCastOrInvocation::ResolveIterator (VEmitContext &ec) {
 //==========================================================================
 void VCastOrInvocation::Emit (VEmitContext &) {
   ParseError(Loc, "Should not happen (VCastOrInvocation)");
+}
+
+
+//==========================================================================
+//
+//  VCastOrInvocation::IsMethodNameChangeable
+//
+//==========================================================================
+bool VCastOrInvocation::IsMethodNameChangeable () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VCastOrInvocation::GetMethodName
+//
+//==========================================================================
+VName VCastOrInvocation::GetMethodName () const {
+  return Name;
+}
+
+
+//==========================================================================
+//
+//  VCastOrInvocation::SetMethodName
+//
+//==========================================================================
+void VCastOrInvocation::SetMethodName (VName aname) {
+  Name = aname;
 }
 
 
@@ -739,6 +799,36 @@ void VDotInvocation::Emit (VEmitContext &) {
 
 //==========================================================================
 //
+//  VDotInvocation::IsMethodNameChangeable
+//
+//==========================================================================
+bool VDotInvocation::IsMethodNameChangeable () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VDotInvocation::GetMethodName
+//
+//==========================================================================
+VName VDotInvocation::GetMethodName () const {
+  return MethodName;
+}
+
+
+//==========================================================================
+//
+//  VCastOrInvocation::SetMethodName
+//
+//==========================================================================
+void VDotInvocation::SetMethodName (VName aname) {
+  MethodName = aname;
+}
+
+
+//==========================================================================
+//
 //  VTypeInvocation::VTypeInvocation
 //
 //==========================================================================
@@ -908,6 +998,36 @@ VExpression *VTypeInvocation::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VTypeInvocation::Emit (VEmitContext &) {
   ParseError(Loc, "Should not happen (VTypeInvocation)");
+}
+
+
+//==========================================================================
+//
+//  VTypeInvocation::IsMethodNameChangeable
+//
+//==========================================================================
+bool VTypeInvocation::IsMethodNameChangeable () const {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VTypeInvocation::GetMethodName
+//
+//==========================================================================
+VName VTypeInvocation::GetMethodName () const {
+  return MethodName;
+}
+
+
+//==========================================================================
+//
+//  VTypeInvocation::SetMethodName
+//
+//==========================================================================
+void VTypeInvocation::SetMethodName (VName aname) {
+  MethodName = aname;
 }
 
 
@@ -1513,6 +1633,36 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VInvocation::IsMethodNameChangeable
+//
+//==========================================================================
+bool VInvocation::IsMethodNameChangeable () const {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VInvocation::GetMethodName
+//
+//==========================================================================
+VName VInvocation::GetMethodName () const {
+  return (Func ? Func->Name : NAME_None);
+}
+
+
+//==========================================================================
+//
+//  VInvocation::SetMethodName
+//
+//==========================================================================
+void VInvocation::SetMethodName (VName aname) {
+  FatalError("VC: Internal compiler error: `VInvocation::SetMethodName()` called");
+}
+
+
+//==========================================================================
+//
 //  VInvokeWrite::VInvokeWrite
 //
 //==========================================================================
@@ -1622,4 +1772,34 @@ void VInvokeWrite::DoSyntaxCopyTo (VExpression *e) {
   VInvocationBase::DoSyntaxCopyTo(e);
   auto res = (VInvokeWrite *)e;
   res->isWriteln = isWriteln;
+}
+
+
+//==========================================================================
+//
+//  VInvokeWrite::IsMethodNameChangeable
+//
+//==========================================================================
+bool VInvokeWrite::IsMethodNameChangeable () const {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VInvokeWrite::GetMethodName
+//
+//==========================================================================
+VName VInvokeWrite::GetMethodName () const {
+  return VName(isWriteln ? "writeln" : "write");
+}
+
+
+//==========================================================================
+//
+//  VInvokeWrite::SetMethodName
+//
+//==========================================================================
+void VInvokeWrite::SetMethodName (VName aname) {
+  FatalError("VC: Internal compiler error: `VInvokeWrite::SetMethodName()` called");
 }
