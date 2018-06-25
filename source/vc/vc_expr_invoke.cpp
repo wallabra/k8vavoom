@@ -191,10 +191,10 @@ void VInvocationBase::DoSyntaxCopyTo (VExpression *e) {
 
 //==========================================================================
 //
-//  VInvocationBase::IsInvocation
+//  VInvocationBase::IsAnyInvocation
 //
 //==========================================================================
-bool VInvocationBase::IsInvocation () const {
+bool VInvocationBase::IsAnyInvocation () const {
   return true;
 }
 
@@ -243,7 +243,7 @@ void VSuperInvocation::DoSyntaxCopyTo (VExpression *e) {
 VExpression *VSuperInvocation::DoResolve (VEmitContext &ec) {
   guard(VSuperInvocation::DoResolve);
 
-  if (ec.SelfClass) {
+  if (ec.SelfClass && ec.SelfClass->ParentClass) {
     VMethod *Func = ec.SelfClass->ParentClass->FindAccessibleMethod(Name, ec.SelfClass);
     if (Func) {
       VInvocation *e = new VInvocation(nullptr, Func, nullptr, false, true, Loc, NumArgs, Args);
@@ -282,6 +282,17 @@ void VSuperInvocation::Emit (VEmitContext &) {
   guard(VSuperInvocation::Emit);
   ParseError(Loc, "Should not happen (VSuperInvocation)");
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VSuperInvocation::GetVMethod
+//
+//==========================================================================
+VMethod *VSuperInvocation::GetVMethod (VEmitContext &ec) {
+  if (!ec.SelfClass || !ec.SelfClass->ParentClass) return nullptr;
+  return ec.SelfClass->ParentClass->FindAccessibleMethod(Name, ec.SelfClass);
 }
 
 
@@ -455,6 +466,17 @@ VExpression *VCastOrInvocation::ResolveIterator (VEmitContext &ec) {
 //==========================================================================
 void VCastOrInvocation::Emit (VEmitContext &) {
   ParseError(Loc, "Should not happen (VCastOrInvocation)");
+}
+
+
+//==========================================================================
+//
+//  VCastOrInvocation::GetVMethod
+//
+//==========================================================================
+VMethod *VCastOrInvocation::GetVMethod (VEmitContext &ec) {
+  if (!ec.SelfClass) return nullptr;
+  return ec.SelfClass->FindAccessibleMethod(Name, ec.SelfClass);
 }
 
 
@@ -774,7 +796,7 @@ VExpression *VDotInvocation::ResolveIterator (VEmitContext &ec) {
     return nullptr;
   }
   if ((M->Flags&FUNC_Iterator) == 0) {
-    ParseError(Loc, "%s is not an iterator method", *MethodName);
+    ParseError(Loc, "`%s` is not an iterator method", *MethodName);
     delete this;
     return nullptr;
   }
@@ -794,6 +816,30 @@ VExpression *VDotInvocation::ResolveIterator (VEmitContext &ec) {
 //==========================================================================
 void VDotInvocation::Emit (VEmitContext &) {
   ParseError(Loc, "Should not happen (VDotInvocation)");
+}
+
+
+//==========================================================================
+//
+//  VDotInvocation::GetVMethod
+//
+//==========================================================================
+VMethod *VDotInvocation::GetVMethod (VEmitContext &ec) {
+  if (!ec.SelfClass || !SelfExpr) return nullptr;
+
+  VGagErrors gag;
+
+  VExpression *eself = SelfExpr->SyntaxCopy()->Resolve(ec);
+  if (!eself) return nullptr;
+
+  if (eself->Type.Type == TYPE_Reference || eself->Type.Type == TYPE_Class) {
+    VMethod *res = eself->Type.Class->FindAccessibleMethod(MethodName, ec.SelfClass);
+    delete eself;
+    return res;
+  }
+
+  delete eself;
+  return nullptr;
 }
 
 
@@ -998,6 +1044,16 @@ VExpression *VTypeInvocation::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VTypeInvocation::Emit (VEmitContext &) {
   ParseError(Loc, "Should not happen (VTypeInvocation)");
+}
+
+
+//==========================================================================
+//
+//  VTypeInvocation::GetVMethod
+//
+//==========================================================================
+VMethod *VTypeInvocation::GetVMethod (VEmitContext &ec) {
+  return nullptr;
 }
 
 
@@ -1292,6 +1348,16 @@ void VInvocation::Emit (VEmitContext &ec) {
     ec.AddStatement(OPC_VCall, Func, SelfOffset, Loc);
   }
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VInvocation::IsLLInvocation
+//
+//==========================================================================
+bool VInvocation::IsLLInvocation () const {
+  return true;
 }
 
 
@@ -1633,6 +1699,16 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VInvocation::GetVMethod
+//
+//==========================================================================
+VMethod *VInvocation::GetVMethod (VEmitContext &ec) {
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VInvocation::IsMethodNameChangeable
 //
 //==========================================================================
@@ -1682,6 +1758,18 @@ VExpression *VInvokeWrite::SyntaxCopy () {
   auto res = new VInvokeWrite();
   DoSyntaxCopyTo(res);
   return res;
+}
+
+
+//==========================================================================
+//
+//  VInvokeWrite::DoSyntaxCopyTo
+//
+//==========================================================================
+void VInvokeWrite::DoSyntaxCopyTo (VExpression *e) {
+  VInvocationBase::DoSyntaxCopyTo(e);
+  auto res = (VInvokeWrite *)e;
+  res->isWriteln = isWriteln;
 }
 
 
@@ -1765,13 +1853,11 @@ void VInvokeWrite::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VInvokeWrite::DoSyntaxCopyTo
+//  VInvokeWrite::GetVMethod
 //
 //==========================================================================
-void VInvokeWrite::DoSyntaxCopyTo (VExpression *e) {
-  VInvocationBase::DoSyntaxCopyTo(e);
-  auto res = (VInvokeWrite *)e;
-  res->isWriteln = isWriteln;
+VMethod *VInvokeWrite::GetVMethod (VEmitContext &ec) {
+  return nullptr;
 }
 
 

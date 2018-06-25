@@ -90,7 +90,9 @@ public:
   VInvocationBase (int ANumArgs, VExpression **AArgs, const TLocation &ALoc);
   virtual ~VInvocationBase () override;
 
-  virtual bool IsInvocation () const override;
+  virtual bool IsAnyInvocation () const override;
+
+  virtual VMethod *GetVMethod (VEmitContext &ec) = 0;
 
   virtual bool IsMethodNameChangeable () const = 0;
   virtual VName GetMethodName () const = 0;
@@ -116,6 +118,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual VMethod *GetVMethod (VEmitContext &ec) override;
+
   virtual bool IsMethodNameChangeable () const override;
   virtual VName GetMethodName () const override;
   virtual void SetMethodName (VName aname) override;
@@ -140,6 +144,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual VExpression *ResolveIterator (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual VMethod *GetVMethod (VEmitContext &ec) override;
 
   virtual bool IsMethodNameChangeable () const override;
   virtual VName GetMethodName () const override;
@@ -168,6 +174,8 @@ public:
   virtual VExpression *ResolveIterator (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual VMethod *GetVMethod (VEmitContext &ec) override;
+
   virtual bool IsMethodNameChangeable () const override;
   virtual VName GetMethodName () const override;
   virtual void SetMethodName (VName aname) override;
@@ -195,6 +203,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual VMethod *GetVMethod (VEmitContext &ec) override;
 
   virtual bool IsMethodNameChangeable () const override;
   virtual VName GetMethodName () const override;
@@ -230,6 +240,11 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual VMethod *GetVMethod (VEmitContext &ec) override;
+
+  virtual bool IsLLInvocation () const override;
+
   void CheckParams (VEmitContext &ec, int argc, VExpression **argv); // argc/argv: non-resolved argument copies
   void CheckDecorateParams (VEmitContext &);
 
@@ -261,6 +276,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual VMethod *GetVMethod (VEmitContext &ec) override;
 
   virtual bool IsMethodNameChangeable () const override;
   virtual VName GetMethodName () const override;

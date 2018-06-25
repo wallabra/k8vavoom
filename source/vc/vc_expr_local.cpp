@@ -72,9 +72,9 @@ void VLocalDecl::DoSyntaxCopyTo (VExpression *e) {
   res->Vars.SetNum(Vars.Num());
   for (int f = 0; f < Vars.Num(); ++f) {
     res->Vars[f] = Vars[f];
-    if (res->Vars[f].TypeExpr) res->Vars[f].TypeExpr = Vars[f].TypeExpr->SyntaxCopy();
-    if (res->Vars[f].Value) res->Vars[f].Value = Vars[f].Value->SyntaxCopy();
-    if (res->Vars[f].TypeOfExpr) res->Vars[f].TypeOfExpr = Vars[f].TypeOfExpr->SyntaxCopy();
+    if (Vars[f].TypeExpr) res->Vars[f].TypeExpr = Vars[f].TypeExpr->SyntaxCopy();
+    if (Vars[f].Value) res->Vars[f].Value = Vars[f].Value->SyntaxCopy();
+    if (Vars[f].TypeOfExpr) res->Vars[f].TypeOfExpr = Vars[f].TypeOfExpr->SyntaxCopy();
   }
 }
 

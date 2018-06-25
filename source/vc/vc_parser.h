@@ -37,6 +37,7 @@ private:
   VMethod *currFunc; // for lambdas
   VClass *currClass; // for lambdas
   bool CheckForLocal;
+  int anonLocalCount;
 
   // not more than `MAX_PARAMS`; returns argc
   int ParseArgList (const TLocation &stloc, VExpression **argv);
@@ -60,6 +61,7 @@ private:
   VExpression *ParseExpressionPriority13 ();
   VExpression *ParseExpressionPriority14 (bool allowAssign=false);
   VExpression *ParseExpression (bool allowAssign=false);
+  VLocalDecl *CreateUnnamedLocal (VFieldType type, const TLocation &loc);
   VStatement *ParseForeachIterator (const TLocation &l);
   bool ParseForeachOptions (); // returns `true` if `reversed` was found
   VStatement *ParseForeachRange (const TLocation &l); // array or iota

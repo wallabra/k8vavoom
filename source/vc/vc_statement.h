@@ -222,6 +222,9 @@ private:
   VExpression *loopLoad;
   VExpression *varaddr;
 
+private:
+  bool DoResolveScriptIter (VEmitContext &ec);
+
 public:
   VExpression *idxvar; // index variable (can be null if hidden)
   VExpression *var; // value variable
@@ -230,7 +233,7 @@ public:
   bool reversed;
   bool isRef; // if `var` a reference?
 
-  VForeachArray (VExpression *aidxvar, VExpression *avar, VExpression *aarr, bool aIsRef, const TLocation &aloc);
+  VForeachArray (VExpression *aarr, VExpression *aidx, VExpression *avar, bool aVarRef, const TLocation &aloc);
   virtual ~VForeachArray () override;
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
@@ -239,6 +242,46 @@ public:
 
 protected:
   VForeachArray () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VForeachScripted : public VStatement {
+public:
+  struct Var {
+    VExpression *var;
+    bool isRef;
+    VLocalDecl *decl; // used in parser
+
+    Var () : var(nullptr), isRef(false), decl(nullptr) {}
+  };
+
+private:
+  bool isBoolInit;
+  VExpression *ivInit; // invocation, init
+  VExpression *ivNext; // invocation, next
+  VExpression *ivDone; // invocation, done, can be null
+
+public:
+  VExpression *arr; // array
+  Var fevars[VMethod::MAX_PARAMS];
+  int fevarCount;
+  VStatement *statement;
+  bool reversed;
+
+  VForeachScripted (VExpression *aarr, int afeCount, Var *afevars, const TLocation &aloc);
+  virtual ~VForeachScripted () override;
+  virtual VStatement *SyntaxCopy () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual bool IsEndsWithReturn () override;
+
+protected:
+  VForeachScripted () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
 
 public:

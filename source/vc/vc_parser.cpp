@@ -112,6 +112,23 @@ VExpression *VParser::ParseMethodCallOrCast (VName Name, const TLocation &Loc) {
 
 //==========================================================================
 //
+//  VParser::CreateUnnamedLocal
+//
+//==========================================================================
+VLocalDecl *VParser::CreateUnnamedLocal (VFieldType type, const TLocation &loc) {
+  VLocalDecl *decl = new VLocalDecl(loc);
+  VStr name = VStr(anonLocalCount++);
+  VLocalEntry e;
+  e.TypeExpr = VTypeExpr::NewTypeExpr(type, loc);
+  e.Loc = loc;
+  e.Name = VName(*name);
+  decl->Vars.append(e);
+  return decl;
+}
+
+
+//==========================================================================
+//
 //  VParser::ParseLocalVar
 //
 //==========================================================================
@@ -933,58 +950,53 @@ bool VParser::ParseForeachOptions () {
 //
 //==========================================================================
 VStatement *VParser::ParseForeachRange (const TLocation &l) {
-  // optional `ref`
-  auto refloc = Lex.Location;
-  bool hasRef = Lex.Check(TK_Ref);
+  bool hasDecls = false;
+  bool killDecls = true;
 
-  // parse loop var
-  VLocalDecl *decl = nullptr;
-  VExpression *vexpr = nullptr;
-  auto vtype = ParseOptionalTypeDecl(TK_Semicolon);
-  if (vtype) {
-    decl = ParseLocalVar(vtype, LocalForeach);
-    if (decl && decl->Vars.length() != 1) {
-      ParseError(decl->Loc, "Only one variable declaration expected");
-      vexpr = new VIntLiteral(0, decl->Loc);
-      delete decl;
-      decl = nullptr;
-    } else if (!decl) {
-      ParseError(Lex.Location, "Variable declaration expected");
-      vexpr = new VIntLiteral(0, Lex.Location);
-    } else {
-      // create vexpr to make the following code cleaner
-      vexpr = new VSingleName(decl->Vars[0].Name, decl->Loc);
-    }
-  } else {
-    vexpr = ParseExpression(false);
-  }
+  // parse loop vars
+  int vexcount = 0;
+  VForeachScripted::Var vex[VMethod::MAX_PARAMS];
 
-  // range foreach can have second var, check for it
-  VLocalDecl *decl2 = nullptr;
-  VExpression *vexpr2 = nullptr;
-  if (Lex.Check(TK_Comma)) {
-    // first is index, it should not have `ref`
-    if (hasRef) ParseError(refloc, "`ref` is not allowed for range index");
-    // but value var can has ref
-    refloc = Lex.Location;
-    hasRef = Lex.Check(TK_Ref);
-    vtype = ParseOptionalTypeDecl(TK_Semicolon);
-    if (vtype) {
-      decl2 = ParseLocalVar(vtype, LocalForeach);
-      if (decl2 && decl2->Vars.length() != 1) {
-        ParseError(decl2->Loc, "Only one variable declaration expected");
-        vexpr2 = new VIntLiteral(0, decl2->Loc);
-        delete decl2;
-        decl2 = nullptr;
-      } else if (!decl2) {
-        ParseError(Lex.Location, "Variable declaration expected");
-        vexpr2 = new VIntLiteral(0, Lex.Location);
+  if (Lex.Token != TK_Semicolon) {
+    for (;;) {
+      VLocalDecl *decl = nullptr;
+      VExpression *vexpr = nullptr;
+      auto refloc = Lex.Location;
+      bool isRef = Lex.Check(TK_Ref);
+      auto vtype = ParseOptionalTypeDecl(TK_Semicolon);
+      if (vtype) {
+        hasDecls = true;
+        decl = ParseLocalVar(vtype, LocalForeach);
+        if (decl && decl->Vars.length() != 1) {
+          ParseError(decl->Loc, "Only one variable declaration expected");
+          vexpr = new VIntLiteral(0, decl->Loc);
+          delete decl;
+          decl = nullptr;
+        } else if (!decl) {
+          ParseError(Lex.Location, "Variable declaration expected");
+          vexpr = new VIntLiteral(0, Lex.Location);
+        } else {
+          decl->Vars[0].isRef = isRef;
+          vexpr = new VSingleName(decl->Vars[0].Name, decl->Loc);
+        }
       } else {
-        // create vexpr to make the following code cleaner
-        vexpr2 = new VSingleName(decl2->Vars[0].Name, decl2->Loc);
+        if (isRef) ParseError(refloc, "`ref` is not allowed without real declaration");
+        vexpr = ParseExpression(false);
       }
-    } else {
-      vexpr2 = ParseExpression(false);
+      if (!vexpr) {
+        ParseError(Lex.Location, "`foreach` variable expected");
+        break;
+      }
+      if (vexcount == VMethod::MAX_PARAMS) {
+        ParseError(vexpr->Loc, "Too many `foreach` variables");
+        delete vexpr;
+      } else {
+        vex[vexcount].var = vexpr;
+        vex[vexcount].isRef = isRef;
+        vex[vexcount].decl = decl;
+        ++vexcount;
+      }
+      if (!Lex.Check(TK_Comma)) break;
     }
   }
 
@@ -999,12 +1011,21 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
   // if we have `..`, this is iota
   if (Lex.Check(TK_DotDot)) {
     // fix loop var type
-    if (decl) decl->Vars[0].TypeOfExpr = new VIntLiteral(0, decl->Vars[0].Loc);
-    if (vexpr2) { ParseError(vexpr2->Loc, "No second variable allowed in iota foreach"); delete vexpr2; delete decl2; }
+    if (vexcount > 1) ParseError(l, "iota foreach should have one arg");
+    // if we have no index var, create dummy one
+    if (vexcount == 0) {
+      vex[0].decl = CreateUnnamedLocal(VFieldType(TYPE_Int), l);
+      vex[0].var = new VSingleName(vex[0].decl->Vars[0].Name, vex[0].decl->Loc);
+      vex[0].isRef = false;
+      vexcount = 1;
+    }
+    if (vex[0].decl) {
+      //if (vex[0].isRef) ParseError(vex[0].decl->Loc, "`ref` is not allowed for iota foreach index");
+      vex[0].decl->Vars[0].TypeOfExpr = new VIntLiteral(0, vex[0].decl->Vars[0].Loc);
+    }
     // iota
-    if (hasRef) { ParseError(refloc, "`ref` is not allowed for iota foreach index"); hasRef = false; }
     VForeachIota *fei = new VForeachIota(l);
-    fei->var = vexpr;
+    fei->var = vex[0].var;
     fei->lo = loarr;
     // parse limit
     fei->hi = ParseExpression(false);
@@ -1016,46 +1037,67 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
     // done
     res = fei;
   } else {
-    // if we have no index var, move value var to *2
-    if (!decl2 && !vexpr2) {
-      vexpr2 = vexpr;
-      decl2 = decl;
-      vexpr = nullptr;
-      decl = nullptr;
+    // is scripted iterator?
+    if (loarr->IsAnyInvocation()) {
+      // scripted
+      killDecls = false;
+      VForeachScripted *fes = new VForeachScripted(loarr, vexcount, vex, l);
+      res = fes;
+    } else {
+      // normal: 1 or 2 args
+      if (vexcount < 1 || vexcount > 2) ParseError(l, "range foreach should have one or two args");
+      // if we have no vars at all, create dummy one (this will allow us to omit some checks later)
+      if (vexcount == 0) {
+        vex[0].decl = CreateUnnamedLocal(VFieldType(TYPE_Int), l);
+        vex[0].var = new VSingleName(vex[0].decl->Vars[0].Name, vex[0].decl->Loc);
+        vex[0].isRef = false;
+        vexcount = 1;
+      }
+      // fix loop var type
+      if (vex[0].decl) {
+        if (!vex[0].decl->Vars[0].TypeOfExpr) vex[0].decl->Vars[0].TypeOfExpr = new VIntLiteral(0, vex[0].decl->Vars[0].Loc);
+      }
+      // fix value var type
+      if (vexcount >= 2 && vex[1].decl && !vex[1].decl->Vars[0].TypeOfExpr) {
+        if (vex[0].isRef) ParseError(vex[0].var->Loc, "range foreach index cannot be `ref`");
+        vex[1].decl->Vars[0].TypeOfExpr = new VArrayElement(loarr->SyntaxCopy(), new VIntLiteral(0, vex[1].decl->Vars[0].Loc), vex[1].decl->Vars[0].Loc, true);
+      }
+      // array
+      VForeachArray *fer;
+      if (vexcount == 1) {
+        fer = new VForeachArray(loarr, nullptr, vex[0].var, false, l);
+      } else {
+        fer = new VForeachArray(loarr, vex[0].var, vex[1].var, vex[1].isRef, l);
+      }
+      fer->reversed = ParseForeachOptions();
+      Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+      // body
+      fer->statement = ParseStatement();
+      // done
+      res = fer;
     }
-    // fix loop var type
-    if (decl) decl->Vars[0].TypeOfExpr = new VIntLiteral(0, decl->Vars[0].Loc);
-    // fix value var type
-    if (decl2) {
-      decl2->Vars[0].TypeOfExpr = new VArrayElement(loarr->SyntaxCopy(), new VIntLiteral(0, decl2->Vars[0].Loc), decl2->Vars[0].Loc, true);
-      decl2->Vars[0].isRef = hasRef;
-    }
-    // array
-    if (hasRef && !decl2) ParseError(refloc, "`ref` is not allowed without real declaration");
-    VForeachArray *fer = new VForeachArray(vexpr, vexpr2, loarr, hasRef, l);
-    fer->reversed = ParseForeachOptions();
-    Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-    // body
-    fer->statement = ParseStatement();
-    // done
-    res = fer;
   }
 
-  if (res && (decl || decl2)) {
-    // if we have a declaration, rewrite code a little:
+  if (!res) killDecls = true;
+
+  if (res && hasDecls) {
+    // if we have any declarations, rewrite code a little:
     //   { decl var; foreach (var; ..) }
     VCompound *body = new VCompound(res->Loc);
-    if (decl) {
-      VLocalVarStatement *vdc = new VLocalVarStatement(decl);
-      body->Statements.append(vdc);
-    }
-    if (decl2) {
-      VLocalVarStatement *vdc = new VLocalVarStatement(decl2);
+    for (int f = 0; f < vexcount; ++f) {
+      VLocalDecl *decl = vex[f].decl;
+      if (!decl) continue;
+      VLocalVarStatement *vdc = new VLocalVarStatement((VLocalDecl *)decl->SyntaxCopy());
       body->Statements.append(vdc);
     }
     body->Statements.append(res);
     res = body;
   }
+
+  if (killDecls) {
+    for (int f = 0; f < vexcount; ++f) delete vex[f].decl;
+  }
+
   return res;
 }
 
@@ -3342,6 +3384,7 @@ void VParser::ParseClass () {
 void VParser::Parse () {
   guard(VParser::Parse);
   dprintf("Parsing\n");
+  anonLocalCount = 0;
   Lex.NextToken();
   bool done = false;
   while (!done) {

@@ -908,7 +908,7 @@ bool VForeachIota::IsEndsWithReturn () {
 //  VForeachArray::VForeachArray
 //
 //==========================================================================
-VForeachArray::VForeachArray (VExpression *aidxvar, VExpression *avar, VExpression *aarr, bool aIsRef, const TLocation &aloc)
+VForeachArray::VForeachArray (VExpression *aarr, VExpression *aidx, VExpression *avar, bool aVarRef, const TLocation &aloc)
   : VStatement(aloc)
   , idxinit(nullptr)
   , hiinit(nullptr)
@@ -916,12 +916,12 @@ VForeachArray::VForeachArray (VExpression *aidxvar, VExpression *avar, VExpressi
   , loopNext(nullptr)
   , loopLoad(nullptr)
   , varaddr(nullptr)
-  , idxvar(aidxvar)
+  , idxvar(aidx)
   , var(avar)
   , arr(aarr)
   , statement(nullptr)
   , reversed(false)
-  , isRef(aIsRef)
+  , isRef(aVarRef)
 {
 }
 
@@ -992,25 +992,7 @@ void VForeachArray::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 bool VForeachArray::Resolve (VEmitContext &ec) {
-  /* if iterator is invocation, rewrite it to:
-   *   {
-   *     firstargtype it;
-   *     mtname_Init(allargs);
-   *     itsetup(&mtname_Done(it));
-   *     {
-   *       forvars;
-   *       while (mtname_Next(it, forvars)) {
-   *         body
-   *       }
-   *     }
-   *     itdone(); // this calls `mtname_Done(it)`
-   *   }
-   */
-  if (arr && arr->IsInvocation()) {
-    VInvocationBase *ib = (VInvocationBase *)arr;
-    ParseError(Loc, "VC iterators aren't supported yet (%d:`%s`)", int(ib->IsMethodNameChangeable()), *ib->GetMethodName());
-    return false;
-  }
+  if (arr && arr->IsAnyInvocation()) FatalError("VC: Internal compiler error (VForeachArray::Resolve)");
 
   // we will rewrite 'em later
   auto ivarR = (idxvar ? idxvar->SyntaxCopy()->Resolve(ec) : nullptr);
@@ -1236,6 +1218,272 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 bool VForeachArray::IsEndsWithReturn () {
+  //TODO: endless fors should have at least one return instead
+  return (statement && statement->IsEndsWithReturn());
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::VForeachScripted
+//
+//==========================================================================
+VForeachScripted::VForeachScripted (VExpression *aarr, int afeCount, Var *afevars, const TLocation &aloc)
+  : VStatement(aloc)
+  , isBoolInit(false)
+  , ivInit(nullptr)
+  , ivNext(nullptr)
+  , ivDone(nullptr)
+  , arr(aarr)
+  , fevarCount(afeCount)
+  , statement(nullptr)
+  , reversed(false)
+{
+  if (afeCount < 0 || afeCount > VMethod::MAX_PARAMS) FatalError("VC: internal compiler error (VForeachScripted::VForeachScripted)");
+  for (int f = 0; f < afeCount; ++f) fevars[f] = afevars[f];
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::~VForeachScripted
+//
+//==========================================================================
+VForeachScripted::~VForeachScripted () {
+  delete ivInit; ivInit = nullptr;
+  delete ivNext; ivNext = nullptr;
+  delete ivDone; ivDone = nullptr;
+  delete arr; arr = nullptr;
+  for (int f = 0; f < fevarCount; ++f) {
+    delete fevars[f].var;
+    delete fevars[f].decl;
+  }
+  fevarCount = 0;
+  delete statement; statement = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::SyntaxCopy
+//
+//==========================================================================
+VStatement *VForeachScripted::SyntaxCopy () {
+  //if (varinit || varnext || hiinit) FatalError("VC: `VForeachScripted::SyntaxCopy()` called on resolved statement");
+  auto res = new VForeachScripted();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::DoSyntaxCopyTo
+//
+//==========================================================================
+void VForeachScripted::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VForeachScripted *)e;
+  res->arr = (arr ? arr->SyntaxCopy() : nullptr);
+  for (int f = 0; f < fevarCount; ++f) {
+    res->fevars[f] = fevars[f];
+    if (fevars[f].var) res->fevars[f].var = fevars[f].var->SyntaxCopy();
+    if (fevars[f].decl) res->fevars[f].decl = (VLocalDecl *)fevars[f].decl->SyntaxCopy();
+  }
+  res->fevarCount = fevarCount;
+  res->statement = (statement ? statement->SyntaxCopy() : nullptr);
+  res->reversed = reversed;
+  // no need to copy private data here, as `SyntaxCopy()` should be called only on unresolved things
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::DoFixSwitch
+//
+//==========================================================================
+void VForeachScripted::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (statement) statement->DoFixSwitch(aold, anew);
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::Resolve
+//
+//==========================================================================
+bool VForeachScripted::Resolve (VEmitContext &ec) {
+  /* if iterator is invocation, rewrite it to:
+   *   {
+   *     firstargtype it;
+   *     mtname_opInit(allargs); // or `mtname_opInitReverse`
+   *     itsetup(doneaddr);
+   *     {
+   *       forvars;
+   *       while (mtname_Next(it, forvars)) {
+   *         <body>
+   *       }
+   *     }
+   *    doneaddr:
+   *     mtname_Done(it)
+   *     itfinish // used in `return` processing
+   *   }
+   */
+
+  VInvocationBase *ib = (VInvocationBase *)arr;
+  if (!ib->IsMethodNameChangeable()) {
+    ParseError(Loc, "Invalid VC iterator");
+    return false;
+  }
+
+  // create initializer expression
+  VStr newName = VStr(*ib->GetMethodName())+"_opInit";
+  if (reversed) newName += "Reverse";
+  VInvocationBase *einit = (VInvocationBase *)arr->SyntaxCopy();
+  einit->SetMethodName(VName(*newName));
+  VMethod *minit = einit->GetVMethod(ec);
+  if (!minit) {
+    delete einit;
+    ParseError(Loc, "Invalid VC iterator (init method not found)");
+    return false;
+  }
+
+  if (einit->NumArgs >= VMethod::MAX_PARAMS) {
+    delete einit;
+    ParseError(Loc, "Too many arguments to VC iterator");
+    return false;
+  }
+
+  // check first arg, and get internal var type
+  // should have at least one argument, and it should be `ref`/`out`
+  if (minit->NumParams < 1 ||
+      (minit->ParamFlags[0]&~(FPARM_Out|FPARM_Ref)) != 0 ||
+      (minit->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) == 0)
+  {
+    delete einit;
+    ParseError(Loc, "VC iterator_Init should have at least one arg, and it should be `ref`/`out`");
+    return false;
+  }
+
+  switch (minit->ReturnType.Type) {
+    case TYPE_Void: isBoolInit = false; break;
+    case TYPE_Bool: isBoolInit = true; break;
+    case TYPE_Int: isBoolInit = true; break;
+    default:
+      delete einit;
+      ParseError(Loc, "VC iterator should return `void` or `bool`");
+      return false;
+  }
+
+  // create hidden local for `it`
+  VLocalVarDef &L = ec.AllocLocal(NAME_None, minit->ParamTypes[0], Loc);
+  L.Visible = false; // it is unnamed, and hidden ;-)
+  L.ParamFlags = 0;
+
+  // insert hidden local as first init arg
+  for (int f = einit->NumArgs; f > 0; --f) einit->Args[f] = einit->Args[f-1];
+  einit->Args[0] = new VLocalVar(L.ldindex, L.Loc);
+  ++einit->NumArgs;
+  // and resolve the call
+  ivInit = einit->Resolve(ec);
+  if (!ivInit /*|| !ivInit->IsLLInvocation()*/) {
+    ParseError(Loc, "Invalid VC iterator");
+    return false;
+  }
+
+  // create next expression
+  newName = VStr(*ib->GetMethodName())+"_opNext";
+  VInvocationBase *enext = (VInvocationBase *)arr->SyntaxCopy();
+  enext->SetMethodName(VName(*newName));
+  VMethod *mnext = enext->GetVMethod(ec);
+  if (!mnext) {
+    delete enext;
+    ParseError(Loc, "Invalid VC iterator (next method not found)");
+    return false;
+  }
+
+  // all "next" args should be `ref`/`out`
+  for (int f = 0; f < mnext->NumParams; ++f) {
+    if ((mnext->ParamFlags[f]&~(FPARM_Out|FPARM_Ref)) != 0 ||
+        (mnext->ParamFlags[f]&(FPARM_Out|FPARM_Ref)) == 0)
+    {
+      delete enext;
+      ParseError(Loc, "VC iterator_Next argument %d is not `ref`/`out`", f+1);
+      return false;
+    }
+  }
+
+  // remove all `enext` args, and insert foreach args instead
+  for (int f = 0; f < enext->NumArgs; ++f) delete enext->Args[f];
+  enext->NumArgs = 1;
+  enext->Args[0] = new VLocalVar(L.ldindex, L.Loc);
+  // add index var (if any)
+  //if (idxvar) {
+
+  if (enext->NumArgs >= VMethod::MAX_PARAMS) {
+    delete enext;
+    ParseError(Loc, "Too many arguments to VC iterator");
+    return false;
+  }
+
+  ParseError(Loc, "VC iterators aren't supported yet (%d:`%s`)", int(ib->IsMethodNameChangeable()), *ib->GetMethodName());
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::DoEmit
+//
+//==========================================================================
+void VForeachScripted::DoEmit (VEmitContext &ec) {
+  // set-up continues and breaks
+/*
+  VLabel OldStart = ec.LoopStart;
+  VLabel OldEnd = ec.LoopEnd;
+
+  // define labels
+  ec.LoopStart = ec.DefineLabel();
+  ec.LoopEnd = ec.DefineLabel();
+
+  VLabel Loop = ec.DefineLabel();
+
+  // emit initialisation expressions
+  if (hiinit) hiinit->Emit(ec); // may be absent for reverse loops
+  idxinit->Emit(ec);
+
+  // do first check
+  loopPreCheck->EmitBranchable(ec, ec.LoopEnd, false);
+
+  // actual loop
+  ec.MarkLabel(Loop);
+  // load value
+  if (isRef) varaddr->Emit(ec);
+  loopLoad->Emit(ec);
+  if (isRef) ec.AddStatement(OPC_AssignPtrDrop, Loc);
+  // and emit loop body
+  statement->Emit(ec);
+
+  // loop next and test
+  ec.MarkLabel(ec.LoopStart); // continue will jump here
+  loopNext->EmitBranchable(ec, Loop, true);
+
+  // end of loop
+  ec.MarkLabel(ec.LoopEnd);
+
+  // restore continue and break state
+  ec.LoopStart = OldStart;
+  ec.LoopEnd = OldEnd;
+*/
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::IsEndsWithReturn
+//
+//==========================================================================
+bool VForeachScripted::IsEndsWithReturn () {
   //TODO: endless fors should have at least one return instead
   return (statement && statement->IsEndsWithReturn());
 }
