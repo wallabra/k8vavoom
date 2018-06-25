@@ -2053,7 +2053,8 @@ func_loop:
       PR_VM_CASE(OPC_IteratorPop)
         if (itsp == 0) { cstDump(ip); Sys_Error("VM: No active iterators (but we should have one)"); }
         if (!itstack[itsp-1].it) { cstDump(ip); Sys_Error("VM: Active iterator is not native (but it should be)"); }
-        delete itstack[itsp-1].it;
+        //delete itstack[itsp-1].it;
+        itstack[itsp-1].it->Finished();
         --itsp;
         ++ip;
         PR_VM_BREAK;
@@ -2181,7 +2182,8 @@ doRealReturnItDtorCont:
     // check iterator type
     if (it.it) {
       // native
-      delete it.it;
+      //delete it.it;
+      it.it->Finished();
       --itsp;
     } else {
       // execute dtor code

@@ -557,7 +557,7 @@ inline vuint32 GetTypeHash (VObject *Obj) { return (Obj ? Obj->GetIndex() : 0); 
 // ////////////////////////////////////////////////////////////////////////// //
 class VScriptIterator : public VInterface {
 public:
-  VScriptIterator *Next; // linked list of active iterators
-
   virtual bool GetNext() = 0;
+  // by default, the following does `delete this;`
+  virtual void Finished ();
 };
