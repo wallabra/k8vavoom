@@ -525,9 +525,19 @@ private:
 #include <cstdlib>
 #include <cxxabi.h>
 
-template<typename T> VStr shippTypeName () {
-  int status;
+template<typename T> VStr shitppTypeName () {
   VStr tpn(typeid(T).name());
+  char *dmn = abi::__cxa_demangle(*tpn, nullptr, nullptr, nullptr);
+  if (dmn) {
+    tpn = VStr(dmn);
+    free(dmn);
+  }
+  return tpn;
+}
+
+
+template<class T> VStr shitppTypeNameObj (const T &o) {
+  VStr tpn(typeid(o).name());
   char *dmn = abi::__cxa_demangle(*tpn, nullptr, nullptr, nullptr);
   if (dmn) {
     tpn = VStr(dmn);
