@@ -1057,14 +1057,14 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
         vex[0].isRef = false;
         vexcount = 1;
       }
+      if (vexcount > 1 && vex[0].isRef) ParseError(vex[0].var->Loc, "range foreach index cannot be `ref`");
       // fix loop var type
-      if (vex[0].decl) {
+      if (vexcount > 1 && vex[0].decl) {
         if (!vex[0].decl->Vars[0].TypeOfExpr) vex[0].decl->Vars[0].TypeOfExpr = new VIntLiteral(0, vex[0].decl->Vars[0].Loc);
       }
       // fix value var type
-      if (vexcount >= 2 && vex[1].decl && !vex[1].decl->Vars[0].TypeOfExpr) {
-        if (vex[0].isRef) ParseError(vex[0].var->Loc, "range foreach index cannot be `ref`");
-        vex[1].decl->Vars[0].TypeOfExpr = new VArrayElement(loarr->SyntaxCopy(), new VIntLiteral(0, vex[1].decl->Vars[0].Loc), vex[1].decl->Vars[0].Loc, true);
+      if (vex[vexcount-1].decl && !vex[vexcount-1].decl->Vars[0].TypeOfExpr) {
+        vex[vexcount-1].decl->Vars[0].TypeOfExpr = new VArrayElement(loarr->SyntaxCopy(), new VIntLiteral(0, vex[vexcount-1].decl->Vars[0].Loc), vex[vexcount-1].decl->Vars[0].Loc, true);
       }
       // array
       VForeachArray *fer;
