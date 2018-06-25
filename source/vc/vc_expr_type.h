@@ -65,6 +65,7 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
 
+  virtual bool IsAutoTypeExpr () const override;
   virtual bool IsSimpleType () const override;
 
 protected:

@@ -88,6 +88,7 @@ public:
   virtual bool IsAnyInvocation () const;
   virtual bool IsLLInvocation () const; // is this `VInvocation`?
   virtual bool IsTypeExpr () const;
+  virtual bool IsAutoTypeExpr () const;
   virtual bool IsSimpleType () const;
   virtual bool IsReferenceType () const;
   virtual bool IsClassType () const;

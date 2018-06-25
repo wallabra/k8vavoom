@@ -1039,6 +1039,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
     if (loarr->IsAnyInvocation()) {
       // scripted
       killDecls = false;
+      // create statement
       VForeachScripted *fes = new VForeachScripted(loarr, vexcount, vex, l);
       // check for `reversed`
       fes->reversed = ParseForeachOptions();
@@ -1047,6 +1048,16 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       fes->statement = ParseStatement();
       // done
       res = fes;
+      // setup types for `auto`
+      for (int f = 0; f < vexcount; ++f) {
+        if (vex[f].decl && vex[f].decl->Vars[0].TypeExpr->IsAutoTypeExpr()) {
+          VStr newName = VStr(*((VInvocationBase *)loarr)->GetMethodName())+"_opNext";
+          VInvocationBase *ee = (VInvocationBase *)loarr->SyntaxCopy();
+          ee->SetMethodName(VName(*newName));
+          vex[f].decl->Vars[0].TypeOfExpr = ee;
+          vex[f].decl->Vars[0].toeIterArgN = f+1;
+        }
+      }
     } else {
       // normal: 1 or 2 args
       if (vexcount < 1 || vexcount > 2) ParseError(l, "range foreach should have one or two args");

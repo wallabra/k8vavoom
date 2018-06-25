@@ -37,8 +37,9 @@ public:
   VExpression *Value;
   VExpression *TypeOfExpr; // for automatic vars w/o initializer, resolve this, and use its type
   bool isRef; // for range foreach
+  int toeIterArgN; // >=0: `TypeOfExpr` is iterator call, take nth arg
 
-  VLocalEntry () : TypeExpr(nullptr), Name(NAME_None), Value(nullptr), TypeOfExpr(nullptr), isRef(false) {}
+  VLocalEntry () : TypeExpr(nullptr), Name(NAME_None), Value(nullptr), TypeOfExpr(nullptr), isRef(false), toeIterArgN(-1) {}
 };
 
 

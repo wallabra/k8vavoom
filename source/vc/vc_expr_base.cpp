@@ -310,6 +310,7 @@ bool VExpression::IsOutArg () const { return false; }
 bool VExpression::IsAnyInvocation () const { return false; }
 bool VExpression::IsLLInvocation () const { return false; }
 bool VExpression::IsTypeExpr () const { return false; }
+bool VExpression::IsAutoTypeExpr () const { return false; }
 bool VExpression::IsSimpleType () const { return false; }
 bool VExpression::IsReferenceType () const { return false; }
 bool VExpression::IsClassType () const { return false; }

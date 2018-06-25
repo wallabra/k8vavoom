@@ -209,6 +209,16 @@ VTypeExpr *VTypeExprSimple::ResolveAsType (VEmitContext &) {
 
 //==========================================================================
 //
+//  VTypeExprSimple::IsAutoTypeExpr
+//
+//==========================================================================
+bool VTypeExprSimple::IsAutoTypeExpr () const {
+  return (Type.Type == TYPE_Automatic);
+}
+
+
+//==========================================================================
+//
 //  VTypeExprSimple::IsSimpleType
 //
 //==========================================================================

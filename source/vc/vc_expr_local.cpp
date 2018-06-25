@@ -123,16 +123,34 @@ void VLocalDecl::Declare (VEmitContext &ec) {
       VExpression *te = (e.Value ? e.Value : e.TypeOfExpr);
       if (!te) { fprintf(stderr, "VC INTERNAL COMPILER ERROR: automatic type without initializer!\n"); *(int*)0 = 0; }
       // resolve type
-      auto res = te->SyntaxCopy()->Resolve(ec);
-      if (!res) {
-        ParseError(e.Loc, "Cannot resolve type for identifier `%s`", *e.Name);
-        delete e.TypeExpr; // delete old `automatic` type
-        e.TypeExpr = new VTypeExprSimple(TYPE_Void, te->Loc);
+      if (e.toeIterArgN >= 0) {
+        // special resolving for iterator
+        if (te->IsAnyInvocation()) {
+          VGagErrors gag;
+          VMethod *mnext = ((VInvocationBase *)te)->GetVMethod(ec);
+          if (mnext && e.toeIterArgN < mnext->NumParams) {
+            //fprintf(stderr, "*** <%s>\n", *mnext->ParamTypes[e.toeIterArgN].GetName()); abort();
+            delete e.TypeExpr; // delete old `automatic` type
+            e.TypeExpr = VTypeExpr::NewTypeExpr(mnext->ParamTypes[e.toeIterArgN], te->Loc);
+          }
+        }
+        if (e.TypeExpr->Type.Type == TYPE_Automatic) {
+          ParseError(e.TypeExpr->Loc, "Cannot infer type for variable `%s`", *e.Name);
+          delete e.TypeExpr; // delete old `automatic` type
+          e.TypeExpr = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Int), te->Loc);
+        }
       } else {
-        //fprintf(stderr, "*** automatic type resolved to `%s`\n", *(res->Type.GetName()));
-        delete e.TypeExpr; // delete old `automatic` type
-        e.TypeExpr = VTypeExpr::NewTypeExpr(res->Type, te->Loc);
-        delete res;
+        auto res = te->SyntaxCopy()->Resolve(ec);
+        if (!res) {
+          ParseError(e.Loc, "Cannot resolve type for identifier `%s`", *e.Name);
+          delete e.TypeExpr; // delete old `automatic` type
+          e.TypeExpr = new VTypeExprSimple(TYPE_Void, te->Loc);
+        } else {
+          //fprintf(stderr, "*** automatic type resolved to `%s`\n", *(res->Type.GetName()));
+          delete e.TypeExpr; // delete old `automatic` type
+          e.TypeExpr = VTypeExpr::NewTypeExpr(res->Type, te->Loc);
+          delete res;
+        }
       }
     }
 
