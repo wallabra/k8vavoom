@@ -802,15 +802,14 @@ void VMethod::OptimiseInstructions () {
   }
 
   // now do jump instructions
-  vint32 Offs;
   for (int i = 0; i < Instructions.Num()-1; ++i) {
-    switch (StatementInfo[Instructions[i].Opcode].Args) {
-    case OPCARGS_BranchTarget:
-      Offs = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
+    if (Instructions[i].Opcode != OPC_IteratorDtorAt &&
+        StatementInfo[Instructions[i].Opcode].Args == OPCARGS_BranchTarget)
+    {
+      vint32 Offs = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
            if (Offs >= 0 && Offs < 256) Instructions[i].Opcode -= 3;
       else if (Offs < 0 && Offs > -256) Instructions[i].Opcode -= 2;
       else if (Offs >= MIN_VINT16 && Offs <= MAX_VINT16) Instructions[i].Opcode -= 1;
-      break;
     }
   }
   Instructions[Instructions.Num()-1].Address = Addr;

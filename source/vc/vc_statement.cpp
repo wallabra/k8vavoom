@@ -1336,98 +1336,143 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
     return false;
   }
 
-  // create initializer expression
-  VStr newName = VStr(*ib->GetMethodName())+"_opInit";
-  if (reversed) newName += "Reverse";
-  VInvocationBase *einit = (VInvocationBase *)arr->SyntaxCopy();
-  einit->SetMethodName(VName(*newName));
-  VMethod *minit = einit->GetVMethod(ec);
-  if (!minit) {
-    delete einit;
-    ParseError(Loc, "Invalid VC iterator (init method not found)");
-    return false;
-  }
-
-  if (einit->NumArgs >= VMethod::MAX_PARAMS) {
-    delete einit;
-    ParseError(Loc, "Too many arguments to VC iterator");
-    return false;
-  }
-
-  // check first arg, and get internal var type
-  // should have at least one argument, and it should be `ref`/`out`
-  if (minit->NumParams < 1 ||
-      (minit->ParamFlags[0]&~(FPARM_Out|FPARM_Ref)) != 0 ||
-      (minit->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) == 0)
+  int itlocidx = -1;
   {
-    delete einit;
-    ParseError(Loc, "VC iterator_Init should have at least one arg, and it should be `ref`/`out`");
-    return false;
-  }
-
-  switch (minit->ReturnType.Type) {
-    case TYPE_Void: isBoolInit = false; break;
-    case TYPE_Bool: isBoolInit = true; break;
-    case TYPE_Int: isBoolInit = true; break;
-    default:
+    // create initializer expression
+    VStr newName = VStr(*ib->GetMethodName())+"_opInit";
+    if (reversed) newName += "Reverse";
+    VInvocationBase *einit = (VInvocationBase *)arr->SyntaxCopy();
+    einit->SetMethodName(VName(*newName));
+    VMethod *minit = einit->GetVMethod(ec);
+    if (!minit) {
       delete einit;
-      ParseError(Loc, "VC iterator should return `void` or `bool`");
+      ParseError(Loc, "Invalid VC iterator (opInit method not found)");
       return false;
-  }
+    }
 
-  // create hidden local for `it`
-  VLocalVarDef &L = ec.AllocLocal(NAME_None, minit->ParamTypes[0], Loc);
-  L.Visible = false; // it is unnamed, and hidden ;-)
-  L.ParamFlags = 0;
+    if (einit->NumArgs >= VMethod::MAX_PARAMS) {
+      delete einit;
+      ParseError(Loc, "Too many arguments to VC iterator opInit method");
+      return false;
+    }
 
-  // insert hidden local as first init arg
-  for (int f = einit->NumArgs; f > 0; --f) einit->Args[f] = einit->Args[f-1];
-  einit->Args[0] = new VLocalVar(L.ldindex, L.Loc);
-  ++einit->NumArgs;
-  // and resolve the call
-  ivInit = einit->Resolve(ec);
-  if (!ivInit /*|| !ivInit->IsLLInvocation()*/) {
-    ParseError(Loc, "Invalid VC iterator");
-    return false;
-  }
-
-  // create next expression
-  newName = VStr(*ib->GetMethodName())+"_opNext";
-  VInvocationBase *enext = (VInvocationBase *)arr->SyntaxCopy();
-  enext->SetMethodName(VName(*newName));
-  VMethod *mnext = enext->GetVMethod(ec);
-  if (!mnext) {
-    delete enext;
-    ParseError(Loc, "Invalid VC iterator (next method not found)");
-    return false;
-  }
-
-  // all "next" args should be `ref`/`out`
-  for (int f = 0; f < mnext->NumParams; ++f) {
-    if ((mnext->ParamFlags[f]&~(FPARM_Out|FPARM_Ref)) != 0 ||
-        (mnext->ParamFlags[f]&(FPARM_Out|FPARM_Ref)) == 0)
+    // check first arg, and get internal var type
+    // should have at least one argument, and it should be `ref`/`out`
+    if (minit->NumParams < 1 ||
+        (minit->ParamFlags[0]&~(FPARM_Out|FPARM_Ref)) != 0 ||
+        (minit->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) == 0)
     {
-      delete enext;
-      ParseError(Loc, "VC iterator_Next argument %d is not `ref`/`out`", f+1);
+      delete einit;
+      ParseError(Loc, "VC iterator opInit should have at least one arg, and it should be `ref`/`out`");
       return false;
+    }
+
+    switch (minit->ReturnType.Type) {
+      case TYPE_Void: isBoolInit = false; break;
+      case TYPE_Bool: case TYPE_Int: isBoolInit = true; break;
+      default:
+        delete einit;
+        ParseError(Loc, "VC iterator opInit should return `bool` or be `void`");
+        return false;
+    }
+
+    // create hidden local for `it`
+    VLocalVarDef &L = ec.AllocLocal(NAME_None, minit->ParamTypes[0], Loc);
+    L.Visible = false; // it is unnamed, and hidden ;-)
+    L.ParamFlags = 0;
+    itlocidx = L.ldindex;
+
+    // insert hidden local as first init arg
+    for (int f = einit->NumArgs; f > 0; --f) einit->Args[f] = einit->Args[f-1];
+    einit->Args[0] = new VLocalVar(itlocidx, Loc);
+    ++einit->NumArgs;
+    // and resolve the call
+    ivInit = (isBoolInit ? einit->ResolveBoolean(ec) : einit->Resolve(ec));
+    if (!ivInit) return false;
+  }
+
+  {
+    // create next expression
+    VStr newName = VStr(*ib->GetMethodName())+"_opNext";
+    VInvocationBase *enext = (VInvocationBase *)arr->SyntaxCopy();
+    enext->SetMethodName(VName(*newName));
+    VMethod *mnext = enext->GetVMethod(ec);
+    if (!mnext) {
+      delete enext;
+      ParseError(Loc, "Invalid VC iterator (opNext method not found)");
+      return false;
+    }
+
+    // all "next" args should be `ref`/`out`
+    for (int f = 0; f < mnext->NumParams; ++f) {
+      if ((mnext->ParamFlags[f]&~(FPARM_Out|FPARM_Ref)) != 0 ||
+          (mnext->ParamFlags[f]&(FPARM_Out|FPARM_Ref)) == 0)
+      {
+        delete enext;
+        ParseError(Loc, "VC iterator opNext argument %d is not `ref`/`out`", f+1);
+        return false;
+      }
+    }
+
+    // "next" should return bool
+    switch (mnext->ReturnType.Type) {
+      case TYPE_Bool: case TYPE_Int: break;
+      default:
+        delete enext;
+        ParseError(Loc, "VC iterator opNext should return `bool`");
+        return false;
+    }
+
+    // remove all `enext` args, and insert foreach args instead
+    for (int f = 0; f < enext->NumArgs; ++f) delete enext->Args[f];
+    enext->NumArgs = 1+fevarCount;
+    enext->Args[0] = new VLocalVar(itlocidx, Loc);
+    for (int f = 0; f < fevarCount; ++f) enext->Args[f+1] = fevars[f].var->SyntaxCopy();
+
+    ivNext = enext->ResolveBoolean(ec);
+    if (!ivNext) return false;
+  }
+
+  {
+    // create done expression
+    VStr newName = VStr(*ib->GetMethodName())+"_opDone";
+    VInvocationBase *edone = (VInvocationBase *)arr->SyntaxCopy();
+    edone->SetMethodName(VName(*newName));
+    VMethod *mdone = edone->GetVMethod(ec);
+    // no done is ok
+    if (mdone) {
+      // has done
+      // check first arg, and get internal var type
+      // should have at least one argument, and it should be `ref`/`out`
+      if (mdone->NumParams != 1 ||
+          (mdone->ParamFlags[0]&~(FPARM_Out|FPARM_Ref)) != 0 ||
+          (mdone->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) == 0)
+      {
+        delete edone;
+        ParseError(Loc, "VC iterator opDone should have one arg, and it should be `ref`/`out`");
+        return false;
+      }
+
+      if (mdone->ReturnType.Type != TYPE_Void) {
+        delete edone;
+        ParseError(Loc, "VC iterator opDone should be `void`");
+        return false;
+      }
+
+      // replace "done" args with hidden `it`
+      for (int f = 0; f < edone->NumArgs; ++f) delete edone->Args[f];
+      edone->NumArgs = 1;
+      edone->Args[0] = new VLocalVar(itlocidx, Loc);
+
+      ivDone = edone->Resolve(ec);
+      if (!ivDone) return false;
+    } else {
+      ivDone = nullptr;
     }
   }
 
-  // remove all `enext` args, and insert foreach args instead
-  for (int f = 0; f < enext->NumArgs; ++f) delete enext->Args[f];
-  enext->NumArgs = 1;
-  enext->Args[0] = new VLocalVar(L.ldindex, L.Loc);
-  // add index var (if any)
-  //if (idxvar) {
-
-  if (enext->NumArgs >= VMethod::MAX_PARAMS) {
-    delete enext;
-    ParseError(Loc, "Too many arguments to VC iterator");
-    return false;
-  }
-
-  ParseError(Loc, "VC iterators aren't supported yet (%d:`%s`)", int(ib->IsMethodNameChangeable()), *ib->GetMethodName());
-  return false;
+  // finally, resolve statement (last, so local reusing will work as expected)
+  return statement->Resolve(ec);
 }
 
 
@@ -1438,7 +1483,6 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
 //==========================================================================
 void VForeachScripted::DoEmit (VEmitContext &ec) {
   // set-up continues and breaks
-/*
   VLabel OldStart = ec.LoopStart;
   VLabel OldEnd = ec.LoopEnd;
 
@@ -1446,35 +1490,41 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
   ec.LoopStart = ec.DefineLabel();
   ec.LoopEnd = ec.DefineLabel();
 
-  VLabel Loop = ec.DefineLabel();
+  VLabel LoopExitSkipDtor = ec.DefineLabel();
 
-  // emit initialisation expressions
-  if (hiinit) hiinit->Emit(ec); // may be absent for reverse loops
-  idxinit->Emit(ec);
+  // emit initialisation expression
+  if (isBoolInit) {
+    ivInit->EmitBranchable(ec, LoopExitSkipDtor, false);
+  } else {
+    ivInit->Emit(ec);
+  }
 
-  // do first check
-  loopPreCheck->EmitBranchable(ec, ec.LoopEnd, false);
+  // push iterator
+  ec.AddStatement(OPC_IteratorDtorAt, ec.LoopEnd, Loc);
 
   // actual loop
-  ec.MarkLabel(Loop);
-  // load value
-  if (isRef) varaddr->Emit(ec);
-  loopLoad->Emit(ec);
-  if (isRef) ec.AddStatement(OPC_AssignPtrDrop, Loc);
-  // and emit loop body
+  ec.MarkLabel(ec.LoopStart);
+  // call next
+  ivNext->EmitBranchable(ec, ec.LoopEnd, false);
+  // emit loop body
   statement->Emit(ec);
-
-  // loop next and test
-  ec.MarkLabel(ec.LoopStart); // continue will jump here
-  loopNext->EmitBranchable(ec, Loop, true);
+  // again
+  ec.AddStatement(OPC_Goto, ec.LoopStart, Loc);
 
   // end of loop
   ec.MarkLabel(ec.LoopEnd);
 
+  // dtor
+  if (ivDone) ivDone->Emit(ec);
+
+  // pop iterator
+  ec.AddStatement(OPC_IteratorFinish, Loc);
+
+  ec.MarkLabel(LoopExitSkipDtor);
+
   // restore continue and break state
   ec.LoopStart = OldStart;
   ec.LoopEnd = OldEnd;
-*/
 }
 
 

@@ -950,7 +950,6 @@ bool VParser::ParseForeachOptions () {
 //
 //==========================================================================
 VStatement *VParser::ParseForeachRange (const TLocation &l) {
-  bool hasDecls = false;
   bool killDecls = true;
 
   // parse loop vars
@@ -965,7 +964,6 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       bool isRef = Lex.Check(TK_Ref);
       auto vtype = ParseOptionalTypeDecl(TK_Semicolon);
       if (vtype) {
-        hasDecls = true;
         decl = ParseLocalVar(vtype, LocalForeach);
         if (decl && decl->Vars.length() != 1) {
           ParseError(decl->Loc, "Only one variable declaration expected");
@@ -987,7 +985,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
         ParseError(Lex.Location, "`foreach` variable expected");
         break;
       }
-      if (vexcount == VMethod::MAX_PARAMS) {
+      if (vexcount == VMethod::MAX_PARAMS-1) {
         ParseError(vexpr->Loc, "Too many `foreach` variables");
         delete vexpr;
       } else {
@@ -1020,7 +1018,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       vexcount = 1;
     }
     if (vex[0].decl) {
-      //if (vex[0].isRef) ParseError(vex[0].decl->Loc, "`ref` is not allowed for iota foreach index");
+      if (vex[0].isRef) ParseError(vex[0].decl->Loc, "`ref` is not allowed for iota foreach index");
       vex[0].decl->Vars[0].TypeOfExpr = new VIntLiteral(0, vex[0].decl->Vars[0].Loc);
     }
     // iota
@@ -1042,6 +1040,12 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       // scripted
       killDecls = false;
       VForeachScripted *fes = new VForeachScripted(loarr, vexcount, vex, l);
+      // check for `reversed`
+      fes->reversed = ParseForeachOptions();
+      Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+      // body
+      fes->statement = ParseStatement();
+      // done
       res = fes;
     } else {
       // normal: 1 or 2 args
@@ -1080,8 +1084,9 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
 
   if (!res) killDecls = true;
 
-  if (res && hasDecls) {
-    // if we have any declarations, rewrite code a little:
+  // create compound anyway
+  if (res) {
+    // rewrite code a little:
     //   { decl var; foreach (var; ..) }
     VCompound *body = new VCompound(res->Loc);
     for (int f = 0; f < vexcount; ++f) {

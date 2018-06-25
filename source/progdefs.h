@@ -68,7 +68,7 @@ enum {
 #ifndef OPCODE_INFO
 
 #define PROG_MAGIC    "VPRG"
-#define PROG_VERSION  (36)
+#define PROG_VERSION  (37)
 
 enum {
   OPCARGS_None,
@@ -403,6 +403,10 @@ enum {
   DECLARE_OPC(IteratorInit, None),
   DECLARE_OPC(IteratorNext, None),
   DECLARE_OPC(IteratorPop, None),
+
+  // scripted iterators
+  DECLARE_OPC(IteratorDtorAt, BranchTarget),
+  DECLARE_OPC(IteratorFinish, None),
 
   // `write` and `writeln`
   DECLARE_OPC(DoWriteOne, Type),
