@@ -271,6 +271,8 @@ static void RunFunction (VMethod *func) {
   guard(RunFunction);
   current_func = func;
 
+  if (!func) { cstDump(nullptr); Sys_Error("Trying to execute null function"); }
+
   if (func->Flags&FUNC_Net) {
     VStack *Params = pr_stackPtr-func->ParamsSize;
     if (((VObject *)Params[0].p)->ExecuteNetMethod(func)) return;
@@ -323,6 +325,7 @@ func_loop:
       PR_VM_CASE(OPC_Call)
         pr_stackPtr = sp;
         cstFixTopIPSP(ip);
+        //cstDump(ip);
         RunFunction((VMethod *)ReadPtr(ip+1));
         current_func = func;
         ip += 1+sizeof(void *);

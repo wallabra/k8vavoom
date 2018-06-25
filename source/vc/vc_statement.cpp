@@ -1345,6 +1345,7 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
     einit->SetMethodName(VName(*newName));
     VMethod *minit = einit->GetVMethod(ec);
     if (!minit) {
+      //fprintf(stderr, "arr type: `%s` : `%s` (%s)\n", *shitppTypeNameObj(*arr), *shitppTypeNameObj(*einit), *einit->GetMethodName());
       delete einit;
       ParseError(Loc, "Invalid VC iterator (opInit method not found)");
       return false;
