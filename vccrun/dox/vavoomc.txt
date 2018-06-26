@@ -432,3 +432,11 @@ For assignin, VC will try methods in this order:
   opIndex<indtype>Assign
   opIndexAssign<valtype>
   opIndexAssign
+
+
+
+Optional ref/out arguments
+==========================
+
+It is possible. And even if it is not optional, you can use `nullptr` if you don't
+want to pass anything there.
