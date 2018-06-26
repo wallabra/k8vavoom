@@ -129,6 +129,12 @@ To call a method with optional arguments, use this syntax:
 Note the `default` keyword. It is not required now, but it *will* be
 required in the future, so you'd better not omit it.
 
+It is possible to "marshall" optional flag:
+
+  othermethod(n, f!optional, s);
+
+This call will "marshall" optional flag for argument `f`, if it is present,
+and if it is necessary.
 
 
 Delegates
