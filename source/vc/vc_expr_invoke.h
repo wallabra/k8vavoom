@@ -26,54 +26,32 @@
 
 //==========================================================================
 //
-//  VRefOutArg
+//  VArgMarshall
 //
 //==========================================================================
-class VRefOutArg : public VExpression {
+class VArgMarshall : public VExpression {
 public:
   VExpression *e;
+  bool isRef;
+  bool isOut;
+  bool marshallOpt;
 
 public:
-  VRefOutArg (VExpression *ae);
-  virtual ~VRefOutArg () override;
+  VArgMarshall (VExpression *ae);
+  virtual ~VArgMarshall () override;
   virtual VExpression *DoResolve (VEmitContext &ec) override;
   virtual void Emit (VEmitContext &ec) override;
 
-protected:
-  VRefOutArg () {}
-  virtual void DoSyntaxCopyTo (VExpression *e) override;
-};
-
-
-//==========================================================================
-//
-//  VRefArg
-//
-//==========================================================================
-class VRefArg : public VRefOutArg {
-public:
-  VRefArg (VExpression *ae);
   virtual VExpression *SyntaxCopy () override;
+
+  virtual bool IsMarshallArg () const override;
   virtual bool IsRefArg () const override;
-
-protected:
-  VRefArg () {}
-};
-
-
-//==========================================================================
-//
-//  VOutArg
-//
-//==========================================================================
-class VOutArg : public VRefOutArg {
-public:
-  VOutArg (VExpression *ae);
-  virtual VExpression *SyntaxCopy () override;
   virtual bool IsOutArg () const override;
+  virtual bool IsOptMarshallArg () const override;
 
 protected:
-  VOutArg () {}
+  VArgMarshall () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 
 
@@ -225,6 +203,7 @@ class VInvocation : public VInvocationBase {
 private:
   int lcidx[VMethod::MAX_PARAMS];
   bool reused[VMethod::MAX_PARAMS];
+  bool optmarshall[VMethod::MAX_PARAMS];
 
 public:
   VExpression *SelfExpr;

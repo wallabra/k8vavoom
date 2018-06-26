@@ -307,8 +307,10 @@ bool VExpression::IsAssignExpr () const { return false; }
 bool VExpression::IsBinaryMath () const { return false; }
 bool VExpression::IsSingleName () const { return false; }
 bool VExpression::IsDotField () const { return false; }
+bool VExpression::IsMarshallArg () const { return false; }
 bool VExpression::IsRefArg () const { return false; }
 bool VExpression::IsOutArg () const { return false; }
+bool VExpression::IsOptMarshallArg () const { return false; }
 bool VExpression::IsAnyInvocation () const { return false; }
 bool VExpression::IsLLInvocation () const { return false; }
 bool VExpression::IsTypeExpr () const { return false; }

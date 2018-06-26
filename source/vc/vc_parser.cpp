@@ -49,9 +49,21 @@ int VParser::ParseArgList (const TLocation &stloc, VExpression **argv) {
         arg = nullptr;
       } else {
         arg = ParseExpressionPriority13();
-        if (arg) {
-               if (isRef) arg = new VRefArg(arg);
-          else if (isOut) arg = new VOutArg(arg);
+        bool isOutMarshall = false;
+        if (Lex.Check(TK_Not)) {
+          if (Lex.Token != TK_Optional) {
+            ParseError(Lex.Location, "`optional` expected for marshalling");
+          } else {
+            isOutMarshall = true;
+            Lex.NextToken();
+          }
+        }
+        if (arg && (isRef || isOut || isOutMarshall)) {
+          VArgMarshall *em = new VArgMarshall(arg);
+          em->isRef = isRef;
+          em->isOut = isOut;
+          em->marshallOpt = isOutMarshall;
+          arg = em;
         }
       }
       if (count == VMethod::MAX_PARAMS) {

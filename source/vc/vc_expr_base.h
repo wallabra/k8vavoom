@@ -85,8 +85,10 @@ public:
   virtual bool IsBinaryMath () const;
   virtual bool IsSingleName () const;
   virtual bool IsDotField () const;
+  virtual bool IsMarshallArg () const;
   virtual bool IsRefArg () const;
   virtual bool IsOutArg () const;
+  virtual bool IsOptMarshallArg () const;
   virtual bool IsAnyInvocation () const;
   virtual bool IsLLInvocation () const; // is this `VInvocation`?
   virtual bool IsTypeExpr () const;

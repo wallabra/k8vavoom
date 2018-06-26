@@ -31,44 +31,35 @@
 
 //==========================================================================
 //
-//  VRefOutArg::VRefOutArg
+//  VArgMarshall::VArgMarshall
 //
 //==========================================================================
-VRefOutArg::VRefOutArg (VExpression *ae)
+VArgMarshall::VArgMarshall (VExpression *ae)
   : VExpression(ae->Loc)
   , e(ae)
+  , isRef(false)
+  , isOut(false)
+  , marshallOpt(false)
 {
 }
 
 
 //==========================================================================
 //
-//  VRefOutArg::~VRefOutArg
+//  VArgMarshall::~VArgMarshall
 //
 //==========================================================================
-VRefOutArg::~VRefOutArg () {
+VArgMarshall::~VArgMarshall () {
   delete e;
 }
 
 
 //==========================================================================
 //
-//  VRefOutArg::DoSyntaxCopyTo
+//  VArgMarshall::DoResolve
 //
 //==========================================================================
-void VRefOutArg::DoSyntaxCopyTo (VExpression *e) {
-  VExpression::DoSyntaxCopyTo(e);
-  auto res = (VRefOutArg *)e;
-  res->e = (this->e ? this->e->SyntaxCopy() : nullptr);
-}
-
-
-//==========================================================================
-//
-//  VRefOutArg::DoSyntaxCopyTo
-//
-//==========================================================================
-VExpression *VRefOutArg::DoResolve (VEmitContext &ec) {
+VExpression *VArgMarshall::DoResolve (VEmitContext &ec) {
   if (e) e = e->Resolve(ec);
   if (!e) { delete this; return nullptr; }
   VExpression *res = e;
@@ -80,40 +71,11 @@ VExpression *VRefOutArg::DoResolve (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VRefOutArg::DoSyntaxCopyTo
+//  VArgMarshall::SyntaxCopy
 //
 //==========================================================================
-void VRefOutArg::Emit (VEmitContext &ec) {
-  Sys_Error("The thing that should not be (VRefOutArg::Emit)");
-}
-
-
-//==========================================================================
-//
-//  VRefArg::VRefArg
-//
-//==========================================================================
-VRefArg::VRefArg (VExpression *ae) : VRefOutArg(ae) {
-}
-
-
-//==========================================================================
-//
-//  VRefArg::IsRefArg
-//
-//==========================================================================
-bool VRefArg::IsRefArg () const {
-  return true;
-}
-
-
-//==========================================================================
-//
-//  VRefArg::SyntaxCopy
-//
-//==========================================================================
-VExpression *VRefArg::SyntaxCopy () {
-  auto res = new VRefArg();
+VExpression *VArgMarshall::SyntaxCopy () {
+  auto res = new VArgMarshall();
   DoSyntaxCopyTo(res);
   return res;
 }
@@ -121,33 +83,68 @@ VExpression *VRefArg::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VOutArg::VOutArg
+//  VArgMarshall::DoSyntaxCopyTo
 //
 //==========================================================================
-VOutArg::VOutArg (VExpression *ae) : VRefOutArg(ae) {
+void VArgMarshall::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VArgMarshall *)e;
+  res->e = (this->e ? this->e->SyntaxCopy() : nullptr);
+  res->isRef = isRef;
+  res->isOut = isOut;
+  res->marshallOpt = marshallOpt;
 }
 
 
 //==========================================================================
 //
-//  VOutArg::VOutArg
+//  VArgMarshall::Emit
 //
 //==========================================================================
-bool VOutArg::IsOutArg () const {
+void VArgMarshall::Emit (VEmitContext &ec) {
+  Sys_Error("The thing that should not be (VArgMarshall::Emit)");
+}
+
+
+//==========================================================================
+//
+//  VArgMarshall::IsMarshallArg
+//
+//==========================================================================
+bool VArgMarshall::IsMarshallArg () const {
   return true;
 }
 
 
 //==========================================================================
 //
-//  VOutArg::SyntaxCopy
+//  VArgMarshall::IsRefArg
 //
 //==========================================================================
-VExpression *VOutArg::SyntaxCopy () {
-  auto res = new VOutArg();
-  DoSyntaxCopyTo(res);
-  return res;
+bool VArgMarshall::IsRefArg () const {
+  return isRef;
 }
+
+
+//==========================================================================
+//
+//  VArgMarshall::IsOutArg
+//
+//==========================================================================
+bool VArgMarshall::IsOutArg () const {
+  return isOut;
+}
+
+
+//==========================================================================
+//
+//  VArgMarshall::IsOptMarshallArg
+//
+//==========================================================================
+bool VArgMarshall::IsOptMarshallArg () const {
+  return marshallOpt;
+}
+
 
 
 //==========================================================================
@@ -1193,6 +1190,8 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   VExpression **argv = (argc > 0 ? new VExpression *[argc] : nullptr);
   for (int f = 0; f < argc; ++f) argv[f] = nullptr;
 
+  memset(optmarshall, 0, sizeof(optmarshall));
+
   // resolve arguments
   int requiredParams = Func->NumParams;
   int maxParams = (Func->Flags&FUNC_VarArgs ? VMethod::MAX_PARAMS-1 : Func->NumParams);
@@ -1204,6 +1203,9 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
       break;
     }
     if (Args[i]) {
+      if (i < VMethod::MAX_PARAMS && Args[i]->IsOptMarshallArg() && (Func->ParamFlags[i]&FPARM_Optional) != 0) {
+        optmarshall[i] = true;
+      }
       // check for `ref`/`out` validness
       if (Args[i]->IsRefArg() && (i >= requiredParams || (Func->ParamFlags[i]&FPARM_Ref) == 0)) {
         ParseError(Args[i]->Loc, "`ref` argument for non-ref parameter #%d", i+1);
@@ -1361,7 +1363,37 @@ void VInvocation::Emit (VEmitContext &ec) {
       Args[i]->Emit(ec);
       SelfOffset += (Args[i]->Type.Type == TYPE_Vector ? 3 : 1);
       if (Func->ParamFlags[i]&FPARM_Optional) {
-        ec.EmitPushNumber(1, Loc);
+        // marshall "specified_*"?
+        if (i < VMethod::MAX_PARAMS && optmarshall[i] && Args[i]->IsLocalVarExpr()) {
+          VLocalVar *ve = (VLocalVar *)Args[i];
+          VLocalVarDef &L = ec.GetLocalByIndex(ve->num);
+          if (L.Name == NAME_None) {
+            // unnamed, no "specified_*"
+            ec.EmitPushNumber(1, Loc);
+          } else {
+            VStr spname = VStr("specified_")+(*L.Name);
+            int lidx = ec.CheckForLocalVar(VName(*spname));
+            if (lidx < 0) {
+              // not found
+              ec.EmitPushNumber(1, Loc);
+            } else {
+              L = ec.GetLocalByIndex(lidx);
+              if (L.Type.Type != TYPE_Int) {
+                // not int
+                ec.EmitPushNumber(1, Loc);
+              } else {
+                // i found her!
+                //HACK: it is safe (and necessary) to resolve here
+                VExpression *xlv = new VLocalVar(lidx, ve->Loc);
+                xlv = xlv->Resolve(ec);
+                if (!xlv) FatalError("VC: internal compiler error (13496)");
+                xlv->Emit(ec);
+              }
+            }
+          }
+        } else {
+          ec.EmitPushNumber(1, Loc);
+        }
         ++SelfOffset;
       }
     }
