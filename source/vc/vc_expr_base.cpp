@@ -294,6 +294,8 @@ vint32 VExpression::GetIntConst () const { ParseError(Loc, "Integer constant exp
 float VExpression::GetFloatConst () const { ParseError(Loc, "Float constant expected"); return 0.0; }
 VStr VExpression::GetStrConst (VPackage *) const { ParseError(Loc, "String constant expected"); return VStr(); }
 VName VExpression::GetNameConst () const { ParseError(Loc, "Name constant expected"); return NAME_None; }
+bool VExpression::IsNoneLiteral () const { return false; }
+bool VExpression::IsNullLiteral () const { return false; }
 bool VExpression::IsDefaultObject () const { return false; }
 bool VExpression::IsPropertyAssign () const { return false; }
 bool VExpression::IsDynArraySetNum () const { return false; }

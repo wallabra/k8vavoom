@@ -160,6 +160,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual bool IsNoneLiteral () const override;
+
 protected:
   VNoneLiteral () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -177,6 +179,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual bool IsNullLiteral () const override;
 
 protected:
   VNullLiteral () {}

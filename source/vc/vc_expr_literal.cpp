@@ -512,6 +512,16 @@ void VNoneLiteral::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VNoneLiteral::IsNoneLiteral
+//
+//==========================================================================
+bool VNoneLiteral::IsNoneLiteral () const {
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VNullLiteral::VNullLiteral
 //
 //==========================================================================
@@ -559,6 +569,16 @@ VExpression *VNullLiteral::DoResolve (VEmitContext &) {
 //==========================================================================
 void VNullLiteral::Emit (VEmitContext &ec) {
   ec.AddStatement(OPC_PushNull, Loc);
+}
+
+
+//==========================================================================
+//
+//  VNullLiteral::IsNullLiteral
+//
+//==========================================================================
+bool VNullLiteral::IsNullLiteral () const {
+  return true;
 }
 
 

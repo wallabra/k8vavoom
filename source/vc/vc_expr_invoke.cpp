@@ -1248,7 +1248,10 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   // we may create new locals, so activate local reuse mechanics
   int compIdx = ec.EnterCompound();
 
-  for (int f = 0; f < VMethod::MAX_PARAMS; ++f) lcidx[f] = -1;
+  for (int f = 0; f < VMethod::MAX_PARAMS; ++f) {
+    lcidx[f] = -1;
+    reused[f] = false;
+  }
 
   // for ommited "optional ref", create temporary locals
   for (int i = 0; i < NumArgs; ++i) {
@@ -1260,6 +1263,7 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
         L.ParamFlags = 0;
         //index = new VLocalVar(L.ldindex, L.Loc);
         lcidx[i] = L.ldindex;
+        reused[i] = L.reused;
       }
     }
   }
@@ -1299,14 +1303,14 @@ void VInvocation::Emit (VEmitContext &ec) {
   vint32 SelfOffset = 1;
   for (int i = 0; i < NumArgs; ++i) {
     if (!Args[i]) {
-      if ((Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
+      if (i < Func->NumParams && (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
         // get local address
         if (lcidx[i] < 0) FatalError("VC: Internal compiler error (VInvocation::Emit)");
         // make sure struct / class field offsets have been calculated
         if (Func->ParamTypes[i].Type == TYPE_Struct) {
           Func->ParamTypes[i].Struct->PostLoad();
         }
-        ec.EmitOneLocalDtor(lcidx[i], Loc, true);
+        if (reused[i]) ec.EmitOneLocalDtor(lcidx[i], Loc, true);
         VLocalVarDef &loc = ec.GetLocalByIndex(lcidx[i]);
         ec.EmitLocalAddress(loc.Offset, Loc);
         //ec.AddStatement(OPC_ZeroByPtrNoDrop, Func->ParamTypes[i].GetSize(), Loc);
@@ -1348,8 +1352,11 @@ void VInvocation::Emit (VEmitContext &ec) {
             break;
         }
       }
-      ec.EmitPushNumber(0, Loc);
-      ++SelfOffset;
+      // omited ref args can be non-optional
+      if ((Func->ParamFlags[i]&FPARM_Optional) != 0) {
+        ec.EmitPushNumber(0, Loc);
+        ++SelfOffset;
+      }
     } else {
       Args[i]->Emit(ec);
       SelfOffset += (Args[i]->Type.Type == TYPE_Vector ? 3 : 1);
@@ -1502,12 +1509,17 @@ void VInvocation::CheckParams (VEmitContext &ec, int argc, VExpression **argv) {
   for (int i = 0; i < NumArgs; ++i) {
     if (i < requiredParams) {
       if (!Args[i]) {
-        if (!(Func->ParamFlags[i]&FPARM_Optional)) ParseError(Loc, "Cannot omit non-optional argument");
         if ((Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
           argsize += 4; // pointer
         } else {
+          if (!(Func->ParamFlags[i]&FPARM_Optional)) ParseError(Loc, "Cannot omit non-optional argument");
           argsize += Func->ParamTypes[i].GetStackSize();
         }
+      } else if ((Args[i]->IsNoneLiteral() || Args[i]->IsNullLiteral()) && (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
+        // `ref`/`out` arg can be ommited with `none` or `null`
+        delete Args[i];
+        Args[i] = nullptr;
+        argsize += 4; // pointer
       } else {
         // check for `ref`/`out` validness
         //if (Args[i]->IsRefArg() && (Func->ParamFlags[i]&FPARM_Ref) == 0) ParseError(Args[i]->Loc, "`ref` argument for non-ref parameter");

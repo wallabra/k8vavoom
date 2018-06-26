@@ -72,6 +72,8 @@ public:
   virtual float GetFloatConst () const;
   virtual VStr GetStrConst (VPackage *) const;
   virtual VName GetNameConst () const;
+  virtual bool IsNoneLiteral () const;
+  virtual bool IsNullLiteral () const;
   virtual bool IsDefaultObject () const;
   virtual bool IsPropertyAssign () const;
   virtual bool IsDynArraySetNum () const;
