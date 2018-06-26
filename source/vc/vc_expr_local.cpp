@@ -111,7 +111,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
     VLocalEntry &e = Vars[i];
 
     if (ec.CheckForLocalVar(e.Name) != -1) {
-      //VLocalVarDef &loc = ec.GetLocalByIndex(ec.CheckForLocalVar(e.Name));
+      //const VLocalVarDef &loc = ec.GetLocalByIndex(ec.CheckForLocalVar(e.Name));
       //fprintf(stderr, "duplicate '%s'(%d) (old(%d) is at %s:%d)\n", *e.Name, ec.GetCurrCompIndex(), loc.GetCompIndex(), *loc.Loc.GetSource(), loc.Loc.GetLine());
       ParseError(e.Loc, "Redefined identifier `%s`", *e.Name);
     } else {
@@ -254,7 +254,7 @@ void VLocalVar::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VLocalVar::DoResolve (VEmitContext &ec) {
-  VLocalVarDef &loc = ec.GetLocalByIndex(num);
+  const VLocalVarDef &loc = ec.GetLocalByIndex(num);
   locSavedFlags = loc.ParamFlags;
   Type = loc.Type;
   RealType = loc.Type;
@@ -286,7 +286,7 @@ void VLocalVar::RequestAddressOf () {
 //  VLocalVar::genLocalValue
 //
 //==========================================================================
-void VLocalVar::genLocalValue (VEmitContext &ec, VLocalVarDef &loc, int xofs) {
+void VLocalVar::genLocalValue (VEmitContext &ec, const VLocalVarDef &loc, int xofs) {
   int Ofs = loc.Offset+xofs;
   if (Ofs < 256) {
          if (Ofs == 0) ec.AddStatement(OPC_LocalValue0, Loc);
@@ -311,7 +311,7 @@ void VLocalVar::genLocalValue (VEmitContext &ec, VLocalVarDef &loc, int xofs) {
 //
 //==========================================================================
 void VLocalVar::Emit (VEmitContext &ec) {
-  VLocalVarDef &loc = ec.GetLocalByIndex(num);
+  const VLocalVarDef &loc = ec.GetLocalByIndex(num);
   if (AddressRequested) {
     ec.EmitLocalAddress(loc.Offset, Loc);
   } else if (locSavedFlags&(FPARM_Out|FPARM_Ref)) {

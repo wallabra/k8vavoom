@@ -93,5 +93,5 @@ protected:
   VLocalVar () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 
-  void genLocalValue (VEmitContext &ec, VLocalVarDef &loc, int xofs=0);
+  void genLocalValue (VEmitContext &ec, const VLocalVarDef &loc, int xofs=0);
 };

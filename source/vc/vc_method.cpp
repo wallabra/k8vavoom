@@ -399,7 +399,7 @@ void VMethod::Emit () {
   }
 
   for (int i = 0; i < ec.GetLocalDefCount(); ++i) {
-    VLocalVarDef &loc = ec.GetLocalByIndex(i);
+    const VLocalVarDef &loc = ec.GetLocalByIndex(i);
     if (loc.Type.Type == TYPE_Vector && (ParamFlags[i]&(FPARM_Out|FPARM_Ref)) == 0) {
       ec.AddStatement(OPC_VFixParam, loc.Offset, Loc);
     }

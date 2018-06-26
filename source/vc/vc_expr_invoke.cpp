@@ -1178,7 +1178,7 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
 
   if (DelegateLocal >= 0) {
     //FIXME
-    VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
+    const VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
     if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) {
       ParseError(Loc, "ref locals arent supported yet (sorry)");
       delete this;
@@ -1313,7 +1313,7 @@ void VInvocation::Emit (VEmitContext &ec) {
           Func->ParamTypes[i].Struct->PostLoad();
         }
         if (reused[i]) ec.EmitOneLocalDtor(lcidx[i], Loc, true);
-        VLocalVarDef &loc = ec.GetLocalByIndex(lcidx[i]);
+        const VLocalVarDef &loc = ec.GetLocalByIndex(lcidx[i]);
         ec.EmitLocalAddress(loc.Offset, Loc);
         //ec.AddStatement(OPC_ZeroByPtrNoDrop, Func->ParamTypes[i].GetSize(), Loc);
         //ec.EmitLocalAddress(loc.Offset, Loc);
@@ -1366,7 +1366,7 @@ void VInvocation::Emit (VEmitContext &ec) {
         // marshall "specified_*"?
         if (i < VMethod::MAX_PARAMS && optmarshall[i] && Args[i]->IsLocalVarExpr()) {
           VLocalVar *ve = (VLocalVar *)Args[i];
-          VLocalVarDef &L = ec.GetLocalByIndex(ve->num);
+          const VLocalVarDef &L = ec.GetLocalByIndex(ve->num);
           if (L.Name == NAME_None) {
             // unnamed, no "specified_*"
             ec.EmitPushNumber(1, Loc);
@@ -1377,8 +1377,8 @@ void VInvocation::Emit (VEmitContext &ec) {
               // not found
               ec.EmitPushNumber(1, Loc);
             } else {
-              L = ec.GetLocalByIndex(lidx);
-              if (L.Type.Type != TYPE_Int) {
+              const VLocalVarDef &LL = ec.GetLocalByIndex(lidx);
+              if (LL.Type.Type != TYPE_Int) {
                 // not int
                 ec.EmitPushNumber(1, Loc);
               } else {
@@ -1421,7 +1421,7 @@ void VInvocation::Emit (VEmitContext &ec) {
     ec.AddStatement(OPC_DelegateCall, DelegateField, SelfOffset, Loc);
   } else if (DelegateLocal >= 0) {
     // get address of local
-    VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
+    const VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
     ec.EmitLocalAddress(loc.Offset, Loc);
     // push self offset
     //ec.EmitPushNumber(SelfOffset, Loc);

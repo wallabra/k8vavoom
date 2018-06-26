@@ -127,7 +127,7 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
   if (!atype.IsReusingDisabled()) {
     for (int f = 0; f < LocalDefs.length(); ++f) {
       //break;
-      VLocalVarDef &ll = LocalDefs[f];
+      const VLocalVarDef &ll = LocalDefs[f];
       if (ll.Reusable && !ll.Visible && !ll.Type.IsReusingDisabled()) {
         if (ll.stackSize >= ssz) {
           // i found her!
@@ -147,7 +147,7 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
   } else if (atype.Type == TYPE_String) {
     // string can be safely replaced with another string, they both require dtor
     for (int f = 0; f < LocalDefs.length(); ++f) {
-      VLocalVarDef &ll = LocalDefs[f];
+      const VLocalVarDef &ll = LocalDefs[f];
       if (ll.Reusable && !ll.Visible && ll.Type.Type == TYPE_String) {
         // i found her!
         bestidx = f;
@@ -242,7 +242,7 @@ void VEmitContext::ExitCompound (int cidx) {
 int VEmitContext::CheckForLocalVar (VName Name) {
   if (Name == NAME_None) return -1;
   for (int i = LocalDefs.length()-1; i >= 0; --i) {
-    VLocalVarDef &loc = LocalDefs[i];
+    const VLocalVarDef &loc = LocalDefs[i];
     if (!loc.Visible) continue;
     if (loc.Name == Name) return i;
   }

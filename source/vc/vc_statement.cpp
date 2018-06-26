@@ -1378,10 +1378,12 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
     }
 
     // create hidden local for `it`
-    VLocalVarDef &L = ec.AllocLocal(NAME_None, minit->ParamTypes[0], Loc);
-    L.Visible = false; // it is unnamed, and hidden ;-)
-    L.ParamFlags = 0;
-    itlocidx = L.ldindex;
+    {
+      VLocalVarDef &L = ec.AllocLocal(NAME_None, minit->ParamTypes[0], Loc);
+      L.Visible = false; // it is unnamed, and hidden ;-)
+      L.ParamFlags = 0;
+      itlocidx = L.ldindex;
+    }
 
     // insert hidden local as first init arg
     for (int f = einit->NumArgs; f > 0; --f) einit->Args[f] = einit->Args[f-1];
