@@ -1,0 +1,32 @@
+class Main : Object;
+
+
+struct T {
+  int v;
+  //string s;
+}
+
+
+void test (optional ref int a, optional ref string s, optional ref T t) {
+  writeln(specified_a, " : ", a);
+  writeln(specified_s, " : <", s, ">");
+  writeln(specified_t, " : ", t.v);
+  writeln(a);
+}
+
+
+void test1 (optional ref int a) {
+  writeln(specified_a, " : ", a);
+}
+
+
+void main () {
+  int aa = 42;
+  array!string n;
+  n[0] = "a";
+  test(aa);
+  writeln(aa);
+  test();
+  writeln(aa);
+  writeln(n.length, " : <", n[0], ">");
+}

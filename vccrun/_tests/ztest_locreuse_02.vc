@@ -1,0 +1,18 @@
+class Main : Object;
+
+
+void main () {
+  {
+    int aa = 42;
+    writeln(aa);
+  }
+  {
+    int aa = 666;
+    writeln(aa);
+  }
+  {
+    int aa;
+    writeln(aa);
+  }
+  for (int f = 0; f < 2; ++f) {}
+}

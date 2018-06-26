@@ -36,17 +36,22 @@ for fn in *.vc; do
       cat "$ofname.err"
       break
     fi
-    cmp "$ifname" "$ofname"
+    cmp -s "$ifname" "$ofname"
   else
     if [ $res -eq 0 ]; then
       echo "FAILED (retcode)"
       break
     fi
-    cmp "$ifname.err" "$ofname.err"
+    cmp -s "$ifname.err" "$ofname.err"
   fi
   res=$?
   if [ $res -ne 0 ]; then
     echo "FAILED (output)"
+    if [ $expectfail = ona ]; then
+      diff -u "$ifname" "$ofname"
+    else
+      diff -u "$ifname.err" "$ofname.err"
+    fi
     break
   fi
   echo "OK"
