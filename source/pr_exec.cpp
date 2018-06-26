@@ -313,7 +313,7 @@ func_loop:
 #endif
 
 #ifdef VCC_STUPID_TRACER
-    fprintf(stderr, "*** %s: %6u: %s\n", *func->GetFullName(), (unsigned)(ip-func->Statements.Ptr()), StatementInfo[*ip].name);
+    fprintf(stderr, "*** %s: %6u: %s (sp=%d)\n", *func->GetFullName(), (unsigned)(ip-func->Statements.Ptr()), StatementInfo[*ip].name, (int)(sp-pr_stackPtr));
 #endif
 
     PR_VM_SWITCH(*ip) {
@@ -1825,6 +1825,12 @@ func_loop:
         --sp;
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_ZeroPointedStruct)
+        ((VStruct *)ReadPtr(ip+1))->ZeroObject((byte *)sp[-1].p);
+        ip += 1+sizeof(void *);
+        --sp;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_Drop)
         ++ip;
         --sp;
@@ -2104,6 +2110,15 @@ func_loop:
         //VFieldType Type;
         //ReadType(Type, ip);
         ip += 8+sizeof(VClass *);
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_ZeroByPtr)
+        if (sp[-1].p) {
+          int bcount = ReadInt32(ip+1);
+          if (bcount > 0) memset(sp[-1].p, 0, bcount);
+        }
+        --sp;
+        ip += 1+4;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Builtin)

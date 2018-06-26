@@ -2095,7 +2095,7 @@ bool VReturn::Resolve (VEmitContext &ec) {
 void VReturn::DoEmit (VEmitContext &ec) {
   if (Expr) {
     Expr->Emit(ec);
-    ec.EmitClearStrings(0, NumLocalsToClear, Loc);
+    ec.EmitLocalDtors(0, NumLocalsToClear, Loc);
     if (Expr->Type.GetStackSize() == 4) {
       ec.AddStatement(OPC_ReturnL, Loc);
     } else if (Expr->Type.Type == TYPE_Vector) {
@@ -2104,7 +2104,7 @@ void VReturn::DoEmit (VEmitContext &ec) {
       ParseError(Loc, "Bad return type");
     }
   } else {
-    ec.EmitClearStrings(0, NumLocalsToClear, Loc);
+    ec.EmitLocalDtors(0, NumLocalsToClear, Loc);
     ec.AddStatement(OPC_Return, Loc);
   }
 }

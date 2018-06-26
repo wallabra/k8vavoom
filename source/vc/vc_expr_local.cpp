@@ -163,6 +163,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
     VLocalVarDef &L = ec.AllocLocal(e.Name, Type, e.Loc);
     L.ParamFlags = (e.isRef ? FPARM_Ref : 0);
     //if (e.isRef) fprintf(stderr, "*** <%s:%d> is REF\n", *e.Name, L.ldindex);
+    e.locIdx = L.ldindex;
 
     // resolve initialisation
     if (e.Value) {
@@ -171,6 +172,9 @@ void VLocalDecl::Declare (VEmitContext &ec) {
       e.Value = new VAssignment(VAssignment::Assign, op1, e.Value, e.Loc);
       e.Value = e.Value->Resolve(ec);
       L.Visible = true; // and make it visible again
+      e.emitClear = false;
+    } else {
+      e.emitClear = L.reused;
     }
   }
 }
@@ -183,7 +187,12 @@ void VLocalDecl::Declare (VEmitContext &ec) {
 //==========================================================================
 void VLocalDecl::EmitInitialisations (VEmitContext &ec) {
   for (int i = 0; i < Vars.length(); ++i) {
-    if (Vars[i].Value) Vars[i].Value->Emit(ec);
+    if (Vars[i].Value) {
+      Vars[i].Value->Emit(ec);
+    } else if (Vars[i].emitClear) {
+      if (Vars[i].locIdx < 0) FatalError("VC: internal compiler error (VLocalDecl::EmitInitialisations)");
+      ec.EmitOneLocalDtor(Vars[i].locIdx, Loc, true); // zero it
+    }
   }
 }
 

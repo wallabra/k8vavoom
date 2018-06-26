@@ -68,7 +68,7 @@ enum {
 #ifndef OPCODE_INFO
 
 #define PROG_MAGIC    "VPRG"
-#define PROG_VERSION  (37)
+#define PROG_VERSION  (38)
 
 enum {
   OPCARGS_None,
@@ -365,6 +365,7 @@ enum {
   // cleanup of local variables.
   DECLARE_OPC(ClearPointedStr, None),
   DECLARE_OPC(ClearPointedStruct, Member),
+  DECLARE_OPC(ZeroPointedStruct, Member),
 
   // drop result
   DECLARE_OPC(Drop, None),
@@ -414,6 +415,9 @@ enum {
 
   // for printf-like varargs
   DECLARE_OPC(DoPushTypePtr, Type),
+
+  // fill [-1] pointer with zeroes; int is length
+  DECLARE_OPC(ZeroByPtr, Int),
 
   // builtins (k8: i'm short of opcodes, so...)
   DECLARE_OPC(Builtin, Builtin),

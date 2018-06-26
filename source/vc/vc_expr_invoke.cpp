@@ -1244,6 +1244,28 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
 
   for (int f = 0; f < argc; ++f) { delete argv[f]; argv[f] = nullptr; }
   delete[] argv;
+
+  // we may create new locals, so activate local reuse mechanics
+  int compIdx = ec.EnterCompound();
+
+  for (int f = 0; f < VMethod::MAX_PARAMS; ++f) lcidx[f] = -1;
+
+  // for ommited "optional ref", create temporary locals
+  for (int i = 0; i < NumArgs; ++i) {
+    if (!Args[i] && i < VMethod::MAX_PARAMS) {
+      if ((Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
+        // create temporary
+        VLocalVarDef &L = ec.AllocLocal(NAME_None, Func->ParamTypes[i], Loc);
+        L.Visible = false; // it is unnamed, and hidden ;-)
+        L.ParamFlags = 0;
+        //index = new VLocalVar(L.ldindex, L.Loc);
+        lcidx[i] = L.ldindex;
+      }
+    }
+  }
+
+  ec.ExitCompound(compIdx);
+
   return this;
   unguard;
 }
@@ -1277,32 +1299,54 @@ void VInvocation::Emit (VEmitContext &ec) {
   vint32 SelfOffset = 1;
   for (int i = 0; i < NumArgs; ++i) {
     if (!Args[i]) {
-      switch (Func->ParamTypes[i].Type) {
-        case TYPE_Int:
-        case TYPE_Byte:
-        case TYPE_Bool:
-        case TYPE_Float:
-        case TYPE_Name:
-          ec.EmitPushNumber(0, Loc);
-          ++SelfOffset;
-          break;
-        case TYPE_String:
-        case TYPE_Pointer:
-        case TYPE_Reference:
-        case TYPE_Class:
-        case TYPE_State:
-          ec.AddStatement(OPC_PushNull, Loc);
-          ++SelfOffset;
-          break;
-        case TYPE_Vector:
-          ec.EmitPushNumber(0, Loc);
-          ec.EmitPushNumber(0, Loc);
-          ec.EmitPushNumber(0, Loc);
-          SelfOffset += 3;
-          break;
-        default:
-          ParseError(Loc, "Bad optional parameter type");
-          break;
+      if ((Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
+        // get local address
+        if (lcidx[i] < 0) FatalError("VC: Internal compiler error (VInvocation::Emit)");
+        // make sure struct / class field offsets have been calculated
+        if (Func->ParamTypes[i].Type == TYPE_Struct) {
+          Func->ParamTypes[i].Struct->PostLoad();
+        }
+        ec.EmitOneLocalDtor(lcidx[i], Loc, true);
+        VLocalVarDef &loc = ec.GetLocalByIndex(lcidx[i]);
+        ec.EmitLocalAddress(loc.Offset, Loc);
+        //ec.AddStatement(OPC_ZeroByPtrNoDrop, Func->ParamTypes[i].GetSize(), Loc);
+        //ec.EmitLocalAddress(loc.Offset, Loc);
+        ++SelfOffset; // pointer
+      } else {
+        // nonref
+        switch (Func->ParamTypes[i].Type) {
+          case TYPE_Int:
+          case TYPE_Byte:
+          case TYPE_Bool:
+          case TYPE_Float:
+          case TYPE_Name:
+            ec.EmitPushNumber(0, Loc);
+            ++SelfOffset;
+            break;
+          case TYPE_String:
+          case TYPE_Pointer:
+          case TYPE_Reference:
+          case TYPE_Class:
+          case TYPE_State:
+            ec.AddStatement(OPC_PushNull, Loc);
+            ++SelfOffset;
+            break;
+          case TYPE_Vector:
+            ec.EmitPushNumber(0, Loc);
+            ec.EmitPushNumber(0, Loc);
+            ec.EmitPushNumber(0, Loc);
+            SelfOffset += 3;
+            break;
+          case TYPE_Delegate:
+            ec.AddStatement(OPC_PushNull, Loc);
+            ec.AddStatement(OPC_PushNull, Loc);
+            SelfOffset += 2;
+            break;
+          default:
+            // optional?
+            ParseError(Loc, "Bad optional parameter type");
+            break;
+        }
       }
       ec.EmitPushNumber(0, Loc);
       ++SelfOffset;
@@ -1459,7 +1503,11 @@ void VInvocation::CheckParams (VEmitContext &ec, int argc, VExpression **argv) {
     if (i < requiredParams) {
       if (!Args[i]) {
         if (!(Func->ParamFlags[i]&FPARM_Optional)) ParseError(Loc, "Cannot omit non-optional argument");
-        argsize += Func->ParamTypes[i].GetStackSize();
+        if ((Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
+          argsize += 4; // pointer
+        } else {
+          argsize += Func->ParamTypes[i].GetStackSize();
+        }
       } else {
         // check for `ref`/`out` validness
         //if (Args[i]->IsRefArg() && (Func->ParamFlags[i]&FPARM_Ref) == 0) ParseError(Args[i]->Loc, "`ref` argument for non-ref parameter");

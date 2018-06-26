@@ -55,6 +55,7 @@ public:
   vuint8 ParamFlags;
   // internal index; DO NOT CHANGE!
   int ldindex;
+  bool reused;
 
 private:
   int compindex; // for enter/exit compound
@@ -136,7 +137,10 @@ public:
   void AddBuiltin (int b, const TLocation &aloc);
   void EmitPushNumber (int Val, const TLocation &aloc);
   void EmitLocalAddress (int Ofs, const TLocation &aloc);
-  void EmitClearStrings (int Start, int End, const TLocation &aloc);
+  void EmitLocalDtors (int Start, int End, const TLocation &aloc, bool zeroIt=false);
+
+  // returns `true` if dtor was emited
+  void EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt=false);
 
   VArrayElement *SetIndexArray (VArrayElement *el); // returns previous
 };

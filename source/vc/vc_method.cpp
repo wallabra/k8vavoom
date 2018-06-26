@@ -240,8 +240,8 @@ bool VMethod::Define () {
     }
 
     ParamTypes[i] = type;
-    if ((ParamFlags[i]&FPARM_Optional) != 0 && (ParamFlags[i]&FPARM_Out) != 0) ParseError(P.Loc, "Modifiers `optional` and `out` are mutually exclusive");
-    if ((ParamFlags[i]&FPARM_Optional) != 0 && (ParamFlags[i]&FPARM_Ref) != 0) ParseError(P.Loc, "Modifiers `optional` and `ref` are mutually exclusive");
+    //if ((ParamFlags[i]&FPARM_Optional) != 0 && (ParamFlags[i]&FPARM_Out) != 0) ParseError(P.Loc, "Modifiers `optional` and `out` are mutually exclusive");
+    //if ((ParamFlags[i]&FPARM_Optional) != 0 && (ParamFlags[i]&FPARM_Ref) != 0) ParseError(P.Loc, "Modifiers `optional` and `ref` are mutually exclusive");
     if ((ParamFlags[i]&FPARM_Out) != 0 && (ParamFlags[i]&FPARM_Ref) != 0) ParseError(P.Loc, "Modifiers `out` and `ref` are mutually exclusive");
 
     if (ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
@@ -410,7 +410,7 @@ void VMethod::Emit () {
   Statement->Emit(ec);
 
   if (ReturnType.Type == TYPE_Void) {
-    ec.EmitClearStrings(0, ec.GetLocalDefCount(), Loc);
+    ec.EmitLocalDtors(0, ec.GetLocalDefCount(), Loc);
     ec.AddStatement(OPC_Return, Loc);
   }
   NumLocals = ec.localsofs;

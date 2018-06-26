@@ -31,6 +31,23 @@
 
 //==========================================================================
 //
+//  NeedDtor
+//
+//==========================================================================
+static inline bool NeedDtor (const VFieldType &Type) {
+  if (Type.Type == TYPE_String) return true;
+  if (Type.Type == TYPE_DynamicArray) return true;
+  if (Type.Type == TYPE_Array) {
+    if (Type.ArrayInnerType == TYPE_String) return true;
+    if (Type.ArrayInnerType == TYPE_Struct) return Type.Struct->NeedsDestructor();
+  }
+  if (Type.Type == TYPE_Struct) return Type.Struct->NeedsDestructor();
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VField::VField
 //
 //==========================================================================
@@ -95,6 +112,7 @@ void VField::Serialise (VStream &Strm) {
 //
 //==========================================================================
 bool VField::NeedsDestructor () const {
+  /*
   if (Type.Type == TYPE_String) return true;
   if (Type.Type == TYPE_DynamicArray) return true;
   if (Type.Type == TYPE_Array) {
@@ -103,6 +121,8 @@ bool VField::NeedsDestructor () const {
   }
   if (Type.Type == TYPE_Struct) return Type.Struct->NeedsDestructor();
   return false;
+  */
+  return NeedDtor(Type);
 }
 
 
@@ -348,18 +368,28 @@ void VField::CleanField (vuint8 *Data, const VFieldType &Type) {
 //  VField::DestructField
 //
 //==========================================================================
-void VField::DestructField (vuint8 *Data, const VFieldType &Type) {
+void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
   guard(DestructField);
+  //if (zeroIt) fprintf(stderr, "***ZERO<%s>: %d\n", *Type.GetName(), (int)NeedDtor(Type));
+  if (zeroIt && !NeedDtor(Type)) {
+    //fprintf(stderr, "   ZEROED (%d)!\n", Type.GetSize());
+    memset(Data, 0, Type.GetSize());
+    return;
+  }
   VFieldType IntType;
   int InnerSize;
   switch (Type.Type) {
-    case TYPE_String: ((VStr *)Data)->Clean(); break;
-    case TYPE_Struct: Type.Struct->DestructObject(Data); break;
+    case TYPE_String:
+      ((VStr *)Data)->Clean();
+      break;
+    case TYPE_Struct:
+      if (!zeroIt) Type.Struct->DestructObject(Data); else Type.Struct->ZeroObject(Data);
+      break;
     case TYPE_Array:
       IntType = Type;
       IntType.Type = Type.ArrayInnerType;
       InnerSize = IntType.GetSize();
-      for (int i = 0; i < Type.ArrayDim; ++i) DestructField(Data+i*InnerSize, IntType);
+      for (int i = 0; i < Type.ArrayDim; ++i) DestructField(Data+i*InnerSize, IntType, zeroIt);
       break;
     case TYPE_DynamicArray:
       IntType = Type;

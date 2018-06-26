@@ -78,7 +78,8 @@ public:
   void CopyObject (const vuint8 *, vuint8 *);
   void SerialiseObject (VStream &, vuint8 *);
   void CleanObject (vuint8 *);
-  void DestructObject (vuint8 *);
+  void DestructObject (vuint8 *Data);
+  void ZeroObject (vuint8 *Data);
   bool IdenticalObject (const vuint8 *, const vuint8 *);
 #endif
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)

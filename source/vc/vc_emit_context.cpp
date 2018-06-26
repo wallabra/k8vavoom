@@ -166,6 +166,7 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
     ll.Type = atype;
     ll.ParamFlags = 0;
     ll.compindex = compindex;
+    ll.reused = true;
     return ll;
   } else {
     // introduce new local
@@ -180,6 +181,7 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
     loc.ldindex = LocalDefs.length()-1;
     loc.compindex = compindex;
     loc.stackSize = ssz;
+    loc.reused = false;
     localsofs += ssz;
     if (localsofs > 1024) {
       ParseError(aloc, "Local vars > 1k");
@@ -497,47 +499,75 @@ void VEmitContext::EmitLocalAddress (int Ofs, const TLocation &aloc) {
 
 //==========================================================================
 //
-//  VEmitContext::EmitClearStrings
+//  VEmitContext::EmitLocalDtors
 //
 //==========================================================================
-void VEmitContext::EmitClearStrings (int Start, int End, const TLocation &aloc) {
-  for (int i = Start; i < End; ++i) {
-    // don't touch out/ref parameters
-    if (LocalDefs[i].ParamFlags&(FPARM_Out|FPARM_Ref)) continue;
+void VEmitContext::EmitLocalDtors (int Start, int End, const TLocation &aloc, bool zeroIt) {
+  for (int i = Start; i < End; ++i) EmitOneLocalDtor(i, aloc, zeroIt);
+}
 
-    if (LocalDefs[i].Type.Type == TYPE_String) {
-      EmitLocalAddress(LocalDefs[i].Offset, aloc);
-      AddStatement(OPC_ClearPointedStr, aloc);
+
+//==========================================================================
+//
+//  VEmitContext::EmitLocalDtors
+//
+//==========================================================================
+void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt) {
+  // don't touch out/ref parameters
+  if (LocalDefs[locidx].ParamFlags&(FPARM_Out|FPARM_Ref)) return;
+
+  if (LocalDefs[locidx].Type.Type == TYPE_String) {
+    EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
+    AddStatement(OPC_ClearPointedStr, aloc);
+    return;
+  }
+
+  if (LocalDefs[locidx].Type.Type == TYPE_DynamicArray) {
+    EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
+    AddStatement(OPC_PushNumber0, aloc);
+    AddStatement(OPC_DynArraySetNum, LocalDefs[locidx].Type.GetArrayInnerType(), aloc);
+    return;
+  }
+
+  if (LocalDefs[locidx].Type.Type == TYPE_Struct) {
+    if (LocalDefs[locidx].Type.Struct->NeedsDestructor()) {
+      EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
+      AddStatement((!zeroIt ? OPC_ClearPointedStruct : OPC_ZeroPointedStruct), LocalDefs[locidx].Type.Struct, aloc);
+    } else if (zeroIt) {
+      EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
+      AddStatement(OPC_ZeroByPtr, LocalDefs[locidx].Type.GetSize(), aloc);
     }
+    return;
+  }
 
-    if (LocalDefs[i].Type.Type == TYPE_DynamicArray) {
-      EmitLocalAddress(LocalDefs[i].Offset, aloc);
-      AddStatement(OPC_PushNumber0, aloc);
-      AddStatement(OPC_DynArraySetNum, LocalDefs[i].Type.GetArrayInnerType(), aloc);
-    }
-
-    if (LocalDefs[i].Type.Type == TYPE_Struct && LocalDefs[i].Type.Struct->NeedsDestructor()) {
-      EmitLocalAddress(LocalDefs[i].Offset, aloc);
-      AddStatement(OPC_ClearPointedStruct, LocalDefs[i].Type.Struct, aloc);
-    }
-
-    if (LocalDefs[i].Type.Type == TYPE_Array) {
-      if (LocalDefs[i].Type.ArrayInnerType == TYPE_String) {
-        for (int j = 0; j < LocalDefs[i].Type.ArrayDim; ++j) {
-          EmitLocalAddress(LocalDefs[i].Offset, aloc);
+  if (LocalDefs[locidx].Type.Type == TYPE_Array) {
+    if (LocalDefs[locidx].Type.ArrayInnerType == TYPE_String) {
+      for (int j = 0; j < LocalDefs[locidx].Type.ArrayDim; ++j) {
+        EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
+        EmitPushNumber(j, aloc);
+        AddStatement(OPC_ArrayElement, LocalDefs[locidx].Type.GetArrayInnerType(), aloc);
+        AddStatement(OPC_ClearPointedStr, aloc);
+      }
+    } else if (LocalDefs[locidx].Type.ArrayInnerType == TYPE_Struct) {
+      if (LocalDefs[locidx].Type.Struct->NeedsDestructor()) {
+        for (int j = 0; j < LocalDefs[locidx].Type.ArrayDim; ++j) {
+          EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
           EmitPushNumber(j, aloc);
-          AddStatement(OPC_ArrayElement, LocalDefs[i].Type.GetArrayInnerType(), aloc);
-          AddStatement(OPC_ClearPointedStr, aloc);
+          AddStatement(OPC_ArrayElement, LocalDefs[locidx].Type.GetArrayInnerType(), aloc);
+          AddStatement((!zeroIt ? OPC_ClearPointedStruct : OPC_ZeroPointedStruct), LocalDefs[locidx].Type.Struct, aloc);
         }
-      } else if (LocalDefs[i].Type.ArrayInnerType == TYPE_Struct && LocalDefs[i].Type.Struct->NeedsDestructor()) {
-        for (int j = 0; j < LocalDefs[i].Type.ArrayDim; ++j) {
-          EmitLocalAddress(LocalDefs[i].Offset, aloc);
-          EmitPushNumber(j, aloc);
-          AddStatement(OPC_ArrayElement, LocalDefs[i].Type.GetArrayInnerType(), aloc);
-          AddStatement(OPC_ClearPointedStruct, LocalDefs[i].Type.Struct, aloc);
-        }
+      } else {
+        // just zero it
+        EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
+        AddStatement(OPC_ZeroByPtr, LocalDefs[locidx].Type.GetSize(), aloc);
       }
     }
+    return;
+  }
+
+  if (zeroIt) {
+    EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
+    AddStatement(OPC_ZeroByPtr, LocalDefs[locidx].Type.GetSize(), aloc);
   }
 }
 
