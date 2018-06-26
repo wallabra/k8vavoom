@@ -439,7 +439,7 @@ endif(WITH_FLAC)
 #
 #  **** Platform specific library checks ****
 #
-if(NOT WIN32)
+#if(NOT WIN32)
   # ---------------- Other *NIX platforms ----------------
   if(WITH_SDL2)
     find_package(SDL2 REQUIRED)
@@ -468,7 +468,7 @@ if(NOT WIN32)
   else(WITH_OPENGL)
     set(OPENGL_FOUND OFF)
   endif(WITH_OPENGL)
-endif(NOT WIN32)
+#endif(NOT WIN32)
 
 
 if(WITH_GME)
