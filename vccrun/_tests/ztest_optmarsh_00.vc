@@ -1,0 +1,19 @@
+class Main : Object;
+
+
+void test0 (optional int n) {
+  writeln("test0: ", specified_n, " : ", n);
+}
+
+
+void test1 (optional int n) {
+  writeln("test1: ", specified_n, " : ", n);
+  test0(n!optional);
+}
+
+
+void main () {
+  int v = 42;
+  test1();
+  test1(v);
+}
