@@ -64,6 +64,7 @@ const char *VLexer::TokenNames[] = {
   "foreach",
   "game",
   "get",
+  "goto",
   "if",
   "inline",
   "import",
@@ -1054,6 +1055,7 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
     case 'g':
            if (checkStrTk("game")) Token = TK_Game;
       else if (checkStrTk("get")) Token = TK_Get;
+      else if (checkStrTk("goto")) Token = TK_Goto;
       break;
     case 'i':
            if (checkStrTk("if")) Token = TK_If;

@@ -26,6 +26,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VSwitch;
+class VLabelStmt;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -39,12 +40,25 @@ public:
   virtual bool Resolve (VEmitContext &) = 0;
   virtual void DoEmit (VEmitContext &) = 0;
   void Emit (VEmitContext &);
-  virtual bool IsBreak ();
-  virtual bool IsContinue ();
-  virtual bool IsReturn ();
-  virtual bool IsSwitchCase ();
-  virtual bool IsSwitchDefault ();
-  virtual bool IsEndsWithReturn ();
+  virtual bool IsLabel () const;
+  virtual VName GetLabelName () const;
+  virtual bool IsGoto () const;
+  virtual bool IsBreak () const;
+  virtual bool IsContinue () const;
+  virtual bool IsFlowStop () const; // break, continue, goto...
+  virtual bool IsReturn () const;
+  virtual bool IsSwitchCase () const;
+  virtual bool IsSwitchDefault () const;
+  virtual bool IsVarDecl () const;
+  virtual bool IsEndsWithReturn () const;
+
+  virtual VLabelStmt *FindLabel (VName aname);
+  virtual bool IsGotoInAllowed () const;
+  virtual bool IsGotoOutAllowed () const;
+  virtual bool IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const;
+
+  // returns `false` if statement not found (and `path` is not modified)
+  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path);
 
 protected:
   VStatement () {}
@@ -62,7 +76,7 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsEndsWithReturn () override;
+  virtual bool IsEndsWithReturn () const override;
 
 protected:
   VEmptyStatement () {}
@@ -82,7 +96,11 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsEndsWithReturn () override;
+  virtual bool IsEndsWithReturn () const override;
+
+  virtual VLabelStmt *FindLabel (VName aname) override;
+
+  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
 protected:
   VIf () {}
@@ -103,7 +121,11 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsEndsWithReturn () override;
+  virtual bool IsEndsWithReturn () const override;
+
+  virtual VLabelStmt *FindLabel (VName aname) override;
+
+  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
 protected:
   VWhile () {}
@@ -125,7 +147,11 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsEndsWithReturn () override;
+  virtual bool IsEndsWithReturn () const override;
+
+  virtual VLabelStmt *FindLabel (VName aname) override;
+
+  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
 protected:
   VDo () {}
@@ -149,7 +175,12 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsEndsWithReturn () override;
+  virtual bool IsEndsWithReturn () const override;
+
+  virtual VLabelStmt *FindLabel (VName aname) override;
+  virtual bool IsGotoInAllowed () const override;
+
+  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
 protected:
   VFor () {}
@@ -171,7 +202,13 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext&) override;
   virtual void DoEmit (VEmitContext&) override;
-  virtual bool IsEndsWithReturn () override;
+  virtual bool IsEndsWithReturn () const override;
+
+  virtual VLabelStmt *FindLabel (VName aname) override;
+  virtual bool IsGotoInAllowed () const override;
+  virtual bool IsGotoOutAllowed () const override;
+
+  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
 protected:
   VForeach () {}
@@ -201,7 +238,12 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsEndsWithReturn () override;
+  virtual bool IsEndsWithReturn () const override;
+
+  virtual VLabelStmt *FindLabel (VName aname) override;
+  virtual bool IsGotoInAllowed () const override;
+
+  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
 protected:
   VForeachIota () {}
@@ -238,7 +280,12 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsEndsWithReturn () override;
+  virtual bool IsEndsWithReturn () const override;
+
+  virtual VLabelStmt *FindLabel (VName aname) override;
+  virtual bool IsGotoInAllowed () const override;
+
+  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
 protected:
   VForeachArray () {}
@@ -278,7 +325,13 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsEndsWithReturn () override;
+  virtual bool IsEndsWithReturn () const override;
+
+  virtual VLabelStmt *FindLabel (VName aname) override;
+  virtual bool IsGotoInAllowed () const override;
+  virtual bool IsGotoOutAllowed () const override;
+
+  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
 protected:
   VForeachScripted () {}
@@ -308,7 +361,13 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsEndsWithReturn () override;
+  virtual bool IsEndsWithReturn () const override;
+
+  virtual VLabelStmt *FindLabel (VName aname) override;
+
+  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
+
+  virtual bool IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const override;
 
 protected:
   VSwitch () {}
@@ -332,7 +391,7 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext&) override;
   virtual void DoEmit (VEmitContext&) override;
-  virtual bool IsSwitchCase () override;
+  virtual bool IsSwitchCase () const override;
 
 protected:
   VSwitchCase () {}
@@ -352,7 +411,7 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsSwitchDefault () override;
+  virtual bool IsSwitchDefault () const override;
 
 protected:
   VSwitchDefault () {}
@@ -370,7 +429,7 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsBreak () override;
+  virtual bool IsBreak () const override;
 
 protected:
   VBreak () {}
@@ -384,7 +443,7 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsContinue () override;
+  virtual bool IsContinue () const override;
 
 protected:
   VContinue () {}
@@ -402,8 +461,8 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsReturn () override;
-  virtual bool IsEndsWithReturn () override;
+  virtual bool IsReturn () const override;
+  virtual bool IsEndsWithReturn () const override;
 
 protected:
   VReturn () {}
@@ -438,6 +497,8 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
+
+  virtual bool IsVarDecl () const override;
 
 protected:
   VLocalVarStatement () {}
@@ -478,7 +539,13 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsEndsWithReturn () override;
+  virtual bool IsEndsWithReturn () const override;
+
+  virtual VLabelStmt *FindLabel (VName aname) override;
+
+  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
+
+  virtual bool IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const override;
 
 protected:
   VCompound () {}
@@ -486,4 +553,42 @@ protected:
 
 public:
   virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VLabelStmt : public VStatement {
+public:
+  VName Name;
+
+  VLabelStmt (VName aname, const TLocation &ALoc);
+  virtual VStatement *SyntaxCopy () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+
+  virtual bool IsLabel () const override;
+  virtual VName GetLabelName () const override;
+
+protected:
+  VLabelStmt () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VGotoStmt : public VStatement {
+public:
+  VName Name; // destination
+
+  VGotoStmt (VName aname, const TLocation &ALoc);
+  virtual VStatement *SyntaxCopy () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+
+  virtual bool IsGoto () const override;
+  virtual VName GetLabelName () const;
+
+protected:
+  VGotoStmt () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
 };

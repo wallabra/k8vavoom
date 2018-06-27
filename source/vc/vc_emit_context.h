@@ -84,6 +84,15 @@ private:
   TArray<VLocalVarDef> LocalDefs;
   int compindex;
 
+  struct VGotoListItem {
+    VLabel jlbl;
+    VName name;
+    TLocation loc;
+    bool defined;
+  };
+
+  TArray<VGotoListItem> GotoLabels;
+
 public:
   VMethod *CurrentFunc;
   VClass *SelfClass;
@@ -141,6 +150,9 @@ public:
 
   // returns `true` if dtor was emited
   void EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt=false);
+
+  void EmitGotoTo (VName lblname, const TLocation &aloc);
+  void EmitGotoLabel (VName lblname, const TLocation &aloc);
 
   VArrayElement *SetIndexArray (VArrayElement *el); // returns previous
 };

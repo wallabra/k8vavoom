@@ -582,3 +582,61 @@ VArrayElement *VEmitContext::SetIndexArray (VArrayElement *el) {
   IndArray = el;
   return res;
 }
+
+
+  struct VGotoList {
+    VLabel jlbl;
+    VName name;
+  };
+  TArray<VGotoList> GotoLabels;
+
+//==========================================================================
+//
+//  VEmitContext::SetIndexArray
+//
+//==========================================================================
+void VEmitContext::EmitGotoTo (VName lblname, const TLocation &aloc) {
+  if (lblname == NAME_None) FatalError("VC: internal compiler error (VEmitContext::EmitGotoTo)");
+  for (int f = GotoLabels.length()-1; f >= 0; --f) {
+    if (GotoLabels[f].name == lblname) {
+      AddStatement(OPC_Goto, GotoLabels[f].jlbl, aloc);
+      return;
+    }
+  }
+  // add new goto label
+  VGotoListItem it;
+  it.jlbl = DefineLabel();
+  it.name = lblname;
+  it.loc = aloc;
+  it.defined = false;
+  GotoLabels.append(it);
+  AddStatement(OPC_Goto, it.jlbl, aloc);
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::SetIndexArray
+//
+//==========================================================================
+void VEmitContext::EmitGotoLabel (VName lblname, const TLocation &aloc) {
+  if (lblname == NAME_None) FatalError("VC: internal compiler error (VEmitContext::EmitGotoTo)");
+  for (int f = GotoLabels.length()-1; f >= 0; --f) {
+    if (GotoLabels[f].name == lblname) {
+      if (GotoLabels[f].defined) {
+        ParseError(aloc, "Duplicate label `%s` (previous is at %s:%d)", *lblname, *GotoLabels[f].loc.GetSource(), GotoLabels[f].loc.GetLine());
+      } else {
+        MarkLabel(GotoLabels[f].jlbl);
+      }
+      return;
+    }
+  }
+  // add new goto label
+  VGotoListItem it;
+  it.jlbl = DefineLabel();
+  it.name = lblname;
+  it.loc = aloc;
+  it.defined = true;
+  MarkLabel(it.jlbl);
+  GotoLabels.append(it);
+}

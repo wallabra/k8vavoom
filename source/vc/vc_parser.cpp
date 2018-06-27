@@ -1308,6 +1308,16 @@ VStatement *VParser::ParseStatement () {
     case TK_LBrace:
       Lex.NextToken();
       return ParseCompoundStatement();
+    case TK_Goto:
+      Lex.NextToken();
+      if (Lex.Token == TK_Identifier) {
+        VName ln = Lex.Name;
+        Lex.NextToken();
+        Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        return new VGotoStmt(ln, l);
+      }
+      ParseError(Lex.Location, "Identifier expected");
+      return new VGotoStmt(VName("undefined"), l);
     case TK_Bool:
     case TK_Byte:
     case TK_Class:
@@ -1327,6 +1337,14 @@ VStatement *VParser::ParseStatement () {
         return new VLocalVarStatement(Decl);
       }
     default:
+      // label?
+      if (Lex.Token == TK_Identifier && Lex.peekTokenType(1) == TK_Colon) {
+        VName ln = Lex.Name;
+        Lex.NextToken();
+        Lex.NextToken();
+        return new VLabelStmt(ln, l);
+      }
+      // expression
       CheckForLocal = true;
       VExpression *Expr = ParseExpressionPriority14(true);
       if (!Expr) {

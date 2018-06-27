@@ -31,14 +31,32 @@
 VStatement::VStatement (const TLocation &ALoc) : Loc(ALoc) {}
 VStatement::~VStatement () {}
 void VStatement::Emit (VEmitContext &ec) { DoEmit(ec); }
-bool VStatement::IsBreak () { return false; }
-bool VStatement::IsContinue () { return false; }
-bool VStatement::IsReturn () { return false; }
-bool VStatement::IsSwitchCase () { return false; }
-bool VStatement::IsSwitchDefault () { return false; }
-bool VStatement::IsEndsWithReturn () { return false; }
+bool VStatement::IsLabel () const { return false; }
+VName VStatement::GetLabelName () const { return NAME_None; }
+bool VStatement::IsGoto () const { return false; }
+bool VStatement::IsBreak () const { return false; }
+bool VStatement::IsContinue () const { return false; }
+bool VStatement::IsFlowStop () const { return (IsBreak() || IsContinue() || IsGoto()); }
+bool VStatement::IsReturn () const { return false; }
+bool VStatement::IsSwitchCase () const { return false; }
+bool VStatement::IsSwitchDefault () const { return false; }
+bool VStatement::IsVarDecl () const { return false; }
+bool VStatement::IsEndsWithReturn () const { return false; }
 void VStatement::DoSyntaxCopyTo (VStatement *e) { e->Loc = Loc; }
 void VStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {}
+VLabelStmt *VStatement::FindLabel (VName aname) { return (IsLabel() && GetLabelName() == aname ? (VLabelStmt *)this : nullptr); }
+bool VStatement::IsGotoInAllowed () const { return true; }
+bool VStatement::IsGotoOutAllowed () const { return true; }
+bool VStatement::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const { return true; }
+
+bool VStatement::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
+  if (dest == this) {
+    path.append(this);
+    return true;
+  } else {
+    return false;
+  }
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -46,8 +64,9 @@ void VStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {}
 VEmptyStatement::VEmptyStatement (const TLocation &ALoc) : VStatement(ALoc) {}
 VStatement *VEmptyStatement::SyntaxCopy () { auto res = new VEmptyStatement(); DoSyntaxCopyTo(res); return res; }
 bool VEmptyStatement::Resolve (VEmitContext &) { return true; }
-bool VEmptyStatement::IsEndsWithReturn () { return false; }
+bool VEmptyStatement::IsEndsWithReturn () const { return false; }
 void VEmptyStatement::DoEmit (VEmitContext &) {}
+
 
 
 //==========================================================================
@@ -173,10 +192,38 @@ void VIf::DoEmit (VEmitContext &ec) {
 //  VIf::IsEndsWithReturn
 //
 //==========================================================================
-bool VIf::IsEndsWithReturn () {
+bool VIf::IsEndsWithReturn () const {
   if (TrueStatement && FalseStatement) return (TrueStatement->IsEndsWithReturn() && FalseStatement->IsEndsWithReturn());
   return false;
 }
+
+
+//==========================================================================
+//
+//  VIf::FindLabel
+//
+//==========================================================================
+VLabelStmt *VIf::FindLabel (VName aname) {
+  VLabelStmt *lbl = (TrueStatement ? TrueStatement->FindLabel(aname) : nullptr);
+  if (!lbl && FalseStatement) lbl = (FalseStatement->FindLabel(aname));
+  return lbl;
+}
+
+
+//==========================================================================
+//
+//  VIf::BuildPathTo
+//
+//==========================================================================
+bool VIf::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
+  if (dest == this) { path.append(this); return true; }
+  path.append(this);
+  if (TrueStatement && TrueStatement->BuildPathTo(dest, path)) return true;
+  if (FalseStatement && FalseStatement->BuildPathTo(dest, path)) return true;
+  path.removeAt(path.length()-1);
+  return false;
+}
+
 
 
 //==========================================================================
@@ -282,9 +329,34 @@ void VWhile::DoEmit (VEmitContext &ec) {
 //  VWhile::IsEndsWithReturn
 //
 //==========================================================================
-bool VWhile::IsEndsWithReturn () {
+bool VWhile::IsEndsWithReturn () const {
   return (Statement && Statement->IsEndsWithReturn());
 }
+
+
+//==========================================================================
+//
+//  VWhile::FindLabel
+//
+//==========================================================================
+VLabelStmt *VWhile::FindLabel (VName aname) {
+  return (Statement ? Statement->FindLabel(aname) : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VWhile::BuildPathTo
+//
+//==========================================================================
+bool VWhile::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
+  if (dest == this) { path.append(this); return true; }
+  path.append(this);
+  if (Statement && Statement->BuildPathTo(dest, path)) return true;
+  path.removeAt(path.length()-1);
+  return false;
+}
+
 
 
 //==========================================================================
@@ -389,9 +461,34 @@ void VDo::DoEmit (VEmitContext &ec) {
 //  VDo::IsEndsWithReturn
 //
 //==========================================================================
-bool VDo::IsEndsWithReturn () {
+bool VDo::IsEndsWithReturn () const {
   return (Statement && Statement->IsEndsWithReturn());
 }
+
+
+//==========================================================================
+//
+//  VDo::FindLabel
+//
+//==========================================================================
+VLabelStmt *VDo::FindLabel (VName aname) {
+  return (Statement ? Statement->FindLabel(aname) : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDo::BuildPathTo
+//
+//==========================================================================
+bool VDo::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
+  if (dest == this) { path.append(this); return true; }
+  path.append(this);
+  if (Statement && Statement->BuildPathTo(dest, path)) return true;
+  path.removeAt(path.length()-1);
+  return false;
+}
+
 
 
 //==========================================================================
@@ -554,10 +651,45 @@ void VFor::DoEmit (VEmitContext &ec) {
 //  VFor::IsEndsWithReturn
 //
 //==========================================================================
-bool VFor::IsEndsWithReturn () {
+bool VFor::IsEndsWithReturn () const {
   //TODO: endless fors should have at least one return instead
   return (Statement && Statement->IsEndsWithReturn());
 }
+
+
+//==========================================================================
+//
+//  VFor::FindLabel
+//
+//==========================================================================
+VLabelStmt *VFor::FindLabel (VName aname) {
+  return (Statement ? Statement->FindLabel(aname) : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VFor::IsGotoInAllowed
+//
+//==========================================================================
+bool VFor::IsGotoInAllowed () const {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VFor::BuildPathTo
+//
+//==========================================================================
+bool VFor::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
+  if (dest == this) { path.append(this); return true; }
+  path.append(this);
+  if (Statement && Statement->BuildPathTo(dest, path)) return true;
+  path.removeAt(path.length()-1);
+  return false;
+}
+
 
 
 //==========================================================================
@@ -667,9 +799,54 @@ void VForeach::DoEmit (VEmitContext &ec) {
 //  VForeach::IsEndsWithReturn
 //
 //==========================================================================
-bool VForeach::IsEndsWithReturn () {
+bool VForeach::IsEndsWithReturn () const {
   return (Statement && Statement->IsEndsWithReturn());
 }
+
+
+//==========================================================================
+//
+//  VForeach::FindLabel
+//
+//==========================================================================
+VLabelStmt *VForeach::FindLabel (VName aname) {
+  return (Statement ? Statement->FindLabel(aname) : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VForeach::IsGotoInAllowed
+//
+//==========================================================================
+bool VForeach::IsGotoInAllowed () const {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VForeach::IsGotoOutAllowed
+//
+//==========================================================================
+bool VForeach::IsGotoOutAllowed () const {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VForeach::BuildPathTo
+//
+//==========================================================================
+bool VForeach::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
+  if (dest == this) { path.append(this); return true; }
+  path.append(this);
+  if (Statement && Statement->BuildPathTo(dest, path)) return true;
+  path.removeAt(path.length()-1);
+  return false;
+}
+
 
 
 //==========================================================================
@@ -897,10 +1074,45 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
 //  VForeachIota::IsEndsWithReturn
 //
 //==========================================================================
-bool VForeachIota::IsEndsWithReturn () {
+bool VForeachIota::IsEndsWithReturn () const {
   //TODO: endless fors should have at least one return instead
   return (statement && statement->IsEndsWithReturn());
 }
+
+
+//==========================================================================
+//
+//  VForeachIota::FindLabel
+//
+//==========================================================================
+VLabelStmt *VForeachIota::FindLabel (VName aname) {
+  return (statement ? statement->FindLabel(aname) : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::IsGotoInAllowed
+//
+//==========================================================================
+bool VForeachIota::IsGotoInAllowed () const {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::BuildPathTo
+//
+//==========================================================================
+bool VForeachIota::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
+  if (dest == this) { path.append(this); return true; }
+  path.append(this);
+  if (statement && statement->BuildPathTo(dest, path)) return true;
+  path.removeAt(path.length()-1);
+  return false;
+}
+
 
 
 //==========================================================================
@@ -1217,10 +1429,45 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
 //  VForeachArray::IsEndsWithReturn
 //
 //==========================================================================
-bool VForeachArray::IsEndsWithReturn () {
+bool VForeachArray::IsEndsWithReturn () const {
   //TODO: endless fors should have at least one return instead
   return (statement && statement->IsEndsWithReturn());
 }
+
+
+//==========================================================================
+//
+//  VForeachArray::FindLabel
+//
+//==========================================================================
+VLabelStmt *VForeachArray::FindLabel (VName aname) {
+  return (statement ? statement->FindLabel(aname) : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VForeachArray::IsGotoInAllowed
+//
+//==========================================================================
+bool VForeachArray::IsGotoInAllowed () const {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::BuildPathTo
+//
+//==========================================================================
+bool VForeachArray::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
+  if (dest == this) { path.append(this); return true; }
+  path.append(this);
+  if (statement && statement->BuildPathTo(dest, path)) return true;
+  path.removeAt(path.length()-1);
+  return false;
+}
+
 
 
 //==========================================================================
@@ -1536,10 +1783,55 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
 //  VForeachScripted::IsEndsWithReturn
 //
 //==========================================================================
-bool VForeachScripted::IsEndsWithReturn () {
+bool VForeachScripted::IsEndsWithReturn () const {
   //TODO: endless fors should have at least one return instead
   return (statement && statement->IsEndsWithReturn());
 }
+
+
+//==========================================================================
+//
+//  VForeachScripted::FindLabel
+//
+//==========================================================================
+VLabelStmt *VForeachScripted::FindLabel (VName aname) {
+  return (statement ? statement->FindLabel(aname) : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::IsGotoInAllowed
+//
+//==========================================================================
+bool VForeachScripted::IsGotoInAllowed () const {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::IsGotoOutAllowed
+//
+//==========================================================================
+bool VForeachScripted::IsGotoOutAllowed () const {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::BuildPathTo
+//
+//==========================================================================
+bool VForeachScripted::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
+  if (dest == this) { path.append(this); return true; }
+  path.append(this);
+  if (statement && statement->BuildPathTo(dest, path)) return true;
+  path.removeAt(path.length()-1);
+  return false;
+}
+
 
 
 //==========================================================================
@@ -1677,7 +1969,7 @@ void VSwitch::DoEmit (VEmitContext &ec) {
 //  VSwitch::IsEndsWithReturn
 //
 //==========================================================================
-bool VSwitch::IsEndsWithReturn () {
+bool VSwitch::IsEndsWithReturn () const {
   if (Statements.length() == 0) return false;
   bool defautSeen = false;
   bool returnSeen = false;
@@ -1696,7 +1988,7 @@ bool VSwitch::IsEndsWithReturn () {
     }
     if (breakSeen) continue;
     statementSeen = true;
-    if (Statements[n]->IsBreak() || Statements[n]->IsContinue()) {
+    if (Statements[n]->IsFlowStop()) {
       // `break`/`continue`
       if (!returnSeen) return false;
       breakSeen = true;
@@ -1709,6 +2001,59 @@ bool VSwitch::IsEndsWithReturn () {
   // without `default` it may fallthru
   return (returnSeen && defautSeen);
 }
+
+
+//==========================================================================
+//
+//  VSwitch::FindLabel
+//
+//==========================================================================
+VLabelStmt *VSwitch::FindLabel (VName aname) {
+  for (int f = 0; f < Statements.length(); ++f) {
+    VLabelStmt *lbl = (Statements[f] ? Statements[f]->FindLabel(aname) : nullptr);
+    if (lbl) return lbl;
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VSwitch::BuildPathTo
+//
+//==========================================================================
+bool VSwitch::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
+  if (dest == this) { path.append(this); return true; }
+  path.append(this);
+  for (int f = 0; f < Statements.length(); ++f) {
+    if (Statements[f] && Statements[f]->BuildPathTo(dest, path)) return true;
+  }
+  path.removeAt(path.length()-1);
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VSwitch::IsJumpOverAllowed
+//
+//==========================================================================
+bool VSwitch::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const {
+  if (s0 == s1) return true;
+  if (!s0 || !s1) return false;
+  int idx0 = -1, idx1 = -1;
+  for (int f = Statements.length()-1; f >= 0; --f) {
+         if (Statements[f] == s0) idx0 = f;
+    else if (Statements[f] == s1) idx1 = f;
+  }
+  if (idx0 < 0 || idx1 < 0) return false; // the thing that should not be
+  if (idx0 > idx1) { int tmp = idx0; idx0 = idx1; idx1 = tmp; }
+  for (int f = idx0; f <= idx1; ++f) {
+    if (Statements[f] && Statements[f]->IsVarDecl()) return false;
+  }
+  return true;
+}
+
 
 
 //==========================================================================
@@ -1744,6 +2089,7 @@ VStatement *VSwitchCase::SyntaxCopy () {
   DoSyntaxCopyTo(res);
   return res;
 }
+
 
 
 //==========================================================================
@@ -1816,9 +2162,10 @@ void VSwitchCase::DoEmit (VEmitContext &ec) {
 //  VSwitchCase::IsCase
 //
 //==========================================================================
-bool VSwitchCase::IsSwitchCase () {
+bool VSwitchCase::IsSwitchCase () const {
   return true;
 }
+
 
 
 //==========================================================================
@@ -1897,9 +2244,10 @@ void VSwitchDefault::DoEmit (VEmitContext &ec) {
 //  VSwitchDefault::IsSwitchDefault
 //
 //==========================================================================
-bool VSwitchDefault::IsSwitchDefault () {
+bool VSwitchDefault::IsSwitchDefault () const {
   return true;
 }
+
 
 
 //==========================================================================
@@ -1953,9 +2301,10 @@ void VBreak::DoEmit (VEmitContext &ec) {
 //  VBreak::IsBreak
 //
 //==========================================================================
-bool VBreak::IsBreak () {
+bool VBreak::IsBreak () const {
   return true;
 }
+
 
 
 //==========================================================================
@@ -2009,9 +2358,10 @@ void VContinue::DoEmit (VEmitContext &ec) {
 //  VContinue::IsContinue
 //
 //==========================================================================
-bool VContinue::IsContinue () {
+bool VContinue::IsContinue () const {
   return true;
 }
+
 
 
 //==========================================================================
@@ -2117,7 +2467,7 @@ void VReturn::DoEmit (VEmitContext &ec) {
 //  VReturn::IsReturn
 //
 //==========================================================================
-bool VReturn::IsReturn () {
+bool VReturn::IsReturn () const {
   return true;
 }
 
@@ -2127,9 +2477,10 @@ bool VReturn::IsReturn () {
 //  VReturn::IsEndsWithReturn
 //
 //==========================================================================
-bool VReturn::IsEndsWithReturn () {
+bool VReturn::IsEndsWithReturn () const {
   return true;
 }
+
 
 
 //==========================================================================
@@ -2201,6 +2552,7 @@ void VExpressionStatement::DoEmit (VEmitContext &ec) {
 }
 
 
+
 //==========================================================================
 //
 //  VLocalVarStatement::VLocalVarStatement
@@ -2267,6 +2619,17 @@ bool VLocalVarStatement::Resolve (VEmitContext &ec) {
 void VLocalVarStatement::DoEmit (VEmitContext &ec) {
   Decl->EmitInitialisations(ec);
 }
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::IsVarDecl
+//
+//==========================================================================
+bool VLocalVarStatement::IsVarDecl () const {
+  return true;
+}
+
 
 
 //==========================================================================
@@ -2371,6 +2734,7 @@ void VDeleteStatement::DoEmit (VEmitContext &ec) {
 }
 
 
+
 //==========================================================================
 //
 //  VCompound::VCompound
@@ -2460,11 +2824,287 @@ void VCompound::DoEmit (VEmitContext &ec) {
 //  VCompound::IsEndsWithReturn
 //
 //==========================================================================
-bool VCompound::IsEndsWithReturn () {
+bool VCompound::IsEndsWithReturn () const {
   for (int n = 0; n < Statements.length(); ++n) {
     if (!Statements[n]) continue;
     if (Statements[n]->IsEndsWithReturn()) return true;
-    if (Statements[n]->IsBreak() || Statements[n]->IsContinue()) break;
+    if (Statements[n]->IsFlowStop()) break;
   }
   return false;
+}
+
+
+//==========================================================================
+//
+//  VCompound::FindLabel
+//
+//==========================================================================
+VLabelStmt *VCompound::FindLabel (VName aname) {
+  for (int f = 0; f < Statements.length(); ++f) {
+    VLabelStmt *lbl = (Statements[f] ? Statements[f]->FindLabel(aname) : nullptr);
+    if (lbl) return lbl;
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VCompound::BuildPathTo
+//
+//==========================================================================
+bool VCompound::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
+  if (dest == this) { path.append(this); return true; }
+  path.append(this);
+  for (int f = 0; f < Statements.length(); ++f) {
+    if (Statements[f] && Statements[f]->BuildPathTo(dest, path)) return true;
+  }
+  path.removeAt(path.length()-1);
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VCompound::IsJumpOverAllowed
+//
+//==========================================================================
+bool VCompound::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const {
+  if (s0 == s1) return true;
+  if (!s0 || !s1) return false;
+  int idx0 = -1, idx1 = -1;
+  for (int f = Statements.length()-1; f >= 0; --f) {
+         if (Statements[f] == s0) idx0 = f;
+    else if (Statements[f] == s1) idx1 = f;
+  }
+  if (idx0 < 0 || idx1 < 0) return false; // the thing that should not be
+  if (idx0 > idx1) { int tmp = idx0; idx0 = idx1; idx1 = tmp; }
+  for (int f = idx0; f <= idx1; ++f) {
+    if (Statements[f] && Statements[f]->IsVarDecl()) return false;
+  }
+  return true;
+}
+
+
+
+//==========================================================================
+//
+//  VLabelStmt::VLabelStmt
+//
+//==========================================================================
+VLabelStmt::VLabelStmt (VName aname, const TLocation &ALoc)
+  : VStatement(ALoc)
+  , Name(aname)
+{
+}
+
+
+//==========================================================================
+//
+//  VLabelStmt::VLabelStmt
+//
+//==========================================================================
+VStatement *VLabelStmt::SyntaxCopy () {
+  auto res = new VLabelStmt();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VLabelStmt::DoSyntaxCopyTo
+//
+//==========================================================================
+void VLabelStmt::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VLabelStmt *)e;
+  res->Name = Name;
+}
+
+
+//==========================================================================
+//
+//  VLabelStmt::Resolve
+//
+//==========================================================================
+bool VLabelStmt::Resolve (VEmitContext &ec) {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VLabelStmt::DoEmit
+//
+//==========================================================================
+void VLabelStmt::DoEmit (VEmitContext &ec) {
+  ec.EmitGotoLabel(Name, Loc);
+}
+
+
+//==========================================================================
+//
+//  VLabelStmt::IsLabel
+//
+//==========================================================================
+bool VLabelStmt::IsLabel () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VLabelStmt::GetLabelName
+//
+//==========================================================================
+VName VLabelStmt::GetLabelName () const {
+  return Name;
+}
+
+
+
+//==========================================================================
+//
+//  VGotoStmt::VGotoStmt
+//
+//==========================================================================
+VGotoStmt::VGotoStmt (VName aname, const TLocation &ALoc)
+  : VStatement(ALoc)
+  , Name(aname)
+{
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::VGotoStmt
+//
+//==========================================================================
+VStatement *VGotoStmt::SyntaxCopy () {
+  auto res = new VGotoStmt();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::DoSyntaxCopyTo
+//
+//==========================================================================
+void VGotoStmt::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VGotoStmt *)e;
+  res->Name = Name;
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::Resolve
+//
+//==========================================================================
+bool VGotoStmt::Resolve (VEmitContext &ec) {
+  // find label
+  VLabelStmt *lbl = ec.CurrentFunc->Statement->FindLabel(Name);
+  if (!lbl) {
+    ParseError(Loc, "Destination label `%s` not found", *Name);
+    return false;
+  }
+  // build path to self
+  TArray<VStatement *> toself;
+  if (!ec.CurrentFunc->Statement->BuildPathTo(this, toself)) {
+    ParseError(Loc, "Cannot build path to `goto`");
+    return false;
+  }
+  // build path to label
+  TArray<VStatement *> tolabel;
+  if (!ec.CurrentFunc->Statement->BuildPathTo(lbl, tolabel)) {
+    ParseError(Loc, "Cannot build path to label `%s`", *Name);
+    return false;
+  }
+  // find common parent
+  VStatement *cpar = nullptr;
+  int sidx = -1, lidx = -1;
+  for (int f = toself.length()-1; f >= 0; --f) {
+    for (int c = tolabel.length()-1; c >= 0; --c) {
+      if (tolabel[c] == toself[f]) {
+        cpar = tolabel[c];
+        sidx = f;
+        lidx = c;
+        break;
+      }
+    }
+    if (cpar) break;
+  }
+  if (!cpar) {
+    ParseError(Loc, "Cannot find common parent for `goto`, and label `%s`", *Name);
+    return false;
+  }
+  if (sidx == toself.length()-1 || lidx == tolabel.length()-1) FatalError("VC: internal compiler error (VGotoStmt::Resolve)");
+  // now go up to parent and down to label, checking if gotos are allowed
+  for (int f = toself.length()-1; f >= 0; --f) {
+    if (toself[f] == cpar) break;
+    if (!toself[f]->IsGotoOutAllowed()) {
+      ParseError(Loc, "Cannot jump to label `%s`", *Name);
+      return false;
+    }
+  }
+  // down
+  bool doCheck = false;
+  for (int c = 0; c < tolabel.length(); ++c) {
+    if (tolabel[c] == cpar) {
+      doCheck = true;
+      continue;
+    }
+    if (!doCheck) continue;
+    if (!tolabel[c]->IsGotoInAllowed()) {
+      ParseError(Loc, "Cannot jump to label `%s`", *Name);
+      return false;
+    }
+  }
+  // check if we can jump over
+  if (!cpar->IsJumpOverAllowed(toself[sidx+1], tolabel[lidx+1])) {
+    ParseError(Loc, "Cannot jump to label `%s`", *Name);
+    return false;
+  }
+  // ok, it is legal
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::DoEmit
+//
+//==========================================================================
+void VGotoStmt::DoEmit (VEmitContext &ec) {
+  // find label
+  VLabelStmt *lbl = ec.CurrentFunc->Statement->FindLabel(Name);
+  if (!lbl) {
+    ParseError(Loc, "Destination label `%s` not found", *Name);
+    return;
+  }
+  ec.EmitGotoTo(Name, Loc);
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::IsGoto
+//
+//==========================================================================
+bool VGotoStmt::IsGoto () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::GetLabelName
+//
+//==========================================================================
+VName VGotoStmt::GetLabelName () const {
+  return Name;
 }
