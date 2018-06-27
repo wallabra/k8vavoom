@@ -88,7 +88,7 @@ private:
   // returns `true` if drawing will has any effect
   static inline bool setupBlending () {
     if (mBlendMode == BlendNormal) {
-      if ((colorARGB&0xff0000) == 0) {
+      if ((colorARGB&0xff000000u) == 0) {
         // opaque
         glDisable(GL_BLEND);
         return true;
@@ -96,14 +96,14 @@ private:
         // either alpha, or completely transparent
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        return ((colorARGB&0xff0000) != 0xff0000);
+        return ((colorARGB&0xff000000u) != 0xff000000u);
       }
     } else {
       glEnable(GL_BLEND);
            if (mBlendMode == BlendBlend) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
       else if (mBlendMode == BlendFilter) glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
       else if (mBlendMode == BlendInvert) glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
-      return ((colorARGB&0xff0000) != 0xff0000);
+      return ((colorARGB&0xff000000u) != 0xff000000u);
     }
   }
 

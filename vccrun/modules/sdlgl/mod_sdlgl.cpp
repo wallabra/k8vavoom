@@ -1648,6 +1648,7 @@ IMPLEMENT_FUNCTION(VVideo, fillRect) {
   if (!mInited || isFullyTransparent() || w < 1 || h < 1) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
+
   // no need for 0.5f here, or rect will be offset
   glBegin(GL_QUADS);
     glVertex2f(x0+0, y0+0);
