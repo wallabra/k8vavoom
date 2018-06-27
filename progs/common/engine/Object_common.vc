@@ -201,6 +201,9 @@ native static final float rad2deg (float angle) [builtin RadToDeg];
 // absolute value
 native static final int abs (int val) [builtin IntAbs];
 native static final float fabs (float val) [builtin FloatAbs];
+// sign (-1, 0, 1)
+native static final int sign (int val) [builtin IntSign];
+native static final float fsign (float val) [builtin FloatSign];
 // minimal value
 native static final int Min (int v1, int v2) [builtin IntMin];
 native static final int min (int v1, int v2) [builtin IntMin];

@@ -2125,6 +2125,8 @@ func_loop:
         switch (ReadU8(ip+1)) {
           case OPC_Builtin_IntAbs: if (sp[-1].i < 0) sp[-1].i = -sp[-1].i; break;
           case OPC_Builtin_FloatAbs: if (sp[-1].f < 0) sp[-1].f = -sp[-1].f; break;
+          case OPC_Builtin_IntSign: if (sp[-1].i < 0) sp[-1].i = -1; else if (sp[-1].i > 0) sp[-1].i = 1; break;
+          case OPC_Builtin_FloatSign: if (sp[-1].f < 0) sp[-1].f = -1; else if (sp[-1].f > 0) sp[-1].f = 1; else sp[-1].f = 0; break;
           case OPC_Builtin_IntMin: if (sp[-2].i > sp[-1].i) sp[-2].i = sp[-1].i; sp -= 1; break;
           case OPC_Builtin_IntMax: if (sp[-2].i < sp[-1].i) sp[-2].i = sp[-1].i; sp -= 1; break;
           case OPC_Builtin_FloatMin: if (sp[-2].f > sp[-1].f) sp[-2].f = sp[-1].f; sp -= 1; break;
