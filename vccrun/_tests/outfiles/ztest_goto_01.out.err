@@ -1,0 +1,3 @@
+ztest_goto_01.vc:6: Cannot jump to label `lbl`
+FATAL: Confused by previous errors, bailing out
+

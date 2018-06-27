@@ -1,0 +1,10 @@
+// FAIL
+class Main : Object;
+
+void main () {
+  int n = 42;
+  goto lbl;
+  int v = 69;
+lbl:
+  writeln("n=", n, "; v=", v);
+}

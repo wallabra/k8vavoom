@@ -1,0 +1,9 @@
+class Main : Object;
+
+void main () {
+  int n = 42;
+  goto lbl;
+lbl:
+  int v = 69;
+  writeln("n=", n, "; v=", v);
+}

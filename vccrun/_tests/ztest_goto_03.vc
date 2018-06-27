@@ -1,0 +1,11 @@
+// FAIL
+class Main : Object;
+
+void main () {
+  int n = 42;
+  for (int f = 0; f < 32; ++f) {
+   lbl:
+    writeln(f);
+  }
+  goto lbl;
+}
