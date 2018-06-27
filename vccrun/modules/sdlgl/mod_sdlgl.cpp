@@ -1327,6 +1327,7 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, tex->tid);
   glEnable(GL_BLEND); // font is rarely fully opaque, so don't bother checking
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   glBegin(GL_QUADS);
   int sx = x;
