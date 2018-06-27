@@ -579,6 +579,26 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       }
       Type = TYPE_String;
       break;
+    case IsA:
+      if (op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) {
+        // two classes
+        int v = (op1->Type.Class->IsChildOf(op2->Type.Class) ? 1 : 0);
+        VExpression *e = new VIntLiteral(v, Loc);
+        delete this;
+        return e->Resolve(ec);
+      } else if (op1->Type.Type == TYPE_Class || op1->Type.Type == TYPE_Reference) {
+        if (op2->Type.Type != TYPE_Class && op2->Type.Type != TYPE_Reference) {
+          ParseError(Loc, "`isa` expects class or object");
+          delete this;
+          return nullptr;
+        }
+        Type = TYPE_Int;
+      } else {
+        ParseError(Loc, "`isa` expects class or struct");
+        delete this;
+        return nullptr;
+      }
+      break;
   }
 
   // optimise integer constants
@@ -689,6 +709,25 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
 void VBinary::Emit (VEmitContext &ec) {
   if (!op1 || !op2) return;
 
+  if (Oper == IsA) {
+    if (op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) {
+      FatalError("VC: internal compiler error (VBinary::Emit:Class:Class)");
+    } else if (op1->Type.Type == TYPE_Class || op1->Type.Type == TYPE_Reference) {
+      if (op2->Type.Type != TYPE_Class && op2->Type.Type != TYPE_Reference) {
+        FatalError("VC: internal compiler error (VBinary::Emit:ClassObj:?)");
+      }
+      op1->Emit(ec);
+      if (op1->Type.Type == TYPE_Reference) ec.AddStatement(OPC_GetObjClassPtr, Loc); // load class
+      op2->Emit(ec);
+      if (op2->Type.Type == TYPE_Reference) ec.AddStatement(OPC_GetObjClassPtr, Loc); // load class
+      ec.AddStatement(OPC_ClassIsAClass, Loc);
+      return;
+    } else {
+      FatalError("VC: internal compiler error (VBinary::Emit:?:?)");
+    }
+    return;
+  }
+
   op1->Emit(ec);
   op2->Emit(ec);
 
@@ -776,6 +815,8 @@ void VBinary::Emit (VEmitContext &ec) {
       break;
     case StrCat:
       if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrCat, Loc);
+      break;
+    case IsA: FatalError("wtf?!");
   }
 }
 

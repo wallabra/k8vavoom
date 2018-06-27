@@ -114,6 +114,7 @@ public:
     Greater,
     GreaterEquals,
     StrCat,
+    IsA,
   };
 
 public:

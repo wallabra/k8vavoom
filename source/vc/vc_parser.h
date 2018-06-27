@@ -51,6 +51,7 @@ private:
   VExpression *ParseExpressionPriority3 ();
   VExpression *ParseExpressionPriority4 ();
   VExpression *ParseExpressionPriority5 ();
+  VExpression *ParseExpressionPriority5_1 ();
   VExpression *ParseExpressionPriority6 ();
   VExpression *ParseExpressionPriority7 ();
   VExpression *ParseExpressionPriority8 ();

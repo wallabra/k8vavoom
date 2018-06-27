@@ -613,6 +613,31 @@ VExpression *VParser::ParseExpressionPriority5 () {
 
 //==========================================================================
 //
+// VParser::ParseExpressionPriority5_1
+//
+// binary: `isa`
+//
+//==========================================================================
+VExpression *VParser::ParseExpressionPriority5_1 () {
+  guard(VParser::ParseExpressionPriority5_1);
+  VExpression *op1 = ParseExpressionPriority5();
+  if (!op1) return nullptr;
+  for (;;) {
+    TLocation l = Lex.Location;
+    if (Lex.Check(TK_IsA)) {
+      VExpression *op2 = ParseExpressionPriority5();
+      op1 = new VBinary(VBinary::IsA, op1, op2, l);
+    } else {
+      break;
+    }
+  }
+  return op1;
+  unguard;
+}
+
+
+//==========================================================================
+//
 // VParser::ParseExpressionPriority6
 //
 // binary: `<`, `<=`, `>`, `>=`
@@ -620,21 +645,21 @@ VExpression *VParser::ParseExpressionPriority5 () {
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority6 () {
   guard(VParser::ParseExpressionPriority6);
-  VExpression *op1 = ParseExpressionPriority5();
+  VExpression *op1 = ParseExpressionPriority5_1();
   if (!op1) return nullptr;
   for (;;) {
     TLocation l = Lex.Location;
     if (Lex.Check(TK_Less)) {
-      VExpression *op2 = ParseExpressionPriority5();
+      VExpression *op2 = ParseExpressionPriority5_1();
       op1 = new VBinary(VBinary::Less, op1, op2, l);
     } else if (Lex.Check(TK_LessEquals)) {
-      VExpression *op2 = ParseExpressionPriority5();
+      VExpression *op2 = ParseExpressionPriority5_1();
       op1 = new VBinary(VBinary::LessEquals, op1, op2, l);
     } else if (Lex.Check(TK_Greater)) {
-      VExpression *op2 = ParseExpressionPriority5();
+      VExpression *op2 = ParseExpressionPriority5_1();
       op1 = new VBinary(VBinary::Greater, op1, op2, l);
     } else if (Lex.Check(TK_GreaterEquals)) {
-      VExpression *op2 = ParseExpressionPriority5();
+      VExpression *op2 = ParseExpressionPriority5_1();
       op1 = new VBinary(VBinary::GreaterEquals, op1, op2, l);
     } else {
       break;

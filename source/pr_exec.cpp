@@ -2121,6 +2121,26 @@ func_loop:
         ip += 1+4;
         PR_VM_BREAK;
 
+      // [-1]: obj
+      PR_VM_CASE(OPC_GetObjClassPtr)
+        if (sp[-1].p) sp[-1].p = ((VObject *)sp[-1].p)->GetClass();
+        ++ip;
+        PR_VM_BREAK;
+
+      // [-2]: class
+      // [-1]: class
+      PR_VM_CASE(OPC_ClassIsAClass)
+        if (sp[-2].p && sp[-1].p) {
+          //VClass *c = ((VObject *)sp[-2].p)->GetClass();
+          VClass *c = (VClass *)sp[-2].p;
+          sp[-2].i = (c->IsChildOf((VClass *)sp[-1].p) ? 1 : 0);
+        } else {
+          sp[-2].i = 0;
+        }
+        --sp;
+        ++ip;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_Builtin)
         switch (ReadU8(ip+1)) {
           case OPC_Builtin_IntAbs: if (sp[-1].i < 0) sp[-1].i = -sp[-1].i; break;

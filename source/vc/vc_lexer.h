@@ -72,6 +72,7 @@ enum EToken {
   TK_Inline,
   TK_Import,
   TK_Int,
+  TK_IsA,
   TK_Iterator,
   TK_Name,
   TK_Native,
