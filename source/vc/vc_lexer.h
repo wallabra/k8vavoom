@@ -49,6 +49,7 @@ enum EToken {
   TK_Break,
   TK_Byte,
   TK_Case,
+  TK_Cast,
   TK_Class,
   TK_Const,
   TK_Continue,

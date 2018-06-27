@@ -418,6 +418,16 @@ VExpression *VParser::ParseExpressionPriority0 () {
         }
       }
       break;
+    case TK_Cast:
+      {
+        Lex.NextToken();
+        Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
+        VExpression *t = ParseTypeWithPtrs(false); // no delegates
+        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+        VExpression *e = ParseExpressionPriority1();
+        return new VStructPtrCast(e, t, l);
+      }
+      break;
     default:
       break;
   }

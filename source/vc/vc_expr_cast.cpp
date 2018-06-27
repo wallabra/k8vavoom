@@ -627,3 +627,79 @@ void VDynamicClassCast::Emit (VEmitContext &ec) {
   op->Emit(ec);
   ec.AddStatement(OPC_DynamicClassCast, Type.Class, Loc);
 }
+
+
+//==========================================================================
+//
+//  VStructPtrCast::VStructPtrCast
+//
+//==========================================================================
+VStructPtrCast::VStructPtrCast (VExpression *aop, VExpression *adest, const TLocation &aloc)
+  : VCastExpressionBase(aloc)
+  , dest(adest)
+{
+  op = aop;
+}
+
+
+//==========================================================================
+//
+//  VStructPtrCast::~VStructPtrCast
+//
+//==========================================================================
+VStructPtrCast::~VStructPtrCast () {
+  delete dest; dest = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VStructPtrCast::SyntaxCopy
+//
+//==========================================================================
+VExpression *VStructPtrCast::SyntaxCopy () {
+  auto res = new VStructPtrCast();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VStructPtrCast::VStructPtrCast
+//
+//==========================================================================
+void VStructPtrCast::DoSyntaxCopyTo (VExpression *e) {
+  VCastExpressionBase::DoSyntaxCopyTo(e);
+  auto res = (VStructPtrCast *)e;
+  res->dest = (dest ? dest->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VStructPtrCast::DoResolve
+//
+//==========================================================================
+VExpression *VStructPtrCast::DoResolve (VEmitContext &ec) {
+  if (op) op = op->Resolve(ec);
+  if (dest) dest = dest->ResolveAsType(ec);
+  if (!op || !dest) { delete this; return nullptr; }
+  if (op->Type.Type != TYPE_Pointer || dest->Type.Type != TYPE_Pointer) {
+    ParseError(Loc, "Casts are supported only for pointers yet");
+    delete this;
+    return nullptr;
+  }
+  Type = dest->Type;
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VStructPtrCast::Emit
+//
+//==========================================================================
+void VStructPtrCast::Emit (VEmitContext &ec) {
+  if (op) op->Emit(ec);
+}

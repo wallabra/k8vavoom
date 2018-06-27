@@ -46,6 +46,7 @@ const char *VLexer::TokenNames[] = {
   "break",
   "byte",
   "case",
+  "cast",
   "class",
   "const",
   "continue",
@@ -1033,6 +1034,7 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
       else if (checkStrTk("class")) Token = TK_Class;
       else if (checkStrTk("const")) Token = TK_Const;
       else if (checkStrTk("continue")) Token = TK_Continue;
+      else if (checkStrTk("cast")) Token = TK_Cast;
       break;
     case 'd':
            if (checkStrTk("decorate")) Token = TK_Decorate;

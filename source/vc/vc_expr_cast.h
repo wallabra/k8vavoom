@@ -135,8 +135,8 @@ class VCastToString : public VCastExpressionBase {
 public:
   VCastToString (VExpression *AOp);
   virtual VExpression *SyntaxCopy () override;
-  virtual VExpression *DoResolve(VEmitContext&) override;
-  virtual void Emit (VEmitContext&) override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
 
 protected:
   VCastToString () {}
@@ -152,8 +152,8 @@ class VCastToName : public VCastExpressionBase {
 public:
   VCastToName (VExpression *AOp);
   virtual VExpression *SyntaxCopy () override;
-  virtual VExpression *DoResolve(VEmitContext&) override;
-  virtual void Emit (VEmitContext&) override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
 
 protected:
   VCastToName () {}
@@ -196,5 +196,26 @@ public:
 
 protected:
   VDynamicClassCast () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VStructPtrCast
+//
+//==========================================================================
+class VStructPtrCast : public VCastExpressionBase {
+public:
+  VExpression *dest;
+
+  VStructPtrCast (VExpression *aop, VExpression *adest, const TLocation &aloc);
+  virtual ~VStructPtrCast () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VStructPtrCast () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
