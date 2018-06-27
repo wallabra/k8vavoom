@@ -1422,6 +1422,10 @@ IMPLEMENT_FUNCTION(VVideo, requestQuit) {
   }
 }
 
+IMPLEMENT_FUNCTION(VVideo, resetQuitRequest) {
+  VVideo::quitSignal = false;
+}
+
 IMPLEMENT_FUNCTION(VVideo, requestRefresh) {
   if (!VVideo::doRefresh) {
     VVideo::doRefresh = true;

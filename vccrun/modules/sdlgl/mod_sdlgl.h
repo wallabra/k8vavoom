@@ -181,6 +181,7 @@ public:
 
   DECLARE_FUNCTION(requestRefresh)
   DECLARE_FUNCTION(requestQuit)
+  DECLARE_FUNCTION(resetQuitRequest)
 
   DECLARE_FUNCTION(forceSwap)
 

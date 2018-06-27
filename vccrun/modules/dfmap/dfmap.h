@@ -408,6 +408,7 @@ struct /*readonly*/ Trigger /*size 148 bytes binblock 6*/ {
   bool bOnShot; // ACTIVATE_SHOT
   bool bNoMonster; // ACTIVATE_NOMONSTER
   */
+  int dummy;
   //"keys" type ubyte offset 19 bitenum Key default KEY_NONE;
   int keyFlags;
   /*

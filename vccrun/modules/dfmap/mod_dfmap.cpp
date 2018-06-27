@@ -305,6 +305,7 @@ bool VDFMap::loadFrom (VStream &strm) {
           int type = rd.readU8();
           int actFlags = rd.readU8();
           int keyFlags = rd.readU8();
+          rd.pos = (vuint32)f*148+20;
           //fprintf(stderr, " trigger of type %u\n", type);
           switch (type) {
             case TRIGGER_EXIT:

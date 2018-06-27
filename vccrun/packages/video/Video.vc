@@ -42,6 +42,7 @@ native final static void runEventLoop ();
 
 native final static void requestRefresh ();
 native final static void requestQuit ();
+native final static void resetQuitRequest ();
 
 // do forced GLSwap (i.e. show rendered frame)
 native final static void forceSwap ();
