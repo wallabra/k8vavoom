@@ -552,7 +552,7 @@ final void A_Explode()
 {
   int     damage;
   float   distance;
-  byte    damageSelf;
+  ubyte    damageSelf;
 
   damage = 128;
   distance = 128.0;
@@ -590,7 +590,7 @@ final void A_ExplodeParms()
 {
   int     damage;
   float   distance;
-  byte    damageSelf;
+  ubyte    damageSelf;
 
   damage = ExplosionDamage;
   distance = itof(ExplosionRadius);

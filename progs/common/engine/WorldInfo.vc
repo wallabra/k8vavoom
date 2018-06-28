@@ -29,7 +29,7 @@ class WorldInfo : GameObject
 
 native private readonly void *Acs;
 
-readonly byte         GameSkill;
+readonly ubyte         GameSkill;
 readonly float          SkillAmmoFactor;
 readonly float          SkillDoubleAmmoFactor;
 readonly float          SkillDamageFactor;

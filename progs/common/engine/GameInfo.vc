@@ -49,11 +49,11 @@ enum
 name        AcsHelper;
 name        GenericConScript;
 
-readonly byte   NetMode;
-readonly byte   deathmatch;
-byte        respawn;
-byte        nomonsters;
-byte        fastparm;
+readonly ubyte   NetMode;
+readonly ubyte   deathmatch;
+ubyte        respawn;
+ubyte        nomonsters;
+ubyte        fastparm;
 
 readonly int *validcount;
 readonly int    skyflatnum;

@@ -71,7 +71,7 @@ float     PSpriteSY;
 //  For displaying weapon with player model.
 int       PlayerModelVersion;
 
-byte      FireMode;
+ubyte      FireMode;
 
 float     BotCombatDist;
 
@@ -536,7 +536,7 @@ state GetReloadState()
 //
 //==========================================================================
 
-bool CheckAmmo(byte Mode, bool AutoSwitch, optional bool RequireAmmo)
+bool CheckAmmo(ubyte Mode, bool AutoSwitch, optional bool RequireAmmo)
 {
   //  Search for infinite ammo power. Any subclass will do.
   Inventory InfiniteAmmo = EntityEx(Owner).Inventory;
@@ -611,7 +611,7 @@ bool CheckAmmo(byte Mode, bool AutoSwitch, optional bool RequireAmmo)
 //
 //==========================================================================
 
-final bool DepleteAmmo(byte Mode, optional bool CheckEnough,
+final bool DepleteAmmo(ubyte Mode, optional bool CheckEnough,
   optional int DehackedUse)
 {
   //  Search for infinite ammo power. Any subclass will do.

@@ -32,8 +32,8 @@ int       PlayerNum;
 string      PlayerName;
 string      UserInfo;
 
-byte      TranslStart;
-byte      TranslEnd;
+ubyte      TranslStart;
+ubyte      TranslEnd;
 int       Colour;
 
 int       Frags;

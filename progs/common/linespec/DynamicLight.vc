@@ -35,7 +35,7 @@ enum
   DLTYPE_Sector
 };
 
-byte      LightType;
+ubyte     LightType;
 float     LightTime;
 float     Intensity;
 

@@ -324,7 +324,7 @@ final bool ActivateLine(line_t *Line, EntityEx A, int Side,
   if ((lineActivation & (SPAC_Use | SPAC_Impact | SPAC_UseThrough)) &&
     buttonSuccess)
   {
-    byte Quest;
+    ubyte Quest;
     ChangeSwitchTexture(Line->sidenum[0], repeat,
       Line->special == LNSPEC_ExitNormal ||
       Line->special == LNSPEC_ExitSecret ||
@@ -6049,8 +6049,8 @@ final bool EV_GlassBreak(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   line_t *Line, EntityEx A)
 {
   bool    switched;
-  byte    Quest1;
-  byte    Quest2;
+  ubyte    Quest1;
+  ubyte    Quest2;
   float   x;
   float   y;
   int     i;

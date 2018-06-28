@@ -126,7 +126,7 @@ enum
 struct LightEffectDef
 {
   name        Name;
-  byte        Type;
+  ubyte        Type;
   int         Colour;
   float       Radius;
   float       Radius2;
@@ -140,8 +140,8 @@ struct LightEffectDef
 struct ParticleEffectDef
 {
   name        Name;
-  byte        Type;
-  byte        Type2;
+  ubyte        Type;
+  ubyte        Type2;
   int         Colour;
   TVec        Offset;
   int         Count;
@@ -217,13 +217,13 @@ readonly state  DispState;
 float     StateTime;      // state tic counter
 
 //More drawing info.
-byte      SpriteType;       //  How to draw sprite
+ubyte      SpriteType;       //  How to draw sprite
 name      FixedSpriteName;
 string      FixedModelName;
-byte      ModelVersion;
+ubyte      ModelVersion;
 int             NumTouchingLights;
 
-byte      RenderStyle;
+ubyte      RenderStyle;
 float     Alpha;
 int       Translation;
 
@@ -323,8 +323,8 @@ float     MaxDropoffHeight;
 float     Gravity;
 
 //  Water
-byte      WaterLevel;
-byte      WaterType;
+ubyte      WaterLevel;
+ubyte      WaterType;
 
 //   For player sounds.
 name      SoundClass;

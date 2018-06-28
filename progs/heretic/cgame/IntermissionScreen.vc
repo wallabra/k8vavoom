@@ -283,7 +283,7 @@ void IM_LoadPics()
   }
   if (BgPic)
   {
-    byte BgState;
+    ubyte BgState;
     switch (interstate)
     {
     case IMS_Stats:

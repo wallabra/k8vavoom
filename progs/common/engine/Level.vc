@@ -49,7 +49,7 @@ struct StateCall
 {
   Entity    Item;
   state   State;
-  byte    Result;
+  ubyte    Result;
 };
 
 native readonly name MapName;

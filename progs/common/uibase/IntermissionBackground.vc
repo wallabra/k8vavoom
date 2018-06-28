@@ -48,7 +48,7 @@ enum {
 
 
 struct AnimInfo {
-  byte Cond;
+  ubyte Cond;
 
   name MapName1;
   name MapName2;
@@ -94,7 +94,7 @@ array!SpotInfo Spots;
 // used for timing of background animation
 float btime;
 
-byte State;
+ubyte State;
 
 
 //==========================================================================
@@ -102,7 +102,7 @@ byte State;
 //  Init
 //
 //==========================================================================
-final void Init (name Name, byte AState, ClientGameShared AClGame) {
+final void Init (name Name, ubyte AState, ClientGameShared AClGame) {
   Clean();
 
   State = AState;
@@ -404,7 +404,7 @@ final void DrawPointer (int n) {
 //  CheckCond
 //
 //==========================================================================
-final bool CheckCond (byte Cond, name MapName1, name MapName2) {
+final bool CheckCond (ubyte Cond, name MapName1, name MapName2) {
   switch (Cond) {
     case COND_IfLeaving: return (State < STATE_NextLoc && MapName1 == ClGame.im.LeaveMap);
     case COND_IfNotLeaving: return (State >= STATE_NextLoc || MapName1 != ClGame.im.LeaveMap);

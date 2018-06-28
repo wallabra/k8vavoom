@@ -274,8 +274,8 @@ native static final bool AreStateSpritesPresent (state State);
 // ////////////////////////////////////////////////////////////////////////// //
 // misc
 
-native static final int RGB (byte r, byte g, byte b);
-native static final int RGBA (byte r, byte g, byte b, byte a);
+native static final int RGB (ubyte r, ubyte g, ubyte b);
+native static final int RGBA (ubyte r, ubyte g, ubyte b, ubyte a);
 // reads key value from info string (userinfo or serverinfo)
 native static final string Info_ValueForKey (string info, string key);
 // checks if WAD lump is present, used to check for shareware/extended WADs
@@ -286,7 +286,7 @@ native static final GameObject::LockDef *GetLockDef (int Lock);
 native static final int ParseColour (string Name);
 native static final string TextColourString (int Colour);
 native static final bool StartTitleMap ();
-native static final void LoadBinaryLump (name LumpName, out array!byte Array);
+native static final void LoadBinaryLump (name LumpName, out array!ubyte Array);
 native static final bool IsMapPresent (name MapName);
 
 native static final int P_GetMapIndexByLevelNum (int map);
@@ -327,9 +327,9 @@ struct mapInfo_t {
   name TitlePatch;
   int ParTime;
   int SuckTime;
-  byte HorizWallShade;
-  byte VertWallShade;
-  byte Infighting;
+  ubyte HorizWallShade;
+  ubyte VertWallShade;
+  ubyte Infighting;
   array!VMapSpecialAction SpecialActions;
   name RedirectType;
   name RedirectMap;

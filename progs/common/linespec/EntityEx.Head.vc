@@ -345,8 +345,8 @@ float     MissileChance;
 float     MissileMinRange;
 float     MissileMaxRange;
 
-byte      BounceType;
-byte      BounceCount;
+ubyte      BounceType;
+ubyte      BounceCount;
 float     BounceFactor;
 float     WallBounceFactor;
 
@@ -373,7 +373,7 @@ Entity      LastLookActor;
 //  TID of things to hate, 0 if none.
 int       TIDToHate;
 
-byte      FriendPlayer;
+ubyte      FriendPlayer;
 
 int       MissileDamage;  // For missiles
 int       MissilePoisonDamage;

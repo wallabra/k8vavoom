@@ -40,7 +40,7 @@ native readonly WorldInfo World;
 
 string LevelName;
 int LevelNum;
-byte Cluster;
+ubyte Cluster;
 
 name NextMap;
 name SecretMap;
@@ -59,7 +59,7 @@ int Fade;
 int OutsideFog;
 
 name SongLump;
-byte CDTrack;
+ubyte CDTrack;
 
 bool bDoubleSky; // parallax sky: sky2 behind sky1
 bool bLightning; // Use of lightning on the level flashes from sky1 to sky2
@@ -186,7 +186,7 @@ native final void Completed (int Map, int Position, int SaveAngle);
 //
 //  Special thinker utilites
 //
-native final bool ChangeSwitchTexture (int SideNum, int useAgain, name DefaultSound, out byte Quest);
+native final bool ChangeSwitchTexture (int SideNum, int useAgain, name DefaultSound, out ubyte Quest);
 native final Entity FindMobjFromTID (int tid, Entity Prev);
 native final void AutoSave ();
 
