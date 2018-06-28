@@ -497,7 +497,7 @@ bool VStruct::IdenticalObject (const vuint8 *Val1, const vuint8 *Val2) {
 #endif //!defined(IN_VCC)
 
 
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VStruct::NetSerialiseObject

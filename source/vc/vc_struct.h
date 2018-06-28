@@ -82,7 +82,7 @@ public:
   void ZeroObject (vuint8 *Data);
   bool IdenticalObject (const vuint8 *, const vuint8 *);
 #endif
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
   bool NetSerialiseObject (VStream &, VNetObjectsMap *, vuint8 *);
 #endif
 

@@ -78,7 +78,7 @@ public:
   static void DestructField (vuint8 *, const VFieldType &, bool zeroIt=false);
   static bool IdenticalValue (const vuint8 *, const vuint8 *, const VFieldType &);
 #endif
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
   static bool NetSerialiseValue (VStream &, VNetObjectsMap *, vuint8 *, const VFieldType &);
 #endif
 

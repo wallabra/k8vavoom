@@ -172,3 +172,7 @@ class TPlane {
     return (dot < -0.1 ? 1 : dot > 0.1 ? 0 : 2);
   }
 };
+
+
+static __attribute__((unused)) inline float ByteToAngle (vuint8 angle) { return (float)angle*360.0/256.0; }
+static __attribute__((unused)) inline vuint8 AngleToByte (float angle) { return (vuint8)(angle*256.0/360.0); }

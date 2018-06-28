@@ -457,7 +457,7 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
 #endif
 
 
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VField::NetSerialiseValue
