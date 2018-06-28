@@ -2010,7 +2010,7 @@ bool VSwitch::Resolve (VEmitContext &ec) {
   for (int i = 0; i < Statements.length(); ++i) {
     VStatement *st = Statements[i];
     if (!st->IsSwitchCase() && !st->IsSwitchDefault()) {
-      if (!st->Resolve(ec)) { Ret = false; break; }
+      if (!st->Resolve(ec)) Ret = false;
     }
   }
 
