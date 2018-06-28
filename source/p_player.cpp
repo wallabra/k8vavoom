@@ -124,72 +124,7 @@ bool VBasePlayer::ExecuteNetMethod(VMethod *Func)
 
   //  Clean up parameters
   guard(VBasePlayer::ExecuteNetMethod::CleanUp);
-  VStack *Param = pr_stackPtr - Func->ParamsSize + 1; //  Skip self
-  for (int i = 0; i < Func->NumParams; i++)
-  {
-    switch (Func->ParamTypes[i].Type)
-    {
-    case TYPE_Int:
-    case TYPE_Byte:
-    case TYPE_Bool:
-    case TYPE_Float:
-    case TYPE_Name:
-    case TYPE_Pointer:
-    case TYPE_Reference:
-    case TYPE_Class:
-    case TYPE_State:
-      Param++;
-      break;
-    case TYPE_String:
-      ((VStr*)&Param->p)->Clean();
-      Param++;
-      break;
-    case TYPE_Vector:
-      Param += 3;
-      break;
-    default:
-      Sys_Error("Bad method argument type %d", Func->ParamTypes[i].Type);
-    }
-    if (Func->ParamFlags[i] & FPARM_Optional)
-    {
-      Param++;
-    }
-  }
-  pr_stackPtr -= Func->ParamsSize;
-  unguard;
-
-  //  Push null return value
-  guard(VBasePlayer::ExecuteNetMethod::RetVal);
-  switch (Func->ReturnType.Type)
-  {
-  case TYPE_Void:
-    break;
-  case TYPE_Int:
-  case TYPE_Byte:
-  case TYPE_Bool:
-  case TYPE_Name:
-    PR_Push(0);
-    break;
-  case TYPE_Float:
-    PR_Pushf(0);
-    break;
-  case TYPE_String:
-    PR_PushStr(VStr());
-    break;
-  case TYPE_Pointer:
-  case TYPE_Reference:
-  case TYPE_Class:
-  case TYPE_State:
-    PR_PushPtr(nullptr);
-    break;
-  case TYPE_Vector:
-    PR_Pushf(0);
-    PR_Pushf(0);
-    PR_Pushf(0);
-    break;
-  default:
-    Sys_Error("Bad return value type");
-  }
+  Func->CleanupParams();
   unguard;
 
   //  It's been handled here.
