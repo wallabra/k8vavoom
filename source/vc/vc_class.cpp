@@ -363,6 +363,7 @@ void VClass::Serialise (VStream &Strm) {
 #if !defined(IN_VCC)
   VClass *PrevParent = ParentClass;
 #endif
+  // other data
   Strm << ParentClass
     << Fields
     << States
@@ -379,7 +380,7 @@ void VClass::Serialise (VStream &Strm) {
 #endif
   // aliases
   vint32 acount = (vint32)AliasList.count();
-  Strm << STRM_INDEX(acount);
+  Strm << acount;
   if (Strm.IsLoading()) {
     AliasFrameNum = 0;
     AliasList.clear();
@@ -409,7 +410,7 @@ void VClass::Serialise (VStream &Strm) {
       KnownEnums.put(ename, true);
     }
   } else {
-    for (auto it = AliasList.first(); it; ++it) {
+    for (auto it = KnownEnums.first(); it; ++it) {
       VName ename = it.getKey();
       Strm << ename;
     }
