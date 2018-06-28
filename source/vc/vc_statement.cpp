@@ -2303,13 +2303,10 @@ void VSwitchCase::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 bool VSwitchCase::Resolve (VEmitContext &ec) {
-  if (Expr) Expr = Expr->Resolve(ec);
+  if (Expr) Expr = Expr->ResolveToIntLiteralEx(ec);
   if (!Expr) return false;
 
-  if (!Expr->IsIntConst()) {
-    ParseError(Expr->Loc, "Integer constant expected");
-    return false;
-  }
+  if (!Expr->IsIntConst()) FatalError("VC: internal compiler error (VSwitchCase::Resolve)");
 
   Value = Expr->GetIntConst();
   for (int i = 0; i < Switch->CaseInfo.length(); ++i) {
@@ -3312,12 +3309,9 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
       // find the following case (it is not a bug to not have one)
       if (CaseValue) {
         // case is guaranteed to be parsed, do value search
-        CaseValue = CaseValue->Resolve(ec);
+        CaseValue = CaseValue->ResolveToIntLiteralEx(ec);
         if (!CaseValue) return false; // oops
-        if (!CaseValue->IsIntConst()) {
-          ParseError(CaseValue->Loc, "Integer constant expected");
-          return false;
-        }
+        if (!CaseValue->IsIntConst()) FatalError("VC: internal compiler error (VGotoStmt::Resolve)");
         int val = CaseValue->GetIntConst();
         for (int f = 0; f < Switch->Statements.length(); ++f) {
           if (Switch->Statements[f]->IsSwitchCase()) {

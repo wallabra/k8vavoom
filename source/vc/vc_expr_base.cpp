@@ -283,6 +283,53 @@ void VExpression::EmitPushPointedCode (VFieldType type, VEmitContext &ec) {
 }
 
 
+//==========================================================================
+//
+//  VExpression::ResolveToIntLiteralEx
+//
+//  this resolves one-char strings and names to int literals too
+//
+//==========================================================================
+VExpression *VExpression::ResolveToIntLiteralEx (VEmitContext &ec, bool allowFloatTrunc) {
+  VExpression *res = Resolve(ec);
+  if (!res) return nullptr; // we are dead anyway
+
+  // easy case
+  if (res->IsIntConst()) return res;
+
+  // truncate floats?
+  if (allowFloatTrunc && res->IsFloatConst()) {
+    VExpression *e = new VIntLiteral((int)res->GetFloatConst(), res->Loc);
+    delete res;
+    return e->Resolve(ec);
+  }
+
+  // one-char string?
+  if (res->IsStrConst()) {
+    VStr s = res->GetStrConst(ec.Package);
+    if (s.length() == 1) {
+      VExpression *e = new VIntLiteral((vuint8)s[0], res->Loc);
+      delete res;
+      return e->Resolve(ec);
+    }
+  }
+
+  // one-char name?
+  if (res->IsNameConst()) {
+    VStr s(*res->GetNameConst());
+    if (s.length() == 1) {
+      VExpression *e = new VIntLiteral((vuint8)s[0], res->Loc);
+      delete res;
+      return e->Resolve(ec);
+    }
+  }
+
+  ParseError(res->Loc, "Integer constant expected");
+  delete res;
+  return nullptr;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // IsXXX
 bool VExpression::IsValidTypeExpression () const { return false; }

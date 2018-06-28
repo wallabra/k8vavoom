@@ -104,6 +104,9 @@ public:
   virtual bool IsSliceType () const;
   virtual bool IsDelegateType () const;
 
+  // this resolves one-char strings and names to int literals too
+  VExpression *ResolveToIntLiteralEx (VEmitContext &ec, bool allowFloatTrunc=false);
+
   static void *operator new (size_t size);
   static void *operator new[] (size_t size);
   static void operator delete (void *p);
