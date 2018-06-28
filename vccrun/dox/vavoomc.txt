@@ -469,7 +469,7 @@ Switch without breaks
 
 If you want to omit `break` in switch case, you should use `goto case;` statement
 instead. VC compiler checks if you have a proper case termination statement, and
-will abort with error if you don't.
+will abort with error if you haven't.
 
 You can use `goto case;` anywhere inside a branch. There is also support for both
 `goto case <value>;` and `goto default`.
