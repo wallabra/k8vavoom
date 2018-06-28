@@ -363,7 +363,8 @@ VExpression *VParser::ParseExpressionPriority0 () {
           ClassName = Lex.Name;
           Lex.NextToken();
         } else {
-          // class<type>
+          // class<type> (deprecated)
+          if (Lex.Token == TK_Less) ParseError(Lex.Location, "class<name> syntax is deprecated");
           Lex.Expect(TK_Less);
           if (Lex.Token != TK_Identifier) { ParseError(Lex.Location, "Identifier expected"); break; }
           ClassName = Lex.Name;
@@ -1480,7 +1481,8 @@ VExpression *VParser::ParsePrimitiveType () {
             }
           }
         } else if (Lex.Check(TK_Less)) {
-          // class<type>
+          // class<type>; deprecated
+          ParseError(Lex.Location, "class<name> syntax is deprecated");
           if (Lex.Token != TK_Identifier) {
             ParseError(Lex.Location, "Invalid identifier, class name expected");
           } else {
@@ -1524,7 +1526,8 @@ VExpression *VParser::ParsePrimitiveType () {
             }
           }
         } else {
-          // array<type>
+          // array<type>; deprecated
+          if (Lex.Token == TK_Less) ParseError(Lex.Location, "array<type> syntax is deprecated");
           Lex.Expect(TK_Less);
           Inner = ParseTypeWithPtrs(true);
           if (!Inner) ParseError(Lex.Location, "Inner type declaration expected");
