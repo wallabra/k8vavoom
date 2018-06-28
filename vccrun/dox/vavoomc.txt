@@ -1,8 +1,10 @@
 Brief introduction to VaVoom C for C (and C++) people
 =====================================================
 
-Initially, VC was designed to mimic Unreal Script 1, so many Unreal tutorials
-will apply (sans class hierarchy, of course).
+Initially, VC was designed to look like Unreal Script, and in the same time to
+be familiar for C and C++ developers. So some Unreal tutorials will apply
+(sans class hierarchy, of course), especially some tutorials on things like
+default properties or replication (to some extent).
 
 But you are here not to read "fuck off, your tutorial is in another castle",
 aren't you? Ok, ok, I'll describe some things you have to know. Most of the
