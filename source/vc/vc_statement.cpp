@@ -35,6 +35,7 @@ bool VStatement::IsLabel () const { return false; }
 VName VStatement::GetLabelName () const { return NAME_None; }
 bool VStatement::IsGoto () const { return false; }
 bool VStatement::IsGotoCase () const { return false; }
+bool VStatement::HasGotoCaseExpr () const { return false; }
 bool VStatement::IsGotoDefault () const { return false; }
 bool VStatement::IsBreak () const { return false; }
 bool VStatement::IsContinue () const { return false; }
@@ -2011,6 +2012,47 @@ bool VSwitch::Resolve (VEmitContext &ec) {
     VStatement *st = Statements[i];
     if (!st->IsSwitchCase() && !st->IsSwitchDefault()) {
       if (!st->Resolve(ec)) Ret = false;
+      // dummy last `break`, it is not necessary
+      if (Ret) {
+        if (st->IsBreak()) {
+          // skip branches without statements
+          int n = i+1;
+          while (n < Statements.length() && (Statements[n]->IsSwitchCase() || Statements[n]->IsSwitchDefault())) ++n;
+          if (n >= Statements.length()) {
+            //ParseWarning(st->Loc, "`break;` dummied out");
+            ((VBreak *)st)->skipCodegen = true;
+          }
+        } else if (st->IsGotoCase() && !st->HasGotoCaseExpr()) {
+          // jump to next case: dummy it out if next case immediately follows
+          if (i+1 >= Statements.length() || Statements[i+1]->IsSwitchCase()) {
+            //ParseWarning(st->Loc, "`goto case;` dummied out");
+            ((VGotoStmt *)st)->skipCodegen = true;
+          }
+        } else if (st->IsGotoDefault()) {
+          // jump to next case: dummy it out if default case immediately follows
+          if ((i+1 >= Statements.length() && !HaveDefault) || Statements[i+1]->IsSwitchDefault()) {
+            //ParseWarning(st->Loc, "`goto default;` dummied out");
+            ((VGotoStmt *)st)->skipCodegen = true;
+          }
+        } else if (st->IsGotoCase() && st->HasGotoCaseExpr()) {
+          // jump to next case: dummy it out if next case immediately follows
+          VGotoStmt *gs = (VGotoStmt *)st;
+          if (gs->CaseValue && gs->CaseValue->IsIntConst()) {
+            int v = gs->CaseValue->GetIntConst();
+            int n = i+1;
+            while (n < Statements.length()) {
+              if (!Statements[n]->IsSwitchCase()) { n = Statements.length(); break; }
+              VSwitchCase *sc = (VSwitchCase *)Statements[n];
+              if (sc->Value == v) break;
+              ++n;
+            }
+            if (n < Statements.length()) {
+              //ParseWarning(st->Loc, "`goto case %d;` dummied out", v);
+              gs->skipCodegen = true;
+            }
+          }
+        }
+      }
     }
   }
 
@@ -2433,7 +2475,9 @@ bool VSwitchDefault::IsSwitchDefault () const {
 //  VBreak::VBreak
 //
 //==========================================================================
-VBreak::VBreak (const TLocation &ALoc) : VStatement(ALoc)
+VBreak::VBreak (const TLocation &ALoc)
+  : VStatement(ALoc)
+  , skipCodegen(false)
 {
 }
 
@@ -2466,6 +2510,7 @@ bool VBreak::Resolve (VEmitContext &) {
 //
 //==========================================================================
 void VBreak::DoEmit (VEmitContext &ec) {
+  if (skipCodegen) return;
   if (!ec.LoopEnd.IsDefined()) {
     ParseError(Loc, "Misplaced `break` statement");
     return;
@@ -3161,6 +3206,7 @@ VGotoStmt::VGotoStmt (VName aname, const TLocation &ALoc)
   , CaseValue(nullptr)
   , GotoType(Normal)
   , SwitchStNum(-1)
+  , skipCodegen(false)
 {
 }
 
@@ -3179,6 +3225,7 @@ VGotoStmt::VGotoStmt (VSwitch *ASwitch, VExpression *ACaseValue, int ASwitchStNu
   , CaseValue(ACaseValue)
   , GotoType(toDefault ? Default : Case)
   , SwitchStNum(ASwitchStNum)
+  , skipCodegen(false)
 {
 }
 
@@ -3295,18 +3342,19 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
   if (Switch) {
     // goto case/default
     if (GotoType == Normal) FatalError("VC: internal compiler error (VGotoStmt::Resolve) (0)");
-    // find case or default (it is not a bug to not have one)
+    // find case or default
     VStatement *st = nullptr;
     if (GotoType == Default) {
-      // find default
+      // find the default
       for (int f = Switch->Statements.length()-1; f >= 0; --f) {
         if (Switch->Statements[f]->IsSwitchDefault()) {
           st = Switch->Statements[f];
           break;
         }
       }
+      if (!st) { ParseError(Loc, "`goto default;` whithout `default`"); return false; }
     } else {
-      // find the following case (it is not a bug to not have one)
+      // find the case
       if (CaseValue) {
         // case is guaranteed to be parsed, do value search
         CaseValue = CaseValue->ResolveToIntLiteralEx(ec);
@@ -3322,10 +3370,7 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
             }
           }
         }
-        if (!st) {
-          ParseError(Loc, "case `%d` not found", val);
-          return false;
-        }
+        if (!st) { ParseError(Loc, "case `%d` not found", val); return false; }
       } else {
         // `goto case` without args: find next one
         for (int f = SwitchStNum; f < Switch->Statements.length(); ++f) {
@@ -3334,6 +3379,7 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
             break;
           }
         }
+        if (!st) { ParseError(Loc, "case for `goto case;` not found"); return false; }
       }
       if (st) {
         VSwitchCase *cc = (VSwitchCase *)st;
@@ -3364,6 +3410,7 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VGotoStmt::DoEmit (VEmitContext &ec) {
+  if (skipCodegen) return; // nothing to do here
   if (GotoType == Normal) {
     VLabelStmt *lbl = gotolbl; //ec.CurrentFunc->Statement->FindLabel(Name);
     if (!lbl) {
@@ -3372,12 +3419,20 @@ void VGotoStmt::DoEmit (VEmitContext &ec) {
     }
     ec.EmitGotoTo(Name, Loc);
   } else if (GotoType == Case) {
-    if (!casedef) return; // nothing to do
+    if (!casedef) {
+      if (!ec.LoopEnd.IsDefined()) ParseError(Loc, "Misplaced `goto case` statement");
+      ec.AddStatement(OPC_Goto, ec.LoopEnd, Loc);
+      return;
+    }
     if (!casedef->IsSwitchCase()) FatalError("VC: internal compiler error (VGotoStmt::DoEmit) (0)");
     VSwitchCase *cc = (VSwitchCase *)casedef;
     ec.AddStatement(OPC_Goto, cc->gotoLbl, Loc);
   } else if (GotoType == Default) {
-    if (!casedef) return; // nothing to do
+    if (!casedef) {
+      if (!ec.LoopEnd.IsDefined()) ParseError(Loc, "Misplaced `goto default` statement");
+      ec.AddStatement(OPC_Goto, ec.LoopEnd, Loc);
+      return;
+    }
     ec.AddStatement(OPC_Goto, Switch->DefaultAddress, Loc);
   } else {
     FatalError("VC: internal compiler error (VGotoStmt::DoEmit)");
@@ -3402,6 +3457,16 @@ bool VGotoStmt::IsGoto () const {
 //==========================================================================
 bool VGotoStmt::IsGotoCase () const {
   return (GotoType == Case);
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::HasGotoCaseExpr
+//
+//==========================================================================
+bool VGotoStmt::HasGotoCaseExpr () const {
+  return (GotoType == Case && !!CaseValue);
 }
 
 

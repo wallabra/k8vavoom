@@ -45,6 +45,7 @@ public:
   virtual VName GetLabelName () const;
   virtual bool IsGoto () const; // any, including `goto case` and `goto default`
   virtual bool IsGotoCase () const;
+  virtual bool HasGotoCaseExpr () const;
   virtual bool IsGotoDefault () const;
   virtual bool IsBreak () const;
   virtual bool IsContinue () const;
@@ -443,6 +444,9 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VBreak : public VStatement {
 public:
+  // need not to be copied (set in `switch` resolver)
+  bool skipCodegen;
+
   VBreak (const TLocation &ALoc);
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
@@ -608,6 +612,8 @@ public:
   VExpression *CaseValue; // for `goto case n;`
   int GotoType;
   int SwitchStNum;
+  // need not to be copied (set in `switch` resolver)
+  bool skipCodegen;
 
   VGotoStmt (VName aname, const TLocation &ALoc);
   VGotoStmt (VSwitch *ASwitch, VExpression *ACaseValue, int ASwitchStNum, bool toDefault, const TLocation &ALoc);
@@ -617,6 +623,7 @@ public:
 
   virtual bool IsGoto () const override;
   virtual bool IsGotoCase () const override;
+  virtual bool HasGotoCaseExpr () const override;
   virtual bool IsGotoDefault () const override;
   virtual VName GetLabelName () const;
 
