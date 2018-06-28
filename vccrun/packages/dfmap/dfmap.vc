@@ -89,8 +89,8 @@ enum /*TriggerType*/ {
 }
 
 // "as XXX" means "generate this identifier for pascal sources
-enum PANEL_NONE = 0;
 bitenum /*PanelType*/ {
+  PANEL_NONE = none,
   PANEL_WALL, // 1
   PANEL_BACK, // 2
   PANEL_FORE, // 4
@@ -107,8 +107,8 @@ bitenum /*PanelType*/ {
   PANEL_LIFTRIGHT, // 8192
 }
 
-enum PANEL_FLAG_NONE = 0;
 bitenum /*PanelFlag*/ {
+  PANEL_FLAG_NONE = none,
   PANEL_FLAG_BLENDING, // 1
   PANEL_FLAG_HIDE, // 2
   PANEL_FLAG_WATERTEXTURES, // 4
@@ -166,8 +166,8 @@ enum /*Item*/ {
   ITEM_MAX, // store the last item's id in here use this in for loops
 }
 
-enum ITEM_OPTION_NONE = 0;
 bitenum /*ItemOption*/ {
+  ITEM_OPTION_NONE = none,
   ITEM_OPTION_ONLYDM, // 1
   ITEM_OPTION_FALL, // 2
 }
@@ -310,8 +310,8 @@ enum /*TriggerScoreTeam*/ {
   TRIGGER_SCORE_TEAM_FORCE_BLUE, // 3
 }
 
-enum ACTIVATE_NONE = 0;
 bitenum /*ActivateType*/ {
+  ACTIVATE_NONE = none,
   ACTIVATE_PLAYERCOLLIDE, // 1
   ACTIVATE_MONSTERCOLLIDE, // 2
   ACTIVATE_PLAYERPRESS, // 4
@@ -321,8 +321,8 @@ bitenum /*ActivateType*/ {
 }
 enum ACTIVATE_CUSTOM = 255;
 
-enum KEY_NONE = 0;
 bitenum /*Key*/ {
+  KEY_NONE = none,
   KEY_RED, // 1
   KEY_GREEN, // 2
   KEY_BLUE, // 4

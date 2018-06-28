@@ -1,4 +1,5 @@
 Const=42
+NoneBit=0
 Bit1=2 : 2
 Bit0=1 : 1
 Bit3=8 : 8

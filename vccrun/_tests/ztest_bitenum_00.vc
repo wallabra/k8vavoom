@@ -6,6 +6,7 @@ enum Const = 42;
 bitenum Bit1 = 1;
 
 bitenum {
+  NoneBit = none,
   Bit0,
   Bit3 = 3,
   Bit4,
@@ -23,6 +24,7 @@ enum {
 
 final int main (array!string *args) {
   writeln("Const=", Const);
+  writeln("NoneBit=", NoneBit);
   writeln("Bit1=", Bit1, " : ", 1<<1);
   writeln("Bit0=", Bit0, " : ", 1<<0);
   writeln("Bit3=", Bit3, " : ", 1<<3);

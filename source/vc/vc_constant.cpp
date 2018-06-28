@@ -90,7 +90,11 @@ bool VConstant::Define () {
   guard(VConstant::Define);
   if (PrevEnumValue) {
     if (bitconstant) {
-      Value = PrevEnumValue->Value<<1;
+      if (PrevEnumValue->Value == 0) {
+        Value = 1;
+      } else {
+        Value = PrevEnumValue->Value<<1;
+      }
     } else {
       Value = PrevEnumValue->Value+1;
     }
@@ -98,8 +102,15 @@ bool VConstant::Define () {
   }
 
   if (ValueExpr) {
-    VEmitContext ec(this);
-    ValueExpr = ValueExpr->Resolve(ec);
+    if (ValueExpr->IsNoneLiteral()) {
+      if (!bitconstant) ParseError(ValueExpr->Loc, "`none` is allowed only for bitenums");
+      Value = 0;
+      Type = TYPE_Int;
+      return true;
+    } else {
+      VEmitContext ec(this);
+      ValueExpr = ValueExpr->Resolve(ec);
+    }
   }
   if (!ValueExpr) return false;
 
@@ -117,6 +128,7 @@ bool VConstant::Define () {
         ParseError(ValueExpr->Loc, "Float constant expected");
         return false;
       }
+      if (bitconstant) ParseError(ValueExpr->Loc, "Integer constant expected");
       FloatValue = ValueExpr->GetFloatConst();
       break;
     default:
