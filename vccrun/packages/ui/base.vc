@@ -529,7 +529,7 @@ protected final void layoutInternal () {
       switch (c.align) {
         case AlignExpand:
           if (c.mHeight <= mHeight) c.mHeight = mHeight;
-          /* fallthrough */
+          goto case;
         case AlignCenter:
           c.mY = (mHeight-c.mHeight)/2;
           break;
@@ -547,7 +547,7 @@ protected final void layoutInternal () {
       switch (c.align) {
         case AlignExpand:
           if (c.mWidth <= mWidth) c.mWidth = mWidth;
-          /* fallthrough */
+          goto case;
         case AlignCenter:
           c.mX = (mWidth-c.mWidth)/2;
           break;
