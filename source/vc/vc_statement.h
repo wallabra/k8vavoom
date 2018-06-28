@@ -40,9 +40,12 @@ public:
   virtual bool Resolve (VEmitContext &) = 0;
   virtual void DoEmit (VEmitContext &) = 0;
   void Emit (VEmitContext &);
+
   virtual bool IsLabel () const;
   virtual VName GetLabelName () const;
-  virtual bool IsGoto () const;
+  virtual bool IsGoto () const; // any, including `goto case` and `goto default`
+  virtual bool IsGotoCase () const;
+  virtual bool IsGotoDefault () const;
   virtual bool IsBreak () const;
   virtual bool IsContinue () const;
   virtual bool IsFlowStop () const; // break, continue, goto...
@@ -51,6 +54,7 @@ public:
   virtual bool IsSwitchDefault () const;
   virtual bool IsVarDecl () const;
   virtual bool IsEndsWithReturn () const;
+  virtual bool IsProperCaseEnd (bool skipBreak) const; // ends with `return`, `break`, `continue`, `goto case` or `goto default`
 
   virtual VLabelStmt *FindLabel (VName aname);
   virtual bool IsGotoInAllowed () const;
@@ -76,7 +80,6 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
-  virtual bool IsEndsWithReturn () const override;
 
 protected:
   VEmptyStatement () {}
@@ -97,6 +100,7 @@ public:
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () const override;
+  virtual bool IsProperCaseEnd (bool skipBreak) const override;
 
   virtual VLabelStmt *FindLabel (VName aname) override;
 
@@ -122,6 +126,7 @@ public:
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () const override;
+  virtual bool IsProperCaseEnd (bool skipBreak) const override;
 
   virtual VLabelStmt *FindLabel (VName aname) override;
 
@@ -148,6 +153,7 @@ public:
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () const override;
+  virtual bool IsProperCaseEnd (bool skipBreak) const override;
 
   virtual VLabelStmt *FindLabel (VName aname) override;
 
@@ -176,6 +182,7 @@ public:
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () const override;
+  virtual bool IsProperCaseEnd (bool skipBreak) const override;
 
   virtual VLabelStmt *FindLabel (VName aname) override;
   virtual bool IsGotoInAllowed () const override;
@@ -203,6 +210,7 @@ public:
   virtual bool Resolve (VEmitContext&) override;
   virtual void DoEmit (VEmitContext&) override;
   virtual bool IsEndsWithReturn () const override;
+  virtual bool IsProperCaseEnd (bool skipBreak) const override;
 
   virtual VLabelStmt *FindLabel (VName aname) override;
   virtual bool IsGotoInAllowed () const override;
@@ -239,6 +247,7 @@ public:
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () const override;
+  virtual bool IsProperCaseEnd (bool skipBreak) const override;
 
   virtual VLabelStmt *FindLabel (VName aname) override;
   virtual bool IsGotoInAllowed () const override;
@@ -281,6 +290,7 @@ public:
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () const override;
+  virtual bool IsProperCaseEnd (bool skipBreak) const override;
 
   virtual VLabelStmt *FindLabel (VName aname) override;
   virtual bool IsGotoInAllowed () const override;
@@ -326,6 +336,7 @@ public:
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () const override;
+  virtual bool IsProperCaseEnd (bool skipBreak) const override;
 
   virtual VLabelStmt *FindLabel (VName aname) override;
   virtual bool IsGotoInAllowed () const override;
@@ -362,6 +373,7 @@ public:
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () const override;
+  virtual bool IsProperCaseEnd (bool skipBreak) const override;
 
   virtual VLabelStmt *FindLabel (VName aname) override;
 
@@ -369,9 +381,13 @@ public:
 
   virtual bool IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const override;
 
+  //void PostProcessGotoCase ();
+
 protected:
   VSwitch () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+  bool checkProperCaseEnd (bool reportSwitchCase) const;
 
 public:
   virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
@@ -385,6 +401,8 @@ public:
   VExpression *Expr;
   vint32 Value;
   vint32 Index;
+  // the following need not to be copied by `SyntaxCopy()`
+  VLabel gotoLbl; // if `gotoLbl.IsDefined()` is `true`, need to emit it; set by `goto case;`
 
   VSwitchCase (VSwitch *ASwitch, VExpression *AExpr, const TLocation &ALoc);
   virtual ~VSwitchCase () override;
@@ -462,7 +480,6 @@ public:
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsReturn () const override;
-  virtual bool IsEndsWithReturn () const override;
 
 protected:
   VReturn () {}
@@ -540,6 +557,7 @@ public:
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual bool IsEndsWithReturn () const override;
+  virtual bool IsProperCaseEnd (bool skipBreak) const override;
 
   virtual VLabelStmt *FindLabel (VName aname) override;
 
@@ -577,18 +595,34 @@ protected:
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VGotoStmt : public VStatement {
+private:
+  VStatement *casedef;
+  VLabelStmt *gotolbl;
+
 public:
-  VName Name; // destination
+  enum { Normal, Case, Default };
+
+public:
+  VName Name; // destination (NAME_None for `goto case;`)
+  VSwitch *Switch; // for `goto case;`
+  VExpression *CaseValue; // for `goto case n;`
+  int GotoType;
+  int SwitchStNum;
 
   VGotoStmt (VName aname, const TLocation &ALoc);
+  VGotoStmt (VSwitch *ASwitch, VExpression *ACaseValue, int ASwitchStNum, bool toDefault, const TLocation &ALoc);
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
 
   virtual bool IsGoto () const override;
+  virtual bool IsGotoCase () const override;
+  virtual bool IsGotoDefault () const override;
   virtual VName GetLabelName () const;
 
 protected:
   VGotoStmt () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+  bool ResolveGoto (VEmitContext &ec, VStatement *dest);
 };

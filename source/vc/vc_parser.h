@@ -36,6 +36,7 @@ private:
   VPackage *Package;
   VMethod *currFunc; // for lambdas
   VClass *currClass; // for lambdas
+  VSwitch *currSwitch;
   bool CheckForLocal;
   int anonLocalCount;
 

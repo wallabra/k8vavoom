@@ -261,25 +261,35 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   // try enum constant in this class
   if (ec.SelfClass && op && op->IsSingleName()) {
     VName ename = ((VSingleName *)op)->Name;
-    VConstant *Const = ec.SelfClass->FindConstant(FieldName, ename);
-    if (Const) {
-      VExpression *e = new VConstantValue(Const, Loc);
-      delete this;
-      return e->Resolve(ec);
+    if (ec.SelfClass->IsKnownEnum(ename)) {
+      VConstant *Const = ec.SelfClass->FindConstant(FieldName, ename);
+      if (Const) {
+        VExpression *e = new VConstantValue(Const, Loc);
+        delete this;
+        return e->Resolve(ec);
+      } else {
+        ParseError(Loc, "Unknown member `%s` in enum `%s`", *FieldName, *ename);
+        delete this;
+        return nullptr;
+      }
     }
   }
 
   // try enum constant in other class: `C::E.x`
-  if (ec.SelfClass && op && op->IsDoubleName()) {
+  if (op && op->IsDoubleName()) {
     VDoubleName *dn = (VDoubleName *)op;
     VClass *Class = VMemberBase::StaticFindClass(dn->Name1);
-    //fprintf(stderr, "Class=%s; n0=%s; n1=%s\n", Class->GetName(), *dn->Name1, *dn->Name2);
+    //fprintf(stderr, "Class=%s; n0=%s; n1=%s (fld=%s)\n", Class->GetName(), *dn->Name1, *dn->Name2, *FieldName);
     if (Class && Class->IsKnownEnum(dn->Name2)) {
       VConstant *Const = Class->FindConstant(FieldName, dn->Name2);
       if (Const) {
         VExpression *e = new VConstantValue(Const, Loc);
         delete this;
         return e->Resolve(ec);
+      } else {
+        ParseError(Loc, "Unknown member `%s` in enum `%s::%s`", *FieldName, *dn->Name1, *dn->Name2);
+        delete this;
+        return nullptr;
       }
     }
   }

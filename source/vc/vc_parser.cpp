@@ -1319,6 +1319,9 @@ VStatement *VParser::ParseStatement () {
         if (!Switch->Expr) ParseError(Lex.Location, "Switch expression expected");
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
 
+        auto oldSwitch = currSwitch;
+        currSwitch = Switch;
+
         Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
         do {
           l = Lex.Location;
@@ -1335,6 +1338,10 @@ VStatement *VParser::ParseStatement () {
             Switch->Statements.Append(Statement);
           }
         } while (!Lex.Check(TK_RBrace));
+
+        //Switch->PostProcessGotoCase();
+        currSwitch = oldSwitch;
+
         return Switch;
       }
     case TK_Delete:
@@ -1345,6 +1352,17 @@ VStatement *VParser::ParseStatement () {
       return ParseCompoundStatement();
     case TK_Goto:
       Lex.NextToken();
+      if (Lex.Token == TK_Case || Lex.Token == TK_Default) {
+        // `goto case;` or `goto default;`
+        bool toDef = (Lex.Token == TK_Default);
+        if (!currSwitch) ParseError(l, "`goto %s` outside of `switch`", (toDef ? "default" : "case"));
+        Lex.NextToken();
+        VExpression *caseValue = nullptr;
+        // parse optional case specifier
+        if (!toDef && Lex.Token != TK_Semicolon) caseValue = ParseExpression();
+        Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        return new VGotoStmt(currSwitch, caseValue, currSwitch->Statements.length(), toDef, l);
+      }
       if (Lex.Token == TK_Identifier) {
         VName ln = Lex.Name;
         Lex.NextToken();
@@ -3487,7 +3505,10 @@ void VParser::ParseClass () {
   int defcount = 0;
   int defallot = 0;
 
-  Class->ClassFlags = TModifiers::ClassAttr(TModifiers::Check(TModifiers::Parse(Lex), TModifiers::Native|TModifiers::Abstract, Lex.Location));
+  Class->ClassFlags = TModifiers::ClassAttr(
+    TModifiers::Check(TModifiers::Parse(Lex),
+      TModifiers::Native|TModifiers::Abstract|TModifiers::Transient,
+      Lex.Location));
   // parse class attributes
   do {
     if (Lex.Check(TK_MobjInfo)) {
@@ -3981,6 +4002,7 @@ void VParser::Parse () {
   guard(VParser::Parse);
   dprintf("Parsing\n");
   anonLocalCount = 0;
+  currSwitch = nullptr;
   Lex.NextToken();
   bool done = false;
   while (!done) {

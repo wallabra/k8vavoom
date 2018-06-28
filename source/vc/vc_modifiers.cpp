@@ -150,6 +150,7 @@ int TModifiers::ClassAttr (int Modifiers) {
   int Attributes = 0;
   if (Modifiers&Native) Attributes |= CLASS_Native;
   if (Modifiers&Abstract) Attributes |= CLASS_Abstract;
+  if (Modifiers&Transient) Attributes |= CLASS_Transient;
   return Attributes;
 }
 

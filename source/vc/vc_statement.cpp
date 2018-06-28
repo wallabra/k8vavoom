@@ -34,6 +34,8 @@ void VStatement::Emit (VEmitContext &ec) { DoEmit(ec); }
 bool VStatement::IsLabel () const { return false; }
 VName VStatement::GetLabelName () const { return NAME_None; }
 bool VStatement::IsGoto () const { return false; }
+bool VStatement::IsGotoCase () const { return false; }
+bool VStatement::IsGotoDefault () const { return false; }
 bool VStatement::IsBreak () const { return false; }
 bool VStatement::IsContinue () const { return false; }
 bool VStatement::IsFlowStop () const { return (IsBreak() || IsContinue() || IsGoto()); }
@@ -41,7 +43,8 @@ bool VStatement::IsReturn () const { return false; }
 bool VStatement::IsSwitchCase () const { return false; }
 bool VStatement::IsSwitchDefault () const { return false; }
 bool VStatement::IsVarDecl () const { return false; }
-bool VStatement::IsEndsWithReturn () const { return false; }
+bool VStatement::IsEndsWithReturn () const { return IsReturn(); }
+bool VStatement::IsProperCaseEnd (bool skipBreak) const { if (IsReturn() || IsGotoCase() || IsGotoDefault()) return true; if (!skipBreak && (IsBreak() || IsContinue())) return true; return false; }
 void VStatement::DoSyntaxCopyTo (VStatement *e) { e->Loc = Loc; }
 void VStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {}
 VLabelStmt *VStatement::FindLabel (VName aname) { return (IsLabel() && GetLabelName() == aname ? (VLabelStmt *)this : nullptr); }
@@ -64,7 +67,6 @@ bool VStatement::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path
 VEmptyStatement::VEmptyStatement (const TLocation &ALoc) : VStatement(ALoc) {}
 VStatement *VEmptyStatement::SyntaxCopy () { auto res = new VEmptyStatement(); DoSyntaxCopyTo(res); return res; }
 bool VEmptyStatement::Resolve (VEmitContext &) { return true; }
-bool VEmptyStatement::IsEndsWithReturn () const { return false; }
 void VEmptyStatement::DoEmit (VEmitContext &) {}
 
 
@@ -194,6 +196,17 @@ void VIf::DoEmit (VEmitContext &ec) {
 //==========================================================================
 bool VIf::IsEndsWithReturn () const {
   if (TrueStatement && FalseStatement) return (TrueStatement->IsEndsWithReturn() && FalseStatement->IsEndsWithReturn());
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VIf::IsProperCaseEnd
+//
+//==========================================================================
+bool VIf::IsProperCaseEnd (bool skipBreak) const {
+  if (TrueStatement && FalseStatement) return (TrueStatement->IsProperCaseEnd(skipBreak) && FalseStatement->IsProperCaseEnd(skipBreak));
   return false;
 }
 
@@ -336,6 +349,16 @@ bool VWhile::IsEndsWithReturn () const {
 
 //==========================================================================
 //
+//  VWhile::IsProperCaseEnd
+//
+//==========================================================================
+bool VWhile::IsProperCaseEnd (bool skipBreak) const {
+  return (Statement && Statement->IsProperCaseEnd(true));
+}
+
+
+//==========================================================================
+//
 //  VWhile::FindLabel
 //
 //==========================================================================
@@ -463,6 +486,16 @@ void VDo::DoEmit (VEmitContext &ec) {
 //==========================================================================
 bool VDo::IsEndsWithReturn () const {
   return (Statement && Statement->IsEndsWithReturn());
+}
+
+
+//==========================================================================
+//
+//  VDo::IsProperCaseEnd
+//
+//==========================================================================
+bool VDo::IsProperCaseEnd (bool skipBreak) const {
+  return (Statement && Statement->IsProperCaseEnd(true));
 }
 
 
@@ -659,6 +692,16 @@ bool VFor::IsEndsWithReturn () const {
 
 //==========================================================================
 //
+//  VFor::IsProperCaseEnd
+//
+//==========================================================================
+bool VFor::IsProperCaseEnd (bool skipBreak) const {
+  return (Statement && Statement->IsProperCaseEnd(true));
+}
+
+
+//==========================================================================
+//
 //  VFor::FindLabel
 //
 //==========================================================================
@@ -801,6 +844,16 @@ void VForeach::DoEmit (VEmitContext &ec) {
 //==========================================================================
 bool VForeach::IsEndsWithReturn () const {
   return (Statement && Statement->IsEndsWithReturn());
+}
+
+
+//==========================================================================
+//
+//  VForeach::IsProperCaseEnd
+//
+//==========================================================================
+bool VForeach::IsProperCaseEnd (bool skipBreak) const {
+  return (Statement && Statement->IsProperCaseEnd(true));
 }
 
 
@@ -1077,6 +1130,16 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
 bool VForeachIota::IsEndsWithReturn () const {
   //TODO: endless fors should have at least one return instead
   return (statement && statement->IsEndsWithReturn());
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::IsProperCaseEnd
+//
+//==========================================================================
+bool VForeachIota::IsProperCaseEnd (bool skipBreak) const {
+  return (statement && statement->IsProperCaseEnd(true));
 }
 
 
@@ -1437,6 +1500,16 @@ bool VForeachArray::IsEndsWithReturn () const {
 
 //==========================================================================
 //
+//  VForeachArray::IsProperCaseEnd
+//
+//==========================================================================
+bool VForeachArray::IsProperCaseEnd (bool skipBreak) const {
+  return (statement && statement->IsProperCaseEnd(true));
+}
+
+
+//==========================================================================
+//
 //  VForeachArray::FindLabel
 //
 //==========================================================================
@@ -1791,6 +1864,16 @@ bool VForeachScripted::IsEndsWithReturn () const {
 
 //==========================================================================
 //
+//  VForeachScripted::IsProperCaseEnd
+//
+//==========================================================================
+bool VForeachScripted::IsProperCaseEnd (bool skipBreak) const {
+  return (statement && statement->IsProperCaseEnd(true));
+}
+
+
+//==========================================================================
+//
 //  VForeachScripted::FindLabel
 //
 //==========================================================================
@@ -1844,6 +1927,7 @@ VSwitch::VSwitch (const TLocation &ALoc)
   , HaveDefault(false)
 {
 }
+
 
 //==========================================================================
 //
@@ -1914,8 +1998,24 @@ bool VSwitch::Resolve (VEmitContext &ec) {
     Ret = false;
   }
 
+  // first resolve all cases and default
   for (int i = 0; i < Statements.length(); ++i) {
-    if (!Statements[i]->Resolve(ec)) Ret = false;
+    VStatement *st = Statements[i];
+    if (st->IsSwitchCase() || st->IsSwitchDefault()) {
+      if (!st->Resolve(ec)) return false;
+    }
+  }
+
+  // now resolve other statements
+  for (int i = 0; i < Statements.length(); ++i) {
+    VStatement *st = Statements[i];
+    if (!st->IsSwitchCase() && !st->IsSwitchDefault()) {
+      if (!st->Resolve(ec)) { Ret = false; break; }
+    }
+  }
+
+  if (Ret) {
+    if (!checkProperCaseEnd(true)) Ret = false;
   }
 
   return Ret;
@@ -1970,6 +2070,7 @@ void VSwitch::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 bool VSwitch::IsEndsWithReturn () const {
+  //FIXME: `goto case` and `goto default`
   if (Statements.length() == 0) return false;
   bool defautSeen = false;
   bool returnSeen = false;
@@ -2000,6 +2101,62 @@ bool VSwitch::IsEndsWithReturn () const {
   if (!statementSeen) return false; // just in case
   // without `default` it may fallthru
   return (returnSeen && defautSeen);
+}
+
+
+//==========================================================================
+//
+//  VSwitch::checkProperCaseEnd
+//
+//==========================================================================
+bool VSwitch::IsProperCaseEnd (bool skipBreak) const {
+  return IsEndsWithReturn();
+}
+
+
+//==========================================================================
+//
+//  VSwitch::checkProperCaseEnd
+//
+//==========================================================================
+bool VSwitch::checkProperCaseEnd (bool reportSwitchCase) const {
+  if (Statements.length() == 0) return true;
+  bool statementSeen = false;
+  bool isEndSeen = false;
+  int lastCaseIdx = -1;
+  //ParseWarning(Loc, "=========================");
+  for (int n = 0; n < Statements.length(); ++n) {
+    if (!Statements[n]) return false; //k8: orly?
+    // `case` or `default`?
+    if (Statements[n]->IsSwitchCase() || Statements[n]->IsSwitchDefault()) {
+      if (lastCaseIdx >= 0 && !isEndSeen && statementSeen) {
+        //fprintf(stderr, "pidx=%d; n=%d; es=%d; ss=%d\n", lastCaseIdx, n, (int)isEndSeen, (int)statementSeen);
+        // oops
+        if (reportSwitchCase) ParseError(Statements[lastCaseIdx]->Loc, "`switch` branch doesn't end with `break` or `goto case`");
+        return false;
+      }
+      lastCaseIdx = n;
+      isEndSeen = false;
+      statementSeen = false;
+      continue;
+    }
+    if (isEndSeen) continue;
+    //fprintf(stderr, "  n=%d; type=%s\n", n, *shitppTypeNameObj(*Statements[n]));
+    if (Statements[n]->IsLabel()) continue; // nobody cares
+    statementSeen = true;
+    // proper end?
+    if (Statements[n]->IsProperCaseEnd(false)) {
+      isEndSeen = true;
+      continue;
+    }
+    // flow break?
+    if (Statements[n]->IsFlowStop()) {
+      // `break`/`continue`
+      isEndSeen = true;
+    }
+  }
+  // last one can omit proper end
+  return true;
 }
 
 
@@ -2055,6 +2212,26 @@ bool VSwitch::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) con
 }
 
 
+//==========================================================================
+//
+//  VSwitch::PostProcessGotoCase
+//
+//==========================================================================
+/*
+void VSwitch::PostProcessGotoCase () {
+  for (int f = Statements.length()-1; f >= 0; --f) {
+    if (Statements[f]->IsGoto()) {
+      auto gs = (VGotoStmt *)Statements[f];
+      // is this `goto case;`?
+      if (gs.GotoType == VGotoStmt::Case || gs.GotoType == VGotoStmt::Default) {
+        gs->Switch = this;
+      }
+    }
+  }
+}
+*/
+
+
 
 //==========================================================================
 //
@@ -2065,6 +2242,9 @@ VSwitchCase::VSwitchCase (VSwitch *ASwitch, VExpression *AExpr, const TLocation 
   : VStatement(ALoc)
   , Switch(ASwitch)
   , Expr(AExpr)
+  , Value(0)
+  , Index(0)
+  , gotoLbl()
 {
 }
 
@@ -2154,6 +2334,7 @@ bool VSwitchCase::Resolve (VEmitContext &ec) {
 //==========================================================================
 void VSwitchCase::DoEmit (VEmitContext &ec) {
   ec.MarkLabel(Switch->CaseInfo[Index].Address);
+  if (gotoLbl.IsDefined()) ec.MarkLabel(gotoLbl);
 }
 
 
@@ -2468,16 +2649,6 @@ void VReturn::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 bool VReturn::IsReturn () const {
-  return true;
-}
-
-
-//==========================================================================
-//
-//  VReturn::IsEndsWithReturn
-//
-//==========================================================================
-bool VReturn::IsEndsWithReturn () const {
   return true;
 }
 
@@ -2836,6 +3007,21 @@ bool VCompound::IsEndsWithReturn () const {
 
 //==========================================================================
 //
+//  VCompound::IsProperCaseEnd
+//
+//==========================================================================
+bool VCompound::IsProperCaseEnd (bool skipBreak) const {
+  for (int n = 0; n < Statements.length(); ++n) {
+    if (!Statements[n]) continue;
+    if (Statements[n]->IsProperCaseEnd(skipBreak)) return true;
+    if (Statements[n]->IsFlowStop()) break;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VCompound::FindLabel
 //
 //==========================================================================
@@ -2971,7 +3157,31 @@ VName VLabelStmt::GetLabelName () const {
 //==========================================================================
 VGotoStmt::VGotoStmt (VName aname, const TLocation &ALoc)
   : VStatement(ALoc)
+  , casedef(nullptr)
+  , gotolbl(nullptr)
   , Name(aname)
+  , Switch(nullptr)
+  , CaseValue(nullptr)
+  , GotoType(Normal)
+  , SwitchStNum(-1)
+{
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::VGotoStmt
+//
+//==========================================================================
+VGotoStmt::VGotoStmt (VSwitch *ASwitch, VExpression *ACaseValue, int ASwitchStNum, bool toDefault, const TLocation &ALoc)
+  : VStatement(ALoc)
+  , casedef(nullptr)
+  , gotolbl(nullptr)
+  , Name(NAME_None)
+  , Switch(ASwitch)
+  , CaseValue(ACaseValue)
+  , GotoType(toDefault ? Default : Case)
+  , SwitchStNum(ASwitchStNum)
 {
 }
 
@@ -2997,33 +3207,34 @@ void VGotoStmt::DoSyntaxCopyTo (VStatement *e) {
   VStatement::DoSyntaxCopyTo(e);
   auto res = (VGotoStmt *)e;
   res->Name = Name;
+  res->Switch = Switch;
+  res->CaseValue = (CaseValue ? CaseValue->SyntaxCopy() : nullptr);
+  res->GotoType = GotoType;
 }
 
 
 //==========================================================================
 //
-//  VGotoStmt::Resolve
+//  VGotoStmt::ResolveGoto
 //
 //==========================================================================
-bool VGotoStmt::Resolve (VEmitContext &ec) {
-  // find label
-  VLabelStmt *lbl = ec.CurrentFunc->Statement->FindLabel(Name);
-  if (!lbl) {
-    ParseError(Loc, "Destination label `%s` not found", *Name);
-    return false;
-  }
+bool VGotoStmt::ResolveGoto (VEmitContext &ec, VStatement *dest) {
+  if (!dest) return false;
+
   // build path to self
   TArray<VStatement *> toself;
   if (!ec.CurrentFunc->Statement->BuildPathTo(this, toself)) {
     ParseError(Loc, "Cannot build path to `goto`");
     return false;
   }
+
   // build path to label
   TArray<VStatement *> tolabel;
-  if (!ec.CurrentFunc->Statement->BuildPathTo(lbl, tolabel)) {
+  if (!ec.CurrentFunc->Statement->BuildPathTo(dest, tolabel)) {
     ParseError(Loc, "Cannot build path to label `%s`", *Name);
     return false;
   }
+
   // find common parent
   VStatement *cpar = nullptr;
   int sidx = -1, lidx = -1;
@@ -3043,6 +3254,7 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
     return false;
   }
   if (sidx == toself.length()-1 || lidx == tolabel.length()-1) FatalError("VC: internal compiler error (VGotoStmt::Resolve)");
+
   // now go up to parent and down to label, checking if gotos are allowed
   for (int f = toself.length()-1; f >= 0; --f) {
     if (toself[f] == cpar) break;
@@ -3051,6 +3263,7 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
       return false;
     }
   }
+
   // down
   bool doCheck = false;
   for (int c = 0; c < tolabel.length(); ++c) {
@@ -3064,13 +3277,90 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
       return false;
     }
   }
+
   // check if we can jump over
   if (!cpar->IsJumpOverAllowed(toself[sidx+1], tolabel[lidx+1])) {
     ParseError(Loc, "Cannot jump to label `%s`", *Name);
     return false;
   }
+
   // ok, it is legal
   return true;
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::Resolve
+//
+//==========================================================================
+bool VGotoStmt::Resolve (VEmitContext &ec) {
+  if (Switch) {
+    // goto case/default
+    if (GotoType == Normal) FatalError("VC: internal compiler error (VGotoStmt::Resolve) (0)");
+    // find case or default (it is not a bug to not have one)
+    VStatement *st = nullptr;
+    if (GotoType == Default) {
+      // find default
+      for (int f = Switch->Statements.length()-1; f >= 0; --f) {
+        if (Switch->Statements[f]->IsSwitchDefault()) {
+          st = Switch->Statements[f];
+          break;
+        }
+      }
+    } else {
+      // find the following case (it is not a bug to not have one)
+      if (CaseValue) {
+        // case is guaranteed to be parsed, do value search
+        CaseValue = CaseValue->Resolve(ec);
+        if (!CaseValue) return false; // oops
+        if (!CaseValue->IsIntConst()) {
+          ParseError(CaseValue->Loc, "Integer constant expected");
+          return false;
+        }
+        int val = CaseValue->GetIntConst();
+        for (int f = 0; f < Switch->Statements.length(); ++f) {
+          if (Switch->Statements[f]->IsSwitchCase()) {
+            VSwitchCase *cc = (VSwitchCase *)(Switch->Statements[f]);
+            if (cc->Value == val) {
+              st = cc;
+              break;
+            }
+          }
+        }
+        if (!st) {
+          ParseError(Loc, "case `%d` not found", val);
+          return false;
+        }
+      } else {
+        // `goto case` without args: find next one
+        for (int f = SwitchStNum; f < Switch->Statements.length(); ++f) {
+          if (Switch->Statements[f]->IsSwitchCase()) {
+            st = Switch->Statements[f];
+            break;
+          }
+        }
+      }
+      if (st) {
+        VSwitchCase *cc = (VSwitchCase *)st;
+        if (!cc->gotoLbl.IsDefined()) cc->gotoLbl = ec.DefineLabel();
+      }
+    }
+    casedef = st;
+    return (st ? ResolveGoto(ec, st) : true);
+  } else {
+    // normal goto
+    if (GotoType != Normal) FatalError("VC: internal compiler error (VGotoStmt::Resolve) (1)");
+    if (Switch) FatalError("VC: internal compiler error (VGotoStmt::Resolve) (2)");
+    // find label
+    VLabelStmt *lbl = ec.CurrentFunc->Statement->FindLabel(Name);
+    if (!lbl) {
+      ParseError(Loc, "Destination label `%s` not found", *Name);
+      return false;
+    }
+    gotolbl = lbl;
+    return ResolveGoto(ec, lbl);
+  }
 }
 
 
@@ -3080,13 +3370,24 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VGotoStmt::DoEmit (VEmitContext &ec) {
-  // find label
-  VLabelStmt *lbl = ec.CurrentFunc->Statement->FindLabel(Name);
-  if (!lbl) {
-    ParseError(Loc, "Destination label `%s` not found", *Name);
-    return;
+  if (GotoType == Normal) {
+    VLabelStmt *lbl = gotolbl; //ec.CurrentFunc->Statement->FindLabel(Name);
+    if (!lbl) {
+      ParseError(Loc, "Destination label `%s` not found", *Name);
+      return;
+    }
+    ec.EmitGotoTo(Name, Loc);
+  } else if (GotoType == Case) {
+    if (!casedef) return; // nothing to do
+    if (!casedef->IsSwitchCase()) FatalError("VC: internal compiler error (VGotoStmt::DoEmit) (0)");
+    VSwitchCase *cc = (VSwitchCase *)casedef;
+    ec.AddStatement(OPC_Goto, cc->gotoLbl, Loc);
+  } else if (GotoType == Default) {
+    if (!casedef) return; // nothing to do
+    ec.AddStatement(OPC_Goto, Switch->DefaultAddress, Loc);
+  } else {
+    FatalError("VC: internal compiler error (VGotoStmt::DoEmit)");
   }
-  ec.EmitGotoTo(Name, Loc);
 }
 
 
@@ -3097,6 +3398,26 @@ void VGotoStmt::DoEmit (VEmitContext &ec) {
 //==========================================================================
 bool VGotoStmt::IsGoto () const {
   return true;
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::IsGotoCase
+//
+//==========================================================================
+bool VGotoStmt::IsGotoCase () const {
+  return (GotoType == Case);
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::IsGotoDefault
+//
+//==========================================================================
+bool VGotoStmt::IsGotoDefault () const {
+  return (GotoType == Default);
 }
 
 
