@@ -1,0 +1,24 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+
+enum ENetRole {
+  None,            // no role at all
+  SimulatedProxy,  // locally simulated proxy of this actor
+  AutonomousProxy, // locally autonomous proxy of this actor
+  Authority,       // authoritative control over the actor
+}
+
+ENetRole role;
+ENetRole remoteRole;
+
+
+final int main (array!string *args) {
+  ENetRole r2 = ENetRole.Authority;
+  role = ENetRole.SimulatedProxy;
+
+  writeln(role, " : ", ENetRole.SimulatedProxy);
+  writeln(r2, " : ", ENetRole.Authority);
+
+  return 0;
+}
