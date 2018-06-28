@@ -45,8 +45,8 @@
 #include "progdefs.h"
 
 
+#include <math.h>
 #ifdef VC_USE_LIBC_FLOAT_CHECKERS
-# include <math.h>
 # define isFiniteF  isfinite
 # define isNaNF     isnan
 # define isInfF     isinf
@@ -2197,6 +2197,12 @@ func_loop:
               sp[-3].f = v1.x;
               break;
             }
+          case OPC_Builtin_RoundF2I: sp[-1].i = (int)(roundf(sp[-1].f)); break;
+          case OPC_Builtin_RoundF2F: sp[-1].f = roundf(sp[-1].f); break;
+          case OPC_Builtin_TruncF2I: sp[-1].i = (int)(truncf(sp[-1].f)); break;
+          case OPC_Builtin_TruncF2F: sp[-1].f = truncf(sp[-1].f); break;
+          case OPC_Builtin_FloatCeil: sp[-1].f = ceilf(sp[-1].f); break;
+          case OPC_Builtin_FloatFloor: sp[-1].f = floorf(sp[-1].f); break;
           default: cstDump(ip); Sys_Error("Unknown builtin");
         }
         ip += 2;

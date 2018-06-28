@@ -190,6 +190,15 @@ native static final void FatalError (string format, ...) [printf,1];
 // ////////////////////////////////////////////////////////////////////////// //
 // math functions (angles are in degrees)
 
+native static final int round (float v) [builtin RoundF2I];
+native static final float fround (float v) [builtin RoundF2F];
+native static final int trunc (float v) [builtin TruncF2I];
+native static final float ftrunc (float v) [builtin TruncF2F];
+native static final float ceil (float v) [builtin FloatCeil];
+native static final float floor (float v) [builtin FloatFloor];
+//native static final float frac (float v) [builtin FloatFrac];
+//native static final float fint (float v) [builtin FloatInt];
+
 // normalises angle in range 0..360
 native static final float AngleMod360 (float angle);
 // normalises angle in range -180..180

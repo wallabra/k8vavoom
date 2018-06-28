@@ -1186,6 +1186,7 @@ void VVideo::runEventLoop () {
     SDL_PumpEvents();
     bool gotEvent = doFrameBusiness(ev);
 
+  morevents:
     if (gotEvent) {
       switch (ev.type) {
         case SDL_KEYDOWN:
@@ -1285,6 +1286,8 @@ void VVideo::runEventLoop () {
         default:
           break;
       }
+      // if we have no fixed frame time, process more events
+      if (currFrameTime <= 0 && SDL_PollEvent(&ev)) goto morevents;
     }
 
     if (doRefresh) onDraw();
@@ -1429,7 +1432,7 @@ IMPLEMENT_FUNCTION(VVideo, resetQuitRequest) {
 IMPLEMENT_FUNCTION(VVideo, requestRefresh) {
   if (!VVideo::doRefresh) {
     VVideo::doRefresh = true;
-    VVideo::sendPing();
+    if (VVideo::getFrameTime() <= 0) VVideo::sendPing();
   }
 }
 
