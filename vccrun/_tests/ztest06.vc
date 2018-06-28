@@ -16,7 +16,7 @@ class Main : TestObject;
 
 int val;
 
-final static void classTest (class<Object> cls) {
+final static void classTest (class!Object cls) {
   print("cls is '%s'", NameToStr(GetClassName(cls)));
 }
 
