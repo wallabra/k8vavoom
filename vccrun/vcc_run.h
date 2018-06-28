@@ -32,9 +32,11 @@
 
 #include "filesys/fsys.h"
 
+
 #include "../libs/core/core.h"
 #include "../source/common.h"
 #include "../source/maths.h"
+#include "vcc_netobj.h"
 #include "../source/vc/vc_location.h"
 #include "../source/vc/vc_type.h"
 #include "../source/vc/vc_member.h"

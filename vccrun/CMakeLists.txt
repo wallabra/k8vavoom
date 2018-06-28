@@ -101,6 +101,8 @@ if (ENABLE_VCCRUN)
     ${VCCRUN_FSYS_SOURCES}
     vcc_run.cpp
     vcc_run.h
+    vcc_netobj.h
+    vcc_netobj.cpp
     modules/mod_ini.h
     modules/mod_ini.cpp
     modules/sdlgl/mod_sdlgl.h
