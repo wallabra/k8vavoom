@@ -34,6 +34,67 @@ VObject *mainObject = nullptr;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static bool onExecuteNetMethod (VObject *aself, VMethod *func) {
+  /*
+  if (GDemoRecordingContext) {
+    // find initial version of the method
+    VMethod *Base = func;
+    while (Base->SuperMethod) Base = Base->SuperMethod;
+    // execute it's replication condition method
+    check(Base->ReplCond);
+    P_PASS_REF(this);
+    vuint32 SavedFlags = PlayerFlags;
+    PlayerFlags &= ~VBasePlayer::PF_IsClient;
+    bool ShouldSend = false;
+    if (VObject::ExecuteFunction(Base->ReplCond).i) ShouldSend = true;
+    PlayerFlags = SavedFlags;
+    if (ShouldSend) {
+      // replication condition is true, the method must be replicated
+      GDemoRecordingContext->ClientConnections[0]->Channels[CHANIDX_Player]->SendRpc(func, this);
+    }
+  }
+  */
+
+  /*
+#ifdef CLIENT
+  if (GGameInfo->NetMode == NM_TitleMap ||
+    GGameInfo->NetMode == NM_Standalone ||
+    (GGameInfo->NetMode == NM_ListenServer && this == cl))
+  {
+    return false;
+  }
+#endif
+  */
+
+  // find initial version of the method
+  VMethod *Base = func;
+  while (Base->SuperMethod) Base = Base->SuperMethod;
+  // execute it's replication condition method
+  check(Base->ReplCond);
+  P_PASS_REF(aself);
+  if (!VObject::ExecuteFunction(Base->ReplCond).i) {
+    //fprintf(stderr, "rpc call to `%s` (%s) is not done\n", aself->GetClass()->GetName(), *func->GetFullName());
+    return false;
+  }
+
+  /*
+  if (Net) {
+    // replication condition is true, the method must be replicated
+    Net->Channels[CHANIDX_Player]->SendRpc(func, this);
+  }
+  */
+
+  // clean up parameters
+  func->CleanupParams();
+
+  fprintf(stderr, "rpc call to `%s` (%s) is DONE!\n", aself->GetClass()->GetName(), *func->GetFullName());
+
+  // it's been handled here
+  return true;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 __attribute__((noreturn, format(printf, 1, 2))) void Host_Error (const char *error, ...) {
   fprintf(stderr, "FATAL: ");
   va_list argPtr;
@@ -373,6 +434,7 @@ static void initialize () {
   VMemberBase::StaticAddDefine("VCCRUN_HAS_OPENAL");
 #endif
   VMemberBase::StaticAddDefine("VCCRUN_HAS_IMAGO");
+  VObject::onExecuteNetMethodCB = &onExecuteNetMethod;
 }
 
 
