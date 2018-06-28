@@ -35,7 +35,7 @@ public:
   // state info
   VName SpriteName;
   vint32 Frame;
-  float Time;
+  float Time; // for d2df states: number of frames we should wait (ignore fractional part)
   vint32 Misc1;
   vint32 Misc2;
   VState *NextState;

@@ -81,6 +81,7 @@ private:
   void ParseStruct (VClass *InClass, bool IsVector);
   VName ParseStateString ();
   void ParseStates (VClass *InClass);
+  void ParseStatesNewStyleUnused (VClass *inClass);
   void ParseStatesNewStyle (VClass *inClass);
   void ParseReplication (VClass *InClass);
   void ParseClass ();
