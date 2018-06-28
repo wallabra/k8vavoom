@@ -34,7 +34,7 @@ final void A_FPunchAttack() self(Actor)
   int       damage;
   float     power;
   TVec      vforward;
-  class<Actor>  PuffType;
+  class!Actor  PuffType;
   EntityEx    AimTarget;
   TAVec     angles;
 
@@ -103,7 +103,7 @@ final void A_FAxeAttack() self(Actor)
   int       useMana;
   TAVec     angles;
   TVec      vforward;
-  class<Actor>  PuffType;
+  class!Actor  PuffType;
   EntityEx    AimTarget;
 
   if (!bIsPlayer)

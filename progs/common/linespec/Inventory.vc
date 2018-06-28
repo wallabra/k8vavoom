@@ -49,7 +49,7 @@ int         GiveQuestNum;
 name        IconName;
 float       DropTime;
 //  Spawn PickuFlash when picked up.
-class<Actor>    PickupFlashType;
+class!Actor    PickupFlashType;
 
 name        PickupSound;
 name        UseSound;
@@ -398,7 +398,7 @@ Inventory CreateCopy(EntityEx Toucher)
   if (GoAway())
   {
     //  Must create a copy
-    Copy = Spawn(class<Inventory>(Class),,,, false);
+    Copy = Spawn(class!Inventory(Class),,,, false);
     Copy.Amount = Amount;
     Copy.MaxAmount = MaxAmount;
   }
@@ -440,7 +440,7 @@ Inventory CreateTossable()
     return self;
   }
 
-  Inventory Copy = Spawn(class<Inventory>(Class),,,, false);
+  Inventory Copy = Spawn(class!Inventory(Class),,,, false);
   Copy.Amount = 1;
   Copy.MaxAmount = MaxAmount;
   Copy.DropTime = 1.0;
@@ -614,7 +614,7 @@ final void GiveQuest(EntityEx Toucher)
 {
   if (GiveQuestNum)
   {
-    Toucher.GiveInventoryType(class<Inventory>(FindClass(
+    Toucher.GiveInventoryType(class!Inventory(FindClass(
       StrToName(va("QuestItem%d", GiveQuestNum)))));
   }
 }
@@ -1090,7 +1090,7 @@ final void A_Saw()
 //===========================================================================
 
 final void decorate_A_Saw(optional name FullSound, optional name HitSound,
-  optional int SawDamage, optional class<Actor> PuffType)
+  optional int SawDamage, optional class!Actor PuffType)
 {
   float   angle;
   int     damage;
@@ -1174,7 +1174,7 @@ final void decorate_A_Saw(optional name FullSound, optional name HitSound,
 //===========================================================================
 
 final void A_CustomPunch(int PunchDamage, optional bool NoRandom,
-  optional int Flags, optional class<Actor> PuffType,
+  optional int Flags, optional class!Actor PuffType,
   optional float Range, optional float LifeSteal)
 {
   TAVec   aimAngles;
@@ -1254,7 +1254,7 @@ final void A_CustomPunch(int PunchDamage, optional bool NoRandom,
 //===========================================================================
 
 final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
-  int DamagePerBullet, optional class<Actor> PuffType, optional int Flags,
+  int DamagePerBullet, optional class!Actor PuffType, optional int Flags,
   optional float Range)
 {
   TVec    dir;
@@ -1349,7 +1349,7 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
 //
 //===========================================================================
 
-final void A_FireCustomMissile(class<Actor> MissileType, optional float Angle,
+final void A_FireCustomMissile(class!Actor MissileType, optional float Angle,
   optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
   optional int AimAtAngle, optional float Pitch)
 {
@@ -1419,7 +1419,7 @@ final void A_FireCustomMissile(class<Actor> MissileType, optional float Angle,
 final void A_RailAttack(int RailDamage, optional float Offset,
   optional bool UseAmmo, optional string Colour1, optional string Colour2,
   optional int Flags, optional float MaxDiff,
-  optional class<Actor> PuffType)
+  optional class!Actor PuffType)
 {
   if (!specified_UseAmmo)
   {

@@ -26,7 +26,7 @@
 class HexenWeapon : Weapon
   abstract;
 
-class<Actor> WeaponClass;
+class!Actor WeaponClass;
 
 //==========================================================================
 //

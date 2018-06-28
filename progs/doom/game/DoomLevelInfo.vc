@@ -31,7 +31,7 @@ class DoomLevelInfo : LineSpecialLevelInfo;
 //
 //==========================================================================
 
-override class<Inventory> GetDehackedItemType(EntityEx Item)
+override class!Inventory GetDehackedItemType(EntityEx Item)
 {
   // Identify by sprite.
   // armor

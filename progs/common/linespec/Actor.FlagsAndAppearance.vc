@@ -214,7 +214,7 @@ final void A_NoBlocking()
 {
   int         SpeechNum;
   RogueConSpeech *Speech;
-  class<EntityEx>   DropItemType;
+  class!EntityEx   DropItemType;
   int         i;
 
   //  Andy Baker's stealth monsters
@@ -256,7 +256,7 @@ final void A_NoBlocking()
       {
         if (DropItemList[i].Type)
         {
-          DropItem(class<EntityEx>(DropItemList[i].Type),
+          DropItem(class!EntityEx(DropItemList[i].Type),
             DropItemList[i].Amount, DropItemList[i].Chance);
         }
       }

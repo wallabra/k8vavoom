@@ -42,8 +42,8 @@ enum
 };
 
 //  Type of ammo weapon needs to operate.
-class<Ammo>   AmmoType1;
-class<Ammo>   AmmoType2;
+class!Ammo   AmmoType1;
+class!Ammo   AmmoType2;
 //  How much ammo to give when picked up.
 int       AmmoGive1;
 int       AmmoGive2;
@@ -51,7 +51,7 @@ int       AmmoGive2;
 int       AmmoUse1;
 int       AmmoUse2;
 //  Weapon given together with current one.
-class<Weapon> SisterWeaponType;
+class!Weapon SisterWeaponType;
 
 name      UpSound;
 name      ReadySound;
@@ -262,11 +262,11 @@ override void AttachToOwner(EntityEx NewOwner)
     if (PlayerEx(Owner.Player).ReadyWeapon)
     {
       LineSpecialGameInfo(Level.Game).FindWeaponSlot(
-        class<Weapon>(PlayerEx(Owner.Player).ReadyWeapon.Class),
+        class!Weapon(PlayerEx(Owner.Player).ReadyWeapon.Class),
         ReadySlot, ReadyIndex, PlayerEx(Owner.Player).ReadyWeapon.Position);
     }
     LineSpecialGameInfo(Level.Game).FindWeaponSlot(
-      class<Weapon>(Class), NewSlot, NewIndex, Position);
+      class!Weapon(Class), NewSlot, NewIndex, Position);
     if (CheckAmmo(FIRE_Either, false) &&
       (LineSpecialGameInfo(Level.Game).bAlwaysSwitchNewWeapon ||
       !PlayerEx(Owner.Player).ReadyWeapon || NewSlot > ReadySlot) ||
@@ -285,7 +285,7 @@ override void AttachToOwner(EntityEx NewOwner)
 //
 //==========================================================================
 
-final Ammo AddAmmo(EntityEx Toucher, class<Ammo> AmmoType, int count)
+final Ammo AddAmmo(EntityEx Toucher, class!Ammo AmmoType, int count)
 {
   if (!AmmoType)
   {
@@ -362,7 +362,7 @@ final bool AddExistingAmmo(Ammo AmmoItem, int count)
 //
 //==========================================================================
 
-final Weapon AddWeapon(class<Weapon> WeaponType)
+final Weapon AddWeapon(class!Weapon WeaponType)
 {
   if (!WeaponType)
   {

@@ -3109,7 +3109,7 @@ final void SetWallScroller(int LineId, float XSpeed, float YSpeed,
   }
   else
   {
-    array<Scroller>   FoundScrollers;
+    array!Scroller   FoundScrollers;
 
     foreach AllThinkers(Scroller, Scroll)
     {
@@ -4089,7 +4089,7 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
   float   angle;
   float   speed;
   float   vspeed;
-  class<EntityEx> moType;
+  class!EntityEx moType;
   Entity    A;
   EntityEx  newA;
   bool    success;
@@ -4097,18 +4097,18 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
   success = false;
   if (TypeName)
   {
-    moType = class<EntityEx>(FindClassLowerCase(TypeName));
+    moType = class!EntityEx(FindClassLowerCase(TypeName));
   }
   else
   {
-    moType = class<EntityEx>(FindClassFromScriptId(TypeID,
+    moType = class!EntityEx(FindClassFromScriptId(TypeID,
       LineSpecialGameInfo(Game).GameFilterFlag));
   }
   if (!moType)
   {
     return false;
   }
-  moType = class<EntityEx>(GetClassReplacement(moType));
+  moType = class!EntityEx(GetClassReplacement(moType));
   if (Level.Game.nomonsters && moType.default.bMonster)
   {
     return false;
@@ -4247,18 +4247,18 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   float     angle;
   Entity      A;
   EntityEx    newAct;
-  class<EntityEx> moType;
+  class!EntityEx moType;
   bool      success;
 
   success = false;
   tid = Arg1;
-  moType = class<EntityEx>(FindClassFromScriptId(Arg2,
+  moType = class!EntityEx(FindClassFromScriptId(Arg2,
     LineSpecialGameInfo(Game).GameFilterFlag));
   if (!moType)
   {
     return false;
   }
-  moType = class<EntityEx>(GetClassReplacement(moType));
+  moType = class!EntityEx(GetClassReplacement(moType));
   if (Level.Game.nomonsters && moType.default.bMonster)
   {
     return false;
@@ -4329,7 +4329,7 @@ final override int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle)
     print("No such class %n", Name);
     return false;
   }
-  class<EntityEx> EntClass = class<EntityEx>(EClass);
+  class!EntityEx EntClass = class!EntityEx(EClass);
   if (!EntClass)
   {
     print("%n is not an actor class", Name);
@@ -4520,7 +4520,7 @@ final bool EV_HealThing(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     else if (Max == 1)
     {
       Max = 200;
-      class<Health> SClass = class<Health>(FindClass('Soulsphere'));
+      class!Health SClass = class!Health(FindClass('Soulsphere'));
       if (SClass)
       {
         Max = SClass.default.MaxAmount;
@@ -6121,8 +6121,8 @@ final bool EV_GlassBreak(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       if (A && A.bIsPlayer)
       {
         A.GiveInventoryType(QuestItem29);
-        A.GiveInventoryType(class<Inventory>(FindClass('UpgradeAccuracy')));
-        A.GiveInventoryType(class<Inventory>(FindClass('UpgradeStamina')));
+        A.GiveInventoryType(class!Inventory(FindClass('UpgradeAccuracy')));
+        A.GiveInventoryType(class!Inventory(FindClass('UpgradeStamina')));
       }
     }
   }
@@ -6463,7 +6463,7 @@ final override bool PolyBusy(int polyobj)
 
 final override int ThingCount(int type, name TypeName, int tid, int SectorTag)
 {
-  class<EntityEx>   moType;
+  class!EntityEx   moType;
 
   if (!(type + tid) && !TypeName)
   {
@@ -6472,7 +6472,7 @@ final override int ThingCount(int type, name TypeName, int tid, int SectorTag)
   }
   if (TypeName)
   {
-    moType = class<EntityEx>(FindClassLowerCase(TypeName));
+    moType = class!EntityEx(FindClassLowerCase(TypeName));
     if (!moType)
     {
       return 0;
@@ -6480,7 +6480,7 @@ final override int ThingCount(int type, name TypeName, int tid, int SectorTag)
   }
   else
   {
-    moType = class<EntityEx>(FindClassFromScriptId(type,
+    moType = class!EntityEx(FindClassFromScriptId(type,
       LineSpecialGameInfo(Game).GameFilterFlag));
   }
 
@@ -6490,7 +6490,7 @@ final override int ThingCount(int type, name TypeName, int tid, int SectorTag)
   {
     //  If this class has a replacement, count number of instances of
     // replacement class too.
-    class<EntityEx> RepType = class<EntityEx>(GetClassReplacement(
+    class!EntityEx RepType = class!EntityEx(GetClassReplacement(
       moType));
     if (RepType != moType)
     {
@@ -6507,7 +6507,7 @@ final override int ThingCount(int type, name TypeName, int tid, int SectorTag)
 //
 //==========================================================================
 
-final int DoThingCount(class<EntityEx> moType, int tid, int SectorTag)
+final int DoThingCount(class!EntityEx moType, int tid, int SectorTag)
 {
   int         count;
   EntityEx      Ent;
@@ -6580,7 +6580,7 @@ final int DoThingCount(class<EntityEx> moType, int tid, int SectorTag)
 final override void SectorDamage(int Tag, int Amount, name DamageType,
   name ProtectionType, int Flags)
 {
-  class<Inventory> ProtectClass = class<Inventory>(FindClassLowerCase(
+  class!Inventory ProtectClass = class!Inventory(FindClassLowerCase(
     ProtectionType));
 
   int SecNum = -1;
@@ -6657,7 +6657,7 @@ final override void SectorDamage(int Tag, int Amount, name DamageType,
 final override void SpawnMapThing(mthing_t *mthing)
 {
   int       spawnMask;
-  class<EntityEx> moClass;
+  class!EntityEx moClass;
 
   if (mthing->type <= 0)
   {
@@ -6772,7 +6772,7 @@ final override void SpawnMapThing(mthing_t *mthing)
   }
 
   // find which type to spawn
-  moClass = class<EntityEx>(FindClassFromEditorId(mthing->type,
+  moClass = class!EntityEx(FindClassFromEditorId(mthing->type,
     LineSpecialGameInfo(Game).GameFilterFlag));
   if (!moClass)
   {
@@ -6783,7 +6783,7 @@ final override void SpawnMapThing(mthing_t *mthing)
   }
   else
   {
-    moClass = class<EntityEx>(GetClassReplacement(moClass));
+    moClass = class!EntityEx(GetClassReplacement(moClass));
 
     //  If actor has no sprites, also map it to the unknown thing
     if (FindClassState(moClass, 'Spawn') &&
@@ -6873,7 +6873,7 @@ final bool CheckLockDef(LockDef *Lock, EntityEx User)
     bool Good = false;
     for (j = 0; j < Lock->Locks[i].AnyKeyList.Num; j++)
     {
-      if (User.FindInventory(class<Inventory>(
+      if (User.FindInventory(class!Inventory(
         Lock->Locks[i].AnyKeyList[j])))
       {
         Good = true;
@@ -6988,16 +6988,16 @@ final void StartSpeech(int SpeechNum)
 //
 //==========================================================================
 
-final class<EntityEx> GetClassFromID(int ID)
+final class!EntityEx GetClassFromID(int ID)
 {
   class Cls;
   if (ID)
   {
     foreach AllClasses(EntityEx, Cls)
     {
-      if (class<EntityEx>(Cls).default.ConversationID == ID)
+      if (class!EntityEx(Cls).default.ConversationID == ID)
       {
-        return class<EntityEx>(Cls);
+        return class!EntityEx(Cls);
       }
     }
     print("Unknown item %d", ID);
@@ -7021,15 +7021,15 @@ final int CheckForNeededItem(EntityEx A, int ID, int Amount)
     return -1;
   }
   //  Get class ID.
-  class<EntityEx> CID = GetClassFromID(ID);
+  class!EntityEx CID = GetClassFromID(ID);
   //  Check inventory items.
-  if (class<Inventory>(CID) && class<Inventory>(CID).default.bInvBar)
+  if (class!Inventory(CID) && class!Inventory(CID).default.bInvBar)
   {
-    Inventory Item = A.FindInventory(class<Inventory>(CID));
+    Inventory Item = A.FindInventory(class!Inventory(CID));
     return !Item || Item.Amount < Amount ? -2 : 0;
   }
   //  Check keys.
-  Inventory Item = A.FindInventory(class<Inventory>(CID));
+  Inventory Item = A.FindInventory(class!Inventory(CID));
   if (Item)
   {
     return -1;
@@ -7065,7 +7065,7 @@ final void ConChoiceImpulse(int ChoiceNum)
   int Item1;
   int Item2;
   int Item3;
-  class<EntityEx> ItemType;
+  class!EntityEx ItemType;
   Inventory Item;
   bool GaveItem;
 
@@ -7129,7 +7129,7 @@ final void ConChoiceImpulse(int ChoiceNum)
     if (Item1 != -1)
     {
       Item = CurrentSpeakingTo.FindInventory(
-        class<Inventory>(GetClassFromID(Choice->NeedItem1)));
+        class!Inventory(GetClassFromID(Choice->NeedItem1)));
       Item.Amount -= Choice->NeedAmount1;
       if (Item.Amount <= 0)
       {
@@ -7139,7 +7139,7 @@ final void ConChoiceImpulse(int ChoiceNum)
     if (Item2 != -1)
     {
       Item = CurrentSpeakingTo.FindInventory(
-        class<Inventory>(GetClassFromID(Choice->NeedItem2)));
+        class!Inventory(GetClassFromID(Choice->NeedItem2)));
       Item.Amount -= Choice->NeedAmount2;
       if (Item.Amount <= 0)
       {
@@ -7149,7 +7149,7 @@ final void ConChoiceImpulse(int ChoiceNum)
     if (Item3 != -1)
     {
       Item = CurrentSpeakingTo.FindInventory(
-        class<Inventory>(GetClassFromID(Choice->NeedItem3)));
+        class!Inventory(GetClassFromID(Choice->NeedItem3)));
       Item.Amount -= Choice->NeedAmount3;
       if (Item.Amount <= 0)
       {
@@ -7519,7 +7519,7 @@ final override void SetMarineSprite(int Tid, name SrcClassName, Entity Activator
     return;
   }
   //  If it's not a valid actor class, it will set sprite back to default.
-  class<EntityEx> SrcClass = class<EntityEx>(TmpClass);
+  class!EntityEx SrcClass = class!EntityEx(TmpClass);
 
   if (Tid)
   {
@@ -7567,7 +7567,7 @@ int GetPClassSpawnFlags()
 //
 //==========================================================================
 
-class<Inventory> GetDehackedItemType(EntityEx Ent)
+class!Inventory GetDehackedItemType(EntityEx Ent)
 {
   return none;
 }

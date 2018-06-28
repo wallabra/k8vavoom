@@ -64,7 +64,7 @@ name      SpawnClass;
 name      ScoreIcon;
 
 //  For morphed player classes
-class<Weapon> MorphWeapon;
+class!Weapon MorphWeapon;
 
 //  Attack offset, relative to the centre of the player.
 float     AttackZOffset;

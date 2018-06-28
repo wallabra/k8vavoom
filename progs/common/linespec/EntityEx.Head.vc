@@ -337,9 +337,9 @@ int       WoundHealth;
 int       GibsHealth;
 
 //  Damage info.
-array<DamageFactor>   DamageFactors;
+array!DamageFactor   DamageFactors;
 float         PainChance;
-array<PainChanceInfo> PainChances;
+array!PainChanceInfo PainChances;
 
 float     MissileChance;
 float     MissileMinRange;
@@ -417,7 +417,7 @@ int       Special1; // Special info
 int       Special2; // Special info
 float     Special1f;
 float     Special2f;
-class<EntityEx> SpecialCID;
+class!EntityEx SpecialCID;
 
 name      DamageType;
 
@@ -447,19 +447,19 @@ state     PrevEffectState;
 int       MeleeDamage;
 name      MeleeSound;
 float     MissileHeight;
-class<Actor>  MissileType;
+class!Actor  MissileType;
 
 //  View offset when used as a player camera
 float     CameraHeight;
 
 //  Customiseable blood
-class<Actor>  BloodType;
-class<Actor>  BloodSplatterType;
-class<Actor>  AxeBloodType;
+class!Actor  BloodType;
+class!Actor  BloodSplatterType;
+class!Actor  AxeBloodType;
 int       BloodColour;
 int       BloodTranslation;
 
-array<DropItemInfo> DropItemList;
+array!DropItemInfo DropItemList;
 
 int       SkillRespawnCount;
 

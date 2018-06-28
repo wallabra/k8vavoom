@@ -304,7 +304,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
           //writeln("  bloodclass: ", bloodClassName);
 
-          class<Actor> bloodClass = class<Actor>(FindClass(bloodClassName));
+          class!Actor bloodClass = class!Actor(FindClass(bloodClassName));
 
           if (bloodClass) {
             int bcc = int(GetCvarF('k8HSHeadKillBloodCount'));
@@ -324,11 +324,11 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
           }
 
           if (GetCvarB('k8HSHeadKillBloodPool')) {
-            class<Actor> poolClass = class<Actor>(FindClass(poolClassName));
+            class!Actor poolClass = class!Actor(FindClass(poolClassName));
             if (poolClass) Level.Spawn(poolClass, Origin);
           }
 
-          //class<Actor> mistClass = mistClassName;
+          //class!Actor mistClass = mistClassName;
           //if (mistClass) Spawn(mistClass, Pos);
         }
 

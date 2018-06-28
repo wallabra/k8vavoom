@@ -38,7 +38,7 @@ final void A_TossGib()
   EntityEx gib;
   float an;
   float speed;
-  class<EntityEx> tp;
+  class!EntityEx tp;
 
   if (bNoBlood)
   {
@@ -68,7 +68,7 @@ final void A_TossGib()
 //
 //==========================================================================
 
-final void A_SpawnDebris(class<Actor> SpawnType, optional bool TransTransl,
+final void A_SpawnDebris(class!Actor SpawnType, optional bool TransTransl,
   optional float MultH, optional float MultV)
 {
   if (!SpawnType)
@@ -209,7 +209,7 @@ final void InitSpawnedItem(EntityEx A, bool TransTransl, bool SetMaster,
 //
 //==========================================================================
 
-final void A_SpawnItem(class<Actor> ItemType, optional float Distance,
+final void A_SpawnItem(class!Actor ItemType, optional float Distance,
   optional float ZHeight, optional bool UseAmmo, optional bool TransTransl)
 {
   if (!specified_UseAmmo)
@@ -264,7 +264,7 @@ final void A_SpawnItem(class<Actor> ItemType, optional float Distance,
 //
 //==========================================================================
 
-final void A_SpawnItemEx(class<Actor> ItemType, optional float XOffs,
+final void A_SpawnItemEx(class!Actor ItemType, optional float XOffs,
   optional float YOffs, optional float ZOffs, optional float XVel,
   optional float YVel, optional float ZVel, optional float Angle,
   optional int Flags, optional int Chance, optional bool ApplyTranslation)

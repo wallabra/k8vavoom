@@ -186,7 +186,7 @@ final void SetWeapon(int WpnNum)
 //
 //==========================================================================
 
-final void SetSprite(class<EntityEx> SrcClass)
+final void SetSprite(class!EntityEx SrcClass)
 {
   if (SrcClass)
   {

@@ -226,7 +226,7 @@ delegate bool KeyUp(Object Sender, int Key);
 //==========================================================================
 
 //  Creation and destruction of widgets.
-native final spawner Widget NewChild(class<Widget> ChildClass);
+native final spawner Widget NewChild(class!Widget ChildClass);
 override native final void Destroy();
 native final void DestroyAllChildren();
 
@@ -292,7 +292,7 @@ native final int TextWidth(string text);
 //  Calculates text height
 native final int TextHeight(string text);
 //  Splits text into lines that fit in specified width
-native final int SplitText(string Text, out array<SplitLine> Lines,
+native final int SplitText(string Text, out array!SplitLine Lines,
   int Maxwidth);
 //  Splits text into lines that fit in specified width by inserting newlines
 native final string SplitTextWithNewlines(string Text, int Maxwidth);

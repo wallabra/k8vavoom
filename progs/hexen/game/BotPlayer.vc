@@ -282,7 +282,7 @@ bool CheckItem(Actor item)
 
     // If we don't have the weapon, pick it up
     if (ClassIsChildOf(botmo.Class, GetClassReplacement(HexenWeapon(Wpn).WeaponClass)) &&
-      !botmo.FindInventory(class<Inventory>(Wpn.Class)))
+      !botmo.FindInventory(class!Inventory(Wpn.Class)))
       return true;
 
     // If we have no more room for the mana it gives

@@ -28,7 +28,7 @@ class HUDMessage : Widget;
 //  ID, used as a priority or to replace a previous message.
 int         Id;
 
-array<SplitLine>  MsgLines;
+array!SplitLine  MsgLines;
 name        MsgFont;
 int         MsgColour;
 float       MsgAlpha;

@@ -307,9 +307,9 @@ override void SpawnSpeedEffect()
 
 override void Cheat_Gimme()
 {
-  class<Inventory>      Cls;
-  class<Weapon>       WpnCls;
-  class<FourthWeaponPiece>  PieceCls;
+  class!Inventory      Cls;
+  class!Weapon       WpnCls;
+  class!FourthWeaponPiece  PieceCls;
   Inventory         Inv;
 
   if (Cmd_CheckParm("weapons"))
@@ -520,7 +520,7 @@ override void Cheat_Class()
   }
   BaseClass = pclass;
 //  PostMorphWeapon(HexenDefs::WP_FIRST);
-  Actor(MO).MorphPlayer(class<PlayerPawn>(Level.Game.PlayerClasses[PClass]), 0.0,
+  Actor(MO).MorphPlayer(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), 0.0,
     PorkFX.default.MorphStyle, none, none, Actor(MO));
   SetCvar('class', pclass);
   SB_Start();

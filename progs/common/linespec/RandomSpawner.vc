@@ -102,7 +102,7 @@ override void BeginPlay()
     }
     else if (Random() <= DropItemList[i].Chance)
     {
-      class<EntityEx> cls = class<EntityEx>(FindClass(GetClassName(GetClassReplacement(DropItemList[i].Type))));
+      class!EntityEx cls = class!EntityEx(FindClass(GetClassName(GetClassReplacement(DropItemList[i].Type))));
 
       if (!cls)
       {

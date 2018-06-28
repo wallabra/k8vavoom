@@ -687,7 +687,7 @@ final void A_GenWizard()
 //
 //===========================================================================
 
-final void A_StaffAttack(int damage, class<Actor> PuffType) self(Actor)
+final void A_StaffAttack(int damage, class!Actor PuffType) self(Actor)
 {
   TAVec   angles;
   TVec    dir;
@@ -728,7 +728,7 @@ final void A_GauntletAttack(int power) self(Actor)
   float     dist;
   TAVec     angles;
   TVec      dir;
-  class<Actor>  PuffType;
+  class!Actor  PuffType;
   EntityEx    AimTarget;
 
   if (!bIsPlayer)

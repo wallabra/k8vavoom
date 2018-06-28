@@ -36,8 +36,8 @@ enum
   MB_EndGame
 };
 
-array<name> savedChoices;
-array<int> savedChoicesIdx;
+array!name savedChoices;
+array!int savedChoicesIdx;
 
 const int MAX_MENU_STACK  = 32;
 
@@ -75,7 +75,7 @@ bool          WaitForQuit;
 int           BigSelectorXOffset;
 int           BigSelectorYOffset;
 int           BigSelectorAnimSpeed;
-array<name>       BigSelectorAnimFrames;
+array!name       BigSelectorAnimFrames;
 
 name          DefaultFinaleMusic;
 name          DefaultFinaleType;
@@ -86,7 +86,7 @@ name          DefaultFinaleType;
 //
 //==========================================================================
 
-final MenuScreen SpawnMenu (class<MenuScreen> CID) {
+final MenuScreen SpawnMenu (class!MenuScreen CID) {
   MenuScreen m = MenuScreen(GRoot.NewChild(CID));
   m.ClGame = self;
   m.CreateMenu();
@@ -457,7 +457,7 @@ override void AddHudMessage(string Message, name Font, int Type, int Id, int Col
 final void SetPClass(int PClass)
 {
   MenuPClass = PClass;
-  SkillClassName = va("%n", class<PlayerPawn>(Game.PlayerClasses[
+  SkillClassName = va("%n", class!PlayerPawn(Game.PlayerClasses[
     PClass]).default.SpawnClass);
   print("EPISODES: %d", P_GetNumEpisodes());
   if (P_GetNumEpisodes() > 1)

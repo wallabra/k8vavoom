@@ -288,7 +288,7 @@ bool CheckItem(Actor item)
     bNewItemIsWeapon = true;
 
     // If we don't have the weapon, pick it up
-    if (!botmo.FindInventory(class<Inventory>(Wpn.Class)))
+    if (!botmo.FindInventory(class!Inventory(Wpn.Class)))
       return true;
 
     // If we have no more room for the ammo it gives

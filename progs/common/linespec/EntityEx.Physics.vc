@@ -1383,7 +1383,7 @@ final bool HitFloorType()
   {
     if (SInfo->SmallClass)
     {
-      A = Spawn(class<EntityEx>(SInfo->SmallClass), org);
+      A = Spawn(class!EntityEx(SInfo->SmallClass), org);
       A.FloorClip += SInfo->SmallClip;
       if (SInfo->SmallSound)
       {
@@ -1395,7 +1395,7 @@ final bool HitFloorType()
   {
     if (SInfo->BaseClass)
     {
-      A = Spawn(class<EntityEx>(SInfo->BaseClass), org);
+      A = Spawn(class!EntityEx(SInfo->BaseClass), org);
       if (SInfo->Sound && !SInfo->ChunkClass)
       {
         A.PlaySound(SInfo->Sound, CHAN_VOICE);
@@ -1403,7 +1403,7 @@ final bool HitFloorType()
     }
     if (SInfo->ChunkClass)
     {
-      A = Spawn(class<EntityEx>(SInfo->ChunkClass), org);
+      A = Spawn(class!EntityEx(SInfo->ChunkClass), org);
       A.Target = self;
       A.Velocity.x = (Random() - Random()) * SInfo->ChunkXVelMul * 35.0;
       A.Velocity.y = (Random() - Random()) * SInfo->ChunkYVelMul * 35.0;

@@ -60,7 +60,7 @@ int pic_armor[2];
 int LoadedLog;
 string LogText;
 
-class<Key> KeyCID[30];
+class!Key KeyCID[30];
 
 //==========================================================================
 //
@@ -388,7 +388,7 @@ void SB_DrawMainBar()
 //
 //==========================================================================
 
-void DrawAmmo(class<Inventory> Type, int Y, optional float alpha)
+void DrawAmmo(class!Inventory Type, int Y, optional float alpha)
 {
   Inventory AmmoItem = EntityEx(cl.MO).FindInventory(Type);
   if (specified_alpha)

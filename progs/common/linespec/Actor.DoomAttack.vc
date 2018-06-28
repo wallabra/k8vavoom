@@ -420,7 +420,7 @@ final void A_PainAttack()
 //
 //==========================================================================
 
-final void decorate_A_PainAttack(optional class<Actor> SpawnType)
+final void decorate_A_PainAttack(optional class!Actor SpawnType)
 {
   if (!GetCvarB('k8ElvenPaine')) return;
 
@@ -439,7 +439,7 @@ final void decorate_A_PainAttack(optional class<Actor> SpawnType)
 //
 //==========================================================================
 
-final void A_DualPainAttack(optional class<Actor> SpawnType)
+final void A_DualPainAttack(optional class!Actor SpawnType)
 {
   if (!Target)
   {
@@ -472,7 +472,7 @@ final void A_PainDie()
 //
 //==========================================================================
 
-final void decorate_A_PainDie(optional class<Actor> SpawnType)
+final void decorate_A_PainDie(optional class!Actor SpawnType)
 {
   A_Fall();
   PainShootSkull(SpawnType, Angles.yaw + 90.0);
@@ -564,7 +564,7 @@ final void A_FatAttack1()
 
 const float FatsoSpreadAngle = 90.0 / 8.0;
 
-final void decorate_A_FatAttack1(optional class<EntityEx> SpawnType)
+final void decorate_A_FatAttack1(optional class!EntityEx SpawnType)
 {
   EntityEx A;
 
@@ -612,7 +612,7 @@ final void A_FatAttack2()
 //
 //==========================================================================
 
-final void decorate_A_FatAttack2(optional class<EntityEx> SpawnType)
+final void decorate_A_FatAttack2(optional class!EntityEx SpawnType)
 {
   EntityEx A;
 
@@ -660,7 +660,7 @@ final void A_FatAttack3()
 //
 //==========================================================================
 
-final void decorate_A_FatAttack3(optional class<EntityEx> SpawnType)
+final void decorate_A_FatAttack3(optional class!EntityEx SpawnType)
 {
   EntityEx A;
 
@@ -858,12 +858,12 @@ final void A_BrainSpit()
 //
 //==========================================================================
 
-final void SpawnFly(class<EntityEx> SpawnType, name SpawnSound)
+final void SpawnFly(class!EntityEx SpawnType, name SpawnSound)
 {
   EntityEx newmobj;
   EntityEx fog;
   int r;
-  class<EntityEx> type;
+  class!EntityEx type;
 
   if (--ReactionCount)
     return; // still flying
@@ -940,7 +940,7 @@ final void A_SpawnFly()
 //
 //==========================================================================
 
-final void decorate_A_SpawnFly(optional class<EntityEx> SpawnType)
+final void decorate_A_SpawnFly(optional class!EntityEx SpawnType)
 {
   name SpawnSound;
   if (SpawnType)
@@ -1052,7 +1052,7 @@ final void A_Mushroom()
 //
 //==========================================================================
 
-final void decorate_A_Mushroom(optional class<Actor> SpawnType,
+final void decorate_A_Mushroom(optional class!Actor SpawnType,
   optional int Amount, optional int Flags, optional float vrange,
   optional float hrange)
 {

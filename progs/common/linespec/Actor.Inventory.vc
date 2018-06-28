@@ -33,7 +33,7 @@
 //
 //==========================================================================
 
-final void DoGiveInventory(class<Inventory> ItemType, int Amount,
+final void DoGiveInventory(class!Inventory ItemType, int Amount,
   EntityEx Receiver)
 {
   if (!Receiver)
@@ -87,7 +87,7 @@ final void DoGiveInventory(class<Inventory> ItemType, int Amount,
 //
 //==========================================================================
 
-final void A_GiveInventory(class<Inventory> ItemType, optional int Amount)
+final void A_GiveInventory(class!Inventory ItemType, optional int Amount)
 {
   DoGiveInventory(ItemType, Amount, self);
 }
@@ -98,7 +98,7 @@ final void A_GiveInventory(class<Inventory> ItemType, optional int Amount)
 //
 //==========================================================================
 
-final void A_GiveToTarget(class<Inventory> ItemType, optional int Amount)
+final void A_GiveToTarget(class!Inventory ItemType, optional int Amount)
 {
   DoGiveInventory(ItemType, Amount, Target);
 }
@@ -109,7 +109,7 @@ final void A_GiveToTarget(class<Inventory> ItemType, optional int Amount)
 //
 //==========================================================================
 
-final void DoTakeInventory(class<Inventory> ItemType, int Amount,
+final void DoTakeInventory(class!Inventory ItemType, int Amount,
   EntityEx Receiver)
 {
   if (!Receiver)
@@ -153,7 +153,7 @@ final void DoTakeInventory(class<Inventory> ItemType, int Amount,
 //
 //==========================================================================
 
-final void A_TakeInventory(class<Inventory> ItemType, optional int Amount)
+final void A_TakeInventory(class!Inventory ItemType, optional int Amount)
 {
   DoTakeInventory(ItemType, Amount, self);
 }
@@ -164,7 +164,7 @@ final void A_TakeInventory(class<Inventory> ItemType, optional int Amount)
 //
 //==========================================================================
 
-final void A_TakeFromTarget(class<Inventory> ItemType, optional int Amount)
+final void A_TakeFromTarget(class!Inventory ItemType, optional int Amount)
 {
   DoTakeInventory(ItemType, Amount, Target);
 }
@@ -175,7 +175,7 @@ final void A_TakeFromTarget(class<Inventory> ItemType, optional int Amount)
 //
 //==========================================================================
 
-final void A_DropInventory(class<Inventory> ItemType)
+final void A_DropInventory(class!Inventory ItemType)
 {
   Inventory Item = FindInventory(ItemType);
   if (Item)
@@ -190,7 +190,7 @@ final void A_DropInventory(class<Inventory> ItemType)
 //
 //==========================================================================
 
-final void A_SelectWeapon(class<Weapon> WeaponType)
+final void A_SelectWeapon(class!Weapon WeaponType)
 {
   if (!bIsPlayer)
   {

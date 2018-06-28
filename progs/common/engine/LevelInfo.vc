@@ -125,15 +125,15 @@ int CurrentSecret;
 float CompletitionTime; //  For intermission
 
 // Maintain single and multi player starting spots.
-array<mthing_t> DeathmatchStarts; // Player spawn spots for deathmatch.
-array<mthing_t> PlayerStarts; // Player spawn spots.
+array!mthing_t DeathmatchStarts; // Player spawn spots for deathmatch.
+array!mthing_t PlayerStarts; // Player spawn spots.
 
 private Entity TIDHash[TID_HASH_SIZE];
 
 float Gravity;      // Level Gravity
 float AirControl;
 int Infighting;
-array<MapSpecialAction> SpecialActions;
+array!MapSpecialAction SpecialActions;
 
 
 replication {

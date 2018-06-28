@@ -36,7 +36,7 @@ int       DropAmount;
 //
 //==========================================================================
 
-final class<Ammo> GetParentAmmo()
+final class!Ammo GetParentAmmo()
 {
   class Ret = Class;
   //  Get parent class that is direct descendant of Ammo class.
@@ -44,7 +44,7 @@ final class<Ammo> GetParentAmmo()
   {
     Ret = GetClassParent(Ret);
   }
-  return class<Ammo>(Ret);
+  return class!Ammo(Ret);
 }
 
 //==========================================================================

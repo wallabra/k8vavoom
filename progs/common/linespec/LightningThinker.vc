@@ -29,8 +29,8 @@ int       Sky1Texture;
 int       Sky2Texture;
 float     NextLightningFlash;
 float     LightningFlash;
-array<int>    LightningLightLevels;
-array<byte>   LightningSectors;
+array!int    LightningLightLevels;
+array!byte   LightningSectors;
 bool      bStopping;
 
 //==========================================================================

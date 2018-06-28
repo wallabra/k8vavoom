@@ -27,7 +27,7 @@ class WeaponPiece : Inventory
   abstract;
 
 int       PieceValue;
-class<Weapon> WeaponType;
+class!Weapon WeaponType;
 Weapon      GivenWeapon;
 
 //==========================================================================

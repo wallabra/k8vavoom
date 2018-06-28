@@ -192,7 +192,7 @@ struct SkillDef {
   int SpawnFilter;
   int AcsReturn;
   string MenuName;
-  array<SkillPlayerClassName> PlayerClassNames;
+  array!SkillPlayerClassName PlayerClassNames;
   string ConfirmationText;
   string Key;
   string TextColour;
@@ -286,7 +286,7 @@ native static final GameObject::LockDef *GetLockDef (int Lock);
 native static final int ParseColour (string Name);
 native static final string TextColourString (int Colour);
 native static final bool StartTitleMap ();
-native static final void LoadBinaryLump (name LumpName, out array<byte> Array);
+native static final void LoadBinaryLump (name LumpName, out array!byte Array);
 native static final bool IsMapPresent (name MapName);
 
 native static final int P_GetMapIndexByLevelNum (int map);

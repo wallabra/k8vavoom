@@ -34,7 +34,7 @@ float       notify_times[NUM_NOTIFY_LINES];
 int         num_notify;
 int         first_notify;
 
-array<SplitLine>  CentreMessageLines;
+array!SplitLine  CentreMessageLines;
 int         CentreMessageHeight;
 float       CentreTime;
 
@@ -125,7 +125,7 @@ void ClearNotify()
 
 void AddNotifyMessage(string Str)
 {
-  array<SplitLine>  Lines;
+  array!SplitLine  Lines;
   int         i;
 
   SetFont('smallfont');

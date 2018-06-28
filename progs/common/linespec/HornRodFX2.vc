@@ -130,7 +130,7 @@ final void A_SkullRodStorm()
   float y;
   Actor A;
   PlayerEx player;
-  class<Actor> rain_type;
+  class!Actor rain_type;
 
   if (Health-- == 0)
   {

@@ -671,7 +671,7 @@ final void NightmareRespawn()
     z = ONFLOORZ;
 
   // inherit attributes from deceased one
-  A = Spawn(class<EntityEx>(Class), vector(x, y, z),,, false);
+  A = Spawn(class!EntityEx(Class), vector(x, y, z),,, false);
   Level.CopyMThing(&SpawnPoint, &A.SpawnPoint);
   A.Angles.yaw = itof(45 * (SpawnPoint.angle / 45));
 
@@ -1049,8 +1049,8 @@ name GetSpecies()
   // and use the top one as species.
   if (bMonster)
   {
-    while (class<EntityEx>(GetClassParent(Ret)) &&
-      class<EntityEx>(GetClassParent(Ret)).default.bMonster)
+    while (class!EntityEx(GetClassParent(Ret)) &&
+      class!EntityEx(GetClassParent(Ret)).default.bMonster)
     {
       Ret = GetClassParent(Ret);
     }
@@ -1529,7 +1529,7 @@ void PlayActiveSound()
 //
 //==========================================================================
 
-final void DropItem(class<EntityEx> type, int amount, float chance)
+final void DropItem(class!EntityEx type, int amount, float chance)
 {
   EntityEx  A;
 
@@ -1930,8 +1930,8 @@ override void ClientTick(float DeltaTime)
 
 final void DoStateEffects(float DeltaTime)
 {
-  array<LightEffectDef*>    Lights;
-  array<ParticleEffectDef*> Particles;
+  array!(LightEffectDef *)    Lights;
+  array!(ParticleEffectDef *) Particles;
   int             i;
   TVec            Forward;
   TVec            Right;
@@ -2063,7 +2063,7 @@ final void TouchDehackedSpecial(EntityEx Toucher)
     return;
   }
 
-  class<Inventory> ItemType = LineSpecialLevelInfo(Level).GetDehackedItemType(self);
+  class!Inventory ItemType = LineSpecialLevelInfo(Level).GetDehackedItemType(self);
   if (!ItemType)
   {
     return;
@@ -2195,7 +2195,7 @@ final bool GiveBody(int num)
 //
 //==========================================================================
 
-final void SpawnPuff(TVec Org, float Range, class<EntityEx> PuffType,
+final void SpawnPuff(TVec Org, float Range, class!EntityEx PuffType,
   bool HitThing, optional sector_t *sec, optional line_t *li, optional TVec realOrg, optional name decalType)
 {
   int i, c;
@@ -2629,7 +2629,7 @@ final bool CheckBossDeath()
 
   // scan the remaining thinkers to see if all bosses are dead
   EntityEx Other;
-  foreach AllThinkers(class<Thinker>(Class), Other)
+  foreach AllThinkers(class!Thinker(Class), Other)
   {
     if (Other != self && Other.Class == Class && Other.Health > 0)
     {
@@ -2694,7 +2694,7 @@ final int GetSpeech()
 //
 //==========================================================================
 
-final EntityEx TossUpObject(class<EntityEx> type)
+final EntityEx TossUpObject(class!EntityEx type)
 {
   EntityEx  A;
   float   an;
@@ -2867,7 +2867,7 @@ final override int GetActorProperty(int Prop)
 
 final bool SetPlayerProperty(int Prop, int Set)
 {
-  class<Inventory> InvClass = none;
+  class!Inventory InvClass = none;
   switch (Prop)
   {
   case PROP_FROZEN:
@@ -3040,7 +3040,7 @@ bool ShouldDropItems()
 //
 //==========================================================================
 
-final void PainShootSkull(class<Actor> SpawnType, float angle)
+final void PainShootSkull(class!Actor SpawnType, float angle)
 {
   EntityEx mo;
   Actor newSkull;
@@ -3124,8 +3124,8 @@ final void AutoUseHealth(int saveHealth)
   int count;
   int normalhealth = 0;
   int superhealth = 0;
-  array<Inventory> normal;
-  array<Inventory> super;
+  array!Inventory normal;
+  array!Inventory super;
   Inventory inv;
   int saved = 0;
 
@@ -3304,7 +3304,7 @@ final void AutoUseHealth(int saveHealth)
 final void AutoUseStrifeHealth(int saveHealth)
 {
   int i;
-  array<Inventory> Items;
+  array!Inventory Items;
   Inventory inv;
   int itemshealth;
 
@@ -3427,7 +3427,7 @@ final void SpawnDirt(float radius)
 {
   float angle;
   TVec org;
-  class<EntityEx> dtype;
+  class!EntityEx dtype;
   EntityEx dirt;
 
   angle = 360.0 * Random();

@@ -396,7 +396,7 @@ void SB_DrawMainBar()
         int TmpSlot;
         int TmpIndex;
         LineSpecialGameInfo(cl.ClGame.Game).FindWeaponSlot(
-          class<Weapon>(Item.Class), TmpSlot, TmpIndex, Weapon(Item).Position);
+          class!Weapon(Item.Class), TmpSlot, TmpIndex, Weapon(Item).Position);
         if (TmpSlot == i + 2)
         {
           HaveWeapon = true;
@@ -506,7 +506,7 @@ void SB_DrawMainBar()
 //==========================================================================
 
 void DrawAmmo(int CountX, int CountY, int MaxX, int MaxY,
-  class<Inventory> AmmoClass)
+  class!Inventory AmmoClass)
 {
   Inventory   Item;
 

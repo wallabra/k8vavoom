@@ -26,12 +26,12 @@
 class MorphProjectile : Actor
   abstract;
 
-class<Actor>    MonsterClass;
-class<PlayerPawn> PlayerClass;
+class!Actor    MonsterClass;
+class!PlayerPawn PlayerClass;
 float       Duration;
 int         MorphStyle;
-class<Actor>    MorphFlash;
-class<Actor>    UnmorphFlash;
+class!Actor    MorphFlash;
+class!Actor    UnmorphFlash;
 
 //==========================================================================
 //
@@ -41,7 +41,7 @@ class<Actor>    UnmorphFlash;
 
 override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 {
-  victim.Morph(class<MorphedMonster>(MonsterClass), PlayerClass, Duration,
+  victim.Morph(class!MorphedMonster(MonsterClass), PlayerClass, Duration,
     MorphStyle, MorphFlash, UnmorphFlash);
   return -1;  // Always return
 }

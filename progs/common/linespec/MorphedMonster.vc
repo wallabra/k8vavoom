@@ -27,7 +27,7 @@ class MorphedMonster : Actor;
 
 int       MorphStyle;
 float     UnmorphTime;
-class<Actor>  UnmorphFlash;
+class!Actor  UnmorphFlash;
 EntityEx    UnmorphedMo;
 
 //==========================================================================
@@ -78,7 +78,7 @@ final bool UpdateMorphedMonster()
 override int UnmorphActor(Entity Activator, int Force)
 {
   TVec oldOrigin;
-  class<EntityEx> originalClass;
+  class!EntityEx originalClass;
   float oldAngle;
   int oldSpecial;
   int oldTID;
@@ -127,7 +127,7 @@ override int UnmorphActor(Entity Activator, int Force)
   mo.bGhost = bGhost;
   SetState(FindState('FreeTargMobj'));
   UnmorphedMo = mo;
-  Spawn(UnmorphFlash ? UnmorphFlash : class<Actor>(TeleportFog), oldOrigin +
+  Spawn(UnmorphFlash ? UnmorphFlash : class!Actor(TeleportFog), oldOrigin +
     vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
   return true;
 }

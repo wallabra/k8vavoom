@@ -123,7 +123,7 @@ final void A_KeenDie()
   A_Fall();
 
   // scan the remaining thinkers to see if all Keens are dead
-  foreach AllThinkers(class<Thinker>(Class), Other)
+  foreach AllThinkers(class!Thinker(Class), Other)
   {
     if (Other != self && Other.Health > 0)
     {
@@ -365,11 +365,11 @@ final void A_CheckPlayerDone()
 //
 //==========================================================================
 
-final void A_SkullPop(optional class<Actor> SpawnType)
+final void A_SkullPop(optional class!Actor SpawnType)
 {
   EntityEx A;
 
-  if (!class<PlayerChunk>(SpawnType))
+  if (!class!PlayerChunk(SpawnType))
   {
     SpawnType = BloodySkull;
   }

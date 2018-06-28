@@ -341,7 +341,7 @@ final void decorate_A_GiveQuestItem(int QuestType)
 
   //  Give quest item for destroying important object.
   //  Basicly all object using this function does this.
-  class<Inventory> QClass = class<Inventory>(FindClass(
+  class!Inventory QClass = class!Inventory(FindClass(
     StrToName(va("QuestItem%d", QuestType))));
   if (QClass)
   {

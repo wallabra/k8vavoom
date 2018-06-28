@@ -45,7 +45,7 @@ final void A_Jump(int Chance, state Label1, optional state Label2,
     }
     else
     {
-      array<state> List;
+      array!state List;
       List[0] = Label1;
       List[1] = Label2;
       if (specified_Label3)
@@ -164,11 +164,11 @@ final void A_JumpIfHealthLower(int HealthVal, state Label)
 //
 //==========================================================================
 
-final void A_JumpIfInventory(class<Actor> ItemType, int Amount, state Label)
+final void A_JumpIfInventory(class!Actor ItemType, int Amount, state Label)
 {
   if (ItemType)
   {
-    Inventory Item = FindInventory(class<Inventory>(ItemType));
+    Inventory Item = FindInventory(class!Inventory(ItemType));
     if (Item)
     {
       if ((Amount > 0 && Item.Amount >= Amount) ||
@@ -192,11 +192,11 @@ final void A_JumpIfInventory(class<Actor> ItemType, int Amount, state Label)
 //
 //==========================================================================
 
-final void A_JumpIfInTargetInventory(class<Actor> ItemType, int Amount, state Label)
+final void A_JumpIfInTargetInventory(class!Actor ItemType, int Amount, state Label)
 {
   if (ItemType && Target)
   {
-    Inventory Item = Target.FindInventory(class<Inventory>(ItemType));
+    Inventory Item = Target.FindInventory(class!Inventory(ItemType));
     if (Item)
     {
       if ((Amount > 0 && Item.Amount >= Amount) ||

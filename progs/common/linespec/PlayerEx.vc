@@ -88,7 +88,7 @@ int       Refire;
 
 float     FlyHeight;
 
-array<name>   RevealedMaps;
+array!name   RevealedMaps;
 
 Inventory   InvFirst;
 Inventory   InvPtr;
@@ -125,7 +125,7 @@ int       Objectives;
 
 float     MorphTime;  // player is morphed into something if > 0
 int       MorphStyle;
-class<Actor>  UnmorphFlash;
+class!Actor  UnmorphFlash;
 
 int       Accuracy;
 int       Stamina;
@@ -1116,7 +1116,7 @@ final void NextWeapon()
 //
 //==========================================================================
 
-final Weapon BestWeapon(optional class<Ammo> AmmoType)
+final Weapon BestWeapon(optional class!Ammo AmmoType)
 {
   bool Powered = !!EntityEx(MO).FindInventory(PowerWeaponLevel2);
   Weapon Best = none;
@@ -1238,7 +1238,7 @@ final Weapon GetPrevWeapon(Weapon Current)
   int     Start;
   int     i;
 
-  if (GI.FindWeaponSlot(class<Weapon>(Current.Class), Slot, Index, Current.Position))
+  if (GI.FindWeaponSlot(class!Weapon(Current.Class), Slot, Index, Current.Position))
   {
     Start = Slot * LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT + Index;
   }
@@ -1277,7 +1277,7 @@ final Weapon GetNextWeapon(Weapon Current)
   int     Start;
   int     i;
 
-  if (GI.FindWeaponSlot(class<Weapon>(Current.Class), Slot, Index, Current.Position))
+  if (GI.FindWeaponSlot(class!Weapon(Current.Class), Slot, Index, Current.Position))
   {
     Start = Slot * LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT + Index;
   }
@@ -1759,7 +1759,7 @@ override void PreTravel()
 
 override void UseInventory(string Inv)
 {
-  Inventory item = EntityEx(MO).FindInventory(class<Inventory>(FindClass(StrToName(Inv))));
+  Inventory item = EntityEx(MO).FindInventory(class!Inventory(FindClass(StrToName(Inv))));
 
   if (bTotallyFrozen || (Level.bFrozen && !(Cheats & CF_TIMEFREEZE)))
   { // You can't use items if you're totally frozen
@@ -2110,7 +2110,7 @@ void ClientVoice(int VoiceNum)
 //
 //==========================================================================
 
-final bool GiveAmmo(class<Ammo> ammo, int count)
+final bool GiveAmmo(class!Ammo ammo, int count)
 {
   int oldammo;
 
@@ -2466,7 +2466,7 @@ void ResetPlayerOnSpawn()
 
 void GiveDefaultDeathMatchInventory()
 {
-  class<Inventory>  Cls;
+  class!Inventory  Cls;
 
   //  Give all keys in death match mode.
   foreach AllClasses(Key, Cls)
@@ -2519,7 +2519,7 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
   {
     Error("Player::SpawnPlayer : Unknown class type");
   }
-  PP = Level.Spawn(class<PlayerPawn>(Level.Game.PlayerClasses[PClass]), vector(x, y, z),,, false);
+  PP = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z),,, false);
   PP.Origin.z += mthing->height;
   PP.LinkToWorld();
   PP.FriendPlayer = GetPlayerNum() + 1; //  Players are their own friends.
@@ -2975,7 +2975,7 @@ final void UseFlyPower()
 //
 //==========================================================================
 
-final void PlayerUseArtifactType(class<Inventory> arti)
+final void PlayerUseArtifactType(class!Inventory arti)
 {
   Inventory Item = EntityEx(MO).FindInventory(arti);
   if (Item)
@@ -3519,7 +3519,7 @@ final bool UndoPlayerMorph(bool Force, PlayerEx Activator)
   {
     Error("UndoPlayerMorph: Unknown class type");
   }
-  A = Level.Spawn(class<PlayerPawn>(Level.Game.PlayerClasses[BaseClass]),
+  A = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[BaseClass]),
     MO.Origin,,, false);
   if (!Force && !A.TestLocation())
   {
@@ -3566,7 +3566,7 @@ final bool UndoPlayerMorph(bool Force, PlayerEx Activator)
   if (CorrectWeapon)
   {
     // Better "lose morphed weapon" semantics
-    class<Weapon> MorphWeapon = PlayerPawn(MO).MorphWeapon;
+    class!Weapon MorphWeapon = PlayerPawn(MO).MorphWeapon;
     if (MorphWeapon)
     {
       Weapon OrigWpn = Weapon(EntityEx(MO).FindInventory(MorphWeapon));
@@ -3585,7 +3585,7 @@ final bool UndoPlayerMorph(bool Force, PlayerEx Activator)
     }
   }
 
-  Level.Spawn(UnmorphFlash ? UnmorphFlash : class<Actor>(TeleportFog),
+  Level.Spawn(UnmorphFlash ? UnmorphFlash : class!Actor(TeleportFog),
     MO.Origin + vector(20.0 * cos(MO.Angles.yaw),
     20.0 * sin(MO.Angles.yaw),
     LineSpecialGameInfo(Level.Game).TeleFogHeight));
@@ -3605,7 +3605,7 @@ final bool UndoPlayerMorph(bool Force, PlayerEx Activator)
 
 final void ActivateMorphWeapon()
 {
-  class<Weapon> WpnClass = PlayerPawn(MO).MorphWeapon;
+  class!Weapon WpnClass = PlayerPawn(MO).MorphWeapon;
   Weapon Wpn;
   if (WpnClass)
   {
@@ -3627,7 +3627,7 @@ final void ActivateMorphWeapon()
       if (Weapon(Item))
       {
         Wpn = Weapon(Item);
-        WpnClass = class<Weapon>(Weapon(Item).Class);
+        WpnClass = class!Weapon(Weapon(Item).Class);
       }
     }
   }

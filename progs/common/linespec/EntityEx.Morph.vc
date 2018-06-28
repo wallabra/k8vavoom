@@ -47,9 +47,9 @@ const int
 //
 //==========================================================================
 
-final bool Morph(class<MorphedMonster> MonsterClass,
-  class<PlayerPawn> PlayerClass, float Duration, int MorphStyle,
-  class<Actor> MorphFlash, class<Actor> UnmorphFlash)
+final bool Morph(class!MorphedMonster MonsterClass,
+  class!PlayerPawn PlayerClass, float Duration, int MorphStyle,
+  class!Actor MorphFlash, class!Actor UnmorphFlash)
 {
   if (bIsPlayer)
   {
@@ -69,8 +69,8 @@ final bool Morph(class<MorphedMonster> MonsterClass,
 //
 //==========================================================================
 
-final bool MorphMonster(class<MorphedMonster> MonsterClass, float Duration,
-  int MorphStyle, class<Actor> MorphFlash, class<Actor> UnmorphFlash)
+final bool MorphMonster(class!MorphedMonster MonsterClass, float Duration,
+  int MorphStyle, class!Actor MorphFlash, class!Actor UnmorphFlash)
 {
   int i;
 
@@ -91,11 +91,11 @@ final bool MorphMonster(class<MorphedMonster> MonsterClass, float Duration,
     return false;
   }
 
-  Spawn(MorphFlash ? MorphFlash : class<Actor>(TeleportFog), Origin +
+  Spawn(MorphFlash ? MorphFlash : class!Actor(TeleportFog), Origin +
     vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
   MorphedMonster monster = Spawn(MonsterClass, Origin,,, false);
-  monster.SpecialCID = class<Actor>(Class);
+  monster.SpecialCID = class!Actor(Class);
   monster.MorphStyle = MorphStyle;
   monster.UnmorphTime = XLevel.Time + Duration;
   monster.UnmorphFlash = UnmorphFlash;
@@ -138,8 +138,8 @@ void MonsterMorphed()
 //
 //==========================================================================
 
-final bool MorphPlayer(class<PlayerPawn> PlayerClass, float Duration,
-  int MorphStyle, class<Actor> MorphFlash, class<Actor> UnmorphFlash,
+final bool MorphPlayer(class!PlayerPawn PlayerClass, float Duration,
+  int MorphStyle, class!Actor MorphFlash, class!Actor UnmorphFlash,
   EntityEx Activator)
 {
   Actor beastMo;
@@ -171,7 +171,7 @@ final bool MorphPlayer(class<PlayerPawn> PlayerClass, float Duration,
     return false;
   }
 
-  Spawn(MorphFlash ? MorphFlash : class<Actor>(TeleportFog), Origin +
+  Spawn(MorphFlash ? MorphFlash : class!Actor(TeleportFog), Origin +
     vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
   beastMo = Spawn(PlayerClass, Origin,,, false);
@@ -235,8 +235,8 @@ final bool MorphPlayer(class<PlayerPawn> PlayerClass, float Duration,
 override int MorphActor(name PlayerClass, name MonsterClass, float Duration,
   int Style, name MorphFlash, name UnmorphFlash)
 {
-  return Morph(class<MorphedMonster>(FindClassLowerCase(MonsterClass)),
-    class<PlayerPawn>(FindClassLowerCase(PlayerClass)), Duration, Style,
-    class<Actor>(FindClassLowerCase(MorphFlash)),
-    class<Actor>(FindClassLowerCase(UnmorphFlash)));
+  return Morph(class!MorphedMonster(FindClassLowerCase(MonsterClass)),
+    class!PlayerPawn(FindClassLowerCase(PlayerClass)), Duration, Style,
+    class!Actor(FindClassLowerCase(MorphFlash)),
+    class!Actor(FindClassLowerCase(UnmorphFlash)));
 }

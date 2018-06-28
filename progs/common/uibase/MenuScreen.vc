@@ -27,7 +27,7 @@ class MenuScreen : Widget;
 
 ClientGameShared ClGame;
 
-array<MenuChoice> Items;
+array!MenuChoice Items;
 
 bool MenuScrollable;
 int OfsYPrev;
@@ -37,7 +37,7 @@ int CursorPrev;
 int ChoicesStartX;
 int ChoicesStartY;
 
-class<Widget> SelectorType;
+class!Widget SelectorType;
 Widget Selector;
 
 string Title;

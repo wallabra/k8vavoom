@@ -45,7 +45,7 @@ float StartTime;      //  minotaur start time
 //
 //==========================================================================
 
-final void A_CustomMissile(class<Actor> MissileType, optional float SpawnHeight,
+final void A_CustomMissile(class!Actor MissileType, optional float SpawnHeight,
   optional int SpawnXYOffset, optional float Angle, optional int AimMode,
   optional float Pitch)
 {
@@ -146,7 +146,7 @@ final void FireSuperBullet () {
 //==========================================================================
 
 final void A_CustomBulletAttack(float SpreadHoriz, float SpreadVert,
-  int NumBullets, int DamagePerBullet, optional class<Actor> PuffType,
+  int NumBullets, int DamagePerBullet, optional class!Actor PuffType,
   optional float Range, optional int Flags)
 {
   if (!Range)
@@ -202,7 +202,7 @@ final void A_CustomBulletAttack(float SpreadHoriz, float SpreadVert,
 final void A_CustomRailgun(int RailDamage, optional float Offset,
   optional string Colour1, optional string Colour2, optional int Flags,
   optional bool DoAim, optional float MaxDiff,
-  optional class<Actor> PuffType)
+  optional class!Actor PuffType)
 {
   if (DoAim && !Target)
   {
@@ -291,7 +291,7 @@ final void A_CustomMeleeAttack(int MeleeDamage, optional name MeleeSound,
 //
 //==========================================================================
 
-final void A_CustomComboAttack(class<Actor> MissileType, float MissileHeight,
+final void A_CustomComboAttack(class!Actor MissileType, float MissileHeight,
   int MeleeDamage, optional name MeleeSound, optional name DamageType,
   optional bool Bleed)
 {
@@ -335,7 +335,7 @@ final void A_CustomComboAttack(class<Actor> MissileType, float MissileHeight,
 //==========================================================================
 
 final void DoAttack(bool DoMelee, bool DoMissile, int MeleeDamage,
-  name MeleeSound, class<Actor> MissileType, float MissileHeight)
+  name MeleeSound, class!Actor MissileType, float MissileHeight)
 {
   if (!Target)
   {
@@ -410,7 +410,7 @@ final void A_ComboAttack()
 //==========================================================================
 
 final void A_BasicAttack(int AMeleeDamage, name AMeleeSound,
-  class<Actor> AMissileType, float AMissileHeight)
+  class!Actor AMissileType, float AMissileHeight)
 {
   DoAttack(true, true, AMeleeDamage, AMeleeSound, AMissileType,
     AMissileHeight);
@@ -729,7 +729,7 @@ final void A_Detonate()
 //
 //==========================================================================
 
-final void A_ThrowGrenade(class<Actor> ItemType, optional float SpawnHeight,
+final void A_ThrowGrenade(class!Actor ItemType, optional float SpawnHeight,
   optional float XYVel, optional float ZVel, optional bool UseAmmo)
 {
   if (!specified_UseAmmo)
@@ -897,7 +897,7 @@ void A_ZoomFactor(float zoom, optional int flags)
 //==========================================================================
 
 final void BlastActor(Actor victim, Actor source, float speed,
-          class<Actor> BlastEffect)
+          class!Actor BlastEffect)
 {
   float angle;
   float ang;
@@ -977,7 +977,7 @@ final void BlastActor(Actor victim, Actor source, float speed,
 //==========================================================================
 
 final void A_Blast(int BlastFlags, float Strength, float Radius, float Speed,
-           class<Actor> BlastEffect, string BlastSound)
+           class!Actor BlastEffect, string BlastSound)
 {
   Actor mo;
   float dist;
@@ -1552,7 +1552,7 @@ final void A_MinotaurCharge()
 
   if (Special1 > 0)
   {
-    class<Actor> PuffType = PhoenixPuff;
+    class!Actor PuffType = PhoenixPuff;
     if (bSummonedMonster)
     {
       PuffType = PunchPuff;

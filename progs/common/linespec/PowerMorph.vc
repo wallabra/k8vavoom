@@ -25,10 +25,10 @@
 
 class PowerMorph : Powerup;
 
-class<PlayerPawn> PlayerClass;
+class!PlayerPawn PlayerClass;
 int         MorphStyle;
-class<Actor>    MorphFlash;
-class<Actor>    UnmorphFlash;
+class!Actor    MorphFlash;
+class!Actor    UnmorphFlash;
 PlayerEx      OwnerPlayer;
 
 //===========================================================================

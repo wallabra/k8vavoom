@@ -77,7 +77,7 @@ void RemoveInventory(Inventory Item)
 //
 //==========================================================================
 
-final Inventory FindInventory(class<Inventory> ItemClass)
+final Inventory FindInventory(class!Inventory ItemClass)
 {
   Inventory Check;
 
@@ -97,7 +97,7 @@ final Inventory FindInventory(class<Inventory> ItemClass)
 //
 //==========================================================================
 
-final Inventory GiveInventoryType(class<Inventory> Type)
+final Inventory GiveInventoryType(class!Inventory Type)
 {
   Inventory Item = Spawn(Type,,,, false);
   //  This shouldn't count for the item statistics
@@ -276,7 +276,7 @@ final override void GiveInventory(name ItemName, int Amount)
     print("Unknown item type %n", ItemName);
     return;
   }
-  class<Inventory> ItemClass = class<Inventory>(EClass);
+  class!Inventory ItemClass = class!Inventory(EClass);
   if (!ItemClass)
   {
     print("%n is not an inventory class", ItemName);
@@ -340,7 +340,7 @@ final override void TakeInventory(name ItemName, int Amount)
   }
 
   //  Get class of the item.
-  class<Inventory> ItemClass = class<Inventory>(FindClassLowerCase(
+  class!Inventory ItemClass = class!Inventory(FindClassLowerCase(
     ItemName));
   if (!ItemClass)
   {
@@ -384,7 +384,7 @@ final override int CheckInventory(name ItemName)
     return Health;
   }
 
-  class<Inventory> ItemClass = class<Inventory>(FindClassLowerCase(
+  class!Inventory ItemClass = class!Inventory(FindClassLowerCase(
     ItemName));
   if (ItemClass)
   {
@@ -402,7 +402,7 @@ final override int CheckInventory(name ItemName)
 
 final override int UseInventoryName(name ItemName)
 {
-  class<Inventory> ItemClass = class<Inventory>(FindClassLowerCase(
+  class!Inventory ItemClass = class!Inventory(FindClassLowerCase(
     ItemName));
   if (ItemClass)
   {
@@ -456,7 +456,7 @@ final override int SetNamedWeapon(name Name)
     return false;
   }
 
-  Weapon Wpn = Weapon(FindInventory(class<Inventory>(FindClassLowerCase(
+  Weapon Wpn = Weapon(FindInventory(class!Inventory(FindClassLowerCase(
     Name))));
   if (!Wpn)
   {
@@ -486,7 +486,7 @@ final override int SetNamedWeapon(name Name)
 
 final override int GetAmmoCapacity(name Name)
 {
-  class<Ammo> AmmoType = class<Ammo>(FindClassLowerCase(Name));
+  class!Ammo AmmoType = class!Ammo(FindClassLowerCase(Name));
   if (!AmmoType)
   {
     return 0;
@@ -517,7 +517,7 @@ final override int GetAmmoCapacity(name Name)
 
 final override void SetAmmoCapacity(name Name, int Amount)
 {
-  class<Ammo> AmmoType = class<Ammo>(FindClassLowerCase(Name));
+  class!Ammo AmmoType = class!Ammo(FindClassLowerCase(Name));
   if (!AmmoType)
   {
     return;

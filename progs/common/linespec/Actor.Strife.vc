@@ -88,8 +88,8 @@ final void A_SpectralLightning()
   y = Origin.y + (Random() - 0.5) * 6.0 * 50.0;
 
   //  Spawn bolt in the centre.
-  lightning1 = Spawn(Threshold > 25 ? class<Actor>(SpectralLightningV2) :
-    class<Actor>(SpectralLightningV1), vector(x, y, ONCEILINGZ));
+  lightning1 = Spawn(Threshold > 25 ? class!Actor(SpectralLightningV2) :
+    class!Actor(SpectralLightningV1), vector(x, y, ONCEILINGZ));
   if (Sector->bHasExtrafloors && Origin.z <= CeilingZ)
   {
     lightning1.Origin.z = CeilingZ - lightning1.Height;
@@ -1015,7 +1015,7 @@ final void A_ShowElectricFlash() self(Actor)
 //
 //==========================================================================
 
-final void A_FireArrow(class<Actor> Proj) self(Actor)
+final void A_FireArrow(class!Actor Proj) self(Actor)
 {
   float savedangle;
 
@@ -1066,7 +1066,7 @@ final void A_FireMiniMissile() self(Actor)
 //
 //==========================================================================
 
-final void A_FireGrenade(class<Actor> grenadetype, float angleofs,
+final void A_FireGrenade(class!Actor grenadetype, float angleofs,
   state flash) self(Actor)
 {
   EntityEx grenade;

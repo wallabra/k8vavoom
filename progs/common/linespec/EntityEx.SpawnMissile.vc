@@ -260,7 +260,7 @@ final bool ExplodeMissile(EntityEx Victim, optional line_t *line)
 //
 //==========================================================================
 
-final EntityEx SpawnMissile(EntityEx dest, class<EntityEx> type,
+final EntityEx SpawnMissile(EntityEx dest, class!EntityEx type,
   optional float SpawnHeight)
 {
   EntityEx A;
@@ -339,7 +339,7 @@ final EntityEx SpawnMissile(EntityEx dest, class<EntityEx> type,
 //
 //==========================================================================
 
-final EntityEx SpawnMissileXYZ(TVec org, EntityEx dest, class<EntityEx> type)
+final EntityEx SpawnMissileXYZ(TVec org, EntityEx dest, class!EntityEx type)
 {
   TVec    dir;
   EntityEx  A;
@@ -384,7 +384,7 @@ final EntityEx SpawnMissileXYZ(TVec org, EntityEx dest, class<EntityEx> type)
 //
 //==========================================================================
 
-final EntityEx SpawnMissileZAimed(float z, EntityEx dest, class<EntityEx> type)
+final EntityEx SpawnMissileZAimed(float z, EntityEx dest, class!EntityEx type)
 {
   EntityEx  A;
   TVec    dir;
@@ -439,7 +439,7 @@ final EntityEx SpawnMissileZAimed(float z, EntityEx dest, class<EntityEx> type)
 //
 //==========================================================================
 
-final EntityEx SpawnMissileAngles(class<EntityEx> type, float yaw, float pitch,
+final EntityEx SpawnMissileAngles(class!EntityEx type, float yaw, float pitch,
   optional float SpawnHeight)
 {
   TVec    org;
@@ -492,7 +492,7 @@ final EntityEx SpawnMissileAngles(class<EntityEx> type, float yaw, float pitch,
 //
 //==========================================================================
 
-final EntityEx SpawnMissileAngle(class<EntityEx> type, float angle,
+final EntityEx SpawnMissileAngle(class!EntityEx type, float angle,
   float momz, optional float SpawnHeight)
 {
   TVec org;
@@ -540,7 +540,7 @@ final EntityEx SpawnMissileAngle(class<EntityEx> type, float angle,
 //
 //==========================================================================
 
-final EntityEx SpawnMissileAngleSpeed(class<EntityEx> type, float angle,
+final EntityEx SpawnMissileAngleSpeed(class!EntityEx type, float angle,
   float momz, float speed)
 {
   TVec org;
@@ -568,7 +568,7 @@ final EntityEx SpawnMissileAngleSpeed(class<EntityEx> type, float angle,
 //
 //==========================================================================
 
-final EntityEx SpawnSubMissile(class<EntityEx> type, EntityEx AInstigator)
+final EntityEx SpawnSubMissile(class!EntityEx type, EntityEx AInstigator)
 {
   EntityEx  other;
   TVec    dir;
@@ -597,7 +597,7 @@ final EntityEx SpawnSubMissile(class<EntityEx> type, EntityEx AInstigator)
 //
 //==========================================================================
 
-final EntityEx SpawnPlayerMissile(class<EntityEx> type, optional name decalType)
+final EntityEx SpawnPlayerMissile(class!EntityEx type, optional name decalType)
 {
   EntityEx  AimTarget;
 
@@ -610,7 +610,7 @@ final EntityEx SpawnPlayerMissile(class<EntityEx> type, optional name decalType)
 //
 //==========================================================================
 
-final EntityEx SpawnPlayerMissileAngle(class<EntityEx> type, float angle)
+final EntityEx SpawnPlayerMissileAngle(class!EntityEx type, float angle)
 {
   EntityEx  AimTarget;
 
@@ -623,7 +623,7 @@ final EntityEx SpawnPlayerMissileAngle(class<EntityEx> type, float angle)
 //
 //===========================================================================
 
-final EntityEx SpawnPlayerMissileAngleXYZ(TVec org, class<EntityEx> type,
+final EntityEx SpawnPlayerMissileAngleXYZ(TVec org, class!EntityEx type,
   float angle)
 {
   EntityEx  AimTarget;
@@ -639,7 +639,7 @@ final EntityEx SpawnPlayerMissileAngleXYZ(TVec org, class<EntityEx> type,
 //
 //==========================================================================
 
-final EntityEx SpawnPlayerMissileEx(class<EntityEx> type, bool RetExploded,
+final EntityEx SpawnPlayerMissileEx(class!EntityEx type, bool RetExploded,
   out EntityEx AimTarget, optional float angle, optional TVec SpawnOrg, optional name decalType)
 {
   EntityEx  A;

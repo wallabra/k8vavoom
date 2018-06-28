@@ -31,7 +31,7 @@ const int
   WPIECE2     = 2,
   WPIECE3     = 4;
 
-class<Actor>  PieceClass;
+class!Actor  PieceClass;
 
 bool      gaveWeapon;
 

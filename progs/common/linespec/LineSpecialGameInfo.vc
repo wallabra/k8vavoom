@@ -55,7 +55,7 @@ const int
 
 struct WeaponSlot
 {
-  class<Weapon> Weapons[MAX_WEAPONS_PER_SLOT+1];
+  class!Weapon Weapons[MAX_WEAPONS_PER_SLOT+1];
 };
 
 float     contents_alpha[9];
@@ -1366,7 +1366,7 @@ override void SpawnWorld(Level InLevel)
 //
 //==========================================================================
 
-bool FindWeaponSlot(class<Weapon> WpnClass, out int Slot, out int Index,
+bool FindWeaponSlot(class!Weapon WpnClass, out int Slot, out int Index,
           optional int Position)
 {
   int     i;
@@ -1403,7 +1403,7 @@ bool FindWeaponSlot(class<Weapon> WpnClass, out int Slot, out int Index,
 //
 //==========================================================================
 
-bool AddWeaponToSlot(int Slot, class<Weapon> WeaponClass)
+bool AddWeaponToSlot(int Slot, class!Weapon WeaponClass)
 {
   int i;
 
@@ -1445,7 +1445,7 @@ override void CmdWeaponSection(string Section)
 //
 //==========================================================================
 
-override void CmdSetSlot(out array<string> Args)
+override void CmdSetSlot(out array!string Args)
 {
   if (Args.Num < 2)
   {
@@ -1483,7 +1483,7 @@ override void CmdSetSlot(out array<string> Args)
     {
       // Standarize class name here, since I've found people writing in all types of
       // mixed cases...
-      class<Weapon> Cls = class<Weapon>(FindClassLowerCase(StrToName(strlwr(Args[i]))));
+      class!Weapon Cls = class!Weapon(FindClassLowerCase(StrToName(strlwr(Args[i]))));
       if (!Cls)
       {
         print("%s is not a weapon", Args[i]);
@@ -1502,7 +1502,7 @@ override void CmdSetSlot(out array<string> Args)
 //
 //==========================================================================
 
-override void CmdAddSlotDefault(out array<string> Args)
+override void CmdAddSlotDefault(out array!string Args)
 {
   if (Args.Num != 3)
   {
@@ -1520,7 +1520,7 @@ override void CmdAddSlotDefault(out array<string> Args)
 
   // Standarize class name here, since I've found people writing in all types of
   // mixed cases...
-  class<Weapon> Cls = class<Weapon>(FindClassLowerCase(StrToName(strlwr(Args[2]))));
+  class!Weapon Cls = class!Weapon(FindClassLowerCase(StrToName(strlwr(Args[2]))));
   if (!Cls)
   {
     print("%s is not a weapon", Args[2]);

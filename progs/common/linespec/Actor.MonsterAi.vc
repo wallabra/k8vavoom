@@ -1159,7 +1159,7 @@ final void A_SentinelBob()
 //
 //==========================================================================
 
-final void A_Burst(class<Actor> ChunkType)
+final void A_Burst(class!Actor ChunkType)
 {
   if (!ChunkType)
   {

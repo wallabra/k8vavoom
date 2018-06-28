@@ -605,7 +605,7 @@ final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps
 //==========================================================================
 final bool ShootHitPlane (sector_t *sec, line_t *li, sec_plane_t *plane,
                           TVec linestart, TVec lineend, float range,
-                          class<EntityEx> PuffType, TVec *outHitPoint)
+                          class!EntityEx PuffType, TVec *outHitPoint)
 {
   if (plane->flags&SPF_NOBLOCKSHOOT) return true; // doesn't block shooting
 
@@ -647,7 +647,7 @@ final bool ShootHitPlane (sector_t *sec, line_t *li, sec_plane_t *plane,
 //==========================================================================
 final bool ShootCheckPlanes (sector_t *sec, optional line_t *li,
                              TVec linestart, TVec lineend, float range,
-                             class<EntityEx> PuffType, TVec *outHitPoint)
+                             class!EntityEx PuffType, TVec *outHitPoint)
 {
   sec_region_t *reg;
   sec_region_t *startreg;
@@ -674,7 +674,7 @@ final bool ShootCheckPlanes (sector_t *sec, optional line_t *li,
 //
 //==========================================================================
 final int LineAttack (TVec dir, float distance, int LADamage,
-                      class<EntityEx> PuffType, optional bool NoAttackGhosts,
+                      class!EntityEx PuffType, optional bool NoAttackGhosts,
                       optional TVec *outHitPoint, optional name DmgType,
                       optional bool secondary, optional name decalType)
 {
@@ -842,7 +842,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
 //
 //==========================================================================
 final bool RailHitPlane (sec_plane_t *plane, TVec linestart, out TVec lineend,
-                         float range, class<EntityEx> PuffType)
+                         float range, class!EntityEx PuffType)
 {
   if (plane->flags&SPF_NOBLOCKSHOOT) return true; // doesn't block shooting
   float org_dist = DotProduct(linestart, plane->normal)-plane->dist;
@@ -875,7 +875,7 @@ final bool RailHitPlane (sec_plane_t *plane, TVec linestart, out TVec lineend,
 //
 //==========================================================================
 final bool RailCheckPlanes (sector_t *sec, TVec linestart, out TVec lineend,
-                            float range, class<EntityEx> PuffType)
+                            float range, class!EntityEx PuffType)
 {
   sec_region_t *reg;
 
@@ -903,7 +903,7 @@ final bool RailCheckPlanes (sector_t *sec, TVec linestart, out TVec lineend,
 
 final void RailAttack (TVec dir, float Offset, int RailDamage,
                        optional int Col1, optional int Col2, optional float MaxDiff,
-                       optional class<EntityEx> PuffType, optional bool Silent,
+                       optional class!EntityEx PuffType, optional bool Silent,
                        optional bool DontPierce)
 {
   TVec dst;

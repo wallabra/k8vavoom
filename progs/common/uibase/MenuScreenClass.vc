@@ -91,7 +91,7 @@ override void CreateChoices()
   {
     MenuChoicePClass Btn = NewChild(MenuChoicePClass);
     Btn.SetPos(ChoicesStartX, currentY);
-    Btn.Text = class<PlayerPawn>(ClGame.Game.PlayerClasses[
+    Btn.Text = class!PlayerPawn(ClGame.Game.PlayerClasses[
       i]).default.DisplayName;
     Btn.FocusLost = &PClassItemFocusLost;
     Btn.FocusReceived = &PClassItemFocusReceived;
@@ -135,7 +135,7 @@ void PClassItemFocusReceived(Object Sender)
   if (FighterBox)
   {
     MenuChoicePClass Btn = MenuChoicePClass(Sender);
-    name CName = class<PlayerPawn>(ClGame.Game.PlayerClasses[
+    name CName = class!PlayerPawn(ClGame.Game.PlayerClasses[
       Btn.Index]).default.SpawnClass;
     if (CName == 'fighter')
     {

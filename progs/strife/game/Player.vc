@@ -67,7 +67,7 @@ override void GotAmmo(Ammo NewAmmo)
   // Preferences are not user selectable.
   if (ReadyWeapon.bWimpyWeapon)
   {
-    Weapon Best = BestWeapon(class<Ammo>(NewAmmo.Class));
+    Weapon Best = BestWeapon(class!Ammo(NewAmmo.Class));
     if (Best && Best.SelectionOrder < ReadyWeapon.SelectionOrder)
     {
       PendingWeapon = Best;
@@ -147,8 +147,8 @@ override void PlayerImpulse()
 override void Cheat_Gimme()
 {
   int         i;
-  class<Inventory>  Cls;
-  class<Weapon>   WpnCls;
+  class!Inventory  Cls;
+  class!Weapon   WpnCls;
 
   // Backpack
   if (Cmd_CheckParm("Backpack"))
@@ -261,7 +261,7 @@ override void Cheat_Gimme()
   {
     if (Cmd_CheckParm(va("Quest%d", i + 1)))
     {
-      EntityEx(MO).GiveInventoryType(class<Inventory>(FindClass(
+      EntityEx(MO).GiveInventoryType(class!Inventory(FindClass(
         StrToName(va("QuestItem%d", i)))));
       cprint("YOU GOT IT");
     }

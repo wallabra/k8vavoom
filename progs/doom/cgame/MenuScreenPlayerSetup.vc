@@ -25,7 +25,7 @@
 
 class MenuScreenPlayerSetup : MenuScreen;
 
-array<name>     SkinNames;
+array!name     SkinNames;
 
 MenuInputLine   PlayerName;
 MenuChoiceSlider  ColR;

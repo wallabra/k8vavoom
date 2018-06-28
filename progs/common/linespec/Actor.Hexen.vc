@@ -1019,7 +1019,7 @@ final void A_LeafSpawn()
 
   for (i = (P_Random() & 3) + 1; i; i--)
   {
-    A = Spawn(P_Random() & 1 ? class<Actor>(Leaf2) : class<Actor>(Leaf1),
+    A = Spawn(P_Random() & 1 ? class!Actor(Leaf2) : class!Actor(Leaf1),
       Origin + vector((Random() - Random()) * 64.0,
       (Random() - Random()) * 64.0, Random() * 64.0));
     if (A)
@@ -1101,7 +1101,7 @@ final void A_SoAExplode()
   if (Args[0])
   {
     // Spawn an item. Don't spawn monsters it they are disabled.
-    class<EntityEx> Cls = class<EntityEx>(FindClassFromScriptId(Args[0],
+    class!EntityEx Cls = class!EntityEx(FindClassFromScriptId(Args[0],
       LineSpecialGameInfo(Level.Game).GameFilterFlag));
     if (Cls && (!Level.Game.nomonsters || !Cls.default.bMonster))
     {
@@ -1129,7 +1129,7 @@ final void A_FiredSpawnRock()
 {
   Actor mo;
   TVec rockOrg;
-  class<Actor> rtype;
+  class!Actor rtype;
 
   switch (P_Random() % 5)
   {
@@ -1344,7 +1344,7 @@ final void A_IceGuyLook()
 {
   float dist;
   float an;
-  class<Actor> tp;
+  class!Actor tp;
 
   A_Look();
   if (Random() < 0.25)
@@ -1371,7 +1371,7 @@ final void A_IceGuyChase()
   float dist;
   float an;
   Actor A;
-  class<Actor> tp;
+  class!Actor tp;
 
   A_Chase();
   if (Random() < 0.5)
@@ -2343,7 +2343,7 @@ final void A_KoraxDecide()
 //
 //==========================================================================
 
-final Actor SpawnKoraxMissile(TVec org, EntityEx dest, class<Actor> type)
+final Actor SpawnKoraxMissile(TVec org, EntityEx dest, class!Actor type)
 {
   TVec dir;
   Actor th;
@@ -2371,7 +2371,7 @@ final Actor SpawnKoraxMissile(TVec org, EntityEx dest, class<Actor> type)
 // Arm 1 projectile
 //==========================================================================
 
-final void KoraxFire1(class<Actor> type)
+final void KoraxFire1(class!Actor type)
 {
   float ang;
   float x, y, z;
@@ -2387,7 +2387,7 @@ final void KoraxFire1(class<Actor> type)
 // Arm 2 projectile
 //============================================================================
 
-final void KoraxFire2(class<Actor> type)
+final void KoraxFire2(class!Actor type)
 {
   float ang;
   float x, y, z;
@@ -2403,7 +2403,7 @@ final void KoraxFire2(class<Actor> type)
 // Arm 3 projectile
 //============================================================================
 
-final void KoraxFire3(class<Actor> type)
+final void KoraxFire3(class!Actor type)
 {
   float ang;
   float x, y, z;
@@ -2419,7 +2419,7 @@ final void KoraxFire3(class<Actor> type)
 // Arm 4 projectile
 //============================================================================
 
-final void KoraxFire4(class<Actor> type)
+final void KoraxFire4(class!Actor type)
 {
   float ang;
   float x, y, z;
@@ -2435,7 +2435,7 @@ final void KoraxFire4(class<Actor> type)
 // Arm 5 projectile
 //============================================================================
 
-final void KoraxFire5(class<Actor> type)
+final void KoraxFire5(class!Actor type)
 {
   float ang;
   float x, y, z;
@@ -2451,7 +2451,7 @@ final void KoraxFire5(class<Actor> type)
 // Arm 6 projectile
 //============================================================================
 
-final void KoraxFire6(class<Actor> type)
+final void KoraxFire6(class!Actor type)
 {
   float ang;
   float x, y, z;
@@ -2471,7 +2471,7 @@ final void KoraxFire6(class<Actor> type)
 
 final void A_KoraxMissile()
 {
-  class<Actor> mtype;
+  class!Actor mtype;
   name sound;
 
   PlaySound('KoraxAttack', CHAN_VOICE);

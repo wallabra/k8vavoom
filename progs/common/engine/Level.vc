@@ -153,9 +153,9 @@ native readonly private int[] StaticLights;
 //native readonly private void *StaticLights;
 //native readonly private int NumStaticLights;
 
-native readonly private array<int> ActiveSequences;
+native readonly private array!int ActiveSequences;
 
-native readonly private array<int> CameraTextures;
+native readonly private array!int CameraTextures;
 
 native readonly float Time;
 native readonly int TicTime;
@@ -163,8 +163,8 @@ native readonly int TicTime;
 native readonly private void *SectorList;
 native readonly private void *HeadSecNode;
 
-native readonly private array<void *> Translations;
-native readonly private array<void *> BodyQueueTransl;
+native readonly private array!(void *) Translations;
+native readonly private array!(void *) BodyQueueTransl;
 
 native readonly state CallingState;
 native readonly StateCall *StateCall;

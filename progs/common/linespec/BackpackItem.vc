@@ -92,7 +92,7 @@ override bool HandlePickup(Inventory Item)
 
 override Inventory CreateCopy(EntityEx Toucher)
 {
-  class<Ammo> Cls;
+  class!Ammo Cls;
 
   //  Give toucher every kind of ammo.
   foreach AllClasses(Ammo, Cls)

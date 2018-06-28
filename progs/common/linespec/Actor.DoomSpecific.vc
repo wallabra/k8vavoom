@@ -150,7 +150,7 @@ final void A_BFGSpray()
 //
 //===========================================================================
 
-final void decorate_A_BFGSpray(optional class<EntityEx> FlashType,
+final void decorate_A_BFGSpray(optional class!EntityEx FlashType,
   optional int NumRays, optional int DamageAmount)
 {
   int     i;

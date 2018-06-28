@@ -49,10 +49,10 @@ struct menukey {
 
 // jeep dynamic arrays of each of these so that we "build"
 // the special control sections in the menu
-array<alias_t> aliases_list;
-array<bind> dbinds_list;
-array<bind> binds_list;
-array<menukey> menukeys_list;
+array!alias_t aliases_list;
+array!bind dbinds_list;
+array!bind binds_list;
+array!menukey menukeys_list;
 
 string AltTitle;      // Alternate Title for the screen (if any)
 

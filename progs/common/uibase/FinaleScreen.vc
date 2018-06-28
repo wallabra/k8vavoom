@@ -51,7 +51,7 @@ bool          castattacking;
 bool          castdeath;
 
 // Casting by id Software. in order of appearance
-class<EntityEx>     castorder[CastCount];
+class!EntityEx     castorder[CastCount];
 //
 // Character cast strings
 //
