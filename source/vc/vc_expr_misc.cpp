@@ -373,7 +373,13 @@ VTypeExpr *VSingleName::ResolveAsType (VEmitContext &ec) {
   Type = VMemberBase::StaticFindType(ec.SelfClass, Name);
 
   if (Type.Type == TYPE_Unknown) {
-    ParseError(Loc, "Invalid identifier, bad type name %s", *Name);
+    // try enum name
+    if (ec.SelfClass && ec.SelfClass->IsKnownEnum(Name)) {
+      auto e = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Int), Loc);
+      delete this;
+      return e->ResolveAsType(ec);
+    }
+    ParseError(Loc, "Invalid identifier, bad type name `%s`", *Name);
     delete this;
     return nullptr;
   }
@@ -383,9 +389,9 @@ VTypeExpr *VSingleName::ResolveAsType (VEmitContext &ec) {
     *(int*)0 = 0;
   }
 
-  auto e = new VTypeExprSimple(Type, Loc);
+  auto e = VTypeExpr::NewTypeExpr(Type, Loc);
   delete this;
-  return e;
+  return e->ResolveAsType(ec);
 }
 
 
@@ -454,7 +460,7 @@ void VDoubleName::DoSyntaxCopyTo (VExpression *e) {
 VExpression *VDoubleName::DoResolve (VEmitContext &ec) {
   VClass *Class = VMemberBase::StaticFindClass(Name1);
   if (!Class) {
-    ParseError(Loc, "No such class %s", *Name1);
+    ParseError(Loc, "No such class `%s`", *Name1);
     delete this;
     return nullptr;
   }
@@ -466,7 +472,7 @@ VExpression *VDoubleName::DoResolve (VEmitContext &ec) {
     return e->Resolve(ec);
   }
 
-  ParseError(Loc, "No such constant or state %s", *Name2);
+  ParseError(Loc, "No such constant or state `%s::%s`", *Name1, *Name2);
   delete this;
   return nullptr;
 }
@@ -477,10 +483,11 @@ VExpression *VDoubleName::DoResolve (VEmitContext &ec) {
 //  VDoubleName::ResolveAsType
 //
 //==========================================================================
-VTypeExpr *VDoubleName::ResolveAsType (VEmitContext &) {
+VTypeExpr *VDoubleName::ResolveAsType (VEmitContext &ec) {
   VClass *Class = VMemberBase::StaticFindClass(Name1);
+
   if (!Class) {
-    ParseError(Loc, "No such class %s", *Name1);
+    ParseError(Loc, "No such class `%s`", *Name1);
     delete this;
     return nullptr;
   }
@@ -488,7 +495,13 @@ VTypeExpr *VDoubleName::ResolveAsType (VEmitContext &) {
   Type = VMemberBase::StaticFindType(Class, Name2);
 
   if (Type.Type == TYPE_Unknown) {
-    ParseError(Loc, "Invalid identifier, bad type name %s::%s", *Name1, *Name2);
+    // try enum name
+    if (Class->IsKnownEnum(Name2)) {
+      auto e = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Int), Loc);
+      delete this;
+      return e->ResolveAsType(ec);
+    }
+    ParseError(Loc, "Invalid identifier, bad type name `%s::%s`", *Name1, *Name2);
     delete this;
     return nullptr;
   }
@@ -498,9 +511,9 @@ VTypeExpr *VDoubleName::ResolveAsType (VEmitContext &) {
     *(int*)0 = 0;
   }
 
-  auto e = new VTypeExprSimple(Type, Loc);
+  auto e = VTypeExpr::NewTypeExpr(Type, Loc);
   delete this;
-  return e;
+  return e->ResolveAsType(ec);
 }
 
 
@@ -520,6 +533,16 @@ void VDoubleName::Emit (VEmitContext &) {
 //
 //==========================================================================
 bool VDoubleName::IsValidTypeExpression () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VDoubleName::IsDoubleName
+//
+//==========================================================================
+bool VDoubleName::IsDoubleName () const {
   return true;
 }
 

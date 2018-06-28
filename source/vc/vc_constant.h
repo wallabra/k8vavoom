@@ -37,7 +37,8 @@ public:
   VExpression *ValueExpr;
   VConstant *PrevEnumValue;
 
-  VConstant (VName, VMemberBase *, const TLocation &);
+  VConstant (VName AName, VMemberBase *AOuter, const TLocation &ALoc);
+  VConstant (VName AEnumName, VName AName, VMemberBase *AOuter, const TLocation &ALoc);
   virtual ~VConstant () override;
   virtual void CompilerShutdown () override;
 

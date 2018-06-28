@@ -256,6 +256,8 @@ public:
 
   VName ResolveAlias (VName aname); // returns `aname` for unknown alias, or `NAME_None` for alias loop
 
+  TMap<VName, bool> KnownEnums;
+
 public:
   VClass (VName, VMemberBase *, const TLocation &);
   VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *AParent, EName AName, void (*ACtor) ());
@@ -281,7 +283,9 @@ public:
   void AddState (VState *);
   void AddMethod (VMethod *);
 
-  VConstant *FindConstant (VName);
+  bool IsKnownEnum (VName EnumName);
+  bool AddKnownEnum (VName EnumName); // returns `true` if enum was redefined
+  VConstant *FindConstant (VName Name, VName EnumName=NAME_None);
   VField *FindField (VName);
   VField *FindField (VName, const TLocation &, VClass *);
   VField *FindFieldChecked (VName);

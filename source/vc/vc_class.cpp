@@ -83,6 +83,7 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   , Replacee(nullptr)
   , AliasList()
   , AliasFrameNum(0)
+  , KnownEnums()
 {
   guard(VClass::VClass);
   LinkNext = GClasses;
@@ -125,6 +126,9 @@ VClass::VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *A
   , Defaults(nullptr)
   , Replacement(nullptr)
   , Replacee(nullptr)
+  , AliasList()
+  , AliasFrameNum(0)
+  , KnownEnums()
 {
   guard(native VClass::VClass);
   LinkNext = GClasses;
@@ -196,7 +200,7 @@ void VClass::CompilerShutdown () {
 
 //==========================================================================
 //
-//  VClass::resolveAlias
+//  VClass::ResolveAlias
 //
 //  returns `aname` for unknown alias, or `NAME_None` for alias loop
 //
@@ -219,6 +223,30 @@ VName VClass::ResolveAlias (VName aname) {
     ai->aframe = AliasFrameNum;
     aname = res;
   }
+}
+
+
+//==========================================================================
+//
+//  VClass::IsKnownEnum
+//
+//==========================================================================
+bool VClass::IsKnownEnum (VName EnumName) {
+  if (KnownEnums.has(EnumName)) return true;
+  if (!ParentClass) return false;
+  return ParentClass->IsKnownEnum(EnumName);
+}
+
+
+//==========================================================================
+//
+//  VClass::AddKnownEnum
+//
+//==========================================================================
+bool VClass::AddKnownEnum (VName EnumName) {
+  if (IsKnownEnum(EnumName)) return true;
+  KnownEnums.put(EnumName, true);
+  return false;
 }
 
 
@@ -335,8 +363,23 @@ void VClass::Serialise (VStream &Strm) {
 #if !defined(IN_VCC)
   VClass *PrevParent = ParentClass;
 #endif
-  vuint32 acount = AliasList.count();
-  Strm << acount;
+  Strm << ParentClass
+    << Fields
+    << States
+    << Methods
+    << DefaultProperties
+    << RepInfos
+    << StateLabels;
+#if !defined(IN_VCC)
+  if ((ObjectFlags&CLASSOF_Native) != 0 && ParentClass != PrevParent) {
+    Sys_Error("Bad parent class, class %s, C++ %s, VavoomC %s)",
+      GetName(), PrevParent ? PrevParent->GetName() : "(none)",
+      ParentClass ? ParentClass->GetName() : "(none)");
+  }
+#endif
+  // aliases
+  vint32 acount = (vint32)AliasList.count();
+  Strm << STRM_INDEX(acount);
   if (Strm.IsLoading()) {
     AliasFrameNum = 0;
     AliasList.clear();
@@ -355,20 +398,23 @@ void VClass::Serialise (VStream &Strm) {
       Strm << ai.aliasName << ai.origName;
     }
   }
-  Strm << ParentClass
-    << Fields
-    << States
-    << Methods
-    << DefaultProperties
-    << RepInfos
-    << StateLabels;
-#if !defined(IN_VCC)
-  if ((ObjectFlags&CLASSOF_Native) != 0 && ParentClass != PrevParent) {
-    Sys_Error("Bad parent class, class %s, C++ %s, VavoomC %s)",
-      GetName(), PrevParent ? PrevParent->GetName() : "(none)",
-      ParentClass ? ParentClass->GetName() : "(none)");
+  // enums
+  acount = (vint32)KnownEnums.count();
+  Strm << STRM_INDEX(acount);
+  if (Strm.IsLoading()) {
+    KnownEnums.clear();
+    while (acount-- > 0) {
+      VName ename;
+      Strm << ename;
+      KnownEnums.put(ename, true);
+    }
+  } else {
+    for (auto it = AliasList.first(); it; ++it) {
+      VName ename = it.getKey();
+      Strm << ename;
+    }
   }
-#endif
+  // done
   unguard;
 }
 
@@ -485,13 +531,13 @@ void VClass::AddMethod (VMethod *m) {
 //  VClass::FindConstant
 //
 //==========================================================================
-VConstant *VClass::FindConstant (VName Name) {
+VConstant *VClass::FindConstant (VName Name, VName EnumName) {
   guard(VClass::FindConstant);
   if (Name == NAME_None) return nullptr;
   Name = ResolveAlias(Name);
-  VMemberBase *m = StaticFindMember(Name, this, MEMBER_Const);
+  VMemberBase *m = StaticFindMember(Name, this, MEMBER_Const, EnumName);
   if (m) return (VConstant *)m;
-  if (ParentClass) return ParentClass->FindConstant(Name);
+  if (ParentClass) return ParentClass->FindConstant(Name, EnumName);
   return nullptr;
   unguard;
 }

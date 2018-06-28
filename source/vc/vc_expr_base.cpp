@@ -306,6 +306,7 @@ bool VExpression::IsLocalVarExpr () const { return false; }
 bool VExpression::IsAssignExpr () const { return false; }
 bool VExpression::IsBinaryMath () const { return false; }
 bool VExpression::IsSingleName () const { return false; }
+bool VExpression::IsDoubleName () const { return false; }
 bool VExpression::IsDotField () const { return false; }
 bool VExpression::IsMarshallArg () const { return false; }
 bool VExpression::IsRefArg () const { return false; }

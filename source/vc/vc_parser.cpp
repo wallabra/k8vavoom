@@ -3554,7 +3554,7 @@ void VParser::ParseClass () {
       Lex.NextToken();
       VConstant *PrevValue = nullptr;
       // check for `enum const = val;`
-      if (Lex.Token == TK_Identifier) {
+      if (Lex.Token == TK_Identifier && Lex.peekTokenType(1) == TK_Assign) {
         if (Class->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier `%s`", *Lex.Name);
         VConstant *cDef = new VConstant(Lex.Name, Class, Lex.Location);
         cDef->Type = TYPE_Int;
@@ -3568,14 +3568,29 @@ void VParser::ParseClass () {
           ParseError(Lex.Location, "`=` expected");
         }
       } else {
+        VName ename = NAME_None;
+        // get optional enum name
+        if (Lex.Token == TK_Identifier) {
+          ename = Lex.Name;
+          if (Class->AddKnownEnum(ename)) ParseError(Lex.Location, "Duplicate enum name `%s`", *ename);
+          Lex.NextToken();
+        }
         Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
         for (;;) {
           if (Lex.Token != TK_Identifier) {
             ParseError(Lex.Location, "Identifier expected");
             break;
           }
-          if (Class->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier `%s`", *Lex.Name);
-          VConstant *cDef = new VConstant(Lex.Name, Class, Lex.Location);
+          VConstant *cDef;
+          if (ename == NAME_None) {
+            // unnamed enum
+            if (Class->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier `%s`", *Lex.Name);
+            cDef = new VConstant(Lex.Name, Class, Lex.Location);
+          } else {
+            // named enum
+            if (Class->FindConstant(Lex.Name, ename)) ParseError(Lex.Location, "Redefined identifier `%s::%s`", *ename, *Lex.Name);
+            cDef = new VConstant(ename, Lex.Name, Class, Lex.Location);
+          }
           cDef->bitconstant = bitconst;
           cDef->Type = TYPE_Int;
           Lex.NextToken();

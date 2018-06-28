@@ -354,9 +354,9 @@ int VPackage::FindString (const char *str) {
 //  VPackage::FindConstant
 //
 //==========================================================================
-VConstant *VPackage::FindConstant (VName Name) {
+VConstant *VPackage::FindConstant (VName Name, VName EnumName) {
   guard(VPackage::FindConstant);
-  VMemberBase *m = StaticFindMember(Name, this, MEMBER_Const);
+  VMemberBase *m = StaticFindMember(Name, this, MEMBER_Const, EnumName);
   if (m) return (VConstant *)m;
   return nullptr;
   unguard;

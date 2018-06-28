@@ -273,8 +273,16 @@ VPackage *VMemberBase::StaticLoadPackage (VName AName, const TLocation &l) {
 //  VMemberBase::StaticFindMember
 //
 //==========================================================================
-VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType) {
+VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName) {
   guard(VMemberBase::StaticFindMember);
+  //VName realName = AName;
+  if (AType == MEMBER_Const && EnumName != NAME_None) {
+    // rewrite name
+    VStr nn(*EnumName);
+    nn += " ";
+    nn += *AName;
+    AName = VName(*nn);
+  }
   int HashIndex = AName.GetIndex()&4095;
   for (VMemberBase *m = GMembersHash[HashIndex]; m; m = m->HashNext) {
     if (m->Name == AName && (m->Outer == AOuter ||

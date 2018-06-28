@@ -258,6 +258,32 @@ VExpression *VDotField::DoPropertyResolve (VEmitContext &ec, VProperty *Prop, As
 //
 //==========================================================================
 VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType assType) {
+  // try enum constant in this class
+  if (ec.SelfClass && op && op->IsSingleName()) {
+    VName ename = ((VSingleName *)op)->Name;
+    VConstant *Const = ec.SelfClass->FindConstant(FieldName, ename);
+    if (Const) {
+      VExpression *e = new VConstantValue(Const, Loc);
+      delete this;
+      return e->Resolve(ec);
+    }
+  }
+
+  // try enum constant in other class: `C::E.x`
+  if (ec.SelfClass && op && op->IsDoubleName()) {
+    VDoubleName *dn = (VDoubleName *)op;
+    VClass *Class = VMemberBase::StaticFindClass(dn->Name1);
+    //fprintf(stderr, "Class=%s; n0=%s; n1=%s\n", Class->GetName(), *dn->Name1, *dn->Name2);
+    if (Class && Class->IsKnownEnum(dn->Name2)) {
+      VConstant *Const = Class->FindConstant(FieldName, dn->Name2);
+      if (Const) {
+        VExpression *e = new VConstantValue(Const, Loc);
+        delete this;
+        return e->Resolve(ec);
+      }
+    }
+  }
+
   // we need a copy in case this is a pointer thingy
   auto opcopy = (op ? op->SyntaxCopy() : nullptr);
 

@@ -84,6 +84,7 @@ public:
   virtual bool IsAssignExpr () const;
   virtual bool IsBinaryMath () const;
   virtual bool IsSingleName () const;
+  virtual bool IsDoubleName () const;
   virtual bool IsDotField () const;
   virtual bool IsMarshallArg () const;
   virtual bool IsRefArg () const;

@@ -99,7 +99,7 @@ public:
   static void StaticExit ();
   static void StaticAddPackagePath (const char *);
   static VPackage *StaticLoadPackage (VName, const TLocation &);
-  static VMemberBase *StaticFindMember (VName, VMemberBase *, vuint8);
+  static VMemberBase *StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None);
 
   //FIXME: this looks ugly
   static VFieldType StaticFindType (VClass *, VName);

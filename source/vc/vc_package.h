@@ -87,7 +87,7 @@ public:
   virtual void Serialise (VStream &) override;
 
   int FindString (const char *);
-  VConstant *FindConstant (VName);
+  VConstant *FindConstant (VName Name, VName EnumName=NAME_None);
 
   VClass *FindDecorateImportClass (VName) const;
 

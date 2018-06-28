@@ -92,6 +92,7 @@ public:
   virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual bool IsValidTypeExpression () const override;
+  virtual bool IsDoubleName () const override;
 
 protected:
   VDoubleName () {}

@@ -70,7 +70,7 @@ enum {
 #ifndef OPCODE_INFO
 
 #define PROG_MAGIC    "VPRG"
-#define PROG_VERSION  (38)
+#define PROG_VERSION  (39)
 
 enum {
   OPCARGS_None,

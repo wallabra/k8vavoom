@@ -44,6 +44,22 @@ VConstant::VConstant (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
 
 //==========================================================================
 //
+//  VConstant::VConstant
+//
+//==========================================================================
+VConstant::VConstant (VName AEnumName, VName AName, VMemberBase *AOuter, const TLocation &ALoc)
+  : VMemberBase(MEMBER_Const, VName(*(VStr(*AEnumName)+" "+(*AName))), AOuter, ALoc)
+  , Type(TYPE_Unknown)
+  , bitconstant(false)
+  , Value(0)
+  , ValueExpr(nullptr)
+  , PrevEnumValue(nullptr)
+{
+}
+
+
+//==========================================================================
+//
 //  VConstant::~VConstant
 //
 //==========================================================================
@@ -74,7 +90,7 @@ void VConstant::Serialise (VStream &Strm) {
   Strm << Type;
   switch (Type) {
     case TYPE_Float: Strm << FloatValue; break;
-    case TYPE_Name: Strm << *(VName*)&Value; break;
+    case TYPE_Name: Strm << *(VName *)&Value; break;
     default: Strm << STRM_INDEX(Value); break;
   }
   unguard;
