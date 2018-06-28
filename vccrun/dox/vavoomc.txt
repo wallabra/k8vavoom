@@ -449,3 +449,29 @@ Optional ref/out arguments
 
 It is possible. And even if it is not optional, you can use `nullptr` if you don't
 want to pass anything there.
+
+
+
+Static array declarations
+=========================
+
+Recommended syntax for static arrays is:
+
+  int[42] name;
+
+insted of C-like `int name[42];`.
+Note that C-like syntax may be dropped in the future.
+
+
+
+Switch without breaks
+=====================
+
+If you want to omit `break` in switch case, you should use `goto case;` statement
+instead. VC compiler checks if you have a proper case termination statement, and
+will abort with error if you don't.
+
+You can use `goto case;` anywhere inside a branch. There is also support for both
+`goto case <value>;` and `goto default`.
+
+Note that last case/default branch can omit proper termination.
