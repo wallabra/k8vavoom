@@ -447,7 +447,7 @@ override void Tick(float deltaTime)
         goto case; //k8: is it right???
       case CEILEV_GenericChange:
         Sector->ceiling.pic = Texture;
-        goto case; //k8: is it right???
+        goto default; //k8: is it right???
       default:
         Finished();
         break;
@@ -488,7 +488,7 @@ override void Tick(float deltaTime)
         goto case; //k8: is it right???
       case CEILEV_GenericChange:
         Sector->ceiling.pic = Texture;
-        goto case; //k8: is it right???
+        goto default; //k8: is it right???
       default:
         Finished();
         break;
