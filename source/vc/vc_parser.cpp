@@ -3780,7 +3780,7 @@ void VParser::ParseClass () {
         fi->TypeExpr = FieldType;
         fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
           TModifiers::Native|TModifiers::Private|TModifiers::Protected|
-          TModifiers::ReadOnly|TModifiers::Transient, FieldLoc));
+          TModifiers::ReadOnly|TModifiers::Transient|TModifiers::Repnotify, FieldLoc));
         Class->AddField(fi);
         //Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
         need_semicolon = true;
@@ -3950,7 +3950,7 @@ void VParser::ParseClass () {
       fi->TypeExpr = FieldType;
       fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
         TModifiers::Native|TModifiers::Private|TModifiers::Protected|
-        TModifiers::ReadOnly|TModifiers::Transient, FieldLoc));
+        TModifiers::ReadOnly|TModifiers::Transient|TModifiers::Repnotify, FieldLoc));
       Class->AddField(fi);
 
       // new-style delegate syntax: `type delegate (args) name;`

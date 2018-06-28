@@ -54,6 +54,7 @@ int TModifiers::Parse (VLexer &Lex) {
     {TK_Override, Override},
     {TK_Ref, Ref},
     {TK_Const, Const},
+    {TK_Repnotify, Repnotify},
     {TK_EOF, 0},
   };
 
@@ -97,6 +98,7 @@ const char *TModifiers::Name (int Modifier) {
     case Ref: return "ref";
     case Protected: return "protected";
     case Const: return "const";
+    case Repnotify: return "repnotify";
   }
   return "";
 }
@@ -169,6 +171,7 @@ int TModifiers::FieldAttr (int Modifiers) {
   if (Modifiers&Private) Attributes |= FIELD_Private;
   if (Modifiers&ReadOnly) Attributes |= FIELD_ReadOnly;
   if (Modifiers&Protected) Attributes |= FIELD_Protected;
+  if (Modifiers&Repnotify) Attributes |= FIELD_Repnotify;
   return Attributes;
 }
 

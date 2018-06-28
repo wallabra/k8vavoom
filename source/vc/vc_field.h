@@ -35,6 +35,7 @@ enum {
   FIELD_Private   = 0x0004, // private field
   FIELD_ReadOnly  = 0x0008, // read-only field
   FIELD_Net       = 0x0010, // network replicated field
+  FIELD_Repnotify = 0x0020, // your C++ code should call `void ReplicatedEvent (name fldname)` after getting a new value
   FIELD_Protected = 0x0100,
 };
 

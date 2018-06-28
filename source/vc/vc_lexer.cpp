@@ -85,6 +85,7 @@ const char *VLexer::TokenNames[] = {
   "ref",
   "reliable",
   "replication",
+  "repnotify",
   "return",
   "scope",
   "self",
@@ -1090,6 +1091,7 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
       else if (checkStrTk("readonly")) Token = TK_ReadOnly;
       else if (checkStrTk("reliable")) Token = TK_Reliable;
       else if (checkStrTk("replication")) Token = TK_Replication;
+      else if (checkStrTk("repnotify")) Token = TK_Repnotify;
       break;
     case 's':
            if (checkStrTk("string")) Token = TK_String;

@@ -88,6 +88,7 @@ enum EToken {
   TK_Ref,
   TK_Reliable,
   TK_Replication,
+  TK_Repnotify,
   TK_Return,
   TK_Scope,
   TK_Self,
