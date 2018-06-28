@@ -2014,6 +2014,7 @@ bool VSwitch::Resolve (VEmitContext &ec) {
       if (!st->Resolve(ec)) Ret = false;
       // dummy last `break`, it is not necessary
       if (Ret) {
+        //FIXME: this should be done in separate code optimizer pass
         if (st->IsBreak()) {
           // skip branches without statements
           int n = i+1;
@@ -2024,13 +2025,13 @@ bool VSwitch::Resolve (VEmitContext &ec) {
           }
         } else if (st->IsGotoCase() && !st->HasGotoCaseExpr()) {
           // jump to next case: dummy it out if next case immediately follows
-          if (i+1 >= Statements.length() || Statements[i+1]->IsSwitchCase()) {
+          if (i+1 < Statements.length() && Statements[i+1]->IsSwitchCase()) {
             //ParseWarning(st->Loc, "`goto case;` dummied out");
             ((VGotoStmt *)st)->skipCodegen = true;
           }
         } else if (st->IsGotoDefault()) {
           // jump to next case: dummy it out if default case immediately follows
-          if ((i+1 >= Statements.length() && !HaveDefault) || Statements[i+1]->IsSwitchDefault()) {
+          if (i+1 < Statements.length() && HaveDefault && Statements[i+1]->IsSwitchDefault()) {
             //ParseWarning(st->Loc, "`goto default;` dummied out");
             ((VGotoStmt *)st)->skipCodegen = true;
           }
