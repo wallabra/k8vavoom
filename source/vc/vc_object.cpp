@@ -57,6 +57,7 @@ void *VObject::GNewObject = nullptr;
 bool VObject::GImmediadeDelete = true;
 #endif
 bool VObject::GGCMessagesAllowed = false;
+bool (*VObject::onExecuteNetMethodCB) (VObject *obj, VMethod *func) = nullptr; // return `false` to do normal execution
 
 
 //==========================================================================
@@ -398,7 +399,8 @@ void VObject::Serialise (VStream &Strm) {
 //  VObject::ExecuteNetMethod
 //
 //==========================================================================
-bool VObject::ExecuteNetMethod (VMethod *) {
+bool VObject::ExecuteNetMethod (VMethod *func) {
+  if (onExecuteNetMethodCB) return onExecuteNetMethodCB(this, func);
   return false;
 }
 

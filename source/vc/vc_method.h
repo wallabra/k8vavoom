@@ -190,6 +190,10 @@ public:
   void DumpAsm ();
   void PostLoad ();
 
+  // this can be called in `ExecuteNetMethod()` to do cleanup after RPC
+  // should not be called for vararg methods
+  void CleanupParams () const;
+
   TLocation FindPCLocation (const vuint8 *pc);
 
   friend inline VStream &operator << (VStream &Strm, VMethod *&Obj) { return Strm << *(VMemberBase**)&Obj; }

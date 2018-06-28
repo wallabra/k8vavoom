@@ -834,6 +834,79 @@ TLocation VMethod::FindPCLocation (const vuint8 *pc) {
 
 //==========================================================================
 //
+//  VMethod::CleanupParams
+//
+//  this can be called in `ExecuteNetMethod()` to do cleanup after RPC
+//
+//==========================================================================
+void VMethod::CleanupParams () const {
+#if !defined(IN_VCC)
+  guard(VMethod::CleanupParams);
+  VStack *Param = pr_stackPtr-ParamsSize+(Flags&FUNC_Static ? 0 : 1); // skip self too
+  for (int i = 0; i < NumParams; ++i) {
+    switch (ParamTypes[i].Type) {
+      case TYPE_Int:
+      case TYPE_Byte:
+      case TYPE_Bool:
+      case TYPE_Float:
+      case TYPE_Name:
+      case TYPE_Pointer:
+      case TYPE_Reference:
+      case TYPE_Class:
+      case TYPE_State:
+        ++Param;
+        break;
+      case TYPE_String:
+        ((VStr *)&Param->p)->clear();
+        ++Param;
+        break;
+      case TYPE_Vector:
+        Param += 3;
+        break;
+      default:
+        Sys_Error("Bad method argument type `%s`", *ParamTypes[i].GetName());
+    }
+    if (ParamFlags[i]&FPARM_Optional) ++Param;
+  }
+  pr_stackPtr -= ParamsSize;
+
+  // push null return value
+  switch (ReturnType.Type) {
+    case TYPE_Void:
+      break;
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Bool:
+    case TYPE_Name:
+      PR_Push(0);
+      break;
+    case TYPE_Float:
+      PR_Pushf(0);
+      break;
+    case TYPE_String:
+      PR_PushStr(VStr());
+      break;
+    case TYPE_Pointer:
+    case TYPE_Reference:
+    case TYPE_Class:
+    case TYPE_State:
+      PR_PushPtr(nullptr);
+      break;
+    case TYPE_Vector:
+      PR_Pushf(0);
+      PR_Pushf(0);
+      PR_Pushf(0);
+      break;
+    default:
+      Sys_Error("Bad return value type `%s`", *ReturnType.GetName());
+  }
+  unguard;
+#endif
+}
+
+
+//==========================================================================
+//
 //  operator <<
 //
 //==========================================================================
