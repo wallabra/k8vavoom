@@ -1,0 +1,43 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Test0 : Object;
+
+enum E0 {
+  N0Zero,
+  N0One,
+  N0Four = 4,
+  N0Five,
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Test1 : Test0;
+
+enum E1 {
+  N1Zero,
+  N1One,
+  N1Four = 4,
+  N1Five = E0.N0Five,
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+
+enum E0 {
+  Zero,
+  One,
+  Four = 4,
+  Five,
+}
+
+
+final int main (array!string *args) {
+  writeln(E0.One, " : ", 1);
+  writeln(Test0::E0.N0One, " : ", 1);
+  writeln(Test1::E0.N0One, " : ", 1);
+  writeln(Test1::E1.N1One, " : ", 1);
+  writeln(Test1::E1.N1Five, " : ", 5);
+
+  return 0;
+}
