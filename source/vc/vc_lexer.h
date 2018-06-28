@@ -102,6 +102,8 @@ enum EToken {
   TK_Switch,
   TK_Transient,
   TK_True,
+  TK_UByte,
+  TK_UInt,
   TK_Unreliable,
   TK_Vector,
   TK_Void,

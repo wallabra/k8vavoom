@@ -915,7 +915,7 @@ VExpression *VParser::ParseOptionalTypeDecl (EToken tkend) {
   // allow local declaration here
   switch (Lex.Token) {
     case TK_Bool:
-    case TK_Byte:
+    case TK_UByte:
     case TK_Class:
     case TK_Float:
     case TK_Int:
@@ -1373,7 +1373,7 @@ VStatement *VParser::ParseStatement () {
       ParseError(Lex.Location, "Identifier expected");
       return new VGotoStmt(VName("undefined"), l);
     case TK_Bool:
-    case TK_Byte:
+    case TK_UByte:
     case TK_Class:
     case TK_Float:
     case TK_Int:
@@ -1448,7 +1448,7 @@ VExpression *VParser::ParsePrimitiveType () {
     case TK_Void: Lex.NextToken(); return new VTypeExprSimple(TYPE_Void, l);
     case TK_Auto: Lex.NextToken(); return new VTypeExprSimple(TYPE_Automatic, l);
     case TK_Int: Lex.NextToken(); return new VTypeExprSimple(TYPE_Int, l);
-    case TK_Byte: Lex.NextToken(); return new VTypeExprSimple(TYPE_Byte, l);
+    case TK_UByte: Lex.NextToken(); return new VTypeExprSimple(TYPE_Byte, l);
     case TK_Float: Lex.NextToken(); return new VTypeExprSimple(TYPE_Float, l);
     case TK_Name: Lex.NextToken(); return new VTypeExprSimple(TYPE_Name, l);
     case TK_String: Lex.NextToken(); return new VTypeExprSimple(TYPE_String, l);

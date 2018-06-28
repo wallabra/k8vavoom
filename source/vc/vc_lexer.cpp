@@ -99,6 +99,8 @@ const char *VLexer::TokenNames[] = {
   "switch",
   "transient",
   "true",
+  "ubyte",
+  "uint",
   "unreliable",
   "vector",
   "void",
@@ -1110,7 +1112,9 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
       else if (checkStrTk("transient")) Token = TK_Transient;
       break;
     case 'u':
-      if (checkStrTk("unreliable")) Token = TK_Unreliable;
+           if (checkStrTk("unreliable")) Token = TK_Unreliable;
+      else if (checkStrTk("ubyte")) Token = TK_UByte;
+      else if (checkStrTk("uint")) Token = TK_UInt;
       break;
     case 'v':
            if (checkStrTk("void")) Token = TK_Void;
