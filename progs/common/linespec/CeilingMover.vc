@@ -235,6 +235,7 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   case CEILEV_CrushAndRaiseSilA:
   case CEILEV_CrushRaiseAndStaySilA:
     SeqName = 'CeilingSemiSilent';
+    goto case; //k8: is it right???
   case CEILEV_CrushAndRaiseA:
   case CEILEV_CrushRaiseAndStayA:
     Crush = Arg4; // args[3] = crushing value
@@ -443,8 +444,10 @@ override void Tick(float deltaTime)
       case CEILEV_GenericChangeT:
       case CEILEV_GenericChange0:
         Sector->special = NewSpecial;
+        goto case; //k8: is it right???
       case CEILEV_GenericChange:
         Sector->ceiling.pic = Texture;
+        goto case; //k8: is it right???
       default:
         Finished();
         break;
@@ -482,8 +485,10 @@ override void Tick(float deltaTime)
       case CEILEV_GenericChangeT:
       case CEILEV_GenericChange0:
         Sector->special = NewSpecial;
+        goto case; //k8: is it right???
       case CEILEV_GenericChange:
         Sector->ceiling.pic = Texture;
+        goto case; //k8: is it right???
       default:
         Finished();
         break;

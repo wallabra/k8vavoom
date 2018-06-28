@@ -1334,10 +1334,8 @@ override void SpawnWorld(Level InLevel)
     {
     case PO_SPAWN_TYPE_HEXEN:
     case PO_SPAWNCRUSH_TYPE_HEXEN:
-      if (!bUseHexenPolyobjTypes)
-      {
-        break;
-      }
+      if (!bUseHexenPolyobjTypes) break;
+      goto case; //k8: is it right???
     case PO_SPAWN_TYPE:
     case PO_SPAWNCRUSH_TYPE:
     case PO_SPAWNHURT_TYPE:
@@ -1351,10 +1349,8 @@ override void SpawnWorld(Level InLevel)
       break;
 
     case PO_ANCHOR_TYPE_HEXEN:
-      if (!bUseHexenPolyobjTypes)
-      {
-        break;
-      }
+      if (!bUseHexenPolyobjTypes) break;
+      goto case; //k8: is it right???
     case PO_ANCHOR_TYPE:
       // Polyobj Anchor Pt.
       InLevel.AddPolyAnchorPoint(mthing->x, mthing->y, mthing->angle);

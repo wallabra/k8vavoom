@@ -421,10 +421,8 @@ final bool CheckActivation(int activationType, line_t *line, int Side,
         switch (line->special)
         {
         case LNSPEC_DoorRaise:
-          if (line->arg2 >= 64)
-          {
-            break;
-          }
+          if (line->arg2 >= 64) break;
+          goto case; //k8: is it right???
         case LNSPEC_PlatDownWaitUpStay:
         case LNSPEC_Teleport:
         case LNSPEC_TeleportNoFog:
