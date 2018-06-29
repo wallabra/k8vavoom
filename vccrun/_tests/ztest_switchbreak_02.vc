@@ -1,0 +1,13 @@
+class Main : Object;
+
+
+void main () {
+  int n = 42;
+  switch (n) {
+    case 1: writeln(1); goto case 42;
+    case 42: writeln(42); goto case 666; writeln("!!!");
+    case 666: writeln(666); goto default;
+    case 69: writeln(69); goto default;
+    default: writeln("default"); break;
+  }
+}
