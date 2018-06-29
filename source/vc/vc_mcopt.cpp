@@ -29,11 +29,13 @@
 #define VCMOPT_DISABLE_ALL_OUTPUT
 
 #ifndef VCMOPT_DISABLE_ALL_OUTPUT
-#define VCMCOPT_DUMP_FUNC_NAMES
+
+//#define VCMCOPT_DUMP_FUNC_NAMES
 //#define VCMCOPT_DISASM_FINAL_RESULT
 //#define VCMCOPT_DISASM_FINAL_RESULT_ANYWAY
 
-//#define VCMCOPT_DEBUG_RETURN_CHECKER
+#define VCMCOPT_DEBUG_RETURN_CHECKER
+#define VCMCOPT_DEBUG_RETURN_CHECKER_EXTRA
 
 //#define VCMCOPT_DEBUG_DEAD_JUMP_KILLER
 //#define VCMCOPT_NOTIFY_DEAD_JUMP_KILLER
@@ -118,6 +120,9 @@ public:
 
 protected:
   // returns `true` if this path (and all its possible branches) reached `return` instruction
+  // basically, it just marks all reachable instructions, and fails if it reached end-of-function
+  // note that we don't try to catch endless loops, but simple endless loops are considered ok
+  // (due to an accident)
   bool isPathEndsWithReturn (int iidx);
 
   void optimiseLoads ();
@@ -672,68 +677,42 @@ bool VMCOptimiser::canRemoveRange (int idx0, int idx1, Instr *ignoreThis) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+/*
+struct Exiter {
+  VStr msg;
+
+  Exiter (const VStr &amsg) { msg = amsg; }
+  ~Exiter () { fprintf(stderr, "%s", *msg); }
+};
+*/
+
+
 // returns `true` if this path (and all its possible branches) reached `return` instruction
+// basically, it just marks all reachable instructions, and fails if it reached end-of-function
+// note that we don't try to catch endless loops, but simple endless loops are considered ok
+// (due to an accident)
+// note that arriving at already marked instructions means "success"
 bool VMCOptimiser::isPathEndsWithReturn (int iidx) {
-#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
-  fprintf(stderr, "*** ENTER: VMCOptimiser::isPathEndsWithReturn iidx=%d\n", iidx);
-#endif
-  int idxStart = iidx;
   while (iidx >= 0 && iidx < instrCount) {
     Instr *it = getInstrAt(iidx);
     if (!it) return false; // oops
-    // if we returned to visited path, it means that we got a cycle (or success)
-    if (it->retflag) {
-#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
-      fprintf(stderr, "VMCOptimiser::isPathEndsWithReturn hits loop at %d (%d)\n", iidx, it->retflag);
-#endif
-      if (it->retflag > 0) {
-        // but we hit a path that leads to return, so mark our current path as success
-        for (int f = idxStart; f < iidx; ++f) getInstrAt(f)->retflag = 1;
-        // and return success
-        return true;
-      }
-      break;
-    }
-    // if this is return, we're done
-    if (it->isReturn()) {
-#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
-      fprintf(stderr, "*** EXIT(R): VMCOptimiser::isPathEndsWithReturn iidx=%d; end=%d\n", idxStart, iidx);
-#endif
-      // mark our current path as success
-      for (int f = idxStart; f <= iidx; ++f) getInstrAt(f)->retflag = 1;
-      // and return success
-      return true;
-    }
-    // mark as "in processing"
-    it->retflag = -1;
+    if (it->idx != iidx) FatalError("VCOPT: internal inconsisitency (VMCOptimiser::isPathEndsWithReturn)");
+    if (it->retflag) return true; // anyway
+    // mark it as visited
+    it->retflag = 1;
+    // if this is return, we're done too
+    if (it->isReturn()) return true;
     // follow branches
     if (it->isAnyBranch()) {
-      // if this is conditional branch backwards, assume that it can be skipped, and continue
-      if (!it->isGoto() && it->getBranchDest() > it->idx) {
-        // can't skip; for `goto`, just follow it, but for conditional, traverse both ways
-#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
-        fprintf(stderr, "***   BRANCH: VMCOptimiser::isPathEndsWithReturn iidx=%d; gidx=%d\n", idxStart, iidx);
-#endif
-        if (!isPathEndsWithReturn(it->getBranchDest())) {
-          // oops
-#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
-          fprintf(stderr, "VMCOptimiser::isPathEndsWithReturn hits no-return branch at %d\n", iidx);
-#endif
-          break;
-        }
-        // if this is unconditional branch, we're done here
-        if (it->isGoto()) {
-#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
-          fprintf(stderr, "*** EXIT(G): VMCOptimiser::isPathEndsWithReturn iidx=%d; end=%d\n", idxStart, iidx);
-#endif
-          // mark our current path as success
-          for (int f = idxStart; f <= iidx; ++f) getInstrAt(f)->retflag = 1;
-          // and return success
-          return true;
-        }
-        // otherwise continue as if nothing happened
+      // for goto, follow it unconditionally
+      if (it->isGoto()) {
+        iidx = it->getBranchDest();
+        continue;
       }
+      // for other branches, recurse on destination, then follow
+      if (!isPathEndsWithReturn(it->getBranchDest())) return false; // oops
     }
+    // go on
     ++iidx;
   }
   // don't bother rewinding, as we won't do more work anyway
