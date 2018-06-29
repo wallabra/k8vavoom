@@ -24,6 +24,7 @@
 //**************************************************************************
 
 #include "vc_local.h"
+#include "vc_mcopt.cpp"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -50,35 +51,6 @@ static void PF_Fixme () {
 //==========================================================================
 VMethodParam::VMethodParam () : TypeExpr(nullptr), Name(NAME_None) {
 }
-
-
-/*
-//==========================================================================
-//
-//  VMethodParam::VMethodParam
-//
-//==========================================================================
-VMethodParam::VMethodParam (const VMethodParam &v)
-  : TypeExpr(v.TypeExpr ? v.TypeExpr->SyntaxCopy() : nullptr)
-  , Name(v.Name)
-  , Loc(v.Loc)
-{
-}
-
-
-//==========================================================================
-//
-//  VMethodParam::VMethodParam
-//
-//==========================================================================
-VMethodParam &VMethodParam::operator = (const VMethodParam &v) {
-  if (&v != this) {
-    TypeExpr = (v.TypeExpr ? v.TypeExpr->SyntaxCopy() : nullptr);
-    Name = v.Name;
-    Loc = v.Loc;
-  }
-}
-*/
 
 
 //==========================================================================
@@ -696,126 +668,11 @@ void VMethod::CompileCode () {
 //==========================================================================
 void VMethod::OptimiseInstructions () {
   guard(VMethod::OptimiseInstructions);
-  int Addr = 0;
-  for (int i = 0; i < Instructions.Num()-1; ++i) {
-    switch (Instructions[i].Opcode) {
-      case OPC_PushVFunc:
-        // make sure class virtual table has been calculated
-        Instructions[i].Member->Outer->PostLoad();
-        if (((VMethod *)Instructions[i].Member)->VTableIndex < 256) Instructions[i].Opcode = OPC_PushVFuncB;
-        break;
-      case OPC_VCall:
-        // make sure class virtual table has been calculated
-        Instructions[i].Member->Outer->PostLoad();
-        if (((VMethod *)Instructions[i].Member)->VTableIndex < 256) Instructions[i].Opcode = OPC_VCallB;
-        break;
-      case OPC_DelegateCall:
-        // make sure struct / class field offsets have been calculated
-        Instructions[i].Member->Outer->PostLoad();
-             if (((VField *)Instructions[i].Member)->Ofs < 256) Instructions[i].Opcode = OPC_DelegateCallB;
-        else if (((VField *)Instructions[i].Member)->Ofs <= MAX_VINT16) Instructions[i].Opcode = OPC_DelegateCallS;
-        break;
-      case OPC_Offset:
-      case OPC_FieldValue:
-      case OPC_VFieldValue:
-      case OPC_PtrFieldValue:
-      case OPC_StrFieldValue:
-      case OPC_SliceFieldValue:
-      case OPC_ByteFieldValue:
-      case OPC_Bool0FieldValue:
-      case OPC_Bool1FieldValue:
-      case OPC_Bool2FieldValue:
-      case OPC_Bool3FieldValue:
-        // make sure struct / class field offsets have been calculated
-        Instructions[i].Member->Outer->PostLoad();
-        // no short form for slices
-        if (Instructions[i].Opcode != OPC_SliceFieldValue) {
-               if (((VField *)Instructions[i].Member)->Ofs < 256) Instructions[i].Opcode += 2;
-          else if (((VField *)Instructions[i].Member)->Ofs <= MAX_VINT16) ++Instructions[i].Opcode;
-        }
-        break;
-      case OPC_ArrayElement:
-             if (Instructions[i].TypeArg.GetSize() < 256) Instructions[i].Opcode = OPC_ArrayElementB;
-        else if (Instructions[i].TypeArg.GetSize() < MAX_VINT16) Instructions[i].Opcode = OPC_ArrayElementS;
-        break;
-      case OPC_PushName:
-             if (Instructions[i].NameArg.GetIndex() < 256) Instructions[i].Opcode = OPC_PushNameB;
-        else if (Instructions[i].NameArg.GetIndex() < MAX_VINT16) Instructions[i].Opcode = OPC_PushNameS;
-        break;
-    }
-
-    // calculate approximate addresses for jump instructions
-    Instructions[i].Address = Addr;
-    switch (StatementInfo[Instructions[i].Opcode].Args) {
-      case OPCARGS_None:
-        ++Addr;
-        break;
-      case OPCARGS_Member:
-      case OPCARGS_String:
-        Addr += 1+sizeof(void*);
-        break;
-      case OPCARGS_BranchTargetB:
-      case OPCARGS_BranchTargetNB:
-      case OPCARGS_Byte:
-      case OPCARGS_NameB:
-      case OPCARGS_FieldOffsetB:
-      case OPCARGS_VTableIndexB:
-      case OPCARGS_TypeSizeB:
-        Addr += 2;
-        break;
-      case OPCARGS_BranchTargetS:
-      case OPCARGS_Short:
-      case OPCARGS_NameS:
-      case OPCARGS_FieldOffsetS:
-      case OPCARGS_VTableIndex:
-      case OPCARGS_VTableIndexB_Byte:
-      case OPCARGS_FieldOffsetB_Byte:
-      case OPCARGS_TypeSizeS:
-        Addr += 3;
-        break;
-      case OPCARGS_ByteBranchTarget:
-      case OPCARGS_VTableIndex_Byte:
-      case OPCARGS_FieldOffsetS_Byte:
-        Addr += 4;
-        break;
-      case OPCARGS_BranchTarget:
-      case OPCARGS_ShortBranchTarget:
-      case OPCARGS_Int:
-      case OPCARGS_Name:
-      case OPCARGS_FieldOffset:
-      case OPCARGS_TypeSize:
-        Addr += 5;
-        break;
-      case OPCARGS_FieldOffset_Byte:
-        Addr += 6;
-        break;
-      case OPCARGS_IntBranchTarget:
-        Addr += 7;
-        break;
-      case OPCARGS_Type:
-        Addr += 9+sizeof(void*);
-        break;
-      case OPCARGS_Builtin:
-        Addr += 2;
-        break;
-    }
-  }
-
-  // now do jump instructions
-  for (int i = 0; i < Instructions.Num()-1; ++i) {
-    if (Instructions[i].Opcode != OPC_IteratorDtorAt &&
-        StatementInfo[Instructions[i].Opcode].Args == OPCARGS_BranchTarget)
-    {
-      vint32 Offs = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
-           if (Offs >= 0 && Offs < 256) Instructions[i].Opcode -= 3;
-      else if (Offs < 0 && Offs > -256) Instructions[i].Opcode -= 2;
-      else if (Offs >= MIN_VINT16 && Offs <= MAX_VINT16) Instructions[i].Opcode -= 1;
-    }
-  }
-  Instructions[Instructions.Num()-1].Address = Addr;
+  VMCOptimiser opt(Instructions);
+  opt.optimiseAll();
+  opt.finish(); // this will copy result back to `Instructions`
   unguard;
 }
-
 
 //==========================================================================
 //

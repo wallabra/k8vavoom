@@ -22,6 +22,8 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+//TODO: create separate optimizer module: it can be completely independent
+//      of anything else.
 
 
 //==========================================================================
