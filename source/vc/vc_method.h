@@ -200,7 +200,9 @@ public:
 
   friend inline VStream &operator << (VStream &Strm, VMethod *&Obj) { return Strm << *(VMemberBase**)&Obj; }
 
+  // this is public for VCC
+  void OptimiseInstructions ();
+
 private:
   void CompileCode ();
-  void OptimiseInstructions ();
 };

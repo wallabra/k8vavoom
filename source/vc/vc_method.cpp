@@ -395,6 +395,10 @@ void VMethod::Emit () {
   Statement = nullptr;
   */
 
+#if defined(IN_VCC)
+  OptimiseInstructions();
+#endif
+
   unguard;
 }
 
@@ -513,6 +517,7 @@ void VMethod::PostLoad () {
   }
 #endif
 
+  OptimiseInstructions();
   CompileCode();
 
   mPostLoaded = true;
@@ -543,7 +548,6 @@ void VMethod::CompileCode () {
   Statements.Clear();
   if (!Instructions.Num()) return;
 
-  OptimiseInstructions();
   for (int i = 0; i < Instructions.Num()-1; ++i) {
     Instructions[i].Address = Statements.Num();
     Statements.Append(Instructions[i].Opcode);
@@ -668,7 +672,7 @@ void VMethod::CompileCode () {
 //==========================================================================
 void VMethod::OptimiseInstructions () {
   guard(VMethod::OptimiseInstructions);
-  VMCOptimiser opt(Instructions);
+  VMCOptimiser opt(this, Instructions);
   opt.optimiseAll();
   opt.finish(); // this will copy result back to `Instructions`
   unguard;
