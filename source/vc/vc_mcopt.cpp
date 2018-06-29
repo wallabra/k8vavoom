@@ -50,7 +50,8 @@
 //#define VCMCOPT_NOTIFY_SIMPLIFY_JUMP_JUMP
 
 //#define VCMCOPT_DEBUG_DEADIF_SIMPLIFIER
-#define VCMCOPT_NOTIFY_DEADIF_SIMPLIFIER
+//#define VCMCOPT_NOTIFY_DEADIF_SIMPLIFIER
+
 #endif
 
 
@@ -94,7 +95,7 @@ private:
   void replaceInstr (Instr *dest, Instr *src);
 
   // range is inclusive
-  bool canRemoveRange (int idx0, int idx1, Instr *ignoreThis=nullptr);
+  bool canRemoveRange (int idx0, int idx1, Instr *ignoreThis=nullptr, Instr *ignoreThis1=nullptr);
 
   // range is inclusive
   void killRange (int idx0, int idx1);
@@ -658,7 +659,7 @@ void VMCOptimiser::replaceInstr (Instr *dest, Instr *src) {
 // ////////////////////////////////////////////////////////////////////////// //
 // range can be removed if there are no jumps *into* it
 // range is inclusive
-bool VMCOptimiser::canRemoveRange (int idx0, int idx1, Instr *ignoreThis) {
+bool VMCOptimiser::canRemoveRange (int idx0, int idx1, Instr *ignoreThis, Instr *ignoreThis1) {
   if (idx0 < 0 || idx1 < 0 || idx0 > idx1 || idx0 >= instrCount || idx1 >= instrCount) return false;
   for (int f = idx0; f <= idx1; ++f) {
     Instr *it = getInstrAt(f);
@@ -667,7 +668,10 @@ bool VMCOptimiser::canRemoveRange (int idx0, int idx1, Instr *ignoreThis) {
     if (!it->isMeJumpTarget()) continue;
     // check if we have something outside that jumps here
     for (Instr *jp = jplistHead; jp; jp = jp->jpnext) {
-      if (jp == ignoreThis) continue;
+      if (jp == ignoreThis || jp == ignoreThis1) continue;
+      // if this jump is inside our region, ignore it
+      if (jp->idx >= idx0 && jp->idx <= idx1) continue;
+      // check destination
       int dest = jp->getBranchDest();
       if (dest >= idx0 && dest <= idx1) return false; // oops
     }
@@ -1174,7 +1178,8 @@ bool VMCOptimiser::removeDeadIfs () {
       int eend = jdm1->getBranchDest()-1; // range is inclusive
       if (estart > eend) FatalError("VCOPT: internal error (1) at (VMCOptimiser::removeDeadIfs) (%d,%d)", estart, eend);
       // check if we can remove `push` and `ifgoto` (we won't need 'em in any case)
-      if (!canRemoveRange(itprev->idx, it->idx)) continue; // alas
+      // moved down, to avoid some false positives
+      //if (!canRemoveRange(itprev->idx, it->idx)) continue; // alas
       // yeah, it does; check what branch we should keep
       if ((it->Opcode == OPC_IfNotGoto && itprev->getPushIntValue() != 0) ||
           (it->Opcode == OPC_IfGoto && itprev->getPushIntValue() == 0))
@@ -1186,6 +1191,8 @@ bool VMCOptimiser::removeDeadIfs () {
 #ifdef VCMCOPT_NOTIFY_DEADIF_SIMPLIFIER
         fprintf(stderr, "removing `else` branch (%d:%d), and cond (%d:%d)\n", estart, eend, itprev->idx, it->idx);
 #endif
+        // check if we can remove `push` and `ifgoto` (we won't need 'em in any case)
+        if (!canRemoveRange(itprev->idx, it->idx)) continue; // alas
         // check if we can remove `else` (but ignore `If[Not]Goto`)
         if (!canRemoveRange(estart, eend, it)) continue;
         // yeah, we can!
@@ -1204,7 +1211,7 @@ bool VMCOptimiser::removeDeadIfs () {
         fprintf(stderr, "removing `then` branch (%d:%d)\n", itprev->idx, estart);
 #endif
         // check if we can remove `then` (estart is `goto endif`, we don't need it too)
-        if (!canRemoveRange(it->idx+1, estart)) continue;
+        if (!canRemoveRange(itprev->idx, estart)) continue;
         // remove the whole `then` branch
         killRange(itprev->idx, estart);
         // and exit, 'cause i don't want to bother with `jit` resyncing
