@@ -24,21 +24,30 @@
 // ////////////////////////////////////////////////////////////////////////// //
 // OPTIMIZER
 //
-//#define VCMCOPT_DUMP_FUNC_NAMES
+//#define VCMOPT_DISABLE_OPTIMIZER
+
+#define VCMOPT_DISABLE_ALL_OUTPUT
+
+#ifndef VCMOPT_DISABLE_ALL_OUTPUT
+#define VCMCOPT_DUMP_FUNC_NAMES
 //#define VCMCOPT_DISASM_FINAL_RESULT
 //#define VCMCOPT_DISASM_FINAL_RESULT_ANYWAY
 
 //#define VCMCOPT_DEBUG_DEAD_JUMP_KILLER
-//#define VCMCOPT_VERBOSE_DEAD_JUMP_KILLER
+//#define VCMCOPT_NOTIFY_DEAD_JUMP_KILLER
 
 //#define VCMCOPT_DEBUG_REDUNANT_JUMPS
-//#define VCMCOPT_VERBOSE_REDUNANT_JUMPS
+//#define VCMCOPT_NOTIFY_REDUNANT_JUMPS
 
 //#define VCMCOPT_DEBUG_SIMPLIFY_JUMP_CHAINS
-//#define VCMCOPT_VERBOSE_SIMPLIFY_JUMP_CHAINS
+//#define VCMCOPT_NOTIFY_SIMPLIFY_JUMP_CHAINS
 
 //#define VCMCOPT_DEBUG_SIMPLIFY_JUMP_JUMP
-//#define VCMCOPT_VERBOSE_SIMPLIFY_JUMP_JUMP
+//#define VCMCOPT_NOTIFY_SIMPLIFY_JUMP_JUMP
+
+//#define VCMCOPT_DEBUG_DEADIF_SIMPLIFIER
+#define VCMCOPT_NOTIFY_DEADIF_SIMPLIFIER
+#endif
 
 
 struct Instr;
@@ -80,6 +89,12 @@ private:
   //WARNING: copies contents of `src` to `dest`, but does no list reordering!
   void replaceInstr (Instr *dest, Instr *src);
 
+  // range is inclusive
+  bool canRemoveRange (int idx0, int idx1, Instr *ignoreThis=nullptr);
+
+  // range is inclusive
+  void killRange (int idx0, int idx1);
+
 public:
   VMCOptimiser (VMethod *afunc, TArray<FInstruction> &aorig);
   ~VMCOptimiser ();
@@ -104,6 +119,8 @@ protected:
   bool removeRedunantJumps ();
   bool simplifyIfJumpJump ();
   bool simplifyIfJumps ();
+
+  bool removeDeadIfs ();
 };
 
 
@@ -274,6 +291,33 @@ struct Instr {
     return !meJumpTarget;
   }
 
+  inline bool isPushInt () const {
+    switch (Opcode) {
+      case OPC_PushNumber0:
+      case OPC_PushNumber1:
+      case OPC_PushNumberB:
+      case OPC_PushNumberS:
+      case OPC_PushNumber:
+        return true;
+    }
+    return false;
+  }
+
+  inline int getPushIntValue () const {
+    switch (Opcode) {
+      case OPC_PushNumber0:
+        return 0;
+      case OPC_PushNumber1:
+        return 1;
+      case OPC_PushNumberB:
+        return Arg1&0xff;
+      case OPC_PushNumberS:
+        return (vint32)(vint16)(Arg1&0xffff);
+      case OPC_PushNumber:
+        return Arg1;
+    }
+    return false;
+  }
 
   void disasm () const {
     // opcode
@@ -537,6 +581,16 @@ void VMCOptimiser::killInstr (Instr *it) {
 }
 
 
+// range is inclusive
+void VMCOptimiser::killRange (int idx0, int idx1) {
+  //fprintf(stderr, "  KILLING: (%d:%d)\n", idx0, idx1);
+  while (idx0 <= idx1) {
+    killInstr(getInstrAt(idx0));
+    --idx1; // one less left
+  }
+}
+
+
 void VMCOptimiser::replaceInstr (Instr *dest, Instr *src) {
   if (!dest || !src || dest == src) return; // sanity checks
   bool isDestJmp = dest->isAnyBranch();
@@ -584,7 +638,32 @@ void VMCOptimiser::replaceInstr (Instr *dest, Instr *src) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// range can be removed if there are no jumps *into* it
+// range is inclusive
+bool VMCOptimiser::canRemoveRange (int idx0, int idx1, Instr *ignoreThis) {
+  if (idx0 < 0 || idx1 < 0 || idx0 > idx1 || idx0 >= instrCount || idx1 >= instrCount) return false;
+  for (int f = idx0; f <= idx1; ++f) {
+    Instr *it = getInstrAt(f);
+    // is this a jump target?
+    if (!it->isMeJumpTarget()) continue;
+    // check if we have something outside that jumps here
+    for (Instr *jp = jplistHead; jp; jp = jp->jpnext) {
+      if (jp == ignoreThis) continue;
+      int dest = jp->getBranchDest();
+      if (dest >= idx0 && dest <= idx1) return false; // oops
+    }
+  }
+  return true;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 void VMCOptimiser::optimiseAll () {
+#ifdef VCMOPT_DISABLE_OPTIMIZER
+  // two required steps
+  optimiseLoads();
+  optimiseJumps();
+#else
 #if defined(VCMCOPT_DUMP_FUNC_NAMES) || defined(VCMCOPT_DISASM_FINAL_RESULT) || defined(VCMCOPT_DISASM_FINAL_RESULT_ANYWAY)
   bool shown = false;
   shown =
@@ -593,6 +672,13 @@ void VMCOptimiser::optimiseAll () {
   removeDeadBranches();
   // main optimiser loop: stop if nothing was optimised on each step
   for (;;) {
+    // do this first, 'cause branch replacer can break if detection logic
+    if (removeDeadIfs()) {
+#if defined(VCMCOPT_DUMP_FUNC_NAMES) || defined(VCMCOPT_DISASM_FINAL_RESULT)
+      shown = true;
+#endif
+      continue;
+    }
     if (!removeRedunantJumps() &&
         !simplifyIfJumpJump() &&
         !simplifyIfJumps() &&
@@ -643,6 +729,7 @@ void VMCOptimiser::optimiseAll () {
 #endif
     fprintf(stderr, "####### DONE OPTIMIZING: %s #######\n", *func->GetFullName());
   }
+#endif
 #endif
 }
 
@@ -795,7 +882,7 @@ bool VMCOptimiser::removeDeadBranches () {
     if (!it->prev->isReturn() && !it->prev->isGoto()) continue;
     // ok, this is jump right after `return` or `goto`, and it is not a jump target
     // it is effectively dead, so remove it
-#ifdef VCMCOPT_VERBOSE_DEAD_JUMP_KILLER
+#ifdef VCMCOPT_NOTIFY_DEAD_JUMP_KILLER
     fprintf(stderr, "::: %s ::: KILLING DEAD BRANCH at %d (orig:%d)\n", *func->GetFullName(), it->idx, it->origIdx); it->disasm();
 #endif
     res = true;
@@ -820,7 +907,7 @@ bool VMCOptimiser::removeRedunantJumps () {
     if (!it->isGoto() || it->getBranchDest() != it->idx+1) continue;
     // i found her!
     res = true;
-#ifdef VCMCOPT_VERBOSE_REDUNANT_JUMPS
+#ifdef VCMCOPT_NOTIFY_REDUNANT_JUMPS
     fprintf(stderr, "removing jump $+1 at %d (orig:%d); jumptarget=%d\n", it->idx, it->origIdx, (int)(it->isMeJumpTarget()));
     it->disasm(); getInstrAt(it->getBranchDest())->disasm();
 #endif
@@ -832,7 +919,7 @@ bool VMCOptimiser::removeRedunantJumps () {
     // (as this is what this code does anyway)
     if (it->isMeJumpTarget()) {
       // mark next instruction as jump target
-      if (it->next->idx != it->idx+1) abort(); // just in case
+      if (it->next->idx != it->idx+1) FatalError("VCOPT: internal error in (VMCOptimiser::removeRedunantJumps)");
       it->next->meJumpTarget = true;
       // fix jumps to `it`
       for (Instr *jit = jplistHead; jit; jit = jit->jpnext) {
@@ -868,7 +955,7 @@ bool VMCOptimiser::simplifyIfJumps () {
     if (it->isGoto() && tgt->isReturn()) {
       // yes, replace it with direct return
       res = true;
-#ifdef VCMCOPT_VERBOSE_SIMPLIFY_JUMP_CHAINS
+#ifdef VCMCOPT_NOTIFY_SIMPLIFY_JUMP_CHAINS
       fprintf(stderr, "replacing jump-to-return at %d (orig:%d)\n", it->idx, it->origIdx);
       it->disasm(); tgt->disasm();
 #endif
@@ -891,7 +978,7 @@ bool VMCOptimiser::simplifyIfJumps () {
     if (!tgt->isGoto()) continue;
     // change destination
     res = true;
-#ifdef VCMCOPT_VERBOSE_SIMPLIFY_JUMP_CHAINS
+#ifdef VCMCOPT_NOTIFY_SIMPLIFY_JUMP_CHAINS
     fprintf(stderr, "replacing jump to %d at position %d to jump at %d (orig:%d)\n", it->getBranchDest(), it->idx, tgt->getBranchDest(), it->origIdx);
     it->disasm(); tgt->disasm();
 #endif
@@ -936,7 +1023,7 @@ bool VMCOptimiser::simplifyIfJumpJump () {
     if (it->getBranchDest() != itnext->next->idx) continue;
     // ok, replace it
     res = true;
-#ifdef VCMCOPT_VERBOSE_SIMPLIFY_JUMP_JUMP
+#ifdef VCMCOPT_NOTIFY_SIMPLIFY_JUMP_JUMP
     fprintf(stderr, "replacing if+goto at %d (orig:%d)\n", it->idx, it->origIdx);
     it->disasm(); itnext->disasm(); getInstrAt(it->getBranchDest())->disasm();
 #endif
@@ -953,7 +1040,7 @@ bool VMCOptimiser::simplifyIfJumpJump () {
     // remove next jump (do some magic to continue iterating)
     if (itnext == jit) jit = jit->jpnext; // `jit` will be destroyed, so skip it
     killInstr(itnext);
-#ifdef VCMCOPT_VERBOSE_SIMPLIFY_JUMP_JUMP
+#ifdef VCMCOPT_NOTIFY_SIMPLIFY_JUMP_JUMP
     fprintf(stderr, "  replaced if+goto at %d (orig:%d)\n", it->idx, it->origIdx);
     it->disasm(); it->next->disasm(); getInstrAt(it->getBranchDest())->disasm();
 #endif
@@ -967,6 +1054,104 @@ bool VMCOptimiser::simplifyIfJumpJump () {
   return res;
 }
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+// if we have `PushNumber; If[Not]Goto m;`, remove if, and remove possible "else" branch
+bool VMCOptimiser::removeDeadIfs () {
+  Instr *jit = jplistHead;
+  while (jit) {
+    Instr *it = jit;
+    jit = jit->jpnext;
+    // should be `If[Not]Goto`
+    if (it->Opcode != OPC_IfGoto && it->Opcode != OPC_IfNotGoto) continue;
+    // should have previous instr
+    Instr *itprev = it->prev;
+    if (!itprev) continue;
+    // it should be "push int literal"
+    if (!itprev->isPushInt()) continue;
+    // jump should be forward (and has some code inside)
+    if (it->getBranchDest() <= it->idx+1) continue;
+    // if [dest-1] is `goto`, this looks like `if/else`
+    Instr *jdm1 = getInstrAt(it->getBranchDest()-1);
+    if (jdm1->isGoto()) {
+      // check if that `goto` leads further down
+      if (jdm1->getBranchDest() <= jdm1->idx+1) continue;
+      int estart = jdm1->idx; // it starts from `goto endif`
+      if (estart+1 != it->getBranchDest()) FatalError("VCOPT: internal error (0) at (VMCOptimiser::removeDeadIfs) (%d, %d)", estart, it->getBranchDest());
+      int eend = jdm1->getBranchDest()-1; // range is inclusive
+      if (estart > eend) FatalError("VCOPT: internal error (1) at (VMCOptimiser::removeDeadIfs) (%d,%d)", estart, eend);
+      // check if we can remove `push` and `ifgoto` (we won't need 'em in any case)
+      if (!canRemoveRange(itprev->idx, it->idx)) continue; // alas
+      // yeah, it does; check what branch we should keep
+      if ((it->Opcode == OPC_IfNotGoto && itprev->getPushIntValue() != 0) ||
+          (it->Opcode == OPC_IfGoto && itprev->getPushIntValue() == 0))
+      {
+        // this is `true` branch
+#ifdef VCMCOPT_DEBUG_DEADIF_SIMPLIFIER
+        disasmAll();
+#endif
+#ifdef VCMCOPT_NOTIFY_DEADIF_SIMPLIFIER
+        fprintf(stderr, "removing `else` branch (%d:%d), and cond (%d:%d)\n", estart, eend, itprev->idx, it->idx);
+#endif
+        // check if we can remove `else` (but ignore `If[Not]Goto`)
+        if (!canRemoveRange(estart, eend, it)) continue;
+        // yeah, we can!
+        // first, remove `else` branch ('cause if we'll remove `IfXXX` first, indicies will break)
+        killRange(estart, eend);
+        // second, remove push and ifgoto
+        killRange(itprev->idx, it->idx);
+        // and exit, 'cause i don't want to bother with `jit` resyncing
+        return true;
+      } else {
+        // this is `false` branch
+#ifdef VCMCOPT_DEBUG_DEADIF_SIMPLIFIER
+        disasmAll();
+#endif
+#ifdef VCMCOPT_NOTIFY_DEADIF_SIMPLIFIER
+        fprintf(stderr, "removing `then` branch (%d:%d)\n", itprev->idx, estart);
+#endif
+        // check if we can remove `then` (estart is `goto endif`, we don't need it too)
+        if (!canRemoveRange(it->idx+1, estart)) continue;
+        // remove the whole `then` branch
+        killRange(itprev->idx, estart);
+        // and exit, 'cause i don't want to bother with `jit` resyncing
+        return true;
+      }
+    } else {
+      // no `goto` there, this looks like an `if` without `else`
+      // should we remove `then` branch?
+      if ((it->Opcode == OPC_IfNotGoto && itprev->getPushIntValue() == 0) ||
+          (it->Opcode == OPC_IfGoto && itprev->getPushIntValue() != 0))
+      {
+        // yeah, check if it is possible at all
+        int tend = it->getBranchDest()-1;
+        if (!canRemoveRange(itprev->idx, tend)) continue;
+        // kill it with fire!
+#ifdef VCMCOPT_DEBUG_DEADIF_SIMPLIFIER
+        disasmAll();
+#endif
+#ifdef VCMCOPT_NOTIFY_DEADIF_SIMPLIFIER
+        fprintf(stderr, "removing lone `push/if/else` (%d:%d)\n", itprev->idx, tend);
+#endif
+        killRange(itprev->idx, tend);
+        // and exit, 'cause i don't want to bother with `jit` resyncing
+        return true;
+      } else {
+        // remove only `push` and `IfXXX`, as we have no `else` branch
+        // check if we can remove `push` and `ifgoto`
+        if (!canRemoveRange(itprev->idx, it->idx)) continue; // alas
+        // kill it with fire!
+#ifdef VCMCOPT_DEBUG_DEADIF_SIMPLIFIER
+        disasmAll();
+#endif
+#ifdef VCMCOPT_NOTIFY_DEADIF_SIMPLIFIER
+        fprintf(stderr, "removing lone `push/if` (%d:%d)\n", itprev->idx, it->idx);
+#endif
+        killRange(itprev->idx, it->idx);
+        // and exit, 'cause i don't want to bother with `jit` resyncing
+        return true;
+      }
+    }
   }
   return false;
 }
