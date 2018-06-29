@@ -33,6 +33,8 @@
 //#define VCMCOPT_DISASM_FINAL_RESULT
 //#define VCMCOPT_DISASM_FINAL_RESULT_ANYWAY
 
+//#define VCMCOPT_DEBUG_RETURN_CHECKER
+
 //#define VCMCOPT_DEBUG_DEAD_JUMP_KILLER
 //#define VCMCOPT_NOTIFY_DEAD_JUMP_KILLER
 
@@ -106,11 +108,18 @@ public:
   // this will copy result back to `aorig`, and will clear everything
   void finish ();
 
+  // this does flood-fill search to see if all execution pathes are finished with `return`
+  void checkReturns ();
+
   void optimiseAll ();
+  void shortenInstructions ();
 
   inline int countInstrs () const { return instrCount; }
 
 protected:
+  // returns `true` if this path (and all its possible branches) reached `return` instruction
+  bool isPathEndsWithReturn (int iidx);
+
   void optimiseLoads ();
   void optimiseJumps ();
 
@@ -146,6 +155,8 @@ struct Instr {
   int idx; // instruction index, used to check/fix jumps
   int origIdx; // index in original instruction array
   bool meJumpTarget; // `true` if this instr is a jump target
+  // used for return checking
+  bool visited;
 
   Instr (VMCOptimiser *aowner, const FInstruction &i)
     : owner(aowner)
@@ -163,6 +174,7 @@ struct Instr {
     , idx(-1)
     , origIdx(-1)
     , meJumpTarget(false)
+    , visited(false)
   {
   }
 
@@ -644,6 +656,7 @@ bool VMCOptimiser::canRemoveRange (int idx0, int idx1, Instr *ignoreThis) {
   if (idx0 < 0 || idx1 < 0 || idx0 > idx1 || idx0 >= instrCount || idx1 >= instrCount) return false;
   for (int f = idx0; f <= idx1; ++f) {
     Instr *it = getInstrAt(f);
+    if (!it) return false;
     // is this a jump target?
     if (!it->isMeJumpTarget()) continue;
     // check if we have something outside that jumps here
@@ -658,11 +671,93 @@ bool VMCOptimiser::canRemoveRange (int idx0, int idx1, Instr *ignoreThis) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VMCOptimiser::optimiseAll () {
-#ifdef VCMOPT_DISABLE_OPTIMIZER
+// returns `true` if this path (and all its possible branches) reached `return` instruction
+bool VMCOptimiser::isPathEndsWithReturn (int iidx) {
+#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
+  fprintf(stderr, "*** ENTER: VMCOptimiser::isPathEndsWithReturn iidx=%d\n", iidx);
+#endif
+  int idxStart = iidx;
+  while (iidx >= 0 && iidx < instrCount) {
+    Instr *it = getInstrAt(iidx);
+    if (!it) return false; // oops
+    // if we returned to visited path, it means that we got a cycle
+    if (it->visited) {
+#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
+      fprintf(stderr, "VMCOptimiser::isPathEndsWithReturn hits loop at %d\n", iidx);
+#endif
+      break;
+    }
+    // if this is return, we're done
+    if (it->isReturn()) {
+#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
+      fprintf(stderr, "*** EXIT(R): VMCOptimiser::isPathEndsWithReturn iidx=%d; end=%d\n", idxStart, iidx);
+#endif
+      // rewind (unmark visited nodes)
+      for (int f = idxStart; f < iidx; ++f) getInstrAt(f)->visited = false;
+      // and return success
+      return true;
+    }
+    // mark as visited
+    it->visited = true;
+    // follow branches
+    if (it->isAnyBranch()) {
+      // if this is conditional branch backwards, assume that it can be skipped, and continue
+      if (!it->isGoto() && it->getBranchDest() > it->idx) {
+        // can't skip; for `goto`, just follow it, but for conditional, traverse both ways
+#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
+        fprintf(stderr, "***   BRANCH: VMCOptimiser::isPathEndsWithReturn iidx=%d; gidx=%d\n", idxStart, iidx);
+#endif
+        if (!isPathEndsWithReturn(it->getBranchDest())) {
+          // oops
+#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
+          fprintf(stderr, "VMCOptimiser::isPathEndsWithReturn hits no-return branch at %d\n", iidx);
+#endif
+          break;
+        }
+        // if this is unconditional branch, we're done here
+        if (it->isGoto()) {
+#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
+          fprintf(stderr, "*** EXIT(G): VMCOptimiser::isPathEndsWithReturn iidx=%d; end=%d\n", idxStart, iidx);
+#endif
+          // rewind (unmark visited nodes)
+          for (int f = idxStart; f <= iidx; ++f) getInstrAt(f)->visited = false;
+          // and return success
+          return true;
+        }
+        // otherwise continue as if nothing happened
+      }
+    }
+    ++iidx;
+  }
+  // don't bother rewinding, as we won't do more work anyway
+  return false;
+}
+
+
+// this does flood-fill search to see if all execution pathes are finished with `return`
+void VMCOptimiser::checkReturns () {
+  // reset `visited` flag on each instruction
+  for (int f = 0; f < instrCount; ++f) getInstrAt(f)->visited = false;
+  if (!isPathEndsWithReturn(0)) {
+    ParseError(func->Loc, "Missing `return` in one of the pathes of function `%s`", *func->GetFullName());
+#ifdef VCMCOPT_DEBUG_RETURN_CHECKER
+    disasmAll();
+#endif
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void VMCOptimiser::shortenInstructions () {
   // two required steps
   optimiseLoads();
   optimiseJumps();
+}
+
+
+void VMCOptimiser::optimiseAll () {
+#ifdef VCMOPT_DISABLE_OPTIMIZER
+  return;
 #else
 #if defined(VCMCOPT_DUMP_FUNC_NAMES) || defined(VCMCOPT_DISASM_FINAL_RESULT) || defined(VCMCOPT_DISASM_FINAL_RESULT_ANYWAY)
   bool shown = false;
@@ -687,8 +782,6 @@ void VMCOptimiser::optimiseAll () {
     shown = true;
 #endif
   }
-  optimiseLoads(); // should be last
-  optimiseJumps();
 #if defined(VCMCOPT_DISASM_FINAL_RESULT_ANYWAY)
   shown = true;
 #endif
@@ -951,6 +1044,16 @@ bool VMCOptimiser::simplifyIfJumps () {
     if (it->isSelfJump()) continue;
     // get target instruction
     Instr *tgt = getInstrAt(it->getBranchDest());
+    if (!tgt) {
+      // this can happen for function without return
+      // such function will be rejected by return checker, so don't bother
+      continue;
+      /*
+      fprintf(stderr, "===================== %s =====================\n", *func->GetFullName());
+      disasmAll();
+      FatalError("VCOPT: failed to get destination for instruction %d (destination is %d)", it->idx, it->getBranchDest());
+      */
+    }
     // `goto` to `return`?
     if (it->isGoto() && tgt->isReturn()) {
       // yes, replace it with direct return
@@ -1073,6 +1176,10 @@ bool VMCOptimiser::removeDeadIfs () {
     if (it->getBranchDest() <= it->idx+1) continue;
     // if [dest-1] is `goto`, this looks like `if/else`
     Instr *jdm1 = getInstrAt(it->getBranchDest()-1);
+    if (!jdm1) {
+      // this should not happen, but for invalid code it can happen nevertheless
+      continue;
+    }
     if (jdm1->isGoto()) {
       // check if that `goto` leads further down
       if (jdm1->getBranchDest() <= jdm1->idx+1) continue;

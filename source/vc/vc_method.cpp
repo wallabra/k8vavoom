@@ -326,12 +326,15 @@ void VMethod::Emit () {
 
   if (!Statement) { ParseError(Loc, "Method body missing"); return; }
 
+  // no need to do it here, as optimiser will do it for us
+  /*
   if (ReturnTypeExpr && ReturnTypeExpr->Type.Type != TYPE_Void) {
     if (!Statement->IsEndsWithReturn()) {
       ParseError(Loc, "Missing `return` in one of the pathes of function `%s`", *GetFullName());
       return;
     }
   }
+  */
 
   VEmitContext ec(this);
 
@@ -389,15 +392,13 @@ void VMethod::Emit () {
   ec.EndCode();
   if (VMemberBase::doAsmDump) DumpAsm();
 
+  OptimiseInstructions();
+
   // clear it here, 'cause why not?
   /*
   delete Statement;
   Statement = nullptr;
   */
-
-#if defined(IN_VCC)
-  OptimiseInstructions();
-#endif
 
   unguard;
 }
@@ -517,7 +518,8 @@ void VMethod::PostLoad () {
   }
 #endif
 
-  OptimiseInstructions();
+  // moved to `Emit()`, as it belongs there anyway
+  //OptimiseInstructions();
   CompileCode();
 
   mPostLoaded = true;
@@ -674,9 +676,14 @@ void VMethod::OptimiseInstructions () {
   guard(VMethod::OptimiseInstructions);
   VMCOptimiser opt(this, Instructions);
   opt.optimiseAll();
+  // do this last, as optimiser can remove some dead code
+  opt.checkReturns();
+  // this should be done as a last step
+  opt.shortenInstructions();
   opt.finish(); // this will copy result back to `Instructions`
   unguard;
 }
+
 
 //==========================================================================
 //
