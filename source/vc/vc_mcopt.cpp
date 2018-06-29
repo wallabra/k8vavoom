@@ -130,6 +130,7 @@ protected:
   bool simplifyIfJumps ();
 
   bool removeDeadIfs ();
+  bool removeDeadWhiles ();
 };
 
 
@@ -774,7 +775,7 @@ void VMCOptimiser::optimiseAll () {
   // main optimiser loop: stop if nothing was optimised on each step
   for (;;) {
     // do this first, 'cause branch replacer can break if detection logic
-    if (removeDeadIfs()) {
+    if (removeDeadIfs() || removeDeadWhiles()) {
 #if defined(VCMCOPT_DUMP_FUNC_NAMES) || defined(VCMCOPT_DISASM_FINAL_RESULT)
       shown = true;
 #endif
@@ -1267,4 +1268,63 @@ bool VMCOptimiser::removeDeadIfs () {
     }
   }
   return false;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// remove/optimize dead `while {}` loops
+// while loop looks like this:
+//   goto lbl
+//  start:
+//   body
+//  lbl:
+//   cond
+//   If[Not]Goto start
+bool VMCOptimiser::removeDeadWhiles () {
+  bool res = false;
+  Instr *jit = jplistHead;
+  while (jit) {
+    Instr *it = jit;
+    jit = jit->jpnext;
+    // should be `If[Not]Goto`
+    if (it->Opcode != OPC_IfGoto && it->Opcode != OPC_IfNotGoto) continue;
+    // should have previous instr
+    Instr *itprev = it->prev;
+    if (!itprev) continue;
+    // it should be "push int literal"
+    if (!itprev->isPushInt()) continue;
+    // jump should be backward
+    if (it->getBranchDest() >= it->idx-1) continue;
+    // if [dest-1] is `goto`, this looks like `if/else`
+    Instr *jdm1 = getInstrAt(it->getBranchDest()-1);
+    if (!jdm1) {
+      // this should not happen, but for invalid code it can happen nevertheless
+      continue;
+    }
+    // if this is not a `goto`, don't bother (such jumps will be optimized out by another pass)
+    if (!jdm1->isGoto()) continue;
+    // should we convert the jump into unconditional, or drop the whole loop?
+    if ((it->Opcode == OPC_IfGoto && itprev->getPushIntValue() != 0) ||
+        (it->Opcode == OPC_IfNotGoto && itprev->getPushIntValue() == 0))
+    {
+      // the easy case: convert to unconditional
+      // check if we can remove `push`
+      if (!canRemoveRange(itprev->idx, itprev->idx, it, jdm1)) continue; // alas, cannot remove `push`
+      res = true;
+      // convert opcode
+      it->Opcode = OPC_Goto;
+      // and remove push
+      killInstr(itprev);
+      // we can safely continue here
+      continue;
+    } else {
+      // the hard case: remove the whole `while`
+      // check if we can remove it (starting from the first jump, and down to check)
+      if (!canRemoveRange(jdm1->idx, it->idx)) continue; // alas, cannot remove
+      killRange(jdm1->idx, it->idx);
+      // and don't continue, 'cause we can possibly lost `jit`
+      return true;
+    }
+  }
+  return res;
 }
