@@ -1,0 +1,3 @@
+ztest_retcheck_01.vc:5: Missing `return` in one of the pathes of function `vccrun.Main.test`
+FATAL: Confused by previous errors, bailing out
+

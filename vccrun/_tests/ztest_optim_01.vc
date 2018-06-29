@@ -1,0 +1,8 @@
+class Main : Object;
+
+
+void main () {
+  int n = 42;
+  if (n) {} else writeln(n);
+  if (!n) {} else writeln(n);
+}

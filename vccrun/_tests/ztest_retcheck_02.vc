@@ -1,0 +1,15 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+int test (int v) {
+  // note that dead code eliminator will eliminate the branch,
+  // so in the end of a day, this function always finishes with return
+  if (1) {
+    return 42;
+  }
+}
+
+
+void main () {
+  writeln(test(666));
+}

@@ -1,0 +1,11 @@
+class Main : Object;
+
+
+void main () {
+  if (1) writeln("yay!"); else writeln("shit");
+  if (0) writeln("fuck"); else writeln("yeah!");
+  if (1) writeln("hee0");
+  if (0) writeln("ass");
+  if (1) {} else writeln("ass1");
+  if (0) {} else writeln("hee1");
+}

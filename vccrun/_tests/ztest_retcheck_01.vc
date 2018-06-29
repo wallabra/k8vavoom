@@ -1,0 +1,14 @@
+// FAIL
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+int test (int v) {
+  if (v) {
+    return 42;
+  }
+}
+
+
+void main () {
+  writeln(test(666));
+}

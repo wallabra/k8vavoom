@@ -1,0 +1,15 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+int test (int v) {
+  if (v) {
+    return 42;
+  } else {
+    return 99;
+  }
+}
+
+
+void main () {
+  writeln(test(666));
+}
