@@ -283,71 +283,21 @@ void VLocalVar::RequestAddressOf () {
 
 //==========================================================================
 //
-//  VLocalVar::genLocalValue
-//
-//==========================================================================
-void VLocalVar::genLocalValue (VEmitContext &ec, const VLocalVarDef &loc, int xofs) {
-  int Ofs = loc.Offset+xofs;
-  if (Ofs < 256) {
-         if (Ofs == 0) ec.AddStatement(OPC_LocalValue0, Loc);
-    else if (Ofs == 1) ec.AddStatement(OPC_LocalValue1, Loc);
-    else if (Ofs == 2) ec.AddStatement(OPC_LocalValue2, Loc);
-    else if (Ofs == 3) ec.AddStatement(OPC_LocalValue3, Loc);
-    else if (Ofs == 4) ec.AddStatement(OPC_LocalValue4, Loc);
-    else if (Ofs == 5) ec.AddStatement(OPC_LocalValue5, Loc);
-    else if (Ofs == 6) ec.AddStatement(OPC_LocalValue6, Loc);
-    else if (Ofs == 7) ec.AddStatement(OPC_LocalValue7, Loc);
-    else ec.AddStatement(OPC_LocalValueB, Ofs, Loc);
-  } else {
-    ec.EmitLocalAddress(Ofs, Loc);
-    ec.AddStatement(OPC_PushPointedPtr, Loc);
-  }
-}
-
-
-//==========================================================================
-//
 //  VLocalVar::Emit
 //
 //==========================================================================
 void VLocalVar::Emit (VEmitContext &ec) {
-  const VLocalVarDef &loc = ec.GetLocalByIndex(num);
   if (AddressRequested) {
+    const VLocalVarDef &loc = ec.GetLocalByIndex(num);
     ec.EmitLocalAddress(loc.Offset, Loc);
   } else if (locSavedFlags&(FPARM_Out|FPARM_Ref)) {
-    genLocalValue(ec, loc);
-    if (PushOutParam) EmitPushPointedCode(loc.Type, ec);
-  } else if (loc.Offset < 256) {
-    if (loc.Type.Type == TYPE_Bool && loc.Type.BitMask != 1) ParseError(Loc, "Strange local bool mask");
-    switch (loc.Type.Type) {
-      case TYPE_Int:
-      case TYPE_Byte:
-      case TYPE_Bool:
-      case TYPE_Float:
-      case TYPE_Name:
-      case TYPE_Pointer:
-      case TYPE_Reference:
-      case TYPE_Class:
-      case TYPE_State:
-        genLocalValue(ec, loc, 0);
-        break;
-      case TYPE_Delegate:
-        genLocalValue(ec, loc, 0);
-        genLocalValue(ec, loc, 1);
-        break;
-      case TYPE_Vector:
-        ec.AddStatement(OPC_VLocalValueB, loc.Offset, Loc);
-        break;
-      case TYPE_String:
-        ec.AddStatement(OPC_StrLocalValueB, loc.Offset, Loc);
-        break;
-      default:
-        ParseError(Loc, "Invalid operation of this variable type");
-        break;
+    ec.EmitLocalPtrValue(num, Loc);
+    if (PushOutParam) {
+      const VLocalVarDef &loc = ec.GetLocalByIndex(num);
+      EmitPushPointedCode(loc.Type, ec);
     }
   } else {
-    ec.EmitLocalAddress(loc.Offset, Loc);
-    EmitPushPointedCode(loc.Type, ec);
+    ec.EmitLocalValue(num, Loc);
   }
 }
 

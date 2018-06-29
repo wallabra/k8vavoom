@@ -146,6 +146,9 @@ public:
   void AddBuiltin (int b, const TLocation &aloc);
   void EmitPushNumber (int Val, const TLocation &aloc);
   void EmitLocalAddress (int Ofs, const TLocation &aloc);
+  void EmitLocalValue (int lcidx, const TLocation &aloc, int xofs=0);
+  void EmitLocalPtrValue (int lcidx, const TLocation &aloc, int xofs=0);
+  void EmitPushPointedCode (VFieldType type, const TLocation &aloc);
   void EmitLocalDtors (int Start, int End, const TLocation &aloc, bool zeroIt=false);
 
   // returns `true` if dtor was emited

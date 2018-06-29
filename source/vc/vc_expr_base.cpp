@@ -243,43 +243,7 @@ void VExpression::EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue) {
 //
 //==========================================================================
 void VExpression::EmitPushPointedCode (VFieldType type, VEmitContext &ec) {
-  switch (type.Type) {
-    case TYPE_Int:
-    case TYPE_Float:
-    case TYPE_Name:
-      ec.AddStatement(OPC_PushPointed, Loc);
-      break;
-    case TYPE_Byte:
-      ec.AddStatement(OPC_PushPointedByte, Loc);
-      break;
-    case TYPE_Bool:
-           if (type.BitMask&0x000000ff) ec.AddStatement(OPC_PushBool0, (int)(type.BitMask), Loc);
-      else if (type.BitMask&0x0000ff00) ec.AddStatement(OPC_PushBool1, (int)(type.BitMask>>8), Loc);
-      else if (type.BitMask&0x00ff0000) ec.AddStatement(OPC_PushBool2, (int)(type.BitMask>>16), Loc);
-      else ec.AddStatement(OPC_PushBool3, (int)(type.BitMask>>24), Loc);
-      break;
-    case TYPE_Pointer:
-    case TYPE_Reference:
-    case TYPE_Class:
-    case TYPE_State:
-      ec.AddStatement(OPC_PushPointedPtr, Loc);
-      break;
-    case TYPE_Vector:
-      ec.AddStatement(OPC_VPushPointed, Loc);
-      break;
-    case TYPE_String:
-      ec.AddStatement(OPC_PushPointedStr, Loc);
-      break;
-    case TYPE_Delegate:
-      ec.AddStatement(OPC_PushPointedDelegate, Loc);
-      break;
-    case TYPE_SliceArray:
-      ec.AddStatement(OPC_PushPointedSlice, Loc);
-      break;
-    default:
-      ParseError(Loc, "Bad push pointed");
-      break;
-  }
+  ec.EmitPushPointedCode(type, Loc);
 }
 
 

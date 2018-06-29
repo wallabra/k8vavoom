@@ -2013,6 +2013,7 @@ bool VSwitch::Resolve (VEmitContext &ec) {
     if (!st->IsSwitchCase() && !st->IsSwitchDefault()) {
       if (!st->Resolve(ec)) Ret = false;
       // dummy last `break`, it is not necessary
+      /*
       if (Ret) {
         //FIXME: this should be done in separate code optimizer pass
         if (st->IsBreak()) {
@@ -2054,6 +2055,7 @@ bool VSwitch::Resolve (VEmitContext &ec) {
           }
         }
       }
+      */
     }
   }
 

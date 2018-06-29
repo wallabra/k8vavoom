@@ -499,6 +499,105 @@ void VEmitContext::EmitLocalAddress (int Ofs, const TLocation &aloc) {
 
 //==========================================================================
 //
+//  VEmitContext::EmitPushPointedCode
+//
+//==========================================================================
+void VEmitContext::EmitPushPointedCode (VFieldType type, const TLocation &aloc) {
+  switch (type.Type) {
+    case TYPE_Int:
+    case TYPE_Float:
+    case TYPE_Name:
+      AddStatement(OPC_PushPointed, aloc);
+      break;
+    case TYPE_Byte:
+      AddStatement(OPC_PushPointedByte, aloc);
+      break;
+    case TYPE_Bool:
+           if (type.BitMask&0x000000ff) AddStatement(OPC_PushBool0, (int)(type.BitMask), aloc);
+      else if (type.BitMask&0x0000ff00) AddStatement(OPC_PushBool1, (int)(type.BitMask>>8), aloc);
+      else if (type.BitMask&0x00ff0000) AddStatement(OPC_PushBool2, (int)(type.BitMask>>16), aloc);
+      else AddStatement(OPC_PushBool3, (int)(type.BitMask>>24), aloc);
+      break;
+    case TYPE_Pointer:
+    case TYPE_Reference:
+    case TYPE_Class:
+    case TYPE_State:
+      AddStatement(OPC_PushPointedPtr, aloc);
+      break;
+    case TYPE_Vector:
+      AddStatement(OPC_VPushPointed, aloc);
+      break;
+    case TYPE_String:
+      AddStatement(OPC_PushPointedStr, aloc);
+      break;
+    case TYPE_Delegate:
+      AddStatement(OPC_PushPointedDelegate, aloc);
+      break;
+    case TYPE_SliceArray:
+      AddStatement(OPC_PushPointedSlice, aloc);
+      break;
+    default:
+      ParseError(aloc, "Bad push pointed");
+      break;
+  }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::EmitLocalValue
+//
+//==========================================================================
+void VEmitContext::EmitLocalValue (int lcidx, const TLocation &aloc, int xofs) {
+  if (lcidx < 0 || lcidx >= LocalDefs.length()) FatalError("VC: internal compiler error (VEmitContext::EmitLocalValue)");
+  const VLocalVarDef &loc = LocalDefs[lcidx];
+  int Ofs = loc.Offset+xofs;
+  if (Ofs < 0 || Ofs > 1024*1024*32) FatalError("VC: internal compiler error (VEmitContext::EmitLocalValue)");
+  if (Ofs < 256 && loc.Type.Type != TYPE_Delegate) {
+    switch (loc.Type.Type) {
+      case TYPE_Vector:
+        AddStatement(OPC_VLocalValueB, Ofs, aloc);
+        break;
+      case TYPE_String:
+        AddStatement(OPC_StrLocalValueB, Ofs, aloc);
+        break;
+      case TYPE_Bool:
+        if (loc.Type.BitMask != 1) ParseError(aloc, "Strange local bool mask");
+        /* fallthrough */
+      default:
+        if (Ofs >= 0 && Ofs <= 7) AddStatement(OPC_LocalValue0+Ofs, aloc);
+        else AddStatement(OPC_LocalValueB, Ofs, aloc);
+        break;
+    }
+  } else {
+    EmitLocalAddress(loc.Offset, aloc);
+    EmitPushPointedCode(loc.Type, aloc);
+  }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::EmitLocalPtrValue
+//
+//==========================================================================
+void VEmitContext::EmitLocalPtrValue (int lcidx, const TLocation &aloc, int xofs) {
+  if (lcidx < 0 || lcidx >= LocalDefs.length()) FatalError("VC: internal compiler error (VEmitContext::EmitLocalValue)");
+  const VLocalVarDef &loc = LocalDefs[lcidx];
+  int Ofs = loc.Offset+xofs;
+  if (Ofs < 0 || Ofs > 1024*1024*32) FatalError("VC: internal compiler error (VEmitContext::EmitLocalPtrValue)");
+  if (Ofs < 256) {
+    if (Ofs >= 0 && Ofs <= 7) AddStatement(OPC_LocalValue0+Ofs, aloc);
+    else AddStatement(OPC_LocalValueB, Ofs, aloc);
+  } else {
+    EmitLocalAddress(loc.Offset, aloc);
+    AddStatement(OPC_PushPointedPtr, aloc);
+  }
+}
+
+
+//==========================================================================
+//
 //  VEmitContext::EmitLocalDtors
 //
 //==========================================================================
