@@ -156,7 +156,7 @@ struct Instr {
   int origIdx; // index in original instruction array
   bool meJumpTarget; // `true` if this instr is a jump target
   // used for return checking
-  bool visited;
+  int retflag; // 0: not visited; -1: processing it right now; 2: determined to return
 
   Instr (VMCOptimiser *aowner, const FInstruction &i)
     : owner(aowner)
@@ -174,7 +174,7 @@ struct Instr {
     , idx(-1)
     , origIdx(-1)
     , meJumpTarget(false)
-    , visited(false)
+    , retflag(0)
   {
   }
 
@@ -680,11 +680,17 @@ bool VMCOptimiser::isPathEndsWithReturn (int iidx) {
   while (iidx >= 0 && iidx < instrCount) {
     Instr *it = getInstrAt(iidx);
     if (!it) return false; // oops
-    // if we returned to visited path, it means that we got a cycle
-    if (it->visited) {
+    // if we returned to visited path, it means that we got a cycle (or success)
+    if (it->retflag) {
 #ifdef VCMCOPT_DEBUG_RETURN_CHECKER
-      fprintf(stderr, "VMCOptimiser::isPathEndsWithReturn hits loop at %d\n", iidx);
+      fprintf(stderr, "VMCOptimiser::isPathEndsWithReturn hits loop at %d (%d)\n", iidx, it->retflag);
 #endif
+      if (it->retflag > 0) {
+        // but we hit a path that leads to return, so mark our current path as success
+        for (int f = idxStart; f < iidx; ++f) getInstrAt(f)->retflag = 1;
+        // and return success
+        return true;
+      }
       break;
     }
     // if this is return, we're done
@@ -692,13 +698,13 @@ bool VMCOptimiser::isPathEndsWithReturn (int iidx) {
 #ifdef VCMCOPT_DEBUG_RETURN_CHECKER
       fprintf(stderr, "*** EXIT(R): VMCOptimiser::isPathEndsWithReturn iidx=%d; end=%d\n", idxStart, iidx);
 #endif
-      // rewind (unmark visited nodes)
-      for (int f = idxStart; f < iidx; ++f) getInstrAt(f)->visited = false;
+      // mark our current path as success
+      for (int f = idxStart; f <= iidx; ++f) getInstrAt(f)->retflag = 1;
       // and return success
       return true;
     }
-    // mark as visited
-    it->visited = true;
+    // mark as "in processing"
+    it->retflag = -1;
     // follow branches
     if (it->isAnyBranch()) {
       // if this is conditional branch backwards, assume that it can be skipped, and continue
@@ -719,8 +725,8 @@ bool VMCOptimiser::isPathEndsWithReturn (int iidx) {
 #ifdef VCMCOPT_DEBUG_RETURN_CHECKER
           fprintf(stderr, "*** EXIT(G): VMCOptimiser::isPathEndsWithReturn iidx=%d; end=%d\n", idxStart, iidx);
 #endif
-          // rewind (unmark visited nodes)
-          for (int f = idxStart; f <= iidx; ++f) getInstrAt(f)->visited = false;
+          // mark our current path as success
+          for (int f = idxStart; f <= iidx; ++f) getInstrAt(f)->retflag = 1;
           // and return success
           return true;
         }
@@ -737,7 +743,7 @@ bool VMCOptimiser::isPathEndsWithReturn (int iidx) {
 // this does flood-fill search to see if all execution pathes are finished with `return`
 void VMCOptimiser::checkReturns () {
   // reset `visited` flag on each instruction
-  for (int f = 0; f < instrCount; ++f) getInstrAt(f)->visited = false;
+  for (int f = 0; f < instrCount; ++f) getInstrAt(f)->retflag = false;
   if (!isPathEndsWithReturn(0)) {
     ParseError(func->Loc, "Missing `return` in one of the pathes of function `%s`", *func->GetFullName());
 #ifdef VCMCOPT_DEBUG_RETURN_CHECKER
