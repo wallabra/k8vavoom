@@ -2012,50 +2012,6 @@ bool VSwitch::Resolve (VEmitContext &ec) {
     VStatement *st = Statements[i];
     if (!st->IsSwitchCase() && !st->IsSwitchDefault()) {
       if (!st->Resolve(ec)) Ret = false;
-      // dummy last `break`, it is not necessary
-      /*
-      if (Ret) {
-        //FIXME: this should be done in separate code optimizer pass
-        if (st->IsBreak()) {
-          // skip branches without statements
-          int n = i+1;
-          while (n < Statements.length() && (Statements[n]->IsSwitchCase() || Statements[n]->IsSwitchDefault())) ++n;
-          if (n >= Statements.length()) {
-            //ParseWarning(st->Loc, "`break;` dummied out");
-            ((VBreak *)st)->skipCodegen = true;
-          }
-        } else if (st->IsGotoCase() && !st->HasGotoCaseExpr()) {
-          // jump to next case: dummy it out if next case immediately follows
-          if (i+1 < Statements.length() && Statements[i+1]->IsSwitchCase()) {
-            //ParseWarning(st->Loc, "`goto case;` dummied out");
-            ((VGotoStmt *)st)->skipCodegen = true;
-          }
-        } else if (st->IsGotoDefault()) {
-          // jump to next case: dummy it out if default case immediately follows
-          if (i+1 < Statements.length() && HaveDefault && Statements[i+1]->IsSwitchDefault()) {
-            //ParseWarning(st->Loc, "`goto default;` dummied out");
-            ((VGotoStmt *)st)->skipCodegen = true;
-          }
-        } else if (st->IsGotoCase() && st->HasGotoCaseExpr()) {
-          // jump to next case: dummy it out if next case immediately follows
-          VGotoStmt *gs = (VGotoStmt *)st;
-          if (gs->CaseValue && gs->CaseValue->IsIntConst()) {
-            int v = gs->CaseValue->GetIntConst();
-            int n = i+1;
-            while (n < Statements.length()) {
-              if (!Statements[n]->IsSwitchCase()) { n = Statements.length(); break; }
-              VSwitchCase *sc = (VSwitchCase *)Statements[n];
-              if (sc->Value == v) break;
-              ++n;
-            }
-            if (n < Statements.length()) {
-              //ParseWarning(st->Loc, "`goto case %d;` dummied out", v);
-              gs->skipCodegen = true;
-            }
-          }
-        }
-      }
-      */
     }
   }
 
@@ -2478,9 +2434,7 @@ bool VSwitchDefault::IsSwitchDefault () const {
 //  VBreak::VBreak
 //
 //==========================================================================
-VBreak::VBreak (const TLocation &ALoc)
-  : VStatement(ALoc)
-  , skipCodegen(false)
+VBreak::VBreak (const TLocation &ALoc) : VStatement(ALoc)
 {
 }
 
@@ -2513,7 +2467,6 @@ bool VBreak::Resolve (VEmitContext &) {
 //
 //==========================================================================
 void VBreak::DoEmit (VEmitContext &ec) {
-  if (skipCodegen) return;
   if (!ec.LoopEnd.IsDefined()) {
     ParseError(Loc, "Misplaced `break` statement");
     return;
@@ -3209,7 +3162,6 @@ VGotoStmt::VGotoStmt (VName aname, const TLocation &ALoc)
   , CaseValue(nullptr)
   , GotoType(Normal)
   , SwitchStNum(-1)
-  , skipCodegen(false)
 {
 }
 
@@ -3228,7 +3180,6 @@ VGotoStmt::VGotoStmt (VSwitch *ASwitch, VExpression *ACaseValue, int ASwitchStNu
   , CaseValue(ACaseValue)
   , GotoType(toDefault ? Default : Case)
   , SwitchStNum(ASwitchStNum)
-  , skipCodegen(false)
 {
 }
 
@@ -3413,7 +3364,6 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VGotoStmt::DoEmit (VEmitContext &ec) {
-  if (skipCodegen) return; // nothing to do here
   if (GotoType == Normal) {
     VLabelStmt *lbl = gotolbl; //ec.CurrentFunc->Statement->FindLabel(Name);
     if (!lbl) {

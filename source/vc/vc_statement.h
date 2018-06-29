@@ -444,9 +444,6 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VBreak : public VStatement {
 public:
-  // need not to be copied (set in `switch` resolver)
-  bool skipCodegen;
-
   VBreak (const TLocation &ALoc);
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
@@ -612,8 +609,6 @@ public:
   VExpression *CaseValue; // for `goto case n;`
   int GotoType;
   int SwitchStNum;
-  // need not to be copied (set in `switch` resolver)
-  bool skipCodegen;
 
   VGotoStmt (VName aname, const TLocation &ALoc);
   VGotoStmt (VSwitch *ASwitch, VExpression *ACaseValue, int ASwitchStNum, bool toDefault, const TLocation &ALoc);
