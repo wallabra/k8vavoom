@@ -916,6 +916,7 @@ bool VMCOptimiser::simplifyIfJumps () {
 // ////////////////////////////////////////////////////////////////////////// //
 // replace `If[Not]Goto $+2; Goto m;` to `If[!Not]Goto m;`, and remove `Goto m;`
 bool VMCOptimiser::simplifyIfJumpJump () {
+  bool res = false;
   Instr *jit = jplistHead;
   while (jit) {
     Instr *it = jit;
@@ -934,6 +935,7 @@ bool VMCOptimiser::simplifyIfJumpJump () {
     // jump should be at next+1
     if (it->getBranchDest() != itnext->next->idx) continue;
     // ok, replace it
+    res = true;
 #ifdef VCMCOPT_VERBOSE_SIMPLIFY_JUMP_JUMP
     fprintf(stderr, "replacing if+goto at %d (orig:%d)\n", it->idx, it->origIdx);
     it->disasm(); itnext->disasm(); getInstrAt(it->getBranchDest())->disasm();
@@ -960,7 +962,11 @@ bool VMCOptimiser::simplifyIfJumpJump () {
     //disasmAll();
     it->disasm();
 #endif
-    return true;
+    //return true;
+  }
+  return res;
+}
+
   }
   return false;
 }
