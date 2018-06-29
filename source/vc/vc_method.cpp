@@ -390,9 +390,13 @@ void VMethod::Emit () {
   }
   NumLocals = ec.localsofs;
   ec.EndCode();
+
   if (VMemberBase::doAsmDump) DumpAsm();
 
   OptimiseInstructions();
+
+  // and dump it again for optimised case
+  if (VMemberBase::doAsmDump) DumpAsm();
 
   // clear it here, 'cause why not?
   /*
@@ -435,6 +439,9 @@ void VMethod::DumpAsm () {
         // name of the object
         dprintf(" %s", *Instructions[s].Member->GetFullName());
         break;
+      case OPCARGS_BranchTargetB:
+      case OPCARGS_BranchTargetNB:
+      case OPCARGS_BranchTargetS:
       case OPCARGS_BranchTarget:
         dprintf(" %6d", Instructions[s].Arg1);
         break;
