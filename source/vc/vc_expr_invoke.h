@@ -243,6 +243,12 @@ public:
 protected:
   VInvocation () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
+
+  // should be called only for functions with `builtinOpc >= 0`
+  VExpression *OptimiseBuiltin (VEmitContext &ec);
+
+  // used by `OptimiseBuiltin`; `types` are `TYPE_xxx`
+  bool CheckSimpleConstArgs (int argc, const int *types) const;
 };
 
 

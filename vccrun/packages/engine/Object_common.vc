@@ -204,6 +204,11 @@ native static final float flerp (float a, float b, float delta) [builtin FloatLe
 // this will round the result
 native static final int lerp (int a, int b, float delta) [builtin IntLerp];
 
+// `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
+// results are undefined if edge0  edge1
+native static final float smoothstep (float edge0, float edge1, float x) [builtin FloatSmoothStep];
+native static final float smoothstepPerlin (float edge0, float edge1, float x) [builtin FloatSmoothStepPerlin];
+
 // normalises angle in range 0..360
 native static final float AngleMod360 (float angle);
 // normalises angle in range -180..180

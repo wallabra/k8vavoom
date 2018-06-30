@@ -28,6 +28,10 @@
 #include <float.h>
 #include <math.h>
 
+// builtin codes
+#define BUILTIN_OPCODE_INFO
+#include "../progdefs.h"
+
 
 //==========================================================================
 //
@@ -1272,8 +1276,199 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
 
   ec.ExitCompound(compIdx);
 
+  // some special functions will be converted to builtins, try to const-optimise 'em
+  if (Func->builtinOpc >= 0) return OptimiseBuiltin(ec);
+
   return this;
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VInvocation::CheckSimpleConstArgs
+//
+//  used by `OptimiseBuiltin`; `types` are `TYPE_xxx`
+//
+//==========================================================================
+bool VInvocation::CheckSimpleConstArgs (int argc, const int *types) const {
+  if (argc != NumArgs) return false;
+  for (int f = 0; f < argc; ++f) {
+    if (!Args[f]) return false; // cannot omit anything (yet)
+    switch (types[f]) {
+      case TYPE_Int: if (!Args[f]->IsIntConst()) return false; break;
+      case TYPE_Float: if (!Args[f]->IsFloatConst()) return false; break;
+      case TYPE_String: if (!Args[f]->IsStrConst()) return false; break;
+      case TYPE_Name: if (!Args[f]->IsNameConst()) return false; break;
+      default: return false; // unknown request
+    }
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VInvocation::OptimiseBuiltin
+//
+//==========================================================================
+VExpression *VInvocation::OptimiseBuiltin (VEmitContext &ec) {
+  if (!Func || Func->builtinOpc < 0) return this; // sanity check
+  VExpression *e = nullptr;
+  switch (Func->builtinOpc) {
+    case OPC_Builtin_IntAbs:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Int})) return this;
+      e = new VIntLiteral((Args[0]->GetIntConst() < 0 ? -Args[0]->GetIntConst() : Args[0]->GetIntConst()), Loc);
+      break;
+    case OPC_Builtin_FloatAbs:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral((Args[0]->GetFloatConst() < 0 ? -Args[0]->GetFloatConst() : Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_IntSign:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Int})) return this;
+      e = new VIntLiteral((Args[0]->GetIntConst() < 0 ? -1 : Args[0]->GetIntConst() > 0 ? 1 : 0), Loc);
+      break;
+    case OPC_Builtin_FloatSign:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral((Args[0]->GetFloatConst() < 0 ? -1.0f : Args[0]->GetFloatConst() > 0 ? 1.0f : 0.0f), Loc);
+      break;
+    case OPC_Builtin_IntMin:
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Int, TYPE_Int})) return this;
+      e = new VIntLiteral((Args[0]->GetIntConst() < Args[1]->GetIntConst() ? Args[0]->GetIntConst() : Args[1]->GetIntConst()), Loc);
+      break;
+    case OPC_Builtin_IntMax:
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Int, TYPE_Int})) return this;
+      e = new VIntLiteral((Args[0]->GetIntConst() > Args[1]->GetIntConst() ? Args[0]->GetIntConst() : Args[1]->GetIntConst()), Loc);
+      break;
+    case OPC_Builtin_FloatMin:
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Float, TYPE_Float})) return this;
+      e = new VFloatLiteral((Args[0]->GetFloatConst() < Args[1]->GetFloatConst() ? Args[0]->GetFloatConst() : Args[1]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_FloatMax:
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Float, TYPE_Float})) return this;
+      e = new VFloatLiteral((Args[0]->GetFloatConst() > Args[1]->GetFloatConst() ? Args[0]->GetFloatConst() : Args[1]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_IntClamp: // (val, min, max)
+      if (!CheckSimpleConstArgs(3, (const int []){TYPE_Int, TYPE_Int, TYPE_Int})) return this;
+      e = new VIntLiteral(
+        (Args[0]->GetIntConst() < Args[1]->GetIntConst() ? Args[1]->GetIntConst() :
+         Args[0]->GetIntConst() > Args[2]->GetIntConst() ? Args[2]->GetIntConst() :
+         Args[0]->GetIntConst()), Loc);
+      break;
+    case OPC_Builtin_FloatClamp: // (val, min, max)
+      if (!CheckSimpleConstArgs(3, (const int []){TYPE_Float, TYPE_Float, TYPE_Float})) return this;
+      e = new VFloatLiteral(
+        (Args[0]->GetFloatConst() < Args[1]->GetFloatConst() ? Args[1]->GetFloatConst() :
+         Args[0]->GetFloatConst() > Args[2]->GetFloatConst() ? Args[2]->GetFloatConst() :
+         Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_FloatIsNaN:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VIntLiteral((isNaNF(Args[0]->GetFloatConst()) ? 1 : 0), Loc);
+      break;
+    case OPC_Builtin_FloatIsInf:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VIntLiteral((isInfF(Args[0]->GetFloatConst()) ? 1 : 0), Loc);
+      break;
+    case OPC_Builtin_FloatIsFinite:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VIntLiteral((isFiniteF(Args[0]->GetFloatConst()) ? 1 : 0), Loc);
+      break;
+    case OPC_Builtin_DegToRad:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(DEG2RAD(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_RadToDeg:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(RAD2DEG(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_Sin:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(msin(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_Cos:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(mcos(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_Tan:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(mtan(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_ASin:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(masin(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_ACos:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(acos(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_ATan:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(RAD2DEG(atan(Args[0]->GetFloatConst())), Loc);
+      break;
+    case OPC_Builtin_Sqrt:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(sqrt(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_ATan2:
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Float, TYPE_Float})) return this;
+      e = new VFloatLiteral(matan(Args[0]->GetFloatConst(), Args[1]->GetFloatConst()), Loc);
+      break;
+    /*
+    case OPC_Builtin_VecLength:
+    case OPC_Builtin_VecLength2D:
+    case OPC_Builtin_VecNormalize:
+    case OPC_Builtin_VecDot:
+    case OPC_Builtin_VecCross:
+    */
+    case OPC_Builtin_RoundF2I:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VIntLiteral((int)roundf(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_RoundF2F:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(roundf(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_TruncF2I:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VIntLiteral((int)truncf(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_TruncF2F:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(truncf(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_FloatCeil:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(ceilf(Args[0]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_FloatFloor:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
+      e = new VFloatLiteral(floorf(Args[0]->GetFloatConst()), Loc);
+      break;
+    // [-3]: a; [-2]: b, [-1]: delta
+    case OPC_Builtin_FloatLerp:
+      if (!CheckSimpleConstArgs(3, (const int []){TYPE_Float, TYPE_Float, TYPE_Float})) return this;
+      e = new VFloatLiteral(Args[0]->GetFloatConst()+(Args[1]->GetFloatConst()-Args[0]->GetFloatConst())*Args[2]->GetFloatConst(), Loc);
+      break;
+    case OPC_Builtin_IntLerp:
+      if (!CheckSimpleConstArgs(3, (const int []){TYPE_Int, TYPE_Int, TYPE_Float})) return this;
+      e = new VIntLiteral((int)roundf(Args[0]->GetIntConst()+(Args[1]->GetIntConst()-Args[0]->GetIntConst())*Args[2]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_FloatSmoothStep:
+      if (!CheckSimpleConstArgs(3, (const int []){TYPE_Float, TYPE_Float, TYPE_Float})) return this;
+      e = new VFloatLiteral(smoothstep(Args[0]->GetFloatConst(), Args[1]->GetFloatConst(), Args[2]->GetFloatConst()), Loc);
+      break;
+    case OPC_Builtin_FloatSmoothStepPerlin:
+      if (!CheckSimpleConstArgs(3, (const int []){TYPE_Float, TYPE_Float, TYPE_Float})) return this;
+      e = new VFloatLiteral(smoothstepPerlin(Args[0]->GetFloatConst(), Args[1]->GetFloatConst(), Args[2]->GetFloatConst()), Loc);
+      break;
+    default: break;
+  }
+  if (e) {
+    delete this;
+    return e->Resolve(ec);
+  }
+  return this;
 }
 
 

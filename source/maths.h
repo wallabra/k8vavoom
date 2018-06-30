@@ -47,6 +47,28 @@ static __attribute__((unused)) inline bool isInfF (float v) {
 #endif
 
 
+// `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
+// results are undefined if edge0 ™ edge1
+static __attribute__((unused)) inline float smoothstep (float edge0, float edge1, float x) {
+  // scale, bias and saturate x to 0..1 range
+  x = (x-edge0)/(edge1-edge0);
+  if (x < 0) x = 0; else if (x > 1) x = 1;
+  // evaluate polynomial
+  return x*x*(3-2*x); // GLSL reference
+  //return x*x*x*(x*(x*6-15)+10); // Ken Perlin version
+}
+
+// `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
+// results are undefined if edge0 ™ edge1
+static __attribute__((unused)) inline float smoothstepPerlin (float edge0, float edge1, float x) {
+  // scale, bias and saturate x to 0..1 range
+  x = (x-edge0)/(edge1-edge0);
+  if (x < 0) x = 0; else if (x > 1) x = 1;
+  // evaluate polynomial
+  return x*x*x*(x*(x*6-15)+10); // Ken Perlin version
+}
+
+
 #undef MIN
 #undef MAX
 #undef MID
