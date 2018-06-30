@@ -199,6 +199,11 @@ native static final float floor (float v) [builtin FloatFloor];
 //native static final float frac (float v) [builtin FloatFrac];
 //native static final float fint (float v) [builtin FloatInt];
 
+// linear interpolation between `a` and `b`; `delta` should be in [0..1]
+native static final float flerp (float a, float b, float delta) [builtin FloatLerp];
+// this will round the result
+native static final int lerp (int a, int b, float delta) [builtin IntLerp];
+
 // normalises angle in range 0..360
 native static final float AngleMod360 (float angle);
 // normalises angle in range -180..180

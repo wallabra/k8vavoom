@@ -2203,6 +2203,9 @@ func_loop:
           case OPC_Builtin_TruncF2F: sp[-1].f = truncf(sp[-1].f); break;
           case OPC_Builtin_FloatCeil: sp[-1].f = ceilf(sp[-1].f); break;
           case OPC_Builtin_FloatFloor: sp[-1].f = floorf(sp[-1].f); break;
+          // [-3]: a; [-2]: b, [-1]: delta
+          case OPC_Builtin_FloatLerp: sp[-3].f = sp[-3].f+(sp[-2].f-sp[-3].f)*sp[-1].f; sp -= 2; break;
+          case OPC_Builtin_IntLerp: sp[-3].i = (int)roundf(sp[-3].i+(sp[-2].i-sp[-3].i)*sp[-1].f); sp -= 2; break;
           default: cstDump(ip); Sys_Error("Unknown builtin");
         }
         ip += 2;
