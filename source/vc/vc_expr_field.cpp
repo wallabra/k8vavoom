@@ -493,6 +493,18 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
+      // optimisation for float literals
+      if (op->IsFloatConst()) {
+        VExpression *e = nullptr;
+        switch (builtin) {
+          case OPC_Builtin_FloatIsNaN: e = new VIntLiteral((isNaNF(op->GetFloatConst()) ? 1 : 0), op->Loc); break;
+          case OPC_Builtin_FloatIsInf: e = new VIntLiteral((isInfF(op->GetFloatConst()) ? 1 : 0), op->Loc); break;
+          case OPC_Builtin_FloatIsFinite: e = new VIntLiteral((isFiniteF(op->GetFloatConst()) ? 1 : 0), op->Loc); break;
+          default: FatalError("VC: internal compiler error (float property `%s`)", *FieldName);
+        }
+        delete this;
+        return e->Resolve(ec);
+      }
       //FIXME: use int instead of bool here, it generates faster opcode, and doesn't matter for now
       //Type = VFieldType(TYPE_Bool); Type.BitMask = 1;
       Type = VFieldType(TYPE_Int);

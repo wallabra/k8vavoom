@@ -23,6 +23,30 @@
 //**
 //**************************************************************************
 
+//#define VC_USE_LIBC_FLOAT_CHECKERS
+#include <math.h>
+#ifdef VC_USE_LIBC_FLOAT_CHECKERS
+# define isFiniteF  isfinite
+# define isNaNF     isnan
+# define isInfF     isinf
+#else
+static __attribute__((unused)) inline bool isFiniteF (float v) {
+  union { float f; vuint32 x; } u = {v};
+  return ((u.x&0x7f800000u) != 0x7f800000u);
+}
+
+static __attribute__((unused)) inline bool isNaNF (float v) {
+  union { float f; vuint32 x; } u = {v};
+  return ((u.x<<1) > 0xff000000u);
+}
+
+static __attribute__((unused)) inline bool isInfF (float v) {
+  union { float f; vuint32 x; } u = {v};
+  return ((u.x<<1) == 0xff000000u);
+}
+#endif
+
+
 #undef MIN
 #undef MAX
 #undef MID

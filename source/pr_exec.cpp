@@ -26,7 +26,6 @@
 //**    Execution of PROGS.
 //**
 //**************************************************************************
-//#define VC_USE_LIBC_FLOAT_CHECKERS
 //#define VCC_STUPID_TRACER
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
@@ -43,29 +42,6 @@
 // builtin codes
 #define BUILTIN_OPCODE_INFO
 #include "progdefs.h"
-
-
-#include <math.h>
-#ifdef VC_USE_LIBC_FLOAT_CHECKERS
-# define isFiniteF  isfinite
-# define isNaNF     isnan
-# define isInfF     isinf
-#else
-static inline bool isFiniteF (float v) {
-  union { float f; vuint32 x; } u = {v};
-  return ((u.x&0x7f800000u) != 0x7f800000u);
-}
-
-static inline bool isNaNF (float v) {
-  union { float f; vuint32 x; } u = {v};
-  return ((u.x<<1) > 0xff000000u);
-}
-
-static inline bool isInfF (float v) {
-  union { float f; vuint32 x; } u = {v};
-  return ((u.x<<1) == 0xff000000u);
-}
-#endif
 
 
 #define MAX_PROG_STACK  (10000)
