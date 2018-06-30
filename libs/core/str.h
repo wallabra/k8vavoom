@@ -519,6 +519,9 @@ private:
   static const vuint8 utf8dfa[0x16c];
 };
 
+// required for VaVoom C VM
+static_assert(sizeof(VStr) <= sizeof(void *));
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 #include <string>
