@@ -109,9 +109,7 @@ private:
   vuint8 *ArrData;
 
 public:
-#if defined(VCC_STANDALONE_EXECUTOR)
   VScriptArray (const TArray<VStr> &xarr);
-#endif
 
   inline int Num () const { return ArrNum; }
   inline vuint8 *Ptr () { return ArrData; }
@@ -123,6 +121,9 @@ public:
   void Insert (int Index, int Count, VFieldType &Type);
   void Remove (int Index, int Count, VFieldType &Type);
 };
+
+// required for VaVoom C VM
+static_assert(sizeof(VScriptArray) <= sizeof(void *)*3);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

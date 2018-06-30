@@ -560,7 +560,6 @@ bool VFieldType::IsReusingDisabled () const {
 //  VScriptArray::VScriptArray
 //
 //==========================================================================
-#if defined(VCC_STANDALONE_EXECUTOR)
 VScriptArray::VScriptArray (const TArray<VStr>& xarr) {
   //guard(VScriptArray::VScriptArray);
   ArrData = nullptr;
@@ -576,7 +575,6 @@ VScriptArray::VScriptArray (const TArray<VStr>& xarr) {
   }
   //unguard;
 }
-#endif
 
 
 //==========================================================================
