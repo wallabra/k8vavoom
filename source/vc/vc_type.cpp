@@ -276,12 +276,12 @@ int VFieldType::GetStackSize () const {
     case TYPE_Reference: return 4;
     case TYPE_Class: return 4;
     case TYPE_State: return 4;
-    case TYPE_Delegate: return 8;
+    case TYPE_Delegate: return 2*4; // self, funcptr
     case TYPE_Struct: return Struct->StackSize*4;
-    case TYPE_Vector: return 12;
+    case TYPE_Vector: return 3*4; // 3 floats
     case TYPE_Array: return ArrayDim*GetArrayInnerType().GetStackSize();
-    case TYPE_SliceArray: return 8; // ptr and length
-    case TYPE_DynamicArray: return 12;
+    case TYPE_SliceArray: return 2*4; // ptr and length
+    case TYPE_DynamicArray: return 3*4; // 3 fields in VScriptArray
   }
   return 0;
   unguard;

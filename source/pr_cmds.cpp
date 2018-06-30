@@ -141,7 +141,7 @@ public:
 };
 
 
-// caller should be tagget with `[printf]` attribute
+// caller should be tagged with `[printf]` attribute
 VStr PF_FormatString () {
   guard(PF_FormatString);
 
