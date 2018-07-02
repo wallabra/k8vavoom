@@ -1410,9 +1410,16 @@ IMPLEMENT_FUNCTION(VVideo, setScale) {
 // aborts if font cannot be loaded
 //native final static void loadFont (name fname, string fnameIni, string fnameTexture);
 IMPLEMENT_FUNCTION(VVideo, loadFont) {
+  /*
   P_GET_STR(fnameTexture);
   P_GET_STR(fnameIni);
   P_GET_NAME(fname);
+  */
+  VName fname;
+  VStr fnameIni;
+  VStr fnameTexture;
+  vobjGetParam(fname, fnameIni, fnameTexture);
+  //fprintf(stderr, "fname=<%s>; ini=<%s>; tx=<%s>\n", *fname, *fnameIni, *fnameTexture);
   if (VFont::findFont(fname)) return;
   new VFont(fname, fnameIni, fnameTexture);
 }

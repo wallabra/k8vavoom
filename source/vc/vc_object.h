@@ -562,3 +562,24 @@ public:
   // by default, the following does `delete this;`
   virtual void Finished ();
 };
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static __attribute__((unused)) inline void vobj_get_param (int &n) { n = PR_Pop(); }
+static __attribute__((unused)) inline void vobj_get_param (float &n) { n = PR_Popf(); }
+static __attribute__((unused)) inline void vobj_get_param (double &n) { n = PR_Popf(); }
+static __attribute__((unused)) inline void vobj_get_param (bool &n) { n = !!PR_Pop(); }
+static __attribute__((unused)) inline void vobj_get_param (VStr &n) { n = PR_PopStr(); }
+static __attribute__((unused)) inline void vobj_get_param (VName &n) { n = PR_PopName(); }
+static __attribute__((unused)) inline void vobj_get_param (int *&n) { n = (int *)PR_PopPtr(); }
+template<class C> static __attribute__((unused)) inline void vobj_get_param (C *&n) { n = (C *)PR_PopPtr(); }
+
+template<typename T, typename... Args> static __attribute__((unused)) inline void vobj_get_param (T &n, Args&... args) {
+  vobj_get_param(args...);
+  vobj_get_param(n);
+}
+
+
+template<typename... Args> static __attribute__((unused)) inline void vobjGetParam (Args&... args) {
+  vobj_get_param(args...);
+}
