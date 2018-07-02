@@ -714,7 +714,7 @@ VExpression *VDollar::DoResolve (VEmitContext &ec) {
     delete this;
     return nullptr;
   }
-  VExpression *e = new VDotField(ec.IndArray->opcopy->SyntaxCopy(), VName("length"), Loc);
+  VExpression *e = new VDotField(ec.IndArray->GetOpSyntaxCopy(), VName("length"), Loc);
   delete this;
   return e->Resolve(ec);
 }

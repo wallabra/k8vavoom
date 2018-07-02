@@ -34,11 +34,32 @@ public:
     VExpression *e;
 
   public:
+    AutoCopy () : e(nullptr) {}
     AutoCopy (VExpression *ae) : e(ae ? ae->SyntaxCopy() : nullptr) {}
     ~AutoCopy () { delete e; e = nullptr; }
     inline void release () { delete e; e = nullptr; }
     inline VExpression *get () { VExpression *res = e; e = nullptr; return res; }
     VExpression *SyntaxCopy () { return (e ? e->SyntaxCopy() : nullptr); }
+    inline void assignSyntaxCopy (VExpression *ae) {
+      if (!ae) { delete e; e = nullptr; return; }
+      if (ae != e) {
+        delete e;
+        e = (ae ? ae->SyntaxCopy() : nullptr);
+      } else {
+        fprintf(stderr, "VC: internal compiler error (AutoCopy::assignSyntaxCopy)\n");
+        *(int *)0 = 0;
+      }
+    }
+    inline void assignNoCopy (VExpression *ae) {
+      if (!ae) { delete e; e = nullptr; return; }
+      if (ae != e) {
+        delete e;
+        e = ae;
+      } else {
+        fprintf(stderr, "VC: internal compiler error (AutoCopy::assignNoCopy)\n");
+        *(int *)0 = 0;
+      }
+    }
   };
 
 public:

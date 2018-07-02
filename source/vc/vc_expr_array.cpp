@@ -33,6 +33,7 @@
 //==========================================================================
 VArrayElement::VArrayElement (VExpression *AOp, VExpression *AInd, const TLocation &ALoc, bool aSkipBounds)
   : VExpression(ALoc)
+  , opscopy(nullptr)
   , genStringAssign(false)
   , sval(nullptr)
   , op(AOp)
@@ -54,6 +55,7 @@ VArrayElement::VArrayElement (VExpression *AOp, VExpression *AInd, const TLocati
 //
 //==========================================================================
 VArrayElement::~VArrayElement () {
+  opscopy.release();
   if (op) { delete op; op = nullptr; }
   if (ind) { delete ind; ind = nullptr; }
   if (sval) { delete sval; sval = nullptr; }
@@ -102,7 +104,8 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
   }
 
   // we need a copy for opDollar
-  opcopy = op->SyntaxCopy();
+  //VExpression *opcopy = op->SyntaxCopy();
+  opscopy.assignSyntaxCopy(op);
 
   op = op->Resolve(ec);
   VExpression *indcopy = (ind ? ind->SyntaxCopy() : nullptr);
@@ -115,7 +118,6 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
   }
 
   if (!op || !ind) {
-    delete opcopy;
     delete indcopy;
     delete this;
     return nullptr;
@@ -139,19 +141,19 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
     if (op->Type.Class->FindAccessibleMethod(*itname, ec.SelfClass)) mtname = VName(*itname);
     if (!op->Type.Class->FindAccessibleMethod(mtname, ec.SelfClass)) mtname = NAME_None;
     if (mtname == NAME_None) {
-      delete opcopy;
       delete indcopy;
       ParseError(Loc, "Cannot find `opIndex`");
       delete this;
       return nullptr;
     }
-    VExpression *e = new VDotInvocation(opcopy, mtname, Loc, 1, &indcopy);
+    VExpression *e = new VDotInvocation(opscopy.get(), mtname, Loc, 1, &indcopy);
     delete this;
     return e->Resolve(ec);
   }
 
-  // don't need thos anymore
-  delete opcopy;
+  // don't need those anymore
+  //delete opcopy;
+  opscopy.release();
   delete indcopy;
 
   if (ind->Type.Type != TYPE_Int) {
@@ -340,7 +342,8 @@ VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression
   resolved = true; // anyway
 
   // we need a copy for opDollar
-  opcopy = op;
+  //VExpression *opcopy = op;
+  opscopy.assignNoCopy(op);
   op = rop;
 
   if (op) {
@@ -352,7 +355,8 @@ VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression
   sval = (val ? val->Resolve(ec) : nullptr);
 
   // we don't need this anymore
-  delete opcopy;
+  //delete opcopy;
+  opscopy.release();
 
   if (!op || !ind || !sval) {
     delete this;
@@ -451,6 +455,16 @@ void VArrayElement::Emit (VEmitContext &ec) {
   }
 }
 
+//==========================================================================
+//
+//  VArrayElement::GetOpSyntaxCopy
+//
+//==========================================================================
+VExpression *VArrayElement::GetOpSyntaxCopy () {
+  return opscopy.SyntaxCopy();
+}
+
+
 
 //==========================================================================
 //
@@ -511,7 +525,8 @@ VExpression *VSliceOp::DoResolve (VEmitContext &ec) {
   }
 
   // we need a copy for opDollar
-  opcopy = op->SyntaxCopy();
+  //VExpression *opcopy = op->SyntaxCopy();
+  opscopy.assignSyntaxCopy(op);
 
   op = op->Resolve(ec);
   if (op) {
@@ -523,7 +538,8 @@ VExpression *VSliceOp::DoResolve (VEmitContext &ec) {
   }
 
   // we don't need this anymore
-  delete opcopy;
+  //delete opcopy;
+  opscopy.release();
 
   if (!op || !ind || !hi) {
     delete this;
@@ -584,7 +600,8 @@ VExpression *VSliceOp::ResolveCompleteAssign (VEmitContext &ec, VExpression *val
   }
 
   // we need a copy for opDollar
-  opcopy = op;
+  //VExpression *opcopy = op;
+  opscopy.assignNoCopy(op);
   op = rop;
 
   {
@@ -597,7 +614,8 @@ VExpression *VSliceOp::ResolveCompleteAssign (VEmitContext &ec, VExpression *val
   sval = (val ? val->Resolve(ec) : nullptr);
 
   // we don't need this anymore
-  delete opcopy;
+  //delete opcopy;
+  opscopy.release();
 
   if (!op || !ind || !hi || !sval) {
     delete this;

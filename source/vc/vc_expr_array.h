@@ -31,7 +31,7 @@
 //==========================================================================
 class VArrayElement : public VExpression {
 protected:
-  VExpression *opcopy; // valid only in `DoResolve()`
+  AutoCopy opscopy;
   bool genStringAssign;
   VExpression *sval;
 
@@ -51,6 +51,8 @@ public:
   virtual VExpression *ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) override;
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &) override;
+
+  VExpression *GetOpSyntaxCopy ();
 
 protected:
   VArrayElement () {}
