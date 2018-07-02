@@ -22,8 +22,79 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+//#define VCC_DEBUG_COMPILER_LEAKS
+//#define VCC_DEBUG_COMPILER_LEAKS_CHECKS
 
 #include "vc_local.h"
+
+
+#ifdef VCC_DEBUG_COMPILER_LEAKS
+struct MemInfo {
+  void *ptr;
+  size_t size;
+  MemInfo *prev, *next;
+};
+
+static MemInfo *allocInfoHead = nullptr;
+static MemInfo *allocInfoTail = nullptr;
+
+
+static void *AllocMem (size_t sz) {
+  MemInfo *mi = (MemInfo *)malloc(sz+sizeof(MemInfo));
+  mi->ptr = (vuint8 *)(mi+1)+sizeof(size_t);
+  mi->size = sz-sizeof(size_t);
+  mi->prev = allocInfoTail;
+  mi->next = nullptr;
+  if (allocInfoTail) allocInfoTail->next = mi; else allocInfoHead = mi;
+  allocInfoTail = mi;
+  return mi+1;
+}
+
+
+static void FreeMem (void *p) {
+  if (!p) return;
+  MemInfo *mi = ((MemInfo *)p)-1;
+  if (mi->prev) mi->prev->next = mi->next; else allocInfoHead = mi->next;
+  if (mi->next) mi->next->prev = mi->prev; else allocInfoTail = mi->prev;
+  free(mi);
+}
+
+
+#if defined(VCC_DEBUG_COMPILER_LEAKS_CHECKS)
+static size_t CalcMem () {
+  size_t res = 0;
+  for (MemInfo *mi = allocInfoHead; mi; mi = mi->next) res += mi->size;
+  return res;
+}
+
+
+static void DumpAllocs () {
+  fprintf(stderr, "=== ALLOCS ===\n");
+  for (MemInfo *mi = allocInfoHead; mi; mi = mi->next) {
+    fprintf(stderr, "address: %p; size: %u\n", mi->ptr, (unsigned)mi->size);
+  }
+  fprintf(stderr, "---\n");
+}
+#endif
+
+
+void VExpression::ReportLeaks () {
+  fprintf(stderr, "================================= LEAKS =================================\n");
+  for (MemInfo *mi = allocInfoHead; mi; mi = mi->next) {
+    fprintf(stderr, "address: %p\n", mi->ptr);
+    auto e = (VExpression *)mi->ptr;
+    fprintf(stderr, "  type: %s (loc: %s:%d)\n", *shitppTypeNameObj(*e), *e->Loc.GetSource(), e->Loc.GetLine());
+  }
+  fprintf(stderr, "---\n");
+}
+
+
+#else
+# define AllocMem  malloc
+# define FreeMem   free
+void VExpression::ReportLeaks () {
+}
+#endif
 
 
 //==========================================================================
@@ -363,8 +434,7 @@ bool VExpression::InCompilerCleanup = false;
 
 
 void *VExpression::operator new (size_t size) {
-  //if (size == 0) size = 1;
-  size_t *res = (size_t *)malloc(size+sizeof(size_t));
+  size_t *res = (size_t *)AllocMem(size+sizeof(size_t));
   if (!res) { fprintf(stderr, "\nFATAL: OUT OF MEMORY!\n"); *(int *)0 = 0; }
   *res = size;
   ++res;
@@ -372,13 +442,20 @@ void *VExpression::operator new (size_t size) {
   TotalMemoryUsed += (vuint32)size;
   CurrMemoryUsed += (vuint32)size;
   if (PeakMemoryUsed < CurrMemoryUsed) PeakMemoryUsed = CurrMemoryUsed;
+  //fprintf(stderr, "* new: %u (%p)\n", (unsigned)size, res);
+#if defined(VCC_DEBUG_COMPILER_LEAKS) && defined(VCC_DEBUG_COMPILER_LEAKS_CHECKS)
+  if (CalcMem() != CurrMemoryUsed) {
+    fprintf(stderr, "NEW CALC: %u\nNEW CURR: %u\n", (unsigned)CalcMem(), (unsigned)CurrMemoryUsed);
+    DumpAllocs();
+    abort();
+  }
+#endif
   return res;
 }
 
 
 void *VExpression::operator new[] (size_t size) {
-  //if (size == 0) size = 1;
-  size_t *res = (size_t *)malloc(size+sizeof(size_t));
+  size_t *res = (size_t *)AllocMem(size+sizeof(size_t));
   if (!res) { fprintf(stderr, "\nFATAL: OUT OF MEMORY!\n"); *(int *)0 = 0; }
   *res = size;
   ++res;
@@ -386,23 +463,47 @@ void *VExpression::operator new[] (size_t size) {
   TotalMemoryUsed += (vuint32)size;
   CurrMemoryUsed += (vuint32)size;
   if (PeakMemoryUsed < CurrMemoryUsed) PeakMemoryUsed = CurrMemoryUsed;
+  //fprintf(stderr, "* new[]: %u (%p)\n", (unsigned)size, res);
+#if defined(VCC_DEBUG_COMPILER_LEAKS) && defined(VCC_DEBUG_COMPILER_LEAKS_CHECKS)
+  if (CalcMem() != CurrMemoryUsed) {
+    fprintf(stderr, "NEW[] CALC: %u\nNEW[] CURR: %u\n", (unsigned)CalcMem(), (unsigned)CurrMemoryUsed);
+    DumpAllocs();
+    abort();
+  }
+#endif
   return res;
 }
 
 
 void VExpression::operator delete (void *p) {
   if (p) {
+    //fprintf(stderr, "* del: %u (%p)\n", (vuint32)*((size_t *)p-1), p);
     if (InCompilerCleanup) TotalMemoryFreed += (vuint32)*((size_t *)p-1);
     CurrMemoryUsed -= (vuint32)*((size_t *)p-1);
-    free(((size_t *)p-1));
+    FreeMem(((size_t *)p-1));
+#if defined(VCC_DEBUG_COMPILER_LEAKS) && defined(VCC_DEBUG_COMPILER_LEAKS_CHECKS)
+    if (CalcMem() != CurrMemoryUsed) {
+      fprintf(stderr, "DEL CALC: %u\nDEL CURR: %u\n", (unsigned)CalcMem(), (unsigned)CurrMemoryUsed);
+      DumpAllocs();
+      abort();
+    }
+#endif
   }
 }
 
 
 void VExpression::operator delete[] (void *p) {
   if (p) {
+    //fprintf(stderr, "* del[]: %u (%p)\n", (vuint32)*((size_t *)p-1), p);
     if (InCompilerCleanup) TotalMemoryFreed += (vuint32)*((size_t *)p-1);
     CurrMemoryUsed -= (vuint32)*((size_t *)p-1);
-    free(((size_t *)p-1));
+    FreeMem(((size_t *)p-1));
+#if defined(VCC_DEBUG_COMPILER_LEAKS) && defined(VCC_DEBUG_COMPILER_LEAKS_CHECKS)
+    if (CalcMem() != CurrMemoryUsed) {
+      fprintf(stderr, "DEL[] CALC: %u\nDEL[] CURR: %u\n", (unsigned)CalcMem(), (unsigned)CurrMemoryUsed);
+      DumpAllocs();
+      abort();
+    }
+#endif
   }
 }

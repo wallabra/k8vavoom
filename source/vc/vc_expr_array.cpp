@@ -1095,9 +1095,10 @@ void VStringGetLength::Emit (VEmitContext &ec) {
 }
 
 
+
 //==========================================================================
 //
-//  VSliceGetLength
+//  VSliceGetLength::VSliceGetLength
 //
 //==========================================================================
 VSliceGetLength::VSliceGetLength (VExpression *asexpr, const TLocation &aloc)
@@ -1107,27 +1108,57 @@ VSliceGetLength::VSliceGetLength (VExpression *asexpr, const TLocation &aloc)
   Flags = FIELD_ReadOnly;
 }
 
+
+//==========================================================================
+//
+//  VSliceGetLength::~VSliceGetLength
+//
+//==========================================================================
 VSliceGetLength::~VSliceGetLength () {
   delete sexpr;
 }
 
+
+//==========================================================================
+//
+//  VSliceGetLength::SyntaxCopy
+//
+//==========================================================================
 VExpression *VSliceGetLength::SyntaxCopy () {
   auto res = new VSliceGetLength();
   DoSyntaxCopyTo(res);
   return res;
 }
 
+
+//==========================================================================
+//
+//  VSliceGetLength::DoSyntaxCopyTo
+//
+//==========================================================================
 void VSliceGetLength::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
   auto res = (VSliceGetLength *)e;
   res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
 }
 
+
+//==========================================================================
+//
+//  VSliceGetLength::DoResolve
+//
+//==========================================================================
 VExpression *VSliceGetLength::DoResolve (VEmitContext &ec) {
   Type = VFieldType(TYPE_Int);
   return this;
 }
 
+
+//==========================================================================
+//
+//  VSliceGetLength::Emit
+//
+//==========================================================================
 void VSliceGetLength::Emit (VEmitContext &ec) {
   sexpr->Emit(ec);
   /*
@@ -1139,9 +1170,10 @@ void VSliceGetLength::Emit (VEmitContext &ec) {
 }
 
 
+
 //==========================================================================
 //
-//  VSliceGetPtr
+//  VSliceGetPtr::VSliceGetPtr
 //
 //==========================================================================
 VSliceGetPtr::VSliceGetPtr (VExpression *asexpr, const TLocation &aloc)
@@ -1151,22 +1183,46 @@ VSliceGetPtr::VSliceGetPtr (VExpression *asexpr, const TLocation &aloc)
   Flags = FIELD_ReadOnly;
 }
 
+
+//==========================================================================
+//
+//  VSliceGetPtr::~VSliceGetPtr
+//
+//==========================================================================
 VSliceGetPtr::~VSliceGetPtr () {
   delete sexpr;
 }
 
+
+//==========================================================================
+//
+//  VSliceGetPtr::SyntaxCopy
+//
+//==========================================================================
 VExpression *VSliceGetPtr::SyntaxCopy () {
   auto res = new VSliceGetPtr();
   DoSyntaxCopyTo(res);
   return res;
 }
 
+
+//==========================================================================
+//
+//  VSliceGetPtr::DoSyntaxCopyTo
+//
+//==========================================================================
 void VSliceGetPtr::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
   auto res = (VSliceGetPtr *)e;
   res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
 }
 
+
+//==========================================================================
+//
+//  VSliceGetPtr::DoResolve
+//
+//==========================================================================
 VExpression *VSliceGetPtr::DoResolve (VEmitContext &ec) {
   //fprintf(stderr, "setype: <%s>\n", *sexpr->Type.GetName());
   Type = sexpr->Type.GetArrayInnerType();
@@ -1174,6 +1230,12 @@ VExpression *VSliceGetPtr::DoResolve (VEmitContext &ec) {
   return this;
 }
 
+
+//==========================================================================
+//
+//  VSliceGetPtr::Emit
+//
+//==========================================================================
 void VSliceGetPtr::Emit (VEmitContext &ec) {
   sexpr->Emit(ec);
   ec.AddStatement(OPC_PushPointedPtr, Loc);

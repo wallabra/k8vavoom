@@ -29,6 +29,19 @@ class VTypeExpr;
 // ////////////////////////////////////////////////////////////////////////// //
 class VExpression {
 public:
+  struct AutoCopy {
+  protected:
+    VExpression *e;
+
+  public:
+    AutoCopy (VExpression *ae) : e(ae ? ae->SyntaxCopy() : nullptr) {}
+    ~AutoCopy () { delete e; e = nullptr; }
+    inline void release () { delete e; e = nullptr; }
+    inline VExpression *get () { VExpression *res = e; e = nullptr; return res; }
+    VExpression *SyntaxCopy () { return (e ? e->SyntaxCopy() : nullptr); }
+  };
+
+public:
   VFieldType Type;
   VFieldType RealType;
   int Flags;
@@ -117,6 +130,8 @@ public:
   static void *operator new[] (size_t size);
   static void operator delete (void *p);
   static void operator delete[] (void *p);
+
+  static void ReportLeaks ();
 
 protected:
   // `e` should be of correct type

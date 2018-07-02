@@ -310,28 +310,25 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   }
 
   // we need a copy in case this is a pointer thingy
-  auto opcopy = (op ? op->SyntaxCopy() : nullptr);
+  AutoCopy opcopy(op);
 
   if (op) op = op->Resolve(ec);
   if (!op) {
-    delete opcopy;
     delete this;
     return nullptr;
   }
 
+  // allow dotted access for dynamic arrays
   if (op->Type.Type == TYPE_Pointer) {
-    // allow dotted access for dynamic arrays
     if (op->Type.InnerType == TYPE_DynamicArray) {
-      auto cp2 = opcopy->SyntaxCopy(); // for vector property conversions
       delete op;
       op = nullptr;
-      op = (new VPushPointed(opcopy))->Resolve(ec);
-      if (!op) { delete cp2; delete this; return nullptr; }
-      opcopy = cp2;
+      op = (new VPushPointed(opcopy.SyntaxCopy()))->Resolve(ec);
+      if (!op) { delete this; return nullptr; }
     } else {
       delete op;
       op = nullptr;
-      VPointerField *e = new VPointerField(opcopy, FieldName, Loc);
+      VPointerField *e = new VPointerField(opcopy.get(), FieldName, Loc);
       delete this;
       return e->Resolve(ec);
     }
@@ -342,25 +339,22 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     if (M) {
       if (M->Flags&FUNC_Iterator) {
         ParseError(Loc, "Iterator methods can only be used in foreach statements");
-        delete opcopy;
         delete this;
         return nullptr;
       }
       VExpression *e;
       // rewrite as invoke
       if ((M->Flags&FUNC_Static) != 0) {
-        delete opcopy;
         e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
       } else {
-        e = new VDotInvocation(opcopy, FieldName, Loc, 0, nullptr);
+        e = new VDotInvocation(opcopy.get(), FieldName, Loc, 0, nullptr);
       }
       delete this;
       return e->Resolve(ec);
     }
 
     // we never ever need opcopy here
-    delete opcopy;
-    opcopy = nullptr; // just in case
+    //opcopy.release();
 
     VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
     if (field) {
@@ -392,19 +386,18 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       // convert to method, 'cause why not?
       if (assType == AssType::Normal) {
         VExpression *ufcsArgs[1];
-        ufcsArgs[0] = opcopy;
+        ufcsArgs[0] = opcopy.get();
         VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
         delete this;
         return call->Resolve(ec);
       } else {
-        delete opcopy;
         ParseError(Loc, "INTERNAL COMPILER ERROR: No such field `%s`, and no struct also!", *FieldName);
         delete this;
         return nullptr;
       }
     }
-    delete opcopy; // we never ever need opcopy here
-    opcopy = nullptr; // just in case
+    //delete opcopy; // we never ever need opcopy here
+    //opcopy = nullptr; // just in case
     int Flags = op->Flags;
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
@@ -424,8 +417,8 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   if (op->Type.Type == TYPE_DynamicArray &&
       (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length))
   {
-    delete opcopy; // we never ever need opcopy here
-    opcopy = nullptr; // just in case
+    //delete opcopy; // we never ever need opcopy here
+    //opcopy = nullptr; // just in case
     //VFieldType type = op->Type;
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
@@ -446,8 +439,8 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   if (op->Type.Type == TYPE_Array &&
       (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length))
   {
-    delete opcopy; // we never ever need opcopy here
-    opcopy = nullptr; // just in case
+    //delete opcopy; // we never ever need opcopy here
+    //opcopy = nullptr; // just in case
     if (assType == AssType::AssTarget) {
       ParseError(Loc, "Cannot change length of static array");
       delete this;
@@ -461,8 +454,8 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   // string properties
   if (op->Type.Type == TYPE_String) {
     if (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length) {
-      delete opcopy; // we never ever need opcopy here
-      opcopy = nullptr; // just in case
+      //delete opcopy; // we never ever need opcopy here
+      //opcopy = nullptr; // just in case
       if (assType == AssType::AssTarget) {
         ParseError(Loc, "Cannot change string length via assign yet");
         delete this;
@@ -502,7 +495,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     else if (FieldName == "isinf" || FieldName == "isInf") builtin = OPC_Builtin_FloatIsInf;
     else if (FieldName == "isfinite" || FieldName == "isFinite") builtin = OPC_Builtin_FloatIsFinite;
     if (builtin >= 0) {
-      delete opcopy; // we never ever need opcopy here
+      //delete opcopy; // we never ever need opcopy here
       if (assType == AssType::AssTarget) {
         ParseError(Loc, "Cannot assign to read-only property");
         delete this;
@@ -564,8 +557,8 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   if (assType != AssType::AssTarget) {
     // Class.Method -- for static methods
     if (op->Type.Type == TYPE_Class) {
-      delete opcopy; // we never ever need opcopy here
-      opcopy = nullptr; // just in case
+      //delete opcopy; // we never ever need opcopy here
+      //opcopy = nullptr; // just in case
       if (!op->Type.Class) {
         ParseError(Loc, "Class name expected at the left side of `.`");
         delete this;
@@ -599,7 +592,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     // convert to `func(op)`
     if (ec.SelfClass) {
       VExpression *ufcsArgs[1];
-      ufcsArgs[0] = opcopy;
+      ufcsArgs[0] = opcopy.get();
       if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
         VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
         delete this;
@@ -608,8 +601,8 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     }
   } else if (assType == AssType::AssTarget) {
     if (op->Type.Type == TYPE_Class) {
-      delete opcopy; // we never ever need opcopy here
-      opcopy = nullptr; // just in case
+      //delete opcopy; // we never ever need opcopy here
+      //opcopy = nullptr; // just in case
       if (!op->Type.Class) {
         ParseError(Loc, "Class name expected at the left side of `.`");
         delete this;
@@ -621,7 +614,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     }
   }
 
-  delete opcopy; // we never ever need opcopy here
+  //delete opcopy; // we never ever need opcopy here
   ParseError(Loc, "Reference, struct or vector expected on left side of `.` (got `%s`)", *op->Type.GetName());
   delete this;
   return nullptr;

@@ -546,15 +546,9 @@ VFor::VFor (const TLocation &ALoc)
 //
 //==========================================================================
 VFor::~VFor () {
-  for (int i = 0; i < InitExpr.length(); ++i) {
-    if (InitExpr[i]) { delete InitExpr[i]; InitExpr[i] = nullptr; }
-  }
-  for (int i = 0; i < CondExpr.length(); ++i) {
-    if (CondExpr[i]) { delete CondExpr[i]; CondExpr[i] = nullptr; }
-  }
-  for (int i = 0; i < LoopExpr.length(); ++i) {
-    if (LoopExpr[i]) { delete LoopExpr[i]; LoopExpr[i] = nullptr; }
-  }
+  for (int i = 0; i < InitExpr.length(); ++i) { delete InitExpr[i]; InitExpr[i] = nullptr; }
+  for (int i = 0; i < CondExpr.length(); ++i) { delete CondExpr[i]; CondExpr[i] = nullptr; }
+  for (int i = 0; i < LoopExpr.length(); ++i) { delete LoopExpr[i]; LoopExpr[i] = nullptr; }
   if (Statement) { delete Statement; Statement = nullptr; }
 }
 

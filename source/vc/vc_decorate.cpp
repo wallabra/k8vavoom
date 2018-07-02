@@ -3304,5 +3304,6 @@ void CompilerReportMemory () {
   GCon->Logf(NAME_Init, "Released compiler memory  : %s bytes.", comatoze(VExpression::TotalMemoryFreed));
   if (VExpression::CurrMemoryUsed != 0) {
     GCon->Logf(NAME_Init, "Compiler leaks %s bytes (this is harmless).", comatoze(VExpression::CurrMemoryUsed));
+    VExpression::ReportLeaks();
   }
 }
