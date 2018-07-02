@@ -103,12 +103,214 @@ VExpression *VStringToBool::SyntaxCopy () {
 
 //==========================================================================
 //
+//  VStringToBool::DoResolve
+//
+//==========================================================================
+VExpression *VStringToBool::DoResolve (VEmitContext &ec) {
+  if (!op) return nullptr;
+  op = op->Resolve(ec);
+  if (!op) { delete this; return nullptr; }
+  if (op->Type.Type != TYPE_String) {
+    ParseError(Loc, "cannot convert type `%s` to `bool`", *op->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+  if (op->IsStrConst()) {
+    // do it inplace
+    VStr s = op->GetStrConst(ec.Package);
+    VExpression *e = new VIntLiteral((s.length() ? 1 : 0), Loc);
+    delete op;
+    return e->Resolve(ec);
+  }
+  Type = TYPE_Int;
+  return this;
+}
+
+
+//==========================================================================
+//
 //  VStringToBool::Emit
 //
 //==========================================================================
 void VStringToBool::Emit (VEmitContext &ec) {
   op->Emit(ec);
   ec.AddStatement(OPC_StrToBool, Loc);
+}
+
+
+//==========================================================================
+//
+//  VNameToBool::VNameToBool
+//
+//==========================================================================
+VNameToBool::VNameToBool (VExpression *AOp) : VCastExpressionBase(AOp) {
+  Type = TYPE_Int;
+}
+
+
+//==========================================================================
+//
+//  VNameToBool::SyntaxCopy
+//
+//==========================================================================
+VExpression *VNameToBool::SyntaxCopy () {
+  auto res = new VNameToBool();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VNameToBool::DoResolve
+//
+//==========================================================================
+VExpression *VNameToBool::DoResolve (VEmitContext &ec) {
+  if (!op) return nullptr;
+  op = op->Resolve(ec);
+  if (!op) { delete this; return nullptr; }
+  if (op->Type.Type != TYPE_Name) {
+    ParseError(Loc, "cannot convert type `%s` to `bool`", *op->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+  if (op->IsNameConst()) {
+    // do it inplace
+    VName n = op->GetNameConst();
+    VExpression *e = new VIntLiteral((n != NAME_None ? 1 : 0), Loc);
+    delete op;
+    return e->Resolve(ec);
+  }
+  Type = TYPE_Int;
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VNameToBool::Emit
+//
+//==========================================================================
+void VNameToBool::Emit (VEmitContext &ec) {
+  op->Emit(ec);
+  // no further conversion required
+}
+
+
+//==========================================================================
+//
+//  VFloatToBool::VFloatToBool
+//
+//==========================================================================
+VFloatToBool::VFloatToBool (VExpression *AOp) : VCastExpressionBase(AOp) {
+  Type = TYPE_Int;
+}
+
+
+//==========================================================================
+//
+//  VFloatToBool::SyntaxCopy
+//
+//==========================================================================
+VExpression *VFloatToBool::SyntaxCopy () {
+  auto res = new VFloatToBool();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VFloatToBool::DoResolve
+//
+//==========================================================================
+VExpression *VFloatToBool::DoResolve (VEmitContext &ec) {
+  if (!op) return nullptr;
+  op = op->Resolve(ec);
+  if (!op) { delete this; return nullptr; }
+  if (op->Type.Type != TYPE_Float) {
+    ParseError(Loc, "cannot convert type `%s` to `bool`", *op->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+  if (op->IsFloatConst()) {
+    // do it inplace
+    VExpression *e = new VIntLiteral((op->GetFloatConst() == 0 ? 0 : 1), Loc);
+    delete op;
+    return e->Resolve(ec);
+  }
+  Type = TYPE_Int;
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VFloatToBool::Emit
+//
+//==========================================================================
+void VFloatToBool::Emit (VEmitContext &ec) {
+  op->Emit(ec);
+  ec.AddStatement(OPC_FloatToBool, Loc);
+}
+
+
+//==========================================================================
+//
+//  VVectorToBool::VVectorToBool
+//
+//==========================================================================
+VVectorToBool::VVectorToBool (VExpression *AOp) : VCastExpressionBase(AOp) {
+  Type = TYPE_Int;
+}
+
+
+//==========================================================================
+//
+//  VVectorToBool::SyntaxCopy
+//
+//==========================================================================
+VExpression *VVectorToBool::SyntaxCopy () {
+  auto res = new VVectorToBool();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VVectorToBool::DoResolve
+//
+//==========================================================================
+VExpression *VVectorToBool::DoResolve (VEmitContext &ec) {
+  if (!op) return nullptr;
+  op = op->Resolve(ec);
+  if (!op) { delete this; return nullptr; }
+  if (op->Type.Type != TYPE_Vector) {
+    ParseError(Loc, "cannot convert type `%s` to `bool`", *op->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+  if (op->IsConstVectorCtor()) {
+    // do it inplace
+    TVec v = ((VVector *)op)->GetConstValue();
+    VExpression *e = new VIntLiteral((v.x == 0 && v.y == 0 && v.z == 0 ? 0 : 1), Loc);
+    delete op;
+    return e->Resolve(ec);
+  }
+  Type = TYPE_Int;
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VVectorToBool::Emit
+//
+//==========================================================================
+void VVectorToBool::Emit (VEmitContext &ec) {
+  op->Emit(ec);
+  ec.AddStatement(OPC_VectorToBool, Loc);
 }
 
 
@@ -131,6 +333,45 @@ VExpression *VPointerToBool::SyntaxCopy () {
   auto res = new VPointerToBool();
   DoSyntaxCopyTo(res);
   return res;
+}
+
+
+//==========================================================================
+//
+//  VPointerToBool::DoResolve
+//
+//==========================================================================
+VExpression *VPointerToBool::DoResolve (VEmitContext &ec) {
+  if (!op) return nullptr;
+  op = op->Resolve(ec);
+  if (!op) { delete this; return nullptr; }
+
+  // do it in-place for pointers
+  switch (op->Type.Type) {
+    case TYPE_Pointer:
+      if (op->IsNullLiteral()) {
+        VExpression *e = new VIntLiteral(0, Loc);
+        delete this;
+        return e->Resolve(ec);
+      }
+      break;
+    case TYPE_Reference:
+    case TYPE_Class:
+    case TYPE_State:
+      if (op->IsNoneLiteral()) {
+        VExpression *e = new VIntLiteral(0, Loc);
+        delete this;
+        return e->Resolve(ec);
+      }
+      break;
+    default:
+      ParseError(Loc, "cannot convert type `%s` to `bool`", *op->Type.GetName());
+      delete this;
+      return nullptr;
+  }
+
+  Type = TYPE_Int;
+  return this;
 }
 
 
@@ -180,10 +421,10 @@ VExpression *VScalarToFloat::SyntaxCopy () {
 //
 //==========================================================================
 VExpression *VScalarToFloat::DoResolve (VEmitContext &ec) {
-  //printf("VScalarToFloat::DoResolve!\n");
   if (!op) return nullptr;
   op = op->Resolve(ec);
   if (!op) { delete this; return nullptr; }
+  //fprintf(stderr, "VScalarToFloat::DoResolve! (%s)\n", *shitppTypeNameObj(*op));
   switch (op->Type.Type) {
     case TYPE_Int:
     case TYPE_Byte:
@@ -196,9 +437,15 @@ VExpression *VScalarToFloat::DoResolve (VEmitContext &ec) {
       }
       break;
     case TYPE_Float:
+      if (op->IsFloatConst()) {
+        VExpression *e = op;
+        op = nullptr;
+        delete this;
+        return e;
+      }
       break;
     default:
-      ParseError(Loc, "cannot convert type to `float`");
+      ParseError(Loc, "cannot convert type `%s` to `float`", *op->Type.GetName());
       delete this;
       return nullptr;
   }
@@ -269,6 +516,12 @@ VExpression *VScalarToInt::DoResolve (VEmitContext &ec) {
     case TYPE_Int:
     case TYPE_Byte:
     case TYPE_Bool:
+      if (op->IsIntConst()) {
+        VExpression *e = op;
+        op = nullptr;
+        delete this;
+        return e;
+      }
       break;
     case TYPE_Float:
       if (op->IsFloatConst()) {
@@ -279,7 +532,7 @@ VExpression *VScalarToInt::DoResolve (VEmitContext &ec) {
       }
       break;
     default:
-      ParseError(Loc, "cannot convert type to `int`");
+      ParseError(Loc, "cannot convert type `%s` to `int`", *op->Type.GetName());
       delete this;
       return nullptr;
   }

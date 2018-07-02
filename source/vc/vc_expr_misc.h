@@ -36,10 +36,18 @@ public:
   VExpression *op3;
 
   VVector (VExpression *, VExpression *, VExpression *, const TLocation &);
+  VVector (const TVec &vv, const TLocation &aloc);
   virtual ~VVector () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual bool IsVectorCtor () const override;
+  virtual bool IsConstVectorCtor () const override;
+
+  // is this a const ctor? (should be called after resolving)
+  bool IsConst () const;
+  TVec GetConstValue () const;
 
 protected:
   VVector () {}

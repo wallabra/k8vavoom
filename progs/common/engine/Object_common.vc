@@ -258,39 +258,51 @@ native static final float atan2 (float y, float x) [builtin ATan2];
 // square root
 native static final float sqrt (float x) [builtin Sqrt];
 // vector length
-native static final float length (TVec vec) [builtin VecLength];
+native static final float length (const TVec vec) [builtin VecLength];
 alias Length = length;
 // vector length without z component
-native static final float length2D (TVec vec) [builtin VecLength2D];
+native static final float length2D (const TVec vec) [builtin VecLength2D];
 alias Length2D = length2D;
 alias length2d = length2D;
 // normalises vector
-native static final TVec normalise (TVec vec) [builtin VecNormalize];
+native static final TVec normalise (const TVec vec) [builtin VecNormalize];
 alias Normalise = normalise;
 alias Normalize = normalise;
 alias normalize = normalise;
+// normalises 2d vector (ignores z)
+native static final TVec normalise2D (const TVec vec) [builtin VecNormalize2D];
+alias Normalise2D = normalise2D;
+alias normalise2d = normalise2d;
 // dot product
-native static final float dot (TVec v1, TVec v2) [builtin VecDot];
+native static final float dot (const TVec v1, const TVec v2) [builtin VecDot];
 alias DotProduct = dot;
+// dot product of 2d vector (ignores z)
+native static final float dot2d (const TVec v1, const TVec v2) [builtin VecDot2D];
+alias DotProduct2D = dot2d;
+alias dot2D = dot2d;
 // cross product (perpendicular vector)
-native static final TVec cross (TVec v1, TVec v2) [builtin VecCross];
+native static final TVec cross (const TVec v1, const TVec v2) [builtin VecCross];
 alias CrossProduct = cross;
+// 2d cross product (signed magnitude, z, as x and y are effectively zero in 2d)
+native static final TVec cross2d (const TVec v1, const TVec v2) [builtin VecCross2D];
+alias CrossProduct2D = cross2d;
+alias cross2D = cross2D;
 // creates vectors for given angle vector
-native static final void AngleVectors (TAVec *angles, TVec *forward, TVec *right, TVec *up);
+native static final void AngleVectors (TAVec *angles, const TVec *forward, const TVec *right, const TVec *up);
 // simplified version of AngleVectors, creates only forward vector
-native static final void AngleVector (TAVec *angles, TVec *forward);
+native static final void AngleVector (TAVec *angles, const TVec *forward);
 // create angle vector for a vector
-native static final void VectorAngles (TVec *vec, TAVec *angles);
+native static final void VectorAngles (const TVec *vec, TAVec *angles);
 // get z of point with given x and y coords (don't try to use it on a vertical plane)
-native static final float GetPlanePointZ (TPlane *plane, TVec point);
+native static final float GetPlanePointZ (const TPlane *plane, const TVec point);
 // returns side 0 (front) or 1 (back)
-native static final int PointOnPlaneSide (TVec point, TPlane *plane);
+native static final int PointOnPlaneSide (const TVec point, const TPlane *plane);
 // rotates a direction vector
-native static final TVec RotateDirectionVector (TVec vec, TAVec rot);
+native static final TVec RotateDirectionVector (const TVec vec, const TAVec rot);
 // rotates vector around Z axis
 native static final void VectorRotateAroundZ (TVec *vec, float angle);
 // rotates vector around another vector
-native static final TVec RotateVectorAroundVector (TVec Vector, TVec Axis, float angle);
+native static final TVec RotateVectorAroundVector (const TVec Vector, const TVec Axis, float angle);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

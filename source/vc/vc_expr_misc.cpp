@@ -1,4 +1,4 @@
-//**************************************************************************
+///**************************************************************************
 //**
 //**  ##   ##    ##    ##   ##   ####     ####   ###     ###
 //**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
@@ -40,6 +40,20 @@ VVector::VVector (VExpression *AOp1, VExpression *AOp2, VExpression *AOp3, const
   if (!op1) ParseError(Loc, "Expression expected");
   if (!op2) ParseError(Loc, "Expression expected");
   if (!op3) ParseError(Loc, "Expression expected");
+}
+
+
+//==========================================================================
+//
+//  VVector::VVector
+//
+//==========================================================================
+VVector::VVector (const TVec &vv, const TLocation &aloc)
+  : VExpression(aloc)
+{
+  op1 = new VFloatLiteral(vv.x, aloc);
+  op2 = new VFloatLiteral(vv.y, aloc);
+  op3 = new VFloatLiteral(vv.z, aloc);
 }
 
 
@@ -124,9 +138,62 @@ VExpression *VVector::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VVector::Emit (VEmitContext &ec) {
-  op1->Emit(ec);
-  op2->Emit(ec);
-  op3->Emit(ec);
+  if (op1) op1->Emit(ec);
+  if (op1) op2->Emit(ec);
+  if (op1) op3->Emit(ec);
+}
+
+
+//==========================================================================
+//
+//  VVector::IsVectorCtor
+//
+//==========================================================================
+bool VVector::IsVectorCtor () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VVector::IsConstVectorCtor
+//
+//==========================================================================
+bool VVector::IsConstVectorCtor () const {
+  return IsConst();
+}
+
+
+//==========================================================================
+//
+//  VVector::IsConst
+//
+//==========================================================================
+// is this a const ctor? (should be called after resolving)
+bool VVector::IsConst () const {
+  if (!op1 || !op2 || !op3) return false;
+  return
+    (op1->IsFloatConst() || op1->IsIntConst()) &&
+    (op2->IsFloatConst() || op2->IsIntConst()) &&
+    (op3->IsFloatConst() || op3->IsIntConst());
+}
+
+
+//==========================================================================
+//
+//  VVector::GetConstValue
+//
+//==========================================================================
+TVec VVector::GetConstValue () const {
+  TVec res(0, 0, 0);
+  if (!IsConst()) {
+    ParseError(Loc, "Cannot get const value from non-const vector");
+    return res;
+  }
+  res.x = (op1->IsFloatConst() ? op1->GetFloatConst() : (float)op1->GetIntConst());
+  res.y = (op2->IsFloatConst() ? op2->GetFloatConst() : (float)op2->GetIntConst());
+  res.z = (op3->IsFloatConst() ? op3->GetFloatConst() : (float)op3->GetIntConst());
+  return res;
 }
 
 

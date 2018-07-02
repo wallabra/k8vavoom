@@ -1560,6 +1560,17 @@ func_loop:
         sp -= 2;
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_FloatToBool)
+        sp[-1].i = (sp[-1].f == 0 ? 0 : 1);
+        ++ip;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_VectorToBool)
+        sp[-3].i = (sp[-1].f == 0 && sp[-2].f == 0 && sp[-3].f == 0 ? 0 : 1);
+        sp -= 2;
+        ++ip;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_StrToBool)
         {
           ++ip;
@@ -2153,6 +2164,15 @@ func_loop:
               sp[-3].f = v.x;
               break;
             }
+          case OPC_Builtin_VecNormalize2D:
+            {
+              TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
+              v = normalise2D(v);
+              sp[-1].f = v.z;
+              sp[-2].f = v.y;
+              sp[-3].f = v.x;
+              break;
+            }
           case OPC_Builtin_VecDot:
             {
               TVec v2(sp[-3].f, sp[-2].f, sp[-1].f);
@@ -2160,6 +2180,15 @@ func_loop:
               TVec v1(sp[-3].f, sp[-2].f, sp[-1].f);
               sp -= 2;
               sp[-1].f = DotProduct(v1, v2);
+              break;
+            }
+          case OPC_Builtin_VecDot2D:
+            {
+              TVec v2(sp[-3].f, sp[-2].f, sp[-1].f);
+              sp -= 3;
+              TVec v1(sp[-3].f, sp[-2].f, sp[-1].f);
+              sp -= 2;
+              sp[-1].f = DotProduct2D(v1, v2);
               break;
             }
           case OPC_Builtin_VecCross:
@@ -2171,6 +2200,15 @@ func_loop:
               sp[-1].f = v1.z;
               sp[-2].f = v1.y;
               sp[-3].f = v1.x;
+              break;
+            }
+          case OPC_Builtin_VecCross2D:
+            {
+              TVec v2(sp[-3].f, sp[-2].f, sp[-1].f);
+              sp -= 3;
+              TVec v1(sp[-3].f, sp[-2].f, sp[-1].f);
+              sp -= 2;
+              sp[-1].f = CrossProduct2D(v1, v2);
               break;
             }
           case OPC_Builtin_RoundF2I: sp[-1].i = (int)(roundf(sp[-1].f)); break;

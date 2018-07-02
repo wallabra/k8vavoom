@@ -1304,6 +1304,7 @@ bool VInvocation::CheckSimpleConstArgs (int argc, const int *types) const {
       case TYPE_Float: if (!Args[f]->IsFloatConst()) return false; break;
       case TYPE_String: if (!Args[f]->IsStrConst()) return false; break;
       case TYPE_Name: if (!Args[f]->IsNameConst()) return false; break;
+      case TYPE_Vector: if (!Args[f]->IsConstVectorCtor()) return false; break;
       default: return false; // unknown request
     }
   }
@@ -1318,6 +1319,7 @@ bool VInvocation::CheckSimpleConstArgs (int argc, const int *types) const {
 //==========================================================================
 VExpression *VInvocation::OptimiseBuiltin (VEmitContext &ec) {
   if (!Func || Func->builtinOpc < 0) return this; // sanity check
+  TVec v0, v1;
   VExpression *e = nullptr;
   switch (Func->builtinOpc) {
     case OPC_Builtin_IntAbs:
@@ -1418,13 +1420,53 @@ VExpression *VInvocation::OptimiseBuiltin (VEmitContext &ec) {
       if (!CheckSimpleConstArgs(2, (const int []){TYPE_Float, TYPE_Float})) return this;
       e = new VFloatLiteral(matan(Args[0]->GetFloatConst(), Args[1]->GetFloatConst()), Loc);
       break;
-    /*
     case OPC_Builtin_VecLength:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
+      v0 = ((VVector *)Args[0])->GetConstValue();
+      e = new VFloatLiteral(v0.length(), Loc);
+      break;
     case OPC_Builtin_VecLength2D:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
+      v0 = ((VVector *)Args[0])->GetConstValue();
+      e = new VFloatLiteral(v0.length2D(), Loc);
+      break;
     case OPC_Builtin_VecNormalize:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
+      v0 = ((VVector *)Args[0])->GetConstValue();
+      v0 = normalise(v0);
+      e = new VVector(v0, Loc);
+      break;
+    case OPC_Builtin_VecNormalize2D:
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
+      v0 = ((VVector *)Args[0])->GetConstValue();
+      v0 = normalise2D(v0);
+      e = new VVector(v0, Loc);
+      break;
     case OPC_Builtin_VecDot:
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
+      v0 = ((VVector *)Args[0])->GetConstValue();
+      v1 = ((VVector *)Args[1])->GetConstValue();
+      e = new VFloatLiteral(dot(v0, v1), Loc);
+      break;
+    case OPC_Builtin_VecDot2D:
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
+      v0 = ((VVector *)Args[0])->GetConstValue();
+      v1 = ((VVector *)Args[1])->GetConstValue();
+      e = new VFloatLiteral(dot2D(v0, v1), Loc);
+      break;
     case OPC_Builtin_VecCross:
-    */
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
+      v0 = ((VVector *)Args[0])->GetConstValue();
+      v1 = ((VVector *)Args[1])->GetConstValue();
+      v0 = cross(v0, v1);
+      e = new VVector(v0, Loc);
+      break;
+    case OPC_Builtin_VecCross2D:
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
+      v0 = ((VVector *)Args[0])->GetConstValue();
+      v1 = ((VVector *)Args[1])->GetConstValue();
+      e = new VFloatLiteral(cross2D(v0, v1), Loc);
+      break;
     case OPC_Builtin_RoundF2I:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
       e = new VIntLiteral((int)roundf(Args[0]->GetFloatConst()), Loc);

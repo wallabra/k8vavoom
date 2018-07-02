@@ -81,32 +81,47 @@ VExpression *VExpression::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 VExpression *VExpression::ResolveBoolean (VEmitContext &ec) {
+  VExpression *ecopy = this->SyntaxCopy();
   VExpression *e = Resolve(ec);
-  if (!e) return nullptr;
+  if (!e) { delete ecopy; return nullptr; }
 
   switch (e->Type.Type) {
     case TYPE_Int:
     case TYPE_Byte:
     case TYPE_Bool:
+      delete ecopy;
+      break;
     case TYPE_Float:
+      delete e;
+      e = (new VFloatToBool(ecopy))->Resolve(ec);
+      break;
     case TYPE_Name:
+      delete e;
+      e = (new VNameToBool(ecopy))->Resolve(ec);
       break;
     case TYPE_Pointer:
     case TYPE_Reference:
     case TYPE_Class:
     case TYPE_State:
-      e = new VPointerToBool(e);
+      delete e;
+      e = (new VPointerToBool(ecopy))->Resolve(ec);
       break;
     case TYPE_String:
-      e = new VStringToBool(e);
+      delete e;
+      e = (new VStringToBool(ecopy))->Resolve(ec);
       break;
     case TYPE_Delegate:
-      e = new VDelegateToBool(e);
+      delete e;
+      e = (new VDelegateToBool(ecopy))->Resolve(ec);
+      break;
+    case TYPE_Vector:
+      delete e;
+      e = (new VVectorToBool(ecopy))->Resolve(ec);
       break;
     default:
       ParseError(Loc, "Expression type mismatch, boolean expression expected");
+      delete ecopy;
       delete e;
-      e = nullptr;
       return nullptr;
   }
 
@@ -120,21 +135,25 @@ VExpression *VExpression::ResolveBoolean (VEmitContext &ec) {
 //
 //==========================================================================
 VExpression *VExpression::ResolveFloat (VEmitContext &ec) {
+  VExpression *ecopy = this->SyntaxCopy();
   VExpression *e = Resolve(ec);
-  if (!e) return nullptr;
+  if (!e) { delete ecopy; return nullptr; }
 
   switch (e->Type.Type) {
     case TYPE_Int:
     case TYPE_Byte:
     //case TYPE_Bool:
-      e = new VScalarToFloat(e);
+      delete e;
+      e = (new VScalarToFloat(ecopy))->Resolve(ec);
       break;
     case TYPE_Float:
+      delete ecopy;
       break;
     default:
       ParseError(Loc, "Expression type mismatch, float expression expected");
+      delete ecopy;
       delete e;
-      e = nullptr;
+      return nullptr;
   }
 
   return e;
@@ -150,7 +169,16 @@ VExpression *VExpression::ResolveFloat (VEmitContext &ec) {
 //==========================================================================
 VExpression *VExpression::CoerceToFloat () {
   if (Type.Type == TYPE_Float) return this; // nothing to do
-  if (Type.Type == TYPE_Int || Type.Type == TYPE_Byte) return new VScalarToFloat(this);
+  if (Type.Type == TYPE_Int || Type.Type == TYPE_Byte) {
+    if (IsIntConst()) {
+      VExpression *e = new VFloatLiteral((float)GetIntConst(), Loc);
+      delete this;
+      return e; // no need to resolve it
+    }
+    //HACK: `VScalarToFloat()` resolver does nothing special (except constant folding),
+    //      so we can skip resolving here
+    return new VScalarToFloat(this);
+  }
   ParseError(Loc, "Expression type mismatch, float expression expected");
   delete this;
   return nullptr;
@@ -296,6 +324,7 @@ VExpression *VExpression::ResolveToIntLiteralEx (VEmitContext &ec, bool allowFlo
 
 // ////////////////////////////////////////////////////////////////////////// //
 // IsXXX
+bool VExpression::AddDropResult () { return false; }
 bool VExpression::IsValidTypeExpression () const { return false; }
 bool VExpression::IsIntConst () const { return false; }
 bool VExpression::IsFloatConst () const { return false; }
@@ -310,7 +339,6 @@ bool VExpression::IsNullLiteral () const { return false; }
 bool VExpression::IsDefaultObject () const { return false; }
 bool VExpression::IsPropertyAssign () const { return false; }
 bool VExpression::IsDynArraySetNum () const { return false; }
-bool VExpression::AddDropResult () { return false; }
 bool VExpression::IsDecorateSingleName () const { return false; }
 bool VExpression::IsLocalVarDecl () const { return false; }
 bool VExpression::IsLocalVarExpr () const { return false; }
@@ -336,6 +364,8 @@ bool VExpression::IsStaticArrayType () const { return false; }
 bool VExpression::IsDynamicArrayType () const { return false; }
 bool VExpression::IsDelegateType () const { return false; }
 bool VExpression::IsSliceType () const { return false; }
+bool VExpression::IsVectorCtor () const { return false; }
+bool VExpression::IsConstVectorCtor () const { return false; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

@@ -63,6 +63,7 @@ public:
   virtual void Emit (VEmitContext &ec) = 0;
   virtual void EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue);
   void EmitPushPointedCode (VFieldType type, VEmitContext &ec); // yeah, non-virtual
+  virtual bool AddDropResult ();
   virtual bool IsValidTypeExpression () const;
   virtual bool IsIntConst () const;
   virtual bool IsFloatConst () const;
@@ -77,7 +78,6 @@ public:
   virtual bool IsDefaultObject () const;
   virtual bool IsPropertyAssign () const;
   virtual bool IsDynArraySetNum () const;
-  virtual bool AddDropResult ();
   virtual bool IsDecorateSingleName () const;
   virtual bool IsLocalVarDecl () const;
   virtual bool IsLocalVarExpr () const;
@@ -103,6 +103,8 @@ public:
   virtual bool IsDynamicArrayType () const;
   virtual bool IsSliceType () const;
   virtual bool IsDelegateType () const;
+  virtual bool IsVectorCtor () const;
+  virtual bool IsConstVectorCtor () const;
 
   // this resolves one-char strings and names to int literals too
   VExpression *ResolveToIntLiteralEx (VEmitContext &ec, bool allowFloatTrunc=false);

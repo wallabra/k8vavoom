@@ -61,9 +61,10 @@ public:
   }
 
   inline TVec &operator /= (float scale) {
-    x /= scale;
-    y /= scale;
-    z /= scale;
+    scale = 1.0f/scale;
+    x *= scale;
+    y *= scale;
+    z *= scale;
     return *this;
   }
 
@@ -74,6 +75,9 @@ public:
   inline float Length () const { return sqrt(x*x+y*y+z*z); }
   inline float length () const { return sqrt(x*x+y*y+z*z); }
 
+  inline float Length2D () const { return sqrt(x*x+y*y); }
+  inline float length2D () const { return sqrt(x*x+y*y); }
+
   inline float LengthSquared () const { return x*x+y*y+z*z; }
   inline float lengthSquared () const { return x*x+y*y+z*z; }
 
@@ -82,36 +86,42 @@ public:
 };
 
 
-inline TVec operator + (const TVec &v1, const TVec &v2) { return TVec(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z); }
-inline TVec operator - (const TVec &v1, const TVec &v2) { return TVec(v1.x-v2.x, v1.y-v2.y, v1.z-v2.z); }
+static __attribute__((unused)) inline TVec operator + (const TVec &v1, const TVec &v2) { return TVec(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z); }
+static __attribute__((unused)) inline TVec operator - (const TVec &v1, const TVec &v2) { return TVec(v1.x-v2.x, v1.y-v2.y, v1.z-v2.z); }
 
-inline TVec operator * (const TVec &v, float s) { return TVec(s*v.x, s*v.y, s*v.z); }
-inline TVec operator * (float s, const TVec &v) { return TVec(s*v.x, s*v.y, s*v.z); }
-inline TVec operator / (const TVec &v, float s) { return TVec(v.x/s, v.y/s, v.z/s); }
+static __attribute__((unused)) inline TVec operator * (const TVec &v, float s) { return TVec(s*v.x, s*v.y, s*v.z); }
+static __attribute__((unused)) inline TVec operator * (float s, const TVec &v) { return TVec(s*v.x, s*v.y, s*v.z); }
+static __attribute__((unused)) inline TVec operator / (const TVec &v, float s) { s = 1.0f/s; return TVec(v.x*s, v.y*s, v.z*s); }
 
-inline bool operator == (const TVec &v1, const TVec &v2) { return (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z); }
-inline bool operator != (const TVec &v1, const TVec &v2) { return (v1.x != v2.x || v1.y != v2.y || v1.z != v2.z); }
+static __attribute__((unused)) inline bool operator == (const TVec &v1, const TVec &v2) { return (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z); }
+static __attribute__((unused)) inline bool operator != (const TVec &v1, const TVec &v2) { return (v1.x != v2.x || v1.y != v2.y || v1.z != v2.z); }
 
-inline float Length (const TVec &v) { return sqrt(v.x*v.x+v.y*v.y+v.z*v.z); }
-inline float length (const TVec &v) { return sqrt(v.x*v.x+v.y*v.y+v.z*v.z); }
-inline float Length2D (const TVec &v) { return sqrt(v.x*v.x+v.y*v.y); }
-inline float length2D (const TVec &v) { return sqrt(v.x*v.x+v.y*v.y); }
+static __attribute__((unused)) inline float Length (const TVec &v) { return sqrt(v.x*v.x+v.y*v.y+v.z*v.z); }
+static __attribute__((unused)) inline float length (const TVec &v) { return sqrt(v.x*v.x+v.y*v.y+v.z*v.z); }
+static __attribute__((unused)) inline float Length2D (const TVec &v) { return sqrt(v.x*v.x+v.y*v.y); }
+static __attribute__((unused)) inline float length2D (const TVec &v) { return sqrt(v.x*v.x+v.y*v.y); }
 
-inline float LengthSquared (const TVec &v) { return v.x*v.x+v.y*v.y+v.z*v.z; }
-inline float lengthSquared (const TVec &v) { return v.x*v.x+v.y*v.y+v.z*v.z; }
-inline float Length2DSquared (const TVec &v) { return v.x*v.x+v.y*v.y; }
-inline float length2DSquared (const TVec &v) { return v.x*v.x+v.y*v.y; }
+static __attribute__((unused)) inline float LengthSquared (const TVec &v) { return v.x*v.x+v.y*v.y+v.z*v.z; }
+static __attribute__((unused)) inline float lengthSquared (const TVec &v) { return v.x*v.x+v.y*v.y+v.z*v.z; }
+static __attribute__((unused)) inline float Length2DSquared (const TVec &v) { return v.x*v.x+v.y*v.y; }
+static __attribute__((unused)) inline float length2DSquared (const TVec &v) { return v.x*v.x+v.y*v.y; }
 
-inline TVec Normalise (const TVec &v) { return v/v.Length(); }
-inline TVec normalise (const TVec &v) { return v/v.Length(); }
+static __attribute__((unused)) inline TVec Normalise (const TVec &v) { return v/v.Length(); }
+static __attribute__((unused)) inline TVec normalise (const TVec &v) { return v/v.Length(); }
 
-inline float DotProduct (const TVec &v1, const TVec &v2) { return v1.x*v2.x+v1.y*v2.y+v1.z*v2.z; }
-inline float dot (const TVec &v1, const TVec &v2) { return v1.x*v2.x+v1.y*v2.y+v1.z*v2.z; }
+static __attribute__((unused)) inline TVec normalise2D (const TVec &v) { const float invlen = 1.0f/v.length2D(); return TVec(v.x*invlen, v.y*invlen, v.z); }
 
-inline float DotProduct2D (const TVec &v1, const TVec &v2) { return v1.x*v2.x+v1.y*v2.y; }
-inline float dot2D (const TVec &v1, const TVec &v2) { return v1.x*v2.x+v1.y*v2.y; }
+static __attribute__((unused)) inline float DotProduct (const TVec &v1, const TVec &v2) { return v1.x*v2.x+v1.y*v2.y+v1.z*v2.z; }
+static __attribute__((unused)) inline float dot (const TVec &v1, const TVec &v2) { return v1.x*v2.x+v1.y*v2.y+v1.z*v2.z; }
 
-inline TVec CrossProduct (const TVec &v1, const TVec &v2) { return TVec(v1.y*v2.z-v1.z*v2.y, v1.z*v2.x-v1.x*v2.z, v1.x*v2.y-v1.y*v2.x); }
-inline TVec cross (const TVec &v1, const TVec &v2) { return TVec(v1.y*v2.z-v1.z*v2.y, v1.z*v2.x-v1.x*v2.z, v1.x*v2.y-v1.y*v2.x); }
+static __attribute__((unused)) inline float DotProduct2D (const TVec &v1, const TVec &v2) { return v1.x*v2.x+v1.y*v2.y; }
+static __attribute__((unused)) inline float dot2D (const TVec &v1, const TVec &v2) { return v1.x*v2.x+v1.y*v2.y; }
 
-inline VStream &operator << (VStream &Strm, TVec &v) { return Strm << v.x << v.y << v.z; }
+static __attribute__((unused)) inline TVec CrossProduct (const TVec &v1, const TVec &v2) { return TVec(v1.y*v2.z-v1.z*v2.y, v1.z*v2.x-v1.x*v2.z, v1.x*v2.y-v1.y*v2.x); }
+static __attribute__((unused)) inline TVec cross (const TVec &v1, const TVec &v2) { return TVec(v1.y*v2.z-v1.z*v2.y, v1.z*v2.x-v1.x*v2.z, v1.x*v2.y-v1.y*v2.x); }
+
+// returns signed magnitude of cross-product (z, as x and y are effectively zero in 2d)
+static __attribute__((unused)) inline float CrossProduct2D (const TVec &v1, const TVec &v2) { return (v1.x*v2.y)-(v1.y*v2.x); }
+static __attribute__((unused)) inline float cross2D (const TVec &v1, const TVec &v2) { return (v1.x*v2.y)-(v1.y*v2.x); }
+
+static __attribute__((unused)) inline VStream &operator << (VStream &Strm, TVec &v) { return Strm << v.x << v.y << v.z; }

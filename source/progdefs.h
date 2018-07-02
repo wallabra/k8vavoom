@@ -56,8 +56,11 @@ enum {
   DECLARE_OPC_BUILTIN(VecLength),
   DECLARE_OPC_BUILTIN(VecLength2D),
   DECLARE_OPC_BUILTIN(VecNormalize),
+  DECLARE_OPC_BUILTIN(VecNormalize2D),
   DECLARE_OPC_BUILTIN(VecDot),
+  DECLARE_OPC_BUILTIN(VecDot2D),
   DECLARE_OPC_BUILTIN(VecCross),
+  DECLARE_OPC_BUILTIN(VecCross2D),
   DECLARE_OPC_BUILTIN(RoundF2I),
   DECLARE_OPC_BUILTIN(RoundF2F),
   DECLARE_OPC_BUILTIN(TruncF2I),
@@ -340,6 +343,9 @@ enum {
   DECLARE_OPC(VSubVarDrop, None),
   DECLARE_OPC(VScaleVarDrop, None),
   DECLARE_OPC(VIScaleVarDrop, None),
+
+  DECLARE_OPC(FloatToBool, None),
+  DECLARE_OPC(VectorToBool, None),
 
   // string operators
   DECLARE_OPC(StrToBool, None),

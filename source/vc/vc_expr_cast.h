@@ -69,10 +69,62 @@ class VStringToBool : public VCastExpressionBase {
 public:
   VStringToBool (VExpression *AOp);
   virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
 protected:
   VStringToBool () {}
+};
+
+
+//==========================================================================
+//
+//  VNameToBool
+//
+//==========================================================================
+class VNameToBool : public VCastExpressionBase {
+public:
+  VNameToBool (VExpression *AOp);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VNameToBool () {}
+};
+
+
+//==========================================================================
+//
+//  VFloatToBool
+//
+//==========================================================================
+class VFloatToBool : public VCastExpressionBase {
+public:
+  VFloatToBool (VExpression *AOp);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VFloatToBool () {}
+};
+
+
+//==========================================================================
+//
+//  VVectorToBool
+//
+//==========================================================================
+class VVectorToBool : public VCastExpressionBase {
+public:
+  VVectorToBool (VExpression *AOp);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VVectorToBool () {}
 };
 
 
@@ -85,6 +137,7 @@ class VPointerToBool : public VCastExpressionBase {
 public:
   VPointerToBool (VExpression *AOp);
   virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
 protected:
