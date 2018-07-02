@@ -1506,7 +1506,7 @@ VExpression *VInvocation::OptimiseBuiltin (VEmitContext &ec) {
       e = new VVector(v0, Loc);
       break;
     case OPC_Builtin_VecDot:
-      fprintf(stderr, "op0=<%s>; op1=<%s>\n", *Args[0]->toString(), *Args[1]->toString());
+      //fprintf(stderr, "op0=<%s>; op1=<%s>\n", *Args[0]->toString(), *Args[1]->toString());
       if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
       v0 = ((VVector *)Args[0])->GetConstValue();
       v1 = ((VVector *)Args[1])->GetConstValue();

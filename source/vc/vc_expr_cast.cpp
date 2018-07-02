@@ -173,7 +173,7 @@ VExpression *VStringToBool::DoResolve (VEmitContext &ec) {
     // do it inplace
     VStr s = op->GetStrConst(ec.Package);
     VExpression *e = new VIntLiteral((s.length() ? 1 : 0), Loc);
-    delete op;
+    delete this;
     return e->Resolve(ec);
   }
   Type = TYPE_Int;
@@ -244,7 +244,7 @@ VExpression *VNameToBool::DoResolve (VEmitContext &ec) {
     // do it inplace
     VName n = op->GetNameConst();
     VExpression *e = new VIntLiteral((n != NAME_None ? 1 : 0), Loc);
-    delete op;
+    delete this;
     return e->Resolve(ec);
   }
   Type = TYPE_Int;
@@ -314,7 +314,7 @@ VExpression *VFloatToBool::DoResolve (VEmitContext &ec) {
   if (op->IsFloatConst()) {
     // do it inplace
     VExpression *e = new VIntLiteral((op->GetFloatConst() == 0 ? 0 : 1), Loc);
-    delete op;
+    delete this;
     return e->Resolve(ec);
   }
   Type = TYPE_Int;
@@ -385,7 +385,7 @@ VExpression *VVectorToBool::DoResolve (VEmitContext &ec) {
     // do it inplace
     TVec v = ((VVector *)op)->GetConstValue();
     VExpression *e = new VIntLiteral((v.x == 0 && v.y == 0 && v.z == 0 ? 0 : 1), Loc);
-    delete op;
+    delete this;
     return e->Resolve(ec);
   }
   Type = TYPE_Int;
@@ -534,10 +534,9 @@ VExpression *VScalarToFloat::DoResolve (VEmitContext &ec) {
     case TYPE_Byte:
     case TYPE_Bool:
       if (op->IsIntConst()) {
-        VExpression *lit = new VFloatLiteral((float)op->GetIntConst(), op->Loc);
-        delete op;
-        op = lit->Resolve(ec); // just in case
-        if (!op) { delete this; return nullptr; }
+        VExpression *e = new VFloatLiteral((float)op->GetIntConst(), op->Loc);
+        delete this;
+        return e->Resolve(ec);
       }
       break;
     case TYPE_Float:
@@ -634,10 +633,9 @@ VExpression *VScalarToInt::DoResolve (VEmitContext &ec) {
       break;
     case TYPE_Float:
       if (op->IsFloatConst()) {
-        VExpression *lit = new VIntLiteral((vint32)op->GetFloatConst(), op->Loc);
-        delete op;
-        op = lit->Resolve(ec); // just in case
-        if (!op) { delete this; return nullptr; }
+        VExpression *e = new VIntLiteral((vint32)op->GetFloatConst(), op->Loc);
+        delete this;
+        return e->Resolve(ec);
       }
       break;
     default:
@@ -724,8 +722,8 @@ VExpression *VCastToString::DoResolve (VEmitContext &ec) {
         VStr ns = VStr(*op->GetNameConst());
         int val = ec.Package->FindString(*ns);
         VExpression *e = (new VStringLiteral(ns, val, Loc))->Resolve(ec);
-        delete op;
-        op = e;
+        delete this;
+        return e->Resolve(ec);
       }
       break;
     default:
@@ -806,8 +804,8 @@ VExpression *VCastToName::DoResolve (VEmitContext &ec) {
         // do it inplace
         VStr s = op->GetStrConst(ec.Package);
         VExpression *e = (new VNameLiteral(VName(*s), Loc))->Resolve(ec);
-        delete op;
-        op = e;
+        delete this;
+        return e->Resolve(ec);
       }
       break;
     case TYPE_Name:
@@ -897,14 +895,12 @@ void VDynamicCast::DoSyntaxCopyTo (VExpression *e) {
 VExpression *VDynamicCast::DoResolve (VEmitContext &ec) {
   if (!opResolved) { opResolved = true; if (op) op = op->Resolve(ec); }
   if (!op) { delete this; return nullptr; }
-
   if (op->Type.Type != TYPE_Reference) {
     ParseError(Loc, "Bad expression, class reference required");
     delete this;
     return nullptr;
   }
   Type = VFieldType(Class);
-
   return this;
 }
 

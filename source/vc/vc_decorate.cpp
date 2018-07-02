@@ -1028,7 +1028,7 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
   // check for quoted strings first, since these could also have numbers...
   if (sc->CheckQuotedString()) {
     int Val = DecPkg->FindString(*sc->String);
-    return new VStringLiteral(Val, l);
+    return new VStringLiteral(sc->String, Val, l);
   }
 
   if (sc->CheckNumber()) {
