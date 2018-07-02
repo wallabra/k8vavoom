@@ -592,16 +592,6 @@ VExpression *VCastToString::SyntaxCopy () {
 //==========================================================================
 VExpression *VCastToString::DoResolve (VEmitContext &ec) {
   if (!op) return nullptr;
-
-  /*
-  if (op->Type.Type != TYPE_String) {
-    //TODO: convert it in-place
-    VExpression *TmpArgs[1];
-    TmpArgs[0] = op;
-    op = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("NameToStr"), nullptr, false, false, Loc, 1, TmpArgs); // no self, not base call
-  }
-  */
-
   op = op->Resolve(ec);
   if (!op) { delete this; return nullptr; }
 
@@ -676,16 +666,6 @@ VExpression *VCastToName::SyntaxCopy () {
 //==========================================================================
 VExpression *VCastToName::DoResolve (VEmitContext &ec) {
   if (!op) return nullptr;
-
-  /*
-  if (op->Type.Type != TYPE_Name) {
-    //TODO: convert it in-place
-    VExpression *TmpArgs[1];
-    TmpArgs[0] = op;
-    op = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("StrToName"), nullptr, false, false, Loc, 1, TmpArgs); // no self, not base call
-  }
-  */
-
   op = op->Resolve(ec);
   if (!op) { delete this; return nullptr; }
 

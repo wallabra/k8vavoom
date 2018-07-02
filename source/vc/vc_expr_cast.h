@@ -48,6 +48,8 @@ protected:
 //
 //  VDelegateToBool
 //
+//  WARNING! `AOP` should be resolved!
+//
 //==========================================================================
 class VDelegateToBool : public VCastExpressionBase {
 public:

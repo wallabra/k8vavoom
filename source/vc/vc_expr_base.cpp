@@ -111,8 +111,8 @@ VExpression *VExpression::ResolveBoolean (VEmitContext &ec) {
       e = (new VStringToBool(ecopy))->Resolve(ec);
       break;
     case TYPE_Delegate:
-      delete e;
-      e = (new VDelegateToBool(ecopy))->Resolve(ec);
+      delete ecopy;
+      e = new VDelegateToBool(e);
       break;
     case TYPE_Vector:
       delete e;
