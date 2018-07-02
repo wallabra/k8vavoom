@@ -335,6 +335,56 @@ VClass *VMemberBase::StaticFindClass (VName Name) {
 
 //==========================================================================
 //
+//  VMemberBase::StaticFindMObj
+//
+//==========================================================================
+VClass *VMemberBase::StaticFindMObj (vint32 id, VName pkgname) {
+  guard(VMemberBase::StaticFindMObj);
+  if (pkgname != NAME_None) {
+    VMemberBase *pkg = StaticFindMember(pkgname, nullptr, MEMBER_Package);
+    if (!pkg) return nullptr;
+    return ((VPackage *)pkg)->FindMObj(id);
+  } else {
+    int len = GMembers.length();
+    for (int f = 0; f < len; ++f) {
+      if (GMembers[f] && GMembers[f]->MemberType == MEMBER_Package) {
+        VClass *c = ((VPackage *)GMembers[f])->FindMObj(id);
+        if (c) return c;
+      }
+    }
+  }
+  return nullptr;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::StaticFindScriptId
+//
+//==========================================================================
+VClass *VMemberBase::StaticFindScriptId (vint32 id, VName pkgname) {
+  guard(VMemberBase::StaticFindMObj);
+  if (pkgname != NAME_None) {
+    VMemberBase *pkg = StaticFindMember(pkgname, nullptr, MEMBER_Package);
+    if (!pkg) return nullptr;
+    return ((VPackage *)pkg)->FindScriptId(id);
+  } else {
+    int len = GMembers.length();
+    for (int f = 0; f < len; ++f) {
+      if (GMembers[f] && GMembers[f]->MemberType == MEMBER_Package) {
+        VClass *c = ((VPackage *)GMembers[f])->FindScriptId(id);
+        if (c) return c;
+      }
+    }
+  }
+  return nullptr;
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VMemberBase::StaticSplitStateLabel
 //
 //==========================================================================

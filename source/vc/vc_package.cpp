@@ -835,3 +835,27 @@ void VPackage::LoadObject (TLocation l) {
 
   unguard;
 }
+
+
+//==========================================================================
+//
+// VPackage::FindMObj
+//
+//==========================================================================
+VClass *VPackage::FindMObj (vint32 id) const {
+  int len = MobjInfo.length();
+  for (int f = 0; f < len; ++f) if (MobjInfo[f].DoomEdNum == id) return MobjInfo[f].Class;
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+// VPackage::FindScriptId
+//
+//==========================================================================
+VClass *VPackage::FindScriptId (vint32 id) const {
+  int len = ScriptIds.length();
+  for (int f = 0; f < len; ++f) if (ScriptIds[f].DoomEdNum == id) return ScriptIds[f].Class;
+  return nullptr;
+}

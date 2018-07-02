@@ -100,5 +100,8 @@ public:
   // will delete `Strm`
   void LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation l);
 
+  VClass *FindMObj (vint32 id) const;
+  VClass *FindScriptId (vint32 id) const;
+
   friend inline VStream &operator << (VStream &Strm, VPackage *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };

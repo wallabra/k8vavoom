@@ -105,3 +105,12 @@ native static final int fsysGetLastPakId ();
 // open file for reading, NOT relative to basedir
 //native static final VStream *fsysOpenDiskFileWrite (string fname);
 //native static final VStream *fsysOpenDiskFile (string fname);
+
+
+//==========================================================================
+//
+//              MISC BUILDINS
+//
+//==========================================================================
+native final static class FindMObjId (int id, optional name pkgname);
+native final static class FindScriptId (int id, optional name pkgname);

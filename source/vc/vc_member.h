@@ -105,6 +105,9 @@ public:
   static VFieldType StaticFindType (VClass *, VName);
   static VClass *StaticFindClass (VName);
 
+  static VClass *StaticFindMObj (vint32 id, VName pkgname=NAME_None);
+  static VClass *StaticFindScriptId (vint32 id, VName pkgname=NAME_None);
+
   static void StaticSplitStateLabel (const VStr &, TArray<VName> &);
 
   static void StaticAddIncludePath (const char *);

@@ -3278,7 +3278,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
       s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
       s->Function->ReturnType = VFieldType(TYPE_Void);
       s->Function->Statement = ParseCompoundStatement();
-    } else if (!Lex.NewLine) {
+    } else if (Lex.Token == TK_Identifier) {
       auto stloc = Lex.Location;
       // function call
       if (Lex.Token != TK_Identifier) {
@@ -3304,9 +3304,8 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
           }
         }
       }
-      Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
     }
-    while (Lex.Check(TK_Semicolon)) {}
+    Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
 
     // link to previous state
     if (prevState) prevState->NextState = s;

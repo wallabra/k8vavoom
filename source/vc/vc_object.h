@@ -430,6 +430,9 @@ public:
   DECLARE_FUNCTION(fsysGetPakPath)
   DECLARE_FUNCTION(fsysGetPakPrefix)
   DECLARE_FUNCTION(fsysGetLastPakId)
+
+  DECLARE_FUNCTION(FindMObjId)
+  DECLARE_FUNCTION(FindScriptId)
 #endif
 };
 
