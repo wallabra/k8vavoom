@@ -154,6 +154,21 @@ bool VArgMarshall::IsOptMarshallArg () const {
 }
 
 
+//==========================================================================
+//
+//  VArgMarshall::toString
+//
+//==========================================================================
+VStr VArgMarshall::toString () const {
+  VStr res;
+  if (isRef) res += "ref ";
+  if (isOut) res += "out ";
+  res += e2s(e);
+  if (marshallOpt) res != "!optional";
+  return res;
+}
+
+
 
 //==========================================================================
 //
@@ -202,6 +217,23 @@ void VInvocationBase::DoSyntaxCopyTo (VExpression *e) {
 bool VInvocationBase::IsAnyInvocation () const {
   return true;
 }
+
+
+//==========================================================================
+//
+//  VInvocationBase::IsAnyInvocation
+//
+//==========================================================================
+VStr VInvocationBase::args2str () const {
+  VStr res("(");
+  for (int f = 0; f < NumArgs; ++f) {
+    if (f != 0) res != ", ";
+    if (Args[f]) res += Args[f]->toString(); else res += "default";
+  }
+  res += ")";
+  return res;
+}
+
 
 
 //==========================================================================
@@ -329,6 +361,17 @@ VName VSuperInvocation::GetMethodName () const {
 void VSuperInvocation::SetMethodName (VName aname) {
   Name = aname;
 }
+
+
+//==========================================================================
+//
+//  VSuperInvocation::toString
+//
+//==========================================================================
+VStr VSuperInvocation::toString () const {
+  return VStr("::")+(*Name)+args2str();
+}
+
 
 
 //==========================================================================
@@ -513,6 +556,17 @@ VName VCastOrInvocation::GetMethodName () const {
 void VCastOrInvocation::SetMethodName (VName aname) {
   Name = aname;
 }
+
+
+//==========================================================================
+//
+//  VCastOrInvocation::toString
+//
+//==========================================================================
+VStr VCastOrInvocation::toString () const {
+  return VStr(*Name)+args2str();
+}
+
 
 
 //==========================================================================
@@ -870,7 +924,7 @@ VName VDotInvocation::GetMethodName () const {
 
 //==========================================================================
 //
-//  VCastOrInvocation::SetMethodName
+//  VDotInvocation::SetMethodName
 //
 //==========================================================================
 void VDotInvocation::SetMethodName (VName aname) {
@@ -880,12 +934,20 @@ void VDotInvocation::SetMethodName (VName aname) {
 
 //==========================================================================
 //
+//  VDotInvocation::toString
+//
+//==========================================================================
+VStr VDotInvocation::toString () const {
+  return e2s(SelfExpr)+"."+VStr(*MethodName)+args2str();
+}
+
+
+
+//==========================================================================
+//
 //  VTypeInvocation::VTypeInvocation
 //
 //==========================================================================
-VExpression *TypeExpr;
-VName MethodName;
-
 VTypeInvocation::VTypeInvocation (VExpression *aTypeExpr, VName aMethodName, const TLocation &aloc, int argc, VExpression **argv)
   : VInvocationBase(argc, argv, aloc)
   , TypeExpr(aTypeExpr)
@@ -1094,6 +1156,17 @@ void VTypeInvocation::SetMethodName (VName aname) {
 
 //==========================================================================
 //
+//  VTypeInvocation::toString
+//
+//==========================================================================
+VStr VTypeInvocation::toString () const {
+  return e2s(TypeExpr)+"."+VStr(*MethodName)+args2str();
+}
+
+
+
+//==========================================================================
+//
 //  VInvocation::VInvocation
 //
 //==========================================================================
@@ -1194,10 +1267,6 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
     }
   }
 
-  int argc = (NumArgs > 0 ? NumArgs : 0);
-  VExpression **argv = (argc > 0 ? new VExpression *[argc] : nullptr);
-  for (int f = 0; f < argc; ++f) argv[f] = nullptr;
-
   memset(optmarshall, 0, sizeof(optmarshall));
 
   // resolve arguments
@@ -1225,7 +1294,6 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
         ArgsOk = false;
         break;
       }
-      argv[i] = Args[i]->SyntaxCopy(); // save it for checker
       Args[i] = Args[i]->Resolve(ec);
       if (!Args[i]) { ArgsOk = false; break; }
     } else {
@@ -1240,20 +1308,15 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   }
 
   if (!ArgsOk) {
-    for (int f = 0; f < argc; ++f) delete argv[f];
-    delete[] argv;
     delete this;
     return nullptr;
   }
 
-  CheckParams(ec, argc, argv);
+  CheckParams(ec);
 
   Type = Func->ReturnType;
   if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
   if (Func->Flags&FUNC_Spawner) Type.Class = Args[0]->Type.Class;
-
-  for (int f = 0; f < argc; ++f) { delete argv[f]; argv[f] = nullptr; }
-  delete[] argv;
 
   // we may create new locals, so activate local reuse mechanics
   int compIdx = ec.EnterCompound();
@@ -1443,6 +1506,7 @@ VExpression *VInvocation::OptimiseBuiltin (VEmitContext &ec) {
       e = new VVector(v0, Loc);
       break;
     case OPC_Builtin_VecDot:
+      fprintf(stderr, "op0=<%s>; op1=<%s>\n", *Args[0]->toString(), *Args[1]->toString());
       if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
       v0 = ((VVector *)Args[0])->GetConstValue();
       v1 = ((VVector *)Args[1])->GetConstValue();
@@ -1717,6 +1781,8 @@ bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VE
 
   if (argc > maxParams) return false;
 
+  VGagErrors gag;
+
   for (int i = 0; i < argc; ++i) {
     if (i < requiredParams) {
       if (!argv[i]) {
@@ -1760,7 +1826,7 @@ bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VE
     ++argc;
   }
 
-  return true;
+  return !gag.wasErrors();
 }
 
 
@@ -1771,7 +1837,7 @@ bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VE
 //  argc/argv: non-resolved argument copies)
 //
 //==========================================================================
-void VInvocation::CheckParams (VEmitContext &ec, int argc, VExpression **argv) {
+void VInvocation::CheckParams (VEmitContext &ec) {
   guard(VInvocation::CheckParams);
 
   // determine parameter count
@@ -1808,7 +1874,7 @@ void VInvocation::CheckParams (VEmitContext &ec, int argc, VExpression **argv) {
                 Args[i] = new VIntLiteral(Val, Loc);
                 Args[i] = Args[i]->Resolve(ec);
               } else if (Args[i]->Type.Type == TYPE_Float) {
-                Args[i] = (new VScalarToInt(Args[i]))->Resolve(ec);
+                Args[i] = (new VScalarToInt(Args[i], true))->Resolve(ec);
               }
               break;
             case TYPE_Float:
@@ -1820,7 +1886,7 @@ void VInvocation::CheckParams (VEmitContext &ec, int argc, VExpression **argv) {
                 Args[i] = new VFloatLiteral(Val, Loc);
                 Args[i] = Args[i]->Resolve(ec);
               } else if (Args[i]->Type.Type == TYPE_Int) {
-                Args[i] = (new VScalarToFloat(Args[i]))->Resolve(ec);
+                Args[i] = (new VScalarToFloat(Args[i], true))->Resolve(ec);
               }
               break;
           }
@@ -1848,13 +1914,9 @@ void VInvocation::CheckParams (VEmitContext &ec, int argc, VExpression **argv) {
               delete Args[i];
               Args[i] = (new VFloatLiteral(val, Loc))->Resolve(ec); // literal's `Reslove()` does nothing, but...
             } else if (Args[i]->Type.Type == TYPE_Int) {
-              VExpression *e = (new VScalarToFloat(argv[i]->SyntaxCopy()))->Resolve(ec);
-              if (!e) {
-                ParseError(argv[i]->Loc, "Cannot convert argument to float for arg #%d (want `%s`, but got `%s`)", i+1, *Func->ParamTypes[i].GetName(), *Args[i]->Type.GetName());
-              } else {
-                delete Args[i];
-                Args[i] = e;
-              }
+              auto erloc = Args[i]->Loc;
+              Args[i] = (new VScalarToFloat(Args[i], true))->Resolve(ec);
+              if (!Args[i]) ParseError(erloc, "Cannot convert argument to float for arg #%d", i+1);
             }
           }
           Args[i]->Type.CheckMatch(Args[i]->Loc, Func->ParamTypes[i]);
@@ -1929,7 +1991,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
       case TYPE_String:
         if (Args[i]->IsDecorateSingleName()) {
           VDecorateSingleName *E = (VDecorateSingleName *)Args[i];
-          Args[i] = new VStringLiteral(ec.Package->FindString(*E->Name), E->Loc);
+          Args[i] = new VStringLiteral(VStr(*E->Name), ec.Package->FindString(*E->Name), E->Loc);
           delete E;
           E = nullptr;
         }
@@ -1937,7 +1999,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
       case TYPE_Class:
         if (Args[i]->IsDecorateSingleName()) {
           VDecorateSingleName *E = (VDecorateSingleName *)Args[i];
-          Args[i] = new VStringLiteral(ec.Package->FindString(*E->Name), E->Loc);
+          Args[i] = new VStringLiteral(VStr(*E->Name), ec.Package->FindString(*E->Name), E->Loc);
           delete E;
           E = nullptr;
         }
@@ -2068,6 +2130,30 @@ VName VInvocation::GetMethodName () const {
 void VInvocation::SetMethodName (VName aname) {
   FatalError("VC: Internal compiler error: `VInvocation::SetMethodName()` called");
 }
+
+
+//==========================================================================
+//
+//  VInvocation::toString
+//
+//==========================================================================
+VStr VInvocation::toString () const {
+  VStr res;
+  if (HaveSelf) {
+    res += "(";
+    res += e2s(SelfExpr);
+    res += ")";
+  }
+  if (BaseCall) res += "::";
+  if (Func) res += "("+Func->GetFullName()+")"; else res += e2s(nullptr);
+  //VField *DelegateField;
+  //int DelegateLocal;
+  //VState *CallerState;
+  //bool MultiFrameState;
+  res += args2str();
+  return res;
+}
+
 
 
 //==========================================================================
@@ -2221,4 +2307,17 @@ VName VInvokeWrite::GetMethodName () const {
 //==========================================================================
 void VInvokeWrite::SetMethodName (VName aname) {
   FatalError("VC: Internal compiler error: `VInvokeWrite::SetMethodName()` called");
+}
+
+
+//==========================================================================
+//
+//  VInvokeWrite::toString
+//
+//==========================================================================
+VStr VInvokeWrite::toString () const {
+  VStr res("write");
+  if (isWriteln) res += "ln";
+  res += args2str();
+  return res;
 }

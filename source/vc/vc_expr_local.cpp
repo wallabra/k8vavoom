@@ -209,6 +209,27 @@ bool VLocalDecl::IsLocalVarDecl () const {
 
 //==========================================================================
 //
+//  VLocalDecl::toString
+//
+//==========================================================================
+VStr VLocalDecl::toString () const {
+  VStr res;
+  for (int f = 0; f < Vars.length(); ++f) {
+    if (res.length()) res += " ";
+    res += e2s(Vars[f].TypeExpr);
+    res += " ";
+    res += *Vars[f].Name;
+    res += "("+VStr(Vars[f].locIdx)+")";
+    if (Vars[f].Value) res += Vars[f].Value->toString();
+    res += ";";
+  }
+  return res;
+}
+
+
+
+//==========================================================================
+//
 //  VLocalVar::VLocalVar
 //
 //==========================================================================
@@ -309,4 +330,17 @@ void VLocalVar::Emit (VEmitContext &ec) {
 //==========================================================================
 bool VLocalVar::IsLocalVarExpr () const {
   return true;
+}
+
+
+//==========================================================================
+//
+//  VLocalDecl::toString
+//
+//==========================================================================
+VStr VLocalVar::toString () const {
+  VStr res("local(");
+  res += VStr(num);
+  res += ")";
+  return res;
 }

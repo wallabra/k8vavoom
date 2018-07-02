@@ -49,6 +49,8 @@ public:
   bool IsConst () const;
   TVec GetConstValue () const;
 
+  virtual VStr toString () const override;
+
 protected:
   VVector () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -78,6 +80,8 @@ public:
   virtual bool IsValidTypeExpression () const override;
   virtual bool IsSingleName () const override;
 
+  virtual VStr toString () const override;
+
 protected:
   VSingleName () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -102,6 +106,8 @@ public:
   virtual bool IsValidTypeExpression () const override;
   virtual bool IsDoubleName () const override;
 
+  virtual VStr toString () const override;
+
 protected:
   VDoubleName () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -123,6 +129,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &);
   virtual void Emit (VEmitContext &) override;
   virtual bool IsDefaultObject () const override;
+
+  virtual VStr toString () const override;
 
 protected:
   VDefaultObject () {}
@@ -147,6 +155,8 @@ public:
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual VStr toString () const override;
+
 protected:
   VPushPointed () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -170,6 +180,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual VStr toString () const override;
+
 protected:
   VConditional () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -191,6 +203,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual VStr toString () const override;
+
 protected:
   VDropResult () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -211,6 +225,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual VStr toString () const override;
+
 protected:
   VClassConstant () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -230,6 +246,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual VStr toString () const override;
 
 protected:
   VStateConstant () {}
@@ -254,6 +272,8 @@ public:
   virtual bool IsFloatConst () const override;
   virtual vint32 GetIntConst () const override;
   virtual float GetFloatConst () const override;
+
+  virtual VStr toString () const override;
 
 protected:
   VConstantValue () {}

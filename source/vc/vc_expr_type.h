@@ -45,6 +45,8 @@ public:
 
   static VTypeExpr *NewTypeExpr (VFieldType atype, const TLocation &aloc);
 
+  virtual VStr toString () const override;
+
 protected:
   VTypeExpr () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;

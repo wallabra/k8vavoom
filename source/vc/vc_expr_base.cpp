@@ -81,50 +81,39 @@ VExpression *VExpression::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 VExpression *VExpression::ResolveBoolean (VEmitContext &ec) {
-  VExpression *ecopy = this->SyntaxCopy();
   VExpression *e = Resolve(ec);
-  if (!e) { delete ecopy; return nullptr; }
-
+  if (!e) return nullptr;
   switch (e->Type.Type) {
     case TYPE_Int:
     case TYPE_Byte:
     case TYPE_Bool:
-      delete ecopy;
       break;
     case TYPE_Float:
-      delete e;
-      e = (new VFloatToBool(ecopy))->Resolve(ec);
+      e = (new VFloatToBool(e, true))->Resolve(ec);
       break;
     case TYPE_Name:
-      delete e;
-      e = (new VNameToBool(ecopy))->Resolve(ec);
+      e = (new VNameToBool(e, true))->Resolve(ec);
       break;
     case TYPE_Pointer:
     case TYPE_Reference:
     case TYPE_Class:
     case TYPE_State:
-      delete e;
-      e = (new VPointerToBool(ecopy))->Resolve(ec);
+      e = (new VPointerToBool(e, true))->Resolve(ec);
       break;
     case TYPE_String:
-      delete e;
-      e = (new VStringToBool(ecopy))->Resolve(ec);
+      e = (new VStringToBool(e, true))->Resolve(ec);
       break;
     case TYPE_Delegate:
-      delete ecopy;
-      e = new VDelegateToBool(e);
+      e = (new VDelegateToBool(e, true))->Resolve(ec);
       break;
     case TYPE_Vector:
-      delete e;
-      e = (new VVectorToBool(ecopy))->Resolve(ec);
+      e = (new VVectorToBool(e, true))->Resolve(ec);
       break;
     default:
-      ParseError(Loc, "Expression type mismatch, boolean expression expected");
-      delete ecopy;
+      ParseError(e->Loc, "Expression type mismatch, boolean expression expected");
       delete e;
       return nullptr;
   }
-
   return e;
 }
 
@@ -135,27 +124,21 @@ VExpression *VExpression::ResolveBoolean (VEmitContext &ec) {
 //
 //==========================================================================
 VExpression *VExpression::ResolveFloat (VEmitContext &ec) {
-  VExpression *ecopy = this->SyntaxCopy();
   VExpression *e = Resolve(ec);
-  if (!e) { delete ecopy; return nullptr; }
-
+  if (!e) return nullptr;
   switch (e->Type.Type) {
     case TYPE_Int:
     case TYPE_Byte:
     //case TYPE_Bool:
-      delete e;
-      e = (new VScalarToFloat(ecopy))->Resolve(ec);
+      e = (new VScalarToFloat(e, true))->Resolve(ec);
       break;
     case TYPE_Float:
-      delete ecopy;
       break;
     default:
-      ParseError(Loc, "Expression type mismatch, float expression expected");
-      delete ecopy;
+      ParseError(e->Loc, "Expression type mismatch, float expression expected");
       delete e;
       return nullptr;
   }
-
   return e;
 }
 
@@ -177,7 +160,7 @@ VExpression *VExpression::CoerceToFloat () {
     }
     //HACK: `VScalarToFloat()` resolver does nothing special (except constant folding),
     //      so we can skip resolving here
-    return new VScalarToFloat(this);
+    return new VScalarToFloat(this, true);
   }
   ParseError(Loc, "Expression type mismatch, float expression expected");
   delete this;
@@ -366,6 +349,8 @@ bool VExpression::IsDelegateType () const { return false; }
 bool VExpression::IsSliceType () const { return false; }
 bool VExpression::IsVectorCtor () const { return false; }
 bool VExpression::IsConstVectorCtor () const { return false; }
+
+VStr VExpression::toString () const { return VStr("<VExpression::")+shitppTypeNameObj(*this)+":no-toString>"; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

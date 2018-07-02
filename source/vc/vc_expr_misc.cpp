@@ -199,6 +199,17 @@ TVec VVector::GetConstValue () const {
 
 //==========================================================================
 //
+//  VVector::toString
+//
+//==========================================================================
+VStr VVector::toString () const {
+  return VStr("vector(")+e2s(op1)+","+e2s(op2)+","+e2s(op3)+")";
+}
+
+
+
+//==========================================================================
+//
 //  VSingleName::VSingleName
 //
 //==========================================================================
@@ -484,6 +495,17 @@ bool VSingleName::IsValidTypeExpression () const {
 
 //==========================================================================
 //
+//  VSingleName::toString
+//
+//==========================================================================
+VStr VSingleName::toString () const {
+  return VStr(*Name);
+}
+
+
+
+//==========================================================================
+//
 //  VDoubleName::VDoubleName
 //
 //==========================================================================
@@ -616,6 +638,17 @@ bool VDoubleName::IsDoubleName () const {
 
 //==========================================================================
 //
+//  VDoubleName::toString
+//
+//==========================================================================
+VStr VDoubleName::toString () const {
+  return VStr(*Name1)+"::"+VStr(*Name2);
+}
+
+
+
+//==========================================================================
+//
 //  VDefaultObject::VDefaultObject
 //
 //==========================================================================
@@ -713,6 +746,17 @@ void VDefaultObject::Emit (VEmitContext &ec) {
 bool VDefaultObject::IsDefaultObject () const {
   return true;
 }
+
+
+//==========================================================================
+//
+//  VDefaultObject::toString
+//
+//==========================================================================
+VStr VDefaultObject::toString () const {
+  return VStr("default");
+}
+
 
 
 //==========================================================================
@@ -821,10 +865,20 @@ void VPushPointed::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VPushPointed::toString
+//
+//==========================================================================
+VStr VPushPointed::toString () const {
+  return VStr("*(")+e2s(op)+")";
+}
+
+
+
+//==========================================================================
+//
 //  VConditional::VConditional
 //
 //==========================================================================
-
 VConditional::VConditional (VExpression *AOp, VExpression *AOp1, VExpression *AOp2, const TLocation &ALoc)
   : VExpression(ALoc)
   , op(AOp)
@@ -898,6 +952,7 @@ VExpression *VConditional::DoResolve (VEmitContext &ec) {
   return this;
 }
 
+
 //==========================================================================
 //
 //  VConditional::Emit
@@ -914,6 +969,17 @@ void VConditional::Emit (VEmitContext &ec) {
   op2->Emit(ec);
   ec.MarkLabel(End);
 }
+
+
+//==========================================================================
+//
+//  VConditional::toString
+//
+//==========================================================================
+VStr VConditional::toString () const {
+  return VStr("(")+e2s(op)+" ? "+e2s(op1)+" : "+e2s(op2)+")";
+}
+
 
 
 //==========================================================================
@@ -1015,6 +1081,17 @@ void VDropResult::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VDropResult::toString
+//
+//==========================================================================
+VStr VDropResult::toString () const {
+  return VStr("void(")+e2s(op)+")";
+}
+
+
+
+//==========================================================================
+//
 //  VClassConstant::VClassConstant
 //
 //==========================================================================
@@ -1073,6 +1150,17 @@ void VClassConstant::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VClassConstant::toString
+//
+//==========================================================================
+VStr VClassConstant::toString () const {
+  return VStr("(")+(Class ? VStr(*Class->Name) : e2s(nullptr))+")";
+}
+
+
+
+//==========================================================================
+//
 //  VStateConstant::VStateConstant
 //
 //==========================================================================
@@ -1126,6 +1214,17 @@ VExpression *VStateConstant::DoResolve (VEmitContext &) {
 void VStateConstant::Emit (VEmitContext &ec) {
   ec.AddStatement(OPC_PushState, State, Loc);
 }
+
+
+//==========================================================================
+//
+//  VStateConstant::toString
+//
+//==========================================================================
+VStr VStateConstant::toString () const {
+  return VStr("`")+(State ? VStr(*State->Name) : e2s(nullptr))+"`";
+}
+
 
 
 //==========================================================================
@@ -1213,7 +1312,7 @@ float VConstantValue::GetFloatConst () const {
 //
 //==========================================================================
 bool VConstantValue::IsIntConst () const {
-  return Const->Type == TYPE_Int;
+  return (Const->Type == TYPE_Int);
 }
 
 
@@ -1223,5 +1322,15 @@ bool VConstantValue::IsIntConst () const {
 //
 //==========================================================================
 bool VConstantValue::IsFloatConst () const {
-  return Const->Type == TYPE_Float;
+  return (Const->Type == TYPE_Float);
+}
+
+
+//==========================================================================
+//
+//  VConstantValue::toString
+//
+//==========================================================================
+VStr VConstantValue::toString () const {
+  return VStr("const(")+(Const ? Const->toString() : e2s(nullptr))+")";
 }

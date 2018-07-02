@@ -272,6 +272,31 @@ bool VAssignment::IsAssignExpr () const {
 
 //==========================================================================
 //
+//  VAssignment::toString
+//
+//==========================================================================
+VStr VAssignment::toString () const {
+  VStr res = e2s(op1);
+  switch (Oper) {
+    case Assign: res += " = "; break;
+    case AddAssign: res += " += "; break;
+    case MinusAssign: res += " -= "; break;
+    case MultiplyAssign: res += " *= "; break;
+    case DivideAssign: res += " /= "; break;
+    case ModAssign: res += " %= "; break;
+    case AndAssign: res += " &= "; break;
+    case OrAssign: res += " |= "; break;
+    case XOrAssign: res += " ^= "; break;
+    case LShiftAssign: res += " <<= "; break;
+    case RShiftAssign: res += " >>= "; break;
+  }
+  res += e2s(op2);
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VPropertyAssign::VPropertyAssign
 //
 //==========================================================================

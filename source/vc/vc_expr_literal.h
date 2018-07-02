@@ -40,6 +40,8 @@ public:
   virtual bool IsIntConst () const override;
   virtual vint32 GetIntConst () const override;
 
+  virtual VStr toString () const override;
+
 protected:
   VIntLiteral () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -61,6 +63,8 @@ public:
   virtual void Emit (VEmitContext &) override;
   virtual bool IsFloatConst () const override;
   virtual float GetFloatConst () const override;
+
+  virtual VStr toString () const override;
 
 protected:
   VFloatLiteral () {}
@@ -84,6 +88,8 @@ public:
   virtual bool IsNameConst () const override;
   virtual VName GetNameConst () const;
 
+  virtual VStr toString () const override;
+
 protected:
   VNameLiteral () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -98,13 +104,16 @@ protected:
 class VStringLiteral : public VExpression {
 public:
   vint32 Value;
+  VStr strval;
 
-  VStringLiteral (vint32, const TLocation &);
+  VStringLiteral (const VStr &asval, vint32, const TLocation &);
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual bool IsStrConst () const override;
   virtual VStr GetStrConst (VPackage *) const override;
+
+  virtual VStr toString () const override;
 
 protected:
   VStringLiteral () {}
@@ -124,6 +133,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual VStr toString () const override;
+
 protected:
   VSelf () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -141,6 +152,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual VStr toString () const override;
 
 protected:
   VSelfClass () {}
@@ -162,6 +175,8 @@ public:
 
   virtual bool IsNoneLiteral () const override;
 
+  virtual VStr toString () const override;
+
 protected:
   VNoneLiteral () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -182,6 +197,8 @@ public:
 
   virtual bool IsNullLiteral () const override;
 
+  virtual VStr toString () const override;
+
 protected:
   VNullLiteral () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -199,6 +216,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual VStr toString () const override;
 
 protected:
   VDollar () {}

@@ -50,6 +50,8 @@ public:
   virtual void Emit (VEmitContext &) override;
   virtual void EmitBranchable (VEmitContext &, VLabel, bool) override;
 
+  virtual VStr toString () const override;
+
 protected:
   VUnary () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -82,6 +84,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual bool AddDropResult () override;
+
+  virtual VStr toString () const override;
 
 protected:
   VUnaryMutator () {}
@@ -129,9 +133,15 @@ public:
   virtual void Emit (VEmitContext &) override;
   virtual bool IsBinaryMath () const override;
 
+  virtual VStr toString () const override;
+
+  static bool needParens (EBinOp me, EBinOp inner);
+
 protected:
   VBinary () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
+
+  static int calcPrio (EBinOp op);
 };
 
 
@@ -158,6 +168,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual void EmitBranchable (VEmitContext &, VLabel, bool) override;
+
+  virtual VStr toString () const override;
 
 protected:
   VBinaryLogical () {}

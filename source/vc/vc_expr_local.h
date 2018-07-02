@@ -64,6 +64,8 @@ public:
   void EmitInitialisations (VEmitContext &);
   virtual bool IsLocalVarDecl () const override;
 
+  virtual VStr toString () const override;
+
 protected:
   VLocalDecl () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -88,6 +90,8 @@ public:
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &) override;
   virtual bool IsLocalVarExpr () const override;
+
+  virtual VStr toString () const override;
 
 protected:
   VLocalVar () {}

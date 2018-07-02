@@ -105,6 +105,17 @@ bool VIntLiteral::IsIntConst () const {
 
 //==========================================================================
 //
+//  VIntLiteral::toString
+//
+//==========================================================================
+VStr VIntLiteral::toString () const {
+  return VStr(Value);
+}
+
+
+
+//==========================================================================
+//
 //  VFloatLiteral::VFloatLiteral
 //
 //==========================================================================
@@ -178,6 +189,17 @@ bool VFloatLiteral::IsFloatConst () const {
 float VFloatLiteral::GetFloatConst () const {
   return Value;
 }
+
+
+//==========================================================================
+//
+//  VFloatLiteral::toString
+//
+//==========================================================================
+VStr VFloatLiteral::toString () const {
+  return VStr(Value);
+}
+
 
 
 //==========================================================================
@@ -259,12 +281,24 @@ void VNameLiteral::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VNameLiteral::toString
+//
+//==========================================================================
+VStr VNameLiteral::toString () const {
+  return VStr("'")+VStr(*Value)+"'";
+}
+
+
+
+//==========================================================================
+//
 //  VStringLiteral::VStringLiteral
 //
 //==========================================================================
-VStringLiteral::VStringLiteral (vint32 AValue, const TLocation &ALoc)
+VStringLiteral::VStringLiteral (const VStr &asval, vint32 AValue, const TLocation &ALoc)
   : VExpression(ALoc)
   , Value(AValue)
+  , strval(asval)
 {
   Type = TYPE_String;
 }
@@ -291,6 +325,7 @@ void VStringLiteral::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
   auto res = (VStringLiteral *)e;
   res->Value = Value;
+  res->strval = strval;
 }
 
 
@@ -332,6 +367,17 @@ bool VStringLiteral::IsStrConst () const {
 VStr VStringLiteral::GetStrConst (VPackage *Pkg) const {
   return &Pkg->Strings[Value];
 }
+
+
+//==========================================================================
+//
+//  VStringLiteral::toString
+//
+//==========================================================================
+VStr VStringLiteral::toString () const {
+  return VStr("\"")+strval.quote()+"\"";
+}
+
 
 
 //==========================================================================
@@ -398,6 +444,17 @@ void VSelf::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VSelf::toString
+//
+//==========================================================================
+VStr VSelf::toString () const {
+  return VStr("self");
+}
+
+
+
+//==========================================================================
+//
 //  VSelfClass::VSelfClass
 //
 //==========================================================================
@@ -456,6 +513,17 @@ void VSelfClass::Emit (VEmitContext &ec) {
     ec.AddStatement(OPC_LocalValue0, Loc);
   }
 }
+
+
+//==========================================================================
+//
+//  VSelfClass::toString
+//
+//==========================================================================
+VStr VSelfClass::toString () const {
+  return VStr("(self.Class)");
+}
+
 
 
 //==========================================================================
@@ -522,6 +590,17 @@ bool VNoneLiteral::IsNoneLiteral () const {
 
 //==========================================================================
 //
+//  VNoneLiteral::toString
+//
+//==========================================================================
+VStr VNoneLiteral::toString () const {
+  return VStr("none");
+}
+
+
+
+//==========================================================================
+//
 //  VNullLiteral::VNullLiteral
 //
 //==========================================================================
@@ -584,6 +663,17 @@ bool VNullLiteral::IsNullLiteral () const {
 
 //==========================================================================
 //
+//  VNullLiteral::toString
+//
+//==========================================================================
+VStr VNullLiteral::toString () const {
+  return VStr("nullptr");
+}
+
+
+
+//==========================================================================
+//
 //  VDollar::VDollar
 //
 //==========================================================================
@@ -637,4 +727,14 @@ VExpression *VDollar::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VDollar::Emit (VEmitContext &ec) {
   ParseError(Loc, "the thing that should not be");
+}
+
+
+//==========================================================================
+//
+//  VDollar::toString
+//
+//==========================================================================
+VStr VDollar::toString () const {
+  return VStr("$");
 }

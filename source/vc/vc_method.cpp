@@ -340,7 +340,7 @@ void VMethod::Emit () {
 
   ec.ClearLocalDefs();
   ec.localsofs = (Flags&FUNC_Static ? 0 : 1); // first is `self`
-  if (Outer->MemberType == MEMBER_Class && this == ((VClass*)Outer)->DefaultProperties) {
+  if (Outer->MemberType == MEMBER_Class && this == ((VClass *)Outer)->DefaultProperties) {
     ec.InDefaultProperties = true;
   }
 
@@ -452,8 +452,14 @@ void VMethod::DumpAsm () {
         break;
       case OPCARGS_Byte:
       case OPCARGS_Short:
-      case OPCARGS_Int:
         dprintf(" %6d (%x)", Instructions[s].Arg1, Instructions[s].Arg1);
+        break;
+      case OPCARGS_Int:
+        if (Instructions[s].Arg1IsFloat) {
+          dprintf(" %f", *(const float *)&Instructions[s].Arg1);
+        } else {
+          dprintf(" %6d (%x)", Instructions[s].Arg1, Instructions[s].Arg1);
+        }
         break;
       case OPCARGS_Name:
         // name

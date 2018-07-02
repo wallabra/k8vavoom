@@ -45,5 +45,7 @@ public:
   virtual void Serialise (VStream &) override;
   bool Define ();
 
+  virtual VStr toString () const;
+
   friend inline VStream &operator << (VStream &Strm, VConstant *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };

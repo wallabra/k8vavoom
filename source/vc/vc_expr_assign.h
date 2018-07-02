@@ -54,6 +54,8 @@ public:
   virtual void Emit (VEmitContext &) override;
   virtual bool IsAssignExpr () const override;
 
+  virtual VStr toString () const override;
+
 protected:
   VAssignment () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;

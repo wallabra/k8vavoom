@@ -309,6 +309,8 @@ public:
     return Strm;
   }
 
+  VStr quote () const;
+
   VStr EvalEscapeSequences () const;
 
   VStr RemoveColours () const;

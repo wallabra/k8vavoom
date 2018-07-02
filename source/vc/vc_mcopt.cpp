@@ -152,6 +152,7 @@ struct Instr {
   vint32 Opcode;
   vint32 Arg1;
   vint32 Arg2;
+  bool Arg1IsFloat;
   VMemberBase *Member;
   VName NameArg;
   VFieldType TypeArg;
@@ -173,6 +174,7 @@ struct Instr {
     , Opcode(i.Opcode)
     , Arg1(i.Arg1)
     , Arg2(i.Arg2)
+    , Arg1IsFloat(i.Arg1IsFloat)
     , Member(i.Member)
     , NameArg(i.NameArg)
     , TypeArg(i.TypeArg)
@@ -191,6 +193,7 @@ struct Instr {
     dest.Opcode = Opcode;
     dest.Arg1 = Arg1;
     dest.Arg2 = Arg2;
+    dest.Arg1IsFloat = Arg1IsFloat;
     dest.Member = Member;
     dest.NameArg = NameArg;
     dest.TypeArg = TypeArg;
@@ -366,7 +369,11 @@ struct Instr {
         fprintf(stderr, " %d (0x%04x)", Arg1, (unsigned)Arg1);
         break;
       case OPCARGS_Int:
-        fprintf(stderr, " %d (0x%08x)", Arg1, (unsigned)Arg1);
+        if (Arg1IsFloat) {
+          fprintf(stderr, " %f", *(const float *)&Arg1);
+        } else {
+          fprintf(stderr, " %d (0x%08x)", Arg1, (unsigned)Arg1);
+        }
         break;
       case OPCARGS_Name:
         fprintf(stderr, " \'%s\'", *NameArg);
@@ -473,6 +480,7 @@ void VMCOptimiser::finish () {
   olist[iofs].Opcode = OPC_Done;
   olist[iofs].Arg1 = 0;
   olist[iofs].Arg2 = 0;
+  olist[iofs].Arg1IsFloat = false;
   olist[iofs].Member = nullptr;
   olist[iofs].NameArg = NAME_None;
   olist[iofs].TypeArg = VFieldType(TYPE_Void);
@@ -634,6 +642,7 @@ void VMCOptimiser::replaceInstr (Instr *dest, Instr *src) {
   dest->Opcode = src->Opcode;
   dest->Arg1 = src->Arg1;
   dest->Arg2 = src->Arg2;
+  dest->Arg1IsFloat = src->Arg1IsFloat;
   dest->Member = src->Member;
   dest->NameArg = src->NameArg;
   dest->TypeArg = src->TypeArg;

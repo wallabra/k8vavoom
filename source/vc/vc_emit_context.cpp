@@ -330,6 +330,7 @@ void VEmitContext::AddStatement (int statement, float FloatArg, const TLocation 
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.Arg1 = *(vint32*)&FloatArg;
+  I.Arg1IsFloat = true;
   I.loc = aloc;
 }
 

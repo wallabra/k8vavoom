@@ -56,6 +56,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual VStr toString () const override;
+
 protected:
   VPointerField () {}
 };
@@ -87,6 +89,8 @@ public:
   virtual void Emit (VEmitContext &) override;
   virtual bool IsDotField () const override;
 
+  virtual VStr toString () const override;
+
 protected:
   VDotField () {}
 };
@@ -110,6 +114,8 @@ public:
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual VStr toString () const override;
+
 protected:
   VFieldAccess () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -131,6 +137,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual VStr toString () const override;
 
 protected:
   VDelegateVal () {}

@@ -106,6 +106,10 @@ public:
   virtual bool IsVectorCtor () const;
   virtual bool IsConstVectorCtor () const;
 
+  virtual VStr toString () const;
+
+  static inline VStr e2s (const VExpression *e) { return (e ? e->toString() : "<{null}>"); }
+
   // this resolves one-char strings and names to int literals too
   VExpression *ResolveToIntLiteralEx (VEmitContext &ec, bool allowFloatTrunc=false);
 

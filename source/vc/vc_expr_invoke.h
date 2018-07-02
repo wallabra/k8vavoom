@@ -49,6 +49,8 @@ public:
   virtual bool IsOutArg () const override;
   virtual bool IsOptMarshallArg () const override;
 
+  virtual VStr toString () const override;
+
 protected:
   VArgMarshall () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -79,6 +81,9 @@ public:
 protected:
   VInvocationBase () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
+
+  // generates "(" and ")" too
+  VStr args2str () const;
 };
 
 
@@ -101,6 +106,8 @@ public:
   virtual bool IsMethodNameChangeable () const override;
   virtual VName GetMethodName () const override;
   virtual void SetMethodName (VName aname) override;
+
+  virtual VStr toString () const override;
 
 protected:
   VSuperInvocation () {}
@@ -128,6 +135,8 @@ public:
   virtual bool IsMethodNameChangeable () const override;
   virtual VName GetMethodName () const override;
   virtual void SetMethodName (VName aname) override;
+
+  virtual VStr toString () const override;
 
 protected:
   VCastOrInvocation () {}
@@ -158,6 +167,8 @@ public:
   virtual VName GetMethodName () const override;
   virtual void SetMethodName (VName aname) override;
 
+  virtual VStr toString () const override;
+
 protected:
   VDotInvocation () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -187,6 +198,8 @@ public:
   virtual bool IsMethodNameChangeable () const override;
   virtual VName GetMethodName () const override;
   virtual void SetMethodName (VName aname) override;
+
+  virtual VStr toString () const override;
 
 protected:
   VTypeInvocation () {}
@@ -228,7 +241,7 @@ public:
 
   virtual bool IsLLInvocation () const override;
 
-  void CheckParams (VEmitContext &ec, int argc, VExpression **argv); // argc/argv: non-resolved argument copies
+  void CheckParams (VEmitContext &ec);
   void CheckDecorateParams (VEmitContext &);
 
   // arguments should be already resolved (i.e. has type)
@@ -239,6 +252,8 @@ public:
   virtual bool IsMethodNameChangeable () const override;
   virtual VName GetMethodName () const override;
   virtual void SetMethodName (VName aname) override;
+
+  virtual VStr toString () const override;
 
 protected:
   VInvocation () {}
@@ -271,6 +286,8 @@ public:
   virtual bool IsMethodNameChangeable () const override;
   virtual VName GetMethodName () const override;
   virtual void SetMethodName (VName aname) override;
+
+  virtual VStr toString () const override;
 
 protected:
   VInvokeWrite () {}

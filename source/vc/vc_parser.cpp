@@ -277,9 +277,10 @@ VExpression *VParser::ParseExpressionPriority0 () {
       }
     case TK_StringLiteral:
       {
-        int Val = Package->FindString(Lex.String);
+        VStr s = Lex.String;
+        int Val = Package->FindString(*s);
         Lex.NextToken();
-        return new VStringLiteral(Val, l);
+        return new VStringLiteral(s, Val, l);
       }
     case TK_Self: Lex.NextToken(); return new VSelf(l);
     case TK_None: Lex.NextToken(); return new VNoneLiteral(l);
@@ -410,10 +411,10 @@ VExpression *VParser::ParseExpressionPriority0 () {
           if (!op) ParseError(l, "Expression expected");
           Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
           switch (tk) {
-            case TK_Int: return new VScalarToInt(op);
-            case TK_Float: return new VScalarToFloat(op);
-            case TK_String: return new VCastToString(op);
-            case TK_Name: return new VCastToName(op);
+            case TK_Int: return new VScalarToInt(op, false);
+            case TK_Float: return new VScalarToFloat(op, false);
+            case TK_String: return new VCastToString(op, false);
+            case TK_Name: return new VCastToName(op, false);
             default: FatalError("VC: Ketmar forgot to handle some type in `VParser::ParseExpressionPriority0()`");
           }
         }

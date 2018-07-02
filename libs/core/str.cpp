@@ -1116,6 +1116,42 @@ VStr VStr::FromChar (int c) {
 }
 
 
+VStr VStr::quote () const {
+  int len = length();
+  char hexb[6];
+  for (int f = 0; f < len; ++f) {
+    vuint8 ch = (vuint8)data[f];
+    if (ch < ' ' || ch == '\\' || ch == '\'' || ch == '"' || ch >= 127) {
+      // need to quote it
+      VStr res;
+      for (int c = 0; c < len; ++c) {
+        ch = (vuint8)data[c];
+        if (ch < ' ') {
+          switch (ch) {
+            case '\t': res += "\\t"; break;
+            case '\n': res += "\\n"; break;
+            default:
+              snprintf(hexb, sizeof(hexb), "\\x%02x", ch);
+              res += hexb;
+              break;
+          }
+        } else if (ch == '\\' || ch == '\'' || ch == '"') {
+          res += "\\";
+          res += (char)ch;
+        } else if (ch >= 127) {
+          snprintf(hexb, sizeof(hexb), "\\x%02x", ch);
+          res += hexb;
+        } else {
+          res += (char)ch;
+        }
+      }
+      return res;
+    }
+  }
+  return VStr(*this);
+}
+
+
 //==========================================================================
 //
 // va

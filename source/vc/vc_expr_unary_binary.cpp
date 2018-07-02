@@ -237,6 +237,28 @@ void VUnary::EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue) {
 
 //==========================================================================
 //
+// VUnary::toString
+//
+//==========================================================================
+VStr VUnary::toString () const {
+  VStr res;
+  switch (Oper) {
+    case Plus: res += "+"; break;
+    case Minus: res += "-"; break;
+    case Not: res += "!"; break;
+    case BitInvert: res += "~"; break;
+    case TakeAddress: res += "&"; break;
+    default: break;
+  }
+  res += "(";
+  res += e2s(op);
+  res += ")";
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VUnaryMutator::VUnaryMutator
 //
 //==========================================================================
@@ -344,6 +366,30 @@ bool VUnaryMutator::AddDropResult () {
 
 //==========================================================================
 //
+// VUnaryMutator::toString
+//
+//==========================================================================
+VStr VUnaryMutator::toString () const {
+  VStr res;
+  switch (Oper) {
+    case PreInc: res += "++"; break;
+    case PreDec: res += "--"; break;
+    default: break;
+  }
+  res += e2s(op);
+  switch (Oper) {
+    case PostInc: res += "++"; break;
+    case PostDec: res += "--"; break;
+    case Inc: res += "(++)"; break;
+    case Dec: res += "(--)"; break;
+    default: break;
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VBinary::VBinary
 //
 //==========================================================================
@@ -391,6 +437,59 @@ void VBinary::DoSyntaxCopyTo (VExpression *e) {
   res->Oper = Oper;
   res->op1 = (op1 ? op1->SyntaxCopy() : nullptr);
   res->op2 = (op2 ? op2->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VBinary::calcPrio
+//
+//==========================================================================
+//FIXME: BUGGY!
+int VBinary::calcPrio (EBinOp op) {
+  switch (op) {
+    case Add:
+    case Subtract:
+      return 2;
+    case Multiply:
+    case Divide:
+    case Modulus:
+      return 3;
+    case LShift:
+    case RShift:
+      return 4;
+    case And:
+      return 5;
+    case XOr:
+      return 6;
+    case Or:
+      return 7;
+    case Equals:
+    case NotEquals:
+      return 8;
+    case Less:
+    case LessEquals:
+    case Greater:
+    case GreaterEquals:
+      return 9;
+    case StrCat:
+      return 2;
+    case IsA:
+      return 1;
+  };
+  FatalError("VC: internal error (VBinary::calcPrio)");
+  return -1;
+}
+
+
+//==========================================================================
+//
+//  VBinary::needParens
+//
+//==========================================================================
+//FIXME: BUGGY!
+bool VBinary::needParens (EBinOp me, EBinOp inner) {
+  return (calcPrio(me) < calcPrio(inner));
 }
 
 
@@ -476,10 +575,10 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   // decorate coercion to float
   if (ec.Package->Name == NAME_decorate) {
     if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Float) {
-      op1 = (new VScalarToFloat(op1))->Resolve(ec);
+      op1 = (new VScalarToFloat(op1, true))->Resolve(ec);
       if (!op1) { delete this; return nullptr; } // oops
     } else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Int) {
-      op2 = (new VScalarToFloat(op2))->Resolve(ec);
+      op2 = (new VScalarToFloat(op2, true))->Resolve(ec);
       if (!op2) { delete this; return nullptr; } // oops
     }
   }
@@ -573,7 +672,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       if (op1->IsStrConst() && op2->IsStrConst()) {
         VStr s = op1->GetStrConst(ec.Package)+op2->GetStrConst(ec.Package);
         int val = ec.Package->FindString(*s);
-        VExpression *e = new VStringLiteral(val, Loc);
+        VExpression *e = new VStringLiteral(s, val, Loc);
         delete this;
         return e->Resolve(ec);
       }
@@ -833,6 +932,51 @@ bool VBinary::IsBinaryMath () const {
 
 //==========================================================================
 //
+// VBinary::toString
+//
+//==========================================================================
+VStr VBinary::toString () const {
+  VStr res;
+  if (!op1 || !op1->IsBinaryMath()) {
+    res += e2s(op1);
+  } else {
+    if (needParens(Oper, ((const VBinary *)op1)->Oper)) res += "(";
+    res += e2s(op1);
+    if (needParens(Oper, ((const VBinary *)op1)->Oper)) res += ")";
+  }
+  switch (Oper) {
+    case Add: res += "+"; break;
+    case Subtract: res += "-"; break;
+    case Multiply: res += "*"; break;
+    case Divide: res += "/"; break;
+    case Modulus: res += "%"; break;
+    case LShift: res += "<<"; break;
+    case RShift: res += "<<"; break;
+    case And: res += "&"; break;
+    case XOr: res += "^"; break;
+    case Or: res += "|"; break;
+    case Equals: res += " == "; break;
+    case NotEquals: res += " != "; break;
+    case Less: res += " < "; break;
+    case LessEquals: res += " <= "; break;
+    case Greater: res += " > "; break;
+    case GreaterEquals: res += " >= "; break;
+    case StrCat: res += "~"; break;
+    case IsA: res += " isa "; break;
+  }
+  if (!op2 || !op2->IsBinaryMath()) {
+    res += e2s(op2);
+  } else {
+    if (needParens(Oper, ((const VBinary *)op2)->Oper)) res += "(";
+    res += e2s(op2);
+    if (needParens(Oper, ((const VBinary *)op2)->Oper)) res += ")";
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VBinaryLogical::VBinaryLogical
 //
 //==========================================================================
@@ -968,4 +1112,24 @@ void VBinaryLogical::EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue) 
       }
       break;
   }
+}
+
+
+//==========================================================================
+//
+// VBinaryLogical::toString
+//
+//==========================================================================
+VStr VBinaryLogical::toString () const {
+  VStr res("(");
+  res += e2s(op1);
+  res += ")";
+  switch (Oper) {
+    case And: res += " && "; break;
+    case Or: res += " || "; break;
+  }
+  res += "(";
+  res += e2s(op2);
+  res += ")";
+  return res;
 }

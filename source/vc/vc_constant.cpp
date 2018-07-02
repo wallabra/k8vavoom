@@ -154,3 +154,17 @@ bool VConstant::Define () {
   return true;
   unguard;
 }
+
+
+//==========================================================================
+//
+//  VConstant::Define
+//
+//==========================================================================
+VStr VConstant::toString () const {
+  switch (Type) {
+    case TYPE_Int: return VStr(Value);
+    case TYPE_Float: return VStr(FloatValue);
+  }
+  return VStr("<{unknown-const}>");
+}

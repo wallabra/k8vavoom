@@ -107,10 +107,13 @@ struct FInstruction {
   vint32 Opcode;
   vint32 Arg1;
   vint32 Arg2;
+  bool Arg1IsFloat;
   VMemberBase *Member;
   VName NameArg;
   VFieldType TypeArg;
   TLocation loc;
+
+  FInstruction () : Address(0), Opcode(0), Arg1(0), Arg2(0), Arg1IsFloat(false), Member(nullptr), NameArg(NAME_None), TypeArg(TYPE_Unknown), loc(TLocation()) {}
 
   friend VStream &operator << (VStream &, FInstruction &);
 };
