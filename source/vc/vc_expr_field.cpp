@@ -501,7 +501,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
-      // optimisation for float literals
+      // optimization for float literals
       if (op->IsFloatConst()) {
         VExpression *e = nullptr;
         switch (builtin) {

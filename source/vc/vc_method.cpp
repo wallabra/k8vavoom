@@ -326,7 +326,7 @@ void VMethod::Emit () {
 
   if (!Statement) { ParseError(Loc, "Method body missing"); return; }
 
-  // no need to do it here, as optimiser will do it for us
+  // no need to do it here, as optimizer will do it for us
   /*
   if (ReturnTypeExpr && ReturnTypeExpr->Type.Type != TYPE_Void) {
     if (!Statement->IsEndsWithReturn()) {
@@ -393,9 +393,9 @@ void VMethod::Emit () {
 
   if (VMemberBase::doAsmDump) DumpAsm();
 
-  OptimiseInstructions();
+  OptimizeInstructions();
 
-  // and dump it again for optimised case
+  // and dump it again for optimized case
   if (VMemberBase::doAsmDump) DumpAsm();
 
   // clear it here, 'cause why not?
@@ -532,7 +532,7 @@ void VMethod::PostLoad () {
 #endif
 
   // moved to `Emit()`, as it belongs there anyway
-  //OptimiseInstructions();
+  //OptimizeInstructions();
   CompileCode();
 
   mPostLoaded = true;
@@ -682,14 +682,14 @@ void VMethod::CompileCode () {
 
 //==========================================================================
 //
-//  VMethod::OptimiseInstructions
+//  VMethod::OptimizeInstructions
 //
 //==========================================================================
-void VMethod::OptimiseInstructions () {
-  guard(VMethod::OptimiseInstructions);
-  VMCOptimiser opt(this, Instructions);
-  opt.optimiseAll();
-  // do this last, as optimiser can remove some dead code
+void VMethod::OptimizeInstructions () {
+  guard(VMethod::OptimizeInstructions);
+  VMCOptimizer opt(this, Instructions);
+  opt.optimizeAll();
+  // do this last, as optimizer can remove some dead code
   opt.checkReturns();
   // this should be done as a last step
   opt.shortenInstructions();

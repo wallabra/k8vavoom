@@ -1343,8 +1343,8 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
 
   ec.ExitCompound(compIdx);
 
-  // some special functions will be converted to builtins, try to const-optimise 'em
-  if (Func->builtinOpc >= 0) return OptimiseBuiltin(ec);
+  // some special functions will be converted to builtins, try to const-optimize 'em
+  if (Func->builtinOpc >= 0) return OptimizeBuiltin(ec);
 
   return this;
   unguard;
@@ -1355,7 +1355,7 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
 //
 //  VInvocation::CheckSimpleConstArgs
 //
-//  used by `OptimiseBuiltin`; `types` are `TYPE_xxx`
+//  used by `OptimizeBuiltin`; `types` are `TYPE_xxx`
 //
 //==========================================================================
 bool VInvocation::CheckSimpleConstArgs (int argc, const int *types) const {
@@ -1377,10 +1377,10 @@ bool VInvocation::CheckSimpleConstArgs (int argc, const int *types) const {
 
 //==========================================================================
 //
-//  VInvocation::OptimiseBuiltin
+//  VInvocation::OptimizeBuiltin
 //
 //==========================================================================
-VExpression *VInvocation::OptimiseBuiltin (VEmitContext &ec) {
+VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
   if (!Func || Func->builtinOpc < 0) return this; // sanity check
   TVec v0, v1;
   VExpression *e = nullptr;

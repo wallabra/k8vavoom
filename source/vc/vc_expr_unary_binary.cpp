@@ -165,7 +165,7 @@ VExpression *VUnary::DoResolve (VEmitContext &ec) {
       break;
   }
 
-  // optimise integer constants
+  // optimize integer constants
   if (op->IsIntConst()) {
     vint32 Value = op->GetIntConst();
     VExpression *e = nullptr;
@@ -181,7 +181,7 @@ VExpression *VUnary::DoResolve (VEmitContext &ec) {
     }
   }
 
-  // optimise float constants
+  // optimize float constants
   if (op->IsFloatConst() && Oper == Minus) {
     float Value = op->GetFloatConst();
     VExpression *e = new VFloatLiteral(-Value, Loc);
@@ -668,7 +668,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
         delete this;
         return nullptr;
       }
-      // optimise literals
+      // optimize literals
       if (op1->IsStrConst() && op2->IsStrConst()) {
         VStr s = op1->GetStrConst(ec.Package)+op2->GetStrConst(ec.Package);
         int val = ec.Package->FindString(*s);
@@ -700,7 +700,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       break;
   }
 
-  // optimise integer constants
+  // optimize integer constants
   if (op1->IsIntConst() && op2->IsIntConst()) {
     vint32 Value1 = op1->GetIntConst();
     vint32 Value2 = op2->GetIntConst();
@@ -741,7 +741,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
     if (e) { delete this; return e; }
   }
 
-  // optimise float constants
+  // optimize float constants
   if (op1->IsFloatConst() && op2->IsFloatConst()) {
     float Value1 = op1->GetFloatConst();
     float Value2 = op2->GetFloatConst();
@@ -1042,7 +1042,7 @@ VExpression *VBinaryLogical::DoResolve (VEmitContext &ec) {
 
   Type = TYPE_Int;
 
-  // optimise constant cases
+  // optimize constant cases
   if (op1->IsIntConst() && op2->IsIntConst()) {
     vint32 Value1 = op1->GetIntConst();
     vint32 Value2 = op2->GetIntConst();

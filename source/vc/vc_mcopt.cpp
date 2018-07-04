@@ -60,7 +60,7 @@ struct Instr;
 
 // ////////////////////////////////////////////////////////////////////////// //
 // main optimizer class (k8: well, `MC` stands for `machine code`, lol)
-class VMCOptimiser {
+class VMCOptimizer {
 friend struct Instr;
 
 public:
@@ -101,8 +101,8 @@ private:
   void killRange (int idx0, int idx1);
 
 public:
-  VMCOptimiser (VMethod *afunc, TArray<FInstruction> &aorig);
-  ~VMCOptimiser ();
+  VMCOptimizer (VMethod *afunc, TArray<FInstruction> &aorig);
+  ~VMCOptimizer ();
 
   void clear ();
 
@@ -114,7 +114,7 @@ public:
   // this does flood-fill search to see if all execution pathes are finished with `return`
   void checkReturns ();
 
-  void optimiseAll ();
+  void optimizeAll ();
   void shortenInstructions ();
 
   inline int countInstrs () const { return instrCount; }
@@ -126,8 +126,8 @@ protected:
   // (due to an accident)
   bool isPathEndsWithReturn (int iidx);
 
-  void optimiseLoads ();
-  void optimiseJumps ();
+  void optimizeLoads ();
+  void optimizeJumps ();
 
   bool removeDeadBranches ();
 
@@ -144,7 +144,7 @@ protected:
 // this is used to hold original instruction, and various extra optimizer data
 struct Instr {
   // optimizer will fill those
-  VMCOptimiser *owner;
+  VMCOptimizer *owner;
   Instr *prev, *next; // in main list
   Instr *jpprev, *jpnext; // in "jump" list
   // fields from the original
@@ -159,14 +159,14 @@ struct Instr {
   TLocation loc;
   // copied from statement info list
   int opcArgType;
-  // optimiser internal data
+  // optimizer internal data
   int idx; // instruction index, used to check/fix jumps
   int origIdx; // index in original instruction array
   bool meJumpTarget; // `true` if this instr is a jump target
   // used for return checking
   int retflag; // 0: not visited; -1: processing it right now; 2: determined to return
 
-  Instr (VMCOptimiser *aowner, const FInstruction &i)
+  Instr (VMCOptimizer *aowner, const FInstruction &i)
     : owner(aowner)
     , prev(nullptr), next(nullptr)
     , jpprev(nullptr), jpnext(nullptr)
@@ -412,7 +412,7 @@ struct Instr {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VMCOptimiser::VMCOptimiser (VMethod *afunc, TArray<FInstruction> &aorig)
+VMCOptimizer::VMCOptimizer (VMethod *afunc, TArray<FInstruction> &aorig)
   : func(nullptr)
   , origInstrList(nullptr)
   , ilistHead(nullptr), ilistTail(nullptr)
@@ -424,12 +424,12 @@ VMCOptimiser::VMCOptimiser (VMethod *afunc, TArray<FInstruction> &aorig)
 }
 
 
-VMCOptimiser::~VMCOptimiser () {
+VMCOptimizer::~VMCOptimizer () {
   clear();
 }
 
 
-void VMCOptimiser::clear () {
+void VMCOptimizer::clear () {
   func = nullptr;
   origInstrList = nullptr;
   Instr *c = ilistHead;
@@ -445,7 +445,7 @@ void VMCOptimiser::clear () {
 }
 
 
-void VMCOptimiser::setupFrom (VMethod *afunc, TArray<FInstruction> *aorig) {
+void VMCOptimizer::setupFrom (VMethod *afunc, TArray<FInstruction> *aorig) {
   clear();
   func = afunc;
   origInstrList = aorig;
@@ -467,12 +467,12 @@ void VMCOptimiser::setupFrom (VMethod *afunc, TArray<FInstruction> *aorig) {
 }
 
 
-void VMCOptimiser::finish () {
+void VMCOptimizer::finish () {
   TArray<FInstruction> &olist = *origInstrList;
   olist.setLength(countInstrs()+1); // one for `Done`
   int iofs = 0;
   for (Instr *it = ilistHead; it; it = it->next, ++iofs) {
-    if (iofs != it->idx) FatalError("VCOPT: internal optimiser inconsistency");
+    if (iofs != it->idx) FatalError("VCOPT: internal optimizer inconsistency");
     it->copyTo(olist[iofs]);
   }
   // append `Done`
@@ -496,14 +496,14 @@ void VMCOptimiser::finish () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 //FIXME: optimize!
-Instr *VMCOptimiser::getInstrAtSlow (int idx) const {
+Instr *VMCOptimizer::getInstrAtSlow (int idx) const {
   if (idx < 0 || idx >= instrCount) return nullptr;
   for (Instr *it = ilistHead; it; it = it->next) if (idx-- == 0) return it;
   return nullptr;
 }
 
 
-Instr *VMCOptimiser::getInstrAt (int idx) const {
+Instr *VMCOptimizer::getInstrAt (int idx) const {
   /*
   int num = instrCount;
   if (idx < 0 || idx >= num) return nullptr;
@@ -526,13 +526,13 @@ Instr *VMCOptimiser::getInstrAt (int idx) const {
 }
 
 
-void VMCOptimiser::disasmAll () const {
+void VMCOptimizer::disasmAll () const {
   for (const Instr *it = ilistHead; it; it = it->next) it->disasm();
 }
 
 
 //FIXME: optimize this!
-void VMCOptimiser::recalcJumpTargetCacheFor (Instr *it) {
+void VMCOptimizer::recalcJumpTargetCacheFor (Instr *it) {
   if (!it) return;
   it->meJumpTarget = false;
   for (Instr *jit = jplistHead; jit; jit = jit->jpnext) {
@@ -545,12 +545,12 @@ void VMCOptimiser::recalcJumpTargetCacheFor (Instr *it) {
 
 
 //FIXME: optimize this!
-void VMCOptimiser::fixJumpTargetCache () {
+void VMCOptimizer::fixJumpTargetCache () {
   for (Instr *it = ilistHead; it; it = it->next) recalcJumpTargetCacheFor(it);
 }
 
 
-void VMCOptimiser::appendToList (Instr *i) {
+void VMCOptimizer::appendToList (Instr *i) {
   if (!i) return; // jist in case
   i->idx = instrCount++;
   i->next = nullptr;
@@ -562,7 +562,7 @@ void VMCOptimiser::appendToList (Instr *i) {
 }
 
 
-void VMCOptimiser::appendToJPList (Instr *i) {
+void VMCOptimizer::appendToJPList (Instr *i) {
   if (!i) return; // jist in case
   i->jpnext = nullptr;
   i->jpprev = jplistTail;
@@ -571,7 +571,7 @@ void VMCOptimiser::appendToJPList (Instr *i) {
 }
 
 
-void VMCOptimiser::removeInstr (Instr *it) {
+void VMCOptimizer::removeInstr (Instr *it) {
   if (!it) return; // just in case
   // fix jump indicies
   bool selfJump = it->isSelfJump();
@@ -601,7 +601,7 @@ void VMCOptimiser::removeInstr (Instr *it) {
 }
 
 
-void VMCOptimiser::killInstr (Instr *it) {
+void VMCOptimizer::killInstr (Instr *it) {
   if (!it) return; // just in case
   removeInstr(it);
   delete it;
@@ -609,7 +609,7 @@ void VMCOptimiser::killInstr (Instr *it) {
 
 
 // range is inclusive
-void VMCOptimiser::killRange (int idx0, int idx1) {
+void VMCOptimizer::killRange (int idx0, int idx1) {
   //fprintf(stderr, "  KILLING: (%d:%d)\n", idx0, idx1);
   while (idx0 <= idx1) {
     killInstr(getInstrAt(idx0));
@@ -618,7 +618,7 @@ void VMCOptimiser::killRange (int idx0, int idx1) {
 }
 
 
-void VMCOptimiser::replaceInstr (Instr *dest, Instr *src) {
+void VMCOptimizer::replaceInstr (Instr *dest, Instr *src) {
   if (!dest || !src || dest == src) return; // sanity checks
   bool isDestJmp = dest->isAnyBranch();
   bool isSrcJmp = src->isAnyBranch();
@@ -668,7 +668,7 @@ void VMCOptimiser::replaceInstr (Instr *dest, Instr *src) {
 // ////////////////////////////////////////////////////////////////////////// //
 // range can be removed if there are no jumps *into* it
 // range is inclusive
-bool VMCOptimiser::canRemoveRange (int idx0, int idx1, Instr *ignoreThis, Instr *ignoreThis1) {
+bool VMCOptimizer::canRemoveRange (int idx0, int idx1, Instr *ignoreThis, Instr *ignoreThis1) {
   if (idx0 < 0 || idx1 < 0 || idx0 > idx1 || idx0 >= instrCount || idx1 >= instrCount) return false;
   for (int f = idx0; f <= idx1; ++f) {
     Instr *it = getInstrAt(f);
@@ -705,11 +705,11 @@ struct Exiter {
 // note that we don't try to catch endless loops, but simple endless loops are considered ok
 // (due to an accident)
 // note that arriving at already marked instructions means "success"
-bool VMCOptimiser::isPathEndsWithReturn (int iidx) {
+bool VMCOptimizer::isPathEndsWithReturn (int iidx) {
   while (iidx >= 0 && iidx < instrCount) {
     Instr *it = getInstrAt(iidx);
     if (!it) return false; // oops
-    if (it->idx != iidx) FatalError("VCOPT: internal inconsisitency (VMCOptimiser::isPathEndsWithReturn)");
+    if (it->idx != iidx) FatalError("VCOPT: internal inconsisitency (VMCOptimizer::isPathEndsWithReturn)");
     if (it->retflag) return true; // anyway
     // mark it as visited
     it->retflag = 1;
@@ -734,7 +734,7 @@ bool VMCOptimiser::isPathEndsWithReturn (int iidx) {
 
 
 // this does flood-fill search to see if all execution pathes are finished with `return`
-void VMCOptimiser::checkReturns () {
+void VMCOptimizer::checkReturns () {
   // reset `visited` flag on each instruction
   for (int f = 0; f < instrCount; ++f) getInstrAt(f)->retflag = false;
   if (!isPathEndsWithReturn(0)) {
@@ -747,14 +747,14 @@ void VMCOptimiser::checkReturns () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VMCOptimiser::shortenInstructions () {
+void VMCOptimizer::shortenInstructions () {
   // two required steps
-  optimiseLoads();
-  optimiseJumps();
+  optimizeLoads();
+  optimizeJumps();
 }
 
 
-void VMCOptimiser::optimiseAll () {
+void VMCOptimizer::optimizeAll () {
 #ifdef VCMOPT_DISABLE_OPTIMIZER
   return;
 #else
@@ -764,7 +764,7 @@ void VMCOptimiser::optimiseAll () {
 #endif
   // this will remove "out-of-code" unreachable jumps (compiler can insert 'em on occasion)
   removeDeadBranches();
-  // main optimiser loop: stop if nothing was optimised on each step
+  // main optimizer loop: stop if nothing was optimized on each step
   for (;;) {
     // do this first, 'cause branch replacer can break if detection logic
     if (removeDeadIfs() || removeDeadWhiles()) {
@@ -827,8 +827,8 @@ void VMCOptimiser::optimiseAll () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// optimise various load/call instructions
-void VMCOptimiser::optimiseLoads () {
+// optimize various load/call instructions
+void VMCOptimizer::optimizeLoads () {
   for (Instr *it = ilistHead; it; it = it->next) {
     Instr &insn = *it;
     switch (insn.Opcode) {
@@ -881,8 +881,8 @@ void VMCOptimiser::optimiseLoads () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// optimise various branch instructions (convert to a short form, if we can)
-void VMCOptimiser::optimiseJumps () {
+// optimize various branch instructions (convert to a short form, if we can)
+void VMCOptimizer::optimizeJumps () {
   // calculate approximate addresses for jump instructions
   int addr = 0;
   TArray<int> iaddrs; // to avoid constant list searches
@@ -958,8 +958,8 @@ void VMCOptimiser::optimiseJumps () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // remove unreachable branches (those after ret/goto, and not a jump target)
-// codegen can generate those, and optimiser can left those
-bool VMCOptimiser::removeDeadBranches () {
+// codegen can generate those, and optimizer can left those
+bool VMCOptimizer::removeDeadBranches () {
   bool res = false;
 #ifdef VCMCOPT_DEBUG_DEAD_JUMP_KILLER
   bool firstRemove = true;
@@ -989,7 +989,7 @@ bool VMCOptimiser::removeDeadBranches () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // remove `goto $+1;`
-bool VMCOptimiser::removeRedunantJumps () {
+bool VMCOptimizer::removeRedunantJumps () {
   bool res = false;
   Instr *jit = jplistHead;
   while (jit) {
@@ -1011,7 +1011,7 @@ bool VMCOptimiser::removeRedunantJumps () {
     // (as this is what this code does anyway)
     if (it->isMeJumpTarget()) {
       // mark next instruction as jump target
-      if (it->next->idx != it->idx+1) FatalError("VCOPT: internal error in (VMCOptimiser::removeRedunantJumps)");
+      if (it->next->idx != it->idx+1) FatalError("VCOPT: internal error in (VMCOptimizer::removeRedunantJumps)");
       it->next->meJumpTarget = true;
       // fix jumps to `it`
       for (Instr *jit = jplistHead; jit; jit = jit->jpnext) {
@@ -1033,7 +1033,7 @@ bool VMCOptimiser::removeRedunantJumps () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // replace `brn op1; op1: goto op2;` with `brn op2;`
-bool VMCOptimiser::simplifyIfJumps () {
+bool VMCOptimizer::simplifyIfJumps () {
   bool res = false;
   Instr *jit = jplistHead;
   while (jit) {
@@ -1104,7 +1104,7 @@ bool VMCOptimiser::simplifyIfJumps () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // replace `If[Not]Goto $+2; Goto m;` to `If[!Not]Goto m;`, and remove `Goto m;`
-bool VMCOptimiser::simplifyIfJumpJump () {
+bool VMCOptimizer::simplifyIfJumpJump () {
   bool res = false;
   Instr *jit = jplistHead;
   while (jit) {
@@ -1159,7 +1159,7 @@ bool VMCOptimiser::simplifyIfJumpJump () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // if we have `PushNumber; If[Not]Goto m;`, remove if, and remove possible "else" branch
-bool VMCOptimiser::removeDeadIfs () {
+bool VMCOptimizer::removeDeadIfs () {
   Instr *jit = jplistHead;
   while (jit) {
     Instr *it = jit;
@@ -1183,9 +1183,9 @@ bool VMCOptimiser::removeDeadIfs () {
       // check if that `goto` leads further down
       if (jdm1->getBranchDest() <= jdm1->idx+1) continue;
       int estart = jdm1->idx; // it starts from `goto endif`
-      if (estart+1 != it->getBranchDest()) FatalError("VCOPT: internal error (0) at (VMCOptimiser::removeDeadIfs) (%d, %d)", estart, it->getBranchDest());
+      if (estart+1 != it->getBranchDest()) FatalError("VCOPT: internal error (0) at (VMCOptimizer::removeDeadIfs) (%d, %d)", estart, it->getBranchDest());
       int eend = jdm1->getBranchDest()-1; // range is inclusive
-      if (estart > eend) FatalError("VCOPT: internal error (1) at (VMCOptimiser::removeDeadIfs) (%d,%d)", estart, eend);
+      if (estart > eend) FatalError("VCOPT: internal error (1) at (VMCOptimizer::removeDeadIfs) (%d,%d)", estart, eend);
       // check if we can remove `push` and `ifgoto` (we won't need 'em in any case)
       // moved down, to avoid some false positives
       //if (!canRemoveRange(itprev->idx, it->idx)) continue; // alas
@@ -1275,7 +1275,7 @@ bool VMCOptimiser::removeDeadIfs () {
 //  lbl:
 //   cond
 //   If[Not]Goto start
-bool VMCOptimiser::removeDeadWhiles () {
+bool VMCOptimizer::removeDeadWhiles () {
   bool res = false;
   Instr *jit = jplistHead;
   while (jit) {
