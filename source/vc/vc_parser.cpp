@@ -1836,7 +1836,7 @@ VExpression *VParser::ParseLambda () {
   //fprintf(stderr, "*** LAMBDA: <%s>\n", *lname);
 
   VMethod *Func = new VMethod(lname, currClass, stl);
-  Func->Flags = currFunc->Flags&(FUNC_Static|FUNC_Final);
+  Func->Flags = FUNC_Final; //currFunc->Flags&(FUNC_Static|FUNC_Final);
   Func->ReturnTypeExpr = Type;
   currClass->AddMethod(Func);
 
@@ -1871,8 +1871,6 @@ VExpression *VParser::ParseLambda () {
 
   if ((currFunc->Flags&FUNC_Static) != 0) {
     ParseError(stl, "Lambdas aren't allowed in static methods");
-  } else if ((currFunc->Flags&(FUNC_Final|FUNC_Override)) == FUNC_Final) {
-    ParseError(stl, "Lambdas aren't allowed in non-virtual methods");
   }
 
   return new VDelegateVal(new VSelf(stl), Func, stl);
