@@ -52,6 +52,7 @@ VLabelStmt *VStatement::FindLabel (VName aname) { return (IsLabel() && GetLabelN
 bool VStatement::IsGotoInAllowed () const { return true; }
 bool VStatement::IsGotoOutAllowed () const { return true; }
 bool VStatement::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const { return true; }
+void VStatement::EmitBlockCleanup (VEmitContext &ec, const TLocation &aloc) const {}
 
 bool VStatement::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
   if (dest == this) {
@@ -878,7 +879,17 @@ bool VForeach::IsGotoInAllowed () const {
 //
 //==========================================================================
 bool VForeach::IsGotoOutAllowed () const {
-  return false;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VForeach::EmitBlockCleanup
+//
+//==========================================================================
+void VForeach::EmitBlockCleanup (VEmitContext &ec, const TLocation &aloc) const {
+  ec.AddStatement(OPC_IteratorPop, aloc);
 }
 
 
@@ -1893,7 +1904,21 @@ bool VForeachScripted::IsGotoInAllowed () const {
 //
 //==========================================================================
 bool VForeachScripted::IsGotoOutAllowed () const {
-  return false;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VForeach::EmitBlockCleanup
+//
+//==========================================================================
+void VForeachScripted::EmitBlockCleanup (VEmitContext &ec, const TLocation &aloc) const {
+  // dtor
+  if (ivDone) ivDone->Emit(ec);
+
+  // pop iterator
+  ec.AddStatement(OPC_IteratorFinish, Loc);
 }
 
 
@@ -3286,6 +3311,54 @@ bool VGotoStmt::ResolveGoto (VEmitContext &ec, VStatement *dest) {
 //  VGotoStmt::Resolve
 //
 //==========================================================================
+void VGotoStmt::EmitCleanups (VEmitContext &ec, VStatement *dest) {
+  // build path to self
+  TArray<VStatement *> toself;
+  if (!ec.CurrentFunc->Statement->BuildPathTo(this, toself)) {
+    ParseError(Loc, "Cannot build path to `goto`");
+    return;
+  }
+
+  // build path to label
+  TArray<VStatement *> tolabel;
+  if (!ec.CurrentFunc->Statement->BuildPathTo(dest, tolabel)) {
+    ParseError(Loc, "Cannot build path to label `%s`", *Name);
+    return;
+  }
+
+  // find common parent
+  VStatement *cpar = nullptr;
+  int sidx = -1, lidx = -1;
+  for (int f = toself.length()-1; f >= 0; --f) {
+    for (int c = tolabel.length()-1; c >= 0; --c) {
+      if (tolabel[c] == toself[f]) {
+        cpar = tolabel[c];
+        sidx = f;
+        lidx = c;
+        break;
+      }
+    }
+    if (cpar) break;
+  }
+  if (!cpar) {
+    ParseError(Loc, "Cannot find common parent for `goto`, and label `%s`", *Name);
+    return;
+  }
+  if (sidx == toself.length()-1 || lidx == tolabel.length()-1) FatalError("VC: internal compiler error (VGotoStmt::EmitCleanups)");
+
+  // now go up to parent and down to label, checking if gotos are allowed
+  for (int f = toself.length()-1; f >= 0; --f) {
+    if (toself[f] == cpar) break;
+    toself[f]->EmitBlockCleanup(ec, Loc);
+  }
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::Resolve
+//
+//==========================================================================
 bool VGotoStmt::Resolve (VEmitContext &ec) {
   if (Switch) {
     // goto case/default
@@ -3301,6 +3374,7 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
         }
       }
       if (!st) { ParseError(Loc, "`goto default;` whithout `default`"); return false; }
+      casedef = st;
     } else {
       // find the case
       if (CaseValue) {
@@ -3364,22 +3438,23 @@ void VGotoStmt::DoEmit (VEmitContext &ec) {
       ParseError(Loc, "Destination label `%s` not found", *Name);
       return;
     }
+    EmitCleanups(ec, lbl);
     ec.EmitGotoTo(Name, Loc);
   } else if (GotoType == Case) {
-    if (!casedef) {
-      if (!ec.LoopEnd.IsDefined()) ParseError(Loc, "Misplaced `goto case` statement");
-      ec.AddStatement(OPC_Goto, ec.LoopEnd, Loc);
+    if (casedef) {
+      ParseError(Loc, "Misplaced `goto case` statement");
       return;
     }
     if (!casedef->IsSwitchCase()) FatalError("VC: internal compiler error (VGotoStmt::DoEmit) (0)");
     VSwitchCase *cc = (VSwitchCase *)casedef;
+    EmitCleanups(ec, cc);
     ec.AddStatement(OPC_Goto, cc->gotoLbl, Loc);
   } else if (GotoType == Default) {
     if (!casedef) {
-      if (!ec.LoopEnd.IsDefined()) ParseError(Loc, "Misplaced `goto default` statement");
-      ec.AddStatement(OPC_Goto, ec.LoopEnd, Loc);
+      ParseError(Loc, "Misplaced `goto default` statement");
       return;
     }
+    EmitCleanups(ec, casedef);
     ec.AddStatement(OPC_Goto, Switch->DefaultAddress, Loc);
   } else {
     FatalError("VC: internal compiler error (VGotoStmt::DoEmit)");

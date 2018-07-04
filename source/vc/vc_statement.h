@@ -62,6 +62,9 @@ public:
   virtual bool IsGotoOutAllowed () const;
   virtual bool IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const;
 
+  // emit code for various shutdowns (used go do `goto` from foreach iteration)
+  virtual void EmitBlockCleanup (VEmitContext &ec, const TLocation &aloc) const;
+
   // returns `false` if statement not found (and `path` is not modified)
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path);
 
@@ -217,6 +220,8 @@ public:
   virtual bool IsGotoInAllowed () const override;
   virtual bool IsGotoOutAllowed () const override;
 
+  virtual void EmitBlockCleanup (VEmitContext &ec, const TLocation &aloc) const override;
+
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
 protected:
@@ -342,6 +347,8 @@ public:
   virtual VLabelStmt *FindLabel (VName aname) override;
   virtual bool IsGotoInAllowed () const override;
   virtual bool IsGotoOutAllowed () const override;
+
+  virtual void EmitBlockCleanup (VEmitContext &ec, const TLocation &aloc) const override;
 
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
@@ -627,4 +634,5 @@ protected:
   virtual void DoSyntaxCopyTo (VStatement *e) override;
 
   bool ResolveGoto (VEmitContext &ec, VStatement *dest);
+  void EmitCleanups (VEmitContext &ec, VStatement *dest);
 };
