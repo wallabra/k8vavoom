@@ -427,9 +427,11 @@ bool VFieldType::CheckMatch (bool asRef, const TLocation &l, const VFieldType &O
     if (it1.Equals(it2)) return true;
     if (it1.Type == TYPE_Void || it2.Type == TYPE_Void) return true;
     if (it1.Type == TYPE_Struct && it2.Type == TYPE_Struct) {
-      VStruct *s1 = it1.Struct;
-      VStruct *s2 = it2.Struct;
-      for (VStruct *st1 = s1->ParentStruct; st1; st1 = st1->ParentStruct) if (st1 == s2) return true;
+      if (!it1.Struct->IsA(it2.Struct)) {
+        if (raiseError) ParseError(l, "struct `%s` is not a substruct of `%s`", *GetName(), *Other.GetName());
+        return false;
+      }
+      return true;
     }
   }
 
