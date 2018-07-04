@@ -189,7 +189,7 @@ bool VMethod::Define () {
     VFieldType t = ReturnTypeExpr->Type;
     if (t.Type != TYPE_Void) {
       // function's return type must be void, vector or with size 4
-      t.CheckPassable(ReturnTypeExpr->Loc);
+      t.CheckReturnable(ReturnTypeExpr->Loc);
     }
     ReturnType = t;
   } else {
@@ -489,6 +489,9 @@ void VMethod::DumpAsm () {
       case OPCARGS_Member_Int:
         dprintf(" %s (%d)", *Instructions[s].Member->GetFullName(), Instructions[s].Arg2);
         break;
+      case OPCARGS_Type_Int:
+        dprintf(" %s (%d)", *Instructions[s].TypeArg.GetName(), Instructions[s].Arg2);
+        break;
     }
     dprintf("\n");
   }
@@ -647,6 +650,7 @@ void VMethod::CompileCode () {
       case OPCARGS_Type: WriteType(Instructions[i].TypeArg); break;
       case OPCARGS_Builtin: WriteUInt8(Instructions[i].Arg1); break;
       case OPCARGS_Member_Int: WritePtr(Instructions[i].Member); break; // int is not emited
+      case OPCARGS_Type_Int: WriteInt32(Instructions[i].Arg2); break; // type is not emited
     }
     while (StatLocs.length() < Statements.length()) StatLocs.Append(Instructions[i].loc);
   }
@@ -693,10 +697,12 @@ void VMethod::OptimizeInstructions () {
   guard(VMethod::OptimizeInstructions);
   VMCOptimizer opt(this, Instructions);
   opt.optimizeAll();
-  // do this last, as optimizer can remove some dead code
-  opt.checkReturns();
-  // this should be done as a last step
-  opt.shortenInstructions();
+  if (vcErrorCount == 0) {
+    // do this last, as optimizer can remove some dead code
+    opt.checkReturns();
+    // this should be done as a last step
+    opt.shortenInstructions();
+  }
   opt.finish(); // this will copy result back to `Instructions`
   unguard;
 }
@@ -847,6 +853,10 @@ VStream &operator << (VStream &Strm, FInstruction &Instr) {
       break;
     case OPCARGS_Member_Int:
       Strm << Instr.Member;
+      Strm << STRM_INDEX(Instr.Arg2);
+      break;
+    case OPCARGS_Type_Int:
+      Strm << Instr.TypeArg;
       Strm << STRM_INDEX(Instr.Arg2);
       break;
   }

@@ -411,6 +411,21 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const
 //  VEmitContext::AddStatement
 //
 //==========================================================================
+void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, int Arg, const TLocation &aloc) {
+  if (StatementInfo[statement].Args != OPCARGS_Type_Int) FatalError("Opcode doesn\'t take type as argument");
+  FInstruction &I = CurrentFunc->Instructions.Alloc();
+  I.Opcode = statement;
+  I.TypeArg = TypeArg;
+  I.Arg2 = Arg;
+  I.loc = aloc;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::AddStatement
+//
+//==========================================================================
 void VEmitContext::AddStatement (int statement, VLabel Lbl, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_BranchTarget) FatalError("Opcode does\'t take label as argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();

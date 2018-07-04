@@ -83,7 +83,8 @@ public:
   int GetStackSize () const;
   int GetSize () const;
   int GetAlignment () const;
-  void CheckPassable (const TLocation &) const;
+  bool CheckPassable (const TLocation &, bool raiseError=true) const;
+  bool CheckReturnable (const TLocation &, bool raiseError=true) const;
   bool CheckMatch (const TLocation &loc, const VFieldType &, bool raiseError=true) const;
   VStr GetName () const;
 

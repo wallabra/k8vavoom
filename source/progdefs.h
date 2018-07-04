@@ -119,6 +119,8 @@ enum {
   OPCARGS_Builtin,
   // used for call, int is argc
   OPCARGS_Member_Int,
+  // used for delegate call, int is argc, type is delegate type
+  OPCARGS_Type_Int,
 };
 
 
@@ -137,7 +139,7 @@ enum {
   DECLARE_OPC(DelegateCall, FieldOffset_Byte),
   DECLARE_OPC(DelegateCallS, FieldOffsetS_Byte),
   DECLARE_OPC(DelegateCallB, FieldOffsetB_Byte),
-  DECLARE_OPC(DelegateCallPtr, Int),
+  DECLARE_OPC(DelegateCallPtr, Type_Int),
   DECLARE_OPC(Return, None),
   DECLARE_OPC(ReturnL, None),
   DECLARE_OPC(ReturnV, None),

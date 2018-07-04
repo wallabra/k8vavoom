@@ -900,7 +900,7 @@ void VDelegateVal::Emit (VEmitContext &ec) {
   op->Emit(ec);
   // call class postload, so `FUNC_RealFinal` will be set
   ec.SelfClass->PostLoad();
-  fprintf(stderr, "MT: %s (rf=%d)\n", *M->GetFullName(), (M->Flags&FUNC_RealFinal ? 1 : 0));
+  //fprintf(stderr, "MT: %s (rf=%d)\n", *M->GetFullName(), (M->Flags&FUNC_RealFinal ? 1 : 0));
   if (M->Flags&FUNC_RealFinal) {
     ec.AddStatement(OPC_PushFunc, M, Loc);
   } else {

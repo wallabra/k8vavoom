@@ -1728,7 +1728,7 @@ void VInvocation::Emit (VEmitContext &ec) {
     // get address of local
     const VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
     ec.EmitLocalAddress(loc.Offset, Loc);
-    ec.AddStatement(OPC_DelegateCallPtr, SelfOffset, Loc);
+    ec.AddStatement(OPC_DelegateCallPtr, loc.Type, SelfOffset, Loc);
   } else {
     ec.AddStatement(OPC_VCall, Func, SelfOffset, Loc);
   }

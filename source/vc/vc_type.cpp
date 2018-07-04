@@ -355,11 +355,31 @@ int VFieldType::GetAlignment () const {
 //  Check, if type can be pushed into the stack
 //
 //==========================================================================
-void VFieldType::CheckPassable (const TLocation &l) const {
+bool VFieldType::CheckPassable (const TLocation &l, bool raiseError) const {
   guardSlow(VFieldType::CheckPassable);
   if (GetStackSize() != 4 && Type != TYPE_Vector && Type != TYPE_Delegate && Type != TYPE_SliceArray) {
-    ParseError(l, "Type `%s` is not passable", *GetName());
+    if (raiseError) ParseError(l, "Type `%s` is not passable", *GetName());
+    return false;
   }
+  return true;
+  unguardSlow;
+}
+
+
+//==========================================================================
+//
+//  VFieldType::CheckReturnable
+//
+//  Check, if type can be pushed into the stack
+//
+//==========================================================================
+bool VFieldType::CheckReturnable (const TLocation &l, bool raiseError) const {
+  guardSlow(VFieldType::CheckPassable);
+  if (GetStackSize() != 4 && Type != TYPE_Vector) {
+    if (raiseError) ParseError(l, "Type `%s` is not returnable", *GetName());
+    return false;
+  }
+  return true;
   unguardSlow;
 }
 
@@ -376,8 +396,8 @@ void VFieldType::CheckPassable (const TLocation &l) const {
 //==========================================================================
 bool VFieldType::CheckMatch (const TLocation &l, const VFieldType &Other, bool raiseError) const {
   guard(VFieldType::CheckMatch);
-  CheckPassable(l);
-  Other.CheckPassable(l);
+  if (!CheckPassable(l)) return false;
+  if (!Other.CheckPassable(l)) return false;
 
   if (Equals(Other)) return true;
 

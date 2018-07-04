@@ -141,6 +141,7 @@ public:
   void AddStatement (int statement, VMemberBase *Member, const TLocation &aloc);
   void AddStatement (int statement, VMemberBase *Member, int Arg, const TLocation &aloc);
   void AddStatement (int statement, const VFieldType &TypeArg, const TLocation &aloc);
+  void AddStatement (int statement, const VFieldType &TypeArg, int Arg, const TLocation &aloc);
   void AddStatement (int statement, VLabel Lbl, const TLocation &aloc);
   void AddStatement (int statement, int p, VLabel Lbl, const TLocation &aloc);
   void AddBuiltin (int b, const TLocation &aloc);
