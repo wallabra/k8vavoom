@@ -1,0 +1,33 @@
+class Main : Object;
+
+struct IterInfo {
+  int cur;
+}
+
+
+final void testIter_opInit (out IterInfo it, int initval) {
+  it.cur = initval;
+  writeln("iterator initialized");
+}
+
+final void testIter_opDone (ref IterInfo it) {
+  writeln("iterator deinitialized, cur=", it.cur);
+}
+
+final bool testIter_opNext (ref IterInfo it, ref int v) {
+  if (it.cur > 6) return false;
+  v = it.cur;
+  ++it.cur;
+  return true;
+}
+
+
+void main () {
+  foreach (int n; testIter(2)) {
+    if (n == 4) goto exit;
+    writeln("n=", n);
+  }
+  writeln("done");
+exit:
+  writeln("exit");
+}

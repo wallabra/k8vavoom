@@ -1,0 +1,5 @@
+iterator initialized
+n=2
+n=3
+iterator deinitialized, cur=5
+exit
