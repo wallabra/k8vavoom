@@ -1809,12 +1809,12 @@ bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VE
       if (m->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
         if (!aa->Type.Equals(m->ParamTypes[i])) {
           // check, but don't raise any errors
-          if (!aa->Type.CheckMatch(aa->Loc, m->ParamTypes[i], false)) { delete aa; return false; }
+          if (!aa->Type.CheckMatch(true, aa->Loc, m->ParamTypes[i], false)) { delete aa; return false; }
         }
       } else {
         if (m->ParamTypes[i].Type == TYPE_Float && aa->Type.Type == TYPE_Int) { delete aa; continue; }
         // check, but don't raise any errors
-        if (!aa->Type.CheckMatch(aa->Loc, m->ParamTypes[i], false)) { delete aa; return false; }
+        if (!aa->Type.CheckMatch(false, aa->Loc, m->ParamTypes[i], false)) { delete aa; return false; }
       }
       delete aa;
     } else {
@@ -1899,10 +1899,10 @@ void VInvocation::CheckParams (VEmitContext &ec) {
             //FIXME: This should be error
             /*
             if (!(Func->ParamFlags[NumArgs]&FPARM_Optional)) {
-              Args[i]->Type.CheckMatch(Args[i]->Loc, Func->ParamTypes[i]);
+              Args[i]->Type.CheckMatch(true, Args[i]->Loc, Func->ParamTypes[i]);
             }
             */
-            if (!Args[i]->Type.CheckMatch(Args[i]->Loc, Func->ParamTypes[i])) {
+            if (!Args[i]->Type.CheckMatch(true, Args[i]->Loc, Func->ParamTypes[i])) {
               ParseError(Args[i]->Loc, "Out parameter types must be equal for arg #%d (want `%s`, but got `%s`)", i+1, *Func->ParamTypes[i].GetName(), *Args[i]->Type.GetName());
             }
           }
@@ -1921,7 +1921,7 @@ void VInvocation::CheckParams (VEmitContext &ec) {
               if (!Args[i]) ParseError(erloc, "Cannot convert argument to float for arg #%d", i+1);
             }
           }
-          Args[i]->Type.CheckMatch(Args[i]->Loc, Func->ParamTypes[i]);
+          Args[i]->Type.CheckMatch(false, Args[i]->Loc, Func->ParamTypes[i]);
         }
         argsize += Args[i]->Type.GetStackSize();
       }

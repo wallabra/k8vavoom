@@ -942,8 +942,8 @@ VExpression *VConditional::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  op1->Type.CheckMatch(Loc, op2->Type);
-  if (op1->Type.Type == TYPE_Pointer && op1->Type.InnerType == TYPE_Void){
+  op1->Type.CheckMatch(false, Loc, op2->Type);
+  if (op1->Type.Type == TYPE_Pointer && op1->Type.InnerType == TYPE_Void) {
     Type = op2->Type;
   } else {
     Type = op1->Type;

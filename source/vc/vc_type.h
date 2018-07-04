@@ -85,7 +85,7 @@ public:
   int GetAlignment () const;
   bool CheckPassable (const TLocation &, bool raiseError=true) const;
   bool CheckReturnable (const TLocation &, bool raiseError=true) const;
-  bool CheckMatch (const TLocation &loc, const VFieldType &, bool raiseError=true) const;
+  bool CheckMatch (bool asRef, const TLocation &loc, const VFieldType &, bool raiseError=true) const;
   VStr GetName () const;
 
   bool IsAnyArray () const;

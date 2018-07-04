@@ -374,7 +374,7 @@ bool VFieldType::CheckPassable (const TLocation &l, bool raiseError) const {
 //
 //==========================================================================
 bool VFieldType::CheckReturnable (const TLocation &l, bool raiseError) const {
-  guardSlow(VFieldType::CheckPassable);
+  guardSlow(VFieldType::CheckReturnable);
   if (GetStackSize() != 4 && Type != TYPE_Vector) {
     if (raiseError) ParseError(l, "Type `%s` is not returnable", *GetName());
     return false;
@@ -394,10 +394,27 @@ bool VFieldType::CheckReturnable (const TLocation &l, bool raiseError) const {
 //  t2 - needed type
 //
 //==========================================================================
-bool VFieldType::CheckMatch (const TLocation &l, const VFieldType &Other, bool raiseError) const {
+bool VFieldType::CheckMatch (bool asRef, const TLocation &l, const VFieldType &Other, bool raiseError) const {
   guard(VFieldType::CheckMatch);
-  if (!CheckPassable(l)) return false;
-  if (!Other.CheckPassable(l)) return false;
+  if (!asRef) {
+    if (!CheckPassable(l)) return false;
+    if (!Other.CheckPassable(l)) return false;
+  } else {
+    // check if `this` is a substruct of `Other`
+    if (Type == TYPE_Struct && Other.Type == TYPE_Struct) {
+      /*
+      if (!Struct || !Other.Struct) {
+        if (raiseError) ParseError(l, "struct `%s` is not a substruct of `%s`", *GetName(), *Other.GetName());
+        return false;
+      }
+      */
+      if (!Struct->IsA(Other.Struct)) {
+        if (raiseError) ParseError(l, "struct `%s` is not a substruct of `%s`", *GetName(), *Other.GetName());
+        return false;
+      }
+    }
+    return true;
+  }
 
   if (Equals(Other)) return true;
 

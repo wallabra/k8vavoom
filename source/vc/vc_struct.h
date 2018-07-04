@@ -71,6 +71,8 @@ public:
   bool Define ();
   bool DefineMembers ();
 
+  bool IsA (const VStruct *s) const;
+
   void CalcFieldOffsets ();
   void InitReferences ();
   void InitDestructorFields ();

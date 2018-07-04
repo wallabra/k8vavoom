@@ -130,7 +130,7 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
-    op2->Type.CheckMatch(Loc, VFieldType(TYPE_Int));
+    op2->Type.CheckMatch(false, Loc, VFieldType(TYPE_Int));
     VDynArraySetNum *e = (VDynArraySetNum *)op1;
     e->NumExpr = op2;
          if (Oper == Assign) e->opsign = 0;
@@ -142,7 +142,7 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
     return e->Resolve(ec);
   }
 
-  op2->Type.CheckMatch(Loc, op1->RealType);
+  op2->Type.CheckMatch(false, Loc, op1->RealType);
   op1->RequestAddressOf();
   return this;
 }

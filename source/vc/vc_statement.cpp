@@ -1295,9 +1295,9 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
 
   if (!wasError) {
     if (isRef) {
-      wasError = !varR->Type.MakePointerType().CheckMatch(Loc, arrR->Type.GetArrayInnerType().MakePointerType());
+      wasError = !varR->Type.MakePointerType().CheckMatch(false, Loc, arrR->Type.GetArrayInnerType().MakePointerType());
     } else {
-      wasError = !varR->Type.CheckMatch(Loc, arrR->Type.GetArrayInnerType());
+      wasError = !varR->Type.CheckMatch(false, Loc, arrR->Type.GetArrayInnerType());
     }
   }
 
@@ -2623,7 +2623,7 @@ bool VReturn::Resolve (VEmitContext &ec) {
       ParseError(Loc, "void function cannot return a value");
       Ret = false;
     } else if (Expr) {
-      Expr->Type.CheckMatch(Expr->Loc, ec.FuncRetType);
+      Expr->Type.CheckMatch(false, Expr->Loc, ec.FuncRetType);
     } else {
       Ret = false;
     }
