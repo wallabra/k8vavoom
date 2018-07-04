@@ -1721,16 +1721,13 @@ void VInvocation::Emit (VEmitContext &ec) {
   }
 
   if (DirectCall) {
-    ec.AddStatement(OPC_Call, Func, Loc);
+    ec.AddStatement(OPC_Call, Func, SelfOffset, Loc);
   } else if (DelegateField) {
     ec.AddStatement(OPC_DelegateCall, DelegateField, SelfOffset, Loc);
   } else if (DelegateLocal >= 0) {
     // get address of local
     const VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
     ec.EmitLocalAddress(loc.Offset, Loc);
-    // push self offset
-    //ec.EmitPushNumber(SelfOffset, Loc);
-    // emit call
     ec.AddStatement(OPC_DelegateCallPtr, SelfOffset, Loc);
   } else {
     ec.AddStatement(OPC_VCall, Func, SelfOffset, Loc);

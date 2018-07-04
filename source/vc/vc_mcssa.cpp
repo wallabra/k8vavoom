@@ -7,9 +7,7 @@
 //**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
 //**     #    ##    ##    #      ####     ####   ##       ##
 //**
-//**  $Id$
-//**
-//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018 Ketmar Dark
 //**
 //**  This program is free software; you can redistribute it and/or
 //**  modify it under the terms of the GNU General Public License
@@ -22,114 +20,80 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+// ////////////////////////////////////////////////////////////////////////// //
+// SSA instruction can have up to 3 operands (except for phis and calls)
 
-
-#ifdef BUILTIN_OPCODE_INFO
-# ifndef DECLARE_OPC_BUILTIN
-#  define BUILTIN_OPCODE_INFO_DEFAULT
-#  define DECLARE_OPC_BUILTIN(name)  OPC_Builtin_##name
-enum {
-# endif
-  DECLARE_OPC_BUILTIN(IntAbs),
-  DECLARE_OPC_BUILTIN(FloatAbs),
-  DECLARE_OPC_BUILTIN(IntSign),
-  DECLARE_OPC_BUILTIN(FloatSign),
-  DECLARE_OPC_BUILTIN(IntMin),
-  DECLARE_OPC_BUILTIN(IntMax),
-  DECLARE_OPC_BUILTIN(FloatMin),
-  DECLARE_OPC_BUILTIN(FloatMax),
-  DECLARE_OPC_BUILTIN(IntClamp),
-  DECLARE_OPC_BUILTIN(FloatClamp),
-  DECLARE_OPC_BUILTIN(FloatIsNaN),
-  DECLARE_OPC_BUILTIN(FloatIsInf),
-  DECLARE_OPC_BUILTIN(FloatIsFinite),
-  DECLARE_OPC_BUILTIN(DegToRad),
-  DECLARE_OPC_BUILTIN(RadToDeg),
-  DECLARE_OPC_BUILTIN(Sin),
-  DECLARE_OPC_BUILTIN(Cos),
-  DECLARE_OPC_BUILTIN(Tan),
-  DECLARE_OPC_BUILTIN(ASin),
-  DECLARE_OPC_BUILTIN(ACos),
-  DECLARE_OPC_BUILTIN(ATan), // slope
-  DECLARE_OPC_BUILTIN(Sqrt),
-  DECLARE_OPC_BUILTIN(ATan2), // y, x
-  DECLARE_OPC_BUILTIN(VecLength),
-  DECLARE_OPC_BUILTIN(VecLength2D),
-  DECLARE_OPC_BUILTIN(VecNormalize),
-  DECLARE_OPC_BUILTIN(VecNormalize2D),
-  DECLARE_OPC_BUILTIN(VecDot),
-  DECLARE_OPC_BUILTIN(VecDot2D),
-  DECLARE_OPC_BUILTIN(VecCross),
-  DECLARE_OPC_BUILTIN(VecCross2D),
-  DECLARE_OPC_BUILTIN(RoundF2I),
-  DECLARE_OPC_BUILTIN(RoundF2F),
-  DECLARE_OPC_BUILTIN(TruncF2I),
-  DECLARE_OPC_BUILTIN(TruncF2F),
-  DECLARE_OPC_BUILTIN(FloatCeil),
-  DECLARE_OPC_BUILTIN(FloatFloor),
-  DECLARE_OPC_BUILTIN(FloatLerp),
-  DECLARE_OPC_BUILTIN(IntLerp),
-  DECLARE_OPC_BUILTIN(FloatSmoothStep),
-  DECLARE_OPC_BUILTIN(FloatSmoothStepPerlin),
-# undef DECLARE_OPC_BUILTIN
-# undef BUILTIN_OPCODE_INFO
-# ifdef BUILTIN_OPCODE_INFO_DEFAULT
-#  undef BUILTIN_OPCODE_INFO_DEFAULT
+enum SSAOperand {
+  SSAOT_None,
+  SSAOT_RegDest,
+  SSAOT_RegSrc,
+  SSAOT_RegPhi, // special
+  // integers
+  SSAOT_INumSrc,
+  // floats
+  SSAOT_FNumSrc,
+  // stores can only store one value into memory
+  SSAOT_MemDest,
+  // loads can only load one value into register
+  SSAOT_MemSrc,
+  // calls
+  SSAOT_VFIndex, // virtual function index
+  SSAOT_FIndex, // non-virtual function index
+  SSAOT_Class,
+  // various offsets
+  SSAOT_LocOfs,
+  SSAOT_FieldOfs,
+  // jumps
+  SSAOT_GotoDest,
+  // other literals
+  SSAOT_Name,
+  SSAOT_String,
+  SSAOT_State,
+  SSAOT_Vector,
+  //
+  SSAOT_Struct,
+  SSAOT_Type,
+  SSAOT_TypeSize,
+  //
+  SSAOT_Builtin,
 };
-# endif
 
-#else
+struct SSAInstrInfo {
+  const char *name;
+  int op0, op1, op2;
+};
 
-#ifndef OPCODE_INFO
-
-#define PROG_MAGIC    "VPRG"
-#define PROG_VERSION  (40)
+static const SSAInstrInfo ssainfo[] = {
+#define DECLARE_SSA(name,otp0,otp1,otp2) \
+  {"" # name, SSAOT_ ## otp0, SSAOT_ ## otp1, SSAOT_ ## otp2}
+#include "vc_mcssa_op.cpp"
+#undef DECLARE_SSA
+};
 
 enum {
-  OPCARGS_None,
-  OPCARGS_Member,
-  OPCARGS_BranchTargetB,
-  OPCARGS_BranchTargetNB,
-  OPCARGS_BranchTargetS,
-  OPCARGS_BranchTarget,
-  OPCARGS_ByteBranchTarget,
-  OPCARGS_ShortBranchTarget,
-  OPCARGS_IntBranchTarget,
-  OPCARGS_Byte,
-  OPCARGS_Short,
-  OPCARGS_Int,
-  OPCARGS_Name,
-  OPCARGS_NameS,
-  OPCARGS_NameB,
-  OPCARGS_String,
-  OPCARGS_FieldOffset,
-  OPCARGS_FieldOffsetS,
-  OPCARGS_FieldOffsetB,
-  OPCARGS_VTableIndex,
-  OPCARGS_VTableIndexB,
-  OPCARGS_TypeSize,
-  OPCARGS_TypeSizeS,
-  OPCARGS_TypeSizeB,
-  OPCARGS_VTableIndex_Byte,
-  OPCARGS_VTableIndexB_Byte,
-  OPCARGS_FieldOffset_Byte,
-  OPCARGS_FieldOffsetS_Byte,
-  OPCARGS_FieldOffsetB_Byte,
-  OPCARGS_Type,
-  OPCARGS_Builtin,
-  // used for call, int is argc
-  OPCARGS_Member_Int,
+#define DECLARE_SSA(name,otp0,otp1,otp2) \
+  SSA_ ## name
+#include "vc_mcssa_op.cpp"
+#undef DECLARE_SSA
 };
 
 
-enum {
-#define DECLARE_OPC(name, args)   OPC_##name
-#endif
+// ////////////////////////////////////////////////////////////////////////// //
+struct SSAInstr {
+  SSAInstr *next, *prev;
+  int opcode;
+  int arg0, arg1, arg2;
+  // various specials
+}
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+/*
+static SSAInstr *buildSSAFromVM (VMethod *func, TArray<FInstruction> &instr) {
   DECLARE_OPC(Done, None),
 
   // call / return
-  DECLARE_OPC(Call, Member_Int),
+  DECLARE_OPC(Call, Member),
   DECLARE_OPC(PushVFunc, VTableIndex),
   DECLARE_OPC(PushFunc, Member),
   DECLARE_OPC(VCall, VTableIndex_Byte),
@@ -227,7 +191,7 @@ enum {
   DECLARE_OPC(Bool3FieldValue, FieldOffset_Byte),
   DECLARE_OPC(Bool3FieldValueS, FieldOffsetS_Byte),
   DECLARE_OPC(Bool3FieldValueB, FieldOffsetB_Byte),
-  DECLARE_OPC(CheckArrayBounds, Int), /* won't pop index */
+  DECLARE_OPC(CheckArrayBounds, Int), // won't pop index
   DECLARE_OPC(ArrayElement, TypeSize),
   DECLARE_OPC(ArrayElementS, TypeSizeS),
   DECLARE_OPC(ArrayElementB, TypeSizeB),
@@ -446,75 +410,5 @@ enum {
 
   // builtins (k8: i'm short of opcodes, so...)
   DECLARE_OPC(Builtin, Builtin),
-
-#undef DECLARE_OPC
-#ifndef OPCODE_INFO
-  NUM_OPCODES
-};
-
-static_assert(NUM_OPCODES < 256, "VaVoomC: too many opcodes!");
-
-struct dprograms_t {
-  char magic[4]; // "VPRG"
-  int version;
-
-  int ofs_names;
-  int num_names;
-
-  int num_strings;
-  int ofs_strings;
-
-  int ofs_mobjinfo;
-  int num_mobjinfo;
-
-  int ofs_scriptids;
-  int num_scriptids;
-
-  int ofs_exportinfo;
-  int ofs_exportdata;
-  int num_exports;
-
-  int ofs_imports;
-  int num_imports;
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-struct VProgsImport {
-  vuint8 Type;
-  VName Name;
-  vint32 OuterIndex;
-  VName ParentClassName;  // for decorate class imports
-
-  VMemberBase *Obj;
-
-  VProgsImport () : Type(0), Name(NAME_None), OuterIndex(0), Obj(0) {}
-  VProgsImport (VMemberBase *InObj, vint32 InOuterIndex);
-
-  friend VStream &operator << (VStream &Strm, VProgsImport &I) {
-    Strm << I.Type << I.Name << STRM_INDEX(I.OuterIndex);
-    if (I.Type == MEMBER_DecorateClass) Strm << I.ParentClassName;
-    return Strm;
-  }
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-struct VProgsExport {
-  vuint8 Type;
-  VName Name;
-
-  VMemberBase *Obj;
-
-  VProgsExport () : Type(0), Name(NAME_None), Obj(0) {}
-  VProgsExport(VMemberBase *InObj);
-
-  friend VStream &operator << (VStream &Strm, VProgsExport &E) {
-    return Strm << E.Type << E.Name;
-  }
-};
-
-
-#endif
-
-#endif
+}
+*/

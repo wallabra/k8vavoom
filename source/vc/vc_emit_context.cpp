@@ -375,7 +375,8 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member, const TLoca
 //==========================================================================
 void VEmitContext::AddStatement (int statement, VMemberBase *Member, int Arg, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_VTableIndex_Byte &&
-      StatementInfo[statement].Args != OPCARGS_FieldOffset_Byte)
+      StatementInfo[statement].Args != OPCARGS_FieldOffset_Byte &&
+      StatementInfo[statement].Args != OPCARGS_Member_Int)
   {
     FatalError("Opcode does\'t take member and byte as argument");
   }

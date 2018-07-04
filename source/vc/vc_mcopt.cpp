@@ -55,6 +55,10 @@
 #endif
 
 
+#include "vc_mcssa.cpp"
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct Instr;
 
 
@@ -153,6 +157,8 @@ struct Instr {
   vint32 Arg1;
   vint32 Arg2;
   bool Arg1IsFloat;
+  vint32 sofs0, sofs1, sofs2; // stack offsets (from 0th parameter) for destination(0), and two possible sources
+  vint32 spdelta;
   VMemberBase *Member;
   VName NameArg;
   VFieldType TypeArg;
@@ -175,6 +181,8 @@ struct Instr {
     , Arg1(i.Arg1)
     , Arg2(i.Arg2)
     , Arg1IsFloat(i.Arg1IsFloat)
+    , sofs0(-1), sofs1(-1), sofs2(-1)
+    , spdelta(0)
     , Member(i.Member)
     , NameArg(i.NameArg)
     , TypeArg(i.TypeArg)
@@ -194,6 +202,9 @@ struct Instr {
     dest.Arg1 = Arg1;
     dest.Arg2 = Arg2;
     dest.Arg1IsFloat = Arg1IsFloat;
+    dest.sofs0 = sofs0;
+    dest.sofs1 = sofs1;
+    dest.sofs2 = sofs2;
     dest.Member = Member;
     dest.NameArg = NameArg;
     dest.TypeArg = TypeArg;
@@ -341,6 +352,349 @@ struct Instr {
     return false;
   }
 
+  // returns sp delta
+  void setStackOffsets (int cursp) {
+    sofs0 = sofs1 = sofs2 = -1; // mark as unused
+    spdelta = 0;
+    switch (Opcode) {
+      case Done:
+        return;
+
+      // call / return
+      case Call:
+      case VCall:
+      case VCallB:
+        sofs1 = cursp-Arg2; // first argument
+        spdelta = -Arg2; // pop arguments
+        spdelta += ((VMethod *)Member)->ReturnType.GetStackSize();
+        return;
+      case PushVFunc:
+      case PushFunc:
+        spdelta = 1;
+        // destination
+        sofs0 = cursp;
+        // source is not on the stack
+        return;
+      case DelegateCall:
+      case DelegateCallS:
+      case DelegateCallB:
+        sofs1 = cursp-Arg2; // first argument
+        spdelta = -Arg2;
+        spdelta += ((VField *)Member)->Type.Function->ReturnType.GetStackSize();
+      case DelegateCallPtr:
+      case Return:
+      case ReturnL:
+      case ReturnV:
+
+      // branching
+      case GotoB:
+      case GotoNB:
+      case GotoS:
+      case Goto:
+      case IfGotoB:
+      case IfGotoNB:
+      case IfGotoS:
+      case IfGoto:
+      case IfNotGotoB:
+      case IfNotGotoNB:
+      case IfNotGotoS:
+      case IfNotGoto:
+      case CaseGotoB:
+      case CaseGotoS:
+      case CaseGoto:
+
+      // push constants
+      case PushNumber0:
+      case PushNumber1:
+      case PushNumberB:
+      case PushNumberS:
+      case PushNumber:
+      case PushName:
+      case PushNameS:
+      case PushNameB:
+      case PushString:
+      case PushClassId:
+      case PushState:
+      case PushNull:
+
+      // loading of variables
+      case LocalAddress0:
+      case LocalAddress1:
+      case LocalAddress2:
+      case LocalAddress3:
+      case LocalAddress4:
+      case LocalAddress5:
+      case LocalAddress6:
+      case LocalAddress7:
+      case LocalAddressB:
+      case LocalAddressS:
+      case LocalAddress:
+      case LocalValue0:
+      case LocalValue1:
+      case LocalValue2:
+      case LocalValue3:
+      case LocalValue4:
+      case LocalValue5:
+      case LocalValue6:
+      case LocalValue7:
+      case LocalValueB:
+      case VLocalValueB:
+      case StrLocalValueB:
+      case Offset:
+      case OffsetS:
+      case OffsetB:
+      case FieldValue:
+      case FieldValueS:
+      case FieldValueB:
+      case VFieldValue:
+      case VFieldValueS:
+      case VFieldValueB:
+      case PtrFieldValue:
+      case PtrFieldValueS:
+      case PtrFieldValueB:
+      case StrFieldValue:
+      case StrFieldValueS:
+      case StrFieldValueB:
+      case SliceFieldValue:
+      case ByteFieldValue:
+      case ByteFieldValueS:
+      case ByteFieldValueB:
+      case Bool0FieldValue:
+      case Bool0FieldValueS:
+      case Bool0FieldValueB:
+      case Bool1FieldValue:
+      case Bool1FieldValueS:
+      case Bool1FieldValueB:
+      case Bool2FieldValue:
+      case Bool2FieldValueS:
+      case Bool2FieldValueB:
+      case Bool3FieldValue:
+      case Bool3FieldValueS:
+      case Bool3FieldValueB:
+      case CheckArrayBounds: // won't pop index
+      case ArrayElement:
+      case ArrayElementS:
+      case ArrayElementB:
+      case SliceElement:
+      case OffsetPtr:
+      case PushPointed:
+      case PushPointedSlice:
+      case PushPointedSliceLen:
+      case VPushPointed:
+      case PushPointedPtr:
+      case PushPointedByte:
+      case PushBool0:
+      case PushBool1:
+      case PushBool2:
+      case PushBool3:
+      case PushPointedStr:
+      case PushPointedDelegate:
+
+      // integer opeartors
+      case Add:
+      case Subtract:
+      case Multiply:
+      case Divide:
+      case Modulus:
+      case Equals:
+      case NotEquals:
+      case Less:
+      case Greater:
+      case LessEquals:
+      case GreaterEquals:
+      case NegateLogical:
+      case AndBitwise:
+      case OrBitwise:
+      case XOrBitwise:
+      case LShift:
+      case RShift:
+      case UnaryMinus:
+      case BitInverse:
+
+      // increment / decrement
+      case PreInc:
+      case PreDec:
+      case PostInc:
+      case PostDec:
+      case IncDrop:
+      case DecDrop:
+
+      // integer assignment operators
+      case AssignDrop:
+      case AddVarDrop:
+      case SubVarDrop:
+      case MulVarDrop:
+      case DivVarDrop:
+      case ModVarDrop:
+      case AndVarDrop:
+      case OrVarDrop:
+      case XOrVarDrop:
+      case LShiftVarDrop:
+      case RShiftVarDrop:
+
+      // increment / decrement byte
+      case BytePreInc:
+      case BytePreDec:
+      case BytePostInc:
+      case BytePostDec:
+      case ByteIncDrop:
+      case ByteDecDrop:
+
+      // byte assignment operators
+      case ByteAssignDrop:
+      case ByteAddVarDrop:
+      case ByteSubVarDrop:
+      case ByteMulVarDrop:
+      case ByteDivVarDrop:
+      case ByteModVarDrop:
+      case ByteAndVarDrop:
+      case ByteOrVarDrop:
+      case ByteXOrVarDrop:
+      case ByteLShiftVarDrop:
+      case ByteRShiftVarDrop:
+
+      // floating point operators
+      case FAdd:
+      case FSubtract:
+      case FMultiply:
+      case FDivide:
+      case FEquals:
+      case FNotEquals:
+      case FLess:
+      case FGreater:
+      case FLessEquals:
+      case FGreaterEquals:
+      case FUnaryMinus:
+
+      // floating point assignment operators
+      case FAddVarDrop:
+      case FSubVarDrop:
+      case FMulVarDrop:
+      case FDivVarDrop:
+
+      // vector operators
+      case VAdd:
+      case VSubtract:
+      case VPreScale:
+      case VPostScale:
+      case VIScale:
+      case VEquals:
+      case VNotEquals:
+      case VUnaryMinus:
+      case VFixParam:
+
+      // vector assignment operators
+      case VAssignDrop:
+      case VAddVarDrop:
+      case VSubVarDrop:
+      case VScaleVarDrop:
+      case VIScaleVarDrop:
+
+      case FloatToBool:
+      case VectorToBool:
+
+      // string operators
+      case StrToBool:
+      case StrEquals:
+      case StrNotEquals:
+      case StrLess:
+      case StrLessEqu:
+      case StrGreat:
+      case StrGreatEqu:
+      case StrLength:
+      case StrCat:
+
+      case StrGetChar:
+      case StrSetChar:
+
+      // string slicing and slice slicing
+      case StrSlice:
+      case StrSliceAssign:
+      case SliceSlice:
+
+      // string assignment operators
+      case AssignStrDrop:
+
+      // pointer opeartors
+      case PtrEquals:
+      case PtrNotEquals:
+      case PtrToBool:
+
+      // conversions
+      case IntToFloat:
+      case FloatToInt:
+      case StrToName:
+      case NameToStr:
+
+      // cleanup of local variables
+      case ClearPointedStr:
+      case ClearPointedStruct:
+      case ZeroPointedStruct:
+
+      // drop result
+      case Drop:
+      case VDrop:
+      case DropStr:
+
+      // special assignment operators
+      case AssignPtrDrop:
+      case AssignBool0:
+      case AssignBool1:
+      case AssignBool2:
+      case AssignBool3:
+      case AssignDelegate:
+
+      // dynamic arrays
+      case DynArrayElement:
+      case DynArrayElementS:
+      case DynArrayElementB:
+      case DynArrayElementGrow:
+      case DynArrayGetNum:
+      case DynArraySetNum:
+      case DynArraySetNumMinus:
+      case DynArraySetNumPlus:
+      case DynArrayInsert:
+      case DynArrayRemove:
+
+      // dynamic cast
+      case DynamicCast:
+      case DynamicClassCast:
+
+      // access to the default object
+      case GetDefaultObj:
+      case GetClassDefaultObj:
+
+      // iterators
+      case IteratorInit:
+      case IteratorNext:
+      case IteratorPop:
+
+      // scripted iterators
+      case IteratorDtorAt:
+      case IteratorFinish:
+
+      // `write` and `writeln`
+      case DoWriteOne:
+      case DoWriteFlush:
+
+      // for printf-like varargs
+      case DoPushTypePtr:
+
+      // fill [-1] pointer with zeroes; int is length
+      case ZeroByPtr:
+
+      // get class pointer from pushed object
+      case GetObjClassPtr:
+      // [-2]: classptr; [-1]: classptr
+      case ClassIsAClass:
+
+      // builtins (k8: i'm short of opcodes, so...)
+      case Builtin:
+    }
+    FatalError("setStackOffsets: unhandled opcode %d", Opcode);
+    return 0;
+  }
+
   void disasm () const {
     // opcode
     fprintf(stderr, "(%6d) %c%6d: %s", origIdx, (meJumpTarget ? '*' : ' '), idx, StatementInfo[Opcode].name);
@@ -404,6 +758,9 @@ struct Instr {
         break;
       case OPCARGS_Builtin:
         fprintf(stderr, " %s", StatementBuiltinInfo[Arg1].name);
+        break;
+      case OPCARGS_Member_Int:
+        fprintf(stderr, " %s (%d)", *Member->GetFullName(), Arg2);
         break;
     }
     fprintf(stderr, "\n");
@@ -939,6 +1296,9 @@ void VMCOptimizer::optimizeJumps () {
         break;
       case OPCARGS_Builtin:
         addr += 1;
+        break;
+      case OPCARGS_Member_Int:
+        addr += sizeof(void *);
         break;
     }
   }

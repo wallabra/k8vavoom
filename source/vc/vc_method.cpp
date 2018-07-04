@@ -486,6 +486,9 @@ void VMethod::DumpAsm () {
       case OPCARGS_Builtin:
         dprintf(" %s", StatementBuiltinInfo[Instructions[s].Arg1].name);
         break;
+      case OPCARGS_Member_Int:
+        dprintf(" %s (%d)", *Instructions[s].Member->GetFullName(), Instructions[s].Arg2);
+        break;
     }
     dprintf("\n");
   }
@@ -643,6 +646,7 @@ void VMethod::CompileCode () {
       case OPCARGS_TypeSizeB: WriteUInt8(Instructions[i].TypeArg.GetSize()); break;
       case OPCARGS_Type: WriteType(Instructions[i].TypeArg); break;
       case OPCARGS_Builtin: WriteUInt8(Instructions[i].Arg1); break;
+      case OPCARGS_Member_Int: WritePtr(Instructions[i].Member); break; // int is not emited
     }
     while (StatLocs.length() < Statements.length()) StatLocs.Append(Instructions[i].loc);
   }
@@ -840,6 +844,10 @@ VStream &operator << (VStream &Strm, FInstruction &Instr) {
       break;
     case OPCARGS_Builtin:
       Strm << STRM_INDEX(Instr.Arg1);
+      break;
+    case OPCARGS_Member_Int:
+      Strm << Instr.Member;
+      Strm << STRM_INDEX(Instr.Arg2);
       break;
   }
   return Strm;
