@@ -55,6 +55,11 @@
 #endif
 
 
+// builtin codes
+#define BUILTIN_OPCODE_INFO
+#include "../progdefs.h"
+
+
 #include "vc_mcssa.cpp"
 
 
@@ -141,6 +146,8 @@ protected:
 
   bool removeDeadIfs ();
   bool removeDeadWhiles ();
+
+  void calcStackDepth ();
 };
 
 
@@ -157,7 +164,7 @@ struct Instr {
   vint32 Arg1;
   vint32 Arg2;
   bool Arg1IsFloat;
-  vint32 sofs0, sofs1, sofs2; // stack offsets (from 0th parameter) for destination(0), and two possible sources
+  vint32 spcur; // current stack offset (from 0th parameter)
   vint32 spdelta;
   VMemberBase *Member;
   VName NameArg;
@@ -181,7 +188,7 @@ struct Instr {
     , Arg1(i.Arg1)
     , Arg2(i.Arg2)
     , Arg1IsFloat(i.Arg1IsFloat)
-    , sofs0(-1), sofs1(-1), sofs2(-1)
+    , spcur(-1) // unknown
     , spdelta(0)
     , Member(i.Member)
     , NameArg(i.NameArg)
@@ -202,9 +209,6 @@ struct Instr {
     dest.Arg1 = Arg1;
     dest.Arg2 = Arg2;
     dest.Arg1IsFloat = Arg1IsFloat;
-    dest.sofs0 = sofs0;
-    dest.sofs1 = sofs1;
-    dest.sofs2 = sofs2;
     dest.Member = Member;
     dest.NameArg = NameArg;
     dest.TypeArg = TypeArg;
@@ -354,345 +358,554 @@ struct Instr {
 
   // returns sp delta
   void setStackOffsets (int cursp) {
-    sofs0 = sofs1 = sofs2 = -1; // mark as unused
+    spcur = cursp;
     spdelta = 0;
     switch (Opcode) {
-      case Done:
+      case OPC_Done:
         return;
 
       // call / return
-      case Call:
-      case VCall:
-      case VCallB:
-        sofs1 = cursp-Arg2; // first argument
-        spdelta = -Arg2; // pop arguments
-        spdelta += ((VMethod *)Member)->ReturnType.GetStackSize();
+      case OPC_Call:
+      case OPC_VCall:
+      case OPC_VCallB:
+        spdelta = -(Arg2-0); // pop arguments
+        spdelta += ((VMethod *)Member)->ReturnType.GetStackSize()/4;
+        //if (((VMethod *)Member)->Flags&FUNC_VarArgs) spdelta += 1;
+        if (((VMethod *)Member)->Flags&FUNC_Static) spdelta += 1;
         return;
-      case PushVFunc:
-      case PushFunc:
+      case OPC_PushVFunc:
+      case OPC_PushFunc:
         spdelta = 1;
-        // destination
-        sofs0 = cursp;
-        // source is not on the stack
         return;
-      case DelegateCall:
-      case DelegateCallS:
-      case DelegateCallB:
-        sofs1 = cursp-Arg2; // first argument
+      case OPC_DelegateCall:
+      case OPC_DelegateCallS:
+      case OPC_DelegateCallB:
         spdelta = -Arg2;
-        spdelta += ((VField *)Member)->Type.Function->ReturnType.GetStackSize();
-      case DelegateCallPtr:
-      case Return:
-      case ReturnL:
-      case ReturnV:
+        spdelta += ((VField *)Member)->Type.Function->ReturnType.GetStackSize()/4;
+        return;
+      case OPC_DelegateCallPtr:
+        spdelta = -Arg2-1; // delegate pointer
+        spdelta += TypeArg.Function->ReturnType.GetStackSize()/4;
+        return;
+      case OPC_Return:
+        return;
+      case OPC_ReturnL:
+        spdelta = -1;
+        return;
+      case OPC_ReturnV:
+        spdelta = -3;
+        return;
 
       // branching
-      case GotoB:
-      case GotoNB:
-      case GotoS:
-      case Goto:
-      case IfGotoB:
-      case IfGotoNB:
-      case IfGotoS:
-      case IfGoto:
-      case IfNotGotoB:
-      case IfNotGotoNB:
-      case IfNotGotoS:
-      case IfNotGoto:
-      case CaseGotoB:
-      case CaseGotoS:
-      case CaseGoto:
+      case OPC_GotoB:
+      case OPC_GotoNB:
+      case OPC_GotoS:
+      case OPC_Goto:
+        return;
+      case OPC_IfGotoB:
+      case OPC_IfGotoNB:
+      case OPC_IfGotoS:
+      case OPC_IfGoto:
+      case OPC_IfNotGotoB:
+      case OPC_IfNotGotoNB:
+      case OPC_IfNotGotoS:
+      case OPC_IfNotGoto:
+        spdelta = -1;
+        return;
+      case OPC_CaseGotoB:
+      case OPC_CaseGotoS:
+      case OPC_CaseGoto:
+        return;
 
       // push constants
-      case PushNumber0:
-      case PushNumber1:
-      case PushNumberB:
-      case PushNumberS:
-      case PushNumber:
-      case PushName:
-      case PushNameS:
-      case PushNameB:
-      case PushString:
-      case PushClassId:
-      case PushState:
-      case PushNull:
+      case OPC_PushNumber0:
+      case OPC_PushNumber1:
+      case OPC_PushNumberB:
+      case OPC_PushNumberS:
+      case OPC_PushNumber:
+      case OPC_PushName:
+      case OPC_PushNameS:
+      case OPC_PushNameB:
+      case OPC_PushString:
+      case OPC_PushClassId:
+      case OPC_PushState:
+      case OPC_PushNull:
+        spdelta = 1;
+        return;
 
       // loading of variables
-      case LocalAddress0:
-      case LocalAddress1:
-      case LocalAddress2:
-      case LocalAddress3:
-      case LocalAddress4:
-      case LocalAddress5:
-      case LocalAddress6:
-      case LocalAddress7:
-      case LocalAddressB:
-      case LocalAddressS:
-      case LocalAddress:
-      case LocalValue0:
-      case LocalValue1:
-      case LocalValue2:
-      case LocalValue3:
-      case LocalValue4:
-      case LocalValue5:
-      case LocalValue6:
-      case LocalValue7:
-      case LocalValueB:
-      case VLocalValueB:
-      case StrLocalValueB:
-      case Offset:
-      case OffsetS:
-      case OffsetB:
-      case FieldValue:
-      case FieldValueS:
-      case FieldValueB:
-      case VFieldValue:
-      case VFieldValueS:
-      case VFieldValueB:
-      case PtrFieldValue:
-      case PtrFieldValueS:
-      case PtrFieldValueB:
-      case StrFieldValue:
-      case StrFieldValueS:
-      case StrFieldValueB:
-      case SliceFieldValue:
-      case ByteFieldValue:
-      case ByteFieldValueS:
-      case ByteFieldValueB:
-      case Bool0FieldValue:
-      case Bool0FieldValueS:
-      case Bool0FieldValueB:
-      case Bool1FieldValue:
-      case Bool1FieldValueS:
-      case Bool1FieldValueB:
-      case Bool2FieldValue:
-      case Bool2FieldValueS:
-      case Bool2FieldValueB:
-      case Bool3FieldValue:
-      case Bool3FieldValueS:
-      case Bool3FieldValueB:
-      case CheckArrayBounds: // won't pop index
-      case ArrayElement:
-      case ArrayElementS:
-      case ArrayElementB:
-      case SliceElement:
-      case OffsetPtr:
-      case PushPointed:
-      case PushPointedSlice:
-      case PushPointedSliceLen:
-      case VPushPointed:
-      case PushPointedPtr:
-      case PushPointedByte:
-      case PushBool0:
-      case PushBool1:
-      case PushBool2:
-      case PushBool3:
-      case PushPointedStr:
-      case PushPointedDelegate:
+      case OPC_LocalAddress0:
+      case OPC_LocalAddress1:
+      case OPC_LocalAddress2:
+      case OPC_LocalAddress3:
+      case OPC_LocalAddress4:
+      case OPC_LocalAddress5:
+      case OPC_LocalAddress6:
+      case OPC_LocalAddress7:
+      case OPC_LocalAddressB:
+      case OPC_LocalAddressS:
+      case OPC_LocalAddress:
+      case OPC_LocalValue0:
+      case OPC_LocalValue1:
+      case OPC_LocalValue2:
+      case OPC_LocalValue3:
+      case OPC_LocalValue4:
+      case OPC_LocalValue5:
+      case OPC_LocalValue6:
+      case OPC_LocalValue7:
+      case OPC_LocalValueB:
+        spdelta = 1;
+        return;
+      case OPC_VLocalValueB:
+        spdelta = 3;
+        return;
+      case OPC_StrLocalValueB:
+        spdelta = 1;
+        return;
+      case OPC_Offset:
+      case OPC_OffsetS:
+      case OPC_OffsetB:
+        return;
+      case OPC_FieldValue:
+      case OPC_FieldValueS:
+      case OPC_FieldValueB:
+        return;
+      case OPC_VFieldValue:
+      case OPC_VFieldValueS:
+      case OPC_VFieldValueB:
+        spdelta = 2;
+        return;
+      case OPC_PtrFieldValue:
+      case OPC_PtrFieldValueS:
+      case OPC_PtrFieldValueB:
+      case OPC_StrFieldValue:
+      case OPC_StrFieldValueS:
+      case OPC_StrFieldValueB:
+        return;
+      case OPC_SliceFieldValue:
+        spdelta = 1;
+        return;
+      case OPC_ByteFieldValue:
+      case OPC_ByteFieldValueS:
+      case OPC_ByteFieldValueB:
+      case OPC_Bool0FieldValue:
+      case OPC_Bool0FieldValueS:
+      case OPC_Bool0FieldValueB:
+      case OPC_Bool1FieldValue:
+      case OPC_Bool1FieldValueS:
+      case OPC_Bool1FieldValueB:
+      case OPC_Bool2FieldValue:
+      case OPC_Bool2FieldValueS:
+      case OPC_Bool2FieldValueB:
+      case OPC_Bool3FieldValue:
+      case OPC_Bool3FieldValueS:
+      case OPC_Bool3FieldValueB:
+        return;
+      case OPC_CheckArrayBounds: // won't pop index
+        return;
+      case OPC_ArrayElement:
+      case OPC_ArrayElementS:
+      case OPC_ArrayElementB:
+      case OPC_SliceElement:
+        spdelta = -1;
+        return;
+      case OPC_OffsetPtr:
+        spdelta = 0;
+        return;
+      case OPC_PushPointed:
+        spdelta = 0;
+        return;
+      case OPC_PushPointedSlice:
+        spdelta = 1;
+        return;
+      case OPC_PushPointedSliceLen:
+        spdelta = 0;
+        return;
+      case OPC_VPushPointed:
+        spdelta = 2;
+        return;
+      case OPC_PushPointedPtr:
+      case OPC_PushPointedByte:
+      case OPC_PushBool0:
+      case OPC_PushBool1:
+      case OPC_PushBool2:
+      case OPC_PushBool3:
+      case OPC_PushPointedStr:
+        return;
+      case OPC_PushPointedDelegate:
+        spdelta = 1;
+        return;
 
       // integer opeartors
-      case Add:
-      case Subtract:
-      case Multiply:
-      case Divide:
-      case Modulus:
-      case Equals:
-      case NotEquals:
-      case Less:
-      case Greater:
-      case LessEquals:
-      case GreaterEquals:
-      case NegateLogical:
-      case AndBitwise:
-      case OrBitwise:
-      case XOrBitwise:
-      case LShift:
-      case RShift:
-      case UnaryMinus:
-      case BitInverse:
+      case OPC_Add:
+      case OPC_Subtract:
+      case OPC_Multiply:
+      case OPC_Divide:
+      case OPC_Modulus:
+      case OPC_Equals:
+      case OPC_NotEquals:
+      case OPC_Less:
+      case OPC_Greater:
+      case OPC_LessEquals:
+      case OPC_GreaterEquals:
+        spdelta = -1;
+        return;
+      case OPC_NegateLogical:
+        return;
+      case OPC_AndBitwise:
+      case OPC_OrBitwise:
+      case OPC_XOrBitwise:
+      case OPC_LShift:
+      case OPC_RShift:
+        spdelta = -1;
+        return;
+      case OPC_UnaryMinus:
+      case OPC_BitInverse:
+        return;
 
       // increment / decrement
-      case PreInc:
-      case PreDec:
-      case PostInc:
-      case PostDec:
-      case IncDrop:
-      case DecDrop:
+      case OPC_PreInc:
+      case OPC_PreDec:
+      case OPC_PostInc:
+      case OPC_PostDec:
+        return;
+      case OPC_IncDrop:
+      case OPC_DecDrop:
+        spdelta = -1;
+        return;
 
       // integer assignment operators
-      case AssignDrop:
-      case AddVarDrop:
-      case SubVarDrop:
-      case MulVarDrop:
-      case DivVarDrop:
-      case ModVarDrop:
-      case AndVarDrop:
-      case OrVarDrop:
-      case XOrVarDrop:
-      case LShiftVarDrop:
-      case RShiftVarDrop:
+      case OPC_AssignDrop:
+      case OPC_AddVarDrop:
+      case OPC_SubVarDrop:
+      case OPC_MulVarDrop:
+      case OPC_DivVarDrop:
+      case OPC_ModVarDrop:
+      case OPC_AndVarDrop:
+      case OPC_OrVarDrop:
+      case OPC_XOrVarDrop:
+      case OPC_LShiftVarDrop:
+      case OPC_RShiftVarDrop:
+        spdelta = -2;
+        return;
 
       // increment / decrement byte
-      case BytePreInc:
-      case BytePreDec:
-      case BytePostInc:
-      case BytePostDec:
-      case ByteIncDrop:
-      case ByteDecDrop:
+      case OPC_BytePreInc:
+      case OPC_BytePreDec:
+      case OPC_BytePostInc:
+      case OPC_BytePostDec:
+        return;
+      case OPC_ByteIncDrop:
+      case OPC_ByteDecDrop:
+        spdelta = -1;
+        return;
 
       // byte assignment operators
-      case ByteAssignDrop:
-      case ByteAddVarDrop:
-      case ByteSubVarDrop:
-      case ByteMulVarDrop:
-      case ByteDivVarDrop:
-      case ByteModVarDrop:
-      case ByteAndVarDrop:
-      case ByteOrVarDrop:
-      case ByteXOrVarDrop:
-      case ByteLShiftVarDrop:
-      case ByteRShiftVarDrop:
+      case OPC_ByteAssignDrop:
+      case OPC_ByteAddVarDrop:
+      case OPC_ByteSubVarDrop:
+      case OPC_ByteMulVarDrop:
+      case OPC_ByteDivVarDrop:
+      case OPC_ByteModVarDrop:
+      case OPC_ByteAndVarDrop:
+      case OPC_ByteOrVarDrop:
+      case OPC_ByteXOrVarDrop:
+      case OPC_ByteLShiftVarDrop:
+      case OPC_ByteRShiftVarDrop:
+        spdelta = -2;
+        return;
 
       // floating point operators
-      case FAdd:
-      case FSubtract:
-      case FMultiply:
-      case FDivide:
-      case FEquals:
-      case FNotEquals:
-      case FLess:
-      case FGreater:
-      case FLessEquals:
-      case FGreaterEquals:
-      case FUnaryMinus:
+      case OPC_FAdd:
+      case OPC_FSubtract:
+      case OPC_FMultiply:
+      case OPC_FDivide:
+      case OPC_FEquals:
+      case OPC_FNotEquals:
+      case OPC_FLess:
+      case OPC_FGreater:
+      case OPC_FLessEquals:
+      case OPC_FGreaterEquals:
+        spdelta = -1;
+        return;
+      case OPC_FUnaryMinus:
+        return;
 
       // floating point assignment operators
-      case FAddVarDrop:
-      case FSubVarDrop:
-      case FMulVarDrop:
-      case FDivVarDrop:
+      case OPC_FAddVarDrop:
+      case OPC_FSubVarDrop:
+      case OPC_FMulVarDrop:
+      case OPC_FDivVarDrop:
+        spdelta = -2;
+        return;
 
       // vector operators
-      case VAdd:
-      case VSubtract:
-      case VPreScale:
-      case VPostScale:
-      case VIScale:
-      case VEquals:
-      case VNotEquals:
-      case VUnaryMinus:
-      case VFixParam:
+      case OPC_VAdd:
+      case OPC_VSubtract:
+        spdelta = -3;
+        return;
+      case OPC_VPreScale:
+      case OPC_VPostScale:
+      case OPC_VIScale:
+        spdelta = -1;
+        return;
+      case OPC_VEquals:
+      case OPC_VNotEquals:
+        spdelta = -5;
+        return;
+      case OPC_VUnaryMinus:
+      case OPC_VFixParam:
+        return;
 
       // vector assignment operators
-      case VAssignDrop:
-      case VAddVarDrop:
-      case VSubVarDrop:
-      case VScaleVarDrop:
-      case VIScaleVarDrop:
+      case OPC_VAssignDrop:
+      case OPC_VAddVarDrop:
+      case OPC_VSubVarDrop:
+        spdelta = -4; // ptr and vector
+        return;
+      case OPC_VScaleVarDrop:
+      case OPC_VIScaleVarDrop:
+        spdelta = -2;
+        return;
 
-      case FloatToBool:
-      case VectorToBool:
+      case OPC_FloatToBool:
+        return;
+      case OPC_VectorToBool:
+        spdelta = -2;
+        return;
 
       // string operators
-      case StrToBool:
-      case StrEquals:
-      case StrNotEquals:
-      case StrLess:
-      case StrLessEqu:
-      case StrGreat:
-      case StrGreatEqu:
-      case StrLength:
-      case StrCat:
+      case OPC_StrToBool:
+        return;
+      case OPC_StrEquals:
+      case OPC_StrNotEquals:
+      case OPC_StrLess:
+      case OPC_StrLessEqu:
+      case OPC_StrGreat:
+      case OPC_StrGreatEqu:
+        spdelta = -1;
+        return;
+      case OPC_StrLength:
+        return;
+      case OPC_StrCat:
+        spdelta = -1;
+        return;
 
-      case StrGetChar:
-      case StrSetChar:
+      case OPC_StrGetChar:
+        spdelta = -1;
+        return;
+      case OPC_StrSetChar:
+        spdelta = -3;
+        return;
 
       // string slicing and slice slicing
-      case StrSlice:
-      case StrSliceAssign:
-      case SliceSlice:
+      case OPC_StrSlice:
+        spdelta = -2;
+        return;
+      case OPC_StrSliceAssign:
+        spdelta = -4;
+        return;
+      case OPC_SliceSlice:
+        spdelta = -1;
+        return;
 
       // string assignment operators
-      case AssignStrDrop:
+      case OPC_AssignStrDrop:
+        spdelta = -2;
+        return;
 
       // pointer opeartors
-      case PtrEquals:
-      case PtrNotEquals:
-      case PtrToBool:
+      case OPC_PtrEquals:
+      case OPC_PtrNotEquals:
+        spdelta = -1;
+        return;
+      case OPC_PtrToBool:
+        return;
 
       // conversions
-      case IntToFloat:
-      case FloatToInt:
-      case StrToName:
-      case NameToStr:
+      case OPC_IntToFloat:
+      case OPC_FloatToInt:
+      case OPC_StrToName:
+      case OPC_NameToStr:
+        return;
 
       // cleanup of local variables
-      case ClearPointedStr:
-      case ClearPointedStruct:
-      case ZeroPointedStruct:
+      case OPC_ClearPointedStr:
+      case OPC_ClearPointedStruct:
+      case OPC_ZeroPointedStruct:
+        spdelta = -1;
+        return;
 
       // drop result
-      case Drop:
-      case VDrop:
-      case DropStr:
+      case OPC_Drop:
+        spdelta = -1;
+        return;
+      case OPC_VDrop:
+        spdelta = -3;
+        return;
+      case OPC_DropStr:
+        spdelta = -1;
+        return;
 
       // special assignment operators
-      case AssignPtrDrop:
-      case AssignBool0:
-      case AssignBool1:
-      case AssignBool2:
-      case AssignBool3:
-      case AssignDelegate:
+      case OPC_AssignPtrDrop:
+      case OPC_AssignBool0:
+      case OPC_AssignBool1:
+      case OPC_AssignBool2:
+      case OPC_AssignBool3:
+        spdelta = -2;
+        return;
+      case OPC_AssignDelegate:
+        spdelta = -3;
+        return;
 
       // dynamic arrays
-      case DynArrayElement:
-      case DynArrayElementS:
-      case DynArrayElementB:
-      case DynArrayElementGrow:
-      case DynArrayGetNum:
-      case DynArraySetNum:
-      case DynArraySetNumMinus:
-      case DynArraySetNumPlus:
-      case DynArrayInsert:
-      case DynArrayRemove:
+      case OPC_DynArrayElement:
+      case OPC_DynArrayElementS:
+      case OPC_DynArrayElementB:
+        spdelta = -1;
+        return;
+      case OPC_DynArrayElementGrow:
+        spdelta = -1;
+        return;
+      case OPC_DynArrayGetNum:
+        return;
+      case OPC_DynArraySetNum:
+      case OPC_DynArraySetNumMinus:
+      case OPC_DynArraySetNumPlus:
+        spdelta = -2;
+        return;
+      case OPC_DynArrayInsert:
+      case OPC_DynArrayRemove:
+        spdelta = -3;
+        return;
 
       // dynamic cast
-      case DynamicCast:
-      case DynamicClassCast:
+      case OPC_DynamicCast:
+      case OPC_DynamicClassCast:
+        return;
 
       // access to the default object
-      case GetDefaultObj:
-      case GetClassDefaultObj:
+      case OPC_GetDefaultObj:
+      case OPC_GetClassDefaultObj:
+        return;
 
       // iterators
-      case IteratorInit:
-      case IteratorNext:
-      case IteratorPop:
+      case OPC_IteratorInit:
+        spdelta = -1;
+        return;
+      case OPC_IteratorNext:
+        spdelta = 1;
+        return;
+      case OPC_IteratorPop:
 
       // scripted iterators
-      case IteratorDtorAt:
-      case IteratorFinish:
+      case OPC_IteratorDtorAt:
+      case OPC_IteratorFinish:
 
       // `write` and `writeln`
-      case DoWriteOne:
-      case DoWriteFlush:
+      case OPC_DoWriteOne:
+        switch (TypeArg.Type) {
+          case TYPE_Struct:
+          case TYPE_Array:
+          case TYPE_DynamicArray:
+            spdelta = -1; // ptr
+            break;
+          default:
+            spdelta = -(TypeArg.GetStackSize()/4);
+            break;
+        }
+        return;
+      case OPC_DoWriteFlush:
+        return;
 
       // for printf-like varargs
-      case DoPushTypePtr:
+      case OPC_DoPushTypePtr:
+        spdelta = 1;
+        return;
 
       // fill [-1] pointer with zeroes; int is length
-      case ZeroByPtr:
+      case OPC_ZeroByPtr:
+        spdelta = 1;
+        return;
 
       // get class pointer from pushed object
-      case GetObjClassPtr:
+      case OPC_GetObjClassPtr:
+        return;
       // [-2]: classptr; [-1]: classptr
-      case ClassIsAClass:
+      case OPC_ClassIsAClass:
+        spdelta = -1;
+        return;
 
       // builtins (k8: i'm short of opcodes, so...)
-      case Builtin:
+      case OPC_Builtin:
+        switch (Arg1) {
+          case OPC_Builtin_IntAbs:
+          case OPC_Builtin_FloatAbs:
+          case OPC_Builtin_IntSign:
+          case OPC_Builtin_FloatSign:
+            return;
+          case OPC_Builtin_IntMin:
+          case OPC_Builtin_IntMax:
+          case OPC_Builtin_FloatMin:
+          case OPC_Builtin_FloatMax:
+            spdelta = -1;
+            return;
+          case OPC_Builtin_IntClamp:
+          case OPC_Builtin_FloatClamp:
+            spdelta = -2;
+            return;
+          case OPC_Builtin_FloatIsNaN:
+          case OPC_Builtin_FloatIsInf:
+          case OPC_Builtin_FloatIsFinite:
+          case OPC_Builtin_DegToRad:
+          case OPC_Builtin_RadToDeg:
+          case OPC_Builtin_Sin:
+          case OPC_Builtin_Cos:
+          case OPC_Builtin_Tan:
+          case OPC_Builtin_ASin:
+          case OPC_Builtin_ACos:
+          case OPC_Builtin_ATan:
+          case OPC_Builtin_Sqrt:
+            return;
+          case OPC_Builtin_ATan2:
+            spdelta = -1;
+            return;
+          case OPC_Builtin_VecLength:
+          case OPC_Builtin_VecLength2D:
+            spdelta = -2;
+            return;
+          case OPC_Builtin_VecNormalize:
+          case OPC_Builtin_VecNormalize2D:
+            return;
+          case OPC_Builtin_VecDot:
+          case OPC_Builtin_VecDot2D:
+            spdelta = -5;
+            return;
+          case OPC_Builtin_VecCross:
+            spdelta = -3;
+            return;
+          case OPC_Builtin_VecCross2D:
+            spdelta = -5;
+            return;
+          case OPC_Builtin_RoundF2I:
+          case OPC_Builtin_RoundF2F:
+          case OPC_Builtin_TruncF2I:
+          case OPC_Builtin_TruncF2F:
+          case OPC_Builtin_FloatCeil:
+          case OPC_Builtin_FloatFloor:
+            return;
+          // [-3]: a; [-2]: b, [-1]: delta
+          case OPC_Builtin_FloatLerp:
+          case OPC_Builtin_IntLerp:
+          case OPC_Builtin_FloatSmoothStep:
+          case OPC_Builtin_FloatSmoothStepPerlin:
+            spdelta = -2;
+            return;
+          default: FatalError("Unknown builtin");
+        }
     }
     FatalError("setStackOffsets: unhandled opcode %d", Opcode);
-    return 0;
   }
 
   void disasm () const {
@@ -762,7 +975,11 @@ struct Instr {
       case OPCARGS_Member_Int:
         fprintf(stderr, " %s (%d)", *Member->GetFullName(), Arg2);
         break;
+      case OPCARGS_Type_Int:
+        fprintf(stderr, " %s (%d)", *TypeArg.GetName(), Arg2);
+        break;
     }
+    if (spcur >= 0) fprintf(stderr, " (sp:%d; delta:%d)", spcur, spdelta);
     fprintf(stderr, "\n");
   }
 };
@@ -1105,6 +1322,7 @@ void VMCOptimizer::checkReturns () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VMCOptimizer::shortenInstructions () {
+  calcStackDepth();
   // two required steps
   optimizeLoads();
   optimizeJumps();
@@ -1299,6 +1517,9 @@ void VMCOptimizer::optimizeJumps () {
         break;
       case OPCARGS_Member_Int:
         addr += sizeof(void *);
+        break;
+      case OPCARGS_Type_Int:
+        addr += 4;
         break;
     }
   }
@@ -1682,4 +1903,35 @@ bool VMCOptimizer::removeDeadWhiles () {
     }
   }
   return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void VMCOptimizer::calcStackDepth () {
+  // reset
+  for (Instr *it = ilistHead; it; it = it->next) { it->spcur = -1; it->spdelta = 0; }
+  int cursp = 0;
+  for (int f = 0; f < instrCount; ++f) {
+    Instr *it = getInstrAt(f);
+    if (it->spcur >= 0) cursp = it->spcur; // possibly set by branch
+    it->setStackOffsets(cursp);
+    cursp += it->spdelta;
+    if (cursp < 0) {
+      fprintf(stderr, "==== %s ====\n", *func->GetFullName()); disasmAll();
+      FatalError("unbalanced stack(0) (f=%d; spcur=%d; cursp=%d; delta=%d)", f, it->spcur, cursp, it->spdelta);
+    }
+    if (it->isAnyBranch()) {
+      int dest = it->getBranchDest();
+      if (dest < 0 || dest >= instrCount) continue;
+      if (dest < f) {
+        if (getInstrAt(dest)->spcur != cursp) {
+          fprintf(stderr, "==== %s ====\n", *func->GetFullName()); disasmAll();
+          FatalError("unbalanced stack(1) (f=%d; dest=%d; spcur=%d; cursp=%d)", f, dest, getInstrAt(dest)->spcur, cursp);
+        }
+      } else if (dest > f) {
+        getInstrAt(dest)->spcur = cursp;
+      }
+    }
+  }
+  //fprintf(stderr, "==== %s ====\n", *func->GetFullName()); disasmAll();
 }
