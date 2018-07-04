@@ -3374,7 +3374,6 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
         }
       }
       if (!st) { ParseError(Loc, "`goto default;` whithout `default`"); return false; }
-      casedef = st;
     } else {
       // find the case
       if (CaseValue) {
@@ -3441,7 +3440,7 @@ void VGotoStmt::DoEmit (VEmitContext &ec) {
     EmitCleanups(ec, lbl);
     ec.EmitGotoTo(Name, Loc);
   } else if (GotoType == Case) {
-    if (casedef) {
+    if (!casedef) {
       ParseError(Loc, "Misplaced `goto case` statement");
       return;
     }
