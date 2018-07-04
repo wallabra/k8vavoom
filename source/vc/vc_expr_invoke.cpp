@@ -1666,7 +1666,12 @@ void VInvocation::Emit (VEmitContext &ec) {
       }
     } else {
       Args[i]->Emit(ec);
-      SelfOffset += (Args[i]->Type.Type == TYPE_Vector ? 3 : 1);
+      if (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
+        SelfOffset += 1;
+      } else {
+        //SelfOffset += (Args[i]->Type.Type == TYPE_Vector ? 3 : Args[i]->Type.Type == TYPE_Delegate ? 2 : 1);
+        SelfOffset += Args[i]->Type.GetStackSize()/4;
+      }
       if (Func->ParamFlags[i]&FPARM_Optional) {
         // marshall "specified_*"?
         if (i < VMethod::MAX_PARAMS && optmarshall[i] && Args[i]->IsLocalVarExpr()) {
