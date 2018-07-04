@@ -188,7 +188,7 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 
   case PLATEV_DownByValueWaitUpStay:
     Spot = *Sector->lines[0]->v1;
-    Spot.z = GetPlanePointZ(&Sector->floor, Spot) - itof(Arg4) * 8.0;
+    Spot.z = GetPlanePointZ(ref Sector->floor, Spot) - itof(Arg4) * 8.0;
     Low = DotProduct(Sector->floor.normal, Spot);
     if (Low > Sector->floor.dist)
       Low = Sector->floor.dist;
@@ -221,7 +221,7 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 
   case PLATEV_UpByValueWaitDownStay:
     Spot = *Sector->lines[0]->v1;
-    Spot.z = GetPlanePointZ(&Sector->floor, Spot) + itof(Arg4) * 8.0;
+    Spot.z = GetPlanePointZ(ref Sector->floor, Spot) + itof(Arg4) * 8.0;
     High = DotProduct(Sector->floor.normal, Spot);
     if (High < Sector->floor.dist)
       High = Sector->floor.dist;

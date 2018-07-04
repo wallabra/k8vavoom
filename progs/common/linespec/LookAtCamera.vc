@@ -109,7 +109,7 @@ override bool Interpolate()
   if (::Interpolate())
   {
     delta = Target.GetCentre() - Origin;
-    VectorAngles(&delta, &ang);
+    VectorAngles(delta, out ang);
     Angles.yaw = ang.yaw;
     if (Args[2] & 4)
     {

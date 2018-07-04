@@ -48,7 +48,7 @@ final void A_FirePhoenixPL1() self(Actor)
 
   Wpn.DepleteAmmo(Wpn.FireMode);
   SpawnPlayerMissile(PhoenixFX1);
-  AngleVector(&Angles, &vforward);
+  AngleVector(Angles, out vforward);
   Velocity -= vforward * 140.0;
 }
 

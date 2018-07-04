@@ -71,7 +71,7 @@ bool Physics(float DeltaTime)
       {
         continue;
       }
-      float height = GetPlanePointZ(&Sector->floor, Origin);
+      float height = GetPlanePointZ(ref Sector->floor, Origin);
       if (Origin.z > height)
       {
         if (!Sector->heightsec || (Sector->heightsec->bIgnoreHeightSec))
@@ -79,7 +79,7 @@ bool Physics(float DeltaTime)
           continue;
         }
 
-        float waterheight = GetPlanePointZ(&Sector->heightsec->floor, Origin);
+        float waterheight = GetPlanePointZ(ref Sector->heightsec->floor, Origin);
         if (waterheight > height && Origin.z >= waterheight)
         {
           continue;
@@ -141,7 +141,7 @@ bool Physics(float DeltaTime)
         LinkToWorld();
       }
       FloatBobPhase += DeltaTime;
-      Origin.z = GetPlanePointZ(&Sector->floor, Origin) + Special1f +
+      Origin.z = GetPlanePointZ(ref Sector->floor, Origin) + Special1f +
         Level.Game.FloatBobOffsets[ftoi(FloatBobPhase * 35.0) & 63];
     }
     else
@@ -768,7 +768,7 @@ final bool HitFloor()
   float vdot;
 
   //  Trigger hit floor sector actions.
-  if (Sector->ActionList && GetPlanePointZ(&Sector->floor, Origin) == FloorZ)
+  if (Sector->ActionList && GetPlanePointZ(ref Sector->floor, Origin) == FloorZ)
   {
     SectorAction(Sector->ActionList).TriggerAction(self,
       SectorAction::SECSPAC_HitFloor);
@@ -871,7 +871,7 @@ final bool HitCeiling()
   float vdot;
 
   //  Trigger hit ceiling sector actions.
-  if (Sector->ActionList && GetPlanePointZ(&Sector->ceiling, Origin) ==
+  if (Sector->ActionList && GetPlanePointZ(ref Sector->ceiling, Origin) ==
     CeilingZ)
   {
     SectorAction(Sector->ActionList).TriggerAction(self,
@@ -1346,7 +1346,7 @@ final bool HitFloorType()
   VTerrainInfo *TInfo;
   VSplashInfo *SInfo;
 
-  if (FloorZ != GetPlanePointZ(&Sector->floor, Origin))
+  if (FloorZ != GetPlanePointZ(ref Sector->floor, Origin))
   {
     // don't splash if landing on the edge above water/lava/etc....
     return false;
@@ -1502,7 +1502,7 @@ final override void ApplyFriction()
     if (Velocity.x > 0.25 * 35.0 || Velocity.x < -0.25 * 35.0 ||
       Velocity.y > 0.25 * 35.0 || Velocity.y < -0.25 * 35.0)
     {
-      if (FloorZ > GetPlanePointZ(&Sector->floor, Origin) ||
+      if (FloorZ > GetPlanePointZ(ref Sector->floor, Origin) ||
         DropOffZ != FloorZ)
       {
         return;

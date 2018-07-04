@@ -443,7 +443,7 @@ final void A_ReaverRanged()
   for (i = 0; i < 3; i++)
   {
     dir = aimDir;
-    VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+    VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
     damage = ((P_Random() % 8) + 1) * 3;
     LineAttack(dir, MISSILERANGE, damage, StrifePuff);
   }
@@ -471,7 +471,7 @@ final void A_TemplarAttack()
   for (i = 0; i < 3; i++)
   {
     dir = aimDir;
-    VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+    VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
     damage = ((P_Random() % 5) + 1) * 3;
     LineAttack(dir, MISSILERANGE + 64.0, damage, MaulerPuff,,, 'Disintegrate');
   }

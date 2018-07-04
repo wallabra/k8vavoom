@@ -48,7 +48,7 @@ final void A_PosAttack()
   A_FaceTarget();
 
   AimLineAttack(dir, Angles, MISSILERANGE);
-  VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+  VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
 
   PlaySound('grunt/attack', CHAN_WEAPON);
 
@@ -113,7 +113,7 @@ final void DoSPosAttack()
   for (i = 0; i < 3; i++)
   {
     dir = aimDir;
-    VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+    VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
     damage = ((P_Random() % 5) + 1) * 3;
     LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Shell', (i != 0)); //k8:FIXME: Mastermind guy should use 'Bullet' here
   }
@@ -147,7 +147,7 @@ final void A_CPosAttack()
   PlaySound(AttackSound, CHAN_WEAPON);
   A_FaceTarget();
   AimLineAttack(dir, Angles, MISSILERANGE);
-  VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+  VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
   damage = ((P_Random() % 5) + 1) * 3;
   LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet', false);
 }
@@ -587,7 +587,7 @@ final void decorate_A_FatAttack1(optional class!EntityEx SpawnType)
   if (A)
   {
     A.Angles.yaw = AngleMod360(A.Angles.yaw + FatsoSpreadAngle);
-    VectorRotateAroundZ(&A.Velocity, FatsoSpreadAngle);
+    VectorRotateAroundZ(ref A.Velocity, FatsoSpreadAngle);
   }
 }
 
@@ -635,7 +635,7 @@ final void decorate_A_FatAttack2(optional class!EntityEx SpawnType)
   if (A)
   {
     A.Angles.yaw = AngleMod360(A.Angles.yaw - FatsoSpreadAngle * 2.0);
-    VectorRotateAroundZ(&A.Velocity, -FatsoSpreadAngle * 2.0);
+    VectorRotateAroundZ(ref A.Velocity, -FatsoSpreadAngle * 2.0);
   }
 }
 
@@ -680,14 +680,14 @@ final void decorate_A_FatAttack3(optional class!EntityEx SpawnType)
   if (A)
   {
     A.Angles.yaw = AngleMod360(A.Angles.yaw - FatsoSpreadAngle / 2.0);
-    VectorRotateAroundZ(&A.Velocity, -FatsoSpreadAngle / 2.0);
+    VectorRotateAroundZ(ref A.Velocity, -FatsoSpreadAngle / 2.0);
   }
 
   A = SpawnMissile(Target, SpawnType);
   if (A)
   {
     A.Angles.yaw = AngleMod360(A.Angles.yaw + FatsoSpreadAngle / 2.0);
-    VectorRotateAroundZ(&A.Velocity, FatsoSpreadAngle / 2.0);
+    VectorRotateAroundZ(ref A.Velocity, FatsoSpreadAngle / 2.0);
   }
 }
 

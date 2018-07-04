@@ -353,20 +353,20 @@ final float FindLowestFloorSurrounding (sector_t *sec, TVec *v) {
   TVec spot;
 
   spot = *sec->lines[0]->v1;
-  floor = GetPlanePointZ(&sec->floor, spot);
+  floor = GetPlanePointZ(ref sec->floor, spot);
   for (int i = 0; i < sec.lines.length; ++i) {
     check = sec->lines[i];
     other = getNextSector(check, sec);
 
     if (!other) continue;
 
-    ofloor = GetPlanePointZ(&other->floor, *check->v1);
-    if (ofloor < floor && ofloor < GetPlanePointZ(&sec->floor, *check->v1)) {
+    ofloor = GetPlanePointZ(ref other->floor, *check->v1);
+    if (ofloor < floor && ofloor < GetPlanePointZ(ref sec->floor, *check->v1)) {
       floor = ofloor;
       spot = *check->v1;
     }
-    ofloor = GetPlanePointZ(&other->floor, *check->v2);
-    if (ofloor < floor && ofloor < GetPlanePointZ(&sec->floor, *check->v2)) {
+    ofloor = GetPlanePointZ(ref other->floor, *check->v2);
+    if (ofloor < floor && ofloor < GetPlanePointZ(ref sec->floor, *check->v2)) {
       floor = ofloor;
       spot = *check->v2;
     }
@@ -398,12 +398,12 @@ final float FindHighestFloorSurrounding (sector_t *sec, TVec *v) {
 
     if (!other) continue;
 
-    ofloor = GetPlanePointZ(&other->floor, *check->v1);
+    ofloor = GetPlanePointZ(ref other->floor, *check->v1);
     if (ofloor > floor) {
       floor = ofloor;
       spot = *check->v1;
     }
-    ofloor = GetPlanePointZ(&other->floor, *check->v2);
+    ofloor = GetPlanePointZ(ref other->floor, *check->v2);
     if (ofloor > floor) {
       floor = ofloor;
       spot = *check->v2;
@@ -435,7 +435,7 @@ final float FindNextHighestFloor (sector_t *sec, TVec *v) {
   float heightdiff;
 
   spot = *sec->lines[0]->v1;
-  height = GetPlanePointZ(&sec->floor, spot);
+  height = GetPlanePointZ(ref sec->floor, spot);
   heightdiff = 99999.0;
   for (int i = 0; i < sec.lines.length; ++i) {
     check = sec->lines[i];
@@ -443,15 +443,15 @@ final float FindNextHighestFloor (sector_t *sec, TVec *v) {
 
     if (!other) continue;
 
-    ofloor = GetPlanePointZ(&other->floor, *check->v1);
-    floor = GetPlanePointZ(&sec->floor, *check->v1);
+    ofloor = GetPlanePointZ(ref other->floor, *check->v1);
+    floor = GetPlanePointZ(ref sec->floor, *check->v1);
     if (ofloor > floor && ofloor-floor < heightdiff) {
       heightdiff = ofloor-floor;
       height = ofloor;
       spot = *check->v1;
     }
-    ofloor = GetPlanePointZ(&other->floor, *check->v2);
-    floor = GetPlanePointZ(&sec->floor, *check->v2);
+    ofloor = GetPlanePointZ(ref other->floor, *check->v2);
+    floor = GetPlanePointZ(ref sec->floor, *check->v2);
     if (ofloor > floor && ofloor-floor < heightdiff) {
       heightdiff = ofloor-floor;
       height = ofloor;
@@ -484,7 +484,7 @@ final float FindNextLowestFloor (sector_t *sec, TVec *v) {
   float heightdiff;
 
   spot = *sec->lines[0]->v1;
-  height = GetPlanePointZ(&sec->floor, spot);
+  height = GetPlanePointZ(ref sec->floor, spot);
   heightdiff = 99999.0;
   for (int i = 0; i < sec.lines.length; ++i) {
     check = sec->lines[i];
@@ -492,15 +492,15 @@ final float FindNextLowestFloor (sector_t *sec, TVec *v) {
 
     if (!other) continue;
 
-    ofloor = GetPlanePointZ(&other->floor, *check->v1);
-    floor = GetPlanePointZ(&sec->floor, *check->v1);
+    ofloor = GetPlanePointZ(ref other->floor, *check->v1);
+    floor = GetPlanePointZ(ref sec->floor, *check->v1);
     if (ofloor < floor && floor-ofloor < heightdiff) {
       heightdiff = floor-ofloor;
       height = ofloor;
       spot = *check->v1;
     }
-    ofloor = GetPlanePointZ(&other->floor, *check->v2);
-    floor = GetPlanePointZ(&sec->floor, *check->v2);
+    ofloor = GetPlanePointZ(ref other->floor, *check->v2);
+    floor = GetPlanePointZ(ref sec->floor, *check->v2);
     if (ofloor < floor && floor-ofloor < heightdiff) {
       heightdiff = floor-ofloor;
       height = ofloor;
@@ -533,7 +533,7 @@ final float FindNextLowestCeiling (sector_t *sec, TVec *v) {
   float heightdiff;
 
   spot = *sec->lines[0]->v1;
-  height = GetPlanePointZ(&sec->ceiling, spot);
+  height = GetPlanePointZ(ref sec->ceiling, spot);
   heightdiff = 99999.0;
   for (int i = 0; i < sec.lines.length; ++i) {
     check = sec->lines[i];
@@ -541,15 +541,15 @@ final float FindNextLowestCeiling (sector_t *sec, TVec *v) {
 
     if (!other) continue;
 
-    oceil = GetPlanePointZ(&other->ceiling, *check->v1);
-    ceil = GetPlanePointZ(&sec->ceiling, *check->v1);
+    oceil = GetPlanePointZ(ref other->ceiling, *check->v1);
+    ceil = GetPlanePointZ(ref sec->ceiling, *check->v1);
     if (oceil < ceil && ceil-oceil < heightdiff) {
       heightdiff = ceil-oceil;
       height = oceil;
       spot = *check->v1;
     }
-    oceil = GetPlanePointZ(&other->ceiling, *check->v2);
-    ceil = GetPlanePointZ(&sec->ceiling, *check->v2);
+    oceil = GetPlanePointZ(ref other->ceiling, *check->v2);
+    ceil = GetPlanePointZ(ref sec->ceiling, *check->v2);
     if (oceil < ceil && ceil-oceil < heightdiff) {
       heightdiff = ceil-oceil;
       height = oceil;
@@ -585,7 +585,7 @@ final float FindNextHighestCeiling(sector_t *sec, TVec *v)
   float   heightdiff;
 
   spot = *sec->lines[0]->v1;
-  height = GetPlanePointZ(&sec->ceiling, spot);
+  height = GetPlanePointZ(ref sec->ceiling, spot);
   heightdiff = 99999.0;
   for (i = 0; i < sec.lines.length; i++)
   {
@@ -595,16 +595,16 @@ final float FindNextHighestCeiling(sector_t *sec, TVec *v)
     if (!other)
       continue;
 
-    oceil = GetPlanePointZ(&other->ceiling, *check->v1);
-    ceil = GetPlanePointZ(&sec->ceiling, *check->v1);
+    oceil = GetPlanePointZ(ref other->ceiling, *check->v1);
+    ceil = GetPlanePointZ(ref sec->ceiling, *check->v1);
     if (oceil > ceil && oceil - ceil < heightdiff)
     {
       heightdiff = oceil - ceil;
       height = oceil;
       spot = *check->v1;
     }
-    oceil = GetPlanePointZ(&other->ceiling, *check->v2);
-    ceil = GetPlanePointZ(&sec->ceiling, *check->v2);
+    oceil = GetPlanePointZ(ref other->ceiling, *check->v2);
+    ceil = GetPlanePointZ(ref sec->ceiling, *check->v2);
     if (oceil > ceil && oceil - ceil < heightdiff)
     {
       heightdiff = oceil - ceil;
@@ -644,13 +644,13 @@ final float FindLowestCeilingSurrounding(sector_t *sec, TVec *v)
     if (!other)
       continue;
 
-    oceil = GetPlanePointZ(&other->ceiling, *check->v1);
+    oceil = GetPlanePointZ(ref other->ceiling, *check->v1);
     if (oceil < height)
     {
       height = oceil;
       spot = *check->v1;
     }
-    oceil = GetPlanePointZ(&other->ceiling, *check->v2);
+    oceil = GetPlanePointZ(ref other->ceiling, *check->v2);
     if (oceil < height)
     {
       height = oceil;
@@ -689,13 +689,13 @@ final float FindHighestCeilingSurrounding(sector_t *sec, TVec *v)
     if (!other)
       continue;
 
-    oceil = GetPlanePointZ(&other->ceiling, *check->v1);
+    oceil = GetPlanePointZ(ref other->ceiling, *check->v1);
     if (oceil > height)
     {
       height = oceil;
       spot = *check->v1;
     }
-    oceil = GetPlanePointZ(&other->ceiling, *check->v2);
+    oceil = GetPlanePointZ(ref other->ceiling, *check->v2);
     if (oceil > height)
     {
       height = oceil;
@@ -825,8 +825,8 @@ final sector_t *FindModelFloorSector(sector_t *sec, float height)
     check = sec->lines[i];
     other = getNextSector(check, sec);
     if (other &&
-      (GetPlanePointZ(&other->floor, *check->v1) == height ||
-      GetPlanePointZ(&other->floor, *check->v2) == height))
+      (GetPlanePointZ(ref other->floor, *check->v1) == height ||
+      GetPlanePointZ(ref other->floor, *check->v2) == height))
     {
       return other;
     }
@@ -865,8 +865,8 @@ final sector_t *FindModelCeilingSector(sector_t *sec, float height)
     check = sec->lines[i];
     other = getNextSector(check, sec);
     if (other &&
-      (GetPlanePointZ(&other->ceiling, *check->v1) == height ||
-      GetPlanePointZ(&other->ceiling, *check->v2) == height))
+      (GetPlanePointZ(ref other->ceiling, *check->v1) == height ||
+      GetPlanePointZ(ref other->ceiling, *check->v2) == height))
     {
       return other;
     }
@@ -929,13 +929,13 @@ final float FindHighestFloorPoint(sector_t *sec, TVec *v)
   for (i = 0; i < sec.lines.length; i++)
   {
     line = sec->lines[i];
-    probeheight = GetPlanePointZ(&sec->floor, *line->v1);
+    probeheight = GetPlanePointZ(ref sec->floor, *line->v1);
     if (probeheight > height)
     {
       height = probeheight;
       spot = *line->v1;
     }
-    probeheight = GetPlanePointZ(&sec->floor, *line->v2);
+    probeheight = GetPlanePointZ(ref sec->floor, *line->v2);
     if (probeheight > height)
     {
       height = probeheight;
@@ -974,13 +974,13 @@ final float FindLowestCeilingPoint(sector_t *sec, TVec *v)
   for (i = 0; i < sec.lines.length; i++)
   {
     line = sec->lines[i];
-    probeheight = GetPlanePointZ(&sec->ceiling, *line->v1);
+    probeheight = GetPlanePointZ(ref sec->ceiling, *line->v1);
     if (probeheight < height)
     {
       height = probeheight;
       spot = *line->v1;
     }
-    probeheight = GetPlanePointZ(&sec->ceiling, *line->v2);
+    probeheight = GetPlanePointZ(ref sec->ceiling, *line->v2);
     if (probeheight < height)
     {
       height = probeheight;

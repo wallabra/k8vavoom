@@ -72,7 +72,7 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   Dir = (InStairsType == STAIRSEV_DownNormal ||
     InStairsType == STAIRSEV_DownSync) ? -1 : 1;
 
-  Height = GetPlanePointZ(&InSector->floor, vector(0.0, 0.0, 0.0));
+  Height = GetPlanePointZ(ref InSector->floor, vector(0.0, 0.0, 0.0));
   switch (InStairsType)
   {
   case STAIRSEV_DownNormal:
@@ -143,7 +143,7 @@ void QueueInit(sector_t *InSector, int InType, float InHeight, int InStairsType,
   DelayTotal = InDelay;
   if (DelayTotal)
   {
-    Spot.z = GetPlanePointZ(&Sector->floor, Spot) + StairStepDelta;
+    Spot.z = GetPlanePointZ(ref Sector->floor, Spot) + StairStepDelta;
     StairsDelayDist = DotProduct(Sector->floor.normal, Spot);
     StairsDelayDistDelta = StairStepDelta;
   }

@@ -352,7 +352,7 @@ bool Interpolate()
         TempOrg = Origin - TempOrg;
         Origin -= TempOrg;
       }
-      VectorAngles(&TempOrg, &TempAng);
+      VectorAngles(TempOrg, out TempAng);
       if (Args[2] & 2)
       {
         // adjust yaw

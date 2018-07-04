@@ -164,7 +164,7 @@ final void A_Respawn(optional int Flags)
   bool OK = false;
   Org.x = SpawnPoint.x;
   Org.y = SpawnPoint.y;
-  Org.z = GetPlanePointZ(&XLevel.PointInSector(Org)->floor, Org);
+  Org.z = GetPlanePointZ(ref XLevel.PointInSector(Org)->floor, Org);
   SetOrigin(Org);
   bSolid = true;
   Height = default.Height;
@@ -274,7 +274,7 @@ final void A_ShootGun()
   PlaySound('monsters/rifle', CHAN_WEAPON);
   A_FaceTarget();
   AimLineAttack(dir, Angles, MISSILERANGE);
-  VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+  VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
   damage = ((P_Random() % 5) + 1) * 3;
   LineAttack(dir, MISSILERANGE, damage, StrifePuff);
 }

@@ -300,7 +300,7 @@ final void A_SpawnItemEx(class!Actor ItemType, optional float XOffs,
     //  In relative mode negative y values mean 'left' and positive ones
     // mean 'right'. This is the inverse orientation of the absolute mode!
     Org.y = -Org.y;
-    VectorRotateAroundZ(&Org, Angle);
+    VectorRotateAroundZ(ref Org, Angle);
   }
   Org += Origin;
 
@@ -321,7 +321,7 @@ final void A_SpawnItemEx(class!Actor ItemType, optional float XOffs,
     {
       //  The same issue as with offsets.
       A.Velocity.y = -A.Velocity.y;
-      VectorRotateAroundZ(&A.Velocity, Angle);
+      VectorRotateAroundZ(ref A.Velocity, Angle);
     }
     if (Flags & 256)
     {

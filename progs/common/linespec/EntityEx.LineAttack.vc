@@ -402,7 +402,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance) {
   float aim_bottomslope; // slopes to top and bottom of target
   float aim_range2d;
 
-  AngleVector(&angles, &aim_dir);
+  AngleVector(angles, out aim_dir);
   x2 = Origin.x+distance*aim_dir.x;
   y2 = Origin.y+distance*aim_dir.y;
   aim_z = Origin.z+Height/2.0-FloorClip;
@@ -497,7 +497,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance) {
   }
 
   if (linetarget) angles.pitch = -atan(aim_slope);
-  AngleVector(&angles, &dir);
+  AngleVector(angles, out dir);
   OutDir = dir;
   return linetarget;
 }
@@ -527,7 +527,7 @@ final EntityEx Aim (out TVec OutDir, float distance, optional float yaw, optiona
   if (specified_yaw) ang.yaw = yaw;
   if (bIsPlayer && /*!PlayerEx(Player).bAutoAim*/!aaim) {
     //ang.pitch = AngleMod360(ang.pitch-4);
-    AngleVector(&ang, &dir);
+    AngleVector(ang, out dir);
     OutDir = dir;
   }
 
@@ -542,7 +542,7 @@ final EntityEx Aim (out TVec OutDir, float distance, optional float yaw, optiona
       LineTarget = AimLineAttack(dir, ang, distance);
       if (!LineTarget) {
         ang.yaw = AngleMod360(ang.yaw+45.0/8.0);
-        AngleVector(&ang, &dir);
+        AngleVector(ang, out dir);
       }
     }
   }
@@ -582,7 +582,7 @@ final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps
     angles = Angles;
     LineTarget = AimLineAttack(OutDir, angles, FinalRange);
   } else {
-    AngleVector(&Angles, &vforward);
+    AngleVector(Angles, out vforward);
     OutDir = vforward;
   }
 

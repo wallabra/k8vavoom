@@ -781,7 +781,7 @@ final bool StepMove()
 
         CheckDropOff(DeltaX, DeltaY);
         dir = Target.Origin - Origin;
-        VectorAngles(&dir, &ang);
+        VectorAngles(dir, out ang);
 
         if (DeltaX > 0.0)
         {

@@ -821,7 +821,7 @@ void TranslateLine(Level InLevel, line_t *line)
   case 416:
   case 417:
     if (line->frontsector) {
-      if (GetPlanePointZ(&line->frontsector->floor, *line->frontsector->lines[0]->v1) < GetPlanePointZ(&line->frontsector->ceiling, *line->frontsector->lines[0]->v1))
+      if (GetPlanePointZ(ref line->frontsector->floor, *line->frontsector->lines[0]->v1) < GetPlanePointZ(ref line->frontsector->ceiling, *line->frontsector->lines[0]->v1))
       {
         InLevel.SwapPlanes(line->frontsector);
       }

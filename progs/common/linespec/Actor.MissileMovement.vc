@@ -154,7 +154,7 @@ final void A_Tracer()
   }
   wishdir = currdir + delta * adjustlen;
   Velocity = wishdir * Speed;
-  VectorAngles(&wishdir, &Angles);
+  VectorAngles(wishdir, out Angles);
 }
 
 //==========================================================================

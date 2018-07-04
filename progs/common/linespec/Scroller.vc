@@ -207,9 +207,9 @@ void InitTextureModel(line_t *Line, line_t *SrcLine)
   }
   if (Control != -1)
   {
-    LastHeight = GetPlanePointZ(&XLevel.Sectors[Control].floor,
+    LastHeight = GetPlanePointZ(ref XLevel.Sectors[Control].floor,
       XLevel.Sectors[Control].soundorg) +
-      GetPlanePointZ(&XLevel.Sectors[Control].ceiling,
+      GetPlanePointZ(ref XLevel.Sectors[Control].ceiling,
       XLevel.Sectors[Control].soundorg);
   }
 }
@@ -283,9 +283,9 @@ void InitGen(int InType, line_t *SrcLine, int InAffectee)
   }
   if (Control != -1)
   {
-    LastHeight = GetPlanePointZ(&XLevel.Sectors[Control].floor,
+    LastHeight = GetPlanePointZ(ref XLevel.Sectors[Control].floor,
       XLevel.Sectors[Control].soundorg) +
-      GetPlanePointZ(&XLevel.Sectors[Control].ceiling,
+      GetPlanePointZ(ref XLevel.Sectors[Control].ceiling,
       XLevel.Sectors[Control].soundorg);
   }
 }
@@ -358,9 +358,9 @@ override void Tick(float DeltaTime)
   if (Control != -1)
   {
     //  Compute scroll amounts based on a sector's height changes
-    Height = GetPlanePointZ(&XLevel.Sectors[Control].floor,
+    Height = GetPlanePointZ(ref XLevel.Sectors[Control].floor,
       XLevel.Sectors[Control].soundorg) +
-      GetPlanePointZ(&XLevel.Sectors[Control].ceiling,
+      GetPlanePointZ(ref XLevel.Sectors[Control].ceiling,
       XLevel.Sectors[Control].soundorg);
     Delta = Height - LastHeight;
     LastHeight = Height;

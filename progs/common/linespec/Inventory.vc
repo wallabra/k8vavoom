@@ -1405,7 +1405,7 @@ final void A_FireCustomMissile(class!Actor MissileType, optional float Angle,
 
     if (!AimAtAngle)
     {
-      VectorRotateAroundZ(&A.Velocity, Angle);
+      VectorRotateAroundZ(ref A.Velocity, Angle);
     }
   }
 }
@@ -1442,7 +1442,7 @@ final void A_RailAttack(int RailDamage, optional float Offset,
   int Col1 = ParseColour(Colour1);
   int Col2 = ParseColour(Colour2);
   TVec Dir;
-  AngleVector(&Angles, &Dir);
+  AngleVector(Angles, out Dir);
   RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType,
     !!(Flags & 1), !!(Flags & 2));
 }
@@ -1749,7 +1749,7 @@ final void DoFireRailgun(float Offset)
   }
   int RailDamage = Level.Game.deathmatch ? 100 : 150;
   TVec Dir;
-  AngleVector(&Angles, &Dir);
+  AngleVector(Angles, out Dir);
   RailAttack(Dir, Offset, RailDamage);
 }
 

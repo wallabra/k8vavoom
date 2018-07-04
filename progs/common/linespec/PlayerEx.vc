@@ -372,7 +372,7 @@ final void CheckWaterJump()
   TVec HitNormal;
 
   // check for a jump-out-of-water
-  AngleVector(&MO.Angles, &vforward);
+  AngleVector(MO.Angles, out vforward);
   start = MO.Origin;
   start.z += MO.Height * 0.5 + 8.0;
   vforward.z = 0.0;
@@ -413,7 +413,7 @@ final void WaterMove(float deltaTime)
   //  if not onground.
   onground = (MO.Origin.z <= MO.FloorZ) || EntityEx(MO).bOnMobj;
 
-  AngleVectors(&MO.Angles, &vforward, &vright, &vup);
+  AngleVectors(MO.Angles, out vforward, out vright, out vup);
 
   forward = ForwardMove;
   side = SideMove;
@@ -476,7 +476,7 @@ final void PlayerInSpecialSector(float deltaTime)
   float speed;
   float finean;
 
-  if (MO.Origin.z != GetPlanePointZ(&MO.Sector->floor, MO.Origin) &&
+  if (MO.Origin.z != GetPlanePointZ(ref MO.Sector->floor, MO.Origin) &&
     !MO.WaterLevel)
   {
     // Player is not touching the floor
@@ -1318,7 +1318,7 @@ final bool UsePuzzleItem(int PuzzleItemType)
   TVec PuzzleUseDir;
   intercept_t * in;
 
-  AngleVector(&MO.Angles, &PuzzleUseDir);
+  AngleVector(MO.Angles, out PuzzleUseDir);
   x1 = MO.Origin.x;
   y1 = MO.Origin.y;
   x2 = x1 + USERANGE * PuzzleUseDir.x;
@@ -1998,7 +1998,7 @@ void ClientRailTrail(TVec From, TVec To, int Col1, int Col2, float MaxDiff)
   float Len = Length(To - From);
   TVec Dir = Normalise(To - From);
   TAVec Ang;
-  VectorAngles(&Dir, &Ang);
+  VectorAngles(Dir, out Ang);
   Ang.roll = 270.0;
 
   if (!Col1)
@@ -2074,7 +2074,7 @@ void ClientRailTrail(TVec From, TVec To, int Col1, int Col2, float MaxDiff)
     TVec Forward;
     TVec Right;
     TVec Up;
-    AngleVectors(&Ang, &Forward, &Right, &Up);
+    AngleVectors(Ang, out Forward, out Right, out Up);
 
     p = Level.NewParticle();
     if (!p)
@@ -3805,7 +3805,7 @@ final override void Cheat_Summon () {
   // spawn it
   TAVec ang = MO.Angles; //vector(plr.pitch, plr.yaw, plr.roll);
   TVec dir;
-  AngleVector(&ang, &dir);
+  AngleVector(ang, out dir);
   TVec dst = MO.Origin+84*dir;
   Level.Spawn(moClass, dst); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
 }

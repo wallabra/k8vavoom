@@ -223,7 +223,7 @@ override void Tick(float deltaTime)
     {
       OldFloorDist = Sector->floor.dist;
       BotDist = DotProduct(Sector->ceiling.normal, vector(BotSpot.x,
-        BotSpot.y, GetPlanePointZ(&Sector->floor, BotSpot)));
+        BotSpot.y, GetPlanePointZ(ref Sector->floor, BotSpot)));
     }
   }
 

@@ -260,7 +260,7 @@ float AngleTo(TVec dest)
   TAVec ang;
 
   dir = dest - botmo.Origin;
-  VectorAngles(&dir, &ang);
+  VectorAngles(dir, out ang);
   return ang.yaw;
 }
 
@@ -629,8 +629,8 @@ bool CheckPath(float ang, float dist)
         return false;
       }
 
-      diffheight = GetPlanePointZ(&back->floor, hit_point) -
-        GetPlanePointZ(&front->floor, hit_point);
+      diffheight = GetPlanePointZ(ref back->floor, hit_point) -
+        GetPlanePointZ(ref front->floor, hit_point);
 
       // No cliff jumping unless we're going after something
       if (-diffheight > 32.0 && !enemy)
@@ -1283,7 +1283,7 @@ void Pitch()
     TAVec ang;
 
     dir = enemy.Origin - botmo.Origin;
-    VectorAngles(&dir, &ang);
+    VectorAngles(dir, out ang);
     botmo.Angles.pitch = ang.pitch;
   }
   else

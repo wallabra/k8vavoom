@@ -288,19 +288,19 @@ native static final TVec cross2d (const TVec v1, const TVec v2) [builtin VecCros
 alias CrossProduct2D = cross2d;
 alias cross2D = cross2D;
 // creates vectors for given angle vector
-native static final void AngleVectors (TAVec *angles, const TVec *forward, const TVec *right, const TVec *up);
+native static final void AngleVectors (const ref TAVec angles, out TVec forward, out TVec right, out TVec up);
 // simplified version of AngleVectors, creates only forward vector
-native static final void AngleVector (TAVec *angles, const TVec *forward);
+native static final void AngleVector (const ref TAVec angles, out TVec forward);
 // create angle vector for a vector
-native static final void VectorAngles (const TVec *vec, TAVec *angles);
+native static final void VectorAngles (const ref TVec vec, out TAVec angles);
 // get z of point with given x and y coords (don't try to use it on a vertical plane)
-native static final float GetPlanePointZ (const TPlane *plane, const TVec point);
+native static final float GetPlanePointZ (const ref TPlane plane, const TVec point);
 // returns side 0 (front) or 1 (back)
 native static final int PointOnPlaneSide (const TVec point, const TPlane *plane);
 // rotates a direction vector
 native static final TVec RotateDirectionVector (const TVec vec, const TAVec rot);
 // rotates vector around Z axis
-native static final void VectorRotateAroundZ (TVec *vec, float angle);
+native static final void VectorRotateAroundZ (ref TVec vec, float angle);
 // rotates vector around another vector
 native static final TVec RotateVectorAroundVector (const TVec Vector, const TVec Axis, float angle);
 

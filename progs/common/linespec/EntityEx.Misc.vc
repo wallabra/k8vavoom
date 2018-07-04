@@ -322,8 +322,8 @@ final bool Teleport(TVec Dst, float angle, bool DstFog, bool SrcFog,
   if (Dst.z == ONFLOORZ)
   {
     sector_t *DstSec = XLevel.PointInSector(Dst);
-    float DstFloorZ = GetPlanePointZ(&DstSec->floor, Dst);
-    float DstCeilZ = GetPlanePointZ(&DstSec->floor, Dst);
+    float DstFloorZ = GetPlanePointZ(ref DstSec->floor, Dst);
+    float DstCeilZ = GetPlanePointZ(ref DstSec->floor, Dst);
     if (bIsPlayer)
     {
       if (FindInventory(PowerFlight) && aboveFloor)
@@ -1627,7 +1627,7 @@ override void Tick(float deltaTime)
     trsplat_t tr;
     TAVec ang = Angles; //vector(plr.pitch, plr.yaw, plr.roll);
     TVec dir;
-    AngleVector(&ang, &dir);
+    AngleVector(ang, out dir);
     bool wallHit = TraceLineEx(Origin, dir, 4096, true, &tr);
     if (wallHit) {
       print("*** WALL");
@@ -1945,7 +1945,7 @@ final void DoStateEffects(float DeltaTime)
     return;
   }
 
-  AngleVectors(&Angles, &Forward, &Right, &Up);
+  AngleVectors(Angles, out Forward, out Right, out Up);
 
   if (!bStaticLightSpwned)
   {
@@ -2334,7 +2334,7 @@ final void SpawnBlood (TVec Org, int damage, optional TVec org) {
     if (Radius > 0) goup.z += Radius+4+Random()*4;
     TAVec av;
     TVec v = goup-org;
-    VectorAngles(&v, &av);
+    VectorAngles(v, out av);
     //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
     TraceBleed(damage, goup, av.yaw, av.pitch, false);
   }
@@ -2405,7 +2405,7 @@ final void SpawnExploBloodAtHead (int damage, EntityEx src) {
     TAVec av;
     TVec v;
     if (src.bIsPlayer) v = goup-src.Origin; else v = src.Velocity;
-    VectorAngles(&v, &av);
+    VectorAngles(v, out av);
     //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
     TraceBleed(damage, goup, av.yaw, av.pitch, true);
   }
@@ -2478,7 +2478,7 @@ final void SpawnBloodSplatter(TVec org, int damage, TVec shootOrg)
   {
     TAVec av;
     TVec v = org-shootOrg;
-    VectorAngles(&v, &av);
+    VectorAngles(v, out av);
     //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
     TraceBleed(damage, org, av.yaw, av.pitch, false);
   }
@@ -2512,7 +2512,7 @@ final void SpawnBloodSplatter2(TVec org, TVec shootOrg)
   {
     TAVec av;
     TVec v = org-shootOrg;
-    VectorAngles(&v, &av);
+    VectorAngles(v, out av);
     //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
     TraceBleed(500, org, av.yaw, av.pitch, false);
   }
@@ -3477,10 +3477,10 @@ final void GunShot(int accurate, TVec dir, name DmgType, bool secondary, optiona
   {
     TAVec angles;
 
-    VectorAngles(&dir, &angles);
+    VectorAngles(dir, out angles);
     angles.yaw = AngleMod360(angles.yaw +
       (Random() - Random()) * 45.0 / 8.0);
-    AngleVector(&angles, &dir);
+    AngleVector(angles, out dir);
   }
 
   damage = 5 * (P_Random() % 3 + 1);
@@ -3564,7 +3564,7 @@ override void CheckForSectorActions(sector_t *OldSec, bool OldAboveFakeFloor,
   if (OldSec->heightsec && Sector->heightsec && Sector->ActionList)
   {
     float EyeZ = bIsPlayer ? Player.ViewOrg.z : Origin.z + Height * 0.5;
-    float FakeZ = GetPlanePointZ(&Sector->heightsec->floor, Origin);
+    float FakeZ = GetPlanePointZ(ref Sector->heightsec->floor, Origin);
 
     if (!OldAboveFakeFloor && EyeZ > FakeZ)
     {
@@ -3579,7 +3579,7 @@ override void CheckForSectorActions(sector_t *OldSec, bool OldAboveFakeFloor,
 
     if (!Sector->heightsec->bFakeFloorOnly)
     {
-      FakeZ = GetPlanePointZ(&Sector->heightsec->ceiling, Origin);
+      FakeZ = GetPlanePointZ(ref Sector->heightsec->ceiling, Origin);
       if (!OldAboveFakeCeiling && EyeZ > FakeZ)
       {
         SectorAction(Sector->ActionList).TriggerAction(self,
@@ -3604,17 +3604,17 @@ override void CheckForSectorActions(sector_t *OldSec, bool OldAboveFakeFloor,
     if (Sector->ActionList)
     {
       int Spac = SectorAction::SECSPAC_Enter;
-      if (Origin.z <= GetPlanePointZ(&Sector->floor, Origin))
+      if (Origin.z <= GetPlanePointZ(ref Sector->floor, Origin))
       {
         Spac |= SectorAction::SECSPAC_HitFloor;
       }
-      if (Origin.z + Height >= GetPlanePointZ(&Sector->ceiling,
+      if (Origin.z + Height >= GetPlanePointZ(ref Sector->ceiling,
         Origin))
       {
         Spac |= SectorAction::SECSPAC_HitCeiling;
       }
       if (Sector->heightsec && Origin.z ==
-        GetPlanePointZ(&Sector->heightsec->floor, Origin))
+        GetPlanePointZ(ref Sector->heightsec->floor, Origin))
       {
         Spac |= SectorAction::SECSPAC_HitFakeFloor;
       }
@@ -3634,7 +3634,7 @@ final void CheckFakeFloorTriggers(float OldZ, optional bool OldHasViewH)
   if (Sector && Sector->heightsec && Sector->ActionList)
   {
     float ViewH = bIsPlayer ? PlayerEx(Player).ViewHeight : Height * 0.5;
-    float FakeZ = GetPlanePointZ(&Sector->heightsec->floor, Origin);
+    float FakeZ = GetPlanePointZ(ref Sector->heightsec->floor, Origin);
 
     if (OldZ > FakeZ && Origin.z <= FakeZ)
     {
@@ -3661,7 +3661,7 @@ final void CheckFakeFloorTriggers(float OldZ, optional bool OldHasViewH)
 
     if (!Sector->heightsec->bFakeFloorOnly)
     {
-      FakeZ = GetPlanePointZ(&Sector->heightsec->ceiling, Origin);
+      FakeZ = GetPlanePointZ(ref Sector->heightsec->ceiling, Origin);
       if (OldZ <= FakeZ && EyeZ > FakeZ)
       {
         SectorAction(Sector->ActionList).TriggerAction(self,
@@ -3697,7 +3697,7 @@ final bool UseLines(float UseRange, float UseThingRange, name FailSound)
   opening_t *open;
 
   action = false;
-  AngleVector(&Angles, &useDir);
+  AngleVector(Angles, out useDir);
   x1 = Origin.x;
   y1 = Origin.y;
 

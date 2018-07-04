@@ -301,7 +301,7 @@ final EntityEx SpawnMissile(EntityEx dest, class!EntityEx type,
     if (dest.bShadow)
     {
       // Invisible target
-      VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+      VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
     }
   }
   else
@@ -325,7 +325,7 @@ final EntityEx SpawnMissile(EntityEx dest, class!EntityEx type,
 
     A.Velocity.z = dir.z * A.Speed;
   }
-  VectorAngles(&dir, &A.Angles);
+  VectorAngles(dir, out A.Angles);
 
   return A.CheckMissileSpawn() ? A : none;
 }
@@ -356,7 +356,7 @@ final EntityEx SpawnMissileXYZ(TVec org, EntityEx dest, class!EntityEx type)
   if (dest.bShadow)
   {
     // Invisible target
-    VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0);
+    VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0);
   }
   dir = Normalise(dir);
   A.Velocity = dir * A.Speed;
@@ -374,7 +374,7 @@ final EntityEx SpawnMissileXYZ(TVec org, EntityEx dest, class!EntityEx type)
 
     A.Velocity.z = dir.z * A.Speed;
   }
-  VectorAngles(&dir, &A.Angles);
+  VectorAngles(dir, out A.Angles);
   return A.CheckMissileSpawn() ? A : none;
 }
 
@@ -407,7 +407,7 @@ final EntityEx SpawnMissileZAimed(float z, EntityEx dest, class!EntityEx type)
   // fuzzy player
   if (dest.bShadow)
   {
-    VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+    VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
   }
   dir = Normalise(dir);
   A.Velocity = dir * A.Speed;
@@ -425,7 +425,7 @@ final EntityEx SpawnMissileZAimed(float z, EntityEx dest, class!EntityEx type)
 
     A.Velocity.z = dir.z * A.Speed;
   }
-  VectorAngles(&dir, &A.Angles);
+  VectorAngles(dir, out A.Angles);
 
   return A.CheckMissileSpawn() ? A : none;
 }
@@ -473,7 +473,7 @@ final EntityEx SpawnMissileAngles(class!EntityEx type, float yaw, float pitch,
   A.Target = self;  // Originator
   A.Angles.yaw = yaw;
   A.Angles.pitch = pitch;
-  AngleVector(&A.Angles, &dir);
+  AngleVector(A.Angles, out dir);
   A.Velocity = A.Speed * dir;
   // Floor and ceiling huggers should never have a vertical component to their velocity
   if (A.bIgnoreCeilingStep || A.bIgnoreFloorStep)
@@ -703,7 +703,7 @@ final EntityEx SpawnPlayerMissileEx(class!EntityEx type, bool RetExploded,
 
     A.Velocity.z = dir.z * A.Speed;
   }
-  VectorAngles(&dir, &A.Angles);
+  VectorAngles(dir, out A.Angles);
 
   return A.CheckMissileSpawn() || RetExploded ? A : none;
 }

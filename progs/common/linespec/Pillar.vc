@@ -53,8 +53,8 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   Sector = InSector;
 
   Spot = *Sector->lines[0]->v1;
-  FloorHeight = GetPlanePointZ(&Sector->floor, Spot);
-  CeilHeight = GetPlanePointZ(&Sector->ceiling, Spot);
+  FloorHeight = GetPlanePointZ(ref Sector->floor, Spot);
+  CeilHeight = GetPlanePointZ(ref Sector->ceiling, Spot);
 
   //  Not so easy.
   if (FloorHeight == CeilHeight)
@@ -126,9 +126,9 @@ void InitOpen(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   else
   {
     Spot1 = *Sector->lines[0]->v1;
-    FloorDestHeight = GetPlanePointZ(&Sector->floor, Spot1) - itof(Arg3);
+    FloorDestHeight = GetPlanePointZ(ref Sector->floor, Spot1) - itof(Arg3);
   }
-  FloorHeight = GetPlanePointZ(&Sector->floor, Spot1);
+  FloorHeight = GetPlanePointZ(ref Sector->floor, Spot1);
   Spot1.z = FloorDestHeight;
   FloorDest = DotProduct(Sector->floor.normal, Spot1);
 
@@ -139,9 +139,9 @@ void InitOpen(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   else
   {
     Spot2 = *Sector->lines[0]->v1;
-    CeilDestHeight = GetPlanePointZ(&Sector->ceiling, Spot2) + itof(Arg4);
+    CeilDestHeight = GetPlanePointZ(ref Sector->ceiling, Spot2) + itof(Arg4);
   }
-  CeilHeight = GetPlanePointZ(&Sector->ceiling, Spot2);
+  CeilHeight = GetPlanePointZ(ref Sector->ceiling, Spot2);
   Spot2.z = CeilDestHeight;
   CeilingDest = DotProduct(Sector->ceiling.normal, Spot2);
 

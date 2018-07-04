@@ -220,7 +220,7 @@ final void A_Recoil(float Force)
   TVec Dir;
   TAVec Ang = Angles;
   Ang.yaw += 180.0;
-  AngleVector(&Ang, &Dir);
+  AngleVector(Ang, out Dir);
   Velocity += Dir * Force * 35.0;
 }
 
@@ -305,11 +305,11 @@ final void A_FireAssaultGun()
     Aim(dir, 16.0 * 64.0);
     if (PlayerEx(Player).Refire)
     {
-      VectorAngles(&dir, &angles);
+      VectorAngles(dir, out angles);
       angles.yaw = AngleMod360(angles.yaw +
         (Random() - Random()) * 45.0 / 2.0 /
         itof(1 << (PlayerEx(Player).Accuracy * 5 / 100)));
-      AngleVector(&angles, &dir);
+      AngleVector(angles, out dir);
     }
   }
   else

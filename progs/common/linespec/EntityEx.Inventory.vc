@@ -170,7 +170,7 @@ EntityEx DropInventory(Inventory SrcItem)
 {
   TVec      Dir;
 
-  AngleVector(&Angles, &Dir);
+  AngleVector(Angles, out Dir);
   Dir.z = 0.0;
   Dir = Normalise(Dir);
   Inventory Item = SrcItem.CreateTossable();

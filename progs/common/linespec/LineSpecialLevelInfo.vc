@@ -1853,7 +1853,7 @@ final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 
     // new floor thinker
     Rtn = 1;
-    Height = GetPlanePointZ(&Sec->floor, vector(0.0, 0.0, 0.0)) +
+    Height = GetPlanePointZ(ref Sec->floor, vector(0.0, 0.0, 0.0)) +
       StairSize;
     Floor = Spawn(FloorMover);
     Floor.InitStair(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Generic, Height);
@@ -3305,7 +3305,7 @@ final bool EV_FloorTransferNumeric(int Arg1, int Arg2, int Arg3, int Arg4,
     Sec = &XLevel.Sectors[SecNum];
     Rtn = true;
 
-    MdlSec = FindModelFloorSector(Sec, GetPlanePointZ(&Sec->floor,
+    MdlSec = FindModelFloorSector(Sec, GetPlanePointZ(ref Sec->floor,
       Sec->soundorg));
     if (MdlSec)
     {
@@ -5612,7 +5612,7 @@ final bool EV_SilentLineTeleport(line_t *line, int side, EntityEx thing,
     TempV.x = DotProduct(DstXAxis, SrcXAxis);
     TempV.y = DotProduct(DstYAxis, SrcXAxis);
     TempV.z = 0.0;
-    VectorAngles(&TempV, &TempA);
+    VectorAngles(TempV, out TempA);
     thing.Angles.yaw = AngleMod360(thing.Angles.yaw - TempA.yaw);
 
     // Rotate thing's momentum to come out of exit just like it entered
@@ -6609,7 +6609,7 @@ final override void SectorDamage(int Tag, int Amount, name DamageType,
       }
 
       if (!(Flags & DAMAGE_IN_AIR) && Ent.Origin.z !=
-        GetPlanePointZ(&Sec->floor, Ent.Origin) && !Ent.WaterLevel)
+        GetPlanePointZ(ref Sec->floor, Ent.Origin) && !Ent.WaterLevel)
       {
         continue;
       }

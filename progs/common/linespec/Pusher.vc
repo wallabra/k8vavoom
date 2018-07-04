@@ -280,7 +280,7 @@ override void Tick(float DeltaTime)
       }
       else // special water sector
       {
-        ht = GetPlanePointZ(&sec->heightsec->floor, thing.Origin);
+        ht = GetPlanePointZ(ref sec->heightsec->floor, thing.Origin);
         if (thing.Origin.z > ht) // above ground
         {
           xspeed = Xmag; // full force

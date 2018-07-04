@@ -90,7 +90,7 @@ final void A_CustomMissile(class!Actor MissileType, optional float SpawnHeight,
 
       if (A)
       {
-        VectorRotateAroundZ(&A.Velocity, Angle);
+        VectorRotateAroundZ(ref A.Velocity, Angle);
         //  Find correct shooter for projectiles shooting projectiles.
         if (IsMissile(!!(Flags & 4)))
         {
@@ -226,7 +226,7 @@ final void A_CustomRailgun(int RailDamage, optional float Offset,
   TVec Dir;
   AimLineAttack(Dir, Angles, MISSILERANGE);
   TAVec Ang;
-  VectorAngles(&Dir, &Ang);
+  VectorAngles(Dir, out Ang);
 
   if (DoAim)
   {
@@ -242,7 +242,7 @@ final void A_CustomRailgun(int RailDamage, optional float Offset,
     Angles.yaw = Ang.yaw;
   }
 
-  AngleVector(&Ang, &Dir);
+  AngleVector(Ang, out Dir);
   int Col1 = ParseColour(Colour1);
   int Col2 = ParseColour(Colour2);
   RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType,
@@ -441,7 +441,7 @@ final void A_BulletAttack()
   for (i = 0; i < NumBullets; i++)
   {
     TVec dir = aimDir;
-    VectorRotateAroundZ(&dir, (Random() - Random()) * 45.0 / 2.0);
+    VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
     int damage = ((P_Random() % 5) + 1) * 3;
     LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet', (i != 0));
   }
@@ -474,7 +474,7 @@ final void A_MonsterRail()
   TVec Dir;
   AimLineAttack(Dir, Angles, MISSILERANGE);
   TAVec Ang;
-  VectorAngles(&Dir, &Ang);
+  VectorAngles(Dir, out Ang);
 
   //  Trail a little bit behind the target
   Ang.yaw = atan2(
@@ -487,7 +487,7 @@ final void A_MonsterRail()
   }
   Angles.yaw = Ang.yaw;
 
-  AngleVector(&Ang, &Dir);
+  AngleVector(Ang, out Dir);
   RailAttack(Dir, 0.0, GetMissileDamage(0, 1));
 }
 
@@ -1481,7 +1481,7 @@ final void A_MinotaurAtk2()
   A = SpawnMissile(Target, MinotaurFX1, 40.0);
   if (A)
   {
-    VectorAngles(&A.Velocity, &ang);
+    VectorAngles(A.Velocity, out ang);
     angle = A.Angles.yaw;
     SpawnMissileAngles(MinotaurFX1,
       AngleMod360(angle - (45.0 / 8.0)), ang.pitch, 40.0);

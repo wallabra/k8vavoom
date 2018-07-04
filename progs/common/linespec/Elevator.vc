@@ -61,8 +61,8 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   Type = InType;
   Speed = itof(Arg2) * 35.0 / 8.0;
 
-  FloorHeight = GetPlanePointZ(&Sector->floor, Sector->soundorg);
-  CeilingHeight = GetPlanePointZ(&Sector->ceiling, Sector->soundorg);
+  FloorHeight = GetPlanePointZ(ref Sector->floor, Sector->soundorg);
+  CeilingHeight = GetPlanePointZ(ref Sector->ceiling, Sector->soundorg);
 
   //  Set up the fields according to the type of elevator action.
   switch (Type)
@@ -73,8 +73,8 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
     NewHeight = Level.FindNextLowestFloor(Sector, &Spot);
     Spot.z = NewHeight;
     FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    Spot.z += GetPlanePointZ(&Sector->ceiling, Spot) -
-      GetPlanePointZ(&Sector->floor, Spot);
+    Spot.z += GetPlanePointZ(ref Sector->ceiling, Spot) -
+      GetPlanePointZ(ref Sector->floor, Spot);
     CeilingDestDist = DotProduct(Sector->ceiling.normal, Spot);
     break;
 
@@ -84,19 +84,19 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
     NewHeight = Level.FindNextHighestFloor(Sector, &Spot);
     Spot.z = NewHeight;
     FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    Spot.z += GetPlanePointZ(&Sector->ceiling, Spot) -
-      GetPlanePointZ(&Sector->floor, Spot);
+    Spot.z += GetPlanePointZ(ref Sector->ceiling, Spot) -
+      GetPlanePointZ(ref Sector->floor, Spot);
     CeilingDestDist = DotProduct(Sector->ceiling.normal, Spot);
     break;
 
   //  Elevator to floor height of activating switch's front sector.
   case ELEVEV_Current:
     Spot = *Line->v1;
-    NewHeight = GetPlanePointZ(&Line->frontsector->floor, Spot);
+    NewHeight = GetPlanePointZ(ref Line->frontsector->floor, Spot);
     Spot.z = NewHeight;
     FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    Spot.z += GetPlanePointZ(&Sector->ceiling, Spot) -
-      GetPlanePointZ(&Sector->floor, Spot);
+    Spot.z += GetPlanePointZ(ref Sector->ceiling, Spot) -
+      GetPlanePointZ(ref Sector->floor, Spot);
     CeilingDestDist = DotProduct(Sector->ceiling.normal, Spot);
     Direction = FloorDestDist > Sector->floor.dist ? 1 : -1;
     break;

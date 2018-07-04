@@ -131,35 +131,35 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
     break;
 
   case CEILEV_LowerByValue:
-    DestHeight = GetPlanePointZ(&Sector->ceiling, Spot) - itof(Arg3);
+    DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot) - itof(Arg3);
     Spot.z = DestHeight;
     BottomDist = DotProduct(Sector->ceiling.normal, Spot);
     Direction = -1;
     break;
 
   case CEILEV_RaiseByValue:
-    DestHeight = GetPlanePointZ(&Sector->ceiling, Spot) + itof(Arg3);
+    DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot) + itof(Arg3);
     Spot.z = DestHeight;
     TopDist = DotProduct(Sector->ceiling.normal, Spot);
     Direction = 1;
     break;
 
   case CEILEV_LowerByValueTimes8:
-    DestHeight = GetPlanePointZ(&Sector->ceiling, Spot) - itof(Arg3) * 8.0;
+    DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot) - itof(Arg3) * 8.0;
     Spot.z = DestHeight;
     BottomDist = DotProduct(Sector->ceiling.normal, Spot);
     Direction = -1;
     break;
 
   case CEILEV_RaiseByValueTimes8:
-    DestHeight = GetPlanePointZ(&Sector->ceiling, Spot) + itof(Arg3) * 8.0;
+    DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot) + itof(Arg3) * 8.0;
     Spot.z = DestHeight;
     TopDist = DotProduct(Sector->ceiling.normal, Spot);
     Direction = 1;
     break;
 
   case CEILEV_LowerTimes8Instant:
-    DestHeight = GetPlanePointZ(&Sector->ceiling, Spot) - itof(Arg3) * 8.0;
+    DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot) - itof(Arg3) * 8.0;
     Spot.z = DestHeight;
     BottomDist = DotProduct(Sector->ceiling.normal, Spot);
     Direction = -1;
@@ -167,7 +167,7 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
     break;
 
   case CEILEV_RaiseTimes8Instant:
-    DestHeight = GetPlanePointZ(&Sector->ceiling, Spot) + itof(Arg3) * 8.0;
+    DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot) + itof(Arg3) * 8.0;
     Spot.z = DestHeight;
     TopDist = DotProduct(Sector->ceiling.normal, Spot);
     Direction = 1;
@@ -186,7 +186,7 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       DestHeight = -DestHeight;
     }
     Spot.z = DestHeight;
-    if (GetPlanePointZ(&Sector->ceiling, Spot) <= DestHeight)
+    if (GetPlanePointZ(ref Sector->ceiling, Spot) <= DestHeight)
     {
       Direction = 1;
       TopDist = DotProduct(Sector->ceiling.normal, Spot);
@@ -281,11 +281,11 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       DestHeight = Level.FindHighestFloorPoint(Sector, &Spot);
       break;
     case 6:
-      DestHeight = GetPlanePointZ(&Sector->ceiling, Spot) +
+      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot) +
         itof(Direction) * Level.FindShortestUpperAround(Sector);
       break;
     default:
-      DestHeight = GetPlanePointZ(&Sector->ceiling, Spot) +
+      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot) +
         itof(Direction * Arg3);
       break;
     }

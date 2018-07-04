@@ -130,14 +130,14 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 
   case FLOOREV_LowerByValue:
     Direction = -1;
-    DestHeight = GetPlanePointZ(&Sector->floor, Spot) - itof(Arg3);
+    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) - itof(Arg3);
     Spot.z = DestHeight;
     FloorDestDist = DotProduct(Sector->floor.normal, Spot);
     break;
 
   case FLOOREV_RaiseByValue:
     Direction = 1;
-    DestHeight = GetPlanePointZ(&Sector->floor, Spot) + itof(Arg3);
+    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) + itof(Arg3);
     Spot.z = DestHeight;
     FloorDestDist = DotProduct(Sector->floor.normal, Spot);
     break;
@@ -145,7 +145,7 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   case FLOOREV_LowerByValueTimes8:
   case FLOOREV_LowerTimes8Instant:
     Direction = -1;
-    DestHeight = GetPlanePointZ(&Sector->floor, Spot) - itof(Arg3) * 8.0;
+    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) - itof(Arg3) * 8.0;
     Spot.z = DestHeight;
     FloorDestDist = DotProduct(Sector->floor.normal, Spot);
     break;
@@ -222,14 +222,14 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   case FLOOREV_RaiseByValueTimes8:
   case FLOOREV_RaiseTimes8Instant:
     Direction = 1;
-    DestHeight = GetPlanePointZ(&Sector->floor, Spot) + itof(Arg3) * 8.0;
+    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) + itof(Arg3) * 8.0;
     Spot.z = DestHeight;
     FloorDestDist = DotProduct(Sector->floor.normal, Spot);
     break;
 
   case FLOOREV_RaiseByTexture:
     Direction = 1;
-    DestHeight = GetPlanePointZ(&Sector->floor, Spot) +
+    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) +
       Level.FindShortestTextureAround(Sector);
     Spot.z = DestHeight;
     FloorDestDist = DotProduct(Sector->floor.normal, Spot);
@@ -279,7 +279,7 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 
   case FLOOREV_RaiseByValueChange:
     Direction = 1;
-    DestHeight = GetPlanePointZ(&Sector->floor, Spot) + itof(Arg3);
+    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) + itof(Arg3);
     Spot.z = DestHeight;
     FloorDestDist = DotProduct(Sector->floor.normal, Spot);
     if (Line)
@@ -296,7 +296,7 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 
   case FLOOREV_RaiseByValueChange2:
     Direction = 1;
-    DestHeight = GetPlanePointZ(&Sector->floor, Spot) + itof(Arg3) * 8.0;
+    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) + itof(Arg3) * 8.0;
     Spot.z = DestHeight;
     FloorDestDist = DotProduct(Sector->floor.normal, Spot);
     if (Line)
@@ -330,11 +330,11 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       DestHeight = Level.FindLowestCeilingPoint(Sector, &Spot);
        break;
     case 6:
-      DestHeight = GetPlanePointZ(&Sector->floor, Spot) +
+      DestHeight = GetPlanePointZ(ref Sector->floor, Spot) +
         itof(Direction) * Level.FindShortestTextureAround(Sector);
        break;
     default:
-      DestHeight = GetPlanePointZ(&Sector->floor, Spot) +
+      DestHeight = GetPlanePointZ(ref Sector->floor, Spot) +
         itof(Direction * Arg3);
       break;
     }
