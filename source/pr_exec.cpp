@@ -314,9 +314,17 @@ func_loop:
         ++sp;
         PR_VM_BREAK;
 
+      /*
       PR_VM_CASE(OPC_PushVFuncB)
         sp[0].p = ((VObject *)sp[-1].p)->GetVFunctionIdx(ip[1]);
         ip += 2;
+        ++sp;
+        PR_VM_BREAK;
+      */
+
+      PR_VM_CASE(OPC_PushFunc)
+        sp[0].p = ReadPtr(ip+1);
+        ip += 1+sizeof(void *);
         ++sp;
         PR_VM_BREAK;
 

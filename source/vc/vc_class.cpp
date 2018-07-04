@@ -1250,10 +1250,8 @@ void VClass::CalcFieldOffsets () {
     VMethod *M = (VMethod *)Methods[i];
     int MOfs = -1;
     if (ParentClass) MOfs = ParentClass->GetMethodIndex(M->Name);
-    if (MOfs == -1 && (M->Flags&FUNC_Final) == 0) {
-      M->Flags |= FUNC_RealFinal;
-      MOfs = numMethods++;
-    }
+    if (MOfs == -1 && (M->Flags&FUNC_Final) != 0) M->Flags |= FUNC_RealFinal;
+    if (MOfs == -1 && (M->Flags&FUNC_Final) == 0) MOfs = numMethods++;
     M->VTableIndex = MOfs;
   }
   if (ClassVTable && PrevClassNumMethods != ClassNumMethods) {

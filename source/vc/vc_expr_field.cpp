@@ -882,7 +882,7 @@ VExpression *VDelegateVal::DoResolve (VEmitContext &ec) {
   if ((M->Flags&FUNC_VarArgs) != 0) { wasError = true; ParseError(Loc, "delegate should not be vararg"); }
   if ((M->Flags&FUNC_Iterator) != 0) { wasError = true; ParseError(Loc, "delegate should not be iterator"); }
   // sadly, `FUNC_RealFinal` is not set yet, so use slower check
-  if (ec.SelfClass->isRealFinalMethod(M->Name)) { wasError = true; ParseError(Loc, "delegate should not be final"); }
+  //if (ec.SelfClass->isRealFinalMethod(M->Name)) { wasError = true; ParseError(Loc, "delegate should not be final"); }
   if (wasError) { delete this; return nullptr; }
   Type = TYPE_Delegate;
   Type.Function = M;
@@ -898,7 +898,14 @@ VExpression *VDelegateVal::DoResolve (VEmitContext &ec) {
 void VDelegateVal::Emit (VEmitContext &ec) {
   if (!op) return;
   op->Emit(ec);
-  ec.AddStatement(OPC_PushVFunc, M, Loc);
+  // call class postload, so `FUNC_RealFinal` will be set
+  ec.SelfClass->PostLoad();
+  fprintf(stderr, "MT: %s (rf=%d)\n", *M->GetFullName(), (M->Flags&FUNC_RealFinal ? 1 : 0));
+  if (M->Flags&FUNC_RealFinal) {
+    ec.AddStatement(OPC_PushFunc, M, Loc);
+  } else {
+    ec.AddStatement(OPC_PushVFunc, M, Loc);
+  }
 }
 
 

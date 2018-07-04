@@ -83,7 +83,7 @@ enum {
 #ifndef OPCODE_INFO
 
 #define PROG_MAGIC    "VPRG"
-#define PROG_VERSION  (39)
+#define PROG_VERSION  (40)
 
 enum {
   OPCARGS_None,
@@ -129,7 +129,7 @@ enum {
   // call / return
   DECLARE_OPC(Call, Member),
   DECLARE_OPC(PushVFunc, VTableIndex),
-  DECLARE_OPC(PushVFuncB, VTableIndexB),
+  DECLARE_OPC(PushFunc, Member),
   DECLARE_OPC(VCall, VTableIndex_Byte),
   DECLARE_OPC(VCallB, VTableIndexB_Byte),
   DECLARE_OPC(DelegateCall, FieldOffset_Byte),
@@ -380,7 +380,7 @@ enum {
   DECLARE_OPC(StrToName, None),
   DECLARE_OPC(NameToStr, None),
 
-  // cleanup of local variables.
+  // cleanup of local variables
   DECLARE_OPC(ClearPointedStr, None),
   DECLARE_OPC(ClearPointedStruct, Member),
   DECLARE_OPC(ZeroPointedStruct, Member),

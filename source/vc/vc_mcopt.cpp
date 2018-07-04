@@ -835,7 +835,7 @@ void VMCOptimizer::optimizeLoads () {
       case OPC_PushVFunc:
         // make sure class virtual table has been calculated
         insn.Member->Outer->PostLoad();
-        if (((VMethod *)insn.Member)->VTableIndex < 256) insn.Opcode = OPC_PushVFuncB;
+        //if (((VMethod *)insn.Member)->VTableIndex < 256) insn.Opcode = OPC_PushVFuncB;
         break;
       case OPC_VCall:
         // make sure class virtual table has been calculated
