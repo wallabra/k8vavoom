@@ -128,7 +128,8 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
     for (int f = 0; f < LocalDefs.length(); ++f) {
       //break;
       const VLocalVarDef &ll = LocalDefs[f];
-      if (ll.Reusable && !ll.Visible && !ll.Type.IsReusingDisabled()) {
+      // don't rewrite type info
+      if (ll.Reusable && !ll.Visible && !ll.Type.IsReusingDisabled() && ll.Type.IsReplacableWith(atype)) {
         if (ll.stackSize >= ssz) {
           // i found her!
           if (ll.stackSize == ssz) {

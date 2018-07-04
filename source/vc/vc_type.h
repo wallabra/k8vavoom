@@ -91,6 +91,7 @@ public:
   bool IsAnyArray () const;
 
   bool IsReusingDisabled () const;
+  bool IsReplacableWith (const VFieldType &atype) const;
 };
 
 

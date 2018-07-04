@@ -573,6 +573,18 @@ bool VFieldType::IsReusingDisabled () const {
 }
 
 
+//==========================================================================
+//
+//  VFieldType::IsReplacableWith
+//
+//==========================================================================
+bool VFieldType::IsReplacableWith (const VFieldType &atype) const {
+  if (Equals(atype)) return true; // same types are always replaceable
+  // don't change types
+  return false;
+}
+
+
 #if !defined(IN_VCC)
 
 //==========================================================================
