@@ -1,0 +1,16 @@
+class Main : Object;
+
+int fld = 1000;
+
+
+final static void test (int delegate (int n) dg) {
+  int v = dg(42);
+  writeln(v);
+}
+
+
+final int cback (int n) { return n+fld; }
+
+void main () {
+  test(&cback);
+}
