@@ -826,7 +826,7 @@ struct Instr {
 
       // fill [-1] pointer with zeroes; int is length
       case OPC_ZeroByPtr:
-        spdelta = 1;
+        spdelta = -1;
         return;
 
       // get class pointer from pushed object
@@ -1923,13 +1923,14 @@ void VMCOptimizer::calcStackDepth () {
     if (it->isAnyBranch()) {
       int dest = it->getBranchDest();
       if (dest < 0 || dest >= instrCount) continue;
+      int newsp = cursp-(it->isCaseBranch() ? 1 : 0);
       if (dest < f) {
-        if (getInstrAt(dest)->spcur != cursp) {
+        if (getInstrAt(dest)->spcur != newsp) {
           fprintf(stderr, "==== %s ====\n", *func->GetFullName()); disasmAll();
-          FatalError("unbalanced stack(1) (f=%d; dest=%d; spcur=%d; cursp=%d)", f, dest, getInstrAt(dest)->spcur, cursp);
+          FatalError("unbalanced stack(1) (f=%d; dest=%d; spcur=%d; newsp=%d)", f, dest, getInstrAt(dest)->spcur, newsp);
         }
       } else if (dest > f) {
-        getInstrAt(dest)->spcur = cursp;
+        getInstrAt(dest)->spcur = newsp;
       }
     }
   }
