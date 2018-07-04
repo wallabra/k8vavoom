@@ -1906,7 +1906,14 @@ void VInvocation::CheckParams (VEmitContext &ec) {
               ParseError(Args[i]->Loc, "Out parameter types must be equal for arg #%d (want `%s`, but got `%s`)", i+1, *Func->ParamTypes[i].GetName(), *Args[i]->Type.GetName());
             }
           }
+          // now check r/o flags
+          if ((Args[i]->Flags&FIELD_ReadOnly) != 0 && (Func->ParamFlags[i]&FPARM_Const) == 0) {
+            ParseError(Args[i]->Loc, "Cannot pass const argument #%d as non-const", i+1);
+          }
+          int oldFlags = Args[i]->Flags;
+          Args[i]->Flags &= ~FIELD_ReadOnly;
           Args[i]->RequestAddressOf();
+          Args[i]->Flags = oldFlags;
         } else {
           // normal args: do int->float conversion
           if (Func->ParamTypes[i].Type == TYPE_Float) {
