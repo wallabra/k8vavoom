@@ -2875,17 +2875,6 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
   bool stateSeen = false;
   bool optOptionsSeen = false;
 
-  struct TextureInfo {
-    VStr texImage;
-    int frameWidth;
-    int frameHeight;
-    int frameOfsX;
-    int frameOfsY;
-  };
-  TMapDtor<VStr, TextureInfo> texlist;
-
-  VStr texDir;
-
   while (!Lex.Check(TK_RBrace)) {
     TLocation tmpLoc = Lex.Location;
 
@@ -2904,7 +2893,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
         Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
         continue;
       }
-      TextureInfo ti;
+      VClass::TextureInfo ti;
       ti.texImage = VStr();
       ti.frameWidth = -1;
       ti.frameHeight = -1;
@@ -2956,8 +2945,10 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
         ParseError(stloc, "No texture name specified");
       } else {
         ti.texImage = ti.texImage.toLowerCase();
-        texlist.remove(txname);
-        texlist.put(txname, ti);
+        //texlist.remove(txname);
+        //texlist.put(txname, ti);
+        currClass->DFStateAddTexture(txname, ti);
+        //fprintf(stderr, "NEWTEX: name:<%s>; img:<%s>\n", *txname, *ti.texImage);
       }
       continue;
     }
@@ -2970,12 +2961,16 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
         Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
         continue;
       }
+      VStr texDir;
+      bool wasTexDir = false;
       while (!Lex.Check(TK_RBrace)) {
         if (Lex.Token != TK_Identifier) {
           ParseError(Lex.Location, "Option name expected");
           break;
         }
         if (VStr::ICmp(*Lex.Name, "texture_dir") == 0) {
+          if (wasTexDir) ParseError(Lex.Location, "Duplicate option '%s'", *Lex.Name);
+          wasTexDir = true;
           Lex.NextToken();
                if (Lex.Token == TK_Identifier || Lex.Token == TK_NameLiteral) { texDir = VStr(*Lex.Name); Lex.NextToken(); }
           else if (Lex.Token == TK_StringLiteral) { texDir = Lex.String; Lex.NextToken(); }
@@ -2987,6 +2982,10 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
         }
       }
       if (!texDir.isEmpty() && !texDir.endsWith("/")) texDir += "/";
+      if (wasTexDir) {
+        //fprintf(stderr, "NEWTEXDIR: dir:<%s>\n", *texDir);
+        currClass->DFStateSetTexDir(texDir);
+      }
       continue;
     }
 
@@ -3148,15 +3147,17 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     // sprite name
     if (!tmpName.isEmpty() && tmpName.ICmp("none") != 0) {
       VStr sprName = tmpName.toLowerCase();
-      if (texlist.has(sprName)) {
-        TextureInfo *ti = texlist.get(sprName);
-        sprName = ti->texImage;
-        s->frameWidth = ti->frameWidth;
-        s->frameHeight = ti->frameHeight;
-        s->frameOfsX = ti->frameOfsX;
-        s->frameOfsY = ti->frameOfsY;
+      VClass::TextureInfo ti;
+      if (currClass->DFStateGetTexture(sprName, ti)) {
+        sprName = ti.texImage;
+        s->frameWidth = ti.frameWidth;
+        s->frameHeight = ti.frameHeight;
+        s->frameOfsX = ti.frameOfsX;
+        s->frameOfsY = ti.frameOfsY;
       }
+      auto texDir = currClass->DFStateGetTexDir();
       if (!texDir.isEmpty()) sprName = texDir+sprName;
+      //fprintf(stderr, "td:<%s>; sn:<%s>\n", *texDir, *sprName);
       s->SpriteName = VName(*sprName);
     } else {
       s->SpriteName = NAME_None;
@@ -3270,12 +3271,14 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     }
 
     // code
+    bool semiExpected = true;
     if (Lex.Check(TK_LBrace)) {
       //if (frameUsed != 1) ParseError(Lex.Location, "Only states with single frame can have code block");
       s->Function = new VMethod(NAME_None, s, s->Loc);
       s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
       s->Function->ReturnType = VFieldType(TYPE_Void);
       s->Function->Statement = ParseCompoundStatement();
+      semiExpected = false;
     } else if (Lex.Token == TK_Identifier) {
       auto stloc = Lex.Location;
       // function call
@@ -3303,7 +3306,8 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
         }
       }
     }
-    Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+    if (semiExpected) Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+    while (Lex.Check(TK_Semicolon)) {}
 
     // link to previous state
     if (prevState) prevState->NextState = s;

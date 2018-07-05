@@ -187,6 +187,15 @@ class VClass : public VMemberBase {
 public:
   enum { LOWER_CASE_HASH_SIZE = 8 * 1024 };
 
+  struct TextureInfo {
+    VStr texImage;
+    int frameWidth;
+    int frameHeight;
+    int frameOfsX;
+    int frameOfsY;
+  };
+
+public:
   // persistent fields
   VClass *ParentClass;
   VField *Fields;
@@ -207,6 +216,11 @@ public:
   TArray<VProperty *> Properties;
   TArray<VStateLabelDef> StateLabelDefs;
   bool Defined;
+
+  // new-style state options and textures
+  TMapDtor<VStr, TextureInfo> dfStateTexList;
+  VStr dfStateTexDir;
+  vint32 dfStateTexDirSet;
 
   // internal per-object variables
   vuint32 ObjectFlags; // private EObjectFlags used by object manager
@@ -334,6 +348,12 @@ public:
   VClass *GetReplacee ();
 #endif
   void HashLowerCased ();
+
+  // df state thingy
+  void DFStateSetTexDir (const VStr &adir);
+  void DFStateAddTexture (const VStr &tname, const TextureInfo &ti);
+  const VStr &DFStateGetTexDir () const;
+  bool DFStateGetTexture (const VStr &tname, TextureInfo &ti) const;
 
 private:
   void CalcFieldOffsets ();

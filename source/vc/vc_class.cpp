@@ -64,6 +64,9 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   , MobjInfoExpr(nullptr)
   , ScriptIdExpr(nullptr)
   , Defined(true)
+  , dfStateTexList()
+  , dfStateTexDir()
+  , dfStateTexDirSet(0)
   , ObjectFlags(0)
   , LinkNext(nullptr)
   , ClassSize(0)
@@ -380,7 +383,7 @@ void VClass::Serialise (VStream &Strm) {
 #endif
   // aliases
   vint32 acount = (vint32)AliasList.count();
-  Strm << acount;
+  Strm << STRM_INDEX(acount);
   if (Strm.IsLoading()) {
     AliasFrameNum = 0;
     AliasList.clear();
@@ -413,6 +416,27 @@ void VClass::Serialise (VStream &Strm) {
     for (auto it = KnownEnums.first(); it; ++it) {
       VName ename = it.getKey();
       Strm << ename;
+    }
+  }
+  // dfstate thingy
+  Strm << STRM_INDEX(dfStateTexDirSet) << dfStateTexDir;
+  acount = (vint32)dfStateTexList.count();
+  Strm << STRM_INDEX(acount);
+  if (Strm.IsLoading()) {
+    dfStateTexList.clear();
+    while (acount-- > 0) {
+      VStr tname;
+      TextureInfo ti;
+      Strm << tname;
+      Strm << ti.texImage << ti.frameWidth << ti.frameHeight << ti.frameOfsX << ti.frameOfsY;
+      dfStateTexList.put(tname, ti);
+    }
+  } else {
+    for (auto it = dfStateTexList.first(); it; ++it) {
+      VStr tname = it.getKey();
+      Strm << tname;
+      TextureInfo &ti = it.getValue();
+      Strm << ti.texImage << ti.frameWidth << ti.frameHeight << ti.frameOfsX << ti.frameOfsY;
     }
   }
   // done
@@ -1664,4 +1688,77 @@ VClass *VClass::FindClassLowerCase (VName AName) {
 //==========================================================================
 VStream &operator << (VStream &Strm, VStateLabel &Lbl) {
   return Strm << Lbl.Name << Lbl.State << Lbl.SubLabels;
+}
+
+
+//==========================================================================
+//
+//  VClass::DFStateSetTexDir
+//
+//==========================================================================
+void VClass::DFStateSetTexDir (const VStr &adir) {
+  dfStateTexDirSet = true;
+  dfStateTexDir = adir;
+}
+
+
+//==========================================================================
+//
+//  VClass::DFStateGetTexDir
+//
+//==========================================================================
+const VStr &VClass::DFStateGetTexDir () const {
+  for (const VClass *c = this; c; c = c->ParentClass) {
+    if (c->dfStateTexDirSet) return c->dfStateTexDir;
+  }
+  // this can be not postloaded yet, so...
+  VName pn = ParentClassName;
+  while (pn != NAME_None) {
+    VClass *c = StaticFindClass(pn);
+    if (!c) break;
+    if (c->dfStateTexDirSet) return c->dfStateTexDir;
+    pn = c->ParentClassName;
+  }
+  return VStr::EmptyString;
+}
+
+
+//==========================================================================
+//
+//  VClass::DFStateAddTexture
+//
+//==========================================================================
+void VClass::DFStateAddTexture (const VStr &tname, const TextureInfo &ti) {
+  if (tname.isEmpty()) return;
+  dfStateTexList.put(tname, ti);
+}
+
+
+//==========================================================================
+//
+//  VClass::DFStateGetTexture
+//
+//==========================================================================
+bool VClass::DFStateGetTexture (const VStr &tname, TextureInfo &ti) const {
+  ti.texImage.clear();
+  ti.frameWidth = ti.frameHeight = 0;
+  ti.frameOfsX = ti.frameOfsY = 0;
+  if (tname.isEmpty()) return false;
+  auto xti = dfStateTexList.get(tname);
+  if (xti) {
+    ti = *xti;
+    return true;
+  }
+  for (const VClass *c = this->ParentClass; c; c = c->ParentClass) {
+    if (c->DFStateGetTexture(tname, ti)) return true;
+  }
+  // this can be not postloaded yet, so...
+  VName pn = ParentClassName;
+  while (pn != NAME_None) {
+    VClass *c = StaticFindClass(pn);
+    if (!c) break;
+    if (c->DFStateGetTexture(tname, ti)) return true;
+    pn = c->ParentClassName;
+  }
+  return false;
 }

@@ -125,6 +125,7 @@ void VState::Emit () {
   guard(VState::Emit);
   VEmitContext ec(this);
   if (GotoLabel != NAME_None) {
+    //fprintf(stderr, "state `%s` label resolve: %s\n", *GetFullName(), *GotoLabel);
     NextState = ((VClass *)Outer)->ResolveStateLabel(Loc, GotoLabel, GotoOffset);
   }
 
