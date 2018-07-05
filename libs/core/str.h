@@ -522,7 +522,7 @@ private:
 };
 
 // required for VaVoom C VM
-static_assert(sizeof(VStr) <= sizeof(void *));
+static_assert(sizeof(VStr) <= sizeof(void *), "oops");
 
 
 // ////////////////////////////////////////////////////////////////////////// //

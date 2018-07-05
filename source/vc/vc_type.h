@@ -125,7 +125,7 @@ public:
 };
 
 // required for VaVoom C VM
-static_assert(sizeof(VScriptArray) <= sizeof(void *)*3);
+static_assert(sizeof(VScriptArray) <= sizeof(void *)*3, "oops");
 
 
 // ////////////////////////////////////////////////////////////////////////// //
