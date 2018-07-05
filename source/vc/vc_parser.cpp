@@ -3142,6 +3142,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     char StateName[64];
     snprintf(StateName, sizeof(StateName), "S_%d", stateIdx);
     VState *s = new VState(StateName, inClass, tmpLoc);
+    s->Type = VState::D2DF;
     inClass->AddState(s);
 
     // sprite name

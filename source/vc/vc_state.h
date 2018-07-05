@@ -30,8 +30,10 @@ public:
   // handles maximum brightness (torches, muzzle flare, light sources)
   enum { FF_FULLBRIGHT = 0x80 }; // flag in Frame
   enum { FF_FRAMEMASK  = 0x7f };
+  enum { VaVoom, D2DF };
 
   // persistent fields
+  vint32 Type;
   // state info
   VName SpriteName;
   vint32 Frame;

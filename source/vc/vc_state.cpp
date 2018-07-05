@@ -33,6 +33,7 @@
 //==========================================================================
 VState::VState (VName AName, VMemberBase *AOuter, TLocation ALoc)
   : VMemberBase(MEMBER_State, AName, AOuter, ALoc)
+  , Type(VaVoom)
   , SpriteName(NAME_None)
   , Frame(0)
   , Time(0)
@@ -73,7 +74,9 @@ VState::~VState () {
 void VState::Serialise (VStream &Strm) {
   guard(VState::Serialise);
   VMemberBase::Serialise(Strm);
-  Strm << SpriteName
+  Strm
+    << STRM_INDEX(Type)
+    << SpriteName
     << STRM_INDEX(Frame)
     << Time
     << STRM_INDEX(Misc1)
@@ -140,7 +143,9 @@ void VState::Emit () {
       if (Function->NumParams) ParseError(Loc, "State method must not take any arguments");
       if (Function->Flags&FUNC_Static) ParseError(Loc, "State method must not be static");
       if (Function->Flags&FUNC_VarArgs) ParseError(Loc, "State method must not have varargs");
-      //if (!(Function->Flags&FUNC_Final)) ParseError(Loc, "State method must be final"); //k8: why?
+      if (Type == VaVoom) {
+        if (!(Function->Flags&FUNC_Final)) ParseError(Loc, "State method must be final"); //k8: why?
+      }
     }
   }
   unguard;
