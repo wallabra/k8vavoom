@@ -37,6 +37,7 @@
 #include "propp.h"
 #include "hashfunc.h"
 #include "jh32.h"
+#include "rg32.h"
 #include "zone.h"   //  Zone memory allocation
 #include "endian.h"   //  Endianes handling
 #include "names.h"    //  Built-in names

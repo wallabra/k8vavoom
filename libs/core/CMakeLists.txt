@@ -19,6 +19,8 @@ add_library(core STATIC
   hashset.h
   jh32.h
   jh32.cpp
+  rg32.h
+  rg32.cpp
   log.cpp
   log.h
   map_impl.h
