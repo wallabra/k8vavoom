@@ -3534,7 +3534,8 @@ void VParser::ParseClass () {
         Class->ScriptIdExpr = e;
       }
       Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-    } else if (Lex.Check(TK_Game)) {
+    } else if (/*Lex.Check(TK_Game)*/Lex.Token == TK_Identifier && Lex.Name == "game") {
+      Lex.NextToken();
       Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
       VExpression *e = ParseExpression();
       if (!e) {

@@ -57,7 +57,7 @@
   VC_LEXER_DEFTOKEN(Float,             "float")
   VC_LEXER_DEFTOKEN(For,               "for")
   VC_LEXER_DEFTOKEN(Foreach,           "foreach")
-  VC_LEXER_DEFTOKEN(Game,              "game")
+  //VC_LEXER_DEFTOKEN(Game,              "game") // demoted to simple identifier
   VC_LEXER_DEFTOKEN(Get,               "get")
   VC_LEXER_DEFTOKEN(Goto,              "goto")
   VC_LEXER_DEFTOKEN(If,                "if")
