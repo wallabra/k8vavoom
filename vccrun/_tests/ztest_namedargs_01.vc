@@ -1,0 +1,23 @@
+class Main : Object;
+
+string test (float y, float z, int a, int b, int c, string d) {
+  return
+    "y="~string.fromFloat(y)~
+    "; z="~string.fromFloat(z)~
+    "; a="~string.fromInt(a)~
+    "; b="~string.fromInt(b)~
+    "; c="~string.fromInt(c)~
+    "; d="~d;
+}
+
+
+void main () {
+  string s = test(y: 33.3,
+                  z: 44.4,
+                  a: 9999,
+                  b: 8888,
+                  7777,
+                  d:"Yehaw");
+  writeln(s);
+  if (s != "y=33.299999; z=44.400002; a=9999; b=8888; c=7777; d=Yehaw") FatalError("fuck");
+}

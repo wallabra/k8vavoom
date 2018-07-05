@@ -1,0 +1,26 @@
+class Main : Object;
+
+
+string test (int a,
+           int I_dont_care_what_I_am_named_at_caller_site_,
+           optional int ending_underscore_turns_off_namedarg_checking_,
+           optional string ok_)
+{
+  if (!specified_ending_underscore_turns_off_namedarg_checking_) ending_underscore_turns_off_namedarg_checking_ = 1;
+  if (!specified_ok_) ok_ = "55.5";
+  return
+    "a="~string.fromInt(a)~
+    "; 01="~string.fromInt(I_dont_care_what_I_am_named_at_caller_site_)~
+    "; 02="~string.fromInt(ending_underscore_turns_off_namedarg_checking_)~
+    "; 03="~ok_;
+}
+
+
+void main () {
+  writeln(test(a: 1111, b: 2222));
+  writeln(test(a: 1111, anything: 2222));
+  writeln(test(a: 1111, b: 2222, c: 3333));
+  //if (test(a: 1111, b: 2222) != "a=1111; 01=2222; 02=1; 03=55.5") assert(0);
+  //if (test(a: 1111, anything: 2222) != "a=1111; 01=2222; 02=1; 03=55.5") assert(0);
+  //if (test(a: 1111, b: 2222, c: 3333) != "a=1111; 01=2222; 02=3333; 03=55.5") assert(0);
+}

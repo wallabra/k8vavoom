@@ -1,0 +1,12 @@
+class Main : Object;
+
+string test (int a, optional int b, optional int c, optional int d, optional int e) {
+  return "a="~string.fromInt(a)~"; b="~string.fromInt(b)~"; c="~string.fromInt(c)~"; d="~string.fromInt(d)~"; e="~string.fromInt(e);
+}
+
+
+void main () {
+  string s = test(a: 1, 2, c: 9999);
+  writeln(s);
+  if (s != "a=1; b=2; c=9999; d=0; e=0") FatalError("FUCK");
+}

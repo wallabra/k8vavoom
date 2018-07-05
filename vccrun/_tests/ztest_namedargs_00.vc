@@ -1,0 +1,14 @@
+class Main : Object;
+
+string test (string a, string b) {
+  writeln("a=", a, "; b=", b);
+  return "a="~a~"; b="~b;
+}
+
+
+void main () {
+  //pragma(msg, test(a: "Hello", b: "World"));
+  //pragma(msg, test(b: "World", a: "Hello"));
+  if (test(a: "Hello", b: "World") != "a=Hello; b=World") FatalError("fuck0");
+  if (test(b: "World", a: "Hello") != "a=Hello; b=World") FatalError("fuck1");
+}

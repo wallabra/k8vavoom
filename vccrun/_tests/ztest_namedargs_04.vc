@@ -1,0 +1,15 @@
+class Main : Object;
+
+
+string test (string a, optional string b, optional string c) {
+  if (!specified_b) b = "wow";
+  if (!specified_c) c = "heh";
+  return a~b~c;
+}
+
+
+void main () {
+  auto str = test(c: "cc", a: "aa");
+  writeln(str);
+  if (str != "aawowcc") FatalError("FUCK");
+}
