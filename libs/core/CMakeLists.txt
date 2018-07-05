@@ -17,6 +17,8 @@ add_library(core STATIC
   exception.h
   hashfunc.h
   hashset.h
+  jh32.h
+  jh32.cpp
   log.cpp
   log.h
   map_impl.h
