@@ -405,6 +405,9 @@ bool VExpression::IsMarshallArg () const { return false; }
 bool VExpression::IsRefArg () const { return false; }
 bool VExpression::IsOutArg () const { return false; }
 bool VExpression::IsOptMarshallArg () const { return false; }
+bool VExpression::IsDefaultArg () const { return false; }
+bool VExpression::IsNamedArg () const { return false; }
+VName VExpression::GetArgName () const { return NAME_None; }
 bool VExpression::IsAnyInvocation () const { return false; }
 bool VExpression::IsLLInvocation () const { return false; }
 bool VExpression::IsTypeExpr () const { return false; }

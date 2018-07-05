@@ -35,9 +35,11 @@ public:
   bool isRef;
   bool isOut;
   bool marshallOpt;
+  VName argName;
 
 public:
   VArgMarshall (VExpression *ae);
+  VArgMarshall (VName aname, const TLocation &aloc);
   virtual ~VArgMarshall () override;
   virtual VExpression *DoResolve (VEmitContext &ec) override;
   virtual void Emit (VEmitContext &ec) override;
@@ -48,6 +50,10 @@ public:
   virtual bool IsRefArg () const override;
   virtual bool IsOutArg () const override;
   virtual bool IsOptMarshallArg () const override;
+  virtual bool IsDefaultArg () const override;
+
+  virtual bool IsNamedArg () const override;
+  virtual VName GetArgName () const override;
 
   virtual VStr toString () const override;
 
@@ -264,6 +270,9 @@ protected:
 
   // used by `OptimizeBuiltin`; `types` are `TYPE_xxx`
   bool CheckSimpleConstArgs (int argc, const int *types) const;
+
+  // rebuild arglist if there are named args
+  bool RebuildArgs ();
 };
 
 

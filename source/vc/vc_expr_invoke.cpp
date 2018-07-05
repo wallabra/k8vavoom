@@ -48,6 +48,23 @@ VArgMarshall::VArgMarshall (VExpression *ae)
   , isRef(false)
   , isOut(false)
   , marshallOpt(false)
+  , argName(NAME_None)
+{
+}
+
+
+//==========================================================================
+//
+//  VArgMarshall::VArgMarshall
+//
+//==========================================================================
+VArgMarshall::VArgMarshall (VName aname, const TLocation &aloc)
+  : VExpression(aloc)
+  , e(nullptr)
+  , isRef(false)
+  , isOut(false)
+  , marshallOpt(false)
+  , argName(aname)
 {
 }
 
@@ -101,6 +118,7 @@ void VArgMarshall::DoSyntaxCopyTo (VExpression *e) {
   res->isRef = isRef;
   res->isOut = isOut;
   res->marshallOpt = marshallOpt;
+  res->argName = argName;
 }
 
 
@@ -156,6 +174,36 @@ bool VArgMarshall::IsOptMarshallArg () const {
 
 //==========================================================================
 //
+//  VArgMarshall::IsDefaultArg
+//
+//==========================================================================
+bool VArgMarshall::IsDefaultArg () const {
+  return (e == nullptr);
+}
+
+
+//==========================================================================
+//
+//  VArgMarshall::IsNamedArg
+//
+//==========================================================================
+bool VArgMarshall::IsNamedArg () const {
+  return (argName != NAME_None);
+}
+
+
+//==========================================================================
+//
+//  VArgMarshall::GetArgName
+//
+//==========================================================================
+VName VArgMarshall::GetArgName () const {
+  return argName;
+}
+
+
+//==========================================================================
+//
 //  VArgMarshall::toString
 //
 //==========================================================================
@@ -163,7 +211,8 @@ VStr VArgMarshall::toString () const {
   VStr res;
   if (isRef) res += "ref ";
   if (isOut) res += "out ";
-  res += e2s(e);
+  if (argName != NAME_None) { res = *argName; res += ":"; }
+  res += (e ? e2s(e) : "default");
   if (marshallOpt) res != "!optional";
   return res;
 }
@@ -425,8 +474,6 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
-    //VExpression *e = new VLocalVar(num, Loc);
-    //VField *field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
     VInvocation *e = new VInvocation(tp.Function, num, Loc, NumArgs, Args);
     NumArgs = 0;
     delete this;
@@ -435,7 +482,7 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
 
   VClass *Class = VMemberBase::StaticFindClass(Name);
   if (Class) {
-    if (NumArgs != 1 || !Args[0]) {
+    if (NumArgs != 1 || !Args[0] || Args[0]->IsDefaultArg()) {
       ParseError(Loc, "Dynamic cast requires 1 argument");
       delete this;
       return nullptr;
@@ -636,21 +683,26 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     delete selfCopy;
     if (MethodName == NAME_Insert || VStr::Cmp(*MethodName, "insert") == 0) {
       if (NumArgs == 1) {
+        if (Args[0]->GetArgName() == "count") {
+          ParseError(Loc, "`count` without index");
+          delete this;
+          return nullptr;
+        }
         // default count is 1
         Args[1] = new VIntLiteral(1, Loc);
         NumArgs = 2;
       }
-      if (NumArgs != 2) {
+      if (NumArgs != 2 || !Args[0] || Args[0]->IsDefaultArg() || !Args[1] || Args[1]->IsDefaultArg()) {
         ParseError(Loc, "Insert requires 1 or 2 arguments");
         delete this;
         return nullptr;
       }
-      if (Args[0] && (Args[0]->IsRefArg() || Args[0]->IsOutArg())) {
+      if (Args[0]->IsRefArg() || Args[0]->IsOutArg()) {
         ParseError(Args[0]->Loc, "Insert cannot has `ref`/`out` argument");
         delete this;
         return nullptr;
       }
-      if (Args[1] && (Args[1]->IsRefArg() || Args[1]->IsOutArg())) {
+      if (Args[1]->IsRefArg() || Args[1]->IsOutArg()) {
         ParseError(Args[1]->Loc, "Insert cannot has `ref`/`out` argument");
         delete this;
         return nullptr;
@@ -664,21 +716,26 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
 
     if (MethodName == NAME_Remove || VStr::Cmp(*MethodName, "remove") == 0) {
       if (NumArgs == 1) {
+        if (Args[0]->GetArgName() == "count") {
+          ParseError(Loc, "`count` without index");
+          delete this;
+          return nullptr;
+        }
         // default count is 1
         Args[1] = new VIntLiteral(1, Loc);
         NumArgs = 2;
       }
-      if (NumArgs != 2) {
+      if (NumArgs != 2 || !Args[0] || Args[0]->IsDefaultArg() || !Args[1] || Args[1]->IsDefaultArg()) {
         ParseError(Loc, "Insert requires 1 or 2 arguments");
         delete this;
         return nullptr;
       }
-      if (Args[0] && (Args[0]->IsRefArg() || Args[0]->IsOutArg())) {
+      if (Args[0]->IsRefArg() || Args[0]->IsOutArg()) {
         ParseError(Args[0]->Loc, "Remove cannot has `ref`/`out` argument");
         delete this;
         return nullptr;
       }
-      if (Args[1] && (Args[1]->IsRefArg() || Args[1]->IsOutArg())) {
+      if (Args[1]->IsRefArg() || Args[1]->IsOutArg()) {
         ParseError(Args[1]->Loc, "Remove cannot has `ref`/`out` argument");
         delete this;
         return nullptr;
@@ -1073,7 +1130,7 @@ VExpression *VTypeInvocation::DoResolve (VEmitContext &ec) {
       else if (MethodName == "fromFloat") newMethod = "strFromFloat";
       if (newMethod) {
         // convert to invocation
-        VExpression *e = new VInvocation(nullptr, cls->FindMethodChecked("strrepeat"), nullptr, false, false, Loc, NumArgs, Args);
+        VExpression *e = new VInvocation(nullptr, cls->FindMethodChecked(newMethod), nullptr, false, false, Loc, NumArgs, Args);
         NumArgs = 0; // don't clear args
         e = e->Resolve(ec);
         delete this;
@@ -1249,6 +1306,76 @@ void VInvocation::DoSyntaxCopyTo (VExpression *e) {
 
 //==========================================================================
 //
+//  VInvocation::RebuildArgs
+//
+//==========================================================================
+bool VInvocation::RebuildArgs () {
+  if (NumArgs == 0) return true;
+  int maxParams = (Func->Flags&FUNC_VarArgs ? VMethod::MAX_PARAMS-1 : Func->NumParams);
+  if (NumArgs > maxParams) {
+    ParseError(Loc, "Too many method arguments");
+    return false;
+  }
+  VExpression *newArgs[VMethod::MAX_PARAMS+1];
+  bool isSet[VMethod::MAX_PARAMS+1];
+  for (int f = 0; f < VMethod::MAX_PARAMS+1; ++f) { newArgs[f] = nullptr; isSet[f] = false; }
+  int firstNamed = -1;
+  for (int f = 0; f < NumArgs; ++f) {
+    if (Args[f] && Args[f]->IsNamedArg()) {
+      firstNamed = f;
+      break;
+    }
+    newArgs[f] = Args[f];
+    isSet[f] = true;
+  }
+  if (firstNamed < 0) return true; // nothing to do
+  // do actual rebuild
+  int newNumArgs = firstNamed;
+  int newIdx = -1;
+  for (; firstNamed < NumArgs; ++firstNamed) {
+    if (Args[firstNamed] && Args[firstNamed]->IsNamedArg()) {
+      // named
+      int realIdx = Func->FindArgByName(Args[firstNamed]->GetArgName());
+      //HACK: ending underscore means "nobody cares"
+      if (realIdx < 0 && firstNamed < Func->NumParams) {
+        const char *ss = *Func->Params[firstNamed].Name;
+        if (ss[0] && ss[strlen(ss)-1] == '_') realIdx = firstNamed;
+      }
+      if (realIdx < 0) {
+        ParseError(Args[firstNamed]->Loc, "no argument named `%s`", *Args[firstNamed]->GetArgName());
+        return false;
+      }
+      if (isSet[realIdx]) {
+        ParseError(Args[firstNamed]->Loc, "duplicate argument named `%s`", *Args[firstNamed]->GetArgName());
+        return false;
+      }
+      newIdx = realIdx;
+    } else {
+      // unnamed
+      if (newIdx < 0) FatalError("VC: internal compiler error (VInvocation::RebuildArgs)");
+      if (newIdx >= maxParams) {
+        ParseError(Loc, "Too many method arguments");
+        return false;
+      }
+      if (isSet[newIdx]) {
+        ParseError((Args[firstNamed] ? Args[firstNamed]->Loc : Loc), "duplicate argument #%d", newIdx+1);
+        return false;
+      }
+    }
+    isSet[newIdx] = true;
+    newArgs[newIdx] = Args[firstNamed];
+    ++newIdx;
+    if (newIdx > newNumArgs) newNumArgs = newIdx;
+  }
+  // copy new list
+  NumArgs = newNumArgs;
+  for (int f = 0; f < newNumArgs; ++f) Args[f] = newArgs[f];
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VInvocation::DoResolve
 //
 //==========================================================================
@@ -1272,12 +1399,18 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   // resolve arguments
   int requiredParams = Func->NumParams;
   int maxParams = (Func->Flags&FUNC_VarArgs ? VMethod::MAX_PARAMS-1 : Func->NumParams);
-  bool ArgsOk = true;
+  bool ArgsOk = RebuildArgs();
+  if (!ArgsOk) { delete this; return nullptr; }
   for (int i = 0; i < NumArgs; ++i) {
     if (i >= maxParams) {
       ParseError((Args[i] ? Args[i]->Loc : Loc), "Too many method arguments");
       ArgsOk = false;
       break;
+    }
+    if (Args[i] && Args[i]->IsDefaultArg()) {
+      // unpack it, why not
+      delete Args[i];
+      Args[i] = nullptr;
     }
     if (Args[i]) {
       if (i < VMethod::MAX_PARAMS && Args[i]->IsOptMarshallArg() && (Func->ParamFlags[i]&FPARM_Optional) != 0) {
@@ -1853,7 +1986,7 @@ void VInvocation::CheckParams (VEmitContext &ec) {
         if ((Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
           argsize += 4; // pointer
         } else {
-          if (!(Func->ParamFlags[i]&FPARM_Optional)) ParseError(Loc, "Cannot omit non-optional argument");
+          if (!(Func->ParamFlags[i]&FPARM_Optional)) ParseError(Loc, "Cannot omit non-optional argument #%d", i+1);
           argsize += Func->ParamTypes[i].GetStackSize();
         }
       } else if ((Args[i]->IsNoneLiteral() || Args[i]->IsNullLiteral()) && (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {

@@ -38,15 +38,24 @@ int VParser::ParseArgList (const TLocation &stloc, VExpression **argv) {
   int count = 0;
   if (!Lex.Check(TK_RParen)) {
     do {
+      VName argName = NAME_None;
       bool isRef = false, isOut = false;
            if (Lex.Check(TK_Ref)) isRef = true;
       else if (Lex.Check(TK_Out)) isOut = true;
+      // named arg?
+      if (Lex.Token == TK_Identifier && Lex.peekTokenType(1) == TK_Colon) {
+        argName = Lex.Name;
+        Lex.NextToken();
+        Lex.NextToken();
+      }
       VExpression *arg;
       if (Lex.Token == TK_Default && Lex.peekNextNonBlankChar() != '.') {
              if (isRef) ParseError(Lex.Location, "`ref` is not allowed for `default` arg");
         else if (isOut) ParseError(Lex.Location, "`out` is not allowed for `default` arg");
-        Lex.Expect(TK_Default);
+        //if (argName != NAME_None) ParseError(Lex.Location, "name is not allowed for `default` arg");
         arg = nullptr;
+        if (argName != NAME_None) arg = new VArgMarshall(argName, Lex.Location);
+        Lex.Expect(TK_Default);
       } else {
         arg = ParseExpressionPriority13();
         bool isOutMarshall = false;
@@ -58,12 +67,15 @@ int VParser::ParseArgList (const TLocation &stloc, VExpression **argv) {
             Lex.NextToken();
           }
         }
-        if (arg && (isRef || isOut || isOutMarshall)) {
+        if (arg && (isRef || isOut || isOutMarshall || argName != NAME_None)) {
           VArgMarshall *em = new VArgMarshall(arg);
           em->isRef = isRef;
           em->isOut = isOut;
           em->marshallOpt = isOutMarshall;
+          em->argName = argName;
           arg = em;
+        } else if (!arg && argName != NAME_None) {
+          arg = new VArgMarshall(argName, Lex.Location);
         }
       }
       if (count == VMethod::MAX_PARAMS) {

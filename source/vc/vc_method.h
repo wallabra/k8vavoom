@@ -167,7 +167,7 @@ public:
 
   // compiler fields
   VExpression *ReturnTypeExpr;
-  VMethodParam Params[MAX_PARAMS];
+  VMethodParam Params[MAX_PARAMS]; // param name will be serialized
   VStatement *Statement;
   VName SelfTypeName;
   vint32 lmbCount; // number of defined lambdas, used to create lambda names
@@ -205,6 +205,9 @@ public:
 
   // this is public for VCC
   void OptimizeInstructions ();
+
+  // <0: not found
+  int FindArgByName (VName aname) const;
 
 private:
   void CompileCode ();

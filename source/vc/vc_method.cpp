@@ -150,7 +150,10 @@ void VMethod::Serialise (VStream &Strm) {
     << STRM_INDEX(printfFmtArgIdx)
     << STRM_INDEX(builtinOpc)
   ;
-  for (int i = 0; i < NumParams; ++i) Strm << ParamTypes[i] << ParamFlags[i];
+  for (int i = 0; i < NumParams; ++i) {
+    // save param names too
+    Strm << ParamTypes[i] << ParamFlags[i] << Params[i].Name;
+  }
   Strm << ReplCond << Instructions;
   unguard;
 }
@@ -405,6 +408,22 @@ void VMethod::Emit () {
   */
 
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VMethod::FindArgByName
+//
+//  <0: not found
+//
+//==========================================================================
+int VMethod::FindArgByName (VName aname) const {
+  if (aname == NAME_None) return -1;
+  for (int f = 0; f < NumParams; ++f) {
+    if (Params[f].Name == aname) return f;
+  }
+  return -1;
 }
 
 

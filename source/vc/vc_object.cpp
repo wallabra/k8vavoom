@@ -738,7 +738,7 @@ IMPLEMENT_FUNCTION(VObject, strFromInt) {
   RET_STR(s);
 }
 
-//native static final string strFromFloat (int v);
+//native static final string strFromFloat (float v);
 IMPLEMENT_FUNCTION(VObject, strFromFloat) {
   P_GET_FLOAT(v);
   VStr s(v);

@@ -124,6 +124,9 @@ public:
   virtual bool IsRefArg () const;
   virtual bool IsOutArg () const;
   virtual bool IsOptMarshallArg () const;
+  virtual bool IsDefaultArg () const;
+  virtual bool IsNamedArg () const;
+  virtual VName GetArgName () const;
   virtual bool IsAnyInvocation () const;
   virtual bool IsLLInvocation () const; // is this `VInvocation`?
   virtual bool IsTypeExpr () const;
