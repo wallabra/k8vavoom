@@ -28,137 +28,10 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 const char *VLexer::TokenNames[] = {
-  "",
-  "END OF FILE",
-  "IDENTIFIER",
-  "NAME LITERAL",
-  "STRING LITERAL",
-  "INTEGER LITERAL",
-  "FLOAT LITERAL",
-
-  // keywords
-  "abstract",
-  "alias",
-  "array",
-  "auto",
-  "bitenum",
-  "bool",
-  "break",
-  "byte",
-  "case",
-  "cast",
-  "class",
-  "const",
-  "continue",
-  "decorate",
-  "default",
-  "defaultproperties",
-  "delegate",
-  "delete",
-  "do",
-  "else",
-  "enum",
-  "false",
-  "final",
-  "float",
-  "for",
-  "foreach",
-  "game",
-  "get",
-  "goto",
-  "if",
-  "inline",
-  "import",
-  "int",
-  "isa",
-  "iterator",
-  "name",
-  "native",
-  "none",
-  "nullptr",
-  "optional",
-  "out",
-  "override",
-  "private",
-  "protected",
-  "readonly",
-  "ref",
-  "reliable",
-  "replication",
-  "repnotify",
-  "return",
-  "scope",
-  "self",
-  "set",
-  "spawner",
-  "state",
-  "states",
-  "static",
-  "string",
-  "struct",
-  "switch",
-  "transient",
-  "true",
-  "ubyte",
-  "uint",
-  "unreliable",
-  "vector",
-  "void",
-  "while",
-
-  "__mobjinfo__",
-  "__scriptid__",
-
-  // punctuation
-  "...",
-  "<<=",
-  ">>=",
-  "..",
-  "+=",
-  "-=",
-  "*=",
-  "/=",
-  "%=",
-  "&=",
-  "|=",
-  "^=",
-  "==",
-  "!=",
-  "<=",
-  ">=",
-  "&&",
-  "||",
-  "<<",
-  ">>",
-  "++",
-  "--",
-  "->",
-  "::",
-  "<",
-  ">",
-  "?",
-  "&",
-  "|",
-  "^",
-  "~",
-  "!",
-  "+",
-  "-",
-  "*",
-  "/",
-  "%",
-  "(",
-  ")",
-  ".",
-  ",",
-  ";",
-  ":",
-  "=",
-  "[",
-  "]",
-  "{",
-  "}",
-  "$",
+#define VC_LEXER_DEFTOKEN(name,str)  str,
+#include "vc_lexer_tokens.h"
+#undef VC_LEXER_DEFTOKEN
+  nullptr
 };
 
 char VLexer::ASCIIToChrCode[256];
@@ -377,7 +250,7 @@ void VLexer::NextChr () {
     src->IncLineNumber = false;
   }
   currCh = *src->FilePtr++;
-  if ((vuint8)currCh < ' ') {
+  if ((vuint8)currCh < ' ' || (vuint8)currCh == EOF_CHARACTER) {
     if (currCh == '\n') {
       src->IncLineNumber = true;
       src->NewLine = true;
@@ -1011,121 +884,18 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
 
   if (!CheckKeywords) return;
 
-  //k8: there were alot of `if`s with char-by-char comparisons, but meh... it is 2018 now.
+  //k8: it was a giant `switch`, but meh... it is 2018 now!
   const char *s = tokenStringBuffer;
-  switch (s[0]) {
-    case '_':
-      if (s[1] == '_') {
-             if (checkStrTk("__mobjinfo__")) Token = TK_MobjInfo;
-        else if (checkStrTk("__scriptid__")) Token = TK_ScriptId;
-      }
+  for (unsigned tidx = TK_Abstract; tidx < TK_VarArgs; ++tidx) {
+    if (s[0] == TokenNames[tidx][0] && strcmp(s, TokenNames[tidx]) == 0) {
+      Token = (EToken)tidx;
       break;
-    case 'a':
-           if (checkStrTk("abstract")) Token = TK_Abstract;
-      else if (checkStrTk("array")) Token = TK_Array;
-      else if (checkStrTk("auto")) Token = TK_Auto;
-      else if (checkStrTk("alias")) Token = TK_Alias;
-      break;
-    case 'b':
-           if (checkStrTk("bool")) Token = TK_Bool;
-      else if (checkStrTk("break")) Token = TK_Break;
-      else if (checkStrTk("byte")) Token = TK_Byte;
-      else if (checkStrTk("bitenum")) Token = TK_BitEnum;
-      break;
-    case 'c':
-           if (checkStrTk("case")) Token = TK_Case;
-      else if (checkStrTk("class")) Token = TK_Class;
-      else if (checkStrTk("const")) Token = TK_Const;
-      else if (checkStrTk("continue")) Token = TK_Continue;
-      else if (checkStrTk("cast")) Token = TK_Cast;
-      break;
-    case 'd':
-           if (checkStrTk("decorate")) Token = TK_Decorate;
-      else if (checkStrTk("default")) Token = TK_Default;
-      else if (checkStrTk("defaultproperties")) Token = TK_DefaultProperties;
-      else if (checkStrTk("delegate")) Token = TK_Delegate;
-      else if (checkStrTk("delete")) Token = TK_Delete;
-      else if (checkStrTk("do")) Token = TK_Do;
-      break;
-    case 'e':
-           if (checkStrTk("else")) Token = TK_Else;
-      else if (checkStrTk("enum")) Token = TK_Enum;
-      break;
-    case 'f':
-           if (checkStrTk("false")) Token = TK_False;
-      else if (checkStrTk("final")) Token = TK_Final;
-      else if (checkStrTk("float")) Token = TK_Float;
-      else if (checkStrTk("for")) Token = TK_For;
-      else if (checkStrTk("foreach")) Token = TK_Foreach;
-      break;
-    case 'g':
-           if (checkStrTk("game")) Token = TK_Game;
-      else if (checkStrTk("get")) Token = TK_Get;
-      else if (checkStrTk("goto")) Token = TK_Goto;
-      break;
-    case 'i':
-           if (checkStrTk("if")) Token = TK_If;
-      else if (checkStrTk("import")) Token = TK_Import;
-      else if (checkStrTk("int")) Token = TK_Int;
-      else if (checkStrTk("iterator")) Token = TK_Iterator;
-      else if (checkStrTk("inline")) Token = TK_Inline;
-      else if (checkStrTk("isa")) Token = TK_IsA;
-      break;
-    case 'n':
-           if (checkStrTk("name")) Token = TK_Name;
-      else if (checkStrTk("native")) Token = TK_Native;
-      else if (checkStrTk("none")) Token = TK_None;
-      else if (checkStrTk("null")) Token = TK_Null;
-      else if (checkStrTk("nullptr")) Token = TK_Null;
-      break;
-    case 'o':
-           if (checkStrTk("optional")) Token = TK_Optional;
-      else if (checkStrTk("out")) Token = TK_Out;
-      else if (checkStrTk("override")) Token = TK_Override;
-      break;
-    case 'p':
-      if (checkStrTk("private")) Token = TK_Private;
-      if (checkStrTk("protected")) Token = TK_Protected;
-      break;
-    case 'r':
-           if (checkStrTk("return")) Token = TK_Return;
-      else if (checkStrTk("ref")) Token = TK_Ref;
-      else if (checkStrTk("readonly")) Token = TK_ReadOnly;
-      else if (checkStrTk("reliable")) Token = TK_Reliable;
-      else if (checkStrTk("replication")) Token = TK_Replication;
-      else if (checkStrTk("repnotify")) Token = TK_Repnotify;
-      break;
-    case 's':
-           if (checkStrTk("string")) Token = TK_String;
-      else if (checkStrTk("switch")) Token = TK_Switch;
-      else if (checkStrTk("self")) Token = TK_Self;
-      else if (checkStrTk("set")) Token = TK_Set;
-      else if (checkStrTk("struct")) Token = TK_Struct;
-      else if (checkStrTk("spawner")) Token = TK_Spawner;
-      else if (checkStrTk("static")) Token = TK_Static;
-      else if (checkStrTk("state")) Token = TK_State;
-      else if (checkStrTk("states")) Token = TK_States;
-      else if (checkStrTk("scope")) Token = TK_Scope;
-      break;
-    case 't':
-           if (checkStrTk("true")) Token = TK_True;
-      else if (checkStrTk("transient")) Token = TK_Transient;
-      break;
-    case 'u':
-           if (checkStrTk("unreliable")) Token = TK_Unreliable;
-      else if (checkStrTk("ubyte")) Token = TK_UByte;
-      else if (checkStrTk("uint")) Token = TK_UInt;
-      break;
-    case 'v':
-           if (checkStrTk("void")) Token = TK_Void;
-      else if (checkStrTk("vector")) Token = TK_Vector;
-      break;
-    case 'w':
-      if (checkStrTk("while")) Token = TK_While;
-      break;
-    case 'N':
-      if (checkStrTk("NULL")) Token = TK_Null;
-      break;
+    }
+  }
+  // hacks
+  if (Token == TK_Identifier) {
+         if (s[0] == 'n' && strcmp(s, "nullptr") == 0) Token = TK_Null;
+    else if (s[0] == 'N' && strcmp(s, "NULL") == 0) Token = TK_Null;
   }
 
   if (Token == TK_Identifier) Name = tokenStringBuffer;
@@ -1138,9 +908,34 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
 //
 //==========================================================================
 void VLexer::ProcessSpecialToken () {
-  char c = currCh;
+  Token = TK_NoToken;
+  char tkbuf[8]; // way too much
+  size_t tkbpos = 0;
+  for (;;) {
+    tkbuf[tkbpos] = currCh;
+    tkbuf[tkbpos+1] = 0;
+    EToken ntk = TK_NoToken;
+    for (unsigned tidx = TK_VarArgs; tidx < TK_TotalTokenCount; ++tidx) {
+      if (tkbuf[0] == TokenNames[tidx][0] && strcmp(tkbuf, TokenNames[tidx]) == 0) {
+        ntk = (EToken)tidx;
+        break;
+      }
+    }
+    // not found?
+    if (ntk == TK_NoToken) {
+      // use last found token
+      if (Token == TK_NoToken) ParseError(Location, ERR_BAD_CHARACTER, "Unknown punctuation \'%s\'", tkbuf);
+      return;
+    }
+    // new token found, eat one char and repeat
+    Token = ntk;
+    NextChr();
+    if (++tkbpos >= sizeof(tkbuf)) FatalError("VC: something is very wrong with the lexer");
+  }
+  /*
+  char ch = currCh;
   NextChr();
-  switch (c) {
+  switch (ch) {
     case '+':
            if (currCh == '=') { Token = TK_AddAssign; NextChr(); }
       else if (currCh == '+') { Token = TK_Inc; NextChr(); }
@@ -1235,10 +1030,11 @@ void VLexer::ProcessSpecialToken () {
     case '}': Token = TK_RBrace; break;
     case '$': Token = TK_Dollar; break;
     default:
-      ParseError(Location, ERR_BAD_CHARACTER, "Unknown punctuation \'%c\'", currCh);
+      ParseError(Location, ERR_BAD_CHARACTER, "Unknown punctuation \'%c\'", ch);
       Token = TK_NoToken;
       break;
   }
+  */
 }
 
 
