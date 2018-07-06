@@ -427,6 +427,8 @@ native static final int GetStateMisc1 (state State);
 native static final int GetStateMisc2 (state State);
 native static final void SetStateMisc1 (state State, int v);
 native static final void SetStateMisc2 (state State, int v);
+native static final int GetStateFRN (state State);
+native static final void SetStateFRN (state State, int v);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

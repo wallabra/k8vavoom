@@ -54,6 +54,7 @@ public:
   vint32 frameHeight;
   vint32 frameOfsX;
   vint32 frameOfsY;
+  vint32 frameAction; // for d2df states: >0 means: do action on each nth frame
 
   // run-time fields
   vint32 SpriteIndex;

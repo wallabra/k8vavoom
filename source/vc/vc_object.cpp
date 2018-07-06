@@ -1099,6 +1099,17 @@ IMPLEMENT_FUNCTION(VObject, SetStateMisc2) {
   if (State) State->Misc2 = v;
 }
 
+IMPLEMENT_FUNCTION(VObject, GetStateFRN) {
+  P_GET_PTR(VState, State);
+  RET_INT(State ? State->frameAction : 0);
+}
+
+IMPLEMENT_FUNCTION(VObject, SetStateFRN) {
+  P_GET_INT(v);
+  P_GET_PTR(VState, State);
+  if (State) State->frameAction = v;
+}
+
 #ifndef VCC_STANDALONE_EXECUTOR
 IMPLEMENT_FUNCTION(VObject, AreStateSpritesPresent) {
   P_GET_PTR(VState, State);

@@ -49,6 +49,7 @@ VState::VState (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , frameHeight(-1)
   , frameOfsX(0)
   , frameOfsY(0)
+  , frameAction(0)
   , SpriteIndex(0)
   , InClassIndex(-1)
   , NetId(-1)
@@ -85,6 +86,7 @@ void VState::Serialise (VStream &Strm) {
     << STRM_INDEX(frameHeight)
     << STRM_INDEX(frameOfsX)
     << STRM_INDEX(frameOfsY)
+    << STRM_INDEX(frameAction)
     << NextState
     << Function
     << Next;

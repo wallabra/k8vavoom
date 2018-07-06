@@ -3257,6 +3257,20 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     }
     if (neg) s->Time = -s->Time;
 
+    // :frn
+    if (Lex.Check(TK_Colon)) {
+      if (Lex.Token == TK_IntLiteral) {
+        s->frameAction = Lex.Number;
+        Lex.NextToken();
+      } else if (Lex.Token == TK_FloatLiteral) {
+        ParseError(Lex.Location, "State frn should be integral");
+        s->frameAction = (int)Lex.Float;
+        Lex.NextToken();
+      } else {
+        ParseError(Lex.Location, "State frn duration expected");
+      }
+    }
+
     // options
     while (Lex.Token == TK_Identifier) {
       if (Lex.Name == "_ofs") {
