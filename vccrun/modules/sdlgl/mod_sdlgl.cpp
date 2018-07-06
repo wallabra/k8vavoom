@@ -41,6 +41,9 @@ bool VVideo::quitSignal = false;
 
 extern VObject *mainObject;
 
+static const float zNear = 1.0f;
+static const float zFar = 42.0f;
+
 #ifndef GL_CLAMP_TO_EDGE
 # define GL_CLAMP_TO_EDGE  0x812F
 #endif
@@ -548,11 +551,12 @@ void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0
   const float fx1 = (float)x1/(float)img->width;
   const float fy0 = (float)y0/(float)img->height;
   const float fy1 = (float)y1/(float)img->height;
+  const float z = VVideo::currZFloat;
   glBegin(GL_QUADS);
-    glTexCoord2f(fx0, fy0); glVertex2f(dx0, dy0);
-    glTexCoord2f(fx1, fy0); glVertex2f(dx1, dy0);
-    glTexCoord2f(fx1, fy1); glVertex2f(dx1, dy1);
-    glTexCoord2f(fx0, fy1); glVertex2f(dx0, dy1);
+    glTexCoord2f(fx0, fy0); glVertex3f(dx0, dy0, z);
+    glTexCoord2f(fx1, fy0); glVertex3f(dx1, dy0, z);
+    glTexCoord2f(fx1, fy1); glVertex3f(dx1, dy1, z);
+    glTexCoord2f(fx0, fy1); glVertex3f(dx0, dy1, z);
   glEnd();
 }
 
@@ -575,11 +579,12 @@ void VOpenGLTexture::blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int
   } else {
     VVideo::setupBlending();
   }
+  const float z = VVideo::currZFloat;
   glBegin(GL_QUADS);
-    glTexCoord2i(x0, y0); glVertex2f(dx0, dy0);
-    glTexCoord2i(x1, y0); glVertex2f(dx1, dy0);
-    glTexCoord2i(x1, y1); glVertex2f(dx1, dy1);
-    glTexCoord2i(x0, y1); glVertex2f(dx0, dy1);
+    glTexCoord2i(x0, y0); glVertex3f(dx0, dy0, z);
+    glTexCoord2i(x1, y0); glVertex3f(dx1, dy0, z);
+    glTexCoord2i(x1, y1); glVertex3f(dx1, dy1, z);
+    glTexCoord2i(x0, y1); glVertex3f(dx0, dy1, z);
   glEnd();
 }
 
@@ -602,11 +607,12 @@ void VOpenGLTexture::blitAt (int dx0, int dy0, float scale) const {
   } else {
     VVideo::setupBlending();
   }
+  const float z = VVideo::currZFloat;
   glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex2f(dx0, dy0);
-    glTexCoord2f(1.0f, 0.0f); glVertex2f(dx0+w*scale, dy0);
-    glTexCoord2f(1.0f, 1.0f); glVertex2f(dx0+w*scale, dy0+h*scale);
-    glTexCoord2f(0.0f, 1.0f); glVertex2f(dx0, dy0+h*scale);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(dx0, dy0, z);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(dx0+w*scale, dy0, z);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(dx0+w*scale, dy0+h*scale, z);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(dx0, dy0+h*scale, z);
   glEnd();
 }
 
@@ -779,6 +785,10 @@ int VVideo::mWidth = 0;
 int VVideo::mHeight = 0;
 bool VVideo::smoothLine = false;
 bool VVideo::directMode = false;
+bool VVideo::depthTest = false;
+int VVideo::depthFunc = VVideo::ZFunc_Less;
+int VVideo::currZ = 0;
+float VVideo::currZFloat = 1.0f;
 
 
 struct TimerInfo {
@@ -945,6 +955,10 @@ void VVideo::close () {
     mWidth = 0;
     mHeight = 0;
     directMode = false;
+    depthTest = false;
+    depthFunc = VVideo::ZFunc_Less;
+    currZ = 0;
+    currZFloat = 1.0f;
   }
 }
 
@@ -969,7 +983,7 @@ bool VVideo::open (const VStr &winname, int width, int height) {
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
   /*
@@ -1016,7 +1030,8 @@ bool VVideo::open (const VStr &winname, int width, int height) {
 
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
-  glDisable(GL_DEPTH_TEST);
+  if (depthTest) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
+  realizeZFunc();
   glDisable(GL_CULL_FACE);
   //glDisable(GL_BLEND);
   //glEnable(GL_LINE_SMOOTH);
@@ -1032,14 +1047,17 @@ bool VVideo::open (const VStr &winname, int width, int height) {
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(0, width, height, 0, -99999, 99999);
+  glOrtho(0, width, height, 0, -zNear, -zFar);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
+  //glDrawBuffer(directMode ? GL_FRONT : GL_BACK);
+
   clear();
+  glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
   return true;
 }
@@ -1051,7 +1069,9 @@ void VVideo::clear () {
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClearDepth(1.0);
   glClearStencil(0);
-  glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+
+  //glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT|(depthTest ? GL_DEPTH_BUFFER_BIT : 0));
 }
 
 
@@ -1332,6 +1352,7 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
   glEnable(GL_BLEND); // font is rarely fully opaque, so don't bother checking
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+  const float z = currZFloat;
   glBegin(GL_QUADS);
   int sx = x;
   for (int f = 0; f < text.length(); ++f) {
@@ -1341,10 +1362,10 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
     auto fc = currFont->getChar(ch);
     if (!fc) continue;
     // draw char
-    glTexCoord2f(fc->tx0, fc->ty0); glVertex2f(x, y+fc->topofs);
-    glTexCoord2f(fc->tx1, fc->ty0); glVertex2f(x+fc->width, y+fc->topofs);
-    glTexCoord2f(fc->tx1, fc->ty1); glVertex2f(x+fc->width, y+fc->topofs+fc->height);
-    glTexCoord2f(fc->tx0, fc->ty1); glVertex2f(x, y+fc->topofs+fc->height);
+    glTexCoord2f(fc->tx0, fc->ty0); glVertex3f(x, y+fc->topofs, z);
+    glTexCoord2f(fc->tx1, fc->ty0); glVertex3f(x+fc->width, y+fc->topofs, z);
+    glTexCoord2f(fc->tx1, fc->ty1); glVertex3f(x+fc->width, y+fc->topofs+fc->height, z);
+    glTexCoord2f(fc->tx0, fc->ty1); glVertex3f(x, y+fc->topofs+fc->height, z);
     // advance
     x += fc->advance;
   }
@@ -1455,11 +1476,55 @@ IMPLEMENT_FUNCTION(VVideo, get_directMode) {
 
 IMPLEMENT_FUNCTION(VVideo, set_directMode) {
   P_GET_BOOL(m);
-  if (!mInited) return;
+  if (!mInited) { directMode = m; return; }
   if (m != directMode) {
     directMode = m;
     glDrawBuffer(m ? GL_FRONT : GL_BACK);
   }
+}
+
+IMPLEMENT_FUNCTION(VVideo, get_depthTest) {
+  RET_BOOL(depthTest);
+}
+
+IMPLEMENT_FUNCTION(VVideo, set_depthTest) {
+  P_GET_BOOL(m);
+  if (!mInited) { depthTest = m; return; }
+  if (m != depthTest) {
+    depthTest = m;
+    if (m) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
+  }
+}
+
+IMPLEMENT_FUNCTION(VVideo, get_depthFunc) {
+  RET_INT(depthFunc);
+}
+
+IMPLEMENT_FUNCTION(VVideo, set_depthFunc) {
+  P_GET_INT(v);
+  if (v < 0 || v >= ZFunc_Max) return;
+  if (!mInited) { depthFunc = v; return; }
+  if (v != depthFunc) {
+    depthFunc = v;
+    realizeZFunc();
+  }
+}
+
+IMPLEMENT_FUNCTION(VVideo, get_currZ) {
+  RET_INT(currZ);
+}
+
+IMPLEMENT_FUNCTION(VVideo, set_currZ) {
+  P_GET_INT(z);
+  if (z < 0) z = 0; else if (z > 65535) z = 65535;
+  if (z == currZ) return;
+  const float zNear = 1;
+  const float zFar = 64;
+  const float a = zFar/(zFar-zNear);
+  const float b = zFar*zNear/(zNear-zFar);
+  const float k = 1<<16;
+  currZ = z;
+  currZFloat = (k*b)/(z-(k*a));
 }
 
 IMPLEMENT_FUNCTION(VVideo, get_scissorEnabled) {
@@ -1629,9 +1694,10 @@ IMPLEMENT_FUNCTION(VVideo, drawLine) {
   if (!mInited || isFullyTransparent()) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
+  const float z = VVideo::currZFloat;
   glBegin(GL_LINES);
-    glVertex2f(x0+0.5f, y0+0.5f);
-    glVertex2f(x1+0.5f, y1+0.5f);
+    glVertex3f(x0+0.5f, y0+0.5f, z);
+    glVertex3f(x1+0.5f, y1+0.5f, z);
   glEnd();
 }
 
@@ -1645,11 +1711,12 @@ IMPLEMENT_FUNCTION(VVideo, drawRect) {
   if (!mInited || isFullyTransparent() || w < 1 || h < 1) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
+  const float z = currZFloat;
   glBegin(GL_LINE_LOOP);
-    glVertex2f(x0+0+0.5f, y0+0+0.5f);
-    glVertex2f(x0+w-0.5f, y0+0+0.5f);
-    glVertex2f(x0+w-0.5f, y0+h-0.5f);
-    glVertex2f(x0+0+0.5f, y0+h-0.5f);
+    glVertex3f(x0+0+0.5f, y0+0+0.5f, z);
+    glVertex3f(x0+w-0.5f, y0+0+0.5f, z);
+    glVertex3f(x0+w-0.5f, y0+h-0.5f, z);
+    glVertex3f(x0+0+0.5f, y0+h-0.5f, z);
   glEnd();
 }
 
@@ -1665,11 +1732,12 @@ IMPLEMENT_FUNCTION(VVideo, fillRect) {
   glDisable(GL_TEXTURE_2D);
 
   // no need for 0.5f here, or rect will be offset
+  const float z = currZFloat;
   glBegin(GL_QUADS);
-    glVertex2f(x0+0, y0+0);
-    glVertex2f(x0+w, y0+0);
-    glVertex2f(x0+w, y0+h);
-    glVertex2f(x0+0, y0+h);
+    glVertex3f(x0+0, y0+0, z);
+    glVertex3f(x0+w, y0+0, z);
+    glVertex3f(x0+w, y0+h, z);
+    glVertex3f(x0+0, y0+h, z);
   glEnd();
 }
 

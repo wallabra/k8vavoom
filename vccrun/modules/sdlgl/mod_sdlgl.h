@@ -52,6 +52,18 @@ public:
     BlendInvert, // glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO)
   };
 
+  enum {
+    ZFunc_Never,
+    ZFunc_Always,
+    ZFunc_Equal,
+    ZFunc_NotEqual,
+    ZFunc_Less, // default
+    ZFunc_LessEqual,
+    ZFunc_Greater,
+    ZFunc_GreaterEqual,
+    ZFunc_Max,
+  };
+
 private:
   static bool mInited;
   static int mWidth, mHeight;
@@ -70,9 +82,30 @@ private:
   static VFont *currFont;
   static bool smoothLine;
   static bool directMode;
+  static bool depthTest;
+  static int depthFunc;
+  static int currZ;
   friend class VOpenGLTexture;
 
+public:
+  static float currZFloat;
+
 private:
+  static inline void realizeZFunc () {
+    if (mInited) {
+      switch (depthFunc) {
+        case ZFunc_Never: glDepthFunc(GL_NEVER); break;
+        case ZFunc_Always: glDepthFunc(GL_ALWAYS); break;
+        case ZFunc_Equal: glDepthFunc(GL_EQUAL); break;
+        case ZFunc_NotEqual: glDepthFunc(GL_NOTEQUAL); break;
+        case ZFunc_Less: glDepthFunc(GL_LESS); break;
+        case ZFunc_LessEqual: glDepthFunc(GL_LEQUAL); break;
+        case ZFunc_Greater: glDepthFunc(GL_GREATER); break;
+        case ZFunc_GreaterEqual: glDepthFunc(GL_GEQUAL); break;
+      }
+    }
+  }
+
   static inline void realiseGLColor () {
     if (mInited) {
       glColor4f(
@@ -187,6 +220,15 @@ public:
 
   DECLARE_FUNCTION(get_directMode)
   DECLARE_FUNCTION(set_directMode)
+
+  DECLARE_FUNCTION(get_depthTest)
+  DECLARE_FUNCTION(set_depthTest)
+
+  DECLARE_FUNCTION(get_depthFunc)
+  DECLARE_FUNCTION(set_depthFunc)
+
+  DECLARE_FUNCTION(get_currZ)
+  DECLARE_FUNCTION(set_currZ)
 
   DECLARE_FUNCTION(get_scissorEnabled)
   DECLARE_FUNCTION(set_scissorEnabled)

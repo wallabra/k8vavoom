@@ -50,6 +50,29 @@ native final static void forceSwap ();
 // in "direct mode" we are rendering on front (visible) screen buffer
 native final static bool directMode { get; set; }
 
+
+// in "depth testing mode" we are using z coordinate to do depth testing (default is off)
+// note that `clearScreen()` will clear depth buffer only if this mode is on
+native final static bool depthTest { get; set; }
+
+enum ZFunc {
+  Never,
+  Always,
+  Equal,
+  NotEqual,
+  Less, // default
+  LessEqual,
+  Greater,
+  GreaterEqual,
+}
+
+native final static ZFunc depthFunc { get; set; }
+
+// current z value, in range of [0..65535]
+// values closer to z takes priority
+native final static int currZ { get; set; }
+
+
 // aborts if font cannot be loaded
 native final static void loadFont (name fontname, string fnameIni, string fnameTexture);
 
