@@ -903,7 +903,7 @@ struct Instr {
             spdelta = -2;
             return;
           case OPC_Builtin_NameToInt:
-            break;
+            return;
           default: FatalError("Unknown builtin");
         }
     }
