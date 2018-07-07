@@ -870,7 +870,7 @@ bool VClass::Define () {
   int HashIndex = Name.GetIndex()&4095;
   for (VMemberBase *m = GMembersHash[HashIndex]; m; m = m->HashNext) {
     if (m->Name == Name && m->MemberType == MEMBER_Class && ((VClass *)m)->Defined) {
-      ParseError(Loc, "Class %s already has been declared", *Name);
+      ParseError(Loc, "Class `%s` already has been declared", *Name);
     }
   }
 
@@ -880,7 +880,7 @@ bool VClass::Define () {
   if (ParentClassName != NAME_None) {
     ParentClass = StaticFindClass(ParentClassName);
     if (!ParentClass) {
-      ParseError(ParentClassLoc, "No such class %s", *ParentClassName);
+      ParseError(ParentClassLoc, "No such class `%s`", *ParentClassName);
     } else if (!ParentClass->Defined) {
       ParseError(ParentClassLoc, "Parent class must be defined before");
     }
@@ -892,6 +892,9 @@ bool VClass::Define () {
       ParentClass ? ParentClass->GetName() : "(none)");
   }
 #endif
+
+  // process constants, so if other class will try to use constant it its declaration, that will succeed
+  for (int f = 0; f < Constants.length(); ++f) if (!Constants[f]->Define()) return false;
 
   for (int i = 0; i < Structs.Num(); ++i) if (!Structs[i]->Define()) return false;
 
@@ -910,7 +913,8 @@ bool VClass::DefineMembers () {
   guard(VClass::DefineMembers);
   bool Ret = true;
 
-  for (int i = 0; i < Constants.Num(); ++i) if (!Constants[i]->Define()) Ret = false;
+  // moved to `Define()`
+  //for (int i = 0; i < Constants.Num(); ++i) if (!Constants[i]->Define()) Ret = false;
   for (int i = 0; i < Structs.Num(); ++i) Structs[i]->DefineMembers();
 
   VField *PrevBool = nullptr;

@@ -24,6 +24,9 @@
 //**************************************************************************
 
 class VConstant : public VMemberBase {
+private:
+  bool alreadyDefined;
+
 public:
   // persistent fields
   vuint8 Type;
