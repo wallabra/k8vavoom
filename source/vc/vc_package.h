@@ -72,6 +72,8 @@ public:
   TArray<VClass *> ParsedClasses;
   TArray<VClass *> ParsedDecorateImportClasses;
 
+  TMap<VName, bool> KnownEnums;
+
   int NumBuiltins;
 
   // run-time fields
@@ -88,6 +90,9 @@ public:
 
   int FindString (const char *);
   VConstant *FindConstant (VName Name, VName EnumName=NAME_None);
+
+  bool IsKnownEnum (VName EnumName);
+  bool AddKnownEnum (VName EnumName); // returns `true` if enum was redefined
 
   VClass *FindDecorateImportClass (VName) const;
 

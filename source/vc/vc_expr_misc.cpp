@@ -448,15 +448,10 @@ VExpression *VSingleName::ResolveAssignmentValue (VEmitContext &ec) {
 //
 //==========================================================================
 VTypeExpr *VSingleName::ResolveAsType (VEmitContext &ec) {
+  // this does enum types too
   Type = VMemberBase::StaticFindType(ec.SelfClass, Name);
 
   if (Type.Type == TYPE_Unknown) {
-    // try enum name
-    if (ec.SelfClass && ec.SelfClass->IsKnownEnum(Name)) {
-      auto e = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Int), Loc);
-      delete this;
-      return e->ResolveAsType(ec);
-    }
     ParseError(Loc, "Invalid identifier, bad type name `%s`", *Name);
     delete this;
     return nullptr;

@@ -3627,6 +3627,7 @@ void VParser::ParseClass () {
         if (Lex.Token == TK_Identifier) {
           ename = Lex.Name;
           if (Class->AddKnownEnum(ename)) ParseError(Lex.Location, "Duplicate enum name `%s`", *ename);
+          if (Class->FindConstant(ename)) ParseError(Lex.Location, "Redefined identifier `%s`", *ename);
           Lex.NextToken();
         }
         Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
@@ -4055,27 +4056,65 @@ void VParser::Parse () {
           break;
         }
       case TK_Enum:
+      case TK_BitEnum:
         {
+          bool bitconst = (Lex.Token == TK_BitEnum);
           Lex.NextToken();
           VConstant *PrevValue = nullptr;
-          Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
-          for (;;) {
-            if (Lex.Token != TK_Identifier) ParseError(Lex.Location, "Expected IDENTIFIER");
-            if (Package->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier %s", *Lex.Name);
+          // check for `enum const = val;`
+          if (Lex.Token == TK_Identifier && Lex.peekTokenType(1) == TK_Assign) {
+            if (Package->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier `%s`", *Lex.Name);
             VConstant *cDef = new VConstant(Lex.Name, Package, Lex.Location);
             cDef->Type = TYPE_Int;
-            Lex.NextToken();
-                 if (Lex.Check(TK_Assign)) cDef->ValueExpr = ParseExpression();
-            else if (PrevValue) cDef->PrevEnumValue = PrevValue;
-            else cDef->ValueExpr = new VIntLiteral(0, Lex.Location);
-            PrevValue = cDef;
+            cDef->bitconstant = bitconst;
             Package->ParsedConstants.Append(cDef);
-            // get comma
-            if (!Lex.Check(TK_Comma)) break;
-            // this can be last "orphan" comma
-            if (Lex.Token == TK_RBrace) break;
+            Lex.NextToken();
+            if (Lex.Check(TK_Assign)) {
+              cDef->ValueExpr = ParseExpression();
+              Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+            } else {
+              ParseError(Lex.Location, "`=` expected");
+            }
+          } else {
+            VName ename = NAME_None;
+            // get optional enum name
+            if (Lex.Token == TK_Identifier) {
+              ename = Lex.Name;
+              if (Package->AddKnownEnum(ename)) ParseError(Lex.Location, "Duplicate enum name `%s`", *ename);
+              if (Package->FindConstant(ename)) ParseError(Lex.Location, "Redefined identifier `%s`", *ename);
+              Lex.NextToken();
+            }
+            Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
+            for (;;) {
+              if (Lex.Token != TK_Identifier) ParseError(Lex.Location, "Identifier expected");
+              VConstant *cDef;
+              if (ename == NAME_None) {
+                // unnamed enum
+                if (Package->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier `%s`", *Lex.Name);
+                cDef = new VConstant(Lex.Name, Package, Lex.Location);
+              } else {
+                //if (!Package->IsKnownEnum(ename)) FatalError("VC: oops");
+                // named enum
+                if (Package->FindConstant(Lex.Name, ename)) ParseError(Lex.Location, "Redefined identifier `%s::%s`", *ename, *Lex.Name);
+                cDef = new VConstant(ename, Lex.Name, Package, Lex.Location);
+              }
+              //fprintf(stderr, ":<%s>\n", *cDef->Name);
+              //VConstant *cDef = new VConstant(Lex.Name, Package, Lex.Location);
+              cDef->Type = TYPE_Int;
+              cDef->bitconstant = bitconst;
+              Lex.NextToken();
+                   if (Lex.Check(TK_Assign)) cDef->ValueExpr = ParseExpression();
+              else if (PrevValue) cDef->PrevEnumValue = PrevValue;
+              else cDef->ValueExpr = new VIntLiteral(0, Lex.Location);
+              PrevValue = cDef;
+              Package->ParsedConstants.Append(cDef);
+              // get comma
+              if (!Lex.Check(TK_Comma)) break;
+              // this can be last "orphan" comma
+              if (Lex.Token == TK_RBrace) break;
+            }
+            Lex.Expect(TK_RBrace, ERR_MISSING_RBRACE);
           }
-          Lex.Expect(TK_RBrace, ERR_MISSING_RBRACE);
           while (Lex.Check(TK_Semicolon)) {}
           //Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
           break;

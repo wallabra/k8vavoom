@@ -306,13 +306,34 @@ VFieldType VMemberBase::StaticFindType (VClass *AClass, VName Name) {
   guard(VMemberBase::StaticFindType);
   if (Name == NAME_None) return VFieldType(TYPE_Unknown);
 
+  // enum in a class
+  if (AClass && AClass->IsKnownEnum(Name)) return VFieldType(TYPE_Int);
+
+  // class name
   VMemberBase *m = StaticFindMember(Name, ANY_PACKAGE, MEMBER_Class);
-  if (m) return VFieldType((VClass*)m);
+  if (m) return VFieldType((VClass *)m);
 
+  // struct name
   m = StaticFindMember(Name, (AClass ? (VMemberBase *)AClass : (VMemberBase *)ANY_PACKAGE), MEMBER_Struct);
-  if (m) return VFieldType((VStruct*)m);
+  if (m) return VFieldType((VStruct *)m);
 
-  if (AClass) return StaticFindType(AClass->ParentClass, Name);
+  // type in parent class
+  if (AClass) {
+    VFieldType tres = StaticFindType(AClass->ParentClass, Name);
+    if (tres.Type != TYPE_Unknown) return tres;
+  }
+
+  // package enum
+  //FIXME: make this faster
+  {
+    int len = GMembers.length();
+    for (int f = 0; f < len; ++f) {
+      if (GMembers[f] && GMembers[f]->MemberType == MEMBER_Package) {
+        VPackage *pkg = (VPackage *)GMembers[f];
+        if (pkg->IsKnownEnum(Name)) return VFieldType(TYPE_Int);
+      }
+    }
+  }
 
   return VFieldType(TYPE_Unknown);
   unguard;

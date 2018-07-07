@@ -233,6 +233,7 @@ VStream &operator << (VStream &Strm, mobjinfo_t &MI) {
 //==========================================================================
 VPackage::VPackage()
   : VMemberBase(MEMBER_Package, NAME_None, nullptr, TLocation())
+  , KnownEnums()
   , NumBuiltins(0)
   , Checksum(0)
   , Reader(nullptr)
@@ -255,6 +256,7 @@ VPackage::VPackage()
 //==========================================================================
 VPackage::VPackage(VName AName)
   : VMemberBase(MEMBER_Package, AName, nullptr, TLocation())
+  , KnownEnums()
   , NumBuiltins(0)
   , Checksum(0)
   , Reader(nullptr)
@@ -301,6 +303,22 @@ void VPackage::CompilerShutdown () {
 void VPackage::Serialise (VStream &Strm) {
   guard(VPackage::Serialise);
   VMemberBase::Serialise(Strm);
+  // enums
+  vint32 acount = (vint32)KnownEnums.count();
+  Strm << STRM_INDEX(acount);
+  if (Strm.IsLoading()) {
+    KnownEnums.clear();
+    while (acount-- > 0) {
+      VName ename;
+      Strm << ename;
+      KnownEnums.put(ename, true);
+    }
+  } else {
+    for (auto it = KnownEnums.first(); it; ++it) {
+      VName ename = it.getKey();
+      Strm << ename;
+    }
+  }
   unguard;
 }
 
@@ -346,6 +364,28 @@ int VPackage::FindString (const char *str) {
   VStr::Cpy(&Strings[Ofs], str);
   return SI.Offs;
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VClass::IsKnownEnum
+//
+//==========================================================================
+bool VPackage::IsKnownEnum (VName EnumName) {
+  return KnownEnums.has(EnumName);
+}
+
+
+//==========================================================================
+//
+//  VClass::AddKnownEnum
+//
+//==========================================================================
+bool VPackage::AddKnownEnum (VName EnumName) {
+  if (IsKnownEnum(EnumName)) return true;
+  KnownEnums.put(EnumName, true);
+  return false;
 }
 
 

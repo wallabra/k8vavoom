@@ -273,10 +273,11 @@ VExpression *VDotField::DoPropertyResolve (VEmitContext &ec, VProperty *Prop, As
 //
 //==========================================================================
 VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType assType) {
-  // try enum constant in this class
-  if (ec.SelfClass && op && op->IsSingleName()) {
+  // try enum constant
+  if (op && op->IsSingleName()) {
     VName ename = ((VSingleName *)op)->Name;
-    if (ec.SelfClass->IsKnownEnum(ename)) {
+    // in this class
+    if (ec.SelfClass && ec.SelfClass->IsKnownEnum(ename)) {
       VConstant *Const = ec.SelfClass->FindConstant(FieldName, ename);
       if (Const) {
         VExpression *e = new VConstantValue(Const, Loc);
@@ -287,6 +288,28 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
+    }
+    // in this package
+    //fprintf(stderr, "ENUM TRY: <%s %s>\n", *ename, *FieldName);
+    if (ec.Package->IsKnownEnum(ename)) {
+      //fprintf(stderr, "  <%s %s>\n", *ename, *FieldName);
+      VConstant *Const = ec.Package->FindConstant(FieldName, ename);
+      if (Const) {
+        VExpression *e = new VConstantValue(Const, Loc);
+        delete this;
+        return e->Resolve(ec);
+      } else {
+        ParseError(Loc, "Unknown member `%s` in enum `%s`", *FieldName, *ename);
+        delete this;
+        return nullptr;
+      }
+    }
+    // in any package (this does package imports)
+    VConstant *Const = (VConstant *)VMemberBase::StaticFindMember(FieldName, ANY_PACKAGE, MEMBER_Const, ename);
+    if (Const) {
+      VExpression *e = new VConstantValue(Const, Loc);
+      delete this;
+      return e->Resolve(ec);
     }
   }
 
