@@ -19,23 +19,23 @@ native final static GLTexture Load (string fname);
 native final static GLTexture GetById (int id);
 native override void Destroy ();
 
-native int width ();
-native int height ();
+native final int width ();
+native final int height ();
 
 // that is:
 //  isTransparent==true: no need to draw anything
 //  isOpaque==true: no need to do alpha-blending
 //  isOneBitAlpha==true: no need to do advanced alpha-blending
-native bool isTransparent ();
-native bool isOpaque ();
-native bool isOneBitAlpha ();
+native final bool isTransparent ();
+native final bool isOpaque ();
+native final bool isOneBitAlpha ();
 
 // the following two clamps
-native void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
-native void blitAt (int dx0, int dy0, optional float scale);
+native final void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
+native final void blitAt (int dx0, int dy0, optional float scale);
 
 // this one repeats
-native void blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
+native final void blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
 
 
 // `txname` can be used in `Load()`

@@ -135,3 +135,95 @@ IMPLEMENT_FUNCTION(VTextReader, get_position) {
   P_GET_SELF;
   RET_INT(Self && Self->fstream && !Self->fstream->IsError() ? Self->fstream->Tell() : 0);
 }
+
+
+// convenient functions
+IMPLEMENT_FUNCTION(VTextReader, readU8) {
+  P_GET_SELF;
+  if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
+  vuint8 b;
+  Self->fstream->Serialize(&b, 1);
+  if (Self->fstream->IsError()) { RET_INT(0); return; }
+  RET_INT(b);
+}
+
+IMPLEMENT_FUNCTION(VTextReader, readU16) {
+  P_GET_SELF;
+  if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
+  vuint8 b[2];
+  Self->fstream->Serialize(&b[0], 2);
+  if (Self->fstream->IsError()) { RET_INT(0); return; }
+  RET_INT(b[0]|(b[1]<<8));
+}
+
+IMPLEMENT_FUNCTION(VTextReader, readU32) {
+  P_GET_SELF;
+  if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
+  vuint8 b[4];
+  Self->fstream->Serialize(&b[0], 4);
+  if (Self->fstream->IsError()) { RET_INT(0); return; }
+  RET_INT(b[0]|(b[1]<<8)|(b[2]<<16)|(b[3]<<24));
+}
+
+IMPLEMENT_FUNCTION(VTextReader, readI8) {
+  P_GET_SELF;
+  if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
+  vint8 b;
+  Self->fstream->Serialize(&b, 1);
+  if (Self->fstream->IsError()) { RET_INT(0); return; }
+  RET_INT((vint32)b);
+}
+
+IMPLEMENT_FUNCTION(VTextReader, readI16) {
+  P_GET_SELF;
+  if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
+  vuint8 b[2];
+  Self->fstream->Serialize(&b[0], 2);
+  if (Self->fstream->IsError()) { RET_INT(0); return; }
+  RET_INT((vint32)(vint16)(b[0]|(b[1]<<8)));
+}
+
+IMPLEMENT_FUNCTION(VTextReader, readI32) {
+  P_GET_SELF;
+  if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
+  vuint8 b[4];
+  Self->fstream->Serialize(&b[0], 4);
+  if (Self->fstream->IsError()) { RET_INT(0); return; }
+  RET_INT(b[0]|(b[1]<<8)|(b[2]<<16)|(b[3]<<24));
+}
+
+IMPLEMENT_FUNCTION(VTextReader, readU16BE) {
+  P_GET_SELF;
+  if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
+  vuint8 b[2];
+  Self->fstream->Serialize(&b[0], 2);
+  if (Self->fstream->IsError()) { RET_INT(0); return; }
+  RET_INT(b[1]|(b[0]<<8));
+}
+
+IMPLEMENT_FUNCTION(VTextReader, readU32BE) {
+  P_GET_SELF;
+  if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
+  vuint8 b[4];
+  Self->fstream->Serialize(&b[0], 4);
+  if (Self->fstream->IsError()) { RET_INT(0); return; }
+  RET_INT(b[3]|(b[2]<<8)|(b[1]<<16)|(b[0]<<24));
+}
+
+IMPLEMENT_FUNCTION(VTextReader, readI16BE) {
+  P_GET_SELF;
+  if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
+  vuint8 b[2];
+  Self->fstream->Serialize(&b[0], 2);
+  if (Self->fstream->IsError()) { RET_INT(0); return; }
+  RET_INT((vint32)(vint16)(b[1]|(b[0]<<8)));
+}
+
+IMPLEMENT_FUNCTION(VTextReader, readI32BE) {
+  P_GET_SELF;
+  if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
+  vuint8 b[4];
+  Self->fstream->Serialize(&b[0], 4);
+  if (Self->fstream->IsError()) { RET_INT(0); return; }
+  RET_INT(b[3]|(b[2]<<8)|(b[1]<<16)|(b[0]<<24));
+}

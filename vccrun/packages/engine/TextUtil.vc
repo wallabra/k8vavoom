@@ -29,82 +29,57 @@ native private readonly void *fstream;
 native final static TextReader Open (string filename);
 
 // closes the file, but won't destroy the object
-native void close ();
+native final void close ();
 
 // returns success flag (false means "error")
 // whence is one of SeekXXX; default is SeekStart
 // return code is not absolutely reliable (actual seek may be delayed)
-native bool seek (int ofs, optional int whence);
+native final bool seek (int ofs, optional int whence);
 
 // returns 8-bit char or -1 on EOF/error
-native int getch ();
+native final int getch ();
 
 // reads `size` bytes from file
 // always tries to read as max as possible
 // returns empty string on EOF/error
 // if `exact` is `true`, out of data means "error"
 // default is "not exact"
-native string readBuf (int size, optional bool exact);
+native final string readBuf (int size, optional bool exact);
 
 // returns name of the opened file (it may be empty)
-native string fileName { get; }
+native final string fileName { get; }
 
 // is this object open (if object is error'd, it is not open)
-native bool isOpen { get; }
+native final bool isOpen { get; }
 
 // `true` if something was error'd
 // there is no reason to continue after an error (and this is UB)
 // closed file is always returns `true`
-native bool error { get; }
+native final bool error { get; }
 
 // get file size
-native int size { get; }
+native final int size { get; }
 
 // get current position
-native int position { get; }
+native final int position { get; }
 
 
 // convenient functions
-//FIXME: move to native code
+native final int readU8 ();
+native final int readU16 ();
+native final int readU32 ();
 
-final int readU8 () {
-  if (error) return 0;
-  auto s = readBuf(1, true);
-  if (error) return 0;
-  return s[0];
-}
+native final int readI8 ();
+native final int readI16 ();
+native final int readI32 ();
 
-final int readU16 () {
-  if (error) return 0;
-  auto s = readBuf(2, true);
-  if (error) return 0;
-  return s[0]|(s[1]<<8);
-}
+native final int readU16BE ();
+native final int readU32BE ();
+native final int readI16BE ();
+native final int readI32BE ();
 
-final int readU32 () {
-  if (error) return 0;
-  auto s = readBuf(4, true);
-  if (error) return 0;
-  return s[0]|(s[1]<<8)|(s[2]<<16)|(s[3]<<24);
-}
+alias readU16LE = readU16;
+alias readU32LE = readU32;
 
-
-final int readI8 () {
-  if (error) return 0;
-  auto s = readBuf(1, true);
-  if (error) return 0;
-  int res = s[0];
-  if (res&0x80) res -= 0x100;
-  return res;
-}
-
-final int readI16 () {
-  if (error) return 0;
-  auto s = readBuf(2, true);
-  if (error) return 0;
-  int res = s[0]|(s[1]<<8);
-  if (res&0x8000) res -= 0x10000;
-  return res;
-}
-
-final int readI32 () { return readU32(); }
+alias readI16LE = readI16;
+alias readI32LE = readI32;
