@@ -290,6 +290,8 @@ private:
   void registerMe ();
   void analyzeImage ();
 
+  VOpenGLTexture (int awdt, int ahgt); // dimensions must be valid!
+
 public:
   VOpenGLTexture (VImage *aimg, const VStr &apath);
   ~VOpenGLTexture (); // don't call this manually!
@@ -297,7 +299,10 @@ public:
   void addRef ();
   void release (); //WARNING: can delete `this`!
 
+  void update ();
+
   static VOpenGLTexture *Load (const VStr &fname);
+  static VOpenGLTexture *CreateEmpty (VName txname, int wdt, int hgt);
 
   inline int getWidth () const { return (img ? img->width : 0); }
   inline int getHeight () const { return (img ? img->height : 0); }
@@ -349,6 +354,11 @@ public:
   DECLARE_FUNCTION(blitExt)
   DECLARE_FUNCTION(blitExtRep)
   DECLARE_FUNCTION(blitAt)
+
+  DECLARE_FUNCTION(CreateEmpty) // native final static GLTexture CreateEmpty (int wdt, int hgt, optional name txname);
+  DECLARE_FUNCTION(setPixel) // native final static void setPixel (int x, int y, int argb); // aarrggbb; a==0 is completely opaque
+  DECLARE_FUNCTION(getPixel) // native final static int getPixel (int x, int y); // aarrggbb; a==0 is completely opaque
+  DECLARE_FUNCTION(upload) // native final static void upload ();
 };
 
 

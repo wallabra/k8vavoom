@@ -444,6 +444,31 @@ VOpenGLTexture::VOpenGLTexture (VImage *aimg, const VStr &apath)
   registerMe();
 }
 
+
+// dimensions must be valid!
+VOpenGLTexture::VOpenGLTexture (int awdt, int ahgt)
+  : rc(1)
+  , mPath()
+  , img(nullptr)
+  , tid(0)
+  , mTransparent(false)
+  , mOpaque(false)
+  , mOneBitAlpha(false)
+  , prev(nullptr)
+  , next(nullptr)
+{
+  img = new VImage(VImage::IT_RGBA, awdt, ahgt);
+  for (int y = 0; y < ahgt; ++y) {
+    for (int x = 0; x < awdt; ++x) {
+      img->setPixel(x, y, VImage::RGBA(0, 0, 0, 0)); // transparent
+    }
+  }
+  analyzeImage();
+  if (hw_glctx) texUpload(this);
+  registerMe();
+}
+
+
 VOpenGLTexture::~VOpenGLTexture () {
   if (hw_glctx && tid) {
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -511,14 +536,27 @@ void VOpenGLTexture::release () {
 }
 
 
+//FIXME: optimize this!
+void VOpenGLTexture::update () {
+  if (hw_glctx && tid) {
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDeleteTextures(1, &tid);
+  }
+  tid = 0;
+  if (hw_glctx) texUpload(this);
+  analyzeImage();
+}
+
+
 VOpenGLTexture *VOpenGLTexture::Load (const VStr &fname) {
+  if (fname.length() > 0) {
+    VOpenGLTexture **loaded = txLoaded.find(fname);
+    if (loaded) { (*loaded)->addRef(); return *loaded; }
+  }
   VStr rname = fsysFileFindAnyExt(fname);
   if (rname.length() == 0) return nullptr;
-  VOpenGLTexture **loaded = txLoaded.find(fname);
-  if (loaded) {
-    (*loaded)->addRef();
-    return *loaded;
-  }
+  VOpenGLTexture **loaded = txLoaded.find(rname);
+  if (loaded) { (*loaded)->addRef(); return *loaded; }
   VStream *st = fsysOpenFile(rname);
   if (!st) return nullptr;
   VImage *img = VImage::loadFrom(st);
@@ -526,6 +564,27 @@ VOpenGLTexture *VOpenGLTexture::Load (const VStr &fname) {
   if (!img) return nullptr;
   VOpenGLTexture *res = new VOpenGLTexture(img, rname);
   txLoaded.put(rname, res);
+  //fprintf(stderr, "TXLOADED: '%s' rc=%d, (%p)\n", *res->mPath, res->rc, res);
+  return res;
+}
+
+
+VOpenGLTexture *VOpenGLTexture::CreateEmpty (VName txname, int wdt, int hgt) {
+  VStr sname;
+  if (txname != NAME_None) {
+    sname = VStr(*txname);
+    if (sname.length() > 0) {
+      VOpenGLTexture **loaded = txLoaded.find(sname);
+      if (loaded) {
+        if ((*loaded)->width != wdt || (*loaded)->height != hgt) return nullptr; // oops
+        (*loaded)->addRef();
+        return *loaded;
+      }
+    }
+  }
+  if (wdt < 1 || hgt < 1 || wdt > 32768 || hgt > 32768) return nullptr;
+  VOpenGLTexture *res = new VOpenGLTexture(wdt, hgt);
+  if (sname.length() > 0) txLoaded.put(sname, res);
   //fprintf(stderr, "TXLOADED: '%s' rc=%d, (%p)\n", *res->mPath, res->rc, res);
   return res;
 }
@@ -776,6 +835,60 @@ IMPLEMENT_FUNCTION(VGLTexture, blitAt) {
   P_GET_SELF;
   if (!specifiedScale) scale = 1;
   if (Self && Self->tex) Self->tex->blitAt(dx0, dy0, scale);
+}
+
+
+// native final static GLTexture CreateEmpty (int wdt, int hgt, optional name txname);
+IMPLEMENT_FUNCTION(VGLTexture, CreateEmpty) {
+  P_GET_NAME_OPT(txname, NAME_None);
+  P_GET_INT(hgt);
+  P_GET_INT(wdt);
+  if (wdt < 1 || hgt < 1 || wdt > 32768 || hgt > 32768) { RET_REF(nullptr); return; }
+  VOpenGLTexture *tex = VOpenGLTexture::CreateEmpty(txname, wdt, hgt);
+  if (tex) {
+    VGLTexture *ifile = Spawn<VGLTexture>();
+    ifile->tex = tex;
+    ifile->id = vcGLAllocId(ifile);
+    //fprintf(stderr, "created texture object %p (%p)\n", ifile, ifile->tex);
+    RET_REF((VObject *)ifile);
+    return;
+  }
+  RET_REF(nullptr);
+}
+
+// native final static void setPixel (int x, int y, int argb); // aarrggbb; a==0 is completely opaque
+IMPLEMENT_FUNCTION(VGLTexture, setPixel) {
+  P_GET_INT(argb);
+  P_GET_INT(y);
+  P_GET_INT(x);
+  P_GET_SELF;
+  if (Self && Self->tex && Self->tex->img) {
+    vuint8 a = 255-((argb>>24)&0xff);
+    vuint8 r = (argb>>16)&0xff;
+    vuint8 g = (argb>>8)&0xff;
+    vuint8 b = argb&0xff;
+    Self->tex->img->setPixel(x, y, VImage::RGBA(r, g, b, a));
+  }
+}
+
+// native final static int getPixel (int x, int y); // aarrggbb; a==0 is completely opaque
+IMPLEMENT_FUNCTION(VGLTexture, getPixel) {
+  P_GET_INT(y);
+  P_GET_INT(x);
+  P_GET_SELF;
+  if (Self && Self->tex && Self->tex->img) {
+    auto c = Self->tex->img->getPixel(x, y);
+    vuint32 argb = (((vuint32)c.r)<<16)|(((vuint32)c.g)<<8)|((vuint32)c.b)|(((vuint32)(255-c.a))<<24);
+    RET_INT((vint32)argb);
+  } else {
+    RET_INT(0xff000000); // completely transparent
+  }
+}
+
+// native final static void upload ();
+IMPLEMENT_FUNCTION(VGLTexture, upload) {
+  P_GET_SELF;
+  if (Self && Self->tex) Self->tex->update();
 }
 
 

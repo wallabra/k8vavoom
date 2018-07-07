@@ -36,3 +36,10 @@ native void blitAt (int dx0, int dy0, optional float scale);
 
 // this one repeats
 native void blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
+
+
+// `txname` can be used in `Load()`
+native final static GLTexture CreateEmpty (int wdt, int hgt, optional name txname);
+native final void setPixel (int x, int y, int argb); // aarrggbb; a==0 is completely opaque
+native final int getPixel (int x, int y); // aarrggbb; a==0 is completely opaque
+native final void upload ();

@@ -62,3 +62,49 @@ native int size { get; }
 
 // get current position
 native int position { get; }
+
+
+// convenient functions
+//FIXME: move to native code
+
+final int readU8 () {
+  if (error) return 0;
+  auto s = readBuf(1, true);
+  if (error) return 0;
+  return s[0];
+}
+
+final int readU16 () {
+  if (error) return 0;
+  auto s = readBuf(2, true);
+  if (error) return 0;
+  return s[0]|(s[1]<<8);
+}
+
+final int readU32 () {
+  if (error) return 0;
+  auto s = readBuf(4, true);
+  if (error) return 0;
+  return s[0]|(s[1]<<8)|(s[2]<<16)|(s[3]<<24);
+}
+
+
+final int readI8 () {
+  if (error) return 0;
+  auto s = readBuf(1, true);
+  if (error) return 0;
+  int res = s[0];
+  if (res&0x80) res -= 0x100;
+  return res;
+}
+
+final int readI16 () {
+  if (error) return 0;
+  auto s = readBuf(2, true);
+  if (error) return 0;
+  int res = s[0]|(s[1]<<8);
+  if (res&0x8000) res -= 0x10000;
+  return res;
+}
+
+final int readI32 () { return readU32(); }
