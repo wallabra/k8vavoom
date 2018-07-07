@@ -902,6 +902,8 @@ struct Instr {
           case OPC_Builtin_FloatSmoothStepPerlin:
             spdelta = -2;
             return;
+          case OPC_Builtin_NameToInt:
+            break;
           default: FatalError("Unknown builtin");
         }
     }

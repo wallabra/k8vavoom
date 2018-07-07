@@ -387,6 +387,8 @@ native static final float itof (int f);
 native static final name StrToName (string Str);
 // converts name to string (use `name(val)` instead)
 native static final string NameToStr (name Name);
+// converts name to int (as name is just an int internally)
+native static final int NameToInt (name Name) [builtin NameToInt];
 
 
 // ////////////////////////////////////////////////////////////////////////// //
