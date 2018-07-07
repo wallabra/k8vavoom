@@ -40,6 +40,16 @@
 
 // TYPES -------------------------------------------------------------------
 
+// dynamic light types
+enum DLType {
+  DLTYPE_Point,
+  DLTYPE_MuzzleFlash,
+  DLTYPE_Pulse,
+  DLTYPE_Flicker,
+  DLTYPE_FlickerRandom,
+  DLTYPE_Sector,
+};
+
 //
 //  Sprites are patches with a special naming convention
 // so they can be recognized by R_InitSprites.

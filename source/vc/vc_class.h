@@ -41,18 +41,6 @@ enum EClassObjectFlags {
   CLASSOF_PostLoaded = 0x00000002, // `PostLoad()` has been called
 };
 
-/*
-// dynamic light types
-enum DLType {
-  DLTYPE_Point,
-  DLTYPE_MuzzleFlash,
-  DLTYPE_Pulse,
-  DLTYPE_Flicker,
-  DLTYPE_FlickerRandom,
-  DLTYPE_Sector,
-};
-*/
-
 
 //==========================================================================
 //
