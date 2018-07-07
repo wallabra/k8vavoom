@@ -22,7 +22,7 @@ for fn in *.vc; do
   if [ -f "$ofname" ]; then
     echo "SKIP"
   else
-    sh ../0run.sh -pakdir ../packages -P. "$fn" boo foo zoo >"$ofname" 2>"$ofname.err"
+    sh ../0run.sh -DVCCRUN_PACKAGE_CONSTANT_TEST -pakdir ../packages -P. "$fn" boo foo zoo >"$ofname" 2>"$ofname.err"
     res=$?
     fline=`head -n 1 "$fn"`
     expectfail="ona"

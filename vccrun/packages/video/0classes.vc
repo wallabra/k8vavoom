@@ -9,5 +9,27 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  **************************************************************************/
+#ifdef VCCRUN_PACKAGE_CONSTANT_TEST
+enum VidX00 = 42;
+enum { VidX01 = 68, VidX02 }
+
+bitenum VidBEN {
+  Zero = none,
+  One,
+  Two,
+  Four,
+}
+
+enum VidNamed {
+  Zero,
+  One,
+}
+
+enum VidNamed1 {
+  Zero=1000,
+  One,
+}
+#endif
+
 #include "Video.vc"
 #include "GLTexture.vc"

@@ -1,0 +1,24 @@
+import 'Video';
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+static final void main () {
+  writeln("VidX00=", VidX00, " : ", 42);
+  writeln("VidX01=", VidX01, " : ", 68);
+  writeln("VidX02=", VidX02, " : ", 69);
+
+  writeln("VidBEN.Zero=", VidBEN.Zero, " : ", 0);
+  writeln("VidBEN.One=", VidBEN.One, " : ", 1);
+  writeln("VidBEN.Two=", VidBEN.Two, " : ", 2);
+  writeln("VidBEN.Four=", VidBEN.Four, " : ", 4);
+
+  writeln("VidNamed.Zero=", VidNamed.Zero, " : ", 0);
+  writeln("VidNamed.One=", VidNamed.One, " : ", 1);
+
+  writeln("VidNamed1.Zero=", VidNamed1.Zero, " : ", 1000);
+  writeln("VidNamed1.One=", VidNamed1.One, " : ", 1001);
+
+  VidNamed n = 42;
+  writeln(n);
+}
