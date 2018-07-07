@@ -1,0 +1,23 @@
+class Main : Object;
+
+int amount[Test::E.Max]; // compiler bug
+
+
+void main () {
+  writeln(amount.length);
+}
+
+
+defaultproperties {
+  amount[1] = 42;
+}
+
+
+
+class Test : Object;
+
+enum E {
+  Zero,
+  One,
+  Max,
+}
