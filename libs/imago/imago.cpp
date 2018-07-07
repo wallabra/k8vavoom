@@ -188,6 +188,70 @@ void VImage::setPalette (const RGBA *pal, int colnum) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// this one came from GZDoom
+//
+//==========================================================================
+//#define CHKPIX(ofs) (l1[(ofs)*4+MSB] == 255 ? ((((vuint32 *)l1)[0] = ((vuint32*)l1)[ofs]&SOME_MASK), trans = true ) : false)
+#define CHKPIX(ofs) (l1[ofs].isOpaque() ? (l1[0] = RGBA(l1[ofs].r, l1[ofs].g, l1[ofs].b, 0), trans = true) : false)
+#define CHKPIXV(ofs) ((void)CHKPIX(ofs))
+
+void VImage::smoothEdges () {
+  if (mWidth <= 1 || mHeight <= 1 || mFormat != IT_RGBA) return;
+
+  RGBA *l1 = (VImage::RGBA *)mPixels;
+  // if I set this to false here the code won't detect textures that only contain transparent pixels
+  bool trans = l1->isTransparent();
+
+  if (l1->isTransparent() && !CHKPIX(1)) {
+    CHKPIX(mWidth);
+  }
+  ++l1;
+
+  for (int x = 1; x < mWidth-1; ++x, ++l1) {
+    if (l1->isTransparent() && !CHKPIX(-1) && !CHKPIX(1)) {
+      CHKPIXV(mWidth);
+    }
+  }
+  if (l1->isTransparent() && !CHKPIX(-1)) {
+    CHKPIXV(mWidth);
+  }
+  ++l1;
+
+  for (int y = 1; y < mHeight-1; ++y) {
+    if (l1->isTransparent() && !CHKPIX(-mWidth) && !CHKPIX(1)) {
+      CHKPIXV(mWidth);
+    }
+    ++l1;
+
+    for (int x = 1; x < mWidth-1; ++x, ++l1) {
+      if (l1->isTransparent() && !CHKPIX(-mWidth) && !CHKPIX(-1) && !CHKPIX(1) && !CHKPIX(-mWidth-1) && !CHKPIX(-mWidth+1) && !CHKPIX(mWidth-1) && !CHKPIX(mWidth+1)) {
+        CHKPIXV(mWidth);
+      }
+    }
+    if (l1->isTransparent() && !CHKPIX(-mWidth) && !CHKPIX(-1)) {
+      CHKPIXV(mWidth);
+    }
+    ++l1;
+  }
+
+  if (l1->isTransparent() && !CHKPIX(-mWidth)) {
+    CHKPIXV(1);
+  }
+  ++l1;
+
+  for (int x = 1; x < mWidth-1; ++x, ++l1) {
+    if (l1->isTransparent() && !CHKPIX(-mWidth) && !CHKPIX(-1)) {
+      CHKPIXV(1);
+    }
+  }
+
+  if (l1->isTransparent() && !CHKPIX(-mWidth)) {
+    CHKPIXV(-1);
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // load image from stream; return `nullptr` on error
 VImage *VImage::loadFrom (VStream *strm, const VStr &name) {
   if (!strm) return nullptr;

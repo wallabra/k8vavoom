@@ -617,6 +617,8 @@ int main (int argc, char **argv) {
   VStack ret;
   ret.i = 0;
 
+  srand(time(nullptr));
+
 #if 0
   {
     TArray<VStr> pts;

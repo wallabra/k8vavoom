@@ -403,6 +403,7 @@ static bool texUpload (VOpenGLTexture *tx) {
     }
     delete tx->img;
     tx->img = tc;
+    tc->smoothEdges();
   }
   //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tc->width, tc->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tc->pixels);
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0/*x*/, 0/*y*/, tx->img->width, tx->img->height, GL_RGBA, GL_UNSIGNED_BYTE, tx->img->pixels); // this updates texture
@@ -474,6 +475,7 @@ void VOpenGLTexture::registerMe () {
 
 void VOpenGLTexture::analyzeImage () {
   if (img) {
+    img->smoothEdges();
     mTransparent = true;
     mOpaque = true;
     mOneBitAlpha = true;

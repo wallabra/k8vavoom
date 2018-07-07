@@ -50,6 +50,14 @@ public:
     inline bool operator == (const RGBA &c) const { return (c.a == 255 && r == c.r && g == c.g && b == c.b); }
     inline int distSq (const RGB &c) const { return (r-c.r)*(r-c.r)+(g-c.g)*(g-c.g)+(b-c.b)*(b-c.b); }
     inline int distSq (const RGBA &c) const { return (r-c.r)*(r-c.r)+(g-c.g)*(g-c.g)+(b-c.b)*(b-c.b)+(255-c.a)*(255-c.a); }
+    inline bool isTransparent () const { return false; }
+    inline bool isOpaque () const { return true; }
+    // ignores alpha
+    inline bool sameColor (const RGB &c) const { return (r == c.r && g == c.g && b == c.b); }
+    inline bool sameColor (const RGBA &c) const { return (r == c.r && g == c.g && b == c.b); }
+    // ignores alpha
+    inline void setColor (const RGB &c) { r = c.r; g = c.g; b = c.b; }
+    inline void setColor (const RGBA &c) { r = c.r; g = c.g; b = c.b; }
   };
 
   struct __attribute((aligned(1), packed)) RGBA {
@@ -62,6 +70,14 @@ public:
     inline bool operator == (const RGBA &c) const { return (a == c.a && r == c.r && g == c.g && b == c.b); }
     inline int distSq (const RGB &c) const { return (r-c.r)*(r-c.r)+(g-c.g)*(g-c.g)+(b-c.b)*(b-c.b)+(255-a)*(255-a); }
     inline int distSq (const RGBA &c) const { return (r-c.r)*(r-c.r)+(g-c.g)*(g-c.g)+(b-c.b)*(b-c.b)+(a-c.a)*(a-c.a); }
+    inline bool isTransparent () const { return (a == 0); }
+    inline bool isOpaque () const { return (a == 255); }
+    // ignores alpha
+    inline bool sameColor (const RGB &c) const { return (r == c.r && g == c.g && b == c.b); }
+    inline bool sameColor (const RGBA &c) const { return (r == c.r && g == c.g && b == c.b); }
+    // ignores alpha
+    inline void setColor (const RGB &c) { r = c.r; g = c.g; b = c.b; }
+    inline void setColor (const RGBA &c) { r = c.r; g = c.g; b = c.b; }
   };
 
 protected:
@@ -123,6 +139,9 @@ public:
 
   // has any sense only for paletted images
   void setBytePixel (int x, int y, vuint8 b);
+
+  // filters edges in RGBA images
+  void smoothEdges ();
 };
 
 
