@@ -576,11 +576,13 @@ func_loop:
         ++sp;
         PR_VM_BREAK;
 
+      /*
       PR_VM_CASE(OPC_PushNameB)
         sp->i = ip[1];
         ip += 2;
         ++sp;
         PR_VM_BREAK;
+      */
 
       PR_VM_CASE(OPC_PushString)
         sp->p = ReadPtr(ip+1);

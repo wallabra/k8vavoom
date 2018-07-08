@@ -84,7 +84,7 @@ enum {
 #ifndef OPCODE_INFO
 
 #define PROG_MAGIC    "VPRG"
-#define PROG_VERSION  (43)
+#define PROG_VERSION  (44)
 
 enum {
   OPCARGS_None,
@@ -101,7 +101,7 @@ enum {
   OPCARGS_Int,
   OPCARGS_Name,
   OPCARGS_NameS,
-  OPCARGS_NameB,
+  //OPCARGS_NameB,
   OPCARGS_String,
   OPCARGS_FieldOffset,
   OPCARGS_FieldOffsetS,
@@ -170,7 +170,7 @@ enum {
   DECLARE_OPC(PushNumber, Int),
   DECLARE_OPC(PushName, Name),
   DECLARE_OPC(PushNameS, NameS),
-  DECLARE_OPC(PushNameB, NameB),
+  //DECLARE_OPC(PushNameB, NameB),
   DECLARE_OPC(PushString, String),
   DECLARE_OPC(PushClassId, Member),
   DECLARE_OPC(PushState, Member),

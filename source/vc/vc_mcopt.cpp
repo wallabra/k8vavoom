@@ -425,7 +425,7 @@ struct Instr {
       case OPC_PushNumber:
       case OPC_PushName:
       case OPC_PushNameS:
-      case OPC_PushNameB:
+      //case OPC_PushNameB:
       case OPC_PushString:
       case OPC_PushClassId:
       case OPC_PushState:
@@ -1449,8 +1449,9 @@ void VMCOptimizer::optimizeLoads () {
         else if (insn.TypeArg.GetSize() < MAX_VINT16) insn.Opcode = OPC_ArrayElementS;
         break;
       case OPC_PushName:
-             if (insn.NameArg.GetIndex() < 256) insn.Opcode = OPC_PushNameB;
-        else if (insn.NameArg.GetIndex() < MAX_VINT16) insn.Opcode = OPC_PushNameS;
+        // `OPC_PushNameB` is no more
+        /*     if (insn.NameArg.GetIndex() < 256) insn.Opcode = OPC_PushNameB;
+        else*/ if (insn.NameArg.GetIndex() < MAX_VINT16) insn.Opcode = OPC_PushNameS;
         break;
     }
   }
@@ -1476,7 +1477,7 @@ void VMCOptimizer::optimizeJumps () {
       case OPCARGS_BranchTargetB:
       case OPCARGS_BranchTargetNB:
       case OPCARGS_Byte:
-      case OPCARGS_NameB:
+      //case OPCARGS_NameB:
       case OPCARGS_FieldOffsetB:
       case OPCARGS_VTableIndexB:
       case OPCARGS_TypeSizeB:
