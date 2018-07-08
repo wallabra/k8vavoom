@@ -2013,7 +2013,7 @@ bool VSwitch::Resolve (VEmitContext &ec) {
 
   if (Expr) Expr = Expr->Resolve(ec);
 
-  if (!Expr || Expr->Type.Type != TYPE_Int) {
+  if (!Expr || (Expr->Type.Type != TYPE_Int && Expr->Type.Type != TYPE_Name)) {
     ParseError(Loc, "Int expression expected");
     Ret = false;
   }
@@ -2323,15 +2323,30 @@ void VSwitchCase::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 bool VSwitchCase::Resolve (VEmitContext &ec) {
-  if (Expr) Expr = Expr->ResolveToIntLiteralEx(ec);
-  if (!Expr) return false;
+  if (Switch && Expr && Switch->Expr && Switch->Expr->Type.Type == TYPE_Name) {
+    Expr = Expr->Resolve(ec);
+    if (!Expr) return false;
+    if (!Expr->IsNameConst()) {
+      ParseError(Loc, "case condition should be a name literal");
+      return false;
+    }
+    Value = Expr->GetNameConst().GetIndex();
+  } else {
+    if (Expr) Expr = Expr->ResolveToIntLiteralEx(ec);
+    if (!Expr) return false;
+    if (!Expr->IsIntConst()) {
+      ParseError(Loc, "case condition should be an integer literal");
+      return false;
+    }
+    Value = Expr->GetIntConst();
+  }
 
-  if (!Expr->IsIntConst()) FatalError("VC: internal compiler error (VSwitchCase::Resolve)");
+  bool res = true;
 
-  Value = Expr->GetIntConst();
   for (int i = 0; i < Switch->CaseInfo.length(); ++i) {
     if (Switch->CaseInfo[i].Value == Value) {
       ParseError(Loc, "Duplicate case value");
+      res = false;
       break;
     }
   }
@@ -2340,7 +2355,7 @@ bool VSwitchCase::Resolve (VEmitContext &ec) {
   VSwitch::VCaseInfo &C = Switch->CaseInfo.Alloc();
   C.Value = Value;
 
-  return true;
+  return res;
 }
 
 
@@ -3378,10 +3393,24 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
       // find the case
       if (CaseValue) {
         // case is guaranteed to be parsed, do value search
-        CaseValue = CaseValue->ResolveToIntLiteralEx(ec);
-        if (!CaseValue) return false; // oops
-        if (!CaseValue->IsIntConst()) FatalError("VC: internal compiler error (VGotoStmt::Resolve)");
-        int val = CaseValue->GetIntConst();
+        int val;
+        if (Switch && Switch->Expr && Switch->Expr->Type.Type == TYPE_Name) {
+          CaseValue = CaseValue->Resolve(ec);
+          if (!CaseValue) return false; // oops
+          if (!CaseValue->IsNameConst()) {
+            ParseError(Loc, "`goto case` expects a name literal");
+            return false;
+          }
+          val = CaseValue->GetNameConst().GetIndex();
+        } else {
+          CaseValue = CaseValue->ResolveToIntLiteralEx(ec);
+          if (!CaseValue) return false; // oops
+          if (!CaseValue->IsIntConst()) {
+            ParseError(Loc, "`goto case` expects an integer literal");
+            return false;
+          }
+          val = CaseValue->GetIntConst();
+        }
         for (int f = 0; f < Switch->Statements.length(); ++f) {
           if (Switch->Statements[f]->IsSwitchCase()) {
             VSwitchCase *cc = (VSwitchCase *)(Switch->Statements[f]);
