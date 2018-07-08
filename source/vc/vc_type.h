@@ -118,7 +118,7 @@ public:
   inline vuint8 *Ptr () { return ArrData; }
   void Clear (const VFieldType &Type);
   void Resize (int NewSize, const VFieldType &Type);
-  void SetNum (int NewNum, const VFieldType &Type);
+  void SetNum (int NewNum, const VFieldType &Type, bool doShrink=true);
   void SetNumMinus (int NewNum, const VFieldType &Type);
   void SetNumPlus (int NewNum, const VFieldType &Type);
   void Insert (int Index, int Count, const VFieldType &Type);

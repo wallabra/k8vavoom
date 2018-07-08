@@ -684,12 +684,17 @@ void VScriptArray::Resize (int NewSize, const VFieldType &Type) {
 //  VScriptArray::SetNum
 //
 //==========================================================================
-void VScriptArray::SetNum (int NewNum, const VFieldType &Type) {
+void VScriptArray::SetNum (int NewNum, const VFieldType &Type, bool doShrink) {
   guard(VScriptArray::SetNum);
   check(NewNum >= 0);
+  if (!doShrink && NewNum == 0) {
+    ArrNum = 0;
+    return;
+  }
   // as a special case setting size to 0 should clear the array
        if (NewNum == 0) Clear(Type);
   else if (NewNum > ArrSize) Resize(NewNum+NewNum*3/8+32, Type);
+  else if (doShrink && ArrSize > 32 && NewNum > 32 && NewNum < ArrSize/3) Resize(ArrSize/3, Type);
   ArrNum = NewNum;
   unguard;
 }
@@ -702,9 +707,10 @@ void VScriptArray::SetNum (int NewNum, const VFieldType &Type) {
 //==========================================================================
 void VScriptArray::SetNumMinus (int NewNum, const VFieldType &Type) {
   guard(VScriptArray::SetNumMinus);
+  if (NewNum <= 0) return;
+  if (NewNum > ArrNum) NewNum = ArrNum;
   NewNum = ArrNum-NewNum;
-  if (NewNum < 0) NewNum = 0;
-  SetNum(NewNum, Type);
+  SetNum(NewNum, Type, false);
   unguard;
 }
 
@@ -716,9 +722,10 @@ void VScriptArray::SetNumMinus (int NewNum, const VFieldType &Type) {
 //==========================================================================
 void VScriptArray::SetNumPlus (int NewNum, const VFieldType &Type) {
   guard(VScriptArray::SetNumPlus);
+  if (NewNum <= 0) return;
+  if (ArrNum >= 0x3fffffff || 0x3fffffff-ArrNum < NewNum) FatalError("out of memory for dynarray");
   NewNum += ArrNum;
-  if (NewNum < 0) NewNum = 0;
-  SetNum(NewNum, Type);
+  SetNum(NewNum, Type, false);
   unguard;
 }
 
@@ -733,6 +740,8 @@ void VScriptArray::Insert (int Index, int Count, const VFieldType &Type) {
   check(ArrData != nullptr);
   check(Index >= 0);
   check(Index <= ArrNum);
+
+  if (Count <= 0) return;
 
   SetNum(ArrNum+Count, Type);
   int InnerSize = Type.GetSize();
@@ -755,6 +764,8 @@ void VScriptArray::Remove (int Index, int Count, const VFieldType &Type) {
   check(ArrData != nullptr);
   check(Index >= 0);
   check(Index+Count <= ArrNum);
+
+  if (Count <= 0) return;
 
   ArrNum -= Count;
   if (ArrNum == 0) {
