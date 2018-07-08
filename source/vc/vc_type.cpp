@@ -636,8 +636,12 @@ VScriptArray::VScriptArray (const TArray<VStr>& xarr) {
 void VScriptArray::Clear (const VFieldType &Type) {
   guard(VScriptArray::Clear);
   if (ArrData) {
-    int InnerSize = Type.GetSize();
-    for (int i = 0; i < ArrSize; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
+    // don't waste time destructing types without dtors
+    if (VField::NeedToDestructField(Type)) {
+      // no need to clear the whole array, as any resizes will zero out unused elements
+      int InnerSize = Type.GetSize();
+      for (int i = 0; i < ArrNum; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
+    }
     delete[] ArrData;
   }
   ArrData = nullptr;
@@ -661,17 +665,32 @@ void VScriptArray::Resize (int NewSize, const VFieldType &Type) {
   if (NewSize == ArrSize) return;
 
   vuint8 *OldData = ArrData;
-  vint32 OldSize = ArrSize;
+  //vint32 OldSize = ArrSize;
+  vint32 oldlen = ArrNum;
   ArrSize = NewSize;
   if (ArrNum > NewSize) ArrNum = NewSize;
 
   int InnerSize = Type.GetSize();
   ArrData = new vuint8[ArrSize*InnerSize];
-  memset(ArrData, 0, ArrSize*InnerSize);
-  for (int i = 0; i < ArrNum; ++i) VField::CopyFieldValue(OldData+i*InnerSize, ArrData+i*InnerSize, Type);
+  // use simple copy if it is possible
+  // coincidentally, simple copy is possible for everything that doesn't require destructing
+  if (VField::NeedToDestructField(Type)) {
+    // clear new data, 'cause `VField::CopyFieldValue()` assume valid data
+    memset(ArrData, 0, ArrSize*InnerSize);
+    for (int i = 0; i < ArrNum; ++i) VField::CopyFieldValue(OldData+i*InnerSize, ArrData+i*InnerSize, Type);
+  } else {
+    // copy old data
+    if (ArrNum > 0) memcpy(ArrData, OldData, ArrNum*InnerSize);
+    // clear tail, so further growth will not hit random values
+    if (ArrNum < ArrSize) memset(ArrData+ArrNum*InnerSize, 0, (ArrSize-ArrNum)*InnerSize);
+  }
 
   if (OldData) {
-    for (int i = 0; i < OldSize; ++i) VField::DestructField(OldData + i * InnerSize, Type);
+    // don't waste time destructing types without dtors
+    if (VField::NeedToDestructField(Type)) {
+      // no need to clear the whole array, as any resizes will zero out unused elements
+      for (int i = 0; i < oldlen; ++i) VField::DestructField(OldData+i*InnerSize, Type);
+    }
     delete[] OldData;
   }
 
@@ -688,13 +707,32 @@ void VScriptArray::SetNum (int NewNum, const VFieldType &Type, bool doShrink) {
   guard(VScriptArray::SetNum);
   check(NewNum >= 0);
   if (!doShrink && NewNum == 0) {
-    ArrNum = 0;
+    if (ArrNum > 0) {
+      // clear unused values (so possible array growth will not hit stale data, and strings won't hang it memory)
+      int InnerSize = Type.GetSize();
+      if (VField::NeedToDestructField(Type)) {
+        for (int i = 0; i < ArrNum; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
+      } else {
+        memset(ArrData, 0, ArrNum*InnerSize);
+      }
+      ArrNum = 0;
+    }
     return;
   }
   // as a special case setting size to 0 should clear the array
        if (NewNum == 0) Clear(Type);
-  else if (NewNum > ArrSize) Resize(NewNum+NewNum*3/8+32, Type);
-  else if (doShrink && ArrSize > 32 && NewNum > 32 && NewNum < ArrSize/3) Resize(ArrSize/3, Type);
+  else if (NewNum > ArrSize) Resize(NewNum+NewNum*3/8+32, Type); // resize will take care of cleanups
+  else if (doShrink && ArrSize > 32 && NewNum > 32 && NewNum < ArrSize/3) Resize(ArrSize/3+8, Type); // resize will take care of cleanups
+  else if (NewNum < ArrNum) {
+    // clear unused values (so possible array growth will not hit stale data, and strings won't hang it memory)
+    int InnerSize = Type.GetSize();
+    if (VField::NeedToDestructField(Type)) {
+      for (int i = NewNum; i < ArrNum; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
+    } else {
+      memset(ArrData+NewNum*InnerSize, 0, (ArrNum-NewNum)*InnerSize);
+    }
+  }
+  if (ArrSize < NewNum) FatalError("VC: internal error in (VScriptArray::SetNum)");
   ArrNum = NewNum;
   unguard;
 }
@@ -737,18 +775,25 @@ void VScriptArray::SetNumPlus (int NewNum, const VFieldType &Type) {
 //==========================================================================
 void VScriptArray::Insert (int Index, int Count, const VFieldType &Type) {
   guard(VScriptArray::Insert);
-  check(ArrData != nullptr);
+  //check(ArrData != nullptr);
   check(Index >= 0);
   check(Index <= ArrNum);
 
   if (Count <= 0) return;
 
-  SetNum(ArrNum+Count, Type);
+  auto oldnum = ArrNum;
+  SetNum(ArrNum+Count, Type, false); // don't shrink
   int InnerSize = Type.GetSize();
-  // move value to new location
-  for (int i = ArrNum-1; i >= Index+Count; --i) VField::CopyFieldValue(ArrData+(i-Count)*InnerSize, ArrData+i*InnerSize, Type);
-  // clean inserted elements
-  for (int i = Index; i < Index+Count; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
+  // use simple copy if it is possible
+  // coincidentally, simple copy is possible for everything that doesn't require destructing
+  if (VField::NeedToDestructField(Type)) {
+    // copy values to new location
+    for (int i = ArrNum-1; i >= Index+Count; --i) VField::CopyFieldValue(ArrData+(i-Count)*InnerSize, ArrData+i*InnerSize, Type);
+    // clean inserted elements
+    for (int i = Index; i < Index+Count; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
+  } else {
+    if (Index < oldnum) memmove(ArrData+(Index+Count)*InnerSize, ArrData+Index*InnerSize, (oldnum-Index)*InnerSize);
+  }
   memset(ArrData+Index*InnerSize, 0, Count*InnerSize);
   unguard;
 }
@@ -761,20 +806,33 @@ void VScriptArray::Insert (int Index, int Count, const VFieldType &Type) {
 //==========================================================================
 void VScriptArray::Remove (int Index, int Count, const VFieldType &Type) {
   guard(VScriptArray::Remove);
-  check(ArrData != nullptr);
+  //check(ArrData != nullptr);
   check(Index >= 0);
   check(Index+Count <= ArrNum);
 
+  auto oldnum = ArrNum;
+  if (Count > oldnum) Count = oldnum; // just in case
   if (Count <= 0) return;
 
-  ArrNum -= Count;
-  if (ArrNum == 0) {
-    // array is empty, so just clear it
-    Clear(Type);
+  if (Count == oldnum) {
+    if (Index != 0) FatalError("VC: internal error 0 (VScriptArray::Remove)");
+    // array is empty, so just clear it (but don't shrink)
+    SetNum(0, Type, false);
+    if (ArrNum != 0) FatalError("VC: internal error 1 (VScriptArray::Remove)");
   } else {
     // move elements that are after removed ones
     int InnerSize = Type.GetSize();
-    for (int i = Index; i < ArrNum; ++i) VField::CopyFieldValue(ArrData+(i+Count)*InnerSize, ArrData+i*InnerSize, Type);
+    // use simple copy if it is possible
+    // coincidentally, simple copy is possible for everything that doesn't require destructing
+    if (VField::NeedToDestructField(Type)) {
+      for (int i = Index+Count; i < oldnum; ++i) VField::CopyFieldValue(ArrData+i*InnerSize, ArrData+(i-Count)*InnerSize, Type);
+    } else {
+      if (Index+Count < oldnum) {
+        memmove(ArrData+Index*InnerSize, ArrData+(Index+Count)*InnerSize, (oldnum-Index-Count)*InnerSize);
+      }
+    }
+    // now resize it, but don't shrink (this will clear unused values too)
+    SetNum(oldnum-Count, Type, false);
   }
   unguard;
 }
