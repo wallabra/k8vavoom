@@ -898,6 +898,30 @@ bool VClass::Define () {
 
   for (int i = 0; i < Structs.Num(); ++i) if (!Structs[i]->Define()) return false;
 
+  // this can be not postloaded yet, so...
+  {
+    VName pn = ParentClassName;
+    while (pn != NAME_None) {
+      VClass *c = StaticFindClass(pn);
+      if (!c) break;
+      // check fields
+      for (VField *F = Fields; F; F = F->Next) {
+        if (c->FindField(F->Name)) {
+          ParseError(F->Loc, "Field `%s` already defined in parent class `%s`", *F->Name, *pn);
+        }
+      }
+      // check constants
+      for (int f = 0; f < Constants.length(); ++f) {
+        for (int ff = 0; ff < c->Constants.length(); ++ff) {
+          if (c->Constants[ff]->Name == Constants[f]->Name) {
+            ParseError(Constants[f]->Loc, "Constant `%s` already defined in parent class `%s`", *Constants[f]->Name, *pn);
+          }
+        }
+      }
+      pn = c->ParentClassName;
+    }
+  }
+
   Defined = true;
   return true;
   unguard;
@@ -1716,12 +1740,14 @@ const VStr &VClass::DFStateGetTexDir () const {
     if (c->dfStateTexDirSet) return c->dfStateTexDir;
   }
   // this can be not postloaded yet, so...
-  VName pn = ParentClassName;
-  while (pn != NAME_None) {
-    VClass *c = StaticFindClass(pn);
-    if (!c) break;
-    if (c->dfStateTexDirSet) return c->dfStateTexDir;
-    pn = c->ParentClassName;
+  if (!ParentClass) {
+    VName pn = ParentClassName;
+    while (pn != NAME_None) {
+      VClass *c = StaticFindClass(pn);
+      if (!c) break;
+      if (c->dfStateTexDirSet) return c->dfStateTexDir;
+      pn = c->ParentClassName;
+    }
   }
   return VStr::EmptyString;
 }
@@ -1757,12 +1783,14 @@ bool VClass::DFStateGetTexture (const VStr &tname, TextureInfo &ti) const {
     if (c->DFStateGetTexture(tname, ti)) return true;
   }
   // this can be not postloaded yet, so...
-  VName pn = ParentClassName;
-  while (pn != NAME_None) {
-    VClass *c = StaticFindClass(pn);
-    if (!c) break;
-    if (c->DFStateGetTexture(tname, ti)) return true;
-    pn = c->ParentClassName;
+  if (!ParentClass) {
+    VName pn = ParentClassName;
+    while (pn != NAME_None) {
+      VClass *c = StaticFindClass(pn);
+      if (!c) break;
+      if (c->DFStateGetTexture(tname, ti)) return true;
+      pn = c->ParentClassName;
+    }
   }
   return false;
 }
