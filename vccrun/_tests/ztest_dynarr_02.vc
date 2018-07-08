@@ -1,0 +1,11 @@
+class Main : Object;
+
+void main () {
+  array!string a;
+  foreach (auto idx; 0..6) a[idx] = string.fromInt(idx+1);
+  writeln("==================="); foreach (auto idx, auto v; a) writeln("[", idx, "] = ", v);
+  a.length -= 2;
+  writeln("==================="); foreach (auto idx, auto v; a) writeln("[", idx, "] = ", v);
+  a[$+4] = "boo";
+  writeln("==================="); foreach (auto idx, auto v; a) writeln("[", idx, "] = ", v);
+}

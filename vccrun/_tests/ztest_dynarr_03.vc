@@ -1,0 +1,26 @@
+class Test : Object;
+
+int n;
+
+override void Destroy () { writeln("killing (", n, ")"); ::Destroy(); }
+
+
+class Main : Object;
+
+array!Test a;
+
+void main () {
+  Test oo;
+  foreach (auto idx; 0..6) {
+    auto o = SpawnObject(Test);
+    if (idx == 1) oo = o;
+    o.n = idx+1;
+    a[idx] = o;
+  }
+  writeln("==================="); foreach (auto idx, auto v; a) writeln("[", idx, "] = ", (v ? v.n : -666));
+  // now kill one object: it should magically disappear from array
+  // note that local dynarrays won't be cleaned
+  delete oo;
+  CollectGarbage(true);
+  writeln("==================="); foreach (auto idx, auto v; a) writeln("[", idx, "] = ", (v ? v.n : -666));
+}
