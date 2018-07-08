@@ -114,6 +114,7 @@ public:
   VScriptArray (const TArray<VStr> &xarr);
 
   inline int Num () const { return ArrNum; }
+  inline int length () const { return ArrNum; }
   inline vuint8 *Ptr () { return ArrData; }
   void Clear (const VFieldType &Type);
   void Resize (int NewSize, const VFieldType &Type);

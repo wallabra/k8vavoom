@@ -61,6 +61,8 @@ static void enterIndent () { ++k8edIndent; }
 static void leaveIndent () { if (--k8edIndent < 0) *(int *)0 = 0; }
 #endif
 
+enum { MaxDynArrayLength = 1024*1024*512 };
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 VStack *pr_stackPtr;
@@ -1907,6 +1909,8 @@ func_loop:
         sp -= 3;
         PR_VM_BREAK;
 
+      // [-2]: *dynarray
+      // [-1]: index
       PR_VM_CASE(OPC_DynArrayElement)
         if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) {
           cstDump(ip);
@@ -1917,6 +1921,8 @@ func_loop:
         --sp;
         PR_VM_BREAK;
 
+      // [-2]: *dynarray
+      // [-1]: index
       PR_VM_CASE(OPC_DynArrayElementS)
         if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) {
           cstDump(ip);
@@ -1927,6 +1933,8 @@ func_loop:
         --sp;
         PR_VM_BREAK;
 
+      // [-2]: *dynarray
+      // [-1]: index
       PR_VM_CASE(OPC_DynArrayElementB)
         if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) {
           cstDump(ip);
@@ -1937,13 +1945,17 @@ func_loop:
         --sp;
         PR_VM_BREAK;
 
+      // [-2]: *dynarray
+      // [-1]: index
+      // pointer to a new element left on the stack
       PR_VM_CASE(OPC_DynArrayElementGrow)
         {
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
           //ip += 9+sizeof(VClass *);
-          if (sp[-1].i < 0) { cstDump(ip); Sys_Error("Array index is negative"); }
+          if (sp[-1].i < 0) { cstDump(ip); Sys_Error("Array index %d is negative", sp[-1].i); }
+          if (sp[-1].i >= MaxDynArrayLength) { cstDump(ip); Sys_Error("Array index %d is too big", sp[-1].i); }
           VScriptArray &A = *(VScriptArray *)sp[-2].p;
           if (sp[-1].i >= A.Num()) A.SetNum(sp[-1].i+1, Type);
           sp[-2].p = A.Ptr()+sp[-1].i*Type.GetSize();
@@ -1951,75 +1963,114 @@ func_loop:
         }
         PR_VM_BREAK;
 
+      // [-1]: *dynarray
       PR_VM_CASE(OPC_DynArrayGetNum)
         ++ip;
         sp[-1].i = ((VScriptArray *)sp[-1].p)->Num();
         PR_VM_BREAK;
 
+      // [-2]: *dynarray
+      // [-1]: length
       PR_VM_CASE(OPC_DynArraySetNum)
         {
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
           //ip += 9+sizeof(VClass *);
+          if (sp[-1].i < 0) { cstDump(ip); Sys_Error("Array index %d is negative", sp[-1].i); }
+          if (sp[-1].i > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array index %d is too big", sp[-1].i); }
           ((VScriptArray *)sp[-2].p)->SetNum(sp[-1].i, Type);
           sp -= 2;
         }
         PR_VM_BREAK;
 
+      // [-2]: *dynarray
+      // [-1]: delta
       PR_VM_CASE(OPC_DynArraySetNumMinus)
         {
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
           //ip += 9+sizeof(VClass *);
-          ((VScriptArray *)sp[-2].p)->SetNumMinus(sp[-1].i, Type);
+          if (sp[-1].i < 0) { cstDump(ip); Sys_Error("Array shrink delta %d is negative", sp[-1].i); }
+          if (sp[-1].i > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array shrink delta %d is too big", sp[-1].i); }
+          VScriptArray &A = *(VScriptArray *)sp[-2].p;
+          if (A.length() < sp[-1].i) { cstDump(ip); Sys_Error("Array shrink delta %d is too big (%d)", sp[-1].i, A.length()); }
+          if (sp[-1].i > 0) A.SetNumMinus(sp[-1].i, Type);
+          //((VScriptArray *)sp[-2].p)->SetNumMinus(sp[-1].i, Type);
           sp -= 2;
         }
         PR_VM_BREAK;
 
+      // [-2]: *dynarray
+      // [-1]: delta
       PR_VM_CASE(OPC_DynArraySetNumPlus)
         {
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
           //ip += 9+sizeof(VClass *);
-          ((VScriptArray *)sp[-2].p)->SetNumPlus(sp[-1].i, Type);
+          if (sp[-1].i < 0) { cstDump(ip); Sys_Error("Array grow delta %d is negative", sp[-1].i); }
+          if (sp[-1].i > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array grow delta %d is too big", sp[-1].i); }
+          VScriptArray &A = *(VScriptArray *)sp[-2].p;
+          if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < sp[-1].i) { cstDump(ip); Sys_Error("Array grow delta %d is too big (%d)", sp[-1].i, A.length()); }
+          if (sp[-1].i > 0) A.SetNumPlus(sp[-1].i, Type);
+          //((VScriptArray *)sp[-2].p)->SetNumPlus(sp[-1].i, Type);
           sp -= 2;
         }
         PR_VM_BREAK;
 
+      // [-3]: *dynarray
+      // [-2]: index
+      // [-1]: count
       PR_VM_CASE(OPC_DynArrayInsert)
         {
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
           //ip += 9+sizeof(VClass *);
-          ((VScriptArray *)sp[-3].p)->Insert(sp[-2].i, sp[-1].i, Type);
+          int count = sp[-1].i;
+          int index = sp[-2].i;
+          VScriptArray &A = *(VScriptArray *)sp[-3].p;
+          if (count < 0) { cstDump(ip); Sys_Error("Array count %d is negative", count); }
+          if (index < 0) { cstDump(ip); Sys_Error("Array index %d is negative", index); }
+          if (index > A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
+          if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() > count) { cstDump(ip); Sys_Error("Out of memory for dynarray"); }
+          if (count > 0) A.Insert(index, count, Type);
+          //((VScriptArray *)sp[-3].p)->Insert(sp[-2].i, sp[-1].i, Type);
           sp -= 3;
         }
         PR_VM_BREAK;
 
+      // [-3]: *dynarray
+      // [-2]: index
+      // [-1]: count
       PR_VM_CASE(OPC_DynArrayRemove)
         {
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
           //ip += 9+sizeof(VClass *);
-          ((VScriptArray *)sp[-3].p)->Remove(sp[-2].i, sp[-1].i, Type);
+          int count = sp[-1].i;
+          int index = sp[-2].i;
+          VScriptArray &A = *(VScriptArray *)sp[-3].p;
+          if (count < 0) { cstDump(ip); Sys_Error("Array count %d is negative", count); }
+          if (index < 0) { cstDump(ip); Sys_Error("Array index %d is negative", index); }
+          if (index > A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
+          if (count > A.length()-index) { cstDump(ip); Sys_Error("Array count %d is too big at %d (%d)", count, index, A.length()); }
+          if (count > 0) A.Remove(index, count, Type);
+          //((VScriptArray *)sp[-3].p)->Remove(sp[-2].i, sp[-1].i, Type);
           sp -= 3;
         }
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynamicCast)
-        sp[-1].p = sp[-1].p && ((VObject *)sp[-1].p)->IsA(
-          (VClass *)ReadPtr(ip+1)) ? sp[-1].p : 0;
+        sp[-1].p = sp[-1].p && ((VObject *)sp[-1].p)->IsA((VClass *)ReadPtr(ip+1)) ? sp[-1].p : 0;
         ip += 1+sizeof(void *);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynamicClassCast)
-        sp[-1].p = sp[-1].p && ((VClass *)sp[-1].p)->IsChildOf(
-          (VClass *)ReadPtr(ip+1)) ? sp[-1].p : 0;
+        sp[-1].p = sp[-1].p && ((VClass *)sp[-1].p)->IsChildOf((VClass *)ReadPtr(ip+1)) ? sp[-1].p : 0;
         ip += 1+sizeof(void *);
         PR_VM_BREAK;
 
