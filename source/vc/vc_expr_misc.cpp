@@ -296,9 +296,9 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
     if (field) {
       VExpression *e;
       // "normal" access: call delegate (if it is operand-less)
-      if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
+      /*if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
         e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
-      } else {
+      } else*/ {
         e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
       }
       delete this;

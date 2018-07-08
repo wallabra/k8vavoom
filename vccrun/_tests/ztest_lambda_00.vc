@@ -10,9 +10,9 @@ int boo () { return field; }
 void main () {
   //dgfld = delegate int () { return field; };
   dgfld = &boo;
-  print("dg1: %d", dgfld);
+  print("dg1: %d", dgfld());
   dgfld = delegate int () { return field+1000; };
-  print("dg1: %d", dgfld);
+  print("dg1: %d", dgfld());
 }
 
 

@@ -181,7 +181,7 @@ VExpression *VExpression::ResolveBoolean (VEmitContext &ec) {
       e = (new VVectorToBool(e, true))->Resolve(ec);
       break;
     default:
-      ParseError(e->Loc, "Expression type mismatch, boolean expression expected");
+      ParseError(e->Loc, "Expression type mismatch, boolean expression expected, got `%s`", *e->Type.GetName());
       delete e;
       return nullptr;
   }

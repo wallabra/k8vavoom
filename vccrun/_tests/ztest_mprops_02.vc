@@ -21,9 +21,9 @@ void main () {
   dgfld = &self.boo;
   print("dg0: %d", dgfld());
   dgfld = &boo;
-  print("dg1: %d", dgfld);
+  print("dg1: %d", dgfld());
   dgfld = dgfld;
-  print("dg2: %d", dgfld);
+  print("dg2: %d", dgfld());
 }
 
 
