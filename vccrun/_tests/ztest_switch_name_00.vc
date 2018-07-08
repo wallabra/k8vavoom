@@ -1,0 +1,11 @@
+class Main : Object;
+
+void main () {
+  name nam = 'foo';
+  switch (nam) {
+    case 'zoo': writeln("zoo"); break;
+    case 'bar': writeln("bar"); break;
+    case 'foo': writeln("foo"); goto case 'zoo';
+    default: writeln("unknown: <", nam, ">"); break;
+  }
+}
