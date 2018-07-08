@@ -46,7 +46,7 @@ int       TranslEnd;
 float     HexenArmor[5];
 
 //  Jump velocity.
-float     JumpVelZ;
+//!float     JumpVelZ;
 
 //  Name displayed in menu.
 string      DisplayName;

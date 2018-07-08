@@ -27,7 +27,7 @@ class PowerInvulnerable : Powerup;
 
 // For cleric's invulnerability effect
 bool      bAltShadow;
-bool      bShadow;
+//!bool      bShadow;
 bool      bDontDraw;
 int       PrevTicTime;
 
