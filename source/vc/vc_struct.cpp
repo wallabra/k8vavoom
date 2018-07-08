@@ -46,6 +46,10 @@ VStruct::VStruct (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , DestructorFields(0)
   , AliasList()
   , AliasFrameNum(0)
+  , cacheNeedDTor(-1)
+#if !defined(IN_VCC)
+  , cacheNeedCleanup(-1)
+#endif
 {
 }
 
@@ -121,6 +125,13 @@ void VStruct::Serialise (VStream &Strm) {
     << IsVector
     << STRM_INDEX(StackSize)
     << Fields;
+
+  if (Strm.IsLoading()) {
+    cacheNeedDTor = -1;
+#if !defined(IN_VCC)
+    cacheNeedCleanup = -1;
+#endif
+  }
   unguard;
 }
 
@@ -147,6 +158,11 @@ void VStruct::AddField (VField *f) {
     Prev->Next = f;
   }
   f->Next = nullptr;
+
+  cacheNeedDTor = -1;
+#if !defined(IN_VCC)
+  cacheNeedCleanup = -1;
+#endif
   unguard;
 }
 
@@ -172,10 +188,13 @@ VField *VStruct::FindField (VName FieldName) {
 //  VStruct::NeedsDestructor
 //
 //==========================================================================
-bool VStruct::NeedsDestructor () const {
+bool VStruct::NeedsDestructor () {
   guard(VStruct::NeedsDestructor);
+  if (cacheNeedDTor >= 0) return (cacheNeedDTor != 0);
+  cacheNeedDTor = 1;
   for (VField *F = Fields; F; F = F->Next) if (F->NeedsDestructor()) return true;
-  if (ParentStruct) return ParentStruct->NeedsDestructor();
+  if (ParentStruct && ParentStruct->NeedsDestructor()) return true;
+  cacheNeedDTor = 0;
   return false;
   unguard;
 }
@@ -341,6 +360,11 @@ void VStruct::CalcFieldOffsets () {
 //==========================================================================
 void VStruct::InitReferences () {
   guard(VStruct::InitReferences);
+  // invalidate caches (just in case)
+  cacheNeedDTor = -1;
+#if !defined(IN_VCC)
+  cacheNeedCleanup = -1;
+#endif
   ReferenceFields = nullptr;
   if (ParentStruct) ReferenceFields = ParentStruct->ReferenceFields;
   for (VField *F = Fields; F; F = F->Next) {
@@ -383,34 +407,50 @@ void VStruct::InitReferences () {
 //==========================================================================
 void VStruct::InitDestructorFields () {
   guard(VStruct::InitDestructorFields);
+  // invalidate caches (just in case)
+  cacheNeedDTor = -1;
+#if !defined(IN_VCC)
+  cacheNeedCleanup = -1;
+#endif
   DestructorFields = nullptr;
   if (ParentStruct) DestructorFields = ParentStruct->DestructorFields;
   for (VField *F = Fields; F; F = F->Next) {
     switch (F->Type.Type) {
+#if !defined(IN_VCC)
+      case TYPE_Reference:
+      case TYPE_Delegate:
+        cacheNeedCleanup = 1;
+        break;
+#endif
       case TYPE_String:
+        cacheNeedDTor = 1; // anyway
         F->DestructorLink = DestructorFields;
         DestructorFields = F;
         break;
       case TYPE_Struct:
         F->Type.Struct->PostLoad();
         if (F->Type.Struct->DestructorFields) {
+          cacheNeedDTor = 1; // anyway
           F->DestructorLink = DestructorFields;
           DestructorFields = F;
         }
         break;
       case TYPE_Array:
         if (F->Type.ArrayInnerType == TYPE_String) {
+          cacheNeedDTor = 1; // anyway
           F->DestructorLink = DestructorFields;
           DestructorFields = F;
         } else if (F->Type.ArrayInnerType == TYPE_Struct) {
           F->Type.Struct->PostLoad();
           if (F->Type.Struct->DestructorFields) {
+            cacheNeedDTor = 1; // anyway
             F->DestructorLink = DestructorFields;
             DestructorFields = F;
           }
         }
         break;
       case TYPE_DynamicArray:
+        cacheNeedDTor = 1; // anyway
         F->DestructorLink = DestructorFields;
         DestructorFields = F;
         break;
@@ -453,6 +493,22 @@ void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
     VField::SerialiseFieldValue(Strm, Data+F->Ofs, F->Type);
   }
   unguardf(("(%s)", *Name));
+}
+
+
+//==========================================================================
+//
+//  VStruct::NeedToCleanObject
+//
+//==========================================================================
+bool VStruct::NeedToCleanObject () {
+  if (cacheNeedCleanup >= 0) return (cacheNeedCleanup != 0);
+  cacheNeedCleanup = 1;
+  //for (VField *F = ReferenceFields; F; F = F->NextReference) if (VField::NeedToCleanField(F->Type)) return true;
+  for (VField *F = Fields; F; F = F->Next) if (VField::NeedToCleanField(F->Type)) return true;
+  if (ParentStruct && ParentStruct->NeedToCleanObject()) return true;
+  cacheNeedCleanup = 0;
+  return false;
 }
 
 

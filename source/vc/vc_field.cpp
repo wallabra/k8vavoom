@@ -112,16 +112,6 @@ void VField::Serialise (VStream &Strm) {
 //
 //==========================================================================
 bool VField::NeedsDestructor () const {
-  /*
-  if (Type.Type == TYPE_String) return true;
-  if (Type.Type == TYPE_DynamicArray) return true;
-  if (Type.Type == TYPE_Array) {
-    if (Type.ArrayInnerType == TYPE_String) return true;
-    if (Type.ArrayInnerType == TYPE_Struct) return Type.Struct->NeedsDestructor();
-  }
-  if (Type.Type == TYPE_Struct) return Type.Struct->NeedsDestructor();
-  return false;
-  */
   return NeedDtor(Type);
 }
 
@@ -323,6 +313,29 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
 
 //==========================================================================
 //
+//  VField::NeedToCleanField
+//
+//==========================================================================
+bool VField::NeedToCleanField (const VFieldType &Type) {
+  VFieldType IntType;
+  switch (Type.Type) {
+    case TYPE_Reference:
+    case TYPE_Delegate:
+      return true;
+    case TYPE_Struct:
+      return Type.Struct->NeedToCleanObject();
+    case TYPE_Array:
+    case TYPE_DynamicArray:
+      IntType = Type;
+      IntType.Type = Type.ArrayInnerType;
+      return NeedToCleanField(IntType);
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VField::CleanField
 //
 //==========================================================================
@@ -346,20 +359,34 @@ void VField::CleanField (vuint8 *Data, const VFieldType &Type) {
     case TYPE_Array:
       IntType = Type;
       IntType.Type = Type.ArrayInnerType;
-      InnerSize = IntType.GetSize();
-      for (int i = 0; i < Type.ArrayDim; ++i) CleanField(Data+i*InnerSize, IntType);
+      if (NeedToCleanField(IntType)) {
+        InnerSize = IntType.GetSize();
+        for (int i = 0; i < Type.ArrayDim; ++i) CleanField(Data+i*InnerSize, IntType);
+      }
       break;
     case TYPE_DynamicArray:
       {
         VScriptArray &A = *(VScriptArray *)Data;
         IntType = Type;
         IntType.Type = Type.ArrayInnerType;
-        InnerSize = IntType.GetSize();
-        for (int i = 0; i < A.Num(); ++i) CleanField(A.Ptr()+i*InnerSize, IntType);
+        if (NeedToCleanField(IntType)) {
+          InnerSize = IntType.GetSize();
+          for (int i = 0; i < A.Num(); ++i) CleanField(A.Ptr()+i*InnerSize, IntType);
+        }
       }
       break;
   }
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VField::NeedToDestructField
+//
+//==========================================================================
+bool VField::NeedToDestructField (const VFieldType &atype) {
+  return NeedDtor(atype);
 }
 
 
@@ -379,6 +406,10 @@ void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
   VFieldType IntType;
   int InnerSize;
   switch (Type.Type) {
+    case TYPE_Reference:
+    case TYPE_Pointer:
+      *(void **)Data = nullptr;
+      break;
     case TYPE_String:
       ((VStr *)Data)->Clean();
       break;
@@ -388,13 +419,21 @@ void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
     case TYPE_Array:
       IntType = Type;
       IntType.Type = Type.ArrayInnerType;
-      InnerSize = IntType.GetSize();
-      for (int i = 0; i < Type.ArrayDim; ++i) DestructField(Data+i*InnerSize, IntType, zeroIt);
+      if (NeedDtor(IntType)) {
+        InnerSize = IntType.GetSize();
+        for (int i = 0; i < Type.ArrayDim; ++i) DestructField(Data+i*InnerSize, IntType, zeroIt);
+      } else if (zeroIt && Type.ArrayDim) {
+        InnerSize = IntType.GetSize();
+        memset(Data, 0, Type.ArrayDim*InnerSize);
+      }
       break;
     case TYPE_DynamicArray:
       IntType = Type;
       IntType.Type = Type.ArrayInnerType;
       ((VScriptArray *)Data)->Clear(IntType);
+      break;
+    case TYPE_SliceArray:
+      memset(Data, 0, Type.GetSize());
       break;
   }
   unguard;

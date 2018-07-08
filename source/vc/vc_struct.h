@@ -58,6 +58,13 @@ public:
 
   VName ResolveAlias (VName aname); // returns `aname` for unknown alias, or `NAME_None` for alias loop
 
+private:
+  // cache various requests (<0: not cached; 0: false; 1: true)
+  int cacheNeedDTor;
+#if !defined(IN_VCC)
+  int cacheNeedCleanup;
+#endif
+
 public:
   VStruct (VName, VMemberBase *, TLocation);
   virtual void CompilerShutdown () override;
@@ -67,7 +74,7 @@ public:
 
   void AddField (VField *f);
   VField *FindField (VName);
-  bool NeedsDestructor () const;
+  bool NeedsDestructor ();
   bool Define ();
   bool DefineMembers ();
 
@@ -79,6 +86,7 @@ public:
 #if !defined(IN_VCC)
   void CopyObject (const vuint8 *, vuint8 *);
   void SerialiseObject (VStream &, vuint8 *);
+  bool NeedToCleanObject ();
   void CleanObject (vuint8 *);
   void DestructObject (vuint8 *Data);
   void ZeroObject (vuint8 *Data);

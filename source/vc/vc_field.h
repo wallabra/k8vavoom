@@ -77,6 +77,8 @@ public:
   static void SerialiseFieldValue (VStream &, vuint8 *, const VFieldType &);
   static void CleanField (vuint8 *, const VFieldType &);
   static void DestructField (vuint8 *, const VFieldType &, bool zeroIt=false);
+  static bool NeedToDestructField (const VFieldType &);
+  static bool NeedToCleanField (const VFieldType &);
   static bool IdenticalValue (const vuint8 *, const vuint8 *, const VFieldType &);
 #endif
 #if !defined(IN_VCC)
