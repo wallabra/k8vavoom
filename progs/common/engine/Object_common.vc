@@ -272,7 +272,7 @@ alias normalize = normalise;
 // normalises 2d vector (ignores z)
 native static final TVec normalise2D (const TVec vec) [builtin VecNormalize2D];
 alias Normalise2D = normalise2D;
-alias normalise2d = normalise2d;
+alias normalise2d = normalise2D;
 // dot product
 native static final float dot (const TVec v1, const TVec v2) [builtin VecDot];
 alias DotProduct = dot;
@@ -286,7 +286,7 @@ alias CrossProduct = cross;
 // 2d cross product (signed magnitude, z, as x and y are effectively zero in 2d)
 native static final TVec cross2d (const TVec v1, const TVec v2) [builtin VecCross2D];
 alias CrossProduct2D = cross2d;
-alias cross2D = cross2D;
+alias cross2D = cross2d;
 // creates vectors for given angle vector
 native static final void AngleVectors (const ref TAVec angles, out TVec forward, out TVec right, out TVec up);
 // simplified version of AngleVectors, creates only forward vector
