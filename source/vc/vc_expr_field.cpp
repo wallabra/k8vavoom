@@ -405,7 +405,9 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
 
   if (op->Type.Type == TYPE_Struct || op->Type.Type == TYPE_Vector) {
     VFieldType type = op->Type;
-    if (!type.Struct) {
+    // `auto v = vector(a, b, c)` is vector without struct, for example, hence the check
+    VField *field = (type.Struct ? type.Struct->FindField(FieldName) : nullptr);
+    if (!field) {
       // convert to method, 'cause why not?
       if (assType == AssType::Normal) {
         VExpression *ufcsArgs[1];
@@ -414,7 +416,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return call->Resolve(ec);
       } else {
-        ParseError(Loc, "INTERNAL COMPILER ERROR: No such field `%s`, and no struct also!", *FieldName);
+        ParseError(Loc, "No such field `%s`", *FieldName);
         delete this;
         return nullptr;
       }
@@ -424,12 +426,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     int Flags = op->Flags;
     op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
-    VField *field = type.Struct->FindField(FieldName);
-    if (!field) {
-      ParseError(Loc, "No such field %s", *FieldName);
-      delete this;
-      return nullptr;
-    }
     VExpression *e = new VFieldAccess(op, field, Loc, Flags&FIELD_ReadOnly);
     op = nullptr;
     delete this;

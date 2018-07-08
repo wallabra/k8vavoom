@@ -228,7 +228,7 @@ bool VStruct::DefineMembers () {
     } else {
       size += fi->Type.GetStackSize();
     }
-    PrevBool = fi->Type.Type == TYPE_Bool ? fi : nullptr;
+    PrevBool = (fi->Type.Type == TYPE_Bool ? fi : nullptr);
   }
 
   // validate vector type
