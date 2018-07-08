@@ -2035,7 +2035,7 @@ func_loop:
           if (count < 0) { cstDump(ip); Sys_Error("Array count %d is negative", count); }
           if (index < 0) { cstDump(ip); Sys_Error("Array index %d is negative", index); }
           if (index > A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
-          if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() > count) { cstDump(ip); Sys_Error("Out of memory for dynarray"); }
+          if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < count) { cstDump(ip); Sys_Error("Out of memory for dynarray"); }
           if (count > 0) A.Insert(index, count, Type);
           //((VScriptArray *)sp[-3].p)->Insert(sp[-2].i, sp[-1].i, Type);
           sp -= 3;
