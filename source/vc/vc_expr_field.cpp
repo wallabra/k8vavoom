@@ -409,7 +409,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     VField *field = (type.Struct ? type.Struct->FindField(FieldName) : nullptr);
     if (!field) {
       // convert to method, 'cause why not?
-      if (assType == AssType::Normal) {
+      if (assType != AssType::AssTarget) {
         VExpression *ufcsArgs[1];
         ufcsArgs[0] = opcopy.get();
         VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
