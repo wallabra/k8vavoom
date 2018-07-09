@@ -446,6 +446,7 @@ enum {
   DECLARE_OPC(GetObjClassPtr, None),
   // [-2]: classptr; [-1]: classptr
   DECLARE_OPC(ClassIsAClass, None),
+  DECLARE_OPC(ClassIsNotAClass, None),
 
   // builtins (k8: i'm short of opcodes, so...)
   DECLARE_OPC(Builtin, Builtin),

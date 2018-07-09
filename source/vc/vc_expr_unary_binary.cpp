@@ -475,6 +475,7 @@ int VBinary::calcPrio (EBinOp op) {
     case StrCat:
       return 2;
     case IsA:
+    case NotIsA:
       return 1;
   };
   FatalError("VC: internal error (VBinary::calcPrio)");
@@ -679,6 +680,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       Type = TYPE_String;
       break;
     case IsA:
+    case NotIsA:
       if (op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) {
         // two classes
         int v = (op1->Type.Class->IsChildOf(op2->Type.Class) ? 1 : 0);
@@ -808,7 +810,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
 void VBinary::Emit (VEmitContext &ec) {
   if (!op1 || !op2) return;
 
-  if (Oper == IsA) {
+  if (Oper == IsA || Oper == NotIsA) {
     if (op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) {
       FatalError("VC: internal compiler error (VBinary::Emit:Class:Class)");
     } else if (op1->Type.Type == TYPE_Class || op1->Type.Type == TYPE_Reference) {
@@ -819,7 +821,7 @@ void VBinary::Emit (VEmitContext &ec) {
       if (op1->Type.Type == TYPE_Reference) ec.AddStatement(OPC_GetObjClassPtr, Loc); // load class
       op2->Emit(ec);
       if (op2->Type.Type == TYPE_Reference) ec.AddStatement(OPC_GetObjClassPtr, Loc); // load class
-      ec.AddStatement(OPC_ClassIsAClass, Loc);
+      ec.AddStatement((Oper == IsA ? OPC_ClassIsAClass : OPC_ClassIsNotAClass), Loc);
       return;
     } else {
       FatalError("VC: internal compiler error (VBinary::Emit:?:?)");
@@ -915,7 +917,7 @@ void VBinary::Emit (VEmitContext &ec) {
     case StrCat:
       if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrCat, Loc);
       break;
-    case IsA: FatalError("wtf?!");
+    case IsA: case NotIsA: FatalError("wtf?!");
   }
 }
 
@@ -963,6 +965,7 @@ VStr VBinary::toString () const {
     case GreaterEquals: res += " >= "; break;
     case StrCat: res += "~"; break;
     case IsA: res += " isa "; break;
+    case NotIsA: res += " !isa "; break;
   }
   if (!op2 || !op2->IsBinaryMath()) {
     res += e2s(op2);

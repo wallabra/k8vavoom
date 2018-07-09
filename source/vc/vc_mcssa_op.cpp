@@ -206,3 +206,4 @@ DECLARE_SSA(ZeroByPtr, None, RegSrc, RegSrc),
 DECLARE_SSA(GetObjClassPtr, RegDest, RegSrc, None),
 // [-2]: classptr; [-1]: classptr
 DECLARE_SSA(ClassIsAClass, RegDest, RegSrc, RegSrc),
+DECLARE_SSA(ClassIsNotAClass, RegDest, RegSrc, RegSrc),

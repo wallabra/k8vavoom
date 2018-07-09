@@ -834,6 +834,7 @@ struct Instr {
         return;
       // [-2]: classptr; [-1]: classptr
       case OPC_ClassIsAClass:
+      case OPC_ClassIsNotAClass:
         spdelta = -1;
         return;
 

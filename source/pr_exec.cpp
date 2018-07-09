@@ -2182,7 +2182,31 @@ func_loop:
           //VClass *c = ((VObject *)sp[-2].p)->GetClass();
           VClass *c = (VClass *)sp[-2].p;
           sp[-2].i = (c->IsChildOf((VClass *)sp[-1].p) ? 1 : 0);
+        } else if (sp[-2].p || sp[-1].p) {
+          // class isa none is false
+          // none isa class is false
+          sp[-2].i = 0;
         } else {
+          // none isa none is true
+          sp[-2].i = 1;
+        }
+        --sp;
+        ++ip;
+        PR_VM_BREAK;
+
+      // [-2]: class
+      // [-1]: class
+      PR_VM_CASE(OPC_ClassIsNotAClass)
+        if (sp[-2].p && sp[-1].p) {
+          //VClass *c = ((VObject *)sp[-2].p)->GetClass();
+          VClass *c = (VClass *)sp[-2].p;
+          sp[-2].i = (c->IsChildOf((VClass *)sp[-1].p) ? 0 : 1);
+        } else if (sp[-2].p || sp[-1].p) {
+          // class !isa none is true
+          // none !isa class is true
+          sp[-2].i = 1;
+        } else {
+          // none !isa none is false
           sp[-2].i = 0;
         }
         --sp;
