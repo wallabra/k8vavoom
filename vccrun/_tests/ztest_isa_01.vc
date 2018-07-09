@@ -1,0 +1,24 @@
+class Test0 : Object;
+class Test1 : Test0;
+
+class Main : Object;
+
+void main () {
+  writeln(Test0 !isa Object, " : 0");
+  writeln(Test1 !isa Object, " : 0");
+  writeln(self !isa Object, " : 0");
+  writeln(self !isa Test0, " : 1");
+  writeln(Test0 !isa Test0, " : 0");
+  writeln(Test1 !isa Test0, " : 0");
+  writeln(Test0 !isa Test1, " : 1");
+  writeln(Test1 !isa Test1, " : 0");
+  auto t0 = SpawnObject(Test0);
+  auto t1 = SpawnObject(Test1);
+  writeln(t0 !isa Object, " : 0");
+  writeln(t1 !isa Object, " : 0");
+  writeln(t1 !isa self, " : 1");
+  writeln(t0 !isa Test0, " : 0");
+  writeln(t1 !isa Test0, " : 0");
+  writeln(t0 !isa Test1, " : 1");
+  writeln(t1 !isa Test1, " : 0");
+}
