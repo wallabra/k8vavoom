@@ -653,6 +653,7 @@ VExpression *VParser::ParseExpressionPriority5_1 () {
       op1 = new VBinary(VBinary::IsA, op1, op2, l);
     } else if (Lex.Token == TK_Not && Lex.peekTokenType(1) == TK_IsA) {
       Lex.NextToken();
+      Lex.NextToken();
       VExpression *op2 = ParseExpressionPriority5();
       op1 = new VBinary(VBinary::NotIsA, op1, op2, l);
     } else {

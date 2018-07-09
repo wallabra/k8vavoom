@@ -684,6 +684,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       if (op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) {
         // two classes
         int v = (op1->Type.Class->IsChildOf(op2->Type.Class) ? 1 : 0);
+        if (Oper == NotIsA) v = !v;
         VExpression *e = new VIntLiteral(v, Loc);
         delete this;
         return e->Resolve(ec);
