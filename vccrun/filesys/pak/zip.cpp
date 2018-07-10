@@ -903,7 +903,7 @@ void VZipFileReader::Serialise (void* buf, int len) {
     dest += rd;
   }
 
-  if (rest_read_uncompressed == 0 && Crc32 != info.crc) {
+  if (rest_read_uncompressed == 0 && currpos == (int)info.uncompressed_size && Crc32 != info.crc) {
 #ifdef K8_UNLZMA_DEBUG
     fprintf(stderr, "LZMA: FAILED to read %d bytes (CRC fucked; got: 0x%08x; expected: 0x%08x)\n", len, Crc32, info.crc);
 #endif
@@ -911,7 +911,7 @@ void VZipFileReader::Serialise (void* buf, int len) {
     return;
   }
 #ifdef K8_UNLZMA_DEBUG
-  if (rest_read_uncompressed == 0 && Crc32 == info.crc) { fprintf(stderr, "ZIP CRC CHECK: OK\n"); }
+  if (rest_read_uncompressed == 0 && currpos == (int)info.uncompressed_size && Crc32 == info.crc) { fprintf(stderr, "ZIP CRC CHECK: OK\n"); }
 #endif
 
   unguard;
