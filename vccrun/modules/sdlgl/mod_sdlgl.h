@@ -85,6 +85,7 @@ private:
   static bool depthTest;
   static int depthFunc;
   static int currZ;
+  static int swapInterval;
   friend class VOpenGLTexture;
 
 public:
@@ -247,8 +248,12 @@ public:
   DECLARE_FUNCTION(get_blendMode)
   DECLARE_FUNCTION(set_blendMode)
 
+  DECLARE_FUNCTION(get_swapInterval)
+  DECLARE_FUNCTION(set_swapInterval)
+
   DECLARE_FUNCTION(get_fontName)
   DECLARE_FUNCTION(set_fontName)
+
   DECLARE_FUNCTION(fontHeight)
   DECLARE_FUNCTION(charWidth)
   DECLARE_FUNCTION(spaceWidth)

@@ -904,6 +904,7 @@ bool VVideo::depthTest = false;
 int VVideo::depthFunc = VVideo::ZFunc_Less;
 int VVideo::currZ = 0;
 float VVideo::currZFloat = 1.0f;
+int VVideo::swapInterval = 0;
 
 
 struct TimerInfo {
@@ -1101,14 +1102,9 @@ bool VVideo::open (const VStr &winname, int width, int height) {
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-  /*
-  if (r_vsync) {
-    if (SDL_GL_SetSwapInterval(-1) == -1) SDL_GL_SetSwapInterval(1);
-  } else {
-    SDL_GL_SetSwapInterval(0);
-  }
-  */
-  SDL_GL_SetSwapInterval(0);
+  int si = swapInterval;
+  if (si < 0) si = -1; else if (si > 0) si = 1;
+  if (SDL_GL_SetSwapInterval(si) == -1 && si < 0) SDL_GL_SetSwapInterval(1);
 
   hw_window = SDL_CreateWindow((winname.length() ? *winname : "Untitled"), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
   if (!hw_window) {
@@ -1127,14 +1123,9 @@ bool VVideo::open (const VStr &winname, int width, int height) {
   uploadAllTextures();
 
   //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
-  /*
-  if (r_vsync) {
-    if (SDL_GL_SetSwapInterval(-1) == -1) SDL_GL_SetSwapInterval(1);
-  } else {
-    SDL_GL_SetSwapInterval(0);
-  }
-  */
-  SDL_GL_SetSwapInterval(0);
+  if (si < 0) si = -1; else if (si > 0) si = 1;
+  if (SDL_GL_SetSwapInterval(si) == -1) { if (si < 0) { si = 1; SDL_GL_SetSwapInterval(1); } }
+  swapInterval = si;
 
   // everything is fine, set some globals and finish
   mWidth = width;
@@ -1857,6 +1848,19 @@ IMPLEMENT_FUNCTION(VVideo, fillRect) {
 }
 
 
+IMPLEMENT_FUNCTION(VVideo, get_swapInterval) {
+  RET_INT(swapInterval);
+}
+
+IMPLEMENT_FUNCTION(VVideo, set_swapInterval) {
+  P_GET_INT(si);
+  if (si < 0) si = -1; else if (si > 0) si = 1;
+  if (!mInited) { swapInterval = si; return; }
+  if (SDL_GL_SetSwapInterval(si) == -1) { if (si < 0) { si = 1; SDL_GL_SetSwapInterval(1); } }
+  swapInterval = si;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
 //native final static class FindMObjId (int id, optional name pkgname);
 IMPLEMENT_FUNCTION(VObject, FindMObjId) {
   P_GET_NAME_OPT(pkgname, NAME_None);

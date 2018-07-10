@@ -108,6 +108,9 @@ native final static void drawLine (int x0, int y0, int x1, int y1);
 native final static void drawRect (int x0, int y0, int w, int h);
 native final static void fillRect (int x0, int y0, int w, int h);
 
+// 0: no vsync; -1: adaptive vsync; 1: "hard" vsync
+native final static int swapInterval { get; set; }
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct ScissorRect {
