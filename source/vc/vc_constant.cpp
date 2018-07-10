@@ -146,12 +146,15 @@ bool VConstant::Define () {
       if (bitconstant) Value = 1<<Value;
       break;
     case TYPE_Float:
-      if (!ValueExpr->IsFloatConst()) {
+      if (bitconstant) ParseError(ValueExpr->Loc, "Integer constant expected");
+      if (ValueExpr->IsIntConst()) {
+        FloatValue = ValueExpr->GetIntConst();
+      } else if (ValueExpr->IsFloatConst()) {
+        FloatValue = ValueExpr->GetFloatConst();
+      } else {
         ParseError(ValueExpr->Loc, "Float constant expected");
         return false;
       }
-      if (bitconstant) ParseError(ValueExpr->Loc, "Integer constant expected");
-      FloatValue = ValueExpr->GetFloatConst();
       break;
     default:
       ParseError(Loc, "Unsupported type of constant");
