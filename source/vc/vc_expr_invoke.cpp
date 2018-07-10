@@ -496,7 +496,7 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
   if (ec.SelfClass) {
     VMethod *M = ec.SelfClass->FindAccessibleMethod(Name, ec.SelfClass);
     if (M) {
-      if (M->Flags & FUNC_Iterator) {
+      if (M->Flags&FUNC_Iterator) {
         ParseError(Loc, "Iterator methods can only be used in foreach statements");
         delete this;
         return nullptr;
@@ -514,13 +514,13 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
       delete this;
       return e->Resolve(ec);
     }
-  }
 
-  if (VStr::Cmp(*Name, "write") == 0 || VStr::Cmp(*Name, "writeln") == 0) {
-    VExpression *e = new VInvokeWrite((VStr::Cmp(*Name, "writeln") == 0), Loc, NumArgs, Args);
-    NumArgs = 0;
-    delete this;
-    return e->Resolve(ec);
+    if (VStr::Cmp(*Name, "write") == 0 || VStr::Cmp(*Name, "writeln") == 0) {
+      VExpression *e = new VInvokeWrite((VStr::Cmp(*Name, "writeln") == 0), Loc, NumArgs, Args);
+      NumArgs = 0;
+      delete this;
+      return e->Resolve(ec);
+    }
   }
 
   ParseError(Loc, "Unknown method `%s`", *Name);
