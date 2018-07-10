@@ -144,10 +144,10 @@ IMPLEMENT_FUNCTION(VTextReader, get_position) {
 // convenient functions
 IMPLEMENT_FUNCTION(VTextReader, readU8) {
   P_GET_SELF;
-  if (!Self || !Self->fstream || Self->fstream->IsError()) { fprintf(stderr, "*** BOOM!\n"); RET_INT(0); return; }
+  if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b;
   Self->fstream->Serialize(&b, 1);
-  if (Self->fstream->IsError()) { fprintf(stderr, "*** FUCK!\n"); RET_INT(0); return; }
+  if (Self->fstream->IsError()) { RET_INT(0); return; }
   RET_INT(b);
 }
 
