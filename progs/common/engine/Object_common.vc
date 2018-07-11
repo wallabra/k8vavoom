@@ -284,7 +284,7 @@ alias dot2D = dot2d;
 native static final TVec cross (const TVec v1, const TVec v2) [builtin VecCross];
 alias CrossProduct = cross;
 // 2d cross product (signed magnitude, z, as x and y are effectively zero in 2d)
-native static final TVec cross2d (const TVec v1, const TVec v2) [builtin VecCross2D];
+native static final float cross2d (const TVec v1, const TVec v2) [builtin VecCross2D];
 alias CrossProduct2D = cross2d;
 alias cross2D = cross2d;
 // creates vectors for given angle vector
