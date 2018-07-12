@@ -395,3 +395,17 @@ IMPLEMENT_FUNCTION(VSoundSystem, SetMusicPitch) {
   P_GET_FLOAT(pitch);
   if (GAudio) GAudio->SetMusicPitch(pitch);
 }
+
+
+#define IMPLEMENT_VSS_PROPERTY(atype,name,varname) \
+IMPLEMENT_FUNCTION(VSoundSystem, get_##name) { RET_##atype(varname); } \
+IMPLEMENT_FUNCTION(VSoundSystem, set_##name) { P_GET_##atype(v); varname = v; }
+
+IMPLEMENT_VSS_PROPERTY(FLOAT, DopplerFactor, VSoundDevice::doppler_factor)
+IMPLEMENT_VSS_PROPERTY(FLOAT, DopplerVelocity, VSoundDevice::doppler_velocity)
+IMPLEMENT_VSS_PROPERTY(FLOAT, RolloffFactor, VSoundDevice::rolloff_factor)
+IMPLEMENT_VSS_PROPERTY(FLOAT, ReferenceDistance, VSoundDevice::reference_distance)
+IMPLEMENT_VSS_PROPERTY(FLOAT, MaxDistance, VSoundDevice::max_distance)
+IMPLEMENT_VSS_PROPERTY(INT, NumChannels, VAudioPublic::snd_channels)
+
+#undef IMPLEMENT_VSS_PROPERTY

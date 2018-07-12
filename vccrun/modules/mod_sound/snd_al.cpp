@@ -59,13 +59,6 @@ private:
   ALuint StrmSource;
   short StrmDataBuffer[STRM_BUFFER_SIZE*2];
 
-  // convars
-  static float doppler_factor;
-  static float doppler_velocity;
-  static float rolloff_factor;
-  static float reference_distance;
-  static float max_distance;
-
 public:
   // VSoundDevice interface
   virtual bool Init () override;
@@ -95,11 +88,11 @@ public:
 
 IMPLEMENT_SOUND_DEVICE(VOpenALDevice, SNDDRV_OpenAL, "OpenAL", "OpenAL sound device", "-openal");
 
-float VOpenALDevice::doppler_factor = 1.0f;
-float VOpenALDevice::doppler_velocity = 10000.0f;
-float VOpenALDevice::rolloff_factor = 1.0f;
-float VOpenALDevice::reference_distance = 32.0f; // The distance under which the volume for the source would normally drop by half (before being influenced by rolloff factor or AL_MAX_DISTANCE)
-float VOpenALDevice::max_distance = 800.0f; // Used with the Inverse Clamped Distance Model to set the distance where there will no longer be any attenuation of the source
+float VSoundDevice::doppler_factor = 1.0f;
+float VSoundDevice::doppler_velocity = 10000.0f;
+float VSoundDevice::rolloff_factor = 1.0f;
+float VSoundDevice::reference_distance = 32.0f; // The distance under which the volume for the source would normally drop by half (before being influenced by rolloff factor or AL_MAX_DISTANCE)
+float VSoundDevice::max_distance = 800.0f; // Used with the Inverse Clamped Distance Model to set the distance where there will no longer be any attenuation of the source
 
 
 //==========================================================================

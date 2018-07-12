@@ -121,7 +121,7 @@ VAudioPublic *GAudio;
 float VAudioPublic::snd_sfx_volume = 1.0; //("snd_sfx_volume", "0.5", "Sound effects volume.", CVAR_Archive);
 float VAudioPublic::snd_music_volume = 1.0; //("snd_music_volume", "0.5", "Music volume", CVAR_Archive);
 bool VAudioPublic::snd_swap_stereo = false; //("snd_swap_stereo", false, "Swap stereo channels?", CVAR_Archive);
-int VAudioPublic::snd_channels = 128; //("snd_channels", "128", "Number of sound channels.", CVAR_Archive);
+int VAudioPublic::snd_channels = 64; //("snd_channels", "128", "Number of sound channels.", CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

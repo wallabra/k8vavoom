@@ -25,7 +25,7 @@ static native final bool IsSoundPlaying (int origin_id, int sound_id);
 static native final void SetSoundPitch (int origin_id, int sound_id, float pitch);
 static native final void UpdateSounds ();
 
-static native final bool PlayMusic (string filename, optional bool Loop);
+static native final bool PlayMusic (string filename, optional bool loop);
 static native final bool IsMusicPlaying ();
 static native final void PauseMusic ();
 static native final void ResumeMusic ();
@@ -38,3 +38,12 @@ static native final TVec ListenerOrigin { set; }
 static native final float SoundVolume { get; set; }
 static native final float MusicVolume { get; set; }
 static native final bool SwapStereo { get; set; }
+
+
+// the following must be set BEFORE initializing the sound system
+static native final float DopplerFactor { get; set; }
+static native final float DopplerVelocity { get; set; }
+static native final float RolloffFactor { get; set; }
+static native final float ReferenceDistance { get; set; }
+static native final float MaxDistance { get; set; }
+static native final int NumChannels { get; set; }
