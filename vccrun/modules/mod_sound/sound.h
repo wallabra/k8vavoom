@@ -77,6 +77,7 @@ public:
   virtual void StopChannel (int Handle) = 0;
   virtual void UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec&, const TVec &up) = 0;
 
+  // all stream functions should be thread-safe
   virtual bool OpenStream (int Rate, int Bits, int Channels) = 0;
   virtual void CloseStream () = 0;
   virtual int GetStreamAvailable () = 0;
@@ -86,6 +87,9 @@ public:
   virtual void PauseStream () = 0;
   virtual void ResumeStream () = 0;
   virtual void SetStreamPitch (float pitch) = 0;
+
+  virtual void AddCurrentThread () = 0;
+  virtual void RemoveCurrentThread () = 0;
 
   // set the following BEFORE initializing sound
   static float doppler_factor;
@@ -174,6 +178,16 @@ FAudioCodecDesc TClass##Desc(Description, TClass::Create);
 // ////////////////////////////////////////////////////////////////////////// //
 class VStreamMusicPlayer {
 public:
+  // stream player is using a separate thread
+  mythread stpThread;
+  mythread_mutex stpPingLock;
+  mythread_cond stpPingCond;
+  mythread_mutex stpLockPong;
+  mythread_cond stpCondPong;
+  float lastVolume;
+  bool threadInited;
+
+public:
   bool StrmOpened;
   VAudioCodec *Codec;
   // current playing song info
@@ -184,26 +198,55 @@ public:
   double FinishTime;
   VSoundDevice *SoundDevice;
 
+public:
   VStreamMusicPlayer (VSoundDevice *InSoundDevice)
-    : StrmOpened(false)
+    : lastVolume(1.0)
+    , threadInited(false)
+    , StrmOpened(false)
     , Codec(nullptr)
     , CurrLoop(false)
     , Stopping(false)
     , Paused(false)
     , SoundDevice(InSoundDevice)
+    , stpIsPlaying(false)
+    , stpNewPitch(1.0)
+    , stpNewVolume(1.0)
   {}
 
   ~VStreamMusicPlayer () {}
 
   void Init ();
   void Shutdown ();
-  void Tick ();
+  //bool Tick (); // DON'T CALL THIS!!!
   void Play (VAudioCodec *InCodec, const VStr &InName, bool InLoop);
   void Pause ();
   void Resume ();
   void Stop ();
   bool IsPlaying ();
   void SetPitch (float pitch);
+  void SetVolume (float volume);
+
+  // streamer thread ping/pong bussiness
+  // k8: it is public to free me from fuckery with `friends`
+  enum STPCommand {
+    STP_Quit, // stop playing, and quit immediately
+    STP_Start, // start playing current stream
+    STP_Stop, // stop current stream
+    STP_Pause, // pause current stream
+    STP_Resume, // resume current stream
+    STP_IsPlaying, // check if current stream is playing
+    STP_SetPitch, // change stream pitch
+    STP_SetVolume,
+  };
+  volatile STPCommand stpcmd;
+  volatile bool stpIsPlaying; // it will return `STP_IsPlaying` result here
+  volatile float stpNewPitch;
+  volatile float stpNewVolume;
+
+  bool stpThreadWaitPing (unsigned int msecs);
+  void stpThreadSendPong ();
+
+  void stpThreadSendCommand (STPCommand acmd);
 };
 
 

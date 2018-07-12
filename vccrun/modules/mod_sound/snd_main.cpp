@@ -586,8 +586,9 @@ void VAudio::UpdateSounds () {
 
   UpdateSfx();
   if (StreamMusicPlayer) {
-    SoundDevice->SetStreamVolume(snd_music_volume/* *MusicVolumeFactor*/);
-    StreamMusicPlayer->Tick();
+    StreamMusicPlayer->SetVolume(snd_music_volume);
+    //SoundDevice->SetStreamVolume(snd_music_volume/* *MusicVolumeFactor*/);
+    //StreamMusicPlayer->Tick();
   }
 }
 

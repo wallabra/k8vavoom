@@ -46,6 +46,14 @@ private:
   enum { NUM_STRM_BUFFERS = 8 };
   enum { STRM_BUFFER_SIZE = 1024 };
 
+  // stream player is using a separate thread
+  mythread_mutex stpLock;
+  mythread stpThread;
+  mythread_mutex stpPingLock;
+  mythread_cond stpPingCond;
+  mythread_mutex stpPongLock;
+  mythread_cond stpPongCond;
+
   ALCdevice *Device;
   ALCcontext *Context;
   ALuint *Buffers;
@@ -73,6 +81,7 @@ public:
   virtual void StopChannel (int Handle) override;
   virtual void UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec&, const TVec &up) override;
 
+  // OpenAL is thread-safe, so we have nothing special to do here
   virtual bool OpenStream (int Rate, int Bits, int Channels) override;
   virtual void CloseStream () override;
   virtual int GetStreamAvailable () override;
@@ -82,6 +91,9 @@ public:
   virtual void PauseStream () override;
   virtual void ResumeStream () override;
   virtual void SetStreamPitch (float pitch) override;
+
+  virtual void AddCurrentThread () override;
+  virtual void RemoveCurrentThread () override;
 
   bool PrepareSound (int sound_id);
 };
@@ -139,6 +151,26 @@ bool VOpenALDevice::Init () {
   //memset(Buffers, 0, sizeof(ALuint)*GSoundManager->S_sfx.length());
 
   return true;
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::AddCurrentThread
+//
+//==========================================================================
+void VOpenALDevice::AddCurrentThread () {
+  alcSetThreadContext(Context);
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::RemoveCurrentThread
+//
+//==========================================================================
+void VOpenALDevice::RemoveCurrentThread () {
+  alcSetThreadContext(nullptr);
 }
 
 
