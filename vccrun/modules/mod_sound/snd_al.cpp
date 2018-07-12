@@ -26,8 +26,10 @@
 #ifndef _WIN32
 # define INITGUID
 #endif
+#define AL_ALEXT_PROTOTYPES
 #include <AL/al.h>
 #include <AL/alc.h>
+#include <AL/alext.h>
 // linux headers doesn't define this
 #ifndef OPENAL
 # define OPENAL
@@ -119,9 +121,16 @@ bool VOpenALDevice::Init () {
   }
 
   // create a context and make it current
-  Context = alcCreateContext(Device, nullptr);
+  static const ALCint attrs[] = {
+    ALC_STEREO_SOURCES, 1, // get at least one stereo source for music
+    ALC_MONO_SOURCES, 1, // this should be audio channels in our game engine
+    //ALC_FREQUENCY, 48000, // desired frequency; we don't really need this, let OpenAL choose the best
+    0,
+  };
+  Context = alcCreateContext(Device, attrs);
   if (!Context) Sys_Error("Failed to create OpenAL context");
-  alcMakeContextCurrent(Context);
+  //alcMakeContextCurrent(Context);
+  alcSetThreadContext(Context);
   E = alGetError();
   if (E != AL_NO_ERROR) Sys_Error("OpenAL error: %s", alGetString(E));
 
@@ -162,10 +171,7 @@ void VOpenALDevice::Shutdown () {
 
   // destroy context
   if (Context) {
-#ifndef __linux__
-    // this causes a freeze in Linux
-    alcMakeContextCurrent(nullptr);
-#endif
+    alcSetThreadContext(nullptr);
     alcDestroyContext(Context);
     Context = nullptr;
   }
