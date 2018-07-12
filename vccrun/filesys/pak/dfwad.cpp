@@ -166,13 +166,7 @@ static FSysDriverBase *dfwadLoader (VStream *strm) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class DFWadVFSRegistrator {
-public:
-  DFWadVFSRegistrator (int n) {
-    FSysRegisterDriver(&dfwadLoader, 6666);
-    //fprintf(stderr, "FSYS: added DFWAD reader.\n");
-  }
-};
-
-
-static DFWadVFSRegistrator ldr(666);
+void fsys_Register_DFWAD () {
+  //fprintf(stderr, "registering DFWAD loader...\n");
+  FSysRegisterDriver(&dfwadLoader, 6666);
+}

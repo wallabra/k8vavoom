@@ -58,16 +58,11 @@ const vuint16 VStr::cp1251[128] = {
 char VStr::wc2shitmap[65536];
 
 
-class VStrInternalInitializer {
-public:
-  VStrInternalInitializer (int n) {
-    memset(VStr::wc2shitmap, '?', sizeof(VStr::wc2shitmap));
-    for (int f = 0; f < 128; ++f) VStr::wc2shitmap[f] = (char)f;
-    for (int f = 0; f < 128; ++f) VStr::wc2shitmap[VStr::cp1251[f]] = (char)(f+128);
-  }
-};
-
-static VStrInternalInitializer vstrInitr(666);
+void VStr::vstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you () {
+  memset(VStr::wc2shitmap, '?', sizeof(VStr::wc2shitmap));
+  for (int f = 0; f < 128; ++f) VStr::wc2shitmap[f] = (char)f;
+  for (int f = 0; f < 128; ++f) VStr::wc2shitmap[VStr::cp1251[f]] = (char)(f+128);
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //

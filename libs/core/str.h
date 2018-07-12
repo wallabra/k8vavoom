@@ -154,21 +154,23 @@ public:
   inline VStr &operator = (const char *instr) { setContent(instr); return *this; }
   inline VStr &operator = (const VStr &instr) { assign(instr); return *this; }
 
-  // concatenation operators
-  VStr &operator += (const char *instr) {
-    int inl = (int)(instr && instr[0] ? strlen(instr) : 0);
-    if (inl) {
-      if (isMyData(instr, inl)) {
-        VStr s(instr, inl);
+  VStr &appendCStr (const char *instr, int len=-1) {
+    if (len < 0) len = (int)(instr && instr[0] ? strlen(instr) : 0);
+    if (len) {
+      if (isMyData(instr, len)) {
+        VStr s(instr, len);
         operator+=(s);
       } else {
         int l = length();
-        resize(l+inl);
-        memcpy(data+l, instr, inl+1);
+        resize(l+len);
+        memcpy(data+l, instr, len+1);
       }
     }
     return *this;
   }
+
+  // concatenation operators
+  inline VStr &operator += (const char *instr) { return appendCStr(instr, -1); }
 
   VStr &operator += (const VStr &instr) {
     int inl = instr.length();
@@ -471,6 +473,8 @@ public:
   static char wc2shitmap[65536];
 
   static const VStr EmptyString;
+
+  static void vstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you ();
 };
 
 

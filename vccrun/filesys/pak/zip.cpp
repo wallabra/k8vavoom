@@ -307,6 +307,7 @@ void VZipFile::openArchive () {
     fileStream->Serialise(filename_inzip, file_info.size_filename);
     for (int f = 0; f < file_info.size_filename; ++f) if (filename_inzip[f] == '\\') filename_inzip[f] = '/';
     files[i].name = VStr(filename_inzip);
+    //fprintf(stderr, "** NAME: <%s> (%s) (%s)\n", *files[i].name, filename_inzip, *files[i].name.utf2win());
     delete[] filename_inzip;
     if (files[i].name.isUtf8Valid()) files[i].name = files[i].name.utf2win();
     //fprintf(stderr, "NAME: <%s>\n", *files[i].name);
@@ -952,13 +953,7 @@ static FSysDriverBase *zipLoader (VStream *strm) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class ZipVFSRegistrator {
-public:
-  ZipVFSRegistrator (int n) {
-    FSysRegisterDriver(&zipLoader);
-    //fprintf(stderr, "FSYS: added ZIP reader.\n");
-  }
-};
-
-
-static ZipVFSRegistrator ldr(666);
+void fsys_Register_ZIP () {
+  //fprintf(stderr, "registering ZIP loader...\n");
+  FSysRegisterDriver(&zipLoader);
+}

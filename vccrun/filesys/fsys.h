@@ -334,4 +334,9 @@ void fsysCloseDir (void *adir);
 double fsysCurrTick ();
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+void fsys_Register_ZIP ();
+void fsys_Register_DFWAD ();
+
+
 #endif

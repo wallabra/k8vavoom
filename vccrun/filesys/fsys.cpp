@@ -500,6 +500,8 @@ VStreamPakFile::~VStreamPakFile () {
 // `fsysBaseDir` should be set before calling this
 void fsysInit () {
   if (openPakCount == 0) {
+    fsys_Register_ZIP();
+    fsys_Register_DFWAD();
          if (fsysBaseDir.length() == 0) fsysBaseDir = VStr("./");
     else if (!fsysBaseDir.endsWith("/")) fsysBaseDir += "/"; // fuck you, shitdoze
     openPaks[0] = new FSysDriverDisk(fsysBaseDir);
