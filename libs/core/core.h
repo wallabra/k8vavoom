@@ -33,6 +33,8 @@
 #include <cstdarg>
 #include <cmath>
 
+#include "mythreadlite.h"
+
 #include "common.h"   //  Common types and definitions
 #include "propp.h"
 #include "hashfunc.h"
