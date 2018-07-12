@@ -37,10 +37,10 @@ public:
     IT_RGBA, // truecolour
   };
 
-  struct __attribute((aligned(1), packed)) RGB;
-  struct __attribute((aligned(1), packed)) RGBA;
+  struct __attribute__((aligned(1), packed)) RGB;
+  struct __attribute__((aligned(1), packed)) RGBA;
 
-  struct __attribute((aligned(1), packed)) RGB {
+  struct __attribute__((aligned(1), packed)) RGB {
     vuint8 r, g, b;
     RGB () : r(0), g(0), b(0) {}
     RGB (vuint8 ar, vuint8 ag, vuint8 ab) : r(ar), g(ag), b(ab) {}
@@ -60,7 +60,7 @@ public:
     inline void setColor (const RGBA &c) { r = c.r; g = c.g; b = c.b; }
   };
 
-  struct __attribute((aligned(1), packed)) RGBA {
+  struct __attribute__((aligned(1), packed)) RGBA {
     vuint8  r, g, b, a;
     RGBA () : r(0), g(0), b(0), a(0) {}
     RGBA (vuint8 ar, vuint8 ag, vuint8 ab, vuint8 aa=255) : r(ar), g(ag), b(ab), a(aa) {}
