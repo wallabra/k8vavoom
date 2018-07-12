@@ -23,9 +23,7 @@
 //**
 //**************************************************************************
 
-#ifdef _WIN32
-# include "winshit/winlocal.h"
-#else
+#ifndef _WIN32
 # define INITGUID
 #endif
 #include <AL/al.h>
