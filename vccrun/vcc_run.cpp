@@ -28,6 +28,8 @@
 
 #include "vcc_run.h"
 
+#include "modules/mod_sound/sound.h"
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 VObject *mainObject = nullptr;
@@ -710,6 +712,7 @@ int main (int argc, char **argv) {
       }
     }
 
+    VSoundManager::StaticShutdown();
     VObject::StaticExit();
     VName::StaticExit();
   } catch (VException& e) {
@@ -813,4 +816,14 @@ IMPLEMENT_FUNCTION(VObject, fsysGetPakPrefix) {
 //native static final int fsysGetLastPakId ();
 IMPLEMENT_FUNCTION(VObject, fsysGetLastPakId) {
   RET_INT(fsysGetLastPakId());
+}
+
+
+IMPLEMENT_FUNCTION(VObject, get_fsysKillCommonZipPrefix) {
+  RET_BOOL(fsysKillCommonZipPrefix);
+}
+
+IMPLEMENT_FUNCTION(VObject, set_fsysKillCommonZipPrefix) {
+  P_GET_BOOL(v);
+  fsysKillCommonZipPrefix = v;
 }

@@ -94,6 +94,8 @@ native static final string fsysFileFindAnyExt (string fname, optional int pakid)
 
 native static final int fsysGetLastPakId ();
 
+native static final bool fsysKillCommonZipPrefix { get; set; }
+
 //void fsysCreatePath (const VStr &path);
 
 // open file for reading, relative to basedir, and look into archives too

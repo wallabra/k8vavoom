@@ -29,6 +29,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 extern VStr fsysBaseDir; // always ends with "/" (fill be fixed by `fsysInit()` if necessary)
 extern bool fsysDiskFirst; // default is true
+extern bool fsysKillCommonZipPrefix; // default false
 
 
 enum { fsysAnyPak = -666 };

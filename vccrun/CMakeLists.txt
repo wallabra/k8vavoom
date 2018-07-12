@@ -103,15 +103,28 @@ if (ENABLE_VCCRUN)
     vcc_run.h
     vcc_netobj.h
     vcc_netobj.cpp
+    # ini
     modules/mod_ini.h
     modules/mod_ini.cpp
+    # SDL2 and OpenGL
     modules/sdlgl/mod_sdlgl.h
     modules/sdlgl/mod_sdlgl.cpp
+    # DooM2D:Forever stuff
     modules/dfmap/dfmap.h
     modules/dfmap/mod_dfmap.h
     modules/dfmap/mod_dfmap.cpp
+    # file reader
     modules/mod_textread.h
     modules/mod_textread.cpp
+    # sound system
+    modules/mod_sound/sound.h
+    modules/mod_sound/snd_al.cpp
+    modules/mod_sound/snd_data.cpp
+    modules/mod_sound/snd_flac.cpp
+    modules/mod_sound/snd_main.cpp
+    modules/mod_sound/snd_streamplayer.cpp
+    modules/mod_sound/snd_vorbis.cpp
+    modules/mod_sound/snd_wav.cpp
   )
 
   #message(STATUS "VCCRUN: LIBS: " ${VCCRUN_LINKLIBS})

@@ -1,0 +1,35 @@
+/**************************************************************************
+ *    This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 3
+ *  of the License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ **************************************************************************/
+class SoundSystem : Object abstract native;
+
+
+static native final void Initialize ();
+
+static native final int AddSound (name tagName, string filename); // won't replace
+static native final int FindSound (name tagName);
+
+// `channel` is a logical channel
+static native final void PlaySound (int InSoundId, const TVec origin, const TVec velocity, int origin_id, int channel, float volume, float attenuation, bool loop);
+static native final void StopSound (int origin_id, int channel);
+static native final void StopAllSound ();
+static native final bool IsSoundPlaying (int origin_id, int sound_id);
+static native final void SetSoundPitch (int origin_id, int sound_id, float pitch);
+static native final void PauseSound ();
+static native final void ResumeSound ();
+static native final void UpdateSounds ();
+
+
+static native final TVec ListenerOrigin { set; }
+
+static native final float SoundVolume { get; set; }
+static native final float MusicVolume { get; set; }
+static native final bool SwapStereo { get; set; }

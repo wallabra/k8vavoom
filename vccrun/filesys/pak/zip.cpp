@@ -231,7 +231,7 @@ void VZipFile::openArchive () {
 
   files = new VZipFileInfo[fileCount];
 
-  bool canHasPrefix = true;
+  bool canHasPrefix = fsysKillCommonZipPrefix;
 
   //fprintf(stderr, "cdpos=0x%08x; fc=%d\n", central_pos, fileCount);
   // set the current file of the zipfile to the first file

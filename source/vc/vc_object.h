@@ -433,6 +433,9 @@ public:
   DECLARE_FUNCTION(fsysGetPakPrefix)
   DECLARE_FUNCTION(fsysGetLastPakId)
 
+  DECLARE_FUNCTION(get_fsysKillCommonZipPrefix)
+  DECLARE_FUNCTION(set_fsysKillCommonZipPrefix)
+
   DECLARE_FUNCTION(FindMObjId)
   DECLARE_FUNCTION(FindScriptId)
 #endif
