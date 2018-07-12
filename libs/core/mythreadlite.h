@@ -381,4 +381,17 @@ static __attribute__((unused)) inline void mythread_condtime_set (mythread_condt
 #endif
 
 
+class MyThreadLocker {
+private:
+  MyThreadLocker (const MyThreadLocker &);
+  void operator = (const MyThreadLocker &);
+
+public:
+  mythread_mutex *mutex;
+
+  MyThreadLocker (mythread_mutex *amutex) : mutex(amutex) { mythread_mutex_lock(mutex); }
+  ~MyThreadLocker () { mythread_mutex_unlock(mutex); }
+};
+
+
 #endif
