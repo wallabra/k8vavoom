@@ -78,6 +78,7 @@ private:
   enum { UNZ_BUFSIZE = 16384 };
   //enum { UNZ_BUFSIZE = 65536 };
 
+  mythread_mutex lock;
   VStream *fileStream; // source stream of the zipfile
   const VZipFileInfo &info; // info about the file we are reading
 
@@ -138,7 +139,7 @@ protected:
   virtual const VStr &getNameByIndex (int idx) const override;
   virtual int getNameCount () const override;
   // should return `nullptr` on failure
-  virtual VStream *open (int idx) override;
+  virtual VStream *openWithIndex (int idx) override;
 
 public:
   VZipFile (VStream* fstream, const VStr &aname=VStr("<memory>")); // takes ownership on success
@@ -151,7 +152,8 @@ public:
 // /////////////////////////////////////////////////////////////////////////// /
 // takes ownership
 VZipFile::VZipFile (VStream *fstream, const VStr &aname)
-  : zipFileName(aname)
+  : FSysDriverBase()
+  , zipFileName(aname)
   , fileStream(nullptr)
   , files(nullptr)
   , fileCount(0)
@@ -432,7 +434,7 @@ vuint32 VZipFile::searchCentralDir () {
 }
 
 
-VStream *VZipFile::open (int idx) {
+VStream *VZipFile::openWithIndex (int idx) {
   if (idx < 0 || idx >= fileCount) return nullptr;
   return new VZipFileReader(fileStream, bytesBeforeZipFile, files[idx], this);
 }
@@ -444,6 +446,7 @@ VZipFileReader::VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, c
   , fileStream(InStream)
   , info(aInfo)
 {
+  mythread_mutex_init(&lock);
   // open the file in the zip
   usezlib = true;
   nextpos = currpos = 0;
@@ -504,6 +507,7 @@ VZipFileReader::VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, c
 
 VZipFileReader::~VZipFileReader () {
   Close();
+  mythread_mutex_destroy(&lock);
 }
 
 
@@ -519,8 +523,6 @@ void VZipFileReader::setError () {
 
 
 bool VZipFileReader::Close () {
-  guard(VZipFileReader::Close);
-
   if (!bError && rest_read_uncompressed == 0) {
     if (Crc32 != info.crc) { bError = true; /*error->Log("Bad CRC");*/ }
   }
@@ -529,10 +531,8 @@ bool VZipFileReader::Close () {
   } else {
     if (stream_initialised) lzma_end(&lzmastream);
   }
-
   stream_initialised = false;
   return !bError;
-  unguard;
 }
 
 
@@ -816,6 +816,7 @@ bool VZipFileReader::checkCurrentFileCoherencyHeader (vuint32 *piSizeVar, vuint3
 void VZipFileReader::Serialise (void* buf, int len) {
   guard(VZipFileReader::Serialise);
   if (bError) return; // don't read anything from already broken stream
+  MyThreadLocker locker(&lock);
   if (len < 0) {
 #ifdef K8_UNLZMA_DEBUG
     fprintf(stderr, "LZMA: FAILED to read %d bytes\n", len);

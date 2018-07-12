@@ -44,7 +44,7 @@ protected:
   virtual const VStr &getNameByIndex (int idx) const override;
   virtual int getNameCount () const override;
   // should return `nullptr` on failure
-  virtual VStream *open (int idx) override;
+  virtual VStream *openWithIndex (int idx) override;
 
 public:
   VDFWadFile (VStream* fstream, const VStr &aname=VStr("<memory>")); // takes ownership on success
@@ -57,7 +57,8 @@ public:
 // /////////////////////////////////////////////////////////////////////////// /
 // takes ownership
 VDFWadFile::VDFWadFile (VStream *fstream, const VStr &aname)
-  : fileStream(nullptr)
+  : FSysDriverBase()
+  , fileStream(nullptr)
   , files(nullptr)
   , fileCount(0)
 {
@@ -148,7 +149,7 @@ bool VDFWadFile::openArchive () {
 }
 
 
-VStream *VDFWadFile::open (int idx) {
+VStream *VDFWadFile::openWithIndex (int idx) {
   if (idx < 0 || idx >= fileCount) return nullptr;
   fileStream->Seek(files[idx].pkofs);
   return new VZipStreamReader(files[idx].name, fileStream, files[idx].pksize);

@@ -46,6 +46,13 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static mythread_mutex paklock;
+//WARNING! THIS IS NOT THREAD-SAFE, BUT I DON'T CARE!
+static volatile vint32 paklockInited = 1;
+
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 VStr fsysBaseDir = VStr("./"); // always ends with "/" (fill be fixed by `fsysInit()` if necessary)
 bool fsysDiskFirst = true; // default is true
 bool fsysKillCommonZipPrefix = false;
@@ -151,18 +158,45 @@ static __attribute((unused)) inline vuint32 fnameHashBufCI (const VStr &str) {
 }
 
 
+FSysDriverBase::FSysDriverBase ()
+  : mOpenedFiles(0)
+  , mPrefix(VStr())
+  , htableSize(0)
+  , htable(nullptr)
+  , mActive(true)
+{
+  mythread_mutex_init(&lock);
+}
+
+
 FSysDriverBase::~FSysDriverBase () {
   delete htable;
   htable = nullptr;
   htableSize = 0;
+  mythread_mutex_destroy(&lock);
+}
+
+
+void FSysDriverBase::fileOpened (VStream *s) {
+  if (s) {
+    /*mythread_sync(lock)*/ {
+      ++mOpenedFiles;
+    }
+  }
 }
 
 
 void FSysDriverBase::fileClosed (VStream *s) {
   if (s) {
-    --mOpenedFiles;
-    if (mOpenedFiles == 0 && !active() && canBeDestroyed()) {
+    int ofc;
+    mythread_sync(lock) {
+      ofc = --mOpenedFiles;
+    }
+    //FIXME: thread safety
+    if (ofc == 0 && !active() && canBeDestroyed()) {
       // kill it
+      fsysInit();
+      MyThreadLocker paklocker(&paklock);
       int pakid = 1;
       while (pakid < openPakCount && openPaks[pakid] != this) ++pakid;
       if (pakid < openPakCount) {
@@ -175,9 +209,29 @@ void FSysDriverBase::fileClosed (VStream *s) {
 }
 
 
-bool FSysDriverBase::canBeDestroyed () const { return (mOpenedFiles == 0); }
-bool FSysDriverBase::active () const { return mActive; }
-void FSysDriverBase::deactivate () { mActive = false; }
+bool FSysDriverBase::canBeDestroyed () {
+  bool res;
+  mythread_sync(lock) {
+    res = (mOpenedFiles == 0);
+  }
+  return res;
+}
+
+
+bool FSysDriverBase::active () {
+  bool res;
+  mythread_sync(lock) {
+    res = mActive;
+  }
+  return res;
+}
+
+
+void FSysDriverBase::deactivate () {
+  mythread_sync(lock) {
+    mActive = false;
+  }
+}
 
 
 void FSysDriverBase::buildNameHashTable () {
@@ -216,6 +270,7 @@ void FSysDriverBase::buildNameHashTable () {
 
 
 // index or -1
+// driver should be locked
 int FSysDriverBase::findName (const VStr &fname) const {
   vuint32 nhash = fnameHashBufCI(fname);
   vuint32 hidx = nhash%htableSize;
@@ -231,28 +286,41 @@ int FSysDriverBase::findName (const VStr &fname) const {
 }
 
 
-bool FSysDriverBase::hasFile (const VStr &fname) const {
-  return (findName(fname) >= 0);
+bool FSysDriverBase::hasFile (const VStr &fname) {
+  bool res;
+  mythread_sync(lock) {
+    res = (findName(fname) >= 0);
+  }
+  return res;
 }
 
 
-VStr FSysDriverBase::findFileWithAnyExt (const VStr &fname) const {
+VStr FSysDriverBase::findFileWithAnyExt (const VStr &fname) {
   if (fname.length() == 0) return VStr();
-  if (hasFile(fname)) return fname;
-  for (int f = getNameCount()-1; f >= 0; --f) {
-    VStr name = getNameByIndex(f);
-    if (name.length() < fname.length()) continue;
-    name = name.stripExtension();
-    if (name.length() != fname.length()) continue;
-    if (name.equ1251CI(fname)) return getNameByIndex(f);
+  VStr res;
+  mythread_sync(lock) {
+    if (findName(fname) >= 0) { res = fname; break; }
+    for (int f = getNameCount()-1; f >= 0; --f) {
+      VStr name = getNameByIndex(f);
+      if (name.length() < fname.length()) continue;
+      name = name.stripExtension();
+      if (name.length() != fname.length()) continue;
+      if (name.equ1251CI(fname)) {
+        res = getNameByIndex(f);
+        break;
+      }
+    }
   }
-  return VStr();
+  return res;
 }
 
 VStream *FSysDriverBase::open (const VStr &fname) {
-  int idx = findName(fname);
-  if (idx < 0) return nullptr;
-  return open(idx);
+  VStream *res;
+  mythread_sync(lock) {
+    int idx = findName(fname);
+    res = (idx < 0 ? nullptr : openWithIndex(idx));
+  }
+  return res;
 }
 
 
@@ -267,7 +335,9 @@ VStreamDiskFile::VStreamDiskFile (FILE* afl, const VStr &aname, bool asWriter, F
   bLoading = !asWriter;
 }
 
-VStreamDiskFile::~VStreamDiskFile () { Close(); }
+VStreamDiskFile::~VStreamDiskFile () {
+  Close();
+}
 
 void VStreamDiskFile::setError () {
   if (mFl) { fclose(mFl); mFl = nullptr; }
@@ -326,17 +396,17 @@ protected:
   virtual int getNameCount () const override;
 
 protected:
-  virtual VStream *open (int idx) override;
+  virtual VStream *openWithIndex (int idx) override;
 
 public:
   FSysDriverDisk (const VStr &apath);
   virtual ~FSysDriverDisk () override;
 
-  virtual bool canBeDestroyed () const override;
+  virtual bool canBeDestroyed () override;
 
-  virtual bool hasFile (const VStr &fname) const;
+  virtual bool hasFile (const VStr &fname);
   virtual VStream *open (const VStr &fname);
-  virtual VStr findFileWithAnyExt (const VStr &fname) const override;
+  virtual VStr findFileWithAnyExt (const VStr &fname) override;
 };
 
 
@@ -446,13 +516,13 @@ FSysDriverDisk::FSysDriverDisk (const VStr &apath) : FSysDriverBase() {
 
 FSysDriverDisk::~FSysDriverDisk () {}
 
-bool FSysDriverDisk::canBeDestroyed () const { return true; }
+bool FSysDriverDisk::canBeDestroyed () { return true; }
 
 const VStr &FSysDriverDisk::getNameByIndex (int idx) const { *(int *)0 = 0; return VStr::EmptyString; } // the thing that should not be
 int FSysDriverDisk::getNameCount () const { *(int *)0 = 0; return 0; } // the thing that should not be
-VStream *FSysDriverDisk::open (int idx) { *(int *)0 = 0; return nullptr; } // the thing that should not be
+VStream *FSysDriverDisk::openWithIndex (int idx) { *(int *)0 = 0; return nullptr; } // the thing that should not be
 
-bool FSysDriverDisk::hasFile (const VStr &fname) const {
+bool FSysDriverDisk::hasFile (const VStr &fname) {
   if (!isGoodPath(fname)) return false;
   VStr newname = findFileNC(path+fname, false);
   if (newname.length() == 0) return false;
@@ -462,7 +532,7 @@ bool FSysDriverDisk::hasFile (const VStr &fname) const {
   return true;
 }
 
-VStr FSysDriverDisk::findFileWithAnyExt (const VStr &fname) const {
+VStr FSysDriverDisk::findFileWithAnyExt (const VStr &fname) {
   if (!isGoodPath(fname)) return VStr();
   VStr newname = findFileNC(path+fname, true); // ignore ext
   if (newname.length() == 0) return VStr();
@@ -487,7 +557,7 @@ VStreamPakFile::VStreamPakFile (FSysDriverBase *aDriver)
   : VStream()
   , mDriver(aDriver)
 {
-  if (aDriver) ++aDriver->mOpenedFiles;
+  if (aDriver) aDriver->fileOpened(this);
 }
 
 
@@ -498,8 +568,25 @@ VStreamPakFile::~VStreamPakFile () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // `fsysBaseDir` should be set before calling this
-void fsysInit () {
-  if (openPakCount == 0) {
+static void fsysInitInternal (bool addBaseDir) {
+  //WARNING! THIS IS NOT THREAD-SAFE, BUT I DON'T CARE!
+  // paklockInited: <0: initializing now; 0x0fffffff: initialized
+  --paklockInited; // 0 becomes -1, 2 becomes 1, and so on
+  // check if we are initializing this crap in another thread
+  if (paklockInited) {
+    // still positive: already initialized
+    if (paklockInited > 0) {
+      // restore value and exit
+      ++paklockInited;
+      return;
+    }
+    // it is negative, do spinlock wait, and then exit
+    while (paklockInited < 0) {}
+    return;
+  }
+  // nope, it is not initialized
+  mythread_mutex_init(&paklock);
+  if (addBaseDir && openPakCount == 0) {
     fsys_Register_ZIP();
     fsys_Register_DFWAD();
          if (fsysBaseDir.length() == 0) fsysBaseDir = VStr("./");
@@ -507,6 +594,13 @@ void fsysInit () {
     openPaks[0] = new FSysDriverDisk(fsysBaseDir);
     openPakCount = 1;
   }
+  // set "initialized" flag
+  paklockInited = 0x0fffffff;
+}
+
+
+void fsysInit () {
+  fsysInitInternal(true);
 }
 
 
@@ -518,6 +612,8 @@ void fsysShutdown () {
 // append disk directory to the list of archives
 int fsysAppendDir (const VStr &path, const VStr &apfx) {
   if (path.length() == 0) return 0;
+  fsysInitInternal(false);
+  MyThreadLocker paklocker(&paklock);
   if (openPakCount >= MaxOpenPaks) Sys_Error("too many pak files");
   openPaks[openPakCount] = new FSysDriverDisk(path);
   openPaks[openPakCount]->setPrefix(apfx);
@@ -529,7 +625,6 @@ int fsysAppendDir (const VStr &path, const VStr &apfx) {
 // it will be searched in the current dir, and then in `fsysBaseDir`
 // returns pack id or 0
 int fsysAppendPak (const VStr &fname, int pakid) {
-  if (openPakCount == 0) fsysInit();
   if (fname.length() == 0) return false;
   VStr fn = fname;
   VStream *fl = fsysOpenFile(fname, pakid);
@@ -564,8 +659,10 @@ int fsysAppendPak (const VStr &fname, int pakid) {
 // returns pack id or 0
 int fsysAppendPak (VStream *strm, const VStr &apfx) {
   if (!strm) return false;
+  fsysInit();
+  MyThreadLocker paklocker(&paklock);
 
-  if (openPakCount == 0) fsysInit();
+  // it MUST append packs to the end of the list, so `fsysRemovePaksFrom()` will work properly
   if (openPakCount >= MaxOpenPaks) { delete strm; Sys_Error("too many pak files"); }
 
   //fprintf(stderr, "trying <%s> : pfx=<%s>\n", *strm->GetName(), *apfx);
@@ -592,6 +689,8 @@ int fsysAppendPak (VStream *strm, const VStr &apfx) {
 
 // remove given pack from pack list
 void fsysRemovePak (int pakid) {
+  fsysInit();
+  MyThreadLocker paklocker(&paklock);
   if (pakid < 2 || pakid > openPakCount || !openPaks[pakid-1]) return;
   --pakid;
   if (openPaks[pakid]->canBeDestroyed()) {
@@ -606,6 +705,8 @@ void fsysRemovePak (int pakid) {
 
 // remove all packs from pakid and later
 void fsysRemovePaksFrom (int pakid) {
+  fsysInit();
+  MyThreadLocker paklocker(&paklock);
   if (pakid < 2 || pakid > openPakCount) return;
   --pakid;
   for (int f = openPakCount-1; f >= pakid; --f) {
@@ -623,6 +724,8 @@ void fsysRemovePaksFrom (int pakid) {
 
 // return pack file path for the given pack id (or empty string)
 VStr fsysGetPakPath (int pakid) {
+  fsysInit();
+  MyThreadLocker paklocker(&paklock);
   if (pakid < 1 || pakid > openPakCount) return VStr();
   --pakid;
   if (!openPaks[pakid] || !openPaks[pakid]->active()) return VStr();
@@ -632,6 +735,8 @@ VStr fsysGetPakPath (int pakid) {
 
 // return pack prefix for the given pack id (or empty string)
 VStr fsysGetPakPrefix (int pakid) {
+  fsysInit();
+  MyThreadLocker paklocker(&paklock);
   if (pakid < 1 || pakid > openPakCount) return VStr();
   --pakid;
   if (!openPaks[pakid] || !openPaks[pakid]->active()) return VStr();
@@ -640,6 +745,8 @@ VStr fsysGetPakPrefix (int pakid) {
 
 
 int fsysGetLastPakId () {
+  fsysInit();
+  MyThreadLocker paklocker(&paklock);
   return openPakCount;
 }
 
@@ -677,6 +784,8 @@ static bool isPrefixEqu (const VStr &p0, const VStr &p1) {
 // ////////////////////////////////////////////////////////////////////////// //
 // 0: no such pack
 int fsysFindPakByPrefix (const VStr &pfx) {
+  fsysInit();
+  MyThreadLocker paklocker(&paklock);
   if (pfx.length() == 0) return 0;
   // check non-basedir packs
   for (int f = openPakCount-1; f > 0; --f) {
@@ -688,10 +797,11 @@ int fsysFindPakByPrefix (const VStr &pfx) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 bool fsysFileExists (const VStr &fname, int pakid) {
-  if (openPakCount == 0) fsysInit();
+  fsysInit();
   VStr goodname = normalizeFilePath(fname);
   VStr pfx, fn;
   splitFileName(goodname, pfx, fn);
+  MyThreadLocker paklocker(&paklock);
   // try basedir first, if the corresponding flag is set
 #ifdef WIN32
   if ((pakid == fsysAnyPak || pakid == 1) && fsysDiskFirst && pfx.length() < 2)
@@ -730,10 +840,11 @@ bool fsysFileExists (const VStr &fname, int pakid) {
 
 // open file for reading, relative to basedir, and look into archives too
 VStream *fsysOpenFile (const VStr &fname, int pakid) {
-  if (openPakCount == 0) fsysInit();
+  fsysInit();
   VStr goodname = normalizeFilePath(fname);
   VStr pfx, fn;
   splitFileName(goodname, pfx, fn);
+  MyThreadLocker paklocker(&paklock);
   // try basedir first, if the corresponding flag is set
 #ifdef WIN32
   if ((pakid == fsysAnyPak || pakid == 1) && fsysDiskFirst && pfx.length() < 2 && openPaks[0]->active())
@@ -805,12 +916,13 @@ VStream *fsysOpenDiskFile (const VStr &fname) {
 
 // find file with any extension
 static VStr fsysFileFindAnyExtInternal (const VStr &fname, int pakid) {
-  if (openPakCount == 0) fsysInit();
+  fsysInit();
   if (fsysFileExists(fname, pakid)) return fname;
   VStr goodname = normalizeFilePath(fname);
   VStr pfx, fn;
   splitFileName(goodname, pfx, fn);
   //fprintf(stderr, "fsysFileFindAnyExtInternal: <%s>; fn=<%s>; pfx=<%s>\n", *fname, *fn, *pfx);
+  MyThreadLocker paklocker(&paklock);
   // try basedir first, if the corresponding flag is set
   if ((pakid == fsysAnyPak || pakid == 1) && fsysDiskFirst && openPaks[0]->active() &&
 #ifdef WIN32
@@ -871,6 +983,7 @@ VPartialStreamReader::VPartialStreamReader (VStream *ASrcStream, int astpos, int
   , srccurpos(astpos)
   , partlen(apartlen)
 {
+  mythread_mutex_init(&lock);
   bLoading = true;
   if (!srcStream) { bError = true; return; }
   if (partlen < 0) {
@@ -881,6 +994,7 @@ VPartialStreamReader::VPartialStreamReader (VStream *ASrcStream, int astpos, int
 
 VPartialStreamReader::~VPartialStreamReader () {
   Close();
+  mythread_mutex_destroy(&lock);
 }
 
 bool VPartialStreamReader::Close () {
@@ -902,10 +1016,12 @@ void VPartialStreamReader::Serialise (void *buf, int len) {
   if (srccurpos >= stpos+partlen) { setError(); return; }
   int left = stpos+partlen-srccurpos;
   if (left < len) { setError(); return; }
-  srcStream->Seek(srccurpos);
-  srcStream->Serialise(buf, len);
-  if (srcStream->IsError()) { setError(); return; }
-  srccurpos += len;
+  mythread_sync(lock) {
+    srcStream->Seek(srccurpos);
+    srcStream->Serialise(buf, len);
+    if (srcStream->IsError()) { setError(); break; }
+    srccurpos += len;
+  }
 }
 
 void VPartialStreamReader::Seek (int pos) {
@@ -938,6 +1054,7 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize
   , forceRewind(false)
   , mFileName(VStr())
 {
+  mythread_mutex_init(&lock);
   initialize();
 }
 
@@ -957,12 +1074,14 @@ VZipStreamReader::VZipStreamReader (const VStr &fname, VStream *ASrcStream, vuin
   , forceRewind(false)
   , mFileName(fname)
 {
+  mythread_mutex_init(&lock);
   initialize();
 }
 
 
 VZipStreamReader::~VZipStreamReader () {
   Close();
+  mythread_mutex_destroy(&lock);
 }
 
 
@@ -979,6 +1098,7 @@ void VZipStreamReader::initialize () {
   */
 
   if (srcStream) {
+    MyThreadLocker locker(&lock);
     // read in some initial data
     stpos = srcStream->Tell();
     if (compressedSize == 0xffffffffU) compressedSize = (vuint32)(srcStream->TotalSize()-stpos);
@@ -1030,6 +1150,7 @@ void VZipStreamReader::setError () {
 
 // just read, no `nextpos` advancement
 // returns number of bytes read, -1 on error, or 0 on EOF
+// no need to lock here
 int VZipStreamReader::readSomeBytes (void *buf, int len) {
   if (len <= 0) return -1;
   if (!srcStream) return -1;
@@ -1069,6 +1190,8 @@ int VZipStreamReader::readSomeBytes (void *buf, int len) {
 
 void VZipStreamReader::Serialise (void* buf, int len) {
   if (len == 0) return;
+  MyThreadLocker locker(&lock);
+
   if (!initialised || len < 0 || !srcStream || srcStream->IsError()) setError();
   if (bError) return;
 
@@ -1146,6 +1269,7 @@ int VZipStreamReader::TotalSize () {
   if (bError) return 0;
   if (uncompressedSize == 0xffffffffU) {
     // calculate size
+    MyThreadLocker locker(&lock);
     for (;;) {
       char tmpbuf[256];
       int rd = readSomeBytes(tmpbuf, 256);
@@ -1170,6 +1294,7 @@ VZipStreamWriter::VZipStreamWriter (VStream *ADstStream)
   , currCrc32(0)
   , doCrcCalc(false)
 {
+  mythread_mutex_init(&lock);
   bLoading = false;
 
   // initialise zip stream structure
@@ -1189,6 +1314,7 @@ VZipStreamWriter::VZipStreamWriter (VStream *ADstStream)
 
 VZipStreamWriter::~VZipStreamWriter () {
   Close();
+  mythread_mutex_destroy(&lock);
 }
 
 
@@ -1212,6 +1338,8 @@ void VZipStreamWriter::setError () {
 
 void VZipStreamWriter::Serialise (void *buf, int len) {
   if (len == 0) return;
+  MyThreadLocker locker(&lock);
+
   if (!initialised || len < 0 || !dstStream || dstStream->IsError()) setError();
   if (bError) return;
 
@@ -1239,6 +1367,8 @@ void VZipStreamWriter::Seek (int pos) {
 
 
 void VZipStreamWriter::Flush () {
+  MyThreadLocker locker(&lock);
+
   if (!initialised || !dstStream || dstStream->IsError()) setError();
   if (bError) return;
 
@@ -1260,6 +1390,7 @@ void VZipStreamWriter::Flush () {
 
 bool VZipStreamWriter::Close () {
   if (initialised) {
+    MyThreadLocker locker(&lock);
     zStream.avail_in = 0;
     do {
       zStream.next_out = buffer;

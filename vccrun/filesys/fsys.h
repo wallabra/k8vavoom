@@ -120,6 +120,7 @@ protected:
   }
 
 protected:
+  mythread_mutex lock;
   int mOpenedFiles;
   VStr mPrefix; // this can be used to open named paks
   VStr mFilePath; // if opened from file
@@ -140,16 +141,21 @@ protected:
 
 protected:
   // should return `nullptr` on failure
-  virtual VStream *open (int idx) = 0;
+  // driver is already locked
+  virtual VStream *openWithIndex (int idx) = 0;
+
+  //WARNING! THIS SHOULD BE CALLED ONLY WHEN THE DRIVER IS LOCKED!
+  virtual void fileOpened (VStream *s);
+
   virtual void fileClosed (VStream *s);
 
 public:
-  FSysDriverBase () : mOpenedFiles(0), mPrefix(VStr()), htableSize(0), htable(nullptr), mActive(true) {}
+  FSysDriverBase ();
   virtual ~FSysDriverBase ();
 
-  virtual bool canBeDestroyed () const;
+  virtual bool canBeDestroyed ();
 
-  virtual bool active () const;
+  virtual bool active ();
   virtual void deactivate ();
 
   inline void setPrefix (const VStr &apfx) { mPrefix = apfx; }
@@ -158,9 +164,9 @@ public:
   inline void setFilePath (const VStr &s) { mFilePath = s; }
   inline const VStr &getFilePath () const { return mFilePath; }
 
-  virtual bool hasFile (const VStr &fname) const;
+  virtual bool hasFile (const VStr &fname);
 
-  virtual VStr findFileWithAnyExt (const VStr &fname) const;
+  virtual VStr findFileWithAnyExt (const VStr &fname);
 
   // should return `nullptr` on failure
   virtual VStream *open (const VStr &fname);
@@ -212,6 +218,7 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VPartialStreamReader : public VStreamPakFile {
 private:
+  mythread_mutex lock;
   VStream *srcStream;
   int stpos;
   int srccurpos;
@@ -249,6 +256,7 @@ class VZipStreamReader : public VStreamPakFile {
 private:
   enum { BUFFER_SIZE = 16384 };
 
+  mythread_mutex lock;
   VStream *srcStream;
   int stpos;
   int srccurpos;
@@ -298,6 +306,7 @@ class VZipStreamWriter : public VStream {
 private:
   enum { BUFFER_SIZE = 16384 };
 
+  mythread_mutex lock;
   VStream *dstStream;
   Bytef buffer[BUFFER_SIZE];
   z_stream zStream;
