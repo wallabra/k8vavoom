@@ -91,6 +91,7 @@ float VSoundDevice::doppler_velocity = 10000.0f;
 float VSoundDevice::rolloff_factor = 1.0f;
 float VSoundDevice::reference_distance = 32.0f; // The distance under which the volume for the source would normally drop by half (before being influenced by rolloff factor or AL_MAX_DISTANCE)
 float VSoundDevice::max_distance = 800.0f; // Used with the Inverse Clamped Distance Model to set the distance where there will no longer be any attenuation of the source
+TVec VSoundDevice::sound2d_pos = TVec(0, 0, -1);
 
 
 //==========================================================================
@@ -249,7 +250,7 @@ int VOpenALDevice::PlaySound (int sound_id, float volume, float sep, float pitch
   alSourcef(src, AL_GAIN, volume);
   alSourcef(src, AL_ROLLOFF_FACTOR, rolloff_factor);
   alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);
-  alSource3f(src, AL_POSITION, 0.0, 0.0, 0.0 /*-16.0*/);
+  alSource3f(src, AL_POSITION, sound2d_pos.x, sound2d_pos.y, sound2d_pos.z);
   alSourcef(src, AL_REFERENCE_DISTANCE, reference_distance);
   alSourcef(src, AL_MAX_DISTANCE, max_distance);
   alSourcef(src, AL_PITCH, pitch);

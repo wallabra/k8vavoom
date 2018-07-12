@@ -18,7 +18,8 @@ static native final int AddSound (name tagName, string filename); // won't repla
 static native final int FindSound (name tagName);
 
 // `channel` is a logical channel
-static native final void PlaySound (int InSoundId, const TVec origin, const TVec velocity, int origin_id, int channel, float volume, float attenuation, bool loop);
+static native final void PlaySound (int sound_id, const TVec origin, optional const TVec velocity,
+  int origin_id, int channel, optional float volume, optional float attenuation, optional float pitch, optional bool loop);
 static native final void StopSound (int origin_id, int channel);
 static native final void StopAllSound ();
 static native final bool IsSoundPlaying (int origin_id, int sound_id);
@@ -40,10 +41,13 @@ static native final float MusicVolume { get; set; }
 static native final bool SwapStereo { get; set; }
 
 
-// the following must be set BEFORE initializing the sound system
-static native final float DopplerFactor { get; set; }
-static native final float DopplerVelocity { get; set; }
+// those affecting each new sound
 static native final float RolloffFactor { get; set; }
 static native final float ReferenceDistance { get; set; }
 static native final float MaxDistance { get; set; }
+static native final TVec Sound2DPos { get; set; }
+
+// the following must be set BEFORE initializing the sound system
+static native final float DopplerFactor { get; set; }
+static native final float DopplerVelocity { get; set; }
 static native final int NumChannels { get; set; }

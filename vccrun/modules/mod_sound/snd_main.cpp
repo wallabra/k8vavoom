@@ -38,7 +38,7 @@ public:
   virtual void Shutdown () override;
 
   // playback of sound effects
-  virtual int PlaySound (int InSoundId, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float Attenuation, bool Loop) override;
+  virtual int PlaySound (int InSoundId, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float attenuation, float pitch, bool Loop) override;
   virtual void StopSound (int origin_id, int channel) override;
   virtual void StopAllSound () override;
   virtual bool IsSoundPlaying (int origin_id, int InSoundId) override;
@@ -265,7 +265,7 @@ void VAudio::SetListenerOrigin (const TVec &aorigin) {
 //==========================================================================
 int VAudio::PlaySound (int InSoundId, const TVec &origin,
   const TVec &velocity, int origin_id, int channel, float volume,
-  float Attenuation, bool Loop)
+  float attenuation, float pitch, bool Loop)
 {
   //fprintf(stderr, "InSoundId: %d; maxvol=%f; vol=%f\n", InSoundId, (double)MaxVolume, (double)volume);
   if (!SoundDevice || InSoundId < 1 || /*MaxVolume <= 0 ||*/ volume <= 0 || snd_sfx_volume <= 0) return -1;
@@ -292,8 +292,8 @@ int VAudio::PlaySound (int InSoundId, const TVec &origin,
   // calculate the distance before other stuff so that we can throw out
   // sounds that are beyond the hearing range
   int dist = 0;
-  if (!LocalPlayerSound && Attenuation > 0 /*&& cl*/) {
-    dist = (int)(Length(origin-ListenerOrigin)*Attenuation);
+  if (!LocalPlayerSound && attenuation > 0 /*&& cl*/) {
+    dist = (int)(Length(origin-ListenerOrigin)*attenuation);
   }
   if (dist >= MaxSoundDist) return -1; // sound is beyond the hearing range
 
@@ -302,14 +302,14 @@ int VAudio::PlaySound (int InSoundId, const TVec &origin,
   int chan = GetChannel(sound_id, origin_id, channel, priority);
   if (chan == -1) return -1; // no free channels
 
-  float pitch = 1.0;
+  //float pitch = 1.0;
   if (GSoundManager->S_sfx[sound_id].changePitch) {
     pitch = 1.0+(Random()-Random())*GSoundManager->S_sfx[sound_id].changePitch;
   }
 
   int handle;
   bool is3D;
-  if (LocalPlayerSound || Attenuation <= 0) {
+  if (LocalPlayerSound || attenuation <= 0) {
     // local sound
     handle = SoundDevice->PlaySound(sound_id, volume, 0, pitch, Loop);
     is3D = false;
@@ -332,7 +332,7 @@ int VAudio::PlaySound (int InSoundId, const TVec &origin,
     Channel[chan].sound_id = sound_id;
     Channel[chan].priority = priority;
     Channel[chan].volume = volume;
-    Channel[chan].attenuation = Attenuation;
+    Channel[chan].attenuation = attenuation;
     Channel[chan].handle = handle;
     Channel[chan].is3D = is3D;
     Channel[chan].localPlayerSound = LocalPlayerSound;

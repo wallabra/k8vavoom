@@ -93,6 +93,7 @@ public:
   static float rolloff_factor;
   static float reference_distance; // The distance under which the volume for the source would normally drop by half (before being influenced by rolloff factor or AL_MAX_DISTANCE)
   static float max_distance; // Used with the Inverse Clamped Distance Model to set the distance where there will no longer be any attenuation of the source
+  static TVec sound2d_pos;
 };
 
 
@@ -261,7 +262,7 @@ public:
   virtual void Shutdown () = 0;
 
   // playback of sound effects
-  virtual int PlaySound (int InSoundId, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float Attenuation, bool Loop) = 0;
+  virtual int PlaySound (int InSoundId, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float attenuation, float pitch, bool Loop) = 0;
   virtual void StopSound (int origin_id, int channel) = 0;
   virtual void StopAllSound () = 0;
   virtual bool IsSoundPlaying (int origin_id, int InSoundId) = 0;
@@ -338,16 +339,21 @@ public:
   DECLARE_FUNCTION(StopMusic)
   DECLARE_FUNCTION(SetMusicPitch)
 
-  DECLARE_FUNCTION(get_DopplerFactor)
-  DECLARE_FUNCTION(set_DopplerFactor)
-  DECLARE_FUNCTION(get_DopplerVelocity)
-  DECLARE_FUNCTION(set_DopplerVelocity)
   DECLARE_FUNCTION(get_RolloffFactor)
   DECLARE_FUNCTION(set_RolloffFactor)
   DECLARE_FUNCTION(get_ReferenceDistance)
   DECLARE_FUNCTION(set_ReferenceDistance)
   DECLARE_FUNCTION(get_MaxDistance)
   DECLARE_FUNCTION(set_MaxDistance)
+
+  DECLARE_FUNCTION(get_Sound2DPos)
+  DECLARE_FUNCTION(set_Sound2DPos)
+
+  DECLARE_FUNCTION(get_DopplerFactor)
+  DECLARE_FUNCTION(set_DopplerFactor)
+  DECLARE_FUNCTION(get_DopplerVelocity)
+  DECLARE_FUNCTION(set_DopplerVelocity)
+
   DECLARE_FUNCTION(get_NumChannels)
   DECLARE_FUNCTION(set_NumChannels)
 };

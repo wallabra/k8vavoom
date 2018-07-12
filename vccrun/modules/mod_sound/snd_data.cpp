@@ -256,18 +256,21 @@ IMPLEMENT_FUNCTION(VSoundSystem, FindSound) {
 }
 
 
-// static native final int PlaySound (int InSoundId, const TVec origin, const TVec velocity, int origin_id, int channel, float volume, float Attenuation, bool Loop);
+// static native final void PlaySound (int sound_id, const TVec origin, optional const TVec velocity,
+//   int origin_id, int channel, optional float volume, optional float attenuation, optional float pitch,
+//    optional bool loop);
 IMPLEMENT_FUNCTION(VSoundSystem, PlaySound) {
   VSoundManager::StaticInitialize();
-  P_GET_BOOL(loop);
-  P_GET_FLOAT(attenuation);
-  P_GET_FLOAT(volume);
+  P_GET_BOOL_OPT(loop, false);
+  P_GET_FLOAT_OPT(pitch, 1.0);
+  P_GET_FLOAT_OPT(attenuation, 1.0);
+  P_GET_FLOAT_OPT(volume, 1.0);
   P_GET_INT(channel);
   P_GET_INT(origin_id);
-  P_GET_VEC(velocity);
+  P_GET_VEC_OPT(velocity, TVec(0, 0, 0));
   P_GET_VEC(origin);
   P_GET_INT(sndid);
-  if (GAudio) GAudio->PlaySound(sndid, origin, velocity, origin_id, channel, volume, attenuation, loop);
+  if (GAudio) GAudio->PlaySound(sndid, origin, velocity, origin_id, channel, volume, attenuation, pitch, loop);
 }
 
 
@@ -287,7 +290,7 @@ IMPLEMENT_FUNCTION(VSoundSystem, StopAllSound) {
 }
 
 
-// static native final bool IsSoundPlaying (int origin_id, int InSoundId);
+// static native final bool IsSoundPlaying (int origin_id, int sound_id);
 IMPLEMENT_FUNCTION(VSoundSystem, IsSoundPlaying) {
   VSoundManager::StaticInitialize();
   P_GET_INT(sound_id);
@@ -407,5 +410,6 @@ IMPLEMENT_VSS_PROPERTY(FLOAT, RolloffFactor, VSoundDevice::rolloff_factor)
 IMPLEMENT_VSS_PROPERTY(FLOAT, ReferenceDistance, VSoundDevice::reference_distance)
 IMPLEMENT_VSS_PROPERTY(FLOAT, MaxDistance, VSoundDevice::max_distance)
 IMPLEMENT_VSS_PROPERTY(INT, NumChannels, VAudioPublic::snd_channels)
+IMPLEMENT_VSS_PROPERTY(VEC, Sound2DPos, VSoundDevice::sound2d_pos)
 
 #undef IMPLEMENT_VSS_PROPERTY
