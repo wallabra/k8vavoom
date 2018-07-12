@@ -88,6 +88,7 @@ public:
   virtual void SetStreamVolume (float vol) override;
   virtual void PauseStream () override;
   virtual void ResumeStream () override;
+  virtual void SetStreamPitch (float pitch) override;
 
   bool PrepareSound (int sound_id);
 };
@@ -426,6 +427,7 @@ bool VOpenALDevice::OpenStream (int Rate, int Bits, int Channels) {
   }
 
   alSourcei(StrmSource, AL_SOURCE_RELATIVE, AL_TRUE);
+  alSourcef(StrmSource, AL_PITCH, 1.0);
   alGenBuffers(NUM_STRM_BUFFERS, StrmBuffers);
   alSourceQueueBuffers(StrmSource, NUM_STRM_BUFFERS, StrmBuffers);
   alSourcePlay(StrmSource);
@@ -445,6 +447,18 @@ void VOpenALDevice::CloseStream () {
     alDeleteBuffers(NUM_STRM_BUFFERS, StrmBuffers);
     alDeleteSources(1, &StrmSource);
     StrmSource = 0;
+  }
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::SetStreamPitch
+//
+//==========================================================================
+void VOpenALDevice::SetStreamPitch (float pitch) {
+  if (StrmSource) {
+    alSourcef(StrmSource, AL_PITCH, pitch);
   }
 }
 

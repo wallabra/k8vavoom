@@ -36,16 +36,20 @@ public:
 
 VSampleLoader *VSampleLoader::List;
 VSoundManager *GSoundManager;
+static bool sminited = false;
 
 //static VRawSampleLoader RawSampleLoader;
 //static TStrSet soundsWarned;
 
 void VSoundManager::StaticInitialize () {
-  if (!GSoundManager) {
-    GSoundManager = new VSoundManager;
-    GSoundManager->Init();
-    GAudio = VAudioPublic::Create();
-    GAudio->Init();
+  if (!sminited) {
+    if (!GSoundManager) {
+      sminited = true;
+      GSoundManager = new VSoundManager;
+      GSoundManager->Init();
+      GAudio = VAudioPublic::Create();
+      GAudio->Init();
+    }
   }
 }
 
@@ -57,6 +61,7 @@ void VSoundManager::StaticShutdown () {
   delete GSoundManager;
   GAudio = nullptr;
   GSoundManager = nullptr;
+  sminited = false;
 }
 
 
@@ -303,20 +308,6 @@ IMPLEMENT_FUNCTION(VSoundSystem, SetSoundPitch) {
 }
 
 
-// static native final void PauseSound ();
-IMPLEMENT_FUNCTION(VSoundSystem, PauseSound) {
-  VSoundManager::StaticInitialize();
-  if (GAudio) GAudio->PauseSound();
-}
-
-
-// static native final void ResumeSound ();
-IMPLEMENT_FUNCTION(VSoundSystem, ResumeSound) {
-  VSoundManager::StaticInitialize();
-  if (GAudio) GAudio->ResumeSound();
-}
-
-
 // static native final void UpdateSounds ();
 IMPLEMENT_FUNCTION(VSoundSystem, UpdateSounds) {
   VSoundManager::StaticInitialize();
@@ -358,4 +349,49 @@ IMPLEMENT_FUNCTION(VSoundSystem, get_SwapStereo) {
 IMPLEMENT_FUNCTION(VSoundSystem, set_SwapStereo) {
   P_GET_BOOL(v);
   VAudioPublic::snd_swap_stereo = v;
+}
+
+
+// static native final bool PlayMusic (string filename, optional bool Loop);
+IMPLEMENT_FUNCTION(VSoundSystem, PlayMusic) {
+  P_GET_BOOL_OPT(loop, false);
+  P_GET_STR(filename);
+  VSoundManager::StaticInitialize();
+  if (GAudio) {
+    RET_BOOL(GAudio->PlayMusic(filename, loop));
+  } else {
+    RET_BOOL(false);
+  }
+}
+
+// static native final bool IsMusicPlaying ();
+IMPLEMENT_FUNCTION(VSoundSystem, IsMusicPlaying) {
+  VSoundManager::StaticInitialize();
+  RET_BOOL(GAudio ? GAudio->IsMusicPlaying() : false);
+}
+
+// static native final void PauseMusic ();
+IMPLEMENT_FUNCTION(VSoundSystem, PauseMusic) {
+  VSoundManager::StaticInitialize();
+  if (GAudio) GAudio->PauseMusic();
+}
+
+// static native final void ResumeMusic ();
+IMPLEMENT_FUNCTION(VSoundSystem, ResumeMusic) {
+  VSoundManager::StaticInitialize();
+  if (GAudio) GAudio->ResumeMusic();
+}
+
+// static native final void StopMusic ();
+IMPLEMENT_FUNCTION(VSoundSystem, StopMusic) {
+  VSoundManager::StaticInitialize();
+  if (GAudio) GAudio->StopMusic();
+}
+
+
+// static native final void SetMusicPitch (float pitch);
+IMPLEMENT_FUNCTION(VSoundSystem, SetMusicPitch) {
+  VSoundManager::StaticInitialize();
+  P_GET_FLOAT(pitch);
+  if (GAudio) GAudio->SetMusicPitch(pitch);
 }

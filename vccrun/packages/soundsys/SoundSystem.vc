@@ -23,9 +23,14 @@ static native final void StopSound (int origin_id, int channel);
 static native final void StopAllSound ();
 static native final bool IsSoundPlaying (int origin_id, int sound_id);
 static native final void SetSoundPitch (int origin_id, int sound_id, float pitch);
-static native final void PauseSound ();
-static native final void ResumeSound ();
 static native final void UpdateSounds ();
+
+static native final bool PlayMusic (string filename, optional bool Loop);
+static native final bool IsMusicPlaying ();
+static native final void PauseMusic ();
+static native final void ResumeMusic ();
+static native final void StopMusic ();
+static native final void SetMusicPitch (float pitch);
 
 
 static native final TVec ListenerOrigin { set; }

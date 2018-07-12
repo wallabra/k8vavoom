@@ -85,6 +85,7 @@ public:
   virtual void SetStreamVolume (float vol) = 0;
   virtual void PauseStream () = 0;
   virtual void ResumeStream () = 0;
+  virtual void SetStreamPitch (float pitch) = 0;
 };
 
 
@@ -169,7 +170,7 @@ public:
   VAudioCodec *Codec;
   // current playing song info
   bool CurrLoop;
-  VName CurrSong;
+  VStr CurrSong;
   bool Stopping;
   bool Paused;
   double FinishTime;
@@ -189,11 +190,12 @@ public:
   void Init ();
   void Shutdown ();
   void Tick ();
-  void Play (VAudioCodec *InCodec, const char *InName, bool InLoop);
+  void Play (VAudioCodec *InCodec, const VStr &InName, bool InLoop);
   void Pause ();
   void Resume ();
   void Stop ();
   bool IsPlaying ();
+  void SetPitch (float pitch);
 };
 
 
@@ -258,16 +260,19 @@ public:
   virtual bool IsSoundPlaying (int origin_id, int InSoundId) = 0;
   virtual void SetSoundPitch (int origin_id, int InSoundId, float pitch) = 0;
 
-  // music and general sound control
-  virtual void StartSong (VName song, int track, bool loop) = 0;
-  virtual void PauseSound () = 0;
-  virtual void ResumeSound () = 0;
-  virtual void Start () = 0;
-  virtual void MusicChanged () = 0;
+  // general sound control
   virtual void UpdateSounds () = 0;
 
   // call this before `UpdateSounds()`
   virtual void SetListenerOrigin (const TVec &aorigin) = 0;
+
+  // music playback
+  virtual bool PlayMusic (const VStr &filename, bool Loop) = 0;
+  virtual bool IsMusicPlaying () = 0;
+  virtual void PauseMusic () = 0;
+  virtual void ResumeMusic () = 0;
+  virtual void StopMusic () = 0;
+  virtual void SetMusicPitch (float pitch) = 0;
 
   static VAudioPublic *Create ();
 
@@ -306,9 +311,6 @@ public:
   DECLARE_FUNCTION(IsSoundPlaying)
   DECLARE_FUNCTION(SetSoundPitch)
 
-  DECLARE_FUNCTION(PauseSound)
-  DECLARE_FUNCTION(ResumeSound)
-
   DECLARE_FUNCTION(UpdateSounds)
 
   DECLARE_FUNCTION(set_ListenerOrigin)
@@ -321,6 +323,13 @@ public:
 
   DECLARE_FUNCTION(get_SwapStereo)
   DECLARE_FUNCTION(set_SwapStereo)
+
+  DECLARE_FUNCTION(PlayMusic)
+  DECLARE_FUNCTION(IsMusicPlaying)
+  DECLARE_FUNCTION(PauseMusic)
+  DECLARE_FUNCTION(ResumeMusic)
+  DECLARE_FUNCTION(StopMusic)
+  DECLARE_FUNCTION(SetMusicPitch)
 };
 
 

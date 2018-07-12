@@ -97,7 +97,7 @@ void VStreamMusicPlayer::Tick () {
 //  VStreamMusicPlayer::Play
 //
 //==========================================================================
-void VStreamMusicPlayer::Play (VAudioCodec *InCodec, const char *InName, bool InLoop) {
+void VStreamMusicPlayer::Play (VAudioCodec *InCodec, const VStr &InName, bool InLoop) {
   StrmOpened = SoundDevice->OpenStream(InCodec->SampleRate, InCodec->SampleBits, InCodec->NumChannels);
   if (!StrmOpened) return;
   Codec = InCodec;
@@ -154,4 +154,15 @@ void VStreamMusicPlayer::Stop () {
 bool VStreamMusicPlayer::IsPlaying () {
   if (!StrmOpened) return false;
   return true;
+}
+
+
+//==========================================================================
+//
+//  VStreamMusicPlayer::SetPitch
+//
+//==========================================================================
+void VStreamMusicPlayer::SetPitch (float pitch) {
+  if (!StrmOpened) return;
+  SoundDevice->SetStreamPitch(pitch);
 }

@@ -45,14 +45,16 @@ public:
   virtual void SetSoundPitch (int origin_id, int InSoundId, float pitch) override;
 
   // music and general sound control
-  virtual void StartSong (VName song, int track, bool loop) override;
-  virtual void PauseSound () override;
-  virtual void ResumeSound () override;
-  virtual void Start () override;
-  virtual void MusicChanged () override;
   virtual void UpdateSounds () override;
 
   virtual void SetListenerOrigin (const TVec &aorigin) override;
+
+  virtual bool PlayMusic (const VStr &filename, bool Loop) override;
+  virtual bool IsMusicPlaying () override;
+  virtual void PauseMusic () override;
+  virtual void ResumeMusic () override;
+  virtual void StopMusic () override;
+  virtual void SetMusicPitch (float pitch) override;
 
 private:
   enum { MAX_CHANNELS = 256 };
@@ -82,7 +84,6 @@ private:
   int MaxSoundDist;
 
   // stream music player
-  bool MusicEnabled;
   bool StreamPlaying;
   VStreamMusicPlayer *StreamMusicPlayer;
 
@@ -110,13 +111,6 @@ private:
   int GetChannel (int sound_id, int origin_id, int channel, int priority);
   void StopChannel (int chan_num);
   void UpdateSfx ();
-
-  // music playback
-  void StartMusic ();
-  void PlaySong (const char *Song, bool Loop);
-
-  // execution of console commands
-  //void CmdMusic(const TArray<VStr>&);
 };
 
 
@@ -159,7 +153,6 @@ VAudioPublic *VAudioPublic::Create () {
 VAudio::VAudio()
   : SoundCurve(nullptr)
   , MaxSoundDist(0)
-  , MusicEnabled(true)
   , StreamPlaying(false)
   , StreamMusicPlayer(nullptr)
   , NumChannels(0)
@@ -577,82 +570,6 @@ void VAudio::UpdateSfx () {
 
 //==========================================================================
 //
-//  VAudio::StartSong
-//
-//==========================================================================
-void VAudio::StartSong (VName song, int track, bool loop) {
-  /*
-  if (loop)
-    GCmdBuf << "Music Loop " << *song << "\n";
-  else
-    GCmdBuf << "Music Play " << *song << "\n";
-  */
-}
-
-
-//==========================================================================
-//
-//  VAudio::PauseSound
-//
-//==========================================================================
-void VAudio::PauseSound () {
-  /*
-  GCmdBuf << "Music Pause\n";
-  */
-}
-
-
-//==========================================================================
-//
-//  VAudio::ResumeSound
-//
-//==========================================================================
-void VAudio::ResumeSound () {
-  /*
-  GCmdBuf << "Music resume\n";
-  */
-}
-
-
-//==========================================================================
-//
-//  VAudio::StartMusic
-//
-//==========================================================================
-void VAudio::StartMusic () {
-  //StartSong(MapSong, MapCDTrack, true);
-}
-
-
-//==========================================================================
-//
-//  VAudio::Start
-//
-//  Per level startup code. Kills playing sounds at start of level,
-//  determines music if any, changes music.
-//
-//==========================================================================
-void VAudio::Start () {
-  StopAllSound();
-}
-
-
-//==========================================================================
-//
-//  VAudio::MusicChanged
-//
-//==========================================================================
-void VAudio::MusicChanged () {
-  /*
-  MapSong = GClLevel->LevelInfo->SongLump;
-  MapCDTrack = GClLevel->LevelInfo->CDTrack;
-  StartMusic();
-  */
-}
-
-
-//==========================================================================
-//
 //  VAudio::UpdateSounds
 //
 //  Updates music & sounds
@@ -677,10 +594,10 @@ void VAudio::UpdateSounds () {
 
 //==========================================================================
 //
-//  VAudio::PlaySong
+//  VAudio::PlayMusic
 //
 //==========================================================================
-void VAudio::PlaySong (const char *Song, bool Loop) {
+bool VAudio::PlayMusic (const VStr &filename, bool Loop) {
 #if 0
   static const char *Exts[] = {
     "ogg", "flac",
@@ -695,22 +612,22 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
   static const char *ExtraExts[] = { "ogg", "mp3", nullptr };
 #endif
 
-  if (!Song || !Song[0]) return;
-
   if (StreamPlaying) StreamMusicPlayer->Stop();
   StreamPlaying = false;
+
+  if (filename.isEmpty()) return false;
 
   // get music volume for this song
   //MusicVolumeFactor = GSoundManager->GetMusicVolume(Song);
   if (StreamMusicPlayer) SoundDevice->SetStreamVolume(snd_music_volume/* *MusicVolumeFactor*/);
 
-  VStream *Strm = fsysOpenFile(Song);
-  if (!Strm) return;
+  VStream *Strm = fsysOpenFile(filename);
+  if (!Strm) return false;
 
   if (Strm->TotalSize() < 4) {
     delete Strm;
     Strm = nullptr;
-    return;
+    return false;
   }
 
   /*
@@ -741,149 +658,73 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
 
   //  Try to create audio codec.
   VAudioCodec *Codec = nullptr;
-  for (FAudioCodecDesc *Desc = FAudioCodecDesc::List; Desc && !Codec; Desc = Desc->Next)
-  {
+  for (FAudioCodecDesc *Desc = FAudioCodecDesc::List; Desc && !Codec; Desc = Desc->Next) {
     //GCon->Logf(va("Using %s to open the stream", Desc->Description));
     Codec = Desc->Creator(Strm);
   }
 
   if (StreamMusicPlayer && Codec) {
     // start playing streamed music
-    StreamMusicPlayer->Play(Codec, Song, Loop);
+    StreamMusicPlayer->Play(Codec, filename, Loop);
     StreamPlaying = true;
+    return true;
   } else {
     delete Strm;
     Strm = nullptr;
+    return false;
   }
 }
 
 
 //==========================================================================
 //
-//  VAudio::CmdMusic
+//  VAudio::IsMusicPlaying
 //
 //==========================================================================
-/*
-void VAudio::CmdMusic(const TArray<VStr>& Args)
-{
-  if (!MidiDevice && !StreamMusicPlayer)
-  {
-    return;
-  }
-
-  if (Args.length() < 2)
-  {
-    return;
-  }
-
-  VStr command = Args[1].ToLower();
-
-  if (command == "on")
-  {
-    MusicEnabled = true;
-    return;
-  }
-
-  if (command == "off")
-  {
-    if (MidiDevice)
-    {
-      MidiDevice->Stop();
-    }
-    if (StreamMusicPlayer)
-    {
-      StreamMusicPlayer->Stop();
-    }
-    MusicEnabled = false;
-    return;
-  }
-
-  if (!MusicEnabled)
-  {
-    return;
-  }
-
-  if (command == "play")
-  {
-    if (Args.length() < 3)
-    {
-      GCon->Log("Please enter name of the song.");
-      return;
-    }
-    PlaySong(*Args[2].ToLower(), false);
-    return;
-  }
-
-  if (command == "loop")
-  {
-    if (Args.length() < 3)
-    {
-      GCon->Log("Please enter name of the song.");
-      return;
-    }
-    PlaySong(*Args[2].ToLower(), true);
-    return;
-  }
-
-  if (command == "pause")
-  {
-    if (StreamPlaying)
-    {
-      StreamMusicPlayer->Pause();
-    }
-    else if (MidiDevice)
-    {
-      MidiDevice->Pause();
-    }
-    return;
-  }
-
-  if (command == "resume")
-  {
-    if (StreamPlaying)
-    {
-      StreamMusicPlayer->Resume();
-    }
-    else if (MidiDevice)
-    {
-      MidiDevice->Resume();
-    }
-    return;
-  }
-
-  if (command == "stop")
-  {
-    if (StreamPlaying)
-    {
-      StreamMusicPlayer->Stop();
-    }
-    else if (MidiDevice)
-    {
-      MidiDevice->Stop();
-    }
-    return;
-  }
-
-  if (command == "info")
-  {
-    if (StreamPlaying && StreamMusicPlayer->IsPlaying())
-    {
-      GCon->Logf("Currently %s %s.", StreamMusicPlayer->CurrLoop ?
-        "looping" : "playing", *StreamMusicPlayer->CurrSong);
-    }
-    else if (MidiDevice && !StreamPlaying && MidiDevice->IsPlaying())
-    {
-      GCon->Logf("Currently %s %s.", MidiDevice->CurrLoop ?
-        "looping" : "playing", *MidiDevice->CurrSong);
-    }
-    else
-    {
-      GCon->Log("No song currently playing");
-    }
-    return;
-  }
+bool VAudio::IsMusicPlaying () {
+  if (StreamPlaying && StreamMusicPlayer) return StreamMusicPlayer->IsPlaying();
+  return false;
 }
-*/
+
+
+//==========================================================================
+//
+//  VAudio::PauseMusic
+//
+//==========================================================================
+void VAudio::PauseMusic () {
+  if (StreamPlaying && StreamMusicPlayer) StreamMusicPlayer->Pause();
+}
+
+
+//==========================================================================
+//
+//  VAudio::ResumeMusic
+//
+//==========================================================================
+void VAudio::ResumeMusic () {
+  if (StreamPlaying && StreamMusicPlayer) StreamMusicPlayer->Resume();
+}
+
+
+//==========================================================================
+//
+//  VAudio::StopMusic
+//
+//==========================================================================
+void VAudio::StopMusic () {
+  if (StreamPlaying && StreamMusicPlayer) StreamMusicPlayer->Stop();
+}
+
+
+//==========================================================================
+//
+//  VAudio::SetMusicPitch
+//
+//==========================================================================
+void VAudio::SetMusicPitch (float pitch) {
+  if (StreamPlaying && StreamMusicPlayer) StreamMusicPlayer->SetPitch(pitch);
+}
 
 
 //==========================================================================
