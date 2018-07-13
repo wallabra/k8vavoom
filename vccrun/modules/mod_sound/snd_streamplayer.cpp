@@ -183,7 +183,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
     //fprintf(stderr, "STP: streaming thread waiting...\n");
 #endif
-    if (strm->stpThreadWaitPing(20)) {
+    if (strm->stpThreadWaitPing(100)) {
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
       fprintf(stderr, "STP: streaming thread received the command: %u\n", (unsigned)strm->stpcmd);
 #endif
