@@ -139,7 +139,9 @@ static bool cfgIOFields (VStream &strm, vuint8 *data, VField *fields) {
       if (!fld) {
         // field not found
         fprintf(stderr, "CFG LOADER: field '%s' not found!\n", *fldName);
-        return false;
+        //return false;
+        // ignore unknown fields
+        continue;
       }
       if (!cfgCanIOField(fld)) {
         fprintf(stderr, "CFG LOADER: field '%s' is not suitable for i/o!\n", *fldName);
