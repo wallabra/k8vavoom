@@ -358,45 +358,47 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   }
 
   if (op->Type.Type == TYPE_Reference) {
-    VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass);
-    if (M) {
-      if (M->Flags&FUNC_Iterator) {
-        ParseError(Loc, "Iterator methods can only be used in foreach statements");
+    if (op->Type.Class) {
+      VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass);
+      if (M) {
+        if (M->Flags&FUNC_Iterator) {
+          ParseError(Loc, "Iterator methods can only be used in foreach statements");
+          delete this;
+          return nullptr;
+        }
+        VExpression *e;
+        // rewrite as invoke
+        if ((M->Flags&FUNC_Static) != 0) {
+          e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
+        } else {
+          e = new VDotInvocation(opcopy.get(), FieldName, Loc, 0, nullptr);
+        }
         delete this;
-        return nullptr;
+        return e->Resolve(ec);
       }
-      VExpression *e;
-      // rewrite as invoke
-      if ((M->Flags&FUNC_Static) != 0) {
-        e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
-      } else {
-        e = new VDotInvocation(opcopy.get(), FieldName, Loc, 0, nullptr);
+
+      // we never ever need opcopy here
+      //opcopy.release();
+
+      VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
+      if (field) {
+        VExpression *e;
+        // "normal" access: call delegate (if it is operand-less)
+        /*if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
+          fprintf(stderr, "*** FLD! %s\n", *field->Name);
+          e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
+        } else*/ {
+          // generate field access
+          e = new VFieldAccess(op, field, Loc, op->IsDefaultObject() ? FIELD_ReadOnly : 0);
+          op = nullptr;
+        }
+        delete this;
+        return e->Resolve(ec);
       }
-      delete this;
-      return e->Resolve(ec);
+
+      VProperty *Prop = op->Type.Class->FindProperty(FieldName);
+      if (Prop) return DoPropertyResolve(ec, Prop, assType);
     }
-
-    // we never ever need opcopy here
-    //opcopy.release();
-
-    VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
-    if (field) {
-      VExpression *e;
-      // "normal" access: call delegate (if it is operand-less)
-      /*if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
-        fprintf(stderr, "*** FLD! %s\n", *field->Name);
-        e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
-      } else*/ {
-        // generate field access
-        e = new VFieldAccess(op, field, Loc, op->IsDefaultObject() ? FIELD_ReadOnly : 0);
-        op = nullptr;
-      }
-      delete this;
-      return e->Resolve(ec);
-    }
-
-    VProperty *Prop = op->Type.Class->FindProperty(FieldName);
-    if (Prop) return DoPropertyResolve(ec, Prop, assType);
 
     ParseError(Loc, "No such field `%s`", *FieldName);
     delete this;
