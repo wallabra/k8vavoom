@@ -56,14 +56,14 @@ static VStr buildConfigName (const VStr &optfile) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 static bool cfgCanIOType (const VFieldType &type);
-static bool cfgCanIOClass (VClass *cls);
+static bool cfgCanIOClass (VClass *cls, bool ignoreFlags=false);
 static bool cfgCanIOStruct (VStruct *st);
 static bool cfgCanIOField (VField *fld);
 
 static bool cfgIOFields (VStream &strm, vuint8 *data, VField *fields);
 static bool cfgIOValue (VStream &strm, vuint8 *data, const VFieldType &type);
 static bool cfgIOStruct (VStream &strm, vuint8 *data, VStruct *st);
-static bool cfgIOObject (VStream &strm, VObject *obj, VClass *cls);
+static bool cfgIOObject (VStream &strm, VObject *obj, VClass *cls, bool ignoreFlags=false);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -105,12 +105,15 @@ static bool cfgCanIOStruct (VStruct *st) {
   return cfgCanIOStruct(st->ParentStruct);
 }
 
-static bool cfgCanIOClass (VClass *cls) {
+static bool cfgCanIOClass (VClass *cls, bool ignoreFlags) {
   if (!cls) return false;
+  if (!ignoreFlags) {
+    if (cls->ClassFlags&(CLASS_Transient|CLASS_Abstract)) return false;
+  }
   for (VField *fld = cls->Fields; fld; fld = fld->Next) {
     if (cfgCanIOField(fld)) return true;
   }
-  return cfgCanIOClass(cls->ParentClass);
+  return cfgCanIOClass(cls->ParentClass, ignoreFlags);
 }
 
 
@@ -364,10 +367,10 @@ static bool cfgIOStruct (VStream &strm, vuint8 *data, VStruct *st) {
   return !strm.IsError();
 }
 
-static bool cfgIOObject (VStream &strm, VObject *obj, VClass *cls) {
+static bool cfgIOObject (VStream &strm, VObject *obj, VClass *cls, bool ignoreFlags) {
   if (!obj || !cls) return false;
   if (!obj->GetClass()->IsChildOf(cls)) return false;
-  if (!cfgCanIOClass(cls)) return false;
+  if (!cfgCanIOClass(cls, ignoreFlags)) return false;
   VStr stName;
   if (strm.IsLoading()) {
     // loading
@@ -379,19 +382,19 @@ static bool cfgIOObject (VStream &strm, VObject *obj, VClass *cls) {
     vuint8 b;
     strm << b;
     if (strm.IsError()) return false;
-    if (b) return cfgIOObject(strm, obj, cls->ParentClass);
+    if (b) return cfgIOObject(strm, obj, cls->ParentClass, ignoreFlags);
   } else {
     // saving
     stName = *obj->GetClass()->Name;
     strm << stName;
     if (strm.IsError()) return false;
     if (!cfgIOFields(strm, (vuint8 *)obj, cls->Fields)) return false;
-    if (cfgCanIOClass(cls->ParentClass)) {
+    if (cfgCanIOClass(cls->ParentClass, ignoreFlags)) {
       // parent
       vuint8 b = 1;
       strm << b;
       if (strm.IsError()) return false;
-      return cfgIOObject(strm, obj, cls->ParentClass);
+      return cfgIOObject(strm, obj, cls->ParentClass, ignoreFlags);
     } else {
       vuint8 b = 0;
       strm << b;
@@ -1256,7 +1259,7 @@ IMPLEMENT_FUNCTION(VObject, appSaveOptions) {
   P_GET_STR_OPT(optfile, VStr());
   P_GET_REF(VObject, optobj);
   if (appName.isEmpty() || !optobj) { RET_BOOL(false); return; }
-  if (!cfgCanIOClass(optobj->GetClass())) { RET_BOOL(false); return; }
+  if (!cfgCanIOClass(optobj->GetClass(), true)) { RET_BOOL(false); return; }
   auto fname = buildConfigName(optfile);
   if (fname.isEmpty()) { RET_BOOL(false); return; }
   auto strm = fsysOpenDiskFileWrite(fname);
@@ -1264,7 +1267,7 @@ IMPLEMENT_FUNCTION(VObject, appSaveOptions) {
   static const char *sign = "BCF0";
   strm->Serialise(sign, 4);
   if (strm->IsError()) { delete strm; RET_BOOL(false); return; }
-  bool res = cfgIOObject(*strm, optobj, optobj->GetClass());
+  bool res = cfgIOObject(*strm, optobj, optobj->GetClass(), true);
   if (res && strm->IsError()) res = false;
   delete strm;
   RET_BOOL(res);
@@ -1276,7 +1279,7 @@ IMPLEMENT_FUNCTION(VObject, appLoadOptions) {
   P_GET_STR_OPT(optfile, VStr());
   P_GET_REF(VObject, optobj);
   if (appName.isEmpty() || !optobj) { RET_BOOL(false); return; }
-  if (!cfgCanIOClass(optobj->GetClass())) { RET_BOOL(false); return; }
+  if (!cfgCanIOClass(optobj->GetClass(), true)) { RET_BOOL(false); return; }
   auto fname = buildConfigName(optfile);
   if (fname.isEmpty()) { RET_BOOL(false); return; }
   auto strm = fsysOpenDiskFile(fname);
@@ -1285,7 +1288,7 @@ IMPLEMENT_FUNCTION(VObject, appLoadOptions) {
   strm->Serialise(sign, 4);
   if (strm->IsError()) { delete strm; RET_BOOL(false); return; }
   if (memcmp(sign, "BCF0", 4) != 0) { delete strm; RET_BOOL(false); return; }
-  bool res = cfgIOObject(*strm, optobj, optobj->GetClass());
+  bool res = cfgIOObject(*strm, optobj, optobj->GetClass(), true);
   if (res && strm->IsError()) res = false;
   delete strm;
   RET_BOOL(res);
