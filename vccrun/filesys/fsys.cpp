@@ -48,7 +48,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 static mythread_mutex paklock;
 //WARNING! THIS IS NOT THREAD-SAFE, BUT I DON'T CARE!
-static volatile vint32 paklockInited = 1;
+static volatile vint32 paklockInited = 0;
 
 
 
@@ -165,7 +165,6 @@ FSysDriverBase::FSysDriverBase ()
   , htable(nullptr)
   , mActive(true)
 {
-  mythread_mutex_init(&lock);
 }
 
 
@@ -173,27 +172,17 @@ FSysDriverBase::~FSysDriverBase () {
   delete htable;
   htable = nullptr;
   htableSize = 0;
-  mythread_mutex_destroy(&lock);
 }
 
 
 void FSysDriverBase::fileOpened (VStream *s) {
-  if (s) {
-    /*mythread_sync(lock)*/ {
-      ++mOpenedFiles;
-    }
-  }
+  if (s) ++mOpenedFiles;
 }
 
 
 void FSysDriverBase::fileClosed (VStream *s) {
   if (s) {
-    int ofc;
-    mythread_sync(lock) {
-      ofc = --mOpenedFiles;
-    }
-    //FIXME: thread safety
-    if (ofc == 0 && !active() && canBeDestroyed()) {
+    if (--mOpenedFiles == 0 && !active() && canBeDestroyed()) {
       // kill it
       fsysInit();
       MyThreadLocker paklocker(&paklock);
@@ -210,27 +199,17 @@ void FSysDriverBase::fileClosed (VStream *s) {
 
 
 bool FSysDriverBase::canBeDestroyed () {
-  bool res;
-  mythread_sync(lock) {
-    res = (mOpenedFiles == 0);
-  }
-  return res;
+  return (mOpenedFiles == 0);
 }
 
 
 bool FSysDriverBase::active () {
-  bool res;
-  mythread_sync(lock) {
-    res = mActive;
-  }
-  return res;
+  return mActive;
 }
 
 
 void FSysDriverBase::deactivate () {
-  mythread_sync(lock) {
-    mActive = false;
-  }
+  mActive = false;
 }
 
 
@@ -270,7 +249,6 @@ void FSysDriverBase::buildNameHashTable () {
 
 
 // index or -1
-// driver should be locked
 int FSysDriverBase::findName (const VStr &fname) const {
   vuint32 nhash = fnameHashBufCI(fname);
   vuint32 hidx = nhash%htableSize;
@@ -287,40 +265,28 @@ int FSysDriverBase::findName (const VStr &fname) const {
 
 
 bool FSysDriverBase::hasFile (const VStr &fname) {
-  bool res;
-  mythread_sync(lock) {
-    res = (findName(fname) >= 0);
-  }
-  return res;
+  return (findName(fname) >= 0);
 }
 
 
 VStr FSysDriverBase::findFileWithAnyExt (const VStr &fname) {
   if (fname.length() == 0) return VStr();
-  VStr res;
-  mythread_sync(lock) {
-    if (findName(fname) >= 0) { res = fname; break; }
-    for (int f = getNameCount()-1; f >= 0; --f) {
-      VStr name = getNameByIndex(f);
-      if (name.length() < fname.length()) continue;
-      name = name.stripExtension();
-      if (name.length() != fname.length()) continue;
-      if (name.equ1251CI(fname)) {
-        res = getNameByIndex(f);
-        break;
-      }
-    }
+  if (hasFile(fname)) return fname;
+  for (int f = getNameCount()-1; f >= 0; --f) {
+    VStr name = getNameByIndex(f);
+    if (name.length() < fname.length()) continue;
+    name = name.stripExtension();
+    if (name.length() != fname.length()) continue;
+    if (name.equ1251CI(fname)) return getNameByIndex(f);
   }
-  return res;
+  return VStr();
 }
 
+
 VStream *FSysDriverBase::open (const VStr &fname) {
-  VStream *res;
-  mythread_sync(lock) {
-    int idx = findName(fname);
-    res = (idx < 0 ? nullptr : openWithIndex(idx));
-  }
-  return res;
+  int idx = findName(fname);
+  if (idx < 0) return nullptr;
+  return openWithIndex(idx);
 }
 
 
@@ -571,10 +537,10 @@ VStreamPakFile::~VStreamPakFile () {
 static void fsysInitInternal (bool addBaseDir) {
   //WARNING! THIS IS NOT THREAD-SAFE, BUT I DON'T CARE!
   // paklockInited: <0: initializing now; 0x0fffffff: initialized
-  --paklockInited; // 0 becomes -1, 2 becomes 1, and so on
+  // 0 becomes -1, 2 becomes 1, and so on
   // check if we are initializing this crap in another thread
-  if (paklockInited) {
-    // still positive: already initialized
+  if (paklockInited--) {
+    // still positive? already initialized
     if (paklockInited > 0) {
       // restore value and exit
       ++paklockInited;
@@ -595,7 +561,7 @@ static void fsysInitInternal (bool addBaseDir) {
     openPakCount = 1;
   }
   // set "initialized" flag
-  paklockInited = 0x0fffffff;
+  paklockInited = 0xffff;
 }
 
 
@@ -690,16 +656,20 @@ int fsysAppendPak (VStream *strm, const VStr &apfx) {
 // remove given pack from pack list
 void fsysRemovePak (int pakid) {
   fsysInit();
-  MyThreadLocker paklocker(&paklock);
-  if (pakid < 2 || pakid > openPakCount || !openPaks[pakid-1]) return;
-  --pakid;
-  if (openPaks[pakid]->canBeDestroyed()) {
-    delete openPaks[pakid];
-    openPaks[pakid] = nullptr;
-    while (openPakCount > 1 && !openPaks[openPakCount-1]) --openPakCount;
-  } else {
-    openPaks[pakid]->deactivate();
+  FSysDriverBase *tokill = nullptr;
+  {
+    MyThreadLocker paklocker(&paklock);
+    if (pakid < 2 || pakid > openPakCount || !openPaks[pakid-1]) return;
+    --pakid;
+    if (openPaks[pakid]->canBeDestroyed()) {
+      tokill = openPaks[pakid];
+      openPaks[pakid] = nullptr;
+      while (openPakCount > 1 && !openPaks[openPakCount-1]) --openPakCount;
+    } else {
+      openPaks[pakid]->deactivate();
+    }
   }
+  delete tokill;
 }
 
 
@@ -784,9 +754,9 @@ static bool isPrefixEqu (const VStr &p0, const VStr &p1) {
 // ////////////////////////////////////////////////////////////////////////// //
 // 0: no such pack
 int fsysFindPakByPrefix (const VStr &pfx) {
+  if (pfx.length() == 0) return 0;
   fsysInit();
   MyThreadLocker paklocker(&paklock);
-  if (pfx.length() == 0) return 0;
   // check non-basedir packs
   for (int f = openPakCount-1; f > 0; --f) {
     if (isPrefixEqu(openPaks[f]->getPrefix(), pfx)) return f+1;
@@ -987,6 +957,7 @@ VPartialStreamReader::VPartialStreamReader (VStream *ASrcStream, int astpos, int
   bLoading = true;
   if (!srcStream) { bError = true; return; }
   if (partlen < 0) {
+    MyThreadLocker locker(&lock);
     partlen = srcStream->TotalSize()-stpos;
     if (partlen < 0) partlen = 0;
   }
@@ -1016,12 +987,11 @@ void VPartialStreamReader::Serialise (void *buf, int len) {
   if (srccurpos >= stpos+partlen) { setError(); return; }
   int left = stpos+partlen-srccurpos;
   if (left < len) { setError(); return; }
-  mythread_sync(lock) {
-    srcStream->Seek(srccurpos);
-    srcStream->Serialise(buf, len);
-    if (srcStream->IsError()) { setError(); break; }
-    srccurpos += len;
-  }
+  MyThreadLocker locker(&lock);
+  srcStream->Seek(srccurpos);
+  srcStream->Serialise(buf, len);
+  if (srcStream->IsError()) { setError(); return; }
+  srccurpos += len;
 }
 
 void VPartialStreamReader::Seek (int pos) {

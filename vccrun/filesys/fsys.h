@@ -120,8 +120,7 @@ protected:
   }
 
 protected:
-  mythread_mutex lock;
-  int mOpenedFiles;
+  volatile int mOpenedFiles;
   VStr mPrefix; // this can be used to open named paks
   VStr mFilePath; // if opened from file
   vuint32 htableSize;
@@ -141,12 +140,9 @@ protected:
 
 protected:
   // should return `nullptr` on failure
-  // driver is already locked
   virtual VStream *openWithIndex (int idx) = 0;
 
-  //WARNING! THIS SHOULD BE CALLED ONLY WHEN THE DRIVER IS LOCKED!
   virtual void fileOpened (VStream *s);
-
   virtual void fileClosed (VStream *s);
 
 public:

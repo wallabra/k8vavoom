@@ -447,6 +447,8 @@ VZipFileReader::VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, c
   , info(aInfo)
 {
   mythread_mutex_init(&lock);
+  MyThreadLocker locker(&lock);
+
   // open the file in the zip
   usezlib = true;
   nextpos = currpos = 0;
@@ -814,7 +816,6 @@ bool VZipFileReader::checkCurrentFileCoherencyHeader (vuint32 *piSizeVar, vuint3
 
 
 void VZipFileReader::Serialise (void* buf, int len) {
-  guard(VZipFileReader::Serialise);
   if (bError) return; // don't read anything from already broken stream
   MyThreadLocker locker(&lock);
   if (len < 0) {
@@ -915,8 +916,6 @@ void VZipFileReader::Serialise (void* buf, int len) {
 #ifdef K8_UNLZMA_DEBUG
   if (rest_read_uncompressed == 0 && currpos == (int)info.uncompressed_size && Crc32 == info.crc) { fprintf(stderr, "ZIP CRC CHECK: OK\n"); }
 #endif
-
-  unguard;
 }
 
 
