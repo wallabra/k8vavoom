@@ -438,6 +438,10 @@ public:
 
   DECLARE_FUNCTION(FindMObjId)
   DECLARE_FUNCTION(FindScriptId)
+
+  DECLARE_FUNCTION(appSetName)
+  DECLARE_FUNCTION(appSaveOptions)
+  DECLARE_FUNCTION(appLoadOptions)
 #endif
 };
 

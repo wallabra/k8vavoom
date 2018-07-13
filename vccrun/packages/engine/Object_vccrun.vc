@@ -111,8 +111,22 @@ native static final bool fsysKillCommonZipPrefix { get; set; }
 
 //==========================================================================
 //
-//              MISC BUILDINS
+//              MISC BUILTINS
 //
 //==========================================================================
 native final static class FindMObjId (int id, optional name pkgname);
 native final static class FindScriptId (int id, optional name pkgname);
+
+
+//==========================================================================
+//
+//               OPTIONS (OBJECT) I/O
+//
+//==========================================================================
+// set application name -- it will be used to determine options and saves storage
+native final void appSetName (string appname);
+// save options: this will save all non-trainsient POD object fields
+native final bool appSaveOptions (Object optobj, optional string optfile);
+// load options: this will load all non-trainsient POD object fields
+// returns `true` if options was succesfully loaded
+native final bool appLoadOptions (Object optobj, optional string optfile);

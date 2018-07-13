@@ -33,8 +33,423 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 VObject *mainObject = nullptr;
+VStr appName;
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+static VStr buildConfigName (const VStr &optfile) {
+  for (int f = 0; f < optfile.length(); ++f) {
+    char ch = optfile[f];
+    if (ch >= '0' && ch <= '9') continue;
+    if (ch >= 'A' && ch <= 'Z') continue;
+    if (ch >= 'a' && ch <= 'z') continue;
+    if (ch == '_' || ch == ' ' || ch == '.') continue;
+    return VStr();
+  }
+  if (optfile.length()) {
+    return VStr(".")+optfile+".cfg";
+  } else {
+    return VStr(".options.cfg");
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static bool cfgCanIOType (const VFieldType &type);
+static bool cfgCanIOClass (VClass *cls);
+static bool cfgCanIOStruct (VStruct *st);
+static bool cfgCanIOField (VField *fld);
+
+static bool cfgIOFields (VStream &strm, vuint8 *data, VField *fields);
+static bool cfgIOValue (VStream &strm, vuint8 *data, const VFieldType &type);
+static bool cfgIOStruct (VStream &strm, vuint8 *data, VStruct *st);
+static bool cfgIOObject (VStream &strm, VObject *obj, VClass *cls);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static bool cfgCanIOType (const VFieldType &type) {
+  switch (type.Type) {
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Bool:
+    case TYPE_Float:
+    case TYPE_Name:
+    case TYPE_String:
+      return true;
+    case TYPE_Reference:
+      return cfgCanIOClass(type.Class);
+    case TYPE_Class:
+      return true;
+    case TYPE_Struct:
+      return cfgCanIOStruct(type.Struct);
+    case TYPE_Vector:
+      return true;
+    case TYPE_Array:
+    case TYPE_DynamicArray:
+      return cfgCanIOType(type.GetArrayInnerType());
+  }
+  return false;
+}
+
+static bool cfgCanIOField (VField *fld) {
+  if (!fld) return false;
+  if (fld->Flags&(FIELD_Transient|FIELD_ReadOnly)) return false;
+  return cfgCanIOType(fld->Type);
+}
+
+static bool cfgCanIOStruct (VStruct *st) {
+  if (!st) return false;
+  for (VField *fld = st->Fields; fld; fld = fld->Next) {
+    if (cfgCanIOField(fld)) return true;
+  }
+  return cfgCanIOStruct(st->ParentStruct);
+}
+
+static bool cfgCanIOClass (VClass *cls) {
+  if (!cls) return false;
+  for (VField *fld = cls->Fields; fld; fld = fld->Next) {
+    if (cfgCanIOField(fld)) return true;
+  }
+  return cfgCanIOClass(cls->ParentClass);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static bool cfgIOFields (VStream &strm, vuint8 *data, VField *fields) {
+  vuint16 fcount;
+  if (strm.IsLoading()) {
+    strm << fcount;
+    if (strm.IsError()) return false;
+    if (fcount == 0) return false;
+    if (!fields) return false;
+    // load fields
+    while (fcount-- > 0) {
+      VStr fldName;
+      strm << fldName;
+      if (strm.IsError()) return false;
+      // find field
+      VField *fld = fields;
+      while (fld) {
+        if (fldName == *fld->Name) break;
+        fld = fld->Next;
+      }
+      if (!fld) {
+        // field not found
+        fprintf(stderr, "CFG LOADER: field '%s' not found!\n", *fldName);
+        return false;
+      }
+      if (!cfgCanIOField(fld)) {
+        fprintf(stderr, "CFG LOADER: field '%s' is not suitable for i/o!\n", *fldName);
+        return false;
+      }
+      if (!cfgIOValue(strm, data+fld->Ofs, fld->Type)) return false;
+    }
+  } else {
+    // count saveable fields
+    fcount = 0;
+    for (VField *fld = fields; fld; fld = fld->Next) {
+      if (cfgCanIOField(fld)) {
+        if (fcount == 0xffff) return false; // too many
+        ++fcount;
+      }
+    }
+    strm << fcount;
+    if (strm.IsError()) return false;
+    // save fields
+    for (VField *fld = fields; fld; fld = fld->Next) {
+      if (cfgCanIOField(fld)) {
+        VStr fldName = *fld->Name;
+        strm << fldName;
+        if (strm.IsError()) return false;
+        if (!cfgIOValue(strm, data+fld->Ofs, fld->Type)) return false;
+      }
+    }
+  }
+  return !strm.IsError();
+}
+
+static bool cfgIOValue (VStream &strm, vuint8 *data, const VFieldType &type) {
+  vuint8 typetag = (vuint8)type.Type;
+  strm << typetag;
+  if (strm.IsLoading() && type.Type != typetag) return false;
+  switch (type.Type) {
+    case TYPE_Int:
+      strm << *(vint32 *)data;
+      break;
+    case TYPE_Byte:
+      strm << *(vuint8 *)data;
+      break;
+    case TYPE_Bool:
+      if (strm.IsLoading()) {
+        vuint8 b = 0;
+        strm << b;
+        if (type.BitMask == 0) {
+          *(vuint32 *)data = (b ? 1 : 0);
+        } else {
+          if (b) *(vuint32 *)data |= type.BitMask; else *(vuint32 *)data &= ~type.BitMask;
+        }
+      } else {
+        vuint8 b;
+        if (type.BitMask == 0) {
+          b = ((*(vuint32 *)data) != 0 ? 1 : 0);
+        } else {
+          b = (((*(vuint32 *)data)&type.BitMask) != 0 ? 1 : 0);
+        }
+        strm << b;
+      }
+      break;
+    case TYPE_Float:
+      strm << *(float *)data;
+      break;
+    case TYPE_Name:
+      if (strm.IsLoading()) {
+        VStr s;
+        strm << s;
+        *(VName *)data = VName(*s);
+      } else {
+        VStr s = *(*(VName *)data);
+        strm << s;
+      }
+      break;
+    case TYPE_String:
+      strm << *(VStr *)data;
+      return true;
+    case TYPE_Reference:
+      if (cfgCanIOClass(type.Class)) {
+        VObject **o = (VObject **)data;
+        vuint8 b = (*o != nullptr);
+        strm << b;
+        if (strm.IsError()) return false;
+        if (strm.IsLoading()) {
+          // loading
+          if (*o) (*o)->ConditionalDestroy();
+          if (b) {
+            VStr clsName;
+            strm << clsName;
+            if (clsName != *type.Class->Name) return false;
+            *o = VObject::StaticSpawnObject(type.Class);
+            return cfgIOObject(strm, *o, type.Class);
+          } else {
+            *o = nullptr;
+          }
+        } else {
+          // saving
+          if (*o) {
+            VStr clsName = *type.Class->Name;
+            strm << clsName;
+            if (strm.IsError()) return false;
+            return cfgIOObject(strm, *o, type.Class);
+          }
+        }
+      } else {
+        return false;
+      }
+      break;
+    case TYPE_Class:
+      if (strm.IsLoading()) {
+        // loading
+        VClass **c = (VClass **)data;
+        VStr clsName;
+        strm << clsName;
+        if (strm.IsError()) return false;
+        if (clsName.isEmpty()) {
+          *c = nullptr;
+        } else {
+          *c = VClass::FindClass(*clsName);
+          if (*c == nullptr) return false;
+        }
+      } else {
+        // saving
+        VClass *c = *(VClass **)data;
+        VStr clsName = (c ? *c->Name : "");
+        strm << clsName;
+      }
+      break;
+    case TYPE_Struct:
+      return cfgIOStruct(strm, data, type.Struct);
+    case TYPE_Vector:
+      strm << *(float *)data;
+      strm << *(float *)(data+sizeof(float));
+      strm << *(float *)(data+sizeof(float)*2);
+      break;
+    case TYPE_Array:
+      if (cfgCanIOType(type.GetArrayInnerType())) {
+        VFieldType intType = type;
+        intType.Type = type.ArrayInnerType;
+        vint32 innerSize = intType.GetSize();
+        vint32 dim = type.ArrayDim;
+        if (strm.IsLoading()) {
+          vint32 d;
+          strm << d;
+          if (strm.IsError()) return false;
+          if (d != dim) return false;
+          strm << d;
+          if (strm.IsError()) return false;
+          if (d != innerSize) return false;
+        } else {
+          strm << dim;
+          strm << innerSize;
+          if (strm.IsError()) return false;
+        }
+        for (int f = 0; f < dim; ++f) {
+          if (!cfgIOValue(strm, data+f*innerSize, intType)) return false;
+        }
+      } else {
+        return false;
+      }
+      break;
+    case TYPE_DynamicArray:
+      if (cfgCanIOType(type.GetArrayInnerType())) {
+        VScriptArray *a = (VScriptArray *)data;
+        VFieldType intType = type;
+        intType.Type = type.ArrayInnerType;
+        vint32 innerSize = intType.GetSize();
+        if (strm.IsLoading()) {
+          vint32 d, s;
+          strm << d;
+          strm << s;
+          if (strm.IsError()) return false;
+          if (d < 0 || d > 1024*1024*512 || s != innerSize) return false;
+          a->SetNum(d, intType);
+        } else {
+          vint32 d = a->length();
+          strm << d;
+          strm << innerSize;
+        }
+        for (int f = 0; f < a->length(); ++f) {
+          if (!cfgIOValue(strm, a->Ptr()+f*innerSize, intType)) return false;
+        }
+      } else {
+        return false;
+      }
+      break;
+    default:
+      return false;
+  }
+  return !strm.IsError();
+}
+
+static bool cfgIOStruct (VStream &strm, vuint8 *data, VStruct *st) {
+  if (!st) return false;
+  if (!cfgCanIOStruct(st)) return false;
+  VStr stName;
+  if (strm.IsLoading()) {
+    // loading
+    strm << stName;
+    if (strm.IsError()) return false;
+    if (stName != *st->Name) return false;
+    if (!cfgIOFields(strm, data, st->Fields)) return false;
+    // parent
+    vuint8 b;
+    strm << b;
+    if (strm.IsError()) return false;
+    if (b) return cfgIOStruct(strm, data, st->ParentStruct);
+  } else {
+    // saving
+    stName = *st->Name;
+    strm << stName;
+    if (strm.IsError()) return false;
+    if (!cfgIOFields(strm, data, st->Fields)) return false;
+    if (cfgCanIOStruct(st->ParentStruct)) {
+      // parent
+      vuint8 b = 1;
+      strm << b;
+      if (strm.IsError()) return false;
+      return cfgIOStruct(strm, data, st->ParentStruct);
+    } else {
+      vuint8 b = 0;
+      strm << b;
+    }
+  }
+  return !strm.IsError();
+}
+
+static bool cfgIOObject (VStream &strm, VObject *obj, VClass *cls) {
+  if (!obj || !cls) return false;
+  if (!obj->GetClass()->IsChildOf(cls)) return false;
+  if (!cfgCanIOClass(cls)) return false;
+  VStr stName;
+  if (strm.IsLoading()) {
+    // loading
+    strm << stName;
+    if (strm.IsError()) return false;
+    if (stName != *cls->Name) return false;
+    if (!cfgIOFields(strm, (vuint8 *)obj, cls->Fields)) return false;
+    // parent
+    vuint8 b;
+    strm << b;
+    if (strm.IsError()) return false;
+    if (b) return cfgIOObject(strm, obj, cls->ParentClass);
+  } else {
+    // saving
+    stName = *obj->GetClass()->Name;
+    strm << stName;
+    if (strm.IsError()) return false;
+    if (!cfgIOFields(strm, (vuint8 *)obj, cls->Fields)) return false;
+    if (cfgCanIOClass(cls->ParentClass)) {
+      // parent
+      vuint8 b = 1;
+      strm << b;
+      if (strm.IsError()) return false;
+      return cfgIOObject(strm, obj, cls->ParentClass);
+    } else {
+      vuint8 b = 0;
+      strm << b;
+    }
+  }
+  return !strm.IsError();
+}
+
+/*
+// class
+  // persistent fields
+  VClass *ParentClass;
+  VField *Fields;
+  VState *States;
+  TArray<VMethod *> Methods;
+  VMethod *DefaultProperties;
+  TArray<VRepInfo> RepInfos;
+  TArray<VStateLabel> StateLabels;
+
+// field
+  // persistent fields
+  VField *Next;
+  VFieldType Type;
+  VMethod *Func;
+  vuint32 Flags;
+  VMethod *ReplCond;
+
+  // compiler fields
+  VExpression *TypeExpr;
+
+  // run-time fields
+  VField *NextReference; // linked list of reference fields
+  VField *DestructorLink;
+  VField *NextNetField;
+  vint32 Ofs;
+  vint32 NetIndex;
+
+// struct
+  // persistent fields
+  VStruct *ParentStruct;
+  vuint8 IsVector;
+  // size in stack units when used as local variable
+  vint32 StackSize;
+  // structure fields
+  VField *Fields;
+
+  // compiler fields
+  VName ParentStructName;
+  TLocation ParentStructLoc;
+  bool Defined;
+
+  // run-time fields
+  bool PostLoaded;
+  vint32 Size;
+  vuint8 Alignment;
+  VField *ReferenceFields;
+  VField *DestructorFields;
+*/
 // ////////////////////////////////////////////////////////////////////////// //
 #if 0
 // replicator
@@ -826,4 +1241,52 @@ IMPLEMENT_FUNCTION(VObject, get_fsysKillCommonZipPrefix) {
 IMPLEMENT_FUNCTION(VObject, set_fsysKillCommonZipPrefix) {
   P_GET_BOOL(v);
   fsysKillCommonZipPrefix = v;
+}
+
+
+// native final void appSetName (string appname);
+IMPLEMENT_FUNCTION(VObject, appSetName) {
+  P_GET_STR(aname);
+  appName = aname;
+}
+
+
+//native final bool appSaveOptions (Object optobj, optional string optfile);
+IMPLEMENT_FUNCTION(VObject, appSaveOptions) {
+  P_GET_STR_OPT(optfile, VStr());
+  P_GET_REF(VObject, optobj);
+  if (appName.isEmpty() || !optobj) { RET_BOOL(false); return; }
+  if (!cfgCanIOClass(optobj->GetClass())) { RET_BOOL(false); return; }
+  auto fname = buildConfigName(optfile);
+  if (fname.isEmpty()) { RET_BOOL(false); return; }
+  auto strm = fsysOpenDiskFileWrite(fname);
+  if (!strm) { RET_BOOL(false); return; }
+  static const char *sign = "BCF0";
+  strm->Serialise(sign, 4);
+  if (strm->IsError()) { delete strm; RET_BOOL(false); return; }
+  bool res = cfgIOObject(*strm, optobj, optobj->GetClass());
+  if (res && strm->IsError()) res = false;
+  delete strm;
+  RET_BOOL(res);
+}
+
+
+//native final bool appLoadOptions (Object optobj, optional string optfile);
+IMPLEMENT_FUNCTION(VObject, appLoadOptions) {
+  P_GET_STR_OPT(optfile, VStr());
+  P_GET_REF(VObject, optobj);
+  if (appName.isEmpty() || !optobj) { RET_BOOL(false); return; }
+  if (!cfgCanIOClass(optobj->GetClass())) { RET_BOOL(false); return; }
+  auto fname = buildConfigName(optfile);
+  if (fname.isEmpty()) { RET_BOOL(false); return; }
+  auto strm = fsysOpenDiskFile(fname);
+  if (!strm) { RET_BOOL(false); return; }
+  char sign[4];
+  strm->Serialise(sign, 4);
+  if (strm->IsError()) { delete strm; RET_BOOL(false); return; }
+  if (memcmp(sign, "BCF0", 4) != 0) { delete strm; RET_BOOL(false); return; }
+  bool res = cfgIOObject(*strm, optobj, optobj->GetClass());
+  if (res && strm->IsError()) res = false;
+  delete strm;
+  RET_BOOL(res);
 }
