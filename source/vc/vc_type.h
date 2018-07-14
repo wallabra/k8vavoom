@@ -88,12 +88,13 @@ public:
   inline void SetArrayDimIntr (vint32 v) { ArrayDimInternal = v; }
 
   inline bool IsArray1D () const { return (ArrayDimInternal >= 0); }
+  inline bool IsArray2D () const { return (ArrayDimInternal < 0); }
   // get 1d array dim (for 2d arrays this will be correctly calculated)
-  vint32 GetArrayDim () const;
+  inline vint32 GetArrayDim () const { return (ArrayDimInternal >= 0 ? ArrayDimInternal : GetFirstDim()*GetSecondDim()); }
   // get first dimension (or the only one for 1d array)
-  vint32 GetFirstDim () const;
+  inline vint32 GetFirstDim () const { return (ArrayDimInternal >= 0 ? ArrayDimInternal : ArrayDimInternal&0x7fff); }
   // get second dimension (or 1 for 1d array)
-  vint32 GetSecondDim () const;
+  inline vint32 GetSecondDim () const { return (ArrayDimInternal >= 0 ? 1 : (ArrayDimInternal>>16)&0x7fff); }
 
   int GetStackSize () const;
   int GetSize () const;

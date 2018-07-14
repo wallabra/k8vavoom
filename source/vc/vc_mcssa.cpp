@@ -54,6 +54,7 @@ enum SSAOperand {
   SSAOT_Struct,
   SSAOT_Type,
   SSAOT_TypeSize,
+  SSAOT_A2DDimsAndSize,
   //
   SSAOT_Builtin,
 };
@@ -193,7 +194,7 @@ static SSAInstr *buildSSAFromVM (VMethod *func, TArray<FInstruction> &instr) {
   DECLARE_OPC(Bool3FieldValueB, FieldOffsetB_Byte),
   DECLARE_OPC(CheckArrayBounds, Int), // won't pop index
   DECLARE_OPC(ArrayElement, TypeSize),
-  DECLARE_OPC(ArrayElementS, TypeSizeS),
+  //DECLARE_OPC(ArrayElementS, TypeSizeS),
   DECLARE_OPC(ArrayElementB, TypeSizeB),
   DECLARE_OPC(SliceElement, TypeSize),
   DECLARE_OPC(OffsetPtr, Int),
@@ -366,7 +367,7 @@ static SSAInstr *buildSSAFromVM (VMethod *func, TArray<FInstruction> &instr) {
 
   // dynamic arrays
   DECLARE_OPC(DynArrayElement, TypeSize),
-  DECLARE_OPC(DynArrayElementS, TypeSizeS),
+  //DECLARE_OPC(DynArrayElementS, TypeSizeS),
   DECLARE_OPC(DynArrayElementB, TypeSizeB),
   DECLARE_OPC(DynArrayElementGrow, Type),
   DECLARE_OPC(DynArrayGetNum, None),

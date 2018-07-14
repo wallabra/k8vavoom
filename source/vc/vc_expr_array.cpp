@@ -38,6 +38,31 @@ VArrayElement::VArrayElement (VExpression *AOp, VExpression *AInd, const TLocati
   , sval(nullptr)
   , op(AOp)
   , ind(AInd)
+  , ind2(nullptr)
+  , AddressRequested(false)
+  , IsAssign(false)
+  , skipBoundsChecking(aSkipBounds)
+{
+  if (!ind) {
+    ParseError(Loc, "Expression expected");
+    return;
+  }
+}
+
+
+//==========================================================================
+//
+//  VArrayElement::VArrayElement
+//
+//==========================================================================
+VArrayElement::VArrayElement (VExpression *AOp, VExpression *AInd, VExpression *AInd2, const TLocation &ALoc, bool aSkipBounds)
+  : VExpression(ALoc)
+  , opscopy(nullptr)
+  , genStringAssign(false)
+  , sval(nullptr)
+  , op(AOp)
+  , ind(AInd)
+  , ind2(AInd2)
   , AddressRequested(false)
   , IsAssign(false)
   , skipBoundsChecking(aSkipBounds)
@@ -58,6 +83,7 @@ VArrayElement::~VArrayElement () {
   opscopy.release();
   if (op) { delete op; op = nullptr; }
   if (ind) { delete ind; ind = nullptr; }
+  if (ind2) { delete ind2; ind2 = nullptr; }
   if (sval) { delete sval; sval = nullptr; }
 }
 
@@ -86,6 +112,7 @@ void VArrayElement::DoSyntaxCopyTo (VExpression *e) {
   res->sval = (sval ? sval->SyntaxCopy() : nullptr);
   res->op = (op ? op->SyntaxCopy() : nullptr);
   res->ind = (ind ? ind->SyntaxCopy() : nullptr);
+  res->ind2 = (ind2 ? ind2->SyntaxCopy() : nullptr);
   res->AddressRequested = AddressRequested;
   res->IsAssign = IsAssign;
   res->skipBoundsChecking = skipBoundsChecking;
@@ -108,23 +135,61 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
   opscopy.assignSyntaxCopy(op);
 
   op = op->Resolve(ec);
+
+  bool wasInd2 = (ind2 != nullptr);
+
+  if (wasInd2 && op) {
+    if (op->Type.Type != TYPE_Array) {
+      ParseError(Loc, "Only static arrays can be 2d yet");
+      opscopy.release();
+      delete this;
+      return nullptr;
+    }
+    if (!op->Type.IsArray2D()) {
+      ParseError(Loc, "2d access to 1d array");
+      opscopy.release();
+      delete this;
+      return nullptr;
+    }
+  } else if (!wasInd2 && op) {
+    if (op->Type.Type == TYPE_Array && !op->Type.IsArray1D()) {
+      ParseError(Loc, "1d access to 2d array");
+      opscopy.release();
+      delete this;
+      return nullptr;
+    }
+  }
+
   VExpression *indcopy = (ind ? ind->SyntaxCopy() : nullptr);
+  VExpression *ind2copy = (ind2 ? ind2->SyntaxCopy() : nullptr);
 
   if (op) {
     // resolve index expression
     auto oldIndArray = ec.SetIndexArray(this);
-    ind = ind->Resolve(ec);
+    resolvingInd2 = false;
+    if (ind) ind = ind->Resolve(ec);
+    resolvingInd2 = true;
+    if (ind2) ind2 = ind2->Resolve(ec);
     ec.SetIndexArray(oldIndArray);
   }
 
-  if (!op || !ind) {
+  if (!op || !ind || (wasInd2 && !ind2)) {
     delete indcopy;
+    delete ind2copy;
     delete this;
     return nullptr;
   }
 
   // convert `class[idx]` to `opIndex` funcall
   if (op->Type.Type == TYPE_Reference || op->Type.Type == TYPE_Class) {
+    if (ind2) {
+      ParseError(Loc, "No `opIndex` support for 2d array access yet");
+      delete indcopy;
+      delete ind2copy;
+      ParseError(Loc, "Cannot find `opIndex`");
+      delete this;
+      return nullptr;
+    }
     if (assTarget) FatalError("VC: internal compiler error (VArrayElement::InternalResolve)");
     VName mtname = VName("opIndex");
     // try typed method first: opIndex<index>
@@ -142,11 +207,13 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
     if (!op->Type.Class->FindAccessibleMethod(mtname, ec.SelfClass)) mtname = NAME_None;
     if (mtname == NAME_None) {
       delete indcopy;
+      delete ind2copy;
       ParseError(Loc, "Cannot find `opIndex`");
       delete this;
       return nullptr;
     }
     VExpression *e = new VDotInvocation(opscopy.get(), mtname, Loc, 1, &indcopy);
+    delete ind2copy;
     delete this;
     return e->Resolve(ec);
   }
@@ -155,8 +222,9 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
   //delete opcopy;
   opscopy.release();
   delete indcopy;
+  delete ind2copy;
 
-  if (ind->Type.Type != TYPE_Int) {
+  if (ind->Type.Type != TYPE_Int || (ind2 && ind2->Type.Type != TYPE_Int)) {
     ParseError(Loc, "Array index must be of integer type");
     delete this;
     return nullptr;
@@ -164,15 +232,24 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
 
   if (op->Type.IsAnyArray()) {
     // check bounds for static arrays
-    if (!skipBoundsChecking && ind->IsIntConst()) {
-      if (ind->GetIntConst() < 0) {
+    if (!skipBoundsChecking && ind->IsIntConst() && (!ind2 || ind2->IsIntConst())) {
+      if (ind->GetIntConst() < 0 || (ind2 && ind2->GetIntConst() < 0)) {
         ParseError(Loc, "Negative array index");
         delete this;
         return nullptr;
-      } else if (op->Type.Type == TYPE_Array && ind->GetIntConst() >= op->Type.GetArrayDim()) {
-        ParseError(Loc, "Array index %d out of bounds (%d)", ind->GetIntConst(), op->Type.GetArrayDim());
-        delete this;
-        return nullptr;
+      }
+      if (op->Type.Type == TYPE_Array) {
+        if (ind->GetIntConst() >= op->Type.GetFirstDim()) {
+          ParseError(Loc, "Array index %d out of bounds (%d)", ind->GetIntConst(), op->Type.GetFirstDim());
+          delete this;
+          return nullptr;
+        }
+        if (ind2 && ind2->GetIntConst() >= op->Type.GetSecondDim()) {
+          ParseError(Loc, "Secondary array index %d out of bounds (%d)", ind2->GetIntConst(), op->Type.GetSecondDim());
+          delete this;
+          return nullptr;
+        }
+        skipBoundsChecking = true;
       }
     }
     Flags = op->Flags;
@@ -257,6 +334,8 @@ VExpression *VArrayElement::ResolveAssignmentTarget (VEmitContext &ec) {
 //
 //==========================================================================
 VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) {
+  if (ind2) return this;
+
   VExpression *rop = op->SyntaxCopy()->Resolve(ec);
   if (!rop) { delete val; delete this; return nullptr; }
 
@@ -423,8 +502,9 @@ void VArrayElement::RequestAddressOf () {
 //
 //==========================================================================
 void VArrayElement::Emit (VEmitContext &ec) {
-  op->Emit(ec);
-  ind->Emit(ec);
+  if (op) op->Emit(ec);
+  if (ind) ind->Emit(ec);
+  if (ind2) ind2->Emit(ec);
   if (genStringAssign) {
     sval->Emit(ec);
     ec.AddStatement(OPC_StrSetChar, Loc);
@@ -445,15 +525,16 @@ void VArrayElement::Emit (VEmitContext &ec) {
     } else if (op->Type.Type == TYPE_SliceArray) {
       ec.AddStatement(OPC_SliceElement, RealType, Loc);
     } else {
+      // `Resolve()` will set this flag if it did static check
       if (!skipBoundsChecking) {
-        // skip bounds checking for integer literals: it is already done in `Resolve()`
-        if (!ind->IsIntConst()) ec.AddStatement(OPC_CheckArrayBounds, op->Type.GetArrayDim(), Loc);
+        ec.AddStatement((ind2 ? OPC_CheckArrayBounds2d : OPC_CheckArrayBounds), op->Type, Loc);
       }
-      ec.AddStatement(OPC_ArrayElement, RealType, Loc);
+      ec.AddStatement((ind2 ? OPC_ArrayElement2d : OPC_ArrayElement), RealType, Loc);
     }
     if (!AddressRequested) EmitPushPointedCode(RealType, ec);
   }
 }
+
 
 //==========================================================================
 //

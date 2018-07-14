@@ -500,6 +500,7 @@ void VMethod::DumpAsm () {
         break;
       case OPCARGS_TypeSize:
       case OPCARGS_Type:
+      case OPCARGS_A2DDimsAndSize:
         dprintf(" %s", *Instructions[s].TypeArg.GetName());
         break;
       case OPCARGS_Builtin:
@@ -664,9 +665,14 @@ void VMethod::CompileCode () {
         WriteUInt8(Instructions[i].Arg2);
         break;
       case OPCARGS_TypeSize: WriteInt32(Instructions[i].TypeArg.GetSize()); break;
-      case OPCARGS_TypeSizeS: WriteInt16(Instructions[i].TypeArg.GetSize()); break;
+      //case OPCARGS_TypeSizeS: WriteInt16(Instructions[i].TypeArg.GetSize()); break;
       case OPCARGS_TypeSizeB: WriteUInt8(Instructions[i].TypeArg.GetSize()); break;
       case OPCARGS_Type: WriteType(Instructions[i].TypeArg); break;
+      case OPCARGS_A2DDimsAndSize:
+        WriteInt16(Instructions[i].TypeArg.GetFirstDim());
+        WriteInt16(Instructions[i].TypeArg.GetSecondDim());
+        WriteInt32(Instructions[i].TypeArg.GetSize());
+        break;
       case OPCARGS_Builtin: WriteUInt8(Instructions[i].Arg1); break;
       case OPCARGS_Member_Int: WritePtr(Instructions[i].Member); break; // int is not emited
       case OPCARGS_Type_Int: WriteInt32(Instructions[i].Arg2); break; // type is not emited
@@ -865,6 +871,7 @@ VStream &operator << (VStream &Strm, FInstruction &Instr) {
       break;
     case OPCARGS_TypeSize:
     case OPCARGS_Type:
+    case OPCARGS_A2DDimsAndSize:
       Strm << Instr.TypeArg;
       break;
     case OPCARGS_Builtin:

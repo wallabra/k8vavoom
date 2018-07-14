@@ -202,6 +202,7 @@ VFieldType VFieldType::MakeArrayType (int elcount, const TLocation &l) const {
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VFieldType::MakeArray2DType
@@ -276,42 +277,6 @@ VFieldType VFieldType::GetArrayInnerType () const {
 
 //==========================================================================
 //
-//  VFieldType::GetArrayDim
-//
-//  get 1d array dim (for 2d arrays this will be correctly calculated)
-//
-//==========================================================================
-vint32 VFieldType::GetArrayDim () const {
-  return (ArrayDimInternal >= 0 ? ArrayDimInternal : GetFirstDim()*GetSecondDim());
-}
-
-
-//==========================================================================
-//
-//  VFieldType::GetFirstDim
-//
-//  get first dimension (or the only one for 1d array)
-//
-//==========================================================================
-vint32 VFieldType::GetFirstDim () const {
-  return (ArrayDimInternal >= 0 ? ArrayDimInternal : ArrayDimInternal&0x7fff);
-}
-
-
-//==========================================================================
-//
-//  VFieldType::GetSecondDim
-//
-//  get second dimension (or 0 for 1d array)
-//
-//==========================================================================
-vint32 VFieldType::GetSecondDim () const {
-  return (ArrayDimInternal >= 0 ? 1 : (ArrayDimInternal>>16)&0x7fff);
-}
-
-
-//==========================================================================
-//
 //  VFieldType::GetStackSize
 //
 //==========================================================================
@@ -331,7 +296,7 @@ int VFieldType::GetStackSize () const {
     case TYPE_Delegate: return 2*4; // self, funcptr
     case TYPE_Struct: return Struct->StackSize*4;
     case TYPE_Vector: return 3*4; // 3 floats
-    case TYPE_Array: return (ArrayDimInternal&0x7fffffff)*GetArrayInnerType().GetStackSize();
+    case TYPE_Array: return GetArrayDim()*GetArrayInnerType().GetStackSize();
     case TYPE_SliceArray: return 2*4; // ptr and length
     case TYPE_DynamicArray: return 3*4; // 3 fields in VScriptArray
   }
@@ -361,7 +326,7 @@ int VFieldType::GetSize () const {
     case TYPE_Delegate: return sizeof(VObjectDelegate);
     case TYPE_Struct: return (Struct->Size+3)&~3;
     case TYPE_Vector: return sizeof(TVec);
-    case TYPE_Array: return (ArrayDimInternal&0x7fffffff)*GetArrayInnerType().GetSize();
+    case TYPE_Array: return GetArrayDim()*GetArrayInnerType().GetSize();
     case TYPE_SliceArray: return sizeof(void *)+sizeof(vint32); // ptr and length
     case TYPE_DynamicArray: return sizeof(VScriptArray);
   }

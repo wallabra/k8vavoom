@@ -109,7 +109,7 @@ enum {
   OPCARGS_VTableIndex,
   OPCARGS_VTableIndexB,
   OPCARGS_TypeSize,
-  OPCARGS_TypeSizeS,
+  //OPCARGS_TypeSizeS,
   OPCARGS_TypeSizeB,
   OPCARGS_VTableIndex_Byte,
   OPCARGS_VTableIndexB_Byte,
@@ -117,6 +117,7 @@ enum {
   OPCARGS_FieldOffsetS_Byte,
   OPCARGS_FieldOffsetB_Byte,
   OPCARGS_Type,
+  OPCARGS_A2DDimsAndSize,
   OPCARGS_Builtin,
   // used for call, int is argc
   OPCARGS_Member_Int,
@@ -231,9 +232,11 @@ enum {
   DECLARE_OPC(Bool3FieldValueS, FieldOffsetS_Byte),
   DECLARE_OPC(Bool3FieldValueB, FieldOffsetB_Byte),
   DECLARE_OPC(CheckArrayBounds, Int), /* won't pop index */
+  DECLARE_OPC(CheckArrayBounds2d, A2DDimsAndSize), /* won't pop indicies */
   DECLARE_OPC(ArrayElement, TypeSize),
-  DECLARE_OPC(ArrayElementS, TypeSizeS),
+  //DECLARE_OPC(ArrayElementS, TypeSizeS),
   DECLARE_OPC(ArrayElementB, TypeSizeB),
+  DECLARE_OPC(ArrayElement2d, A2DDimsAndSize),
   DECLARE_OPC(SliceElement, TypeSize),
   DECLARE_OPC(OffsetPtr, Int),
   DECLARE_OPC(PushPointed, None),
@@ -405,7 +408,7 @@ enum {
 
   // dynamic arrays
   DECLARE_OPC(DynArrayElement, TypeSize),
-  DECLARE_OPC(DynArrayElementS, TypeSizeS),
+  //DECLARE_OPC(DynArrayElementS, TypeSizeS),
   DECLARE_OPC(DynArrayElementB, TypeSizeB),
   DECLARE_OPC(DynArrayElementGrow, Type),
   DECLARE_OPC(DynArrayGetNum, None),

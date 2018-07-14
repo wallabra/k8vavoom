@@ -502,9 +502,10 @@ struct Instr {
       case OPC_Bool3FieldValueB:
         return;
       case OPC_CheckArrayBounds: // won't pop index
+      case OPC_CheckArrayBounds2d: // won't pop index
         return;
       case OPC_ArrayElement:
-      case OPC_ArrayElementS:
+      //case OPC_ArrayElementS:
       case OPC_ArrayElementB:
       case OPC_SliceElement:
         spdelta = -1;
@@ -761,7 +762,7 @@ struct Instr {
 
       // dynamic arrays
       case OPC_DynArrayElement:
-      case OPC_DynArrayElementS:
+      //case OPC_DynArrayElementS:
       case OPC_DynArrayElementB:
         spdelta = -1;
         return;
@@ -970,6 +971,7 @@ struct Instr {
         break;
       case OPCARGS_TypeSize:
       case OPCARGS_Type:
+      case OPCARGS_A2DDimsAndSize:
         fprintf(stderr, " %s", *TypeArg.GetName());
         break;
       case OPCARGS_Builtin:
@@ -1446,8 +1448,14 @@ void VMCOptimizer::optimizeLoads () {
         }
         break;
       case OPC_ArrayElement:
+        // `OPC_ArrayElementS` is no more
              if (insn.TypeArg.GetSize() < 256) insn.Opcode = OPC_ArrayElementB;
-        else if (insn.TypeArg.GetSize() < MAX_VINT16) insn.Opcode = OPC_ArrayElementS;
+        //else if (insn.TypeArg.GetSize() < MAX_VINT16) insn.Opcode = OPC_ArrayElementS;
+        break;
+      case OPC_DynArrayElement:
+        // `OPC_DynArrayElementS` is no more
+             if (insn.TypeArg.GetSize() < 256) insn.Opcode = OPC_DynArrayElementB;
+        //else if (insn.TypeArg.GetSize() < MAX_VINT16) insn.Opcode = OPC_DynArrayElementS;
         break;
       case OPC_PushName:
         // `OPC_PushNameB` is no more
@@ -1491,7 +1499,7 @@ void VMCOptimizer::optimizeJumps () {
       case OPCARGS_VTableIndex:
       case OPCARGS_VTableIndexB_Byte:
       case OPCARGS_FieldOffsetB_Byte:
-      case OPCARGS_TypeSizeS:
+      //case OPCARGS_TypeSizeS:
         addr += 2;
         break;
       case OPCARGS_ByteBranchTarget:
@@ -1506,6 +1514,9 @@ void VMCOptimizer::optimizeJumps () {
       case OPCARGS_FieldOffset:
       case OPCARGS_TypeSize:
         addr += 4;
+        break;
+      case OPCARGS_A2DDimsAndSize:
+        addr += 2+2+4;
         break;
       case OPCARGS_FieldOffset_Byte:
         addr += 5;

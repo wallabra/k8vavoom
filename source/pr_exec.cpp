@@ -969,6 +969,8 @@ func_loop:
         PR_VM_BREAK;
 
       // won't pop index
+      // [-2]: op
+      // [-1]: idx
       PR_VM_CASE(OPC_CheckArrayBounds)
         if (sp[-1].i < 0 || sp[-1].i >= ReadInt32(ip+1)) {
           cstDump(ip);
@@ -977,22 +979,45 @@ func_loop:
         ip += 5;
         PR_VM_BREAK;
 
+      // won't pop index
+      // [-3]: op
+      // [-2]: idx
+      // [-1]: idx2
+      PR_VM_CASE(OPC_CheckArrayBounds2d)
+        if (sp[-2].i < 0 || sp[-2].i >= ReadInt16(ip+1)) Sys_Error("First array index %d is out of bounds (%d)", sp[-2].i, ReadInt16(ip+1));
+        if (sp[-1].i < 0 || sp[-1].i >= ReadInt16(ip+1+2)) Sys_Error("Second array index %d is out of bounds (%d)", sp[-1].i, ReadInt16(ip+1+2));
+        ip += 1+2+2+4;
+        PR_VM_BREAK;
+
+      // [-2]: op
+      // [-1]: idx
       PR_VM_CASE(OPC_ArrayElement)
         sp[-2].p = (vuint8 *)sp[-2].p+sp[-1].i*ReadInt32(ip+1);
         ip += 5;
         --sp;
         PR_VM_BREAK;
 
+      /*
       PR_VM_CASE(OPC_ArrayElementS)
         sp[-2].p = (vuint8 *)sp[-2].p+sp[-1].i*ReadInt16(ip+1);
         ip += 3;
         --sp;
         PR_VM_BREAK;
+      */
 
       PR_VM_CASE(OPC_ArrayElementB)
         sp[-2].p = (vuint8 *)sp[-2].p+sp[-1].i*ip[1];
         ip += 2;
         --sp;
+        PR_VM_BREAK;
+
+      // [-3]: op
+      // [-2]: idx
+      // [-1]: idx2
+      PR_VM_CASE(OPC_ArrayElement2d)
+        sp[-2].p = (vuint8 *)sp[-3].p+(sp[-1].i*ReadInt16(ip+1)+sp[-2].i)*ReadInt32(ip+1+2+2);
+        --sp;
+        ip += 1+2+2+4;
         PR_VM_BREAK;
 
       // [-1]: index
@@ -1923,6 +1948,7 @@ func_loop:
 
       // [-2]: *dynarray
       // [-1]: index
+      /*
       PR_VM_CASE(OPC_DynArrayElementS)
         if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) {
           cstDump(ip);
@@ -1932,6 +1958,7 @@ func_loop:
         ip += 3;
         --sp;
         PR_VM_BREAK;
+      */
 
       // [-2]: *dynarray
       // [-1]: index

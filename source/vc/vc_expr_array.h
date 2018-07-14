@@ -34,15 +34,18 @@ protected:
   AutoCopy opscopy;
   bool genStringAssign;
   VExpression *sval;
+  bool resolvingInd2; // for opDollar
 
 public:
   VExpression *op;
   VExpression *ind;
+  VExpression *ind2; // for 2d access; null for 1d
   bool AddressRequested;
   bool IsAssign;
   bool skipBoundsChecking; // in range foreach, we can skip this
 
   VArrayElement (VExpression *AOp, VExpression *AInd, const TLocation &ALoc, bool aSkipBounds=false);
+  VArrayElement (VExpression *AOp, VExpression *AInd, VExpression *AInd2, const TLocation &ALoc, bool aSkipBounds=false);
   virtual ~VArrayElement () override;
   VExpression *InternalResolve (VEmitContext &ec, bool assTarget);
   virtual VExpression *SyntaxCopy () override;
@@ -51,6 +54,8 @@ public:
   virtual VExpression *ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) override;
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &) override;
+
+  inline bool Is2d () const { return (ind2 != nullptr); }
 
   VExpression *GetOpSyntaxCopy ();
 
