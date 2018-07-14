@@ -157,6 +157,8 @@ void VLocalDecl::Declare (VEmitContext &ec) {
     e.TypeExpr = e.TypeExpr->ResolveAsType(ec);
     if (!e.TypeExpr) continue;
 
+    //fprintf(stderr, "LOC: <%s>; type: <%s>\n", *e.Name, *e.TypeExpr->Type.GetName());
+
     VFieldType Type = e.TypeExpr->Type;
     if (Type.Type == TYPE_Void || Type.Type == TYPE_Automatic) ParseError(e.TypeExpr->Loc, "Bad variable type for variable `%s`", *e.Name);
 

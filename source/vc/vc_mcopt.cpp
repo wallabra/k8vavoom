@@ -507,6 +507,11 @@ struct Instr {
       case OPC_ArrayElement:
       //case OPC_ArrayElementS:
       case OPC_ArrayElementB:
+        spdelta = -1;
+        return;
+      case OPC_ArrayElement2d:
+        spdelta = -2;
+        return;
       case OPC_SliceElement:
         spdelta = -1;
         return;

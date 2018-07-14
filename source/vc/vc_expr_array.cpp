@@ -152,12 +152,15 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
       return nullptr;
     }
   } else if (!wasInd2 && op) {
+    //k8: ah, let us do it
+    /*
     if (op->Type.Type == TYPE_Array && !op->Type.IsArray1D()) {
       ParseError(Loc, "1d access to 2d array");
       opscopy.release();
       delete this;
       return nullptr;
     }
+    */
   }
 
   VExpression *indcopy = (ind ? ind->SyntaxCopy() : nullptr);
@@ -239,8 +242,9 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
         return nullptr;
       }
       if (op->Type.Type == TYPE_Array) {
-        if (ind->GetIntConst() >= op->Type.GetFirstDim()) {
-          ParseError(Loc, "Array index %d out of bounds (%d)", ind->GetIntConst(), op->Type.GetFirstDim());
+        int xdim = (ind2 ? op->Type.GetFirstDim() : op->Type.GetArrayDim());
+        if (ind->GetIntConst() >= xdim) {
+          ParseError(Loc, "Array index %d out of bounds (%d)", ind->GetIntConst(), xdim);
           delete this;
           return nullptr;
         }
@@ -250,6 +254,16 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
           return nullptr;
         }
         skipBoundsChecking = true;
+        // convert 2d access to 1d access (it is faster this way)
+        if (ind2) {
+          int x = ind->GetIntConst();
+          int y = ind2->GetIntConst();
+          VExpression *ne = new VIntLiteral(y*op->Type.GetFirstDim()+x, ind->Loc);
+          delete ind2;
+          delete ind;
+          ind2 = nullptr;
+          ind = ne->Resolve(ec); // just in case
+        }
       }
     }
     Flags = op->Flags;
@@ -527,9 +541,17 @@ void VArrayElement::Emit (VEmitContext &ec) {
     } else {
       // `Resolve()` will set this flag if it did static check
       if (!skipBoundsChecking) {
-        ec.AddStatement((ind2 ? OPC_CheckArrayBounds2d : OPC_CheckArrayBounds), op->Type, Loc);
+        if (ind2) {
+          ec.AddStatement(OPC_CheckArrayBounds2d, op->Type, Loc);
+        } else {
+          ec.AddStatement(OPC_CheckArrayBounds, op->Type.GetArrayDim(), Loc);
+        }
       }
-      ec.AddStatement((ind2 ? OPC_ArrayElement2d : OPC_ArrayElement), RealType, Loc);
+      if (ind2) {
+        ec.AddStatement(OPC_ArrayElement2d, op->Type, Loc);
+      } else {
+        ec.AddStatement(OPC_ArrayElement, RealType, Loc);
+      }
     }
     if (!AddressRequested) EmitPushPointedCode(RealType, ec);
   }

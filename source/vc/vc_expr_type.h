@@ -120,8 +120,9 @@ protected:
 class VFixedArrayType : public VTypeExpr {
 public:
   VExpression *SizeExpr;
+  VExpression *SizeExpr2;
 
-  VFixedArrayType (VExpression *AExpr, VExpression *ASizeExpr, const TLocation &ALoc);
+  VFixedArrayType (VExpression *AExpr, VExpression *ASizeExpr, VExpression *ASizeExpr2, const TLocation &ALoc);
   virtual ~VFixedArrayType () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VTypeExpr *ResolveAsType (VEmitContext &) override;

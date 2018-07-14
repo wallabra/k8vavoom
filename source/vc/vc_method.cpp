@@ -669,9 +669,16 @@ void VMethod::CompileCode () {
       case OPCARGS_TypeSizeB: WriteUInt8(Instructions[i].TypeArg.GetSize()); break;
       case OPCARGS_Type: WriteType(Instructions[i].TypeArg); break;
       case OPCARGS_A2DDimsAndSize:
-        WriteInt16(Instructions[i].TypeArg.GetFirstDim());
-        WriteInt16(Instructions[i].TypeArg.GetSecondDim());
-        WriteInt32(Instructions[i].TypeArg.GetSize());
+        {
+          // we got an array type here, but we need size of one array element, so DIY it
+          // sorry for code duplication from `VArrayElement::InternalResolve()`
+          VFieldType arr = Instructions[i].TypeArg;
+          VFieldType itt = arr.GetArrayInnerType();
+          if (itt.Type == TYPE_Byte || itt.Type == TYPE_Bool) itt = VFieldType(TYPE_Int);
+          WriteInt16(arr.GetFirstDim());
+          WriteInt16(arr.GetSecondDim());
+          WriteInt32(itt.GetSize());
+        }
         break;
       case OPCARGS_Builtin: WriteUInt8(Instructions[i].Arg1); break;
       case OPCARGS_Member_Int: WritePtr(Instructions[i].Member); break; // int is not emited

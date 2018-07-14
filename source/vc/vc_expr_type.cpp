@@ -66,7 +66,13 @@ VTypeExpr *VTypeExpr::NewTypeExpr (VFieldType atype, const TLocation &aloc) {
     case TYPE_Delegate:
       FatalError("VC: VTypeExpr::NewTypeExpr: no delegates yet");
     case TYPE_Array:
-      return new VFixedArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc), new VIntLiteral(atype.GetArrayDim(), aloc), aloc);
+      if (atype.IsArray1D()) {
+        return new VFixedArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc),
+          new VIntLiteral(atype.GetArrayDim(), aloc), nullptr, aloc);
+      } else {
+        return new VFixedArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc),
+          new VIntLiteral(atype.GetFirstDim(), aloc), new VIntLiteral(atype.GetSecondDim(), aloc), aloc);
+      }
     case TYPE_DynamicArray:
       return new VDynamicArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc), aloc);
     case TYPE_SliceArray:
@@ -345,9 +351,10 @@ bool VPointerType::IsPointerType () const {
 //  VFixedArrayType::VFixedArrayType
 //
 //==========================================================================
-VFixedArrayType::VFixedArrayType (VExpression *AExpr, VExpression *ASizeExpr, const TLocation &ALoc)
+VFixedArrayType::VFixedArrayType (VExpression *AExpr, VExpression *ASizeExpr, VExpression *ASizeExpr2, const TLocation &ALoc)
   : VTypeExpr(TYPE_Unknown, ALoc)
   , SizeExpr(ASizeExpr)
+  , SizeExpr2(ASizeExpr2)
 {
   Expr = AExpr;
   if (!SizeExpr) ParseError(Loc, "Array size expected");
@@ -361,6 +368,7 @@ VFixedArrayType::VFixedArrayType (VExpression *AExpr, VExpression *ASizeExpr, co
 //==========================================================================
 VFixedArrayType::~VFixedArrayType () {
   if (SizeExpr) { delete SizeExpr; SizeExpr = nullptr; }
+  if (SizeExpr2) { delete SizeExpr2; SizeExpr2 = nullptr; }
 }
 
 
@@ -385,6 +393,7 @@ void VFixedArrayType::DoSyntaxCopyTo (VExpression *e) {
   VTypeExpr::DoSyntaxCopyTo(e);
   auto res = (VFixedArrayType *)e;
   res->SizeExpr = (SizeExpr ? SizeExpr->SyntaxCopy() : nullptr);
+  res->SizeExpr2 = (SizeExpr2 ? SizeExpr2->SyntaxCopy() : nullptr);
 }
 
 
@@ -396,6 +405,10 @@ void VFixedArrayType::DoSyntaxCopyTo (VExpression *e) {
 VTypeExpr *VFixedArrayType::ResolveAsType (VEmitContext &ec) {
   if (Expr) Expr = Expr->ResolveAsType(ec);
   if (SizeExpr) SizeExpr = SizeExpr->Resolve(ec);
+  if (SizeExpr2) {
+    SizeExpr2 = SizeExpr2->Resolve(ec);
+    if (!SizeExpr2) { delete this; return nullptr; }
+  }
   if (!Expr || !SizeExpr) { delete this; return nullptr; }
 
   if (Expr->IsAnyArrayType()) {
@@ -404,7 +417,7 @@ VTypeExpr *VFixedArrayType::ResolveAsType (VEmitContext &ec) {
     return nullptr;
   }
 
-  if (!SizeExpr->IsIntConst()) {
+  if (!SizeExpr->IsIntConst() || (SizeExpr2 && !SizeExpr2->IsIntConst())) {
     ParseError(SizeExpr->Loc, "Integer constant expected");
     delete this;
     return nullptr;
@@ -417,7 +430,17 @@ VTypeExpr *VFixedArrayType::ResolveAsType (VEmitContext &ec) {
     return nullptr;
   }
 
-  Type = Expr->Type.MakeArrayType(Size, Loc);
+  if (SizeExpr2) {
+    if (Size < 1 || SizeExpr2->GetIntConst() < 1) {
+      ParseError(SizeExpr2->Loc, "Static 2d array cannot be of negative or empty size");
+      delete this;
+      return nullptr;
+    }
+    Type = Expr->Type.MakeArray2DType(Size, SizeExpr2->GetIntConst(), Loc);
+  } else {
+    Type = Expr->Type.MakeArrayType(Size, Loc);
+  }
+
   return this;
 }
 

@@ -182,6 +182,8 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt) {
       // size
       TLocation SLoc = Lex.Location;
       VExpression *SE = ParseExpression();
+      VExpression *SE2 = nullptr;
+      if (Lex.Check(TK_Comma)) SE2 = ParseExpression();
       Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
       // name
       if (Lex.Token != TK_Identifier) {
@@ -194,7 +196,7 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt) {
       e.Name = Lex.Name;
       Lex.NextToken();
       // create it
-      e.TypeExpr = new VFixedArrayType(e.TypeExpr, SE, SLoc);
+      e.TypeExpr = new VFixedArrayType(e.TypeExpr, SE, SE2, SLoc);
       wasNewArray = true;
       if (lt == LocalFor) ParseError(Lex.Location, "Initializer required, but arrays doesn't support initialization");
     } else {
@@ -231,7 +233,7 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt) {
         TLocation SLoc = Lex.Location;
         VExpression *SE = ParseExpression();
         Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
-        e.TypeExpr = new VFixedArrayType(e.TypeExpr, SE, SLoc);
+        e.TypeExpr = new VFixedArrayType(e.TypeExpr, SE, nullptr, SLoc);
       }
 
       // initialisation
@@ -497,8 +499,11 @@ VExpression *VParser::ParseExpressionPriority1 () {
         Lex.Expect(TK_RBracket, ERR_BAD_ARRAY);
         op = new VSliceOp(op, ind, hi, l);
       } else {
+        VExpression *ind2 = nullptr;
+        // second index
+        if (Lex.Check(TK_Comma)) ind2 = ParseExpressionPriority13();
         Lex.Expect(TK_RBracket, ERR_BAD_ARRAY);
-        op = new VArrayElement(op, ind, l);
+        op = new VArrayElement(op, ind, ind2, l);
       }
     } else {
       break;
@@ -2019,8 +2024,10 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
         // size
         TLocation SLoc = Lex.Location;
         VExpression *e = ParseExpression();
+        VExpression *SE2 = nullptr;
+        if (Lex.Check(TK_Comma)) SE2 = ParseExpression();
         Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
-        FieldType = new VFixedArrayType(FieldType, e, SLoc);
+        FieldType = new VFixedArrayType(FieldType, e, SE2, SLoc);
         // name
         VName FieldName(NAME_None);
         TLocation FieldLoc = Lex.Location;
@@ -2063,7 +2070,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
         TLocation SLoc = Lex.Location;
         VExpression *e = ParseExpression();
         Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
-        FieldType = new VFixedArrayType(FieldType, e, SLoc);
+        FieldType = new VFixedArrayType(FieldType, e, nullptr, SLoc);
       }
       // create field
       VField *fi = new VField(FieldName, Struct, FieldLoc);
@@ -3796,6 +3803,8 @@ void VParser::ParseClass () {
         firstField = false; // it is safe to reset it here
         TLocation SLoc = Lex.Location;
         VExpression *e = ParseExpression();
+        VExpression *SE2 = nullptr;
+        if (Lex.Check(TK_Comma)) SE2 = ParseExpression();
         Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
 
         if (Lex.Token != TK_Identifier) {
@@ -3814,7 +3823,7 @@ void VParser::ParseClass () {
           continue;
         }
 
-        FieldType = new VFixedArrayType(FieldType, e, SLoc);
+        FieldType = new VFixedArrayType(FieldType, e, SE2, SLoc);
 
         VField *fi = new VField(FieldName, Class, FieldLoc);
         fi->TypeExpr = FieldType;
@@ -3979,8 +3988,10 @@ void VParser::ParseClass () {
         if (Type->IsDelegateType()) ParseError(Lex.Location, "No arrays of delegates are allowed (yet)");
         TLocation SLoc = Lex.Location;
         VExpression *e = ParseExpression();
+        VExpression *SE2 = nullptr;
+        if (Lex.Check(TK_Comma)) SE2 = ParseExpression();
         Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
-        FieldType = new VFixedArrayType(FieldType, e, SLoc);
+        FieldType = new VFixedArrayType(FieldType, e, SE2, SLoc);
       } else if (!Type->IsDelegateType() && Lex.Check(TK_Assign)) {
         // not an array, and has initialiser
         initr = ParseExpression();
