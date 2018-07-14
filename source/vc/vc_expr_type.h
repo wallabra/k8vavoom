@@ -161,9 +161,6 @@ protected:
 //==========================================================================
 class VSliceType : public VTypeExpr {
 public:
-  bool ptrFirst;
-
-public:
   VSliceType (VExpression *AExpr, const TLocation &ALoc);
   virtual VExpression *SyntaxCopy () override;
   virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
@@ -173,7 +170,6 @@ public:
 
 protected:
   VSliceType () {}
-  virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 
 

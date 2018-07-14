@@ -534,18 +534,6 @@ VExpression *VSliceType::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VSliceType::DoSyntaxCopyTo
-//
-//==========================================================================
-void VSliceType::DoSyntaxCopyTo (VExpression *e) {
-  VTypeExpr::DoSyntaxCopyTo(e);
-  auto res = (VSliceType *)e;
-  res->ptrFirst = ptrFirst;
-}
-
-
-//==========================================================================
-//
 //  VSliceType::ResolveAsType
 //
 //==========================================================================
@@ -559,7 +547,7 @@ VTypeExpr *VSliceType::ResolveAsType (VEmitContext &ec) {
     return nullptr;
   }
 
-  Type = Expr->Type.MakeSliceType(ptrFirst, Loc);
+  Type = Expr->Type.MakeSliceType(Loc);
   return this;
 }
 

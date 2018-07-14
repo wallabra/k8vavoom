@@ -223,7 +223,7 @@ VFieldType VFieldType::MakeDynamicArrayType (const TLocation &l) const {
 //  VFieldType::MakeSliceType
 //
 //==========================================================================
-VFieldType VFieldType::MakeSliceType (bool aPtrFirst, const TLocation &l) const {
+VFieldType VFieldType::MakeSliceType (const TLocation &l) const {
   guard(VFieldType::MakeSliceType);
   if (IsAnyArray()) ParseError(l, "Can't have multi-dimensional slices or slices of arrays");
   VFieldType array = *this;

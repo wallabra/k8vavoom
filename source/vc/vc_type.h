@@ -77,7 +77,7 @@ public:
   VFieldType GetPointerInnerType () const;
   VFieldType MakeArrayType (int, const TLocation &) const;
   VFieldType MakeDynamicArrayType (const TLocation &) const;
-  VFieldType MakeSliceType (bool aPtrFirst, const TLocation &) const;
+  VFieldType MakeSliceType (const TLocation &) const;
   VFieldType GetArrayInnerType () const;
   int GetStackSize () const;
   int GetSize () const;
