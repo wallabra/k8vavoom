@@ -678,6 +678,7 @@ void VMethod::CompileCode () {
           WriteInt16(arr.GetFirstDim());
           WriteInt16(arr.GetSecondDim());
           WriteInt32(itt.GetSize());
+          //fprintf(stderr, "d0=%d; d1=%d; dim=%d; isz=%d; size=%d\n", arr.GetFirstDim(), arr.GetSecondDim(), arr.GetArrayDim(), itt.GetSize(), arr.GetSize());
         }
         break;
       case OPCARGS_Builtin: WriteUInt8(Instructions[i].Arg1); break;
