@@ -36,7 +36,7 @@ VFieldType::VFieldType()
   , InnerType(TYPE_Void)
   , ArrayInnerType(TYPE_Void)
   , PtrLevel(0)
-  , ArrayDim(0)
+  , ArrayDimInternal(0)
   , Class(0)
 {
 }
@@ -52,7 +52,7 @@ VFieldType::VFieldType(EType Atype)
   , InnerType(TYPE_Void)
   , ArrayInnerType(TYPE_Void)
   , PtrLevel(0)
-  , ArrayDim(0)
+  , ArrayDimInternal(0)
   , Class(0)
 {
 }
@@ -68,7 +68,7 @@ VFieldType::VFieldType (VClass *InClass)
   , InnerType(TYPE_Void)
   , ArrayInnerType(TYPE_Void)
   , PtrLevel(0)
-  , ArrayDim(0)
+  , ArrayDimInternal(0)
   , Class(InClass)
 {
 }
@@ -84,7 +84,7 @@ VFieldType::VFieldType (VStruct *InStruct)
   , InnerType(TYPE_Void)
   , ArrayInnerType(TYPE_Void)
   , PtrLevel(0)
-  , ArrayDim(0)
+  , ArrayDimInternal(0)
   , Struct(InStruct)
 {
 }
@@ -100,7 +100,7 @@ VStream &operator << (VStream &Strm, VFieldType &T) {
   Strm << T.Type;
   vuint8 RealType = T.Type;
   if (RealType == TYPE_Array) {
-    Strm << T.ArrayInnerType << STRM_INDEX(T.ArrayDim);
+    Strm << T.ArrayInnerType << STRM_INDEX(T.ArrayDimInternal);
     RealType = T.ArrayInnerType;
   } else if (RealType == TYPE_DynamicArray) {
     Strm << T.ArrayInnerType;
@@ -133,7 +133,7 @@ bool VFieldType::Equals (const VFieldType &Other) const {
       InnerType != Other.InnerType ||
       ArrayInnerType != Other.ArrayInnerType ||
       PtrLevel != Other.PtrLevel ||
-      ArrayDim != Other.ArrayDim ||
+      ArrayDimInternal != Other.ArrayDimInternal ||
       Class != Other.Class)
   {
     return false;
@@ -193,10 +193,11 @@ VFieldType VFieldType::GetPointerInnerType () const {
 VFieldType VFieldType::MakeArrayType (int elcount, const TLocation &l) const {
   guard(VFieldType::MakeArrayType);
   if (IsAnyArray()) ParseError(l, "Can't have multi-dimensional arrays");
+  if (elcount < 0) ParseError(l, "Can't have arrays with negative size");
   VFieldType array = *this;
   array.ArrayInnerType = Type;
   array.Type = TYPE_Array;
-  array.ArrayDim = elcount;
+  array.ArrayDimInternal = elcount;
   return array;
   unguard;
 }
@@ -248,9 +249,45 @@ VFieldType VFieldType::GetArrayInnerType () const {
   VFieldType ret = *this;
   ret.Type = ArrayInnerType;
   ret.ArrayInnerType = TYPE_Void;
-  ret.ArrayDim = 0;
+  ret.ArrayDimInternal = 0;
   return ret;
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VFieldType::GetArrayDim
+//
+//  get 1d array dim (for 2d arrays this will be correctly calculated)
+//
+//==========================================================================
+vint32 VFieldType::GetArrayDim () const {
+  return (ArrayDimInternal >= 0 ? ArrayDimInternal : GetFirstDim()*GetSecondDim());
+}
+
+
+//==========================================================================
+//
+//  VFieldType::GetFirstDim
+//
+//  get first dimension (or the only one for 1d array)
+//
+//==========================================================================
+vint32 VFieldType::GetFirstDim () const {
+  return (ArrayDimInternal >= 0 ? ArrayDimInternal : ArrayDimInternal&0x7fff);
+}
+
+
+//==========================================================================
+//
+//  VFieldType::GetSecondDim
+//
+//  get second dimension (or 0 for 1d array)
+//
+//==========================================================================
+vint32 VFieldType::GetSecondDim () const {
+  return (ArrayDimInternal >= 0 ? 1 : (ArrayDimInternal>>16)&0x7fff);
 }
 
 
@@ -275,7 +312,7 @@ int VFieldType::GetStackSize () const {
     case TYPE_Delegate: return 2*4; // self, funcptr
     case TYPE_Struct: return Struct->StackSize*4;
     case TYPE_Vector: return 3*4; // 3 floats
-    case TYPE_Array: return ArrayDim*GetArrayInnerType().GetStackSize();
+    case TYPE_Array: return (ArrayDimInternal&0x7fffffff)*GetArrayInnerType().GetStackSize();
     case TYPE_SliceArray: return 2*4; // ptr and length
     case TYPE_DynamicArray: return 3*4; // 3 fields in VScriptArray
   }
@@ -305,7 +342,7 @@ int VFieldType::GetSize () const {
     case TYPE_Delegate: return sizeof(VObjectDelegate);
     case TYPE_Struct: return (Struct->Size+3)&~3;
     case TYPE_Vector: return sizeof(TVec);
-    case TYPE_Array: return ArrayDim*GetArrayInnerType().GetSize();
+    case TYPE_Array: return (ArrayDimInternal&0x7fffffff)*GetArrayInnerType().GetSize();
     case TYPE_SliceArray: return sizeof(void *)+sizeof(vint32); // ptr and length
     case TYPE_DynamicArray: return sizeof(VScriptArray);
   }
@@ -520,7 +557,13 @@ VStr VFieldType::GetName () const {
     case TYPE_State: return "state";
     case TYPE_Struct: return *Struct->Name;
     case TYPE_Vector: return "vector";
-    case TYPE_Array: return GetArrayInnerType().GetName()+"["+VStr(ArrayDim)+"]";
+    case TYPE_Array:
+      if (ArrayDimInternal < 0) {
+        // two-dimensional
+        return GetArrayInnerType().GetName()+"["+VStr(GetFirstDim())+", "+VStr(GetSecondDim())+"]";
+      } else {
+        return GetArrayInnerType().GetName()+"["+VStr(ArrayDimInternal)+"]";
+      }
     case TYPE_DynamicArray:
       Ret = GetArrayInnerType().GetName();
       return (Ret.IndexOf('*') < 0 ? VStr("array!")+Ret : VStr("array!(")+Ret+")");

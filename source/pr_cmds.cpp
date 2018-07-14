@@ -54,7 +54,7 @@ static inline VFieldType PR_ReadTypeFromPtr (const void *pp) {
   t.ArrayInnerType = p[1];
   t.InnerType = p[2];
   t.PtrLevel = p[3];
-  t.ArrayDim = *(vint16 *)(p+4);
+  t.SetArrayDimIntr(*(vint16 *)(p+4));
   t.Class = (VClass *)(*(void **)(p+8));
   return t;
 }

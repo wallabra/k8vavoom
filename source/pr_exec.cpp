@@ -220,7 +220,7 @@ static void cstDump (const vuint8 *ip) {
   T.ArrayInnerType = (ip)[1]; \
   T.InnerType = (ip)[2]; \
   T.PtrLevel = (ip)[3]; \
-  T.ArrayDim = ReadInt32((ip)+4); \
+  T.SetArrayDimIntr(ReadInt32((ip)+4)); \
   T.Class = (VClass *)ReadPtr((ip)+8); \
   ip += 8+sizeof(VClass *); \
 } while (0)

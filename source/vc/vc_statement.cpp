@@ -1303,7 +1303,7 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
 
   // generate faster code for static arrays
   bool isStaticArray = (arrR ? arrR->Type.Type == TYPE_Array : false);
-  int staticLen = (isStaticArray ? arrR->Type.ArrayDim : 0);
+  int staticLen = (isStaticArray ? arrR->Type.GetArrayDim() : 0);
 
   // find local for ref
   int indLocalVal = -1;

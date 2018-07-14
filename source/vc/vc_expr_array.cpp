@@ -169,8 +169,8 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
         ParseError(Loc, "Negative array index");
         delete this;
         return nullptr;
-      } else if (op->Type.Type == TYPE_Array && ind->GetIntConst() >= op->Type.ArrayDim) {
-        ParseError(Loc, "Array index %d out of bounds (%d)", ind->GetIntConst(), op->Type.ArrayDim);
+      } else if (op->Type.Type == TYPE_Array && ind->GetIntConst() >= op->Type.GetArrayDim()) {
+        ParseError(Loc, "Array index %d out of bounds (%d)", ind->GetIntConst(), op->Type.GetArrayDim());
         delete this;
         return nullptr;
       }
@@ -447,7 +447,7 @@ void VArrayElement::Emit (VEmitContext &ec) {
     } else {
       if (!skipBoundsChecking) {
         // skip bounds checking for integer literals: it is already done in `Resolve()`
-        if (!ind->IsIntConst()) ec.AddStatement(OPC_CheckArrayBounds, op->Type.ArrayDim, Loc);
+        if (!ind->IsIntConst()) ec.AddStatement(OPC_CheckArrayBounds, op->Type.GetArrayDim(), Loc);
       }
       ec.AddStatement(OPC_ArrayElement, RealType, Loc);
     }

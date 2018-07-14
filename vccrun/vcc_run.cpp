@@ -283,7 +283,7 @@ private:
           VFieldType intType = type;
           intType.Type = type.ArrayInnerType;
           vint32 innerSize = intType.GetSize();
-          vint32 dim = type.ArrayDim;
+          vint32 dim = type.GetArrayDim();
           for (int f = 0; f < dim; ++f) {
             processValue(data+f*innerSize, intType);
             if (wasError) break;
@@ -464,7 +464,7 @@ static bool cfgSaveValue (ObjectSaveMap &smap, VStream &strm, vuint8 *data, cons
         VFieldType intType = type;
         intType.Type = type.ArrayInnerType;
         vint32 innerSize = intType.GetSize();
-        vint32 dim = type.ArrayDim;
+        vint32 dim = type.GetArrayDim();
         strm << STRM_INDEX(dim);
         strm << STRM_INDEX(innerSize);
         if (strm.IsError()) return false;
@@ -927,7 +927,7 @@ static void replicateObj (VObject *obj, vuint8 *oldData) {
       VFieldType intrType = F->Type;
       intrType.Type = F->Type.ArrayInnerType;
       int innerSize = intrType.GetSize();
-      for (int i = 0; i < F->Type.ArrayDim; ++i) {
+      for (int i = 0; i < F->Type.GetArrayDim(); ++i) {
         vuint8 *val = fieldData+i*innerSize;
         vuint8 *oldval = oldData+F->Ofs+i*innerSize;
         if (VField::IdenticalValue(val, oldval, intrType)) continue;
@@ -938,7 +938,7 @@ static void replicateObj (VObject *obj, vuint8 *oldData) {
         }
 
         Msg.WriteInt(F->NetIndex, obj->GetClass()->NumNetFields);
-        Msg.WriteInt(i, F->Type.ArrayDim);
+        Msg.WriteInt(i, F->Type.GetArrayDim());
         if (VField::NetSerialiseValue(Msg, Connection->ObjMap, val, intrType)) {
           VField::CopyFieldValue(val, oldval, intrType);
         }

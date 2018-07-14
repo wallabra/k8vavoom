@@ -173,7 +173,7 @@ void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &T
         VFieldType IntType = Type;
         IntType.Type = Type.ArrayInnerType;
         int InnerSize = IntType.GetSize();
-        for (int i = 0; i < Type.ArrayDim; ++i) CopyFieldValue(Src+i*InnerSize, Dst+i*InnerSize, IntType);
+        for (int i = 0; i < Type.GetArrayDim(); ++i) CopyFieldValue(Src+i*InnerSize, Dst+i*InnerSize, IntType);
       }
       break;
     case TYPE_DynamicArray:
@@ -288,7 +288,7 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
       IntType = Type;
       IntType.Type = Type.ArrayInnerType;
       InnerSize = IntType.GetSize();
-      for (int i = 0; i < Type.ArrayDim; ++i) SerialiseFieldValue(Strm, Data+i*InnerSize, IntType);
+      for (int i = 0; i < Type.GetArrayDim(); ++i) SerialiseFieldValue(Strm, Data+i*InnerSize, IntType);
       break;
     case TYPE_DynamicArray:
       {
@@ -361,7 +361,7 @@ void VField::CleanField (vuint8 *Data, const VFieldType &Type) {
       IntType.Type = Type.ArrayInnerType;
       if (NeedToCleanField(IntType)) {
         InnerSize = IntType.GetSize();
-        for (int i = 0; i < Type.ArrayDim; ++i) CleanField(Data+i*InnerSize, IntType);
+        for (int i = 0; i < Type.GetArrayDim(); ++i) CleanField(Data+i*InnerSize, IntType);
       }
       break;
     case TYPE_DynamicArray:
@@ -421,10 +421,10 @@ void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
       IntType.Type = Type.ArrayInnerType;
       if (NeedDtor(IntType)) {
         InnerSize = IntType.GetSize();
-        for (int i = 0; i < Type.ArrayDim; ++i) DestructField(Data+i*InnerSize, IntType, zeroIt);
-      } else if (zeroIt && Type.ArrayDim) {
+        for (int i = 0; i < Type.GetArrayDim(); ++i) DestructField(Data+i*InnerSize, IntType, zeroIt);
+      } else if (zeroIt && Type.GetArrayDim()) {
         InnerSize = IntType.GetSize();
-        memset(Data, 0, Type.ArrayDim*InnerSize);
+        memset(Data, 0, Type.GetArrayDim()*InnerSize);
       }
       break;
     case TYPE_DynamicArray:
@@ -469,7 +469,7 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
       IntType = Type;
       IntType.Type = Type.ArrayInnerType;
       InnerSize = IntType.GetSize();
-      for (int i = 0; i < Type.ArrayDim; ++i) {
+      for (int i = 0; i < Type.GetArrayDim(); ++i) {
         if (!IdenticalValue(Val1+i*InnerSize, Val2+i*InnerSize, IntType)) return false;
       }
       return true;
@@ -481,7 +481,7 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
         IntType = Type;
         IntType.Type = Type.ArrayInnerType;
         InnerSize = IntType.GetSize();
-        for (int i = 0; i < Type.ArrayDim; ++i) {
+        for (int i = 0; i < Type.GetArrayDim(); ++i) {
           if (!IdenticalValue(Arr1.Ptr()+i*InnerSize, Arr2.Ptr()+i*InnerSize, IntType)) return false;
         }
       }
@@ -572,7 +572,7 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMap *Map, vuint8 *Data
       IntType = Type;
       IntType.Type = Type.ArrayInnerType;
       InnerSize = IntType.GetSize();
-      for (int i = 0; i < Type.ArrayDim; ++i) {
+      for (int i = 0; i < Type.GetArrayDim(); ++i) {
         if (!NetSerialiseValue(Strm, Map, Data+i*InnerSize, IntType)) Ret = false;
       }
       break;

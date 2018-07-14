@@ -467,7 +467,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       delete this;
       return nullptr;
     }
-    VExpression *e = new VIntLiteral(op->Type.ArrayDim, Loc);
+    VExpression *e = new VIntLiteral(op->Type.GetArrayDim(), Loc);
     delete this;
     return e->Resolve(ec);
   }

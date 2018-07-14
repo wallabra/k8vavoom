@@ -57,7 +57,9 @@ public:
   vuint8 InnerType; // for pointers
   vuint8 ArrayInnerType; // for arrays
   vuint8 PtrLevel;
-  vint32 ArrayDim;
+  // you should never access `ArrayDimInternal` directly!
+  // sign bit is used to mark "2-dim array"
+  vint32 ArrayDimInternal;
   union {
     vuint32 BitMask;
     VClass *Class; // class of the reference
@@ -79,6 +81,18 @@ public:
   VFieldType MakeDynamicArrayType (const TLocation &) const;
   VFieldType MakeSliceType (const TLocation &) const;
   VFieldType GetArrayInnerType () const;
+
+  // this is used in VM, don't touch it
+  inline void SetArrayDimIntr (vint32 v) { ArrayDimInternal = v; }
+
+  inline bool IsArray1D () const { return (ArrayDimInternal >= 0); }
+  // get 1d array dim (for 2d arrays this will be correctly calculated)
+  vint32 GetArrayDim () const;
+  // get first dimension (or the only one for 1d array)
+  vint32 GetFirstDim () const;
+  // get second dimension (or 1 for 1d array)
+  vint32 GetSecondDim () const;
+
   int GetStackSize () const;
   int GetSize () const;
   int GetAlignment () const;

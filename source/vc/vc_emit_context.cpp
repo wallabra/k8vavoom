@@ -659,7 +659,7 @@ void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zer
 
   if (LocalDefs[locidx].Type.Type == TYPE_Array) {
     if (LocalDefs[locidx].Type.ArrayInnerType == TYPE_String) {
-      for (int j = 0; j < LocalDefs[locidx].Type.ArrayDim; ++j) {
+      for (int j = 0; j < LocalDefs[locidx].Type.GetArrayDim(); ++j) {
         EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
         EmitPushNumber(j, aloc);
         AddStatement(OPC_ArrayElement, LocalDefs[locidx].Type.GetArrayInnerType(), aloc);
@@ -667,7 +667,7 @@ void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zer
       }
     } else if (LocalDefs[locidx].Type.ArrayInnerType == TYPE_Struct) {
       if (LocalDefs[locidx].Type.Struct->NeedsDestructor()) {
-        for (int j = 0; j < LocalDefs[locidx].Type.ArrayDim; ++j) {
+        for (int j = 0; j < LocalDefs[locidx].Type.GetArrayDim(); ++j) {
           EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
           EmitPushNumber(j, aloc);
           AddStatement(OPC_ArrayElement, LocalDefs[locidx].Type.GetArrayInnerType(), aloc);

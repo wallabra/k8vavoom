@@ -579,7 +579,7 @@ void VMethod::PostLoad () {
   WriteUInt8(T.ArrayInnerType); \
   WriteUInt8(T.InnerType); \
   WriteUInt8(T.PtrLevel); \
-  WriteInt32(T.ArrayDim); \
+  WriteInt32(T.GetArrayDim()); \
   WritePtr(T.Class);
 
 

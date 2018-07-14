@@ -66,7 +66,7 @@ VTypeExpr *VTypeExpr::NewTypeExpr (VFieldType atype, const TLocation &aloc) {
     case TYPE_Delegate:
       FatalError("VC: VTypeExpr::NewTypeExpr: no delegates yet");
     case TYPE_Array:
-      return new VFixedArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc), new VIntLiteral(atype.ArrayDim, aloc), aloc);
+      return new VFixedArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc), new VIntLiteral(atype.GetArrayDim(), aloc), aloc);
     case TYPE_DynamicArray:
       return new VDynamicArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc), aloc);
     case TYPE_SliceArray:
