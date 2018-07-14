@@ -1015,8 +1015,8 @@ func_loop:
       // [-2]: idx
       // [-1]: idx2
       PR_VM_CASE(OPC_ArrayElement2d)
-        sp[-2].p = (vuint8 *)sp[-3].p+(sp[-1].i*ReadInt16(ip+1)+sp[-2].i)*ReadInt32(ip+1+2+2);
-        --sp;
+        sp[-3].p = (vuint8 *)sp[-3].p+(sp[-1].i*ReadInt16(ip+1)+sp[-2].i)*ReadInt32(ip+1+2+2);
+        sp -= 2;
         ip += 1+2+2+4;
         PR_VM_BREAK;
 
