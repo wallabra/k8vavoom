@@ -70,7 +70,7 @@ VTypeExpr *VTypeExpr::NewTypeExpr (VFieldType atype, const TLocation &aloc) {
     case TYPE_DynamicArray:
       return new VDynamicArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc), aloc);
     case TYPE_SliceArray:
-      return new VSliceType(NewTypeExpr(atype.GetArrayInnerType(), aloc), atype.SlicePtrFirst, aloc);
+      return new VSliceType(NewTypeExpr(atype.GetArrayInnerType(), aloc), aloc);
     case TYPE_Unknown:
     case TYPE_Automatic: // this is valid only for variable declarations, and will be resolved to actual type
       fprintf(stderr, "VC: VTypeExpr::NewTypeExpr: internal compiler error\n");
@@ -513,9 +513,8 @@ bool VDynamicArrayType::IsDynamicArrayType () const {
 //  VSliceType::VSliceType
 //
 //==========================================================================
-VSliceType::VSliceType (VExpression *AExpr, bool aPtrFirst, const TLocation &ALoc)
+VSliceType::VSliceType (VExpression *AExpr, const TLocation &ALoc)
   : VTypeExpr(TYPE_Unknown, ALoc)
-  , ptrFirst(aPtrFirst)
 {
   Expr = AExpr;
 }

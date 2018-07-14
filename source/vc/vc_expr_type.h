@@ -164,7 +164,7 @@ public:
   bool ptrFirst;
 
 public:
-  VSliceType (VExpression *AExpr, bool aPtrFirst, const TLocation &ALoc);
+  VSliceType (VExpression *AExpr, const TLocation &ALoc);
   virtual VExpression *SyntaxCopy () override;
   virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
 

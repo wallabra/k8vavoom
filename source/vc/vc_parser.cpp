@@ -1580,7 +1580,7 @@ VExpression *VParser::ParseType (bool allowDelegates) {
     Type = ParseTypePtrs(Type);
     Lex.Expect(TK_LBracket);
     Lex.Expect(TK_RBracket);
-    Type = new VSliceType(Type, true, stloc);
+    Type = new VSliceType(Type, stloc);
   }
 
   if (allowDelegates) {

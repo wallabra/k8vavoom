@@ -58,7 +58,6 @@ public:
   vuint8 ArrayInnerType; // for arrays
   vuint8 PtrLevel;
   vint32 ArrayDim;
-  bool SlicePtrFirst; // is slice pointer comes before length?
   union {
     vuint32 BitMask;
     VClass *Class; // class of the reference

@@ -108,9 +108,6 @@ VStream &operator << (VStream &Strm, VFieldType &T) {
   } else if (RealType == TYPE_SliceArray) {
     Strm << T.ArrayInnerType;
     RealType = T.ArrayInnerType;
-    vuint8 spf = (T.SlicePtrFirst ? 1 : 0);
-    Strm << spf;
-    if (Strm.IsLoading()) T.SlicePtrFirst = (spf != 0);
   }
   if (RealType == TYPE_Pointer) {
     Strm << T.InnerType << T.PtrLevel;
@@ -232,7 +229,6 @@ VFieldType VFieldType::MakeSliceType (bool aPtrFirst, const TLocation &l) const 
   VFieldType array = *this;
   array.ArrayInnerType = Type;
   array.Type = TYPE_SliceArray;
-  array.SlicePtrFirst = aPtrFirst;
   return array;
   unguard;
 }
@@ -340,7 +336,7 @@ int VFieldType::GetAlignment () const {
     case TYPE_Struct: return Struct->Alignment;
     case TYPE_Vector: return sizeof(float);
     case TYPE_Array: return GetArrayInnerType().GetAlignment();
-    case TYPE_SliceArray: return (SlicePtrFirst ? sizeof(void *) : sizeof(vint32)); //???
+    case TYPE_SliceArray: return sizeof(void *);
     case TYPE_DynamicArray: return sizeof(void *);
   }
   return 0;
@@ -528,7 +524,7 @@ VStr VFieldType::GetName () const {
     case TYPE_DynamicArray:
       Ret = GetArrayInnerType().GetName();
       return (Ret.IndexOf('*') < 0 ? VStr("array!")+Ret : VStr("array!(")+Ret+")");
-    case TYPE_SliceArray: return GetArrayInnerType().GetName()+(SlicePtrFirst ? "[]" : "[#]");
+    case TYPE_SliceArray: return GetArrayInnerType().GetName()+"[]";
     case TYPE_Automatic: return "auto";
     case TYPE_Delegate: return "delegate";
     default: return VStr("unknown:")+VStr((vuint32)Type);
