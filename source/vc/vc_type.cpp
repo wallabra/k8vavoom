@@ -202,6 +202,25 @@ VFieldType VFieldType::MakeArrayType (int elcount, const TLocation &l) const {
   unguard;
 }
 
+//==========================================================================
+//
+//  VFieldType::MakeArray2DType
+//
+//==========================================================================
+VFieldType VFieldType::MakeArray2DType (int d0, int d1, const TLocation &l) const {
+  guard(VFieldType::MakeArray2DType);
+  if (IsAnyArray()) ParseError(l, "Can't have multi-dimensional 2d arrays");
+  if (d0 < 0 || d1 < 0) ParseError(l, "Can't have 2d arrays with negative size");
+  if (d0 <= 0 || d1 <= 0) ParseError(l, "Can't have 2d arrays with zero size");
+  if (d0 > 0x7fff || d1 > 0x7fff) ParseError(l, "Can't have 2d arrays with dimensions more than 32767");
+  VFieldType array = *this;
+  array.ArrayInnerType = Type;
+  array.Type = TYPE_Array;
+  array.ArrayDimInternal = (d0|(d1<<16))|0x80000000;
+  return array;
+  unguard;
+}
+
 
 //==========================================================================
 //

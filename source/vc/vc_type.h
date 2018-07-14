@@ -75,9 +75,11 @@ public:
   friend VStream &operator << (VStream &, VFieldType &);
 
   bool Equals (const VFieldType &) const;
+
   VFieldType MakePointerType () const;
   VFieldType GetPointerInnerType () const;
   VFieldType MakeArrayType (int, const TLocation &) const;
+  VFieldType MakeArray2DType (int d0, int d1, const TLocation &l) const;
   VFieldType MakeDynamicArrayType (const TLocation &) const;
   VFieldType MakeSliceType (const TLocation &) const;
   VFieldType GetArrayInnerType () const;
