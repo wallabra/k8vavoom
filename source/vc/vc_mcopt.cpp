@@ -379,7 +379,6 @@ struct Instr {
         return;
       case OPC_DelegateCall:
       case OPC_DelegateCallS:
-      case OPC_DelegateCallB:
         spdelta = -Arg2;
         spdelta += ((VField *)Member)->Type.Function->ReturnType.GetStackSize()/4;
         return;
@@ -463,42 +462,32 @@ struct Instr {
         return;
       case OPC_Offset:
       case OPC_OffsetS:
-      case OPC_OffsetB:
         return;
       case OPC_FieldValue:
       case OPC_FieldValueS:
-      case OPC_FieldValueB:
         return;
       case OPC_VFieldValue:
       case OPC_VFieldValueS:
-      case OPC_VFieldValueB:
         spdelta = 2;
         return;
       case OPC_PtrFieldValue:
       case OPC_PtrFieldValueS:
-      case OPC_PtrFieldValueB:
       case OPC_StrFieldValue:
       case OPC_StrFieldValueS:
-      case OPC_StrFieldValueB:
         return;
       case OPC_SliceFieldValue:
         spdelta = 1;
         return;
       case OPC_ByteFieldValue:
       case OPC_ByteFieldValueS:
-      case OPC_ByteFieldValueB:
       case OPC_Bool0FieldValue:
       case OPC_Bool0FieldValueS:
-      case OPC_Bool0FieldValueB:
       case OPC_Bool1FieldValue:
       case OPC_Bool1FieldValueS:
-      case OPC_Bool1FieldValueB:
       case OPC_Bool2FieldValue:
       case OPC_Bool2FieldValueS:
-      case OPC_Bool2FieldValueB:
       case OPC_Bool3FieldValue:
       case OPC_Bool3FieldValueS:
-      case OPC_Bool3FieldValueB:
         return;
       case OPC_CheckArrayBounds: // won't pop index
       case OPC_CheckArrayBounds2d: // won't pop index
@@ -1429,8 +1418,7 @@ void VMCOptimizer::optimizeLoads () {
       case OPC_DelegateCall:
         // make sure struct / class field offsets have been calculated
         insn.Member->Outer->PostLoad();
-             if (((VField *)insn.Member)->Ofs < 256) insn.Opcode = OPC_DelegateCallB;
-        else if (((VField *)insn.Member)->Ofs <= MAX_VINT16) insn.Opcode = OPC_DelegateCallS;
+        if (((VField *)insn.Member)->Ofs <= MAX_VINT16) insn.Opcode = OPC_DelegateCallS;
         break;
       case OPC_Offset:
       case OPC_FieldValue:
@@ -1447,8 +1435,7 @@ void VMCOptimizer::optimizeLoads () {
         if (insn.Opcode != OPC_SliceFieldValue) {
           // make sure struct / class field offsets have been calculated
           insn.Member->Outer->PostLoad();
-               if (((VField *)insn.Member)->Ofs < 256) insn.Opcode += 2;
-          else if (((VField *)insn.Member)->Ofs <= MAX_VINT16) ++insn.Opcode;
+          if (((VField *)insn.Member)->Ofs <= MAX_VINT16) ++insn.Opcode;
         }
         break;
       case OPC_ArrayElement:
@@ -1484,7 +1471,6 @@ void VMCOptimizer::optimizeJumps () {
       case OPCARGS_BranchTargetB:
       case OPCARGS_BranchTargetNB:
       case OPCARGS_Byte:
-      case OPCARGS_FieldOffsetB:
       case OPCARGS_VTableIndexB:
       case OPCARGS_TypeSizeB:
         addr += 1;
@@ -1495,7 +1481,6 @@ void VMCOptimizer::optimizeJumps () {
       case OPCARGS_FieldOffsetS:
       case OPCARGS_VTableIndex:
       case OPCARGS_VTableIndexB_Byte:
-      case OPCARGS_FieldOffsetB_Byte:
         addr += 2;
         break;
       case OPCARGS_ByteBranchTarget:

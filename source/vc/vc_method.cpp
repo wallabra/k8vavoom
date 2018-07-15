@@ -618,11 +618,6 @@ void VMethod::CompileCode () {
         Instructions[i].Member->Outer->PostLoad();
         WriteInt16(((VField *)Instructions[i].Member)->Ofs);
         break;
-      case OPCARGS_FieldOffsetB:
-        // make sure struct / class field offsets have been calculated
-        Instructions[i].Member->Outer->PostLoad();
-        WriteUInt8(((VField *)Instructions[i].Member)->Ofs);
-        break;
       case OPCARGS_VTableIndex:
         // make sure class virtual table has been calculated
         Instructions[i].Member->Outer->PostLoad();
@@ -655,12 +650,6 @@ void VMethod::CompileCode () {
         // make sure struct / class field offsets have been calculated
         Instructions[i].Member->Outer->PostLoad();
         WriteInt16(((VField *)Instructions[i].Member)->Ofs);
-        WriteUInt8(Instructions[i].Arg2);
-        break;
-      case OPCARGS_FieldOffsetB_Byte:
-        // make sure struct / class field offsets have been calculated
-        Instructions[i].Member->Outer->PostLoad();
-        WriteUInt8(((VField *)Instructions[i].Member)->Ofs);
         WriteUInt8(Instructions[i].Arg2);
         break;
       case OPCARGS_TypeSize: WriteInt32(Instructions[i].TypeArg.GetSize()); break;

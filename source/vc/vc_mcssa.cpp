@@ -101,7 +101,6 @@ static SSAInstr *buildSSAFromVM (VMethod *func, TArray<FInstruction> &instr) {
   DECLARE_OPC(VCallB, VTableIndexB_Byte),
   DECLARE_OPC(DelegateCall, FieldOffset_Byte),
   DECLARE_OPC(DelegateCallS, FieldOffsetS_Byte),
-  DECLARE_OPC(DelegateCallB, FieldOffsetB_Byte),
   DECLARE_OPC(DelegateCallPtr, Int),
   DECLARE_OPC(Return, None),
   DECLARE_OPC(ReturnL, None),

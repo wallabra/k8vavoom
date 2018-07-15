@@ -84,7 +84,7 @@ enum {
 #ifndef OPCODE_INFO
 
 #define PROG_MAGIC    "VPRG"
-#define PROG_VERSION  (45)
+#define PROG_VERSION  (46)
 
 enum {
   OPCARGS_None,
@@ -104,7 +104,6 @@ enum {
   OPCARGS_String,
   OPCARGS_FieldOffset,
   OPCARGS_FieldOffsetS,
-  OPCARGS_FieldOffsetB,
   OPCARGS_VTableIndex,
   OPCARGS_VTableIndexB,
   OPCARGS_TypeSize,
@@ -113,7 +112,6 @@ enum {
   OPCARGS_VTableIndexB_Byte,
   OPCARGS_FieldOffset_Byte,
   OPCARGS_FieldOffsetS_Byte,
-  OPCARGS_FieldOffsetB_Byte,
   OPCARGS_Type,
   OPCARGS_A2DDimsAndSize,
   OPCARGS_Builtin,
@@ -138,7 +136,6 @@ enum {
   DECLARE_OPC(VCallB, VTableIndexB_Byte),
   DECLARE_OPC(DelegateCall, FieldOffset_Byte),
   DECLARE_OPC(DelegateCallS, FieldOffsetS_Byte),
-  DECLARE_OPC(DelegateCallB, FieldOffsetB_Byte),
   DECLARE_OPC(DelegateCallPtr, Type_Int),
   DECLARE_OPC(Return, None),
   DECLARE_OPC(ReturnL, None),
@@ -199,39 +196,28 @@ enum {
   DECLARE_OPC(StrLocalValueB, Byte),
   DECLARE_OPC(Offset, FieldOffset),
   DECLARE_OPC(OffsetS, FieldOffsetS),
-  DECLARE_OPC(OffsetB, FieldOffsetB),
   DECLARE_OPC(FieldValue, FieldOffset),
   DECLARE_OPC(FieldValueS, FieldOffsetS),
-  DECLARE_OPC(FieldValueB, FieldOffsetB),
   DECLARE_OPC(VFieldValue, FieldOffset),
   DECLARE_OPC(VFieldValueS, FieldOffsetS),
-  DECLARE_OPC(VFieldValueB, FieldOffsetB),
   DECLARE_OPC(PtrFieldValue, FieldOffset),
   DECLARE_OPC(PtrFieldValueS, FieldOffsetS),
-  DECLARE_OPC(PtrFieldValueB, FieldOffsetB),
   DECLARE_OPC(StrFieldValue, FieldOffset),
   DECLARE_OPC(StrFieldValueS, FieldOffsetS),
-  DECLARE_OPC(StrFieldValueB, FieldOffsetB),
   DECLARE_OPC(SliceFieldValue, FieldOffset),
   DECLARE_OPC(ByteFieldValue, FieldOffset),
   DECLARE_OPC(ByteFieldValueS, FieldOffsetS),
-  DECLARE_OPC(ByteFieldValueB, FieldOffsetB),
   DECLARE_OPC(Bool0FieldValue, FieldOffset_Byte),
   DECLARE_OPC(Bool0FieldValueS, FieldOffsetS_Byte),
-  DECLARE_OPC(Bool0FieldValueB, FieldOffsetB_Byte),
   DECLARE_OPC(Bool1FieldValue, FieldOffset_Byte),
   DECLARE_OPC(Bool1FieldValueS, FieldOffsetS_Byte),
-  DECLARE_OPC(Bool1FieldValueB, FieldOffsetB_Byte),
   DECLARE_OPC(Bool2FieldValue, FieldOffset_Byte),
   DECLARE_OPC(Bool2FieldValueS, FieldOffsetS_Byte),
-  DECLARE_OPC(Bool2FieldValueB, FieldOffsetB_Byte),
   DECLARE_OPC(Bool3FieldValue, FieldOffset_Byte),
   DECLARE_OPC(Bool3FieldValueS, FieldOffsetS_Byte),
-  DECLARE_OPC(Bool3FieldValueB, FieldOffsetB_Byte),
   DECLARE_OPC(CheckArrayBounds, Int), /* won't pop index */
   DECLARE_OPC(CheckArrayBounds2d, A2DDimsAndSize), /* won't pop indicies */
   DECLARE_OPC(ArrayElement, TypeSize),
-  //DECLARE_OPC(ArrayElementS, TypeSizeS),
   DECLARE_OPC(ArrayElementB, TypeSizeB),
   DECLARE_OPC(ArrayElement2d, A2DDimsAndSize),
   DECLARE_OPC(SliceElement, TypeSize),
