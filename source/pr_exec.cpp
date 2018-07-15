@@ -406,6 +406,9 @@ func_loop:
       PR_VM_CASE(OPC_Return)
         if (itsp == 0) {
           checkSlow(sp == local_vars+func->NumLocals);
+#ifdef VMEXEC_RUNDUMP
+          printIndent(); printf("LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+#endif
           pr_stackPtr = local_vars;
           cstPop();
           return;
@@ -416,6 +419,9 @@ func_loop:
       PR_VM_CASE(OPC_ReturnL)
         if (itsp == 0) {
           checkSlow(sp == local_vars+func->NumLocals+1);
+#ifdef VMEXEC_RUNDUMP
+          printIndent(); printf("LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+#endif
           ((VStack *)local_vars)[0] = sp[-1];
           pr_stackPtr = local_vars+1;
           cstPop();
@@ -427,6 +433,9 @@ func_loop:
       PR_VM_CASE(OPC_ReturnV)
         if (itsp == 0) {
           checkSlow(sp == local_vars+func->NumLocals+3);
+#ifdef VMEXEC_RUNDUMP
+          printIndent(); printf("LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+#endif
           ((VStack *)local_vars)[0] = sp[-3];
           ((VStack *)local_vars)[1] = sp[-2];
           ((VStack *)local_vars)[2] = sp[-1];
