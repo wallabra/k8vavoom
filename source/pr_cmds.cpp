@@ -145,7 +145,7 @@ public:
 VStr PF_FormatString () {
   guard(PF_FormatString);
 
-  const int MAX_PARAMS = 64;
+  const int MAX_PARAMS = 256;
 
   //VStr Ret;
   VStack params[MAX_PARAMS];

@@ -151,7 +151,7 @@ private:
   bool mPostLoaded;
 
 public:
-  enum { MAX_PARAMS = 16 };
+  enum { MAX_PARAMS = 32 };
 
   // persistent fields
   vint32 NumLocals;

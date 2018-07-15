@@ -406,7 +406,13 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
     return e->Resolve(ec);
   }
 
-  ParseError(Loc, "Illegal expression identifier %s", *Name);
+  if (assType == Normal && ec.SelfClass && (Name == "write" || Name == "writeln")) {
+    VExpression *e = new VInvokeWrite((Name == "writeln"), Loc, 0, nullptr);
+    delete this;
+    return e->Resolve(ec);
+  }
+
+  ParseError(Loc, "Illegal expression identifier `%s`", *Name);
   delete this;
   return nullptr;
 }
