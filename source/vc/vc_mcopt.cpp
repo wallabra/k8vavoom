@@ -425,7 +425,6 @@ struct Instr {
       case OPC_PushNumber:
       case OPC_PushName:
       case OPC_PushNameS:
-      //case OPC_PushNameB:
       case OPC_PushString:
       case OPC_PushClassId:
       case OPC_PushState:
@@ -1453,19 +1452,13 @@ void VMCOptimizer::optimizeLoads () {
         }
         break;
       case OPC_ArrayElement:
-        // `OPC_ArrayElementS` is no more
-             if (insn.TypeArg.GetSize() < 256) insn.Opcode = OPC_ArrayElementB;
-        //else if (insn.TypeArg.GetSize() < MAX_VINT16) insn.Opcode = OPC_ArrayElementS;
+        if (insn.TypeArg.GetSize() < 256) insn.Opcode = OPC_ArrayElementB;
         break;
       case OPC_DynArrayElement:
-        // `OPC_DynArrayElementS` is no more
-             if (insn.TypeArg.GetSize() < 256) insn.Opcode = OPC_DynArrayElementB;
-        //else if (insn.TypeArg.GetSize() < MAX_VINT16) insn.Opcode = OPC_DynArrayElementS;
+        if (insn.TypeArg.GetSize() < 256) insn.Opcode = OPC_DynArrayElementB;
         break;
       case OPC_PushName:
-        // `OPC_PushNameB` is no more
-        /*     if (insn.NameArg.GetIndex() < 256) insn.Opcode = OPC_PushNameB;
-        else*/ if (insn.NameArg.GetIndex() < MAX_VINT16) insn.Opcode = OPC_PushNameS;
+        if (insn.NameArg.GetIndex() < MAX_VINT16) insn.Opcode = OPC_PushNameS;
         break;
     }
   }
@@ -1491,7 +1484,6 @@ void VMCOptimizer::optimizeJumps () {
       case OPCARGS_BranchTargetB:
       case OPCARGS_BranchTargetNB:
       case OPCARGS_Byte:
-      //case OPCARGS_NameB:
       case OPCARGS_FieldOffsetB:
       case OPCARGS_VTableIndexB:
       case OPCARGS_TypeSizeB:
@@ -1504,7 +1496,6 @@ void VMCOptimizer::optimizeJumps () {
       case OPCARGS_VTableIndex:
       case OPCARGS_VTableIndexB_Byte:
       case OPCARGS_FieldOffsetB_Byte:
-      //case OPCARGS_TypeSizeS:
         addr += 2;
         break;
       case OPCARGS_ByteBranchTarget:

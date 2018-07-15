@@ -578,14 +578,6 @@ func_loop:
         ++sp;
         PR_VM_BREAK;
 
-      /*
-      PR_VM_CASE(OPC_PushNameB)
-        sp->i = ip[1];
-        ip += 2;
-        ++sp;
-        PR_VM_BREAK;
-      */
-
       PR_VM_CASE(OPC_PushString)
         sp->p = ReadPtr(ip+1);
         ip += 1+sizeof(void *);
@@ -984,8 +976,8 @@ func_loop:
       // [-2]: idx
       // [-1]: idx2
       PR_VM_CASE(OPC_CheckArrayBounds2d)
-        if (sp[-2].i < 0 || sp[-2].i >= ReadInt16(ip+1)) Sys_Error("First array index %d is out of bounds (%d)", sp[-2].i, ReadInt16(ip+1));
-        if (sp[-1].i < 0 || sp[-1].i >= ReadInt16(ip+1+2)) Sys_Error("Second array index %d is out of bounds (%d)", sp[-1].i, ReadInt16(ip+1+2));
+        if (sp[-2].i < 0 || sp[-2].i >= ReadInt16(ip+1)) { cstDump(ip); Sys_Error("First array index %d is out of bounds (%d)", sp[-2].i, ReadInt16(ip+1)); }
+        if (sp[-1].i < 0 || sp[-1].i >= ReadInt16(ip+1+2)) { cstDump(ip); Sys_Error("Second array index %d is out of bounds (%d)", sp[-1].i, ReadInt16(ip+1+2)); }
         ip += 1+2+2+4;
         PR_VM_BREAK;
 

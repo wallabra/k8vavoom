@@ -607,7 +607,6 @@ void VMethod::CompileCode () {
       case OPCARGS_Int: WriteInt32(Instructions[i].Arg1); break;
       case OPCARGS_Name: WriteInt32(Instructions[i].NameArg.GetIndex()); break;
       case OPCARGS_NameS: WriteInt16(Instructions[i].NameArg.GetIndex()); break;
-      //case OPCARGS_NameB: WriteUInt8(Instructions[i].NameArg.GetIndex()); break;
       case OPCARGS_String: WritePtr(&GetPackage()->Strings[Instructions[i].Arg1]); break;
       case OPCARGS_FieldOffset:
         // make sure struct / class field offsets have been calculated
@@ -665,7 +664,6 @@ void VMethod::CompileCode () {
         WriteUInt8(Instructions[i].Arg2);
         break;
       case OPCARGS_TypeSize: WriteInt32(Instructions[i].TypeArg.GetSize()); break;
-      //case OPCARGS_TypeSizeS: WriteInt16(Instructions[i].TypeArg.GetSize()); break;
       case OPCARGS_TypeSizeB: WriteUInt8(Instructions[i].TypeArg.GetSize()); break;
       case OPCARGS_Type: WriteType(Instructions[i].TypeArg); break;
       case OPCARGS_A2DDimsAndSize:
