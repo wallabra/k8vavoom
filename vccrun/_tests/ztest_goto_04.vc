@@ -5,16 +5,16 @@ struct IterInfo {
 }
 
 
-final void testIter_opInit (out IterInfo it, int initval) {
+final void testIter_opIterInit (out IterInfo it, int initval) {
   it.cur = initval;
   writeln("iterator initialized");
 }
 
-final void testIter_opDone (ref IterInfo it) {
+final void testIter_opIterDone (ref IterInfo it) {
   writeln("iterator deinitialized, cur=", it.cur);
 }
 
-final bool testIter_opNext (ref IterInfo it, ref int v) {
+final bool testIter_opIterNext (ref IterInfo it, ref int v) {
   if (it.cur > 6) return false;
   v = it.cur;
   ++it.cur;

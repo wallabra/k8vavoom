@@ -1139,7 +1139,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       // setup types for `auto`
       for (int f = 0; f < vexcount; ++f) {
         if (vex[f].decl && vex[f].decl->Vars[0].TypeExpr->IsAutoTypeExpr()) {
-          VStr newName = VStr(*((VInvocationBase *)loarr)->GetMethodName())+"_opNext";
+          VStr newName = VStr(*((VInvocationBase *)loarr)->GetMethodName())+"_opIterNext";
           VInvocationBase *ee = (VInvocationBase *)loarr->SyntaxCopy();
           ee->SetMethodName(VName(*newName));
           vex[f].decl->Vars[0].TypeOfExpr = ee;

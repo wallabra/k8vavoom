@@ -391,26 +391,26 @@ same as using ranged iterators:
 I.e. iterator simply should be a function call. Let's see how we can define iterator
 (this will also explain what <vardefs> and <args> are):
 
-  <bool|void> iter_opInit (ref type arg[, <args>]) { ... }
-  void iter_opDone (ref type arg) { ... }
-  bool iter_opNext (ref type arg[, <loopargs>]) { ... }
+  <bool|void> iter_opIterInit (ref type arg[, <args>]) { ... }
+  void iter_opIterDone (ref type arg) { ... }
+  bool iter_opIterNext (ref type arg[, <loopargs>]) { ... }
 
 Here, iterator name is `iter` (i.e. use `iter` as name part in `foreach`).
 
-VM will call `_opInit` first, and its first argument is the hidden loop
+VM will call `_opIterInit` first, and its first argument is the hidden loop
 indexing variable (you cannot access it from `foreach` body, but it will be
-passed to each iterator `opXXX`). `_opInit` can be `void`, or it can return `bool`.
+passed to each iterator `opXXX`). `_opIterInit` can be `void`, or it can return `bool`.
 In the later case, you can return `false` to skip *BOTH* loop body, and iterator
 finalizer. Also, <args> from `foreach` will be passed to initializer.
 
 If initializer succeeds, at each loop start (even at the first iteration), VM will
-call `_opNext`, passing hidden indexing variable as the first arg, and <vardefs> as
-the other args (and all `_opNext` parameters should be `ref`). Return `false` from
-`_opNext` to stoop iterating, and jump to the finalizer.
+call `_opIterNext`, passing hidden indexing variable as the first arg, and <vardefs> as
+the other args (and all `_opIterNext` parameters should be `ref`). Return `false` from
+`_opIterNext` to stoop iterating, and jump to the finalizer.
 
-And finally, VM will call iterator finalizer -- `_opDone`. Finalizer should be `void`,
+And finally, VM will call iterator finalizer -- `_opIterDone`. Finalizer should be `void`,
 and should have exactly one arg -- for hidden indexing variable. Note that finalizer is
-optional -- you can do all your finalizing work in `_opNext` before returning `false`,
+optional -- you can do all your finalizing work in `_opIterNext` before returning `false`,
 and don't define finalizer at all.
 
 Usually, hidden indexing variable will be some kind of struct, where you'll keep all the
