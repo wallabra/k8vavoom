@@ -1,0 +1,27 @@
+class Test : Object;
+
+class Test1 : Test;
+int n = 42;
+
+
+class Main : Object;
+
+class!Test castClass;
+
+void main () {
+  Test t0 = SpawnObject(Test);
+  Test t1 = SpawnObject(Test1);
+  class!Test c2 = Test1;
+  castClass = Test1;
+  writeln(Test1(t1).n, " : ", 42);
+
+  auto t2 = castClass(t0);
+  if (t2) writeln("FUCK!");
+  auto t3 = castClass(t1);
+  if (!t3) writeln("FUCK!"); else writeln(Test1(t3).n, " : ", 42);
+
+  t2 = c2(t0);
+  if (t2) writeln("FUCK!");
+  t3 = c2(t1);
+  if (!t3) writeln("FUCK!"); else writeln(Test1(t3).n, " : ", 42);
+}
