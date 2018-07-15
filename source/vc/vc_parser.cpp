@@ -1390,8 +1390,12 @@ VStatement *VParser::ParseStatement () {
         return Switch;
       }
     case TK_Delete:
-      Lex.NextToken();
-      return new VDeleteStatement(ParseExpression(false), l); // no assignments
+      {
+        Lex.NextToken();
+        VStatement *st = new VDeleteStatement(ParseExpression(false), l); // no assignments
+        Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        return st;
+      }
     case TK_LBrace:
       Lex.NextToken();
       return ParseCompoundStatement();
