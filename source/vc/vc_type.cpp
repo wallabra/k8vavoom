@@ -761,7 +761,7 @@ void VScriptArray::SetNum (int NewNum, const VFieldType &Type, bool doShrink) {
   // as a special case setting size to 0 should clear the array
        if (NewNum == 0) Clear(Type);
   else if (NewNum > ArrSize) Resize(NewNum+NewNum*3/8+32, Type); // resize will take care of cleanups
-  else if (doShrink && ArrSize > 32 && NewNum > 32 && NewNum < ArrSize/3) Resize(ArrSize/3+8, Type); // resize will take care of cleanups
+  else if (doShrink && ArrSize > 32 && NewNum > 32 && NewNum < ArrSize/3) Resize(NewNum+NewNum/3+8, Type); // resize will take care of cleanups
   else if (NewNum < ArrNum) {
     // clear unused values (so possible array growth will not hit stale data, and strings won't hang it memory)
     int InnerSize = Type.GetSize();

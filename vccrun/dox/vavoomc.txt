@@ -411,7 +411,8 @@ the other args (and all `_opIterNext` parameters should be `ref`). Return `false
 And finally, VM will call iterator finalizer -- `_opIterDone`. Finalizer should be `void`,
 and should have exactly one arg -- for hidden indexing variable. Note that finalizer is
 optional -- you can do all your finalizing work in `_opIterNext` before returning `false`,
-and don't define finalizer at all.
+and don't define finalizer at all. But note that `return` and `break` will not cleanup
+iterators without finalizers.
 
 Usually, hidden indexing variable will be some kind of struct, where you'll keep all the
 data required to do the actual iteration.
