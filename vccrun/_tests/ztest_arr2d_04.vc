@@ -1,0 +1,29 @@
+class Main : Object;
+
+
+void main () {
+  array!int a2d;
+  a2d.SetSize(4, 3);
+  writeln(a2d.length1, " : ", a2d.length2, " : ", a2d.length);
+  // this is 3 rows of 4 elements
+  // that is, flat index is ind1*dim0+ind0
+  a2d[1, 0] = 9;
+  a2d[1, 2] = 6;
+  a2d[$-1, $-1] = 666;
+  foreach (int y; 0..a2d.length2) {
+    foreach (int x; 0..a2d.length1) {
+      write(a2d[x, y], " ");
+    }
+    writeln();
+  }
+  writeln("===========");
+  writeln(a2d[0], " : ", a2d[1]);
+  writeln("===========");
+  foreach (int y; 0..3) {
+    foreach (int x; 0..4) {
+      write(a2d[y*4+x], " ");
+    }
+    writeln();
+  }
+  foreach (auto idx, auto val; a2d) writeln(idx, ": ", val);
+}
