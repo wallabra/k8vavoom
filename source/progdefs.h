@@ -410,6 +410,8 @@ enum {
   // dynamic cast
   DECLARE_OPC(DynamicCast, Member),
   DECLARE_OPC(DynamicClassCast, Member),
+  DECLARE_OPC(DynamicCastIndirect, None),
+  DECLARE_OPC(DynamicClassCastIndirect, None),
 
   // access to the default object
   DECLARE_OPC(GetDefaultObj, None),

@@ -39,6 +39,107 @@
 
 //==========================================================================
 //
+//  VDynCastWithVar::VDynCastWithVar
+//
+//==========================================================================
+VDynCastWithVar::VDynCastWithVar (VExpression *awhat, VExpression *adestclass, const TLocation &aloc)
+  : VExpression(aloc)
+  , what(awhat)
+  , destclass(adestclass)
+{
+}
+
+
+//==========================================================================
+//
+//  VDynCastWithVar::~VDynCastWithVar
+//
+//==========================================================================
+VDynCastWithVar::~VDynCastWithVar () {
+  delete what; what = nullptr;
+  delete destclass; destclass = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VDynCastWithVar::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynCastWithVar::SyntaxCopy () {
+  auto res = new VDynCastWithVar();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynCastWithVar::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDynCastWithVar::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDynCastWithVar *)e;
+  res->what = (what ? what->SyntaxCopy() : nullptr);
+  res->destclass = (destclass ? destclass->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDynCastWithVar::DoResolve
+//
+//==========================================================================
+VExpression *VDynCastWithVar::DoResolve (VEmitContext &ec) {
+  if (what) what = what->Resolve(ec);
+  if (destclass) destclass = destclass->Resolve(ec);
+  if (!what || !destclass) { delete this; return nullptr; }
+
+  if (destclass->Type.Type != TYPE_Class) {
+    ParseError(destclass->Loc, "Dynamic cast destination must be of a class type");
+    delete this;
+    return nullptr;
+  }
+
+  if (what->Type.Type != TYPE_Class && what->Type.Type != TYPE_Reference) {
+    ParseError(what->Loc, "Dynamic cast destination must be of a class or an object type");
+    delete this;
+    return nullptr;
+  }
+
+  // result of this is of `what` type with replaced class
+  Type = destclass->Type;
+  Type.Type = what->Type.Type;
+  Type.Class = destclass->Type.Class;
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDynCastWithVar::Emit
+//
+//==========================================================================
+void VDynCastWithVar::Emit (VEmitContext &ec) {
+  if (what) what->Emit(ec);
+  if (destclass) destclass->Emit(ec);
+  ec.AddStatement((what->Type.Type == TYPE_Class ? OPC_DynamicClassCastIndirect : OPC_DynamicCastIndirect), Loc);
+}
+
+
+//==========================================================================
+//
+//  VDynCastWithVar::toString
+//
+//==========================================================================
+VStr VDynCastWithVar::toString () const {
+  return e2s(destclass)+"("+e2s(what)+")";
+}
+
+
+//==========================================================================
+//
 //  VArgMarshall::VArgMarshall
 //
 //==========================================================================
@@ -469,12 +570,24 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
   int num = ec.CheckForLocalVar(Name);
   if (num != -1) {
     VFieldType tp = ec.GetLocalVarType(num);
-    if (tp.Type != TYPE_Delegate) {
+    if (tp.Type != TYPE_Class && tp.Type != TYPE_Delegate) {
       ParseError(Loc, "Cannot call non-delegate");
       delete this;
       return nullptr;
     }
-    VInvocation *e = new VInvocation(tp.Function, num, Loc, NumArgs, Args);
+    if (tp.Type == TYPE_Delegate) {
+      VInvocation *e = new VInvocation(tp.Function, num, Loc, NumArgs, Args);
+      NumArgs = 0;
+      delete this;
+      return e->Resolve(ec);
+    }
+    // cast to class variable
+    if (NumArgs != 1 || !Args[0] || Args[0]->IsDefaultArg()) {
+      ParseError(Loc, "Dynamic cast requires one argument");
+      delete this;
+      return nullptr;
+    }
+    VExpression *e = new VDynCastWithVar(Args[0], new VLocalVar(num, Loc), Loc);
     NumArgs = 0;
     delete this;
     return e->Resolve(ec);
@@ -508,11 +621,24 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
     }
 
     VField *field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
-    if (field != nullptr && field->Type.Type == TYPE_Delegate) {
-      VInvocation *e = new VInvocation(nullptr, field->Func, field, false, false, Loc, NumArgs, Args);
-      NumArgs = 0;
-      delete this;
-      return e->Resolve(ec);
+    if (field != nullptr) {
+      if (field->Type.Type == TYPE_Delegate) {
+        VInvocation *e = new VInvocation(nullptr, field->Func, field, false, false, Loc, NumArgs, Args);
+        NumArgs = 0;
+        delete this;
+        return e->Resolve(ec);
+      } else if (field->Type.Type == TYPE_Class) {
+        // cast to class variable
+        if (NumArgs != 1 || !Args[0] || Args[0]->IsDefaultArg()) {
+          ParseError(Loc, "Dynamic cast requires one argument");
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VDynCastWithVar(Args[0], new VFieldAccess(new VSelf(Loc), field, Loc, 0), Loc);
+        NumArgs = 0;
+        delete this;
+        return e->Resolve(ec);
+      }
     }
 
     if (VStr::Cmp(*Name, "write") == 0 || VStr::Cmp(*Name, "writeln") == 0) {

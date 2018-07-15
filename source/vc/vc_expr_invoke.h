@@ -26,6 +26,31 @@
 
 //==========================================================================
 //
+//  VDynCastWithVar
+//
+//==========================================================================
+class VDynCastWithVar : public VExpression {
+public:
+  VExpression *what;
+  VExpression *destclass;
+
+public:
+  VDynCastWithVar (VExpression *awhat, VExpression *adestclass, const TLocation &aloc);
+  virtual ~VDynCastWithVar () override;
+  virtual VExpression *DoResolve (VEmitContext &ec) override;
+  virtual void Emit (VEmitContext &ec) override;
+
+  virtual VExpression *SyntaxCopy () override;
+  virtual VStr toString () const override;
+
+protected:
+  VDynCastWithVar () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
 //  VArgMarshall
 //
 //==========================================================================

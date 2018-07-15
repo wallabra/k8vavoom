@@ -2060,13 +2060,29 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynamicCast)
-        sp[-1].p = sp[-1].p && ((VObject *)sp[-1].p)->IsA((VClass *)ReadPtr(ip+1)) ? sp[-1].p : 0;
+        sp[-1].p = (sp[-1].p && ((VObject *)sp[-1].p)->IsA((VClass *)ReadPtr(ip+1)) ? sp[-1].p : nullptr);
         ip += 1+sizeof(void *);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DynamicClassCast)
-        sp[-1].p = sp[-1].p && ((VClass *)sp[-1].p)->IsChildOf((VClass *)ReadPtr(ip+1)) ? sp[-1].p : 0;
+        sp[-1].p = (sp[-1].p && ((VClass *)sp[-1].p)->IsChildOf((VClass *)ReadPtr(ip+1)) ? sp[-1].p : nullptr);
         ip += 1+sizeof(void *);
+        PR_VM_BREAK;
+
+      // [-2]: what to cast
+      // [-1]: destination class
+      PR_VM_CASE(OPC_DynamicCastIndirect)
+        sp[-2].p = (sp[-1].p && sp[-2].p && ((VObject *)sp[-2].p)->IsA((VClass *)sp[-1].p) ? sp[-2].p : nullptr);
+        --sp;
+        ++ip;
+        PR_VM_BREAK;
+
+      // [-2]: what to cast
+      // [-1]: destination class
+      PR_VM_CASE(OPC_DynamicClassCastIndirect)
+        sp[-2].p = (sp[-1].p && sp[-2].p && ((VClass *)sp[-2].p)->IsChildOf((VClass *)sp[-1].p) ? sp[-2].p : nullptr);
+        --sp;
+        ++ip;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_GetDefaultObj)

@@ -788,6 +788,11 @@ struct Instr {
       case OPC_DynamicClassCast:
         return;
 
+      case OPC_DynamicClassCastIndirect:
+      case OPC_DynamicCastIndirect:
+        spdelta -= 1;
+        return;
+
       // access to the default object
       case OPC_GetDefaultObj:
       case OPC_GetClassDefaultObj:
