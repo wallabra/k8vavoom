@@ -181,7 +181,7 @@ void VThinkerChannel::Update () {
       VFieldType IntType = F->Type;
       IntType.Type = F->Type.ArrayInnerType;
       int InnerSize = IntType.GetSize();
-      for (int i = 0; i < F->Type.ArrayDim; ++i) {
+      for (int i = 0; i < F->Type.GetArrayDim(); ++i) {
         vuint8 *Val = FieldValue+i*InnerSize;
         vuint8 *OldVal = OldData+F->Ofs+i*InnerSize;
         if (VField::IdenticalValue(Val, OldVal, IntType)) continue;
@@ -193,7 +193,7 @@ void VThinkerChannel::Update () {
         }
 
         Msg.WriteInt(F->NetIndex, Thinker->GetClass()->NumNetFields);
-        Msg.WriteInt(i, F->Type.ArrayDim);
+        Msg.WriteInt(i, F->Type.GetArrayDim());
         if (VField::NetSerialiseValue(Msg, Connection->ObjMap, Val, IntType)) {
           VField::CopyFieldValue(Val, OldVal, IntType);
         }
@@ -262,7 +262,7 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
     }
     if (F) {
       if (F->Type.Type == TYPE_Array) {
-        int Idx = Msg.ReadInt(F->Type.ArrayDim);
+        int Idx = Msg.ReadInt(F->Type.GetArrayDim());
         VFieldType IntType = F->Type;
         IntType.Type = F->Type.ArrayInnerType;
         VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Thinker+F->Ofs+Idx*IntType.GetSize(), IntType);
