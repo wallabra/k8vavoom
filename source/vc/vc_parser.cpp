@@ -1032,7 +1032,20 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       VLocalDecl *decl = nullptr;
       VExpression *vexpr = nullptr;
       auto refloc = Lex.Location;
-      bool isRef = Lex.Check(TK_Ref);
+      bool isRef = false, isConst = false;
+      for (;;) {
+        if (Lex.Check(TK_Ref)) {
+          if (isRef) ParseError(Lex.Location, "duplicate `ref`");
+          isRef = true;
+          continue;
+        }
+        if (Lex.Check(TK_Const)) {
+          if (isConst) ParseError(Lex.Location, "duplicate `const`");
+          isConst = true;
+          continue;
+        }
+        break;
+      }
       auto vtype = ParseOptionalTypeDecl(TK_Semicolon);
       if (vtype) {
         decl = ParseLocalVar(vtype, LocalForeach);
@@ -1046,10 +1059,12 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
           vexpr = new VIntLiteral(0, Lex.Location);
         } else {
           decl->Vars[0].isRef = isRef;
+          decl->Vars[0].isConst = isConst;
           vexpr = new VSingleName(decl->Vars[0].Name, decl->Loc);
         }
       } else {
         if (isRef) ParseError(refloc, "`ref` is not allowed without real declaration");
+        if (isConst) ParseError(refloc, "`const` is not allowed without real declaration");
         vexpr = ParseExpression(false);
       }
       if (!vexpr) {
@@ -1062,6 +1077,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       } else {
         vex[vexcount].var = vexpr;
         vex[vexcount].isRef = isRef;
+        vex[vexcount].isConst = isConst;
         vex[vexcount].decl = decl;
         ++vexcount;
       }
@@ -1086,6 +1102,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       vex[0].decl = CreateUnnamedLocal(VFieldType(TYPE_Int), l);
       vex[0].var = new VSingleName(vex[0].decl->Vars[0].Name, vex[0].decl->Loc);
       vex[0].isRef = false;
+      vex[0].isConst = false;
       vexcount = 1;
     }
     if (vex[0].decl) {
@@ -1137,6 +1154,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
         vex[0].decl = CreateUnnamedLocal(VFieldType(TYPE_Int), l);
         vex[0].var = new VSingleName(vex[0].decl->Vars[0].Name, vex[0].decl->Loc);
         vex[0].isRef = false;
+        vex[0].isConst = false;
         vexcount = 1;
       }
       // fix loop var type
@@ -1149,14 +1167,17 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
         vex[vexcount-1].decl->Vars[0].TypeOfExpr = new VArrayElement(loarr->SyntaxCopy(), new VIntLiteral(0, vex[vexcount-1].decl->Vars[0].Loc), vex[vexcount-1].decl->Vars[0].Loc, true);
       }
       for (int f = 0; f < vexcount; ++f) {
-        if (vex[f].decl) vex[f].decl->Vars[0].isRef = vex[f].isRef;
+        if (vex[f].decl) {
+          vex[f].decl->Vars[0].isRef = vex[f].isRef;
+          vex[f].decl->Vars[0].isConst = vex[f].isConst;
+        }
       }
       // array
       VForeachArray *fer;
       if (vexcount == 1) {
-        fer = new VForeachArray(loarr, nullptr, vex[0].var, vex[0].isRef, l);
+        fer = new VForeachArray(loarr, nullptr, vex[0].var, vex[0].isRef, vex[0].isConst, l);
       } else {
-        fer = new VForeachArray(loarr, vex[0].var, vex[1].var, vex[1].isRef, l);
+        fer = new VForeachArray(loarr, vex[0].var, vex[1].var, vex[1].isRef, vex[1].isConst, l);
       }
       fer->reversed = ParseForeachOptions();
       Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);

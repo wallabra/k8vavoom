@@ -163,7 +163,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
     if (Type.Type == TYPE_Void || Type.Type == TYPE_Automatic) ParseError(e.TypeExpr->Loc, "Bad variable type for variable `%s`", *e.Name);
 
     VLocalVarDef &L = ec.AllocLocal(e.Name, Type, e.Loc);
-    L.ParamFlags = (e.isRef ? FPARM_Ref : 0);
+    L.ParamFlags = (e.isRef ? FPARM_Ref : 0)|(e.isConst ? FPARM_Const : 0);
     //if (e.isRef) fprintf(stderr, "*** <%s:%d> is REF\n", *e.Name, L.ldindex);
     e.locIdx = L.ldindex;
 

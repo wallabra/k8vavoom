@@ -426,7 +426,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     //delete opcopy; // we never ever need opcopy here
     //opcopy = nullptr; // just in case
     int Flags = op->Flags;
-    op->Flags &= ~FIELD_ReadOnly;
+    if (assType != AssType::AssTarget) op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
     VExpression *e = new VFieldAccess(op, field, Loc, Flags&FIELD_ReadOnly);
     op = nullptr;
@@ -436,20 +436,30 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
 
   // dynarray properties
   if (op->Type.Type == TYPE_DynamicArray &&
-      (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length))
+      (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length ||
+       FieldName == "length1" || FieldName == "length2"))
   {
     //delete opcopy; // we never ever need opcopy here
     //opcopy = nullptr; // just in case
     //VFieldType type = op->Type;
-    op->Flags &= ~FIELD_ReadOnly;
+    if (assType == AssType::AssTarget) {
+      if (FieldName == "length1" || FieldName == "length2") {
+        ParseError(Loc, "Use `SetSize` method to create 2d dynamic array");
+        delete this;
+        return nullptr;
+      }
+    } else {
+      op->Flags &= ~FIELD_ReadOnly;
+    }
     op->RequestAddressOf();
     if (assType == AssType::AssTarget) {
-      VExpression *e = new VDynArraySetNum(op, nullptr, Loc);
+      // op1 will be patched in assign resolver, so it is ok
+      VExpression *e = new VDynArraySetNum(op, nullptr, nullptr, Loc);
       op = nullptr;
       delete this;
       return e->Resolve(ec);
     } else {
-      VExpression *e = new VDynArrayGetNum(op, Loc);
+      VExpression *e = new VDynArrayGetNum(op, (FieldName == "length1" ? 1 : FieldName == "length2" ? 2 : 0), Loc);
       op = nullptr;
       delete this;
       return e->Resolve(ec);
@@ -458,7 +468,8 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
 
   // array properties
   if (op->Type.Type == TYPE_Array &&
-      (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length))
+      (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length ||
+       FieldName == "length1" || FieldName == "length2"))
   {
     //delete opcopy; // we never ever need opcopy here
     //opcopy = nullptr; // just in case
@@ -467,7 +478,10 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       delete this;
       return nullptr;
     }
-    VExpression *e = new VIntLiteral(op->Type.GetArrayDim(), Loc);
+    VExpression *e;
+         if (FieldName == "length1") e = new VIntLiteral(op->Type.GetFirstDim(), Loc);
+    else if (FieldName == "length2") e = new VIntLiteral(op->Type.GetSecondDim(), Loc);
+    else e = new VIntLiteral(op->Type.GetArrayDim(), Loc);
     delete this;
     return e->Resolve(ec);
   }

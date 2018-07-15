@@ -714,12 +714,16 @@ VExpression *VDollar::DoResolve (VEmitContext &ec) {
     delete this;
     return nullptr;
   }
-  if (ec.IndArray->Is2d()) {
-    ParseError(Loc, "`$` is not implemented for 2d array indexing yet");
-    delete this;
-    return nullptr;
+  VExpression *e;
+  if (ec.IndArray->Is2D()) {
+    if (ec.IndArray->resolvingInd2) {
+      e = new VDotField(ec.IndArray->GetOpSyntaxCopy(), VName("length2"), Loc);
+    } else {
+      e = new VDotField(ec.IndArray->GetOpSyntaxCopy(), VName("length1"), Loc);
+    }
+  } else {
+    e = new VDotField(ec.IndArray->GetOpSyntaxCopy(), VName("length"), Loc);
   }
-  VExpression *e = new VDotField(ec.IndArray->GetOpSyntaxCopy(), VName("length"), Loc);
   delete this;
   return e->Resolve(ec);
 }

@@ -889,7 +889,7 @@ func_loop:
       // [-3]: op
       // [-2]: idx
       // [-1]: idx2
-      PR_VM_CASE(OPC_CheckArrayBounds2d)
+      PR_VM_CASE(OPC_CheckArrayBounds2D)
         if (sp[-2].i < 0 || sp[-2].i >= ReadInt16(ip+1)) { cstDump(ip); Sys_Error("First array index %d is out of bounds (%d)", sp[-2].i, ReadInt16(ip+1)); }
         if (sp[-1].i < 0 || sp[-1].i >= ReadInt16(ip+1+2)) { cstDump(ip); Sys_Error("Second array index %d is out of bounds (%d)", sp[-1].i, ReadInt16(ip+1+2)); }
         ip += 1+2+2+4;
@@ -920,7 +920,7 @@ func_loop:
       // [-3]: op
       // [-2]: idx
       // [-1]: idx2
-      PR_VM_CASE(OPC_ArrayElement2d)
+      PR_VM_CASE(OPC_ArrayElement2D)
         sp[-3].p = (vuint8 *)sp[-3].p+(sp[-1].i*ReadInt16(ip+1)+sp[-2].i)*ReadInt32(ip+1+2+2);
         sp -= 2;
         ip += 1+2+2+4;
@@ -1854,20 +1854,6 @@ func_loop:
 
       // [-2]: *dynarray
       // [-1]: index
-      /*
-      PR_VM_CASE(OPC_DynArrayElementS)
-        if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) {
-          cstDump(ip);
-          Sys_Error("Index %d outside the bounds of an array (%d)", sp[-1].i, ((VScriptArray *)sp[-2].p)->Num());
-        }
-        sp[-2].p = ((VScriptArray *)sp[-2].p)->Ptr()+sp[-1].i*ReadInt16(ip+1);
-        ip += 3;
-        --sp;
-        PR_VM_BREAK;
-      */
-
-      // [-2]: *dynarray
-      // [-1]: index
       PR_VM_CASE(OPC_DynArrayElementB)
         if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) {
           cstDump(ip);
@@ -1887,11 +1873,15 @@ func_loop:
           ++ip;
           ReadType(Type, ip);
           //ip += 9+sizeof(VClass *);
-          if (sp[-1].i < 0) { cstDump(ip); Sys_Error("Array index %d is negative", sp[-1].i); }
-          if (sp[-1].i >= MaxDynArrayLength) { cstDump(ip); Sys_Error("Array index %d is too big", sp[-1].i); }
           VScriptArray &A = *(VScriptArray *)sp[-2].p;
-          if (sp[-1].i >= A.Num()) A.SetNum(sp[-1].i+1, Type);
-          sp[-2].p = A.Ptr()+sp[-1].i*Type.GetSize();
+          int idx = sp[-1].i;
+          if (idx < 0) { cstDump(ip); Sys_Error("Array index %d is negative", idx); }
+          if (idx >= A.Num()) {
+            if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot grow 2D array"); }
+            if (idx >= MaxDynArrayLength) { cstDump(ip); Sys_Error("Array index %d is too big", idx); }
+            A.SetNum(idx+1, Type);
+          }
+          sp[-2].p = A.Ptr()+idx*Type.GetSize();
           --sp;
         }
         PR_VM_BREAK;
@@ -1902,17 +1892,32 @@ func_loop:
         sp[-1].i = ((VScriptArray *)sp[-1].p)->Num();
         PR_VM_BREAK;
 
+      // [-1]: *dynarray
+      PR_VM_CASE(OPC_DynArrayGetNum1)
+        ++ip;
+        sp[-1].i = ((VScriptArray *)sp[-1].p)->length1();
+        PR_VM_BREAK;
+
+      // [-1]: *dynarray
+      PR_VM_CASE(OPC_DynArrayGetNum2)
+        ++ip;
+        sp[-1].i = ((VScriptArray *)sp[-1].p)->length2();
+        PR_VM_BREAK;
+
       // [-2]: *dynarray
       // [-1]: length
       PR_VM_CASE(OPC_DynArraySetNum)
         {
+          VScriptArray &A = *(VScriptArray *)sp[-2].p;
+          int newsize = sp[-1].i;
+          // allow clearing for 2d arrays
+          if (A.Is2D() && newsize != 0) { cstDump(ip); Sys_Error("Cannot resize 2D array"); }
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
-          //ip += 9+sizeof(VClass *);
-          if (sp[-1].i < 0) { cstDump(ip); Sys_Error("Array index %d is negative", sp[-1].i); }
-          if (sp[-1].i > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array index %d is too big", sp[-1].i); }
-          ((VScriptArray *)sp[-2].p)->SetNum(sp[-1].i, Type);
+          if (newsize < 0) { cstDump(ip); Sys_Error("Array index %d is negative", newsize); }
+          if (newsize > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array index %d is too big", newsize); }
+          A.SetNum(newsize, Type);
           sp -= 2;
         }
         PR_VM_BREAK;
@@ -1921,16 +1926,17 @@ func_loop:
       // [-1]: delta
       PR_VM_CASE(OPC_DynArraySetNumMinus)
         {
+          VScriptArray &A = *(VScriptArray *)sp[-2].p;
+          int newsize = sp[-1].i;
+          // allow clearing for 2d arrays
+          if (A.Is2D() && newsize != 0 && newsize != A.length()) { cstDump(ip); Sys_Error("Cannot resize 2D array"); }
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
-          //ip += 9+sizeof(VClass *);
-          if (sp[-1].i < 0) { cstDump(ip); Sys_Error("Array shrink delta %d is negative", sp[-1].i); }
-          if (sp[-1].i > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array shrink delta %d is too big", sp[-1].i); }
-          VScriptArray &A = *(VScriptArray *)sp[-2].p;
-          if (A.length() < sp[-1].i) { cstDump(ip); Sys_Error("Array shrink delta %d is too big (%d)", sp[-1].i, A.length()); }
-          if (sp[-1].i > 0) A.SetNumMinus(sp[-1].i, Type);
-          //((VScriptArray *)sp[-2].p)->SetNumMinus(sp[-1].i, Type);
+          if (newsize < 0) { cstDump(ip); Sys_Error("Array shrink delta %d is negative", newsize); }
+          if (newsize > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array shrink delta %d is too big", newsize); }
+          if (A.length() < newsize) { cstDump(ip); Sys_Error("Array shrink delta %d is too big (%d)", newsize, A.length()); }
+          if (newsize > 0) A.SetNumMinus(newsize, Type);
           sp -= 2;
         }
         PR_VM_BREAK;
@@ -1939,16 +1945,17 @@ func_loop:
       // [-1]: delta
       PR_VM_CASE(OPC_DynArraySetNumPlus)
         {
+          VScriptArray &A = *(VScriptArray *)sp[-2].p;
+          int newsize = sp[-1].i;
+          // allow clearing for 2d arrays
+          if (A.Is2D() && newsize != 0 && newsize != A.length()) { cstDump(ip); Sys_Error("Cannot resize 2D array"); }
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
-          //ip += 9+sizeof(VClass *);
-          if (sp[-1].i < 0) { cstDump(ip); Sys_Error("Array grow delta %d is negative", sp[-1].i); }
-          if (sp[-1].i > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array grow delta %d is too big", sp[-1].i); }
-          VScriptArray &A = *(VScriptArray *)sp[-2].p;
-          if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < sp[-1].i) { cstDump(ip); Sys_Error("Array grow delta %d is too big (%d)", sp[-1].i, A.length()); }
-          if (sp[-1].i > 0) A.SetNumPlus(sp[-1].i, Type);
-          //((VScriptArray *)sp[-2].p)->SetNumPlus(sp[-1].i, Type);
+          if (newsize < 0) { cstDump(ip); Sys_Error("Array grow delta %d is negative", newsize); }
+          if (newsize > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array grow delta %d is too big", newsize); }
+          if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < newsize) { cstDump(ip); Sys_Error("Array grow delta %d is too big (%d)", newsize, A.length()); }
+          if (newsize > 0) A.SetNumPlus(newsize, Type);
           sp -= 2;
         }
         PR_VM_BREAK;
@@ -1958,19 +1965,18 @@ func_loop:
       // [-1]: count
       PR_VM_CASE(OPC_DynArrayInsert)
         {
+          VScriptArray &A = *(VScriptArray *)sp[-3].p;
+          if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot insert into 2D array"); }
+          int index = sp[-2].i;
+          int count = sp[-1].i;
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
-          //ip += 9+sizeof(VClass *);
-          int count = sp[-1].i;
-          int index = sp[-2].i;
-          VScriptArray &A = *(VScriptArray *)sp[-3].p;
           if (count < 0) { cstDump(ip); Sys_Error("Array count %d is negative", count); }
           if (index < 0) { cstDump(ip); Sys_Error("Array index %d is negative", index); }
           if (index > A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
           if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < count) { cstDump(ip); Sys_Error("Out of memory for dynarray"); }
           if (count > 0) A.Insert(index, count, Type);
-          //((VScriptArray *)sp[-3].p)->Insert(sp[-2].i, sp[-1].i, Type);
           sp -= 3;
         }
         PR_VM_BREAK;
@@ -1980,20 +1986,76 @@ func_loop:
       // [-1]: count
       PR_VM_CASE(OPC_DynArrayRemove)
         {
+          VScriptArray &A = *(VScriptArray *)sp[-3].p;
+          if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot insert into 2D array"); }
+          int index = sp[-2].i;
+          int count = sp[-1].i;
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
-          //ip += 9+sizeof(VClass *);
-          int count = sp[-1].i;
-          int index = sp[-2].i;
-          VScriptArray &A = *(VScriptArray *)sp[-3].p;
           if (count < 0) { cstDump(ip); Sys_Error("Array count %d is negative", count); }
           if (index < 0) { cstDump(ip); Sys_Error("Array index %d is negative", index); }
           if (index > A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
           if (count > A.length()-index) { cstDump(ip); Sys_Error("Array count %d is too big at %d (%d)", count, index, A.length()); }
           if (count > 0) A.Remove(index, count, Type);
-          //((VScriptArray *)sp[-3].p)->Remove(sp[-2].i, sp[-1].i, Type);
           sp -= 3;
+        }
+        PR_VM_BREAK;
+
+      // [-2]: *dynarray
+      // [-1]: size
+      PR_VM_CASE(OPC_DynArraySetSize1D)
+        {
+          VScriptArray &A = *(VScriptArray *)sp[-2].p;
+          int newsize = sp[-1].i;
+          VFieldType Type;
+          ++ip;
+          ReadType(Type, ip);
+          if (newsize < 0) { cstDump(ip); Sys_Error("Array size %d is negative", newsize); }
+          if (newsize > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array size %d is too big", newsize); }
+          A.SetNum(newsize, Type); // this will flatten it
+          sp -= 2;
+        }
+        PR_VM_BREAK;
+
+      // [-3]: *dynarray
+      // [-2]: size1
+      // [-1]: size2
+      PR_VM_CASE(OPC_DynArraySetSize2D)
+        {
+          VScriptArray &A = *(VScriptArray *)sp[-3].p;
+          int newsize1 = sp[-2].i;
+          int newsize2 = sp[-1].i;
+          VFieldType Type;
+          ++ip;
+          ReadType(Type, ip);
+          if (newsize1 < 1) { cstDump(ip); Sys_Error("Array size %d is too small", newsize1); }
+          if (newsize1 > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array size %d is too big", newsize1); }
+          if (newsize2 < 1) { cstDump(ip); Sys_Error("Array size %d is too small", newsize2); }
+          if (newsize2 > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array size %d is too big", newsize2); }
+          A.SetSize2D(newsize1, newsize2, Type);
+          sp -= 3;
+        }
+        PR_VM_BREAK;
+
+      // [-3]: *dynarray
+      // [-2]: index1
+      // [-1]: index2
+      // pointer to a new element left on the stack
+      PR_VM_CASE(OPC_DynArrayElement2D)
+        {
+          VScriptArray &A = *(VScriptArray *)sp[-3].p;
+          int idx1 = sp[-2].i;
+          int idx2 = sp[-1].i;
+          // 1d arrays can be accessed as 2d if second index is 0
+          if (idx2 != 0 && !A.Is2D()) { cstDump(ip); Sys_Error("Cannot index 1D array as 2D"); }
+          if (idx1 < 0) { cstDump(ip); Sys_Error("Array index %d is too small", idx1); }
+          if (idx1 >= A.length1()) { cstDump(ip); Sys_Error("Array index %d is too big (%d)", idx1, A.length1()); }
+          if (idx2 < 0) { cstDump(ip); Sys_Error("Array size %d is too small", idx2); }
+          if (idx2 >= A.length2()) { cstDump(ip); Sys_Error("Array size %d is too big (%d)", idx2, A.length2()); }
+          sp[-3].p = A.Ptr()+(idx2*A.length1()+idx1)*ReadInt32(ip+1);
+          ip += 5;
+          sp -= 2;
         }
         PR_VM_BREAK;
 

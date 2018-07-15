@@ -216,10 +216,10 @@ enum {
   DECLARE_OPC(Bool3FieldValue, FieldOffset_Byte),
   DECLARE_OPC(Bool3FieldValueS, FieldOffsetS_Byte),
   DECLARE_OPC(CheckArrayBounds, Int), /* won't pop index */
-  DECLARE_OPC(CheckArrayBounds2d, A2DDimsAndSize), /* won't pop indicies */
+  DECLARE_OPC(CheckArrayBounds2D, A2DDimsAndSize), /* won't pop indicies */
   DECLARE_OPC(ArrayElement, TypeSize),
   DECLARE_OPC(ArrayElementB, TypeSizeB),
-  DECLARE_OPC(ArrayElement2d, A2DDimsAndSize),
+  DECLARE_OPC(ArrayElement2D, A2DDimsAndSize),
   DECLARE_OPC(SliceElement, TypeSize),
   DECLARE_OPC(OffsetPtr, Int),
   DECLARE_OPC(PushPointed, None),
@@ -395,11 +395,17 @@ enum {
   DECLARE_OPC(DynArrayElementB, TypeSizeB),
   DECLARE_OPC(DynArrayElementGrow, Type),
   DECLARE_OPC(DynArrayGetNum, None),
+  DECLARE_OPC(DynArrayGetNum1, None),
+  DECLARE_OPC(DynArrayGetNum2, None), // second dimension
   DECLARE_OPC(DynArraySetNum, Type),
   DECLARE_OPC(DynArraySetNumMinus, Type),
   DECLARE_OPC(DynArraySetNumPlus, Type),
   DECLARE_OPC(DynArrayInsert, Type),
   DECLARE_OPC(DynArrayRemove, Type),
+  // 2d (and some 1d)
+  DECLARE_OPC(DynArraySetSize1D, Type),
+  DECLARE_OPC(DynArraySetSize2D, Type),
+  DECLARE_OPC(DynArrayElement2D, TypeSize),
 
   // dynamic cast
   DECLARE_OPC(DynamicCast, Member),

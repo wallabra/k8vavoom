@@ -55,7 +55,7 @@ public:
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &) override;
 
-  inline bool Is2d () const { return (ind2 != nullptr); }
+  inline bool Is2D () const { return (ind2 != nullptr); }
 
   VExpression *GetOpSyntaxCopy ();
 
@@ -99,8 +99,9 @@ protected:
 class VDynArrayGetNum : public VExpression {
 public:
   VExpression *ArrayExpr;
+  int dimNumber; // 0: total size
 
-  VDynArrayGetNum (VExpression *AArrayExpr, const TLocation &ALoc);
+  VDynArrayGetNum (VExpression *AArrayExpr, int aDimNumber, const TLocation &ALoc);
   virtual ~VDynArrayGetNum () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
@@ -121,9 +122,11 @@ class VDynArraySetNum : public VExpression {
 public:
   VExpression *ArrayExpr;
   VExpression *NumExpr;
+  VExpression *NumExpr2;
   int opsign; // <0: -=; >0: +=; 0: =; fixed in assign expression resolving
+  bool asSetSize;
 
-  VDynArraySetNum (VExpression *, VExpression *, const TLocation &);
+  VDynArraySetNum (VExpression *AArrayExpr, VExpression *ANumExpr, VExpression *ANumExpr2, const TLocation &ALoc);
   virtual ~VDynArraySetNum () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;

@@ -369,6 +369,7 @@ static SSAInstr *buildSSAFromVM (VMethod *func, TArray<FInstruction> &instr) {
   DECLARE_OPC(DynArrayElementB, TypeSizeB),
   DECLARE_OPC(DynArrayElementGrow, Type),
   DECLARE_OPC(DynArrayGetNum, None),
+  DECLARE_OPC(DynArrayGetNum2, None),
   DECLARE_OPC(DynArraySetNum, Type),
   DECLARE_OPC(DynArraySetNumMinus, Type),
   DECLARE_OPC(DynArraySetNumPlus, Type),

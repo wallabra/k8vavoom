@@ -122,23 +122,28 @@ struct VObjectDelegate {
 // dynamic array object, used in script executor
 class VScriptArray {
 private:
-  int ArrNum;
-  int ArrSize;
+  int ArrNum; // if bit 31 is set, this is 1st dim of 2d array
+  int ArrSize; // if bit 31 is set, this is 1st dim of 2d array
   vuint8 *ArrData;
 
 public:
   VScriptArray (const TArray<VStr> &xarr);
 
-  inline int Num () const { return ArrNum; }
-  inline int length () const { return ArrNum; }
+  inline int Num () const { return (ArrNum >= 0 ? ArrNum : (ArrNum&0x7fffffff)*(ArrSize&0x7fffffff)); }
+  inline int length () const { return (ArrNum >= 0 ? ArrNum : (ArrNum&0x7fffffff)*(ArrSize&0x7fffffff)); }
+  inline int length1 () const { return (ArrNum&0x7fffffff); }
+  inline int length2 () const { return (ArrNum >= 0 ? (ArrNum ? 1 : 0) : (ArrSize&0x7fffffff)); }
   inline vuint8 *Ptr () { return ArrData; }
+  inline bool Is2D () const { return (ArrNum < 0); }
+  inline void Flatten () { if (Is2D()) { vint32 oldlen = length(); ArrSize = ArrNum = oldlen; } }
   void Clear (const VFieldType &Type);
   void Resize (int NewSize, const VFieldType &Type);
-  void SetNum (int NewNum, const VFieldType &Type, bool doShrink=true);
+  void SetNum (int NewNum, const VFieldType &Type, bool doShrink=true); // will convert to 1d
   void SetNumMinus (int NewNum, const VFieldType &Type);
   void SetNumPlus (int NewNum, const VFieldType &Type);
   void Insert (int Index, int Count, const VFieldType &Type);
   void Remove (int Index, int Count, const VFieldType &Type);
+  void SetSize2D (int dim1, int dim2, const VFieldType &Type);
 };
 
 // required for VaVoom C VM

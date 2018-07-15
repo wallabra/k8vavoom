@@ -635,7 +635,6 @@ bool VFieldType::IsReplacableWith (const VFieldType &atype) const {
 //
 //==========================================================================
 VScriptArray::VScriptArray (const TArray<VStr>& xarr) {
-  //guard(VScriptArray::VScriptArray);
   ArrData = nullptr;
   ArrNum = 0;
   ArrSize = 0;
@@ -647,7 +646,6 @@ VScriptArray::VScriptArray (const TArray<VStr>& xarr) {
     for (int f = 0; f < xarr.Num(); ++f) *(VStr*)(&aa[f]) = xarr[f];
     ArrSize = ArrNum = xarr.Num();
   }
-  //unguard;
 }
 
 
@@ -663,7 +661,7 @@ void VScriptArray::Clear (const VFieldType &Type) {
     if (VField::NeedToDestructField(Type)) {
       // no need to clear the whole array, as any resizes will zero out unused elements
       int InnerSize = Type.GetSize();
-      for (int i = 0; i < ArrNum; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
+      for (int i = 0; i < length(); ++i) VField::DestructField(ArrData+i*InnerSize, Type);
     }
     delete[] ArrData;
   }
@@ -685,6 +683,7 @@ void VScriptArray::Resize (int NewSize, const VFieldType &Type) {
 
   if (NewSize <= 0) { Clear(Type); return; }
 
+  Flatten(); // flatten 2d array (anyway)
   if (NewSize == ArrSize) return;
 
   vuint8 *OldData = ArrData;
@@ -723,12 +722,29 @@ void VScriptArray::Resize (int NewSize, const VFieldType &Type) {
 
 //==========================================================================
 //
+//  VScriptArray::SetSize2D
+//
+//==========================================================================
+void VScriptArray::SetSize2D (int dim1, int dim2, const VFieldType &Type) {
+  if (dim1 <= 0 || dim2 <= 0) { Clear(Type); return; }
+  // resize array to make exact match
+  Resize(dim1*dim2, Type);
+  // resize flattened it, convert to 2d
+  ArrNum = dim1|0x80000000;
+  ArrSize = dim2|0x80000000;
+  if (!Is2D()) FatalError("VC: internal error in (VScriptArray::SetSize2D)");
+}
+
+
+//==========================================================================
+//
 //  VScriptArray::SetNum
 //
 //==========================================================================
 void VScriptArray::SetNum (int NewNum, const VFieldType &Type, bool doShrink) {
   guard(VScriptArray::SetNum);
   check(NewNum >= 0);
+  Flatten(); // flatten 2d array
   if (!doShrink && NewNum == 0) {
     if (ArrNum > 0) {
       // clear unused values (so possible array growth will not hit stale data, and strings won't hang it memory)
@@ -768,6 +784,7 @@ void VScriptArray::SetNum (int NewNum, const VFieldType &Type, bool doShrink) {
 //==========================================================================
 void VScriptArray::SetNumMinus (int NewNum, const VFieldType &Type) {
   guard(VScriptArray::SetNumMinus);
+  Flatten(); // flatten 2d array
   if (NewNum <= 0) return;
   if (NewNum > ArrNum) NewNum = ArrNum;
   NewNum = ArrNum-NewNum;
@@ -783,6 +800,7 @@ void VScriptArray::SetNumMinus (int NewNum, const VFieldType &Type) {
 //==========================================================================
 void VScriptArray::SetNumPlus (int NewNum, const VFieldType &Type) {
   guard(VScriptArray::SetNumPlus);
+  Flatten(); // flatten 2d array
   if (NewNum <= 0) return;
   if (ArrNum >= 0x3fffffff || 0x3fffffff-ArrNum < NewNum) FatalError("out of memory for dynarray");
   NewNum += ArrNum;
@@ -798,6 +816,7 @@ void VScriptArray::SetNumPlus (int NewNum, const VFieldType &Type) {
 //==========================================================================
 void VScriptArray::Insert (int Index, int Count, const VFieldType &Type) {
   guard(VScriptArray::Insert);
+  Flatten(); // flatten 2d array
   //check(ArrData != nullptr);
   check(Index >= 0);
   check(Index <= ArrNum);
@@ -829,6 +848,7 @@ void VScriptArray::Insert (int Index, int Count, const VFieldType &Type) {
 //==========================================================================
 void VScriptArray::Remove (int Index, int Count, const VFieldType &Type) {
   guard(VScriptArray::Remove);
+  Flatten(); // flatten 2d array
   //check(ArrData != nullptr);
   check(Index >= 0);
   check(Index+Count <= ArrNum);

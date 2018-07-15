@@ -681,6 +681,60 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
 
   if (SelfExpr->Type.Type == TYPE_DynamicArray) {
     delete selfCopy;
+
+    // allow `length()` for cpp-addicts
+    if (MethodName == NAME_Num || MethodName == NAME_Length || MethodName == NAME_length ||
+        MethodName == "length1" || MethodName == "length2")
+    {
+      if (NumArgs != 0) {
+        ParseError(Loc, "Cannot call `%s` with arguments", *MethodName);
+        delete this;
+        return nullptr;
+      }
+      VExpression *e = new VDynArrayGetNum(SelfExpr, (MethodName == "length1" ? 1 : MethodName == "length2" ? 2 : 0), Loc);
+      SelfExpr = nullptr;
+      delete this;
+      return e->Resolve(ec);
+    }
+
+    // set new array size, 1d or 2d
+    if (MethodName == "SetSize" || MethodName == "setSize") {
+      if (NumArgs < 1 || NumArgs > 2) {
+        ParseError(Loc, "Method `%s` expects one or two arguments", *MethodName);
+        delete this;
+        return nullptr;
+      }
+      // for 2d case, defaults are allowed
+      if (NumArgs == 1 && (!Args[0] || Args[0]->IsDefaultArg())) {
+        ParseError(Loc, "Method `%s` does not accept default arguments", *MethodName);
+        delete this;
+        return nullptr;
+      }
+      // check ref/out
+      for (int f = 0; f < NumArgs; ++f) {
+        if (!Args[f]) continue;
+        if (Args[f]->IsRefArg()) {
+          ParseError(Loc, "Method `%s` cannot has `ref` argument", *MethodName);
+          delete this;
+          return nullptr;
+        }
+        if (Args[f]->IsOutArg()) {
+          ParseError(Loc, "Method `%s` cannot has `out` argument", *MethodName);
+          delete this;
+          return nullptr;
+        }
+      }
+      // ok
+      //op->Flags &= ~FIELD_ReadOnly;
+      SelfExpr->RequestAddressOf();
+      VDynArraySetNum *e = new VDynArraySetNum(SelfExpr, Args[0], Args[1], Loc);
+      e->asSetSize = true;
+      SelfExpr = nullptr;
+      NumArgs = 0;
+      delete this;
+      return e->Resolve(ec);
+    }
+
     if (MethodName == NAME_Insert || VStr::Cmp(*MethodName, "insert") == 0) {
       if (NumArgs == 1) {
         if (Args[0]->GetArgName() == "count") {

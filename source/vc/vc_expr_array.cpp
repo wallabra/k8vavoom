@@ -138,29 +138,25 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
 
   bool wasInd2 = (ind2 != nullptr);
 
+  // note that 1d access to 2d array is ok
   if (wasInd2 && op) {
-    if (op->Type.Type != TYPE_Array) {
-      ParseError(Loc, "Only static arrays can be 2d yet");
+    bool wasErr = true;
+    if (op->Type.Type == TYPE_Array) {
+      if (!op->Type.IsArray2D()) {
+        ParseError(Loc, "2d access to 1d array");
+      } else {
+        wasErr = false;
+      }
+    } else if (op->Type.Type == TYPE_DynamicArray) {
+      wasErr = false;
+    } else {
+      ParseError(Loc, "Only arrays can be 2d yet");
+    }
+    if (wasErr) {
       opscopy.release();
       delete this;
       return nullptr;
     }
-    if (!op->Type.IsArray2D()) {
-      ParseError(Loc, "2d access to 1d array");
-      opscopy.release();
-      delete this;
-      return nullptr;
-    }
-  } else if (!wasInd2 && op) {
-    //k8: ah, let us do it
-    /*
-    if (op->Type.Type == TYPE_Array && !op->Type.IsArray1D()) {
-      ParseError(Loc, "1d access to 2d array");
-      opscopy.release();
-      delete this;
-      return nullptr;
-    }
-    */
   }
 
   VExpression *indcopy = (ind ? ind->SyntaxCopy() : nullptr);
@@ -254,7 +250,7 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
           return nullptr;
         }
         skipBoundsChecking = true;
-        // convert 2d access to 1d access (it is faster this way)
+        // convert 2d access to 1d access (it is slightly faster this way)
         if (ind2) {
           int x = ind->GetIntConst();
           int y = ind2->GetIntConst();
@@ -266,9 +262,14 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
         }
       }
     }
+    // if second index is 0, convert 2d access to 1d access (it is slightly faster this way)
+    if (ind2 && ind2->IsIntConst() && ind2->GetIntConst() == 0) {
+      delete ind2;
+      ind2 = nullptr;
+    }
     Flags = op->Flags;
     Type = op->Type.GetArrayInnerType();
-    op->Flags &= ~FIELD_ReadOnly;
+    if (!assTarget) op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
   } else if (op->Type.Type == TYPE_String) {
     // check bounds
@@ -524,10 +525,10 @@ void VArrayElement::Emit (VEmitContext &ec) {
     ec.AddStatement(OPC_StrSetChar, Loc);
   } else {
     if (op->Type.Type == TYPE_DynamicArray) {
-      if (IsAssign) {
-        ec.AddStatement(OPC_DynArrayElementGrow, RealType, Loc);
+      if (ind2) {
+        ec.AddStatement(OPC_DynArrayElement2D, RealType, Loc);
       } else {
-        ec.AddStatement(OPC_DynArrayElement, RealType, Loc);
+        ec.AddStatement((IsAssign ? OPC_DynArrayElementGrow : OPC_DynArrayElement), RealType, Loc);
       }
     } else if (op->Type.Type == TYPE_String) {
       if (IsAssign) {
@@ -542,13 +543,13 @@ void VArrayElement::Emit (VEmitContext &ec) {
       // `Resolve()` will set this flag if it did static check
       if (!skipBoundsChecking) {
         if (ind2) {
-          ec.AddStatement(OPC_CheckArrayBounds2d, op->Type, Loc);
+          ec.AddStatement(OPC_CheckArrayBounds2D, op->Type, Loc);
         } else {
           ec.AddStatement(OPC_CheckArrayBounds, op->Type.GetArrayDim(), Loc);
         }
       }
       if (ind2) {
-        ec.AddStatement(OPC_ArrayElement2d, op->Type, Loc);
+        ec.AddStatement(OPC_ArrayElement2D, op->Type, Loc);
       } else {
         ec.AddStatement(OPC_ArrayElement, RealType, Loc);
       }
@@ -783,9 +784,10 @@ void VSliceOp::Emit (VEmitContext &ec) {
 //  VDynArrayGetNum::VDynArrayGetNum
 //
 //==========================================================================
-VDynArrayGetNum::VDynArrayGetNum (VExpression *AArrayExpr, const TLocation &ALoc)
+VDynArrayGetNum::VDynArrayGetNum (VExpression *AArrayExpr, int aDimNumber, const TLocation &ALoc)
   : VExpression(ALoc)
   , ArrayExpr(AArrayExpr)
+  , dimNumber(aDimNumber)
 {
   Flags = FIELD_ReadOnly;
 }
@@ -822,6 +824,7 @@ void VDynArrayGetNum::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
   auto res = (VDynArrayGetNum *)e;
   res->ArrayExpr = (ArrayExpr ? ArrayExpr->SyntaxCopy() : nullptr);
+  res->dimNumber = dimNumber;
 }
 
 
@@ -842,8 +845,13 @@ VExpression *VDynArrayGetNum::DoResolve (VEmitContext &) {
 //
 //==========================================================================
 void VDynArrayGetNum::Emit (VEmitContext &ec) {
-  ArrayExpr->Emit(ec);
-  ec.AddStatement(OPC_DynArrayGetNum, Loc);
+  if (ArrayExpr) ArrayExpr->Emit(ec);
+  switch (dimNumber) {
+    case 0: ec.AddStatement(OPC_DynArrayGetNum, Loc); break;
+    case 1: ec.AddStatement(OPC_DynArrayGetNum1, Loc); break;
+    case 2: ec.AddStatement(OPC_DynArrayGetNum2, Loc); break;
+    default: FatalError("VC: internal error in (VDynArrayGetNum::Emit)");
+  }
 }
 
 
@@ -852,11 +860,13 @@ void VDynArrayGetNum::Emit (VEmitContext &ec) {
 //  VDynArraySetNum::VDynArraySetNum
 //
 //==========================================================================
-VDynArraySetNum::VDynArraySetNum (VExpression *AArrayExpr, VExpression *ANumExpr, const TLocation &ALoc)
+VDynArraySetNum::VDynArraySetNum (VExpression *AArrayExpr, VExpression *ANumExpr, VExpression *ANumExpr2, const TLocation &ALoc)
   : VExpression(ALoc)
   , ArrayExpr(AArrayExpr)
   , NumExpr(ANumExpr)
+  , NumExpr2(ANumExpr2)
   , opsign(0)
+  , asSetSize(!!ANumExpr2)
 {
   Type = VFieldType(TYPE_Void);
 }
@@ -869,6 +879,7 @@ VDynArraySetNum::VDynArraySetNum (VExpression *AArrayExpr, VExpression *ANumExpr
 //==========================================================================
 VDynArraySetNum::~VDynArraySetNum () {
   if (ArrayExpr) { delete ArrayExpr; ArrayExpr = nullptr; }
+  if (NumExpr2) { delete NumExpr2; NumExpr2 = nullptr; }
   if (NumExpr) { delete NumExpr; NumExpr = nullptr; }
 }
 
@@ -895,7 +906,9 @@ void VDynArraySetNum::DoSyntaxCopyTo (VExpression *e) {
   auto res = (VDynArraySetNum *)e;
   res->ArrayExpr = (ArrayExpr ? ArrayExpr->SyntaxCopy() : nullptr);
   res->NumExpr = (NumExpr ? NumExpr->SyntaxCopy() : nullptr);
+  res->NumExpr2 = (NumExpr2 ? NumExpr2->SyntaxCopy() : nullptr);
   res->opsign = opsign;
+  res->asSetSize = asSetSize;
 }
 
 
@@ -904,7 +917,28 @@ void VDynArraySetNum::DoSyntaxCopyTo (VExpression *e) {
 //  VDynArraySetNum::DoResolve
 //
 //==========================================================================
-VExpression *VDynArraySetNum::DoResolve (VEmitContext &) {
+VExpression *VDynArraySetNum::DoResolve (VEmitContext &ec) {
+  if (asSetSize) {
+    // in this case indicies are not resolved yet
+    if (opsign != 0) {
+      ParseError(Loc, "You cannot use '+=' or '-=' for `SetSize`");
+      delete this;
+      return nullptr;
+    }
+    if (opsign != 0) {
+      ParseError(Loc, "You cannot use '+=' or '-=' for `SetSize`");
+      delete this;
+      return nullptr;
+    }
+    if (NumExpr) NumExpr = NumExpr->Resolve(ec);
+    if (NumExpr2) {
+      NumExpr2 = NumExpr2->Resolve(ec);
+      if (!NumExpr2) { delete this; return nullptr; }
+    }
+    if (!NumExpr) { delete this; return nullptr; }
+    NumExpr->Type.CheckMatch(false, NumExpr->Loc, VFieldType(TYPE_Int));
+    if (NumExpr2) NumExpr2->Type.CheckMatch(false, NumExpr2->Loc, VFieldType(TYPE_Int));
+  }
   return this;
 }
 
@@ -915,11 +949,16 @@ VExpression *VDynArraySetNum::DoResolve (VEmitContext &) {
 //
 //==========================================================================
 void VDynArraySetNum::Emit (VEmitContext &ec) {
-  ArrayExpr->Emit(ec);
-  NumExpr->Emit(ec);
+  if (ArrayExpr) ArrayExpr->Emit(ec);
+  if (NumExpr) NumExpr->Emit(ec);
+  if (NumExpr2) NumExpr2->Emit(ec);
   if (opsign == 0) {
     // normal assign
-    ec.AddStatement(OPC_DynArraySetNum, ArrayExpr->Type.GetArrayInnerType(), Loc);
+    if (asSetSize) {
+      ec.AddStatement((NumExpr2 ? OPC_DynArraySetSize2D : OPC_DynArraySetSize1D), ArrayExpr->Type.GetArrayInnerType(), Loc);
+    } else {
+      ec.AddStatement(OPC_DynArraySetNum, ArrayExpr->Type.GetArrayInnerType(), Loc);
+    }
   } else if (opsign < 0) {
     // -=
     ec.AddStatement(OPC_DynArraySetNumMinus, ArrayExpr->Type.GetArrayInnerType(), Loc);

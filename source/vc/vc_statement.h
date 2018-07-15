@@ -289,8 +289,9 @@ public:
   VStatement *statement;
   bool reversed;
   bool isRef; // if `var` a reference?
+  bool isConst; // if `var` a const?
 
-  VForeachArray (VExpression *aarr, VExpression *aidx, VExpression *avar, bool aVarRef, const TLocation &aloc);
+  VForeachArray (VExpression *aarr, VExpression *aidx, VExpression *avar, bool aVarRef, bool aVarConst, const TLocation &aloc);
   virtual ~VForeachArray () override;
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
@@ -318,9 +319,10 @@ public:
   struct Var {
     VExpression *var;
     bool isRef;
+    bool isConst; // if `var` a const?
     VLocalDecl *decl; // used in parser
 
-    Var () : var(nullptr), isRef(false), decl(nullptr) {}
+    Var () : var(nullptr), isRef(false), isConst(false), decl(nullptr) {}
   };
 
 private:

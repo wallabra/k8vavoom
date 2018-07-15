@@ -490,14 +490,14 @@ struct Instr {
       case OPC_Bool3FieldValueS:
         return;
       case OPC_CheckArrayBounds: // won't pop index
-      case OPC_CheckArrayBounds2d: // won't pop index
+      case OPC_CheckArrayBounds2D: // won't pop index
         return;
       case OPC_ArrayElement:
       //case OPC_ArrayElementS:
       case OPC_ArrayElementB:
         spdelta = -1;
         return;
-      case OPC_ArrayElement2d:
+      case OPC_ArrayElement2D:
         spdelta = -2;
         return;
       case OPC_SliceElement:
@@ -763,15 +763,24 @@ struct Instr {
         spdelta = -1;
         return;
       case OPC_DynArrayGetNum:
+      case OPC_DynArrayGetNum1:
+      case OPC_DynArrayGetNum2:
         return;
       case OPC_DynArraySetNum:
       case OPC_DynArraySetNumMinus:
       case OPC_DynArraySetNumPlus:
+      case OPC_DynArraySetSize1D:
         spdelta = -2;
         return;
       case OPC_DynArrayInsert:
       case OPC_DynArrayRemove:
         spdelta = -3;
+        return;
+      case OPC_DynArraySetSize2D:
+        spdelta -= 3;
+        return;
+      case OPC_DynArrayElement2D:
+        spdelta -= 2;
         return;
 
       // dynamic cast

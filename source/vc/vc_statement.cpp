@@ -1189,7 +1189,7 @@ bool VForeachIota::BuildPathTo (const VStatement *dest, TArray<VStatement *> &pa
 //  VForeachArray::VForeachArray
 //
 //==========================================================================
-VForeachArray::VForeachArray (VExpression *aarr, VExpression *aidx, VExpression *avar, bool aVarRef, const TLocation &aloc)
+VForeachArray::VForeachArray (VExpression *aarr, VExpression *aidx, VExpression *avar, bool aVarRef, bool aVarConst, const TLocation &aloc)
   : VStatement(aloc)
   , idxinit(nullptr)
   , hiinit(nullptr)
@@ -1203,6 +1203,7 @@ VForeachArray::VForeachArray (VExpression *aarr, VExpression *aidx, VExpression 
   , statement(nullptr)
   , reversed(false)
   , isRef(aVarRef)
+  , isConst(aVarConst)
 {
 }
 
@@ -1253,6 +1254,7 @@ void VForeachArray::DoSyntaxCopyTo (VStatement *e) {
   res->statement = (statement ? statement->SyntaxCopy() : nullptr);
   res->reversed = reversed;
   res->isRef = isRef;
+  res->isConst = isConst;
   // no need to copy private data here, as `SyntaxCopy()` should be called only on unresolved things
 }
 
@@ -1400,6 +1402,7 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   delete limit;
 
   loopLoad = new VArrayElement(arr->SyntaxCopy(), index->SyntaxCopy(), Loc, true); // we can skip bounds checking here
+  if (isConst) loopLoad->Flags |= FIELD_ReadOnly;
   // refvar code will be completed in our codegen
   if (isRef) {
     check(indLocalVal >= 0);
@@ -1416,7 +1419,8 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
       auto flg = loopLoad->Flags;
       loopLoad->Flags &= ~FIELD_ReadOnly;
       loopLoad->RequestAddressOf();
-      varaddr->Flags = flg;
+      if (isConst) loopLoad->Flags |= FIELD_ReadOnly;
+      varaddr->Flags = flg|(isConst ? FIELD_ReadOnly : 0);
     }
   } else {
     loopLoad = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), loopLoad, loopLoad->Loc);
