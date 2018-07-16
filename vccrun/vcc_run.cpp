@@ -34,6 +34,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 VObject *mainObject = nullptr;
 VStr appName;
+bool compileOnly = false;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1278,6 +1279,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
       const char option = *text++;
       switch (option) {
         case 'd': DebugMode = true; if (*text) OpenDebugFile(text); break;
+        case 'c': compileOnly = true; break;
         case 'a': /*if (!*text) DisplayUsage(); dump_asm_names[num_dump_asm++] = text;*/ VMemberBase::doAsmDump = true; break;
         case 'I': VMemberBase::StaticAddIncludePath(text); break;
         case 'D': VMemberBase::StaticAddDefine(text); break;
@@ -1488,7 +1490,7 @@ int main (int argc, char **argv) {
 
     VScriptArray scargs(scriptArgs);
     VClass *mklass = VClass::FindClass("Main");
-    if (mklass) {
+    if (mklass && !compileOnly) {
       dprintf("Found class 'Main'\n");
       VMethod *mmain = mklass->FindAccessibleMethod("main");
       if (mmain) {
