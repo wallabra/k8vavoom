@@ -3878,7 +3878,7 @@ void VParser::ParseClass () {
 
       // property?
       if (Lex.Check(TK_LBrace)) {
-        Modifiers = TModifiers::Check(Modifiers, TModifiers::Native|TModifiers::Final|TModifiers::Private|TModifiers::Protected|TModifiers::Static, FieldLoc);
+        Modifiers = TModifiers::Check(Modifiers, TModifiers::Native|TModifiers::Final|TModifiers::Private|TModifiers::Protected|TModifiers::Static|TModifiers::Override, FieldLoc);
         VProperty *Prop = new VProperty(FieldName, Class, FieldLoc);
         Prop->TypeExpr = FieldType;
         Prop->Flags = TModifiers::PropAttr(Modifiers);
