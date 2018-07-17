@@ -231,28 +231,28 @@ void VStream::SerialiseBigEndian (void *Val, int Len) {
 
 //==========================================================================
 //
-//  operator<<
+//  operator <<
 //
 //==========================================================================
 VStream &operator << (VStream &Strm, VStreamCompactIndex &I) {
   guard(operator VStream << VStreamCompactIndex);
   if (Strm.IsLoading()) {
-    vuint8 B;
-    Strm << B;
-    bool Neg = !!(B & 0x40);
-    vint32 Val = B & 0x3f;
-    if (B & 0x80) {
-      Strm << B;
-      Val |= (B & 0x7f) << 6;
-      if (B & 0x80) {
-        Strm << B;
-        Val |= (B & 0x7f) << 13;
-        if (B & 0x80) {
-          Strm << B;
-          Val |= (B & 0x7f) << 20;
-          if (B & 0x80) {
-            Strm << B;
-            Val |= (B & 0x7f) << 27;
+    vuint8 b;
+    Strm << b;
+    bool Neg = !!(b&0x40);
+    vint32 Val = b&0x3f;
+    if (b&0x80) {
+      Strm << b;
+      Val |= (b&0x7f)<<6;
+      if (b&0x80) {
+        Strm << b;
+        Val |= (b&0x7f)<<13;
+        if (b&0x80) {
+          Strm << b;
+          Val |= (b&0x7f)<<20;
+          if (b & 0x80) {
+            Strm << b;
+            Val |= (b&0x7f)<<27;
           }
         }
       }
@@ -262,25 +262,83 @@ VStream &operator << (VStream &Strm, VStreamCompactIndex &I) {
   } else {
     vint32 Val = I.Val;
     if (Val < 0) Val = -Val;
-    vuint8 B = Val & 0x3f;
-    if (I.Val < 0) B |= 0x40;
-    if (Val & 0xffffffc0) B |= 0x80;
-    Strm << B;
-    if (Val & 0xffffffc0) {
-      B = (Val >> 6) & 0x7f;
-      if (Val & 0xffffe000) B |= 0x80;
-      Strm << B;
-      if (Val & 0xffffe000) {
-        B = (Val >> 13) & 0x7f;
-        if (Val & 0xfff00000) B |= 0x80;
-        Strm << B;
-        if (Val & 0xfff00000) {
-          B = (Val >> 20) & 0x7f;
-          if (Val & 0xf8000000)B |= 0x80;
-          Strm << B;
-          if (Val & 0xf8000000) {
-            B = (Val >> 27) & 0x7f;
-            Strm << B;
+    vuint8 b = Val&0x3f;
+    if (I.Val < 0) b |= 0x40;
+    if (Val & 0xffffffc0) b |= 0x80;
+    Strm << b;
+    if (Val&0xffffffc0) {
+      b = (Val>>6)&0x7f;
+      if (Val&0xffffe000) b |= 0x80;
+      Strm << b;
+      if (Val&0xffffe000) {
+        b = (Val>>13)&0x7f;
+        if (Val&0xfff00000) b |= 0x80;
+        Strm << b;
+        if (Val&0xfff00000) {
+          b = (Val>>20)&0x7f;
+          if (Val&0xf8000000) b |= 0x80;
+          Strm << b;
+          if (Val&0xf8000000) {
+            b = (Val>>27)&0x7f;
+            Strm << b;
+          }
+        }
+      }
+    }
+  }
+  return Strm;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  operator <<
+//
+//==========================================================================
+VStream &operator << (VStream &Strm, VStreamCompactIndexU &I) {
+  guard(operator VStream << VStreamCompactIndexU);
+  if (Strm.IsLoading()) {
+    vuint8 b;
+    Strm << b;
+    vuint32 Val = b&0x7f;
+    if (b&0x80) {
+      Strm << b;
+      Val |= (b&0x7f)<<7;
+      if (b&0x80) {
+        Strm << b;
+        Val |= (b&0x7f)<<14;
+        if (b&0x80) {
+          Strm << b;
+          Val |= (b&0x7f)<<21;
+          if (b & 0x80) {
+            Strm << b;
+            Val |= (b&0x0f)<<28;
+          }
+        }
+      }
+    }
+    I.Val = Val;
+  } else {
+    vuint32 Val = I.Val;
+    vuint8 b = Val&0x7f;
+    if (Val&0xffffff80) b |= 0x80;
+    Strm << b;
+    if (Val&0xffffff80) {
+      b = (Val>>7)&0x7f;
+      if (Val&0xffffc000) b |= 0x80;
+      Strm << b;
+      if (Val&0xffffc000) {
+        b = (Val>>14)&0x7f;
+        if (Val&0xffe00000) b |= 0x80;
+        Strm << b;
+        if (Val&0xffe00000) {
+          b = (Val>>21)&0x7f;
+          if (Val&0xf0000000)b |= 0x80;
+          Strm << b;
+          if (Val&0xf0000000) {
+            b = (Val>>28)&0x7f;
+            Strm << b;
           }
         }
       }
