@@ -1141,6 +1141,12 @@ func_loop:
         BINOP_Q(i, >>=);
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_URShift)
+        ++ip;
+        *(vuint32 *)&sp[-2].i >>= sp[-1].i;
+        --sp;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_UnaryMinus)
         ++ip;
         sp[-1].i = -sp[-1].i;
@@ -1248,6 +1254,10 @@ func_loop:
 
       PR_VM_CASE(OPC_RShiftVarDrop)
         ASSIGNOP(vint32, i, >>=);
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_URShiftVarDrop)
+        ASSIGNOP(vuint32, i, >>=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_BytePreInc)

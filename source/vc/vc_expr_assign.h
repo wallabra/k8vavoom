@@ -39,6 +39,7 @@ public:
     XOrAssign,
     LShiftAssign,
     RShiftAssign,
+    URShiftAssign,
   };
 
 public:

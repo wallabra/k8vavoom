@@ -105,6 +105,8 @@
 
   //WARNING! the following tokens should be sorted by string length!
   // punctuation
+  VC_LEXER_DEFTOKEN(URShiftAssign,  ">>>=")
+  VC_LEXER_DEFTOKEN(URShift,        ">>>")
   VC_LEXER_DEFTOKEN(VarArgs,        "...")
   VC_LEXER_DEFTOKEN(LShiftAssign,   "<<=")
   VC_LEXER_DEFTOKEN(RShiftAssign,   ">>=")

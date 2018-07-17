@@ -551,6 +551,7 @@ struct Instr {
       case OPC_XOrBitwise:
       case OPC_LShift:
       case OPC_RShift:
+      case OPC_URShift:
         spdelta = -1;
         return;
       case OPC_UnaryMinus:
@@ -580,6 +581,7 @@ struct Instr {
       case OPC_XOrVarDrop:
       case OPC_LShiftVarDrop:
       case OPC_RShiftVarDrop:
+      case OPC_URShiftVarDrop:
         spdelta = -2;
         return;
 

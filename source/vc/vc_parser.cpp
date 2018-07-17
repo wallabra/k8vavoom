@@ -631,6 +631,9 @@ VExpression *VParser::ParseExpressionPriority5 () {
     } else if (Lex.Check(TK_RShift)) {
       VExpression *op2 = ParseExpressionPriority4();
       op1 = new VBinary(VBinary::RShift, op1, op2, l);
+    } else if (Lex.Check(TK_URShift)) {
+      VExpression *op2 = ParseExpressionPriority4();
+      op1 = new VBinary(VBinary::URShift, op1, op2, l);
     } else {
       break;
     }
@@ -895,6 +898,7 @@ VExpression *VParser::ParseExpressionPriority14 (bool allowAssign) {
   else if (Lex.Check(TK_XOrAssign)) oper = VAssignment::XOrAssign;
   else if (Lex.Check(TK_LShiftAssign)) oper = VAssignment::LShiftAssign;
   else if (Lex.Check(TK_RShiftAssign)) oper = VAssignment::RShiftAssign;
+  else if (Lex.Check(TK_URShiftAssign)) oper = VAssignment::URShiftAssign;
   else return op1;
   // parse `n = delegate ...`
   if (oper == VAssignment::Assign && Lex.Check(TK_Delegate)) {

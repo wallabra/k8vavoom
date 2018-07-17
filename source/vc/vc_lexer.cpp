@@ -886,7 +886,7 @@ void VLexer::ProcessLetterToken (bool CheckKeywords) {
 
   //k8: it was a giant `switch`, but meh... it is 2018 now!
   const char *s = tokenStringBuffer;
-  for (unsigned tidx = TK_Abstract; tidx < TK_VarArgs; ++tidx) {
+  for (unsigned tidx = TK_Abstract; tidx < TK_URShiftAssign; ++tidx) {
     if (s[0] == TokenNames[tidx][0] && strcmp(s, TokenNames[tidx]) == 0) {
       Token = (EToken)tidx;
       break;
@@ -915,7 +915,7 @@ void VLexer::ProcessSpecialToken () {
     tkbuf[tkbpos] = currCh;
     tkbuf[tkbpos+1] = 0;
     EToken ntk = TK_NoToken;
-    for (unsigned tidx = TK_VarArgs; tidx < TK_TotalTokenCount; ++tidx) {
+    for (unsigned tidx = TK_URShiftAssign; tidx < TK_TotalTokenCount; ++tidx) {
       if (tkbuf[0] == TokenNames[tidx][0] && strcmp(tkbuf, TokenNames[tidx]) == 0) {
         ntk = (EToken)tidx;
         break;
@@ -1303,7 +1303,7 @@ EToken VLexer::skipTokenFrom (int &cpos, VStr *str=nullptr) const {
     if (isNStrEqu(spos, cpos, "NULL")) return TK_Null;
     if (isNStrEqu(spos, cpos, "null")) return TK_Null;
     // look in tokens
-    for (unsigned f = TK_Abstract; f < TK_VarArgs; ++f) {
+    for (unsigned f = TK_Abstract; f < TK_URShiftAssign; ++f) {
       if (isNStrEqu(spos, cpos, TokenNames[f])) return (EToken)f;
     }
     return TK_Identifier;
@@ -1316,7 +1316,7 @@ EToken VLexer::skipTokenFrom (int &cpos, VStr *str=nullptr) const {
   for (;;) {
     // look in tokens
     bool found = false;
-    for (unsigned f = TK_VarArgs; f < TK_TotalTokenCount; ++f) {
+    for (unsigned f = TK_URShiftAssign; f < TK_TotalTokenCount; ++f) {
       if (isNStrEqu(spos, cpos+1, TokenNames[f])) {
         tkres = (EToken)f;
         found = true;

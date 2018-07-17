@@ -254,6 +254,12 @@ void VAssignment::Emit (VEmitContext &ec) {
       else ParseError(Loc, "Expression type mismatch");
       break;
 
+    case URShiftAssign:
+           if (op1->RealType.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_URShiftVarDrop, Loc);
+      else if (op1->RealType.Type == TYPE_Byte && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_ByteRShiftVarDrop, Loc);
+      else ParseError(Loc, "Expression type mismatch");
+      break;
+
     default:
       ParseError(Loc, "VC INTERNAL COMPILER ERROR: unknown assign operation");
   }
@@ -289,6 +295,7 @@ VStr VAssignment::toString () const {
     case XOrAssign: res += " ^= "; break;
     case LShiftAssign: res += " <<= "; break;
     case RShiftAssign: res += " >>= "; break;
+    case URShiftAssign: res += " >>>= "; break;
   }
   res += e2s(op2);
   return res;

@@ -457,6 +457,7 @@ int VBinary::calcPrio (EBinOp op) {
       return 3;
     case LShift:
     case RShift:
+    case URShift:
       return 4;
     case And:
       return 5;
@@ -621,11 +622,13 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
     case Modulus:
     case LShift:
     case RShift:
+    case URShift:
     case And:
     case XOr:
     case Or:
-      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) Type = TYPE_Int;
-      else {
+      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) {
+        Type = TYPE_Int;
+      } else {
         ParseError(Loc, "Expression type mismatch");
         delete this;
         return nullptr;
@@ -730,6 +733,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
         break;
       case LShift: e = new VIntLiteral(Value1<<Value2, Loc); break;
       case RShift: e = new VIntLiteral(Value1>>Value2, Loc); break;
+      case URShift: e = new VIntLiteral((vint32)((vuint32)Value1>>Value2), Loc); break;
       case Less: e = new VIntLiteral(Value1 < Value2, Loc); break;
       case LessEquals: e = new VIntLiteral(Value1 <= Value2, Loc); break;
       case Greater: e = new VIntLiteral(Value1 > Value2, Loc); break;
@@ -864,6 +868,9 @@ void VBinary::Emit (VEmitContext &ec) {
     case RShift:
       if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_RShift, Loc);
       break;
+    case URShift:
+      if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_URShift, Loc);
+      break;
     case Less:
            if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Less, Loc);
       else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FLess, Loc);
@@ -954,7 +961,8 @@ VStr VBinary::toString () const {
     case Divide: res += "/"; break;
     case Modulus: res += "%"; break;
     case LShift: res += "<<"; break;
-    case RShift: res += "<<"; break;
+    case RShift: res += ">>"; break;
+    case URShift: res += ">>>"; break;
     case And: res += "&"; break;
     case XOr: res += "^"; break;
     case Or: res += "|"; break;

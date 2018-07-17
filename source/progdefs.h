@@ -253,6 +253,7 @@ enum {
   DECLARE_OPC(XOrBitwise, None),
   DECLARE_OPC(LShift, None),
   DECLARE_OPC(RShift, None),
+  DECLARE_OPC(URShift, None),
   DECLARE_OPC(UnaryMinus, None),
   DECLARE_OPC(BitInverse, None),
 
@@ -276,6 +277,7 @@ enum {
   DECLARE_OPC(XOrVarDrop, None),
   DECLARE_OPC(LShiftVarDrop, None),
   DECLARE_OPC(RShiftVarDrop, None),
+  DECLARE_OPC(URShiftVarDrop, None),
 
   // increment / decrement byte
   DECLARE_OPC(BytePreInc, None),

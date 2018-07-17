@@ -108,6 +108,7 @@ public:
     Modulus,
     LShift,
     RShift,
+    URShift,
     And,
     XOr,
     Or,
