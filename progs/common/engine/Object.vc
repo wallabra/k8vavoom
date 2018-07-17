@@ -29,7 +29,8 @@
 
 class Object
   native
-  abstract;
+  abstract
+  transient;
 
 #include "Object_common.vc"
 #ifdef VCC_STANDALONE_EXECUTOR

@@ -27,11 +27,11 @@
 //
 //==========================================================================
 
-native readonly private void *CxxVTable;
-native readonly private void *VTable;
-native readonly private int ObjectIndex;
-native readonly private int ObjectFlags;
-native readonly class Class;
+native readonly private transient void *CxxVTable;
+native readonly private transient void *VTable;
+native readonly private transient int ObjectIndex;
+native readonly private transient int ObjectFlags;
+native readonly transient class Class;
 
 native void Destroy ();
 native final bool IsA (name CheckName);
