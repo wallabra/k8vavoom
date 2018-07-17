@@ -75,7 +75,7 @@ public:
   static bool isSkip (VClass *cls, bool checkName) {
     if (!cls) return true;
     if (checkName && cls->Name == NAME_None) return true;
-    if (cls->ClassFlags&(CLASS_Transient|CLASS_Abstract)) return true;
+    if (cls->ClassFlags&(CLASS_Transient/*|CLASS_Abstract*/)) return true;
     return false;
   }
 
