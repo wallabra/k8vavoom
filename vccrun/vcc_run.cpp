@@ -56,87 +56,110 @@ static VStr buildConfigName (const VStr &optfile) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static bool cfgCanIOType (const VFieldType &type);
-static bool cfgCanIOClass (VClass *cls, bool ignoreFlags=false);
-static bool cfgCanIOStruct (VStruct *st);
-static bool cfgCanIOField (VField *fld);
-static bool cfgSkipClass (VClass *cls, bool checkName);
-
-
-static bool cfgCanIOType (const VFieldType &type) {
-  switch (type.Type) {
-    case TYPE_Int:
-    case TYPE_Byte:
-    case TYPE_Bool:
-    case TYPE_Float:
-    case TYPE_Name:
-    case TYPE_String:
-    case TYPE_Vector:
-    case TYPE_Class:
-      return true;
-    case TYPE_Reference:
-      if (cfgSkipClass(type.Class, true)) return true;
-      return cfgCanIOClass(type.Class);
-    case TYPE_Struct:
-      return cfgCanIOStruct(type.Struct);
-    case TYPE_Array:
-    case TYPE_DynamicArray:
-      return cfgCanIOType(type.GetArrayInnerType());
-  }
-  return false;
-}
-
-static bool cfgSkipField (VField *fld) {
-  if (!fld || fld->Name == NAME_None) return true;
-  if (fld->Flags&(FIELD_Transient|FIELD_ReadOnly)) return true;
-  return false;
-}
-
-static bool cfgCanIOField (VField *fld) {
-  if (cfgSkipField(fld)) return false;
-  return cfgCanIOType(fld->Type);
-}
-
-// saveable struct either has no fields, or all fields are saveable
-static bool cfgCanIOStruct (VStruct *st) {
-  if (!st || st->Name == NAME_None) return false;
-  for (VStruct *cst = st; cst; cst = cst->ParentStruct) {
-    for (VField *fld = cst->Fields; fld; fld = fld->Next) {
-      if (cfgSkipField(fld)) continue;
-      if (!cfgCanIOField(fld)) return false;
-    }
-  }
-  return true;
-}
-
-// saveable class either has no fields, or all fields are saveable
-static bool cfgSkipClass (VClass *cls, bool checkName) {
-  if (!cls) return true;
-  if (checkName && cls->Name == NAME_None) return true;
-  if (cls->ClassFlags&(CLASS_Transient|CLASS_Abstract)) return true;
-  return false;
-}
-
-// saveable class either has no fields, or all fields are saveable
-static bool cfgCanIOClass (VClass *cls, bool ignoreFlags) {
-  if (!cls || cls->Name == NAME_None) return false;
-  if (!ignoreFlags && cfgSkipClass(cls, true)) return false;
-  for (VClass *c = cls; c; c = c->ParentClass) {
-    if (c != cls && cfgSkipClass(c, false)) break; // transient class breaks chain
-    for (VField *fld = c->Fields; fld; fld = fld->Next) {
-      if (cfgSkipField(fld)) continue;
-      if (!cfgCanIOField(fld)) return false;
-    }
-  }
-  return true;
-}
+class ObjectSaveMap;
+class ObjectSaveChecker;
+class ObjectSaver;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class ObjectSaveMap;
+class ObjectSaveChecker {
+public:
+  TMap<VClass *, bool> classmap;
+  TMap<VStruct *, bool> structmap;
+  TMap<VField *, bool> fieldmap;
 
-static bool cfgSaveObject (ObjectSaveMap &smap, VStream &strm, VObject *obj, bool ignoreFlags);
+  // saveable class either has no fields, or all fields are saveable
+  static bool isSkip (VClass *cls, bool checkName) {
+    if (!cls) return true;
+    if (checkName && cls->Name == NAME_None) return true;
+    if (cls->ClassFlags&(CLASS_Transient|CLASS_Abstract)) return true;
+    return false;
+  }
 
+  static bool isSkip (VField *fld) {
+    if (!fld || fld->Name == NAME_None) return true;
+    if (fld->Flags&(FIELD_Transient|FIELD_ReadOnly)) return true;
+    return false;
+  }
+
+  bool canIO (const VFieldType &type) {
+    switch (type.Type) {
+      case TYPE_Int:
+      case TYPE_Byte:
+      case TYPE_Bool:
+      case TYPE_Float:
+      case TYPE_Name:
+      case TYPE_String:
+      case TYPE_Vector:
+      case TYPE_Class:
+        return true;
+      case TYPE_Reference:
+        if (isSkip(type.Class, true)) return true;
+        return canIO(type.Class, false);
+      case TYPE_Struct:
+        return canIO(type.Struct);
+      case TYPE_Array:
+      case TYPE_DynamicArray:
+        return canIO(type.GetArrayInnerType());
+    }
+    return false;
+  }
+
+  bool canIO (VField *fld) {
+    if (isSkip(fld)) return true;
+    auto ck = fieldmap.find(fld);
+    if (ck) return *ck;
+    fieldmap.put(fld, true); // while we are checking
+    bool res = canIO(fld->Type);
+    if (!res) fieldmap.put(fld, false);
+    return res;
+  }
+
+  // saveable struct either has no fields, or all fields are saveable
+  bool canIO (VStruct *st) {
+    if (!st || st->Name == NAME_None) return true;
+    auto ck = structmap.find(st);
+    if (ck) return *ck;
+    structmap.put(st, true); // while we are checking
+    for (VStruct *cst = st; cst; cst = cst->ParentStruct) {
+      for (VField *fld = cst->Fields; fld; fld = fld->Next) {
+        if (isSkip(fld)) continue;
+        if (!canIO(fld)) {
+          structmap.put(st, false);
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // saveable class either has no fields, or all fields are saveable
+  bool canIO (VClass *cls, bool ignoreFlags) {
+    if (!cls || cls->Name == NAME_None) return true;
+    if (!ignoreFlags && isSkip(cls, true)) return true;
+    auto ck = classmap.find(cls);
+    if (ck) return *ck;
+    classmap.put(cls, true);
+    for (VClass *c = cls; c; c = c->ParentClass) {
+      if (c != cls && isSkip(c, false)) break; // transient class breaks chain
+      auto ck2 = classmap.find(c);
+      if (ck2) return *ck2;
+      classmap.put(c, true);
+      for (VField *fld = c->Fields; fld; fld = fld->Next) {
+        if (isSkip(fld)) continue;
+        if (!canIO(fld)) {
+          classmap.put(c, false);
+          classmap.put(cls, false);
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // build map of objects, strings and names
 class ObjectSaveMap {
 public:
@@ -150,6 +173,7 @@ public:
   vuint32 nameCount;
   vuint32 strCount;
   bool wasError;
+  ObjectSaveChecker ck;
 
 public:
   ObjectSaveMap (VObject *ao)
@@ -167,6 +191,8 @@ public:
     buildSaveMap(ao);
   }
 
+  inline bool IsError () const { return wasError; }
+
   VObject *getByIndex (vuint32 idx) {
     if (idx < 1 || idx > objCount) return nullptr;
     return objarr[(vint32)idx-1];
@@ -175,14 +201,19 @@ public:
   vuint32 getObjectId (VObject *o) {
     if (!o) return 0;
     auto idp = objmap.find(o);
-    if (!idp) FatalError("tried to save unregistered object");
+    if (!idp) FatalError("tried to save unregistered object (%s)", *o->GetClass()->Name);
     return *idp;
   }
 
   vuint32 getNameId (VName n) {
     if (n == NAME_None) return 0;
     auto idp = namemap.find(n);
-    if (!idp) FatalError("tried to save unregistered name");
+    if (!idp) {
+      for (int f = 0; f < namearr.length(); ++f) {
+        if (namearr[f] == n) abort();
+      }
+      FatalError("tried to save unregistered name '%s'", *n);
+    }
     return *idp;
   }
 
@@ -219,11 +250,13 @@ public:
       if (strm.IsError()) return false;
     }
     // objects
+    /*
     for (int f = 0; f < objarr.length(); ++f) {
       VObject *o = objarr[f];
       if (!o) return false;
-      if (!cfgSaveObject(*this, strm, o, true)) return false;
+      if (!sv.saveIt(o, true)) return false;
     }
+    */
     return !strm.IsError();
   }
 
@@ -236,6 +269,7 @@ private:
   void putName (VName n) {
     if (n == NAME_None || namemap.has(n)) return;
     if ((vint32)nameCount != namearr.length()) FatalError("oops: putName");
+    //fprintf(stderr, "PN: <%s>\n", *n);
     namemap.put(n, ++nameCount);
     namearr.append(n);
   }
@@ -247,12 +281,23 @@ private:
     strarr.append(s);
   }
 
+  void putObject (VObject *obj) {
+    if (!obj) FatalError("oops(0): putObject");
+    if ((vint32)objCount != objarr.length()) FatalError("oops(1): putObject");
+    //fprintf(stderr, "object %p of class `%s`\n", obj, *obj->GetClass()->Name);
+    objmap.put(obj, ++objCount);
+    objarr.append(obj);
+    putName(obj->GetClass()->Name);
+  }
+
   void processValue (vuint8 *data, const VFieldType &type) {
-    if (!cfgCanIOType(type)) {
+    if (!ck.canIO(type)) {
       //fprintf(stderr, "FUCKED type '%s'\n", *type.GetName());
       wasError = true;
       return;
     }
+    VObject *o;
+    VClass *c;
     switch (type.Type) {
       case TYPE_Name:
         putName(*(*(VName *)data));
@@ -261,26 +306,26 @@ private:
         putStr(*(VStr *)data);
         break;
       case TYPE_Reference:
-        {
-          VObject *o = *(VObject **)data;
-          if (o) processObject(o);
-        }
+        // save desired class name
+        if (type.Class) putName(type.Class->Name);
+        o = *(VObject **)data;
+        if (o) processObject(o);
         break;
       case TYPE_Class:
-        {
-          VClass *c = *(VClass **)data;
-          if (c) putName(c->Name);
-        }
+        c = *(VClass **)data;
+        if (c) putName(c->Name);
         break;
       case TYPE_Struct:
-        if (cfgCanIOStruct(type.Struct)) {
+        // save desired struct name
+        if (ck.canIO(type.Struct)) {
+          putName(type.Struct->Name);
           processStruct(data, type.Struct);
         } else {
           wasError = true;
         }
         break;
       case TYPE_Array:
-        if (cfgCanIOType(type.GetArrayInnerType())) {
+        if (ck.canIO(type.GetArrayInnerType())) {
           VFieldType intType = type;
           intType.Type = type.ArrayInnerType;
           vint32 innerSize = intType.GetSize();
@@ -294,7 +339,7 @@ private:
         }
         break;
       case TYPE_DynamicArray:
-        if (cfgCanIOType(type.GetArrayInnerType())) {
+        if (ck.canIO(type.GetArrayInnerType())) {
           VScriptArray *a = (VScriptArray *)data;
           VFieldType intType = type;
           intType.Type = type.ArrayInnerType;
@@ -312,8 +357,8 @@ private:
 
   void processFields (vuint8 *data, VField *fields) {
     for (VField *fld = fields; fld; fld = fld->Next) {
-      if (cfgSkipField(fld)) continue;
-      if (cfgCanIOField(fld)) {
+      if (ck.isSkip(fld)) continue;
+      if (ck.canIO(fld)) {
         putName(fld->Name);
         processValue(data+fld->Ofs, fld->Type);
       } else {
@@ -324,9 +369,10 @@ private:
   }
 
   void processStruct (vuint8 *data, VStruct *st) {
-    if (!cfgCanIOStruct(st)) { wasError = true; return; }
+    if (!ck.canIO(st)) { wasError = true; return; }
     putName(st->Name);
     for (VStruct *cst = st; cst; cst = cst->ParentStruct) {
+      //putName(cst->Name); // why not?
       processFields(data, cst->Fields);
       if (wasError) break;
     }
@@ -336,7 +382,7 @@ private:
     if (!obj) { wasError = true; return; }
     VClass *cls = obj->GetClass();
     //if (!obj->GetClass()->IsChildOf(cls)) { wasError = true; return; }
-    if (!obj || !cfgCanIOClass(cls, ignoreFlags)) {
+    if (!obj || !ck.canIO(cls, ignoreFlags)) {
       //fprintf(stderr, "CANNOT save class '%s'\n", *cls->Name);
       wasError = true;
       return;
@@ -348,13 +394,11 @@ private:
     }
     //fprintf(stderr, "DOING object '%s' (%p)\n", *cls->Name, obj);
     // mark as processed
-    if ((vint32)objCount != objarr.length()) FatalError("oops: processObject");
-    objmap.put(obj, ++objCount);
-    objarr.append(obj);
-    putName(cls->Name);
+    putObject(obj);
     // do this class and superclasses
     for (VClass *c = cls; c; c = c->ParentClass) {
-      if (c != cls && cfgSkipClass(c, false)) break; // transient class breaks chain
+      //putName(c->Name); // why not?
+      if (c != cls && ck.isSkip(c, false)) break; // transient class breaks chain
       processFields((vuint8 *)obj, c->Fields);
       if (wasError) break;
     }
@@ -363,182 +407,191 @@ private:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static bool cfgSaveFields (ObjectSaveMap &smap, VStream &strm, vuint8 *data, VField *fields);
-static bool cfgSaveValue (ObjectSaveMap &smap, VStream &strm, vuint8 *data, const VFieldType &type);
-static bool cfgSaveStruct (ObjectSaveMap &smap, VStream &strm, vuint8 *data, VStruct *st);
-static bool cfgSaveObject (ObjectSaveMap &smap, VStream &strm, VObject *obj, bool ignoreFlags);
+class ObjectSaver {
+public:
+  VStream &strm;
+  ObjectSaveMap &smap;
 
-
-// ////////////////////////////////////////////////////////////////////////// //
-static bool cfgCountSaveableFields (vuint32 &fcount, VField *fields) {
-  for (VField *fld = fields; fld; fld = fld->Next) {
-    if (cfgSkipField(fld)) continue;
-    if (!cfgCanIOField(fld)) return false;
-    ++fcount;
+public:
+  ObjectSaver (VStream &astrm, ObjectSaveMap &asmap) : strm(astrm), smap(asmap) {
   }
-  return true;
-}
 
-static bool cfgSaveFields (ObjectSaveMap &smap, VStream &strm, vuint8 *data, VField *fields) {
-  // save fields
-  for (VField *fld = fields; fld; fld = fld->Next) {
-    if (cfgSkipField(fld)) continue;
-    if (!cfgCanIOField(fld)) return false;
-    vuint32 n = smap.getNameId(fld->Name);
-    strm << STRM_INDEX(n);
-    if (strm.IsError()) return false;
-    if (!cfgSaveValue(smap, strm, data+fld->Ofs, fld->Type)) return false;
+  inline bool IsError () const { return (smap.wasError || strm.IsError()); }
+
+  bool saveAll () {
+    if (!smap.saveMap(strm)) { smap.wasError = true; return false; }
+    // objects
+    for (int f = 0; f < smap.objarr.length(); ++f) {
+      VObject *o = smap.objarr[f];
+      if (!o) return false;
+      if (!saveIt(o, true)) return false;
+    }
+    return !strm.IsError();
   }
-  return !strm.IsError();
-}
 
-static bool cfgSaveValue (ObjectSaveMap &smap, VStream &strm, vuint8 *data, const VFieldType &type) {
-  vuint8 typetag = (vuint8)type.Type;
-  strm << typetag;
-  switch (type.Type) {
-    case TYPE_Int:
-      strm << STRM_INDEX(*(vint32 *)data);
-      break;
-    case TYPE_Byte:
-      strm << *(vuint8 *)data;
-      break;
-    case TYPE_Bool:
-      {
-        vuint8 b;
+private:
+  bool countSaveableFields (vuint32 &fcount, VField *fields) {
+    for (VField *fld = fields; fld; fld = fld->Next) {
+      if (smap.ck.isSkip(fld)) continue;
+      if (!smap.ck.canIO(fld)) return false;
+      ++fcount;
+    }
+    return true;
+  }
+
+  bool saveFields (vuint8 *data, VField *fields) {
+    // save fields
+    for (VField *fld = fields; fld; fld = fld->Next) {
+      if (smap.ck.isSkip(fld)) continue;
+      if (!smap.ck.canIO(fld)) return false;
+      vuint32 n = smap.getNameId(fld->Name);
+      strm << STRM_INDEX(n);
+      if (strm.IsError()) return false;
+      if (!saveIt(data+fld->Ofs, fld->Type)) return false;
+    }
+    return !strm.IsError();
+  }
+
+  bool saveIt (vuint8 *data, const VFieldType &type) {
+    vuint8 typetag = (vuint8)type.Type;
+    vuint32 u32;
+    vuint8 u8;
+    VObject *o;
+    VClass *c;
+    strm << typetag;
+    switch (type.Type) {
+      case TYPE_Int:
+        strm << STRM_INDEX(*(vint32 *)data);
+        break;
+      case TYPE_Byte:
+        strm << *(vuint8 *)data;
+        break;
+      case TYPE_Bool:
         if (type.BitMask == 0) {
-          b = ((*(vuint32 *)data) != 0 ? 1 : 0);
+          u8 = ((*(vuint32 *)data) != 0 ? 1 : 0);
         } else {
-          b = (((*(vuint32 *)data)&type.BitMask) != 0 ? 1 : 0);
+          u8 = (((*(vuint32 *)data)&type.BitMask) != 0 ? 1 : 0);
         }
-        strm << b;
-      }
-      break;
-    case TYPE_Float:
-      strm << *(float *)data;
-      break;
-    case TYPE_Name:
-      {
-        vuint32 n = smap.getNameId(*(VName *)data);
-        strm << STRM_INDEX(n);
-      }
-      break;
-    case TYPE_String:
-      {
-        vuint32 s = smap.getStrId(*(VStr *)data);
-        strm << STRM_INDEX(s);
-      }
-      break;
-    case TYPE_Reference:
-      {
-        VObject *o = *(VObject **)data;
+        strm << u8;
+        break;
+      case TYPE_Float:
+        strm << *(float *)data;
+        break;
+      case TYPE_Name:
+        u32 = smap.getNameId(*(VName *)data);
+        strm << STRM_INDEX(u32);
+        break;
+      case TYPE_String:
+        u32 = smap.getStrId(*(VStr *)data);
+        strm << STRM_INDEX(u32);
+        break;
+      case TYPE_Reference:
+        o = *(VObject **)data;
         if (o) {
           // class to cast
-          vuint32 n = smap.getNameId(type.Class->Name);
-          strm << STRM_INDEX(n);
+          u32 = smap.getNameId(type.Class->Name);
+          strm << STRM_INDEX(u32);
           if (strm.IsError()) return false;
-          n = smap.getObjectId(o);
-          strm << STRM_INDEX(n);
+          u32 = smap.getObjectId(o);
+          strm << STRM_INDEX(u32);
         } else {
-          vuint32 n = smap.getNameId(NAME_None);
-          strm << STRM_INDEX(n);
+          u32 = smap.getNameId(NAME_None);
+          strm << STRM_INDEX(u32);
         }
-      }
-      break;
-    case TYPE_Class:
-      {
-        // saving
-        VClass *c = *(VClass **)data;
-        vuint32 n = smap.getNameId(c ? c->Name : NAME_None);
-        strm << STRM_INDEX(n);
-      }
-      break;
-    case TYPE_Struct:
-      if (!cfgCanIOStruct(type.Struct)) return false;
-      return cfgSaveStruct(smap, strm, data, type.Struct);
-    case TYPE_Vector:
-      strm << *(float *)data;
-      strm << *(float *)(data+sizeof(float));
-      strm << *(float *)(data+sizeof(float)*2);
-      break;
-    case TYPE_Array:
-      if (cfgCanIOType(type.GetArrayInnerType())) {
-        VFieldType intType = type;
-        intType.Type = type.ArrayInnerType;
-        vint32 innerSize = intType.GetSize();
-        vint32 dim = type.GetArrayDim();
-        strm << STRM_INDEX(dim);
-        strm << STRM_INDEX(innerSize);
-        if (strm.IsError()) return false;
-        for (int f = 0; f < dim; ++f) {
-          if (!cfgSaveValue(smap, strm, data+f*innerSize, intType)) return false;
+        break;
+      case TYPE_Class:
+        c = *(VClass **)data;
+        u32 = smap.getNameId(c ? c->Name : NAME_None);
+        strm << STRM_INDEX(u32);
+        break;
+      case TYPE_Struct:
+        if (!smap.ck.canIO(type.Struct)) return false;
+        return saveIt(data, type.Struct);
+      case TYPE_Vector:
+        strm << *(float *)data;
+        strm << *(float *)(data+sizeof(float));
+        strm << *(float *)(data+sizeof(float)*2);
+        break;
+      case TYPE_Array:
+        if (smap.ck.canIO(type.GetArrayInnerType())) {
+          VFieldType intType = type;
+          intType.Type = type.ArrayInnerType;
+          vint32 innerSize = intType.GetSize();
+          vint32 dim = type.GetArrayDim();
+          strm << STRM_INDEX(dim);
+          strm << STRM_INDEX(innerSize);
+          if (strm.IsError()) return false;
+          for (int f = 0; f < dim; ++f) {
+            if (!saveIt(data+f*innerSize, intType)) return false;
+          }
+        } else {
+          return false;
         }
-      } else {
+        break;
+      case TYPE_DynamicArray:
+        if (smap.ck.canIO(type.GetArrayInnerType())) {
+          VScriptArray *a = (VScriptArray *)data;
+          VFieldType intType = type;
+          intType.Type = type.ArrayInnerType;
+          vint32 innerSize = intType.GetSize();
+          vint32 d = a->length();
+          strm << STRM_INDEX(d);
+          strm << STRM_INDEX(innerSize);
+          for (int f = 0; f < a->length(); ++f) {
+            if (!saveIt(a->Ptr()+f*innerSize, intType)) return false;
+          }
+        } else {
+          return false;
+        }
+        break;
+      default:
         return false;
-      }
-      break;
-    case TYPE_DynamicArray:
-      if (cfgCanIOType(type.GetArrayInnerType())) {
-        VScriptArray *a = (VScriptArray *)data;
-        VFieldType intType = type;
-        intType.Type = type.ArrayInnerType;
-        vint32 innerSize = intType.GetSize();
-        vint32 d = a->length();
-        strm << STRM_INDEX(d);
-        strm << STRM_INDEX(innerSize);
-        for (int f = 0; f < a->length(); ++f) {
-          if (!cfgSaveValue(smap, strm, a->Ptr()+f*innerSize, intType)) return false;
-        }
-      } else {
-        return false;
-      }
-      break;
-    default:
-      return false;
+    }
+    return !strm.IsError();
   }
-  return !strm.IsError();
-}
 
-static bool cfgSaveStruct (ObjectSaveMap &smap, VStream &strm, vuint8 *data, VStruct *st) {
-  if (!cfgCanIOStruct(st)) return false;
-  // struct name
-  vuint32 nn = smap.getNameId(st->Name);
-  strm << STRM_INDEX(nn);
-  if (strm.IsError()) return false;
-  // field count
-  vuint32 fcount = 0;
-  for (VStruct *cst = st; cst; cst = cst->ParentStruct) {
-    if (!cfgCountSaveableFields(fcount, cst->Fields)) return false;
+  bool saveIt (vuint8 *data, VStruct *st) {
+    if (!smap.ck.canIO(st)) return false;
+    // struct name
+    vuint32 nn = smap.getNameId(st->Name);
+    strm << STRM_INDEX(nn);
+    if (strm.IsError()) return false;
+    // field count
+    vuint32 fcount = 0;
+    for (VStruct *cst = st; cst; cst = cst->ParentStruct) {
+      if (!countSaveableFields(fcount, cst->Fields)) return false;
+    }
+    strm << STRM_INDEX(fcount);
+    if (strm.IsError()) return false;
+    // fields
+    for (VStruct *cst = st; cst; cst = cst->ParentStruct) {
+      if (!saveFields(data, cst->Fields)) return false;
+    }
+    return !strm.IsError();
   }
-  strm << STRM_INDEX(fcount);
-  if (strm.IsError()) return false;
-  // fields
-  for (VStruct *cst = st; cst; cst = cst->ParentStruct) {
-    if (!cfgSaveFields(smap, strm, data, cst->Fields)) return false;
-  }
-  return !strm.IsError();
-}
 
-static bool cfgSaveObject (ObjectSaveMap &smap, VStream &strm, VObject *obj, bool ignoreFlags) {
-  if (!obj || !cfgCanIOClass(obj->GetClass(), ignoreFlags)) return false;
-  // object class
-  VClass *cls = obj->GetClass();
-  vuint32 nn = smap.getNameId(cls->Name);
-  strm << STRM_INDEX(nn);
-  if (strm.IsError()) return false;
-  // field count
-  vuint32 fcount = 0;
-  for (VClass *c = cls; c; c = c->ParentClass) {
-    if (c != cls && cfgSkipClass(c, false)) break; // transient class breaks chain
-    if (!cfgCountSaveableFields(fcount, c->Fields)) return false;
+  bool saveIt (VObject *obj, bool ignoreFlags) {
+    if (!obj || !smap.ck.canIO(obj->GetClass(), ignoreFlags)) return false;
+    // object class
+    VClass *cls = obj->GetClass();
+    vuint32 nn = smap.getNameId(cls->Name);
+    strm << STRM_INDEX(nn);
+    if (strm.IsError()) return false;
+    // field count
+    vuint32 fcount = 0;
+    for (VClass *c = cls; c; c = c->ParentClass) {
+      if (c != cls && smap.ck.isSkip(c, false)) break; // transient class breaks chain
+      if (!countSaveableFields(fcount, c->Fields)) return false;
+    }
+    strm << STRM_INDEX(fcount);
+    // fields
+    for (VClass *c = obj->GetClass(); c; c = c->ParentClass) {
+      if (c != cls && smap.ck.isSkip(c, false)) break; // transient class breaks chain
+      if (!saveFields((vuint8 *)obj, c->Fields)) continue;
+    }
+    return !strm.IsError();
   }
-  strm << STRM_INDEX(fcount);
-  // fields
-  for (VClass *c = obj->GetClass(); c; c = c->ParentClass) {
-    if (c != cls && cfgSkipClass(c, false)) break; // transient class breaks chain
-    if (!cfgSaveFields(smap, strm, (vuint8 *)obj, c->Fields)) continue;
-  }
-  return !strm.IsError();
-}
+};
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1639,23 +1692,19 @@ IMPLEMENT_FUNCTION(VObject, appSaveOptions) {
   P_GET_STR_OPT(optfile, VStr());
   P_GET_REF(VObject, optobj);
   if (appName.isEmpty() || !optobj) { RET_BOOL(false); return; }
-  if (!cfgCanIOClass(optobj->GetClass(), true)) { RET_BOOL(false); return; }
+  //if (!cfgCanIOClass(optobj->GetClass(), true)) { RET_BOOL(false); return; }
   //fprintf(stderr, "000\n");
-  ObjectSaveMap smap(optobj);
-  if (smap.wasError) { RET_BOOL(false); return; }
+  ObjectSaveMap svmap(optobj);
+  if (svmap.wasError) { RET_BOOL(false); return; }
   //fprintf(stderr, "001\n");
   auto fname = buildConfigName(optfile);
   if (fname.isEmpty()) { RET_BOOL(false); return; }
   auto strm = fsysOpenDiskFileWrite(fname);
   if (!strm) { RET_BOOL(false); return; }
-  //static const char *sign = "BCF0";
-  //strm->Serialise(sign, 4);
-  //if (strm->IsError()) { delete strm; RET_BOOL(false); return; }
-  //bool res = cfgSaveObject(smap, *strm, optobj, true);
-  bool res = smap.saveMap(*strm);
-  if (res && strm->IsError()) res = false;
+  ObjectSaver saver(*strm, svmap);
+  bool res = saver.saveAll();
   delete strm;
-  RET_BOOL(res);
+  RET_BOOL(res && !saver.IsError());
 }
 
 
@@ -1664,7 +1713,7 @@ IMPLEMENT_FUNCTION(VObject, appLoadOptions) {
   P_GET_STR_OPT(optfile, VStr());
   P_GET_REF(VObject, optobj);
   if (appName.isEmpty() || !optobj) { RET_BOOL(false); return; }
-  if (!cfgCanIOClass(optobj->GetClass(), true)) { RET_BOOL(false); return; }
+  //if (!cfgCanIOClass(optobj->GetClass(), true)) { RET_BOOL(false); return; }
   auto fname = buildConfigName(optfile);
   if (fname.isEmpty()) { RET_BOOL(false); return; }
   auto strm = fsysOpenDiskFile(fname);
