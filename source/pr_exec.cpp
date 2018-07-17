@@ -1143,7 +1143,7 @@ func_loop:
 
       PR_VM_CASE(OPC_URShift)
         ++ip;
-        *(vuint32 *)&sp[-2].i >>= sp[-1].i;
+        sp[-2].u >>= sp[-1].i;
         --sp;
         PR_VM_BREAK;
 
@@ -1257,7 +1257,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_URShiftVarDrop)
-        ASSIGNOP(vuint32, i, >>=);
+        ASSIGNOP(vuint32, u, >>=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_BytePreInc)

@@ -29,6 +29,7 @@ struct dprograms_t;
 
 union VStack {
   vint32 i;
+  vuint32 u;
   float f;
   void *p;
 };
