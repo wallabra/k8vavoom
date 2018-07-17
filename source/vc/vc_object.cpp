@@ -193,7 +193,7 @@ VObject *VObject::StaticSpawnObject (VClass *AClass) {
 
   // copy values from the default object
   check(AClass->Defaults);
-  AClass->CopyObject(AClass->Defaults, (vuint8*)Obj);
+  AClass->CopyObject(AClass->Defaults, (vuint8 *)Obj);
 
   // find native class
   VClass *NativeClass = AClass;

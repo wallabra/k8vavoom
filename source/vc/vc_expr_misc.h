@@ -148,7 +148,7 @@ public:
   VExpression *op;
   bool AddressRequested;
 
-  VPushPointed (VExpression *);
+  VPushPointed (VExpression *, const TLocation &);
   virtual ~VPushPointed () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;

@@ -344,9 +344,10 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   // allow dotted access for dynamic arrays
   if (op->Type.Type == TYPE_Pointer) {
     if (op->Type.InnerType == TYPE_DynamicArray) {
+      auto loc = op->Loc;
       delete op;
       op = nullptr;
-      op = (new VPushPointed(opcopy.SyntaxCopy()))->Resolve(ec);
+      op = (new VPushPointed(opcopy.SyntaxCopy(), loc))->Resolve(ec);
       if (!op) { delete this; return nullptr; }
     } else {
       delete op;

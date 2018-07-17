@@ -533,7 +533,7 @@ VExpression *VParser::ParseExpressionPriority2 () {
   if (Lex.Check(TK_Not)) { op = ParseExpressionPriority2(); return new VUnary(VUnary::Not, op, l); }
   if (Lex.Check(TK_Tilde)) { op = ParseExpressionPriority2(); return new VUnary(VUnary::BitInvert, op, l); }
   if (Lex.Check(TK_And)) { op = ParseExpressionPriority1(); return new VUnary(VUnary::TakeAddress, op, l); }
-  if (Lex.Check(TK_Asterisk)) { op = ParseExpressionPriority2(); return new VPushPointed(op); }
+  if (Lex.Check(TK_Asterisk)) { op = ParseExpressionPriority2(); return new VPushPointed(op, l); }
   if (Lex.Check(TK_Inc)) { op = ParseExpressionPriority2(); return new VUnaryMutator(VUnaryMutator::PreInc, op, l); }
   if (Lex.Check(TK_Dec)) { op = ParseExpressionPriority2(); return new VUnaryMutator(VUnaryMutator::PreDec, op, l); }
 

@@ -765,8 +765,8 @@ VStr VDefaultObject::toString () const {
 //  VPushPointed::VPushPointed
 //
 //==========================================================================
-VPushPointed::VPushPointed (VExpression *AOp)
-  : VExpression(AOp->Loc)
+VPushPointed::VPushPointed (VExpression *AOp, const TLocation &ALoc)
+  : VExpression(ALoc)
   , op(AOp)
   , AddressRequested(false)
 {
@@ -989,7 +989,7 @@ VStr VConditional::toString () const {
 //
 //==========================================================================
 VDropResult::VDropResult (VExpression *AOp)
-  : VExpression(AOp->Loc)
+  : VExpression(AOp ? AOp->Loc : TLocation())
   , op(AOp)
 {
 }
