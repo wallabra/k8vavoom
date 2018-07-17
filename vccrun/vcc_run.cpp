@@ -522,7 +522,8 @@ private:
           intType.Type = type.ArrayInnerType;
           vint32 innerSize = intType.GetSize();
           vint32 dim = type.GetArrayDim();
-          strm << STRM_INDEX_U(intType.Type);
+          vint8 ittag = (vint8)intType.Type;
+          strm << STRM_INDEX_U(ittag);
           strm << STRM_INDEX_U(innerSize);
           strm << STRM_INDEX_U(dim);
           if (strm.IsError()) return false;
@@ -767,7 +768,7 @@ private:
           // class to cast
           c = VMemberBase::StaticFindClass(namearr[u32]);
           if (!c) { fprintf(stderr, "Object Loader: class `%s` not found\n", *namearr[u32]); return false; }
-          if (!type.Class->IsChildOf(c)) { fprintf(stderr, "Object Loader: class `%s` is not a subclass of `%s`\n", *namearr[u32], *type.Class->Name); return false; }
+          if (!c->IsChildOf(type.Class)) { fprintf(stderr, "Object Loader: class `%s` is not a subclass of `%s`\n", *namearr[u32], *type.Class->Name); return false; }
           // object id
           strm << STRM_INDEX_U(u32);
           if (u32 >= (vuint32)objarr.length()) return false;
@@ -783,7 +784,7 @@ private:
         if (u32) {
           c = VMemberBase::StaticFindClass(namearr[u32]);
           if (!c) { fprintf(stderr, "Object Loader: class `%s` not found\n", *namearr[u32]); return false; }
-          if (!type.Class->IsChildOf(c)) { fprintf(stderr, "Object Loader: class `%s` is not a subclass of `%s`\n", *namearr[u32], *type.Class->Name); return false; }
+          if (!c->IsChildOf(type.Class)) { fprintf(stderr, "Object Loader: class `%s` is not a subclass of `%s`\n", *namearr[u32], *type.Class->Name); return false; }
           *(VClass **)data = c;
         } else {
           *(VClass **)data = nullptr; // none
@@ -798,10 +799,11 @@ private:
         break;
       case TYPE_Array:
         {
-          vint32 innerSize, dim, itype;
+          vint8 itype;
+          vint32 innerSize, dim;
           strm << STRM_INDEX_U(itype);
-          strm << STRM_INDEX_U(dim);
           strm << STRM_INDEX_U(innerSize);
+          strm << STRM_INDEX_U(dim);
           if (strm.IsError()) return false;
           VFieldType intType = type;
           intType.Type = type.ArrayInnerType;
@@ -918,7 +920,7 @@ private:
     if (nn == 0 || nn >= (vuint32)namearr.length()) return false;
     VClass *c = VMemberBase::StaticFindClass(namearr[nn]);
     if (!c) { fprintf(stderr, "Object Loader: class `%s` not found\n", *namearr[nn]); return false; }
-    if (!cls->IsChildOf(c)) { fprintf(stderr, "Object Loader: class `%s` is not a subclass of `%s`\n", *namearr[nn], *cls->Name); return false; }
+    if (!c->IsChildOf(cls)) { fprintf(stderr, "Object Loader: class `%s` is not a subclass of `%s`\n", *namearr[nn], *cls->Name); return false; }
     // field count
     vuint32 fcount;
     strm << STRM_INDEX_U(fcount);
