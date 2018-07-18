@@ -1237,19 +1237,19 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_AndVarDrop)
-        ASSIGNOP(vint32, i, &=);
+        ASSIGNOP(vuint32, i, &=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_OrVarDrop)
-        ASSIGNOP(vint32, i, |=);
+        ASSIGNOP(vuint32, i, |=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_XOrVarDrop)
-        ASSIGNOP(vint32, i, ^=);
+        ASSIGNOP(vuint32, i, ^=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_LShiftVarDrop)
-        ASSIGNOP(vint32, i, <<=);
+        ASSIGNOP(vuint32, i, <<=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_RShiftVarDrop)
