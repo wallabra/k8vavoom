@@ -163,7 +163,7 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
- static const char *BinStorageSignature = "VaVoom C Binary Data Storage v0"; // 32 bytes
+static const char *BinStorageSignature = "VaVoom C Binary Data Storage v0"; // 32 bytes
 
 // build map of objects, strings and names
 class ObjectSaveMap {
@@ -619,10 +619,17 @@ public:
   TArray<VObject *> objarr;
   TArray<VName> namearr;
   TArray<VStr> strarr;
-  ObjectSaveChecker ck;
+  bool skipping;
 
 public:
-  ObjectLoader (VStream &astrm, VClass *aMainClass) : strm(astrm), mainClass(aMainClass) {}
+  ObjectLoader (VStream &astrm, VClass *aMainClass)
+    : strm(astrm)
+    , mainClass(aMainClass)
+    , objarr()
+    , namearr()
+    , strarr()
+    , skipping(false)
+  {}
 
   void clear () {
     for (int f = 0; f < objarr.length(); ++f) {
@@ -708,71 +715,78 @@ private:
     vuint8 typetag;
     strm << typetag;
     if (strm.IsError()) return false;
-    if (typetag != type.Type) {
+    if (!skipping) {
+      if (typetag != type.Type) {
 #ifdef DEBUG_OBJECT_LOADER
-      fprintf(stderr, "  bad type tag (%u)\n", (vuint32)typetag);
+        fprintf(stderr, "  bad type tag (%u)\n", (vuint32)typetag);
 #endif
-      return false;
+        return false;
+      }
     }
+    float f32;
+    vint32 i32;
     vuint32 u32;
     vuint8 u8;
     VClass *c;
     switch (typetag) {
       case TYPE_Int:
-        strm << STRM_INDEX(*(vint32 *)data);
+        strm << STRM_INDEX(i32);
+        if (!skipping) *(vint32 *)data = i32;
         break;
       case TYPE_Byte:
-        strm << *(vuint8 *)data;
+        strm << u8;
+        if (!skipping) *(vuint8 *)data = u8;
         break;
       case TYPE_Bool:
         strm << u8;
         if (strm.IsError()) return false;
         if (u8 != 0 && u8 != 1) return false;
-        if (type.BitMask == 0) {
-          *(vuint32 *)data = u8;
-        } else {
-          if (u8) {
-            *(vuint32 *)data |= type.BitMask;
+        if (!skipping) {
+          if (type.BitMask == 0) {
+            *(vuint32 *)data = u8;
           } else {
-            *(vuint32 *)data &= ~type.BitMask;
+            if (u8) {
+              *(vuint32 *)data |= type.BitMask;
+            } else {
+              *(vuint32 *)data &= ~type.BitMask;
+            }
           }
         }
         break;
       case TYPE_Float:
-        strm << *(float *)data;
+        strm << f32;
+        if (!skipping) *(float *)data = f32;
         break;
       case TYPE_Name:
         strm << STRM_INDEX_U(u32);
         if (strm.IsError()) return false;
         if (u32 >= (vuint32)namearr.length()) return false;
-        *(VName *)data = namearr[u32];
+        if (!skipping) *(VName *)data = namearr[u32];
         break;
       case TYPE_String:
         strm << STRM_INDEX_U(u32);
         if (strm.IsError()) return false;
         if (u32 >= (vuint32)strarr.length()) return false;
-        *(VStr *)data = strarr[u32];
+        if (!skipping) *(VStr *)data = strarr[u32];
         break;
       case TYPE_Reference:
         // class name
         strm << STRM_INDEX_U(u32);
         if (strm.IsError()) return false;
         if (u32 >= (vuint32)namearr.length()) return false;
-        /*
-        if (!o) {
-          o = *(VObject **)data;
-          if (o) FatalError("empty reference is not empty for some reason");
-        }
-        */
         if (u32) {
           // class to cast
-          c = VMemberBase::StaticFindClass(namearr[u32]);
-          if (!c) { fprintf(stderr, "Object Loader: class `%s` not found\n", *namearr[u32]); return false; }
-          if (!c->IsChildOf(type.Class)) { fprintf(stderr, "Object Loader: class `%s` is not a subclass of `%s`\n", *namearr[u32], *type.Class->Name); return false; }
-          // object id
-          strm << STRM_INDEX_U(u32);
-          if (u32 >= (vuint32)objarr.length()) return false;
-          *(VObject **)data = objarr[u32];
+          if (!skipping) {
+            c = VMemberBase::StaticFindClass(namearr[u32]);
+            if (!c) { fprintf(stderr, "Object Loader: class `%s` not found\n", *namearr[u32]); return false; }
+            if (!c->IsChildOf(type.Class)) { fprintf(stderr, "Object Loader: class `%s` is not a subclass of `%s`\n", *namearr[u32], *type.Class->Name); return false; }
+            // object id
+            strm << STRM_INDEX_U(u32);
+            if (u32 >= (vuint32)objarr.length()) return false;
+            *(VObject **)data = objarr[u32];
+          } else {
+            strm << STRM_INDEX_U(u32);
+          }
         } else {
           *(VObject **)data = nullptr; // none
         }
@@ -781,21 +795,29 @@ private:
         strm << STRM_INDEX_U(u32);
         if (strm.IsError()) return false;
         if (u32 >= (vuint32)namearr.length()) return false;
-        if (u32) {
-          c = VMemberBase::StaticFindClass(namearr[u32]);
-          if (!c) { fprintf(stderr, "Object Loader: class `%s` not found\n", *namearr[u32]); return false; }
-          if (!c->IsChildOf(type.Class)) { fprintf(stderr, "Object Loader: class `%s` is not a subclass of `%s`\n", *namearr[u32], *type.Class->Name); return false; }
-          *(VClass **)data = c;
-        } else {
-          *(VClass **)data = nullptr; // none
+        if (!skipping) {
+          if (u32) {
+            c = VMemberBase::StaticFindClass(namearr[u32]);
+            if (!c) { fprintf(stderr, "Object Loader: class `%s` not found\n", *namearr[u32]); return false; }
+            if (!c->IsChildOf(type.Class)) { fprintf(stderr, "Object Loader: class `%s` is not a subclass of `%s`\n", *namearr[u32], *type.Class->Name); return false; }
+            *(VClass **)data = c;
+          } else {
+            *(VClass **)data = nullptr; // none
+          }
         }
         break;
       case TYPE_Struct:
         return loadStruct(data, type.Struct);
       case TYPE_Vector:
-        strm << *(float *)data;
-        strm << *(float *)(data+sizeof(float));
-        strm << *(float *)(data+sizeof(float)*2);
+        if (!skipping) {
+          strm << *(float *)data;
+          strm << *(float *)(data+sizeof(float));
+          strm << *(float *)(data+sizeof(float)*2);
+        } else {
+          strm << f32;
+          strm << f32;
+          strm << f32;
+        }
         break;
       case TYPE_Array:
         {
@@ -805,13 +827,19 @@ private:
           strm << STRM_INDEX_U(innerSize);
           strm << STRM_INDEX_U(dim);
           if (strm.IsError()) return false;
-          VFieldType intType = type;
-          intType.Type = type.ArrayInnerType;
-          if (intType.Type != itype) return false;
-          if (innerSize != intType.GetSize()) return false;
-          if (dim > type.GetArrayDim()) return false;
-          for (int f = 0; f < dim; ++f) {
-            if (!loadTypedData(data+f*innerSize, intType)) return false;
+          if (!skipping) {
+            VFieldType intType = type;
+            intType.Type = type.ArrayInnerType;
+            if (intType.Type != itype) return false;
+            if (innerSize != intType.GetSize()) return false;
+            if (dim > type.GetArrayDim()) return false;
+            for (int f = 0; f < dim; ++f) {
+              if (!loadTypedData(data+f*innerSize, intType)) return false;
+            }
+          } else {
+            for (int f = 0; f < dim; ++f) {
+              if (!loadTypedData(data, type)) return false;
+            }
           }
         }
         break;
@@ -835,18 +863,25 @@ private:
           } else {
             if (dim > 1024*1024*512) return false;
           }
-          VScriptArray *a = (VScriptArray *)data;
-          VFieldType intType = type;
-          intType.Type = type.ArrayInnerType;
-          if (intType.Type != itype) return false;
-          if (innerSize != intType.GetSize()) return false;
-          if (is2d) {
-            a->SetSize2D((vint32)d1, (vint32)d2, intType);
+          if (!skipping) {
+            VScriptArray *a = (VScriptArray *)data;
+            VFieldType intType = type;
+            intType.Type = type.ArrayInnerType;
+            if (intType.Type != itype) return false;
+            if (innerSize != intType.GetSize()) return false;
+            if (is2d) {
+              a->SetSize2D((vint32)d1, (vint32)d2, intType);
+            } else {
+              a->SetNum((vint32)dim, intType);
+            }
+            for (int f = 0; f < a->length(); ++f) {
+              if (!loadTypedData(a->Ptr()+f*innerSize, intType)) return false;
+            }
           } else {
-            a->SetNum((vint32)dim, intType);
-          }
-          for (int f = 0; f < a->length(); ++f) {
-            if (!loadTypedData(a->Ptr()+f*innerSize, intType)) return false;
+            if (is2d) dim = d1*d2;
+            for (int f = 0; f < dim; ++f) {
+              if (!loadTypedData(data, type)) return false;
+            }
           }
         }
         break;
@@ -866,13 +901,15 @@ private:
     strm << STRM_INDEX_U(nn);
     if (strm.IsError()) return false;
     if (nn == 0 || nn >= (vuint32)namearr.length()) return false;
-    bool found = false;
-    for (VStruct *cst = st; cst; cst = cst->ParentStruct) {
-      if (cst->Name == namearr[nn]) { found = true; break; }
-    }
-    if (!found) {
-      fprintf(stderr, "Object Loader: tried to load struct `%s`, which is not a subset of `%s`\n", *namearr[nn], *st->Name);
-      return false;
+    if (!skipping) {
+      bool found = false;
+      for (VStruct *cst = st; cst; cst = cst->ParentStruct) {
+        if (cst->Name == namearr[nn]) { found = true; break; }
+      }
+      if (!found) {
+        fprintf(stderr, "Object Loader: tried to load struct `%s`, which is not a subset of `%s`\n", *namearr[nn], *st->Name);
+        return false;
+      }
     }
     // field count
     vuint32 fcount;
@@ -886,19 +923,26 @@ private:
 #ifdef DEBUG_OBJECT_LOADER
       fprintf(stderr, "  loading field `%s` in struct `%s`...\n", *namearr[n], *st->GetFullName());
 #endif
-      VField *fld = nullptr;
-      for (VStruct *cst = st; cst; cst = cst->ParentStruct) {
-        fld = findField(namearr[n], cst->Fields);
-        if (fld) break;
-      }
-      //FIXME: skip unknown fields
-      if (!fld) {
-        fprintf(stderr, "Object Loader: field `%s` is not found in struct `%s`\n", *namearr[n], *st->GetFullName());
-        return false;
-      }
-      if (!loadTypedData(data+fld->Ofs, fld->Type)) {
-        fprintf(stderr, "Object Loader: failed to load field `%s` in struct `%s`\n", *namearr[n], *st->GetFullName());
-        return false;
+      if (!skipping) {
+        VField *fld = nullptr;
+        for (VStruct *cst = st; cst; cst = cst->ParentStruct) {
+          fld = findField(namearr[n], cst->Fields);
+          if (fld) break;
+        }
+        //FIXME: skip unknown fields
+        if (!fld) {
+          fprintf(stderr, "Object Loader: field `%s` is not found in struct `%s`\n", *namearr[n], *st->GetFullName());
+          skipping = true;
+          if (!loadTypedData(nullptr, VFieldType())) return false;
+          skipping = false;
+        } else {
+          if (!loadTypedData(data+fld->Ofs, fld->Type)) {
+            fprintf(stderr, "Object Loader: failed to load field `%s` in struct `%s`\n", *namearr[n], *st->GetFullName());
+            return false;
+          }
+        }
+      } else {
+        if (!loadTypedData(nullptr, VFieldType())) return false;
       }
     }
 #ifdef DEBUG_OBJECT_LOADER
@@ -918,39 +962,55 @@ private:
     strm << STRM_INDEX_U(nn);
     if (strm.IsError()) return false;
     if (nn == 0 || nn >= (vuint32)namearr.length()) return false;
-    VClass *c = VMemberBase::StaticFindClass(namearr[nn]);
-    if (!c) { fprintf(stderr, "Object Loader: class `%s` not found\n", *namearr[nn]); return false; }
-    if (!c->IsChildOf(cls)) { fprintf(stderr, "Object Loader: class `%s` is not a subclass of `%s`\n", *namearr[nn], *cls->Name); return false; }
-    // field count
-    vuint32 fcount;
-    strm << STRM_INDEX_U(fcount);
-    if (strm.IsError()) return false;
-    // fields
-    while (fcount--) {
-      vuint32 n;
-      strm << STRM_INDEX_U(n);
-      if (n == 0 || n >= (vuint32)namearr.length()) return false;
-      VField *fld = nullptr;
+    if (!skipping) {
+      VClass *c = VMemberBase::StaticFindClass(namearr[nn]);
+      if (!c) { fprintf(stderr, "Object Loader: class `%s` not found\n", *namearr[nn]); return false; }
+      if (!c->IsChildOf(cls)) { fprintf(stderr, "Object Loader: class `%s` is not a subclass of `%s`\n", *namearr[nn], *cls->Name); return false; }
+      // field count
+      vuint32 fcount;
+      strm << STRM_INDEX_U(fcount);
+      if (strm.IsError()) return false;
+      // fields
+      while (fcount--) {
+        vuint32 n;
+        strm << STRM_INDEX_U(n);
+        if (n == 0 || n >= (vuint32)namearr.length()) return false;
+        VField *fld = nullptr;
 #ifdef DEBUG_OBJECT_LOADER
-      fprintf(stderr, "  loading field `%s` in class `%s`...\n", *namearr[n], *cls->Name);
+        fprintf(stderr, "  loading field `%s` in class `%s`...\n", *namearr[n], *cls->Name);
 #endif
-      for (VClass *c = cls; c; c = c->ParentClass) {
-        fld = findField(namearr[n], c->Fields);
-        if (fld) break;
+        for (VClass *c = cls; c; c = c->ParentClass) {
+          fld = findField(namearr[n], c->Fields);
+          if (fld) break;
+        }
+        //FIXME: skip unknown fields
+        if (!fld) {
+          fprintf(stderr, "Object Loader: field `%s` is not found in class `%s`\n", *namearr[n], *cls->Name);
+          skipping = true;
+          if (!loadTypedData(nullptr, VFieldType())) return false;
+          skipping = false;
+        } else {
+          if (!loadTypedData((vuint8 *)obj+fld->Ofs, fld->Type)) {
+            fprintf(stderr, "Object Loader: failed to load field `%s` in class `%s`\n", *namearr[n], *cls->Name);
+            return false;
+          }
+        }
       }
-      //FIXME: skip unknown fields
-      if (!fld) {
-        fprintf(stderr, "Object Loader: field `%s` is not found in class `%s`\n", *namearr[n], *cls->Name);
-        return false;
-      }
-      if (!loadTypedData((vuint8 *)obj+fld->Ofs, fld->Type)) {
-        fprintf(stderr, "Object Loader: failed to load field `%s` in class `%s`\n", *namearr[n], *cls->Name);
-        return false;
+#ifdef DEBUG_OBJECT_LOADER
+      fprintf(stderr, "done loading object of class `%s`...\n", *cls->Name);
+#endif
+    } else {
+      // field count
+      vuint32 fcount;
+      strm << STRM_INDEX_U(fcount);
+      if (strm.IsError()) return false;
+      while (fcount--) {
+        vuint32 n;
+        strm << STRM_INDEX_U(n);
+        if (n == 0 || n >= (vuint32)namearr.length()) return false;
+        if (!loadTypedData(nullptr, VFieldType())) return false;
       }
     }
-#ifdef DEBUG_OBJECT_LOADER
-    fprintf(stderr, "done loading object of class `%s`...\n", *cls->Name);
-#endif
     return !strm.IsError();
   }
 };
