@@ -35,6 +35,7 @@ bool VName::Initialised;
 // ////////////////////////////////////////////////////////////////////////// //
 #define REGISTER_NAME(name)   { nullptr, NAME_##name, #name },
 static VNameEntry AutoNames[] = {
+  { nullptr, NAME_none, "" },
 #include "names.h"
 };
 
@@ -71,10 +72,11 @@ VName::VName (const char *Name, ENameFindType FindType) {
 
   Index = NAME_None;
   // make sure name is valid
-  if (!Name || !*Name) return;
+  if (!Name || !Name[0]) return;
 
-  // map 'none' to 'None'
-  if (VStr::Cmp(Name, "none") == 0) return;
+  //k8: `none` is a valid name, and it is not equal to `NAME_none`!
+  // 'None' is not the same as 'none`!
+  //if (VStr::Cmp(Name, "none") == 0) return;
 
   memset(NameBuf, 0, sizeof(NameBuf));
   size_t nlen = strlen(Name);
@@ -109,16 +111,14 @@ VName::VName (const char *Name, ENameFindType FindType) {
     HashTable[HashIndex] = Names[Index];
   }
 
-  // map 'none' to 'None'
-  //if (Index == NAME_none) Index = NAME_None;
   unguard;
 }
 
 
-bool VName::operator == (const VStr &s) const { return (Index == 0 ? (s.isEmpty() || s == "none" || s == "None") : (s == Names[Index]->Name)); }
+bool VName::operator == (const VStr &s) const { return (Index == 0 ? s.isEmpty() : (s == Names[Index]->Name)); }
 bool VName::operator != (const VStr &s) const { return !(*this == s); }
 
-bool VName::operator == (const char *s) const { return (Index == 0 ? (!s || !s[0] || VStr::Cmp(s, "none") == 0 || VStr::Cmp(s, "None") == 0) : (VStr::Cmp(s, Names[Index]->Name) == 0)); }
+bool VName::operator == (const char *s) const { return (Index == 0 ? (!s || !s[0]) : (VStr::Cmp(s, Names[Index]->Name) == 0)); }
 bool VName::operator != (const char *s) const { return !(*this == s); }
 
 

@@ -1039,7 +1039,7 @@ int SpecialMissileHit(EntityEx Other)
 
 name GetSpecies()
 {
-  if (StrToName(Species) != 'None')
+  if (Species != "None" && Species != "none")
   {
     return StrToName(Species);
   }

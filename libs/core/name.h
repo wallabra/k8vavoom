@@ -28,7 +28,7 @@
 //**************************************************************************
 
 // maximum length of a name
-enum { NAME_SIZE = 64 };
+enum { NAME_SIZE = 128 };
 
 
 // entry in the names table

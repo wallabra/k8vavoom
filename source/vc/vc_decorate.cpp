@@ -3163,7 +3163,7 @@ void ProcessDecorateScripts () {
   for (int i = 0; i < ClassFixups.Num(); ++i) {
     VClassFixup &CF = ClassFixups[i];
     check(CF.ReqParent);
-    if (!CF.Name.ICmp("None")) {
+    if (CF.Name.ICmp("None") == 0) {
       *(VClass**)(CF.Class->Defaults+CF.Offset) = nullptr;
     } else {
       VClass *C = VClass::FindClassLowerCase(*CF.Name.ToLower());

@@ -33,15 +33,17 @@
 #ifndef REGISTER_NAME
   #define REGISTER_NAME(name) NAME_##name,
   #define REGISTERING_ENUM
+  #define NAME_None  NAME_none
   enum EName {
+    // special zero value, meaning no name
+    NAME_none,
 #else
-  #define NAME_none  NAME_None
+  #define NAME_None  NAME_none
 #endif
 
 // Hardcoded names ---------------------------------------------------------
 
 // Special zero value, meaning no name.
-REGISTER_NAME(None)
 //REGISTER_NAME(none)
 
 // Log messages.
