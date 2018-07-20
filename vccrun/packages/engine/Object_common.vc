@@ -184,6 +184,30 @@ struct event_t {
 #endif
 };
 
+#ifdef VCC_STANDALONE_EXECUTOR
+bitenum ModMask {
+  Empty = none,
+  Ctrl,
+  Alt,
+  Shift,
+  Hyper,
+  LMB,
+  MMB,
+  RMB,
+}
+static final ModMask buildModMask (const ref event_t evt) {
+  ModMask res = ModMask.Empty;
+  if (evt.bCtrl) res |= ModMask.Ctrl;
+  if (evt.bAlt) res |= ModMask.Alt;
+  if (evt.bShift) res |= ModMask.Shift;
+  if (evt.bHyper) res |= ModMask.Hyper;
+  if (evt.bLMB) res |= ModMask.LMB;
+  if (evt.bMMB) res |= ModMask.MMB;
+  if (evt.bRMB) res |= ModMask.RMB;
+  return res;
+}
+#endif
+
 
 //==========================================================================
 //
