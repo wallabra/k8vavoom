@@ -169,6 +169,19 @@ struct event_t {
   alias focused = data1;
   // for timer
   alias timerid = data1;
+#ifdef VCC_STANDALONE_EXECUTOR
+  // modifiers/buttons state
+  // modifiers state changed *after* processing an even
+  // i.e. if `K_?CTRL` is pressed, the flag will be set after calling `onEvent()`,
+  // and if `K_?CTRL` is released, the flag will be reset after calling `onEvent()`
+  bool bCtrl;
+  bool bAlt;
+  bool bShift;
+  bool bHyper; // not used yet
+  bool bLMB;
+  bool bMMB;
+  bool bRMB;
+#endif
 };
 
 

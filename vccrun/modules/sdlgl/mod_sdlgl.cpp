@@ -276,13 +276,27 @@ enum {
   ev_closequery, // data1: !=0 -- system shutdown
 };
 
+enum {
+  bCtrl = 1<<0,
+  bAlt = 1<<1,
+  bShift = 1<<2,
+  bHyper = 1<<3,
+  bLMB = 1<<4,
+  bMMB = 1<<5,
+  bRMB = 1<<6,
+};
+
 // event structure
 struct event_t {
-  int type; // event type
-  int data1; // keys / mouse / joystick buttons
-  int data2; // mouse / joystick x move
-  int data3; // mouse / joystick y move
+  vint32 type; // event type
+  vint32 data1; // keys / mouse / joystick buttons
+  vint32 data2; // mouse / joystick x move
+  vint32 data3; // mouse / joystick y move
+  vuint32 modflags;
 };
+
+static vuint32 curmodflagsR = 0;
+static vuint32 curmodflagsL = 0;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1324,7 +1338,20 @@ void VVideo::runEventLoop () {
               evt.data1 = kk;
               evt.data2 = 0;
               evt.data3 = 0;
+              evt.modflags = curmodflagsL|curmodflagsR;
               onEvent(evt);
+            }
+            // now fix flags
+            switch (ev.key.keysym.sym) {
+              case SDLK_LSHIFT: if (ev.type == SDL_KEYDOWN) curmodflagsL |= bShift; else curmodflagsL &= ~bShift; break;
+              case SDLK_RSHIFT: if (ev.type == SDL_KEYDOWN) curmodflagsR |= bShift; else curmodflagsR &= ~bShift; break;
+              case SDLK_LCTRL: if (ev.type == SDL_KEYDOWN) curmodflagsL |= bCtrl; else curmodflagsL &= ~bCtrl; break;
+              case SDLK_RCTRL: if (ev.type == SDL_KEYDOWN) curmodflagsR |= bCtrl; else curmodflagsR &= ~bCtrl; break;
+              case SDLK_LALT: if (ev.type == SDL_KEYDOWN) curmodflagsL |= bAlt; else curmodflagsL &= ~bAlt; break;
+              case SDLK_RALT: if (ev.type == SDL_KEYDOWN) curmodflagsR |= bAlt; else curmodflagsR &= ~bAlt; break;
+              case SDLK_LGUI: if (ev.type == SDL_KEYDOWN) curmodflagsL |= bHyper; else curmodflagsL &= ~bHyper; break;
+              case SDLK_RGUI: if (ev.type == SDL_KEYDOWN) curmodflagsR |= bHyper; else curmodflagsR &= ~bHyper; break;
+              default: break;
             }
           }
           break;
@@ -1335,6 +1362,7 @@ void VVideo::runEventLoop () {
           //evt.data3 = ev.motion.yrel;
           evt.data2 = ev.motion.x;
           evt.data3 = ev.motion.y;
+          evt.modflags = curmodflagsL|curmodflagsR;
           onEvent(evt);
           break;
         case SDL_MOUSEBUTTONDOWN:
@@ -1348,7 +1376,11 @@ void VVideo::runEventLoop () {
           else break;
           evt.data2 = ev.button.x;
           evt.data3 = ev.button.y;
+          evt.modflags = curmodflagsL|curmodflagsR;
           onEvent(evt);
+               if (ev.button.button == SDL_BUTTON_LEFT) { if (ev.button.state == SDL_PRESSED) curmodflagsL |= bLMB; else curmodflagsL &= ~bLMB; }
+          else if (ev.button.button == SDL_BUTTON_RIGHT) { if (ev.button.state == SDL_PRESSED) curmodflagsL |= bRMB; else curmodflagsL &= ~bRMB; }
+          else if (ev.button.button == SDL_BUTTON_MIDDLE) { if (ev.button.state == SDL_PRESSED) curmodflagsL |= bMMB; else curmodflagsL &= ~bMMB; }
           break;
         case SDL_MOUSEWHEEL:
           evt.type = ev_keydown;
@@ -1361,23 +1393,28 @@ void VVideo::runEventLoop () {
             SDL_GetMouseState(&mx, &my);
             evt.data2 = mx;
             evt.data3 = my;
+            evt.modflags = curmodflagsL|curmodflagsR;
             onEvent(evt);
           }
           break;
         case SDL_WINDOWEVENT:
           switch (ev.window.event) {
             case SDL_WINDOWEVENT_FOCUS_GAINED:
+              curmodflagsL = curmodflagsR = 0; // just in case
               evt.type = ev_winfocus;
               evt.data1 = 1;
               evt.data2 = 0;
               evt.data3 = 0;
+              evt.modflags = curmodflagsL|curmodflagsR;
               onEvent(evt);
               break;
             case SDL_WINDOWEVENT_FOCUS_LOST:
+              curmodflagsL = curmodflagsR = 0;
               evt.type = ev_winfocus;
               evt.data1 = 0;
               evt.data2 = 0;
               evt.data3 = 0;
+              evt.modflags = curmodflagsL|curmodflagsR;
               onEvent(evt);
               break;
             case SDL_WINDOWEVENT_EXPOSED:
@@ -1391,6 +1428,7 @@ void VVideo::runEventLoop () {
           evt.data1 = 0; // alas, there is no way to tell why we're quiting; fuck you, sdl!
           evt.data2 = 0;
           evt.data3 = 0;
+          evt.modflags = curmodflagsL|curmodflagsR;
           onEvent(evt);
           break;
         case SDL_USEREVENT:
@@ -1405,6 +1443,7 @@ void VVideo::runEventLoop () {
               evt.data1 = id;
               evt.data2 = 0;
               evt.data3 = 0;
+              evt.modflags = curmodflagsL|curmodflagsR;
               onEvent(evt);
             }
           }
