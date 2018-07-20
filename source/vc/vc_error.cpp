@@ -78,9 +78,9 @@ __attribute__((format(printf, 2, 3))) void ParseWarning (const TLocation &l, con
   vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
   va_end(argPtr);
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GCon->Logf("%s:%d: warning: %s", *l.GetSource(), l.GetLine(), Buffer);
+  GCon->Logf("%s: warning: %s", *l.toString(), Buffer);
 #else
-  fprintf(stderr, "%s:%d: warning: %s\n", *l.GetSource(), l.GetLine(), Buffer);
+  fprintf(stderr, "%s: warning: %s\n", *l.toString(), Buffer);
 #endif
 }
 
@@ -102,9 +102,9 @@ __attribute__((format(printf, 2, 3))) void ParseError (const TLocation &l, const
   vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
   va_end(argPtr);
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GCon->Logf("%s:%d: %s", *l.GetSource(), l.GetLine(), Buffer);
+  GCon->Logf("%s: %s", *l.toString(), Buffer);
 #else
-  fprintf(stderr, "%s:%d: %s\n", *l.GetSource(), l.GetLine(), Buffer);
+  fprintf(stderr, "%s: %s\n", *l.toString(), Buffer);
 #endif
 
   if (vcErrorCount >= 16) Sys_Error("Too many errors");
@@ -130,13 +130,18 @@ void ParseError (const TLocation &l, ECompileError error) {
 __attribute__((format(printf, 3, 4))) void ParseError (const TLocation &l, ECompileError error, const char *text, ...) {
   if (vcGagErrors) { ++vcGagErrors; return; }
 
-  char Buffer[2048];
-  va_list argPtr;
+  if (text && text[0]) {
+    char Buffer[2048];
+    va_list argPtr;
 
-  va_start(argPtr, text);
-  vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
-  va_end(argPtr);
-  ParseError(l, "Error #%d - %s, %s", error, ErrorNames[error], Buffer);
+    va_start(argPtr, text);
+    vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
+    va_end(argPtr);
+    //ParseError(l, "Error #%d - %s, %s", error, ErrorNames[error], Buffer);
+    ParseError(l, "%s, %s", ErrorNames[error], Buffer);
+  } else {
+    ParseError(l, "%s", ErrorNames[error]);
+  }
 }
 
 

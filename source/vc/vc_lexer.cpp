@@ -924,7 +924,7 @@ void VLexer::ProcessSpecialToken () {
     // not found?
     if (ntk == TK_NoToken) {
       // use last found token
-      if (Token == TK_NoToken) ParseError(Location, ERR_BAD_CHARACTER, "Unknown punctuation \'%s\'", tkbuf);
+      if (Token == TK_NoToken) ParseError(Location, ERR_BAD_CHARACTER, "Unknown punctuation '%s'", tkbuf);
       return;
     }
     // new token found, eat one char and repeat
@@ -1086,7 +1086,7 @@ bool VLexer::Check (EToken tk) {
 //
 //==========================================================================
 void VLexer::Expect (EToken tk) {
-  if (Token != tk) ParseError(Location, "expected %s, found %s", TokenNames[tk], TokenNames[Token]);
+  if (Token != tk) ParseError(Location, "expected `%s`, found `%s`", TokenNames[tk], TokenNames[Token]);
   NextToken();
 }
 
@@ -1100,7 +1100,7 @@ void VLexer::Expect (EToken tk) {
 //
 //==========================================================================
 void VLexer::Expect (EToken tk, ECompileError error) {
-  if (Token != tk) ParseError(Location, error, "expected %s, found %s", TokenNames[tk], TokenNames[Token]);
+  if (Token != tk) ParseError(Location, error, "expected `%s`, found `%s`", TokenNames[tk], TokenNames[Token]);
   NextToken();
 }
 

@@ -42,5 +42,7 @@ public:
   static int AddSourceFile (const VStr &);
   static void ClearSourceFiles ();
 
+  VStr toString () const;
+
   friend VStream &operator << (VStream &, TLocation &);
 };
