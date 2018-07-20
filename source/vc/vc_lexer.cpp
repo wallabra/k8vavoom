@@ -95,7 +95,7 @@ VLexer::~VLexer () {
 //==========================================================================
 void VLexer::OpenSource (const VStr &FileName) {
   // read file and prepare for compilation
-  PushSource(Location, FileName);
+  PushSource(/*Location,*/ FileName);
   sourceOpen = true;
   Token = TK_NoToken;
 }
@@ -108,7 +108,7 @@ void VLexer::OpenSource (const VStr &FileName) {
 //==========================================================================
 void VLexer::OpenSource (VStream *astream, const VStr &FileName) {
   // read file and prepare for compilation
-  PushSource(Location, astream, FileName);
+  PushSource(/*Location,*/ astream, FileName);
   sourceOpen = true;
   Token = TK_NoToken;
 }
@@ -119,13 +119,13 @@ void VLexer::OpenSource (VStream *astream, const VStr &FileName) {
 //  VLexer::PushSource
 //
 //==========================================================================
-void VLexer::PushSource (TLocation &Loc, const VStr &FileName) {
+void VLexer::PushSource (/*TLocation &Loc, */const VStr &FileName) {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   VStream *Strm = FL_OpenFileRead(FileName);
 #else
   VStream *Strm = fsysOpenFile(FileName);
 #endif
-  PushSource(Loc, Strm, FileName);
+  PushSource(/*Loc,*/ Strm, FileName);
 }
 
 
@@ -134,7 +134,7 @@ void VLexer::PushSource (TLocation &Loc, const VStr &FileName) {
 //  VLexer::PushSource
 //
 //==========================================================================
-void VLexer::PushSource (TLocation &Loc, VStream *Strm, const VStr &FileName) {
+void VLexer::PushSource (/*TLocation &Loc,*/ VStream *Strm, const VStr &FileName) {
   if (!Strm) {
     FatalError("Couldn't open %s", *FileName);
     return;
@@ -169,13 +169,15 @@ void VLexer::PushSource (TLocation &Loc, VStream *Strm, const VStr &FileName) {
   // save current character and location to be able to restore them
   NewSrc->currCh = currCh;
   NewSrc->Loc = Location;
+  NewSrc->CurLoc = CurLocation;
 
   NewSrc->SourceIdx = TLocation::AddSourceFile(FileName);
   NewSrc->Line = 1;
+  NewSrc->Column = 0;
   NewSrc->IncLineNumber = false;
   NewSrc->NewLine = true;
   NewSrc->Skipping = false;
-  Location = TLocation(NewSrc->SourceIdx, NewSrc->Line);
+  Location = TLocation(NewSrc->SourceIdx, NewSrc->Line, 1);
   NextChr();
 }
 
@@ -194,6 +196,7 @@ void VLexer::PopSource () {
   src = Tmp->Next;
   currCh = Tmp->currCh;
   Location = Tmp->Loc;
+  CurLocation = Tmp->CurLoc;
   delete Tmp;
 }
 
@@ -208,7 +211,9 @@ void VLexer::NextToken () {
   NewLine = src->NewLine;
   do {
     tokenStringBuffer[0] = 0;
+    Location = CurLocation;
     SkipWhitespaceAndComments();
+    Location = CurLocation;
 
     if (src->NewLine) {
       NewLine = true;
@@ -231,6 +236,7 @@ void VLexer::NextToken () {
 
     if (Token != TK_EOF && src->Skipping) Token = TK_NoToken;
   } while (Token == TK_NoToken);
+  //Location = CurLocation;
 }
 
 
@@ -246,10 +252,11 @@ void VLexer::NextChr () {
   }
   if (src->IncLineNumber) {
     ++src->Line;
-    Location = TLocation(src->SourceIdx, src->Line);
+    src->Column = 0;
     src->IncLineNumber = false;
   }
   currCh = *src->FilePtr++;
+  ++src->Column;
   if ((vuint8)currCh < ' ' || (vuint8)currCh == EOF_CHARACTER) {
     if (currCh == '\n') {
       src->IncLineNumber = true;
@@ -257,6 +264,7 @@ void VLexer::NextChr () {
     }
     currCh = ' ';
   }
+  CurLocation = TLocation(src->SourceIdx, src->Line, src->Column);
 }
 
 
@@ -413,13 +421,15 @@ void VLexer::ProcessPreprocessor () {
     if (ASCIIToChrCode[(vuint8)currCh] != CHR_Number) ParseError(Location, "`#line`: line number expected");
     ProcessNumberToken();
     src->Line = Number-1;
+    src->Column = 0;
 
     // read file name
     SkipWhitespaceAndComments();
     if (ASCIIToChrCode[(vuint8)currCh] != CHR_Quote) ParseError(Location, "`#line`: file name expected");
     ProcessFileName();
     src->SourceIdx = TLocation::AddSourceFile(String);
-    Location = TLocation(src->SourceIdx, src->Line);
+    Location = TLocation(src->SourceIdx, src->Line, src->Column);
+    CurLocation = Location;
 
     // ignore flags
     while (!src->NewLine) NextChr();
@@ -622,7 +632,7 @@ void VLexer::ProcessInclude () {
     return;
   }
   ProcessFileName();
-  TLocation Loc = Location;
+  //TLocation Loc = Location;
 
   Token = TK_NoToken;
   SkipWhitespaceAndComments();
@@ -642,7 +652,7 @@ void VLexer::ProcessInclude () {
       VStream *Strm = fsysOpenFile(FileName);
 #endif
       if (Strm) {
-        PushSource(Loc, Strm, FileName);
+        PushSource(/*Loc,*/ Strm, FileName);
         return;
       }
     }
@@ -655,14 +665,14 @@ void VLexer::ProcessInclude () {
       VStream *Strm = fsysOpenFile(FileName);
 #endif
       if (Strm) {
-        PushSource(Loc, Strm, FileName);
+        PushSource(/*Loc,*/ Strm, FileName);
         return;
       }
     }
   }
 
   // either it's relative to the current directory or absolute path
-  PushSource(Loc, tokenStringBuffer);
+  PushSource(/*Loc,*/ tokenStringBuffer);
 }
 
 

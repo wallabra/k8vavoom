@@ -758,7 +758,7 @@ void VScriptParser::Error (const char *message) {
 TLocation VScriptParser::GetLoc () {
   guardSlow(VScriptParser::GetLoc);
   if (SrcIdx == -1) SrcIdx = TLocation::AddSourceFile(ScriptName);
-  return TLocation(SrcIdx, Line);
+  return TLocation(SrcIdx, Line, 1);
   unguardSlow;
 }
 

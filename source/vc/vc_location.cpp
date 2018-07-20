@@ -94,7 +94,11 @@ void TLocation::ClearSourceFiles () {
 //==========================================================================
 VStr TLocation::toString () const {
   if (GetLine()) {
-    return GetSource()+":"+VStr(GetLine());
+    if (GetCol() > 0) {
+      return GetSource()+":"+VStr(GetLine())+":"+VStr(GetCol());
+    } else {
+      return GetSource()+":"+VStr(GetLine())+":1";
+    }
   } else {
     return VStr("(nowhere)");
   }
