@@ -95,7 +95,7 @@ VLexer::~VLexer () {
 //==========================================================================
 void VLexer::OpenSource (const VStr &FileName) {
   // read file and prepare for compilation
-  PushSource(/*Location,*/ FileName);
+  PushSource(FileName);
   sourceOpen = true;
   Token = TK_NoToken;
 }
@@ -108,7 +108,7 @@ void VLexer::OpenSource (const VStr &FileName) {
 //==========================================================================
 void VLexer::OpenSource (VStream *astream, const VStr &FileName) {
   // read file and prepare for compilation
-  PushSource(/*Location,*/ astream, FileName);
+  PushSource(astream, FileName);
   sourceOpen = true;
   Token = TK_NoToken;
 }
@@ -119,13 +119,13 @@ void VLexer::OpenSource (VStream *astream, const VStr &FileName) {
 //  VLexer::PushSource
 //
 //==========================================================================
-void VLexer::PushSource (/*TLocation &Loc, */const VStr &FileName) {
+void VLexer::PushSource (const VStr &FileName) {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   VStream *Strm = FL_OpenFileRead(FileName);
 #else
   VStream *Strm = fsysOpenFile(FileName);
 #endif
-  PushSource(/*Loc,*/ Strm, FileName);
+  PushSource(Strm, FileName);
 }
 
 
@@ -134,7 +134,7 @@ void VLexer::PushSource (/*TLocation &Loc, */const VStr &FileName) {
 //  VLexer::PushSource
 //
 //==========================================================================
-void VLexer::PushSource (/*TLocation &Loc,*/ VStream *Strm, const VStr &FileName) {
+void VLexer::PushSource (VStream *Strm, const VStr &FileName) {
   if (!Strm) {
     FatalError("Couldn't open %s", *FileName);
     return;
@@ -147,9 +147,13 @@ void VLexer::PushSource (/*TLocation &Loc,*/ VStream *Strm, const VStr &FileName
   // copy file name
   NewSrc->FileName = FileName;
 
-  // extract path to the file.
+  // extract path to the file
   const char *PathEnd = *FileName+FileName.Length()-1;
+#ifdef WIN32
   while (PathEnd >= *FileName && *PathEnd != '/' && *PathEnd != '\\') --PathEnd;
+#else
+  while (PathEnd >= *FileName && *PathEnd != '/') --PathEnd;
+#endif
   if (PathEnd >= *FileName) NewSrc->Path = VStr(FileName, 0, (PathEnd-(*FileName))+1);
 
   // read the file
@@ -172,12 +176,11 @@ void VLexer::PushSource (/*TLocation &Loc,*/ VStream *Strm, const VStr &FileName
   NewSrc->CurLoc = CurLocation;
 
   NewSrc->SourceIdx = TLocation::AddSourceFile(FileName);
-  NewSrc->Line = 1;
-  NewSrc->Column = 0;
   NewSrc->IncLineNumber = false;
   NewSrc->NewLine = true;
   NewSrc->Skipping = false;
-  Location = TLocation(NewSrc->SourceIdx, NewSrc->Line, 1);
+  Location = TLocation(NewSrc->SourceIdx, 1, 1);
+  CurLocation = TLocation(NewSrc->SourceIdx, 1, 0); // 0, 'cause `NextChr()` will do `ConsumeChar()`
   NextChr();
 }
 
@@ -211,7 +214,6 @@ void VLexer::NextToken () {
   NewLine = src->NewLine;
   do {
     tokenStringBuffer[0] = 0;
-    Location = CurLocation;
     SkipWhitespaceAndComments();
     Location = CurLocation;
 
@@ -236,7 +238,6 @@ void VLexer::NextToken () {
 
     if (Token != TK_EOF && src->Skipping) Token = TK_NoToken;
   } while (Token == TK_NoToken);
-  //Location = CurLocation;
 }
 
 
@@ -250,13 +251,9 @@ void VLexer::NextChr () {
     currCh = EOF_CHARACTER;
     return;
   }
-  if (src->IncLineNumber) {
-    ++src->Line;
-    src->Column = 0;
-    src->IncLineNumber = false;
-  }
+  CurLocation.ConsumeChar(src->IncLineNumber);
+  src->IncLineNumber = false;
   currCh = *src->FilePtr++;
-  ++src->Column;
   if ((vuint8)currCh < ' ' || (vuint8)currCh == EOF_CHARACTER) {
     if (currCh == '\n') {
       src->IncLineNumber = true;
@@ -264,7 +261,6 @@ void VLexer::NextChr () {
     }
     currCh = ' ';
   }
-  CurLocation = TLocation(src->SourceIdx, src->Line, src->Column);
 }
 
 
@@ -291,6 +287,7 @@ char VLexer::Peek (int dist) const {
 //
 //==========================================================================
 void VLexer::SkipWhitespaceAndComments () {
+  Location = CurLocation;
   bool Done;
   do {
     Done = true;
@@ -420,15 +417,14 @@ void VLexer::ProcessPreprocessor () {
     SkipWhitespaceAndComments();
     if (ASCIIToChrCode[(vuint8)currCh] != CHR_Number) ParseError(Location, "`#line`: line number expected");
     ProcessNumberToken();
-    src->Line = Number-1;
-    src->Column = 0;
+    auto lno = Number-1;
 
     // read file name
     SkipWhitespaceAndComments();
     if (ASCIIToChrCode[(vuint8)currCh] != CHR_Quote) ParseError(Location, "`#line`: file name expected");
     ProcessFileName();
     src->SourceIdx = TLocation::AddSourceFile(String);
-    Location = TLocation(src->SourceIdx, src->Line, src->Column);
+    Location = TLocation(src->SourceIdx, lno, 0);
     CurLocation = Location;
 
     // ignore flags
@@ -685,14 +681,14 @@ void VLexer::AddIncludePath (const VStr &DirName) {
   if (DirName.length() == 0) return; // get lost
   VStr copy = DirName;
   // append trailing slash if needed
-#ifndef _WIN32
+#ifndef WIN32
   if (!copy.EndsWith("/")) copy += '/';
 #else
   if (!copy.EndsWith("/") && !copy.EndsWith("\\")) copy += '/';
 #endif
   // check for duplicate pathes
   for (int i = 0; i < includePath.length(); ++i) {
-#ifndef _WIN32
+#ifndef WIN32
     if (includePath[i] == copy) return;
 #else
     if (includePath[i].ICmp(copy) == 0) return;
@@ -942,109 +938,6 @@ void VLexer::ProcessSpecialToken () {
     NextChr();
     if (++tkbpos >= sizeof(tkbuf)) FatalError("VC: something is very wrong with the lexer");
   }
-  /*
-  char ch = currCh;
-  NextChr();
-  switch (ch) {
-    case '+':
-           if (currCh == '=') { Token = TK_AddAssign; NextChr(); }
-      else if (currCh == '+') { Token = TK_Inc; NextChr(); }
-      else Token = TK_Plus;
-      break;
-    case '-':
-           if (currCh == '=') { Token = TK_MinusAssign; NextChr(); }
-      else if (currCh == '-') { Token = TK_Dec; NextChr(); }
-      else if (currCh == '>') { Token = TK_Arrow; NextChr(); }
-      else Token = TK_Minus;
-      break;
-    case '*':
-      if (currCh == '=') { Token = TK_MultiplyAssign; NextChr(); }
-      else Token = TK_Asterisk;
-      break;
-    case '/':
-      if (currCh == '=') { Token = TK_DivideAssign; NextChr(); }
-      else Token = TK_Slash;
-      break;
-    case '%':
-      if (currCh == '=') { Token = TK_ModAssign; NextChr(); }
-      else Token = TK_Percent;
-      break;
-    case '=':
-      if (currCh == '=') { Token = TK_Equals; NextChr(); }
-      else Token = TK_Assign;
-      break;
-    case '<':
-      if (currCh == '<') {
-        NextChr();
-        if (currCh == '=') { Token = TK_LShiftAssign; NextChr(); }
-        else Token = TK_LShift;
-      } else if (currCh == '=') {
-        Token = TK_LessEquals;
-        NextChr();
-      } else {
-        Token = TK_Less;
-      }
-      break;
-    case '>':
-      if (currCh == '>') {
-        NextChr();
-        if (currCh == '=') { Token = TK_RShiftAssign; NextChr(); }
-        else Token = TK_RShift;
-      } else if (currCh == '=') {
-        Token = TK_GreaterEquals;
-        NextChr();
-      } else {
-        Token = TK_Greater;
-      }
-      break;
-    case '!':
-      if (currCh == '=') { Token = TK_NotEquals; NextChr(); }
-      else Token = TK_Not;
-      break;
-    case '&':
-           if (currCh == '=') { Token = TK_AndAssign; NextChr(); }
-      else if (currCh == '&') { Token = TK_AndLog; NextChr(); }
-      else Token = TK_And;
-      break;
-    case '|':
-           if (currCh == '=') { Token = TK_OrAssign; NextChr(); }
-      else if (currCh == '|') { Token = TK_OrLog; NextChr(); }
-      else Token = TK_Or;
-      break;
-    case '^':
-      if (currCh == '=') { Token = TK_XOrAssign; NextChr(); }
-      else Token = TK_XOr;
-      break;
-    case '.':
-      if (currCh == '.') {
-        NextChr();
-        if (currCh == '.') { Token = TK_VarArgs; NextChr(); }
-        else Token = TK_DotDot;
-      } else {
-        Token = TK_Dot;
-      }
-      break;
-    case ':':
-      if (currCh == ':') { Token = TK_DColon; NextChr(); }
-      else Token = TK_Colon;
-      break;
-    case '(': Token = TK_LParen; break;
-    case ')': Token = TK_RParen; break;
-    case '?': Token = TK_Quest; break;
-    case '~': Token = TK_Tilde; break;
-    case ',': Token = TK_Comma; break;
-    case ';': Token = TK_Semicolon; break;
-    case '[': Token = TK_LBracket; break;
-    case ']': Token = TK_RBracket; break;
-    case '{': Token = TK_LBrace; break;
-    case '}': Token = TK_RBrace; break;
-    case '$': Token = TK_Dollar; break;
-    default:
-      ParseError(Location, ERR_BAD_CHARACTER, "Unknown punctuation \'%c\'", ch);
-      Token = TK_NoToken;
-      break;
-  }
-  */
 }
 
 
@@ -1056,7 +949,7 @@ void VLexer::ProcessSpecialToken () {
 void VLexer::ProcessFileName () {
   int len = 0;
   NextChr();
-  while (currCh != '\"') {
+  while (currCh != '"') {
     if (len >= MAX_QUOTED_LENGTH-1) {
       ParseError(Location, ERR_STRING_TOO_LONG);
       NextChr();

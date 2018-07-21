@@ -30,6 +30,7 @@
 int vcErrorCount = 0;
 int vcGagErrorCount = 0;
 int vcGagErrors = 0; // !0: errors are gagged
+bool vcErrorIncludeCol = true;
 
 
 static const char *ErrorNames[NUM_ERRORS] = {
@@ -78,9 +79,9 @@ __attribute__((format(printf, 2, 3))) void ParseWarning (const TLocation &l, con
   vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
   va_end(argPtr);
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GCon->Logf("%s: warning: %s", *l.toString(), Buffer);
+  GCon->Logf("%s: warning: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
 #else
-  fprintf(stderr, "%s: warning: %s\n", *l.toString(), Buffer);
+  fprintf(stderr, "%s: warning: %s\n", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
 #endif
 }
 
@@ -102,9 +103,9 @@ __attribute__((format(printf, 2, 3))) void ParseError (const TLocation &l, const
   vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
   va_end(argPtr);
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GCon->Logf("%s: %s", *l.toString(), Buffer);
+  GCon->Logf("%s: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
 #else
-  fprintf(stderr, "%s: %s\n", *l.toString(), Buffer);
+  fprintf(stderr, "%s: %s\n", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
 #endif
 
   if (vcErrorCount >= 16) Sys_Error("Too many errors");

@@ -28,16 +28,17 @@
 // describes location in a source file
 class TLocation {
 private:
-  int Loc;
-  int Col;
+  vuint32 Loc;
+  vuint32 Col;
   static TArray<VStr> SourceFiles;
   static TMapDtor<VStr, vint32> SourceFilesMap; // to avoid Schlemiel's curse
 
 public:
   TLocation () : Loc(0), Col(0) {}
-  TLocation (int SrcIdx, int Line, int ACol) : Loc(((SrcIdx&0xffff)<<16)|(Line&0xffff)), Col(ACol) {}
+  TLocation (int SrcIdx, int Line, int ACol) : Loc(((SrcIdx&0xffff)<<16)|(Line&0xffff)), Col(ACol&0x7fffffff) {}
   inline int GetLine () const { return (Loc&0xffff); }
-  inline int GetCol () const { return Col; }
+  inline void SetLine (int Line) { Loc = (Loc&0xffff0000)|(Line&0xffff); }
+  inline int GetCol () const { return Col&0x7fffffff; }
   VStr GetSource () const;
   inline bool isInternal () const { return (Loc == 0); }
 
@@ -45,6 +46,11 @@ public:
   static void ClearSourceFiles ();
 
   VStr toString () const;
+  VStr toStringNoCol () const;
 
-  friend VStream &operator << (VStream &, TLocation &);
+  inline void ConsumeChar (bool doNewline) {
+    if (doNewline) { ++Loc; Col = 1; } else ++Col;
+  }
+
+  //friend VStream &operator << (VStream &, TLocation &);
 };

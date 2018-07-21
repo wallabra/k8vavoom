@@ -81,8 +81,6 @@ private:
     TLocation Loc;
     TLocation CurLoc;
     int SourceIdx;
-    int Line;
-    int Column;
     bool IncLineNumber;
     bool NewLine;
     TArray<int> IfStates;
@@ -112,8 +110,8 @@ private:
   void ProcessElse ();
   void ProcessEndIf ();
   void ProcessInclude ();
-  void PushSource (/*TLocation &Loc,*/ const VStr &FileName);
-  void PushSource (/*TLocation &Loc,*/ VStream *Strm, const VStr &FileName); // takes ownership
+  void PushSource (const VStr &FileName);
+  void PushSource (VStream *Strm, const VStr &FileName); // takes ownership
   void PopSource ();
   void ProcessNumberToken ();
   void ProcessChar ();

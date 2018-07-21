@@ -107,9 +107,24 @@ VStr TLocation::toString () const {
 
 //==========================================================================
 //
+//  TLocation::toStringNoCol
+//
+//==========================================================================
+VStr TLocation::toStringNoCol () const {
+  if (GetLine()) {
+    return GetSource()+":"+VStr(GetLine());
+  } else {
+    return VStr("(nowhere)");
+  }
+}
+
+
+//==========================================================================
+//
 //  operator << (TLocation)
 //
 //==========================================================================
+/*
 VStream &operator << (VStream &Strm, TLocation &loc) {
   //FIXME: kill Schlemiel
   vint8 ll = (loc.Loc ? 1 : 0);
@@ -128,3 +143,4 @@ VStream &operator << (VStream &Strm, TLocation &loc) {
   }
   return Strm;
 }
+*/
