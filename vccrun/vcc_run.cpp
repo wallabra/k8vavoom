@@ -1470,7 +1470,9 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
         case 'P': VMemberBase::StaticAddPackagePath(text); break;
         default:
           --text;
-          if (VStr::Cmp(text, "base") == 0) {
+          if (VStr::Cmp(text, "nocol") == 0) {
+            vcErrorIncludeCol = false;
+          } else if (VStr::Cmp(text, "base") == 0) {
             ++i;
             if (i >= ArgCount) DisplayUsage();
             fsysBaseDir = VStr(ArgVector[i]);
