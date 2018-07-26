@@ -135,6 +135,9 @@ if (ENABLE_VCCRUN)
     # file reader
     modules/mod_textread.h
     modules/mod_textread.cpp
+    # command console
+    modules/mod_console.h
+    modules/mod_console.cpp
     # sound system
     modules/mod_sound/sound.h
     modules/mod_sound/snd_al.cpp
