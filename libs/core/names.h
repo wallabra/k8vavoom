@@ -364,6 +364,8 @@ REGISTER_NAME(SoundSystem)
 
 REGISTER_NAME(DFMap)
 
+REGISTER_NAME(Console)
+
 // Closing -----------------------------------------------------------------
 
 #ifdef REGISTERING_ENUM
