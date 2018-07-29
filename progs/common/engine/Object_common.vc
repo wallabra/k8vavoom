@@ -210,7 +210,7 @@ static final ModMask buildModMask (const ref event_t evt) {
 #endif
 
 
-static final string GetInputKeyName (int kcode) {
+static final string GetInputKeyStr (int kcode) {
   if (kcode >= "0" && kcode <= "9") return string.fromChar(kcode);
   if (kcode >= "a" && kcode <= "z") return string.fromChar(kcode-32);
   switch (kcode) {
