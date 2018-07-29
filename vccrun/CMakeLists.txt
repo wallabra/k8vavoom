@@ -134,6 +134,11 @@ if (ENABLE_VCCRUN)
     set(VCCRUN_SOUND_LIBMAD_SOURCES modules/mod_sound/snd_libmad.cpp)
   endif(LIBMAD_FOUND)
 
+  set(VCCRUN_SOUND_XMPLITE_SOURCES )
+  if(XMPLITE_FOUND)
+    set(VCCRUN_SOUND_XMPLITE_SOURCES modules/mod_sound/snd_xmplite.cpp)
+  endif(XMPLITE_FOUND)
+
   add_executable(vcc_run
     ${VCCRUN_COMPILER_SOURCES}
     ${VCCRUN_RUNTIME_SOURCES}
@@ -168,6 +173,7 @@ if (ENABLE_VCCRUN)
     ${VCCRUN_SOUND_OPUS_SOURCES}
     ${VCCRUN_SOUND_FLAC_SOURCES}
     ${VCCRUN_SOUND_LIBMAD_SOURCES}
+    ${VCCRUN_SOUND_XMPLITE_SOURCES}
     modules/mod_sound/snd_wav.cpp
   )
 
