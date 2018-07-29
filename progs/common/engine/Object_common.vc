@@ -91,7 +91,7 @@ enum {
   K_HOME, K_END,
   K_PAGEUP, K_PAGEDOWN,
 
-  K_PAD0, K_PAD1, K_PAD2, K_PAD3,K_PAD4, K_PAD5, K_PAD6, K_PAD7, K_PAD8, K_PAD9,
+  K_PAD0, K_PAD1, K_PAD2, K_PAD3, K_PAD4, K_PAD5, K_PAD6, K_PAD7, K_PAD8, K_PAD9,
 
   K_NUMLOCK,
   K_PADDIVIDE, K_PADMULTIPLE,
@@ -195,6 +195,7 @@ bitenum ModMask {
   MMB,
   RMB,
 }
+
 static final ModMask buildModMask (const ref event_t evt) {
   ModMask res = ModMask.Empty;
   if (evt.bCtrl) res |= ModMask.Ctrl;
@@ -207,6 +208,117 @@ static final ModMask buildModMask (const ref event_t evt) {
   return res;
 }
 #endif
+
+
+static final string GetInputKeyName (int kcode) {
+  if (kcode >= "0" && kcode <= "9") return string.fromChar(kcode);
+  if (kcode >= "a" && kcode <= "z") return string.fromChar(kcode-32);
+  switch (kcode) {
+    case K_SPACE: return "SPACE";
+
+    case K_UPARROW: return "UP";
+    case K_LEFTARROW: return "LEFT";
+    case K_RIGHTARROW: return "RIGHT";
+    case K_DOWNARROW: return "DOWN";
+    case K_INSERT: return "INSERT";
+    case K_DELETE: return "DELETE";
+    case K_HOME: return "HOME";
+    case K_END: return "END";
+    case K_PAGEUP: return "PGUP";
+    case K_PAGEDOWN: return "PGDN";
+
+    case K_PAD0: return "PAD0";
+    case K_PAD1: return "PAD1";
+    case K_PAD2: return "PAD2";
+    case K_PAD3: return "PAD3";
+    case K_PAD4: return "PAD4";
+    case K_PAD5: return "PAD5";
+    case K_PAD6: return "PAD6";
+    case K_PAD7: return "PAD7";
+    case K_PAD8: return "PAD8";
+    case K_PAD9: return "PAD9";
+
+    case K_NUMLOCK: return "NUMLOCK";
+    case K_PADDIVIDE: return "PAD/";
+    case K_PADMULTIPLE: return "PAD*";
+    case K_PADMINUS: return "PAD-";
+    case K_PADPLUS: return "PAD+";
+    case K_PADENTER: return "PADENTER";
+    case K_PADDOT: return "PAD.";
+
+    case K_ESCAPE: return "ESCAPE";
+    case K_ENTER: return "ENTER";
+    case K_TAB: return "TAB";
+    case K_BACKSPACE: return "BACKSPACE";
+    case K_CAPSLOCK: return "CAPSLOCK";
+
+    case K_F1: return "F1";
+    case K_F2: return "F2";
+    case K_F3: return "F3";
+    case K_F4: return "F4";
+    case K_F5: return "F5";
+    case K_F6: return "F6";
+    case K_F7: return "F7";
+    case K_F8: return "F8";
+    case K_F9: return "F9";
+    case K_F10: return "F10";
+    case K_F11: return "F11";
+    case K_F12: return "F12";
+
+    case K_LSHIFT: return "LSHIFT";
+    case K_RSHIFT: return "RSHIFT";
+    case K_LCTRL: return "LCTRL";
+    case K_RCTRL: return "RCTRL";
+    case K_LALT: return "LALT";
+    case K_RALT: return "RALT";
+
+    case K_LWIN: return "LWIN";
+    case K_RWIN: return "RWIN";
+    case K_MENU: return "MENU";
+
+    case K_PRINTSCRN: return "PRINTSCRN";
+    case K_SCROLLLOCK: return "SCRLOCK";
+    case K_PAUSE: return "PAUSE";
+
+    case K_ABNT_C1: return "ABNT_C1";
+    case K_YEN: return "YEN";
+    case K_KANA: return "KANA";
+    case K_CONVERT: return "CONVERT";
+    case K_NOCONVERT: return "NOCONVERT";
+    case K_AT: return "AT";
+    case K_CIRCUMFLEX: return "CIRCUMFLEX";
+    case K_COLON2: return "COLON2";
+    case K_KANJI: return "KANJI";
+
+    case K_MOUSE1: return "MOUSE1";
+    case K_MOUSE2: return "MOUSE2";
+    case K_MOUSE3: return "MOUSE3";
+    case K_MOUSED1: return "MOUSED1";
+    case K_MOUSED2: return "MOUSED2";
+    case K_MOUSED3: return "MOUSED3";
+
+    case K_MWHEELUP: return "MWHEELUP";
+    case K_MWHEELDOWN: return "MWHEELDOWN";
+
+    case K_JOY1: return "JOY1";
+    case K_JOY2: return "JOY2";
+    case K_JOY3: return "JOY3";
+    case K_JOY4: return "JOY4";
+    case K_JOY5: return "JOY5";
+    case K_JOY6: return "JOY6";
+    case K_JOY7: return "JOY7";
+    case K_JOY8: return "JOY8";
+    case K_JOY9: return "JOY9";
+    case K_JOY10: return "JOY10";
+    case K_JOY11: return "JOY11";
+    case K_JOY12: return "JOY12";
+    case K_JOY13: return "JOY13";
+    case K_JOY14: return "JOY14";
+    case K_JOY15: return "JOY15";
+    case K_JOY16: return "JOY16";
+  }
+  return "???";
+}
 
 
 //==========================================================================
