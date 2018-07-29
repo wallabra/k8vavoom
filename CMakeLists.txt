@@ -15,6 +15,7 @@ option(WITH_OPUS "Enable Opus support" ON)
 option(WITH_LIBMAD "Enable MP3 support" ON)
 option(WITH_MIKMOD "Enable MikMod support" ON)
 option(WITH_MODPLUG "Enable ModPlug support" ON)
+option(WITH_XMPLITE "Enable XMP-Lite support" ON)
 option(WITH_FLAC "Enable FLAC support" ON)
 option(WITH_GME "Enable built-in GME support" OFF)
 option(WITH_SYS_LIBPNG "Use system libpng" OFF)
@@ -78,6 +79,7 @@ else(ENABLE_VCCRUN_ONLY)
     set(WITH_LIBMAD OFF)
     set(WITH_MIKMOD OFF)
     set(WITH_MODPLUG OFF)
+    set(WITH_XMPLITE OFF)
     set(WITH_FLAC OFF)
     set(WITH_GME OFF)
   endif(NOT ENABLE_CLIENT)
@@ -349,6 +351,26 @@ if(WITH_OPUS)
 else(WITH_OPUS)
   set(OPUS_FOUND OFF)
 endif(WITH_OPUS)
+
+
+#
+#  **** Check for xmp-lite ****
+#
+if(WITH_XMPLITE)
+  FIND_PACKAGE(PkgConfig REQUIRED)
+  PKG_CHECK_MODULES(XMPLITE libxmp-lite)
+  if(XMPLITE_INCLUDE_DIRS AND XMPLITE_LIBRARIES)
+    message(STATUS "Found XMP-Lite: ${XMPLITE_LIBRARIES}")
+    set(XMPLITE_FOUND ON)
+    include_directories(${XMPLITE_INCLUDE_DIRS})
+    set(MAIN_LIBS ${XMPLITE_LIBRARIES} ${MAIN_LIBS})
+  else(XMPLITE_INCLUDE_DIRS AND XMPLITE_LIBRARIES)
+    message(STATUS "Could NOT find XMP-Lite libraries")
+    set(XMPLITE_FOUND OFF)
+  endif(XMPLITE_INCLUDE_DIRS AND XMPLITE_LIBRARIES)
+else(WITH_XMPLITE)
+  set(XMPLITE_FOUND OFF)
+endif(WITH_XMPLITE)
 
 
 #

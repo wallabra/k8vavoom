@@ -114,6 +114,26 @@ if (ENABLE_VCCRUN)
     filesys/pak/dfwad.cpp
   )
 
+  set(VCCRUN_SOUND_VORBIS_SOURCES )
+  if(VORBIS_FOUND)
+    set(VCCRUN_SOUND_VORBIS_SOURCES modules/mod_sound/snd_vorbis.cpp)
+  endif(VORBIS_FOUND)
+
+  set(VCCRUN_SOUND_OPUS_SOURCES )
+  if(OPUS_FOUND)
+    set(VCCRUN_SOUND_OPUS_SOURCES modules/mod_sound/snd_opus.cpp)
+  endif(OPUS_FOUND)
+
+  set(VCCRUN_SOUND_FLAC_SOURCES )
+  if(FLAC_FOUND)
+    set(VCCRUN_SOUND_FLAC_SOURCES modules/mod_sound/snd_flac.cpp)
+  endif(FLAC_FOUND)
+
+  set(VCCRUN_SOUND_LIBMAD_SOURCES )
+  if(LIBMAD_FOUND)
+    set(VCCRUN_SOUND_LIBMAD_SOURCES modules/mod_sound/snd_libmad.cpp)
+  endif(LIBMAD_FOUND)
+
   add_executable(vcc_run
     ${VCCRUN_COMPILER_SOURCES}
     ${VCCRUN_RUNTIME_SOURCES}
@@ -142,11 +162,12 @@ if (ENABLE_VCCRUN)
     modules/mod_sound/sound.h
     modules/mod_sound/snd_al.cpp
     modules/mod_sound/snd_data.cpp
-    modules/mod_sound/snd_flac.cpp
     modules/mod_sound/snd_main.cpp
     modules/mod_sound/snd_streamplayer.cpp
-    modules/mod_sound/snd_vorbis.cpp
-    modules/mod_sound/snd_opus.cpp
+    ${VCCRUN_SOUND_VORBIS_SOURCES}
+    ${VCCRUN_SOUND_OPUS_SOURCES}
+    ${VCCRUN_SOUND_FLAC_SOURCES}
+    ${VCCRUN_SOUND_LIBMAD_SOURCES}
     modules/mod_sound/snd_wav.cpp
   )
 

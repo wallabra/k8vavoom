@@ -278,43 +278,8 @@ void VVorbisSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
   VVorbisAudioCodec *Codec = new VVorbisAudioCodec(&Stream, false);
   if (!Codec->Init()) {
     Codec->Cleanup();
-    delete Codec;
-    Codec = nullptr;
-    return;
+  } else {
+    LoadFromAudioCodec(Sfx, Codec);
   }
-
-  TArray<short> Data;
-  do {
-    short Buf[16*2048];
-    int SamplesDecoded = Codec->Decode(Buf, 16*1024);
-    if (SamplesDecoded > 0) {
-      int OldPos = Data.length();
-      Data.SetNumWithReserve(Data.length()+SamplesDecoded);
-      //for (int i = 0; i < SamplesDecoded; ++i) Data[OldPos+i] = Buf[i*2];
-      for (int i = 0; i < SamplesDecoded; ++i) {
-        // mix it
-        int v = Buf[i*2]+Buf[i*2+1];
-        if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
-        Data[OldPos+i] = v;
-      }
-    }
-  } while (!Codec->Finished());
-
-  if (!Data.length()) {
-    delete Codec;
-    Codec = nullptr;
-    return;
-  }
-
-  // copy parameters
-  Sfx.sampleRate = Codec->SampleRate;
-  Sfx.sampleBits = Codec->SampleBits;
-
-  // copy data
-  Sfx.dataSize = Data.length()*2;
-  Sfx.data = (vuint8 *)Z_Malloc(Data.length()*2);
-  memcpy(Sfx.data, Data.Ptr(), Data.length()*2);
-
   delete Codec;
-  Codec = nullptr;
 }
