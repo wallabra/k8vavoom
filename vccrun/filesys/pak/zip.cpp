@@ -113,6 +113,7 @@ public:
   VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, const VZipFileInfo &aInfo, FSysDriverBase *aDriver);
   virtual ~VZipFileReader () override;
 
+  virtual const VStr &GetName () const override;
   virtual void Serialise (void*, int) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
@@ -510,6 +511,11 @@ VZipFileReader::VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, c
 VZipFileReader::~VZipFileReader () {
   Close();
   mythread_mutex_destroy(&lock);
+}
+
+
+const VStr &VZipFileReader::GetName () const {
+  return info.name;
 }
 
 
@@ -928,7 +934,8 @@ void VZipFileReader::Seek (int pos) {
 
 
 int VZipFileReader::Tell () {
-  return (usezlib ? stream.total_out : lzmastream.total_out);
+  //return (usezlib ? stream.total_out : lzmastream.total_out);
+  return nextpos;
 }
 
 
