@@ -110,7 +110,7 @@ static const OpusFileCallbacks opusStreamCB = {
 
 //==========================================================================
 //
-//  VVorbisAudioCodec::VVorbisAudioCodec
+//  VOpusAudioCodec::VOpusAudioCodec
 //
 //==========================================================================
 VOpusAudioCodec::VOpusAudioCodec (VStream *AStrm, bool AFreeStream)
@@ -127,7 +127,7 @@ VOpusAudioCodec::VOpusAudioCodec (VStream *AStrm, bool AFreeStream)
 
 //==========================================================================
 //
-//  VVorbisAudioCodec::~VVorbisAudioCodec
+//  VOpusAudioCodec::~VOpusAudioCodec
 //
 //==========================================================================
 VOpusAudioCodec::~VOpusAudioCodec () {
@@ -145,7 +145,7 @@ VOpusAudioCodec::~VOpusAudioCodec () {
 
 //==========================================================================
 //
-//  VVorbisAudioCodec::Init
+//  VOpusAudioCodec::Init
 //
 //==========================================================================
 bool VOpusAudioCodec::Init () {
@@ -172,6 +172,7 @@ bool VOpusAudioCodec::Init () {
   SampleBits = 16;
   NumChannels = 2; //head.channel_count;
   InitLevel = 1;
+  eos = false;
 
   return true;
 }
@@ -179,7 +180,7 @@ bool VOpusAudioCodec::Init () {
 
 //==========================================================================
 //
-//  VVorbisAudioCodec::Cleanup
+//  VOpusAudioCodec::Cleanup
 //
 //==========================================================================
 void VOpusAudioCodec::Cleanup () {
@@ -190,7 +191,7 @@ void VOpusAudioCodec::Cleanup () {
 
 //==========================================================================
 //
-//  VVorbisAudioCodec::Decode
+//  VOpusAudioCodec::Decode
 //
 //  `NumSamples` is number of frames, actually
 //
@@ -205,14 +206,14 @@ int VOpusAudioCodec::Decode (short *Data, int NumSamples) {
     //fprintf(stderr, "toread: %d; rdsmp: %d\n", toread, rdsmp);
     CurSample += rdsmp;
   }
-  if (!eos) eos = (Strm->IsError() || Strm->Tell() >= BytesLeft);
+  if (Strm->IsError()) eos = true;
   return CurSample;
 }
 
 
 //==========================================================================
 //
-//  VVorbisAudioCodec::Finished
+//  VOpusAudioCodec::Finished
 //
 //==========================================================================
 bool VOpusAudioCodec::Finished () {
@@ -222,7 +223,7 @@ bool VOpusAudioCodec::Finished () {
 
 //==========================================================================
 //
-//  VVorbisAudioCodec::Restart
+//  VOpusAudioCodec::Restart
 //
 //==========================================================================
 void VOpusAudioCodec::Restart () {
@@ -235,7 +236,7 @@ void VOpusAudioCodec::Restart () {
 
 //==========================================================================
 //
-//  VVorbisAudioCodec::Create
+//  VOpusAudioCodec::Create
 //
 //==========================================================================
 VAudioCodec *VOpusAudioCodec::Create (VStream *InStrm) {
@@ -252,7 +253,7 @@ VAudioCodec *VOpusAudioCodec::Create (VStream *InStrm) {
 
 //==========================================================================
 //
-//  VVorbisAudioCodec::Create
+//  VOpusAudioCodec::Create
 //
 //==========================================================================
 void VOpusSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
