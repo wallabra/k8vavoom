@@ -11,6 +11,7 @@ option(WITH_SDL2 "Use SDL2 library" ON)
 option(WITH_OPENGL "Use OpenGL library" ON)
 option(WITH_OPENAL "Use OpenAL library" ON)
 option(WITH_VORBIS "Enable Vorbis support" ON)
+option(WITH_OPUS "Enable Opus support" ON)
 option(WITH_LIBMAD "Enable MP3 support" ON)
 option(WITH_MIKMOD "Enable MikMod support" ON)
 option(WITH_MODPLUG "Enable ModPlug support" ON)
@@ -73,6 +74,7 @@ else(ENABLE_VCCRUN_ONLY)
     set(WITH_OPENGL OFF)
     set(WITH_OPENAL OFF)
     set(WITH_VORBIS OFF)
+    set(WITH_OPUS OFF)
     set(WITH_LIBMAD OFF)
     set(WITH_MIKMOD OFF)
     set(WITH_MODPLUG OFF)
@@ -326,6 +328,27 @@ if(WITH_VORBIS)
 else(WITH_VORBIS)
   set(VORBIS_FOUND OFF)
 endif(WITH_VORBIS)
+
+
+#
+#  **** Check for Opus ****
+#
+if(WITH_OPUS)
+  FIND_PACKAGE(PkgConfig REQUIRED)
+  #PKG_CHECK_MODULES(OPUS opusfile libopusenc ogg)
+  PKG_CHECK_MODULES(OPUS opusfile opus)
+  if(OPUS_INCLUDE_DIRS AND OPUS_LIBRARIES)
+    message(STATUS "Found Opus: ${OPUS_LIBRARIES}")
+    set(OPUS_FOUND ON)
+    include_directories(${OPUS_INCLUDE_DIRS})
+    set(MAIN_LIBS ${OPUS_LIBRARIES} ${MAIN_LIBS})
+  else(OPUS_INCLUDE_DIRS AND OPUS_LIBRARIES)
+    message(STATUS "Could NOT find Opus libraries")
+    set(OPUS_FOUND OFF)
+  endif(OPUS_INCLUDE_DIRS AND OPUS_LIBRARIES)
+else(WITH_OPUS)
+  set(OPUS_FOUND OFF)
+endif(WITH_OPUS)
 
 
 #

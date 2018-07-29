@@ -146,6 +146,7 @@ if (ENABLE_VCCRUN)
     modules/mod_sound/snd_main.cpp
     modules/mod_sound/snd_streamplayer.cpp
     modules/mod_sound/snd_vorbis.cpp
+    modules/mod_sound/snd_opus.cpp
     modules/mod_sound/snd_wav.cpp
   )
 
