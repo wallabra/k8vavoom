@@ -444,8 +444,14 @@ VExpression *VParser::ParseExpressionPriority0 () {
         return new VStructPtrCast(e, t, l);
       }
       break;
-    default:
+    case TK_Delegate:
+      {
+        Lex.NextToken();
+        VExpression *e = ParseLambda();
+        return e;
+      }
       break;
+    default: break;
   }
 
   return nullptr;
@@ -901,13 +907,8 @@ VExpression *VParser::ParseExpressionPriority14 (bool allowAssign) {
   else if (Lex.Check(TK_URShiftAssign)) oper = VAssignment::URShiftAssign;
   else return op1;
   // parse `n = delegate ...`
-  if (oper == VAssignment::Assign && Lex.Check(TK_Delegate)) {
-    VExpression *op2 = ParseLambda();
-    op1 = new VAssignment(oper, op1, op2, l);
-  } else {
-    VExpression *op2 = ParseExpressionPriority13();
-    op1 = new VAssignment(oper, op1, op2, l);
-  }
+  VExpression *op2 = ParseExpressionPriority13();
+  op1 = new VAssignment(oper, op1, op2, l);
   if (!allowAssign) ParseError(l, "assignment is not allowed here");
   return op1;
   unguard;
