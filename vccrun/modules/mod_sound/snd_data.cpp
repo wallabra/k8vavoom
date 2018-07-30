@@ -384,6 +384,7 @@ IMPLEMENT_FUNCTION(VSoundSystem, set_SoundVolume) {
   P_GET_FLOAT(v);
   if (v < 0) v = 0; else if (v > 1) v = 1;
   VAudioPublic::snd_sfx_volume = v;
+  if (GAudio) GAudio->UpdateSounds();
 }
 
 IMPLEMENT_FUNCTION(VSoundSystem, get_MusicVolume) {
@@ -394,6 +395,7 @@ IMPLEMENT_FUNCTION(VSoundSystem, set_MusicVolume) {
   P_GET_FLOAT(v);
   if (v < 0) v = 0; else if (v > 1) v = 1;
   VAudioPublic::snd_music_volume = v;
+  if (GAudio) GAudio->UpdateSounds();
 }
 
 IMPLEMENT_FUNCTION(VSoundSystem, get_SwapStereo) {
@@ -403,6 +405,7 @@ IMPLEMENT_FUNCTION(VSoundSystem, get_SwapStereo) {
 IMPLEMENT_FUNCTION(VSoundSystem, set_SwapStereo) {
   P_GET_BOOL(v);
   VAudioPublic::snd_swap_stereo = v;
+  if (GAudio) GAudio->UpdateSounds();
 }
 
 

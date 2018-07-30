@@ -213,6 +213,8 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
           fprintf(stderr, "STP:   start\n");
 #endif
           strm->StrmOpened = true;
+          strm->SoundDevice->SetStreamPitch(1.0f);
+          strm->SoundDevice->SetStreamVolume(strm->stpNewVolume);
           break;
         case VStreamMusicPlayer::STP_Pause: // pause current stream
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
@@ -358,6 +360,8 @@ void VStreamMusicPlayer::Play (VAudioCodec *InCodec, const VStr &InName, bool In
   CurrSong = InName;
   CurrLoop = InLoop;
   Stopping = false;
+  stpNewVolume = lastVolume;
+  stpNewPitch = 1.0f;
   stpThreadSendCommand(STP_Start);
 }
 

@@ -666,6 +666,7 @@ bool VAudio::PlayMusic (const VStr &filename, bool Loop) {
 
   if (StreamMusicPlayer && Codec) {
     // start playing streamed music
+    StreamMusicPlayer->SetVolume(snd_music_volume);
     StreamMusicPlayer->Play(Codec, filename, Loop);
     StreamPlaying = true;
     return true;
