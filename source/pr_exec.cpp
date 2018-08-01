@@ -27,6 +27,7 @@
 //**
 //**************************************************************************
 //#define VCC_STUPID_TRACER
+//#define VMEXEC_RUNDUMP
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 # include "gamedefs.h"
@@ -51,12 +52,11 @@
 #define CHECK_STACK_UNDERFLOW
 #define CHECK_FOR_EMPTY_STACK
 
-//#define VMEXEC_RUNDUMP
 
 #ifdef VMEXEC_RUNDUMP
 static int k8edIndent = 0;
 
-static void printIndent () { for (int f = k8edIndent; f > 0; --f) fputc(' ', stdout); }
+static void printIndent () { for (int f = k8edIndent; f > 0; --f) fputc(' ', stderr); }
 static void enterIndent () { ++k8edIndent; }
 static void leaveIndent () { if (--k8edIndent < 0) *(int *)0 = 0; }
 #endif
@@ -251,6 +251,8 @@ static void RunFunction (VMethod *func) {
 
   if (!func) { cstDump(nullptr); Sys_Error("Trying to execute null function"); }
 
+  //fprintf(stderr, "FN(%d): <%s>\n", cstUsed, *func->GetFullName());
+
   if (func->Flags&FUNC_Net) {
     VStack *Params = pr_stackPtr-func->ParamsSize;
     if (((VObject *)Params[0].p)->ExecuteNetMethod(func)) return;
@@ -275,7 +277,7 @@ static void RunFunction (VMethod *func) {
   ip = func->Statements.Ptr();
 
 #ifdef VMEXEC_RUNDUMP
-  enterIndent(); printIndent(); printf("ENTERING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack));
+  enterIndent(); printIndent(); fprintf(stderr, "ENTERING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-local_vars));
 #endif
 
   // the main execution loop
@@ -291,7 +293,7 @@ func_loop:
 #endif
 
 #ifdef VCC_STUPID_TRACER
-    fprintf(stderr, "*** %s: %6u: %s (sp=%d)\n", *func->GetFullName(), (unsigned)(ip-func->Statements.Ptr()), StatementInfo[*ip].name, (int)(sp-pr_stackPtr));
+    fprintf(stderr, "*** %s: %6u: %s (sp=%d)\n", *func->GetFullName(), (unsigned)(ip-func->Statements.Ptr()), StatementInfo[*ip].name, (int)(sp-local_vars));
 #endif
 
     PR_VM_SWITCH(*ip) {
@@ -356,6 +358,8 @@ func_loop:
           void **pDelegate = (void **)((vuint8 *)sp[-ip[5]].p+ReadInt32(ip+1));
           // push proper self object
           if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
+          if (!pDelegate[1]) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
+          if ((int)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
           sp[-ip[5]].p = pDelegate[0];
           pr_stackPtr = sp;
           cstFixTopIPSP(ip);
@@ -372,6 +376,8 @@ func_loop:
           void **pDelegate = (void **)((vuint8 *)sp[-ip[3]].p+ReadInt16(ip+1));
           // push proper self object
           if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
+          if (!pDelegate[1]) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
+          if ((int)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
           sp[-ip[3]].p = pDelegate[0];
           pr_stackPtr = sp;
           cstFixTopIPSP(ip);
@@ -394,6 +400,8 @@ func_loop:
           sp -= 1;
           // push proper self object
           if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
+          if (!pDelegate[1]) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
+          if ((int)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
           sp[-sofs].p = pDelegate[0];
           pr_stackPtr = sp;
           cstFixTopIPSP(ip);
@@ -407,7 +415,7 @@ func_loop:
         if (itsp == 0) {
           checkSlow(sp == local_vars+func->NumLocals);
 #ifdef VMEXEC_RUNDUMP
-          printIndent(); printf("LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+          printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
           pr_stackPtr = local_vars;
           cstPop();
@@ -420,7 +428,7 @@ func_loop:
         if (itsp == 0) {
           checkSlow(sp == local_vars+func->NumLocals+1);
 #ifdef VMEXEC_RUNDUMP
-          printIndent(); printf("LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+          printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
           ((VStack *)local_vars)[0] = sp[-1];
           pr_stackPtr = local_vars+1;
@@ -434,7 +442,7 @@ func_loop:
         if (itsp == 0) {
           checkSlow(sp == local_vars+func->NumLocals+3);
 #ifdef VMEXEC_RUNDUMP
-          printIndent(); printf("LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+          printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
           ((VStack *)local_vars)[0] = sp[-3];
           ((VStack *)local_vars)[1] = sp[-2];
@@ -2352,7 +2360,7 @@ func_loop:
 
 doRealReturn:
   #ifdef VMEXEC_RUNDUMP
-  printIndent(); printf("LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+  printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
   #endif
   if (itsp == 0) { cstDump(ip); Sys_Error("VM: Return that should not be"); }
   inReturn = true;
@@ -2409,6 +2417,8 @@ doRealReturnItDtorCont:
 VStack VObject::ExecuteFunction (VMethod *func) {
   guard(VObject::ExecuteFunction);
 
+  //fprintf(stderr, "*** VObject::ExecuteFunction: <%s>\n", *func->GetFullName());
+
   VMethod *prev_func;
   VStack ret;
 
@@ -2417,7 +2427,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
   // run function
   prev_func = current_func;
 #ifdef VMEXEC_RUNDUMP
-  enterIndent(); printIndent(); printf("***ENTERING `%s` (RETx); sp=%d (MAX:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK);
+  enterIndent(); printIndent(); fprintf(stderr, "***ENTERING `%s` (RETx); sp=%d (MAX:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK);
 #endif
   RunFunction(func);
   current_func = prev_func;
@@ -2428,7 +2438,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
     ret = *pr_stackPtr;
   }
 #ifdef VMEXEC_RUNDUMP
-  printIndent(); printf("***LEAVING `%s` (RETx); sp=%d, (MAX:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK); leaveIndent();
+  printIndent(); fprintf(stderr, "***LEAVING `%s` (RETx); sp=%d, (MAX:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK); leaveIndent();
 #endif
 
 #ifdef CHECK_FOR_EMPTY_STACK

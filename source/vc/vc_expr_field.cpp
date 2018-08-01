@@ -935,7 +935,10 @@ void VDelegateVal::Emit (VEmitContext &ec) {
   if (!op) return;
   op->Emit(ec);
   // call class postload, so `FUNC_RealFinal` will be set
-  ec.SelfClass->PostLoad();
+  //ec.SelfClass->PostLoad();
+  if (!M->Outer) { ParseError(Loc, "VDelegateVal::Emit: Method has no outer!"); return; }
+  if (M->Outer->MemberType != MEMBER_Class) { ParseError(Loc, "VDelegateVal::Emit: Method outer is not a class!"); return; }
+  M->Outer->PostLoad();
   //fprintf(stderr, "MT: %s (rf=%d)\n", *M->GetFullName(), (M->Flags&FUNC_RealFinal ? 1 : 0));
   if (M->Flags&FUNC_RealFinal) {
     ec.AddStatement(OPC_PushFunc, M, Loc);

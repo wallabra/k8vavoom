@@ -590,21 +590,25 @@ bool VFieldType::IsReusingDisabled () const {
     case TYPE_State:
     case TYPE_Vector:
     case TYPE_Class: // classes has no dtors
-    case TYPE_Delegate: // delegates need no dtor (yet)
     case TYPE_Reference: // reference is something like a pointer
     case TYPE_SliceArray: // slices require no dtors as of yet
       return false;
+    case TYPE_Delegate: // delegates need no dtor (yet)
+      return true;
     case TYPE_Struct: // struct members can require dtors
-      if (!Struct) return true; // let's play safe
-      return Struct->NeedsDestructor();
+      //!if (!Struct) return true; // let's play safe
+      //!return Struct->NeedsDestructor();
+      return true;
     case TYPE_String: // strings require dtors
       return true;
     case TYPE_Array: // it depends of inner type, so check it
       if (ArrayInnerType == TYPE_Struct) {
-        if (!Struct) return true; // let's play safe
-        return Struct->NeedsDestructor();
+        //!if (!Struct) return true; // let's play safe
+        //!return Struct->NeedsDestructor();
+        return true;
       }
-      return (ArrayInnerType == TYPE_String || ArrayInnerType == TYPE_Array || ArrayInnerType == TYPE_DynamicArray);
+      //return (ArrayInnerType == TYPE_String || ArrayInnerType == TYPE_Array || ArrayInnerType == TYPE_DynamicArray);
+      return !(ArrayInnerType == TYPE_Int || ArrayInnerType == TYPE_Float || ArrayInnerType == TYPE_Name);
     case TYPE_DynamicArray: // dynamic arrays should be cleared with dtors
     case TYPE_Automatic: // this is something that should not be, so let's play safe
       return true;
