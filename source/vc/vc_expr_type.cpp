@@ -64,7 +64,12 @@ VTypeExpr *VTypeExpr::NewTypeExpr (VFieldType atype, const TLocation &aloc) {
     case TYPE_Class:
       return new VTypeExprClass((atype.Class ? atype.Class->Name : NAME_None), aloc);
     case TYPE_Delegate:
+      /*
+      fprintf(stderr, "<%s>\n", *atype.GetName());
+      *(int *)0 = 0;
       FatalError("VC: VTypeExpr::NewTypeExpr: no delegates yet");
+      */
+      return new VDelegateType(atype, aloc);
     case TYPE_Array:
       if (atype.IsArray1D()) {
         return new VFixedArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc),
@@ -614,6 +619,23 @@ VDelegateType::VDelegateType (VExpression *aexpr, const TLocation &aloc)
 
 //==========================================================================
 //
+//  VDelegateType::VDelegateType
+//
+//==========================================================================
+VDelegateType::VDelegateType (VFieldType atype, const TLocation &aloc)
+  : VTypeExpr(TYPE_Unknown, aloc)
+  , Flags(0)
+  , NumParams(0)
+{
+  Expr = nullptr;
+  memset(Params, 0, sizeof(Params));
+  memset(ParamFlags, 0, sizeof(ParamFlags));
+  //FatalError("VC: VDelegateType::VDelegateType: no `auto` delegates yet, use the full declaration");
+}
+
+
+//==========================================================================
+//
 //  VDelegateType::~VDelegateType
 //
 //==========================================================================
@@ -663,6 +685,11 @@ void VDelegateType::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VTypeExpr *VDelegateType::ResolveAsType (VEmitContext &ec) {
+  if (!Expr) {
+    ParseError(Loc, "VC: VDelegateType::VDelegateType: no `auto` delegates yet, use the full declaration");
+    delete this;
+    return nullptr;
+  }
   VMethod *Func = CreateDelegateMethod(ec.CurrentFunc);
   Func->Define();
   Type = VFieldType(TYPE_Delegate);

@@ -188,6 +188,7 @@ public:
 
   // aexpr: return type
   VDelegateType (VExpression *aexpr, const TLocation &aloc);
+  VDelegateType (VFieldType atype, const TLocation &aloc);
   virtual ~VDelegateType () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VTypeExpr *ResolveAsType (VEmitContext &ec) override;
