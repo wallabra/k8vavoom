@@ -184,9 +184,18 @@ void VObject::StaticExit () {
 //  VObject::StaticSpawnObject
 //
 //==========================================================================
-VObject *VObject::StaticSpawnObject (VClass *AClass) {
+VObject *VObject::StaticSpawnObject (VClass *AClass
+#if defined(VCC_STANDALONE_EXECUTOR)
+                                     , bool skipReplacement
+#endif
+) {
   guard(VObject::StaticSpawnObject);
   check(AClass);
+
+  // actually, spawn a replacement
+#if defined(VCC_STANDALONE_EXECUTOR)
+  if (!skipReplacement) AClass = AClass->GetReplacement();
+#endif
 
   // allocate memory
   VObject *Obj = (VObject *)Z_Calloc(AClass->ClassSize);
@@ -1233,9 +1242,22 @@ IMPLEMENT_FUNCTION(VObject, WadLumpPresent) {
 IMPLEMENT_FUNCTION(VObject, SpawnObject) {
   P_GET_PTR(VClass, Class);
   if (!Class) { VMDumpCallStack(); Sys_Error("Cannot spawn `none`"); }
+#ifdef VCC_STANDALONE_EXECUTOR
+  if (Class->GetReplacement()->ClassFlags&CLASS_Abstract) { VMDumpCallStack(); Sys_Error("Cannot spawn abstract object"); }
+#else
   if (Class->ClassFlags&CLASS_Abstract) { VMDumpCallStack(); Sys_Error("Cannot spawn abstract object"); }
+#endif
   RET_REF(VObject::StaticSpawnObject(Class));
 }
+
+#ifdef VCC_STANDALONE_EXECUTOR
+IMPLEMENT_FUNCTION(VObject, SpawnObjectSkipReplacement) {
+  P_GET_PTR(VClass, Class);
+  if (!Class) { VMDumpCallStack(); Sys_Error("Cannot spawn `none`"); }
+  if (Class->ClassFlags&CLASS_Abstract) { VMDumpCallStack(); Sys_Error("Cannot spawn abstract object"); }
+  RET_REF(VObject::StaticSpawnObject(Class, true)); // skip replacements
+}
+#endif
 
 #ifndef VCC_STANDALONE_EXECUTOR
 IMPLEMENT_FUNCTION(VObject, FindAnimDoor) {

@@ -3497,14 +3497,30 @@ void VParser::ParseClass () {
 
   VName ParentClassName = NAME_None;
   TLocation ParentClassLoc;
+  bool doesReplacement = false;
 
   if (Lex.Check(TK_Colon)) {
-    if (Lex.Token != TK_Identifier) {
-      ParseError(Lex.Location, "Parent class name expected");
-    } else {
-      ParentClassName = Lex.Name;
-      ParentClassLoc = Lex.Location;
+    // replaces(Name)?
+    if (Lex.Token == TK_Identifier && Lex.Name == "replaces" && Lex.peekTokenType(1) == TK_LParen) {
+      doesReplacement = true;
       Lex.NextToken();
+      Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
+      if (Lex.Token != TK_Identifier) {
+        ParseError(Lex.Location, "Parent class name expected");
+      } else {
+        ParentClassName = Lex.Name;
+        ParentClassLoc = Lex.Location;
+        Lex.NextToken();
+      }
+      Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+    } else {
+      if (Lex.Token != TK_Identifier) {
+        ParseError(Lex.Location, "Parent class name expected");
+      } else {
+        ParentClassName = Lex.Name;
+        ParentClassLoc = Lex.Location;
+        Lex.NextToken();
+      }
     }
   } else if (ClassName != NAME_Object) {
     ParseError(Lex.Location, "Parent class expected");
@@ -3574,6 +3590,7 @@ void VParser::ParseClass () {
   if (ParentClassName != NAME_None) {
     Class->ParentClassName = ParentClassName;
     Class->ParentClassLoc = ParentClassLoc;
+    Class->DoesReplacement = doesReplacement;
   }
 
   // we will collect default field values, and insert 'em in `defaultproperties` block
@@ -3585,6 +3602,7 @@ void VParser::ParseClass () {
     TModifiers::Check(TModifiers::Parse(Lex),
       TModifiers::Native|TModifiers::Abstract|TModifiers::Transient,
       Lex.Location));
+
   // parse class attributes
   do {
     if (Lex.Check(TK_MobjInfo)) {

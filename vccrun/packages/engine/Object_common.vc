@@ -594,3 +594,7 @@ native static final iterator AllClassStates (class BaseClass, out state State);
 // misc
 
 native static final spawner Object SpawnObject (class cid);
+
+#ifdef VCC_STANDALONE_EXECUTOR
+native static final spawner Object SpawnObjectSkipReplacement (class cid);
+#endif

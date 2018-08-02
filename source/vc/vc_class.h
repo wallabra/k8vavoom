@@ -198,6 +198,7 @@ public:
   // compiler fields
   VName ParentClassName;
   TLocation ParentClassLoc;
+  bool DoesReplacement;
   VExpression *GameExpr;
   VExpression *MobjInfoExpr;
   VExpression *ScriptIdExpr;
@@ -334,9 +335,12 @@ public:
   void CleanObject (VObject *);
   void DestructObject (VObject *);
   VClass *CreateDerivedClass (VName, VMemberBase *, const TLocation &);
+#endif
   VClass *GetReplacement ();
   VClass *GetReplacee ();
-#endif
+  // returns `false` if replacee cannot be set for some reason
+  bool SetReplacement (VClass *cls); // assign `cls` as a replacement for this
+
   void HashLowerCased ();
 
   // df state thingy

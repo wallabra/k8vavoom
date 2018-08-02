@@ -159,7 +159,11 @@ public:
   // system-wide functions
   static void StaticInit ();
   static void StaticExit ();
-  static VObject *StaticSpawnObject (VClass *);
+#if defined(VCC_STANDALONE_EXECUTOR)
+  static VObject *StaticSpawnObject (VClass *AClass, bool skipReplacement=false);
+#else
+  static VObject *StaticSpawnObject (VClass *AClass);
+#endif
   static void CollectGarbage (bool destroyDelayed=false);
   static VObject *GetIndexObject (int);
   static int GetObjectsCount ();
@@ -327,6 +331,9 @@ public:
   DECLARE_FUNCTION(WadLumpPresent)
 #endif
   DECLARE_FUNCTION(SpawnObject)
+#ifdef VCC_STANDALONE_EXECUTOR
+  DECLARE_FUNCTION(SpawnObjectSkipReplacement)
+#endif
 #ifndef VCC_STANDALONE_EXECUTOR
   DECLARE_FUNCTION(FindAnimDoor)
   DECLARE_FUNCTION(GetLangString)

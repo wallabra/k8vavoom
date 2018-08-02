@@ -60,6 +60,7 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   , States(nullptr)
   , DefaultProperties(nullptr)
   , ParentClassName(NAME_None)
+  , DoesReplacement(false)
   , GameExpr(nullptr)
   , MobjInfoExpr(nullptr)
   , ScriptIdExpr(nullptr)
@@ -884,9 +885,23 @@ bool VClass::Define () {
     } else if (!ParentClass->Defined) {
       ParseError(ParentClassLoc, "Parent class must be defined before");
     }
+#if defined(VCC_STANDALONE_EXECUTOR)
+    // process replacements
+    // first get actual replacement
+    ParentClass = ParentClass->GetReplacement();
+    if (!ParentClass) FatalError("VC Internal Error: VClass::Define: cannot find replacement");
+    //fprintf(stderr, "VClass::Define: requested parent is `%s`, actual parent is `%s`\n", *ParentClassName, ParentClass->GetName());
+    // now set replacemente for the actual replacement (if necessary)
+    if (DoesReplacement) {
+      //fprintf(stderr, "VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...\n", GetName(), *ParentClassName, ParentClass->GetName());
+      if (!ParentClass->SetReplacement(this)) {
+        ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
+      }
+    }
+#endif
   }
 #if !defined(IN_VCC)
-  if ((ObjectFlags & CLASSOF_Native) && ParentClass != PrevParent) {
+  if ((ObjectFlags&CLASSOF_Native) && ParentClass != PrevParent) {
     Sys_Error("Bad parent class, class %s, C++ %s, VavoomC %s)",
       GetName(), PrevParent ? PrevParent->GetName() : "(none)",
       ParentClass ? ParentClass->GetName() : "(none)");
@@ -1638,6 +1653,7 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, const TLoc
   return NewClass;
   unguard;
 }
+#endif //!defined(IN_VCC)
 
 
 //==========================================================================
@@ -1675,7 +1691,27 @@ VClass *VClass::GetReplacee () {
   return Ret;
   unguard;
 }
-#endif //!defined(IN_VCC)
+
+
+//==========================================================================
+//
+//  VClass::SetReplacement
+//
+//  assign `cls` as a replacement for this
+//
+//==========================================================================
+bool VClass::SetReplacement (VClass *cls) {
+  if (!cls) return (Replacement == nullptr);
+  if (cls == this) return false; // cannot replace itself
+  if (Replacement == cls) return true; // nothing to do
+  if (Replacement) return false; // already set
+  // sanity check: `cls` should not be already assigned as some replacement
+  if (cls->Replacee) return false;
+  // do it
+  Replacement = cls;
+  cls->Replacee = this;
+  return true;
+}
 
 
 //==========================================================================
