@@ -1,0 +1,69 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Test['oTest'] : Object;
+
+int n = 42;
+
+void onAction () {
+  writeln("test: n=", n);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// `SpawnObject(Test)` will spawn this instead
+class TestNew : replaces(Test);
+
+
+override void onAction () {
+  writeln("new test! parent is '", GetClassName(GetClassParent(Class)), "'");
+  ::onAction();
+}
+
+
+defaultproperties {
+  n = 666;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// `SpawnObject(Test)` will spawn this instead
+// note that this one will inherit from `TestNew`
+class TestNewNew : replaces(Test);
+
+
+override void onAction () {
+  writeln("new new test! parent is '", GetClassName(GetClassParent(Class)), "'");
+  ::onAction();
+}
+
+
+defaultproperties {
+  n = 69;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+
+void dumpGameObjNames () {
+  class cc;
+  foreach AllClasses(Object, out cc) {
+    auto gn = GetClassGameObjName(cc);
+    if (gn) writeln("'", gn, "' is `", GetClassName(cc), "`");
+    //else writeln("... `", GetClassName(cc), "`");
+  }
+}
+
+
+void main () {
+  auto tobj = SpawnObject(Test);
+  tobj.onAction();
+
+  dumpGameObjNames();
+
+  auto cc = FindClassByGameObjName('oTest');
+  if (!cc) FatalError("'oTest' not found!");
+  writeln(GetClassName(cc));
+  cc = GetClassReplacement(cc);
+  writeln(GetClassName(cc));
+}
