@@ -1,0 +1,41 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+enum Const = 42;
+
+bitenum Bit1 = 1;
+
+bitenum BN {
+  None = none,
+  Bit0,
+  Bit3 = 3,
+  Bit4,
+  Bit2 = 2,
+  Other3,
+}
+
+enum {
+  Zero,
+  One,
+  Four = 4,
+  Five,
+}
+
+
+final int main (array!string *args) {
+  writeln("Const=", Const);
+  writeln("NoneBit=", BN.None);
+  writeln("Bit1=", Bit1, " : ", 1<<1);
+  writeln("Bit0=", BN.Bit0, " : ", 1<<0);
+  writeln("Bit3=", BN.Bit3, " : ", 1<<3);
+  writeln("Bit4=", BN.Bit4, " : ", 1<<4);
+  writeln("Bit2=", BN.Bit2, " : ", 1<<2);
+  writeln("Other3=", BN.Other3, " : ", 1<<3);
+
+  writeln("Zero=", Zero, " : ", 0);
+  writeln("One=", One, " : ", 1);
+  writeln("Four=", Four, " : ", 4);
+  writeln("Five=", Five, " : ", 5);
+
+  return 0;
+}

@@ -1,0 +1,3 @@
+new new test! parent is 'TestNew'
+new test! parent is 'TestNew'
+test: n=69

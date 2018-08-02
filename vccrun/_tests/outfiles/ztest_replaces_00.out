@@ -1,0 +1,2 @@
+new test! parent is 'Test'
+test: n=666

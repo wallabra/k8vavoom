@@ -1,0 +1,51 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Test : Object;
+
+int n = 42;
+
+void onAction () {
+  writeln("test: n=", n);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// `SpawnObject(Test)` will spawn this instead
+class TestNew : replaces(Test);
+
+
+override void onAction () {
+  writeln("new test! parent is '", GetClassName(GetClassParent(Class)), "'");
+  ::onAction();
+}
+
+
+defaultproperties {
+  n = 666;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// `SpawnObject(Test)` will spawn this instead
+// note that this one will inherit from `TestNew`
+class TestNewNew : replaces(Test);
+
+
+override void onAction () {
+  writeln("new new test! parent is '", GetClassName(GetClassParent(Class)), "'");
+  ::onAction();
+}
+
+
+defaultproperties {
+  n = 69;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+
+void main () {
+  auto tobj = SpawnObject(Test);
+  tobj.onAction();
+}
