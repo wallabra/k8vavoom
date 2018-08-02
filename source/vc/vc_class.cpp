@@ -92,6 +92,7 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   guard(VClass::VClass);
   LinkNext = GClasses;
   GClasses = this;
+  ClassGameObjName = NAME_None;
   HashLowerCased();
   unguard;
 }
@@ -137,6 +138,7 @@ VClass::VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *A
   guard(native VClass::VClass);
   LinkNext = GClasses;
   GClasses = this;
+  ClassGameObjName = NAME_None;
   unguard;
 }
 
@@ -374,7 +376,8 @@ void VClass::Serialise (VStream &Strm) {
     << Methods
     << DefaultProperties
     << RepInfos
-    << StateLabels;
+    << StateLabels
+    << ClassGameObjName;
 #if !defined(IN_VCC)
   if ((ObjectFlags&CLASSOF_Native) != 0 && ParentClass != PrevParent) {
     Sys_Error("Bad parent class, class %s, C++ %s, VavoomC %s)",
@@ -474,6 +477,7 @@ void VClass::Shutdown () {
   StateLabelDefs.Clear();
   DecorateStateActions.Clear();
   SpriteEffects.Clear();
+  ClassGameObjName = NAME_None;
   unguard;
 }
 

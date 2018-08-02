@@ -107,6 +107,7 @@ public:
 
   static VClass *StaticFindMObj (vint32 id, VName pkgname=NAME_None);
   static VClass *StaticFindScriptId (vint32 id, VName pkgname=NAME_None);
+  static VClass *StaticFindClassByGameObjName (VName aname, VName pkgname=NAME_None);
 
   static void StaticSplitStateLabel (const VStr &, TArray<VName> &);
 

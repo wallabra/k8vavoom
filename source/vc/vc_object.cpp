@@ -932,27 +932,27 @@ IMPLEMENT_FUNCTION(VObject, FindClassLowerCase) {
 IMPLEMENT_FUNCTION(VObject, ClassIsChildOf) {
   P_GET_PTR(VClass, BaseClass);
   P_GET_PTR(VClass, SomeClass);
-  RET_BOOL(SomeClass->IsChildOf(BaseClass));
+  RET_BOOL(SomeClass && BaseClass ? SomeClass->IsChildOf(BaseClass) : false);
 }
 
 IMPLEMENT_FUNCTION(VObject, GetClassName) {
   P_GET_PTR(VClass, SomeClass);
-  RET_NAME(SomeClass->Name);
+  RET_NAME(SomeClass ? SomeClass->Name : NAME_None);
 }
 
 IMPLEMENT_FUNCTION(VObject, GetClassParent) {
   P_GET_PTR(VClass, SomeClass);
-  RET_PTR(SomeClass->ParentClass);
+  RET_PTR(SomeClass ? SomeClass->ParentClass : nullptr);
 }
 
 IMPLEMENT_FUNCTION(VObject, GetClassReplacement) {
   P_GET_PTR(VClass, SomeClass);
-  RET_PTR(SomeClass->GetReplacement());
+  RET_PTR(SomeClass ? SomeClass->GetReplacement() : nullptr);
 }
 
 IMPLEMENT_FUNCTION(VObject, GetClassReplacee) {
   P_GET_PTR(VClass, SomeClass);
-  RET_PTR(SomeClass->GetReplacee());
+  RET_PTR(SomeClass ? SomeClass->GetReplacee() : nullptr);
 }
 
 IMPLEMENT_FUNCTION(VObject, FindClassState) {
@@ -965,14 +965,42 @@ IMPLEMENT_FUNCTION(VObject, FindClassState) {
 IMPLEMENT_FUNCTION(VObject, GetClassNumOwnedStates) {
   P_GET_PTR(VClass, Cls);
   int Ret = 0;
-  for (VState *S = Cls->States; S; S = S->Next) ++Ret;
+  if (Cls) for (VState *S = Cls->States; S; S = S->Next) ++Ret;
   RET_INT(Ret);
 }
 
 IMPLEMENT_FUNCTION(VObject, GetClassFirstState) {
   P_GET_PTR(VClass, Cls);
-  RET_PTR(Cls->States);
+  RET_PTR(Cls ? Cls->States : nullptr);
 }
+
+IMPLEMENT_FUNCTION(VObject, GetClassGameObjName) {
+  P_GET_PTR(VClass, SomeClass);
+  RET_NAME(SomeClass ? SomeClass->ClassGameObjName : NAME_None);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+#ifdef VCC_STANDALONE_EXECUTOR
+//native final static class FindMObjId (int id, optional name pkgname);
+IMPLEMENT_FUNCTION(VObject, FindMObjId) {
+  P_GET_NAME_OPT(pkgname, NAME_None);
+  P_GET_INT(id);
+  RET_REF(VMemberBase::StaticFindMObj(id, pkgname));
+}
+
+IMPLEMENT_FUNCTION(VObject, FindScriptId) {
+  P_GET_NAME_OPT(pkgname, NAME_None);
+  P_GET_INT(id);
+  RET_REF(VMemberBase::StaticFindScriptId(id, pkgname));
+}
+
+IMPLEMENT_FUNCTION(VObject, FindClassByGameObjName) {
+  P_GET_NAME_OPT(pkgname, NAME_None);
+  P_GET_NAME(aname);
+  RET_REF(VMemberBase::StaticFindClassByGameObjName(aname, pkgname));
+}
+#endif
 
 
 //==========================================================================

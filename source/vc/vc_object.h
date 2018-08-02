@@ -292,6 +292,7 @@ public:
   DECLARE_FUNCTION(FindClassState)
   DECLARE_FUNCTION(GetClassNumOwnedStates)
   DECLARE_FUNCTION(GetClassFirstState)
+  DECLARE_FUNCTION(GetClassGameObjName)
 
   // state methods
   DECLARE_FUNCTION(StateIsInRange)
@@ -445,6 +446,7 @@ public:
 
   DECLARE_FUNCTION(FindMObjId)
   DECLARE_FUNCTION(FindScriptId)
+  DECLARE_FUNCTION(FindClassByGameObjName)
 
   DECLARE_FUNCTION(appSetName)
   DECLARE_FUNCTION(appSaveOptions)

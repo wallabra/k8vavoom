@@ -194,6 +194,7 @@ public:
   VMethod *DefaultProperties;
   TArray<VRepInfo> RepInfos;
   TArray<VStateLabel> StateLabels;
+  VName ClassGameObjName; // class can has a "game object name" (used in Spelunky Remake, for example)
 
   // compiler fields
   VName ParentClassName;

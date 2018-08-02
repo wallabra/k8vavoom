@@ -406,6 +406,37 @@ VClass *VMemberBase::StaticFindScriptId (vint32 id, VName pkgname) {
 
 //==========================================================================
 //
+//  VMemberBase::StaticFindClassByGameObjName
+//
+//==========================================================================
+VClass *VMemberBase::StaticFindClassByGameObjName (VName aname, VName pkgname) {
+  guard(VMemberBase::StaticFindClassByGameObjName);
+  if (aname == NAME_None) return nullptr;
+  VMemberBase *pkg = nullptr;
+  if (pkgname != NAME_None) {
+    pkg = StaticFindMember(pkgname, nullptr, MEMBER_Package);
+    if (!pkg) return nullptr;
+  }
+  int len = GMembers.length();
+  for (int f = 0; f < len; ++f) {
+    if (GMembers[f] && GMembers[f]->MemberType == MEMBER_Class) {
+      VClass *c = (VClass *)GMembers[f];
+      if (c->ClassGameObjName == aname) {
+        if (pkgname == nullptr) return c;
+        // check package
+        for (const VMemberBase *p = c; p; p = p->Outer) {
+          if (p->MemberType == MEMBER_Package && p == pkg) return c;
+        }
+      }
+    }
+  }
+  return nullptr;
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VMemberBase::StaticSplitStateLabel
 //
 //==========================================================================

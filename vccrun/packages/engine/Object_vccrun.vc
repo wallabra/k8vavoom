@@ -116,6 +116,7 @@ native static final bool fsysKillCommonZipPrefix { get; set; }
 //==========================================================================
 native final static class FindMObjId (int id, optional name pkgname);
 native final static class FindScriptId (int id, optional name pkgname);
+native final static class FindClassByGameObjName (name aname, optional name pkgname);
 
 
 //==========================================================================

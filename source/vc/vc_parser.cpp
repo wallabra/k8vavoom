@@ -3495,6 +3495,18 @@ void VParser::ParseClass () {
   }
   Lex.NextToken();
 
+  // class Name['ObjectName']...
+  VName ClassGameObjName = NAME_None;
+  if (Lex.Check(TK_LBracket)) {
+    if (Lex.Token != TK_NameLiteral) {
+      ParseError(Lex.Location, "Game object name literal expected");
+    } else {
+      ClassGameObjName = Lex.Name;
+      Lex.NextToken();
+    }
+    Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
+  }
+
   VName ParentClassName = NAME_None;
   TLocation ParentClassLoc;
   bool doesReplacement = false;
@@ -3544,6 +3556,7 @@ void VParser::ParseClass () {
     // new class
     VClass *Class = new VClass(ClassName, Package, ClassLoc);
     Class->Defined = false;
+    Class->ClassGameObjName = ClassGameObjName;
 
     if (ParentClassName != NAME_None) {
       Class->ParentClassName = ParentClassName;
@@ -3586,6 +3599,8 @@ void VParser::ParseClass () {
     Class = new VClass(ClassName, Package, ClassLoc);
   }
   Class->Defined = false;
+  Class->ClassGameObjName = ClassGameObjName;
+  //if (ClassGameObjName != NAME_None) fprintf(stderr, "*** class `%s` has object name '%s'\n", *ClassName, *ClassGameObjName);
 
   if (ParentClassName != NAME_None) {
     Class->ParentClassName = ParentClassName;

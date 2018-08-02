@@ -1900,22 +1900,6 @@ IMPLEMENT_FUNCTION(VVideo, set_swapInterval) {
 }
 
 // ////////////////////////////////////////////////////////////////////////// //
-//native final static class FindMObjId (int id, optional name pkgname);
-IMPLEMENT_FUNCTION(VObject, FindMObjId) {
-  P_GET_NAME_OPT(pkgname, NAME_None);
-  P_GET_INT(id);
-  RET_REF(VMemberBase::StaticFindMObj(id, pkgname));
-}
-
-
-IMPLEMENT_FUNCTION(VObject, FindScriptId) {
-  P_GET_NAME_OPT(pkgname, NAME_None);
-  P_GET_INT(id);
-  RET_REF(VMemberBase::StaticFindScriptId(id, pkgname));
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 static VStr readLine (VStream *strm, bool allTrim=true) {
   if (!strm || strm->IsError()) return VStr();
   VStr res;
