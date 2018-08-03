@@ -66,6 +66,29 @@ enum ZFunc {
   GreaterEqual,
 }
 
+
+enum StencilOp {
+  Keep,
+  Zero,
+  Replace,
+  Incr,
+  IncrWrap,
+  Decr,
+  DecrWrap,
+  Invert,
+}
+
+enum StencilFunc {
+  Never,
+  Less,
+  LEqual,
+  Greater,
+  GEqual,
+  NotEqual,
+  Always,
+}
+
+
 native final static ZFunc depthFunc { get; set; }
 
 // current z value, in range of [0..65535]
@@ -110,6 +133,13 @@ native final static void fillRect (int x0, int y0, int w, int h);
 
 // 0: no vsync; -1: adaptive vsync; 1: "hard" vsync
 native final static int swapInterval { get; set; }
+
+
+const int StencilMax = 0xff; // 8-bit stencil buffer
+
+native final static bool stencil { get; set; }
+native final static void stencilOp (StencilOp sfail, StencilOp dpfail, optional StencilOp dppass);
+native final static void stencilFunc (StencilFunc func, int refval, optional int mask);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

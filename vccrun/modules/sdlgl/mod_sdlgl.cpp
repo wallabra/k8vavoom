@@ -915,6 +915,7 @@ int VVideo::mHeight = 0;
 bool VVideo::smoothLine = false;
 bool VVideo::directMode = false;
 bool VVideo::depthTest = false;
+bool VVideo::stencilEnabled = false;
 int VVideo::depthFunc = VVideo::ZFunc_Less;
 int VVideo::currZ = 0;
 float VVideo::currZFloat = 1.0f;
@@ -1051,6 +1052,38 @@ bool VVideo::SetTimerInterval (int id, int intervalms) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static GLenum convertStencilOp (int op) {
+  switch (op) {
+    case VVideo::STC_Keep: return GL_KEEP;
+    case VVideo::STC_Zero: return GL_ZERO;
+    case VVideo::STC_Replace: return GL_REPLACE;
+    case VVideo::STC_Incr: return GL_INCR;
+    case VVideo::STC_IncrWrap: return GL_INCR_WRAP;
+    case VVideo::STC_Decr: return GL_DECR;
+    case VVideo::STC_DecrWrap: return GL_DECR_WRAP;
+    case VVideo::STC_Invert: return GL_INVERT;
+    default: break;
+  }
+  return GL_KEEP;
+}
+
+
+static GLenum convertStencilFunc (int op) {
+  switch (op) {
+    case VVideo::STC_Never: return GL_NEVER;
+    case VVideo::STC_Less: return GL_LESS;
+    case VVideo::STC_LEqual: return GL_LEQUAL;
+    case VVideo::STC_Greater: return GL_GREATER;
+    case VVideo::STC_GEqual: return GL_GEQUAL;
+    case VVideo::STC_NotEqual: return GL_NOTEQUAL;
+    case VVideo::STC_Always: return GL_ALWAYS;
+    default: break;
+  }
+  return GL_ALWAYS;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 bool VVideo::canInit () {
   return true;
 }
@@ -1156,6 +1189,9 @@ bool VVideo::open (const VStr &winname, int width, int height) {
   //glDisable(GL_BLEND);
   //glEnable(GL_LINE_SMOOTH);
   if (smoothLine) glEnable(GL_LINE_SMOOTH); else glDisable(GL_LINE_SMOOTH);
+  if (stencilEnabled) glEnable(GL_STENCIL_TEST); else glDisable(GL_STENCIL_TEST);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+  glStencilFunc(GL_ALWAYS, 0, 0xffffffff);
 
   glDisable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -1191,7 +1227,8 @@ void VVideo::clear () {
   glClearStencil(0);
 
   //glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-  glClear(GL_COLOR_BUFFER_BIT|(depthTest ? GL_DEPTH_BUFFER_BIT : 0));
+  //glClear(GL_COLOR_BUFFER_BIT|(depthTest ? GL_DEPTH_BUFFER_BIT : 0));
+  glClear(GL_COLOR_BUFFER_BIT|(depthTest ? GL_DEPTH_BUFFER_BIT : 0)|(stencilEnabled ? GL_STENCIL_BUFFER_BIT : 0));
 }
 
 
@@ -1744,7 +1781,6 @@ IMPLEMENT_FUNCTION(VVideo, get_smoothLine) {
   RET_BOOL(smoothLine);
 }
 
-
 IMPLEMENT_FUNCTION(VVideo, set_smoothLine) {
   P_GET_BOOL(v);
   if (smoothLine != v) {
@@ -1753,6 +1789,39 @@ IMPLEMENT_FUNCTION(VVideo, set_smoothLine) {
       if (v) glEnable(GL_LINE_SMOOTH); else glDisable(GL_LINE_SMOOTH);
     }
   }
+}
+
+
+IMPLEMENT_FUNCTION(VVideo, get_stencil) {
+  RET_BOOL(stencilEnabled);
+}
+
+IMPLEMENT_FUNCTION(VVideo, set_stencil) {
+  P_GET_BOOL(v);
+  if (stencilEnabled != v) {
+    stencilEnabled = v;
+    if (mInited) {
+      if (v) glEnable(GL_STENCIL_TEST); else glDisable(GL_STENCIL_TEST);
+    }
+  }
+}
+
+//native final static void stencilOp (StencilOp sfail, StencilOp dpfail, optional StencilOp dppass);
+IMPLEMENT_FUNCTION(VVideo, stencilOp) {
+  P_GET_INT_OPT(dppass, STC_Always);
+  P_GET_INT(dpfail);
+  P_GET_INT(sfail);
+  if (!specified_dppass) dppass = dpfail;
+  if (mInited) glStencilOp(convertStencilOp(sfail), convertStencilOp(dpfail), convertStencilOp(dppass));
+}
+
+//native final static void stencilFunc (StencilFunc func, int refval, optional int mask);
+IMPLEMENT_FUNCTION(VVideo, stencilFunc) {
+  P_GET_INT_OPT(mask, -1);
+  P_GET_INT(refval);
+  P_GET_INT(func);
+  if (!specified_mask) mask = -1;
+  if (mInited) glStencilFunc(convertStencilFunc(func), refval, mask);
 }
 
 

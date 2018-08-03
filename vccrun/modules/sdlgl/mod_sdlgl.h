@@ -64,6 +64,27 @@ public:
     ZFunc_Max,
   };
 
+  enum {
+    STC_Keep,
+    STC_Zero,
+    STC_Replace,
+    STC_Incr,
+    STC_IncrWrap,
+    STC_Decr,
+    STC_DecrWrap,
+    STC_Invert,
+  };
+
+  enum {
+    STC_Never,
+    STC_Less,
+    STC_LEqual,
+    STC_Greater,
+    STC_GEqual,
+    STC_NotEqual,
+    STC_Always,
+  };
+
 private:
   static bool mInited;
   static int mWidth, mHeight;
@@ -83,6 +104,7 @@ private:
   static bool smoothLine;
   static bool directMode;
   static bool depthTest;
+  static bool stencilEnabled;
   static int depthFunc;
   static int currZ;
   static int swapInterval;
@@ -238,6 +260,11 @@ public:
   DECLARE_FUNCTION(copyScissor)
 
   DECLARE_FUNCTION(clearScreen)
+
+  DECLARE_FUNCTION(get_stencil)
+  DECLARE_FUNCTION(set_stencil)
+  DECLARE_FUNCTION(stencilOp)
+  DECLARE_FUNCTION(stencilFunc)
 
   DECLARE_FUNCTION(get_smoothLine)
   DECLARE_FUNCTION(set_smoothLine)
