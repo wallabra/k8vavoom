@@ -318,6 +318,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     VDoubleName *dn = (VDoubleName *)op;
     VClass *Class = VMemberBase::StaticFindClass(dn->Name1);
     //fprintf(stderr, "Class=%s; n0=%s; n1=%s (fld=%s)\n", Class->GetName(), *dn->Name1, *dn->Name2, *FieldName);
+    //!if (Class && Class != ec.SelfClass && !Class->Defined) Class->Define();
     if (Class && Class->IsKnownEnum(dn->Name2)) {
       VConstant *Const = Class->FindConstant(FieldName, dn->Name2);
       if (Const) {
@@ -360,6 +361,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
 
   if (op->Type.Type == TYPE_Reference) {
     if (op->Type.Class) {
+      //!if (op->Type.Class && op->Type.Class != ec.SelfClass && !op->Type.Class->Defined) op->Type.Class->Define();
       VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass);
       if (M) {
         if (M->Flags&FUNC_Iterator) {

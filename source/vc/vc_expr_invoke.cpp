@@ -1018,9 +1018,16 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
 
   VMethod *M = SelfExpr->Type.Class->FindAccessibleMethod(MethodName, ec.SelfClass);
   if (M) {
+    /*
+    if (SelfExpr->Type.Class && SelfExpr->Type.Class != ec.SelfClass && !SelfExpr->Type.Class->Defined) {
+      fprintf(stderr, "!!!! <%s>\n", SelfExpr->Type.Class->GetName());
+      SelfExpr->Type.Class->Define();
+    }
+    fprintf(stderr, "!!!! CALL: <%s>\n", *M->GetFullName());
+    */
     // don't need it anymore
     delete selfCopy;
-    if (M->Flags & FUNC_Iterator) {
+    if (M->Flags&FUNC_Iterator) {
       ParseError(Loc, "Iterator methods can only be used in foreach statements");
       delete this;
       return nullptr;
