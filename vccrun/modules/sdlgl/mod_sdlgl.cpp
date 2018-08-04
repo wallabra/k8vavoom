@@ -1052,6 +1052,14 @@ bool VVideo::SetTimerInterval (int id, int intervalms) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+#ifdef WIN32
+enum {
+  GL_INCR_WRAP = 0x8507u,
+  GL_DECR_WRAP = 0x8508u,
+};
+#endif
+
+
 static GLenum convertStencilOp (int op) {
   switch (op) {
     case VVideo::STC_Keep: return GL_KEEP;
