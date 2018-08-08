@@ -218,9 +218,7 @@ int VMp3AudioCodec::ReadData () {
   // if there are some bytes left, move them to the beginning of the buffer
   if (Stream.next_frame != nullptr) {
     Remaining = Stream.bufend-Stream.next_frame;
-    fprintf(stderr, "000\n");
     memmove(InputBuffer, Stream.next_frame, Remaining);
-    fprintf(stderr, "001\n");
     ReadStart = InputBuffer+Remaining;
     ReadSize = INPUT_BUFFER_SIZE-Remaining;
   } else {

@@ -838,9 +838,7 @@ void VScriptArray::Insert (int Index, int Count, const VFieldType &Type) {
     // clean inserted elements
     for (int i = Index; i < Index+Count; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
   } else {
-    if (Index < oldnum) {
-      memmove(ArrData+(Index+Count)*InnerSize, ArrData+Index*InnerSize, (oldnum-Index)*InnerSize);
-    }
+    if (Index < oldnum) memmove(ArrData+(Index+Count)*InnerSize, ArrData+Index*InnerSize, (oldnum-Index)*InnerSize);
   }
   memset(ArrData+Index*InnerSize, 0, Count*InnerSize);
   unguard;
@@ -876,9 +874,7 @@ void VScriptArray::Remove (int Index, int Count, const VFieldType &Type) {
     if (VField::NeedToDestructField(Type)) {
       for (int i = Index+Count; i < oldnum; ++i) VField::CopyFieldValue(ArrData+i*InnerSize, ArrData+(i-Count)*InnerSize, Type);
     } else {
-      if (Index+Count < oldnum) {
-        memmove(ArrData+Index*InnerSize, ArrData+(Index+Count)*InnerSize, (oldnum-Index-Count)*InnerSize);
-      }
+      if (Index+Count < oldnum) memmove(ArrData+Index*InnerSize, ArrData+(Index+Count)*InnerSize, (oldnum-Index-Count)*InnerSize);
     }
     // now resize it, but don't shrink (this will clear unused values too)
     SetNum(oldnum-Count, Type, false);
