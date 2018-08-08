@@ -815,6 +815,7 @@ VStream *fsysOpenFile (const VStr &fname, int pakid) {
   VStr pfx, fn;
   splitFileName(goodname, pfx, fn);
   MyThreadLocker paklocker(&paklock);
+  //fprintf(stderr, "fsysOpenFile: <%s>\n", *fname);
   // try basedir first, if the corresponding flag is set
 #ifdef WIN32
   if ((pakid == fsysAnyPak || pakid == 1) && fsysDiskFirst && pfx.length() < 2 && openPaks[0]->active())

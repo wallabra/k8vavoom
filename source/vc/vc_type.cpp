@@ -838,7 +838,9 @@ void VScriptArray::Insert (int Index, int Count, const VFieldType &Type) {
     // clean inserted elements
     for (int i = Index; i < Index+Count; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
   } else {
-    if (Index < oldnum) memmove(ArrData+(Index+Count)*InnerSize, ArrData+Index*InnerSize, (oldnum-Index)*InnerSize);
+    if (Index < oldnum) {
+      memmove(ArrData+(Index+Count)*InnerSize, ArrData+Index*InnerSize, (oldnum-Index)*InnerSize);
+    }
   }
   memset(ArrData+Index*InnerSize, 0, Count*InnerSize);
   unguard;
