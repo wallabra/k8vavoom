@@ -48,7 +48,7 @@ protected:
 
 public:
   VDFWadFile (VStream* fstream, const VStr &aname=VStr("<memory>")); // takes ownership on success
-  virtual ~VDFWadFile() override;
+  virtual ~VDFWadFile () override;
 
   inline bool isOpened () const { return (fileStream != nullptr); }
 };

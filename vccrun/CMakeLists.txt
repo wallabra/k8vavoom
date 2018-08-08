@@ -114,6 +114,13 @@ if (ENABLE_VCCRUN)
     filesys/pak/dfwad.cpp
   )
 
+  if(VCCRUN_HAXPAK)
+    set(VCCRUN_FSYS_SOURCES
+      ${VCCRUN_FSYS_SOURCES}
+      filesys/pak/hax.cpp
+    )
+  endif(VCCRUN_HAXPAK)
+
   set(VCCRUN_SOUND_VORBIS_SOURCES )
   if(VORBIS_FOUND)
     set(VCCRUN_SOUND_VORBIS_SOURCES modules/mod_sound/snd_vorbis.cpp)

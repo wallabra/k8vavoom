@@ -22,6 +22,7 @@ option(WITH_SYS_LIBPNG "Use system libpng" OFF)
 option(WITH_SYS_LIBJPG "Use system libjpg" ON)
 option(WITH_SYS_ZLIB "Use system zlib" ON)
 option(WITH_SYS_LZMA "Use system liblzma" ON)
+option(VCCRUN_HAXPAK "You cannot turn this on" OFF)
 
 if(MINGW)
   option(WITH_WINE "Use wine to run built executables" ON)
