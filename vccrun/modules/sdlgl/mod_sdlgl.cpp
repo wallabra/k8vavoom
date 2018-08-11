@@ -604,7 +604,7 @@ VOpenGLTexture *VOpenGLTexture::CreateEmpty (VName txname, int wdt, int hgt) {
 }
 
 
-void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const {
+void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1, float angle) const {
   if (!tid || VVideo::isFullyTransparent() || mTransparent) return;
   if (x1 < 0) x1 = img->width;
   if (y1 < 0) y1 = img->height;
@@ -622,17 +622,28 @@ void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0
   } else {
     VVideo::setupBlending();
   }
+
   const float fx0 = (float)x0/(float)img->width;
   const float fx1 = (float)x1/(float)img->width;
   const float fy0 = (float)y0/(float)img->height;
   const float fy1 = (float)y1/(float)img->height;
   const float z = VVideo::currZFloat;
+
+  if (angle != 0) {
+    glPushMatrix();
+    glTranslatef(dx0+(dx1-dx0)/2.0, dy0+(dy1-dy0)/2.0, 0);
+    glRotatef(angle, 0, 0, 1);
+    glTranslatef(-(dx0+(dx1-dx0)/2.0), -(dy0+(dy1-dy0)/2.0), 0);
+  }
+
   glBegin(GL_QUADS);
     glTexCoord2f(fx0, fy0); glVertex3f(dx0, dy0, z);
     glTexCoord2f(fx1, fy0); glVertex3f(dx1, dy0, z);
     glTexCoord2f(fx1, fy1); glVertex3f(dx1, dy1, z);
     glTexCoord2f(fx0, fy1); glVertex3f(dx0, dy1, z);
   glEnd();
+
+  if (angle != 0) glPopMatrix();
 }
 
 
@@ -655,6 +666,7 @@ void VOpenGLTexture::blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int
     VVideo::setupBlending();
   }
   const float z = VVideo::currZFloat;
+
   glBegin(GL_QUADS);
     glTexCoord2i(x0, y0); glVertex3f(dx0, dy0, z);
     glTexCoord2i(x1, y0); glVertex3f(dx1, dy0, z);
@@ -664,7 +676,7 @@ void VOpenGLTexture::blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int
 }
 
 
-void VOpenGLTexture::blitAt (int dx0, int dy0, float scale) const {
+void VOpenGLTexture::blitAt (int dx0, int dy0, float scale, float angle) const {
   if (!tid || VVideo::isFullyTransparent() || scale <= 0 || mTransparent) return;
   int w = img->width;
   int h = img->height;
@@ -683,12 +695,25 @@ void VOpenGLTexture::blitAt (int dx0, int dy0, float scale) const {
     VVideo::setupBlending();
   }
   const float z = VVideo::currZFloat;
+
+  const float dx1 = dx0+w*scale;
+  const float dy1 = dy0+h*scale;
+
+  if (angle != 0) {
+    glPushMatrix();
+    glTranslatef(dx0+(dx1-dx0)/2.0, dy0+(dy1-dy0)/2.0, 0);
+    glRotatef(angle, 0, 0, 1);
+    glTranslatef(-(dx0+(dx1-dx0)/2.0), -(dy0+(dy1-dy0)/2.0), 0);
+  }
+
   glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f); glVertex3f(dx0, dy0, z);
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(dx0+w*scale, dy0, z);
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(dx0+w*scale, dy0+h*scale, z);
-    glTexCoord2f(0.0f, 1.0f); glVertex3f(dx0, dy0+h*scale, z);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(dx1, dy0, z);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(dx1, dy1, z);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(dx0, dy1, z);
   glEnd();
+
+  if (angle != 0) glPopMatrix();
 }
 
 
@@ -802,8 +827,9 @@ IMPLEMENT_FUNCTION(VGLTexture, isOneBitAlpha) {
 }
 
 
-// void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
+// void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1, optional float angle);
 IMPLEMENT_FUNCTION(VGLTexture, blitExt) {
+  P_GET_FLOAT_OPT(angle, 0);
   P_GET_INT(specifiedY1);
   P_GET_INT(y1);
   P_GET_INT(specifiedX1);
@@ -817,7 +843,7 @@ IMPLEMENT_FUNCTION(VGLTexture, blitExt) {
   P_GET_SELF;
   if (!specifiedX1) x1 = -1;
   if (!specifiedY1) y1 = -1;
-  if (Self && Self->tex) Self->tex->blitExt(dx0, dy0, dx1, dy1, x0, y0, x1, y1);
+  if (Self && Self->tex) Self->tex->blitExt(dx0, dy0, dx1, dy1, x0, y0, x1, y1, angle);
 }
 
 
@@ -840,15 +866,16 @@ IMPLEMENT_FUNCTION(VGLTexture, blitExtRep) {
 }
 
 
-// void blitAt (int dx0, int dy0, optional float scale);
+// void blitAt (int dx0, int dy0, optional float scale, optional float angle);
 IMPLEMENT_FUNCTION(VGLTexture, blitAt) {
+  P_GET_FLOAT_OPT(angle, 0);
   P_GET_INT(specifiedScale);
   P_GET_FLOAT(scale);
   P_GET_INT(dy0);
   P_GET_INT(dx0);
   P_GET_SELF;
   if (!specifiedScale) scale = 1;
-  if (Self && Self->tex) Self->tex->blitAt(dx0, dy0, scale);
+  if (Self && Self->tex) Self->tex->blitAt(dx0, dy0, scale, angle);
 }
 
 

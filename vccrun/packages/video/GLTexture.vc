@@ -31,8 +31,8 @@ native final bool isOpaque ();
 native final bool isOneBitAlpha ();
 
 // the following two clamps
-native final void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
-native final void blitAt (int dx0, int dy0, optional float scale);
+native final void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1, optional float angle);
+native final void blitAt (int dx0, int dy0, optional float scale, optional float angle);
 
 // this one repeats
 native final void blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);

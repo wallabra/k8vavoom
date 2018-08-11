@@ -353,8 +353,9 @@ public:
   // this means that the only alpha values are 255 or 0
   PropertyRO<bool, VOpenGLTexture> isOneBitAlpha {this, &VOpenGLTexture::get1BitAlpha};
 
-  void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const;
-  void blitAt (int dx0, int dy0, float scale=1) const;
+  // angle is in degrees
+  void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1, float angle) const;
+  void blitAt (int dx0, int dy0, float scale=1, float angle=0) const;
 
   // this uses integer texture coords
   void blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const;
