@@ -236,36 +236,36 @@ bool VMethod::Define () {
 
   if (SuperMethod) {
     if ((Flags&FUNC_Override) == 0) {
-      ParseError(Loc, "Overriding virtual method without `override` keyword");
+      ParseError(Loc, "Overriding virtual method `%s` without `override` keyword", *GetFullName());
       Ret = false;
     }
     if (Ret && (SuperMethod->Flags&FUNC_Private) != 0) {
-      ParseError(Loc, "Overriding private method is not allowed");
+      ParseError(Loc, "Overriding private method `%s` is not allowed", *GetFullName());
       Ret = false;
     }
     if (Ret && (Flags&FUNC_Private) != 0) {
-      ParseError(Loc, "Overriding with private method is not allowed");
+      ParseError(Loc, "Overriding with private method `%s` is not allowed", *GetFullName());
       Ret = false;
     }
     if (Ret && (SuperMethod->Flags&FUNC_Protected) != (Flags&FUNC_Protected)) {
       if ((SuperMethod->Flags&FUNC_Protected)) {
-        ParseError(Loc, "Cannot override protected method with public");
+        ParseError(Loc, "Cannot override protected method `%s` with public one", *GetFullName());
         Ret = false;
       } else {
         //FIXME: not yet implemented
-        ParseError(Loc, "Cannot override public method with protected");
+        ParseError(Loc, "Cannot override public method `%s` with protected one", *GetFullName());
         Ret = false;
       }
     }
     if (Ret && (SuperMethod->Flags&FUNC_Final)) {
-      ParseError(Loc, "Method already has been declared as final and cannot be overriden");
+      ParseError(Loc, "Method `%s` already has been declared as final and cannot be overriden", *GetFullName());
       Ret = false;
     }
     if (!SuperMethod->ReturnType.Equals(ReturnType)) {
-      if (Ret) ParseError(Loc, "Method redefined with different return type");
+      if (Ret) ParseError(Loc, "Method `%s` redefined with different return type", *GetFullName());
       Ret = false;
     } else if (SuperMethod->NumParams != NumParams) {
-      if (Ret) ParseError(Loc, "Method redefined with different number of arguments");
+      if (Ret) ParseError(Loc, "Method `%s` redefined with different number of arguments", *GetFullName());
       Ret = false;
     } else {
       for (int i = 0; i < NumParams; ++i) {
@@ -287,7 +287,7 @@ bool VMethod::Define () {
     Flags |= SuperMethod->Flags&FUNC_NetFlags;
   } else {
     if ((Flags&FUNC_Override) != 0) {
-      ParseError(Loc, "Trying to override non-existing method");
+      ParseError(Loc, "Trying to override non-existing method `%s`", *GetFullName());
       Ret = false;
     }
   }

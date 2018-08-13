@@ -1883,7 +1883,7 @@ VExpression *VParser::ParseLambda () {
 
   if (Lex.Token != TK_LParen) { ParseError(Lex.Location, "Argument list"); delete Type; return new VNullLiteral(stl); }
 
-  VStr newname = VStr(*currFunc->Name)+"-lambda-"+VStr(currFunc->lmbCount++);
+  VStr newname = VStr(currFunc->GetFullName())+"-lambda-"+VStr(currFunc->lmbCount++);
   VName lname = VName(*newname);
   //fprintf(stderr, "*** LAMBDA: <%s>\n", *lname);
 
