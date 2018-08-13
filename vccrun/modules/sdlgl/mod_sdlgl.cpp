@@ -130,8 +130,9 @@ struct TDateTime {
   int hour; // [0..23]
   int month; // [0..11]
   int year; // normal value, i.e. 2042 for 2042
-  int wday; // [0..6] -- day of the week (0 is sunday)
   int mday; // [1..31] -- day of the month
+  //
+  int wday; // [0..6] -- day of the week (0 is sunday)
   int yday; // [0..365] -- day of the year
   int isdst; // is daylight saving time?
 };
@@ -159,7 +160,7 @@ IMPLEMENT_FUNCTION(VObject, DecodeTimeVal) {
   P_GET_PTR(TTimeVal, tvin);
   P_GET_PTR(TDateTime, tmres);
   timeval tv;
-  tv.tv_sec = ((uint64_t)tvin->secs)|(((uint64_t)tvin->secshi)<<32);
+  tv.tv_sec = (((uint64_t)tvin->secs)&0xffffffff)|(((uint64_t)tvin->secshi)<<32);
   //tv.tv_usec = tvin->usecs;
   tm ctm;
   if (localtime_r(&tv.tv_sec, &ctm)) {
@@ -186,14 +187,15 @@ IMPLEMENT_FUNCTION(VObject, EncodeTimeVal) {
   P_GET_PTR(TDateTime, tmin);
   P_GET_PTR(TTimeVal, tvres);
   tm ctm;
+  memset(&ctm, 0, sizeof(ctm));
   ctm.tm_sec = tmin->sec;
   ctm.tm_min = tmin->min;
   ctm.tm_hour = tmin->hour;
   ctm.tm_mon = tmin->month;
   ctm.tm_year = tmin->year-1900;
   ctm.tm_mday = tmin->mday;
-  ctm.tm_wday = tmin->wday;
-  ctm.tm_yday = tmin->yday;
+  //ctm.tm_wday = tmin->wday;
+  //ctm.tm_yday = tmin->yday;
   ctm.tm_isdst = tmin->isdst;
   if (!usedst) ctm.tm_isdst = -1;
   auto tt = mktime(&ctm);

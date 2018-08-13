@@ -70,8 +70,9 @@ struct TDateTime {
   int hour; // [0..23]
   int month; // [0..11]
   int year; // normal value, i.e. 2042 for 2042
-  int wday; // [0..6] -- day of the week (0 is sunday)
   int mday; // [1..31] -- day of the month
+  //
+  int wday; // [0..6] -- day of the week (0 is sunday)
   int yday; // [0..365] -- day of the year
   int isdst; // is daylight saving time?
 }
@@ -80,7 +81,7 @@ native static final bool GetTimeOfDay (out TTimeVal tv);
 native static final bool DecodeTimeVal (out TDateTime tm, const ref TTimeVal tv);
 
 // see mktime(3)
-// `wday`, `mday`, `yday`, and `isdst` are set on success
+// `wday`, `yday`, and `isdst` are set on success; `isdst` is used if `usedist` is `true`
 native static final bool EncodeTimeVal (out TTimeVal tv, ref TDateTime tm, optional bool usedst);
 
 
