@@ -65,6 +65,7 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   , MobjInfoExpr(nullptr)
   , ScriptIdExpr(nullptr)
   , Defined(true)
+  , DefinedAsDependency(false)
   , dfStateTexList()
   , dfStateTexDir()
   , dfStateTexDirSet(0)
@@ -114,6 +115,7 @@ VClass::VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *A
   , MobjInfoExpr(nullptr)
   , ScriptIdExpr(nullptr)
   , Defined(true)
+  , DefinedAsDependency(false)
   , ObjectFlags(CLASSOF_Native)
   , LinkNext(nullptr)
   , ClassSize(ASize)
@@ -871,13 +873,19 @@ bool VClass::isRealFinalMethod (VName Name) {
 //==========================================================================
 bool VClass::Define () {
   guard(VClass::Define);
+
   // check for duplicates
   int HashIndex = Name.GetIndex()&4095;
   for (VMemberBase *m = GMembersHash[HashIndex]; m; m = m->HashNext) {
     if (m->Name == Name && m->MemberType == MEMBER_Class && ((VClass *)m)->Defined) {
+      if (((VClass *)m)->DefinedAsDependency) return true;
       ParseError(Loc, "Class `%s` already has been declared", *Name);
     }
   }
+
+  // mark it as defined
+  Defined = true;
+  DefinedAsDependency = false;
 
 #if !defined(IN_VCC)
   VClass *PrevParent = ParentClass;
@@ -887,7 +895,11 @@ bool VClass::Define () {
     if (!ParentClass) {
       ParseError(ParentClassLoc, "No such class `%s`", *ParentClassName);
     } else if (!ParentClass->Defined) {
-      ParseError(ParentClassLoc, "Parent class must be defined before");
+      //ParseError(ParentClassLoc, "Parent class must be defined before");
+      // recurse, 'cause why not?
+      bool xdres = ParentClass->Define();
+      ParentClass->DefinedAsDependency = true;
+      if (!xdres) return false;
     }
 #if defined(VCC_STANDALONE_EXECUTOR)
     // process replacements
@@ -941,7 +953,6 @@ bool VClass::Define () {
     }
   }
 
-  Defined = true;
   return true;
   unguard;
 }

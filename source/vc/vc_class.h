@@ -208,6 +208,7 @@ public:
   TArray<VProperty *> Properties;
   TArray<VStateLabelDef> StateLabelDefs;
   bool Defined;
+  bool DefinedAsDependency;
 
   // new-style state options and textures
   TMapDtor<VStr, TextureInfo> dfStateTexList;

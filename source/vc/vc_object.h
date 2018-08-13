@@ -1,4 +1,4 @@
-//**************************************************************************
+///**************************************************************************
 //**
 //**  ##   ##    ##    ##   ##   ####     ####   ###     ###
 //**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
@@ -429,6 +429,10 @@ public:
   DECLARE_FUNCTION(GetTimerInterval)
   DECLARE_FUNCTION(SetTimerInterval)
   DECLARE_FUNCTION(GetTickCount)
+
+  DECLARE_FUNCTION(GetTimeOfDay)
+  DECLARE_FUNCTION(DecodeTimeVal);
+  DECLARE_FUNCTION(EncodeTimeVal);
 
   DECLARE_FUNCTION(fsysAppendDir)
   DECLARE_FUNCTION(fsysAppendPak)

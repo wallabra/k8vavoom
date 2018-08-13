@@ -48,7 +48,40 @@ native static final int GetTimerInterval (int id); // 0: no such timer
 // returns success flag; won't do anything if interval is < 1
 native static final bool SetTimerInterval (int id, int intervalms);
 
+// in seconds, from app start
 native static final float GetTickCount ();
+
+
+//==========================================================================
+//
+//  date/time utils
+//
+//==========================================================================
+struct TTimeVal {
+  int secs; // actually, unsigned
+  int usecs;
+  // for 2030+
+  int secshi;
+}
+
+struct TDateTime {
+  int sec; // [0..60] (yes, *sometimes* it can be 60)
+  int min; // [0..59]
+  int hour; // [0..23]
+  int month; // [0..11]
+  int year; // normal value, i.e. 2042 for 2042
+  int wday; // [0..6] -- day of the week (0 is sunday)
+  int mday; // [1..31] -- day of the month
+  int yday; // [0..365] -- day of the year
+  int isdst; // is daylight saving time?
+}
+
+native static final bool GetTimeOfDay (out TTimeVal tv);
+native static final bool DecodeTimeVal (out TDateTime tm, const ref TTimeVal tv);
+
+// see mktime(3)
+// `wday`, `mday`, `yday`, and `isdst` are set on success
+native static final bool EncodeTimeVal (out TTimeVal tv, ref TDateTime tm, optional bool usedst);
 
 
 //==========================================================================
