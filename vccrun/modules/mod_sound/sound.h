@@ -312,6 +312,7 @@ public:
   // playback of sound effects
   virtual int PlaySound (int InSoundId, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float attenuation, float pitch, bool Loop) = 0;
   virtual void StopSound (int origin_id, int channel) = 0;
+  virtual void StopSoundById (int origin_id, int sound_id) = 0;
   virtual void StopAllSound () = 0;
   virtual bool IsSoundPlaying (int origin_id, int InSoundId) = 0;
   virtual void SetSoundPitch (int origin_id, int InSoundId, float pitch) = 0;
@@ -363,6 +364,7 @@ public:
 
   DECLARE_FUNCTION(PlaySound)
   DECLARE_FUNCTION(StopSound)
+  DECLARE_FUNCTION(StopSoundById)
   DECLARE_FUNCTION(StopAllSound)
   DECLARE_FUNCTION(IsSoundPlaying)
   DECLARE_FUNCTION(SetSoundPitch)

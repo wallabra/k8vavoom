@@ -334,6 +334,15 @@ IMPLEMENT_FUNCTION(VSoundSystem, StopSound) {
 }
 
 
+// static native final void StopSoundById (int origin_id, int sound_id);
+IMPLEMENT_FUNCTION(VSoundSystem, StopSoundById) {
+  VSoundManager::StaticInitialize();
+  P_GET_INT(sound_id);
+  P_GET_INT(origin_id);
+  if (GAudio) GAudio->StopSoundById(origin_id, sound_id);
+}
+
+
 // static native final void StopAllSound ();
 IMPLEMENT_FUNCTION(VSoundSystem, StopAllSound) {
   VSoundManager::StaticInitialize();

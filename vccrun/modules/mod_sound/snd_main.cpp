@@ -40,6 +40,7 @@ public:
   // playback of sound effects
   virtual int PlaySound (int InSoundId, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float attenuation, float pitch, bool Loop) override;
   virtual void StopSound (int origin_id, int channel) override;
+  virtual void StopSoundById (int origin_id, int sound_id) override;
   virtual void StopAllSound () override;
   virtual bool IsSoundPlaying (int origin_id, int InSoundId) override;
   virtual void SetSoundPitch (int origin_id, int InSoundId, float pitch) override;
@@ -449,6 +450,25 @@ void VAudio::StopSound (int origin_id, int channel) {
 //==========================================================================
 void VAudio::StopAllSound () {
   for (int i = 0; i < NumChannels; ++i) StopChannel(i);
+}
+
+
+//==========================================================================
+//
+//  VAudio::StopSoundById
+//
+//==========================================================================
+void VAudio::StopSoundById (int origin_id, int sound_id) {
+  for (int i = 0; i < NumChannels; ++i) {
+    if (Channel[i].handle < 0) continue;
+    //fprintf(stderr, "i=%d; sid=%d; oid=%d (%d:%d)\n", i, Channel[i].sound_id, Channel[i].origin_id, sound_id, origin_id);
+    if (Channel[i].sound_id == sound_id && Channel[i].origin_id == origin_id) {
+      //fprintf(stderr, "FOUND! %d\n", (int)SoundDevice->IsChannelPlaying(Channel[i].handle));
+      if (SoundDevice->IsChannelPlaying(Channel[i].handle)) {
+        StopChannel(i);
+      }
+    }
+  }
 }
 
 
