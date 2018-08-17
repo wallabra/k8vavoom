@@ -108,12 +108,35 @@ private:
   static int depthFunc;
   static int currZ;
   static int swapInterval;
+  static bool texFiltering;
   friend class VOpenGLTexture;
 
 public:
   static float currZFloat;
 
+  static inline void forceGLTexFilter () {
+    if (mInited) {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (texFiltering ? GL_LINEAR : GL_NEAREST));
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (texFiltering ? GL_LINEAR : GL_NEAREST));
+    }
+  }
+
 private:
+  static inline bool getTexFiltering () {
+    return texFiltering;
+  }
+
+  static inline void setTexFiltering (bool filterit) {
+    //if (texFiltering == filterit) return;
+    texFiltering = filterit;
+    /*
+    if (mInited) {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterit ? GL_LINEAR : GL_NEAREST));
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (filterit ? GL_LINEAR : GL_NEAREST));
+    }
+    */
+  }
+
   static inline void realizeZFunc () {
     if (mInited) {
       switch (depthFunc) {
@@ -274,6 +297,9 @@ public:
 
   DECLARE_FUNCTION(get_blendMode)
   DECLARE_FUNCTION(set_blendMode)
+
+  DECLARE_FUNCTION(get_textureFiltering)
+  DECLARE_FUNCTION(set_textureFiltering)
 
   DECLARE_FUNCTION(get_swapInterval)
   DECLARE_FUNCTION(set_swapInterval)

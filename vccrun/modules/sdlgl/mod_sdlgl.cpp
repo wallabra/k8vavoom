@@ -513,8 +513,11 @@ static bool texUpload (VOpenGLTexture *tx) {
   //fprintf(stderr, "uploading texture '%s'\n", *tx->getPath());
 
   glBindTexture(GL_TEXTURE_2D, tx->tid);
+  /*
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  */
+  VVideo::forceGLTexFilter();
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tx->img->width, tx->img->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr); // this creates texture
 
@@ -722,6 +725,7 @@ void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0
   glBindTexture(GL_TEXTURE_2D, tid);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  VVideo::forceGLTexFilter();
   if (VVideo::getBlendMode() == VVideo::BlendNormal) {
     if (mOpaque && VVideo::isFullyOpaque()) {
       glDisable(GL_BLEND);
@@ -765,6 +769,7 @@ void VOpenGLTexture::blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int
   glBindTexture(GL_TEXTURE_2D, tid);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  VVideo::forceGLTexFilter();
   if (VVideo::getBlendMode() == VVideo::BlendNormal) {
     if (mOpaque && VVideo::isFullyOpaque()) {
       glDisable(GL_BLEND);
@@ -794,6 +799,7 @@ void VOpenGLTexture::blitAt (int dx0, int dy0, float scale, float angle) const {
   glBindTexture(GL_TEXTURE_2D, tid);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  VVideo::forceGLTexFilter();
   if (VVideo::getBlendMode() == VVideo::BlendNormal) {
     if (mOpaque && VVideo::isFullyOpaque()) {
       glDisable(GL_BLEND);
@@ -1057,6 +1063,7 @@ int VVideo::depthFunc = VVideo::ZFunc_Less;
 int VVideo::currZ = 0;
 float VVideo::currZFloat = 1.0f;
 int VVideo::swapInterval = 0;
+bool VVideo::texFiltering = false;
 
 
 struct TimerInfo {
@@ -1354,6 +1361,11 @@ bool VVideo::open (const VStr &winname, int width, int height) {
   glLoadIdentity();
 
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+
+  /*
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (texFiltering  ? GL_LINEAR : GL_NEAREST));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (texFiltering  ? GL_LINEAR : GL_NEAREST));
+  */
 
   //glDrawBuffer(directMode ? GL_FRONT : GL_BACK);
 
@@ -1990,6 +2002,17 @@ IMPLEMENT_FUNCTION(VVideo, get_blendMode) {
 IMPLEMENT_FUNCTION(VVideo, set_blendMode) {
   P_GET_INT(c);
   setBlendMode(c);
+}
+
+//native final static bool get_textureFiltering ();
+IMPLEMENT_FUNCTION(VVideo, get_textureFiltering) {
+  RET_BOOL(getTexFiltering());
+}
+
+//native final static void set_textureFiltering (bool v);
+IMPLEMENT_FUNCTION(VVideo, set_textureFiltering) {
+  P_GET_BOOL(tf);
+  setTexFiltering(tf);
 }
 
 //native final static void setFont (name fontname);

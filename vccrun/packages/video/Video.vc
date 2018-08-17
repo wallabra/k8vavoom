@@ -11,12 +11,12 @@
  **************************************************************************/
 class Video : Object abstract native;
 
-// default mode is `BlendNormal`
-enum {
-  BlendNormal, // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  BlendBlend, // glBlendFunc(GL_SRC_ALPHA, GL_ONE)
-  BlendFilter, // glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR)
-  BlendInvert, // glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO)
+// default mode is `Blend.Normal`
+enum Blend {
+  Normal, // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  Blend, // glBlendFunc(GL_SRC_ALPHA, GL_ONE)
+  Filter, // glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR)
+  Invert, // glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO)
 }
 
 
@@ -113,7 +113,7 @@ native final static int colorARGB { get; set; }
 // BlendXXX
 //native final static int getBlendMode ();
 //native final static void setBlendMode (int v);
-native final static int blendMode { get; set; }
+native final static Blend blendMode { get; set; }
 
 
 //native final static name getFont ();
@@ -140,6 +140,11 @@ const int StencilMax = 0xff; // 8-bit stencil buffer
 native final static bool stencil { get; set; }
 native final static void stencilOp (StencilOp sfail, StencilOp dpfail, optional StencilOp dppass);
 native final static void stencilFunc (StencilFunc func, int refval, optional int mask);
+
+
+// true : GL_LINEAR
+// false: GL_NEAREST
+native final static bool textureFiltering { get; set; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
