@@ -1,0 +1,17 @@
+class Main : Object;
+
+
+void main () {
+  array!int arr;
+  foreach (auto idx; 0..64) arr[$] = idx;
+  writeln(arr.length);
+  arr.clear();
+  writeln(arr.length);
+  foreach (auto idx; 0..32) arr[$] = idx;
+  writeln(arr.length);
+  foreach (auto idx; 0..32) arr[$] = idx;
+  foreach (auto idx; 0..32) arr[$] = idx;
+  writeln(arr.length);
+  arr.clear();
+  writeln(arr.length);
+}
