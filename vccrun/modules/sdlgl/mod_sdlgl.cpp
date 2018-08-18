@@ -1411,7 +1411,7 @@ again:
   stencilBits = (stb < 1 ? 0 : stb);
   //if (stb < 1) fprintf(stderr, "WARNING: no stencil buffer available!");
 
-#if 1 //!defined(WIN32)
+#if 0 //!defined(WIN32)
   {
     int ghi, glo;
     SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &ghi);
