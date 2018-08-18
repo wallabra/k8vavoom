@@ -25,6 +25,8 @@
 //**************************************************************************
 #if defined (VCCRUN_HAS_SDL) && defined(VCCRUN_HAS_OPENGL)
 
+//#define GL_GLEXT_PROTOTYPES
+
 #include "mod_sdlgl.h"
 #include "../../filesys/fsys.h"
 
@@ -32,6 +34,7 @@
 
 #include <SDL.h>
 #include <GL/gl.h>
+#include <GL/glext.h>
 static SDL_Window *hw_window = nullptr;
 static SDL_GLContext hw_glctx = nullptr;
 static VOpenGLTexture *txHead = nullptr, *txTail = nullptr;
@@ -46,9 +49,26 @@ extern VObject *mainObject;
 static const float zNear = 1.0f;
 static const float zFar = 42.0f;
 
+
+#ifdef WIN32
+//static PFNGLBLENDEQUATIONPROC glBlendEquation;
+typedef void (APIENTRY *glBlendEquationFn) (GLenum mode);
+static glBlendEquationFn glBlendEquationFunc;
+#else
+# define glBlendEquationFunc glBlendEquation
+#endif
+
+/*
 #ifndef GL_CLAMP_TO_EDGE
 # define GL_CLAMP_TO_EDGE  0x812F
 #endif
+
+#ifdef WIN32
+# ifndef GL_FUNC_ADD
+#  define GL_FUNC_ADD
+# endif
+#endif
+*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1203,12 +1223,14 @@ bool VVideo::SetTimerInterval (int id, int intervalms) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+/*
 #ifdef WIN32
 enum {
   GL_INCR_WRAP = 0x8507u,
   GL_DECR_WRAP = 0x8508u,
 };
 #endif
+*/
 
 
 static GLenum convertStencilOp (int op) {
@@ -1270,7 +1292,7 @@ void VVideo::forceAlphaFunc () {
 }
 
 void VVideo::forceBlendFunc () {
-  if (mInited) glBlendEquation(convertBlendFunc(mBlendFunc));
+  if (mInited) glBlendEquationFunc(convertBlendFunc(mBlendFunc));
 }
 
 
@@ -1459,6 +1481,10 @@ again:
 
   //glDrawBuffer(directMode ? GL_FRONT : GL_BACK);
 
+#ifdef WIN32
+  glBlendEquationFunc = (/*PFNGLBLENDEQUATIONPROC*/glBlendEquationFn)SDL_GL_GetProcAddress("glBlendEquation");
+  if (!glBlendEquationFunc) abort();
+#endif
 
   clear();
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);

@@ -32,6 +32,7 @@
 #if defined (VCCRUN_HAS_SDL) && defined(VCCRUN_HAS_OPENGL)
 #include <SDL.h>
 #include <GL/gl.h>
+#include <GL/glext.h>
 
 
 // ////////////////////////////////////////////////////////////////////////// //
