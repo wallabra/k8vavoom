@@ -1616,7 +1616,93 @@ static int checkArg (VMethod *mmain) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+/*
+#include <SDL.h>
+#include <GL/gl.h>
+
+void boo () {
+  int width = 800;
+  int height = 600;
+
+  Uint32 flags = SDL_WINDOW_OPENGL;
+
+#if 0
+  //k8: require OpenGL 1.5
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+  //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
+  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+  //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+#else
+  //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+  //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
+  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+#endif
+
+  glGetError();
+
+  auto hw_window = SDL_CreateWindow("tesT", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
+  if (!hw_window) {
+#ifndef WIN32
+    fprintf(stderr, "ALAS: cannot create SDL2 window.\n");
+#endif
+    return;
+  }
+
+  auto hw_glctx = SDL_GL_CreateContext(hw_window);
+  if (!hw_glctx) {
+    SDL_DestroyWindow(hw_window);
+    hw_window = nullptr;
+#ifndef WIN32
+    fprintf(stderr, "ALAS: cannot create SDL2 OpenGL context.\n");
+#endif
+    return;
+  }
+
+  SDL_GL_MakeCurrent(hw_window, hw_glctx);
+  glGetError();
+
+#if !defined(WIN32)
+  {
+    int ghi, glo;
+    SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &ghi);
+    SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &glo);
+    fprintf(stderr, "OpenGL version: %d.%d\n", ghi, glo);
+
+    int ltmp = 666;
+    SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &ltmp); fprintf(stderr, "STENCIL BUFFER BITS: %d\n", ltmp);
+    SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &ltmp); fprintf(stderr, "RED BITS: %d\n", ltmp);
+    SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &ltmp); fprintf(stderr, "GREEN BITS: %d\n", ltmp);
+    SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE, &ltmp); fprintf(stderr, "BLUE BITS: %d\n", ltmp);
+    SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &ltmp); fprintf(stderr, "DEPTH BITS: %d\n", ltmp);
+  }
+#endif
+
+  //SDL_GL_MakeCurrent(hw_window, hw_glctx);
+  SDL_GL_MakeCurrent(hw_window, nullptr);
+  SDL_GL_DeleteContext(hw_glctx);
+  SDL_DestroyWindow(hw_window);
+}
+*/
+
+// ////////////////////////////////////////////////////////////////////////// //
 int main (int argc, char **argv) {
+  //boo();
+
   VStack ret;
   ret.i = 0;
 

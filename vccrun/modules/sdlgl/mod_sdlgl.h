@@ -45,11 +45,28 @@ class VVideo : public VObject {
   NO_DEFAULT_CONSTRUCTOR(VVideo)
 
 public:
+  // (srcColor * <srcFactor>) <op> (dstColor * <dstFactor>)
+  // If you want alpha blending use <srcFactor> of SRC_ALPHA and <dstFactor> of ONE_MINUS_SRC_ALPHA:
+  //   (srcColor * srcAlpha) + (dstColor * (1-srcAlpha))
   enum {
+    BlendNone, // disabled
     BlendNormal, // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     BlendBlend, // glBlendFunc(GL_SRC_ALPHA, GL_ONE)
     BlendFilter, // glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR)
     BlendInvert, // glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO)
+    BlendParticle, // glBlendFunc(GL_DST_COLOR, GL_ZERO)
+    BlendHighlight, // glBlendFunc(GL_DST_COLOR, GL_ONE);
+    BlendDstMulDstAlpha, // glBlendFunc(GL_ZERO, GL_DST_ALPHA);
+    //
+    BlendMax,
+  };
+
+  enum {
+    BlendFunc_Add,
+    BlendFunc_Sub,
+    BlendFunc_SubRev,
+    BlendFunc_Min,
+    BlendFunc_Max,
   };
 
   enum {
@@ -81,12 +98,21 @@ public:
     STC_LEqual,
     STC_Greater,
     STC_GEqual,
+    STC_Equal,
     STC_NotEqual,
     STC_Always,
   };
 
+  enum {
+    CMask_Red   = 0x01,
+    CMask_Green = 0x02,
+    CMask_Blue  = 0x04,
+    CMask_Alpha = 0x08,
+  };
+
 private:
   static bool mInited;
+  static int stencilBits;
   static int mWidth, mHeight;
   static bool doGLSwap;
   static bool doRefresh;
@@ -98,6 +124,7 @@ private:
   static int currFrameTime;
   static int prevFrameTime;
   static int mBlendMode;
+  static int mBlendFunc;
 
   static vuint32 colorARGB; // a==0: opaque
   static VFont *currFont;
@@ -109,6 +136,9 @@ private:
   static int currZ;
   static int swapInterval;
   static bool texFiltering;
+  static int colorMask;
+  static int alphaTestFunc;
+  static float alphaFuncVal;
   friend class VOpenGLTexture;
 
 public:
@@ -122,6 +152,19 @@ public:
   }
 
 private:
+  static inline void forceColorMask () {
+    if (mInited) {
+      glColorMask(
+        (colorMask&CMask_Red ? GL_TRUE : GL_FALSE),
+        (colorMask&CMask_Green ? GL_TRUE : GL_FALSE),
+        (colorMask&CMask_Blue ? GL_TRUE : GL_FALSE),
+        (colorMask&CMask_Alpha ? GL_TRUE : GL_FALSE));
+    }
+  }
+
+  static void forceAlphaFunc ();
+  static void forceBlendFunc ();
+
   static inline bool getTexFiltering () {
     return texFiltering;
   }
@@ -164,9 +207,12 @@ private:
     }
   }
 
-  // returns `true` if drawing will has any effect
+  // returns `true` if drawing will have any effect
   static inline bool setupBlending () {
-    if (mBlendMode == BlendNormal) {
+    if (mBlendMode == BlendNone) {
+      glDisable(GL_BLEND);
+      return true;
+    } else if (mBlendMode == BlendNormal) {
       if ((colorARGB&0xff000000u) == 0) {
         // opaque
         glDisable(GL_BLEND);
@@ -182,6 +228,9 @@ private:
            if (mBlendMode == BlendBlend) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
       else if (mBlendMode == BlendFilter) glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
       else if (mBlendMode == BlendInvert) glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+      else if (mBlendMode == BlendParticle) glBlendFunc(GL_DST_COLOR, GL_ZERO);
+      else if (mBlendMode == BlendHighlight) glBlendFunc(GL_DST_COLOR, GL_ONE);
+      else if (mBlendMode == BlendDstMulDstAlpha) glBlendFunc(GL_ZERO, GL_DST_ALPHA);
       return ((colorARGB&0xff000000u) != 0xff000000u);
     }
   }
@@ -216,7 +265,7 @@ public:
   static inline vuint32 getColor () { return colorARGB; }
 
   static inline int getBlendMode () { return mBlendMode; }
-  static inline void setBlendMode (int v) { if (v >= BlendNormal && v <= BlendInvert && v != mBlendMode) { mBlendMode = v; setupBlending(); } }
+  static inline void setBlendMode (int v) { if (v >= BlendNormal && v <= BlendMax && v != mBlendMode) { mBlendMode = v; setupBlending(); } }
 
   static inline bool isFullyOpaque () { return ((colorARGB&0xff000000) == 0); }
   static inline bool isFullyTransparent () { return ((colorARGB&0xff000000) == 0xff000000); }
@@ -289,6 +338,14 @@ public:
   DECLARE_FUNCTION(stencilOp)
   DECLARE_FUNCTION(stencilFunc)
 
+  DECLARE_FUNCTION(get_alphaTestFunc)
+  DECLARE_FUNCTION(set_alphaTestFunc)
+  DECLARE_FUNCTION(get_alphaTestVal)
+  DECLARE_FUNCTION(set_alphaTestVal)
+
+  DECLARE_FUNCTION(get_realStencilBits)
+  DECLARE_FUNCTION(get_framebufferHasAlpha)
+
   DECLARE_FUNCTION(get_smoothLine)
   DECLARE_FUNCTION(set_smoothLine)
 
@@ -297,6 +354,12 @@ public:
 
   DECLARE_FUNCTION(get_blendMode)
   DECLARE_FUNCTION(set_blendMode)
+
+  DECLARE_FUNCTION(get_blendFunc)
+  DECLARE_FUNCTION(set_blendFunc)
+
+  DECLARE_FUNCTION(get_colorMask)
+  DECLARE_FUNCTION(set_colorMask)
 
   DECLARE_FUNCTION(get_textureFiltering)
   DECLARE_FUNCTION(set_textureFiltering)

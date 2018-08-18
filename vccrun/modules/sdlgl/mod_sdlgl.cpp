@@ -718,7 +718,7 @@ VOpenGLTexture *VOpenGLTexture::CreateEmpty (VName txname, int wdt, int hgt) {
 
 
 void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1, float angle) const {
-  if (!tid || VVideo::isFullyTransparent() || mTransparent) return;
+  if (!tid /*|| VVideo::isFullyTransparent() || mTransparent*/) return;
   if (x1 < 0) x1 = img->width;
   if (y1 < 0) y1 = img->height;
   glEnable(GL_TEXTURE_2D);
@@ -726,6 +726,7 @@ void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   VVideo::forceGLTexFilter();
+
   if (VVideo::getBlendMode() == VVideo::BlendNormal) {
     if (mOpaque && VVideo::isFullyOpaque()) {
       glDisable(GL_BLEND);
@@ -762,7 +763,7 @@ void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0
 
 
 void VOpenGLTexture::blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const {
-  if (!tid || VVideo::isFullyTransparent() || mTransparent) return;
+  if (!tid /*|| VVideo::isFullyTransparent() || mTransparent*/) return;
   if (x1 < 0) x1 = img->width;
   if (y1 < 0) y1 = img->height;
   glEnable(GL_TEXTURE_2D);
@@ -770,6 +771,7 @@ void VOpenGLTexture::blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   VVideo::forceGLTexFilter();
+
   if (VVideo::getBlendMode() == VVideo::BlendNormal) {
     if (mOpaque && VVideo::isFullyOpaque()) {
       glDisable(GL_BLEND);
@@ -792,7 +794,7 @@ void VOpenGLTexture::blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int
 
 
 void VOpenGLTexture::blitAt (int dx0, int dy0, float scale, float angle) const {
-  if (!tid || VVideo::isFullyTransparent() || scale <= 0 || mTransparent) return;
+  if (!tid /*|| VVideo::isFullyTransparent() || scale <= 0 || mTransparent*/) return;
   int w = img->width;
   int h = img->height;
   glEnable(GL_TEXTURE_2D);
@@ -800,6 +802,7 @@ void VOpenGLTexture::blitAt (int dx0, int dy0, float scale, float angle) const {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   VVideo::forceGLTexFilter();
+
   if (VVideo::getBlendMode() == VVideo::BlendNormal) {
     if (mOpaque && VVideo::isFullyOpaque()) {
       glDisable(GL_BLEND);
@@ -1064,6 +1067,10 @@ int VVideo::currZ = 0;
 float VVideo::currZFloat = 1.0f;
 int VVideo::swapInterval = 0;
 bool VVideo::texFiltering = false;
+int VVideo::colorMask = CMask_Red|CMask_Green|CMask_Blue|CMask_Alpha;
+int VVideo::stencilBits = 0;
+int VVideo::alphaTestFunc = VVideo::STC_Always;
+float VVideo::alphaFuncVal = 0.0f;
 
 
 struct TimerInfo {
@@ -1228,6 +1235,7 @@ static GLenum convertStencilFunc (int op) {
     case VVideo::STC_Greater: return GL_GREATER;
     case VVideo::STC_GEqual: return GL_GEQUAL;
     case VVideo::STC_NotEqual: return GL_NOTEQUAL;
+    case VVideo::STC_Equal: return GL_EQUAL;
     case VVideo::STC_Always: return GL_ALWAYS;
     default: break;
   }
@@ -1235,7 +1243,37 @@ static GLenum convertStencilFunc (int op) {
 }
 
 
+static GLenum convertBlendFunc (int op) {
+  switch (op) {
+    case VVideo::BlendFunc_Add: return GL_FUNC_ADD;
+    case VVideo::BlendFunc_Sub: return GL_FUNC_SUBTRACT;
+    case VVideo::BlendFunc_SubRev: return GL_FUNC_REVERSE_SUBTRACT;
+    case VVideo::BlendFunc_Min: return GL_MIN;
+    case VVideo::BlendFunc_Max: return GL_MAX;
+    default: break;
+  }
+  return GL_FUNC_ADD;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
+void VVideo::forceAlphaFunc () {
+  if (mInited) {
+    auto fn = convertStencilFunc(alphaTestFunc);
+    if (fn == GL_ALWAYS) {
+      glDisable(GL_ALPHA_TEST);
+    } else {
+      glEnable(GL_ALPHA_TEST);
+      glAlphaFunc(fn, alphaFuncVal);
+    }
+  }
+}
+
+void VVideo::forceBlendFunc () {
+  if (mInited) glBlendEquation(convertBlendFunc(mBlendFunc));
+}
+
+
 bool VVideo::canInit () {
   return true;
 }
@@ -1259,13 +1297,10 @@ void VVideo::close () {
         SDL_GL_MakeCurrent(hw_window, hw_glctx);
         unloadAllTextures();
       }
+      SDL_GL_MakeCurrent(hw_window, nullptr);
       SDL_GL_DeleteContext(hw_glctx);
-      hw_glctx = nullptr;
     }
-    if (hw_window) {
-      SDL_DestroyWindow(hw_window);
-      hw_window = nullptr;
-    }
+    if (hw_window) SDL_DestroyWindow(hw_window);
     mInited = false;
     mWidth = 0;
     mHeight = 0;
@@ -1274,7 +1309,12 @@ void VVideo::close () {
     depthFunc = VVideo::ZFunc_Less;
     currZ = 0;
     currZFloat = 1.0f;
+    texFiltering = false;
+    colorMask = CMask_Red|CMask_Green|CMask_Blue|CMask_Alpha;
+    stencilBits = 0;
   }
+  hw_glctx = nullptr;
+  hw_window = nullptr;
 }
 
 
@@ -1284,30 +1324,40 @@ bool VVideo::open (const VStr &winname, int width, int height) {
     height = 600;
   }
 
+  int tryCount = 0;
+
   close();
 
+again:
   Uint32 flags = SDL_WINDOW_OPENGL;
   //if (!Windowed) flags |= SDL_WINDOW_FULLSCREEN;
+  //flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+  //flags |= SDL_WINDOW_FULLSCREEN;
 
-  //k8: require OpenGL 1.5
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+  //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
   //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+  SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
   int si = swapInterval;
   if (si < 0) si = -1; else if (si > 0) si = 1;
   if (SDL_GL_SetSwapInterval(si) == -1 && si < 0) SDL_GL_SetSwapInterval(1);
 
+  glGetError();
+
   hw_window = SDL_CreateWindow((winname.length() ? *winname : "Untitled"), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
   if (!hw_window) {
-    //GCon->Logf("ALAS: cannot create SDL2 window.");
+#ifndef WIN32
+    fprintf(stderr, "ALAS: cannot create SDL2 window.\n");
+#endif
     return false;
   }
 
@@ -1315,10 +1365,47 @@ bool VVideo::open (const VStr &winname, int width, int height) {
   if (!hw_glctx) {
     SDL_DestroyWindow(hw_window);
     hw_window = nullptr;
+#ifndef WIN32
+    fprintf(stderr, "ALAS: cannot create SDL2 OpenGL context.\n");
+#endif
     return false;
   }
 
   SDL_GL_MakeCurrent(hw_window, hw_glctx);
+  glGetError();
+
+  //k8: no, i really don't know why i have to repeat this twice,
+  //    but at the first try i get no stencil buffer for some reason
+  int stb = -1;
+  SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &stb);
+  if (stb < 1 && tryCount++ == 0) {
+    SDL_GL_MakeCurrent(hw_window, nullptr);
+    SDL_GL_DeleteContext(hw_glctx);
+    SDL_DestroyWindow(hw_window);
+    hw_glctx = nullptr;
+    hw_window = nullptr;
+    goto again;
+  }
+  stencilBits = (stb < 1 ? 0 : stb);
+  //if (stb < 1) fprintf(stderr, "WARNING: no stencil buffer available!");
+
+#if 1 //!defined(WIN32)
+  {
+    int ghi, glo;
+    SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &ghi);
+    SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &glo);
+    fprintf(stderr, "OpenGL version: %d.%d\n", ghi, glo);
+
+    int ltmp = 666;
+    SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &ltmp); fprintf(stderr, "STENCIL BUFFER BITS: %d\n", ltmp);
+    SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &ltmp); fprintf(stderr, "RED BITS: %d\n", ltmp);
+    SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &ltmp); fprintf(stderr, "GREEN BITS: %d\n", ltmp);
+    SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE, &ltmp); fprintf(stderr, "BLUE BITS: %d\n", ltmp);
+    SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE, &ltmp); fprintf(stderr, "ALPHA BITS: %d\n", ltmp);
+    SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &ltmp); fprintf(stderr, "DEPTH BITS: %d\n", ltmp);
+  }
+#endif
+
   uploadAllTextures();
 
   //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
@@ -1327,11 +1414,14 @@ bool VVideo::open (const VStr &winname, int width, int height) {
   swapInterval = si;
 
   // everything is fine, set some globals and finish
+  mInited = true;
   mWidth = width;
   mHeight = height;
-  mInited = true;
 
   //SDL_DisableScreenSaver();
+
+  forceColorMask();
+  forceAlphaFunc();
 
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
@@ -1368,6 +1458,7 @@ bool VVideo::open (const VStr &winname, int width, int height) {
   */
 
   //glDrawBuffer(directMode ? GL_FRONT : GL_BACK);
+
 
   clear();
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
@@ -1670,6 +1761,7 @@ void VVideo::runEventLoop () {
 // ////////////////////////////////////////////////////////////////////////// //
 vuint32 VVideo::colorARGB = 0xffffff;
 int VVideo::mBlendMode = VVideo::BlendNormal;
+int VVideo::mBlendFunc = BlendFunc_Add;
 VFont *VVideo::currFont = nullptr;
 
 
@@ -1680,7 +1772,7 @@ void VVideo::setFont (VName fontname) {
 
 
 void VVideo::drawTextAt (int x, int y, const VStr &text) {
-  if (!currFont || isFullyTransparent() || text.isEmpty()) return;
+  if (!currFont /*|| isFullyTransparent()*/ || text.isEmpty()) return;
   if (!mInited) return;
 
   const VOpenGLTexture *tex = currFont->getTexture();
@@ -1949,6 +2041,45 @@ IMPLEMENT_FUNCTION(VVideo, set_smoothLine) {
 }
 
 
+// native final static AlphaFunc get_alphaTestFunc ()
+IMPLEMENT_FUNCTION(VVideo, get_alphaTestFunc) {
+  RET_INT(alphaTestFunc);
+}
+
+// native final static void set_alphaTestFunc (AlphaFunc v)
+IMPLEMENT_FUNCTION(VVideo, set_alphaTestFunc) {
+  P_GET_INT(atf);
+  if (alphaTestFunc != atf) {
+    alphaTestFunc = atf;
+    forceAlphaFunc();
+  }
+}
+
+//native final static float get_alphaTestVal ()
+IMPLEMENT_FUNCTION(VVideo, get_alphaTestVal) {
+  RET_FLOAT(alphaFuncVal);
+}
+
+// native final static void set_alphaTestVal (float v)
+IMPLEMENT_FUNCTION(VVideo, set_alphaTestVal) {
+  P_GET_FLOAT(v);
+  if (alphaFuncVal != v) {
+    alphaFuncVal = v;
+    forceAlphaFunc();
+  }
+}
+
+
+IMPLEMENT_FUNCTION(VVideo, get_realStencilBits) {
+  RET_INT(stencilBits);
+}
+
+IMPLEMENT_FUNCTION(VVideo, get_framebufferHasAlpha) {
+  int res;
+  SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE, &res);
+  RET_BOOL(res == 8);
+}
+
 IMPLEMENT_FUNCTION(VVideo, get_stencil) {
   RET_BOOL(stencilEnabled);
 }
@@ -1959,13 +2090,14 @@ IMPLEMENT_FUNCTION(VVideo, set_stencil) {
     stencilEnabled = v;
     if (mInited) {
       if (v) glEnable(GL_STENCIL_TEST); else glDisable(GL_STENCIL_TEST);
+      //fprintf(stderr, "stencil test: %d\n", (v ? 1 : 0));
     }
   }
 }
 
 //native final static void stencilOp (StencilOp sfail, StencilOp dpfail, optional StencilOp dppass);
 IMPLEMENT_FUNCTION(VVideo, stencilOp) {
-  P_GET_INT_OPT(dppass, STC_Always);
+  P_GET_INT_OPT(dppass, STC_Keep);
   P_GET_INT(dpfail);
   P_GET_INT(sfail);
   if (!specified_dppass) dppass = dpfail;
@@ -2003,6 +2135,38 @@ IMPLEMENT_FUNCTION(VVideo, set_blendMode) {
   P_GET_INT(c);
   setBlendMode(c);
 }
+
+//native final static int getBlendFunc ();
+IMPLEMENT_FUNCTION(VVideo, get_blendFunc) {
+  RET_INT(mBlendFunc);
+}
+
+//native final static void set_blendMode (int v);
+IMPLEMENT_FUNCTION(VVideo, set_blendFunc) {
+  P_GET_INT(v);
+  if (mBlendFunc != v) {
+    mBlendFunc = v;
+    forceBlendFunc();
+  }
+}
+
+
+//native final static CMask get_colorMask ();
+IMPLEMENT_FUNCTION(VVideo, get_colorMask) {
+  RET_INT(colorMask);
+}
+
+
+//native final static void set_colorMask (CMask mask);
+IMPLEMENT_FUNCTION(VVideo, set_colorMask) {
+  P_GET_INT(mask);
+  mask &= CMask_Red|CMask_Green|CMask_Blue|CMask_Alpha;
+  if (mask != colorMask) {
+    colorMask = mask;
+    forceColorMask();
+  }
+}
+
 
 //native final static bool get_textureFiltering ();
 IMPLEMENT_FUNCTION(VVideo, get_textureFiltering) {
@@ -2073,7 +2237,7 @@ IMPLEMENT_FUNCTION(VVideo, drawLine) {
   P_GET_INT(x1);
   P_GET_INT(y0);
   P_GET_INT(x0);
-  if (!mInited || isFullyTransparent()) return;
+  if (!mInited /*|| isFullyTransparent()*/) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
   const float z = VVideo::currZFloat;
@@ -2090,7 +2254,7 @@ IMPLEMENT_FUNCTION(VVideo, drawRect) {
   P_GET_INT(w);
   P_GET_INT(y0);
   P_GET_INT(x0);
-  if (!mInited || isFullyTransparent() || w < 1 || h < 1) return;
+  if (!mInited /*|| isFullyTransparent()*/ || w < 1 || h < 1) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
   const float z = currZFloat;
@@ -2109,7 +2273,7 @@ IMPLEMENT_FUNCTION(VVideo, fillRect) {
   P_GET_INT(w);
   P_GET_INT(y0);
   P_GET_INT(x0);
-  if (!mInited || isFullyTransparent() || w < 1 || h < 1) return;
+  if (!mInited /*|| isFullyTransparent()*/ || w < 1 || h < 1) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
 

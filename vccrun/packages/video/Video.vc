@@ -12,13 +12,24 @@
 class Video : Object abstract native;
 
 // default mode is `Blend.Normal`
-enum Blend {
+enum BlendMode {
+  None, // blending disabled
   Normal, // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   Blend, // glBlendFunc(GL_SRC_ALPHA, GL_ONE)
   Filter, // glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR)
   Invert, // glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO)
+  Particle, // glBlendFunc(GL_DST_COLOR, GL_ZERO)
+  Highlight, // glBlendFunc(GL_DST_COLOR, GL_ONE);
+  DstMulDstAlpha, // glBlendFunc(GL_ZERO, GL_DST_ALPHA);
 }
 
+enum BlendFunc {
+  Add,
+  Sub,
+  SubRev,
+  Min,
+  Max,
+}
 
 native final static bool canInit ();
 native final static bool hasOpenGL ();
@@ -84,8 +95,21 @@ enum StencilFunc {
   LEqual,
   Greater,
   GEqual,
+  Equal,
   NotEqual,
   Always,
+}
+
+//WARNING: MUST BE THE SAME AS `StencilFunc`
+enum AlphaFunc {
+  Never,
+  Less,
+  LEqual,
+  Greater,
+  GEqual,
+  Equal,
+  NotEqual,
+  Always, // disables alpha test
 }
 
 
@@ -113,7 +137,8 @@ native final static int colorARGB { get; set; }
 // BlendXXX
 //native final static int getBlendMode ();
 //native final static void setBlendMode (int v);
-native final static Blend blendMode { get; set; }
+native final static BlendMode blendMode { get; set; }
+native final static BlendFunc blendFunc { get; set; }
 
 
 //native final static name getFont ();
@@ -137,9 +162,30 @@ native final static int swapInterval { get; set; }
 
 const int StencilMax = 0xff; // 8-bit stencil buffer
 
+native final static int realStencilBits { get; }
+native final static bool framebufferHasAlpha { get; }
+
 native final static bool stencil { get; set; }
 native final static void stencilOp (StencilOp sfail, StencilOp dpfail, optional StencilOp dppass);
+// (refval&mask) func (stecilbuf&mask)
 native final static void stencilFunc (StencilFunc func, int refval, optional int mask);
+
+// incoming_alpha AlphaFunc alphaTestVal
+native final static AlphaFunc alphaTestFunc { get; set; }
+// note that this is OpenGL alpha in [0..1] range, where `1` is opaque
+native final static float alphaTestVal { get; set; }
+
+enum CMask {
+  None  = 0x00,
+  Red   = 0x01,
+  Green = 0x02,
+  Blue  = 0x04,
+  Alpha = 0x08,
+  //
+  Colors = 0x07,
+  All    = 0x0f,
+}
+native final static CMask colorMask { get; set; }
 
 
 // true : GL_LINEAR
