@@ -661,17 +661,40 @@ VScriptArray::VScriptArray (const TArray<VStr>& xarr) {
 void VScriptArray::Clear (const VFieldType &Type) {
   guard(VScriptArray::Clear);
   if (ArrData) {
+    Flatten();
     // don't waste time destructing types without dtors
     if (VField::NeedToDestructField(Type)) {
       // no need to clear the whole array, as any resizes will zero out unused elements
       int InnerSize = Type.GetSize();
-      for (int i = 0; i < length(); ++i) VField::DestructField(ArrData+i*InnerSize, Type);
+      for (int i = 0; i < ArrNum; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
     }
     delete[] ArrData;
   }
   ArrData = nullptr;
   ArrNum = 0;
   ArrSize = 0;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VScriptArray::Reset
+//
+//==========================================================================
+void VScriptArray::Reset (const VFieldType &Type) {
+  guard(VScriptArray::Reset);
+  if (ArrData) {
+    Flatten();
+    // don't waste time destructing types without dtors
+    if (VField::NeedToDestructField(Type)) {
+      // no need to clear the whole array, as any resizes will zero out unused elements
+      int InnerSize = Type.GetSize();
+      for (int i = 0; i < ArrNum; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
+    }
+  }
+  //fprintf(stderr, "VScriptArray::Reset: oldnum=%d; oldsize=%d\n", ArrNum, ArrSize);
+  ArrNum = 0;
   unguard;
 }
 

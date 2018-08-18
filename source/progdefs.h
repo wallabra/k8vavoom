@@ -404,6 +404,7 @@ enum {
   DECLARE_OPC(DynArraySetNumPlus, Type),
   DECLARE_OPC(DynArrayInsert, Type),
   DECLARE_OPC(DynArrayRemove, Type),
+  DECLARE_OPC(DynArrayClear, Type),
   // 2d (and some 1d)
   DECLARE_OPC(DynArraySetSize1D, Type),
   DECLARE_OPC(DynArraySetSize2D, Type),

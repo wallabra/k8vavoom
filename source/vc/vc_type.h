@@ -123,7 +123,7 @@ struct VObjectDelegate {
 class VScriptArray {
 private:
   int ArrNum; // if bit 31 is set, this is 1st dim of 2d array
-  int ArrSize; // if bit 31 is set, this is 1st dim of 2d array
+  int ArrSize; // if bit 31 is set in `ArrNum`, this is 2nd dim of 2d array
   vuint8 *ArrData;
 
 public:
@@ -137,6 +137,7 @@ public:
   inline bool Is2D () const { return (ArrNum < 0); }
   inline void Flatten () { if (Is2D()) { vint32 oldlen = length(); ArrSize = ArrNum = oldlen; } }
   void Clear (const VFieldType &Type);
+  void Reset (const VFieldType &Type); // clear array, but don't resize
   void Resize (int NewSize, const VFieldType &Type);
   void SetNum (int NewNum, const VFieldType &Type, bool doShrink=true); // will convert to 1d
   void SetNumMinus (int NewNum, const VFieldType &Type);

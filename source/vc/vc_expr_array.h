@@ -187,6 +187,27 @@ protected:
 
 //==========================================================================
 //
+//  VDynArrayClear
+//
+//==========================================================================
+class VDynArrayClear : public VExpression {
+public:
+  VExpression *ArrayExpr;
+
+  VDynArrayClear (VExpression *, const TLocation &);
+  virtual ~VDynArrayClear () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDynArrayClear () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
 //  VStringGetLength
 //
 //==========================================================================

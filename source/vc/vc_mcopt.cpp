@@ -778,6 +778,9 @@ struct Instr {
       case OPC_DynArrayRemove:
         spdelta = -3;
         return;
+      case OPC_DynArrayClear:
+        spdelta = -1;
+        return;
       case OPC_DynArraySetSize2D:
         spdelta -= 3;
         return;

@@ -1077,6 +1077,7 @@ void VDynArrayInsert::Emit (VEmitContext &ec) {
 }
 
 
+
 //==========================================================================
 //
 //  VDynArrayRemove::VDynArrayRemove
@@ -1173,6 +1174,77 @@ void VDynArrayRemove::Emit (VEmitContext &ec) {
   CountExpr->Emit(ec);
   ec.AddStatement(OPC_DynArrayRemove, ArrayExpr->Type.GetArrayInnerType(), Loc);
 }
+
+
+
+//==========================================================================
+//
+//  VDynArrayClear::VDynArrayClear
+//
+//==========================================================================
+VDynArrayClear::VDynArrayClear (VExpression *AArrayExpr, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , ArrayExpr(AArrayExpr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDynArrayClear::~VDynArrayClear
+//
+//==========================================================================
+VDynArrayClear::~VDynArrayClear () {
+  if (ArrayExpr) { delete ArrayExpr; ArrayExpr = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VDynArrayClear::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynArrayClear::SyntaxCopy () {
+  auto res = new VDynArrayClear();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynArrayClear::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VDynArrayClear::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDynArrayClear *)e;
+  res->ArrayExpr = (ArrayExpr ? ArrayExpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDynArrayClear::DoResolve
+//
+//==========================================================================
+VExpression *VDynArrayClear::DoResolve (VEmitContext &ec) {
+  if (ArrayExpr) ArrayExpr->RequestAddressOf();
+  Type = VFieldType(TYPE_Void);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDynArrayClear::Emit
+//
+//==========================================================================
+void VDynArrayClear::Emit (VEmitContext &ec) {
+  ArrayExpr->Emit(ec);
+  ec.AddStatement(OPC_DynArrayClear, ArrayExpr->Type.GetArrayInnerType(), Loc);
+}
+
 
 
 //==========================================================================

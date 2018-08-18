@@ -927,6 +927,20 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
 
+    // clear array, but don't reallocate
+    if (VStr::Cmp(*MethodName, "clear") == 0) {
+      if (NumArgs != 0) {
+        ParseError(Loc, "`.clear` requires no arguments");
+        delete this;
+        return nullptr;
+      }
+      VExpression *e = new VDynArrayClear(SelfExpr, Loc);
+      SelfExpr = nullptr;
+      NumArgs = 0;
+      delete this;
+      return e->Resolve(ec);
+    }
+
     ParseError(Loc, "Invalid operation on dynamic array");
     delete this;
     return nullptr;

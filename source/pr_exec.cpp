@@ -2029,6 +2029,18 @@ func_loop:
         }
         PR_VM_BREAK;
 
+      // [-1]: *dynarray
+      PR_VM_CASE(OPC_DynArrayClear)
+        {
+          VScriptArray &A = *(VScriptArray *)sp[-1].p;
+          VFieldType Type;
+          ++ip;
+          ReadType(Type, ip);
+          A.Reset(Type);
+          --sp;
+        }
+        PR_VM_BREAK;
+
       // [-2]: *dynarray
       // [-1]: size
       PR_VM_CASE(OPC_DynArraySetSize1D)
