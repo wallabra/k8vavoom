@@ -92,7 +92,7 @@ __attribute__((format(printf, 2, 3))) void ParseWarning (const TLocation &l, con
 //
 //==========================================================================
 __attribute__((format(printf, 2, 3))) void ParseError (const TLocation &l, const char *text, ...) {
-  if (vcGagErrors) { ++vcGagErrors; return; }
+  if (vcGagErrors) { ++vcGagErrorCount; return; }
 
   char Buffer[2048];
   va_list argPtr;
@@ -118,7 +118,7 @@ __attribute__((format(printf, 2, 3))) void ParseError (const TLocation &l, const
 //
 //==========================================================================
 void ParseError (const TLocation &l, ECompileError error) {
-  if (vcGagErrors) { ++vcGagErrors; return; }
+  if (vcGagErrors) { ++vcGagErrorCount; return; }
   ParseError(l, "Error #%d - %s", error, ErrorNames[error]);
 }
 
@@ -129,7 +129,7 @@ void ParseError (const TLocation &l, ECompileError error) {
 //
 //==========================================================================
 __attribute__((format(printf, 3, 4))) void ParseError (const TLocation &l, ECompileError error, const char *text, ...) {
-  if (vcGagErrors) { ++vcGagErrors; return; }
+  if (vcGagErrors) { ++vcGagErrorCount; return; }
 
   if (text && text[0]) {
     char Buffer[2048];
