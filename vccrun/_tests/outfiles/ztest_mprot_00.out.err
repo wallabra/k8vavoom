@@ -1,3 +1,3 @@
-ztest_mprot_00.vc:10: Cannot override public method with protected
+ztest_mprot_00.vc:10: Cannot override public method `vccrun.Test1.foo` with protected one
 FATAL: Confused by previous errors, bailing out
 
