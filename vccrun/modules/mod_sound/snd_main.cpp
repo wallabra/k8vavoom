@@ -925,7 +925,7 @@ void VAudio::UpdateSfx (float frameDelta) {
     //if (Channel[i].localPlayerSound) continue; // client sound
 
     // move sound
-    Channel[i].origin += Channel[i].velocity*frameDelta;
+    if (frameDelta) Channel[i].origin += Channel[i].velocity*frameDelta;
 
     // calculate the distance before other stuff so that we can throw out sounds that are beyond the hearing range
     int dist = 0;
@@ -943,6 +943,11 @@ void VAudio::UpdateSfx (float frameDelta) {
     if (Channel[i].newPitch != Channel[i].pitch) {
       SoundDevice->UpdateChannelPitch(Channel[i].handle, Channel[i].newPitch);
       Channel[i].pitch = Channel[i].newPitch;
+    }
+
+    if (Channel[i].newVolume != Channel[i].volume) {
+      SoundDevice->UpdateChannelVolume(Channel[i].handle, Channel[i].newVolume);
+      Channel[i].volume = Channel[i].newVolume;
     }
 
     Channel[i].priority = GSoundManager->S_sfx[Channel[i].sound_id].priority*(PRIORITY_MAX_ADJUST-PRIORITY_MAX_ADJUST*dist/MaxSoundDist);

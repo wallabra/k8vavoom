@@ -59,6 +59,7 @@ public:
   virtual int PlaySound3D (int sound_id, const TVec &origin, const TVec &velocity, float volume, float pitch, bool Loop, bool relative) = 0;
   virtual void UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel, bool relative) = 0;
   virtual void UpdateChannelPitch (int Handle, float pitch) = 0;
+  virtual void UpdateChannelVolume (int Handle, float volume) = 0;
   virtual bool IsChannelActive (int Handle) = 0;
   virtual void StopChannel (int Handle) = 0;
   virtual void PauseChannel (int Handle) = 0;

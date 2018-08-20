@@ -75,6 +75,7 @@ public:
   virtual int PlaySound3D (int sound_id, const TVec &origin, const TVec &velocity, float volume, float pitch, bool Loop, bool relative) override;
   virtual void UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel, bool relative) override;
   virtual void UpdateChannelPitch (int Handle, float pitch) override;
+  virtual void UpdateChannelVolume (int Handle, float volume) override;
   virtual bool IsChannelActive (int Handle) override;
   virtual void StopChannel (int Handle) override;
   virtual void PauseChannel (int Handle) override;
@@ -344,6 +345,17 @@ void VOpenALDevice::UpdateChannel3D (int Handle, const TVec &Org, const TVec &Ve
 void VOpenALDevice::UpdateChannelPitch (int Handle, float pitch) {
   if (Handle == -1) return;
   alSourcef(Handle, AL_PITCH, pitch);
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::UpdateChannelVolume
+//
+//==========================================================================
+void VOpenALDevice::UpdateChannelVolume (int Handle, float volume) {
+  if (Handle == -1) return;
+  alSourcef(Handle, AL_GAIN, volume);
 }
 
 
