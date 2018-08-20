@@ -2051,6 +2051,7 @@ func_loop:
         //fprintf(stderr, "sp=%p\n", sp);
         {
           VScriptArray &A = *(VScriptArray *)sp[-3].p;
+          if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot sort non-flat arrays"); }
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
