@@ -41,6 +41,7 @@ public:
     Protected   = 0x1000,
     Const       = 0x2000,
     Repnotify   = 0x4000,
+    Scope       = 0x8000,
   };
 
   static int Parse (VLexer &);

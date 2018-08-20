@@ -55,6 +55,7 @@ int TModifiers::Parse (VLexer &Lex) {
     {TK_Ref, Ref},
     {TK_Const, Const},
     {TK_Repnotify, Repnotify},
+    {TK_Scope, Scope},
     {TK_EOF, 0},
   };
 
@@ -99,6 +100,7 @@ const char *TModifiers::Name (int Modifier) {
     case Protected: return "protected";
     case Const: return "const";
     case Repnotify: return "repnotify";
+    case Scope: return "scope";
   }
   return "";
 }

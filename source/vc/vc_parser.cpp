@@ -1640,7 +1640,8 @@ VExpression *VParser::ParseType (bool allowDelegates) {
       do {
         VMethodParam &P = dg->Params[dg->NumParams];
         int ParmModifiers = TModifiers::Parse(Lex);
-        dg->ParamFlags[dg->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref, Lex.Location));
+        dg->ParamFlags[dg->NumParams] = TModifiers::ParmAttr(TModifiers::Check(
+            ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref|TModifiers::Const|TModifiers::Scope, Lex.Location));
         P.TypeExpr = ParseTypeWithPtrs(true);
         if (!P.TypeExpr && dg->NumParams == 0) break;
         if (Lex.Token == TK_Identifier) {
@@ -1730,7 +1731,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
 
     int ParmModifiers = TModifiers::Parse(Lex);
     Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers,
-        TModifiers::Optional|TModifiers::Out|TModifiers::Ref|TModifiers::Const, Lex.Location));
+        TModifiers::Optional|TModifiers::Out|TModifiers::Ref|TModifiers::Const|TModifiers::Scope, Lex.Location));
 
     P.TypeExpr = ParseTypeWithPtrs(true);
     if (!P.TypeExpr && Func->NumParams == 0) break;
@@ -1843,7 +1844,8 @@ void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
   do {
     VMethodParam &P = Func->Params[Func->NumParams];
     int ParmModifiers = TModifiers::Parse(Lex);
-    Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref, Lex.Location));
+    Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers,
+      TModifiers::Optional|TModifiers::Out|TModifiers::Ref|TModifiers::Const|TModifiers::Scope, Lex.Location));
     P.TypeExpr = ParseTypeWithPtrs(true);
     if (!P.TypeExpr && Func->NumParams == 0) break;
     if (Lex.Token == TK_Identifier) {
