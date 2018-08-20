@@ -503,9 +503,11 @@ struct Instr {
       case OPC_SliceElement:
         spdelta = -1;
         return;
+      /*
       case OPC_OffsetPtr:
         spdelta = 0;
         return;
+      */
       case OPC_PushPointed:
         spdelta = 0;
         return;
@@ -781,6 +783,9 @@ struct Instr {
       case OPC_DynArrayClear:
         spdelta = -1;
         return;
+      case OPC_DynArraySort:
+        spdelta = -3; // delegate and array
+        return;
       case OPC_DynArraySetSize2D:
         spdelta -= 3;
         return;
@@ -993,6 +998,9 @@ struct Instr {
         fprintf(stderr, " %s (%d)", *Member->GetFullName(), Arg2);
         break;
       case OPCARGS_Type_Int:
+        fprintf(stderr, " %s (%d)", *TypeArg.GetName(), Arg2);
+        break;
+      case OPCARGS_ArrElemType_Int:
         fprintf(stderr, " %s (%d)", *TypeArg.GetName(), Arg2);
         break;
     }
@@ -1535,6 +1543,9 @@ void VMCOptimizer::optimizeJumps () {
         break;
       case OPCARGS_Type_Int:
         addr += 4;
+        break;
+      case OPCARGS_ArrElemType_Int:
+        addr += 8+sizeof(void*)+4;
         break;
     }
   }

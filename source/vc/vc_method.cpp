@@ -512,6 +512,9 @@ void VMethod::DumpAsm () {
       case OPCARGS_Type_Int:
         dprintf(" %s (%d)", *Instructions[s].TypeArg.GetName(), Instructions[s].Arg2);
         break;
+      case OPCARGS_ArrElemType_Int:
+        dprintf(" %s (%d)", *Instructions[s].TypeArg.GetName(), Instructions[s].Arg2);
+        break;
     }
     dprintf("\n");
   }
@@ -671,6 +674,7 @@ void VMethod::CompileCode () {
       case OPCARGS_Builtin: WriteUInt8(Instructions[i].Arg1); break;
       case OPCARGS_Member_Int: WritePtr(Instructions[i].Member); break; // int is not emited
       case OPCARGS_Type_Int: WriteInt32(Instructions[i].Arg2); break; // type is not emited
+      case OPCARGS_ArrElemType_Int: WriteType(Instructions[i].TypeArg); WriteInt32(Instructions[i].Arg2); break;
     }
     while (StatLocs.length() < Statements.length()) StatLocs.Append(Instructions[i].loc);
   }
@@ -877,6 +881,7 @@ VStream &operator << (VStream &Strm, FInstruction &Instr) {
       Strm << STRM_INDEX(Instr.Arg2);
       break;
     case OPCARGS_Type_Int:
+    case OPCARGS_ArrElemType_Int:
       Strm << Instr.TypeArg;
       Strm << STRM_INDEX(Instr.Arg2);
       break;

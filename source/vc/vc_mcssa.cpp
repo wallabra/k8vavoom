@@ -195,7 +195,7 @@ static SSAInstr *buildSSAFromVM (VMethod *func, TArray<FInstruction> &instr) {
   //DECLARE_OPC(ArrayElementS, TypeSizeS),
   DECLARE_OPC(ArrayElementB, TypeSizeB),
   DECLARE_OPC(SliceElement, TypeSize),
-  DECLARE_OPC(OffsetPtr, Int),
+  //DECLARE_OPC(OffsetPtr, Int),
   DECLARE_OPC(PushPointed, None),
   DECLARE_OPC(PushPointedSlice, None),
   DECLARE_OPC(PushPointedSliceLen, None),

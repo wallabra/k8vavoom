@@ -414,7 +414,7 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const
 //
 //==========================================================================
 void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, int Arg, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_Type_Int) FatalError("Opcode doesn\'t take type as argument");
+  if (StatementInfo[statement].Args != OPCARGS_Type_Int && StatementInfo[statement].Args != OPCARGS_ArrElemType_Int) FatalError("Opcode doesn\'t take type as argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.TypeArg = TypeArg;

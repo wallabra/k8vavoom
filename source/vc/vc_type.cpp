@@ -22,6 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+/*
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
+*/
 
 #include "vc_local.h"
 
@@ -903,6 +908,231 @@ void VScriptArray::Remove (int Index, int Count, const VFieldType &Type) {
     SetNum(oldnum-Count, Type, false);
   }
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VScriptArray::SwapElements
+//
+//==========================================================================
+void VScriptArray::SwapElements (int i0, int i1, const VFieldType &Type) {
+  if (i0 == i1) return;
+  int InnerSize = Type.GetSize();
+  vuint32 *p0 = (vuint32 *)(ArrData+i0*InnerSize);
+  vuint32 *p1 = (vuint32 *)(ArrData+i1*InnerSize);
+  while (InnerSize >= 4) {
+    vuint32 t = *p0;
+    *p0 = *p1;
+    *p1 = t;
+    InnerSize -= 4;
+  }
+  vuint8 *c0 = (vuint8 *)p0;
+  vuint8 *c1 = (vuint8 *)p1;
+  while (InnerSize--) {
+    vuint8 t = *c0;
+    *c0 = *c1;
+    *c1 = t;
+  }
+}
+
+
+//==========================================================================
+//
+//  VScriptArray::CallComparePtr
+//
+//==========================================================================
+//bool VScriptArray::CallComparePtr (const void *p0, const void *p1, const VFieldType &Type, VObject *self, VMethod *fnless)
+
+
+
+//==========================================================================
+//
+//  VScriptArray::CallCompare
+//
+//==========================================================================
+bool VScriptArray::CallCompare (int i0, int i1, const VFieldType &Type, VObject *self, VMethod *fnless) {
+  if (i0 == i1) return false;
+  int InnerSize = Type.GetSize();
+  vuint8 *p0 = ArrData+i0*InnerSize;
+  vuint8 *p1 = ArrData+i1*InnerSize;
+  //return CallComparePtr(p0, p1, Type, self, fnless);
+  // self
+  if ((fnless->Flags&FUNC_Static) == 0) P_PASS_REF(self);
+  // first arg
+  if ((fnless->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) != 0) {
+    P_PASS_REF(p0);
+  } else {
+    switch (Type.Type) {
+      case TYPE_Int: P_PASS_INT(*(vint32 *)p0); break;
+      case TYPE_Byte: P_PASS_BYTE(*(vuint8 *)p0); break;
+      case TYPE_Bool: P_PASS_BOOL(*(vint32 *)p0); break;
+      case TYPE_Float: P_PASS_FLOAT(*(float *)p0); break;
+      case TYPE_Name: P_PASS_NAME(*(VName *)p0); break;
+      case TYPE_String: P_PASS_STR(*(VStr *)p0); break;
+      case TYPE_Pointer: P_PASS_PTR(*(void **)p0); break;
+      case TYPE_Reference: P_PASS_REF(*(VObject **)p0); break;
+      case TYPE_Class: P_PASS_PTR(*(VClass **)p0); break;
+      case TYPE_State: P_PASS_PTR(*(VState **)p0); break;
+      //case TYPE_Delegate
+      //case TYPE_Struct,
+      case TYPE_Vector: P_PASS_VEC(*(TVec *)p0); break;
+      //case TYPE_Array,
+      //case TYPE_DynamicArray,
+      //case TYPE_SliceArray, // array consisting of pointer and length, with immutable length
+      default: abort(); // the thing that should not be
+    }
+  }
+  // second arg
+  if ((fnless->ParamFlags[1]&(FPARM_Out|FPARM_Ref)) != 0) {
+    P_PASS_REF(p1);
+  } else {
+    switch (Type.Type) {
+      case TYPE_Int: P_PASS_INT(*(vint32 *)p1); break;
+      case TYPE_Byte: P_PASS_BYTE(*(vuint8 *)p1); break;
+      case TYPE_Bool: P_PASS_BOOL(*(vint32 *)p1); break;
+      case TYPE_Float: P_PASS_FLOAT(*(float *)p1); break;
+      case TYPE_Name: P_PASS_NAME(*(VName *)p1); break;
+      case TYPE_String: P_PASS_STR(*(VStr *)p1); break;
+      case TYPE_Pointer: P_PASS_PTR(*(void **)p1); break;
+      case TYPE_Reference: P_PASS_REF(*(VObject **)p1); break;
+      case TYPE_Class: P_PASS_PTR(*(VClass **)p1); break;
+      case TYPE_State: P_PASS_PTR(*(VState **)p1); break;
+      //case TYPE_Delegate
+      //case TYPE_Struct,
+      case TYPE_Vector: P_PASS_VEC(*(TVec *)p1); break;
+      //case TYPE_Array,
+      //case TYPE_DynamicArray,
+      //case TYPE_SliceArray, // array consisting of pointer and length, with immutable length
+      default: abort(); // the thing that should not be
+    }
+  }
+  auto ret = VObject::ExecuteFunction(fnless);
+  return (ret.i != 0);
+}
+
+
+/*
+struct QSortInfo {
+  VScriptArray *arr;
+  VFieldType Type;
+};
+
+
+extern "C" {
+  static int QComparator (const void *a, const void *b, void *udata) {
+    auto nfo = (QSortInfo *)udata;
+    return (VScriptArray::CallComparePtr(
+  }
+}
+  qsort_r(ArrData, ArrNum, InnerSize, &QComparator, &nfo);
+       void qsort_r(void *base, size_t nmemb, size_t size,
+                  int (*compar)(const void *, const void *, void *),
+                  void *arg);
+*/
+
+
+//==========================================================================
+//
+//  VScriptArray::Sort
+//
+//==========================================================================
+//static final void sortIntArray (ref array!int arr, bool delegate (int a, int b) dgLess, optional int count)
+bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless) {
+  // check delegate
+  if (!fnless) return false;
+  if (fnless->NumParams != 2) return false;
+  if (fnless->ReturnType.Type != TYPE_Int && fnless->ReturnType.Type != TYPE_Bool) return false;
+  if (!fnless->ParamTypes[0].Equals(Type) || !fnless->ParamTypes[1].Equals(Type)) return false;
+  // check if type should be passed as ref
+  bool requireRef = false;
+  if (Type.PtrLevel == 0) {
+    switch (Type.Type) {
+      case TYPE_Struct:
+      case TYPE_Vector: //FIXME
+      case TYPE_DynamicArray:
+        requireRef = true;
+        break;
+      case TYPE_Delegate:
+      case TYPE_Array:
+      case TYPE_SliceArray: //FIXME
+        return false;
+      default:
+        break;
+    }
+  }
+  if (requireRef) {
+    if ((fnless->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) == 0) return false;
+    if ((fnless->ParamFlags[1]&(FPARM_Out|FPARM_Ref)) == 0) return false;
+  }
+  // no optional args allowed
+  if ((fnless->ParamFlags[0]|fnless->ParamFlags[1])&FPARM_Optional) return false;
+  // if we have no self, this should be a static method
+  if (!self && (fnless->Flags&FUNC_Static) == 0) return false;
+  // check other flags
+  if (fnless->Flags&(FUNC_VarArgs|FUNC_Iterator)) return false;
+  // ok, it looks that our delegate is valid
+
+  /*
+  if (count < 2 || ArrNum < 2) return; // nothing to do
+  if (count > ArrNum) count = ArrNum;
+  */
+
+  if (ArrNum < 2) return true;
+  int count = ArrNum;
+
+  /*
+  int InnerSize = Type.GetSize();
+  QSortInfo nfo;
+  nfo.arr = this.
+  nfo.Type = Type;
+
+  qsort_r(ArrData, ArrNum, InnerSize, &QComparator, &nfo);
+  */
+
+  if (count == 2) {
+    if (CallCompare(0, 1, Type, self, fnless)) SwapElements(0, 1, Type);
+    return true;
+  }
+
+  auto end = count-1;
+
+  // heapify
+  auto start = (end-1)/2; // parent; always safe, as our array has at least two items
+  for (;;) {
+    //siftDownCIDSort(arr, start, end, dgLess);
+    auto root = start;
+    for (;;) {
+      auto child = 2*root+1; // left child
+      if (child > end) break;
+      auto swap = root;
+      if (CallCompare(swap, child, Type, self, fnless)) swap = child;
+      if (child+1 <= end && CallCompare(swap, child+1, Type, self, fnless)) swap = child+1;
+      if (swap == root) break;
+      SwapElements(swap, root, Type);
+      root = swap;
+    }
+    if (start-- == 0) break; // as `start` cannot be negative, use this condition
+  }
+
+  while (end > 0) {
+    SwapElements(0, end, Type);
+    --end;
+    //siftDownCIDSort(arr, 0, end, dgLess);
+    auto root = 0;
+    for (;;) {
+      auto child = 2*root+1; // left child
+      if (child > end) break;
+      auto swap = root;
+      if (CallCompare(swap, child, Type, self, fnless)) swap = child;
+      if (child+1 <= end && CallCompare(swap, child+1, Type, self, fnless)) swap = child+1;
+      if (swap == root) break;
+      SwapElements(swap, root, Type);
+      root = swap;
+    }
+  }
+
+  return true;
 }
 
 #endif // !defined(IN_VCC)

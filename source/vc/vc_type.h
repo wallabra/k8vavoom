@@ -22,6 +22,8 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class VObject;
+class VMethod;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -145,6 +147,13 @@ public:
   void Insert (int Index, int Count, const VFieldType &Type);
   void Remove (int Index, int Count, const VFieldType &Type);
   void SetSize2D (int dim1, int dim2, const VFieldType &Type);
+
+  void SwapElements (int i0, int i1, const VFieldType &Type);
+  bool CallCompare (int i0, int i1, const VFieldType &Type, VObject *self, VMethod *fnless);
+  // only for flat arrays
+  bool Sort (const VFieldType &Type, VObject *self, VMethod *fnless);
+
+  //static bool CallComparePtr (const void *p0, const void *p1, const VFieldType &Type, VObject *self, VMethod *fnless);
 };
 
 // required for VaVoom C VM

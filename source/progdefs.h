@@ -119,6 +119,8 @@ enum {
   OPCARGS_Member_Int,
   // used for delegate call, int is argc, type is delegate type
   OPCARGS_Type_Int,
+  // used for dynarray sorting, int is delegate argc
+  OPCARGS_ArrElemType_Int,
 };
 
 
@@ -221,7 +223,7 @@ enum {
   DECLARE_OPC(ArrayElementB, TypeSizeB),
   DECLARE_OPC(ArrayElement2D, A2DDimsAndSize),
   DECLARE_OPC(SliceElement, TypeSize),
-  DECLARE_OPC(OffsetPtr, Int),
+  /*DECLARE_OPC(OffsetPtr, Int),*/
   DECLARE_OPC(PushPointed, None),
   DECLARE_OPC(PushPointedSlice, None),
   DECLARE_OPC(PushPointedSliceLen, None),
@@ -405,6 +407,7 @@ enum {
   DECLARE_OPC(DynArrayInsert, Type),
   DECLARE_OPC(DynArrayRemove, Type),
   DECLARE_OPC(DynArrayClear, Type),
+  DECLARE_OPC(DynArraySort, /*ArrElemType_Int*/Type),
   // 2d (and some 1d)
   DECLARE_OPC(DynArraySetSize1D, Type),
   DECLARE_OPC(DynArraySetSize2D, Type),

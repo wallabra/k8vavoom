@@ -960,11 +960,13 @@ func_loop:
         --sp;
         PR_VM_BREAK;
 
+      /*
       PR_VM_CASE(OPC_OffsetPtr)
         if (!sp[-1].p) { cstDump(ip); Sys_Error("Cannot offset null pointer"); }
         sp[-1].p = (vuint8 *)sp[-1].p+ReadInt32(ip+1);
         ip += 5;
         PR_VM_BREAK;
+      */
 
       PR_VM_CASE(OPC_PushPointed)
         ++ip;
@@ -2038,6 +2040,33 @@ func_loop:
           ReadType(Type, ip);
           A.Reset(Type);
           --sp;
+        }
+        PR_VM_BREAK;
+
+      // [-1]: *dynarray
+      // [-2]: delegate
+      // [-3]: delegate
+      // in code: type, argc
+      PR_VM_CASE(OPC_DynArraySort)
+        {
+          VScriptArray &A = *(VScriptArray *)sp[-1].p;
+          VFieldType Type;
+          ++ip;
+          ReadType(Type, ip);
+          /*
+          int sofs = ReadInt32(ip);
+          ip += 4;
+          */
+          // get pointer to the delegate
+          void **pDelegate = (void **)sp[-1].p;
+          // make proper self object
+          VObject *dgself = (VObject *)pDelegate[0];
+          VMethod *dgfunc = (VMethod *)pDelegate[1];
+          if (!dgself) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
+          if (!dgfunc) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
+          if ((int)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
+          if (!A.Sort(Type, dgself, dgfunc)) { cstDump(ip); Sys_Error("Internal error in array sorter"); }
+          sp -= 3;
         }
         PR_VM_BREAK;
 
