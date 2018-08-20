@@ -926,6 +926,8 @@ void VScriptArray::SwapElements (int i0, int i1, const VFieldType &Type) {
     vuint32 t = *p0;
     *p0 = *p1;
     *p1 = t;
+    ++p0;
+    ++p1;
     InnerSize -= 4;
   }
   vuint8 *c0 = (vuint8 *)p0;
@@ -934,6 +936,8 @@ void VScriptArray::SwapElements (int i0, int i1, const VFieldType &Type) {
     vuint8 t = *c0;
     *c0 = *c1;
     *c1 = t;
+    ++c0;
+    ++c1;
   }
 }
 
