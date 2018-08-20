@@ -1249,6 +1249,169 @@ void VDynArrayClear::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VDynArraySort::VDynArraySort
+//
+//==========================================================================
+VDynArraySort::VDynArraySort (VExpression *AArrayExpr, VExpression *ADgExpr, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , ArrayExpr(AArrayExpr)
+  , DgExpr(ADgExpr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDynArraySort::~VDynArraySort
+//
+//==========================================================================
+VDynArraySort::~VDynArraySort () {
+  if (ArrayExpr) { delete ArrayExpr; ArrayExpr = nullptr; }
+  if (DgExpr) { delete DgExpr; DgExpr = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VDynArraySort::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynArraySort::SyntaxCopy () {
+  auto res = new VDynArraySort();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynArraySort::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VDynArraySort::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDynArraySort *)e;
+  res->ArrayExpr = (ArrayExpr ? ArrayExpr->SyntaxCopy() : nullptr);
+  res->DgExpr = (DgExpr ? DgExpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDynArraySort::checkDelegateType
+//
+//==========================================================================
+bool VDynArraySort::checkDelegateType (VMethod *dg) {
+  if (!dg) { ParseError(Loc, "VDynArraySort::DoResolve: internal compiler error"); return false; }
+
+  if (dg->NumParams != 2) { ParseError(Loc, "`.sort` delegate must have two parameters"); return false; }
+
+  if (dg->NumParams != 2) { ParseError(Loc, "`.sort` delegate must return `bool`"); return false; }
+
+  if (dg->ReturnType.Type != TYPE_Int && dg->ReturnType.Type != TYPE_Bool) {
+    ParseError(Loc, "`.sort` delegate must return `bool`");
+    return false;
+  }
+
+  VFieldType Type = ArrayExpr->Type.GetArrayInnerType();
+
+  if (!dg->ParamTypes[0].Equals(Type) || !dg->ParamTypes[1].Equals(Type)) {
+    ParseError(Loc, "`.sort` delegate parameters must be of the same type `%s`", *Type.GetName());
+    return false;
+  }
+
+  // check if type should be passed as ref
+  bool requireRef = false;
+  if (Type.PtrLevel == 0) {
+    switch (Type.Type) {
+      case TYPE_Struct:
+      case TYPE_Vector: //FIXME
+      case TYPE_DynamicArray:
+        requireRef = true;
+        break;
+      case TYPE_Delegate:
+      case TYPE_Array:
+      case TYPE_SliceArray: //FIXME
+        return false;
+      default:
+        break;
+    }
+  }
+
+  if (requireRef) {
+    if ((dg->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) == 0 || (dg->ParamFlags[1]&(FPARM_Out|FPARM_Ref)) == 0) {
+      ParseError(Loc, "`.sort` array type `%s` must be passed by ref", *Type.GetName());
+      return false;
+    }
+  }
+
+  // no optional args allowed
+  if ((dg->ParamFlags[0]|dg->ParamFlags[1])&FPARM_Optional) {
+    ParseError(Loc, "`.sort` delegate parameters must not be optional");
+    return false;
+  }
+
+  // if we have no self, this should be a static method
+  //if (!self && (dg->Flags&FUNC_Static) == 0) return false;
+
+  // check other flags
+  if (dg->Flags&(FUNC_VarArgs|FUNC_Iterator)) {
+    ParseError(Loc, "`.sort` delegate should not be iterator or vararg method");
+    return false;
+  }
+
+  // ok, it looks that our delegate is valid
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VDynArraySort::DoResolve
+//
+//==========================================================================
+VExpression *VDynArraySort::DoResolve (VEmitContext &ec) {
+  if (ArrayExpr) ArrayExpr->RequestAddressOf();
+  // resolve arguments
+  if (DgExpr) DgExpr = DgExpr->Resolve(ec);
+  if (!DgExpr) {
+    delete this;
+    return nullptr;
+  }
+
+  // must be a delegate
+  if (DgExpr->Type.Type != TYPE_Delegate) {
+    ParseError(Loc, "`.sort` expects delegate argument");
+    delete this;
+    return nullptr;
+  }
+
+  VMethod *dg = DgExpr->Type.Function;
+  if (!checkDelegateType(dg)) {
+    delete this;
+    return nullptr;
+  }
+
+  Type = VFieldType(TYPE_Void);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDynArraySort::Emit
+//
+//==========================================================================
+void VDynArraySort::Emit (VEmitContext &ec) {
+  ArrayExpr->Emit(ec);
+  DgExpr->Emit(ec);
+  ec.AddStatement(OPC_DynArraySort, ArrayExpr->Type.GetArrayInnerType(), Loc);
+}
+
+
+
+//==========================================================================
+//
 //  VStringGetLength::VStringGetLength
 //
 //==========================================================================

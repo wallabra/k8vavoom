@@ -941,6 +941,29 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
 
+    if (MethodName == NAME_Remove || VStr::Cmp(*MethodName, "sort") == 0) {
+      if (NumArgs != 1) {
+        ParseError(Loc, "`.sort` require delegate argument");
+        delete this;
+        return nullptr;
+      }
+      if (Args[0]->GetArgName() != NAME_None && Args[0]->GetArgName() != "lessfn") {
+        ParseError(Loc, "`.sort` argument name must be `lessfn`");
+        delete this;
+        return nullptr;
+      }
+      if (Args[0]->IsDefaultArg()) {
+        ParseError(Loc, "`.sort` argument name must not be default");
+        delete this;
+        return nullptr;
+      }
+      VExpression *e = new VDynArraySort(SelfExpr, Args[0], Loc);
+      SelfExpr = nullptr;
+      NumArgs = 0;
+      delete this;
+      return e->Resolve(ec);
+    }
+
     ParseError(Loc, "Invalid operation on dynamic array");
     delete this;
     return nullptr;

@@ -784,7 +784,7 @@ struct Instr {
         spdelta = -1;
         return;
       case OPC_DynArraySort:
-        spdelta = -3; // delegate and array
+        spdelta = -3; // array, self, and delegate
         return;
       case OPC_DynArraySetSize2D:
         spdelta -= 3;

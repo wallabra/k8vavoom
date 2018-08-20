@@ -918,6 +918,7 @@ void VScriptArray::Remove (int Index, int Count, const VFieldType &Type) {
 //==========================================================================
 void VScriptArray::SwapElements (int i0, int i1, const VFieldType &Type) {
   if (i0 == i1) return;
+  //fprintf(stderr, "VScriptArray::SwapElements: i0=%d; i1=%d\n", i0, i1);
   int InnerSize = Type.GetSize();
   vuint32 *p0 = (vuint32 *)(ArrData+i0*InnerSize);
   vuint32 *p1 = (vuint32 *)(ArrData+i1*InnerSize);
@@ -953,6 +954,7 @@ void VScriptArray::SwapElements (int i0, int i1, const VFieldType &Type) {
 //==========================================================================
 bool VScriptArray::CallCompare (int i0, int i1, const VFieldType &Type, VObject *self, VMethod *fnless) {
   if (i0 == i1) return false;
+  //fprintf(stderr, "VScriptArray::CallCompare: i0=%d; i1=%d\n", i0, i1);
   int InnerSize = Type.GetSize();
   vuint8 *p0 = ArrData+i0*InnerSize;
   vuint8 *p1 = ArrData+i1*InnerSize;
@@ -1037,13 +1039,29 @@ extern "C" {
 //  VScriptArray::Sort
 //
 //==========================================================================
+//#define SRTLOG(fmt,...)  fprintf(stderr, "VScriptArray::Sort: " fmt "\n", __VA_ARGS__)
+#define SRTLOG(fmt,...)  (void)((void)fmt, (void)__VA_ARGS__)
+
 //static final void sortIntArray (ref array!int arr, bool delegate (int a, int b) dgLess, optional int count)
 bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless) {
   // check delegate
-  if (!fnless) return false;
-  if (fnless->NumParams != 2) return false;
-  if (fnless->ReturnType.Type != TYPE_Int && fnless->ReturnType.Type != TYPE_Bool) return false;
-  if (!fnless->ParamTypes[0].Equals(Type) || !fnless->ParamTypes[1].Equals(Type)) return false;
+  if (!fnless) {
+    SRTLOG("%s", "delegate is null");
+    return false;
+  }
+  SRTLOG("dgname: `%s`", *fnless->GetFullName());
+  if (fnless->NumParams != 2) {
+    SRTLOG("%s (%d)", "delegate has invalid number of parameters", fnless->NumParams);
+    return false;
+  }
+  if (fnless->ReturnType.Type != TYPE_Int && fnless->ReturnType.Type != TYPE_Bool) {
+    SRTLOG("%s", "delegate has invalid return type");
+    return false;
+  }
+  if (!fnless->ParamTypes[0].Equals(Type) || !fnless->ParamTypes[1].Equals(Type)) {
+    SRTLOG("%s", "delegate has invalid parameters type");
+    return false;
+  }
   // check if type should be passed as ref
   bool requireRef = false;
   if (Type.PtrLevel == 0) {
@@ -1062,15 +1080,30 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
     }
   }
   if (requireRef) {
-    if ((fnless->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) == 0) return false;
-    if ((fnless->ParamFlags[1]&(FPARM_Out|FPARM_Ref)) == 0) return false;
+    if ((fnless->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) == 0) {
+      SRTLOG("%s", "first delegate parameter is not `ref`");
+      return false;
+    }
+    if ((fnless->ParamFlags[1]&(FPARM_Out|FPARM_Ref)) == 0) {
+      SRTLOG("%s", "second delegate parameter is not `ref`");
+      return false;
+    }
   }
   // no optional args allowed
-  if ((fnless->ParamFlags[0]|fnless->ParamFlags[1])&FPARM_Optional) return false;
+  if ((fnless->ParamFlags[0]|fnless->ParamFlags[1])&FPARM_Optional) {
+    SRTLOG("%s", "some delegate parameters are optional");
+    return false;
+  }
   // if we have no self, this should be a static method
-  if (!self && (fnless->Flags&FUNC_Static) == 0) return false;
+  if (!self && (fnless->Flags&FUNC_Static) == 0) {
+    SRTLOG("%s", "has no self, but delegate is not static");
+    return false;
+  }
   // check other flags
-  if (fnless->Flags&(FUNC_VarArgs|FUNC_Iterator)) return false;
+  if (fnless->Flags&(FUNC_VarArgs|FUNC_Iterator)) {
+    SRTLOG("%s", "delegate is iterator or vararg");
+    return false;
+  }
   // ok, it looks that our delegate is valid
 
   /*

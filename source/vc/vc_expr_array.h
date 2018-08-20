@@ -208,6 +208,31 @@ protected:
 
 //==========================================================================
 //
+//  VDynArraySort
+//
+//==========================================================================
+class VDynArraySort : public VExpression {
+public:
+  VExpression *ArrayExpr;
+  VExpression *DgExpr;
+
+  VDynArraySort (VExpression *, VExpression *, const TLocation &);
+  virtual ~VDynArraySort () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDynArraySort () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+
+private:
+  bool checkDelegateType (VMethod *dg);
+};
+
+
+//==========================================================================
+//
 //  VStringGetLength
 //
 //==========================================================================

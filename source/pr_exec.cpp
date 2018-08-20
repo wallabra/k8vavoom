@@ -2043,31 +2043,34 @@ func_loop:
         }
         PR_VM_BREAK;
 
-      // [-1]: *dynarray
-      // [-2]: delegate
-      // [-3]: delegate
+      // [-1]: delegate
+      // [-2]: self
+      // [-3]: *dynarray
       // in code: type, argc
       PR_VM_CASE(OPC_DynArraySort)
+        //fprintf(stderr, "sp=%p\n", sp);
         {
-          VScriptArray &A = *(VScriptArray *)sp[-1].p;
+          VScriptArray &A = *(VScriptArray *)sp[-3].p;
           VFieldType Type;
           ++ip;
           ReadType(Type, ip);
-          /*
-          int sofs = ReadInt32(ip);
-          ip += 4;
-          */
+          // get self
+          VObject *dgself = (VObject *)sp[-2].p;
           // get pointer to the delegate
-          void **pDelegate = (void **)sp[-1].p;
-          // make proper self object
-          VObject *dgself = (VObject *)pDelegate[0];
-          VMethod *dgfunc = (VMethod *)pDelegate[1];
-          if (!dgself) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
+          VMethod *dgfunc = (VMethod *)sp[-1].p;
+          if (!dgself) {
+            if (!dgfunc || (dgfunc->Flags&FUNC_Static) == 0) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
+          }
           if (!dgfunc) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
-          if ((int)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
+          // fix stack, so we can call a delegate properly
+          pr_stackPtr = sp;
+          cstFixTopIPSP(ip);
           if (!A.Sort(Type, dgself, dgfunc)) { cstDump(ip); Sys_Error("Internal error in array sorter"); }
-          sp -= 3;
         }
+        current_func = func;
+        sp = pr_stackPtr;
+        //fprintf(stderr, "sp=%p\n", sp);
+        sp -= 3;
         PR_VM_BREAK;
 
       // [-2]: *dynarray
