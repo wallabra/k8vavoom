@@ -79,6 +79,8 @@ public:
   virtual void UpdateChannelPitch (int Handle, float pitch) override;
   virtual bool IsChannelPlaying (int Handle) override;
   virtual void StopChannel (int Handle) override;
+  virtual void PauseChannel (int Handle) override;
+  virtual void ResumeChannel (int Handle) override;
   virtual void UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec&, const TVec &up) override;
 
   // OpenAL is thread-safe, so we have nothing special to do here
@@ -400,7 +402,7 @@ bool VOpenALDevice::IsChannelPlaying (int Handle) {
   if (Handle == -1) return false;
   ALint State;
   alGetSourcei(Handle, AL_SOURCE_STATE, &State);
-  return (State == AL_PLAYING);
+  return (State == AL_PLAYING || State == AL_PAUSED);
 }
 
 
@@ -408,16 +410,34 @@ bool VOpenALDevice::IsChannelPlaying (int Handle) {
 //
 //  VOpenALDevice::StopChannel
 //
-//  Stop the sound. Necessary to prevent runaway chainsaw, and to stop
-// rocket launches when an explosion occurs.
-//  All sounds MUST be stopped;
-//
 //==========================================================================
 void VOpenALDevice::StopChannel (int Handle) {
   if (Handle == -1) return;
   // stop buffer
   alSourceStop(Handle);
   alDeleteSources(1, (ALuint *)&Handle);
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::PauseChannel
+//
+//==========================================================================
+void VOpenALDevice::PauseChannel (int Handle) {
+  if (Handle == -1) return;
+  alSourcePause(Handle);
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::ResumeChannel
+//
+//==========================================================================
+void VOpenALDevice::ResumeChannel (int Handle) {
+  if (Handle == -1) return;
+  alSourcePlay(Handle);
 }
 
 

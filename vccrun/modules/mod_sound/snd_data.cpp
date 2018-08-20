@@ -286,9 +286,20 @@ IMPLEMENT_FUNCTION(VSoundSystem, Initialize) {
 }
 
 
+// static native final static void Shutdown ();
+IMPLEMENT_FUNCTION(VSoundSystem, Shutdown) {
+  VSoundManager::StaticShutdown();
+}
+
+
+// static native final static void IsInitialized ();
+IMPLEMENT_FUNCTION(VSoundSystem, get_IsInitialized) {
+  RET_BOOL(!!GAudio);
+}
+
+
 // static native final int AddSound (name tagName, string filename); // won't replace
 IMPLEMENT_FUNCTION(VSoundSystem, AddSound) {
-  VSoundManager::StaticInitialize();
   P_GET_STR(filename);
   P_GET_NAME(tagName);
   int res = 0;
@@ -299,7 +310,6 @@ IMPLEMENT_FUNCTION(VSoundSystem, AddSound) {
 
 // static native final int FindSound (name tagName);
 IMPLEMENT_FUNCTION(VSoundSystem, FindSound) {
-  VSoundManager::StaticInitialize();
   P_GET_NAME(tagName);
   int res = 0;
   if (GSoundManager) res = GSoundManager->FindSound(tagName);
@@ -311,7 +321,6 @@ IMPLEMENT_FUNCTION(VSoundSystem, FindSound) {
 //   int origin_id, int channel, optional float volume, optional float attenuation, optional float pitch,
 //    optional bool loop);
 IMPLEMENT_FUNCTION(VSoundSystem, PlaySound) {
-  VSoundManager::StaticInitialize();
   P_GET_BOOL_OPT(loop, false);
   P_GET_FLOAT_OPT(pitch, 1.0);
   P_GET_FLOAT_OPT(attenuation, 1.0);
@@ -325,34 +334,40 @@ IMPLEMENT_FUNCTION(VSoundSystem, PlaySound) {
 }
 
 
-// static native final void StopSound (int origin_id, int channel);
-IMPLEMENT_FUNCTION(VSoundSystem, StopSound) {
-  VSoundManager::StaticInitialize();
+// static native final void StopChannel (int origin_id, int channel);
+IMPLEMENT_FUNCTION(VSoundSystem, StopChannel) {
   P_GET_INT(channel);
   P_GET_INT(origin_id);
-  if (GAudio) GAudio->StopSound(origin_id, channel);
+  if (GAudio) GAudio->StopChannel(origin_id, channel);
 }
 
 
-// static native final void StopSoundById (int origin_id, int sound_id);
-IMPLEMENT_FUNCTION(VSoundSystem, StopSoundById) {
-  VSoundManager::StaticInitialize();
+// static native final void StopSound (int origin_id, int sound_id);
+IMPLEMENT_FUNCTION(VSoundSystem, StopSound) {
   P_GET_INT(sound_id);
   P_GET_INT(origin_id);
-  if (GAudio) GAudio->StopSoundById(origin_id, sound_id);
+  if (GAudio) GAudio->StopSound(origin_id, sound_id);
 }
 
 
 // static native final void StopAllSound ();
 IMPLEMENT_FUNCTION(VSoundSystem, StopAllSound) {
-  VSoundManager::StaticInitialize();
   if (GAudio) GAudio->StopAllSound();
+}
+
+
+// static native final bool IsChannelPlaying (int origin_id, int channel);
+IMPLEMENT_FUNCTION(VSoundSystem, IsChannelPlaying) {
+  P_GET_INT(channel);
+  P_GET_INT(origin_id);
+  bool res = false;
+  if (GAudio) res = GAudio->IsChannelPlaying(origin_id, channel);
+  RET_BOOL(res);
 }
 
 
 // static native final bool IsSoundPlaying (int origin_id, int sound_id);
 IMPLEMENT_FUNCTION(VSoundSystem, IsSoundPlaying) {
-  VSoundManager::StaticInitialize();
   P_GET_INT(sound_id);
   P_GET_INT(origin_id);
   bool res = false;
@@ -361,9 +376,28 @@ IMPLEMENT_FUNCTION(VSoundSystem, IsSoundPlaying) {
 }
 
 
-// static native final void SetSoundPitch (int origin_id, int InSoundId, float pitch);
+// static native final bool IsChannelPaused (int origin_id, int channel);
+IMPLEMENT_FUNCTION(VSoundSystem, IsChannelPaused) {
+  P_GET_INT(channel);
+  P_GET_INT(origin_id);
+  bool res = false;
+  if (GAudio) res = GAudio->IsChannelPaused(origin_id, channel);
+  RET_BOOL(res);
+}
+
+
+// static native final bool IsSoundPaused (int origin_id, int sound_id);
+IMPLEMENT_FUNCTION(VSoundSystem, IsSoundPaused) {
+  P_GET_INT(sound_id);
+  P_GET_INT(origin_id);
+  bool res = false;
+  if (GAudio) res = GAudio->IsSoundPaused(origin_id, sound_id);
+  RET_BOOL(res);
+}
+
+
+// static native final void SetSoundPitch (int origin_id, int sound_id, float pitch);
 IMPLEMENT_FUNCTION(VSoundSystem, SetSoundPitch) {
-  VSoundManager::StaticInitialize();
   P_GET_FLOAT(pitch);
   P_GET_INT(sound_id);
   P_GET_INT(origin_id);
@@ -373,9 +407,53 @@ IMPLEMENT_FUNCTION(VSoundSystem, SetSoundPitch) {
 
 // static native final void UpdateSounds ();
 IMPLEMENT_FUNCTION(VSoundSystem, UpdateSounds) {
-  VSoundManager::StaticInitialize();
   if (GAudio) GAudio->UpdateSounds();
 }
+
+
+// static native final void PauseChannel (int origin_id, int channel);
+IMPLEMENT_FUNCTION(VSoundSystem, PauseChannel) {
+  P_GET_INT(channel);
+  P_GET_INT(origin_id);
+  if (GAudio) GAudio->PauseChannel(origin_id, channel);
+}
+
+
+// static native final void PauseSound (int origin_id, int sound_id);
+IMPLEMENT_FUNCTION(VSoundSystem, PauseSound) {
+  P_GET_INT(sound_id);
+  P_GET_INT(origin_id);
+  if (GAudio) GAudio->PauseSound(origin_id, sound_id);
+}
+
+
+// static native final void ResumeChannel (int origin_id, int channel);
+IMPLEMENT_FUNCTION(VSoundSystem, ResumeChannel) {
+  P_GET_INT(channel);
+  P_GET_INT(origin_id);
+  if (GAudio) GAudio->ResumeChannel(origin_id, channel);
+}
+
+
+// static native final void ResumeSound (int origin_id, int sound_id);
+IMPLEMENT_FUNCTION(VSoundSystem, ResumeSound) {
+  P_GET_INT(sound_id);
+  P_GET_INT(origin_id);
+  if (GAudio) GAudio->ResumeSound(origin_id, sound_id);
+}
+
+
+// static native final void PauseSounds ();
+IMPLEMENT_FUNCTION(VSoundSystem, PauseSounds) {
+  if (GAudio) GAudio->PauseSounds();
+}
+
+
+// static native final void ResumeSounds ();
+IMPLEMENT_FUNCTION(VSoundSystem, ResumeSounds) {
+  if (GAudio) GAudio->ResumeSounds();
+}
+
 
 // static native final void SetListenerOrigin ();
 IMPLEMENT_FUNCTION(VSoundSystem, set_ListenerOrigin) {

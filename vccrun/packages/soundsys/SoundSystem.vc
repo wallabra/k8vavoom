@@ -13,19 +13,32 @@ class SoundSystem : Object abstract native;
 
 
 static native final void Initialize ();
+static native final void Shutdown ();
+static native final int IsInitialized { get; }
 
 static native final int AddSound (name tagName, string filename); // won't replace
 static native final int FindSound (name tagName);
 
 // `channel` is a logical channel
 static native final void PlaySound (int sound_id, const TVec origin, optional const TVec velocity,
-  int origin_id, int channel, optional float volume, optional float attenuation, optional float pitch, optional bool loop);
-static native final void StopSound (int origin_id, int channel);
-static native final void StopSoundById (int origin_id, int sound_id);
+  int origin_id, int channel, optional float volume, optional float attenuation,
+  optional float pitch, optional bool loop);
+static native final void StopChannel (int origin_id, int channel);
+static native final void StopSound (int origin_id, int sound_id);
 static native final void StopAllSound ();
+static native final bool IsChannelPlaying (int origin_id, int channel);
 static native final bool IsSoundPlaying (int origin_id, int sound_id);
+static native final bool IsChannelPaused (int origin_id, int channel);
+static native final bool IsSoundPaused (int origin_id, int sound_id);
 static native final void SetSoundPitch (int origin_id, int sound_id, float pitch);
 static native final void UpdateSounds ();
+static native final void PauseChannel (int origin_id, int channel);
+static native final void PauseSound (int origin_id, int sound_id);
+static native final void ResumeChannel (int origin_id, int channel);
+static native final void ResumeSound (int origin_id, int sound_id);
+static native final void PauseSounds ();
+static native final void ResumeSounds ();
+
 
 static native final bool PlayMusic (string filename, optional bool loop);
 static native final bool IsMusicPlaying ();
@@ -39,7 +52,7 @@ static native final TVec ListenerOrigin { set; }
 
 static native final float SoundVolume { get; set; }
 static native final float MusicVolume { get; set; }
-static native final bool SwapStereo { get; set; }
+static native final bool SwapStereo { get; set; } // not working yet
 
 
 // those affecting each new sound

@@ -75,6 +75,8 @@ public:
   virtual void UpdateChannelPitch (int Handle, float pitch) = 0;
   virtual bool IsChannelPlaying (int Handle) = 0;
   virtual void StopChannel (int Handle) = 0;
+  virtual void PauseChannel (int Handle) = 0;
+  virtual void ResumeChannel (int Handle) = 0;
   virtual void UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec&, const TVec &up) = 0;
 
   // all stream functions should be thread-safe
@@ -310,12 +312,21 @@ public:
   virtual void Shutdown () = 0;
 
   // playback of sound effects
-  virtual int PlaySound (int InSoundId, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float attenuation, float pitch, bool Loop) = 0;
-  virtual void StopSound (int origin_id, int channel) = 0;
-  virtual void StopSoundById (int origin_id, int sound_id) = 0;
+  virtual int PlaySound (int sound_id, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float attenuation, float pitch, bool Loop) = 0;
+  virtual void StopChannel (int origin_id, int channel) = 0;
+  virtual void StopSound (int origin_id, int sound_id) = 0;
   virtual void StopAllSound () = 0;
-  virtual bool IsSoundPlaying (int origin_id, int InSoundId) = 0;
-  virtual void SetSoundPitch (int origin_id, int InSoundId, float pitch) = 0;
+  virtual bool IsChannelPlaying (int origin_id, int channel) = 0;
+  virtual bool IsSoundPlaying (int origin_id, int sound_id) = 0;
+  virtual bool IsChannelPaused (int origin_id, int channel) = 0;
+  virtual bool IsSoundPaused (int origin_id, int sound_id) = 0;
+  virtual void SetSoundPitch (int origin_id, int sound_id, float pitch) = 0;
+  virtual void PauseChannel (int origin_id, int channel) = 0;
+  virtual void PauseSound (int origin_id, int sound_id) = 0;
+  virtual void ResumeChannel (int origin_id, int channel) = 0;
+  virtual void ResumeSound (int origin_id, int sound_id) = 0;
+  virtual void PauseSounds () = 0;
+  virtual void ResumeSounds () = 0;
 
   // general sound control
   virtual void UpdateSounds () = 0;
@@ -357,17 +368,28 @@ public:
 
 public:
   DECLARE_FUNCTION(Initialize)
+  DECLARE_FUNCTION(Shutdown)
+  DECLARE_FUNCTION(get_IsInitialized)
   //DECLARE_FUNCTION(Destroy)
 
   DECLARE_FUNCTION(AddSound)
   DECLARE_FUNCTION(FindSound)
 
   DECLARE_FUNCTION(PlaySound)
+  DECLARE_FUNCTION(StopChannel)
   DECLARE_FUNCTION(StopSound)
-  DECLARE_FUNCTION(StopSoundById)
   DECLARE_FUNCTION(StopAllSound)
+  DECLARE_FUNCTION(IsChannelPlaying)
   DECLARE_FUNCTION(IsSoundPlaying)
+  DECLARE_FUNCTION(IsChannelPaused)
+  DECLARE_FUNCTION(IsSoundPaused)
   DECLARE_FUNCTION(SetSoundPitch)
+  DECLARE_FUNCTION(PauseChannel)
+  DECLARE_FUNCTION(PauseSound)
+  DECLARE_FUNCTION(ResumeChannel)
+  DECLARE_FUNCTION(ResumeSound)
+  DECLARE_FUNCTION(PauseSounds)
+  DECLARE_FUNCTION(ResumeSounds)
 
   DECLARE_FUNCTION(UpdateSounds)
 

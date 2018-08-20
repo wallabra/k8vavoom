@@ -38,12 +38,21 @@ public:
   virtual void Shutdown () override;
 
   // playback of sound effects
-  virtual int PlaySound (int InSoundId, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float attenuation, float pitch, bool Loop) override;
-  virtual void StopSound (int origin_id, int channel) override;
-  virtual void StopSoundById (int origin_id, int sound_id) override;
+  virtual int PlaySound (int sound_id, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float attenuation, float pitch, bool Loop) override;
+  virtual void StopChannel (int origin_id, int channel) override;
+  virtual void StopSound (int origin_id, int sound_id) override;
   virtual void StopAllSound () override;
-  virtual bool IsSoundPlaying (int origin_id, int InSoundId) override;
-  virtual void SetSoundPitch (int origin_id, int InSoundId, float pitch) override;
+  virtual bool IsChannelPlaying (int origin_id, int channel) override;
+  virtual bool IsSoundPlaying (int origin_id, int sound_id) override;
+  virtual bool IsChannelPaused (int origin_id, int channel) override;
+  virtual bool IsSoundPaused (int origin_id, int sound_id) override;
+  virtual void SetSoundPitch (int origin_id, int sound_id, float pitch) override;
+  virtual void PauseChannel (int origin_id, int channel) override;
+  virtual void PauseSound (int origin_id, int sound_id) override;
+  virtual void ResumeChannel (int origin_id, int channel) override;
+  virtual void ResumeSound (int origin_id, int sound_id) override;
+  virtual void PauseSounds () override;
+  virtual void ResumeSounds () override;
 
   // music and general sound control
   virtual void UpdateSounds () override;
@@ -76,6 +85,7 @@ private:
     bool is3D;
     bool localPlayerSound;
     bool loop;
+    bool paused;
     float pitch;
     float newPitch;
   };
@@ -110,7 +120,10 @@ private:
 
   // sound effect helpers
   int GetChannel (int sound_id, int origin_id, int channel, int priority);
-  void StopChannel (int chan_num);
+  void StopChannelByNum (int chan_num);
+  void PauseChannelByNum (int chan_num);
+  void ResumeChannelByNum (int chan_num);
+  bool IsChannelPausedByNum (int chan_num);
   void UpdateSfx ();
 };
 
@@ -264,15 +277,15 @@ void VAudio::SetListenerOrigin (const TVec &aorigin) {
 //  Returns allocated channel or -1
 //
 //==========================================================================
-int VAudio::PlaySound (int InSoundId, const TVec &origin,
+int VAudio::PlaySound (int sound_id, const TVec &origin,
   const TVec &velocity, int origin_id, int channel, float volume,
   float attenuation, float pitch, bool Loop)
 {
-  //fprintf(stderr, "InSoundId: %d; maxvol=%f; vol=%f\n", InSoundId, (double)MaxVolume, (double)volume);
-  if (!SoundDevice || InSoundId < 1 || /*MaxVolume <= 0 ||*/ volume <= 0 || snd_sfx_volume <= 0) return -1;
+  //fprintf(stderr, "sound_id: %d; maxvol=%f; vol=%f\n", sound_id, (double)MaxVolume, (double)volume);
+  if (!SoundDevice || sound_id < 1 || /*MaxVolume <= 0 ||*/ volume <= 0 || snd_sfx_volume <= 0) return -1;
 
   // find actual sound ID to use
-  int sound_id = InSoundId; //GSoundManager->ResolveSound(InSoundId);
+  //int sound_id = InSoundId; //GSoundManager->ResolveSound(InSoundId);
 
   // if it's a looping sound and it's still playing, then continue playing the existing one
   for (int i = 0; i < NumChannels; ++i) {
@@ -340,6 +353,7 @@ int VAudio::PlaySound (int InSoundId, const TVec &origin,
     Channel[chan].loop = Loop;
     Channel[chan].pitch = pitch;
     Channel[chan].newPitch = pitch;
+    Channel[chan].paused = false;
     return chan;
   } else {
     Channel[chan].handle = -1;
@@ -387,7 +401,7 @@ int VAudio::GetChannel (int sound_id, int origin_id, int channel, int priority) 
         // other sounds have greater priority
         return -1; // don't replace any sounds
       }
-      StopChannel(lp);
+      StopChannelByNum(lp);
     }
   }
 
@@ -404,7 +418,7 @@ int VAudio::GetChannel (int sound_id, int origin_id, int channel, int priority) 
     i = (SndCount+chan)%NumChannels;
     if (priority >= Channel[i].priority) {
       // replace the lower priority sound
-      StopChannel(i);
+      StopChannelByNum(i);
       return i;
     }
   }
@@ -416,10 +430,10 @@ int VAudio::GetChannel (int sound_id, int origin_id, int channel, int priority) 
 
 //==========================================================================
 //
-//  VAudio::StopChannel
+//  VAudio::StopChannelByNum
 //
 //==========================================================================
-void VAudio::StopChannel (int chan_num) {
+void VAudio::StopChannelByNum (int chan_num) {
   if (Channel[chan_num].sound_id) {
     SoundDevice->StopChannel(Channel[chan_num].handle);
     Channel[chan_num].handle = -1;
@@ -431,14 +445,138 @@ void VAudio::StopChannel (int chan_num) {
 
 //==========================================================================
 //
-//  VAudio::StopSound
+//  VAudio::PauseChannelByNum
 //
 //==========================================================================
-void VAudio::StopSound (int origin_id, int channel) {
+void VAudio::PauseChannelByNum (int chan_num) {
+  if (Channel[chan_num].sound_id && !Channel[chan_num].paused) {
+    SoundDevice->PauseChannel(Channel[chan_num].handle);
+    Channel[chan_num].paused = true;
+  }
+}
+
+
+//==========================================================================
+//
+//  VAudio::ResumeChannelByNum
+//
+//==========================================================================
+void VAudio::ResumeChannelByNum (int chan_num) {
+  if (Channel[chan_num].sound_id && Channel[chan_num].paused) {
+    SoundDevice->ResumeChannel(Channel[chan_num].handle);
+    Channel[chan_num].paused = false;
+  }
+}
+
+
+//==========================================================================
+//
+//  VAudio::IsChannelPausedByNum
+//
+//==========================================================================
+bool VAudio::IsChannelPausedByNum (int chan_num) {
+  return (Channel[chan_num].sound_id ? Channel[chan_num].paused : false);
+}
+
+
+//==========================================================================
+//
+//  VAudio::StopChannel
+//
+//==========================================================================
+void VAudio::StopChannel (int origin_id, int channel) {
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].origin_id == origin_id && (!channel || Channel[i].channel == channel)) {
-      StopChannel(i);
+      StopChannelByNum(i);
     }
+  }
+}
+
+
+//==========================================================================
+//
+//  VAudio::PauseChannel
+//
+//==========================================================================
+void VAudio::PauseChannel (int origin_id, int channel) {
+  for (int i = 0; i < NumChannels; ++i) {
+    if (Channel[i].origin_id == origin_id && (!channel || Channel[i].channel == channel)) {
+      PauseChannelByNum(i);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VAudio::PauseSound
+//
+//==========================================================================
+void VAudio::PauseSound (int origin_id, int sound_id) {
+  for (int i = 0; i < NumChannels; ++i) {
+    if (Channel[i].handle < 0) continue;
+    if (Channel[i].sound_id == sound_id && Channel[i].origin_id == origin_id) {
+      if (SoundDevice->IsChannelPlaying(Channel[i].handle)) {
+        PauseChannelByNum(i);
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VAudio::ResumeChannel
+//
+//==========================================================================
+void VAudio::ResumeChannel (int origin_id, int channel) {
+  for (int i = 0; i < NumChannels; ++i) {
+    if (Channel[i].origin_id == origin_id && (!channel || Channel[i].channel == channel)) {
+      ResumeChannelByNum(i);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VAudio::ResumeSound
+//
+//==========================================================================
+void VAudio::ResumeSound (int origin_id, int sound_id) {
+  for (int i = 0; i < NumChannels; ++i) {
+    if (Channel[i].handle < 0) continue;
+    if (Channel[i].sound_id == sound_id && Channel[i].origin_id == origin_id) {
+      if (SoundDevice->IsChannelPlaying(Channel[i].handle)) {
+        ResumeChannelByNum(i);
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VAudio::PauseSounds
+//
+//==========================================================================
+void VAudio::PauseSounds () {
+  for (int i = 0; i < NumChannels; ++i) {
+    if (Channel[i].handle < 0) continue;
+    PauseChannelByNum(i);
+  }
+}
+
+
+//==========================================================================
+//
+//  VAudio::ResumeSounds
+//
+//==========================================================================
+void VAudio::ResumeSounds () {
+  for (int i = 0; i < NumChannels; ++i) {
+    if (Channel[i].handle < 0) continue;
+    ResumeChannelByNum(i);
   }
 }
 
@@ -449,23 +587,23 @@ void VAudio::StopSound (int origin_id, int channel) {
 //
 //==========================================================================
 void VAudio::StopAllSound () {
-  for (int i = 0; i < NumChannels; ++i) StopChannel(i);
+  for (int i = 0; i < NumChannels; ++i) StopChannelByNum(i);
 }
 
 
 //==========================================================================
 //
-//  VAudio::StopSoundById
+//  VAudio::StopSound
 //
 //==========================================================================
-void VAudio::StopSoundById (int origin_id, int sound_id) {
+void VAudio::StopSound (int origin_id, int sound_id) {
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
     //fprintf(stderr, "i=%d; sid=%d; oid=%d (%d:%d)\n", i, Channel[i].sound_id, Channel[i].origin_id, sound_id, origin_id);
     if (Channel[i].sound_id == sound_id && Channel[i].origin_id == origin_id) {
       //fprintf(stderr, "FOUND! %d\n", (int)SoundDevice->IsChannelPlaying(Channel[i].handle));
       if (SoundDevice->IsChannelPlaying(Channel[i].handle)) {
-        StopChannel(i);
+        StopChannelByNum(i);
       }
     }
   }
@@ -474,11 +612,28 @@ void VAudio::StopSoundById (int origin_id, int sound_id) {
 
 //==========================================================================
 //
+//  VAudio::IsChannelPlaying
+//
+//==========================================================================
+bool VAudio::IsChannelPlaying (int origin_id, int channel) {
+  for (int i = 0; i < NumChannels; ++i) {
+    if (Channel[i].origin_id == origin_id && (!channel || Channel[i].channel == channel)) {
+      if (SoundDevice->IsChannelPlaying(Channel[i].handle)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VAudio::IsSoundPlaying
 //
 //==========================================================================
-bool VAudio::IsSoundPlaying (int origin_id, int InSoundId) {
-  int sound_id = InSoundId; //GSoundManager->ResolveSound(InSoundId);
+bool VAudio::IsSoundPlaying (int origin_id, int sound_id) {
+  //int sound_id = InSoundId; //GSoundManager->ResolveSound(InSoundId);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
     //fprintf(stderr, "i=%d; sid=%d; oid=%d (%d:%d)\n", i, Channel[i].sound_id, Channel[i].origin_id, sound_id, origin_id);
@@ -495,11 +650,42 @@ bool VAudio::IsSoundPlaying (int origin_id, int InSoundId) {
 
 //==========================================================================
 //
+//  VAudio::IsChannelPaused
+//
+//==========================================================================
+bool VAudio::IsChannelPaused (int origin_id, int channel) {
+  for (int i = 0; i < NumChannels; ++i) {
+    if (Channel[i].origin_id == origin_id && (!channel || Channel[i].channel == channel)) {
+      return IsChannelPausedByNum(i);
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VAudio::IsSoundPaused
+//
+//==========================================================================
+bool VAudio::IsSoundPaused (int origin_id, int sound_id) {
+  for (int i = 0; i < NumChannels; ++i) {
+    if (Channel[i].handle < 0) continue;
+    if (Channel[i].sound_id == sound_id && Channel[i].origin_id == origin_id) {
+      return IsChannelPausedByNum(i);
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VAudio::SetSoundPitch
 //
 //==========================================================================
-void VAudio::SetSoundPitch (int origin_id, int InSoundId, float pitch) {
-  int sound_id = InSoundId; //GSoundManager->ResolveSound(InSoundId);
+void VAudio::SetSoundPitch (int origin_id, int sound_id, float pitch) {
+  //int sound_id = InSoundId; //GSoundManager->ResolveSound(InSoundId);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
     //fprintf(stderr, "i=%d; sid=%d; oid=%d (%d:%d)\n", i, Channel[i].sound_id, Channel[i].origin_id, sound_id, origin_id);
@@ -545,7 +731,7 @@ void VAudio::UpdateSfx () {
     if (Channel[i].handle < 0) continue;
     if (!SoundDevice->IsChannelPlaying(Channel[i].handle)) {
       // playback done
-      StopChannel(i);
+      StopChannelByNum(i);
       continue;
     }
     if (!Channel[i].origin_id || Channel[i].attenuation <= 0) continue; // full volume sound
@@ -560,7 +746,7 @@ void VAudio::UpdateSfx () {
     int dist = (int)(Length(Channel[i].origin-ListenerOrigin)*Channel[i].attenuation);
     if (dist >= MaxSoundDist) {
       // too far away
-      StopChannel(i);
+      StopChannelByNum(i);
       continue;
     }
 
