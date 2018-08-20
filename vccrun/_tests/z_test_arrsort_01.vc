@@ -1,0 +1,33 @@
+class Main : Object;
+
+struct Data {
+  string s;
+  int v;
+}
+
+
+bool lessfn (const ref Data a, const ref Data b) {
+  //writeln("CMP: a=<", a.s, ">; b=<", b.s, ">; less=", (a.s < b.s));
+  return (a.s < b.s);
+}
+
+
+void test () {
+  array!Data arr;
+  foreach (auto n; 0..10; reverse) {
+    arr.length += 1;
+    arr[$-1].s = va("idx=%s; value=%s", n, n);
+    //arr[$-1].s = va("%s", n);
+    arr[$-1].v = n;
+  }
+  foreach (auto n, ref auto v; arr) writeln(n, ": s=<", v.s, ">; v=", v.v);
+  arr.sort(&lessfn);
+  foreach (auto n, ref auto v; arr) writeln(n, ": s=<", v.s, ">; v=", v.v);
+}
+
+
+void main () {
+  test();
+  writeln("===");
+  test();
+}
