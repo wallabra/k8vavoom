@@ -1,0 +1,15 @@
+class Main : Object;
+
+
+bool lessint (int a, int b) {
+  //writeln("CMP: a=", a, "; b=", b);
+  return (a < b);
+}
+
+
+void main () {
+  array!int arr;
+  foreach (auto n; 0..10; reverse) arr[$] = n;
+  arr.sort(&lessint);
+  foreach (auto n, auto v; arr) writeln(n, " = ", v);
+}
