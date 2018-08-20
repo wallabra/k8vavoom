@@ -2313,6 +2313,25 @@ IMPLEMENT_FUNCTION(VVideo, fillRect) {
   glEnd();
 }
 
+// native final static bool getMousePos (out int x, out int y)
+IMPLEMENT_FUNCTION(VVideo, getMousePos) {
+  P_GET_PTR(int, yp);
+  P_GET_PTR(int, xp);
+  if (mInited) {
+    //SDL_GetMouseState(xp, yp); //k8: alas, this returns until a mouse has been moved
+    SDL_GetGlobalMouseState(xp, yp);
+    int wx, wy;
+    SDL_GetWindowPosition(hw_window, &wx, &wy);
+    *xp -= wx;
+    *yp -= wy;
+    RET_BOOL(true);
+  } else {
+    *xp = 0;
+    *yp = 0;
+    RET_BOOL(false);
+  }
+}
+
 
 IMPLEMENT_FUNCTION(VVideo, get_swapInterval) {
   RET_INT(swapInterval);

@@ -381,6 +381,8 @@ public:
   DECLARE_FUNCTION(drawLine)
   DECLARE_FUNCTION(drawRect)
   DECLARE_FUNCTION(fillRect)
+
+  DECLARE_FUNCTION(getMousePos)
 };
 
 

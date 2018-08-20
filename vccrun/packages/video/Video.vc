@@ -193,6 +193,9 @@ native final static CMask colorMask { get; set; }
 native final static bool textureFiltering { get; set; }
 
 
+native final static bool getMousePos (out int x, out int y);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 struct ScissorRect {
   int x, y, w, h;
