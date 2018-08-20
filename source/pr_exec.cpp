@@ -2046,7 +2046,7 @@ func_loop:
       // [-1]: delegate
       // [-2]: self
       // [-3]: *dynarray
-      // in code: type, argc
+      // in code: type
       PR_VM_CASE(OPC_DynArraySort)
         //fprintf(stderr, "sp=%p\n", sp);
         {
@@ -2072,6 +2072,25 @@ func_loop:
         sp = pr_stackPtr;
         //fprintf(stderr, "sp=%p\n", sp);
         sp -= 3;
+        PR_VM_BREAK;
+
+      // [-1]: idx1
+      // [-2]: idx0
+      // [-3]: *dynarray
+      PR_VM_CASE(OPC_DynArraySwap1D)
+        {
+          VScriptArray &A = *(VScriptArray *)sp[-3].p;
+          if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot swap items of non-flat arrays"); }
+          VFieldType Type;
+          ++ip;
+          ReadType(Type, ip);
+          int idx0 = sp[-2].i;
+          int idx1 = sp[-1].i;
+          if (idx0 < 0 || idx0 >= A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", idx0, A.length()); }
+          if (idx1 < 0 || idx1 >= A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", idx1, A.length()); }
+          A.SwapElements(idx0, idx1, Type);
+          sp -= 3;
+        }
         PR_VM_BREAK;
 
       // [-2]: *dynarray

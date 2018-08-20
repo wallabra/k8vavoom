@@ -233,6 +233,29 @@ private:
 
 //==========================================================================
 //
+//  VDynArraySwap1D
+//
+//==========================================================================
+class VDynArraySwap1D : public VExpression {
+public:
+  VExpression *ArrayExpr;
+  VExpression *Index0Expr;
+  VExpression *Index1Expr;
+
+  VDynArraySwap1D (VExpression *, VExpression *, VExpression *, const TLocation &);
+  virtual ~VDynArraySwap1D () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDynArraySwap1D () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
 //  VStringGetLength
 //
 //==========================================================================

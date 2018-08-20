@@ -863,7 +863,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
 
     if (MethodName == NAME_Insert || VStr::Cmp(*MethodName, "insert") == 0) {
       if (NumArgs == 1) {
-        if (Args[0]->GetArgName() == "count") {
+        if (Args[0] && Args[0]->GetArgName() == "count") {
           ParseError(Loc, "`count` without index");
           delete this;
           return nullptr;
@@ -896,7 +896,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
 
     if (MethodName == NAME_Remove || VStr::Cmp(*MethodName, "remove") == 0) {
       if (NumArgs == 1) {
-        if (Args[0]->GetArgName() == "count") {
+        if (Args[0] && Args[0]->GetArgName() == "count") {
           ParseError(Loc, "`count` without index");
           delete this;
           return nullptr;
@@ -947,7 +947,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         delete this;
         return nullptr;
       }
-      if (Args[0]->GetArgName() != NAME_None && Args[0]->GetArgName() != "lessfn") {
+      if (Args[0] && Args[0]->GetArgName() != NAME_None && Args[0]->GetArgName() != "lessfn") {
         ParseError(Loc, "`.sort` argument name must be `lessfn`");
         delete this;
         return nullptr;
@@ -958,6 +958,44 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return nullptr;
       }
       VExpression *e = new VDynArraySort(SelfExpr, Args[0], Loc);
+      SelfExpr = nullptr;
+      NumArgs = 0;
+      delete this;
+      return e->Resolve(ec);
+    }
+
+    if (VStr::Cmp(*MethodName, "swap") == 0) {
+      if (NumArgs != 2) {
+        ParseError(Loc, "`.swap` requires two arguments");
+        delete this;
+        return nullptr;
+      }
+      if (Args[0] && Args[0]->GetArgName() != NAME_None && Args[0]->GetArgName() == "idx0") {
+        ParseError(Loc, "`.swap` 1st argument name must be `idx0`");
+        delete this;
+        return nullptr;
+      }
+      if (Args[1] && Args[1]->GetArgName() != NAME_None && Args[1]->GetArgName() == "idx1") {
+        ParseError(Loc, "`.swap` 1st argument name must be `idx1`");
+        delete this;
+        return nullptr;
+      }
+      if (!Args[0] || Args[0]->IsDefaultArg() || !Args[1] || Args[1]->IsDefaultArg()) {
+        ParseError(Loc, "`.swap` requires two arguments");
+        delete this;
+        return nullptr;
+      }
+      if (Args[0]->IsRefArg() || Args[0]->IsOutArg()) {
+        ParseError(Loc, "`.swap` arguments cannot be `ref`");
+        delete this;
+        return nullptr;
+      }
+      if (Args[1]->IsRefArg() || Args[1]->IsOutArg()) {
+        ParseError(Loc, "`.swap` arguments cannot be `out`");
+        delete this;
+        return nullptr;
+      }
+      VExpression *e = new VDynArraySwap1D(SelfExpr, Args[0], Args[1], Loc);
       SelfExpr = nullptr;
       NumArgs = 0;
       delete this;

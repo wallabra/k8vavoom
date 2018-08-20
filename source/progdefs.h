@@ -408,6 +408,7 @@ enum {
   DECLARE_OPC(DynArrayRemove, Type),
   DECLARE_OPC(DynArrayClear, Type),
   DECLARE_OPC(DynArraySort, /*ArrElemType_Int*/Type),
+  DECLARE_OPC(DynArraySwap1D, Type),
   // 2d (and some 1d)
   DECLARE_OPC(DynArraySetSize1D, Type),
   DECLARE_OPC(DynArraySetSize2D, Type),

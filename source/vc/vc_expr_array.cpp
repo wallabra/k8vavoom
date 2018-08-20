@@ -1412,6 +1412,105 @@ void VDynArraySort::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VDynArraySwap1D::VDynArraySwap1D
+//
+//==========================================================================
+VDynArraySwap1D::VDynArraySwap1D (VExpression *AArrayExpr, VExpression *AIndex0Expr, VExpression *AIndex1Expr, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , ArrayExpr(AArrayExpr)
+  , Index0Expr(AIndex0Expr)
+  , Index1Expr(AIndex1Expr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDynArraySwap1D::~VDynArraySwap1D
+//
+//==========================================================================
+VDynArraySwap1D::~VDynArraySwap1D () {
+  if (ArrayExpr) { delete ArrayExpr; ArrayExpr = nullptr; }
+  if (Index0Expr) { delete Index0Expr; Index0Expr = nullptr; }
+  if (Index1Expr) { delete Index1Expr; Index1Expr = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VDynArraySwap1D::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynArraySwap1D::SyntaxCopy () {
+  auto res = new VDynArraySwap1D();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynArraySwap1D::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VDynArraySwap1D::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDynArraySwap1D *)e;
+  res->ArrayExpr = (ArrayExpr ? ArrayExpr->SyntaxCopy() : nullptr);
+  res->Index0Expr = (Index0Expr ? Index0Expr->SyntaxCopy() : nullptr);
+  res->Index1Expr = (Index1Expr ? Index1Expr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDynArraySwap1D::DoResolve
+//
+//==========================================================================
+VExpression *VDynArraySwap1D::DoResolve (VEmitContext &ec) {
+  if (ArrayExpr) ArrayExpr->RequestAddressOf();
+  // resolve arguments
+  if (Index0Expr) Index0Expr = Index0Expr->Resolve(ec);
+  if (Index1Expr) Index1Expr = Index1Expr->Resolve(ec);
+  if (!Index0Expr || !Index1Expr) {
+    delete this;
+    return nullptr;
+  }
+
+  // check argument types
+  if (Index0Expr->Type.Type != TYPE_Int) {
+    ParseError(Loc, "Index0 must be integer expression");
+    delete this;
+    return nullptr;
+  }
+
+  if (Index1Expr->Type.Type != TYPE_Int) {
+    ParseError(Loc, "Index1 must be integer expression");
+    delete this;
+    return nullptr;
+  }
+
+  Type = VFieldType(TYPE_Void);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDynArraySwap1D::Emit
+//
+//==========================================================================
+void VDynArraySwap1D::Emit (VEmitContext &ec) {
+  ArrayExpr->Emit(ec);
+  Index0Expr->Emit(ec);
+  Index1Expr->Emit(ec);
+  ec.AddStatement(OPC_DynArraySwap1D, ArrayExpr->Type.GetArrayInnerType(), Loc);
+}
+
+
+
+//==========================================================================
+//
 //  VStringGetLength::VStringGetLength
 //
 //==========================================================================
