@@ -72,12 +72,10 @@ public:
   virtual bool Init () override;
   virtual int SetChannels (int InNumChannels) override;
   virtual void Shutdown ();
-  virtual int PlaySound (int sound_id, float volume, float sep, float pitch, bool Loop) override;
-  virtual int PlaySound3D (int sound_id, const TVec &origin, const TVec &velocity, float volume, float pitch, bool Loop) override;
-  virtual void UpdateChannel (int Handle, float vol, float sep) override;
-  virtual void UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel) override;
+  virtual int PlaySound3D (int sound_id, const TVec &origin, const TVec &velocity, float volume, float pitch, bool Loop, bool relative) override;
+  virtual void UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel, bool relative) override;
   virtual void UpdateChannelPitch (int Handle, float pitch) override;
-  virtual bool IsChannelPlaying (int Handle) override;
+  virtual bool IsChannelActive (int Handle) override;
   virtual void StopChannel (int Handle) override;
   virtual void PauseChannel (int Handle) override;
   virtual void ResumeChannel (int Handle) override;
@@ -100,14 +98,21 @@ public:
   bool PrepareSound (int sound_id);
 };
 
-IMPLEMENT_SOUND_DEVICE(VOpenALDevice, SNDDRV_OpenAL, "OpenAL", "OpenAL sound device", "-openal");
-
 float VSoundDevice::doppler_factor = 1.0f;
 float VSoundDevice::doppler_velocity = 10000.0f;
 float VSoundDevice::rolloff_factor = 1.0f;
 float VSoundDevice::reference_distance = 32.0f; // The distance under which the volume for the source would normally drop by half (before being influenced by rolloff factor or AL_MAX_DISTANCE)
 float VSoundDevice::max_distance = 800.0f; // Used with the Inverse Clamped Distance Model to set the distance where there will no longer be any attenuation of the source
-TVec VSoundDevice::sound2d_pos = TVec(0, 0, -1);
+
+
+//==========================================================================
+//
+//  CreateVSoundDevice
+//
+//==========================================================================
+VSoundDevice *CreateVSoundDevice () {
+  return new VOpenALDevice;
+}
 
 
 //==========================================================================
@@ -268,56 +273,13 @@ bool VOpenALDevice::PrepareSound (int sound_id) {
 
 //==========================================================================
 //
-//  VOpenALDevice::PlaySound
+//  VOpenALDevice::PlaySound3D
 //
 //  This function adds a sound to the list of currently active sounds, which
 //  is maintained as a given number of internal channels.
 //
 //==========================================================================
-int VOpenALDevice::PlaySound (int sound_id, float volume, float sep, float pitch, bool Loop) {
-  if (!PrepareSound(sound_id)) return -1;
-
-  ALuint src;
-  alGetError(); // clear error code
-  alGenSources(1, &src);
-  if (alGetError() != AL_NO_ERROR) {
-    fprintf(stderr, "WARNING: failed to gen sound source.\n");
-    return -1;
-  }
-
-  alSourcei(src, AL_BUFFER, Buffers[sound_id]);
-
-  alSourcef(src, AL_GAIN, volume);
-  alSourcef(src, AL_ROLLOFF_FACTOR, rolloff_factor);
-  alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);
-  alSource3f(src, AL_POSITION, sound2d_pos.x, sound2d_pos.y, sound2d_pos.z);
-  alSourcef(src, AL_REFERENCE_DISTANCE, reference_distance);
-  alSourcef(src, AL_MAX_DISTANCE, max_distance);
-  alSourcef(src, AL_PITCH, pitch);
-  if (Loop) alSourcei(src, AL_LOOPING, AL_TRUE);
-  alSourcePlay(src);
-
-  /*
-  ALint stt;
-  alGetSourcei(src, AL_SOURCE_STATE, &stt);
-  fprintf(stderr, "2d: stt=%d 0x%04x (%d)\n", stt, (unsigned)stt, (int)(stt == AL_PLAYING));
-  fprintf(stderr, "  volume=%f\n", (double)volume);
-  fprintf(stderr, "  rolloff_factor=%f\n", (double)rolloff_factor);
-  fprintf(stderr, "  reference_distance=%f\n", (double)reference_distance);
-  fprintf(stderr, "  max_distance=%f\n", (double)max_distance);
-  fprintf(stderr, "  pitch=%f\n", (double)pitch);
-  */
-
-  return src;
-}
-
-
-//==========================================================================
-//
-//  VOpenALDevice::PlaySound3D
-//
-//==========================================================================
-int VOpenALDevice::PlaySound3D (int sound_id, const TVec &origin, const TVec &velocity, float volume, float pitch, bool Loop) {
+int VOpenALDevice::PlaySound3D (int sound_id, const TVec &origin, const TVec &velocity, float volume, float pitch, bool Loop, bool relative) {
   if (!PrepareSound(sound_id)) return -1;
 
   ALuint src;
@@ -334,7 +296,7 @@ int VOpenALDevice::PlaySound3D (int sound_id, const TVec &origin, const TVec &ve
 
   alSourcef(src, AL_GAIN, volume);
   alSourcef(src, AL_ROLLOFF_FACTOR, rolloff_factor);
-  alSourcei(src, AL_SOURCE_RELATIVE, AL_FALSE);
+  alSourcei(src, AL_SOURCE_RELATIVE, (relative ? AL_TRUE : AL_FALSE));
   alSource3f(src, AL_POSITION, origin.x, origin.y, origin.z);
   alSource3f(src, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
   alSourcef(src, AL_REFERENCE_DISTANCE, reference_distance);
@@ -363,22 +325,14 @@ int VOpenALDevice::PlaySound3D (int sound_id, const TVec &origin, const TVec &ve
 
 //==========================================================================
 //
-//  VOpenALDevice::UpdateChannel
-//
-//==========================================================================
-void VOpenALDevice::UpdateChannel (int, float, float) {
-}
-
-
-//==========================================================================
-//
 //  VOpenALDevice::UpdateChannel3D
 //
 //==========================================================================
-void VOpenALDevice::UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel) {
+void VOpenALDevice::UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel, bool relative) {
   if (Handle == -1) return;
   alSource3f(Handle, AL_POSITION, Org.x, Org.y, Org.z);
   alSource3f(Handle, AL_VELOCITY, Vel.x, Vel.y, Vel.z);
+  alSourcei(Handle, AL_SOURCE_RELATIVE, (relative ? AL_TRUE : AL_FALSE));
 }
 
 
@@ -395,10 +349,10 @@ void VOpenALDevice::UpdateChannelPitch (int Handle, float pitch) {
 
 //==========================================================================
 //
-//  VOpenALDevice::IsChannelPlaying
+//  VOpenALDevice::IsChannelActive
 //
 //==========================================================================
-bool VOpenALDevice::IsChannelPlaying (int Handle) {
+bool VOpenALDevice::IsChannelActive (int Handle) {
   if (Handle == -1) return false;
   ALint State;
   alGetSourcei(Handle, AL_SOURCE_STATE, &State);

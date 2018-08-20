@@ -27,21 +27,9 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-/*
-class VRawSampleLoader : public VSampleLoader {
-public:
-  virtual void Load (sfxinfo_t &, VStream &) override;
-};
-*/
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 VSampleLoader *VSampleLoader::List;
 VSoundManager *GSoundManager;
 static bool sminited = false;
-
-//static VRawSampleLoader RawSampleLoader;
-//static TStrSet soundsWarned;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -121,11 +109,7 @@ void VSampleLoader::LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec) {
 //  VSoundManager::VSoundManager
 //
 //==========================================================================
-VSoundManager::VSoundManager ()
-  : NumPlayerReserves(0)
-  , CurrentChangePitch(0) //7.0/255.0
-  , name2idx()
-{
+VSoundManager::VSoundManager () : name2idx() {
 }
 
 
@@ -140,8 +124,7 @@ VSoundManager::~VSoundManager () {
       Z_Free(S_sfx[i].data);
       S_sfx[i].data = nullptr;
     }
-    //delete[] S_sfx[i].Sounds;
-    //S_sfx[i].Sounds = nullptr;
+    S_sfx.clear();
   }
 }
 
@@ -149,8 +132,6 @@ VSoundManager::~VSoundManager () {
 //==========================================================================
 //
 //  VSoundManager::Init
-//
-//  Loads sound script lump or file, if param -devsnd was specified
 //
 //==========================================================================
 void VSoundManager::Init () {
@@ -169,25 +150,17 @@ void VSoundManager::Init () {
 int VSoundManager::AddSound (VName TagName, const VStr &filename) {
   if (TagName == NAME_None) return 0;
   int id = FindSound(TagName);
-  //fprintf(stderr, "id=%d; tag=%s; file=%s\n", id, *TagName, *filename);
   if (!id) {
     sfxinfo_t S;
     memset(&S, 0, sizeof(S));
     S.tagName = TagName;
-    S.data = nullptr;
     S.priority = 127;
     S.numChannels = 2;
-    S.changePitch = CurrentChangePitch;
-    int idx = -1;
-    for (int f = S_sfx.length()-1; f > 0; --f) if (S_sfx[f].tagName == NAME_None) { idx = f; break; }
-    if (idx < 0) {
-      idx = S_sfx.length();
-      S_sfx.Append(S);
-    } else {
-      S_sfx[idx] = S;
-    }
+    S.changePitch = 0;
+    // we can't unload sounds, so don't bother searching for a free slot
+    int idx = S_sfx.length();
+    S_sfx.Append(S);
     name2idx.put(TagName, idx);
-    //fprintf(stderr, "  idx=%d; slen=%d\n", idx, S_sfx.length());
     LoadSound(idx, filename);
     return idx;
   }
@@ -209,11 +182,98 @@ int VSoundManager::FindSound (VName tagName) {
 
 //==========================================================================
 //
+//  VSoundManager::GetSoundPriority
+//
+//==========================================================================
+int VSoundManager::GetSoundPriority (VName tagName) {
+  auto ii = name2idx.find(tagName);
+  return (ii ? S_sfx[*ii].priority : 127);
+}
+
+
+//==========================================================================
+//
+//  VSoundManager::SetSoundPriority
+//
+//==========================================================================
+void VSoundManager::SetSoundPriority (VName tagName, int value) {
+  auto ii = name2idx.find(tagName);
+  if (ii) S_sfx[*ii].priority = value;
+}
+
+
+//==========================================================================
+//
+//  VSoundManager::GetSoundChannels
+//
+//==========================================================================
+int VSoundManager::GetSoundChannels (VName tagName) {
+  auto ii = name2idx.find(tagName);
+  return (ii ? S_sfx[*ii].numChannels : 2);
+}
+
+
+//==========================================================================
+//
+//  VSoundManager::SetSoundChannels
+//
+//==========================================================================
+void VSoundManager::SetSoundChannels (VName tagName, int value) {
+  auto ii = name2idx.find(tagName);
+  if (ii) S_sfx[*ii].numChannels = value;
+}
+
+
+//==========================================================================
+//
+//  VSoundManager::GetSoundRandomPitch
+//
+//==========================================================================
+float VSoundManager::GetSoundRandomPitch (VName tagName) {
+  auto ii = name2idx.find(tagName);
+  return (ii ? S_sfx[*ii].changePitch : 0);
+}
+
+
+//==========================================================================
+//
+//  VSoundManager::SetSoundRandomPitch
+//
+//==========================================================================
+void VSoundManager::SetSoundRandomPitch (VName tagName, float value) {
+  auto ii = name2idx.find(tagName);
+  if (ii) S_sfx[*ii].changePitch = value;
+}
+
+
+//==========================================================================
+//
+//  VSoundManager::GetSoundSingular
+//
+//==========================================================================
+bool VSoundManager::GetSoundSingular (VName tagName) {
+  auto ii = name2idx.find(tagName);
+  return (ii ? S_sfx[*ii].bSingular : false);
+}
+
+
+//==========================================================================
+//
+//  VSoundManager::SetSoundSingular
+//
+//==========================================================================
+void VSoundManager::SetSoundSingular (VName tagName, bool value) {
+  auto ii = name2idx.find(tagName);
+  if (ii) S_sfx[*ii].bSingular = value;
+}
+
+
+//==========================================================================
+//
 //  VSoundManager::LoadSound
 //
 //==========================================================================
 bool VSoundManager::LoadSound (int sound_id, const VStr &filename) {
-  //static const char *exts[] = { "flac", "ogg", "wav", nullptr };
   if (!S_sfx[sound_id].data) {
     VStream *Strm = fsysOpenFile(filename);
     if (!Strm) {
@@ -224,7 +284,6 @@ bool VSoundManager::LoadSound (int sound_id, const VStr &filename) {
       Strm->Seek(0);
       Ldr->Load(S_sfx[sound_id], *Strm);
       if (S_sfx[sound_id].data) {
-        //GCon->Logf("sound '%s' is %s", *W_FullLumpName(Lump), typeid(*Ldr).name());
         //fprintf(stderr, "Loaded sound '%s' from file '%s'\n", *S_sfx[sound_id].tagName, *filename);
         break;
       }
@@ -232,11 +291,6 @@ bool VSoundManager::LoadSound (int sound_id, const VStr &filename) {
     delete Strm;
     if (!S_sfx[sound_id].data) {
       fprintf(stderr, "WARNING: Failed to load sound '%s' from file '%s'\n", *S_sfx[sound_id].tagName, *filename);
-      /*
-      if (!soundsWarned.put(*S_sfx[sound_id].TagName)) {
-        GCon->Logf(NAME_Dev, "Failed to load sound %s", *S_sfx[sound_id].TagName);
-      }
-      */
       return false;
     }
   }
@@ -244,313 +298,4 @@ bool VSoundManager::LoadSound (int sound_id, const VStr &filename) {
 }
 
 
-//==========================================================================
-//
-//  VRawSampleLoader::Load
-//
-//==========================================================================
-/*
-void VRawSampleLoader::Load(sfxinfo_t &Sfx, VStream &Strm) {
-  //  Read header and see if it's a valid raw sample.
-  vuint16   Unknown;
-  vuint16   SampleRate;
-  vuint32   DataSize;
-
-  Strm.Seek(0);
-  Strm << Unknown
-    << SampleRate
-    << DataSize;
-  if (Unknown != 3 || (vint32)DataSize != Strm.TotalSize() - 8)
-  {
-    return;
-  }
-
-  Sfx.SampleBits = 8;
-  Sfx.SampleRate = SampleRate;
-  Sfx.DataSize = DataSize;
-  Sfx.Data = Z_Malloc(Sfx.DataSize);
-  Strm.Serialise(Sfx.Data, Sfx.DataSize);
-}
-*/
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-IMPLEMENT_CLASS(V, SoundSystem);
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-// returns `none` on error
-// static native final static void Initialize ();
-IMPLEMENT_FUNCTION(VSoundSystem, Initialize) {
-  VSoundManager::StaticInitialize();
-}
-
-
-// static native final static void Shutdown ();
-IMPLEMENT_FUNCTION(VSoundSystem, Shutdown) {
-  VSoundManager::StaticShutdown();
-}
-
-
-// static native final static void IsInitialized ();
-IMPLEMENT_FUNCTION(VSoundSystem, get_IsInitialized) {
-  RET_BOOL(!!GAudio);
-}
-
-
-// static native final int AddSound (name tagName, string filename); // won't replace
-IMPLEMENT_FUNCTION(VSoundSystem, AddSound) {
-  P_GET_STR(filename);
-  P_GET_NAME(tagName);
-  int res = 0;
-  if (GSoundManager) res = GSoundManager->AddSound(tagName, filename);
-  RET_INT(res);
-}
-
-
-// static native final int FindSound (name tagName);
-IMPLEMENT_FUNCTION(VSoundSystem, FindSound) {
-  P_GET_NAME(tagName);
-  int res = 0;
-  if (GSoundManager) res = GSoundManager->FindSound(tagName);
-  RET_INT(res);
-}
-
-
-// static native final void PlaySound (int sound_id, const TVec origin, optional const TVec velocity,
-//   int origin_id, int channel, optional float volume, optional float attenuation, optional float pitch,
-//    optional bool loop);
-IMPLEMENT_FUNCTION(VSoundSystem, PlaySound) {
-  P_GET_BOOL_OPT(loop, false);
-  P_GET_FLOAT_OPT(pitch, 1.0);
-  P_GET_FLOAT_OPT(attenuation, 1.0);
-  P_GET_FLOAT_OPT(volume, 1.0);
-  P_GET_INT(channel);
-  P_GET_INT(origin_id);
-  P_GET_VEC_OPT(velocity, TVec(0, 0, 0));
-  P_GET_VEC(origin);
-  P_GET_INT(sndid);
-  if (GAudio) GAudio->PlaySound(sndid, origin, velocity, origin_id, channel, volume, attenuation, pitch, loop);
-}
-
-
-// static native final void StopChannel (int origin_id, int channel);
-IMPLEMENT_FUNCTION(VSoundSystem, StopChannel) {
-  P_GET_INT(channel);
-  P_GET_INT(origin_id);
-  if (GAudio) GAudio->StopChannel(origin_id, channel);
-}
-
-
-// static native final void StopSound (int origin_id, int sound_id);
-IMPLEMENT_FUNCTION(VSoundSystem, StopSound) {
-  P_GET_INT(sound_id);
-  P_GET_INT(origin_id);
-  if (GAudio) GAudio->StopSound(origin_id, sound_id);
-}
-
-
-// static native final void StopAllSound ();
-IMPLEMENT_FUNCTION(VSoundSystem, StopAllSound) {
-  if (GAudio) GAudio->StopAllSound();
-}
-
-
-// static native final bool IsChannelPlaying (int origin_id, int channel);
-IMPLEMENT_FUNCTION(VSoundSystem, IsChannelPlaying) {
-  P_GET_INT(channel);
-  P_GET_INT(origin_id);
-  bool res = false;
-  if (GAudio) res = GAudio->IsChannelPlaying(origin_id, channel);
-  RET_BOOL(res);
-}
-
-
-// static native final bool IsSoundPlaying (int origin_id, int sound_id);
-IMPLEMENT_FUNCTION(VSoundSystem, IsSoundPlaying) {
-  P_GET_INT(sound_id);
-  P_GET_INT(origin_id);
-  bool res = false;
-  if (GAudio) res = GAudio->IsSoundPlaying(origin_id, sound_id);
-  RET_BOOL(res);
-}
-
-
-// static native final bool IsChannelPaused (int origin_id, int channel);
-IMPLEMENT_FUNCTION(VSoundSystem, IsChannelPaused) {
-  P_GET_INT(channel);
-  P_GET_INT(origin_id);
-  bool res = false;
-  if (GAudio) res = GAudio->IsChannelPaused(origin_id, channel);
-  RET_BOOL(res);
-}
-
-
-// static native final bool IsSoundPaused (int origin_id, int sound_id);
-IMPLEMENT_FUNCTION(VSoundSystem, IsSoundPaused) {
-  P_GET_INT(sound_id);
-  P_GET_INT(origin_id);
-  bool res = false;
-  if (GAudio) res = GAudio->IsSoundPaused(origin_id, sound_id);
-  RET_BOOL(res);
-}
-
-
-// static native final void SetSoundPitch (int origin_id, int sound_id, float pitch);
-IMPLEMENT_FUNCTION(VSoundSystem, SetSoundPitch) {
-  P_GET_FLOAT(pitch);
-  P_GET_INT(sound_id);
-  P_GET_INT(origin_id);
-  if (GAudio) GAudio->SetSoundPitch(origin_id, sound_id, pitch);
-}
-
-
-// static native final void UpdateSounds ();
-IMPLEMENT_FUNCTION(VSoundSystem, UpdateSounds) {
-  if (GAudio) GAudio->UpdateSounds();
-}
-
-
-// static native final void PauseChannel (int origin_id, int channel);
-IMPLEMENT_FUNCTION(VSoundSystem, PauseChannel) {
-  P_GET_INT(channel);
-  P_GET_INT(origin_id);
-  if (GAudio) GAudio->PauseChannel(origin_id, channel);
-}
-
-
-// static native final void PauseSound (int origin_id, int sound_id);
-IMPLEMENT_FUNCTION(VSoundSystem, PauseSound) {
-  P_GET_INT(sound_id);
-  P_GET_INT(origin_id);
-  if (GAudio) GAudio->PauseSound(origin_id, sound_id);
-}
-
-
-// static native final void ResumeChannel (int origin_id, int channel);
-IMPLEMENT_FUNCTION(VSoundSystem, ResumeChannel) {
-  P_GET_INT(channel);
-  P_GET_INT(origin_id);
-  if (GAudio) GAudio->ResumeChannel(origin_id, channel);
-}
-
-
-// static native final void ResumeSound (int origin_id, int sound_id);
-IMPLEMENT_FUNCTION(VSoundSystem, ResumeSound) {
-  P_GET_INT(sound_id);
-  P_GET_INT(origin_id);
-  if (GAudio) GAudio->ResumeSound(origin_id, sound_id);
-}
-
-
-// static native final void PauseSounds ();
-IMPLEMENT_FUNCTION(VSoundSystem, PauseSounds) {
-  if (GAudio) GAudio->PauseSounds();
-}
-
-
-// static native final void ResumeSounds ();
-IMPLEMENT_FUNCTION(VSoundSystem, ResumeSounds) {
-  if (GAudio) GAudio->ResumeSounds();
-}
-
-
-// static native final void SetListenerOrigin ();
-IMPLEMENT_FUNCTION(VSoundSystem, set_ListenerOrigin) {
-  VSoundManager::StaticInitialize();
-  P_GET_VEC(orig);
-  if (GAudio) GAudio->SetListenerOrigin(orig);
-}
-
-
-IMPLEMENT_FUNCTION(VSoundSystem, get_SoundVolume) {
-  RET_FLOAT(VAudioPublic::snd_sfx_volume);
-}
-
-IMPLEMENT_FUNCTION(VSoundSystem, set_SoundVolume) {
-  P_GET_FLOAT(v);
-  if (v < 0) v = 0; else if (v > 1) v = 1;
-  VAudioPublic::snd_sfx_volume = v;
-  if (GAudio) GAudio->UpdateSounds();
-}
-
-IMPLEMENT_FUNCTION(VSoundSystem, get_MusicVolume) {
-  RET_FLOAT(VAudioPublic::snd_music_volume);
-}
-
-IMPLEMENT_FUNCTION(VSoundSystem, set_MusicVolume) {
-  P_GET_FLOAT(v);
-  if (v < 0) v = 0; else if (v > 1) v = 1;
-  VAudioPublic::snd_music_volume = v;
-  if (GAudio) GAudio->UpdateSounds();
-}
-
-IMPLEMENT_FUNCTION(VSoundSystem, get_SwapStereo) {
-  RET_BOOL(VAudioPublic::snd_swap_stereo);
-}
-
-IMPLEMENT_FUNCTION(VSoundSystem, set_SwapStereo) {
-  P_GET_BOOL(v);
-  VAudioPublic::snd_swap_stereo = v;
-  if (GAudio) GAudio->UpdateSounds();
-}
-
-
-// static native final bool PlayMusic (string filename, optional bool Loop);
-IMPLEMENT_FUNCTION(VSoundSystem, PlayMusic) {
-  P_GET_BOOL_OPT(loop, false);
-  P_GET_STR(filename);
-  VSoundManager::StaticInitialize();
-  if (GAudio) {
-    RET_BOOL(GAudio->PlayMusic(filename, loop));
-  } else {
-    RET_BOOL(false);
-  }
-}
-
-// static native final bool IsMusicPlaying ();
-IMPLEMENT_FUNCTION(VSoundSystem, IsMusicPlaying) {
-  VSoundManager::StaticInitialize();
-  RET_BOOL(GAudio ? GAudio->IsMusicPlaying() : false);
-}
-
-// static native final void PauseMusic ();
-IMPLEMENT_FUNCTION(VSoundSystem, PauseMusic) {
-  VSoundManager::StaticInitialize();
-  if (GAudio) GAudio->PauseMusic();
-}
-
-// static native final void ResumeMusic ();
-IMPLEMENT_FUNCTION(VSoundSystem, ResumeMusic) {
-  VSoundManager::StaticInitialize();
-  if (GAudio) GAudio->ResumeMusic();
-}
-
-// static native final void StopMusic ();
-IMPLEMENT_FUNCTION(VSoundSystem, StopMusic) {
-  VSoundManager::StaticInitialize();
-  if (GAudio) GAudio->StopMusic();
-}
-
-
-// static native final void SetMusicPitch (float pitch);
-IMPLEMENT_FUNCTION(VSoundSystem, SetMusicPitch) {
-  VSoundManager::StaticInitialize();
-  P_GET_FLOAT(pitch);
-  if (GAudio) GAudio->SetMusicPitch(pitch);
-}
-
-
-#define IMPLEMENT_VSS_PROPERTY(atype,name,varname) \
-IMPLEMENT_FUNCTION(VSoundSystem, get_##name) { RET_##atype(varname); } \
-IMPLEMENT_FUNCTION(VSoundSystem, set_##name) { P_GET_##atype(v); varname = v; }
-
-IMPLEMENT_VSS_PROPERTY(FLOAT, DopplerFactor, VSoundDevice::doppler_factor)
-IMPLEMENT_VSS_PROPERTY(FLOAT, DopplerVelocity, VSoundDevice::doppler_velocity)
-IMPLEMENT_VSS_PROPERTY(FLOAT, RolloffFactor, VSoundDevice::rolloff_factor)
-IMPLEMENT_VSS_PROPERTY(FLOAT, ReferenceDistance, VSoundDevice::reference_distance)
-IMPLEMENT_VSS_PROPERTY(FLOAT, MaxDistance, VSoundDevice::max_distance)
-IMPLEMENT_VSS_PROPERTY(INT, NumChannels, VAudioPublic::snd_channels)
-IMPLEMENT_VSS_PROPERTY(VEC, Sound2DPos, VSoundDevice::sound2d_pos)
-
-#undef IMPLEMENT_VSS_PROPERTY
+#include "snd_vcapi.cpp"

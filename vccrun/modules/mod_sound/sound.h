@@ -26,16 +26,7 @@
 #define VCCMOD_SOUND_HEADER_FILE
 
 #include "../../vcc_run.h"
-
 #include "../../filesys/fsys.h"
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-enum {
-  SNDDRV_OpenAL,
-
-  SNDDRV_MAX,
-};
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -43,13 +34,10 @@ enum {
 struct sfxinfo_t {
   VName tagName; // name, by whitch sound is recognised in script
 
-  int priority;  // higher priority takes precendence
-  int numChannels; // total number of channels a sound type may occupy
-  float changePitch;
-
-  bool bRandomHeader;
-  bool bPlayerReserve;
-  bool bSingular;
+  int priority; // higher priority takes precendence (can be modified by user)
+  int numChannels; // total number of channels a sound type may occupy (can be modified by user)
+  float changePitch; // if not zero, do pitch randomisation
+  bool bSingular; // if true, only one instance of this sound may play
 
   vuint32 sampleRate;
   int sampleBits;
@@ -68,12 +56,10 @@ public:
   virtual bool Init () = 0;
   virtual int SetChannels (int InNumChannels) = 0;
   virtual void Shutdown () = 0;
-  virtual int PlaySound (int sound_id, float volume, float sep, float pitch, bool Loop) = 0;
-  virtual int PlaySound3D (int sound_id, const TVec &origin, const TVec &velocity, float volume, float pitch, bool Loop) = 0;
-  virtual void UpdateChannel (int Handle, float vol, float sep) = 0;
-  virtual void UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel) = 0;
+  virtual int PlaySound3D (int sound_id, const TVec &origin, const TVec &velocity, float volume, float pitch, bool Loop, bool relative) = 0;
+  virtual void UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel, bool relative) = 0;
   virtual void UpdateChannelPitch (int Handle, float pitch) = 0;
-  virtual bool IsChannelPlaying (int Handle) = 0;
+  virtual bool IsChannelActive (int Handle) = 0;
   virtual void StopChannel (int Handle) = 0;
   virtual void PauseChannel (int Handle) = 0;
   virtual void ResumeChannel (int Handle) = 0;
@@ -99,27 +85,10 @@ public:
   static float rolloff_factor;
   static float reference_distance; // The distance under which the volume for the source would normally drop by half (before being influenced by rolloff factor or AL_MAX_DISTANCE)
   static float max_distance; // Used with the Inverse Clamped Distance Model to set the distance where there will no longer be any attenuation of the source
-  static TVec sound2d_pos;
 };
 
 
-// description of a sound driver
-struct FSoundDeviceDesc {
-  const char *Name;
-  const char *Description;
-  const char *CmdLineArg;
-  VSoundDevice *(*Creator) ();
-
-  FSoundDeviceDesc (int Type, const char *AName, const char *ADescription, const char *ACmdLineArg, VSoundDevice *(*ACreator)());
-};
-
-
-// sound device registration helper
-#define IMPLEMENT_SOUND_DEVICE(TClass, Type, Name, Description, CmdLineArg) \
-VSoundDevice *Create##TClass()  { \
-  return new TClass(); \
-} \
-FSoundDeviceDesc TClass##Desc(Type, Name, Description, CmdLineArg, Create##TClass);
+VSoundDevice *CreateVSoundDevice ();
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -224,7 +193,6 @@ public:
 
   void Init ();
   void Shutdown ();
-  //bool Tick (); // DON'T CALL THIS!!!
   void Play (VAudioCodec *InCodec, const VStr &InName, bool InLoop);
   void Pause ();
   void Resume ();
@@ -274,28 +242,27 @@ public:
   // 0: not found
   int FindSound (VName tagName);
 
+  // higher priority takes precendence (default: 0)
+  int GetSoundPriority (VName tagName);
+  void SetSoundPriority (VName tagName, int value);
+
+  // total number of channels a sound type may occupy (0 is unlimited, default)
+  int GetSoundChannels (VName tagName);
+  void SetSoundChannels (VName tagName, int value);
+
+  // if not zero, do pitch randomisation
+  // random value between [-1..1] will be multiplied by this, and added to default pitch (1.0)
+  float GetSoundRandomPitch (VName tagName);
+  void SetSoundRandomPitch (VName tagName, float value);
+
+  // if true, only one instance of this sound may play
+  bool GetSoundSingular (VName tagName);
+  void SetSoundSingular (VName tagName, bool value);
+
   static void StaticInitialize ();
   static void StaticShutdown ();
 
 private:
-  struct FPlayerSound {
-    int ClassId;
-    int GenderId;
-    int RefId;
-    int SoundId;
-  };
-
-  enum { NUM_AMBIENT_SOUNDS = 256 };
-
-  struct VMusicVolume {
-    VName SongName;
-    float Volume;
-  };
-
-  int NumPlayerReserves;
-  float CurrentChangePitch;
-  int SeqTrans[64*3];
-
   // mapping from sound name to sfx index
   TMap<VName, vint32> name2idx;
 
@@ -307,32 +274,65 @@ private:
 // main audio management class
 class VAudioPublic : public VInterface {
 public:
+  // change this before `UpdateSounds()`
+  TVec ListenerForward;
+  TVec ListenerRight;
+  TVec ListenerUp;
+  TVec ListenerOrigin;
+  TVec ListenerVelocity;
+
+public:
   // top level methods
   virtual void Init () = 0;
   virtual void Shutdown () = 0;
 
   // playback of sound effects
-  virtual int PlaySound (int sound_id, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float attenuation, float pitch, bool Loop) = 0;
-  virtual void StopChannel (int origin_id, int channel) = 0;
-  virtual void StopSound (int origin_id, int sound_id) = 0;
-  virtual void StopAllSound () = 0;
-  virtual bool IsChannelPlaying (int origin_id, int channel) = 0;
-  virtual bool IsSoundPlaying (int origin_id, int sound_id) = 0;
-  virtual bool IsChannelPaused (int origin_id, int channel) = 0;
+  virtual int PlaySound (int sound_id, const TVec &origin, const TVec &velocity, int origin_id, int channel,
+                         float volume, float attenuation, float pitch, bool Loop) = 0;
+
+  virtual bool IsSoundActive (int origin_id, int sound_id) = 0;
   virtual bool IsSoundPaused (int origin_id, int sound_id) = 0;
-  virtual void SetSoundPitch (int origin_id, int sound_id, float pitch) = 0;
-  virtual void PauseChannel (int origin_id, int channel) = 0;
+  virtual void StopSound (int origin_id, int sound_id) = 0;
   virtual void PauseSound (int origin_id, int sound_id) = 0;
   virtual void ResumeChannel (int origin_id, int channel) = 0;
+
+  virtual void SetSoundPitch (int origin_id, int sound_id, float pitch) = 0;
+  virtual void SetSoundOrigin (int origin_id, int sound_id, const TVec &origin) = 0;
+  virtual void SetSoundVelocity (int origin_id, int sound_id, const TVec &velocity) = 0;
+  virtual void SetSoundVolume (int origin_id, int sound_id, float volume) = 0;
+  virtual void SetSoundAttenuation (int origin_id, int sound_id, float attenuation) = 0;
+
+  virtual bool IsChannelActive (int origin_id, int channel) = 0;
+  virtual bool IsChannelPaused (int origin_id, int channel) = 0;
+  virtual void StopChannel (int origin_id, int channel) = 0;
+  virtual void PauseChannel (int origin_id, int channel) = 0;
   virtual void ResumeSound (int origin_id, int sound_id) = 0;
+
+  virtual void SetChannelPitch (int origin_id, int channel, float pitch) = 0;
+  virtual void SetChannelOrigin (int origin_id, int channel, const TVec &origin) = 0;
+  virtual void SetChannelVelocity (int origin_id, int channel, const TVec &velocity) = 0;
+  virtual void SetChannelVolume (int origin_id, int channel, float volume) = 0;
+  virtual void SetChannelAttenuation (int origin_id, int channel, float attenuation) = 0;
+
+  virtual void StopSounds () = 0;
   virtual void PauseSounds () = 0;
   virtual void ResumeSounds () = 0;
 
-  // general sound control
-  virtual void UpdateSounds () = 0;
+  // <0: not found
+  virtual int FindInternalChannelForSound (int origin_id, int sound_id) = 0;
+  virtual int FindInternalChannelForChannel (int origin_id, int channel) = 0;
 
-  // call this before `UpdateSounds()`
-  virtual void SetListenerOrigin (const TVec &aorigin) = 0;
+  virtual bool IsInternalChannelPlaying (int ichannel) = 0;
+  virtual bool IsInternalChannelPaused (int ichannel) = 0;
+  virtual void StopInternalChannel (int ichannel) = 0;
+  virtual void PauseInternalChannel (int ichannel) = 0;
+  virtual void ResumeInternalChannel (int ichannel) = 0;
+  virtual bool IsInternalChannelRelative (int ichannel) = 0;
+  virtual void SetInternalChannelRelative (int ichannel, bool relative) = 0;
+
+  // general sound control
+  // `frameDelta` used to update positions with velocity
+  virtual void UpdateSounds (float frameDelta) = 0;
 
   // music playback
   virtual bool PlayMusic (const VStr &filename, bool Loop) = 0;
@@ -349,6 +349,7 @@ public:
   static float snd_music_volume;
   static bool snd_swap_stereo;
   static int snd_channels;
+  static int snd_max_distance;
 };
 
 //extern VCvarB snd_mid_player;
@@ -356,6 +357,30 @@ public:
 
 extern VSoundManager *GSoundManager;
 extern VAudioPublic *GAudio;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VSoundSFXManager : public VObject {
+  DECLARE_CLASS(VSoundSFXManager, VObject, 0)
+  NO_DEFAULT_CONSTRUCTOR(VSoundSFXManager)
+
+public:
+  DECLARE_FUNCTION(AddSound)
+  DECLARE_FUNCTION(FindSound)
+
+  DECLARE_FUNCTION(GetSoundPriority)
+  DECLARE_FUNCTION(SetSoundPriority)
+
+  DECLARE_FUNCTION(GetSoundChannels)
+  DECLARE_FUNCTION(SetSoundChannels)
+
+  DECLARE_FUNCTION(GetSoundRandomPitch)
+  DECLARE_FUNCTION(SetSoundRandomPitch)
+
+  DECLARE_FUNCTION(GetSoundSingular)
+  DECLARE_FUNCTION(SetSoundSingular)
+};
+
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -372,28 +397,63 @@ public:
   DECLARE_FUNCTION(get_IsInitialized)
   //DECLARE_FUNCTION(Destroy)
 
-  DECLARE_FUNCTION(AddSound)
-  DECLARE_FUNCTION(FindSound)
+  DECLARE_FUNCTION(get_MaxHearingDistance)
+  DECLARE_FUNCTION(set_MaxHearingDistance)
 
-  DECLARE_FUNCTION(PlaySound)
-  DECLARE_FUNCTION(StopChannel)
-  DECLARE_FUNCTION(StopSound)
-  DECLARE_FUNCTION(StopAllSound)
-  DECLARE_FUNCTION(IsChannelPlaying)
-  DECLARE_FUNCTION(IsSoundPlaying)
-  DECLARE_FUNCTION(IsChannelPaused)
+  DECLARE_FUNCTION(IsSoundActive)
   DECLARE_FUNCTION(IsSoundPaused)
-  DECLARE_FUNCTION(SetSoundPitch)
-  DECLARE_FUNCTION(PauseChannel)
+  DECLARE_FUNCTION(PlaySound)
+  DECLARE_FUNCTION(StopSound)
   DECLARE_FUNCTION(PauseSound)
-  DECLARE_FUNCTION(ResumeChannel)
   DECLARE_FUNCTION(ResumeSound)
-  DECLARE_FUNCTION(PauseSounds)
-  DECLARE_FUNCTION(ResumeSounds)
+
+  DECLARE_FUNCTION(SetSoundPitch)
+  DECLARE_FUNCTION(SetSoundOrigin)
+  DECLARE_FUNCTION(SetSoundVelocity)
+  DECLARE_FUNCTION(SetSoundVolume)
+  DECLARE_FUNCTION(SetSoundAttenuation)
+
+  DECLARE_FUNCTION(IsChannelActive)
+  DECLARE_FUNCTION(IsChannelPaused)
+  DECLARE_FUNCTION(PauseChannel)
+  DECLARE_FUNCTION(ResumeChannel)
+
+  DECLARE_FUNCTION(SetChannelPitch)
+  DECLARE_FUNCTION(SetChannelOrigin)
+  DECLARE_FUNCTION(SetChannelVelocity)
+  DECLARE_FUNCTION(SetChannelVolume)
+  DECLARE_FUNCTION(SetChannelAttenuation)
+
+  DECLARE_FUNCTION(StopChannel)
 
   DECLARE_FUNCTION(UpdateSounds)
 
+  DECLARE_FUNCTION(StopSounds)
+  DECLARE_FUNCTION(PauseSounds)
+  DECLARE_FUNCTION(ResumeSounds)
+
+  DECLARE_FUNCTION(FindInternalChannelForSound)
+  DECLARE_FUNCTION(FindInternalChannelForChannel)
+
+  DECLARE_FUNCTION(IsInternalChannelPlaying)
+  DECLARE_FUNCTION(IsInternalChannelPaused)
+  DECLARE_FUNCTION(StopInternalChannel)
+  DECLARE_FUNCTION(PauseInternalChannel)
+  DECLARE_FUNCTION(ResumeInternalChannel)
+  DECLARE_FUNCTION(IsInternalChannelRelative)
+  DECLARE_FUNCTION(SetInternalChannelRelative)
+
+  DECLARE_FUNCTION(get_ListenerOrigin)
+  DECLARE_FUNCTION(get_ListenerVelocity)
+  DECLARE_FUNCTION(get_ListenerForward)
+  DECLARE_FUNCTION(get_ListenerRight)
+  DECLARE_FUNCTION(get_ListenerUp)
+
   DECLARE_FUNCTION(set_ListenerOrigin)
+  DECLARE_FUNCTION(set_ListenerVelocity)
+  DECLARE_FUNCTION(set_ListenerForward)
+  DECLARE_FUNCTION(set_ListenerRight)
+  DECLARE_FUNCTION(set_ListenerUp)
 
   DECLARE_FUNCTION(get_SoundVolume)
   DECLARE_FUNCTION(set_SoundVolume)
@@ -417,9 +477,6 @@ public:
   DECLARE_FUNCTION(set_ReferenceDistance)
   DECLARE_FUNCTION(get_MaxDistance)
   DECLARE_FUNCTION(set_MaxDistance)
-
-  DECLARE_FUNCTION(get_Sound2DPos)
-  DECLARE_FUNCTION(set_Sound2DPos)
 
   DECLARE_FUNCTION(get_DopplerFactor)
   DECLARE_FUNCTION(set_DopplerFactor)

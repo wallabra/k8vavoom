@@ -9,46 +9,120 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  **************************************************************************/
-class SoundSystem : Object abstract native;
+class SoundSFXManager : Object abstract native;
 
+// returns sound id or 0 if sound is not found
+// note that if sound loading is failed, this is not an error, and
+// sound id will still be allocated
+static native final int AddSound (name tagName, string filename); // won't replace
+static native final int FindSound (name tagName);
+
+// manipulate various sfx properties
+// it is better to set them immediately after `AddSound()`, otherwise
+// sound system may delay or ignore some changed values
+
+// higher priority takes precendence (default: 127)
+static native final int GetSoundPriority (name tagName);
+static native final void SetSoundPriority (name tagName, int value);
+
+// total number of channels a sound type may occupy (0 is unlimited; default is 2)
+static native final int GetSoundChannels (name tagName);
+static native final void SetSoundChannels (name tagName, int value);
+
+// if not zero, do pitch randomisation
+// random value between [-1..1] will be multiplied by this, and added to default pitch (1.0)
+static native final float GetSoundRandomPitch (name tagName);
+static native final void SetSoundRandomPitch (name tagName, float value);
+
+// if true, only one instance of this sound may play
+// the difference between this and one allowed occupied channel is that
+// singular sounds will not be replaced while playing, ever, but
+// sound with only one allowed channel can be restarted
+static native final bool GetSoundSingular (name tagName);
+static native final void SetSoundSingular (name tagName, bool value);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class SoundSystem : Object abstract native;
 
 static native final void Initialize ();
 static native final void Shutdown ();
 static native final int IsInitialized { get; }
 
-static native final int AddSound (name tagName, string filename); // won't replace
-static native final int FindSound (name tagName);
 
-// `channel` is a logical channel
+// this is used to determine sound priority, and to cut off too far-away sounds
+// this is distance from the listener origin
+static native final int MaxHearingDistance { get; set; } // default: 1200
+
+
+// this function adds a sound to the list of currently active sounds, which
+// is maintained as a given number of internal channels.
+// returns internal sound system channel number, which can be used in `*Internal*()` API, or
+// -1 in case of error.
+//
+// `channel` is a logical channel, in the range of [0..NumChannels)
+// if `channel` is -1 (or not specified), allocate new logical sound channel (and you don't know which one),
+// i.e. you can play several sounds for one `origin_id`, otherwise new sound will replace
+// already playing sound for the given `origin_id`
+// if `origin_id` is 0, this is local player sound, otherwise it is a user-defined entity id
 static native final void PlaySound (int sound_id, const TVec origin, optional const TVec velocity,
-  int origin_id, int channel, optional float volume, optional float attenuation,
+  int origin_id, optional int channel, optional float volume, optional float attenuation,
   optional float pitch, optional bool loop);
-static native final void StopChannel (int origin_id, int channel);
+
+// in the following functions, zero `channel` means "all channels with the given `origin_id`"
 static native final void StopSound (int origin_id, int sound_id);
-static native final void StopAllSound ();
-static native final bool IsChannelPlaying (int origin_id, int channel);
-static native final bool IsSoundPlaying (int origin_id, int sound_id);
-static native final bool IsChannelPaused (int origin_id, int channel);
+static native final bool IsSoundActive (int origin_id, int sound_id); // paused sounds considered "playing"
 static native final bool IsSoundPaused (int origin_id, int sound_id);
-static native final void SetSoundPitch (int origin_id, int sound_id, float pitch);
-static native final void UpdateSounds ();
-static native final void PauseChannel (int origin_id, int channel);
 static native final void PauseSound (int origin_id, int sound_id);
-static native final void ResumeChannel (int origin_id, int channel);
 static native final void ResumeSound (int origin_id, int sound_id);
+static native final void SetSoundPitch (int origin_id, int sound_id, float pitch);
+
+// `channel` is a same value that was passed to `PlaySound()`, but
+// if `channel` is -1, it means "all channels for the given `origin_id`"
+
+static native final void StopChannel (int origin_id, int channel);
+static native final void PauseChannel (int origin_id, int channel);
+static native final void ResumeChannel (int origin_id, int channel);
+static native final void SetChannelPitch (int origin_id, int channel, float pitch);
+
+// `channel` == -1: is any sound for the given `origin_id` is playing?
+static native final bool IsChannelActive (int origin_id, int channel);
+static native final bool IsChannelPaused (int origin_id, int channel);
+
+static native final int FindInternalChannelForSound (int origin_id, int sound_id);
+static native final int FindInternalChannelForChannel (int origin_id, int channel);
+
+static native final bool IsInternalChannelPlaying (int ichannel);
+static native final bool IsInternalChannelPaused (int ichannel);
+static native final void StopInternalChannel (int ichannel);
+static native final void PauseInternalChannel (int ichannel);
+static native final void ResumeInternalChannel (int ichannel);
+static native final bool IsInternalChannelRelative (int ichannel);
+static native final void SetInternalChannelRelative (int ichannel, bool relative);
+
+// `frameDelta` is used to move all sounds by their respective velocity*frameDelta
+static native final void UpdateSounds (optional float frameDelta);
+
+static native final void StopSounds ();
 static native final void PauseSounds ();
 static native final void ResumeSounds ();
 
 
 static native final bool PlayMusic (string filename, optional bool loop);
 static native final bool IsMusicPlaying ();
+static native final void SetMusicPitch (float pitch);
+
 static native final void PauseMusic ();
 static native final void ResumeMusic ();
 static native final void StopMusic ();
-static native final void SetMusicPitch (float pitch);
 
 
-static native final TVec ListenerOrigin { set; }
+static native final TVec ListenerOrigin { get; set; } // TVec(0, 0, 0)
+static native final TVec ListenerVelocity { get; set; } // TVec(0, 0, 0)
+// direction vectors, must be normalized
+static native final TVec ListenerForward { get; set; } // TVec(0, 0, -1)
+static native final TVec ListenerRight { get; set; } // TVec(1, 0, 0)
+static native final TVec ListenerUp { get; set; } // TVec(0, 1, 0)
 
 static native final float SoundVolume { get; set; }
 static native final float MusicVolume { get; set; }
@@ -59,9 +133,11 @@ static native final bool SwapStereo { get; set; } // not working yet
 static native final float RolloffFactor { get; set; }
 static native final float ReferenceDistance { get; set; }
 static native final float MaxDistance { get; set; }
-static native final TVec Sound2DPos { get; set; }
 
 // the following must be set BEFORE initializing the sound system
 static native final float DopplerFactor { get; set; }
 static native final float DopplerVelocity { get; set; }
+
+// this should be set before initializing audio subsystem
+// default value is 32, maximum value is 256
 static native final int NumChannels { get; set; }
