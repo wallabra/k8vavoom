@@ -39,12 +39,8 @@ To batch verify signatures:
   // valid[i] will be set to 1 if the individual signature was valid, 0 otherwise
   int all_valid = ed25519_sign_open_batch(mp, ml, pkp, sigp, num, valid) == 0;
 
-**Note**: Batch verification uses `ed25519_randombytes_unsafe`, implemented in
-`ed25519-randombytes.h`, to generate random scalars for the verification code.
-The default implementation now uses OpenSSLs `RAND_bytes`.
-
-Unlike the [SUPERCOP](http://bench.cr.yp.to/supercop.html) version, signatures are
-not appended to messages, and there is no need for padding in front of messages.
+Unlike the http://bench.cr.yp.to/supercop.html version, signatures are not
+appended to messages, and there is no need for padding in front of messages.
 Additionally, the secret key does not contain a copy of the public key, so it is
 32 bytes instead of 64 bytes, and the public key must be provided to the signing
 function.
@@ -77,18 +73,10 @@ void ed25519_sign(const unsigned char *m, size_t mlen, const ed25519_secret_key 
 
 int ed25519_sign_open_batch(const unsigned char **m, size_t *mlen, const unsigned char **pk, const unsigned char **RS, size_t num, int *valid);
 
-void ed25519_randombytes_unsafe(void *out, size_t count);
+void ed25519_randombytes(void *out, size_t count);
 
 void curved25519_scalarmult_basepoint(curved25519_key pk, const curved25519_key e);
 
-/*
-  a custom randombytes must implement:
-
-  void ED25519_FN(ed25519_randombytes_unsafe) (void *p, size_t len);
-
-  ed25519_randombytes_unsafe is used by the batch verification function
-  to create random scalars
-*/
 
 #if defined(__cplusplus)
 }
