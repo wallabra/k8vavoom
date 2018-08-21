@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include <signal.h>
 #include <time.h>
 
@@ -30,6 +29,10 @@
 
 #include "modules/mod_sound/sound.h"
 #include "modules/mod_console.h"
+
+#ifdef SERIALIZER_USE_LIBHA
+# include "filesys/halib/libha.h"
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1923,8 +1926,47 @@ IMPLEMENT_FUNCTION(VObject, appSetName) {
 }
 
 
-//native final bool appSaveOptions (Object optobj, optional string optfile);
+#ifdef SERIALIZER_USE_LIBHA
+static const char *LHABinStorageSignature = "VaVoom C Binary Data Storage V0"; // 32 bytes
+
+struct LHAIOData {
+  VStream *sin;
+  VStream *sout;
+};
+
+extern "C" {
+  // return number of bytes read; 0: EOF; <0: error; can be less than buf_len
+  static int lhaRead (void *buf, int buf_len, void *udata) {
+    LHAIOData *dd = (LHAIOData *)udata;
+    if (dd->sin->IsError()) return -1;
+    auto left = dd->sin->TotalSize()-dd->sin->Tell();
+    if (left == 0) return 0;
+    if (buf_len > left) buf_len = left;
+    dd->sin->Serialise(buf, buf_len);
+    if (dd->sin->IsError()) return -1;
+    return buf_len;
+  }
+
+  // result != buf_len: error
+  static int lhaWrite (const void *buf, int buf_len, void *udata) {
+    LHAIOData *dd = (LHAIOData *)udata;
+    if (dd->sout->IsError()) return -1;
+    dd->sout->Serialise(buf, buf_len);
+    if (dd->sout->IsError()) return -1;
+    return buf_len;
+  }
+
+  static libha_io_t lhaiostrm {
+    .bread = &lhaRead,
+    .bwrite = &lhaWrite,
+  };
+}
+#endif
+
+
+//native final bool appSaveOptions (Object optobj, optional string optfile, optional bool packit);
 IMPLEMENT_FUNCTION(VObject, appSaveOptions) {
+  P_GET_BOOL_OPT(packit, true);
   P_GET_STR_OPT(optfile, VStr());
   P_GET_REF(VObject, optobj);
   if (appName.isEmpty() || !optobj) { RET_BOOL(false); return; }
@@ -1935,10 +1977,48 @@ IMPLEMENT_FUNCTION(VObject, appSaveOptions) {
   if (fname.isEmpty()) { RET_BOOL(false); return; }
   auto strm = fsysOpenDiskFileWrite(fname);
   if (!strm) { RET_BOOL(false); return; }
+#ifdef SERIALIZER_USE_LIBHA
+  if (packit) {
+    auto wrs = new VStreamMemWrite();
+    ObjectSaver saver(*wrs, svmap);
+    bool res = saver.saveAll();
+    if (res && !saver.IsError()) {
+      strm->Serialise(LHABinStorageSignature, 32);
+      auto rds = new VStreamMemRead(wrs->getData(), wrs->Tell());
+      LHAIOData data;
+      data.sin = rds;
+      data.sout = strm;
+      libha_t lha = libha_alloc(&lhaiostrm, &data);
+      if (!lha) {
+        delete rds;
+        delete wrs;
+        delete strm;
+        RET_BOOL(false);
+        return;
+      }
+      auto herr = libha_pack(lha);
+      libha_free(lha);
+      delete rds;
+      delete wrs;
+      delete strm;
+      RET_BOOL(herr == LIBHA_ERR_OK);
+    } else {
+      delete wrs;
+      delete strm;
+      RET_BOOL(false);
+    }
+  } else {
+    ObjectSaver saver(*strm, svmap);
+    bool res = saver.saveAll();
+    delete strm;
+    RET_BOOL(res && !saver.IsError());
+  }
+#else
   ObjectSaver saver(*strm, svmap);
   bool res = saver.saveAll();
   delete strm;
   RET_BOOL(res && !saver.IsError());
+#endif
 }
 
 
@@ -1953,6 +2033,74 @@ IMPLEMENT_FUNCTION(VObject, appLoadOptions) {
   if (fname.isEmpty()) { RET_REF(nullptr); return; }
   auto strm = fsysOpenDiskFile(fname);
   if (!strm) { RET_REF(nullptr); return; }
+#ifdef SERIALIZER_USE_LIBHA
+  char sign[32];
+  strm->Serialise(sign, 32);
+  if (!strm->IsError() && memcmp(sign, LHABinStorageSignature, 32) == 0) {
+    // packed data
+    auto sz = strm->TotalSize()-strm->Tell();
+    auto xbuf = new vuint8[sz];
+    strm->Serialise(xbuf, sz);
+    bool rerr = strm->IsError();
+    delete strm;
+    if (rerr) {
+      delete xbuf;
+      RET_REF(nullptr);
+      return;
+    }
+    auto rds = new VStreamMemRead(xbuf, sz);
+    auto wrs = new VStreamMemWrite();
+    LHAIOData data;
+    data.sin = rds;
+    data.sout = wrs;
+    libha_t lha = libha_alloc(&lhaiostrm, &data);
+    if (!lha) {
+      delete rds;
+      delete wrs;
+      delete xbuf;
+      RET_REF(nullptr);
+      return;
+    }
+    auto herr = libha_unpack(lha);
+    libha_free(lha);
+    if (herr != LIBHA_ERR_OK) {
+      delete rds;
+      delete wrs;
+      delete xbuf;
+      RET_REF(nullptr);
+      return;
+    }
+    delete rds;
+    delete xbuf;
+    rds = new VStreamMemRead(wrs->getData(), wrs->Tell());
+    ObjectLoader ldr(*rds, cls);
+    bool uerr = !ldr.loadAll();
+    delete rds;
+    delete wrs;
+    if (uerr) {
+      ldr.clear();
+      RET_REF(nullptr);
+      return;
+    }
+    RET_REF(ldr.objarr[1]); // 0 is `none`
+  } else if (!strm->IsError() && memcmp(sign, BinStorageSignature, 32) == 0) {
+    // unpacked data
+    strm->Seek(0);
+    ObjectLoader ldr(*strm, cls);
+    if (!ldr.loadAll()) {
+      delete strm;
+      ldr.clear();
+      RET_REF(nullptr);
+      return;
+    }
+    delete strm;
+    RET_REF(ldr.objarr[1]); // 0 is `none`
+  } else {
+    // wutafuck?
+    delete strm;
+    RET_REF(nullptr);
+  }
+#else
   ObjectLoader ldr(*strm, cls);
   if (!ldr.loadAll()) {
     delete strm;
@@ -1962,5 +2110,6 @@ IMPLEMENT_FUNCTION(VObject, appLoadOptions) {
   }
   delete strm;
   //fprintf(stderr, "%p\n", ldr.objarr[1]);
-  RET_REF(ldr.objarr[1]);
+  RET_REF(ldr.objarr[1]); // 0 is `none`
+#endif
 }

@@ -969,6 +969,10 @@ VPartialStreamReader::~VPartialStreamReader () {
   mythread_mutex_destroy(&lock);
 }
 
+const VStr &VPartialStreamReader::GetName () const {
+  return (srcStream ? srcStream->GetName() : mEmptyName);
+}
+
 bool VPartialStreamReader::Close () {
   //if (srcStream) { delete srcStream; srcStream = nullptr; }
   srcStream = nullptr;
@@ -1388,3 +1392,93 @@ void *fsysOpenDir (const VStr &path) { return Sys_OpenDir(path); }
 VStr fsysReadDir (void *adir) { return Sys_ReadDir(adir); }
 void fsysCloseDir (void *adir) { Sys_CloseDir(adir); }
 double fsysCurrTick () { return Sys_Time(); }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VStreamMemRead::VStreamMemRead (const vuint8 *adata, vuint32 adatasize)
+  : data(adata)
+  , datasize(adatasize)
+  , pos(0)
+{
+  if (!data || datasize < 0) { data = nullptr; datasize = 0; }
+  bLoading = true;
+}
+
+VStreamMemRead::~VStreamMemRead () {
+}
+
+void VStreamMemRead::Serialise (void *buf, int count) {
+  if (bError) return;
+  if (count < 0) { setError(); return; }
+  if (count > datasize-pos) { setError(); return; }
+  memcpy(buf, data+pos, count);
+  pos += count;
+}
+
+void VStreamMemRead::Seek (int ofs) {
+       if (ofs < 0) ofs = 0;
+  else if (ofs > datasize) ofs = datasize;
+  pos = ofs;
+}
+
+int VStreamMemRead::Tell () { return pos; }
+int VStreamMemRead::TotalSize () { return datasize; }
+bool VStreamMemRead::AtEnd () { return (pos >= datasize); }
+bool VStreamMemRead::Close () { data = nullptr; datasize = pos = 0; return !bError; }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VStreamMemWrite::VStreamMemWrite (vint32 areservesize)
+  : data(nullptr)
+  , datasize(0)
+  , pos(0)
+{
+  bLoading = false;
+  if (areservesize > 0) {
+    data = (vuint8 *)malloc(areservesize);
+    if (!data) { bError = true; return; }
+    datasize = areservesize;
+  }
+}
+
+VStreamMemWrite::~VStreamMemWrite () { Close(); }
+
+void VStreamMemWrite::setError () {
+  bError = true;
+  if (data) free(data);
+  data = nullptr;
+  datasize = pos = 0;
+}
+
+void VStreamMemWrite::Serialise (void *buf, int count) {
+  if (bError) return;
+  if (count < 0) { setError(); return; }
+  if (pos > 0x3fffffff) { setError(); return; }
+  if (0x3fffffff-pos < count) { setError(); return; }
+  if (datasize-pos < count) {
+    vint32 ndsize = ((pos+count)|0x3ffff)+1;
+    vuint8 *nd = (vuint8 *)realloc(data, ndsize);
+    if (!nd) { setError(); return; }
+    data = nd;
+    datasize = ndsize;
+  }
+  memcpy(data+pos, buf, count);
+  pos += count;
+}
+
+void VStreamMemWrite::Seek (int ofs) {
+       if (ofs < 0) ofs = 0;
+  else if (ofs > datasize) ofs = datasize;
+  pos = ofs;
+}
+
+int VStreamMemWrite::Tell () { return pos; }
+int VStreamMemWrite::TotalSize () { return pos; }
+bool VStreamMemWrite::AtEnd () { return true; }
+
+bool VStreamMemWrite::Close () {
+  if (data) free(data);
+  data = nullptr;
+  datasize = pos = 0;
+  return !bError;
+}

@@ -161,7 +161,7 @@ native final static class FindClassByGameObjName (name aname, optional name pkgn
 // set application name -- it will be used to determine options and saves storage
 native final static void appSetName (string appname);
 // save options: this will save all non-trainsient POD object fields
-native final static bool appSaveOptions (Object optobj, optional string optfile);
+native final static bool appSaveOptions (Object optobj, optional string optfile, optional bool packit);
 // load options: this will load all non-trainsient POD object fields
 // returns `true` if options was succesfully loaded
 native final static spawner Object appLoadOptions (class cls, optional string optfile);

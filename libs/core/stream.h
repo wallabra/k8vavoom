@@ -63,17 +63,17 @@ public:
   virtual void Flush ();
   virtual bool Close ();
 
-  //  Interface functions for objects and classes streams.
+  // interface functions for objects and classes streams
   virtual VStream &operator << (VName &);
   virtual VStream &operator << (VObject *&);
   virtual void SerialiseStructPointer (void *&, VStruct *);
   virtual VStream &operator << (VMemberBase *&);
 
-  //  Serialise integers in particular byte order.
+  // serialise integers in particular byte order
   void SerialiseLittleEndian (void *, int);
   void SerialiseBigEndian (void*, int);
 
-  //  Stream serialisation operators.
+  // stream serialisation operators
   friend VStream &operator << (VStream &Strm, vint8 &Val) { Strm.Serialise(&Val, 1); return Strm; }
   friend VStream &operator << (VStream &Strm, vuint8 &Val) { Strm.Serialise(&Val, 1); return Strm; }
   friend VStream &operator << (VStream &Strm, vint16 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }

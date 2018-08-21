@@ -115,9 +115,11 @@ if (ENABLE_VCCRUN)
   )
 
   if(VCCRUN_HAXPAK)
+    add_definitions(-DSERIALIZER_USE_LIBHA=1)
     set(VCCRUN_FSYS_SOURCES
       ${VCCRUN_FSYS_SOURCES}
       filesys/pak/hax.cpp
+      filesys/halib/libha.c
     )
   endif(VCCRUN_HAXPAK)
 

@@ -227,6 +227,8 @@ public:
   // doesn't own passed stream
   VPartialStreamReader (VStream *ASrcStream, int astpos, int apartlen=-1, FSysDriverBase *aDriver=nullptr);
   virtual ~VPartialStreamReader () override;
+
+  virtual const VStr &GetName () const override;
   virtual void Serialise (void *, int) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
@@ -321,6 +323,54 @@ public:
   virtual void Serialise (void *, int) override;
   virtual void Seek (int) override;
   virtual void Flush () override;
+  virtual bool Close () override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VStreamMemRead : public VStream {
+private:
+  const vuint8 *data;
+  vint32 datasize;
+  vint32 pos;
+
+private:
+  void setError () { bError = true; data = nullptr; datasize = pos = 0; }
+
+public:
+  VStreamMemRead (const vuint8 *adata, vuint32 adatasize);
+  virtual ~VStreamMemRead () override;
+
+  virtual void Serialise (void *buf, int count) override;
+  virtual void Seek (int ofs) override;
+  virtual int Tell () override;
+  virtual int TotalSize () override;
+  virtual bool AtEnd () override;
+  virtual bool Close () override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VStreamMemWrite : public VStream {
+private:
+  vuint8 *data;
+  vint32 datasize;
+  vint32 pos;
+
+private:
+  void setError ();
+
+public:
+  VStreamMemWrite (vint32 areservesize=-1);
+  virtual ~VStreamMemWrite () override;
+
+  inline vuint8 *getData () { return data; }
+
+  virtual void Serialise (void *buf, int count) override;
+  virtual void Seek (int ofs) override;
+  virtual int Tell () override;
+  virtual int TotalSize () override;
+  virtual bool AtEnd () override;
   virtual bool Close () override;
 };
 
