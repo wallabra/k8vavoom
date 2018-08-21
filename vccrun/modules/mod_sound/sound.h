@@ -64,7 +64,7 @@ public:
   virtual void StopChannel (int Handle) = 0;
   virtual void PauseChannel (int Handle) = 0;
   virtual void ResumeChannel (int Handle) = 0;
-  virtual void UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec&, const TVec &up) = 0;
+  virtual void UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec &up) = 0;
 
   // all stream functions should be thread-safe
   virtual bool OpenStream (int Rate, int Bits, int Channels) = 0;
@@ -163,6 +163,9 @@ public:
   mythread_cond stpCondPong;
   float lastVolume;
   bool threadInited;
+
+  // sadly, we cannot share OpenAL between different threads: it is not working right
+  //void *udata;
 
 public:
   bool StrmOpened;
@@ -275,9 +278,9 @@ private:
 // main audio management class
 class VAudioPublic : public VInterface {
 public:
-  // change this before `UpdateSounds()`
+  // lock updates before changing this!
+  // TODO: wrap in API
   TVec ListenerForward;
-  TVec ListenerRight;
   TVec ListenerUp;
   TVec ListenerOrigin;
   TVec ListenerVelocity;
@@ -331,10 +334,6 @@ public:
   virtual bool IsInternalChannelRelative (int ichannel) = 0;
   virtual void SetInternalChannelRelative (int ichannel, bool relative) = 0;
 
-  // general sound control
-  // `frameDelta` used to update positions with velocity
-  virtual void UpdateSounds (float frameDelta) = 0;
-
   // music playback
   virtual bool PlayMusic (const VStr &filename, bool Loop) = 0;
   virtual bool IsMusicPlaying () = 0;
@@ -342,6 +341,10 @@ public:
   virtual void ResumeMusic () = 0;
   virtual void StopMusic () = 0;
   virtual void SetMusicPitch (float pitch) = 0;
+
+  // balance this!
+  virtual void LockUpdates () = 0;
+  virtual void UnlockUpdates () = 0;
 
   static VAudioPublic *Create ();
 
@@ -427,8 +430,6 @@ public:
 
   DECLARE_FUNCTION(StopChannel)
 
-  DECLARE_FUNCTION(UpdateSounds)
-
   DECLARE_FUNCTION(StopSounds)
   DECLARE_FUNCTION(PauseSounds)
   DECLARE_FUNCTION(ResumeSounds)
@@ -444,16 +445,17 @@ public:
   DECLARE_FUNCTION(IsInternalChannelRelative)
   DECLARE_FUNCTION(SetInternalChannelRelative)
 
+  DECLARE_FUNCTION(LockUpdates)
+  DECLARE_FUNCTION(UnlockUpdates)
+
   DECLARE_FUNCTION(get_ListenerOrigin)
   DECLARE_FUNCTION(get_ListenerVelocity)
   DECLARE_FUNCTION(get_ListenerForward)
-  DECLARE_FUNCTION(get_ListenerRight)
   DECLARE_FUNCTION(get_ListenerUp)
 
   DECLARE_FUNCTION(set_ListenerOrigin)
   DECLARE_FUNCTION(set_ListenerVelocity)
   DECLARE_FUNCTION(set_ListenerForward)
-  DECLARE_FUNCTION(set_ListenerRight)
   DECLARE_FUNCTION(set_ListenerUp)
 
   DECLARE_FUNCTION(get_SoundVolume)

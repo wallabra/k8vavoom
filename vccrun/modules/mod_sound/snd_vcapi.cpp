@@ -199,12 +199,6 @@ IMPLEMENT_FUNCTION(VSoundSystem, ResumeChannel) {
 }
 
 
-// static native final void UpdateSounds (optional float frameDelta);
-IMPLEMENT_FUNCTION(VSoundSystem, UpdateSounds) {
-  P_GET_FLOAT_OPT(frameDelta, 0);
-  if (GAudio) GAudio->UpdateSounds(frameDelta);
-}
-
 // static native final void PauseSounds ();
 IMPLEMENT_FUNCTION(VSoundSystem, PauseSounds) {
   if (GAudio) GAudio->PauseSounds();
@@ -296,14 +290,33 @@ IMPLEMENT_FUNCTION(VSoundSystem, SetInternalChannelRelative) {
   if (GAudio) GAudio->SetInternalChannelRelative(ichannel, relative);
 }
 
+
+IMPLEMENT_FUNCTION(VSoundSystem, LockUpdates) {
+  if (GAudio) GAudio->LockUpdates();
+}
+
+IMPLEMENT_FUNCTION(VSoundSystem, UnlockUpdates) {
+  if (GAudio) GAudio->UnlockUpdates();
+}
+
+
 #define IMPLEMENT_VSS_LISTENER_PROPERTY(name) \
-IMPLEMENT_FUNCTION(VSoundSystem, get_Listener##name) { P_GET_VEC(v); if (GAudio) GAudio->Listener##name = v; } \
-IMPLEMENT_FUNCTION(VSoundSystem, set_Listener##name) { if (GAudio) RET_VEC(GAudio->Listener##name); else RET_VEC(TVec(0, 0, 0)); }
+  IMPLEMENT_FUNCTION(VSoundSystem, set_Listener##name) { \
+    P_GET_VEC(v); \
+    if (GAudio) { \
+      GAudio->LockUpdates(); \
+      GAudio->Listener##name = v; \
+      GAudio->UnlockUpdates(); \
+    } \
+  } \
+  \
+  IMPLEMENT_FUNCTION(VSoundSystem, get_Listener##name) { \
+    if (GAudio) RET_VEC(GAudio->Listener##name); else RET_VEC(TVec(0, 0, 0)); \
+  }
 
 IMPLEMENT_VSS_LISTENER_PROPERTY(Origin)
 IMPLEMENT_VSS_LISTENER_PROPERTY(Velocity)
 IMPLEMENT_VSS_LISTENER_PROPERTY(Forward)
-IMPLEMENT_VSS_LISTENER_PROPERTY(Right)
 IMPLEMENT_VSS_LISTENER_PROPERTY(Up)
 
 #undef IMPLEMENT_VSS_LISTENER_PROPERTY
@@ -316,8 +329,9 @@ IMPLEMENT_FUNCTION(VSoundSystem, get_SoundVolume) {
 IMPLEMENT_FUNCTION(VSoundSystem, set_SoundVolume) {
   P_GET_FLOAT(v);
   if (v < 0) v = 0; else if (v > 1) v = 1;
+  if (GAudio) GAudio->LockUpdates();
   VAudioPublic::snd_sfx_volume = v;
-  if (GAudio) GAudio->UpdateSounds(0);
+  if (GAudio) GAudio->UnlockUpdates();
 }
 
 IMPLEMENT_FUNCTION(VSoundSystem, get_MusicVolume) {
@@ -327,8 +341,9 @@ IMPLEMENT_FUNCTION(VSoundSystem, get_MusicVolume) {
 IMPLEMENT_FUNCTION(VSoundSystem, set_MusicVolume) {
   P_GET_FLOAT(v);
   if (v < 0) v = 0; else if (v > 1) v = 1;
+  if (GAudio) GAudio->LockUpdates();
   VAudioPublic::snd_music_volume = v;
-  if (GAudio) GAudio->UpdateSounds(0);
+  if (GAudio) GAudio->UnlockUpdates();
 }
 
 IMPLEMENT_FUNCTION(VSoundSystem, get_SwapStereo) {
@@ -337,8 +352,9 @@ IMPLEMENT_FUNCTION(VSoundSystem, get_SwapStereo) {
 
 IMPLEMENT_FUNCTION(VSoundSystem, set_SwapStereo) {
   P_GET_BOOL(v);
+  if (GAudio) GAudio->LockUpdates();
   VAudioPublic::snd_swap_stereo = v;
-  if (GAudio) GAudio->UpdateSounds(0);
+  if (GAudio) GAudio->UnlockUpdates();
 }
 
 
@@ -408,5 +424,7 @@ IMPLEMENT_FUNCTION(VSoundSystem, set_MaxHearingDistance) {
   P_GET_INT(v);
   if (GAudio || v < 0) return;
   if (v > 0x000fffff) v = 0x000fffff;
+  if (GAudio) GAudio->LockUpdates();
   VAudioPublic::snd_max_distance = v;
+  if (GAudio) GAudio->UnlockUpdates();
 }

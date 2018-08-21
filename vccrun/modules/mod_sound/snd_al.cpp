@@ -37,6 +37,11 @@
 
 #include "sound.h"
 
+//#define DEBUG_DUMP
+#define USE_DOPPLER
+#define USE_ROLLOFF
+#define USE_DISTANCES
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VOpenALDevice : public VSoundDevice {
@@ -67,6 +72,9 @@ private:
   ALuint StrmSource;
   short StrmDataBuffer[STRM_BUFFER_SIZE*2];
 
+  // for debugging
+  TVec listenerPos;
+
 public:
   // VSoundDevice interface
   virtual bool Init () override;
@@ -80,7 +88,7 @@ public:
   virtual void StopChannel (int Handle) override;
   virtual void PauseChannel (int Handle) override;
   virtual void ResumeChannel (int Handle) override;
-  virtual void UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec&, const TVec &up) override;
+  virtual void UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec &up) override;
 
   // OpenAL is thread-safe, so we have nothing special to do here
   virtual bool OpenStream (int Rate, int Bits, int Channels) override;
@@ -100,7 +108,7 @@ public:
 };
 
 float VSoundDevice::doppler_factor = 1.0f;
-float VSoundDevice::doppler_velocity = 10000.0f;
+float VSoundDevice::doppler_velocity = 343.3f; //10000.0f;
 float VSoundDevice::rolloff_factor = 1.0f;
 float VSoundDevice::reference_distance = 32.0f; // The distance under which the volume for the source would normally drop by half (before being influenced by rolloff factor or AL_MAX_DISTANCE)
 float VSoundDevice::max_distance = 800.0f; // Used with the Inverse Clamped Distance Model to set the distance where there will no longer be any attenuation of the source
@@ -154,9 +162,10 @@ bool VOpenALDevice::Init () {
   E = alGetError();
   if (E != AL_NO_ERROR) Sys_Error("OpenAL error: %s", alGetString(E));
 
-  // allocate array for buffers
-  //Buffers = new ALuint[GSoundManager->S_sfx.length()];
-  //memset(Buffers, 0, sizeof(ALuint)*GSoundManager->S_sfx.length());
+  alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
+  //alDistanceModel(AL_LINEAR_DISTANCE_CLAMPED);
+
+  listenerPos = TVec(0, 0, 0);
 
   return true;
 }
@@ -296,29 +305,39 @@ int VOpenALDevice::PlaySound3D (int sound_id, const TVec &origin, const TVec &ve
   if (alGetError() != AL_NO_ERROR) { alDeleteSources(1, &src); fprintf(stderr, "WARNING: failed to set sound source buffer.\n"); return -1; }
 
   alSourcef(src, AL_GAIN, volume);
+#if defined(USE_ROLLOFF)
   alSourcef(src, AL_ROLLOFF_FACTOR, rolloff_factor);
+#endif
   alSourcei(src, AL_SOURCE_RELATIVE, (relative ? AL_TRUE : AL_FALSE));
   alSource3f(src, AL_POSITION, origin.x, origin.y, origin.z);
   alSource3f(src, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
+#if defined(USE_DISTANCES)
   alSourcef(src, AL_REFERENCE_DISTANCE, reference_distance);
   alSourcef(src, AL_MAX_DISTANCE, max_distance);
+#endif
   alSourcef(src, AL_PITCH, pitch);
   if (Loop) alSourcei(src, AL_LOOPING, AL_TRUE);
   if (alGetError() != AL_NO_ERROR) { alDeleteSources(1, &src); fprintf(stderr, "WARNING: failed to set sound source options.\n"); return -1; }
   alSourcePlay(src);
   if (alGetError() != AL_NO_ERROR) { alDeleteSources(1, &src); fprintf(stderr, "WARNING: failed to start sound source.\n"); return -1; }
 
-  /*
+#if defined(DEBUG_DUMP)
   ALint stt;
   alGetSourcei(src, AL_SOURCE_STATE, &stt);
   fprintf(stderr, "3d: stt=%d 0x%04x (%d)\n", stt, (unsigned)stt, (int)(stt == AL_PLAYING));
   fprintf(stderr, "  volume=%f\n", (double)volume);
+#if defined(USE_ROLLOFF)
   fprintf(stderr, "  rolloff_factor=%f\n", (double)rolloff_factor);
-  fprintf(stderr, "  origin=(%f,%f,%f)\n", (double)origin.x, origin.y, origin.z);
+#endif
+  fprintf(stderr, "  origin  =(%f,%f,%f)\n", (double)origin.x, origin.y, origin.z);
+  fprintf(stderr, "  listener=(%f,%f,%f)\n", (double)listenerPos.x, listenerPos.y, listenerPos.z);
+#if defined(USE_DISTANCES)
   fprintf(stderr, "  reference_distance=%f\n", (double)reference_distance);
   fprintf(stderr, "  max_distance=%f\n", (double)max_distance);
+#endif
   fprintf(stderr, "  pitch=%f\n", (double)pitch);
-  */
+  fprintf(stderr, "  relative=%s\n", (relative ? "tan" : "ona"));
+#endif
 
   return src;
 }
@@ -331,9 +350,11 @@ int VOpenALDevice::PlaySound3D (int sound_id, const TVec &origin, const TVec &ve
 //==========================================================================
 void VOpenALDevice::UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel, bool relative) {
   if (Handle == -1) return;
+  /*
   alSource3f(Handle, AL_POSITION, Org.x, Org.y, Org.z);
   alSource3f(Handle, AL_VELOCITY, Vel.x, Vel.y, Vel.z);
   alSourcei(Handle, AL_SOURCE_RELATIVE, (relative ? AL_TRUE : AL_FALSE));
+  */
 }
 
 
@@ -412,15 +433,28 @@ void VOpenALDevice::ResumeChannel (int Handle) {
 //  VOpenALDevice::UpdateListener
 //
 //==========================================================================
-void VOpenALDevice::UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec&, const TVec &up) {
+void VOpenALDevice::UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec &up) {
+  listenerPos = org;
+
+  alGetError(); // clear error code
+
   alListener3f(AL_POSITION, org.x, org.y, org.z);
+  //ALenum err = alGetError();
+  //if (err != AL_NO_ERROR) fprintf(stderr, "WARNING: failed to set listener position (0x%04X).\n", err);
+
   alListener3f(AL_VELOCITY, vel.x, vel.y, vel.z);
+  //err = alGetError();
+  //if (err != AL_NO_ERROR) fprintf(stderr, "WARNING: failed to set listener velocity (0x%04X).\n", err);
 
   ALfloat orient[6] = { fwd.x, fwd.y, fwd.z, up.x, up.y, up.z};
   alListenerfv(AL_ORIENTATION, orient);
+  //err = alGetError();
+  //if (err != AL_NO_ERROR) fprintf(stderr, "WARNING: failed to set listener orientation (0x%04X).\n", err);
 
+#if defined(USE_DOPPLER)
   alDopplerFactor(doppler_factor);
   alDopplerVelocity(doppler_velocity);
+#endif
 }
 
 

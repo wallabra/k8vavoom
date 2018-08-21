@@ -100,9 +100,6 @@ static native final void ResumeInternalChannel (int ichannel);
 static native final bool IsInternalChannelRelative (int ichannel);
 static native final void SetInternalChannelRelative (int ichannel, bool relative);
 
-// `frameDelta` is used to move all sounds by their respective velocity*frameDelta
-static native final void UpdateSounds (optional float frameDelta);
-
 static native final void StopSounds ();
 static native final void PauseSounds ();
 static native final void ResumeSounds ();
@@ -117,11 +114,17 @@ static native final void ResumeMusic ();
 static native final void StopMusic ();
 
 
+// just in case you want to do alot of different updates, use this
+// don't forget to balance it
+// recursive update locking is allowed
+static native final void LockUpdates ();
+static native final void UnlockUpdates ();
+
+
 static native final TVec ListenerOrigin { get; set; } // TVec(0, 0, 0)
 static native final TVec ListenerVelocity { get; set; } // TVec(0, 0, 0)
 // direction vectors, must be normalized
 static native final TVec ListenerForward { get; set; } // TVec(0, 0, -1)
-static native final TVec ListenerRight { get; set; } // TVec(1, 0, 0)
 static native final TVec ListenerUp { get; set; } // TVec(0, 1, 0)
 
 static native final float SoundVolume { get; set; }
@@ -130,8 +133,13 @@ static native final bool SwapStereo { get; set; } // not working yet
 
 
 // those affecting each new sound
+// the rolloff rate (default: 1.0)
 static native final float RolloffFactor { get; set; }
+// the distance under which the volume for the source would normally drop by half
+// (before being influenced by rolloff factor or AL_MAX_DISTANCE)
 static native final float ReferenceDistance { get; set; }
+// used with the Inverse Clamped Distance Model to set the distance where there
+// will no longer be any attenuation of the source
 static native final float MaxDistance { get; set; }
 
 // the following must be set BEFORE initializing the sound system
