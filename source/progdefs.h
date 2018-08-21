@@ -84,7 +84,7 @@ enum {
 #ifndef OPCODE_INFO
 
 #define PROG_MAGIC    "VPRG"
-#define PROG_VERSION  (47)
+#define PROG_VERSION  (48)
 
 enum {
   OPCARGS_None,
@@ -164,7 +164,7 @@ enum {
   DECLARE_OPC(PushNumber0, None),
   DECLARE_OPC(PushNumber1, None),
   DECLARE_OPC(PushNumberB, Byte),
-  DECLARE_OPC(PushNumberS, Short),
+  //DECLARE_OPC(PushNumberS, Short),
   DECLARE_OPC(PushNumber, Int),
   DECLARE_OPC(PushName, Name),
   DECLARE_OPC(PushNameS, NameS),
@@ -301,6 +301,8 @@ enum {
   DECLARE_OPC(ByteXOrVarDrop, None),
   DECLARE_OPC(ByteLShiftVarDrop, None),
   DECLARE_OPC(ByteRShiftVarDrop, None),
+
+  DECLARE_OPC(CatAssignVarDrop, None),
 
   // floating point operators
   DECLARE_OPC(FAdd, None),

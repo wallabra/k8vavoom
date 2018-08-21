@@ -491,7 +491,7 @@ void VEmitContext::EmitPushNumber (int Val, const TLocation &aloc) {
        if (Val == 0) AddStatement(OPC_PushNumber0, aloc);
   else if (Val == 1) AddStatement(OPC_PushNumber1, aloc);
   else if (Val >= 0 && Val < 256) AddStatement(OPC_PushNumberB, Val, aloc);
-  else if (Val >= MIN_VINT16 && Val <= MAX_VINT16) AddStatement(OPC_PushNumberS, Val, aloc);
+  //else if (Val >= MIN_VINT16 && Val <= MAX_VINT16) AddStatement(OPC_PushNumberS, Val, aloc);
   else AddStatement(OPC_PushNumber, Val, aloc);
 }
 

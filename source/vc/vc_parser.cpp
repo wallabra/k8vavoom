@@ -921,6 +921,7 @@ VExpression *VParser::ParseExpressionPriority14 (bool allowAssign) {
   else if (Lex.Check(TK_LShiftAssign)) oper = VAssignment::LShiftAssign;
   else if (Lex.Check(TK_RShiftAssign)) oper = VAssignment::RShiftAssign;
   else if (Lex.Check(TK_URShiftAssign)) oper = VAssignment::URShiftAssign;
+  else if (Lex.Check(TK_CatAssign)) oper = VAssignment::CatAssign;
   else return op1;
   // parse `n = delegate ...`
   VExpression *op2 = ParseExpressionPriority13();

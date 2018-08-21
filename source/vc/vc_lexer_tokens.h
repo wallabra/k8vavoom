@@ -119,6 +119,7 @@
   VC_LEXER_DEFTOKEN(AndAssign,      "&=")
   VC_LEXER_DEFTOKEN(OrAssign,       "|=")
   VC_LEXER_DEFTOKEN(XOrAssign,      "^=")
+  VC_LEXER_DEFTOKEN(CatAssign,      "~=")
   VC_LEXER_DEFTOKEN(Equals,         "==")
   VC_LEXER_DEFTOKEN(NotEquals,      "!=")
   VC_LEXER_DEFTOKEN(LessEquals,     "<=")

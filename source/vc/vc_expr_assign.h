@@ -40,6 +40,7 @@ public:
     LShiftAssign,
     RShiftAssign,
     URShiftAssign,
+    CatAssign,
   };
 
 public:

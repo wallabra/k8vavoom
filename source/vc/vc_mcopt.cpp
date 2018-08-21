@@ -333,7 +333,7 @@ struct Instr {
       case OPC_PushNumber0:
       case OPC_PushNumber1:
       case OPC_PushNumberB:
-      case OPC_PushNumberS:
+      //case OPC_PushNumberS:
       case OPC_PushNumber:
         return true;
     }
@@ -348,8 +348,10 @@ struct Instr {
         return 1;
       case OPC_PushNumberB:
         return Arg1&0xff;
+      /*
       case OPC_PushNumberS:
         return (vint32)(vint16)(Arg1&0xffff);
+      */
       case OPC_PushNumber:
         return Arg1;
     }
@@ -420,7 +422,7 @@ struct Instr {
       case OPC_PushNumber0:
       case OPC_PushNumber1:
       case OPC_PushNumberB:
-      case OPC_PushNumberS:
+      //case OPC_PushNumberS:
       case OPC_PushNumber:
       case OPC_PushName:
       case OPC_PushNameS:
@@ -610,6 +612,10 @@ struct Instr {
       case OPC_ByteXOrVarDrop:
       case OPC_ByteLShiftVarDrop:
       case OPC_ByteRShiftVarDrop:
+        spdelta = -2;
+        return;
+
+      case OPC_CatAssignVarDrop:
         spdelta = -2;
         return;
 

@@ -555,11 +555,13 @@ func_loop:
         ++sp;
         PR_VM_BREAK;
 
+      /*
       PR_VM_CASE(OPC_PushNumberS)
         sp->i = ReadInt16(ip+1);
         ip += 3;
         ++sp;
         PR_VM_BREAK;
+      */
 
       PR_VM_CASE(OPC_PushNumber)
         sp->i = ReadInt32(ip+1);
@@ -1362,6 +1364,15 @@ func_loop:
 
       PR_VM_CASE(OPC_ByteRShiftVarDrop)
         ASSIGNOP(vuint8, i, >>=);
+        PR_VM_BREAK;
+
+      // [-1] src
+      // [-2] dest
+      PR_VM_CASE(OPC_CatAssignVarDrop)
+        ++ip;
+        *(VStr *)sp[-2].p += *(VStr *)&sp[-1].p;
+        ((VStr *)&sp[-1].p)->Clean();
+        sp -= 2;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FAdd)
