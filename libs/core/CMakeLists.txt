@@ -45,4 +45,5 @@ add_library(core STATIC
   minipng.cpp
   syslow.h
   syslow.cpp
+  poly1305-donna.c
 )
