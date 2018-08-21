@@ -121,6 +121,24 @@ VStr TLocation::toStringNoCol () const {
 
 //==========================================================================
 //
+//  TLocation::toStringLineCol
+//
+//==========================================================================
+VStr TLocation::toStringLineCol () const {
+  if (GetLine()) {
+    if (GetCol() > 0) {
+      return VStr(GetLine())+":"+VStr(GetCol());
+    } else {
+      return VStr(GetLine())+":1";
+    }
+  } else {
+    return VStr("(nowhere)");
+  }
+}
+
+
+//==========================================================================
+//
 //  operator << (TLocation)
 //
 //==========================================================================

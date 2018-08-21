@@ -28,6 +28,22 @@
 
 //==========================================================================
 //
+//  VParser::ErrorFieldTypeExpected
+//
+//==========================================================================
+void VParser::ErrorFieldTypeExpected () {
+  if (inCompound) {
+    ParseError(lastCompoundStart, "Probably unclosed compound (field type expected at %s)", *Lex.Location.toStringLineCol());
+  } else if (hasCompoundEnd) {
+    ParseError(lastCompoundEnd, "Probably closing unopened compound (field type expected at %s)", *Lex.Location.toStringLineCol());
+  } else {
+    ParseError(Lex.Location, "Field type expected");
+  }
+}
+
+
+//==========================================================================
+//
 //  VParser::ParseArgList
 //
 //  `(` already eaten
@@ -1480,8 +1496,26 @@ VStatement *VParser::ParseStatement () {
 //==========================================================================
 VCompound *VParser::ParseCompoundStatement () {
   guard(VParser::ParseCompoundStatement);
+  auto savedLCS = lastCompoundStart;
+  auto savedIC = inCompound;
+  lastCompoundStart = Lex.Location;
+  inCompound = true;
   VCompound *Comp = new VCompound(Lex.Location);
-  while (!Lex.Check(TK_RBrace)) Comp->Statements.Append(ParseStatement());
+  for (;;) {
+    if (Lex.Token == TK_EOF) {
+      ParseError(lastCompoundStart, "Missing closing `}` for opening `{`");
+      break;
+    }
+    if (Lex.Token == TK_RBrace) {
+      lastCompoundEnd = Lex.Location;
+      hasCompoundEnd = true;
+      Lex.NextToken();
+      break;
+    }
+    Comp->Statements.Append(ParseStatement());
+  }
+  lastCompoundStart = savedLCS;
+  inCompound = savedIC;
   return Comp;
   unguard;
 }
@@ -2040,7 +2074,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
 
     VExpression *Type = ParseType(true); // delegates allowed
     if (!Type) {
-      ParseError(Lex.Location, "Field type expected");
+      ErrorFieldTypeExpected();
       Lex.NextToken();
       continue;
     }
@@ -3784,7 +3818,7 @@ void VParser::ParseClass () {
     if (Lex.Check(TK_Delegate)) {
       VExpression *Type = ParseTypeWithPtrs();
       if (!Type) {
-        ParseError(Lex.Location, "Field type expected");
+        ErrorFieldTypeExpected();
         continue;
       }
       if (Lex.Token != TK_Identifier) {
@@ -3851,7 +3885,7 @@ void VParser::ParseClass () {
 
     VExpression *Type = ParseType(true);
     if (!Type) {
-      ParseError(Lex.Location, "Field type expected");
+      ErrorFieldTypeExpected();
       Lex.NextToken();
       continue;
     }
@@ -4121,6 +4155,8 @@ void VParser::Parse () {
   guard(VParser::Parse);
   dprintf("Parsing\n");
   anonLocalCount = 0;
+  inCompound = false;
+  hasCompoundEnd = false;
   currSwitch = nullptr;
   Lex.NextToken();
   bool done = false;

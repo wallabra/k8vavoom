@@ -47,6 +47,7 @@ public:
 
   VStr toString () const;
   VStr toStringNoCol () const;
+  VStr toStringLineCol () const;
 
   inline void ConsumeChar (bool doNewline) {
     if (doNewline) { ++Loc; Col = 1; } else ++Col;

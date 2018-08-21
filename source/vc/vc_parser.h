@@ -40,6 +40,16 @@ private:
   bool CheckForLocal;
   int anonLocalCount;
 
+  // for error reporting
+  TLocation lastCompoundStart;
+  bool inCompound;
+
+  TLocation lastCompoundEnd;
+  bool hasCompoundEnd;
+
+private:
+  void ErrorFieldTypeExpected ();
+
   // not more than `MAX_PARAMS`; returns argc
   int ParseArgList (const TLocation &stloc, VExpression **argv);
   VExpression *ParseDotMethodCall (VExpression *, VName, const TLocation &);
