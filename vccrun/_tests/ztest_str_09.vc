@@ -1,0 +1,9 @@
+// ////////////////////////////////////////////////////////////////////////// //
+class Main : Object;
+
+static void main () {
+  string s = "abcdef";
+  writeln(s.length, ":<", s, ">");
+  s ~= "-boo";
+  writeln(s.length, ":<", s, ">");
+}
