@@ -46,4 +46,5 @@ add_library(core STATIC
   syslow.h
   syslow.cpp
   poly1305-donna.c
+  ed25519.c
 )
