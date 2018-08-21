@@ -41,6 +41,7 @@
 #include "jh32.h"
 #include "rg32.h"
 #include "xxhash32.h"
+#include "chacha20.h"
 #include "zone.h"   //  Zone memory allocation
 #include "endian.h"   //  Endianes handling
 #include "names.h"    //  Built-in names
