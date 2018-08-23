@@ -94,11 +94,21 @@ public:
     return buf;
   }
 
-  void putStr (const VStr &s) {
+  void putStrInternal (const VStr &s) {
     if (s.isEmpty()) return;
     reserve((size_t)s.length());
     memcpy(buf+bufused, *s, (size_t)s.length());
     bufused += (size_t)s.length();
+  }
+
+  void putStr (const VStr &s, int width, bool toRight, bool zeroFill) {
+    if (width > s.length() && toRight) {
+      while (width-- > s.length()) putChar(' ');
+    }
+    putStrInternal(s);
+    if (width > s.length() && !toRight) {
+      while (width-- > s.length()) putChar(' ');
+    }
   }
 
   void putStr (const char *s, int sslen=-1) {
@@ -115,10 +125,26 @@ public:
     bufused += 1;
   }
 
-  void putInt (int v) {
+  void putInt (int v, int width, bool toRight, bool zeroFill) {
     char tmp[64];
     int len = (int)snprintf(tmp, sizeof(tmp), "%d", v);
-    if (len > 0) putStr(tmp, len);
+    if (len > 0) {
+      if (width > len && toRight) {
+        if (zeroFill) {
+          if (tmp[0] == '-') {
+            putChar('-');
+            memmove(tmp, tmp+1, strlen(tmp));
+          }
+          while (width-- > len) putChar('0');
+        } else {
+          while (width-- > len) putChar(' ');
+        }
+      }
+      putStr(tmp, len);
+      if (width > len && !toRight) {
+        while (width-- > len) putChar(' ');
+      }
+    }
   }
 
   void putHex (int v) {
@@ -173,20 +199,37 @@ VStr PF_FormatString () {
   pi = 0;
   while (spos < str.length()) {
     if (str[spos] == '%') {
+      auto savedpos = spos;
       ++spos;
       if (spos >= str.length()) { pbuf.putChar('%'); break; }
+      if (str[spos] == '%') { pbuf.putChar('%'); ++spos; continue; }
+      bool toRight = true;
+      bool zeroFill = false;
+      int width = -1;
+      if (str[spos] == '-') {
+        toRight = false;
+        if (++spos == str.length()) { pbuf.putStr("%-"); break; }
+      }
+      if (str[spos] >= '0' && str[spos] <= '9') {
+        zeroFill = str[spos];
+        width = 0;
+        while (spos <= str.length() && str[spos] >= '0' && str[spos] <= '9') {
+          width = width*10+str[spos++]-'0';
+        }
+        if (spos >= str.length()) {
+          while (savedpos < str.length()) pbuf.putChar(str[savedpos++]);
+          break;
+        }
+      }
       char fspec = str[spos++];
       switch (fspec) {
-        case '%':
-          pbuf.putChar('%');
-          break;
         case 'i':
         case 'd':
           if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
-            case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putInt(params[pi].i); break;
-            case TYPE_Float: pbuf.putInt((int)params[pi].f); break;
-            case TYPE_Name: pbuf.putInt(params[pi].i); break; // hack
+            case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putInt(params[pi].i, width, toRight, zeroFill); break;
+            case TYPE_Float: pbuf.putInt((int)params[pi].f, width, toRight, zeroFill); break;
+            case TYPE_Name: pbuf.putInt(params[pi].i, width, toRight, zeroFill); break; // hack
             default: VObject::VMDumpCallStack(); Sys_Error("Invalid argument to format specifier '%c'", fspec);
           }
           ++pi;
@@ -216,11 +259,11 @@ VStr PF_FormatString () {
             case TYPE_Name:
               {
                 VName n = *(VName*)&params[pi].i;
-                if (n == NAME_None) pbuf.putStr("<none>"); else pbuf.putStr(*n);
+                if (n == NAME_None) pbuf.putStr(VStr("<none>"), width, toRight, zeroFill); else pbuf.putStr(VStr(*n), width, toRight, zeroFill);
               }
               break;
             case TYPE_String:
-              pbuf.putStr(*(VStr*)&params[pi].p);
+              pbuf.putStr(*(VStr*)&params[pi].p, width, toRight, zeroFill);
               ((VStr*)&params[pi].p)->Clean();
               break;
             default: VObject::VMDumpCallStack(); Sys_Error("Invalid argument to format specifier '%c'", fspec);
@@ -252,8 +295,8 @@ VStr PF_FormatString () {
         case 'B': // boolean
           if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
-            case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putStr(params[pi].i ? "true" : "false"); break;
-            case TYPE_Float: pbuf.putStr(params[pi].f ? "true" : "false"); break;
+            case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putStr(VStr(params[pi].i ? "true" : "false"), width, toRight, zeroFill); break;
+            case TYPE_Float: pbuf.putStr(VStr(params[pi].f ? "true" : "false"), width, toRight, zeroFill); break;
             //TODO
             default: VObject::VMDumpCallStack(); Sys_Error("Invalid argument to format specifier '%c'", fspec);
           }
@@ -261,29 +304,32 @@ VStr PF_FormatString () {
         case 's': // this can convert most of the types to string
           if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
-            case TYPE_Void: pbuf.putStr("<void>"); break;
-            case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putInt(params[pi].i); break;
+            case TYPE_Void: pbuf.putStr(VStr("<void>"), width, toRight, zeroFill); break;
+            case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putInt(params[pi].i, width, toRight, zeroFill); break;
             case TYPE_Float: pbuf.putFloat(params[pi].f); break;
             case TYPE_Name:
               {
                 VName n = *(VName*)&params[pi].i;
-                if (n == NAME_None) pbuf.putStr("<none>"); else pbuf.putStr(*n);
+                if (n == NAME_None) pbuf.putStr(VStr("<none>"), width, toRight, zeroFill); else pbuf.putStr(VStr(*n), width, toRight, zeroFill);
               }
               break;
             case TYPE_String:
-              pbuf.putStr(*(VStr*)&params[pi].p);
+              pbuf.putStr(*(VStr*)&params[pi].p, width, toRight, zeroFill);
               ((VStr*)&params[pi].p)->Clean();
               break;
             case TYPE_Pointer: pbuf.putPtr(params[pi].p); break;
             case TYPE_Reference:
               if (params[pi].p) {
-                pbuf.putChar('(');
-                pbuf.putStr(ptypes[pi].Class ? *ptypes[pi].Class->Name : "none");
+                VStr ss = "(";
+                ss += (ptypes[pi].Class ? *ptypes[pi].Class->Name : "none");
+                ss += ")";
+                pbuf.putStr(ss, width, toRight, zeroFill);
+                /*
                 pbuf.putChar(':');
                 pbuf.putPtr(params[pi].p);
-                pbuf.putChar(')');
+                */
               } else {
-                pbuf.putStr("none");
+                pbuf.putStr(VStr("none"), width, toRight, zeroFill);
               }
               break;
             case TYPE_Class:
@@ -295,7 +341,7 @@ VStr PF_FormatString () {
             case TYPE_SliceArray:
             //case TYPE_Unknown:
             //case TYPE_Automatic:
-              pbuf.putStr(ptypes[pi].GetName());
+              pbuf.putStr(VStr(ptypes[pi].GetName()), width, toRight, zeroFill);
               break;
             case TYPE_Vector:
               pbuf.putChar('(');
