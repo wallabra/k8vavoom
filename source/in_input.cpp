@@ -85,7 +85,6 @@ private:
   VStr      KeyBindingsUp[256];
   bool      KeyBindingsSave[256];
 
-  static const char *KeyNames[SCANCODECOUNT];
   static const char ShiftXForm[];
 };
 
@@ -102,111 +101,6 @@ private:
 VInputPublic *GInput;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-const char *VInput::KeyNames[SCANCODECOUNT] =
-{
-  "UP",
-  "LEFT",
-  "RIGHT",
-  "DOWN",
-  "INSERT",
-  "DELETE",
-  "HOME",
-  "END",
-  "PAGEUP",
-  "PAGEDOWN",
-
-  "PAD0",
-  "PAD1",
-  "PAD2",
-  "PAD3",
-  "PAD4",
-  "PAD5",
-  "PAD6",
-  "PAD7",
-  "PAD8",
-  "PAD9",
-
-  "NUMLOCK",
-  "PADDIVIDE",
-  "PADMULTIPLE",
-  "PADMINUS",
-  "PADPLUS",
-  "PADENTER",
-  "PADDOT",
-
-  "ESCAPE",
-  "ENTER",
-  "TAB",
-  "BACKSPACE",
-  "CAPSLOCK",
-
-  "F1",
-  "F2",
-  "F3",
-  "F4",
-  "F5",
-  "F6",
-  "F7",
-  "F8",
-  "F9",
-  "F10",
-  "F11",
-  "F12",
-
-  "LSHIFT",
-  "RSHIFT",
-  "LCTRL",
-  "RCTRL",
-  "LALT",
-  "RALT",
-
-  "LWIN",
-  "RWIN",
-  "MENU",
-
-  "PRINTSCREEN",
-  "SCROLLLOCK",
-  "PAUSE",
-
-  "ABNT_C1",
-  "YEN",
-  "KANA",
-  "CONVERT",
-  "NOCONVERT",
-  "AT",
-  "CIRCUMFLEX",
-  "COLON2",
-  "KANJI",
-
-  "MOUSE1",
-  "MOUSE2",
-  "MOUSE3",
-
-  "MOUSED1",
-  "MOUSED2",
-  "MOUSED3",
-
-  "MWHEELUP",
-  "MWHEELDOWN",
-
-  "JOY1",
-  "JOY2",
-  "JOY3",
-  "JOY4",
-  "JOY5",
-  "JOY6",
-  "JOY7",
-  "JOY8",
-  "JOY9",
-  "JOY10",
-  "JOY11",
-  "JOY12",
-  "JOY13",
-  "JOY14",
-  "JOY15",
-  "JOY16"
-};
 
 //  Key shifting
 const char    VInput::ShiftXForm[] =
@@ -621,33 +515,15 @@ int VInput::TranslateKey(int ch)
 // return key code
 //
 //==========================================================================
-
-int VInput::KeyNumForName(const VStr &Name)
-{
+int VInput::KeyNumForName(const VStr &Name) {
   guard(VInput::KeyNumForName);
-  if (Name.IsEmpty())
-    return -1;
-
-  //  Single character.
-  if (!Name[1])
-    return VStr::ToLower(Name[0]);
-
-  //  Special cases that you can't enter in console.
-  if (!Name.ICmp("Space"))
-    return ' ';
-
-  if (!Name.ICmp("Tilde"))
-    return '`';
-
-  //  Check special key names.
-  for (int i = 0; i < SCANCODECOUNT; i++)
-    if (!Name.ICmp(KeyNames[i]))
-      return i + 0x80;
-
-  //  Not found.
-  return -1;
+  if (Name.IsEmpty()) return -1;
+  int res = VObject::VKeyFromName(Name);
+  if (res <= 0) res = -1;
+  return res;
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -656,20 +532,17 @@ int VInput::KeyNumForName(const VStr &Name)
 //  Writes into given string key name
 //
 //==========================================================================
-
-VStr VInput::KeyNameForNum(int KeyNr)
-{
+VStr VInput::KeyNameForNum(int KeyNr) {
   guard(VInput::KeyNameForNum);
-  if (KeyNr == ' ')
-    return "SPACE";
-  else if (KeyNr >= 0x80)
-    return KeyNames[KeyNr - 0x80];
-  else if (KeyNr)
-    return VStr((char)KeyNr);
-  else
-    return VStr();
+       if (KeyNr == ' ') return "SPACE";
+  else if (KeyNr == K_ESCAPE) return VStr("ESCAPE");
+  else if (KeyNr == K_ENTER) return VStr("ENTER");
+  else if (KeyNr == K_TAB) return VStr("TAB");
+  else if (KeyNr == K_BACKSPACE) return VStr("BACKSPACE");
+  else return VObject::NameFromVKey(KeyNr);
   unguard;
 }
+
 
 //==========================================================================
 //

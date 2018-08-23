@@ -243,188 +243,6 @@ IMPLEMENT_FUNCTION(VObject, EncodeTimeVal) {
 }
 
 
-
-// ////////////////////////////////////////////////////////////////////////// //
-// keys and buttons
-enum {
-  K_SPACE = 32,
-
-  K_N0 = 48,
-  K_N1,
-  K_N2,
-  K_N3,
-  K_N4,
-  K_N5,
-  K_N6,
-  K_N7,
-  K_N8,
-  K_N9,
-
-  K_a = 97,
-  K_b,
-  K_c,
-  K_d,
-  K_e,
-  K_f,
-  K_g,
-  K_h,
-  K_i,
-  K_j,
-  K_k,
-  K_l,
-  K_m,
-  K_n,
-  K_o,
-  K_p,
-  K_q,
-  K_r,
-  K_s,
-  K_t,
-  K_u,
-  K_v,
-  K_w,
-  K_x,
-  K_y,
-  K_z,
-
-  K_UPARROW = 0x80,
-  K_LEFTARROW,
-  K_RIGHTARROW,
-  K_DOWNARROW,
-  K_INSERT,
-  K_DELETE,
-  K_HOME,
-  K_END,
-  K_PAGEUP,
-  K_PAGEDOWN,
-
-  K_PAD0,
-  K_PAD1,
-  K_PAD2,
-  K_PAD3,
-  K_PAD4,
-  K_PAD5,
-  K_PAD6,
-  K_PAD7,
-  K_PAD8,
-  K_PAD9,
-
-  K_NUMLOCK,
-  K_PADDIVIDE,
-  K_PADMULTIPLE,
-  K_PADMINUS,
-  K_PADPLUS,
-  K_PADENTER,
-  K_PADDOT,
-
-  K_ESCAPE,
-  K_ENTER,
-  K_TAB,
-  K_BACKSPACE,
-  K_CAPSLOCK,
-
-  K_F1,
-  K_F2,
-  K_F3,
-  K_F4,
-  K_F5,
-  K_F6,
-  K_F7,
-  K_F8,
-  K_F9,
-  K_F10,
-  K_F11,
-  K_F12,
-
-  K_LSHIFT,
-  K_RSHIFT,
-  K_LCTRL,
-  K_RCTRL,
-  K_LALT,
-  K_RALT,
-
-  K_LWIN,
-  K_RWIN,
-  K_MENU,
-
-  K_PRINTSCRN,
-  K_SCROLLLOCK,
-  K_PAUSE,
-
-  K_ABNT_C1,
-  K_YEN,
-  K_KANA,
-  K_CONVERT,
-  K_NOCONVERT,
-  K_AT,
-  K_CIRCUMFLEX,
-  K_COLON2,
-  K_KANJI,
-
-  K_MOUSE1,
-  K_MOUSE2,
-  K_MOUSE3,
-
-  K_MOUSED1,
-  K_MOUSED2,
-  K_MOUSED3,
-
-  K_MWHEELUP,
-  K_MWHEELDOWN,
-
-  K_JOY1,
-  K_JOY2,
-  K_JOY3,
-  K_JOY4,
-  K_JOY5,
-  K_JOY6,
-  K_JOY7,
-  K_JOY8,
-  K_JOY9,
-  K_JOY10,
-  K_JOY11,
-  K_JOY12,
-  K_JOY13,
-  K_JOY14,
-  K_JOY15,
-  K_JOY16,
-
-  KEY_COUNT,
-
-  SCANCODECOUNT = KEY_COUNT-0x80
-};
-
-// input event types
-enum {
-  ev_keydown,
-  ev_keyup,
-  ev_mouse,
-  ev_joystick,
-  // extended events for vcc_run
-  ev_winfocus, // data1: focused
-  ev_timer, // data1: timer id
-  ev_closequery, // data1: !=0 -- system shutdown
-};
-
-enum {
-  bCtrl = 1<<0,
-  bAlt = 1<<1,
-  bShift = 1<<2,
-  bHyper = 1<<3,
-  bLMB = 1<<4,
-  bMMB = 1<<5,
-  bRMB = 1<<6,
-};
-
-// event structure
-struct event_t {
-  vint32 type; // event type
-  vint32 data1; // keys / mouse / joystick buttons
-  vint32 data2; // mouse / joystick x move
-  vint32 data3; // mouse / joystick y move
-  vuint32 modflags;
-};
-
 static vuint32 curmodflagsR = 0;
 static vuint32 curmodflagsL = 0;
 
@@ -469,6 +287,8 @@ static vuint8 sdl2TranslateKey (SDL_Keycode ksym) {
     case SDLK_RETURN: return K_ENTER;
     case SDLK_TAB: return K_TAB;
     case SDLK_BACKSPACE: return K_BACKSPACE;
+
+    case SDLK_BACKQUOTE: return K_BACKQUOTE;
     case SDLK_CAPSLOCK: return K_CAPSLOCK;
 
     case SDLK_F1: return K_F1;
@@ -502,18 +322,6 @@ static vuint8 sdl2TranslateKey (SDL_Keycode ksym) {
     default:
       if (ksym >= ' ' && ksym < 127) return (vuint8)ksym;
       break;
-
-    /*
-    case SDLK_ABNT_C1: return K_ABNT_C1;
-    case SDLK_YEN: return K_YEN;
-    case SDLK_KANA: return K_KANA;
-    case SDLK_CONVERT: return K_CONVERT;
-    case SDLK_NOCONVERT: return K_NOCONVERT;
-    case SDLK_AT: return K_AT;
-    case SDLK_CIRCUMFLEX: return K_CIRCUMFLEX;
-    case SDLK_COLON2: return K_COLON2;
-    case SDLK_KANJI: return K_KANJI;
-    */
   }
 
   return 0;
@@ -1827,6 +1635,21 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
     x += fc->advance;
   }
   glEnd();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+//static native final string GetInputKeyName (int kcode);
+IMPLEMENT_FUNCTION(VObject, GetInputKeyStrName) {
+  P_GET_INT(kcode);
+  RET_STR(VObject::NameFromVKey(kcode));
+}
+
+
+//static native final int GetInputKeyCode (string kname);
+IMPLEMENT_FUNCTION(VObject, GetInputKeyCode) {
+  P_GET_STR(kname);
+  RET_INT(VObject::VKeyFromName(kname));
 }
 
 
