@@ -60,6 +60,10 @@ public:
         *(int *)0 = 0;
       }
     }
+
+  private:
+    AutoCopy (const AutoCopy &ac);
+    void operator = (const AutoCopy &ac);
   };
 
 public:
