@@ -1148,7 +1148,7 @@ void VVideo::close () {
 }
 
 
-bool VVideo::open (const VStr &winname, int width, int height) {
+bool VVideo::open (const VStr &winname, int width, int height, int fullscreen) {
   if (width < 1 || height < 1) {
     width = 800;
     height = 600;
@@ -1162,7 +1162,7 @@ again:
   Uint32 flags = SDL_WINDOW_OPENGL;
   //if (!Windowed) flags |= SDL_WINDOW_FULLSCREEN;
   //flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-  //flags |= SDL_WINDOW_FULLSCREEN;
+  if (fullscreen) flags |= (fullscreen == 1 ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_FULLSCREEN_DESKTOP);
 
   //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
@@ -1271,11 +1271,39 @@ again:
   //glEnable(GL_BLEND);
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  glViewport(0, 0, width, height);
+  int realw = width, realh = height;
+  SDL_GL_GetDrawableSize(hw_window, &realw, &realh);
+
+  //glViewport(0, 0, width, height);
+  glViewport(0, 0, realw, realh);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(0, width, height, 0, -zNear, -zFar);
+
+  glOrtho(0, realw, realh, 0, -zNear, -zFar);
+  mWidth = realw;
+  mHeight = realh;
+
+  /*
+  if (realw == width && realh == height) {
+    glOrtho(0, width, height, 0, -zNear, -zFar);
+  } else {
+    int sx0 = (realw-width)/2;
+    int sy0 = (realh-height)/2;
+    fprintf(stderr, "size:(%d,%d); real:(%d,%d); sofs:(%d,%d)\n", width, height, realw, realh, sx0, sy0);
+    //glOrtho(-sx0, realw-sx0, sy0+realh, sy0, -zNear, -zFar);
+    //glOrtho(-sx0, width-sx0, height, 0, -zNear, -zFar);
+    //glOrtho(0, width, height, 0, -zNear, -zFar);
+
+    glOrtho(0, realw, realh, 0, -zNear, -zFar);
+    mWidth = realw;
+    mHeight = realh;
+
+    //glOrtho(-500, width-500, height, 0, -zNear, -zFar);
+    //width = realw;
+    //height = realh;
+  }
+  */
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -1679,16 +1707,30 @@ IMPLEMENT_FUNCTION(VVideo, screenHeight) { RET_INT(VVideo::getHeight()); }
 IMPLEMENT_FUNCTION(VVideo, get_frameTime) { RET_BOOL(VVideo::getFrameTime()); }
 IMPLEMENT_FUNCTION(VVideo, set_frameTime) { P_GET_INT(newft); VVideo::setFrameTime(newft); VVideo::sendPing(); }
 
+// native final static bool openScreen (string winname, int width, int height, optional int fullscreen);
 IMPLEMENT_FUNCTION(VVideo, openScreen) {
+  P_GET_INT_OPT(fs, 0);
   P_GET_INT(hgt);
   P_GET_INT(wdt);
   P_GET_STR(wname);
-  RET_BOOL(VVideo::open(wname, wdt, hgt));
+  RET_BOOL(VVideo::open(wname, wdt, hgt, fs));
 }
 
 IMPLEMENT_FUNCTION(VVideo, closeScreen) {
   VVideo::close();
   VVideo::sendPing();
+}
+
+
+// native final static void getRealWindowSize (out int w, out int h);
+IMPLEMENT_FUNCTION(VVideo, getRealWindowSize) {
+  P_GET_PTR(int, h);
+  P_GET_PTR(int, w);
+  if (mInited) {
+    //SDL_GetWindowSize(hw_window, w, h);
+    SDL_GL_GetDrawableSize(hw_window, w, h);
+    //fprintf(stderr, "w=%d; h=%d\n", *w, *h);
+  }
 }
 
 
@@ -1698,6 +1740,7 @@ IMPLEMENT_FUNCTION(VVideo, clearScreen) { VVideo::clear(); }
 
 
 //native final static void setScale (float sx, float sy);
+/*
 IMPLEMENT_FUNCTION(VVideo, setScale) {
   P_GET_FLOAT(sy);
   P_GET_FLOAT(sx);
@@ -1706,6 +1749,7 @@ IMPLEMENT_FUNCTION(VVideo, setScale) {
     glScalef(sx, sy, 1);
   }
 }
+*/
 
 
 // aborts if font cannot be loaded
@@ -1854,7 +1898,7 @@ IMPLEMENT_FUNCTION(VVideo, getScissor) {
 }
 
 IMPLEMENT_FUNCTION(VVideo, setScissor) {
-  P_GET_PTR(ScissorRect, sr);
+  P_GET_PTR_OPT(ScissorRect, sr, nullptr);
   if (sr) {
     if (!mInited) return;
     if (sr->enabled) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
@@ -1875,6 +1919,44 @@ IMPLEMENT_FUNCTION(VVideo, setScissor) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// static native final void glPushMatrix ();
+IMPLEMENT_FUNCTION(VVideo, glPushMatrix) { if (mInited) glPushMatrix(); }
+
+// static native final void glPopMatrix ();
+IMPLEMENT_FUNCTION(VVideo, glPopMatrix) { if (mInited) glPopMatrix(); }
+
+// static native final void glLoadIdentity ();
+IMPLEMENT_FUNCTION(VVideo, glLoadIdentity) { if (mInited) glLoadIdentity(); }
+
+// static native final void glScale (float sx, float sy, optional float sz);
+IMPLEMENT_FUNCTION(VVideo, glScale) {
+  P_GET_FLOAT_OPT(z, 1);
+  P_GET_FLOAT(y);
+  P_GET_FLOAT(x);
+  if (mInited) glScalef(x, y, z);
+}
+
+// static native final void glTranslate (float dx, float dy, optional float dz);
+IMPLEMENT_FUNCTION(VVideo, glTranslate) {
+  P_GET_FLOAT_OPT(z, 0);
+  P_GET_FLOAT(y);
+  P_GET_FLOAT(x);
+  if (mInited) glTranslatef(x, y, z);
+}
+
+// static native final void glRotate (float ax, float ay, optional float az);
+/*
+IMPLEMENT_FUNCTION(VVideo, glRotate) {
+  P_GET_FLOAT(x);
+  P_GET_FLOAT(y);
+  P_GET_FLOAT_OPT(z, 1);
+  glRotatef(x, y, z);
+}
+*/
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 IMPLEMENT_FUNCTION(VVideo, get_smoothLine) {
   RET_BOOL(smoothLine);
 }

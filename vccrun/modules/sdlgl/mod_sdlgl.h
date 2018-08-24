@@ -252,7 +252,7 @@ public:
   static int getWidth ();
   static int getHeight ();
 
-  static bool open (const VStr &winname, int width, int height);
+  static bool open (const VStr &winname, int width, int height, int fullscreen);
   static void close ();
 
   static void clear ();
@@ -296,6 +296,8 @@ public:
   DECLARE_FUNCTION(screenWidth)
   DECLARE_FUNCTION(screenHeight)
 
+  DECLARE_FUNCTION(getRealWindowSize)
+
   DECLARE_FUNCTION(get_frameTime)
   DECLARE_FUNCTION(set_frameTime)
 
@@ -331,6 +333,13 @@ public:
   DECLARE_FUNCTION(getScissor)
   DECLARE_FUNCTION(setScissor)
   DECLARE_FUNCTION(copyScissor)
+
+  DECLARE_FUNCTION(glPushMatrix);
+  DECLARE_FUNCTION(glPopMatrix);
+  DECLARE_FUNCTION(glLoadIdentity);
+  DECLARE_FUNCTION(glScale);
+  DECLARE_FUNCTION(glTranslate);
+  //DECLARE_FUNCTION(glRotate);
 
   DECLARE_FUNCTION(clearScreen)
 

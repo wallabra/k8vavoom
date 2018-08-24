@@ -37,14 +37,18 @@ native final static bool isInitialized ();
 native final static int screenWidth ();
 native final static int screenHeight ();
 
-native final static void setScale (float sx, float sy);
+native final static void getRealWindowSize (out int w, out int h);
+
+//native final static void setScale (float sx, float sy);
 
 //native final static int getFrameTime ();
 //native final static void setFrameTime (int newframetime); // in msecs
 native final static bool frameTime { get; set; }
 
-native final static bool openScreen (string winname, int width, int height);
+native final static bool openScreen (string winname, int width, int height, optional int fullscreen);
 native final static void closeScreen ();
+
+//native final bool fullscreen { get; set; }
 
 native final static void clearScreen ();
 //native final static void clearScreenRGB (int r, int g, int b);
@@ -197,6 +201,15 @@ native final static bool getMousePos (out int x, out int y);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static native final void glPushMatrix ();
+static native final void glPopMatrix ();
+static native final void glLoadIdentity ();
+static native final void glScale (float sx, float sy, optional float sz);
+static native final void glTranslate (float dx, float dy, optional float dz);
+//static native final void glRotate (float ax, float ay, optional float az);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct ScissorRect {
   int x, y, w, h;
   int enabled;
@@ -207,16 +220,16 @@ struct ScissorRect {
 //native final static void setScissorEnabled (bool v);
 native final static bool scissorEnabled { get; set; }
 
-native final static void getScissor (ScissorRect *sr);
-native final static void setScissor (ScissorRect *sr);
+native final static void getScissor (out ScissorRect sr);
+native final static void setScissor (ref optional ScissorRect sr);
 
-native final static void copyScissor (ScissorRect *dest, ScissorRect *src);
+native final static void copyScissor (out ScissorRect dest, const ref ScissorRect src);
 
 
 // returns `false` if no area left
 final static bool scissorCombine (int x0, int y0, int w, int h) {
   ScissorRect sr;
-  getScissor(&sr);
+  getScissor(sr);
   if (!sr.enabled) {
     sr.x = 0;
     sr.y = 0;
@@ -248,7 +261,7 @@ final static bool scissorCombine (int x0, int y0, int w, int h) {
       sr.h = sy1-sr.y+1;
     }
   }
-  setScissor(&sr);
+  setScissor(sr);
   return (sr.w > 0 && sr.h > 0);
 }
 
