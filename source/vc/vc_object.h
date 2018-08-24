@@ -113,6 +113,12 @@ class VObject : public VInterface {
   // friends
   friend class FObjectIterator;
 
+#if defined(VCC_STANDALONE_EXECUTOR)
+# define VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN  false
+#else
+# define VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN  true
+#endif
+
 private:
   // internal per-object variables
   VMethod **vtable;
@@ -159,11 +165,7 @@ public:
   // system-wide functions
   static void StaticInit ();
   static void StaticExit ();
-#if defined(VCC_STANDALONE_EXECUTOR)
-  static VObject *StaticSpawnObject (VClass *AClass, bool skipReplacement=false);
-#else
-  static VObject *StaticSpawnObject (VClass *AClass);
-#endif
+  static VObject *StaticSpawnObject (VClass *AClass, bool skipReplacement=VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN);
   static void CollectGarbage (bool destroyDelayed=false);
   static VObject *GetIndexObject (int);
   static int GetObjectsCount ();
@@ -189,278 +191,14 @@ public:
   static VStr NameFromVKey (int vkey);
   static int VKeyFromName (const VStr &kn);
 
-  DECLARE_FUNCTION(Destroy)
-  DECLARE_FUNCTION(IsA)
-  DECLARE_FUNCTION(IsDestroyed)
-  DECLARE_FUNCTION(CollectGarbage)
-#ifdef VCC_STANDALONE_EXECUTOR
-  DECLARE_FUNCTION(get_ImmediateDelete)
-  DECLARE_FUNCTION(set_ImmediateDelete)
-#endif
-  DECLARE_FUNCTION(get_GCMessagesAllowed)
-  DECLARE_FUNCTION(set_GCMessagesAllowed)
+#include "vc_object_common.h"
 
-  // error functions
-  DECLARE_FUNCTION(Error)
-  DECLARE_FUNCTION(FatalError)
-
-#ifndef VCC_STANDALONE_EXECUTOR
-  // cvar functions
-  DECLARE_FUNCTION(CvarExists)
-  DECLARE_FUNCTION(CreateCvar)
-  DECLARE_FUNCTION(GetCvar)
-  DECLARE_FUNCTION(SetCvar)
-  DECLARE_FUNCTION(GetCvarF)
-  DECLARE_FUNCTION(SetCvarF)
-  DECLARE_FUNCTION(GetCvarS)
-  DECLARE_FUNCTION(SetCvarS)
-  DECLARE_FUNCTION(GetCvarB)
-#endif
-
-  // math functions
-  DECLARE_FUNCTION(AngleMod360)
-  DECLARE_FUNCTION(AngleMod180)
-  DECLARE_FUNCTION(AngleVectors)
-  DECLARE_FUNCTION(AngleVector)
-  DECLARE_FUNCTION(VectorAngles)
-  DECLARE_FUNCTION(GetPlanePointZ)
-  DECLARE_FUNCTION(PointOnPlaneSide)
-  DECLARE_FUNCTION(RotateDirectionVector)
-  DECLARE_FUNCTION(VectorRotateAroundZ)
-  DECLARE_FUNCTION(RotateVectorAroundVector)
-
-  // string functions
-  DECLARE_FUNCTION(strlen)
-  DECLARE_FUNCTION(strcmp)
-  DECLARE_FUNCTION(stricmp)
-  DECLARE_FUNCTION(strcat)
-  DECLARE_FUNCTION(strlwr)
-  DECLARE_FUNCTION(strupr)
-  DECLARE_FUNCTION(substr)
-  DECLARE_FUNCTION(strmid)
-  DECLARE_FUNCTION(strleft)
-  DECLARE_FUNCTION(strright)
-  DECLARE_FUNCTION(strrepeat)
-  DECLARE_FUNCTION(strFromChar)
-  DECLARE_FUNCTION(strFromCharUtf8)
-  DECLARE_FUNCTION(strFromInt)
-  DECLARE_FUNCTION(strFromFloat)
-  DECLARE_FUNCTION(va)
-  DECLARE_FUNCTION(atoi)
-  DECLARE_FUNCTION(atof)
-  DECLARE_FUNCTION(StrStartsWith)
-  DECLARE_FUNCTION(StrEndsWith)
-  DECLARE_FUNCTION(StrReplace)
-
-  // random numbers
-  DECLARE_FUNCTION(Random)
-  DECLARE_FUNCTION(P_Random)
-
-#ifndef VCC_STANDALONE_EXECUTOR
-  // textures
-  DECLARE_FUNCTION(CheckTextureNumForName)
-  DECLARE_FUNCTION(TextureNumForName)
-  DECLARE_FUNCTION(CheckFlatNumForName)
-  DECLARE_FUNCTION(FlatNumForName)
-  DECLARE_FUNCTION(TextureHeight)
-  DECLARE_FUNCTION(GetTextureName)
-#endif
-
-  // printing in console
-  DECLARE_FUNCTION(print)
-  DECLARE_FUNCTION(dprint)
-
-  // type conversions
-  DECLARE_FUNCTION(itof)
-  DECLARE_FUNCTION(ftoi)
-  DECLARE_FUNCTION(StrToName)
-  DECLARE_FUNCTION(NameToStr)
-
-#ifndef VCC_STANDALONE_EXECUTOR
-  // console command functions
-  DECLARE_FUNCTION(Cmd_CheckParm)
-  DECLARE_FUNCTION(Cmd_GetArgC)
-  DECLARE_FUNCTION(Cmd_GetArgV)
-  DECLARE_FUNCTION(CmdBuf_AddText)
-#endif
-
-  // class methods
-  DECLARE_FUNCTION(FindClass)
-  DECLARE_FUNCTION(FindClassLowerCase)
-  DECLARE_FUNCTION(ClassIsChildOf)
-  DECLARE_FUNCTION(GetClassName)
-  DECLARE_FUNCTION(GetClassParent)
-  DECLARE_FUNCTION(GetClassReplacement)
-  DECLARE_FUNCTION(GetClassReplacee)
-  DECLARE_FUNCTION(FindClassState)
-  DECLARE_FUNCTION(GetClassNumOwnedStates)
-  DECLARE_FUNCTION(GetClassFirstState)
-  DECLARE_FUNCTION(GetClassGameObjName)
-
-  // state methods
-  DECLARE_FUNCTION(StateIsInRange)
-  DECLARE_FUNCTION(StateIsInSequence)
-  DECLARE_FUNCTION(GetStateSpriteName)
-  DECLARE_FUNCTION(GetStateSpriteFrame)
-  DECLARE_FUNCTION(GetStateSpriteFrameWidth)
-  DECLARE_FUNCTION(GetStateSpriteFrameHeight)
-  DECLARE_FUNCTION(GetStateSpriteFrameSize)
-  DECLARE_FUNCTION(GetStateDuration)
-  DECLARE_FUNCTION(GetStatePlus)
-  DECLARE_FUNCTION(GetNextState)
-  DECLARE_FUNCTION(GetNextStateInProg)
-  DECLARE_FUNCTION(StateHasAction)
-  DECLARE_FUNCTION(CallStateAction)
-  DECLARE_FUNCTION(GetStateSpriteFrameOfsX)
-  DECLARE_FUNCTION(GetStateSpriteFrameOfsY)
-  DECLARE_FUNCTION(GetStateSpriteFrameOffset)
-  DECLARE_FUNCTION(GetStateMisc1)
-  DECLARE_FUNCTION(GetStateMisc2)
-  DECLARE_FUNCTION(SetStateMisc1)
-  DECLARE_FUNCTION(SetStateMisc2)
-  DECLARE_FUNCTION(GetStateFRN)
-  DECLARE_FUNCTION(SetStateFRN)
-#ifndef VCC_STANDALONE_EXECUTOR
-  DECLARE_FUNCTION(AreStateSpritesPresent)
-#endif
-
-  // Iterators
-  DECLARE_FUNCTION(AllObjects)
-  DECLARE_FUNCTION(AllClasses)
-  DECLARE_FUNCTION(AllClassStates)
-
-#ifndef VCC_STANDALONE_EXECUTOR
-  // misc
-  DECLARE_FUNCTION(Info_ValueForKey)
-  DECLARE_FUNCTION(WadLumpPresent)
-#endif
-  DECLARE_FUNCTION(SpawnObject)
-#ifdef VCC_STANDALONE_EXECUTOR
-  DECLARE_FUNCTION(SpawnObjectSkipReplacement)
-#endif
-#ifndef VCC_STANDALONE_EXECUTOR
-  DECLARE_FUNCTION(FindAnimDoor)
-  DECLARE_FUNCTION(GetLangString)
-  DECLARE_FUNCTION(RGB)
-  DECLARE_FUNCTION(RGBA)
-  DECLARE_FUNCTION(GetLockDef)
-  DECLARE_FUNCTION(ParseColour)
-  DECLARE_FUNCTION(TextColourString)
-  DECLARE_FUNCTION(StartTitleMap)
-  DECLARE_FUNCTION(LoadBinaryLump)
-  DECLARE_FUNCTION(IsMapPresent)
-  //DECLARE_FUNCTION(Clock)
-  //DECLARE_FUNCTION(Unclock)
-#endif
-
-#ifndef VCC_STANDALONE_EXECUTOR
-#ifdef CLIENT
-  DECLARE_FUNCTION(P_GetMapName)
-  DECLARE_FUNCTION(P_GetMapIndexByLevelNum)
-  DECLARE_FUNCTION(P_GetNumMaps)
-  DECLARE_FUNCTION(P_GetMapInfo)
-  DECLARE_FUNCTION(P_GetMapLumpName)
-  DECLARE_FUNCTION(P_TranslateMap)
-  DECLARE_FUNCTION(P_GetNumEpisodes)
-  DECLARE_FUNCTION(P_GetEpisodeDef)
-  DECLARE_FUNCTION(P_GetNumSkills)
-  DECLARE_FUNCTION(P_GetSkillDef)
-  DECLARE_FUNCTION(KeyNameForNum)
-  DECLARE_FUNCTION(IN_GetBindingKeys)
-  DECLARE_FUNCTION(IN_SetBinding)
-  DECLARE_FUNCTION(SV_GetSaveString)
-  DECLARE_FUNCTION(StartSearch)
-  DECLARE_FUNCTION(GetSlist)
-
-  DECLARE_FUNCTION(LoadTextLump)
-
-  // graphics
-  DECLARE_FUNCTION(SetVirtualScreen)
-  DECLARE_FUNCTION(R_RegisterPic)
-  DECLARE_FUNCTION(R_RegisterPicPal)
-  DECLARE_FUNCTION(R_GetPicInfo)
-  DECLARE_FUNCTION(R_DrawPic)
-  DECLARE_FUNCTION(R_InstallSprite)
-  DECLARE_FUNCTION(R_DrawSpritePatch)
-  DECLARE_FUNCTION(InstallModel)
-  DECLARE_FUNCTION(R_DrawModelFrame)
-  DECLARE_FUNCTION(R_FillRect)
-
-  // client side sound
-  DECLARE_FUNCTION(LocalSound)
-  DECLARE_FUNCTION(IsLocalSoundPlaying)
-  DECLARE_FUNCTION(StopLocalSounds)
-
-  DECLARE_FUNCTION(TranslateKey)
-#endif // CLIENT
-
-#ifdef SERVER
-  // map utilites
-  DECLARE_FUNCTION(SectorClosestPoint)
-  DECLARE_FUNCTION(LineOpenings)
-  DECLARE_FUNCTION(P_BoxOnLineSide)
-  DECLARE_FUNCTION(FindThingGap)
-  DECLARE_FUNCTION(FindOpening)
-  DECLARE_FUNCTION(PointInRegion)
-
-  // sound functions
-  DECLARE_FUNCTION(SectorStopSound)
-  DECLARE_FUNCTION(GetSoundPlayingInfo)
-  DECLARE_FUNCTION(GetSoundID)
-  DECLARE_FUNCTION(SetSeqTrans)
-  DECLARE_FUNCTION(GetSeqTrans)
-  DECLARE_FUNCTION(GetSeqSlot)
-  DECLARE_FUNCTION(StopAllSounds)
-
-  DECLARE_FUNCTION(SB_Start)
-  DECLARE_FUNCTION(TerrainType)
-  DECLARE_FUNCTION(GetSplashInfo)
-  DECLARE_FUNCTION(GetTerrainInfo)
-  DECLARE_FUNCTION(FindClassFromEditorId)
-  DECLARE_FUNCTION(FindClassFromScriptId)
-
-  DECLARE_FUNCTION(HasDecal)
-#endif // SERVER
-#endif // !VCC_STANDALONE_EXECUTOR
-
-#ifdef VCC_STANDALONE_EXECUTOR
-  DECLARE_FUNCTION(GetInputKeyStrName)
-  DECLARE_FUNCTION(GetInputKeyCode)
-
-  DECLARE_FUNCTION(CreateTimer)
-  DECLARE_FUNCTION(CreateTimerWithId)
-  DECLARE_FUNCTION(DeleteTimer)
-  DECLARE_FUNCTION(IsTimerExists)
-  DECLARE_FUNCTION(IsTimerOneShot)
-  DECLARE_FUNCTION(GetTimerInterval)
-  DECLARE_FUNCTION(SetTimerInterval)
-  DECLARE_FUNCTION(GetTickCount)
-
-  DECLARE_FUNCTION(GetTimeOfDay)
-  DECLARE_FUNCTION(DecodeTimeVal);
-  DECLARE_FUNCTION(EncodeTimeVal);
-
-  DECLARE_FUNCTION(fsysAppendDir)
-  DECLARE_FUNCTION(fsysAppendPak)
-  DECLARE_FUNCTION(fsysRemovePak)
-  DECLARE_FUNCTION(fsysRemovePaksFrom)
-  DECLARE_FUNCTION(fsysFindPakByPrefix)
-  DECLARE_FUNCTION(fsysFileExists)
-  DECLARE_FUNCTION(fsysFileFindAnyExt)
-  DECLARE_FUNCTION(fsysGetPakPath)
-  DECLARE_FUNCTION(fsysGetPakPrefix)
-  DECLARE_FUNCTION(fsysGetLastPakId)
-
-  DECLARE_FUNCTION(get_fsysKillCommonZipPrefix)
-  DECLARE_FUNCTION(set_fsysKillCommonZipPrefix)
-
-  DECLARE_FUNCTION(FindMObjId)
-  DECLARE_FUNCTION(FindScriptId)
-  DECLARE_FUNCTION(FindClassByGameObjName)
-
-  DECLARE_FUNCTION(appSetName)
-  DECLARE_FUNCTION(appSaveOptions)
-  DECLARE_FUNCTION(appLoadOptions)
+#if defined(VCC_STANDALONE_EXECUTOR)
+# include "vc_object_vccrun.h"
+#elif defined(IN_VCC)
+# include "vc_object_vcc.h"
+#else
+# include "vc_object_vavoom.h"
 #endif
 };
 
@@ -505,6 +243,7 @@ public:
 
 // object creation template
 template<class T> T *Spawn () { return (T*)VObject::StaticSpawnObject(T::StaticClass()); }
+template<class T> T *SpawnWithReplace () { return (T*)VObject::StaticSpawnObject(T::StaticClass(), true); }
 
 inline vuint32 GetTypeHash (VObject *Obj) { return (Obj ? Obj->GetIndex() : 0); }
 

@@ -4,69 +4,74 @@
 #
 #---------------------------------------
 set(VCCLIB_SOURCES
-  vc/vc_class.cpp
-  vc/vc_class.h
-  vc/vc_constant.cpp
-  vc/vc_constant.h
-  vc/vc_decorate.cpp
-  vc/vc_decorate.h
-  vc/vc_dehacked.cpp
-  vc/vc_dehacked.h
-  vc/vc_emit_context.cpp
-  vc/vc_emit_context.h
-  vc/vc_error.cpp
-  vc/vc_error.h
-  vc/vc_expr_array.cpp
-  vc/vc_expr_array.h
-  vc/vc_expr_assign.cpp
-  vc/vc_expr_assign.h
-  vc/vc_expr_base.cpp
-  vc/vc_expr_base.h
-  vc/vc_expr_cast.cpp
-  vc/vc_expr_cast.h
-  vc/vc_expr_field.cpp
-  vc/vc_expr_field.h
-  vc/vc_expr_invoke.cpp
-  vc/vc_expr_invoke.h
-  vc/vc_expr_literal.cpp
-  vc/vc_expr_literal.h
-  vc/vc_expr_local.cpp
-  vc/vc_expr_local.h
-  vc/vc_expr_misc.cpp
-  vc/vc_expr_misc.h
-  vc/vc_expr_type.cpp
-  vc/vc_expr_type.h
-  vc/vc_expr_unary_binary.cpp
-  vc/vc_expr_unary_binary.h
-  vc/vc_field.cpp
-  vc/vc_field.h
-  vc/vc_lexer.cpp
-  vc/vc_lexer.h
   vc/vc_local.h
-  vc/vc_location.cpp
+
   vc/vc_location.h
-  vc/vc_member.cpp
-  vc/vc_member.h
-  vc/vc_method.cpp
-  vc/vc_method.h
-  vc/vc_modifiers.cpp
-  vc/vc_modifiers.h
-  vc/vc_object.cpp
-  vc/vc_object.h
-  vc/vc_package.cpp
-  vc/vc_package.h
-  vc/vc_parser.cpp
-  vc/vc_parser.h
-  vc/vc_property.cpp
-  vc/vc_property.h
-  vc/vc_state.cpp
-  vc/vc_state.h
-  vc/vc_statement.cpp
-  vc/vc_statement.h
-  vc/vc_struct.cpp
-  vc/vc_struct.h
-  vc/vc_type.cpp
+  vc/vc_location.cpp
+  vc/vc_error.h
+  vc/vc_error.cpp
   vc/vc_type.h
+  vc/vc_type.cpp
+  vc/vc_member.h
+  vc/vc_member.cpp
+  vc/vc_constant.h
+  vc/vc_constant.cpp
+  vc/vc_property.h
+  vc/vc_property.cpp
+  vc/vc_state.h
+  vc/vc_state.cpp
+  vc/vc_field.h
+  vc/vc_field.cpp
+  vc/vc_method.h
+  vc/vc_method.cpp
+  vc/vc_struct.h
+  vc/vc_struct.cpp
+  vc/vc_class.h
+  vc/vc_class.cpp
+  vc/vc_object.h
+  vc/vc_object.cpp
+  vc/vc_package.h
+  vc/vc_package.cpp
+  vc/vc_decorate.h
+  vc/vc_decorate.cpp
+  vc/vc_dehacked.h
+  vc/vc_dehacked.cpp
+
+  vc/vc_emit_context.h
+  vc/vc_emit_context.cpp
+  vc/vc_expr_base.h
+  vc/vc_expr_base.cpp
+
+  vc/vc_expr_array.h
+  vc/vc_expr_array.cpp
+  vc/vc_expr_assign.h
+  vc/vc_expr_assign.cpp
+  vc/vc_expr_cast.h
+  vc/vc_expr_cast.cpp
+  vc/vc_expr_field.h
+  vc/vc_expr_field.cpp
+  vc/vc_expr_invoke.h
+  vc/vc_expr_invoke.cpp
+  vc/vc_expr_literal.h
+  vc/vc_expr_literal.cpp
+  vc/vc_expr_local.h
+  vc/vc_expr_local.cpp
+  vc/vc_expr_misc.h
+  vc/vc_expr_misc.cpp
+  vc/vc_expr_type.h
+  vc/vc_expr_type.cpp
+  vc/vc_expr_unary_binary.h
+  vc/vc_expr_unary_binary.cpp
+  vc/vc_statement.h
+  vc/vc_statement.cpp
+
+  vc/vc_lexer.h
+  vc/vc_lexer_tokens.h
+  vc/vc_lexer.cpp
+  vc/vc_modifiers.h
+  vc/vc_modifiers.cpp
+  vc/vc_parser.h
+  vc/vc_parser.cpp
 )
 
 #---------------------------------------

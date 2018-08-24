@@ -54,39 +54,6 @@ native static final float GetTickCount ();
 
 //==========================================================================
 //
-//  date/time utils
-//
-//==========================================================================
-struct TTimeVal {
-  int secs; // actually, unsigned
-  int usecs;
-  // for 2030+
-  int secshi;
-}
-
-struct TDateTime {
-  int sec; // [0..60] (yes, *sometimes* it can be 60)
-  int min; // [0..59]
-  int hour; // [0..23]
-  int month; // [0..11]
-  int year; // normal value, i.e. 2042 for 2042
-  int mday; // [1..31] -- day of the month
-  //
-  int wday; // [0..6] -- day of the week (0 is sunday)
-  int yday; // [0..365] -- day of the year
-  int isdst; // is daylight saving time?
-}
-
-native static final bool GetTimeOfDay (out TTimeVal tv);
-native static final bool DecodeTimeVal (out TDateTime tm, const ref TTimeVal tv);
-
-// see mktime(3)
-// `wday`, `yday`, and `isdst` are set on success; `isdst` is used if `usedist` is `true`
-native static final bool EncodeTimeVal (out TTimeVal tv, ref TDateTime tm, optional bool usedst);
-
-
-//==========================================================================
-//
 //              FILESYSTEM BUILTINS
 //
 //==========================================================================
@@ -141,16 +108,6 @@ native static final bool fsysKillCommonZipPrefix { get; set; }
 // open file for reading, NOT relative to basedir
 //native static final VStream *fsysOpenDiskFileWrite (string fname);
 //native static final VStream *fsysOpenDiskFile (string fname);
-
-
-//==========================================================================
-//
-//              MISC BUILTINS
-//
-//==========================================================================
-native final static class FindMObjId (int id, optional name pkgname);
-native final static class FindScriptId (int id, optional name pkgname);
-native final static class FindClassByGameObjName (name aname, optional name pkgname);
 
 
 //==========================================================================
