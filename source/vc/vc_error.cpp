@@ -160,6 +160,9 @@ __attribute__((noreturn)) void BailOut () {
  // nothing
 
 #else
+#if defined(WIN32)
+# include <windows.h>
+#endif
 
 //==========================================================================
 //
@@ -167,14 +170,20 @@ __attribute__((noreturn)) void BailOut () {
 //
 //==========================================================================
 __attribute__((noreturn, format(printf, 1, 2))) void FatalError (const char *text, ...) {
-  char workString[256];
+  static char workString[1024];
   va_list argPtr;
 
   va_start(argPtr, text);
   vsnprintf(workString, sizeof(workString), text, argPtr);
   va_end(argPtr);
+
+#if defined(VCC_STANDALONE_EXECUTOR) && defined(WIN32)
+  MessageBox(NULL, workString, "VaVoom/C Runner Fatal Error", MB_OK);
+#else
   fputs(workString, stderr);
   fputc('\n', stderr);
+#endif
+
   exit(1);
 }
 

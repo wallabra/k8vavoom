@@ -1225,13 +1225,26 @@ static bool onExecuteNetMethod (VObject *aself, VMethod *func) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+#if defined(WIN32)
+# include <windows.h>
+#endif
+
 __attribute__((noreturn, format(printf, 1, 2))) void Host_Error (const char *error, ...) {
+#if defined(VCC_STANDALONE_EXECUTOR) && defined(WIN32)
+  static char workString[1024];
+  va_list argPtr;
+  va_start(argPtr, error);
+  vsnprintf(workString, sizeof(workString), error, argPtr);
+  va_end(argPtr);
+  MessageBox(NULL, workString, "VaVoom/C Runner Fatal Error", MB_OK);
+#else
   fprintf(stderr, "FATAL: ");
   va_list argPtr;
   va_start(argPtr, error);
   vfprintf(stderr, error, argPtr);
   va_end(argPtr);
   fprintf(stderr, "\n");
+#endif
   exit(1);
 }
 
@@ -1807,7 +1820,11 @@ int main (int argc, char **argv) {
     VName::StaticExit();
   } catch (VException& e) {
     ret.i = -1;
+#ifndef WIN32
     FatalError("FATAL: %s", e.What());
+#else
+    FatalError("%s", e.What());
+#endif
   }
 
   return ret.i;
