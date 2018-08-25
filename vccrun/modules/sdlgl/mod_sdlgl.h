@@ -298,6 +298,10 @@ public:
 
   DECLARE_FUNCTION(getRealWindowSize)
 
+  DECLARE_FUNCTION(isMouseCursorVisible)
+  DECLARE_FUNCTION(hideMouseCursor)
+  DECLARE_FUNCTION(showMouseCursor)
+
   DECLARE_FUNCTION(get_frameTime)
   DECLARE_FUNCTION(set_frameTime)
 

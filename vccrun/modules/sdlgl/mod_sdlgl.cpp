@@ -1704,6 +1704,10 @@ IMPLEMENT_FUNCTION(VVideo, isInitialized) { RET_BOOL(VVideo::isInitialized()); }
 IMPLEMENT_FUNCTION(VVideo, screenWidth) { RET_INT(VVideo::getWidth()); }
 IMPLEMENT_FUNCTION(VVideo, screenHeight) { RET_INT(VVideo::getHeight()); }
 
+IMPLEMENT_FUNCTION(VVideo, isMouseCursorVisible) { RET_BOOL(mInited ? SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE : true); }
+IMPLEMENT_FUNCTION(VVideo, hideMouseCursor) { if (mInited) SDL_ShowCursor(SDL_DISABLE); }
+IMPLEMENT_FUNCTION(VVideo, showMouseCursor) { if (mInited) SDL_ShowCursor(SDL_ENABLE); }
+
 IMPLEMENT_FUNCTION(VVideo, get_frameTime) { RET_BOOL(VVideo::getFrameTime()); }
 IMPLEMENT_FUNCTION(VVideo, set_frameTime) { P_GET_INT(newft); VVideo::setFrameTime(newft); VVideo::sendPing(); }
 

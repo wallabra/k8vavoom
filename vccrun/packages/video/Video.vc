@@ -37,6 +37,11 @@ native final static bool isInitialized ();
 native final static int screenWidth ();
 native final static int screenHeight ();
 
+native final static bool isMouseCursorVisible ();
+// no recursion is supported
+native final static void hideMouseCursor ();
+native final static void showMouseCursor ();
+
 native final static void getRealWindowSize (out int w, out int h);
 
 //native final static void setScale (float sx, float sy);
