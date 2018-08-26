@@ -72,6 +72,8 @@
   DECLARE_FUNCTION(Random)
   DECLARE_FUNCTION(P_Random)
 
+  DECLARE_FUNCTION(GenRandomSeedU32)
+
   // printing in console
   DECLARE_FUNCTION(print)
   DECLARE_FUNCTION(dprint)

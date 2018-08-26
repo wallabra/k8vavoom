@@ -351,6 +351,14 @@ void VAudio::UnlockUpdates () {
 }
 
 
+static float RandomFloat () {
+  vuint32 rn;
+  ed25519_randombytes(&rn, sizeof(rn));
+  float res = float(rn&0x3ffff)/(float)0x3ffff;
+  return res;
+}
+
+
 //==========================================================================
 //
 //  VAudio::PlaySound
@@ -395,7 +403,7 @@ int VAudio::PlaySound (int sound_id, const TVec &origin,
 
   // random pitch?
   if (GSoundManager->S_sfx[sound_id].changePitch) {
-    pitch = 1.0+(Random()-Random())*GSoundManager->S_sfx[sound_id].changePitch;
+    pitch = 1.0+(RandomFloat()-RandomFloat())*GSoundManager->S_sfx[sound_id].changePitch;
   }
 
   if (startIt) {

@@ -349,6 +349,8 @@ native static final TVec RotateVectorAroundVector (const TVec Vector, const TVec
 native static final float Random ();
 // integer random number 1 .. 255
 native static final int P_Random ();
+// generates a random seen in range [1..0xffff_ffff]
+native static final int GenRandomSeedU32 ();
 
 
 // ////////////////////////////////////////////////////////////////////////// //

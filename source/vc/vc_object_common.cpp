@@ -340,7 +340,20 @@ IMPLEMENT_FUNCTION(VObject, StrReplace) {
 //
 //**************************************************************************
 IMPLEMENT_FUNCTION(VObject, Random) {
+#if defined(VCC_STANDALONE_EXECUTOR)
+  vuint32 rn;
+  ed25519_randombytes(&rn, sizeof(rn));
+  float res = float(rn&0x3ffff)/(float)0x3ffff;
+  RET_FLOAT(res);
+#else
   RET_FLOAT(Random());
+#endif
+}
+
+IMPLEMENT_FUNCTION(VObject, GenRandomSeedU32) {
+  vint32 rn;
+  do { ed25519_randombytes(&rn, sizeof(rn)); } while (!rn);
+  RET_INT(rn);
 }
 
 IMPLEMENT_FUNCTION(VObject, P_Random) {

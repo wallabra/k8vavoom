@@ -26,7 +26,19 @@
 #ifndef VCCRUN_HEADER_FILE
 #define VCCRUN_HEADER_FILE
 
-#define Random()  ((float)(rand()&0x7fff)/(float)0x8000)
+#include <stdio.h>
+
+#include "../libs/core/core.h"
+
+//#define Random()  ((float)(rand()&0x7fff)/(float)0x8000)
+/*
+float Random () {
+  unsigned int rn;
+  ed25519_randombytes(&rn, sizeof(rn));
+  fprintf(stderr, "rn=0x%08x\n", rn);
+  return (rn&0x3ffff)/(float)0x3ffff;
+}
+*/
 
 
 //#define OPCODE_STATS
@@ -34,7 +46,6 @@
 #include "filesys/fsys.h"
 
 
-#include "../libs/core/core.h"
 #include "../source/common.h"
 #include "../source/maths.h"
 #include "vcc_netobj.h"

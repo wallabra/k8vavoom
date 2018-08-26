@@ -149,6 +149,19 @@ isaacp_random(isaacp_state *st, void *p, size_t len) {
 #else
 #include <windows.h>
 #include <stdio.h>
+
+static inline uint32_t hashU32 (uint32_t a) {
+  uint32_t res = (uint32_t)a;
+  res -= (res<<6);
+  res = res^(res>>17);
+  res -= (res<<9);
+  res = res^(res<<4);
+  res -= (res<<3);
+  res = res^(res<<10);
+  res = res^(res>>15);
+  return res;
+}
+
 //#include <ntsecapi.h>
 typedef BOOLEAN WINAPI (*RtlGenRandomFn) (PVOID RandomBuffer,ULONG RandomBufferLength);
 
@@ -156,26 +169,42 @@ static void RtlGenRandomX (PVOID RandomBuffer, ULONG RandomBufferLength) {
   if (RandomBufferLength <= 0) return;
   static __thread RtlGenRandomFn RtlGenRandomXX = NULL;
   static __thread int inited = 0;
-  static __thread DWORD ctt = 0;
   if (!inited) {
+    inited = 1;
     HANDLE libh = LoadLibrary("advapi32.dll");
     if (libh) {
       RtlGenRandomXX = (RtlGenRandomFn)GetProcAddress(libh, "SystemFunction036");
       if (!RtlGenRandomXX) fprintf(stderr, "WARNING: `RtlGenRandom()` is not found!\n");
       //else fprintf(stderr, "MESSAGE: `RtlGenRandom()` found!\n");
     }
-    inited = 1;
   }
   if (RtlGenRandomXX) {
     if (RtlGenRandomXX(RandomBuffer, RandomBufferLength)) return;
-    fprintf(stderr, "WARNING: `RtlGenRandom()` fallback!\n");
+    fprintf(stderr, "WARNING: `RtlGenRandom()` fallback for %u bytes!\n", (unsigned)RandomBufferLength);
   }
   unsigned char *dest = (unsigned char *)RandomBuffer;
+  uint32_t ctt;
+  //while (!ctt) ctt = hashU32(GetTickCount());
+  for (;;) {
+    SYSTEMTIME st;
+    FILETIME ft;
+    GetLocalTime(&st);
+    if (!SystemTimeToFileTime(&st, &ft)) {
+      fprintf(stderr, "SHIT: `SystemTimeToFileTime()` failed!\n");
+      do { ctt = hashU32(GetTickCount()); } while (!ctt);
+      break;
+    } else {
+      ctt = hashU32(ft.dwLowDateTime);
+      //fprintf(stderr, "ft=0x%08x (0x%08x)\n", (uint32_t)ft.dwLowDateTime, ctt);
+      if (ctt) break;
+    }
+  }
   while (RandomBufferLength > 0) {
-    while (ctt == 0) ctt += GetTickCount();
     if (RandomBufferLength >= sizeof(ctt)) {
       memcpy(dest, &ctt, sizeof(ctt));
       RandomBufferLength -= sizeof(ctt);
+      //fprintf(stderr, ":: ctt=0x%08x\n", ctt);
+      do { ctt = hashU32(ctt+1); } while (!ctt);
     } else {
       memcpy(dest, &ctt, RandomBufferLength);
       break;
