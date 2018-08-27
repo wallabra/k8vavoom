@@ -342,7 +342,7 @@ VExpression *VParser::ParseExpressionPriority0 () {
         //VExpression *op = ParseExpressionPriority14(false);
         if (!op) ParseError(l, "Expression expected");
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
-        return op;
+        return new VExprParens(op, l);
       }
     case TK_DColon:
       {

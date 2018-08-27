@@ -120,6 +120,8 @@ public:
   virtual bool IsLocalVarDecl () const;
   virtual bool IsLocalVarExpr () const;
   virtual bool IsAssignExpr () const;
+  virtual bool IsParens () const;
+  virtual bool IsUnaryMath () const;
   virtual bool IsBinaryMath () const;
   virtual bool IsSingleName () const;
   virtual bool IsDoubleName () const;

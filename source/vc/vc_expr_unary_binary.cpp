@@ -28,6 +28,95 @@
 
 //==========================================================================
 //
+//  VExprParens::VExprParens
+//
+//==========================================================================
+VExprParens::VExprParens (VExpression *AOp, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , op(AOp)
+{
+}
+
+
+//==========================================================================
+//
+//  VExprParens::~VExprParens
+//
+//==========================================================================
+VExprParens::~VExprParens () {
+  if (op) { delete op; op = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VExprParens::SyntaxCopy
+//
+//==========================================================================
+VExpression *VExprParens::SyntaxCopy () {
+  auto res = new VExprParens();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VExprParens::DoSyntaxCopyTo
+//
+//==========================================================================
+void VExprParens::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VExprParens *)e;
+  res->op = (op ? op->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VExpression
+//
+//==========================================================================
+VExpression *VExprParens::DoResolve (VEmitContext &ec) {
+  VExpression *res = (op ? op->Resolve(ec) : nullptr);
+  op = nullptr;
+  delete this;
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VExprParens::Emit
+//
+//==========================================================================
+void VExprParens::Emit (VEmitContext &) {
+  FatalError("VExprParens::Emit: the thing that should not be");
+}
+
+
+//==========================================================================
+//
+//  VExprParens::IsParens
+//
+//==========================================================================
+bool VExprParens::IsParens () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VExprParens::toString
+//
+//==========================================================================
+VStr VExprParens::toString () const {
+  return VStr("(")+e2s(op)+")";
+}
+
+
+//==========================================================================
+//
 //  VUnary::VUnary
 //
 //==========================================================================
@@ -59,6 +148,16 @@ VExpression *VUnary::SyntaxCopy () {
   auto res = new VUnary();
   DoSyntaxCopyTo(res);
   return res;
+}
+
+
+//==========================================================================
+//
+//  VUnary::IsUnaryMath
+//
+//==========================================================================
+bool VUnary::IsUnaryMath () const {
+  return true;
 }
 
 
@@ -278,6 +377,16 @@ VUnaryMutator::VUnaryMutator (EIncDec AOper, VExpression *AOp, const TLocation &
 //==========================================================================
 VUnaryMutator::~VUnaryMutator () {
   if (op) { delete op; op = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VUnaryMutator::IsUnaryMath
+//
+//==========================================================================
+bool VUnaryMutator::IsUnaryMath () const {
+  return true;
 }
 
 

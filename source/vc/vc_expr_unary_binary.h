@@ -26,6 +26,31 @@
 
 //==========================================================================
 //
+//  VExprParens
+//
+//==========================================================================
+class VExprParens : public VExpression {
+public:
+  VExpression *op;
+
+  VExprParens (VExpression *, const TLocation &);
+  virtual ~VExprParens () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+  virtual bool IsParens () const override;
+
+  virtual VStr toString () const override;
+
+protected:
+  VExprParens () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
 //  VUnary
 //
 //==========================================================================
@@ -49,6 +74,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual void EmitBranchable (VEmitContext &, VLabel, bool) override;
+
+  virtual bool IsUnaryMath () const override;
 
   virtual VStr toString () const override;
 
@@ -84,6 +111,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual bool AddDropResult () override;
+
+  virtual bool IsUnaryMath () const override;
 
   virtual VStr toString () const override;
 
