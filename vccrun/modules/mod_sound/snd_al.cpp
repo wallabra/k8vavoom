@@ -476,6 +476,9 @@ bool VOpenALDevice::OpenStream (int Rate, int Bits, int Channels) {
     return false;
   }
 
+  alSourcei(StrmSource, AL_DIRECT_CHANNELS_SOFT, AL_TRUE);
+  if (alGetError() != AL_NO_ERROR) fprintf(stderr, "WARNING: can't turn on OpenAL direct channels (this is harmless).\n");
+
   alSourcei(StrmSource, AL_SOURCE_RELATIVE, AL_TRUE);
   alSourcef(StrmSource, AL_PITCH, 1.0);
   alGenBuffers(NUM_STRM_BUFFERS, StrmBuffers);
