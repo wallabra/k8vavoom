@@ -402,7 +402,10 @@ IMPLEMENT_FUNCTION(VObject, bjprngNext) {
 IMPLEMENT_FUNCTION(VObject, bjprngNextFloat) {
   P_GET_PTR(BJPRNGCtx, ctx);
   if (ctx) {
-    RET_FLOAT((float)(ranval(ctx)&0x3ffff)/(float)(0x3ffff+1));
+    for (;;) {
+      float v = ((double)ranval(ctx))/((double)0xffffffffu);
+      if (v != 1.0f) { RET_FLOAT(v); return; }
+    }
   } else {
     RET_FLOAT(0);
   }
