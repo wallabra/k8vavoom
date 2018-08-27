@@ -352,6 +352,18 @@ native static final int P_Random ();
 // generates a random seen in range [1..0xffff_ffff]
 native static final int GenRandomSeedU32 ();
 
+// http://burtleburtle.net/bob/rand/smallprng.html
+struct BJPRNGCtx {
+  int a, b, c, d;
+}
+
+native static final void bjprngSeed (out BJPRNGCtx ctx, int aseed);
+// full 32-bit value (so it can be negative)
+native static final int bjprngNext (ref BJPRNGCtx ctx);
+// [0..1) (WARNING! not really uniform!)
+native static final float bjprngNextFloat (ref BJPRNGCtx ctx);
+
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // string functions

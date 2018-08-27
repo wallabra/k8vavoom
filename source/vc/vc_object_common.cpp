@@ -343,7 +343,7 @@ IMPLEMENT_FUNCTION(VObject, Random) {
 #if defined(VCC_STANDALONE_EXECUTOR)
   vuint32 rn;
   ed25519_randombytes(&rn, sizeof(rn));
-  float res = float(rn&0x3ffff)/(float)0x3ffff;
+  float res = (float)(rn&0x3ffff)/(float)(0x3ffff+1);
   RET_FLOAT(res);
 #else
   RET_FLOAT(Random());
@@ -357,7 +357,55 @@ IMPLEMENT_FUNCTION(VObject, GenRandomSeedU32) {
 }
 
 IMPLEMENT_FUNCTION(VObject, P_Random) {
-  RET_INT(rand() & 0xff);
+  RET_INT(rand()&0xff);
+}
+
+
+// http://burtleburtle.net/bob/rand/smallprng.html
+struct BJPRNGCtx {
+  vuint32 a, b, c, d;
+};
+
+#define bjprng_rot(x,k) (((x)<<(k))|((x)>>(32-(k))))
+static inline vuint32 ranval (BJPRNGCtx *x) {
+  vuint32 e = x->a-bjprng_rot(x->b, 27);
+  x->a = x->b^bjprng_rot(x->c, 17);
+  x->b = x->c+x->d;
+  x->c = x->d+e;
+  x->d = e+x->a;
+  return x->d;
+}
+
+static inline void raninit (BJPRNGCtx *x, vuint32 seed) {
+  x->a = 0xf1ea5eed;
+  x->b = x->c = x->d = seed;
+  for (unsigned i = 0; i < 20; ++i) (void)ranval(x);
+}
+
+
+// native static final void bjprngSeed (out BJPRNGCtx ctx, int aseed);
+IMPLEMENT_FUNCTION(VObject, bjprngSeed) {
+  P_GET_INT(aseed);
+  P_GET_PTR(BJPRNGCtx, ctx);
+  if (ctx) raninit(ctx, (vuint32)aseed);
+}
+
+// full 32-bit value (so it can be negative)
+//native static final int bjprngNext (ref BJPRNGCtx ctx);
+IMPLEMENT_FUNCTION(VObject, bjprngNext) {
+  P_GET_PTR(BJPRNGCtx, ctx);
+  RET_INT(ctx ? ranval(ctx) : 0);
+}
+
+// [0..1) (WARNING! not really uniform!)
+//native static final float bjprngNextFloat (ref BJPRNGCtx ctx);
+IMPLEMENT_FUNCTION(VObject, bjprngNextFloat) {
+  P_GET_PTR(BJPRNGCtx, ctx);
+  if (ctx) {
+    RET_FLOAT((float)(ranval(ctx)&0x3ffff)/(float)(0x3ffff+1));
+  } else {
+    RET_FLOAT(0);
+  }
 }
 
 

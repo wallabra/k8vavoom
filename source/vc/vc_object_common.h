@@ -74,6 +74,10 @@
 
   DECLARE_FUNCTION(GenRandomSeedU32)
 
+  DECLARE_FUNCTION(bjprngSeed)
+  DECLARE_FUNCTION(bjprngNext)
+  DECLARE_FUNCTION(bjprngNextFloat)
+
   // printing in console
   DECLARE_FUNCTION(print)
   DECLARE_FUNCTION(dprint)
