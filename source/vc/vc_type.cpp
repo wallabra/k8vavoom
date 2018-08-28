@@ -950,7 +950,6 @@ void VScriptArray::SwapElements (int i0, int i1, const VFieldType &Type) {
 //bool VScriptArray::CallComparePtr (const void *p0, const void *p1, const VFieldType &Type, VObject *self, VMethod *fnless)
 
 
-
 //==========================================================================
 //
 //  VScriptArray::CallCompare
