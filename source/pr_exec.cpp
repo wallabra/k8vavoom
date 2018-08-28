@@ -251,10 +251,16 @@ static void RunFunction (VMethod *func) {
 
   if (!func) { cstDump(nullptr); Sys_Error("Trying to execute null function"); }
 
+#if defined(VCC_STANDALONE_EXECUTOR)
+  ++(current_func->Profile1);
+  ++(current_func->Profile2);
+#endif
+
   //fprintf(stderr, "FN(%d): <%s>\n", cstUsed, *func->GetFullName());
 
   if (func->Flags&FUNC_Net) {
     VStack *Params = pr_stackPtr-func->ParamsSize;
+    //if (!(current_func->Flags&FUNC_Native)) ++(current_func->Profile2);
     if (((VObject *)Params[0].p)->ExecuteNetMethod(func)) return;
   }
 
@@ -2571,33 +2577,57 @@ void VObject::VMDumpCallStack () {
 //
 //==========================================================================
 void VObject::DumpProfile () {
-  //#define MAX_PROF  100
+  DumpProfileInternal(-1);
+  DumpProfileInternal(1);
+}
+
+
+//==========================================================================
+//
+//  VObject::DumpProfileInternal
+//
+//  <0: only native; >0: only script; 0: everything
+//
+//==========================================================================
+void VObject::DumpProfileInternal (int type) {
   const int MAX_PROF = 100;
-  int profsort[MAX_PROF];
+  int profsort[MAX_PROF+1];
   int totalcount = 0;
   memset(profsort, 0, sizeof(profsort));
   for (int i = 0; i < VMemberBase::GMembers.Num(); ++i) {
     if (VMemberBase::GMembers[i]->MemberType != MEMBER_Method) continue;
     VMethod *Func = (VMethod *)VMemberBase::GMembers[i];
     if (!Func->Profile1) continue; // never called
-    for (int j = 0; j < MAX_PROF; ++j) {
-      totalcount += Func->Profile2;
-      if (((VMethod *)VMemberBase::GMembers[profsort[j]])->Profile2 <= Func->Profile2) {
-        for (int k = MAX_PROF-1; k > j; --k) profsort[k] = profsort[k-1];
-        profsort[j] = i;
-        break;
-      }
+    totalcount += Func->Profile2;
+    if (type < 0 && (Func->Flags&FUNC_Native) == 0) continue;
+    if (type > 0 && (Func->Flags&FUNC_Native) != 0) continue;
+    int dpos = 0;
+    while (dpos < MAX_PROF) {
+      if (!profsort[dpos]) break;
+      VMethod *f2 = (VMethod *)VMemberBase::GMembers[profsort[dpos]];
+      if (f2->Profile2 < Func->Profile2) break;
+      ++dpos;
+    }
+    if (dpos < MAX_PROF) {
+      if (profsort[dpos]) memmove(profsort+dpos+1, profsort+dpos, (MAX_PROF-dpos)*sizeof(profsort[0]));
+      profsort[dpos] = i;
     }
   }
   if (!totalcount) return;
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+    GCon->Logf("====== PROFILE ======");
+#else
+    fprintf(stderr, "====== PROFILE ======\n");
+#endif
   for (int i = 0; i < MAX_PROF && profsort[i]; ++i) {
     VMethod *Func = (VMethod *)VMemberBase::GMembers[profsort[i]];
+    if (!Func) continue;
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    GCon->Logf("%3.2f%% (%9d) %9d %s",
+    GCon->Logf("%6.2f%% (%9d) %9d %s",
       (double)Func->Profile2*100.0/(double)totalcount,
       (int)Func->Profile2, (int)Func->Profile1, *Func->GetFullName());
 #else
-    fprintf(stderr, "%3.2f%% (%9d) %9d %s\n",
+    fprintf(stderr, "%6.2f%% (%9d) %9d %s\n",
       (double)Func->Profile2*100.0/(double)totalcount,
       (int)Func->Profile2, (int)Func->Profile1, *Func->GetFullName());
 #endif

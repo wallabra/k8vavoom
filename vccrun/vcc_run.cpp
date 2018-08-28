@@ -45,6 +45,7 @@ VObject *mainObject = nullptr;
 VStr appName;
 bool compileOnly = false;
 bool writeToConsole = true; //FIXME
+bool dumpProfile = false;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -351,6 +352,8 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
           --text;
           if (VStr::Cmp(text, "nocol") == 0) {
             vcErrorIncludeCol = false;
+          } else if (VStr::Cmp(text, "profile") == 0) {
+            dumpProfile = true;
           } else if (VStr::Cmp(text, "base") == 0) {
             ++i;
             if (i >= ArgCount) DisplayUsage();
@@ -661,6 +664,7 @@ int main (int argc, char **argv) {
       }
     }
 
+    if (dumpProfile) VObject::DumpProfile();
     VSoundManager::StaticShutdown();
     VObject::StaticExit();
     VName::StaticExit();

@@ -173,6 +173,7 @@ public:
   static VStack ExecuteFunction (VMethod *);
   static void VMDumpCallStack ();
   static void DumpProfile ();
+  static void DumpProfileInternal (int type); // <0: only native; >0: only script; 0: everything
 
   // functions
   bool ConditionalDestroy ();

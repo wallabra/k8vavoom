@@ -404,7 +404,7 @@ IMPLEMENT_FUNCTION(VObject, bjprngNextFloat) {
   if (ctx) {
     for (;;) {
       float v = ((double)ranval(ctx))/((double)0xffffffffu);
-      if (v != 1.0f) { RET_FLOAT(v); return; }
+      if (v < 1.0f) { RET_FLOAT(v); return; }
     }
   } else {
     RET_FLOAT(0);
