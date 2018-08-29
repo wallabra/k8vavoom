@@ -50,13 +50,14 @@ static const float zNear = 1.0f;
 static const float zFar = 42.0f;
 
 
-#ifdef WIN32
 //static PFNGLBLENDEQUATIONPROC glBlendEquation;
 typedef void (APIENTRY *glBlendEquationFn) (GLenum mode);
 static glBlendEquationFn glBlendEquationFunc;
+/*
 #else
 # define glBlendEquationFunc glBlendEquation
 #endif
+*/
 
 /*
 #ifndef GL_CLAMP_TO_EDGE
@@ -498,8 +499,8 @@ void VOpenGLTexture::update () {
     glDeleteTextures(1, &tid);
   }
   tid = 0;
-  if (hw_glctx) texUpload(this);
   analyzeImage();
+  if (hw_glctx) texUpload(this);
 }
 
 
@@ -877,6 +878,14 @@ IMPLEMENT_FUNCTION(VGLTexture, getPixel) {
 IMPLEMENT_FUNCTION(VGLTexture, upload) {
   P_GET_SELF;
   if (Self && Self->tex) Self->tex->update();
+}
+
+// native final void smoothEdges (); // call after manual texture building
+IMPLEMENT_FUNCTION(VGLTexture, smoothEdges) {
+  P_GET_SELF;
+  if (Self && Self->tex && Self->tex->img) {
+    Self->tex->img->smoothEdges();
+  }
 }
 
 
@@ -1317,10 +1326,8 @@ again:
 
   //glDrawBuffer(directMode ? GL_FRONT : GL_BACK);
 
-#ifdef WIN32
   glBlendEquationFunc = (/*PFNGLBLENDEQUATIONPROC*/glBlendEquationFn)SDL_GL_GetProcAddress("glBlendEquation");
   if (!glBlendEquationFunc) abort();
-#endif
 
   clear();
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);

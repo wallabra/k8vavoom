@@ -497,6 +497,7 @@ public:
   DECLARE_FUNCTION(setPixel) // native final static void setPixel (int x, int y, int argb); // aarrggbb; a==0 is completely opaque
   DECLARE_FUNCTION(getPixel) // native final static int getPixel (int x, int y); // aarrggbb; a==0 is completely opaque
   DECLARE_FUNCTION(upload) // native final static void upload ();
+  DECLARE_FUNCTION(smoothEdges) // native final void smoothEdges (); // call after manual texture building
 };
 
 
