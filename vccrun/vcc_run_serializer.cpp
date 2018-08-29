@@ -752,7 +752,7 @@ private:
             strm << STRM_INDEX_U(u32);
           }
         } else {
-          *(VObject **)data = nullptr; // none
+          if (!skipping) *(VObject **)data = nullptr; // none
         }
         break;
       case TYPE_Class:
@@ -896,9 +896,10 @@ private:
         //FIXME: skip unknown fields
         if (!fld) {
           fprintf(stderr, "Object Loader: field `%s` is not found in struct `%s`\n", *namearr[n], *st->GetFullName());
+          auto oldskip = skipping;
           skipping = true;
           if (!loadTypedData(nullptr, VFieldType())) return false;
-          skipping = false;
+          skipping = oldskip;
         } else {
           if (!loadTypedData(data+fld->Ofs, fld->Type)) {
             fprintf(stderr, "Object Loader: failed to load field `%s` in struct `%s`\n", *namearr[n], *st->GetFullName());
@@ -950,9 +951,10 @@ private:
         //FIXME: skip unknown fields
         if (!fld) {
           fprintf(stderr, "Object Loader: field `%s` is not found in class `%s`\n", *namearr[n], *cls->Name);
+          auto oldskip = skipping;
           skipping = true;
           if (!loadTypedData(nullptr, VFieldType())) return false;
-          skipping = false;
+          skipping = oldskip;
         } else {
           if (!loadTypedData((vuint8 *)obj+fld->Ofs, fld->Type)) {
             fprintf(stderr, "Object Loader: failed to load field `%s` in class `%s`\n", *namearr[n], *cls->Name);
