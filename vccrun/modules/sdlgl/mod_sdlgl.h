@@ -310,8 +310,6 @@ public:
 
   DECLARE_FUNCTION(setScale)
 
-  DECLARE_FUNCTION(loadFont)
-
   DECLARE_FUNCTION(runEventLoop)
 
   DECLARE_FUNCTION(requestRefresh)
@@ -384,7 +382,11 @@ public:
   DECLARE_FUNCTION(get_fontName)
   DECLARE_FUNCTION(set_fontName)
 
+  DECLARE_FUNCTION(loadFontDF)
+  DECLARE_FUNCTION(loadFontPCF)
+
   DECLARE_FUNCTION(fontHeight)
+  DECLARE_FUNCTION(getCharInfo)
   DECLARE_FUNCTION(charWidth)
   DECLARE_FUNCTION(spaceWidth)
   DECLARE_FUNCTION(textWidth)
@@ -509,10 +511,12 @@ protected:
 
 public:
   struct FontChar {
-    int ch;
-    int width, height; // height may differ from font height
-    int advance; // horizontal advance to print next char
-    int topofs; // offset from font top (i.e. y+topofs should be used to draw char)
+    vint32 ch;
+    vint32 width, height; // height may differ from font height
+    vint32 advance; // horizontal advance to print next char
+    vint32 topofs; // offset from font top (i.e. y+topofs should be used to draw char)
+    vint32 leftbear, rightbear; // positive means "more to the respective bbox side"
+    vint32 ascent, descent; // both are positive, which actually means "offset from baseline to the respective direction"
     float tx0, ty0; // texture coordinates, [0..1)
     float tx1, ty1; // texture coordinates, [0..1) -- cached for convenience
     VOpenGLTexture *tex; // don't destroy this!
@@ -522,33 +526,37 @@ protected:
   VName name;
   VFont *next;
   VOpenGLTexture *tex;
+  bool singleTexture;
 
   // font characters (cp1251)
   TArray<FontChar> chars;
-  int spaceWidth; // width of the space character
-  int fontHeight; // height of the font
+  vint32 spaceWidth; // width of the space character
+  vint32 fontHeight; // height of the font
+  vint32 minWidth, maxWidth, avgWidth;
 
-  // fast look-up for 1251 encoding characters
-  //int chars1251[256];
-  // range of available characters
-  //int firstChar;
-  //int lastChar;
+protected:
+  VFont (); // this inits nothing, and intended to be used in `LoadXXX()`
 
 public:
-  //VFont ();
-  VFont (VName aname, const VStr &fnameIni, const VStr &fnameTexture);
+  //VFont (VName aname, const VStr &fnameIni, const VStr &fnameTexture);
   ~VFont ();
 
-  const FontChar *getChar (int ch) const;
-  int charWidth (int ch) const;
-  int textWidth (const VStr &s) const;
-  int textHeight (const VStr &s) const;
+  static VFont *LoadDF (VName aname, const VStr &fnameIni, const VStr &fnameTexture);
+  static VFont *LoadPCF (VName aname, const VStr &filename);
+
+  const FontChar *getChar (vint32 ch) const;
+  vint32 charWidth (vint32 ch) const;
+  vint32 textWidth (const VStr &s) const;
+  vint32 textHeight (const VStr &s) const;
   // will clear lines; returns maximum text width
   //int splitTextWidth (const VStr &text, TArray<VSplitLine> &lines, int maxWidth) const;
 
   inline VName getName () const { return name; }
-  inline int getSpaceWidth () const { return spaceWidth; }
-  inline int getHeight () const { return fontHeight; }
+  inline vint32 getSpaceWidth () const { return spaceWidth; }
+  inline vint32 getHeight () const { return fontHeight; }
+  inline vint32 getMinWidth () const { return minWidth; }
+  inline vint32 getMaxWidth () const { return maxWidth; }
+  inline vint32 getAvgWidth () const { return avgWidth; }
   inline const VOpenGLTexture *getTexture () const { return tex; }
 
 public:

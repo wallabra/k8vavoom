@@ -129,9 +129,6 @@ native final static ZFunc depthFunc { get; set; }
 native final static int currZ { get; set; }
 
 
-// aborts if font cannot be loaded
-native final static void loadFont (name fontname, string fnameIni, string fnameTexture);
-
 //native final static void setSmoothLine (bool v);
 native final static bool smoothLine { get; set; }
 
@@ -150,12 +147,29 @@ native final static BlendMode blendMode { get; set; }
 native final static BlendFunc blendFunc { get; set; }
 
 
+// aborts if font cannot be loaded
+native final static void loadFontDF (name fontname, string fnameIni, string fnameTexture);
+
+// aborts if font cannot be loaded
+native final static void loadFontPCF (name fontname, string filename);
+
 //native final static name getFont ();
 //native final static void setFont (name fontname);
 native final static name fontName { get; set; }
 
+struct FontCharInfo {
+  int ch;
+  int width, height; // height may differ from font height
+  int advance; // horizontal advance to print next char
+  int topofs; // offset from font top (i.e. y+topofs should be used to draw char)
+  int leftbear, rightbear; // positive means "more to the respective bbox side"
+  int ascent, descent; // both are positive, which actually means "offset from baseline to the respective direction"
+}
+
+
 native final static int fontHeight ();
 native final static int spaceWidth ();
+native final static bool getCharInfo (int ch, out FontCharInfo ci); // returns `false` if char wasn't found
 native final static int charWidth (int ch);
 native final static int textWidth (string text);
 native final static int textHeight (string text);
