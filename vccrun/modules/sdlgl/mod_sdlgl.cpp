@@ -39,6 +39,7 @@ static SDL_Window *hw_window = nullptr;
 static SDL_GLContext hw_glctx = nullptr;
 static VOpenGLTexture *txHead = nullptr, *txTail = nullptr;
 static TMap<VStr, VOpenGLTexture *> txLoaded;
+//static TArray<VOpenGLTexture *> txLoadedUnnamed;
 
 bool VVideo::doGLSwap = false;
 bool VVideo::doRefresh = false;
@@ -145,6 +146,7 @@ public:
     }
   };
 
+  /*
   struct Prop {
     VStr name;
     VStr sv; // empty: this is integer property
@@ -153,9 +155,10 @@ public:
     inline bool isString () const { return (*sv != nullptr); }
     inline bool isInt () const { return (*sv == nullptr); }
   };
+  */
 
   struct Glyph {
-    vuint32 index; // glyph index
+    //vuint32 index; // glyph index
     vuint32 codepoint;
     CharMetrics metrics;
     CharMetrics inkmetrics;
@@ -163,9 +166,9 @@ public:
     vuint32 bmpfmt;
     //VStr name; // may be absent
 
-    Glyph () : index(0), codepoint(0), metrics(), inkmetrics(), bitmap(nullptr), bmpfmt(0) {}
-    Glyph (const Glyph &g) : index(0), codepoint(0), metrics(), inkmetrics(), bitmap(nullptr), bmpfmt(0) {
-      index = g.index;
+    Glyph () : codepoint(0), metrics(), inkmetrics(), bitmap(nullptr), bmpfmt(0) {}
+    Glyph (const Glyph &g) : codepoint(0), metrics(), inkmetrics(), bitmap(nullptr), bmpfmt(0) {
+      //index = g.index;
       codepoint = g.codepoint;
       metrics = g.metrics;
       inkmetrics = g.inkmetrics;
@@ -175,7 +178,7 @@ public:
     }
 
     void clear () {
-      index = 0;
+      //index = 0;
       codepoint = 0;
       metrics.clear();
       inkmetrics.clear();
@@ -186,7 +189,7 @@ public:
 
     void operator = (const Glyph &g) {
       if (&g != this) {
-        index = g.index;
+        //index = g.index;
         codepoint = g.codepoint;
         metrics = g.metrics;
         inkmetrics = g.inkmetrics;
@@ -305,12 +308,17 @@ public:
 
   VOpenGLTexture *createGlyphTexture (int gidx) {
     Glyph &gl = glyphs[gidx];
+    //!fprintf(stderr, "glyph #%d (ch=%u); wdt=%d; hgt=%d\n", gidx, gl.codepoint, gl.bmpWidth(), gl.bmpHeight());
+    if (gl.bmpWidth() < 1 || gl.bmpHeight() < 1) return nullptr;
     VOpenGLTexture *tex = VOpenGLTexture::CreateEmpty(NAME_None, gl.bmpWidth(), gl.bmpHeight());
-    for (int dy = 0; dy < gl.bmpWidth(); ++dy) {
-      for (int dx = 0; dx < gl.bmpHeight(); ++dx) {
+    for (int dy = 0; dy < gl.bmpHeight(); ++dy) {
+      //!fprintf(stderr, "  ");
+      for (int dx = 0; dx < gl.bmpWidth(); ++dx) {
         bool pix = gl.getPixel(dx, dy);
-        tex->img->setPixel(dx, dy, (pix ? VImage::RGBA(255, 255, 255, 255) : VImage::RGBA(255, 255, 255, 0)));
+        //!fprintf(stderr, "%c", (pix ? '#' : '.'));
+        tex->img->setPixel(dx, dy, (pix ? VImage::RGBA(255, 255, 255, 255) : VImage::RGBA(0, 0, 0, 0)));
       }
+      //!fprintf(stderr, "\n");
     }
     return tex;
   }
@@ -424,7 +432,6 @@ public:
   vuint8 tmpb; \
   fl.Serialise(&tmpb, 1); \
   dest = (tmpb != 0); \
-  (void)dest; \
 } while (0)
 
     char sign[4];
@@ -557,7 +564,7 @@ public:
     //immutable int bytesPerItem = 1<<(bmpfmt&3);
     for (int idx = 0; idx < glyphs.length(); ++idx) {
       Glyph &gl = glyphs[idx];
-      gl.index = (vuint32)idx;
+      //gl.index = (vuint32)idx;
       //uint realofs = gboffsets[idx]*bytesPerItem;
       //if (realofs >= bitmaps.length) throw new Exception("invalid glyph bitmap offset in PCF");
       vuint32 realofs = gboffsets[idx];
@@ -643,7 +650,7 @@ public:
         }
         if (count < (vuint32)glyphs.length()) return false;
         for (int gidx = 0; gidx < glyphs.length(); ++gidx) {
-          Glyph gl = glyphs[gidx];
+          Glyph &gl = glyphs[gidx];
           readMetrics(gl.metrics);
           gl.inkmetrics = gl.metrics;
         }
@@ -676,7 +683,7 @@ public:
         }
         if (count > (vuint32)glyphs.length()) count = (vuint32)glyphs.length();
         for (int gidx = 0; gidx < glyphs.length(); ++gidx) {
-          Glyph gl = glyphs[gidx];
+          Glyph &gl = glyphs[gidx];
           readMetrics(gl.inkmetrics);
         }
       }
@@ -750,17 +757,17 @@ public:
       if (fmt != tbl.format) return false;
       setupFormat(tbl);
       // load font parameters
-      bool noOverlap; readBool(noOverlap);
-      bool constantMetrics; readBool(constantMetrics);
-      bool terminalFont; readBool(terminalFont);
-      bool constantWidth; readBool(constantWidth);
-      bool inkInside; readBool(inkInside);
-      bool inkMetrics; readBool(inkMetrics);
-      bool drawDirectionLTR; readBool(drawDirectionLTR);
-      int padding; readInt(vuint8, padding);
-      int fntAscent; readInt(vint32, fntAscent);
-      int fntDescent; readInt(vint32, fntDescent);
-      int maxOverlap; readInt(vint32, maxOverlap);
+      readBool(noOverlap);
+      readBool(constantMetrics);
+      readBool(terminalFont);
+      readBool(constantWidth);
+      readBool(inkInside);
+      readBool(inkMetrics);
+      readBool(drawDirectionLTR);
+      readInt(vuint8, padding);
+      readInt(vint32, fntAscent);
+      readInt(vint32, fntDescent);
+      readInt(vint32, maxOverlap);
       readInt(vint16, minbounds.leftSidedBearing);
       readInt(vint16, minbounds.rightSideBearing);
       readInt(vint16, minbounds.width);
@@ -1207,7 +1214,18 @@ VOpenGLTexture::~VOpenGLTexture () {
   tid = 0;
   delete img;
   img = nullptr;
-  if (mPath.length()) txLoaded.remove(mPath);
+  if (mPath.length()) {
+    txLoaded.remove(mPath);
+  } else {
+    /*
+    for (int idx = 0; idx < txLoadedUnnamed.length(); ++idx) {
+      if (txLoadedUnnamed[idx] == this) {
+        txLoadedUnnamed.removeAt(idx);
+        break;
+      }
+    }
+    */
+  }
   mPath = VStr();
   if (!prev && !next) {
     if (txHead == this) { txHead = txTail = nullptr; }
@@ -1314,7 +1332,7 @@ VOpenGLTexture *VOpenGLTexture::CreateEmpty (VName txname, int wdt, int hgt) {
   }
   if (wdt < 1 || hgt < 1 || wdt > 32768 || hgt > 32768) return nullptr;
   VOpenGLTexture *res = new VOpenGLTexture(wdt, hgt);
-  if (sname.length() > 0) txLoaded.put(sname, res);
+  if (sname.length() > 0) txLoaded.put(sname, res); //else txLoadedUnnamed.append(res);
   //fprintf(stderr, "TXLOADED: '%s' rc=%d, (%p)\n", *res->mPath, res->rc, res);
   return res;
 }
@@ -2019,8 +2037,6 @@ again:
   }
 #endif
 
-  uploadAllTextures();
-
   //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
   if (si < 0) si = -1; else if (si > 0) si = 1;
   if (SDL_GL_SetSwapInterval(si) == -1) { if (si < 0) { si = 1; SDL_GL_SetSwapInterval(1); } }
@@ -2105,6 +2121,8 @@ again:
 
   clear();
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+
+  uploadAllTextures();
 
   return true;
 }
@@ -2419,31 +2437,44 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
   if (!mInited) return;
 
   const VOpenGLTexture *tex = currFont->getTexture();
-  if (!tex || !tex->tid) return; // oops
+  if (currFont->singleTexture) {
+    if (!tex || !tex->tid) return; // oops
+  }
 
   glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, tex->tid);
+  if (currFont->singleTexture) glBindTexture(GL_TEXTURE_2D, tex->tid);
   glEnable(GL_BLEND); // font is rarely fully opaque, so don't bother checking
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   const float z = currZFloat;
-  glBegin(GL_QUADS);
+  if (currFont->singleTexture) glBegin(GL_QUADS);
   int sx = x;
   for (int f = 0; f < text.length(); ++f) {
     int ch = (vuint8)text[f];
-    if (ch == '\r') { x = sx; continue; }
+    //if (ch == '\r') { x = sx; continue; }
     if (ch == '\n') { x = sx; y += currFont->getHeight(); continue; }
     auto fc = currFont->getChar(ch);
-    if (!fc) continue;
+    if (!fc) {
+      //fprintf(stderr, "NO CHAR #%d\n", ch);
+      continue;
+    }
     // draw char
-    glTexCoord2f(fc->tx0, fc->ty0); glVertex3f(x, y+fc->topofs, z);
-    glTexCoord2f(fc->tx1, fc->ty0); glVertex3f(x+fc->width, y+fc->topofs, z);
-    glTexCoord2f(fc->tx1, fc->ty1); glVertex3f(x+fc->width, y+fc->topofs+fc->height, z);
-    glTexCoord2f(fc->tx0, fc->ty1); glVertex3f(x, y+fc->topofs+fc->height, z);
+    if (!currFont->singleTexture) {
+      glBindTexture(GL_TEXTURE_2D, fc->tex->tid);
+      glBegin(GL_QUADS);
+      //fprintf(stderr, "rebound texture (tid=%u) for char %d\n", fc->tex->tid, ch);
+    }
+    int xofs = fc->leftbear;
+    glTexCoord2f(fc->tx0, fc->ty0); glVertex3f(x+xofs, y+fc->topofs, z);
+    glTexCoord2f(fc->tx1, fc->ty0); glVertex3f(x+xofs+fc->width, y+fc->topofs, z);
+    glTexCoord2f(fc->tx1, fc->ty1); glVertex3f(x+xofs+fc->width, y+fc->topofs+fc->height, z);
+    glTexCoord2f(fc->tx0, fc->ty1); glVertex3f(x+xofs, y+fc->topofs+fc->height, z);
+    if (!currFont->singleTexture) glEnd();
     // advance
-    x += fc->advance;
+    //x += fc->advance;
+    x += fc->leftbear+fc->rightbear;
   }
-  glEnd();
+  if (currFont->singleTexture) glEnd();
 }
 
 
@@ -2900,19 +2931,18 @@ IMPLEMENT_FUNCTION(VVideo, loadFontDF) {
 // aborts if font cannot be loaded
 //native final static void loadFontPCF (name fname, string filename);
 IMPLEMENT_FUNCTION(VVideo, loadFontPCF) {
-  VName fname;
-  VStr filename;
-  vobjGetParam(fname, filename);
-  if (VFont::findFont(fname)) return;
-  VFont::LoadPCF(fname, filename);
+  P_GET_STR(filename);
+  P_GET_NAME(fontname);
+  if (VFont::findFont(fontname)) return;
+  VFont::LoadPCF(fontname, filename);
 }
 
 
 struct FontCharInfo {
   int ch;
-  int width, height; // height may differ from font height
-  int advance; // horizontal advance to print next char
-  int topofs; // offset from font top (i.e. y+topofs should be used to draw char)
+  //int width, height; // height may differ from font height
+  //int advance; // horizontal advance to print next char
+  //int topofs; // offset from font top (i.e. y+topofs should be used to draw char)
   int leftbear, rightbear; // positive means "more to the respective bbox side"
   int ascent, descent; // both are positive, which actually means "offset from baseline to the respective direction"
 };
@@ -2929,16 +2959,16 @@ IMPLEMENT_FUNCTION(VVideo, getCharInfo) {
     return;
   }
   auto fci = currFont->getChar(ch);
-  if (!fci) {
+  if (!fci || fci->ch == 0) {
     memset(fc, 0, sizeof(*fc));
     RET_BOOL(false);
     return;
   }
   fc->ch = fci->ch;
-  fc->width = fci->width;
-  fc->height = fci->height;
-  fc->advance = fci->advance;
-  fc->topofs = fci->topofs;
+  //fc->width = fci->width;
+  //fc->height = fci->height;
+  //fc->advance = fci->advance;
+  //fc->topofs = fci->topofs;
   fc->leftbear = fci->leftbear;
   fc->rightbear = fci->rightbear;
   fc->ascent = fci->ascent;
@@ -3284,12 +3314,14 @@ VFont *VFont::LoadDF (VName aname, const VStr &fnameIni, const VStr &fnameTextur
       fc.ch = cy*xchars+cx;
       fc.width = cwdt;
       fc.height = chgt;
-      fc.advance = xwidth[fc.ch]+kern;
+      //fc.advance = xwidth[fc.ch]+kern;
+      fc.leftbear = 0;
+      fc.rightbear = xwidth[fc.ch]+kern;
       if (minWdt > cwdt) minWdt = cwdt;
       if (maxWdt < cwdt) maxWdt = cwdt;
       totalWdt += cwdt;
       ++totalCount;
-      if (fc.ch == 32) fnt->spaceWidth = fc.advance;
+      if (fc.ch == 32) fnt->spaceWidth = fc.leftbear+fc.rightbear;
       fc.topofs = 0;
       fc.tx0 = (float)(cx*cwdt)/(float)tex->getWidth();
       fc.ty0 = (float)(cy*chgt)/(float)tex->getHeight();
@@ -3301,7 +3333,7 @@ VFont *VFont::LoadDF (VName aname, const VStr &fnameIni, const VStr &fnameTextur
 
   fnt->minWidth = minWdt;
   fnt->maxWidth = maxWdt;
-  if (totalCount) fnt->avgWidth = totalWdt/totalCount;
+  fnt->avgWidth = (totalCount ? totalWdt/totalCount : 0);
 
   fnt->next = fontList;
   fontList = fnt;
@@ -3316,12 +3348,95 @@ VFont *VFont::LoadDF (VName aname, const VStr &fnameIni, const VStr &fnameTextur
 //
 //==========================================================================
 VFont *VFont::LoadPCF (VName aname, const VStr &filename) {
+/*
+  static const vuint16 cp12512Uni[128] = {
+    0x0402,0x0403,0x201A,0x0453,0x201E,0x2026,0x2020,0x2021,0x20AC,0x2030,0x0409,0x2039,0x040A,0x040C,0x040B,0x040F,
+    0x0452,0x2018,0x2019,0x201C,0x201D,0x2022,0x2013,0x2014,0x003F,0x2122,0x0459,0x203A,0x045A,0x045C,0x045B,0x045F,
+    0x00A0,0x040E,0x045E,0x0408,0x00A4,0x0490,0x00A6,0x00A7,0x0401,0x00A9,0x0404,0x00AB,0x00AC,0x00AD,0x00AE,0x0407,
+    0x00B0,0x00B1,0x0406,0x0456,0x0491,0x00B5,0x00B6,0x00B7,0x0451,0x2116,0x0454,0x00BB,0x0458,0x0405,0x0455,0x0457,
+    0x0410,0x0411,0x0412,0x0413,0x0414,0x0415,0x0416,0x0417,0x0418,0x0419,0x041A,0x041B,0x041C,0x041D,0x041E,0x041F,
+    0x0420,0x0421,0x0422,0x0423,0x0424,0x0425,0x0426,0x0427,0x0428,0x0429,0x042A,0x042B,0x042C,0x042D,0x042E,0x042F,
+    0x0430,0x0431,0x0432,0x0433,0x0434,0x0435,0x0436,0x0437,0x0438,0x0439,0x043A,0x043B,0x043C,0x043D,0x043E,0x043F,
+    0x0440,0x0441,0x0442,0x0443,0x0444,0x0445,0x0446,0x0447,0x0448,0x0449,0x044A,0x044B,0x044C,0x044D,0x044E,0x044F,
+  };
+*/
+
   auto fl = fsysOpenFile(filename);
   if (!fl) { Sys_Error(va("cannot load font '%s'", *aname)); }
+
   PcfFont pcf;
   if (!pcf.load(*fl)) { Sys_Error(va("invalid PCF font '%s'", *aname)); }
-  //Sys_Error(va("cannot load font '%s'", *aname));
-  return nullptr;
+
+  VFont *fnt = new VFont();
+  fnt->name = aname;
+  fnt->singleTexture = false;
+  fnt->tex = nullptr;
+
+  fnt->chars.setLength(256);
+  for (int f = 0; f < fnt->chars.length(); ++f) fnt->chars[f].ch = -1;
+
+  fnt->fontHeight = pcf.fntAscent+pcf.fntDescent;
+  fnt->spaceWidth = -1;
+
+  int totalWdt = 0, maxWdt = -0x7fffffff, minWdt = 0x7fffffff, totalCount = 0;
+
+  for (int gidx = 0; gidx < pcf.glyphs.length(); ++gidx) {
+    PcfFont::Glyph &gl = pcf.glyphs[gidx];
+    int chidx = -1;
+    if (gl.codepoint < 128) {
+      chidx = (int)gl.codepoint;
+    } else {
+      //for (unsigned f = 0; f < 128; ++f) if (cp12512Uni[f] == gl.codepoint) { chidx = (int)f+128; break; }
+      if (gl.codepoint > 255) continue;
+      chidx = (int)gl.codepoint;
+    }
+    if (chidx < 0) continue; // unused glyph
+    //fprintf(stderr, "gidx=%d; codepoint=%u; chidx=%d\n", gidx, gl.codepoint, chidx);
+    FontChar &fc = fnt->chars[chidx];
+    if (fc.ch >= 0) continue; // duplicate glyph
+
+    fc.tex = pcf.createGlyphTexture(gidx);
+    if (!fc.tex) continue;
+
+    fc.ch = chidx;
+    fc.tx0 = fc.ty0 = 0;
+    fc.tx1 = fc.ty1 = 1;
+
+    fc.width = fc.tex->img->width;
+    fc.height = fc.tex->img->height;
+    //fc.advance = gl.metrics.leftSidedBearing+gl.metrics.width+gl.metrics.rightSideBearing;
+    fc.topofs = pcf.fntAscent-gl.metrics.ascent;
+    fc.leftbear = gl.metrics.leftSidedBearing;
+    fc.rightbear = gl.metrics.rightSideBearing;
+    fc.ascent = gl.metrics.ascent;
+    fc.descent = gl.metrics.descent;
+
+    if (fc.ch == 32) fnt->spaceWidth = fc.leftbear+fc.rightbear;
+
+    if (minWdt > gl.metrics.width) minWdt = gl.metrics.width;
+    if (maxWdt < gl.metrics.width) maxWdt = gl.metrics.width;
+    totalWdt += gl.metrics.width;
+    ++totalCount;
+
+    /*
+    VGLTexture *ifile = Spawn<VGLTexture>();
+    ifile->tex = fc.tex;
+    ifile->id = vcGLAllocId(ifile);
+    */
+
+    fc.tex->update();
+  }
+
+  fnt->minWidth = minWdt;
+  fnt->maxWidth = maxWdt;
+  fnt->avgWidth = (totalCount ? totalWdt/totalCount : 0);
+
+  if (fnt->spaceWidth < 0) fnt->spaceWidth = fnt->avgWidth;
+
+  fnt->next = fontList;
+  fontList = fnt;
+
+  return fnt;
 }
 
 
@@ -3331,11 +3446,13 @@ VFont *VFont::LoadPCF (VName aname, const VStr &filename) {
 //
 //==========================================================================
 const VFont::FontChar *VFont::getChar (int ch) const {
+  //fprintf(stderr, "GET CHAR #%d (%d); internal:%d\n", ch, chars.length(), chars[ch].ch);
+  if (ch < 0) return nullptr;
   if (ch < 0 || ch >= chars.length()) {
     ch = VStr::upcase1251(ch);
     if (ch < 0 || ch >= chars.length()) return nullptr;
   }
-  return &chars[ch];
+  return (chars[ch].ch >= 0 ? &chars[ch] : nullptr);
 }
 
 
@@ -3356,11 +3473,18 @@ int VFont::charWidth (int ch) const {
 //
 //==========================================================================
 int VFont::textWidth (const VStr &s) const {
-  int res = 0;
+  int res = 0, curwdt = 0;
   for (int f = 0; f < s.length(); ++f) {
-    auto fc = getChar(vuint8(s[f]));
-    if (fc) res += fc->advance;
+    vuint8 ch = vuint8(s[f]);
+    if (ch == '\n') {
+      if (res < curwdt) res = curwdt;
+      curwdt = 0;
+      continue;
+    }
+    auto fc = getChar(ch);
+    if (fc) curwdt += fc->leftbear+fc->rightbear;
   }
+  if (res < curwdt) res = curwdt;
   return res;
 }
 

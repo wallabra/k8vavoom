@@ -500,6 +500,8 @@ public:
   DECLARE_FUNCTION(getPixel) // native final static int getPixel (int x, int y); // aarrggbb; a==0 is completely opaque
   DECLARE_FUNCTION(upload) // native final static void upload ();
   DECLARE_FUNCTION(smoothEdges) // native final void smoothEdges (); // call after manual texture building
+
+  friend class VFont;
 };
 
 
@@ -513,16 +515,18 @@ public:
   struct FontChar {
     vint32 ch;
     vint32 width, height; // height may differ from font height
-    vint32 advance; // horizontal advance to print next char
+    //vint32 advance; // horizontal advance to print next char
     vint32 topofs; // offset from font top (i.e. y+topofs should be used to draw char)
     vint32 leftbear, rightbear; // positive means "more to the respective bbox side"
     vint32 ascent, descent; // both are positive, which actually means "offset from baseline to the respective direction"
     float tx0, ty0; // texture coordinates, [0..1)
     float tx1, ty1; // texture coordinates, [0..1) -- cached for convenience
     VOpenGLTexture *tex; // don't destroy this!
+
+    FontChar () : ch(-1), width(0), height(0), tex(nullptr) {}
   };
 
-protected:
+public:
   VName name;
   VFont *next;
   VOpenGLTexture *tex;
