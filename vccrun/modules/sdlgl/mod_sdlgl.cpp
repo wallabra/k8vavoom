@@ -44,6 +44,7 @@ static TMap<VStr, VOpenGLTexture *> txLoaded;
 bool VVideo::doGLSwap = false;
 bool VVideo::doRefresh = false;
 bool VVideo::quitSignal = false;
+bool VVideo::hasNPOT = false;
 
 extern VObject *mainObject;
 
@@ -2126,6 +2127,14 @@ again:
 
   uploadAllTextures();
 
+  if (SDL_GL_ExtensionSupported("GL_ARB_texture_non_power_of_two") ||
+      SDL_GL_ExtensionSupported("GL_OES_texture_npot"))
+  {
+    hasNPOT = true;
+  } else {
+    hasNPOT = false;
+  }
+
   return true;
 }
 
@@ -2592,6 +2601,26 @@ IMPLEMENT_FUNCTION(VVideo, forceSwap) {
   if (!mInited) return;
   doGLSwap = false;
   SDL_GL_SwapWindow(hw_window);
+}
+
+
+//native final static bool glHasExtension (string extname);
+IMPLEMENT_FUNCTION(VVideo, glHasExtension) {
+  P_GET_STR(extname);
+  if (extname.isEmpty() || !mInited) {
+    RET_BOOL(false);
+  } else {
+    if (SDL_GL_ExtensionSupported(*extname)) {
+      RET_BOOL(true);
+    } else {
+      RET_BOOL(false);
+    }
+  }
+}
+
+
+IMPLEMENT_FUNCTION(VVideo, get_glHasNPOT) {
+  RET_BOOL(mInited ? hasNPOT : false);
 }
 
 IMPLEMENT_FUNCTION(VVideo, get_directMode) {

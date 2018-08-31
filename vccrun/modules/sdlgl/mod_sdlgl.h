@@ -118,6 +118,7 @@ private:
   static bool doGLSwap;
   static bool doRefresh;
   static bool quitSignal;
+  static bool hasNPOT; // NPOT texture support
   static VMethod *onDrawVC;
   static VMethod *onEventVC;
   static VMethod *onNewFrameVC;
@@ -317,6 +318,10 @@ public:
   DECLARE_FUNCTION(resetQuitRequest)
 
   DECLARE_FUNCTION(forceSwap)
+
+  DECLARE_FUNCTION(glHasExtension)
+
+  DECLARE_FUNCTION(get_glHasNPOT)
 
   DECLARE_FUNCTION(get_directMode)
   DECLARE_FUNCTION(set_directMode)

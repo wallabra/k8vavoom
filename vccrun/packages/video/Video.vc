@@ -44,6 +44,12 @@ native final static void showMouseCursor ();
 
 native final static void getRealWindowSize (out int w, out int h);
 
+// call this *AFTER* you opened a screen
+native final static bool glHasNPOT { get; }
+
+// call this *AFTER* you opened a screen
+native final static bool glHasExtension (string extname);
+
 //native final static void setScale (float sx, float sy);
 
 //native final static int getFrameTime ();
