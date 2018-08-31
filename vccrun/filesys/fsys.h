@@ -89,6 +89,7 @@ VStr fsysFileFindAnyExt (const VStr &fname, int pakid=fsysAnyPak);
 // ////////////////////////////////////////////////////////////////////////// //
 class FSysDriverBase {
   friend class VStreamPakFile;
+  friend const VStr &fsysForEachPakFile (bool (*dg) (const VStr &fname));
 
 protected:
   virtual const VStr &getNameByIndex (int idx) const = 0;
@@ -387,6 +388,8 @@ void fsysCloseDir (void *adir);
 
 // kinda like `GetTickCount()`, in seconds
 double fsysCurrTick ();
+
+const VStr &fsysForEachPakFile (bool (*dg) (const VStr &fname));
 
 
 // ////////////////////////////////////////////////////////////////////////// //

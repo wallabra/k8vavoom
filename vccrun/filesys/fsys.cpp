@@ -485,8 +485,8 @@ FSysDriverDisk::~FSysDriverDisk () {}
 bool FSysDriverDisk::canBeDestroyed () { return true; }
 
 const VStr &FSysDriverDisk::getNameByIndex (int idx) const { *(int *)0 = 0; return VStr::EmptyString; } // the thing that should not be
-int FSysDriverDisk::getNameCount () const { *(int *)0 = 0; return 0; } // the thing that should not be
-VStream *FSysDriverDisk::openWithIndex (int idx) { *(int *)0 = 0; return nullptr; } // the thing that should not be
+int FSysDriverDisk::getNameCount () const { return 0; } // the thing that should not be
+VStream *FSysDriverDisk::openWithIndex (int idx) { return nullptr; } // the thing that should not be
 
 bool FSysDriverDisk::hasFile (const VStr &fname) {
   if (!isGoodPath(fname)) return false;
@@ -865,6 +865,44 @@ VStream *fsysOpenFileAnyExt (const VStr &fname, int pakid) {
   VStr rname = fsysFileFindAnyExt(fname, pakid);
   if (rname.length() == 0) return nullptr;
   return fsysOpenFile(rname, pakid);
+}
+
+
+const VStr &fsysForEachPakFile (bool (*dg) (const VStr &fname)) {
+  fsysInit();
+  MyThreadLocker paklocker(&paklock);
+  if (openPakCount < 1) return VStr::EmptyString;
+  // try basedir first, if the corresponding flag is set
+  if (fsysDiskFirst) {
+    if (openPaks[0]->active()) {
+      int len = openPaks[0]->getNameCount();
+      for (int pidx = 0; pidx < len; ++pidx) {
+        const VStr &fn = openPaks[0]->getNameByIndex(pidx);
+        if (!fn.isEmpty() && dg(fn)) return fn;
+      }
+    }
+  }
+  // do other paks
+  for (int f = openPakCount-1; f > 0; --f) {
+    if (openPaks[f]->active()) {
+      int len = openPaks[f]->getNameCount();
+      for (int pidx = 0; pidx < len; ++pidx) {
+        const VStr &fn = openPaks[f]->getNameByIndex(pidx);
+        if (!fn.isEmpty() && dg(fn)) return fn;
+      }
+    }
+  }
+  // try basedir last, if the corresponding flag is set
+  if (!fsysDiskFirst) {
+    if (openPaks[0]->active()) {
+      int len = openPaks[0]->getNameCount();
+      for (int pidx = 0; pidx < len; ++pidx) {
+        const VStr &fn = openPaks[0]->getNameByIndex(pidx);
+        if (!fn.isEmpty() && dg(fn)) return fn;
+      }
+    }
+  }
+  return VStr::EmptyString;
 }
 
 

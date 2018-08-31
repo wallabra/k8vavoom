@@ -336,6 +336,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
 
   for (int i = 1; i < ArgCount; ++i) {
     const char *text = ArgVector[i];
+    if (!text[0]) continue;
     if (count == 0 && !nomore && *text == '-') {
       ++text;
       if (*text == 0) DisplayUsage();
@@ -348,6 +349,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
         case 'I': VMemberBase::StaticAddIncludePath(text); break;
         case 'D': VMemberBase::StaticAddDefine(text); break;
         case 'P': VMemberBase::StaticAddPackagePath(text); break;
+        case 'h': case 'v': DisplayUsage(); break;
         default:
           --text;
           if (VStr::Cmp(text, "nocol") == 0) {
@@ -383,8 +385,6 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
     }
   }
 
-  if (count == 0) DisplayUsage();
-
   /*
   if (!DebugFile) {
     VStr DbgFileName;
@@ -394,12 +394,18 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
   }
   */
 
+  if (paklist.length() == 0) {
+    //fprintf(stderr, "forcing 'game.dat'\n");
+    paklist.append(":game.dat");
+  }
+
   fsysInit();
   for (int f = 0; f < paklist.length(); ++f) {
     VStr pname = paklist[f];
     if (pname.length() < 2) continue;
     char type = pname[0];
     pname.chopLeft(1);
+    //fprintf(stderr, "!%c! <%s>\n", type, *pname);
     if (type == ':') {
       if (fsysAppendPak(pname)) {
         dprintf("added pak file '%s'...\n", *pname);
@@ -413,6 +419,26 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
         fprintf(stderr, "CAN'T add pak directory '%s'!\n", *pname);
       }
     }
+  }
+
+  if (count == 0) {
+    if (SourceFileName.isEmpty()) {
+      SourceFileName = fsysForEachPakFile([] (const VStr &fname) { /*fprintf(stderr, ":<%s>\n", *fname);*/ return fname.endsWith("main.vc"); });
+    }
+    auto dir = fsysOpenDir(".");
+    if (dir) {
+      for (;;) {
+        auto fname = fsysReadDir(dir);
+        if (fname.isEmpty()) break;
+        //fprintf(stderr, "<%s>\n", *fname);
+        if (fname.endsWith("main.vc")) {
+          SourceFileName = fname;
+          break;
+        }
+      }
+      fsysCloseDir(dir);
+    }
+    if (SourceFileName.isEmpty()) DisplayUsage();
   }
 
   SourceFileName = SourceFileName.fixSlashes();
