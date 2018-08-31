@@ -279,6 +279,7 @@ private:
   void clearInternal () {
     glyphs.clear();
     defaultchar = 0;
+    delete[] bitmaps;
     bitmaps = nullptr;
     bitmapsSize = 0;
     minbounds.clear();
@@ -299,8 +300,9 @@ private:
   }
 
 public:
-  PcfFont () : glyphs() { clearInternal(); }
-  //PcfFont (VStream &fl) : glyphs() { clearInternal(); load(fl); }
+  PcfFont () : glyphs(), bitmaps(nullptr), bitmapsSize(0) { clearInternal(); }
+
+  ~PcfFont () { clear(); }
 
   inline bool isValid () const { return (glyphs.length() > 0); }
 
