@@ -1748,7 +1748,7 @@ static Uint32 sdlTimerCallback (Uint32 interval, void *param) {
   SDL_Event event;
   SDL_UserEvent userevent;
 
-  int id = (int)param;
+  int id = (int)(intptr_t)param;
 
   TimerInfo *ti = timerMap.get(id);
   if (ti) {
@@ -2391,7 +2391,7 @@ void VVideo::runEventLoop () {
         case SDL_USEREVENT:
           //fprintf(stderr, "SDL: userevent, code=%d\n", ev.user.code);
           if (ev.user.code == 1) {
-            TimerInfo *ti = timerMap.get((int)ev.user.data1);
+            TimerInfo *ti = timerMap.get((int)(intptr_t)ev.user.data1);
             if (ti) {
               int id = ti->id; // save id
               // remove one-shot timer
