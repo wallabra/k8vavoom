@@ -1755,7 +1755,7 @@ static Uint32 sdlTimerCallback (Uint32 interval, void *param) {
     //fprintf(stderr, "timer cb: id=%d\n", id);
     userevent.type = SDL_USEREVENT;
     userevent.code = 1;
-    userevent.data1 = (void *)ti->id;
+    userevent.data1 = (void *)(intptr_t)ti->id;
 
     event.type = SDL_USEREVENT;
     event.user = userevent;
@@ -1782,7 +1782,7 @@ int VVideo::CreateTimerWithId (int id, int intervalms, bool oneShot) {
   }
   //fprintf(stderr, "id=%d; interval=%d; one=%d\n", id, intervalms, (int)oneShot);
   TimerInfo ti;
-  ti.sdlid = SDL_AddTimer(intervalms, &sdlTimerCallback, (void *)id);
+  ti.sdlid = SDL_AddTimer(intervalms, &sdlTimerCallback, (void *)(intptr_t)id);
   if (ti.sdlid == 0) {
     fprintf(stderr, "CANNOT create timer: id=%d; interval=%d; one=%d\n", id, intervalms, (int)oneShot);
     timerFreeId(id);

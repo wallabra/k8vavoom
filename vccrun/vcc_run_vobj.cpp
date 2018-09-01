@@ -176,6 +176,8 @@ extern "C" {
 //native final bool appSaveOptions (Object optobj, optional string optfile, optional bool packit);
 IMPLEMENT_FUNCTION(VObject, appSaveOptions) {
   P_GET_BOOL_OPT(packit, true);
+  (void)packit;
+  (void)specified_packit;
   P_GET_STR_OPT(optfile, VStr());
   P_GET_REF(VObject, optobj);
   if (appName.isEmpty() || !optobj) { RET_BOOL(false); return; }
