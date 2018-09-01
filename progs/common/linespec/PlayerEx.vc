@@ -749,7 +749,7 @@ final void PlayerInSpecialSector(float deltaTime)
     ThrustPlayer(180.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
       SECSPEC_BASE_MASK) - SECSPEC_ScrollWest5], deltaTime);
     break;
-  };
+  }
 }
 
 //============================================================================

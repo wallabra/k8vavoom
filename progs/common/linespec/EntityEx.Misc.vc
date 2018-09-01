@@ -1831,7 +1831,7 @@ final override bool SectorChanged(int CrushChange)
   // killough 11/98: kill touchy things immediately
   if (bTouchy && (bArmed || IsSentient()))
     {
-    bArmed = false;; // Disarm
+    bArmed = false; // Disarm
     Damage(none, none, default.Health);  // kill object
     return true;
     }

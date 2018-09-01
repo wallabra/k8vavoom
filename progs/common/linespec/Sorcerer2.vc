@@ -113,7 +113,7 @@ final void DSparilTeleport()
   dir = Spot.Origin - Origin;
   dir.z = 0.0;
   Initial = Spot;
-  while (Length(dir) < 128.0);
+  while (Length(dir) < 128.0)
   {
     Spot = Spot.NextSpot;
     if (!Spot)
