@@ -73,7 +73,10 @@ int VParser::ParseArgList (const TLocation &stloc, VExpression **argv) {
         if (argName != NAME_None) arg = new VArgMarshall(argName, Lex.Location);
         Lex.Expect(TK_Default);
       } else {
+        auto argloc = Lex.Location;
         arg = ParseExpressionPriority13();
+        // omiting arguments is deprecated; use `default` instead
+        if (!arg) ParseError(argloc, "use `default` to skip optional argument");
         bool isOutMarshall = false;
         if (Lex.Check(TK_Not)) {
           if (Lex.Token != TK_Optional) {
