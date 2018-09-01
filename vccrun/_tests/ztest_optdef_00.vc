@@ -11,10 +11,10 @@ void test (int n, optional int v, optional int z) {
 
 final void main () {
   test(42);
-  test(42,, 666);
+  test(42, default, 666); // this was test w/o `default`, but compiler doesn't support that anymore
   test(42, default, 666);
   test(42, 666, default);
-  test(42, 666, );
+  test(42, 666, default); // this was test w/o `default`, but compiler doesn't support that anymore
   test(42, default.iv);
   test(42, default.iv, default);
   test(42, default.iv, default.iv);
