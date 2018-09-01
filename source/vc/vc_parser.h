@@ -79,7 +79,7 @@ private:
   VStatement *ParseForeachRange (const TLocation &l); // array or iota
   VStatement *ParseForeach ();
   VStatement *ParseStatement ();
-  VCompound *ParseCompoundStatement ();
+  /*VCompound*/VStatement *ParseCompoundStatement (const TLocation &l);
   VExpression *ParseOptionalTypeDecl (EToken tkend); // used in things like `for (type var = ...)`
   VExpression *ParsePrimitiveType (); // this won't parse `type*` and delegates
   VExpression *ParseType (bool allowDelegates=false); // this won't parse `type*`

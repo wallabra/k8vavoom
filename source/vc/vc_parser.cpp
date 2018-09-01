@@ -1423,7 +1423,7 @@ VStatement *VParser::ParseStatement () {
       }
     case TK_LBrace:
       Lex.NextToken();
-      return ParseCompoundStatement();
+      return ParseCompoundStatement(l);
     case TK_Goto:
       Lex.NextToken();
       if (Lex.Token == TK_Case || Lex.Token == TK_Default) {
@@ -1478,6 +1478,8 @@ VStatement *VParser::ParseStatement () {
         if (!Lex.Check(TK_Semicolon)) {
           ParseError(l, "Token %s makes no sense here", VLexer::TokenNames[Lex.Token]);
           Lex.NextToken();
+        } else {
+          ParseError(l, "use `{}` to create an empty statement");
         }
         return new VEmptyStatement(l);
       } else if (Expr->IsValidTypeExpression() && Lex.Token == TK_Identifier) {
@@ -1498,8 +1500,13 @@ VStatement *VParser::ParseStatement () {
 // VParser::ParseCompoundStatement
 //
 //==========================================================================
-VCompound *VParser::ParseCompoundStatement () {
+VStatement *VParser::ParseCompoundStatement (const TLocation &l) {
   guard(VParser::ParseCompoundStatement);
+  // empty statement?
+  if (Lex.Token == TK_RBrace) {
+    Lex.NextToken();
+    return new VEmptyStatement(l);
+  }
   auto savedLCS = lastCompoundStart;
   auto savedIC = inCompound;
   lastCompoundStart = Lex.Location;
@@ -1859,10 +1866,11 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
       }
       Lex.Expect(TK_RParen);
     }
+    auto stloc = Lex.Location;
     Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
     auto oldcf = currFunc;
     currFunc = Func;
-    Func->Statement = ParseCompoundStatement();
+    Func->Statement = ParseCompoundStatement(stloc);
     currFunc = oldcf;
   }
   unguard;
@@ -1982,8 +1990,9 @@ void VParser::ParseDefaultProperties (VClass *InClass, bool doparse, int defcoun
   Func->ReturnType = VFieldType(TYPE_Void);
   InClass->DefaultProperties = Func;
   if (doparse) {
+    auto stloc = Lex.Location;
     Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
-    Func->Statement = ParseCompoundStatement();
+    Func->Statement = ParseCompoundStatement(stloc);
     if (defcount > 0) {
       VCompound *cst = new VCompound(Func->Statement->Loc);
       for (int f = 0; f < defcount; ++f) cst->Statements.Append(stats[f]);
@@ -2376,13 +2385,14 @@ void VParser::ParseStates (VClass *InClass) {
       break;
     }
 
+    auto stloc = Lex.Location;
     // code
     if (Lex.Check(TK_LBrace)) {
       if (VStr::Length(*FramesString) > 1) ParseError(Lex.Location, "Only states with single frame can have code block");
       s->Function = new VMethod(NAME_None, s, s->Loc);
       s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
       s->Function->ReturnType = VFieldType(TYPE_Void);
-      s->Function->Statement = ParseCompoundStatement();
+      s->Function->Statement = ParseCompoundStatement(stloc);
     } else if (!Lex.NewLine) {
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "State method name expected");
@@ -2868,13 +2878,14 @@ void VParser::ParseStatesNewStyleUnused (VClass *inClass) {
 
     //Lex.NewLine
 
+    auto stloc = Lex.Location;
     // code
     if (Lex.Check(TK_LBrace)) {
       //if (frameUsed != 1) ParseError(Lex.Location, "Only states with single frame can have code block");
       s->Function = new VMethod(NAME_None, s, s->Loc);
       s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
       s->Function->ReturnType = VFieldType(TYPE_Void);
-      s->Function->Statement = ParseCompoundStatement();
+      s->Function->Statement = ParseCompoundStatement(stloc);
     } else if (!Lex.NewLine) {
       auto stloc = Lex.Location;
       // function call
@@ -3382,13 +3393,14 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
     }
 
     // code
+    auto stloc = Lex.Location;
     bool semiExpected = true;
     if (Lex.Check(TK_LBrace)) {
       //if (frameUsed != 1) ParseError(Lex.Location, "Only states with single frame can have code block");
       s->Function = new VMethod(NAME_None, s, s->Loc);
       s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
       s->Function->ReturnType = VFieldType(TYPE_Void);
-      s->Function->Statement = ParseCompoundStatement();
+      s->Function->Statement = ParseCompoundStatement(stloc);
       semiExpected = false;
     } else if (Lex.Token == TK_Identifier) {
       auto stloc = Lex.Location;
@@ -3989,8 +4001,9 @@ void VParser::ParseClass () {
                 Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
                 ++Package->NumBuiltins;
               } else {
+                auto stloc = Lex.Location;
                 Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
-                Func->Statement = ParseCompoundStatement();
+                Func->Statement = ParseCompoundStatement(stloc);
               }
 
               if (Prop->GetFunc) {
@@ -4044,8 +4057,9 @@ void VParser::ParseClass () {
                 Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
                 ++Package->NumBuiltins;
               } else {
+                auto stloc = Lex.Location;
                 Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
-                Func->Statement = ParseCompoundStatement();
+                Func->Statement = ParseCompoundStatement(stloc);
               }
 
               if (Prop->SetFunc) {
