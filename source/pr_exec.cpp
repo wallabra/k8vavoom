@@ -365,7 +365,7 @@ func_loop:
           // push proper self object
           if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
           if (!pDelegate[1]) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
-          if ((int)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
+          if ((uintptr_t)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
           sp[-ip[5]].p = pDelegate[0];
           pr_stackPtr = sp;
           cstFixTopIPSP(ip);
@@ -383,7 +383,7 @@ func_loop:
           // push proper self object
           if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
           if (!pDelegate[1]) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
-          if ((int)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
+          if ((uintptr_t)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
           sp[-ip[3]].p = pDelegate[0];
           pr_stackPtr = sp;
           cstFixTopIPSP(ip);
@@ -407,7 +407,7 @@ func_loop:
           // push proper self object
           if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
           if (!pDelegate[1]) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
-          if ((int)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
+          if ((uintptr_t)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
           sp[-sofs].p = pDelegate[0];
           pr_stackPtr = sp;
           cstFixTopIPSP(ip);
