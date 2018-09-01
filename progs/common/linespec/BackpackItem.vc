@@ -105,7 +105,7 @@ override Inventory CreateCopy(EntityEx Toucher)
     Ammo AmmoItem = Ammo(Toucher.FindInventory(Cls));
     if (!AmmoItem)
     {
-      AmmoItem = Spawn(Cls,,,, false);
+      AmmoItem = Spawn(Cls, default, default, default, false);
       AmmoItem.AttachToOwner(Toucher);
       AmmoItem.Amount = 0;
     }

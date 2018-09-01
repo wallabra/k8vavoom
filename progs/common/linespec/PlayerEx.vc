@@ -2122,7 +2122,7 @@ final bool GiveAmmo(class!Ammo ammo, int count)
   Ammo AmmoItem = Ammo(EntityEx(MO).FindInventory(ammo));
   if (!AmmoItem)
   {
-    AmmoItem = Level.Spawn(ammo,,,, false);
+    AmmoItem = Level.Spawn(ammo, default, default, default, false);
     AmmoItem.AttachToOwner(EntityEx(MO));
     AmmoItem.Amount = 0;
   }
@@ -2519,7 +2519,7 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
   {
     Error("Player::SpawnPlayer : Unknown class type");
   }
-  PP = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z),,, false);
+  PP = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, false);
   PP.Origin.z += mthing->height;
   PP.LinkToWorld();
   PP.FriendPlayer = GetPlayerNum() + 1; //  Players are their own friends.
@@ -2655,7 +2655,7 @@ final bool AddElvenGift (name Klass) {
 
 void AddDefaultInventory()
 {
-  HexenArmor HArmor = Level.Spawn(HexenArmor,,,, false);
+  HexenArmor HArmor = Level.Spawn(HexenArmor, default, default, default, false);
   HArmor.AttachToOwner(EntityEx(MO));
   HArmor.Slots[4] = PlayerPawn(MO).HexenArmor[0];
   HArmor.SlotsIncrement[0] = PlayerPawn(MO).HexenArmor[1];
@@ -2663,14 +2663,14 @@ void AddDefaultInventory()
   HArmor.SlotsIncrement[2] = PlayerPawn(MO).HexenArmor[3];
   HArmor.SlotsIncrement[3] = PlayerPawn(MO).HexenArmor[4];
 
-  BasicArmor BArmor = Level.Spawn(BasicArmor,,,, false);
+  BasicArmor BArmor = Level.Spawn(BasicArmor, default, default, default, false);
   BArmor.Amount = 0;
   BArmor.AttachToOwner(EntityEx(MO));
 
   int i;
   for (i = 0; i < EntityEx(MO).DropItemList.Num; i++)
   {
-    Inventory Item = Inventory(Level.Spawn(EntityEx(MO).DropItemList[i].Type,,,, false));
+    Inventory Item = Inventory(Level.Spawn(EntityEx(MO).DropItemList[i].Type, default, default, default, false));
     Item.bIgnoreSkill = true;
     if (EntityEx(MO).DropItemList[i].Amount > 0)
     {
@@ -3520,7 +3520,7 @@ final bool UndoPlayerMorph(bool Force, PlayerEx Activator)
     Error("UndoPlayerMorph: Unknown class type");
   }
   A = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[BaseClass]),
-    MO.Origin,,, false);
+    MO.Origin, default, default, false);
   if (!Force && !A.TestLocation())
   {
     // Didn't fit
@@ -3619,7 +3619,7 @@ final void ActivateMorphWeapon()
     int i;
     for (i = 0; i < EntityEx(MO).DropItemList.Num; i++)
     {
-      Inventory Item = Inventory(Level.Spawn(EntityEx(MO).DropItemList[i].Type,,,, false));
+      Inventory Item = Inventory(Level.Spawn(EntityEx(MO).DropItemList[i].Type, default, default, default, false));
       if (EntityEx(MO).DropItemList[i].Amount > 0)
       {
         Item.Amount = EntityEx(MO).DropItemList[i].Amount;

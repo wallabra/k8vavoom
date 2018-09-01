@@ -196,7 +196,7 @@ void SB_DrawTallNum(int x, int y, int num, float alpha)
   x -= TextWidth(Text);
 
   // draw the new number
-  DrawText(x, y, Text,,, alpha);
+  DrawText(x, y, Text, default, default, alpha);
 }
 
 //==========================================================================
@@ -550,7 +550,7 @@ void SB_DrawFullscreenStats()
         SetFont('smallfont2');
         SetTextAlign(hleft, vtop);
         DrawText(BAR_X + 40 + (i / 5) * 140,
-          BAR_Y + 104 + (i % 5) * 18, Item.StrifeName,,, 0.9);
+          BAR_Y + 104 + (i % 5) * 18, Item.StrifeName, default, default, 0.9);
       }
     }
   }
@@ -566,7 +566,7 @@ void SB_DrawFullscreenStats()
       LoadedLog = cl.Objectives;
     }
     SetTextAlign(hleft, vtop);
-    DrawText(BAR_X + 20, BAR_Y + 100, LogText,,, 0.9);
+    DrawText(BAR_X + 20, BAR_Y + 100, LogText, default, default, 0.9);
   }
 }
 

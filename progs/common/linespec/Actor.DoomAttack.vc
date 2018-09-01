@@ -54,7 +54,7 @@ final void A_PosAttack()
 
   damage = ((P_Random() % 5) + 1) * 3;
 
-  LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet', false);
+  LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, 'Bullet', false);
 }
 
 //==========================================================================
@@ -115,7 +115,7 @@ final void DoSPosAttack()
     dir = aimDir;
     VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
     damage = ((P_Random() % 5) + 1) * 3;
-    LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Shell', (i != 0)); //k8:FIXME: Mastermind guy should use 'Bullet' here
+    LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, 'Shell', (i != 0)); //k8:FIXME: Mastermind guy should use 'Bullet' here
   }
 }
 
@@ -149,7 +149,7 @@ final void A_CPosAttack()
   AimLineAttack(dir, Angles, MISSILERANGE);
   VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
   damage = ((P_Random() % 5) + 1) * 3;
-  LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Bullet', false);
+  LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, 'Bullet', false);
 }
 
 //==========================================================================
@@ -1017,7 +1017,7 @@ final void A_BrainExplode()
 
 final void BrainishExplosion(TVec org)
 {
-  EntityEx A = Spawn(Rocket, org,,, false);
+  EntityEx A = Spawn(Rocket, org, default, default, false);
   A.DeathSound = 'misc/brainexplode';
   //  Disables collision detection which is not wanted here
   A.MissileDamage = 0;
@@ -1073,7 +1073,7 @@ final void decorate_A_Mushroom(optional class!Actor SpawnType,
 
   // Now launch mushroom cloud
   // We need something to aim at.
-  Actor target = Spawn(MapSpot,,,, false);
+  Actor target = Spawn(MapSpot, default, default, default, false);
   target.Height = Height;
   for (i = -Amount; i <= Amount; i += 8)
   {
@@ -1139,7 +1139,7 @@ final void A_M_Saw()
 
     // use meleerange + 1 se the puff doesn't skip the flash
     AimTarget = AimLineAttack(dir, aimAng, MELEERANGE + 0.00001);
-    LineAttack(dir, MELEERANGE + 0.00001, damage, BulletPuff,,,'Chainsaw', false);
+    LineAttack(dir, MELEERANGE + 0.00001, damage, BulletPuff, default, default, 'Chainsaw', false);
 
     if (!AimTarget)
     {

@@ -329,7 +329,7 @@ override void Cheat_Gimme()
         //  Abstract class.
         continue;
       }
-      Weapon Wpn = Level.Spawn(WpnCls,,,, false);
+      Weapon Wpn = Level.Spawn(WpnCls, default, default, default, false);
       Wpn.AmmoGive1 = 0;
       Wpn.AmmoGive2 = 0;
       if (!Wpn.TryPickup(EntityEx(MO)))
@@ -347,7 +347,7 @@ override void Cheat_Gimme()
       Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
       if (!AmmoItem)
       {
-        AmmoItem = Level.Spawn(Cls,,,, false);
+        AmmoItem = Level.Spawn(Cls, default, default, default, false);
         if (!AmmoItem.TryPickup(EntityEx(MO)))
         {
           AmmoItem.Destroy();
@@ -364,7 +364,7 @@ override void Cheat_Gimme()
       EntityEx(MO).FindInventory(FourthWeaponHolder));
     if (!Hold)
     {
-      Hold = Level.Spawn(FourthWeaponHolder,,,, false);
+      Hold = Level.Spawn(FourthWeaponHolder, default, default, default, false);
       Hold.AttachToOwner(EntityEx(MO));
     }
     Hold.PieceMask = 7;
@@ -423,7 +423,7 @@ override void Cheat_Gimme()
         //  From other game or not available in shareware.
         continue;
       }
-      Inv = Level.Spawn(Cls,,,, false);
+      Inv = Level.Spawn(Cls, default, default, default, false);
       Inv.Amount = Inv.MaxAmount;
       if (!Inv.TryPickup(EntityEx(MO)))
       {

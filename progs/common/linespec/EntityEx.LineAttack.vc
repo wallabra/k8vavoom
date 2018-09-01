@@ -152,7 +152,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
   }
 
   lineEnd = dst;
-  if (!ShootCheckPlanes(XLevel.PointInSector(dst),, lineStart, lineEnd, distance, none/*PuffType*/, &outHitPoint)) {
+  if (!ShootCheckPlanes(XLevel.PointInSector(dst), default, lineStart, lineEnd, distance, none/*PuffType*/, &outHitPoint)) {
     // process floor and ceiling here
     if (tr) { tr->hit = outHitPoint; tr->didhit = true; }
   }
@@ -278,7 +278,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
   }
 
   lineEnd = dst;
-  if (!ShootCheckPlanes(XLevel.PointInSector(dst),, lineStart, lineEnd, distance, none/*PuffType*/, &outHitPoint)) {
+  if (!ShootCheckPlanes(XLevel.PointInSector(dst), default, lineStart, lineEnd, distance, none/*PuffType*/, &outHitPoint)) {
     // process floor and ceiling here
     if (tr) { tr->hit = outHitPoint; tr->didhit = true; }
   }
@@ -819,7 +819,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
     return false;
   }
   lineEnd = dst;
-  if (!ShootCheckPlanes(XLevel.PointInSector(dst),, lineStart, lineEnd, distance, PuffType, outHitPoint)) {
+  if (!ShootCheckPlanes(XLevel.PointInSector(dst), default, lineStart, lineEnd, distance, PuffType, outHitPoint)) {
     return false;
   }
 

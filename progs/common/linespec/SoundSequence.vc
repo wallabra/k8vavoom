@@ -125,8 +125,7 @@ override void BeginPlay()
     }
     if (!master)
     {
-      master = Spawn(SoundSequenceSlot, vector(0.0, 0.0, 0.0),,,
-        false);
+      master = Spawn(SoundSequenceSlot, vector(0.0, 0.0, 0.0), default, default, false);
       master.SeqName = slot;
       master.StartSoundSequence(slot, 0);
     }

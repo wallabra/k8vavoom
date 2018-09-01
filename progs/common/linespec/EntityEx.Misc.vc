@@ -671,7 +671,7 @@ final void NightmareRespawn()
     z = ONFLOORZ;
 
   // inherit attributes from deceased one
-  A = Spawn(class!EntityEx(Class), vector(x, y, z),,, false);
+  A = Spawn(class!EntityEx(Class), vector(x, y, z), default, default, false);
   Level.CopyMThing(&SpawnPoint, &A.SpawnPoint);
   A.Angles.yaw = itof(45 * (SpawnPoint.angle / 45));
 
@@ -2068,7 +2068,7 @@ final void TouchDehackedSpecial(EntityEx Toucher)
   {
     return;
   }
-  Inventory Item = Spawn(ItemType,,,, false);
+  Inventory Item = Spawn(ItemType, default, default, default, false);
   Item.bDropped = bDropped;
   if (bDropped)
   {
@@ -3485,7 +3485,7 @@ final void GunShot(int accurate, TVec dir, name DmgType, bool secondary, optiona
 
   damage = 5 * (P_Random() % 3 + 1);
 
-  LineAttack(dir, MISSILERANGE, damage, BulletPuff,,, DmgType, secondary, DecalName);
+  LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, DmgType, secondary, DecalName);
 }
 
 //===========================================================================

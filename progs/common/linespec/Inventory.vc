@@ -398,7 +398,7 @@ Inventory CreateCopy(EntityEx Toucher)
   if (GoAway())
   {
     //  Must create a copy
-    Copy = Spawn(class!Inventory(Class),,,, false);
+    Copy = Spawn(class!Inventory(Class), default, default, default, false);
     Copy.Amount = Amount;
     Copy.MaxAmount = MaxAmount;
   }
@@ -440,7 +440,7 @@ Inventory CreateTossable()
     return self;
   }
 
-  Inventory Copy = Spawn(class!Inventory(Class),,,, false);
+  Inventory Copy = Spawn(class!Inventory(Class), default, default, default, false);
   Copy.Amount = 1;
   Copy.MaxAmount = MaxAmount;
   Copy.DropTime = 1.0;
@@ -1133,7 +1133,7 @@ final void decorate_A_Saw(optional name FullSound, optional name HitSound,
 
   // use meleerange + 1 se the puff doesn't skip the flash
   AimTarget = AimLineAttack(dir, aimAng, MELEERANGE + 0.00001);
-  LineAttack(dir, MELEERANGE + 0.00001, damage, PuffType,,,'Chainsaw');
+  LineAttack(dir, MELEERANGE + 0.00001, damage, PuffType, default, default, 'Chainsaw');
 
   if (!AimTarget)
   {
@@ -1216,8 +1216,7 @@ final void A_CustomPunch(int PunchDamage, optional bool NoRandom,
     PunchDamage *= (P_Random() % 8 + 1);
   }
 
-  LineAttack(dir, Range, PunchDamage, PuffType,,,
-    PuffType.default.DamageType);
+  LineAttack(dir, Range, PunchDamage, PuffType, default, default, PuffType.default.DamageType);
 
   // turn to face target
   if (AimTarget)
@@ -1302,7 +1301,7 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
     decal = Wpn.DecalName;
   }
 
-  Aim(aimDir, 16.0 * 64.0,, noAAim);
+  Aim(aimDir, 16.0 * 64.0, default, noAAim);
 
   if ((NumBullets == 1 && !PlayerEx(Player).Refire) || NumBullets == 0)
   {
@@ -1311,7 +1310,7 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
     {
       damage *= (P_Random() % 3 + 1);
     }
-    LineAttack(aimDir, Range, damage, PuffType,,, PuffType.default.DamageType, false, decal);
+    LineAttack(aimDir, Range, damage, PuffType, default, default, PuffType.default.DamageType, false, decal);
   }
   else
   {
@@ -1338,7 +1337,7 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
       {
         damage *= (P_Random() % 3 + 1);
       }
-      LineAttack(dir, Range, damage, PuffType,,, PuffType.default.DamageType, (i != 0), decal);
+      LineAttack(dir, Range, damage, PuffType, default, default, PuffType.default.DamageType, (i != 0), decal);
     }
   }
 }
@@ -1433,7 +1432,7 @@ final void A_RailAttack(int RailDamage, optional float Offset,
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if ((specified_Flags && (Flags & 1)) || UseAmmo)
   {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1))
     {
       return;
     }
@@ -1469,7 +1468,7 @@ final void A_FirePistol()
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
     if (Wpn)
     {
-      if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+      if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1))
       {
         return;
       }
@@ -1488,7 +1487,7 @@ final void A_FirePistol()
 
   PlaySound('weapons/pistol', CHAN_WEAPON);
 
-  Aim(dir, 16.0 * 64.0,, noAAim);
+  Aim(dir, 16.0 * 64.0, default, noAAim);
   GunShot(Accurate, dir, 'Bullet', false, decal);
 }
 
@@ -1516,7 +1515,7 @@ final void A_FireShotgun()
   name decal = '';
   if (Wpn)
   {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1))
     {
       return;
     }
@@ -1526,7 +1525,7 @@ final void A_FireShotgun()
     noAAim = Wpn.bNoAutoaim;
   }
 
-  Aim(dir, 16.0 * 64.0,, noAAim);
+  Aim(dir, 16.0 * 64.0, default, noAAim);
   for (i = 0; i < 7; i++)
   {
     GunShot(false, dir, 'Shell', (i != 0), decal);
@@ -1560,7 +1559,7 @@ final void A_FireShotgun2()
   name decal = '';
   if (Wpn)
   {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 2))
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 2))
     {
       return;
     }
@@ -1570,7 +1569,7 @@ final void A_FireShotgun2()
     noAAim = Wpn.bNoAutoaim;
   }
 
-  Aim(aimDir, 16.0 * 64.0,, noAAim);
+  Aim(aimDir, 16.0 * 64.0, default, noAAim);
   for (i = 0; i < 20; i++)
   {
     rot.pitch = (Random() - Random()) * 45.0 / 8.0;
@@ -1578,7 +1577,7 @@ final void A_FireShotgun2()
     rot.roll = 0.0;
     dir = RotateDirectionVector(aimDir, rot);
     damage = 5 * (P_Random() % 3 + 1);
-    LineAttack(dir, MISSILERANGE, damage, BulletPuff,,,'Shell', (i != 0), decal);
+    LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, 'Shell', (i != 0), decal);
   }
 }
 
@@ -1638,7 +1637,7 @@ final void A_FireCGun()
   name decal = '';
   if (Wpn)
   {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1))
     {
       return;
     }
@@ -1657,7 +1656,7 @@ final void A_FireCGun()
 
   SetState(MeleeState);
 
-  Aim(dir, 16.0 * 64.0,, noAAim);
+  Aim(dir, 16.0 * 64.0, default, noAAim);
   GunShot(!PlayerEx(Player).Refire, dir, 'Bullet', false, decal);
 }
 
@@ -1677,7 +1676,7 @@ final void A_FireMissile()
   name decal = '';
   if (Wpn)
   {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1))
     {
       return;
     }
@@ -1702,7 +1701,7 @@ final void A_FirePlasma()
   name decal = '';
   if (Wpn)
   {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1))
     {
       return;
     }
@@ -1734,7 +1733,7 @@ final void DoFireRailgun(float Offset)
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (Wpn)
   {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode,, 1))
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1))
     {
       return;
     }
@@ -1823,7 +1822,7 @@ final void A_FireBFG()
   name decal = '';
   if (Wpn)
   {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode,, BFG9000.default.AmmoUse1))
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, BFG9000.default.AmmoUse1))
     {
       return;
     }

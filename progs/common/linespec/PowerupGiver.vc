@@ -44,7 +44,7 @@ name      Mode;
 
 override bool Use(bool Pickup)
 {
-  Powerup Pw = Spawn(PowerupType,,,, false);
+  Powerup Pw = Spawn(PowerupType, default, default, default, false);
 
   if (EffectTime)
   {

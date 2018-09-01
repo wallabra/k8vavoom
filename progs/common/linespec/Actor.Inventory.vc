@@ -48,7 +48,7 @@ final void DoGiveInventory(class!Inventory ItemType, int Amount,
   bool Ret = true;
   if (ItemType)
   {
-    Inventory Item = Spawn(ItemType,,,, false);
+    Inventory Item = Spawn(ItemType, default, default, default, false);
     if (Health(Item))
     {
       Item.Amount *= Amount;
@@ -262,7 +262,7 @@ final void A_Punch()
   aimAngles.yaw = AngleMod360(aimAngles.yaw + (Random() -
     Random()) * 45.0 / 8.0);
   AimTarget = AimLineAttack(dir, aimAngles, MELEERANGE);
-  LineAttack(dir, MELEERANGE, damage, BulletPuff,,,'Fist');
+  LineAttack(dir, MELEERANGE, damage, BulletPuff, default, default, 'Fist');
 
   // turn to face target
   if (AimTarget)
@@ -318,5 +318,5 @@ final void A_FireAssaultGun()
   }
 
   damage = 4 * (P_Random() % 3 + 1);
-  LineAttack(dir, MISSILERANGE, damage, StrifePuff,,,'Bullet');
+  LineAttack(dir, MISSILERANGE, damage, StrifePuff, default, default, 'Bullet');
 }

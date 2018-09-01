@@ -52,7 +52,7 @@ override bool TryPickup(EntityEx Toucher)
   }
   if (!Hold)
   {
-    Hold = Spawn(WeaponHolder,,,, false);
+    Hold = Spawn(WeaponHolder, default, default, default, false);
     Hold.AttachToOwner(Toucher);
     Hold.WeaponType = WeaponType;
     Hold.PieceMask = 0;

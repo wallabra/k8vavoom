@@ -96,7 +96,7 @@ final void A_PlaySoundEx(string Sound, string Channel, optional bool Loop,
     break;
   }
 
-  PlaySound(StrToName(Sound), Chan,, Atten, Loop);
+  PlaySound(StrToName(Sound), Chan, default, Atten, Loop);
 }
 
 //==========================================================================
@@ -134,7 +134,7 @@ final void A_LoopActiveSound()
 {
   if (ActiveSound)
   {
-    PlaySound(ActiveSound, CHAN_VOICE,,, true);
+    PlaySound(ActiveSound, CHAN_VOICE, default, default, true);
   }
 }
 

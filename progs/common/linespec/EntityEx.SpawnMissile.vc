@@ -601,7 +601,7 @@ final EntityEx SpawnPlayerMissile(class!EntityEx type, optional name decalType)
 {
   EntityEx  AimTarget;
 
-  return SpawnPlayerMissileEx(type, false, AimTarget,,, decalType);
+  return SpawnPlayerMissileEx(type, false, AimTarget, default, default, decalType);
 }
 
 //==========================================================================

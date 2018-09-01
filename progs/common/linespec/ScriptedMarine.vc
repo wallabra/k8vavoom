@@ -288,7 +288,7 @@ final void A_M_Punch()
   aimAngles.yaw = AngleMod360(aimAngles.yaw + (Random() -
     Random()) * 45.0 / 8.0);
   AimTarget = AimLineAttack(dir, aimAngles, MELEERANGE);
-  LineAttack(dir, MELEERANGE, damage, BulletPuff,,,'Fist');
+  LineAttack(dir, MELEERANGE, damage, BulletPuff, default, default, 'Fist');
 
   // turn to face target
   if (AimTarget)
@@ -325,7 +325,7 @@ final void A_M_BerserkPunch()
   aimAngles.yaw = AngleMod360(aimAngles.yaw + (Random() -
     Random()) * 45.0 / 8.0);
   AimTarget = AimLineAttack(dir, aimAngles, MELEERANGE);
-  LineAttack(dir, MELEERANGE, damage, BulletPuff,,,'BerserkFist');
+  LineAttack(dir, MELEERANGE, damage, BulletPuff, default, default, 'BerserkFist');
 
   // turn to face target
   if (AimTarget)
@@ -488,7 +488,7 @@ final void A_M_FireShotgun2()
     rot.roll = 0.0;
     dir = RotateDirectionVector(aimDir, rot);
     damage = 5 * (P_Random() % 3 + 1);
-    LineAttack(dir, Actor::MISSILERANGE, damage, BulletPuff,,,'Shell', (i != 0));
+    LineAttack(dir, Actor::MISSILERANGE, damage, BulletPuff, default, default, 'Shell', (i != 0));
   }
   Special1f = XLevel.Time;
 }

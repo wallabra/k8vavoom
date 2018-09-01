@@ -241,16 +241,16 @@ final void A_SorcSpinBalls()
   org = Origin;
   org.z = Origin.z - FloorClip + Height;
 
-  ball = Spawn(SorcBall1, org,,, false);
+  ball = Spawn(SorcBall1, org, default, default, false);
   if (ball)
   {
     ball.Target = self;
     ball.Special2 = SORCFX4_RAPIDFIRE_TIME;
   }
-  ball = Spawn(SorcBall2, org,,, false);
+  ball = Spawn(SorcBall2, org, default, default, false);
   if (ball)
     ball.Target = self;
-  ball = Spawn(SorcBall3, org,,, false);
+  ball = Spawn(SorcBall3, org, default, default, false);
   if (ball)
     ball.Target = self;
 }
@@ -302,7 +302,7 @@ final void A_SorcFX2Split()
 {
   Actor A;
 
-  A = Spawn(SorcFX2, Origin,,, false);
+  A = Spawn(SorcFX2, Origin, default, default, false);
   if (A)
   {
     A.Target = Target;
@@ -310,7 +310,7 @@ final void A_SorcFX2Split()
     A.Special1f = Angles.yaw; // Set angle
     A.SetState(A.FindState('Orbit'));
   }
-  A = Spawn(SorcFX2, Origin,,, false);
+  A = Spawn(SorcFX2, Origin, default, default, false);
   if (A)
   {
     A.Target = Target;
@@ -2962,14 +2962,14 @@ final void A_Summon()
 {
   EntityEx A;
 
-  A = Spawn(MinotaurFriend, Origin,,, true);
+  A = Spawn(MinotaurFriend, Origin, default, default, true);
   if (A)
   {
     if (!A.TestLocation() || !Tracer)
     {
       // Didn't fit - change back to artifact
       A.SetState(none);
-      A = Spawn(ArtiDarkServant, Origin,,, true);
+      A = Spawn(ArtiDarkServant, Origin, default, default, true);
       if (A)
         A.bDropped = true;
       return;
@@ -2980,7 +2980,7 @@ final void A_Summon()
     {
       //  Master isn't dead
       A.Tracer = Tracer;  // Pointer to master
-      Powerup Power = Spawn(PowerMinotaur,,,, false);
+      Powerup Power = Spawn(PowerMinotaur, default, default, default, false);
       Power.bAlwaysPickup = true;
       if (!Power.TryPickup(Target))
       {
@@ -2993,7 +2993,7 @@ final void A_Summon()
     }
 
     // Make smoke puff
-    Spawn(MinotaurSmoke, Origin,,, true);
+    Spawn(MinotaurSmoke, Origin, default, default, true);
     PlaySound(A.ActiveSound, CHAN_VOICE);
   }
 }

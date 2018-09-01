@@ -419,7 +419,7 @@ void SB_DrawMainBar()
   // faces
   if (ClGame.maxclients > 1)
   {
-    DrawPic(ST_FACESX, ST_FACESY, pic_faceback,, cl.MO.Translation);
+    DrawPic(ST_FACESX, ST_FACESY, pic_faceback, default, cl.MO.Translation);
   }
   DrawPic(ST_FACESX, ST_FACESY, pic_faces[sb_faceindex]);
 

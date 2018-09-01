@@ -301,7 +301,7 @@ final Ammo AddAmmo(EntityEx Toucher, class!Ammo AmmoType, int count)
   Ammo AmmoItem = Ammo(Toucher.FindInventory(AmmoType));
   if (!AmmoItem)
   {
-    AmmoItem = Spawn(AmmoType,,,, false);
+    AmmoItem = Spawn(AmmoType, default, default, default, false);
     AmmoItem.AttachToOwner(Toucher);
     AmmoItem.Amount = count;
   }
@@ -371,7 +371,7 @@ final Weapon AddWeapon(class!Weapon WeaponType)
   Weapon Wpn = Weapon(EntityEx(Owner).FindInventory(WeaponType));
   if (!Wpn)
   {
-    Wpn = Spawn(WeaponType,,,, false);
+    Wpn = Spawn(WeaponType, default, default, default, false);
     Wpn.AttachToOwner(EntityEx(Owner));
   }
   return Wpn;

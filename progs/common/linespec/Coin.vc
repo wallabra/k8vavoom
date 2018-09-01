@@ -70,7 +70,7 @@ override Inventory CreateCopy(EntityEx Toucher)
   }
   else
   {
-    Inventory Copy = Spawn(Coin,,,, false);
+    Inventory Copy = Spawn(Coin, default, default, default, false);
     Copy.Amount = Amount;
     GoAwayAndDie();
     return Copy;
@@ -94,22 +94,22 @@ override Inventory CreateTossable()
   //  Gold is dropped with maximal throwable amount.
   if (Amount >= 50)
   {
-    Copy = Spawn(Gold50,,,, false);
+    Copy = Spawn(Gold50, default, default, default, false);
     Amount -= 50;
   }
   else if (Amount >= 25)
   {
-    Copy = Spawn(Gold25,,,, false);
+    Copy = Spawn(Gold25, default, default, default, false);
     Amount -= 25;
   }
   else if (Amount >= 10)
   {
-    Copy = Spawn(Gold10,,,, false);
+    Copy = Spawn(Gold10, default, default, default, false);
     Amount -= 10;
   }
   else if (Amount > 1 || bKeepDepleted)
   {
-    Copy = Spawn(Coin,,,, false);
+    Copy = Spawn(Coin, default, default, default, false);
     Amount -= 1;
   }
   else

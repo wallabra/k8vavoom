@@ -153,7 +153,7 @@ override void Cheat_Gimme()
   // Backpack
   if (Cmd_CheckParm("Backpack"))
   {
-    Inventory I = Level.Spawn(AmmoSatchel,,,, false);
+    Inventory I = Level.Spawn(AmmoSatchel, default, default, default, false);
     I.bDropped = true;
     if (!I.TryPickup(EntityEx(MO)))
     {
@@ -176,7 +176,7 @@ override void Cheat_Gimme()
       {
         continue;
       }
-      Weapon Wpn = Level.Spawn(WpnCls,,,, false);
+      Weapon Wpn = Level.Spawn(WpnCls, default, default, default, false);
       Wpn.AmmoGive1 = 0;
       Wpn.AmmoGive2 = 0;
       if (!Wpn.TryPickup(EntityEx(MO)))
@@ -200,7 +200,7 @@ override void Cheat_Gimme()
       Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
       if (!AmmoItem)
       {
-        AmmoItem = Level.Spawn(Cls,,,, false);
+        AmmoItem = Level.Spawn(Cls, default, default, default, false);
         if (!AmmoItem.TryPickup(EntityEx(MO)))
         {
           AmmoItem.Destroy();
@@ -248,7 +248,7 @@ override void Cheat_Gimme()
   // Sigil piece
   if (Cmd_CheckParm("Sigil"))
   {
-    Sigil S = Level.Spawn(Sigil,,,, false);
+    Sigil S = Level.Spawn(Sigil, default, default, default, false);
     if (!S.SpecialDropAction(none))
     {
       S.Destroy();
@@ -273,7 +273,7 @@ override void Cheat_Gimme()
     Inventory GoldItem = EntityEx(MO).FindInventory(Coin);
     if (!GoldItem)
     {
-      GoldItem = Level.Spawn(Coin,,,, false);
+      GoldItem = Level.Spawn(Coin, default, default, default, false);
       if (!GoldItem.TryPickup(EntityEx(MO)))
       {
         GoldItem.Destroy();

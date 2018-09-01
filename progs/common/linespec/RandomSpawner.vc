@@ -63,7 +63,7 @@ override void BeginPlay()
         // Send a warning that this class can't be found and continue the loop
         print("WARNING: RandomSpawner type definition is incorrect at element %i", DropItemList.Num - i);
         // Show that there's a problem.
-        Spawn(Unknown, Origin,,, false);
+        Spawn(Unknown, Origin, default, default, false);
         Destroy();
         return;
       }
@@ -96,7 +96,7 @@ override void BeginPlay()
     if (BounceCount >= MAX_RANDOMSPAWNERS_RECURSION)
     {
       // Show that there's a problem.
-      Spawn(Unknown, Origin,,, false);
+      Spawn(Unknown, Origin, default, default, false);
       Destroy();
       return;
     }
@@ -107,7 +107,7 @@ override void BeginPlay()
       if (!cls)
       {
         // Show that there's a problem.
-        Spawn(Unknown, Origin,,, false);
+        Spawn(Unknown, Origin, default, default, false);
         Destroy();
         return;
       }
@@ -123,7 +123,7 @@ override void BeginPlay()
       }
       else
       {
-        NewEntity = Spawn(cls, Origin,,, false);
+        NewEntity = Spawn(cls, Origin, default, default, false);
       }
 
       if (NewEntity)

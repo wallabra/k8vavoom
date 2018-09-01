@@ -6801,7 +6801,7 @@ final override void SpawnMapThing(mthing_t *mthing)
   }
 
   // spawn it
-  Spawn(moClass,,, mthing, false);
+  Spawn(moClass, default, default, mthing, false);
 }
 
 //==========================================================================
@@ -7110,7 +7110,7 @@ final void ConChoiceImpulse(int ChoiceNum)
     ItemType = GetClassFromID(Choice->GiveItem);
     if (ItemType)
     {
-      Item = Inventory(Spawn(ItemType,,,, false));
+      Item = Inventory(Spawn(ItemType, default, default, default, false));
       //  This shouldn't count for the item statistics
       if (Item.bCountItem)
       {

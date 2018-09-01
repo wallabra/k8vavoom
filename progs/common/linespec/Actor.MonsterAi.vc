@@ -1094,7 +1094,7 @@ final void A_KillMaster()
 {
   if (Master)
   {
-    Master.Damage(self, self, Master.Health,, true);
+    Master.Damage(self, self, Master.Health, default, true);
   }
 }
 
@@ -1111,7 +1111,7 @@ final void A_KillChildren()
   {
     if (A.Master == self)
     {
-      A.Damage(self, self, A.Health,, true);
+      A.Damage(self, self, A.Health, default, true);
     }
   }
 }

@@ -99,7 +99,7 @@ final Inventory FindInventory(class!Inventory ItemClass)
 
 final Inventory GiveInventoryType(class!Inventory Type)
 {
-  Inventory Item = Spawn(Type,,,, false);
+  Inventory Item = Spawn(Type, default, default, default, false);
   //  This shouldn't count for the item statistics
   if (Item.bCountItem)
   {
@@ -291,7 +291,7 @@ final override void GiveInventory(name ItemName, int Amount)
     HadWeapon = !!PlayerEx(Player).ReadyWeapon;
   }
 
-  Inventory Item = Spawn(ItemClass,,,, false);
+  Inventory Item = Spawn(ItemClass, default, default, default, false);
   //  This shouldn't count for the item statistics
   if (Item.bCountItem)
   {

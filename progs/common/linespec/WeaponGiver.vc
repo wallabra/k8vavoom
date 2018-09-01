@@ -36,7 +36,7 @@ override bool TryPickup(EntityEx Toucher)
 {
   if (DropItemList.Num && ClassIsChildOf(DropItemList[0].Type, Weapon))
   {
-    Weapon Wpn = Weapon(Spawn(DropItemList[0].Type,,,, false));
+    Weapon Wpn = Weapon(Spawn(DropItemList[0].Type, default, default, default, false));
     if (Wpn)
     {
       Wpn.bAlwaysPickup = false;
