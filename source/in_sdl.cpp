@@ -114,6 +114,8 @@ static vuint8 sdl2TranslateKey (SDL_Keycode ksym) {
     case SDLK_RETURN: return K_ENTER;
     case SDLK_TAB: return K_TAB;
     case SDLK_BACKSPACE: return K_BACKSPACE;
+
+    case SDLK_BACKQUOTE: return K_BACKQUOTE;
     case SDLK_CAPSLOCK: return K_CAPSLOCK;
 
     case SDLK_F1: return K_F1;
@@ -147,18 +149,6 @@ static vuint8 sdl2TranslateKey (SDL_Keycode ksym) {
     default:
       if (ksym >= ' ' && ksym < 127) return (vuint8)ksym;
       break;
-
-    /*
-    case SDLK_ABNT_C1: return K_ABNT_C1;
-    case SDLK_YEN: return K_YEN;
-    case SDLK_KANA: return K_KANA;
-    case SDLK_CONVERT: return K_CONVERT;
-    case SDLK_NOCONVERT: return K_NOCONVERT;
-    case SDLK_AT: return K_AT;
-    case SDLK_CIRCUMFLEX: return K_CIRCUMFLEX;
-    case SDLK_COLON2: return K_COLON2;
-    case SDLK_KANJI: return K_KANJI;
-    */
   }
 
   return 0;
