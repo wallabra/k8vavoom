@@ -2594,7 +2594,12 @@ bool VReturn::Resolve (VEmitContext &ec) {
       ParseError(Loc, "void function cannot return a value");
       Ret = false;
     } else if (Expr) {
-      Expr->Type.CheckMatch(false, Expr->Loc, ec.FuncRetType);
+      if (Expr->Type.GetStackSize() == 4 || Expr->Type.Type == TYPE_Vector) {
+        Ret = Expr->Type.CheckMatch(false, Expr->Loc, ec.FuncRetType);
+      } else {
+        ParseError(Loc, "Bad return type");
+        Ret = false;
+      }
     } else {
       Ret = false;
     }
@@ -2616,6 +2621,7 @@ bool VReturn::Resolve (VEmitContext &ec) {
 void VReturn::DoEmit (VEmitContext &ec) {
   if (Expr) {
     Expr->Emit(ec);
+    ec.EmitFinalizers();
     ec.EmitLocalDtors(0, NumLocalsToClear, Loc);
     if (Expr->Type.GetStackSize() == 4) {
       ec.AddStatement(OPC_ReturnL, Loc);
@@ -2625,6 +2631,7 @@ void VReturn::DoEmit (VEmitContext &ec) {
       ParseError(Loc, "Bad return type");
     }
   } else {
+    ec.EmitFinalizers();
     ec.EmitLocalDtors(0, NumLocalsToClear, Loc);
     ec.AddStatement(OPC_Return, Loc);
   }

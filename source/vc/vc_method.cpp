@@ -388,6 +388,7 @@ void VMethod::Emit () {
   Statement->Emit(ec);
 
   if (ReturnType.Type == TYPE_Void) {
+    ec.EmitFinalizers(); // just in case we have function-global finalizers
     ec.EmitLocalDtors(0, ec.GetLocalDefCount(), Loc);
     ec.AddStatement(OPC_Return, Loc);
   }
