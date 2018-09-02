@@ -2870,10 +2870,10 @@ void VParser::ParseStatesNewStyleUnused (VClass *inClass) {
         if (!Lex.Check(TK_Assign) && !Lex.Check(TK_Colon)) ParseError(Lex.Location, "`:` expected");
         Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
         for (int f = 0; f < 2; ++f) {
-          bool neg = Lex.Check(TK_Minus);
-          if (!neg) Lex.Check(TK_Plus);
+          bool negative = Lex.Check(TK_Minus);
+          if (!negative) Lex.Check(TK_Plus);
           if (Lex.Token == TK_IntLiteral) {
-            if (neg) Lex.Number = -Lex.Number;
+            if (negative) Lex.Number = -Lex.Number;
             if (f == 0) s->frameOfsX += Lex.Number; else s->frameOfsY += Lex.Number;
             Lex.NextToken();
           } else {
@@ -2916,7 +2916,6 @@ void VParser::ParseStatesNewStyleUnused (VClass *inClass) {
       s->Function->ReturnType = VFieldType(TYPE_Void);
       s->Function->Statement = ParseCompoundStatement(stloc);
     } else if (!Lex.NewLine) {
-      auto stloc = Lex.Location;
       // function call
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "State method name expected");
@@ -3402,10 +3401,10 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
         if (!Lex.Check(TK_Assign) && !Lex.Check(TK_Colon)) ParseError(Lex.Location, "`:` expected");
         Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
         for (int f = 0; f < 2; ++f) {
-          bool neg = Lex.Check(TK_Minus);
-          if (!neg) Lex.Check(TK_Plus);
+          bool negative = Lex.Check(TK_Minus);
+          if (!negative) Lex.Check(TK_Plus);
           if (Lex.Token == TK_IntLiteral) {
-            if (neg) Lex.Number = -Lex.Number;
+            if (negative) Lex.Number = -Lex.Number;
             if (f == 0) s->frameOfsX += Lex.Number; else s->frameOfsY += Lex.Number;
             Lex.NextToken();
           } else {
@@ -3432,7 +3431,6 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
       s->Function->Statement = ParseCompoundStatement(stloc);
       semiExpected = false;
     } else if (Lex.Token == TK_Identifier) {
-      auto stloc = Lex.Location;
       // function call
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "State method name expected");

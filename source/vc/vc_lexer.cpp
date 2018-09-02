@@ -1133,7 +1133,7 @@ EToken VLexer::skipTokenFrom (int &cpos, VStr *str=nullptr) const {
     vuint8 ech = ch;
     ++cpos;
     for (;;) {
-      vuint8 ch = peekChar(cpos++);
+      ch = peekChar(cpos++);
       if (str) (*str) += (char)ch;
       if (ch == '\\') {
         ++cpos; // unconditionally skip next char

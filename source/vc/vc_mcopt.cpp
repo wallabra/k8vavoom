@@ -1621,10 +1621,10 @@ bool VMCOptimizer::removeRedunantJumps () {
       if (it->next->idx != it->idx+1) FatalError("VCOPT: internal error in (VMCOptimizer::removeRedunantJumps)");
       it->next->meJumpTarget = true;
       // fix jumps to `it`
-      for (Instr *jit = jplistHead; jit; jit = jit->jpnext) {
-        if (jit->getBranchDest() == it->idx) {
+      for (Instr *jmptoit = jplistHead; jmptoit; jmptoit = jmptoit->jpnext) {
+        if (jmptoit->getBranchDest() == it->idx) {
           // fix jump destination
-          jit->setBranchDest(it->idx+1, false); // don't fix flags
+          jmptoit->setBranchDest(it->idx+1, false); // don't fix flags
         }
       }
     }
