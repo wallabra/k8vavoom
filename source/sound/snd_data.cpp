@@ -152,7 +152,7 @@ void VSoundManager::Init()
   for (Lump = W_IterateNS(-1, WADNS_Voices); Lump >= 0;
     Lump = W_IterateNS(Lump, WADNS_Voices))
   {
-    char SndName[64];
+    char SndName[256];
     snprintf(SndName, sizeof(SndName), "svox/%s", *W_LumpName(Lump));
 
     int id = AddSoundLump(SndName, Lump);
@@ -382,7 +382,7 @@ void VSoundManager::ParseSndinfo(VScriptParser *sc)
         ambient = new FAmbientSound;
         AmbientSounds[sc->Number] = ambient;
       }
-      memset(ambient, 0, sizeof(FAmbientSound));
+      memset((void *)ambient, 0, sizeof(FAmbientSound));
 
       sc->ExpectString();
       ambient->Sound = *sc->String;
@@ -506,7 +506,7 @@ int VSoundManager::AddSoundLump(VName TagName, int Lump)
 {
   guard(VSoundManager::AddSoundLump);
   sfxinfo_t S;
-  memset(&S, 0, sizeof(S));
+  memset((void *)&S, 0, sizeof(S));
   S.TagName = TagName;
   S.Data = nullptr;
   S.Priority = 127;
