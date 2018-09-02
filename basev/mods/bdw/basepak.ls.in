@@ -70,6 +70,7 @@ sprites/weapons/arifle/rifrf0.png   @CMAKE_CURRENT_SOURCE_DIR@/sprites/weapons/a
 sprites/weapons/arifle/rifrg0.png   @CMAKE_CURRENT_SOURCE_DIR@/sprites/weapons/arifle/rifrg0.png
 sprites/weapons/arifle/rifrh0.png   @CMAKE_CURRENT_SOURCE_DIR@/sprites/weapons/arifle/rifrh0.png
 sprites/weapons/arifle/rifri0.png   @CMAKE_CURRENT_SOURCE_DIR@/sprites/weapons/arifle/rifri0.png
+sprites/weapons/arifle/rifrj0.png   @CMAKE_CURRENT_SOURCE_DIR@/sprites/weapons/arifle/rifri0.png
 sprites/weapons/arifle/rifrk0.png   @CMAKE_CURRENT_SOURCE_DIR@/sprites/weapons/arifle/rifrk0.png
 sprites/weapons/arifle/rifrl0.png   @CMAKE_CURRENT_SOURCE_DIR@/sprites/weapons/arifle/rifrl0.png
 sprites/weapons/arifle/rifrm0.png   @CMAKE_CURRENT_SOURCE_DIR@/sprites/weapons/arifle/rifrm0.png
