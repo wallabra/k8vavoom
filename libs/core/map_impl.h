@@ -140,7 +140,7 @@ private:
       }
     }
     if (mEBSize > 0) {
-      memset(&mEntries[0], 0, mEBSize*sizeof(TEntry));
+      memset((void *)(&mEntries[0]), 0, mEBSize*sizeof(TEntry));
       for (vuint32 f = 0; f < mEBSize; ++f) {
         TEntry *e = &mEntries[f];
         e->empty = true;
@@ -159,7 +159,7 @@ private:
         mBuckets = (TEntry **)malloc(mEBSize*sizeof(TEntry *));
         memset(&mBuckets[0], 0, mEBSize*sizeof(TEntry *));
         mEntries = (TEntry *)malloc(mEBSize*sizeof(TEntry));
-        memset(&mEntries[0], 0, mEBSize*sizeof(TEntry));
+        memset((void *)(&mEntries[0]), 0, mEBSize*sizeof(TEntry));
         for (vuint32 f = 0; f < mEBSize; ++f) mEntries[f].empty = true;
       }
       ++mLastEntry;
@@ -190,7 +190,7 @@ private:
     e->key = TK();
     e->value = TV();
 #endif
-    memset(e, 0, sizeof(*e));
+    memset((void *)e, 0, sizeof(*e));
     e->empty = true;
     e->nextFree = mFreeEntryHead;
     mFreeEntryHead = e;
@@ -266,7 +266,7 @@ public:
         mBuckets = (TEntry **)malloc(mEBSize*sizeof(TEntry *));
         memset(&mBuckets[0], 0, mEBSize*sizeof(TEntry *));
         mEntries = (TEntry *)malloc(mEBSize*sizeof(TEntry));
-        memset(&mEntries[0], 0, mEBSize*sizeof(TEntry));
+        memset((void *)(&mEntries[0]), 0, mEBSize*sizeof(TEntry));
         for (vuint32 f = 0; f < mEBSize; ++f) mEntries[f].empty = true;
         mFirstEntry = mLastEntry = -1;
         for (vuint32 f = 0; f < mEBSize; ++f) {
@@ -291,7 +291,7 @@ public:
     free(mBuckets);
     mBucketsUsed = 0;
     mBuckets = nullptr;
-    free(mEntries);
+    free((void *)mEntries);
     mEBSize = 0;
     mEntries = nullptr;
     mFreeEntryHead = nullptr;
@@ -363,7 +363,7 @@ public:
     // shrink
     mBuckets = (TEntry **)realloc(mBuckets, newsz*sizeof(TEntry *));
     // shrink
-    mEntries = (TEntry *)realloc(mEntries, newsz*sizeof(TEntry));
+    mEntries = (TEntry *)realloc((void *)mEntries, newsz*sizeof(TEntry));
     mEBSize = newsz;
     // mFreeEntryHead will be fixed in `rehash()`
     // reinsert entries
@@ -506,8 +506,8 @@ public:
       mBuckets = (TEntry **)realloc(mBuckets, newsz*sizeof(TEntry *));
       memset(mBuckets+mEBSize, 0, (newsz-mEBSize)*sizeof(TEntry *));
       // resize entries array
-      mEntries = (TEntry *)realloc(mEntries, newsz*sizeof(TEntry));
-      memset(mEntries+mEBSize, 0, (newsz-mEBSize)*sizeof(TEntry));
+      mEntries = (TEntry *)realloc((void *)mEntries, newsz*sizeof(TEntry));
+      memset((void *)(mEntries+mEBSize), 0, (newsz-mEBSize)*sizeof(TEntry));
       for (vuint32 f = mEBSize; f < newsz; ++f) mEntries[f].empty = true;
       mEBSize = newsz;
       // mFreeEntryHead will be fixed in `rehash()`
