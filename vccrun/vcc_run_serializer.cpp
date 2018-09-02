@@ -944,8 +944,8 @@ private:
 #ifdef DEBUG_OBJECT_LOADER
         fprintf(stderr, "  loading field `%s` in class `%s`...\n", *namearr[n], *cls->Name);
 #endif
-        for (VClass *c = cls; c; c = c->ParentClass) {
-          fld = findField(namearr[n], c->Fields);
+        for (VClass *ccl = cls; ccl; ccl = ccl->ParentClass) {
+          fld = findField(namearr[n], ccl->Fields);
           if (fld) break;
         }
         //FIXME: skip unknown fields
