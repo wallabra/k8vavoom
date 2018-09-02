@@ -323,15 +323,16 @@ bool M_AppendPNGChunk (VStream *file, vuint32 chunkID, const vuint8 *chunkData, 
 //==========================================================================
 bool M_AppendPNGText (VStream *file, const char *keyword, const char *text) {
   struct { vuint32 len, id; char key[80]; } head;
-  int len = (int)strlen (text);
-  int keylen = (int)strlen(keyword);
+  size_t len = strlen (text);
+  size_t keylen = strlen(keyword);
   if (keylen > 79) keylen = 79;
   vuint32 crc;
 
   head.len = BigLong(len+keylen+1);
   head.id = MAKE_ID('t','E','X','t');
   memset (&head.key, 0, sizeof(head.key));
-  strncpy (head.key, keyword, keylen);
+  //strncpy (head.key, keyword, keylen);
+  strncpy (head.key, keyword, sizeof(head.key)-1);
   head.key[keylen] = 0;
 
   file->Serialise(&head, keylen+9);
