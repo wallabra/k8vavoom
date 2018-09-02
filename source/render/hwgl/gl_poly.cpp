@@ -359,14 +359,14 @@ void VOpenGLDrawer::WorldDrawing () {
     for (surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
       if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
 
-      texinfo_t *tex = surf->texinfo;
-      SetTexture(tex->Tex, tex->ColourMap);
+      texinfo_t *textr = surf->texinfo;
+      SetTexture(textr->Tex, textr->ColourMap);
 
-      p_glUniform3fvARB(SurfSimpleSAxisLoc, 1, &tex->saxis.x);
-      p_glUniform1fARB(SurfSimpleSOffsLoc, tex->soffs);
+      p_glUniform3fvARB(SurfSimpleSAxisLoc, 1, &textr->saxis.x);
+      p_glUniform1fARB(SurfSimpleSOffsLoc, textr->soffs);
       p_glUniform1fARB(SurfSimpleTexIWLoc, tex_iw);
-      p_glUniform3fvARB(SurfSimpleTAxisLoc, 1, &tex->taxis.x);
-      p_glUniform1fARB(SurfSimpleTOffsLoc, tex->toffs);
+      p_glUniform3fvARB(SurfSimpleTAxisLoc, 1, &textr->taxis.x);
+      p_glUniform1fARB(SurfSimpleTOffsLoc, textr->toffs);
       p_glUniform1fARB(SurfSimpleTexIHLoc, tex_ih);
 
       float lev = (float)(surf->Light>>24)/255.0f;
@@ -381,7 +381,7 @@ void VOpenGLDrawer::WorldDrawing () {
         p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_FALSE);
       }
 
-      bool doDecals = tex->Tex && !tex->Tex->noDecals && surf->dcseg && surf->dcseg->decals;
+      bool doDecals = textr->Tex && !textr->Tex->noDecals && surf->dcseg && surf->dcseg->decals;
 
       // fill stencil buffer for decals
       if (doDecals) RenderPrepareShaderDecals(surf, false);
