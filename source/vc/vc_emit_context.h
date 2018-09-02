@@ -262,10 +262,9 @@ public:
   // when `VAutoFin` object is destroyed
   VAutoFin RegisterFinalizer (VStatement *st);
 
+  VAutoFin RegisterLoopFinalizer (VStatement *st);
+
   // emit all currently registered finalizers, from last to first; used in `return`
-  // WARNING! will *NOT* emit "break finalizers", so if you need to do some
-  //          finalizing both in `break`/`continue`, and in `return`,
-  //          register *BOTH* finalizer types
   void EmitFinalizers ();
 
   // the flow is like that:
@@ -276,7 +275,7 @@ public:
   //   that is:
   //     {
   //       auto brk = ec.DefineBreak();
-  //       brk.RegisterFinalizer(this);
+  //       brk.RegisterLoopFinalizer(this);
   //       <generate some code>
   //       brk.MarkBreak();
   //     } // here, `brk` will be destroyed, and "break finalizer" code will be generated

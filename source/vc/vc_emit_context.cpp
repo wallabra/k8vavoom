@@ -1049,6 +1049,25 @@ VEmitContext::VAutoFin VEmitContext::RegisterFinalizer (VStatement *st) {
   fin->ec = this;
   fin->prev = lastFin;
   fin->st = st;
+  fin->bc = nullptr;
+  lastFin = fin;
+  return VAutoFin(fin); // this increments `rc`
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::RegisterLoopFinalizer
+//
+//==========================================================================
+VEmitContext::VAutoFin VEmitContext::RegisterLoopFinalizer (VStatement *st) {
+  if (!st) return VAutoFin(); // this is noop anyway
+  VFinalizer *fin = new VFinalizer();
+  fin->rc = 0; // will be incremented in `VAutoFin()` constructor
+  fin->ec = this;
+  fin->prev = lastFin;
+  fin->st = st;
+  fin->bc = lastBC;
   lastFin = fin;
   return VAutoFin(fin); // this increments `rc`
 }

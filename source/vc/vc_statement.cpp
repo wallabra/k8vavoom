@@ -810,7 +810,7 @@ void VForeach::DoEmit (VEmitContext &ec) {
 
   ec.AddStatement(OPC_Goto, loopStart.GetLabelNoFinalizers(), Loc);
   {
-    auto fin = ec.RegisterFinalizer(this);
+    auto fin = ec.RegisterLoopFinalizer(this);
     ec.MarkLabel(Loop);
     Statement->Emit(ec);
     loopStart.Mark();
@@ -1806,7 +1806,7 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
   // actual loop
   {
     // register finalizer, and mark loop start
-    auto fin = ec.RegisterFinalizer(this);
+    auto fin = ec.RegisterLoopFinalizer(this);
     loopStart.Mark();
     // call next
     ivNext->EmitBranchable(ec, loopEnd.GetLabelNoFinalizers(), false);
