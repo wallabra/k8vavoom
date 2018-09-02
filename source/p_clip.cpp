@@ -771,8 +771,8 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
     }
     else if (ds->seg->linedef)
     {
-      TVec v1 = *ds->seg->linedef->v1;
-      TVec v2 = *ds->seg->linedef->v2;
+      TVec vv1 = *ds->seg->linedef->v1;
+      TVec vv2 = *ds->seg->linedef->v2;
 
       if (ds->seg->backsector)
       {
@@ -790,15 +790,15 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
             // A line without top texture isn't a door
             if (ds->seg->sidedef->TopTexture != -1 && clip_bsp)
             {
-              float frontcz1 = ds->seg->linedef->frontsector->ceiling.GetPointZ(v1);
-              float frontcz2 = ds->seg->linedef->frontsector->ceiling.GetPointZ(v2);
-              float frontfz1 = ds->seg->linedef->frontsector->floor.GetPointZ(v1);
-              float frontfz2 = ds->seg->linedef->frontsector->floor.GetPointZ(v2);
+              float frontcz1 = ds->seg->linedef->frontsector->ceiling.GetPointZ(vv1);
+              float frontcz2 = ds->seg->linedef->frontsector->ceiling.GetPointZ(vv2);
+              float frontfz1 = ds->seg->linedef->frontsector->floor.GetPointZ(vv1);
+              float frontfz2 = ds->seg->linedef->frontsector->floor.GetPointZ(vv2);
 
-              float backcz1 = ds->seg->linedef->backsector->ceiling.GetPointZ(v1);
-              float backcz2 = ds->seg->linedef->backsector->ceiling.GetPointZ(v2);
-              float backfz1 = ds->seg->linedef->backsector->floor.GetPointZ(v1);
-              float backfz2 = ds->seg->linedef->backsector->floor.GetPointZ(v2);
+              float backcz1 = ds->seg->linedef->backsector->ceiling.GetPointZ(vv1);
+              float backcz2 = ds->seg->linedef->backsector->ceiling.GetPointZ(vv2);
+              float backfz1 = ds->seg->linedef->backsector->floor.GetPointZ(vv1);
+              float backfz2 = ds->seg->linedef->backsector->floor.GetPointZ(vv2);
 
               if ((backcz2 <= frontfz2 && backcz2 <= frontfz1 && backcz1 <= frontfz2 && backcz1 <= frontfz1) &&
                 (frontcz2 <= backfz2 && frontcz2 <= backfz1 && frontcz1 <= backfz2 && frontcz1 <= backfz1))
@@ -816,15 +816,15 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
             // A line without bottom texture isn't an elevator/plat
             if (ds->seg->sidedef->BottomTexture != -1 && clip_bsp)
             {
-              float frontcz1 = ds->seg->linedef->frontsector->ceiling.GetPointZ(v1);
-              float frontcz2 = ds->seg->linedef->frontsector->ceiling.GetPointZ(v2);
-              float frontfz1 = ds->seg->linedef->frontsector->floor.GetPointZ(v1);
-              float frontfz2 = ds->seg->linedef->frontsector->floor.GetPointZ(v2);
+              float frontcz1 = ds->seg->linedef->frontsector->ceiling.GetPointZ(vv1);
+              float frontcz2 = ds->seg->linedef->frontsector->ceiling.GetPointZ(vv2);
+              float frontfz1 = ds->seg->linedef->frontsector->floor.GetPointZ(vv1);
+              float frontfz2 = ds->seg->linedef->frontsector->floor.GetPointZ(vv2);
 
-              float backcz1 = ds->seg->linedef->backsector->ceiling.GetPointZ(v1);
-              float backcz2 = ds->seg->linedef->backsector->ceiling.GetPointZ(v2);
-              float backfz1 = ds->seg->linedef->backsector->floor.GetPointZ(v1);
-              float backfz2 = ds->seg->linedef->backsector->floor.GetPointZ(v2);
+              float backcz1 = ds->seg->linedef->backsector->ceiling.GetPointZ(vv1);
+              float backcz2 = ds->seg->linedef->backsector->ceiling.GetPointZ(vv2);
+              float backfz1 = ds->seg->linedef->backsector->floor.GetPointZ(vv1);
+              float backfz2 = ds->seg->linedef->backsector->floor.GetPointZ(vv2);
 
               if ((backcz2 <= frontfz2 && backcz2 <= frontfz1 && backcz1 <= frontfz2 && backcz1 <= frontfz1) &&
                 (frontcz2 <= backfz2 && frontcz2 <= backfz1 && frontcz1 <= backfz2 && frontcz1 <= backfz1))
@@ -842,15 +842,15 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
             // A line without mid texture isn't a polyobj door
             if (ds->seg->sidedef->MidTexture != -1 && clip_bsp)
             {
-              float frontcz1 = ds->seg->linedef->frontsector->ceiling.GetPointZ(v1);
-              float frontcz2 = ds->seg->linedef->frontsector->ceiling.GetPointZ(v2);
-              float frontfz1 = ds->seg->linedef->frontsector->floor.GetPointZ(v1);
-              float frontfz2 = ds->seg->linedef->frontsector->floor.GetPointZ(v2);
+              float frontcz1 = ds->seg->linedef->frontsector->ceiling.GetPointZ(vv1);
+              float frontcz2 = ds->seg->linedef->frontsector->ceiling.GetPointZ(vv2);
+              float frontfz1 = ds->seg->linedef->frontsector->floor.GetPointZ(vv1);
+              float frontfz2 = ds->seg->linedef->frontsector->floor.GetPointZ(vv2);
 
-              float backcz1 = ds->seg->linedef->backsector->ceiling.GetPointZ(v1);
-              float backcz2 = ds->seg->linedef->backsector->ceiling.GetPointZ(v2);
-              float backfz1 = ds->seg->linedef->backsector->floor.GetPointZ(v1);
-              float backfz2 = ds->seg->linedef->backsector->floor.GetPointZ(v2);
+              float backcz1 = ds->seg->linedef->backsector->ceiling.GetPointZ(vv1);
+              float backcz2 = ds->seg->linedef->backsector->ceiling.GetPointZ(vv2);
+              float backfz1 = ds->seg->linedef->backsector->floor.GetPointZ(vv1);
+              float backfz2 = ds->seg->linedef->backsector->floor.GetPointZ(vv2);
 
               if ((backcz2 <= frontfz2 && backcz2 <= frontfz1 && backcz1 <= frontfz2 && backcz1 <= frontfz1) &&
                 (frontcz2 <= backfz2 && frontcz2 <= backfz1 && frontcz1 <= backfz2 && frontcz1 <= backfz1))
@@ -880,21 +880,20 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
       }
 
       // Clip sectors that are behind rendered segs
-      TVec r1 = Origin - v1;
-      TVec r2 = Origin - v2;
-      float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
-      float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
+      TVec rr1 = Origin - vv1;
+      TVec rr2 = Origin - vv2;
+      float DD1 = DotProduct(Normalise(CrossProduct(rr1, rr2)), Origin);
+      float DD2 = DotProduct(Normalise(CrossProduct(rr2, rr1)), Origin);
 
 #ifdef CLIENT
-      TVec rLight1;
-      TVec rLight2;
-      float DLight1;
-      float DLight2;
+      //TVec rLight1;
+      //TVec rLight2;
+      //float DLight1;
+      //float DLight2;
 
-      if (shadowslight)
-      {
-        rLight1 = CurrLightPos - v1;
-        rLight2 = CurrLightPos - v2;
+      if (shadowslight) {
+        rLight1 = CurrLightPos - vv1;
+        rLight2 = CurrLightPos - vv2;
         DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
         DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
@@ -910,7 +909,7 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
           continue;
         }
 
-        if (D1 > r_lights_radius && D2 > r_lights_radius)
+        if (DD1 > r_lights_radius && DD2 > r_lights_radius)
         {
           ds++;
           continue;
@@ -926,7 +925,7 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
       else
 #endif
       {
-        if (D1 <= 0.0 && D2 <= 0.0)
+        if (DD1 <= 0.0 && DD2 <= 0.0)
         {
           ds++;
           continue;
@@ -940,30 +939,30 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
         // this one works for now...
         if (DLight1 > CurrLightRadius && DLight2 < -CurrLightRadius)
         {
-          v2 += (v2 - v1) * DLight1 / (DLight1 - DLight2);
+          vv2 += (vv2 - vv1) * DLight1 / (DLight1 - DLight2);
         }
         else if (DLight2 > CurrLightRadius && DLight1 < -CurrLightRadius)
         {
-          v1 += (v1 - v2) * DLight2 / (DLight2 - DLight1);
+          vv1 += (vv1 - vv2) * DLight2 / (DLight2 - DLight1);
         }
       }
       else
 #endif
       {
-        if (D1 > 0.0 && D2 <= 0.0)
+        if (DD1 > 0.0 && DD2 <= 0.0)
         {
-          v2 += (v2 - v1) * D1 / (D1 - D2);
+          vv2 += (vv2 - vv1) * DD1 / (DD1 - DD2);
         }
-        else if (D2 > 0.0 && D1 <= 0.0)
+        else if (DD2 > 0.0 && DD1 <= 0.0)
         {
-          v1 += (v1 - v2) * D2 / (D2 - D1);
+          vv1 += (vv1 - vv2) * DD2 / (DD2 - DD1);
         }
       }
 
       if (!ds->seg->linedef->backsector)
       {
-        if (IsRangeVisible(PointToClipAngle(v2),
-          PointToClipAngle(v1)))
+        if (IsRangeVisible(PointToClipAngle(vv2),
+          PointToClipAngle(vv1)))
         {
           return true;
         }
@@ -1111,11 +1110,9 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
       {
         return true;
       }
-    }
-    else if (line->linedef)
-    {
-      TVec v1 = *line->linedef->v1;
-      TVec v2 = *line->linedef->v2;
+    } else if (line->linedef) {
+      TVec vv1 = *line->linedef->v1;
+      TVec vv2 = *line->linedef->v2;
 
       // 2-sided line, determine if it can be skipped
       if (line->backsector)
@@ -1131,15 +1128,15 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
           // A line without top texture isn't a door
           if (line->sidedef->TopTexture != -1)
           {
-            float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(v1);
-            float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(v2);
-            float frontfz1 = line->linedef->frontsector->floor.GetPointZ(v1);
-            float frontfz2 = line->linedef->frontsector->floor.GetPointZ(v2);
+            float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(vv1);
+            float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(vv2);
+            float frontfz1 = line->linedef->frontsector->floor.GetPointZ(vv1);
+            float frontfz2 = line->linedef->frontsector->floor.GetPointZ(vv2);
 
-            float backcz1 = line->linedef->backsector->ceiling.GetPointZ(v1);
-            float backcz2 = line->linedef->backsector->ceiling.GetPointZ(v2);
-            float backfz1 = line->linedef->backsector->floor.GetPointZ(v1);
-            float backfz2 = line->linedef->backsector->floor.GetPointZ(v2);
+            float backcz1 = line->linedef->backsector->ceiling.GetPointZ(vv1);
+            float backcz2 = line->linedef->backsector->ceiling.GetPointZ(vv2);
+            float backfz1 = line->linedef->backsector->floor.GetPointZ(vv1);
+            float backfz2 = line->linedef->backsector->floor.GetPointZ(vv2);
 
             if ((backcz2 <= frontfz2 && backcz2 <= frontfz1 && backcz1 <= frontfz2 && backcz1 <= frontfz1) &&
               (frontcz2 <= backfz2 && frontcz2 <= backfz1 && frontcz1 <= backfz2 && frontcz1 <= backfz1))
@@ -1156,15 +1153,15 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
           // A line without bottom texture isn't an elevator/plat
           if (line->sidedef->BottomTexture != -1 && clip_bsp)
           {
-            float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(v1);
-            float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(v2);
-            float frontfz1 = line->linedef->frontsector->floor.GetPointZ(v1);
-            float frontfz2 = line->linedef->frontsector->floor.GetPointZ(v2);
+            float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(vv1);
+            float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(vv2);
+            float frontfz1 = line->linedef->frontsector->floor.GetPointZ(vv1);
+            float frontfz2 = line->linedef->frontsector->floor.GetPointZ(vv2);
 
-            float backcz1 = line->linedef->backsector->ceiling.GetPointZ(v1);
-            float backcz2 = line->linedef->backsector->ceiling.GetPointZ(v2);
-            float backfz1 = line->linedef->backsector->floor.GetPointZ(v1);
-            float backfz2 = line->linedef->backsector->floor.GetPointZ(v2);
+            float backcz1 = line->linedef->backsector->ceiling.GetPointZ(vv1);
+            float backcz2 = line->linedef->backsector->ceiling.GetPointZ(vv2);
+            float backfz1 = line->linedef->backsector->floor.GetPointZ(vv1);
+            float backfz2 = line->linedef->backsector->floor.GetPointZ(vv2);
 
             if ((backcz2 <= frontfz2 && backcz2 <= frontfz1 && backcz1 <= frontfz2 && backcz1 <= frontfz1) &&
               (frontcz2 <= backfz2 && frontcz2 <= backfz1 && frontcz1 <= backfz2 && frontcz1 <= backfz1))
@@ -1181,15 +1178,15 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
           // A line without mid texture isn't a polyobj door
           if (line->sidedef->MidTexture != -1 && clip_bsp)
           {
-            float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(v1);
-            float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(v2);
-            float frontfz1 = line->linedef->frontsector->floor.GetPointZ(v1);
-            float frontfz2 = line->linedef->frontsector->floor.GetPointZ(v2);
+            float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(vv1);
+            float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(vv2);
+            float frontfz1 = line->linedef->frontsector->floor.GetPointZ(vv1);
+            float frontfz2 = line->linedef->frontsector->floor.GetPointZ(vv2);
 
-            float backcz1 = line->linedef->backsector->ceiling.GetPointZ(v1);
-            float backcz2 = line->linedef->backsector->ceiling.GetPointZ(v2);
-            float backfz1 = line->linedef->backsector->floor.GetPointZ(v1);
-            float backfz2 = line->linedef->backsector->floor.GetPointZ(v2);
+            float backcz1 = line->linedef->backsector->ceiling.GetPointZ(vv1);
+            float backcz2 = line->linedef->backsector->ceiling.GetPointZ(vv2);
+            float backfz1 = line->linedef->backsector->floor.GetPointZ(vv1);
+            float backfz2 = line->linedef->backsector->floor.GetPointZ(vv2);
 
             if ((backcz2 <= frontfz2 && backcz2 <= frontfz1 && backcz1 <= frontfz2 && backcz1 <= frontfz1) &&
               (frontcz2 <= backfz2 && frontcz2 <= backfz1 && frontcz1 <= backfz2 && frontcz1 <= backfz1))
@@ -1216,22 +1213,22 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
       }
 
       // Clip sectors that are behind rendered segs
-      TVec rLight1;
-      TVec rLight2;
+      //TVec rLight1;
+      //TVec rLight2;
 
-      TVec r1 = Origin - v1;
-      TVec r2 = Origin - v2;
-      float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
-      float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
+      /*TVec*/ r1 = Origin - vv1;
+      /*TVec*/ r2 = Origin - vv2;
+      /*float*/ D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
+      /*float*/ D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
 
 #ifdef CLIENT
-      float DLight1;
-      float DLight2;
+      //float DLight1;
+      //float DLight2;
 
       if (shadowslight)
       {
-        rLight1 = CurrLightPos - v1;
-        rLight2 = CurrLightPos - v2;
+        rLight1 = CurrLightPos - vv1;
+        rLight2 = CurrLightPos - vv2;
         DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
         DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
@@ -1274,11 +1271,11 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
         // this one works for now...
         if (DLight1 > CurrLightRadius && DLight2 < -CurrLightRadius)
         {
-          v2 += (v2 - v1) * DLight1 / (DLight1 - DLight2);
+          vv2 += (vv2 - vv1) * DLight1 / (DLight1 - DLight2);
         }
         else if (DLight2 > CurrLightRadius && DLight1 < -CurrLightRadius)
         {
-          v1 += (v1 - v2) * DLight2 / (DLight2 - DLight1);
+          vv1 += (vv1 - vv2) * DLight2 / (DLight2 - DLight1);
         }
       }
       else
@@ -1286,18 +1283,18 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
       {
         if (D1 > 0.0 && D2 < 0.0)
         {
-          v2 += (v2 - v1) * D1 / (D1 - D2);
+          vv2 += (vv2 - vv1) * D1 / (D1 - D2);
         }
         else if (D2 > 0.0 && D1 < 0.0)
         {
-          v1 += (v1 - v2) * D2 / (D2 - D1);
+          vv1 += (vv1 - vv2) * D2 / (D2 - D1);
         }
       }
 
       if (!line->linedef->backsector)
       {
-        if (IsRangeVisible(PointToClipAngle(v2),
-          PointToClipAngle(v1)))
+        if (IsRangeVisible(PointToClipAngle(vv2),
+          PointToClipAngle(vv1)))
         {
           return true;
         }
@@ -1403,11 +1400,9 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
 
     if (clip_trans_hack && line->linedef->alpha < 1.0) continue; //k8: skip translucent walls (for now)
     // 2-sided line, determine if it can be skipped
-    if (line->backsector)
-    {
-
-      TVec v1 = *line->linedef->v1;
-      TVec v2 = *line->linedef->v2;
+    if (line->backsector) {
+      const TVec vv1 = *line->linedef->v1;
+      const TVec vv2 = *line->linedef->v2;
 
       // Just apply this to sectors without slopes
       if (line->linedef->frontsector->floor.normal.z == 1.0 && line->linedef->backsector->floor.normal.z == 1.0 &&
@@ -1420,15 +1415,15 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
         // A line without top texture isn't a door
         if (line->sidedef->TopTexture != -1)
         {
-          float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(v1);
-          float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(v2);
-          float frontfz1 = line->linedef->frontsector->floor.GetPointZ(v1);
-          float frontfz2 = line->linedef->frontsector->floor.GetPointZ(v2);
+          float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(vv1);
+          float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(vv2);
+          float frontfz1 = line->linedef->frontsector->floor.GetPointZ(vv1);
+          float frontfz2 = line->linedef->frontsector->floor.GetPointZ(vv2);
 
-          float backcz1 = line->linedef->backsector->ceiling.GetPointZ(v1);
-          float backcz2 = line->linedef->backsector->ceiling.GetPointZ(v2);
-          float backfz1 = line->linedef->backsector->floor.GetPointZ(v1);
-          float backfz2 = line->linedef->backsector->floor.GetPointZ(v2);
+          float backcz1 = line->linedef->backsector->ceiling.GetPointZ(vv1);
+          float backcz2 = line->linedef->backsector->ceiling.GetPointZ(vv2);
+          float backfz1 = line->linedef->backsector->floor.GetPointZ(vv1);
+          float backfz2 = line->linedef->backsector->floor.GetPointZ(vv2);
 
           if ((backcz2 > frontfz2 && backcz2 > frontfz1 && backcz1 > frontfz2 && backcz1 > frontfz1) &&
             (frontcz2 > backfz2 && frontcz2 > backfz1 && frontcz1 > backfz2 && frontcz1 > backfz1))
@@ -1443,17 +1438,16 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
         //
 
         // A line without bottom texture isn't an elevator/plat
-        if (line->sidedef->BottomTexture != -1)
-        {
-          float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(v1);
-          float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(v2);
-          float frontfz1 = line->linedef->frontsector->floor.GetPointZ(v1);
-          float frontfz2 = line->linedef->frontsector->floor.GetPointZ(v2);
+        if (line->sidedef->BottomTexture != -1) {
+          float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(vv1);
+          float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(vv2);
+          float frontfz1 = line->linedef->frontsector->floor.GetPointZ(vv1);
+          float frontfz2 = line->linedef->frontsector->floor.GetPointZ(vv2);
 
-          float backcz1 = line->linedef->backsector->ceiling.GetPointZ(v1);
-          float backcz2 = line->linedef->backsector->ceiling.GetPointZ(v2);
-          float backfz1 = line->linedef->backsector->floor.GetPointZ(v1);
-          float backfz2 = line->linedef->backsector->floor.GetPointZ(v2);
+          float backcz1 = line->linedef->backsector->ceiling.GetPointZ(vv1);
+          float backcz2 = line->linedef->backsector->ceiling.GetPointZ(vv2);
+          float backfz1 = line->linedef->backsector->floor.GetPointZ(vv1);
+          float backfz2 = line->linedef->backsector->floor.GetPointZ(vv2);
 
           if ((backcz2 > frontfz2 && backcz2 > frontfz1 && backcz1 > frontfz2 && backcz1 > frontfz1) &&
             (frontcz2 > backfz2 && frontcz2 > backfz1 && frontcz1 > backfz2 && frontcz1 > backfz1))
@@ -1468,17 +1462,16 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
         //
 
         // A line without mid texture isn't a polyobj door
-        if (line->sidedef->MidTexture != -1 && clip_bsp)
-        {
-          float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(v1);
-          float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(v2);
-          float frontfz1 = line->linedef->frontsector->floor.GetPointZ(v1);
-          float frontfz2 = line->linedef->frontsector->floor.GetPointZ(v2);
+        if (line->sidedef->MidTexture != -1 && clip_bsp) {
+          float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(vv1);
+          float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(vv2);
+          float frontfz1 = line->linedef->frontsector->floor.GetPointZ(vv1);
+          float frontfz2 = line->linedef->frontsector->floor.GetPointZ(vv2);
 
-          float backcz1 = line->linedef->backsector->ceiling.GetPointZ(v1);
-          float backcz2 = line->linedef->backsector->ceiling.GetPointZ(v2);
-          float backfz1 = line->linedef->backsector->floor.GetPointZ(v1);
-          float backfz2 = line->linedef->backsector->floor.GetPointZ(v2);
+          float backcz1 = line->linedef->backsector->ceiling.GetPointZ(vv1);
+          float backcz2 = line->linedef->backsector->ceiling.GetPointZ(vv2);
+          float backfz1 = line->linedef->backsector->floor.GetPointZ(vv1);
+          float backfz2 = line->linedef->backsector->floor.GetPointZ(vv2);
 
           if ((backcz2 > frontfz2 && backcz2 > frontfz1 && backcz1 > frontfz2 && backcz1 > frontfz1) &&
             (frontcz2 > backfz2 && frontcz2 > backfz1 && frontcz1 > backfz2 && frontcz1 > backfz1))
@@ -1487,9 +1480,7 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
             continue;
           }
         }
-      }
-      else
-      {
+      } else {
         if (((line->linedef->frontsector->floor.maxz <= line->linedef->backsector->ceiling.minz &&
           line->linedef->frontsector->ceiling.maxz >= line->linedef->backsector->floor.minz) ||
           (line->linedef->frontsector->floor.minz <= line->linedef->backsector->ceiling.maxz &&
@@ -1542,22 +1533,18 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
     AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));
   }
 
-  if (Sub->poly)
-  {
+  if (Sub->poly) {
     seg_t **polySeg = Sub->poly->segs;
 
-    for (int polyCount = Sub->poly->numsegs; polyCount--; polySeg++)
-    {
+    for (int polyCount = Sub->poly->numsegs; polyCount--; polySeg++) {
       seg_t *line = *polySeg;
 
-      if (!line->linedef)
-      {
+      if (!line->linedef) {
         //  Miniseg.
         continue;
       }
 
-      if (line->PointOnSide(Origin))
-      {
+      if (line->PointOnSide(Origin)) {
         //  Viewer is in back side or on plane
         continue;
       }
@@ -1566,16 +1553,14 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
       TVec v2 = *line->v2;
 
       // Just apply this to sectors without slopes
-      if (line->frontsector->floor.normal.z == 10 && line->frontsector->ceiling.normal.z == -1.0)
-      {
+      if (line->frontsector->floor.normal.z == 10 && line->frontsector->ceiling.normal.z == -1.0) {
         TVec r1 = Origin - v1;
         TVec r2 = Origin - v2;
         float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
         float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
 
 #ifdef CLIENT
-        if (shadowslight)
-        {
+        if (shadowslight) {
           TVec rLight1 = CurrLightPos - v1;
           TVec rLight2 = CurrLightPos - v2;
           float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
@@ -1606,18 +1591,14 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
         else
 #endif
         {
-          if (D1 <= 0.0 && D2 <= 0.0)
-          {
-            continue;
-          }
+          if (D1 <= 0.0 && D2 <= 0.0) continue;
         }
       }
 
       // 2-sided line, determine if it can be skipped
-      if (line->backsector)
-      {
-        TVec v1 = *line->linedef->v1;
-        TVec v2 = *line->linedef->v2;
+      if (line->backsector) {
+        const TVec vv1 = *line->linedef->v1;
+        const TVec vv2 = *line->linedef->v2;
 
         // Just apply this to sectors without slopes
         if (line->linedef->frontsector->floor.normal.z == 1.0 && line->linedef->backsector->floor.normal.z == 1.0 &&
@@ -1628,17 +1609,16 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
           //
 
           // A line without top texture isn't a door
-          if (line->sidedef->TopTexture != -1)
-          {
-            float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(v1);
-            float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(v2);
-            float frontfz1 = line->linedef->frontsector->floor.GetPointZ(v1);
-            float frontfz2 = line->linedef->frontsector->floor.GetPointZ(v2);
+          if (line->sidedef->TopTexture != -1) {
+            float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(vv1);
+            float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(vv2);
+            float frontfz1 = line->linedef->frontsector->floor.GetPointZ(vv1);
+            float frontfz2 = line->linedef->frontsector->floor.GetPointZ(vv2);
 
-            float backcz1 = line->linedef->backsector->ceiling.GetPointZ(v1);
-            float backcz2 = line->linedef->backsector->ceiling.GetPointZ(v2);
-            float backfz1 = line->linedef->backsector->floor.GetPointZ(v1);
-            float backfz2 = line->linedef->backsector->floor.GetPointZ(v2);
+            float backcz1 = line->linedef->backsector->ceiling.GetPointZ(vv1);
+            float backcz2 = line->linedef->backsector->ceiling.GetPointZ(vv2);
+            float backfz1 = line->linedef->backsector->floor.GetPointZ(vv1);
+            float backfz2 = line->linedef->backsector->floor.GetPointZ(vv2);
 
             if ((backcz2 > frontfz2 && backcz2 > frontfz1 && backcz1 > frontfz2 && backcz1 > frontfz1) &&
               (frontcz2 > backfz2 && frontcz2 > backfz1 && frontcz1 > backfz2 && frontcz1 > backfz1))
@@ -1653,17 +1633,16 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
           //
 
           // A line without bottom texture isn't an elevator/plat
-          if (line->sidedef->BottomTexture != -1)
-          {
-            float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(v1);
-            float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(v2);
-            float frontfz1 = line->linedef->frontsector->floor.GetPointZ(v1);
-            float frontfz2 = line->linedef->frontsector->floor.GetPointZ(v2);
+          if (line->sidedef->BottomTexture != -1) {
+            float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(vv1);
+            float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(vv2);
+            float frontfz1 = line->linedef->frontsector->floor.GetPointZ(vv1);
+            float frontfz2 = line->linedef->frontsector->floor.GetPointZ(vv2);
 
-            float backcz1 = line->linedef->backsector->ceiling.GetPointZ(v1);
-            float backcz2 = line->linedef->backsector->ceiling.GetPointZ(v2);
-            float backfz1 = line->linedef->backsector->floor.GetPointZ(v1);
-            float backfz2 = line->linedef->backsector->floor.GetPointZ(v2);
+            float backcz1 = line->linedef->backsector->ceiling.GetPointZ(vv1);
+            float backcz2 = line->linedef->backsector->ceiling.GetPointZ(vv2);
+            float backfz1 = line->linedef->backsector->floor.GetPointZ(vv1);
+            float backfz2 = line->linedef->backsector->floor.GetPointZ(vv2);
 
             if ((backcz2 > frontfz2 && backcz2 > frontfz1 && backcz1 > frontfz2 && backcz1 > frontfz1) &&
               (frontcz2 > backfz2 && frontcz2 > backfz1 && frontcz1 > backfz2 && frontcz1 > backfz1))
@@ -1678,17 +1657,16 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
           //
 
           // A line without mid texture isn't a polyobj door
-          if (line->sidedef->MidTexture != -1)
-          {
-            float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(v1);
-            float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(v2);
-            float frontfz1 = line->linedef->frontsector->floor.GetPointZ(v1);
-            float frontfz2 = line->linedef->frontsector->floor.GetPointZ(v2);
+          if (line->sidedef->MidTexture != -1) {
+            float frontcz1 = line->linedef->frontsector->ceiling.GetPointZ(vv1);
+            float frontcz2 = line->linedef->frontsector->ceiling.GetPointZ(vv2);
+            float frontfz1 = line->linedef->frontsector->floor.GetPointZ(vv1);
+            float frontfz2 = line->linedef->frontsector->floor.GetPointZ(vv2);
 
-            float backcz1 = line->linedef->backsector->ceiling.GetPointZ(v1);
-            float backcz2 = line->linedef->backsector->ceiling.GetPointZ(v2);
-            float backfz1 = line->linedef->backsector->floor.GetPointZ(v1);
-            float backfz2 = line->linedef->backsector->floor.GetPointZ(v2);
+            float backcz1 = line->linedef->backsector->ceiling.GetPointZ(vv1);
+            float backcz2 = line->linedef->backsector->ceiling.GetPointZ(vv2);
+            float backfz1 = line->linedef->backsector->floor.GetPointZ(vv1);
+            float backfz2 = line->linedef->backsector->floor.GetPointZ(vv2);
 
             if ((backcz2 > frontfz2 && backcz2 > frontfz1 && backcz1 > frontfz2 && backcz1 > frontfz1) &&
               (frontcz2 > backfz2 && frontcz2 > backfz1 && frontcz1 > backfz2 && frontcz1 > backfz1))
@@ -1698,8 +1676,7 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
             }
           }
         }
-        else
-        {
+        else {
           if (((line->linedef->frontsector->floor.maxz <= line->linedef->backsector->ceiling.minz &&
             line->linedef->frontsector->ceiling.maxz >= line->linedef->backsector->floor.minz) ||
             (line->linedef->frontsector->floor.minz <= line->linedef->backsector->ceiling.maxz &&
