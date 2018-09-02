@@ -570,9 +570,9 @@ slist_t *VNetwork::GetSlist () {
       for (int i = 0; i < HostCacheCount; ++i) {
         for (int j = i + 1; j < HostCacheCount; ++j) {
           if (HostCache[j].Name.Cmp(HostCache[i].Name) < 0) {
-            memcpy(&temp, &HostCache[j], sizeof(hostcache_t));
-            memcpy(&HostCache[j], &HostCache[i], sizeof(hostcache_t));
-            memcpy(&HostCache[i], &temp, sizeof(hostcache_t));
+            memcpy(&temp, (void *)(&HostCache[j]), sizeof(hostcache_t));
+            memcpy((void *)(&HostCache[j]), (void *)(&HostCache[i]), sizeof(hostcache_t));
+            memcpy((void *)(&HostCache[i]), &temp, sizeof(hostcache_t));
           }
         }
       }
