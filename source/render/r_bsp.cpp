@@ -301,8 +301,8 @@ void VRenderLevelShared::RenderHorizon (drawseg_t *dseg) {
   if (!dseg->HorizonTop) {
     dseg->HorizonTop = (surface_t *)Z_Malloc(HORIZON_SURF_SIZE);
     dseg->HorizonBot = (surface_t *)Z_Malloc(HORIZON_SURF_SIZE);
-    memset(dseg->HorizonTop, 0, HORIZON_SURF_SIZE);
-    memset(dseg->HorizonBot, 0, HORIZON_SURF_SIZE);
+    memset((void *)dseg->HorizonTop, 0, HORIZON_SURF_SIZE);
+    memset((void *)dseg->HorizonBot, 0, HORIZON_SURF_SIZE);
   }
 
   // horizon is not supported in sectors with slopes, so just use TexZ

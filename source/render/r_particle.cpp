@@ -114,7 +114,7 @@ particle_t *VRenderLevelShared::NewParticle()
   particle_t *p = FreeParticles;
   FreeParticles = p->next;
   //  Clean
-  memset(p, 0, sizeof(*p));
+  memset((void *)p, 0, sizeof(*p));
   //  Add to active particles
   p->next = ActiveParticles;
   ActiveParticles = p;

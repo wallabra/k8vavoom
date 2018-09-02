@@ -166,7 +166,7 @@ void VPortal::Draw(bool UseStencil)
     // be done only for portals that do rendering of view.
     RLev->BspVis = new vuint8[RLev->VisSize];
 
-    memset(TransSprites, 0, sizeof(VRenderLevel::trans_sprite_t) * VRenderLevel::MAX_TRANS_SPRITES);
+    memset((void *)TransSprites, 0, sizeof(VRenderLevel::trans_sprite_t) * VRenderLevel::MAX_TRANS_SPRITES);
     RLev->trans_sprites = TransSprites;
   }
 

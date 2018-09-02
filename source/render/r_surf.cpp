@@ -156,7 +156,7 @@ void VRenderLevelShared::SetupSky()
   }
   //  Make it a bit higher to avoid clipping of the sprites.
   skyheight += 8 * 1024;
-  memset(&sky_plane, 0, sizeof(sky_plane));
+  memset((void *)&sky_plane, 0, sizeof(sky_plane));
   sky_plane.Set(TVec(0, 0, -1), -skyheight);
   sky_plane.pic = skyflatnum;
   sky_plane.Alpha = 1.1;
@@ -418,7 +418,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface(subsector_t *sub,
   surface_t   *surf;
 
   ssurf = new sec_surface_t;
-  memset(ssurf, 0, sizeof(sec_surface_t));
+  memset((void *)ssurf, 0, sizeof(sec_surface_t));
   surf = (surface_t*)Z_Calloc(sizeof(surface_t) +
     (sub->numlines - 1) * sizeof(TVec));
 
@@ -636,7 +636,7 @@ surface_t *VRenderLevelShared::NewWSurf()
   surface_t *surf = free_wsurfs;
   free_wsurfs = surf->next;
 
-  memset(surf, 0, WSURFSIZE);
+  memset((void *)surf, 0, WSURFSIZE);
 
   return surf;
   unguard;
@@ -1250,17 +1250,17 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
       float extrabotz1 = extrabot->GetPointZ(*seg->v1);
       float extrabotz2 = extrabot->GetPointZ(*seg->v2);
 
-      VTexture *MTex = GTextureManager(extraside->MidTexture);
-      sp->texinfo.saxis = segdir * TextureSScale(MTex);
-      sp->texinfo.taxis = TVec(0, 0, -1) * TextureTScale(MTex);
+      VTexture *MTextr = GTextureManager(extraside->MidTexture);
+      sp->texinfo.saxis = segdir * TextureSScale(MTextr);
+      sp->texinfo.taxis = TVec(0, 0, -1) * TextureTScale(MTextr);
       sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis) +
-        seg->offset * TextureSScale(MTex) +
-        sidedef->MidTextureOffset * TextureOffsetSScale(MTex);
+        seg->offset * TextureSScale(MTextr) +
+        sidedef->MidTextureOffset * TextureOffsetSScale(MTextr);
 
       sp->texinfo.toffs = extratop->TexZ *
-        TextureTScale(MTex) + sidedef->MidRowOffset *
-        TextureOffsetTScale(MTex);
-      sp->texinfo.Tex = MTex;
+        TextureTScale(MTextr) + sidedef->MidRowOffset *
+        TextureOffsetTScale(MTextr);
+      sp->texinfo.Tex = MTextr;
       sp->texinfo.Alpha = extrabot->Alpha < 1.0 ? extrabot->Alpha : 1.1;
       sp->texinfo.Additive = !!(extrabot->flags & SPF_ADDITIVE);
       sp->texinfo.ColourMap = 0;
@@ -1798,20 +1798,20 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
     }
 
     sec_region_t *reg;
-    segpart_t *sp = dseg->extra;
+    segpart_t *spp = dseg->extra;
     for (reg = seg->backsector->botregion; reg->next; reg = reg->next)
     {
       sec_plane_t *extratop = reg->next->floor;
       sec_plane_t *extrabot = reg->ceiling;
       side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
 
-      sp->texinfo.ColourMap = ColourMap;
+      spp->texinfo.ColourMap = ColourMap;
       VTexture *ETex = GTextureManager(extraside->MidTexture);
-      sp->texinfo.Tex = ETex;
-      if (FASI(sp->frontTopDist) != FASI(r_ceiling->dist) ||
-        FASI(sp->frontBotDist) != FASI(r_floor->dist) ||
-        FASI(sp->backTopDist) != FASI(extratop->dist) ||
-        FASI(sp->backBotDist) != FASI(extrabot->dist))
+      spp->texinfo.Tex = ETex;
+      if (FASI(spp->frontTopDist) != FASI(r_ceiling->dist) ||
+        FASI(spp->frontBotDist) != FASI(r_floor->dist) ||
+        FASI(spp->backTopDist) != FASI(extratop->dist) ||
+        FASI(spp->backBotDist) != FASI(extrabot->dist))
       {
         float topz1 = r_ceiling->GetPointZ(*seg->v1);
         float topz2 = r_ceiling->GetPointZ(*seg->v2);
@@ -1823,10 +1823,10 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
         float extrabotz1 = extrabot->GetPointZ(*seg->v1);
         float extrabotz2 = extrabot->GetPointZ(*seg->v2);
 
-        FreeWSurfs(sp->surfs);
-        sp->surfs = nullptr;
+        FreeWSurfs(spp->surfs);
+        spp->surfs = nullptr;
 
-        sp->texinfo.toffs = extratop->TexZ *
+        spp->texinfo.toffs = extratop->TexZ *
           TextureTScale(ETex) + sidedef->MidRowOffset *
           TextureOffsetTScale(ETex);
 
@@ -1840,23 +1840,23 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
         wv[2].z = MIN(extratopz2, topz2);
         wv[3].z = MAX(extrabotz2, botz2);
 
-        sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+        spp->surfs = CreateWSurfs(wv, &spp->texinfo, seg, r_sub);
 
-        sp->frontTopDist = r_ceiling->dist;
-        sp->frontBotDist = r_floor->dist;
-        sp->backTopDist = extratop->dist;
-        sp->backBotDist = extrabot->dist;
-        sp->RowOffset = sidedef->MidRowOffset;
+        spp->frontTopDist = r_ceiling->dist;
+        spp->frontBotDist = r_floor->dist;
+        spp->backTopDist = extratop->dist;
+        spp->backBotDist = extrabot->dist;
+        spp->RowOffset = sidedef->MidRowOffset;
       }
-      else if (FASI(sp->RowOffset) != FASI(sidedef->MidRowOffset))
+      else if (FASI(spp->RowOffset) != FASI(sidedef->MidRowOffset))
       {
-        UpdateRowOffset(sp, sidedef->MidRowOffset);
+        UpdateRowOffset(spp, sidedef->MidRowOffset);
       }
-      if (FASI(sp->TextureOffset) != FASI(sidedef->MidTextureOffset))
+      if (FASI(spp->TextureOffset) != FASI(sidedef->MidTextureOffset))
       {
-        UpdateTextureOffset(sp, sidedef->MidTextureOffset);
+        UpdateTextureOffset(spp, sidedef->MidTextureOffset);
       }
-      sp = sp->next;
+      spp = spp->next;
     }
   }
   unguard;
@@ -1995,12 +1995,12 @@ void VRenderLevelShared::CreateWorldSurfaces()
   }
 
   //  Get some memory
-  sreg = new subregion_t[count];
-  pds = new drawseg_t[dscount];
-  pspart = new segpart_t[spcount];
-  memset(sreg, 0, sizeof(subregion_t) * count);
-  memset(pds, 0, sizeof(drawseg_t) * dscount);
-  memset(pspart, 0, sizeof(segpart_t) * spcount);
+  sreg = new subregion_t[count+1];
+  pds = new drawseg_t[dscount+1];
+  pspart = new segpart_t[spcount+1];
+  memset((void *)sreg, 0, sizeof(subregion_t) * (count+1));
+  memset((void *)pds, 0, sizeof(drawseg_t) * (dscount+1));
+  memset((void *)pspart, 0, sizeof(segpart_t) * (spcount+1));
   AllocatedSubRegions = sreg;
   AllocatedDrawSegs = pds;
   AllocatedSegParts = pspart;
@@ -2727,7 +2727,7 @@ void VRenderLevelShared::SetupFakeFloors(sector_t *Sec)
   }
 
   Sec->fakefloors = new fakefloor_t;
-  memset(Sec->fakefloors, 0, sizeof(fakefloor_t));
+  memset((void *)Sec->fakefloors, 0, sizeof(fakefloor_t));
   Sec->fakefloors->floorplane = Sec->floor;
   Sec->fakefloors->ceilplane = Sec->ceiling;
   Sec->fakefloors->params = Sec->params;

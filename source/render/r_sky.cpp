@@ -81,7 +81,7 @@ static void ParseSkyBoxesScript(VScriptParser *sc)
   while (!sc->AtEnd())
   {
     skyboxinfo_t &info = skyboxinfo.Alloc();
-    memset(&info, 0, sizeof(info));
+    memset((void *)&info, 0, sizeof(info));
 
     sc->ExpectString();
     info.Name = *sc->String;
@@ -172,7 +172,7 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
   float Sky2ScrollDelta, bool DoubleSky, bool ForceNoSkyStretch, bool Flip)
 {
   guard(VSky::InitOldSky);
-  memset(sky, 0, sizeof(sky));
+  memset((void *)sky, 0, sizeof(sky));
   bIsSkyBox = false;
 
   int skyheight = GTextureManager[Sky1Texture]->GetHeight();
@@ -334,7 +334,7 @@ void VSky::InitSkyBox(VName Name1, VName Name2)
   }
 //  skyboxinfo_t &s2info = skyboxinfo[num];
 
-  memset(sky, 0, sizeof(sky));
+  memset((void *)sky, 0, sizeof(sky));
 
   sky[0].surf.verts[0] = TVec(128, 128, -128);
   sky[0].surf.verts[1] = TVec(128, 128, 128);
