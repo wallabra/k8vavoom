@@ -137,7 +137,7 @@ VSoundManager::~VSoundManager () {
 void VSoundManager::Init () {
   // zero slot is reserved
   sfxinfo_t S;
-  memset(&S, 0, sizeof(S));
+  memset((void *)(&S), 0, sizeof(S));
   S_sfx.Append(S);
 }
 
@@ -152,7 +152,7 @@ int VSoundManager::AddSound (VName TagName, const VStr &filename) {
   int id = FindSound(TagName);
   if (!id) {
     sfxinfo_t S;
-    memset(&S, 0, sizeof(S));
+    memset((void *)(&S), 0, sizeof(S));
     S.tagName = TagName;
     S.priority = 127;
     S.numChannels = 2;
