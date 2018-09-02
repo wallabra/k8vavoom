@@ -655,9 +655,9 @@ void W_Profile()
   char    ch;
   FILE *f;
   int     j;
-  char    name[16];
+  char    name[64];
 
-  sprintf(name,"jl/waddump%d.txt", profilecount);
+  snprintf(name, sizeof(name), "jl/waddump%d.txt", profilecount);
 
   for (i = 0; i < numlumps; i++)
   {

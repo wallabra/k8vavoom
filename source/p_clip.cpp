@@ -507,6 +507,7 @@ bool VViewClipper::ClipIsBBoxVisible(float *BBox, bool shadowslight, const TVec 
 
   TVec v1;
   TVec v2;
+  v1.z = v2.z = 0;
   if (BBox[0] > Origin.x)
   {
     if (BBox[1] > Origin.y)

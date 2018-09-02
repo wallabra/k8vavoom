@@ -152,8 +152,8 @@ void VSoundManager::Init()
   for (Lump = W_IterateNS(-1, WADNS_Voices); Lump >= 0;
     Lump = W_IterateNS(Lump, WADNS_Voices))
   {
-    char SndName[16];
-    sprintf(SndName, "svox/%s", *W_LumpName(Lump));
+    char SndName[64];
+    snprintf(SndName, sizeof(SndName), "svox/%s", *W_LumpName(Lump));
 
     int id = AddSoundLump(SndName, Lump);
     S_sfx[id].ChangePitch = 0;

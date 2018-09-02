@@ -264,10 +264,10 @@ static VStr LookupColourName(VStr &Name)
       if ((size_t)(pBuf - Start) == (size_t)Name.Length() && !Name.ICmp(Start))
       {
         char ValBuf[8];
-        sprintf(ValBuf, "#%02x%02x%02x", Col[0], Col[1], Col[2]);
+        snprintf(ValBuf, sizeof(ValBuf), "#%02x%02x%02x", Col[0], Col[1], Col[2]);
         delete[] Buf;
         Buf = nullptr;
-        return ValBuf;
+        return VStr(ValBuf);
       }
       Count = 0;
     }

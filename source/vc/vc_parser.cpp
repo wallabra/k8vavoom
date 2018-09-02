@@ -4020,8 +4020,8 @@ void VParser::ParseClass () {
               Lex.NextToken();
               Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
             } else {
-              char TmpName[NAME_SIZE];
-              sprintf(TmpName, "get_%s", *FieldName);
+              char TmpName[NAME_SIZE+6];
+              snprintf(TmpName, sizeof(TmpName), "get_%s", *FieldName);
               VMethod *Func = new VMethod(TmpName, Class, Lex.Location);
               Func->Flags = TModifiers::MethodAttr(Modifiers);
               Func->ReturnTypeExpr = FieldType->SyntaxCopy();
@@ -4059,8 +4059,8 @@ void VParser::ParseClass () {
               Lex.NextToken();
               Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
             } else {
-              char TmpName[NAME_SIZE];
-              sprintf(TmpName, "set_%s", *FieldName);
+              char TmpName[NAME_SIZE+6];
+              snprintf(TmpName, sizeof(TmpName), "set_%s", *FieldName);
               VMethod *Func = new VMethod(TmpName, Class, Lex.Location);
               Func->Flags = TModifiers::MethodAttr(Modifiers);
               Func->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);

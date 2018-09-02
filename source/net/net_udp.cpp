@@ -278,7 +278,7 @@ void VUdpDriver::GetLocalAddress () {
   myAddr = *(int *)local->h_addr_list[0];
 
   addr = ntohl(myAddr);
-  sprintf(Net->MyIpAddress, "%d.%d.%d.%d", (addr>>24)&0xff, (addr>>16)&0xff, (addr>>8)&0xff, addr&0xff);
+  snprintf(Net->MyIpAddress, sizeof(Net->MyIpAddress), "%d.%d.%d.%d", (addr>>24)&0xff, (addr>>16)&0xff, (addr>>8)&0xff, addr&0xff);
   unguard;
 }
 #endif

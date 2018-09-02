@@ -1582,18 +1582,18 @@ static void DrawWorldTimer()
 
   T_SetFont(SmallFont);
   T_SetAlign(hleft, vtop);
-  sprintf(timeBuffer, "%.2d : %.2d : %.2d", hours, minutes, seconds);
+  snprintf(timeBuffer, sizeof(timeBuffer), "%.2d : %.2d : %.2d", hours, minutes, seconds);
   T_DrawText(560, 8, timeBuffer, CR_UNTRANSLATED);
 
   if (days)
   {
     if (days == 1)
     {
-      sprintf(dayBuffer, "%.2d DAY", days);
+      snprintf(dayBuffer, sizeof(dayBuffer), "%.2d DAY", days);
     }
     else
     {
-      sprintf(dayBuffer, "%.2d DAYS", days);
+      snprintf(dayBuffer, sizeof(dayBuffer), "%.2d DAYS", days);
     }
     T_DrawText(560, 18, dayBuffer, CR_UNTRANSLATED);
     if (days >= 5)
@@ -1654,7 +1654,7 @@ static void AM_DrawDeathmatchStats()
     T_SetFont(font_small);
     T_SetAlign(hleft, vtop);
     T_DrawText(8, yPosition, *GPlayersBase[order[i]]->PlayerName);
-    sprintf(textBuffer, "%d", GPlayersBase[order[i]]->Frags);
+    snprintf(textBuffer, sizeof(textBuffer), "%d", GPlayersBase[order[i]]->Frags);
     T_DrawText(80, yPosition, textBuffer);
     yPosition += 10;
   }*/
@@ -1687,11 +1687,11 @@ static void AM_DrawLevelStats()
 
   T_SetFont(SmallFont);
   T_SetAlign(hleft, vtop);
-  sprintf(kill, "Kills: %.2d / %.2d", kills, totalkills);
+  snprintf(kill, sizeof(kill), "Kills: %.2d / %.2d", kills, totalkills);
   T_DrawText(8, 390, kill, CR_RED);
-  sprintf(item, "Items: %.2d / %.2d", items, totalitems);
+  snprintf(item, sizeof(item), "Items: %.2d / %.2d", items, totalitems);
   T_DrawText(8, 400, item, CR_BLUE);
-  sprintf(secret, "Secrets: %.2d / %.2d", secrets, totalsecrets);
+  snprintf(secret, sizeof(secret), "Secrets: %.2d / %.2d", secrets, totalsecrets);
   T_DrawText(8, 410, secret, CR_WHITE);
 }
 

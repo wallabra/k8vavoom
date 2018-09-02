@@ -675,7 +675,7 @@ VFont::VFont(VName AName, const VStr &FormatStr, int First, int Count,
   {
     int Char = i + First;
     char Buffer[10];
-    sprintf(Buffer, *FormatStr, i + StartIndex);
+    snprintf(Buffer, sizeof(Buffer), *FormatStr, i + StartIndex);
     VName LumpName(Buffer, VName::AddLower8);
     int Lump = W_CheckNumForName(LumpName, WADNS_Graphics);
 
