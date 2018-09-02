@@ -87,7 +87,8 @@ VTextureTranslation         ColourMaps[CM_Max];
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 //  Temporary variables for sprite installing
-static spriteframe_t        sprtemp[30];
+enum { MAX_SPR_TEMP = 30 };
+static spriteframe_t        sprtemp[MAX_SPR_TEMP];
 static int              maxframe;
 static const char *spritename;
 
@@ -325,6 +326,8 @@ static void InstallSpriteLump(int lumpnr, int frame, char Rot, bool flipped)
   int     r;
   int     rotation;
 
+  //fprintf(stderr, "!!INSTALL_SPRITE_LUMP: <%s> (lumpnr=%d; frame=%d; Rot=%c; flipped=%d)\n", *GTextureManager[lumpnr]->Name, lumpnr, frame, Rot, (flipped ? 1 : 0));
+
   if (Rot >= '0' && Rot <= '9')
   {
     rotation = Rot - '0';
@@ -350,7 +353,7 @@ static void InstallSpriteLump(int lumpnr, int frame, char Rot, bool flipped)
   if (rotation == 0)
   {
     // the lump should be used for all rotations
-    sprtemp[frame].rotate = false;
+    sprtemp[frame].rotate = 0;
     for (r = 0; r < 16; r++)
     {
       sprtemp[frame].lump[r] = lumpnr;
@@ -369,7 +372,7 @@ static void InstallSpriteLump(int lumpnr, int frame, char Rot, bool flipped)
   }
 
   // the lump is only used for one rotation
-  if (sprtemp[frame].rotate == false)
+  if (sprtemp[frame].rotate == 0)
   {
     for (r = 0; r < 16; r++)
     {
@@ -378,7 +381,7 @@ static void InstallSpriteLump(int lumpnr, int frame, char Rot, bool flipped)
     }
   }
 
-  sprtemp[frame].rotate = true;
+  sprtemp[frame].rotate = 1;
   sprtemp[frame].lump[rotation] = lumpnr;
   sprtemp[frame].flip[rotation] = flipped;
   unguard;
@@ -404,8 +407,19 @@ void R_InstallSprite(const char *name, int index)
   {
     Host_Error("Invalid sprite index %d for sprite %s", index, name);
   }
+  //fprintf(stderr, "!!INSTALL_SPRITE: <%s> (%d)\n", name, index);
   spritename = name;
+#if 1
   memset(sprtemp, -1, sizeof(sprtemp));
+#else
+  for (unsigned idx = 0; idx < MAX_SPR_TEMP; ++idx) {
+    sprtemp[idx].rotate = -1;
+    for (unsigned c = 0; c < 16; ++c) {
+      sprtemp[idx].lump[c] = -1;
+      sprtemp[idx].flip[c] = false;
+    }
+  }
+#endif
   maxframe = -1;
 
   // scan all the lump names for each of the names,
@@ -421,13 +435,10 @@ void R_InstallSprite(const char *name, int index)
       const char *lumpname = *GTextureManager[l]->Name;
       if (*(int*)lumpname == intname)
       {
-        InstallSpriteLump(l, VStr::ToUpper(lumpname[4]) - 'A',
-          lumpname[5], false);
-
-        if (lumpname[6])
-        {
-          InstallSpriteLump(l, VStr::ToUpper(lumpname[6]) - 'A',
-            lumpname[7], true);
+        //fprintf(stderr, "!!<%s> [4]=%c; [6]=%c; [7]=%c\n", lumpname, lumpname[4], lumpname[6], (lumpname[6] ? lumpname[7] : 0));
+        InstallSpriteLump(l, VStr::ToUpper(lumpname[4])-'A', lumpname[5], false);
+        if (lumpname[6]) {
+          InstallSpriteLump(l, VStr::ToUpper(lumpname[6])-'A', lumpname[7], true);
         }
       }
     }
@@ -444,12 +455,17 @@ void R_InstallSprite(const char *name, int index)
 
   for (int frame = 0; frame < maxframe; frame++)
   {
+    //fprintf(stderr, "  frame=%d; rot=%d (%u)\n", frame, (int)sprtemp[frame].rotate, *((unsigned char *)&sprtemp[frame].rotate));
     switch ((int)sprtemp[frame].rotate)
     {
     case -1:
       // no rotations were found for that frame at all
-      Sys_Error("R_InstallSprite: No patches found "
-          "for %s frame %c", spritename, frame + 'A');
+      if (GArgs.CheckParm("-sprloose")) {
+        GCon->Logf("R_InstallSprite: No patches found for %s frame %c", spritename, frame+'A');
+      } else {
+        //fprintf(stderr, "  R_InstallSprite: No patches found for %s frame %c\n", spritename, frame+'A');
+        Sys_Error("R_InstallSprite: No patches found for %s frame %c", spritename, frame+'A');
+      }
       break;
 
     case 0:
