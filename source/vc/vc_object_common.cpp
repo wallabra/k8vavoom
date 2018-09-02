@@ -733,3 +733,127 @@ IMPLEMENT_FUNCTION(VObject, SpawnObject) {
   }
   RET_REF(VObject::StaticSpawnObject(Class, skipReplacement));
 }
+
+
+#include <time.h>
+
+struct TTimeVal {
+  int secs; // actually, unsigned
+  int usecs;
+  // for 2030+
+  int secshi;
+};
+
+
+struct TDateTime {
+  int sec; // [0..60] (yes, *sometimes* it can be 60)
+  int min; // [0..59]
+  int hour; // [0..23]
+  int month; // [0..11]
+  int year; // normal value, i.e. 2042 for 2042
+  int mday; // [1..31] -- day of the month
+  //
+  int wday; // [0..6] -- day of the week (0 is sunday)
+  int yday; // [0..365] -- day of the year
+  int isdst; // is daylight saving time?
+};
+
+//native static final bool GetTimeOfDay (out TTimeVal tv);
+IMPLEMENT_FUNCTION(VObject, GetTimeOfDay) {
+  P_GET_PTR(TTimeVal, tvres);
+  tvres->secshi = 0;
+  timeval tv;
+  if (gettimeofday(&tv, nullptr)) {
+    tvres->secs = 0;
+    tvres->usecs = 0;
+    RET_BOOL(false);
+  } else {
+    tvres->secs = (int)(tv.tv_sec&0xffffffff);
+    tvres->usecs = (int)tv.tv_usec;
+    tvres->secshi = (int)(((uint64_t)tv.tv_sec)>>32);
+    RET_BOOL(true);
+  }
+}
+
+
+//native static final bool DecodeTimeVal (out TDateTime tm, const ref TTimeVal tv);
+IMPLEMENT_FUNCTION(VObject, DecodeTimeVal) {
+  P_GET_PTR(TTimeVal, tvin);
+  P_GET_PTR(TDateTime, tmres);
+  timeval tv;
+  tv.tv_sec = (((uint64_t)tvin->secs)&0xffffffff)|(((uint64_t)tvin->secshi)<<32);
+  //tv.tv_usec = tvin->usecs;
+  tm ctm;
+  if (localtime_r(&tv.tv_sec, &ctm)) {
+    tmres->sec = ctm.tm_sec;
+    tmres->min = ctm.tm_min;
+    tmres->hour = ctm.tm_hour;
+    tmres->month = ctm.tm_mon;
+    tmres->year = ctm.tm_year+1900;
+    tmres->mday = ctm.tm_mday;
+    tmres->wday = ctm.tm_wday;
+    tmres->yday = ctm.tm_yday;
+    tmres->isdst = ctm.tm_isdst;
+    RET_BOOL(true);
+  } else {
+    memset(tmres, 0, sizeof(*tmres));
+    RET_BOOL(false);
+  }
+}
+
+
+//native static final bool EncodeTimeVal (out TTimeVal tv, ref TDateTime tm, optional bool usedst);
+IMPLEMENT_FUNCTION(VObject, EncodeTimeVal) {
+  P_GET_BOOL_OPT(usedst, false);
+  P_GET_PTR(TDateTime, tmin);
+  P_GET_PTR(TTimeVal, tvres);
+  tm ctm;
+  memset(&ctm, 0, sizeof(ctm));
+  ctm.tm_sec = tmin->sec;
+  ctm.tm_min = tmin->min;
+  ctm.tm_hour = tmin->hour;
+  ctm.tm_mon = tmin->month;
+  ctm.tm_year = tmin->year-1900;
+  ctm.tm_mday = tmin->mday;
+  //ctm.tm_wday = tmin->wday;
+  //ctm.tm_yday = tmin->yday;
+  ctm.tm_isdst = tmin->isdst;
+  if (!usedst) ctm.tm_isdst = -1;
+  auto tt = mktime(&ctm);
+  if (tt == (time_t)-1) {
+    // oops
+    memset(tvres, 0, sizeof(*tvres));
+    RET_BOOL(false);
+  } else {
+    // update it
+    tmin->sec = ctm.tm_sec;
+    tmin->min = ctm.tm_min;
+    tmin->hour = ctm.tm_hour;
+    tmin->month = ctm.tm_mon;
+    tmin->year = ctm.tm_year+1900;
+    tmin->mday = ctm.tm_mday;
+    tmin->wday = ctm.tm_wday;
+    tmin->yday = ctm.tm_yday;
+    tmin->isdst = ctm.tm_isdst;
+    // setup tvres
+    tvres->secs = (int)(tt&0xffffffff);
+    tvres->usecs = 0;
+    tvres->secshi = (int)(((uint64_t)tt)>>32);
+    RET_BOOL(true);
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+//static native final string GetInputKeyName (int kcode);
+IMPLEMENT_FUNCTION(VObject, GetInputKeyStrName) {
+  P_GET_INT(kcode);
+  RET_STR(VObject::NameFromVKey(kcode));
+}
+
+
+//static native final int GetInputKeyCode (string kname);
+IMPLEMENT_FUNCTION(VObject, GetInputKeyCode) {
+  P_GET_STR(kname);
+  RET_INT(VObject::VKeyFromName(kname));
+}
