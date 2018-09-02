@@ -572,7 +572,13 @@ void TranslateLine(Level InLevel, line_t *line)
   OldTag = line->arg1;
   OldFlags = line->flags;
 
-  //print("trline: special=%d; tag=%d; flags=%d", OldSpec, OldTag, OldFlags);
+  if (OldSpec < 0) {
+    print("WARNING: TranslateLine: special=%d; tag=%d; flags=%x", OldSpec, OldTag, OldFlags);
+    OldSpec = 0;
+    OldTag = 0;
+    line->special = 0;
+    line->arg1 = 0;
+  }
 
   //  Clear unknown flags.
   line->flags &= 0x01ff;
