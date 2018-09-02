@@ -40,6 +40,8 @@ public:
   virtual bool Resolve (VEmitContext &) = 0;
   virtual void DoEmit (VEmitContext &) = 0;
   void Emit (VEmitContext &);
+  void EmitFinalizer (VEmitContext &ec);
+  void EmitFinalizerBC (VEmitContext &ec); // break/cont
 
   virtual bool IsLabel () const;
   virtual VName GetLabelName () const;

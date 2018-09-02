@@ -31,6 +31,8 @@
 VStatement::VStatement (const TLocation &ALoc) : Loc(ALoc) {}
 VStatement::~VStatement () {}
 void VStatement::Emit (VEmitContext &ec) { DoEmit(ec); }
+void VStatement::EmitFinalizer (VEmitContext &ec) {}
+void VStatement::EmitFinalizerBC (VEmitContext &ec) {}
 bool VStatement::IsLabel () const { return false; }
 VName VStatement::GetLabelName () const { return NAME_None; }
 bool VStatement::IsGoto () const { return false; }
@@ -320,22 +322,21 @@ bool VWhile::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VWhile::DoEmit (VEmitContext &ec) {
-  VLabel OldStart = ec.LoopStart;
-  VLabel OldEnd = ec.LoopEnd;
+  auto loopStart = ec.DefineContinue();
+  auto loopEnd = ec.DefineBreak();
 
   VLabel Loop = ec.DefineLabel();
-  ec.LoopStart = ec.DefineLabel();
-  ec.LoopEnd = ec.DefineLabel();
 
-  ec.AddStatement(OPC_Goto, ec.LoopStart, Loc);
+  // jump over the loop body
+  ec.AddStatement(OPC_Goto, loopStart.GetLabelNoFinalizers(), Loc);
+  // generate loop body
   ec.MarkLabel(Loop);
   Statement->Emit(ec);
-  ec.MarkLabel(ec.LoopStart);
+  // generate loop start
+  loopStart.Mark();
   Expr->EmitBranchable(ec, Loop, true);
-  ec.MarkLabel(ec.LoopEnd);
-
-  ec.LoopStart = OldStart;
-  ec.LoopEnd = OldEnd;
+  // mark loop end
+  loopEnd.Mark();
 }
 
 
@@ -463,21 +464,20 @@ bool VDo::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VDo::DoEmit (VEmitContext &ec) {
-  VLabel OldStart = ec.LoopStart;
-  VLabel OldEnd = ec.LoopEnd;
+  auto loopStart = ec.DefineContinue();
+  auto loopEnd = ec.DefineBreak();
 
   VLabel Loop = ec.DefineLabel();
-  ec.LoopStart = ec.DefineLabel();
-  ec.LoopEnd = ec.DefineLabel();
 
+  // generate loop body
   ec.MarkLabel(Loop);
   Statement->Emit(ec);
-  ec.MarkLabel(ec.LoopStart);
+  // mark loop start (continue)
+  loopStart.Mark();
+  // emit condition
   Expr->EmitBranchable(ec, Loop, true);
-  ec.MarkLabel(ec.LoopEnd);
-
-  ec.LoopStart = OldStart;
-  ec.LoopEnd = OldEnd;
+  // mark loop end
+  loopEnd.Mark();
 }
 
 
@@ -633,13 +633,10 @@ bool VFor::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VFor::DoEmit (VEmitContext &ec) {
-  // set-up continues and breaks
-  VLabel OldStart = ec.LoopStart;
-  VLabel OldEnd = ec.LoopEnd;
-
   // define labels
-  ec.LoopStart = ec.DefineLabel();
-  ec.LoopEnd = ec.DefineLabel();
+  auto loopStart = ec.DefineContinue();
+  auto loopEnd = ec.DefineBreak();
+
   VLabel Test = ec.DefineLabel();
   VLabel Loop = ec.DefineLabel();
 
@@ -654,7 +651,7 @@ void VFor::DoEmit (VEmitContext &ec) {
   Statement->Emit(ec);
 
   // emit per-loop expression statements
-  ec.MarkLabel(ec.LoopStart);
+  loopStart.Mark();
   for (int i = 0; i < LoopExpr.length(); ++i) LoopExpr[i]->Emit(ec);
 
   // loop test
@@ -667,11 +664,7 @@ void VFor::DoEmit (VEmitContext &ec) {
   }
 
   // end of loop
-  ec.MarkLabel(ec.LoopEnd);
-
-  // restore continue and break state
-  ec.LoopStart = OldStart;
-  ec.LoopEnd = OldEnd;
+  loopEnd.Mark();
 }
 
 
@@ -809,27 +802,22 @@ bool VForeach::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeach::DoEmit (VEmitContext &ec) {
-  VLabel OldStart = ec.LoopStart;
-  VLabel OldEnd = ec.LoopEnd;
-
   Expr->Emit(ec);
   ec.AddStatement(OPC_IteratorInit, Loc);
 
-  VLabel Loop = ec.DefineLabel();
-  ec.LoopStart = ec.DefineLabel();
-  ec.LoopEnd = ec.DefineLabel();
+  auto loopStart = ec.DefineContinue();
+  auto loopEnd = ec.DefineBreak();
 
-  ec.AddStatement(OPC_Goto, ec.LoopStart, Loc);
+  VLabel Loop = ec.DefineLabel();
+
+  ec.AddStatement(OPC_Goto, loopStart.GetLabelNoFinalizers(), Loc);
   ec.MarkLabel(Loop);
   Statement->Emit(ec);
-  ec.MarkLabel(ec.LoopStart);
+  loopStart.Mark();
   ec.AddStatement(OPC_IteratorNext, Loc);
   ec.AddStatement(OPC_IfGoto, Loop, Loc);
-  ec.MarkLabel(ec.LoopEnd);
+  loopEnd.Mark();
   ec.AddStatement(OPC_IteratorPop, Loc);
-
-  ec.LoopStart = OldStart;
-  ec.LoopEnd = OldEnd;
 }
 
 
@@ -1094,13 +1082,9 @@ bool VForeachIota::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeachIota::DoEmit (VEmitContext &ec) {
-  // set-up continues and breaks
-  VLabel OldStart = ec.LoopStart;
-  VLabel OldEnd = ec.LoopEnd;
-
   // define labels
-  ec.LoopStart = ec.DefineLabel();
-  ec.LoopEnd = ec.DefineLabel();
+  auto loopStart = ec.DefineContinue();
+  auto loopEnd = ec.DefineBreak();
 
   VLabel Loop = ec.DefineLabel();
 
@@ -1109,22 +1093,18 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
   varinit->Emit(ec);
 
   // do first check
-  var->EmitBranchable(ec, ec.LoopEnd, false);
+  var->EmitBranchable(ec, loopEnd.GetLabelNoFinalizers(), false);
 
   // emit embeded statement
   ec.MarkLabel(Loop);
   statement->Emit(ec);
 
   // loop next and test
-  ec.MarkLabel(ec.LoopStart); // continue will jump here
+  loopStart.Mark(); // continue will jump here
   varnext->EmitBranchable(ec, Loop, true);
 
   // end of loop
-  ec.MarkLabel(ec.LoopEnd);
-
-  // restore continue and break state
-  ec.LoopStart = OldStart;
-  ec.LoopEnd = OldEnd;
+  loopEnd.Mark();
 }
 
 
@@ -1458,13 +1438,9 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeachArray::DoEmit (VEmitContext &ec) {
-  // set-up continues and breaks
-  VLabel OldStart = ec.LoopStart;
-  VLabel OldEnd = ec.LoopEnd;
-
   // define labels
-  ec.LoopStart = ec.DefineLabel();
-  ec.LoopEnd = ec.DefineLabel();
+  auto loopStart = ec.DefineContinue();
+  auto loopEnd = ec.DefineBreak();
 
   VLabel Loop = ec.DefineLabel();
 
@@ -1473,7 +1449,7 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
   idxinit->Emit(ec);
 
   // do first check
-  loopPreCheck->EmitBranchable(ec, ec.LoopEnd, false);
+  loopPreCheck->EmitBranchable(ec, loopEnd.GetLabelNoFinalizers(), false);
 
   // actual loop
   ec.MarkLabel(Loop);
@@ -1485,15 +1461,11 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
   statement->Emit(ec);
 
   // loop next and test
-  ec.MarkLabel(ec.LoopStart); // continue will jump here
+  loopStart.Mark(); // continue will jump here
   loopNext->EmitBranchable(ec, Loop, true);
 
   // end of loop
-  ec.MarkLabel(ec.LoopEnd);
-
-  // restore continue and break state
-  ec.LoopStart = OldStart;
-  ec.LoopEnd = OldEnd;
+  loopEnd.Mark();
 }
 
 
@@ -1815,13 +1787,9 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeachScripted::DoEmit (VEmitContext &ec) {
-  // set-up continues and breaks
-  VLabel OldStart = ec.LoopStart;
-  VLabel OldEnd = ec.LoopEnd;
-
   // define labels
-  ec.LoopStart = ec.DefineLabel();
-  ec.LoopEnd = ec.DefineLabel();
+  auto loopStart = ec.DefineContinue();
+  auto loopEnd = ec.DefineBreak();
 
   VLabel LoopExitSkipDtor = ec.DefineLabel();
 
@@ -1833,19 +1801,19 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
   }
 
   // push iterator
-  ec.AddStatement(OPC_IteratorDtorAt, ec.LoopEnd, Loc);
+  ec.AddStatement(OPC_IteratorDtorAt, loopEnd.GetLabelNoFinalizers(), Loc);
 
   // actual loop
-  ec.MarkLabel(ec.LoopStart);
+  loopStart.Mark();
   // call next
-  ivNext->EmitBranchable(ec, ec.LoopEnd, false);
+  ivNext->EmitBranchable(ec, loopEnd.GetLabelNoFinalizers(), false);
   // emit loop body
   statement->Emit(ec);
   // again
-  ec.AddStatement(OPC_Goto, ec.LoopStart, Loc);
+  ec.AddStatement(OPC_Goto, loopStart.GetLabelNoFinalizers(), Loc);
 
   // end of loop
-  ec.MarkLabel(ec.LoopEnd);
+  loopEnd.Mark();
 
   // dtor
   if (ivDone) ivDone->Emit(ec);
@@ -1854,10 +1822,6 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
   ec.AddStatement(OPC_IteratorFinish, Loc);
 
   ec.MarkLabel(LoopExitSkipDtor);
-
-  // restore continue and break state
-  ec.LoopStart = OldStart;
-  ec.LoopEnd = OldEnd;
 }
 
 
@@ -2052,11 +2016,9 @@ bool VSwitch::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VSwitch::DoEmit (VEmitContext &ec) {
-  VLabel OldEnd = ec.LoopEnd;
-
   Expr->Emit(ec);
 
-  ec.LoopEnd = ec.DefineLabel();
+  auto loopEnd = ec.DefineBreak();
 
   // case table
   for (int i = 0; i < CaseInfo.length(); ++i) {
@@ -2076,15 +2038,13 @@ void VSwitch::DoEmit (VEmitContext &ec) {
     DefaultAddress = ec.DefineLabel();
     ec.AddStatement(OPC_Goto, DefaultAddress, Loc);
   } else {
-    ec.AddStatement(OPC_Goto, ec.LoopEnd, Loc);
+    ec.AddStatement(OPC_Goto, loopEnd.GetLabelNoFinalizers(), Loc);
   }
 
   // switch statements
   for (int i = 0; i < Statements.length(); ++i) Statements[i]->Emit(ec);
 
-  ec.MarkLabel(ec.LoopEnd);
-
-  ec.LoopEnd = OldEnd;
+  loopEnd.Mark();
 }
 
 
@@ -2505,11 +2465,7 @@ bool VBreak::Resolve (VEmitContext &) {
 //
 //==========================================================================
 void VBreak::DoEmit (VEmitContext &ec) {
-  if (!ec.LoopEnd.IsDefined()) {
-    ParseError(Loc, "Misplaced `break` statement");
-    return;
-  }
-  ec.AddStatement(OPC_Goto, ec.LoopEnd, Loc);
+  if (!ec.EmitBreak(Loc)) ParseError(Loc, "Misplaced `break` statement");
 }
 
 
@@ -2562,11 +2518,7 @@ bool VContinue::Resolve (VEmitContext &) {
 //
 //==========================================================================
 void VContinue::DoEmit (VEmitContext &ec) {
-  if (!ec.LoopStart.IsDefined()) {
-    ParseError(Loc, "Misplaced `continue` statement");
-    return;
-  }
-  ec.AddStatement(OPC_Goto, ec.LoopStart, Loc);
+  if (!ec.EmitContinue(Loc)) ParseError(Loc, "Misplaced `continue` statement");
 }
 
 

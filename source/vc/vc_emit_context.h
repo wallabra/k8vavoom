@@ -26,6 +26,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VArrayElement;
+class VStatement;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -40,6 +41,7 @@ private:
 public:
   VLabel () : Index(-1) {}
   inline bool IsDefined () const { return (Index != -1); }
+  inline bool operator == (const VLabel &b) const { return (Index == b.Index); }
 };
 
 
@@ -72,7 +74,43 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VEmitContext {
+  friend class VAutoFin;
+
 private:
+  struct VFinalizer {
+    int rc;
+    VEmitContext *ec;
+    VFinalizer *prev;
+    VStatement *st;
+    bool isBreakCont;
+
+    VFinalizer () : rc(0), ec(nullptr), prev(nullptr), st(nullptr), isBreakCont(false) {}
+
+    inline void incRef () { ++rc; }
+    inline void decRef () { if (--rc == 0) die(); }
+
+    void die ();
+    void emit ();
+  };
+
+  struct VBreakCont {
+    int rc;
+    VEmitContext *ec;
+    VBreakCont *prev;
+    VLabel lbl;
+    bool isBreak;
+    VFinalizer *lastFin;
+
+    VBreakCont () : rc(0), ec(nullptr), prev(nullptr), lbl(), isBreak(false), lastFin(nullptr) {}
+    ~VBreakCont ();
+
+    inline void incRef () { ++rc; }
+    inline void decRef () { if (--rc == 0) die(); }
+
+    void die ();
+    void emit ();
+  };
+
   struct VLabelFixup {
     int Pos;
     int LabelIdx;
@@ -93,6 +131,63 @@ private:
 
   TArray<VGotoListItem> GotoLabels;
 
+  VFinalizer *lastFin;
+  VBreakCont *lastBC;
+
+public:
+  class VAutoFin {
+    friend class VEmitContext;
+
+  private:
+    VFinalizer *fin;
+
+  private:
+    VAutoFin (VFinalizer *afin);
+
+  public:
+    VAutoFin () : fin(nullptr) {}
+    VAutoFin (const VAutoFin &);
+    void operator = (const VAutoFin &);
+
+    ~VAutoFin ();
+  };
+
+  class VAutoBreakCont {
+    friend class VEmitContext;
+
+  private:
+    VBreakCont *bc;
+
+  private:
+    VAutoBreakCont (VBreakCont *abc);
+
+    void emitOurFins ();
+    void emitFins (); // without ours
+
+  public:
+    VAutoBreakCont () : bc(nullptr) {}
+    VAutoBreakCont (const VAutoBreakCont &);
+    void operator = (const VAutoBreakCont &);
+
+    ~VAutoBreakCont ();
+
+    // use this to register finalizer that will be called when this object is destroyed
+    void RegisterFinalizer (VStatement *st);
+
+    // calls `MarkLabel()`
+    void Mark ();
+
+    // returns label, doesn't generate finalizing code
+    VLabel GetLabelNoFinalizers ();
+
+    // emit finalizers, so you can safely jump to the returned label
+    // note that finalizers, registered with this object, will *NOT* be emited!
+    VLabel GetLabel ();
+  };
+
+private:
+  VAutoBreakCont DefineBreakCont (bool isBreak);
+
 public:
   VMethod *CurrentFunc;
   VClass *SelfClass;
@@ -103,8 +198,8 @@ public:
 
   int localsofs;
 
-  VLabel LoopStart;
-  VLabel LoopEnd;
+  //VLabel LoopStart;
+  //VLabel LoopEnd;
 
   bool InDefaultProperties;
 
@@ -159,6 +254,38 @@ public:
   void EmitGotoLabel (VName lblname, const TLocation &aloc);
 
   VArrayElement *SetIndexArray (VArrayElement *el); // returns previous
+
+  // use this to register block finalizer that will be called on `return`, or
+  // when `VAutoFin` object is destroyed
+  VAutoFin RegisterFinalizer (VStatement *st);
+
+  // emit all currently registered finalizers, from last to first; used in `return`
+  // WARNING! will *NOT* emit "break finalizers", so if you need to do some
+  //          finalizing both in `break`/`continue`, and in `return`,
+  //          register *BOTH* finalizer types
+  void EmitFinalizers ();
+
+  // the flow is like that:
+  //   each registered finalizer is marked with the current break/cont label
+  //   emiting `break` will emit all finalizers NOT including finalizers
+  //   registered for the given label.
+  //   i.e. each loop block should call `MarkXXX()` *BEFORE* autodestruction of `VAutoFin`
+  //   that is:
+  //     {
+  //       auto brk = ec.DefineBreak();
+  //       brk.RegisterFinalizer(this);
+  //       <generate some code>
+  //       brk.MarkBreak();
+  //     } // here, `brk` will be destroyed, and "break finalizer" code will be generated
+
+  // autodestructible
+  VAutoBreakCont DefineBreak ();
+  VAutoBreakCont DefineContinue ();
+
+  // returns success flag
+  bool EmitBreak (const TLocation &loc);
+  // returns success flag
+  bool EmitContinue (const TLocation &loc);
 };
 
 

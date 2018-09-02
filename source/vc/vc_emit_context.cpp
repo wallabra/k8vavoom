@@ -40,6 +40,274 @@ VStatementBuiltinInfo StatementBuiltinInfo[] = {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// VEmitContext::VAutoFin
+// ////////////////////////////////////////////////////////////////////////// //
+
+//==========================================================================
+//
+//  VEmitContext::VAutoFin::VAutoFin
+//
+//==========================================================================
+VEmitContext::VAutoFin::VAutoFin (VEmitContext::VFinalizer *afin) : fin(afin) {
+  if (afin) afin->incRef();
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VAutoFin::~VAutoFin
+//
+//==========================================================================
+VEmitContext::VAutoFin::~VAutoFin () {
+  if (fin) { fin->decRef(); fin = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VAutoFin::VAutoFin
+//
+//==========================================================================
+VEmitContext::VAutoFin::VAutoFin (const VAutoFin &src) {
+  if (&src != this) {
+    if (src.fin) src.fin->incRef();
+    if (fin) fin->decRef();
+    fin = src.fin;
+  }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VAutoFin::operator =
+//
+//==========================================================================
+void VEmitContext::VAutoFin::operator = (const VAutoFin &src) {
+  if (&src != this) {
+    if (src.fin) src.fin->incRef();
+    if (fin) fin->decRef();
+    fin = src.fin;
+  }
+}
+
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// VEmitContext::VAutoBreakCont
+// ////////////////////////////////////////////////////////////////////////// //
+
+//==========================================================================
+//
+//  VEmitContext::VAutoBreakCont::VAutoBreakCont
+//
+//==========================================================================
+VEmitContext::VAutoBreakCont::VAutoBreakCont (VBreakCont *abc) : bc(abc) {
+  if (abc) abc->incRef();
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VAutoBreakCont::~VAutoBreakCont
+//
+//==========================================================================
+VEmitContext::VAutoBreakCont::~VAutoBreakCont () {
+  if (bc) { bc->decRef(); bc = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VAutoBreakCont::VAutoBreakCont
+//
+//==========================================================================
+VEmitContext::VAutoBreakCont::VAutoBreakCont (const VAutoBreakCont &src) {
+  if (&src != this) {
+    if (src.bc) src.bc->incRef();
+    if (bc) bc->decRef();
+    bc = src.bc;
+  }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VAutoBreakCont::operator =
+//
+//==========================================================================
+void VEmitContext::VAutoBreakCont::operator = (const VAutoBreakCont &src) {
+  if (&src != this) {
+    if (src.bc) src.bc->incRef();
+    if (bc) bc->decRef();
+    bc = src.bc;
+  }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VAutoBreakCont::RegisterFinalizer
+//
+//  use this to register finalizer that will be called when this object is destroyed
+//
+//==========================================================================
+void VEmitContext::VAutoBreakCont::RegisterFinalizer (VStatement *st) {
+  if (!st || !bc) return; // this is noop anyway
+  VFinalizer *fin = new VFinalizer();
+  fin->rc = 0; // will be incremented in `VAutoFin()` constructor
+  fin->ec = bc->ec;
+  fin->prev = bc->lastFin;
+  fin->st = st;
+  fin->isBreakCont = true;
+  bc->lastFin = fin;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VAutoBreakCont::Mark
+//
+//  calls `MarkLabel()`
+//
+//==========================================================================
+void VEmitContext::VAutoBreakCont::Mark () {
+  if (bc) bc->ec->MarkLabel(bc->lbl);
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VAutoBreakCont::GetLabelNoFinalizers
+//
+//  returns label, doesn't generate finalizing code
+//
+//==========================================================================
+VLabel VEmitContext::VAutoBreakCont::GetLabelNoFinalizers () {
+  return (bc ? bc->lbl : VLabel());
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VAutoBreakCont::emitOurFins
+//
+//==========================================================================
+void VEmitContext::VAutoBreakCont::emitOurFins () {
+  if (bc) bc->emit();
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VAutoBreakCont::emitFins
+//
+//  without ours
+//
+//==========================================================================
+void VEmitContext::VAutoBreakCont::emitFins () {
+  if (bc) {
+    VBreakCont *currBC = bc->ec->lastBC;
+    while (currBC != bc) {
+      currBC->emit();
+      currBC = currBC->prev;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VAutoBreakCont::GetLabel
+//
+//  emit finalizers, so you can safely jump to the returned label
+//  note that finalizers, registered with this object, will *NOT* be emited!
+//
+//==========================================================================
+VLabel VEmitContext::VAutoBreakCont::GetLabel () {
+  if (!bc) return VLabel();
+  emitFins();
+  return bc->lbl;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// VEmitContext::VFinalizer
+// ////////////////////////////////////////////////////////////////////////// //
+
+//==========================================================================
+//
+//  VEmitContext::VFinalizer::die
+//
+//==========================================================================
+void VEmitContext::VFinalizer::die () {
+  emit();
+  ec->lastFin = prev;
+  delete this;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VFinalizer::emit
+//
+//==========================================================================
+void VEmitContext::VFinalizer::emit () {
+  if (st) {
+    if (isBreakCont) {
+      st->EmitFinalizerBC(*ec);
+    } else {
+      st->EmitFinalizer(*ec);
+    }
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// VEmitContext::VBreakCont
+// ////////////////////////////////////////////////////////////////////////// //
+
+//==========================================================================
+//
+//  VEmitContext::VBreakCont::~VBreakCont
+//
+//==========================================================================
+VEmitContext::VBreakCont::~VBreakCont () {
+  while (lastFin) {
+    VFinalizer *fin = lastFin;
+    lastFin = fin->prev;
+    delete fin;
+  }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VBreakCont::die
+//
+//==========================================================================
+void VEmitContext::VBreakCont::die () {
+  emit();
+  ec->lastBC = prev;
+  delete this;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::VBreakCont::emit
+//
+//==========================================================================
+void VEmitContext::VBreakCont::emit () {
+  for (VFinalizer *fin = lastFin; fin; fin = fin->prev) fin->emit();
+}
+
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// VEmitContext
+// ////////////////////////////////////////////////////////////////////////// //
+
 //==========================================================================
 //
 //  VEmitContext::VEmitContext
@@ -47,6 +315,8 @@ VStatementBuiltinInfo StatementBuiltinInfo[] = {
 //==========================================================================
 VEmitContext::VEmitContext (VMemberBase *Member)
   : compindex(0)
+  , lastFin(nullptr)
+  , lastBC(nullptr)
   , CurrentFunc(nullptr)
   , IndArray(nullptr)
   , FuncRetType(TYPE_Unknown)
@@ -81,6 +351,9 @@ VEmitContext::VEmitContext (VMemberBase *Member)
 //
 //==========================================================================
 void VEmitContext::EndCode () {
+  if (lastFin) FatalError("Internal compiler error: unbalanced finalizers");
+  if (lastBC) FatalError("Internal compiler error: unbalanced break/cont");
+
   // fix-up labels.
   for (int i = 0; i < Fixups.Num(); ++i) {
     if (Labels[Fixups[i].LabelIdx] < 0) FatalError("Label was not marked");
@@ -757,4 +1030,111 @@ void VEmitContext::EmitGotoLabel (VName lblname, const TLocation &aloc) {
   it.defined = true;
   MarkLabel(it.jlbl);
   GotoLabels.append(it);
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::RegisterFinalizer
+//
+//  use this to register finalizer that will be called in `return`, or
+//  when `VAutoFin` object is destroyed
+//
+//==========================================================================
+VEmitContext::VAutoFin VEmitContext::RegisterFinalizer (VStatement *st) {
+  if (!st) return VAutoFin(); // this is noop anyway
+  VFinalizer *fin = new VFinalizer();
+  fin->rc = 0; // will be incremented in `VAutoFin()` constructor
+  fin->ec = this;
+  fin->prev = lastFin;
+  fin->st = st;
+  lastFin = fin;
+  return VAutoFin(fin); // this increments `rc`
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::EmitFinalizers
+//
+//  emit all currently registered finalizers, from last to first
+//
+//==========================================================================
+void VEmitContext::EmitFinalizers () {
+  for (VFinalizer *fin = lastFin; fin; fin = fin->prev) fin->emit();
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::DefineBreakCont
+//
+//==========================================================================
+VEmitContext::VAutoBreakCont VEmitContext::DefineBreakCont (bool isBreak) {
+  VBreakCont *bc = new VBreakCont();
+  bc->rc = 0; // will be incremented in `VAutoBreakCont()` constructor
+  bc->ec = this;
+  bc->prev = lastBC;
+  bc->lbl = DefineLabel();
+  bc->isBreak = isBreak;
+  lastBC = bc;
+  return VAutoBreakCont(bc); // this increments `rc`
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::DefineBreak
+//
+//==========================================================================
+VEmitContext::VAutoBreakCont VEmitContext::DefineBreak () {
+  return DefineBreakCont(true);
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::DefineContinue
+//
+//==========================================================================
+VEmitContext::VAutoBreakCont VEmitContext::DefineContinue () {
+  return DefineBreakCont(false);
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::EmitBreak
+//
+//  returns success flag
+//
+//==========================================================================
+bool VEmitContext::EmitBreak (const TLocation &loc) {
+  for (VBreakCont *bc = lastBC; bc; bc = bc->prev) {
+    if (bc->isBreak) {
+      AddStatement(OPC_Goto, bc->lbl, loc);
+      return true; // done, no need to emit finalizers
+    }
+    bc->emit();
+  }
+  return false; // oops
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::EmitContinue
+//
+//  returns success flag
+//
+//==========================================================================
+bool VEmitContext::EmitContinue (const TLocation &loc) {
+  for (VBreakCont *bc = lastBC; bc; bc = bc->prev) {
+    if (!bc->isBreak) {
+      AddStatement(OPC_Goto, bc->lbl, loc);
+      return true; // done, no need to emit finalizers
+    }
+    bc->emit();
+  }
+  return false; // oops
 }
