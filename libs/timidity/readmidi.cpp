@@ -604,7 +604,7 @@ MidiEvent* read_midi_mem(MidiSong* song, void* mimage, int msize, int32* count, 
 	int32 len, divisions;
 	int16 format, tracks, divisions_tmp;
 	int i;
-	char tmp[4];
+	char tmp[64];
 
 	song->midi_image = (uint8*)mimage;
 	song->image_left = msize;
