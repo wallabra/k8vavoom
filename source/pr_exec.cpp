@@ -230,7 +230,6 @@ static void cstDump (const vuint8 *ip) {
 
 struct ItStackItem {
   VScriptIterator *it; // can be null
-  vuint8 *doneip; // can be null
 };
 
 
@@ -241,7 +240,6 @@ static void RunFunction (VMethod *func) {
   //VScriptIterator *ActiveIterators = nullptr;
   ItStackItem itstack[MAX_ITER_STACK];
   int itsp = 0;
-  bool inReturn = false; // for iterator cleanup
   int retSize = 0;
   float ftemp;
   vint32 itemp;
@@ -2211,7 +2209,6 @@ func_loop:
         //((VScriptIterator *)sp[-1].p)->Next = ActiveIterators;
         //ActiveIterators = (VScriptIterator *)sp[-1].p;
         itstack[itsp].it = (VScriptIterator *)sp[-1].p;
-        itstack[itsp].doneip = nullptr;
         ++itsp;
         --sp;
         PR_VM_BREAK;
@@ -2232,22 +2229,6 @@ func_loop:
         //delete itstack[itsp-1].it;
         itstack[itsp-1].it->Finished();
         --itsp;
-        ++ip;
-        PR_VM_BREAK;
-
-      PR_VM_CASE(OPC_IteratorDtorAt)
-        if (itsp >= MAX_ITER_STACK) { cstDump(ip); Sys_Error("Too many nested `foreach`"); }
-        itstack[itsp].it = nullptr;
-        itstack[itsp].doneip = ip+ReadInt32(ip+1);
-        ++itsp;
-        ip += 1+4;
-        PR_VM_BREAK;
-
-      PR_VM_CASE(OPC_IteratorFinish)
-        if (itsp == 0) { cstDump(ip); Sys_Error("VM: No active iterators (but we should have one)"); }
-        if (!itstack[itsp-1].doneip) { cstDump(ip); Sys_Error("VM: Active iterator is native (but it should not be)"); }
-        --itsp;
-        if (inReturn) goto doRealReturnItDtorCont;
         ++ip;
         PR_VM_BREAK;
 
@@ -2444,24 +2425,12 @@ doRealReturn:
   printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
   #endif
   if (itsp == 0) { cstDump(ip); Sys_Error("VM: Return that should not be"); }
-  inReturn = true;
   // kill iterators
-doRealReturnItDtorCont:
+
   while (itsp > 0) {
     ItStackItem &it = itstack[itsp-1];
-    // check iterator type
-    if (it.it) {
-      // native
-      //delete it.it;
-      it.it->Finished();
-      --itsp;
-    } else {
-      // execute dtor code
-      ip = it.doneip;
-      //auto oldpstack = pr_stackPtr;
-      //sp = pr_stackPtr;
-      goto func_loop;
-    }
+    if (it.it) it.it->Finished();
+    --itsp;
   }
 
   // set return value
@@ -2485,7 +2454,6 @@ doRealReturnItDtorCont:
     default: { cstDump(ip); Sys_Error("VM: Invalid return size"); }
   }
   cstPop();
-
   unguardf(("(%s %d)", *func->GetFullName(), (int)(ip-func->Statements.Ptr())));
 }
 

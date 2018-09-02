@@ -41,7 +41,6 @@ public:
   virtual void DoEmit (VEmitContext &) = 0;
   void Emit (VEmitContext &);
   virtual void EmitFinalizer (VEmitContext &ec);
-  virtual void EmitFinalizerBC (VEmitContext &ec); // break/cont
 
   virtual bool IsLabel () const;
   virtual VName GetLabelName () const;
@@ -63,9 +62,6 @@ public:
   virtual bool IsGotoInAllowed () const;
   virtual bool IsGotoOutAllowed () const;
   virtual bool IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const;
-
-  // emit code for various shutdowns (used go do `goto` from foreach iteration)
-  virtual void EmitBlockCleanup (VEmitContext &ec, const TLocation &aloc) const;
 
   // returns `false` if statement not found (and `path` is not modified)
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path);
@@ -215,14 +211,13 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext&) override;
   virtual void DoEmit (VEmitContext&) override;
+  virtual void EmitFinalizer (VEmitContext &ec) override;
   virtual bool IsEndsWithReturn () const override;
   virtual bool IsProperCaseEnd (bool skipBreak) const override;
 
   virtual VLabelStmt *FindLabel (VName aname) override;
   virtual bool IsGotoInAllowed () const override;
   virtual bool IsGotoOutAllowed () const override;
-
-  virtual void EmitBlockCleanup (VEmitContext &ec, const TLocation &aloc) const override;
 
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
@@ -345,14 +340,13 @@ public:
   virtual VStatement *SyntaxCopy () override;
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
+  virtual void EmitFinalizer (VEmitContext &ec) override;
   virtual bool IsEndsWithReturn () const override;
   virtual bool IsProperCaseEnd (bool skipBreak) const override;
 
   virtual VLabelStmt *FindLabel (VName aname) override;
   virtual bool IsGotoInAllowed () const override;
   virtual bool IsGotoOutAllowed () const override;
-
-  virtual void EmitBlockCleanup (VEmitContext &ec, const TLocation &aloc) const override;
 
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
@@ -597,7 +591,6 @@ public:
   virtual bool Resolve (VEmitContext &) override;
   virtual void DoEmit (VEmitContext &) override;
   virtual void EmitFinalizer (VEmitContext &ec) override;
-  virtual void EmitFinalizerBC (VEmitContext &ec) override;
 
 protected:
   VCompoundScopeExit () {}

@@ -77,12 +77,14 @@ class VEmitContext {
   friend class VAutoFin;
 
 private:
+  struct VBreakCont;
+
   struct VFinalizer {
     int rc;
     VEmitContext *ec;
     VFinalizer *prev;
     VStatement *st;
-    struct VBreakCont *bc;
+    VBreakCont *bc;
 
     VFinalizer () : rc(0), ec(nullptr), prev(nullptr), st(nullptr), bc(nullptr) {}
 
@@ -105,16 +107,14 @@ private:
     VBreakCont *prev;
     VLabel lbl;
     BCType type;
-    VFinalizer *lastFin;
 
-    VBreakCont () : rc(0), ec(nullptr), prev(nullptr), lbl(), type(BCType::Break), lastFin(nullptr) {}
-    ~VBreakCont ();
+    VBreakCont () : rc(0), ec(nullptr), prev(nullptr), lbl(), type(BCType::Break) {}
 
     inline void incRef () { ++rc; }
     inline void decRef () { if (--rc == 0) die(); }
 
     void die ();
-    void emit ();
+    void emitFinalizers (); // not including ours
   };
 
   struct VLabelFixup {
@@ -176,9 +176,6 @@ public:
     void operator = (const VAutoBreakCont &);
 
     ~VAutoBreakCont ();
-
-    // use this to register finalizer that will be called when this object is destroyed
-    void RegisterFinalizer (VStatement *st);
 
     // calls `MarkLabel()`
     void Mark ();

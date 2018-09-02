@@ -431,10 +431,6 @@ enum {
   DECLARE_OPC(IteratorNext, None),
   DECLARE_OPC(IteratorPop, None),
 
-  // scripted iterators
-  DECLARE_OPC(IteratorDtorAt, BranchTarget),
-  DECLARE_OPC(IteratorFinish, None),
-
   // `write` and `writeln`
   DECLARE_OPC(DoWriteOne, Type),
   DECLARE_OPC(DoWriteFlush, None),

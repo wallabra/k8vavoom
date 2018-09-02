@@ -147,24 +147,6 @@ void VEmitContext::VAutoBreakCont::operator = (const VAutoBreakCont &src) {
 
 //==========================================================================
 //
-//  VEmitContext::VAutoBreakCont::RegisterFinalizer
-//
-//  use this to register finalizer that will be called when this object is destroyed
-//
-//==========================================================================
-void VEmitContext::VAutoBreakCont::RegisterFinalizer (VStatement *st) {
-  if (!st || !bc) return; // this is noop anyway
-  VFinalizer *fin = new VFinalizer();
-  fin->rc = 0; // will be incremented in `VAutoFin()` constructor
-  fin->ec = bc->ec;
-  fin->prev = bc->lastFin;
-  fin->st = st;
-  bc->lastFin = fin;
-}
-
-
-//==========================================================================
-//
 //  VEmitContext::VAutoBreakCont::Mark
 //
 //  calls `MarkLabel()`
@@ -193,7 +175,17 @@ VLabel VEmitContext::VAutoBreakCont::GetLabelNoFinalizers () {
 //
 //==========================================================================
 void VEmitContext::VAutoBreakCont::emitOurFins () {
-  if (bc) bc->emit();
+  if (bc) {
+    VFinalizer *lastFin = nullptr;
+    for (VFinalizer *fin = bc->ec->lastFin; fin; fin = fin->prev) {
+      if (fin->bc == bc) lastFin = fin;
+    }
+    if (!lastFin) return;
+    for (VFinalizer *fin = bc->ec->lastFin; fin; fin = fin->prev) {
+      fin->emit();
+      if (fin == lastFin) break;
+    }
+  }
 }
 
 
@@ -206,10 +198,13 @@ void VEmitContext::VAutoBreakCont::emitOurFins () {
 //==========================================================================
 void VEmitContext::VAutoBreakCont::emitFins () {
   if (bc) {
-    VBreakCont *currBC = bc->ec->lastBC;
-    while (currBC != bc) {
-      currBC->emit();
-      currBC = currBC->prev;
+    VFinalizer *lastFin = nullptr;
+    for (VFinalizer *fin = bc->ec->lastFin; fin; fin = fin->prev) {
+      if (fin->bc == bc) { lastFin = fin; break; }
+    }
+    if (!lastFin) return;
+    for (VFinalizer *fin = bc->ec->lastFin; fin != lastFin; fin = fin->prev) {
+      fin->emit();
     }
   }
 }
@@ -252,13 +247,7 @@ void VEmitContext::VFinalizer::die () {
 //
 //==========================================================================
 void VEmitContext::VFinalizer::emit () {
-  if (st) {
-    if (bc) {
-      st->EmitFinalizerBC(*ec);
-    } else {
-      st->EmitFinalizer(*ec);
-    }
-  }
+  if (st) st->EmitFinalizer(*ec);
 }
 
 
@@ -268,25 +257,27 @@ void VEmitContext::VFinalizer::emit () {
 
 //==========================================================================
 //
-//  VEmitContext::VBreakCont::~VBreakCont
-//
-//==========================================================================
-VEmitContext::VBreakCont::~VBreakCont () {
-  while (lastFin) {
-    VFinalizer *fin = lastFin;
-    lastFin = fin->prev;
-    delete fin;
-  }
-}
-
-
-//==========================================================================
-//
 //  VEmitContext::VBreakCont::die
 //
 //==========================================================================
 void VEmitContext::VBreakCont::die () {
-  emit();
+  // find last our finalizer
+  VFinalizer *lastFin = nullptr;
+  for (VFinalizer *fin = ec->lastFin; fin; fin = fin->prev) {
+    if (fin->bc == this) lastFin = fin;
+  }
+  if (lastFin) {
+    // emit code for all finalizers up to, and including ours
+    for (VFinalizer *fin = ec->lastFin; fin; fin = fin->prev) {
+      fin->emit();
+      if (fin->bc == this) {
+        // mark our finalizers as dead, autodtors will remove 'em
+        fin->st = nullptr;
+        fin->bc = nullptr;
+      }
+      if (fin == lastFin) break;
+    }
+  }
   ec->lastBC = prev;
   delete this;
 }
@@ -297,8 +288,19 @@ void VEmitContext::VBreakCont::die () {
 //  VEmitContext::VBreakCont::emit
 //
 //==========================================================================
-void VEmitContext::VBreakCont::emit () {
-  for (VFinalizer *fin = lastFin; fin; fin = fin->prev) fin->emit();
+void VEmitContext::VBreakCont::emitFinalizers () {
+  if (!ec) return;
+  // find last our finalizer
+  VFinalizer *lastFin = nullptr;
+  for (VFinalizer *fin = ec->lastFin; fin; fin = fin->prev) {
+    if (fin->bc == this) { lastFin = fin; break; }
+  }
+  if (lastFin) {
+    // emit code for all finalizers up to ours
+    for (VFinalizer *fin = ec->lastFin; fin != lastFin; fin = fin->prev) {
+      fin->emit();
+    }
+  }
 }
 
 
@@ -1122,6 +1124,7 @@ bool VEmitContext::EmitBreak (const TLocation &loc) {
   for (VBreakCont *bc = lastBC; bc; bc = bc->prev) {
     switch (bc->type) {
       case BCType::Break:
+        bc->emitFinalizers();
         AddStatement(OPC_Goto, bc->lbl, loc);
         return true; // done, no need to emit finalizers
       case BCType::Continue:
@@ -1129,7 +1132,6 @@ bool VEmitContext::EmitBreak (const TLocation &loc) {
       case BCType::Block:
         return false;
     }
-    bc->emit();
   }
   return false; // oops
 }
@@ -1148,12 +1150,12 @@ bool VEmitContext::EmitContinue (const TLocation &loc) {
       case BCType::Break:
         break;
       case BCType::Continue:
+        bc->emitFinalizers();
         AddStatement(OPC_Goto, bc->lbl, loc);
         return true; // done, no need to emit finalizers
       case BCType::Block:
         return false;
     }
-    bc->emit();
   }
   return false; // oops
 }
@@ -1166,7 +1168,7 @@ bool VEmitContext::EmitContinue (const TLocation &loc) {
 //==========================================================================
 bool VEmitContext::IsReturnAllowed () {
   for (VBreakCont *bc = lastBC; bc; bc = bc->prev) {
-    if (bc->type == BCType::Break) return false;
+    if (bc->type == BCType::Block) return false;
   }
   return true;
 }

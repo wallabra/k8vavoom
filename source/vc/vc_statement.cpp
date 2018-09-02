@@ -32,7 +32,6 @@ VStatement::VStatement (const TLocation &ALoc) : Loc(ALoc) {}
 VStatement::~VStatement () {}
 void VStatement::Emit (VEmitContext &ec) { DoEmit(ec); }
 void VStatement::EmitFinalizer (VEmitContext &ec) {}
-void VStatement::EmitFinalizerBC (VEmitContext &ec) {}
 bool VStatement::IsLabel () const { return false; }
 VName VStatement::GetLabelName () const { return NAME_None; }
 bool VStatement::IsGoto () const { return false; }
@@ -54,7 +53,6 @@ VLabelStmt *VStatement::FindLabel (VName aname) { return (IsLabel() && GetLabelN
 bool VStatement::IsGotoInAllowed () const { return true; }
 bool VStatement::IsGotoOutAllowed () const { return true; }
 bool VStatement::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const { return true; }
-void VStatement::EmitBlockCleanup (VEmitContext &ec, const TLocation &aloc) const {}
 
 bool VStatement::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
   if (dest == this) {
@@ -811,12 +809,24 @@ void VForeach::DoEmit (VEmitContext &ec) {
   VLabel Loop = ec.DefineLabel();
 
   ec.AddStatement(OPC_Goto, loopStart.GetLabelNoFinalizers(), Loc);
-  ec.MarkLabel(Loop);
-  Statement->Emit(ec);
-  loopStart.Mark();
-  ec.AddStatement(OPC_IteratorNext, Loc);
-  ec.AddStatement(OPC_IfGoto, Loop, Loc);
-  loopEnd.Mark();
+  {
+    auto fin = ec.RegisterFinalizer(this);
+    ec.MarkLabel(Loop);
+    Statement->Emit(ec);
+    loopStart.Mark();
+    ec.AddStatement(OPC_IteratorNext, Loc);
+    ec.AddStatement(OPC_IfGoto, Loop, Loc);
+    loopEnd.Mark();
+  }
+}
+
+
+//==========================================================================
+//
+//  VForeach::EmitFinalizer
+//
+//==========================================================================
+void VForeach::EmitFinalizer (VEmitContext &ec) {
   ec.AddStatement(OPC_IteratorPop, Loc);
 }
 
@@ -868,16 +878,6 @@ bool VForeach::IsGotoInAllowed () const {
 //==========================================================================
 bool VForeach::IsGotoOutAllowed () const {
   return true;
-}
-
-
-//==========================================================================
-//
-//  VForeach::EmitBlockCleanup
-//
-//==========================================================================
-void VForeach::EmitBlockCleanup (VEmitContext &ec, const TLocation &aloc) const {
-  ec.AddStatement(OPC_IteratorPop, aloc);
 }
 
 
@@ -1787,10 +1787,6 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeachScripted::DoEmit (VEmitContext &ec) {
-  // define labels
-  auto loopStart = ec.DefineContinue();
-  auto loopEnd = ec.DefineBreak();
-
   VLabel LoopExitSkipDtor = ec.DefineLabel();
 
   // emit initialisation expression
@@ -1801,27 +1797,46 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
   }
 
   // push iterator
-  ec.AddStatement(OPC_IteratorDtorAt, loopEnd.GetLabelNoFinalizers(), Loc);
+  //ec.AddStatement(OPC_IteratorDtorAt, loopEnd.GetLabelNoFinalizers(), Loc);
+
+  // define labels
+  auto loopStart = ec.DefineContinue();
+  auto loopEnd = ec.DefineBreak();
 
   // actual loop
-  loopStart.Mark();
-  // call next
-  ivNext->EmitBranchable(ec, loopEnd.GetLabelNoFinalizers(), false);
-  // emit loop body
-  statement->Emit(ec);
-  // again
-  ec.AddStatement(OPC_Goto, loopStart.GetLabelNoFinalizers(), Loc);
+  {
+    // register finalizer, and mark loop start
+    auto fin = ec.RegisterFinalizer(this);
+    loopStart.Mark();
+    // call next
+    ivNext->EmitBranchable(ec, loopEnd.GetLabelNoFinalizers(), false);
+    // emit loop body
+    statement->Emit(ec);
+    // again
+    ec.AddStatement(OPC_Goto, loopStart.GetLabelNoFinalizers(), Loc);
 
-  // end of loop
-  loopEnd.Mark();
+    // end of loop
+    loopEnd.Mark();
+  }
+  // finalizer is emited
 
   // dtor
-  if (ivDone) ivDone->Emit(ec);
+  //if (ivDone) ivDone->Emit(ec);
 
   // pop iterator
-  ec.AddStatement(OPC_IteratorFinish, Loc);
+  //ec.AddStatement(OPC_IteratorFinish, Loc);
 
   ec.MarkLabel(LoopExitSkipDtor);
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::EmitFinalizer
+//
+//==========================================================================
+void VForeachScripted::EmitFinalizer (VEmitContext &ec) {
+  if (ivDone) ivDone->Emit(ec);
 }
 
 
@@ -1873,20 +1888,6 @@ bool VForeachScripted::IsGotoInAllowed () const {
 //==========================================================================
 bool VForeachScripted::IsGotoOutAllowed () const {
   return true;
-}
-
-
-//==========================================================================
-//
-//  VForeach::EmitBlockCleanup
-//
-//==========================================================================
-void VForeachScripted::EmitBlockCleanup (VEmitContext &ec, const TLocation &aloc) const {
-  // dtor
-  if (ivDone) ivDone->Emit(ec);
-
-  // pop iterator
-  ec.AddStatement(OPC_IteratorFinish, Loc);
 }
 
 
@@ -3138,7 +3139,6 @@ bool VCompoundScopeExit::Resolve (VEmitContext &ec) {
 //==========================================================================
 void VCompoundScopeExit::DoEmit (VEmitContext &ec) {
   auto fin = ec.RegisterFinalizer(this);
-  auto block = ec.BlockBreakContReturn();
   VCompound::DoEmit(ec);
 }
 
@@ -3149,19 +3149,11 @@ void VCompoundScopeExit::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 void VCompoundScopeExit::EmitFinalizer (VEmitContext &ec) {
-  if (Body) Body->Emit(ec);
+  if (Body) {
+    auto block = ec.BlockBreakContReturn();
+    Body->Emit(ec);
+  }
 }
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::EmitFinalizerBC
-//
-//==========================================================================
-void VCompoundScopeExit::EmitFinalizerBC (VEmitContext &ec) {
-  if (Body) Body->Emit(ec);
-}
-
 
 
 //==========================================================================
@@ -3423,7 +3415,7 @@ void VGotoStmt::EmitCleanups (VEmitContext &ec, VStatement *dest) {
   // now go up to parent and down to label, checking if gotos are allowed
   for (int f = toself.length()-1; f >= 0; --f) {
     if (toself[f] == cpar) break;
-    toself[f]->EmitBlockCleanup(ec, Loc);
+    toself[f]->EmitFinalizer(ec);
   }
 }
 

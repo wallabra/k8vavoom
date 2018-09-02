@@ -821,10 +821,6 @@ struct Instr {
         return;
       case OPC_IteratorPop:
 
-      // scripted iterators
-      case OPC_IteratorDtorAt:
-      case OPC_IteratorFinish:
-
       // `write` and `writeln`
       case OPC_DoWriteOne:
         switch (TypeArg.Type) {
@@ -1557,7 +1553,7 @@ void VMCOptimizer::optimizeJumps () {
   // now optimize jump instructions
   for (Instr *it = jplistHead; it; it = it->jpnext) {
     Instr &insn = *it;
-    if (insn.Opcode != OPC_IteratorDtorAt && insn.opcArgType == OPCARGS_BranchTarget && insn.getBranchDest() < iaddrs.length()) {
+    if (insn.opcArgType == OPCARGS_BranchTarget && insn.getBranchDest() < iaddrs.length()) {
       vint32 ofs = iaddrs[insn.getBranchDest()]-insn.Address;
            if (ofs >= 0 && ofs < 256) insn.Opcode -= 3;
       else if (ofs < 0 && ofs > -256) insn.Opcode -= 2;
