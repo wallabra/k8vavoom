@@ -504,6 +504,7 @@ VStr VObject::NameFromVKey (int vkey) {
     case K_INSERT: return "INSERT";
     case K_DELETE: return "DELETE";
     case K_HOME: return "HOME";
+    case K_END: return "END";
     case K_PAGEUP: return "PGUP";
     case K_PAGEDOWN: return "PGDOWN";
 
@@ -603,6 +604,7 @@ int VObject::VKeyFromName (const VStr &kn) {
     if (ch == 13 || ch == 10) return K_ENTER;
     if (ch == 8) return K_BACKSPACE;
     if (ch == 9) return K_TAB;
+    if (ch > 32 && ch < 127) return (int)ch;
   }
 
   if (kn.ICmp("ESCAPE") == 0) return K_ESCAPE;
@@ -620,6 +622,7 @@ int VObject::VKeyFromName (const VStr &kn) {
   if (kn.ICmp("INSERT") == 0 || kn.ICmp("INS") == 0) return K_INSERT;
   if (kn.ICmp("DELETE") == 0 || kn.ICmp("DEL") == 0) return K_DELETE;
   if (kn.ICmp("HOME") == 0) return K_HOME;
+  if (kn.ICmp("END") == 0) return K_END;
   if (kn.ICmp("PAGEUP") == 0 || kn.ICmp("PGUP") == 0) return K_PAGEUP;
   if (kn.ICmp("PAGEDOWN") == 0 || kn.ICmp("PGDOWN") == 0 || kn.ICmp("PGDN") == 0) return K_PAGEDOWN;
 
@@ -669,7 +672,7 @@ int VObject::VKeyFromName (const VStr &kn) {
   if (kn.ICmp("RWIN") == 0) return K_RWIN;
   if (kn.ICmp("MENU") == 0) return K_MENU;
 
-  if (kn.ICmp("PRINTSCRN") == 0 || kn.ICmp("PSCRN") == 0) return K_PRINTSCRN;
+  if (kn.ICmp("PRINTSCRN") == 0 || kn.ICmp("PSCRN") == 0 || kn.ICmp("PRINTSCREEN") == 0 ) return K_PRINTSCRN;
   if (kn.ICmp("SCROLLLOCK") == 0 || kn.ICmp("SCROLL") == 0) return K_SCROLLLOCK;
   if (kn.ICmp("PAUSE") == 0) return K_PAUSE;
 
