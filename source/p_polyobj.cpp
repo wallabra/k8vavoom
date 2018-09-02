@@ -70,7 +70,7 @@ void VLevel::SpawnPolyobj(float x, float y, int tag, bool crush, bool hurt)
     delete[] Temp;
     Temp = nullptr;
     }
-  memset(&PolyObjs[index], 0, sizeof(polyobj_t));
+  memset((void *)(&PolyObjs[index]), 0, sizeof(polyobj_t));
 
   PolyObjs[index].startSpot.x = x;
   PolyObjs[index].startSpot.y = y;
@@ -427,7 +427,7 @@ void VLevel::InitPolyBlockMap()
 {
   guard(VLevel::InitPolyBlockMap);
   PolyBlockMap = new polyblock_t*[BlockMapWidth * BlockMapHeight];
-  memset(PolyBlockMap, 0, sizeof(polyblock_t*) * BlockMapWidth *
+  memset((void *)PolyBlockMap, 0, sizeof(polyblock_t*) * BlockMapWidth *
     BlockMapHeight);
 
   for (int i = 0; i < NumPolyObjs; i++)

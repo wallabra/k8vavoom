@@ -1562,7 +1562,7 @@ static void DrawWorldTimer()
   int minutes;
   int seconds;
   int worldTimer;
-  char timeBuffer[15];
+  char timeBuffer[64];
   char dayBuffer[20];
 
   worldTimer = (int)cl->WorldTimer;

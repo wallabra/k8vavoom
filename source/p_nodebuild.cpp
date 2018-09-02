@@ -369,7 +369,7 @@ static void CopySegs(VLevel *Level, vertex_t *GLVertexes)
 
   Level->NumSegs = num_complete_seg;
   Level->Segs = new seg_t[Level->NumSegs];
-  memset(Level->Segs, 0, sizeof(seg_t) * Level->NumSegs);
+  memset((void *)Level->Segs, 0, sizeof(seg_t) * Level->NumSegs);
   seg_t *li = Level->Segs;
   for (int i = 0; i < Level->NumSegs; i++, li++)
   {
@@ -449,7 +449,7 @@ static void CopySubsectors(VLevel *Level)
   guard(CopySubsectors);
   Level->NumSubsectors = num_subsecs;
   Level->Subsectors = new subsector_t[Level->NumSubsectors];
-  memset(Level->Subsectors, 0, sizeof(subsector_t) * Level->NumSubsectors);
+  memset((void *)Level->Subsectors, 0, sizeof(subsector_t) * Level->NumSubsectors);
   subsector_t *ss = Level->Subsectors;
   for (int i = 0; i < Level->NumSubsectors; i++, ss++)
   {
@@ -554,7 +554,7 @@ static void CopyNodes(VLevel *Level, glbsp_node_t *root_node)
   //  Copy nodes.
   Level->NumNodes = num_nodes;
   Level->Nodes = new node_t[Level->NumNodes];
-  memset(Level->Nodes, 0, sizeof(node_t) * Level->NumNodes);
+  memset((void *)Level->Nodes, 0, sizeof(node_t) * Level->NumNodes);
   if (root_node)
   {
     int NodeIndex = 0;

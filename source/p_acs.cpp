@@ -415,7 +415,7 @@ VAcsObject::VAcsObject(VAcsLevel *ALevel, int Lump)
   ArrayStore = nullptr;
   NumTotalArrays = 0;
   Arrays = nullptr;
-  memset(MapVarStore, 0, sizeof(MapVarStore));
+  memset((void *)MapVarStore, 0, sizeof(MapVarStore));
 
   if (Lump < 0) return;
   if (W_LumpLength(Lump) < (int)sizeof(VAcsHeader)) {
@@ -548,7 +548,7 @@ void VAcsObject::LoadOldObject()
     return;
   }
   Scripts = new VAcsInfo[NumScripts];
-  memset(Scripts, 0, NumScripts * sizeof(VAcsInfo));
+  memset((void *)Scripts, 0, NumScripts * sizeof(VAcsInfo));
   for (i = 0, info = Scripts; i < NumScripts; i++, info++)
   {
     info->Number = LittleLong(*buffer) % 1000;
@@ -572,7 +572,7 @@ void VAcsObject::LoadOldObject()
   }
 
   //  Set up map vars.
-  memset(MapVarStore, 0, sizeof(MapVarStore));
+  memset((void *)MapVarStore, 0, sizeof(MapVarStore));
   for (i = 0; i < MAX_ACS_MAP_VARS; i++)
   {
     MapVars[i] = &MapVarStore[i];
@@ -599,7 +599,7 @@ void VAcsObject::LoadEnhancedObject()
   {
     NumScripts = LittleLong(buffer[1]) / 12;
     Scripts = new VAcsInfo[NumScripts];
-    memset(Scripts, 0, NumScripts * sizeof(VAcsInfo));
+    memset((void *)Scripts, 0, NumScripts * sizeof(VAcsInfo));
     buffer += 2;
 
     for (i = 0, info = Scripts; i < NumScripts; i++, info++)
@@ -618,7 +618,7 @@ void VAcsObject::LoadEnhancedObject()
   {
     NumScripts = LittleLong(buffer[1]) / 8;
     Scripts = new VAcsInfo[NumScripts];
-    memset(Scripts, 0, NumScripts * sizeof(VAcsInfo));
+    memset((void *)Scripts, 0, NumScripts * sizeof(VAcsInfo));
     buffer += 2;
 
     for (i = 0, info = Scripts; i < NumScripts; i++, info++)
@@ -706,7 +706,7 @@ void VAcsObject::LoadEnhancedObject()
   }
 
   //  Initialise this object's map variables.
-  memset(MapVarStore, 0, sizeof(MapVarStore));
+  memset((void *)MapVarStore, 0, sizeof(MapVarStore));
   buffer = (int*)FindChunk("MINI");
   while (buffer)
   {
@@ -725,13 +725,13 @@ void VAcsObject::LoadEnhancedObject()
   {
     NumArrays = LittleLong(buffer[1]) / 8;
     ArrayStore = new VArrayInfo[NumArrays];
-    memset(ArrayStore, 0, sizeof(*ArrayStore) * NumArrays);
+    memset((void *)ArrayStore, 0, sizeof(*ArrayStore) * NumArrays);
     for (i = 0; i < NumArrays; ++i)
     {
       MapVarStore[LittleLong(buffer[2 + i * 2])] = i;
       ArrayStore[i].Size = LittleLong(buffer[3 + i * 2]);
       ArrayStore[i].Data = new vint32[ArrayStore[i].Size];
-      memset(ArrayStore[i].Data, 0, ArrayStore[i].Size * sizeof(vint32));
+      memset((void *)ArrayStore[i].Data, 0, ArrayStore[i].Size * sizeof(vint32));
     }
   }
 
@@ -1728,8 +1728,7 @@ VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
   script->LocalVars[0] = Arg1;
   script->LocalVars[1] = Arg2;
   script->LocalVars[2] = Arg3;
-  memset(script->LocalVars + Info->ArgCount, 0,
-    (Info->VarCount - Info->ArgCount) * 4);
+  memset((void *)(script->LocalVars+Info->ArgCount), 0, (Info->VarCount-Info->ArgCount)*4);
   if (Delayed)
   {
     //  World objects are allotted 1 second for initialization.
@@ -1782,7 +1781,7 @@ void VAcsGrowingArray::Redim(int NewSize)
     //  Clear newly allocated elements.
     if (NewSize > Size)
     {
-      memset(Data + Size, 0, (NewSize - Size) * sizeof(int));
+      memset((void *)(Data+Size), 0, (NewSize - Size) * sizeof(int));
     }
   }
   Size = NewSize;
@@ -5173,8 +5172,8 @@ int VAcs::FindSectorFromTag(int tag, int start)
 
 VAcsGlobal::VAcsGlobal()
 {
-  memset(WorldVars, 0, sizeof(WorldVars));
-  memset(GlobalVars, 0, sizeof(GlobalVars));
+  memset((void *)WorldVars, 0, sizeof(WorldVars));
+  memset((void *)GlobalVars, 0, sizeof(GlobalVars));
 }
 
 //==========================================================================

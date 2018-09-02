@@ -281,7 +281,7 @@ void VLevel::Serialise(VStream &Strm)
         decal = nullptr; // previous
         while (dcount-- > 0) {
           decal_t *dc = new decal_t;
-          memset(dc, 0, sizeof(decal_t));
+          memset((void *)dc, 0, sizeof(decal_t));
           dc->seg = &Segs[f];
           DecalIO(Strm, dc);
           if (dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0 || dc->texture < 0) {
@@ -290,11 +290,11 @@ void VLevel::Serialise(VStream &Strm)
           } else {
             // fix backsector
             if (dc->flags&(decal_t::SlideFloor|decal_t::SlideCeil)) {
-              line_t *li = Segs[f].linedef;
-              if (!li) Sys_Error("Save loader: invalid seg linedef (0)!");
+              line_t *lin = Segs[f].linedef;
+              if (!lin) Sys_Error("Save loader: invalid seg linedef (0)!");
               int bsidenum = (dc->flags&decal_t::SideDefOne ? 1 : 0);
-              if (li->sidenum[bsidenum] < 0) Sys_Error("Save loader: invalid seg linedef (1)!");
-              side_t *sb = &Sides[li->sidenum[bsidenum]];
+              if (lin->sidenum[bsidenum] < 0) Sys_Error("Save loader: invalid seg linedef (1)!");
+              side_t *sb = &Sides[lin->sidenum[bsidenum]];
               dc->bsec = sb->Sector;
               if (!dc->bsec) Sys_Error("Save loader: invalid seg linedef (2)!");
             }
@@ -1255,33 +1255,33 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
         if (count >= dcmaxcount) {
           //GCon->Logf("removing %d extra '%s' decals", count-dcmaxcount+1, *dec->name);
           // do removal
-          decal_t *cur = first;
+          decal_t *currd = first;
           if (prev) {
-            if (prev->next != cur) Sys_Error("decal oops(0)");
+            if (prev->next != currd) Sys_Error("decal oops(0)");
           } else {
-            if (seg->decals != cur) Sys_Error("decal oops(1)");
+            if (seg->decals != currd) Sys_Error("decal oops(1)");
           }
-          while (cur) {
-            decal_t *n = cur->next;
-            if (cur->dectype == dec->name && isDecalsOverlap(dec, segdist, orgz, cur, tinf)) {
+          while (currd) {
+            decal_t *n = currd->next;
+            if (currd->dectype == dec->name && isDecalsOverlap(dec, segdist, orgz, currd, tinf)) {
               /*
               GCon->Logf("removing extra '%s' decal; org=(%f:%f,%f:%f); neworg=(%f:%f,%f:%f)", *dec->name,
-                cur->xdist-tw2, cur->xdist+tw2, cur->orgz-th2, cur->orgz+th2,
+                currd->xdist-tw2, currd->xdist+tw2, currd->orgz-th2, currd->orgz+th2,
                 segd0, segd1, orgz-th2, orgz+th2
               );
               */
               if (prev) prev->next = n; else seg->decals = n;
-              RemoveAnimatedDecal(cur);
-              delete cur;
+              RemoveAnimatedDecal(currd);
+              delete currd;
               if (--count < dcmaxcount) break;
             }
-            cur = n;
+            currd = n;
           }
         }
       }
       // create decal
       decal_t *decal = new decal_t;
-      memset(decal, 0, sizeof(decal_t));
+      memset((void *)decal, 0, sizeof(decal_t));
       decal_t *cdec = seg->decals;
       if (cdec) {
         while (cdec->next) cdec = cdec->next;
@@ -1771,7 +1771,7 @@ sec_region_t *AddExtraFloor(line_t *line, sector_t *dst)
     if (infloorz <= floorz && inceilz >= ceilz)
     {
       region = new sec_region_t;
-      memset(region, 0, sizeof(*region));
+      memset((void *)region, 0, sizeof(*region));
       region->floor = inregion->floor;
       region->ceiling = &src->ceiling;
       region->params = &src->params;
@@ -1798,7 +1798,7 @@ sec_region_t *AddExtraFloor(line_t *line, sector_t *dst)
       if (inregion->floor->maxz <= src->ceiling.minz && inregion->ceiling->maxz >= src->floor.minz)
       {
         region = new sec_region_t;
-        memset(region, 0, sizeof(*region));
+        memset((void *)region, 0, sizeof(*region));
         region->floor = inregion->floor;
         region->ceiling = &src->ceiling;
         region->params = &src->params;
@@ -1830,7 +1830,7 @@ sec_region_t *AddExtraFloor(line_t *line, sector_t *dst)
       if (inregion->floor->minz <= src->ceiling.maxz && inregion->ceiling->minz >= src->floor.maxz)
       {
         region = new sec_region_t;
-        memset(region, 0, sizeof(*region));
+        memset((void *)region, 0, sizeof(*region));
         region->floor = inregion->floor;
         region->ceiling = &src->ceiling;
         region->params = &src->params;

@@ -310,8 +310,10 @@ bool C_Responder(event_t *ev)
   case K_ESCAPE:
     if (consolestate != cons_open)
       return false;
+    /* fallthrough */
 
   case '`':
+  case K_BACKQUOTE:
     if (consolestate == cons_closing)
       C_Start();
     else

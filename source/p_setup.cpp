@@ -646,7 +646,7 @@ void VLevel::LoadVertexes(int Lump, int GLLump, int &NumBaseVerts)
 
   //  Allocate memory for vertexes.
   Vertexes = new vertex_t[NumVertexes];
-  if (NumVertexes) memset(Vertexes, 0, sizeof(vertex_t)*NumVertexes);
+  if (NumVertexes) memset((void *)Vertexes, 0, sizeof(vertex_t)*NumVertexes);
 
   //  Load base vertexes.
   VStream *Strm = W_CreateLumpReaderNum(Lump);
@@ -703,7 +703,7 @@ void VLevel::LoadSectors(int Lump)
   //  Allocate memory for sectors.
   NumSectors = W_LumpLength(Lump) / 26;
   Sectors = new sector_t[NumSectors];
-  memset(Sectors, 0, sizeof(sector_t) * NumSectors);
+  memset((void *)Sectors, 0, sizeof(sector_t) * NumSectors);
 
   //  Load sectors.
   VStream *Strm = W_CreateLumpReaderNum(Lump);
@@ -754,7 +754,7 @@ void VLevel::LoadSectors(int Lump)
     ss->params.LightColour = 0x00ffffff;
     //  Region
     sec_region_t *region = new sec_region_t;
-    memset(region, 0, sizeof(*region));
+    memset((void *)region, 0, sizeof(*region));
     region->floor = &ss->floor;
     region->ceiling = &ss->ceiling;
     region->params = &ss->params;
@@ -842,8 +842,8 @@ void VLevel::CreateSides()
   }
 
   //  Allocate memory for side defs.
-  Sides = new side_t[NumNewSides];
-  memset(Sides, 0, sizeof(side_t) * NumNewSides);
+  Sides = new side_t[NumNewSides+1];
+  memset((void *)Sides, 0, sizeof(side_t) * (NumNewSides+1));
 
   int CurrentSide = 0;
   Line = Lines;
@@ -996,7 +996,7 @@ void VLevel::LoadLineDefs1(int Lump, int NumBaseVerts, const mapInfo_t &MInfo)
   guard(VLevel::LoadLineDefs1);
   NumLines = W_LumpLength(Lump) / 14;
   Lines = new line_t[NumLines];
-  memset(Lines, 0, sizeof(line_t) * NumLines);
+  memset((void *)Lines, 0, sizeof(line_t) * NumLines);
 
   VStream *Strm = W_CreateLumpReaderNum(Lump);
   line_t *ld = Lines;
@@ -1053,7 +1053,7 @@ void VLevel::LoadLineDefs2(int Lump, int NumBaseVerts, const mapInfo_t &MInfo)
   guard(VLevel::LoadLineDefs2);
   NumLines = W_LumpLength(Lump) / 16;
   Lines = new line_t[NumLines];
-  memset(Lines, 0, sizeof(line_t) * NumLines);
+  memset((void *)Lines, 0, sizeof(line_t) * NumLines);
 
   VStream *Strm = W_CreateLumpReaderNum(Lump);
   line_t *ld = Lines;
@@ -1185,7 +1185,7 @@ void VLevel::LoadGLSegs(int Lump, int NumBaseVerts)
 
   //  Allocate memory for segs data.
   Segs = new seg_t[NumSegs];
-  memset(Segs, 0, sizeof(seg_t) * NumSegs);
+  memset((void *)Segs, 0, sizeof(seg_t) * NumSegs);
 
   //  Read data.
   VStream *Strm = W_CreateLumpReaderNum(Lump);
@@ -1315,7 +1315,7 @@ void VLevel::LoadSubsectors(int Lump)
 
   //  Allocate memory for subsectors.
   Subsectors = new subsector_t[NumSubsectors];
-  memset(Subsectors, 0, sizeof(subsector_t) * NumSubsectors);
+  memset((void *)Subsectors, 0, sizeof(subsector_t) * NumSubsectors);
 
   //  Read data.
   VStream *Strm = W_CreateLumpReaderNum(Lump);
@@ -1390,7 +1390,7 @@ void VLevel::LoadNodes(int Lump)
     NumNodes = W_LumpLength(Lump) / 28;
   }
   Nodes = new node_t[NumNodes];
-  memset(Nodes, 0, sizeof(node_t) * NumNodes);
+  memset((void *)Nodes, 0, sizeof(node_t) * NumNodes);
 
   VStream *Strm = W_CreateLumpReaderNum(Lump);
   node_t *no = Nodes;
@@ -1497,8 +1497,8 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
     vertex_t *OldVerts = Vertexes;
     NumVertexes = OrgVerts + NewVerts;
     Vertexes = new vertex_t[NumVertexes];
-    if (NumVertexes) memset(Vertexes, 0, sizeof(vertex_t)*NumVertexes);
-    memcpy(Vertexes, OldVerts, OrgVerts * sizeof(vertex_t));
+    if (NumVertexes) memset((void *)Vertexes, 0, sizeof(vertex_t)*NumVertexes);
+    memcpy((void *)Vertexes, (void *)OldVerts, OrgVerts * sizeof(vertex_t));
     //  Fix up vertex pointers in linedefs
     for (int i = 0; i < NumLines; i++)
     {
@@ -1525,7 +1525,7 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
   guard(VLevel::LoadCompressedGLNodes::Subsectors);
   NumSubsectors = Streamer<vuint32>(*Strm);
   Subsectors = new subsector_t[NumSubsectors];
-  memset(Subsectors, 0, sizeof(subsector_t) * NumSubsectors);
+  memset((void *)Subsectors, 0, sizeof(subsector_t) * NumSubsectors);
   subsector_t *ss = Subsectors;
   int FirstSeg = 0;
   for (int i = 0; i < NumSubsectors; i++, ss++)
@@ -1542,7 +1542,7 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
   guard(VLevel::LoadCompressedGLNodes::Segs);
   NumSegs = Streamer<vuint32>(*Strm);
   Segs = new seg_t[NumSegs];
-  memset(Segs, 0, sizeof(seg_t) * NumSegs);
+  memset((void *)Segs, 0, sizeof(seg_t) * NumSegs);
   seg_t *li = Segs;
   for (int i = 0; i < NumSegs; i++, li++)
   {
@@ -1605,7 +1605,7 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
   guard(VLevel::LoadCompressedGLNodes::Nodes);
   NumNodes = Streamer<vuint32>(*Strm);
   Nodes = new node_t[NumNodes];
-  memset(Nodes, 0, sizeof(node_t) * NumNodes);
+  memset((void *)Nodes, 0, sizeof(node_t) * NumNodes);
   node_t *no = Nodes;
   for (int i = 0; i < NumNodes; i++, no++)
   {
@@ -1969,7 +1969,7 @@ void VLevel::LoadThings1(int Lump)
   guard(VLevel::LoadThings1);
   NumThings = W_LumpLength(Lump) / 10;
   Things = new mthing_t[NumThings];
-  memset(Things, 0, sizeof(mthing_t) * NumThings);
+  memset((void *)Things, 0, sizeof(mthing_t) * NumThings);
 
   VStream *Strm = W_CreateLumpReaderNum(Lump);
   mthing_t *th = Things;
@@ -2013,7 +2013,7 @@ void VLevel::LoadThings2(int Lump)
   guard(VLevel::LoadThings2);
   NumThings = W_LumpLength(Lump) / 20;
   Things = new mthing_t[NumThings];
-  memset(Things, 0, sizeof(mthing_t) * NumThings);
+  memset((void *)Things, 0, sizeof(mthing_t) * NumThings);
 
   VStream *Strm = W_CreateLumpReaderNum(Lump);
   mthing_t *th = Things;
