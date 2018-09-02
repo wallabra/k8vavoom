@@ -29,6 +29,11 @@ if(MINGW)
   option(WITH_STATIC_OPENAL "Use special flags to link with static OpenAL" ON)
 endif(MINGW)
 
+if(NOT CMAKE_COMPILER_IS_GNUCC)
+  message(SEND_ERROR "GNU C/C++ compilers are required to build VaVoom and tools")
+  return()
+endif(NOT CMAKE_COMPILER_IS_GNUCC)
+
 option(ENABLE_SIGNAL_HANDLER "Intercept system signals" OFF)
 
 option(ENABLE_CLIENT   "Build client executable" ON)
@@ -102,24 +107,42 @@ set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-strict-aliasing")
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-strict-overflow")
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fwrapv")
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wall")
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wabi=10")
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fabi-version=10")
 #set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-frame-address")
-if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7)
-  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-stringop-truncation")
-  set(UNFUCK_GXX_FLAGS "${UNFUCK_GXX_FLAGS} -Wno-class-memaccess")
+
+if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.4)
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wimplicit-fallthrough")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wshadow=local")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Walloc-zero")
+endif()
+
+if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.7)
+  #set(UNFUCK_GXX_FLAGS "${UNFUCK_GXX_FLAGS} -Wno-class-memaccess")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wmultistatement-macros")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wmissing-attributes")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wcast-function-type")
 endif()
 
 # use -ffast-math, 'cause why not?
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -ffast-math")
 # if not shitdoze, use SSE2
+# k8: actually, use SSE2 anyway; fuck ancient shit!
 if(NOT WIN32)
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -march=native")
-  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -msse2")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -mtune=native")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -msse3")
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -mfpmath=sse")
 
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -pthread")
   set(CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_LINK_EXECUTABLE} -pthread")
   set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -pthread")
 else(NOT WIN32)
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -march=core2")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -mtune=core2")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -msse3")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -mfpmath=sse")
+
   set(CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_LINK_EXECUTABLE} -mwindows")
   set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -mwindows")
 endif(NOT WIN32)
