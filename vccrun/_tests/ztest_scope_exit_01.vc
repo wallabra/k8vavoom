@@ -1,0 +1,13 @@
+class Main : Object;
+
+
+void main () {
+  writeln("before scope...");
+  {
+    writeln("in scope");
+    scope(exit) writeln("SCOPE: EXIT");
+    return;
+    writeln("scope ends");
+  }
+  writeln("after scope");
+}
