@@ -646,6 +646,7 @@ void VLevel::LoadVertexes(int Lump, int GLLump, int &NumBaseVerts)
 
   //  Allocate memory for vertexes.
   Vertexes = new vertex_t[NumVertexes];
+  if (NumVertexes) memset(Vertexes, 0, sizeof(vertex_t)*NumVertexes);
 
   //  Load base vertexes.
   VStream *Strm = W_CreateLumpReaderNum(Lump);
@@ -1496,6 +1497,7 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
     vertex_t *OldVerts = Vertexes;
     NumVertexes = OrgVerts + NewVerts;
     Vertexes = new vertex_t[NumVertexes];
+    if (NumVertexes) memset(Vertexes, 0, sizeof(vertex_t)*NumVertexes);
     memcpy(Vertexes, OldVerts, OrgVerts * sizeof(vertex_t));
     //  Fix up vertex pointers in linedefs
     for (int i = 0; i < NumLines; i++)

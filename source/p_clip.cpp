@@ -624,12 +624,8 @@ bool VViewClipper::ClipIsBBoxVisible(float *BBox, bool shadowslight, const TVec 
   else
 #endif
   {
-    /*k8: this glitches E1M2
-    if (D1 < 0.0 && D2 < 0.0)
-    {
-      return false;
-    }
-    */
+    //k8: this glitches E1M2 (due to uninitialized `z` component above, it seems; so no more)
+    if (D1 < 0.0 && D2 < 0.0) return false;
 
     // There might be a better method of doing this, but
     // this one works for now...
@@ -732,13 +728,10 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
 #endif
     {
       //k8: dunno, seems to be the same bug as above?
-      /*
-      if (D1 <= 0.0 && D2 <= 0.0)
-      {
+      if (D1 <= 0.0 && D2 <= 0.0) {
         ds++;
         continue;
       }
-      */
     }
 
     if (!ds->seg->backsector)
@@ -1066,12 +1059,10 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
 #endif
     {
       //k8: dunno, seems to be the same bug as above?
-      /*
       if (D1 < 0.0 && D2 < 0.0)
       {
         continue;
       }
-      */
     }
 
     if (!line->backsector)
@@ -1270,12 +1261,10 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
 #endif
       {
         //k8: dunno, seems to be the same bug as above?
-        /*
         if (D1 < 0.0 && D2 < 0.0)
         {
           continue;
         }
-        */
       }
 
 #ifdef CLIENT
