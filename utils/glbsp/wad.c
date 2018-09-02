@@ -659,11 +659,11 @@ static void WriteHeader(void)
   switch (wad.kind)
   {
     case IWAD:
-      strncpy(header.type, "IWAD", 4);
+      memcpy(header.type, "IWAD", 4);
       break;
 
     case PWAD:
-      strncpy(header.type, "PWAD", 4);
+      memcpy(header.type, "PWAD", 4);
       break;
   }
 
@@ -918,7 +918,12 @@ static void WriteDirEntry(lump_t *lump)
 
   DisplayTicker();
 
-  strncpy(entry.name, lump->name, 8);
+  memset(entry.name, 0, sizeof(entry.name));
+
+  size_t nlen = strlen(lump->name);
+  if (nlen > 8) nlen = 8;
+  if (nlen) memcpy(entry.name, lump->name, nlen);
+  //strncpy(entry.name, lump->name, 8);
 
   entry.start  = UINT32(lump->new_start);
   entry.length = UINT32(lump->length);

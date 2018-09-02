@@ -167,7 +167,11 @@ void TOWadFile::Open(const char *filename, const char *Awadid)
   memset(&header, 0, sizeof(header));
   fwrite(&header, 1, sizeof(header), handle);
   lumpinfo = new lumpinfo_t[8 * 1024];
-  strncpy(wadid, Awadid, 4);
+  //strncpy(wadid, Awadid, 4);
+  memset(wadid, 0, sizeof(wadid));
+  size_t nlen = strlen(Awadid);
+  if (nlen > 4) nlen = 4;
+  if (nlen) memcpy(wadid, Awadid, nlen);
   numlumps = 0;
 }
 
@@ -204,7 +208,12 @@ void TOWadFile::Close()
   for (int i = 0; i < numlumps; i++)
   {
     filelump_t  fileinfo;
-    strncpy(fileinfo.name, lumpinfo[i].name, 8);
+    //strncpy(fileinfo.name, lumpinfo[i].name, 8);
+    size_t nlen = strlen(lumpinfo[i].name);
+    if (nlen > 8) nlen = 8;
+    memset(fileinfo.name, 0, sizeof(fileinfo.name));
+    if (nlen) memcpy(fileinfo.name, lumpinfo[i].name, nlen);
+    //
     fileinfo.size = LittleLong(lumpinfo[i].size);
     fileinfo.filepos = LittleLong(lumpinfo[i].position);
     fwrite(&fileinfo, 1, sizeof(fileinfo), handle);

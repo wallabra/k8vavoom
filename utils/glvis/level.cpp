@@ -327,7 +327,7 @@ void TVisBuilder::LoadSegs(int lump)
 
     numsegs = (glwad->LumpSize(lump) - HdrSize) / sizeof(mapglseg_v3_t);
     segs = new seg_t[numsegs];
-    memset(segs, 0, sizeof(seg_t) * numsegs);
+    memset((void *)segs, 0, sizeof(seg_t) * numsegs);
 
     mapglseg_v3_t* ml = (mapglseg_v3_t*)((vuint8*)data + HdrSize);
     li = segs;
@@ -383,7 +383,7 @@ void TVisBuilder::LoadSegs(int lump)
   {
     numsegs = glwad->LumpSize(lump) / sizeof(mapglseg_t);
     segs = new seg_t[numsegs];
-    memset(segs, 0, sizeof(seg_t) * numsegs);
+    memset((void *)segs, 0, sizeof(seg_t) * numsegs);
 
     mapglseg_t* ml = (mapglseg_t *)data;
     li = segs;
@@ -438,7 +438,7 @@ void TVisBuilder::LoadSegs(int lump)
   Z_Free(data);
 
   portals = new portal_t[numportals];
-  memset(portals, 0, sizeof(portal_t) * numportals);
+  memset((void *)portals, 0, sizeof(portal_t) * numportals);
 }
 
 //==========================================================================
@@ -461,7 +461,7 @@ void TVisBuilder::LoadSubsectors(int lump)
     numsubsectors = (glwad->LumpSize(lump) - HdrSize) /
       sizeof(mapglsubsector_v3_t);
     subsectors = new subsector_t[numsubsectors];
-    memset(subsectors, 0, sizeof(subsector_t) * numsubsectors);
+    memset((void *)subsectors, 0, sizeof(subsector_t) * numsubsectors);
 
     mapglsubsector_v3_t* ms = (mapglsubsector_v3_t*)((vuint8*)data +
       HdrSize);
@@ -497,7 +497,7 @@ void TVisBuilder::LoadSubsectors(int lump)
   {
     numsubsectors = glwad->LumpSize(lump) / sizeof(mapsubsector_t);
     subsectors = new subsector_t[numsubsectors];
-    memset(subsectors, 0, sizeof(subsector_t) * numsubsectors);
+    memset((void *)subsectors, 0, sizeof(subsector_t) * numsubsectors);
 
     mapsubsector_t* ms = (mapsubsector_t *)data;
     ss = subsectors;

@@ -523,14 +523,13 @@ void TVisBuilder::PortalFlow(portal_t *p)
 {
   threaddata_t  data;
 
-  if (p->status != stat_working)
-    throw GLVisError("PortalFlow: reflowed");
+  if (p->status != stat_working) throw GLVisError("PortalFlow: reflowed");
   p->status = stat_working;
 
   p->visbits = new vuint8[bitbytes];
   memset(p->visbits, 0, bitbytes);
 
-  memset(&data, 0, sizeof(data));
+  memset((void *)&data, 0, sizeof(data));
   data.leafvis = p->visbits;
   data.base = p;
 
