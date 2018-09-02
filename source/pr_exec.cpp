@@ -226,21 +226,34 @@ static void cstDump (const vuint8 *ip) {
 } while (0)
 
 
-#define MAX_ITER_STACK (32)
+static VScriptIterator **iterStack = nullptr;
+static int iterStackUsed = 0;
+static int iterStackSize = 0;
 
-struct ItStackItem {
-  VScriptIterator *it; // can be null
-};
+
+static void pushOldIterator (VScriptIterator *iter) {
+  if (iterStackUsed == iterStackSize) {
+    // grow
+    iterStackSize = ((iterStackSize+1)|0x3ff)+1;
+    iterStack = (VScriptIterator **)realloc(iterStack, iterStackSize*sizeof(iterStack[0]));
+    if (!iterStack) { cstDump(nullptr); Sys_Error("popOldIterator: out of memory for iterator stack"); }
+    if (iterStackUsed >= iterStackSize) { cstDump(nullptr); Sys_Error("popOldIterator: WTF?!"); }
+  }
+  iterStack[iterStackUsed++] = iter;
+}
+
+
+static void popOldIterator () {
+  if (iterStackUsed == 0) { cstDump(nullptr); Sys_Error("popOldIterator: iterator stack underflow"); }
+  VScriptIterator *it = iterStack[--iterStackUsed];
+  if (it) it->Finished();
+}
 
 
 static void RunFunction (VMethod *func) {
   vuint8 *ip = nullptr;
   VStack *sp;
   VStack *local_vars;
-  //VScriptIterator *ActiveIterators = nullptr;
-  ItStackItem itstack[MAX_ITER_STACK];
-  int itsp = 0;
-  int retSize = 0;
   float ftemp;
   vint32 itemp;
 
@@ -416,47 +429,35 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Return)
-        if (itsp == 0) {
-          checkSlow(sp == local_vars+func->NumLocals);
+        checkSlow(sp == local_vars+func->NumLocals);
 #ifdef VMEXEC_RUNDUMP
-          printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+        printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
-          pr_stackPtr = local_vars;
-          cstPop();
-          return;
-        }
-        //retSize = 0;
-        goto doRealReturn;
+        pr_stackPtr = local_vars;
+        cstPop();
+        return;
 
       PR_VM_CASE(OPC_ReturnL)
-        if (itsp == 0) {
-          checkSlow(sp == local_vars+func->NumLocals+1);
+        checkSlow(sp == local_vars+func->NumLocals+1);
 #ifdef VMEXEC_RUNDUMP
-          printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+        printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
-          ((VStack *)local_vars)[0] = sp[-1];
-          pr_stackPtr = local_vars+1;
-          cstPop();
-          return;
-        }
-        retSize = 1;
-        goto doRealReturn;
+        ((VStack *)local_vars)[0] = sp[-1];
+        pr_stackPtr = local_vars+1;
+        cstPop();
+        return;
 
       PR_VM_CASE(OPC_ReturnV)
-        if (itsp == 0) {
-          checkSlow(sp == local_vars+func->NumLocals+3);
+        checkSlow(sp == local_vars+func->NumLocals+3);
 #ifdef VMEXEC_RUNDUMP
-          printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
+        printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
-          ((VStack *)local_vars)[0] = sp[-3];
-          ((VStack *)local_vars)[1] = sp[-2];
-          ((VStack *)local_vars)[2] = sp[-1];
-          pr_stackPtr = local_vars+3;
-          cstPop();
-          return;
-        }
-        retSize = 3;
-        goto doRealReturn;
+        ((VStack *)local_vars)[0] = sp[-3];
+        ((VStack *)local_vars)[1] = sp[-2];
+        ((VStack *)local_vars)[2] = sp[-1];
+        pr_stackPtr = local_vars+3;
+        cstPop();
+        return;
 
       PR_VM_CASE(OPC_GotoB)
         ip += ip[1];
@@ -2204,31 +2205,21 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_IteratorInit)
-        if (itsp >= MAX_ITER_STACK) { cstDump(ip); Sys_Error("Too many nested `foreach`"); }
         ++ip;
-        //((VScriptIterator *)sp[-1].p)->Next = ActiveIterators;
-        //ActiveIterators = (VScriptIterator *)sp[-1].p;
-        itstack[itsp].it = (VScriptIterator *)sp[-1].p;
-        ++itsp;
+        pushOldIterator((VScriptIterator *)sp[-1].p);
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_IteratorNext)
-        if (itsp == 0) { cstDump(ip); Sys_Error("VM: No active iterators (but we should have one)"); }
-        if (!itstack[itsp-1].it) { cstDump(ip); Sys_Error("VM: Active iterator is not native (but it should be)"); }
+        if (iterStackUsed == 0) { cstDump(ip); Sys_Error("VM: No active iterators (but we should have one)"); }
         ++ip;
-        //checkSlow(ActiveIterators);
-        //sp->i = ActiveIterators->GetNext();
-        sp->i = itstack[itsp-1].it->GetNext();
+        sp->i = iterStack[iterStackUsed-1]->GetNext();
         ++sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_IteratorPop)
-        if (itsp == 0) { cstDump(ip); Sys_Error("VM: No active iterators (but we should have one)"); }
-        if (!itstack[itsp-1].it) { cstDump(ip); Sys_Error("VM: Active iterator is not native (but it should be)"); }
-        //delete itstack[itsp-1].it;
-        itstack[itsp-1].it->Finished();
-        --itsp;
+        if (iterStackUsed == 0) { cstDump(ip); Sys_Error("VM: No active iterators (but we should have one)"); }
+        popOldIterator();
         ++ip;
         PR_VM_BREAK;
 
@@ -2420,40 +2411,9 @@ func_loop:
   }
   goto func_loop;
 
-doRealReturn:
   #ifdef VMEXEC_RUNDUMP
   printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
   #endif
-  if (itsp == 0) { cstDump(ip); Sys_Error("VM: Return that should not be"); }
-  // kill iterators
-
-  while (itsp > 0) {
-    ItStackItem &it = itstack[itsp-1];
-    if (it.it) it.it->Finished();
-    --itsp;
-  }
-
-  // set return value
-  switch (retSize) {
-    case 0:
-      checkSlow(sp == local_vars+func->NumLocals);
-      pr_stackPtr = local_vars;
-      break;
-    case 1:
-      checkSlow(sp == local_vars+func->NumLocals+1);
-      ((VStack *)local_vars)[0] = sp[-1];
-      pr_stackPtr = local_vars+1;
-      break;
-    case 3:
-      checkSlow(sp == local_vars+func->NumLocals+3);
-      ((VStack *)local_vars)[0] = sp[-3];
-      ((VStack *)local_vars)[1] = sp[-2];
-      ((VStack *)local_vars)[2] = sp[-1];
-      pr_stackPtr = local_vars+3;
-      break;
-    default: { cstDump(ip); Sys_Error("VM: Invalid return size"); }
-  }
-  cstPop();
   unguardf(("(%s %d)", *func->GetFullName(), (int)(ip-func->Statements.Ptr())));
 }
 
