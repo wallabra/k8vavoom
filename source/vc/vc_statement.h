@@ -40,8 +40,8 @@ public:
   virtual bool Resolve (VEmitContext &) = 0;
   virtual void DoEmit (VEmitContext &) = 0;
   void Emit (VEmitContext &);
-  void EmitFinalizer (VEmitContext &ec);
-  void EmitFinalizerBC (VEmitContext &ec); // break/cont
+  virtual void EmitFinalizer (VEmitContext &ec);
+  virtual void EmitFinalizerBC (VEmitContext &ec); // break/cont
 
   virtual bool IsLabel () const;
   virtual VName GetLabelName () const;
@@ -583,6 +583,25 @@ protected:
 
 public:
   virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VCompoundScopeExit : public VCompound {
+public:
+  VStatement *Body;
+
+  VCompoundScopeExit (VStatement *ABody, const TLocation &ALoc);
+  virtual ~VCompoundScopeExit () override;
+  virtual VStatement *SyntaxCopy () override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
+  virtual void EmitFinalizer (VEmitContext &ec) override;
+  virtual void EmitFinalizerBC (VEmitContext &ec) override;
+
+protected:
+  VCompoundScopeExit () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
 };
 
 

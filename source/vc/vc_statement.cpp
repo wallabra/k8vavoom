@@ -2619,6 +2619,10 @@ bool VReturn::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VReturn::DoEmit (VEmitContext &ec) {
+  if (!ec.IsReturnAllowed()) {
+    ParseError(Loc, "`return` is not allowed here");
+    return;
+  }
   if (Expr) {
     Expr->Emit(ec);
     ec.EmitFinalizers();
@@ -3064,6 +3068,98 @@ bool VCompound::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) c
     if (Statements[f] && Statements[f]->IsVarDecl()) return false;
   }
   return true;
+}
+
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::VCompoundScopeExit
+//
+//==========================================================================
+VCompoundScopeExit::VCompoundScopeExit (VStatement *ABody, const TLocation &ALoc)
+  : VCompound(ALoc)
+  , Body(ABody)
+{
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::~VCompoundScopeExit
+//
+//==========================================================================
+VCompoundScopeExit::~VCompoundScopeExit () {
+  delete Body; Body = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::SyntaxCopy
+//
+//==========================================================================
+VStatement *VCompoundScopeExit::SyntaxCopy () {
+  auto res = new VCompoundScopeExit();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::DoSyntaxCopyTo
+//
+//==========================================================================
+void VCompoundScopeExit::DoSyntaxCopyTo (VStatement *e) {
+  VCompound::DoSyntaxCopyTo(e);
+  auto res = (VCompoundScopeExit *)e;
+  res->Body = (Body ? Body->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::Resolve
+//
+//==========================================================================
+bool VCompoundScopeExit::Resolve (VEmitContext &ec) {
+  if (Body) {
+    if (!Body->Resolve(ec)) return false;
+  }
+  return VCompound::Resolve(ec);
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::DoEmit
+//
+//==========================================================================
+void VCompoundScopeExit::DoEmit (VEmitContext &ec) {
+  auto fin = ec.RegisterFinalizer(this);
+  auto block = ec.BlockBreakContReturn();
+  VCompound::DoEmit(ec);
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::EmitFinalizer
+//
+//==========================================================================
+void VCompoundScopeExit::EmitFinalizer (VEmitContext &ec) {
+  if (Body) Body->Emit(ec);
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::EmitFinalizerBC
+//
+//==========================================================================
+void VCompoundScopeExit::EmitFinalizerBC (VEmitContext &ec) {
+  if (Body) Body->Emit(ec);
 }
 
 

@@ -1523,6 +1523,35 @@ VStatement *VParser::ParseCompoundStatement (const TLocation &l) {
       Lex.NextToken();
       break;
     }
+    if (Lex.Token == TK_Scope) {
+      // `scope(exit)`, `scope(return)`
+      auto loc = Lex.Location;
+      Lex.NextToken();
+      Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
+      if (Lex.Check(TK_Return)) {
+        ParseError(Lex.Location, "`scope(return)` is not supported yet");
+        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+        auto st = ParseStatement();
+        delete st; // we don't need it
+      } else if (Lex.Token == TK_Identifier && Lex.Name == "exit") {
+        Lex.NextToken();
+        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+        // parse scope body
+        VStatement *stbody = ParseStatement();
+        // parse rest of the compound
+        auto rest = ParseCompoundStatement(l);
+        // create scope statement
+        auto scopest = new VCompoundScopeExit(stbody, loc);
+        // append rest
+        scopest->Statements.Append(rest);
+        // append scope
+        Comp->Statements.Append(scopest);
+        break;
+      } else {
+        ParseError(Lex.Location, "Scope condition expected");
+      }
+      continue;
+    }
     Comp->Statements.Append(ParseStatement());
   }
   lastCompoundStart = savedLCS;

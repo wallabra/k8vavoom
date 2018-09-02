@@ -82,9 +82,9 @@ private:
     VEmitContext *ec;
     VFinalizer *prev;
     VStatement *st;
-    bool isBreakCont;
+    struct VBreakCont *bc;
 
-    VFinalizer () : rc(0), ec(nullptr), prev(nullptr), st(nullptr), isBreakCont(false) {}
+    VFinalizer () : rc(0), ec(nullptr), prev(nullptr), st(nullptr), bc(nullptr) {}
 
     inline void incRef () { ++rc; }
     inline void decRef () { if (--rc == 0) die(); }
@@ -93,15 +93,21 @@ private:
     void emit ();
   };
 
+  enum BCType {
+    Break,
+    Continue,
+    Block,
+  };
+
   struct VBreakCont {
     int rc;
     VEmitContext *ec;
     VBreakCont *prev;
     VLabel lbl;
-    bool isBreak;
+    BCType type;
     VFinalizer *lastFin;
 
-    VBreakCont () : rc(0), ec(nullptr), prev(nullptr), lbl(), isBreak(false), lastFin(nullptr) {}
+    VBreakCont () : rc(0), ec(nullptr), prev(nullptr), lbl(), type(BCType::Break), lastFin(nullptr) {}
     ~VBreakCont ();
 
     inline void incRef () { ++rc; }
@@ -186,7 +192,7 @@ public:
   };
 
 private:
-  VAutoBreakCont DefineBreakCont (bool isBreak);
+  VAutoBreakCont DefineBreakCont (BCType atype);
 
 public:
   VMethod *CurrentFunc;
@@ -282,10 +288,14 @@ public:
   VAutoBreakCont DefineBreak ();
   VAutoBreakCont DefineContinue ();
 
+  VAutoBreakCont BlockBreakContReturn ();
+
   // returns success flag
   bool EmitBreak (const TLocation &loc);
   // returns success flag
   bool EmitContinue (const TLocation &loc);
+
+  bool IsReturnAllowed ();
 };
 
 

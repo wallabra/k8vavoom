@@ -159,7 +159,6 @@ void VEmitContext::VAutoBreakCont::RegisterFinalizer (VStatement *st) {
   fin->ec = bc->ec;
   fin->prev = bc->lastFin;
   fin->st = st;
-  fin->isBreakCont = true;
   bc->lastFin = fin;
 }
 
@@ -254,7 +253,7 @@ void VEmitContext::VFinalizer::die () {
 //==========================================================================
 void VEmitContext::VFinalizer::emit () {
   if (st) {
-    if (isBreakCont) {
+    if (bc) {
       st->EmitFinalizerBC(*ec);
     } else {
       st->EmitFinalizer(*ec);
@@ -1070,13 +1069,13 @@ void VEmitContext::EmitFinalizers () {
 //  VEmitContext::DefineBreakCont
 //
 //==========================================================================
-VEmitContext::VAutoBreakCont VEmitContext::DefineBreakCont (bool isBreak) {
+VEmitContext::VAutoBreakCont VEmitContext::DefineBreakCont (VEmitContext::BCType atype) {
   VBreakCont *bc = new VBreakCont();
   bc->rc = 0; // will be incremented in `VAutoBreakCont()` constructor
   bc->ec = this;
   bc->prev = lastBC;
   bc->lbl = DefineLabel();
-  bc->isBreak = isBreak;
+  bc->type = atype;
   lastBC = bc;
   return VAutoBreakCont(bc); // this increments `rc`
 }
@@ -1088,7 +1087,7 @@ VEmitContext::VAutoBreakCont VEmitContext::DefineBreakCont (bool isBreak) {
 //
 //==========================================================================
 VEmitContext::VAutoBreakCont VEmitContext::DefineBreak () {
-  return DefineBreakCont(true);
+  return DefineBreakCont(BCType::Break);
 }
 
 
@@ -1098,7 +1097,17 @@ VEmitContext::VAutoBreakCont VEmitContext::DefineBreak () {
 //
 //==========================================================================
 VEmitContext::VAutoBreakCont VEmitContext::DefineContinue () {
-  return DefineBreakCont(false);
+  return DefineBreakCont(BCType::Continue);
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::BlockBreakContReturn
+//
+//==========================================================================
+VEmitContext::VAutoBreakCont VEmitContext::BlockBreakContReturn () {
+  return DefineBreakCont(BCType::Block);
 }
 
 
@@ -1111,9 +1120,14 @@ VEmitContext::VAutoBreakCont VEmitContext::DefineContinue () {
 //==========================================================================
 bool VEmitContext::EmitBreak (const TLocation &loc) {
   for (VBreakCont *bc = lastBC; bc; bc = bc->prev) {
-    if (bc->isBreak) {
-      AddStatement(OPC_Goto, bc->lbl, loc);
-      return true; // done, no need to emit finalizers
+    switch (bc->type) {
+      case BCType::Break:
+        AddStatement(OPC_Goto, bc->lbl, loc);
+        return true; // done, no need to emit finalizers
+      case BCType::Continue:
+        break;
+      case BCType::Block:
+        return false;
     }
     bc->emit();
   }
@@ -1130,11 +1144,29 @@ bool VEmitContext::EmitBreak (const TLocation &loc) {
 //==========================================================================
 bool VEmitContext::EmitContinue (const TLocation &loc) {
   for (VBreakCont *bc = lastBC; bc; bc = bc->prev) {
-    if (!bc->isBreak) {
-      AddStatement(OPC_Goto, bc->lbl, loc);
-      return true; // done, no need to emit finalizers
+    switch (bc->type) {
+      case BCType::Break:
+        break;
+      case BCType::Continue:
+        AddStatement(OPC_Goto, bc->lbl, loc);
+        return true; // done, no need to emit finalizers
+      case BCType::Block:
+        return false;
     }
     bc->emit();
   }
   return false; // oops
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::IsReturnAllowed
+//
+//==========================================================================
+bool VEmitContext::IsReturnAllowed () {
+  for (VBreakCont *bc = lastBC; bc; bc = bc->prev) {
+    if (bc->type == BCType::Break) return false;
+  }
+  return true;
 }
