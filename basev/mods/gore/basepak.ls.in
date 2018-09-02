@@ -17,13 +17,10 @@ sprites/gore/blodb0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/blodb0.png
 sprites/gore/blodc0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/blodc0.png
 sprites/gore/blodd0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/blodd0.png
 sprites/gore/blode0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/blode0.png
-sprites/gore/blodj0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/blodj0.png
-sprites/gore/blodk0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/blodk0.png
-sprites/gore/blodl0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/blodl0.png
-sprites/gore/blodm0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/blodm0.png
+sprites/gore/bloma0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/bloma0.png
 sprites/gore/bluda0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/bluda0.png
 sprites/gore/bludb0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/bludb0.png
-sprites/gore/bludz0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/bludz0.png
+sprites/gore/bluxa0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/bluxa0.png
 sprites/gore/bpdla0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/bpdla0.png
 sprites/gore/bpdlb0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/bpdlb0.png
 sprites/gore/bpdlc0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/bpdlc0.png
@@ -66,7 +63,10 @@ sprites/gore/br7nd0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/br7nd0.png
 sprites/gore/br7ne0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/br7ne0.png
 sprites/gore/bsptc0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/bsptc0.png
 sprites/gore/bsptd0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/bsptd0.png
+sprites/gore/btrla0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/btrlc0.png
+sprites/gore/btrlb0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/btrlc0.png
 sprites/gore/btrlc0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/btrlc0.png
+sprites/gore/btrld0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/btrlc0.png
 sprites/gore/msbla0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/msbla0.png
 sprites/gore/msblb0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/msblb0.png
 sprites/gore/msblc0    @CMAKE_CURRENT_SOURCE_DIR@/sprites/gore/msblc0.png

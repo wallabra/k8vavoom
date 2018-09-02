@@ -29,11 +29,11 @@ Actor K8Gore_TinyBlood$(Color) {
       TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
 #ifndef TRANSIENT
-      BLUD Z 500
+      BLUX A 500
       Stop
 #else
     TinFade:
-      BLUD Z 2 A_FadeOut(0.01)
+      BLUX A 2 A_FadeOut(0.01)
       Loop
 #endif
 
@@ -716,9 +716,9 @@ Actor K8Gore_BloodDripingFromCeiling$(Color) : K8Gore_TinyBlood$(Color) {
       TNT1 A 0 A_Jump(230, "NoSpawn")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
 #ifndef TRANSIENT
-      BLUD Z 500
+      BLUX A 500
 #else
-      BLUD Z 100 A_FadeOut(0.1)
+      BLUX A 100 A_FadeOut(0.1)
 #endif
       Loop
   }
@@ -743,7 +743,7 @@ Actor K8Gore_BloodDripingFromCeilingBig$(Color) : K8Gore_TinyBlood$(Color) {
       BPDL A 0 ThrustThingZ(0,300,0,1)
       TNT1 A 0 A_Jump(160, "NoSpawn")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      BLUD Z 500
+      BLUX A 500
       Loop
   }
 }
@@ -762,7 +762,7 @@ Actor K8Gore_DripingBlood$(Color) : K8Gore_TinyBlood$(Color) {
     Spawn:
       TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      BLUD Z 4
+      BLUX A 4
       Loop
 
     Splash:
@@ -791,7 +791,7 @@ Actor K8Gore_DripingBloodLeavesPool$(Color) : K8Gore_TinyBlood$(Color) {
     Spawn:
       TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      BLUD Z 4
+      BLUX A 4
       Loop
 
     Splash:
@@ -1439,7 +1439,7 @@ Actor K8Gore_GrowingSmallBloodSpot$(Color) {
       //Check if blood is over water. If yes, disappear.
       //Randomize blood texture:
       TNT1 A 0 ThrustThingZ(0,5,0,1)
-      BLOD M 9009
+      BLOM A 9009
       Stop
 
     Splash:
