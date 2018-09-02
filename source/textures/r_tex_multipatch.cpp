@@ -79,7 +79,7 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
   // create list of patches
   PatchCount = Streamer<vint16>(Strm);
   Patches = new VTexPatch[PatchCount];
-  memset(Patches, 0, sizeof(VTexPatch)*PatchCount);
+  memset((void *)Patches, 0, sizeof(VTexPatch)*PatchCount);
 
   // read patches
   bool warned = false;
