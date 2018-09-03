@@ -1859,7 +1859,7 @@ again:
   Uint32 flags = SDL_WINDOW_OPENGL|(tryCount == 0 ? SDL_WINDOW_HIDDEN : 0);
   //if (!Windowed) flags |= SDL_WINDOW_FULLSCREEN;
   //flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-  if (fullscreen) flags |= (fullscreen == 1 ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_FULLSCREEN_DESKTOP);
+  if (fullscreen && tryCount > 0) flags |= (fullscreen == 1 ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_FULLSCREEN_DESKTOP);
 
   //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
@@ -1903,9 +1903,9 @@ again:
 
   //k8: no, i really don't know why i have to repeat this twice,
   //    but at the first try i get no stencil buffer for some reason
-  int stb = -1;
-  SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &stb);
-  if (stb < 1 && tryCount++ == 0) {
+  //    (and no rgba framebuffer too)
+  if (tryCount == 0) {
+    ++tryCount;
     SDL_GL_MakeCurrent(hw_window, nullptr);
     SDL_GL_DeleteContext(hw_glctx);
     SDL_DestroyWindow(hw_window);
@@ -1913,6 +1913,9 @@ again:
     hw_window = nullptr;
     goto again;
   }
+
+  int stb = -1;
+  SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &stb);
   stencilBits = (stb < 1 ? 0 : stb);
   //if (stb < 1) fprintf(stderr, "WARNING: no stencil buffer available!");
   if (flags&SDL_WINDOW_HIDDEN) SDL_ShowWindow(hw_window);
