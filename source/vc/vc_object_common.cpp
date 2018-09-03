@@ -736,6 +736,7 @@ IMPLEMENT_FUNCTION(VObject, SpawnObject) {
 
 
 #include <time.h>
+#include <sys/time.h>
 
 struct TTimeVal {
   int secs; // actually, unsigned
