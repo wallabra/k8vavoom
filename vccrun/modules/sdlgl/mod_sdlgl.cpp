@@ -1856,7 +1856,7 @@ bool VVideo::open (const VStr &winname, int width, int height, int fullscreen) {
   close();
 
 again:
-  Uint32 flags = SDL_WINDOW_OPENGL;
+  Uint32 flags = SDL_WINDOW_OPENGL|(tryCount == 0 ? SDL_WINDOW_HIDDEN : 0);
   //if (!Windowed) flags |= SDL_WINDOW_FULLSCREEN;
   //flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   if (fullscreen) flags |= (fullscreen == 1 ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_FULLSCREEN_DESKTOP);
@@ -1915,6 +1915,7 @@ again:
   }
   stencilBits = (stb < 1 ? 0 : stb);
   //if (stb < 1) fprintf(stderr, "WARNING: no stencil buffer available!");
+  if (flags&SDL_WINDOW_HIDDEN) SDL_ShowWindow(hw_window);
 
 #if 0 //!defined(WIN32)
   {
