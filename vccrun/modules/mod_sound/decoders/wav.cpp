@@ -22,8 +22,8 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+#include "../sound.h"
 
-#include "sound.h"
 
 #pragma pack(1)
 struct FRiffChunkHeader {

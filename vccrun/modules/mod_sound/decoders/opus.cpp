@@ -22,10 +22,9 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include <opus/opusfile.h>
 
-#include "sound.h"
+#include "../sound.h"
 
 
 class VOpusAudioCodec : public VAudioCodec {

@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "sound.h"
 
 //#define VCCRUN_SOUND_THREAD_DEBUG

@@ -24,7 +24,7 @@
 //**************************************************************************
 #include <xmp.h>
 
-#include "sound.h"
+#include "../sound.h"
 
 
 class VXMPAudioCodec : public VAudioCodec {

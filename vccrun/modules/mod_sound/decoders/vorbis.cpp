@@ -22,10 +22,9 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include <vorbis/codec.h>
 
-#include "sound.h"
+#include "../sound.h"
 
 
 class VVorbisAudioCodec : public VAudioCodec {

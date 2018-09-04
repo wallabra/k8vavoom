@@ -22,10 +22,9 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include <mad.h>
 
-#include "sound.h"
+#include "../sound.h"
 
 
 class VMp3AudioCodec : public VAudioCodec {

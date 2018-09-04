@@ -129,30 +129,46 @@ if (ENABLE_VCCRUN)
     )
   endif(VCCRUN_HAXPAK)
 
+
   set(VCCRUN_SOUND_VORBIS_SOURCES )
   if(VORBIS_FOUND)
-    set(VCCRUN_SOUND_VORBIS_SOURCES modules/mod_sound/snd_vorbis.cpp)
+    set(VCCRUN_SOUND_VORBIS_SOURCES modules/mod_sound/decoders/vorbis.cpp)
   endif(VORBIS_FOUND)
 
   set(VCCRUN_SOUND_OPUS_SOURCES )
   if(OPUS_FOUND)
-    set(VCCRUN_SOUND_OPUS_SOURCES modules/mod_sound/snd_opus.cpp)
+    set(VCCRUN_SOUND_OPUS_SOURCES modules/mod_sound/decoders/opus.cpp)
   endif(OPUS_FOUND)
 
   set(VCCRUN_SOUND_FLAC_SOURCES )
   if(FLAC_FOUND)
-    set(VCCRUN_SOUND_FLAC_SOURCES modules/mod_sound/snd_flac.cpp)
+    set(VCCRUN_SOUND_FLAC_SOURCES modules/mod_sound/decoders/flac.cpp)
   endif(FLAC_FOUND)
 
   set(VCCRUN_SOUND_LIBMAD_SOURCES )
   if(LIBMAD_FOUND)
-    set(VCCRUN_SOUND_LIBMAD_SOURCES modules/mod_sound/snd_libmad.cpp)
+    set(VCCRUN_SOUND_LIBMAD_SOURCES modules/mod_sound/decoders/mad.cpp)
   endif(LIBMAD_FOUND)
 
   set(VCCRUN_SOUND_XMPLITE_SOURCES )
   if(XMPLITE_FOUND)
-    set(VCCRUN_SOUND_XMPLITE_SOURCES modules/mod_sound/snd_xmplite.cpp)
+    set(VCCRUN_SOUND_XMPLITE_SOURCES modules/mod_sound/decoders/xmplite.cpp)
   endif(XMPLITE_FOUND)
+
+  set(VCCRUN_SOUND_SOURCES
+    modules/mod_sound/sound.h
+    modules/mod_sound/openal.cpp
+    modules/mod_sound/main.cpp
+    modules/mod_sound/streamplayer.cpp
+    modules/mod_sound/vcapi.cpp
+    modules/mod_sound/decoders/wav.cpp
+    ${VCCRUN_SOUND_VORBIS_SOURCES}
+    ${VCCRUN_SOUND_OPUS_SOURCES}
+    ${VCCRUN_SOUND_FLAC_SOURCES}
+    ${VCCRUN_SOUND_LIBMAD_SOURCES}
+    ${VCCRUN_SOUND_XMPLITE_SOURCES}
+  )
+
 
   add_executable(vcc_run
     ${VCCRUN_COMPILER_SOURCES}
@@ -179,17 +195,7 @@ if (ENABLE_VCCRUN)
     modules/mod_console.h
     modules/mod_console.cpp
     # sound system
-    modules/mod_sound/sound.h
-    modules/mod_sound/snd_al.cpp
-    modules/mod_sound/snd_data.cpp
-    modules/mod_sound/snd_main.cpp
-    modules/mod_sound/snd_streamplayer.cpp
-    ${VCCRUN_SOUND_VORBIS_SOURCES}
-    ${VCCRUN_SOUND_OPUS_SOURCES}
-    ${VCCRUN_SOUND_FLAC_SOURCES}
-    ${VCCRUN_SOUND_LIBMAD_SOURCES}
-    ${VCCRUN_SOUND_XMPLITE_SOURCES}
-    modules/mod_sound/snd_wav.cpp
+    ${VCCRUN_SOUND_SOURCES}
   )
 
   #message(STATUS "VCCRUN: LIBS: " ${VCCRUN_LINKLIBS})
