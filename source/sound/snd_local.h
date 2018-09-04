@@ -172,11 +172,7 @@ struct VReverbInfo
 class VSoundDevice : public VInterface
 {
 public:
-  bool    Sound3D;
-
-  VSoundDevice()
-  : Sound3D(false)
-  {}
+  VSoundDevice() {}
 
   //  VSoundDevice interface.
   virtual bool Init() = 0;
@@ -185,7 +181,6 @@ public:
   virtual void Tick(float) = 0;
   virtual int PlaySound(int, float, float, float, bool) = 0;
   virtual int PlaySound3D(int, const TVec&, const TVec&, float, float, bool) = 0;
-  virtual void UpdateChannel(int, float, float) = 0;
   virtual void UpdateChannel3D(int, const TVec&, const TVec&) = 0;
   virtual bool IsChannelPlaying(int) = 0;
   virtual void StopChannel(int) = 0;

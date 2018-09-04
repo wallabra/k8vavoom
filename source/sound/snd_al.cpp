@@ -78,7 +78,6 @@ public:
   void Tick(float);
   int PlaySound(int, float, float, float, bool);
   int PlaySound3D(int, const TVec&, const TVec&, float, float, bool);
-  void UpdateChannel(int, float, float);
   void UpdateChannel3D(int, const TVec&, const TVec&);
   bool IsChannelPlaying(int);
   void StopChannel(int);
@@ -175,10 +174,6 @@ bool VOpenALDevice::Init()
   //  Allocate array for buffers.
   Buffers = new ALuint[GSoundManager->S_sfx.Num()];
   memset(Buffers, 0, sizeof(ALuint) * GSoundManager->S_sfx.Num());
-  if (GArgs.CheckParm("-3dsound")) {
-    Sound3D = true;
-    GCon->Log(NAME_Init, "3D sound on");
-  }
 
   GCon->Log(NAME_Init, "OpenAL initialized.");
   return true;
@@ -382,15 +377,6 @@ int VOpenALDevice::PlaySound3D(int sound_id, const TVec &origin,
   unguard;
 }
 
-//==========================================================================
-//
-//  VOpenALDevice::UpdateChannel
-//
-//==========================================================================
-
-void VOpenALDevice::UpdateChannel(int, float, float)
-{
-}
 
 //==========================================================================
 //

@@ -128,7 +128,6 @@ private:
   };
 
   //  Sound curve
-  vuint8 *SoundCurve;
   int         MaxSoundDist;
 
   //  Map's music lump and CD track
@@ -242,8 +241,7 @@ VAudioPublic *VAudioPublic::Create()
 //==========================================================================
 
 VAudio::VAudio()
-: SoundCurve(nullptr)
-, MaxSoundDist(0)
+: MaxSoundDist(1200*6)
 , MapSong(NAME_None)
 , MapCDTrack(0)
 , MusicEnabled(true)
@@ -377,26 +375,7 @@ void VAudio::Init()
     StreamMusicPlayer->Init();
   }
 
-  int Lump = W_CheckNumForName(NAME_sndcurve);
-  if (Lump >= 0)
-  {
-    VStream *Strm = W_CreateLumpReaderNum(Lump);
-    MaxSoundDist = Strm->TotalSize();
-    SoundCurve = new vuint8[MaxSoundDist];
-    Strm->Serialise(SoundCurve, MaxSoundDist);
-    delete Strm;
-    Strm = nullptr;
-  }
-  else
-  {
-    MaxSoundDist = 1200;
-    SoundCurve = new vuint8[MaxSoundDist];
-    for (int i = 0; i < MaxSoundDist; i++)
-    {
-      SoundCurve[i] = MIN(127, (MaxSoundDist - i) * 127 /
-        (MaxSoundDist - 160));
-    }
-  }
+  MaxSoundDist = 1200*6;
   MaxVolume = -1;
 
   //  Free all channels for use.
@@ -443,11 +422,6 @@ void VAudio::Shutdown()
     SoundDevice->Shutdown();
     delete SoundDevice;
     SoundDevice = nullptr;
-  }
-  if (SoundCurve)
-  {
-    delete[] SoundCurve;
-    SoundCurve = nullptr;
   }
   unguard;
 }
@@ -525,18 +499,6 @@ void VAudio::PlaySound(int InSoundId, const TVec &origin,
   {
     //  Local sound
     handle = SoundDevice->PlaySound(sound_id, volume, 0, pitch, Loop);
-    is3D = false;
-  }
-  else if (!SoundDevice->Sound3D)
-  {
-    float vol = SoundCurve[dist] / 127.0 * volume;
-    float sep = DotProduct(origin - (cl ? cl->ViewOrg : TVec(0.0, 0.0, 0.0)), ListenerRight) /
-      MaxSoundDist;
-    if (snd_swap_stereo)
-    {
-      sep = -sep;
-    }
-    handle = SoundDevice->PlaySound(sound_id, vol, sep, pitch, Loop);
     is3D = false;
   }
   else
@@ -953,18 +915,7 @@ void VAudio::UpdateSfx()
     }
 
     //  Update params
-    if (!Channel[i].is3D)
-    {
-      float vol = SoundCurve[dist] / 127.0 * Channel[i].volume;
-      float sep = DotProduct(Channel[i].origin - cl->ViewOrg,
-        ListenerRight) / MaxSoundDist;
-      if (snd_swap_stereo)
-      {
-        sep = -sep;
-      }
-      SoundDevice->UpdateChannel(Channel[i].handle, vol, sep);
-    }
-    else
+    if (Channel[i].is3D)
     {
       SoundDevice->UpdateChannel3D(Channel[i].handle,
         Channel[i].origin, Channel[i].velocity);
@@ -973,7 +924,7 @@ void VAudio::UpdateSfx()
       (PRIORITY_MAX_ADJUST - PRIORITY_MAX_ADJUST * dist / MaxSoundDist);
   }
 
-  if (SoundDevice->Sound3D && cl)
+  if (cl)
   {
     SoundDevice->UpdateListener(cl->ViewOrg, TVec(0, 0, 0),
       ListenerForward, ListenerRight, ListenerUp,
