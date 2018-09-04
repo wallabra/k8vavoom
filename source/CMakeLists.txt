@@ -359,8 +359,6 @@ set(MAIN_OPENGL_SOURCES
 #-- Linux with SDL --
 set(MAIN_UNIX_SDL_SOURCES
   in_sdl.cpp
-  #sound/snd_sdl.cpp
-  #sound/snd_sdlmusic.cpp
   sys_sdl.cpp
 )
 set(MAIN_OPENGL_UNIX_SDL_SOURCES
