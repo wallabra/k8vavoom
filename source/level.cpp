@@ -1168,6 +1168,19 @@ static bool isDecalsOverlap (VDecalDef *dec, float segdist, float orgz, decal_t 
 }
 
 
+static __attribute__((unused)) const char *lif2str (int flags) {
+  static char buf[128];
+  char *pp = buf;
+  *pp++ = '<';
+  if (flags&ML_TWOSIDED) *pp++ = '2';
+  if (flags&ML_DONTPEGTOP) *pp++ = 'T';
+  if (flags&ML_DONTPEGBOTTOM) *pp++ = 'B';
+  *pp++ = '>';
+  *pp = 0;
+  return buf;
+}
+
+
 void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, vuint32 flips) {
   guard(VLevel::PutDecalAtLine);
 
@@ -1232,6 +1245,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
         //printf("* SKIP seg: (segd=%f:%f; seg=%f:%f)\n", segd0, segd1, seg->offset, seg->offset+seg->length);
         continue;
       }
+      bool slideWithFloor = false;
+      bool slideWithCeiling = false;
       //printf("** found seg: (segd=%f:%f; seg=%f:%f)\n", segd0, segd1, seg->offset, seg->offset+seg->length);
       int dcmaxcount = decal_onetype_max;
            if (tinf.width >= 128 || tinf.height >= 128) dcmaxcount = 8;
@@ -1239,6 +1254,42 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       else if (tinf.width >= 32 || tinf.height >= 32) dcmaxcount = 32;
       // remove old same-typed decals, if necessary
       if (dcmaxcount > 0 && dcmaxcount < 10000) {
+        float hiz = orgz+tinf.yoffset*dec->scaleY;
+        float loz = hiz-tinf.height*dec->scaleY;
+        {
+          side_t *sb = &Sides[li->sidenum[sidenum]];
+          if (sb->TopTexture <= 0 && sb->BottomTexture <= 0 && sb->MidTexture <= 0) { /*!GCon->Logf("  *** no textures at all (sidenum=%d)", sidenum);*/ continue; }
+          if (sb->MidTexture <= 0) {
+            if ((li->flags&ML_TWOSIDED) != 0 && li->sidenum[1-sidenum] >= 0) {
+              // has other side
+              sector_t *bsec = Sides[li->sidenum[1-sidenum]].Sector;
+              bool botHit = false, topHit = false;
+              //!GCon->Logf("sidenum=%d; orgz=%f; loz=%f; hiz=%f; sec.floorZ=%f; sec.ceilZ=%f; bsec.floorZ=%f; bsec.ceilZ=%f; toptex=%d; midtex=%d; bottex=%d; liflg=%s", sidenum, orgz, loz, hiz, sec->floor.TexZ, sec->ceiling.TexZ, bsec->floor.TexZ, bsec->ceiling.TexZ, sb->TopTexture, sb->MidTexture, sb->BottomTexture, lif2str(li->flags));
+
+              if (sb->BottomTexture > 0 && bsec->floor.TexZ > sec->floor.TexZ) {
+                // raises from a floor
+                botHit = !(hiz <= sec->floor.TexZ || loz >= bsec->floor.TexZ);
+                if (botHit) { if ((li->flags&ML_DONTPEGBOTTOM) == 0) slideWithFloor = true; /*!GCon->Logf("  BOTTOM HIT! slide=%d", (slideWithFloor ? 1 : 0));*/ }
+              } else {
+              }
+
+              if (sb->TopTexture > 0 && bsec->ceiling.TexZ < sec->ceiling.TexZ) {
+                // raises from a floor
+                topHit = !(hiz <= bsec->ceiling.TexZ || loz >= sec->ceiling.TexZ);
+                if (topHit) { if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true; /*!GCon->Logf("  TOP HIT! slide=%d", (slideWithCeiling ? 1 : 0));*/ }
+              } else {
+              }
+
+              if (!botHit && !topHit) { /*!GCon->Logf("  *** in air");*/ continue; }
+            } else {
+              // no other side
+              //!GCon->Logf("::: sidenum=%d; orgz=%f; loz=%f; hiz=%f; sec.floorZ=%f; sec.ceilZ=%f; toptex=%d; midtex=%d; bottex=%d; liflg=%s", sidenum, orgz, loz, hiz, sec->floor.TexZ, sec->ceiling.TexZ, sb->TopTexture, sb->MidTexture, sb->BottomTexture, lif2str(li->flags));
+              if (loz >= sec->floor.TexZ && hiz <= sec->ceiling.TexZ) { /*!GCon->Logf("  *** in air, and no middle texture");*/ continue; }
+              if (sb->TopTexture <= 0 && hiz >= sec->ceiling.TexZ) { /*!GCon->Logf("  *** higher than ceiling, and no top texture");*/ continue; }
+              if (sb->BottomTexture <= 0 && loz <= sec->floor.TexZ) { /*!GCon->Logf("  *** lower than floor, and no bottom texture");*/ continue; }
+            }
+          }
+        }
         int count = 0;
         decal_t *prev = nullptr;
         decal_t *first = nullptr;
@@ -1313,29 +1364,16 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       decal->flags = flips|(dec->fullbright ? decal_t::Fullbright : 0)|(dec->fuzzy ? decal_t::Fuzzy : 0);
 
       // setup curz and pegs
-      // if we have the other side, check for top/bottom hit
-      if (li->sidenum[1-sidenum] >= 0) {
-        side_t *sb = &Sides[li->sidenum[1-sidenum]];
-        sector_t *bsec = sb->Sector;
-        // this check is just in case of something really fucked up
-        if (bsec) {
-          //GCon->Logf("bs.floorZ=%f; bs.ceilZ=%f; sec.floorZ=%f; sec.ceilZ=%f", bsec->floor.TexZ, bsec->ceiling.TexZ, sec->floor.TexZ, sec->ceiling.TexZ);
-          // back floor has higher z: has bottom, check for [myfloorz..backfloorz]
-          if (bsec->floor.TexZ > sec->floor.TexZ && orgz >= sec->floor.TexZ && orgz <= bsec->floor.TexZ) {
-            if ((li->flags&/*ML_DONTPEGTOP*/ML_DONTPEGBOTTOM) == 0) {
-              decal->curz -= bsec->floor.TexZ;
-              decal->flags |= decal_t::SlideFloor|(sidenum == 0 ? decal_t::SideDefOne : 0);
-              decal->bsec = bsec;
-            }
-          } else if (bsec->ceiling.TexZ < sec->ceiling.TexZ && orgz >= bsec->ceiling.TexZ && orgz <= sec->ceiling.TexZ) {
-            // back ceil has lower z: has top, check for [backceilz..myceilz]
-            if ((li->flags&ML_DONTPEGBOTTOM) == 0) {
-              decal->curz -= bsec->ceiling.TexZ;
-              decal->flags |= decal_t::SlideCeil|(sidenum == 0 ? decal_t::SideDefOne : 0);
-              decal->bsec = bsec;
-            }
-          }
-        }
+      if (slideWithFloor) {
+        sector_t *bsec = Sides[li->sidenum[1-sidenum]].Sector;
+        decal->flags |= decal_t::SlideFloor|(sidenum == 0 ? decal_t::SideDefOne : 0);
+        decal->curz -= bsec->floor.TexZ;
+        decal->bsec = bsec;
+      } else if (slideWithCeiling) {
+        sector_t *bsec = Sides[li->sidenum[1-sidenum]].Sector;
+        decal->flags |= decal_t::SlideCeil|(sidenum == 0 ? decal_t::SideDefOne : 0);
+        decal->curz -= bsec->ceiling.TexZ;
+        decal->bsec = bsec;
       }
     }
   }
