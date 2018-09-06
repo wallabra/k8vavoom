@@ -241,7 +241,7 @@ VAudioPublic *VAudioPublic::Create()
 //==========================================================================
 
 VAudio::VAudio()
-: MaxSoundDist(1200*3)
+: MaxSoundDist(4096)
 , MapSong(NAME_None)
 , MapCDTrack(0)
 , MusicEnabled(true)
@@ -375,7 +375,7 @@ void VAudio::Init()
     StreamMusicPlayer->Init();
   }
 
-  MaxSoundDist = 1200*3;
+  MaxSoundDist = 4096;
   MaxVolume = -1;
 
   //  Free all channels for use.

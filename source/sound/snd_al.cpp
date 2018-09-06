@@ -107,12 +107,14 @@ public:
 
 IMPLEMENT_SOUND_DEVICE(VOpenALDevice, SNDDRV_OpenAL, "OpenAL", "OpenAL sound device", "-openal");
 
-VCvarF VOpenALDevice::doppler_factor("snd_al_doppler_factor", "1.0", "OpenAL doppler factor.", CVAR_Archive);
-VCvarF VOpenALDevice::doppler_velocity("snd_al_doppler_velocity", "10000.0", "OpenAL doppler velocity.", CVAR_Archive);
-VCvarF VOpenALDevice::rolloff_factor("snd_al_rolloff_factor", "1.0", "OpenAL rolloff factor.", CVAR_Archive);
-VCvarF VOpenALDevice::reference_distance("snd_al_reference_distance", "64.0", "OpenAL reference distance.", CVAR_Archive);
-VCvarF VOpenALDevice::max_distance("snd_al_max_distance", "2024.0", "OpenAL max distance.", CVAR_Archive);
-VCvarI VOpenALDevice::eax_environment("snd_al_eax_environment", "0", "OpenAL EAX environment id.");
+VCvarF VOpenALDevice::doppler_factor("snd_doppler_factor", "1.0", "OpenAL doppler factor.", 0/*CVAR_Archive*/);
+VCvarF VOpenALDevice::doppler_velocity("snd_doppler_velocity", "10000.0", "OpenAL doppler velocity.", 0/*CVAR_Archive*/);
+VCvarF VOpenALDevice::rolloff_factor("snd_rolloff_factor", "1.0", "OpenAL rolloff factor.", 0/*CVAR_Archive*/);
+//VCvarF VOpenALDevice::reference_distance("snd_reference_distance", "64.0", "OpenAL reference distance.", CVAR_Archive);
+//VCvarF VOpenALDevice::max_distance("snd_max_distance", "2024.0", "OpenAL max distance.", CVAR_Archive);
+VCvarF VOpenALDevice::reference_distance("snd_reference_distance", "384.0", "OpenAL reference distance.", 0/*CVAR_Archive*/);
+VCvarF VOpenALDevice::max_distance("snd_max_distance", "4096.0", "OpenAL max distance.", 0/*CVAR_Archive*/);
+VCvarI VOpenALDevice::eax_environment("snd_eax_environment", "0", "OpenAL EAX environment id.", 0/*CVAR_Archive*/);
 
 static VCvarB openal_show_extensions("openal_show_extensions", false, "Show available OpenAL extensions?", CVAR_Archive);
 
