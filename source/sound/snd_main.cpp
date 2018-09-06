@@ -155,8 +155,6 @@ private:
 
   //  Hardware devices
   VSoundDevice *SoundDevice;
-  VMidiDevice *MidiDevice;
-  VCDAudioDevice *CDAudioDevice;
 
   //  Console variables
   static VCvarF   snd_sfx_volume;
@@ -218,8 +216,6 @@ VCvarB        snd_mod_player("snd_mod_player", true, "Allow music modules?", CVA
 FAudioCodecDesc *FAudioCodecDesc::List;
 
 static FSoundDeviceDesc *SoundDeviceList[SNDDRV_MAX];
-static FMidiDeviceDesc *MidiDeviceList[MIDIDRV_MAX];
-static FCDAudioDeviceDesc *CDAudioDeviceList[CDDRV_MAX];
 
 // CODE --------------------------------------------------------------------
 
@@ -251,8 +247,6 @@ VAudio::VAudio()
 , SndCount(0)
 , MaxVolume(0)
 , SoundDevice(nullptr)
-, MidiDevice(nullptr)
-, CDAudioDevice(nullptr)
 {
   ActiveSequences = 0;
   SequenceListHead = nullptr;
@@ -310,64 +304,6 @@ void VAudio::Init()
     }
   }
 
-  //  Initialise MIDI driver.
-  int MIdx = -1;
-  if (!GArgs.CheckParm("-nosound") && !GArgs.CheckParm("-nomusic"))
-  {
-    for (int i = 0; i < MIDIDRV_MAX; i++)
-    {
-      if (!MidiDeviceList[i])
-        continue;
-      //  Default to first available non-null midi device.
-      if (MIdx == -1)
-        MIdx = i;
-      //  Check for user selection.
-      if (MidiDeviceList[i]->CmdLineArg &&
-        GArgs.CheckParm(MidiDeviceList[i]->CmdLineArg))
-        MIdx = i;
-    }
-  }
-  if (MIdx != -1)
-  {
-    GCon->Logf(NAME_Init, "Selected %s", MidiDeviceList[MIdx]->Description);
-    MidiDevice = MidiDeviceList[MIdx]->Creator();
-    MidiDevice->Init();
-    if (!MidiDevice->Initialised)
-    {
-      delete MidiDevice;
-      MidiDevice = nullptr;
-    }
-  }
-
-  //  Initialise CD audio driver.
-  int CDIdx = -1;
-  if (!GArgs.CheckParm("-nosound") && !GArgs.CheckParm("-nocdaudio"))
-  {
-    for (int i = 0; i < CDDRV_MAX; i++)
-    {
-      if (!CDAudioDeviceList[i])
-        continue;
-      //  Default to first available non-null CD audio device.
-      if (CDIdx == -1)
-        CDIdx = i;
-      //  Check for user selection.
-      if (CDAudioDeviceList[i]->CmdLineArg &&
-        GArgs.CheckParm(CDAudioDeviceList[i]->CmdLineArg))
-        CDIdx = i;
-    }
-  }
-  if (CDIdx != -1)
-  {
-    GCon->Logf(NAME_Init, "Selected %s", CDAudioDeviceList[CDIdx]->Description);
-    CDAudioDevice = CDAudioDeviceList[CDIdx]->Creator();
-    CDAudioDevice->Init();
-    if (!CDAudioDevice->Initialised)
-    {
-      delete CDAudioDevice;
-      CDAudioDevice = nullptr;
-    }
-  }
-
   //  Initialise stream music player.
   if (SoundDevice && !GArgs.CheckParm("-nomusic"))
   {
@@ -404,18 +340,6 @@ void VAudio::Shutdown()
     StreamMusicPlayer->Shutdown();
     delete StreamMusicPlayer;
     StreamMusicPlayer = nullptr;
-  }
-  if (CDAudioDevice)
-  {
-    CDAudioDevice->Shutdown();
-    delete CDAudioDevice;
-    CDAudioDevice = nullptr;
-  }
-  if (MidiDevice)
-  {
-    MidiDevice->Shutdown();
-    delete MidiDevice;
-    MidiDevice = nullptr;
   }
   if (SoundDevice)
   {
@@ -1065,15 +989,6 @@ void VAudio::UpdateSounds()
     SoundDevice->SetStreamVolume(snd_music_volume * MusicVolumeFactor);
     //StreamMusicPlayer->Tick(host_frametime);
   }
-  if (MidiDevice)
-  {
-    MidiDevice->SetVolume(snd_music_volume * MusicVolumeFactor);
-    MidiDevice->Tick(host_frametime);
-  }
-  if (CDAudioDevice)
-  {
-    CDAudioDevice->Update();
-  }
   unguard;
 }
 
@@ -1101,10 +1016,6 @@ void VAudio::PlaySong(const char *Song, bool Loop)
   {
     StreamMusicPlayer->Stop();
   }
-  else if (MidiDevice)
-  {
-    MidiDevice->Stop();
-  }
   StreamPlaying = false;
 
   //  Get music volume for this song.
@@ -1112,10 +1023,6 @@ void VAudio::PlaySong(const char *Song, bool Loop)
   if (StreamMusicPlayer)
   {
     SoundDevice->SetStreamVolume(snd_music_volume * MusicVolumeFactor);
-  }
-  if (MidiDevice)
-  {
-    MidiDevice->SetVolume(snd_music_volume * MusicVolumeFactor);
   }
 
   //  Find the song.
@@ -1214,26 +1121,6 @@ void VAudio::PlaySong(const char *Song, bool Loop)
     StreamMusicPlayer->Play(Codec, Song, Loop);
     StreamPlaying = true;
   }
-  else if (MidiDevice)
-  {
-    int Length = Strm->TotalSize();
-    void *Data = Z_Malloc(Length);
-    Strm->Seek(0);
-    Strm->Serialise(Data, Length);
-    Strm->Close();
-    delete Strm;
-    Strm = nullptr;
-
-    if (!memcmp(Data, MIDIMAGIC, 4))
-    {
-      MidiDevice->Play(Data, Length, Song, Loop);
-    }
-    else
-    {
-      GCon->Log("Music file format is not supported");
-      Z_Free(Data);
-    }
-  }
   else
   {
     delete Strm;
@@ -1251,7 +1138,7 @@ void VAudio::PlaySong(const char *Song, bool Loop)
 void VAudio::CmdMusic(const TArray<VStr>& Args)
 {
   guard(VAudio::CmdMusic);
-  if (!MidiDevice && !StreamMusicPlayer)
+  if (!StreamMusicPlayer)
   {
     return;
   }
@@ -1271,10 +1158,6 @@ void VAudio::CmdMusic(const TArray<VStr>& Args)
 
   if (command == "off")
   {
-    if (MidiDevice)
-    {
-      MidiDevice->Stop();
-    }
     if (StreamMusicPlayer)
     {
       StreamMusicPlayer->Stop();
@@ -1316,10 +1199,6 @@ void VAudio::CmdMusic(const TArray<VStr>& Args)
     {
       StreamMusicPlayer->Pause();
     }
-    else if (MidiDevice)
-    {
-      MidiDevice->Pause();
-    }
     return;
   }
 
@@ -1328,10 +1207,6 @@ void VAudio::CmdMusic(const TArray<VStr>& Args)
     if (StreamPlaying)
     {
       StreamMusicPlayer->Resume();
-    }
-    else if (MidiDevice)
-    {
-      MidiDevice->Resume();
     }
     return;
   }
@@ -1342,10 +1217,6 @@ void VAudio::CmdMusic(const TArray<VStr>& Args)
     {
       StreamMusicPlayer->Stop();
     }
-    else if (MidiDevice)
-    {
-      MidiDevice->Stop();
-    }
     return;
   }
 
@@ -1355,11 +1226,6 @@ void VAudio::CmdMusic(const TArray<VStr>& Args)
     {
       GCon->Logf("Currently %s %s.", StreamMusicPlayer->CurrLoop ?
         "looping" : "playing", *StreamMusicPlayer->CurrSong);
-    }
-    else if (MidiDevice && !StreamPlaying && MidiDevice->IsPlaying())
-    {
-      GCon->Logf("Currently %s %s.", MidiDevice->CurrLoop ?
-        "looping" : "playing", *MidiDevice->CurrSong);
     }
     else
     {
@@ -1378,156 +1244,6 @@ void VAudio::CmdMusic(const TArray<VStr>& Args)
 
 void VAudio::CmdCD(const TArray<VStr>& Args)
 {
-  guard(VAudio::CmdCD);
-  if (!CDAudioDevice)
-    return;
-
-  if (Args.Num() < 2)
-    return;
-
-  VStr command = Args[1].ToLower();
-
-  if (command == "on")
-  {
-    CDAudioDevice->Enabled = true;
-    return;
-  }
-
-  if (command == "off")
-  {
-    if (CDAudioDevice->Playing)
-    {
-      CDAudioDevice->Stop();
-    }
-    CDAudioDevice->Enabled = false;
-    return;
-  }
-
-  if (command == "reset")
-  {
-    int   n;
-
-    CDAudioDevice->Enabled = true;
-    if (CDAudioDevice->Playing)
-    {
-      CDAudioDevice->Stop();
-    }
-    for (n = 0; n < 100; n++)
-    {
-      CDAudioDevice->Remap[n] = n;
-    }
-    CDAudioDevice->GetInfo();
-    return;
-  }
-
-  if (command == "remap")
-  {
-    int   n;
-    int   ret;
-
-    ret = Args.Num() - 2;
-    if (ret <= 0)
-    {
-      for (n = 1; n < 100; n++)
-      {
-        if (CDAudioDevice->Remap[n] != n)
-        {
-          GCon->Logf("%d -> %d", n, CDAudioDevice->Remap[n]);
-        }
-      }
-      return;
-    }
-    for (n = 1; n <= ret; n++)
-    {
-      CDAudioDevice->Remap[n] = atoi(*Args[n + 1]);
-    }
-    return;
-  }
-
-  if (!CDAudioDevice->Enabled)
-  {
-    return;
-  }
-
-  if (command == "eject")
-  {
-    if (CDAudioDevice->Playing)
-    {
-      CDAudioDevice->Stop();
-    }
-    CDAudioDevice->OpenDoor();
-    CDAudioDevice->CDValid = false;
-    return;
-  }
-
-  if (command == "close")
-  {
-    CDAudioDevice->CloseDoor();
-    return;
-  }
-
-  if (!CDAudioDevice->CDValid)
-  {
-    CDAudioDevice->GetInfo();
-    if (!CDAudioDevice->CDValid)
-    {
-      GCon->Log("No CD in player.");
-      return;
-    }
-  }
-
-  if (command == "play")
-  {
-    if (Args.Num() < 2)
-    {
-      GCon->Log("Please enter CD track number");
-      return;
-    }
-    CDAudioDevice->Play(atoi(*Args[2]), false);
-    return;
-  }
-
-  if (command == "loop")
-  {
-    if (Args.Num() < 2)
-    {
-      GCon->Log("Please enter CD track number");
-      return;
-    }
-    CDAudioDevice->Play(atoi(*Args[2]), true);
-    return;
-  }
-
-  if (command == "pause")
-  {
-    CDAudioDevice->Pause();
-    return;
-  }
-
-  if (command == "resume")
-  {
-    CDAudioDevice->Resume();
-    return;
-  }
-
-  if (command == "stop")
-  {
-    CDAudioDevice->Stop();
-    return;
-  }
-
-  if (command == "info")
-  {
-    GCon->Logf("%d tracks", CDAudioDevice->MaxTrack);
-    if (CDAudioDevice->Playing || CDAudioDevice->WasPlaying)
-    {
-      GCon->Logf("%s %s track %d", CDAudioDevice->Playing ?
-        "Currently" : "Paused", CDAudioDevice->PlayLooping ?
-        "looping" : "playing", CDAudioDevice->PlayTrack);
-    }
-    return;
-  }
-  unguard;
 }
 
 //==========================================================================
@@ -1943,40 +1659,6 @@ FSoundDeviceDesc::FSoundDeviceDesc(int Type, const char *AName,
 , Creator(ACreator)
 {
   SoundDeviceList[Type] = this;
-}
-
-//==========================================================================
-//
-//  FMidiDeviceDesc::FMidiDeviceDesc
-//
-//==========================================================================
-
-FMidiDeviceDesc::FMidiDeviceDesc(int Type, const char *AName,
-  const char *ADescription, const char *ACmdLineArg,
-  VMidiDevice *(*ACreator)())
-: Name(AName)
-, Description(ADescription)
-, CmdLineArg(ACmdLineArg)
-, Creator(ACreator)
-{
-  MidiDeviceList[Type] = this;
-}
-
-//==========================================================================
-//
-//  FCDAudioDeviceDesc::FCDAudioDeviceDesc
-//
-//==========================================================================
-
-FCDAudioDeviceDesc::FCDAudioDeviceDesc(int Type, const char *AName,
-  const char *ADescription, const char *ACmdLineArg,
-  VCDAudioDevice *(*ACreator)())
-: Name(AName)
-, Description(ADescription)
-, CmdLineArg(ACmdLineArg)
-, Creator(ACreator)
-{
-  CDAudioDeviceList[Type] = this;
 }
 
 //==========================================================================
