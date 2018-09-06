@@ -958,7 +958,6 @@ void VAudio::MusicChanged()
 void VAudio::UpdateSounds()
 {
   guard(VAudio::UpdateSounds);
-  SoundDevice->AddCurrentThread();
 
   //  Check sound volume.
   if (snd_sfx_volume < 0.0)
