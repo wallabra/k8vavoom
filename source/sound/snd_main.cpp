@@ -241,7 +241,7 @@ VAudioPublic *VAudioPublic::Create()
 //==========================================================================
 
 VAudio::VAudio()
-: MaxSoundDist(1200*6)
+: MaxSoundDist(1200*3)
 , MapSong(NAME_None)
 , MapCDTrack(0)
 , MusicEnabled(true)
@@ -375,7 +375,7 @@ void VAudio::Init()
     StreamMusicPlayer->Init();
   }
 
-  MaxSoundDist = 1200*6;
+  MaxSoundDist = 1200*3;
   MaxVolume = -1;
 
   //  Free all channels for use.
@@ -473,8 +473,10 @@ void VAudio::PlaySound(int InSoundId, const TVec &origin,
   {
     dist = (int)(Length(origin - cl->ViewOrg) * Attenuation);
   }
+  //GCon->Logf("DISTANCE=%d", dist);
   if (dist >= MaxSoundDist)
   {
+    //GCon->Logf("  too far away (%d)", MaxSoundDist);
     return; // sound is beyond the hearing range...
   }
 
@@ -931,7 +933,7 @@ void VAudio::UpdateSfx()
       GSoundManager->FindEnvironment(cl->SoundEnvironment));
   }
 
-  SoundDevice->Tick(host_frametime);
+  //SoundDevice->Tick(host_frametime);
   unguard;
 }
 
@@ -1032,6 +1034,8 @@ void VAudio::MusicChanged()
 void VAudio::UpdateSounds()
 {
   guard(VAudio::UpdateSounds);
+  SoundDevice->AddCurrentThread();
+
   //  Check sound volume.
   if (snd_sfx_volume < 0.0)
   {
@@ -1059,7 +1063,7 @@ void VAudio::UpdateSounds()
   if (StreamMusicPlayer)
   {
     SoundDevice->SetStreamVolume(snd_music_volume * MusicVolumeFactor);
-    StreamMusicPlayer->Tick(host_frametime);
+    //StreamMusicPlayer->Tick(host_frametime);
   }
   if (MidiDevice)
   {

@@ -178,7 +178,7 @@ public:
   virtual bool Init() = 0;
   virtual int SetChannels(int) = 0;
   virtual void Shutdown() = 0;
-  virtual void Tick(float) = 0;
+  //virtual void Tick(float) = 0;
   virtual int PlaySound(int, float, float, float, bool) = 0;
   virtual int PlaySound3D(int, const TVec&, const TVec&, float, float, bool) = 0;
   virtual void UpdateChannel3D(int, const TVec&, const TVec&) = 0;
@@ -187,14 +187,19 @@ public:
   virtual void UpdateListener(const TVec&, const TVec&, const TVec&,
     const TVec&, const TVec&, VReverbInfo*) = 0;
 
-  virtual bool OpenStream(int, int, int) = 0;
-  virtual void CloseStream() = 0;
-  virtual int GetStreamAvailable() = 0;
-  virtual short *GetStreamBuffer() = 0;
-  virtual void SetStreamData(short*, int) = 0;
-  virtual void SetStreamVolume(float) = 0;
-  virtual void PauseStream() = 0;
-  virtual void ResumeStream() = 0;
+  // all stream functions should be thread-safe
+  virtual bool OpenStream (int Rate, int Bits, int Channels) = 0;
+  virtual void CloseStream () = 0;
+  virtual int GetStreamAvailable () = 0;
+  virtual short *GetStreamBuffer () = 0;
+  virtual void SetStreamData (short *data, int len) = 0;
+  virtual void SetStreamVolume (float vol) = 0;
+  virtual void PauseStream () = 0;
+  virtual void ResumeStream () = 0;
+  virtual void SetStreamPitch (float pitch) = 0;
+
+  virtual void AddCurrentThread () = 0;
+  virtual void RemoveCurrentThread () = 0;
 };
 
 //  Describtion of a sound driver.
@@ -422,6 +427,16 @@ public:
 class VStreamMusicPlayer
 {
 public:
+  // stream player is using a separate thread
+  mythread stpThread;
+  mythread_mutex stpPingLock;
+  mythread_cond stpPingCond;
+  mythread_mutex stpLockPong;
+  mythread_cond stpCondPong;
+  float lastVolume;
+  bool threadInited;
+
+public:
   bool      StrmOpened;
   VAudioCodec *Codec;
   //  Current playing song info.
@@ -433,24 +448,52 @@ public:
   VSoundDevice *SoundDevice;
 
   VStreamMusicPlayer(VSoundDevice *InSoundDevice)
-  : StrmOpened(false)
-  , Codec(nullptr)
-  , CurrLoop(false)
-  , Stopping(false)
-  , Paused(false)
-  , SoundDevice(InSoundDevice)
+    : lastVolume(1.0)
+    , threadInited(false)
+    , StrmOpened(false)
+    , Codec(nullptr)
+    , CurrLoop(false)
+    , Stopping(false)
+    , Paused(false)
+    , SoundDevice(InSoundDevice)
+    , stpIsPlaying(false)
+    , stpNewPitch(1.0)
+    , stpNewVolume(1.0)
   {}
   ~VStreamMusicPlayer()
   {}
 
   void Init();
   void Shutdown();
-  void Tick(float);
   void Play(VAudioCodec *InCodec, const char *InName, bool InLoop);
   void Pause();
   void Resume();
   void Stop();
   bool IsPlaying();
+  void SetPitch (float pitch);
+  void SetVolume (float volume);
+
+  // streamer thread ping/pong bussiness
+  // k8: it is public to free me from fuckery with `friends`
+  enum STPCommand {
+    STP_Quit, // stop playing, and quit immediately
+    STP_Start, // start playing current stream
+    STP_Stop, // stop current stream
+    STP_Pause, // pause current stream
+    STP_Resume, // resume current stream
+    STP_IsPlaying, // check if current stream is playing
+    STP_SetPitch, // change stream pitch
+    STP_SetVolume,
+  };
+  volatile STPCommand stpcmd;
+  volatile bool stpIsPlaying; // it will return `STP_IsPlaying` result here
+  volatile float stpNewPitch;
+  volatile float stpNewVolume;
+
+  bool stpThreadWaitPing (unsigned int msecs);
+  void stpThreadSendPong ();
+
+  void stpThreadSendCommand (STPCommand acmd);
 };
 
 //**************************************************************************

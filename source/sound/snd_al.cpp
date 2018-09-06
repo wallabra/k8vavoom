@@ -22,18 +22,20 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-#ifdef _WIN32
-#include "winshit/winlocal.h"
+#ifndef _WIN32
+# define INITGUID
 #else
-#define INITGUID
+# include "winshit/winlocal.h"
 #endif
+#define AL_ALEXT_PROTOTYPES
 #include <AL/al.h>
 #include <AL/alc.h>
-//  Linux headers doesn't define this
+#include <AL/alext.h>
+// linux headers doesn't define this
 #ifndef OPENAL
-#define OPENAL
+# define OPENAL
 #endif
+
 #include "sound/eax.h"
 
 #include "gamedefs.h"
@@ -44,54 +46,61 @@ class VOpenALDevice : public VSoundDevice
 private:
   enum { MAX_VOICES = 256 };
 
-  enum { NUM_STRM_BUFFERS = 8 };
-  enum { STRM_BUFFER_SIZE = 1024 };
+  //enum { NUM_STRM_BUFFERS = 8 };
+  //enum { STRM_BUFFER_SIZE = 1024 };
+
+  enum { NUM_STRM_BUFFERS = 8*2 };
+  enum { STRM_BUFFER_SIZE = 1024*8 };
 
   ALCdevice *Device;
   ALCcontext *Context;
   ALuint *Buffers;
+  vint32 BufferCount;
 
   bool    supportEAX;
   EAXGet    pEAXGet;
   EAXSet    pEAXSet;
 
-  ALuint    StrmSampleRate;
-  ALuint    StrmFormat;
-  ALuint    StrmBuffers[NUM_STRM_BUFFERS];
-  ALuint    StrmAvailableBuffers[NUM_STRM_BUFFERS];
-  int     StrmNumAvailableBuffers;
-  ALuint    StrmSource;
-  short   StrmDataBuffer[STRM_BUFFER_SIZE * 2];
+  ALuint StrmSampleRate;
+  ALuint StrmFormat;
+  ALuint StrmBuffers[NUM_STRM_BUFFERS];
+  ALuint StrmAvailableBuffers[NUM_STRM_BUFFERS];
+  int StrmNumAvailableBuffers;
+  ALuint StrmSource;
+  short StrmDataBuffer[STRM_BUFFER_SIZE * 2];
 
-  static VCvarF   doppler_factor;
-  static VCvarF   doppler_velocity;
-  static VCvarF   rolloff_factor;
-  static VCvarF   reference_distance;
-  static VCvarF   max_distance;
-  static VCvarI   eax_environment;
+  static VCvarF doppler_factor;
+  static VCvarF doppler_velocity;
+  static VCvarF rolloff_factor;
+  static VCvarF reference_distance;
+  static VCvarF max_distance;
+  static VCvarI eax_environment;
 
 public:
   //  VSoundDevice interface.
-  bool Init();
-  int SetChannels(int);
-  void Shutdown();
-  void Tick(float);
-  int PlaySound(int, float, float, float, bool);
-  int PlaySound3D(int, const TVec&, const TVec&, float, float, bool);
-  void UpdateChannel3D(int, const TVec&, const TVec&);
-  bool IsChannelPlaying(int);
-  void StopChannel(int);
-  void UpdateListener(const TVec&, const TVec&, const TVec&, const TVec&,
-    const TVec&, VReverbInfo*);
+  virtual bool Init () override;
+  virtual int SetChannels (int) override;
+  virtual void Shutdown () override;
+  //virtual void Tick(float);
+  virtual int PlaySound (int, float, float, float, bool) override;
+  virtual int PlaySound3D (int, const TVec&, const TVec&, float, float, bool) override;
+  virtual void UpdateChannel3D (int, const TVec&, const TVec&) override;
+  virtual bool IsChannelPlaying (int) override;
+  virtual void StopChannel (int) override;
+  virtual void UpdateListener (const TVec&, const TVec&, const TVec&, const TVec&, const TVec&, VReverbInfo*) override;
 
-  bool OpenStream(int, int, int);
-  void CloseStream();
-  int GetStreamAvailable();
-  short *GetStreamBuffer();
-  void SetStreamData(short*, int);
-  void SetStreamVolume(float);
-  void PauseStream();
-  void ResumeStream();
+  virtual bool OpenStream (int, int, int) override;
+  virtual void CloseStream () override;
+  virtual int GetStreamAvailable () override;
+  virtual short *GetStreamBuffer () override;
+  virtual void SetStreamData (short*, int) override;
+  virtual void SetStreamVolume (float) override;
+  virtual void SetStreamPitch (float pitch) override;
+  virtual void PauseStream () override;
+  virtual void ResumeStream () override;
+
+  virtual void AddCurrentThread () override;
+  virtual void RemoveCurrentThread () override;
 
   bool LoadSound(int);
 };
@@ -124,6 +133,7 @@ bool VOpenALDevice::Init()
   Device = nullptr;
   Context = nullptr;
   Buffers = nullptr;
+  BufferCount = 0;
   supportEAX = false;
   pEAXGet = nullptr;
   pEAXSet = nullptr;
@@ -143,12 +153,21 @@ bool VOpenALDevice::Init()
 #endif
   }
 
-  //  Create a context and make it current.
-  Context = alcCreateContext(Device, nullptr);
+  // create a context and make it current
+  static const ALCint attrs[] = {
+    ALC_STEREO_SOURCES, 1, // get at least one stereo source for music
+    ALC_MONO_SOURCES, 1, // this should be audio channels in our game engine
+    //ALC_FREQUENCY, 48000, // desired frequency; we don't really need this, let OpenAL choose the best
+    0,
+  };
+  Context = alcCreateContext(Device, attrs);
   if (!Context) Sys_Error("Failed to create OpenAL context");
-  alcMakeContextCurrent(Context);
+  //alcMakeContextCurrent(Context);
+  alcSetThreadContext(Context);
   E = alGetError();
   if (E != AL_NO_ERROR) Sys_Error("OpenAL error: %s", alGetString(E));
+
+  alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
 
   //  Print some information.
   if (openal_show_extensions) {
@@ -172,57 +191,80 @@ bool VOpenALDevice::Init()
   }
 
   //  Allocate array for buffers.
+  /*
   Buffers = new ALuint[GSoundManager->S_sfx.Num()];
   memset(Buffers, 0, sizeof(ALuint) * GSoundManager->S_sfx.Num());
+  */
 
   GCon->Log(NAME_Init, "OpenAL initialized.");
   return true;
   unguard;
 }
 
+
+//==========================================================================
+//
+//  VOpenALDevice::AddCurrentThread
+//
+//==========================================================================
+void VOpenALDevice::AddCurrentThread () {
+  alcSetThreadContext(Context);
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::RemoveCurrentThread
+//
+//==========================================================================
+void VOpenALDevice::RemoveCurrentThread () {
+  alcSetThreadContext(nullptr);
+}
+
+
 //==========================================================================
 //
 //  VOpenALDevice::SetChannels
 //
 //==========================================================================
-
-int VOpenALDevice::SetChannels(int InNumChannels)
-{
+int VOpenALDevice::SetChannels (int InNumChannels) {
   guard(VOpenALDevice::SetChannels);
   int NumChannels = MAX_VOICES;
-  if (NumChannels > InNumChannels)
-    NumChannels = InNumChannels;
+  if (NumChannels > InNumChannels) NumChannels = InNumChannels;
   return NumChannels;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::Shutdown
 //
 //==========================================================================
-
-void VOpenALDevice::Shutdown()
-{
+void VOpenALDevice::Shutdown () {
   guard(VOpenALDevice::Shutdown);
-  //  Delete buffers.
-  if (Buffers)
-  {
-    alDeleteBuffers(GSoundManager->S_sfx.Num(), Buffers);
+
+  // delete buffers
+  if (Buffers) {
+    //alDeleteBuffers(GSoundManager->S_sfx.length(), Buffers);
+    for (int bidx = 0; bidx < BufferCount; ++bidx) {
+      if (Buffers[bidx]) {
+        alDeleteBuffers(1, Buffers+bidx);
+        Buffers[bidx] = 0;
+      }
+    }
     delete[] Buffers;
     Buffers = nullptr;
   }
+  BufferCount = 0;
 
   //  Destroy context.
-  if (Context)
-  {
-#ifndef __linux__
-    // This causes a freeze in Linux
-    alcMakeContextCurrent(nullptr);
-#endif
+  if (Context) {
+    alcSetThreadContext(nullptr);
     alcDestroyContext(Context);
     Context = nullptr;
   }
+
   //  Disconnect from a device.
   if (Device)
   {
@@ -232,15 +274,6 @@ void VOpenALDevice::Shutdown()
   unguard;
 }
 
-//==========================================================================
-//
-//  VOpenALDevice::Tick
-//
-//==========================================================================
-
-void VOpenALDevice::Tick(float)
-{
-}
 
 //==========================================================================
 //
@@ -251,6 +284,16 @@ void VOpenALDevice::Tick(float)
 bool VOpenALDevice::LoadSound(int sound_id)
 {
   guard(VOpenALDevice::LoadSound);
+
+  if (BufferCount < sound_id+1) {
+    int newsz = ((sound_id+4)|0xfff)+1;
+    ALuint *newbuf = new ALuint[newsz];
+    for (int f = BufferCount; f < newsz; ++f) newbuf[f] = 0;
+    delete[] Buffers;
+    Buffers = newbuf;
+    BufferCount = newsz;
+  }
+
   if (Buffers[sound_id])
   {
     return true;
@@ -323,15 +366,14 @@ int VOpenALDevice::PlaySound(int sound_id, float volume, float, float pitch,
 
   alSourcei(src, AL_BUFFER, Buffers[sound_id]);
 
-    alSourcef(src, AL_GAIN, volume);
+  alSourcef(src, AL_GAIN, volume);
   alSourcef(src, AL_ROLLOFF_FACTOR, rolloff_factor);
   alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);
   alSource3f(src, AL_POSITION, 0.0, 0.0, -16.0);
   alSourcef(src, AL_REFERENCE_DISTANCE, reference_distance);
   alSourcef(src, AL_MAX_DISTANCE, max_distance);
   alSourcef(src, AL_PITCH, pitch);
-  if (Loop)
-    alSourcei(src, AL_LOOPING, AL_TRUE);
+  if (Loop) alSourcei(src, AL_LOOPING, AL_TRUE);
   alSourcePlay(src);
   return src;
   unguard;
@@ -363,15 +405,15 @@ int VOpenALDevice::PlaySound3D(int sound_id, const TVec &origin,
 
   alSourcei(src, AL_BUFFER, Buffers[sound_id]);
 
-    alSourcef(src, AL_GAIN, volume);
+  alSourcef(src, AL_GAIN, volume);
   alSourcef(src, AL_ROLLOFF_FACTOR, rolloff_factor);
+  alSourcei(src, AL_SOURCE_RELATIVE, AL_FALSE); // just in case
   alSource3f(src, AL_POSITION, origin.x, origin.y, origin.z);
   alSource3f(src, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
   alSourcef(src, AL_REFERENCE_DISTANCE, reference_distance);
   alSourcef(src, AL_MAX_DISTANCE, max_distance);
   alSourcef(src, AL_PITCH, pitch);
-  if (Loop)
-    alSourcei(src, AL_LOOPING, AL_TRUE);
+  if (Loop) alSourcei(src, AL_LOOPING, AL_TRUE);
   alSourcePlay(src);
   return src;
   unguard;
@@ -620,6 +662,18 @@ void VOpenALDevice::SetStreamVolume(float Vol)
       alSourcef(StrmSource, AL_GAIN, Vol);
   }
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::SetStreamPitch
+//
+//==========================================================================
+void VOpenALDevice::SetStreamPitch (float pitch) {
+  if (StrmSource) {
+    alSourcef(StrmSource, AL_PITCH, pitch);
+  }
 }
 
 //==========================================================================
