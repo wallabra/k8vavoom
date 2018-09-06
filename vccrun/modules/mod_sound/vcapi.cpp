@@ -24,6 +24,11 @@
 //**************************************************************************
 #include "sound.h"
 
+#define AL_ALEXT_PROTOTYPES
+#include <AL/al.h>
+#include <AL/alc.h>
+#include <AL/alext.h>
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 IMPLEMENT_CLASS(V, SoundSFXManager);
@@ -427,4 +432,108 @@ IMPLEMENT_FUNCTION(VSoundSystem, set_MaxHearingDistance) {
   if (GAudio) GAudio->LockUpdates();
   VAudioPublic::snd_max_distance = v;
   if (GAudio) GAudio->UnlockUpdates();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static void buildDevList (VScriptArray *arr, const ALCchar *list) {
+  auto type = VFieldType(TYPE_String);
+  if (!list || !list[0]) {
+    arr->Clear(type);
+  } else {
+    int count = 0;
+    const ALCchar *tmp = list;
+    while (*tmp) {
+      ++count;
+      while (*tmp) ++tmp;
+      ++tmp;
+    }
+    arr->SetNum(count, type);
+    VStr *aptr = (VStr *)arr->Ptr();
+    tmp = list;
+    while (*tmp) {
+      *aptr++ = VStr(tmp);
+      while (*tmp) ++tmp;
+      ++tmp;
+    }
+  }
+}
+
+
+static void buildExtList (VScriptArray *arr, const ALCchar *list) {
+  auto type = VFieldType(TYPE_String);
+  if (!list || !list[0]) {
+    arr->Clear(type);
+  } else {
+    int count = 0;
+    const ALCchar *tmp = list;
+    while (*tmp) {
+      while ((vuint8)*tmp <= 32) ++tmp;
+      if (!tmp[0]) break;
+      ++count;
+      while ((vuint8)*tmp > 32) ++tmp;
+      if (*tmp) ++tmp;
+    }
+    arr->SetNum(count, type);
+    VStr *aptr = (VStr *)arr->Ptr();
+    tmp = list;
+    while (*tmp) {
+      while ((vuint8)*tmp <= 32) ++tmp;
+      if (!tmp[0]) break;
+      auto end = tmp+1;
+      while ((vuint8)*end > 32) ++end;
+      *aptr++ = VStr(tmp, (int)(intptr_t)(end-tmp));
+      tmp = end;
+      if (*tmp) ++tmp;
+    }
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// static native final void getDeviceList (out array!string list);
+IMPLEMENT_FUNCTION(VSoundSystem, getDeviceList) {
+  P_GET_PTR(VScriptArray, arr);
+  const char *list;
+  if (GAudio) {
+    list = GAudio->GetDevList();
+  } else {
+    (void)alcGetError(nullptr);
+    list = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
+    ALCenum err = alcGetError(nullptr);
+    if (err != ALC_NO_ERROR) list = nullptr;
+  }
+  buildDevList(arr, list);
+}
+
+
+// static native final void getPhysDeviceList (out array!string list);
+IMPLEMENT_FUNCTION(VSoundSystem, getPhysDeviceList) {
+  P_GET_PTR(VScriptArray, arr);
+  const char *list;
+  if (GAudio) {
+    list = GAudio->GetAllDevList();
+  } else {
+    (void)alcGetError(nullptr);
+    list = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
+    ALCenum err = alcGetError(nullptr);
+    if (err != ALC_NO_ERROR) list = nullptr;
+  }
+  buildDevList(arr, list);
+}
+
+
+// static native final void getExtensionsList (out array!string list);
+IMPLEMENT_FUNCTION(VSoundSystem, getExtensionsList) {
+  P_GET_PTR(VScriptArray, arr);
+  const char *list;
+  if (GAudio) {
+    list = GAudio->GetExtList();
+  } else {
+    (void)alcGetError(nullptr);
+    list = alcGetString(NULL, ALC_EXTENSIONS);
+    ALCenum err = alcGetError(nullptr);
+    if (err != ALC_NO_ERROR) list = nullptr;
+  }
+  buildExtList(arr, list);
 }

@@ -26,6 +26,11 @@
 
 //#define DEBUG_CHAN_ALLOC
 
+#define AL_ALEXT_PROTOTYPES
+#include <AL/al.h>
+#include <AL/alc.h>
+#include <AL/alext.h>
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 VSampleLoader *VSampleLoader::List;
@@ -362,6 +367,10 @@ public:
 
   virtual void LockUpdates () override;
   virtual void UnlockUpdates () override;
+
+  virtual const char *GetDevList () override;
+  virtual const char *GetAllDevList () override;
+  virtual const char *GetExtList () override;
 
 // public, so i don't have to fuck with "friends"
 public:
@@ -1518,4 +1527,46 @@ void VAudio::StopMusic () {
 //==========================================================================
 void VAudio::SetMusicPitch (float pitch) {
   if (StreamPlaying && StreamMusicPlayer) StreamMusicPlayer->SetPitch(pitch);
+}
+
+
+//==========================================================================
+//
+//  VAudio::GetDevList
+//
+//==========================================================================
+const char *VAudio::GetDevList () {
+  if (SoundDevice) return SoundDevice->GetDevList();
+  (void)alcGetError(nullptr);
+  const ALCchar *list = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
+  ALCenum err = alcGetError(nullptr);
+  return (err == ALC_NO_ERROR ? list : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VAudio::GetAllDevList
+//
+//==========================================================================
+const char *VAudio::GetAllDevList () {
+  if (SoundDevice) return SoundDevice->GetAllDevList();
+  (void)alcGetError(nullptr);
+  const ALCchar *list = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
+  ALCenum err = alcGetError(nullptr);
+  return (err == ALC_NO_ERROR ? list : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VAudio::GetExtList
+//
+//==========================================================================
+const char *VAudio::GetExtList () {
+  if (SoundDevice) return SoundDevice->GetExtList();
+  (void)alcGetError(nullptr);
+  const ALCchar *list = alcGetString(NULL, ALC_EXTENSIONS);
+  ALCenum err = alcGetError(nullptr);
+  return (err == ALC_NO_ERROR ? list : nullptr);
 }

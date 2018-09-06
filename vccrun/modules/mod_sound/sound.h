@@ -80,6 +80,10 @@ public:
   virtual void AddCurrentThread () = 0;
   virtual void RemoveCurrentThread () = 0;
 
+  virtual const char *GetDevList () = 0;
+  virtual const char *GetAllDevList () = 0;
+  virtual const char *GetExtList () = 0;
+
   // set the following BEFORE initializing sound
   static float doppler_factor;
   static float doppler_velocity;
@@ -343,6 +347,10 @@ public:
   virtual void LockUpdates () = 0;
   virtual void UnlockUpdates () = 0;
 
+  virtual const char *GetDevList () = 0;
+  virtual const char *GetAllDevList () = 0;
+  virtual const char *GetExtList () = 0;
+
   static VAudioPublic *Create ();
 
 public:
@@ -485,6 +493,10 @@ public:
 
   DECLARE_FUNCTION(get_NumChannels)
   DECLARE_FUNCTION(set_NumChannels)
+
+  DECLARE_FUNCTION(getDeviceList)
+  DECLARE_FUNCTION(getPhysDeviceList)
+  DECLARE_FUNCTION(getExtensionsList)
 };
 
 

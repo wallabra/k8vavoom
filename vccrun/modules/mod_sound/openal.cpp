@@ -68,6 +68,8 @@ private:
   TVec listenerPos;
 
 public:
+  VOpenALDevice () : Device(nullptr), Context(nullptr), Buffers(nullptr), BufferCount(0) {}
+
   // VSoundDevice interface
   virtual bool Init () override;
   virtual int SetChannels (int InNumChannels) override;
@@ -96,6 +98,10 @@ public:
   virtual void AddCurrentThread () override;
   virtual void RemoveCurrentThread () override;
 
+  virtual const char *GetDevList () override;
+  virtual const char *GetAllDevList () override;
+  virtual const char *GetExtList () override;
+
   bool PrepareSound (int sound_id);
 };
 
@@ -113,6 +119,45 @@ float VSoundDevice::max_distance = 800.0f; // Used with the Inverse Clamped Dist
 //==========================================================================
 VSoundDevice *CreateVSoundDevice () {
   return new VOpenALDevice;
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::GetDevList
+//
+//==========================================================================
+const char *VOpenALDevice::GetDevList () {
+  (void)alcGetError(Device);
+  const ALCchar *list = alcGetString(Device, ALC_DEVICE_SPECIFIER);
+  ALCenum err = alcGetError(Device);
+  return (err == ALC_NO_ERROR ? list : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::GetAllDevList
+//
+//==========================================================================
+const char *VOpenALDevice::GetAllDevList () {
+  (void)alcGetError(Device);
+  const ALCchar *list = alcGetString(Device, ALC_ALL_DEVICES_SPECIFIER);
+  ALCenum err = alcGetError(Device);
+  return (err == ALC_NO_ERROR ? list : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::GetExtList
+//
+//==========================================================================
+const char *VOpenALDevice::GetExtList () {
+  (void)alcGetError(Device);
+  const ALCchar *list = alcGetString(Device, ALC_EXTENSIONS);
+  ALCenum err = alcGetError(Device);
+  return (err == ALC_NO_ERROR ? list : nullptr);
 }
 
 

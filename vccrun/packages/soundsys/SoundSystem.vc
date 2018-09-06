@@ -149,3 +149,7 @@ static native final float DopplerVelocity { get; set; }
 // this should be set before initializing audio subsystem
 // default value is 32, maximum value is 256
 static native final int NumChannels { get; set; }
+
+static native final void getDeviceList (out array!string list);
+static native final void getPhysDeviceList (out array!string list);
+static native final void getExtensionsList (out array!string list);
