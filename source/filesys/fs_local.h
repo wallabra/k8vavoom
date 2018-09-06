@@ -148,6 +148,7 @@ struct VZipFileInfo;
 class VZipFile : public VSearchPath
 {
 private:
+  mythread_mutex rdlock;
   VStr      ZipFileName;
   VStream *FileStream;     //  Source stream of the zipfile
   VZipFileInfo *Files;

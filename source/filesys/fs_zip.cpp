@@ -99,6 +99,7 @@ private:
   //enum { UNZ_BUFSIZE = 16384 };
   enum { UNZ_BUFSIZE = 65536 };
 
+  mythread_mutex *rdlock;
   VStream *FileStream;   //  Source stream of the zipfile
   const VZipFileInfo &Info;     //  Info about the file we are reading
   FOutputDevice *Error;
@@ -122,7 +123,7 @@ private:
   bool LzmaRestart (); // `pos_in_zipfile` must be valid
 
 public:
-  VZipFileReader(VStream*, vuint32, const VZipFileInfo&, FOutputDevice*);
+  VZipFileReader(VStream*, vuint32, const VZipFileInfo&, FOutputDevice*, mythread_mutex *ardlock);
   virtual ~VZipFileReader() override;
   void Serialise(void*, int);
   void Seek(int);
@@ -181,6 +182,7 @@ VZipFile::VZipFile (VStream *fstream)
 , NumFiles(0)
 {
   guard(VZipFile::VZipFile);
+  mythread_mutex_init(&rdlock);
   OpenArchive(fstream);
   unguard;
 }
@@ -193,6 +195,7 @@ VZipFile::VZipFile (VStream *fstream, const VStr &name)
 , NumFiles(0)
 {
   guard(VZipFile::VZipFile);
+  mythread_mutex_init(&rdlock);
   OpenArchive(fstream);
   unguard;
 }
@@ -204,6 +207,7 @@ VZipFile::VZipFile(const VStr &zipfile)
 , NumFiles(0)
 {
   guard(VZipFile::VZipFile);
+  mythread_mutex_init(&rdlock);
   GCon->Logf(NAME_Init, "Adding %s", *ZipFileName);
   auto fstream = FL_OpenSysFileRead(ZipFileName);
   check(fstream);
@@ -221,6 +225,7 @@ VZipFile::~VZipFile()
 {
   //guard(VZipFile::~VZipFile);
   Close();
+  mythread_mutex_destroy(&rdlock);
   //unguard;
 }
 
@@ -535,8 +540,7 @@ VStream *VZipFile::OpenFileRead(const VStr &FName)
   {
     if (Files[i].Name == CheckName)
     {
-      return new VZipFileReader(FileStream, BytesBeforeZipFile,
-        Files[i], GCon);
+      return new VZipFileReader(FileStream, BytesBeforeZipFile, Files[i], GCon, &rdlock);
     }
   }
   return nullptr;
@@ -690,8 +694,7 @@ VStream *VZipFile::CreateLumpReaderNum(int Lump)
   guard(VZipFile::CreateLumpReaderNum);
   check(Lump >= 0);
   check(Lump < NumFiles);
-  return new VZipFileReader(FileStream, BytesBeforeZipFile, Files[Lump],
-    GCon);
+  return new VZipFileReader(FileStream, BytesBeforeZipFile, Files[Lump], GCon, &rdlock);
   unguard;
 }
 
@@ -790,14 +793,19 @@ void VZipFile::ListPk3Files (TArray<VStr>& List) {
 //==========================================================================
 
 VZipFileReader::VZipFileReader(VStream *InStream, vuint32 BytesBeforeZipFile,
-                               const VZipFileInfo &aInfo, FOutputDevice *InError)
-: FileStream(InStream)
+                               const VZipFileInfo &aInfo, FOutputDevice *InError, mythread_mutex *ardlock)
+: rdlock(ardlock)
+, FileStream(InStream)
 , Info(aInfo)
 , Error(InError)
 {
   guard(VZipFileReader::VZipFileReader);
   //  Open the file in the zip
   usezlib = true;
+
+  if (!rdlock) Sys_Error("VZipFileReader::VZipFileReader: empty lock!");
+
+  MyThreadLocker locker(rdlock);
 
   vuint32 iSizeVar;
   if (!CheckCurrentFileCoherencyHeader(&iSizeVar, BytesBeforeZipFile)) {
@@ -1059,6 +1067,8 @@ bool VZipFileReader::CheckCurrentFileCoherencyHeader(vuint32 *piSizeVar,
 void VZipFileReader::Serialise(void *V, int Length)
 {
   guard(VZipFileReader::Serialise);
+  MyThreadLocker locker(rdlock);
+
   if (bError) return; // Don't read anything from already broken stream.
   if (FileStream->IsError()) return;
 
@@ -1186,6 +1196,7 @@ void VZipFileReader::Seek(int InPos)
   guard(VZipFileReader::Seek);
   check(InPos >= 0);
   check(InPos <= (int)Info.uncompressed_size);
+  //MyThreadLocker locker(rdlock);
 
   if (bError) return;
 
@@ -1266,6 +1277,7 @@ bool VZipFileReader::AtEnd()
 bool VZipFileReader::Close()
 {
   guard(VZipFileReader::Close);
+  //MyThreadLocker locker(rdlock);
 
   if (!bError && rest_read_uncompressed == 0) {
     if (Crc32 != Info.crc) {
