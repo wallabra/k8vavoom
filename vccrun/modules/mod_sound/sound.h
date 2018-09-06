@@ -164,9 +164,6 @@ public:
   float lastVolume;
   bool threadInited;
 
-  // sadly, we cannot share OpenAL between different threads: it is not working right
-  //void *udata;
-
 public:
   bool StrmOpened;
   VAudioCodec *Codec;

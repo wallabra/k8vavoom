@@ -48,16 +48,8 @@ class VOpenALDevice : public VSoundDevice {
 private:
   enum { MAX_VOICES = 256 };
 
-  enum { NUM_STRM_BUFFERS = 8 };
-  enum { STRM_BUFFER_SIZE = 1024 };
-
-  // stream player is using a separate thread
-  mythread_mutex stpLock;
-  mythread stpThread;
-  mythread_mutex stpPingLock;
-  mythread_cond stpPingCond;
-  mythread_mutex stpPongLock;
-  mythread_cond stpPongCond;
+  enum { NUM_STRM_BUFFERS = 8*2 };
+  enum { STRM_BUFFER_SIZE = 1024*4 };
 
   ALCdevice *Device;
   ALCcontext *Context;
@@ -212,7 +204,13 @@ int VOpenALDevice::SetChannels (int InNumChannels) {
 void VOpenALDevice::Shutdown () {
   // delete buffers
   if (Buffers) {
-    alDeleteBuffers(GSoundManager->S_sfx.length(), Buffers);
+    //alDeleteBuffers(GSoundManager->S_sfx.length(), Buffers);
+    for (int bidx = 0; bidx < BufferCount; ++bidx) {
+      if (Buffers[bidx]) {
+        alDeleteBuffers(1, Buffers+bidx);
+        Buffers[bidx] = 0;
+      }
+    }
     delete[] Buffers;
     Buffers = nullptr;
   }
@@ -224,6 +222,7 @@ void VOpenALDevice::Shutdown () {
     alcDestroyContext(Context);
     Context = nullptr;
   }
+
   // disconnect from a device
   if (Device) {
     alcCloseDevice(Device);
