@@ -894,6 +894,7 @@ bool VClass::Define () {
     ParentClass = StaticFindClass(ParentClassName);
     if (!ParentClass) {
       ParseError(ParentClassLoc, "No such class `%s`", *ParentClassName);
+      return false;
     } else if (!ParentClass->Defined) {
       //ParseError(ParentClassLoc, "Parent class must be defined before");
       // recurse, 'cause why not?
