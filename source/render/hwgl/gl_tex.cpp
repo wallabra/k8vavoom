@@ -364,20 +364,17 @@ void VOpenGLDrawer::GenerateTexture(VTexture *Tex, GLuint *pHandle,
   }
 
   //  Set up texture wrapping.
-  if (Tex->Type == TEXTYPE_Wall || Tex->Type == TEXTYPE_Flat ||
-    Tex->Type == TEXTYPE_Overload)
-  {
+  if (Tex->Type == TEXTYPE_Wall || Tex->Type == TEXTYPE_Flat || Tex->Type == TEXTYPE_Overload || Tex->Type == TEXTYPE_WallPatch) {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  }
-  else
-  {
+    //fprintf(stderr, "::: generating normal texture for <%s> (type=%d)\n", *Tex->Name, Tex->Type);
+  } else {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ClampToEdge);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ClampToEdge);
+    //fprintf(stderr, "::: generating clamped texture for <%s> (type=%d)\n", *Tex->Name, Tex->Type);
   }
   //  Set up texture anisotropic filtering.
-  if (max_anisotropy > 1.0)
-  {
+  if (max_anisotropy > 1.0) {
     //glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), max_anisotropy);
     glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(gl_texture_filter_anisotropic < 0 ? 0 : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic));
   }
