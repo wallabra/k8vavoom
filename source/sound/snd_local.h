@@ -35,16 +35,6 @@
 #endif
 
 
-//  Sound device types.
-//??? Should Default be replaced with all default drivers?
-enum
-{
-  SNDDRV_Default,
-  SNDDRV_OpenAL,
-
-  SNDDRV_MAX
-};
-
 enum ESSCmds
 {
   SSCMD_None,
