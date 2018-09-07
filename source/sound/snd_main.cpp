@@ -102,9 +102,6 @@ public:
   void StopAllSequences();
   void SerialiseSounds(VStream&);
 
-  //  EAX utilites
-  float EAX_CalcEnvSize();
-
 private:
   enum { MAX_CHANNELS = 256 };
 
@@ -162,7 +159,6 @@ private:
   static VCvarB   snd_swap_stereo;
   static VCvarI   snd_channels;
   static VCvarB   snd_external_music;
-  static VCvarF   snd_eax_distance_unit;
 
   //  Friends
   friend class TCmdMusic;
@@ -180,8 +176,6 @@ private:
   //  Execution of console commands
   void CmdMusic(const TArray<VStr>&);
   void CmdCD(const TArray<VStr>&);
-
-  float CalcDirSize(const TVec&);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -203,7 +197,6 @@ VCvarF        VAudio::snd_music_volume("snd_music_volume", "0.5", "Music volume"
 VCvarB        VAudio::snd_swap_stereo("snd_swap_stereo", false, "Swap stereo channels?", CVAR_Archive);
 VCvarI        VAudio::snd_channels("snd_channels", "128", "Number of sound channels.", CVAR_Archive);
 VCvarB        VAudio::snd_external_music("snd_external_music", true, "Allow external music remapping?", CVAR_Archive);
-VCvarF        VAudio::snd_eax_distance_unit("snd_eax_distance_unit", "32.0", "EAX distance unit.", CVAR_Archive);
 
 //  Public CVars
 #if defined(DJGPP) || defined(_WIN32)
@@ -1243,51 +1236,6 @@ void VAudio::CmdMusic(const TArray<VStr>& Args)
 
 void VAudio::CmdCD(const TArray<VStr>& Args)
 {
-}
-
-//==========================================================================
-//
-//  VAudio::EAX_CalcEnvSize
-//
-//==========================================================================
-
-float VAudio::EAX_CalcEnvSize()
-{
-  guard(VAudio::EAX_CalcEnvSize);
-  if (!cl)
-  {
-    return 7.5;
-  }
-
-  float len = 0;
-  len += CalcDirSize(TVec(3200, 0, 0));
-  len += CalcDirSize(TVec(0, 3200, 0));
-  len += CalcDirSize(TVec(0, 0, 3200));
-  return len / 3.0;
-  unguard;
-}
-
-//==========================================================================
-//
-//  VAudio::CalcDirSize
-//
-//==========================================================================
-
-float VAudio::CalcDirSize(const TVec &dir)
-{
-  guard(VAudio::CalcDirSize);
-  linetrace_t Trace;
-  GClLevel->TraceLine(Trace, cl->ViewOrg, cl->ViewOrg + dir, SPF_NOBLOCKSIGHT);
-  float len = Length(Trace.LineEnd - cl->ViewOrg);
-  GClLevel->TraceLine(Trace, cl->ViewOrg, cl->ViewOrg - dir, SPF_NOBLOCKSIGHT);
-  len += Length(Trace.LineEnd - cl->ViewOrg);
-  len /= snd_eax_distance_unit;
-  if (len > 100)
-    len = 100;
-  if (len < 1)
-    len = 1;
-  return len;
-  unguard;
 }
 
 //==========================================================================

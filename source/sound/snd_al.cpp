@@ -36,8 +36,6 @@
 # define OPENAL
 #endif
 
-#include "sound/eax.h"
-
 #include "gamedefs.h"
 #include "snd_local.h"
 
@@ -57,10 +55,6 @@ private:
   ALuint *Buffers;
   vint32 BufferCount;
 
-  bool    supportEAX;
-  EAXGet    pEAXGet;
-  EAXSet    pEAXSet;
-
   ALuint StrmSampleRate;
   ALuint StrmFormat;
   ALuint StrmBuffers[NUM_STRM_BUFFERS];
@@ -74,7 +68,6 @@ private:
   static VCvarF rolloff_factor;
   static VCvarF reference_distance;
   static VCvarF max_distance;
-  static VCvarI eax_environment;
 
 public:
   //  VSoundDevice interface.
@@ -114,7 +107,6 @@ VCvarF VOpenALDevice::rolloff_factor("snd_rolloff_factor", "1.0", "OpenAL rollof
 //VCvarF VOpenALDevice::max_distance("snd_max_distance", "2024.0", "OpenAL max distance.", CVAR_Archive);
 VCvarF VOpenALDevice::reference_distance("snd_reference_distance", "384.0", "OpenAL reference distance.", 0/*CVAR_Archive*/);
 VCvarF VOpenALDevice::max_distance("snd_max_distance", "4096.0", "OpenAL max distance.", 0/*CVAR_Archive*/);
-VCvarI VOpenALDevice::eax_environment("snd_eax_environment", "0", "OpenAL EAX environment id.", 0/*CVAR_Archive*/);
 
 static VCvarB openal_show_extensions("openal_show_extensions", false, "Show available OpenAL extensions?", CVAR_Archive);
 
@@ -136,9 +128,6 @@ bool VOpenALDevice::Init()
   Context = nullptr;
   Buffers = nullptr;
   BufferCount = 0;
-  supportEAX = false;
-  pEAXGet = nullptr;
-  pEAXSet = nullptr;
   StrmSource = 0;
   StrmNumAvailableBuffers = 0;
 
@@ -183,13 +172,6 @@ bool VOpenALDevice::Init()
     GCon->Log(NAME_Init, "ALC_EXTENSIONS:");
     VStr((char*)alcGetString(Device, ALC_EXTENSIONS)).Split(' ', Exts);
     for (int i = 0; i < Exts.Num(); i++) GCon->Log(NAME_Init, VStr("- ") + Exts[i]);
-  }
-
-  if (alIsExtensionPresent((ALchar*)"EAX")) {
-    GCon->Log(NAME_Init, "EAX 2.0 supported");
-    pEAXSet = (EAXSet)alGetProcAddress((ALchar*)"EAXSet");
-    pEAXGet = (EAXGet)alGetProcAddress((ALchar*)"EAXGet");
-    supportEAX = true;
   }
 
   //  Allocate array for buffers.
@@ -502,39 +484,6 @@ void VOpenALDevice::UpdateListener(const TVec &org, const TVec &vel,
   alDopplerFactor(doppler_factor);
   alDopplerVelocity(doppler_velocity);
 
-  if (supportEAX)
-  {
-    EAXLISTENERPROPERTIES Prop;
-    Prop.lRoom = Env->Props.Room;
-    Prop.lRoomHF = Env->Props.RoomHF;
-    Prop.flRoomRolloffFactor = Env->Props.RoomRolloffFactor;
-    Prop.flDecayTime = Env->Props.DecayTime;
-    Prop.flDecayHFRatio = Env->Props.DecayHFRatio;
-    Prop.lReflections = Env->Props.Reflections;
-    Prop.flReflectionsDelay = Env->Props.ReflectionsDelay;
-    Prop.lReverb = Env->Props.Reverb;
-    Prop.flReverbDelay = Env->Props.ReverbDelay;
-    Prop.dwEnvironment = Env->Props.Environment;
-    Prop.flEnvironmentSize = Env->Props.EnvironmentSize;
-    Prop.flEnvironmentDiffusion = Env->Props.EnvironmentDiffusion;
-    Prop.flAirAbsorptionHF = Env->Props.AirAbsorptionHF;
-    Prop.dwFlags = Env->Props.Flags & 0x3f;
-    pEAXSet(&DSPROPSETID_EAX_ListenerProperties,
-      DSPROPERTY_EAXLISTENER_ALLPARAMETERS, 0, &Prop, sizeof(Prop));
-
-    if (Env->Id == 1)
-    {
-      int envId = eax_environment;
-      if (envId < 0 || envId >= EAX_ENVIRONMENT_COUNT)
-        envId = EAX_ENVIRONMENT_GENERIC;
-      pEAXSet(&DSPROPSETID_EAX_ListenerProperties,
-        DSPROPERTY_EAXLISTENER_ENVIRONMENT, 0, &envId, sizeof(int));
-
-      float envSize = GAudio->EAX_CalcEnvSize();
-      pEAXSet(&DSPROPSETID_EAX_ListenerProperties,
-        DSPROPERTY_EAXLISTENER_ENVIRONMENTSIZE, 0, &envSize, sizeof(float));
-    }
-  }
   unguard;
 }
 

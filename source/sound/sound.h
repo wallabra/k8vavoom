@@ -172,9 +172,6 @@ public:
   virtual void StopAllSequences() = 0;
   virtual void SerialiseSounds(VStream&) = 0;
 
-  //  EAX utilites
-  virtual float EAX_CalcEnvSize() = 0;
-
   static VAudioPublic *Create();
 };
 extern VCvarB       snd_mid_player;

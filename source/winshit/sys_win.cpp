@@ -40,7 +40,6 @@
 #include <dinput.h>
 #include <ddraw.h>
 //#include <dsound.h>
-#include "sound/eax.h"
 
 //#define R_OK  (4)
 

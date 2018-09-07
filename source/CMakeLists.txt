@@ -369,7 +369,6 @@ set(MAIN_OPENGL_UNIX_SDL_SOURCES
 set(MAIN_WIN32_SOURCES
   winshit/in_win32.cpp
   winshit/sys_win.cpp
-#  winshit/sound/eax.h
 #  winshit/sound/snd_win32.cpp
 #  winshit/sound/snd_win32music.cpp
 #  winshit/res/vavoom.ico
