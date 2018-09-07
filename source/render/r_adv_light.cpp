@@ -663,50 +663,39 @@ void VAdvancedRenderLevel::RenderShadowBSPNode(int bspnum, float *bbox, bool Lim
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAdvancedRenderLevel::DrawLightSurfaces
 //
 //==========================================================================
-
 void VAdvancedRenderLevel::DrawLightSurfaces(surface_t *InSurfs, texinfo_t *texinfo,
   VEntity *SkyBox, bool CheckSkyBoxAlways, bool LightCanCross)
 {
   guard(VAdvancedRenderLevel::DrawLightSurfaces);
-  surface_t *surfs = InSurfs;
-  if (!surfs)
-  {
-    return;
-  }
 
-  if (texinfo->Tex->Type == TEXTYPE_Null)
-  {
-    return;
-  }
+  if (!InSurfs) return;
 
-  if (texinfo->Alpha < 1.0)
-  {
-    return;
-  }
+  if (texinfo->Tex->Type == TEXTYPE_Null) return;
+  if (texinfo->Alpha < 1.0) return;
 
-  if (SkyBox && (SkyBox->EntityFlags & VEntity::EF_FixedModel))
-  {
-    SkyBox = nullptr;
-  }
-  bool IsStack = SkyBox && SkyBox->eventSkyBoxGetAlways();
+  if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
+
   if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) ||
-    (IsStack && CheckSkyBoxAlways))
+      (CheckSkyBoxAlways && (SkyBox && SkyBox->eventSkyBoxGetAlways())))
   {
     return;
   }
 
-  do
-  {
+  surface_t *surfs = InSurfs;
+  do {
     Drawer->DrawSurfaceLight(surfs, CurrLightPos, CurrLightRadius, LightCanCross);
     surfs = surfs->next;
   } while (surfs);
+
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -715,108 +704,69 @@ void VAdvancedRenderLevel::DrawLightSurfaces(surface_t *InSurfs, texinfo_t *texi
 //  Clips the given segment and adds any visible pieces to the line list.
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderLightLine(drawseg_t *dseg)
-{
+void VAdvancedRenderLevel::RenderLightLine (drawseg_t *dseg) {
   guard(VAdvancedRenderLevel::RenderLightLine);
   seg_t *line = dseg->seg;
 
-  if (!line->linedef)
-  {
-    //  Miniseg
-    return;
-  }
+  if (!line->linedef) return; // miniseg
 
-  // Clip sectors that are behind rendered segs
+  // clip sectors that are behind rendered segs
   TVec v1 = *line->v1;
   TVec v2 = *line->v2;
-  TVec r1 = CurrLightPos - v1;
-  TVec r2 = CurrLightPos - v2;
+  TVec r1 = CurrLightPos-v1;
+  TVec r2 = CurrLightPos-v2;
   float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), CurrLightPos);
   float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), CurrLightPos);
 
-  // There might be a better method of doing this, but
-  // this one works for now...
-  if (D1 > CurrLightRadius && D2 < -CurrLightRadius)
-  {
-    v2 += ((v2 - v1) * D1 / (D1 - D2));
-  }
-  else if (D2 > CurrLightRadius && D1 < -CurrLightRadius)
-  {
-    v1 += ((v1 - v2) * D2 / (D2 - D1));
+  // there might be a better method of doing this, but this one works for now...
+  if (D1 > CurrLightRadius && D2 < -CurrLightRadius) {
+    v2 += ((v2-v1)*D1/(D1-D2));
+  } else if (D2 > CurrLightRadius && D1 < -CurrLightRadius) {
+    v1 += ((v1-v2)*D2/(D2-D1));
   }
 
-  if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(v2),
-    LightClip.PointToClipAngle(v1)))
-  {
-    return;
-  }
+  if (!LightClip.IsRangeVisible(LightClip.PointToClipAngle(v2), LightClip.PointToClipAngle(v1))) return;
 
-  float dist = DotProduct(CurrLightPos, line->normal) - line->dist;
-  if (dist <= -CurrLightRadius || dist > CurrLightRadius)
-  {
-    //  Light is in back side or on plane
-    return;
-  }
+  float dist = DotProduct(CurrLightPos, line->normal)-line->dist;
+  if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light is in back side or on plane
 
-  //line_t *linedef = line->linedef;
-  //side_t *sidedef = line->sidedef;
-
-  if (!line->backsector)
-  {
+  if (!line->backsector) {
     // single sided line
-    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo,
-      r_region->ceiling->SkyBox, false, false);
-    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo,
-      r_region->ceiling->SkyBox, false, false);
-  }
-  else
-  {
+    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, r_region->ceiling->SkyBox, false, false);
+    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, r_region->ceiling->SkyBox, false, false);
+  } else {
     // two sided line
-    DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo,
-      r_region->ceiling->SkyBox, false, false);
-    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo,
-      r_region->ceiling->SkyBox, false, true);
-    DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo,
-      r_region->ceiling->SkyBox, false, false);
-    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo,
-      r_region->ceiling->SkyBox, false, true);
+    DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, r_region->ceiling->SkyBox, false, false);
+    DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, r_region->ceiling->SkyBox, false, true);
+    DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, r_region->ceiling->SkyBox, false, false);
+    DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, r_region->ceiling->SkyBox, false, true);
 
-    for (segpart_t *sp = dseg->extra; sp; sp = sp->next)
-    {
-      DrawLightSurfaces(sp->surfs, &sp->texinfo,
-        r_region->ceiling->SkyBox, false, false);
+    for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
+      DrawLightSurfaces(sp->surfs, &sp->texinfo, r_region->ceiling->SkyBox, false, false);
     }
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderLightSecSurface
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderLightSecSurface(sec_surface_t *ssurf, VEntity *SkyBox)
-{
+void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
   guard(VAdvancedRenderLevel::RenderLightSecSurface);
   sec_plane_t &plane = *ssurf->secplane;
 
-  if (!plane.pic)
-  {
-    return;
-  }
+  if (!plane.pic) return;
 
-  float dist = DotProduct(CurrLightPos, plane.normal) - plane.dist;
-  if (dist <= -CurrLightRadius || dist > CurrLightRadius)
-  {
-    //  Light is in back side or on plane
-    return;
-  }
+  float dist = DotProduct(CurrLightPos, plane.normal)-plane.dist;
+  if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light is in back side or on plane
 
   DrawLightSurfaces(ssurf->surfs, &ssurf->texinfo, SkyBox, true, false);
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -826,195 +776,139 @@ void VAdvancedRenderLevel::RenderLightSecSurface(sec_surface_t *ssurf, VEntity *
 //  Draw one or more line segments.
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderLightSubRegion(subregion_t *region)
-{
+void VAdvancedRenderLevel::RenderLightSubRegion (subregion_t *region) {
   guard(VAdvancedRenderLevel::RenderLightSubRegion);
-  int       count;
-  int       polyCount;
+  int count;
+  int polyCount;
   seg_t **polySeg;
-  float     d;
 
-  d = DotProduct(CurrLightPos, region->floor->secplane->normal) -
-    region->floor->secplane->dist;
-  if (region->next && d <= -CurrLightRadius)
-  {
-    if (!LightClip.ClipCheckRegion(region->next, r_sub, true, CurrLightPos, CurrLightRadius))
-    {
-      return;
-    }
+  float d = DotProduct(CurrLightPos, region->floor->secplane->normal)-region->floor->secplane->dist;
+
+  if (region->next && d <= -CurrLightRadius) {
+    if (!LightClip.ClipCheckRegion(region->next, r_sub, true, CurrLightPos, CurrLightRadius)) return;
     RenderLightSubRegion(region->next);
   }
 
   r_region = region->secregion;
 
-  if (r_sub->poly)
-  {
-    //  Render the polyobj in the subsector first
+  if (r_sub->poly) {
+    // render the polyobj in the subsector first
     polyCount = r_sub->poly->numsegs;
     polySeg = r_sub->poly->segs;
-    while (polyCount--)
-    {
+    while (polyCount--) {
       RenderLightLine((*polySeg)->drawsegs);
-      polySeg++;
+      ++polySeg;
     }
   }
 
   count = r_sub->numlines;
   drawseg_t *ds = region->lines;
-  while (count--)
-  {
+  while (count--) {
     RenderLightLine(ds);
-    ds++;
+    ++ds;
   }
 
   RenderLightSecSurface(region->floor, r_region->floor->SkyBox);
   RenderLightSecSurface(region->ceil, r_region->ceiling->SkyBox);
 
-  if (region->next && d > CurrLightRadius)
-  {
-    if (!LightClip.ClipCheckRegion(region->next, r_sub, true, CurrLightPos, CurrLightRadius))
-    {
-      return;
-    }
+  if (region->next && d > CurrLightRadius) {
+    if (!LightClip.ClipCheckRegion(region->next, r_sub, true, CurrLightPos, CurrLightRadius)) return;
     RenderLightSubRegion(region->next);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderLightSubsector
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderLightSubsector(int num)
-{
+void VAdvancedRenderLevel::RenderLightSubsector (int num) {
   guard(VAdvancedRenderLevel::RenderLightSubsector);
   subsector_t *Sub = &Level->Subsectors[num];
   r_sub = Sub;
 
-  if (!(LightBspVis[num >> 3] & (1 << (num & 7))) ||
-    !(BspVis[num >> 3] & (1 << (num & 7))))
-  {
-    return;
-  }
+  if (!(LightBspVis[num>>3]&(1<<(num&7))) || !(BspVis[num>>3]&(1<<(num&7)))) return;
 
-  if (!Sub->sector->linecount)
-  {
-    //  Skip sectors containing original polyobjs
-    return;
-  }
+  if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
 
-  if (!LightClip.ClipCheckSubsector(Sub, true, CurrLightPos, CurrLightRadius))
-  {
-    return;
-  }
+  if (!LightClip.ClipCheckSubsector(Sub, true, CurrLightPos, CurrLightRadius)) return;
 
   RenderLightSubRegion(Sub->regions);
 
-  //  Add subsector's segs to the clipper. Clipping against mirror
-  // is done only for vertical mirror planes.
+  // add subsector's segs to the clipper
+  // clipping against mirror is done only for vertical mirror planes
   LightClip.ClipAddSubsectorSegs(Sub, true, nullptr, CurrLightPos, CurrLightRadius);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderLightBSPNode
 //
 //  Renders all subsectors below a given node, traversing subtree
-// recursively. Just call with BSP root.
+//  recursively. Just call with BSP root.
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderLightBSPNode(int bspnum, float *bbox, bool LimitLights)
-{
+void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, float *bbox, bool LimitLights) {
   guard(VAdvancedRenderLevel::RenderLightBSPNode);
-  if (LimitLights && CurrLightsNumber > r_max_lights)
-  {
-    return;
-  }
+  if (LimitLights && CurrLightsNumber > r_max_lights) return;
 
-  if (LightClip.ClipIsFull())
-  {
-    return;
-  }
+  if (LightClip.ClipIsFull()) return;
 
-  if (!LightClip.ClipIsBBoxVisible(bbox, true, CurrLightPos, CurrLightRadius))
-  {
-    return;
-  }
+  if (!LightClip.ClipIsBBoxVisible(bbox, true, CurrLightPos, CurrLightRadius)) return;
 
-  if (bspnum == -1)
-  {
+  if (bspnum == -1) {
     RenderLightSubsector(0);
-    if (LimitLights)
-    {
-      CurrLightsNumber += 1;
-    }
+    if (LimitLights) ++CurrLightsNumber;
     return;
   }
 
-  // Found a subsector?
-  if (!(bspnum & NF_SUBSECTOR))
-  {
+  // found a subsector?
+  if (!(bspnum&NF_SUBSECTOR)) {
     node_t *bsp = &Level->Nodes[bspnum];
 
     // Decide which side the light is on.
     float Dist = DotProduct(CurrLightPos, bsp->normal) - bsp->dist;
-    if (Dist > CurrLightRadius)
-    {
-      //  Light is completely on front side.
+    if (Dist > CurrLightRadius) {
+      // light is completely on front side
       RenderLightBSPNode(bsp->children[0], bsp->bbox[0], LimitLights ? true : false);
-    }
-    else if (Dist < -CurrLightRadius)
-    {
-      //  Light is completely on back side.
+    } else if (Dist < -CurrLightRadius) {
+      // light is completely on back side
       RenderLightBSPNode(bsp->children[1], bsp->bbox[1], LimitLights ? true : false);
-    }
-    else
-    {
+    } else {
       int side = bsp->PointOnSide(CurrLightPos);
 
-      // Recursively divide front space.
+      // recursively divide front space
       RenderLightBSPNode(bsp->children[side], bsp->bbox[side], false);
 
-      // Possibly divide back space
-      if (!LightClip.ClipIsBBoxVisible(bsp->bbox[side ^ 1], true, CurrLightPos, CurrLightRadius))
-      {
-        if (LimitLights)
-        {
-          CurrLightsNumber += 1;
-        }
+      // possibly divide back space
+      if (!LightClip.ClipIsBBoxVisible(bsp->bbox[side^1], true, CurrLightPos, CurrLightRadius)) {
+        if (LimitLights) ++CurrLightsNumber;
         return;
       }
-      RenderLightBSPNode(bsp->children[side ^ 1], bsp->bbox[side ^ 1], false);
+      RenderLightBSPNode(bsp->children[side^1], bsp->bbox[side^1], false);
     }
 
-    if (LimitLights)
-    {
-      CurrLightsNumber += 1;
-    }
+    if (LimitLights) ++CurrLightsNumber;
     return;
   }
 
   RenderLightSubsector(bspnum & (~NF_SUBSECTOR));
 
-  /*if (LimitLights)
-  {
-    CurrLightsNumber += 1;
-  }*/
+  //if (LimitLights) ++CurrLightsNumber;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderLightShadows
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderLightShadows(const refdef_t *RD,
+void VAdvancedRenderLevel::RenderLightShadows (const refdef_t *RD,
   const VViewClipper *Range, TVec &Pos, float Radius, vuint32 Colour, bool LimitLights)
 {
   guard(VAdvancedRenderLevel::RenderLightShadows);
@@ -1024,39 +918,37 @@ void VAdvancedRenderLevel::RenderLightShadows(const refdef_t *RD,
 
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
-  //  Build vis data for light.
+  // build vis data for light
   LightClip.ClearClipNodes(CurrLightPos, Level);
   memset(LightVis, 0, VisSize);
   BuildLightVis(Level->NumNodes - 1, dummy_bbox);
 
-  //  Create combined light and view visibility.
+  // create combined light and view visibility
   bool HaveIntersect = false;
-  for (int i = 0; i < VisSize; i++)
-  {
+  for (int i = 0; i < VisSize; ++i) {
     LightBspVis[i] = BspVis[i] & LightVis[i];
-    if (LightBspVis[i])
-    {
-      HaveIntersect = true;
-    }
+    if (LightBspVis[i]) HaveIntersect = true;
   }
-  if (!HaveIntersect)
-  {
-    return;
-  }
+  if (!HaveIntersect) return;
 
   ResetMobjsLightCount();
 
-  //  Do shadow volumes.
+  // do shadow volumes
   Drawer->BeginLightShadowVolumes();
   LightClip.ClearClipNodes(CurrLightPos, Level);
-  RenderShadowBSPNode(Level->NumNodes - 1, dummy_bbox, LimitLights);
+  RenderShadowBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
   Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
   RenderMobjsShadow();
   Drawer->EndLightShadowVolumes();
 
   ResetMobjsLightCount();
 
-  //  Draw light.
+  // k8: the question is: why we are rendering surfaces instead
+  //     of simply render a light circle? shadow volumes should
+  //     take care of masking the area, so simply rendering a
+  //     circle should do the trick.
+
+  // draw light
   Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, Colour);
   LightClip.ClearClipNodes(CurrLightPos, Level);
   RenderLightBSPNode(Level->NumNodes - 1, dummy_bbox, LimitLights);
