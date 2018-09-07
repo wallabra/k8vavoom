@@ -124,6 +124,7 @@ public:
 
 private:
   void freeEntries () {
+#if defined(TMAP_DO_DTOR) || !defined(TMAP_NO_CLEAR)
     if (mFirstEntry >= 0) {
       for (int f = mFirstEntry; f <= mLastEntry; ++f) {
         TEntry *e = &mEntries[f];
@@ -139,6 +140,7 @@ private:
         }
       }
     }
+#endif
     if (mEBSize > 0) {
       memset((void *)(&mEntries[0]), 0, mEBSize*sizeof(TEntry));
       for (vuint32 f = 0; f < mEBSize; ++f) {
@@ -284,7 +286,7 @@ public:
   }
 
   void clear () {
-#if defined(TMAP_DO_DTOR) || defined(TMAP_NO_CLEAR)
+#if defined(TMAP_DO_DTOR) || !defined(TMAP_NO_CLEAR)
     freeEntries();
 #endif
     mFreeEntryHead = nullptr;
