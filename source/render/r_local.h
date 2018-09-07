@@ -494,7 +494,7 @@ public:
   void SetupFakeFloors(sector_t*);
 
   void AddStaticLight(const TVec&, float, vuint32);
-  dlight_t *AllocDlight(VThinker*);
+  dlight_t *AllocDlight(VThinker *Owner, const TVec &lorg, float radius);
   void DecayLights(float);
 };
 

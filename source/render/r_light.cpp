@@ -486,47 +486,68 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
 // VRenderLevelShared::AllocDlight
 //
 //==========================================================================
-dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner) {
+dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, float radius) {
   guard(VRenderLevelShared::AllocDlight);
-  dlight_t *dl;
 
-  // first look for an exact key match
-  if (Owner) {
-    dl = DLights;
-    for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
-      if (dl->Owner == Owner) {
-        memset((void *)dl, 0, sizeof(*dl));
-        dl->Owner = Owner;
-        return dl;
+  dlight_t *dlowner = nullptr;
+  dlight_t *dldying = nullptr;
+  dlight_t *dlreplace = nullptr;
+  dlight_t *dlbestdist = nullptr;
+  float bestdist = length2DSquared(lorg-cl->ViewOrg);
+  if (radius < 0) radius = 0;
+  float radsq = (radius < 1 ? 32*32 : radius*radius);
+  if (radsq < 32*32) radsq = 32*32;
+
+  // look for any free slot (or free one if necessary)
+  dlight_t *dl = DLights;
+  for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
+    // replace dlight of the same owner
+    // (but keep looping, 'cause we may want to drop this light altogether)
+    if (!dlowner && Owner && dl->Owner == Owner) {
+      dlowner = dl;
+      continue;
+    }
+    // replace dying light
+    if (dl->die < Level->Time) {
+      if (!dldying) dldying = dl;
+      continue;
+    }
+    // replace furthest light
+    float dist = length2DSquared(dl->origin-cl->ViewOrg);
+    if (dist > bestdist) {
+      bestdist = dist;
+      dlbestdist = dl;
+    }
+    // check if we already have dynamic light around new origin
+    {
+      float dd = length2DSquared(dl->origin-lorg);
+      if (dd < radsq) {
+        // if existing light radius is greater than new radius, drop new light, 'cause
+        // we have too much lights around one point (prolly due to several things at one place)
+        if (radius > 0 && dl->radius > radius) return nullptr;
+        // otherwise, replace this light
+        dlreplace = dl;
+        break; // stop searcing, we have a perfect candidate
       }
     }
   }
 
-  // then look for anything else
-  dl = DLights;
-  for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
-    if (dl->die < Level->Time) {
-      memset((void *)dl, 0, sizeof(*dl));
-      dl->Owner = Owner;
-      return dl;
-    }
+  if (dlowner) {
+    // remove replaced light
+    if (dlreplace && dlreplace != dlowner) memset((void *)dlreplace, 0, sizeof(*dlreplace));
+    dl = dlowner;
+  } else {
+    dl = dlreplace;
+    if (!dl) { dl = dldying; if (!dl) { dl = dlbestdist; if (!dl) return nullptr; } }
   }
 
-  int bestnum = 0;
-  float bestdist = 0.0;
-  dl = DLights;
-  for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
-    float dist = Length(dl->origin-cl->ViewOrg);
-    if (dist > bestdist) {
-      bestnum = i;
-      bestdist = dist;
-    }
-  }
-
-  dl = &DLights[bestnum];
+  // clean new light, and return it
   memset((void *)dl, 0, sizeof(*dl));
   dl->Owner = Owner;
+  dl->origin = lorg;
+  dl->radius = radius;
   return dl;
+
   unguard;
 }
 

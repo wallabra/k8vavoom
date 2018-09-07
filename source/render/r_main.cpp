@@ -27,6 +27,7 @@
 //**  geometry, trigonometry). See tables.c, too.
 //**
 //**************************************************************************
+//#define RADVLIGHT_GRID_OPTIMIZER
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -865,9 +866,11 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
   CurrShadowsNumber = 0;
 
   if (!FixedLight && r_static_lights) {
+#ifdef RADVLIGHT_GRID_OPTIMIZER
     static TMapNC<vuint32, int> slmhash;
     int statdiv = r_hashlight_static_div;
     if (statdiv > 0) slmhash.reset();
+#endif
 
     for (int i = 0; i < Lights.Num(); i++) {
       if (!Lights[i].radius) continue;
@@ -884,6 +887,7 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
       if (Delta.Length() > r_lights_radius) continue;
       if ((Delta.Length() > r_lights_radius_sight_check) && !Level->TraceLine(Trace, Lights[i].origin, vieworg, SPF_NOBLOCKSIGHT)) continue;
 
+#ifdef RADVLIGHT_GRID_OPTIMIZER
       // don't render too much lights around one point
       if (statdiv > 0) {
         vuint32 cc = ((((vuint32)Lights[i].origin.x)/(vuint32)statdiv)&0xffffu)|(((((vuint32)Lights[i].origin.y)/(vuint32)statdiv)&0xffffu)<<16);
@@ -896,27 +900,33 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
         } else {
           slmhash.put(cc, i);
         }
-      } else {
+      } else
+#endif
+      {
         RenderLightShadows(RD, Range, Lights[i].origin, Lights[i].radius, Lights[i].colour, true);
       }
     }
 
+#ifdef RADVLIGHT_GRID_OPTIMIZER
     if (statdiv > 0) {
       for (auto it = slmhash.first(); bool(it); ++it) {
         int i = it.getValue();
         RenderLightShadows(RD, Range, Lights[i].origin, Lights[i].radius, Lights[i].colour, true);
       }
     }
+#endif
   }
 
   if (!FixedLight && r_dynamic) {
+#ifdef RADVLIGHT_GRID_OPTIMIZER
     static TMapNC<vuint32, dlight_t *> dlmhash;
     int dyndiv = r_hashlight_dynamic_div;
     if (dyndiv > 0) dlmhash.reset();
+    int lcount = 0;
     //fprintf(stderr, "=====\n");
+#endif
 
     dlight_t *l = DLights;
-    int lcount = 0;
 
     for (int i = 0; i < MAX_DLIGHTS; i++, l++) {
       if (!l->radius || l->die < Level->Time) continue;
@@ -935,6 +945,7 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
       if (Delta.Length() > r_lights_radius) continue;
       if ((Delta.Length() > r_lights_radius_sight_check) && !Level->TraceLine(Trace, l->origin, vieworg, SPF_NOBLOCKSIGHT)) continue;
 
+#ifdef RADVLIGHT_GRID_OPTIMIZER
       // don't render too much lights around one point
       if (dyndiv > 0) {
         vuint32 cc = ((((vuint32)l->origin.x)/(vuint32)dyndiv)&0xffffu)|(((((vuint32)l->origin.y)/(vuint32)dyndiv)&0xffffu)<<16);
@@ -951,11 +962,14 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
           dlmhash.put(cc, l);
           ++lcount;
         }
-      } else {
+      } else
+#endif
+      {
         RenderLightShadows(RD, Range, l->origin, l->radius, l->colour, true);
       }
     }
 
+#ifdef RADVLIGHT_GRID_OPTIMIZER
     if (dyndiv > 0) {
       for (auto it = dlmhash.first(); bool(it); ++it) {
         dlight_t *dlt = it.getValue();
@@ -964,6 +978,7 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
       }
       if (lcount != 0) Sys_Error("unbalanced dlights");
     }
+#endif
   }
 
   Drawer->DrawWorldTexturesPass();
