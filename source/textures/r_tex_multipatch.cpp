@@ -176,6 +176,8 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         Type = TEXTYPE_Null;
       } else if (sc->Check("nodecals")) {
         noDecals = true;
+        staticNoDecals = true;
+        animNoDecals = true;
       }
       else if (sc->Check("patch")) {
         VTexPatch &P = Parts.Alloc();

@@ -76,6 +76,7 @@ struct texinfo_t
   TVec      taxis;
   float     toffs;
   VTexture *Tex;
+  bool noDecals;
   //  1.1 for solid surfaces
   // Alpha for masked surfaces
   float     Alpha;

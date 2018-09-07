@@ -449,6 +449,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface(subsector_t *sub,
   ssurf->texinfo.soffs = splane->xoffs;
   ssurf->texinfo.toffs = splane->yoffs + splane->BaseYOffs;
   ssurf->texinfo.Tex = Tex;
+  ssurf->texinfo.noDecals = (Tex ? Tex->noDecals : true);
   ssurf->texinfo.Alpha = splane->Alpha < 1.0 ? splane->Alpha : 1.1;
   ssurf->texinfo.Additive = !!(splane->flags & SPF_ADDITIVE);
   ssurf->texinfo.ColourMap = 0;
@@ -524,9 +525,11 @@ void VRenderLevelShared::UpdateSecSurface(sec_surface_t *ssurf,
   }
 
   ssurf->texinfo.ColourMap = ColourMap;
-  if (ssurf->texinfo.Tex != GTextureManager(plane->pic))
+  VTexture *newtex = GTextureManager(plane->pic);
+  if (ssurf->texinfo.Tex != newtex)
   {
-    ssurf->texinfo.Tex = GTextureManager(plane->pic);
+    ssurf->texinfo.Tex = newtex;
+    ssurf->texinfo.noDecals = (newtex ? newtex->noDecals : true);
   }
   if (FASI(ssurf->dist) != FASI(plane->dist))
   {
@@ -833,8 +836,7 @@ surface_t *VRenderLevelShared::CreateWSurfs(TVec *wv, texinfo_t *texinfo,
   surf->count = 4;
   memcpy(surf->verts, wv, surf->count * sizeof(TVec));
 
-  if (texinfo->Tex == GTextureManager[skyflatnum])
-  {
+  if (texinfo->Tex == GTextureManager[skyflatnum]) {
     //  Never split sky surfaces
     surf->texinfo = texinfo;
     surf->plane = seg;
@@ -923,6 +925,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
       seg->offset * TextureSScale(MTex) +
       sidedef->MidTextureOffset * TextureOffsetSScale(MTex);
     sp->texinfo.Tex = MTex;
+    sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
     sp->texinfo.Alpha = 1.1;
     sp->texinfo.Additive = false;
     sp->texinfo.ColourMap = 0;
@@ -966,6 +969,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
     dseg->topsky = pspart++;
     sp = dseg->topsky;
     sp->texinfo.Tex = GTextureManager[skyflatnum];
+    sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
     sp->texinfo.Alpha = 1.1;
     sp->texinfo.Additive = false;
     sp->texinfo.ColourMap = 0;
@@ -1037,6 +1041,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
       seg->offset * TextureSScale(TTex) +
       sidedef->TopTextureOffset * TextureOffsetSScale(TTex);
     sp->texinfo.Tex = TTex;
+    sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
     sp->texinfo.Alpha = 1.1;
     sp->texinfo.Additive = false;
     sp->texinfo.ColourMap = 0;
@@ -1080,6 +1085,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
       sp = dseg->topsky;
 
       sp->texinfo.Tex = GTextureManager[skyflatnum];
+      sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
       sp->texinfo.Alpha = 1.1;
       sp->texinfo.Additive = false;
       sp->texinfo.ColourMap = 0;
@@ -1109,6 +1115,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
       seg->offset * TextureSScale(BTex) +
       sidedef->BotTextureOffset * TextureOffsetSScale(BTex);
     sp->texinfo.Tex = BTex;
+    sp->texinfo.noDecals = (BTex ? BTex->noDecals : true);
     sp->texinfo.Alpha = 1.1;
     sp->texinfo.Additive = false;
     sp->texinfo.ColourMap = 0;
@@ -1166,6 +1173,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
 
     VTexture *MTex = GTextureManager(sidedef->MidTexture);
     sp->texinfo.Tex = MTex;
+    sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
     sp->texinfo.ColourMap = 0;
     if (MTex->Type != TEXTYPE_Null)
     {
@@ -1261,6 +1269,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
         TextureTScale(MTextr) + sidedef->MidRowOffset *
         TextureOffsetTScale(MTextr);
       sp->texinfo.Tex = MTextr;
+      sp->texinfo.noDecals = (MTextr ? MTextr->noDecals : true);
       sp->texinfo.Alpha = extrabot->Alpha < 1.0 ? extrabot->Alpha : 1.1;
       sp->texinfo.Additive = !!(extrabot->flags & SPF_ADDITIVE);
       sp->texinfo.ColourMap = 0;
@@ -1412,6 +1421,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
       sp->texinfo.toffs *= TextureTScale(MTex);
       sp->texinfo.toffs += sidedef->MidRowOffset * TextureOffsetTScale(MTex);
       sp->texinfo.Tex = MTex;
+      sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
 
       wv[0].x = wv[1].x = seg->v1->x;
       wv[0].y = wv[1].y = seg->v1->y;
@@ -1432,11 +1442,13 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
     else if (FASI(sp->RowOffset) != FASI(sidedef->MidRowOffset))
     {
       sp->texinfo.Tex = MTex;
+      sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
       UpdateRowOffset(sp, sidedef->MidRowOffset);
     }
     else
     {
       sp->texinfo.Tex = MTex;
+      sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
     }
     if (FASI(sp->TextureOffset) != FASI(sidedef->MidTextureOffset))
     {
@@ -1535,6 +1547,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
       sp->texinfo.toffs *= TextureTScale(TTex);
       sp->texinfo.toffs += sidedef->TopRowOffset * TextureOffsetTScale(TTex);
       sp->texinfo.Tex = TTex;
+      sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
 
       wv[0].x = wv[1].x = seg->v1->x;
       wv[0].y = wv[1].y = seg->v1->y;
@@ -1556,11 +1569,13 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
     else if (FASI(sp->RowOffset) != FASI(sidedef->TopRowOffset))
     {
       sp->texinfo.Tex = TTex;
+      sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
       UpdateRowOffset(sp, sidedef->TopRowOffset);
     }
     else
     {
       sp->texinfo.Tex = TTex;
+      sp->texinfo.noDecals = (TTex ? TTex->noDecals : true);
     }
     if (FASI(sp->TextureOffset) != FASI(sidedef->TopTextureOffset))
     {
@@ -1580,6 +1595,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
       sp->surfs = nullptr;
 
       sp->texinfo.Tex = GTextureManager[skyflatnum];
+      sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
       sp->texinfo.Alpha = 1.1;
       sp->texinfo.Additive = false;
       sp->texinfo.ColourMap = 0;
@@ -1603,6 +1619,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
     sp->texinfo.ColourMap = ColourMap;
     VTexture *BTex = GTextureManager(sidedef->BottomTexture);
     sp->texinfo.Tex = BTex;
+    sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
     if (FASI(sp->frontTopDist) != FASI(r_ceiling->dist) ||
       FASI(sp->frontBotDist) != FASI(r_floor->dist) ||
       FASI(sp->backBotDist) != FASI(back_floor->dist))
@@ -1686,6 +1703,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
       sp->surfs = nullptr;
 
       sp->texinfo.Tex = MTex;
+      sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
       if (sidedef->MidTexture)
       {
         float topz1 = r_ceiling->GetPointZ(*seg->v1);
@@ -1786,6 +1804,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
     else
     {
       sp->texinfo.Tex = MTex;
+      sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
       if (sidedef->MidTexture)
       {
         sp->texinfo.Alpha = linedef->alpha;
@@ -1808,6 +1827,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
       spp->texinfo.ColourMap = ColourMap;
       VTexture *ETex = GTextureManager(extraside->MidTexture);
       spp->texinfo.Tex = ETex;
+      spp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
       if (FASI(spp->frontTopDist) != FASI(r_ceiling->dist) ||
         FASI(spp->frontBotDist) != FASI(r_floor->dist) ||
         FASI(spp->backTopDist) != FASI(extratop->dist) ||

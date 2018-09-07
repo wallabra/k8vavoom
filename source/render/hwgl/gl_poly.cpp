@@ -381,7 +381,7 @@ void VOpenGLDrawer::WorldDrawing () {
         p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_FALSE);
       }
 
-      bool doDecals = textr->Tex && !textr->Tex->noDecals && surf->dcseg && surf->dcseg->decals;
+      bool doDecals = textr->Tex && !textr->noDecals && surf->dcseg && surf->dcseg->decals;
 
       // fill stencil buffer for decals
       if (doDecals) RenderPrepareShaderDecals(surf, false);
@@ -456,7 +456,7 @@ void VOpenGLDrawer::WorldDrawing () {
         p_glUniform1iARB(SurfLightmapFogEnabledLoc, GL_FALSE);
       }
 
-      bool doDecals = tex->Tex && !tex->Tex->noDecals && surf->dcseg && surf->dcseg->decals;
+      bool doDecals = tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals;
 
       // fill stencil buffer for decals
       if (doDecals) RenderPrepareShaderDecals(surf, true);
@@ -535,7 +535,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       ((surf->Light >> 8) & 255) * lev / 255.0,
       (surf->Light & 255) * lev / 255.0, 1.0);
 
-    bool doDecals = tex->Tex && !tex->Tex->noDecals && surf->dcseg && surf->dcseg->decals;
+    bool doDecals = tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals;
 
     // fill stencil buffer for decals
     if (doDecals) RenderPrepareShaderDecals(surf, true);

@@ -201,6 +201,8 @@ public:
   int SourceLump;
 
   bool noDecals;
+  bool staticNoDecals;
+  bool animNoDecals;
 
   // driver data
   struct VTransData {
@@ -294,36 +296,28 @@ public:
   int AddRawWithPal(VName Name, VName PalName);
   int AddFileTexture(VName Name, int Type);
 
-  //  Get unanimated texture
-  VTexture *operator[](int TexNum)
-  {
-    if ((vuint32)TexNum >= (vuint32)Textures.Num())
-    {
-      return nullptr;
-    }
-    return Textures[TexNum];
+  // get unanimated texture
+  inline VTexture *operator [] (int TexNum) {
+    VTexture *res = ((vuint32)TexNum < (vuint32)Textures.Num() ? Textures[TexNum] : nullptr);
+    if (res) res->noDecals = res->staticNoDecals;
+    return res;
   }
 
-  //  Get animated texture
-  VTexture *operator()(int TexNum)
-  {
-    if ((vuint32)TexNum >= (vuint32)Textures.Num())
-    {
-      return nullptr;
-    }
-    return Textures[TextureAnimation(TexNum)];
+  // get animated texture
+  inline VTexture *operator () (int TexNum) {
+    if ((vuint32)TexNum >= (vuint32)Textures.Num()) return nullptr;
+    VTexture *res = Textures[TextureAnimation(TexNum)];
+    if (res) res->noDecals = Textures[TexNum]->animNoDecals || Textures[TexNum]->staticNoDecals;
+    return res;
   }
 
-  int GetNumTextures() const
-  {
-    return Textures.Num();
-  }
+  inline int GetNumTextures () const { return Textures.Num(); }
 
 private:
   enum { HASH_SIZE = 1024 };
 
-  TArray<VTexture*> Textures;
-  int         TextureHash[HASH_SIZE];
+  TArray<VTexture *> Textures;
+  int TextureHash[HASH_SIZE];
 
   void AddToHash(int Index);
   void RemoveFromHash(int Index);
