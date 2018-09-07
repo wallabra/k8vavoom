@@ -403,18 +403,6 @@ float VTextureManager::TextureHeight (int TexNum) {
 
 //==========================================================================
 //
-//  VTextureManager::TextureAnimation
-//
-//==========================================================================
-int VTextureManager::TextureAnimation (int InTex) {
-  guard(VTextureManager::TextureAnimation);
-  return Textures[InTex]->TextureTranslation;
-  unguard;
-}
-
-
-//==========================================================================
-//
 //  VTextureManager::SetFrontSkyLayer
 //
 //==========================================================================
@@ -1442,36 +1430,58 @@ void R_AnimateSurfaces () {
     ad.Time -= host_frametime;
     if (ad.Time > 0.0) continue;
 
-    switch (ad.Type) {
-      case ANIM_Normal:
-      case ANIM_Forward:
-        ad.CurrentFrame = (ad.CurrentFrame+1)%ad.NumFrames;
-        break;
-      case ANIM_Backward:
-        if (ad.CurrentFrame == 0) ad.CurrentFrame = ad.NumFrames-1; else --ad.CurrentFrame;
-        break;
-      case ANIM_OscillateUp:
-        ++ad.CurrentFrame;
-        if (ad.CurrentFrame == ad.NumFrames-1) ad.Type = ANIM_OscillateDown;
-        break;
-      case ANIM_OscillateDown:
-        --ad.CurrentFrame;
-        if (ad.CurrentFrame == 0) ad.Type = ANIM_OscillateUp;
-        break;
+    bool validAnimation = true;
+    if (ad.NumFrames > 1) {
+      switch (ad.Type) {
+        case ANIM_Normal:
+        case ANIM_Forward:
+          ad.CurrentFrame = (ad.CurrentFrame+1)%ad.NumFrames;
+          break;
+        case ANIM_Backward:
+          ad.CurrentFrame = (ad.CurrentFrame+ad.NumFrames-1)%ad.NumFrames;
+          break;
+        case ANIM_OscillateUp:
+          if (++ad.CurrentFrame >= ad.NumFrames-1) {
+            ad.Type = ANIM_OscillateDown;
+            ad.CurrentFrame = ad.NumFrames-1;
+          }
+          break;
+        case ANIM_OscillateDown:
+          if (--ad.CurrentFrame <= 0) {
+            ad.Type = ANIM_OscillateUp;
+            ad.CurrentFrame = 0;
+          }
+          break;
+        default:
+          fprintf(stderr, "unknown animation type for texture %d (%s): %d\n", ad.Index, *GTextureManager[ad.Index]->Name, (int)ad.Type);
+          validAnimation = false;
+          ad.CurrentFrame = 0;
+          break;
+      }
+    } else {
+      ad.CurrentFrame = 0;
     }
 
-    const frameDef_t &fd = FrameDefs[ad.StartFrameDef+(ad.Type == ANIM_Normal ? ad.CurrentFrame : 0)];
+    //const frameDef_t &fd = FrameDefs[ad.StartFrameDef+(ad.Type == ANIM_Normal ? ad.CurrentFrame : 0)];
+    //fprintf(stderr, "ANIM #%d: texture %d (%s); type=%d; curframe=%d; framenum=%d; fdefs=%d; stfdef=%d; cfr=%d\n", i, ad.Index, *GTextureManager[ad.Index]->Name, (int)ad.Type, ad.CurrentFrame, ad.NumFrames, FrameDefs.length(), ad.StartFrameDef, ad.StartFrameDef+ad.CurrentFrame);
+    const frameDef_t &fd = FrameDefs[ad.StartFrameDef+(validAnimation ? (ad.Type == ANIM_Normal ? ad.CurrentFrame : 0) : 0)];
     ad.Time = fd.BaseTime/35.0;
     if (fd.RandomRange) ad.Time += Random()*(fd.RandomRange/35.0); // random tics
 
-    GTextureManager[ad.Index]->noDecals = (ad.allowDecals == 0);
-    GTextureManager[ad.Index]->animNoDecals = (ad.allowDecals == 0);
+    VTexture *atx = GTextureManager[ad.Index];
+    atx->noDecals = (ad.allowDecals == 0);
+    atx->animNoDecals = (ad.allowDecals == 0);
+    atx->animated = true;
 
-    if (ad.Type == ANIM_Normal) {
-      GTextureManager[ad.Index]->TextureTranslation = fd.Index;
+    if (ad.Type == ANIM_Normal || !validAnimation) {
+      atx->TextureTranslation = fd.Index;
     } else {
       for (int fn = 0; fn < ad.NumFrames; ++fn) {
-        GTextureManager[ad.Index+fn]->TextureTranslation = ad.Index+(ad.CurrentFrame+fn)%ad.NumFrames;
+        atx = GTextureManager[ad.Index+fn];
+        atx->TextureTranslation = ad.Index+(ad.CurrentFrame+fn)%ad.NumFrames;
+        atx->noDecals = (ad.allowDecals == 0);
+        atx->animNoDecals = (ad.allowDecals == 0);
+        atx->animated = true;
       }
     }
   }

@@ -203,6 +203,7 @@ public:
   bool noDecals;
   bool staticNoDecals;
   bool animNoDecals;
+  bool animated; // used to select "no decals" flag
 
   // driver data
   struct VTransData {
@@ -289,7 +290,6 @@ public:
   VName GetTextureName(int TexNum);
   float TextureWidth(int TexNum);
   float TextureHeight(int TexNum);
-  int TextureAnimation(int InTex);
   void SetFrontSkyLayer(int tex);
   void GetTextureInfo(int TexNum, picinfo_t *info);
   int AddPatch(VName Name, int Type, bool Silent = false);
@@ -307,13 +307,21 @@ public:
     return ((vuint32)TexNum < (vuint32)Textures.Num() ? Textures[TexNum] : nullptr);
   }
 
+  //inline int TextureAnimation (int InTex) { return Textures[InTex]->TextureTranslation; }
+
   // get animated texture
   inline VTexture *operator () (int TexNum) {
     if ((vuint32)TexNum >= (vuint32)Textures.Num()) return nullptr;
-    int ttrans = TextureAnimation(TexNum);
-    VTexture *res = Textures[ttrans];
-    if (res) res->noDecals = (ttrans != TexNum ? Textures[TexNum]->animNoDecals : Textures[TexNum]->staticNoDecals) || Textures[TexNum]->staticNoDecals;
-    return res;
+    VTexture *origtex = Textures[TexNum];
+    if (!origtex) return nullptr;
+    if (origtex->TextureTranslation != TexNum) {
+      VTexture *res = Textures[origtex->TextureTranslation];
+      if (res) res->noDecals = origtex->animNoDecals || res->staticNoDecals;
+      return res;
+    } else {
+      origtex->noDecals = (origtex->animated ? origtex->animNoDecals : false) || origtex->staticNoDecals;
+      return origtex;
+    }
   }
 
   inline int GetNumTextures () const { return Textures.Num(); }
