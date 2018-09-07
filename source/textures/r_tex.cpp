@@ -1155,7 +1155,7 @@ static void ParseFTAnim(VScriptParser *sc, int IsFlat)
     }
     if (sc->Check("tics"))
     {
-      sc->ExpectNumber();
+      sc->ExpectNumber(true);
       fd.BaseTime = sc->Number;
       fd.RandomRange = 0;
     }
@@ -1274,7 +1274,7 @@ static TSwitch *ParseSwitchState(VScriptParser *sc, bool IgnoreBad)
       F.Texture = Tex;
       if (sc->Check("tics"))
       {
-        sc->ExpectNumber();
+        sc->ExpectNumber(true);
         F.BaseTime = sc->Number;
         F.RandomRange = 0;
       }

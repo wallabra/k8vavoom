@@ -2340,14 +2340,14 @@ void VInvocation::CheckParams (VEmitContext &ec) {
     }
   }
 
-  if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments, need %d, got %d", maxParams, NumArgs);
+  if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments to `%s`, need %d, got %d", *Func->GetFullName(), maxParams, NumArgs);
 
   while (NumArgs < requiredParams) {
     if (Func->ParamFlags[NumArgs]&FPARM_Optional) {
       Args[NumArgs] = nullptr;
       ++NumArgs;
     } else {
-      ParseError(Loc, "Incorrect argument count %d, should be %d", NumArgs, requiredParams);
+      ParseError(Loc, "Incorrect argument count %d to `%s`, should be %d", NumArgs, *Func->GetFullName(), requiredParams);
       break;
     }
   }
@@ -2376,7 +2376,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
     maxParams = Func->NumParams;
   }
 
-  if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments, need %d, got %d", maxParams, NumArgs);
+  if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments to `%s`, need %d, got %d", *Func->GetFullName(), maxParams, NumArgs);
 
   for (int i = 0; i < NumArgs; ++i) {
     if (i >= requiredParams) continue;

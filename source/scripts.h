@@ -66,7 +66,7 @@ public:
   bool CheckQuotedString ();
   bool CheckIdentifier ();
   bool CheckNumber ();
-  void ExpectNumber ();
+  void ExpectNumber (bool allowFloat=false);
   bool CheckNumberWithSign ();
   void ExpectNumberWithSign ();
   bool CheckFloat ();
