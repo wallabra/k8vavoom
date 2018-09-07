@@ -10,59 +10,27 @@ varying vec3 VPos;
 varying float PlaneDist;
 varying float Dist;
 
-void main ()
-{
-  float DistVPos;
+void main () {
+  float DistVPos = /*sqrt*/(dot(VPos, VPos));
+  if (DistVPos < 0.0) discard;
 
-  DistVPos = sqrt(dot (VPos, VPos));
+  float DistToView = /*sqrt*/(dot(VertToView, VertToView));
+  if (DistToView < 0.0) discard;
 
-  if ((DistVPos < 0.0))
-  {
-    discard;
-  };
-  float DistToView;
+  vec4 TexColour = texture2D(Texture, TextureCoordinate);
+  if (TexColour.w < 0.1) discard;
 
-  DistToView = sqrt(dot (VertToView, VertToView));
+  float ClampTransp = clamp((TexColour.w-0.1)/0.9, 0.0, 1.0);
 
-  if ((DistToView < 0.0))
-  {
-    discard;
-  };
-  vec4 TexColour;
-
-  TexColour = texture2D (Texture, TextureCoordinate);
-
-  if ((TexColour.w < 0.1))
-  {
-    discard;
-  };
-  float ClampTransp;
-
-  ClampTransp = clamp (((TexColour.w - 0.1) / 0.9), 0.0, 1.0);
-  vec4 FinalColour;
-
-  FinalColour.xyz = TexColour.xyz;
-  FinalColour.w = (InAlpha * (ClampTransp * (ClampTransp *
-    (3.0 - (2.0 * ClampTransp))
-    )));
-
-  if ((AllowTransparency == false))
-  {
-    if ((InAlpha == 1.0))
-    {
-      if ((ClampTransp < 0.666))
-      {
-        discard;
-      };
-    };
+  if (!AllowTransparency) {
+    if (InAlpha == 1.0 && ClampTransp < 0.666) discard;
+  } else {
+    if (ClampTransp < 0.1) discard;
   }
-  else
-  {
-    if ((ClampTransp < 0.1))
-    {
-      discard;
-    };
-  };
+
+  vec4 FinalColour;
+  FinalColour.xyz = TexColour.xyz;
+  FinalColour.w = InAlpha*(ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))));
 
   gl_FragColor = FinalColour;
 }

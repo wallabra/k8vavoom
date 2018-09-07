@@ -17,124 +17,90 @@ varying float VDist;
 
 void main ()
 {
-  vec4 FinalColour;
-  float Add;
-  float DistVPosL;
+  vec4 TexColour = texture2D(Texture, TextureCoordinate);
+  if (TexColour.w < 0.1) discard;
 
-  DistVPosL = sqrt(dot (VPosL, VPosL));
-  float DistVPos;
+  float DistVPosL = /*sqrt*/(dot(VPosL, VPosL));
+  float DistVPos = /*sqrt*/(dot(VPos, VPos));
 
-  DistVPos = sqrt(dot (VPos, VPos));
+  //-2, -1, 0
+  float distSign1 = min(-1.0, sign(Dist)-1.0);
+  // =0: DistVPosL < -LightRadius
+  // <0: DistVPosL > LightRadius, or -DistVPosL < -LightRadius
+  //
+  // =0: DistVPosL < -LightRadius, or -DistVPosL > LightRadius
+  // <0: DistVPosL > LightRadius
+  //
+  //  0: -1
+  // -1:  1
+  float dsmul = -1.0-distSign1*2.0;
 
-  if ((Dist > 0.0))
-  {
-    if ((DistVPosL < -(LightRadius)))
-    {
-      discard;
-    };
+  //3 < -5  -3 > 5
+  //-5 < -3  5 > 3
 
-    if ((DistVPos < 0.0))
-    {
-      discard;
-    };
+  if (sign(Dist)*sign(DistVPos) < 0.0 || dsmul*DistVPosL > LightRadius*LightRadius) discard;
+  /*
+  if (Dist > 0.0) {
+    if (DistVPos < 0.0) discard;
+    if (DistVPosL < -LightRadius) discard;
+  } else {
+    if (DistVPos > 0.0) discard;
+    if (DistVPosL > LightRadius) discard;
   }
-  else
-  {
-    if ((DistVPosL > LightRadius))
-    {
-      discard;
-    };
+  */
 
-    if ((DistVPos > 0.0))
-    {
-      discard;
-    };
-  };
-  float DistToView;
 
-  DistToView = sqrt(dot (VertToView, VertToView));
-
-  if ((Dist > 0.0))
-  {
-    if ((VDist < 0.0))
-    {
-      discard;
-    };
-    if ((DistToView < 0.0))
-    {
-      discard;
-    };
+  float DistToView = /*sqrt*/(dot(VertToView, VertToView));
+  if (sign(Dist)*sign(VDist) < 0.0 || sign(Dist)*sign(DistToView) < 0.0) discard;
+  /*
+  if (Dist > 0.0) {
+    if (VDist < 0.0) discard;
+    if (DistToView < 0.0) discard;
+  } else {
+    if (VDist > 0.0) discard;
+    if (DistToView > 0.0) discard;
   }
-  else
-  {
-    if ((VDist > 0.0))
-    {
-      discard;
-    };
-    if ((DistToView > 0.0))
-    {
-      discard;
-    };
-  };
-  float DistToLight;
+  */
 
-  DistToLight = sqrt(dot (VertToLight, VertToLight));
+  float DistToLight = /*sqrt*/(dot(VertToLight, VertToLight));
 
-  if ((Dist > 0.0))
-  {
-    if ((DistToLight > LightRadius))
-    {
-      discard;
-    };
+  //  1:  1
+  //  0:  1
+  // -1: -1
+
+  //  1:  1
+  //  0: -1
+
+  float distSign2 = min(1.0, sign(Dist)+1.0);
+  float dsmul2 = -1.0-distSign2*2.0;
+  if (dsmul2*DistToLight > LightRadius) discard;
+
+  /*
+  if (Dist > 0.0) {
+    if (DistToLight > LightRadius) discard;
+  } else {
+    if (DistToLight < -LightRadius) discard;
   }
-  else
-  {
-    if ((DistToLight < -(LightRadius)))
-    {
-      discard;
-    };
-  };
-  vec4 TexColour;
+  */
 
-  TexColour = texture2D (Texture, TextureCoordinate);
 
-  if ((TexColour.w < 0.1))
-  {
-    discard;
-  };
-  Add = ((LightRadius - DistToLight) * (0.5 + (0.5 *
-  dot (normalize(VertToLight), Normal)
-  )));
+  float Add = (LightRadius-DistToLight)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
+  if (Add <= 0.0) discard;
 
-  if ((Add <= 0.0))
-  {
-    discard;
-  };
-  float ClampAdd;
-
-  ClampAdd = clamp ((Add / 255.0), 0.0, 1.0);
+  float ClampAdd = clamp(Add/255.0, 0.0, 1.0);
   Add = ClampAdd;
-  float ClampTrans;
 
-  ClampTrans = clamp (((TexColour.w - 0.1) / 0.9), 0.0, 1.0);
-  FinalColour.xyz = LightColour;
-  FinalColour.w = ((ClampAdd * TexColour.w) * (ClampTrans * (ClampTrans *
-  (3.0 - (2.0 * ClampTrans))
-  )));
+  float ClampTrans = clamp((TexColour.w-0.1)/0.9, 0.0, 1.0);
 
-  if ((AllowTransparency == bool(0)))
-  {
-    if (((InAlpha == 1.0) && (ClampTrans < 0.666)))
-    {
-      discard;
-    };
+  if (!AllowTransparency) {
+    if (InAlpha == 1.0 && ClampTrans < 0.666) discard;
+  } else {
+    if (ClampTrans < 0.1) discard;
   }
-  else
-  {
-    if ((ClampTrans < 0.1))
-    {
-      discard;
-    };
-  };
+
+  vec4 FinalColour;
+  FinalColour.xyz = LightColour;
+  FinalColour.w = (ClampAdd*TexColour.w)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
+
   gl_FragColor = FinalColour;
 }

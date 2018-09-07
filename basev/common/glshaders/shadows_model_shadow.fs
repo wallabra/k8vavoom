@@ -6,31 +6,16 @@ varying vec3 VertToView;
 varying vec3 VPosL;
 varying vec3 VPos;
 
-void main ()
-{
-  float DistToView;
 
-  DistToView = sqrt(dot (VertToView, VertToView));
+void main () {
+  float DistToView = /*sqrt*/(dot(VertToView, VertToView));
+  if (DistToView < 0.0) discard;
 
-  if ((DistToView < 0.0))
-  {
-    discard;
-  };
-  float DistVPosL;
+  float DistVPosL = /*sqrt*/(dot(VPosL, VPosL));
+  if (DistVPosL < -(LightRadius*LightRadius)) discard;
 
-  DistVPosL = sqrt(dot (VPosL, VPosL));
+  float DistVPos = /*sqrt*/(dot(VPos, VPos));
+  if (DistVPos < 0.0) discard;
 
-  if ((DistVPosL < -(LightRadius)))
-  {
-    discard;
-  };
-  float DistVPos;
-
-  DistVPos = sqrt(dot (VPos, VPos));
-
-  if ((DistVPos < 0.0))
-  {
-    discard;
-  };
   gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
 }
