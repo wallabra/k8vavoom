@@ -27,78 +27,10 @@
 #else
 # include "winshit/winlocal.h"
 #endif
-#define AL_ALEXT_PROTOTYPES
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alext.h>
-// linux headers doesn't define this
-#ifndef OPENAL
-# define OPENAL
-#endif
 
 #include "gamedefs.h"
 #include "snd_local.h"
 
-class VOpenALDevice : public VSoundDevice
-{
-private:
-  enum { MAX_VOICES = 256-4 };
-
-  //enum { NUM_STRM_BUFFERS = 8 };
-  //enum { STRM_BUFFER_SIZE = 1024 };
-
-  enum { NUM_STRM_BUFFERS = 8*2 };
-  enum { STRM_BUFFER_SIZE = 1024*8 };
-
-  ALCdevice *Device;
-  ALCcontext *Context;
-  ALuint *Buffers;
-  vint32 BufferCount;
-
-  ALuint StrmSampleRate;
-  ALuint StrmFormat;
-  ALuint StrmBuffers[NUM_STRM_BUFFERS];
-  ALuint StrmAvailableBuffers[NUM_STRM_BUFFERS];
-  int StrmNumAvailableBuffers;
-  ALuint StrmSource;
-  short StrmDataBuffer[STRM_BUFFER_SIZE * 2];
-
-  static VCvarF doppler_factor;
-  static VCvarF doppler_velocity;
-  static VCvarF rolloff_factor;
-  static VCvarF reference_distance;
-  static VCvarF max_distance;
-
-public:
-  //  VSoundDevice interface.
-  virtual bool Init () override;
-  virtual int SetChannels (int) override;
-  virtual void Shutdown () override;
-  //virtual void Tick(float);
-  virtual int PlaySound (int, float, float, float, bool) override;
-  virtual int PlaySound3D (int, const TVec&, const TVec&, float, float, bool) override;
-  virtual void UpdateChannel3D (int, const TVec&, const TVec&) override;
-  virtual bool IsChannelPlaying (int) override;
-  virtual void StopChannel (int) override;
-  virtual void UpdateListener (const TVec&, const TVec&, const TVec&, const TVec&, const TVec&, VReverbInfo*) override;
-
-  virtual bool OpenStream (int, int, int) override;
-  virtual void CloseStream () override;
-  virtual int GetStreamAvailable () override;
-  virtual short *GetStreamBuffer () override;
-  virtual void SetStreamData (short*, int) override;
-  virtual void SetStreamVolume (float) override;
-  virtual void SetStreamPitch (float pitch) override;
-  virtual void PauseStream () override;
-  virtual void ResumeStream () override;
-
-  virtual void AddCurrentThread () override;
-  virtual void RemoveCurrentThread () override;
-
-  bool LoadSound(int);
-};
-
-IMPLEMENT_SOUND_DEVICE(VOpenALDevice, SNDDRV_OpenAL, "OpenAL", "OpenAL sound device", "-openal");
 
 VCvarF VOpenALDevice::doppler_factor("snd_doppler_factor", "1.0", "OpenAL doppler factor.", 0/*CVAR_Archive*/);
 VCvarF VOpenALDevice::doppler_velocity("snd_doppler_velocity", "10000.0", "OpenAL doppler velocity.", 0/*CVAR_Archive*/);
@@ -113,14 +45,43 @@ static VCvarB openal_show_extensions("openal_show_extensions", false, "Show avai
 
 //==========================================================================
 //
+//  VOpenALDevice::VOpenALDevice
+//
+//==========================================================================
+VOpenALDevice::VOpenALDevice ()
+  : Device(nullptr)
+  , Context(nullptr)
+  , Buffers(nullptr)
+  , BufferCount(0)
+  , StrmSampleRate(0)
+  , StrmFormat(0)
+  , StrmNumAvailableBuffers(0)
+  , StrmSource(0)
+{
+  memset(StrmBuffers, 0, sizeof(StrmBuffers));
+  memset(StrmAvailableBuffers, 0, sizeof(StrmAvailableBuffers));
+  memset(StrmDataBuffer, 0, sizeof(StrmDataBuffer));
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::~VOpenALDevice
+//
+//==========================================================================
+VOpenALDevice::~VOpenALDevice () {
+  Shutdown(); // just in case
+}
+
+
+//==========================================================================
+//
 //  VOpenALDevice::Init
 //
 //  Inits sound
 //
 //==========================================================================
-
-bool VOpenALDevice::Init()
-{
+bool VOpenALDevice::Init () {
   guard(VOpenALDevice::Init);
   ALenum E;
 
@@ -250,8 +211,7 @@ void VOpenALDevice::Shutdown () {
   }
 
   //  Disconnect from a device.
-  if (Device)
-  {
+  if (Device) {
     alcCloseDevice(Device);
     Device = nullptr;
   }

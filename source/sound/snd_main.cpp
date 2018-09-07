@@ -151,7 +151,7 @@ private:
   TVec        ListenerUp;
 
   //  Hardware devices
-  VSoundDevice *SoundDevice;
+  VOpenALDevice *SoundDevice;
 
   //  Console variables
   static VCvarF   snd_sfx_volume;
@@ -208,9 +208,6 @@ VCvarB        snd_mod_player("snd_mod_player", true, "Allow music modules?", CVA
 
 FAudioCodecDesc *FAudioCodecDesc::List;
 
-static FSoundDeviceDesc *SoundDeviceList[SNDDRV_MAX];
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
@@ -257,6 +254,7 @@ VAudio::~VAudio()
   Shutdown();
 }
 
+
 //==========================================================================
 //
 //  VAudio::Init
@@ -265,41 +263,20 @@ VAudio::~VAudio()
 //  Sets channels, SFX and music volume, allocates channel buffer.
 //
 //==========================================================================
-
-void VAudio::Init()
-{
+void VAudio::Init () {
   guard(VAudio::Init);
-  //  Initialise sound driver.
-  int SIdx = -1;
-  if (!GArgs.CheckParm("-nosound") && !GArgs.CheckParm("-nosfx"))
-  {
-    for (int i = 0; i < SNDDRV_MAX; i++)
-    {
-      if (!SoundDeviceList[i])
-        continue;
-      //  Default to first available non-null sound device.
-      if (SIdx == -1)
-        SIdx = i;
-      //  Check for user selection.
-      if (SoundDeviceList[i]->CmdLineArg &&
-        GArgs.CheckParm(SoundDeviceList[i]->CmdLineArg))
-        SIdx = i;
-    }
-  }
-  if (SIdx != -1)
-  {
-    GCon->Logf(NAME_Init, "Selected %s", SoundDeviceList[SIdx]->Description);
-    SoundDevice = SoundDeviceList[SIdx]->Creator();
-    if (!SoundDevice->Init())
-    {
+
+  // initialise sound driver
+  if (!GArgs.CheckParm("-nosound") && !GArgs.CheckParm("-nosfx")) {
+    SoundDevice = new VOpenALDevice();
+    if (!SoundDevice->Init()) {
       delete SoundDevice;
       SoundDevice = nullptr;
     }
   }
 
   //  Initialise stream music player.
-  if (SoundDevice && !GArgs.CheckParm("-nomusic"))
-  {
+  if (SoundDevice && !GArgs.CheckParm("-nomusic")) {
     StreamMusicPlayer = new VStreamMusicPlayer(SoundDevice);
     StreamMusicPlayer->Init();
   }
@@ -1591,44 +1568,25 @@ void VSoundSeqNode::Serialise(VStream &Strm)
   unguard;
 }
 
-//==========================================================================
-//
-//  FSoundDeviceDesc::FSoundDeviceDesc
-//
-//==========================================================================
-
-FSoundDeviceDesc::FSoundDeviceDesc(int Type, const char *AName,
-  const char *ADescription, const char *ACmdLineArg,
-  VSoundDevice *(*ACreator)())
-: Name(AName)
-, Description(ADescription)
-, CmdLineArg(ACmdLineArg)
-, Creator(ACreator)
-{
-  SoundDeviceList[Type] = this;
-}
 
 //==========================================================================
 //
 //  COMMAND Music
 //
 //==========================================================================
-
-COMMAND(Music)
-{
+COMMAND(Music) {
   guard(COMMAND Music);
   ((VAudio*)GAudio)->CmdMusic(Args);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  COMMAND CD
 //
 //==========================================================================
-
-COMMAND(CD)
-{
+COMMAND(CD) {
   guard(COMMAND CD);
   ((VAudio*)GAudio)->CmdCD(Args);
   unguard;

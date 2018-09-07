@@ -22,9 +22,18 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #ifndef _S_LOCAL_H
 #define _S_LOCAL_H
+
+#define AL_ALEXT_PROTOTYPES
+#include <AL/al.h>
+#include <AL/alc.h>
+#include <AL/alext.h>
+// linux headers doesn't define this
+#ifndef OPENAL
+# define OPENAL
+#endif
+
 
 //  Sound device types.
 //??? Should Default be replaced with all default drivers?
@@ -34,22 +43,6 @@ enum
   SNDDRV_OpenAL,
 
   SNDDRV_MAX
-};
-
-//  Midi device types.
-enum
-{
-  MIDIDRV_Default,
-
-  MIDIDRV_MAX
-};
-
-//  CD audio device types.
-enum
-{
-  CDDRV_Default,
-
-  CDDRV_MAX
 };
 
 enum ESSCmds
@@ -164,63 +157,71 @@ struct VReverbInfo
   VReverbProperties Props;
 };
 
-//
-//  VSoundDevice
-//
-//  Sound device interface. This class implements dummy driver.
-//
-class VSoundDevice : public VInterface
-{
-public:
-  VSoundDevice() {}
 
-  //  VSoundDevice interface.
-  virtual bool Init() = 0;
-  virtual int SetChannels(int) = 0;
-  virtual void Shutdown() = 0;
-  //virtual void Tick(float) = 0;
-  virtual int PlaySound(int, float, float, float, bool) = 0;
-  virtual int PlaySound3D(int, const TVec&, const TVec&, float, float, bool) = 0;
-  virtual void UpdateChannel3D(int, const TVec&, const TVec&) = 0;
-  virtual bool IsChannelPlaying(int) = 0;
-  virtual void StopChannel(int) = 0;
-  virtual void UpdateListener(const TVec&, const TVec&, const TVec&,
-    const TVec&, const TVec&, VReverbInfo*) = 0;
+//
+//  VOpenALDevice
+//
+//  Sound device interface. This class implements the only supported OpenAL Soft driver.
+//
+class VOpenALDevice {
+private:
+  enum { MAX_VOICES = 256-4 };
+
+  //enum { NUM_STRM_BUFFERS = 8 };
+  //enum { STRM_BUFFER_SIZE = 1024 };
+
+  enum { NUM_STRM_BUFFERS = 8*2 };
+  enum { STRM_BUFFER_SIZE = 1024*8 };
+
+  ALCdevice *Device;
+  ALCcontext *Context;
+  ALuint *Buffers;
+  vint32 BufferCount;
+
+  ALuint StrmSampleRate;
+  ALuint StrmFormat;
+  ALuint StrmBuffers[NUM_STRM_BUFFERS];
+  ALuint StrmAvailableBuffers[NUM_STRM_BUFFERS];
+  int StrmNumAvailableBuffers;
+  ALuint StrmSource;
+  short StrmDataBuffer[STRM_BUFFER_SIZE * 2];
+
+  static VCvarF doppler_factor;
+  static VCvarF doppler_velocity;
+  static VCvarF rolloff_factor;
+  static VCvarF reference_distance;
+  static VCvarF max_distance;
+
+  bool LoadSound(int);
+
+public:
+  VOpenALDevice ();
+  ~VOpenALDevice ();
+
+  bool Init();
+  int SetChannels(int);
+  void Shutdown();
+  int PlaySound(int, float, float, float, bool);
+  int PlaySound3D(int, const TVec&, const TVec&, float, float, bool);
+  void UpdateChannel3D(int, const TVec&, const TVec&);
+  bool IsChannelPlaying(int);
+  void StopChannel(int);
+  void UpdateListener(const TVec&, const TVec&, const TVec&, const TVec&, const TVec&, VReverbInfo*);
 
   // all stream functions should be thread-safe
-  virtual bool OpenStream (int Rate, int Bits, int Channels) = 0;
-  virtual void CloseStream () = 0;
-  virtual int GetStreamAvailable () = 0;
-  virtual short *GetStreamBuffer () = 0;
-  virtual void SetStreamData (short *data, int len) = 0;
-  virtual void SetStreamVolume (float vol) = 0;
-  virtual void PauseStream () = 0;
-  virtual void ResumeStream () = 0;
-  virtual void SetStreamPitch (float pitch) = 0;
+  bool OpenStream (int Rate, int Bits, int Channels);
+  void CloseStream ();
+  int GetStreamAvailable ();
+  short *GetStreamBuffer ();
+  void SetStreamData (short *data, int len);
+  void SetStreamVolume (float vol);
+  void PauseStream ();
+  void ResumeStream ();
+  void SetStreamPitch (float pitch);
 
-  virtual void AddCurrentThread () = 0;
-  virtual void RemoveCurrentThread () = 0;
+  void AddCurrentThread ();
+  void RemoveCurrentThread ();
 };
-
-//  Describtion of a sound driver.
-struct FSoundDeviceDesc
-{
-  const char *Name;
-  const char *Description;
-  const char *CmdLineArg;
-  VSoundDevice *(*Creator)();
-
-  FSoundDeviceDesc(int Type, const char *AName, const char *ADescription,
-    const char *ACmdLineArg, VSoundDevice *(*ACreator)());
-};
-
-//  Sound device registration helper.
-#define IMPLEMENT_SOUND_DEVICE(TClass, Type, Name, Description, CmdLineArg) \
-VSoundDevice *Create##TClass() \
-{ \
-  return new TClass(); \
-} \
-FSoundDeviceDesc TClass##Desc(Type, Name, Description, CmdLineArg, Create##TClass);
 
 
 //  Loader of sound samples.
@@ -334,9 +335,9 @@ public:
   bool      Stopping;
   bool      Paused;
   double      FinishTime;
-  VSoundDevice *SoundDevice;
+  VOpenALDevice *SoundDevice;
 
-  VStreamMusicPlayer(VSoundDevice *InSoundDevice)
+  VStreamMusicPlayer(VOpenALDevice *InSoundDevice)
     : lastVolume(1.0)
     , threadInited(false)
     , StrmOpened(false)
