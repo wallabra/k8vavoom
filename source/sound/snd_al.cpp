@@ -98,11 +98,10 @@ bool VOpenALDevice::Init () {
     GCon->Log(NAME_Init, "Couldn't open OpenAL device");
     return false;
   }
-  //  In Linux it's not implemented.
-  if (openal_show_extensions) {
-#ifdef ALC_DEVICE_SPECIFIER
-    GCon->Logf(NAME_Init, "Opened OpenAL device %s", alcGetString(Device, ALC_DEVICE_SPECIFIER));
-#endif
+
+  if (!alcIsExtensionPresent(Device, "ALC_EXT_thread_local_context")) {
+    Sys_Error("OpenAL: 'ALC_EXT_thread_local_context' extension is not present.\n"
+              "Please, use OpenAL Soft implementation, and make sure that it is recent.");
   }
 
   // create a context and make it current
@@ -114,7 +113,6 @@ bool VOpenALDevice::Init () {
   };
   Context = alcCreateContext(Device, attrs);
   if (!Context) Sys_Error("Failed to create OpenAL context");
-  //alcMakeContextCurrent(Context);
   alcSetThreadContext(Context);
   E = alGetError();
   if (E != AL_NO_ERROR) Sys_Error("OpenAL error: %s", alGetString(E));
