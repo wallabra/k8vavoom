@@ -177,11 +177,13 @@ override void ClientTick(float DeltaTime)
   }
   }
 
-  dlight_t *dl = AllocDlight(self);
-  dl->origin = Origin;
-  dl->colour = RGB(Args[0], Args[1], Args[2]);
-  dl->radius = IntensityToRadius(Intensity);
-  dl->die = XLevel.Time + 0.01;
+  dlight_t *dl = AllocDlight(self, Origin, IntensityToRadius(Intensity));
+  if (dl) {
+    //dl->origin = Origin;
+    dl->colour = RGB(Args[0], Args[1], Args[2]);
+    //dl->radius = IntensityToRadius(Intensity);
+    dl->die = XLevel.Time + 0.01;
+  }
 }
 
 //==========================================================================

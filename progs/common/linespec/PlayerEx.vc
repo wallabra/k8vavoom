@@ -1484,12 +1484,14 @@ void ClientExplosion(int colour, float rad, TVec org)
 {
   dlight_t *dl;
 
-  dl = Level.AllocDlight(none);
-  dl->origin = org;
-  dl->radius = rad + 150.0;
-  dl->colour = colour;
-  dl->die = Level.XLevel.Time + 0.5;
-  dl->decay = 300.0;
+  dl = Level.AllocDlight(none, org, rad + 150.0);
+  if (dl) {
+    //dl->origin = org;
+    //dl->radius = rad + 150.0;
+    dl->colour = colour;
+    dl->die = Level.XLevel.Time + 0.5;
+    dl->decay = 300.0;
+  }
 }
 
 //==========================================================================
@@ -1531,12 +1533,14 @@ void ClientParticleExplosion(int colour, float rad, TVec org)
     p->gravity = 40.0 + (Random() * 512.0) - 256.0;
   }
 
-  dl = Level.AllocDlight(none);
-  dl->origin = org;
-  dl->radius = rad + 150.0;
-  dl->colour = colour;
-  dl->die = Level.XLevel.Time + 0.5;
-  dl->decay = 300.0;
+  dl = Level.AllocDlight(none, org, rad + 150.0);
+  if (dl) {
+    //dl->origin = org;
+    //dl->radius = rad + 150.0;
+    dl->colour = colour;
+    dl->die = Level.XLevel.Time + 0.5;
+    dl->decay = 300.0;
+  }
 }
 
 //==========================================================================

@@ -84,7 +84,7 @@ override native void Destroy();
 //  Broadcast message (print to all clients)
 native final void bprint(string format, ...) [printf,1];
 
-native final dlight_t *AllocDlight(Thinker Owner);
+native final dlight_t *AllocDlight(Thinker Owner, TVec origin, optional float radius); // can return `nullptr`
 native final particle_t *NewParticle();
 native static final FAmbientSound *GetAmbientSound(int Idx);
 
