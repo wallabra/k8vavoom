@@ -22,7 +22,8 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-#include "sound.h"
+#include "sound_private.h"
+//#include "sound.h"
 
 //#define VCCRUN_SOUND_THREAD_DEBUG
 //#define VCCRUN_SOUND_THREAD_DUMMY

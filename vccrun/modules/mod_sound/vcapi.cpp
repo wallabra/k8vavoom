@@ -23,11 +23,7 @@
 //**
 //**************************************************************************
 #include "sound.h"
-
-#define AL_ALEXT_PROTOTYPES
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alext.h>
+#include "sound_private.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -406,11 +402,11 @@ IMPLEMENT_FUNCTION(VSoundSystem, SetMusicPitch) {
 IMPLEMENT_FUNCTION(VSoundSystem, get_##name) { RET_##atype(varname); } \
 IMPLEMENT_FUNCTION(VSoundSystem, set_##name) { P_GET_##atype(v); varname = v; }
 
-IMPLEMENT_VSS_PROPERTY(FLOAT, DopplerFactor, VSoundDevice::doppler_factor)
-IMPLEMENT_VSS_PROPERTY(FLOAT, DopplerVelocity, VSoundDevice::doppler_velocity)
-IMPLEMENT_VSS_PROPERTY(FLOAT, RolloffFactor, VSoundDevice::rolloff_factor)
-IMPLEMENT_VSS_PROPERTY(FLOAT, ReferenceDistance, VSoundDevice::reference_distance)
-IMPLEMENT_VSS_PROPERTY(FLOAT, MaxDistance, VSoundDevice::max_distance)
+IMPLEMENT_VSS_PROPERTY(FLOAT, DopplerFactor, VOpenALDevice::doppler_factor)
+IMPLEMENT_VSS_PROPERTY(FLOAT, DopplerVelocity, VOpenALDevice::doppler_velocity)
+IMPLEMENT_VSS_PROPERTY(FLOAT, RolloffFactor, VOpenALDevice::rolloff_factor)
+IMPLEMENT_VSS_PROPERTY(FLOAT, ReferenceDistance, VOpenALDevice::reference_distance)
+IMPLEMENT_VSS_PROPERTY(FLOAT, MaxDistance, VOpenALDevice::max_distance)
 
 #undef IMPLEMENT_VSS_PROPERTY
 

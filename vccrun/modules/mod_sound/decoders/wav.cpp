@@ -22,6 +22,7 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+#include "../sound_private.h"
 #include "../sound.h"
 
 

@@ -22,6 +22,7 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+#include "sound_private.h"
 #include "sound.h"
 
 //#define DEBUG_CHAN_ALLOC
@@ -45,7 +46,7 @@ void VSoundManager::StaticInitialize () {
       sminited = true;
       GSoundManager = new VSoundManager;
       GSoundManager->Init();
-      GAudio = VAudioPublic::Create();
+      GAudio = new VAudioPublic();
       GAudio->Init();
     }
   }
@@ -306,134 +307,7 @@ bool VSoundManager::LoadSound (int sound_id, const VStr &filename) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // main audio management class
-class VAudio : public VAudioPublic {
-public:
-  VAudio ();
-  ~VAudio ();
-
-  // top level methods
-  virtual void Init () override;
-  virtual void Shutdown () override;
-
-  // playback of sound effects
-  virtual int PlaySound (int sound_id, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float attenuation, float pitch, bool Loop) override;
-
-  virtual bool IsSoundActive (int origin_id, int sound_id) override;
-  virtual bool IsSoundPaused (int origin_id, int sound_id) override;
-  virtual void StopSound (int origin_id, int sound_id) override;
-  virtual void PauseSound (int origin_id, int sound_id) override;
-  virtual void ResumeChannel (int origin_id, int channel) override;
-
-  virtual void SetSoundPitch (int origin_id, int sound_id, float pitch) override;
-  virtual void SetSoundOrigin (int origin_id, int sound_id, const TVec &origin) override;
-  virtual void SetSoundVelocity (int origin_id, int sound_id, const TVec &velocity) override;
-  virtual void SetSoundVolume (int origin_id, int sound_id, float volume) override;
-  virtual void SetSoundAttenuation (int origin_id, int sound_id, float attenuation) override;
-
-  virtual bool IsChannelActive (int origin_id, int channel) override;
-  virtual bool IsChannelPaused (int origin_id, int channel) override;
-  virtual void StopChannel (int origin_id, int channel) override;
-  virtual void PauseChannel (int origin_id, int channel) override;
-  virtual void ResumeSound (int origin_id, int sound_id) override;
-
-  virtual void SetChannelPitch (int origin_id, int channel, float pitch) override;
-  virtual void SetChannelOrigin (int origin_id, int channel, const TVec &origin) override;
-  virtual void SetChannelVelocity (int origin_id, int channel, const TVec &velocity) override;
-  virtual void SetChannelVolume (int origin_id, int channel, float volume) override;
-  virtual void SetChannelAttenuation (int origin_id, int channel, float attenuation) override;
-
-  virtual void StopSounds () override;
-  virtual void PauseSounds () override;
-  virtual void ResumeSounds () override;
-
-  // <0: not found
-  virtual int FindInternalChannelForSound (int origin_id, int sound_id) override;
-  virtual int FindInternalChannelForChannel (int origin_id, int channel) override;
-
-  virtual bool IsInternalChannelPlaying (int ichannel) override;
-  virtual bool IsInternalChannelPaused (int ichannel) override;
-  virtual void StopInternalChannel (int ichannel) override;
-  virtual void PauseInternalChannel (int ichannel) override;
-  virtual void ResumeInternalChannel (int ichannel) override;
-  virtual bool IsInternalChannelRelative (int ichannel) override;
-  virtual void SetInternalChannelRelative (int ichannel, bool relative) override;
-
-  virtual bool PlayMusic (const VStr &filename, bool Loop) override;
-  virtual bool IsMusicPlaying () override;
-  virtual void PauseMusic () override;
-  virtual void ResumeMusic () override;
-  virtual void StopMusic () override;
-  virtual void SetMusicPitch (float pitch) override;
-
-  virtual void LockUpdates () override;
-  virtual void UnlockUpdates () override;
-
-  virtual const char *GetDevList () override;
-  virtual const char *GetAllDevList () override;
-  virtual const char *GetExtList () override;
-
-// public, so i don't have to fuck with "friends"
-public:
-  enum { MAX_CHANNELS = 256 };
-
-  enum { PRIORITY_MAX_ADJUST = 10 };
-
-  mythread updateThread;
-  bool updateThreadStarted;
-  mythread_mutex lockListener;
-
-  mythread_mutex stpPingLock;
-  mythread_cond stpPingCond;
-
-  int updaterThreadLockFlag; // !0: updater thread is not updating anything
-
-  // info about sounds currently playing
-  struct FChannel {
-    int origin_id;
-    int channel;
-    TVec origin;
-    TVec velocity;
-    int sound_id;
-    int priority;
-    float volume;
-    float attenuation;
-    int handle;
-    bool localPlayerSound;
-    bool loop;
-    bool paused;
-    float pitch;
-    //
-    float newPitch;
-    float newVolume;
-  };
-
-  // used to determine sound priority, and to cut off too far-away sounds
-  int MaxSoundDist;
-
-  // stream music player
-  bool StreamPlaying;
-  VStreamMusicPlayer *StreamMusicPlayer;
-
-  // list of currently playing sounds
-  FChannel Channel[MAX_CHANNELS];
-  int NumChannels;
-  int SndCount;
-
-  // hardware devices
-  VSoundDevice *SoundDevice;
-
-  // sound effect helpers
-  int GetChannel (int sound_id, int origin_id, int channel, int priority, bool loop);
-  void StopChannelByNum (int chan_num);
-  void PauseChannelByNum (int chan_num);
-  void ResumeChannelByNum (int chan_num);
-  bool IsChannelPausedByNum (int chan_num);
-  void UpdateSfx (float frameDelta);
-
-  void sendQuit ();
-};
-
-
+// ////////////////////////////////////////////////////////////////////////// //
 VAudioPublic *GAudio = nullptr;
 FAudioCodecDesc *FAudioCodecDesc::List;
 
@@ -452,7 +326,7 @@ int VAudioPublic::snd_max_distance = 1200;
 //
 //==========================================================================
 static MYTHREAD_RET_TYPE audioUpdateThread (void *aobjptr) {
-  VAudio *audio = (VAudio *)aobjptr;
+  VAudioPublic *audio = (VAudioPublic *)aobjptr;
   mythread_mutex_lock(&audio->stpPingLock);
   audio->SoundDevice->AddCurrentThread();
   mythread_condtime ctime;
@@ -479,26 +353,16 @@ static MYTHREAD_RET_TYPE audioUpdateThread (void *aobjptr) {
 
 //==========================================================================
 //
-//  VAudioPublic::Create
+//  VAudioPublic::VAudioPublic
 //
 //==========================================================================
-VAudioPublic *VAudioPublic::Create () {
-  return new VAudio();
-}
-
-
-//==========================================================================
-//
-//  VAudio::VAudio
-//
-//==========================================================================
-VAudio::VAudio()
-  : MaxSoundDist(VAudioPublic::snd_max_distance)
+VAudioPublic::VAudioPublic()
+  : SoundDevice(nullptr)
+  , MaxSoundDist(VAudioPublic::snd_max_distance)
   , StreamPlaying(false)
   , StreamMusicPlayer(nullptr)
   , NumChannels(0)
   , SndCount(0)
-  , SoundDevice(nullptr)
 {
   memset(Channel, 0, sizeof(Channel));
   ListenerForward = TVec(0, 0, -1);
@@ -518,27 +382,27 @@ VAudio::VAudio()
 
 //==========================================================================
 //
-//  VAudio::~VAudio
+//  VAudioPublic::~VAudioPublic
 //
 //==========================================================================
-VAudio::~VAudio () {
+VAudioPublic::~VAudioPublic () {
   Shutdown();
 }
 
 
 //==========================================================================
 //
-//  VAudio::Init
+//  VAudioPublic::Init
 //
 //  Initialises sound stuff, including volume
 //  Sets channels, SFX and music volume, allocates channel buffer.
 //
 //==========================================================================
-void VAudio::Init () {
+void VAudioPublic::Init () {
   Shutdown(); // just in case
 
   // initialize sound device
-  if (!SoundDevice) SoundDevice = CreateVSoundDevice();
+  if (!SoundDevice) SoundDevice = new VOpenALDevice();
   if (!SoundDevice->Init()) {
     delete SoundDevice;
     SoundDevice = nullptr;
@@ -566,12 +430,12 @@ void VAudio::Init () {
 
 //==========================================================================
 //
-//  VAudio::Shutdown
+//  VAudioPublic::Shutdown
 //
 //  Shuts down all sound stuff
 //
 //==========================================================================
-void VAudio::Shutdown () {
+void VAudioPublic::Shutdown () {
   sendQuit();
   // stop playback of all sounds
   if (SoundDevice) StopSounds();
@@ -590,10 +454,10 @@ void VAudio::Shutdown () {
 
 //==========================================================================
 //
-//  VAudio::sendQuit
+//  VAudioPublic::sendQuit
 //
 //==========================================================================
-void VAudio::sendQuit () {
+void VAudioPublic::sendQuit () {
   if (updateThreadStarted) {
     // we'll aquire lock if another thread is in cond_wait
     mythread_mutex_lock(&stpPingLock);
@@ -612,10 +476,10 @@ void VAudio::sendQuit () {
 
 //==========================================================================
 //
-//  VAudio::LockUpdates
+//  VAudioPublic::LockUpdates
 //
 //==========================================================================
-void VAudio::LockUpdates () {
+void VAudioPublic::LockUpdates () {
   MyThreadLocker lislock(&lockListener);
   // 256 should be enough for everyone
   if (++updaterThreadLockFlag > 256) Sys_Error("SoundSysmem update locker is not balanced");
@@ -624,10 +488,10 @@ void VAudio::LockUpdates () {
 
 //==========================================================================
 //
-//  VAudio::UnlockUpdates
+//  VAudioPublic::UnlockUpdates
 //
 //==========================================================================
-void VAudio::UnlockUpdates () {
+void VAudioPublic::UnlockUpdates () {
   MyThreadLocker lislock(&lockListener);
   if (--updaterThreadLockFlag < 0) Sys_Error("SoundSysmem update locker is not balanced");
 }
@@ -643,7 +507,7 @@ static float RandomFloat () {
 
 //==========================================================================
 //
-//  VAudio::PlaySound
+//  VAudioPublic::PlaySound
 //
 //  This function adds a sound to the list of currently active sounds, which
 //  is maintained as a given number of internal channels.
@@ -651,7 +515,7 @@ static float RandomFloat () {
 //  Returns allocated channel or -1
 //
 //==========================================================================
-int VAudio::PlaySound (int sound_id, const TVec &origin,
+int VAudioPublic::PlaySound (int sound_id, const TVec &origin,
   const TVec &velocity, int origin_id, int channel, float volume,
   float attenuation, float pitch, bool Loop)
 {
@@ -721,10 +585,10 @@ int VAudio::PlaySound (int sound_id, const TVec &origin,
 
 //==========================================================================
 //
-//  VAudio::GetChannel
+//  VAudioPublic::GetChannel
 //
 //==========================================================================
-int VAudio::GetChannel (int sound_id, int origin_id, int channel, int priority, bool loop) {
+int VAudioPublic::GetChannel (int sound_id, int origin_id, int channel, int priority, bool loop) {
   // if it's a looping sound and it's still playing, don't replace it
   // otherwise, abort currently playing sound on the given logical channel
   if (channel >= 0) {
@@ -802,10 +666,10 @@ int VAudio::GetChannel (int sound_id, int origin_id, int channel, int priority, 
 
 //==========================================================================
 //
-//  VAudio::StopChannelByNum
+//  VAudioPublic::StopChannelByNum
 //
 //==========================================================================
-void VAudio::StopChannelByNum (int chan_num) {
+void VAudioPublic::StopChannelByNum (int chan_num) {
   if (chan_num >= 0 && chan_num < NumChannels && Channel[chan_num].handle >= 0) {
 #ifdef DEBUG_CHAN_ALLOC
     fprintf(stderr, "%s ichannel %d (oid=%d; sid=%d; cid=%d)\n",
@@ -822,10 +686,10 @@ void VAudio::StopChannelByNum (int chan_num) {
 
 //==========================================================================
 //
-//  VAudio::PauseChannelByNum
+//  VAudioPublic::PauseChannelByNum
 //
 //==========================================================================
-void VAudio::PauseChannelByNum (int chan_num) {
+void VAudioPublic::PauseChannelByNum (int chan_num) {
   if (chan_num >= 0 && chan_num < NumChannels && Channel[chan_num].handle >= 0 && !Channel[chan_num].paused) {
     SoundDevice->PauseChannel(Channel[chan_num].handle);
     Channel[chan_num].paused = true;
@@ -835,10 +699,10 @@ void VAudio::PauseChannelByNum (int chan_num) {
 
 //==========================================================================
 //
-//  VAudio::ResumeChannelByNum
+//  VAudioPublic::ResumeChannelByNum
 //
 //==========================================================================
-void VAudio::ResumeChannelByNum (int chan_num) {
+void VAudioPublic::ResumeChannelByNum (int chan_num) {
   if (chan_num >= 0 && chan_num < NumChannels && Channel[chan_num].handle >= 0 && Channel[chan_num].paused) {
     SoundDevice->ResumeChannel(Channel[chan_num].handle);
     Channel[chan_num].paused = false;
@@ -848,20 +712,20 @@ void VAudio::ResumeChannelByNum (int chan_num) {
 
 //==========================================================================
 //
-//  VAudio::IsChannelPausedByNum
+//  VAudioPublic::IsChannelPausedByNum
 //
 //==========================================================================
-bool VAudio::IsChannelPausedByNum (int chan_num) {
+bool VAudioPublic::IsChannelPausedByNum (int chan_num) {
   return (chan_num >= 0 && chan_num < NumChannels && Channel[chan_num].handle >= 0 ? Channel[chan_num].paused : false);
 }
 
 
 //==========================================================================
 //
-//  VAudio::PauseSounds
+//  VAudioPublic::PauseSounds
 //
 //==========================================================================
-void VAudio::PauseSounds () {
+void VAudioPublic::PauseSounds () {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -873,10 +737,10 @@ void VAudio::PauseSounds () {
 
 //==========================================================================
 //
-//  VAudio::ResumeSounds
+//  VAudioPublic::ResumeSounds
 //
 //==========================================================================
-void VAudio::ResumeSounds () {
+void VAudioPublic::ResumeSounds () {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -888,10 +752,10 @@ void VAudio::ResumeSounds () {
 
 //==========================================================================
 //
-//  VAudio::StopSounds
+//  VAudioPublic::StopSounds
 //
 //==========================================================================
-void VAudio::StopSounds () {
+void VAudioPublic::StopSounds () {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) StopChannelByNum(i);
 }
@@ -899,10 +763,10 @@ void VAudio::StopSounds () {
 
 //==========================================================================
 //
-//  VAudio::StopChannel
+//  VAudioPublic::StopChannel
 //
 //==========================================================================
-void VAudio::StopChannel (int origin_id, int channel) {
+void VAudioPublic::StopChannel (int origin_id, int channel) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].origin_id == origin_id && (channel < 0 || Channel[i].channel == channel)) {
@@ -915,10 +779,10 @@ void VAudio::StopChannel (int origin_id, int channel) {
 
 //==========================================================================
 //
-//  VAudio::PauseChannel
+//  VAudioPublic::PauseChannel
 //
 //==========================================================================
-void VAudio::PauseChannel (int origin_id, int channel) {
+void VAudioPublic::PauseChannel (int origin_id, int channel) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].origin_id == origin_id && (channel < 0 || Channel[i].channel == channel)) {
@@ -931,10 +795,10 @@ void VAudio::PauseChannel (int origin_id, int channel) {
 
 //==========================================================================
 //
-//  VAudio::ResumeChannel
+//  VAudioPublic::ResumeChannel
 //
 //==========================================================================
-void VAudio::ResumeChannel (int origin_id, int channel) {
+void VAudioPublic::ResumeChannel (int origin_id, int channel) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].origin_id == origin_id && (channel < 0 || Channel[i].channel == channel)) {
@@ -947,10 +811,10 @@ void VAudio::ResumeChannel (int origin_id, int channel) {
 
 //==========================================================================
 //
-//  VAudio::IsChannelActive
+//  VAudioPublic::IsChannelActive
 //
 //==========================================================================
-bool VAudio::IsChannelActive (int origin_id, int channel) {
+bool VAudioPublic::IsChannelActive (int origin_id, int channel) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].origin_id == origin_id && (channel < 0 || Channel[i].channel == channel)) {
@@ -964,10 +828,10 @@ bool VAudio::IsChannelActive (int origin_id, int channel) {
 
 //==========================================================================
 //
-//  VAudio::IsChannelPaused
+//  VAudioPublic::IsChannelPaused
 //
 //==========================================================================
-bool VAudio::IsChannelPaused (int origin_id, int channel) {
+bool VAudioPublic::IsChannelPaused (int origin_id, int channel) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].origin_id == origin_id && (channel < 0 || Channel[i].channel == channel)) {
@@ -980,10 +844,10 @@ bool VAudio::IsChannelPaused (int origin_id, int channel) {
 
 //==========================================================================
 //
-//  VAudio::SetChannelPitch
+//  VAudioPublic::SetChannelPitch
 //
 //==========================================================================
-void VAudio::SetChannelPitch (int origin_id, int channel, float pitch) {
+void VAudioPublic::SetChannelPitch (int origin_id, int channel, float pitch) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -996,10 +860,10 @@ void VAudio::SetChannelPitch (int origin_id, int channel, float pitch) {
 
 //==========================================================================
 //
-//  VAudio::SetChannelOrigin
+//  VAudioPublic::SetChannelOrigin
 //
 //==========================================================================
-void VAudio::SetChannelOrigin (int origin_id, int channel, const TVec &origin) {
+void VAudioPublic::SetChannelOrigin (int origin_id, int channel, const TVec &origin) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1012,10 +876,10 @@ void VAudio::SetChannelOrigin (int origin_id, int channel, const TVec &origin) {
 
 //==========================================================================
 //
-//  VAudio::SetChannelVelocity
+//  VAudioPublic::SetChannelVelocity
 //
 //==========================================================================
-void VAudio::SetChannelVelocity (int origin_id, int channel, const TVec &velocity) {
+void VAudioPublic::SetChannelVelocity (int origin_id, int channel, const TVec &velocity) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1028,10 +892,10 @@ void VAudio::SetChannelVelocity (int origin_id, int channel, const TVec &velocit
 
 //==========================================================================
 //
-//  VAudio::SetChannelVolume
+//  VAudioPublic::SetChannelVolume
 //
 //==========================================================================
-void VAudio::SetChannelVolume (int origin_id, int channel, float volume) {
+void VAudioPublic::SetChannelVolume (int origin_id, int channel, float volume) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1044,10 +908,10 @@ void VAudio::SetChannelVolume (int origin_id, int channel, float volume) {
 
 //==========================================================================
 //
-//  VAudio::SetChannelAttenuation
+//  VAudioPublic::SetChannelAttenuation
 //
 //==========================================================================
-void VAudio::SetChannelAttenuation (int origin_id, int channel, float attenuation) {
+void VAudioPublic::SetChannelAttenuation (int origin_id, int channel, float attenuation) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1060,10 +924,10 @@ void VAudio::SetChannelAttenuation (int origin_id, int channel, float attenuatio
 
 //==========================================================================
 //
-//  VAudio::PauseSound
+//  VAudioPublic::PauseSound
 //
 //==========================================================================
-void VAudio::PauseSound (int origin_id, int sound_id) {
+void VAudioPublic::PauseSound (int origin_id, int sound_id) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1077,10 +941,10 @@ void VAudio::PauseSound (int origin_id, int sound_id) {
 
 //==========================================================================
 //
-//  VAudio::ResumeSound
+//  VAudioPublic::ResumeSound
 //
 //==========================================================================
-void VAudio::ResumeSound (int origin_id, int sound_id) {
+void VAudioPublic::ResumeSound (int origin_id, int sound_id) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1094,10 +958,10 @@ void VAudio::ResumeSound (int origin_id, int sound_id) {
 
 //==========================================================================
 //
-//  VAudio::StopSound
+//  VAudioPublic::StopSound
 //
 //==========================================================================
-void VAudio::StopSound (int origin_id, int sound_id) {
+void VAudioPublic::StopSound (int origin_id, int sound_id) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1110,10 +974,10 @@ void VAudio::StopSound (int origin_id, int sound_id) {
 
 //==========================================================================
 //
-//  VAudio::IsSoundActive
+//  VAudioPublic::IsSoundActive
 //
 //==========================================================================
-bool VAudio::IsSoundActive (int origin_id, int sound_id) {
+bool VAudioPublic::IsSoundActive (int origin_id, int sound_id) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1128,10 +992,10 @@ bool VAudio::IsSoundActive (int origin_id, int sound_id) {
 
 //==========================================================================
 //
-//  VAudio::IsSoundPaused
+//  VAudioPublic::IsSoundPaused
 //
 //==========================================================================
-bool VAudio::IsSoundPaused (int origin_id, int sound_id) {
+bool VAudioPublic::IsSoundPaused (int origin_id, int sound_id) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1145,10 +1009,10 @@ bool VAudio::IsSoundPaused (int origin_id, int sound_id) {
 
 //==========================================================================
 //
-//  VAudio::SetSoundPitch
+//  VAudioPublic::SetSoundPitch
 //
 //==========================================================================
-void VAudio::SetSoundPitch (int origin_id, int sound_id, float pitch) {
+void VAudioPublic::SetSoundPitch (int origin_id, int sound_id, float pitch) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1161,10 +1025,10 @@ void VAudio::SetSoundPitch (int origin_id, int sound_id, float pitch) {
 
 //==========================================================================
 //
-//  VAudio::SetSoundOrigin
+//  VAudioPublic::SetSoundOrigin
 //
 //==========================================================================
-void VAudio::SetSoundOrigin (int origin_id, int sound_id, const TVec &origin) {
+void VAudioPublic::SetSoundOrigin (int origin_id, int sound_id, const TVec &origin) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1177,10 +1041,10 @@ void VAudio::SetSoundOrigin (int origin_id, int sound_id, const TVec &origin) {
 
 //==========================================================================
 //
-//  VAudio::SetSoundVelocity
+//  VAudioPublic::SetSoundVelocity
 //
 //==========================================================================
-void VAudio::SetSoundVelocity (int origin_id, int sound_id, const TVec &velocity) {
+void VAudioPublic::SetSoundVelocity (int origin_id, int sound_id, const TVec &velocity) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1193,10 +1057,10 @@ void VAudio::SetSoundVelocity (int origin_id, int sound_id, const TVec &velocity
 
 //==========================================================================
 //
-//  VAudio::SetSoundVolume
+//  VAudioPublic::SetSoundVolume
 //
 //==========================================================================
-void VAudio::SetSoundVolume (int origin_id, int sound_id, float volume) {
+void VAudioPublic::SetSoundVolume (int origin_id, int sound_id, float volume) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1209,10 +1073,10 @@ void VAudio::SetSoundVolume (int origin_id, int sound_id, float volume) {
 
 //==========================================================================
 //
-//  VAudio::SetSoundAttenuation
+//  VAudioPublic::SetSoundAttenuation
 //
 //==========================================================================
-void VAudio::SetSoundAttenuation (int origin_id, int sound_id, float attenuation) {
+void VAudioPublic::SetSoundAttenuation (int origin_id, int sound_id, float attenuation) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1225,10 +1089,10 @@ void VAudio::SetSoundAttenuation (int origin_id, int sound_id, float attenuation
 
 //==========================================================================
 //
-//  VAudio::FindInternalChannelForSound
+//  VAudioPublic::FindInternalChannelForSound
 //
 //==========================================================================
-int VAudio::FindInternalChannelForSound (int origin_id, int sound_id) {
+int VAudioPublic::FindInternalChannelForSound (int origin_id, int sound_id) {
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
     if (Channel[i].handle < 0) continue;
@@ -1243,10 +1107,10 @@ int VAudio::FindInternalChannelForSound (int origin_id, int sound_id) {
 
 //==========================================================================
 //
-//  VAudio::FindInternalChannelForChannel
+//  VAudioPublic::FindInternalChannelForChannel
 //
 //==========================================================================
-int VAudio::FindInternalChannelForChannel (int origin_id, int channel) {
+int VAudioPublic::FindInternalChannelForChannel (int origin_id, int channel) {
   if (channel < 0) return -1; // don't know what to do
   MyThreadLocker lislock(&lockListener);
   for (int i = 0; i < NumChannels; ++i) {
@@ -1261,10 +1125,10 @@ int VAudio::FindInternalChannelForChannel (int origin_id, int channel) {
 
 //==========================================================================
 //
-//  VAudio::IsInternalChannelPlaying
+//  VAudioPublic::IsInternalChannelPlaying
 //
 //==========================================================================
-bool VAudio::IsInternalChannelPlaying (int ichannel) {
+bool VAudioPublic::IsInternalChannelPlaying (int ichannel) {
   MyThreadLocker lislock(&lockListener);
   if (ichannel >= 0 && ichannel < NumChannels && Channel[ichannel].handle >= 0) {
     if (SoundDevice->IsChannelActive(Channel[ichannel].handle)) return true;
@@ -1276,10 +1140,10 @@ bool VAudio::IsInternalChannelPlaying (int ichannel) {
 
 //==========================================================================
 //
-//  VAudio::IsInternalChannelPaused
+//  VAudioPublic::IsInternalChannelPaused
 //
 //==========================================================================
-bool VAudio::IsInternalChannelPaused (int ichannel) {
+bool VAudioPublic::IsInternalChannelPaused (int ichannel) {
   MyThreadLocker lislock(&lockListener);
   return IsChannelPausedByNum(ichannel);
 }
@@ -1287,10 +1151,10 @@ bool VAudio::IsInternalChannelPaused (int ichannel) {
 
 //==========================================================================
 //
-//  VAudio::StopInternalChannel
+//  VAudioPublic::StopInternalChannel
 //
 //==========================================================================
-void VAudio::StopInternalChannel (int ichannel) {
+void VAudioPublic::StopInternalChannel (int ichannel) {
   MyThreadLocker lislock(&lockListener);
   StopChannelByNum(ichannel);
 }
@@ -1298,10 +1162,10 @@ void VAudio::StopInternalChannel (int ichannel) {
 
 //==========================================================================
 //
-//  VAudio::PauseInternalChannel
+//  VAudioPublic::PauseInternalChannel
 //
 //==========================================================================
-void VAudio::PauseInternalChannel (int ichannel) {
+void VAudioPublic::PauseInternalChannel (int ichannel) {
   MyThreadLocker lislock(&lockListener);
   PauseChannelByNum(ichannel);
 }
@@ -1309,10 +1173,10 @@ void VAudio::PauseInternalChannel (int ichannel) {
 
 //==========================================================================
 //
-//  VAudio::ResumeInternalChannel
+//  VAudioPublic::ResumeInternalChannel
 //
 //==========================================================================
-void VAudio::ResumeInternalChannel (int ichannel) {
+void VAudioPublic::ResumeInternalChannel (int ichannel) {
   MyThreadLocker lislock(&lockListener);
   ResumeChannelByNum(ichannel);
 }
@@ -1320,10 +1184,10 @@ void VAudio::ResumeInternalChannel (int ichannel) {
 
 //==========================================================================
 //
-//  VAudio::IsInternalChannelRelative
+//  VAudioPublic::IsInternalChannelRelative
 //
 //==========================================================================
-bool VAudio::IsInternalChannelRelative (int ichannel) {
+bool VAudioPublic::IsInternalChannelRelative (int ichannel) {
   MyThreadLocker lislock(&lockListener);
   return (ichannel >= 0 && ichannel < NumChannels && Channel[ichannel].handle >= 0 ? Channel[ichannel].localPlayerSound : false);
 }
@@ -1331,10 +1195,10 @@ bool VAudio::IsInternalChannelRelative (int ichannel) {
 
 //==========================================================================
 //
-//  VAudio::SetInternalChannelRelative
+//  VAudioPublic::SetInternalChannelRelative
 //
 //==========================================================================
-void VAudio::SetInternalChannelRelative (int ichannel, bool relative) {
+void VAudioPublic::SetInternalChannelRelative (int ichannel, bool relative) {
   MyThreadLocker lislock(&lockListener);
   if (ichannel >= 0 && ichannel < NumChannels && Channel[ichannel].handle >= 0) Channel[ichannel].localPlayerSound = relative;
 }
@@ -1342,13 +1206,13 @@ void VAudio::SetInternalChannelRelative (int ichannel, bool relative) {
 
 //==========================================================================
 //
-//  VAudio::UpdateSfx
+//  VAudioPublic::UpdateSfx
 //
 //  Update the sound parameters. Used to control volume and pan
 //  changes such as when a player turns.
 //
 //==========================================================================
-void VAudio::UpdateSfx (float frameDelta) {
+void VAudioPublic::UpdateSfx (float frameDelta) {
   MyThreadLocker lislock(&lockListener);
 
   if (updaterThreadLockFlag || !SoundDevice || !NumChannels) return;
@@ -1412,10 +1276,10 @@ void VAudio::UpdateSfx (float frameDelta) {
 
 //==========================================================================
 //
-//  VAudio::PlayMusic
+//  VAudioPublic::PlayMusic
 //
 //==========================================================================
-bool VAudio::PlayMusic (const VStr &filename, bool Loop) {
+bool VAudioPublic::PlayMusic (const VStr &filename, bool Loop) {
   if (StreamPlaying) StreamMusicPlayer->Stop();
   StreamPlaying = false;
 
@@ -1481,10 +1345,10 @@ bool VAudio::PlayMusic (const VStr &filename, bool Loop) {
 
 //==========================================================================
 //
-//  VAudio::IsMusicPlaying
+//  VAudioPublic::IsMusicPlaying
 //
 //==========================================================================
-bool VAudio::IsMusicPlaying () {
+bool VAudioPublic::IsMusicPlaying () {
   if (StreamPlaying && StreamMusicPlayer) return StreamMusicPlayer->IsPlaying();
   return false;
 }
@@ -1492,50 +1356,50 @@ bool VAudio::IsMusicPlaying () {
 
 //==========================================================================
 //
-//  VAudio::PauseMusic
+//  VAudioPublic::PauseMusic
 //
 //==========================================================================
-void VAudio::PauseMusic () {
+void VAudioPublic::PauseMusic () {
   if (StreamPlaying && StreamMusicPlayer) StreamMusicPlayer->Pause();
 }
 
 
 //==========================================================================
 //
-//  VAudio::ResumeMusic
+//  VAudioPublic::ResumeMusic
 //
 //==========================================================================
-void VAudio::ResumeMusic () {
+void VAudioPublic::ResumeMusic () {
   if (StreamPlaying && StreamMusicPlayer) StreamMusicPlayer->Resume();
 }
 
 
 //==========================================================================
 //
-//  VAudio::StopMusic
+//  VAudioPublic::StopMusic
 //
 //==========================================================================
-void VAudio::StopMusic () {
+void VAudioPublic::StopMusic () {
   if (StreamPlaying && StreamMusicPlayer) StreamMusicPlayer->Stop();
 }
 
 
 //==========================================================================
 //
-//  VAudio::SetMusicPitch
+//  VAudioPublic::SetMusicPitch
 //
 //==========================================================================
-void VAudio::SetMusicPitch (float pitch) {
+void VAudioPublic::SetMusicPitch (float pitch) {
   if (StreamPlaying && StreamMusicPlayer) StreamMusicPlayer->SetPitch(pitch);
 }
 
 
 //==========================================================================
 //
-//  VAudio::GetDevList
+//  VAudioPublic::GetDevList
 //
 //==========================================================================
-const char *VAudio::GetDevList () {
+const char *VAudioPublic::GetDevList () {
   if (SoundDevice) return SoundDevice->GetDevList();
   (void)alcGetError(nullptr);
   const ALCchar *list = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
@@ -1546,10 +1410,10 @@ const char *VAudio::GetDevList () {
 
 //==========================================================================
 //
-//  VAudio::GetAllDevList
+//  VAudioPublic::GetAllDevList
 //
 //==========================================================================
-const char *VAudio::GetAllDevList () {
+const char *VAudioPublic::GetAllDevList () {
   if (SoundDevice) return SoundDevice->GetAllDevList();
   (void)alcGetError(nullptr);
   const ALCchar *list = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
@@ -1560,10 +1424,10 @@ const char *VAudio::GetAllDevList () {
 
 //==========================================================================
 //
-//  VAudio::GetExtList
+//  VAudioPublic::GetExtList
 //
 //==========================================================================
-const char *VAudio::GetExtList () {
+const char *VAudioPublic::GetExtList () {
   if (SoundDevice) return SoundDevice->GetExtList();
   (void)alcGetError(nullptr);
   const ALCchar *list = alcGetString(NULL, ALC_EXTENSIONS);

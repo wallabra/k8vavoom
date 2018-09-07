@@ -22,19 +22,7 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-#ifndef _WIN32
-# define INITGUID
-#endif
-#define AL_ALEXT_PROTOTYPES
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alext.h>
-// linux headers doesn't define this
-#ifndef OPENAL
-# define OPENAL
-#endif
-
+#include "sound_private.h"
 #include "sound.h"
 
 //#define DEBUG_DUMP
@@ -44,82 +32,11 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VOpenALDevice : public VSoundDevice {
-private:
-  enum { MAX_VOICES = 256-4 };
-
-  enum { NUM_STRM_BUFFERS = 8*2 };
-  enum { STRM_BUFFER_SIZE = 1024*4 };
-
-  ALCdevice *Device;
-  ALCcontext *Context;
-  ALuint *Buffers;
-  vint32 BufferCount;
-
-  ALuint StrmSampleRate;
-  ALuint StrmFormat;
-  ALuint StrmBuffers[NUM_STRM_BUFFERS];
-  ALuint StrmAvailableBuffers[NUM_STRM_BUFFERS];
-  int StrmNumAvailableBuffers;
-  ALuint StrmSource;
-  short StrmDataBuffer[STRM_BUFFER_SIZE*2];
-
-  // for debugging
-  TVec listenerPos;
-
-public:
-  VOpenALDevice () : Device(nullptr), Context(nullptr), Buffers(nullptr), BufferCount(0) {}
-
-  // VSoundDevice interface
-  virtual bool Init () override;
-  virtual int SetChannels (int InNumChannels) override;
-  virtual void Shutdown ();
-  virtual int PlaySound3D (int sound_id, const TVec &origin, const TVec &velocity, float volume, float pitch, bool Loop, bool relative) override;
-  virtual void UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel, bool relative) override;
-  virtual void UpdateChannelPitch (int Handle, float pitch) override;
-  virtual void UpdateChannelVolume (int Handle, float volume) override;
-  virtual bool IsChannelActive (int Handle) override;
-  virtual void StopChannel (int Handle) override;
-  virtual void PauseChannel (int Handle) override;
-  virtual void ResumeChannel (int Handle) override;
-  virtual void UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec &up) override;
-
-  // OpenAL is thread-safe, so we have nothing special to do here
-  virtual bool OpenStream (int Rate, int Bits, int Channels) override;
-  virtual void CloseStream () override;
-  virtual int GetStreamAvailable () override;
-  virtual short *GetStreamBuffer () override;
-  virtual void SetStreamData (short *data, int len) override;
-  virtual void SetStreamVolume (float vol) override;
-  virtual void PauseStream () override;
-  virtual void ResumeStream () override;
-  virtual void SetStreamPitch (float pitch) override;
-
-  virtual void AddCurrentThread () override;
-  virtual void RemoveCurrentThread () override;
-
-  virtual const char *GetDevList () override;
-  virtual const char *GetAllDevList () override;
-  virtual const char *GetExtList () override;
-
-  bool PrepareSound (int sound_id);
-};
-
-float VSoundDevice::doppler_factor = 1.0f;
-float VSoundDevice::doppler_velocity = 343.3f; //10000.0f;
-float VSoundDevice::rolloff_factor = 1.0f;
-float VSoundDevice::reference_distance = 32.0f; // The distance under which the volume for the source would normally drop by half (before being influenced by rolloff factor or AL_MAX_DISTANCE)
-float VSoundDevice::max_distance = 800.0f; // Used with the Inverse Clamped Distance Model to set the distance where there will no longer be any attenuation of the source
-
-
-//==========================================================================
-//
-//  CreateVSoundDevice
-//
-//==========================================================================
-VSoundDevice *CreateVSoundDevice () {
-  return new VOpenALDevice;
-}
+float VOpenALDevice::doppler_factor = 1.0f;
+float VOpenALDevice::doppler_velocity = 343.3f; //10000.0f;
+float VOpenALDevice::rolloff_factor = 1.0f;
+float VOpenALDevice::reference_distance = 32.0f; // The distance under which the volume for the source would normally drop by half (before being influenced by rolloff factor or AL_MAX_DISTANCE)
+float VOpenALDevice::max_distance = 800.0f; // Used with the Inverse Clamped Distance Model to set the distance where there will no longer be any attenuation of the source
 
 
 //==========================================================================
@@ -202,7 +119,7 @@ bool VOpenALDevice::Init () {
   alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
   //alDistanceModel(AL_LINEAR_DISTANCE_CLAMPED);
 
-  listenerPos = TVec(0, 0, 0);
+  //listenerPos = TVec(0, 0, 0);
 
   return true;
 }
@@ -374,7 +291,7 @@ int VOpenALDevice::PlaySound3D (int sound_id, const TVec &origin, const TVec &ve
   fprintf(stderr, "  rolloff_factor=%f\n", (double)rolloff_factor);
 #endif
   fprintf(stderr, "  origin  =(%f,%f,%f)\n", (double)origin.x, origin.y, origin.z);
-  fprintf(stderr, "  listener=(%f,%f,%f)\n", (double)listenerPos.x, listenerPos.y, listenerPos.z);
+  //fprintf(stderr, "  listener=(%f,%f,%f)\n", (double)listenerPos.x, listenerPos.y, listenerPos.z);
 #if defined(USE_DISTANCES)
   fprintf(stderr, "  reference_distance=%f\n", (double)reference_distance);
   fprintf(stderr, "  max_distance=%f\n", (double)max_distance);
@@ -478,7 +395,7 @@ void VOpenALDevice::ResumeChannel (int Handle) {
 //
 //==========================================================================
 void VOpenALDevice::UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec &up) {
-  listenerPos = org;
+  //listenerPos = org;
 
   alGetError(); // clear error code
 

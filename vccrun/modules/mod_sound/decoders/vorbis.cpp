@@ -24,6 +24,7 @@
 //**************************************************************************
 #include <vorbis/codec.h>
 
+#include "../sound_private.h"
 #include "../sound.h"
 
 

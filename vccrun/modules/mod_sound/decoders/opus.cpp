@@ -24,6 +24,7 @@
 //**************************************************************************
 #include <opus/opusfile.h>
 
+#include "../sound_private.h"
 #include "../sound.h"
 
 
