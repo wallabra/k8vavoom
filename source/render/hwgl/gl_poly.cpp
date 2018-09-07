@@ -700,6 +700,13 @@ void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour
 //
 //  VOpenGLDrawer::DrawSurfaceLight
 //
+//  k8: here we should draw decals again, but we cannot use stencil buffer,
+//      as it is already used by shadow volumes.
+//      i should calculate correct decal texture rectangle, and get rid
+//      of stenciling, but considering that i rarely using advanced
+//      renderer, this task is somewhere at the bottom of my todo list.
+//      patches are welcome, though.
+//
 //==========================================================================
 void VOpenGLDrawer::DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Radius, bool LightCanCross) {
   guard(VOpenGLDrawer::DrawSurfaceLight);
