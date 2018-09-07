@@ -432,6 +432,7 @@ public:
   void RenderSurfaceShadowVolume (surface_t *, TVec &, float, bool);
   void BeginLightPass (TVec &, float, vuint32);
   void DrawSurfaceLight (surface_t *, TVec&, float, bool);
+  virtual void DrawLightRect (TVec &LightPos, float Radius, bool LightCanCross) override;
   void DrawWorldTexturesPass ();
   void DrawWorldFogPass ();
   void EndFogPass ();
