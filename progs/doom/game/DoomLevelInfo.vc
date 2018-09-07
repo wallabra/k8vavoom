@@ -22,181 +22,68 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class DoomLevelInfo : LineSpecialLevelInfo;
 
-//==========================================================================
-//
-//  GetDehackedItemType
-//
-//==========================================================================
 
-override class!Inventory GetDehackedItemType(EntityEx Item)
-{
-  // Identify by sprite.
-  // armor
-  name SpriteName = GetStateSpriteName(Item.State);
-  if (SpriteName == 'arm1')
-  {
-    return GreenArmor;
-  }
-  if (SpriteName == 'arm2')
-  {
-    return BlueArmor;
-  }
+override class!Inventory GetDehackedItemType (EntityEx Item) {
+  // identify by sprite
+  switch (GetStateSpriteName(Item.State)) {
+    // armor
+    case 'arm1': return GreenArmor;
+    case 'arm2': return BlueArmor;
 
-  // bonus items
-  if (SpriteName == 'bon1')
-  {
-    return HealthBonus;
-  }
-  if (SpriteName == 'bon2')
-  {
-    return ArmorBonus;
-  }
-  if (SpriteName == 'soul')
-  {
-    return Soulsphere;
-  }
-  if (SpriteName == 'mega')
-  {
-    return Megasphere;
-  }
+    // bonus items
+    case 'bon1': return HealthBonus;
+    case 'bon2': return ArmorBonus;
+    case 'soul': return Soulsphere;
+    case 'mega': return Megasphere;
 
-  // cards
-  if (SpriteName == 'bkey')
-  {
-    return BlueCard;
-  }
-  if (SpriteName == 'ykey')
-  {
-    return YellowCard;
-  }
-  if (SpriteName == 'rkey')
-  {
-    return RedCard;
-  }
-  if (SpriteName == 'bsku')
-  {
-    return BlueSkull;
-  }
-  if (SpriteName == 'ysku')
-  {
-    return YellowSkull;
-  }
-  if (SpriteName == 'rsku')
-  {
-    return RedSkull;
+    // cards
+    case 'bkey': return BlueCard;
+    case 'ykey': return YellowCard;
+    case 'rkey': return RedCard;
+    case 'bsku': return BlueSkull;
+    case 'ysku': return YellowSkull;
+    case 'rsku': return RedSkull;
+
+    // medikits, heals
+    case 'stim': return Stimpack;
+    case 'medi': return Medikit;
+
+    // power ups
+    case 'pinv': return InvulnerabilitySphere;
+    case 'pstr': return Berserk;
+    case 'pins': return BlurSphere;
+    case 'suit': return RadSuit;
+    case 'pvis': return Infrared;
+
+    // items
+    case 'pmap': return Allmap;
+
+    // ammo
+    case 'clip': return Clip;
+    case 'ammo': return ClipBox;
+    case 'rock': return RocketAmmo;
+    case 'brok': return RocketBox;
+    case 'cell': return Cell;
+    case 'celp': return CellPack;
+    case 'shel': return Shell;
+    case 'sbox': return ShellBox;
+    case 'bpak': return Backpack;
+
+    // weapons
+    case 'bfug': return BFG9000;
+    case 'mgun': return Chaingun;
+    case 'csaw': return Chainsaw;
+    case 'laun': return RocketLauncher;
+    case 'plas': return PlasmaRifle;
+    case 'shot': return Shotgun;
+    case 'sgn2': return SuperShotgun;
   }
 
-  // medikits, heals
-  if (SpriteName == 'stim')
-  {
-    return Stimpack;
-  }
-  if (SpriteName == 'medi')
-  {
-    return Medikit;
-  }
-
-  // power ups
-  if (SpriteName == 'pinv')
-  {
-    return InvulnerabilitySphere;
-  }
-  if (SpriteName == 'pstr')
-  {
-    return Berserk;
-  }
-  if (SpriteName == 'pins')
-  {
-    return BlurSphere;
-  }
-  if (SpriteName == 'suit')
-  {
-    return RadSuit;
-  }
-  if (SpriteName == 'pvis')
-  {
-    return Infrared;
-  }
-
-  //  Items
-  if (SpriteName == 'pmap')
-  {
-    return Allmap;
-  }
-
-  // ammo
-  if (SpriteName == 'clip')
-  {
-    return Clip;
-  }
-  if (SpriteName == 'ammo')
-  {
-    return ClipBox;
-  }
-  if (SpriteName == 'rock')
-  {
-    return RocketAmmo;
-  }
-  if (SpriteName == 'brok')
-  {
-    return RocketBox;
-  }
-  if (SpriteName == 'cell')
-  {
-    return Cell;
-  }
-  if (SpriteName == 'celp')
-  {
-    return CellPack;
-  }
-  if (SpriteName == 'shel')
-  {
-    return Shell;
-  }
-  if (SpriteName == 'sbox')
-  {
-    return ShellBox;
-  }
-  if (SpriteName == 'bpak')
-  {
-    return Backpack;
-  }
-
-  // weapons
-  if (SpriteName == 'bfug')
-  {
-    return BFG9000;
-  }
-  if (SpriteName == 'mgun')
-  {
-    return Chaingun;
-  }
-  if (SpriteName == 'csaw')
-  {
-    return Chainsaw;
-  }
-  if (SpriteName == 'laun')
-  {
-    return RocketLauncher;
-  }
-  if (SpriteName == 'plas')
-  {
-    return PlasmaRifle;
-  }
-  if (SpriteName == 'shot')
-  {
-    return Shotgun;
-  }
-  if (SpriteName == 'sgn2')
-  {
-    return SuperShotgun;
-  }
   return none;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

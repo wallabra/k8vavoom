@@ -22,124 +22,115 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class StatusBarScreen : StatusBarShared;
 
-//
-//  Location of statistics, justified according to widget type.
-//
-
+// location of statistics, justified according to widget type
 const int
-  ST_BGX        = 160,
-  ST_BGY        = 448,
+  ST_BGX = 160,
+  ST_BGY = 448,
 
-// AMMO number pos.
-  ST_AMMOX      = ST_BGX + 44,
-  ST_AMMOY      = ST_BGY + 3,
+  // AMMO number position
+  ST_AMMOX = ST_BGX+44,
+  ST_AMMOY = ST_BGY+3,
 
-// HEALTH number pos.
-  ST_HEALTHX      = ST_BGX + 90,
-  ST_HEALTHY      = ST_BGY + 3,
+  // health number position
+  ST_HEALTHX = ST_BGX+90,
+  ST_HEALTHY = ST_BGY+3,
 
-// Frags pos.
-  ST_FRAGSX     = ST_BGX + 138,
-  ST_FRAGSY     = ST_BGY + 3,
+  // frags position
+  ST_FRAGSX = ST_BGX+138,
+  ST_FRAGSY = ST_BGY+3,
 
-// Weapon pos.
-  ST_ARMSBGX      = ST_BGX + 104,
-  ST_ARMSBGY      = ST_BGY + 0,
-  ST_ARMSX      = ST_BGX + 111,
-  ST_ARMSY      = ST_BGY + 4,
-  ST_ARMSXSPACE   = 12,
-  ST_ARMSYSPACE   = 10,
+  // weapon position
+  ST_ARMSBGX = ST_BGX+104,
+  ST_ARMSBGY = ST_BGY+0,
+  ST_ARMSX = ST_BGX+111,
+  ST_ARMSY = ST_BGY+4,
+  ST_ARMSXSPACE = 12,
+  ST_ARMSYSPACE = 10,
 
-// Location of marine face
-  ST_FACESX     = ST_BGX + 143,
-  ST_FACESY     = ST_BGY + 0,
+  // location of marine face
+  ST_FACESX     = ST_BGX+143,
+  ST_FACESY     = ST_BGY+0,
 
-// ARMOR number pos.
-  ST_ARMORX     = ST_BGX + 221,
-  ST_ARMORY     = ST_BGY + 3,
+  // armor number pos
+  ST_ARMORX = ST_BGX+221,
+  ST_ARMORY = ST_BGY+3,
 
-// Key icon positions.
-  ST_KEY0X      = ST_BGX + 239,
-  ST_KEY0Y      = ST_BGY + 3,
-  ST_KEY1X      = ST_BGX + 239,
-  ST_KEY1Y      = ST_BGY + 13,
-  ST_KEY2X      = ST_BGX + 239,
-  ST_KEY2Y      = ST_BGY + 23,
+  // key icon positions
+  ST_KEY0X = ST_BGX+239,
+  ST_KEY0Y = ST_BGY+3,
+  ST_KEY1X = ST_BGX+239,
+  ST_KEY1Y = ST_BGY+13,
+  ST_KEY2X = ST_BGX+239,
+  ST_KEY2Y = ST_BGY+23,
 
-// Ammunition counter.
-  ST_AMMO0X     = ST_BGX + 288,
-  ST_AMMO0Y     = ST_BGY + 5,
-  ST_AMMO1X     = ST_BGX + 288,
-  ST_AMMO1Y     = ST_BGY + 11,
-  ST_AMMO2X     = ST_BGX + 288,
-  ST_AMMO2Y     = ST_BGY + 23,
-  ST_AMMO3X     = ST_BGX + 288,
-  ST_AMMO3Y     = ST_BGY + 17,
+  // ammunition counter
+  ST_AMMO0X = ST_BGX+288,
+  ST_AMMO0Y = ST_BGY+5,
+  ST_AMMO1X = ST_BGX+288,
+  ST_AMMO1Y = ST_BGY+11,
+  ST_AMMO2X = ST_BGX+288,
+  ST_AMMO2Y = ST_BGY+23,
+  ST_AMMO3X = ST_BGX+288,
+  ST_AMMO3Y = ST_BGY+17,
 
-// Indicate maximum ammunition.
-// Only needed because backpack exists.
-  ST_MAXAMMO0X    = ST_BGX + 314,
-  ST_MAXAMMO0Y    = ST_BGY + 5,
-  ST_MAXAMMO1X    = ST_BGX + 314,
-  ST_MAXAMMO1Y    = ST_BGY + 11,
-  ST_MAXAMMO2X    = ST_BGX + 314,
-  ST_MAXAMMO2Y    = ST_BGY + 23,
-  ST_MAXAMMO3X    = ST_BGX + 314,
-  ST_MAXAMMO3Y    = ST_BGY + 17,
+  // indicate maximum ammunition
+  // only needed because backpack exists
+  ST_MAXAMMO0X = ST_BGX+314,
+  ST_MAXAMMO0Y = ST_BGY+5,
+  ST_MAXAMMO1X = ST_BGX+314,
+  ST_MAXAMMO1Y = ST_BGY+11,
+  ST_MAXAMMO2X = ST_BGX+314,
+  ST_MAXAMMO2Y = ST_BGY+23,
+  ST_MAXAMMO3X = ST_BGX+314,
+  ST_MAXAMMO3Y = ST_BGY+17,
 
-//  Fullscreen widgets
-  ST_TDHEALTHX  = 120,
-  ST_TDHEALTHY  = 460,
+  // fullscreen widgets
+  ST_TDHEALTHX = 120,
+  ST_TDHEALTHY = 460,
 
-  ST_TDARMORX   = 280,
-  ST_TDARMORY   = 460,
+  ST_TDARMORX = 280,
+  ST_TDARMORY = 460,
 
-  ST_TDAMMOX    = 620,
-  ST_TDAMMOY    = 460;
+  ST_TDAMMOX = 620,
+  ST_TDAMMOY = 460;
 
-//
-//  FACE WIDGET MACROS
-//
-enum
-{
-// Number of status faces.
-  ST_NUMPAINFACES   = 5,
+
+// face widget macros
+enum {
+  // number of status faces
+  ST_NUMPAINFACES     = 5,
   ST_NUMSTRAIGHTFACES = 3,
-  ST_NUMTURNFACES   = 2,
+  ST_NUMTURNFACES     = 2,
   ST_NUMSPECIALFACES  = 3,
 
-  ST_FACESTRIDE
-          = (ST_NUMSTRAIGHTFACES + ST_NUMTURNFACES + ST_NUMSPECIALFACES),
+  ST_FACESTRIDE = (ST_NUMSTRAIGHTFACES+ST_NUMTURNFACES+ST_NUMSPECIALFACES),
 
-  ST_NUMEXTRAFACES  = 2,
+  ST_NUMEXTRAFACES = 2,
 
-  ST_NUMFACES
-          = (ST_FACESTRIDE*ST_NUMPAINFACES+ST_NUMEXTRAFACES),
+  ST_NUMFACES = (ST_FACESTRIDE*ST_NUMPAINFACES+ST_NUMEXTRAFACES),
 
-  ST_TURNOFFSET   = (ST_NUMSTRAIGHTFACES),
-  ST_OUCHOFFSET   = (ST_TURNOFFSET + ST_NUMTURNFACES),
-  ST_EVILGRINOFFSET = (ST_OUCHOFFSET + 1),
-  ST_RAMPAGEOFFSET  = (ST_EVILGRINOFFSET + 1),
-  ST_GODFACE      = (ST_NUMPAINFACES * ST_FACESTRIDE),
-  ST_DEADFACE     = (ST_GODFACE + 1)
+  ST_TURNOFFSET     = (ST_NUMSTRAIGHTFACES),
+  ST_OUCHOFFSET     = (ST_TURNOFFSET+ST_NUMTURNFACES),
+  ST_EVILGRINOFFSET = (ST_OUCHOFFSET+1),
+  ST_RAMPAGEOFFSET  = (ST_EVILGRINOFFSET+1),
+  ST_GODFACE        = (ST_NUMPAINFACES*ST_FACESTRIDE),
+  ST_DEADFACE       = (ST_GODFACE+1)
 };
 
-const float ST_STRAIGHTFACETIME   = 0.5;
-const float ST_TURNTIME       = 1.0;
+const float ST_STRAIGHTFACETIME = 0.5;
+const float ST_TURNTIME         = 1.0;
 const float ST_EVILGRINTIME     = 2.0;
 const float ST_RAMPAGEDELAY     = 2.0;
 
-const int ST_MUCHPAIN       = 20;
+const int ST_MUCHPAIN = 20;
+
+const float ST_FULLSCREEN_ALPHA = 0.65;
 
 Player cl;
 
-//
-//  PICS
-//
-
+// pics
 int pic_bar;
 int pic_arms;
 int pic_tallnum[10];
@@ -161,9 +152,7 @@ int pic_selectbox;
 int pic_invgeml[2];
 int pic_invgemr[2];
 
-//
-//  FACE WIDGET DATA
-//
+// face widget data
 
 // count until face changes
 float sb_facetime;
@@ -185,23 +174,19 @@ float sb_face_lastattackdown;
 // current face index, used by w_faces
 int sb_faceindex;
 
+
 //==========================================================================
 //
 //  StartMap
 //
 //==========================================================================
-
-override void StartMap()
-{
-  int i;
-
+override void StartMap () {
   ::StartMap();
 
   pic_bar = R_RegisterPic('stbar');
   pic_arms = R_RegisterPic('starms');
 
-  for (i = 0; i < 10; i++)
-  {
+  foreach (auto i; 0..10) {
     pic_tallnum[i] = R_RegisterPic(StrToName(va("sttnum%d", i)));
     pic_yellownum[i] = R_RegisterPic(StrToName(va("stysnum%d", i)));
     pic_graynum[i] = R_RegisterPic(StrToName(va("stgnum%d", i)));
@@ -211,45 +196,35 @@ override void StartMap()
 
   pic_faceback = R_RegisterPic('stfb0');
 
-  for (i = 0; i < 6; i++)
-  {
-    pic_keys[i] = R_RegisterPic(StrToName(va("stkeys%d", i)));
-  }
+  foreach (auto i; 0..6) pic_keys[i] = R_RegisterPic(StrToName(va("stkeys%d", i)));
 
-  for (i = 0; i < ST_NUMPAINFACES; i++)
-  {
-    pic_faces[i * ST_FACESTRIDE] =
-      R_RegisterPic(StrToName(va("stfst%d0", i)));
-    pic_faces[i * ST_FACESTRIDE + 1] =
-      R_RegisterPic(StrToName(va("stfst%d1", i)));
-    pic_faces[i * ST_FACESTRIDE + 2] =
-      R_RegisterPic(StrToName(va("stfst%d2", i)));
-    pic_faces[i * ST_FACESTRIDE + 3] =
-      R_RegisterPic(StrToName(va("stftr%d0", i)));
-    pic_faces[i * ST_FACESTRIDE + 4] =
-      R_RegisterPic(StrToName(va("stftl%d0", i)));
-    pic_faces[i * ST_FACESTRIDE + 5] =
-      R_RegisterPic(StrToName(va("stfouch%d", i)));
-    pic_faces[i * ST_FACESTRIDE + 6] =
-      R_RegisterPic(StrToName(va("stfevl%d", i)));
-    pic_faces[i * ST_FACESTRIDE + 7] =
-      R_RegisterPic(StrToName(va("stfkill%d", i)));
+  foreach (auto i; 0..ST_NUMPAINFACES) {
+    pic_faces[i*ST_FACESTRIDE+0] = R_RegisterPic(StrToName(va("stfst%d0", i)));
+    pic_faces[i*ST_FACESTRIDE+1] = R_RegisterPic(StrToName(va("stfst%d1", i)));
+    pic_faces[i*ST_FACESTRIDE+2] = R_RegisterPic(StrToName(va("stfst%d2", i)));
+    pic_faces[i*ST_FACESTRIDE+3] = R_RegisterPic(StrToName(va("stftr%d0", i)));
+    pic_faces[i*ST_FACESTRIDE+4] = R_RegisterPic(StrToName(va("stftl%d0", i)));
+    pic_faces[i*ST_FACESTRIDE+5] = R_RegisterPic(StrToName(va("stfouch%d", i)));
+    pic_faces[i*ST_FACESTRIDE+6] = R_RegisterPic(StrToName(va("stfevl%d", i)));
+    pic_faces[i*ST_FACESTRIDE+7] = R_RegisterPic(StrToName(va("stfkill%d", i)));
   }
   pic_faces[ST_GODFACE] = R_RegisterPic('stfgod0');
   pic_faces[ST_DEADFACE] = R_RegisterPic('stfdead0');
 
   pic_pause = R_RegisterPic('m_pause');
 
-  // Fullscreen HUD stuff
+  // fullscreen HUD stuff
   pic_health = R_RegisterPic('stima0');
   pic_armor[0] = R_RegisterPic('arm1a0');
   pic_armor[1] = R_RegisterPic('arm2a0');
 
-  // Inventory bar stuff
-/*  pic_artiflash[0] = R_RegisterPic('useartia');
+  // inventory bar stuff
+  /*
+  pic_artiflash[0] = R_RegisterPic('useartia');
   pic_artiflash[1] = R_RegisterPic('useartib');
   pic_artiflash[2] = R_RegisterPic('useartic');
-  pic_artiflash[3] = R_RegisterPic('useartid');*/
+  pic_artiflash[3] = R_RegisterPic('useartid');
+  */
   pic_artibox = R_RegisterPic('artibox');
   pic_selectbox = R_RegisterPic('selectbo');
   pic_invgeml[0] = R_RegisterPic('invgeml1');
@@ -258,101 +233,73 @@ override void StartMap()
   pic_invgemr[1] = R_RegisterPic('invgemr2');
 }
 
+
 //==========================================================================
 //
 //  SB_DrawTallNum
 //
 //==========================================================================
-
-void SB_DrawTallNum(int x, int y, int num, float alpha, bool perc)
-{
+void SB_DrawTallNum (int x, int y, int num, float alpha, bool perc) {
   int w;
   int neg;
   picinfo_t info;
 
-  if (perc)
-  {
-    DrawPic(x, y, pic_percent, alpha);
-  }
+  if (perc) DrawPic(x, y, pic_percent, alpha);
 
   R_GetPicInfo(pic_tallnum[0], &info);
   w = info.width;
 
   neg = num < 0;
-  if (neg)
-  {
-    num = -num;
-  }
+  if (neg) num = -num;
 
   // in the special case of 0, you draw 0
-  if (!num)
-  {
-    DrawPic(x - w, y, pic_tallnum[0], alpha);
-  }
+  if (!num) DrawPic(x-w, y, pic_tallnum[0], alpha);
 
   // draw the new number
-  while (num)
-  {
+  while (num) {
     x -= w;
-    DrawPic(x, y, pic_tallnum[num % 10], alpha);
+    DrawPic(x, y, pic_tallnum[num%10], alpha);
     num /= 10;
   }
 
   // draw a minus sign if necessary
-  if (neg)
-  {
-    DrawPic(x - 8, y, pic_minus, alpha);
-  }
+  if (neg) DrawPic(x-8, y, pic_minus, alpha);
 }
+
 
 //==========================================================================
 //
 //  SB_DrawSmallNum
 //
 //==========================================================================
-
-void SB_DrawSmallNum(int x, int y, int num)
-{
+void SB_DrawSmallNum (int x, int y, int num) {
   int w;
   picinfo_t info;
 
-  if (num < 0)
-  {
-    num = -num;
-  }
+  if (num < 0) num = -num;
 
   R_GetPicInfo(pic_yellownum[0], &info);
   w = info.width;
 
   // in the special case of 0, you draw 0
-  if (!num)
-  {
-    DrawPic(x - w, y, pic_yellownum[0]);
-  }
+  if (!num) DrawPic(x-w, y, pic_yellownum[0]);
 
   // draw the new number
-  while (num)
-  {
+  while (num) {
     x -= w;
     DrawPic(x, y, pic_yellownum[num % 10]);
     num /= 10;
   }
 }
 
+
 //==========================================================================
 //
 //  SB_DrawMainBar
 //
 //==========================================================================
-
-void SB_DrawMainBar()
-{
-  int i;
-
-  if (!cl || !cl.MO)
-  {
-    return;
-  }
+void SB_DrawMainBar () {
+  if (!cl || !cl.MO) return;
 
   // draw something in the blank spaces
   // check which version of Doom we are playing
@@ -362,98 +309,58 @@ void SB_DrawMainBar()
     FillRectWithFlat(0, 448, 640, 32, 'floor7_2');
   }
 
-  //  background
+  // background
   DrawPic(ST_BGX, ST_BGY, pic_bar);
 
   // ready weapon ammo
-  if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo1)
-  {
+  if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo1) {
     SB_DrawTallNum(ST_AMMOX, ST_AMMOY, cl.ReadyWeapon.Ammo1.Amount, 1.0, false);
   }
 
   // health percentage
   SB_DrawTallNum(ST_HEALTHX, ST_HEALTHY, cl.Health, 1.0, true);
 
-  if (ClGame.deathmatch)
-  {
+  if (ClGame.deathmatch) {
     // frags sum
     SB_DrawTallNum(ST_FRAGSX, ST_FRAGSY, cl.Frags, 1.0, false);
   }
-  else
-  {
+  else {
     // weapons owned
     DrawPic(ST_ARMSBGX, ST_ARMSBGY, pic_arms);
-    for (i = 0; i < 6; i++)
-    {
+    foreach (auto i; 0..6) {
       bool HaveWeapon = false;
       Inventory Item;
-      for (Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory)
-      {
-        if (!Weapon(Item))
-        {
-          continue;
-        }
+      for (Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory) {
+        if (!Weapon(Item)) continue;
         int TmpSlot;
         int TmpIndex;
-        LineSpecialGameInfo(cl.ClGame.Game).FindWeaponSlot(
-          class!Weapon(Item.Class), TmpSlot, TmpIndex, Weapon(Item).Position);
-        if (TmpSlot == i + 2)
-        {
+        LineSpecialGameInfo(cl.ClGame.Game).FindWeaponSlot(class!Weapon(Item.Class), TmpSlot, TmpIndex, Weapon(Item).Position);
+        if (TmpSlot == i+2) {
           HaveWeapon = true;
           break;
         }
       }
-      if (HaveWeapon)
-      {
-        DrawPic(ST_ARMSX + (i % 3) * ST_ARMSXSPACE,
-          ST_ARMSY + (i / 3) * ST_ARMSYSPACE, pic_yellownum[i + 2]);
-      }
-      else
-      {
-        DrawPic(ST_ARMSX + (i % 3) * ST_ARMSXSPACE,
-          ST_ARMSY + (i / 3) * ST_ARMSYSPACE, pic_graynum[i + 2]);
-      }
+      DrawPic(ST_ARMSX+(i%3)*ST_ARMSXSPACE, ST_ARMSY+(i/3)*ST_ARMSYSPACE, (HaveWeapon ? pic_yellownum[i+2] : pic_graynum[i+2]));
     }
   }
 
   // faces
-  if (ClGame.maxclients > 1)
-  {
-    DrawPic(ST_FACESX, ST_FACESY, pic_faceback, default, cl.MO.Translation);
-  }
+  if (ClGame.maxclients > 1) DrawPic(ST_FACESX, ST_FACESY, pic_faceback, default, cl.MO.Translation);
   DrawPic(ST_FACESX, ST_FACESY, pic_faces[sb_faceindex]);
 
   // armor percentage
   BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor));
-  SB_DrawTallNum(ST_ARMORX, ST_ARMORY, Armor ? Armor.Amount : 0, 1.0, true);
+  SB_DrawTallNum(ST_ARMORX, ST_ARMORY, (Armor ? Armor.Amount : 0), 1.0, true);
 
   // keyboxes 0-2
-  if (EntityEx(cl.MO).FindInventory(BlueSkull))
-  {
-    DrawPic(ST_KEY0X, ST_KEY0Y, pic_keys[3]);
-  }
-  else if (EntityEx(cl.MO).FindInventory(BlueCard))
-  {
-    DrawPic(ST_KEY0X, ST_KEY0Y, pic_keys[0]);
-  }
+       if (EntityEx(cl.MO).FindInventory(BlueSkull)) DrawPic(ST_KEY0X, ST_KEY0Y, pic_keys[3]);
+  else if (EntityEx(cl.MO).FindInventory(BlueCard)) DrawPic(ST_KEY0X, ST_KEY0Y, pic_keys[0]);
 
-  if (EntityEx(cl.MO).FindInventory(YellowSkull))
-  {
-    DrawPic(ST_KEY1X, ST_KEY1Y, pic_keys[4]);
-  }
-  else if (EntityEx(cl.MO).FindInventory(YellowCard))
-  {
-    DrawPic(ST_KEY1X, ST_KEY1Y, pic_keys[1]);
-  }
+       if (EntityEx(cl.MO).FindInventory(YellowSkull)) DrawPic(ST_KEY1X, ST_KEY1Y, pic_keys[4]);
+  else if (EntityEx(cl.MO).FindInventory(YellowCard)) DrawPic(ST_KEY1X, ST_KEY1Y, pic_keys[1]);
 
-  if (EntityEx(cl.MO).FindInventory(RedSkull))
-  {
-    DrawPic(ST_KEY2X, ST_KEY2Y, pic_keys[5]);
-  }
-  else if (EntityEx(cl.MO).FindInventory(RedCard))
-  {
-    DrawPic(ST_KEY2X, ST_KEY2Y, pic_keys[2]);
-  }
+       if (EntityEx(cl.MO).FindInventory(RedSkull)) DrawPic(ST_KEY2X, ST_KEY2Y, pic_keys[5]);
+  else if (EntityEx(cl.MO).FindInventory(RedCard)) DrawPic(ST_KEY2X, ST_KEY2Y, pic_keys[2]);
 
   // ammo count (all four kinds)
   DrawAmmo(ST_AMMO0X, ST_AMMO0Y, ST_MAXAMMO0X, ST_MAXAMMO0Y, Clip);
@@ -462,276 +369,195 @@ void SB_DrawMainBar()
   DrawAmmo(ST_AMMO3X, ST_AMMO3Y, ST_MAXAMMO3X, ST_MAXAMMO3Y, RocketAmmo);
 
   // draw inventory bar or ready item when needed (it's drawn with transparency)
-  if (cl.InventoryTime && cl.InvFirst)
-  {
-    //  Inventory
+  if (cl.InventoryTime && cl.InvFirst) {
+    // inventory
     Inventory Item = cl.InvFirst;
-    for (i = 0; i < 7; i++)
-    {
-      DrawPic(210 + i * 31, 448, pic_artibox, 0.6);
-      if (Item)
-      {
-        DrawShadowedPic(207 + i * 31, 446,
-          R_RegisterPic(Item.IconName));
-        SB_DrawSmallNum(238 + i * 31, 470, Item.Amount);
-        if (Item == cl.InvPtr)
-        {
-          DrawPic(210 + i * 31, 448, pic_selectbox, 0.6);
-        }
+    foreach (auto i; 0..7) {
+      DrawPic(210+i*31, 448, pic_artibox, ST_FULLSCREEN_ALPHA);
+      if (Item) {
+        DrawShadowedPic(207+i*31, 446, R_RegisterPic(Item.IconName));
+        SB_DrawSmallNum(238+i*31, 470, Item.Amount);
+        if (Item == cl.InvPtr) DrawPic(210+i*31, 448, pic_selectbox, ST_FULLSCREEN_ALPHA);
         Item = Item.NextInv();
       }
     }
-    if (cl.InvFirst && cl.InvFirst.PrevInv())
-    {
-      DrawPic(198, 447, pic_invgeml[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], 0.6);
-    }
-    if (Item)
-    {
-      DrawPic(429, 447, pic_invgemr[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], 0.6);
-    }
-  }
-  else if (cl.InvPtr)
-  {
-    //  Ready artifact
-    DrawPic(486, 448, pic_artibox, 0.6);
+    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(198, 447, pic_invgeml[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], ST_FULLSCREEN_ALPHA);
+    if (Item) DrawPic(429, 447, pic_invgemr[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], ST_FULLSCREEN_ALPHA);
+  } else if (cl.InvPtr) {
+    // ready artifact
+    DrawPic(486, 448, pic_artibox, ST_FULLSCREEN_ALPHA);
     DrawShadowedPic(483, 446, R_RegisterPic(cl.InvPtr.IconName));
     SB_DrawSmallNum(514, 470, cl.InvPtr.Amount);
   }
 }
+
 
 //==========================================================================
 //
 //  DrawAmmo
 //
 //==========================================================================
-
-void DrawAmmo(int CountX, int CountY, int MaxX, int MaxY,
-  class!Inventory AmmoClass)
-{
-  Inventory   Item;
-
-  Item = EntityEx(cl.MO).FindInventory(AmmoClass);
+void DrawAmmo (int CountX, int CountY, int MaxX, int MaxY, class!Inventory AmmoClass) {
+  Inventory Item = EntityEx(cl.MO).FindInventory(AmmoClass);
   // ammo count
   SB_DrawSmallNum(CountX, CountY, Item ? Item.Amount : 0);
   // max ammo count
-  SB_DrawSmallNum(MaxX, MaxY, Item ? Item.MaxAmount :
-    AmmoClass.default.MaxAmount);
+  SB_DrawSmallNum(MaxX, MaxY, Item ? Item.MaxAmount : AmmoClass.default.MaxAmount);
 }
+
 
 //==========================================================================
 //
 //  SB_DrawFullscreenStats
 //
 //==========================================================================
+void SB_DrawFullscreenStats () {
+  if (!cl || !cl.MO) return;
 
-void SB_DrawFullscreenStats()
-{
-  if (!cl || !cl.MO)
-  {
-    return;
+  float fsalpha = ST_FULLSCREEN_ALPHA;
+  if (CvarExists('r_hud_fullscreen_alpha')) {
+    fsalpha = GetCvarF('r_hud_fullscreen_alpha');
+    if (fsalpha < 0.1) fsalpha = ST_FULLSCREEN_ALPHA;
   }
 
   // health
-  SB_DrawTallNum(ST_TDHEALTHX, ST_TDHEALTHY, cl.Health, 0.6, false);
-  DrawPic(ST_TDHEALTHX - 60, ST_TDHEALTHY + 15, pic_health, 0.6);
+  SB_DrawTallNum(ST_TDHEALTHX, ST_TDHEALTHY, cl.Health, fsalpha, false);
+  DrawPic(ST_TDHEALTHX-60, ST_TDHEALTHY + 15, pic_health, fsalpha);
 
   // armor
   BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor));
-  if (Armor && Armor.Amount)
-  {
+  if (Armor && Armor.Amount) {
     int i = Armor.SavePercent > 0.335 ? 1 : 0;
-    SB_DrawTallNum(ST_TDARMORX, ST_TDARMORY, Armor.Amount, 0.6, false);
-    DrawPic(ST_TDARMORX - 60, ST_TDARMORY + 15, pic_armor[i], 0.6);
+    SB_DrawTallNum(ST_TDARMORX, ST_TDARMORY, Armor.Amount, fsalpha, false);
+    DrawPic(ST_TDARMORX - 60, ST_TDARMORY + 15, pic_armor[i], fsalpha);
   }
 
   // ready weapon ammo with icon
-  if (cl.ReadyWeapon)
-  {
-    if (cl.ReadyWeapon.Ammo1)
-    {
-      SB_DrawTallNum(ST_TDAMMOX, ST_TDAMMOY,
-        cl.ReadyWeapon.Ammo1.Amount, 0.6, false);
-      DrawPic(ST_TDAMMOX - 60, ST_TDAMMOY + 15,
-        R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), 0.6);
+  if (cl.ReadyWeapon) {
+    if (cl.ReadyWeapon.Ammo1) {
+      SB_DrawTallNum(ST_TDAMMOX, ST_TDAMMOY, cl.ReadyWeapon.Ammo1.Amount, fsalpha, false);
+      DrawPic(ST_TDAMMOX-60, ST_TDAMMOY+15, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), fsalpha);
     }
-    if (cl.ReadyWeapon.Ammo2 &&
-      cl.ReadyWeapon.Ammo2 != cl.ReadyWeapon.Ammo1)
-    {
-      SB_DrawTallNum(ST_TDAMMOX, ST_TDAMMOY - 32,
-        cl.ReadyWeapon.Ammo2.Amount, 0.6, false);
-      DrawPic(ST_TDAMMOX - 60, ST_TDAMMOY - 32 + 15,
-        R_RegisterPic(cl.ReadyWeapon.Ammo2.IconName), 0.6);
+    if (cl.ReadyWeapon.Ammo2 && cl.ReadyWeapon.Ammo2 != cl.ReadyWeapon.Ammo1) {
+      SB_DrawTallNum(ST_TDAMMOX, ST_TDAMMOY-32, cl.ReadyWeapon.Ammo2.Amount, fsalpha, false);
+      DrawPic(ST_TDAMMOX-60, ST_TDAMMOY-32+15, R_RegisterPic(cl.ReadyWeapon.Ammo2.IconName), fsalpha);
     }
   }
 
   // keys
   int KeyX = 320;
-  Inventory Item;
-  for (Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory)
-  {
-    if (Key(Item))
-    {
+  for (Inventory Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory) {
+    if (Key(Item)) {
       int Pic = R_RegisterPic(Item.IconName);
-      if (Pic >= 0)
-      {
-        DrawPic(KeyX, 470, Pic, 0.6);
+      if (Pic >= 0) {
+        DrawPic(KeyX, 470, Pic, fsalpha);
         KeyX += 20;
       }
     }
   }
 
-  if (ClGame.deathmatch)
-  {
+  if (ClGame.deathmatch) {
     // frags sum
-    SB_DrawTallNum(630, 10, cl.Frags, 0.6, false);
+    SB_DrawTallNum(630, 10, cl.Frags, fsalpha, false);
   }
 
   // draw inventory bar or ready item when needed (it's drawn with transparency)
-  if (cl.InventoryTime && cl.InvFirst)
-  {
-    //  Inventory
-    int i;
-
-    Item = cl.InvFirst;
-    for (i = 0; i < 7; i++)
-    {
-      DrawPic(210 + i * 31, 448, pic_artibox, 0.6);
-      if (Item)
-      {
-        DrawShadowedPic(207 + i * 31, 446,
-          R_RegisterPic(Item.IconName));
-        SB_DrawSmallNum(238 + i * 31, 470, Item.Amount);
-        if (Item == cl.InvPtr)
-        {
-          DrawPic(210 + i * 31, 448, pic_selectbox, 0.6);
-        }
+  if (cl.InventoryTime && cl.InvFirst) {
+    // inventory
+    Inventory Item = cl.InvFirst;
+    foreach (auto i; 0..7) {
+      DrawPic(210+i*31, 448, pic_artibox, fsalpha);
+      if (Item) {
+        DrawShadowedPic(207+i*31, 446, R_RegisterPic(Item.IconName));
+        SB_DrawSmallNum(238+i*31, 470, Item.Amount);
+        if (Item == cl.InvPtr) DrawPic(210+i*31, 448, pic_selectbox, fsalpha);
         Item = Item.NextInv();
       }
     }
-    if (cl.InvFirst && cl.InvFirst.PrevInv())
-    {
-      DrawPic(198, 447, pic_invgeml[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], 0.6);
-    }
-    if (Item)
-    {
-      DrawPic(429, 447, pic_invgemr[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], 0.6);
-    }
-  }
-  else if (cl.InvPtr)
-  {
-    //  Ready artifact
-    DrawPic(486, 448, pic_artibox, 0.6);
+    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(198, 447, pic_invgeml[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], fsalpha);
+    if (Item) DrawPic(429, 447, pic_invgemr[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], fsalpha);
+  } else if (cl.InvPtr) {
+    // ready artifact
+    DrawPic(486, 448, pic_artibox, fsalpha);
     DrawShadowedPic(483, 446, R_RegisterPic(cl.InvPtr.IconName));
     SB_DrawSmallNum(514, 470, cl.InvPtr.Amount);
   }
 }
+
 
 //==========================================================================
 //
 //  SB_DrawPause
 //
 //==========================================================================
-
-void SB_DrawPause()
-{
-  if (ClGame.Game.bPaused && GetCvar('draw_pause'))
-  {
-    DrawPic(286, 4, pic_pause);
-  }
+void SB_DrawPause () {
+  if (ClGame.Game.bPaused && GetCvar('draw_pause')) DrawPic(286, 4, pic_pause);
 }
+
 
 //==========================================================================
 //
 //  SB_Drawer
 //
 //==========================================================================
-
-override void SB_Drawer(int sb_view)
-{
-  if (!cl || !cl.MO)
-  {
-    return;
-  }
-  if (sb_view == SB_VIEW_FULLSCREEN)
-  {
+override void SB_Drawer (int sb_view) {
+  if (!cl || !cl.MO) return;
+  if (sb_view == SB_VIEW_FULLSCREEN) {
     SB_DrawFullscreenStats();
-  }
-  else
-  {
+  } else {
     SB_DrawMainBar();
   }
   SB_DrawPause();
 }
+
 
 //==========================================================================
 //
 //  CalcPainOffset
 //
 //==========================================================================
-
-final int CalcPainOffset()
-{
-  int health;
-
-  health = cl.Health > 100 ? 100 : cl.Health;
-
-  if (health != sb_cpo_oldhealth)
-  {
-    sb_cpo_lastcalc =
-      ST_FACESTRIDE * (((100 - health) * ST_NUMPAINFACES) / 101);
+final int CalcPainOffset () {
+  int health = cl.Health > 100 ? 100 : cl.Health;
+  if (health != sb_cpo_oldhealth) {
+    sb_cpo_lastcalc = ST_FACESTRIDE*(((100-health)*ST_NUMPAINFACES)/101);
     sb_cpo_oldhealth = health;
   }
   return sb_cpo_lastcalc;
 }
+
 
 //==========================================================================
 //
 //  UpdateFaceWidget
 //
 //  This is a not-very-pretty routine which handles the face states and
-// their timing.
+//  their timing.
 //  the precedence of expressions is:
-//  dead > evil grin > turned head > straight ahead
+//    dead > evil grin > turned head > straight ahead
 //
 //==========================================================================
-
-final void UpdateFaceWidget(float FrameTime)
-{
-  int i;
-  float badguyangle;
-  float diffang;
-  bool doevilgrin;
-
+final void UpdateFaceWidget (float FrameTime) {
   // a random number per tick
-  int st_randomnumber;
+  int st_randomnumber = P_Random();
 
-  st_randomnumber = P_Random();
-
-  if (sb_face_priority < 10)
-  {
+  if (sb_face_priority < 10) {
     // dead
-    if (!cl.Health)
-    {
+    if (!cl.Health) {
       sb_face_priority = 9;
       sb_faceindex = ST_DEADFACE;
       sb_facetime = 0.01;
     }
   }
 
-  if (sb_face_priority < 9)
-  {
-    if (cl.BonusFlash)
-    {
+  if (sb_face_priority < 9) {
+    if (cl.BonusFlash) {
       // picking up bonus
-      doevilgrin = false;
-
-      if (sb_GotWeapon)
-      {
+      bool doevilgrin = false;
+      if (sb_GotWeapon) {
         doevilgrin = true;
         sb_GotWeapon = false;
       }
-      if (doevilgrin)
-      {
+      if (doevilgrin) {
         // evil grin if just picked up weapon
         sb_face_priority = 8;
         sb_facetime = ST_EVILGRINTIME;
@@ -740,122 +566,94 @@ final void UpdateFaceWidget(float FrameTime)
     }
   }
 
-  if (sb_face_priority < 8)
-  {
-    if (cl.DamageFlash && cl.Attacker && cl.Attacker != cl.MO)
-    {
+  if (sb_face_priority < 8) {
+    if (cl.DamageFlash && cl.Attacker && cl.Attacker != cl.MO) {
       // being attacked
       sb_face_priority = 7;
 
-      if (cl.Health - sb_oldhealth > ST_MUCHPAIN)
-      {
+      if (cl.Health-sb_oldhealth > ST_MUCHPAIN) {
         sb_facetime = ST_TURNTIME;
-        sb_faceindex = CalcPainOffset() + ST_OUCHOFFSET;
-      }
-      else
-      {
-        badguyangle = atan2(cl.Attacker.Origin.y - cl.MO.Origin.y,
-          cl.Attacker.Origin.x - cl.MO.Origin.x);
+        sb_faceindex = CalcPainOffset()+ST_OUCHOFFSET;
+      } else {
+        float badguyangle = atan2(cl.Attacker.Origin.y-cl.MO.Origin.y, cl.Attacker.Origin.x-cl.MO.Origin.x);
+        float diffang;
+        bool i;
 
-        if (badguyangle > cl.MO.Angles.yaw)
-        {
+        if (badguyangle > cl.MO.Angles.yaw) {
           // whether right or left
-          diffang = AngleMod360(badguyangle - cl.MO.Angles.yaw);
-          i = diffang > 180.0;
-        }
-        else
-        {
+          diffang = AngleMod360(badguyangle-cl.MO.Angles.yaw);
+          i = (diffang > 180.0);
+        } else {
           // whether left or right
-          diffang = AngleMod360(cl.MO.Angles.yaw - badguyangle);
-          i = diffang <= 180.0;
+          diffang = AngleMod360(cl.MO.Angles.yaw-badguyangle);
+          i = (diffang <= 180.0);
         } // confusing, aint it?
 
         sb_facetime = ST_TURNTIME;
         sb_faceindex = CalcPainOffset();
 
-        if (diffang < 45.0)
-        {
+        if (diffang < 45.0) {
           // head-on
           sb_faceindex += ST_RAMPAGEOFFSET;
-        }
-        else if (i)
-        {
+        } else if (i) {
           // turn face right
           sb_faceindex += ST_TURNOFFSET;
-        }
-        else
-        {
+        } else {
           // turn face left
-          sb_faceindex += ST_TURNOFFSET + 1;
+          sb_faceindex += ST_TURNOFFSET+1;
         }
       }
     }
   }
 
-  if (sb_face_priority < 7)
-  {
+  if (sb_face_priority < 7) {
     // getting hurt because of your own damn stupidity
-    if (cl.DamageFlash)
-    {
-      if (cl.Health - sb_oldhealth > ST_MUCHPAIN)
-      {
+    if (cl.DamageFlash) {
+      if (cl.Health-sb_oldhealth > ST_MUCHPAIN) {
         sb_face_priority = 7;
         sb_facetime = ST_TURNTIME;
-        sb_faceindex = CalcPainOffset() + ST_OUCHOFFSET;
-      }
-      else
-      {
+        sb_faceindex = CalcPainOffset()+ST_OUCHOFFSET;
+      } else {
         sb_face_priority = 6;
         sb_facetime = ST_TURNTIME;
-        sb_faceindex = CalcPainOffset() + ST_RAMPAGEOFFSET;
+        sb_faceindex = CalcPainOffset()+ST_RAMPAGEOFFSET;
       }
     }
   }
 
-  if (sb_face_priority < 6)
-  {
+  if (sb_face_priority < 6) {
     // rapid firing
     if (cl.bAttackDown && !cl.bFrozen && !cl.bTotallyFrozen ||
-      (cl.Level.bFrozen && !(cl.Cheats & PlayerEx::CF_TIMEFREEZE)))
+        (cl.Level.bFrozen && !(cl.Cheats & PlayerEx::CF_TIMEFREEZE)))
     {
-      if (sb_face_lastattackdown == -1.0)
-      {
+      if (sb_face_lastattackdown == -1.0) {
         sb_face_lastattackdown = ST_RAMPAGEDELAY;
-      }
-      else
-      {
+      } else {
         sb_face_lastattackdown -= FrameTime;
-        if (sb_face_lastattackdown <= 0.0)
-        {
+        if (sb_face_lastattackdown <= 0.0) {
           sb_face_priority = 5;
-          sb_faceindex = CalcPainOffset() + ST_RAMPAGEOFFSET;
+          sb_faceindex = CalcPainOffset()+ST_RAMPAGEOFFSET;
           sb_facetime = 0.01;
           sb_face_lastattackdown = 0.01;
         }
       }
-    }
-    else
-    {
+    } else {
       sb_face_lastattackdown = -1.0;
     }
   }
 
-  if (sb_face_priority < 5)
-  {
+  if (sb_face_priority < 5) {
     // invulnerability
-    if ((cl.Cheats & Player::CF_GODMODE) || EntityEx(cl.MO).bInvulnerable)
-    {
+    if ((cl.Cheats&Player::CF_GODMODE) || EntityEx(cl.MO).bInvulnerable) {
       sb_face_priority = 4;
-
       sb_faceindex = ST_GODFACE;
       sb_facetime = 0.01;
     }
   }
 
   // look left or look right if the facecount has timed out
-  if (sb_facetime <= 0.0)
-  {
-    sb_faceindex = CalcPainOffset() + (st_randomnumber % 3);
+  if (sb_facetime <= 0.0) {
+    sb_faceindex = CalcPainOffset()+(st_randomnumber%3);
     sb_facetime = ST_STRAIGHTFACETIME;
     sb_face_priority = 0;
   }
@@ -864,44 +662,38 @@ final void UpdateFaceWidget(float FrameTime)
   sb_oldhealth = cl.Health;
 }
 
+
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
+override void Tick (float DeltaTime) {
   ::Tick(DeltaTime);
-  if (cl.MO)
-  {
-    UpdateFaceWidget(DeltaTime);
-  }
+  if (cl.MO) UpdateFaceWidget(DeltaTime);
 }
+
 
 //==========================================================================
 //
 //  SB_UpdateWidgets
 //
 //==========================================================================
-
-override void SB_UpdateWidgets()
-{
+override void SB_UpdateWidgets () {
 }
+
 
 //==========================================================================
 //
 //  OnVisibilityChanged
 //
 //==========================================================================
-
-override void OnVisibilityChanged(bool bNewVisibility)
-{
+override void OnVisibilityChanged (bool bNewVisibility) {
   bTickEnabled = bNewVisibility;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bTickEnabled = true;
   Focusable = true;
   Width = 640;
