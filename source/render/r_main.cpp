@@ -77,7 +77,10 @@ VCvarB          r_fade_light("r_fade_light", "0", "Fade lights?", CVAR_Archive);
 VCvarF          r_fade_factor("r_fade_factor", "4.0", "Fade actor lights?", CVAR_Archive);
 VCvarF          r_sky_bright_factor("r_sky_bright_factor", "1.0", "Skybright actor factor.", CVAR_Archive);
 
-extern VCvarF     r_lights_radius;
+extern VCvarF r_lights_radius;
+extern VCvarF r_lights_radius_sight_check;
+extern VCvarI r_hashlight_static_div;
+extern VCvarI r_hashlight_dynamic_div;
 
 VDrawer         *Drawer;
 
@@ -861,51 +864,62 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
   CurrLightsNumber = 0;
   CurrShadowsNumber = 0;
 
-  if (!FixedLight && r_static_lights)
-  {
-    for (int i = 0; i < Lights.Num(); i++)
-    {
-      if (!Lights[i].radius)
-      {
-        continue;
-      }
+  if (!FixedLight && r_static_lights) {
+    static TMapNC<vuint32, int> slmhash;
+    int statdiv = r_hashlight_static_div;
+    if (statdiv > 0) slmhash.reset();
+
+    for (int i = 0; i < Lights.Num(); i++) {
+      if (!Lights[i].radius) continue;
 
       sub = Level->PointInSubsector(Lights[i].origin);
       dyn_facevis = Level->LeafPVS(sub);
 
       // Check potential visibility
-      if (!(dyn_facevis[Lights[i].leafnum >> 3] & (1 << (Lights[i].leafnum & 7))))
-      {
-        continue;
-      }
+      if (!(dyn_facevis[Lights[i].leafnum >> 3] & (1 << (Lights[i].leafnum & 7)))) continue;
 
+      //  Don't do lights that are too far away.
       Delta = Lights[i].origin - vieworg;
       Delta.z = 0;
-      //  Don't do lights that are too far away.
-      if ((Delta.Length() > r_lights_radius / 4.0) && !Level->TraceLine(Trace, Lights[i].origin, vieworg, SPF_NOBLOCKSIGHT))
-      {
-        continue;
-      }
+      if (Delta.Length() > r_lights_radius) continue;
+      if ((Delta.Length() > r_lights_radius_sight_check) && !Level->TraceLine(Trace, Lights[i].origin, vieworg, SPF_NOBLOCKSIGHT)) continue;
 
-      if (Delta.Length() > r_lights_radius)
-      {
-        continue;
+      // don't render too much lights around one point
+      if (statdiv > 0) {
+        vuint32 cc = ((((vuint32)Lights[i].origin.x)/(vuint32)statdiv)&0xffffu)|(((((vuint32)Lights[i].origin.y)/(vuint32)statdiv)&0xffffu)<<16);
+        int *np = slmhash.get(cc);
+        if (np) {
+          // replace by light with greater radius
+          if (Lights[*np].radius < Lights[i].radius) {
+            *np = i;
+          }
+        } else {
+          slmhash.put(cc, i);
+        }
+      } else {
+        RenderLightShadows(RD, Range, Lights[i].origin, Lights[i].radius, Lights[i].colour, true);
       }
+    }
 
-      RenderLightShadows(RD, Range, Lights[i].origin, Lights[i].radius, Lights[i].colour, true);
+    if (statdiv > 0) {
+      for (auto it = slmhash.first(); bool(it); ++it) {
+        int i = it.getValue();
+        RenderLightShadows(RD, Range, Lights[i].origin, Lights[i].radius, Lights[i].colour, true);
+      }
     }
   }
 
-  if (!FixedLight && r_dynamic)
-  {
-    dlight_t *l = DLights;
+  if (!FixedLight && r_dynamic) {
+    static TMapNC<vuint32, dlight_t *> dlmhash;
+    int dyndiv = r_hashlight_dynamic_div;
+    if (dyndiv > 0) dlmhash.reset();
+    //fprintf(stderr, "=====\n");
 
-    for (int i = 0; i < MAX_DLIGHTS; i++, l++)
-    {
-      if (!l->radius || l->die < Level->Time)
-      {
-        continue;
-      }
+    dlight_t *l = DLights;
+    int lcount = 0;
+
+    for (int i = 0; i < MAX_DLIGHTS; i++, l++) {
+      if (!l->radius || l->die < Level->Time) continue;
 
       sub = Level->PointInSubsector(l->origin);
       dyn_facevis = Level->LeafPVS(sub);
@@ -913,25 +927,42 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
       leafnum = Level->PointInSubsector(l->origin) - Level->Subsectors;
 
       // Check potential visibility
-      if (!(dyn_facevis[leafnum >> 3] & (1 << (leafnum & 7))))
-      {
-        continue;
-      }
+      if (!(dyn_facevis[leafnum >> 3] & (1 << (leafnum & 7)))) continue;
 
+      //  Don't do lights that are too far away.
       Delta = l->origin - vieworg;
       Delta.z = 0;
-      //  Don't do lights that are too far away.
-      if ((Delta.Length() > r_lights_radius / 4.0) && !Level->TraceLine(Trace, l->origin, vieworg, SPF_NOBLOCKSIGHT))
-      {
-        continue;
-      }
+      if (Delta.Length() > r_lights_radius) continue;
+      if ((Delta.Length() > r_lights_radius_sight_check) && !Level->TraceLine(Trace, l->origin, vieworg, SPF_NOBLOCKSIGHT)) continue;
 
-      if (Delta.Length() > r_lights_radius)
-      {
-        continue;
+      // don't render too much lights around one point
+      if (dyndiv > 0) {
+        vuint32 cc = ((((vuint32)l->origin.x)/(vuint32)dyndiv)&0xffffu)|(((((vuint32)l->origin.y)/(vuint32)dyndiv)&0xffffu)<<16);
+        dlight_t **hl = dlmhash.get(cc);
+        if (hl) {
+          // replace by light with greater radius
+          if ((*hl)->radius < l->radius) {
+            *hl = l;
+            //fprintf(stderr, "  replaced (%f,%f,%f,%f) with (%f,%f,%f,%f)\n", (*hl)->origin.x, (*hl)->origin.y, (*hl)->origin.z, (*hl)->radius, l->origin.x, l->origin.y, l->origin.z, l->radius);
+          } else {
+            //fprintf(stderr, "  dropped (%f,%f,%f,%f)\n", l->origin.x, l->origin.y, l->origin.z, l->radius);
+          }
+        } else {
+          dlmhash.put(cc, l);
+          ++lcount;
+        }
+      } else {
+        RenderLightShadows(RD, Range, l->origin, l->radius, l->colour, true);
       }
+    }
 
-      RenderLightShadows(RD, Range, l->origin, l->radius, l->colour, true);
+    if (dyndiv > 0) {
+      for (auto it = dlmhash.first(); bool(it); ++it) {
+        dlight_t *dlt = it.getValue();
+        RenderLightShadows(RD, Range, dlt->origin, dlt->radius, dlt->colour, true);
+        --lcount;
+      }
+      if (lcount != 0) Sys_Error("unbalanced dlights");
     }
   }
 
