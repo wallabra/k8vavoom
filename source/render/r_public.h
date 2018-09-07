@@ -303,11 +303,16 @@ public:
     return res;
   }
 
+  inline VTexture *getIgnoreAnim (int TexNum) {
+    return ((vuint32)TexNum < (vuint32)Textures.Num() ? Textures[TexNum] : nullptr);
+  }
+
   // get animated texture
   inline VTexture *operator () (int TexNum) {
     if ((vuint32)TexNum >= (vuint32)Textures.Num()) return nullptr;
-    VTexture *res = Textures[TextureAnimation(TexNum)];
-    if (res) res->noDecals = Textures[TexNum]->animNoDecals || Textures[TexNum]->staticNoDecals;
+    int ttrans = TextureAnimation(TexNum);
+    VTexture *res = Textures[ttrans];
+    if (res) res->noDecals = (ttrans != TexNum ? Textures[TexNum]->animNoDecals : Textures[TexNum]->staticNoDecals) || Textures[TexNum]->staticNoDecals;
     return res;
   }
 

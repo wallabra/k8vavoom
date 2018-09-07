@@ -690,7 +690,7 @@ void VAdvancedRenderLevel::DrawLightSurfaces(surface_t *InSurfs, texinfo_t *texi
     SkyBox = nullptr;
   }
   bool IsStack = SkyBox && SkyBox->eventSkyBoxGetAlways();
-  if (texinfo->Tex == GTextureManager[skyflatnum] ||
+  if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) ||
     (IsStack && CheckSkyBoxAlways))
   {
     return;

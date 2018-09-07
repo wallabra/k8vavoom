@@ -189,9 +189,12 @@ void VTextureManager::Shutdown () {
 int VTextureManager::AddTexture (VTexture *Tex) {
   guard(VTextureManager::AddTexture);
   if (!Tex) return -1;
+  //fprintf(stderr, "AddTexture0: <%s>; i=%d; %p  (%p)\n", *Tex->Name, Textures.length(), Tex, Textures.ptr());
+  //if (Textures.length() > 2666) fprintf(stderr, "  [2666]=%p <%s>  (%p)\n", Textures[2666], *Textures[2666]->Name, Textures.ptr());
   Textures.Append(Tex);
   Tex->TextureTranslation = Textures.Num()-1;
   AddToHash(Textures.Num()-1);
+  //fprintf(stderr, "AddTexture1: <%s>; i=%d; %p  (%p)\n", *Textures[Textures.Num()-1]->Name, Textures.length(), Textures[Textures.Num()-1], Textures.ptr());
   return Textures.Num()-1;
   unguard;
 }
@@ -208,6 +211,8 @@ void VTextureManager::ReplaceTexture (int Index, VTexture *NewTex) {
   check(Index < Textures.Num());
   check(NewTex);
   VTexture *OldTex = Textures[Index];
+  //int HashIndex = GetTypeHash(Textures[Index]->Name)&(HASH_SIZE-1);
+  //fprintf(stderr, "ReplaceTexture: <%s>; HashIndex=%d; i=%d; len=%d; [hi]=%d; HashNext=%d\n", *Textures[Index]->Name, HashIndex, Index, Textures.length(), TextureHash[HashIndex], OldTex->HashNext);
   NewTex->Name = OldTex->Name;
   NewTex->Type = OldTex->Type;
   NewTex->TextureTranslation = OldTex->TextureTranslation;
@@ -225,8 +230,21 @@ void VTextureManager::ReplaceTexture (int Index, VTexture *NewTex) {
 void VTextureManager::AddToHash (int Index) {
   guard(VTextureManager::AddToHash);
   int HashIndex = GetTypeHash(Textures[Index]->Name)&(HASH_SIZE-1);
+  //fprintf(stderr, "AddToHash: <%s>; HashIndex=%d; i=%d; len=%d; [hi]=%d\n", *Textures[Index]->Name, HashIndex, Index, Textures.length(), TextureHash[HashIndex]);
   Textures[Index]->HashNext = TextureHash[HashIndex];
   TextureHash[HashIndex] = Index;
+  //HashIndex = 1006;
+  /*
+  if (HashIndex == 1006) {
+    for (int n = TextureHash[HashIndex]; n >= 0; n = Textures[n]->HashNext) {
+      if (n >= 0 && n < Textures.length()) {
+        fprintf(stderr, "  n=%d  <%s>  %p\n", n, *Textures[n]->Name, Textures[n]);
+      } else {
+        fprintf(stderr, "  n=%d  <#$$#^&@!%%@$5>\n", n);
+      }
+    }
+  }
+  */
   unguard;
 }
 
@@ -239,6 +257,7 @@ void VTextureManager::AddToHash (int Index) {
 void VTextureManager::RemoveFromHash (int Index) {
   guard(VTextureManager::RemoveFromHash);
   int HashIndex = GetTypeHash(Textures[Index]->Name)&(HASH_SIZE-1);
+  //fprintf(stderr, "RemoveFromHash: <%s>; HashIndex=%d; i=%d; len=%d; [hi]=%d\n", *Textures[Index]->Name, HashIndex, Index, Textures.length(), TextureHash[HashIndex]);
   int *Prev = &TextureHash[HashIndex];
   while (*Prev != -1 && *Prev != Index) {
     Prev = &Textures[*Prev]->HashNext;
@@ -263,7 +282,7 @@ int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool
 
   int HashIndex = GetTypeHash(Name)&(HASH_SIZE-1);
   for (int i = TextureHash[HashIndex]; i >= 0; i = Textures[i]->HashNext) {
-    //fprintf(stderr, "<%s>; HashIndex=%d; i=%d; len=%d\n", *Name, HashIndex, i, Textures.length());
+    //fprintf(stderr, "CheckNumForName: <%s>; HashIndex=%d; i=%d; len=%d\n", *Name, HashIndex, i, Textures.length());
     if (i < 0 || i >= Textures.length()) continue;
     if (Textures[i]->Name != Name) continue;
 
@@ -672,6 +691,7 @@ void VTextureManager::AddHiResTextures () {
     } else {
       // repalce existing texture by adjusting scale and offsets
       VTexture *OldTex = Textures[OldIdx];
+      //fprintf(stderr, "REPLACE0 <%s> (%d)\n", *OldTex->Name, OldIdx);
       NewTex->bWorldPanning = true;
       NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
       NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
@@ -679,6 +699,7 @@ void VTextureManager::AddHiResTextures () {
       NewTex->TOffset = (int)floor(OldTex->TOffset*NewTex->TScale);
       NewTex->Type = OldTex->Type;
       NewTex->TextureTranslation = OldTex->TextureTranslation;
+      NewTex->HashNext = OldTex->HashNext;
       Textures[OldIdx] = NewTex;
       delete OldTex;
       OldTex = nullptr;
@@ -716,6 +737,7 @@ void VTextureManager::AddHiResTextures () {
         if (!NewTex) continue;
         // repalce existing texture by adjusting scale and offsets
         VTexture *OldTex = Textures[OldIdx];
+        //fprintf(stderr, "REPLACE1 <%s> (%d)\n", *OldTex->Name, OldIdx);
         NewTex->bWorldPanning = true;
         NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
         NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
@@ -724,6 +746,7 @@ void VTextureManager::AddHiResTextures () {
         NewTex->Name = OldTex->Name;
         NewTex->Type = OldTex->Type;
         NewTex->TextureTranslation = OldTex->TextureTranslation;
+        NewTex->HashNext = OldTex->HashNext;
         Textures[OldIdx] = NewTex;
         delete OldTex;
         OldTex = nullptr;
@@ -753,7 +776,9 @@ void VTextureManager::AddHiResTextures () {
         int OldIdx = CheckNumForName(Name, TEXTYPE_Overload, false, false);
         if (OldIdx >= 0) {
           VTexture *OldTex = Textures[OldIdx];
+          //fprintf(stderr, "REPLACE2 <%s> (%d)\n", *OldTex->Name, OldIdx);
           NewTex->TextureTranslation = OldTex->TextureTranslation;
+          NewTex->HashNext = OldTex->HashNext;
           Textures[OldIdx] = NewTex;
           delete OldTex;
           OldTex = nullptr;
