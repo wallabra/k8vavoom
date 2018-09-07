@@ -44,7 +44,7 @@
 class VOpenALDevice : public VSoundDevice
 {
 private:
-  enum { MAX_VOICES = 256 };
+  enum { MAX_VOICES = 256-4 };
 
   //enum { NUM_STRM_BUFFERS = 8 };
   //enum { STRM_BUFFER_SIZE = 1024 };
@@ -158,7 +158,7 @@ bool VOpenALDevice::Init()
   // create a context and make it current
   static const ALCint attrs[] = {
     ALC_STEREO_SOURCES, 1, // get at least one stereo source for music
-    ALC_MONO_SOURCES, 1, // this should be audio channels in our game engine
+    ALC_MONO_SOURCES, MAX_VOICES, // this should be audio channels in our game engine
     //ALC_FREQUENCY, 48000, // desired frequency; we don't really need this, let OpenAL choose the best
     0,
   };
