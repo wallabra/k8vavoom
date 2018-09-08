@@ -1168,7 +1168,7 @@ static void ParseLightDef(VScriptParser *sc, int LightType)
     }
     else
     {
-      sc->Error("Bad point light parameter");
+      sc->Error(va("Bad point light parameter (%s)", *sc->String));
     }
   }
   unguard;
@@ -1300,9 +1300,14 @@ static void ParseGZLightDef(VScriptParser *sc, int LightType)
       sc->ExpectNumber();
       sc->Message("DontLightSelf parameter not supported.");
     }
+    else if (sc->Check("attenuate"))
+    {
+      sc->ExpectNumber();
+      sc->Message("attenuate parameter not supported.");
+    }
     else
     {
-      sc->Error("Bad point light parameter");
+      sc->Error(va("Bad gz light parameter (%s)", *sc->String));
     }
   }
   unguard;
@@ -1468,7 +1473,7 @@ static void ParseParticleEffect(VScriptParser *sc)
     }
     else
     {
-      sc->Error("Bad point light parameter");
+      sc->Error(va("Bad particle effect parameter (%s)", *sc->String));
     }
   }
   unguard;
@@ -1680,6 +1685,16 @@ static void ParseGZDoomEffectDefs(VScriptParser *sc,
     else if (sc->Check("brightmap"))
     {
       sc->Message("Brightmaps are not supported.");
+      // skip it
+      char waitingWhat = '{';
+      for (;;) {
+        sc->ResetQuoted();
+        if (!sc->GetString()) break;
+        if (sc->QuotedString) continue;
+        if (sc->String.length() == 1 && sc->String[0] == waitingWhat) {
+          if (waitingWhat == '{') waitingWhat = '}'; else break;
+        }
+      }
     }
     else if (sc->Check("glow"))
     {
