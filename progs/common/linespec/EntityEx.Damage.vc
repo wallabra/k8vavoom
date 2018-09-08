@@ -324,8 +324,12 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
           }
 
           if (GetCvarB('k8HSHeadKillBloodPool')) {
+            //poolClassName = 'SmallBloodPool';
             class!Actor poolClass = class!Actor(FindClass(poolClassName));
-            if (poolClass) Level.Spawn(poolClass, Origin);
+            if (poolClass) {
+              print("***SPAWNING BLOOD POOL: '%n'", GetClassName(poolClass));
+              Level.Spawn(poolClass, Origin);
+            }
           }
 
           //class!Actor mistClass = mistClassName;
