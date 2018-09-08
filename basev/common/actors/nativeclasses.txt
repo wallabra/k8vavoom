@@ -260,9 +260,13 @@ class Actor extends Thinker
   action native A_BFGSpray(optional class<Actor> flashtype, optional eval int numrays, optioal eval int damage);
 
   action native A_SetAngle(float newyaw);
+
   action native A_SetRollExt(float newa);
   action native A_SetYawExt(float newa);
   action native A_SetPitchExt(float newa);
+
+  action native A_SetScaleXExt(float scale);
+  action native A_SetScaleYExt(float scale);
 
   //
   //  Not documented

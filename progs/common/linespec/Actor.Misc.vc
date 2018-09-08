@@ -611,6 +611,26 @@ final void A_SetPitchExt (float newa) {
 
 //==========================================================================
 //
+//  A_SetScaleXExt
+//
+//==========================================================================
+final void A_SetScaleXExt (float scale) {
+  ScaleX = scale;
+}
+
+
+//==========================================================================
+//
+//  A_SetScaleYExt
+//
+//==========================================================================
+final void A_SetScaleYExt (float scale) {
+  ScaleY = scale;
+}
+
+
+//==========================================================================
+//
 //  A_WeaponReady
 //
 //  The player can fire the weapon or change to another weapon at this time.
