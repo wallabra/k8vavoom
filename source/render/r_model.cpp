@@ -78,6 +78,12 @@ struct VScriptedModelFrame
   float   AngleEnd;
   float   AlphaStart;
   float   AlphaEnd;
+  bool hasYaw;
+  float angleYaw;
+  bool hasRoll;
+  float angleRoll;
+  bool hasPitch;
+  float anglePitch;
 };
 
 struct VClassModelScript
@@ -456,6 +462,17 @@ static void ParseModelScript(VModel *Mdl, VStream &Strm)
     for (VXmlNode *N = CN->FindChild("state"); N; N = N->FindNext())
     {
       VScriptedModelFrame &F = Cls->Frames.Alloc();
+
+      F.hasYaw = N->HasAttribute("angle_yaw");
+      F.hasPitch = N->HasAttribute("angle_pitch");
+      F.hasRoll = N->HasAttribute("angle_roll");
+      if (F.hasYaw && N->GetAttribute("angle_yaw") == "random") F.angleYaw = AngleMod(360.0f*Random());
+      else F.angleYaw = AngleMod(F.hasYaw ? atof(*N->GetAttribute("angle_yaw")) : 0.0f);
+      if (F.hasPitch && N->GetAttribute("angle_pitch") == "random") F.anglePitch = AngleMod(360.0f*Random());
+      else F.anglePitch = AngleMod(F.hasPitch ? atof(*N->GetAttribute("angle_pitch")) : 0.0f);
+      if (F.hasRoll && N->GetAttribute("angle_roll") == "random") F.angleRoll = AngleMod(360.0f*Random());
+      else F.angleRoll = AngleMod(F.hasRoll ? atof(*N->GetAttribute("angle_roll")) : 0.0f);
+
       F.Number = atoi(*N->GetAttribute("index"));
       int lastIndex = -1;
       if (N->HasAttribute("last_index")) lastIndex = atoi(*N->GetAttribute("last_index"));
@@ -493,6 +510,12 @@ static void ParseModelScript(VModel *Mdl, VStream &Strm)
         ffr.AngleEnd = F.AngleEnd;
         ffr.AlphaStart = F.AlphaStart;
         ffr.AlphaEnd = F.AlphaEnd;
+        ffr.hasYaw = F.hasYaw;
+        ffr.hasPitch = F.hasPitch;
+        ffr.hasRoll = F.hasRoll;
+        ffr.angleYaw = F.angleYaw;
+        ffr.anglePitch = F.anglePitch;
+        ffr.angleRoll = F.angleRoll;
       }
     }
     if (!Cls->Frames.Num()) Sys_Error("%s class %s has no states defined", *Mdl->Name, *Cls->Name);
@@ -863,13 +886,16 @@ static int FindFrame(const VClassModelScript &Cls, int Frame, float Inter)
 {
   guard(FindFrame);
   int Ret = -1;
-  for (int i = 0; i < Cls.Frames.Num(); i++)
-  {
-    if (Cls.Frames[i].Number == Frame && Cls.Frames[i].Inter <= Inter)
-    {
+  int frameAny = -1;
+  for (int i = 0; i < Cls.Frames.Num(); i++) {
+    if (Cls.Frames[i].Number == Frame && Cls.Frames[i].Inter <= Inter) {
       Ret = i;
+      break; //k8: why it wasn't here?
     }
+    //k8: frame "-1" means "any"
+    if (frameAny < 0 && Cls.Frames[i].Number == -1) frameAny = i;
   }
+  if (Ret == -1 && frameAny >= 0) return frameAny;
   return Ret;
   unguard;
 }
@@ -1020,6 +1046,10 @@ static void DrawModel(VLevel *Level, const TVec &Org, const TAVec &Angles,
       Md2Angle.yaw = AngleMod(Md2Angle.yaw + FDef.AngleStart +
         (FDef.AngleEnd - FDef.AngleStart) * Inter);
     }
+
+    if (FDef.hasYaw) Md2Angle.yaw = FDef.angleYaw;
+    if (FDef.hasPitch) Md2Angle.pitch = FDef.anglePitch;
+    if (FDef.hasRoll) Md2Angle.roll = FDef.angleRoll;
 
     //  Position model
     if (SubMdl.PositionModel)
