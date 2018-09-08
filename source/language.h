@@ -43,6 +43,8 @@ public:
   VStr Find (VName) const;
   VStr operator [] (VName) const;
 
+  bool HasTranslation (VName s) const;
+
   VName GetStringId (const VStr &);
   void ReplaceString (VName, const VStr &);
 };

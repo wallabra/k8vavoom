@@ -134,7 +134,8 @@ IMPLEMENT_FUNCTION(VObject, Info_ValueForKey) {
 
 IMPLEMENT_FUNCTION(VObject, WadLumpPresent) {
   P_GET_NAME(name);
-  RET_BOOL(W_CheckNumForName(name) >= 0);
+  //fprintf(stderr, "*** <%s> : %d (%d)\n", *name, W_CheckNumForName(name), W_CheckNumForName(name, WADNS_Graphics));
+  RET_BOOL(W_CheckNumForName(name) >= 0 || W_CheckNumForName(name, WADNS_Graphics) >= 0);
 }
 
 IMPLEMENT_FUNCTION(VObject, FindAnimDoor) {

@@ -431,9 +431,11 @@ void VScriptParser::ExpectName8 () {
   // translate "$name" strings
   if (String.Length() > 1 && String[0] == '$') {
     VStr qs = String.mid(1, String.length()-1).toLowerCase();
-    qs = *GLanguage[*qs];
-    if (dbg_show_name_remap) GCon->Logf("**** <%s>=<%s>\n", *String, *qs);
-    String = qs;
+    if (GLanguage.HasTranslation(*qs)) {
+      qs = *GLanguage[*qs];
+      if (dbg_show_name_remap) GCon->Logf("**** <%s>=<%s>\n", *String, *qs);
+      String = qs;
+    }
   }
 #endif
 
