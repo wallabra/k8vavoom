@@ -498,8 +498,20 @@ bool VViewClipper::ClipIsBBoxVisible(float *BBox, bool shadowslight, const TVec 
   if (!clip_enabled)
     return true;
 
+#ifdef CLIENT
+  if (shadowslight)
+  {
+    if (BBox[0] <= CurrLightPos.x && BBox[3] >= CurrLightPos.x &&
+        BBox[1] <= CurrLightPos.y && BBox[4] >= CurrLightPos.y)
+    {
+      //  Viewer is inside the box.
+      return true;
+    }
+  }
+  else
+#endif
   if (BBox[0] <= Origin.x && BBox[3] >= Origin.x &&
-    BBox[1] <= Origin.y && BBox[4] >= Origin.y)
+      BBox[1] <= Origin.y && BBox[4] >= Origin.y)
   {
     //  Viewer is inside the box.
     return true;
@@ -508,6 +520,77 @@ bool VViewClipper::ClipIsBBoxVisible(float *BBox, bool shadowslight, const TVec 
   TVec v1;
   TVec v2;
   v1.z = v2.z = 0;
+#ifdef CLIENT
+  if (shadowslight)
+  {
+    if (BBox[0] > CurrLightPos.x)
+    {
+      if (BBox[1] > CurrLightPos.y)
+      {
+        v1.x = BBox[3];
+        v1.y = BBox[1];
+        v2.x = BBox[0];
+        v2.y = BBox[4];
+      }
+      else if (BBox[4] < CurrLightPos.y)
+      {
+        v1.x = BBox[0];
+        v1.y = BBox[1];
+        v2.x = BBox[3];
+        v2.y = BBox[4];
+      }
+      else
+      {
+        v1.x = BBox[0];
+        v1.y = BBox[1];
+        v2.x = BBox[0];
+        v2.y = BBox[4];
+      }
+    }
+    else if (BBox[3] < CurrLightPos.x)
+    {
+      if (BBox[1] > CurrLightPos.y)
+      {
+        v1.x = BBox[3];
+        v1.y = BBox[4];
+        v2.x = BBox[0];
+        v2.y = BBox[1];
+      }
+      else if (BBox[4] < CurrLightPos.y)
+      {
+        v1.x = BBox[0];
+        v1.y = BBox[4];
+        v2.x = BBox[3];
+        v2.y = BBox[1];
+      }
+      else
+      {
+        v1.x = BBox[3];
+        v1.y = BBox[4];
+        v2.x = BBox[3];
+        v2.y = BBox[1];
+      }
+    }
+    else
+    {
+      if (BBox[1] > CurrLightPos.y)
+      {
+        v1.x = BBox[3];
+        v1.y = BBox[1];
+        v2.x = BBox[0];
+        v2.y = BBox[1];
+      }
+      else
+      {
+        v1.x = BBox[0];
+        v1.y = BBox[4];
+        v2.x = BBox[3];
+        v2.y = BBox[4];
+      }
+    }
+  }
+  else
+#endif
   if (BBox[0] > Origin.x)
   {
     if (BBox[1] > Origin.y)
@@ -704,7 +787,7 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
       float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
       float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
-      if (/*D1 <= 0.0 && D2 <= 0.0 &&*/
+      if (D1 <= 0.0 && D2 <= 0.0 && //k8: i commented this for some reason; wtf?!
         DView1 < -CurrLightRadius && DView2 < -CurrLightRadius)
       {
         ds++;
@@ -902,7 +985,7 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
         float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
         float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
-        if (/*D1 <= 0.0 && D2 <= 0.0 &&*/
+        if (D1 <= 0.0 && D2 <= 0.0 && //k8: i commented this for some reason; wtf?!
           DView1 < -CurrLightRadius && DView2 < -CurrLightRadius)
         {
           ds++;
@@ -1037,7 +1120,7 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
       float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
       float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
-      if (/*D1 < 0.0 && D2 < 0.0 &&*/
+      if (D1 < 0.0 && D2 < 0.0 && //k8: i commented this for some reason; wtf?!
         DView1 < -CurrLightRadius && DView2 < -CurrLightRadius)
       {
         continue;
@@ -1066,14 +1149,17 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
 
     if (!line->backsector)
     {
+#ifdef CLIENT
       if (shadowslight)
       {
+/*
 #ifndef CLIENT
         rLight1 = CurrLightPos - v1;
         rLight2 = CurrLightPos - v2;
         DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
         DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 #endif
+*/
         // There might be a better method of doing this, but
         // this one works for now...
         if (DLight1 > CurrLightRadius && DLight2 < -CurrLightRadius)
@@ -1086,6 +1172,7 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
         }
       }
       else
+#endif
       {
         if (D1 > 0.0 && D2 < 0.0)
         {
@@ -1237,7 +1324,7 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
         float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
         float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
-        if (/*D1 < 0.0 && D2 < 0.0 &&*/
+        if (D1 < 0.0 && D2 < 0.0 && //k8: i commented this for some reason; wtf?!
           DView1 < -CurrLightRadius && DView2 < -CurrLightRadius)
         {
           continue;
@@ -1360,7 +1447,7 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
       float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
       float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
-      if (/*D1 <= 0.0 && D2 <= 0.0 &&*/
+      if (D1 <= 0.0 && D2 <= 0.0 && //k8: i commented this for some reason; wtf?!
         DView1 < -CurrLightRadius && DView2 < -CurrLightRadius)
       {
         continue;
@@ -1553,7 +1640,7 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
       TVec v2 = *line->v2;
 
       // Just apply this to sectors without slopes
-      if (line->frontsector->floor.normal.z == 10 && line->frontsector->ceiling.normal.z == -1.0) {
+      if (line->frontsector->floor.normal.z == 1.0 && line->frontsector->ceiling.normal.z == -1.0) { //k8: first was `10`; a typo?
         TVec r1 = Origin - v1;
         TVec r2 = Origin - v2;
         float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
@@ -1571,7 +1658,7 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
           float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
           float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
-          if (/*D1 <= 0.0 && D2 <= 0.0 &&*/
+          if (D1 <= 0.0 && D2 <= 0.0 && //k8: i commented this for some reason; wtf?!
             DView1 < -CurrLightRadius && DView2 < -CurrLightRadius)
           {
             continue;
