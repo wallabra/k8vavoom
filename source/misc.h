@@ -24,6 +24,7 @@
 //**************************************************************************
 
 #define Random()  ((float)(rand() & 0x7fff) / (float)0x8000)
+#define RandomFull()  ((float)(rand() & 0x7fff) / (float)0x7fff)
 
 // An output device.
 class FOutputDevice : public VLogListener

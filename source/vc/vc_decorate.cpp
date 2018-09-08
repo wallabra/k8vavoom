@@ -1054,7 +1054,7 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
   if (sc->CheckIdentifier()) {
     VStr Name = sc->String;
     // skip random generator ID
-    if ((!Name.ICmp("random") || !Name.ICmp("random2")) && sc->Check("[")) {
+    if ((!Name.ICmp("random") || !Name.ICmp("random2") || !Name.ICmp("frandom")) && sc->Check("[")) {
       sc->ExpectString();
       sc->Expect("]");
     }

@@ -342,11 +342,26 @@ IMPLEMENT_FUNCTION(VObject, StrReplace) {
 IMPLEMENT_FUNCTION(VObject, Random) {
 #if defined(VCC_STANDALONE_EXECUTOR)
   vuint32 rn;
-  ed25519_randombytes(&rn, sizeof(rn));
-  float res = (float)(rn&0x3ffff)/(float)(0x3ffff+1);
+  float res;
+  for (;;) {
+    ed25519_randombytes(&rn, sizeof(rn));
+    res = (float)(rn&0x3ffff)/(float)(0x3ffff);
+    if (res < 1.0) break;
+  }
   RET_FLOAT(res);
 #else
   RET_FLOAT(Random());
+#endif
+}
+
+IMPLEMENT_FUNCTION(VObject, FRandomFull) {
+#if defined(VCC_STANDALONE_EXECUTOR)
+  vuint32 rn;
+  ed25519_randombytes(&rn, sizeof(rn));
+  float res = (float)(rn&0x3ffff)/(float)(0x3ffff);
+  RET_FLOAT(res);
+#else
+  RET_FLOAT(RandomFull());
 #endif
 }
 
