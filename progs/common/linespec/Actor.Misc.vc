@@ -631,6 +631,28 @@ final void A_SetScaleYExt (float scale) {
 
 //==========================================================================
 //
+//  A_ChangeScaleXExt
+//
+//==========================================================================
+final void A_ChangeScaleXExt (float delta, optional float killLimit) {
+  ScaleX = fmax(0, ScaleX+delta);
+  if (specified_killLimit && ScaleX < killLimit) Destroy();
+}
+
+
+//==========================================================================
+//
+//  A_ChangeScaleYExt
+//
+//==========================================================================
+final void A_ChangeScaleYExt (float delta, optional float killLimit) {
+  ScaleY = fmax(0, ScaleY+delta);
+  if (specified_killLimit && ScaleY < killLimit) Destroy();
+}
+
+
+//==========================================================================
+//
 //  A_WeaponReady
 //
 //  The player can fire the weapon or change to another weapon at this time.
