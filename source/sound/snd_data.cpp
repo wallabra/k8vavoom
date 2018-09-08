@@ -481,14 +481,28 @@ void VSoundManager::ParseSndinfo(VScriptParser *sc)
     }
     else if (sc->Check("$volume"))
     {
+      // $volume soundname <volume>
+      sc->ExpectString();
+      sc->ExpectFloatWithSign();
       GCon->Log("$volume is not supported yet.");
+    }
+    else if (sc->Check("$rolloff"))
+    {
+      // $rolloff soundname <mindist> <maxdist>
+      // $rolloff soundname <type>
+      sc->ExpectString();
+      sc->ExpectString();
+      sc->ResetCrossed();
+      sc->ExpectString();
+      if (sc->Crossed) sc->UnGet();
+      GCon->Log("$rolloff is not supported yet.");
     }
     else
     {
       sc->ExpectString();
       if (**sc->String == '$')
       {
-        sc->Error("Unknown command");
+        sc->Error(va("Unknown command (%s)", *sc->String));
       }
       VName TagName = *sc->String;
       sc->ExpectName();
