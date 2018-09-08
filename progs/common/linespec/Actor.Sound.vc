@@ -32,12 +32,18 @@
 //  A_PlaySound
 //
 //==========================================================================
-
-final void A_PlaySound(string Sound, optional int chan)
+//TODO: local
+/*
+native final void PlaySound(name SoundName, int Channel, optional float Volume,
+  optional float Atenuation, optional bool Loop, optional bool Local);
+*/
+final void A_PlaySound(string Sound, optional int chan, optional float volume,
+                       optional bool looping, optional float attenuation,
+                       optional bool local)
 {
   if (!specified_chan) chan = CHAN_BODY;
   if (chan < 0 || chan > 7) chan = CHAN_AUTO;
-  PlaySound(StrToName(Sound), chan);
+  PlaySound(StrToName(Sound), chan, volume!optional, attenuation!optional, looping!optional, local!optional);
 }
 
 //==========================================================================

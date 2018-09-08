@@ -679,6 +679,33 @@ IMPLEMENT_FUNCTION(VObject, SetStateMisc2) {
   if (State) State->Misc2 = v;
 }
 
+//native static final StateFrameType GetStateFrameType (state State);
+IMPLEMENT_FUNCTION(VObject, GetStateFrameType) {
+  P_GET_PTR(VState, State);
+  RET_INT(State ? State->FrmType : 0);
+}
+
+//native static final int GetStateArgN (state State, int argn);
+IMPLEMENT_FUNCTION(VObject, GetStateArgN) {
+  P_GET_INT(argn);
+  P_GET_PTR(VState, State);
+  if (State && argn >= 0 && argn <= 1) {
+    RET_INT(argn == 0 ? State->Arg1 : State->Arg2);
+  } else {
+    RET_INT(0);
+  }
+}
+
+//native static final void SetStateArgN (state State, int argn, int v);
+IMPLEMENT_FUNCTION(VObject, SetStateArgN) {
+  P_GET_INT(v);
+  P_GET_INT(argn);
+  P_GET_PTR(VState, State);
+  if (State && argn >= 0 && argn <= 1) {
+    if (argn == 0) State->Arg1 = v; else State->Arg2 = v;
+  }
+}
+
 IMPLEMENT_FUNCTION(VObject, GetStateFRN) {
   P_GET_PTR(VState, State);
   RET_INT(State ? State->frameAction : 0);

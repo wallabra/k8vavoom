@@ -78,7 +78,7 @@ class VThinker : public VGameObject
   virtual void AddedToLevel();
   virtual void RemovedFromLevel();
 
-  void StartSound(const TVec&, vint32, vint32, vint32, float, float, bool);
+  void StartSound(const TVec&, vint32, vint32, vint32, float, float, bool, bool=false);
   void StopSound(vint32, vint32);
   void StartSoundSequence(const TVec&, vint32, VName, vint32);
   void AddSoundSequenceChoice(vint32, VName);

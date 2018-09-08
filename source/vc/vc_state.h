@@ -32,14 +32,22 @@ public:
   enum { FF_FRAMEMASK  = 0x7f };
   enum { VaVoom, D2DF };
 
+  enum FrameType {
+    FRM_Normal,
+    FRM_Random, // random(Arg1, Arg2)
+  };
+
   // persistent fields
   vint32 Type;
+  FrameType FrmType;
   // state info
   VName SpriteName;
   vint32 Frame;
   float Time; // for d2df states: number of frames we should wait (ignore fractional part)
   vint32 Misc1;
   vint32 Misc2;
+  vint32 Arg1;
+  vint32 Arg2;
   VState *NextState;
   VMethod *Function;
   // linked list of states

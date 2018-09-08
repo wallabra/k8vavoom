@@ -1696,11 +1696,26 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     VStr FramesString = sc->String;
 
     // tics
-    sc->ExpectNumberWithSign();
-    if (sc->Number < 0) {
-      State->Time = sc->Number;
+    if (!sc->GetString()) sc->Error("decorate: tics expected");
+    // `random(a, b)`?
+    if (sc->String.ICmp("random") == 0) {
+      sc->Expect("(");
+      sc->ExpectNumberWithSign();
+      State->Arg1 = sc->Number;
+      sc->Expect(",");
+      sc->ExpectNumberWithSign();
+      State->Arg2 = sc->Number;
+      sc->Expect(")");
+      State->Time = float(State->Arg1)/35.0f;
     } else {
-      State->Time = float(sc->Number)/35.0;
+      // number
+      sc->UnGet();
+      sc->ExpectNumberWithSign();
+      if (sc->Number < 0) {
+        State->Time = sc->Number;
+      } else {
+        State->Time = float(sc->Number)/35.0f;
+      }
     }
 
     bool NeedsUnget = true;

@@ -161,7 +161,7 @@ void VThinker::RemovedFromLevel()
 
 void VThinker::StartSound(const TVec &origin, vint32 origin_id,
   vint32 sound_id, vint32 channel, float volume, float Attenuation,
-  bool Loop)
+  bool Loop, bool Local)
 {
   guard(VThinker::StartSound);
   for (int i = 0; i < MAXPLAYERS; i++)
@@ -171,7 +171,7 @@ void VThinker::StartSound(const TVec &origin, vint32 origin_id,
     if (!(Level->Game->Players[i]->PlayerFlags & VBasePlayer::PF_Spawned))
       continue;
     Level->Game->Players[i]->eventClientStartSound(sound_id, origin,
-      origin_id, channel, volume, Attenuation, Loop);
+      (Local ? -666 : origin_id), channel, volume, Attenuation, Loop);
   }
   unguard;
 }

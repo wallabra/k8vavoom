@@ -34,11 +34,14 @@
 VState::VState (VName AName, VMemberBase *AOuter, TLocation ALoc)
   : VMemberBase(MEMBER_State, AName, AOuter, ALoc)
   , Type(VaVoom)
+  , FrmType(FrameType::FRM_Normal)
   , SpriteName(NAME_None)
   , Frame(0)
   , Time(0)
   , Misc1(0)
   , Misc2(0)
+  , Arg1(0)
+  , Arg2(0)
   , NextState(nullptr)
   , Function(nullptr)
   , Next(nullptr)
@@ -77,11 +80,14 @@ void VState::Serialise (VStream &Strm) {
   VMemberBase::Serialise(Strm);
   Strm
     << STRM_INDEX(Type)
+    << STRM_INDEX(FrmType)
     << SpriteName
     << STRM_INDEX(Frame)
     << Time
     << STRM_INDEX(Misc1)
     << STRM_INDEX(Misc2)
+    << STRM_INDEX(Arg1)
+    << STRM_INDEX(Arg2)
     << STRM_INDEX(frameWidth)
     << STRM_INDEX(frameHeight)
     << STRM_INDEX(frameOfsX)

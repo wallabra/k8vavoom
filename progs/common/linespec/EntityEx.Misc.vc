@@ -618,16 +618,14 @@ final bool HeightClip()
 
 final override float GetStateTime(state AState, float AStateTime)
 {
-  if (IsFast())
-  {
-    if (bFaster && StateIsInRange(AState, SeeState, none, 8))
-    {
-      AStateTime /= 2.0;
-    }
-    if (bFastMelee && StateIsInRange(AState, MeleeState, none, 3))
-    {
-      AStateTime /= 2.0;
-    }
+  switch (GetStateFrameType(AState)) {
+    //case StateFrameType.Normal: return AStateTime;
+    case StateFrameType.Random: AStateTime = float(GetStateArgN(AState, 0)+trunc(Random()*(GetStateArgN(AState, 1)-GetStateArgN(AState, 0)+1)))/35.0f; break;
+    //default: return AStateTime;
+  }
+  if (IsFast()) {
+    if (bFaster && StateIsInRange(AState, SeeState, none, 8)) AStateTime /= 2.0;
+    if (bFastMelee && StateIsInRange(AState, MeleeState, none, 3)) AStateTime /= 2.0;
   }
   return AStateTime;
 }
