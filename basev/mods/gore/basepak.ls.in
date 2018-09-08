@@ -166,3 +166,10 @@ sounds/gore/lqdrip9.ogg       @CMAKE_CURRENT_SOURCE_DIR@/sounds/gore/lqdrip9.ogg
 decorate.txt    @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
 decaldef.txt    @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
 sndinfo.txt     @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
+
+
+// models
+models.xml             @CMAKE_CURRENT_SOURCE_DIR@/models.xml
+models/gibs/bsflt.md2  @CMAKE_CURRENT_SOURCE_DIR@/models/gibs/bsflt.md2
+models/gibs/bsflt.pcx  @CMAKE_CURRENT_SOURCE_DIR@/models/gibs/bsflt.pcx
+models/gibs/bsflt.xml  @CMAKE_CURRENT_SOURCE_DIR@/models/gibs/bsflt.xml

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<vavoom_models_list>
+  <include file="models/gibs/bsflt.xml" />
+</vavoom_models_list>

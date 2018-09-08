@@ -7,6 +7,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gore.pk3
     decorate.txt
     decaldef.txt
     sndinfo.txt
+    models.xml
   )
 add_custom_target(gore_modpak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gore.pk3)
 
