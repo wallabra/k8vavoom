@@ -1684,11 +1684,13 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
 
     // sprite name
     if (TmpName.Length() != 4) sc->Error("Invalid sprite name");
+    if (TmpName == "####") TmpName = VStr("TNT1"); // Waterlab GZD hack
     State->SpriteName = *TmpName.ToLower();
 
     // frame
     sc->ExpectString();
     char FChar = VStr::ToUpper(sc->String[0]);
+    if (FChar == '#') FChar = 'A'; // Waterlab GZD hack
     if (FChar < 'A' || FChar > ']') sc->Error("Frames must be A-Z, [, \\ or ]");
     State->Frame = FChar - 'A';
     VStr FramesString = sc->String;
@@ -1813,6 +1815,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
 
     for (int i = 1; i < FramesString.Length(); ++i) {
       char FSChar = VStr::ToUpper(FramesString[i]);
+      if (FChar == '#') FChar = 'A'; // Waterlab GZD hack
       if (FSChar < 'A' || FSChar > ']') sc->Error("Frames must be A-Z, [, \\ or ]");
 
       // create a new state
