@@ -1783,9 +1783,10 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         VDecorateStateAction *Act = Class->FindDecorateStateAction(*FuncNameLower);
         Func = (Act ? Act->Method : nullptr);
       }
+      //fprintf(stderr, "<%s>\n", *FuncNameLower);
       if (!Func) {
         GCon->Logf("ERROR: Unknown state action %s in %s", *FuncName, Class->GetName());
-      } else if (Func->NumParams || NumArgs) {
+      } else if (Func->NumParams || NumArgs || FuncNameLower == "a_explode") {
         VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
         Expr->CallerState = State;
         Expr->MultiFrameState = (FramesString.Length() > 1);

@@ -34,6 +34,13 @@ enum
   CHAN_BODY
 };
 
+enum {
+  XF_HURTSOURCE = 0x01, // Hurts the source: if set, the source can be damaged by the explosion. Note that the source is not necessarily the calling actor. This flag is set by default.
+  XF_NOTMISSILE = 0x02, // Not a missile: if set, the calling actor is considered to be the source. By default, the calling actor is assumed to be a projectile, and the source is therefore considered to be the calling actor's target.
+  XF_EXPLICITDAMAGETYPE = 0x04, // The damagetype parameter will never change to the actor's damagetype.
+  XF_NOSPLASH = 0x08, // No splash: if set, the explosion does not create any terrain splashes.
+}
+
 enum
 {
   CONTENTS_EMPTY,

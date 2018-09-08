@@ -547,15 +547,31 @@ final void DoExplode(int damage, float distance, bool damageSelf,
 //
 //==========================================================================
 
-final void A_Explode()
+final void A_Explode(optional int damage, optional int radius, optional int flags)
 {
-  int     damage;
-  float   distance;
+  //int     damage;
+  //float   distance;
   ubyte    damageSelf;
 
-  damage = 128;
-  distance = 128.0;
-  damageSelf = true;
+  if (!specified_damage) damage = 128;
+  if (!specified_radius) radius = 128;
+
+  //damage = 128;
+  //distance = 128.0;
+  //damageSelf = true;
+  /*
+    XF_HURTSOURCE -- Hurts the source: if set, the source can be damaged by the explosion. Note that the source is not necessarily the calling actor. This flag is set by default.
+    XF_NOTMISSILE -- Not a missile: if set, the calling actor is considered to be the source. By default, the calling actor is assumed to be a projectile, and the source is therefore considered to be the calling actor's target.
+    XF_EXPLICITDAMAGETYPE -- The damagetype parameter will never change to the actor's damagetype.
+    XF_NOSPLASH -- No splash: if set, the explosion does not create any terrain splashes.
+  */
+  if (specified_flags) {
+    damageSelf = (flags&XF_HURTSOURCE ? 1 : 0);
+  } else {
+    damageSelf = 1;
+  }
+
+  float distance = radius;
 
   PreExplode();
   GetExplodeParms(damage, distance, damageSelf);

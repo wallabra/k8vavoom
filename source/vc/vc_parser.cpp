@@ -2428,8 +2428,26 @@ void VParser::ParseStates (VClass *InClass) {
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "State method name expected");
       } else {
-        s->FunctionName = Lex.Name;
+        VName funcName = Lex.Name;
         Lex.NextToken();
+        if (VStr::ICmp(*funcName, "a_explode") == 0) {
+          s->Function = nullptr;
+          VExpression *Args[VMethod::MAX_PARAMS+1];
+          int NumArgs = 0;
+          // function call?
+          if (Lex.Check(TK_LParen)) NumArgs = ParseArgList(Lex.Location, Args);
+          VExpression *e = new VCastOrInvocation(funcName, stloc, NumArgs, Args);
+          auto cst = new VCompound(stloc);
+          cst->Statements.Append(new VExpressionStatement(e));
+          // create function
+          s->Function = new VMethod(NAME_None, s, s->Loc);
+          s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
+          s->Function->ReturnType = VFieldType(TYPE_Void);
+          s->Function->Statement = cst;
+          s->FunctionName = NAME_None;
+        } else {
+          s->FunctionName = funcName;
+        }
       }
     }
 
