@@ -111,7 +111,8 @@ final void Init (name Name, ubyte AState, ClientGameShared AClGame) {
   string NameStr = string(Name);
   if (StrStartsWith(NameStr, "$")) {
     //ParseScript(StrToName(substr(NameStr, 1, strlen(NameStr)-1)));
-    ParseScript(StrToName(substr(NameStr, 1, NameStr.length-1)));
+    //print("INTERBG: parsing script '%s'", NameStr[1..$]);
+    ParseScript(StrToName(NameStr[1..$]));
   } else {
     BackgroundPic = R_RegisterPic(Name);
   }

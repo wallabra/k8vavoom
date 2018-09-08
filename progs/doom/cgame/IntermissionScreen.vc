@@ -123,6 +123,32 @@ int im_nextmap;
 
 IntermissionBackground    Background;
 
+
+//==========================================================================
+//
+//  checkForDoom2
+//
+//==========================================================================
+final bool checkForDoom2 () {
+  bool isDoom2 = IsAnyDoom2;
+  if (isDoom2) {
+    string xmap = string(ClGame.im.LeaveMap);
+    if (xmap.length == 4 && (xmap[0] == "e" || xmap[0] == "E") && (xmap[2] == "m" || xmap[2] == "M")) {
+      isDoom2 = false;
+      //print("MSG: forcing Doom1 (leavemap=%s)", xmap);
+    }
+  }
+  if (isDoom2) {
+    string xmap = string(ClGame.im.EnterMap);
+    if (xmap.length == 4 && (xmap[0] == "e" || xmap[0] == "E") && (xmap[2] == "m" || xmap[2] == "M")) {
+      isDoom2 = false;
+      //print("MSG: forcing Doom1 (entermap=%s)", xmap);
+    }
+  }
+  return isDoom2;
+}
+
+
 //==========================================================================
 //
 //  Start
@@ -143,7 +169,7 @@ void Start()
     Background.ScaleY = itof(Height) / itof(Background.Height);
   }
 
-  if (!IsAnyDoom2) {
+  if (!checkForDoom2()) {
     FindEpisodeAndMap(ClGame.im.LeaveMap, &im_episode, &im_map);
     FindEpisodeAndMap(ClGame.im.EnterMap, &im_nextepisode, &im_nextmap);
   }
@@ -182,13 +208,13 @@ void Start()
     else
     {
 #ifdef FIXME
-      if (IsAnyDoom2) {
+      if (checkForDoom2()) {
         S_StartSong("D_DM2INT", P_GetCDIntermissionTrack(), true);
       } else {
         S_StartSong("D_INTER", P_GetCDIntermissionTrack(), true);
       }
 #else
-      if (IsAnyDoom2) {
+      if (checkForDoom2()) {
         CmdBuf_AddText("music loop D_DM2INT\n");
       } else {
         CmdBuf_AddText("music loop D_INTER\n");
@@ -254,7 +280,7 @@ override void Tick(float DeltaTime)
     break;
 
   case IMS_NextLoc:
-    if (!IsAnyDoom2) IM_UpdateNextLoc(DeltaTime);
+    if (!checkForDoom2()) IM_UpdateNextLoc(DeltaTime);
     break;
 
   case IMS_NoState:
@@ -298,7 +324,7 @@ override void OnPostDraw()
     break;
 
   case IMS_NextLoc:
-    if (!IsAnyDoom2) IM_DrawNextLoc();
+    if (!checkForDoom2()) IM_DrawNextLoc();
     break;
 
   case IMS_NoState:
@@ -328,11 +354,19 @@ override void OnPostDraw()
 
 void IM_InitAnimatedBack()
 {
-  print("IM_InitAnimatedBack: interstate=%d", interstate);
+  /*
+  print("IM_InitAnimatedBack: interstate=%d; exitpic=%n; enterpic=%n", interstate, ClGame.im.ExitPic, ClGame.im.EnterPic);
+  print("  LeaveMap=%n; LeaveCluster=%d; LeaveName=%s; LeaveTitlePatch=%n; ExitPic=%n", ClGame.im.LeaveMap, ClGame.im.LeaveCluster, ClGame.im.LeaveName, ClGame.im.LeaveTitlePatch, ClGame.im.ExitPic);
+  print("  EnterMap=%n; EnterCluster=%d; EnterName=%s; EnterTitlePatch=%n; EnterPic=%n", ClGame.im.EnterMap, ClGame.im.EnterCluster, ClGame.im.EnterName, ClGame.im.EnterTitlePatch, ClGame.im.EnterPic);
+  print("  InterMusic=%n", ClGame.im.InterMusic);
+  print("  Text=%s", ClGame.im.Text);
+  print("  TextFlat=%n; TextPic=%n; TextMusic=%n; bTextIsLump=%d", ClGame.im.TextFlat, ClGame.im.TextPic, ClGame.im.TextMusic, ClGame.im.bTextIsLump);
+  */
+
   name BgPic = interstate ? ClGame.im.ExitPic : ClGame.im.EnterPic;
-  print("  BgPic0: %n (%d); im_episode=%d; isdoom2=%s", BgPic, WadLumpPresent(BgPic), im_episode, (IsAnyDoom2 ? "tan" : "ona"));
+  //print("  BgPic0: %n (present=%d); im_episode=%d; isdoom2=%s", BgPic, WadLumpPresent(BgPic), im_episode, (IsAnyDoom2 ? "tan" : "ona"));
   if (!BgPic) {
-    if (IsAnyDoom2) {
+    if (checkForDoom2()) {
       BgPic = 'interpic';
     } else {
       if (im_episode > 3) {
@@ -341,16 +375,7 @@ void IM_InitAnimatedBack()
         BgPic = StrToName(va("$in_epi%d", im_episode));
       }
     }
-    print("  BgPic1: %n (%d)", BgPic, WadLumpPresent(BgPic));
-    if (WadLumpPresent(BgPic) < 0) {
-      BgPic = 'interpic';
-      print("  BgPic2: %n", BgPic);
-    }
-  } else if (IsAnyDoom2) {
-    if (StrStartsWith(string(BgPic), "in_epi") || StrStartsWith(string(BgPic), "$in_epi")) {
-      print("  FORCED INTERPIC");
-      BgPic = 'interpic';
-    }
+    //print("  BgPic1: %n (present=%d)", BgPic, WadLumpPresent(BgPic));
   }
   Background.Init(BgPic, interstate ?
     IntermissionBackground::STATE_NextLoc :
@@ -658,7 +683,7 @@ void IM_UpdateSingleStats(float DeltaTime)
     {
       LocalSound('weapons/shotgr');
 
-      if (IsAnyDoom2) {
+      if (checkForDoom2()) {
         IM_InitNoState();
       } else {
         IM_InitNextLoc();
@@ -887,7 +912,7 @@ void IM_UpdateCooperativeStats(float DeltaTime)
     if (ClGame.skipintermission)
     {
       LocalSound('weapons/shotgr');
-      if (IsAnyDoom2) {
+      if (checkForDoom2()) {
         IM_InitNoState();
       } else {
         IM_InitNextLoc();
@@ -1040,7 +1065,7 @@ void IM_UpdateDeathmatchStats(float DeltaTime)
     {
       LocalSound('misc/gibbed');
 
-      if (IsAnyDoom2) {
+      if (checkForDoom2()) {
         IM_InitNoState();
       } else {
         IM_InitNextLoc();
@@ -1119,7 +1144,7 @@ void IM_InitNoState()
 
 void IM_DrawNoState()
 {
-  if (IsAnyDoom2) {
+  if (checkForDoom2()) {
     // draws which level you are entering..
     if (ClGame.im.LeaveMap != 'map30')
     {
@@ -1207,7 +1232,7 @@ void IM_InitText()
   }
   else
   {
-    if (IsAnyDoom2) {
+    if (checkForDoom2()) {
 #ifdef FIXME
       S_StartSong("d_read_m", P_GetCDEnd1Track(), true);
 #else

@@ -44,6 +44,25 @@ int pic_brdr_tr;
 int pic_brdr_bl;
 int pic_brdr_br;
 
+
+//==========================================================================
+//
+//  checkForDoom2
+//
+//==========================================================================
+final bool checkForDoom2 () {
+  bool isDoom2 = IsAnyDoom2;
+  if (isDoom2 && cl && cl.MO) {
+    string xmap = string(cl.MO.XLevel.MapName);
+    if (xmap.length == 4 && (xmap[0] == "e" || xmap[0] == "E") && (xmap[2] == "m" || xmap[2] == "M")) {
+      isDoom2 = false;
+      //print("MSG: forcing Doom1 (leavemap=%s)", xmap);
+    }
+  }
+  return isDoom2;
+}
+
+
 //==========================================================================
 //
 //  RootWindowCreated
@@ -446,7 +465,7 @@ override void DrawBorder(int x, int y, int w, int h)
 
 override void DrawViewBorder(int x, int y, int w, int h)
 {
-  if (IsAnyDoom2) {
+  if (checkForDoom2()) {
     GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'grnrock');
   } else {
     GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'floor7_2');
@@ -463,7 +482,7 @@ defaultproperties
   BigSelectorAnimSpeed = 4;
   BigSelectorAnimFrames[0] = 'm_skull1';
   BigSelectorAnimFrames[1] = 'm_skull2';
-  if (!IsAnyDoom2) {
+  if (!checkForDoom2()) {
     DefaultFinaleMusic = 'd_victor';
     DefaultFinaleType = 'EndGamePic1';
     quitsounds[0] = '*death';

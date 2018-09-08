@@ -177,6 +177,24 @@ int sb_faceindex;
 
 //==========================================================================
 //
+//  checkForDoom2
+//
+//==========================================================================
+final bool checkForDoom2 () {
+  bool isDoom2 = IsAnyDoom2;
+  if (isDoom2 && cl && cl.MO) {
+    string xmap = string(cl.MO.XLevel.MapName);
+    if (xmap.length == 4 && (xmap[0] == "e" || xmap[0] == "E") && (xmap[2] == "m" || xmap[2] == "M")) {
+      isDoom2 = false;
+      //print("MSG: forcing Doom1 (leavemap=%s)", xmap);
+    }
+  }
+  return isDoom2;
+}
+
+
+//==========================================================================
+//
 //  StartMap
 //
 //==========================================================================
@@ -303,7 +321,7 @@ void SB_DrawMainBar () {
 
   // draw something in the blank spaces
   // check which version of Doom we are playing
-  if (IsAnyDoom2) {
+  if (checkForDoom2()) {
     FillRectWithFlat(0, 448, 640, 32, 'grnrock');
   } else {
     FillRectWithFlat(0, 448, 640, 32, 'floor7_2');
@@ -413,6 +431,8 @@ void DrawAmmo (int CountX, int CountY, int MaxX, int MaxY, class!Inventory AmmoC
 //==========================================================================
 void SB_DrawFullscreenStats () {
   if (!cl || !cl.MO) return;
+
+  //print("LEVEL: %s (%n)", cl.Level.LevelName, cl.MO.XLevel.MapName);
 
   float fsalpha = ST_FULLSCREEN_ALPHA;
   if (CvarExists('r_hud_fullscreen_alpha')) {
