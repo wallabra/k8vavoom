@@ -177,9 +177,15 @@ int VFilesDir::CheckNumForName(VName, EWadNamespace)
 {
   return -1;
 }
-VName VFilesDir::LumpName(int)
+VName VFilesDir::LumpName(int LumpNum)
 {
-  return NAME_None;
+  //return NAME_None;
+  return (LumpNum >= 0 || LumpNum < CachedFiles.length() ? VName(*CachedFiles[LumpNum]) : NAME_None);
+}
+VStr VFilesDir::LumpFileName(int LumpNum)
+{
+  //return VStr();
+  return (LumpNum >= 0 || LumpNum < CachedFiles.length() ? VStr(*CachedFiles[LumpNum]) : VStr());
 }
 int VFilesDir::IterateNS(int, EWadNamespace)
 {

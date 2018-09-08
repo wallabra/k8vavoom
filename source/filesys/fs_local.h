@@ -58,6 +58,7 @@ public:
   virtual void ReadFromLump(int, void*, int, int) = 0;
   virtual int LumpLength(int) = 0;
   virtual VName LumpName(int) = 0;
+  virtual VStr LumpFileName(int) = 0;
   virtual int IterateNS(int, EWadNamespace) = 0;
   virtual void BuildGLNodes(VSearchPath*) = 0;
   virtual void BuildPVS(VSearchPath*) = 0;
@@ -88,6 +89,7 @@ public:
   void ReadFromLump(int, void*, int, int);
   int LumpLength(int);
   VName LumpName(int);
+  VStr LumpFileName(int);
   int IterateNS(int, EWadNamespace);
   void BuildGLNodes(VSearchPath*);
   void BuildPVS(VSearchPath*);
@@ -128,6 +130,7 @@ public:
   void ReadFromLump(int lump, void *dest, int pos, int size);
   int LumpLength(int);
   VName LumpName(int);
+  VStr LumpFileName(int);
   int IterateNS(int, EWadNamespace);
   void BuildGLNodes(VSearchPath*);
   void BuildPVS(VSearchPath*);
@@ -172,6 +175,7 @@ public:
   void ReadFromLump(int, void*, int, int);
   int LumpLength(int);
   VName LumpName(int);
+  VStr LumpFileName(int);
   int IterateNS(int, EWadNamespace);
   VStream *CreateLumpReaderNum(int);
   void RenameSprites(const TArray<VSpriteRename>&, const TArray<VLumpRename>&);

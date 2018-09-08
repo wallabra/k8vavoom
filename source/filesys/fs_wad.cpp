@@ -408,6 +408,23 @@ VName VWadFile::LumpName(int lump)
 
 //==========================================================================
 //
+//  VWadFile::LumpFileName
+//
+//==========================================================================
+
+VStr VWadFile::LumpFileName(int lump)
+{
+  guard(VWadFile::LumpName);
+  if (lump >= NumLumps)
+  {
+    return VStr();
+  }
+  return VStr(*LumpInfo[lump].Name);
+  unguard;
+}
+
+//==========================================================================
+//
 //  VWadFile::IterateNS
 //
 //==========================================================================

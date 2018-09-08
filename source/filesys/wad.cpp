@@ -452,7 +452,8 @@ VStr W_FullLumpName (int lump) {
   if (FILE_INDEX(lump) >= SearchPaths.Num()) return VStr("<invalid>");
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
-  return w->GetPrefix()+":"+*(w->LumpName(lumpindex));
+  //return w->GetPrefix()+":"+*(w->LumpName(lumpindex));
+  return w->GetPrefix()+":"+*(w->LumpFileName(lumpindex));
   unguard;
 }
 
