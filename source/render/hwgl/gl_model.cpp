@@ -508,6 +508,13 @@ void VOpenGLDrawer::DrawAliasModelTextures(const TVec &origin, const TAVec &angl
   glShadeModel(GL_SMOOTH);
   glAlphaFunc(GL_GREATER, 0.0);
 
+  //glEnable(GL_BLEND);
+  //glShadeModel(GL_FLAT);
+  //glDisable(GL_BLEND);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  //glBlendFunc(GL_DST_COLOR, GL_ZERO);
+
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
   glDepthMask(GL_FALSE);
   p_glDrawRangeElementsEXT(GL_TRIANGLES, 0, Mdl->STVerts.Num() - 1, Mdl->Tris.Num() * 3, GL_UNSIGNED_SHORT, 0);
@@ -524,6 +531,7 @@ void VOpenGLDrawer::DrawAliasModelTextures(const TVec &origin, const TAVec &angl
   glShadeModel(GL_FLAT);
   glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glDisable(GL_ALPHA_TEST);
+  //glEnable(GL_BLEND); // it is already enabled
   unguard;
 }
 
