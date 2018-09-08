@@ -823,8 +823,11 @@ void VAudio::UpdateSfx()
   if (cl)
   {
     SoundDevice->UpdateListener(cl->ViewOrg, TVec(0, 0, 0),
-      ListenerForward, ListenerRight, ListenerUp,
-      GSoundManager->FindEnvironment(cl->SoundEnvironment));
+      ListenerForward, ListenerRight, ListenerUp
+#if defined(VAVOOM_REVERB)
+      , GSoundManager->FindEnvironment(cl->SoundEnvironment)
+#endif
+      );
   }
 
   //SoundDevice->Tick(host_frametime);

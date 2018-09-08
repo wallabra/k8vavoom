@@ -32,7 +32,9 @@ enum seqtype_t
 
 struct sfxinfo_t;
 struct seq_info_t;
+#if defined(VAVOOM_REVERB)
 struct VReverbInfo;
+#endif
 
 enum ESoundType
 {
@@ -88,7 +90,9 @@ public:
   void GetSoundLumpNames(TArray<FReplacedString>&);
   void ReplaceSoundLumpNames(TArray<FReplacedString>&);
 
+#if defined(VAVOOM_REVERB)
   VReverbInfo *FindEnvironment(int);
+#endif
 
 private:
   struct FPlayerSound
@@ -115,7 +119,9 @@ private:
   FAmbientSound *AmbientSounds[NUM_AMBIENT_SOUNDS];
   TArray<VMusicVolume>  MusicVolumes;
   int           SeqTrans[64 * 3];
+#if defined(VAVOOM_REVERB)
   VReverbInfo *Environments;
+#endif
 
   void ParseSndinfo(VScriptParser*);
   int AddSoundLump(VName, int);

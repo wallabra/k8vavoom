@@ -146,7 +146,7 @@ set(SOUNDSYS_SOURCES
   sound/snd_local.h
   sound/snd_main.cpp
   sound/snd_qmus2mid.cpp
-  sound/snd_reverbs.cpp
+  #k8:not used, 'cause there is no EAX/EFX support: sound/snd_reverbs.cpp
   sound/snd_streamplayer.cpp
   sound/snd_timidity.cpp
   sound/snd_wav.cpp

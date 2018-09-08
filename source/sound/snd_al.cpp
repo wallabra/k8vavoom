@@ -430,7 +430,11 @@ void VOpenALDevice::StopChannel(int Handle)
 //==========================================================================
 
 void VOpenALDevice::UpdateListener(const TVec &org, const TVec &vel,
-  const TVec &fwd, const TVec&, const TVec &up, VReverbInfo *Env)
+  const TVec &fwd, const TVec&, const TVec &up
+#if defined(VAVOOM_REVERB)
+  , VReverbInfo *Env
+#endif
+)
 {
   guard(VOpenALDevice::UpdateListener);
   alListener3f(AL_POSITION, org.x, org.y, org.z);

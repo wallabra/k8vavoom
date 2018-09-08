@@ -117,6 +117,7 @@ VSoundManager::~VSoundManager()
     }
   }
 
+#if defined(VAVOOM_REVERB)
   for (VReverbInfo *R = Environments; R;)
   {
     VReverbInfo *Next = R->Next;
@@ -129,6 +130,7 @@ VSoundManager::~VSoundManager()
     }
     R = Next;
   }
+#endif
   //unguard;
 }
 
@@ -184,6 +186,7 @@ void VSoundManager::Init()
     }
   }
 
+#if defined(VAVOOM_REVERB)
   //  Load script REVERBS
   Environments = nullptr;
   for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0;
@@ -195,6 +198,7 @@ void VSoundManager::Init()
         W_CreateLumpReaderNum(Lump)));
     }
   }
+#endif
   unguard;
 }
 

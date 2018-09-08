@@ -138,6 +138,7 @@ struct VReverbProperties
   int         Flags;
 };
 
+#if defined(VAVOOM_REVERB)
 struct VReverbInfo
 {
   VReverbInfo *Next;
@@ -146,6 +147,7 @@ struct VReverbInfo
   bool        Builtin;
   VReverbProperties Props;
 };
+#endif
 
 
 //
@@ -196,7 +198,11 @@ public:
   void UpdateChannel3D(int, const TVec&, const TVec&);
   bool IsChannelPlaying(int);
   void StopChannel(int);
-  void UpdateListener(const TVec&, const TVec&, const TVec&, const TVec&, const TVec&, VReverbInfo*);
+  void UpdateListener(const TVec&, const TVec&, const TVec&, const TVec&, const TVec&
+#if defined(VAVOOM_REVERB)
+                      , VReverbInfo*
+#endif
+                      );
 
   // all stream functions should be thread-safe
   bool OpenStream (int Rate, int Bits, int Channels);
