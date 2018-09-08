@@ -152,6 +152,7 @@ void R_InitModels()
   {
     VStream *Strm = W_CreateLumpReaderNum(Lump);
     check(Strm);
+    GCon->Logf("parsing model definition '%s'...", *W_FullLumpName(Lump));
 
     //  Parse the file.
     VXmlDocument *Doc = new VXmlDocument();
@@ -446,70 +447,57 @@ static void ParseModelScript(VModel *Mdl, VStream &Strm)
     VClassModelScript *Cls = new VClassModelScript();
     Cls->Model = Mdl;
     Cls->Name = *CN->GetAttribute("name");
-    if (!Mdl->DefaultClass)
-      Mdl->DefaultClass = Cls;
+    if (!Mdl->DefaultClass) Mdl->DefaultClass = Cls;
     ClassModels.Append(Cls);
     ClassDefined = true;
+    //GCon->Logf("found model for class '%s'", *Cls->Name);
 
     //  Process frames
     for (VXmlNode *N = CN->FindChild("state"); N; N = N->FindNext())
     {
       VScriptedModelFrame &F = Cls->Frames.Alloc();
       F.Number = atoi(*N->GetAttribute("index"));
+      int lastIndex = -1;
+      if (N->HasAttribute("last_index")) lastIndex = atoi(*N->GetAttribute("last_index"));
       F.FrameIndex = atoi(*N->GetAttribute("frame_index"));
       F.ModelIndex = -1;
       VStr MdlName = N->GetAttribute("model");
-      for (int i = 0; i < Mdl->Models.Num(); i++)
-      {
-        if (Mdl->Models[i].Name == *MdlName)
-        {
+      for (int i = 0; i < Mdl->Models.Num(); ++i) {
+        if (Mdl->Models[i].Name == *MdlName) {
           F.ModelIndex = i;
           break;
         }
       }
-      if (F.ModelIndex == -1)
-      {
-        Sys_Error("%s has no model %s", *Mdl->Name, *MdlName);
-      }
+      if (F.ModelIndex == -1) Sys_Error("%s has no model %s", *Mdl->Name, *MdlName);
 
       F.Inter = 0.0;
-      if (N->HasAttribute("inter"))
-      {
-        F.Inter = atof(*N->GetAttribute("inter"));
-      }
+      if (N->HasAttribute("inter")) F.Inter = atof(*N->GetAttribute("inter"));
 
       F.AngleStart = 0.0;
       F.AngleEnd = 0.0;
-      if (N->HasAttribute("angle_start"))
-      {
-        F.AngleStart = atof(*N->GetAttribute("angle_start"));
-      }
-      if (N->HasAttribute("angle_end"))
-      {
-        F.AngleEnd = atof(*N->GetAttribute("angle_end"));
-      }
+      if (N->HasAttribute("angle_start")) F.AngleStart = atof(*N->GetAttribute("angle_start"));
+      if (N->HasAttribute("angle_end")) F.AngleEnd = atof(*N->GetAttribute("angle_end"));
 
       F.AlphaStart = 1.0;
       F.AlphaEnd = 1.0;
-      if (N->HasAttribute("alpha_start"))
-      {
-        F.AlphaStart = atof(*N->GetAttribute("alpha_start"));
-      }
-      if (N->HasAttribute("alpha_end"))
-      {
-        F.AlphaEnd = atof(*N->GetAttribute("alpha_end"));
+      if (N->HasAttribute("alpha_start")) F.AlphaStart = atof(*N->GetAttribute("alpha_start"));
+      if (N->HasAttribute("alpha_end")) F.AlphaEnd = atof(*N->GetAttribute("alpha_end"));
+
+      for (int cfidx = F.Number+1; cfidx < lastIndex; ++cfidx) {
+        VScriptedModelFrame &ffr = Cls->Frames.Alloc();
+        ffr.Number = cfidx;
+        ffr.FrameIndex = F.FrameIndex;
+        ffr.ModelIndex = F.ModelIndex;
+        ffr.Inter = F.Inter;
+        ffr.AngleStart = F.AngleStart;
+        ffr.AngleEnd = F.AngleEnd;
+        ffr.AlphaStart = F.AlphaStart;
+        ffr.AlphaEnd = F.AlphaEnd;
       }
     }
-    if (!Cls->Frames.Num())
-    {
-      Sys_Error("%s class %s has no states defined",
-        *Mdl->Name, *Cls->Name);
-    }
+    if (!Cls->Frames.Num()) Sys_Error("%s class %s has no states defined", *Mdl->Name, *Cls->Name);
   }
-  if (!ClassDefined)
-  {
-    Sys_Error("%s defined no classes", *Mdl->Name);
-  }
+  if (!ClassDefined) Sys_Error("%s defined no classes", *Mdl->Name);
 
   //  We don't need the XML file anymore.
   delete Doc;
