@@ -138,6 +138,7 @@ static void AddZipFile (VStr ZipName, VZipFile *Zip, bool allowpk3) {
 
     W_AddFileFromZip(ZipName+":"+Wads[i], WadStrm, ZipName+":"+GwaName, GwaStrm);
   }
+  Zip->HideWadFiles();
 
   if (!allowpk3) return;
 

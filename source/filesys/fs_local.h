@@ -182,6 +182,9 @@ public:
   void ListWadFiles(TArray<VStr>&);
   void ListPk3Files(TArray<VStr>&);
 
+  // hide all added wad files in root dir, so they won't conflict with default names
+  void HideWadFiles();
+
   virtual VStr GetPrefix () { return ZipFileName; }
 };
 

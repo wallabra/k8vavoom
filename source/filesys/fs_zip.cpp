@@ -408,6 +408,12 @@ void VZipFile::OpenArchive (VStream *fstream) {
   // build lump names
   for (int i = 0; i < NumFiles; ++i) {
     if (Files[i].Name.Length() > 0) {
+      if (Files[i].Name.EndsWith(".wad") && Files[i].Name.IndexOf('/') == -1) {
+        Files[i].LumpNamespace = WADNS_Hidden;
+        Files[i].LumpName = VName("", VName::AddLower8);
+        continue;
+      }
+
       // set up lump name for WAD-like access
       VStr LumpName = Files[i].Name.ExtractFileName().StripExtension();
 
@@ -766,6 +772,26 @@ void VZipFile::ListWadFiles (TArray<VStr>& List) {
     List.Append(Files[i].Name);
   }
   unguard;
+}
+
+//==========================================================================
+//
+//  VZipFile::HideWadFiles
+//
+//==========================================================================
+
+void VZipFile::HideWadFiles () {
+/*
+  guard(VZipFile::HideWadFiles);
+  for (int i = 0; i < NumFiles; ++i) {
+    // Only .wad files.
+    if (!Files[i].Name.EndsWith(".wad")) continue;
+    // Don't add WAD files in subdirectories
+    if (Files[i].Name.IndexOf('/') != -1) continue;
+    Files[i].Name.clear();
+  }
+  unguard;
+*/
 }
 
 //==========================================================================

@@ -39,6 +39,8 @@ enum EWadNamespace
   WADNS_Voices,
   WADNS_HiResTextures,
 
+  WADNS_Hidden,
+
   //  Special namespaces for zip files, in wad file they will be searched
   // in global namespace.
   WADNS_ZipSpecial,
