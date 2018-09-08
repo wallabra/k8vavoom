@@ -106,6 +106,7 @@ int ToPowerOf2 (int val) {
 //==========================================================================
 float AngleMod (float angle) {
 #if 1
+  angle = fmodf(angle, 360.0f);
   while (angle < 0.0) angle += 360.0;
   while (angle >= 360.0) angle -= 360.0;
 #else
@@ -122,6 +123,7 @@ float AngleMod (float angle) {
 //==========================================================================
 float AngleMod180 (float angle) {
 #if 1
+  angle = fmodf(angle, 360.0f);
   while (angle < -180.0) angle += 360.0;
   while (angle >= 180.0) angle -= 360.0;
 #else
