@@ -953,7 +953,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       sc->ExpectNumber();
       fd.RandomRange = sc->Number-fd.BaseTime+1;
     } else {
-      sc->Error("bad command");
+      sc->Error(va("bad command (%s)", *sc->String));
     }
 
     if (ad.Type != ANIM_Normal) {
@@ -1300,7 +1300,7 @@ static void ParseFTAnims (VScriptParser *sc) {
     else if (sc->Check("warp")) ParseWarp(sc, 1);
     else if (sc->Check("warp2")) ParseWarp(sc, 2);
     else if (sc->Check("cameratexture")) ParseCameraTexture(sc);
-    else sc->Error("bad command");
+    else sc->Error(va("bad command (%s)", *sc->String));
   }
   delete sc;
   sc = nullptr;
