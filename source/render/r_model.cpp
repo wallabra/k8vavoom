@@ -1117,9 +1117,9 @@ static void DrawModel(VLevel *Level, const TVec &Org, const TAVec &Angles,
     if (Interpolate)
     {
       // Interpolate Scale
-      Scale.x = (F.Scale.x + smooth_inter * (NF.Scale.x - F.Scale.x) * ScaleX);
-      Scale.y = (F.Scale.y + smooth_inter * (NF.Scale.y - F.Scale.y) * ScaleX);
-      Scale.z = (F.Scale.z + smooth_inter * (NF.Scale.z - F.Scale.z) * ScaleY);
+      Scale.x = (F.Scale.x + smooth_inter * (NF.Scale.x - F.Scale.x)) * ScaleX;
+      Scale.y = (F.Scale.y + smooth_inter * (NF.Scale.y - F.Scale.y)) * ScaleX;
+      Scale.z = (F.Scale.z + smooth_inter * (NF.Scale.z - F.Scale.z)) * ScaleY;
     }
     else
     {
