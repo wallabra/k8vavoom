@@ -474,7 +474,7 @@ static void ParseModelScript(VModel *Mdl, VStream &Strm)
       else F.angleRoll = AngleMod(F.hasRoll ? atof(*N->GetAttribute("angle_roll")) : 0.0f);
 
       F.Number = atoi(*N->GetAttribute("index"));
-      int lastIndex = -1;
+      int lastIndex = -666;
       if (N->HasAttribute("last_index")) lastIndex = atoi(*N->GetAttribute("last_index"));
       F.FrameIndex = atoi(*N->GetAttribute("frame_index"));
       F.ModelIndex = -1;
@@ -500,22 +500,26 @@ static void ParseModelScript(VModel *Mdl, VStream &Strm)
       if (N->HasAttribute("alpha_start")) F.AlphaStart = atof(*N->GetAttribute("alpha_start"));
       if (N->HasAttribute("alpha_end")) F.AlphaEnd = atof(*N->GetAttribute("alpha_end"));
 
-      for (int cfidx = F.Number+1; cfidx < lastIndex; ++cfidx) {
-        VScriptedModelFrame &ffr = Cls->Frames.Alloc();
-        ffr.Number = cfidx;
-        ffr.FrameIndex = F.FrameIndex;
-        ffr.ModelIndex = F.ModelIndex;
-        ffr.Inter = F.Inter;
-        ffr.AngleStart = F.AngleStart;
-        ffr.AngleEnd = F.AngleEnd;
-        ffr.AlphaStart = F.AlphaStart;
-        ffr.AlphaEnd = F.AlphaEnd;
-        ffr.hasYaw = F.hasYaw;
-        ffr.hasPitch = F.hasPitch;
-        ffr.hasRoll = F.hasRoll;
-        ffr.angleYaw = F.angleYaw;
-        ffr.anglePitch = F.anglePitch;
-        ffr.angleRoll = F.angleRoll;
+      if (F.Number >= 0 && lastIndex > 0) {
+        for (int cfidx = F.Number+1; cfidx <= lastIndex; ++cfidx) {
+          VScriptedModelFrame &ffr = Cls->Frames.Alloc();
+          ffr.Number = cfidx;
+          ffr.FrameIndex = F.FrameIndex;
+          ffr.ModelIndex = F.ModelIndex;
+          ffr.Inter = F.Inter;
+          ffr.AngleStart = F.AngleStart;
+          ffr.AngleEnd = F.AngleEnd;
+          ffr.AlphaStart = F.AlphaStart;
+          ffr.AlphaEnd = F.AlphaEnd;
+          ffr.hasYaw = F.hasYaw;
+          ffr.hasPitch = F.hasPitch;
+          ffr.hasRoll = F.hasRoll;
+          ffr.angleYaw = F.angleYaw;
+          ffr.anglePitch = F.anglePitch;
+          ffr.angleRoll = F.angleRoll;
+        }
+      } else {
+        if (F.Number < 0) F.Number = -666;
       }
     }
     if (!Cls->Frames.Num()) Sys_Error("%s class %s has no states defined", *Mdl->Name, *Cls->Name);
@@ -890,10 +894,10 @@ static int FindFrame(const VClassModelScript &Cls, int Frame, float Inter)
   for (int i = 0; i < Cls.Frames.Num(); i++) {
     if (Cls.Frames[i].Number == Frame && Cls.Frames[i].Inter <= Inter) {
       Ret = i;
-      break; //k8: why it wasn't here?
+      // k8: no `break` here, 'cause we may find better frame (with better "inter")
     }
-    //k8: frame "-1" means "any"
-    if (frameAny < 0 && Cls.Frames[i].Number == -1) frameAny = i;
+    //k8: frame "-666" means "any"
+    if (frameAny < 0 && Ret < 0 && Cls.Frames[i].Number == -666) frameAny = i;
   }
   if (Ret == -1 && frameAny >= 0) return frameAny;
   return Ret;
