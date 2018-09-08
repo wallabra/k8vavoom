@@ -1053,7 +1053,7 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
 
   if (sc->CheckIdentifier()) {
     VStr Name = sc->String;
-    if (Name == "args") {
+    if (Name.ICmp("args") == 0) {
       if (sc->GetString()) {
         if (sc->String == "[") {
           Name = VStr("GetArg");
