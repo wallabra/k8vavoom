@@ -291,36 +291,44 @@ Actor K8Gore_BloodSpot$(Color) {
       TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
-#ifdef TRANSIENT
-      Goto FadeA
-#else
       BPDL A 800 //duration
+      /*
+      TNT1 A 0 {
+        if (GetCVar("k8GoreBloodTransient") != 0) { return state("FadeA"); }
+        return state("SpawnAFrameOnly");
+      }
+      */
       Loop
-#endif
 
     SpawnBFrameOnly:
-#ifdef TRANSIENT
-      Goto FadeB
-#else
       BPDL B 800 //duration
+      /*
+      TNT1 A 0 {
+        if (GetCVar("k8GoreBloodTransient") != 0) { return state("FadeB"); }
+        return state("SpawnBFrameOnly");
+      }
+      */
       Loop
-#endif
 
     SpawnCFrameOnly:
-#ifdef TRANSIENT
-      Goto FadeC
-#else
       BPDL C 800 //duration
+      /*
+      TNT1 A 0 {
+        if (GetCVar("k8GoreBloodTransient") != 0) { return state("FadeC"); }
+        return state("SpawnCFrameOnly");
+      }
+      */
       Loop
-#endif
 
     SpawnDFrameOnly:
-#ifdef TRANSIENT
-      Goto FadeD
-#else
       BPDL D 800 //duration
+      /*
+      TNT1 A 0 {
+        if (GetCVar("k8GoreBloodTransient") != 0) { return state("FadeD"); }
+        return state("SpawnDFrameOnly");
+      }
+      */
       Loop
-#endif
 
     FadeA:
       BPDL AAAA 15 A_FadeOut(0.01)
