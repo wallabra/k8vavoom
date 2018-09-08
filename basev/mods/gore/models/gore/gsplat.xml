@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<vavoom_model_definition>
+	<model name="bloodspinal">
+		<md2 file="models/gore/blood.md2">
+			<frame index="0" />
+		</md2>
+	</model>
+	<model name="bloodsmall">
+		<md2 file="models/gore/blood2.md2">
+			<frame index="0" />
+		</md2>
+	</model>
+	<model name="bloodbrain">
+		<md2 file="models/gore/brain.md2">
+			<frame index="0" />
+		</md2>
+	</model>
+	<model name="bloodgibs">
+		<md2 file="models/gore/gibs.md2">
+			<frame index="0" />
+		</md2>
+	</model>
+	<class name="K8Gore_GrowingBloodPool">
+		<!-- Spawn -->
+		<state index="-1" model="bloodbrain" frame_index="0" />
+	</class>
+	<class name="K8Gore_GrowingBloodPool2">
+		<!-- Spawn -->
+		<state index="-1" model="bloodspinal" frame_index="0" />
+	</class>
+	<class name="K8Gore_BloodSpot">
+		<!-- Spawn -->
+		<state index="-1" model="bloodsmall" frame_index="0" />
+	</class>
+	<class name="K8Gore_BloodSpotTransient">
+		<!-- Spawn -->
+		<state index="-1" model="bloodsmall" frame_index="0" />
+	</class>
+	<class name="K8Gore_GiantBloodSpot">
+		<!-- Spawn -->
+		<state index="-1" model="bloodsmall" frame_index="0" />
+	</class>
+	<class name="K8Gore_BigBloodSpot">
+		<!-- Spawn -->
+		<state index="-1" model="bloodsmall" frame_index="0" />
+	</class>
+	<class name="K8Gore_MediumBloodSpot">
+		<!-- Spawn -->
+		<state index="-1" model="bloodsmall" frame_index="0" />
+	</class>
+	<class name="K8Gore_MediumBloodSpot2">
+		<!-- Spawn -->
+		<state index="-1" model="bloodsmall" frame_index="0" />
+	</class>
+</vavoom_model_definition>

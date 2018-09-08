@@ -193,7 +193,8 @@ Actor K8Gore_BloodSpot {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
-  Alpha 0.9
+  Renderstyle Translucent
+  Alpha 0.6
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplat
@@ -210,6 +211,10 @@ Actor K8Gore_BloodSpot {
 
     SpawnNormally:
       //TNT1 A 0 A_SpawnItem("GibRemoving")
+      TNT1 A 0
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
       TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
@@ -1011,9 +1016,9 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
   height 1
   mass 1
   Health 600
-  //RenderStyle Translucent
   //StencilColor "49 00 00"
-  // Alpha 0.99
+  Renderstyle Translucent
+  Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -1028,6 +1033,59 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
     Spawn:
       TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
+      TNT5 A 1
+      TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRed",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+      TNT5 A 30
+      TNT5 BCD 5
+      TNT5 EFGHIJKLMNOP 5
+      TNT5 QRSTUVWXYZ 5
+
+    Live:
+      TNT5 Z 900 //duration
+      /*
+      TNT1 A 0 {
+        if (GetCVar("k8GoreBloodTransient") != 0) { return state("Splash"); }
+        return state("Live");
+      }
+      */
+      Loop
+
+    Splash:
+      BLOD A 0
+      Stop
+  }
+}
+
+
+Actor K8Gore_GrowingBloodPool2 : K8Gore_BloodSpot {
+  game Doom
+  radius 1
+  height 1
+  mass 1
+  Health 600
+  //StencilColor "49 00 00"
+  Renderstyle Translucent
+  Alpha 0.8
+  +NOTELEPORT
+  +CLIENTSIDEONLY
+  +FORCEXYBILLBOARD
+  +MOVEWITHSECTOR
+  +FLOORCLIP
+  +MISSILE
+  -DONTSPLASH
+  Scale 1.0
+  Decal K8GoreBloodSplat
+
+  States {
+    Spawn:
+      TNT1 A 0
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
       TNT5 A 1
       TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRed",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
       TNT5 A 30
@@ -1358,6 +1416,7 @@ Actor K8Gore_BloodmistXXBig : K8Gore_Bloodmist {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_SplatteredSmall : K8Gore_BloodSpot {
   States {
     Spawn:
@@ -1387,6 +1446,7 @@ Actor K8Gore_SplatteredLarge : K8Gore_BloodSpot {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_BootSmearerRed : K8Gore_GrowingBloodPool {
   MONSTER
   -SOLID
@@ -1695,7 +1755,8 @@ Actor K8Gore_BloodSpotTransient {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
-  Alpha 0.9
+  Renderstyle Translucent
+  Alpha 0.6
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatTransient
@@ -1712,6 +1773,10 @@ Actor K8Gore_BloodSpotTransient {
 
     SpawnNormally:
       //TNT1 A 0 A_SpawnItem("GibRemoving")
+      TNT1 A 0
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
       TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
@@ -2508,9 +2573,9 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
   height 1
   mass 1
   Health 600
-  //RenderStyle Translucent
   //StencilColor "49 00 00"
-  // Alpha 0.99
+  Renderstyle Translucent
+  Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -2525,6 +2590,59 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
     Spawn:
       TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
+      TNT5 A 1
+      TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRedTransient",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+      TNT5 A 30
+      TNT5 BCD 5
+      TNT5 EFGHIJKLMNOP 5
+      TNT5 QRSTUVWXYZ 5
+
+    Live:
+      TNT5 Z 900 //duration
+      /*
+      TNT1 A 0 {
+        if (GetCVar("k8GoreBloodTransient") != 0) { return state("Splash"); }
+        return state("Live");
+      }
+      */
+      Loop
+
+    Splash:
+      BLOD A 0
+      Stop
+  }
+}
+
+
+Actor K8Gore_GrowingBloodPool2Transient : K8Gore_BloodSpotTransient {
+  game Doom
+  radius 1
+  height 1
+  mass 1
+  Health 600
+  //StencilColor "49 00 00"
+  Renderstyle Translucent
+  Alpha 0.8
+  +NOTELEPORT
+  +CLIENTSIDEONLY
+  +FORCEXYBILLBOARD
+  +MOVEWITHSECTOR
+  +FLOORCLIP
+  +MISSILE
+  -DONTSPLASH
+  Scale 1.0
+  Decal K8GoreBloodSplatTransient
+
+  States {
+    Spawn:
+      TNT1 A 0
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
       TNT5 A 1
       TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRedTransient",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
       TNT5 A 30
@@ -2855,6 +2973,7 @@ Actor K8Gore_BloodmistXXBigTransient : K8Gore_BloodmistTransient {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_SplatteredSmallTransient : K8Gore_BloodSpotTransient {
   States {
     Spawn:
@@ -2884,6 +3003,7 @@ Actor K8Gore_SplatteredLargeTransient : K8Gore_BloodSpotTransient {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_BootSmearerRedTransient : K8Gore_GrowingBloodPoolTransient {
   MONSTER
   -SOLID
@@ -3195,7 +3315,8 @@ Actor K8Gore_BloodSpotGreen {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
-  Alpha 0.9
+  Renderstyle Translucent
+  Alpha 0.6
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatGreen
@@ -3212,6 +3333,10 @@ Actor K8Gore_BloodSpotGreen {
 
     SpawnNormally:
       //TNT1 A 0 A_SpawnItem("GibRemoving")
+      TNT1 A 0
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
       TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
@@ -4049,9 +4174,9 @@ Actor K8Gore_GrowingBloodPoolGreen : K8Gore_BloodSpotGreen {
   height 1
   mass 1
   Health 600
-  //RenderStyle Translucent
   //StencilColor "49 00 00"
-  // Alpha 0.99
+  Renderstyle Translucent
+  Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -4066,6 +4191,60 @@ Actor K8Gore_GrowingBloodPoolGreen : K8Gore_BloodSpotGreen {
     Spawn:
       TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
+      TNT5 A 1
+      TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRedGreen",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+      TNT5 A 30
+      TNT5 BCD 5
+      TNT5 EFGHIJKLMNOP 5
+      TNT5 QRSTUVWXYZ 5
+
+    Live:
+      TNT5 Z 900 //duration
+      /*
+      TNT1 A 0 {
+        if (GetCVar("k8GoreBloodTransient") != 0) { return state("Splash"); }
+        return state("Live");
+      }
+      */
+      Loop
+
+    Splash:
+      BLOD A 0
+      Stop
+  }
+}
+
+
+Actor K8Gore_GrowingBloodPool2Green : K8Gore_BloodSpotGreen {
+  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  game Doom
+  radius 1
+  height 1
+  mass 1
+  Health 600
+  //StencilColor "49 00 00"
+  Renderstyle Translucent
+  Alpha 0.8
+  +NOTELEPORT
+  +CLIENTSIDEONLY
+  +FORCEXYBILLBOARD
+  +MOVEWITHSECTOR
+  +FLOORCLIP
+  +MISSILE
+  -DONTSPLASH
+  Scale 1.0
+  Decal K8GoreBloodSplatGreen
+
+  States {
+    Spawn:
+      TNT1 A 0
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
       TNT5 A 1
       TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRedGreen",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
       TNT5 A 30
@@ -4412,6 +4591,7 @@ Actor K8Gore_BloodmistXXBigGreen : K8Gore_BloodmistGreen {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_SplatteredSmallGreen : K8Gore_BloodSpotGreen {
   Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
   States {
@@ -4443,6 +4623,7 @@ Actor K8Gore_SplatteredLargeGreen : K8Gore_BloodSpotGreen {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_BootSmearerRedGreen : K8Gore_GrowingBloodPoolGreen {
   Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
   MONSTER
@@ -4763,7 +4944,8 @@ Actor K8Gore_BloodSpotTransient_Green {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
-  Alpha 0.9
+  Renderstyle Translucent
+  Alpha 0.6
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatTransient_Green
@@ -4780,6 +4962,10 @@ Actor K8Gore_BloodSpotTransient_Green {
 
     SpawnNormally:
       //TNT1 A 0 A_SpawnItem("GibRemoving")
+      TNT1 A 0
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
       TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
@@ -5612,9 +5798,9 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
   height 1
   mass 1
   Health 600
-  //RenderStyle Translucent
   //StencilColor "49 00 00"
-  // Alpha 0.99
+  Renderstyle Translucent
+  Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -5629,6 +5815,60 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
     Spawn:
       TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
+      TNT5 A 1
+      TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRedTransient_Green",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+      TNT5 A 30
+      TNT5 BCD 5
+      TNT5 EFGHIJKLMNOP 5
+      TNT5 QRSTUVWXYZ 5
+
+    Live:
+      TNT5 Z 900 //duration
+      /*
+      TNT1 A 0 {
+        if (GetCVar("k8GoreBloodTransient") != 0) { return state("Splash"); }
+        return state("Live");
+      }
+      */
+      Loop
+
+    Splash:
+      BLOD A 0
+      Stop
+  }
+}
+
+
+Actor K8Gore_GrowingBloodPool2Transient_Green : K8Gore_BloodSpotTransient_Green {
+  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  game Doom
+  radius 1
+  height 1
+  mass 1
+  Health 600
+  //StencilColor "49 00 00"
+  Renderstyle Translucent
+  Alpha 0.8
+  +NOTELEPORT
+  +CLIENTSIDEONLY
+  +FORCEXYBILLBOARD
+  +MOVEWITHSECTOR
+  +FLOORCLIP
+  +MISSILE
+  -DONTSPLASH
+  Scale 1.0
+  Decal K8GoreBloodSplatTransient_Green
+
+  States {
+    Spawn:
+      TNT1 A 0
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
       TNT5 A 1
       TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRedTransient_Green",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
       TNT5 A 30
@@ -5975,6 +6215,7 @@ Actor K8Gore_BloodmistXXBigTransient_Green : K8Gore_BloodmistTransient_Green {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_SplatteredSmallTransient_Green : K8Gore_BloodSpotTransient_Green {
   Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
   States {
@@ -6006,6 +6247,7 @@ Actor K8Gore_SplatteredLargeTransient_Green : K8Gore_BloodSpotTransient_Green {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_BootSmearerRedTransient_Green : K8Gore_GrowingBloodPoolTransient_Green {
   Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
   MONSTER
@@ -6321,7 +6563,8 @@ Actor K8Gore_BloodSpotBlue {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
-  Alpha 0.9
+  Renderstyle Translucent
+  Alpha 0.6
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatBlue
@@ -6338,6 +6581,10 @@ Actor K8Gore_BloodSpotBlue {
 
     SpawnNormally:
       //TNT1 A 0 A_SpawnItem("GibRemoving")
+      TNT1 A 0
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
       TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
@@ -7175,9 +7422,9 @@ Actor K8Gore_GrowingBloodPoolBlue : K8Gore_BloodSpotBlue {
   height 1
   mass 1
   Health 600
-  //RenderStyle Translucent
   //StencilColor "49 00 00"
-  // Alpha 0.99
+  Renderstyle Translucent
+  Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -7192,6 +7439,60 @@ Actor K8Gore_GrowingBloodPoolBlue : K8Gore_BloodSpotBlue {
     Spawn:
       TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
+      TNT5 A 1
+      TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRedBlue",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+      TNT5 A 30
+      TNT5 BCD 5
+      TNT5 EFGHIJKLMNOP 5
+      TNT5 QRSTUVWXYZ 5
+
+    Live:
+      TNT5 Z 900 //duration
+      /*
+      TNT1 A 0 {
+        if (GetCVar("k8GoreBloodTransient") != 0) { return state("Splash"); }
+        return state("Live");
+      }
+      */
+      Loop
+
+    Splash:
+      BLOD A 0
+      Stop
+  }
+}
+
+
+Actor K8Gore_GrowingBloodPool2Blue : K8Gore_BloodSpotBlue {
+  Translation "168:191=192:207","16:47=240:247"
+  game Doom
+  radius 1
+  height 1
+  mass 1
+  Health 600
+  //StencilColor "49 00 00"
+  Renderstyle Translucent
+  Alpha 0.8
+  +NOTELEPORT
+  +CLIENTSIDEONLY
+  +FORCEXYBILLBOARD
+  +MOVEWITHSECTOR
+  +FLOORCLIP
+  +MISSILE
+  -DONTSPLASH
+  Scale 1.0
+  Decal K8GoreBloodSplatBlue
+
+  States {
+    Spawn:
+      TNT1 A 0
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
       TNT5 A 1
       TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRedBlue",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
       TNT5 A 30
@@ -7538,6 +7839,7 @@ Actor K8Gore_BloodmistXXBigBlue : K8Gore_BloodmistBlue {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_SplatteredSmallBlue : K8Gore_BloodSpotBlue {
   Translation "168:191=192:207","16:47=240:247"
   States {
@@ -7569,6 +7871,7 @@ Actor K8Gore_SplatteredLargeBlue : K8Gore_BloodSpotBlue {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_BootSmearerRedBlue : K8Gore_GrowingBloodPoolBlue {
   Translation "168:191=192:207","16:47=240:247"
   MONSTER
@@ -7889,7 +8192,8 @@ Actor K8Gore_BloodSpotTransient_Blue {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
-  Alpha 0.9
+  Renderstyle Translucent
+  Alpha 0.6
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatTransient_Blue
@@ -7906,6 +8210,10 @@ Actor K8Gore_BloodSpotTransient_Blue {
 
     SpawnNormally:
       //TNT1 A 0 A_SpawnItem("GibRemoving")
+      TNT1 A 0
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
       TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
@@ -8738,9 +9046,9 @@ Actor K8Gore_GrowingBloodPoolTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   height 1
   mass 1
   Health 600
-  //RenderStyle Translucent
   //StencilColor "49 00 00"
-  // Alpha 0.99
+  Renderstyle Translucent
+  Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -8755,6 +9063,60 @@ Actor K8Gore_GrowingBloodPoolTransient_Blue : K8Gore_BloodSpotTransient_Blue {
     Spawn:
       TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
+      TNT5 A 1
+      TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRedTransient_Blue",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+      TNT5 A 30
+      TNT5 BCD 5
+      TNT5 EFGHIJKLMNOP 5
+      TNT5 QRSTUVWXYZ 5
+
+    Live:
+      TNT5 Z 900 //duration
+      /*
+      TNT1 A 0 {
+        if (GetCVar("k8GoreBloodTransient") != 0) { return state("Splash"); }
+        return state("Live");
+      }
+      */
+      Loop
+
+    Splash:
+      BLOD A 0
+      Stop
+  }
+}
+
+
+Actor K8Gore_GrowingBloodPool2Transient_Blue : K8Gore_BloodSpotTransient_Blue {
+  Translation "168:191=192:207","16:47=240:247"
+  game Doom
+  radius 1
+  height 1
+  mass 1
+  Health 600
+  //StencilColor "49 00 00"
+  Renderstyle Translucent
+  Alpha 0.8
+  +NOTELEPORT
+  +CLIENTSIDEONLY
+  +FORCEXYBILLBOARD
+  +MOVEWITHSECTOR
+  +FLOORCLIP
+  +MISSILE
+  -DONTSPLASH
+  Scale 1.0
+  Decal K8GoreBloodSplatTransient_Blue
+
+  States {
+    Spawn:
+      TNT1 A 0
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_SetRollExt(0)
+      TNT1 A 0 A_SetYawExt(Random(0, 360))
+      TNT1 A 0 A_SetPitchExt(0)
       TNT5 A 1
       TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRedTransient_Blue",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
       TNT5 A 30
@@ -9101,6 +9463,7 @@ Actor K8Gore_BloodmistXXBigTransient_Blue : K8Gore_BloodmistTransient_Blue {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_SplatteredSmallTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   Translation "168:191=192:207","16:47=240:247"
   States {
@@ -9132,6 +9495,7 @@ Actor K8Gore_SplatteredLargeTransient_Blue : K8Gore_BloodSpotTransient_Blue {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_BootSmearerRedTransient_Blue : K8Gore_GrowingBloodPoolTransient_Blue {
   Translation "168:191=192:207","16:47=240:247"
   MONSTER
