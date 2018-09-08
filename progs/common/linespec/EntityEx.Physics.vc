@@ -870,6 +870,8 @@ final bool HitCeiling()
 {
   float vdot;
 
+  if (!Sector) return false;
+
   //  Trigger hit ceiling sector actions.
   if (Sector->ActionList && GetPlanePointZ(ref Sector->ceiling, Origin) ==
     CeilingZ)
