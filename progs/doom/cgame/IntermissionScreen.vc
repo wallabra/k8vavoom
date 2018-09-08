@@ -328,20 +328,28 @@ override void OnPostDraw()
 
 void IM_InitAnimatedBack()
 {
+  print("IM_InitAnimatedBack: interstate=%d", interstate);
   name BgPic = interstate ? ClGame.im.ExitPic : ClGame.im.EnterPic;
-  if (!BgPic)
-  {
+  print("  BgPic0: %n (%d); im_episode=%d; isdoom2=%s", BgPic, WadLumpPresent(BgPic), im_episode, (IsAnyDoom2 ? "tan" : "ona"));
+  if (!BgPic) {
     if (IsAnyDoom2) {
       BgPic = 'interpic';
     } else {
-      if (im_episode > 3)
-      {
+      if (im_episode > 3) {
         BgPic = 'interpic';
-      }
-      else
-      {
+      } else {
         BgPic = StrToName(va("$in_epi%d", im_episode));
       }
+    }
+    print("  BgPic1: %n (%d)", BgPic, WadLumpPresent(BgPic));
+    if (WadLumpPresent(BgPic) < 0) {
+      BgPic = 'interpic';
+      print("  BgPic2: %n", BgPic);
+    }
+  } else if (IsAnyDoom2) {
+    if (StrStartsWith(string(BgPic), "in_epi") || StrStartsWith(string(BgPic), "$in_epi")) {
+      print("  FORCED INTERPIC");
+      BgPic = 'interpic';
     }
   }
   Background.Init(BgPic, interstate ?
