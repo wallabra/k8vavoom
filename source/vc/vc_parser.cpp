@@ -1813,6 +1813,8 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
       P.Name = Lex.Name;
       P.Loc = Lex.Location;
       Lex.NextToken();
+    } else {
+      ParseError(Lex.Location, "Missing parameter name for parameter #%d", Func->NumParams+1);
     }
     if (Func->NumParams == VMethod::MAX_PARAMS) {
       ParseError(Lex.Location, "Method parameters overflow");
