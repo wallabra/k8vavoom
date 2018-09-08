@@ -1,10 +1,10 @@
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_TinyBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   scale 0.2
@@ -65,10 +65,10 @@ Actor K8Gore_Blood$(Color) Replaces Blood$(Color) {
 Actor K8Gore_Blood$(Color) {
 #endif
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Decal K8GoreBloodSplat$(Color)
   game Doom
@@ -112,10 +112,10 @@ Actor K8Gore_Blood$(Color) {
 
 Actor K8Gore_BloodHit$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   height 8
   radius 4
@@ -140,10 +140,10 @@ Actor K8Gore_BloodHit$(Color) {
 
 Actor K8Gore_FlyingBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   scale 0.5
@@ -220,10 +220,10 @@ Actor K8Gore_FlyingBlood$(Color) {
 
 Actor K8Gore_FlyingBloodMuchFaster$(Color) : K8Gore_FlyingBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   speed 8
 }
@@ -231,10 +231,10 @@ Actor K8Gore_FlyingBloodMuchFaster$(Color) : K8Gore_FlyingBlood$(Color) {
 
 Actor K8Gore_FlyingBloodLevel3$(Color) : K8Gore_FlyingBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Scale 1.0
   Speed 5 //7
@@ -244,10 +244,10 @@ Actor K8Gore_FlyingBloodLevel3$(Color) : K8Gore_FlyingBlood$(Color) {
 
 Actor K8Gore_BloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   radius 2
@@ -266,7 +266,12 @@ Actor K8Gore_BloodSpot$(Color) {
   -SOLID
   +THRUACTORS
   Renderstyle Translucent
-  Alpha 0.6
+#ifdef TRANSIENT
+  //Alpha 0.6
+  Alpha 0.5
+#else
+  Alpha 0.5
+#endif
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplat$(Color)
@@ -420,10 +425,10 @@ Actor K8Gore_BloodSpot$(Color) {
 
 Actor K8Gore_GiantBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Scale 1.1
 
@@ -439,10 +444,10 @@ Actor K8Gore_GiantBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
 
 Actor K8Gore_BigBloodSpot$(Color) : K8Gore_GiantBloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Scale 0.7
 }
@@ -450,10 +455,10 @@ Actor K8Gore_BigBloodSpot$(Color) : K8Gore_GiantBloodSpot$(Color) {
 
 Actor K8Gore_MediumBloodSpot$(Color) : K8Gore_GiantBloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   Scale 0.4
@@ -462,10 +467,10 @@ Actor K8Gore_MediumBloodSpot$(Color) : K8Gore_GiantBloodSpot$(Color) {
 
 Actor K8Gore_MediumBloodSpot2$(Color) : K8Gore_GiantBloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   Scale 0.4
@@ -474,10 +479,10 @@ Actor K8Gore_MediumBloodSpot2$(Color) : K8Gore_GiantBloodSpot$(Color) {
 
 Actor K8Gore_CeilBloodLauncher$(Color) : K8Gore_FlyingBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   +THRUACTORS
   +BLOODLESSIMPACT
@@ -514,10 +519,10 @@ Actor K8Gore_CeilBloodLauncher$(Color) : K8Gore_FlyingBlood$(Color) {
 
 Actor K8Gore_CeilBloodLauncherLong$(Color) : K8Gore_CeilBloodLauncher$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   States {
     Spawn:
@@ -531,10 +536,10 @@ Actor K8Gore_CeilBloodLauncherLong$(Color) : K8Gore_CeilBloodLauncher$(Color) {
 
 Actor K8Gore_DetectCeilBloodSimpler$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   scale 0.4
@@ -573,10 +578,10 @@ Actor K8Gore_DetectCeilBloodSimpler$(Color) {
 
 Actor K8Gore_DetectCeilBloodSimplerLarge$(Color) : K8Gore_DetectCeilBloodSimpler$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   States {
     Death:
@@ -590,10 +595,10 @@ Actor K8Gore_DetectCeilBloodSimplerLarge$(Color) : K8Gore_DetectCeilBloodSimpler
 // Checks if there is a ceiling above, and isn't hitting a monster.
 Actor K8Gore_CeilBloodChecker$(Color) : K8Gore_FlyingBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   +THRUACTORS
   +BLOODLESSIMPACT
@@ -630,10 +635,10 @@ Actor K8Gore_CeilBloodChecker$(Color) : K8Gore_FlyingBlood$(Color) {
 
 Actor K8Gore_CeilBloodCheckerLarge$(Color) : K8Gore_CeilBloodChecker$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   States {
     Death:
@@ -647,10 +652,10 @@ Actor K8Gore_CeilBloodCheckerLarge$(Color) : K8Gore_CeilBloodChecker$(Color) {
 // The Ceil Blood Spot.
 Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Projectile
   +SPAWNCEILING
@@ -684,10 +689,10 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
 
 Actor K8Gore_CeilBloodSpotLarge$(Color) : K8Gore_CeilBloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   States {
     Spawn:
@@ -719,10 +724,10 @@ Actor K8Gore_CeilBloodSpotLarge$(Color) : K8Gore_CeilBloodSpot$(Color) {
 
 Actor K8Gore_CeilBloodTinyBloodSpawner$(Color) : K8Gore_TinyBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   +NOGRAVITY
   +THRUACTORS
@@ -742,10 +747,10 @@ Actor K8Gore_CeilBloodTinyBloodSpawner$(Color) : K8Gore_TinyBlood$(Color) {
 
 Actor K8Gore_CeilBloodLargeBloodSpawner$(Color) : K8Gore_TinyBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   +NOGRAVITY
   +THRUACTORS
@@ -765,10 +770,10 @@ Actor K8Gore_CeilBloodLargeBloodSpawner$(Color) : K8Gore_TinyBlood$(Color) {
 
 Actor K8Gore_BloodDripingFromCeiling$(Color) : K8Gore_TinyBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   +DOOMBOUNCE
   +THRUACTORS
@@ -793,10 +798,10 @@ Actor K8Gore_BloodDripingFromCeiling$(Color) : K8Gore_TinyBlood$(Color) {
 
 Actor K8Gore_BloodDripingFromCeilingBig$(Color) : K8Gore_TinyBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   +DOOMBOUNCE
   BounceFactor 0.1
@@ -817,10 +822,10 @@ Actor K8Gore_BloodDripingFromCeilingBig$(Color) : K8Gore_TinyBlood$(Color) {
 
 Actor K8Gore_DripingBlood$(Color) : K8Gore_TinyBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   scale 0.3
 
@@ -846,10 +851,10 @@ Actor K8Gore_DripingBlood$(Color) : K8Gore_TinyBlood$(Color) {
 
 Actor K8Gore_DripingBloodLeavesPool$(Color) : K8Gore_TinyBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   scale 0.3
 
@@ -876,10 +881,10 @@ Actor K8Gore_DripingBloodLeavesPool$(Color) : K8Gore_TinyBlood$(Color) {
 
 Actor K8Gore_DripingBloodLeavesSmallPool$(Color) : K8Gore_DripingBloodLeavesPool$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   -DONTSPLASH
 
@@ -901,10 +906,10 @@ Actor K8Gore_DripingBloodLeavesSmallPool$(Color) : K8Gore_DripingBloodLeavesPool
 // Blood trails spawned by FlyingBlood
 Actor K8Gore_FlyingBloodTrail$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   scale 0.70
@@ -945,10 +950,10 @@ Actor K8Gore_FlyingBloodTrail$(Color) {
 
 Actor K8Gore_FlyingBloodTrail5$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Decal None
 }
@@ -956,10 +961,10 @@ Actor K8Gore_FlyingBloodTrail5$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 
 Actor K8Gore_BloodTr$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Speed 4
   alpha 0.7
@@ -977,10 +982,10 @@ Actor K8Gore_BloodTr$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 
 Actor K8Gore_BloodTr2$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Speed 4
   alpha 0.7
@@ -1004,10 +1009,10 @@ Actor K8Gore_BloodTr2$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 
 Actor K8Gore_BloodTr3$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Speed 6
   alpha 0.7
@@ -1027,10 +1032,10 @@ Actor K8Gore_BloodTr3$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 
 Actor K8Gore_BloodTr95$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Speed 4
   alpha 0.7
@@ -1054,10 +1059,10 @@ Actor K8Gore_BloodTr95$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 
 Actor K8Gore_BloodTr255$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Speed 2
   alpha 0.5
@@ -1082,10 +1087,10 @@ Actor K8Gore_BloodTr255$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 
 Actor K8Gore_BloodTr255G$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Speed 3
   alpha 0.6
@@ -1109,10 +1114,10 @@ Actor K8Gore_BloodTr255G$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 
 Actor K8Gore_FlyingBloodFaster$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Speed 2 //4
   Mass 5 //1
@@ -1130,10 +1135,10 @@ Actor K8Gore_FlyingBloodFaster$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 
 Actor K8Gore_FlyingBloodTrail16$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   renderstyle Translucent
   alpha 0.4
@@ -1142,10 +1147,10 @@ Actor K8Gore_FlyingBloodTrail16$(Color) : K8Gore_FlyingBloodTrail$(Color) {
 
 Actor K8Gore_WallRedBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   scale 0.6
@@ -1183,10 +1188,10 @@ Actor K8Gore_WallRedBlood$(Color) {
 
 Actor K8Gore_SuperWallRedBlood$(Color) : K8Gore_WallRedBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   speed 32
   Gravity 0.1
@@ -1203,10 +1208,10 @@ Actor K8Gore_SuperWallRedBlood$(Color) : K8Gore_WallRedBlood$(Color) {
 
 Actor K8Gore_ShortWallRedBlood$(Color) : K8Gore_WallRedBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   speed 2
   Gravity 0.1 //1
@@ -1232,10 +1237,10 @@ Actor K8Gore_ShortWallRedBlood$(Color) : K8Gore_WallRedBlood$(Color) {
 
 Actor K8Gore_BloodDying$(Color) : K8Gore_Blood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   States {
     Spawn:
@@ -1260,10 +1265,10 @@ Actor K8Gore_BloodDying$(Color) : K8Gore_Blood$(Color) {
 
 Actor K8Gore_MinuscleBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   radius 2
@@ -1344,10 +1349,10 @@ Actor K8Gore_MinuscleBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
 
 Actor K8Gore_MiniBloodDropEffect$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   +CLIENTSIDEONLY
   +NOBLOCKMAP
@@ -1365,10 +1370,10 @@ Actor K8Gore_MiniBloodDropEffect$(Color) {
 
 Actor K8Gore_GrowingBloodPool$(Color) : K8Gore_BloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   radius 1
@@ -1422,10 +1427,10 @@ Actor K8Gore_GrowingBloodPool$(Color) : K8Gore_BloodSpot$(Color) {
 
 Actor K8Gore_GrowingBloodPool2$(Color) : K8Gore_BloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   radius 1
@@ -1479,10 +1484,10 @@ Actor K8Gore_GrowingBloodPool2$(Color) : K8Gore_BloodSpot$(Color) {
 
 Actor K8Gore_GrowingBloodTrails$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   radius 1
@@ -1528,10 +1533,10 @@ Actor K8Gore_GrowingBloodTrails$(Color) {
 
 Actor K8Gore_GrowingSmallBloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   radius 1
@@ -1578,10 +1583,10 @@ Actor K8Gore_GrowingSmallBloodSpot$(Color) {
 
 Actor K8Gore_LiquidBlood$(Color) : K8Gore_FlyingBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   speed 3
   scale 0.2
@@ -1604,10 +1609,10 @@ Actor K8Gore_LiquidBlood$(Color) : K8Gore_FlyingBlood$(Color) {
 
 Actor K8Gore_LiquidBlood2$(Color) : K8Gore_FlyingBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   speed 4
   scale 0.4
@@ -1630,10 +1635,10 @@ Actor K8Gore_LiquidBlood2$(Color) : K8Gore_FlyingBlood$(Color) {
 
 Actor K8Gore_LiquidBlood3$(Color) : K8Gore_FlyingBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Speed 3
 
@@ -1660,10 +1665,10 @@ Actor K8Gore_LiquidBlood3$(Color) : K8Gore_FlyingBlood$(Color) {
 
 Actor K8Gore_LiquidBloodFast$(Color) : K8Gore_LiquidBlood2$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   speed 4 //8
 }
@@ -1671,10 +1676,10 @@ Actor K8Gore_LiquidBloodFast$(Color) : K8Gore_LiquidBlood2$(Color) {
 
 Actor K8Gore_LiquidBloodTrail$(Color) : K8Gore_FlyingBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   scale 0.4
   gravity 0.1 //0.4
@@ -1694,10 +1699,10 @@ Actor K8Gore_LiquidBloodTrail$(Color) : K8Gore_FlyingBlood$(Color) {
 
 Actor K8Gore_FlyingBloodFake$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   scale 0.5
@@ -1745,10 +1750,10 @@ Actor K8Gore_FlyingBloodFake$(Color) {
 
 Actor K8Gore_FlyingBloodFakeNoDecal$(Color) : K8Gore_FlyingBloodFake$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Decal None
 }
@@ -1756,10 +1761,10 @@ Actor K8Gore_FlyingBloodFakeNoDecal$(Color) : K8Gore_FlyingBloodFake$(Color) {
 
 Actor K8Gore_RegularBloodHitEffect$(Color) : K8Gore_FlyingBloodFake$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   scale 0.8
   Speed 1
@@ -1775,10 +1780,10 @@ Actor K8Gore_RegularBloodHitEffect$(Color) : K8Gore_FlyingBloodFake$(Color) {
 
 Actor K8Gore_Bloodmist$(Color) : K8Gore_FlyingBlood$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Decal K8GoreBloodSuper$(Color)
   +MISSILE
@@ -1822,10 +1827,10 @@ Actor K8Gore_Bloodmist$(Color) : K8Gore_FlyingBlood$(Color) {
 
 Actor K8Gore_BloodmistBig$(Color) : K8Gore_Bloodmist$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Scale 0.9
   Speed 4
@@ -1835,10 +1840,10 @@ Actor K8Gore_BloodmistBig$(Color) : K8Gore_Bloodmist$(Color) {
 
 Actor K8Gore_BloodmistSmall$(Color) : K8Gore_Bloodmist$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Scale 0.45
   Gravity 0.1 //0.8
@@ -1847,10 +1852,10 @@ Actor K8Gore_BloodmistSmall$(Color) : K8Gore_Bloodmist$(Color) {
 
 Actor K8Gore_BloodmistExtraBig$(Color) : K8Gore_Bloodmist$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Scale 1.4
 }
@@ -1858,10 +1863,10 @@ Actor K8Gore_BloodmistExtraBig$(Color) : K8Gore_Bloodmist$(Color) {
 
 Actor K8Gore_BloodmistLarge$(Color) : K8Gore_Bloodmist$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Scale 0.95
 }
@@ -1869,10 +1874,10 @@ Actor K8Gore_BloodmistLarge$(Color) : K8Gore_Bloodmist$(Color) {
 
 Actor K8Gore_BloodmistXXBig$(Color) : K8Gore_Bloodmist$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   Scale 2.2
   Gravity 0.1 //0.2
@@ -1882,10 +1887,10 @@ Actor K8Gore_BloodmistXXBig$(Color) : K8Gore_Bloodmist$(Color) {
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_SplatteredSmall$(Color) : K8Gore_BloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   States {
     Spawn:
@@ -1902,10 +1907,10 @@ Actor K8Gore_SplatteredSmall$(Color) : K8Gore_BloodSpot$(Color) {
 
 Actor K8Gore_SplatteredLarge$(Color) : K8Gore_BloodSpot$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   States {
     Spawn:
@@ -1924,10 +1929,10 @@ Actor K8Gore_SplatteredLarge$(Color) : K8Gore_BloodSpot$(Color) {
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_BootSmearerRed$(Color) : K8Gore_GrowingBloodPool$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   MONSTER
   -SOLID
@@ -1966,10 +1971,10 @@ Actor K8Gore_BootSmearerRed$(Color) : K8Gore_GrowingBloodPool$(Color) {
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_Blood_SplatterReplacer$(Color) : K8Gore_Blood Replaces BloodSplatter$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
 }
 #endif
@@ -1979,10 +1984,10 @@ Actor K8Gore_Blood_SplatterReplacer$(Color) : K8Gore_Blood Replaces BloodSplatte
 // underwater
 Actor K8Gore_Underblood1$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   game Doom
   scale 1.4
@@ -2029,10 +2034,10 @@ Actor K8Gore_Underblood1$(Color) {
 
 Actor K8Gore_Underblood2$(Color) : K8Gore_Underblood1$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   scale 0.7
   speed 0
@@ -2056,10 +2061,10 @@ Actor K8Gore_Underblood2$(Color) : K8Gore_Underblood1$(Color) {
 
 Actor K8Gore_Underblood3$(Color) : K8Gore_Underblood1$(Color) {
 #ifdef BLUE
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 #endif
 #ifdef GREEN
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 #endif
   scale 2.2
   speed 2

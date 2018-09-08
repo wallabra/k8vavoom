@@ -194,7 +194,7 @@ Actor K8Gore_BloodSpot {
   -SOLID
   +THRUACTORS
   Renderstyle Translucent
-  Alpha 0.6
+  Alpha 0.5
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplat
@@ -1799,7 +1799,8 @@ Actor K8Gore_BloodSpotTransient {
   -SOLID
   +THRUACTORS
   Renderstyle Translucent
-  Alpha 0.6
+  //Alpha 0.6
+  Alpha 0.5
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatTransient
@@ -3204,7 +3205,7 @@ Actor K8Gore_Underblood3Transient : K8Gore_Underblood1Transient {
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_TinyBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.2
   speed 7
@@ -3249,7 +3250,7 @@ Actor K8Gore_TinyBloodGreen {
 
 
 Actor K8Gore_BloodGreen Replaces BloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal K8GoreBloodSplatGreen
   game Doom
   +FORCEXYBILLBOARD
@@ -3284,7 +3285,7 @@ Actor K8Gore_BloodGreen Replaces BloodGreen {
 
 
 Actor K8Gore_BloodHitGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   height 8
   radius 4
   +NOBLOCKMAP
@@ -3303,7 +3304,7 @@ Actor K8Gore_BloodHitGreen {
 
 
 Actor K8Gore_FlyingBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.5
   speed 4
@@ -3370,13 +3371,13 @@ Actor K8Gore_FlyingBloodGreen {
 
 
 Actor K8Gore_FlyingBloodMuchFasterGreen : K8Gore_FlyingBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   speed 8
 }
 
 
 Actor K8Gore_FlyingBloodLevel3Green : K8Gore_FlyingBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 1.0
   Speed 5 //7
   Mass 5 //1
@@ -3384,7 +3385,7 @@ Actor K8Gore_FlyingBloodLevel3Green : K8Gore_FlyingBloodGreen {
 
 
 Actor K8Gore_BloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 2
   height 2
@@ -3402,7 +3403,7 @@ Actor K8Gore_BloodSpotGreen {
   -SOLID
   +THRUACTORS
   Renderstyle Translucent
-  Alpha 0.6
+  Alpha 0.5
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatGreen
@@ -3535,7 +3536,7 @@ Actor K8Gore_BloodSpotGreen {
 
 
 Actor K8Gore_GiantBloodSpotGreen : K8Gore_BloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 1.1
 
   States {
@@ -3549,27 +3550,27 @@ Actor K8Gore_GiantBloodSpotGreen : K8Gore_BloodSpotGreen {
 
 
 Actor K8Gore_BigBloodSpotGreen : K8Gore_GiantBloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 0.7
 }
 
 
 Actor K8Gore_MediumBloodSpotGreen : K8Gore_GiantBloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   Scale 0.4
 }
 
 
 Actor K8Gore_MediumBloodSpot2Green : K8Gore_GiantBloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   Scale 0.4
 }
 
 
 Actor K8Gore_CeilBloodLauncherGreen : K8Gore_FlyingBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +THRUACTORS
   +BLOODLESSIMPACT
   -DOOMBOUNCE
@@ -3604,7 +3605,7 @@ Actor K8Gore_CeilBloodLauncherGreen : K8Gore_FlyingBloodGreen {
 
 
 Actor K8Gore_CeilBloodLauncherLongGreen : K8Gore_CeilBloodLauncherGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Spawn:
       TNT1 A 0
@@ -3616,7 +3617,7 @@ Actor K8Gore_CeilBloodLauncherLongGreen : K8Gore_CeilBloodLauncherGreen {
 
 
 Actor K8Gore_DetectCeilBloodSimplerGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.4
   speed 0
@@ -3653,7 +3654,7 @@ Actor K8Gore_DetectCeilBloodSimplerGreen {
 
 
 Actor K8Gore_DetectCeilBloodSimplerLargeGreen : K8Gore_DetectCeilBloodSimplerGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Death:
       TNT1 A 0
@@ -3665,7 +3666,7 @@ Actor K8Gore_DetectCeilBloodSimplerLargeGreen : K8Gore_DetectCeilBloodSimplerGre
 
 // Checks if there is a ceiling above, and isn't hitting a monster.
 Actor K8Gore_CeilBloodCheckerGreen : K8Gore_FlyingBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +THRUACTORS
   +BLOODLESSIMPACT
   damagetype Blood
@@ -3700,7 +3701,7 @@ Actor K8Gore_CeilBloodCheckerGreen : K8Gore_FlyingBloodGreen {
 
 
 Actor K8Gore_CeilBloodCheckerLargeGreen : K8Gore_CeilBloodCheckerGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Death:
       TNT1 A 1 A_SpawnItem("K8Gore_CeilBloodSpotLargeGreen",0,0,0,1)
@@ -3712,7 +3713,7 @@ Actor K8Gore_CeilBloodCheckerLargeGreen : K8Gore_CeilBloodCheckerGreen {
 
 // The Ceil Blood Spot.
 Actor K8Gore_CeilBloodSpotGreen : K8Gore_BloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Projectile
   +SPAWNCEILING
   +CEILINGHUGGER
@@ -3742,7 +3743,7 @@ Actor K8Gore_CeilBloodSpotGreen : K8Gore_BloodSpotGreen {
 
 
 Actor K8Gore_CeilBloodSpotLargeGreen : K8Gore_CeilBloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Spawn:
       TNT1 A 0
@@ -3772,7 +3773,7 @@ Actor K8Gore_CeilBloodSpotLargeGreen : K8Gore_CeilBloodSpotGreen {
 
 
 Actor K8Gore_CeilBloodTinyBloodSpawnerGreen : K8Gore_TinyBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +NOGRAVITY
   +THRUACTORS
   +NOCLIP
@@ -3790,7 +3791,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawnerGreen : K8Gore_TinyBloodGreen {
 
 
 Actor K8Gore_CeilBloodLargeBloodSpawnerGreen : K8Gore_TinyBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +NOGRAVITY
   +THRUACTORS
   +NOCLIP
@@ -3808,7 +3809,7 @@ Actor K8Gore_CeilBloodLargeBloodSpawnerGreen : K8Gore_TinyBloodGreen {
 
 
 Actor K8Gore_BloodDripingFromCeilingGreen : K8Gore_TinyBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +DOOMBOUNCE
   +THRUACTORS
   +CLIENTSIDEONLY
@@ -3827,7 +3828,7 @@ Actor K8Gore_BloodDripingFromCeilingGreen : K8Gore_TinyBloodGreen {
 
 
 Actor K8Gore_BloodDripingFromCeilingBigGreen : K8Gore_TinyBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +DOOMBOUNCE
   BounceFactor 0.1
   XScale 0.4
@@ -3846,7 +3847,7 @@ Actor K8Gore_BloodDripingFromCeilingBigGreen : K8Gore_TinyBloodGreen {
 
 
 Actor K8Gore_DripingBloodGreen : K8Gore_TinyBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   scale 0.3
 
   States {
@@ -3870,7 +3871,7 @@ Actor K8Gore_DripingBloodGreen : K8Gore_TinyBloodGreen {
 
 
 Actor K8Gore_DripingBloodLeavesPoolGreen : K8Gore_TinyBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   scale 0.3
 
   States {
@@ -3895,7 +3896,7 @@ Actor K8Gore_DripingBloodLeavesPoolGreen : K8Gore_TinyBloodGreen {
 
 
 Actor K8Gore_DripingBloodLeavesSmallPoolGreen : K8Gore_DripingBloodLeavesPoolGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   -DONTSPLASH
 
   States {
@@ -3911,7 +3912,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolGreen : K8Gore_DripingBloodLeavesPoolGre
 
 // Blood trails spawned by FlyingBlood
 Actor K8Gore_FlyingBloodTrailGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.70
   mass 1
@@ -3950,13 +3951,13 @@ Actor K8Gore_FlyingBloodTrailGreen {
 
 
 Actor K8Gore_FlyingBloodTrail5Green : K8Gore_FlyingBloodTrailGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal None
 }
 
 
 Actor K8Gore_BloodTrGreen : K8Gore_FlyingBloodTrailGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 4
   alpha 0.7
   scale 1.1
@@ -3972,7 +3973,7 @@ Actor K8Gore_BloodTrGreen : K8Gore_FlyingBloodTrailGreen {
 
 
 Actor K8Gore_BloodTr2Green : K8Gore_FlyingBloodTrailGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 4
   alpha 0.7
   scale 1.1
@@ -3994,7 +3995,7 @@ Actor K8Gore_BloodTr2Green : K8Gore_FlyingBloodTrailGreen {
 
 
 Actor K8Gore_BloodTr3Green : K8Gore_FlyingBloodTrailGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 6
   alpha 0.7
   scale 1.1
@@ -4012,7 +4013,7 @@ Actor K8Gore_BloodTr3Green : K8Gore_FlyingBloodTrailGreen {
 
 
 Actor K8Gore_BloodTr95Green : K8Gore_FlyingBloodTrailGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 4
   alpha 0.7
   scale 1.1
@@ -4034,7 +4035,7 @@ Actor K8Gore_BloodTr95Green : K8Gore_FlyingBloodTrailGreen {
 
 
 Actor K8Gore_BloodTr255Green : K8Gore_FlyingBloodTrailGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 2
   alpha 0.5
   scale 1.0
@@ -4057,7 +4058,7 @@ Actor K8Gore_BloodTr255Green : K8Gore_FlyingBloodTrailGreen {
 
 
 Actor K8Gore_BloodTr255GGreen : K8Gore_FlyingBloodTrailGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 3
   alpha 0.6
   scale 0.7
@@ -4079,7 +4080,7 @@ Actor K8Gore_BloodTr255GGreen : K8Gore_FlyingBloodTrailGreen {
 
 
 Actor K8Gore_FlyingBloodFasterGreen : K8Gore_FlyingBloodTrailGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 2 //4
   Mass 5 //1
 
@@ -4095,14 +4096,14 @@ Actor K8Gore_FlyingBloodFasterGreen : K8Gore_FlyingBloodTrailGreen {
 
 
 Actor K8Gore_FlyingBloodTrail16Green : K8Gore_FlyingBloodTrailGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   renderstyle Translucent
   alpha 0.4
 }
 
 
 Actor K8Gore_WallRedBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.6
   speed 7
@@ -4138,7 +4139,7 @@ Actor K8Gore_WallRedBloodGreen {
 
 
 Actor K8Gore_SuperWallRedBloodGreen : K8Gore_WallRedBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   speed 32
   Gravity 0.1
 
@@ -4153,7 +4154,7 @@ Actor K8Gore_SuperWallRedBloodGreen : K8Gore_WallRedBloodGreen {
 
 
 Actor K8Gore_ShortWallRedBloodGreen : K8Gore_WallRedBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   speed 2
   Gravity 0.1 //1
   Radius 24
@@ -4177,7 +4178,7 @@ Actor K8Gore_ShortWallRedBloodGreen : K8Gore_WallRedBloodGreen {
 
 
 Actor K8Gore_BloodDyingGreen : K8Gore_BloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Spawn:
       TNT1 A 0
@@ -4200,7 +4201,7 @@ Actor K8Gore_BloodDyingGreen : K8Gore_BloodGreen {
 
 
 Actor K8Gore_MinuscleBloodSpotGreen : K8Gore_BloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 2
   height 2
@@ -4279,7 +4280,7 @@ Actor K8Gore_MinuscleBloodSpotGreen : K8Gore_BloodSpotGreen {
 
 
 Actor K8Gore_MiniBloodDropEffectGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +CLIENTSIDEONLY
   +NOBLOCKMAP
   +FLOORCLIP
@@ -4295,7 +4296,7 @@ Actor K8Gore_MiniBloodDropEffectGreen {
 
 
 Actor K8Gore_GrowingBloodPoolGreen : K8Gore_BloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 1
   height 1
@@ -4347,7 +4348,7 @@ Actor K8Gore_GrowingBloodPoolGreen : K8Gore_BloodSpotGreen {
 
 
 Actor K8Gore_GrowingBloodPool2Green : K8Gore_BloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 1
   height 1
@@ -4399,7 +4400,7 @@ Actor K8Gore_GrowingBloodPool2Green : K8Gore_BloodSpotGreen {
 
 
 Actor K8Gore_GrowingBloodTrailsGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 1
   height 1
@@ -4443,7 +4444,7 @@ Actor K8Gore_GrowingBloodTrailsGreen {
 
 
 Actor K8Gore_GrowingSmallBloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 1
   height 1
@@ -4488,7 +4489,7 @@ Actor K8Gore_GrowingSmallBloodSpotGreen {
 
 
 Actor K8Gore_LiquidBloodGreen : K8Gore_FlyingBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   speed 3
   scale 0.2
   gravity 0.1 //0.6
@@ -4509,7 +4510,7 @@ Actor K8Gore_LiquidBloodGreen : K8Gore_FlyingBloodGreen {
 
 
 Actor K8Gore_LiquidBlood2Green : K8Gore_FlyingBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   speed 4
   scale 0.4
   gravity 0.1 //0.6
@@ -4530,7 +4531,7 @@ Actor K8Gore_LiquidBlood2Green : K8Gore_FlyingBloodGreen {
 
 
 Actor K8Gore_LiquidBlood3Green : K8Gore_FlyingBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 3
 
   States {
@@ -4555,13 +4556,13 @@ Actor K8Gore_LiquidBlood3Green : K8Gore_FlyingBloodGreen {
 
 
 Actor K8Gore_LiquidBloodFastGreen : K8Gore_LiquidBlood2Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   speed 4 //8
 }
 
 
 Actor K8Gore_LiquidBloodTrailGreen : K8Gore_FlyingBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   scale 0.4
   gravity 0.1 //0.4
 
@@ -4579,7 +4580,7 @@ Actor K8Gore_LiquidBloodTrailGreen : K8Gore_FlyingBloodGreen {
 
 
 Actor K8Gore_FlyingBloodFakeGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.5
   speed 3
@@ -4625,13 +4626,13 @@ Actor K8Gore_FlyingBloodFakeGreen {
 
 
 Actor K8Gore_FlyingBloodFakeNoDecalGreen : K8Gore_FlyingBloodFakeGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal None
 }
 
 
 Actor K8Gore_RegularBloodHitEffectGreen : K8Gore_FlyingBloodFakeGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   scale 0.8
   Speed 1
 
@@ -4645,7 +4646,7 @@ Actor K8Gore_RegularBloodHitEffectGreen : K8Gore_FlyingBloodFakeGreen {
 
 
 Actor K8Gore_BloodmistGreen : K8Gore_FlyingBloodGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal K8GoreBloodSuperGreen
   +MISSILE
   +NOTELEPORT
@@ -4687,7 +4688,7 @@ Actor K8Gore_BloodmistGreen : K8Gore_FlyingBloodGreen {
 
 
 Actor K8Gore_BloodmistBigGreen : K8Gore_BloodmistGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 0.9
   Speed 4
   Gravity 0.1 //0.4
@@ -4695,26 +4696,26 @@ Actor K8Gore_BloodmistBigGreen : K8Gore_BloodmistGreen {
 
 
 Actor K8Gore_BloodmistSmallGreen : K8Gore_BloodmistGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 0.45
   Gravity 0.1 //0.8
 }
 
 
 Actor K8Gore_BloodmistExtraBigGreen : K8Gore_BloodmistGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 1.4
 }
 
 
 Actor K8Gore_BloodmistLargeGreen : K8Gore_BloodmistGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 0.95
 }
 
 
 Actor K8Gore_BloodmistXXBigGreen : K8Gore_BloodmistGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 2.2
   Gravity 0.1 //0.2
 }
@@ -4722,7 +4723,7 @@ Actor K8Gore_BloodmistXXBigGreen : K8Gore_BloodmistGreen {
 
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_SplatteredSmallGreen : K8Gore_BloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Spawn:
       TNT1 A 0
@@ -4737,7 +4738,7 @@ Actor K8Gore_SplatteredSmallGreen : K8Gore_BloodSpotGreen {
 
 
 Actor K8Gore_SplatteredLargeGreen : K8Gore_BloodSpotGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Spawn:
       TNT1 A 0
@@ -4754,7 +4755,7 @@ Actor K8Gore_SplatteredLargeGreen : K8Gore_BloodSpotGreen {
 
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_BootSmearerRedGreen : K8Gore_GrowingBloodPoolGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   MONSTER
   -SOLID
   +NOCLIP
@@ -4790,14 +4791,14 @@ Actor K8Gore_BootSmearerRedGreen : K8Gore_GrowingBloodPoolGreen {
 
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_Blood_SplatterReplacerGreen : K8Gore_Blood Replaces BloodSplatterGreen {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 // underwater
 Actor K8Gore_Underblood1Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 1.4
   speed 1
@@ -4842,7 +4843,7 @@ Actor K8Gore_Underblood1Green {
 
 
 Actor K8Gore_Underblood2Green : K8Gore_Underblood1Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   scale 0.7
   speed 0
 
@@ -4864,7 +4865,7 @@ Actor K8Gore_Underblood2Green : K8Gore_Underblood1Green {
 
 
 Actor K8Gore_Underblood3Green : K8Gore_Underblood1Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   scale 2.2
   speed 2
   Alpha 0.3
@@ -4877,7 +4878,7 @@ Actor K8Gore_Underblood3Green : K8Gore_Underblood1Green {
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_TinyBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.2
   speed 7
@@ -4923,7 +4924,7 @@ Actor K8Gore_TinyBloodTransient_Green {
 
 
 Actor K8Gore_BloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal K8GoreBloodSplatTransient_Green
   game Doom
   +FORCEXYBILLBOARD
@@ -4956,7 +4957,7 @@ Actor K8Gore_BloodTransient_Green {
 
 
 Actor K8Gore_BloodHitTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   height 8
   radius 4
   +NOBLOCKMAP
@@ -4975,7 +4976,7 @@ Actor K8Gore_BloodHitTransient_Green {
 
 
 Actor K8Gore_FlyingBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.5
   speed 4
@@ -5042,13 +5043,13 @@ Actor K8Gore_FlyingBloodTransient_Green {
 
 
 Actor K8Gore_FlyingBloodMuchFasterTransient_Green : K8Gore_FlyingBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   speed 8
 }
 
 
 Actor K8Gore_FlyingBloodLevel3Transient_Green : K8Gore_FlyingBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 1.0
   Speed 5 //7
   Mass 5 //1
@@ -5056,7 +5057,7 @@ Actor K8Gore_FlyingBloodLevel3Transient_Green : K8Gore_FlyingBloodTransient_Gree
 
 
 Actor K8Gore_BloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 2
   height 2
@@ -5074,7 +5075,8 @@ Actor K8Gore_BloodSpotTransient_Green {
   -SOLID
   +THRUACTORS
   Renderstyle Translucent
-  Alpha 0.6
+  //Alpha 0.6
+  Alpha 0.5
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatTransient_Green
@@ -5207,7 +5209,7 @@ Actor K8Gore_BloodSpotTransient_Green {
 
 
 Actor K8Gore_GiantBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 1.1
 
   States {
@@ -5221,27 +5223,27 @@ Actor K8Gore_GiantBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green {
 
 
 Actor K8Gore_BigBloodSpotTransient_Green : K8Gore_GiantBloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 0.7
 }
 
 
 Actor K8Gore_MediumBloodSpotTransient_Green : K8Gore_GiantBloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   Scale 0.4
 }
 
 
 Actor K8Gore_MediumBloodSpot2Transient_Green : K8Gore_GiantBloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   Scale 0.4
 }
 
 
 Actor K8Gore_CeilBloodLauncherTransient_Green : K8Gore_FlyingBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +THRUACTORS
   +BLOODLESSIMPACT
   -DOOMBOUNCE
@@ -5276,7 +5278,7 @@ Actor K8Gore_CeilBloodLauncherTransient_Green : K8Gore_FlyingBloodTransient_Gree
 
 
 Actor K8Gore_CeilBloodLauncherLongTransient_Green : K8Gore_CeilBloodLauncherTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Spawn:
       TNT1 A 0
@@ -5288,7 +5290,7 @@ Actor K8Gore_CeilBloodLauncherLongTransient_Green : K8Gore_CeilBloodLauncherTran
 
 
 Actor K8Gore_DetectCeilBloodSimplerTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.4
   speed 0
@@ -5325,7 +5327,7 @@ Actor K8Gore_DetectCeilBloodSimplerTransient_Green {
 
 
 Actor K8Gore_DetectCeilBloodSimplerLargeTransient_Green : K8Gore_DetectCeilBloodSimplerTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Death:
       TNT1 A 0
@@ -5337,7 +5339,7 @@ Actor K8Gore_DetectCeilBloodSimplerLargeTransient_Green : K8Gore_DetectCeilBlood
 
 // Checks if there is a ceiling above, and isn't hitting a monster.
 Actor K8Gore_CeilBloodCheckerTransient_Green : K8Gore_FlyingBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +THRUACTORS
   +BLOODLESSIMPACT
   damagetype Blood
@@ -5372,7 +5374,7 @@ Actor K8Gore_CeilBloodCheckerTransient_Green : K8Gore_FlyingBloodTransient_Green
 
 
 Actor K8Gore_CeilBloodCheckerLargeTransient_Green : K8Gore_CeilBloodCheckerTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Death:
       TNT1 A 1 A_SpawnItem("K8Gore_CeilBloodSpotLargeTransient_Green",0,0,0,1)
@@ -5384,7 +5386,7 @@ Actor K8Gore_CeilBloodCheckerLargeTransient_Green : K8Gore_CeilBloodCheckerTrans
 
 // The Ceil Blood Spot.
 Actor K8Gore_CeilBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Projectile
   +SPAWNCEILING
   +CEILINGHUGGER
@@ -5409,7 +5411,7 @@ Actor K8Gore_CeilBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green {
 
 
 Actor K8Gore_CeilBloodSpotLargeTransient_Green : K8Gore_CeilBloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Spawn:
       TNT1 A 0
@@ -5439,7 +5441,7 @@ Actor K8Gore_CeilBloodSpotLargeTransient_Green : K8Gore_CeilBloodSpotTransient_G
 
 
 Actor K8Gore_CeilBloodTinyBloodSpawnerTransient_Green : K8Gore_TinyBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +NOGRAVITY
   +THRUACTORS
   +NOCLIP
@@ -5457,7 +5459,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawnerTransient_Green : K8Gore_TinyBloodTransien
 
 
 Actor K8Gore_CeilBloodLargeBloodSpawnerTransient_Green : K8Gore_TinyBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +NOGRAVITY
   +THRUACTORS
   +NOCLIP
@@ -5475,7 +5477,7 @@ Actor K8Gore_CeilBloodLargeBloodSpawnerTransient_Green : K8Gore_TinyBloodTransie
 
 
 Actor K8Gore_BloodDripingFromCeilingTransient_Green : K8Gore_TinyBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +DOOMBOUNCE
   +THRUACTORS
   +CLIENTSIDEONLY
@@ -5494,7 +5496,7 @@ Actor K8Gore_BloodDripingFromCeilingTransient_Green : K8Gore_TinyBloodTransient_
 
 
 Actor K8Gore_BloodDripingFromCeilingBigTransient_Green : K8Gore_TinyBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +DOOMBOUNCE
   BounceFactor 0.1
   XScale 0.4
@@ -5513,7 +5515,7 @@ Actor K8Gore_BloodDripingFromCeilingBigTransient_Green : K8Gore_TinyBloodTransie
 
 
 Actor K8Gore_DripingBloodTransient_Green : K8Gore_TinyBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   scale 0.3
 
   States {
@@ -5537,7 +5539,7 @@ Actor K8Gore_DripingBloodTransient_Green : K8Gore_TinyBloodTransient_Green {
 
 
 Actor K8Gore_DripingBloodLeavesPoolTransient_Green : K8Gore_TinyBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   scale 0.3
 
   States {
@@ -5562,7 +5564,7 @@ Actor K8Gore_DripingBloodLeavesPoolTransient_Green : K8Gore_TinyBloodTransient_G
 
 
 Actor K8Gore_DripingBloodLeavesSmallPoolTransient_Green : K8Gore_DripingBloodLeavesPoolTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   -DONTSPLASH
 
   States {
@@ -5578,7 +5580,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient_Green : K8Gore_DripingBloodLea
 
 // Blood trails spawned by FlyingBlood
 Actor K8Gore_FlyingBloodTrailTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.70
   mass 1
@@ -5617,13 +5619,13 @@ Actor K8Gore_FlyingBloodTrailTransient_Green {
 
 
 Actor K8Gore_FlyingBloodTrail5Transient_Green : K8Gore_FlyingBloodTrailTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal None
 }
 
 
 Actor K8Gore_BloodTrTransient_Green : K8Gore_FlyingBloodTrailTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 4
   alpha 0.7
   scale 1.1
@@ -5639,7 +5641,7 @@ Actor K8Gore_BloodTrTransient_Green : K8Gore_FlyingBloodTrailTransient_Green {
 
 
 Actor K8Gore_BloodTr2Transient_Green : K8Gore_FlyingBloodTrailTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 4
   alpha 0.7
   scale 1.1
@@ -5661,7 +5663,7 @@ Actor K8Gore_BloodTr2Transient_Green : K8Gore_FlyingBloodTrailTransient_Green {
 
 
 Actor K8Gore_BloodTr3Transient_Green : K8Gore_FlyingBloodTrailTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 6
   alpha 0.7
   scale 1.1
@@ -5679,7 +5681,7 @@ Actor K8Gore_BloodTr3Transient_Green : K8Gore_FlyingBloodTrailTransient_Green {
 
 
 Actor K8Gore_BloodTr95Transient_Green : K8Gore_FlyingBloodTrailTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 4
   alpha 0.7
   scale 1.1
@@ -5701,7 +5703,7 @@ Actor K8Gore_BloodTr95Transient_Green : K8Gore_FlyingBloodTrailTransient_Green {
 
 
 Actor K8Gore_BloodTr255Transient_Green : K8Gore_FlyingBloodTrailTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 2
   alpha 0.5
   scale 1.0
@@ -5724,7 +5726,7 @@ Actor K8Gore_BloodTr255Transient_Green : K8Gore_FlyingBloodTrailTransient_Green 
 
 
 Actor K8Gore_BloodTr255GTransient_Green : K8Gore_FlyingBloodTrailTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 3
   alpha 0.6
   scale 0.7
@@ -5746,7 +5748,7 @@ Actor K8Gore_BloodTr255GTransient_Green : K8Gore_FlyingBloodTrailTransient_Green
 
 
 Actor K8Gore_FlyingBloodFasterTransient_Green : K8Gore_FlyingBloodTrailTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 2 //4
   Mass 5 //1
 
@@ -5762,14 +5764,14 @@ Actor K8Gore_FlyingBloodFasterTransient_Green : K8Gore_FlyingBloodTrailTransient
 
 
 Actor K8Gore_FlyingBloodTrail16Transient_Green : K8Gore_FlyingBloodTrailTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   renderstyle Translucent
   alpha 0.4
 }
 
 
 Actor K8Gore_WallRedBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.6
   speed 7
@@ -5805,7 +5807,7 @@ Actor K8Gore_WallRedBloodTransient_Green {
 
 
 Actor K8Gore_SuperWallRedBloodTransient_Green : K8Gore_WallRedBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   speed 32
   Gravity 0.1
 
@@ -5820,7 +5822,7 @@ Actor K8Gore_SuperWallRedBloodTransient_Green : K8Gore_WallRedBloodTransient_Gre
 
 
 Actor K8Gore_ShortWallRedBloodTransient_Green : K8Gore_WallRedBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   speed 2
   Gravity 0.1 //1
   Radius 24
@@ -5844,7 +5846,7 @@ Actor K8Gore_ShortWallRedBloodTransient_Green : K8Gore_WallRedBloodTransient_Gre
 
 
 Actor K8Gore_BloodDyingTransient_Green : K8Gore_BloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Spawn:
       TNT1 A 0
@@ -5867,7 +5869,7 @@ Actor K8Gore_BloodDyingTransient_Green : K8Gore_BloodTransient_Green {
 
 
 Actor K8Gore_MinuscleBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 2
   height 2
@@ -5946,7 +5948,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green 
 
 
 Actor K8Gore_MiniBloodDropEffectTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   +CLIENTSIDEONLY
   +NOBLOCKMAP
   +FLOORCLIP
@@ -5962,7 +5964,7 @@ Actor K8Gore_MiniBloodDropEffectTransient_Green {
 
 
 Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 1
   height 1
@@ -6014,7 +6016,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
 
 
 Actor K8Gore_GrowingBloodPool2Transient_Green : K8Gore_BloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 1
   height 1
@@ -6066,7 +6068,7 @@ Actor K8Gore_GrowingBloodPool2Transient_Green : K8Gore_BloodSpotTransient_Green 
 
 
 Actor K8Gore_GrowingBloodTrailsTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 1
   height 1
@@ -6110,7 +6112,7 @@ Actor K8Gore_GrowingBloodTrailsTransient_Green {
 
 
 Actor K8Gore_GrowingSmallBloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 1
   height 1
@@ -6155,7 +6157,7 @@ Actor K8Gore_GrowingSmallBloodSpotTransient_Green {
 
 
 Actor K8Gore_LiquidBloodTransient_Green : K8Gore_FlyingBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   speed 3
   scale 0.2
   gravity 0.1 //0.6
@@ -6176,7 +6178,7 @@ Actor K8Gore_LiquidBloodTransient_Green : K8Gore_FlyingBloodTransient_Green {
 
 
 Actor K8Gore_LiquidBlood2Transient_Green : K8Gore_FlyingBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   speed 4
   scale 0.4
   gravity 0.1 //0.6
@@ -6197,7 +6199,7 @@ Actor K8Gore_LiquidBlood2Transient_Green : K8Gore_FlyingBloodTransient_Green {
 
 
 Actor K8Gore_LiquidBlood3Transient_Green : K8Gore_FlyingBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Speed 3
 
   States {
@@ -6222,13 +6224,13 @@ Actor K8Gore_LiquidBlood3Transient_Green : K8Gore_FlyingBloodTransient_Green {
 
 
 Actor K8Gore_LiquidBloodFastTransient_Green : K8Gore_LiquidBlood2Transient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   speed 4 //8
 }
 
 
 Actor K8Gore_LiquidBloodTrailTransient_Green : K8Gore_FlyingBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   scale 0.4
   gravity 0.1 //0.4
 
@@ -6246,7 +6248,7 @@ Actor K8Gore_LiquidBloodTrailTransient_Green : K8Gore_FlyingBloodTransient_Green
 
 
 Actor K8Gore_FlyingBloodFakeTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.5
   speed 3
@@ -6292,13 +6294,13 @@ Actor K8Gore_FlyingBloodFakeTransient_Green {
 
 
 Actor K8Gore_FlyingBloodFakeNoDecalTransient_Green : K8Gore_FlyingBloodFakeTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal None
 }
 
 
 Actor K8Gore_RegularBloodHitEffectTransient_Green : K8Gore_FlyingBloodFakeTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   scale 0.8
   Speed 1
 
@@ -6312,7 +6314,7 @@ Actor K8Gore_RegularBloodHitEffectTransient_Green : K8Gore_FlyingBloodFakeTransi
 
 
 Actor K8Gore_BloodmistTransient_Green : K8Gore_FlyingBloodTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal K8GoreBloodSuperTransient_Green
   +MISSILE
   +NOTELEPORT
@@ -6354,7 +6356,7 @@ Actor K8Gore_BloodmistTransient_Green : K8Gore_FlyingBloodTransient_Green {
 
 
 Actor K8Gore_BloodmistBigTransient_Green : K8Gore_BloodmistTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 0.9
   Speed 4
   Gravity 0.1 //0.4
@@ -6362,26 +6364,26 @@ Actor K8Gore_BloodmistBigTransient_Green : K8Gore_BloodmistTransient_Green {
 
 
 Actor K8Gore_BloodmistSmallTransient_Green : K8Gore_BloodmistTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 0.45
   Gravity 0.1 //0.8
 }
 
 
 Actor K8Gore_BloodmistExtraBigTransient_Green : K8Gore_BloodmistTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 1.4
 }
 
 
 Actor K8Gore_BloodmistLargeTransient_Green : K8Gore_BloodmistTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 0.95
 }
 
 
 Actor K8Gore_BloodmistXXBigTransient_Green : K8Gore_BloodmistTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 2.2
   Gravity 0.1 //0.2
 }
@@ -6389,7 +6391,7 @@ Actor K8Gore_BloodmistXXBigTransient_Green : K8Gore_BloodmistTransient_Green {
 
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_SplatteredSmallTransient_Green : K8Gore_BloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Spawn:
       TNT1 A 0
@@ -6404,7 +6406,7 @@ Actor K8Gore_SplatteredSmallTransient_Green : K8Gore_BloodSpotTransient_Green {
 
 
 Actor K8Gore_SplatteredLargeTransient_Green : K8Gore_BloodSpotTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   States {
     Spawn:
       TNT1 A 0
@@ -6421,7 +6423,7 @@ Actor K8Gore_SplatteredLargeTransient_Green : K8Gore_BloodSpotTransient_Green {
 
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_BootSmearerRedTransient_Green : K8Gore_GrowingBloodPoolTransient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   MONSTER
   -SOLID
   +NOCLIP
@@ -6458,7 +6460,7 @@ Actor K8Gore_BootSmearerRedTransient_Green : K8Gore_GrowingBloodPoolTransient_Gr
 // ////////////////////////////////////////////////////////////////////////// //
 // underwater
 Actor K8Gore_Underblood1Transient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 1.4
   speed 1
@@ -6503,7 +6505,7 @@ Actor K8Gore_Underblood1Transient_Green {
 
 
 Actor K8Gore_Underblood2Transient_Green : K8Gore_Underblood1Transient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   scale 0.7
   speed 0
 
@@ -6525,7 +6527,7 @@ Actor K8Gore_Underblood2Transient_Green : K8Gore_Underblood1Transient_Green {
 
 
 Actor K8Gore_Underblood3Transient_Green : K8Gore_Underblood1Transient_Green {
-  Translation "16:47=112:127", "64:79=112:127", "168:191=112:127", "232:235=119:127", "164:167=117:127", "236:239=123:127"
+  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   scale 2.2
   speed 2
   Alpha 0.3
@@ -6538,7 +6540,7 @@ Actor K8Gore_Underblood3Transient_Green : K8Gore_Underblood1Transient_Green {
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_TinyBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.2
   speed 7
@@ -6583,7 +6585,7 @@ Actor K8Gore_TinyBloodBlue {
 
 
 Actor K8Gore_BloodBlue Replaces BloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal K8GoreBloodSplatBlue
   game Doom
   +FORCEXYBILLBOARD
@@ -6618,7 +6620,7 @@ Actor K8Gore_BloodBlue Replaces BloodBlue {
 
 
 Actor K8Gore_BloodHitBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   height 8
   radius 4
   +NOBLOCKMAP
@@ -6637,7 +6639,7 @@ Actor K8Gore_BloodHitBlue {
 
 
 Actor K8Gore_FlyingBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.5
   speed 4
@@ -6704,13 +6706,13 @@ Actor K8Gore_FlyingBloodBlue {
 
 
 Actor K8Gore_FlyingBloodMuchFasterBlue : K8Gore_FlyingBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   speed 8
 }
 
 
 Actor K8Gore_FlyingBloodLevel3Blue : K8Gore_FlyingBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 1.0
   Speed 5 //7
   Mass 5 //1
@@ -6718,7 +6720,7 @@ Actor K8Gore_FlyingBloodLevel3Blue : K8Gore_FlyingBloodBlue {
 
 
 Actor K8Gore_BloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 2
   height 2
@@ -6736,7 +6738,7 @@ Actor K8Gore_BloodSpotBlue {
   -SOLID
   +THRUACTORS
   Renderstyle Translucent
-  Alpha 0.6
+  Alpha 0.5
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatBlue
@@ -6869,7 +6871,7 @@ Actor K8Gore_BloodSpotBlue {
 
 
 Actor K8Gore_GiantBloodSpotBlue : K8Gore_BloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 1.1
 
   States {
@@ -6883,27 +6885,27 @@ Actor K8Gore_GiantBloodSpotBlue : K8Gore_BloodSpotBlue {
 
 
 Actor K8Gore_BigBloodSpotBlue : K8Gore_GiantBloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 0.7
 }
 
 
 Actor K8Gore_MediumBloodSpotBlue : K8Gore_GiantBloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   Scale 0.4
 }
 
 
 Actor K8Gore_MediumBloodSpot2Blue : K8Gore_GiantBloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   Scale 0.4
 }
 
 
 Actor K8Gore_CeilBloodLauncherBlue : K8Gore_FlyingBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +THRUACTORS
   +BLOODLESSIMPACT
   -DOOMBOUNCE
@@ -6938,7 +6940,7 @@ Actor K8Gore_CeilBloodLauncherBlue : K8Gore_FlyingBloodBlue {
 
 
 Actor K8Gore_CeilBloodLauncherLongBlue : K8Gore_CeilBloodLauncherBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Spawn:
       TNT1 A 0
@@ -6950,7 +6952,7 @@ Actor K8Gore_CeilBloodLauncherLongBlue : K8Gore_CeilBloodLauncherBlue {
 
 
 Actor K8Gore_DetectCeilBloodSimplerBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.4
   speed 0
@@ -6987,7 +6989,7 @@ Actor K8Gore_DetectCeilBloodSimplerBlue {
 
 
 Actor K8Gore_DetectCeilBloodSimplerLargeBlue : K8Gore_DetectCeilBloodSimplerBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Death:
       TNT1 A 0
@@ -6999,7 +7001,7 @@ Actor K8Gore_DetectCeilBloodSimplerLargeBlue : K8Gore_DetectCeilBloodSimplerBlue
 
 // Checks if there is a ceiling above, and isn't hitting a monster.
 Actor K8Gore_CeilBloodCheckerBlue : K8Gore_FlyingBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +THRUACTORS
   +BLOODLESSIMPACT
   damagetype Blood
@@ -7034,7 +7036,7 @@ Actor K8Gore_CeilBloodCheckerBlue : K8Gore_FlyingBloodBlue {
 
 
 Actor K8Gore_CeilBloodCheckerLargeBlue : K8Gore_CeilBloodCheckerBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Death:
       TNT1 A 1 A_SpawnItem("K8Gore_CeilBloodSpotLargeBlue",0,0,0,1)
@@ -7046,7 +7048,7 @@ Actor K8Gore_CeilBloodCheckerLargeBlue : K8Gore_CeilBloodCheckerBlue {
 
 // The Ceil Blood Spot.
 Actor K8Gore_CeilBloodSpotBlue : K8Gore_BloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Projectile
   +SPAWNCEILING
   +CEILINGHUGGER
@@ -7076,7 +7078,7 @@ Actor K8Gore_CeilBloodSpotBlue : K8Gore_BloodSpotBlue {
 
 
 Actor K8Gore_CeilBloodSpotLargeBlue : K8Gore_CeilBloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Spawn:
       TNT1 A 0
@@ -7106,7 +7108,7 @@ Actor K8Gore_CeilBloodSpotLargeBlue : K8Gore_CeilBloodSpotBlue {
 
 
 Actor K8Gore_CeilBloodTinyBloodSpawnerBlue : K8Gore_TinyBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +NOGRAVITY
   +THRUACTORS
   +NOCLIP
@@ -7124,7 +7126,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawnerBlue : K8Gore_TinyBloodBlue {
 
 
 Actor K8Gore_CeilBloodLargeBloodSpawnerBlue : K8Gore_TinyBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +NOGRAVITY
   +THRUACTORS
   +NOCLIP
@@ -7142,7 +7144,7 @@ Actor K8Gore_CeilBloodLargeBloodSpawnerBlue : K8Gore_TinyBloodBlue {
 
 
 Actor K8Gore_BloodDripingFromCeilingBlue : K8Gore_TinyBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +DOOMBOUNCE
   +THRUACTORS
   +CLIENTSIDEONLY
@@ -7161,7 +7163,7 @@ Actor K8Gore_BloodDripingFromCeilingBlue : K8Gore_TinyBloodBlue {
 
 
 Actor K8Gore_BloodDripingFromCeilingBigBlue : K8Gore_TinyBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +DOOMBOUNCE
   BounceFactor 0.1
   XScale 0.4
@@ -7180,7 +7182,7 @@ Actor K8Gore_BloodDripingFromCeilingBigBlue : K8Gore_TinyBloodBlue {
 
 
 Actor K8Gore_DripingBloodBlue : K8Gore_TinyBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   scale 0.3
 
   States {
@@ -7204,7 +7206,7 @@ Actor K8Gore_DripingBloodBlue : K8Gore_TinyBloodBlue {
 
 
 Actor K8Gore_DripingBloodLeavesPoolBlue : K8Gore_TinyBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   scale 0.3
 
   States {
@@ -7229,7 +7231,7 @@ Actor K8Gore_DripingBloodLeavesPoolBlue : K8Gore_TinyBloodBlue {
 
 
 Actor K8Gore_DripingBloodLeavesSmallPoolBlue : K8Gore_DripingBloodLeavesPoolBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   -DONTSPLASH
 
   States {
@@ -7245,7 +7247,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolBlue : K8Gore_DripingBloodLeavesPoolBlue
 
 // Blood trails spawned by FlyingBlood
 Actor K8Gore_FlyingBloodTrailBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.70
   mass 1
@@ -7284,13 +7286,13 @@ Actor K8Gore_FlyingBloodTrailBlue {
 
 
 Actor K8Gore_FlyingBloodTrail5Blue : K8Gore_FlyingBloodTrailBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal None
 }
 
 
 Actor K8Gore_BloodTrBlue : K8Gore_FlyingBloodTrailBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 4
   alpha 0.7
   scale 1.1
@@ -7306,7 +7308,7 @@ Actor K8Gore_BloodTrBlue : K8Gore_FlyingBloodTrailBlue {
 
 
 Actor K8Gore_BloodTr2Blue : K8Gore_FlyingBloodTrailBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 4
   alpha 0.7
   scale 1.1
@@ -7328,7 +7330,7 @@ Actor K8Gore_BloodTr2Blue : K8Gore_FlyingBloodTrailBlue {
 
 
 Actor K8Gore_BloodTr3Blue : K8Gore_FlyingBloodTrailBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 6
   alpha 0.7
   scale 1.1
@@ -7346,7 +7348,7 @@ Actor K8Gore_BloodTr3Blue : K8Gore_FlyingBloodTrailBlue {
 
 
 Actor K8Gore_BloodTr95Blue : K8Gore_FlyingBloodTrailBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 4
   alpha 0.7
   scale 1.1
@@ -7368,7 +7370,7 @@ Actor K8Gore_BloodTr95Blue : K8Gore_FlyingBloodTrailBlue {
 
 
 Actor K8Gore_BloodTr255Blue : K8Gore_FlyingBloodTrailBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 2
   alpha 0.5
   scale 1.0
@@ -7391,7 +7393,7 @@ Actor K8Gore_BloodTr255Blue : K8Gore_FlyingBloodTrailBlue {
 
 
 Actor K8Gore_BloodTr255GBlue : K8Gore_FlyingBloodTrailBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 3
   alpha 0.6
   scale 0.7
@@ -7413,7 +7415,7 @@ Actor K8Gore_BloodTr255GBlue : K8Gore_FlyingBloodTrailBlue {
 
 
 Actor K8Gore_FlyingBloodFasterBlue : K8Gore_FlyingBloodTrailBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 2 //4
   Mass 5 //1
 
@@ -7429,14 +7431,14 @@ Actor K8Gore_FlyingBloodFasterBlue : K8Gore_FlyingBloodTrailBlue {
 
 
 Actor K8Gore_FlyingBloodTrail16Blue : K8Gore_FlyingBloodTrailBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   renderstyle Translucent
   alpha 0.4
 }
 
 
 Actor K8Gore_WallRedBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.6
   speed 7
@@ -7472,7 +7474,7 @@ Actor K8Gore_WallRedBloodBlue {
 
 
 Actor K8Gore_SuperWallRedBloodBlue : K8Gore_WallRedBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   speed 32
   Gravity 0.1
 
@@ -7487,7 +7489,7 @@ Actor K8Gore_SuperWallRedBloodBlue : K8Gore_WallRedBloodBlue {
 
 
 Actor K8Gore_ShortWallRedBloodBlue : K8Gore_WallRedBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   speed 2
   Gravity 0.1 //1
   Radius 24
@@ -7511,7 +7513,7 @@ Actor K8Gore_ShortWallRedBloodBlue : K8Gore_WallRedBloodBlue {
 
 
 Actor K8Gore_BloodDyingBlue : K8Gore_BloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Spawn:
       TNT1 A 0
@@ -7534,7 +7536,7 @@ Actor K8Gore_BloodDyingBlue : K8Gore_BloodBlue {
 
 
 Actor K8Gore_MinuscleBloodSpotBlue : K8Gore_BloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 2
   height 2
@@ -7613,7 +7615,7 @@ Actor K8Gore_MinuscleBloodSpotBlue : K8Gore_BloodSpotBlue {
 
 
 Actor K8Gore_MiniBloodDropEffectBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +CLIENTSIDEONLY
   +NOBLOCKMAP
   +FLOORCLIP
@@ -7629,7 +7631,7 @@ Actor K8Gore_MiniBloodDropEffectBlue {
 
 
 Actor K8Gore_GrowingBloodPoolBlue : K8Gore_BloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 1
   height 1
@@ -7681,7 +7683,7 @@ Actor K8Gore_GrowingBloodPoolBlue : K8Gore_BloodSpotBlue {
 
 
 Actor K8Gore_GrowingBloodPool2Blue : K8Gore_BloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 1
   height 1
@@ -7733,7 +7735,7 @@ Actor K8Gore_GrowingBloodPool2Blue : K8Gore_BloodSpotBlue {
 
 
 Actor K8Gore_GrowingBloodTrailsBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 1
   height 1
@@ -7777,7 +7779,7 @@ Actor K8Gore_GrowingBloodTrailsBlue {
 
 
 Actor K8Gore_GrowingSmallBloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 1
   height 1
@@ -7822,7 +7824,7 @@ Actor K8Gore_GrowingSmallBloodSpotBlue {
 
 
 Actor K8Gore_LiquidBloodBlue : K8Gore_FlyingBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   speed 3
   scale 0.2
   gravity 0.1 //0.6
@@ -7843,7 +7845,7 @@ Actor K8Gore_LiquidBloodBlue : K8Gore_FlyingBloodBlue {
 
 
 Actor K8Gore_LiquidBlood2Blue : K8Gore_FlyingBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   speed 4
   scale 0.4
   gravity 0.1 //0.6
@@ -7864,7 +7866,7 @@ Actor K8Gore_LiquidBlood2Blue : K8Gore_FlyingBloodBlue {
 
 
 Actor K8Gore_LiquidBlood3Blue : K8Gore_FlyingBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 3
 
   States {
@@ -7889,13 +7891,13 @@ Actor K8Gore_LiquidBlood3Blue : K8Gore_FlyingBloodBlue {
 
 
 Actor K8Gore_LiquidBloodFastBlue : K8Gore_LiquidBlood2Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   speed 4 //8
 }
 
 
 Actor K8Gore_LiquidBloodTrailBlue : K8Gore_FlyingBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   scale 0.4
   gravity 0.1 //0.4
 
@@ -7913,7 +7915,7 @@ Actor K8Gore_LiquidBloodTrailBlue : K8Gore_FlyingBloodBlue {
 
 
 Actor K8Gore_FlyingBloodFakeBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.5
   speed 3
@@ -7959,13 +7961,13 @@ Actor K8Gore_FlyingBloodFakeBlue {
 
 
 Actor K8Gore_FlyingBloodFakeNoDecalBlue : K8Gore_FlyingBloodFakeBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal None
 }
 
 
 Actor K8Gore_RegularBloodHitEffectBlue : K8Gore_FlyingBloodFakeBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   scale 0.8
   Speed 1
 
@@ -7979,7 +7981,7 @@ Actor K8Gore_RegularBloodHitEffectBlue : K8Gore_FlyingBloodFakeBlue {
 
 
 Actor K8Gore_BloodmistBlue : K8Gore_FlyingBloodBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal K8GoreBloodSuperBlue
   +MISSILE
   +NOTELEPORT
@@ -8021,7 +8023,7 @@ Actor K8Gore_BloodmistBlue : K8Gore_FlyingBloodBlue {
 
 
 Actor K8Gore_BloodmistBigBlue : K8Gore_BloodmistBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 0.9
   Speed 4
   Gravity 0.1 //0.4
@@ -8029,26 +8031,26 @@ Actor K8Gore_BloodmistBigBlue : K8Gore_BloodmistBlue {
 
 
 Actor K8Gore_BloodmistSmallBlue : K8Gore_BloodmistBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 0.45
   Gravity 0.1 //0.8
 }
 
 
 Actor K8Gore_BloodmistExtraBigBlue : K8Gore_BloodmistBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 1.4
 }
 
 
 Actor K8Gore_BloodmistLargeBlue : K8Gore_BloodmistBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 0.95
 }
 
 
 Actor K8Gore_BloodmistXXBigBlue : K8Gore_BloodmistBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 2.2
   Gravity 0.1 //0.2
 }
@@ -8056,7 +8058,7 @@ Actor K8Gore_BloodmistXXBigBlue : K8Gore_BloodmistBlue {
 
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_SplatteredSmallBlue : K8Gore_BloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Spawn:
       TNT1 A 0
@@ -8071,7 +8073,7 @@ Actor K8Gore_SplatteredSmallBlue : K8Gore_BloodSpotBlue {
 
 
 Actor K8Gore_SplatteredLargeBlue : K8Gore_BloodSpotBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Spawn:
       TNT1 A 0
@@ -8088,7 +8090,7 @@ Actor K8Gore_SplatteredLargeBlue : K8Gore_BloodSpotBlue {
 
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_BootSmearerRedBlue : K8Gore_GrowingBloodPoolBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   MONSTER
   -SOLID
   +NOCLIP
@@ -8124,14 +8126,14 @@ Actor K8Gore_BootSmearerRedBlue : K8Gore_GrowingBloodPoolBlue {
 
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_Blood_SplatterReplacerBlue : K8Gore_Blood Replaces BloodSplatterBlue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 // underwater
 Actor K8Gore_Underblood1Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 1.4
   speed 1
@@ -8176,7 +8178,7 @@ Actor K8Gore_Underblood1Blue {
 
 
 Actor K8Gore_Underblood2Blue : K8Gore_Underblood1Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   scale 0.7
   speed 0
 
@@ -8198,7 +8200,7 @@ Actor K8Gore_Underblood2Blue : K8Gore_Underblood1Blue {
 
 
 Actor K8Gore_Underblood3Blue : K8Gore_Underblood1Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   scale 2.2
   speed 2
   Alpha 0.3
@@ -8211,7 +8213,7 @@ Actor K8Gore_Underblood3Blue : K8Gore_Underblood1Blue {
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_TinyBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.2
   speed 7
@@ -8257,7 +8259,7 @@ Actor K8Gore_TinyBloodTransient_Blue {
 
 
 Actor K8Gore_BloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal K8GoreBloodSplatTransient_Blue
   game Doom
   +FORCEXYBILLBOARD
@@ -8290,7 +8292,7 @@ Actor K8Gore_BloodTransient_Blue {
 
 
 Actor K8Gore_BloodHitTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   height 8
   radius 4
   +NOBLOCKMAP
@@ -8309,7 +8311,7 @@ Actor K8Gore_BloodHitTransient_Blue {
 
 
 Actor K8Gore_FlyingBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.5
   speed 4
@@ -8376,13 +8378,13 @@ Actor K8Gore_FlyingBloodTransient_Blue {
 
 
 Actor K8Gore_FlyingBloodMuchFasterTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   speed 8
 }
 
 
 Actor K8Gore_FlyingBloodLevel3Transient_Blue : K8Gore_FlyingBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 1.0
   Speed 5 //7
   Mass 5 //1
@@ -8390,7 +8392,7 @@ Actor K8Gore_FlyingBloodLevel3Transient_Blue : K8Gore_FlyingBloodTransient_Blue 
 
 
 Actor K8Gore_BloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 2
   height 2
@@ -8408,7 +8410,8 @@ Actor K8Gore_BloodSpotTransient_Blue {
   -SOLID
   +THRUACTORS
   Renderstyle Translucent
-  Alpha 0.6
+  //Alpha 0.6
+  Alpha 0.5
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatTransient_Blue
@@ -8541,7 +8544,7 @@ Actor K8Gore_BloodSpotTransient_Blue {
 
 
 Actor K8Gore_GiantBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 1.1
 
   States {
@@ -8555,27 +8558,27 @@ Actor K8Gore_GiantBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
 
 
 Actor K8Gore_BigBloodSpotTransient_Blue : K8Gore_GiantBloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 0.7
 }
 
 
 Actor K8Gore_MediumBloodSpotTransient_Blue : K8Gore_GiantBloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   Scale 0.4
 }
 
 
 Actor K8Gore_MediumBloodSpot2Transient_Blue : K8Gore_GiantBloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   Scale 0.4
 }
 
 
 Actor K8Gore_CeilBloodLauncherTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +THRUACTORS
   +BLOODLESSIMPACT
   -DOOMBOUNCE
@@ -8610,7 +8613,7 @@ Actor K8Gore_CeilBloodLauncherTransient_Blue : K8Gore_FlyingBloodTransient_Blue 
 
 
 Actor K8Gore_CeilBloodLauncherLongTransient_Blue : K8Gore_CeilBloodLauncherTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Spawn:
       TNT1 A 0
@@ -8622,7 +8625,7 @@ Actor K8Gore_CeilBloodLauncherLongTransient_Blue : K8Gore_CeilBloodLauncherTrans
 
 
 Actor K8Gore_DetectCeilBloodSimplerTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.4
   speed 0
@@ -8659,7 +8662,7 @@ Actor K8Gore_DetectCeilBloodSimplerTransient_Blue {
 
 
 Actor K8Gore_DetectCeilBloodSimplerLargeTransient_Blue : K8Gore_DetectCeilBloodSimplerTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Death:
       TNT1 A 0
@@ -8671,7 +8674,7 @@ Actor K8Gore_DetectCeilBloodSimplerLargeTransient_Blue : K8Gore_DetectCeilBloodS
 
 // Checks if there is a ceiling above, and isn't hitting a monster.
 Actor K8Gore_CeilBloodCheckerTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +THRUACTORS
   +BLOODLESSIMPACT
   damagetype Blood
@@ -8706,7 +8709,7 @@ Actor K8Gore_CeilBloodCheckerTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
 
 
 Actor K8Gore_CeilBloodCheckerLargeTransient_Blue : K8Gore_CeilBloodCheckerTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Death:
       TNT1 A 1 A_SpawnItem("K8Gore_CeilBloodSpotLargeTransient_Blue",0,0,0,1)
@@ -8718,7 +8721,7 @@ Actor K8Gore_CeilBloodCheckerLargeTransient_Blue : K8Gore_CeilBloodCheckerTransi
 
 // The Ceil Blood Spot.
 Actor K8Gore_CeilBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Projectile
   +SPAWNCEILING
   +CEILINGHUGGER
@@ -8743,7 +8746,7 @@ Actor K8Gore_CeilBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
 
 
 Actor K8Gore_CeilBloodSpotLargeTransient_Blue : K8Gore_CeilBloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Spawn:
       TNT1 A 0
@@ -8773,7 +8776,7 @@ Actor K8Gore_CeilBloodSpotLargeTransient_Blue : K8Gore_CeilBloodSpotTransient_Bl
 
 
 Actor K8Gore_CeilBloodTinyBloodSpawnerTransient_Blue : K8Gore_TinyBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +NOGRAVITY
   +THRUACTORS
   +NOCLIP
@@ -8791,7 +8794,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawnerTransient_Blue : K8Gore_TinyBloodTransient
 
 
 Actor K8Gore_CeilBloodLargeBloodSpawnerTransient_Blue : K8Gore_TinyBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +NOGRAVITY
   +THRUACTORS
   +NOCLIP
@@ -8809,7 +8812,7 @@ Actor K8Gore_CeilBloodLargeBloodSpawnerTransient_Blue : K8Gore_TinyBloodTransien
 
 
 Actor K8Gore_BloodDripingFromCeilingTransient_Blue : K8Gore_TinyBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +DOOMBOUNCE
   +THRUACTORS
   +CLIENTSIDEONLY
@@ -8828,7 +8831,7 @@ Actor K8Gore_BloodDripingFromCeilingTransient_Blue : K8Gore_TinyBloodTransient_B
 
 
 Actor K8Gore_BloodDripingFromCeilingBigTransient_Blue : K8Gore_TinyBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +DOOMBOUNCE
   BounceFactor 0.1
   XScale 0.4
@@ -8847,7 +8850,7 @@ Actor K8Gore_BloodDripingFromCeilingBigTransient_Blue : K8Gore_TinyBloodTransien
 
 
 Actor K8Gore_DripingBloodTransient_Blue : K8Gore_TinyBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   scale 0.3
 
   States {
@@ -8871,7 +8874,7 @@ Actor K8Gore_DripingBloodTransient_Blue : K8Gore_TinyBloodTransient_Blue {
 
 
 Actor K8Gore_DripingBloodLeavesPoolTransient_Blue : K8Gore_TinyBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   scale 0.3
 
   States {
@@ -8896,7 +8899,7 @@ Actor K8Gore_DripingBloodLeavesPoolTransient_Blue : K8Gore_TinyBloodTransient_Bl
 
 
 Actor K8Gore_DripingBloodLeavesSmallPoolTransient_Blue : K8Gore_DripingBloodLeavesPoolTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   -DONTSPLASH
 
   States {
@@ -8912,7 +8915,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient_Blue : K8Gore_DripingBloodLeav
 
 // Blood trails spawned by FlyingBlood
 Actor K8Gore_FlyingBloodTrailTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.70
   mass 1
@@ -8951,13 +8954,13 @@ Actor K8Gore_FlyingBloodTrailTransient_Blue {
 
 
 Actor K8Gore_FlyingBloodTrail5Transient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal None
 }
 
 
 Actor K8Gore_BloodTrTransient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 4
   alpha 0.7
   scale 1.1
@@ -8973,7 +8976,7 @@ Actor K8Gore_BloodTrTransient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
 
 
 Actor K8Gore_BloodTr2Transient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 4
   alpha 0.7
   scale 1.1
@@ -8995,7 +8998,7 @@ Actor K8Gore_BloodTr2Transient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
 
 
 Actor K8Gore_BloodTr3Transient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 6
   alpha 0.7
   scale 1.1
@@ -9013,7 +9016,7 @@ Actor K8Gore_BloodTr3Transient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
 
 
 Actor K8Gore_BloodTr95Transient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 4
   alpha 0.7
   scale 1.1
@@ -9035,7 +9038,7 @@ Actor K8Gore_BloodTr95Transient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
 
 
 Actor K8Gore_BloodTr255Transient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 2
   alpha 0.5
   scale 1.0
@@ -9058,7 +9061,7 @@ Actor K8Gore_BloodTr255Transient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
 
 
 Actor K8Gore_BloodTr255GTransient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 3
   alpha 0.6
   scale 0.7
@@ -9080,7 +9083,7 @@ Actor K8Gore_BloodTr255GTransient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
 
 
 Actor K8Gore_FlyingBloodFasterTransient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 2 //4
   Mass 5 //1
 
@@ -9096,14 +9099,14 @@ Actor K8Gore_FlyingBloodFasterTransient_Blue : K8Gore_FlyingBloodTrailTransient_
 
 
 Actor K8Gore_FlyingBloodTrail16Transient_Blue : K8Gore_FlyingBloodTrailTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   renderstyle Translucent
   alpha 0.4
 }
 
 
 Actor K8Gore_WallRedBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.6
   speed 7
@@ -9139,7 +9142,7 @@ Actor K8Gore_WallRedBloodTransient_Blue {
 
 
 Actor K8Gore_SuperWallRedBloodTransient_Blue : K8Gore_WallRedBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   speed 32
   Gravity 0.1
 
@@ -9154,7 +9157,7 @@ Actor K8Gore_SuperWallRedBloodTransient_Blue : K8Gore_WallRedBloodTransient_Blue
 
 
 Actor K8Gore_ShortWallRedBloodTransient_Blue : K8Gore_WallRedBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   speed 2
   Gravity 0.1 //1
   Radius 24
@@ -9178,7 +9181,7 @@ Actor K8Gore_ShortWallRedBloodTransient_Blue : K8Gore_WallRedBloodTransient_Blue
 
 
 Actor K8Gore_BloodDyingTransient_Blue : K8Gore_BloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Spawn:
       TNT1 A 0
@@ -9201,7 +9204,7 @@ Actor K8Gore_BloodDyingTransient_Blue : K8Gore_BloodTransient_Blue {
 
 
 Actor K8Gore_MinuscleBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 2
   height 2
@@ -9280,7 +9283,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
 
 
 Actor K8Gore_MiniBloodDropEffectTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +CLIENTSIDEONLY
   +NOBLOCKMAP
   +FLOORCLIP
@@ -9296,7 +9299,7 @@ Actor K8Gore_MiniBloodDropEffectTransient_Blue {
 
 
 Actor K8Gore_GrowingBloodPoolTransient_Blue : K8Gore_BloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 1
   height 1
@@ -9348,7 +9351,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Blue : K8Gore_BloodSpotTransient_Blue {
 
 
 Actor K8Gore_GrowingBloodPool2Transient_Blue : K8Gore_BloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 1
   height 1
@@ -9400,7 +9403,7 @@ Actor K8Gore_GrowingBloodPool2Transient_Blue : K8Gore_BloodSpotTransient_Blue {
 
 
 Actor K8Gore_GrowingBloodTrailsTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 1
   height 1
@@ -9444,7 +9447,7 @@ Actor K8Gore_GrowingBloodTrailsTransient_Blue {
 
 
 Actor K8Gore_GrowingSmallBloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 1
   height 1
@@ -9489,7 +9492,7 @@ Actor K8Gore_GrowingSmallBloodSpotTransient_Blue {
 
 
 Actor K8Gore_LiquidBloodTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   speed 3
   scale 0.2
   gravity 0.1 //0.6
@@ -9510,7 +9513,7 @@ Actor K8Gore_LiquidBloodTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
 
 
 Actor K8Gore_LiquidBlood2Transient_Blue : K8Gore_FlyingBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   speed 4
   scale 0.4
   gravity 0.1 //0.6
@@ -9531,7 +9534,7 @@ Actor K8Gore_LiquidBlood2Transient_Blue : K8Gore_FlyingBloodTransient_Blue {
 
 
 Actor K8Gore_LiquidBlood3Transient_Blue : K8Gore_FlyingBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Speed 3
 
   States {
@@ -9556,13 +9559,13 @@ Actor K8Gore_LiquidBlood3Transient_Blue : K8Gore_FlyingBloodTransient_Blue {
 
 
 Actor K8Gore_LiquidBloodFastTransient_Blue : K8Gore_LiquidBlood2Transient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   speed 4 //8
 }
 
 
 Actor K8Gore_LiquidBloodTrailTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   scale 0.4
   gravity 0.1 //0.4
 
@@ -9580,7 +9583,7 @@ Actor K8Gore_LiquidBloodTrailTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
 
 
 Actor K8Gore_FlyingBloodFakeTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.5
   speed 3
@@ -9626,13 +9629,13 @@ Actor K8Gore_FlyingBloodFakeTransient_Blue {
 
 
 Actor K8Gore_FlyingBloodFakeNoDecalTransient_Blue : K8Gore_FlyingBloodFakeTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal None
 }
 
 
 Actor K8Gore_RegularBloodHitEffectTransient_Blue : K8Gore_FlyingBloodFakeTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   scale 0.8
   Speed 1
 
@@ -9646,7 +9649,7 @@ Actor K8Gore_RegularBloodHitEffectTransient_Blue : K8Gore_FlyingBloodFakeTransie
 
 
 Actor K8Gore_BloodmistTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal K8GoreBloodSuperTransient_Blue
   +MISSILE
   +NOTELEPORT
@@ -9688,7 +9691,7 @@ Actor K8Gore_BloodmistTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
 
 
 Actor K8Gore_BloodmistBigTransient_Blue : K8Gore_BloodmistTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 0.9
   Speed 4
   Gravity 0.1 //0.4
@@ -9696,26 +9699,26 @@ Actor K8Gore_BloodmistBigTransient_Blue : K8Gore_BloodmistTransient_Blue {
 
 
 Actor K8Gore_BloodmistSmallTransient_Blue : K8Gore_BloodmistTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 0.45
   Gravity 0.1 //0.8
 }
 
 
 Actor K8Gore_BloodmistExtraBigTransient_Blue : K8Gore_BloodmistTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 1.4
 }
 
 
 Actor K8Gore_BloodmistLargeTransient_Blue : K8Gore_BloodmistTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 0.95
 }
 
 
 Actor K8Gore_BloodmistXXBigTransient_Blue : K8Gore_BloodmistTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 2.2
   Gravity 0.1 //0.2
 }
@@ -9723,7 +9726,7 @@ Actor K8Gore_BloodmistXXBigTransient_Blue : K8Gore_BloodmistTransient_Blue {
 
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_SplatteredSmallTransient_Blue : K8Gore_BloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Spawn:
       TNT1 A 0
@@ -9738,7 +9741,7 @@ Actor K8Gore_SplatteredSmallTransient_Blue : K8Gore_BloodSpotTransient_Blue {
 
 
 Actor K8Gore_SplatteredLargeTransient_Blue : K8Gore_BloodSpotTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   States {
     Spawn:
       TNT1 A 0
@@ -9755,7 +9758,7 @@ Actor K8Gore_SplatteredLargeTransient_Blue : K8Gore_BloodSpotTransient_Blue {
 
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_BootSmearerRedTransient_Blue : K8Gore_GrowingBloodPoolTransient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   MONSTER
   -SOLID
   +NOCLIP
@@ -9792,7 +9795,7 @@ Actor K8Gore_BootSmearerRedTransient_Blue : K8Gore_GrowingBloodPoolTransient_Blu
 // ////////////////////////////////////////////////////////////////////////// //
 // underwater
 Actor K8Gore_Underblood1Transient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 1.4
   speed 1
@@ -9837,7 +9840,7 @@ Actor K8Gore_Underblood1Transient_Blue {
 
 
 Actor K8Gore_Underblood2Transient_Blue : K8Gore_Underblood1Transient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   scale 0.7
   speed 0
 
@@ -9859,7 +9862,7 @@ Actor K8Gore_Underblood2Transient_Blue : K8Gore_Underblood1Transient_Blue {
 
 
 Actor K8Gore_Underblood3Transient_Blue : K8Gore_Underblood1Transient_Blue {
-  Translation "168:191=192:207","16:47=240:247"
+  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   scale 2.2
   speed 2
   Alpha 0.3
