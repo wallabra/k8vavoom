@@ -131,8 +131,7 @@ void InitMapInfo()
   //  Set up default map info returned for maps that have not defined in
   // MAPINFO
   DefaultMap.Name = "Unnamed";
-  DefaultMap.Sky1Texture = GTextureManager.CheckNumForName("sky1",
-    TEXTYPE_Wall, true, true);
+  DefaultMap.Sky1Texture = GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
   DefaultMap.Sky2Texture = DefaultMap.Sky1Texture;
   DefaultMap.FadeTable = NAME_colormap;
   DefaultMap.HorizWallShade = -8;
@@ -414,14 +413,14 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       if (newFormat) {
         if (!sc->IsAtEol()) {
           sc->Check(",");
-          sc->ExpectFloat();
+          sc->ExpectFloatWithSign();
           if (HexenMode) sc->Float /= 256.0;
           info->Sky1ScrollDelta = sc->Float * 35.0;
         }
       } else {
         if (!sc->IsAtEol()) {
           sc->Check(",");
-          sc->ExpectFloat();
+          sc->ExpectFloatWithSign();
           if (HexenMode) sc->Float /= 256.0;
           info->Sky1ScrollDelta = sc->Float * 35.0;
         }
@@ -440,14 +439,14 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       if (newFormat) {
         if (!sc->IsAtEol()) {
           sc->Check(",");
-          sc->ExpectFloat();
+          sc->ExpectFloatWithSign();
           if (HexenMode) sc->Float /= 256.0;
           info->Sky1ScrollDelta = sc->Float * 35.0;
         }
       } else {
         if (!sc->IsAtEol()) {
           sc->Check(",");
-          sc->ExpectFloat();
+          sc->ExpectFloatWithSign();
           if (HexenMode) sc->Float /= 256.0;
           info->Sky2ScrollDelta = sc->Float * 35.0;
         }
