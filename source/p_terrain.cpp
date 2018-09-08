@@ -241,7 +241,7 @@ static void ParseTerrainScript(VScriptParser *sc)
         }
         else
         {
-          sc->Error("Unknown command");
+          sc->Error(va("Unknown command (%s)", *sc->String));
         }
       }
     }
@@ -346,7 +346,7 @@ static void ParseTerrainScript(VScriptParser *sc)
         }
         else
         {
-          sc->Error("Unknown command");
+          sc->Error(va("Unknown command (%s)", *sc->String));
         }
       }
     }
@@ -380,7 +380,7 @@ static void ParseTerrainScript(VScriptParser *sc)
     }
     else
     {
-      sc->Error("Unknown command");
+      sc->Error(va("Unknown command (%s)", *sc->String));
     }
   }
   delete sc;

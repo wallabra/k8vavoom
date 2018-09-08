@@ -1604,7 +1604,7 @@ static void ParseEffectDefs(VScriptParser *sc,
     }
     else
     {
-      sc->Error(va("Unknown command %s", *sc->String));
+      sc->Error(va("Unknown command (%s)", *sc->String));
     }
   }
   delete sc;
@@ -1696,7 +1696,7 @@ static void ParseGZDoomEffectDefs(VScriptParser *sc,
     }
     else
     {
-      sc->Error(va("Unknown command %s", *sc->String));
+      sc->Error(va("Unknown command (%s)", *sc->String));
     }
   }
   delete sc;
