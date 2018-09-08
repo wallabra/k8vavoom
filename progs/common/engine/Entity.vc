@@ -313,6 +313,7 @@ readonly private Entity TIDHashPrev;
 
 int       Special;  // special
 int       Args[5];  // special arguments
+//int[5] DecorateArgs;
 
 readonly private int  SoundOriginID;
 
@@ -841,6 +842,7 @@ final TVec GetCentre()
 {
   return Origin + vector(0.0, 0.0, Height * 0.5 - FloorClip);
 }
+
 
 defaultproperties
 {

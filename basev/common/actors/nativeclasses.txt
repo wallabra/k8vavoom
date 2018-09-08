@@ -27,6 +27,8 @@ class Actor extends Thinker
   action native A_SentinelBob();
   action native A_Burst(class<Actor> chunktype);
 
+  action native A_SetArg (int n, int v);
+
   //
   //  Generic monster attacks
   //

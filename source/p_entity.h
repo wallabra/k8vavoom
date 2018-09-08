@@ -253,6 +253,7 @@ class VEntity : public VThinker
 
   int       Special;    // special
   int       Args[5];    // special arguments
+  //int       DecorateArgs[5];    // special arguments
 
   int       SoundOriginID;
 

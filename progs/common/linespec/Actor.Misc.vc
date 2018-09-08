@@ -760,8 +760,35 @@ final void A_WeaponReady(optional int Flags)
   k8InWeaponReady = false;
 }
 
-// This function replaces calls to A_WeaponReady in other codepointers.
+
+//==========================================================================
+//
+//  DoReadyWeapon
+//
+//  This function replaces calls to A_WeaponReady in other codepointers.
+//
+//==========================================================================
 final void DoReadyWeapon()
 {
   A_WeaponReady(0);
+}
+
+
+//==========================================================================
+//
+//  decorate_GetArg
+//
+//==========================================================================
+final int decorate_GetArg (int n) {
+  return (n >= 0 && n < 5 ? Args[n] : 0);
+}
+
+
+//==========================================================================
+//
+//  A_SetArg
+//
+//==========================================================================
+final void A_SetArg (int n, int v) {
+  if (n >= 0 && n < 5) Args[n] = v;
 }

@@ -1053,6 +1053,20 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
 
   if (sc->CheckIdentifier()) {
     VStr Name = sc->String;
+    if (Name == "args") {
+      if (sc->GetString()) {
+        if (sc->String == "[") {
+          Name = VStr("GetArg");
+          //fprintf(stderr, "*** ARGS ***\n");
+          VExpression *Args[1];
+          Args[0] = ParseExpressionPriority13(sc);
+          if (!Args[0]) ParseError(l, "`args` index expression expected");
+          sc->Expect("]");
+          return new VDecorateInvocation(VName(*Name), l, 1, Args);
+        }
+        sc->UnGet();
+      }
+    }
     // skip random generator ID
     if ((!Name.ICmp("random") || !Name.ICmp("random2") || !Name.ICmp("frandom")) && sc->Check("[")) {
       sc->ExpectString();
