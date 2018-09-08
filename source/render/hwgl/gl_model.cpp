@@ -317,7 +317,7 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
   }
   glDisable(GL_BLEND);
   glShadeModel(GL_FLAT);
-  glAlphaFunc(GL_GREATER, 0.333);
+  glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glDisable(GL_ALPHA_TEST);
   if (Additive)
   {
@@ -426,7 +426,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient(const TVec &origin, const TAVec &angle
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 
   glDisable(GL_BLEND);
-  glAlphaFunc(GL_GREATER, 0.333);
+  glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glShadeModel(GL_FLAT);
   glDisable(GL_ALPHA_TEST);
   unguard;
@@ -522,7 +522,7 @@ void VOpenGLDrawer::DrawAliasModelTextures(const TVec &origin, const TAVec &angl
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 
   glShadeModel(GL_FLAT);
-  glAlphaFunc(GL_GREATER, 0.333);
+  glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glDisable(GL_ALPHA_TEST);
   unguard;
 }
@@ -825,7 +825,7 @@ void VOpenGLDrawer::DrawAliasModelFog(const TVec &origin, const TAVec &angles,
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 
   glDisable(GL_BLEND);
-  glAlphaFunc(GL_GREATER, 0.333);
+  glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glShadeModel(GL_FLAT);
   glDisable(GL_ALPHA_TEST);
   unguard;
