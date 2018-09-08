@@ -90,6 +90,7 @@ void InitMapInfo()
   {
     if (W_LumpName(Lump) == NAME_mapinfo)
     {
+      GCon->Logf("mapinfo file: '%s'", *W_FullLumpName(Lump));
       ParseMapInfo(new VScriptParser(*W_LumpName(Lump),
         W_CreateLumpReaderNum(Lump)));
     }
@@ -1030,6 +1031,7 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
     sc->ExpectString();
     *name = sc->String.ToLower();
   } else {
+    sc->ResetQuoted();
     sc->ExpectString();
     if (sc->String.Length() > 1 && sc->String[0] == '$') {
       *flags |= lookupFlag;
@@ -1037,6 +1039,22 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
     } else {
       *flags &= ~lookupFlag;
       *name = sc->String;
+      //fprintf(stderr, "CMODE: %d; qs: %d\n", (int)sc->IsCMode(), (int)sc->QuotedString);
+      while (sc->IsCMode() && sc->QuotedString) {
+        sc->ResetCrossed();
+        sc->ResetQuoted();
+        if (!sc->GetString()) return;
+        if (sc->Crossed) { sc->UnGet(); break; }
+        if (sc->QuotedString) { sc->UnGet(); sc->Error("comma expected"); break; }
+        if (sc->String != ",") { sc->UnGet(); break; }
+        sc->ResetQuoted();
+        if (!sc->GetString()) { sc->Error("unexpected EOF"); return; }
+        if (!sc->QuotedString) { sc->UnGet(); sc->Error("quoted string expected"); break; }
+        //fprintf(stderr, "  :::<%s>\n", *sc->String);
+        *name += "\n";
+        *name += sc->String;
+      }
+      //fprintf(stderr, "collected: <%s>\n", **name);
     }
   }
 }
@@ -1230,6 +1248,12 @@ static void ParseClusterDef(VScriptParser *sc)
   if (newFormat) sc->SetCMode(true);
   while (1)
   {
+    /*
+    if (sc->GetString()) {
+      GCon->Logf("::: CLUSTER: <%s>", *sc->String);
+      sc->UnGet();
+    }
+    */
     if (sc->Check("hub"))
     {
       CDef->Flags |= CLUSTERF_Hub;
@@ -1254,6 +1278,7 @@ static void ParseClusterDef(VScriptParser *sc)
       }
       */
       ParseNameOrLookup(sc, CLUSTERF_LookupEnterText, &CDef->EnterText, &CDef->Flags);
+      //GCon->Logf("::: <%s>", *CDef->EnterText);
     }
     else if (sc->Check("entertextislump"))
     {

@@ -722,6 +722,26 @@ void VScriptParser::ExpectFloatWithSign () {
 
 //==========================================================================
 //
+//  VScriptParser::ResetQuoted
+//
+//==========================================================================
+void VScriptParser::ResetQuoted () {
+  if (!AlreadyGot) QuotedString = false;
+}
+
+
+//==========================================================================
+//
+//  VScriptParser::ResetCrossed
+//
+//==========================================================================
+void VScriptParser::ResetCrossed () {
+  if (!AlreadyGot) Crossed = false;
+}
+
+
+//==========================================================================
+//
 //  VScriptParser::UnGet
 //
 //  Assumes there is a valid string in sc_String.

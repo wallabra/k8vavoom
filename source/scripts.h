@@ -73,6 +73,8 @@ public:
   void ExpectFloat ();
   bool CheckFloatWithSign ();
   void ExpectFloatWithSign ();
+  void ResetQuoted ();
+  void ResetCrossed ();
   void UnGet ();
   void Message (const char *);
   void Error (const char *);
