@@ -793,6 +793,7 @@ VStr VStr::Latin1ToUtf8 () const {
 VStr VStr::EvalEscapeSequences () const {
   guard(VStr::EvalEscapeSequences);
   VStr res;
+  if (!data || !data[0]) return res;
   char val;
   for (const char *c = data; *c; ++c) {
     if (*c == '\\') {
