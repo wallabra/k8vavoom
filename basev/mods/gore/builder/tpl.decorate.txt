@@ -1752,6 +1752,7 @@ Actor K8Gore_BloodmistXXBig$(Color) : K8Gore_Bloodmist$(Color) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_SplatteredSmall$(Color) : K8Gore_BloodSpot$(Color) {
 #ifdef BLUE
   Translation "168:191=192:207","16:47=240:247"
@@ -1793,6 +1794,7 @@ Actor K8Gore_SplatteredLarge$(Color) : K8Gore_BloodSpot$(Color) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_BootSmearerRed$(Color) : K8Gore_GrowingBloodPool$(Color) {
 #ifdef BLUE
   Translation "168:191=192:207","16:47=240:247"
