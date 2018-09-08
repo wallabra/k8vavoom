@@ -340,6 +340,33 @@ static int loadSkyTexture (VName name) {
 }
 
 
+static void SkipBracketed (VScriptParser *sc, bool bracketEaten=false) {
+  if (!bracketEaten) {
+    for (;;) {
+      sc->ResetQuoted();
+      if (!sc->GetString()) return;
+      if (sc->QuotedString) continue;
+      if (sc->String.length() == 1 && sc->String[0] == '{') {
+        break;
+      }
+    }
+  }
+  int level = 1;
+  for (;;) {
+    sc->ResetQuoted();
+    if (!sc->GetString()) break;
+    if (sc->QuotedString) continue;
+    if (sc->String.length() == 1) {
+      if (sc->String[0] == '{') {
+        ++level;
+      } else if (sc->String[0] == '}') {
+        if (--level == 0) return;
+      }
+    }
+  }
+}
+
+
 static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
 {
   guard(ParseMapCommon);
@@ -395,6 +422,9 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
           if (sc->Check("}")) break;
           sc->GetString();
         }
+      } else if (newFormat && sc->Check(",")) {
+        sc->ExpectString();
+        // check for more commas?
       }
     }
     else if (sc->Check("secret") || sc->Check("secretnext"))
@@ -1002,9 +1032,16 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     {
       GCon->Logf("Unimplemented MAPINFO comand unfreezesingleplayerconversations");
     }
+    else if (sc->Check("smoothlighting"))
+    {
+      GCon->Logf("Unimplemented MAPINFO comand SmoothLighting");
+    }
     else
     {
-      if (newFormat) sc->Expect("}");
+      if (newFormat) {
+        if (sc->Check("}")) break;
+        sc->Error(va("invalid mapinfo command (%s)", *sc->String));
+      }
       break;
     }
   }
@@ -1745,6 +1782,10 @@ static void ParseMapInfo(VScriptParser *sc)
           if (sc->Check("}")) break;
           sc->GetString();
         }
+      }
+      else if (sc->Check("intermission")) {
+        GCon->Logf("Unimplemented MAPINFO comand Intermission");
+        SkipBracketed(sc);
       }
       else
       {
