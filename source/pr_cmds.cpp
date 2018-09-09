@@ -884,10 +884,23 @@ IMPLEMENT_FUNCTION(VObject, IN_SetBinding) {
 IMPLEMENT_FUNCTION(VObject, SV_GetSaveString) {
   P_GET_PTR(VStr, buf);
   P_GET_INT(i);
+  if (!buf) { RET_INT(0); return; }
 #ifdef SERVER
   RET_INT(SV_GetSaveString(i, *buf));
 #else
   RET_INT(0);
+#endif
+}
+
+
+IMPLEMENT_FUNCTION(VObject, SV_GetSaveDateString) {
+  P_GET_PTR(VStr, buf);
+  P_GET_INT(i);
+  if (!buf) return;
+#ifdef SERVER
+  SV_GetSaveDateString(i, *buf);
+#else
+  *buf = VStr("UNKNOWN");
 #endif
 }
 

@@ -32,6 +32,9 @@
 #include "sv_local.h"
 #include "filesys/zipstream.h"
 
+#include <time.h>
+#include <sys/time.h>
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 #define REBORN_SLOT  (9)
@@ -43,9 +46,14 @@
 #define SAVE_NAME_ABS(_slot)  (SV_GetSavesDir()+"/save"+(_slot)+".vsg")
 */
 
-#define SAVE_DESCRIPTION_LENGTH   (24)
-#define SAVE_VERSION_TEXT         "Version 1.34.4"
-#define SAVE_VERSION_TEXT_LENGTH  (16)
+#define SAVE_DESCRIPTION_LENGTH    (24)
+#define SAVE_VERSION_TEXT_NO_DATE  "Version 1.34.4"
+#define SAVE_VERSION_TEXT          "Version 1.34.5"
+#define SAVE_VERSION_TEXT_LENGTH   (16)
+
+#define SAVE_EXTDATA_ID_END      (0)
+#define SAVE_EXTDATA_ID_DATEVAL  (1)
+#define SAVE_EXTDATA_ID_DATESTR  (2)
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -277,6 +285,58 @@ static VStr SV_GetSaveSlotFileName (int slot) {
 }
 
 
+struct TTimeVal {
+  int secs; // actually, unsigned
+  int usecs;
+  // for 2030+
+  int secshi;
+};
+
+
+//==========================================================================
+//
+//  GetTimeOfDay
+//
+//==========================================================================
+static void GetTimeOfDay (TTimeVal *tvres) {
+  if (!tvres) return;
+  tvres->secshi = 0;
+  timeval tv;
+  if (gettimeofday(&tv, nullptr)) {
+    tvres->secs = 0;
+    tvres->usecs = 0;
+  } else {
+    tvres->secs = (int)(tv.tv_sec&0xffffffff);
+    tvres->usecs = (int)tv.tv_usec;
+    tvres->secshi = (int)(((uint64_t)tv.tv_sec)>>32);
+  }
+}
+
+
+//==========================================================================
+//
+//  TimeVal2Str
+//
+//==========================================================================
+static VStr TimeVal2Str (const TTimeVal *tvin) {
+  timeval tv;
+  tv.tv_sec = (((uint64_t)tvin->secs)&0xffffffff)|(((uint64_t)tvin->secshi)<<32);
+  //tv.tv_usec = tvin->usecs;
+  tm ctm;
+  if (localtime_r(&tv.tv_sec, &ctm)) {
+    return VStr(va("%04d/%02d/%02d %02d:%02d:%02d",
+      (int)(ctm.tm_year+1900),
+      (int)ctm.tm_mon,
+      (int)ctm.tm_mday,
+      (int)ctm.tm_hour,
+      (int)ctm.tm_min,
+      (int)ctm.tm_sec));
+  } else {
+    return VStr("unknown");
+  }
+}
+
+
 //==========================================================================
 //
 //  VSaveSlot::Clear
@@ -289,6 +349,75 @@ void VSaveSlot::Clear () {
   for (int i = 0; i < Maps.Num(); ++i) { delete Maps[i]; Maps[i] = nullptr; }
   Maps.Clear();
   unguard;
+}
+
+
+//==========================================================================
+//
+//  SkipExtData
+//
+//  skip extended data
+//
+//==========================================================================
+static bool SkipExtData (VStream *Strm) {
+  for (;;) {
+    vint32 id, size;
+    *Strm << STRM_INDEX(id);
+    if (id == SAVE_EXTDATA_ID_END) break;
+    *Strm << STRM_INDEX(size);
+    if (size < 0 || size > 65536) return false;
+    // skip data
+    Strm->Seek(Strm->Tell()+size);
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  LoadDateStrExtData
+//
+//  get date string, or use timeval to build it
+//  empty string means i/o error
+//
+//==========================================================================
+static VStr LoadDateStrExtData (VStream *Strm) {
+  bool tvvalid = false;
+  TTimeVal tv;
+  memset((void *)&tv, 0, sizeof(tv));
+  VStr res;
+  for (;;) {
+    vint32 id, size;
+    *Strm << STRM_INDEX(id);
+    if (id == SAVE_EXTDATA_ID_END) break;
+    *Strm << STRM_INDEX(size);
+    if (size < 0 || size > 65536) return VStr();
+
+    if (id == SAVE_EXTDATA_ID_DATEVAL && size == (vint32)sizeof(tv)) {
+      tvvalid = true;
+      Strm->Serialize(&tv, sizeof(tv));
+      continue;
+    }
+
+    if (id == SAVE_EXTDATA_ID_DATESTR && size > 0 && size < 64) {
+      char buf[65];
+      memset(buf, 0, sizeof(buf));
+      Strm->Serialize(buf, size);
+      if (buf[0]) res = VStr(buf);
+      continue;
+    }
+
+    // skip unknown data
+    Strm->Seek(Strm->Tell()+size);
+  }
+  if (res.length() == 0) {
+    if (tvvalid) {
+      res = TimeVal2Str(&tv);
+    } else {
+      res = VStr("UNKNOWN");
+    }
+  }
+  return res;
 }
 
 
@@ -307,9 +436,10 @@ bool VSaveSlot::LoadSlot (int Slot) {
   }
 
   // check the version text
-  char VersionText[SAVE_VERSION_TEXT_LENGTH];
+  char VersionText[SAVE_VERSION_TEXT_LENGTH+1];
+  memset(VersionText, 0, sizeof(VersionText));
   Strm->Serialise(VersionText, SAVE_VERSION_TEXT_LENGTH);
-  if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT)) {
+  if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT) && VStr::Cmp(VersionText, SAVE_VERSION_TEXT_NO_DATE)) {
     // bad version
     Strm->Close();
     delete Strm;
@@ -319,6 +449,18 @@ bool VSaveSlot::LoadSlot (int Slot) {
   }
 
   *Strm << Description;
+
+  // skip extended data
+  if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT) == 0) {
+    if (!SkipExtData(Strm) || Strm->IsError()) {
+      // bad file
+      Strm->Close();
+      delete Strm;
+      Strm = nullptr;
+      GCon->Log("Savegame is corrupted");
+      return false;
+    }
+  }
 
   // check list of loaded modules
   auto wadlist = GetWadPk3List();
@@ -398,6 +540,30 @@ void VSaveSlot::SaveToSlot (int Slot) {
   // write game save description
   *Strm << Description;
 
+  // extended data: date value and date string
+  {
+    // date value
+    TTimeVal tv;
+    GetTimeOfDay(&tv);
+    vint32 id = SAVE_EXTDATA_ID_DATEVAL;
+    *Strm << STRM_INDEX(id);
+    vint32 size = (vint32)sizeof(tv);
+    *Strm << STRM_INDEX(size);
+    Strm->Serialize(&tv, sizeof(tv));
+
+    // date string
+    VStr dstr = TimeVal2Str(&tv);
+    id = SAVE_EXTDATA_ID_DATESTR;
+    *Strm << STRM_INDEX(id);
+    size = dstr.length();
+    *Strm << STRM_INDEX(size);
+    Strm->Serialize(*dstr, size);
+
+    // end of data marker
+    id = SAVE_EXTDATA_ID_END;
+    *Strm << STRM_INDEX(id);
+  }
+
   // write list of loaded modules
   auto wadlist = GetWadPk3List();
   //GCon->Logf("====================="); for (int f = 0; f < wadlist.length(); ++f) GCon->Logf("  %d: %s", f, *wadlist[f]);
@@ -454,35 +620,70 @@ bool SV_GetSaveString (int Slot, VStr &Desc) {
   guard(SV_GetSaveString);
   VStream *Strm = FL_OpenSysFileRead(SV_GetSaveSlotFileName(Slot));
   if (Strm) {
-    char VersionText[SAVE_VERSION_TEXT_LENGTH];
+    char VersionText[SAVE_VERSION_TEXT_LENGTH+1];
+    memset(VersionText, 0, sizeof(VersionText));
     Strm->Serialise(VersionText, SAVE_VERSION_TEXT_LENGTH);
-    *Strm << Desc;
     bool goodSave = true;
-    if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT)) {
+    Desc = "???";
+    if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT) && VStr::Cmp(VersionText, SAVE_VERSION_TEXT_NO_DATE)) {
       // bad version, put an asterisk in front of the description
       goodSave = false;
     } else {
-      // check list of loaded modules
-      auto wadlist = GetWadPk3List();
-      vint32 wcount = wadlist.length();
-      *Strm << wcount;
-      if (wcount < 1 || wcount > 8192 || wcount != wadlist.length()) {
-        goodSave = false;
-      } else {
-        for (int f = 0; f < wcount; ++f) {
-          VStr s;
-          *Strm << s;
-          if (s != wadlist[f]) { goodSave = false; break; }
+      *Strm << Desc;
+      // skip extended data
+      if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT) == 0) {
+        if (!SkipExtData(Strm) || Strm->IsError()) goodSave = false;
+      }
+      if (goodSave) {
+        // check list of loaded modules
+        auto wadlist = GetWadPk3List();
+        vint32 wcount = wadlist.length();
+        *Strm << wcount;
+        if (wcount < 1 || wcount > 8192 || wcount != wadlist.length()) {
+          goodSave = false;
+        } else {
+          for (int f = 0; f < wcount; ++f) {
+            VStr s;
+            *Strm << s;
+            if (s != wadlist[f]) { goodSave = false; break; }
+          }
         }
       }
     }
     if (!goodSave) Desc = "*"+Desc;
     delete Strm;
-    Strm = nullptr;
     return true;
   } else {
     Desc = EMPTYSTRING;
     return false;
+  }
+  unguard;
+}
+
+
+
+//==========================================================================
+//
+//  SV_GetSaveDateString
+//
+//==========================================================================
+void SV_GetSaveDateString (int Slot, VStr &datestr) {
+  guard(SV_GetSaveDate);
+  VStream *Strm = FL_OpenSysFileRead(SV_GetSaveSlotFileName(Slot));
+  if (Strm) {
+    char VersionText[SAVE_VERSION_TEXT_LENGTH+1];
+    memset(VersionText, 0, sizeof(VersionText));
+    Strm->Serialise(VersionText, SAVE_VERSION_TEXT_LENGTH);
+    datestr = "UNKNOWN";
+    if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT) == 0) {
+      VStr Desc;
+      *Strm << Desc;
+      datestr = LoadDateStrExtData(Strm);
+      if (datestr.length() == 0) datestr = "UNKNOWN";
+    }
+    delete Strm;
+  } else {
+    datestr = "UNKNOWN";
   }
   unguard;
 }
