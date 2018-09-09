@@ -22,103 +22,110 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuSaveSlot : MenuChoiceSlot;
 
-const int SLOTTEXTLEN   = 24;
+const int SLOTTEXTLEN = 24;
 
-int   Status;
-bool  bEnteringText;
-int   SlotNum;
-string  Text;
-string  EnterText;
+int Status;
+bool bEnteringText;
+int SlotNum;
+string Text;
+string EnterText;
 
-override void OnCreate()
-{
+
+//==========================================================================
+//
+//  OnCreate
+//
+//==========================================================================
+override void OnCreate () {
   ::OnCreate();
   InitSlot();
 }
 
-override void OnDraw()
-{
-  if (bEnteringText && IsFocus())
-  {
+
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
+override void OnDraw () {
+  if (bEnteringText && IsFocus()) {
     DrawSlot(0, EnterText, true);
-  }
-  else
-  {
+  } else {
     DrawSlot(0, Text, false);
   }
 }
 
-void ActivateSlot()
-{
+
+//==========================================================================
+//
+//  ActivateSlot
+//
+//==========================================================================
+void ActivateSlot () {
 }
 
-override bool OnKeyDown(int key)
-{
-  int Len;
 
-  if (bEnteringText)
-  {
-    // Save Game string input
-    switch (key)
-    {
-    case K_ESCAPE:
-    case K_MOUSE2:
-      bEnteringText = false;
-      break;
+//==========================================================================
+//
+//  OnKeyDown
+//
+//==========================================================================
+override bool OnKeyDown (int key) {
+  if (bEnteringText) {
+    // save game string input
+    switch (key) {
+      case K_ESCAPE:
+      case K_MOUSE2:
+        bEnteringText = false;
+        break;
 
-    case K_ENTER:
-    case K_PADENTER:
-    case K_MOUSE1:
-      bEnteringText = false;
-      if (strlen(EnterText))
-      {
-        Text = EnterText;
-        CmdBuf_AddText("Save %d \"%s\"\n", SlotNum, Text);
-        GetClGame().ForceMenuOff();
-      }
-      break;
+      case K_ENTER:
+      case K_PADENTER:
+      case K_MOUSE1:
+        bEnteringText = false;
+        if (EnterText) {
+          Text = EnterText;
+          CmdBuf_AddText("Save %d \"%s\"\n", SlotNum, Text);
+          GetClGame().ForceMenuOff();
+        }
+        break;
 
       case K_BACKSPACE:
-        if (strlen(EnterText))
-      {
-        EnterText = substr(EnterText, 0, strlen(EnterText) - 1);
-      }
-      break;
+        if (EnterText) EnterText = EnterText[0..$-1];
+        break;
 
-    default:
-        if (key >= 32 && key < 128)
-      {
-        Len = strlen(EnterText);
-          if (Len < SLOTTEXTLEN - 1)
-          {
-          EnterText = strcat(EnterText, TranslateKey(key));
+      default:
+        if (key >= 32 && key < 128 && key != 34) {
+          string tk = TranslateKey(key);
+          if (tk && tk != "\"") {
+            if (EnterText.length < SLOTTEXTLEN-1) EnterText ~= TranslateKey(key);
           }
-      }
-      break;
+        }
+        break;
     }
     return true;
   }
 
-  if (key == K_ENTER || key == K_PADENTER ||
-    key == K_MOUSE1 || key == K_JOY1)
-  {
+  if (key == K_ENTER || key == K_PADENTER || key == K_MOUSE1 || key == K_JOY1) {
     ActivateSlot();
     return true;
   }
   return false;
 }
 
-override void OnMouseClick(int X, int Y)
-{
+
+//==========================================================================
+//
+//  OnMouseClick
+//
+//==========================================================================
+override void OnMouseClick (int X, int Y) {
   SetFocus();
-  if (bEnteringText)
-  {
+  if (bEnteringText) {
     bEnteringText = false;
-    if (strlen(EnterText))
-    {
+    if (EnterText) {
       Text = EnterText;
       CmdBuf_AddText("Save %d \"%s\"\n", SlotNum, Text);
       GetClGame().ForceMenuOff();
@@ -128,6 +135,6 @@ override void OnMouseClick(int X, int Y)
   ActivateSlot();
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
