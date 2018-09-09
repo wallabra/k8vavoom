@@ -120,6 +120,10 @@ struct VAnimDoorDef
 class VRenderLevelPublic : public VInterface
 {
 public:
+  bool staticLightsFiltered;
+
+public:
+  VRenderLevelPublic () : staticLightsFiltered(false) {}
   virtual void PreRender() = 0;
   virtual void SegMoved(seg_t*) = 0;
   virtual void SetupFakeFloors(sector_t*) = 0;

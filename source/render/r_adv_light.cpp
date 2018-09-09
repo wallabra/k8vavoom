@@ -22,43 +22,101 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+extern VCvarB r_darken;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-extern VCvarB       r_darken;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+// private data definitions
+// ////////////////////////////////////////////////////////////////////////// //
 
 static subsector_t *r_sub;
 static sec_region_t *r_region;
-VCvarF          r_lights_radius("r_lights_radius", "2048", "Maximum light radius.", CVAR_Archive);
-VCvarF          r_lights_radius_sight_check("r_lights_radius_sight_check", "1024", "Maximum light radius.", CVAR_Archive);
-VCvarI          r_max_model_lights("r_max_model_lights", "32", "Maximum model lights.", CVAR_Archive);
-VCvarI          r_max_model_shadows("r_max_model_shadows", "2", "Maximum model shadows.", CVAR_Archive);
-VCvarI          r_max_lights("r_max_lights", "64", "Maximum lights.", CVAR_Archive);
-VCvarI          r_max_shadows("r_max_shadows", "64", "Maximum shadows.", CVAR_Archive);
 
-VCvarI          r_hashlight_static_div("r_hashlight_static_div", "8", "Divisor for static light spatial hashing.", CVAR_Archive);
-VCvarI          r_hashlight_dynamic_div("r_hashlight_dynamic_div", "8", "Divisor for dynamic light spatial hashing.", CVAR_Archive);
+VCvarF r_lights_radius("r_lights_radius", "2048", "Maximum light radius.", CVAR_Archive);
+VCvarF r_lights_radius_sight_check("r_lights_radius_sight_check", "1024", "Maximum light radius.", CVAR_Archive);
+VCvarI r_max_model_lights("r_max_model_lights", "32", "Maximum model lights.", CVAR_Archive);
+VCvarI r_max_model_shadows("r_max_model_shadows", "2", "Maximum model shadows.", CVAR_Archive);
+VCvarI r_max_lights("r_max_lights", "64", "Maximum lights.", CVAR_Archive);
+VCvarI r_max_shadows("r_max_shadows", "64", "Maximum shadows.", CVAR_Archive);
 
-// CODE --------------------------------------------------------------------
+// not used anymore
+VCvarI r_hashlight_static_div("r_hashlight_static_div", "8", "Divisor for static light spatial hashing.", CVAR_Archive);
+VCvarI r_hashlight_dynamic_div("r_hashlight_dynamic_div", "8", "Divisor for dynamic light spatial hashing.", CVAR_Archive);
+
+VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.56", "How close static lights should be to be filtered out?\n(0.5-0.7 is usually ok).", CVAR_Archive);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// code
+// ////////////////////////////////////////////////////////////////////////// //
+
+//==========================================================================
+//
+//  VAdvancedRenderLevel::RefilterStaticLights
+//
+//==========================================================================
+void VAdvancedRenderLevel::RefilterStaticLights () {
+  staticLightsFiltered = true;
+
+  int llen = Lights.length();
+  int actlights = 0;
+  for (int currlidx = 0; currlidx < llen; ++currlidx) {
+    light_t &cl = Lights[currlidx];
+    cl.active = (cl.radius > 6); // arbitrary limit
+    if (cl.active) ++actlights;
+  }
+  if (actlights < 6) return; // arbitrary limit
+
+  float coeff = r_light_filter_static_coeff;
+  if (coeff <= 0) return; // no filtering
+  if (coeff > 8) coeff = 8;
+
+  for (int currlidx = 0; currlidx < llen; ++currlidx) {
+    light_t &cl = Lights[currlidx];
+    if (!cl.active) continue; // already filtered out
+    // remove nearby lights with radius less than ours (or ourself if we'll hit bigger light)
+    float radsq = (cl.radius*cl.radius)*coeff;
+    for (int nlidx = currlidx+1; nlidx < llen; ++nlidx) {
+      light_t &nl = Lights[nlidx];
+      if (!nl.active) continue; // already filtered out
+      const float distsq = length2DSquared(cl.origin-nl.origin);
+      if (distsq >= radsq) continue;
+
+      // check potential visibility
+      /*
+      subsector_t *sub = Level->PointInSubsector(nl.origin);
+      vuint8 *dyn_facevis = Level->LeafPVS(sub);
+      if (!(dyn_facevis[nl.leafnum>>3]&(1<<(nl.leafnum&7)))) continue;
+      */
+
+      // if we cannot trace a line between two lights, they are prolly divided by a wall or floor
+      linetrace_t Trace;
+      if (!Level->TraceLine(Trace, nl.origin, cl.origin, SPF_NOBLOCKSIGHT)) continue;
+
+      if (nl.radius <= cl.radius) {
+        // deactivate nl
+        nl.active = false;
+      } else /*if (nl.radius > cl.radius)*/ {
+        // deactivate cl
+        cl.active = false;
+        // there is no sense to continue
+        break;
+      }
+    }
+  }
+
+  actlights = 0;
+  for (int currlidx = 0; currlidx < llen; ++currlidx) {
+    light_t &cl = Lights[currlidx];
+    if (cl.active) ++actlights;
+  }
+
+  GCon->Logf("ADVRENDERER: filtered %d static lights out of %d (%d left)", llen-actlights, llen, actlights);
+}
+
 
 //==========================================================================
 //
@@ -123,13 +181,12 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p)
   //  Add static lights
   if (r_static_lights)
   {
+    if (!staticLightsFiltered) RefilterStaticLights();
     vuint8 *dyn_facevis = Level->LeafPVS(sub);
     for (int i = 0; i < Lights.Num(); i++)
     {
-      if (!Lights[i].radius)
-      {
-        continue;
-      }
+      //if (!Lights[i].radius) continue;
+      if (!Lights[i].active) continue;
 
       // Check potential visibility
       if (!(dyn_facevis[Lights[i].leafnum >> 3] & (1 << (Lights[i].leafnum & 7))))

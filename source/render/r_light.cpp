@@ -50,6 +50,8 @@ VCvarB r_static_lights("r_static_lights", true, "Allow static lights?", CVAR_Arc
 VCvarB r_static_add("r_static_add", true, "Are static lights additive?", CVAR_Archive);
 VCvarF r_specular("r_specular", "0.1", "Specular light.", CVAR_Archive);
 
+VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.8", "How close dynamic lights should be to be filtered out?\n(0.6-0.9 is usually ok).", CVAR_Archive);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static TVec smins, smaxs;
@@ -77,11 +79,13 @@ static int c_bad;
 //==========================================================================
 void VRenderLevelShared::AddStaticLight (const TVec &origin, float radius, vuint32 colour) {
   guard(VRenderLevelShared::AddStaticLight);
+  staticLightsFiltered = false;
   light_t &L = Lights.Alloc();
   L.origin = origin;
   L.radius = radius;
   L.colour = colour;
   L.leafnum = Level->PointInSubsector(origin) - Level->Subsectors;
+  L.active = true;
   unguard;
 }
 
@@ -495,7 +499,11 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   dlight_t *dlbestdist = nullptr;
   float bestdist = length2DSquared(lorg-cl->ViewOrg);
   if (radius < 0) radius = 0;
-  float radsq = (radius < 1 ? 32*32 : radius*radius);
+
+  float coeff = r_light_filter_dynamic_coeff;
+  if (coeff <= 0.1) coeff = 0.1; else if (coeff > 1) coeff = 1;
+
+  float radsq = (radius < 1 ? 32*32 : radius*radius*coeff);
   if (radsq < 32*32) radsq = 32*32;
 
   // look for any free slot (or free one if necessary)

@@ -317,10 +317,11 @@ protected:
 
   struct light_t
   {
-    TVec      origin;
-    float     radius;
-    vuint32     colour;
-    int       leafnum;
+    TVec origin;
+    float radius;
+    vuint32 colour;
+    int leafnum;
+    bool active; // for filtering
   };
 
   VLevel *Level;
@@ -557,6 +558,8 @@ private:
   byte *LightVis;
   byte *LightBspVis;
   vuint32         CurrLightColour;
+
+  void RefilterStaticLights ();
 
   //  General
   void RenderScene(const refdef_t*, const VViewClipper*);

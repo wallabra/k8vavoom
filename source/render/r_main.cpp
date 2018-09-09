@@ -196,7 +196,8 @@ void R_Start(VLevel *ALevel)
 //==========================================================================
 
 VRenderLevelShared::VRenderLevelShared(VLevel *ALevel)
-: Level(ALevel)
+: VRenderLevelDrawer()
+, Level(ALevel)
 , ViewEnt(nullptr)
 , MirrorLevel(0)
 , PortalLevel(0)
@@ -872,8 +873,11 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
     if (statdiv > 0) slmhash.reset();
 #endif
 
+    if (!staticLightsFiltered) RefilterStaticLights();
+
     for (int i = 0; i < Lights.Num(); i++) {
-      if (!Lights[i].radius) continue;
+      //if (!Lights[i].radius) continue;
+      if (!Lights[i].active) continue;
 
       sub = Level->PointInSubsector(Lights[i].origin);
       dyn_facevis = Level->LeafPVS(sub);
