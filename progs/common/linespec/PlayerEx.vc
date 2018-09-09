@@ -2234,6 +2234,10 @@ override void SpawnClient()
         GetPlayerNum() + 1, Level.Game.RebornPosition);
       SpawnPlayer(Best, false);
     }
+    if (PlayerState != PST_REBORN) {
+      //GCon->Logf("autosaving...");
+      CmdBuf_AddText("AutoSaveEnter\n");
+    }
   }
 
   if (Level.Game.netgame && !Level.Game.deathmatch && playerWasReborn)
