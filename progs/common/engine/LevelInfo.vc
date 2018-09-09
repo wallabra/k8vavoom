@@ -1087,7 +1087,7 @@ void UpdateParticle(particle_t *p, float DeltaTime)
 //
 //==========================================================================
 
-int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle)
+int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle, bool forced)
 {
   return false;
 }
@@ -1098,7 +1098,7 @@ int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle)
 //
 //==========================================================================
 
-int AcsSpawnSpot(name Name, int SpotTid, int Tid, float Angle)
+int AcsSpawnSpot(name Name, int SpotTid, int Tid, float Angle, bool forced)
 {
   return false;
 }

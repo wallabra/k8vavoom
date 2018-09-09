@@ -268,9 +268,9 @@ Actor K8Gore_BloodSpot$(Color) {
   Renderstyle Translucent
 #ifdef TRANSIENT
   //Alpha 0.6
-  Alpha 0.5
+  Alpha 0.7
 #else
-  Alpha 0.5
+  Alpha 0.9
 #endif
   Mass 99999999
   Scale 0.5

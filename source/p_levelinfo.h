@@ -306,13 +306,14 @@ class VLevelInfo : public VThinker
     P_PASS_FLOAT(Angle);
     EV_RET_INT(NAME_AcsSpawnThing);
   }
-  int eventAcsSpawnSpot(VName Name, int SpotTid, int Tid, float Angle)
+  int eventAcsSpawnSpot(VName Name, int SpotTid, int Tid, float Angle, bool forced=false)
   {
     P_PASS_SELF;
     P_PASS_NAME(Name);
     P_PASS_INT(SpotTid);
     P_PASS_INT(Tid);
     P_PASS_FLOAT(Angle);
+    P_PASS_BOOL(forced);
     EV_RET_INT(NAME_AcsSpawnSpot);
   }
   int eventAcsSpawnSpotFacing(VName Name, int SpotTid, int Tid)

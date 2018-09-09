@@ -266,6 +266,7 @@ class VAcs : public VThinker
   void ClearReferences();
   int RunScript(float);
   void Tick(float);
+  int CallFunction (int argCount, int funcIndex, vint32 *args);
 
 private:
   enum { ACS_STACK_DEPTH    = 4096 };
@@ -1994,9 +1995,51 @@ void VAcs::Tick(float DeltaTime)
 #define ACSVM_DEFAULT   default:
 #endif
 
+#define READ_INT16(p)   (vint32)(vint16)((p)[0]|((p)[1]<<8))
 #define READ_INT32(p)   ((p)[0] | ((p)[1] << 8) | ((p)[2] << 16) | ((p)[3] << 24))
 #define READ_BYTE_OR_INT32  (fmt == ACS_LittleEnhanced ? *ip : READ_INT32(ip))
 #define INC_BYTE_OR_INT32 if (fmt == ACS_LittleEnhanced) ip++; else ip += 4
+
+// extfunction enum
+#define ACS_EXTFUNC(fnname)             ACSF_##fnname,
+#define ACS_EXTFUNC_NUM(fnname, fnidx)  ACSF_##fnname=fnidx,
+enum {
+#include "p_acs_extfunc.h"
+};
+#undef ACS_EXTFUNC_NUM
+#undef ACS_EXTFUNC
+
+// extfunction names
+#define ACS_EXTFUNC(fnname)             { "" #fnname "", ACSF_##fnname },
+#define ACS_EXTFUNC_NUM(fnname, fnidx)  { "" #fnname "", ACSF_##fnname },
+struct ACSF_Info {
+  const char *name;
+  int index;
+};
+
+static const ACSF_Info ACSF_List[] = {
+#include "p_acs_extfunc.h"
+  { nullptr, -666 }
+};
+#undef ACS_EXTFUNC_NUM
+#undef ACS_EXTFUNC
+
+int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
+  switch (funcIndex) {
+    case ACSF_SpawnSpotForced: // int SpawnSpotForced (str classname, int spottid, int tid, int angle)
+      //GCon->Logf("ACS: SpawnSpotForced: classname=<%s>; spottid=%d; tid=%d; angle=%f", *GetNameLowerCase(args[0]), args[1], args[2], float(args[3])*45.0f/32.0f);
+      return Level->eventAcsSpawnSpot(GetNameLowerCase(args[0]), args[1], args[2], float(args[3])*45.0f/32.0f, true); // forced
+  }
+
+  for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
+    if (nfo->index == funcIndex) {
+      GCon->Logf("ERROR: unimplemented ACSF function '%s'", nfo->name);
+      Host_Error("unimplemented ACSF function '%s'", nfo->name);
+    }
+  }
+  Host_Error("unimplemented ACSF function #%d", funcIndex);
+}
+
 
 int VAcs::RunScript(float DeltaTime)
 {
@@ -3590,46 +3633,51 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_CallDiscard)
       {
         int funcnum;
-        int i;
+        //int i;
         VAcsObject *object = ActiveObject;
 
         funcnum = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        VAcsFunction *func = ActiveObject->GetFunction(funcnum,
-          object);
-        if (!func)
-        {
-          GCon->Logf("Function %d in script %d out of range",
-            funcnum, number);
+        VAcsFunction *func = ActiveObject->GetFunction(funcnum, object);
+        if (!func) {
+          GCon->Logf("Function %d in script %d out of range", funcnum, number);
           action = SCRIPT_Terminate;
           ACSVM_BREAK_STOP;
         }
-        if ((sp - stack) + func->LocalCount + 64 > ACS_STACK_DEPTH)
-        {
+        if ((sp-stack)+func->LocalCount+64 > ACS_STACK_DEPTH) {
           // 64 is the margin for the function's working space
           GCon->Logf("Out of stack space in script %d", number);
           action = SCRIPT_Terminate;
           ACSVM_BREAK_STOP;
         }
-        //  The function's first argument is also its first local
-        // variable.
-        locals = sp - func->ArgCount;
-        //  Make space on the stack for any other variables the
-        // function uses.
-        for (i = 0; i < func->LocalCount; i++)
-        {
-          sp[i] = 0;
+        // the function's first argument is also its first local variable
+        locals = sp-func->ArgCount;
+        // make space on the stack for any other variables the function uses
+        //for (i = 0; i < func->LocalCount; i++) sp[i] = 0;
+        //sp += i;
+        if (func->LocalCount > 0) {
+          memset((void *)sp, 0, func->LocalCount*sizeof(sp[0]));
+          sp += func->LocalCount;
         }
-        sp += i;
-        ((VAcsCallReturn*)sp)->ReturnAddress =
-          ActiveObject->PtrToOffset(ip);
-        ((VAcsCallReturn*)sp)->ReturnFunction = activeFunction;
-        ((VAcsCallReturn*)sp)->ReturnObject = ActiveObject;
-        ((VAcsCallReturn*)sp)->bDiscardResult = (cmd == PCD_CallDiscard);
-        sp += sizeof(VAcsCallReturn) / sizeof(vint32);
+        ((VAcsCallReturn *)sp)->ReturnAddress = ActiveObject->PtrToOffset(ip);
+        ((VAcsCallReturn *)sp)->ReturnFunction = activeFunction;
+        ((VAcsCallReturn *)sp)->ReturnObject = ActiveObject;
+        ((VAcsCallReturn *)sp)->bDiscardResult = (cmd == PCD_CallDiscard);
+        sp += sizeof(VAcsCallReturn)/sizeof(vint32);
         ActiveObject = object;
         ip = ActiveObject->OffsetToPtr(func->Address);
         activeFunction = func;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_CallFunc)
+      {
+        int argCount = *ip++;
+        int funcIndex = READ_INT16(ip); ip += 2;
+
+        int retval = CallFunction(argCount, funcIndex, sp-argCount);
+        sp -= argCount-1;
+        sp[-1] = retval;
       }
       ACSVM_BREAK;
 

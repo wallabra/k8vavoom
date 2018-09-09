@@ -328,7 +328,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
             //poolClassName = 'SmallBloodPool';
             class!Actor poolClass = class!Actor(FindClass(poolClassName));
             if (poolClass) {
-              print("***SPAWNING BLOOD POOL: '%n'", GetClassName(poolClass));
+              //print("***SPAWNING BLOOD POOL: '%n'", GetClassName(poolClass));
               Level.Spawn(poolClass, Origin);
             }
           }

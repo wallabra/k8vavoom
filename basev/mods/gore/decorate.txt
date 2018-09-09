@@ -194,7 +194,7 @@ Actor K8Gore_BloodSpot {
   -SOLID
   +THRUACTORS
   Renderstyle Translucent
-  Alpha 0.5
+  Alpha 0.9
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplat
@@ -1800,7 +1800,7 @@ Actor K8Gore_BloodSpotTransient {
   +THRUACTORS
   Renderstyle Translucent
   //Alpha 0.6
-  Alpha 0.5
+  Alpha 0.7
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatTransient
@@ -3403,7 +3403,7 @@ Actor K8Gore_BloodSpotGreen {
   -SOLID
   +THRUACTORS
   Renderstyle Translucent
-  Alpha 0.5
+  Alpha 0.9
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatGreen
@@ -5076,7 +5076,7 @@ Actor K8Gore_BloodSpotTransient_Green {
   +THRUACTORS
   Renderstyle Translucent
   //Alpha 0.6
-  Alpha 0.5
+  Alpha 0.7
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatTransient_Green
@@ -6738,7 +6738,7 @@ Actor K8Gore_BloodSpotBlue {
   -SOLID
   +THRUACTORS
   Renderstyle Translucent
-  Alpha 0.5
+  Alpha 0.9
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatBlue
@@ -8411,7 +8411,7 @@ Actor K8Gore_BloodSpotTransient_Blue {
   +THRUACTORS
   Renderstyle Translucent
   //Alpha 0.6
-  Alpha 0.5
+  Alpha 0.7
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatTransient_Blue

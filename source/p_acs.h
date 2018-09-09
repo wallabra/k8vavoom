@@ -381,6 +381,8 @@ enum EPCD
   DECLARE_PCD(PrintBinary),
   DECLARE_PCD(PrintHex),//350
 
+  DECLARE_PCD(CallFunc),//351
+
 #ifdef DECLARING_PCD_ENUM
   PCODE_COMMAND_COUNT
 };
