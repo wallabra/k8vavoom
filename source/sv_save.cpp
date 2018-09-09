@@ -37,6 +37,10 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static VCvarB r_dbg_save_on_level_exit("r_dbg_save_on_level_exit", false, "Save before exiting a level.\nNote that after loading this save you prolly won't be able to exit again.", CVAR_Archive);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 #define REBORN_SLOT  (9)
 #define QUICKSAVE_SLOT  (-666)
 
@@ -1454,13 +1458,8 @@ COMMAND(AutoSaveEnter) {
 }
 
 
-//==========================================================================
-//
-//  COMMAND AutoSaveLeave
-//
-//==========================================================================
-COMMAND(AutoSaveLeave) {
-  guard(COMMAND AutoSaveLeave)
+void SV_AutoSaveOnLevelExit () {
+  if (!r_dbg_save_on_level_exit) return;
 
   if (!CheckIfSaveIsAllowed()) return;
 
@@ -1479,6 +1478,17 @@ COMMAND(AutoSaveLeave) {
   SV_SaveGame(aslot, date);
 
   GCon->Logf("Game autosaved to slot #%d", -aslot);
+}
+
+
+//==========================================================================
+//
+//  COMMAND AutoSaveLeave
+//
+//==========================================================================
+COMMAND(AutoSaveLeave) {
+  guard(COMMAND AutoSaveLeave)
+  SV_AutoSaveOnLevelExit();
   unguard;
 }
 

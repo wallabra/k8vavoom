@@ -33,3 +33,4 @@ extern bool SV_RebornSlotAvailable ();
 extern int SV_GetRebornSlot ();
 extern bool SV_GetSaveString (int Slot, VStr &Desc);
 extern void SV_GetSaveDateString (int Slot, VStr &datestr);
+extern void SV_AutoSaveOnLevelExit ();

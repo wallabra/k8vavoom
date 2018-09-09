@@ -291,6 +291,11 @@ class VBasePlayer : public VGameObject
     P_PASS_BOOL(clusterChange);
     EV_RET_VOID(NAME_PlayerExitMap);
   }
+  void eventPlayerBeforeExitMap()
+  {
+    P_PASS_SELF;
+    EV_RET_VOID(NAME_PlayerBeforeExitMap);
+  }
   void eventPlayerTick(float deltaTime)
   {
     P_PASS_SELF;

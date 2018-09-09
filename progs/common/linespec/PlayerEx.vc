@@ -2736,6 +2736,20 @@ void DoClearPlayer()
   ClearPlayer();
 }
 
+
+//==========================================================================
+//
+//  PlayerBeforeExitMap
+//
+//  Called when a player completes a level, but before going to imis.
+//  Not called for intermissions.
+//
+//==========================================================================
+
+override void PlayerBeforeExitMap()
+{
+}
+
 //==========================================================================
 //
 //  PlayerExitMap

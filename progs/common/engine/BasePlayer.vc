@@ -219,6 +219,10 @@ void UserinfoChanged()
 {
 }
 
+void PlayerBeforeExitMap()
+{
+}
+
 void PlayerExitMap(bool clusterChange)
 {
 }

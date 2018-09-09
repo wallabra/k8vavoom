@@ -548,12 +548,18 @@ static void G_DoCompleted()
     //FIXME Some ACS left from previous visit of the level
     return;
   }
+
+  for (i = 0; i < MAXPLAYERS; ++i) {
+    if (GGameInfo->Players[i]) GGameInfo->Players[i]->eventPlayerBeforeExitMap();
+  }
+
+  SV_AutoSaveOnLevelExit();
+
   sv.intermission = 1;
   sv.intertime = 0;
   GLevelInfo->CompletitionTime = GLevel->Time;
 
-  GLevel->Acs->StartTypedACScripts(SCRIPT_Unloading, 0, 0, 0, nullptr, false,
-    true);
+  GLevel->Acs->StartTypedACScripts(SCRIPT_Unloading, 0, 0, 0, nullptr, false, true);
 
   GLevelInfo->NextMap = CheckRedirects(GLevelInfo->NextMap);
 
@@ -563,23 +569,16 @@ static void G_DoCompleted()
   bool HubChange = !old_info.Cluster || !(ClusterD->Flags & CLUSTERF_Hub) ||
     old_info.Cluster != new_info.Cluster;
 
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    if (GGameInfo->Players[i])
-    {
+  for (i = 0; i < MAXPLAYERS; ++i) {
+    if (GGameInfo->Players[i]) {
       GGameInfo->Players[i]->eventPlayerExitMap(HubChange);
-      if (deathmatch || HubChange)
-      {
-        GGameInfo->Players[i]->eventClientIntermission(
-          GLevelInfo->NextMap);
+      if (deathmatch || HubChange) {
+        GGameInfo->Players[i]->eventClientIntermission(GLevelInfo->NextMap);
       }
     }
   }
 
-  if (!deathmatch && !HubChange)
-  {
-    GCmdBuf << "TeleportNewMap\n";
-  }
+  if (!deathmatch && !HubChange) GCmdBuf << "TeleportNewMap\n";
 }
 
 //==========================================================================
