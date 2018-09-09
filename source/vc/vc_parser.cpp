@@ -2093,7 +2093,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
         if (ainfo) {
           ParseError(Lex.Location, "alias '%s' redeclaration; previous declaration at %s:%d", *aliasName, *ainfo->loc.GetSource(), ainfo->loc.GetLine());
         } else if (aliasName == origName) {
-          ParseError(Lex.Location, "alias '%s' refers to itseld", *aliasName);
+          ParseError(Lex.Location, "alias '%s' refers to itself", *aliasName);
         } else {
           VStruct::AliasInfo ai;
           ai.aliasName = aliasName;

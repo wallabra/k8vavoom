@@ -202,7 +202,7 @@ void VClass::CompilerShutdown () {
   Constants.clear();
   Properties.clear();
   StateLabelDefs.clear();
-  AliasList.clear();
+  //AliasList.clear();
 }
 
 

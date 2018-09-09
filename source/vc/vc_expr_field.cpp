@@ -108,7 +108,7 @@ VExpression *VPointerField::DoResolve (VEmitContext &ec) {
 
   VField *field = type.Struct->FindField(FieldName);
   if (!field) {
-    ParseError(Loc, "No such field %s", *FieldName);
+    ParseError(Loc, "No such field `%s` in struct `%s`", *FieldName, *type.Struct->GetFullName());
     delete this;
     return nullptr;
   }

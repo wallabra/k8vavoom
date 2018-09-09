@@ -61,7 +61,7 @@ VStruct::VStruct (VName AName, VMemberBase *AOuter, TLocation ALoc)
 //==========================================================================
 void VStruct::CompilerShutdown () {
   VMemberBase::CompilerShutdown();
-  AliasList.clear();
+  //AliasList.clear();
 }
 
 
