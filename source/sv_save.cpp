@@ -38,8 +38,10 @@
 
 #define EMPTYSTRING  "empty slot"
 #define MOBJ_NULL  (-1)
+/*
 #define SAVE_NAME(_slot)      (VStr("saves/save")+(_slot)+".vsg")
 #define SAVE_NAME_ABS(_slot)  (SV_GetSavesDir()+"/save"+(_slot)+".vsg")
+*/
 
 #define SAVE_DESCRIPTION_LENGTH   (24)
 #define SAVE_VERSION_TEXT         "Version 1.34.4"
@@ -208,11 +210,70 @@ public:
 //
 //==========================================================================
 static VStr SV_GetSavesDir () {
-  VStr res = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir);
-  res += "/";
-  res += fl_gamedir;
+  VStr res;
+#if !defined(_WIN32)
+  const char *HomeDir = getenv("HOME");
+  if (HomeDir && HomeDir[0]) {
+    res = VStr(HomeDir)+"/.vavoom";
+  } else {
+    res = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir);
+  }
+#else
+  res = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir);
+#endif
   res += "/saves";
   return res;
+}
+
+
+//==========================================================================
+//
+//  SV_GetSaveSlotBaseFileName
+//
+//  if slot is < 0, this is autosave slot
+//  -666 is quicksave slot
+//  returns empty string for invalid slot
+//
+//==========================================================================
+static VStr SV_GetSaveSlotBaseFileName (int slot) {
+  if (slot != -666 && (slot < -64 || slot > 63)) return VStr();
+  VStr modlist;
+  // get list of loaded modules
+  auto wadlist = GetWadPk3List();
+  //GCon->Logf("====================="); for (int f = 0; f < wadlist.length(); ++f) GCon->Logf("  %d: %s", f, *wadlist[f]);
+  for (int f = 0; f < wadlist.length(); ++f) {
+    modlist += wadlist[f];
+    modlist += "\n";
+  }
+  // get list hash
+  ed25519_sha512_hash sha512;
+  ed25519_hash(sha512, *modlist, (size_t)modlist.length());
+  // convert to hex
+  char shahex[ed25519_sha512_hash_size*2+1];
+  static const char *hexd = "0123456789abcdef";
+  for (int f = 0; f < ed25519_sha512_hash_size; ++f) {
+    shahex[f*2+0] = hexd[(sha512[f]>>4)&0x0f];
+    shahex[f*2+1] = hexd[sha512[f]&0x0f];
+  }
+  shahex[ed25519_sha512_hash_size*2] = 0;
+  if (slot == -666) return VStr(va("%s_quicksave_00.vsg", shahex));
+  if (slot < 0) return VStr(va("%s_autosave_%02d.vsg", shahex, -slot));
+  return VStr(va("%s_normsave_%02d.vsg", shahex, slot+1));
+}
+
+
+//==========================================================================
+//
+//  SV_GetSaveSlotFileName
+//
+//  see above about slot values meaning
+//  returns empty string for invalid slot
+//
+//==========================================================================
+static VStr SV_GetSaveSlotFileName (int slot) {
+  VStr bfn = SV_GetSaveSlotBaseFileName(slot);
+  if (bfn.isEmpty()) return bfn;
+  return SV_GetSavesDir()+"/"+bfn;
 }
 
 
@@ -239,7 +300,7 @@ void VSaveSlot::Clear () {
 bool VSaveSlot::LoadSlot (int Slot) {
   guard(VSaveSlot::LoadSlot);
   Clear();
-  VStream *Strm = FL_OpenFileRead(SAVE_NAME(Slot));
+  VStream *Strm = FL_OpenSysFileRead(SV_GetSaveSlotFileName(Slot));
   if (!Strm) {
     GCon->Log("Savegame file doesn't exist");
     return false;
@@ -314,7 +375,19 @@ bool VSaveSlot::LoadSlot (int Slot) {
 //==========================================================================
 void VSaveSlot::SaveToSlot (int Slot) {
   guard(VSaveSlot::SaveToSlot);
-  VStream *Strm = FL_OpenFileWrite(*SAVE_NAME(Slot));
+  VStr savefname = SV_GetSaveSlotFileName(Slot);
+  if (savefname.isEmpty()) {
+    GCon->Logf("ERROR: cannot save to slot %d!", Slot);
+    return;
+  }
+
+  FL_CreatePath(SV_GetSavesDir()); // just in case
+
+  VStream *Strm = FL_OpenSysFileWrite(*savefname);
+  if (!Strm) {
+    GCon->Logf("ERROR: cannot save to slot %d!", Slot);
+    return;
+  }
 
   // write version info
   char VersionText[SAVE_VERSION_TEXT_LENGTH];
@@ -345,9 +418,16 @@ void VSaveSlot::SaveToSlot (int Slot) {
     Strm->Serialise(Maps[i]->Data.Ptr(), Maps[i]->Data.Num());
   }
 
+  bool err = Strm->IsError();
   Strm->Close();
+  err = err || Strm->IsError();
   delete Strm;
   Strm = nullptr;
+  if (err) {
+    GCon->Logf("ERROR: error saving to slot %d, savegame is corrupted!", Slot);
+    return;
+  }
+
   unguard;
 }
 
@@ -372,7 +452,7 @@ VSavedMap *VSaveSlot::FindMap (VName Name) {
 //==========================================================================
 bool SV_GetSaveString (int Slot, VStr &Desc) {
   guard(SV_GetSaveString);
-  VStream *Strm = FL_OpenFileRead(SAVE_NAME(Slot));
+  VStream *Strm = FL_OpenSysFileRead(SV_GetSaveSlotFileName(Slot));
   if (Strm) {
     char VersionText[SAVE_VERSION_TEXT_LENGTH];
     Strm->Serialise(VersionText, SAVE_VERSION_TEXT_LENGTH);
@@ -804,7 +884,7 @@ int SV_GetRebornSlot () {
 //
 //==========================================================================
 bool SV_RebornSlotAvailable () {
-  if (Sys_FileExists(SAVE_NAME_ABS(REBORN_SLOT))) return true;
+  if (Sys_FileExists(SV_GetSaveSlotFileName(REBORN_SLOT))) return true;
   return false;
 }
 
