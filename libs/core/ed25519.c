@@ -1956,14 +1956,14 @@ ge25519_scalarmult_base_niels(ge25519 *r, const uint8_t basepoint_table[256][96]
 #define HASH_BLOCK_SIZE 128
 #define HASH_DIGEST_SIZE 64
 
-typedef struct sha512_state_t {
+typedef struct ed25519_sha512_state_t {
 	uint64_t H[8];
 	uint64_t T[2];
 	uint32_t leftover;
 	uint8_t buffer[HASH_BLOCK_SIZE];
-} sha512_state;
+} ed25519_sha512_state;
 
-typedef sha512_state ed25519_hash_context;
+typedef ed25519_sha512_state ed25519_hash_context;
 
 static const uint64_t sha512_constants[80] = {
 	0x428a2f98d728ae22ull, 0x7137449123ef65cdull, 0xb5c0fbcfec4d3b2full, 0xe9b5dba58189dbbcull,
@@ -2039,9 +2039,10 @@ sha512_STORE64_BE(uint8_t *p, uint64_t v) {
 	r[0] = t0 + t1;
 
 static void
-sha512_blocks(sha512_state *S, const uint8_t *in, size_t blocks) {
+sha512_blocks(ed25519_hash_context *S, const void *invoid, size_t blocks) {
 	uint64_t r[8], w[80], t0, t1;
 	size_t i;
+	const uint8_t *in = (const uint8_t *)invoid;
 
 	for (i = 0; i < 8; i++) r[i] = S->H[i];
 
@@ -2056,8 +2057,8 @@ sha512_blocks(sha512_state *S, const uint8_t *in, size_t blocks) {
 	}
 }
 
-static void
-ed25519_hash_init(sha512_state *S) {
+void
+ED25519_FN(ed25519_hash_init)(ed25519_hash_context *S) {
 	S->H[0] = 0x6a09e667f3bcc908ull;
 	S->H[1] = 0xbb67ae8584caa73bull;
 	S->H[2] = 0x3c6ef372fe94f82bull;
@@ -2071,9 +2072,10 @@ ed25519_hash_init(sha512_state *S) {
 	S->leftover = 0;
 }
 
-static void
-ed25519_hash_update(sha512_state *S, const uint8_t *in, size_t inlen) {
+void
+ED25519_FN(ed25519_hash_update)(ed25519_hash_context *S, const void *invoid, size_t inlen) {
 	size_t blocks, want;
+	const uint8_t *in = (const uint8_t *)invoid;
 
 	/* handle the previous data */
 	if (S->leftover) {
@@ -2101,8 +2103,8 @@ ed25519_hash_update(sha512_state *S, const uint8_t *in, size_t inlen) {
 		memcpy(S->buffer, in, S->leftover);
 }
 
-static void
-ed25519_hash_final(sha512_state *S, uint8_t *hash) {
+void
+ED25519_FN(ed25519_hash_final)(ed25519_hash_context *S, ed25519_sha512_hash hash) {
 	uint64_t t0 = S->T[0] + (S->leftover * 8), t1 = S->T[1];
 
 	S->buffer[S->leftover] = 0x80;
@@ -2128,13 +2130,14 @@ ed25519_hash_final(sha512_state *S, uint8_t *hash) {
 	sha512_STORE64_BE(&hash[56], S->H[7]);
 }
 
-static void
-ed25519_hash(uint8_t *hash, const uint8_t *in, size_t inlen) {
+void
+ED25519_FN(ed25519_hash)(ed25519_sha512_hash hash, const void *in, size_t inlen) {
 	ed25519_hash_context ctx;
 	ed25519_hash_init(&ctx);
 	ed25519_hash_update(&ctx, in, inlen);
 	ed25519_hash_final(&ctx, hash);
 }
+
 
 /*
 	Generates a (extsk[0..31]) and aExt (extsk[32..63])

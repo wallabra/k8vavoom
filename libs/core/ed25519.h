@@ -78,6 +78,19 @@ void ed25519_randombytes(void *out, size_t count);
 void curved25519_scalarmult_basepoint(curved25519_key pk, const curved25519_key e);
 
 
+/* reference/slow SHA-512. really, do not use this */
+typedef struct ed25519_sha512_state_t ed25519_hash_context;
+enum { ed25519_sha512_hash_size = 512/8 };
+typedef uint8_t ed25519_sha512_hash[ed25519_sha512_hash_size];
+
+
+void ed25519_hash_init (ed25519_hash_context *S);
+void ed25519_hash_update (ed25519_hash_context *S, const void *in, size_t inlen);
+void ed25519_hash_final (ed25519_hash_context *S, ed25519_sha512_hash hash);
+
+void ed25519_hash (ed25519_sha512_hash hash, const void *in, size_t inlen);
+
+
 #if defined(__cplusplus)
 }
 #endif
