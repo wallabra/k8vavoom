@@ -191,6 +191,10 @@ void CreateControlKeyChoices () {
   AddControl("Next weapon", "impulse 18", "");
   AddControl("Toggle Console", "ToggleConsole", "");
 
+  AddText("");
+  AddControl("Quick Save", "QuickSave", "");
+  AddControl("Quick Load", "QuickLoad", "");
+
   if (GameName == "strife") {
     // strife keys
     AddText("");
