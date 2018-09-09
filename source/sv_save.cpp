@@ -38,6 +38,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 #define REBORN_SLOT  (9)
+#define QUICKSAVE_SLOT  (-666)
 
 #define EMPTYSTRING  "empty slot"
 #define MOBJ_NULL  (-1)
@@ -239,12 +240,12 @@ static VStr SV_GetSavesDir () {
 //  SV_GetSaveSlotBaseFileName
 //
 //  if slot is < 0, this is autosave slot
-//  -666 is quicksave slot
+//  QUICKSAVE_SLOT is quicksave slot
 //  returns empty string for invalid slot
 //
 //==========================================================================
 static VStr SV_GetSaveSlotBaseFileName (int slot) {
-  if (slot != -666 && (slot < -64 || slot > 63)) return VStr();
+  if (slot != QUICKSAVE_SLOT && (slot < -64 || slot > 63)) return VStr();
   VStr modlist;
   // get list of loaded modules
   auto wadlist = GetWadPk3List();
@@ -264,7 +265,7 @@ static VStr SV_GetSaveSlotBaseFileName (int slot) {
     shahex[f*2+1] = hexd[sha512[f]&0x0f];
   }
   shahex[ed25519_sha512_hash_size*2] = 0;
-  if (slot == -666) return VStr(va("%s_quicksave_00.vsg", shahex));
+  if (slot == QUICKSAVE_SLOT) return VStr(va("%s_quicksave_00.vsg", shahex));
   if (slot < 0) return VStr(va("%s_autosave_%02d.vsg", shahex, -slot));
   return VStr(va("%s_normsave_%02d.vsg", shahex, slot+1));
 }
@@ -290,6 +291,14 @@ struct TTimeVal {
   int usecs;
   // for 2030+
   int secshi;
+
+  inline bool operator < (const TTimeVal &tv) const {
+    if (secshi < tv.secshi) return true;
+    if (secshi > tv.secshi) return false;
+    if (secs < tv.secs) return true;
+    if (secs > tv.secs) return false;
+    return false;
+  }
 };
 
 
@@ -318,19 +327,28 @@ static void GetTimeOfDay (TTimeVal *tvres) {
 //  TimeVal2Str
 //
 //==========================================================================
-static VStr TimeVal2Str (const TTimeVal *tvin) {
+static VStr TimeVal2Str (const TTimeVal *tvin, bool seconds=true) {
   timeval tv;
   tv.tv_sec = (((uint64_t)tvin->secs)&0xffffffff)|(((uint64_t)tvin->secshi)<<32);
   //tv.tv_usec = tvin->usecs;
   tm ctm;
   if (localtime_r(&tv.tv_sec, &ctm)) {
-    return VStr(va("%04d/%02d/%02d %02d:%02d:%02d",
-      (int)(ctm.tm_year+1900),
-      (int)ctm.tm_mon,
-      (int)ctm.tm_mday,
-      (int)ctm.tm_hour,
-      (int)ctm.tm_min,
-      (int)ctm.tm_sec));
+    if (seconds) {
+      return VStr(va("%04d/%02d/%02d %02d:%02d:%02d",
+        (int)(ctm.tm_year+1900),
+        (int)ctm.tm_mon,
+        (int)ctm.tm_mday,
+        (int)ctm.tm_hour,
+        (int)ctm.tm_min,
+        (int)ctm.tm_sec));
+    } else {
+      return VStr(va("%04d/%02d/%02d %02d:%02d",
+        (int)(ctm.tm_year+1900),
+        (int)ctm.tm_mon,
+        (int)ctm.tm_mday,
+        (int)ctm.tm_hour,
+        (int)ctm.tm_min));
+    }
   } else {
     return VStr("unknown");
   }
@@ -418,6 +436,34 @@ static VStr LoadDateStrExtData (VStream *Strm) {
     }
   }
   return res;
+}
+
+
+//==========================================================================
+//
+//  LoadDateTValExtData
+//
+//==========================================================================
+static bool LoadDateTValExtData (VStream *Strm, TTimeVal *tv) {
+  memset((void *)tv, 0, sizeof(*tv));
+  for (;;) {
+    vint32 id, size;
+    *Strm << STRM_INDEX(id);
+    if (id == SAVE_EXTDATA_ID_END) break;
+    //fprintf(stderr, "   id=%d\n", id);
+    *Strm << STRM_INDEX(size);
+    if (size < 0 || size > 65536) break;
+
+    if (id == SAVE_EXTDATA_ID_DATEVAL && size == (vint32)sizeof(*tv)) {
+      Strm->Serialize(&tv, sizeof(tv));
+      //fprintf(stderr, "  found TV[%s] (%s)\n", *TimeVal2Str(tv), (Strm->IsError() ? "ERROR" : "OK"));
+      return !Strm->IsError();
+    }
+
+    // skip unknown data
+    Strm->Seek(Strm->Tell()+size);
+  }
+  return false;
 }
 
 
@@ -686,6 +732,65 @@ void SV_GetSaveDateString (int Slot, VStr &datestr) {
     datestr = "UNKNOWN";
   }
   unguard;
+}
+
+
+//==========================================================================
+//
+//  SV_GetSaveDateTVal
+//
+//  false: slot is empty or invalid
+//
+//==========================================================================
+static bool SV_GetSaveDateTVal (int Slot, TTimeVal *tv) {
+  guard(SV_GetSaveDate);
+  memset((void *)tv, 0, sizeof(*tv));
+  VStream *Strm = FL_OpenSysFileRead(SV_GetSaveSlotFileName(Slot));
+  if (Strm) {
+    char VersionText[SAVE_VERSION_TEXT_LENGTH+1];
+    memset(VersionText, 0, sizeof(VersionText));
+    Strm->Serialise(VersionText, SAVE_VERSION_TEXT_LENGTH);
+    //fprintf(stderr, "OPENED slot #%d\n", Slot);
+    if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT) != 0) { delete Strm; return false; }
+    //fprintf(stderr, "  slot #%d has valid version\n", Slot);
+    VStr Desc;
+    *Strm << Desc;
+    //fprintf(stderr, "  slot #%d description: [%s]\n", Slot, *Desc);
+    if (!LoadDateTValExtData(Strm, tv)) { delete Strm; return false; }
+    delete Strm;
+    return true;
+  } else {
+    return false;
+  }
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  SV_FindAutosaveSlot
+//
+//  returns 0 on error
+//
+//==========================================================================
+static int SV_FindAutosaveSlot () {
+  TTimeVal tv, besttv;
+  int bestslot = 0;
+  memset((void *)&tv, 0, sizeof(tv));
+  memset((void *)&besttv, 0, sizeof(besttv));
+  for (int slot = 1; slot <= 8; ++slot) {
+    if (!SV_GetSaveDateTVal(-slot, &tv)) {
+      //fprintf(stderr, "AUTOSAVE: free slot #%d found!\n", slot);
+      bestslot = -slot;
+      break;
+    }
+    if (!bestslot || tv < besttv) {
+      //fprintf(stderr, "AUTOSAVE: better slot #%d found [%s] : [%s]!\n", slot, *TimeVal2Str(&tv), (bestslot ? *TimeVal2Str(&besttv) : ""));
+      bestslot = -slot;
+      besttv = tv;
+    }
+  }
+  return bestslot;
 }
 
 
@@ -1188,6 +1293,36 @@ void Draw_SaveIcon ();
 void Draw_LoadIcon ();
 
 
+static bool CheckIfSaveIsAllowed () {
+  if (deathmatch) {
+    GCon->Log("Can't save in deathmatch game");
+    return false;
+  }
+
+  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_TitleMap || GGameInfo->NetMode == NM_Client) {
+    GCon->Log("You can't save if you aren't playing!");
+    return false;
+  }
+
+  if (sv.intermission) {
+    GCon->Log("You can't save while in intermission!");
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool CheckIfLoadIsAllowed () {
+  if (deathmatch) {
+    GCon->Log("Can't load in deathmatch game");
+    return false;
+  }
+
+  return true;
+}
+
+
 //==========================================================================
 //
 //  COMMAND Save
@@ -1199,20 +1334,7 @@ COMMAND(Save) {
   guard(COMMAND Save)
   if (Args.Num() != 3) return;
 
-  if (deathmatch) {
-    GCon->Log("Can't save in deathmatch game");
-    return;
-  }
-
-  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_TitleMap || GGameInfo->NetMode == NM_Client) {
-    GCon->Log("you can't save if you aren't playing!");
-    return;
-  }
-
-  if (sv.intermission) {
-    GCon->Log("You can't save while in intermission!");
-    return;
-  }
+  if (!CheckIfSaveIsAllowed()) return;
 
   if (Args[2].Length() >= 32) {
     GCon->Log("Description too long");
@@ -1237,10 +1359,7 @@ COMMAND(Load) {
   guard(COMMAND Load);
   if (Args.Num() != 2) return;
 
-  if (deathmatch) {
-    GCon->Log("Can't load in deathmatch game");
-    return;
-  }
+  if (!CheckIfLoadIsAllowed()) return;
 
   int slot = atoi(*Args[1]);
   VStr desc;
@@ -1256,6 +1375,110 @@ COMMAND(Load) {
     // copy the base slot to the reborn slot
     SV_UpdateRebornSlot();
   }
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  COMMAND QuickSave
+//
+//==========================================================================
+COMMAND(QuickSave) {
+  guard(COMMAND QuickSave)
+
+  if (!CheckIfSaveIsAllowed()) return;
+
+  Draw_SaveIcon();
+
+  SV_SaveGame(QUICKSAVE_SLOT, "quicksave");
+
+  GCon->Log("Game quicksaved");
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  COMMAND QuickLoad
+//
+//==========================================================================
+COMMAND(QuickLoad) {
+  guard(COMMAND QuickLoad);
+
+  if (!CheckIfLoadIsAllowed()) return;
+
+  VStr desc;
+  if (!SV_GetSaveString(QUICKSAVE_SLOT, desc)) {
+    GCon->Log("Empty quicksave slot");
+    return;
+  }
+  GCon->Logf("Loading quicksave...");
+
+  Draw_LoadIcon();
+  SV_LoadGame(QUICKSAVE_SLOT);
+  if (GGameInfo->NetMode == NM_Standalone) {
+    // copy the base slot to the reborn slot
+    SV_UpdateRebornSlot();
+  }
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  COMMAND AutoSaveEnter
+//
+//==========================================================================
+COMMAND(AutoSaveEnter) {
+  guard(COMMAND AutoSaveEnter)
+
+  if (!CheckIfSaveIsAllowed()) return;
+
+  int aslot = SV_FindAutosaveSlot();
+  if (!aslot) {
+    GCon->Logf("Cannot find autosave slot (this should not happen!");
+    return;
+  }
+
+  Draw_SaveIcon();
+
+  TTimeVal tv;
+  GetTimeOfDay(&tv);
+  VStr date = VStr("AUTO-IN:")+TimeVal2Str(&tv, false);
+
+  SV_SaveGame(aslot, date);
+
+  GCon->Logf("Game autosaved to slot #%d", -aslot);
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  COMMAND AutoSaveLeave
+//
+//==========================================================================
+COMMAND(AutoSaveLeave) {
+  guard(COMMAND AutoSaveLeave)
+
+  if (!CheckIfSaveIsAllowed()) return;
+
+  int aslot = SV_FindAutosaveSlot();
+  if (!aslot) {
+    GCon->Logf("Cannot find autosave slot (this should not happen!");
+    return;
+  }
+
+  Draw_SaveIcon();
+
+  TTimeVal tv;
+  GetTimeOfDay(&tv);
+  VStr date = VStr("AUTO-OUT:")+TimeVal2Str(&tv, false);
+
+  SV_SaveGame(aslot, date);
+
+  GCon->Logf("Game autosaved to slot #%d", -aslot);
   unguard;
 }
 
