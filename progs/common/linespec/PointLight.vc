@@ -22,11 +22,19 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class PointLight : DynamicLight  __mobjinfo__(9800);
 
-class PointLight : DynamicLight
-  __mobjinfo__(9800);
-
-defaultproperties
-{
+defaultproperties {
   LightType = DLTYPE_Point;
 }
+
+
+class PointLightAttenuated : PointLight  __mobjinfo__(9830);
+
+
+class PointLightSubtractive : DynamicLight   __mobjinfo__(9820);
+
+defaultproperties {
+  LightType = DLTYPE_Subtractive;
+}
+

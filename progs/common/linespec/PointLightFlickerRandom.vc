@@ -22,11 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class PointLightFlickerRandom : DynamicLight  __mobjinfo__(9804);
 
-class PointLightFlickerRandom : DynamicLight
-  __mobjinfo__(9804);
-
-defaultproperties
-{
+defaultproperties {
   LightType = DLTYPE_FlickerRandom;
 }
+
+
+class PointLightFlickerRandomAttenuated : PointLightFlickerRandom  __mobjinfo__(9834);
