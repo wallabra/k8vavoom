@@ -22,76 +22,74 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class ClientGameShared : LineSpecialClientGame
   abstract;
 
-enum
-{
+
+enum {
   MB_None,
   MB_Quit,
   MB_Control,
   MB_Shareware,
   MB_Nightmare,
-  MB_EndGame
-};
+  MB_EndGame,
+}
+
 
 array!name savedChoices;
 array!int savedChoicesIdx;
 
-const int MAX_MENU_STACK  = 32;
+const int MAX_MENU_STACK = 64;
 
-StatusBarShared     GSBar;
+StatusBarShared GSBar;
 
-MenuScreen        menu_stack[MAX_MENU_STACK];
-int           menu_sp;
+array!MenuScreen menu_stack;
 
-MenuScreen        CurrentMenuScreen;
+MenuScreen CurrentMenuScreen;
 
-MenuControlKey      CurrentCtl;
-int           ControlColumn;  // menu column for controls
+MenuControlKey CurrentCtl;
+int ControlColumn; // menu column for controls
 
-int           MenuPClass;
-name          MenuStartMap;
-string          SkillClassName;
-int           SkillToConfirm;
+int MenuPClass;
+name MenuStartMap;
+string SkillClassName;
+int SkillToConfirm;
 
-//
-//  MESSAGE BOX
-//
-bool          messageToPrint;
-int           msgBoxX;
-int           msgBoxY;
-int           msgBoxW;
-int           msgBoxH;
-string          messageString;    // ...and here is the message string!
-bool          messageNeedsInput;  // timed message = no input from user
-int           messageType;
-name          MsgBoxFlat;
 
-name          QuitSound;
-bool          WaitForQuit;
+// message box
+bool messageToPrint;
+int msgBoxX;
+int msgBoxY;
+int msgBoxW;
+int msgBoxH;
+string messageString; // ...and here is the message string!
+bool messageNeedsInput; // timed message = no input from user
+int messageType;
+name MsgBoxFlat;
 
-int           BigSelectorXOffset;
-int           BigSelectorYOffset;
-int           BigSelectorAnimSpeed;
-array!name       BigSelectorAnimFrames;
+name QuitSound;
+bool WaitForQuit;
 
-name          DefaultFinaleMusic;
-name          DefaultFinaleType;
+int BigSelectorXOffset;
+int BigSelectorYOffset;
+int BigSelectorAnimSpeed;
+array!name BigSelectorAnimFrames;
+
+name DefaultFinaleMusic;
+name DefaultFinaleType;
+
 
 //==========================================================================
 //
 //  SpawnMenu
 //
 //==========================================================================
-
 final MenuScreen SpawnMenu (class!MenuScreen CID) {
   MenuScreen m = MenuScreen(GRoot.NewChild(CID));
   m.ClGame = self;
   m.CreateMenu();
-  for (int i = 0; i < savedChoices.Num; ++i) {
-    if (savedChoices[i] == GetClassName(CID)) {
+  foreach (auto i, auto scc; savedChoices) {
+    if (scc == GetClassName(CID)) {
       m.SetSavedChoice(savedChoicesIdx[i]);
       break;
     }
@@ -99,58 +97,43 @@ final MenuScreen SpawnMenu (class!MenuScreen CID) {
   return m;
 }
 
-//**************************************************************************
-//**
-//**    Menu stack handling
-//**
-//**************************************************************************
+
+// ////////////////////////////////////////////////////////////////////////// //
+// menu stack handling
+// ////////////////////////////////////////////////////////////////////////// //
 
 //==========================================================================
 //
 //  PushMenuScreen
 //
 //==========================================================================
-
-final void PushMenuScreen(MenuScreen menu)
-{
-  int i;
-
+final void PushMenuScreen (MenuScreen menu) {
   // avoid stacking menus invoked by hotkeys
-  for (i = 0; i < menu_sp; i++)
-  {
-    if (menu_stack[i].Class == menu.Class)
-    {
-      int j;
-
-      for (j = i; j < menu_sp; j++)
-      {
-        menu_stack[j].Destroy();
+  foreach (auto i, auto msc; menu_stack) {
+    if (msc && msc.Class == menu.Class) {
+      while (menu_stack.length > i) {
+        delete menu_stack[$-1];
+        menu_stack.remove(menu_stack.length-1);
       }
-      menu_sp = i;
       CurrentMenuScreen = none;
       break;
     }
   }
 
-  if (menu_sp >= MAX_MENU_STACK)
-    FatalError("PushMenu: menu stack overflow");
+  if (menu_stack.length >= MAX_MENU_STACK) FatalError("PushMenu: menu stack overflow");
 
-  menu_stack[menu_sp++] = menu;
+  menu_stack[$] = menu;
 
   SetCvar('ui_active', 1);
-  if (!CurrentMenuScreen)
-  {
-/*    if (cl.paused)
-    {
-      S_ResumeSound();
-    }
-    C_ClearNotify();*/
+  if (!CurrentMenuScreen) {
+    /*
+    if (cl.paused) S_ResumeSound();
+    C_ClearNotify();
+    */
     CmdBuf_AddText("HideConsole\n");
     LocalSound(menu.ActivateSound);
     if (GetCvarB('ui_mouse')) GRoot.SetMouse(true);
-  }
-  else
-  {
+  } else {
     CurrentMenuScreen.Hide();
   }
 
@@ -158,50 +141,46 @@ final void PushMenuScreen(MenuScreen menu)
   CurrentMenuScreen.SetFocus();
 }
 
+
 //==========================================================================
 //
 //  SaveMenuChoice
 //
 //==========================================================================
-
 final void SaveMenuChoice (MenuScreen menu) {
   if (!menu) return;
   // save choice
-  if (menu) {
-    bool found = false;
-    for (int i = 0; i < savedChoices.Num; ++i) {
-      if (savedChoices[i] == GetClassName(menu.Class)) {
-        savedChoicesIdx[i] = menu.GetChoiceForSaving();
-        found = true;
-        break;
-      }
-    }
-    // if not found, append it
-    if (!found) {
-      savedChoices[savedChoices.Length] = GetClassName(menu.Class);
-      savedChoicesIdx[savedChoicesIdx.Length] = menu.GetChoiceForSaving();
+  bool found = false;
+  foreach (auto i, ref auto scc; savedChoices) {
+    if (savedChoices[i] == GetClassName(menu.Class)) {
+      savedChoicesIdx[i] = menu.GetChoiceForSaving();
+      found = true;
+      break;
     }
   }
+  // if not found, append it
+  if (!found) {
+    savedChoices[$] = GetClassName(menu.Class);
+    savedChoicesIdx[$] = menu.GetChoiceForSaving();
+  }
 }
+
 
 //==========================================================================
 //
 //  PopMenu
 //
 //==========================================================================
-
 final void PopMenu () {
-  MenuScreen menu = menu_stack[menu_sp - 1];
-  --menu_sp;
-
-  if (menu_sp < 0) FatalError("PopMenu: menu stack underflow");
+  if (menu_stack.length == 0) FatalError("PopMenu: menu stack underflow");
+  MenuScreen menu = menu_stack[$-1];
+  menu_stack.length -= 1;
 
   SaveMenuChoice(menu);
 
-  menu_stack[menu_sp].Destroy();
-  if (menu_sp) {
+  if (menu_stack.length) {
     if (menu) LocalSound(menu.DeactivateSound);
-    CurrentMenuScreen = menu_stack[menu_sp - 1];
+    CurrentMenuScreen = menu_stack[$-1];
     CurrentMenuScreen.Show();
     CurrentMenuScreen.Raise();
     CurrentMenuScreen.SetFocus();
@@ -211,66 +190,54 @@ final void PopMenu () {
     SetCvar('ui_active', 0);
     GRoot.SetMouse(false);
   }
+
+  delete menu;
 }
+
 
 //==========================================================================
 //
 //  ForceMenuOff
 //
 //==========================================================================
-
-final void ForceMenuOff()
-{
-  int i;
-
-  for (i = 0; i < menu_sp; i++)
-  {
-    SaveMenuChoice(menu_stack[i]);
-    menu_stack[i].Destroy();
-  }
-  menu_sp = 0;
+final void ForceMenuOff () {
+  foreach (ref auto msc; menu_stack) delete msc;
+  menu_stack.clear();
   CurrentMenuScreen = none;
   SetCvar('ui_active', 0);
   GRoot.SetMouse(false);
 }
+
 
 //==========================================================================
 //
 //  MessageBoxStartMessage
 //
 //==========================================================================
-
-final void MessageBoxStartMessage(string text, int type, bool input)
-{
+final void MessageBoxStartMessage (string text, int type, bool input) {
   messageToPrint = true;
   messageString = text;
   messageType = type;
   messageNeedsInput = input;
 
   GRoot.SetFont('smallfont');
-  msgBoxW = (GRoot.TextWidth(messageString) + 16) & ~15;
-  msgBoxH = (GRoot.TextHeight(messageString) + 16) & ~15;
-  if (msgBoxW > 304)
-    msgBoxW = 304;
-  if (msgBoxH > 184)
-    msgBoxH = 184;
-  msgBoxX = (640 - msgBoxW) / 2;
-  msgBoxY = (480 - msgBoxH) / 2;
+  msgBoxW = min(304, (GRoot.TextWidth(messageString)+16)&~15);
+  msgBoxH = min(184, (GRoot.TextHeight(messageString)+16)&~15);
+  msgBoxX = (640-msgBoxW)/2;
+  msgBoxY = (480-msgBoxH)/2;
 
   CmdBuf_AddText("HideConsole\n");
 }
+
 
 //==========================================================================
 //
 //  MessageBoxDrawer
 //
 //==========================================================================
-
-final override void MessageBoxDrawer()
-{
-  // Horiz. & Vertically centre string and print it.
-  if (messageToPrint)
-  {
+final override void MessageBoxDrawer () {
+  // horiz. & vertically centre string and print it
+  if (messageToPrint) {
     GRoot.FillRectWithFlat(msgBoxX, msgBoxY, msgBoxW, msgBoxH, MsgBoxFlat);
     DrawBorder(msgBoxX, msgBoxY, msgBoxW, msgBoxH);
     GRoot.SetFont('smallfont');
@@ -278,107 +245,86 @@ final override void MessageBoxDrawer()
     GRoot.DrawText(320, 240, messageString);
   }
 
-  if (WaitForQuit && !IsLocalSoundPlaying(QuitSound))
-  {
+  if (WaitForQuit && !IsLocalSoundPlaying(QuitSound)) {
     CmdBuf_AddText("Quit\n");
   }
 }
+
 
 //==========================================================================
 //
 //  MessageBoxResponder
 //
 //==========================================================================
+final override bool MessageBoxResponder (event_t *event) {
+  if (WaitForQuit) return true;
 
-final override bool MessageBoxResponder(event_t * event)
-{
-  if (WaitForQuit)
-  {
-    return true;
-  }
-
-  // Take care of any messages that need input
-  if (messageToPrint && event->type == ev_keydown)
-  {
+  // take care of any messages that need input
+  if (messageToPrint && event.type == ev_keydown) {
     if (messageNeedsInput &&
-      event->data1 != K_SPACE &&
-      event->data1 != K_n &&
-      event->data1 != K_y &&
-      event->data1 != K_ESCAPE &&
-      event->data1 != K_MOUSE1 && event->data1 != K_MOUSE2)
+        event.keycode != K_SPACE &&
+        event.keycode != K_n &&
+        event.keycode != K_y &&
+        event.keycode != K_ESCAPE &&
+        event.keycode != K_MOUSE1 && event.keycode != K_MOUSE2)
     {
       return true;
     }
 
     messageToPrint = false;
-    switch (messageType)
-    {
-    case MB_None:
-      break;
-    case MB_Quit:
-      QuitResponse(event->data1);
-      break;
-    case MB_Control:
-      ControlResponse(event->data1);
-      break;
-    case MB_Shareware:
-      SharewareResponse(event->data1);
-      break;
-    case MB_Nightmare:
-      VerifyNightmare(event->data1);
-      break;
-    case MB_EndGame:
-      EndGameResponse(event->data1);
-      break;
+    switch (messageType) {
+      case MB_None: break;
+      case MB_Quit: QuitResponse(event->data1); break;
+      case MB_Control: ControlResponse(event->data1); break;
+      case MB_Shareware: SharewareResponse(event->data1); break;
+      case MB_Nightmare: VerifyNightmare(event->data1); break;
+      case MB_EndGame: EndGameResponse(event->data1); break;
     }
 
-//      S_StartSound(sfx1_swtchx);
+    //S_StartSound(sfx1_swtchx);
     return true;
   }
+
   return false;
 }
+
 
 //==========================================================================
 //
 //  MessageBoxActive
 //
 //==========================================================================
-
-final override bool MessageBoxActive()
-{
+final override bool MessageBoxActive () {
   return messageToPrint;
 }
+
 
 //==========================================================================
 //
 //  ControlResponse
 //
 //==========================================================================
-
-void ControlResponse(int key)
-{
+void ControlResponse (int key) {
   string kb_down;
   string kb_up;
   int key1;
   int key2;
 
-  if (key != K_ESCAPE)
-  {
+  if (key != K_ESCAPE) {
     kb_down = CurrentCtl.CommandOn;
     kb_up = CurrentCtl.CommandOff;
     IN_GetBindingKeys(kb_down, &key1, &key2);
-    if (ControlColumn == 0)
-    {
+    if (ControlColumn == 0) {
       IN_SetBinding(key1, "", "");
       IN_SetBinding(key, kb_down, kb_up);
     }
-    if (ControlColumn == 1)
-    {
+    if (ControlColumn == 1) {
       IN_SetBinding(key2, "", "");
       IN_SetBinding(key, kb_down, kb_up);
     }
   }
 }
+
 
 //==========================================================================
 //
@@ -387,60 +333,49 @@ void ControlResponse(int key)
 //  Realy mightmare skill?
 //
 //==========================================================================
-
-final void VerifyNightmare(int ch)
-{
-  if (ch != K_y)
-  {
-    return;
-  }
-
+final void VerifyNightmare (int ch) {
+  if (ch != K_y && ch != K_t) return;
   NewGame(SkillToConfirm);
 }
+
 
 //==========================================================================
 //
 //  EndGameResponse
 //
 //==========================================================================
-
-final void EndGameResponse(int ch)
-{
-  if (ch != K_y)
-    return;
-
+final void EndGameResponse (int ch) {
+  if (ch != K_y && ch != K_t) return;
   CmdBuf_AddText("Disconnect\n");
 }
+
 
 //==========================================================================
 //
 //  AddNotifyMessage
 //
 //==========================================================================
-
-override void AddNotifyMessage(string Str)
-{
+override void AddNotifyMessage (string Str) {
   GSBar.AddNotifyMessage(Str);
 }
+
 
 //==========================================================================
 //
 //  AddCentreMessage
 //
 //==========================================================================
-
-override void AddCentreMessage(string Msg)
-{
+override void AddCentreMessage (string Msg) {
   GSBar.AddCentreMessage(Msg);
 }
+
 
 //==========================================================================
 //
 //  AddHudMessage
 //
 //==========================================================================
-
-override void AddHudMessage(string Message, name Font, int Type, int Id, int Colour,
+override void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
   string ColourName, float x, float y, int HudWidth, int HudHeight,
   float HoldTime, float Time1, float Time2)
 {
@@ -448,60 +383,46 @@ override void AddHudMessage(string Message, name Font, int Type, int Id, int Col
     HudWidth, HudHeight, HoldTime, Time1, Time2);
 }
 
+
 //==========================================================================
 //
 //  SetPClass
 //
 //==========================================================================
-
-final void SetPClass(int PClass)
-{
+final void SetPClass (int PClass) {
   MenuPClass = PClass;
-  SkillClassName = va("%n", class!PlayerPawn(Game.PlayerClasses[
-    PClass]).default.SpawnClass);
+  SkillClassName = va("%n", class!PlayerPawn(Game.PlayerClasses[PClass]).default.SpawnClass);
   print("EPISODES: %d", P_GetNumEpisodes());
-  if (P_GetNumEpisodes() > 1)
-  {
+  if (P_GetNumEpisodes() > 1) {
     PushMenuScreen(SpawnMenu(MenuScreenEpisode));
-  }
-  else
-  {
+  } else {
     SetEpisode(P_GetEpisodeDef(0));
   }
 }
+
 
 //==========================================================================
 //
 //  SetEpisode
 //
 //==========================================================================
-
-final void SetEpisode(EpisodeDef *EDef)
-{
+final void SetEpisode (EpisodeDef *EDef) {
   MenuStartMap = EDef->Name;
-  if (EDef->TeaserName && !IsMapPresent(EDef->Name))
-  {
-    MenuStartMap = EDef->TeaserName;
-  }
-
-  if (EDef->bNoSkillMenu)
-  {
+  if (EDef->TeaserName && !IsMapPresent(EDef->Name)) MenuStartMap = EDef->TeaserName;
+  if (EDef->bNoSkillMenu) {
     NewGame(2);
-  }
-  else
-  {
+  } else {
     PushMenuScreen(SpawnMenu(MenuScreenSkill));
   }
 }
+
 
 //==========================================================================
 //
 //  NewGame
 //
 //==========================================================================
-
-final void NewGame(int SkillLevel)
-{
+final void NewGame (int SkillLevel) {
   SetCvar('Skill', SkillLevel);
   SetCvar('Class', MenuPClass);
 
@@ -512,22 +433,22 @@ final void NewGame(int SkillLevel)
   ForceMenuOff();
 }
 
-void menu_quit()
-{
+
+void menu_quit () {
 }
 
-void DrawBorder(int x, int y, int w, int h)
-{
+
+void DrawBorder (int x, int y, int w, int h) {
 }
 
-void QuitResponse(int key)
-{
+
+void QuitResponse (int key) {
 }
 
-void SharewareResponse(int key)
-{
+
+void SharewareResponse (int key) {
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
