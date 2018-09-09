@@ -35,6 +35,17 @@ override void CreateChoices () {
 }
 
 
+//==========================================================================
+//
+//  SwitchAutoNormal
+//
+//==========================================================================
+override void SwitchAutoNormal () {
+  ::SwitchAutoNormal();
+  ChangeTitle(autosaves ? "SAVE TO AUTOSAVE" : "SAVE GAME");
+}
+
+
 defaultproperties {
   Title = "SAVE GAME";
 }

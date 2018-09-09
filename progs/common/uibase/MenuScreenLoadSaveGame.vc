@@ -36,9 +36,51 @@ void CreateLoadSaveChoices (class!MenuSaveSlot destClass) {
   foreach (auto i; 0..8) {
     MenuSaveSlot newChoice = destClass(NewChild(destClass));
     newChoice.SetOrigin(ChoicesStartX, ChoicesStartY+i*18);
-    newChoice.SlotNum = i;
-    newChoice.Status = SV_GetSaveString(i, &newChoice.Text);
+    newChoice.SlotNum = (autosaves ? -1-i : i);
+    newChoice.Status = SV_GetSaveString(newChoice.SlotNum, &newChoice.Text);
   }
+}
+
+
+//==========================================================================
+//
+//  RefreshLoadSaveChoices
+//
+//==========================================================================
+void RefreshLoadSaveChoices () {
+  foreach (auto i; 0..8) {
+    if (i >= Items.length) break;
+    MenuSaveSlot ss = MenuSaveSlot(Items[i]);
+    if (!ss) continue;
+    ss.SlotNum = (autosaves ? -1-i : i);
+    ss.Status = SV_GetSaveString(ss.SlotNum, &ss.Text);
+  }
+}
+
+
+//==========================================================================
+//
+//  SwitchAutoNormal
+//
+//  virtual, so children can fix the title accordingly
+//
+//==========================================================================
+void SwitchAutoNormal () {
+  autosaves = !autosaves;
+  RefreshLoadSaveChoices();
+}
+
+
+//==========================================================================
+//
+//  OnKeyDown
+//
+//==========================================================================
+override bool OnKeyDown (int key) {
+  switch (key) {
+    case K_TAB: SwitchAutoNormal(); return true;
+  }
+  return ::OnKeyDown(key);
 }
 
 

@@ -35,6 +35,17 @@ override void CreateChoices () {
 }
 
 
+//==========================================================================
+//
+//  SwitchAutoNormal
+//
+//==========================================================================
+override void SwitchAutoNormal () {
+  ::SwitchAutoNormal();
+  ChangeTitle(autosaves ? "LOAD AUTOSAVE" : "LOAD GAME");
+}
+
+
 defaultproperties {
   Title = "LOAD GAME";
 }

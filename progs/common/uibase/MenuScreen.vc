@@ -26,6 +26,7 @@ class MenuScreen : Widget;
 
 ClientGameShared ClGame;
 
+MenuTitleText titleItem;
 array!MenuChoice Items;
 
 bool MenuScrollable;
@@ -72,10 +73,19 @@ override void OnChildAdded (Widget Child) {
 
 void CreateTitle () {
   if (Title) {
-    MenuTitleText newTitle = MenuTitleText(NewChild(MenuTitleText));
-    newTitle.Text = Title;
-    newTitle.SetOrigin(TitleX, TitleY);
+    if (!titleItem) titleItem = MenuTitleText(NewChild(MenuTitleText));
+    titleItem.Text = Title;
+    titleItem.SetOrigin(TitleX, TitleY);
   }
+}
+
+
+void ChangeTitle (string newtitle) {
+  if (!titleItem) return; // no title, cannot insert it now
+  if (!newtitle) newtitle = " "; //FIXME
+  if (Title == newtitle) return;
+  Title = newtitle;
+  CreateTitle();
 }
 
 
