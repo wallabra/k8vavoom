@@ -76,6 +76,7 @@ void CreateTitle () {
     if (!titleItem) titleItem = MenuTitleText(NewChild(MenuTitleText));
     titleItem.Text = Title;
     titleItem.SetOrigin(TitleX, TitleY);
+    //titleItem.FixSize();
   }
 }
 

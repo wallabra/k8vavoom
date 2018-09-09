@@ -25,6 +25,8 @@
 class MenuScreenLoadSaveGame : MenuScreen;
 
 bool autosaves;
+int lastSelectedIndex = -666; // to update date string
+string datestr = "";
 
 
 //==========================================================================
@@ -44,10 +46,41 @@ void CreateLoadSaveChoices (class!MenuSaveSlot destClass) {
 
 //==========================================================================
 //
+//  OnDraw
+//
+//==========================================================================
+override void OnDraw () {
+  ::OnDraw();
+  if (Items.length == 0) return;
+  if (lastSelectedIndex != CursorPos) {
+    lastSelectedIndex = CursorPos;
+    if (CursorPos >= 0 && CursorPos < Items.length) {
+      MenuSaveSlot ss = MenuSaveSlot(Items[CursorPos]);
+      if (ss) {
+        SV_GetSaveDateString(ss.SlotNum, &datestr);
+        datestr = va("DATE: %s", datestr);
+      } else {
+        datestr = "";
+      }
+    } else {
+      datestr = "";
+    }
+  }
+  SetFont('smallfont');
+  //SetTextAlign(hleft, vtop);
+  SetTextAlign(hright, vtop);
+  DrawText(Width-16, Items[$-1].Y+21, datestr);
+}
+
+
+//==========================================================================
+//
 //  RefreshLoadSaveChoices
 //
 //==========================================================================
 void RefreshLoadSaveChoices () {
+  datestr = "";
+  lastSelectedIndex = default.lastSelectedIndex;
   foreach (auto i; 0..8) {
     if (i >= Items.length) break;
     MenuSaveSlot ss = MenuSaveSlot(Items[i]);

@@ -22,36 +22,44 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuTitleText : Widget;
 
-string      Text;
+string Text;
+
 
 //==========================================================================
 //
 //  SetOrigin
 //
 //==========================================================================
-
-override void SetOrigin(int OrgX, int OrgY)
-{
+override void SetOrigin(int OrgX, int OrgY) {
   SetFont('bigfont');
   SetPos(OrgX - TextWidth(Text) / 2, OrgY - TextHeight(Text));
   SetSize(TextWidth(Text), TextHeight(Text));
 }
+
+
+//==========================================================================
+//
+//  FixSize
+//
+//==========================================================================
+void FixSize (optional int deltay) {
+  SetFont('bigfont');
+  SetSize(TextWidth(Text), TextHeight(Text)+deltay);
+}
+
 
 //==========================================================================
 //
 //  OnDraw
 //
 //==========================================================================
-
-override void OnDraw()
-{
+override void OnDraw () {
   SetFont('bigfont');
   DrawText(0, 0, Text);
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
