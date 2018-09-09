@@ -355,6 +355,7 @@ void CL_SetUpStandaloneClient()
 
   GCon->Log(NAME_Dev, "Client level loaded");
   GCmdBuf << "HideConsole\n";
+
   unguard;
 }
 

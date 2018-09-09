@@ -331,13 +331,17 @@ static void GetTimeOfDay (TTimeVal *tvres) {
 //  TimeVal2Str
 //
 //==========================================================================
-static VStr TimeVal2Str (const TTimeVal *tvin, bool seconds=true) {
+static VStr TimeVal2Str (const TTimeVal *tvin, bool forAutosave=false) {
   timeval tv;
   tv.tv_sec = (((uint64_t)tvin->secs)&0xffffffff)|(((uint64_t)tvin->secshi)<<32);
   //tv.tv_usec = tvin->usecs;
   tm ctm;
   if (localtime_r(&tv.tv_sec, &ctm)) {
-    if (seconds) {
+    if (forAutosave) {
+      // for autosave
+      return VStr(va("%02d:%02d", (int)ctm.tm_hour, (int)ctm.tm_min));
+    } else {
+      // full
       return VStr(va("%04d/%02d/%02d %02d:%02d:%02d",
         (int)(ctm.tm_year+1900),
         (int)ctm.tm_mon,
@@ -345,13 +349,6 @@ static VStr TimeVal2Str (const TTimeVal *tvin, bool seconds=true) {
         (int)ctm.tm_hour,
         (int)ctm.tm_min,
         (int)ctm.tm_sec));
-    } else {
-      return VStr(va("%04d/%02d/%02d %02d:%02d",
-        (int)(ctm.tm_year+1900),
-        (int)ctm.tm_mon,
-        (int)ctm.tm_mday,
-        (int)ctm.tm_hour,
-        (int)ctm.tm_min));
     }
   } else {
     return VStr("unknown");
@@ -1276,16 +1273,22 @@ void SV_MapTeleport (VName mapname) {
   }
 
 #ifdef CLIENT
+  bool doSaveGame = false;
   if (GGameInfo->NetMode == NM_TitleMap ||
       GGameInfo->NetMode == NM_Standalone ||
       GGameInfo->NetMode == NM_ListenServer)
   {
     CL_SetUpStandaloneClient();
+    doSaveGame = true;
   }
+#else
+  const bool doSaveGame = false;
 #endif
 
   // launch waiting scripts
   if (!deathmatch) GLevel->Acs->CheckAcsStore();
+
+  if (doSaveGame) GCmdBuf << "AutoSaveEnter\n";
 
   unguard;
 }
@@ -1421,10 +1424,8 @@ COMMAND(QuickLoad) {
 
   Draw_LoadIcon();
   SV_LoadGame(QUICKSAVE_SLOT);
-  if (GGameInfo->NetMode == NM_Standalone) {
-    // copy the base slot to the reborn slot
-    SV_UpdateRebornSlot();
-  }
+  // don't copy to reborn slot -- this is quickload after all!
+
   unguard;
 }
 
@@ -1449,9 +1450,9 @@ COMMAND(AutoSaveEnter) {
 
   TTimeVal tv;
   GetTimeOfDay(&tv);
-  VStr date = VStr("AUTO-IN:")+TimeVal2Str(&tv, false);
+  VStr svname = TimeVal2Str(&tv, true)+": "+(*GLevel->MapName);
 
-  SV_SaveGame(aslot, date);
+  SV_SaveGame(aslot, svname);
 
   GCon->Logf("Game autosaved to slot #%d", -aslot);
   unguard;
@@ -1473,9 +1474,9 @@ void SV_AutoSaveOnLevelExit () {
 
   TTimeVal tv;
   GetTimeOfDay(&tv);
-  VStr date = VStr("AUTO-OUT:")+TimeVal2Str(&tv, false);
+  VStr svname = TimeVal2Str(&tv, true)+": "+VStr("OUT: ")+(*GLevel->MapName);
 
-  SV_SaveGame(aslot, date);
+  SV_SaveGame(aslot, svname);
 
   GCon->Logf("Game autosaved to slot #%d", -aslot);
 }
