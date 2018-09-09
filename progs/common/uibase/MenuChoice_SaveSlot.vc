@@ -22,21 +22,17 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuChoice_SaveSlot : MenuSaveSlot;
 
-override void ActivateSlot()
-{
-  //  We are going to be intercepting all chars.
+
+override void ActivateSlot() {
+  // we are going to be intercepting all chars
   bEnteringText = true;
-    EnterText = "";
-  if (Status)
-  {
-    EnterText = Text;
-  }
+  EnterText = "";
+  if (Status) EnterText = Text;
   LocalSound('menu/choose');
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

@@ -201,7 +201,10 @@ final void PopMenu () {
 //
 //==========================================================================
 final void ForceMenuOff () {
-  foreach (ref auto msc; menu_stack) delete msc;
+  foreach (ref auto msc; menu_stack) {
+    SaveMenuChoice(msc);
+    delete msc;
+  }
   menu_stack.clear();
   CurrentMenuScreen = none;
   SetCvar('ui_active', 0);

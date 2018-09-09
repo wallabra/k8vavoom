@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuChoiceSlot : MenuChoice;
 
 int pic_M_LSLEFT;
@@ -32,6 +31,7 @@ int pic_M_LSRGHT;
 int pic_M_FSLOT;
 
 bool DrawSlotPic;
+
 
 //**************************************************************************
 //**
@@ -44,42 +44,32 @@ bool DrawSlotPic;
 //  InitSlot
 //
 //==========================================================================
-
-void InitSlot()
-{
-  if (WadLumpPresent('m_fslot'))
-  {
+void InitSlot () {
+  if (WadLumpPresent('m_fslot')) {
     pic_M_FSLOT = R_RegisterPic('m_fslot');
-  }
-  else
-  {
+  } else {
     pic_M_LSLEFT = R_RegisterPic('m_lsleft');
     pic_M_LSCNTR = R_RegisterPic('m_lscntr');
     pic_M_LSRGHT = R_RegisterPic('m_lsrght');
   }
 }
 
+
 //==========================================================================
 //
 //  DrawSlot
 //
 //==========================================================================
-
-int DrawSlot(int y, string text, bool entering)
-{
+int DrawSlot (int y, string text, bool entering) {
   int xx;
   int j;
 
   if (DrawSlotPic) {
-    if (pic_M_FSLOT != -1)
-    {
+    if (pic_M_FSLOT != -1) {
       DrawPic(0, y, pic_M_FSLOT);
-    }
-    else
-    {
+    } else {
       DrawPic(3, y + 12, pic_M_LSLEFT);
-      for (j = 0, xx = 11; j < 24; j++, xx += 8)
-      {
+      for (j = 0, xx = 11; j < 24; j++, xx += 8) {
         DrawPic(xx, y + 12, pic_M_LSCNTR);
       }
       DrawPic(xx, y + 12, pic_M_LSRGHT);
@@ -91,15 +81,13 @@ int DrawSlot(int y, string text, bool entering)
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
   DrawText(5, y + 5, text);
-  if (entering)
-  {
-    DrawCursor();
-  }
+  if (entering) DrawCursor();
+
   return 20;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   pic_M_FSLOT = -1;
   DrawSlotPic = true;
 }

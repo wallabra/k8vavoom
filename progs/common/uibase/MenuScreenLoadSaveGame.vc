@@ -22,20 +22,29 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-class MenuChoice_LoadSlot : MenuSaveSlot;
+class MenuScreenLoadSaveGame : MenuScreen;
+
+bool autosaves;
 
 
-override void ActivateSlot () {
-  if (!Status) {
-    // don't try to load from an empty slot
-    return;
+//==========================================================================
+//
+//  CreateLoadSaveChoices
+//
+//==========================================================================
+void CreateLoadSaveChoices (class!MenuSaveSlot destClass) {
+  foreach (auto i; 0..8) {
+    MenuSaveSlot newChoice = destClass(NewChild(destClass));
+    newChoice.SetOrigin(ChoicesStartX, ChoicesStartY+i*18);
+    newChoice.SlotNum = i;
+    newChoice.Status = SV_GetSaveString(i, &newChoice.Text);
   }
-
-  CmdBuf_AddText("Load %d\n", SlotNum);
-  GetClGame().ForceMenuOff();
-  LocalSound('menu/choose');
 }
 
 
 defaultproperties {
+  ChoicesStartX = 80;
+  ChoicesStartY = 40;
+  SelectorType = MenuSelector_Big;
+  Title = "LOAD OR SAVE GAME";
 }

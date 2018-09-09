@@ -58,6 +58,7 @@ import 'linespec';
 #include "MenuScreenClass.vc"
 #include "MenuScreenEpisode.vc"
 #include "MenuScreenSkill.vc"
+#include "MenuScreenLoadSaveGame.vc"
 #include "MenuScreenLoadGame.vc"
 #include "MenuScreenSaveGame.vc"
 #include "MenuScreenJoinGame.vc"

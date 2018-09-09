@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuChoice : Widget;
 
 int CursorXOffs;
@@ -114,8 +113,7 @@ override void OnMouseEnter() {
 }
 
 
-defaultproperties
-{
+defaultproperties {
   Focusable = true;
   Width = 320;
   Height = 200;

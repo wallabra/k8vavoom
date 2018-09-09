@@ -22,7 +22,7 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-class MenuScreenSaveGame : MenuScreen;
+class MenuScreenSaveGame : MenuScreenLoadSaveGame;
 
 
 //==========================================================================
@@ -31,20 +31,11 @@ class MenuScreenSaveGame : MenuScreen;
 //
 //==========================================================================
 override void CreateChoices () {
-  MenuChoice_SaveSlot newChoice;
-  foreach (auto i; 0..8) {
-    newChoice = NewChild(MenuChoice_SaveSlot);
-    newChoice.SetOrigin(ChoicesStartX, ChoicesStartY+i*18);
-    newChoice.SlotNum = i;
-    newChoice.Status = SV_GetSaveString(i, &newChoice.Text);
-  }
+  CreateLoadSaveChoices(MenuChoice_SaveSlot);
 }
 
 
 defaultproperties {
-  ChoicesStartX = 80;
-  ChoicesStartY = 40;
-  SelectorType = MenuSelector_Big;
   Title = "SAVE GAME";
 }
 
