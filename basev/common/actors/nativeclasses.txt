@@ -103,6 +103,7 @@ class Actor extends Thinker
   action native A_SetBlend(color color1, eval float alpha, eval int tics, optional color color2);
   action native A_CheckSight(state label);
   action native A_CheckFloor(state label);
+  action native A_CheckCeiling(state label);
   action native A_CheckPlayerDone();
   action native A_SkullPop(optional class<Actor> spawntype);
 

@@ -345,6 +345,28 @@ final void A_CheckFloor(state Label)
   }
 }
 
+//==========================================================================
+//
+//  A_CheckCeiling
+//
+//  Checks if an object hit the ceiling
+//
+//==========================================================================
+
+final void A_CheckCeiling(state Label)
+{
+  //  State jumps should not affect state chain results.
+  if (XLevel.StateCall)
+  {
+    XLevel.StateCall->Result = false;
+  }
+
+  if (Origin.z >= CeilingZ)
+  {
+    DoJump(Label);
+  }
+}
+
 //============================================================================
 //
 //  A_CheckPlayerDone
