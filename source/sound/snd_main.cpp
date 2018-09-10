@@ -342,6 +342,9 @@ void VAudio::PlaySound(int InSoundId, const TVec &origin,
   //  Find actual sound ID to use.
   int sound_id = GSoundManager->ResolveSound(InSoundId);
 
+  if (sound_id < 0 || sound_id >= GSoundManager->S_sfx.length()) return; // k8: just in case
+  if (GSoundManager->S_sfx[sound_id].VolumeAmp <= 0) return; // nothing to see here, come along
+
   //  If it's a looping sound and it's still playing, then continue
   // playing the existing one.
   for (int i = 0; i < NumChannels; i++)
@@ -356,6 +359,10 @@ void VAudio::PlaySound(int InSoundId, const TVec &origin,
 
   //  Apply sound volume.
   volume *= MaxVolume;
+
+  // apply $volume
+  volume *= GSoundManager->S_sfx[sound_id].VolumeAmp;
+  if (volume <= 0) return; // nothing to see here, come along
 
   //  Check if this sound is emited by the local player.
   bool LocalPlayerSound = (origin_id == -666 || origin_id == 0 || (cl && cl->MO && cl->MO->SoundOriginID == origin_id));
@@ -389,6 +396,7 @@ void VAudio::PlaySound(int InSoundId, const TVec &origin,
     pitch = 1.0 + (Random() - Random()) *
       GSoundManager->S_sfx[sound_id].ChangePitch;
   }
+
   int handle;
   bool is3D;
   if (!origin_id || LocalPlayerSound || Attenuation <= 0)

@@ -151,20 +151,17 @@ void VSoundManager::Init()
   AddSoundLump(NAME_None, -1);
 
   //  Add Strife voices.
-  for (Lump = W_IterateNS(-1, WADNS_Voices); Lump >= 0;
-    Lump = W_IterateNS(Lump, WADNS_Voices))
-  {
+  for (Lump = W_IterateNS(-1, WADNS_Voices); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Voices)) {
     char SndName[256];
     snprintf(SndName, sizeof(SndName), "svox/%s", *W_LumpName(Lump));
 
     int id = AddSoundLump(SndName, Lump);
     S_sfx[id].ChangePitch = 0;
+    S_sfx[id].VolumeAmp = 1.0;
   }
 
   //  Load script SNDINFO
-  for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0;
-    Lump = W_IterateNS(Lump, WADNS_Global))
-  {
+  for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_sndinfo)
     {
       ParseSndinfo(new VScriptParser(*W_LumpName(Lump),
@@ -483,8 +480,10 @@ void VSoundManager::ParseSndinfo(VScriptParser *sc)
     {
       // $volume soundname <volume>
       sc->ExpectString();
+      int sfx = FindOrAddSound(*sc->String);
       sc->ExpectFloatWithSign();
-      GCon->Log("$volume is not supported yet.");
+      if (sc->Float < 0) sc->Float = 0; else if (sc->Float > 1) sc->Float = 1;
+      S_sfx[sfx].VolumeAmp = sc->Float;
     }
     else if (sc->Check("$rolloff"))
     {
@@ -530,6 +529,7 @@ int VSoundManager::AddSoundLump(VName TagName, int Lump)
   S.Priority = 127;
   S.NumChannels = 2;
   S.ChangePitch = CurrentChangePitch;
+  S.VolumeAmp = 1.0;
   S.LumpNum = Lump;
   S.Link = -1;
   return S_sfx.Append(S);
@@ -808,7 +808,6 @@ int VSoundManager::GetSoundID(const char *name)
     if (lump >= 0) {
       //GCon->Logf("sound '%s' is %s", name, *W_FullLumpName(lump));
       int id = AddSoundLump(VName(name), lump);
-      //S_sfx[id].ChangePitch = 0;
       S_sfx[id].Data = nullptr;
       if (LoadSound(id)) {
         GCon->Logf("loaded sound '%s' (lump %d, id %d)", name, lump, id);

@@ -70,6 +70,7 @@ struct sfxinfo_t
   int   Priority;   // Higher priority takes precendence
   int   NumChannels;  // total number of channels a sound type may occupy
   float ChangePitch;
+  float VolumeAmp; // from sndinfo, cannot exceed 1.0
   int   UseCount;
   int   Link;
   int *Sounds;     // For random sounds, Link is count.
