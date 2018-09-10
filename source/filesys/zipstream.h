@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #ifndef _ZIPSTREAM_H
 #define _ZIPSTREAM_H
 
@@ -32,45 +31,48 @@
 # include <zlib.h>
 #endif
 
-class VZipStreamReader : public VStream
-{
+
+class VZipStreamReader : public VStream {
 private:
-  enum { BUFFER_SIZE = 16384 };
+  enum { BUFFER_SIZE = 65536 };
 
   VStream *SrcStream;
-  Bytef     Buffer[BUFFER_SIZE];
-  z_stream    ZStream;
-  bool      Initialised;
-  vuint32     UncompressedSize;
+  Bytef Buffer[BUFFER_SIZE];
+  z_stream ZStream;
+  bool Initialised;
+  vuint32 UncompressedSize;
 
 public:
-  VZipStreamReader(VStream*, vuint32 = 0xffffffff);
-  ~VZipStreamReader();
-  void Serialise(void*, int);
-  void Seek(int);
-  int Tell();
-  int TotalSize();
-  bool AtEnd();
-  bool Close();
+  VZipStreamReader (VStream*, vuint32 = 0xffffffff);
+  virtual ~VZipStreamReader () override;
+  virtual const VStr &GetName () const override;
+  virtual void Serialise (void*, int) override;
+  virtual void Seek (int) override;
+  virtual int Tell () override;
+  virtual int TotalSize () override;
+  virtual bool AtEnd () override;
+  virtual bool Close () override;
 };
 
-class VZipStreamWriter : public VStream
-{
+
+class VZipStreamWriter : public VStream {
 private:
-  enum { BUFFER_SIZE = 16384 };
+  enum { BUFFER_SIZE = 65536 };
 
   VStream *DstStream;
-  Bytef     Buffer[BUFFER_SIZE];
-  z_stream    ZStream;
-  bool      Initialised;
+  Bytef Buffer[BUFFER_SIZE];
+  z_stream ZStream;
+  bool Initialised;
 
 public:
-  VZipStreamWriter(VStream*);
-  ~VZipStreamWriter();
-  void Serialise(void*, int);
-  void Seek(int);
-  void Flush();
-  bool Close();
+  VZipStreamWriter (VStream *, int clevel=6);
+  virtual ~VZipStreamWriter () override;
+  virtual const VStr &GetName () const override;
+  virtual void Serialise (void*, int) override;
+  virtual void Seek (int) override;
+  virtual void Flush () override;
+  virtual bool Close () override;
 };
+
 
 #endif

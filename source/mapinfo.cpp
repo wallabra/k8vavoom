@@ -96,11 +96,13 @@ void InitMapInfo()
     }
   }
   //  Optionally parse script file.
+  /*
   if (fl_devmode && FL_FileExists("scripts/mapinfo.txt"))
   {
     ParseMapInfo(new VScriptParser("scripts/mapinfo.txt",
       FL_OpenFileRead("scripts/mapinfo.txt")));
   }
+  */
 
   for (int i = 0; i < MapInfo.Num(); i++)
   {

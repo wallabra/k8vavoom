@@ -23,32 +23,24 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
 
-// MACROS ------------------------------------------------------------------
+void FL_Init ();
+void FL_Shutdown ();
 
-// TYPES -------------------------------------------------------------------
+bool FL_FileExists (const VStr &fname);
+void FL_CreatePath (const VStr &Path);
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void FL_Init();
-void FL_Shutdown();
-
-bool FL_FileExists(const VStr &fname);
-void FL_CreatePath(const VStr &Path);
-
-VStream *FL_OpenFileRead(const VStr &Name);
+VStream *FL_OpenFileRead (const VStr &Name);
 // set `isFullName` to `true` to prevent adding anything to file name
-VStream *FL_OpenFileWrite(const VStr &Name, bool isFullName=false);
+VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName=false);
 
-VStream *FL_OpenSysFileRead(const VStr &Name);
-VStream *FL_OpenSysFileWrite(const VStr &Name);
+VStream *FL_OpenSysFileRead (const VStr &Name);
+VStream *FL_OpenSysFileWrite (const VStr &Name);
 
 TArray<VStr> GetWadPk3List ();
 
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
 
-extern bool   fl_devmode;
-extern VStr   fl_basedir;
-extern VStr   fl_savedir;
-extern VStr   fl_gamedir;
+//extern bool fl_devmode;
+extern VStr fl_basedir;
+extern VStr fl_savedir;
+extern VStr fl_gamedir;

@@ -22,184 +22,252 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "fs_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+//==========================================================================
+//
+//  VFilesDir::VFilesDir
+//
+//==========================================================================
+VFilesDir::VFilesDir (const VStr &aPath)
+  : path(aPath)
+  , CachedFiles()
+  , cacheInited(false)
+{
+  //while (path.length() > 0 && path[path.length()-1] == '/') path = path.chopRight(1);
+  if (path.length() == 0) path = "./";
+#ifdef _WIN32
+  if (path[path.length()-1] != '/' && path[path.length()-1] != '\\') path += "/";
+#else
+  if (path[path.length()-1] != '/') path += "/";
+#endif
+  cacheDir();
+}
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+//==========================================================================
+//
+//  VFilesDir::cacheDir
+//
+//==========================================================================
+void VFilesDir::cacheDir () {
+  if (!cacheInited) {
+    cacheInited = true;
+    // scan directory
+    auto dh = Sys_OpenDir(path);
+    if (dh) {
+      for (;;) {
+        VStr dsk = Sys_ReadDir(dh);
+        if (dsk.length() == 0) break;
+        CachedFiles.Append(dsk);
+      }
+      Sys_CloseDir(dh);
+    }
+  }
+}
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+//==========================================================================
+//
+//  VFilesDir::findFileCI
+//
+//==========================================================================
+int VFilesDir::findFileCI (const VStr &fname) {
+  // search
+  VStr fn = fname; //(ignoreExt ? fname.stripExtension() : fname);
+  for (int f = CachedFiles.length()-1; f >= 0; --f) {
+    VStr cfn = CachedFiles[f];
+    //if (ignoreExt) cfn.stripExtension();
+    if (cfn.ICmp(fn) == 0) return f;
+  }
+  return -1;
+}
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VFilesDir::CheckNumForFileName
 //
 //==========================================================================
-
-int VFilesDir::CheckNumForFileName(VStr Name)
-{
+int VFilesDir::CheckNumForFileName (const VStr &Name) {
   guard(VFilesDir::CheckNumForFileName);
-  //  Check if the file exists.
-  if (!Sys_FileExists(Path + "/" + Name))
-  {
-    return -1;
-  }
-
-  //  Add it to the cached files, if needed.
-  for (int i = 0; i < CachedFiles.Num(); i++)
-  {
-    if (CachedFiles[i] == Name)
-    {
-      return i;
-    }
-  }
-  return CachedFiles.Append(Name);
+  return findFileCI(Name);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VFilesDir::FileExists
 //
 //==========================================================================
-
-bool VFilesDir::FileExists(const VStr &fname)
-{
+bool VFilesDir::FileExists (const VStr &Name) {
   guard(VFilesDir::FileExists);
-  if (Sys_FileExists(Path + "/" + fname))
-  {
-    return true;
-  }
-  return false;
+  return (findFileCI(Name) >= 0);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VFilesDir::OpenFileRead
 //
 //==========================================================================
-
-VStream *VFilesDir::OpenFileRead(const VStr &Name)
-{
+VStream *VFilesDir::OpenFileRead (const VStr &Name) {
   guard(FL_OpenFileRead);
-  VStr TmpName = Path + "/" + Name;
-  if (!Sys_FileExists(TmpName))
-  {
-    return nullptr;
-  }
-  FILE *File = fopen(*TmpName, "rb");
-  if (!File)
-  {
-    return nullptr;
-  }
-  return new VStreamFileReader(File, GCon);
+  int fidx = findFileCI(Name);
+  if (fidx == -1) return nullptr;
+  VStr tmpName = path+"/"+Name;
+  FILE *File = fopen(*tmpName, "rb");
+  if (!File) return nullptr;
+  return new VStreamFileReader(File, GCon, tmpName);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VFilesDir::ReadFromLump
 //
 //==========================================================================
-
-void VFilesDir::ReadFromLump(int Lump, void *Dest, int Pos, int Size)
-{
+void VFilesDir::ReadFromLump (int LumpNum, void *Dest, int Pos, int Size) {
   guard(VFilesDir::ReadFromLump);
-  check(Lump >= 0);
-  check(Lump < CachedFiles.Num());
-  VStream *Strm = CreateLumpReaderNum(Lump);
+  check(LumpNum >= 0);
+  check(LumpNum < CachedFiles.length());
+  VStream *Strm = CreateLumpReaderNum(LumpNum);
   check(Strm);
   Strm->Seek(Pos);
   Strm->Serialise(Dest, Size);
   delete Strm;
-  Strm = nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VFilesDir::LumpLength
 //
 //==========================================================================
-
-int VFilesDir::LumpLength(int Lump)
-{
+int VFilesDir::LumpLength (int LumpNum) {
   guard(VFilesDir::LumpLength);
-  check(Lump >= 0);
-  check(Lump < CachedFiles.Num());
-  VStream *Strm = CreateLumpReaderNum(Lump);
+  check(LumpNum >= 0);
+  check(LumpNum < CachedFiles.length());
+  VStream *Strm = CreateLumpReaderNum(LumpNum);
   check(Strm);
   int Ret = Strm->TotalSize();
   delete Strm;
-  Strm = nullptr;
   return Ret;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VFilesDir::CreateLumpReaderNum
 //
 //==========================================================================
-
-VStream *VFilesDir::CreateLumpReaderNum(int LumpNum)
-{
+VStream *VFilesDir::CreateLumpReaderNum (int LumpNum) {
   guard(VFilesDir::CreateLumpReaderNum);
   check(LumpNum >= 0);
-  check(LumpNum < CachedFiles.Num());
+  check(LumpNum < CachedFiles.length());
   VStream *Strm = OpenFileRead(CachedFiles[LumpNum]);
   check(Strm);
   return Strm;
   unguard;
 }
 
-void VFilesDir::Close()
-{
+
+//==========================================================================
+//
+//  VFilesDir::Close
+//
+//==========================================================================
+void VFilesDir::Close () {
 }
-int VFilesDir::CheckNumForName(VName, EWadNamespace)
-{
+
+
+//==========================================================================
+//
+//  VFilesDir::CheckNumForName
+//
+//==========================================================================
+int VFilesDir::CheckNumForName (VName LumpName, EWadNamespace InNS) {
+  /*
+  if (InNS >= WADNS_ZipSpecial) InNS = WADNS_Global;
+  if (InNS != WADNS_Global) return -1;
+  int fidx = findFileCI(LumpName);
+  if (fidx != -1) return fidx;
+  for (int f = CachedFiles.length()-1; f >= 0; --f) {
+    VStr cfn = CachedFiles[f].stripExtension();
+    if (cfn.ICmp(LumpName) == 0) return f;
+  }
+  */
   return -1;
 }
-VName VFilesDir::LumpName(int LumpNum)
-{
-  //return NAME_None;
+
+
+//==========================================================================
+//
+//  VFilesDir::LumpName
+//
+//==========================================================================
+VName VFilesDir::LumpName (int LumpNum) {
   return (LumpNum >= 0 || LumpNum < CachedFiles.length() ? VName(*CachedFiles[LumpNum]) : NAME_None);
 }
-VStr VFilesDir::LumpFileName(int LumpNum)
-{
-  //return VStr();
-  return (LumpNum >= 0 || LumpNum < CachedFiles.length() ? VStr(*CachedFiles[LumpNum]) : VStr());
+
+
+//==========================================================================
+//
+//  VFilesDir::LumpFileName
+//
+//==========================================================================
+VStr VFilesDir::LumpFileName (int LumpNum) {
+  return (LumpNum >= 0 || LumpNum < CachedFiles.length() ? CachedFiles[LumpNum] : VStr());
 }
-int VFilesDir::IterateNS(int, EWadNamespace)
-{
+
+
+//==========================================================================
+//
+//  VFilesDir::IterateNS
+//
+//==========================================================================
+int VFilesDir::IterateNS (int Start, EWadNamespace NS) {
+  /*
+  if (InNS >= WADNS_ZipSpecial) InNS = WADNS_Global;
+  if (InNS != WADNS_Global) return -1;
+  if (Start < 0 || Start >= CachedFiles.length()) return -1;
+  return Start;
+  */
   return -1;
 }
-void VFilesDir::BuildGLNodes(VSearchPath*)
-{
+
+
+//==========================================================================
+//
+//  VFilesDir::BuildGLNodes
+//
+//==========================================================================
+void VFilesDir::BuildGLNodes (VSearchPath *GlWad) {
   Sys_Error("BuildGLNodes on directory");
 }
-void VFilesDir::BuildPVS(VSearchPath*)
-{
+
+
+//==========================================================================
+//
+//  VFilesDir::BuildPVS
+//
+//==========================================================================
+void VFilesDir::BuildPVS (VSearchPath *BaseWad) {
   Sys_Error("BuildPVS on directory");
 }
-void VFilesDir::RenameSprites(const TArray<VSpriteRename>&,
-  const TArray<VLumpRename>&)
-{
+
+
+//==========================================================================
+//
+//  VFilesDir::RenameSprites
+//
+//==========================================================================
+void VFilesDir::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLumpRename> &LA) {
 }

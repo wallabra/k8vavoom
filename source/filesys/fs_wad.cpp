@@ -22,131 +22,96 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "fs_local.h"
 #include "fwaddefs.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-struct lumpinfo_t
-{
-  VName     Name;
-  vint32      Position;
-  vint32      Size;
+struct lumpinfo_t {
+  VName Name;
+  vint32 Position;
+  vint32 Size;
   EWadNamespace Namespace;
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VWadFile::VWadFile
 //
 //==========================================================================
-
-VWadFile::VWadFile()
-: Stream(nullptr)
-, NumLumps(0)
-, LumpInfo(nullptr)
+VWadFile::VWadFile ()
+  : Name(NAME_None)
+  , Stream(nullptr)
+  , NumLumps(0)
+  , LumpInfo(nullptr)
+  , GwaDir()
 {
 }
+
 
 //==========================================================================
 //
 //  VWadFile::~VWadFile
 //
 //==========================================================================
-
-VWadFile::~VWadFile()
-{
+VWadFile::~VWadFile () {
   Close();
 }
+
 
 //==========================================================================
 //
 //  VWadFile::Open
 //
 //==========================================================================
-
-void VWadFile::Open(const VStr &FileName, const VStr &AGwaDir, bool FixVoices,
-  VStream *InStream)
-{
+void VWadFile::Open (const VStr &FileName, const VStr &AGwaDir, bool FixVoices, VStream *InStream) {
   guard(VWadFile::Open);
-  wadinfo_t   header;
+  wadinfo_t header;
   lumpinfo_t *lump_p;
-  int       i, j;
-  int       length;
+  int length;
   filelump_t *fileinfo;
   filelump_t *fi_p;
 
   Name = FileName;
   GwaDir = AGwaDir;
 
-  if (InStream)
-  {
+  if (InStream) {
     Stream = InStream;
-  }
-  else
-  {
+  } else {
     // open the file and add to directory
     Stream = FL_OpenSysFileRead(FileName);
-    if (!Stream)
-    {
-      Sys_Error("Couldn't open %s", *FileName);
-    }
+    if (!Stream) Sys_Error("Couldn't open \"%s\"", *FileName);
   }
-  GCon->Logf(NAME_Init, "adding %s", *FileName);
+  GCon->Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
-  // WAD file
+  // WAD file or homebrew levels?
   Stream->Serialise(&header, sizeof(header));
-  if (VStr::NCmp(header.identification, "IWAD", 4))
+  if (VStr::NCmp(header.identification, "IWAD", 4) != 0 &&
+      VStr::NCmp(header.identification, "PWAD", 4) != 0)
   {
-    // Homebrew levels?
-    if (VStr::NCmp(header.identification, "PWAD", 4))
-    {
-      Sys_Error ("Wad file %s doesn't have IWAD "
-        "or PWAD id\n", *FileName);
-    }
+    Sys_Error ("Wad file \"%s\" is neither IWAD nor PWAD id\n", *FileName);
   }
+
   header.numlumps = LittleLong(header.numlumps);
   header.infotableofs = LittleLong(header.infotableofs);
   NumLumps = header.numlumps;
-  //  Moved here to make static data less fragmented
+  // moved here to make static data less fragmented
   LumpInfo = new lumpinfo_t[NumLumps];
-  length = header.numlumps * sizeof(filelump_t);
-  fi_p = fileinfo = (filelump_t*)Z_Malloc(length);
+  length = header.numlumps*(int)sizeof(filelump_t);
+  fi_p = fileinfo = (filelump_t *)Z_Malloc(length);
   Stream->Seek(header.infotableofs);
   Stream->Serialise(fileinfo, length);
 
-  // Fill in lumpinfo
+  // fill in lumpinfo
   lump_p = LumpInfo;
-
-  for (i = 0; i < NumLumps; i++, lump_p++, fileinfo++)
-  {
+  for (int i = 0; i < NumLumps; ++i, ++lump_p, ++fileinfo) {
     // Mac demo hexen.wad:  many (1784) of the lump names
     // have their first character with the high bit (0x80)
-    // set.  I don't know the reason for that..  We must
-    // clear the high bits for such Mac wad files to work
-    // in this engine. This shouldn't break other wads.
-    for (j = 0; j < 8; j++)
-      fileinfo->name[j] &= 0x7f;
+    // set. I don't know the reason for that. We must clear
+    // the high bits for such Mac wad files to work in this
+    // engine. This shouldn't break other wads.
+    for (int j = 0; j < 8; ++j) fileinfo->name[j] &= 0x7f;
     lump_p->Name = VName(fileinfo->name, VName::AddLower8);
     lump_p->Position = LittleLong(fileinfo->filepos);
     lump_p->Size = LittleLong(fileinfo->size);
@@ -155,32 +120,25 @@ void VWadFile::Open(const VStr &FileName, const VStr &AGwaDir, bool FixVoices,
 
   Z_Free(fi_p);
 
-  //  Set up namespaces.
+  // set up namespaces
   InitNamespaces();
 
-  if (FixVoices)
-  {
-    FixVoiceNamespaces();
-  }
+  if (FixVoices) FixVoiceNamespaces();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWadFile::OpenSingleLump
 //
 //==========================================================================
-
-void VWadFile::OpenSingleLump(const VStr &FileName)
-{
+void VWadFile::OpenSingleLump (const VStr &FileName) {
   guard(VWadFile::OpenSingleLump);
   // open the file and add to directory
   Stream = FL_OpenSysFileRead(FileName);
-  if (!Stream)
-  {
-    Sys_Error("Couldn't open %s", *FileName);
-  }
-  GCon->Logf(NAME_Init, "adding %s", *FileName);
+  if (!Stream) Sys_Error("Couldn't open \"%s\"", *FileName);
+  GCon->Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
   Name = FileName;
   GwaDir = VStr();
@@ -189,7 +147,7 @@ void VWadFile::OpenSingleLump(const VStr &FileName)
   NumLumps = 1;
   LumpInfo = new lumpinfo_t[1];
 
-  // Fill in lumpinfo
+  // fill in lumpinfo
   LumpInfo->Name = VName(*FileName.ExtractFileBase(), VName::AddLower8);
   LumpInfo->Position = 0;
   LumpInfo->Size = Stream->TotalSize();
@@ -197,30 +155,28 @@ void VWadFile::OpenSingleLump(const VStr &FileName)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWadFile::Close
 //
 //==========================================================================
-
-void VWadFile::Close()
-{
+void VWadFile::Close () {
   guard(VWadFile::Close);
-  if (LumpInfo)
-  {
+  if (LumpInfo) {
     delete[] LumpInfo;
     LumpInfo = nullptr;
   }
   NumLumps = 0;
   Name.Clean();
   GwaDir.Clean();
-  if (Stream)
-  {
+  if (Stream) {
     delete Stream;
     Stream = nullptr;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -229,29 +185,19 @@ void VWadFile::Close()
 //  Returns -1 if name not found.
 //
 //==========================================================================
-
-int VWadFile::CheckNumForName(VName LumpName, EWadNamespace InNS)
-{
+int VWadFile::CheckNumForName (VName LumpName, EWadNamespace InNS) {
   guard(VWadFile::CheckNumForName);
-  //  Special ZIP-file namespaces in WAD file are in global namespace.
+  // special ZIP-file namespaces in WAD file are in global namespace
   EWadNamespace NS = InNS;
-  if (NS > WADNS_ZipSpecial)
-  {
-    NS = WADNS_Global;
+  if (NS > WADNS_ZipSpecial) NS = WADNS_Global;
+  for (int i = NumLumps-1; i >= 0; --i) {
+    if (LumpInfo[i].Namespace == NS && LumpInfo[i].Name == LumpName) return i;
   }
-
-  for (int i = NumLumps - 1; i >= 0; i--)
-  {
-    if (LumpInfo[i].Namespace == NS && LumpInfo[i].Name == LumpName)
-    {
-      return i;
-    }
-  }
-
-  // Not found.
+  // not found
   return -1;
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -260,35 +206,23 @@ int VWadFile::CheckNumForName(VName LumpName, EWadNamespace InNS)
 //  Loads part of the lump into the given buffer.
 //
 //==========================================================================
-
-void VWadFile::ReadFromLump(int lump, void *dest, int pos, int size)
-{
+void VWadFile::ReadFromLump (int lump, void *dest, int pos, int size) {
   guard(VWadFile::ReadFromLump);
-  if ((vuint32)lump >= (vuint32)NumLumps)
-  {
-    Sys_Error("VWadFile::ReadFromLump: %i >= numlumps", lump);
-  }
-
+  if ((vuint32)lump >= (vuint32)NumLumps) Sys_Error("VWadFile::ReadFromLump: %i >= numlumps", lump);
   lumpinfo_t &l = LumpInfo[lump];
-
-  if (pos >= l.Size)
-  {
-    return;
-  }
-
-  Stream->Seek(l.Position + pos);
+  if (pos >= l.Size) return;
+  Stream->Seek(l.Position+pos);
   Stream->Serialise(dest, size);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWadFile::InitNamespaces
 //
 //==========================================================================
-
-void VWadFile::InitNamespaces()
-{
+void VWadFile::InitNamespaces () {
   guard(VWadFile::InitNamespaces);
   InitNamespace(WADNS_Sprites, NAME_s_start, NAME_s_end, NAME_ss_start, NAME_ss_end);
   InitNamespace(WADNS_Flats, NAME_f_start, NAME_f_end, NAME_ff_start, NAME_ff_end);
@@ -300,42 +234,29 @@ void VWadFile::InitNamespaces()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWadFile::InitNamespace
 //
 //==========================================================================
-
-void VWadFile::InitNamespace(EWadNamespace NS, VName Start, VName End,
-  VName AltStart, VName AltEnd)
-{
+void VWadFile::InitNamespace (EWadNamespace NS, VName Start, VName End, VName AltStart, VName AltEnd) {
   guard(VWadFile::InitNamespace);
   bool InNS = false;
-  for (int i = 0; i < NumLumps; i++)
-  {
+  for (int i = 0; i < NumLumps; ++i) {
     lumpinfo_t &L = LumpInfo[i];
-
-    //  Skip if lump is already in other namespace.
-    if (L.Namespace != WADNS_Global)
-      continue;
-
-    if (InNS)
-    {
-      //  Check for ending marker.
-      if (L.Name == End || (AltEnd != NAME_None && L.Name == AltEnd))
-      {
+    // skip if lump is already in other namespace
+    if (L.Namespace != WADNS_Global) continue;
+    if (InNS) {
+      // check for ending marker
+      if (L.Name == End || (AltEnd != NAME_None && L.Name == AltEnd)) {
         InNS = false;
-      }
-      else
-      {
+      } else {
         L.Namespace = NS;
       }
-    }
-    else
-    {
-      //  Check for starting marker.
-      if (L.Name == Start || (AltStart != NAME_None && L.Name == AltStart))
-      {
+    } else {
+      // check for starting marker
+      if (L.Name == Start || (AltStart != NAME_None && L.Name == AltStart)) {
         InNS = true;
       }
     }
@@ -343,36 +264,31 @@ void VWadFile::InitNamespace(EWadNamespace NS, VName Start, VName End,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWadFile::FixVoiceNamespaces
 //
 //==========================================================================
-
-void VWadFile::FixVoiceNamespaces()
-{
+void VWadFile::FixVoiceNamespaces () {
   guard(VWadFile::FixVoiceNamespaces);
-  for (int i = 0; i < NumLumps; i++)
-  {
+  for (int i = 0; i < NumLumps; ++i) {
     lumpinfo_t &L = LumpInfo[i];
-
-    //  Skip if lump is already in other namespace.
-    if (L.Namespace != WADNS_Global)
-      continue;
-
+    // skip if lump is already in other namespace
+    if (L.Namespace != WADNS_Global) continue;
     const char *LName = *L.Name;
-    if (LName[0] == 'v' && LName[1] == 'o' && LName[2] == 'c' &&
-      LName[3] >= '0' && LName[3] <= '9' &&
-      (LName[4] == 0 || (LName[4] >= '0' && LName[4] <= '9' &&
-      (LName[5] == 0 || (LName[5] >= '0' && LName[5] <= '9' &&
-      (LName[6] == 0 || (LName[6] >= '0' && LName[6] <= '9' &&
-      (LName[7] == 0 || (LName[7] >= '0' && LName[7] <= '9')))))))))
+    if (LName[0] == 'v' && LName[1] == 'o' && LName[2] == 'c' && LName[3] >= '0' && LName[3] <= '9' &&
+        (LName[4] == 0 || (LName[4] >= '0' && LName[4] <= '9' &&
+        (LName[5] == 0 || (LName[5] >= '0' && LName[5] <= '9' &&
+        (LName[6] == 0 || (LName[6] >= '0' && LName[6] <= '9' &&
+        (LName[7] == 0 || (LName[7] >= '0' && LName[7] <= '9')))))))))
     {
       L.Namespace = WADNS_Voices;
     }
   }
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -381,213 +297,199 @@ void VWadFile::FixVoiceNamespaces()
 //  Returns the buffer size needed to load the given lump.
 //
 //==========================================================================
-
-int VWadFile::LumpLength(int lump)
-{
+int VWadFile::LumpLength (int lump) {
   guard(VWadFile::LumpLength);
-  return LumpInfo[lump].Size;
+  return (lump >= 0 && lump < NumLumps ? LumpInfo[lump].Size : 0);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWadFile::LumpName
 //
 //==========================================================================
-
-VName VWadFile::LumpName(int lump)
-{
+VName VWadFile::LumpName (int lump) {
   guard(VWadFile::LumpName);
-  if (lump >= NumLumps)
-  {
-    return NAME_None;
-  }
-  return LumpInfo[lump].Name;
+  return (lump >= 0 && lump < NumLumps ? LumpInfo[lump].Name : NAME_None);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWadFile::LumpFileName
 //
 //==========================================================================
-
-VStr VWadFile::LumpFileName(int lump)
-{
+VStr VWadFile::LumpFileName (int lump) {
   guard(VWadFile::LumpName);
-  if (lump >= NumLumps)
-  {
-    return VStr();
-  }
-  return VStr(*LumpInfo[lump].Name);
+  return (lump >= 0 && lump < NumLumps ? VStr(*LumpInfo[lump].Name) : VStr());
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWadFile::IterateNS
 //
 //==========================================================================
-
-int VWadFile::IterateNS(int Start, EWadNamespace NS)
-{
+int VWadFile::IterateNS (int Start, EWadNamespace NS) {
   guard(VWadFile::IterateNS);
-  for (int li = Start; li < NumLumps; li++)
-  {
-    if (LumpInfo[li].Namespace == NS)
-    {
-      return li;
-    }
+  for (int li = Start; li < NumLumps; ++li) {
+    if (LumpInfo[li].Namespace == NS) return li;
   }
   return -1;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWadFile::BuildGLNodes
 //
 //==========================================================================
-
-void VWadFile::BuildGLNodes(VSearchPath *GlWad)
-{
+void VWadFile::BuildGLNodes (VSearchPath *GlWad) {
   guard(VWadFile::BuildGLNodes);
 #ifdef CLIENT
   VStr gwaname;
-  if (GwaDir.IsNotEmpty())
-  {
+  if (GwaDir.IsNotEmpty()) {
     FL_CreatePath(GwaDir);
-    gwaname = GwaDir + "/" + Name.ExtractFileName();
-  }
-  else
-  {
+    gwaname = GwaDir+"/"+Name.ExtractFileName();
+  } else {
     gwaname = Name;
   }
-  gwaname = gwaname.StripExtension() + ".gwa";
-
-  // Build GL nodes
-  if (!GLBSP_BuildNodes(*Name, *gwaname))
-  {
-    Sys_Error("Node build failed");
-  }
-
-  // Build PVS
+  gwaname = gwaname.StripExtension()+".gwa";
+  // build GL nodes
+  if (!GLBSP_BuildNodes(*Name, *gwaname)) Sys_Error("Node build failed");
+  // build PVS
   GLVis_BuildPVS(*Name, *gwaname);
-
-  // Add GWA file
-  ((VWadFile*)GlWad)->Open(gwaname, VStr(), false, nullptr);
+  // add GWA file
+  ((VWadFile *)GlWad)->Open(gwaname, VStr(), false, nullptr);
 #endif
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWadFile::BuildPVS
 //
 //==========================================================================
-
-void VWadFile::BuildPVS(VSearchPath *BaseWad)
-{
+void VWadFile::BuildPVS (VSearchPath *BaseWad) {
   guard(VWadFile::BuildPVS);
 #ifdef CLIENT
-  VStr name = ((VWadFile*)BaseWad)->Name;
-
+  VStr name = ((VWadFile *)BaseWad)->Name;
   VStr glname = Name;
-
-  // Close old file
+  // close old file
   Close();
-
-  // Build PVS
+  // build PVS
   GLVis_BuildPVS(*name, BaseWad != this ? *glname : nullptr);
-
-  // Add GWA file
+  // add GWA file
   Open(glname, VStr(), false, nullptr);
 #endif
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWadFile::CreateLumpReaderNum
 //
 //==========================================================================
-
-VStream *VWadFile::CreateLumpReaderNum(int lump)
-{
+VStream *VWadFile::CreateLumpReaderNum (int lump) {
   guard(VWadFile::CreateLumpReaderNum);
   check((vuint32)lump < (vuint32)NumLumps);
   lumpinfo_t &l = LumpInfo[lump];
 
   // read the lump in
   void *ptr = Z_Malloc(l.Size);
-  if (l.Size)
-  {
+  if (l.Size) {
     Stream->Seek(l.Position);
     Stream->Serialise(ptr, l.Size);
   }
 
-
-  //  Create stream.
+  // create stream
   VStream *S = new VMemoryStream(ptr, l.Size);
   Z_Free(ptr);
   return S;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWadFile::RenameSprites
 //
 //==========================================================================
-
-void VWadFile::RenameSprites(const TArray<VSpriteRename>& A,
-  const TArray<VLumpRename>& LA)
-{
+void VWadFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLumpRename> &LA) {
   guard(VWadFile::RenameSprites);
-  for (int i = 0; i < NumLumps; i++)
-  {
+  for (int i = 0; i < NumLumps; ++i) {
     lumpinfo_t &L = LumpInfo[i];
-    if (L.Namespace != WADNS_Sprites)
-    {
-      continue;
-    }
-    for (int j = 0; j < A.Num(); j++)
-    {
+    if (L.Namespace != WADNS_Sprites) continue;
+    for (int j = 0; j < A.Num(); ++j) {
       if ((*L.Name)[0] != A[j].Old[0] || (*L.Name)[1] != A[j].Old[1] ||
-        (*L.Name)[2] != A[j].Old[2] || (*L.Name)[3] != A[j].Old[3])
+          (*L.Name)[2] != A[j].Old[2] || (*L.Name)[3] != A[j].Old[3])
       {
         continue;
       }
-      char NewName[12];
-      VStr::Cpy(NewName, *L.Name);
-      NewName[0] = A[j].New[0];
-      NewName[1] = A[j].New[1];
-      NewName[2] = A[j].New[2];
-      NewName[3] = A[j].New[3];
-      L.Name = NewName;
-    }
-    for (int j = 0; j < LA.Num(); j++)
-    {
-      if (L.Name == LA[j].Old)
-      {
-        L.Name = LA[j].New;
+      char newname[16];
+      auto len = (int)strlen(*L.Name);
+      if (len) {
+        if (len > 12) len = 12;
+        memcpy(newname, *L.Name, len);
       }
+      newname[len] = 0;
+      newname[0] = A[j].New[0];
+      newname[1] = A[j].New[1];
+      newname[2] = A[j].New[2];
+      newname[3] = A[j].New[3];
+      L.Name = newname;
+    }
+    for (int j = 0; j < LA.Num(); ++j) {
+      if (L.Name == LA[j].Old) L.Name = LA[j].New;
     }
   }
   unguard;
 }
 
-int VWadFile::CheckNumForFileName(VStr)
-{
+
+//==========================================================================
+//
+//  VWadFile::CheckNumForFileName
+//
+//==========================================================================
+int VWadFile::CheckNumForFileName (const VStr &fname) {
+  VStr fn = fname.stripExtension();
+  if (fn.isEmpty()) return -1;
+  for (int f = NumLumps-1; f >= 0; --f) {
+    if (fn.ICmp(*LumpInfo[f].Name) == 0) return f;
+  }
   return -1;
 }
 
-bool VWadFile::FileExists(const VStr&)
-{
+
+//==========================================================================
+//
+//  VWadFile::FileExists
+//
+//==========================================================================
+bool VWadFile::FileExists (const VStr &fname) {
+  VStr fn = fname.stripExtension();
+  if (fn.isEmpty()) return -1;
+  for (int f = NumLumps-1; f >= 0; --f) {
+    if (fn.ICmp(*LumpInfo[f].Name) == 0) return true;
+  }
   return false;
 }
 
-VStream *VWadFile::OpenFileRead(const VStr&)
-{
-  return nullptr;
+
+//==========================================================================
+//
+//  VWadFile::OpenFileRead
+//
+//==========================================================================
+VStream *VWadFile::OpenFileRead (const VStr &fname) {
+  int lidx = CheckNumForFileName(fname);
+  if (lidx == -1) return nullptr;
+  return CreateLumpReaderNum(lidx);
 }

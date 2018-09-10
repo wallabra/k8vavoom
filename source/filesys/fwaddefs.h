@@ -24,25 +24,25 @@
 //**************************************************************************
 #pragma pack(push, 1)
 
+
 //==========================================================================
 //
 //  WAD file types
 //
 //==========================================================================
-
-struct wadinfo_t
-{
-  // Should be "IWAD" or "PWAD".
-  char    identification[4];
-  int     numlumps;
-  int     infotableofs;
+struct wadinfo_t {
+  // should be "IWAD" or "PWAD"
+  char identification[4];
+  int numlumps;
+  int infotableofs;
 };
 
-struct filelump_t
-{
-  int     filepos;
-  int     size;
-  char    name[8];
+
+struct filelump_t {
+  int filepos;
+  int size;
+  char name[8];
 };
+
 
 #pragma pack(pop)

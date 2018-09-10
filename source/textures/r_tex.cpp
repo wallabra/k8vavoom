@@ -1325,9 +1325,11 @@ static void InitFTAnims () {
   }
 
   // optionally parse script file
+  /*
   if (fl_devmode && FL_FileExists("scripts/animdefs.txt")) {
     ParseFTAnims(new VScriptParser("scripts/animdefs.txt", FL_OpenFileRead("scripts/animdefs.txt")));
   }
+  */
 
   // read Boom's animated lump if present
   P_InitAnimated();

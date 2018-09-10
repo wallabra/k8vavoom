@@ -27,9 +27,8 @@
 //**
 //**************************************************************************
 
-//  Boom namespaces.
-enum EWadNamespace
-{
+// boom namespaces
+enum EWadNamespace {
   WADNS_Global,
   WADNS_Sprites,
   WADNS_Flats,
@@ -39,10 +38,7 @@ enum EWadNamespace
   WADNS_Voices,
   WADNS_HiResTextures,
 
-  WADNS_Hidden,
-
-  //  Special namespaces for zip files, in wad file they will be searched
-  // in global namespace.
+  // special namespaces for zip files, in wad file they will be searched in global namespace
   WADNS_ZipSpecial,
   WADNS_Patches,
   WADNS_Graphics,
@@ -50,34 +46,35 @@ enum EWadNamespace
   WADNS_Music,
 };
 
-void W_AddFile(const VStr &FileName, const VStr &GwaDir, bool FixVoices);
-void W_Shutdown();
 
-int W_OpenAuxiliary(const VStr &FileName);
-void W_CloseAuxiliary();
+void W_AddFile (const VStr &FileName, const VStr &GwaDir, bool FixVoices);
+void W_Shutdown ();
 
-void W_BuildGLNodes(int lump);
-void W_BuildPVS(int lump, int gllump);
+int W_OpenAuxiliary (const VStr &FileName);
+void W_CloseAuxiliary ();
 
-int W_CheckNumForName(VName Name, EWadNamespace NS = WADNS_Global);
-int W_GetNumForName(VName Name, EWadNamespace NS = WADNS_Global);
-int W_CheckNumForNameInFile(VName Name, int File, EWadNamespace NS = WADNS_Global);
+void W_BuildGLNodes (int lump);
+void W_BuildPVS (int lump, int gllump);
 
-int W_CheckNumForFileName(VStr Name);
-int W_CheckNumForTextureFileName(VStr Name);
-int W_GetNumForFileName(VStr Name);
-int W_FindLumpByFileNameWithExts(VStr BaseName, const char **Exts);
+int W_CheckNumForName (VName Name, EWadNamespace NS = WADNS_Global);
+int W_GetNumForName (VName Name, EWadNamespace NS = WADNS_Global);
+int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS = WADNS_Global);
 
-int W_LumpLength(int lump);
-VName W_LumpName(int lump);
-VStr W_FullLumpName(int lump);
-int W_LumpFile(int lump);
+int W_CheckNumForFileName (const VStr &Name);
+int W_CheckNumForTextureFileName (const VStr &Name);
+int W_GetNumForFileName (const VStr &Name);
+int W_FindLumpByFileNameWithExts (const VStr &BaseName, const char **Exts);
 
-void W_ReadFromLump(int lump, void *dest, int pos, int size);
-VStr W_LoadTextLump(VName name);
-void W_LoadLumpIntoArray(VName Lump, TArray<vuint8>& Array);
-VStream *W_CreateLumpReaderNum(int lump);
-VStream *W_CreateLumpReaderName(VName Name, EWadNamespace NS = WADNS_Global);
+int W_LumpLength (int lump);
+VName W_LumpName (int lump);
+VStr W_FullLumpName (int lump);
+int W_LumpFile (int lump);
 
-int W_IterateNS(int Prev, EWadNamespace NS);
-int W_IterateFile(int Prev, const VStr &Name);
+void W_ReadFromLump (int lump, void *dest, int pos, int size);
+VStr W_LoadTextLump (VName name);
+void W_LoadLumpIntoArray (VName Lump, TArray<vuint8>& Array);
+VStream *W_CreateLumpReaderNum (int lump);
+VStream *W_CreateLumpReaderName (VName Name, EWadNamespace NS = WADNS_Global);
+
+int W_IterateNS (int Prev, EWadNamespace NS);
+int W_IterateFile (int Prev, const VStr &Name);

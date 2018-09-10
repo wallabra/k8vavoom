@@ -121,11 +121,13 @@ void R_InitSkyBoxes()
     }
   }
   //  Optionally parse script file.
+  /*
   if (fl_devmode && FL_FileExists("scripts/skyboxes.txt"))
   {
     ParseSkyBoxesScript(new VScriptParser("scripts/skyboxes.txt",
       FL_OpenFileRead("scripts/skyboxes.txt")));
   }
+  */
   unguard;
 }
 

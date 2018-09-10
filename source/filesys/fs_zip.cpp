@@ -45,9 +45,6 @@
 //**  distribution.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "fs_local.h"
 #ifdef USE_INTERNAL_LZMA
@@ -66,93 +63,80 @@
 
 //#define K8_UNLZMA_DEBUG
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-enum
-{
+enum {
   SIZECENTRALDIRITEM = 0x2e,
-  SIZEZIPLOCALHEADER = 0x1e
+  SIZEZIPLOCALHEADER = 0x1e,
 };
 
-//  VZipFileInfo contain information about a file in the zipfile
-struct VZipFileInfo
-{
-  VStr    Name;         //  Name of the file
-  vuint16   flag;         //  General purpose bit flag
-  vuint16   compression_method;   //  Compression method
-  vuint32   crc;          //  Crc-32
-  vuint32   compressed_size;    //  Compressed size
-  vuint32   uncompressed_size;    //  Uncompressed size
-  vuint16   size_filename;      //  Filename length
-  vuint32   offset_curfile;     //  Relative offset of local header
 
-  //  For WAD-like access.
-  VName   LumpName;
-  vint32    LumpNamespace;
+// information about a file in the zipfile
+struct VZipFileInfo {
+  VStr Name; // name of the file
+  vuint16 flag; // general purpose bit flag
+  vuint16 compression_method; // compression method
+  vuint32 crc; // crc-32
+  vuint32 compressed_size; // compressed size
+  vuint32 uncompressed_size; // uncompressed size
+  vuint16 size_filename; // filename length
+  vuint32 offset_curfile; // relative offset of local header
+  // for WAD-like access
+  VName LumpName;
+  vint32 LumpNamespace;
 };
 
-class VZipFileReader : public VStream
-{
+
+class VZipFileReader : public VStream {
 private:
   //enum { UNZ_BUFSIZE = 16384 };
   enum { UNZ_BUFSIZE = 65536 };
 
   mythread_mutex *rdlock;
-  VStream *FileStream;   //  Source stream of the zipfile
-  const VZipFileInfo &Info;     //  Info about the file we are reading
+  VStream *FileStream; // source stream of the zipfile
+  VStr fname;
+  const VZipFileInfo &Info; // info about the file we are reading
   FOutputDevice *Error;
 
-  Bytef   ReadBuffer[UNZ_BUFSIZE];//  Internal buffer for compressed data
-  z_stream  stream;         //  ZLib stream structure for inflate
+  Bytef ReadBuffer[UNZ_BUFSIZE]; // internal buffer for compressed data
+  z_stream stream; // zlib stream structure for inflate
   lzma_stream lzmastream;
   lzma_options_lzma lzmaopts;
   lzma_filter filters[2];
   bool usezlib;
 
-  vuint32   pos_in_zipfile;     //  Position in byte on the zipfile
-  vuint32   start_pos;        //  Initial position, for restart
-  bool    stream_initialised;   //  Flag set if stream structure is initialised
+  vuint32 pos_in_zipfile; // position in byte on the zipfile
+  vuint32 start_pos; // initial position, for restart
+  bool stream_initialised; // flag set if stream structure is initialised
 
-  vuint32   Crc32;          //  Crc32 of all data uncompressed
-  vuint32   rest_read_compressed; //  Number of byte to be decompressed
-  vuint32   rest_read_uncompressed; //  Number of byte to be obtained after decomp
+  vuint32 Crc32; // crc32 of all data uncompressed
+  vuint32 rest_read_compressed; // number of byte to be decompressed
+  vuint32 rest_read_uncompressed; // number of byte to be obtained after decomp
 
-  bool CheckCurrentFileCoherencyHeader(vuint32*, vuint32);
+  bool CheckCurrentFileCoherencyHeader (vuint32 *, vuint32);
   bool LzmaRestart (); // `pos_in_zipfile` must be valid
 
 public:
-  VZipFileReader(VStream*, vuint32, const VZipFileInfo&, FOutputDevice*, mythread_mutex *ardlock);
-  virtual ~VZipFileReader() override;
-  void Serialise(void*, int);
-  void Seek(int);
-  int Tell();
-  int TotalSize();
-  bool AtEnd();
-  bool Close();
+  VZipFileReader (const VStr &afname, VStream *, vuint32, const VZipFileInfo &, FOutputDevice *, mythread_mutex *ardlock);
+  virtual ~VZipFileReader () override;
+  virtual const VStr &GetName () const override;
+  virtual void Serialise (void *, int) override;
+  virtual void Seek (int) override;
+  virtual int Tell () override;
+  virtual int TotalSize () override;
+  virtual bool AtEnd () override;
+  virtual bool Close () override;
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+extern "C" {
+  int FileCmpFunc (const void *v1, const void *v2) {
+    return ((VZipFileInfo *)v1)->Name.Cmp(((VZipFileInfo *)v2)->Name);
+  }
+}
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-//==========================================================================
-//
-//  VZipFile::VZipFile
-//
-//==========================================================================
-
+// ////////////////////////////////////////////////////////////////////////// //
 struct ResDirInfo {
   const char *pfx;
   EWadNamespace wadns;
@@ -175,11 +159,17 @@ static const ResDirInfo resdirs[] = {
 };
 
 
-// takes ownership
+//==========================================================================
+//
+//  VZipFile::VZipFile
+//
+//  takes ownership
+//
+//==========================================================================
 VZipFile::VZipFile (VStream *fstream)
-: ZipFileName("<memory>")
-, Files(nullptr)
-, NumFiles(0)
+  : ZipFileName("<memory>")
+  , Files(nullptr)
+  , NumFiles(0)
 {
   guard(VZipFile::VZipFile);
   mythread_mutex_init(&rdlock);
@@ -188,11 +178,17 @@ VZipFile::VZipFile (VStream *fstream)
 }
 
 
-// takes ownership
+//==========================================================================
+//
+//  VZipFile::VZipFile
+//
+//  takes ownership
+//
+//==========================================================================
 VZipFile::VZipFile (VStream *fstream, const VStr &name)
-: ZipFileName(name)
-, Files(nullptr)
-, NumFiles(0)
+  : ZipFileName(name)
+  , Files(nullptr)
+  , NumFiles(0)
 {
   guard(VZipFile::VZipFile);
   mythread_mutex_init(&rdlock);
@@ -200,41 +196,43 @@ VZipFile::VZipFile (VStream *fstream, const VStr &name)
   unguard;
 }
 
-
-VZipFile::VZipFile(const VStr &zipfile)
-: ZipFileName(zipfile)
-, Files(nullptr)
-, NumFiles(0)
-{
-  guard(VZipFile::VZipFile);
-  mythread_mutex_init(&rdlock);
-  GCon->Logf(NAME_Init, "Adding %s", *ZipFileName);
-  auto fstream = FL_OpenSysFileRead(ZipFileName);
-  check(fstream);
-  OpenArchive(fstream);
-  unguard;
-}
-
-//==========================================================================
-//
-//  VZipFile::~VZipFile
-//
-//==========================================================================
-
-VZipFile::~VZipFile()
-{
-  //guard(VZipFile::~VZipFile);
-  Close();
-  mythread_mutex_destroy(&rdlock);
-  //unguard;
-}
 
 //==========================================================================
 //
 //  VZipFile::VZipFile
 //
 //==========================================================================
+VZipFile::VZipFile(const VStr &zipfile)
+  : ZipFileName(zipfile)
+  , Files(nullptr)
+  , NumFiles(0)
+{
+  guard(VZipFile::VZipFile);
+  mythread_mutex_init(&rdlock);
+  GCon->Logf(NAME_Init, "Adding \"%s\"...", *ZipFileName);
+  auto fstream = FL_OpenSysFileRead(ZipFileName);
+  check(fstream);
+  OpenArchive(fstream);
+  unguard;
+}
 
+
+//==========================================================================
+//
+//  VZipFile::~VZipFile
+//
+//==========================================================================
+VZipFile::~VZipFile () {
+  Close();
+  mythread_mutex_destroy(&rdlock);
+}
+
+
+//==========================================================================
+//
+//  VZipFile::VZipFile
+//
+//==========================================================================
 void VZipFile::OpenArchive (VStream *fstream) {
   guard(VZipFile::OpenArchive);
   FileStream = fstream;
@@ -246,67 +244,61 @@ void VZipFile::OpenArchive (VStream *fstream) {
   FileStream->Seek(central_pos);
 
   vuint32 Signature;
-  vuint16 number_disk;    //  Number of the current dist, used for
-                // spaning ZIP, unsupported, always 0
-  vuint16 number_disk_with_CD;//  Number the the disk with central dir, used
-                // for spaning ZIP, unsupported, always 0
-  vuint16 number_entry_CD;  //  Total number of entries in
-                // the central dir
-                // (same than number_entry on nospan)
-  vuint16 size_comment;   //  Size of the global comment of the zipfile
+  vuint16 number_disk; // number of the current dist, used for spaning ZIP
+  vuint16 number_disk_with_CD; // number the the disk with central dir, used for spaning ZIP
+  vuint16 number_entry_CD; // total number of entries in the central dir (same than number_entry on nospan)
+  vuint16 size_comment; // size of the global comment of the zipfile
 
   *FileStream
-    //  The signature, already checked
+    // the signature, already checked
     << Signature
-    //  Number of this disk
+    // number of this disk
     << number_disk
-    //  Number of the disk with the start of the central directory
+    // number of the disk with the start of the central directory
     << number_disk_with_CD
-    //  Total number of entries in the central dir on this disk
+    // total number of entries in the central dir on this disk
     << NumFiles
-    //  Total number of entries in the central dir
+    // total number of entries in the central dir
     << number_entry_CD;
 
   check(number_entry_CD == NumFiles);
   check(number_disk_with_CD == 0);
   check(number_disk == 0);
 
-  vuint32   size_central_dir; //  Size of the central directory
-  vuint32   offset_central_dir; //  Offset of start of central directory with
-                  // respect to the starting disk number
+  vuint32 size_central_dir; // size of the central directory
+  vuint32 offset_central_dir; // offset of start of central directory with respect to the starting disk number
 
   *FileStream
     << size_central_dir
     << offset_central_dir
     << size_comment;
 
-  check(central_pos >= offset_central_dir + size_central_dir);
+  check(central_pos >= offset_central_dir+size_central_dir);
 
-  BytesBeforeZipFile = central_pos - (offset_central_dir + size_central_dir);
+  BytesBeforeZipFile = central_pos-(offset_central_dir+size_central_dir);
 
   Files = new VZipFileInfo[NumFiles];
 
   bool canHasPrefix = true;
 
-  //  Set the current file of the zipfile to the first file.
+  // set the current file of the zipfile to the first file
   vuint32 pos_in_central_dir = offset_central_dir;
-  for (int i = 0; i < NumFiles; i++)
-  {
+  for (int i = 0; i < NumFiles; ++i) {
     VZipFileInfo &file_info = Files[i];
 
-    FileStream->Seek(pos_in_central_dir + BytesBeforeZipFile);
+    FileStream->Seek(pos_in_central_dir+BytesBeforeZipFile);
 
     vuint32 Magic;
-    vuint16 version;    //  Version made by
-    vuint16 version_needed; //  Version needed to extract
-    vuint32 dosDate;    //  Last mod file date in Dos fmt
-    vuint16 size_file_extra;//  Extra field length
-    vuint16 size_file_comment;  //  File comment length
-    vuint16 disk_num_start; //  Disk number start
-    vuint16 internal_fa;  //  Internal file attributes
-    vuint32 external_fa;  //  External file attributes
+    vuint16 version; // version made by
+    vuint16 version_needed; // version needed to extract
+    vuint32 dosDate; // last mod file date in Dos fmt
+    vuint16 size_file_extra; // extra field length
+    vuint16 size_file_comment; // file comment length
+    vuint16 disk_num_start; // disk number start
+    vuint16 internal_fa; // internal file attributes
+    vuint32 external_fa; // external file attributes
 
-    /* we check the magic */
+    // we check the magic
     *FileStream
       << Magic
       << version
@@ -325,9 +317,9 @@ void VZipFile::OpenArchive (VStream *fstream) {
       << external_fa
       << file_info.offset_curfile;
 
-    check(Magic == 0x02014b50);
+    if (Magic != 0x02014b50) Sys_Error("corrupted ZIP file \"%s\"", *fstream->GetName());
 
-    char *filename_inzip = new char[file_info.size_filename + 1];
+    char *filename_inzip = new char[file_info.size_filename+1];
     filename_inzip[file_info.size_filename] = '\0';
     FileStream->Serialise(filename_inzip, file_info.size_filename);
     Files[i].Name = VStr(filename_inzip).ToLower().FixFileSlashes();
@@ -342,47 +334,7 @@ void VZipFile::OpenArchive (VStream *fstream) {
       }
     }
 
-    /*
-    //  Set up lump name for WAD-like access.
-    VStr LumpName = Files[i].Name.ExtractFileName().StripExtension();
-
-    //  Map some directories to WAD namespaces.
-    Files[i].LumpNamespace =
-      Files[i].Name.StartsWith("sprites/") ? WADNS_Sprites :
-      Files[i].Name.StartsWith("flats/") ? WADNS_Flats :
-      Files[i].Name.StartsWith("colormaps/") ? WADNS_ColourMaps :
-      Files[i].Name.StartsWith("acs/") ? WADNS_ACSLibrary :
-      Files[i].Name.StartsWith("textures/") ? WADNS_NewTextures :
-      Files[i].Name.StartsWith("voices/") ? WADNS_Voices :
-      Files[i].Name.StartsWith("hires/") ? WADNS_HiResTextures :
-      Files[i].Name.StartsWith("patches/") ? WADNS_Patches :
-      Files[i].Name.StartsWith("graphics/") ? WADNS_Graphics :
-      Files[i].Name.StartsWith("sounds/") ? WADNS_Sounds :
-      Files[i].Name.StartsWith("music/") ? WADNS_Music :
-      Files[i].Name.IndexOf('/') == -1 ? WADNS_Global : -1;
-
-    //  Anything from other directories won't be accessed as lump.
-    if (Files[i].LumpNamespace == -1)
-      LumpName = VStr();
-
-    //  For sprites \ is a valid frame character but is not allowed to
-    // be in a file name, so we do a little mapping here.
-    if (Files[i].LumpNamespace == WADNS_Sprites)
-    {
-      for (size_t ni = 0; ni < LumpName.Length(); ni++)
-      {
-        if (LumpName[ni] == '^')
-        {
-          LumpName[ni] = '\\';
-        }
-      }
-    }
-
-    //  Final lump name;
-    Files[i].LumpName = VName(*LumpName, VName::AddLower8);
-    */
-
-    //  Set the current file of the zipfile to the next file.
+    // set the current file of the zipfile to the next file
     pos_in_central_dir += SIZECENTRALDIRITEM+file_info.size_filename+size_file_extra+size_file_comment;
   }
 
@@ -405,15 +357,19 @@ void VZipFile::OpenArchive (VStream *fstream) {
     }
   }
 
+  // remove duplicate files
+  TMap<VStr, bool> nameset;
+  for (int i = NumFiles-1; i >= 0; --i) {
+    if (nameset.has(Files[i].Name)) {
+      Files[i].Name = VStr(" ");
+    } else {
+      nameset.put(Files[i].Name, true);
+    }
+  }
+
   // build lump names
   for (int i = 0; i < NumFiles; ++i) {
     if (Files[i].Name.Length() > 0) {
-      if (Files[i].Name.EndsWith(".wad") && Files[i].Name.IndexOf('/') == -1) {
-        Files[i].LumpNamespace = WADNS_Hidden;
-        Files[i].LumpName = VName("", VName::AddLower8);
-        continue;
-      }
-
       // set up lump name for WAD-like access
       VStr LumpName = Files[i].Name.ExtractFileName().StripExtension();
 
@@ -423,38 +379,46 @@ void VZipFile::OpenArchive (VStream *fstream) {
       } else {
         Files[i].LumpNamespace = -1;
         for (const ResDirInfo *di = resdirs; di->pfx; ++di) {
-          if (Files[i].Name.StartsWith(di->pfx)) { Files[i].LumpNamespace = di->wadns; break; }
+          if (Files[i].Name.StartsWith(di->pfx)) {
+            Files[i].LumpNamespace = di->wadns;
+            break;
+          }
         }
       }
 
       // anything from other directories won't be accessed as lump
-      if (Files[i].LumpNamespace == -1) LumpName = VStr();
-
-      // For sprites \ is a valid frame character but is not allowed to
-      // be in a file name, so we do a little mapping here.
-      if (Files[i].LumpNamespace == WADNS_Sprites) {
-        /*
-        for (size_t ni = 0; ni < LumpName.Length(); ++ni) {
-          if (LumpName[ni] == '^') LumpName[ni] = '\\';
+      if (Files[i].LumpNamespace == -1) {
+        LumpName = VStr();
+      } else {
+        // hide wad files, 'cause they may conflict with normal files
+        // wads will be correctly added by a separate function
+        if (Files[i].Name.EndsWith(".wad")) {
+          Files[i].LumpNamespace = -1;
+          LumpName = VStr();
         }
-        */
+      }
+
+      // for sprites \ is a valid frame character but is not allowed to
+      // be in a file name, so we do a little mapping here
+      if (Files[i].LumpNamespace == WADNS_Sprites) {
         LumpName = LumpName.Replace("^", "\\");
       }
 
       //if (LumpName.length() == 0) fprintf(stderr, "ZIP <%s> mapped to nothing\n", *Files[i].Name);
       //fprintf(stderr, "ZIP <%s> mapped to <%s> (%d)\n", *Files[i].Name, *LumpName, Files[i].LumpNamespace);
 
-      // Final lump name
+      // final lump name
       Files[i].LumpName = VName(*LumpName, VName::AddLower8);
     } else {
       Files[i].LumpName = VName("", VName::AddLower8);
     }
   }
 
-  //  Sort files alphabetically.
+  // sort files alphabetically (have to do this, or file searching is failing for some reason)
   qsort(Files, NumFiles, sizeof(VZipFileInfo), FileCmpFunc);
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -475,6 +439,11 @@ struct SelfDestructBuf {
 };
 
 
+//==========================================================================
+//
+//  VZipFile::SearchCentralDir
+//
+//==========================================================================
 vuint32 VZipFile::SearchCentralDir () {
   enum { MaxBufSize = 65578 };
 
@@ -505,129 +474,82 @@ vuint32 VZipFile::SearchCentralDir () {
 //  VZipFile::FileExists
 //
 //==========================================================================
-
-int VZipFile::FileCmpFunc(const void *v1, const void *v2)
-{
-  return ((VZipFileInfo*)v1)->Name.ICmp(((VZipFileInfo*)v2)->Name);
-}
-
-//==========================================================================
-//
-//  VZipFile::FileExists
-//
-//==========================================================================
-
-bool VZipFile::FileExists(const VStr &FName)
-{
-  guard(VZipFile::FileExists);
+bool VZipFile::FileExists (const VStr &FName) {
   VStr CheckName = FName.ToLower();
-  for (int i = 0; i < NumFiles; i++)
-  {
-    if (Files[i].Name == CheckName)
-    {
-      return true;
-    }
+  for (int i = NumFiles-1; i >= 0; --i) {
+    if (Files[i].Name == CheckName) return true;
   }
   return false;
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VZipFile::OpenFileRead
 //
 //==========================================================================
-
-VStream *VZipFile::OpenFileRead(const VStr &FName)
-{
-  guard(VZipFile::OpenFileRead);
+VStream *VZipFile::OpenFileRead (const VStr &FName) {
   VStr CheckName = FName.ToLower();
-  for (int i = 0; i < NumFiles; i++)
-  {
-    if (Files[i].Name == CheckName)
-    {
-      return new VZipFileReader(FileStream, BytesBeforeZipFile, Files[i], GCon, &rdlock);
+  for (int i = NumFiles-1; i >= 0; --i) {
+    if (Files[i].Name == CheckName) {
+      return new VZipFileReader(ZipFileName+":"+FName, FileStream, BytesBeforeZipFile, Files[i], GCon, &rdlock);
     }
   }
   return nullptr;
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VZipFile::Close
 //
 //==========================================================================
-
-void VZipFile::Close()
-{
-  guard(VZipFile::Close);
-  if (Files)
-  {
+void VZipFile::Close () {
+  if (Files) {
     delete[] Files;
     Files = nullptr;
   }
-  if (FileStream)
-  {
+  if (FileStream) {
     delete FileStream;
     FileStream = 0;
   }
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VZipFile::CheckNumForName
 //
 //==========================================================================
-
-int VZipFile::CheckNumForName(VName LumpName, EWadNamespace NS)
-{
-  guard(VZipFile::CheckNumForName);
-  for (int i = NumFiles - 1; i >= 0; i--)
-  {
-    if (Files[i].LumpNamespace == NS && Files[i].LumpName == LumpName)
-    {
-      return i;
-    }
+int VZipFile::CheckNumForName (VName LumpName, EWadNamespace NS) {
+  for (int i = NumFiles-1; i >= 0; --i) {
+    if (Files[i].LumpNamespace == NS && Files[i].LumpName == LumpName) return i;
   }
-
-  // Not found.
+  // not found
   return -1;
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VZipFile::CheckNumForFileName
 //
 //==========================================================================
-
-int VZipFile::CheckNumForFileName(VStr Name)
-{
-  guard(VZipFile::CheckNumForFileName);
-  //VStr CheckName = Name.ToLower();
-  for (int i = NumFiles - 1; i >= 0; i--)
-  {
-    if (Files[i].Name.ICmp(Name) == 0)
-    {
-      return i;
-    }
+int VZipFile::CheckNumForFileName (const VStr &Name) {
+  VStr fn = Name.ToLower();
+  for (int i = NumFiles-1; i >= 0; --i) {
+    if (Files[i].Name == fn) return i;
   }
-
-  // Not found.
   return -1;
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VZipFile::ReadFromLump
 //
 //==========================================================================
-
-void VZipFile::ReadFromLump(int Lump, void *Dest, int Pos, int Size)
-{
+void VZipFile::ReadFromLump (int Lump, void *Dest, int Pos, int Size) {
   guard(VZipFile::ReadFromLump);
   check(Lump >= 0);
   check(Lump < NumFiles);
@@ -635,213 +557,185 @@ void VZipFile::ReadFromLump(int Lump, void *Dest, int Pos, int Size)
   Strm->Seek(Pos);
   Strm->Serialise(Dest, Size);
   delete Strm;
-  Strm = nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VZipFile::LumpLength
 //
 //==========================================================================
-
-int VZipFile::LumpLength(int Lump)
-{
-  if (Lump >= NumFiles)
-  {
-    return 0;
-  }
+int VZipFile::LumpLength (int Lump) {
+  if (Lump < 0 || Lump >= NumFiles) return 0;
   return Files[Lump].uncompressed_size;
 }
+
 
 //==========================================================================
 //
 //  VZipFile::LumpName
 //
 //==========================================================================
-
-VName VZipFile::LumpName(int Lump)
-{
-  if (Lump >= NumFiles)
-  {
-    return NAME_None;
-  }
+VName VZipFile::LumpName (int Lump) {
+  if (Lump < 0 || Lump >= NumFiles) return NAME_None;
   return Files[Lump].LumpName;
 }
+
 
 //==========================================================================
 //
 //  VZipFile::LumpFileName
 //
 //==========================================================================
-
-VStr VZipFile::LumpFileName(int Lump)
-{
-  if (Lump >= NumFiles)
-  {
-    return VStr();
-  }
+VStr VZipFile::LumpFileName (int Lump) {
+  if (Lump < 0 || Lump >= NumFiles) return VStr();
   return Files[Lump].Name;
 }
+
 
 //==========================================================================
 //
 //  VZipFile::IterateNS
 //
 //==========================================================================
-
-int VZipFile::IterateNS(int Start, EWadNamespace NS)
-{
-  guard(VZipFile::IterateNS);
-  for (int li = Start; li < NumFiles; li++)
-  {
-    if (Files[li].LumpNamespace == NS)
-    {
-      return li;
-    }
+int VZipFile::IterateNS (int Start, EWadNamespace NS) {
+  if (Start < 0 || Start >= NumFiles) return -1;
+  for (int li = Start; li < NumFiles; ++li) {
+    if (Files[li].LumpNamespace == NS) return li;
   }
   return -1;
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VZipFile::CreateLumpReaderNum
 //
 //==========================================================================
-
-VStream *VZipFile::CreateLumpReaderNum(int Lump)
-{
+VStream *VZipFile::CreateLumpReaderNum (int Lump) {
   guard(VZipFile::CreateLumpReaderNum);
   check(Lump >= 0);
   check(Lump < NumFiles);
-  return new VZipFileReader(FileStream, BytesBeforeZipFile, Files[Lump], GCon, &rdlock);
+  return new VZipFileReader(ZipFileName+":"+Files[Lump].Name, FileStream, BytesBeforeZipFile, Files[Lump], GCon, &rdlock);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VZipFile::RenameSprites
 //
 //==========================================================================
-
-void VZipFile::RenameSprites(const TArray<VSpriteRename>& A,
-  const TArray<VLumpRename>& LA)
-{
+void VZipFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLumpRename> &LA) {
   guard(VZipFile::RenameSprites);
-  for (int i = 0; i < NumFiles; i++)
-  {
+  for (int i = 0; i < NumFiles; ++i) {
     VZipFileInfo &L = Files[i];
-    if (L.LumpNamespace != WADNS_Sprites)
-    {
-      continue;
-    }
-    for (int j = 0; j < A.Num(); j++)
-    {
+    if (L.LumpNamespace != WADNS_Sprites) continue;
+    for (int j = 0; j < A.Num(); ++j) {
       if ((*L.LumpName)[0] != A[j].Old[0] ||
-        (*L.LumpName)[1] != A[j].Old[1] ||
-        (*L.LumpName)[2] != A[j].Old[2] ||
-        (*L.LumpName)[3] != A[j].Old[3])
+          (*L.LumpName)[1] != A[j].Old[1] ||
+          (*L.LumpName)[2] != A[j].Old[2] ||
+          (*L.LumpName)[3] != A[j].Old[3])
       {
         continue;
       }
-      char NewName[12];
-      VStr::Cpy(NewName, *L.LumpName);
-      NewName[0] = A[j].New[0];
-      NewName[1] = A[j].New[1];
-      NewName[2] = A[j].New[2];
-      NewName[3] = A[j].New[3];
-      L.LumpName = NewName;
-    }
-    for (int j = 0; j < LA.Num(); j++)
-    {
-      if (L.LumpName == LA[j].Old)
-      {
-        L.LumpName = LA[j].New;
+      char newname[16];
+      auto len = (int)strlen(*L.Name);
+      if (len) {
+        if (len > 12) len = 12;
+        memcpy(newname, *L.Name, len);
       }
+      newname[len] = 0;
+      newname[0] = A[j].New[0];
+      newname[1] = A[j].New[1];
+      newname[2] = A[j].New[2];
+      newname[3] = A[j].New[3];
+      L.LumpName = newname;
+    }
+    for (int j = 0; j < LA.Num(); ++j) {
+      if (L.LumpName == LA[j].Old) L.LumpName = LA[j].New;
     }
   }
   unguard;
 }
 
-void VZipFile::BuildGLNodes(VSearchPath*)
-{
+
+//==========================================================================
+//
+//  VZipFile::BuildGLNodes
+//
+//==========================================================================
+void VZipFile::BuildGLNodes (VSearchPath *) {
 }
-void VZipFile::BuildPVS(VSearchPath*)
-{
+
+
+//==========================================================================
+//
+//  VZipFile::BuildPVS
+//
+//==========================================================================
+void VZipFile::BuildPVS (VSearchPath *) {
 }
+
 
 //==========================================================================
 //
 //  VZipFile::ListWadFiles
 //
 //==========================================================================
-
-void VZipFile::ListWadFiles (TArray<VStr>& List) {
+void VZipFile::ListWadFiles (TArray<VStr> &List) {
   guard(VZipFile::ListWadFiles);
+  TMap<VStr, bool> hits;
   for (int i = 0; i < NumFiles; ++i) {
-    // Only .wad files.
+    // only .wad files
     if (!Files[i].Name.EndsWith(".wad")) continue;
-    // Don't add WAD files in subdirectories
+    // don't add WAD files in subdirectories
     if (Files[i].Name.IndexOf('/') != -1) continue;
+    if (hits.has(Files[i].Name)) continue;
+    hits.put(Files[i].Name, true);
     List.Append(Files[i].Name);
   }
   unguard;
 }
 
-//==========================================================================
-//
-//  VZipFile::HideWadFiles
-//
-//==========================================================================
-
-void VZipFile::HideWadFiles () {
-/*
-  guard(VZipFile::HideWadFiles);
-  for (int i = 0; i < NumFiles; ++i) {
-    // Only .wad files.
-    if (!Files[i].Name.EndsWith(".wad")) continue;
-    // Don't add WAD files in subdirectories
-    if (Files[i].Name.IndexOf('/') != -1) continue;
-    Files[i].Name.clear();
-  }
-  unguard;
-*/
-}
 
 //==========================================================================
 //
 //  VZipFile::ListPk3Files
 //
 //==========================================================================
-
-void VZipFile::ListPk3Files (TArray<VStr>& List) {
+void VZipFile::ListPk3Files (TArray<VStr> &List) {
   guard(VZipFile::ListPk3Files);
+  TMap<VStr, bool> hits;
   for (int i = 0; i < NumFiles; ++i) {
-    // Only .pk3 files.
+    // only .pk3 files
     if (!Files[i].Name.EndsWith(".pk3")) continue;
-    // Don't add pk3 files in subdirectories
+    // don't add pk3 files in subdirectories
     if (Files[i].Name.IndexOf('/') != -1) continue;
+    if (hits.has(Files[i].Name)) continue;
+    hits.put(Files[i].Name, true);
     List.Append(Files[i].Name);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VZipFileReader::VZipFileReader
 //
 //==========================================================================
-
-VZipFileReader::VZipFileReader(VStream *InStream, vuint32 BytesBeforeZipFile,
+VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 BytesBeforeZipFile,
                                const VZipFileInfo &aInfo, FOutputDevice *InError, mythread_mutex *ardlock)
-: rdlock(ardlock)
-, FileStream(InStream)
-, Info(aInfo)
-, Error(InError)
+  : rdlock(ardlock)
+  , FileStream(InStream)
+  , fname(afname)
+  , Info(aInfo)
+  , Error(InError)
 {
   guard(VZipFileReader::VZipFileReader);
-  //  Open the file in the zip
+  // open the file in the zip
   usezlib = true;
 
   if (!rdlock) Sys_Error("VZipFileReader::VZipFileReader: empty lock!");
@@ -905,26 +799,34 @@ VZipFileReader::VZipFileReader(VStream *InStream, vuint32 BytesBeforeZipFile,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VZipFileReader::~VZipFileReader
 //
 //==========================================================================
-
-VZipFileReader::~VZipFileReader()
-{
-  //guard(VZipFileReader::~VZipFileReader);
+VZipFileReader::~VZipFileReader() {
   Close();
-  //unguard;
 }
 
-//==========================================================================
-//
-//  VZipFileReader::~VZipFileReader
-//
-// `pos_in_zipfile` must be valid
-//==========================================================================
 
+//==========================================================================
+//
+//  VZipFileReader::GetName
+//
+//==========================================================================
+const VStr &VZipFileReader::GetName () const {
+  return fname;
+}
+
+
+//==========================================================================
+//
+//  VZipFileReader::LzmaRestart
+//
+//  `pos_in_zipfile` must be valid
+//
+//==========================================================================
 bool VZipFileReader::LzmaRestart () {
   vuint8 ziplzmahdr[4];
   vuint8 lzmaprhdr[5];
@@ -1026,17 +928,14 @@ bool VZipFileReader::LzmaRestart () {
 //
 //  VZipFileReader::CheckCurrentFileCoherencyHeader
 //
-//  Read the local header of the current zipfile
+//  Read the local header of the current zipfile.
 //  Check the coherency of the local header and info in the end of central
-// directory about this file
+//  directory about this file.
 //  Store in *piSizeVar the size of extra info in local header
-// (filename and size of extra field data)
+//  (filename and size of extra field data).
 //
 //==========================================================================
-
-bool VZipFileReader::CheckCurrentFileCoherencyHeader(vuint32 *piSizeVar,
-  vuint32 byte_before_the_zipfile)
-{
+bool VZipFileReader::CheckCurrentFileCoherencyHeader (vuint32 *piSizeVar, vuint32 byte_before_the_zipfile) {
   guard(VZipFileReader::CheckCurrentFileCoherencyHeader);
   vuint32 Magic, DateTime, Crc, ComprSize, UncomprSize;
   vuint16 Version, Flags, ComprMethod, FileNameSize, ExtraFieldSize;
@@ -1057,61 +956,54 @@ bool VZipFileReader::CheckCurrentFileCoherencyHeader(vuint32 *piSizeVar,
     << FileNameSize
     << ExtraFieldSize;
 
-  if (Magic != 0x04034b50)
-  {
+  if (Magic != 0x04034b50) {
     Error->Log("Bad file magic");
     return false;
   }
 
-  if (ComprMethod != Info.compression_method)
-  {
+  if (ComprMethod != Info.compression_method) {
     Error->Log("Compression method doesn\'t match");
     return false;
   }
 
-  if ((Crc != Info.crc) && ((Flags & 8) == 0))
-  {
+  if (Crc != Info.crc && (Flags&8) == 0) {
     Error->Log("CRC doesn\'t match");
     return false;
   }
 
-  if ((ComprSize != Info.compressed_size) && ((Flags & 8) == 0))
-  {
+  if (ComprSize != Info.compressed_size && (Flags&8) == 0) {
     Error->Log("Compressed size doesn\'t match");
     return false;
   }
 
-  if ((UncomprSize != Info.uncompressed_size) && ((Flags & 8) == 0))
-  {
+  if (UncomprSize != Info.uncompressed_size && (Flags&8) == 0) {
     Error->Log("Uncompressed size doesn\'t match");
     return false;
   }
 
-  if ((FileNameSize != Info.size_filename))
-  {
+  if (FileNameSize != Info.size_filename) {
     Error->Log("File name length doesn\'t match");
     return false;
   }
 
-  *piSizeVar += FileNameSize + ExtraFieldSize;
+  *piSizeVar += FileNameSize+ExtraFieldSize;
 
   return true;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VZipFileReader::Serialise
 //
 //==========================================================================
-
-void VZipFileReader::Serialise(void *V, int Length)
-{
+void VZipFileReader::Serialise (void *V, int Length) {
   guard(VZipFileReader::Serialise);
   MyThreadLocker locker(rdlock);
 
-  if (bError) return; // Don't read anything from already broken stream.
-  if (FileStream->IsError()) return;
+  if (!FileStream || bError) { bError = true; return; } // don't read anything from already broken stream
+  if (FileStream->IsError()) { bError = true; return; }
 
   if (Length == 0) return;
 
@@ -1121,9 +1013,9 @@ void VZipFileReader::Serialise(void *V, int Length)
     return;
   }
 
-  stream.next_out = (Bytef*)V;
+  stream.next_out = (Bytef *)V;
   stream.avail_out = Length;
-  lzmastream.next_out = (Bytef*)V;
+  lzmastream.next_out = (Bytef *)V;
   lzmastream.avail_out = Length;
 
   if ((vuint32)Length > rest_read_uncompressed) {
@@ -1226,14 +1118,13 @@ void VZipFileReader::Serialise(void *V, int Length)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VZipFileReader::Seek
 //
 //==========================================================================
-
-void VZipFileReader::Seek(int InPos)
-{
+void VZipFileReader::Seek (int InPos) {
   guard(VZipFileReader::Seek);
   check(InPos >= 0);
   check(InPos <= (int)Info.uncompressed_size);
@@ -1241,7 +1132,7 @@ void VZipFileReader::Seek(int InPos)
 
   if (bError) return;
 
-  //  If seeking backwards, reset input stream to the begining of the file.
+  // if seeking backwards, reset input stream to the begining of the file
   if (InPos < Tell()) {
     Crc32 = 0;
     rest_read_compressed = Info.compressed_size;
@@ -1265,7 +1156,7 @@ void VZipFileReader::Seek(int InPos)
     }
   }
 
-  //  Read data into a temporary buffer untill we reach needed position.
+  // read data into a temporary buffer untill we reach needed position
   int ToSkip = InPos-Tell();
   while (ToSkip > 0) {
     int Count = ToSkip > 1024 ? 1024 : ToSkip;
@@ -1276,47 +1167,43 @@ void VZipFileReader::Seek(int InPos)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VZipFileReader::Tell
 //
 //==========================================================================
-
-int VZipFileReader::Tell()
-{
+int VZipFileReader::Tell () {
   return (usezlib ? stream.total_out : lzmastream.total_out);
 }
+
 
 //==========================================================================
 //
 //  VZipFileReader::TotalSize
 //
 //==========================================================================
-
-int VZipFileReader::TotalSize()
-{
+int VZipFileReader::TotalSize () {
   return Info.uncompressed_size;
 }
+
 
 //==========================================================================
 //
 //  VZipFileReader::AtEnd
 //
 //==========================================================================
-
-bool VZipFileReader::AtEnd()
-{
-  return rest_read_uncompressed == 0;
+bool VZipFileReader::AtEnd () {
+  return (rest_read_uncompressed == 0);
 }
+
 
 //==========================================================================
 //
 //  VZipFileReader::Close
 //
 //==========================================================================
-
-bool VZipFileReader::Close()
-{
+bool VZipFileReader::Close () {
   guard(VZipFileReader::Close);
   //MyThreadLocker locker(rdlock);
 
