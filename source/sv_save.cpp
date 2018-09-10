@@ -38,6 +38,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB r_dbg_save_on_level_exit("r_dbg_save_on_level_exit", false, "Save before exiting a level.\nNote that after loading this save you prolly won't be able to exit again.", CVAR_Archive);
+static VCvarF save_compression_level("save_compression_level", "1", "Save file compression level [0..9]", CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1053,7 +1054,7 @@ static void SV_SaveMap (bool savePlayers) {
   Map->Data.Clear();
   VArrayStream *ArrStrm = new VArrayStream(Map->Data);
   ArrStrm->BeginWrite();
-  VZipStreamWriter *ZipStrm = new VZipStreamWriter(ArrStrm);
+  VZipStreamWriter *ZipStrm = new VZipStreamWriter(ArrStrm, (int)save_compression_level);
   ZipStrm->Serialise(Buf.Ptr(), Buf.Num());
   delete ZipStrm;
   ZipStrm = nullptr;

@@ -239,6 +239,8 @@ VZipStreamWriter::VZipStreamWriter (VStream *ADstStream, int clevel)
   ZStream.zfree = (free_func)0;
   ZStream.opaque = (voidpf)0;
 
+  if (clevel < 0) clevel = 0; else if (clevel > 9) clevel = 9;
+
   //  Open zip stream.
   int err = deflateInit(&ZStream, clevel);
   if (err != Z_OK) {
