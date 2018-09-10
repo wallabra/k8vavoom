@@ -475,6 +475,42 @@ static void RenameSprites () {
 }
 
 
+#ifndef _WIN32
+# include <sys/types.h>
+# include <unistd.h>
+#else
+# include <windows.h>
+#endif
+
+static VStr getBinaryDir () {
+  static char mydir[8192];
+#ifndef _WIN32
+  char buf[128];
+  pid_t pid = getpid();
+  snprintf(buf, sizeof(buf), "/proc/%u/exe", (unsigned int)pid);
+  if (readlink(buf, mydir, sizeof(mydir)-1) < 0) {
+    mydir[0] = '.';
+    mydir[1] = '\0';
+  } else {
+    char *p = (char *)strrchr(mydir, '/');
+    if (!p) {
+      mydir[0] = '.';
+      mydir[1] = '\0';
+    } else {
+      *p = '\0';
+    }
+  }
+#else
+  char *p;
+  memset(mydir, 0, sizeof(mydir));
+  GetModuleFileName(GetModuleHandle(NULL), mydir, sizeof(mydir)-1);
+  p = strrchr(mydir, '\\');
+  if (!p) strcpy(mydir, "."); else *p = '\0';
+#endif
+  return VStr(mydir);
+}
+
+
 //==========================================================================
 //
 //  FL_Init
@@ -489,7 +525,31 @@ void FL_Init () {
   //  Set up base directory (main data files).
   fl_basedir = ".";
   p = GArgs.CheckValue("-basedir");
-  if (p && p[0]) fl_basedir = p;
+  if (p) {
+    fl_basedir = p;
+    if (fl_basedir.isEmpty()) fl_basedir = ".";
+  } else {
+    static const char *defaultBaseDirs[] = {
+#ifndef _WIN32
+      "!/../share/vavoom",
+      "/opt/vavoom/share/vavoom",
+      "/usr/local/share/vavoom",
+      "/usr/share/vavoom",
+#else
+      "!/share",
+#endif
+      nullptr,
+    };
+    for (const char **tbd = defaultBaseDirs; *tbd; ++tbd) {
+      VStr dir = VStr(*tbd);
+      if (dir[0] == '!') dir = getBinaryDir()+dir;
+      if (Sys_DirExists(dir)) {
+        fl_basedir = dir;
+        break;
+      }
+    }
+    if (fl_basedir.isEmpty()) Sys_Error("cannot find basedir; use \"-basedir dir\" to set it");
+  }
 
   //  Set up save directory (files written by engine).
   p = GArgs.CheckValue("-savedir");
