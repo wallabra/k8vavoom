@@ -2611,8 +2611,9 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
     } else {
       GCon->Logf("WARNING: %s: Unknown property \"%s\"", *prloc.toStringNoCol(), *Prop);
     }
+    // skip this line
     if (!sc->IsAtEol()) {
-      sc->Crossed = false;
+      sc->ResetCrossed();
       while (!sc->AtEnd() && !sc->Crossed) sc->GetString();
     } else {
       sc->GetString();
