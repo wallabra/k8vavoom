@@ -460,11 +460,10 @@ void R_InstallSprite(const char *name, int index)
     {
     case -1:
       // no rotations were found for that frame at all
-      if (GArgs.CheckParm("-sprloose")) {
-        GCon->Logf("R_InstallSprite: No patches found for %s frame %c", spritename, frame+'A');
-      } else {
-        //fprintf(stderr, "  R_InstallSprite: No patches found for %s frame %c\n", spritename, frame+'A');
+      if (GArgs.CheckParm("-sprstrict")) {
         Sys_Error("R_InstallSprite: No patches found for %s frame %c", spritename, frame+'A');
+      } else {
+        GCon->Logf("R_InstallSprite: No patches found for %s frame %c", spritename, frame+'A');
       }
       break;
 
@@ -496,10 +495,10 @@ void R_InstallSprite(const char *name, int index)
       {
         if (sprtemp[frame].lump[rotation] == -1)
         {
-          if (GArgs.CheckParm("-sprloose")) {
-            GCon->Logf("R_InstallSprite: Sprite %s frame %c is missing rotations", spritename, frame+'A');
-          } else {
+          if (GArgs.CheckParm("-sprstrict")) {
             Sys_Error("R_InstallSprite: Sprite %s frame %c is missing rotations", spritename, frame+'A');
+          } else {
+            GCon->Logf("R_InstallSprite: Sprite %s frame %c is missing rotations", spritename, frame+'A');
           }
         }
       }

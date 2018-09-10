@@ -598,7 +598,10 @@ void Host_SaveConfiguration()
 //  Host_Quit
 //
 //==========================================================================
-
+#ifndef _WIN32
+# include <stdio.h>
+# include <unistd.h>
+#endif
 void Host_Quit()
 {
   guard(Host_Quit);
@@ -611,38 +614,27 @@ void Host_Quit()
   //  Get the lump with the end text.
   //  If option -noendtxt is set, don't print the text.
   bool GotEndText = false;
-  char EndText[80 * 25 * 2];
-  if (!GArgs.CheckParm("-noendtxt"))
-  {
-    //  Find end text lump.
+  char EndText[80*25*2];
+  if (GArgs.CheckParm("-endtxt")) {
+    // find end text lump
     VStream *Strm = nullptr;
-    if (W_CheckNumForName(NAME_endoom) >= 0)
-    {
-      Strm = W_CreateLumpReaderName(NAME_endoom);
-    }
-    else if (W_CheckNumForName(NAME_endtext) >= 0)
-    {
-      Strm = W_CreateLumpReaderName(NAME_endtext);
-    }
-    else if (W_CheckNumForName(NAME_endstrf) >= 0)
-    {
-      Strm = W_CreateLumpReaderName(NAME_endstrf);
-    }
-
-    //  Read it, if found.
-    if (Strm)
-    {
-      int Len = 80 * 25 * 2;
-      if (Strm->TotalSize() < Len)
-      {
+         if (W_CheckNumForName(NAME_endoom) >= 0) Strm = W_CreateLumpReaderName(NAME_endoom);
+    else if (W_CheckNumForName(NAME_endtext) >= 0) Strm = W_CreateLumpReaderName(NAME_endtext);
+    else if (W_CheckNumForName(NAME_endstrf) >= 0) Strm = W_CreateLumpReaderName(NAME_endstrf);
+    // read it, if found
+    if (Strm) {
+      int Len = 80*25*2;
+      if (Strm->TotalSize() < Len) {
         memset(EndText, 0, Len);
         Len = Strm->TotalSize();
       }
       Strm->Serialise(EndText, Len);
       delete Strm;
-      Strm = nullptr;
       GotEndText = true;
     }
+#ifndef _WIN32
+    if (!isatty(STDOUT_FILENO)) GotEndText = false;
+#endif
   }
 
   Sys_Quit(GotEndText ? EndText : nullptr);

@@ -392,7 +392,7 @@ void VSdlInputDevice::ReadInput () {
 //==========================================================================
 void VSdlInputDevice::StartupJoystick () {
   guard(VSdlInputDevice::StartupJoystick);
-  if (GArgs.CheckParm("-nojoy")) return;
+  if (!GArgs.CheckParm("-joystick")) return;
 
   if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0) {
     GCon->Log(NAME_Init, "sdl init joystick failed.");

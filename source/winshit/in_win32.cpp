@@ -826,7 +826,7 @@ void VDirectInputDevice::ShutdownMouse () {
 //==========================================================================
 void VDirectInputDevice::StartupJoystick () {
   guard(VDirectInputDevice::StartupJoystick);
-  if (GArgs.CheckParm("-nojoy")) return;
+  if (GArgs.CheckParm("-joystick")) return;
   DInput->EnumDevices(DI8DEVCLASS_GAMECTRL, JoystickEnumCallback, this, DIEDFL_ATTACHEDONLY);
   unguard;
 }
