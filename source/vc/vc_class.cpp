@@ -1192,7 +1192,7 @@ VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Of
   int Count = Offset;
   while (Count--) {
     if (!State || !State->Next) {
-      ParseError(Loc, "Bad jump offset");
+      ParseError(Loc, "Bad jump offset (%d, but only %d is allowed); in `ResolveStateLabel` for label '%s'", Offset, Offset-(Count+1), *LabelName);
       return nullptr;
     }
     State = State->Next;
