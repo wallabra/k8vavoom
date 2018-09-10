@@ -57,6 +57,13 @@ struct FAmbientSound
   VName   Sound;    // Logical name of sound to play
 };
 
+// rolloff information.
+struct FRolloffInfo {
+  int RolloffType;
+  float MinDistance;
+  union { float MaxDistance; float RolloffFactor; };
+};
+
 //
 //  VSoundManager
 //
@@ -116,6 +123,7 @@ private:
   TArray<FPlayerSound>  PlayerSounds;
   int           NumPlayerReserves;
   float         CurrentChangePitch;
+  FRolloffInfo  CurrentDefaultRolloff;
   FAmbientSound *AmbientSounds[NUM_AMBIENT_SOUNDS];
   TArray<VMusicVolume>  MusicVolumes;
   int           SeqTrans[64 * 3];

@@ -74,6 +74,9 @@ VSoundManager::VSoundManager()
 : NumPlayerReserves(0)
 , CurrentChangePitch(7.0 / 255.0)
 {
+  CurrentDefaultRolloff.RolloffType = ROLLOFF_Doom;
+  CurrentDefaultRolloff.MinDistance = 0;
+  CurrentDefaultRolloff.MaxDistance = 0;
   memset(AmbientSounds, 0, sizeof(AmbientSounds));
 }
 
@@ -487,14 +490,29 @@ void VSoundManager::ParseSndinfo(VScriptParser *sc)
     }
     else if (sc->Check("$rolloff"))
     {
-      // $rolloff soundname <mindist> <maxdist>
-      // $rolloff soundname <type>
+      // $rolloff *|<logical name> [linear|log|custom] <min dist> <max dist/rolloff factor>
+      // Using * for the name makes it the default for sounds that don't specify otherwise.
+      FRolloffInfo *rlf;
       sc->ExpectString();
-      sc->ExpectString();
-      sc->ResetCrossed();
-      sc->ExpectString();
-      if (sc->Crossed) sc->UnGet();
-      GCon->Log("$rolloff is not supported yet.");
+      if (sc->String == "*") {
+        rlf = &CurrentDefaultRolloff;
+      } else {
+        int sfx = FindOrAddSound(*sc->String);
+        rlf = &S_sfx[sfx].Rolloff;
+      }
+      if (!sc->CheckFloat()) {
+             if (sc->Check("linear")) rlf->RolloffType = ROLLOFF_Linear;
+        else if (sc->Check("log")) rlf->RolloffType = ROLLOFF_Log;
+        else if (sc->Check("custom")) rlf->RolloffType = ROLLOFF_Custom;
+        else {
+          sc->ExpectString();
+          sc->Error(va("Unknown rolloff type '%s'", *sc->String));
+        }
+        sc->ExpectFloat();
+      }
+      rlf->MinDistance = sc->Float;
+      sc->ExpectFloat();
+      rlf->MaxDistance = sc->Float;
     }
     else
     {
@@ -530,6 +548,8 @@ int VSoundManager::AddSoundLump(VName TagName, int Lump)
   S.NumChannels = 2;
   S.ChangePitch = CurrentChangePitch;
   S.VolumeAmp = 1.0;
+  S.Attenuation = 1.0;
+  S.Rolloff = CurrentDefaultRolloff;
   S.LumpNum = Lump;
   S.Link = -1;
   return S_sfx.Append(S);

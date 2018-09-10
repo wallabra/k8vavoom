@@ -59,6 +59,14 @@ enum ESSCmds
 
 class VSoundSeqNode;
 
+// Rolloff types
+enum {
+  ROLLOFF_Doom, // Linear rolloff with a logarithmic volume scale
+  ROLLOFF_Linear, // Linear rolloff with a linear volume scale
+  ROLLOFF_Log, // Logarithmic rolloff (standard hardware type)
+  ROLLOFF_Custom, // Lookup volume from SNDCURVE
+};
+
 //
 // SoundFX struct.
 //
@@ -71,6 +79,8 @@ struct sfxinfo_t
   int   NumChannels;  // total number of channels a sound type may occupy
   float ChangePitch;
   float VolumeAmp; // from sndinfo, cannot exceed 1.0
+  FRolloffInfo Rolloff;
+  float Attenuation; // Multiplies the attenuation passed to S_Sound.
   int   UseCount;
   int   Link;
   int *Sounds;     // For random sounds, Link is count.
