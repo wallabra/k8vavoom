@@ -123,6 +123,7 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.7)
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wmultistatement-macros")
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wmissing-attributes")
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wcast-function-type")
+  set(UNFUCK_GXX_FLAGS "${UNFUCK_GCC_FLAGS} -Wsuggest-override")
 endif()
 
 # use -ffast-math, 'cause why not?

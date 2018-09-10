@@ -117,11 +117,11 @@ public:
 
   VCameraTexture(VName, int, int);
   virtual ~VCameraTexture() override;
-  bool CheckModified();
-  vuint8 *GetPixels();
-  void Unload();
+  virtual bool CheckModified() override;
+  virtual vuint8 *GetPixels() override;
+  virtual void Unload() override;
   void CopyImage();
-  VTexture *GetHighResolutionTexture();
+  virtual VTexture *GetHighResolutionTexture() override;
 };
 
 class VRenderLevelShared;

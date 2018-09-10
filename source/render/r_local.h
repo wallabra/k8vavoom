@@ -204,10 +204,10 @@ public:
   : VPortal(ARLev)
   , Sky(ASky)
   {}
-  bool NeedsDepthBuffer() const;
-  bool IsSky() const;
-  bool MatchSky(VSky*) const;
-  void DrawContents();
+  virtual bool NeedsDepthBuffer() const override;
+  virtual bool IsSky() const override;
+  virtual bool MatchSky(VSky*) const override;
+  virtual void DrawContents() override;
 };
 
 class VSkyBoxPortal : public VPortal
@@ -219,9 +219,9 @@ public:
   : VPortal(ARLev)
   , Viewport(AViewport)
   {}
-  bool IsSky() const;
-  bool MatchSkyBox(VEntity*) const;
-  void DrawContents();
+  virtual bool IsSky() const override;
+  virtual bool MatchSkyBox(VEntity*) const override;
+  virtual void DrawContents() override;
 };
 
 class VSectorStackPortal : public VPortal
@@ -233,8 +233,8 @@ public:
   : VPortal(ARLev)
   , Viewport(AViewport)
   {}
-  bool MatchSkyBox(VEntity*) const;
-  void DrawContents();
+  virtual bool MatchSkyBox(VEntity*) const override;
+  virtual void DrawContents() override;
 };
 
 class VMirrorPortal : public VPortal
@@ -246,8 +246,8 @@ public:
   : VPortal(ARLev)
   , Plane(APlane)
   {}
-  bool MatchMirror(TPlane*) const;
-  void DrawContents();
+  virtual bool MatchMirror(TPlane*) const override;
+  virtual void DrawContents() override;
 };
 
 enum ERenderPass
@@ -488,16 +488,16 @@ protected:
   void DrawCrosshair();
 
 public:
-  particle_t *NewParticle();
+  virtual particle_t *NewParticle() override;
 
-  void RenderPlayerView();
+  virtual void RenderPlayerView() override;
 
-  void SegMoved(seg_t*);
-  void SetupFakeFloors(sector_t*);
+  virtual void SegMoved(seg_t*) override;
+  virtual void SetupFakeFloors(sector_t*) override;
 
-  void AddStaticLight(const TVec&, float, vuint32);
-  dlight_t *AllocDlight(VThinker *Owner, const TVec &lorg, float radius);
-  void DecayLights(float);
+  virtual void AddStaticLight(const TVec&, float, vuint32) override;
+  virtual dlight_t *AllocDlight(VThinker *Owner, const TVec &lorg, float radius) override;
+  virtual void DecayLights(float) override;
 };
 
 class VRenderLevel : public VRenderLevelShared
@@ -512,12 +512,13 @@ private:
   surfcache_t   blockbuf[NUM_CACHE_BLOCKS];
 
   //  General
-  void RenderScene(const refdef_t*, const VViewClipper*);
+  virtual void RenderScene(const refdef_t*, const VViewClipper*) override;
 
   //  Surf methods
-  void InitSurfs(surface_t*, texinfo_t*, TPlane*, subsector_t*);
-  surface_t *SubdivideFace(surface_t*, const TVec&, const TVec*);
-  surface_t *SubdivideSeg(surface_t*, const TVec&, const TVec*);
+  virtual void InitSurfs(surface_t*, texinfo_t*, TPlane*, subsector_t*) override;
+  virtual surface_t *SubdivideFace(surface_t*, const TVec&, const TVec*) override;
+  virtual surface_t *SubdivideSeg(surface_t*, const TVec&, const TVec*) override;
+
   void UpdateSubsector(int, float*);
   void UpdateBSPNode(int, float*);
   void UpdateWorld(const refdef_t*, const VViewClipper*);
@@ -531,25 +532,25 @@ private:
   void LightFace(surface_t*, subsector_t*);
   void MarkLights(dlight_t*, int, int);
   void AddDynamicLights(surface_t*);
-  void PushDlights();
+  virtual void PushDlights() override;
   void FlushCaches();
   void FlushOldCaches();
   surfcache_t *AllocBlock(int, int);
   surfcache_t *FreeBlock(surfcache_t*, bool);
-  void FreeSurfCache(surfcache_t*);
+  virtual void FreeSurfCache(surfcache_t*) override;
   void CacheSurface(surface_t*);
 
   //  World BSP rendering
-  void QueueWorldSurface(seg_t*, surface_t*);
+  virtual void QueueWorldSurface(seg_t*, surface_t*) override;
   void RenderWorld(const refdef_t*, const VViewClipper*);
 
 public:
   VRenderLevel(VLevel*);
 
-  void PreRender();
+  virtual void PreRender() override;
 
-  vuint32 LightPoint(const TVec &p);
-  bool BuildLightMap(surface_t*, int);
+  virtual vuint32 LightPoint(const TVec &p) override;
+  virtual bool BuildLightMap(surface_t*, int) override;
 };
 
 class VAdvancedRenderLevel : public VRenderLevelShared
@@ -563,22 +564,22 @@ private:
   void RefilterStaticLights ();
 
   //  General
-  void RenderScene(const refdef_t*, const VViewClipper*);
+  virtual void RenderScene(const refdef_t*, const VViewClipper*) override;
 
   //  Surf methods
-  void InitSurfs(surface_t*, texinfo_t*, TPlane*, subsector_t*);
-  surface_t *SubdivideFace(surface_t*, const TVec&, const TVec*);
-  surface_t *SubdivideSeg(surface_t*, const TVec&, const TVec*);
+  virtual void InitSurfs(surface_t*, texinfo_t*, TPlane*, subsector_t*) override;
+  virtual surface_t *SubdivideFace(surface_t*, const TVec&, const TVec*) override;
+  virtual surface_t *SubdivideSeg(surface_t*, const TVec&, const TVec*) override;
   void UpdateSubsector(int, float*);
   void UpdateBSPNode(int, float*);
   void UpdateWorld(const refdef_t*, const VViewClipper*);
 
   //  Light methods
-  void PushDlights();
+  virtual void PushDlights() override;
   vuint32 LightPointAmbient(const TVec &p);
 
   //  World BSP rendering
-  void QueueWorldSurface(seg_t*, surface_t*);
+  virtual void QueueWorldSurface(seg_t*, surface_t*) override;
   void RenderWorld(const refdef_t*, const VViewClipper*);
 
   void BuildLightVis(int bspnum, float *bbox);
@@ -617,10 +618,10 @@ public:
   VAdvancedRenderLevel(VLevel*);
   ~VAdvancedRenderLevel();
 
-  void PreRender();
+  virtual void PreRender() override;
 
-  vuint32 LightPoint(const TVec &p);
-  bool BuildLightMap(surface_t*, int);
+  virtual vuint32 LightPoint(const TVec &p) override;
+  virtual bool BuildLightMap(surface_t*, int) override;
 };
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------

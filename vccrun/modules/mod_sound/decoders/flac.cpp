@@ -46,10 +46,10 @@ public:
 
   protected:
     // FLAC decoder callbacks
-    ::FLAC__StreamDecoderReadStatus read_callback (FLAC__byte buffer[], size_t *bytes);
-    ::FLAC__StreamDecoderWriteStatus write_callback (const ::FLAC__Frame *frame, const FLAC__int32 * const buffer[]);
-    void metadata_callback (const ::FLAC__StreamMetadata *metadata);
-    void error_callback (::FLAC__StreamDecoderErrorStatus status);
+    virtual ::FLAC__StreamDecoderReadStatus read_callback (FLAC__byte buffer[], size_t *bytes) override;
+    virtual ::FLAC__StreamDecoderWriteStatus write_callback (const ::FLAC__Frame *frame, const FLAC__int32 * const buffer[]) override;
+    virtual void metadata_callback (const ::FLAC__StreamMetadata *metadata) override;
+    virtual void error_callback (::FLAC__StreamDecoderErrorStatus status) override;
   };
 
   virtual void Load (sfxinfo_t&, VStream&) override;
@@ -81,10 +81,10 @@ public:
 
   protected:
     // FLAC decoder callbacks
-    ::FLAC__StreamDecoderReadStatus read_callback (FLAC__byte buffer[], size_t *bytes);
-    ::FLAC__StreamDecoderWriteStatus write_callback (const ::FLAC__Frame *frame, const FLAC__int32 * const buffer[]);
-    void metadata_callback (const ::FLAC__StreamMetadata *metadata);
-    void error_callback (::FLAC__StreamDecoderErrorStatus status);
+    virtual ::FLAC__StreamDecoderReadStatus read_callback (FLAC__byte buffer[], size_t *bytes) override;
+    virtual ::FLAC__StreamDecoderWriteStatus write_callback (const ::FLAC__Frame *frame, const FLAC__int32 * const buffer[]) override;
+    virtual void metadata_callback (const ::FLAC__StreamMetadata *metadata) override;
+    virtual void error_callback (::FLAC__StreamDecoderErrorStatus status) override;
   };
 
   FStream *Stream;

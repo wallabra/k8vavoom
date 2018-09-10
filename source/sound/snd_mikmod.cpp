@@ -55,9 +55,9 @@ public:
   //  VAudioCodec interface.
   VMikModAudioCodec(MODULE *InModule);
   ~VMikModAudioCodec();
-  int Decode(short *Data, int NumSamples);
-  bool Finished();
-  void Restart();
+  virtual int Decode(short *Data, int NumSamples) override;
+  virtual bool Finished() override;
+  virtual void Restart() override;
 
   //  Driver functions.
   static BOOL Drv_IsThere();

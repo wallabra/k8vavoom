@@ -405,87 +405,87 @@ class VOpenGLDrawer : public VDrawer {
 public:
   // VDrawer interface
   VOpenGLDrawer ();
-  void InitResolution ();
-  void StartUpdate ();
+  virtual void InitResolution () override;
+  virtual void StartUpdate () override;
   void Setup2D ();
-  void BeginDirectUpdate ();
-  void EndDirectUpdate ();
-  void *ReadScreen (int *, bool *);
-  void ReadBackScreen (int, int, rgba_t *);
+  virtual void BeginDirectUpdate () override;
+  virtual void EndDirectUpdate () override;
+  virtual void *ReadScreen (int *, bool *) override;
+  virtual void ReadBackScreen (int, int, rgba_t *) override;
 
   void FinishUpdate ();
 
   // rendering stuff
-  void SetupView (VRenderLevelDrawer *, const refdef_t *);
-  void SetupViewOrg ();
-  void EndView ();
+  virtual void SetupView (VRenderLevelDrawer *, const refdef_t *) override;
+  virtual void SetupViewOrg () override;
+  virtual void EndView () override;
 
   // texture stuff
-  void PrecacheTexture (VTexture *);
+  virtual void PrecacheTexture (VTexture *) override;
 
   // polygon drawing
-  void WorldDrawing ();
-  void DrawWorldAmbientPass ();
-  void BeginShadowVolumesPass ();
-  void BeginLightShadowVolumes ();
-  void EndLightShadowVolumes ();
-  void RenderSurfaceShadowVolume (surface_t *, TVec &, float, bool);
-  void BeginLightPass (TVec &, float, vuint32);
-  void DrawSurfaceLight (surface_t *, TVec&, float, bool);
+  virtual void WorldDrawing () override;
+  virtual void DrawWorldAmbientPass () override;
+  virtual void BeginShadowVolumesPass () override;
+  virtual void BeginLightShadowVolumes () override;
+  virtual void EndLightShadowVolumes () override;
+  virtual void RenderSurfaceShadowVolume (surface_t *, TVec &, float, bool) override;
+  virtual void BeginLightPass (TVec &, float, vuint32) override;
+  virtual void DrawSurfaceLight (surface_t *, TVec&, float, bool) override;
   virtual void DrawLightRect (TVec &LightPos, float Radius, bool LightCanCross) override;
-  void DrawWorldTexturesPass ();
-  void DrawWorldFogPass ();
-  void EndFogPass ();
-  void DrawSkyPolygon (surface_t *, bool, VTexture *, float, VTexture *, float, int);
-  void DrawMaskedPolygon (surface_t *, float, bool);
-  void DrawSpritePolygon (TVec *, VTexture *, float, bool, VTextureTranslation *,
+  virtual void DrawWorldTexturesPass () override;
+  virtual void DrawWorldFogPass () override;
+  virtual void EndFogPass () override;
+  virtual void DrawSkyPolygon (surface_t *, bool, VTexture *, float, VTexture *, float, int) override;
+  virtual void DrawMaskedPolygon (surface_t *, float, bool) override;
+  virtual void DrawSpritePolygon (TVec *, VTexture *, float, bool, VTextureTranslation *,
                           int, vuint32, vuint32, const TVec &, float,
-                          const TVec &, const TVec &, const TVec &);
-  void DrawAliasModel(const TVec&, const TAVec&, const TVec&, const TVec&,
+                          const TVec &, const TVec &, const TVec &) override;
+  virtual void DrawAliasModel(const TVec&, const TAVec&, const TVec&, const TVec&,
     VMeshModel*, int, int, VTexture*, VTextureTranslation*, int, vuint32,
-    vuint32, float, bool, bool, float, bool, bool, bool);
-  void DrawAliasModelAmbient(const TVec&, const TAVec&, const TVec&,
+    vuint32, float, bool, bool, float, bool, bool, bool) override;
+  virtual void DrawAliasModelAmbient(const TVec&, const TAVec&, const TVec&,
     const TVec&, VMeshModel*, int, int, VTexture*, vuint32, float, float, bool,
-    bool, bool);
-  void DrawAliasModelTextures(const TVec&, const TAVec&, const TVec&, const TVec&,
+    bool, bool) override;
+  virtual void DrawAliasModelTextures(const TVec&, const TAVec&, const TVec&, const TVec&,
     VMeshModel*, int, int, VTexture*, VTextureTranslation*, int, float, float, bool,
-    bool, bool);
-  void BeginModelsLightPass(TVec&, float, vuint32);
-  void DrawAliasModelLight(const TVec&, const TAVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, VTexture*, float, float, bool, bool);
-  void BeginModelsShadowsPass(TVec&, float);
-  void DrawAliasModelShadow(const TVec&, const TAVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, float, bool, const TVec&, float);
-  void DrawAliasModelFog(const TVec&, const TAVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, VTexture*, vuint32, float, float, bool, bool);
-  bool StartPortal(VPortal*, bool);
-  void EndPortal(VPortal*, bool);
+    bool, bool) override;
+  virtual void BeginModelsLightPass(TVec&, float, vuint32) override;
+  virtual void DrawAliasModelLight(const TVec&, const TAVec&, const TVec&,
+    const TVec&, VMeshModel*, int, int, VTexture*, float, float, bool, bool) override;
+  virtual void BeginModelsShadowsPass(TVec&, float) override;
+  virtual void DrawAliasModelShadow(const TVec&, const TAVec&, const TVec&,
+    const TVec&, VMeshModel*, int, int, float, bool, const TVec&, float) override;
+  virtual void DrawAliasModelFog(const TVec&, const TAVec&, const TVec&,
+    const TVec&, VMeshModel*, int, int, VTexture*, vuint32, float, float, bool, bool) override;
+  virtual bool StartPortal(VPortal*, bool) override;
+  virtual void EndPortal(VPortal*, bool) override;
 
   // particles
-  void StartParticles ();
-  void DrawParticle (particle_t *);
-  void EndParticles ();
+  virtual void StartParticles () override;
+  virtual void DrawParticle (particle_t *) override;
+  virtual void EndParticles () override;
 
   // drawing
-  void DrawPic(float, float, float, float, float, float, float, float,
-    VTexture*, VTextureTranslation*, float);
-  void DrawPicShadow(float, float, float, float, float, float, float,
-    float, VTexture*, float);
-  void FillRectWithFlat(float, float, float, float, float, float, float,
-    float, VTexture*);
-  void FillRect(float, float, float, float, vuint32);
-  void ShadeRect(int, int, int, int, float);
-  void DrawConsoleBackground(int);
-  void DrawSpriteLump(float, float, float, float, VTexture*,
-    VTextureTranslation*, bool);
+  virtual void DrawPic(float, float, float, float, float, float, float, float,
+    VTexture*, VTextureTranslation*, float) override;
+  virtual void DrawPicShadow(float, float, float, float, float, float, float,
+    float, VTexture*, float) override;
+  virtual void FillRectWithFlat(float, float, float, float, float, float, float,
+    float, VTexture*) override;
+  virtual void FillRect(float, float, float, float, vuint32) override;
+  virtual void ShadeRect(int, int, int, int, float) override;
+  virtual void DrawConsoleBackground(int) override;
+  virtual void DrawSpriteLump(float, float, float, float, VTexture*,
+    VTextureTranslation*, bool) override;
 
   // automap
-  void StartAutomap ();
-  void DrawLine (int, int, vuint32, int, int, vuint32);
-  void EndAutomap ();
+  virtual void StartAutomap () override;
+  virtual void DrawLine (int, int, vuint32, int, int, vuint32) override;
+  virtual void EndAutomap () override;
 
   // advanced drawing.
-  bool SupportsAdvancedRendering ();
+  virtual bool SupportsAdvancedRendering () override;
 
 private:
   vuint8 decalStcVal;

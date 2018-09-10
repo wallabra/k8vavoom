@@ -54,17 +54,17 @@ public:
   VMp3AudioCodec(VStream*, bool);
   ~VMp3AudioCodec();
   bool Init();
-  int Decode(short*, int);
+  virtual int Decode(short*, int) override;
   int ReadData();
-  bool Finished();
-  void Restart();
+  virtual bool Finished() override;
+  virtual void Restart() override;
   static VAudioCodec *Create(VStream*);
 };
 
 class VMp3SampleLoader : public VSampleLoader
 {
 public:
-  void Load(sfxinfo_t&, VStream&);
+  virtual void Load(sfxinfo_t&, VStream&) override;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------

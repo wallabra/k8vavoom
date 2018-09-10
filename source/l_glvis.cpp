@@ -48,11 +48,11 @@
 class TGLVisGUI : public TGLVis
 {
  public:
-  void DisplayMessage(const char *text, ...) __attribute__((format(printf, 2, 3)));
-  void DisplayStartMap(const char *levelname);
-  void DisplayBaseVisProgress(int count, int total);
-  void DisplayPortalVisProgress(int count, int total);
-  void DisplayMapDone(int accepts, int total);
+  virtual void DisplayMessage(const char *text, ...) override __attribute__((format(printf, 2, 3)));
+  virtual void DisplayStartMap(const char *levelname) override;
+  virtual void DisplayBaseVisProgress(int count, int total) override;
+  virtual void DisplayPortalVisProgress(int count, int total) override;
+  virtual void DisplayMapDone(int accepts, int total) override;
 
   double lastprog;
 };

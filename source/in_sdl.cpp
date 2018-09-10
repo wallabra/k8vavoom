@@ -38,8 +38,8 @@ public:
   VSdlInputDevice ();
   ~VSdlInputDevice ();
 
-  void ReadInput ();
-  void RegrabMouse (); // called by UI when mouse cursor is turned off
+  virtual void ReadInput () override;
+  virtual void RegrabMouse () override; // called by UI when mouse cursor is turned off
 
 private:
   int mouse;

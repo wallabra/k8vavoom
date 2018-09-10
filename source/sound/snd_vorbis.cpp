@@ -55,17 +55,17 @@ public:
   ~VVorbisAudioCodec();
   bool Init();
   void Cleanup();
-  int Decode(short*, int);
+  virtual int Decode(short*, int) override;
   int ReadData();
-  bool Finished();
-  void Restart();
+  virtual bool Finished() override;
+  virtual void Restart() override;
   static VAudioCodec *Create(VStream*);
 };
 
 class VVorbisSampleLoader : public VSampleLoader
 {
 public:
-  void Load(sfxinfo_t&, VStream&);
+  virtual void Load(sfxinfo_t&, VStream&) override;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------

@@ -45,11 +45,11 @@ public:
 public:
   void startTime () { prevtime = 0; }
 
-  virtual void DisplayMessage (const char *text, ...) __attribute__((format(printf, 2, 3)));
-  virtual void DisplayStartMap (const char *levelname);
-  virtual void DisplayBaseVisProgress (int count, int total);
-  virtual void DisplayPortalVisProgress (int count, int total);
-  virtual void DisplayMapDone (int accepts, int total);
+  virtual void DisplayMessage (const char *text, ...) override __attribute__((format(printf, 2, 3)));
+  virtual void DisplayStartMap (const char *levelname) override;
+  virtual void DisplayBaseVisProgress (int count, int total) override;
+  virtual void DisplayPortalVisProgress (int count, int total) override;
+  virtual void DisplayMapDone (int accepts, int total) override;
 };
 
 

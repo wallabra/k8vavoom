@@ -86,7 +86,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual bool IsNameConst () const override;
-  virtual VName GetNameConst () const;
+  virtual VName GetNameConst () const override;
 
   virtual VStr toString () const override;
 

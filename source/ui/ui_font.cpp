@@ -114,10 +114,10 @@ private:
 public:
   VFontChar(VTexture*, rgba_t*);
   virtual ~VFontChar() override;
-  vuint8 *GetPixels();
-  rgba_t *GetPalette();
-  void Unload();
-  VTexture *GetHighResolutionTexture();
+  virtual vuint8 *GetPixels() override;
+  virtual rgba_t *GetPalette() override;
+  virtual void Unload() override;
+  virtual VTexture *GetHighResolutionTexture() override;
 };
 
 //
@@ -137,9 +137,9 @@ private:
 public:
   VFontChar2(int, int, int, int, rgba_t*, int);
   virtual ~VFontChar2() override;
-  vuint8 *GetPixels();
-  rgba_t *GetPalette();
-  void Unload();
+  virtual vuint8 *GetPixels() override;
+  virtual rgba_t *GetPalette() override;
+  virtual void Unload() override;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------

@@ -32,12 +32,12 @@ public:
   SDL_Window *hw_window;
   SDL_GLContext hw_glctx;
 
-  void Init ();
-  bool SetResolution (int, int, bool);
-  void *GetExtFuncPtr (const char *);
-  bool SetAdaptiveSwap ();
-  void Update ();
-  void Shutdown ();
+  virtual void Init () override;
+  virtual bool SetResolution (int, int, bool) override;
+  virtual void *GetExtFuncPtr (const char *) override;
+  virtual bool SetAdaptiveSwap () override;
+  virtual void Update () override;
+  virtual void Shutdown () override;
 
   virtual void WarpMouseToWindowCenter () override;
 };

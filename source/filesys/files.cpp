@@ -766,12 +766,12 @@ public:
     return !bError;
   }
 
-  void Serialise (void *V, int Length) {
+  virtual void Serialise (void *V, int Length) override {
     if (!File || bError) { bError = true; return; }
     if (fwrite(V, Length, 1, File) != 1) bError = true;
   }
 
-  void Flush () {
+  virtual void Flush () override {
     if (!File || bError) { bError = true; return; }
     if (fflush(File)) bError = true;
   }

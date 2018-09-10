@@ -246,7 +246,7 @@ public:
   virtual bool CheckModified () override;
   virtual vuint8 *GetPixels () override;
   virtual rgba_t *GetPalette () override;
-  VTexture *GetHighResolutionTexture ();
+  virtual VTexture *GetHighResolutionTexture () override;
   virtual void Unload () override;
 };
 

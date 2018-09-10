@@ -49,7 +49,7 @@ class VScriptsParser : public VObject {
 
   VScriptParser *Int;
 
-  void Destroy ();
+  virtual void Destroy () override;
   void CheckInterface ();
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)

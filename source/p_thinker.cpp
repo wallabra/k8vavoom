@@ -384,7 +384,7 @@ public:
   , Out(AOut)
   , Current(nullptr)
   {}
-  bool GetNext()
+  virtual bool GetNext() override
   {
     if (!Current)
     {
@@ -421,7 +421,7 @@ public:
   , Out(AOut)
   , Index(0)
   {}
-  bool GetNext()
+  virtual bool GetNext() override
   {
     while (Index < MAXPLAYERS)
     {

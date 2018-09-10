@@ -120,7 +120,7 @@ private:
 
 public:
   VRadiusThingsIterator(VThinker*, VEntity**, TVec, float);
-  bool GetNext();
+  virtual bool GetNext() override;
 };
 
 //==========================================================================
@@ -150,7 +150,7 @@ private:
 
 public:
   VPathTraverse(VThinker*, intercept_t**, float, float, float, float, int);
-  bool GetNext();
+  virtual bool GetNext() override;
 
 private:
   void Init(VThinker*, float, float, float, float, int);

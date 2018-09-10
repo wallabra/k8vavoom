@@ -106,7 +106,7 @@ private:
 
 public:
   VRoughBlockSearchIterator(VEntity*, int, VEntity**);
-  bool GetNext();
+  virtual bool GetNext() override;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------

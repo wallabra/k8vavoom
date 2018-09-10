@@ -54,15 +54,13 @@ public:
 
   protected:
     //  FLAC decoder callbacks.
-    ::FLAC__StreamDecoderReadStatus read_callback(FLAC__byte buffer[],
-      size_t *bytes);
-    ::FLAC__StreamDecoderWriteStatus write_callback(
-      const ::FLAC__Frame *frame, const FLAC__int32 * const buffer[]);
-    void metadata_callback(const ::FLAC__StreamMetadata *metadata);
-    void error_callback(::FLAC__StreamDecoderErrorStatus status);
+    virtual ::FLAC__StreamDecoderReadStatus read_callback(FLAC__byte buffer[], size_t *bytes) override;
+    virtual ::FLAC__StreamDecoderWriteStatus write_callback(const ::FLAC__Frame *frame, const FLAC__int32 * const buffer[]) override;
+    virtual void metadata_callback(const ::FLAC__StreamMetadata *metadata) override;
+    virtual void error_callback(::FLAC__StreamDecoderErrorStatus status) override;
   };
 
-  void Load(sfxinfo_t&, VStream&);
+  virtual void Load(sfxinfo_t&, VStream&) override;
 };
 
 class VFlacAudioCodec : public VAudioCodec
@@ -92,21 +90,19 @@ public:
 
   protected:
     //  FLAC decoder callbacks.
-    ::FLAC__StreamDecoderReadStatus read_callback(FLAC__byte buffer[],
-      size_t *bytes);
-    ::FLAC__StreamDecoderWriteStatus write_callback(
-      const ::FLAC__Frame *frame, const FLAC__int32 * const buffer[]);
-    void metadata_callback(const ::FLAC__StreamMetadata *metadata);
-    void error_callback(::FLAC__StreamDecoderErrorStatus status);
+    virtual ::FLAC__StreamDecoderReadStatus read_callback(FLAC__byte buffer[], size_t *bytes) override;
+    virtual ::FLAC__StreamDecoderWriteStatus write_callback( const ::FLAC__Frame *frame, const FLAC__int32 * const buffer[]) override;
+    virtual void metadata_callback(const ::FLAC__StreamMetadata *metadata) override;
+    virtual void error_callback(::FLAC__StreamDecoderErrorStatus status) override;
   };
 
   FStream *Stream;
 
   VFlacAudioCodec(FStream *InStream);
   ~VFlacAudioCodec();
-  int Decode(short *Data, int NumSamples);
-  bool Finished();
-  void Restart();
+  virtual int Decode(short *Data, int NumSamples) override;
+  virtual bool Finished() override;
+  virtual void Restart() override;
   static VAudioCodec *Create(VStream *InStream);
 };
 

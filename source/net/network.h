@@ -226,7 +226,7 @@ public:
   void SetThinker (VThinker *);
   void EvalCondValues (VObject *, VClass *, vuint8 *);
   void Update ();
-  void ParsePacket (VMessageIn &);
+  virtual void ParsePacket (VMessageIn &) override;
   virtual void Close () override;
 };
 

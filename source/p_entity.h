@@ -297,11 +297,11 @@ class VEntity : public VThinker
   static void InitFuncIndexes();
 
   //  VObject interface.
-  void Serialise(VStream&);
+  virtual void Serialise(VStream&) override;
 
   //  VThinker interface.
-  void DestroyThinker();
-  void AddedToLevel();
+  virtual void DestroyThinker() override;
+  virtual void AddedToLevel() override;
 
   void SetTID(int);
   void InsertIntoTIDList(int);

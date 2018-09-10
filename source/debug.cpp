@@ -36,8 +36,7 @@
 class VDebugLog : public VLogListener
 {
 public:
-  void Serialise(const char *Text, EName Event)
-  {
+  virtual void Serialise(const char *Text, EName Event) override {
     dprintf("%s: %s", VName::SafeString(Event), *VStr(Text).RemoveColours());
   }
 };

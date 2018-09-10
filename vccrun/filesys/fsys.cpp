@@ -370,8 +370,8 @@ public:
 
   virtual bool canBeDestroyed () override;
 
-  virtual bool hasFile (const VStr &fname);
-  virtual VStream *open (const VStr &fname);
+  virtual bool hasFile (const VStr &fname) override;
+  virtual VStream *open (const VStr &fname) override;
   virtual VStr findFileWithAnyExt (const VStr &fname) override;
 };
 

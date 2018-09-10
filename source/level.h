@@ -257,9 +257,9 @@ class VLevel : public VGameObject {
   decal_t *decanimlist;
   int decanimuid;
 
-  void Serialise (VStream &Strm);
-  void ClearReferences ();
-  void Destroy ();
+  virtual void Serialise (VStream &Strm) override;
+  virtual void ClearReferences () override;
+  virtual void Destroy () override;
 
   // map loader
   void LoadMap (VName MapName);

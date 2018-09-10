@@ -68,7 +68,7 @@ class TCmdKeyDown : public VCommand
 {
 public:
   TCmdKeyDown(const char *AName, TKButton &AKey) : VCommand(AName), Key(AKey) { }
-  void Run();
+  virtual void Run() override;
 
   TKButton  &Key;
 };
@@ -77,7 +77,7 @@ class TCmdKeyUp : public VCommand
 {
 public:
   TCmdKeyUp(const char *AName, TKButton &AKey) : VCommand(AName), Key(AKey) { }
-  void Run();
+  virtual void Run() override;
 
   TKButton  &Key;
 };

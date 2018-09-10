@@ -44,10 +44,10 @@ public:
   static ControlMode  MyControlMode;
 
   VTimidityAudioCodec(MidiSong *InSong);
-  ~VTimidityAudioCodec();
-  int Decode(short *Data, int NumSamples);
-  bool Finished();
-  void Restart();
+  virtual ~VTimidityAudioCodec() override;
+  virtual int Decode(short *Data, int NumSamples) override;
+  virtual bool Finished() override;
+  virtual void Restart() override;
 
   //  Control mode functions.
   static int ctl_msg(int, int, const char*, ...);

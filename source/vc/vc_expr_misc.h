@@ -126,7 +126,7 @@ public:
   VDefaultObject (VExpression *, const TLocation &);
   virtual ~VDefaultObject () override;
   virtual VExpression *SyntaxCopy () override;
-  virtual VExpression *DoResolve (VEmitContext &);
+  virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual bool IsDefaultObject () const override;
 

@@ -45,7 +45,7 @@ class VActorDisplayWindow : public VWidget
   VActorDisplayWindow();
 
   void SetState(VState*);
-  void OnDraw();
+  virtual void OnDraw() override;
 
   DECLARE_FUNCTION(SetState)
 };

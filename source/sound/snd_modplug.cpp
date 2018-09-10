@@ -46,9 +46,9 @@ public:
   //  VAudioCodec interface.
   VModPlugAudioCodec(ModPlugFile *InFile);
   ~VModPlugAudioCodec();
-  int Decode(short *Data, int NumSamples);
-  bool Finished();
-  void Restart();
+  virtual int Decode(short *Data, int NumSamples) override;
+  virtual bool Finished() override;
+  virtual void Restart() override;
 
   static VAudioCodec *Create(VStream *InStrm);
 };

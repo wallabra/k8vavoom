@@ -261,11 +261,11 @@ class VAcs : public VThinker
   int       HudHeight;
   VName     Font;
 
-  void Destroy();
-  void Serialise(VStream&);
-  void ClearReferences();
+  virtual void Destroy() override;
+  virtual void Serialise(VStream&) override;
+  virtual void ClearReferences() override;
   int RunScript(float);
-  void Tick(float);
+  virtual void Tick(float) override;
   int CallFunction (int argCount, int funcIndex, vint32 *args);
 
 private:

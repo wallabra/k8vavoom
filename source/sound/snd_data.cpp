@@ -36,7 +36,7 @@
 class VRawSampleLoader : public VSampleLoader
 {
 public:
-  void Load(sfxinfo_t&, VStream&);
+  virtual void Load(sfxinfo_t&, VStream&) override;
 };
 #endif
 

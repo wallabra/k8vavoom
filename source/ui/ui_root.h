@@ -48,7 +48,7 @@ private:
 public:
   VRootWidget();
   void Init();
-  void Init(VWidget*) { Sys_Error("Root canot have a parent"); }
+  virtual void Init(VWidget*) override { Sys_Error("Root canot have a parent"); }
 
   void DrawWidgets();
   void TickWidgets(float DeltaTime);

@@ -131,7 +131,7 @@ private:
 public:
   //  Destroys all child widgets.
   virtual void Init(VWidget*);
-  void Destroy();
+  virtual void Destroy() override;
   void DestroyAllChildren();
 
   VRootWidget *GetRootWidget();

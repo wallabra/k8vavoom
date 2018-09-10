@@ -34,13 +34,13 @@
 class VLogSysError : public FOutputDevice
 {
 public:
-  void Serialise(const char *V, EName Event);
+  virtual void Serialise(const char *V, EName Event) override;
 };
 
 class VLogHostError : public FOutputDevice
 {
 public:
-  void Serialise(const char *V, EName Event);
+  virtual void Serialise(const char *V, EName Event) override;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------

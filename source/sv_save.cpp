@@ -119,14 +119,14 @@ public:
   virtual void Flush () override { Stream->Flush(); }
   virtual bool Close () override { return Stream->Close(); }
 
-  VStream &operator << (VName &Name) {
+  virtual VStream &operator << (VName &Name) override {
     int NameIndex;
     *this << STRM_INDEX(NameIndex);
     Name = NameRemap[NameIndex];
     return *this;
   }
 
-  VStream &operator << (VObject *&Ref) {
+  virtual VStream &operator << (VObject *&Ref) override {
     guard(Loader::operator<<VObject*&);
     int TmpIdx;
     *this << STRM_INDEX(TmpIdx);
@@ -142,7 +142,7 @@ public:
     unguard;
   }
 
-  void SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
+  virtual void SerialiseStructPointer (void *&Ptr, VStruct *Struct) override {
     int TmpIdx;
     *this << STRM_INDEX(TmpIdx);
     if (Struct->Name == "sector_t") {
@@ -184,13 +184,13 @@ public:
   virtual void Flush () override { Stream->Flush(); }
   virtual bool Close () override { return Stream->Close(); }
 
-  VStream &operator << (VName &Name) {
+  virtual VStream &operator << (VName &Name) override {
     if (NamesMap[Name.GetIndex()] == -1) NamesMap[Name.GetIndex()] = Names.Append(Name);
     *this << STRM_INDEX(NamesMap[Name.GetIndex()]);
     return *this;
   }
 
-  VStream &operator << (VObject *&Ref) {
+  virtual VStream &operator << (VObject *&Ref) override {
     guard(Saver::operator<<VObject*&);
     int TmpIdx;
     if (!Ref) {
@@ -202,7 +202,7 @@ public:
     unguard;
   }
 
-  void SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
+  virtual void SerialiseStructPointer (void *&Ptr, VStruct *Struct) override {
     int TmpIdx;
     if (Struct->Name == "sector_t") {
       TmpIdx = (Ptr ? (int)((sector_t *)Ptr-GLevel->Sectors) : -1);

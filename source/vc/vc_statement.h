@@ -643,7 +643,7 @@ public:
   virtual bool IsGotoCase () const override;
   virtual bool HasGotoCaseExpr () const override;
   virtual bool IsGotoDefault () const override;
-  virtual VName GetLabelName () const;
+  virtual VName GetLabelName () const override;
 
 protected:
   VGotoStmt () {}

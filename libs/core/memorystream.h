@@ -41,10 +41,10 @@ public:
   VMemoryStream(void*, int);
   VMemoryStream(const TArray<vuint8>&);
 
-  void Serialise(void*, int);
-  void Seek(int);
-  int Tell();
-  int TotalSize();
+  virtual void Serialise(void*, int) override;
+  virtual void Seek(int) override;
+  virtual int Tell() override;
+  virtual int TotalSize() override;
 
   void BeginRead()
   {

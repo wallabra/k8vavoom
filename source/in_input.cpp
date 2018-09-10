@@ -50,27 +50,27 @@ public:
   ~VInput();
 
   //  System device related functions.
-  void Init();
-  void Shutdown();
+  virtual void Init() override;
+  virtual void Shutdown() override;
 
   //  Input event handling.
-  void PostEvent(event_t*);
-  void KeyEvent(int, int);
-  void ProcessEvents();
-  int ReadKey();
+  virtual void PostEvent(event_t*) override;
+  virtual void KeyEvent(int, int) override;
+  virtual void ProcessEvents() override;
+  virtual int ReadKey() override;
 
   //  Handling of key bindings.
-  void GetBindingKeys(const VStr&, int&, int&);
-  void GetBinding(int, VStr&, VStr&);
-  void SetBinding(int, const VStr&, const VStr&, bool);
-  void WriteBindings(FILE*);
+  virtual void GetBindingKeys(const VStr&, int&, int&) override;
+  virtual void GetBinding(int, VStr&, VStr&) override;
+  virtual void SetBinding(int, const VStr&, const VStr&, bool) override;
+  virtual void WriteBindings(FILE*) override;
 
-  int TranslateKey(int);
+  virtual int TranslateKey(int) override;
 
-  int KeyNumForName(const VStr &Name);
-  VStr KeyNameForNum(int KeyNr);
+  virtual int KeyNumForName(const VStr &Name) override;
+  virtual VStr KeyNameForNum(int KeyNr) override;
 
-  void RegrabMouse (); // called by UI when mouse cursor is turned off
+  virtual void RegrabMouse () override; // called by UI when mouse cursor is turned off
 
 private:
   enum { MAXEVENTS = 64 };

@@ -51,7 +51,7 @@ public:
   char message[MAX_ERROR_TEXT_SIZE];
 
   explicit VavoomError (const char *text);
-  const char *What() const;
+  virtual const char *What() const override;
 };
 
 

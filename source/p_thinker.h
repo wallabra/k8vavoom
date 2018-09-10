@@ -69,8 +69,8 @@ class VThinker : public VGameObject
   VThinker();
 
   //  VObject interface
-  void Destroy();
-  void Serialise(VStream&);
+  virtual void Destroy() override;
+  virtual void Serialise(VStream&) override;
 
   //  VThinker interface
   virtual void Tick(float);

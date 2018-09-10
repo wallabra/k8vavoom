@@ -64,8 +64,8 @@ class VButton : public VThinker
   VName   DefaultSound;
   bool    UseAgain;
 
-  void Serialise(VStream&);
-  void Tick(float);
+  virtual void Serialise(VStream&) override;
+  virtual void Tick(float) override;
   bool AdvanceFrame();
 };
 

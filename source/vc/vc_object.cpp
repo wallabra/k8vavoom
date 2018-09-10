@@ -418,7 +418,7 @@ private:
 public:
   VClassesIterator (VClass *ABaseClass, VClass **AOut) : BaseClass(ABaseClass), Out(AOut), Index(0) {}
 
-  bool GetNext () {
+  virtual bool GetNext () override {
     while (Index < VMemberBase::GMembers.Num()) {
       VMemberBase *Check = VMemberBase::GMembers[Index];
       ++Index;
@@ -443,7 +443,7 @@ public:
     if (aclass) curr = aclass->States;
   }
 
-  bool GetNext () {
+  virtual bool GetNext () override {
     *out = curr;
     if (curr) {
       curr = curr->Next;
@@ -467,7 +467,7 @@ private:
 public:
   VObjectsIterator (VClass *ABaseClass, VObject **AOut) : BaseClass(ABaseClass), Out(AOut), Index(0) {}
 
-  bool GetNext () {
+  virtual bool GetNext () override {
     while (Index < VObject::GetObjectsCount()) {
       VObject *Check = VObject::GetIndexObject(Index);
       ++Index;

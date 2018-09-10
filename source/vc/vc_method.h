@@ -189,11 +189,11 @@ public:
   virtual ~VMethod () override;
   virtual void CompilerShutdown () override;
 
-  void Serialise (VStream &);
+  virtual void Serialise (VStream &) override;
   bool Define ();
   void Emit ();
   void DumpAsm ();
-  void PostLoad ();
+  virtual void PostLoad () override;
 
   // this can be called in `ExecuteNetMethod()` to do cleanup after RPC
   // should not be called for vararg methods

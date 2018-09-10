@@ -53,7 +53,7 @@ struct FWavFormatDesc
 class VWaveSampleLoader : public VSampleLoader
 {
 public:
-  void Load(sfxinfo_t&, VStream&);
+  virtual void Load(sfxinfo_t&, VStream&) override;
 };
 
 class VWavAudioCodec : public VAudioCodec
@@ -67,10 +67,10 @@ public:
   int       BlockAlign;
 
   VWavAudioCodec(VStream *InStrm);
-  ~VWavAudioCodec();
-  int Decode(short *Data, int NumSamples);
-  bool Finished();
-  void Restart();
+  virtual ~VWavAudioCodec() override;
+  virtual int Decode(short *Data, int NumSamples) override;
+  virtual bool Finished() override;
+  virtual void Restart() override;
 
   static VAudioCodec *Create(VStream *InStrm);
 };

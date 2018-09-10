@@ -65,13 +65,13 @@ public:
   virtual void Serialise (void *V, int Length) override { if (fwrite(V, Length, 1, File) != 1) bError = true; }
   virtual void Flush () override { if (fflush(File)) bError = true; }
 
-  VStream &operator << (VName &Name) {
+  virtual VStream &operator << (VName &Name) override {
     int TmpIdx = NamesMap[Name.GetIndex()];
     *this << STRM_INDEX(TmpIdx);
     return *this;
   }
 
-  VStream &operator << (VMemberBase *&Ref) {
+  virtual VStream &operator << (VMemberBase *&Ref) override {
     int TmpIdx = (Ref ? MembersMap[Ref->MemberIndex] : 0);
     *this << STRM_INDEX(TmpIdx);
     return *this;
@@ -105,12 +105,12 @@ public:
     bLoading = false;
   }
 
-  VStream &operator << (VName &Name) {
+  virtual VStream &operator << (VName &Name) override {
     if (Writer.NamesMap[Name.GetIndex()] == -1) Writer.NamesMap[Name.GetIndex()] = Writer.Names.Append(Name);
     return *this;
   }
 
-  VStream &operator << (VMemberBase *&Ref) {
+  virtual VStream &operator << (VMemberBase *&Ref) override {
     if (Ref != Package) Writer.GetMemberIndex(Ref);
     return *this;
   }
@@ -159,14 +159,14 @@ public:
   virtual void Flush () override { Stream->Flush(); }
   virtual bool Close () override { return Stream->Close(); }
 
-  VStream &operator << (VName &Name) {
+  virtual VStream &operator << (VName &Name) override {
     int NameIndex;
     *this << STRM_INDEX(NameIndex);
     Name = NameRemap[NameIndex];
     return *this;
   }
 
-  VStream &operator << (VMemberBase *&Ref) {
+  virtual VStream &operator << (VMemberBase *&Ref) override {
     int ObjIndex;
     *this << STRM_INDEX(ObjIndex);
     if (ObjIndex > 0) {

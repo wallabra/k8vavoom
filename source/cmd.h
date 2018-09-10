@@ -99,7 +99,7 @@ static class TCmd ## name : public VCommand \
 { \
 public: \
   TCmd ## name() : VCommand(#name) { } \
-  void Run(); \
+  virtual void Run () override; \
 } name ## _f; \
 \
 void TCmd ## name::Run()

@@ -73,34 +73,33 @@ public:
 
   //  Structors.
   VAudio();
-  ~VAudio();
+  virtual ~VAudio() override;
 
   //  Top level methods.
-  void Init();
-  void Shutdown();
+  virtual void Init() override;
+  virtual void Shutdown() override;
 
   //  Playback of sound effects
-  void PlaySound(int, const TVec&, const TVec&, int, int, float, float,
-    bool);
-  void StopSound(int, int);
-  void StopAllSound();
-  bool IsSoundPlaying(int, int);
+  virtual void PlaySound(int, const TVec&, const TVec&, int, int, float, float, bool) override;
+  virtual void StopSound(int, int) override;
+  virtual void StopAllSound() override;
+  virtual bool IsSoundPlaying(int, int) override;
 
   //  Music and general sound control
-  void StartSong(VName, int, bool);
-  void PauseSound();
-  void ResumeSound();
-  void Start();
-  void MusicChanged();
-  void UpdateSounds();
+  virtual void StartSong(VName, int, bool) override;
+  virtual void PauseSound() override;
+  virtual void ResumeSound() override;
+  virtual void Start() override;
+  virtual void MusicChanged() override;
+  virtual void UpdateSounds() override;
 
   //  Sound sequences
-  void StartSequence(int, const TVec&, VName, int);
-  void AddSeqChoice(int, VName);
-  void StopSequence(int);
-  void UpdateActiveSequences(float);
-  void StopAllSequences();
-  void SerialiseSounds(VStream&);
+  virtual void StartSequence(int, const TVec&, VName, int) override;
+  virtual void AddSeqChoice(int, VName) override;
+  virtual void StopSequence(int) override;
+  virtual void UpdateActiveSequences(float) override;
+  virtual void StopAllSequences() override;
+  virtual void SerialiseSounds(VStream&) override;
 
 private:
   enum { MAX_CHANNELS = 256 };

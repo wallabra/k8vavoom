@@ -191,7 +191,7 @@ class VBasePlayer : public VGameObject
   {}
 
   //  VObject interface
-  bool ExecuteNetMethod(VMethod*);
+  virtual bool ExecuteNetMethod(VMethod*) override;
 
   void SpawnClient();
 

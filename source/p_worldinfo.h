@@ -52,8 +52,8 @@ class VWorldInfo : public VGameObject
 
   VWorldInfo();
 
-  void Serialise(VStream &Strm);
-  void Destroy();
+  virtual void Serialise(VStream &Strm) override;
+  virtual void Destroy() override;
 
   void SetSkill(int);
 
