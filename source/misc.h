@@ -38,8 +38,8 @@ public:
   void Log(EName Type, const char *S);
   void Log(const VStr &S);
   void Log(EName Type, const VStr &S);
-  void Logf(const char *Fmt, ...);
-  void Logf(EName Type, const char *Fmt, ...);
+  void Logf(const char *Fmt, ...) __attribute__((format(printf, 2, 3)));
+  void Logf(EName Type, const char *Fmt, ...) __attribute__((format(printf, 3, 4)));
 };
 
 //  Error logs.

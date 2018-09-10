@@ -88,7 +88,7 @@ void FOutputDevice::Log(EName Type, const VStr &S)
 {
   Serialise(*S, Type);
 }
-void FOutputDevice::Logf(const char *Fmt, ...)
+__attribute__((format(printf, 2, 3))) void FOutputDevice::Logf(const char *Fmt, ...)
 {
   va_list argptr;
   char string[1024];
@@ -99,7 +99,7 @@ void FOutputDevice::Logf(const char *Fmt, ...)
 
   Serialise(string, NAME_Log);
 }
-void FOutputDevice::Logf(EName Type, const char *Fmt, ...)
+__attribute__((format(printf, 3, 4))) void FOutputDevice::Logf(EName Type, const char *Fmt, ...)
 {
   va_list argptr;
   char string[1024];
