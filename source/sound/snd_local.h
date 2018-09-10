@@ -265,7 +265,8 @@ public:
   , SampleBits(16)
   , NumChannels(2)
   {}
-  virtual int Decode(short*, int) = 0;
+  // always decodes stereo, returns number of frames
+  virtual int Decode(short *Data, int NumSamples) = 0;
   virtual bool Finished() = 0;
   virtual void Restart() = 0;
 };

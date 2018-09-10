@@ -376,46 +376,11 @@ void VMp3SampleLoader::Load(sfxinfo_t &Sfx, VStream &Stream)
 {
   guard(VMp3SampleLoader::Load);
   VMp3AudioCodec *Codec = new VMp3AudioCodec(&Stream, false);
-  if (!Codec->Init())
-  {
-    delete Codec;
-    Codec = nullptr;
-    return;
+  if (!Codec->Init()) {
+    //Codec->Cleanup();
+  } else {
+    LoadFromAudioCodec(Sfx, Codec);
   }
-
-  TArray<short> Data;
-  do
-  {
-    short Buf[16 * 2048];
-    int SamplesDecoded = Codec->Decode(Buf, 16 * 1024);
-    if (SamplesDecoded > 0)
-    {
-      int OldPos = Data.Num();
-      Data.SetNumWithReserve(Data.Num() + SamplesDecoded);
-      for (int i = 0; i < SamplesDecoded; i++)
-      {
-        Data[OldPos + i] = Buf[i * 2];
-      }
-    }
-  }
-  while (!Codec->Finished());
-  if (!Data.Num())
-  {
-    delete Codec;
-    Codec = nullptr;
-    return;
-  }
-
-  //  Copy parameters.
-  Sfx.SampleRate = Codec->SampleRate;
-  Sfx.SampleBits = Codec->SampleBits;
-
-  //  Copy data.
-  Sfx.DataSize = Data.Num() * 2;
-  Sfx.Data = Z_Malloc(Data.Num() * 2);
-  memcpy(Sfx.Data, Data.Ptr(), Data.Num() * 2);
-
   delete Codec;
-  Codec = nullptr;
   unguard;
 }

@@ -162,10 +162,10 @@ void VWaveSampleLoader::Load(sfxinfo_t &Sfx, VStream &Strm)
   int WavChannels = LittleShort(Fmt.Channels);
   int WavBits = LittleShort(Fmt.Bits);
   int BlockAlign = LittleShort(Fmt.BlockAlign);
-  if (WavChannels != 1)
-  {
-    GCon->Logf("A stereo sample, taking left channel");
-  }
+  //if (WavChannels != 1) GCon->Logf("A stereo sample, taking left channel");
+  if (WavChannels < 1 || WavChannels > 2) return;
+  if (SampleRate < 128 || SampleRate > 96000) return;
+  if (WavBits != 8 && WavBits != 16) return;
 
   //  Find data chunk.
   int DataSize = FindRiffChunk(Strm, "data");
@@ -178,7 +178,7 @@ void VWaveSampleLoader::Load(sfxinfo_t &Sfx, VStream &Strm)
   //  Fill in sample info and allocate data.
   Sfx.SampleRate = SampleRate;
   Sfx.SampleBits = WavBits;
-  Sfx.DataSize = (DataSize / BlockAlign) * (WavBits/ 8);
+  Sfx.DataSize = (DataSize/BlockAlign)*(WavBits/8);
   Sfx.Data = Z_Malloc(Sfx.DataSize);
 
   //  Read wav data.
@@ -187,22 +187,25 @@ void VWaveSampleLoader::Load(sfxinfo_t &Sfx, VStream &Strm)
 
   //  Copy sample data.
   DataSize /= BlockAlign;
-  if (WavBits == 8)
-  {
+  if (WavBits == 8) {
     byte *pSrc = (byte*)WavData;
     byte *pDst = (byte*)Sfx.Data;
-    for (int i = 0; i < DataSize; i++, pSrc += BlockAlign, pDst++)
-    {
-      *pDst = *pSrc;
+    for (int i = 0; i < DataSize; i++, pSrc += BlockAlign) {
+      int v = 0;
+      for (int f = 0; f < WavChannels; ++f) v += (int)pSrc[f];
+      v /= WavChannels;
+      if (v < -128) v = -128; else if (v > 127) v = 127;
+      *pDst++ = (byte)v;
     }
-  }
-  else
-  {
-    byte *pSrc = (byte*)WavData;
-    short *pDst = (short*)Sfx.Data;
-    for (int i = 0; i < DataSize; i++, pSrc += BlockAlign, pDst++)
-    {
-      *pDst = LittleShort(*(short*)pSrc);
+  } else {
+    byte *pSrc = (byte *)WavData;
+    short *pDst = (short *)Sfx.Data;
+    for (int i = 0; i < DataSize; i++, pSrc += BlockAlign) {
+      int v = 0;
+      for (int f = 0; f < WavChannels; ++f) v += (int)(LittleShort(*(((short *)pSrc)+f)));
+      v /= WavChannels;
+      if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
+      *pDst++ = (short)v;
     }
   }
   Z_Free(WavData);
@@ -238,6 +241,9 @@ VWavAudioCodec::VWavAudioCodec(VStream *InStrm)
   WavChannels = LittleShort(Fmt.Channels);
   WavBits = LittleShort(Fmt.Bits);
   BlockAlign = LittleShort(Fmt.BlockAlign);
+  if (WavBits != 8 && WavBits != 16) return;
+  if (WavChannels < 1 || WavChannels > 2) return;
+  if (SampleRate < 128 || SampleRate > 96000) return;
 
   SamplesLeft = FindRiffChunk(*Strm, "data");
   if (SamplesLeft == -1)
@@ -280,29 +286,20 @@ int VWavAudioCodec::Decode(short *Data, int NumSamples)
   byte Buf[1024];
   while (SamplesLeft && CurSample < NumSamples)
   {
-    int ReadSamples = 1024 / BlockAlign;
-    if (ReadSamples > NumSamples - CurSample)
-      ReadSamples = NumSamples - CurSample;
-    if (ReadSamples > SamplesLeft)
-      ReadSamples = SamplesLeft;
-    Strm->Serialise(Buf, ReadSamples * BlockAlign);
-    for (int i = 0; i < 2; i++)
-    {
+    int ReadSamples = 1024/BlockAlign;
+    if (ReadSamples > NumSamples-CurSample) ReadSamples = NumSamples-CurSample;
+    if (ReadSamples > SamplesLeft) ReadSamples = SamplesLeft;
+    Strm->Serialise(Buf, ReadSamples*BlockAlign);
+    for (int i = 0; i < 2; ++i) {
       byte *pSrc = Buf;
-      if (i && WavChannels > 1)
-        pSrc += WavBits / 8;
-      short *pDst = Data + CurSample * 2 + i;
-      if (WavBits == 8)
-      {
-        for (int j = 0; j < ReadSamples; j++, pSrc += BlockAlign, pDst += 2)
-        {
+      if (i && WavChannels > 1) pSrc += WavBits/8;
+      short *pDst = Data+CurSample*2+i;
+      if (WavBits == 8) {
+        for (int j = 0; j < ReadSamples; j++, pSrc += BlockAlign, pDst += 2) {
           *pDst = (*pSrc - 127) << 8;
         }
-      }
-      else
-      {
-        for (int j = 0; j < ReadSamples; j++, pSrc += BlockAlign, pDst += 2)
-        {
+      } else {
+        for (int j = 0; j < ReadSamples; j++, pSrc += BlockAlign, pDst += 2) {
           *pDst = LittleShort(*(short*)pSrc);
         }
       }
