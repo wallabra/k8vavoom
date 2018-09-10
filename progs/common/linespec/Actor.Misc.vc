@@ -554,24 +554,34 @@ final void A_ItBurnsItBurns()
 const int SPF_FORCECLAMP = 0x01;
 const int SPF_INTERPOLATE = 0x00;
 */
+private final float clampPitch (float newpitch) {
+  // hack, so player head won't be clamped down
+  //print("  A_SetPitch00: newpitch=%f", newpitch);
+  if (newpitch >= 360) {
+    newpitch = AngleMod360(newpitch);
+    //print("  A_SetPitch01: newpitch=%f", newpitch);
+  }
+  if (newpitch > 180) newpitch = AngleMod360(newpitch)-360; // [-90..]
+  //print("  A_SetPitch02: newpitch=%f", newpitch);
+  //return fclamp(newpitch, -90.0, 90.0);
+  return fclamp(newpitch, -80.0, 80.0); // actual engine limits
+}
+
 // should be always clamped on player
 final void A_SetPitch (float newpitch, optional int flags, optional int ptr) {
-  while (newpitch < -360.0) newpitch += 360.0;
-  while (newpitch > 360.0) newpitch -= 360.0;
-  if ((flags&0x01) != 0) newpitch = fclamp(newpitch, -90.0, 90.0);
-  // clamp
+  //print("A_SetPitch: bIsPlayer=%d; newpitch=%f; pitch=%f", bIsPlayer, newpitch, Angles.pitch);
   if (specified_ptr && ptr != AAPTR_DEFAULT) {
     if (ptr == AAPTR_NULL) return;
     if (ptr == AAPTR_TARGET) {
       if (!Target) return;
-      if (Target.bIsPlayer && (flags&0x01) == 0) newpitch = fclamp(newpitch, -90.0, 90.0);
-      Target.Angles.pitch = newpitch;
+      if (Target.bIsPlayer || (flags&0x01) != 0) newpitch = clampPitch(newpitch);
+      Target.Angles.pitch = /*AngleMod360*/(newpitch);
       return;
     }
     FatalError("A_SetPitch: unsupported ptr (0x%x)", ptr);
   } else {
-    if (bIsPlayer && (flags&0x01) == 0) newpitch = fclamp(newpitch, -90.0, 90.0);
-    Angles.pitch = newpitch;
+    if (bIsPlayer || (flags&0x01) != 0) newpitch = clampPitch(newpitch);
+    Angles.pitch = /*AngleMod360*/(newpitch);
   }
 }
 
@@ -600,7 +610,7 @@ final void A_SetAngle (float newyaw) {
 //
 //==========================================================================
 final void A_SetRollExt (float newa) {
-  Angles.roll = AngleMod360(newa);
+  Angles.roll = /*AngleMod360*/(newa);
 }
 
 
@@ -610,7 +620,7 @@ final void A_SetRollExt (float newa) {
 //
 //==========================================================================
 final void A_SetYawExt (float newa) {
-  Angles.yaw = AngleMod360(newa);
+  Angles.yaw = /*AngleMod360*/(newa);
 }
 
 
@@ -620,7 +630,7 @@ final void A_SetYawExt (float newa) {
 //
 //==========================================================================
 final void A_SetPitchExt (float newa) {
-  Angles.pitch = AngleMod360(newa);
+  Angles.pitch = /*AngleMod360*/(newa);
 }
 
 
