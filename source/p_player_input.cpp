@@ -526,9 +526,9 @@ void VBasePlayer::AdjustAngles()
   {
     ViewAngles.pitch = 80.0;
   }
-  if (ViewAngles.pitch < -70.0)
+  if (ViewAngles.pitch < -80.0)
   {
-    ViewAngles.pitch = -70.0;
+    ViewAngles.pitch = -80.0;
   }
 
   if (ViewAngles.roll > 80.0)
