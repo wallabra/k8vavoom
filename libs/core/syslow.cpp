@@ -37,7 +37,27 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <time.h>
+
+
+struct DirInfo {
+  DIR *dh;
+  VStr path; // with slash
+};
+
+
+//==========================================================================
+//
+//  isDir
+//
+//==========================================================================
+static bool isRegularFile (const VStr &filename) {
+  struct stat st;
+  if (filename.length() == 0) return false;
+  if (stat(*filename, &st) == -1) return false;
+  return (S_ISREG(st.st_mode) != 0);
+}
 
 
 //==========================================================================
@@ -46,7 +66,7 @@
 //
 //==========================================================================
 bool Sys_FileExists (const VStr &filename) {
-  return (!filename.isEmpty() && access(*filename, R_OK) == 0);
+  return (!filename.isEmpty() && access(*filename, R_OK) == 0 && isRegularFile(filename));
 }
 
 
@@ -61,7 +81,7 @@ int Sys_FileTime (const VStr &path) {
   if (path.isEmpty()) return -1;
   struct stat buf;
   if (stat(*path, &buf) == -1) return -1;
-  return buf.st_mtime;
+  return (S_ISREG(buf.st_mode) ? buf.st_mtime : -1);
 }
 
 
@@ -83,7 +103,16 @@ bool Sys_CreateDirectory (const VStr &path) {
 //==========================================================================
 void *Sys_OpenDir (const VStr &path) {
   if (path.isEmpty()) return nullptr;
-  return opendir(*path);
+  DIR *dh = opendir(*path);
+  if (!dh) return nullptr;
+  auto res = (DirInfo *)malloc(sizeof(DirInfo));
+  if (!res) { closedir(dh); return nullptr; }
+  memset((void *)res, 0, sizeof(DirInfo));
+  res->dh = dh;
+  res->path = path;
+  if (res->path.length() == 0) res->path = "./";
+  if (res->path[res->path.length()-1] != '/') res->path += "/";
+  return (void *)res;
 }
 
 
@@ -94,12 +123,18 @@ void *Sys_OpenDir (const VStr &path) {
 //==========================================================================
 VStr Sys_ReadDir (void *adir) {
   if (!adir) return VStr();
+  DirInfo *dh = (DirInfo *)adir;
+  if (!dh->dh) return VStr();
   for (;;) {
-    struct dirent *de = readdir((DIR *)adir);
+    struct dirent *de = readdir(dh->dh);
     if (!de) break;
     if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0) continue;
+    if (!isRegularFile(dh->path+de->d_name)) continue;
     return de->d_name;
   }
+  closedir(dh->dh);
+  dh->dh = nullptr;
+  dh->path.clear();
   return VStr();
 }
 
@@ -110,7 +145,12 @@ VStr Sys_ReadDir (void *adir) {
 //
 //==========================================================================
 void Sys_CloseDir (void *adir) {
-  if (adir) closedir((DIR *)adir);
+  if (adir) {
+    DirInfo *dh = (DirInfo *)adir;
+    if (dh->dh) closedir(dh->dh);
+    dh->path.clear();
+    free((void *)dh);
+  }
 }
 
 
@@ -169,14 +209,28 @@ void Sys_Yield () {
 #include <sys/stat.h>
 #include <windows.h>
 
-#define R_OK  4
+#define R_OK  (4)
 
 
 struct ShitdozeDir {
   HANDLE dir_handle;
   WIN32_FIND_DATA dir_buf;
+  VStr path;
   bool gotName;
 };
+
+
+//==========================================================================
+//
+//  isDir
+//
+//==========================================================================
+static bool isRegularFile (const VStr &filename) {
+  if (filename.length() == 0) return false;
+  DWORD attrs = GetFileAttributes(*filename);
+  if (attrs == INVALID_FILE_ATTRIBUTES) return false;
+  return (attrs&(FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_DIRECTORY) == 0);
+}
 
 
 //==========================================================================
@@ -185,7 +239,7 @@ struct ShitdozeDir {
 //
 //==========================================================================
 bool Sys_FileExists (const VStr &filename) {
-  return (!filename.isEmpty() && access(*filename, R_OK) == 0);
+  return (!filename.isEmpty() && access(*filename, R_OK) == 0 && isRegularFile(filename));
 }
 
 
@@ -198,6 +252,7 @@ bool Sys_FileExists (const VStr &filename) {
 //==========================================================================
 int Sys_FileTime (const VStr &path) {
   if (path.isEmpty()) return -1;
+  if (!isRegularFile(path)) return -1;
   struct stat buf;
   if (stat(*path, &buf) == -1) return -1;
   return buf.st_mtime;
@@ -224,10 +279,14 @@ void *Sys_OpenDir (const VStr &dirname) {
   if (dirname.isEmpty()) return nullptr;
   auto sd = (ShitdozeDir *)malloc(sizeof(ShitdozeDir));
   if (!sd) return nullptr;
-  memset(sd, 0, sizeof(ShitdozeDir));
-  sd->dir_handle = FindFirstFile(va("%s/*.*", *dirname), &sd->dir_buf);
+  memset((void *)sd, 0, sizeof(ShitdozeDir));
+  VStr path = dirname;
+  if (path.length() == 0) path = "./";
+  if (path[path.length()-1] != '/' && path[path.length()-1] != '\\' && path[path.length()-1] != ':') path += "/";
+  sd->dir_handle = FindFirstFile(va("%s*.*", *path), &sd->dir_buf);
   if (sd->dir_handle == INVALID_HANDLE_VALUE) { free(sd); return nullptr; }
   sd->gotName = true;
+  sd->path = path;
   return (void *)sd;
 }
 
@@ -247,6 +306,7 @@ VStr Sys_ReadDir (void *adir) {
     sd->gotName = false;
     auto res = VStr(sd->dir_buf.cFileName);
     if (res != "." && res != "..") return res;
+    if (isRegularFile(sd->path+res)) return res;
   }
 }
 
@@ -260,6 +320,7 @@ void Sys_CloseDir (void *adir) {
   if (adir) {
     auto sd = (ShitdozeDir *)adir;
     FindClose(sd->dir_handle);
+    sd->path.clear();
     free(sd);
   }
 }

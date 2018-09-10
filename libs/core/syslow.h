@@ -29,14 +29,15 @@
 
 
 bool Sys_FileExists (const VStr &filename);
+bool Sys_DirExists (const VStr &path);
 int Sys_FileTime (const VStr &path); // returns -1 if not present
 bool Sys_CreateDirectory (const VStr &path);
 
+// can return `nullptr` for invalid path
 void *Sys_OpenDir (const VStr &path); // nullptr: error
+// never returns directories; returns empty string on end-of-dir; returns names w/o path
 VStr Sys_ReadDir (void *adir);
 void Sys_CloseDir (void *adir);
-
-bool Sys_DirExists (const VStr &path);
 
 double Sys_Time ();
 void Sys_Yield ();
