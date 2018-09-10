@@ -1530,6 +1530,7 @@ static void ParseEnum (VScriptParser *sc) {
 //==========================================================================
 static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VClassFixup> &ClassFixups) {
   guard(ParseFlag);
+  auto floc = sc->GetLoc(); // for warnings
   // get full name of the flag
   sc->ExpectIdentifier();
   VName FlagName(*sc->String.ToLower());
@@ -1550,7 +1551,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
       if (FlagName == F.Name) {
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(DefObj, Value); break;
-          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf("Unsupported flag %s in %s", *FlagName, Class->GetName()); break;
+          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf("%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *FlagName, Class->GetName()); break;
           case FLAG_Byte: F.Field->SetByte(DefObj, Value ? F.BTrue : F.BFalse); break;
           case FLAG_Float: F.Field->SetFloat(DefObj, Value ? F.FTrue : F.FFalse); break;
           case FLAG_Name: F.Field->SetName(DefObj, Value ? F.NTrue : F.NFalse); break;
@@ -1565,7 +1566,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
     sc->Error(va("Unknown flag \"%s\"", *FlagName));
     return false;
   }
-  GCon->Logf("WARNING: Unknown flag \"%s\"", *FlagName);
+  GCon->Logf("WARNING: %s: Unknown flag \"%s\"", *floc.toStringNoCol(), *FlagName);
   /*
   if (!sc->IsAtEol()) {
     sc->Crossed = false;
