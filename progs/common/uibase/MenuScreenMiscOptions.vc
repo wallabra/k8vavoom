@@ -37,6 +37,7 @@ override void CreateChoices () {
   CreateOnOffCvar("Ignore 'nojump'", 'sv_ignore_nojump');
   CreateOnOffCvar("Ignore 'nofreelook'", 'sv_ignore_nomlook');
   CreateFloatSliderCvar("Bobbing", 'movebob', 0.1, 0, 1);
+  CreateFloatSliderCvar("Save compression", 'save_compression_level', 1, 0, 9);
 
 
   CreateChoiceTextLabel("");
