@@ -359,12 +359,13 @@ bool VScriptParser::GetString () {
     ++ScriptPtr;
   } else if (CMode) {
     if ((ScriptPtr[0] == '&' && ScriptPtr[1] == '&') ||
-        (ScriptPtr[0] == '=' && ScriptPtr[1] == '=') ||
         (ScriptPtr[0] == '|' && ScriptPtr[1] == '|') ||
-        (ScriptPtr[0] == '<' && ScriptPtr[1] == '<') ||
-        (ScriptPtr[0] == '>' && ScriptPtr[1] == '>') ||
+        (ScriptPtr[0] == '=' && ScriptPtr[1] == '=') ||
+        (ScriptPtr[0] == '!' && ScriptPtr[1] == '=') ||
         (ScriptPtr[0] == '>' && ScriptPtr[1] == '=') ||
         (ScriptPtr[0] == '<' && ScriptPtr[1] == '=') ||
+        (ScriptPtr[0] == '<' && ScriptPtr[1] == '<') ||
+        (ScriptPtr[0] == '>' && ScriptPtr[1] == '>') ||
         (ScriptPtr[0] == ':' && ScriptPtr[1] == ':'))
     {
       // special double-character token
