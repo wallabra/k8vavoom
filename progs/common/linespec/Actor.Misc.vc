@@ -550,14 +550,29 @@ final void A_ItBurnsItBurns()
 //  A_SetPitch
 //
 //==========================================================================
-
-final void A_SetPitch (float newpitch) {
-  if (newpitch < 0.0) newpitch += 360.0;
-  newpitch = AngleMod360(newpitch);
-  if (newpitch > 90.0) newpitch -= 360.0;
-  //print("oldpitch=%f; newpitch=%f", Angles.pitch, newpitch);
-  Angles.pitch = newpitch;
-  //Angles.pitch = -10.0;
+/*
+const int SPF_FORCECLAMP = 0x01;
+const int SPF_INTERPOLATE = 0x00;
+*/
+// should be always clamped on player
+final void A_SetPitch (float newpitch, optional int flags, optional int ptr) {
+  while (newpitch < -360.0) newpitch += 360.0;
+  while (newpitch > 360.0) newpitch -= 360.0;
+  if ((flags&0x01) != 0) newpitch = fclamp(newpitch, -90.0, 90.0);
+  // clamp
+  if (specified_ptr && ptr != AAPTR_DEFAULT) {
+    if (ptr == AAPTR_NULL) return;
+    if (ptr == AAPTR_TARGET) {
+      if (!Target) return;
+      if (Target.bIsPlayer && (flags&0x01) == 0) newpitch = fclamp(newpitch, -90.0, 90.0);
+      Target.Angles.pitch = newpitch;
+      return;
+    }
+    FatalError("A_SetPitch: unsupported ptr (0x%x)", ptr);
+  } else {
+    if (bIsPlayer && (flags&0x01) == 0) newpitch = fclamp(newpitch, -90.0, 90.0);
+    Angles.pitch = newpitch;
+  }
 }
 
 
@@ -601,7 +616,7 @@ final void A_SetYawExt (float newa) {
 
 //==========================================================================
 //
-//  A_SetPitch
+//  A_SetPitchExt
 //
 //==========================================================================
 final void A_SetPitchExt (float newa) {

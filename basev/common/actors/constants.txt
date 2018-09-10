@@ -123,3 +123,30 @@ const int XF_HURTSOURCE = 0x01; // Hurts the source: if set, the source can be d
 const int XF_NOTMISSILE = 0x02; // Not a missile: if set, the calling actor is considered to be the source. By default, the calling actor is assumed to be a projectile, and the source is therefore considered to be the calling actor's target.
 const int XF_EXPLICITDAMAGETYPE = 0x04; // The damagetype parameter will never change to the actor's damagetype.
 const int XF_NOSPLASH = 0x08; // No splash: if set, the explosion does not create any terrain splashes.
+
+
+const int SPF_FORCECLAMP = 0x01;
+const int SPF_INTERPOLATE = 0x00;
+
+// Pointer constants, bitfield-enabled
+//enum EPointerFlags {
+const int AAPTR_DEFAULT = 0;
+const int AAPTR_NULL = 0x1;
+const int AAPTR_TARGET = 0x2;
+const int AAPTR_MASTER = 0x4;
+const int AAPTR_TRACER = 0x8;
+
+const int AAPTR_PLAYER_GETTARGET = 0x10;
+const int AAPTR_PLAYER_GETCONVERSATION = 0x20;
+
+const int AAPTR_PLAYER1 = 0x40;
+const int AAPTR_PLAYER2 = 0x80;
+const int AAPTR_PLAYER3 = 0x100;
+const int AAPTR_PLAYER4 = 0x200;
+const int AAPTR_PLAYER5 = 0x400;
+const int AAPTR_PLAYER6 = 0x800;
+const int AAPTR_PLAYER7 = 0x1000;
+const int AAPTR_PLAYER8 = 0x2000;
+const int AAPTR_FRIENDPLAYER = 0x4000;
+const int AAPTR_LINETARGET = 0x8000;
+//};
