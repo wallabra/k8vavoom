@@ -142,7 +142,7 @@ sprites/weapons/shotgun/sshri0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/weapons
 sounds/weapons/bdw_rifle/bdwrclpn.ogg   @CMAKE_CURRENT_SOURCE_DIR@/sounds/weapons/bdw_rifle/bdwrclpn.ogg
 sounds/weapons/bdw_rifle/bdwrempt.ogg   @CMAKE_CURRENT_SOURCE_DIR@/sounds/weapons/bdw_rifle/bdwrempt.ogg
 sounds/weapons/bdw_rifle/bdwrreld.ogg   @CMAKE_CURRENT_SOURCE_DIR@/sounds/weapons/bdw_rifle/bdwrreld.ogg
-sounds/weapons/bdw_rifle/bdwrsfst.ogg   @CMAKE_CURRENT_SOURCE_DIR@/sounds/weapons/bdw_rifle/bdwrsfst.ogg
+//sounds/weapons/bdw_rifle/bdwrsfst.ogg   @CMAKE_CURRENT_SOURCE_DIR@/sounds/weapons/bdw_rifle/bdwrsfst.ogg
 sounds/weapons/bdw_rifle/bdwrshot.ogg   @CMAKE_CURRENT_SOURCE_DIR@/sounds/weapons/bdw_rifle/bdwrshot.ogg
 sounds/weapons/bdw_shotgun/bdwspump.ogg   @CMAKE_CURRENT_SOURCE_DIR@/sounds/weapons/bdw_shotgun/bdwspump.ogg
 sounds/weapons/bdw_shotgun/bdwsshin.ogg   @CMAKE_CURRENT_SOURCE_DIR@/sounds/weapons/bdw_shotgun/bdwsshin.ogg
