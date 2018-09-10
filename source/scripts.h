@@ -76,6 +76,7 @@ public:
   void ResetQuoted ();
   void ResetCrossed ();
   void UnGet ();
+  void SkipBracketed (bool bracketEaten=false);
   void Message (const char *);
   void Error (const char *);
   TLocation GetLoc ();

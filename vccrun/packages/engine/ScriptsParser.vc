@@ -47,9 +47,17 @@ native bool CheckNumber ();
 native void ExpectNumber ();
 native bool CheckFloat ();
 native void ExpectFloat ();
+native bool CheckNumberWithSign ();
+native void ExpectNumberWithSign ();
+native bool CheckFloatWithSign ();
+native void ExpectFloatWithSign ();
+native void ResetQuoted ();
+native void ResetCrossed ();
+native void SkipBracketed (optional bool bracketEaten); // default is `false`
 native void UnGet ();
 native void ScriptError (string Text, ...) [printf,1];
+native void ScriptMessage (string Text, ...) [printf,1];
 
-defaultproperties
-{
+
+defaultproperties {
 }

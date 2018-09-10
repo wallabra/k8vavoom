@@ -341,33 +341,6 @@ static int loadSkyTexture (VName name) {
 }
 
 
-static void SkipBracketed (VScriptParser *sc, bool bracketEaten=false) {
-  if (!bracketEaten) {
-    for (;;) {
-      sc->ResetQuoted();
-      if (!sc->GetString()) return;
-      if (sc->QuotedString) continue;
-      if (sc->String.length() == 1 && sc->String[0] == '{') {
-        break;
-      }
-    }
-  }
-  int level = 1;
-  for (;;) {
-    sc->ResetQuoted();
-    if (!sc->GetString()) break;
-    if (sc->QuotedString) continue;
-    if (sc->String.length() == 1) {
-      if (sc->String[0] == '{') {
-        ++level;
-      } else if (sc->String[0] == '}') {
-        if (--level == 0) return;
-      }
-    }
-  }
-}
-
-
 static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
 {
   guard(ParseMapCommon);
@@ -1786,7 +1759,7 @@ static void ParseMapInfo(VScriptParser *sc)
       }
       else if (sc->Check("intermission")) {
         GCon->Logf("Unimplemented MAPINFO comand Intermission");
-        SkipBracketed(sc);
+        sc->SkipBracketed();
       }
       else
       {

@@ -1623,99 +1623,51 @@ static void ParseEffectDefs(VScriptParser *sc,
 //
 //==========================================================================
 
-static void ParseGZDoomEffectDefs(VScriptParser *sc,
-  TArray<VTempClassEffects>& ClassDefs)
-{
+static void ParseGZDoomEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> &ClassDefs) {
   guard(ParseEffectDefs);
-  while (!sc->AtEnd())
-  {
-    if (sc->Check("#include"))
-    {
+  while (!sc->AtEnd()) {
+    if (sc->Check("#include")) {
       sc->ExpectString();
       int Lump = W_CheckNumForFileName(sc->String);
       //  Check WAD lump only if it's no longer than 8 characters and
       // has no path separator.
-      if (Lump < 0 && sc->String.Length() <= 8 &&
-        sc->String.IndexOf('/') < 0)
-      {
+      if (Lump < 0 && sc->String.Length() <= 8 && sc->String.IndexOf('/') < 0) {
         Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
       }
-      if (Lump < 0)
-      {
-        sc->Error(va("Lump %s not found", *sc->String));
-      }
-      ParseGZDoomEffectDefs(new VScriptParser(sc->String,
-        W_CreateLumpReaderNum(Lump)), ClassDefs);
+      if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
+      ParseGZDoomEffectDefs(new VScriptParser(sc->String, W_CreateLumpReaderNum(Lump)), ClassDefs);
       continue;
-    }
-    else if (sc->Check("pointlight"))
-    {
+    } else if (sc->Check("pointlight")) {
       ParseGZLightDef(sc, DLTYPE_Point);
-    }
-    else if (sc->Check("pulselight"))
-    {
+    } else if (sc->Check("pulselight")) {
       ParseGZLightDef(sc, DLTYPE_Pulse);
-    }
-    else if (sc->Check("flickerlight"))
-    {
+    } else if (sc->Check("flickerlight")) {
       ParseGZLightDef(sc, DLTYPE_Flicker);
-    }
-    else if (sc->Check("flickerlight2"))
-    {
+    } else if (sc->Check("flickerlight2")) {
       ParseGZLightDef(sc, DLTYPE_FlickerRandom);
-    }
-    else if (sc->Check("sectorlight"))
-    {
+    } else if (sc->Check("sectorlight")) {
       ParseGZLightDef(sc, DLTYPE_Sector);
-    }
-    else if (sc->Check("object"))
-    {
+    } else if (sc->Check("object")) {
       ParseClassEffects(sc, ClassDefs);
-    }
-    else if (sc->Check("skybox"))
-    {
-      sc->GetString();
-      sc->Expect("{");
-      while (!sc->Check("}"))
-      {
-        sc->GetString();
-      }
+    } else if (sc->Check("skybox")) {
       sc->Message("Skybox parsing isn't implemented yet.");
-    }
-    else if (sc->Check("brightmap"))
-    {
+      sc->SkipBracketed();
+    } else if (sc->Check("brightmap")) {
       sc->Message("Brightmaps are not supported.");
-      // skip it
-      char waitingWhat = '{';
-      for (;;) {
-        sc->ResetQuoted();
-        if (!sc->GetString()) break;
-        if (sc->QuotedString) continue;
-        if (sc->String.length() == 1 && sc->String[0] == waitingWhat) {
-          if (waitingWhat == '{') waitingWhat = '}'; else break;
-        }
-      }
-    }
-    else if (sc->Check("glow"))
-    {
+      sc->SkipBracketed();
+    } else if (sc->Check("glow")) {
       sc->Message("Glowing textures aren't supported yet.");
-    }
-    else if (sc->Check("hardwareshader"))
-    {
+      sc->SkipBracketed();
+    } else if (sc->Check("hardwareshader")) {
       sc->Message("Shaders are not supported");
-    }
-    else if (sc->Check("pwad"))
-    {
-      sc->Message("Tried to parse a WAD file, aborting parsing...");
-      break;
-    }
-    else
-    {
+      sc->SkipBracketed();
+    } else if (sc->Check("pwad")) {
+      sc->Error("Tried to parse a WAD file, aborting...");
+    } else {
       sc->Error(va("Unknown command (%s)", *sc->String));
     }
   }
   delete sc;
-  sc = nullptr;
   unguard;
 }
 
