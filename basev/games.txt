@@ -1,61 +1,58 @@
 // Default game detection configuration file
 //NOTE Games are detected in backwards order
 
-// Default case when IWAD is already set up
-game basev/doom2
-end
-
-// Shareware Doom
-game basev/doom1
-iwad doom1.wad
-param -doom
-end
-
 // Doom / Ultimate Doom
 game basev/doom1
-iwad doom.wad
-param -doom
-end
-
-// Alternate name for Ultimate Doom
-game basev/doom1
+base basev/doom
+// ultimate
 iwad doomu.wad
+// normal
+altiwad doom.wad
+// shareware
+altiwad doom1.wad
 param -doom
 end
 
 // Doom II: Hell On Earth
 game basev/doom2
+base basev/doom
 iwad doom2.wad
+altiwad doom2f.wad
 param -doom2
 end
 
-// Doom II: Hell On Earth, french ???
+// FreeDoom 1
+game basev/doom1
+base basev/doom
+iwad freedoom1.wad
+param -freedoom
+end
+
+// FreeDoom 2
 game basev/doom2
-iwad doom2f.wad
-param -doom2
+base basev/doom2
+iwad freedoom2.wad
+param -freedoom2
 end
 
 // Doom II:TNT Evilution
 game basev/tnt
+base basev/doom2
 iwad tnt.wad
 param -tnt
 end
 
 // Doom II:The Plutonia Experiment
 game basev/plutonia
+base basev/doom2
 iwad plutonia.wad
 param -plutonia
 end
 
-// Shareware Heretic
-game basev/heretic
-iwad heretic1.wad
-param -heretic
-end
-
-// Heretic
+// Heretic, Shareware Heretic
 game basev/heretic
 iwad heretic.wad
+altiwad heretic1.wad
 param -heretic
 end
 
@@ -68,7 +65,7 @@ end
 // Teaser Strife
 game basev/strife
 iwad strife0.wad
-param -strife
+param -strifeteaser
 fixvoices
 end
 
@@ -81,6 +78,7 @@ end
 
 // No Rest for the Living
 game basev/nerve
+base basev/doom2
 iwad doom2.wad
 addfile nerve.wad
 param -nerve
@@ -88,7 +86,8 @@ end
 
 // Doom:Complete
 game basev/complete
+base basev/doom
 iwad complete.pk3
-oriwad doom_complete.pk3
+altiwad doom_complete.pk3
 param -complete
 end

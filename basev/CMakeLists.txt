@@ -2,7 +2,6 @@
 #get_target_property(ACC acc $<TARGET_FILE>)
 
 add_subdirectory(common)
-add_subdirectory(complete)
 add_subdirectory(doom)
 add_subdirectory(doom1)
 add_subdirectory(doom2)

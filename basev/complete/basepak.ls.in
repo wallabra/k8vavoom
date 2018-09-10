@@ -1,3 +1,0 @@
-$dest basepak.pk3
-
-zapinfo.txt     @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
