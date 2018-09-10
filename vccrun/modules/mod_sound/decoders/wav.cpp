@@ -115,11 +115,13 @@ void VWaveSampleLoader::Load (sfxinfo_t &Sfx, VStream &Strm) {
   int WavBits = LittleShort(Fmt.Bits);
   int BlockAlign = LittleShort(Fmt.BlockAlign);
 
+  if (WavBits != 8 && WavBits != 16) return;
+
   // find data chunk
   int DataSize = FindRiffChunk(Strm, "data");
   if (DataSize == -1) return; // data not found
 
-  if (WavChannels != 1) fprintf(stderr, "WAVE: A stereo sample, taking left channel.\n");
+  //if (WavChannels != 1) fprintf(stderr, "WAVE: A stereo sample, taking left channel.\n");
 
   // fill in sample info and allocate data
   Sfx.sampleRate = SampleRate;
@@ -136,11 +138,25 @@ void VWaveSampleLoader::Load (sfxinfo_t &Sfx, VStream &Strm) {
   if (WavBits == 8) {
     byte *pSrc = (byte *)WavData;
     byte *pDst = (byte *)Sfx.data;
-    for (int i = 0; i < DataSize; i++, pSrc += BlockAlign, ++pDst) *pDst = *pSrc;
+    for (int i = 0; i < DataSize; i++, pSrc += BlockAlign) {
+      // mix it
+      int v = 0;
+      for (int f = 0; f < WavChannels; ++f) v += (int)pSrc[f];
+      v /= WavChannels;
+      if (v < -128) v = -128; else if (v > 127) v = 127;
+      *pDst++ = (byte)v;
+    }
   } else {
     byte *pSrc = (byte *)WavData;
     short *pDst = (short *)Sfx.data;
-    for (int i = 0; i < DataSize; i++, pSrc += BlockAlign, ++pDst) *pDst = LittleShort(*(short *)pSrc);
+    for (int i = 0; i < DataSize; i++, pSrc += BlockAlign) {
+      // mix it
+      int v = 0;
+      for (int f = 0; f < WavChannels; ++f) v += (int)(LittleShort(*(((short *)pSrc)+f)));
+      v /= WavChannels;
+      if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
+      *pDst++ = (short)v;
+    }
   }
   Z_Free(WavData);
 }

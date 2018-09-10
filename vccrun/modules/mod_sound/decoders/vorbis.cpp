@@ -180,17 +180,17 @@ int VVorbisAudioCodec::Decode (short *Data, int NumSamples) {
     float **pcm;
     int samples = vorbis_synthesis_pcmout(&vd, &pcm);
     if (samples > 0) {
-      int bout = (CurSample+samples < NumSamples ? samples : NumSamples-CurSample);
+      int bout = NumSamples-CurSample;
+      if (bout > samples) bout = samples;
       for (int i = 0; i < 2; ++i) {
-        short *ptr = Data+CurSample*2+(vi.channels > 1 ? i : 0);
-        float *mono = pcm[vi.channels > 1 ? i : 0];
-        for (int j = 0; j < bout; ++j) {
-          int val = int(mono[j]*32767.f);
+        short *dst = Data+CurSample*2+i;
+        float *src = pcm[vi.channels > 1 ? i : 0];
+        for (int j = 0; j < bout; ++j, dst += 2) {
+          int val = int(src[j]*32767.0f);
           // clipping
                if (val > 32767) val = 32767;
           else if (val < -32768) val = -32768;
-          *ptr = val;
-          ptr += 2;
+          *dst = val;
         }
       }
       // tell libvorbis how many samples we actually consumed

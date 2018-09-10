@@ -73,41 +73,51 @@ void VSoundManager::StaticShutdown () {
 //==========================================================================
 void VSampleLoader::LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec) {
   if (!Codec) return;
-  if (Codec->NumChannels != 1 && Codec->NumChannels != 2) return;
+  //if (Codec->NumChannels != 1 && Codec->NumChannels != 2) return;
   //fprintf(stderr, "loading from audio codec; chans=%d; rate=%d; bits=%d\n", Codec->NumChannels, Codec->SampleRate, Codec->SampleBits);
+  const int MAX_FRAMES = 65536;
 
   TArray<short> Data;
+  short *buf = (short *)malloc(MAX_FRAMES*2*2);
+  if (!buf) return; // oops
   do {
-    short Buf[16*2048];
-    int SamplesDecoded = Codec->Decode(Buf, 16*1024);
+    int SamplesDecoded = Codec->Decode(buf, MAX_FRAMES);
     if (SamplesDecoded > 0) {
-      int OldPos = Data.length();
-      Data.SetNumWithReserve(Data.length()+SamplesDecoded);
-      if (Codec->NumChannels == 2) {
-        // stereo
-        for (int i = 0; i < SamplesDecoded; ++i) {
-          // mix it
-          int v = Buf[i*2]+Buf[i*2+1];
-          if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
-          Data[OldPos+i] = v;
-        }
-      } else {
-        // mono
-        for (int i = 0; i < SamplesDecoded; ++i) Data[OldPos+i] = Buf[i];
+      int oldlen = Data.length();
+      Data.SetNumWithReserve(oldlen+SamplesDecoded);
+      // downmix stereo to mono
+      const short *src = buf;
+      short *dst = ((short *)Data.Ptr())+oldlen;
+      for (int i = 0; i < SamplesDecoded; ++i, src += 2) {
+        int v = (src[0]+src[1])/2;
+        if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
+        *dst++ = (short)v;
       }
+    } else {
+      break;
     }
   } while (!Codec->Finished());
+  free(buf);
 
-  if (!Data.length()) return;
+  int realLen = Data.length();
+  if (realLen < 1) return;
+/*
+  if (Data.length() < 1) return;
+  // we don't care about timing, so trim trailing silence
+  int realLen = Data.length()-1;
+  while (realLen >= 0 && Data[realLen] > -64 && Data[realLen] < 64) --realLen;
+  ++realLen;
+  if (realLen < 1) realLen = 1;
+*/
 
   // copy parameters
   Sfx.sampleRate = Codec->SampleRate;
   Sfx.sampleBits = Codec->SampleBits;
 
   // copy data
-  Sfx.dataSize = Data.length()*2;
-  Sfx.data = (vuint8 *)Z_Malloc(Data.length()*2);
-  memcpy(Sfx.data, Data.Ptr(), Data.length()*2);
+  Sfx.dataSize = realLen*2;
+  Sfx.data = (vuint8 *)Z_Malloc(realLen*2);
+  memcpy(Sfx.data, Data.Ptr(), realLen*2);
 }
 
 
