@@ -479,7 +479,7 @@ static void CopySubsectors(VLevel *Level)
   for (int f = 0; f < Level->NumSegs; ++f) {
     if (!Level->Segs[f].front_sub) { GCon->Logf("Seg %d: front_sub is not set!", f); --setcount; }
   }
-  if (setcount != Level->NumSegs) GCon->Logf("WARNING: %d of %d segs has no front_sub!", Level->NumSegs-setcount);
+  if (setcount != Level->NumSegs) GCon->Logf("WARNING: %d of %d segs has no front_sub!", Level->NumSegs-setcount, Level->NumSegs);
   unguard;
 }
 

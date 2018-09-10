@@ -920,11 +920,10 @@ void VAcsObject::LoadEnhancedObject()
             if (lib->ArrayStore[impNum].Size != expectedSize)
             {
               Format = ACS_Unknown;
-              GCon->Logf("The array %s in %s has %ld elements, "
-                "but %s expects it to only have %ld.",
+              GCon->Logf("The array %s in %s has %d elements, but %s expects it to only have %d.",
                 parse, *W_LumpName(lib->LumpNum),
-                lib->ArrayStore[impNum].Size,
-                *W_LumpName(LumpNum), expectedSize);
+                (int)lib->ArrayStore[impNum].Size,
+                *W_LumpName(LumpNum), (int)expectedSize);
             }
           }
           do ; while (*++parse);

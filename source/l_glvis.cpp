@@ -48,8 +48,7 @@
 class TGLVisGUI : public TGLVis
 {
  public:
-  void DisplayMessage(const char *text, ...)
-    __attribute__((format(printf, 2, 3)));
+  void DisplayMessage(const char *text, ...) __attribute__((format(printf, 2, 3)));
   void DisplayStartMap(const char *levelname);
   void DisplayBaseVisProgress(int count, int total);
   void DisplayPortalVisProgress(int count, int total);
@@ -177,7 +176,7 @@ void TGLVisGUI::DisplayPortalVisProgress(int count, int total)
 
 void TGLVisGUI::DisplayMapDone(int accepts, int total)
 {
-  GCon->Logf(NAME_Dev, "%d accepts, %d rejects, %d%",
+  GCon->Logf(NAME_Dev, "%d accepts, %d rejects, %d%%",
     accepts, total - accepts, accepts * 100 / total);
 }
 

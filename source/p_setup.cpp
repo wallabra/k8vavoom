@@ -555,7 +555,7 @@ void VLevel::LoadMap(VName AMapName)
     //GCon->Logf("Polyobjs         %f", InitPolysTime);
     //GCon->Logf("Sector minmaxs   %f", MinMaxTime);
     //GCon->Logf("Wall shades      %f", WallShadesTime);
-    GCon->Logf("");
+    GCon->Logf("%s", ""); // shut up, gcc!
   }
   unguard;
 }

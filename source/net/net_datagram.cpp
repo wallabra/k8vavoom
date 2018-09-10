@@ -983,7 +983,7 @@ bool VDatagramSocket::IsLocalConnection () {
 //
 //==========================================================================
 static void PrintStats (VSocket *) {
-  GCon->Logf("");
+  GCon->Logf("%s", ""); // shut up, gcc, this is empty line!
 }
 
 
