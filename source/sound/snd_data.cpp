@@ -72,7 +72,7 @@ static TStrSet soundsWarned;
 
 VSoundManager::VSoundManager()
 : NumPlayerReserves(0)
-, CurrentChangePitch(7.0 / 255.0)
+, CurrentChangePitch(0) //7.0 / 255.0)
 {
   CurrentDefaultRolloff.RolloffType = ROLLOFF_Doom;
   CurrentDefaultRolloff.MinDistance = 0;

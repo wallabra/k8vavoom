@@ -198,6 +198,9 @@ VCvarB        VAudio::snd_swap_stereo("snd_swap_stereo", false, "Swap stereo cha
 VCvarI        VAudio::snd_channels("snd_channels", "128", "Number of sound channels.", CVAR_Archive);
 VCvarB        VAudio::snd_external_music("snd_external_music", true, "Allow external music remapping?", CVAR_Archive);
 
+static VCvarF snd_random_pitch("snd_random_pitch", "0.27", "Random pitch all sounds (0: none, otherwise max change).", CVAR_Archive);
+static VCvarF snd_random_pitch_boost("snd_random_pitch_boost", "1", "Random pitch will be multiplied by this value.", CVAR_Archive);
+
 //  Public CVars
 #if defined(DJGPP) || defined(_WIN32)
 VCvarB        snd_mid_player("snd_mid_player", false, "Allow MIDI?", CVAR_Archive);
@@ -334,81 +337,68 @@ void VAudio::PlaySound(int InSoundId, const TVec &origin,
   float Attenuation, bool Loop)
 {
   guard(VAudio::PlaySound);
-  if (!SoundDevice || !InSoundId || !MaxVolume || !volume)
-  {
-    return;
-  }
+  if (!SoundDevice || !InSoundId || !MaxVolume || !volume) return;
 
-  //  Find actual sound ID to use.
+  // find actual sound ID to use
   int sound_id = GSoundManager->ResolveSound(InSoundId);
 
   if (sound_id < 0 || sound_id >= GSoundManager->S_sfx.length()) return; // k8: just in case
   if (GSoundManager->S_sfx[sound_id].VolumeAmp <= 0) return; // nothing to see here, come along
 
-  //  If it's a looping sound and it's still playing, then continue
-  // playing the existing one.
-  for (int i = 0; i < NumChannels; i++)
-  {
-    if (Channel[i].origin_id == origin_id &&
-      Channel[i].channel == channel &&
-      Channel[i].sound_id == sound_id && Channel[i].Loop)
+  // if it's a looping sound and it's still playing, then continue playing the existing one
+  for (int i = 0; i < NumChannels; ++i) {
+    if (Channel[i].origin_id == origin_id && Channel[i].channel == channel &&
+        Channel[i].sound_id == sound_id && Channel[i].Loop)
     {
       return;
     }
   }
 
-  //  Apply sound volume.
+  // apply sound volume
   volume *= MaxVolume;
-
   // apply $volume
   volume *= GSoundManager->S_sfx[sound_id].VolumeAmp;
   if (volume <= 0) return; // nothing to see here, come along
 
-  //  Check if this sound is emited by the local player.
+  // check if this sound is emited by the local player
   bool LocalPlayerSound = (origin_id == -666 || origin_id == 0 || (cl && cl->MO && cl->MO->SoundOriginID == origin_id));
 
   // calculate the distance before other stuff so that we can throw out
-  // sounds that are beyond the hearing range.
+  // sounds that are beyond the hearing range
   int dist = 0;
-  if (origin_id && !LocalPlayerSound && Attenuation > 0 && cl)
-  {
-    dist = (int)(Length(origin - cl->ViewOrg) * Attenuation);
-  }
+  if (origin_id && !LocalPlayerSound && Attenuation > 0 && cl) dist = (int)(Length(origin-cl->ViewOrg)*Attenuation);
   //GCon->Logf("DISTANCE=%d", dist);
-  if (dist >= MaxSoundDist)
-  {
+  if (dist >= MaxSoundDist) {
     //GCon->Logf("  too far away (%d)", MaxSoundDist);
     return; // sound is beyond the hearing range...
   }
 
-  int priority = GSoundManager->S_sfx[sound_id].Priority *
-    (PRIORITY_MAX_ADJUST - PRIORITY_MAX_ADJUST * dist / MaxSoundDist);
+  int priority = GSoundManager->S_sfx[sound_id].Priority*(PRIORITY_MAX_ADJUST-PRIORITY_MAX_ADJUST*dist/MaxSoundDist);
 
   int chan = GetChannel(sound_id, origin_id, channel, priority);
-  if (chan == -1)
-  {
-    return; //no free channels.
-  }
+  if (chan == -1) return; // no free channels
 
   float pitch = 1.0;
-  if (GSoundManager->S_sfx[sound_id].ChangePitch)
-  {
-    pitch = 1.0 + (Random() - Random()) *
-      GSoundManager->S_sfx[sound_id].ChangePitch;
+  if (GSoundManager->S_sfx[sound_id].ChangePitch) {
+    pitch = 1.0+(RandomFull()-RandomFull())*(GSoundManager->S_sfx[sound_id].ChangePitch*snd_random_pitch_boost);
+    //fprintf(stderr, "SND0: randompitched to %f\n", pitch);
+  } else if (!LocalPlayerSound) {
+    float rpt = snd_random_pitch;
+    if (rpt > 0) {
+      if (rpt > 1) rpt = 1;
+      pitch = 1.0+(RandomFull()-RandomFull())*(rpt*snd_random_pitch_boost);
+      //fprintf(stderr, "SND1: randompitched to %f\n", pitch);
+    }
   }
 
   int handle;
   bool is3D;
-  if (!origin_id || LocalPlayerSound || Attenuation <= 0)
-  {
-    //  Local sound
+  if (!origin_id || LocalPlayerSound || Attenuation <= 0) {
+    // local sound
     handle = SoundDevice->PlaySound(sound_id, volume, 0, pitch, Loop);
     is3D = false;
-  }
-  else
-  {
-    handle = SoundDevice->PlaySound3D(sound_id, origin, velocity,
-      volume, pitch, Loop);
+  } else {
+    handle = SoundDevice->PlaySound3D(sound_id, origin, velocity, volume, pitch, Loop);
     is3D = true;
   }
   Channel[chan].origin_id = origin_id;

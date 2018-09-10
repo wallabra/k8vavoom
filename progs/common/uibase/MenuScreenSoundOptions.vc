@@ -36,7 +36,7 @@ override void CreateChoices()
   MenuChoiceSlider  Slider;
   MenuChoiceEnum    Enum;
   MenuTextButton    Btn;
-  int         currentY;
+  //int         currentY;
 
   currentY = ChoicesStartY;
 
@@ -97,11 +97,15 @@ override void CreateChoices()
   Slider.ValueChanging = &ChangeSoundChannels;
   currentY += Slider.Height;
 
+  /* this doesn't work yet
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Swap stereo";
   Enum.SetInitialValue(GetCvar('snd_swap_stereo'));
   Enum.ValueChanging = &ChangeSwapStereo;
+  */
+  CreateFloatSliderCvar("Random sound pitch", 'snd_random_pitch', 0.05, 0, 1);
+  CreateFloatSliderCvar("Random pitch boost", 'snd_random_pitch_boost', 0.1, 1, 4);
 }
 
 //==========================================================================
