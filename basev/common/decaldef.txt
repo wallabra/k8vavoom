@@ -1319,6 +1319,8 @@ generator SuperShotgun      BulletChip
 generator Chaingun      BulletChip
 
 generator PlasmaBall      PlasmaScorch
+generator PlasmaBall1     GreenPlasmaScorch
+generator PlasmaBall2     RedPlasmaScorch
 generator Rocket      Scorch
 generator BFGBall     BFGLightning
 //generator PlasmaBall1   GreenPlasmaScorch

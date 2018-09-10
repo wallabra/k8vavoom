@@ -382,6 +382,43 @@ actor PlasmaBall
   }
 }
 
+// --------------------------------------------------------------------------
+//
+// BFG 2704
+//
+// --------------------------------------------------------------------------
+
+actor PlasmaBall1 : PlasmaBall
+{
+  Damage 4
+  BounceType "Classic"
+  BounceFactor 1.0
+  Obituary "$ob_mpbfg_mbf"
+
+  states
+  {
+  Spawn:
+    PLS1 AB 6 Bright
+    Loop
+  Death:
+    PLS1 CDEFG 4 Bright
+    Stop
+  }
+}
+
+actor PlasmaBall2 : PlasmaBall1
+{
+  States
+  {
+  Spawn:
+    PLS2 AB 6 Bright
+    Loop
+  Death:
+    PLS2 CDE 4 Bright
+    Stop
+  }
+}
+
 //------------------------------------------------------------------------------
 actor BFG9000 : DoomWeapon 2006
 {

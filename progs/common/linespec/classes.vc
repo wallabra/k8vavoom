@@ -387,6 +387,8 @@ class Archvile : Actor decorate;
 class ArchvileFire : Actor decorate;
 class Rocket : Actor decorate;
 class PlasmaBall : Actor decorate;
+class PlasmaBall1 : Actor decorate;
+class PlasmaBall2 : Actor decorate;
 class BFG9000 : Weapon decorate;
 class BFGBall : Actor decorate;
 class BFGExtra : Actor decorate;
