@@ -2039,6 +2039,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
     }
 
     // get full name of the property
+    auto prloc = sc->GetLoc(); // for error messages
     sc->ExpectIdentifier();
     VStr Prop = sc->String;
     while (sc->Check(".")) {
@@ -2066,7 +2067,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
           case PROP_IntUnsupported:
             //FIXME
             sc->CheckNumberWithSign();
-            if (dbg_show_decorate_unsupported) GCon->Logf("Property %s in %s is not yet supported", *Prop, Class->GetName());
+            if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_IntIdUnsupported:
             //FIXME
@@ -2078,7 +2079,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
               sc->ExpectIdentifier();
               if (sc->Check(",")) sc->ExpectIdentifier();
               sc->SetCMode(oldcm);
-              if (dbg_show_decorate_unsupported) GCon->Logf("Property %s in %s is not yet supported", *Prop, Class->GetName());
+              if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             }
             break;
           case PROP_BitIndex:
@@ -2092,7 +2093,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
           case PROP_FloatUnsupported:
             //FIXME
             sc->ExpectFloatWithSign();
-            if (dbg_show_decorate_unsupported) GCon->Logf("Property %s in %s is not yet supported", *Prop, Class->GetName());
+            if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_Speed:
             sc->ExpectFloatWithSign();
@@ -2146,7 +2147,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
           case PROP_StrUnsupported:
             //FIXME
             sc->ExpectString();
-            if (dbg_show_decorate_unsupported) GCon->Logf("Property %s in %s is not yet supported", *Prop, Class->GetName());
+            if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_Class:
             sc->ExpectString();
@@ -2286,7 +2287,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
               else if (sc->Check("OptFuzzy")) RenderStyle = STYLE_OptFuzzy;
               else if (sc->Check("Translucent")) RenderStyle = STYLE_Translucent;
               else if (sc->Check("Add")) RenderStyle = STYLE_Add;
-              else if (sc->Check("Stencil")) { if (dbg_show_decorate_unsupported) GCon->Logf("Render style Stencil in %s is not yet supported", Class->GetName()); } //FIXME
+              else if (sc->Check("Stencil")) { if (dbg_show_decorate_unsupported) GCon->Logf("%s: Render style 'Stencil' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName()); } //FIXME
               else if (sc->Check("Shaded")) RenderStyle = STYLE_Fuzzy; //FIXME -- This is an aproximated style... but it's not the desired one!
               else sc->Error("Bad render style");
               P.Field->SetByte(DefObj, RenderStyle);
@@ -2331,7 +2332,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
             } else {
               sc->ExpectString();
             }
-            if (dbg_show_decorate_unsupported) GCon->Logf("Property StencilColor in %s is not yet supported", Class->GetName());
+            if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property 'StencilColor' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName());
             break;
           case PROP_Monster:
             SetClassFieldBool(Class, "bShootable", true);
@@ -2608,7 +2609,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
     if (decorate_fail_on_unknown) {
       sc->Error(va("Unknown property \"%s\"", *Prop));
     } else {
-      GCon->Logf("WARNING: Unknown property \"%s\"", *Prop);
+      GCon->Logf("WARNING: %s: Unknown property \"%s\"", *prloc.toStringNoCol(), *Prop);
     }
     if (!sc->IsAtEol()) {
       sc->Crossed = false;
