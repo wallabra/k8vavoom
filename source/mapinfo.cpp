@@ -332,8 +332,9 @@ static int loadSkyTexture (VName name) {
     }
   }
   if (Tex < 0) {
-    GCon->Logf("WARNING: sky '%s' not found", *name);
-    return GTextureManager.DefaultTexture;
+    GCon->Logf("WARNING: sky '%s' not found; replaced with 'sky1'", *name);
+    return GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
+    //return GTextureManager.DefaultTexture;
   }
   GCon->Logf("WARNING: force-loaded sky '%s'", *name);
   return Tex;
