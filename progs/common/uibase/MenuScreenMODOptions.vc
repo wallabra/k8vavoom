@@ -281,5 +281,5 @@ defaultproperties
   ChoicesStartX = 200;
   ChoicesStartY = 37;
   SelectorType = MenuSelector_SmallRight;
-  Title = "MOD OUTPUT SETTINGS";
+  Title = "MODULE DECODER CFG";
 }

@@ -49,25 +49,27 @@ override void CreateChoices()
 
   Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
   Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "MIDI Output Device";
-  Enum.AddItem("System MIDI Device");
+  Enum.Text = "MIDI Decoder";
   Enum.AddItem("Timidity");
+  //Enum.AddItem("WildMidi");
+  //Enum.AddItem("FluidSynth");
   Enum.SetInitialValue(GetCvar('snd_mid_player'));
   Enum.ValueChanging = &ChangeMIDIPlayer;
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
   Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "MOD Music Output Device";
+  Enum.Text = "Module Decoder";
   Enum.AddItem("MikMod");
   Enum.AddItem("MODPlug");
+  Enum.AddItem("XMPLite");
   Enum.SetInitialValue(GetCvar('snd_mod_player'));
   Enum.ValueChanging = &ChangeMODPlayer;
   currentY += Enum.Height;
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
-  Btn.Text = "MOD Output Options";
+  Btn.Text = "Module Decoder Options";
   Btn.Activated = &ActivateMODOptions;
   currentY += Btn.Height + 10;
 
