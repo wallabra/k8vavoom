@@ -201,12 +201,8 @@ static VCvarF snd_random_pitch("snd_random_pitch", "0.27", "Random pitch all sou
 static VCvarF snd_random_pitch_boost("snd_random_pitch_boost", "1", "Random pitch will be multiplied by this value.", CVAR_Archive);
 
 //  Public CVars
-#if defined(DJGPP) || defined(_WIN32)
-VCvarB        snd_mid_player("snd_mid_player", false, "Allow MIDI?", CVAR_Archive);
-#else
-VCvarB        snd_mid_player("snd_mid_player", true, "Allow MIDI?", CVAR_Archive);
-#endif
-VCvarB        snd_mod_player("snd_mod_player", true, "Allow music modules?", CVAR_Archive);
+VCvarI snd_mid_player("snd_mid_player", "0", "MIDI player type", CVAR_Archive);
+VCvarI snd_mod_player("snd_mod_player", "2", "Module player type", CVAR_Archive);
 
 FAudioCodecDesc *FAudioCodecDesc::List;
 

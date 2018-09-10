@@ -66,6 +66,53 @@ static TStrSet soundsWarned;
 
 //==========================================================================
 //
+//  VSampleLoader::LoadFromAudioCodec
+//
+//  codec must be initialized, and it will not be owned
+//
+//==========================================================================
+void VSampleLoader::LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec) {
+  if (!Codec) return;
+  if (Codec->NumChannels != 1 && Codec->NumChannels != 2) return;
+  //fprintf(stderr, "loading from audio codec; chans=%d; rate=%d; bits=%d\n", Codec->NumChannels, Codec->SampleRate, Codec->SampleBits);
+
+  TArray<short> Data;
+  do {
+    short Buf[16*2048];
+    int SamplesDecoded = Codec->Decode(Buf, 16*1024);
+    if (SamplesDecoded > 0) {
+      int OldPos = Data.length();
+      Data.SetNumWithReserve(Data.length()+SamplesDecoded);
+      if (Codec->NumChannels == 2) {
+        // stereo
+        for (int i = 0; i < SamplesDecoded; ++i) {
+          // mix it
+          int v = Buf[i*2]+Buf[i*2+1];
+          if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
+          Data[OldPos+i] = v;
+        }
+      } else {
+        // mono
+        for (int i = 0; i < SamplesDecoded; ++i) Data[OldPos+i] = Buf[i];
+      }
+    }
+  } while (!Codec->Finished());
+
+  if (!Data.length()) return;
+
+  // copy parameters
+  Sfx.SampleRate = Codec->SampleRate;
+  Sfx.SampleBits = Codec->SampleBits;
+
+  // copy data
+  Sfx.DataSize = Data.length()*2;
+  Sfx.Data = (vuint8 *)Z_Malloc(Data.length()*2);
+  memcpy(Sfx.Data, Data.Ptr(), Data.length()*2);
+}
+
+
+//==========================================================================
+//
 //  VSoundManager::VSoundManager
 //
 //==========================================================================

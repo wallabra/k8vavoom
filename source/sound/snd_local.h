@@ -231,6 +231,8 @@ public:
 };
 
 
+class VAudioCodec;
+
 //  Loader of sound samples.
 class VSampleLoader : public VInterface
 {
@@ -245,6 +247,9 @@ public:
     List = this;
   }
   virtual void Load(sfxinfo_t&, VStream&) = 0;
+
+  // codec must be initialized, and it will not be owned
+  void LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec);
 };
 
 //  Streamed audio decoder interface.

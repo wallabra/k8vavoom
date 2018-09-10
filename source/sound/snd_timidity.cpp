@@ -189,7 +189,7 @@ int VTimidityAudioCodec::ctl_msg(int type, int verbosity_level, const char *fmt,
 VAudioCodec *VTimidityAudioCodec::Create(VStream *InStrm)
 {
   guard(VTimidityAudioCodec::Create);
-  if (snd_mid_player != 1)
+  if (snd_mid_player != 0)
   {
     return nullptr;
   }
