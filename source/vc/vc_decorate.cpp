@@ -1740,10 +1740,31 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         State->Frame |= VState::FF_FULLBRIGHT;
         continue;
       }
+      // check for canrise parameter
+      if (!sc->String.ICmp("CanRaise")) {
+        GCon->Logf("%s: unsupported DECORATE 'CanRaise' attribute", *sc->GetLoc().toStringNoCol());
+        State->Frame |= VState::FF_CANRAISE;
+        continue;
+      }
+
+      //FIXME: check for light parameter (unsupported for now)
+      if (!sc->String.ICmp("Light")) {
+        //LIGHT(UNMNRALR)
+        GCon->Logf("%s: unsupported DECORATE 'Light' attribute", *sc->GetLoc().toStringNoCol());
+        if (!sc->Crossed) {
+          if (sc->Check("(")) {
+            while (!sc->IsAtEol()) {
+              if (sc->Check(")")) break;
+              sc->GetString();
+            }
+          }
+        }
+        continue;
+      }
 
       // check for other parameters
       if (!sc->String.ICmp("Fast") || !sc->String.ICmp("CanRaise") || !sc->String.ICmp("NoDelay") || !sc->String.ICmp("Slow")) {
-        GCon->Logf("unsupported DECORATE state keyword: '%s'", *sc->String);
+        GCon->Logf("%s: unsupported DECORATE state keyword: '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
         continue;
       }
 
