@@ -2493,10 +2493,16 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
                 g = (Col >> 8) & 255;
                 b = Col & 255;
               }
+              sc->ResetCrossed();
               sc->Check(",");
-              sc->ExpectFloat();
-              a = MID(0, int(sc->Float * 255), 254);
-              if (a > 250) a = 250;
+              // alpha may be missing
+              if (!sc->Crossed) {
+                sc->ExpectFloat();
+                a = MID(0, int(sc->Float * 255), 254);
+                if (a > 250) a = 250;
+              } else {
+                a = 88; // default alpha, around 0.(3)
+              }
               P.Field->SetInt(DefObj, (r << 16) | (g << 8) | b | (a << 24));
             }
             break;
