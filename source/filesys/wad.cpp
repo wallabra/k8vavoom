@@ -227,10 +227,7 @@ int W_CheckNumForName (VName Name, EWadNamespace NS) {
 int W_GetNumForName (VName Name, EWadNamespace NS) {
   guard(W_GetNumForName);
   int i = W_CheckNumForName(Name, NS);
-  if (i == -1) {
-    *(int *)0 = 0;
-    Sys_Error("W_GetNumForName: \"%s\" not found!", *Name);
-  }
+  if (i == -1) Sys_Error("W_GetNumForName: \"%s\" not found!", *Name);
   return i;
   unguard;
 }
