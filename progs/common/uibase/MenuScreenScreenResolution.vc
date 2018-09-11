@@ -25,21 +25,20 @@
 
 class MenuScreenScreenResolution : MenuScreen;
 
-struct mode_t
-{
+struct mode_t {
   int   width;
   int   height;
 };
 
-mode_t        modes[6];
-int         depths[3];
+mode_t modes[6];
+int depths[3];
 
-MenuChoiceEnum    Mode;
-MenuInputLine   Width;
-MenuInputLine   Height;
-MenuChoiceEnum    Depth;
-MenuChoiceEnum    Windowed;
-MenuChoiceEnum    VSync;
+MenuChoiceEnum Mode;
+MenuInputLine Width;
+MenuInputLine Height;
+MenuChoiceEnum Depth;
+MenuChoiceEnum Windowed;
+MenuChoiceEnum VSync;
 
 //==========================================================================
 //
@@ -115,25 +114,12 @@ override void CreateChoices()
 
 final int GetModeValue()
 {
-  int w;
-  int h;
-  int mi;
-
-  w = GetCvar('screen_width');
-  h = GetCvar('screen_height');
-
-  for (mi = 0; mi < 9; mi++)
-  {
-    if (modes[mi].width == w && modes[mi].height == h)
-    {
-      break;
-    }
+  int w = GetCvar('screen_width');
+  int h = GetCvar('screen_height');
+  foreach (auto mi; 0..modes.length) {
+    if (modes[mi].width == w && modes[mi].height == h) return mi;
   }
-  if (mi == 9)
-  {
-    mi = 0;
-  }
-  return mi;
+  return 0;
 }
 
 //==========================================================================
