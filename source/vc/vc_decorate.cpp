@@ -53,6 +53,7 @@ enum {
 
 enum {
   PROP_Int,
+  PROP_IntTrunced,
   PROP_IntConst,
   PROP_IntUnsupported,
   PROP_IntIdUnsupported,
@@ -253,6 +254,9 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
     for (VXmlNode *PN = N->FirstChild; PN; PN = PN->NextSibling) {
       if (PN->Name == "prop_int") {
         VPropDef &P = Lst.NewProp(PROP_Int, PN);
+        P.SetField(Lst.Class, *PN->GetAttribute("property"));
+      } else if (PN->Name == "prop_int_trunced") {
+        VPropDef &P = Lst.NewProp(PROP_IntTrunced, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "prop_int_const") {
         VPropDef &P = Lst.NewProp(PROP_IntConst, PN);
@@ -2085,6 +2089,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
           case PROP_Int:
             sc->ExpectNumberWithSign();
             P.Field->SetInt(DefObj, sc->Number);
+            break;
+          case PROP_IntTrunced:
+            sc->ExpectFloatWithSign();
+            P.Field->SetInt(DefObj, (int)sc->Float);
             break;
           case PROP_IntConst:
             P.Field->SetInt(DefObj, P.IConst);
