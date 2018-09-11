@@ -254,9 +254,9 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
             } else if (sc->Check("flipy")) {
               Flip |= 2;
             } else if (sc->Check("rotate")) {
-              sc->ExpectNumber();
+              sc->ExpectNumberWithSign();
               int Rot = ((sc->Number+90)%360)-90;
-              if (Rot != 0 && Rot !=90 && Rot != 180 && Rot != -90) sc->Error("Rotation must be a multiple of 90 degrees.");
+              if (Rot != 0 && Rot != 90 && Rot != 180 && Rot != -90) sc->Error("Rotation must be a multiple of 90 degrees.");
               P.Rot = (Rot/90)&3;
             } else if (sc->Check("translation")) {
               Format = TEXFMT_RGBA;
