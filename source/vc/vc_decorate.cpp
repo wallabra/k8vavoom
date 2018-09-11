@@ -1706,15 +1706,21 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
 
     // sprite name
     if (TmpName.Length() != 4) sc->Error("Invalid sprite name");
-    if (TmpName == "####") TmpName = VStr("TNT1"); // Waterlab GZD hack
-    State->SpriteName = *TmpName.ToLower();
+    if (TmpName == "####" || TmpName == "----") {
+      State->SpriteName = NAME_None; // don't change
+    } else {
+      State->SpriteName = *TmpName.ToLower();
+    }
 
     // frame
     sc->ExpectString();
     char FChar = VStr::ToUpper(sc->String[0]);
-    if (FChar == '#') FChar = 'A'; // Waterlab GZD hack
-    if (FChar < 'A' || FChar > ']') sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FChar));
-    State->Frame = FChar - 'A';
+    if (FChar == '#' || FChar == '-') {
+      State->Frame = VState::FF_DONTCHANGE;
+    } else {
+      if (FChar < 'A' || FChar > ']') sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FChar));
+      State->Frame = FChar - 'A';
+    }
     VStr FramesString = sc->String;
 
     // tics
@@ -1874,14 +1880,19 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
 
     for (int i = 1; i < FramesString.Length(); ++i) {
       char FSChar = VStr::ToUpper(FramesString[i]);
-      if (FChar == '#') FChar = 'A'; // Waterlab GZD hack
-      if (FChar < 'A' || FChar > ']') sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FChar));
+      vint32 frm;
+      if (FSChar == '#' || FSChar == '-') {
+        frm = VState::FF_DONTCHANGE;
+      } else {
+        if (FSChar < 'A' || FSChar > ']') sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FSChar));
+        frm = FSChar-'A';
+      }
 
       // create a new state
       VState *s2 = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
       States.Append(s2);
       s2->SpriteName = State->SpriteName;
-      s2->Frame = (State->Frame&VState::FF_FULLBRIGHT)|(FSChar-'A');
+      s2->Frame = (State->Frame&VState::FF_FULLBRIGHT)|frm;
       s2->Time = State->Time;
       s2->Misc1 = State->Misc1;
       s2->Misc2 = State->Misc2;

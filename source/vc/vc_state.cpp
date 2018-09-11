@@ -107,7 +107,7 @@ void VState::Serialise (VStream &Strm) {
 //==========================================================================
 void VState::PostLoad () {
   guard(VState::PostLoad);
-  SpriteIndex = VClass::FindSprite(SpriteName);
+  SpriteIndex = (SpriteName != NAME_None ? VClass::FindSprite(SpriteName) : 1);
   NetNext = Next;
   unguard;
 }

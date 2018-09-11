@@ -660,7 +660,7 @@ static void ReadState (int num) {
         GCon->Logf("WARNING! Bad sprite index %d", value);
       } else {
         States[num]->SpriteName = Sprites[value];
-        States[num]->SpriteIndex = VClass::FindSprite(Sprites[value]);
+        States[num]->SpriteIndex = (Sprites[value] != NAME_None ? VClass::FindSprite(Sprites[value]) : 1);
       }
     } else if (!VStr::ICmp(String, "Sprite subnumber")) {
       if (value&0x8000) {

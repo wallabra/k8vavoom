@@ -267,14 +267,15 @@ bool VEntity::SetState(VState *InState)
       return false;
     }
 
-    if (st->SpriteIndex == 1)
+    if (st->SpriteIndex == 1 || (st->Frame&VState::FF_DONTCHANGE) != 0)
     {
       //  1 is ----, which is "do not change sprite"
-      if (!(EntityFlags & EF_UseDispState))
-      {
+      if ((EntityFlags&EF_UseDispState) == 0) {
         DispState = State;
         EntityFlags |= EF_UseDispState;
       }
+      if (st->SpriteIndex != 1) DispState->SpriteIndex = st->SpriteIndex;
+      if ((st->Frame&VState::FF_DONTCHANGE) != 0) DispState->Frame = st->Frame;
     }
     else
     {

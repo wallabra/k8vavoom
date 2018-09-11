@@ -943,7 +943,7 @@ void PR_WriteOne (const VFieldType &type) {
       {
         VState *st = (VState *)PR_PopPtr();
         if (st) {
-          snprintf(sptr, maxlen, "<state:%s %d %f>", *st->SpriteName, st->Frame, st->Time);
+          snprintf(sptr, maxlen, "<state:%s %d %f>", (st->SpriteName != NAME_None ? *st->SpriteName : "<####>"), st->Frame, st->Time);
         } else {
           snprintf(sptr, maxlen, "<state>");
         }
