@@ -468,7 +468,7 @@
     <prop_start_item name="Player.StartItem" />
     <prop_float name="Player.ViewHeight" property="ViewHeight" />
     <prop_class name="Player.MorphWeapon" property="MorphWeapon" />
-    <prop_int_id_unsupported name="Player.WeaponSlot" />
+    <prop_skip_line_unsupported name="Player.WeaponSlot" />
   </class>
 
   <class name="MorphProjectile">

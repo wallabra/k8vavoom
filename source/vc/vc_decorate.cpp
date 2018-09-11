@@ -101,6 +101,7 @@ enum {
   PROP_HexenArmor,
   PROP_StartItem,
   PROP_MorphStyle,
+  PROP_SkipLineUnsupported,
 };
 
 enum {
@@ -263,6 +264,8 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         /*VPropDef &P =*/(void)Lst.NewProp(PROP_FloatUnsupported, PN);
       } else if (PN->Name == "prop_int_id_unsupported") {
         /*VPropDef &P =*/(void)Lst.NewProp(PROP_IntIdUnsupported, PN);
+      } else if (PN->Name == "prop_skip_line_unsupported") {
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_SkipLineUnsupported, PN);
       } else if (PN->Name == "prop_bit_index") {
         VPropDef &P = Lst.NewProp(PROP_BitIndex, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -2619,6 +2622,15 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
               while (sc->Check("|"));
               if (HaveParen) sc->Expect(")");
               P.Field->SetInt(DefObj, Val);
+            }
+            break;
+          case PROP_SkipLineUnsupported:
+            {
+              if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+              sc->ResetCrossed();
+              while (sc->GetString()) {
+                if (sc->Crossed) { sc->UnGet(); break; }
+              }
             }
             break;
         }
