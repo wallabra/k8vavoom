@@ -462,7 +462,7 @@ native static final name GetClassGameObjName (class C);
 // ////////////////////////////////////////////////////////////////////////// //
 // state methods
 
-enum StateFrameType {
+enum StateTicKind {
   Normal,
   Random, // random(Arg1, Arg2)
 }
@@ -487,7 +487,7 @@ native static final int GetStateMisc1 (state State);
 native static final int GetStateMisc2 (state State);
 native static final void SetStateMisc1 (state State, int v);
 native static final void SetStateMisc2 (state State, int v);
-native static final StateFrameType GetStateFrameType (state State);
+native static final StateTicKind GetStateTicKind (state State);
 native static final int GetStateArgN (state State, int argn); // argn is zero-based
 native static final void SetStateArgN (state State, int argn, int v); // argn is zero-based
 native static final int GetStateFRN (state State);

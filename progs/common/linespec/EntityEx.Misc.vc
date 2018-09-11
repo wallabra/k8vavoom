@@ -618,9 +618,9 @@ final bool HeightClip()
 
 final override float GetStateTime(state AState, float AStateTime)
 {
-  switch (GetStateFrameType(AState)) {
-    //case StateFrameType.Normal: return AStateTime;
-    case StateFrameType.Random: AStateTime = float(GetStateArgN(AState, 0)+trunc(Random()*(GetStateArgN(AState, 1)-GetStateArgN(AState, 0)+1)))/35.0f; break;
+  switch (GetStateTicKind(AState)) {
+    //case StateTicKind.Normal: return AStateTime;
+    case StateTicKind.Random: AStateTime = float(GetStateArgN(AState, 0)+trunc(Random()*(GetStateArgN(AState, 1)-GetStateArgN(AState, 0)+1)))/35.0f; break;
     //default: return AStateTime;
   }
   if (IsFast()) {

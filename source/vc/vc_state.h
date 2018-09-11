@@ -33,14 +33,14 @@ public:
   enum { FF_FRAMEMASK  = 0x7f };
   enum { VaVoom, D2DF };
 
-  enum FrameType {
-    FRM_Normal,
-    FRM_Random, // random(Arg1, Arg2)
+  enum TicKind {
+    TCK_Normal,
+    TCK_Random, // random(Arg1, Arg2)
   };
 
   // persistent fields
   vint32 Type;
-  FrameType FrmType;
+  TicKind TicType;
   // state info
   VName SpriteName;
   vint32 Frame;

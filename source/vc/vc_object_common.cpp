@@ -694,10 +694,10 @@ IMPLEMENT_FUNCTION(VObject, SetStateMisc2) {
   if (State) State->Misc2 = v;
 }
 
-//native static final StateFrameType GetStateFrameType (state State);
-IMPLEMENT_FUNCTION(VObject, GetStateFrameType) {
+//native static final StateFrameType GetStateTicKind (state State);
+IMPLEMENT_FUNCTION(VObject, GetStateTicKind) {
   P_GET_PTR(VState, State);
-  RET_INT(State ? State->FrmType : 0);
+  RET_INT(State ? State->TicType : 0);
 }
 
 //native static final int GetStateArgN (state State, int argn);
