@@ -297,13 +297,15 @@ class VLevelInfo : public VThinker
     P_PASS_FLOAT(DeltaTime);
     EV_RET_VOID(NAME_UpdateParticle);
   }
-  int eventAcsSpawnThing(VName Name, TVec Org, int Tid, float Angle)
+  //final override int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle, bool forced)
+  int eventAcsSpawnThing(VName Name, TVec Org, int Tid, float Angle, bool forced=false)
   {
     P_PASS_SELF;
     P_PASS_NAME(Name);
     P_PASS_VEC(Org);
     P_PASS_INT(Tid);
     P_PASS_FLOAT(Angle);
+    P_PASS_BOOL(forced);
     EV_RET_INT(NAME_AcsSpawnThing);
   }
   int eventAcsSpawnSpot(VName Name, int SpotTid, int Tid, float Angle, bool forced=false)
