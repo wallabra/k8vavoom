@@ -3113,6 +3113,17 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
 
 //==========================================================================
 //
+//  ParseDamageType
+//
+//==========================================================================
+static void ParseDamageType (VScriptParser *sc) {
+  GCon->Logf("WARNING: %s: 'DamageType' in decorate is not implemented yet!", *sc->GetLoc().toStringNoCol());
+  sc->SkipBracketed();
+}
+
+
+//==========================================================================
+//
 //  ParseDecorate
 //
 //==========================================================================
@@ -3142,6 +3153,8 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) 
       ParseOldDecoration(sc, OLDDEC_Pickup);
     } else if (sc->Check("projectile")) {
       ParseOldDecoration(sc, OLDDEC_Projectile);
+    } else if (sc->Check("damagetype")) {
+      ParseDamageType(sc);
     } else {
       ParseOldDecoration(sc, OLDDEC_Decoration);
     }
