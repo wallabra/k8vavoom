@@ -2564,6 +2564,9 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
               } else {
                 sc->ExpectString();
                 Col = M_ParseColour(sc->String);
+                while (sc->Check(",")) {
+                  sc->ExpectFloat();
+                }
               }
               P.Field->SetInt(DefObj, Col);
             }
