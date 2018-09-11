@@ -146,7 +146,15 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
   Format = TEXFMT_8;
 
   sc->SetCMode(true);
+
+  sc->ResetQuoted();
   sc->ExpectString();
+  if (!sc->QuotedString && sc->String.ICmp("optional") == 0) {
+    //FIXME!
+    GCon->Logf("WARNING: %s: 'optional' is doing the opposite of what it should, lol", *sc->GetLoc().toStringNoCol());
+    sc->ExpectString();
+  }
+
   Name = VName(*sc->String, VName::AddLower8);
   sc->Expect(",");
   sc->ExpectNumber();
@@ -178,8 +186,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         noDecals = true;
         staticNoDecals = true;
         animNoDecals = true;
-      }
-      else if (sc->Check("patch")) {
+      } else if (sc->Check("patch")) {
         VTexPatch &P = Parts.Alloc();
         sc->ExpectString();
         VName PatchName = VName(*sc->String.ToLower());
@@ -332,7 +339,12 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
               else if (sc->Check("reversesubtract")) P.Style = STYLE_ReverseSubtract;
               else if (sc->Check("modulate")) P.Style = STYLE_Modulate;
               else if (sc->Check("copyalpha")) P.Style = STYLE_CopyAlpha;
-              else sc->Error("Bad style");
+              // Overlay: This is the same as CopyAlpha, except it only copies the patch's alpha channel where it has a higher alpha than what's underneath.
+              else if (sc->Check("overlay")) {
+                //FIXME
+                GCon->Logf("WARNING: %s: unsupported texture style 'Overlay', approximated with 'CopyAlpha'", *sc->GetLoc().toStringNoCol());
+                P.Style = STYLE_CopyAlpha;
+              } else sc->Error(va("Bad style: '%s'", *sc->String));
               if (P.Style != STYLE_Copy) Format = TEXFMT_RGBA;
             } else {
               sc->Error("Bad texture patch command");

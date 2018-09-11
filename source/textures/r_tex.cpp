@@ -785,7 +785,7 @@ void VTextureManager::AddHiResTextures () {
       } else if (sc->Check("graphic")) {
         AddTexture(new VMultiPatchTexture(sc, TEXTYPE_Pic));
       } else {
-        sc->Error("Bad command");
+        sc->Error(va("Bad command: '%s'", *sc->String));
       }
     }
     delete sc;
