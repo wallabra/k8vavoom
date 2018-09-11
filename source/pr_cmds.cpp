@@ -258,13 +258,14 @@ VStr PF_FormatString () {
           switch (ptypes[pi].Type) {
             case TYPE_Name:
               {
-                VName n = *(VName*)&params[pi].i;
+                VName n = *(VName *)&params[pi].i;
+                if (!n.isValid()) { VObject::VMDumpCallStack(); /* *(int*)0 = 0;*/ Sys_Error("garbage name"); }
                 if (n == NAME_None) pbuf.putStr(VStr("<none>"), width, toRight, zeroFill); else pbuf.putStr(VStr(*n), width, toRight, zeroFill);
               }
               break;
             case TYPE_String:
-              pbuf.putStr(*(VStr*)&params[pi].p, width, toRight, zeroFill);
-              ((VStr*)&params[pi].p)->Clean();
+              pbuf.putStr(*(VStr *)&params[pi].p, width, toRight, zeroFill);
+              ((VStr *)&params[pi].p)->Clean();
               break;
             default: VObject::VMDumpCallStack(); Sys_Error("Invalid argument to format specifier '%c'", fspec);
           }
