@@ -73,6 +73,8 @@ public:
   inline const char *operator * () const { return Names[Index]->Name; }
   inline vint32 GetIndex () const { return Index; }
 
+  inline bool isValid () const { return (Index >= 0 && Index < Names.length()); }
+
   // comparisons
   inline bool operator == (const VName &Other) const { return (Index == Other.Index); }
   inline bool operator != (const VName &Other) const { return (Index != Other.Index); }
