@@ -1713,7 +1713,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     sc->ExpectString();
     char FChar = VStr::ToUpper(sc->String[0]);
     if (FChar == '#') FChar = 'A'; // Waterlab GZD hack
-    if (FChar < 'A' || FChar > ']') sc->Error("Frames must be A-Z, [, \\ or ]");
+    if (FChar < 'A' || FChar > ']') sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FChar));
     State->Frame = FChar - 'A';
     VStr FramesString = sc->String;
 
@@ -1875,7 +1875,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     for (int i = 1; i < FramesString.Length(); ++i) {
       char FSChar = VStr::ToUpper(FramesString[i]);
       if (FChar == '#') FChar = 'A'; // Waterlab GZD hack
-      if (FSChar < 'A' || FSChar > ']') sc->Error("Frames must be A-Z, [, \\ or ]");
+      if (FChar < 'A' || FChar > ']') sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FChar));
 
       // create a new state
       VState *s2 = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
@@ -2721,17 +2721,19 @@ static void ParseOldDecStates (VScriptParser *sc, TArray<VState *> &States, VCla
 
     bool GotState = false;
     while (*pFrame) {
-      if (*pFrame == ' ') {
-      } else if (*pFrame == '*') {
+      char cc = *pFrame;
+      if (cc == '#') cc = 'A'; // hideous destructor hack
+      if (cc == ' ') {
+      } else if (cc == '*') {
         if (!GotState) sc->Error("* must come after a frame");
         States[States.Num()-1]->Frame |= VState::FF_FULLBRIGHT;
-      } else if (*pFrame < 'A' || *pFrame > ']') {
+      } else if (cc < 'A' || cc > ']') {
         sc->Error("Frames must be A-Z, [, \\, or ]");
       } else {
         GotState = true;
         VState *State = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
         States.Append(State);
-        State->Frame = *pFrame-'A';
+        State->Frame = cc-'A';
         State->Time = float(Duration)/35.0;
       }
       ++pFrame;
