@@ -186,7 +186,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         noDecals = true;
         staticNoDecals = true;
         animNoDecals = true;
-      } else if (sc->Check("patch")) {
+      } else if (sc->Check("patch") || sc->Check("graphic")) {
         VTexPatch &P = Parts.Alloc();
         sc->ExpectString();
         VName PatchName = VName(*sc->String.ToLower());
@@ -260,6 +260,9 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
               Flip |= 1;
             } else if (sc->Check("flipy")) {
               Flip |= 2;
+            } else if (sc->Check("useoffsets")) {
+              //FIXME!
+              GCon->Logf("WARNING: %s: 'UseOffsets' is not supported yet", *sc->GetLoc().toStringNoCol());
             } else if (sc->Check("rotate")) {
               sc->ExpectNumberWithSign();
               int Rot = ((sc->Number+90)%360)-90;
@@ -347,7 +350,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
               } else sc->Error(va("Bad style: '%s'", *sc->String));
               if (P.Style != STYLE_Copy) Format = TEXFMT_RGBA;
             } else {
-              sc->Error("Bad texture patch command");
+              sc->Error(va("Bad texture patch command '%s'", *sc->String));
             }
           }
         }
@@ -360,7 +363,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
           P.Rot |= 4;
         }
       } else {
-        sc->Error("Bad texture command");
+        sc->Error(va("Bad texture command '%s'", *sc->String));
       }
     }
 
