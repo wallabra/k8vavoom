@@ -232,7 +232,7 @@ extern bool       MirrorClip;
 
 extern int        r_dlightframecount;
 extern bool       r_light_add;
-extern vuint32      blocklights[18 * 18];
+//extern vuint32      blocklights[18 * 18];
 extern vuint32      blocklightsr[18 * 18];
 extern vuint32      blocklightsg[18 * 18];
 extern vuint32      blocklightsb[18 * 18];

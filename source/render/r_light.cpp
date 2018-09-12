@@ -31,13 +31,19 @@
 int r_dlightframecount;
 bool r_light_add;
 
-vuint32 blocklights[18*18];
+//vuint32 blocklights[18*18];
 vuint32 blocklightsr[18*18];
 vuint32 blocklightsg[18*18];
 vuint32 blocklightsb[18*18];
 vuint32 blockaddlightsr[18*18];
 vuint32 blockaddlightsg[18*18];
 vuint32 blockaddlightsb[18*18];
+
+// subtractive
+//static vuint32 blocklightsS[18*18];
+static vuint32 blocklightsrS[18*18];
+static vuint32 blocklightsgS[18*18];
+static vuint32 blocklightsbS[18*18];
 
 byte light_remap[256];
 VCvarB r_darken("r_darken", true, "Allow \"darken\" lights?", CVAR_Archive);
@@ -51,6 +57,8 @@ VCvarB r_static_add("r_static_add", true, "Are static lights additive?", CVAR_Ar
 VCvarF r_specular("r_specular", "0.1", "Specular light.", CVAR_Archive);
 
 VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.8", "How close dynamic lights should be to be filtered out?\n(0.6-0.9 is usually ok).", CVAR_Archive);
+
+static VCvarB r_allow_subtractive_lights("r_allow_subtractive_lights", true, "Are subtractive lights allowed?", /*CVAR_Archive*/0);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -70,6 +78,34 @@ static byte *facevis;
 static bool is_coloured;
 
 static int c_bad;
+
+
+//==========================================================================
+//
+//  getSurfLightLevelInt
+//
+//==========================================================================
+static inline int getSurfLightLevelInt (const surface_t *surf) {
+  if (!surf || r_ambient == -666) return 0;
+  int slins = (surf->Light>>24)&0xff;
+  slins = MAX(slins, r_ambient);
+  if (slins > 255) slins = 255;
+  return slins;
+}
+
+
+//==========================================================================
+//
+//  getSurfLightLevelInt
+//
+//==========================================================================
+static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
+  if (!surf || r_ambient == -666) return 0;
+  int slins = (surf->Light>>24)&0xff;
+  slins = MAX(slins, r_ambient);
+  if (slins > 255) slins = 255;
+  return (surf->Light&0xffffff)|(slins<<24);
+}
 
 
 //==========================================================================
@@ -554,6 +590,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   dl->Owner = Owner;
   dl->origin = lorg;
   dl->radius = radius;
+  dl->type = DLTYPE_Point;
   return dl;
 
   unguard;
@@ -705,26 +742,29 @@ vuint32 VRenderLevel::LightPoint (const TVec &p) {
   if (sub->dlightframe == r_dlightframecount) {
     for (int i = 0; i < MAX_DLIGHTS; ++i) {
       if (!(sub->dlightbits&(1<<i))) continue;
+      const dlight_t &dl = DLights[i];
+      if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
       if (r_dynamic_clip) {
         vuint8 *dyn_facevis = Level->LeafPVS(sub);
-        int leafnum = Level->PointInSubsector(DLights[i].origin)-Level->Subsectors;
+        int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
         // check potential visibility
         if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
       }
-      float add = (DLights[i].radius - DLights[i].minlight)-Length(p-DLights[i].origin);
+      float add = (dl.radius-dl.minlight)-Length(p-dl.origin);
       if (add > 0) {
+        if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;
-        lr += add*((DLights[i].colour>>16)&255)/255.0;
-        lg += add*((DLights[i].colour>>8)&255)/255.0;
-        lb += add*(DLights[i].colour&255)/255.0;
+        lr += add*((dl.colour>>16)&255)/255.0;
+        lg += add*((dl.colour>>8)&255)/255.0;
+        lb += add*(dl.colour&255)/255.0;
       }
     }
   }
 
-  if (l > 255) l = 255;
-  if (lr > 255) lr = 255;
-  if (lg > 255) lg = 255;
-  if (lb > 255) lb = 255;
+  if (l > 255) l = 255; else if (l < 0) l = 0;
+  if (lr > 255) lr = 255; else if (lr < 0) lr = 0;
+  if (lg > 255) lg = 255; else if (lg < 0) lg = 0;
+  if (lb > 255) lb = 255; else if (lb < 0) lb = 0;
 
   return ((int)l<<24)|((int)lr<<16)|((int)lg<<8)|((int)lb);
   unguard;
@@ -738,11 +778,8 @@ vuint32 VRenderLevel::LightPoint (const TVec &p) {
 //==========================================================================
 void VRenderLevel::AddDynamicLights (surface_t *surf) {
   guard(VRenderLevel::AddDynamicLights);
-  int lnum;
-  int sd, td;
   float dist, rad, minlight, rmul, gmul, bmul;
   TVec impact, local;
-  int s, t, i;
   int smax, tmax;
   texinfo_t *tex;
   subsector_t *sub;
@@ -752,33 +789,37 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
   tmax = (surf->extents[1]>>4)+1;
   tex = surf->texinfo;
 
-  for (lnum = 0; lnum < MAX_DLIGHTS; ++lnum) {
+  for (int lnum = 0; lnum < MAX_DLIGHTS; ++lnum) {
     if (!(surf->dlightbits&(1<<lnum))) continue; // not lit by this light
 
-    rad = DLights[lnum].radius;
-    dist = DotProduct(DLights[lnum].origin, surf->plane->normal)-surf->plane->dist;
+    const dlight_t &dl = DLights[lnum];
+    //if (dl.type == DLTYPE_Subtractive) GCon->Logf("***SUBTRACTIVE LIGHT!");
+    if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
+
+    rad = dl.radius;
+    dist = DotProduct(dl.origin, surf->plane->normal)-surf->plane->dist;
     if (r_dynamic_clip) {
       if (dist <= -0.1) continue;
     }
 
     rad -= fabs(dist);
-    minlight = DLights[lnum].minlight;
+    minlight = dl.minlight;
     if (rad < minlight) continue;
     minlight = rad-minlight;
 
-    impact = DLights[lnum].origin-surf->plane->normal*dist;
+    impact = dl.origin-surf->plane->normal*dist;
 
     if (r_dynamic_clip) {
       sub = Level->PointInSubsector(impact);
       vuint8 *dyn_facevis = Level->LeafPVS(sub);
-      leafnum = Level->PointInSubsector(DLights[lnum].origin)-Level->Subsectors;
+      leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
       // check potential visibility
       if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
     }
 
-    rmul = (DLights[lnum].colour>>16)&255;
-    gmul = (DLights[lnum].colour>>8)&255;
-    bmul = DLights[lnum].colour&255;
+    rmul = (dl.colour>>16)&255;
+    gmul = (dl.colour>>8)&255;
+    bmul = dl.colour&255;
 
     local.x = DotProduct(impact, tex->saxis)+tex->soffs;
     local.y = DotProduct(impact, tex->taxis)+tex->toffs;
@@ -786,11 +827,11 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     local.x -= surf->texturemins[0];
     local.y -= surf->texturemins[1];
 
-    for (t = 0; t < tmax; ++t) {
-      td = (int)local.y-t*16;
+    for (int t = 0; t < tmax; ++t) {
+      int td = (int)local.y-t*16;
       if (td < 0) td = -td;
-      for (s = 0; s < smax; ++s) {
-        sd = (int)local.x-s*16;
+      for (int s = 0; s < smax; ++s) {
+        int sd = (int)local.x-s*16;
         if (sd < 0) sd = -sd;
         if (sd > td) {
           dist = sd+(td>>1);
@@ -798,12 +839,19 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
           dist = td+(sd>>1);
         }
         if (dist < minlight) {
-          i = t*smax+s;
-          blocklights[i] += (vuint32)((rad-dist)*256.0);
-          blocklightsr[i] += (vuint32)((rad-dist)*rmul);
-          blocklightsg[i] += (vuint32)((rad-dist)*gmul);
-          blocklightsb[i] += (vuint32)((rad-dist)*bmul);
-          if (DLights[lnum].colour != 0xffffffff) is_coloured = true;
+          int i = t*smax+s;
+          if (dl.type == DLTYPE_Subtractive) {
+            //blocklightsS[i] += (rad-dist)*256.0;
+            blocklightsrS[i] += (rad-dist)*rmul;
+            blocklightsgS[i] += (rad-dist)*gmul;
+            blocklightsbS[i] += (rad-dist)*bmul;
+          } else {
+            //blocklights[i] += (rad-dist)*256.0;
+            blocklightsr[i] += (rad-dist)*rmul;
+            blocklightsg[i] += (rad-dist)*gmul;
+            blocklightsb[i] += (rad-dist)*bmul;
+          }
+          if (dl.colour != 0xffffffff) is_coloured = true;
         }
       }
     }
@@ -819,7 +867,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 // Combine and scale multiple lightmaps into the 8.8 format in blocklights
 //
 //==========================================================================
-bool VRenderLevel::BuildLightMap (surface_t *surf, int shift) {
+void VRenderLevel::BuildLightMap (surface_t *surf) {
   guard(VRenderLevel::BuildLightMap);
   int smax, tmax;
   int t;
@@ -836,8 +884,7 @@ bool VRenderLevel::BuildLightMap (surface_t *surf, int shift) {
   lightmap_rgb = surf->lightmap_rgb;
 
   // clear to ambient
-  t = surf->Light>>24;
-  t = MAX(t, r_ambient);
+  t = getSurfLightLevelInt(surf);
   t <<= 8;
   int tR = ((surf->Light>>16)&255)*t/255;
   int tG = ((surf->Light>>8)&255)*t/255;
@@ -845,13 +892,12 @@ bool VRenderLevel::BuildLightMap (surface_t *surf, int shift) {
   if (tR != tG || tR != tB) is_coloured = true;
 
   for (i = 0; i < size; ++i) {
-    blocklights[i] = t;
+    //blocklights[i] = t;
     blocklightsr[i] = tR;
     blocklightsg[i] = tG;
     blocklightsb[i] = tB;
-    blockaddlightsr[i] = 0;
-    blockaddlightsg[i] = 0;
-    blockaddlightsb[i] = 0;
+    blockaddlightsr[i] = blockaddlightsg[i] = blockaddlightsb[i] = 0;
+    /*blocklightsS[i] =*/ blocklightsrS[i] = blocklightsgS[i] = blocklightsbS[i] = 0;
   }
 
   // add lightmap
@@ -859,7 +905,7 @@ bool VRenderLevel::BuildLightMap (surface_t *surf, int shift) {
     if (!lightmap) Sys_Error("RGB lightmap without uncoloured lightmap");
     is_coloured = true;
     for (i = 0; i < size; ++i) {
-      blocklights[i] += lightmap[i]<<8;
+      //blocklights[i] += lightmap[i]<<8;
       blocklightsr[i] += lightmap_rgb[i].r<<8;
       blocklightsg[i] += lightmap_rgb[i].g<<8;
       blocklightsb[i] += lightmap_rgb[i].b<<8;
@@ -872,7 +918,7 @@ bool VRenderLevel::BuildLightMap (surface_t *surf, int shift) {
   } else if (lightmap) {
     for (i = 0; i < size; ++i) {
       t = lightmap[i]<<8;
-      blocklights[i] += t;
+      //blocklights[i] += t;
       blocklightsr[i] += t;
       blocklightsg[i] += t;
       blocklightsb[i] += t;
@@ -889,9 +935,11 @@ bool VRenderLevel::BuildLightMap (surface_t *surf, int shift) {
 
   // calc additive light
   // this must be done before lightmap procesing because it will clamp all lights
-  if (!shift) {
+  if (/*!shift*/false) {
     for (i = 0; i < size; ++i) {
-      t = blocklightsr[i]-0x10000;
+      t = blocklightsr[i]-blocklightsrS[i];
+      //if (t < 0) { t = 0; blocklightsr[i] = 0; } // subtractive light fix
+      t -= 0x10000;
       if (t > 0) {
         t = int(r_specular*t);
         if (t > 0xffff) t = 0xffff;
@@ -899,7 +947,9 @@ bool VRenderLevel::BuildLightMap (surface_t *surf, int shift) {
         r_light_add = true;
       }
 
-      t = blocklightsg[i]-0x10000;
+      t = blocklightsg[i]-blocklightsgS[i];
+      //if (t < 0) { t = 0; blocklightsg[i] = 0; } // subtractive light fix
+      t -= 0x10000;
       if (t > 0) {
         t = int(r_specular*t);
         if (t > 0xffff) t = 0xffff;
@@ -907,7 +957,9 @@ bool VRenderLevel::BuildLightMap (surface_t *surf, int shift) {
         r_light_add = true;
       }
 
-      t = blocklightsb[i]-0x10000;
+      t = blocklightsb[i]-blocklightsbS[i];
+      //if (t < 0) { t = 0; blocklightsb[i] = 0; } // subtractive light fix
+      t -= 0x10000;
       if (t > 0) {
         t = int(r_specular*t);
         if (t > 0xffff) t = 0xffff;
@@ -918,26 +970,50 @@ bool VRenderLevel::BuildLightMap (surface_t *surf, int shift) {
   }
 
   // bound, invert, and shift
-  int minlight = 1<<(8-shift);
+  //int minlight = 1<<(8-shift);
+  const int minlight = 256;
+  const int maxlight = 0xff00;
   for (i = 0; i < size; ++i) {
-    t = (255*256-(int)blocklights[i])>>shift;
-    if (t < minlight) t = minlight;
+    /*
+    //if (blocklights[i] < 0) blocklights[i] = 0; // subtractive light fix
+    //if ((int)blocklights[i] < 0) fprintf(stderr, "!!!!!! %d\n", (int)blocklights[i]);
+    int xs = (int)blocklightsS[i];
+    t = (int)blocklights[i];
+    if (t < xs) t = xs; //k8:???
+    //t = (255*256-(int)blocklights[i])/ *>>shift* /;
+    t = (int)blocklightsS[i];
+    t = (255*256-t)/ *>>shift* /;
+    if (t < minlight) t = minlight; else if (t > maxlight) t = maxlight;
     blocklights[i] = t;
+    */
 
-    t = (255*256-(int)blocklightsr[i])>>shift;
-    if (t < minlight) t = minlight;
+    //if (blocklightsr[i] < 0) blocklightsr[i] = 0; // subtractive light fix
+    //t = (255*256-((int)blocklightsr[i]-(int)blocklightsrS[i]))/*>>shift*/;
+    t = (255*256-(int)blocklightsr[i])/*>>shift*/;
+    if (t < minlight) t = minlight; else if (t > maxlight) t = maxlight;
     blocklightsr[i] = t;
 
-    t = (255*256-(int)blocklightsg[i])>>shift;
-    if (t < minlight) t = minlight;
+    //if (blocklightsg[i] < 0) blocklightsg[i] = 0; // subtractive light fix
+    //t = (255*256-((int)blocklightsg[i]-(int)blocklightsgS[i]))/*>>shift*/;
+    t = (255*256-(int)blocklightsg[i])/*>>shift*/;
+    if (t < minlight) t = minlight; else if (t > maxlight) t = maxlight;
     blocklightsg[i] = t;
 
-    t = (255*256-(int)blocklightsb[i])>>shift;
-    if (t < minlight) t = minlight;
+    //if (blocklightsb[i] < 0) blocklightsb[i] = 0; // subtractive light fix
+    //t = (255*256-((int)blocklightsb[i]-(int)blocklightsbS[i]))/*>>shift*/;
+    t = (255*256-(int)blocklightsb[i])/*>>shift*/;
+    if (t < minlight) t = minlight; else if (t > maxlight) t = maxlight;
     blocklightsb[i] = t;
+
+    /*
+    //blocklights[i] = 0x0100;
+    blocklightsr[i] = 0xff00;
+    blocklightsg[i] = 0x0100;
+    blocklightsb[i] = 0xff00;
+    */
   }
 
-  return is_coloured;
+  //return is_coloured;
   unguard;
 }
 
@@ -1163,7 +1239,9 @@ void VRenderLevel::CacheSurface (surface_t *surface) {
   // see if the cache holds appropriate data
   cache = surface->CacheSurf;
 
-  if (cache && !cache->dlight && surface->dlightframe != r_dlightframecount && cache->Light == surface->Light) {
+  const vuint32 srflight = fixSurfLightLevel(surface);
+
+  if (cache && !cache->dlight && surface->dlightframe != r_dlightframecount && cache->Light == srflight) {
     bnum = cache->blocknum;
     cache->chain = light_chain[bnum];
     light_chain[bnum] = cache;
@@ -1191,10 +1269,10 @@ void VRenderLevel::CacheSurface (surface_t *surface) {
   } else {
     cache->dlight = 0;
   }
-  cache->Light = surface->Light;
+  cache->Light = srflight;
 
   // calculate the lightings
-  BuildLightMap(surface, 0);
+  BuildLightMap(surface/*, 0*/);
   bnum = cache->blocknum;
   block_changed[bnum] = true;
 

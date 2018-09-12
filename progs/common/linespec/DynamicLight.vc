@@ -50,9 +50,14 @@ override void OnMapSpawn(mthing_t *mthing)
 {
   ::OnMapSpawn(mthing);
 
-  //TODO
+  //TODO: replace with statics
   if (LightType == DLTYPE_Subtractive) {
-    bDormant = true;
+    //bDormant = true;
+    //print("*** SUBTRACTIVE: r=%d; g=%d; b=%d; Args[3]=%d; Args[4]=%d", Args[0], Args[1], Args[2], Args[3], Args[4]);
+    if (RGB(Args[0], Args[1], Args[2]) == 0) {
+      print("*** DUMMY SUBTRACTIVE: r=%d; g=%d; b=%d; Args[3]=%d; Args[4]=%d", Args[0], Args[1], Args[2], Args[3], Args[4]);
+      Destroy();
+    }
     return;
   }
 
@@ -169,9 +174,10 @@ override void ClientTick(float DeltaTime)
       break;
     }
 
-    //TODO: not implemented yet
     case DLTYPE_Subtractive:
-      return;
+      Intensity = itof(Args[3]);
+      //if (RGB(Args[0], Args[1], Args[2]) == 0) return;
+      break;
   }
 
   dlight_t *dl = AllocDlight(self, Origin, IntensityToRadius(Intensity));
@@ -180,6 +186,7 @@ override void ClientTick(float DeltaTime)
     dl->colour = RGB(Args[0], Args[1], Args[2]);
     //dl->radius = IntensityToRadius(Intensity);
     dl->die = XLevel.Time + 0.01;
+    dl->type = LightType;
   }
 }
 

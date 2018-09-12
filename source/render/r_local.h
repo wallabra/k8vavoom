@@ -48,7 +48,7 @@ enum DLType {
   DLTYPE_Flicker,
   DLTYPE_FlickerRandom,
   DLTYPE_Sector,
-  DLTYPE_Subtractive, // not supported yet
+  DLTYPE_Subtractive, // partially supported
 };
 
 //
@@ -550,7 +550,7 @@ public:
   virtual void PreRender() override;
 
   virtual vuint32 LightPoint(const TVec &p) override;
-  virtual bool BuildLightMap(surface_t*, int) override;
+  virtual void BuildLightMap(surface_t *) override;
 };
 
 class VAdvancedRenderLevel : public VRenderLevelShared
@@ -621,7 +621,7 @@ public:
   virtual void PreRender() override;
 
   virtual vuint32 LightPoint(const TVec &p) override;
-  virtual bool BuildLightMap(surface_t*, int) override;
+  virtual void BuildLightMap(surface_t *) override;
 };
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------

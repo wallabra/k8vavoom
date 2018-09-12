@@ -301,9 +301,8 @@ vuint32 VAdvancedRenderLevel::LightPointAmbient(const TVec &p)
 //
 //==========================================================================
 
-bool VAdvancedRenderLevel::BuildLightMap(surface_t *surf, int shift)
+void VAdvancedRenderLevel::BuildLightMap(surface_t *surf)
 {
-  return true;
 }
 
 //==========================================================================

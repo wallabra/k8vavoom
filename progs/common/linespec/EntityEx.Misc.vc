@@ -1959,11 +1959,12 @@ final void DoStateEffects(float DeltaTime)
       switch (L->Type)
       {
         case DynamicLight::DLTYPE_Point:
+        case DynamicLight::DLTYPE_Subtractive:
           dl->decay = XLevel.Time + 300.0;
           dl->radius = prev_rad <= L->Radius ? prev_rad : (prev_rad - L->Radius) * XLevel.Time;
           dl->radius += XLevel.Time * dl->decay;
-          if (dl->radius > L->Radius)
-            dl->radius = L->Radius;
+          if (dl->radius > L->Radius) dl->radius = L->Radius;
+          dl->type = L->Type;
           break;
         case DynamicLight::DLTYPE_MuzzleFlash:
           max = (L->Radius + Random() * (L->Radius2 - L->Radius));

@@ -26,6 +26,7 @@
 #include "render/r_local.h"
 
 extern VCvarB decals_enabled;
+extern VCvarI r_ambient;
 
 static VCvarB glsw_report_verts("glsw_report_verts", false, "Report number of shadow volume vertices?", 0);
 static VCvarB gl_decal_debug_nostencil("gl_decal_debug_nostencil", false, "Don't touch this!", 0);
@@ -39,10 +40,23 @@ static VCvarB gl_decal_reset_max("gl_decal_reset_max", false, "Don't touch this!
 
 //==========================================================================
 //
+//  getSurfLightLevel
+//
+//==========================================================================
+static inline float getSurfLightLevel (const surface_t *surf) {
+  if (!surf || r_ambient == -666) return 0;
+  int slins = (surf->Light>>24)&0xff;
+  slins = MAX(slins, r_ambient);
+  if (slins > 255) slins = 255;
+  return float(slins)/255.0f;
+}
+
+
+//==========================================================================
+//
 //  glVertex
 //
 //==========================================================================
-
 static inline void glVertex (const TVec &v) {
   glVertex3f(v.x, v.y, v.z);
 }
@@ -232,14 +246,14 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, surfca
       continue;
     }
 
-    float lev = (dc->flags&decal_t::Fullbright ? 1.0f : (float)(surf->Light>>24)/255.0f);
+    const float lev = (dc->flags&decal_t::Fullbright ? 1.0f : getSurfLightLevel(surf));
     p_glUniform4fARB(SurfDecalLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
-    if (surf->Fade && (dc->flags&decal_t::Fullbright) == 0) {
+    if (surf->Fade /*&& (dc->flags&decal_t::Fullbright) == 0*/) {
       p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_TRUE);
       p_glUniform4fARB(SurfDecalFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
-      p_glUniform1fARB(SurfDecalFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
-      p_glUniform1fARB(SurfDecalFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
-      p_glUniform1fARB(SurfDecalFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end));
+      p_glUniform1fARB(SurfDecalFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3f : r_fog_density));
+      p_glUniform1fARB(SurfDecalFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0f : r_fog_start));
+      p_glUniform1fARB(SurfDecalFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0f * r_fade_factor : r_fog_end));
     } else {
       p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_FALSE);
     }
@@ -358,7 +372,7 @@ void VOpenGLDrawer::WorldDrawing () {
   if (RendLev->SimpleSurfsHead) {
     p_glUseProgramObjectARB(SurfSimpleProgram);
     p_glUniform1iARB(SurfSimpleTextureLoc, 0);
-    p_glUniform1iARB(SurfSimpleFogTypeLoc, r_fog & 3);
+    p_glUniform1iARB(SurfSimpleFogTypeLoc, r_fog&3);
 
     for (surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
       if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
@@ -373,14 +387,14 @@ void VOpenGLDrawer::WorldDrawing () {
       p_glUniform1fARB(SurfSimpleTOffsLoc, textr->toffs);
       p_glUniform1fARB(SurfSimpleTexIHLoc, tex_ih);
 
-      float lev = (float)(surf->Light>>24)/255.0f;
+      const float lev = getSurfLightLevel(surf);
       p_glUniform4fARB(SurfSimpleLightLoc, ((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
       if (surf->Fade) {
         p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_TRUE);
         p_glUniform4fARB(SurfSimpleFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
-        p_glUniform1fARB(SurfSimpleFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
-        p_glUniform1fARB(SurfSimpleFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
-        p_glUniform1fARB(SurfSimpleFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end));
+        p_glUniform1fARB(SurfSimpleFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3f : r_fog_density));
+        p_glUniform1fARB(SurfSimpleFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0f : r_fog_start));
+        p_glUniform1fARB(SurfSimpleFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0f * r_fade_factor : r_fog_end));
       } else {
         p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_FALSE);
       }
@@ -536,11 +550,11 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     p_glUniform1fARB(ShadowsAmbientTOffsLoc, tex->toffs);
     p_glUniform1fARB(ShadowsAmbientTexIHLoc, tex_ih);
 
-    float lev = float(surf->Light >> 24) / 255.0;
+    const float lev = getSurfLightLevel(surf);
     p_glUniform4fARB(ShadowsAmbientLightLoc,
-      ((surf->Light >> 16) & 255) * lev / 255.0,
-      ((surf->Light >> 8) & 255) * lev / 255.0,
-      (surf->Light & 255) * lev / 255.0, 1.0);
+      ((surf->Light>>16)&255)*lev/255.0f,
+      ((surf->Light>>8)&255)*lev/255.0f,
+      (surf->Light&255)*lev/255.0f, 1.0f);
 
 #if defined(RADV_LIGHT_DECALS_IN_AMBIENT)
     bool doDecals = tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals;
@@ -932,8 +946,8 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *Surf) {
   p_glUniform1fARB(SurfSimpleTOffsLoc, Tex->toffs);
   p_glUniform1fARB(SurfSimpleTexIHLoc, tex_ih);
 
-  float lev = float(Surf->Light>>24)/255.0;
-  p_glUniform4fARB(SurfSimpleLightLoc, ((Surf->Light>>16)&255)*lev/255.0, ((Surf->Light>>8)&255)*lev/255.0, (Surf->Light&255)*lev/255.0, 1.0);
+  const float lev = getSurfLightLevel(Surf);
+  p_glUniform4fARB(SurfSimpleLightLoc, ((Surf->Light>>16)&255)*lev/255.0f, ((Surf->Light>>8)&255)*lev/255.0f, (Surf->Light&255)*lev/255.0f, 1.0f);
   if (Surf->Fade) {
     p_glUniform1iARB(SurfSimpleFogEnabledLoc, GL_TRUE);
     p_glUniform4fARB(SurfSimpleFogColourLoc, ((Surf->Fade>>16)&255)/255.0, ((Surf->Fade>>8)&255)/255.0, (Surf->Fade&255)/255.0, 1.0);
@@ -1050,7 +1064,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   p_glUniform1iARB(SurfMaskedFogTypeLoc, r_fog & 3);
 
   if (surf->lightmap != nullptr || surf->dlightframe == r_dlightframecount) {
-    RendLev->BuildLightMap(surf, 0);
+    RendLev->BuildLightMap(surf);
     int w = (surf->extents[0]>>4)+1;
     int h = (surf->extents[1]>>4)+1;
     int size = w*h;
@@ -1065,21 +1079,21 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     double iscale = 1.0/(size*255*256);
     p_glUniform4fARB(SurfMaskedLightLoc, r*iscale, g*iscale, b*iscale, Alpha);
   } else {
-    float lev = float(surf->Light >> 24) / 255.0;
+    const float lev = getSurfLightLevel(surf);
     p_glUniform4fARB(SurfMaskedLightLoc,
-      ((surf->Light >> 16) & 255) * lev / 255.0,
-      ((surf->Light >> 8) & 255) * lev / 255.0,
-      (surf->Light & 255) * lev / 255.0, Alpha);
+      ((surf->Light>>16)&255)*lev/255.0f,
+      ((surf->Light>>8)&255)*lev/255.0f,
+      (surf->Light&255)*lev/255.0f, Alpha);
   }
   if (surf->Fade) {
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_TRUE);
     p_glUniform4fARB(SurfMaskedFogColourLoc,
-      ((surf->Fade >> 16) & 255) / 255.0,
-      ((surf->Fade >> 8) & 255) / 255.0,
-      (surf->Fade & 255) / 255.0, Alpha);
-    p_glUniform1fARB(SurfMaskedFogDensityLoc, surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density);
-    p_glUniform1fARB(SurfMaskedFogStartLoc, surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start);
-    p_glUniform1fARB(SurfMaskedFogEndLoc, surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end);
+      ((surf->Fade>>16)&255)/255.0f,
+      ((surf->Fade>>8)&255)/255.0f,
+      (surf->Fade&255)/255.0f, Alpha);
+    p_glUniform1fARB(SurfMaskedFogDensityLoc, surf->Fade == FADE_LIGHT ? 0.3f : r_fog_density);
+    p_glUniform1fARB(SurfMaskedFogStartLoc, surf->Fade == FADE_LIGHT ? 1.0f : r_fog_start);
+    p_glUniform1fARB(SurfMaskedFogEndLoc, surf->Fade == FADE_LIGHT ? 1024.0f * r_fade_factor : r_fog_end);
   } else {
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_FALSE);
   }

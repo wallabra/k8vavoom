@@ -44,8 +44,9 @@ struct dlight_t
   float   die;    // stop lighting after this time
   float   decay;    // drop this each second
   float   minlight; // don't add when contributing less
-  VThinker *Owner;    // used to identify owner to reuse the same light
+  /*DLType*/vint32 type;
   vuint32   colour;   // for coloured lights
+  VThinker *Owner;    // used to identify owner to reuse the same light
 };
 
 struct im_t
