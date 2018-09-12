@@ -142,10 +142,10 @@ set(UIWIDGETS_SOURCES
 #---------------------------------------
 set(SOUNDSYS_SOURCES
   sound/sound.h
-  sound/snd_al.cpp
   sound/snd_data.cpp
   sound/snd_local.h
   sound/snd_main.cpp
+  sound/snd_al.cpp
   sound/snd_qmus2mid.cpp
   #k8:not used, 'cause there is no EAX/EFX support: sound/snd_reverbs.cpp
   sound/snd_streamplayer.cpp

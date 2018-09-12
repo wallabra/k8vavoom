@@ -441,6 +441,7 @@ static VStr LoadDateStrExtData (VStream *Strm) {
 }
 
 
+#ifdef CLIENT
 //==========================================================================
 //
 //  LoadDateTValExtData
@@ -467,6 +468,7 @@ static bool LoadDateTValExtData (VStream *Strm, TTimeVal *tv) {
   }
   return false;
 }
+#endif
 
 
 //==========================================================================
@@ -737,6 +739,7 @@ void SV_GetSaveDateString (int Slot, VStr &datestr) {
 }
 
 
+#ifdef CLIENT
 //==========================================================================
 //
 //  SV_GetSaveDateTVal
@@ -794,6 +797,7 @@ static int SV_FindAutosaveSlot () {
   }
   return bestslot;
 }
+#endif
 
 
 //==========================================================================
@@ -1296,7 +1300,6 @@ void SV_MapTeleport (VName mapname) {
 
 
 #ifdef CLIENT
-
 void Draw_SaveIcon ();
 void Draw_LoadIcon ();
 
@@ -1328,6 +1331,29 @@ static bool CheckIfLoadIsAllowed () {
   }
 
   return true;
+}
+
+
+void SV_AutoSaveOnLevelExit () {
+  if (!r_dbg_save_on_level_exit) return;
+
+  if (!CheckIfSaveIsAllowed()) return;
+
+  int aslot = SV_FindAutosaveSlot();
+  if (!aslot) {
+    GCon->Logf("Cannot find autosave slot (this should not happen!");
+    return;
+  }
+
+  Draw_SaveIcon();
+
+  TTimeVal tv;
+  GetTimeOfDay(&tv);
+  VStr svname = TimeVal2Str(&tv, true)+": "+VStr("OUT: ")+(*GLevel->MapName);
+
+  SV_SaveGame(aslot, svname);
+
+  GCon->Logf("Game autosaved to slot #%d", -aslot);
 }
 
 
@@ -1460,29 +1486,6 @@ COMMAND(AutoSaveEnter) {
 }
 
 
-void SV_AutoSaveOnLevelExit () {
-  if (!r_dbg_save_on_level_exit) return;
-
-  if (!CheckIfSaveIsAllowed()) return;
-
-  int aslot = SV_FindAutosaveSlot();
-  if (!aslot) {
-    GCon->Logf("Cannot find autosave slot (this should not happen!");
-    return;
-  }
-
-  Draw_SaveIcon();
-
-  TTimeVal tv;
-  GetTimeOfDay(&tv);
-  VStr svname = TimeVal2Str(&tv, true)+": "+VStr("OUT: ")+(*GLevel->MapName);
-
-  SV_SaveGame(aslot, svname);
-
-  GCon->Logf("Game autosaved to slot #%d", -aslot);
-}
-
-
 //==========================================================================
 //
 //  COMMAND AutoSaveLeave
@@ -1493,6 +1496,4 @@ COMMAND(AutoSaveLeave) {
   SV_AutoSaveOnLevelExit();
   unguard;
 }
-
-
 #endif

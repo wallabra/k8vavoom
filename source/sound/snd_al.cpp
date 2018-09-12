@@ -22,12 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-#ifndef _WIN32
-# define INITGUID
-#else
-# include "winshit/winlocal.h"
-#endif
-
 #include "gamedefs.h"
 #include "snd_local.h"
 
@@ -288,8 +282,7 @@ bool VOpenALDevice::LoadSound(int sound_id)
 //
 //==========================================================================
 
-int VOpenALDevice::PlaySound(int sound_id, float volume, float, float pitch,
-  bool Loop)
+int VOpenALDevice::PlaySound(int sound_id, float volume, float pitch, bool Loop)
 {
   guard(VOpenALDevice::PlaySound);
   if (!LoadSound(sound_id))

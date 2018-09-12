@@ -390,7 +390,7 @@ void VAudio::PlaySound(int InSoundId, const TVec &origin,
   bool is3D;
   if (!origin_id || LocalPlayerSound || Attenuation <= 0) {
     // local sound
-    handle = SoundDevice->PlaySound(sound_id, volume, 0, pitch, Loop);
+    handle = SoundDevice->PlaySound(sound_id, volume, pitch, Loop);
     is3D = false;
   } else {
     handle = SoundDevice->PlaySound3D(sound_id, origin, velocity, volume, pitch, Loop);

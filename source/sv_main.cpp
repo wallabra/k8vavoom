@@ -553,7 +553,9 @@ static void G_DoCompleted()
     if (GGameInfo->Players[i]) GGameInfo->Players[i]->eventPlayerBeforeExitMap();
   }
 
+#ifdef CLIENT
   SV_AutoSaveOnLevelExit();
+#endif
 
   sv.intermission = 1;
   sv.intertime = 0;
@@ -1597,18 +1599,13 @@ VLevel *VServerNetContext::GetLevel()
 //**************************************************************************
 
 #ifndef CLIENT
-
-class FConsoleDevice : public FOutputDevice
-{
+class FConsoleDevice : public FOutputDevice {
 public:
-  void Serialise(const char *V, EName)
-  {
+  virtual void Serialise (const char *V, EName) override {
     printf("%s\n", V);
   }
 };
 
-FConsoleDevice      Console;
-
-FOutputDevice     *GCon = &Console;
-
+FConsoleDevice Console;
+FOutputDevice *GCon = &Console;
 #endif

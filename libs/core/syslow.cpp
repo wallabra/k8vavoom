@@ -209,7 +209,9 @@ void Sys_Yield () {
 #include <sys/stat.h>
 #include <windows.h>
 
-#define R_OK  (4)
+#ifndef R_OK
+# define R_OK  (4)
+#endif
 
 
 struct ShitdozeDir {
@@ -229,7 +231,7 @@ static bool isRegularFile (const VStr &filename) {
   if (filename.length() == 0) return false;
   DWORD attrs = GetFileAttributes(*filename);
   if (attrs == INVALID_FILE_ATTRIBUTES) return false;
-  return (attrs&(FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_DIRECTORY) == 0);
+  return ((attrs&(FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_DIRECTORY)) == 0);
 }
 
 

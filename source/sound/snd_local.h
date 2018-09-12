@@ -204,7 +204,7 @@ public:
   bool Init();
   int SetChannels(int);
   void Shutdown();
-  int PlaySound(int, float, float, float, bool);
+  int PlaySound(int, float, float, bool);
   int PlaySound3D(int, const TVec&, const TVec&, float, float, bool);
   void UpdateChannel3D(int, const TVec&, const TVec&);
   bool IsChannelPlaying(int);

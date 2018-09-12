@@ -1099,8 +1099,10 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
     // Clip sectors that are behind rendered segs
     TVec rLight1;
     TVec rLight2;
+#ifdef CLIENT
     float DLight1;
     float DLight2;
+#endif
 
     TVec r1 = Origin - v1;
     TVec r2 = Origin - v2;

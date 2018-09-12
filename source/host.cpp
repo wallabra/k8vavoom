@@ -79,8 +79,7 @@ bool      host_request_exit = false;
 class VDedLog : public VLogListener
 {
 public:
-  void Serialise(const char *Text, EName)
-  {
+  virtual void Serialise (const char *Text, EName) override {
     printf("%s", Text);
   }
 };

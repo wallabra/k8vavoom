@@ -166,17 +166,17 @@ static void ReadNet () {
           while (sidx < srvList.length()) {
             buf[0] = MCREP_LIST;
             buf[1] = (sidx == 0 ? 1 : 0); // seq id: bit 0 set means 'first', bit 1 set means 'last'
-            int len = 2;
+            int mlen = 2;
             while (sidx < srvList.length()) {
-              if (len+7 > MAX_MSGLEN-1) break;
-              buf[len+0] = srvList[sidx].pver;
-              memcpy(&buf[len+1], srvList[sidx].addr.sa_data+2, 4);
-              memcpy(&buf[len+5], srvList[sidx].addr.sa_data+0, 2);
-              len += 7;
+              if (mlen+7 > MAX_MSGLEN-1) break;
+              buf[mlen+0] = srvList[sidx].pver;
+              memcpy(&buf[mlen+1], srvList[sidx].addr.sa_data+2, 4);
+              memcpy(&buf[mlen+5], srvList[sidx].addr.sa_data+0, 2);
+              mlen += 7;
               ++sidx;
             }
             if (sidx >= srvList.length()) buf[1] |= 0x02; // set "last packet" flag
-            sendto(acceptSocket, buf, len, 0, &clientaddr, sizeof(sockaddr));
+            sendto(acceptSocket, buf, mlen, 0, &clientaddr, sizeof(sockaddr));
           }
           return;
         }
