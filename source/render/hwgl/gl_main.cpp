@@ -476,10 +476,23 @@ void VOpenGLDrawer::InitResolution () {
   SurfAdvDecalSplatAlphaLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "SplatAlpha");
   SurfAdvDecalLightLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "Light");
 
-  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_decal.vs");
-  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal.fs");
+  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_decal_nolmap.vs");
+  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal_nolmap.fs");
+  SurfDecalNoLMapProgram = CreateProgram(VertexShader, FragmentShader);
+  SurfDecalNoLMapTextureLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "Texture");
+  SurfDecalNoLMapSplatColourLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "SplatColour");
+  SurfDecalNoLMapSplatAlphaLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "SplatAlpha");
+  SurfDecalNoLMapLightLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "Light");
+  SurfDecalNoLMapFogEnabledLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "FogEnabled");
+  SurfDecalNoLMapFogTypeLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "FogType");
+  SurfDecalNoLMapFogColourLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "FogColour");
+  SurfDecalNoLMapFogDensityLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "FogDensity");
+  SurfDecalNoLMapFogStartLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "FogStart");
+  SurfDecalNoLMapFogEndLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "FogEnd");
+
+  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_decal_lmap.vs");
+  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal_lmap.fs");
   SurfDecalProgram = CreateProgram(VertexShader, FragmentShader);
-  SurfDecalIsLightmap = p_glGetUniformLocationARB(SurfDecalProgram, "IsLightmap");
   SurfDecalTextureLoc = p_glGetUniformLocationARB(SurfDecalProgram, "Texture");
   SurfDecalSplatColourLoc = p_glGetUniformLocationARB(SurfDecalProgram, "SplatColour");
   SurfDecalSplatAlphaLoc = p_glGetUniformLocationARB(SurfDecalProgram, "SplatAlpha");

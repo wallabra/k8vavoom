@@ -33,6 +33,7 @@ void main () {
 
   if (fina <= 0.0) discard;
 
+/*
 #if 0
   FinalColour_1.r = clamp(TexColour.r*Light.a, 0.0, 1.0);
   FinalColour_1.g = clamp(TexColour.g*Light.a, 0.0, 1.0);
@@ -42,6 +43,7 @@ void main () {
   FinalColour_1.g = clamp(TexColour.g, 0.0, 1.0);
   FinalColour_1.b = clamp(TexColour.b, 0.0, 1.0);
 #endif
+*/
 
   const float multer = 1.0;
   float sa = SplatColour.a;
@@ -49,6 +51,16 @@ void main () {
   FinalColour_1.g = clamp((FinalColour_1.g*(1.0-sa)+SplatColour.g*sa)*multer, 0.0, 1.0);
   FinalColour_1.b = clamp((FinalColour_1.b*(1.0-sa)+SplatColour.b*sa)*multer, 0.0, 1.0);
   FinalColour_1.a = fina;
+
+#if 1
+  FinalColour_1.r = clamp(FinalColour_1.r*Light.a, 0.0, 1.0);
+  FinalColour_1.g = clamp(FinalColour_1.g*Light.a, 0.0, 1.0);
+  FinalColour_1.b = clamp(FinalColour_1.b*Light.a, 0.0, 1.0);
+#else
+  FinalColour_1.r = clamp(FinalColour_1.r, 0.0, 1.0);
+  FinalColour_1.g = clamp(FinalColour_1.g, 0.0, 1.0);
+  FinalColour_1.b = clamp(FinalColour_1.b, 0.0, 1.0);
+#endif
 
   //FinalColour_1.r = 1;
 

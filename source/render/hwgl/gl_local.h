@@ -558,8 +558,19 @@ protected:
   GLint SurfAdvDecalSplatAlphaLoc;
   GLint SurfAdvDecalLightLoc;
 
+  GLhandleARB SurfDecalNoLMapProgram;
+  GLint SurfDecalNoLMapTextureLoc;
+  GLint SurfDecalNoLMapSplatColourLoc;
+  GLint SurfDecalNoLMapSplatAlphaLoc;
+  GLint SurfDecalNoLMapLightLoc;
+  GLint SurfDecalNoLMapFogEnabledLoc;
+  GLint SurfDecalNoLMapFogTypeLoc;
+  GLint SurfDecalNoLMapFogColourLoc;
+  GLint SurfDecalNoLMapFogDensityLoc;
+  GLint SurfDecalNoLMapFogStartLoc;
+  GLint SurfDecalNoLMapFogEndLoc;
+
   GLhandleARB SurfDecalProgram;
-  GLint SurfDecalIsLightmap;
   GLint SurfDecalTextureLoc;
   GLint SurfDecalSplatColourLoc;
   GLint SurfDecalSplatAlphaLoc;

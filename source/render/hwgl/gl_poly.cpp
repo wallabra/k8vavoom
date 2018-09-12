@@ -120,12 +120,11 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
     p_glUseProgramObjectARB(SurfAdvDecalProgram);
     p_glUniform1iARB(SurfAdvDecalTextureLoc, 0);
   } else {
-    p_glUseProgramObjectARB(SurfDecalProgram);
-    p_glUniform1iARB(SurfDecalIsLightmap, (lmap ? GL_TRUE : GL_FALSE));
-    p_glUniform1iARB(SurfDecalTextureLoc, 0);
-    p_glUniform1iARB(SurfDecalFogTypeLoc, r_fog&3);
-
     if (lmap) {
+      p_glUseProgramObjectARB(SurfDecalProgram);
+      p_glUniform1iARB(SurfDecalTextureLoc, 0);
+      p_glUniform1iARB(SurfDecalFogTypeLoc, r_fog&3);
+
       //SetTexture(tex->Tex, tex->ColourMap);
       p_glUniform1iARB(SurfDecalLightMapLoc, 1);
       p_glUniform1iARB(SurfDecalSpecularMapLoc, 2);
@@ -138,16 +137,30 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
       p_glUniform1fARB(SurfDecalTexMinTLoc, surf->texturemins[1]);
       p_glUniform1fARB(SurfDecalCacheSLoc, cache->s);
       p_glUniform1fARB(SurfDecalCacheTLoc, cache->t);
-    }
 
-    if (surf->Fade) {
-      p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_TRUE);
-      p_glUniform4fARB(SurfDecalFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
-      p_glUniform1fARB(SurfDecalFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
-      p_glUniform1fARB(SurfDecalFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
-      p_glUniform1fARB(SurfDecalFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0*r_fade_factor : r_fog_end));
+      if (surf->Fade) {
+        p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_TRUE);
+        p_glUniform4fARB(SurfDecalFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
+        p_glUniform1fARB(SurfDecalFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
+        p_glUniform1fARB(SurfDecalFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
+        p_glUniform1fARB(SurfDecalFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0*r_fade_factor : r_fog_end));
+      } else {
+        p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_FALSE);
+      }
     } else {
-      p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_FALSE);
+      p_glUseProgramObjectARB(SurfDecalNoLMapProgram);
+      p_glUniform1iARB(SurfDecalNoLMapTextureLoc, 0);
+      p_glUniform1iARB(SurfDecalNoLMapFogTypeLoc, r_fog&3);
+
+      if (surf->Fade) {
+        p_glUniform1iARB(SurfDecalNoLMapFogEnabledLoc, GL_TRUE);
+        p_glUniform4fARB(SurfDecalNoLMapFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
+        p_glUniform1fARB(SurfDecalNoLMapFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
+        p_glUniform1fARB(SurfDecalNoLMapFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
+        p_glUniform1fARB(SurfDecalNoLMapFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0*r_fade_factor : r_fog_end));
+      } else {
+        p_glUniform1iARB(SurfDecalNoLMapFogEnabledLoc, GL_FALSE);
+      }
     }
   }
 
@@ -236,25 +249,20 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
     if (advanced) {
       p_glUniform4fARB(SurfAdvDecalSplatColourLoc, dc->shade[0], dc->shade[1], dc->shade[2], dc->shade[3]);
       p_glUniform1fARB(SurfAdvDecalSplatAlphaLoc, dc->alpha);
+      //FIXME: fullbright doesn't work here yet
       const float lev = (dc->flags&decal_t::Fullbright ? 1.0f : getSurfLightLevel(surf));
       p_glUniform4fARB(SurfAdvDecalLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
     } else {
       const float lev = (dc->flags&decal_t::Fullbright ? 1.0f : getSurfLightLevel(surf));
-      p_glUniform4fARB(SurfDecalLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
-      /*
-      if (surf->Fade / *&& (dc->flags&decal_t::Fullbright) == 0* /) {
-        p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_TRUE);
-        p_glUniform4fARB(SurfDecalFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
-        p_glUniform1fARB(SurfDecalFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3f : r_fog_density));
-        p_glUniform1fARB(SurfDecalFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0f : r_fog_start));
-        p_glUniform1fARB(SurfDecalFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0f * r_fade_factor : r_fog_end));
+      if (lmap) {
+        p_glUniform4fARB(SurfDecalLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
+        p_glUniform4fARB(SurfDecalSplatColourLoc, dc->shade[0], dc->shade[1], dc->shade[2], dc->shade[3]);
+        p_glUniform1fARB(SurfDecalSplatAlphaLoc, dc->alpha);
       } else {
-        p_glUniform1iARB(SurfDecalFogEnabledLoc, GL_FALSE);
+        p_glUniform4fARB(SurfDecalNoLMapLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
+        p_glUniform4fARB(SurfDecalNoLMapSplatColourLoc, dc->shade[0], dc->shade[1], dc->shade[2], dc->shade[3]);
+        p_glUniform1fARB(SurfDecalNoLMapSplatAlphaLoc, dc->alpha);
       }
-      */
-
-      p_glUniform4fARB(SurfDecalSplatColourLoc, dc->shade[0], dc->shade[1], dc->shade[2], dc->shade[3]);
-      p_glUniform1fARB(SurfDecalSplatAlphaLoc, dc->alpha);
     }
 
     SetTexture(dtex, tex->ColourMap); // this sets `tex_iw` and `tex_ih`
