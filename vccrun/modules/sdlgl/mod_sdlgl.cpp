@@ -1581,6 +1581,7 @@ IMPLEMENT_FUNCTION(VGLTexture, smoothEdges) {
 IMPLEMENT_CLASS(V, Video);
 
 bool VVideo::mInited = false;
+bool VVideo::mPreInitWasDone = false;
 int VVideo::mWidth = 0;
 int VVideo::mHeight = 0;
 bool VVideo::smoothLine = false;
@@ -1845,21 +1846,69 @@ void VVideo::close () {
 }
 
 
+//k8: no, i really don't know why i have to repeat this twice,
+//    but at the first try i'll get no stencil buffer for some reason
+//    (and no rgba framebuffer too)
+void VVideo::fuckfucksdl () {
+  if (mInited) return;
+
+  mPreInitWasDone = true;
+
+  //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+  //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
+  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+  hw_window = SDL_CreateWindow("VaVoom C runner hidden SDL fucker", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+    640, 480, SDL_WINDOW_OPENGL|SDL_WINDOW_HIDDEN);
+  if (!hw_window) {
+#ifndef WIN32
+    fprintf(stderr, "ALAS: cannot create SDL2 window.\n");
+#endif
+    return;
+  }
+
+  hw_glctx = SDL_GL_CreateContext(hw_window);
+  if (!hw_glctx) {
+    SDL_DestroyWindow(hw_window);
+    hw_window = nullptr;
+#ifndef WIN32
+    fprintf(stderr, "ALAS: cannot create SDL2 OpenGL context.\n");
+#endif
+    return;
+  }
+
+  SDL_GL_MakeCurrent(hw_window, hw_glctx);
+  glGetError();
+
+  SDL_GL_MakeCurrent(hw_window, nullptr);
+  SDL_GL_DeleteContext(hw_glctx);
+  SDL_DestroyWindow(hw_window);
+  hw_glctx = nullptr;
+  hw_window = nullptr;
+}
+
+
 bool VVideo::open (const VStr &winname, int width, int height, int fullscreen) {
   if (width < 1 || height < 1) {
     width = 800;
     height = 600;
   }
 
-  int tryCount = 0;
-
   close();
 
-again:
-  Uint32 flags = SDL_WINDOW_OPENGL|(tryCount == 0 ? SDL_WINDOW_HIDDEN : 0);
-  //if (!Windowed) flags |= SDL_WINDOW_FULLSCREEN;
-  //flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-  if (fullscreen && tryCount > 0) flags |= (fullscreen == 1 ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_FULLSCREEN_DESKTOP);
+  if (!mPreInitWasDone) fuckfucksdl();
+
+  Uint32 flags = SDL_WINDOW_OPENGL;
+  if (fullscreen) flags |= (fullscreen == 1 ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_FULLSCREEN_DESKTOP);
 
   //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
@@ -1901,24 +1950,11 @@ again:
   SDL_GL_MakeCurrent(hw_window, hw_glctx);
   glGetError();
 
-  //k8: no, i really don't know why i have to repeat this twice,
-  //    but at the first try i get no stencil buffer for some reason
-  //    (and no rgba framebuffer too)
-  if (tryCount == 0) {
-    ++tryCount;
-    SDL_GL_MakeCurrent(hw_window, nullptr);
-    SDL_GL_DeleteContext(hw_glctx);
-    SDL_DestroyWindow(hw_window);
-    hw_glctx = nullptr;
-    hw_window = nullptr;
-    goto again;
-  }
-
   int stb = -1;
   SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &stb);
   stencilBits = (stb < 1 ? 0 : stb);
   //if (stb < 1) fprintf(stderr, "WARNING: no stencil buffer available!");
-  if (flags&SDL_WINDOW_HIDDEN) SDL_ShowWindow(hw_window);
+  //if (flags&SDL_WINDOW_HIDDEN) SDL_ShowWindow(hw_window);
 
 #if 0 //!defined(WIN32)
   {

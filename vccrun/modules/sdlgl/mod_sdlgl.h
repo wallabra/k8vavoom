@@ -113,6 +113,7 @@ public:
 
 private:
   static bool mInited;
+  static bool mPreInitWasDone;
   static int stencilBits;
   static int mWidth, mHeight;
   static bool doGLSwap;
@@ -253,6 +254,8 @@ public:
   static int getWidth ();
   static int getHeight ();
 
+  static void fuckfucksdl ();
+
   static bool open (const VStr &winname, int width, int height, int fullscreen);
   static void close ();
 
@@ -291,6 +294,7 @@ public:
   static void setFrameTime (int newft);
 
   // static
+  DECLARE_FUNCTION(performPreInit)
   DECLARE_FUNCTION(canInit)
   DECLARE_FUNCTION(hasOpenGL)
   DECLARE_FUNCTION(isInitialized)
