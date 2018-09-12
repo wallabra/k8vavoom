@@ -258,10 +258,13 @@ extern float      r_avertexnormal_dots[SHADEDOT_QUANT][256];
 //
 //==========================================================================
 
-inline int R_LookupRGB(vuint8 r, vuint8 g, vuint8 b)
+static inline int R_LookupRGB(vuint8 r, vuint8 g, vuint8 b)
 {
   return r_rgbtable[((r << 7) & 0x7c00) + ((g << 2) & 0x3e0) +
     ((b >> 3) & 0x1f)];
 }
+
+void R_ParseMapDefSkyBoxesScript (VScriptParser *sc);
+VName R_HasNamedSkybox (const VStr &aname);
 
 #endif

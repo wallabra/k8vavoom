@@ -1649,8 +1649,7 @@ static void ParseGZDoomEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> 
     } else if (sc->Check("object")) {
       ParseClassEffects(sc, ClassDefs);
     } else if (sc->Check("skybox")) {
-      sc->Message("Skybox parsing isn't implemented yet.");
-      sc->SkipBracketed();
+      R_ParseMapDefSkyBoxesScript(sc);
     } else if (sc->Check("brightmap")) {
       sc->Message("Brightmaps are not supported.");
       sc->SkipBracketed();

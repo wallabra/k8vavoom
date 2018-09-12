@@ -28,6 +28,8 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
+#include "render/r_shared.h"
+
 // MACROS ------------------------------------------------------------------
 
 enum
@@ -413,26 +415,36 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       if (newFormat) sc->Expect("=");
       auto ocm = sc->IsCMode();
       sc->ExpectName8();
-      sc->SetCMode(true);
       //info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
-      info->Sky1Texture = loadSkyTexture(sc->Name8);
-      info->Sky1ScrollDelta = 0;
-      if (newFormat) {
-        if (!sc->IsAtEol()) {
-          sc->Check(",");
-          sc->ExpectFloatWithSign();
-          if (HexenMode) sc->Float /= 256.0;
-          info->Sky1ScrollDelta = sc->Float * 35.0;
-        }
+      VName skbname = R_HasNamedSkybox(sc->String);
+      if (skbname != NAME_None) {
+        info->SkyBox = skbname;
+        info->Sky1Texture = GTextureManager.DefaultTexture;
+        info->Sky2Texture = GTextureManager.DefaultTexture;
+        info->Sky1ScrollDelta = 0;
+        info->Sky2ScrollDelta = 0;
+        GCon->Logf("MSG: using gz skybox '%s'", *skbname);
       } else {
-        if (!sc->IsAtEol()) {
-          sc->Check(",");
-          sc->ExpectFloatWithSign();
-          if (HexenMode) sc->Float /= 256.0;
-          info->Sky1ScrollDelta = sc->Float * 35.0;
+        sc->SetCMode(true);
+        info->Sky1Texture = loadSkyTexture(sc->Name8);
+        info->Sky1ScrollDelta = 0;
+        if (newFormat) {
+          if (!sc->IsAtEol()) {
+            sc->Check(",");
+            sc->ExpectFloatWithSign();
+            if (HexenMode) sc->Float /= 256.0;
+            info->Sky1ScrollDelta = sc->Float * 35.0;
+          }
+        } else {
+          if (!sc->IsAtEol()) {
+            sc->Check(",");
+            sc->ExpectFloatWithSign();
+            if (HexenMode) sc->Float /= 256.0;
+            info->Sky1ScrollDelta = sc->Float * 35.0;
+          }
         }
+        sc->SetCMode(ocm);
       }
-      sc->SetCMode(ocm);
     }
     else if (sc->Check("sky2"))
     {

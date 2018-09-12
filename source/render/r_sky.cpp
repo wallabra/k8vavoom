@@ -102,6 +102,41 @@ static void ParseSkyBoxesScript(VScriptParser *sc)
   unguard;
 }
 
+
+//==========================================================================
+//
+//  ParseMapDefSkyBoxesScript
+//
+//==========================================================================
+void R_ParseMapDefSkyBoxesScript (VScriptParser *sc) {
+  skyboxinfo_t &info = skyboxinfo.Alloc();
+  memset((void *)&info, 0, sizeof(info));
+  sc->ExpectString();
+  info.Name = *sc->String;
+  GCon->Logf("MSG: found gz skybox '%s'", *info.Name);
+  sc->Expect("{");
+  for (int i = 0; i < 6; ++i) {
+    sc->ExpectString();
+    info.surfs[i].texture = GTextureManager.AddFileTexture(VName(*sc->String), TEXTYPE_SkyMap);
+  }
+  sc->Expect("}");
+}
+
+
+//==========================================================================
+//
+//  R_HasNamedSkybox
+//
+//==========================================================================
+VName R_HasNamedSkybox (const VStr &aname) {
+  if (aname.length() == 0) return NAME_None;
+  for (int f = 0; f < skyboxinfo.length(); ++f) {
+    if (aname.ICmp(*skyboxinfo[f].Name) == 0) return skyboxinfo[f].Name;
+  }
+  return NAME_None;
+}
+
+
 //==========================================================================
 //
 //  R_InitSkyBoxes
