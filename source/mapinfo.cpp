@@ -1012,6 +1012,16 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     {
       GCon->Logf("Unimplemented MAPINFO comand SmoothLighting");
     }
+    else if (sc->Check("lightmode"))
+    {
+      GCon->Logf("Unimplemented MAPINFO comand 'LightMode'");
+      if (newFormat) sc->Expect("=");
+      sc->ExpectNumber();
+    }
+    else if (sc->Check("Grinding_PolyObj"))
+    {
+      GCon->Logf("Unimplemented MAPINFO comand 'Grinding_PolyObj'");
+    }
     else
     {
       if (newFormat) {
