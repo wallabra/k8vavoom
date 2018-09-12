@@ -150,11 +150,6 @@ if (ENABLE_VCCRUN)
     set(VCCRUN_SOUND_LIBMAD_SOURCES modules/mod_sound/decoders/mad.cpp)
   endif(LIBMAD_FOUND)
 
-  set(VCCRUN_SOUND_XMPLITE_SOURCES )
-  if(XMPLITE_FOUND)
-    set(VCCRUN_SOUND_XMPLITE_SOURCES modules/mod_sound/decoders/xmplite.cpp)
-  endif(XMPLITE_FOUND)
-
   set(VCCRUN_SOUND_SOURCES
     modules/mod_sound/sound.h
     modules/mod_sound/openal.cpp
@@ -162,11 +157,12 @@ if (ENABLE_VCCRUN)
     modules/mod_sound/streamplayer.cpp
     modules/mod_sound/vcapi.cpp
     modules/mod_sound/decoders/wav.cpp
+    # xmplite is always here
+    modules/mod_sound/decoders/xmplite.cpp
     ${VCCRUN_SOUND_VORBIS_SOURCES}
     ${VCCRUN_SOUND_OPUS_SOURCES}
     ${VCCRUN_SOUND_FLAC_SOURCES}
     ${VCCRUN_SOUND_LIBMAD_SOURCES}
-    ${VCCRUN_SOUND_XMPLITE_SOURCES}
   )
 
 
@@ -174,6 +170,8 @@ if (ENABLE_VCCRUN)
     ${VCCRUN_COMPILER_SOURCES}
     ${VCCRUN_RUNTIME_SOURCES}
     ${VCCRUN_FSYS_SOURCES}
+    convars.h
+    convars.cpp
     vcc_run.cpp
     vcc_run.h
     vcc_netobj.h

@@ -294,7 +294,7 @@ public:
   static void setFrameTime (int newft);
 
   // static
-  DECLARE_FUNCTION(performPreInit)
+  //DECLARE_FUNCTION(performPreInit)
   DECLARE_FUNCTION(canInit)
   DECLARE_FUNCTION(hasOpenGL)
   DECLARE_FUNCTION(isInitialized)

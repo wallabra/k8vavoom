@@ -33,7 +33,7 @@ enum BlendFunc {
 
 // call this before `openScreen()` to make sure that `openScreen()` will not randomly fail
 // WARNING! due to bug in video subsystem, don't skip this step!
-native final static void performPreInit ();
+//native final static void performPreInit ();
 
 native final static bool canInit ();
 native final static bool hasOpenGL ();

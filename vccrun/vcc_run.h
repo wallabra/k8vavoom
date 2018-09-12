@@ -43,6 +43,7 @@ float Random () {
 
 //#define OPCODE_STATS
 
+#include "convars.h"
 #include "filesys/fsys.h"
 
 
