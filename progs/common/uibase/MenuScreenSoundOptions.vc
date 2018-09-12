@@ -37,8 +37,7 @@ override void CreateChoices()
   MenuChoiceEnum    Enum;
   MenuTextButton    Btn;
   //int         currentY;
-
-  currentY = ChoicesStartY;
+  //currentY = ChoicesStartY;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
@@ -57,6 +56,7 @@ override void CreateChoices()
   Enum.ValueChanging = &ChangeMIDIPlayer;
   currentY += Enum.Height;
 
+  /*
   Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Module Decoder";
@@ -66,6 +66,7 @@ override void CreateChoices()
   Enum.SetInitialValue(GetCvar('snd_mod_player'));
   Enum.ValueChanging = &ChangeMODPlayer;
   currentY += Enum.Height;
+  */
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
@@ -199,11 +200,11 @@ bool ChangeSoundChannels(Object Sender, float newValue)
 //  ActivateMODOptions
 //
 //==========================================================================
-
 void ActivateMODOptions(Object Sender)
 {
   ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenMODOptions));
 }
+
 
 defaultproperties
 {
