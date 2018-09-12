@@ -436,37 +436,47 @@ if(ENABLE_CLIENT)
   endif(FLAC_FOUND)
 
 
-  if(WIN32)
-    # ---------------- Windows ----------------
-    set(MAIN_SOURCES ${MAIN_SOURCES} winshit/winlocal.h winshit/in_win32.cpp winshit/sys_win.cpp)
-    set(MAIN_LIBS gdi32 ole32 winmm ${MAIN_LIBS})
+  ### if(WIN32)
+  ###   # ---------------- Windows ----------------
+  ###   set(MAIN_SOURCES ${MAIN_SOURCES} winshit/winlocal.h winshit/in_win32.cpp winshit/sys_win.cpp)
+  ###   set(MAIN_LIBS gdi32 ole32 winmm ${MAIN_LIBS})
+  ###
+  ###   #  CMake doesn't support automatic building of resource files so
+  ###   # we must add a custom command and add object files to the list
+  ###   # of source files
+  ###   ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
+  ###   ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom.o)
+  ###   ### add_custom_command(OUTPUT ${RC_OBJ}
+  ###   ###   DEPENDS ${RC_SRC}
+  ###   ###   COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
+  ###   ### )
+  ###   ### set(MAIN_SOURCES ${MAIN_SOURCES} ${RC_OBJ})
+  ###   #set(MAIN_SOURCES ${MAIN_SOURCES})
+  ### else(WIN32)
+  ###   if(SDL2_FOUND)
+  ###     set(MAIN_SOURCES ${MAIN_SOURCES} in_sdl.cpp sys_sdl.cpp)
+  ###   endif(SDL2_FOUND)
+  ### endif(WIN32)
+  if(SDL2_FOUND)
+    if(WIN32)
+      set(MAIN_LIBS gdi32 ole32 winmm imm32 version ${MAIN_LIBS})
+    endif(WIN32)
+    set(MAIN_SOURCES ${MAIN_SOURCES} in_sdl.cpp sys_sdl.cpp)
+    set(MAIN_SOURCES ${MAIN_SOURCES} render/hwgl/gl_sdl.cpp)
+  endif(SDL2_FOUND)
 
-    #  CMake doesn't support automatic building of resource files so
-    # we must add a custom command and add object files to the list
-    # of source files
-    ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
-    ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom.o)
-    ### add_custom_command(OUTPUT ${RC_OBJ}
-    ###   DEPENDS ${RC_SRC}
-    ###   COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
-    ### )
-    ### set(MAIN_SOURCES ${MAIN_SOURCES} ${RC_OBJ})
-    #set(MAIN_SOURCES ${MAIN_SOURCES})
-  else(WIN32)
-    if(SDL2_FOUND)
-      set(MAIN_SOURCES ${MAIN_SOURCES} in_sdl.cpp sys_sdl.cpp)
-    endif(SDL2_FOUND)
-  endif(WIN32)
 
-
+  ### if(OPENGL_FOUND)
+  ###   set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_SOURCES})
+  ###   if(WIN32)
+  ###     set(MAIN_SOURCES ${MAIN_SOURCES} winshit/render/hwgl/gl_win32.cpp)
+  ###     set(MAIN_LIBS opengl32 ${MAIN_LIBS})
+  ###   else(WIN32)
+  ###     set(MAIN_SOURCES ${MAIN_SOURCES} render/hwgl/gl_sdl.cpp)
+  ###   endif(WIN32)
+  ### endif(OPENGL_FOUND)
   if(OPENGL_FOUND)
     set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_SOURCES})
-    if(WIN32)
-      set(MAIN_SOURCES ${MAIN_SOURCES} winshit/render/hwgl/gl_win32.cpp)
-      set(MAIN_LIBS opengl32 ${MAIN_LIBS})
-    else(WIN32)
-      set(MAIN_SOURCES ${MAIN_SOURCES} render/hwgl/gl_sdl.cpp)
-    endif(WIN32)
   endif(OPENGL_FOUND)
 
 

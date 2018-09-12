@@ -31,7 +31,9 @@
 #include <signal.h>
 #include <dirent.h>
 #include <SDL.h>
-#include <execinfo.h>
+#ifndef _WIN32
+# include <execinfo.h>
+#endif
 
 #include "gamedefs.h"
 
@@ -339,7 +341,9 @@ int main (int argc, char **argv) {
     // install signal handlers
     signal(SIGTERM, signal_handler);
     signal(SIGINT,  signal_handler);
+# ifndef _WIN32
     signal(SIGQUIT, signal_handler);
+# endif
 #endif
 
     Host_Init();
@@ -365,4 +369,7 @@ int main (int argc, char **argv) {
     fprintf(stderr, "\nExiting due to external exception\n");
     throw;
   }
+#ifdef _WIN32
+  return 0;
+#endif
 }

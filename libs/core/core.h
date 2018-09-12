@@ -33,6 +33,10 @@
 #include <cstdarg>
 #include <cmath>
 
+#ifdef _WIN32
+# include <windows.h>
+#endif
+
 #include "mythreadlite.h"
 
 #include "common.h"   //  Common types and definitions

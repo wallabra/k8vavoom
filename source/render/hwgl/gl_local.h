@@ -29,7 +29,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef _WIN32
-#include "winshit/winlocal.h"
+#include <windows.h>
 #endif
 #include <GL/gl.h>
 

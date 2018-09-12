@@ -23,7 +23,7 @@
 //**
 //**************************************************************************
 #ifdef WIN32
-# include "winshit/winlocal.h"
+# include <windows.h>
 # include <errno.h>
 # define socklen_t  int
 #else

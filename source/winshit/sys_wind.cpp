@@ -32,7 +32,7 @@
 #include <conio.h>
 #include <sys/timeb.h>
 #include <sys/stat.h>
-#include "winlocal.h"
+#include <windows.h>
 #include "gamedefs.h"
 
 //#define R_OK  (4)
