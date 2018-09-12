@@ -31,16 +31,14 @@
 int r_dlightframecount;
 bool r_light_add;
 
-//vuint32 blocklights[18*18];
 vuint32 blocklightsr[18*18];
 vuint32 blocklightsg[18*18];
 vuint32 blocklightsb[18*18];
-vuint32 blockaddlightsr[18*18];
-vuint32 blockaddlightsg[18*18];
-vuint32 blockaddlightsb[18*18];
+static vuint32 blockaddlightsr[18*18];
+static vuint32 blockaddlightsg[18*18];
+static vuint32 blockaddlightsb[18*18];
 
 // subtractive
-//static vuint32 blocklightsS[18*18];
 static vuint32 blocklightsrS[18*18];
 static vuint32 blocklightsgS[18*18];
 static vuint32 blocklightsbS[18*18];
@@ -862,6 +860,21 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
 //==========================================================================
 //
+// xblight
+//
+//==========================================================================
+static inline int xblight (int add, int sub) {
+  const int minlight = 256;
+  const int maxlight = 0xff00;
+  int t = 255*256-add+sub;
+  //if (sub > 0) t = maxlight;
+  if (t < minlight) t = minlight; else if (t > maxlight) t = maxlight;
+  return t;
+}
+
+
+//==========================================================================
+//
 // VRenderLevel::BuildLightMap
 //
 // Combine and scale multiple lightmaps into the 8.8 format in blocklights
@@ -935,78 +948,46 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
 
   // calc additive light
   // this must be done before lightmap procesing because it will clamp all lights
-  if (/*!shift*/false) {
-    for (i = 0; i < size; ++i) {
-      t = blocklightsr[i]-blocklightsrS[i];
-      //if (t < 0) { t = 0; blocklightsr[i] = 0; } // subtractive light fix
-      t -= 0x10000;
-      if (t > 0) {
-        t = int(r_specular*t);
-        if (t > 0xffff) t = 0xffff;
-        blockaddlightsr[i] = t;
-        r_light_add = true;
-      }
+  for (i = 0; i < size; ++i) {
+    t = blocklightsr[i]-blocklightsrS[i];
+    //if (t < 0) { t = 0; blocklightsr[i] = 0; } // subtractive light fix
+    t -= 0x10000;
+    if (t > 0) {
+      t = int(r_specular*t);
+      if (t > 0xffff) t = 0xffff;
+      blockaddlightsr[i] = t;
+      r_light_add = true;
+    }
 
-      t = blocklightsg[i]-blocklightsgS[i];
-      //if (t < 0) { t = 0; blocklightsg[i] = 0; } // subtractive light fix
-      t -= 0x10000;
-      if (t > 0) {
-        t = int(r_specular*t);
-        if (t > 0xffff) t = 0xffff;
-        blockaddlightsg[i] = t;
-        r_light_add = true;
-      }
+    t = blocklightsg[i]-blocklightsgS[i];
+    //if (t < 0) { t = 0; blocklightsg[i] = 0; } // subtractive light fix
+    t -= 0x10000;
+    if (t > 0) {
+      t = int(r_specular*t);
+      if (t > 0xffff) t = 0xffff;
+      blockaddlightsg[i] = t;
+      r_light_add = true;
+    }
 
-      t = blocklightsb[i]-blocklightsbS[i];
-      //if (t < 0) { t = 0; blocklightsb[i] = 0; } // subtractive light fix
-      t -= 0x10000;
-      if (t > 0) {
-        t = int(r_specular*t);
-        if (t > 0xffff) t = 0xffff;
-        blockaddlightsb[i] = t;
-        r_light_add = true;
-      }
+    t = blocklightsb[i]-blocklightsbS[i];
+    //if (t < 0) { t = 0; blocklightsb[i] = 0; } // subtractive light fix
+    t -= 0x10000;
+    if (t > 0) {
+      t = int(r_specular*t);
+      if (t > 0xffff) t = 0xffff;
+      blockaddlightsb[i] = t;
+      r_light_add = true;
     }
   }
 
   // bound, invert, and shift
-  //int minlight = 1<<(8-shift);
-  const int minlight = 256;
-  const int maxlight = 0xff00;
   for (i = 0; i < size; ++i) {
-    /*
-    //if (blocklights[i] < 0) blocklights[i] = 0; // subtractive light fix
-    //if ((int)blocklights[i] < 0) fprintf(stderr, "!!!!!! %d\n", (int)blocklights[i]);
-    int xs = (int)blocklightsS[i];
-    t = (int)blocklights[i];
-    if (t < xs) t = xs; //k8:???
-    //t = (255*256-(int)blocklights[i])/ *>>shift* /;
-    t = (int)blocklightsS[i];
-    t = (255*256-t)/ *>>shift* /;
-    if (t < minlight) t = minlight; else if (t > maxlight) t = maxlight;
-    blocklights[i] = t;
-    */
-
-    //if (blocklightsr[i] < 0) blocklightsr[i] = 0; // subtractive light fix
-    //t = (255*256-((int)blocklightsr[i]-(int)blocklightsrS[i]))/*>>shift*/;
-    t = (255*256-(int)blocklightsr[i])/*>>shift*/;
-    if (t < minlight) t = minlight; else if (t > maxlight) t = maxlight;
-    blocklightsr[i] = t;
-
-    //if (blocklightsg[i] < 0) blocklightsg[i] = 0; // subtractive light fix
-    //t = (255*256-((int)blocklightsg[i]-(int)blocklightsgS[i]))/*>>shift*/;
-    t = (255*256-(int)blocklightsg[i])/*>>shift*/;
-    if (t < minlight) t = minlight; else if (t > maxlight) t = maxlight;
-    blocklightsg[i] = t;
-
-    //if (blocklightsb[i] < 0) blocklightsb[i] = 0; // subtractive light fix
-    //t = (255*256-((int)blocklightsb[i]-(int)blocklightsbS[i]))/*>>shift*/;
-    t = (255*256-(int)blocklightsb[i])/*>>shift*/;
-    if (t < minlight) t = minlight; else if (t > maxlight) t = maxlight;
-    blocklightsb[i] = t;
+    //if (blocklightsrS[i]|blocklightsgS[i]|blocklightsbS[i]) fprintf(stderr, "*** SBL: (%d,%d,%d)\n", blocklightsrS[i], blocklightsgS[i], blocklightsbS[i]);
+    blocklightsr[i] = xblight((int)blocklightsr[i], (int)blocklightsrS[i]);
+    blocklightsg[i] = xblight((int)blocklightsg[i], (int)blocklightsgS[i]);
+    blocklightsb[i] = xblight((int)blocklightsb[i], (int)blocklightsbS[i]);
 
     /*
-    //blocklights[i] = 0x0100;
     blocklightsr[i] = 0xff00;
     blocklightsg[i] = 0x0100;
     blocklightsb[i] = 0xff00;
