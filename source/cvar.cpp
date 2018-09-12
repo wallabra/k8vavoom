@@ -136,15 +136,15 @@ static bool convertFloat (const char *s, float *outv) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 VCvar::VCvar(const char *AName, const char *ADefault, const char *AHelp, int AFlags)
-: Name(AName)
-, DefaultString(ADefault)
-, HelpString(AHelp)
-, defstrOwned(false)
-, Flags(AFlags)
-, IntValue(0)
-, FloatValue(0)
-, BoolValue(false)
-, nextInBucket(nullptr)
+  : Name(AName)
+  , DefaultString(ADefault)
+  , HelpString(AHelp)
+  , defstrOwned(false)
+  , Flags(AFlags)
+  , IntValue(0)
+  , FloatValue(0)
+  , BoolValue(false)
+  , nextInBucket(nullptr)
 {
   guard(VCvar::VCvar);
 
@@ -162,14 +162,14 @@ VCvar::VCvar(const char *AName, const char *ADefault, const char *AHelp, int AFl
 
 
 VCvar::VCvar(const char *AName, const VStr &ADefault, const VStr &AHelp, int AFlags)
-: Name(AName)
-, HelpString("no help yet")
-, defstrOwned(true)
-, Flags(AFlags)
-, IntValue(0)
-, FloatValue(0)
-, BoolValue(false)
-, nextInBucket(nullptr)
+  : Name(AName)
+  , HelpString("no help yet")
+  , defstrOwned(true)
+  , Flags(AFlags)
+  , IntValue(0)
+  , FloatValue(0)
+  , BoolValue(false)
+  , nextInBucket(nullptr)
 {
   guard(VCvar::VCvar);
 
@@ -220,8 +220,7 @@ VCvar *VCvar::insertIntoHash () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VCvar::Register()
-{
+void VCvar::Register() {
   guard(VCvar::Register);
   VCommand::AddToAutoComplete(Name);
   DoSet(DefaultString);
@@ -246,13 +245,15 @@ void VCvar::Set (float value) {
 
 void VCvar::Set (const VStr &AValue) {
   guard(VCvar::Set);
-  if (Flags & CVAR_Latch) {
+  if (Flags&CVAR_Latch) {
     LatchedString = AValue;
     return;
   }
 
-  if (Flags & CVAR_Cheat && !Cheating) {
-    GCon->Log(VStr(Name)+" cannot be changed while cheating is disabled");
+  if (AValue == StringValue) return;
+
+  if ((Flags&CVAR_Cheat) != 0 && !Cheating) {
+    GCon->Logf("'%s' cannot be changed while cheating is disabled", Name);
     return;
   }
 
@@ -269,7 +270,6 @@ void VCvar::DoSet (const VStr &AValue) {
   guard(VCvar::DoSet);
 
   StringValue = AValue;
-  //IntValue = superatoi(*StringValue);
   bool validInt = convertInt(*StringValue, &IntValue);
   bool validFloat = convertFloat(*StringValue, &FloatValue);
 
@@ -294,40 +294,28 @@ void VCvar::DoSet (const VStr &AValue) {
   if (!validInt && validFloat) IntValue = (int)FloatValue;
 
 #ifdef CLIENT
-  if (Flags & CVAR_UserInfo)
-  {
+  if (Flags&CVAR_UserInfo) {
     Info_SetValueForKey(cls.userinfo, Name, *StringValue);
-    if (cl)
-    {
+    if (cl) {
       if (GGameInfo->NetMode == NM_TitleMap ||
-        GGameInfo->NetMode == NM_Standalone ||
-        GGameInfo->NetMode == NM_ListenServer)
+          GGameInfo->NetMode == NM_Standalone ||
+          GGameInfo->NetMode == NM_ListenServer)
       {
-        VCommand::ExecuteString(VStr("setinfo \"") + Name + "\" \"" +
-          StringValue + "\"\n", VCommand::SRC_Client, cl);
-      }
-      else if (cl->Net)
-      {
-        cl->Net->SendCommand(VStr("setinfo \"") + Name + "\" \"" +
-          StringValue + "\"\n");
+        VCommand::ExecuteString(VStr("setinfo \"")+Name+"\" \""+StringValue+"\"\n", VCommand::SRC_Client, cl);
+      } else if (cl->Net) {
+        cl->Net->SendCommand(VStr("setinfo \"")+Name+"\" \""+StringValue+"\"\n");
       }
     }
   }
 #endif
 
 #ifdef SERVER
-  if (Flags & CVAR_ServerInfo)
-  {
+  if (Flags&CVAR_ServerInfo) {
     Info_SetValueForKey(svs.serverinfo, Name, *StringValue);
-    if (GGameInfo && GGameInfo->NetMode != NM_None &&
-      GGameInfo->NetMode != NM_Client)
-    {
-      for (int i = 0; i < MAXPLAYERS; i++)
-      {
-        if (GGameInfo->Players[i])
-        {
-          GGameInfo->Players[i]->eventClientSetServerInfo(
-            Name, StringValue);
+    if (GGameInfo && GGameInfo->NetMode != NM_None && GGameInfo->NetMode != NM_Client) {
+      for (int i = 0; i < MAXPLAYERS; ++i) {
+        if (GGameInfo->Players[i]) {
+          GGameInfo->Players[i]->eventClientSetServerInfo(Name, StringValue);
         }
       }
     }
@@ -434,14 +422,14 @@ void VCvar::CreateNew (const char *var_name, const VStr &ADefault, const VStr &A
     if (cvar->defstrOwned) delete[] const_cast<char*>(cvar->DefaultString);
     // set new default value
     {
-      char *Tmp = new char[ADefault.Length() + 1];
+      char *Tmp = new char[ADefault.Length()+1];
       VStr::Cpy(Tmp, *ADefault);
       cvar->DefaultString = Tmp;
       cvar->defstrOwned = true;
     }
     // set new help value
     if (AHelp.Length() > 0) {
-      char *Tmp = new char[AHelp.Length() + 1];
+      char *Tmp = new char[AHelp.Length()+1];
       VStr::Cpy(Tmp, *AHelp);
       cvar->HelpString = Tmp;
     } else {
@@ -552,7 +540,7 @@ void VCvar::Set (const char *var_name, const VStr &value) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-bool VCvar::Command (const TArray<VStr>& Args) {
+bool VCvar::Command (const TArray<VStr> &Args) {
   guard(VCvar::Command);
   VCvar *cvar = FindVariable(*Args[0]);
   if (!cvar) return false;
@@ -569,9 +557,9 @@ bool VCvar::Command (const TArray<VStr>& Args) {
 
   // perform a variable print or set
   if (Args.Num() == 1) {
-    GCon->Log(VStr(cvar->Name) + " is \"" + cvar->StringValue + "\"");
+    GCon->Log(VStr(cvar->Name)+" is \""+cvar->StringValue+"\"");
     if (cvar->Flags & CVAR_Latch && cvar->LatchedString.IsNotEmpty()) {
-      GCon->Log(VStr("Latched \"") + cvar->LatchedString + "\"");
+      GCon->Log(VStr("Latched \"")+cvar->LatchedString+"\"");
     }
   } else if (needHelp) {
     GCon->Logf("%s: %s", cvar->GetName(), cvar->GetHelp());
@@ -654,7 +642,7 @@ void VCvar::WriteVariablesToFile (FILE *f) {
   VCvar **list = getSortedList();
   for (vuint32 n = 0; n < count; ++n) {
     VCvar *cvar = list[n];
-    if (cvar->Flags & CVAR_Archive) fprintf(f, "%s\t\t\"%s\"\n", cvar->Name, *cvar->StringValue);
+    if (cvar->Flags&CVAR_Archive) fprintf(f, "%s\t\t\"%s\"\n", cvar->Name, *cvar->StringValue);
   }
   delete[] list;
   unguard;

@@ -1,4 +1,5 @@
 add_subdirectory(core)
+add_subdirectory(xmplite)
 
 if(NOT WITH_SYS_LZMA)
   add_subdirectory(liblzma)

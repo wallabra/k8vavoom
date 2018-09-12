@@ -142,6 +142,7 @@ set(UIWIDGETS_SOURCES
 #---------------------------------------
 set(SOUNDSYS_SOURCES
   sound/sound.h
+  sound/snd_al.cpp
   sound/snd_data.cpp
   sound/snd_local.h
   sound/snd_main.cpp
@@ -150,37 +151,10 @@ set(SOUNDSYS_SOURCES
   sound/snd_streamplayer.cpp
   sound/snd_timidity.cpp
   sound/snd_wav.cpp
+  # xmplite is always here
+  sound/snd_xmplite.cpp
 )
 
-#-- OpenAL files --
-set(MAIN_OPENAL_SOURCES
-  sound/snd_al.cpp
-)
-
-#-- Vorbis files --
-set(MAIN_VORBIS_SOURCES
-  sound/snd_vorbis.cpp
-)
-
-#-- MP3 files --
-set(MAIN_MP3_SOURCES
-  sound/snd_mp3.cpp
-)
-
-#-- MikMod files --
-set(MAIN_MIKMOD_SOURCES
-  sound/snd_mikmod.cpp
-)
-
-#-- ModPlug files --
-set(MAIN_MODPLUG_SOURCES
-  sound/snd_modplug.cpp
-)
-
-#-- FLAC files --
-set(MAIN_FLAC_SOURCES
-  sound/snd_flac.cpp
-)
 
 #---------------------------------------
 #
@@ -356,31 +330,6 @@ set(MAIN_OPENGL_SOURCES
   render/hwgl/gl_tex.cpp
 )
 
-#-- Linux with SDL --
-set(MAIN_UNIX_SDL_SOURCES
-  in_sdl.cpp
-  sys_sdl.cpp
-)
-set(MAIN_OPENGL_UNIX_SDL_SOURCES
-  render/hwgl/gl_sdl.cpp
-)
-
-#-- Windows --
-set(MAIN_WIN32_SOURCES
-  winshit/in_win32.cpp
-  winshit/sys_win.cpp
-#  winshit/sound/snd_win32.cpp
-#  winshit/sound/snd_win32music.cpp
-#  winshit/res/vavoom.ico
-#  winshit/res/vavoom_2.ico
-#  winshit/res/vavoom_3.ico
-#  winshit/res/vavoom.rc
-  winshit/winlocal.h
-)
-
-set(MAIN_OPENGL_WIN32_SOURCES
-  winshit/render/hwgl/gl_win32.cpp
-)
 
 include_directories( .
   vc
@@ -438,7 +387,6 @@ set(SERVER_COMMON_SOURCES
   ${TEXTURELIB_SOURCES}
   render/r_data.cpp
   sound/snd_data.cpp
-  sound/snd_reverbs.cpp
   sc_man.cpp
   sv_main.cpp
   sv_save.cpp
@@ -446,14 +394,6 @@ set(SERVER_COMMON_SOURCES
   ${VCCLIB_SOURCES}
 )
 
-set(SERVER_UNIX_SOURCES
-  sys_bsd.cpp
-)
-
-set(SERVER_WIN32_SOURCES
-  winshit/sys_wind.cpp
-#  winshit/res/vavoom.rc
-)
 
 #---------------------------------------
 #
@@ -475,17 +415,12 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 #
 #---------------------------------------
 if(ENABLE_CLIENT)
-
   set(MAIN_SOURCES ${MAIN_COMMON_SOURCES})
   set(MAIN_LIBS glbsp libglvis timidity core ${VAVOOM_MAIN_DEPS} ${NET_LIBRARIES} ${MAIN_LIBS})
   set(MAIN_COMPILE_FLAGS "")
 
-  if(OPENAL_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENAL_SOURCES})
-  endif(OPENAL_FOUND)
-
   if(VORBIS_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_VORBIS_SOURCES})
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_vorbis.cpp)
   endif(VORBIS_FOUND)
 
   if(OPUS_FOUND)
@@ -493,29 +428,17 @@ if(ENABLE_CLIENT)
   endif(OPUS_FOUND)
 
   if(LIBMAD_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_MP3_SOURCES})
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_mp3.cpp)
   endif(LIBMAD_FOUND)
 
-  if(MIKMOD_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_MIKMOD_SOURCES})
-  endif(MIKMOD_FOUND)
-
-  if(MODPLUG_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_MODPLUG_SOURCES})
-  endif(MODPLUG_FOUND)
-
-  if(XMPLITE_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_xmplite.cpp)
-  endif(XMPLITE_FOUND)
-
   if(FLAC_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_FLAC_SOURCES})
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_flac.cpp)
   endif(FLAC_FOUND)
 
 
   if(WIN32)
     # ---------------- Windows ----------------
-    set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_WIN32_SOURCES})
+    set(MAIN_SOURCES ${MAIN_SOURCES} winshit/winlocal.h winshit/in_win32.cpp winshit/sys_win.cpp)
     set(MAIN_LIBS gdi32 ole32 winmm ${MAIN_LIBS})
 
     #  CMake doesn't support automatic building of resource files so
@@ -531,7 +454,7 @@ if(ENABLE_CLIENT)
     #set(MAIN_SOURCES ${MAIN_SOURCES})
   else(WIN32)
     if(SDL2_FOUND)
-      set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_UNIX_SDL_SOURCES})
+      set(MAIN_SOURCES ${MAIN_SOURCES} in_sdl.cpp sys_sdl.cpp)
     endif(SDL2_FOUND)
   endif(WIN32)
 
@@ -539,10 +462,10 @@ if(ENABLE_CLIENT)
   if(OPENGL_FOUND)
     set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_SOURCES})
     if(WIN32)
-      set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_WIN32_SOURCES})
+      set(MAIN_SOURCES ${MAIN_SOURCES} winshit/render/hwgl/gl_win32.cpp)
       set(MAIN_LIBS opengl32 ${MAIN_LIBS})
     else(WIN32)
-      set(MAIN_SOURCES ${MAIN_SOURCES} ${MAIN_OPENGL_UNIX_SDL_SOURCES})
+      set(MAIN_SOURCES ${MAIN_SOURCES} render/hwgl/gl_sdl.cpp)
     endif(WIN32)
   endif(OPENGL_FOUND)
 
@@ -589,7 +512,6 @@ exec \"${CMAKE_INSTALL_PREFIX}/${BINDIR}/vavoom.bin\" $* -basedir \"${CMAKE_INST
 ")
     install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/vavoom DESTINATION ${BINDIR})
   endif(ENABLE_WRAPPERS)
-
 endif(ENABLE_CLIENT)
 
 
@@ -599,9 +521,8 @@ endif(ENABLE_CLIENT)
 #
 #---------------------------------------
 if(ENABLE_SERVER)
-
   if(WIN32)
-    set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} ${SERVER_WIN32_SOURCES})
+    set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} winshit/sys_wind.cpp)
 
     #  CMake doesn't support automatic building of resource files so
     # we must add a custom command and add object files to the list
@@ -615,7 +536,7 @@ if(ENABLE_SERVER)
     ### set(SERVER_SOURCES ${SERVER_SOURCES} ${RC_OBJ})
     #set(SERVER_SOURCES ${SERVER_SOURCES})
   else(WIN32)
-    set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} ${SERVER_UNIX_SOURCES})
+    set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} sys_bsd.cpp)
   endif(WIN32)
 
   add_executable(vavoom-dedicated ${SERVER_SOURCES})
@@ -640,5 +561,4 @@ exec \"${CMAKE_INSTALL_PREFIX}/${BINDIR}/vavoom-dedicated.bin\" $* -basedir \"${
 ")
     install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/vavoom-dedicated DESTINATION ${BINDIR})
   endif(ENABLE_WRAPPERS)
-
 endif(ENABLE_SERVER)

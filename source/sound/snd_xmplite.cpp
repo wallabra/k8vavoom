@@ -28,6 +28,13 @@
 #include "snd_local.h"
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+static VCvarI snd_xmp_amp("snd_xmp_amp", "1", "XMP: amplification [0..3]", CVAR_Archive);
+static VCvarI snd_xmp_interpolator("snd_xmp_interpolator", "2", "XMP: interpolator (0:nearest; 1:linear; 2:spline)", CVAR_Archive);
+static VCvarB snd_xmp_full_dsp("snd_xmp_full_dsp", true, "XMP: turn on all DSP effects?", CVAR_Archive);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VXMPAudioCodec : public VAudioCodec {
 public:
   int InitLevel;
@@ -150,6 +157,17 @@ bool VXMPAudioCodec::Init () {
   // create context
   xmpctx = xmp_create_context();
   if (!xmpctx) return false;
+
+  int amp = snd_xmp_amp;
+  if (amp < 0) amp = 0; else if (amp > 3) amp = 3;
+  xmp_set_player(xmpctx, XMP_PLAYER_AMP, amp);
+
+  switch (snd_xmp_interpolator) {
+    case 0: xmp_set_player(xmpctx, XMP_PLAYER_INTERP, XMP_INTERP_NEAREST); break;
+    case 1: default: xmp_set_player(xmpctx, XMP_PLAYER_INTERP, XMP_INTERP_LINEAR); break;
+    case 2: xmp_set_player(xmpctx, XMP_PLAYER_INTERP, XMP_INTERP_SPLINE); break;
+  }
+  xmp_set_player(xmpctx, XMP_PLAYER_DSP, (snd_xmp_full_dsp ? XMP_DSP_ALL : XMP_DSP_LOWPASS));
 
   // load module
   if (xmp_load_module_from_memory(xmpctx, modData, modDataSize) != 0) return false;

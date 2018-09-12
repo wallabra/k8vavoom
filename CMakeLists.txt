@@ -9,7 +9,6 @@ project(vavoom)
 
 option(WITH_SDL2 "Use SDL2 library" ON)
 option(WITH_OPENGL "Use OpenGL library" ON)
-option(WITH_OPENAL "Use OpenAL library" ON)
 option(WITH_VORBIS "Enable Vorbis support" ON)
 option(WITH_OPUS "Enable Opus support" ON)
 option(WITH_LIBMAD "Enable MP3 support" ON)
@@ -54,7 +53,6 @@ if(UNIX)
 endif(UNIX)
 
 if(ENABLE_VCCRUN_ONLY)
-  #set(WITH_OPENAL ON)
   #set(WITH_VORBIS OFF)
   #set(WITH_LIBMAD OFF)
   #set(WITH_MIKMOD OFF)
@@ -70,7 +68,7 @@ if(ENABLE_VCCRUN_ONLY)
   set(ENABLE_VCCRUN ON)
   set(ENABLE_MD2FIXER OFF)
 
-  if (NOT WITH_OPENAL OR NOT WITH_VORBIS OR NOT WITH_FLAC)
+  if (NOT WITH_VORBIS OR NOT WITH_FLAC)
     message(SEND_ERROR "OpenAL, Vorbis and Flac are required")
     return()
   endif()
@@ -84,7 +82,6 @@ else(ENABLE_VCCRUN_ONLY)
     endif(NOT ENABLE_SERVER)
     set(WITH_SDL2 OFF)
     set(WITH_OPENGL OFF)
-    set(WITH_OPENAL OFF)
     set(WITH_VORBIS OFF)
     set(WITH_OPUS OFF)
     set(WITH_LIBMAD OFF)
@@ -363,7 +360,7 @@ endif(NOT WITH_SYS_LZMA)
 #
 #  **** Check for OpenAL ****
 #
-if(WITH_OPENAL)
+if(ENABLE_CLIENT OR ENABLE_SERVER OR ENABLE_VCCRUN)
   find_package(OpenAL REQUIRED)
   include_directories(${OPENAL_INCLUDE_DIR})
   ##find_path(OPENALAL_INCLUDE_DIR AL/al.h)
@@ -376,7 +373,7 @@ if(WITH_OPENAL)
     endif(WITH_STATIC_OPENAL)
     set(MAIN_LIBS ${OPENAL_LIBRARY} winmm ${MAIN_LIBS})
   endif(WIN32)
-endif(WITH_OPENAL)
+endif(ENABLE_CLIENT OR ENABLE_SERVER OR ENABLE_VCCRUN)
 
 
 #
@@ -423,24 +420,29 @@ else(WITH_OPUS)
 endif(WITH_OPUS)
 
 
-#
-#  **** Check for xmp-lite ****
-#
-if(WITH_XMPLITE)
-  FIND_PACKAGE(PkgConfig REQUIRED)
-  PKG_CHECK_MODULES(XMPLITE libxmp-lite)
-  if(XMPLITE_INCLUDE_DIRS AND XMPLITE_LIBRARIES)
-    message(STATUS "Found XMP-Lite: ${XMPLITE_LIBRARIES}")
-    set(XMPLITE_FOUND ON)
-    include_directories(${XMPLITE_INCLUDE_DIRS})
-    set(MAIN_LIBS ${XMPLITE_LIBRARIES} ${MAIN_LIBS})
-  else(XMPLITE_INCLUDE_DIRS AND XMPLITE_LIBRARIES)
-    message(STATUS "Could NOT find XMP-Lite libraries")
-    set(XMPLITE_FOUND OFF)
-  endif(XMPLITE_INCLUDE_DIRS AND XMPLITE_LIBRARIES)
-else(WITH_XMPLITE)
-  set(XMPLITE_FOUND OFF)
-endif(WITH_XMPLITE)
+### #
+### #  **** Check for xmp-lite ****
+### #
+### if(WITH_XMPLITE)
+###   FIND_PACKAGE(PkgConfig REQUIRED)
+###   PKG_CHECK_MODULES(XMPLITE libxmp-lite)
+###   if(XMPLITE_INCLUDE_DIRS AND XMPLITE_LIBRARIES)
+###     message(STATUS "Found XMP-Lite: ${XMPLITE_LIBRARIES}")
+###     set(XMPLITE_FOUND ON)
+###     include_directories(${XMPLITE_INCLUDE_DIRS})
+###     set(MAIN_LIBS ${XMPLITE_LIBRARIES} ${MAIN_LIBS})
+###   else(XMPLITE_INCLUDE_DIRS AND XMPLITE_LIBRARIES)
+###     message(STATUS "Could NOT find XMP-Lite libraries")
+###     set(XMPLITE_FOUND OFF)
+###   endif(XMPLITE_INCLUDE_DIRS AND XMPLITE_LIBRARIES)
+### else(WITH_XMPLITE)
+###   set(XMPLITE_FOUND OFF)
+### endif(WITH_XMPLITE)
+set(XMPLITE_FOUND ON)
+set(MAIN_LIBS xmplite ${MAIN_LIBS})
+include_directories(libs/xmplite)
+add_definitions(-DLIBXMP_CORE_PLAYER)
+add_definitions(-DXMP_SYM_VISIBILITY)
 
 
 #
@@ -463,80 +465,80 @@ else(WITH_LIBMAD)
 endif(WITH_LIBMAD)
 
 
-#
-#  **** Check for MikMod ****
-#
-if(WITH_MIKMOD)
-  # Find libmikmod-config script
-  if(NOT DEFINED LIBMIKMOD_CONFIG)
-    set(LIBMIKMOD_CONFIG libmikmod-config)
-  endif(NOT DEFINED LIBMIKMOD_CONFIG)
-  find_program(LIBMIKMOD_CONFIG_EXECUTABLE ${LIBMIKMOD_CONFIG})
-  if(LIBMIKMOD_CONFIG_EXECUTABLE)
-    # run the libmikmod-config program to get cxxflags
-    exec_program(sh
-      ARGS "${LIBMIKMOD_CONFIG_EXECUTABLE} --cflags"
-      OUTPUT_VARIABLE MIKMOD_CXX_FLAGS
-      RETURN_VALUE RET)
-    if(RET EQUAL 0)
-      # parse definitions from cxxflags
-      string(REGEX MATCHALL "-D.*[^ ;]+" MIKMOD_DEFINITIONS ${MIKMOD_CXX_FLAGS})
-      # drop -D* from CXXFLAGS
-      string(REGEX REPLACE "-D[^ ;]*" "" MIKMOD_CXX_FLAGS ${MIKMOD_CXX_FLAGS})
-      # parse incdirs from cxxflags, drop -I prefix
-      string(REGEX MATCHALL "-I.*[^ ;]+" MIKMOD_INCLUDE_DIRS ${MIKMOD_CXX_FLAGS})
-      string(REGEX REPLACE "-I" "" MIKMOD_INCLUDE_DIRS "${MIKMOD_CXX_FLAGS}")
-      # convert space to semicolons for list
-      string(REGEX REPLACE " " ";" MIKMOD_INCLUDE_DIRS "${MIKMOD_INCLUDE_DIRS}")
-    endif(RET EQUAL 0)
-
-    # run the libmikmod-config program to get the libs
-    exec_program(sh
-      ARGS "${LIBMIKMOD_CONFIG_EXECUTABLE} --libs"
-      OUTPUT_VARIABLE MIKMOD_LIBRARIES
-      RETURN_VALUE RET)
-    if(RET EQUAL 0)
-      string(REGEX REPLACE " " ";" MIKMOD_LIBRARIES "${MIKMOD_LIBRARIES}")
-      # extract linkdirs (-L) for rpath (i.e., LINK_DIRECTORIES)
-      string(REGEX MATCHALL "-L[^ ;]+" MIKMOD_LIBRARY_DIRS "${MIKMOD_LIBRARIES}")
-      string(REGEX REPLACE "-L" "" MIKMOD_LIBRARY_DIRS "${MIKMOD_LIBRARY_DIRS}")
-      # convert space to semicolons for list
-      STRING(REGEX REPLACE " " ";" MIKMOD_LIBRARY_DIRS "${MIKMOD_LIBRARY_DIRS}")
-    endif(RET EQUAL 0)
-
-    if(MIKMOD_INCLUDE_DIRS AND MIKMOD_LIBRARIES)
-      message(STATUS "Found MIKMOD: ${MIKMOD_LIBRARIES}")
-      set(MIKMOD_FOUND ON)
-      include_directories(${MIKMOD_INCLUDE_DIRS})
-      set(MAIN_LIBS ${MIKMOD_LIBRARIES} ${MAIN_LIBS})
-    else(MIKMOD_INCLUDE_DIRS AND MIKMOD_LIBRARIES)
-      message(STATUS "Could NOT find MIKMOD libraries")
-      set(MIKMOD_FOUND OFF)
-    endif(MIKMOD_INCLUDE_DIRS AND MIKMOD_LIBRARIES)
-  endif(LIBMIKMOD_CONFIG_EXECUTABLE)
-else(WITH_MIKMOD)
-  set(MIKMOD_FOUND OFF)
-endif(WITH_MIKMOD)
+### #
+### #  **** Check for MikMod ****
+### #
+### if(WITH_MIKMOD)
+###   # Find libmikmod-config script
+###   if(NOT DEFINED LIBMIKMOD_CONFIG)
+###     set(LIBMIKMOD_CONFIG libmikmod-config)
+###   endif(NOT DEFINED LIBMIKMOD_CONFIG)
+###   find_program(LIBMIKMOD_CONFIG_EXECUTABLE ${LIBMIKMOD_CONFIG})
+###   if(LIBMIKMOD_CONFIG_EXECUTABLE)
+###     # run the libmikmod-config program to get cxxflags
+###     exec_program(sh
+###       ARGS "${LIBMIKMOD_CONFIG_EXECUTABLE} --cflags"
+###       OUTPUT_VARIABLE MIKMOD_CXX_FLAGS
+###       RETURN_VALUE RET)
+###     if(RET EQUAL 0)
+###       # parse definitions from cxxflags
+###       string(REGEX MATCHALL "-D.*[^ ;]+" MIKMOD_DEFINITIONS ${MIKMOD_CXX_FLAGS})
+###       # drop -D* from CXXFLAGS
+###       string(REGEX REPLACE "-D[^ ;]*" "" MIKMOD_CXX_FLAGS ${MIKMOD_CXX_FLAGS})
+###       # parse incdirs from cxxflags, drop -I prefix
+###       string(REGEX MATCHALL "-I.*[^ ;]+" MIKMOD_INCLUDE_DIRS ${MIKMOD_CXX_FLAGS})
+###       string(REGEX REPLACE "-I" "" MIKMOD_INCLUDE_DIRS "${MIKMOD_CXX_FLAGS}")
+###       # convert space to semicolons for list
+###       string(REGEX REPLACE " " ";" MIKMOD_INCLUDE_DIRS "${MIKMOD_INCLUDE_DIRS}")
+###     endif(RET EQUAL 0)
+###
+###     # run the libmikmod-config program to get the libs
+###     exec_program(sh
+###       ARGS "${LIBMIKMOD_CONFIG_EXECUTABLE} --libs"
+###       OUTPUT_VARIABLE MIKMOD_LIBRARIES
+###       RETURN_VALUE RET)
+###     if(RET EQUAL 0)
+###       string(REGEX REPLACE " " ";" MIKMOD_LIBRARIES "${MIKMOD_LIBRARIES}")
+###       # extract linkdirs (-L) for rpath (i.e., LINK_DIRECTORIES)
+###       string(REGEX MATCHALL "-L[^ ;]+" MIKMOD_LIBRARY_DIRS "${MIKMOD_LIBRARIES}")
+###       string(REGEX REPLACE "-L" "" MIKMOD_LIBRARY_DIRS "${MIKMOD_LIBRARY_DIRS}")
+###       # convert space to semicolons for list
+###       STRING(REGEX REPLACE " " ";" MIKMOD_LIBRARY_DIRS "${MIKMOD_LIBRARY_DIRS}")
+###     endif(RET EQUAL 0)
+###
+###     if(MIKMOD_INCLUDE_DIRS AND MIKMOD_LIBRARIES)
+###       message(STATUS "Found MIKMOD: ${MIKMOD_LIBRARIES}")
+###       set(MIKMOD_FOUND ON)
+###       include_directories(${MIKMOD_INCLUDE_DIRS})
+###       set(MAIN_LIBS ${MIKMOD_LIBRARIES} ${MAIN_LIBS})
+###     else(MIKMOD_INCLUDE_DIRS AND MIKMOD_LIBRARIES)
+###       message(STATUS "Could NOT find MIKMOD libraries")
+###       set(MIKMOD_FOUND OFF)
+###     endif(MIKMOD_INCLUDE_DIRS AND MIKMOD_LIBRARIES)
+###   endif(LIBMIKMOD_CONFIG_EXECUTABLE)
+### else(WITH_MIKMOD)
+###   set(MIKMOD_FOUND OFF)
+### endif(WITH_MIKMOD)
 
 
 #
 #  **** Check for ModPlug ****
 #
-if(WITH_MODPLUG)
-  FIND_PACKAGE(PkgConfig REQUIRED)
-  PKG_CHECK_MODULES(MODPLUG libmodplug)
-  if(MODPLUG_INCLUDE_DIRS AND MODPLUG_LIBRARIES)
-    message(STATUS "Found MODPLUG: ${MODPLUG_LIBRARIES}")
-    set(MODPLUG_FOUND ON)
-    include_directories(${MODPLUG_INCLUDE_DIRS})
-    set(MAIN_LIBS ${MODPLUG_LIBRARIES} ${MAIN_LIBS})
-  else(MODPLUG_INCLUDE_DIRS AND MODPLUG_LIBRARIES)
-    message(STATUS "Could NOT find MODPLUG libraries")
-    set(MODPLUG_FOUND OFF)
-  endif(MODPLUG_INCLUDE_DIRS AND MODPLUG_LIBRARIES)
-else(WITH_MODPLUG)
-  set(MODPLUG_FOUND OFF)
-endif(WITH_MODPLUG)
+### if(WITH_MODPLUG)
+###   FIND_PACKAGE(PkgConfig REQUIRED)
+###   PKG_CHECK_MODULES(MODPLUG libmodplug)
+###   if(MODPLUG_INCLUDE_DIRS AND MODPLUG_LIBRARIES)
+###     message(STATUS "Found MODPLUG: ${MODPLUG_LIBRARIES}")
+###     set(MODPLUG_FOUND ON)
+###     include_directories(${MODPLUG_INCLUDE_DIRS})
+###     set(MAIN_LIBS ${MODPLUG_LIBRARIES} ${MAIN_LIBS})
+###   else(MODPLUG_INCLUDE_DIRS AND MODPLUG_LIBRARIES)
+###     message(STATUS "Could NOT find MODPLUG libraries")
+###     set(MODPLUG_FOUND OFF)
+###   endif(MODPLUG_INCLUDE_DIRS AND MODPLUG_LIBRARIES)
+### else(WITH_MODPLUG)
+###   set(MODPLUG_FOUND OFF)
+### endif(WITH_MODPLUG)
 
 
 #
