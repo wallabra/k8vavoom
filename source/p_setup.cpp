@@ -73,7 +73,6 @@ enum
 #define GL_V2_MAGIC     "gNd2"
 #define GL_V3_MAGIC     "gNd3"
 #define GL_V5_MAGIC     "gNd5"
-#define ZGL_MAGIC     "ZGLN"
 
 //  Indicates a GL-specific vertex.
 #define GL_VERTEX     0x8000
@@ -105,6 +104,11 @@ static VCvarB deepwater_hacks("deepwater_hacks", true, "Apply DeepWater hacks? (
 static VCvarB build_blockmap("build_blockmap", false, "Build blockmap?", CVAR_Archive);
 static VCvarB build_gwa("build_gwa", false, "Build GWA?", CVAR_Archive);
 static VCvarB show_level_load_times("show_level_load_times", false, "Show loading times?", CVAR_Archive);
+
+// there seems to be a bug in compressed GL nodes reader, hence the flag
+static VCvarB nodes_allow_compressed_old("nodes_allow_compressed_old", true, "Allow loading v0 compressed GL nodes?", CVAR_Archive);
+static VCvarB nodes_allow_compressed_new("nodes_allow_compressed_new", false, "Allow loading v1+ compressed GL nodes?", CVAR_Archive);
+
 
 // CODE --------------------------------------------------------------------
 
@@ -159,7 +163,9 @@ void VLevel::LoadMap(VName AMapName)
   int CompressedGLNodesLump = -1;
   bool UseComprGLNodes = false;
   bool NeedNodesBuild = false;
+  char GLNodesHdr[4];
   const mapInfo_t &MInfo = P_GetMapInfo(MapName);
+  memset(GLNodesHdr, 0, sizeof(GLNodesHdr));
 
   //  Check for UDMF map
   if (W_LumpName(lumpnum + 1) == NAME_textmap)
@@ -255,19 +261,23 @@ void VLevel::LoadMap(VName AMapName)
 
     //  Verify that it's a valid map.
     if (ThingsLump == -1 || LinesLump == -1 || SidesLump == -1 ||
-      VertexesLump == -1 || SectorsLump == -1)
+        VertexesLump == -1 || SectorsLump == -1)
     {
       Host_Error("Map %s is not a valid map", *MapName);
     }
 
-    if (SubsectorsLump != -1)
-    {
+    if (SubsectorsLump != -1) {
       VStream *TmpStrm = W_CreateLumpReaderNum(SubsectorsLump);
-      if (TmpStrm->TotalSize() > 4)
-      {
-        char Hdr[4];
-        TmpStrm->Serialise(Hdr, 4);
-        if (!VStr::NCmp(Hdr, ZGL_MAGIC, 4))
+      if (TmpStrm->TotalSize() > 4) {
+        TmpStrm->Serialise(GLNodesHdr, 4);
+        if ((GLNodesHdr[0] == 'Z' || GLNodesHdr[0] == 'X') &&
+            GLNodesHdr[1] == 'G' && GLNodesHdr[2] == 'L' &&
+            (GLNodesHdr[3] == 'N' || GLNodesHdr[3] == '2' || GLNodesHdr[3] == '3'))
+        {
+          UseComprGLNodes = true;
+          CompressedGLNodesLump = SubsectorsLump;
+        } else if ((GLNodesHdr[0] == 'Z' || GLNodesHdr[0] == 'X') &&
+                    GLNodesHdr[1] == 'N' && GLNodesHdr[2] == 'O' && GLNodesHdr[3] == 'D')
         {
           UseComprGLNodes = true;
           CompressedGLNodesLump = SubsectorsLump;
@@ -381,7 +391,7 @@ void VLevel::LoadMap(VName AMapName)
   }
   else if (UseComprGLNodes)
   {
-    if (!LoadCompressedGLNodes(CompressedGLNodesLump)) {
+    if (!LoadCompressedGLNodes(CompressedGLNodesLump, GLNodesHdr)) {
       GCon->Logf("rebuilding GL nodes...");
       BuildNodes();
     }
@@ -1463,48 +1473,114 @@ void VLevel::LoadPVS(int Lump)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VLevel::LoadCompressedGLNodes
 //
 //==========================================================================
-
-bool VLevel::LoadCompressedGLNodes(int Lump)
-{
-  return false; //k8:FIXME: dunno, this seems to read some shit in one of my test maps; will investigate it later
+bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   guard(VLevel::LoadCompressedGLNodes);
   VStream *BaseStrm = W_CreateLumpReaderNum(Lump);
-  //  Skip header.
-  BaseStrm->Seek(4);
-  //  Create reader stream for the zipped data.
-  vuint8 *TmpData = new vuint8[BaseStrm->TotalSize() - 4];
-  BaseStrm->Serialise(TmpData, BaseStrm->TotalSize() - 4);
-  VStream *DataStrm = new VMemoryStream(TmpData, BaseStrm->TotalSize() - 4);
+
+  // read header
+  BaseStrm->Serialise(hdr, 4);
+  if (BaseStrm->IsError()) {
+    delete BaseStrm;
+    GCon->Logf("WARNING: error reading GL nodes (VaVoom will use internal node builder)");
+    return false;
+  }
+
+  if ((hdr[0] == 'Z' || hdr[0] == 'X') &&
+      hdr[1] == 'G' && hdr[2] == 'L' &&
+      (hdr[3] == 'N' || hdr[3] == '2' || hdr[3] == '3'))
+  {
+    // ok
+  } else if ((hdr[0] == 'Z' || hdr[0] == 'X') &&
+              hdr[1] == 'N' && hdr[2] == 'O' && hdr[3] == 'D')
+  {
+    // ok
+  } else {
+    delete BaseStrm;
+    GCon->Logf("WARNING: invalid GL nodes signature (VaVoom will use internal node builder)");
+    return false;
+  }
+
+  // create reader stream for the zipped data
+  vuint8 *TmpData = new vuint8[BaseStrm->TotalSize()-4];
+  BaseStrm->Serialise(TmpData, BaseStrm->TotalSize()-4);
+  if (BaseStrm->IsError()) {
+    delete BaseStrm;
+    GCon->Logf("WARNING: error reading GL nodes (VaVoom will use internal node builder)");
+    return false;
+  }
+  VStream *DataStrm = new VMemoryStream(TmpData, BaseStrm->TotalSize()-4);
   delete[] TmpData;
   TmpData = nullptr;
   delete BaseStrm;
   BaseStrm = nullptr;
-  VStream *Strm = new VZipStreamReader(DataStrm);
 
-  //  Read extra vertex data
+  VStream *Strm;
+  if (hdr[0] == 'X') {
+    Strm = DataStrm;
+    DataStrm = nullptr;
+  } else {
+    Strm = new VZipStreamReader(DataStrm);
+  }
+
+  int type;
+  switch (hdr[3]) {
+    case 'D': type = 0; break;
+    case 'N': type = 1; break;
+    case '2': type = 2; break;
+    case '3': type = 3; break;
+    default: delete Strm; delete DataStrm; return false; // just in case
+  }
+
+  GCon->Logf("NOTE: found %scompressed GL nodes, type %d", (hdr[0] == 'X' ? "un" : ""), type);
+
+  if (type == 0) {
+    if (!nodes_allow_compressed_old) {
+      delete Strm; delete DataStrm;
+      GCon->Logf("WARNING: this version of GL nodes is disabled, VaVoom will use internal node builder");
+      return false;
+    }
+  } else {
+    if (!nodes_allow_compressed_new) {
+      delete Strm; delete DataStrm;
+      GCon->Logf("WARNING: this version of GL nodes is disabled, VaVoom will use internal node builder");
+      return false;
+    }
+  }
+
+  // read extra vertex data
   guard(VLevel::LoadCompressedGLNodes::Vertexes);
-  vuint32 OrgVerts;
-  vuint32 NewVerts;
+  vuint32 OrgVerts, NewVerts;
   *Strm << OrgVerts << NewVerts;
 
-  if (OrgVerts + NewVerts != (vuint32)NumVertexes)
-  {
+  if (Strm->IsError()) {
+    delete Strm; delete DataStrm;
+    GCon->Logf("WARNING: error reading GL nodes (VaVoom will use internal node builder)");
+    return false;
+  }
+
+  if (OrgVerts != (vuint32)NumVertexes) {
+    delete Strm; delete DataStrm;
+    GCon->Logf("WARNING: error reading GL nodes (got %u vertexes, expected %d vertexes)", OrgVerts, NumVertexes);
+    return false;
+  }
+
+  if (OrgVerts+NewVerts != (vuint32)NumVertexes) {
     vertex_t *OldVerts = Vertexes;
-    NumVertexes = OrgVerts + NewVerts;
+    NumVertexes = OrgVerts+NewVerts;
     Vertexes = new vertex_t[NumVertexes];
     if (NumVertexes) memset((void *)Vertexes, 0, sizeof(vertex_t)*NumVertexes);
     memcpy((void *)Vertexes, (void *)OldVerts, OrgVerts * sizeof(vertex_t));
-    //  Fix up vertex pointers in linedefs
-    for (int i = 0; i < NumLines; i++)
-    {
+    // fix up vertex pointers in linedefs
+    for (int i = 0; i < NumLines; ++i) {
       line_t &L = Lines[i];
-      int v1 = L.v1 - OldVerts;
-      int v2 = L.v2 - OldVerts;
+      int v1 = L.v1-OldVerts;
+      int v2 = L.v2-OldVerts;
       L.v1 = &Vertexes[v1];
       L.v2 = &Vertexes[v2];
     }
@@ -1512,24 +1588,24 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
     OldVerts = nullptr;
   }
 
-  vertex_t *DstVert = Vertexes + OrgVerts;
-  for (vuint32 i = 0; i < NewVerts; i++, DstVert++)
-  {
+  // read new vertexes
+  vertex_t *DstVert = Vertexes+OrgVerts;
+  for (vuint32 i = 0; i < NewVerts; ++i, ++DstVert) {
     vint32 x, y;
     *Strm << x << y;
-    *DstVert = TVec(x / 65536.0, y / 65536.0, 0);
+    *DstVert = TVec(x/65536.0f, y/65536.0f, 0.0f);
   }
   unguard;
 
-  //  Load subsectors
+  // load subsectors
+  int FirstSeg = 0;
   guard(VLevel::LoadCompressedGLNodes::Subsectors);
   NumSubsectors = Streamer<vuint32>(*Strm);
   Subsectors = new subsector_t[NumSubsectors];
-  memset((void *)Subsectors, 0, sizeof(subsector_t) * NumSubsectors);
+  memset((void *)Subsectors, 0, sizeof(subsector_t)*NumSubsectors);
   subsector_t *ss = Subsectors;
-  int FirstSeg = 0;
-  for (int i = 0; i < NumSubsectors; i++, ss++)
-  {
+
+  for (int i = 0; i < NumSubsectors; ++i, ++ss) {
     vuint32 NumSubSegs;
     *Strm << NumSubSegs;
     ss->numlines = NumSubSegs;
@@ -1538,89 +1614,163 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
   }
   unguard;
 
-  //  Load segs
+  // load segs
   guard(VLevel::LoadCompressedGLNodes::Segs);
   NumSegs = Streamer<vuint32>(*Strm);
+  if (NumSegs != FirstSeg) Host_Error("error reading GL nodes (got %d segs, expected %d segs)", NumSegs, FirstSeg);
+
   Segs = new seg_t[NumSegs];
-  memset((void *)Segs, 0, sizeof(seg_t) * NumSegs);
-  seg_t *li = Segs;
-  for (int i = 0; i < NumSegs; i++, li++)
-  {
-    vuint32 v1;
-    vuint32 partner;
-    vuint16 linedef;
-    vuint8 side;
+  memset((void *)Segs, 0, sizeof(seg_t)*NumSegs);
+  if (type == 0) {
+    seg_t *li = Segs;
+    for (int i = 0; i < NumSegs; ++i, ++li) {
+      vuint32 v1;
+      vuint32 partner;
+      vuint16 linedef;
+      vuint8 side;
 
-    *Strm << v1 << partner << linedef << side;
+      *Strm << v1 << partner << linedef << side;
 
-    if (v1 >= (vuint32)NumVertexes)
-    {
-      Host_Error("Bad vertex index %d", v1);
+      if (v1 >= (vuint32)NumVertexes) Host_Error("Bad vertex index %d", v1);
+      li->v1 = &Vertexes[v1];
+
+      // assign partner (we need it for self-referencing deep water)
+      li->partner = (partner < (unsigned)NumSegs ? &Segs[partner] : nullptr);
+
+      if (linedef != 0xffff) {
+        if (linedef >= NumLines) Host_Error("Bad linedef index %d", linedef);
+        if (side > 1) Host_Error("Bad seg side %d", side);
+
+        line_t *ldef = &Lines[linedef];
+        li->linedef = ldef;
+        li->sidedef = &Sides[ldef->sidenum[side]];
+        li->frontsector = Sides[ldef->sidenum[side]].Sector;
+
+        if ((ldef->flags&ML_TWOSIDED) != 0 && ldef->sidenum[side^1]) {
+          li->backsector = Sides[ldef->sidenum[side^1]].Sector;
+        } else {
+          li->backsector = nullptr;
+          ldef->flags &= ~ML_TWOSIDED;
+        }
+
+        if (side) {
+          check(li);
+          check(li->v1);
+          check(ldef->v2);
+          li->offset = Length(*li->v1 - *ldef->v2);
+        } else {
+          check(li);
+          check(li->v1);
+          check(ldef->v1);
+          li->offset = Length(*li->v1 - *ldef->v1);
+        }
+        li->side = side;
+      } else {
+        /*
+        seg->linedef = nullptr;
+        seg->sidedef = nullptr;
+        seg->frontsector = seg->backsector = (Segs+Subsectors[i].firstline)->frontsector;
+        */
+      }
     }
-    li->v1 = &Vertexes[v1];
+  } else {
+    for (int i = 0; i < NumSubsectors; ++i) {
+      for (int j = 0; j < Subsectors[i].numlines; ++j) {
+        vuint32 v1, partner, linedef;
+        *Strm << v1 << partner;
 
-    //  Assign partner (we need it for self-referencing deep water)
-    li->partner = (partner < (unsigned)NumSegs ? &Segs[partner] : nullptr);
+        if (type >= 2) {
+          *Strm << linedef;
+        } else {
+          vuint16 l16;
+          *Strm << l16;
+          linedef = l16;
+          if (linedef == 0xffff) linedef = 0xffffffffu;
+        }
+        vuint8 side;
+        *Strm << side;
 
-    if (linedef != 0xffff)
-    {
-      if (linedef >= NumLines)
-      {
-        Host_Error("Bad linedef index %d", linedef);
-      }
-      if (side > 1)
-      {
-        Host_Error("Bad seg side %d", side);
-      }
-      line_t *ldef = &Lines[linedef];
-      li->linedef = ldef;
-      li->sidedef = &Sides[ldef->sidenum[side]];
-      li->frontsector = Sides[ldef->sidenum[side]].Sector;
+        seg_t *li = Segs+Subsectors[i].firstline+j;
 
-      if (ldef->flags & ML_TWOSIDED)
-      {
-        li->backsector = Sides[ldef->sidenum[side ^ 1]].Sector;
-      }
+        // assign partner (we need it for self-referencing deep water)
+        li->partner = (partner < (unsigned)NumSegs ? &Segs[partner] : nullptr);
 
-      if (side)
-      {
-        check(li);
-        check(li->v1);
-        check(ldef->v2);
-        li->offset = Length(*li->v1 - *ldef->v2);
+        li->v1 = &Vertexes[v1];
+        /*
+        if (j == 0) {
+          li[Subsectors[i].numlines-1].v2 = li->v1;
+        } else {
+          li[-1].v2 = li->v1;
+        }
+        */
+
+        if (linedef != 0xFFFFFFFFu) {
+          if (linedef >= (vuint32)NumLines) Host_Error("Bad linedef index %u (ss=%d; nl=%d)", linedef, i, j);
+          if (side > 1) Host_Error("Bad seg side %d", side);
+
+          line_t *ldef = &Lines[linedef];
+
+          li->linedef = ldef;
+          li->sidedef = &Sides[ldef->sidenum[side]];
+          li->frontsector = Sides[ldef->sidenum[side]].Sector;
+
+          if ((ldef->flags&ML_TWOSIDED) != 0 && ldef->sidenum[side^1]) {
+            li->backsector = Sides[ldef->sidenum[side^1]].Sector;
+          } else {
+            li->backsector = nullptr;
+            ldef->flags &= ~ML_TWOSIDED;
+          }
+
+          if (side) {
+            check(li);
+            check(li->v1);
+            check(ldef->v2);
+            li->offset = Length(*li->v1 - *ldef->v2);
+          } else {
+            check(li);
+            check(li->v1);
+            check(ldef->v1);
+            li->offset = Length(*li->v1 - *ldef->v1);
+          }
+          li->side = side;
+        } else {
+          li->linedef = nullptr;
+          li->sidedef = nullptr;
+          li->frontsector = li->backsector = (Segs+Subsectors[i].firstline)->frontsector;
+        }
       }
-      else
-      {
-        check(li);
-        check(li->v1);
-        check(ldef->v1);
-        li->offset = Length(*li->v1 - *ldef->v1);
-      }
-      li->side = side;
     }
   }
   unguard;
 
-  //  Load nodes.
+  // load nodes
   guard(VLevel::LoadCompressedGLNodes::Nodes);
   NumNodes = Streamer<vuint32>(*Strm);
   Nodes = new node_t[NumNodes];
   memset((void *)Nodes, 0, sizeof(node_t) * NumNodes);
   node_t *no = Nodes;
-  for (int i = 0; i < NumNodes; i++, no++)
-  {
-    vint16 x, y, dx, dy;
-    vint16 bbox[2][4];
+  for (int i = 0; i < NumNodes; ++i, ++no) {
+    vint32 x, y, dx, dy;
     vuint32 children[2];
-    *Strm << x << y << dx << dy
-      << bbox[0][0] << bbox[0][1] << bbox[0][2] << bbox[0][3]
-      << bbox[1][0] << bbox[1][1] << bbox[1][2] << bbox[1][3]
-      << children[0] << children[1];
+    vint16 bbox[2][4];
+    if (type < 3) {
+      vint16 xx, yy, dxx, dyy;
+      *Strm << xx << yy << dxx << dyy;
+      x = xx;
+      y = yy;
+      dx = dxx;
+      dy = dyy;
+    } else {
+      *Strm << x << y << dx << dy;
+    }
+
+    *Strm << bbox[0][0] << bbox[0][1] << bbox[0][2] << bbox[0][3]
+          << bbox[1][0] << bbox[1][1] << bbox[1][2] << bbox[1][3]
+          << children[0] << children[1];
 
     no->SetPointDir(TVec(x, y, 0), TVec(dx, dy, 0));
 
-    for (int j = 0; j < 2; j++)
-    {
+    for (int j = 0; j < 2; ++j) {
       no->children[j] = children[j];
       no->bbox[j][0] = bbox[j][BOXLEFT];
       no->bbox[j][1] = bbox[j][BOXBOTTOM];
@@ -1632,14 +1782,12 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
   }
   unguard;
 
-  //  Set v2 of the segs.
+  // set v2 of the segs
   guard(VLevel::LoadCompressedGLNodes::Set up seg v2);
   subsector_t *Sub = Subsectors;
-  for (int i = 0; i < NumSubsectors; i++, Sub++)
-  {
-    seg_t *Seg = Segs + Sub->firstline;
-    for (int j = 0; j < Sub->numlines - 1; j++, Seg++)
-    {
+  for (int i = 0; i < NumSubsectors; ++i, ++Sub) {
+    seg_t *Seg = Segs+Sub->firstline;
+    for (int j = 0; j < Sub->numlines-1; ++j, ++Seg) {
       Seg->v2 = Seg[1].v1;
     }
     Seg->v2 = Segs[Sub->firstline].v1;
@@ -1648,9 +1796,8 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
 
   guard(VLevel::LoadCompressedGLNodes::Calc segs);
   seg_t *li = Segs;
-  for (int i = 0; i < NumSegs; i++, li++)
-  {
-    //  Calc seg's plane params
+  for (int i = 0; i < NumSegs; ++i, ++li) {
+    // calc seg's plane params
     li->length = Length(*li->v2 - *li->v1);
     CalcSeg(li);
   }
@@ -1658,34 +1805,30 @@ bool VLevel::LoadCompressedGLNodes(int Lump)
 
   guard(Calc subsectors);
   subsector_t *ss = Subsectors;
-  for (int i = 0; i < NumSubsectors; i++, ss++)
-  {
+  for (int i = 0; i < NumSubsectors; ++i, ++ss) {
     // look up sector number for each subsector
     seg_t *seg = &Segs[ss->firstline];
-    for (int j = 0; j < ss->numlines; j++)
-    {
-      if (seg[j].linedef)
-      {
+    for (int j = 0; j < ss->numlines; ++j) {
+      if (seg[j].linedef) {
         ss->sector = seg[j].sidedef->Sector;
         ss->seclink = ss->sector->subsectors;
         ss->sector->subsectors = ss;
         break;
       }
     }
-    if (!ss->sector)
-      Host_Error("Subsector %d without sector", i);
+    if (!ss->sector) Host_Error("Subsector %d without sector", i);
   }
   unguard;
 
-  //  Create dummy VIS data.
+  // create dummy VIS data
   VisData = nullptr;
-  NoVis = new vuint8[(NumSubsectors + 7) / 8];
-  memset(NoVis, 0xff, (NumSubsectors + 7) / 8);
+  NoVis = new vuint8[(NumSubsectors+7)/8];
+  memset(NoVis, 0xff, (NumSubsectors+7)/8);
 
   delete Strm;
-  Strm = nullptr;
   delete DataStrm;
-  DataStrm = nullptr;
+
+  return true;
   unguard;
 }
 

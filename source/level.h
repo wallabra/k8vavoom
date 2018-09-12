@@ -311,7 +311,7 @@ private:
   void LoadSubsectors (int);
   void LoadNodes (int);
   void LoadPVS (int);
-  bool LoadCompressedGLNodes (int);
+  bool LoadCompressedGLNodes (int Lump, char hdr[4]);
   void LoadBlockMap (int);
   void LoadReject (int);
   void LoadThings1 (int);
