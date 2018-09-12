@@ -70,11 +70,12 @@ public:
 class VFilesDir : public VSearchPath {
 private:
   VStr path;
-  TArray<VStr> CachedFiles;
-  bool cacheInited;
+  TArray<VStr> cachedFiles;
+  TMap<VStr, int> cachedMap;
+  //bool cacheInited;
 
 private:
-  void cacheDir ();
+  //void cacheDir ();
 
   // -1, or index in `CachedFiles`
   int findFileCI (const VStr &fname);
