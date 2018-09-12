@@ -26,12 +26,17 @@
 //**  System driver for DOS, LINUX and UNIX dedicated servers.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
+#ifdef _WIN32
+# define ftime fucked_ftime
+# include <io.h>
+# undef ftime
+# include <conio.h>
+# include <sys/timeb.h>
+# include <windows.h>
+#endif
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -46,6 +51,7 @@
 //==========================================================================
 char *Sys_ConsoleInput () {
   static char text[256];
+#ifndef _WIN32
   int len;
   fd_set fdset;
   struct timeval timeout;
@@ -61,6 +67,37 @@ char *Sys_ConsoleInput () {
   text[len-1] = 0; // rip off the /n and terminate
 
   return text;
+#else
+  static int len;
+  int c;
+
+  // read a line out
+  while (kbhit()) {
+    c = getch();
+    putch(c);
+    if (c == '\r') {
+      text[len] = 0;
+      putch('\n');
+      len = 0;
+      return text;
+    }
+    if (c == 8) {
+      if (len) {
+        putch(' ');
+        putch(c);
+        --len;
+        text[len] = 0;
+      }
+      continue;
+    }
+    text[len] = c;
+    ++len;
+    text[len] = 0;
+    if (len == sizeof(text)) len = 0;
+  }
+
+  return nullptr;
+#endif
 }
 
 
@@ -73,9 +110,7 @@ char *Sys_ConsoleInput () {
 //
 //==========================================================================
 void Sys_Quit (const char *msg) {
-  // Shutdown system
   Host_Shutdown();
-  // Exit
   exit(0);
 }
 
@@ -182,10 +217,17 @@ int main (int argc, char **argv) {
 #endif
 
 #else
+# ifndef _WIN32
     // install signal handlers
     signal(SIGTERM, signal_handler);
     signal(SIGINT,  signal_handler);
     signal(SIGQUIT, signal_handler);
+# else
+    signal(SIGINT,  signal_handler);
+    signal(SIGTERM, signal_handler);
+    signal(SIGBREAK,signal_handler);
+    signal(SIGABRT, signal_handler);
+# endif
 #endif
 
     // initialise
@@ -212,4 +254,6 @@ int main (int argc, char **argv) {
     fprintf(stderr, "\nExiting due to external exception\n");
     throw;
   }
+
+  return 0;
 }

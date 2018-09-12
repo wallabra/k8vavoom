@@ -531,23 +531,24 @@ endif(ENABLE_CLIENT)
 #
 #---------------------------------------
 if(ENABLE_SERVER)
-  if(WIN32)
-    set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} winshit/sys_wind.cpp)
-
-    #  CMake doesn't support automatic building of resource files so
-    # we must add a custom command and add object files to the list
-    # of source files
-    ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
-    ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom_sv.o)
-    ### add_custom_command(OUTPUT ${RC_OBJ}
-    ###   DEPENDS ${RC_SRC}
-    ###   COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
-    ### )
-    ### set(SERVER_SOURCES ${SERVER_SOURCES} ${RC_OBJ})
-    #set(SERVER_SOURCES ${SERVER_SOURCES})
-  else(WIN32)
-    set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} sys_bsd.cpp)
-  endif(WIN32)
+  ### if(WIN32)
+  ###   set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} winshit/sys_wind.cpp)
+  ###
+  ###   #  CMake doesn't support automatic building of resource files so
+  ###   # we must add a custom command and add object files to the list
+  ###   # of source files
+  ###   ### set(RC_SRC ${CMAKE_CURRENT_SOURCE_DIR}/winshit/res/vavoom.rc)
+  ###   ### set(RC_OBJ ${CMAKE_CURRENT_BINARY_DIR}/winshit/res/vavoom_sv.o)
+  ###   ### add_custom_command(OUTPUT ${RC_OBJ}
+  ###   ###   DEPENDS ${RC_SRC}
+  ###   ###   COMMAND windres --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_BINARY_DIR} -o ${RC_OBJ} -i ${RC_SRC}
+  ###   ### )
+  ###   ### set(SERVER_SOURCES ${SERVER_SOURCES} ${RC_OBJ})
+  ###   #set(SERVER_SOURCES ${SERVER_SOURCES})
+  ### else(WIN32)
+  ###   set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} sys_ded.cpp)
+  ### endif(WIN32)
+  set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} sys_ded.cpp)
 
   add_executable(vavoom-dedicated ${SERVER_SOURCES})
   if(ENABLE_WRAPPERS)
