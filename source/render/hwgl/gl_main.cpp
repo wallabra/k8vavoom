@@ -468,6 +468,14 @@ void VOpenGLDrawer::InitResolution () {
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_zbuf.fs");
   SurfZBufProgram = CreateProgram(VertexShader, FragmentShader);
 
+  VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_decal_adv.vs");
+  FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal_adv.fs");
+  SurfAdvDecalProgram = CreateProgram(VertexShader, FragmentShader);
+  SurfAdvDecalTextureLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "Texture");
+  SurfAdvDecalSplatColourLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "SplatColour");
+  SurfAdvDecalSplatAlphaLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "SplatAlpha");
+  SurfAdvDecalLightLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "Light");
+
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_decal.vs");
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal.fs");
   SurfDecalProgram = CreateProgram(VertexShader, FragmentShader);

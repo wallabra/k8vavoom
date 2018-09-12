@@ -493,8 +493,8 @@ private:
 
   void RenderShaderDecalsStart ();
   void RenderShaderDecalsEnd ();
-  void RenderPrepareShaderDecals (surface_t *surf, bool lmap);
-  bool RenderFinishShaderDecals (surface_t *surf, bool lmap, surfcache_t *cache);
+  void RenderPrepareShaderDecals (surface_t *surf);
+  bool RenderFinishShaderDecals (surface_t *surf, bool lmap, bool advanced, surfcache_t *cache);
 
 protected:
   enum { M_INFINITY = 8000 };
@@ -551,6 +551,12 @@ protected:
   GLhandleARB DrawAutomapProgram;
 
   GLhandleARB SurfZBufProgram;
+
+  GLhandleARB SurfAdvDecalProgram;
+  GLint SurfAdvDecalTextureLoc;
+  GLint SurfAdvDecalSplatColourLoc;
+  GLint SurfAdvDecalSplatAlphaLoc;
+  GLint SurfAdvDecalLightLoc;
 
   GLhandleARB SurfDecalProgram;
   GLint SurfDecalIsLightmap;

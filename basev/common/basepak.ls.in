@@ -641,8 +641,10 @@ glshaders/surf_part.fs      @CMAKE_CURRENT_SOURCE_DIR@/glshaders/surf_part.fs
 glshaders/surf_part.vs      @CMAKE_CURRENT_SOURCE_DIR@/glshaders/surf_part.vs
 glshaders/surf_simple.fs    @CMAKE_CURRENT_SOURCE_DIR@/glshaders/surf_simple.fs
 glshaders/surf_simple.vs    @CMAKE_CURRENT_SOURCE_DIR@/glshaders/surf_simple.vs
-glshaders/surf_decal.fs   @CMAKE_CURRENT_SOURCE_DIR@/glshaders/surf_decal.fs
+glshaders/surf_decal.fs      @CMAKE_CURRENT_SOURCE_DIR@/glshaders/surf_decal.fs
 glshaders/surf_decal.vs   @CMAKE_CURRENT_SOURCE_DIR@/glshaders/surf_decal.vs
+glshaders/surf_decal_adv.fs  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/surf_decal_adv.fs
+glshaders/surf_decal_adv.vs  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/surf_decal_adv.vs
 glshaders/surf_sky.fs     @CMAKE_CURRENT_SOURCE_DIR@/glshaders/surf_sky.fs
 glshaders/surf_sky.vs     @CMAKE_CURRENT_SOURCE_DIR@/glshaders/surf_sky.vs
 glshaders/surf_zbuf.fs      @CMAKE_CURRENT_SOURCE_DIR@/glshaders/surf_zbuf.fs
