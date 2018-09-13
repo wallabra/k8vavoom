@@ -133,10 +133,53 @@ pointlight BurningBarrel
   offset 0 0 24
 }
 
+pointlight BurningBarrel_LX0
+{
+  colour 1 0.8 0
+  radius 135
+  //offset 0 0 16
+  offset 0 0 24
+}
+
+pointlight BurningBarrel_LX1
+{
+  colour 1 1 0
+  radius 140
+  //offset 0 0 16
+  offset 0 0 24
+}
+
+pointlight BurningBarrel_LX2
+{
+  colour 1 0.9 0
+  radius 135
+  //offset 0 0 16
+  offset 0 0 24
+}
+
+particleeffect BurningBarrelFlameParts
+{
+  type explode
+  type2 explode2
+  colour 1 1 0
+  count 16
+  offset 0 0 44
+  originrandom 8
+  //velocity 512 512 512
+  velocity 32 32 48
+  velocityrandom 0.5
+  gravity 30
+  duration 15
+  ramp 4
+}
+
 class BurningBarrel
 {
-  static_light BurningBarrel
-  frame FCAN { light BurningBarrel }
+  //static_light BurningBarrel
+  //frame FCAN { light BurningBarrel }
+  frame FCANA { light BurningBarrel_LX0 particles BurningBarrelFlameParts }
+  frame FCANB { light BurningBarrel_LX1 particles BurningBarrelFlameParts }
+  frame FCANC { light BurningBarrel_LX2 particles BurningBarrelFlameParts }
 }
 
 //------------------------------------------------------------------------------
