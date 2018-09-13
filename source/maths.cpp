@@ -56,7 +56,7 @@ public:
     m[2][2] = t*Axis.z*Axis.z+c;
   }
 
-  friend TVec operator * (const TVec &v, const VRotMatrix &m) {
+  friend inline TVec operator * (const TVec &v, const VRotMatrix &m) {
     return TVec(
       m.m[0][0]*v.x+m.m[0][1]*v.y+m.m[0][2]*v.z,
       m.m[1][0]*v.x+m.m[1][1]*v.y+m.m[1][2]*v.z,
@@ -70,21 +70,25 @@ public:
 //  mlog2
 //
 //==========================================================================
+/*
 int mlog2 (int val) {
   int answer = 0;
   while (val >>= 1) ++answer;
   return answer;
 }
+*/
 
 
 //==========================================================================
 //
-//  mlog2
+//  mround
 //
 //==========================================================================
-int mround(float Val) {
+/*
+int mround (float Val) {
   return (int)floor(Val+0.5);
 }
+*/
 
 
 //==========================================================================
@@ -93,9 +97,20 @@ int mround(float Val) {
 //
 //==========================================================================
 int ToPowerOf2 (int val) {
+  /*
   int answer = 1;
   while (answer < val) answer <<= 1;
   return answer;
+  */
+  if (val < 1) val = 1;
+  --val;
+  val |= val>>1;
+  val |= val>>2;
+  val |= val>>4;
+  val |= val>>8;
+  val |= val>>16;
+  ++val;
+  return val;
 }
 
 
@@ -104,6 +119,7 @@ int ToPowerOf2 (int val) {
 //  AngleMod
 //
 //==========================================================================
+/*
 float AngleMod (float angle) {
 #if 1
   angle = fmodf(angle, 360.0f);
@@ -114,6 +130,7 @@ float AngleMod (float angle) {
 #endif
   return angle;
 }
+*/
 
 
 //==========================================================================
@@ -121,6 +138,7 @@ float AngleMod (float angle) {
 //  AngleMod180
 //
 //==========================================================================
+/*
 float AngleMod180 (float angle) {
 #if 1
   angle = fmodf(angle, 360.0f);
@@ -133,6 +151,7 @@ float AngleMod180 (float angle) {
 #endif
   return angle;
 }
+*/
 
 
 //==========================================================================

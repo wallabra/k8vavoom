@@ -117,12 +117,39 @@ public:
 };
 
 
-int mlog2 (int val);
-int mround (float);
+//int mlog2 (int val);
+//int mround (float);
+static __attribute((unused)) inline int mround (float Val) { return (int)floor(Val+0.5); }
+
 int ToPowerOf2 (int val);
 
-float AngleMod (float angle);
-float AngleMod180 (float angle);
+//float AngleMod (float angle);
+//float AngleMod180 (float angle);
+
+static __attribute((unused)) inline float AngleMod (float angle) {
+#if 1
+  angle = fmodf(angle, 360.0f);
+  while (angle < 0.0) angle += 360.0;
+  while (angle >= 360.0) angle -= 360.0;
+#else
+  angle = (360.0/65536)*((int)(angle*(65536/360.0))&65535);
+#endif
+  return angle;
+}
+
+static __attribute((unused)) inline float AngleMod180 (float angle) {
+#if 1
+  angle = fmodf(angle, 360.0f);
+  while (angle < -180.0) angle += 360.0;
+  while (angle >= 180.0) angle -= 360.0;
+#else
+  angle += 180;
+  angle = (360.0/65536)*((int)(angle*(65536/360.0))&65535);
+  angle -= 180;
+#endif
+  return angle;
+}
+
 void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up);
 void AngleVector (const TAVec &angles, TVec &forward);
 void VectorAngles (const TVec &vec, TAVec &angles);
@@ -130,12 +157,12 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
 TVec RotateVectorAroundVector (const TVec &, const TVec &, float);
 
 
-inline float msin (float angle) { return sin(DEG2RAD(angle)); }
-inline float mcos (float angle) { return cos(DEG2RAD(angle)); }
-inline float mtan (float angle) { return tan(DEG2RAD(angle)); }
-inline float masin (float x) { return RAD2DEG(asin(x)); }
-inline float macos (float x) { return RAD2DEG(acos(x)); }
-inline float matan (float y, float x) { return RAD2DEG(atan2(y, x)); }
+static __attribute((unused)) inline float msin (float angle) { return sin(DEG2RAD(angle)); }
+static __attribute((unused)) inline float mcos (float angle) { return cos(DEG2RAD(angle)); }
+static __attribute((unused)) inline float mtan (float angle) { return tan(DEG2RAD(angle)); }
+static __attribute((unused)) inline float masin (float x) { return RAD2DEG(asin(x)); }
+static __attribute((unused)) inline float macos (float x) { return RAD2DEG(acos(x)); }
+static __attribute((unused)) inline float matan (float y, float x) { return RAD2DEG(atan2(y, x)); }
 
 
 //==========================================================================
@@ -179,41 +206,41 @@ class TPlane {
     if (normal.z < 0.0) signbits |= 4;
   }
 
-  void Set (const TVec &Anormal, float Adist) {
+  inline void Set (const TVec &Anormal, float Adist) {
     normal = Anormal;
     dist = Adist;
     CalcBits();
   }
 
   // initialises vertical plane from point and direction
-  void SetPointDir (const TVec &point, const TVec &dir) {
+  inline void SetPointDir (const TVec &point, const TVec &dir) {
     normal = Normalise(TVec(dir.y, -dir.x, 0));
     dist = DotProduct(point, normal);
     CalcBits();
   }
 
   // initialises vertical plane from 2 points
-  void Set2Points (const TVec &v1, const TVec &v2) {
+  inline void Set2Points (const TVec &v1, const TVec &v2) {
     SetPointDir(v1, v2 - v1);
   }
 
   // get z of point with given x and y coords
   // don't try to use it on a vertical plane
-  float GetPointZ (float x, float y) const {
+  inline float GetPointZ (float x, float y) const {
     return (dist-normal.x*x-normal.y*y)/normal.z;
   }
 
-  float GetPointZ (const TVec &v) const {
+  inline float GetPointZ (const TVec &v) const {
     return GetPointZ(v.x, v.y);
   }
 
   // returns side 0 (front) or 1 (back).
-  int PointOnSide(const TVec &point) const {
+  inline int PointOnSide(const TVec &point) const {
     return (DotProduct(point, normal)-dist <= 0);
   }
 
   // returns side 0 (front), 1 (back), or 2 (on).
-  int PointOnSide2(const TVec &point) const {
+  inline int PointOnSide2(const TVec &point) const {
     float dot = DotProduct(point, normal) - dist;
     return (dot < -0.1 ? 1 : dot > 0.1 ? 0 : 2);
   }
