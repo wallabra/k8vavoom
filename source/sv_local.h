@@ -66,11 +66,13 @@ class VAcs;
 class VAcsObject;
 struct VAcsInfo;
 
-class VAcsLevel
-{
+class VAcsLevel {
 private:
-  bool AddToACSStore(int Type, VName Map, int Number, int Arg1, int Arg2,
-    int Arg3, VEntity *Activator);
+  TMap<VStr, int> stringMapByStr;
+  TArray<VStr> stringList;
+
+private:
+  bool AddToACSStore (int Type, VName Map, int Number, int Arg1, int Arg2, int Arg3, VEntity *Activator);
 
 public:
   VLevel *XLevel;
@@ -98,7 +100,12 @@ public:
   VAcs *SpawnScript(VAcsInfo *Info, VAcsObject *Object, VEntity *Activator,
     line_t *Line, int Side, int Arg1, int Arg2, int Arg3, bool Always,
     bool Delayed);
+
+  VStr GetNewString (int idx);
+  VName GetNewLowerName (int idx);
+  int PutNewString (const VStr &str);
 };
+
 
 class VAcsGrowingArray
 {
@@ -112,6 +119,7 @@ public:
   int GetElemVal(int Index);
   void Serialise(VStream &Strm);
 };
+
 
 struct VAcsStore
 {

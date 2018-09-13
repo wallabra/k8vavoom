@@ -50,16 +50,11 @@
 //** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "sv_local.h"
 #include "p_acs.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
+enum { ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX = 0xfffeu };
 
 //
 //  Internal engine limits
@@ -112,131 +107,111 @@ struct VAcsFunction
   vuint32   Address;
 };
 
+
 //
 //  A action code scripts object module - level's BEHAVIOR lump or library.
 //
-class VAcsObject
-{
+class VAcsObject {
 private:
   friend class VAcsLevel;
 
-  struct VArrayInfo
-  {
-    vint32    Size;
+  struct VArrayInfo {
+    vint32 Size;
     vint32 *Data;
   };
 
-  EAcsFormat      Format;
+  EAcsFormat Format;
 
-  vint32        LumpNum;
-  vint32        LibraryID;
+  vint32 LumpNum;
+  vint32 LibraryID;
 
-  vint32        DataSize;
+  vint32 DataSize;
   vuint8 *Data;
 
   vuint8 *Chunks;
 
-  vint32        NumScripts;
+  vint32 NumScripts;
   VAcsInfo *Scripts;
 
   VAcsFunction *Functions;
-  vint32        NumFunctions;
+  vint32 NumFunctions;
 
-  vint32        NumStrings;
+  vint32 NumStrings;
   char **Strings;
   VName *LowerCaseNames;
 
-  vint32        MapVarStore[MAX_ACS_MAP_VARS];
+  vint32 MapVarStore[MAX_ACS_MAP_VARS];
 
-  vint32        NumArrays;
+  vint32 NumArrays;
   VArrayInfo *ArrayStore;
-  vint32        NumTotalArrays;
+  vint32 NumTotalArrays;
   VArrayInfo **Arrays;
 
-  TArray<VAcsObject*> Imports;
+  TArray<VAcsObject *> Imports;
 
-  void LoadOldObject();
-  void LoadEnhancedObject();
-  void UnencryptStrings();
-  int FindFunctionName(const char *Name) const;
-  int FindMapVarName(const char *Name) const;
-  int FindMapArray(const char *Name) const;
-  int FindStringInChunk(vuint8 *Chunk, const char *Name) const;
-  vuint8 *FindChunk(const char *id) const;
-  vuint8 *NextChunk(vuint8 *prev) const;
-  void Serialise(VStream &Strm);
-  void StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
-    VEntity *Activator, bool Always, bool RunNow);
+  void LoadOldObject ();
+  void LoadEnhancedObject ();
+  void UnencryptStrings ();
+  int FindFunctionName (const char *Name) const;
+  int FindMapVarName (const char *Name) const;
+  int FindMapArray (const char *Name) const;
+  int FindStringInChunk (vuint8 *Chunk, const char *Name) const;
+  vuint8 *FindChunk (const char *id) const;
+  vuint8 *NextChunk (vuint8 *prev) const;
+  void Serialise (VStream &Strm);
+  void StartTypedACScripts (int Type, int Arg1, int Arg2, int Arg3, VEntity *Activator, bool Always, bool RunNow);
 
 public:
   VAcsLevel *Level;
   vint32 *MapVars[MAX_ACS_MAP_VARS];
 
-  VAcsObject(VAcsLevel *ALevel, int Lump);
-  ~VAcsObject();
+public:
+  VAcsObject (VAcsLevel *ALevel, int Lump);
+  ~VAcsObject ();
 
-  vuint8 *OffsetToPtr(int);
-  int PtrToOffset(vuint8*);
-  EAcsFormat GetFormat() const
-  {
-    return Format;
-  }
-  int GetNumScripts() const
-  {
-    return NumScripts;
-  }
-  VAcsInfo &GetScriptInfo(int i)
-  {
-    return Scripts[i];
-  }
-  VStr GetString(int i) const
-  {
-    if (i >= NumStrings)
-    {
-      return "";
-    }
+  vuint8 *OffsetToPtr (int);
+  int PtrToOffset (vuint8 *);
+  inline EAcsFormat GetFormat () const { return Format; }
+  inline int GetNumScripts() const { return NumScripts; }
+  inline VAcsInfo &GetScriptInfo (int i) { return Scripts[i]; }
+
+  inline VStr GetString (int i) const {
+    if (i < 0 || i >= NumStrings) return "";
     VStr Ret = Strings[i];
-    if (!Ret.IsValidUtf8())
-    {
-      Ret = Ret.Latin1ToUtf8();
-    }
+    if (!Ret.IsValidUtf8()) Ret = Ret.Latin1ToUtf8();
     return Ret;
   }
-  VName GetNameLowerCase(int i)
-  {
-    if (LowerCaseNames[i] == NAME_None)
-    {
-      LowerCaseNames[i] = *GetString(i).ToLower();
-    }
+
+  inline VName GetNameLowerCase (int i) {
+    if (i < 0 || i >= NumStrings) return NAME_None;
+    if (LowerCaseNames[i] == NAME_None) LowerCaseNames[i] = *GetString(i).ToLower();
     return LowerCaseNames[i];
   }
-  int GetLibraryID() const
-  {
-    return LibraryID;
-  }
-  VAcsInfo *FindScript(int Number) const;
+
+  inline int GetLibraryID () const { return LibraryID; }
+
+  VAcsInfo *FindScript (int Number) const;
   VAcsInfo *FindScriptByName (int nameidx) const;
-  VAcsFunction *GetFunction(int funcnum, VAcsObject *&Object);
-  int GetArrayVal(int ArrayIdx, int Index);
-  void SetArrayVal(int ArrayIdx, int Index, int Value);
+  VAcsFunction *GetFunction (int funcnum, VAcsObject *&Object);
+  int GetArrayVal (int ArrayIdx, int Index);
+  void SetArrayVal (int ArrayIdx, int Index, int Value);
 };
 
-struct VAcsCallReturn
-{
-  int       ReturnAddress;
+
+struct VAcsCallReturn {
+  int ReturnAddress;
   VAcsFunction *ReturnFunction;
   VAcsObject *ReturnObject;
-  vuint8      bDiscardResult;
-  vuint8      Pad[3];
+  vuint8 bDiscardResult;
+  vuint8 Pad[3];
 };
 
-class VAcs : public VThinker
-{
+
+class VAcs : public VThinker {
   DECLARE_CLASS(VAcs, VThinker, 0)
   NO_DEFAULT_CONSTRUCTOR(VAcs)
 
-  enum
-  {
+  enum {
     ASTE_Running,
     ASTE_Suspended,
     ASTE_WaitingForTag,
@@ -341,36 +316,15 @@ private:
     HUDMSG_COLORSTRING  = 0x40000000,
   };
 
-  VStr GetStr(int Index)
-  {
-    return ActiveObject->Level->GetString(Index);
-  }
-  VName GetName(int Index)
-  {
-    return *ActiveObject->Level->GetString(Index);
-  }
-  VName GetNameLowerCase(int Index)
-  {
-    return ActiveObject->Level->GetNameLowerCase(Index);
-  }
-  VName GetName8(int Index)
-  {
-    return VName(*ActiveObject->Level->GetString(Index),
-      VName::AddLower8);
-  }
+  inline VStr GetStr (int Index) { return ActiveObject->Level->GetString(Index); }
+  //inline int PutStr (const VStr &str) { return ActiveObject->Level->PutString(str); }
+  inline VName GetName (int Index) { return *ActiveObject->Level->GetString(Index); }
+  inline VName GetNameLowerCase (int Index) { return ActiveObject->Level->GetNameLowerCase(Index); }
+  inline VName GetName8 (int Index) { return VName(*ActiveObject->Level->GetString(Index), VName::AddLower8); }
 
-  VEntity *EntityFromTID(int TID, VEntity *Default)
-  {
-    if (!TID)
-    {
-      return Default;
-    }
-    else
-    {
-      return Level->FindMobjFromTID(TID, nullptr);
-    }
-  }
-  int FindSectorFromTag(int, int);
+  inline VEntity *EntityFromTID (int TID, VEntity *Default) { return (!TID ? Default : Level->FindMobjFromTID(TID, nullptr)); }
+
+  int FindSectorFromTag (int, int);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -396,7 +350,7 @@ IMPLEMENT_CLASS(V, Acs)
 //==========================================================================
 
 VAcsObject::VAcsObject(VAcsLevel *ALevel, int Lump)
-: Level(ALevel)
+  : Level(ALevel)
 {
   guard(VAcsObject::VAcsObject);
   Format = ACS_Unknown;
@@ -1294,41 +1248,80 @@ void VAcsObject::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsLevel::VAcsLevel
 //
 //==========================================================================
-
-VAcsLevel::VAcsLevel(VLevel *ALevel)
-: XLevel(ALevel)
+VAcsLevel::VAcsLevel (VLevel *ALevel)
+  : stringMapByStr()
+  , stringList()
+  , XLevel(ALevel)
 {
 }
+
 
 //==========================================================================
 //
 //  VAcsLevel::~VAcsLevel
 //
 //==========================================================================
-
-VAcsLevel::~VAcsLevel()
-{
-  //guard(VAcsLevel::~VAcsLevel);
-  for (int i = 0; i < LoadedObjects.Num(); i++)
-  {
+VAcsLevel::~VAcsLevel () {
+  for (int i = 0; i < LoadedObjects.Num(); i++) {
     delete LoadedObjects[i];
     LoadedObjects[i] = nullptr;
   }
   LoadedObjects.Clear();
-  //unguard;
 }
+
+
+//==========================================================================
+//
+//  VAcsLevel::GetNewString
+//
+//==========================================================================
+VStr VAcsLevel::GetNewString (int idx) {
+  idx &= 0xffff;
+  return (idx < stringList.length() ? stringList[idx] : VStr());
+}
+
+
+//==========================================================================
+//
+//  VAcsLevel::GetNewLowerName
+//
+//==========================================================================
+VName VAcsLevel::GetNewLowerName (int idx) {
+  idx &= 0xffff;
+  if (idx >= stringList.length()) return NAME_None;
+  VStr s = stringList[idx];
+  if (s.length() == 0) return NAME_None;
+  return VName(*(s.toLowerCase()));
+}
+
+
+//==========================================================================
+//
+//  VAcsLevel::PutNewString
+//
+//==========================================================================
+int VAcsLevel::PutNewString (const VStr &str) {
+  auto idxp = stringMapByStr.find(str);
+  if (idxp) return *idxp;
+  // add string
+  int idx = stringList.length();
+  stringList.append(str);
+  stringMapByStr.put(str, idx);
+  return idx|(ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX<<16);
+}
+
 
 //==========================================================================
 //
 //  VAcsLevel::LoadObject
 //
 //==========================================================================
-
 VAcsObject *VAcsLevel::LoadObject(int Lump)
 {
   guard(VAcsLevel::LoadObject);
@@ -1387,48 +1380,42 @@ VAcsInfo *VAcsLevel::FindScriptByName (int Number, VAcsObject *&Object)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsLevel::GetString
 //
 //==========================================================================
-
-VStr VAcsLevel::GetString(int Index)
-{
+VStr VAcsLevel::GetString (int Index) {
   guard(VAcsLevel::GetString);
-  int ObjIdx = Index >> 16;
-  if (ObjIdx >= LoadedObjects.Num())
-  {
-    return "";
-  }
-  return LoadedObjects[ObjIdx]->GetString(Index & 0xffff);
+  int ObjIdx = (vuint32)Index>>16;
+  if (ObjIdx == ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX) return GetNewString(Index&0xffff);
+  if (ObjIdx >= LoadedObjects.Num()) return "";
+  return LoadedObjects[ObjIdx]->GetString(Index&0xffff);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAcsLevel::GetNameLowerCase
 //
 //==========================================================================
-
-VName VAcsLevel::GetNameLowerCase(int Index)
-{
+VName VAcsLevel::GetNameLowerCase (int Index) {
   guard(VAcsLevel::GetNameLowerCase);
-  int ObjIdx = Index >> 16;
-  if (ObjIdx >= LoadedObjects.Num())
-  {
-    return NAME_None;
-  }
+  int ObjIdx = (vuint32)Index>>16;
+  if (ObjIdx == ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX) return GetNewLowerName(Index&0xffff);
+  if (ObjIdx >= LoadedObjects.Num()) return NAME_None;
   return LoadedObjects[ObjIdx]->GetNameLowerCase(Index & 0xffff);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAcsLevel::GetObject
 //
 //==========================================================================
-
 VAcsObject *VAcsLevel::GetObject(int Index)
 {
   guard(VAcsLevel::GetObject);
@@ -1464,15 +1451,31 @@ void VAcsLevel::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
 //
 //==========================================================================
 
-void VAcsLevel::Serialise(VStream &Strm)
-{
+void VAcsLevel::Serialise(VStream &Strm) {
   guard(VAcsLevel::Serialise);
-  for (int i = 0; i < LoadedObjects.Num(); i++)
-  {
+  for (int i = 0; i < LoadedObjects.Num(); ++i) {
     LoadedObjects[i]->Serialise(Strm);
+  }
+  // dynamically added strings
+  vint32 sllen;
+  if (Strm.IsLoading()) {
+    stringList.clear();
+    stringMapByStr.clear();
+    Strm << STRM_INDEX(sllen);
+    for (int f = 0; f < sllen; ++f) {
+      VStr s;
+      Strm << s;
+      stringList.append(s);
+      stringMapByStr.put(s, f);
+    }
+  } else {
+    sllen = stringList.length();
+    Strm << STRM_INDEX(sllen);
+    for (int f = 0; f < sllen; ++f) Strm << stringList[f];
   }
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -2028,6 +2031,21 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
     case ACSF_SpawnSpotForced: // int SpawnSpotForced (str classname, int spottid, int tid, int angle)
       //GCon->Logf("ACS: SpawnSpotForced: classname=<%s>; spottid=%d; tid=%d; angle=%f", *GetNameLowerCase(args[0]), args[1], args[2], float(args[3])*45.0f/32.0f);
       return Level->eventAcsSpawnSpot(GetNameLowerCase(args[0]), args[1], args[2], float(args[3])*45.0f/32.0f, true); // forced
+
+    case ACSF_CheckActorClass:
+      {
+        VEntity *Ent = EntityFromTID(args[0], nullptr);
+        VName name = GetNameLowerCase(args[1]);
+        if (name == NAME_None) return 0;
+        return (Ent ? (VStr::ICmp(*Ent->GetClass()->Name, *name) == 0 ? 1 : 0) : 0);
+      }
+
+    case ACSF_GetActorClass:
+      {
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        if (!Ent) return ActiveObject->Level->PutNewString("None");
+        return ActiveObject->Level->PutNewString(*Ent->GetClass()->Name);
+      }
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {

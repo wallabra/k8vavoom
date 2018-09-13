@@ -53,8 +53,9 @@ static VCvarF save_compression_level("save_compression_level", "1", "Save file c
 */
 
 #define SAVE_DESCRIPTION_LENGTH    (24)
-#define SAVE_VERSION_TEXT_NO_DATE  "Version 1.34.4"
-#define SAVE_VERSION_TEXT          "Version 1.34.5"
+//#define SAVE_VERSION_TEXT_NO_DATE  "Version 1.34.4"
+//#define SAVE_VERSION_TEXT          "Version 1.34.5"
+#define SAVE_VERSION_TEXT          "Version 1.34.6"
 #define SAVE_VERSION_TEXT_LENGTH   (16)
 
 #define SAVE_EXTDATA_ID_END      (0)
@@ -489,7 +490,7 @@ bool VSaveSlot::LoadSlot (int Slot) {
   char VersionText[SAVE_VERSION_TEXT_LENGTH+1];
   memset(VersionText, 0, sizeof(VersionText));
   Strm->Serialise(VersionText, SAVE_VERSION_TEXT_LENGTH);
-  if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT) && VStr::Cmp(VersionText, SAVE_VERSION_TEXT_NO_DATE)) {
+  if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT) /*&& VStr::Cmp(VersionText, SAVE_VERSION_TEXT_NO_DATE)*/) {
     // bad version
     Strm->Close();
     delete Strm;
@@ -675,7 +676,7 @@ bool SV_GetSaveString (int Slot, VStr &Desc) {
     Strm->Serialise(VersionText, SAVE_VERSION_TEXT_LENGTH);
     bool goodSave = true;
     Desc = "???";
-    if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT) && VStr::Cmp(VersionText, SAVE_VERSION_TEXT_NO_DATE)) {
+    if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT) /*&& VStr::Cmp(VersionText, SAVE_VERSION_TEXT_NO_DATE)*/) {
       // bad version, put an asterisk in front of the description
       goodSave = false;
     } else {
