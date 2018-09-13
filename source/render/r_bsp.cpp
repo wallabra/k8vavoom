@@ -41,6 +41,8 @@ static bool MirrorClipSegs;
 
 static VCvarI r_maxmirrors("r_maxmirrors", "4", "Maximum allowed mirrors.", CVAR_Archive);
 
+extern int light_reset_surface_cache; // in r_light.cpp
+
 
 //==========================================================================
 //
@@ -731,6 +733,11 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, float *bbox, int AClipflags)
 void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper *Range) {
   guard(VRenderLevelShared::RenderBspWorld);
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
+
+  if (light_reset_surface_cache) {
+    GentlyFlushAllCaches();
+    light_reset_surface_cache = 0;
+  }
 
   SetUpFrustumIndexes();
   ViewClip.ClearClipNodes(vieworg, Level);

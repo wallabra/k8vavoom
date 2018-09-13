@@ -28,8 +28,9 @@
 
 #define BLOCK_WIDTH         (128)
 #define BLOCK_HEIGHT        (128)
-#define NUM_BLOCK_SURFS     (32)
+//#define NUM_BLOCK_SURFS     (32)
 //#define NUM_CACHE_BLOCKS    (8*1024)
+#define NUM_BLOCK_SURFS     (256)
 #define NUM_CACHE_BLOCKS    (32*1024)
 
 struct surface_t;

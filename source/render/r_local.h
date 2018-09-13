@@ -487,6 +487,8 @@ protected:
   void DrawPlayerSprites();
   void DrawCrosshair();
 
+  virtual void GentlyFlushAllCaches () {}
+
 public:
   virtual particle_t *NewParticle() override;
 
@@ -535,6 +537,7 @@ private:
   virtual void PushDlights() override;
   void FlushCaches();
   void FlushOldCaches();
+  virtual void GentlyFlushAllCaches () override;
   surfcache_t *AllocBlock(int, int);
   surfcache_t *FreeBlock(surfcache_t*, bool);
   virtual void FreeSurfCache(surfcache_t*) override;

@@ -31,6 +31,8 @@
 int r_dlightframecount;
 bool r_light_add;
 
+int light_reset_surface_cache = 0;
+
 vuint32 blocklightsr[18*18];
 vuint32 blocklightsg[18*18];
 vuint32 blocklightsb[18*18];
@@ -1026,6 +1028,7 @@ void VRenderLevel::FlushCaches () {
     cacheblocks[i]->height = BLOCK_HEIGHT;
     cacheblocks[i]->blocknum = i;
   }
+  light_reset_surface_cache = 0;
   unguard;
 }
 
@@ -1041,6 +1044,27 @@ void VRenderLevel::FlushOldCaches () {
     for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
       for (surfcache_t *block = blines; block; block = block->lnext) {
         if (block->owner && cacheframecount != block->lastframe) block = FreeBlock(block, false);
+      }
+      if (!blines->owner && !blines->lprev && !blines->lnext) blines = FreeBlock(blines, true);
+    }
+  }
+  if (!freeblocks) Sys_Error("No more free blocks");
+  unguard;
+}
+
+
+//==========================================================================
+//
+// VRenderLevel::GentlyFlushAllCaches
+//
+//==========================================================================
+void VRenderLevel::GentlyFlushAllCaches () {
+  guard(VRenderLevel::GentlyFlushAllCaches);
+  light_reset_surface_cache = 0;
+  for (int i = 0; i < NUM_BLOCK_SURFS; ++i) {
+    for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
+      for (surfcache_t *block = blines; block; block = block->lnext) {
+        if (block->owner) block = FreeBlock(block, false);
       }
       if (!blines->owner && !blines->lprev && !blines->lnext) blines = FreeBlock(blines, true);
     }
@@ -1131,7 +1155,10 @@ surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
   }
 
   //Sys_Error("Surface cache overflow");
-  GCon->Logf("ERROR! ERROR! ERROR! Surface cache overflow!");
+  if (!light_reset_surface_cache) {
+    GCon->Logf("ERROR! ERROR! ERROR! Surface cache overflow!");
+    light_reset_surface_cache = 1;
+  }
   return nullptr;
   unguard;
 }
