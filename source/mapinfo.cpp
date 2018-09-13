@@ -273,30 +273,25 @@ static VName ParseNextMapName(VScriptParser *sc, bool HexenMode)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  DoCompatFlag
 //
 //==========================================================================
-
-static void DoCompatFlag(VScriptParser *sc, mapInfo_t *info, int Flag)
-{
+static void DoCompatFlag (VScriptParser *sc, mapInfo_t *info, int Flag) {
   guard(DoCompatFlag);
   int Set = 1;
-  if (sc->CheckNumber())
-  {
-    Set = sc->Number;
-  }
-  if (Set)
-  {
+  sc->Check("=");
+  if (sc->CheckNumber()) Set = sc->Number;
+  if (Set) {
     info->Flags2 |= Flag;
-  }
-  else
-  {
+  } else {
     info->Flags2 &= ~Flag;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
