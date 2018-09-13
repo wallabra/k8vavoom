@@ -56,7 +56,7 @@ VCvarF r_specular("r_specular", "0.1", "Specular light.", CVAR_Archive);
 
 VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.8", "How close dynamic lights should be to be filtered out?\n(0.6-0.9 is usually ok).", CVAR_Archive);
 
-static VCvarB r_allow_subtractive_lights("r_allow_subtractive_lights", true, "Are subtractive lights allowed?", /*CVAR_Archive*/0);
+VCvarB r_allow_subtractive_lights("r_allow_subtractive_lights", true, "Are subtractive lights allowed?", /*CVAR_Archive*/0);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -700,6 +700,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p) {
     // region's base light
     l = reg->secregion->params->lightlevel+ExtraLight;
     if (r_darken) l = light_remap[MIN(255, (int)l)];
+    if (r_ambient == -666) l = 0; else if (l < r_ambient) l = r_ambient;
     l = MIN(255, l);
     int SecLightColour = reg->secregion->params->LightColour;
     lr = ((SecLightColour>>16)&255)*l/255.0;

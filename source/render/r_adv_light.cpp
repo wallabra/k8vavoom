@@ -27,6 +27,9 @@
 
 
 extern VCvarB r_darken;
+extern VCvarI r_ambient;
+extern VCvarB r_allow_subtractive_lights;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // private data definitions
@@ -167,10 +170,8 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p)
 
     //  Region's base light
     l = reg->secregion->params->lightlevel + ExtraLight;
-    if (r_darken)
-    {
-      l = light_remap[MIN(255, (int)l)];
-    }
+    if (r_darken) l = light_remap[MIN(255, (int)l)];
+    if (r_ambient == -666) l = 0; else if (l < r_ambient) l = r_ambient;
     l = MIN(255, l);
     int SecLightColour = reg->secregion->params->LightColour;
     lr = ((SecLightColour >> 16) & 255) * l / 255.0;
@@ -206,42 +207,34 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p)
   }
 
   //  Add dynamic lights
-  if (r_dynamic)
-  {
+  if (r_dynamic) {
     vuint8 *dyn_facevis = Level->LeafPVS(sub);
-    for (int i = 0; i < MAX_DLIGHTS; i++)
-    {
-      if (!DLights[i].radius || DLights[i].die < Level->Time)
-        continue;
+    for (int i = 0; i < MAX_DLIGHTS; i++) {
+      const dlight_t &dl = DLights[i];
+      if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
 
-      leafnum = Level->PointInSubsector(DLights[i].origin) -
-        Level->Subsectors;
+      if (!dl.radius || dl.die < Level->Time)continue;
+
+      leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
 
       // Check potential visibility
-      if (!(dyn_facevis[leafnum >> 3] & (1 << (leafnum & 7))))
-      {
-        continue;
-      }
+      if (!(dyn_facevis[leafnum >> 3] & (1 << (leafnum & 7)))) continue;
 
-      add = (DLights[i].radius - DLights[i].minlight) - Length(p - DLights[i].origin);
-      if (add > 0)
-      {
+      add = (dl.radius-dl.minlight)-Length(p-dl.origin);
+      if (add > 0) {
+        if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;
-        lr += add * ((DLights[i].colour >> 16) & 255) / 255.0;
-        lg += add * ((DLights[i].colour >> 8) & 255) / 255.0;
-        lb += add * (DLights[i].colour & 255) / 255.0;
+        lr += add * ((dl.colour >> 16) & 255) / 255.0;
+        lg += add * ((dl.colour >> 8) & 255) / 255.0;
+        lb += add * (dl.colour & 255) / 255.0;
       }
     }
   }
 
-  if (l > 255)
-    l = 255;
-  if (lr > 255)
-    lr = 255;
-  if (lg > 255)
-    lg = 255;
-  if (lb > 255)
-    lb = 255;
+  if (l > 255) l = 255; else if (l < 0) l = 0;
+  if (lr > 255) lr = 255; else if (lr < 0) lr = 0;
+  if (lg > 255) lg = 255; else if (lg < 0) lg = 0;
+  if (lb > 255) lb = 255; else if (lb < 0) lb = 0;
 
   return ((int)l << 24) | ((int)lr << 16) | ((int)lg << 8) | ((int)lb);
   unguard;
