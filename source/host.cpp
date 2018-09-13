@@ -58,9 +58,9 @@ void Host_Quit();
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 #ifdef DEVELOPER
-VCvarB      developer("developer", true, "Developer (debug) mode?", CVAR_Archive);
+VCvarB      developer("developer", true, "Developer (debug) mode?", 0/*CVAR_Archive*/);
 #else
-VCvarB      developer("developer", false, "Developer (debug) mode?", CVAR_Archive);
+VCvarB      developer("developer", false, "Developer (debug) mode?", 0/*CVAR_Archive*/);
 #endif
 
 int       host_frametics;

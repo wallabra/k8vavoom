@@ -30,6 +30,7 @@
 
 #define DEBUG_DEEP_WATERS
 
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "gamedefs.h"
@@ -37,6 +38,9 @@
 #ifdef SERVER
 #include "sv_local.h"
 #endif
+
+static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor??", 0/*CVAR_Archive*/);
+
 
 // MACROS ------------------------------------------------------------------
 
@@ -565,7 +569,7 @@ void VLevel::LoadMap(VName AMapName)
     //GCon->Logf("Polyobjs         %f", InitPolysTime);
     //GCon->Logf("Sector minmaxs   %f", MinMaxTime);
     //GCon->Logf("Wall shades      %f", WallShadesTime);
-    GCon->Logf("%s", ""); // shut up, gcc!
+    //GCon->Logf("%s", ""); // shut up, gcc!
   }
   unguard;
 }
@@ -2481,11 +2485,11 @@ inline void VLevel::AddToBox(float *box, float x, float y) const
 //==========================================================================
 
 void VLevel::PostProcessForDecals () {
-  GCon->Logf("postprocessing level for faster decals...");
+  GCon->Logf(NAME_Dev, "postprocessing level for faster decals...");
 
   for (int i = 0; i < NumLines; ++i) Lines[i].firstseg = nullptr;
 
-  GCon->Logf("postprocessing level for faster decals: assigning segs...");
+  GCon->Logf(NAME_Dev, "postprocessing level for faster decals: assigning segs...");
   // collect segments, so we won't go thru the all segs in decal spawner
   for (int sidx = 0; sidx < NumSegs; ++sidx) {
     seg_t *seg = &Segs[sidx];
@@ -2856,7 +2860,7 @@ void VLevel::FixSelfRefDeepWater () {
 
       if (self_subs[j] != 1) continue;
 #ifdef DEBUG_DEEP_WATERS
-      GCon->Logf("Subsector [%d] sec %d --> %d", j, (int)(sub->sector-Sectors), self_subs[j]);
+      if (dbg_deep_water) GCon->Logf("Subsector [%d] sec %d --> %d", j, (int)(sub->sector-Sectors), self_subs[j]);
 #endif
       seg_t *Xseg = 0;
 
@@ -2868,7 +2872,7 @@ void VLevel::FixSelfRefDeepWater () {
 
         int k = (int)(back_sub-Subsectors);
 #ifdef DEBUG_DEEP_WATERS
-        GCon->Logf("  Seg [%d] back_sub %d (back_sect %d)", (int)(seg-Segs), k, (int)(back_sub->sector-Sectors));
+        if (dbg_deep_water) GCon->Logf("  Seg [%d] back_sub %d (back_sect %d)", (int)(seg-Segs), k, (int)(back_sub->sector-Sectors));
 #endif
         if (self_subs[k]&2) {
           if (!Xseg) Xseg = seg;
@@ -2881,7 +2885,7 @@ void VLevel::FixSelfRefDeepWater () {
         if (!Xback_sub) { GCon->Logf("INTERNAL ERROR IN GLBSP LOADER: BACK SUBSECTOR IS NOT SET!"); return; }
         sub->deepref = (Xback_sub->deepref ? Xback_sub->deepref : Xback_sub->sector);
 #ifdef DEBUG_DEEP_WATERS
-        GCon->Logf("  Updating (from seg %d) --> SEC %d", (int)(Xseg-Segs), (int)(sub->deepref-Sectors));
+        if (dbg_deep_water) GCon->Logf("  Updating (from seg %d) --> SEC %d", (int)(Xseg-Segs), (int)(sub->deepref-Sectors));
 #endif
         self_subs[j] = 3;
 
@@ -2998,7 +3002,7 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
     hs = (line->frontsector->heightsec = line->backsector);
   }
 #ifdef DEBUG_DEEP_WATERS
-  GCon->Logf("*** DEEP WATER; LINEDEF #%d; type=%d; fsf=%f; bsf=%f; type=%d", lidx, type, line->frontsector->floor.minz, line->backsector->floor.minz, type);
+  if (dbg_deep_water) GCon->Logf("*** DEEP WATER; LINEDEF #%d; type=%d; fsf=%f; bsf=%f; type=%d", lidx, type, line->frontsector->floor.minz, line->backsector->floor.minz, type);
 #endif
   hs->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
   hs->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
@@ -3028,7 +3032,7 @@ void VLevel::FixDeepWaters () {
     sector_t *sec = &Sectors[sidx];
     if (!IsDeepOk(sec)) continue;
 #ifdef DEBUG_DEEP_WATERS
-    GCon->Logf("DWSEC=%d", sidx);
+    if (dbg_deep_water) GCon->Logf("DWSEC=%d", sidx);
 #endif
     for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
       line_t *ld = sec->lines[lidx];

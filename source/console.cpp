@@ -562,11 +562,8 @@ static void DoPrint(const char *buf)
 void FConsoleDevice::Serialise(const char *V, EName Event)
 {
   dprintf("%s: %s\n", VName::SafeString(Event), *VStr(V).RemoveColours());
+  if (Event == NAME_Dev && !developer) return;
   printf("%s: %s\n", VName::SafeString(Event), *VStr(V).RemoveColours()); //k8
-  if (Event == NAME_Dev && !developer)
-  {
-    return;
-  }
   DoPrint(V);
   DoPrint("\n");
 }
@@ -579,9 +576,6 @@ void FConsoleDevice::Serialise(const char *V, EName Event)
 
 void FConsoleLog::Serialise(const char *Text, EName Event)
 {
-  if (Event == NAME_Dev && !developer)
-  {
-    return;
-  }
+  if (Event == NAME_Dev && !developer) return;
   DoPrint(Text);
 }

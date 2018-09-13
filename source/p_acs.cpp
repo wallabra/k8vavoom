@@ -423,9 +423,9 @@ VAcsObject::VAcsObject(VAcsLevel *ALevel, int Lump)
   }
 
   switch (Format) {
-    case ACS_Old: GCon->Log("Behavior lump: standard"); break;
-    case ACS_Enhanced: GCon->Log("Behavior lump: enhanced-ext"); break;
-    case ACS_LittleEnhanced: GCon->Log("Behavior lump: enhanced-ext"); break;
+    case ACS_Old: if (developer) GCon->Log(NAME_Dev, "Behavior lump: standard"); break;
+    case ACS_Enhanced: if (developer) GCon->Log(NAME_Dev, "Behavior lump: enhanced-ext"); break;
+    case ACS_LittleEnhanced: if (developer) GCon->Log(NAME_Dev, "Behavior lump: enhanced-ext"); break;
     default: break;
   }
 
