@@ -37,7 +37,7 @@ VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName=false);
 VStream *FL_OpenSysFileRead (const VStr &Name);
 VStream *FL_OpenSysFileWrite (const VStr &Name);
 
-TArray<VStr> GetWadPk3List ();
+TArray<VStr> GetWadPk3List (bool fullpath=false);
 
 
 //extern bool fl_devmode;

@@ -51,7 +51,29 @@ TArray<VStr> wadfiles;
 //static bool bIwadAdded;
 static TArray<VStr> IWadDirs;
 static int IWadIndex;
-static TArray<VStr> wpklist;
+
+struct WadPakInfo {
+  VStr path; // lowercased
+  bool isSystem; // true: don't strip path
+};
+
+static TArray<WadPakInfo> wpklist;
+
+static void wpkAppend (const VStr &fname, bool asystem) {
+  if (fname.length() == 0) return;
+  VStr fn = fname.toLowerCase();
+  // check for duplicates
+  for (int f = wpklist.length()-1; f >= 0; --f) {
+    if (wpklist[f].path != fn) continue;
+    if (wpklist[f].isSystem != asystem) continue;
+    // i found her!
+    return;
+  }
+  WadPakInfo &wi = wpklist.Alloc();
+  wi.path = fn;
+  wi.isSystem = asystem;
+}
+
 
 static VCvarS game_name("game_name", "unknown", "The Name Of The Game.", CVAR_Rom);
 
@@ -71,12 +93,20 @@ static int cmpfuncCINoExt (const void *v1, const void *v2) {
 //  AddZipFile
 //
 //==========================================================================
-TArray<VStr> GetWadPk3List () {
+TArray<VStr> GetWadPk3List (bool fullpath) {
   TArray<VStr> res;
   for (int f = 0; f < wpklist.length(); ++f) {
+    /*
     bool found = false;
-    for (int c = 0; c < res.length(); ++c) if (res[c] == wpklist[f]) { found = true; break; }
-    if (!found) res.Append(wpklist[f]);
+    VStr fname = wpklist[f];
+    if (!fullpath) fname = fname.extractFileName();
+    fname = fname.toLowerCase();
+    for (int c = 0; c < res.length(); ++c) if (res[c] == fname) { found = true; break; }
+    if (!found) res.Append(fname);
+    */
+    VStr fname = wpklist[f].path;
+    if (!fullpath && !wpklist[f].isSystem) fname = fname.extractFileName();
+    res.append(fname);
   }
   // and sort it
   //qsort(res.Ptr(), res.length(), sizeof(VStr), cmpfuncCI);
@@ -163,7 +193,7 @@ static void AddZipFile (const VStr &ZipName) {
 
 //==========================================================================
 //
-//  AddZipFile
+//  AddAnyFile
 //
 //==========================================================================
 static void AddAnyFile (const VStr &fname, bool allowFail, bool fixVoices=false) {
@@ -216,7 +246,7 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
     Sys_CloseDir(dirit);
     qsort(ZipFiles.Ptr(), ZipFiles.length(), sizeof(VStr), cmpfuncCINoExt);
     for (int i = 0; i < ZipFiles.length(); ++i) {
-      wpklist.Append(dir+"/"+ZipFiles[i]);
+      wpkAppend(dir+"/"+ZipFiles[i], true); // system pak
       AddZipFile(bdx+"/"+ZipFiles[i]);
     }
   }
@@ -228,14 +258,13 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
   for (int i = 0; i < 1024; ++i) {
     VStr buf = bdx+"/wad"+i+".wad";
     if (!Sys_FileExists(buf)) break;
-    wpklist.Append(dir+"/wad"+i+".wad");
+    wpkAppend(dir+"/wad"+i+".wad", true); // system pak
     W_AddFile(buf, gwadir, false);
   }
   */
 
   // finally add directory itself
   VFilesDir *info = new VFilesDir(bdx);
-  //wpklist.Append(bdx+"/");
   SearchPaths.Append(info);
   unguard;
 }
@@ -400,15 +429,15 @@ static void ParseBase (const VStr &name) {
 
   IWadIndex = SearchPaths.length();
   //GCon->Logf("MAIN WAD(1): '%s'", *MainWadPath);
+  wpkAppend(mainWadPath, true); // system file
   AddAnyFile(mainWadPath, false, gmi.FixVoices);
 
   for (int j = 0; j < gmi.AddFiles.length(); j++) {
     VStr FName = FindMainWad(gmi.AddFiles[j]);
     if (FName.IsEmpty()) Sys_Error("Required file \"%s\" not found", *gmi.AddFiles[j]);
+    wpkAppend(FName, true); // system file
     AddAnyFile(FName, false);
   }
-
-  //AddAnyFile(fl_basedir+"/"+gmi.GameDir+"/basepak.pk3", true);
 
   for (int f = 0; f < gmi.BaseDirs.length(); ++f) AddGameDir(gmi.BaseDirs[f]);
 
@@ -588,7 +617,7 @@ void FL_Init () {
       if (!Sys_FileExists(VStr(GArgs[fp]))) {
         GCon->Logf(NAME_Init, "WARNING: File \"%s\" doesn't exist.", GArgs[fp]);
       } else {
-        wpklist.Append(VStr(GArgs[fp]));
+        wpkAppend(VStr(GArgs[fp]), false); // non-system pak
         AddAnyFile(GArgs[fp], true);
       }
     }
