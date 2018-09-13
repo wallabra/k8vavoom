@@ -150,10 +150,13 @@ void R_Init()
   for (int i = 0; i < 256; i++)
   {
     int n = i*i/255;
+    /*
          if (n == 0) n = 4;
     //else if (n < 64) n += n/2;
     else if (n < 128) n += n/3;
-    if (n > 255) n = 255;
+    */
+         if (n < 8) n = 8;
+    if (n > 255) n = 255; else if (n < 0) n = 0;
     light_remap[i] = byte(n);
   }
   unguard;

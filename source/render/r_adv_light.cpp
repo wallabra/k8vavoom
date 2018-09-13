@@ -274,10 +274,8 @@ vuint32 VAdvancedRenderLevel::LightPointAmbient(const TVec &p)
 
   //  Region's base light
   l = reg->secregion->params->lightlevel + ExtraLight;
-  if (r_darken)
-  {
-    l = light_remap[MIN(255, (int)l)];
-  }
+  if (r_darken) l = light_remap[MIN(255, (int)l)];
+  if (r_ambient == -666) l = 0; else if (l < r_ambient) l = r_ambient;
   l = MIN(255, l);
   int SecLightColour = reg->secregion->params->LightColour;
   lr = ((SecLightColour >> 16) & 255) * l / 255.0;
