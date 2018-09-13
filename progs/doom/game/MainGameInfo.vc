@@ -1135,6 +1135,7 @@ override void TranslateLevel(Level InLevel)
 
   for (i = 0; i < InLevel.Sectors.length; i++)
   {
+    //if (i >= 35 && i <= 37) print("sector #%d: special=%d", i, InLevel.Sectors[i].special);
     TranslateSector(&InLevel.Sectors[i]);
   }
 
