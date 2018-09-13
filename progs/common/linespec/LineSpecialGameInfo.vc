@@ -1212,7 +1212,7 @@ override void SpawnWorld(Level InLevel)
   }
 
   //  Set up 3D floors, transfers of light, etc.
-  print("******* LINES: %d", InLevel.Lines.length);
+  //print("******* LINES: %d", InLevel.Lines.length);
   for (i = 0; i < InLevel.Lines.length; i++)
   {
     line = &InLevel.Lines[i];

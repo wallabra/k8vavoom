@@ -619,3 +619,5 @@ class ClipOfBullets : Ammo decorate;
 class Rebel1 : Actor decorate;
 class GunTraining : Inventory decorate;
 class BrokenPowerCoupling : Inventory decorate;
+
+//class BurningBarrel : Actor decorate;

@@ -62,8 +62,9 @@ override void OnMapSpawn(mthing_t *mthing)
   }
 
   //  Use static light for placed point lights that cannot be deactivated.
-  if (LightType == DLTYPE_Point && mthing && !TID && !bDormant)
+  if (LightType == DLTYPE_Point && mthing && !TID && !bDormant /*&& self !isa BurningBarrel*/)
   {
+    //print("*** adding static light for class '%n'", GetClassName(Class));
     if (mthing->arg1 == 255 && mthing->arg2 == 255 && mthing->arg3)
     {
       Level.AddStaticLight(Origin,
