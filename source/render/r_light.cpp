@@ -44,9 +44,11 @@ static vuint32 blocklightsgS[18*18];
 static vuint32 blocklightsbS[18*18];
 
 byte light_remap[256];
-VCvarB r_darken("r_darken", true, "Allow \"darken\" lights?", CVAR_Archive);
-VCvarI r_ambient("r_ambient", "0", "Ambient light.");
 int light_mem;
+
+VCvarB r_darken("r_darken", true, "Darken level to better match original DooM?", CVAR_Archive);
+VCvarI r_ambient("r_ambient", "0", "Minimal ambient light.", CVAR_Archive);
+VCvarB r_allow_ambient("r_allow_ambient", true, "Allow ambient lights?", CVAR_Archive);
 VCvarB r_extrasamples("r_extrasamples", false, "Do static lightmap filtering?", CVAR_Archive);
 VCvarB r_dynamic("r_dynamic", true, "Allow dynamic lights?", CVAR_Archive);
 VCvarB r_dynamic_clip("r_dynamic_clip", true, "Clip dynamic lights?", CVAR_Archive);
@@ -84,7 +86,7 @@ static int c_bad;
 //
 //==========================================================================
 static inline int getSurfLightLevelInt (const surface_t *surf) {
-  if (!surf || r_ambient == -666) return 0;
+  if (!surf || !r_allow_ambient) return 0;
   int slins = (surf->Light>>24)&0xff;
   slins = MAX(slins, r_ambient);
   if (slins > 255) slins = 255;
@@ -98,7 +100,7 @@ static inline int getSurfLightLevelInt (const surface_t *surf) {
 //
 //==========================================================================
 static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
-  if (!surf || r_ambient == -666) return 0;
+  if (!surf || !r_allow_ambient) return 0;
   int slins = (surf->Light>>24)&0xff;
   slins = MAX(slins, r_ambient);
   if (slins > 255) slins = 255;
@@ -698,10 +700,14 @@ vuint32 VRenderLevel::LightPoint (const TVec &p) {
     }
 
     // region's base light
-    l = reg->secregion->params->lightlevel+ExtraLight;
-    if (r_darken) l = light_remap[MIN(255, (int)l)];
-    if (r_ambient == -666) l = 0; else if (l < r_ambient) l = r_ambient;
-    l = MIN(255, l);
+    if (r_allow_ambient) {
+      l = reg->secregion->params->lightlevel+ExtraLight;
+      if (r_darken) l = light_remap[MIN(255, (int)l)];
+      if (l < r_ambient) l = r_ambient;
+      l = MIN(255, l);
+    } else {
+      l = 0;
+    }
     int SecLightColour = reg->secregion->params->LightColour;
     lr = ((SecLightColour>>16)&255)*l/255.0;
     lg = ((SecLightColour>>8)&255)*l/255.0;

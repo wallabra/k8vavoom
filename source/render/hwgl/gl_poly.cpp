@@ -27,6 +27,7 @@
 
 extern VCvarB decals_enabled;
 extern VCvarI r_ambient;
+extern VCvarB r_allow_ambient;
 
 static VCvarB glsw_report_verts("glsw_report_verts", false, "Report number of shadow volume vertices?", 0);
 static VCvarB gl_decal_debug_nostencil("gl_decal_debug_nostencil", false, "Don't touch this!", 0);
@@ -41,7 +42,7 @@ static VCvarB gl_decal_reset_max("gl_decal_reset_max", false, "Don't touch this!
 //
 //==========================================================================
 static inline float getSurfLightLevel (const surface_t *surf) {
-  if (!surf || r_ambient == -666) return 0;
+  if (!surf || !r_allow_ambient) return 0;
   int slins = (surf->Light>>24)&0xff;
   slins = MAX(slins, r_ambient);
   if (slins > 255) slins = 255;

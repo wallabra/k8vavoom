@@ -28,6 +28,7 @@
 
 extern VCvarB r_darken;
 extern VCvarI r_ambient;
+extern VCvarB r_allow_ambient;
 extern VCvarB r_allow_subtractive_lights;
 
 
@@ -169,10 +170,14 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p)
     }
 
     //  Region's base light
-    l = reg->secregion->params->lightlevel + ExtraLight;
-    if (r_darken) l = light_remap[MIN(255, (int)l)];
-    if (r_ambient == -666) l = 0; else if (l < r_ambient) l = r_ambient;
-    l = MIN(255, l);
+    if (r_allow_ambient) {
+      l = reg->secregion->params->lightlevel + ExtraLight;
+      if (r_darken) l = light_remap[MIN(255, (int)l)];
+      if (l < r_ambient) l = r_ambient;
+      l = MIN(255, l);
+    } else {
+      l = 0;
+    }
     int SecLightColour = reg->secregion->params->LightColour;
     lr = ((SecLightColour >> 16) & 255) * l / 255.0;
     lg = ((SecLightColour >> 8) & 255) * l / 255.0;
@@ -273,10 +278,14 @@ vuint32 VAdvancedRenderLevel::LightPointAmbient(const TVec &p)
   }
 
   //  Region's base light
-  l = reg->secregion->params->lightlevel + ExtraLight;
-  if (r_darken) l = light_remap[MIN(255, (int)l)];
-  if (r_ambient == -666) l = 0; else if (l < r_ambient) l = r_ambient;
-  l = MIN(255, l);
+  if (r_allow_ambient) {
+    l = reg->secregion->params->lightlevel + ExtraLight;
+    if (r_darken) l = light_remap[MIN(255, (int)l)];
+    if (l < r_ambient) l = r_ambient;
+    l = MIN(255, l);
+  } else {
+    l = 0;
+  }
   int SecLightColour = reg->secregion->params->LightColour;
   lr = ((SecLightColour >> 16) & 255) * l / 255.0;
   lg = ((SecLightColour >> 8) & 255) * l / 255.0;
