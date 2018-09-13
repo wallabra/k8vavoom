@@ -167,7 +167,6 @@ static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type (png/jp
 #else
 static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type (png/tga/pcx).", CVAR_Archive);
 #endif
-static VCvarB screenshot_in_home_dir("screenshot_in_home_dir", true, "Save screenshots in ~/.vavoom?", CVAR_Archive);
 
 extern void WriteTGA (const VStr &FileName, void *data, int width, int height, int bpp, bool bot2top);
 extern void WritePCX (const VStr &FileName, void *data, int width, int height, int bpp, bool bot2top);
@@ -198,7 +197,7 @@ COMMAND(ScreenShot) {
 
   // find a file name to save it to
   VStr BaseDir;
-  if (screenshot_in_home_dir) {
+  {
 #if !defined(_WIN32)
     const char *HomeDir = getenv("HOME");
     if (HomeDir && HomeDir[0]) {
@@ -209,8 +208,6 @@ COMMAND(ScreenShot) {
 #else
     BaseDir = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir)+"/"+fl_gamedir;
 #endif
-  } else {
-    BaseDir = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir)+"/"+fl_gamedir;
   }
 
   for (i = 0; i <= 9999; ++i) {

@@ -155,7 +155,7 @@ private:
   //  Console variables
   static VCvarF   snd_sfx_volume;
   static VCvarF   snd_music_volume;
-  static VCvarB   snd_swap_stereo;
+  //static VCvarB   snd_swap_stereo;
   static VCvarI   snd_channels;
   static VCvarB   snd_external_music;
 
@@ -193,7 +193,7 @@ VAudioPublic *GAudio;
 
 VCvarF        VAudio::snd_sfx_volume("snd_sfx_volume", "0.5", "Sound effects volume.", CVAR_Archive);
 VCvarF        VAudio::snd_music_volume("snd_music_volume", "0.5", "Music volume", CVAR_Archive);
-VCvarB        VAudio::snd_swap_stereo("snd_swap_stereo", false, "Swap stereo channels?", CVAR_Archive);
+//VCvarB        VAudio::snd_swap_stereo("snd_swap_stereo", false, "Swap stereo channels?", CVAR_Archive);
 VCvarI        VAudio::snd_channels("snd_channels", "128", "Number of sound channels.", CVAR_Archive);
 VCvarB        VAudio::snd_external_music("snd_external_music", true, "Allow external music remapping?", CVAR_Archive);
 

@@ -41,6 +41,8 @@ void __attribute__((noreturn, format(printf, 1, 2))) __declspec(noreturn)
 const char *Host_GetCoreDump(void);
 bool Host_StartTitleMap();
 
+VStr Host_GetConfigDir ();
+
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
 extern VCvarB   developer;

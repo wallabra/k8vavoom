@@ -128,12 +128,13 @@ bool ChangeSoundVolume(Object Sender, float newValue)
 //  ChangeSwapStereo
 //
 //==========================================================================
-
+/*
 bool ChangeSwapStereo(Object Sender, int newValue)
 {
   SetCvar('snd_swap_stereo', newValue);
   return true;
 }
+*/
 
 //==========================================================================
 //

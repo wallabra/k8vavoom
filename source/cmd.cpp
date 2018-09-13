@@ -754,41 +754,62 @@ COMMAND(Echo)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  Exec_f
 //
 //==========================================================================
-
-COMMAND(Exec)
-{
+COMMAND(Exec) {
   guard(COMMAND Exec);
-  if (Args.Num() != 2)
-  {
+  if (Args.Num() < 2 || Args.Num() > 3) {
     GCon->Log("Exec <filename> : execute script file");
     return;
   }
 
-  if (!FL_FileExists(Args[1]))
-  {
-    GCon->Log(VStr("Can't find ") + Args[1]);
+  VStr dskname = Host_GetConfigDir()+"/"+Args[1];
+  bool ondisk = true;
+
+  if (!Sys_FileExists(dskname)) {
+    if (!FL_FileExists(Args[1])) {
+      if (Args.Num() == 2) GCon->Log(VStr("Can't find ")+Args[1]);
+      return;
+    } else {
+      dskname = Args[1];
+      ondisk = false;
+    }
+  }
+
+  GCon->Log(VStr("Executing ")+Args[1]);
+
+  VStream *Strm = (ondisk ? FL_OpenSysFileRead(dskname) : FL_OpenFileRead(dskname));
+  if (!Strm) {
+    if (Args.Num() == 2) GCon->Log(VStr("Can't find ")+Args[1]);
     return;
   }
 
-  GCon->Log(VStr("Executing ") + Args[1]);
-
-  VStream *Strm = FL_OpenFileRead(Args[1]);
   int Len = Strm->TotalSize();
-  char *buf = new char[Len + 1];
+  if (Len == 0) { delete Strm; return; }
+
+  char *buf = new char[Len+2];
   Strm->Serialise(buf, Len);
-  buf[Len] = 0;
+  if (Strm->IsError()) {
+    delete Strm;
+    delete[] buf;
+    GCon->Log(VStr("Error reading ")+Args[1]);
+  }
   delete Strm;
-  Strm = nullptr;
+
+  if (buf[Len-1] != '\n') {
+    buf[Len] = '\n';
+    buf[Len+1] = 0;
+  } else {
+    buf[Len] = 0;
+  }
 
   GCmdBuf.Insert(buf);
 
   delete[] buf;
-  buf = nullptr;
   unguard;
 }
 
