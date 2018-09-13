@@ -22,28 +22,21 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class MenuSelectorBase : Widget;
 
-class MenuSelector_SmallLeft : MenuSelectorBase;
-
-
-override void SetYOfs (int hgt) {
-  yofs = max(0, (hgt-10)/2);
-}
+int yofs;
 
 
-override void SetOrigin (int OrgX, int OrgY) {
+void SetYOfs (int hgt) {
   yofs = 0;
-  SetPos(OrgX-10, OrgY);
 }
 
 
-override void OnDraw () {
-  SetTextAlign(hright, vtop);
-  DrawText(8, yofs, ">");
+void SetOriginCentered (int OrgX, int OrgY, int hgt) {
+  SetOrigin(OrgX, OrgY);
+  SetYOfs(hgt);
 }
 
 
 defaultproperties {
-  Width = 320;
-  Height = 200;
 }

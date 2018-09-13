@@ -37,8 +37,8 @@ int CursorPrev;
 int ChoicesStartX;
 int ChoicesStartY;
 
-class!Widget SelectorType;
-Widget Selector;
+class!MenuSelectorBase SelectorType;
+MenuSelectorBase Selector;
 
 string Title;
 int TitleX;
@@ -222,7 +222,9 @@ void CursorMoved () {
   FixTopIndex();
   if ((CursorPrev == CursorPos && ChildrenOfsY == OfsYPrev) || MenuChoice_BackButton(Items[CursorPos])) return;
   if (CursorPos >= 0 && CursorPos < Items.Num) SetCurrentFocusChild(Items[CursorPos]);
-  if (Selector) Selector.SetOrigin(Items[CursorPos].X+Items[CursorPos].CursorXOffs, Items[CursorPos].Y+Items[CursorPos].CursorYOffs);
+  if (Selector) {
+    Selector.SetOriginCentered(Items[CursorPos].X+Items[CursorPos].CursorXOffs, Items[CursorPos].Y+Items[CursorPos].CursorYOffs, Items[CursorPos].Height);
+  }
   CursorPrev = CursorPos;
   OfsYPrev = ChildrenOfsY;
 }

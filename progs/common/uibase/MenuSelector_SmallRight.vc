@@ -23,7 +23,7 @@
 //**
 //**************************************************************************
 
-class MenuSelector_SmallRight : Widget;
+class MenuSelector_SmallRight : MenuSelectorBase;
 
 override void OnCreate()
 {
@@ -31,10 +31,22 @@ override void OnCreate()
   Disable();
 }
 
+override void SetYOfs (int hgt) {
+  //writeln("MSB: hgt=", hgt);
+  if (hgt < 12) { yofs = 0; return; }
+  yofs = max(0, (hgt-8)/2);
+}
+
+override void SetOrigin (int OrgX, int OrgY) {
+  //writeln("SRSO");
+  yofs = 0;
+  ::SetOrigin(OrgX, OrgY);
+}
+
 override void OnDraw()
 {
   SetTextAlign(hleft, vtop);
-  DrawText(2, 0, ">");
+  DrawText(2, yofs, ">");
 }
 
 defaultproperties

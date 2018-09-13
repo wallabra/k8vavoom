@@ -96,7 +96,7 @@ ClientGameShared GetClGame () {
 //==========================================================================
 override void OnFocusReceived () {
   if (MenuScreen(Parent) && MenuScreen(Parent).Selector) {
-    MenuScreen(Parent).Selector.SetOrigin(X+CursorXOffs, Y+CursorYOffs);
+    MenuScreen(Parent).Selector.SetOriginCentered(X+CursorXOffs, Y+CursorYOffs, Height);
   }
   ::OnFocusReceived();
 }
@@ -116,6 +116,7 @@ override void OnMouseEnter() {
 defaultproperties {
   Focusable = true;
   Width = 320;
-  Height = 200;
+  //Height = 200;
+  Height = 24;
   cvarSession = '';
 }

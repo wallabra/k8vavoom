@@ -50,6 +50,7 @@ import 'linespec';
 #include "MenuChoicePClass.vc"
 #include "MenuChoiceEpisode.vc"
 #include "MenuChoiceSkill.vc"
+#include "MenuSelectorBase.vc"
 #include "MenuSelector_SmallLeft.vc"
 #include "MenuSelector_SmallRight.vc"
 #include "MenuSelector_Big.vc"

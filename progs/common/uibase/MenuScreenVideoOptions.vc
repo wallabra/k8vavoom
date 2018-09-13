@@ -146,6 +146,9 @@ override void CreateChoices()
 
   CreateOnOffCvar("Interface filtering", 'gl_2d_filtering');
 
+  CreateOnOffCvar("Allow ambient light?", 'r_allow_ambient');
+  CreateFloatSliderCvar("Minimum ambient light", 'r_ambient', 16, 0, 255);
+
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Advanced Video options";
@@ -326,5 +329,6 @@ defaultproperties
   ChoicesStartX = 200;
   ChoicesStartY = 26;
   SelectorType = MenuSelector_SmallRight;
+  MenuScrollable = true;
   Title = "VIDEO OPTIONS";
 }

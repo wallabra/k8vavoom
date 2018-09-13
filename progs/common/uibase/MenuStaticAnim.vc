@@ -23,7 +23,7 @@
 //**
 //**************************************************************************
 
-class MenuStaticAnim : Widget;
+class MenuStaticAnim : /*Widget*/MenuSelectorBase;
 
 int     Speed;
 array!int  Frames;

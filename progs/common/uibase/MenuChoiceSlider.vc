@@ -140,7 +140,7 @@ override void OnDraw () {
   int xx, xt;
 
   SetTextAlign(hright, vtop);
-  DrawText(CursorXOffs, 2, Text, IsFocus() ? CR_YELLOW : CR_WHITE);
+  DrawText(CursorXOffs, 2+1, Text, IsFocus() ? CR_YELLOW : CR_WHITE);
 
   if (pic_M_SLDLT != -1) {
     xx = CursorXOffs;
@@ -223,7 +223,7 @@ override void OnRMouseClick (int X, int Y) {
 defaultproperties
 {
   Width = 360;
-  Height = 16;
+  Height = 16-2;
   CursorXOffs = 200;
   pic_M_SLDLT = -1;
   Value = 0.0;
