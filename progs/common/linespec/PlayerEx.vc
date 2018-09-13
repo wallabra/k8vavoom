@@ -913,16 +913,16 @@ final void SetWeapon(Weapon NewWeapon)
 
 final void BringUpWeapon()
 {
-  if (ReadyWeapon.UpSound)
-  {
+  if (ReadyWeapon && ReadyWeapon.UpSound) {
     MO.PlaySound(ReadyWeapon.UpSound, CHAN_WEAPON);
   }
 
   PendingWeapon = none;
-  ViewStates[ps_weapon].SY = bInstantWeaponSwitch ? Weapon::WEAPONTOP :
-    Weapon::WEAPONBOTTOM;
-  SetViewState(ps_weapon, ReadyWeapon.GetUpState());
-  MO.ModelVersion = ReadyWeapon.PlayerModelVersion;
+  ViewStates[ps_weapon].SY = (bInstantWeaponSwitch ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM);
+  if (ReadyWeapon) {
+    SetViewState(ps_weapon, ReadyWeapon.GetUpState());
+    MO.ModelVersion = ReadyWeapon.PlayerModelVersion;
+  }
 }
 
 //===========================================================================
@@ -935,8 +935,7 @@ final void BringUpWeapon()
 
 final void DropWeapon()
 {
-  if (ReadyWeapon)
-  {
+  if (ReadyWeapon) {
     SetViewState(ps_weapon, ReadyWeapon.GetDownState());
   }
 }
@@ -988,16 +987,12 @@ void FireWeapon()
 {
   bReloadQueued = false;
 
-  if (!ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, true))
-  {
-    return;
-  }
+  if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, true)) return;
 
   MO.SetState(EntityEx(MO).MissileState);
   SetViewState(ps_weapon, ReadyWeapon.GetAttackState(Refire));
   ReadyWeapon.FireMode = Weapon::FIRE_Primary;
-  if (!ReadyWeapon.bNoAlert)
-  {
+  if (!ReadyWeapon.bNoAlert) {
     LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
   }
 }
@@ -1012,16 +1007,12 @@ void AltFireWeapon()
 {
   bReloadQueued = false;
 
-  if (!ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, true))
-  {
-    return;
-  }
+  if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, true)) return;
 
   MO.SetState(EntityEx(MO).MissileState);
   SetViewState(ps_weapon, ReadyWeapon.GetAltAttackState(Refire));
   ReadyWeapon.FireMode = Weapon::FIRE_Secondary;
-  if (!ReadyWeapon.bNoAlert)
-  {
+  if (!ReadyWeapon.bNoAlert) {
     LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
   }
 }
@@ -1035,9 +1026,11 @@ void AltFireWeapon()
 void ReloadWeapon()
 {
   bReloadQueued = false;
-  state rst = ReadyWeapon.GetReloadState();
-  if (!rst) return;
-  SetViewState(ps_weapon, rst);
+  if (ReadyWeapon) {
+    state rst = ReadyWeapon.GetReloadState();
+    if (!rst) return;
+    SetViewState(ps_weapon, rst);
+  }
 }
 
 //==========================================================================
@@ -1052,18 +1045,13 @@ void ReloadWeapon()
 final void ChangeWeapon(int newweapon)
 {
   bReloadQueued = false;
-  if (MorphTime)
-  {
-    return;
-  }
+  if (MorphTime) return;
   Weapon NewWpn = GetSlotChangeWeapon(newweapon);
-  if (NewWpn && NewWpn != ReadyWeapon && (!NewWpn.bGivenAsMorphWeapon &&
-    !ReadyWeapon.bGivenAsMorphWeapon))
+  if (NewWpn && NewWpn != ReadyWeapon &&
+      (!NewWpn.bGivenAsMorphWeapon && (!ReadyWeapon || !ReadyWeapon.bGivenAsMorphWeapon)))
   {
     PendingWeapon = NewWpn;
-  }
-  else
-  {
+  } else {
     return;
   }
 }
@@ -1077,15 +1065,9 @@ final void ChangeWeapon(int newweapon)
 final void PrevWeapon()
 {
   bReloadQueued = false;
-  if (MorphTime)
-  {
-    return;
-  }
+  if (MorphTime) return;
   Weapon Wpn = GetPrevWeapon(PendingWeapon ? PendingWeapon : ReadyWeapon);
-  if (Wpn && Wpn != ReadyWeapon)
-  {
-    PendingWeapon = Wpn;
-  }
+  if (Wpn && Wpn != ReadyWeapon) PendingWeapon = Wpn;
 }
 
 //==========================================================================
@@ -1097,15 +1079,9 @@ final void PrevWeapon()
 final void NextWeapon()
 {
   bReloadQueued = false;
-  if (MorphTime)
-  {
-    return;
-  }
+  if (MorphTime) return;
   Weapon Wpn = GetNextWeapon(PendingWeapon ? PendingWeapon : ReadyWeapon);
-  if (Wpn && Wpn != ReadyWeapon)
-  {
-    PendingWeapon = Wpn;
-  }
+  if (Wpn && Wpn != ReadyWeapon) PendingWeapon = Wpn;
 }
 
 //==========================================================================
@@ -1183,42 +1159,28 @@ final Weapon ChoosePowered(Weapon Wpn)
 
 final Weapon GetSlotChangeWeapon(int Slot)
 {
-  int     i;
-  int     j;
   LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
 
-  if (ReadyWeapon)
-  {
-    for (i = 0; i < LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT; i++)
-    {
+  if (ReadyWeapon) {
+    foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
       if (GI.WeaponSlots[Slot].Weapons[i] == ReadyWeapon.Class ||
-        (ReadyWeapon.bPoweredUp && ReadyWeapon.SisterWeapon &&
-        GI.WeaponSlots[Slot].Weapons[i] == ReadyWeapon.SisterWeapon.Class))
+          (ReadyWeapon.bPoweredUp && ReadyWeapon.SisterWeapon &&
+          GI.WeaponSlots[Slot].Weapons[i] == ReadyWeapon.SisterWeapon.Class))
       {
-        for (j = (i + LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT - 1) %
-          LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT; j != i;
-          j = (j + LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT - 1) %
-          LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT)
+        for (int j = (i+LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT-1)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
+             j != i;
+             j = (j+LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT-1)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT)
         {
-          Weapon Wpn = Weapon(EntityEx(MO).FindInventory(
-            GI.WeaponSlots[Slot].Weapons[j]));
-          if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false))
-          {
-            return ChoosePowered(Wpn);
-          }
+          Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GI.WeaponSlots[Slot].Weapons[j]));
+          if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
         }
       }
     }
   }
 
-  for (i = LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT - 1; i >= 0; i--)
-  {
-    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(
-      GI.WeaponSlots[Slot].Weapons[i]));
-    if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false))
-    {
-      return ChoosePowered(Wpn);
-    }
+  for (int i = LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT-1; i >= 0; --i) {
+    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GI.WeaponSlots[Slot].Weapons[i]));
+    if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
   }
 
   return ReadyWeapon;
@@ -1230,35 +1192,23 @@ final Weapon GetSlotChangeWeapon(int Slot)
 //
 //==========================================================================
 
-final Weapon GetPrevWeapon(Weapon Current)
-{
+final Weapon GetPrevWeapon(Weapon Current) {
   LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
-  int     Slot;
-  int     Index;
-  int     Start;
-  int     i;
+  int Slot;
+  int Index;
+  int Start;
 
-  if (GI.FindWeaponSlot(class!Weapon(Current.Class), Slot, Index, Current.Position))
-  {
-    Start = Slot * LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT + Index;
-  }
-  else
-  {
+  if (Current && GI.FindWeaponSlot(class!Weapon(Current.Class), Slot, Index, Current.Position)) {
+    Start = Slot * LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT+Index;
+  } else {
     Start = 0;
   }
 
-  for (i = LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT *
-    LineSpecialGameInfo::NUM_WEAPON_SLOTS - 1; i >= 0; i--)
-  {
-    Slot = ((Start + i) / LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) %
-      LineSpecialGameInfo::NUM_WEAPON_SLOTS;
-    Index = (Start + i) % LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
-    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(
-      GI.WeaponSlots[Slot].Weapons[Index]));
-    if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false))
-    {
-      return ChoosePowered(Wpn);
-    }
+  for (int i = LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS-1; i >= 0; --i) {
+    Slot = ((Start+i)/LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT)%LineSpecialGameInfo::NUM_WEAPON_SLOTS;
+    Index = (Start+i)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
+    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GI.WeaponSlots[Slot].Weapons[Index]));
+    if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
   }
   return Current;
 }
@@ -1269,35 +1219,23 @@ final Weapon GetPrevWeapon(Weapon Current)
 //
 //==========================================================================
 
-final Weapon GetNextWeapon(Weapon Current)
-{
+final Weapon GetNextWeapon(Weapon Current) {
   LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
-  int     Slot;
-  int     Index;
-  int     Start;
-  int     i;
+  int Slot;
+  int Index;
+  int Start;
 
-  if (GI.FindWeaponSlot(class!Weapon(Current.Class), Slot, Index, Current.Position))
-  {
-    Start = Slot * LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT + Index;
-  }
-  else
-  {
+  if (Current && GI.FindWeaponSlot(class!Weapon(Current.Class), Slot, Index, Current.Position)) {
+    Start = Slot*LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT+Index;
+  } else {
     Start = -1;
   }
 
-  for (i = 1; i <= LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT *
-    LineSpecialGameInfo::NUM_WEAPON_SLOTS; i++)
-  {
-    Slot = ((Start + i) / LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) %
-      LineSpecialGameInfo::NUM_WEAPON_SLOTS;
-    Index = (Start + i) % LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
-    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(
-      GI.WeaponSlots[Slot].Weapons[Index]));
-    if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false))
-    {
-      return ChoosePowered(Wpn);
-    }
+  for (int i = 1; i <= LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS; ++i) {
+    Slot = ((Start+i)/LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT)%LineSpecialGameInfo::NUM_WEAPON_SLOTS;
+    Index = (Start+i)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
+    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GI.WeaponSlots[Slot].Weapons[Index]));
+    if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
   }
   return Current;
 }
@@ -1942,8 +1880,7 @@ void DisplayObituary(EntityEx inflictor, EntityEx source, name DmgType)
     else
     {
       Weapon Wpn = PlayerEx(inflictor.Player).ReadyWeapon;
-      if (Wpn && Wpn.Obituary)
-      {
+      if (Wpn && Wpn.Obituary) {
         //  Weapon obituary message.
         Msg = Wpn.Obituary;
       }
@@ -3634,8 +3571,7 @@ final void ActivateMorphWeapon()
   {
     // Couldn't find any weapons, use the default weapon for this player
     // (from initial inventory)
-    int i;
-    for (i = 0; i < EntityEx(MO).DropItemList.Num; i++)
+    foreach (int i; 0..EntityEx(MO).DropItemList.Num)
     {
       Inventory Item = Inventory(Level.Spawn(EntityEx(MO).DropItemList[i].Type, default, default, default, false));
       if (EntityEx(MO).DropItemList[i].Amount > 0)
@@ -3678,20 +3614,10 @@ final void PostMorphWeapon(Weapon weapon)
 //
 //==========================================================================
 
-final void AddVisitedMap(name Map)
-{
-  int i;
-  for (i = 0; i < MAX_MAPS_VISITED; i++)
-  {
-    if (MapsVisited[i] == Map)
-    {
-      return;
-    }
-    if (!MapsVisited[i])
-    {
-      MapsVisited[i] = Map;
-      return;
-    }
+final void AddVisitedMap(name Map) {
+  foreach (auto i; 0..MAX_MAPS_VISITED) {
+    if (MapsVisited[i] == Map) return;
+    if (!MapsVisited[i]) { MapsVisited[i] = Map; return; }
   }
 }
 
