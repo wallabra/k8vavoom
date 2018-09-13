@@ -913,7 +913,7 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
   stream.avail_in = 0;
   stream.zalloc = Z_NULL;
   stream.zfree = Z_NULL;
-  err = deflateInit (&stream, png_level);
+  err = deflateInit(&stream, png_level);
 
   if (err != Z_OK) return false;
 
@@ -959,14 +959,14 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
 
     if (heightOrig > 0) from += pitch; else from -= pitch;
 
-    err = deflate(&stream, (y == 0) ? Z_FINISH : 0);
+    err = deflate(&stream, /*(y == 0) ? Z_FINISH :*/ 0);
     if (err != Z_OK) break;
     while (stream.avail_out == 0) {
       if (!WriteIDAT(file, buffer, sizeof(buffer))) return false;
       stream.next_out = buffer;
       stream.avail_out = sizeof(buffer);
       if (stream.avail_in != 0) {
-        err = deflate (&stream, (y == 0) ? Z_FINISH : 0);
+        err = deflate(&stream, /*(y == 0) ? Z_FINISH :*/ 0);
         if (err != Z_OK) break;
       }
     }
@@ -976,7 +976,7 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
     err = deflate(&stream, Z_FINISH);
     if (err != Z_OK) break;
     if (stream.avail_out == 0) {
-      if (!WriteIDAT (file, buffer, sizeof(buffer))) return false;
+      if (!WriteIDAT(file, buffer, sizeof(buffer))) return false;
       stream.next_out = buffer;
       stream.avail_out = sizeof(buffer);
     }
@@ -986,7 +986,20 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
 
   if (err != Z_STREAM_END) return false;
 
-  return WriteIDAT(file, buffer, sizeof(buffer)-stream.avail_out);
+  if (!WriteIDAT(file, buffer, sizeof(buffer)-stream.avail_out)) return false;
+
+  // write IEND
+  vuint32 foo[2], crc;
+
+  foo[0] = 0;
+  foo[1] = MAKE_ID('I','E','N','D');
+  crc = CalcCRC32((vuint8 *)&foo[1], 4);
+  crc = BigLong(crc);
+
+  file->Serialise(foo, 8);
+  if (file->IsError()) return false;
+  file->Serialise(&crc, 4);
+  return !file->IsError();
 }
 
 
@@ -1000,15 +1013,15 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
 static bool WriteIDAT (VStream *file, const vuint8 *data, int len) {
   vuint32 foo[2], crc;
 
-  foo[0] = BigLong (len);
+  foo[0] = BigLong(len);
   foo[1] = MAKE_ID('I','D','A','T');
-  crc = CalcCRC32 ((vuint8 *)&foo[1], 4);
-  crc = BigLong((unsigned int)AddCRC32 (crc, data, len));
+  crc = CalcCRC32((vuint8 *)&foo[1], 4);
+  crc = BigLong((unsigned int)AddCRC32(crc, data, len));
 
   file->Serialise(foo, 8);
   if (file->IsError()) return false;
   if (len) {
-    file->Serialise((void *)data, (int)len);
+    file->Serialise(data, (int)len);
     if (file->IsError()) return false;
   }
   file->Serialise(&crc, 4);
