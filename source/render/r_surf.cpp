@@ -266,57 +266,45 @@ void VRenderLevelShared::FlushSurfCaches(surface_t *InSurfs)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VRenderLevel::SubdivideFace
 //
 //==========================================================================
-
-surface_t *VRenderLevel::SubdivideFace(surface_t *InF, const TVec &axis,
-  const TVec *nextaxis)
-{
+surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) {
   guard(VRenderLevel::SubdivideFace);
   surface_t *f = InF;
-  float dot;
   float mins = 99999.0;
   float maxs = -99999.0;
 
-  for (int i = 0; i < f->count; ++i)
-  {
-    dot = DotProduct(f->verts[i], axis);
+  for (int i = 0; i < f->count; ++i) {
+    const float dot = DotProduct(f->verts[i], axis);
     if (dot < mins) mins = dot;
     if (dot > maxs) maxs = dot;
   }
 
-  if (maxs - mins <= subdivide_size)
-  {
-    if (nextaxis)
-    {
-      f = SubdivideFace(f, *nextaxis, nullptr);
-    }
+  if (maxs - mins <= subdivide_size) {
+    if (nextaxis) f = SubdivideFace(f, *nextaxis, nullptr);
     return f;
   }
 
-  c_subdivides++;
+  ++c_subdivides;
 
-  if (f->count > MAXSPLITVERTS)
-  {
-    Host_Error("f->count > MAXSPLITVERTS\n");
-  }
+  if (f->count > MAXSPLITVERTS) Host_Error("f->count > MAXSPLITVERTS\n");
 
   TPlane plane;
 
   plane.normal = axis;
-  dot = Length(plane.normal);
+  const float dot0 = Length(plane.normal);
   plane.normal = Normalise(plane.normal);
-  plane.dist = (mins + subdivide_size - 16) / dot;
+  plane.dist = (mins+subdivide_size-16)/dot0;
 
-  float dots[MAXSPLITVERTS + 1];
-  int sides[MAXSPLITVERTS + 1];
+  float dots[MAXSPLITVERTS+1];
+  int sides[MAXSPLITVERTS+1];
 
-  for (int i = 0; i < f->count; ++i)
-  {
-    dot = DotProduct(f->verts[i], plane.normal) - plane.dist;
+  for (int i = 0; i < f->count; ++i) {
+    const float dot = DotProduct(f->verts[i], plane.normal)-plane.dist;
     dots[i] = dot;
          if (dot < -ON_EPSILON) sides[i] = -1;
     else if (dot > ON_EPSILON) sides[i] = 1;
@@ -330,39 +318,30 @@ surface_t *VRenderLevel::SubdivideFace(surface_t *InF, const TVec &axis,
   int count1 = 0;
   int count2 = 0;
 
-  for (int i = 0; i < f->count; ++i)
-  {
-    if (sides[i] == 0)
-    {
+  for (int i = 0; i < f->count; ++i) {
+    if (sides[i] == 0) {
       verts1[count1++] = f->verts[i];
       verts2[count2++] = f->verts[i];
       continue;
     }
-    if (sides[i] == 1)
-    {
+    if (sides[i] == 1) {
       verts1[count1++] = f->verts[i];
-    }
-    else
-    {
+    } else {
       verts2[count2++] = f->verts[i];
     }
-    if (sides[i + 1] == 0 || sides[i] == sides[i + 1])
-    {
-      continue;
-    }
+    if (sides[i+1] == 0 || sides[i] == sides[i+1]) continue;
 
     // generate a split point
     TVec mid;
     TVec &p1 = f->verts[i];
-    TVec &p2 = f->verts[(i + 1) % f->count];
+    TVec &p2 = f->verts[(i+1)%f->count];
 
-    dot = dots[i] / (dots[i] - dots[i + 1]);
-    for (int j = 0; j < 3; j++)
-    {
+    const float dot = dots[i]/(dots[i]-dots[i+1]);
+    for (int j = 0; j < 3; ++j) {
       // avoid round off error when possible
            if (plane.normal[j] == 1) mid[j] = plane.dist;
       else if (plane.normal[j] == -1) mid[j] = -plane.dist;
-      else mid[j] = p1[j] + dot * (p2[j] - p1[j]);
+      else mid[j] = p1[j]+dot*(p2[j]-p1[j]);
     }
 
     verts1[count1++] = mid;
@@ -372,20 +351,17 @@ surface_t *VRenderLevel::SubdivideFace(surface_t *InF, const TVec &axis,
   surface_t *next = f->next;
   Z_Free(f);
 
-  surface_t *back = (surface_t*)Z_Calloc(sizeof(surface_t) + (count2 - 1) * sizeof(TVec));
+  surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(count2-1)*sizeof(TVec));
   back->count = count2;
   memcpy(back->verts, verts2, count2 * sizeof(TVec));
 
-  surface_t *front = (surface_t*)Z_Calloc(sizeof(surface_t) + (count1 - 1) * sizeof(TVec));
+  surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(count1-1)*sizeof(TVec));
   front->count = count1;
-  memcpy(front->verts, verts1, count1 * sizeof(TVec));
+  memcpy(front->verts, verts1, count1*sizeof(TVec));
 
   front->next = next;
   back->next = SubdivideFace(front, axis, nextaxis);
-  if (nextaxis)
-  {
-    back = SubdivideFace(back, *nextaxis, nullptr);
-  }
+  if (nextaxis) back = SubdivideFace(back, *nextaxis, nullptr);
   return back;
   unguard;
 }
