@@ -216,12 +216,12 @@ bool M_CreatePNG (VStream *file, const vuint8 *buffer, const PalEntry *palette,
 {
   vuint8 work[8+   // signature
         12+2*4+5+  // IHDR
-        12+4+      // gAMA
+        //12+4+      // gAMA
         12+256*3]; // PLTE
   vuint32 *const sig = (vuint32 *)&work[0];
   IHDR *const ihdr = (IHDR *)&work[8+8];
   vuint32 *const gama = (vuint32 *)((vuint8 *)ihdr+2*4+5+12);
-  vuint8 *const plte = (vuint8 *)gama+4+12;
+  vuint8 *const plte = (vuint8 *)gama /*+4+12*/;
   size_t work_len;
 
   sig[0] = MAKE_ID(137,'P','N','G');
@@ -237,8 +237,10 @@ bool M_CreatePNG (VStream *file, const vuint8 *buffer, const PalEntry *palette,
   MakeChunk(ihdr, MAKE_ID('I','H','D','R'), 2*4+5);
 
   // assume a display exponent of 2.2 (100000/2.2 ~= 45454.5)
+  /*
   *gama = BigLong(int(45454.5f*(png_gamma == 0.0f ? gamma : png_gamma)));
   MakeChunk(gama, MAKE_ID('g','A','M','A'), 4);
+  */
 
   if (color_type == SS_PAL) {
     StuffPalette(palette, plte);
@@ -863,10 +865,10 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
 //
 //==========================================================================
 static inline void MakeChunk (void *where, vuint32 type, size_t len) {
-  vuint8 *const data = (vuint8 *)where;
-  *(vuint32 *)(data-8) = BigLong ((unsigned int)len);
+  vuint8 *data = (vuint8 *)where;
+  *(vuint32 *)(data-8) = BigLong((unsigned int)len);
   *(vuint32 *)(data-4) = type;
-  *(vuint32 *)(data+len) = BigLong ((unsigned int)CalcCRC32 (data-4, (unsigned int)(len+4)));
+  *(vuint32 *)(data+len) = BigLong((unsigned int)CalcCRC32 (data-4, (unsigned int)(len+4)));
 }
 
 
