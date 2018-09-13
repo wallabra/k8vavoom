@@ -29,6 +29,8 @@
 #include "r_local.h"
 
 // MACROS ------------------------------------------------------------------
+#define USE_FASTER_SUBDIVIDER
+
 
 #define MAXSPLITVERTS   128
 #define ON_EPSILON      0.1
@@ -267,6 +269,15 @@ void VRenderLevelShared::FlushSurfCaches(surface_t *InSurfs)
 }
 
 
+static __attribute__((unused)) inline void intersectAgainstPlane (TVec &res, const TPlane &plane, const TVec &a, const TVec &b) {
+  //const float t = (plane.dist-(plane.normal*a))/(plane.normal*(b-a));
+  const float t = (plane.dist-DotProduct(plane.normal, a))/DotProduct(plane.normal, b-a);
+  res.x = a.x+(b.x-a.x)*t;
+  res.y = a.y+(b.y-a.y)*t;
+  res.z = a.z+(b.z-a.z)*t;
+}
+
+
 //==========================================================================
 //
 //  VRenderLevel::SubdivideFace
@@ -284,7 +295,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
     if (dot > maxs) maxs = dot;
   }
 
-  if (maxs - mins <= subdivide_size) {
+  if (maxs-mins <= subdivide_size) {
     if (nextaxis) f = SubdivideFace(f, *nextaxis, nullptr);
     return f;
   }
@@ -300,15 +311,21 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   plane.normal = Normalise(plane.normal);
   plane.dist = (mins+subdivide_size-16)/dot0;
 
+  enum {
+    PlaneBack = -1,
+    PlaneCoplanar = 0,
+    PlaneFront = 1,
+  };
+
   float dots[MAXSPLITVERTS+1];
-  int sides[MAXSPLITVERTS+1];
+  int sides[MAXSPLITVERTS+1]; // -1 is back; 0 is on; 1 is front
 
   for (int i = 0; i < f->count; ++i) {
     const float dot = DotProduct(f->verts[i], plane.normal)-plane.dist;
     dots[i] = dot;
-         if (dot < -ON_EPSILON) sides[i] = -1;
-    else if (dot > ON_EPSILON) sides[i] = 1;
-    else sides[i] = 0;
+         if (dot < -ON_EPSILON) sides[i] = PlaneBack;
+    else if (dot > ON_EPSILON) sides[i] = PlaneFront;
+    else sides[i] = PlaneCoplanar;
   }
   dots[f->count] = dots[0];
   sides[f->count] = sides[0];
@@ -317,22 +334,23 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   TVec verts2[MAXSPLITVERTS];
   int count1 = 0;
   int count2 = 0;
+  TVec mid;
 
+#if defined(USE_FASTER_SUBDIVIDER)
   for (int i = 0; i < f->count; ++i) {
-    if (sides[i] == 0) {
+    if (sides[i] == PlaneCoplanar) {
       verts1[count1++] = f->verts[i];
       verts2[count2++] = f->verts[i];
       continue;
     }
-    if (sides[i] == 1) {
+    if (sides[i] == PlaneFront) {
       verts1[count1++] = f->verts[i];
     } else {
       verts2[count2++] = f->verts[i];
     }
-    if (sides[i+1] == 0 || sides[i] == sides[i+1]) continue;
+    if (sides[i+1] == PlaneCoplanar || sides[i] == sides[i+1]) continue;
 
     // generate a split point
-    TVec mid;
     TVec &p1 = f->verts[i];
     TVec &p2 = f->verts[(i+1)%f->count];
 
@@ -347,6 +365,56 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
     verts1[count1++] = mid;
     verts2[count2++] = mid;
   }
+#else
+  // robust spliting, taken from "Real-Time Collision Detection" book
+  for (int i = 0; i < f->count; ++i) {
+    const auto atype = sides[i];
+    const auto btype = sides[i+1];
+    const TVec &va = f->verts[i];
+    const TVec &vb = f->verts[(i+1)%f->count];
+    if (btype == PlaneFront) {
+      if (atype == PlaneBack) {
+        // edge (a, b) straddles, output intersection point to both sides
+        intersectAgainstPlane(mid, plane, vb, va); // `(b, a)` for robustness; was (a, b)
+        // consistently clip edge as ordered going from in front -> behind
+        //assert(plane.pointSide(mid.pos) == Plane.Coplanar);
+        //f.unsafeArrayAppend(mid);
+        //b.unsafeArrayAppend(mid);
+        verts1[count1++] = mid;
+        verts2[count2++] = mid;
+      }
+      // in all three cases, output b to the front side
+      //f.unsafeArrayAppend(vb);
+      verts1[count1++] = vb;
+    } else if (btype == PlaneBack) {
+      if (atype == PlaneFront) {
+        // edge (a, b) straddles plane, output intersection point
+        intersectAgainstPlane(mid, plane, va, vb); // `(b, a)` for robustness; was (a, b)
+        //assert(plane.pointSide(mid.pos) == Plane.Coplanar);
+        //f.unsafeArrayAppend(mid);
+        //b.unsafeArrayAppend(mid);
+        verts1[count1++] = mid;
+        verts2[count2++] = mid;
+      } else if (atype == PlaneCoplanar) {
+        // output a when edge (a, b) goes from 'on' to 'behind' plane
+        //b.unsafeArrayAppend(va);
+        verts2[count2++] = va;
+      }
+      // in all three cases, output b to the back side
+      //b.unsafeArrayAppend(vb);
+      verts2[count2++] = vb;
+    } else {
+      // b is on the plane. In all three cases output b to the front side
+      //f.unsafeArrayAppend(vb);
+      verts1[count1++] = vb;
+      // in one case, also output b to back side
+      if (atype == PlaneBack) {
+        //b.unsafeArrayAppend(vb);
+        verts2[count2++] = vb;
+      }
+    }
+  }
+#endif
 
   surface_t *next = f->next;
   Z_Free(f);
@@ -366,18 +434,17 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAdvancedRenderLevel::SubdivideFace
 //
 //==========================================================================
-
-surface_t *VAdvancedRenderLevel::SubdivideFace(surface_t *f, const TVec&,
-  const TVec*)
-{
-  //  Advanced renderer can draw whole surface.
+surface_t *VAdvancedRenderLevel::SubdivideFace(surface_t *f, const TVec&, const TVec *) {
+  // advanced renderer can draw whole surface
   return f;
 }
+
 
 //==========================================================================
 //
@@ -453,8 +520,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface(subsector_t *sub,
   }
   else
   {
-    ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis,
-      &ssurf->texinfo.taxis);
+    ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis);
     InitSurfs(ssurf->surfs, &ssurf->texinfo, splane, sub);
   }
 
@@ -488,8 +554,7 @@ void VRenderLevelShared::UpdateSecSurface(sec_surface_t *ssurf,
       plane = RealPlane;
       if (!ssurf->surfs->extents[0])
       {
-        ssurf->surfs = SubdivideFace(ssurf->surfs,
-          ssurf->texinfo.saxis, &ssurf->texinfo.taxis);
+        ssurf->surfs = SubdivideFace(ssurf->surfs, ssurf->texinfo.saxis, &ssurf->texinfo.taxis);
         InitSurfs(ssurf->surfs, &ssurf->texinfo, plane, sub);
       }
     }
@@ -564,8 +629,7 @@ void VRenderLevelShared::UpdateSecSurface(sec_surface_t *ssurf,
         dst = v;
         dst.z = plane->GetPointZ(dst);
       }
-      ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis,
-        &ssurf->texinfo.taxis);
+      ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis);
       InitSurfs(ssurf->surfs, &ssurf->texinfo, plane, sub);
     }
   }
@@ -650,62 +714,53 @@ void VRenderLevelShared::FreeWSurfs(surface_t *InSurfs)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VRenderLevel::SubdivideSeg
 //
 //==========================================================================
-
-surface_t *VRenderLevel::SubdivideSeg(surface_t *InSurf,
-  const TVec &axis, const TVec *nextaxis)
-{
+surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis) {
   guard(VRenderLevel::SubdivideSeg);
   surface_t *surf = InSurf;
-  int i;
-  float dot;
   float mins = 99999.0;
   float maxs = -99999.0;
 
-  for (i = 0; i < surf->count; i++)
-  {
-    dot = DotProduct(surf->verts[i], axis);
-    if (dot < mins)
-      mins = dot;
-    if (dot > maxs)
-      maxs = dot;
+  for (int i = 0; i < surf->count; ++i) {
+    const float dot = DotProduct(surf->verts[i], axis);
+    if (dot < mins) mins = dot;
+    if (dot > maxs) maxs = dot;
   }
 
-  if (maxs - mins <= subdivide_size)
-  {
-    if (nextaxis)
-    {
-      surf = SubdivideSeg(surf, *nextaxis, nullptr);
-    }
+  if (maxs-mins <= subdivide_size) {
+    if (nextaxis) surf = SubdivideSeg(surf, *nextaxis, nullptr);
     return surf;
   }
 
-  c_seg_div++;
+  ++c_seg_div;
 
   TPlane plane;
 
   plane.normal = axis;
-  dot = Length(plane.normal);
+  const float dot0 = Length(plane.normal);
   plane.normal = Normalise(plane.normal);
-  plane.dist = (mins + subdivide_size - 16) / dot;
+  plane.dist = (mins+subdivide_size-16)/dot0;
 
-  float dots[MAXWVERTS + 1];
-  int sides[MAXWVERTS + 1];
+  enum {
+    PlaneBack = -1,
+    PlaneCoplanar = 0,
+    PlaneFront = 1,
+  };
 
-  for (i = 0; i < surf->count; i++)
-  {
-    dot = DotProduct(surf->verts[i], plane.normal) - plane.dist;
+  float dots[MAXWVERTS+1];
+  int sides[MAXWVERTS+1];
+
+  for (int i = 0; i < surf->count; ++i) {
+    const float dot = DotProduct(surf->verts[i], plane.normal)-plane.dist;
     dots[i] = dot;
-    if (dot < -ON_EPSILON)
-      sides[i] = -1;
-    else if (dot > ON_EPSILON)
-      sides[i] = 1;
-    else
-      sides[i] = 0;
+         if (dot < -ON_EPSILON) sides[i] = PlaneBack;
+    else if (dot > ON_EPSILON) sides[i] = PlaneFront;
+    else sides[i] = PlaneCoplanar;
   }
   dots[surf->count] = dots[0];
   sides[surf->count] = sides[0];
@@ -714,48 +769,87 @@ surface_t *VRenderLevel::SubdivideSeg(surface_t *InSurf,
   TVec verts2[MAXWVERTS];
   int count1 = 0;
   int count2 = 0;
+  TVec mid;
 
-  for (i = 0; i < surf->count; i++)
-  {
-    if (sides[i] == 0)
-    {
+#if defined(USE_FASTER_SUBDIVIDER)
+  for (int i = 0; i < surf->count; ++i) {
+    if (sides[i] == 0) {
       verts1[count1++] = surf->verts[i];
       verts2[count2++] = surf->verts[i];
       continue;
     }
-    if (sides[i] == 1)
-    {
+    if (sides[i] == 1) {
       verts1[count1++] = surf->verts[i];
-    }
-    else
-    {
+    } else {
       verts2[count2++] = surf->verts[i];
     }
-    if (sides[i + 1] == 0 || sides[i] == sides[i + 1])
-    {
-      continue;
-    }
+    if (sides[i+1] == 0 || sides[i] == sides[i+1]) continue;
 
     // generate a split point
-    TVec mid;
     TVec &p1 = surf->verts[i];
     TVec &p2 = surf->verts[(i + 1) % surf->count];
 
-    dot = dots[i] / (dots[i] - dots[i + 1]);
-    for (int j = 0; j < 3; j++)
-    {
+    const float dot = dots[i]/(dots[i]-dots[i+1]);
+    for (int j = 0; j < 3; ++j) {
       // avoid round off error when possible
-      if (plane.normal[j] == 1)
-        mid[j] = plane.dist;
-      else if (plane.normal[j] == -1)
-        mid[j] = -plane.dist;
-      else
-        mid[j] = p1[j] + dot * (p2[j] - p1[j]);
+           if (plane.normal[j] == 1) mid[j] = plane.dist;
+      else if (plane.normal[j] == -1) mid[j] = -plane.dist;
+      else mid[j] = p1[j]+dot*(p2[j]-p1[j]);
     }
 
     verts1[count1++] = mid;
     verts2[count2++] = mid;
   }
+#else
+  // robust spliting, taken from "Real-Time Collision Detection" book
+  for (int i = 0; i < surf->count; ++i) {
+    const auto atype = sides[i];
+    const auto btype = sides[i+1];
+    const TVec &va = surf->verts[i];
+    const TVec &vb = surf->verts[(i+1)%surf->count];
+    if (btype == PlaneFront) {
+      if (atype == PlaneBack) {
+        // edge (a, b) straddles, output intersection point to both sides
+        intersectAgainstPlane(mid, plane, vb, va); // `(b, a)` for robustness; was (a, b)
+        // consistently clip edge as ordered going from in front -> behind
+        //assert(plane.pointSide(mid.pos) == Plane.Coplanar);
+        //f.unsafeArrayAppend(mid);
+        //b.unsafeArrayAppend(mid);
+        verts1[count1++] = mid;
+        verts2[count2++] = mid;
+      }
+      // in all three cases, output b to the front side
+      //f.unsafeArrayAppend(vb);
+      verts1[count1++] = vb;
+    } else if (btype == PlaneBack) {
+      if (atype == PlaneFront) {
+        // edge (a, b) straddles plane, output intersection point
+        intersectAgainstPlane(mid, plane, va, vb); // `(b, a)` for robustness; was (a, b)
+        //assert(plane.pointSide(mid.pos) == Plane.Coplanar);
+        //f.unsafeArrayAppend(mid);
+        //b.unsafeArrayAppend(mid);
+        verts1[count1++] = mid;
+        verts2[count2++] = mid;
+      } else if (atype == PlaneCoplanar) {
+        // output a when edge (a, b) goes from 'on' to 'behind' plane
+        //b.unsafeArrayAppend(va);
+        verts2[count2++] = va;
+      }
+      // in all three cases, output b to the back side
+      //b.unsafeArrayAppend(vb);
+      verts2[count2++] = vb;
+    } else {
+      // b is on the plane. In all three cases output b to the front side
+      //f.unsafeArrayAppend(vb);
+      verts1[count1++] = vb;
+      // in one case, also output b to back side
+      if (atype == PlaneBack) {
+        //b.unsafeArrayAppend(vb);
+        verts2[count2++] = vb;
+      }
+    }
+  }
+#endif
 
   surf->count = count2;
   memcpy(surf->verts, verts2, count2 * sizeof(TVec));
@@ -774,18 +868,17 @@ surface_t *VRenderLevel::SubdivideSeg(surface_t *InSurf,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAdvancedRenderLevel::SubdivideSeg
 //
 //==========================================================================
-
-surface_t *VAdvancedRenderLevel::SubdivideSeg(surface_t *surf, const TVec&,
-  const TVec*)
-{
-  //  Advanced renderer can draw whole surface.
+surface_t *VAdvancedRenderLevel::SubdivideSeg(surface_t *surf, const TVec &, const TVec *) {
+  // qdvanced renderer can draw whole surface
   return surf;
 }
+
 
 //==========================================================================
 //
