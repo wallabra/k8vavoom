@@ -82,7 +82,7 @@ override void CreateChoices()
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Extra samples";
+  Enum.Text = "Extra lighmap samples";
   Enum.SetInitialValue(GetCvar('r_extrasamples'));
   Enum.ValueChanging = &ChangeExtraSamples;
   currentY += Enum.Height;
@@ -98,6 +98,13 @@ override void CreateChoices()
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Clip Dynamic Lights";
   Enum.SetInitialValue(GetCvar('r_dynamic_clip'));
+  Enum.ValueChanging = &ChangeDynamicClip;
+  currentY += Enum.Height;
+
+  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
+  Enum.SetOrigin(ChoicesStartX, currentY);
+  Enum.Text = "Properly Clip DynLights";
+  Enum.SetInitialValue(GetCvar('r_dynamic_clip_more'));
   Enum.ValueChanging = &ChangeDynamicClip;
   currentY += Enum.Height;
 
