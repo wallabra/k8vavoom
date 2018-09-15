@@ -63,6 +63,9 @@
 
 //#define K8_UNLZMA_DEBUG
 
+extern bool fsys_skipSounds;
+extern bool fsys_skipSprites;
+
 
 enum {
   SIZECENTRALDIRITEM = 0x2e,
@@ -396,6 +399,13 @@ void VZipFile::OpenArchive (VStream *fstream) {
           Files[i].LumpNamespace = -1;
           LumpName = VStr();
         }
+      }
+
+      if ((fsys_skipSounds && Files[i].LumpNamespace == WADNS_Sounds) ||
+          (fsys_skipSprites && Files[i].LumpNamespace == WADNS_Sprites))
+      {
+        Files[i].LumpNamespace = -1;
+        LumpName = VStr();
       }
 
       // for sprites \ is a valid frame character but is not allowed to

@@ -27,6 +27,10 @@
 #include "fwaddefs.h"
 
 
+extern bool fsys_skipSounds;
+extern bool fsys_skipSprites;
+
+
 struct lumpinfo_t {
   VName Name;
   vint32 Position;
@@ -231,6 +235,20 @@ void VWadFile::InitNamespaces () {
   InitNamespace(WADNS_NewTextures, NAME_tx_start, NAME_tx_end);
   InitNamespace(WADNS_Voices, NAME_v_start, NAME_v_end, NAME_vv_start, NAME_vv_end);
   InitNamespace(WADNS_HiResTextures, NAME_hi_start, NAME_hi_end);
+  if (fsys_skipSounds) {
+    for (int i = 0; i < NumLumps; ++i) {
+      lumpinfo_t &L = LumpInfo[i];
+      if (L.Namespace != WADNS_Global) continue;
+      if (L.Name == NAME_None) continue;
+      const char *nn = *L.Name;
+      if ((nn[0] == 'D' || nn[0] == 'd') &&
+          (nn[1] == 'S' || nn[1] == 's' || nn[1] == 'P' || nn[1] == 'p'))
+      {
+        L.Namespace = (EWadNamespace)-1;
+        L.Name = NAME_None;
+      }
+    }
+  }
   unguard;
 }
 
@@ -252,6 +270,12 @@ void VWadFile::InitNamespace (EWadNamespace NS, VName Start, VName End, VName Al
       if (L.Name == End || (AltEnd != NAME_None && L.Name == AltEnd)) {
         InNS = false;
       } else {
+        if ((fsys_skipSounds && NS == WADNS_Sounds) ||
+            (fsys_skipSprites && NS == WADNS_Sprites))
+        {
+          L.Namespace = (EWadNamespace)-1;
+          L.Name = NAME_None;
+        }
         L.Namespace = NS;
       }
     } else {

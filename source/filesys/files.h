@@ -44,3 +44,6 @@ TArray<VStr> GetWadPk3List (bool fullpath=false);
 extern VStr fl_basedir;
 extern VStr fl_savedir;
 extern VStr fl_gamedir;
+
+extern bool fsys_skipSounds;
+extern bool fsys_skipSprites;

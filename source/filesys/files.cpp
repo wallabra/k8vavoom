@@ -27,6 +27,8 @@
 
 
 static VCvarB dbg_dump_gameinfo("dbg_dump_gameinfo", false, "Dump parsed game.txt?", 0);
+bool fsys_skipSounds = false;
+bool fsys_skipSprites = false;
 
 
 struct version_t {
@@ -613,7 +615,25 @@ void FL_Init () {
 
   int fp = GArgs.CheckParm("-file");
   if (fp) {
-    while (++fp != GArgs.Count() && GArgs[fp][0] != '-' && GArgs[fp][0] != '+') {
+    fsys_skipSounds = false;
+    fsys_skipSprites = false;
+    for (int f = 1; f < fp; ++f) {
+           if (VStr::Cmp(GArgs[f], "-skipsounds") == 0) fsys_skipSounds = true;
+      else if (VStr::Cmp(GArgs[f], "-allowsounds") == 0) fsys_skipSounds = false;
+      else if (VStr::Cmp(GArgs[f], "-skipsprites") == 0) fsys_skipSprites = true;
+      else if (VStr::Cmp(GArgs[f], "-allowsprites") == 0) fsys_skipSprites = false;
+    }
+    bool inFile = true;
+    while (++fp != GArgs.Count()) {
+      if (GArgs[fp][0] == '-' || GArgs[fp][0] == '+') {
+             if (VStr::Cmp(GArgs[fp], "-skipsounds") == 0) fsys_skipSounds = true;
+        else if (VStr::Cmp(GArgs[fp], "-allowsounds") == 0) fsys_skipSounds = false;
+        else if (VStr::Cmp(GArgs[fp], "-skipsprites") == 0) fsys_skipSprites = true;
+        else if (VStr::Cmp(GArgs[fp], "-allowsprites") == 0) fsys_skipSprites = false;
+        else inFile = (VStr::Cmp(GArgs[fp], "-file") == 0);
+        continue;
+      }
+      if (!inFile) continue;
       if (!Sys_FileExists(VStr(GArgs[fp]))) {
         GCon->Logf(NAME_Init, "WARNING: File \"%s\" doesn't exist.", GArgs[fp]);
       } else {
@@ -621,6 +641,8 @@ void FL_Init () {
         AddAnyFile(GArgs[fp], true);
       }
     }
+    fsys_skipSounds = false;
+    fsys_skipSprites = false;
   }
 
   if (GArgs.CheckParm("-bdw") != 0) AddGameDir("basev/mods/bdw");
