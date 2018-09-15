@@ -778,30 +778,9 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
       }
       float add = (dl.radius-dl.minlight)-Length(p-dl.origin);
       if (add > 0) {
-        /*
-        if (r_dynamic_clip && r_dynamic_clip_more) {
-          linetrace_t Trace;
-          bool canHit = !!Level->TraceLine(Trace, p, dl.origin, SPF_NOBLOCKSIGHT);
-          if (!canHit) {
-            if (mobj && mobj->Radius > 8) {
-              // check some more rays
-              for (int dy = -1; dy <= 1; ++dy) {
-                for (int dx = -1; dx <= 1; ++dx) {
-                  if ((dy|dx) == 0) continue;
-                  TVec np = p;
-                  np.x += mobj->Radius/1.7f*dx;
-                  np.y += mobj->Radius/1.7f*dy;
-                  canHit = !!Level->TraceLine(Trace, np, dl.origin, SPF_NOBLOCKSIGHT);
-                  if (canHit) break;
-                }
-              }
-              if (!canHit) continue;
-            } else {
-              continue; // ray was blocked
-            }
-          }
+        if (r_dynamic_clip) {
+          if (!RadiusCastRay(p, dl.origin, (mobj ? mobj->Radius : 0), r_dynamic_clip_more)) continue;
         }
-        */
         if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;
         lr += add*((dl.colour>>16)&255)/255.0;

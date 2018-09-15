@@ -489,6 +489,9 @@ protected:
 
   virtual void GentlyFlushAllCaches () {}
 
+  // used in light checking
+  bool RadiusCastRay (const TVec &org, const TVec &dest, float radius, bool advanced);
+
 public:
   virtual particle_t *NewParticle() override;
 

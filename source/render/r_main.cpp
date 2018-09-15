@@ -260,6 +260,32 @@ VRenderLevelShared::VRenderLevelShared(VLevel *ALevel)
   unguard;
 }
 
+
+//==========================================================================
+//
+//  VRenderLevelShared::RadiusCastRay
+//
+//==========================================================================
+bool VRenderLevelShared::RadiusCastRay (const TVec &org, const TVec &dest, float radius, bool advanced) {
+  linetrace_t Trace;
+  bool canHit = !!Level->TraceLine(Trace, org, dest, SPF_NOBLOCKSIGHT);
+  if (canHit) return true;
+  if (!advanced || radius <= 8) return false;
+  // check some more rays
+  for (int dy = -1; dy <= 1; ++dy) {
+    for (int dx = -1; dx <= 1; ++dx) {
+      if ((dy|dx) == 0) continue;
+      TVec np = org;
+      np.x += radius*(0.7f*dx);
+      np.y += radius*(0.7f*dy);
+      canHit = !!Level->TraceLine(Trace, np, dest, SPF_NOBLOCKSIGHT);
+      if (canHit) return true;
+    }
+  }
+  return false;
+}
+
+
 //==========================================================================
 //
 //  VRenderLevel::VRenderLevel
@@ -892,23 +918,9 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
       Delta = Lights[i].origin - vieworg;
       Delta.z = 0;
       if (Delta.Length() > r_lights_radius) continue;
-      if (Delta.Length() > r_lights_radius_sight_check && !Level->TraceLine(Trace, Lights[i].origin, vieworg, SPF_NOBLOCKSIGHT)) {
+      if (Delta.Length() > r_lights_radius_sight_check /*&& !Level->TraceLine(Trace, Lights[i].origin, vieworg, SPF_NOBLOCKSIGHT)*/) {
         // check some more rays
-        bool canHit = false;
-        TVec lorg = Lights[i].origin;
-        float lrad = Lights[i].radius;
-        for (int dy = -1; dy <= 1; ++dy) {
-          for (int dx = -1; dx <= 1; ++dx) {
-            if ((dy|dx) == 0) continue;
-            TVec np = lorg;
-            np.x += lrad/1.7f*dx;
-            np.y += lrad/1.7f*dy;
-            canHit = !!Level->TraceLine(Trace, np, vieworg, SPF_NOBLOCKSIGHT);
-            if (canHit) break;
-          }
-          if (canHit) break;
-        }
-        if (!canHit) continue;
+        if (!RadiusCastRay(Lights[i].origin, vieworg, Lights[i].radius, true)) continue;
       }
 
 #ifdef RADVLIGHT_GRID_OPTIMIZER
@@ -967,23 +979,9 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
       Delta = l->origin - vieworg;
       Delta.z = 0;
       if (Delta.Length() > r_lights_radius) continue;
-      if (Delta.Length() > r_lights_radius_sight_check && !Level->TraceLine(Trace, l->origin, vieworg, SPF_NOBLOCKSIGHT)) {
+      if (Delta.Length() > r_lights_radius_sight_check /*&& !Level->TraceLine(Trace, l->origin, vieworg, SPF_NOBLOCKSIGHT)*/) {
         // check some more rays
-        bool canHit = false;
-        TVec lorg = l->origin;
-        float lrad = l->radius;
-        for (int dy = -1; dy <= 1; ++dy) {
-          for (int dx = -1; dx <= 1; ++dx) {
-            if ((dy|dx) == 0) continue;
-            TVec np = lorg;
-            np.x += lrad/1.7f*dx;
-            np.y += lrad/1.7f*dy;
-            canHit = !!Level->TraceLine(Trace, np, vieworg, SPF_NOBLOCKSIGHT);
-            if (canHit) break;
-          }
-          if (canHit) break;
-        }
-        if (!canHit) continue;
+        if (!RadiusCastRay(l->origin, vieworg, l->radius, true)) continue;
       }
 
 #ifdef RADVLIGHT_GRID_OPTIMIZER
