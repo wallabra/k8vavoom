@@ -30,6 +30,8 @@ extern VCvarB r_darken;
 extern VCvarI r_ambient;
 extern VCvarB r_allow_ambient;
 extern VCvarB r_allow_subtractive_lights;
+extern VCvarB r_dynamic_clip;
+extern VCvarB r_dynamic_clip_more;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -139,37 +141,26 @@ void VAdvancedRenderLevel::PushDlights()
 //
 //==========================================================================
 
-vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p)
+vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p, VEntity *mobj)
 {
   guard(VAdvancedRenderLevel::LightPoint);
   subsector_t   *sub;
   subregion_t   *reg;
   float     l=0, lr=0, lg=0, lb=0, add;
   int       leafnum;
-  linetrace_t   Trace;
 
-  if (FixedLight)
-  {
-    return FixedLight | (FixedLight << 8) | (FixedLight << 16) | (FixedLight << 24);
-  }
+  if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
   sub = Level->PointInSubsector(p);
   reg = sub->regions;
-  if (reg)
-  {
-    while (reg->next)
-    {
+  if (reg) {
+    while (reg->next) {
       float d = DotProduct(p, reg->floor->secplane->normal) - reg->floor->secplane->dist;
-
-      if (d >= 0.0)
-      {
-        break;
-      }
-
+      if (d >= 0.0) break;
       reg = reg->next;
     }
 
-    //  Region's base light
+    // region's base light
     if (r_allow_ambient) {
       l = reg->secregion->params->lightlevel + ExtraLight;
       if (r_darken) l = light_remap[MIN(255, (int)l)];
@@ -184,25 +175,25 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p)
     lb = (SecLightColour & 255) * l / 255.0;
   }
 
-  //  Add static lights
-  if (r_static_lights)
-  {
+  // add static lights
+  if (r_static_lights) {
     if (!staticLightsFiltered) RefilterStaticLights();
     vuint8 *dyn_facevis = Level->LeafPVS(sub);
-    for (int i = 0; i < Lights.Num(); i++)
-    {
+    for (int i = 0; i < Lights.Num(); i++) {
       //if (!Lights[i].radius) continue;
       if (!Lights[i].active) continue;
 
       // Check potential visibility
-      if (!(dyn_facevis[Lights[i].leafnum >> 3] & (1 << (Lights[i].leafnum & 7))))
-      {
-        continue;
-      }
+      if (!(dyn_facevis[Lights[i].leafnum >> 3] & (1 << (Lights[i].leafnum & 7)))) continue;
 
       add = Lights[i].radius - Length(p - Lights[i].origin);
-      if (add > 0)
-      {
+      if (add > 0) {
+        /*
+        if (r_dynamic_clip && r_dynamic_clip_more) {
+          linetrace_t Trace;
+          if (!Level->TraceLine(Trace, p, Lights[i].origin, SPF_NOBLOCKSIGHT)) continue; // ray was blocked
+        }
+        */
         l += add;
         lr += add * ((Lights[i].colour >> 16) & 255) / 255.0;
         lg += add * ((Lights[i].colour >> 8) & 255) / 255.0;
@@ -211,22 +202,47 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p)
     }
   }
 
-  //  Add dynamic lights
+  // add dynamic lights
   if (r_dynamic) {
     vuint8 *dyn_facevis = Level->LeafPVS(sub);
     for (int i = 0; i < MAX_DLIGHTS; i++) {
       const dlight_t &dl = DLights[i];
       if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
 
-      if (!dl.radius || dl.die < Level->Time)continue;
+      if (!dl.radius || dl.die < Level->Time) continue;
 
-      leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
-
-      // Check potential visibility
-      if (!(dyn_facevis[leafnum >> 3] & (1 << (leafnum & 7)))) continue;
+      // check potential visibility
+      if (r_dynamic_clip) {
+        leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
+        if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
+      }
 
       add = (dl.radius-dl.minlight)-Length(p-dl.origin);
       if (add > 0) {
+        /*
+        if (r_dynamic_clip && r_dynamic_clip_more) {
+          linetrace_t Trace;
+          bool canHit = !!Level->TraceLine(Trace, p, dl.origin, SPF_NOBLOCKSIGHT);
+          if (!canHit) {
+            if (mobj && mobj->Radius > 8) {
+              // check some more rays
+              for (int dy = -1; dy <= 1; ++dy) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                  if ((dy|dx) == 0) continue;
+                  TVec np = p;
+                  np.x += mobj->Radius/1.7f*dx;
+                  np.y += mobj->Radius/1.7f*dy;
+                  canHit = !!Level->TraceLine(Trace, np, dl.origin, SPF_NOBLOCKSIGHT);
+                  if (canHit) break;
+                }
+              }
+              if (!canHit) continue;
+            } else {
+              continue; // ray was blocked
+            }
+          }
+        }
+        */
         if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;
         lr += add * ((dl.colour >> 16) & 255) / 255.0;
@@ -251,7 +267,7 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p)
 //
 //==========================================================================
 
-vuint32 VAdvancedRenderLevel::LightPointAmbient(const TVec &p)
+vuint32 VAdvancedRenderLevel::LightPointAmbient(const TVec &p, VEntity *mobj)
 {
   guard(VAdvancedRenderLevel::LightPointAmbient);
   subsector_t   *sub;

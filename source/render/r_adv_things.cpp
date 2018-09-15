@@ -145,14 +145,14 @@ void VAdvancedRenderLevel::RenderThingAmbient(VEntity *mobj)
   }
   else
   {
-    if (!r_model_light)
+    if (!r_model_light || !r_model_shadows)
     {
       // Use old way of lighting
-      light = LightPoint(mobj->Origin);
+      light = LightPoint(mobj->Origin, mobj);
     }
     else
     {
-      light = LightPointAmbient(mobj->Origin);
+      light = LightPointAmbient(mobj->Origin, mobj);
     }
   }
 

@@ -892,7 +892,24 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
       Delta = Lights[i].origin - vieworg;
       Delta.z = 0;
       if (Delta.Length() > r_lights_radius) continue;
-      if ((Delta.Length() > r_lights_radius_sight_check) && !Level->TraceLine(Trace, Lights[i].origin, vieworg, SPF_NOBLOCKSIGHT)) continue;
+      if (Delta.Length() > r_lights_radius_sight_check && !Level->TraceLine(Trace, Lights[i].origin, vieworg, SPF_NOBLOCKSIGHT)) {
+        // check some more rays
+        bool canHit = false;
+        TVec lorg = Lights[i].origin;
+        float lrad = Lights[i].radius;
+        for (int dy = -1; dy <= 1; ++dy) {
+          for (int dx = -1; dx <= 1; ++dx) {
+            if ((dy|dx) == 0) continue;
+            TVec np = lorg;
+            np.x += lrad/1.7f*dx;
+            np.y += lrad/1.7f*dy;
+            canHit = !!Level->TraceLine(Trace, np, vieworg, SPF_NOBLOCKSIGHT);
+            if (canHit) break;
+          }
+          if (canHit) break;
+        }
+        if (!canHit) continue;
+      }
 
 #ifdef RADVLIGHT_GRID_OPTIMIZER
       // don't render too much lights around one point
@@ -950,7 +967,24 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
       Delta = l->origin - vieworg;
       Delta.z = 0;
       if (Delta.Length() > r_lights_radius) continue;
-      if ((Delta.Length() > r_lights_radius_sight_check) && !Level->TraceLine(Trace, l->origin, vieworg, SPF_NOBLOCKSIGHT)) continue;
+      if (Delta.Length() > r_lights_radius_sight_check && !Level->TraceLine(Trace, l->origin, vieworg, SPF_NOBLOCKSIGHT)) {
+        // check some more rays
+        bool canHit = false;
+        TVec lorg = l->origin;
+        float lrad = l->radius;
+        for (int dy = -1; dy <= 1; ++dy) {
+          for (int dx = -1; dx <= 1; ++dx) {
+            if ((dy|dx) == 0) continue;
+            TVec np = lorg;
+            np.x += lrad/1.7f*dx;
+            np.y += lrad/1.7f*dy;
+            canHit = !!Level->TraceLine(Trace, np, vieworg, SPF_NOBLOCKSIGHT);
+            if (canHit) break;
+          }
+          if (canHit) break;
+        }
+        if (!canHit) continue;
+      }
 
 #ifdef RADVLIGHT_GRID_OPTIMIZER
       // don't render too much lights around one point

@@ -54,6 +54,7 @@ VCvarB r_allow_ambient("r_allow_ambient", true, "Allow ambient lights?", CVAR_Ar
 VCvarB r_extrasamples("r_extrasamples", false, "Do static lightmap filtering?", CVAR_Archive);
 VCvarB r_dynamic("r_dynamic", true, "Allow dynamic lights?", CVAR_Archive);
 VCvarB r_dynamic_clip("r_dynamic_clip", true, "Clip dynamic lights?", CVAR_Archive);
+VCvarB r_dynamic_clip_more("r_dynamic_clip_more", false, "Do some extra checks when clipping dynamic lights?", CVAR_Archive);
 VCvarB r_static_lights("r_static_lights", true, "Allow static lights?", CVAR_Archive);
 VCvarB r_static_add("r_static_add", true, "Are static lights additive?", CVAR_Archive);
 VCvarF r_specular("r_specular", "0.1", "Specular light.", CVAR_Archive);
@@ -701,7 +702,7 @@ void VRenderLevel::PushDlights () {
 //  VRenderLevel::LightPoint
 //
 //==========================================================================
-vuint32 VRenderLevel::LightPoint (const TVec &p) {
+vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
   guard(VRenderLevel::LightPoint);
   subsector_t *sub;
   subregion_t *reg;
@@ -778,6 +779,30 @@ vuint32 VRenderLevel::LightPoint (const TVec &p) {
       }
       float add = (dl.radius-dl.minlight)-Length(p-dl.origin);
       if (add > 0) {
+        /*
+        if (r_dynamic_clip && r_dynamic_clip_more) {
+          linetrace_t Trace;
+          bool canHit = !!Level->TraceLine(Trace, p, dl.origin, SPF_NOBLOCKSIGHT);
+          if (!canHit) {
+            if (mobj && mobj->Radius > 8) {
+              // check some more rays
+              for (int dy = -1; dy <= 1; ++dy) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                  if ((dy|dx) == 0) continue;
+                  TVec np = p;
+                  np.x += mobj->Radius/1.7f*dx;
+                  np.y += mobj->Radius/1.7f*dy;
+                  canHit = !!Level->TraceLine(Trace, np, dl.origin, SPF_NOBLOCKSIGHT);
+                  if (canHit) break;
+                }
+              }
+              if (!canHit) continue;
+            } else {
+              continue; // ray was blocked
+            }
+          }
+        }
+        */
         if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;
         lr += add*((dl.colour>>16)&255)/255.0;

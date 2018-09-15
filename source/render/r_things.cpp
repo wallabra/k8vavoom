@@ -71,8 +71,8 @@ VCvarB      r_draw_psprites("r_draw_psprites", true, "Draw psprites?", CVAR_Arch
 VCvarB      r_models("r_models", true, "Allow models?", CVAR_Archive);
 VCvarB      r_hide_models("r_hide_models", false, "Hide models?", CVAR_Archive);
 VCvarB      r_view_models("r_view_models", true, "View models?", CVAR_Archive);
-VCvarB      r_model_shadows("r_model_shadows", false, "Draw model shadows?", CVAR_Archive);
-VCvarB      r_model_light("r_model_light", true, "Draw model light?", CVAR_Archive);
+VCvarB      r_model_shadows("r_model_shadows", false, "Draw model shadows in advanced renderer?", CVAR_Archive);
+VCvarB      r_model_light("r_model_light", true, "Draw model light in advanced renderer?", CVAR_Archive);
 VCvarB      r_sort_sprites("r_sort_sprites", false, "Sprite sorting.");
 VCvarB      r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite offsets?", CVAR_Archive);
 VCvarI      r_sprite_fix_delta("r_sprite_fix_delta", "-3", "Sprite offset amount.", CVAR_Archive);
@@ -623,7 +623,7 @@ void VRenderLevelShared::RenderThing(VEntity *mobj, ERenderPass Pass)
   }
   else
   {
-    light = LightPoint(mobj->Origin);
+    light = LightPoint(mobj->Origin, mobj);
   }
   vuint32 Fade = GetFade(SV_PointInRegion(mobj->Sector, mobj->Origin));
 
@@ -928,7 +928,7 @@ void VRenderLevelShared::DrawPlayerSprites()
     }
     else
     {
-      light = LightPoint(vieworg);
+      light = LightPoint(vieworg, cl->MO);
     }
     vuint32 Fade = GetFade(SV_PointInRegion(r_viewleaf->sector, cl->ViewOrg));
 
