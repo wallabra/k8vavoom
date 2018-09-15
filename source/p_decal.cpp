@@ -155,6 +155,7 @@ bool VDecalDef::parse (VScriptParser *sc) {
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal name"); return false; }
   name = VName(*sc->String);
+  sc->CheckNumber(); //TODO: this is thing id
   sc->Expect("{");
 
   while (!sc->AtEnd()) {
