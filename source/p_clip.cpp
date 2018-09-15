@@ -485,7 +485,7 @@ float VViewClipper::PointToClipAngle(const TVec &Pt)
 //
 //==========================================================================
 
-bool VViewClipper::ClipIsBBoxVisible(float *BBox, bool shadowslight, const TVec &CurrLightPos,
+bool VViewClipper::ClipIsBBoxVisible(const float *BBox, bool shadowslight, const TVec &CurrLightPos,
   float CurrLightRadius)
 {
   guard(VViewClipper::ClipIsBBoxVisible);

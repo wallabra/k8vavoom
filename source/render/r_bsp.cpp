@@ -662,7 +662,7 @@ void VRenderLevelShared::RenderSubsector (int num) {
 // recursively. Just call with BSP root.
 //
 //==========================================================================
-void VRenderLevelShared::RenderBSPNode (int bspnum, float *bbox, int AClipflags) {
+void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, int AClipflags) {
   guard(VRenderLevelShared::RenderBSPNode);
   if (ViewClip.ClipIsFull()) return;
   int clipflags = AClipflags;

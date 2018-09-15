@@ -433,7 +433,7 @@ protected:
   void RenderSecSurface(sec_surface_t*, VEntity*);
   void RenderSubRegion(subregion_t*);
   void RenderSubsector(int);
-  void RenderBSPNode(int, float*, int);
+  void RenderBSPNode(int, const float*, int);
   void RenderBspWorld(const refdef_t*, const VViewClipper*);
   void RenderPortals();
 
