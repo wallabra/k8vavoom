@@ -732,66 +732,71 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float *bbox, int AClip
 //==========================================================================
 void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper *Range) {
   guard(VRenderLevelShared::RenderBspWorld);
-  float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
+  static const float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
-  if (light_reset_surface_cache) {
-    GentlyFlushAllCaches();
-    light_reset_surface_cache = 0;
-  }
+  // if we hit a cache overflow, render everything again, to avoid partial frames
+  int renderattempts = 16;
+  do {
+    if (light_reset_surface_cache) {
+      if (--renderattempts <= 0) Sys_Error("Surface cache overflow, cannot repair");
+      GentlyFlushAllCaches();
+      light_reset_surface_cache = 0;
+    }
 
-  SetUpFrustumIndexes();
-  ViewClip.ClearClipNodes(vieworg, Level);
-  ViewClip.ClipInitFrustrumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
-  if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
-  memset(BspVis, 0, VisSize);
-  if (PortalLevel == 0) WorldSurfs.Resize(4096);
-  MirrorClipSegs = MirrorClip && !view_clipplanes[4].normal.z;
+    SetUpFrustumIndexes();
+    ViewClip.ClearClipNodes(vieworg, Level);
+    ViewClip.ClipInitFrustrumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
+    if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
+    memset(BspVis, 0, VisSize);
+    if (PortalLevel == 0) WorldSurfs.Resize(4096);
+    MirrorClipSegs = MirrorClip && !view_clipplanes[4].normal.z;
 
-  // head node is the last node output
-  RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 31 : 15));
+    // head node is the last node output
+    RenderBSPNode(Level->NumNodes-1, dummy_bbox, (MirrorClip ? 31 : 15));
 
-  if (PortalLevel == 0) {
-    guard(VRenderLevelShared::RenderBspWorld::Best sky);
-    // draw the most complex sky portal behind the scene first, without the need to use stencil buffer
-    VPortal *BestSky = nullptr;
-    int BestSkyIndex = -1;
-    for (int i = 0; i < Portals.Num(); ++i) {
-      if (Portals[i] && Portals[i]->IsSky() && (!BestSky || BestSky->Surfs.Num() < Portals[i]->Surfs.Num())) {
-        BestSky = Portals[i];
-        BestSkyIndex = i;
+    if (PortalLevel == 0) {
+      guard(VRenderLevelShared::RenderBspWorld::Best sky);
+      // draw the most complex sky portal behind the scene first, without the need to use stencil buffer
+      VPortal *BestSky = nullptr;
+      int BestSkyIndex = -1;
+      for (int i = 0; i < Portals.Num(); ++i) {
+        if (Portals[i] && Portals[i]->IsSky() && (!BestSky || BestSky->Surfs.Num() < Portals[i]->Surfs.Num())) {
+          BestSky = Portals[i];
+          BestSkyIndex = i;
+        }
       }
-    }
-    if (BestSky) {
-      PortalLevel = 1;
-      BestSky->Draw(false);
-      delete BestSky;
-      BestSky = nullptr;
-      Portals.RemoveIndex(BestSkyIndex);
-      PortalLevel = 0;
-    }
-    unguard;
-
-    guard(VRenderLevelShared::RenderBspWorld::World surfaces);
-    for (int i = 0; i < WorldSurfs.Num(); ++i) {
-      switch (WorldSurfs[i].Type) {
-        case 0:
-          {
-            seg_t *dcseg = (WorldSurfs[i].Surf->dcseg ? WorldSurfs[i].Surf->dcseg : nullptr);
-            //if (dcseg) printf("world surface! %p\n", dcseg);
-            QueueWorldSurface(dcseg, WorldSurfs[i].Surf);
-          }
-          break;
-        case 1:
-          QueueSkyPortal(WorldSurfs[i].Surf);
-          break;
-        case 2:
-          QueueHorizonPortal(WorldSurfs[i].Surf);
-          break;
+      if (BestSky) {
+        PortalLevel = 1;
+        BestSky->Draw(false);
+        delete BestSky;
+        BestSky = nullptr;
+        Portals.RemoveIndex(BestSkyIndex);
+        PortalLevel = 0;
       }
+      unguard;
+
+      guard(VRenderLevelShared::RenderBspWorld::World surfaces);
+      for (int i = 0; i < WorldSurfs.Num(); ++i) {
+        switch (WorldSurfs[i].Type) {
+          case 0:
+            {
+              seg_t *dcseg = (WorldSurfs[i].Surf->dcseg ? WorldSurfs[i].Surf->dcseg : nullptr);
+              //if (dcseg) printf("world surface! %p\n", dcseg);
+              QueueWorldSurface(dcseg, WorldSurfs[i].Surf);
+            }
+            break;
+          case 1:
+            QueueSkyPortal(WorldSurfs[i].Surf);
+            break;
+          case 2:
+            QueueHorizonPortal(WorldSurfs[i].Surf);
+            break;
+        }
+      }
+      WorldSurfs.Clear();
+      unguard;
     }
-    WorldSurfs.Clear();
-    unguard;
-  }
+  } while (light_reset_surface_cache);
   unguard;
 }
 

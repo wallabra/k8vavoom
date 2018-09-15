@@ -511,7 +511,7 @@ private:
   //  Surface cache.
   surfcache_t *freeblocks;
   surfcache_t *cacheblocks[NUM_BLOCK_SURFS];
-  surfcache_t   blockbuf[NUM_CACHE_BLOCKS];
+  surfcache_t blockbuf[NUM_CACHE_BLOCKS];
 
   //  General
   virtual void RenderScene(const refdef_t*, const VViewClipper*) override;
@@ -535,6 +535,7 @@ private:
   void MarkLights(dlight_t*, int, int);
   void AddDynamicLights(surface_t*);
   virtual void PushDlights() override;
+
   void FlushCaches();
   void FlushOldCaches();
   virtual void GentlyFlushAllCaches () override;

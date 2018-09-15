@@ -30,7 +30,7 @@
 #define BLOCK_HEIGHT        (128)
 //#define NUM_BLOCK_SURFS     (32)
 //#define NUM_CACHE_BLOCKS    (8*1024)
-#define NUM_BLOCK_SURFS     (256)
+#define NUM_BLOCK_SURFS     (64)
 #define NUM_CACHE_BLOCKS    (32*1024)
 
 struct surface_t;
@@ -90,16 +90,16 @@ struct surfcache_t
 class VRenderLevelDrawer : public VRenderLevelPublic
 {
 public:
-  bool      NeedsInfiniteFarClip;
+  bool NeedsInfiniteFarClip;
 
-  //  Lightmaps.
-  rgba_t      light_block[NUM_BLOCK_SURFS][BLOCK_WIDTH * BLOCK_HEIGHT];
-  bool      block_changed[NUM_BLOCK_SURFS];
+  // lightmaps
+  rgba_t light_block[NUM_BLOCK_SURFS][BLOCK_WIDTH*BLOCK_HEIGHT];
+  bool block_changed[NUM_BLOCK_SURFS];
   surfcache_t *light_chain[NUM_BLOCK_SURFS];
 
-  //  Specular lightmaps.
-  rgba_t      add_block[NUM_BLOCK_SURFS][BLOCK_WIDTH * BLOCK_HEIGHT];
-  bool      add_changed[NUM_BLOCK_SURFS];
+  // specular lightmaps
+  rgba_t add_block[NUM_BLOCK_SURFS][BLOCK_WIDTH*BLOCK_HEIGHT];
+  bool add_changed[NUM_BLOCK_SURFS];
   surfcache_t *add_chain[NUM_BLOCK_SURFS];
 
   surface_t *SimpleSurfsHead;
@@ -109,7 +109,7 @@ public:
   surface_t *HorizonPortalsHead;
   surface_t *HorizonPortalsTail;
 
-  int         PortalDepth;
+  int PortalDepth;
 
   virtual void BuildLightMap(surface_t *) = 0;
 };
@@ -119,11 +119,8 @@ class VDrawer
 public:
   VRenderLevelDrawer *RendLev;
 
-  VDrawer()
-  : RendLev(nullptr)
-  {}
-  virtual ~VDrawer()
-  {}
+  VDrawer () : RendLev(nullptr) {}
+  virtual ~VDrawer () {}
 
   virtual void Init() = 0;
   virtual bool SetResolution(int, int, bool) = 0;
