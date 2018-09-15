@@ -390,7 +390,7 @@ void VLevel::LoadMap(VName AMapName)
   double NodesTime = -Sys_Time();
   if (NeedNodesBuild)
   {
-    GCon->Logf("rebuilding GL nodes...");
+    GCon->Logf("building GL nodes...");
     BuildNodes();
   }
   else if (UseComprGLNodes)
