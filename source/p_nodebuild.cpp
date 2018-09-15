@@ -49,6 +49,9 @@ extern boolean_g lev_doing_normal;
 extern boolean_g lev_doing_hexen;
 };
 
+#include "vector2d.h"
+
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -639,9 +642,329 @@ void VLevel::BuildNodes()
     Host_Error("Node build failed");
   }
 
+  /*
   //  Create dummy VIS data.
   VisData = nullptr;
   NoVis = new vuint8[(NumSubsectors + 7) / 8];
   memset(NoVis, 0xff, (NumSubsectors + 7) / 8);
+  */
+  BuildPVS();
   unguard;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+#define MAX_PORTALS_ON_LEAF   (128)
+#define ON_EPSILON  (0.1)
+
+
+struct winding_t {
+  bool original; // don't free, it's part of the portal
+  TVec2D points[2];
+};
+
+enum vstatus_t { stat_none, stat_working, stat_done };
+
+// normal pointing into neighbor
+struct portal_t : TPlane2D {
+  int leaf; // neighbor
+  winding_t winding;
+  //vstatus_t status;
+  vuint8 *visbits;
+  vuint8 *mightsee;
+  int nummightsee;
+  int numcansee;
+};
+
+struct subsec_extra_t {
+  portal_t *portals[MAX_PORTALS_ON_LEAF];
+  int numportals;
+};
+
+struct PVSInfo {
+  int numportals;
+  portal_t *portals;
+  int c_portalsee;
+  int c_leafsee;
+  int bitbytes;
+  int bitlongs;
+  int rowbytes;
+  //int *secnums; // NumSubsectors
+  int *leaves; // NumSegs
+  subsec_extra_t *ssex; // NumSubsectors
+  // temp, don't free
+  vuint8 *portalsee;
+};
+
+
+//==========================================================================
+//
+//  VLevel::BuildPVS
+//
+//==========================================================================
+void VLevel::BuildPVS () {
+  GCon->Logf("building PVS...");
+  PVSInfo nfo;
+  memset((void *)&nfo, 0, sizeof(nfo));
+
+  nfo.bitbytes = ((NumSubsectors+63)&~63)>>3;
+  nfo.bitlongs = nfo.bitbytes/sizeof(long);
+  nfo.rowbytes = (NumSubsectors+7)>>3;
+
+  //nfo.secnums = new int[NumSubsectors+1];
+  nfo.leaves = new int[NumSegs+1];
+  nfo.ssex = new subsec_extra_t[NumSubsectors+1];
+
+  {
+    subsector_t *ss = Subsectors;
+    for (int i = 0; i < NumSubsectors; ++i, ++ss) {
+      nfo.ssex[i].numportals = 0;
+      // set seg subsector links
+      int count = ss->numlines;
+      int ln = ss->firstline;
+      //seg_t *line = &Segs[ln];
+      //secnums[i] = -1;
+      while (count--) {
+        nfo.leaves[ln++] = i;
+        /*
+        if (secnums[i] == -1 && line->secnum >= 0) {
+          ss->secnum = line->secnum;
+        } else if (ss->secnum != -1 && line->secnum >= 0 && ss->secnum != line->secnum) {
+          Owner.DisplayMessage("Segs from different sectors\n");
+        }
+        ++line;
+        */
+      }
+      //if (ss->secnum == -1) throw GLVisError("Subsector without sector");
+    }
+  }
+
+  bool ok = CreatePortals(&nfo);
+  if (ok) {
+    BasePortalVis(&nfo);
+    // assemble the leaf vis lists by oring and compressing the portal lists
+    //totalvis = 0;
+    int vissize = nfo.rowbytes*NumSubsectors;
+    //vis = new vuint8[vissize];
+    VisData = new vuint8[vissize];
+    memset(VisData, 0, vissize);
+    for (int i = 0; i < NumSubsectors; ++i) {
+      if (!LeafFlow(i, &nfo)) { ok = false; break; }
+    }
+    NoVis = nullptr;
+    if (!ok) {
+      delete VisData;
+      VisData = nullptr;
+    }
+  }
+
+  if (!ok) {
+    GCon->Logf("PVS building failed.");
+    VisData = nullptr;
+    NoVis = new vuint8[(NumSubsectors+7)/8];
+    memset(NoVis, 0xff, (NumSubsectors+7)/8);
+  } else {
+    GCon->Logf("PVS building (rough) complete.");
+  }
+
+  for (int i = 0; i < nfo.numportals; ++i) {
+    delete [] nfo.portals[i].mightsee;
+  }
+  //delete [] nfo.secnums;
+  delete [] nfo.leaves;
+  delete [] nfo.ssex;
+  delete [] nfo.portals;
+}
+
+
+//==========================================================================
+//
+//  VLevel::CreatePortals
+//
+//==========================================================================
+bool VLevel::CreatePortals (void *pvsinfo) {
+  PVSInfo *nfo = (PVSInfo *)pvsinfo;
+
+  nfo->numportals = 0;
+  for (int f = 0; f < NumSegs; ++f) {
+    if (Segs[f].partner) ++nfo->numportals;
+  }
+  if (nfo->numportals == 0) { GCon->Logf("PVS: no possible portals found"); return false; }
+
+  nfo->portals = new portal_t[nfo->numportals];
+  for (int i = 0; i < nfo->numportals; ++i) {
+    nfo->portals[i].visbits = nullptr;
+    nfo->portals[i].mightsee = nullptr;
+  }
+
+  portal_t *p = nfo->portals;
+  for (int i = 0; i < NumSegs; ++i) {
+    seg_t *line = &Segs[i];
+    //subsector_t *sub = &Subsectors[line->leaf];
+    //subsector_t *sub = &Subsectors[nfo->leaves[i]];
+    subsec_extra_t *sub = &nfo->ssex[nfo->leaves[i]];
+    if (line->partner) {
+      int pnum = (int)(ptrdiff_t)(line->partner-Segs);
+
+      // skip self-referencing subsector segs
+      if (/*line->leaf == line->partner->leaf*/nfo->leaves[i] == nfo->leaves[pnum]) {
+        //GCon->Logf("Self-referencing subsector detected");
+        --nfo->numportals;
+        continue;
+      }
+
+      // create portal
+      if (sub->numportals == MAX_PORTALS_ON_LEAF) {
+        //throw GLVisError("Leaf with too many portals");
+        GCon->Logf("PVS: Leaf with too many portals!");
+        return false;
+      }
+      sub->portals[sub->numportals] = p;
+      ++sub->numportals;
+
+      p->winding.original = true;
+      p->winding.points[0] = *line->v1;
+      p->winding.points[1] = *line->v2;
+      p->normal = line->partner->normal;
+      p->dist = line->partner->dist;
+      //p->leaf = line->partner->leaf;
+      p->leaf = nfo->leaves[pnum];
+      ++p;
+    }
+  }
+  GCon->Logf("PVS: %d portals found", nfo->numportals);
+  //if (p-portals != numportals) throw GLVisError("Portals miscounted");
+  return (nfo->numportals > 0);
+}
+
+
+//==========================================================================
+//
+//  VLevel::SimpleFlood
+//
+//==========================================================================
+void VLevel::SimpleFlood (/*portal_t*/void *srcportalp, int leafnum, void *pvsinfo) {
+  PVSInfo *nfo = (PVSInfo *)pvsinfo;
+  portal_t *srcportal = (portal_t *)srcportalp;
+
+  if (srcportal->mightsee[leafnum>>3]&(1<<(leafnum&7))) return;
+  srcportal->mightsee[leafnum>>3] |= (1<<(leafnum&7));
+  ++nfo->c_leafsee;
+
+  //leaf_t *leaf = &subsectors[leafnum];
+  subsec_extra_t *leaf = &nfo->ssex[leafnum];
+  for (int i = 0; i < leaf->numportals; ++i) {
+    portal_t *p = leaf->portals[i];
+    if (!nfo->portalsee[p-nfo->portals]) continue;
+    SimpleFlood(srcportal, p->leaf, pvsinfo);
+  }
+}
+
+
+//==========================================================================
+//
+//  VLevel::BasePortalVis
+//
+//  This is a rough first-order aproximation that is used to trivially
+//  reject some of the final calculations.
+//
+//==========================================================================
+void VLevel::BasePortalVis (void *pvsinfo) {
+  int i, j, k;
+  portal_t *tp, *p;
+  double d;
+  winding_t *w;
+
+  PVSInfo *nfo = (PVSInfo *)pvsinfo;
+
+  nfo->portalsee = new vuint8[nfo->numportals];
+  for (i = 0, p = nfo->portals; i < nfo->numportals; ++i, ++p) {
+    //Owner.DisplayBaseVisProgress(i, numportals);
+
+    p->mightsee = new vuint8[nfo->bitbytes];
+    memset(p->mightsee, 0, nfo->bitbytes);
+
+    nfo->c_portalsee = 0;
+    memset(nfo->portalsee, 0, nfo->numportals);
+
+    for (j = 0, tp = nfo->portals; j < nfo->numportals; ++j, ++tp) {
+      if (j == i) continue;
+      w = &tp->winding;
+      for (k = 0; k < 2; ++k) {
+        d = DotProduct(w->points[k], p->normal) - p->dist;
+        if (d > ON_EPSILON) break;
+      }
+      if (k == 2) continue; // no points on front
+
+      w = &p->winding;
+      for (k = 0; k < 2; ++k) {
+        d = DotProduct(w->points[k], tp->normal) - tp->dist;
+        if (d < -ON_EPSILON) break;
+      }
+      if (k == 2) continue; // no points on front
+
+      nfo->portalsee[j] = 1;
+      ++nfo->c_portalsee;
+    }
+
+    nfo->c_leafsee = 0;
+    SimpleFlood(p, p->leaf, pvsinfo);
+    p->nummightsee = nfo->c_leafsee;
+
+    // fastvis just uses mightsee for a very loose bound
+    p->visbits = p->mightsee;
+    //p->status = stat_done;
+  }
+  //Owner.DisplayBaseVisProgress(numportals, numportals);
+  delete[] nfo->portalsee;
+}
+
+
+//==========================================================================
+//
+//  VLevel::LeafFlow
+//
+//  Builds the entire visibility list for a leaf
+//
+//==========================================================================
+bool VLevel::LeafFlow (int leafnum, void *pvsinfo) {
+  //leaf_t *leaf;
+  vuint8 *outbuffer;
+  //int numvis;
+
+  PVSInfo *nfo = (PVSInfo *)pvsinfo;
+
+  // flow through all portals, collecting visible bits
+  outbuffer = VisData+leafnum*nfo->rowbytes;
+  //leaf = &subsectors[leafnum];
+  subsec_extra_t *leaf = &nfo->ssex[leafnum];
+  for (int i = 0; i < leaf->numportals; ++i) {
+    portal_t *p = leaf->portals[i];
+    if (p == nullptr) continue;
+    //if (p->status != stat_done) throw GLVisError("portal %d not done", (int)(p - portals));
+    for (int j = 0; j < nfo->rowbytes; ++j) {
+      if (p->visbits[j] == 0) continue;
+      outbuffer[j] |= p->visbits[j];
+    }
+    //delete[] p->visbits;
+    //p->visbits = nullptr;
+  }
+
+  if (outbuffer[leafnum>>3]&(1<<(leafnum&7))) {
+    GCon->Logf("Leaf portals saw into leaf");
+    return false;
+  }
+
+  outbuffer[leafnum>>3] |= (1<<(leafnum&7));
+
+  /*
+  numvis = 0;
+  for (int i = 0; i < numsubsectors; i++) {
+    if (outbuffer[i>>3]&(1<<(i&3))) ++numvis;
+  }
+  totalvis += numvis;
+  */
+
+  //if (Owner.verbose) Owner.DisplayMessage("leaf %4i : %4i visible\n", leafnum, numvis);
+  return true;
 }

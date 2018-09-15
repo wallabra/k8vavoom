@@ -334,6 +334,11 @@ private:
   void CreateRepBase ();
   void CreateBlockMap ();
   void BuildNodes ();
+  void BuildPVS (); // called from `BuildNodes()`
+  bool CreatePortals (void *pvsinfo);
+  void SimpleFlood (/*portal_t*/void *srcportalp, int leafnum, void *pvsinfo);
+  bool LeafFlow (int leafnum, void *pvsinfo);
+  void BasePortalVis (void *pvsinfo);
   void HashSectors ();
   void HashLines ();
 
