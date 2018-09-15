@@ -3688,6 +3688,7 @@ final void CheckFakeFloorTriggers(float OldZ, optional bool OldHasViewH)
   }
 }
 
+
 //==========================================================================
 //
 //  UseLines
@@ -3695,9 +3696,7 @@ final void CheckFakeFloorTriggers(float OldZ, optional bool OldHasViewH)
 //  Looks for special lines in front of the actor to activate.
 //
 //==========================================================================
-
-final bool UseLines(float UseRange, float UseThingRange, name FailSound)
-{
+final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
   bool action;
   float x1;
   float y1;
@@ -3715,75 +3714,53 @@ final bool UseLines(float UseRange, float UseThingRange, name FailSound)
 
   x2 = x1 + UseThingRange * useDir.x;
   y2 = y1 + UseThingRange * useDir.y;
-  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES | PT_ADDTHINGS)
-  {
-    if (!in->bIsALine)
-    {
-      //  Check height.
-      if (Origin.z >= in->Thing.Origin.z + in->Thing.Height ||
-        Origin.z + Height <= in->Thing.Origin.z)
+  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS) {
+    if (!in->bIsALine) {
+      // check height
+      if (Origin.z >= in->Thing.Origin.z+in->Thing.Height ||
+          Origin.z+Height <= in->Thing.Origin.z)
       {
         continue;
       }
-      if (UseThing(EntityEx(in->Thing)))
-      {
+      if (UseThing(EntityEx(in->Thing))) {
         action = true;
         break;
       }
       continue;
     }
 
-    if (!(in->line->flags & ML_TWOSIDED))
-    {
-      break;  // stop
-    }
+    if (!(in->line->flags & ML_TWOSIDED)) break; // stop
 
-    hit_point = Origin + (UseThingRange * in->frac) * useDir;
+    hit_point = Origin+(UseThingRange*in->frac)*useDir;
     open = LineOpenings(in->line, hit_point);
-    open = FindOpening(open, hit_point.z, hit_point.z + Height);
-    if (!open || open->range < 1.0)
-    {
-      // can't use through a wall
-      break;
-    }
+    open = FindOpening(open, hit_point.z, hit_point.z+Height);
+    if (!open || open->range < 1.0) break; // can't use through a wall
     continue;
   }
 
-  x2 = x1 + UseRange * useDir.x;
-  y2 = y1 + UseRange * useDir.y;
+  x2 = x1+UseRange*useDir.x;
+  y2 = y1+UseRange*useDir.y;
   bool DoSecAct = true;
   bool FoundLine = false;
-  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES)
-  {
+  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES) {
     line_t *line;
     float pheight;
 
     line = in->line;
-    if (!line->special || (!(line->SpacFlags & (SPAC_Use | SPAC_UseThrough))))
-    {
-      hit_point = Origin + (UseRange * in->frac) * useDir;
+    if (!line->special || (!(line->SpacFlags&(SPAC_Use|SPAC_UseThrough)))) {
+      hit_point = Origin+(UseRange*in->frac)*useDir;
       open = LineOpenings(line, hit_point);
-      open = FindOpening(open, hit_point.z,
-        hit_point.z + Height);
-      if (!open || open->range <= 0.0 ||
-        (line->special && Level.CompatUseBlocking))
-      {
+      open = FindOpening(open, hit_point.z, hit_point.z+Height);
+      if (!open || open->range <= 0.0 || (line->special && Level.CompatUseBlocking)) {
         DoSecAct = false;
 
-        //  Let sector intercept the use.
-        if (Sector->ActionList &&
-          SectorAction(Sector->ActionList).TriggerAction(
-          self, SectorAction::SECSPAC_Use))
-        {
+        // let sector intercept the use
+        if (Sector && Sector->ActionList && SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_Use)) {
           break;
         }
 
-        sector_t *Sec = PointOnPlaneSide(Origin, line) == 0 ?
-          line->frontsector : line->backsector;
-        if (Sec->ActionList &&
-          SectorAction(Sec->ActionList).TriggerAction(
-          self, SectorAction::SECSPAC_UseWall))
-        {
+        sector_t *Sec = (PointOnPlaneSide(Origin, line) == 0 ? line->frontsector : line->backsector);
+        if (Sec && Sec->ActionList && SectorAction(Sec->ActionList).TriggerAction(self, SectorAction::SECSPAC_UseWall)) {
           break;
         }
 
@@ -3793,22 +3770,15 @@ final bool UseLines(float UseRange, float UseThingRange, name FailSound)
         break;
       }
       // not a special line, but keep checking
-      pheight = Origin.z + Height / 2.0;
-      if ((open->top < pheight) || (open->bottom > pheight))
-      {
-        PlaySound(FailSound, CHAN_VOICE);
-      }
+      pheight = Origin.z+Height/2.0;
+      if (open->top < pheight || open->bottom > pheight) PlaySound(FailSound, CHAN_VOICE);
       FoundLine = true;
       continue;
     }
 
-    if (PointOnPlaneSide(Origin, line) == 1)
-    {
-      //  Don't use back side unless it's a two-sided line.
-      if (line->backsector != nullptr)
-      {
-        continue;
-      }
+    if (PointOnPlaneSide(Origin, line) == 1) {
+      // don't use back side unless it's a two-sided line
+      if (line->backsector != nullptr) continue;
       break;
     }
 
@@ -3817,34 +3787,24 @@ final bool UseLines(float UseRange, float UseThingRange, name FailSound)
 
     //WAS can't use more than one special line in a row
     //jff 3/21/98 NOW multiple use allowed with enabling line flag
-    if (Level.CompatUseBlocking)
-    {
-      if (!(line->SpacFlags & SPAC_UseThrough))
-      {
+    if (Level.CompatUseBlocking) {
+      if (!(line->SpacFlags&SPAC_UseThrough)) {
         DoSecAct = false;
         break;
       }
-    }
-    else
-    {
-      if (line->SpacFlags & SPAC_Use)
-      {
-        DoSecAct = false;
-        break;
-      }
+    } else if (line->SpacFlags&SPAC_Use) {
+      DoSecAct = false;
+      break;
     }
   }
 
-  if (DoSecAct && Sector->ActionList)
-  {
-    //  Let sector intercept the use.
+  if (DoSecAct && Sector->ActionList) {
+    // Let sector intercept the use
     int Spac = SectorAction::SECSPAC_Use;
-    if (FoundLine)
-    {
-      Spac |= SectorAction::SECSPAC_UseWall;
-    }
+    if (FoundLine) Spac |= SectorAction::SECSPAC_UseWall;
     SectorAction(Sector->ActionList).TriggerAction(self, Spac);
   }
+
   return action;
 }
 
