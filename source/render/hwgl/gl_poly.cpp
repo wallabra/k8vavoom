@@ -80,7 +80,8 @@ void VOpenGLDrawer::RenderShaderDecalsEnd () {
   if (decalUsedStencil) {
     // clear stencil buffer, as other stages may expect it cleared
     // this is not strictly necessary, but 'cmon, be polite!
-    glClear(GL_STENCIL_BUFFER_BIT);
+    // later fix: 'cmon, it is not necessary at all!
+    //glClear(GL_STENCIL_BUFFER_BIT);
   }
 }
 

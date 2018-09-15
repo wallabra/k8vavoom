@@ -489,7 +489,7 @@ public:
   // advanced drawing.
   virtual bool SupportsAdvancedRendering () override;
 
-  static inline float getAlphaThreshold () { return (gl_alpha_threshold < 0 ? 0 : gl_alpha_threshold > 1 ? 1 : gl_alpha_threshold); }
+  static inline float getAlphaThreshold () { float res = gl_alpha_threshold; if (res < 0) res = 0; else if (res > 1) res = 1; return res; }
 
 private:
   vuint8 decalStcVal;
