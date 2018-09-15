@@ -39,14 +39,19 @@ struct VModel;
 
 struct dlight_t
 {
-  TVec    origin;   // origin of the light
-  float   radius;   // radius - how far light goes
-  float   die;    // stop lighting after this time
-  float   decay;    // drop this each second
-  float   minlight; // don't add when contributing less
+  TVec  origin; // origin of the light
+  float radius; // radius - how far light goes
+  float die; // stop lighting after this time
+  float decay; // drop this each second
+  float minlight; // don't add when contributing less
   /*DLType*/vint32 type;
-  vuint32   colour;   // for coloured lights
-  VThinker *Owner;    // used to identify owner to reuse the same light
+  vuint32 colour; // for coloured lights
+  VThinker *Owner; // used to identify owner to reuse the same light
+  // flags
+  vuint32 flags;
+  enum {
+    PlayerLight = 0x0001, // set in alloc, player lights should survive
+  };
 };
 
 struct im_t

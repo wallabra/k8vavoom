@@ -1033,6 +1033,7 @@ struct dlight_t {
   int type;
   int colour;
   private void *__owner;
+  bool bPlayerLight; // set in alloc, player lights should survive
 };
 
 struct particle_t {

@@ -544,6 +544,16 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   float radsq = (radius < 1 ? 32*32 : radius*radius*coeff);
   if (radsq < 32*32) radsq = 32*32;
 
+  // if this is player's dlight, never drop it
+  bool isPlr = false;
+  if (Owner) {
+    static VClass *eclass = nullptr;
+    if (!eclass) eclass = VClass::FindClass("Entity");
+    if (eclass && Owner->IsA(eclass)) {
+      VEntity *e = (VEntity *)Owner;
+      isPlr = ((e->EntityFlags&VEntity::EF_IsPlayer) != 0);
+    }
+  }
   // look for any free slot (or free one if necessary)
   dlight_t *dl = DLights;
   for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
@@ -551,13 +561,19 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     // (but keep looping, 'cause we may want to drop this light altogether)
     if (!dlowner && Owner && dl->Owner == Owner) {
       dlowner = dl;
+      if (isPlr) break;
       continue;
     }
-    // replace dying light
-    if (dl->die < Level->Time) {
+    // remove dead lights
+    if (dl->die < Level->Time) dl->radius = 0;
+    // unused light?
+    if (dl->radius <= 0) {
+      dl->flags = 0;
       if (!dldying) dldying = dl;
       continue;
     }
+    // don't replace player's lights
+    if (dl->flags&dlight_t::PlayerLight) continue;
     // replace furthest light
     float dist = length2DSquared(dl->origin-cl->ViewOrg);
     if (dist > bestdist) {
@@ -565,7 +581,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
       dlbestdist = dl;
     }
     // check if we already have dynamic light around new origin
-    {
+    if (!isPlr) {
       float dd = length2DSquared(dl->origin-lorg);
       if (dd < radsq) {
         // if existing light radius is greater than new radius, drop new light, 'cause
@@ -593,6 +609,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   dl->origin = lorg;
   dl->radius = radius;
   dl->type = DLTYPE_Point;
+  if (isPlr) dl->flags |= dlight_t::PlayerLight;
   return dl;
 
   unguard;
@@ -610,7 +627,10 @@ void VRenderLevelShared::DecayLights (float time) {
   for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
     if (!dl->radius || dl->die < Level->Time) continue;
     dl->radius -= time*dl->decay;
-    if (dl->radius < 0) dl->radius = 0;
+    if (dl->radius <= 0) {
+      dl->radius = 0;
+      dl->flags = 0;
+    }
   }
   unguard;
 }
@@ -636,7 +656,6 @@ void VRenderLevel::MarkLights (dlight_t *light, int bit, int bspnum) {
     if (r_dynamic_clip) {
       vuint8 *dyn_facevis = Level->LeafPVS(ss);
       int leafnum = Level->PointInSubsector(light->origin)-Level->Subsectors;
-
       // check potential visibility
       if (!(dyn_facevis[leafnum >> 3] & (1 << (leafnum & 7)))) return;
     }
