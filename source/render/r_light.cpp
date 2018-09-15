@@ -54,7 +54,7 @@ VCvarB r_allow_ambient("r_allow_ambient", true, "Allow ambient lights?", CVAR_Ar
 VCvarB r_extrasamples("r_extrasamples", false, "Do static lightmap filtering?", CVAR_Archive);
 VCvarB r_dynamic("r_dynamic", true, "Allow dynamic lights?", CVAR_Archive);
 VCvarB r_dynamic_clip("r_dynamic_clip", true, "Clip dynamic lights?", CVAR_Archive);
-VCvarB r_dynamic_clip_more("r_dynamic_clip_more", false, "Do some extra checks when clipping dynamic lights?", CVAR_Archive);
+VCvarB r_dynamic_clip_more("r_dynamic_clip_more", true, "Do some extra checks when clipping dynamic lights?", CVAR_Archive);
 VCvarB r_static_lights("r_static_lights", true, "Allow static lights?", CVAR_Archive);
 VCvarB r_static_add("r_static_add", true, "Are static lights additive?", CVAR_Archive);
 VCvarF r_specular("r_specular", "0.1", "Specular light.", CVAR_Archive);
@@ -249,7 +249,6 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
   TVec *spt;
   TVec facemid;
   linetrace_t Trace;
-
 
   // fill in surforg
   // the points are biased towards the centre of the surface
@@ -835,10 +834,17 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
   texinfo_t *tex;
   subsector_t *sub;
   int leafnum;
+  float mids=0, midt=0;
+  TVec facemid = TVec(0,0,0);
+  bool pointsCalced = false;
 
   smax = (surf->extents[0]>>4)+1;
   tmax = (surf->extents[1]>>4)+1;
   tex = surf->texinfo;
+
+  const float starts = surf->texturemins[0];
+  const float startt = surf->texturemins[1];
+  const float step = 16;
 
   for (int lnum = 0; lnum < MAX_DLIGHTS; ++lnum) {
     if (!(surf->dlightbits&(1<<lnum))) continue; // not lit by this light
@@ -875,13 +881,30 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     local.x = DotProduct(impact, tex->saxis)+tex->soffs;
     local.y = DotProduct(impact, tex->taxis)+tex->toffs;
 
-    local.x -= surf->texturemins[0];
-    local.y -= surf->texturemins[1];
+    local.x -= starts;
+    local.y -= startt;
+
+    if (!pointsCalced && r_dynamic_clip && r_dynamic_clip_more) {
+      pointsCalced = true;
+      CalcFaceVectors(surf);
+      mids = starts+surf->extents[0]/2.0f;
+      midt = startt+surf->extents[1]/2.0f;
+      facemid = texorg+textoworld[0]*mids+textoworld[1]*midt;
+    }
 
     for (int t = 0; t < tmax; ++t) {
       int td = (int)local.y-t*16;
       if (td < 0) td = -td;
       for (int s = 0; s < smax; ++s) {
+        // do more dynlight clipping
+        if (r_dynamic_clip && r_dynamic_clip_more) {
+          linetrace_t Trace;
+          float us = starts+s*step;
+          float ut = startt+t*step;
+          TVec spt = texorg+textoworld[0]*us+textoworld[1]*ut;
+          if (!Level->TraceLine(Trace, dl.origin, spt, SPF_NOBLOCKSIGHT)) continue;
+        }
+        //
         int sd = (int)local.x-s*16;
         if (sd < 0) sd = -sd;
         if (sd > td) {
