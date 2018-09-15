@@ -171,6 +171,9 @@ void VLevel::LoadMap(VName AMapName)
   const mapInfo_t &MInfo = P_GetMapInfo(MapName);
   memset(GLNodesHdr, 0, sizeof(GLNodesHdr));
 
+  VisData = nullptr;
+  NoVis = nullptr;
+
   //  Check for UDMF map
   if (W_LumpName(lumpnum + 1) == NAME_textmap)
   {
@@ -423,6 +426,9 @@ void VLevel::LoadMap(VName AMapName)
   double AcsTime = -Sys_Time();
   LoadACScripts(BehaviorLump);
   AcsTime += Sys_Time();
+
+  // rebuild PVS if we have none (just in case)
+  if (NoVis == nullptr && VisData == nullptr) BuildPVS();
 
   double GroupLinesTime = -Sys_Time();
   GroupLines();
@@ -1462,17 +1468,27 @@ void VLevel::LoadPVS(int Lump)
   if (W_LumpName(Lump) != NAME_gl_pvs || W_LumpLength(Lump) == 0)
   {
     GCon->Logf(NAME_Dev, "Empty or missing PVS lump");
+    if (NoVis == nullptr && VisData == nullptr) BuildPVS();
+    /*
     VisData = nullptr;
     NoVis = new vuint8[(NumSubsectors + 7) / 8];
     memset(NoVis, 0xff, (NumSubsectors + 7) / 8);
+    */
   }
   else
   {
-    VisData = new byte[W_LumpLength(Lump)];
+    //if (NoVis == nullptr && VisData == nullptr) BuildPVS();
+    byte *VisDataNew = new byte[W_LumpLength(Lump)];
     VStream *Strm = W_CreateLumpReaderNum(Lump);
-    Strm->Serialise(VisData, W_LumpLength(Lump));
+    Strm->Serialise(VisDataNew, W_LumpLength(Lump));
+    if (Strm->IsError() || W_LumpLength(Lump) < ((NumSubsectors+7)>>3)*NumSubsectors) {
+      delete [] VisDataNew;
+    } else {
+      delete [] VisData;
+      delete [] NoVis;
+      VisData = VisDataNew;
+    }
     delete Strm;
-    Strm = nullptr;
   }
   unguard;
 }
@@ -3038,5 +3054,30 @@ void VLevel::FixDeepWaters () {
       line_t *ld = sec->lines[lidx];
       FixDeepWater(ld, (int)(ld-Lines));
     }
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+COMMAND(pvs_rebuild) {
+  if (GClLevel) {
+    delete [] GClLevel->VisData;
+    GClLevel->VisData = nullptr;
+    delete [] GClLevel->NoVis;
+    GClLevel->NoVis = nullptr;
+    GClLevel->BuildPVS();
+  }
+}
+
+
+COMMAND(pvs_reset) {
+  if (GClLevel) {
+    delete [] GClLevel->VisData;
+    GClLevel->VisData = nullptr;
+    delete [] GClLevel->NoVis;
+    GClLevel->NoVis = nullptr;
+    GClLevel->VisData = nullptr;
+    GClLevel->NoVis = new vuint8[(GClLevel->NumSubsectors+7)/8];
+    memset(GClLevel->NoVis, 0xff, (GClLevel->NumSubsectors+7)/8);
   }
 }

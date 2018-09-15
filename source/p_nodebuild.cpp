@@ -51,6 +51,8 @@ extern boolean_g lev_doing_hexen;
 
 #include "vector2d.h"
 
+static VCvarB loader_build_pvs("loader_build_pvs", true, "Build simple PVS on node rebuilding?");
+
 
 // MACROS ------------------------------------------------------------------
 
@@ -703,6 +705,13 @@ struct PVSInfo {
 //
 //==========================================================================
 void VLevel::BuildPVS () {
+  if (!loader_build_pvs) {
+    VisData = nullptr;
+    NoVis = new vuint8[(NumSubsectors+7)/8];
+    memset(NoVis, 0xff, (NumSubsectors+7)/8);
+    return;
+  }
+
   GCon->Logf("building PVS...");
   PVSInfo nfo;
   memset((void *)&nfo, 0, sizeof(nfo));

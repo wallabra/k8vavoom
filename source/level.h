@@ -300,6 +300,8 @@ class VLevel : public VGameObject {
   inline bool IsForServer () const { return !!(LevelFlags&LF_ForServer); }
   inline bool IsForClient () const { return !(LevelFlags&LF_ForServer); }
 
+  void BuildPVS (); // called from `BuildNodes()`
+
 private:
   // map loaders
   void LoadVertexes (int, int, int&);
@@ -334,7 +336,6 @@ private:
   void CreateRepBase ();
   void CreateBlockMap ();
   void BuildNodes ();
-  void BuildPVS (); // called from `BuildNodes()`
   bool CreatePortals (void *pvsinfo);
   void SimpleFlood (/*portal_t*/void *srcportalp, int leafnum, void *pvsinfo);
   bool LeafFlow (int leafnum, void *pvsinfo);
