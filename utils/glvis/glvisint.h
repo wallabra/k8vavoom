@@ -43,13 +43,13 @@ namespace VavoomUtils {
 
 struct winding_t {
   bool original; // don't free, it's part of the portal
-  TVec points[2];
+  TVec2D points[2];
 };
 
 enum vstatus_t { stat_none, stat_working, stat_done };
 
 // normal pointing into neighbor
-struct portal_t : TPlane {
+struct portal_t : TPlane2D {
   int leaf; // neighbor
   winding_t winding;
   vstatus_t status;
@@ -72,7 +72,7 @@ struct pstack_t {
   portal_t *portal; // portal exiting
   winding_t *source;
   winding_t *pass;
-  TPlane portalplane;
+  TPlane2D portalplane;
   vuint8 *mightsee; // bit string
 };
 
@@ -82,11 +82,11 @@ struct threaddata_t {
   pstack_t pstack_head;
 };
 
-typedef TVec vertex_t;
+typedef TVec2D vertex_t;
 
 typedef leaf_t subsector_t;
 
-struct seg_t : public TPlane {
+struct seg_t : public TPlane2D {
   vertex_t *v1;
   vertex_t *v2;
 
@@ -177,7 +177,7 @@ private:
   void CheckStack (leaf_t *leaf, threaddata_t *thread);
   void FreeWinding (winding_t *w);
   winding_t *CopyWinding (winding_t *w);
-  winding_t *ClipWinding (winding_t *in, TPlane *split);
+  winding_t *ClipWinding (winding_t *in, TPlane2D *split);
   winding_t *ClipToSeperators (winding_t *source, winding_t *pass, winding_t *target);
   void RecursiveLeafFlow (int leafnum, threaddata_t *thread, pstack_t *prevstack, int StackDepth);
   void PortalFlow (portal_t *p);

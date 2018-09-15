@@ -22,9 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "glvisint.h"
 #include "../../libs/core/core.h"
 
@@ -32,36 +29,18 @@ namespace VavoomUtils {
 
 #include "fmapdefs.h"
 
-// MACROS ------------------------------------------------------------------
-
 #ifdef WIN32
 # define StrCmpCI  _stricmp
 #else
 # define StrCmpCI  stricmp
 #endif
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  GLVisMalloc
 //
 //==========================================================================
-
 /*
 static void *GLVisMalloc(size_t size)
 {
@@ -80,12 +59,12 @@ static void *GLVisMalloc(size_t size)
 }
 */
 
+
 //==========================================================================
 //
 //  GLVisFree
 //
 //==========================================================================
-
 /*
 static void GLVisFree(void *ptr)
 {
@@ -94,138 +73,133 @@ static void GLVisFree(void *ptr)
 }
 */
 
+
 //==========================================================================
 //
 //  TVisBuilder::TVisBuilder
 //
 //==========================================================================
-
-TVisBuilder::TVisBuilder(TGLVis &AOwner) : Owner(AOwner),
-  numvertexes(0), vertexes(NULL), gl_vertexes(NULL),
-  numsegs(0), segs(NULL),
-  numsubsectors(0), subsectors(NULL),
-  numportals(0), portals(NULL),
-  vissize(0), vis(NULL),
-  bitbytes(0), bitlongs(0),
-  portalsee(0), c_leafsee(0), c_portalsee(0),
-  c_chains(0), c_portalskip(0), c_leafskip(0),
-  c_vistest(0), c_mighttest(0),
-  c_portaltest(0), c_portalpass(0), c_portalcheck(0),
-  totalvis(0), rowbytes(0)
+TVisBuilder::TVisBuilder(TGLVis &AOwner)
+  : Owner(AOwner)
+  , numvertexes(0)
+  , vertexes(nullptr)
+  , gl_vertexes(nullptr)
+  , numsegs(0)
+  , segs(nullptr)
+  , numsubsectors(0)
+  , subsectors(nullptr)
+  , numportals(0)
+  , portals(nullptr)
+  , vissize(0)
+  , vis(nullptr)
+  , bitbytes(0)
+  , bitlongs(0)
+  , portalsee(0)
+  , c_leafsee(0)
+  , c_portalsee(0)
+  , c_chains(0)
+  , c_portalskip(0)
+  , c_leafskip(0)
+  , c_vistest(0)
+  , c_mighttest(0)
+  , c_portaltest(0)
+  , c_portalpass(0)
+  , c_portalcheck(0)
+  , totalvis(0)
+  , rowbytes(0)
 {
 }
+
 
 //==========================================================================
 //
 //  TVisBuilder::LoadVertexes
 //
 //==========================================================================
+void TVisBuilder::LoadVertexes (int lump, int gl_lump) {
+  int i;
+  void *data;
+  void *gldata;
+  mapvertex_t *ml;
+  vertex_t *li;
+  int base_verts;
+  int gl_verts;
 
-void TVisBuilder::LoadVertexes(int lump, int gl_lump)
-{
-  int       i;
-  void*     data;
-  void*     gldata;
-  mapvertex_t*  ml;
-  vertex_t*   li;
-  int       base_verts;
-  int       gl_verts;
-
-  base_verts = mainwad->LumpSize(lump) / sizeof(mapvertex_t);
+  base_verts = mainwad->LumpSize(lump)/sizeof(mapvertex_t);
 
   gldata = glwad->GetLump(gl_lump);
-  if (!strncmp((char*)gldata, GL_V5_MAGIC, 4))
-  {
-    GLNodesV5 = true;
+  if (!strncmp((char *)gldata, GL_V5_MAGIC, 4)) GLNodesV5 = true;
+  if (GLNodesV5 || !strncmp((char *)gldata, GL_V2_MAGIC, 4)) {
+    gl_verts = (glwad->LumpSize(gl_lump)-4) / sizeof(gl_mapvertex_t);
+  } else {
+    gl_verts = glwad->LumpSize(gl_lump)/sizeof(mapvertex_t);
   }
-  if (GLNodesV5 || !strncmp((char*)gldata, GL_V2_MAGIC, 4))
-  {
-    gl_verts = (glwad->LumpSize(gl_lump) - 4) / sizeof(gl_mapvertex_t);
-  }
-  else
-  {
-    gl_verts = glwad->LumpSize(gl_lump) / sizeof(mapvertex_t);
-  }
-  numvertexes = base_verts + gl_verts;
+  numvertexes = base_verts+gl_verts;
 
-  // Allocate zone memory for buffer.
+  // allocate zone memory for buffer
   li = vertexes = new vertex_t[numvertexes];
 
-  // Load data into cache.
+  // load data into cache
   data = mainwad->GetLump(lump);
   ml = (mapvertex_t *)data;
 
-  // Copy and convert vertex, internal representation as vector.
-  for (i = 0; i < base_verts; i++, li++, ml++)
-  {
-    *li = TVec(LittleShort(ml->x), LittleShort(ml->y));
+  // copy and convert vertex, internal representation as vector
+  for (i = 0; i < base_verts; i++, li++, ml++) {
+    *li = TVec2D(LittleShort(ml->x), LittleShort(ml->y));
   }
 
-  // Free buffer memory.
+  // free buffer memory
   Z_Free(data);
 
-  //  Save pointer to GL vertexes for seg loading
+  // save pointer to GL vertexes for seg loading
   gl_vertexes = li;
 
-  if (GLNodesV5 || !strncmp((char*)gldata, GL_V2_MAGIC, 4))
-  {
-    gl_mapvertex_t*   glml;
+  if (GLNodesV5 || !strncmp((char *)gldata, GL_V2_MAGIC, 4)) {
+    gl_mapvertex_t *glml;
 
-    glml = (gl_mapvertex_t *)((vuint8*)gldata + 4);
+    glml = (gl_mapvertex_t *)((vuint8 *)gldata+4);
 
-    // Copy and convert vertex, internal representation as vector.
-    for (i = 0; i < gl_verts; i++, li++, glml++)
-    {
-      *li = TVec((double)LittleLong(glml->x) / (double)0x10000,
-             (double)LittleLong(glml->y) / (double)0x10000);
+    // copy and convert vertex, internal representation as vector
+    for (i = 0; i < gl_verts; ++i, ++li, ++glml) {
+      *li = TVec2D((double)LittleLong(glml->x)/(double)0x10000,
+                   (double)LittleLong(glml->y)/(double)0x10000);
     }
-  }
-  else
-  {
+  } else {
     ml = (mapvertex_t *)gldata;
-
-    // Copy and convert vertex, internal representation as vector.
-    for (i = 0; i < gl_verts; i++, li++, ml++)
-    {
-      *li = TVec(LittleShort(ml->x), LittleShort(ml->y));
+    // copy and convert vertex, internal representation as vector
+    for (i = 0; i < gl_verts; ++i, ++li, ++ml) {
+      *li = TVec2D(LittleShort(ml->x), LittleShort(ml->y));
     }
   }
 
-  // Free buffer memory.
+  // free buffer memory
   Z_Free(gldata);
 }
+
 
 //==========================================================================
 //
 //  TVisBuilder::LoadSectors
 //
 //==========================================================================
-
-void TVisBuilder::LoadSectors(int lump)
-{
-  numsectors = mainwad->LumpSize(lump) / sizeof(mapsector_t);
+void TVisBuilder::LoadSectors (int lump) {
+  numsectors = mainwad->LumpSize(lump)/sizeof(mapsector_t);
 }
+
 
 //==========================================================================
 //
 //  TVisBuilder::LoadSideDefs
 //
 //==========================================================================
-
-void TVisBuilder::LoadSideDefs(int lump)
-{
-  mapsidedef_t *data;
-  int i;
-
-  numsides = mainwad->LumpSize(lump) / sizeof(mapsidedef_t);
+void TVisBuilder::LoadSideDefs (int lump) {
+  numsides = mainwad->LumpSize(lump)/sizeof(mapsidedef_t);
   sidesecs = new vint32[numsides];
-  data = (mapsidedef_t *)mainwad->GetLump(lump);
-  for (i = 0; i < numsides; i++)
-  {
-    sidesecs[i] = LittleShort(data[i].sector);
-  }
+  mapsidedef_t *data = (mapsidedef_t *)mainwad->GetLump(lump);
+  for (int i = 0; i < numsides; ++i) sidesecs[i] = LittleShort(data[i].sector);
   Z_Free(data);
 }
+
 
 //==========================================================================
 //
@@ -234,38 +208,33 @@ void TVisBuilder::LoadSideDefs(int lump)
 //  For Doom and Heretic
 //
 //==========================================================================
-
-void TVisBuilder::LoadLineDefs1(int lump)
-{
-  void *data;
-  int i;
-  maplinedef1_t *mld;
-  line_t *ld;
-
-  numlines = mainwad->LumpSize(lump) / sizeof(maplinedef1_t);
+void TVisBuilder::LoadLineDefs1 (int lump) {
+  numlines = mainwad->LumpSize(lump)/sizeof(maplinedef1_t);
   lines = new line_t[numlines];
-  data = mainwad->GetLump(lump);
+  void *data = mainwad->GetLump(lump);
 
-  mld = (maplinedef1_t *)data;
-  ld = lines;
-  for (i = 0; i < numlines; i++, mld++, ld++)
-  {
+  maplinedef1_t *mld = (maplinedef1_t *)data;
+  line_t *ld = lines;
+  for (int i = 0; i < numlines; ++i, ++mld, ++ld) {
     int side0 = LittleShort(mld->sidenum[0]);
     int side1 = LittleShort(mld->sidenum[1]);
 
-    if (side0 != -1)
+    if (side0 != -1) {
       ld->secnum[0] = sidesecs[side0];
-    else
+    } else {
       ld->secnum[0] = -1;
+    }
 
-    if (side1 != -1)
+    if (side1 != -1) {
       ld->secnum[1] = sidesecs[side1];
-    else
+    } else {
       ld->secnum[1] = -1;
+    }
   }
 
   Z_Free(data);
 }
+
 
 //==========================================================================
 //
@@ -274,163 +243,126 @@ void TVisBuilder::LoadLineDefs1(int lump)
 //  For Hexen
 //
 //==========================================================================
-
-void TVisBuilder::LoadLineDefs2(int lump)
-{
-  void *data;
-  int i;
-  maplinedef2_t *mld;
-  line_t *ld;
-
+void TVisBuilder::LoadLineDefs2 (int lump) {
   numlines = mainwad->LumpSize(lump) / sizeof(maplinedef2_t);
   lines = new line_t[numlines];
-  data = mainwad->GetLump(lump);
+  void *data = mainwad->GetLump(lump);
 
-  mld = (maplinedef2_t *)data;
-  ld = lines;
-  for (i = 0; i < numlines; i++, mld++, ld++)
-  {
+  maplinedef2_t *mld = (maplinedef2_t *)data;
+  line_t *ld = lines;
+  for (int i = 0; i < numlines; ++i, ++mld, ++ld) {
     int side0 = LittleShort(mld->sidenum[0]);
     int side1 = LittleShort(mld->sidenum[1]);
 
-    if (side0 != -1)
+    if (side0 != -1) {
       ld->secnum[0] = sidesecs[side0];
-    else
+    } else {
       ld->secnum[0] = -1;
+    }
 
-    if (side1 != -1)
+    if (side1 != -1) {
       ld->secnum[1] = sidesecs[side1];
-    else
+    } else {
       ld->secnum[1] = -1;
+    }
   }
 
   Z_Free(data);
 }
+
 
 //==========================================================================
 //
 //  TVisBuilder::LoadSegs
 //
 //==========================================================================
+void TVisBuilder::LoadSegs (int lump) {
+  void *data = glwad->GetLump(lump);
+  if (GLNodesV5 || !strncmp((char*)data, GL_V3_MAGIC, 4)) {
+    int HdrSize = (GLNodesV5 ? 0 : 4);
+    vuint32 GLVertFlag = (GLNodesV5 ? GL_VERTEX_V5 : GL_VERTEX_V3);
 
-void TVisBuilder::LoadSegs(int lump)
-{
-  void*   data;
-  int     i;
-  seg_t*    li;
-
-  data = glwad->GetLump(lump);
-  if (GLNodesV5 || !strncmp((char*)data, GL_V3_MAGIC, 4))
-  {
-    int HdrSize = GLNodesV5 ? 0 : 4;
-    vuint32 GLVertFlag = GLNodesV5 ? GL_VERTEX_V5 : GL_VERTEX_V3;
-
-    numsegs = (glwad->LumpSize(lump) - HdrSize) / sizeof(mapglseg_v3_t);
+    numsegs = (glwad->LumpSize(lump)-HdrSize)/sizeof(mapglseg_v3_t);
     segs = new seg_t[numsegs];
-    memset((void *)segs, 0, sizeof(seg_t) * numsegs);
+    memset((void *)segs, 0, sizeof(seg_t)*numsegs);
 
-    mapglseg_v3_t* ml = (mapglseg_v3_t*)((vuint8*)data + HdrSize);
-    li = segs;
+    mapglseg_v3_t *ml = (mapglseg_v3_t *)((vuint8 *)data+HdrSize);
+    seg_t *li = segs;
     numportals = 0;
 
-    for (i = 0; i < numsegs; i++, li++, ml++)
-    {
+    for (int i = 0; i < numsegs; ++i, ++li, ++ml) {
       vuint32 v1num = LittleLong(ml->v1);
       vuint32 v2num = LittleLong(ml->v2);
 
-      if (v1num & GLVertFlag)
-      {
+      if (v1num&GLVertFlag) {
         v1num ^= GLVertFlag;
         li->v1 = &gl_vertexes[v1num];
-      }
-      else
-      {
+      } else {
         li->v1 = &vertexes[v1num];
       }
-      if (v2num & GLVertFlag)
-      {
+      if (v2num&GLVertFlag) {
         v2num ^= GLVertFlag;
         li->v2 = &gl_vertexes[v2num];
-      }
-      else
-      {
+      } else {
         li->v2 = &vertexes[v2num];
       }
 
       int partner = LittleLong(ml->partner);
-      if (partner >= 0)
-      {
+      if (partner >= 0) {
         li->partner = &segs[partner];
-        numportals++;
+        ++numportals;
       }
 
       int linenum = LittleShort(ml->linedef);
-      if (linenum >= 0)
-      {
-        li->secnum = lines[linenum].secnum[LittleShort(ml->flags) &
-          GL_SEG_FLAG_SIDE];
-      }
-      else
-      {
+      if (linenum >= 0) {
+        li->secnum = lines[linenum].secnum[LittleShort(ml->flags)&GL_SEG_FLAG_SIDE];
+      } else {
         li->secnum = -1;
       }
 
-      //  Calc seg's plane params
+      // calc seg's plane params
       li->Set2Points(*li->v1, *li->v2);
     }
-  }
-  else
-  {
-    numsegs = glwad->LumpSize(lump) / sizeof(mapglseg_t);
+  } else {
+    numsegs = glwad->LumpSize(lump)/sizeof(mapglseg_t);
     segs = new seg_t[numsegs];
-    memset((void *)segs, 0, sizeof(seg_t) * numsegs);
+    memset((void *)segs, 0, sizeof(seg_t)*numsegs);
 
-    mapglseg_t* ml = (mapglseg_t *)data;
-    li = segs;
+    mapglseg_t *ml = (mapglseg_t *)data;
+    seg_t *li = segs;
     numportals = 0;
 
-    for (i = 0; i < numsegs; i++, li++, ml++)
-    {
+    for (int i = 0; i < numsegs; ++i, ++li, ++ml) {
       vuint16 v1num = LittleShort(ml->v1);
       vuint16 v2num = LittleShort(ml->v2);
 
-      if (v1num & GL_VERTEX)
-      {
+      if (v1num&GL_VERTEX) {
         v1num ^= GL_VERTEX;
         li->v1 = &gl_vertexes[v1num];
-      }
-      else
-      {
+      } else {
         li->v1 = &vertexes[v1num];
       }
-      if (v2num & GL_VERTEX)
-      {
+      if (v2num&GL_VERTEX) {
         v2num ^= GL_VERTEX;
         li->v2 = &gl_vertexes[v2num];
-      }
-      else
-      {
+      } else {
         li->v2 = &vertexes[v2num];
       }
 
       int partner = LittleShort(ml->partner);
-      if (partner >= 0)
-      {
+      if (partner >= 0) {
         li->partner = &segs[partner];
-        numportals++;
+        ++numportals;
       }
 
       int linenum = LittleShort(ml->linedef);
-      if (linenum >= 0)
-      {
+      if (linenum >= 0) {
         li->secnum = lines[linenum].secnum[LittleShort(ml->side)];
-      }
-      else
-      {
+      } else {
         li->secnum = -1;
       }
 
-      //  Calc seg's plane params
+      // calc seg's plane params
       li->Set2Points(*li->v1, *li->v2);
     }
   }
@@ -438,130 +370,95 @@ void TVisBuilder::LoadSegs(int lump)
   Z_Free(data);
 
   portals = new portal_t[numportals];
-  memset((void *)portals, 0, sizeof(portal_t) * numportals);
+  memset((void *)portals, 0, sizeof(portal_t)*numportals);
 }
+
 
 //==========================================================================
 //
 //  TVisBuilder::LoadSubsectors
 //
 //==========================================================================
+void TVisBuilder::LoadSubsectors (int lump) {
+  void *data = glwad->GetLump(lump);
+  if (GLNodesV5 || !strncmp((char *)data, GL_V3_MAGIC, 4)) {
+    int HdrSize = (GLNodesV5 ? 0 : 4);
 
-void TVisBuilder::LoadSubsectors(int lump)
-{
-  void*       data;
-  int         i;
-  subsector_t*    ss;
-
-  data = glwad->GetLump(lump);
-  if (GLNodesV5 || !strncmp((char*)data, GL_V3_MAGIC, 4))
-  {
-    int HdrSize = GLNodesV5 ? 0 : 4;
-
-    numsubsectors = (glwad->LumpSize(lump) - HdrSize) /
-      sizeof(mapglsubsector_v3_t);
+    numsubsectors = (glwad->LumpSize(lump)-HdrSize)/sizeof(mapglsubsector_v3_t);
     subsectors = new subsector_t[numsubsectors];
-    memset((void *)subsectors, 0, sizeof(subsector_t) * numsubsectors);
+    memset((void *)subsectors, 0, sizeof(subsector_t)*numsubsectors);
 
-    mapglsubsector_v3_t* ms = (mapglsubsector_v3_t*)((vuint8*)data +
-      HdrSize);
-    ss = subsectors;
+    mapglsubsector_v3_t *ms = (mapglsubsector_v3_t *)((vuint8 *)data+HdrSize);
+    subsector_t *ss = subsectors;
 
-    for (i = 0; i < numsubsectors; i++, ss++, ms++)
-    {
-      //  Set seg subsector links
+    for (int i = 0; i < numsubsectors; ++i, ++ss, ++ms) {
+      // set seg subsector links
       int count = LittleLong(ms->numsegs);
       seg_t *line = &segs[LittleLong(ms->firstseg)];
       ss->secnum = -1;
-      while (count--)
-      {
+      while (count--) {
         line->leaf = i;
-        if (ss->secnum == -1 && line->secnum >= 0)
-        {
+        if (ss->secnum == -1 && line->secnum >= 0) {
           ss->secnum = line->secnum;
-        }
-        else if (ss->secnum != -1 && line->secnum >= 0 &&
-          ss->secnum != line->secnum)
-        {
+        } else if (ss->secnum != -1 && line->secnum >= 0 && ss->secnum != line->secnum) {
           Owner.DisplayMessage("Segs from different sectors\n");
         }
-        line++;
+        ++line;
       }
-      if (ss->secnum == -1)
-      {
-        throw GLVisError("Subsector without sector");
-      }
+      if (ss->secnum == -1) throw GLVisError("Subsector without sector");
     }
-  }
-  else
-  {
-    numsubsectors = glwad->LumpSize(lump) / sizeof(mapsubsector_t);
+  } else {
+    numsubsectors = glwad->LumpSize(lump)/sizeof(mapsubsector_t);
     subsectors = new subsector_t[numsubsectors];
-    memset((void *)subsectors, 0, sizeof(subsector_t) * numsubsectors);
+    memset((void *)subsectors, 0, sizeof(subsector_t)*numsubsectors);
 
-    mapsubsector_t* ms = (mapsubsector_t *)data;
-    ss = subsectors;
+    mapsubsector_t *ms = (mapsubsector_t *)data;
+    subsector_t *ss = subsectors;
 
-    for (i = 0; i < numsubsectors; i++, ss++, ms++)
-    {
-      //  Set seg subsector links
+    for (int i = 0; i < numsubsectors; ++i, ++ss, ++ms) {
+      // set seg subsector links
       int count = (vuint16)LittleShort(ms->numsegs);
       seg_t *line = &segs[(vuint16)LittleShort(ms->firstseg)];
       ss->secnum = -1;
-      while (count--)
-      {
+      while (count--) {
         line->leaf = i;
-        if (ss->secnum == -1 && line->secnum >= 0)
-        {
+        if (ss->secnum == -1 && line->secnum >= 0) {
           ss->secnum = line->secnum;
-        }
-        else if (ss->secnum != -1 && line->secnum >= 0 &&
-          ss->secnum != line->secnum)
-        {
+        } else if (ss->secnum != -1 && line->secnum >= 0 && ss->secnum != line->secnum) {
           Owner.DisplayMessage("Segs from different sectors\n");
         }
-        line++;
+        ++line;
       }
-      if (ss->secnum == -1)
-      {
-        throw GLVisError("Subsector without sector");
-      }
+      if (ss->secnum == -1) throw GLVisError("Subsector without sector");
     }
   }
 
   Z_Free(data);
 }
 
+
 //==========================================================================
 //
 //  TVisBuilder::CreatePortals
 //
 //==========================================================================
-
-void TVisBuilder::CreatePortals()
-{
-  int i;
-
+void TVisBuilder::CreatePortals () {
   portal_t *p = portals;
-  for (i = 0; i < numsegs; i++)
-  {
+  for (int i = 0; i < numsegs; ++i) {
     seg_t *line = &segs[i];
     subsector_t *sub = &subsectors[line->leaf];
-    if (line->partner)
-    {
-      //  Skip self-referencing subsector segs
-      if (line->leaf == line->partner->leaf)
-      {
+    if (line->partner) {
+      // skip self-referencing subsector segs
+      if (line->leaf == line->partner->leaf) {
         Owner.DisplayMessage("Self-referencing subsector detected\n");
-        numportals--;
+        --numportals;
         continue;
       }
 
       // create portal
-      if (sub->numportals == MAX_PORTALS_ON_LEAF)
-        throw GLVisError("Leaf with too many portals");
+      if (sub->numportals == MAX_PORTALS_ON_LEAF) throw GLVisError("Leaf with too many portals");
       sub->portals[sub->numportals] = p;
-      sub->numportals++;
+      ++sub->numportals;
 
       p->winding.original = true;
       p->winding.points[0] = *line->v1;
@@ -569,35 +466,34 @@ void TVisBuilder::CreatePortals()
       p->normal = line->partner->normal;
       p->dist = line->partner->dist;
       p->leaf = line->partner->leaf;
-      p++;
+      ++p;
     }
   }
-  if (p - portals != numportals)
-    throw GLVisError("Portals miscounted");
+  if (p-portals != numportals) throw GLVisError("Portals miscounted");
 }
+
 
 //==========================================================================
 //
 //  TVisBuilder::LoadLevel
 //
 //==========================================================================
-
-void TVisBuilder::LoadLevel(int lumpnum, int gl_lumpnum)
-{
+void TVisBuilder::LoadLevel (int lumpnum, int gl_lumpnum) {
   const char *levelname = mainwad->LumpName(lumpnum);
   bool extended = !StrCmpCI(mainwad->LumpName(lumpnum + ML_BEHAVIOR), "BEHAVIOR");
 
   GLNodesV5 = false;
-  LoadVertexes(lumpnum + ML_VERTEXES, gl_lumpnum + ML_GL_VERT);
-  LoadSectors(lumpnum + ML_SECTORS);
-  LoadSideDefs(lumpnum + ML_SIDEDEFS);
-  if (extended)
-    LoadLineDefs2(lumpnum + ML_LINEDEFS);
-  else
-    LoadLineDefs1(lumpnum + ML_LINEDEFS);
-  LoadSegs(gl_lumpnum + ML_GL_SEGS);
-  LoadSubsectors(gl_lumpnum + ML_GL_SSECT);
-  reject = NULL;
+  LoadVertexes(lumpnum+ML_VERTEXES, gl_lumpnum+ML_GL_VERT);
+  LoadSectors(lumpnum+ML_SECTORS);
+  LoadSideDefs(lumpnum+ML_SIDEDEFS);
+  if (extended) {
+    LoadLineDefs2(lumpnum+ML_LINEDEFS);
+  } else {
+    LoadLineDefs1(lumpnum+ML_LINEDEFS);
+  }
+  LoadSegs(gl_lumpnum+ML_GL_SEGS);
+  LoadSubsectors(gl_lumpnum+ML_GL_SSECT);
+  reject = nullptr;
 
   CreatePortals();
 
@@ -607,14 +503,13 @@ void TVisBuilder::LoadLevel(int lumpnum, int gl_lumpnum)
   Owner.DisplayStartMap(levelname);
 }
 
+
 //==========================================================================
 //
 //  TVisBuilder::FreeLevel
 //
 //==========================================================================
-
-void TVisBuilder::FreeLevel()
-{
+void TVisBuilder::FreeLevel () {
   delete[] vertexes;
   delete[] sidesecs;
   delete[] lines;
@@ -622,19 +517,19 @@ void TVisBuilder::FreeLevel()
   delete[] subsectors;
   delete[] portals;
   delete[] vis;
-  vertexes = NULL;
-  sidesecs = NULL;
-  lines = NULL;
-  segs = NULL;
-  subsectors = NULL;
-  portals = NULL;
-  vis = NULL;
-  if (reject)
-  {
+  vertexes = nullptr;
+  sidesecs = nullptr;
+  lines = nullptr;
+  segs = nullptr;
+  subsectors = nullptr;
+  portals = nullptr;
+  vis = nullptr;
+  if (reject) {
     delete[] reject;
-    reject = NULL;
+    reject = nullptr;
   }
 }
+
 
 //==========================================================================
 //
@@ -648,6 +543,7 @@ bool TVisBuilder::IsInverseMode (const char *levname) {
   }
   return false;
 }
+
 
 //==========================================================================
 //
@@ -683,12 +579,12 @@ bool TVisBuilder::IsLevelName (int lump) {
   return false;
 }
 
+
 //==========================================================================
 //
 //  TVisBuilder::IsGLLevelName
 //
 //==========================================================================
-
 bool TVisBuilder::IsGLLevelName (int lump) {
   if (lump+4 >= glwad->numlumps) return false;
 
@@ -720,56 +616,44 @@ bool TVisBuilder::IsGLLevelName (int lump) {
   return false;
 }
 
+
 //==========================================================================
 //
 //  TVisBuilder::CopyLump
 //
 //==========================================================================
-
-void TVisBuilder::CopyLump(int i)
-{
+void TVisBuilder::CopyLump (int i) {
   void *ptr = glwad->GetLump(i);
   outwad.AddLump(glwad->LumpName(i), ptr, glwad->LumpSize(i));
   Z_Free(ptr);
 }
+
 
 //==========================================================================
 //
 //  TVisBuilder::BuildGWA
 //
 //==========================================================================
-
-void TVisBuilder::BuildGWA()
-{
+void TVisBuilder::BuildGWA () {
   int i = 0;
-  while (i < glwad->numlumps)
-  {
-    if (IsGLLevelName(i))
-    {
-      const char* name = glwad->LumpName(i);
+  while (i < glwad->numlumps) {
+    if (IsGLLevelName(i)) {
+      const char *name = glwad->LumpName(i);
       char LevName[12];
-      if (!StrCmpCI(name, "GL_LEVEL"))
-      {
-        char* Ptr = (char*)glwad->GetLump(i);
+      if (!StrCmpCI(name, "GL_LEVEL")) {
+        char *Ptr = (char *)glwad->GetLump(i);
         int Len = glwad->LumpSize(i);
-        if (Len < 12 || memcmp(Ptr, "LEVEL=", 6))
-        {
+        if (Len < 12 || memcmp(Ptr, "LEVEL=", 6)) {
           Z_Free(Ptr);
           throw GLVisError("Bad GL_LEVEL format");
         }
         int EndCh = 12;
-        while (EndCh < Len && EndCh < 14 &&
-          Ptr[EndCh] != '\n' && Ptr[EndCh] != '\r')
-        {
-          EndCh++;
-        }
-        memcpy(LevName, Ptr + 6, EndCh - 6);
-        LevName[EndCh - 6] = 0;
+        while (EndCh < Len && EndCh < 14 && Ptr[EndCh] != '\n' && Ptr[EndCh] != '\r') ++EndCh;
+        memcpy(LevName, Ptr+6, EndCh-6);
+        LevName[EndCh-6] = 0;
         Z_Free(Ptr);
-      }
-      else
-      {
-        strcpy(LevName, name + 3);
+      } else {
+        strcpy(LevName, name+3);
       }
 
       LoadLevel(mainwad->LumpNumForName(LevName), i);
@@ -778,34 +662,26 @@ void TVisBuilder::BuildGWA()
       BuildPVS();
       Owner.fastvis = oldfast;
 
-      //  Write lumps
-      for (int ii = 0; ii < 5; ii++)
-      {
-        CopyLump(i + ii);
-      }
+      // write lumps
+      for (int ii = 0; ii < 5; ++ii) CopyLump(i+ii);
       i += 5;
-      if (!strcmp("GL_PVS", glwad->LumpName(i)))
-      {
-        i++;
-      }
+      if (!strcmp("GL_PVS", glwad->LumpName(i))) ++i;
       outwad.AddLump("GL_PVS", vis, vissize);
 
       FreeLevel();
-    }
-    else
-    {
+    } else {
       CopyLump(i);
-      i++;
+      ++i;
     }
   }
 }
+
 
 //==========================================================================
 //
 //  TVisBuilder::BuildWAD
 //
 //==========================================================================
-
 void TVisBuilder::BuildWAD () {
   int i = 0;
   while (i < glwad->numlumps) {
@@ -828,7 +704,7 @@ void TVisBuilder::BuildWAD () {
             while (EndCh < Len && EndCh < 14 && Ptr[EndCh] != '\n' && Ptr[EndCh] != '\r') ++EndCh;
             char LevName[12];
             memcpy(LevName, Ptr+6, EndCh-6);
-            LevName[EndCh - 6] = 0;
+            LevName[EndCh-6] = 0;
             if (!StrCmpCI(LevName, name)) {
               gl_lump = gli;
               break;
@@ -849,42 +725,32 @@ void TVisBuilder::BuildWAD () {
       if (!Owner.no_reject) BuildReject();
 
       //  Write lumps. Assume GL-nodes immediately follows map data
-      for (int mi = i; mi < gl_lump + 5; mi++)
-      {
-        if (mi == i + ML_REJECT && !Owner.no_reject)
-        {
+      for (int mi = i; mi < gl_lump+5; ++mi) {
+        if (mi == i+ML_REJECT && !Owner.no_reject) {
           outwad.AddLump("REJECT", reject, rejectsize);
-        }
-        else
-        {
+        } else {
           CopyLump(mi);
         }
       }
-      i = gl_lump + 5;
-      if (!strcmp("GL_PVS", glwad->LumpName(i)))
-      {
-        i++;
-      }
+      i = gl_lump+5;
+      if (!strcmp("GL_PVS", glwad->LumpName(i))) ++i;
       outwad.AddLump("GL_PVS", vis, vissize);
 
       FreeLevel();
-    }
-    else
-    {
+    } else {
       CopyLump(i);
-      i++;
+      ++i;
     }
   }
 }
+
 
 //==========================================================================
 //
 //  TVisBuilder::Run
 //
 //==========================================================================
-
-void TVisBuilder::Run(const char *srcfile, const char* gwafile)
-{
+void TVisBuilder::Run (const char *srcfile, const char *gwafile) {
   char filename[1024];
   char destfile[1024];
   char tempfile[1024];
@@ -896,52 +762,40 @@ void TVisBuilder::Run(const char *srcfile, const char* gwafile)
   inwad.Open(filename);
   mainwad = &inwad;
 
-  if (gwafile)
-  {
+  if (gwafile) {
     strcpy(filename, gwafile);
-  }
-  else
-  {
+  } else {
     StripExtension(filename);
     strcat(filename, ".gwa");
   }
+
   FILE *ff = fopen(filename, "rb");
-  if (ff)
-  {
+  if (ff) {
     fclose(ff);
     gwa.Open(filename);
     glwad = &gwa;
     strcpy(destfile, filename);
     strcpy(bakext, ".~gw");
-  }
-  else
-  {
+  } else {
     glwad = &inwad;
     strcpy(bakext, ".~wa");
   }
 
   strcpy(tempfile, destfile);
   StripFilename(tempfile);
-  if (tempfile[0])
-    strcat(tempfile, "/");
+  if (tempfile[0]) strcat(tempfile, "/");
   strcat(tempfile, "$glvis$$.$$$");
   outwad.Open(tempfile, glwad->wadid);
 
-  //  Process lumps
-  if (mainwad == glwad)
-  {
+  // process lumps
+  if (mainwad == glwad) {
     BuildWAD();
-  }
-  else
-  {
+  } else {
     BuildGWA();
   }
 
   inwad.Close();
-  if (gwa.handle)
-  {
-    gwa.Close();
-  }
+  if (gwa.handle) gwa.Close();
   outwad.Close();
 
   strcpy(filename, destfile);
@@ -954,6 +808,7 @@ void TVisBuilder::Run(const char *srcfile, const char* gwafile)
 
 } // namespace VavoomUtils
 
+
 using namespace VavoomUtils;
 
 //==========================================================================
@@ -961,32 +816,24 @@ using namespace VavoomUtils;
 //  GLVisError::GLVisError
 //
 //==========================================================================
-
-GLVisError::GLVisError(const char *error, ...)
-{
-  va_list   argptr;
-
+GLVisError::GLVisError (const char *error, ...) {
+  va_list argptr;
   va_start(argptr, error);
   vsprintf(message, error, argptr);
   va_end(argptr);
 }
+
 
 //==========================================================================
 //
 //  TGLVis::Build
 //
 //==========================================================================
-
-void TGLVis::Build(const char *srcfile, const char* gwafile)
-{
-  try
-  {
+void TGLVis::Build (const char *srcfile, const char *gwafile) {
+  try {
     TVisBuilder VisBuilder(*this);
-
     VisBuilder.Run(srcfile, gwafile);
-  }
-  catch (WadLibError &e)
-  {
+  } catch (WadLibError &e) {
     throw GLVisError("%s", e.message);
   }
 }
