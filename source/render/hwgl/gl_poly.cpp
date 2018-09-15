@@ -1058,7 +1058,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   }
 
   if (blend_sprites || Additive || Alpha < 1.0) {
-    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.333);
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
     glEnable(GL_BLEND);
   } else {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555);
@@ -1157,7 +1157,7 @@ void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
   }
 
   if (blend_sprites || Additive || Alpha < 1.0) {
-    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.333);
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
     glEnable(GL_BLEND);
   } else {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555);

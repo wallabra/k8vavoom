@@ -34,6 +34,10 @@
 
 enum { NUMVERTEXNORMALS = 162 };
 
+extern VCvarF gl_alpha_threshold;
+static inline float getAlphaThreshold () { return (gl_alpha_threshold < 0 ? 0 : gl_alpha_threshold > 1 ? 1 : gl_alpha_threshold); }
+
+
 // TYPES -------------------------------------------------------------------
 
 struct VScriptSubModel
@@ -1085,14 +1089,14 @@ static void DrawModel(VLevel *Level, const TVec &Org, const TAVec &Angles,
       break;
 
     case RPASS_Textures:
-      if (Md2Alpha <= 0.333)
+      if (Md2Alpha <= getAlphaThreshold())
       {
         continue;
       }
       break;
 
     case RPASS_Light:
-      if (Md2Alpha <= 0.333 || SubMdl.NoShadow)
+      if (Md2Alpha <= getAlphaThreshold() || SubMdl.NoShadow)
       {
         continue;
       }

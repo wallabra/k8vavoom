@@ -401,6 +401,8 @@ typedef void (APIENTRY *glBindFramebufferFn) (GLenum target, GLuint framebuffer)
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+extern VCvarF gl_alpha_threshold;
+
 class VOpenGLDrawer : public VDrawer {
 public:
   // VDrawer interface
@@ -486,6 +488,8 @@ public:
 
   // advanced drawing.
   virtual bool SupportsAdvancedRendering () override;
+
+  static inline float getAlphaThreshold () { return (gl_alpha_threshold < 0 ? 0 : gl_alpha_threshold > 1 ? 1 : gl_alpha_threshold); }
 
 private:
   vuint8 decalStcVal;
@@ -794,9 +798,6 @@ protected:
   static VCvarB gl_smooth_particles;
   static VCvarB gl_dump_vendor;
   static VCvarB gl_dump_extensions;
-  static VCvarF gl_alpha_threshold;
-
-  static inline float getAlphaThreshold () { return (gl_alpha_threshold < 0 ? 0 : gl_alpha_threshold > 1 ? 1 : gl_alpha_threshold); }
 
   //  extensions
   bool CheckExtension(const char*);

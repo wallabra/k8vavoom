@@ -36,7 +36,7 @@ VCvarI VOpenGLDrawer::sprite_tex_linear("gl_sprite_tex_linear", "0", "Sprite int
 VCvarB VOpenGLDrawer::gl_2d_filtering("gl_2d_filtering", true, "Filter 2D interface.", CVAR_Archive);
 VCvarI VOpenGLDrawer::gl_texture_filter_anisotropic("gl_texture_filter_anisotropic", "4", "Texture anisotropic filtering.", CVAR_Archive);
 VCvarB VOpenGLDrawer::clear("gl_clear", false, "Clear screen before rendering new frame?", CVAR_Archive);
-VCvarB VOpenGLDrawer::blend_sprites("gl_blend_sprites", false, "Alpha-blend sprites?", CVAR_Archive);
+VCvarB VOpenGLDrawer::blend_sprites("gl_blend_sprites", true, "Alpha-blend sprites?", CVAR_Archive);
 VCvarB VOpenGLDrawer::ext_anisotropy("gl_ext_anisotropy", true, "Use OpenGL anisotropy extension (if present)?", 0);
 VCvarB VOpenGLDrawer::ext_shaders("gl_ext_shaders", true, "Use OpenGL shaders (if possible)?", 0);
 VCvarB VOpenGLDrawer::ext_vertex_buffer_objects("gl_ext_vertex_buffer_objects", true, "Use OpenGL VBO extension (if present)?", 0);
@@ -50,7 +50,7 @@ VCvarB VOpenGLDrawer::gl_dump_vendor("gl_dump_vendor", false, "Dump OpenGL vendo
 VCvarB VOpenGLDrawer::gl_dump_extensions("gl_dump_extensions", false, "Dump available OpenGL extensions?", 0);
 
 // was 0.333
-VCvarF VOpenGLDrawer::gl_alpha_threshold("gl_alpha_threshold", "0.15", "Alpha threshold (less than this will not be drawn).", CVAR_Archive);
+VCvarF gl_alpha_threshold("gl_alpha_threshold", "0.15", "Alpha threshold (less than this will not be drawn).", CVAR_Archive);
 
 
 //==========================================================================
