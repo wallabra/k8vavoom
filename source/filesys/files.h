@@ -47,3 +47,4 @@ extern VStr fl_gamedir;
 
 extern bool fsys_skipSounds;
 extern bool fsys_skipSprites;
+extern bool fsys_skipDehacked;

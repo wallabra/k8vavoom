@@ -27,8 +27,10 @@
 
 
 static VCvarB dbg_dump_gameinfo("dbg_dump_gameinfo", false, "Dump parsed game.txt?", 0);
+
 bool fsys_skipSounds = false;
 bool fsys_skipSprites = false;
+bool fsys_skipDehacked = false;
 
 
 struct version_t {
@@ -622,6 +624,8 @@ void FL_Init () {
       else if (VStr::Cmp(GArgs[f], "-allowsounds") == 0) fsys_skipSounds = false;
       else if (VStr::Cmp(GArgs[f], "-skipsprites") == 0) fsys_skipSprites = true;
       else if (VStr::Cmp(GArgs[f], "-allowsprites") == 0) fsys_skipSprites = false;
+      else if (VStr::Cmp(GArgs[f], "-skipdehacked") == 0) fsys_skipDehacked = true;
+      else if (VStr::Cmp(GArgs[f], "-allodehacked") == 0) fsys_skipDehacked = false;
     }
     bool inFile = true;
     while (++fp != GArgs.Count()) {
@@ -630,6 +634,8 @@ void FL_Init () {
         else if (VStr::Cmp(GArgs[fp], "-allowsounds") == 0) fsys_skipSounds = false;
         else if (VStr::Cmp(GArgs[fp], "-skipsprites") == 0) fsys_skipSprites = true;
         else if (VStr::Cmp(GArgs[fp], "-allowsprites") == 0) fsys_skipSprites = false;
+        else if (VStr::Cmp(GArgs[fp], "-skipdehacked") == 0) fsys_skipDehacked = true;
+        else if (VStr::Cmp(GArgs[fp], "-allodehacked") == 0) fsys_skipDehacked = false;
         else inFile = (VStr::Cmp(GArgs[fp], "-file") == 0);
         continue;
       }

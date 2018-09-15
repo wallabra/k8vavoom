@@ -65,6 +65,7 @@
 
 extern bool fsys_skipSounds;
 extern bool fsys_skipSprites;
+extern bool fsys_skipDehacked;
 
 
 enum {
@@ -404,6 +405,11 @@ void VZipFile::OpenArchive (VStream *fstream) {
       if ((fsys_skipSounds && Files[i].LumpNamespace == WADNS_Sounds) ||
           (fsys_skipSprites && Files[i].LumpNamespace == WADNS_Sprites))
       {
+        Files[i].LumpNamespace = -1;
+        LumpName = VStr();
+      }
+
+      if (fsys_skipDehacked && LumpName.length() && LumpName.ICmp("dehacked") == 0) {
         Files[i].LumpNamespace = -1;
         LumpName = VStr();
       }

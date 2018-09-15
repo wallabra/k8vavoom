@@ -29,6 +29,7 @@
 
 extern bool fsys_skipSounds;
 extern bool fsys_skipSprites;
+extern bool fsys_skipDehacked;
 
 
 struct lumpinfo_t {
@@ -235,17 +236,27 @@ void VWadFile::InitNamespaces () {
   InitNamespace(WADNS_NewTextures, NAME_tx_start, NAME_tx_end);
   InitNamespace(WADNS_Voices, NAME_v_start, NAME_v_end, NAME_vv_start, NAME_vv_end);
   InitNamespace(WADNS_HiResTextures, NAME_hi_start, NAME_hi_end);
-  if (fsys_skipSounds) {
+  if (fsys_skipSounds || fsys_skipDehacked) {
     for (int i = 0; i < NumLumps; ++i) {
       lumpinfo_t &L = LumpInfo[i];
       if (L.Namespace != WADNS_Global) continue;
       if (L.Name == NAME_None) continue;
       const char *nn = *L.Name;
-      if ((nn[0] == 'D' || nn[0] == 'd') &&
-          (nn[1] == 'S' || nn[1] == 's' || nn[1] == 'P' || nn[1] == 'p'))
-      {
-        L.Namespace = (EWadNamespace)-1;
-        L.Name = NAME_None;
+      if (fsys_skipSounds) {
+        if ((nn[0] == 'D' || nn[0] == 'd') &&
+            (nn[1] == 'S' || nn[1] == 's' || nn[1] == 'P' || nn[1] == 'p'))
+        {
+          L.Namespace = (EWadNamespace)-1;
+          L.Name = NAME_None;
+          continue;
+        }
+      }
+      if (fsys_skipDehacked) {
+        if (VStr::ICmp(nn, "dehacked") == 0) {
+          L.Namespace = (EWadNamespace)-1;
+          L.Name = NAME_None;
+          continue;
+        }
       }
     }
   }
