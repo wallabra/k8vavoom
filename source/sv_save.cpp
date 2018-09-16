@@ -40,6 +40,8 @@
 static VCvarB r_dbg_save_on_level_exit("r_dbg_save_on_level_exit", false, "Save before exiting a level.\nNote that after loading this save you prolly won't be able to exit again.", CVAR_Archive);
 static VCvarF save_compression_level("save_compression_level", "1", "Save file compression level [0..9]", CVAR_Archive);
 
+static VCvarB dbg_save_ignore_wadlist("dbg_save_ignore_wadlist", false, "Ignore list of loaded wads in savegame when hash mated?", 0/*CVAR_Archive*/);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 #define REBORN_SLOT  (9)
@@ -517,7 +519,8 @@ bool VSaveSlot::LoadSlot (int Slot) {
   auto wadlist = GetWadPk3List();
   vint32 wcount = wadlist.length();
   *Strm << wcount;
-  if (wcount < 1 || wcount > 8192 || wcount != wadlist.length()) {
+
+  if (wcount < 1 || wcount > 8192) {
     Strm->Close();
     delete Strm;
     Strm = nullptr;
@@ -525,15 +528,27 @@ bool VSaveSlot::LoadSlot (int Slot) {
     return false;
   }
 
-  for (int f = 0; f < wcount; ++f) {
-    VStr s;
-    *Strm << s;
-    if (s != wadlist[f]) {
+  if (!dbg_save_ignore_wadlist) {
+    if (wcount != wadlist.length()) {
       Strm->Close();
       delete Strm;
       Strm = nullptr;
-      GCon->Log("Invalid savegame (bad mod)");
+      GCon->Log("Invalid savegame (bad number of mods)");
       return false;
+    }
+  }
+
+  for (int f = 0; f < wcount; ++f) {
+    VStr s;
+    *Strm << s;
+    if (!dbg_save_ignore_wadlist) {
+      if (s != wadlist[f]) {
+        Strm->Close();
+        delete Strm;
+        Strm = nullptr;
+        GCon->Log("Invalid savegame (bad mod)");
+        return false;
+      }
     }
   }
 
