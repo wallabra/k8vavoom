@@ -556,6 +556,18 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
       isPlr = ((e->EntityFlags&VEntity::EF_IsPlayer) != 0);
     }
   }
+
+  if (!isPlr && r_dynamic_clip && Level->VisData) {
+    auto sub = Level->PointInSubsector(cl->ViewOrg);
+    vuint8 *dyn_facevis = Level->LeafPVS(sub);
+    auto leafnum = Level->PointInSubsector(lorg)-Level->Subsectors;
+    // check potential visibility
+    if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) {
+      //fprintf(stderr, "DYNLIGHT rejected by PVS\n");
+      return nullptr;
+    }
+  }
+
   // look for any free slot (or free one if necessary)
   dlight_t *dl = DLights;
   for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
@@ -659,7 +671,7 @@ void VRenderLevel::MarkLights (dlight_t *light, int bit, int bspnum) {
     }
     subsector_t *ss = &Level->Subsectors[num];
 
-    if (r_dynamic_clip) {
+    if (r_dynamic_clip && Level->VisData) {
       vuint8 *dyn_facevis = Level->LeafPVS(ss);
       int leafnum = Level->PointInSubsector(light->origin)-Level->Subsectors;
       // check potential visibility
@@ -776,7 +788,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
       if (!(sub->dlightbits&(1<<i))) continue;
       const dlight_t &dl = DLights[i];
       if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
-      if (r_dynamic_clip) {
+      if (r_dynamic_clip && Level->VisData) {
         vuint8 *dyn_facevis = Level->LeafPVS(sub);
         int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
         // check potential visibility
@@ -851,7 +863,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
     impact = dl.origin-surf->plane->normal*dist;
 
-    if (r_dynamic_clip) {
+    if (r_dynamic_clip && Level->VisData) {
       sub = Level->PointInSubsector(impact);
       vuint8 *dyn_facevis = Level->LeafPVS(sub);
       leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
