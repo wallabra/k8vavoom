@@ -2090,6 +2090,22 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         if (!Ent) return ActiveObject->Level->PutNewString("None");
         return ActiveObject->Level->PutNewString(*Ent->GetClass()->Name);
       }
+
+    //bool ACS_NamedExecute (string script, int map, int s_arg1, int s_arg2, int s_arg3)
+    case ACSF_ACS_NamedExecute:
+      {
+        //VAcsObject *ao = nullptr;
+        VName name = GetNameLowerCase(args[0]);
+        GCon->Logf("WARNING: UNTESTED ACSF function 'ACS_NamedExecute' (script '%s')", *name);
+        if (name == NAME_None) return 0;
+        //if (!ActiveObject->Level->FindScriptByNameStr(*name, ao)) return 0;
+        int ScArgs[3];
+        ScArgs[0] = (argCount > 2 ? args[2] : 0);
+        ScArgs[1] = (argCount > 3 ? args[3] : 0);
+        ScArgs[2] = (argCount > 4 ? args[4] : 0);
+        if (!ActiveObject->Level->Start(-name.GetIndex(), args[1], ScArgs[0], ScArgs[1], ScArgs[2], Activator, line, side, false/*always*/, false/*wantresult*/, true/*net*/)) return 0;
+        return 1;
+      }
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
