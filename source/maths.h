@@ -214,14 +214,23 @@ class TPlane {
 
   // initialises vertical plane from point and direction
   inline void SetPointDir (const TVec &point, const TVec &dir) {
+#if 0
+    if (dir.x != 0 || dir.y != 0) {
+      normal = Normalise(TVec(dir.y, -dir.x, 0));
+    } else {
+      //k8: what to do here?!
+      normal = TVec(0, 0, 1);
+    }
+#else
     normal = Normalise(TVec(dir.y, -dir.x, 0));
+#endif
     dist = DotProduct(point, normal);
     CalcBits();
   }
 
   // initialises vertical plane from 2 points
   inline void Set2Points (const TVec &v1, const TVec &v2) {
-    SetPointDir(v1, v2 - v1);
+    SetPointDir(v1, v2-v1);
   }
 
   // get z of point with given x and y coords
@@ -241,7 +250,7 @@ class TPlane {
 
   // returns side 0 (front), 1 (back), or 2 (on).
   inline int PointOnSide2(const TVec &point) const {
-    float dot = DotProduct(point, normal) - dist;
+    float dot = DotProduct(point, normal)-dist;
     return (dot < -0.1 ? 1 : dot > 0.1 ? 0 : 2);
   }
 };
