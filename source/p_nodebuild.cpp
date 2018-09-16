@@ -51,7 +51,7 @@ extern boolean_g lev_doing_hexen;
 
 #include "vector2d.h"
 
-static VCvarB loader_build_pvs("loader_build_pvs", true, "Build simple PVS on node rebuilding?");
+static VCvarB loader_build_pvs("loader_build_pvs", true, "Build simple PVS on node rebuilding?", CVAR_Archive);
 
 
 // MACROS ------------------------------------------------------------------

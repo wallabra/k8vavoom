@@ -113,6 +113,8 @@ static VCvarB show_level_load_times("show_level_load_times", false, "Show loadin
 static VCvarB nodes_allow_compressed_old("nodes_allow_compressed_old", true, "Allow loading v0 compressed GL nodes?", CVAR_Archive);
 static VCvarB nodes_allow_compressed_new("nodes_allow_compressed_new", false, "Allow loading v1+ compressed GL nodes?", CVAR_Archive);
 
+static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", false, "Force node rebuilding?", CVAR_Archive);
+
 
 // CODE --------------------------------------------------------------------
 
@@ -297,7 +299,7 @@ void VLevel::LoadMap(VName AMapName)
   InitTime += Sys_Time();
 
   double NodeBuildTime = -Sys_Time();
-  if (!(LevelFlags & LF_TextMap) && !UseComprGLNodes)
+  if (!loader_force_nodes_rebuild && !(LevelFlags&LF_TextMap) && !UseComprGLNodes)
   {
     gl_lumpnum = FindGLNodes(MapLumpName);
 #ifdef CLIENT
@@ -329,6 +331,8 @@ void VLevel::LoadMap(VName AMapName)
         NeedNodesBuild = true;
       }
     }
+  } else {
+    NeedNodesBuild = true;
   }
   NodeBuildTime += Sys_Time();
 

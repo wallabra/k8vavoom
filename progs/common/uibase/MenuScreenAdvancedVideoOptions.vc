@@ -35,9 +35,6 @@ override void CreateChoices()
 {
   MenuChoiceSlider  Slider;
   MenuChoiceEnum    Enum;
-  int         currentY;
-
-  currentY = ChoicesStartY;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
@@ -196,6 +193,7 @@ override void CreateChoices()
   Enum.ValueChanging = &ChangeGlSpecularHighlights;
   currentY += Enum.Height;
 }
+
 
 //==========================================================================
 //

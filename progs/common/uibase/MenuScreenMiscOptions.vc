@@ -41,6 +41,12 @@ override void CreateChoices () {
 
 
   CreateChoiceTextLabel("");
+  CreateChoiceTextLabel("Internal Node Builder");
+  CreateOnOffCvar("Force node rebuilding", 'loader_force_nodes_rebuild');
+  CreateOnOffCvar("Build (rough) PVS", 'loader_build_pvs');
+
+
+  CreateChoiceTextLabel("");
   CreateChoiceTextLabel("Headshots Options");
   CreateOnOffCvar("Headshots", 'k8HSEnabled');
   CreateOnOffCvar("Criticals", 'k8HSCriticals');
