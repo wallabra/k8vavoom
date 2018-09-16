@@ -434,7 +434,12 @@ void VLevel::LoadMap(VName AMapName)
   AcsTime += Sys_Time();
 
   // rebuild PVS if we have none (just in case)
-  if (NoVis == nullptr && VisData == nullptr) BuildPVS();
+  double BuildPVSTime = -1;
+  if (NoVis == nullptr && VisData == nullptr) {
+    BuildPVSTime = -Sys_Time();
+    BuildPVS();
+    BuildPVSTime += Sys_Time();
+  }
 
   double GroupLinesTime = -Sys_Time();
   GroupLines();
@@ -535,8 +540,9 @@ void VLevel::LoadMap(VName AMapName)
     //GCon->Logf("Sides            %f", SidesTime);
     //GCon->Logf("Lines 2          %f", Lines2Time);
     GCon->Logf("Nodes            %f", NodesTime);
-    //GCon->Logf("Block map        %f", BlockMapTime);
+    GCon->Logf("Block map        %f", BlockMapTime);
     GCon->Logf("Reject           %f", RejectTime);
+    if (BuildPVSTime >= 0.1) GCon->Logf("PVS build        %f", BuildPVSTime);
     //GCon->Logf("ACS              %f", AcsTime);
     //GCon->Logf("Group lines      %f", GroupLinesTime);
     //GCon->Logf("Flood zones      %f", FloodZonesTime);
