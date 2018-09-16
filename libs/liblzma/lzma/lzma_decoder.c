@@ -111,6 +111,7 @@ case seq ## _BITTREE: \
 #define len_decode(target, ld, pos_state, seq) \
 do { \
 	symbol = 1; \
+	/* fallthrough */ \
 case seq ## _CHOICE: \
 	rc_if_0(ld.choice, seq ## _CHOICE) { \
 		rc_update_0(ld.choice); \
@@ -120,6 +121,7 @@ case seq ## _CHOICE: \
 		target = symbol - LEN_LOW_SYMBOLS + MATCH_LEN_MIN; \
 	} else { \
 		rc_update_1(ld.choice); \
+	/* fallthrough */ \
 case seq ## _CHOICE2: \
 		rc_if_0(ld.choice2, seq ## _CHOICE2) { \
 			rc_update_0(ld.choice2); \
@@ -488,6 +490,7 @@ lzma_decode(lzma_coder *restrict coder, lzma_dict *restrict dictptr,
 		// output history.
 
 		rc_update_1(coder->is_match[state][pos_state]);
+		/* fallthrough */
 
 	case SEQ_IS_REP:
 		rc_if_0(coder->is_rep[state], SEQ_IS_REP) {
@@ -696,11 +699,13 @@ lzma_decode(lzma_coder *restrict coder, lzma_dict *restrict dictptr,
 				ret = LZMA_DATA_ERROR;
 				goto out;
 			}
+		/* fallthrough */
 
 	case SEQ_IS_REP0:
 			rc_if_0(coder->is_rep0[state], SEQ_IS_REP0) {
 				rc_update_0(coder->is_rep0[state]);
 				// The distance is rep0.
+		/* fallthrough */
 
 	case SEQ_IS_REP0_LONG:
 				rc_if_0(coder->is_rep0_long[state][pos_state],
@@ -709,6 +714,7 @@ lzma_decode(lzma_coder *restrict coder, lzma_dict *restrict dictptr,
 							state][pos_state]);
 
 					update_short_rep(state);
+		/* fallthrough */
 
 	case SEQ_SHORTREP:
 					if (unlikely(dict_put(&dict, dict_get(
@@ -727,6 +733,7 @@ lzma_decode(lzma_coder *restrict coder, lzma_dict *restrict dictptr,
 
 			} else {
 				rc_update_1(coder->is_rep0[state]);
+		/* fallthrough */
 
 	case SEQ_IS_REP1:
 				// The distance is rep1, rep2 or rep3. Once
@@ -742,6 +749,7 @@ lzma_decode(lzma_coder *restrict coder, lzma_dict *restrict dictptr,
 
 				} else {
 					rc_update_1(coder->is_rep1[state]);
+		/* fallthrough */
 	case SEQ_IS_REP2:
 					rc_if_0(coder->is_rep2[state],
 							SEQ_IS_REP2) {
@@ -781,6 +789,7 @@ lzma_decode(lzma_coder *restrict coder, lzma_dict *restrict dictptr,
 		// to trigger the algorithm to set len outside this range.
 		assert(len >= MATCH_LEN_MIN);
 		assert(len <= MATCH_LEN_MAX);
+		/* fallthrough */
 
 	case SEQ_COPY:
 		// Repeat len bytes from distance of rep0.

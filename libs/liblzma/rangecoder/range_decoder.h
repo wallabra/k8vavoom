@@ -164,6 +164,7 @@ do { \
 /// spotting the places where the decoder loop may be restarted is less
 /// obvious.
 #define rc_bit_case(prob, action0, action1, seq) \
+	/* fallthrough */ \
 	case seq: rc_bit(prob, action0, action1, seq)
 
 
