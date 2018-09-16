@@ -109,6 +109,9 @@ static __attribute__((unused)) inline float length2DSquared (const TVec &v) { re
 static __attribute__((unused)) inline TVec Normalise (const TVec &v) { return v/v.Length(); }
 static __attribute__((unused)) inline TVec normalise (const TVec &v) { return v/v.Length(); }
 
+static __attribute__((unused)) inline TVec NormaliseSafe (const TVec &v) { const float lensq = v.LengthSquared(); return (lensq >= 0.0001 ? v/sqrt(lensq) : TVec(0, 0, 0)); }
+static __attribute__((unused)) inline TVec normaliseSafe (const TVec &v) { const float lensq = v.LengthSquared(); return (lensq >= 0.0001 ? v/sqrt(lensq) : TVec(0, 0, 0)); }
+
 static __attribute__((unused)) inline TVec normalise2D (const TVec &v) { const float invlen = 1.0f/v.length2D(); return TVec(v.x*invlen, v.y*invlen, v.z); }
 
 static __attribute__((unused)) inline float DotProduct (const TVec &v1, const TVec &v2) { return v1.x*v2.x+v1.y*v2.y+v1.z*v2.z; }
