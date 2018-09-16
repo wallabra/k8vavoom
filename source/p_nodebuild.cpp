@@ -51,7 +51,7 @@ extern boolean_g lev_doing_hexen;
 
 #include "vector2d.h"
 
-static VCvarB loader_build_pvs("loader_build_pvs", true, "Build simple PVS on node rebuilding?", CVAR_Archive);
+static VCvarB loader_build_pvs("loader_build_pvs", false, "Build simple PVS on node rebuilding?", CVAR_Archive);
 static VCvarI loader_pvs_builder_threads("loader_pvs_builder_threads", "3", "Number of threads to use in PVS builder.", CVAR_Archive);
 
 
