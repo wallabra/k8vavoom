@@ -52,6 +52,8 @@
 #define CHECK_STACK_UNDERFLOW
 #define CHECK_FOR_EMPTY_STACK
 
+#define CHECK_FOR_INF_NAN_DIV
+
 
 #ifdef VMEXEC_RUNDUMP
 static int k8edIndent = 0;
@@ -1394,6 +1396,9 @@ func_loop:
 
       PR_VM_CASE(OPC_FDivide)
         if (!sp[-1].f) { cstDump(ip); Sys_Error("Division by 0"); }
+#ifdef CHECK_FOR_INF_NAN_DIV
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); if (isNaNF(sp[-1].f)) Sys_Error("Division by NAN"); Sys_Error("Division by INF"); }
+#endif
         BINOP_Q(f, /=);
         PR_VM_BREAK;
 
@@ -1439,6 +1444,10 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FDivVarDrop)
+        if (!sp[-1].f) { cstDump(ip); Sys_Error("Division by 0"); }
+#ifdef CHECK_FOR_INF_NAN_DIV
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); if (isNaNF(sp[-1].f)) Sys_Error("Division by NAN"); Sys_Error("Division by INF"); }
+#endif
         ASSIGNOP(float, f, /=);
         PR_VM_BREAK;
 
@@ -1543,6 +1552,10 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VIScaleVarDrop)
+        if (!sp[-1].f) { cstDump(ip); Sys_Error("Vector division by 0"); }
+#ifdef CHECK_FOR_INF_NAN_DIV
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); if (isNaNF(sp[-1].f)) Sys_Error("Vector division by NAN"); Sys_Error("Vector division by INF"); }
+#endif
         ++ip;
         *(TVec *)sp[-2].p /= sp[-1].f;
         sp -= 2;
