@@ -192,6 +192,7 @@ public:
 
   VAcsInfo *FindScript (int Number) const;
   VAcsInfo *FindScriptByName (int nameidx) const;
+  VAcsInfo *FindScriptByVName (VName aname) const;
   VAcsFunction *GetFunction (int funcnum, VAcsObject *&Object);
   int GetArrayVal (int ArrayIdx, int Index);
   void SetArrayVal (int ArrayIdx, int Index, int Value);
@@ -1165,6 +1166,23 @@ VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const
 
 //==========================================================================
 //
+//  VAcsObject::FindScriptByVName
+//
+//==========================================================================
+
+VAcsInfo *VAcsObject::FindScriptByVName (VName aname) const
+{
+  guard(VAcsObject::FindScriptByName);
+  if (aname == NAME_None) return nullptr;
+  for (int i = 0; i < NumScripts; i++) {
+    if (Scripts[i].Name == aname) return Scripts + i;
+  }
+  return nullptr;
+  unguard;
+}
+
+//==========================================================================
+//
 //  VAcsObject::GetFunction
 //
 //==========================================================================
@@ -1370,6 +1388,30 @@ VAcsInfo *VAcsLevel::FindScriptByName (int Number, VAcsObject *&Object)
   for (int i = 0; i < LoadedObjects.Num(); i++)
   {
     VAcsInfo *Found = LoadedObjects[i]->FindScriptByName(Number);
+    if (Found)
+    {
+      Object = LoadedObjects[i];
+      return Found;
+    }
+  }
+  return nullptr;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VAcsLevel::FindScriptByVName
+//
+//==========================================================================
+
+VAcsInfo *VAcsLevel::FindScriptByVName (VName aname, VAcsObject *&Object)
+{
+  guard(VAcsLevel::FindScriptByName);
+  if (aname == NAME_None) return nullptr;
+  for (int i = 0; i < LoadedObjects.Num(); i++)
+  {
+    VAcsInfo *Found = LoadedObjects[i]->FindScriptByVName(aname);
     if (Found)
     {
       Object = LoadedObjects[i];
@@ -2046,6 +2088,11 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         if (!Ent) return ActiveObject->Level->PutNewString("None");
         return ActiveObject->Level->PutNewString(*Ent->GetClass()->Name);
       }
+    /*
+    case ACSF_ACS_NamedExecute:
+      {
+      }
+    */
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
@@ -5340,45 +5387,69 @@ IMPLEMENT_FUNCTION(VLevel, StartTypedACScripts)
     RunNow);
 }
 
+
 //==========================================================================
 //
 //  Puke
 //
 //==========================================================================
-
-COMMAND(Puke)
-{
+COMMAND(Puke) {
   guard(COMMAND Puke);
-  if (Source == SRC_Command)
-  {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
 
-  if (Args.Num() < 2)
-  {
-    return;
-  }
+  if (Args.Num() < 2) return;
+
   int Script = atoi(*Args[1]);
-  if (Script == 0)
-  {
+  if (Script == 0) {
     //  Script 0 is special
     return;
   }
+
   int ScArgs[3];
-  for (int i = 0; i < 3; i++)
-  {
-    if (Args.Num() >= i + 3)
-    {
+  for (int i = 0; i < 3; i++) {
+    if (Args.Num() >= i + 3) {
       ScArgs[i] = atoi(*Args[i + 2]);
-    }
-    else
-    {
+    } else {
       ScArgs[i] = 0;
     }
   }
 
   Player->Level->XLevel->Acs->Start(abs(Script), 0, ScArgs[0], ScArgs[1],
     ScArgs[2], GGameInfo->Players[0]->MO, nullptr, 0, Script < 0, false, true);
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  PukeName
+//
+//==========================================================================
+COMMAND(PukeName) {
+  guard(COMMAND PukeName);
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+
+  if (Args.Num() < 2) return;
+
+  VName Script = VName(*Args[1]);
+  if (Script == NAME_None) return;
+
+  int ScArgs[3];
+  for (int i = 0; i < 3; i++) {
+    if (Args.Num() >= i + 3) {
+      ScArgs[i] = atoi(*Args[i + 2]);
+    } else {
+      ScArgs[i] = 0;
+    }
+  }
+
+  Player->Level->XLevel->Acs->Start(-Script.GetIndex(), 0, ScArgs[0], ScArgs[1],
+    ScArgs[2], GGameInfo->Players[0]->MO, nullptr, 0, /*Script < 0*/false/*always:wtf?*/, false, true);
   unguard;
 }

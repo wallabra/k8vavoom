@@ -35,52 +35,38 @@
 
 final void A_Jump(int Chance, state Label1, optional state Label2,
   optional state Label3, optional state Label4, optional state Label5,
-  optional state Label6, optional state Label7, optional state Label8)
+  optional state Label6, optional state Label7, optional state Label8,
+  optional state Label9, optional state Label10, optional state Label11,
+  optional state Label12, optional state Label13, optional state Label14,
+  optional state Label15, optional state Label16)
 {
-  if (P_Random() < Chance)
-  {
-    if (!specified_Label2)
-    {
+  if (P_Random() < Chance) {
+    if (!specified_Label2) {
       DoJump(Label1);
-    }
-    else
-    {
+    } else {
       array!state List;
       List[0] = Label1;
       List[1] = Label2;
-      if (specified_Label3)
-      {
-        List[2] = Label3;
-      }
-      if (specified_Label4)
-      {
-        List[3] = Label4;
-      }
-      if (specified_Label5)
-      {
-        List[4] = Label5;
-      }
-      if (specified_Label6)
-      {
-        List[5] = Label6;
-      }
-      if (specified_Label7)
-      {
-        List[6] = Label7;
-      }
-      if (specified_Label8)
-      {
-        List[7] = Label8;
-      }
-      DoJump(List[P_Random() % List.Num]);
+      if (specified_Label3) List[$] = Label3;
+      if (specified_Label4) List[$] = Label4;
+      if (specified_Label5) List[$] = Label5;
+      if (specified_Label6) List[$] = Label6;
+      if (specified_Label7) List[$] = Label7;
+      if (specified_Label8) List[$] = Label8;
+      if (specified_Label9) List[$] = Label9;
+      if (specified_Label10) List[$] = Label10;
+      if (specified_Label11) List[$] = Label11;
+      if (specified_Label12) List[$] = Label12;
+      if (specified_Label13) List[$] = Label13;
+      if (specified_Label14) List[$] = Label14;
+      if (specified_Label15) List[$] = Label15;
+      if (specified_Label16) List[$] = Label16;
+      DoJump(List[P_Random()%List.Num]);
     }
   }
 
   //  State jumps should not affect state chain results.
-  if (XLevel.StateCall)
-  {
-    XLevel.StateCall->Result = false;
-  }
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 //==========================================================================
