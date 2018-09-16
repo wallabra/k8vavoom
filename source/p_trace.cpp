@@ -350,10 +350,18 @@ bool VLevel::TraceLine(linetrace_t &Trace, const TVec &Start, const TVec &End,
   guard(VLevel::TraceLine);
   validcount++;
 
-  Trace.Start = Start;
-  Trace.End = End;
+  TVec realEnd = End;
 
-  Trace.Delta = End - Start;
+  //k8: HACK!
+  if (realEnd.x == Start.x && realEnd.y == Start.y) {
+    //fprintf(stderr, "TRACE: same point!\n");
+    realEnd.y += 0.2;
+  }
+
+  Trace.Start = Start;
+  Trace.End = realEnd;
+  Trace.Delta = realEnd-Start;
+
   Trace.Plane.SetPointDir(Start, Trace.Delta);
 
   Trace.LineStart = Trace.Start;
@@ -362,10 +370,9 @@ bool VLevel::TraceLine(linetrace_t &Trace, const TVec &Start, const TVec &End,
   Trace.SightEarlyOut = false;
 
   // the head node is the last node output
-  if (CrossBSPNode(Trace, NumNodes - 1))
-  {
-    Trace.LineEnd = End;
-    return CheckPlanes(Trace, PointInSubsector(End)->sector);
+  if (CrossBSPNode(Trace, NumNodes-1)) {
+    Trace.LineEnd = realEnd;
+    return CheckPlanes(Trace, PointInSubsector(realEnd)->sector);
   }
   return false;
   unguard;
