@@ -789,8 +789,6 @@ protected:
   static VCvarB clear;
   static VCvarB blend_sprites;
   static VCvarB ext_anisotropy;
-  static VCvarB ext_shaders;
-  static VCvarB ext_vertex_buffer_objects;
   static VCvarF maxdist;
   static VCvarB model_lighting;
   static VCvarB specular_highlights;
