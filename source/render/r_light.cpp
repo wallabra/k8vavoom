@@ -284,6 +284,8 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
       for (i = 0; i < 6; ++i) {
         // calculate texture point
         *spt = texorg+textoworld[0]*us+textoworld[1]*ut;
+        const TVec fms = facemid-(*spt);
+        if (length2DSquared(fms) < 0.001) break; // same point, got it
         if (Level->TraceLine(Trace, facemid, *spt, SPF_NOBLOCKSIGHT)) break; // got it
         if (i&1) {
           if (us > mids) {
@@ -304,7 +306,7 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
         }
 
         // move surf 8 pixels towards the centre
-        *spt += 8 * Normalise(facemid-(*spt));
+        *spt += 8*Normalise(fms);
       }
       if (i == 2) ++c_bad;
     }
@@ -373,7 +375,7 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf) {
     dist = CastRay(light->origin, *spt, squaredist);
     if (dist < 0) continue; // light doesn't reach
 
-    incoming = Normalise(light->origin-(*spt));
+    incoming = NormaliseSafe(light->origin-(*spt));
     angle = DotProduct(incoming, surf->plane->normal);
 
     angle = 0.5+0.5*angle;
@@ -583,13 +585,17 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     // check if we already have dynamic light around new origin
     if (!isPlr) {
       float dd = length2DSquared(dl->origin-lorg);
-      if (dd < radsq) {
+      if (dd <= 6) {
+        if (radius > 0 && dl->radius > radius) return nullptr;
+        dlreplace = dl;
+        //break; // stop searching, we have a perfect candidate
+      } else if (dd < radsq) {
         // if existing light radius is greater than new radius, drop new light, 'cause
         // we have too much lights around one point (prolly due to several things at one place)
         if (radius > 0 && dl->radius > radius) return nullptr;
         // otherwise, replace this light
         dlreplace = dl;
-        break; // stop searcing, we have a perfect candidate
+        //break; // stop searching, we have a perfect candidate
       }
     }
   }
@@ -881,7 +887,9 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
           float us = starts+s*step;
           float ut = startt+t*step;
           TVec spt = texorg+textoworld[0]*us+textoworld[1]*ut;
-          if (!Level->TraceLine(Trace, dl.origin, spt, SPF_NOBLOCKSIGHT)) continue;
+          if (length2DSquared(spt-dl.origin) > 1) {
+            if (!Level->TraceLine(Trace, dl.origin, spt, SPF_NOBLOCKSIGHT)) continue;
+          }
         }
         //
         int sd = (int)local.x-s*16;
