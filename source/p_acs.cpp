@@ -94,7 +94,7 @@ struct VAcsInfo
   vuint8 *Address;
   vuint16   Flags;
   vuint16   VarCount;
-  VName     Name; // NAME_None for unnamed scripts
+  VName     Name; // NAME_None for unnamed scripts; lowercased
   VAcs *RunningScript;
 };
 
@@ -192,7 +192,7 @@ public:
 
   VAcsInfo *FindScript (int Number) const;
   VAcsInfo *FindScriptByName (int nameidx) const;
-  VAcsInfo *FindScriptByVName (VName aname) const;
+  VAcsInfo *FindScriptByNameStr (const VStr &aname) const;
   VAcsFunction *GetFunction (int funcnum, VAcsObject *&Object);
   int GetArrayVal (int ArrayIdx, int Index);
   void SetArrayVal (int ArrayIdx, int Index, int Value);
@@ -908,7 +908,7 @@ void VAcsObject::LoadEnhancedObject()
         //GCon->Logf("ACS SNAM: %d names found", count);
         for (int f = 0; f < count; ++f) {
           //GCon->Logf("  #%d: <%s>", f, sbuf[f]);
-          if (f < NumScripts) Scripts[f].Name = VName(sbuf[f]);
+          if (f < NumScripts) Scripts[f].Name = VName(sbuf[f], VName::AddLower);
           //else GCon->Logf("    OOPS!");
         }
       } else {
@@ -1166,16 +1166,17 @@ VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const
 
 //==========================================================================
 //
-//  VAcsObject::FindScriptByVName
+//  VAcsObject::FindScriptByNameStr
 //
 //==========================================================================
 
-VAcsInfo *VAcsObject::FindScriptByVName (VName aname) const
+VAcsInfo *VAcsObject::FindScriptByNameStr (const VStr &aname) const
 {
   guard(VAcsObject::FindScriptByName);
-  if (aname == NAME_None) return nullptr;
+  if (aname.length() == 0) return nullptr;
+  VName nn = VName(*aname, VName::AddLower);
   for (int i = 0; i < NumScripts; i++) {
-    if (Scripts[i].Name == aname) return Scripts + i;
+    if (Scripts[i].Name == nn) return Scripts + i;
   }
   return nullptr;
   unguard;
@@ -1401,17 +1402,18 @@ VAcsInfo *VAcsLevel::FindScriptByName (int Number, VAcsObject *&Object)
 
 //==========================================================================
 //
-//  VAcsLevel::FindScriptByVName
+//  VAcsLevel::FindScriptByNameStr
 //
 //==========================================================================
 
-VAcsInfo *VAcsLevel::FindScriptByVName (VName aname, VAcsObject *&Object)
+VAcsInfo *VAcsLevel::FindScriptByNameStr (const VStr &aname, VAcsObject *&Object)
 {
   guard(VAcsLevel::FindScriptByName);
-  if (aname == NAME_None) return nullptr;
+  if (aname.length() == 0) return nullptr;
+  VName nn = VName(*aname, VName::AddLower);
   for (int i = 0; i < LoadedObjects.Num(); i++)
   {
-    VAcsInfo *Found = LoadedObjects[i]->FindScriptByVName(aname);
+    VAcsInfo *Found = LoadedObjects[i]->FindScriptByName(-nn.GetIndex());
     if (Found)
     {
       Object = LoadedObjects[i];
@@ -2088,11 +2090,6 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         if (!Ent) return ActiveObject->Level->PutNewString("None");
         return ActiveObject->Level->PutNewString(*Ent->GetClass()->Name);
       }
-    /*
-    case ACSF_ACS_NamedExecute:
-      {
-      }
-    */
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
@@ -5435,9 +5432,9 @@ COMMAND(PukeName) {
     return;
   }
 
-  if (Args.Num() < 2) return;
+  if (Args.Num() < 2 || Args[1].length() == 0) return;
 
-  VName Script = VName(*Args[1]);
+  VName Script = VName(*Args[1], VName::AddLower);
   if (Script == NAME_None) return;
 
   int ScArgs[3];
