@@ -5580,18 +5580,16 @@ final bool EV_SilentLineTeleport(line_t *line, int side, EntityEx thing,
       DstXAxis = Normalise(*l->v2 - *l->v1);
       DstYAxis = -l->normal;
       newPos = *l->v1 + pos * DstXAxis;
-      newPos.z = thing.Origin.z - GetPlanePointZ(
-        line->frontsector->botregion->floor, thing.Origin) +
-        GetPlanePointZ(l->frontsector->botregion->floor, newPos);
+      newPos.z = thing.Origin.z - GetPlanePointZ(ref *line->frontsector->botregion->floor, thing.Origin) +
+        GetPlanePointZ(ref *l->frontsector->botregion->floor, newPos);
     }
     else
     {
       DstXAxis = Normalise(*l->v1 - *l->v2);
       DstYAxis = l->normal;
       newPos = *l->v2 + pos * DstXAxis;
-      newPos.z = thing.Origin.z - GetPlanePointZ(
-        line->frontsector->botregion->floor, thing.Origin) +
-        GetPlanePointZ(l->backsector->botregion->floor, newPos);
+      newPos.z = thing.Origin.z - GetPlanePointZ(ref *line->frontsector->botregion->floor, thing.Origin) +
+        GetPlanePointZ(ref *l->backsector->botregion->floor, newPos);
     }
 
     // Attempt to teleport, aborting if blocked

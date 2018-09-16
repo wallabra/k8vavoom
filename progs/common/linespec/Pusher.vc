@@ -312,7 +312,7 @@ override void Tick(float DeltaTime)
         floor = &sec->heightsec->floor;
       }
       if (!thing.WaterLevel &&
-        thing.Origin.z > GetPlanePointZ(floor, thing.Origin))
+        thing.Origin.z > GetPlanePointZ(ref *floor, thing.Origin))
       {
         // above ground
         xspeed = 0;

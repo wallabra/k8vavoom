@@ -305,7 +305,7 @@ void SlopeLineToPoint(Level InLevel, mthing_t *mthing, bool IsCeiling)
     plane = &sec->ceiling;
   }
   p1 = vector(mthing->x, mthing->y, 0.0);
-  p1.z = GetPlanePointZ(plane, p1) + mthing->height;
+  p1.z = GetPlanePointZ(ref *plane, p1) + mthing->height;
 
   for (i = 0; i < InLevel.Lines.length; i++)
   {
@@ -337,9 +337,9 @@ void SlopeLineToPoint(Level InLevel, mthing_t *mthing, bool IsCeiling)
     }
 
     p2 = *line->v1;
-    p2.z = GetPlanePointZ(plane, p2);
+    p2.z = GetPlanePointZ(ref *plane, p2);
     v1 = *line->v2 - *line->v1;
-    v1.z = GetPlanePointZ(plane, *line->v2) - p2.z;
+    v1.z = GetPlanePointZ(ref *plane, *line->v2) - p2.z;
     v2 = p1 - *line->v1;
     v2.z = p1.z - p2.z;
 
@@ -363,6 +363,15 @@ void SlopeLineToPoint(Level InLevel, mthing_t *mthing, bool IsCeiling)
   }
 }
 
+private final int calcSecIdx (Level InLevel, sector_t *sec) {
+  if (!sec) FatalError("WUTAFU?!");
+  foreach (int f; 0..InLevel.Sectors.length) {
+    if (&InLevel.Sectors[f] == sec) return f;
+  }
+  FatalError("WUTAFU(1)?!");
+  return -1;
+}
+
 //===========================================================================
 //
 //  SetSlope
@@ -379,16 +388,21 @@ void SetSlope(Level InLevel, mthing_t *mthing, bool IsCeiling)
   TVec      norm;
 
   sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
+  if (!sec) FatalError("point (%f,%f) is not in level", mthing->x, mthing->y);
   if (!IsCeiling)
   {
     plane = &sec->floor;
+    //if (plane.normal.z == 0) FatalError("SetSlope: invalid floor in sector #%d (%v)", calcSecIdx(InLevel, sec), plane.normal);
+    //print("SetSlope; sector %d (floor); %s; plane.dist=%f; plane.normal=%v", calcSecIdx(InLevel, sec), plane, plane.dist, plane.normal);
   }
   else
   {
     plane = &sec->ceiling;
+    //if (plane.normal.z == 0) FatalError("SetSlope: invalid ceiling in sector #%d (%v)", calcSecIdx(InLevel, sec), plane.normal);
+    //print("SetSlope; sector %d (ceiling); %s; plane.dist=%f; plane.normal=%v", calcSecIdx(InLevel, sec), plane, plane.dist, plane.normal);
   }
   p1 = vector(mthing->x, mthing->y, 0.0);
-  p1.z = GetPlanePointZ(plane, p1) + mthing->height;
+  p1.z = GetPlanePointZ(ref *plane, p1) + mthing->height;
 
   if (mthing->arg1 >= 180)
   {
