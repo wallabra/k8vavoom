@@ -267,6 +267,8 @@ VRenderLevelShared::VRenderLevelShared(VLevel *ALevel)
 //
 //==========================================================================
 bool VRenderLevelShared::RadiusCastRay (const TVec &org, const TVec &dest, float radius, bool advanced) {
+  float dsq = length2DSquared(org-dest);
+  if (dsq <= 1) return true;
   linetrace_t Trace;
   bool canHit = !!Level->TraceLine(Trace, org, dest, SPF_NOBLOCKSIGHT);
   if (canHit) return true;
