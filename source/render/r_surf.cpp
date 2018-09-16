@@ -290,13 +290,20 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   float maxs = -99999.0;
 
   for (int i = 0; i < f->count; ++i) {
+    if (!isFiniteF(f->verts[i].x) || !isFiniteF(f->verts[i].y) || !isFiniteF(f->verts[i].z)) {
+      GCon->Logf("ERROR: invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG!",
+        i, f->verts[i].x, f->verts[i].y, f->verts[i].z, axis.x, axis.y, axis.z);
+      if (!isFiniteF(f->verts[i].x)) f->verts[i].x = 0;
+      if (!isFiniteF(f->verts[i].y)) f->verts[i].y = 0;
+      if (!isFiniteF(f->verts[i].z)) f->verts[i].z = 0;
+    }
     const float dot = DotProduct(f->verts[i], axis);
     if (dot < mins) mins = dot;
     if (dot > maxs) maxs = dot;
   }
 
   if (maxs-mins <= subdivide_size) {
-    if (nextaxis) f = SubdivideFace(f, *nextaxis, nullptr);
+    if (nextaxis) return SubdivideFace(f, *nextaxis, nullptr);
     return f;
   }
 
@@ -360,6 +367,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
            if (plane.normal[j] == 1) mid[j] = plane.dist;
       else if (plane.normal[j] == -1) mid[j] = -plane.dist;
       else mid[j] = p1[j]+dot*(p2[j]-p1[j]);
+      //if (!isFiniteF(mid[j])) GCon->Logf("FUCKED mid #%d (%f)! p1=%f; p2=%f; dot=%f", j, mid[j], p1[j], p2[j], dot);
     }
 
     verts1[count1++] = mid;
@@ -416,12 +424,19 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   }
 #endif
 
+  /*
+  fprintf(stderr, "f->count=%d; count1=%d; count2=%d; axis=(%f,%f,%f)\n", f->count, count1, count2, axis.x, axis.y, axis.z);
+  fprintf(stderr, "=== F ===\n"); for (int ff = 0; ff < f->count; ++ff) fprintf(stderr, "  %d: (%f,%f,%f)\n", ff, f->verts[ff].x, f->verts[ff].y, f->verts[ff].z);
+  fprintf(stderr, "=== 1 ===\n"); for (int ff = 0; ff < count1; ++ff) fprintf(stderr, "  %d: (%f,%f,%f)\n", ff, verts1[ff].x, verts1[ff].y, verts1[ff].z);
+  fprintf(stderr, "=== 2 ===\n"); for (int ff = 0; ff < count2; ++ff) fprintf(stderr, "  %d: (%f,%f,%f)\n", ff, verts2[ff].x, verts2[ff].y, verts2[ff].z);
+  */
+
   surface_t *next = f->next;
   Z_Free(f);
 
   surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(count2-1)*sizeof(TVec));
   back->count = count2;
-  memcpy(back->verts, verts2, count2 * sizeof(TVec));
+  memcpy(back->verts, verts2, count2*sizeof(TVec));
 
   surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(count1-1)*sizeof(TVec));
   front->count = count1;
