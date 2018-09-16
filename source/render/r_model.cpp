@@ -744,6 +744,7 @@ static void Mod_SwapAliasModel(VMeshModel *mod)
   //
   bool hadError = false;
   bool showError = true;
+  bool cannotFix = false;
   mod->Frames.SetNum(pmodel->numframes);
   mod->AllVerts.SetNum(pmodel->numframes * VertMap.Num());
   mod->AllNormals.SetNum(pmodel->numframes * VertMap.Num());
@@ -802,13 +803,12 @@ static void Mod_SwapAliasModel(VMeshModel *mod)
           }
         }
         if (!ok) {
-          if (!dbg_alias_model_error) {
-            GCon->Logf("Alias model '%s' has degenerate triangle %d; v1=(%f,%f,%f), v2=(%f,%f,%f); v3=(%f,%f,%f)",
-              *mod->Name, j, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z);
+          if (dbg_alias_model_error) {
+            GCon->Logf("  CANNOT FIX!");
           }
-          GCon->Logf("  CANNOT FIX!");
+          cannotFix = true;
           PlaneNormal = TVec(0, 0, 1);
-          showError = false;
+          //showError = false;
         }
         hadError = true;
       }
@@ -819,7 +819,7 @@ static void Mod_SwapAliasModel(VMeshModel *mod)
     pframe = (mframe_t*)((byte*)pframe + pmodel->framesize);
   }
   if (!dbg_alias_model_error && hadError && showError) {
-    GCon->Logf("WARNING: Alias model '%s' has some degenerate triangles!", *mod->Name);
+    GCon->Logf("WARNING: Alias model '%s' has some degenerate triangles!%s", *mod->Name, (cannotFix ? " (cannot fix)" : ""));
   }
 
   //
