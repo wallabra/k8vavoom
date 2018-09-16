@@ -639,8 +639,12 @@ void pre_resample(Sample* sp)
 		v3 = *(vptr + 1);
 		v4 = *(vptr + 2);
 		xdiff = FSCALENEG(ofs & FRACTION_MASK, FRACTION_BITS);
+#if defined(USE_FPU_MATH)
+		*dest++ = v2;
+#else
 		*dest++ = (sample_t)(v2 + (xdiff / 6.0) * (-2 * v1 - 3 * v2 + 6 * v3 - v4 +
 			xdiff * (3 * (v1 - 2 * v2 + v3) + xdiff * (-v1 + 3 * (v2 - v3) + v4))));
+#endif
 		ofs += incr;
 	}
 
