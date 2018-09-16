@@ -148,6 +148,7 @@ IMPLEMENT_FUNCTION(VObject, VectorAngles) {
 IMPLEMENT_FUNCTION(VObject, GetPlanePointZ) {
   P_GET_VEC(point);
   P_GET_PTR(TPlane, plane);
+  // /*if (plane->normal.z == 0)*/ { fprintf(stderr, "*** %p; dist=%f; normal=(%f,%f,%f)\n", plane, plane->dist, plane->normal.x, plane->normal.y, plane->normal.z); /*VObject::VMDumpCallStack(); Sys_Error("FUUUUUUU");*/ }
   RET_FLOAT(plane->GetPointZ(point));
 }
 
