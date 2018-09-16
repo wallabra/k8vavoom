@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------
 //
 //  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
+//  (C) 2017-2018 The EDGE Team
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
@@ -865,11 +866,12 @@ static void DebugShowSegs(superblock_t *seg_list)
 }
 #endif
 
+
 //
 // BuildNodes
 //
 glbsp_ret_e BuildNodes(superblock_t *seg_list,
-    node_t ** N, subsec_t ** S, int depth, node_t *stale_nd)
+    node_t ** N, subsec_t ** S, int depth, const bbox_t *bbox)
 {
   node_t *node;
   seg_t *best;
@@ -878,7 +880,7 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
   superblock_t *lefts;
 
   intersection_t *cut_list;
-  int stale_opposite = 0;
+  //int stale_opposite = 0;
 
   glbsp_ret_e ret;
 
@@ -894,7 +896,7 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
 # endif
 
   /* pick best node to use.  None indicates convexicity */
-  best = PickNode(seg_list, depth, &stale_nd, &stale_opposite);
+  best = PickNode(seg_list, depth, bbox);
 
   if (best == NULL)
   {
@@ -980,8 +982,7 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
 # endif
 
   ret = BuildNodes(lefts,  &node->l.node, &node->l.subsec, depth+1,
-      stale_nd ? (stale_opposite ? stale_nd->r.node : stale_nd->l.node)
-      : NULL);
+      &node->l.bounds);
   FreeSuper(lefts);
 
   if (ret != GLBSP_E_OK)
@@ -995,8 +996,7 @@ glbsp_ret_e BuildNodes(superblock_t *seg_list,
 # endif
 
   ret = BuildNodes(rights, &node->r.node, &node->r.subsec, depth+1,
-      stale_nd ? (stale_opposite ? stale_nd->l.node : stale_nd->r.node)
-      : NULL);
+      &node->r.bounds);
   FreeSuper(rights);
 
 # if DEBUG_BUILDER

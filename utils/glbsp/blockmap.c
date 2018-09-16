@@ -5,6 +5,7 @@
 //  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
+//  (C) 2017-2018 The EDGE Team
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -591,7 +592,11 @@ void PutBlockmap(void)
   // of shorts for the actual line lists.
 
   if (block_count > cur_info->block_limit)
-    TruncateBlockmap();
+  {
+    //TruncateBlockmap();
+    MarkSoftFailure(LIMIT_BLOCKMAP);
+    block_overflowed = TRUE;
+  }
 
   // initial phase: create internal blockmap containing the index of
   // all lines in each block.

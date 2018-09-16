@@ -5,6 +5,7 @@
 //  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
+//  (C) 2017-2018 The EDGE Team
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -427,8 +428,8 @@ void GlbspFree(const char *str)
 static glbsp_ret_e HandleLevel(void)
 {
   superblock_t *seg_list;
+  bbox_t seg_bbox;
   node_t *root_node;
-  node_t *root_stale_node;
   subsec_t *root_sub;
 
   glbsp_ret_e ret;
@@ -448,11 +449,10 @@ static glbsp_ret_e HandleLevel(void)
   // create initial segs
   seg_list = CreateSegs();
 
-  root_stale_node = (num_stale_nodes == 0) ? NULL :
-      LookupStaleNode(num_stale_nodes - 1);
+  FindLimits(seg_list, &seg_bbox);
 
   // recursively create nodes
-  ret = BuildNodes(seg_list, &root_node, &root_sub, 0, root_stale_node);
+  ret = BuildNodes(seg_list, &root_node, &root_sub, 0, &seg_bbox);
   FreeSuper(seg_list);
 
   if (ret == GLBSP_E_OK)

@@ -5,6 +5,7 @@
 //  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
+//  (C) 2017-2018 The EDGE Team
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -371,7 +372,7 @@ extern int num_things;
 extern int num_segs;
 extern int num_subsecs;
 extern int num_nodes;
-extern int num_stale_nodes;
+//extern int num_stale_nodes;
 
 extern int num_normal_vert;
 extern int num_gl_vert;
@@ -389,7 +390,7 @@ thing_t *NewThing(void);
 seg_t *NewSeg(void);
 subsec_t *NewSubsec(void);
 node_t *NewNode(void);
-node_t *NewStaleNode(void);
+//node_t *NewStaleNode(void);
 wall_tip_t *NewWallTip(void);
 
 // lookup routines
@@ -401,7 +402,7 @@ thing_t *LookupThing(int index);
 seg_t *LookupSeg(int index);
 subsec_t *LookupSubsec(int index);
 node_t *LookupNode(int index);
-node_t *LookupStaleNode(int index);
+//node_t *LookupStaleNode(int index);
 
 // check whether the current level already has normal nodes
 int CheckForNormalNodes(void);

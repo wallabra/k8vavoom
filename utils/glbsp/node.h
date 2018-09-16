@@ -5,6 +5,7 @@
 //  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
+//  (C) 2017-2018 The EDGE Team
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -53,7 +54,7 @@ void FreeSuper(superblock_t *block);
 // returns GLBSP_E_OK, or GLBSP_E_Cancelled if user stopped it.
 //
 glbsp_ret_e BuildNodes(superblock_t *seg_list,
-    node_t ** N, subsec_t ** S, int depth, node_t *stale_nd);
+    node_t ** N, subsec_t ** S, int depth, const bbox_t *bbox);
 
 // compute the height of the bsp tree, starting at 'node'.
 int ComputeBspHeight(node_t *node);

@@ -5,6 +5,7 @@
 //  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
+//  (C) 2017-2018 The EDGE Team
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -22,9 +23,8 @@
 #define __GLBSP_GLBSP_H__
 
 
-#define GLBSP_VER  "2.24"
-#define GLBSP_VER_HEX  0x224
-
+#define GLBSP_VER  "2.27"
+#define GLBSP_VER_HEX  0x227
 
 // certain GCC attributes can be useful
 #undef GCCATTR
