@@ -565,10 +565,12 @@ void FL_Init () {
   } else {
     static const char *defaultBaseDirs[] = {
 #ifndef _WIN32
-      "!/../share/vavoom",
       "/opt/vavoom/share/vavoom",
       "/usr/local/share/vavoom",
       "/usr/share/vavoom",
+      "~/.vavoom/iwads",
+      "~/.vavoom",
+      "!/../share/vavoom",
 #else
       "!/share",
 #endif
@@ -576,7 +578,18 @@ void FL_Init () {
     };
     for (const char **tbd = defaultBaseDirs; *tbd; ++tbd) {
       VStr dir = VStr(*tbd);
-      if (dir[0] == '!') dir = getBinaryDir()+dir;
+      if (dir[0] == '!') {
+        dir.chopLeft(1);
+        dir = getBinaryDir()+dir;
+      } else if (dir[0] == '~') {
+        dir.chopLeft(1);
+        const char *hdir = getenv("HOME");
+        if (hdir && hdir[0]) {
+          dir = VStr(hdir)+dir;
+        } else {
+          continue;
+        }
+      }
       if (Sys_DirExists(dir)) {
         fl_basedir = dir;
         break;
