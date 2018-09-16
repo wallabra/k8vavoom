@@ -39,7 +39,8 @@
 #include "sv_local.h"
 #endif
 
-static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor??", 0/*CVAR_Archive*/);
+static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", 0/*CVAR_Archive*/);
+static VCvarB dbg_use_old_decal_pp("dbg_use_old_decal_pp", false, "Use old decal processor? (for timing)", 0/*CVAR_Archive*/);
 
 
 // MACROS ------------------------------------------------------------------
@@ -499,7 +500,11 @@ void VLevel::LoadMap(VName AMapName)
 
   GCon->Logf("Building Lidedef VV list...");
   double LineVVListTime = -Sys_Time();
-  BuildDecalsVVList();
+  if (dbg_use_old_decal_pp) {
+    BuildDecalsVVListOld();
+  } else {
+    BuildDecalsVVList();
+  }
   LineVVListTime += Sys_Time();
 
   //
