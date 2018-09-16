@@ -1,0 +1,27 @@
+// FAIL
+class Main : Object;
+
+
+struct T {
+  int v;
+  string s;
+}
+
+struct T2 : T {
+  int n;
+}
+
+
+void test (const ref T t) {
+  writeln(t.v, " : <", t.s, ">");
+}
+
+
+void main () {
+  T2 t;
+  t.v = 666;
+  t.s = "Alice";
+  t.n = 69;
+  T2 *tp = &t;
+  test(ref tp);
+}

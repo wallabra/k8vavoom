@@ -1,0 +1,4 @@
+ztest_optref_04.vc:26: Type mismatch, types `T2*` and `T` are not compatible
+ztest_optref_04.vc:26: Out parameter types must be equal for arg #1 (want `T`, but got `T2*`)
+FATAL: Confused by previous errors, bailing out
+
