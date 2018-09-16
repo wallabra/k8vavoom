@@ -109,6 +109,7 @@ TArray<VStr> GetWadPk3List (bool fullpath) {
     if (!found) res.Append(fname);
     */
     VStr fname = wpklist[f].path;
+    //if (fname == "/opt/vavoom/share/vavoom/doomu.wad") fname = "/usr/local/share/vavoom/doomu.wad";
     if (!fullpath && !wpklist[f].isSystem) fname = fname.extractFileName();
     res.append(fname);
   }
@@ -433,13 +434,13 @@ static void ParseBase (const VStr &name) {
 
   IWadIndex = SearchPaths.length();
   //GCon->Logf("MAIN WAD(1): '%s'", *MainWadPath);
-  wpkAppend(mainWadPath, true); // system file
+  wpkAppend(mainWadPath, false); // mark iwad as "non-system" file, so path won't be stored in savegame
   AddAnyFile(mainWadPath, false, gmi.FixVoices);
 
   for (int j = 0; j < gmi.AddFiles.length(); j++) {
     VStr FName = FindMainWad(gmi.AddFiles[j]);
     if (FName.IsEmpty()) Sys_Error("Required file \"%s\" not found", *gmi.AddFiles[j]);
-    wpkAppend(FName, true); // system file
+    wpkAppend(FName, false); // mark additional files as "non-system", so path won't be stored in savegame
     AddAnyFile(FName, false);
   }
 
