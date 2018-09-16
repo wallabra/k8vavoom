@@ -653,7 +653,7 @@ void VLevel::BuildNodes()
   NoVis = new vuint8[(NumSubsectors + 7) / 8];
   memset(NoVis, 0xff, (NumSubsectors + 7) / 8);
   */
-  BuildPVS();
+  //BuildPVS();
   unguard;
 }
 
@@ -736,7 +736,7 @@ struct PVSThreadInfo {
 };
 
 static PVSThreadInfo pvsTreadList[PVSThreadMax];
-static int pvsNextPortal, pvsMaxPortals; // next portal to process
+static int pvsNextPortal, pvsMaxPortals, pvsLastReport; // next portal to process
 static mythread_mutex pvsNPLock;
 static double pvsLastReportTime;
 
@@ -744,7 +744,8 @@ static double pvsLastReportTime;
 static int getNextPortalNum () {
   mythread_mutex_lock(&pvsNPLock);
   int res = pvsNextPortal++;
-  if (pvsMaxPortals >= 512) {
+  if (res-pvsLastReport >= 512) {
+    pvsLastReport = res;
     const double tt = Sys_Time();
     if (tt-pvsLastReportTime >= 2.5) {
       pvsLastReportTime = tt;
@@ -819,6 +820,7 @@ static MYTHREAD_RET_TYPE pvsThreadWorker (void *aarg) {
 
 static void pvsStartThreads (const PVSInfo &anfo) {
   pvsNextPortal = 0;
+  pvsLastReport = 0;
   pvsMaxPortals = anfo.numportals;
   int pvsThreadsToUse = loader_pvs_builder_threads;
   if (pvsThreadsToUse < 1) pvsThreadsToUse = 1; else if (pvsThreadsToUse > PVSThreadMax) pvsThreadsToUse = PVSThreadMax;
