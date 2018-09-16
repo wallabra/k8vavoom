@@ -42,6 +42,8 @@
 static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", 0/*CVAR_Archive*/);
 static VCvarB dbg_use_old_decal_pp("dbg_use_old_decal_pp", false, "Use old decal processor? (for timing)", 0/*CVAR_Archive*/);
 
+VCvarB loader_cache_rebuilt_data("loader_cache_rebuilt_data", true, "Cache rebuilt nodes, pvs, blockmap, and so on?", CVAR_Archive);
+
 
 // MACROS ------------------------------------------------------------------
 
@@ -107,12 +109,12 @@ enum
 static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?", 0);
 static VCvarB deepwater_hacks("deepwater_hacks", true, "Apply DeepWater hacks? (not working right yet)", 0);
 static VCvarB build_blockmap("build_blockmap", false, "Build blockmap?", CVAR_Archive);
-static VCvarB build_gwa("build_gwa", false, "Build GWA?", CVAR_Archive);
+static VCvarB build_gwa("build_gwa", false, "Build GWA?", 0/*CVAR_Archive*/);
 static VCvarB show_level_load_times("show_level_load_times", false, "Show loading times?", CVAR_Archive);
 
 // there seems to be a bug in compressed GL nodes reader, hence the flag
-static VCvarB nodes_allow_compressed_old("nodes_allow_compressed_old", true, "Allow loading v0 compressed GL nodes?", CVAR_Archive);
-static VCvarB nodes_allow_compressed_new("nodes_allow_compressed_new", false, "Allow loading v1+ compressed GL nodes?", CVAR_Archive);
+//static VCvarB nodes_allow_compressed_old("nodes_allow_compressed_old", true, "Allow loading v0 compressed GL nodes?", CVAR_Archive);
+static VCvarB nodes_allow_compressed("nodes_allow_compressed", false, "Allow loading v1+ compressed GL nodes?", CVAR_Archive);
 
 static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", false, "Force node rebuilding?", CVAR_Archive);
 
@@ -286,12 +288,12 @@ void VLevel::LoadMap(VName AMapName)
         {
           UseComprGLNodes = true;
           CompressedGLNodesLump = SubsectorsLump;
-        } else if ((GLNodesHdr[0] == 'Z' || GLNodesHdr[0] == 'X') &&
+        } /*else if ((GLNodesHdr[0] == 'Z' || GLNodesHdr[0] == 'X') &&
                     GLNodesHdr[1] == 'N' && GLNodesHdr[2] == 'O' && GLNodesHdr[3] == 'D')
         {
           UseComprGLNodes = true;
           CompressedGLNodesLump = SubsectorsLump;
-        }
+        }*/
       }
       delete TmpStrm;
       TmpStrm = nullptr;
@@ -300,40 +302,30 @@ void VLevel::LoadMap(VName AMapName)
   InitTime += Sys_Time();
 
   double NodeBuildTime = -Sys_Time();
-  if (!loader_force_nodes_rebuild && !(LevelFlags&LF_TextMap) && !UseComprGLNodes)
-  {
+  if (!loader_force_nodes_rebuild && !(LevelFlags&LF_TextMap) && !UseComprGLNodes) {
     gl_lumpnum = FindGLNodes(MapLumpName);
 #ifdef CLIENT
-    if (build_gwa)
-    {
+    if (build_gwa) {
       //  If missing GL nodes or VIS data, then build them.
-      if (gl_lumpnum < lumpnum)
-      {
+      if (gl_lumpnum < lumpnum) {
         W_BuildGLNodes(lumpnum);
         gl_lumpnum = FindGLNodes(MapLumpName);
-      }
-      else if (W_LumpName(gl_lumpnum + ML_GL_PVS) != NAME_gl_pvs ||
-        W_LumpLength(gl_lumpnum + ML_GL_PVS) == 0)
-      {
+      } else if (W_LumpName(gl_lumpnum+ML_GL_PVS) != NAME_gl_pvs || W_LumpLength(gl_lumpnum+ML_GL_PVS) == 0) {
         W_BuildPVS(lumpnum, gl_lumpnum);
         lumpnum = W_GetNumForName(MapLumpName);
         gl_lumpnum = FindGLNodes(MapLumpName);
       }
     }
 #endif
-    if (gl_lumpnum < lumpnum)
-    {
-      if (build_gwa)
-      {
+    if (gl_lumpnum < lumpnum) {
+      if (build_gwa) {
         Host_Error("Map %s is missing GL-Nodes\n", *MapName);
-      }
-      else
-      {
+      } else {
         NeedNodesBuild = true;
       }
     }
   } else {
-    NeedNodesBuild = true;
+    if ((LevelFlags&LF_TextMap) != 0 || !UseComprGLNodes) NeedNodesBuild = true;
   }
   NodeBuildTime += Sys_Time();
 
@@ -346,14 +338,11 @@ void VLevel::LoadMap(VName AMapName)
   double SidesTime = 0;
   double DecalProcessingTime = 0;
   //  Begin processing map lumps.
-  if (LevelFlags & LF_TextMap)
-  {
+  if (LevelFlags & LF_TextMap) {
     VertexTime = -Sys_Time();
-    LoadTextMap(lumpnum + 1, MInfo);
+    LoadTextMap(lumpnum+1, MInfo);
     VertexTime += Sys_Time();
-  }
-  else
-  {
+  } else {
     // Note: most of this ordering is important
     VertexTime = -Sys_Time();
     LevelFlags &= ~LF_GLNodesV5;
@@ -363,15 +352,12 @@ void VLevel::LoadMap(VName AMapName)
     LoadSectors(SectorsLump);
     SectorsTime += Sys_Time();
     LinesTime = -Sys_Time();
-    if (!(LevelFlags & LF_Extended))
-    {
+    if (!(LevelFlags&LF_Extended)) {
       LoadLineDefs1(LinesLump, NumBaseVerts, MInfo);
       LinesTime += Sys_Time();
       ThingsTime = -Sys_Time();
       LoadThings1(ThingsLump);
-    }
-    else
-    {
+    } else {
       LoadLineDefs2(LinesLump, NumBaseVerts, MInfo);
       LinesTime += Sys_Time();
       ThingsTime = -Sys_Time();
@@ -380,9 +366,8 @@ void VLevel::LoadMap(VName AMapName)
     ThingsTime += Sys_Time();
 
     TranslTime = -Sys_Time();
-    if (!(LevelFlags & LF_Extended))
-    {
-      //  Translate level to Hexen format
+    if (!(LevelFlags&LF_Extended)) {
+      // translate level to Hexen format
       GGameInfo->eventTranslateLevel(this);
     }
     TranslTime += Sys_Time();
@@ -397,24 +382,19 @@ void VLevel::LoadMap(VName AMapName)
   Lines2Time += Sys_Time();
 
   double NodesTime = -Sys_Time();
-  if (NeedNodesBuild)
-  {
+  if (NeedNodesBuild) {
     GCon->Logf("building GL nodes...");
     BuildNodes();
-  }
-  else if (UseComprGLNodes)
-  {
+  } else if (UseComprGLNodes) {
     if (!LoadCompressedGLNodes(CompressedGLNodesLump, GLNodesHdr)) {
       GCon->Logf("rebuilding GL nodes...");
       BuildNodes();
     }
-  }
-  else
-  {
-    LoadGLSegs(gl_lumpnum + ML_GL_SEGS, NumBaseVerts);
-    LoadSubsectors(gl_lumpnum + ML_GL_SSECT);
-    LoadNodes(gl_lumpnum + ML_GL_NODES);
-    LoadPVS(gl_lumpnum + ML_GL_PVS);
+  } else {
+    LoadGLSegs(gl_lumpnum+ML_GL_SEGS, NumBaseVerts);
+    LoadSubsectors(gl_lumpnum+ML_GL_SSECT);
+    LoadNodes(gl_lumpnum+ML_GL_NODES);
+    LoadPVS(gl_lumpnum+ML_GL_PVS);
   }
   NodesTime += Sys_Time();
 
@@ -1644,10 +1624,6 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
       (hdr[3] == 'N' || hdr[3] == '2' || hdr[3] == '3'))
   {
     // ok
-  } else if ((hdr[0] == 'Z' || hdr[0] == 'X') &&
-              hdr[1] == 'N' && hdr[2] == 'O' && hdr[3] == 'D')
-  {
-    // ok
   } else {
     delete BaseStrm;
     GCon->Logf("WARNING: invalid GL nodes signature (VaVoom will use internal node builder)");
@@ -1678,27 +1654,24 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
 
   int type;
   switch (hdr[3]) {
-    case 'D': type = 0; break;
+    //case 'D': type = 0; break;
     case 'N': type = 1; break;
     case '2': type = 2; break;
     case '3': type = 3; break;
-    default: delete Strm; delete DataStrm; return false; // just in case
+    default:
+      delete Strm;
+      delete DataStrm;
+      GCon->Logf("WARNING: this obsolete version of GL nodes is disabled (VaVoom will use internal node builder)");
+      return false;
   }
 
   GCon->Logf("NOTE: found %scompressed GL nodes, type %d", (hdr[0] == 'X' ? "un" : ""), type);
 
-  if (type == 0) {
-    if (!nodes_allow_compressed_old) {
-      delete Strm; delete DataStrm;
-      GCon->Logf("WARNING: this version of GL nodes is disabled, VaVoom will use internal node builder");
-      return false;
-    }
-  } else {
-    if (!nodes_allow_compressed_new) {
-      delete Strm; delete DataStrm;
-      GCon->Logf("WARNING: this version of GL nodes is disabled, VaVoom will use internal node builder");
-      return false;
-    }
+  if (!nodes_allow_compressed) {
+    delete Strm;
+    delete DataStrm;
+    GCon->Logf("WARNING: this new version of GL nodes is disabled (VaVoom will use internal node builder)");
+    return false;
   }
 
   // read extra vertex data
@@ -1707,13 +1680,15 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   *Strm << OrgVerts << NewVerts;
 
   if (Strm->IsError()) {
-    delete Strm; delete DataStrm;
+    delete Strm;
+    delete DataStrm;
     GCon->Logf("WARNING: error reading GL nodes (VaVoom will use internal node builder)");
     return false;
   }
 
   if (OrgVerts != (vuint32)NumVertexes) {
-    delete Strm; delete DataStrm;
+    delete Strm;
+    delete DataStrm;
     GCon->Logf("WARNING: error reading GL nodes (got %u vertexes, expected %d vertexes)", OrgVerts, NumVertexes);
     return false;
   }
@@ -1723,7 +1698,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     NumVertexes = OrgVerts+NewVerts;
     Vertexes = new vertex_t[NumVertexes];
     if (NumVertexes) memset((void *)Vertexes, 0, sizeof(vertex_t)*NumVertexes);
-    memcpy((void *)Vertexes, (void *)OldVerts, OrgVerts * sizeof(vertex_t));
+    if (OldVerts) memcpy((void *)Vertexes, (void *)OldVerts, OrgVerts*sizeof(vertex_t));
     // fix up vertex pointers in linedefs
     for (int i = 0; i < NumLines; ++i) {
       line_t &L = Lines[i];
@@ -1749,6 +1724,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   int FirstSeg = 0;
   guard(VLevel::LoadCompressedGLNodes::Subsectors);
   NumSubsectors = Streamer<vuint32>(*Strm);
+  if (NumSubsectors == 0 || NumSubsectors > 0x1fffffff) Host_Error("error reading GL nodes (got %u subsectors)", NumSubsectors);
   Subsectors = new subsector_t[NumSubsectors];
   memset((void *)Subsectors, 0, sizeof(subsector_t)*NumSubsectors);
   subsector_t *ss = Subsectors;
@@ -1760,6 +1736,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     ss->firstline = FirstSeg;
     FirstSeg += NumSubSegs;
   }
+  if (FirstSeg == 0 || FirstSeg > 0x1fffffff) Host_Error("error reading GL nodes (counted %i subsegs)", FirstSeg);
   unguard;
 
   // load segs
@@ -1769,7 +1746,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
 
   Segs = new seg_t[NumSegs];
   memset((void *)Segs, 0, sizeof(seg_t)*NumSegs);
-  if (type == 0) {
+  /*if (type == 0) {
     seg_t *li = Segs;
     for (int i = 0; i < NumSegs; ++i, ++li) {
       vuint32 v1;
@@ -1814,14 +1791,15 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
         }
         li->side = side;
       } else {
-        /*
+        / *
         seg->linedef = nullptr;
         seg->sidedef = nullptr;
         seg->frontsector = seg->backsector = (Segs+Subsectors[i].firstline)->frontsector;
-        */
+        * /
       }
     }
-  } else {
+  } else*/
+  {
     for (int i = 0; i < NumSubsectors; ++i) {
       for (int j = 0; j < Subsectors[i].numlines; ++j) {
         vuint32 v1, partner, linedef;
@@ -1844,15 +1822,9 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
         li->partner = (partner < (unsigned)NumSegs ? &Segs[partner] : nullptr);
 
         li->v1 = &Vertexes[v1];
-        /*
-        if (j == 0) {
-          li[Subsectors[i].numlines-1].v2 = li->v1;
-        } else {
-          li[-1].v2 = li->v1;
-        }
-        */
+        // v2 will be set later
 
-        if (linedef != 0xFFFFFFFFu) {
+        if (linedef != 0xffffffffu) {
           if (linedef >= (vuint32)NumLines) Host_Error("Bad linedef index %u (ss=%d; nl=%d)", linedef, i, j);
           if (side > 1) Host_Error("Bad seg side %d", side);
 
@@ -1894,29 +1866,31 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   // load nodes
   guard(VLevel::LoadCompressedGLNodes::Nodes);
   NumNodes = Streamer<vuint32>(*Strm);
+  if (NumNodes == 0 || NumNodes > 0x1fffffff) Host_Error("error reading GL nodes (got %u nodes)", NumNodes);
   Nodes = new node_t[NumNodes];
-  memset((void *)Nodes, 0, sizeof(node_t) * NumNodes);
+  memset((void *)Nodes, 0, sizeof(node_t)*NumNodes);
   node_t *no = Nodes;
   for (int i = 0; i < NumNodes; ++i, ++no) {
-    vint32 x, y, dx, dy;
     vuint32 children[2];
     vint16 bbox[2][4];
     if (type < 3) {
       vint16 xx, yy, dxx, dyy;
       *Strm << xx << yy << dxx << dyy;
+      vint32 x, y, dx, dy;
       x = xx;
       y = yy;
       dx = dxx;
       dy = dyy;
+      no->SetPointDir(TVec(x, y, 0), TVec(dx, dy, 0));
     } else {
+      vint32 x, y, dx, dy;
       *Strm << x << y << dx << dy;
+      no->SetPointDir(TVec(x/65536.0f, y/65536.0f, 0), TVec(dx/65536.0f, dy/65536.0f, 0));
     }
 
     *Strm << bbox[0][0] << bbox[0][1] << bbox[0][2] << bbox[0][3]
           << bbox[1][0] << bbox[1][1] << bbox[1][2] << bbox[1][3]
           << children[0] << children[1];
-
-    no->SetPointDir(TVec(x, y, 0), TVec(dx, dy, 0));
 
     for (int j = 0; j < 2; ++j) {
       no->children[j] = children[j];
@@ -1969,9 +1943,12 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   unguard;
 
   // create dummy VIS data
+  // k8: no need to do this, main loader will take care of it
+  /*
   VisData = nullptr;
   NoVis = new vuint8[(NumSubsectors+7)/8];
   memset(NoVis, 0xff, (NumSubsectors+7)/8);
+  */
 
   delete Strm;
   delete DataStrm;
