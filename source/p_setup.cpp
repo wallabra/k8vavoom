@@ -1026,22 +1026,23 @@ void VLevel::LoadLineDefs1(int Lump, int NumBaseVerts, const mapInfo_t &MInfo)
   line_t *ld = Lines;
   for (int i = 0; i < NumLines; i++, ld++)
   {
-    vint16 v1, v2, flags, special, tag;
+    vuint16 v1, v2, flags;
+    vuint16 special, tag;
     vuint16 side0, side1;
     *Strm << v1 << v2 << flags << special << tag << side0 << side1;
 
-    if (v1 < 0 || v1 >= NumBaseVerts)
+    if (/*v1 < 0 ||*/ v1 >= NumBaseVerts)
     {
-      Host_Error("Bad vertex index %d", v1);
+      Host_Error("Bad vertex index %d (00)", v1);
     }
-    if (v2 < 0 || v2 >= NumBaseVerts)
+    if (/*v2 < 0 ||*/ v2 >= NumBaseVerts)
     {
-      Host_Error("Bad vertex index %d", v2);
+      Host_Error("Bad vertex index %d (01)", v2);
     }
 
     ld->flags = flags;
     ld->special = special;
-    ld->arg1 = tag;
+    ld->arg1 = (tag == 0xffff ? -1 : tag);
     ld->v1 = &Vertexes[v1];
     ld->v2 = &Vertexes[v2];
     ld->sidenum[0] = side0 == 0xffff ? -1 : side0;
@@ -1083,19 +1084,19 @@ void VLevel::LoadLineDefs2(int Lump, int NumBaseVerts, const mapInfo_t &MInfo)
   line_t *ld = Lines;
   for (int i = 0; i < NumLines; i++, ld++)
   {
-    vint16 v1, v2, flags;
+    vuint16 v1, v2, flags;
     vuint8 special, arg1, arg2, arg3, arg4, arg5;
     vuint16 side0, side1;
     *Strm << v1 << v2 << flags << special << arg1 << arg2 << arg3 << arg4
       << arg5 << side0 << side1;
 
-    if (v1 < 0 || v1 >= NumBaseVerts)
+    if (/*v1 < 0 ||*/ v1 >= NumBaseVerts)
     {
-      Host_Error("Bad vertex index %d", v1);
+      Host_Error("Bad vertex index %d (02)", v1);
     }
-    if (v2 < 0 || v2 >= NumBaseVerts)
+    if (/*v2 < 0 ||*/ v2 >= NumBaseVerts)
     {
-      Host_Error("Bad vertex index %d", v2);
+      Host_Error("Bad vertex index %d (03)", v2);
     }
 
     ld->flags = flags & ~ML_SPAC_MASK;
@@ -1253,7 +1254,7 @@ void VLevel::LoadGLSegs(int Lump, int NumBaseVerts)
     else
     {
       if (v1num >= (vuint32)NumVertexes)
-        Host_Error("Bad vertex index %d", v1num);
+        Host_Error("Bad vertex index %d (04)", v1num);
       li->v1 = &Vertexes[v1num];
     }
     if (v2num & GLVertFlag)
@@ -1266,7 +1267,7 @@ void VLevel::LoadGLSegs(int Lump, int NumBaseVerts)
     else
     {
       if (v2num >= (vuint32)NumVertexes)
-        Host_Error("Bad vertex index %d", v2num);
+        Host_Error("Bad vertex index %d (05)", v2num);
       li->v2 = &Vertexes[v2num];
     }
 
@@ -1655,7 +1656,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
 
       *Strm << v1 << partner << linedef << side;
 
-      if (v1 >= (vuint32)NumVertexes) Host_Error("Bad vertex index %d", v1);
+      if (v1 >= (vuint32)NumVertexes) Host_Error("Bad vertex index %d (06)", v1);
       li->v1 = &Vertexes[v1];
 
       // assign partner (we need it for self-referencing deep water)

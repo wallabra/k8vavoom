@@ -1274,12 +1274,12 @@ void VLevel::LoadTextMap(int Lump, const mapInfo_t &MInfo)
     if (Parser.ParsedLines[i].V1Index < 0 ||
       Parser.ParsedLines[i].V1Index >= NumVertexes)
     {
-      Host_Error("Bad vertex index %d", Parser.ParsedLines[i].V1Index);
+      Host_Error("Bad vertex index %d (07)", Parser.ParsedLines[i].V1Index);
     }
     if (Parser.ParsedLines[i].V2Index < 0 ||
       Parser.ParsedLines[i].V2Index >= NumVertexes)
     {
-      Host_Error("Bad vertex index %d", Parser.ParsedLines[i].V2Index);
+      Host_Error("Bad vertex index %d (08)", Parser.ParsedLines[i].V2Index);
     }
     Lines[i].v1 = &Vertexes[Parser.ParsedLines[i].V1Index];
     Lines[i].v2 = &Vertexes[Parser.ParsedLines[i].V2Index];
