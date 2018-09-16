@@ -319,6 +319,9 @@ static void signal_handler (int s) {
 //  Main program
 //
 //==========================================================================
+#if defined(USE_FPU_MATH)
+# include <fenv.h>
+#endif
 int main (int argc, char **argv) {
   try {
     GArgs.Init(argc, argv);
@@ -344,6 +347,13 @@ int main (int argc, char **argv) {
 # ifndef _WIN32
     signal(SIGQUIT, signal_handler);
 # endif
+#endif
+
+#if defined(USE_FPU_MATH)
+  fprintf(stderr, "DEBUG: setting FPU trap flags\n");
+  //feenableexcept(FE_ALL_EXCEPT/*FE_DIVBYZERO|FE_INVALID|FE_OVERFLOW*/);
+  //feenableexcept(FE_DIVBYZERO|FE_INVALID|FE_OVERFLOW);
+  feenableexcept(FE_DIVBYZERO|FE_INVALID);
 #endif
 
     Host_Init();

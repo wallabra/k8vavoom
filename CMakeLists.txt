@@ -26,6 +26,7 @@ option(WITH_SSE4 "Use SSE4 instruction set" OFF)
 option(WITH_SSE41 "Use SSE4.1 instruction set" OFF)
 option(WITH_SSE42 "Use SSE4.2 instruction set" OFF)
 option(INSANE_AVX "Use AVX2 instruction set (don't do this, it won't give you any noticeable speedup)" OFF)
+option(DEBUG_FPU_CHECKS "Use FPU and turn on some checks (GNU/Linux only)" OFF)
 option(VCCRUN_HAXPAK "You cannot turn this on" OFF)
 
 if(MINGW)
@@ -128,12 +129,18 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.7)
   set(UNFUCK_GXX_FLAGS "${UNFUCK_GCC_FLAGS} -Wsuggest-override")
 endif()
 
-# use -ffast-math, 'cause why not?
-set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -ffast-math")
-# if not shitdoze, use SSE2
-# k8: actually, use SSE2 anyway; fuck ancient shit!
+if(NOT DEBUG_FPU_CHECKS)
+  # use -ffast-math, 'cause why not?
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -ffast-math")
+endif(NOT DEBUG_FPU_CHECKS)
 
-if(INSANE_AVX)
+if(DEBUG_FPU_CHECKS)
+  message(STATUS "BUILD: using FPU")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -mfpmath=387")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -ffloat-store")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fsignaling-nans")
+  add_definitions(-DUSE_FPU_MATH=1)
+elseif(INSANE_AVX)
   message(STATUS "BUILD: using AVX2 instriction set")
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -march=native")
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -mtune=native")
