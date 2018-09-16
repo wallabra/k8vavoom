@@ -37,6 +37,8 @@ enum { NUMVERTEXNORMALS = 162 };
 extern VCvarF gl_alpha_threshold;
 static inline float getAlphaThreshold () { float res = gl_alpha_threshold; if (res < 0) res = 0; else if (res > 1) res = 1; return res; }
 
+static VCvarB dbg_alias_model_error("dbg_alias_model_error", false, "Show errors in alias models?", 0/*CVAR_Archive*/);
+
 
 // TYPES -------------------------------------------------------------------
 
@@ -740,6 +742,8 @@ static void Mod_SwapAliasModel(VMeshModel *mod)
   //
   // frames
   //
+  bool hadError = false;
+  bool showError = true;
   mod->Frames.SetNum(pmodel->numframes);
   mod->AllVerts.SetNum(pmodel->numframes * VertMap.Num());
   mod->AllNormals.SetNum(pmodel->numframes * VertMap.Num());
@@ -774,13 +778,48 @@ static void Mod_SwapAliasModel(VMeshModel *mod)
       TVec v1 = Frame.Verts[mod->Tris[j].VertIndex[0]];
       TVec v2 = Frame.Verts[mod->Tris[j].VertIndex[1]];
       TVec v3 = Frame.Verts[mod->Tris[j].VertIndex[2]];
-      TVec d1 = v2 - v3;
-      TVec d2 = v1 - v3;
-      TVec PlaneNormal = Normalise(CrossProduct(d1, d2));
-      float PlaneDist = DotProduct(PlaneNormal, v3);
+      TVec d1 = v2-v3;
+      TVec d2 = v1-v3;
+      //TVec PlaneNormal = Normalise(CrossProduct(d1, d2));
+      TVec PlaneNormal = CrossProduct(d1, d2);
+      if (lengthSquared(PlaneNormal) == 0) {
+        //k8:hack!
+        if (dbg_alias_model_error) {
+          GCon->Logf("Alias model '%s' has degenerate triangle %d; v1=(%f,%f,%f), v2=(%f,%f,%f); v3=(%f,%f,%f); d1=(%f,%f,%f); d2=(%f,%f,%f); cross=(%f,%f,%f)",
+            *mod->Name, j, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z, d1.x, d1.y, d1.z, d2.x, d2.y, d2.z, PlaneNormal.x, PlaneNormal.y, PlaneNormal.z);
+        }
+        bool ok = false;
+        for (int vnn = 1; vnn <= 3; ++vnn) {
+          v1 = Frame.Verts[mod->Tris[j].VertIndex[(vnn+0)%3]];
+          v2 = Frame.Verts[mod->Tris[j].VertIndex[(vnn+1)%3]];
+          v3 = Frame.Verts[mod->Tris[j].VertIndex[(vnn+2)%3]];
+          d1 = v2-v3;
+          d2 = v1-v3;
+          PlaneNormal = CrossProduct(d1, d2);
+          if (lengthSquared(PlaneNormal) != 0) {
+            ok = true;
+            break;
+          }
+        }
+        if (!ok) {
+          if (!dbg_alias_model_error) {
+            GCon->Logf("Alias model '%s' has degenerate triangle %d; v1=(%f,%f,%f), v2=(%f,%f,%f); v3=(%f,%f,%f)",
+              *mod->Name, j, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z);
+          }
+          GCon->Logf("  CANNOT FIX!");
+          PlaneNormal = TVec(0, 0, 1);
+          showError = false;
+        }
+        hadError = true;
+      }
+      PlaneNormal = Normalise(PlaneNormal);
+      const float PlaneDist = DotProduct(PlaneNormal, v3);
       Frame.Planes[j].Set(PlaneNormal, PlaneDist);
     }
     pframe = (mframe_t*)((byte*)pframe + pmodel->framesize);
+  }
+  if (!dbg_alias_model_error && hadError && showError) {
+    GCon->Logf("WARNING: Alias model '%s' has some degenerate triangles!", *mod->Name);
   }
 
   //
