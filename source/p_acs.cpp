@@ -192,6 +192,7 @@ public:
 
   VAcsInfo *FindScript (int Number) const;
   VAcsInfo *FindScriptByName (int nameidx) const;
+  int FindScriptNumberByName (const VStr &aname) const;
   VAcsInfo *FindScriptByNameStr (const VStr &aname) const;
   VAcsFunction *GetFunction (int funcnum, VAcsObject *&Object);
   int GetArrayVal (int ArrayIdx, int Index);
@@ -1132,6 +1133,10 @@ int VAcsObject::PtrToOffset(vuint8 *Ptr)
 VAcsInfo *VAcsObject::FindScript(int Number) const
 {
   guard(VAcsObject::FindScript);
+  if (Number <= -100000) {
+    Number = -(Number+100000);
+    return &Scripts[Number];
+  }
   for (int i = 0; i < NumScripts; i++)
   {
     if (Scripts[i].Number == Number)
@@ -1172,13 +1177,31 @@ VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const
 
 VAcsInfo *VAcsObject::FindScriptByNameStr (const VStr &aname) const
 {
-  guard(VAcsObject::FindScriptByName);
+  guard(VAcsObject::FindScriptByNameStr);
   if (aname.length() == 0) return nullptr;
   VName nn = VName(*aname, VName::AddLower);
   for (int i = 0; i < NumScripts; i++) {
     if (Scripts[i].Name == nn) return Scripts + i;
   }
   return nullptr;
+  unguard;
+}
+
+//==========================================================================
+//
+//  VAcsObject::FindScriptNumberByName
+//
+//==========================================================================
+
+int VAcsObject::FindScriptNumberByName (const VStr &aname) const
+{
+  guard(VAcsObject::FindScriptNumberByName);
+  if (aname.length() == 0) return -1;
+  VName nn = VName(*aname, VName::AddLower);
+  for (int i = 0; i < NumScripts; i++) {
+    if (Scripts[i].Name == nn) return -100000-i;
+  }
+  return -1;
   unguard;
 }
 
@@ -1399,7 +1422,6 @@ VAcsInfo *VAcsLevel::FindScriptByName (int Number, VAcsObject *&Object)
   unguard;
 }
 
-
 //==========================================================================
 //
 //  VAcsLevel::FindScriptByNameStr
@@ -1408,7 +1430,7 @@ VAcsInfo *VAcsLevel::FindScriptByName (int Number, VAcsObject *&Object)
 
 VAcsInfo *VAcsLevel::FindScriptByNameStr (const VStr &aname, VAcsObject *&Object)
 {
-  guard(VAcsLevel::FindScriptByName);
+  guard(VAcsLevel::FindScriptByNameStr);
   if (aname.length() == 0) return nullptr;
   VName nn = VName(*aname, VName::AddLower);
   for (int i = 0; i < LoadedObjects.Num(); i++)
@@ -1421,6 +1443,28 @@ VAcsInfo *VAcsLevel::FindScriptByNameStr (const VStr &aname, VAcsObject *&Object
     }
   }
   return nullptr;
+  unguard;
+}
+
+//==========================================================================
+//
+//  VAcsLevel::FindScriptNumberByName
+//
+//==========================================================================
+int VAcsLevel::FindScriptNumberByName (const VStr &aname, VAcsObject *&Object)
+{
+  guard(VAcsLevel::FindScriptNumberByName);
+  if (aname.length() == 0) return -1;
+  for (int i = 0; i < LoadedObjects.Num(); i++)
+  {
+    int idx = LoadedObjects[i]->FindScriptNumberByName(aname);
+    if (idx <= -100000)
+    {
+      Object = LoadedObjects[i];
+      return idx;
+    }
+  }
+  return -1;
   unguard;
 }
 
@@ -2752,7 +2796,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_ScriptWait)
       WaitValue = sp[-1];
       if (!XLevel->Acs->FindScript(WaitValue, WaitObject) ||
-        !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
+          !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
       {
         State = ASTE_WaitingForScriptStart;
       }
@@ -2767,7 +2811,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_ScriptWaitDirect)
       WaitValue = READ_INT32(ip);
       if (!XLevel->Acs->FindScript(WaitValue, WaitObject) ||
-        !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
+          !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
       {
         State = ASTE_WaitingForScriptStart;
       }
@@ -2777,6 +2821,29 @@ int VAcs::RunScript(float DeltaTime)
       }
       ip += 4;
       action = SCRIPT_Stop;
+      ACSVM_BREAK_STOP;
+
+    ACSVM_CASE(PCD_ScriptWaitNamed)
+      {
+        VName name = GetNameLowerCase(sp[-1]);
+        --sp;
+        GCon->Logf("WARNING: UNTESTED ACS OPCODE PCD_ScriptWaitNamed (script '%s')", *name);
+        WaitValue = XLevel->Acs->FindScriptNumberByName(*name, WaitObject);
+        if (WaitValue <= -100000) {
+          if (!XLevel->Acs->FindScript(WaitValue, WaitObject) ||
+              !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
+          {
+            State = ASTE_WaitingForScriptStart;
+          }
+          else
+          {
+            State = ASTE_WaitingForScript;
+          }
+        } else {
+          GCon->Logf("ACS ERROR: PCD_ScriptWaitNamed wanted to wait for unknown script '%s'", *name);
+        }
+        action = SCRIPT_Stop;
+      }
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_ClearLineSpecial)
@@ -5244,6 +5311,15 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_GrabInput)
     ACSVM_CASE(PCD_SetMousePointer)
     ACSVM_CASE(PCD_MoveMousePointer)
+    ACSVM_CASE(PCD_SaveString)
+    ACSVM_CASE(PCD_PrintMapChRange)
+    ACSVM_CASE(PCD_PrintWorldChRange)
+    ACSVM_CASE(PCD_PrintGlobalChRange)
+    ACSVM_CASE(PCD_StrCpyToMapChRange)
+    ACSVM_CASE(PCD_StrCpyToWorldChRange)
+    ACSVM_CASE(PCD_StrCpyToGlobalChRange)
+    ACSVM_CASE(PCD_PushFunction)
+    ACSVM_CASE(PCD_CallStack)
       GCon->Logf(NAME_Dev, "Unsupported ACS p-code %d", cmd);
       action = SCRIPT_Terminate;
       ACSVM_BREAK_STOP;
@@ -5251,7 +5327,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_DEFAULT
       Host_Error("Illegal ACS opcode %d", cmd);
     }
-  } while  (action == SCRIPT_Continue);
+  } while (action == SCRIPT_Continue);
 
 #if USE_COMPUTED_GOTO
 LblFuncStop:
