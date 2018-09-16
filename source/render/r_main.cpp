@@ -186,6 +186,7 @@ void R_Start(VLevel *ALevel)
       //ALevel->RenderData = new VAdvancedRenderLevel(ALevel);
       GCon->Logf("Your GPU supports Advanced Renderer, but it is slow and unfinished, so i won't use it.");
     }
+    r_level_renderer = 1; // so it will be saved on exit
     ALevel->RenderData = new VRenderLevel(ALevel);
     break;
   }
