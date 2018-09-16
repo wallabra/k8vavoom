@@ -1683,8 +1683,11 @@ bool VAcsLevel::Start(int Number, int MapNum, int Arg1, int Arg2, int Arg3,
   VAcsInfo *Info;
   if (Number >= 0) {
     Info = FindScript(Number, Object);
-  } else {
+  } else if (Number > -100000) {
     Info = FindScriptByName(Number, Object);
+  } else {
+    GCon->Logf("VAcsLevel::Start: by direct index (%d)", -(Number+100000));
+    Info = FindScript(Number, Object);
   }
   if (!Info)
   {
