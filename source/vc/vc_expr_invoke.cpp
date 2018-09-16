@@ -2303,6 +2303,12 @@ void VInvocation::CheckParams (VEmitContext &ec) {
             */
             if (!Args[i]->Type.CheckMatch(true, Args[i]->Loc, Func->ParamTypes[i])) {
               ParseError(Args[i]->Loc, "Out parameter types must be equal for arg #%d (want `%s`, but got `%s`)", i+1, *Func->ParamTypes[i].GetName(), *Args[i]->Type.GetName());
+            } else {
+              /*
+              fprintf(stderr, "PTRPTR: %s (%s : %s); (%u:%u) (%d:%d)\n", *Args[i]->Loc.toString(), *Args[i]->Type.GetName(), *Func->ParamTypes[i].GetName(),
+                (unsigned)Args[i]->Type.Type, (unsigned)Func->ParamTypes[i].Type,
+                Args[i]->Type.PtrLevel, Func->ParamTypes[i].PtrLevel);
+              */
             }
           }
           // now check r/o flags

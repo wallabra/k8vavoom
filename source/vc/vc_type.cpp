@@ -434,8 +434,8 @@ bool VFieldType::CheckMatch (bool asRef, const TLocation &l, const VFieldType &O
         if (raiseError) ParseError(l, "struct `%s` is not a substruct of `%s`", *GetName(), *Other.GetName());
         return false;
       }
+      return true;
     }
-    return true;
   }
 
   if (Equals(Other)) return true;
