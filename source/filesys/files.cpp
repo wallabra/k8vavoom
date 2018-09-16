@@ -568,8 +568,6 @@ void FL_Init () {
       "/opt/vavoom/share/vavoom",
       "/usr/local/share/vavoom",
       "/usr/share/vavoom",
-      "~/.vavoom/iwads",
-      "~/.vavoom",
       "!/../share/vavoom",
 #else
       "!/share",
@@ -617,6 +615,36 @@ void FL_Init () {
     while (++iwp != GArgs.Count() && GArgs[iwp][0] != '-' && GArgs[iwp][0] != '+') {
       IWadDirs.Append(GArgs[iwp]);
     }
+  } else {
+#ifndef _WIN32
+    static const char *defaultIwadDirs[] = {
+      "~/.vavoom/iwads",
+      "~/.vavoom",
+      "/opt/vavoom/share/vavoom",
+      "/usr/local/share/vavoom",
+      "/usr/share/vavoom",
+      "!/../share/vavoom",
+      nullptr,
+    };
+    for (const char **tbd = defaultIwadDirs; *tbd; ++tbd) {
+      VStr dir = VStr(*tbd);
+      if (dir[0] == '!') {
+        dir.chopLeft(1);
+        dir = getBinaryDir()+dir;
+      } else if (dir[0] == '~') {
+        dir.chopLeft(1);
+        const char *hdir = getenv("HOME");
+        if (hdir && hdir[0]) {
+          dir = VStr(hdir)+dir;
+        } else {
+          continue;
+        }
+      }
+      if (Sys_DirExists(dir)) {
+        IWadDirs.Append(dir);
+      }
+    }
+#endif
   }
 
   AddGameDir("basev/common");
