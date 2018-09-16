@@ -54,6 +54,9 @@ extern boolean_g lev_doing_hexen;
 static VCvarB loader_build_pvs("loader_build_pvs", false, "Build simple PVS on node rebuilding?", CVAR_Archive);
 static VCvarI loader_pvs_builder_threads("loader_pvs_builder_threads", "3", "Number of threads to use in PVS builder.", CVAR_Archive);
 
+static VCvarB nodes_detect_window_fx("nodes_detect_window_fx", false, "Use \"window fx\" glBSP detector?", CVAR_Archive);
+static VCvarB nodes_fast_and_bad("nodes_fast_and_bad", false, "Do faster rebuild, but generate worser BSP tree?", CVAR_Archive);
+
 
 // MACROS ------------------------------------------------------------------
 
@@ -583,6 +586,8 @@ void VLevel::BuildNodes()
   nodebuildcomms_t nb_comms = default_buildcomms;
   nb_info.quiet = false;
   nb_info.gwa_mode = true;
+  nb_info.window_fx = nodes_detect_window_fx;
+  nb_info.fast = nodes_fast_and_bad;
 
   cur_info  = &nb_info;
   cur_funcs = &build_funcs;
