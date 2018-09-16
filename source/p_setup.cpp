@@ -343,6 +343,7 @@ void VLevel::LoadMap(VName AMapName)
   double ThingsTime = 0;
   double TranslTime = 0;
   double SidesTime = 0;
+  double DecalProcessingTime = 0;
   //  Begin processing map lumps.
   if (LevelFlags & LF_TextMap)
   {
@@ -465,35 +466,27 @@ void VLevel::LoadMap(VName AMapName)
   GGameInfo->eventSpawnWorld(this);
   HashLines();
   SpawnWorldTime += Sys_Time();
+
   double InitPolysTime = -Sys_Time();
   InitPolyobjs(); // Initialise the polyobjs
   InitPolysTime += Sys_Time();
 
   double MinMaxTime = -Sys_Time();
   //  We need this for client.
-  for (int i = 0; i < NumSectors; i++)
-  {
-    CalcSecMinMaxs(&Sectors[i]);
-  }
+  for (int i = 0; i < NumSectors; i++) CalcSecMinMaxs(&Sectors[i]);
   MinMaxTime += Sys_Time();
 
   double WallShadesTime = -Sys_Time();
-  for (int i = 0; i < NumLines; i++)
-  {
+  for (int i = 0; i < NumLines; i++) {
     line_t *Line = Lines + i;
-    if (!Line->normal.x)
-    {
+    if (!Line->normal.x) {
       Sides[Line->sidenum[0]].Light = MInfo.HorizWallShade;
-      if (Line->sidenum[1] >= 0)
-      {
+      if (Line->sidenum[1] >= 0) {
         Sides[Lines[i].sidenum[1]].Light = MInfo.HorizWallShade;
       }
-    }
-    else if (!Line->normal.y)
-    {
+    } else if (!Line->normal.y) {
       Sides[Line->sidenum[0]].Light = MInfo.VertWallShade;
-      if (Line->sidenum[1] >= 0)
-      {
+      if (Line->sidenum[1] >= 0) {
         Sides[Lines[i].sidenum[1]].Light = MInfo.VertWallShade;
       }
     }
@@ -504,7 +497,155 @@ void VLevel::LoadMap(VName AMapName)
   CreateRepBase();
   RepBaseTime += Sys_Time();
 
-  // build v1 and v2 lists
+  GCon->Logf("Building Lidedef VV list...");
+  double LineVVListTime = -Sys_Time();
+  BuildDecalsVVList();
+  LineVVListTime += Sys_Time();
+
+  //
+  // End of map lump processing
+  //
+  if (AuxiliaryMap)
+  {
+    // Close the auxiliary file.
+    W_CloseAuxiliary();
+  }
+
+  DecalProcessingTime = -Sys_Time();
+  PostProcessForDecals();
+  DecalProcessingTime += Sys_Time();
+
+  TotalTime += Sys_Time();
+  if (true || show_level_load_times)
+  {
+    GCon->Logf("-------");
+    GCon->Logf("Level loadded in %f", TotalTime);
+    //GCon->Logf("Initialisation   %f", InitTime);
+    GCon->Logf("Node build       %f", NodeBuildTime);
+    //GCon->Logf("Vertexes         %f", VertexTime);
+    //GCon->Logf("Sectors          %f", SectorsTime);
+    //GCon->Logf("Lines            %f", LinesTime);
+    //GCon->Logf("Things           %f", ThingsTime);
+    //GCon->Logf("Translation      %f", TranslTime);
+    //GCon->Logf("Sides            %f", SidesTime);
+    //GCon->Logf("Lines 2          %f", Lines2Time);
+    GCon->Logf("Nodes            %f", NodesTime);
+    //GCon->Logf("Block map        %f", BlockMapTime);
+    GCon->Logf("Reject           %f", RejectTime);
+    //GCon->Logf("ACS              %f", AcsTime);
+    //GCon->Logf("Group lines      %f", GroupLinesTime);
+    //GCon->Logf("Flood zones      %f", FloodZonesTime);
+    //GCon->Logf("Conversations    %f", ConvTime);
+    GCon->Logf("Spawn world      %f", SpawnWorldTime);
+    GCon->Logf("Polyobjs         %f", InitPolysTime);
+    GCon->Logf("Sector minmaxs   %f", MinMaxTime);
+    GCon->Logf("Wall shades      %f", WallShadesTime);
+    GCon->Logf("Linedef VV list  %f", LineVVListTime);
+    GCon->Logf("Decal processing %f", DecalProcessingTime);
+    //GCon->Logf("%s", ""); // shut up, gcc!
+  }
+  unguard;
+}
+
+
+struct VectorInfo {
+  float xy[2];
+  int lidx; // linedef index
+  VectorInfo *next;
+
+  inline bool operator == (const VectorInfo &vi) const { return (xy[0] == vi.xy[0] && xy[1] == vi.xy[1]); }
+};
+
+//inline vuint32 GetTypeHash (const VectorInfo &vi) { return fnvHashBuf(vi.xy, sizeof(vi.xy)); }
+inline vuint32 GetTypeHash (const VectorInfo *vi) { return fnvHashBuf(vi->xy, sizeof(vi->xy)); }
+
+
+//==========================================================================
+//
+//  VLevel::BuildDecalsVVList
+//
+//  build v1 and v2 lists (for decals)
+//
+//==========================================================================
+void VLevel::BuildDecalsVVList () {
+  if (NumLines < 1) return; // just in case
+
+  // build hashes and lists
+  TMapNC<VectorInfo *, int> vmap; // in tarray
+  TArray<VectorInfo> va;
+  va.SetLength(NumLines*2);
+  line_t *ld = Lines;
+  for (int i = 0; i < NumLines; ++i, ++ld) {
+    ld->decalMark = 0;
+    ld->v1linesCount = ld->v2linesCount = 0;
+    ld->v1lines = ld->v2lines = nullptr;
+    for (int vn = 0; vn < 2; ++vn) {
+      VectorInfo *vi = &va[i+NumLines*vn];
+      vi->xy[0] = (vn == 0 ? ld->v1 : ld->v2)->x;
+      vi->xy[1] = (vn == 0 ? ld->v1 : ld->v2)->y;
+      vi->lidx = i;
+      vi->next = nullptr;
+      auto vaidxp = vmap.find(vi);
+      if (vaidxp) {
+        VectorInfo *cv = &va[*vaidxp];
+        while (cv->next) cv = cv->next;
+        cv->next = vi;
+      } else {
+        vmap.put(vi, i+NumLines*vn);
+      }
+    }
+  }
+
+  line_t **wklist = new line_t *[NumLines*2];
+  vuint8 *wkhit = new vuint8[NumLines];
+
+  // fill linedef lists
+  ld = Lines;
+  for (int i = 0; i < NumLines; ++i, ++ld) {
+    for (int vn = 0; vn < 2; ++vn) {
+      int count = 0;
+      memset(wkhit, 0, NumLines*sizeof(wkhit[0]));
+      wkhit[i] = 1;
+      for (int curvn = 0; curvn < 2; ++curvn) {
+        VectorInfo vi = va[i+NumLines*curvn];
+        auto vaidxp = vmap.find(&vi);
+        if (!vaidxp) continue; //Sys_Error("VLevel::BuildDecalsVVList: internal error (0)");
+        VectorInfo *cv = &va[*vaidxp];
+        while (cv) {
+          if (!wkhit[cv->lidx]) {
+            wkhit[cv->lidx] = 1;
+            wklist[count++] = Lines+cv->lidx;
+          }
+          cv = cv->next;
+        }
+      }
+      if (count > 0) {
+        line_t **list = new line_t *[count];
+        memcpy(list, wklist, count*sizeof(wklist[0]));
+        if (vn == 0) {
+          ld->v1linesCount = count;
+          ld->v1lines = list;
+        } else {
+          ld->v2linesCount = count;
+          ld->v2lines = list;
+        }
+      }
+    }
+  }
+
+  delete [] wkhit;
+  delete [] wklist;
+}
+
+
+//==========================================================================
+//
+//  VLevel::BuildDecalsVVListOld
+//
+//  build v1 and v2 lists (for decals)
+//
+//==========================================================================
+void VLevel::BuildDecalsVVListOld () {
   for (int i = 0; i < NumLines; ++i) {
     line_t *ld = Lines+i;
     ld->decalMark = 0;
@@ -542,47 +683,8 @@ void VLevel::LoadMap(VName AMapName)
       }
     }
   }
-
-  //
-  // End of map lump processing
-  //
-  if (AuxiliaryMap)
-  {
-    // Close the auxiliary file.
-    W_CloseAuxiliary();
-  }
-
-  PostProcessForDecals();
-
-  TotalTime += Sys_Time();
-  if (true || show_level_load_times)
-  {
-    GCon->Logf("-------");
-    //GCon->Logf("Level loadded in %f", TotalTime);
-    //GCon->Logf("Initialisation   %f", InitTime);
-    GCon->Logf("Node build       %f", NodeBuildTime);
-    //GCon->Logf("Vertexes         %f", VertexTime);
-    //GCon->Logf("Sectors          %f", SectorsTime);
-    //GCon->Logf("Lines            %f", LinesTime);
-    //GCon->Logf("Things           %f", ThingsTime);
-    //GCon->Logf("Translation      %f", TranslTime);
-    //GCon->Logf("Sides            %f", SidesTime);
-    //GCon->Logf("Lines 2          %f", Lines2Time);
-    GCon->Logf("Nodes            %f", NodesTime);
-    //GCon->Logf("Block map        %f", BlockMapTime);
-    GCon->Logf("Reject           %f", RejectTime);
-    //GCon->Logf("ACS              %f", AcsTime);
-    //GCon->Logf("Group lines      %f", GroupLinesTime);
-    //GCon->Logf("Flood zones      %f", FloodZonesTime);
-    //GCon->Logf("Conversations    %f", ConvTime);
-    //GCon->Logf("Spawn world      %f", SpawnWorldTime);
-    //GCon->Logf("Polyobjs         %f", InitPolysTime);
-    //GCon->Logf("Sector minmaxs   %f", MinMaxTime);
-    //GCon->Logf("Wall shades      %f", WallShadesTime);
-    //GCon->Logf("%s", ""); // shut up, gcc!
-  }
-  unguard;
 }
+
 
 //==========================================================================
 //
@@ -2924,9 +3026,9 @@ void VLevel::FixSelfRefDeepWater () {
     //while (hs->deepref && hs->deepref != sub->deepref) hs = hs->deepref;
     //if (hs->deepref == sub->deepref) hs = sub->deepref;
     sector_t *ss = sub->sector;
-    if (!ss) { GCon->Logf("WTF(0)?!"); continue; }
+    if (!ss) { if (dbg_deep_water) GCon->Logf("WTF(0)?!"); continue; }
     if (ss->deepref) {
-      if (ss->deepref != hs) { GCon->Logf("WTF(1) %d : %d?!", (int)(hs-Sectors), (int)(ss->deepref-Sectors)); continue; }
+      if (ss->deepref != hs) { if (dbg_deep_water) GCon->Logf("WTF(1) %d : %d?!", (int)(hs-Sectors), (int)(ss->deepref-Sectors)); continue; }
     } else {
       ss->deepref = hs;
     }

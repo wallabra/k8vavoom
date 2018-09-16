@@ -327,6 +327,9 @@ private:
   bool IsDeepOk (sector_t *sec); // all lines should have the same front/back
   int IsDeepWater (line_t *line);
 
+  void BuildDecalsVVList ();
+  void BuildDecalsVVListOld ();
+
   // map loading helpers
   int FindGLNodes (VName) const;
   int TexNumForName (const char *, int, bool=false) const;
