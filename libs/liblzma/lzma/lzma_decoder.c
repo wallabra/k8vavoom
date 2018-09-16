@@ -350,6 +350,7 @@ lzma_decode(lzma_coder *restrict coder, lzma_dict *restrict dictptr,
 		// since we already calculated it when setting up the local
 		// variables.
 		pos_state = dict.pos & pos_mask;
+		/* fallthrough */
 
 	case SEQ_NORMALIZE:
 	case SEQ_IS_MATCH:
@@ -573,24 +574,28 @@ lzma_decode(lzma_coder *restrict coder, lzma_dict *restrict dictptr,
 							SEQ_DIST_MODEL);
 						++offset;
 						--limit;
+						/* fallthrough */
 					case 4:
 						rc_bit(probs[symbol], ,
 							rep0 += 1 << offset,
 							SEQ_DIST_MODEL);
 						++offset;
 						--limit;
+						/* fallthrough */
 					case 3:
 						rc_bit(probs[symbol], ,
 							rep0 += 1 << offset,
 							SEQ_DIST_MODEL);
 						++offset;
 						--limit;
+						/* fallthrough */
 					case 2:
 						rc_bit(probs[symbol], ,
 							rep0 += 1 << offset,
 							SEQ_DIST_MODEL);
 						++offset;
 						--limit;
+						/* fallthrough */
 					case 1:
 						// We need "symbol" only for
 						// indexing the probability
