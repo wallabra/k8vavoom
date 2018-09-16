@@ -534,6 +534,7 @@ static void FindBlockmapLimits(bbox_t *bbox)
 //
 // TruncateBlockmap
 //
+#if 0
 static void TruncateBlockmap(void)
 {
   while (block_w * block_h > cur_info->block_limit)
@@ -557,6 +558,7 @@ static void TruncateBlockmap(void)
   PrintDebug("New blockmap origin: (%d,%d)\n", block_x, block_y);
 # endif
 }
+#endif
 
 //
 // InitBlockmap

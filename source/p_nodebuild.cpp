@@ -615,7 +615,9 @@ void VLevel::BuildNodes()
   superblock_t *SegList = CreateSegs();
   glbsp_node_t *root_node;
   subsec_t *root_sub;
-  glbsp_ret_e ret = ::BuildNodes(SegList, &root_node, &root_sub, 0, nullptr);
+  bbox_t seg_bbox;
+  FindLimits(SegList, &seg_bbox);
+  glbsp_ret_e ret = ::BuildNodes(SegList, &root_node, &root_sub, 0, &seg_bbox);
   FreeSuper(SegList);
 
   if (ret == GLBSP_E_OK)
