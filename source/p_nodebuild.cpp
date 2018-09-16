@@ -52,6 +52,7 @@ extern boolean_g lev_doing_hexen;
 #include "vector2d.h"
 
 static VCvarB loader_build_pvs("loader_build_pvs", true, "Build simple PVS on node rebuilding?", CVAR_Archive);
+static VCvarI loader_pvs_builder_threads("loader_pvs_builder_threads", "3", "Number of threads to use in PVS builder.", CVAR_Archive);
 
 
 // MACROS ------------------------------------------------------------------
@@ -656,7 +657,7 @@ void VLevel::BuildNodes()
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#define MAX_PORTALS_ON_LEAF   (128)
+#define MAX_PORTALS_ON_LEAF   (512)
 #define ON_EPSILON  (0.1)
 
 
@@ -665,17 +666,12 @@ struct winding_t {
   TVec2D points[2];
 };
 
-enum vstatus_t { stat_none, stat_working, stat_done };
-
 // normal pointing into neighbor
 struct portal_t : TPlane2D {
   int leaf; // neighbor
   winding_t winding;
-  //vstatus_t status;
   vuint8 *visbits;
   vuint8 *mightsee;
-  int nummightsee;
-  int numcansee;
 };
 
 struct subsec_extra_t {
@@ -686,17 +682,159 @@ struct subsec_extra_t {
 struct PVSInfo {
   int numportals;
   portal_t *portals;
-  int c_portalsee;
-  int c_leafsee;
   int bitbytes;
   int bitlongs;
   int rowbytes;
-  //int *secnums; // NumSubsectors
   int *leaves; // NumSegs
   subsec_extra_t *ssex; // NumSubsectors
   // temp, don't free
   vuint8 *portalsee;
+
+  PVSInfo ()
+    : numportals(0)
+    , portals(nullptr)
+    , bitbytes(0)
+    , bitlongs(0)
+    , rowbytes(0)
+    , leaves(nullptr)
+    , ssex(nullptr)
+    , portalsee(nullptr)
+  {}
+
+  PVSInfo (const PVSInfo &a)
+    : numportals(a.numportals)
+    , portals(a.portals)
+    , bitbytes(a.bitbytes)
+    , bitlongs(a.bitlongs)
+    , rowbytes(a.rowbytes)
+    , leaves(a.leaves)
+    , ssex(a.ssex)
+    , portalsee(nullptr)
+  {}
+
+  inline void operator = (const PVSInfo &a) {
+    numportals = a.numportals;
+    portals = a.portals;
+    bitbytes = a.bitbytes;
+    bitlongs = a.bitlongs;
+    rowbytes = a.rowbytes;
+    leaves = a.leaves;
+    ssex = a.ssex;
+    portalsee = nullptr;
+  }
 };
+
+
+enum { PVSThreadMax = 16 }; // one is reserved for music
+
+struct PVSThreadInfo {
+  PVSInfo nfo;
+  mythread trd;
+  bool created;
+};
+
+static PVSThreadInfo pvsTreadList[PVSThreadMax];
+static int pvsNextPortal, pvsMaxPortals; // next portal to process
+static mythread_mutex pvsNPLock;
+static double pvsLastReportTime;
+
+
+static int getNextPortalNum () {
+  mythread_mutex_lock(&pvsNPLock);
+  int res = pvsNextPortal++;
+  if (pvsMaxPortals >= 512) {
+    const double tt = Sys_Time();
+    if (tt-pvsLastReportTime >= 2.5) {
+      pvsLastReportTime = tt;
+      int cur = res;
+      if (cur > pvsMaxPortals) cur = pvsMaxPortals;
+      int prc = cur*100/pvsMaxPortals;
+      GCon->Logf("PVS: %02d%% done (%d of %d)", prc, cur-1, pvsMaxPortals);
+    }
+  }
+  mythread_mutex_unlock(&pvsNPLock);
+  return res;
+}
+
+
+extern "C" {
+static void SimpleFlood (portal_t *srcportal, int leafnum, PVSInfo *nfo) {
+  if (srcportal->mightsee[leafnum>>3]&(1<<(leafnum&7))) return;
+  srcportal->mightsee[leafnum>>3] |= (1<<(leafnum&7));
+
+  subsec_extra_t *leaf = &nfo->ssex[leafnum];
+  for (int i = 0; i < leaf->numportals; ++i) {
+    portal_t *p = leaf->portals[i];
+    if (!nfo->portalsee[p-nfo->portals]) continue;
+    SimpleFlood(srcportal, p->leaf, nfo);
+  }
+}
+
+
+static MYTHREAD_RET_TYPE pvsThreadWorker (void *aarg) {
+  PVSInfo *nfo = (PVSInfo *)aarg;
+  nfo->portalsee = new vuint8[nfo->numportals];
+  for (;;) {
+    int pnum = getNextPortalNum();
+    if (pnum >= nfo->numportals) break;
+    portal_t *p = &nfo->portals[pnum];
+
+    p->mightsee = new vuint8[nfo->bitbytes];
+    memset(p->mightsee, 0, nfo->bitbytes);
+
+    memset(nfo->portalsee, 0, nfo->numportals);
+    portal_t *tp = nfo->portals;
+    for (int j = 0; j < nfo->numportals; ++j, ++tp) {
+      if (j == pnum) continue;
+      winding_t *w = &tp->winding;
+      int k;
+      for (k = 0; k < 2; ++k) {
+        const double d = DotProduct(w->points[k], p->normal)-p->dist;
+        if (d > ON_EPSILON) break;
+      }
+      if (k == 2) continue; // no points on front
+
+      w = &p->winding;
+      for (k = 0; k < 2; ++k) {
+        const double d = DotProduct(w->points[k], tp->normal)-tp->dist;
+        if (d < -ON_EPSILON) break;
+      }
+      if (k == 2) continue; // no points on front
+
+      nfo->portalsee[j] = 1;
+    }
+
+    SimpleFlood(p, p->leaf, nfo);
+
+    // fastvis just uses mightsee for a very loose bound
+    p->visbits = p->mightsee;
+  }
+  delete[] nfo->portalsee;
+  return MYTHREAD_RET_VALUE;
+}
+}
+
+
+static void pvsStartThreads (const PVSInfo &anfo) {
+  pvsNextPortal = 0;
+  pvsMaxPortals = anfo.numportals;
+  int pvsThreadsToUse = loader_pvs_builder_threads;
+  if (pvsThreadsToUse < 1) pvsThreadsToUse = 1; else if (pvsThreadsToUse > PVSThreadMax) pvsThreadsToUse = PVSThreadMax;
+  mythread_mutex_init(&pvsNPLock);
+  int ccount = 0;
+  pvsLastReportTime = Sys_Time();
+  for (int f = 0; f < pvsThreadsToUse; ++f) {
+    pvsTreadList[f].nfo = anfo;
+    pvsTreadList[f].created = (mythread_create(&pvsTreadList[f].trd, &pvsThreadWorker, &pvsTreadList[f].nfo) == 0);
+    if (pvsTreadList[f].created) ++ccount;
+  }
+  if (ccount == 0) Sys_Error("Cannot create PVS worker threads");
+  for (int f = 0; f < pvsThreadsToUse; ++f) {
+    if (pvsTreadList[f].created) mythread_join(pvsTreadList[f].trd);
+  }
+  mythread_mutex_destroy(&pvsNPLock);
+  if (pvsNextPortal < anfo.numportals) Sys_Error("PVS worker threads gone ape");
+}
 
 
 //==========================================================================
@@ -731,26 +869,18 @@ void VLevel::BuildPVS () {
       // set seg subsector links
       int count = ss->numlines;
       int ln = ss->firstline;
-      //seg_t *line = &Segs[ln];
-      //secnums[i] = -1;
-      while (count--) {
-        nfo.leaves[ln++] = i;
-        /*
-        if (secnums[i] == -1 && line->secnum >= 0) {
-          ss->secnum = line->secnum;
-        } else if (ss->secnum != -1 && line->secnum >= 0 && ss->secnum != line->secnum) {
-          Owner.DisplayMessage("Segs from different sectors\n");
-        }
-        ++line;
-        */
-      }
-      //if (ss->secnum == -1) throw GLVisError("Subsector without sector");
+      while (count--) nfo.leaves[ln++] = i;
     }
   }
 
   bool ok = CreatePortals(&nfo);
+
   if (ok) {
-    BasePortalVis(&nfo);
+    if (loader_pvs_builder_threads > 1) {
+      pvsStartThreads(nfo);
+    } else {
+      BasePortalVis(&nfo);
+    }
     // assemble the leaf vis lists by oring and compressing the portal lists
     //totalvis = 0;
     int vissize = nfo.rowbytes*NumSubsectors;
@@ -858,7 +988,7 @@ void VLevel::SimpleFlood (/*portal_t*/void *srcportalp, int leafnum, void *pvsin
 
   if (srcportal->mightsee[leafnum>>3]&(1<<(leafnum&7))) return;
   srcportal->mightsee[leafnum>>3] |= (1<<(leafnum&7));
-  ++nfo->c_leafsee;
+  //++nfo->c_leafsee;
 
   //leaf_t *leaf = &subsectors[leafnum];
   subsec_extra_t *leaf = &nfo->ssex[leafnum];
@@ -893,7 +1023,7 @@ void VLevel::BasePortalVis (void *pvsinfo) {
     p->mightsee = new vuint8[nfo->bitbytes];
     memset(p->mightsee, 0, nfo->bitbytes);
 
-    nfo->c_portalsee = 0;
+    //nfo->c_portalsee = 0;
     memset(nfo->portalsee, 0, nfo->numportals);
 
     for (j = 0, tp = nfo->portals; j < nfo->numportals; ++j, ++tp) {
@@ -913,12 +1043,12 @@ void VLevel::BasePortalVis (void *pvsinfo) {
       if (k == 2) continue; // no points on front
 
       nfo->portalsee[j] = 1;
-      ++nfo->c_portalsee;
+      //++nfo->c_portalsee;
     }
 
-    nfo->c_leafsee = 0;
+    //nfo->c_leafsee = 0;
     SimpleFlood(p, p->leaf, pvsinfo);
-    p->nummightsee = nfo->c_leafsee;
+    //p->nummightsee = nfo->c_leafsee;
 
     // fastvis just uses mightsee for a very loose bound
     p->visbits = p->mightsee;
