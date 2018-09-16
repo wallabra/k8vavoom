@@ -43,6 +43,8 @@ override void CreateChoices () {
   CreateChoiceTextLabel("");
   CreateChoiceTextLabel("Internal Node Builder");
   CreateOnOffCvar("Force node rebuilding", 'loader_force_nodes_rebuild');
+  CreateOnOffCvar("Fast (but bad) node building", 'nodes_fast_and_bad');
+  CreateOnOffCvar("Detect some kinds of window fx", 'nodes_detect_window_fx');
   CreateOnOffCvar("Build (rough) PVS", 'loader_build_pvs');
 
 
