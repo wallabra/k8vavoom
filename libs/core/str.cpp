@@ -1150,6 +1150,27 @@ VStr VStr::quote () const {
 
 //==========================================================================
 //
+//  VStr::buf2hex
+//
+//==========================================================================
+VStr VStr::buf2hex (const void *buf, int buflen) {
+  static const char *hexd = "0123456789abcdef";
+  VStr res;
+  if (buflen < 0 || !buf) return res;
+  const vuint8 *b = (const vuint8 *)buf;
+  buflen *= 2;
+  res.resize(buflen);
+  char *str = res.data;
+  for (int f = 0; f < buflen; f += 2, ++b) {
+    *str++ = hexd[((*b)>>4)&0x0f];
+    *str++ = hexd[(*b)&0x0f];
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
 // va
 //
 // Very useful function from Quake.

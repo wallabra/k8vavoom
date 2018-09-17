@@ -1952,7 +1952,7 @@ ge25519_scalarmult_base_niels(ge25519 *r, const uint8_t basepoint_table[256][96]
 
 
 /* reference/slow SHA-512. really, do not use this */
-
+#if 0
 //#define SHA512_HASH_BLOCK_SIZE  (128)
 #define HASH_DIGEST_SIZE (64)
 
@@ -2139,6 +2139,7 @@ ED25519_FN(ed25519_hash)(ed25519_sha512_hash hash, const void *in, size_t inlen)
 	ed25519_hash_update(&ctx, in, inlen);
 	ed25519_hash_final(&ctx, hash);
 }
+#endif
 
 
 /*

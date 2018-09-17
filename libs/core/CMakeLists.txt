@@ -48,4 +48,5 @@ add_library(core STATIC
   poly1305-donna.c
   ed25519.c
   chacha20.c
+  sha2.c
 )

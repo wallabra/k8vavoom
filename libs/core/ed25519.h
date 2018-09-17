@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include "sha2.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -79,6 +80,7 @@ void ed25519_randombytes(void *out, size_t count);
 void curved25519_scalarmult_basepoint(curved25519_key pk, const curved25519_key e);
 
 
+#if 0
 /* reference/slow SHA-512. really, do not use this */
 #define SHA512_HASH_BLOCK_SIZE  (128)
 typedef struct ed25519_sha512_state_t {
@@ -98,6 +100,18 @@ void ed25519_hash_update (ed25519_hash_context *S, const void *in, size_t inlen)
 void ed25519_hash_final (ed25519_hash_context *S, ed25519_sha512_hash hash);
 
 void ed25519_hash (ed25519_sha512_hash hash, const void *in, size_t inlen);
+
+#else
+typedef sha512_ctx  ed25519_hash_context;
+typedef uint8_t  ed25519_sha512_hash[SHA512_DIGEST_SIZE];
+
+#define ed25519_hash_init    sha512_init
+#define ed25519_hash_update  sha512_update
+#define ed25519_hash_final   sha512_final
+
+#define ed25519_hash         sha512_buf
+
+#endif
 
 
 #if defined(__cplusplus)

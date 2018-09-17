@@ -429,6 +429,8 @@ public:
   inline bool fnameEqu1251CI (const VStr &s) const { return fnameEqu1251CI(s.data); }
   bool fnameEqu1251CI (const char *s) const;
 
+  static VStr buf2hex (const void *buf, int buflen);
+
 public:
   static inline char wchar2win (vuint32 wc) { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
 

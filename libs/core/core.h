@@ -22,11 +22,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #ifndef _CORE_H
 #define _CORE_H
 
-//  C headers
+// C headers
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -39,33 +38,34 @@
 
 #include "mythreadlite.h"
 
-#include "common.h"   //  Common types and definitions
+#include "common.h" // common types and definitions
 #include "propp.h"
 #include "hashfunc.h"
 #include "jh32.h"
 #include "rg32.h"
+#include "sha2.h"
 #include "xxhash32.h"
 #include "chacha20.h"
 #include "poly1305-donna.h"
 #include "ed25519.h"
-#include "zone.h"   //  Zone memory allocation
-#include "endian.h"   //  Endianes handling
-#include "names.h"    //  Built-in names
-#include "log.h"    //  General logging interface
-#include "exception.h"  //  Exception handling
-#include "stream.h"   //  Streams
-#include "array.h"    //  Dynamic arrays
-#include "map.h"    //  Mapping of keys to values
-#include "crc.h"    //  CRC calcuation
-#include "name.h"   //  Names
-#include "str.h"    //  Strings
-#include "args.h"   //  Command line arguments.
-#include "memorystream.h"// In-memory streams
-#include "arraystream.h"//  Stream for reading from array
-#include "bitstream.h"  //  Streams for bit-data
-#include "vector.h"   //  Vector math
-#include "matrix.h"   //  Matrices
-#include "xml.h"    //  XML file parsing
+#include "zone.h" // zone memory allocation
+#include "endian.h" // endianes handling
+#include "names.h" // built-in names
+#include "log.h" // general logging interface
+#include "exception.h" // exception handling
+#include "stream.h" // streams
+#include "array.h" // dynamic arrays
+#include "map.h" // mapping of keys to values
+#include "crc.h" // CRC calcuation
+#include "name.h" // names
+#include "str.h" // strings
+#include "args.h" // command line arguments
+#include "memorystream.h"// in-memory streams
+#include "arraystream.h"// stream for reading from array
+#include "bitstream.h" // streams for bit-data
+#include "vector.h" // vector math
+#include "matrix.h" // matrices
+#include "xml.h" // xml file parsing
 
 #include "hashset.h"
 #include "wlist.h"
