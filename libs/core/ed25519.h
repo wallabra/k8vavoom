@@ -2,6 +2,7 @@
 #define ED25519_H
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -79,6 +80,14 @@ void curved25519_scalarmult_basepoint(curved25519_key pk, const curved25519_key 
 
 
 /* reference/slow SHA-512. really, do not use this */
+#define SHA512_HASH_BLOCK_SIZE  (128)
+typedef struct ed25519_sha512_state_t {
+  uint64_t H[8];
+  uint64_t T[2];
+  uint32_t leftover;
+  uint8_t buffer[SHA512_HASH_BLOCK_SIZE];
+} ed25519_sha512_state;
+
 typedef struct ed25519_sha512_state_t ed25519_hash_context;
 enum { ed25519_sha512_hash_size = 512/8 };
 typedef uint8_t ed25519_sha512_hash[ed25519_sha512_hash_size];

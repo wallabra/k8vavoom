@@ -1953,17 +1953,19 @@ ge25519_scalarmult_base_niels(ge25519 *r, const uint8_t basepoint_table[256][96]
 
 /* reference/slow SHA-512. really, do not use this */
 
-#define HASH_BLOCK_SIZE 128
-#define HASH_DIGEST_SIZE 64
+//#define SHA512_HASH_BLOCK_SIZE  (128)
+#define HASH_DIGEST_SIZE (64)
 
+/*
 typedef struct ed25519_sha512_state_t {
 	uint64_t H[8];
 	uint64_t T[2];
 	uint32_t leftover;
-	uint8_t buffer[HASH_BLOCK_SIZE];
+	uint8_t buffer[SHA512_HASH_BLOCK_SIZE];
 } ed25519_sha512_state;
+*/
 
-typedef ed25519_sha512_state ed25519_hash_context;
+typedef struct ed25519_sha512_state_t ed25519_hash_context;
 
 static const uint64_t sha512_constants[80] = {
 	0x428a2f98d728ae22ull, 0x7137449123ef65cdull, 0xb5c0fbcfec4d3b2full, 0xe9b5dba58189dbbcull,
@@ -2051,9 +2053,9 @@ sha512_blocks(ed25519_hash_context *S, const void *invoid, size_t blocks) {
 		for (i = 16; i < 80; i++) { w[i] = W1(i); }
 		for (i =  0; i < 80; i++) { STEP(i); }
 		for (i =  0; i <  8; i++) { r[i] += S->H[i]; S->H[i] = r[i]; }
-		S->T[0] += HASH_BLOCK_SIZE * 8;
+		S->T[0] += SHA512_HASH_BLOCK_SIZE * 8;
 		S->T[1] += (!S->T[0]) ? 1 : 0;
-		in += HASH_BLOCK_SIZE;
+		in += SHA512_HASH_BLOCK_SIZE;
 	}
 }
 
@@ -2079,11 +2081,11 @@ ED25519_FN(ed25519_hash_update)(ed25519_hash_context *S, const void *invoid, siz
 
 	/* handle the previous data */
 	if (S->leftover) {
-		want = (HASH_BLOCK_SIZE - S->leftover);
+		want = (SHA512_HASH_BLOCK_SIZE - S->leftover);
 		want = (want < inlen) ? want : inlen;
 		memcpy(S->buffer + S->leftover, in, want);
 		S->leftover += (uint32_t)want;
-		if (S->leftover < HASH_BLOCK_SIZE)
+		if (S->leftover < SHA512_HASH_BLOCK_SIZE)
 			return;
 		in += want;
 		inlen -= want;
@@ -2091,10 +2093,10 @@ ED25519_FN(ed25519_hash_update)(ed25519_hash_context *S, const void *invoid, siz
 	}
 
 	/* handle the current data */
-	blocks = (inlen & ~(HASH_BLOCK_SIZE - 1));
+	blocks = (inlen & ~(SHA512_HASH_BLOCK_SIZE - 1));
 	S->leftover = (uint32_t)(inlen - blocks);
 	if (blocks) {
-		sha512_blocks(S, in, blocks / HASH_BLOCK_SIZE);
+		sha512_blocks(S, in, blocks / SHA512_HASH_BLOCK_SIZE);
 		in += blocks;
 	}
 
