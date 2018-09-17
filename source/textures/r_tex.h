@@ -232,6 +232,7 @@ protected:
   VTexture *SrcTex;
   vuint8 *Pixels;
   float GenTime;
+  float Speed;
   float WarpXScale;
   float WarpYScale;
   float *XSin1;
@@ -240,7 +241,7 @@ protected:
   float *YSin2;
 
 public:
-  VWarpTexture (VTexture *);
+  VWarpTexture (VTexture *, float aspeed=1);
   virtual ~VWarpTexture () override;
   virtual void SetFrontSkyLayer () override;
   virtual bool CheckModified () override;
@@ -254,7 +255,7 @@ public:
 // different style of warping
 class VWarp2Texture : public VWarpTexture {
 public:
-  VWarp2Texture (VTexture *);
+  VWarp2Texture (VTexture *, float aspeed=1);
   virtual vuint8 *GetPixels () override;
 };
 

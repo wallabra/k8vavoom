@@ -1211,14 +1211,17 @@ static void ParseWarp (VScriptParser *sc, int Type) {
   int TexNum = GTextureManager.CheckNumForName(sc->Name8, TexType, true, true);
   if (TexNum < 0) return;
 
+  float speed = 1;
+  if (sc->CheckFloat()) speed = sc->Float;
+
   VTexture *SrcTex = GTextureManager[TexNum];
   VTexture *WarpTex = SrcTex;
   // warp only once
   if (!SrcTex->WarpType) {
     if (Type == 1) {
-      WarpTex = new VWarpTexture(SrcTex);
+      WarpTex = new VWarpTexture(SrcTex, speed);
     } else {
-      WarpTex = new VWarp2Texture(SrcTex);
+      WarpTex = new VWarp2Texture(SrcTex, speed);
     }
     GTextureManager.ReplaceTexture(TexNum, WarpTex);
   }

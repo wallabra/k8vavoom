@@ -32,10 +32,11 @@
 //  VWarpTexture::VWarpTexture
 //
 //==========================================================================
-VWarpTexture::VWarpTexture (VTexture *ASrcTex)
+VWarpTexture::VWarpTexture (VTexture *ASrcTex, float aspeed)
   : SrcTex(ASrcTex)
   , Pixels(nullptr)
   , GenTime(0)
+  , Speed(aspeed)
   , WarpXScale(1.0)
   , WarpYScale(1.0)
   , XSin1(nullptr)
@@ -50,6 +51,7 @@ VWarpTexture::VWarpTexture (VTexture *ASrcTex)
   SScale = SrcTex->SScale;
   TScale = SrcTex->TScale;
   WarpType = 1;
+  if (Speed < 1) Speed = 1; else if (Speed > 16) Speed = 16;
 }
 
 
@@ -106,7 +108,7 @@ void VWarpTexture::SetFrontSkyLayer () {
 //
 //==========================================================================
 bool VWarpTexture::CheckModified () {
-  return (GenTime != GTextureManager.Time);
+  return (GenTime != GTextureManager.Time*Speed);
 }
 
 
@@ -117,12 +119,12 @@ bool VWarpTexture::CheckModified () {
 //==========================================================================
 vuint8 *VWarpTexture::GetPixels () {
   guard(VWarpTexture::GetPixels);
-  if (Pixels && GenTime == GTextureManager.Time) return Pixels;
+  if (Pixels && GenTime == GTextureManager.Time*Speed) return Pixels;
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
   Format = SrcTex->Format;
 
-  GenTime = GTextureManager.Time;
+  GenTime = GTextureManager.Time*Speed;
   Pixels8BitValid = false;
 
   if (!XSin1) {
@@ -220,7 +222,9 @@ void VWarpTexture::Unload () {
 //  VWarp2Texture::VWarp2Texture
 //
 //==========================================================================
-VWarp2Texture::VWarp2Texture (VTexture *ASrcTex) : VWarpTexture(ASrcTex) {
+VWarp2Texture::VWarp2Texture (VTexture *ASrcTex, float aspeed)
+  : VWarpTexture(ASrcTex, aspeed)
+{
   WarpType = 2;
 }
 
@@ -232,12 +236,12 @@ VWarp2Texture::VWarp2Texture (VTexture *ASrcTex) : VWarpTexture(ASrcTex) {
 //==========================================================================
 vuint8 *VWarp2Texture::GetPixels () {
   guard(VWarp2Texture::GetPixels);
-  if (Pixels && GenTime == GTextureManager.Time) return Pixels;
+  if (Pixels && GenTime == GTextureManager.Time*Speed) return Pixels;
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
   Format = SrcTex->Format;
 
-  GenTime = GTextureManager.Time;
+  GenTime = GTextureManager.Time*Speed;
   Pixels8BitValid = false;
 
   if (!XSin1) {
