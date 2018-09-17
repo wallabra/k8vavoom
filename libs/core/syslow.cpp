@@ -72,6 +72,16 @@ bool Sys_FileExists (const VStr &filename) {
 
 //==========================================================================
 //
+//  Sys_FileDelete
+//
+//==========================================================================
+void Sys_FileDelete (const VStr &filename) {
+  if (filename.length()) unlink(*filename);
+}
+
+
+//==========================================================================
+//
 //  Sys_FileTime
 //
 //  Returns -1 if not present
@@ -242,6 +252,16 @@ static bool isRegularFile (const VStr &filename) {
 //==========================================================================
 bool Sys_FileExists (const VStr &filename) {
   return (!filename.isEmpty() && access(*filename, R_OK) == 0 && isRegularFile(filename));
+}
+
+
+//==========================================================================
+//
+//  Sys_FileDelete
+//
+//==========================================================================
+void Sys_FileDelete (const VStr &filename) {
+  if (filename.length()) DeleteFile(*filename);
 }
 
 

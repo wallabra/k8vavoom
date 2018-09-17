@@ -33,6 +33,8 @@ bool Sys_DirExists (const VStr &path);
 int Sys_FileTime (const VStr &path); // returns -1 if not present
 bool Sys_CreateDirectory (const VStr &path);
 
+void Sys_FileDelete (const VStr &filename);
+
 // can return `nullptr` for invalid path
 void *Sys_OpenDir (const VStr &path); // nullptr: error
 // never returns directories; returns empty string on end-of-dir; returns names w/o path
