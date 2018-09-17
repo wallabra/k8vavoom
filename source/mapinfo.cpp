@@ -771,6 +771,13 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     {
       DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
     }
+    else if (sc->Check("compat_sectorsounds"))
+    {
+      GCon->Logf("WARNING: %s: mapdef 'compat_sectorsounds' is not supported yet", *sc->GetLoc().toStringNoCol());
+      //DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
+      sc->Check("=");
+      sc->CheckNumber();
+    }
     else if (sc->Check("evenlighting"))
     {
       info->HorizWallShade = 0;
