@@ -123,6 +123,87 @@ static VCvarB loader_cache_data("loader_cache_data", false, "Cache built level d
 
 // CODE --------------------------------------------------------------------
 static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 000.\n";
+static bool cacheCleanupComplete = false;
+
+
+//==========================================================================
+//
+//  hashLump
+//
+//==========================================================================
+static bool hashLump (ed25519_hash_context *sha512ctx, int lumpnum) {
+  if (lumpnum < 0) return false;
+  static char buf[65536];
+  VStream *strm = W_CreateLumpReaderNum(lumpnum);
+  if (!strm) return false;
+  auto left = strm->TotalSize();
+  while (left > 0) {
+    int rd = left;
+    if (rd > (int)sizeof(buf)) rd = (int)sizeof(buf);
+    strm->Serialise(buf, rd);
+    if (strm->IsError()) { delete strm; return false; }
+    ed25519_hash_update(sha512ctx, buf, rd);
+    left -= rd;
+  }
+  delete strm;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  getCacheDir
+//
+//==========================================================================
+static VStr getCacheDir () {
+  VStr res;
+  if (!loader_cache_data) return res;
+#if !defined(_WIN32)
+  const char *HomeDir = getenv("HOME");
+  if (HomeDir && HomeDir[0]) {
+    res = VStr(HomeDir)+"/.vavoom";
+    Sys_CreateDirectory(res);
+    res += "/.mapcache";
+    Sys_CreateDirectory(res);
+  }
+#endif
+  return res;
+}
+
+
+//==========================================================================
+//
+//  doCacheCleanup
+//
+//==========================================================================
+static void doCacheCleanup (int currtime) {
+  if (cacheCleanupComplete || currtime < 1) return;
+  cacheCleanupComplete = true;
+  VStr cpath = getCacheDir();
+  if (cpath.length() == 0) return;
+  TArray<VStr> dellist;
+  auto dh = Sys_OpenDir(cpath);
+  if (!dh) return;
+  for (;;) {
+    VStr fname = Sys_ReadDir(dh);
+    if (fname.length() == 0) break;
+    VStr shortname = fname;
+    fname = cpath+"/"+fname;
+    int ftime = Sys_FileTime(fname);
+    if (ftime <= 0) {
+      GCon->Logf("cache: deleting invalid file '%s'", *shortname);
+      dellist.append(fname);
+    } else if (ftime < currtime && currtime-ftime > 60*60*24*16) {
+      GCon->Logf("cache: deleting old file '%s'", *shortname);
+    } else {
+      //GCon->Logf("cache: age=%d for '%s'", currtime-ftime, *shortname);
+    }
+  }
+  Sys_CloseDir(dh);
+  for (int f = 0; f < dellist.length(); ++f) {
+    Sys_FileDelete(dellist[f]);
+  }
+}
 
 
 //==========================================================================
@@ -550,51 +631,6 @@ error:
 
 //==========================================================================
 //
-//  hashLump
-//
-//==========================================================================
-static bool hashLump (ed25519_hash_context *sha512ctx, int lumpnum) {
-  if (lumpnum < 0) return false;
-  static char buf[65536];
-  VStream *strm = W_CreateLumpReaderNum(lumpnum);
-  if (!strm) return false;
-  auto left = strm->TotalSize();
-  while (left > 0) {
-    int rd = left;
-    if (rd > (int)sizeof(buf)) rd = (int)sizeof(buf);
-    strm->Serialise(buf, rd);
-    if (strm->IsError()) { delete strm; return false; }
-    ed25519_hash_update(sha512ctx, buf, rd);
-    left -= rd;
-  }
-  delete strm;
-  return true;
-}
-
-
-//==========================================================================
-//
-//  getCacheDir
-//
-//==========================================================================
-static VStr getCacheDir () {
-  VStr res;
-  if (!loader_cache_data) return res;
-#if !defined(_WIN32)
-  const char *HomeDir = getenv("HOME");
-  if (HomeDir && HomeDir[0]) {
-    res = VStr(HomeDir)+"/.vavoom";
-    Sys_CreateDirectory(res);
-    res += "/.mapcache";
-    Sys_CreateDirectory(res);
-  }
-#endif
-  return res;
-}
-
-
-//==========================================================================
-//
 //  VLevel::LoadMap
 //
 //==========================================================================
@@ -1008,6 +1044,8 @@ void VLevel::LoadMap (VName AMapName) {
     VStream *strm = FL_OpenSysFileWrite(cacheFileName);
     SaveCachedData(strm);
     delete strm;
+    int ftime = Sys_FileTime(cacheFileName);
+    if (ftime > 0) doCacheCleanup(ftime);
   }
 
   unguard;
