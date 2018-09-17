@@ -30,7 +30,8 @@
 
 bool Sys_FileExists (const VStr &filename);
 bool Sys_DirExists (const VStr &path);
-int Sys_FileTime (const VStr &path); // returns -1 if not present
+int Sys_FileTime (const VStr &path); // returns -1 if not present, or time in unix epoch
+int Sys_CurrFileTime (); // return current time in unix epoch
 bool Sys_CreateDirectory (const VStr &path);
 
 void Sys_FileDelete (const VStr &filename);
