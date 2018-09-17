@@ -263,19 +263,13 @@ static VStr SV_GetSaveSlotBaseFileName (int slot) {
     modlist += "\n";
   }
   // get list hash
-  ed25519_sha512_hash sha512;
-  ed25519_hash(sha512, *modlist, (size_t)modlist.length());
+  vuint8 sha512[SHA512_DIGEST_SIZE];
+  sha512_buf(sha512, *modlist, (size_t)modlist.length());
   // convert to hex
-  char shahex[ed25519_sha512_hash_size*2+1];
-  static const char *hexd = "0123456789abcdef";
-  for (int f = 0; f < ed25519_sha512_hash_size; ++f) {
-    shahex[f*2+0] = hexd[(sha512[f]>>4)&0x0f];
-    shahex[f*2+1] = hexd[sha512[f]&0x0f];
-  }
-  shahex[ed25519_sha512_hash_size*2] = 0;
-  if (slot == QUICKSAVE_SLOT) return VStr(va("%s_quicksave_00.vsg", shahex));
-  if (slot < 0) return VStr(va("%s_autosave_%02d.vsg", shahex, -slot));
-  return VStr(va("%s_normsave_%02d.vsg", shahex, slot+1));
+  VStr shahex = VStr::buf2hex(sha512, SHA512_DIGEST_SIZE);
+  if (slot == QUICKSAVE_SLOT) return shahex+VStr("_quicksave_00.vsg");
+  if (slot < 0) return VStr(va("%s_autosave_%02d.vsg", *shahex, -slot));
+  return VStr(va("%s_normsave_%02d.vsg", *shahex, slot+1));
 }
 
 

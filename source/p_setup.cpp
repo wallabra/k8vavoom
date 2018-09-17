@@ -132,9 +132,9 @@ static bool cacheCleanupComplete = false;
 //  hashLump
 //
 //==========================================================================
-static bool hashLump (ed25519_hash_context *sha512ctx, int lumpnum) {
+static bool hashLump (sha512_ctx *sha512ctx, int lumpnum) {
   if (lumpnum < 0) return false;
-  static char buf[65536];
+  static vuint8 buf[65536];
   VStream *strm = W_CreateLumpReaderNum(lumpnum);
   if (!strm) return false;
   auto left = strm->TotalSize();
@@ -143,7 +143,7 @@ static bool hashLump (ed25519_hash_context *sha512ctx, int lumpnum) {
     if (rd > (int)sizeof(buf)) rd = (int)sizeof(buf);
     strm->Serialise(buf, rd);
     if (strm->IsError()) { delete strm; return false; }
-    ed25519_hash_update(sha512ctx, buf, rd);
+    sha512_update(sha512ctx, buf, rd);
     left -= rd;
   }
   delete strm;
@@ -689,12 +689,12 @@ void VLevel::LoadMap (VName AMapName) {
   VisData = nullptr;
   NoVis = nullptr;
 
-  ed25519_hash_context sha512ctx;
+  sha512_ctx sha512ctx;
   bool sha512valid = false;
   VStr cacheFileName;
   VStr cacheDir = getCacheDir();
 
-  if (cacheDir.length()) ed25519_hash_init(&sha512ctx);
+  if (cacheDir.length()) sha512_init(&sha512ctx);
 
   // check for UDMF map
   if (W_LumpName(lumpnum+1) == NAME_textmap) {
@@ -775,15 +775,9 @@ void VLevel::LoadMap (VName AMapName) {
 
   bool cachedDataLoaded = false;
   if (sha512valid) {
-    ed25519_sha512_hash sha512hash;
-    ed25519_hash_final(&sha512ctx, sha512hash);
-    static const char *hexd = "0123456789abcdef";
-    cacheFileName = VStr("mapcache_");
-    for (int f = 0; f < ed25519_sha512_hash_size; ++f) {
-      cacheFileName += hexd[(sha512hash[f]>>4)&0x0f];
-      cacheFileName += hexd[sha512hash[f]&0x0f];
-    }
-    cacheFileName += ".cache";
+    vuint8 sha512hash[SHA512_DIGEST_SIZE];
+    sha512_final(&sha512ctx, sha512hash);
+    cacheFileName = VStr("mapcache_")+VStr::buf2hex(sha512hash, SHA512_DIGEST_SIZE)+".cache";
     cacheFileName = cacheDir+"/"+cacheFileName;
   }
 
