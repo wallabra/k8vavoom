@@ -26,9 +26,6 @@
 //**    Build nodes using glBSP.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "filesys/fwaddefs.h"
 extern "C" {
@@ -58,58 +55,44 @@ static VCvarB nodes_detect_window_fx("nodes_detect_window_fx", false, "Use \"win
 static VCvarB nodes_fast_and_bad("nodes_fast_and_bad", false, "Do faster rebuild, but generate worser BSP tree?", CVAR_Archive);
 
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
 // Lump order in a map WAD: each map needs a couple of lumps
 // to provide a complete scene geometry description.
-enum
-{
-  ML_LABEL,   // A separator, name, ExMx or MAPxx
-  ML_THINGS,    // Monsters, items..
-  ML_LINEDEFS,  // LineDefs, from editing
-  ML_SIDEDEFS,  // SideDefs, from editing
-  ML_VERTEXES,  // Vertices, edited and BSP splits generated
-  ML_SEGS,    // LineSegs, from LineDefs split by BSP
-  ML_SSECTORS,  // SubSectors, list of LineSegs
-  ML_NODES,   // BSP nodes
-  ML_SECTORS,   // Sectors, from editing
-  ML_REJECT,    // LUT, sector-sector visibility
-  ML_BLOCKMAP,  // LUT, motion clipping, walls/grid element
-  ML_BEHAVIOR   // ACS scripts
+enum {
+  ML_LABEL, // A separator, name, ExMx or MAPxx
+  ML_THINGS,  // Monsters, items..
+  ML_LINEDEFS, // LineDefs, from editing
+  ML_SIDEDEFS, // SideDefs, from editing
+  ML_VERTEXES, // Vertices, edited and BSP splits generated
+  ML_SEGS, // LineSegs, from LineDefs split by BSP
+  ML_SSECTORS, // SubSectors, list of LineSegs
+  ML_NODES, // BSP nodes
+  ML_SECTORS, // Sectors, from editing
+  ML_REJECT, // LUT, sector-sector visibility
+  ML_BLOCKMAP, // LUT, motion clipping, walls/grid element
+  ML_BEHAVIOR, // ACS scripts
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
+//==========================================================================
+//
+//  stripNL
+//
+//==========================================================================
 static void stripNL (char *str) {
   if (!str) return;
   auto slen = strlen(str);
   while (slen > 0 && (str[slen-1] == '\n' || str[slen-1] == '\r')) str[--slen] = '\0';
 }
 
+
 //==========================================================================
 //
 //  GLBSP_PrintMsg
 //
 //==========================================================================
-
-static void GLBSP_PrintMsg(const char *str, ...)
-{
-  static char   message_buf[1024];
-  va_list   args;
+static void GLBSP_PrintMsg (const char *str, ...) {
+  static char message_buf[1024];
+  va_list args;
 
   va_start(args, str);
   vsnprintf(message_buf, sizeof(message_buf), str, args);
@@ -119,6 +102,7 @@ static void GLBSP_PrintMsg(const char *str, ...)
   GCon->Logf("GB: %s", message_buf);
 }
 
+
 //==========================================================================
 //
 //  GLBSP_FatalError
@@ -126,11 +110,9 @@ static void GLBSP_PrintMsg(const char *str, ...)
 //  Terminates the program reporting an error.
 //
 //==========================================================================
-
-static void GLBSP_FatalError(const char *str, ...)
-{
-  static char   message_buf[1024];
-  va_list   args;
+static void GLBSP_FatalError (const char *str, ...) {
+  static char message_buf[1024];
+  va_list args;
 
   va_start(args, str);
   vsnprintf(message_buf, sizeof(message_buf), str, args);
@@ -140,37 +122,16 @@ static void GLBSP_FatalError(const char *str, ...)
   Sys_Error("Builing nodes failed: %s\n", message_buf);
 }
 
-static void GLBSP_Ticker()
-{
-}
 
-static boolean_g GLBSP_DisplayOpen(displaytype_e)
-{
-  return true;
-}
+static void GLBSP_Ticker () {}
+static boolean_g GLBSP_DisplayOpen (displaytype_e) { return true; }
+static void GLBSP_DisplaySetTitle (const char *) { }
+static void GLBSP_DisplaySetBarText (int, const char *) {}
+static void GLBSP_DisplaySetBarLimit (int, int) {}
+static void GLBSP_DisplaySetBar (int, int) {}
+static void GLBSP_DisplayClose () {}
 
-static void GLBSP_DisplaySetTitle(const char *)
-{
-}
-
-static void GLBSP_DisplaySetBarText(int, const char*)
-{
-}
-
-static void GLBSP_DisplaySetBarLimit(int, int)
-{
-}
-
-static void GLBSP_DisplaySetBar(int, int)
-{
-}
-
-static void GLBSP_DisplayClose()
-{
-}
-
-static const nodebuildfuncs_t build_funcs =
-{
+static const nodebuildfuncs_t build_funcs = {
   GLBSP_FatalError,
   GLBSP_PrintMsg,
   GLBSP_Ticker,
@@ -183,132 +144,109 @@ static const nodebuildfuncs_t build_funcs =
   GLBSP_DisplayClose
 };
 
+
 //==========================================================================
 //
 //  SetUpVertices
 //
 //==========================================================================
-
-static void SetUpVertices(VLevel *Level)
-{
+static void SetUpVertices (VLevel *Level) {
   guard(SetUpVertices);
   vertex_t *pSrc = Level->Vertexes;
-  for (int i = 0; i < Level->NumVertexes; i++, pSrc++)
-  {
+  for (int i = 0; i < Level->NumVertexes; ++i, ++pSrc) {
     glbsp_vertex_t *Vert = NewVertex();
     Vert->x = pSrc->x;
     Vert->y = pSrc->y;
     Vert->index = i;
   }
-
   num_normal_vert = num_vertices;
   num_gl_vert = 0;
   num_complete_seg = 0;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  SetUpSectors
 //
 //==========================================================================
-
-static void SetUpSectors(VLevel *Level)
-{
+static void SetUpSectors (VLevel *Level) {
   guard(SetUpSectors);
   sector_t *pSrc = Level->Sectors;
-  for (int i = 0; i < Level->NumSectors; i++, pSrc++)
-  {
+  for (int i = 0; i < Level->NumSectors; ++i, ++pSrc) {
     glbsp_sector_t *Sector = NewSector();
-    Sector->coalesce = (pSrc->tag >= 900 && pSrc->tag < 1000) ?
-      TRUE : FALSE;
+    Sector->coalesce = (pSrc->tag >= 900 && pSrc->tag < 1000 ? TRUE : FALSE);
     Sector->index = i;
     Sector->warned_facing = -1;
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  SetUpSidedefs
 //
 //==========================================================================
-
-static void SetUpSidedefs(VLevel *Level)
-{
+static void SetUpSidedefs (VLevel *Level) {
   guard(SetUpSidedefs);
   side_t *pSrc = Level->Sides;
-  for (int i = 0; i < Level->NumSides; i++, pSrc++)
-  {
+  for (int i = 0; i < Level->NumSides; ++i, ++pSrc) {
     sidedef_t *Side = NewSidedef();
-    Side->sector = !pSrc->Sector ? nullptr :
-      LookupSector(pSrc->Sector - Level->Sectors);
-    if (Side->sector)
-    {
-      Side->sector->ref_count++;
-    }
+    Side->sector = (!pSrc->Sector ? nullptr : LookupSector(pSrc->Sector-Level->Sectors));
+    if (Side->sector) ++Side->sector->ref_count;
     Side->index = i;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  SetUpLinedefs
 //
 //==========================================================================
-
-static void SetUpLinedefs(VLevel *Level)
-{
+static void SetUpLinedefs (VLevel *Level) {
   guard(SetUpLinedefs);
   line_t *pSrc = Level->Lines;
-  for (int i = 0; i < Level->NumLines; i++, pSrc++)
-  {
+  for (int i = 0; i < Level->NumLines; ++i, ++pSrc) {
     linedef_t *Line = NewLinedef();
-    if (Line == nullptr)
-    {
-      continue;
-    }
+    if (Line == nullptr) continue;
     Line->start = LookupVertex(pSrc->v1 - Level->Vertexes);
     Line->end = LookupVertex(pSrc->v2 - Level->Vertexes);
-    Line->start->ref_count++;
-    Line->end->ref_count++;
-    Line->zero_len = (fabs(Line->start->x - Line->end->x) < DIST_EPSILON) &&
-      (fabs(Line->start->y - Line->end->y) < DIST_EPSILON);
+    ++Line->start->ref_count;
+    ++Line->end->ref_count;
+    Line->zero_len = (fabs(Line->start->x-Line->end->x) < DIST_EPSILON) && (fabs(Line->start->y-Line->end->y) < DIST_EPSILON);
     Line->flags = pSrc->flags;
     Line->type = pSrc->special;
-    Line->two_sided = (Line->flags & LINEFLAG_TWO_SIDED) ? TRUE : FALSE;
-    Line->right = pSrc->sidenum[0] < 0 ? nullptr : LookupSidedef(pSrc->sidenum[0]);
-    Line->left = pSrc->sidenum[1] < 0 ? nullptr : LookupSidedef(pSrc->sidenum[1]);
-    if (Line->right != nullptr)
-    {
-      Line->right->ref_count++;
-      Line->right->on_special |= (Line->type > 0) ? 1 : 0;
+    Line->two_sided = (Line->flags&LINEFLAG_TWO_SIDED ? TRUE : FALSE);
+    Line->right = (pSrc->sidenum[0] < 0 || pSrc->sidenum[0] > 0x7fffffff ? nullptr : LookupSidedef(pSrc->sidenum[0]));
+    Line->left = (pSrc->sidenum[1] < 0 || pSrc->sidenum[1] > 0x7fffffff ? nullptr : LookupSidedef(pSrc->sidenum[1]));
+    if (Line->right != nullptr) {
+      ++Line->right->ref_count;
+      Line->right->on_special |= (Line->type > 0 ? 1 : 0);
     }
-    if (Line->left != nullptr)
-    {
-      Line->left->ref_count++;
-      Line->left->on_special |= (Line->type > 0) ? 1 : 0;
+    if (Line->left != nullptr) {
+      ++Line->left->ref_count;
+      Line->left->on_special |= (Line->type > 0 ? 1 : 0);
     }
-    Line->self_ref = (Line->left != nullptr && Line->right != nullptr &&
-      (Line->left->sector == Line->right->sector));
+    Line->self_ref = (Line->left != nullptr && Line->right != nullptr && Line->left->sector == Line->right->sector);
     Line->index = i;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  SetUpThings
 //
 //==========================================================================
-
-static void SetUpThings(VLevel *Level)
-{
+static void SetUpThings (VLevel *Level) {
   guard(SetUpThings);
   mthing_t *pSrc = Level->Things;
-  for (int i = 0; i < Level->NumThings; i++, pSrc++)
-  {
+  for (int i = 0; i < Level->NumThings; ++i, ++pSrc) {
     thing_t *Thing = NewThing();
     Thing->x = (int)pSrc->x;
     Thing->y = (int)pSrc->y;
@@ -319,127 +257,139 @@ static void SetUpThings(VLevel *Level)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  CopyGLVerts
 //
 //==========================================================================
-
-static void CopyGLVerts(VLevel *Level, vertex_t *&GLVertexes)
-{
+static void CopyGLVerts (VLevel *Level, vertex_t *&GLVertexes) {
   guard(CopyGLVerts);
   int NumBaseVerts = Level->NumVertexes;
   vertex_t *OldVertexes = Level->Vertexes;
-  Level->NumVertexes = NumBaseVerts + num_gl_vert;
+  Level->NumVertexes = NumBaseVerts+num_gl_vert;
   Level->Vertexes = new vertex_t[Level->NumVertexes];
-  GLVertexes = Level->Vertexes + NumBaseVerts;
-  memcpy(Level->Vertexes, OldVertexes, NumBaseVerts * sizeof(vertex_t));
+  GLVertexes = Level->Vertexes+NumBaseVerts;
+  memcpy((void *)Level->Vertexes, (void *)OldVertexes, NumBaseVerts*sizeof(vertex_t));
   vertex_t *pDst = GLVertexes;
-  for (int i = 0; i < num_vertices; i++)
-  {
+  int vcount = NumBaseVerts;
+  for (int i = 0; i < num_vertices; ++i) {
     glbsp_vertex_t *vert = LookupVertex(i);
-    if (!(vert->index & IS_GL_VERTEX))
-      continue;
+    if (!(vert->index&IS_GL_VERTEX)) continue;
     *pDst = TVec(vert->x, vert->y, 0);
-    pDst++;
+    ++pDst;
+    ++vcount;
   }
+  if (vcount != Level->NumVertexes) Sys_Error("glBSP: invalid number of vertexes");
 
-  //  Update pointers to vertexes in lines.
-  for (int i = 0; i < Level->NumLines; i++)
-  {
+  // update pointers to vertexes in lines
+  for (int i = 0; i < Level->NumLines; ++i) {
     line_t *ld = &Level->Lines[i];
-    ld->v1 = &Level->Vertexes[ld->v1 - OldVertexes];
-    ld->v2 = &Level->Vertexes[ld->v2 - OldVertexes];
+    ld->v1 = &Level->Vertexes[ld->v1-OldVertexes];
+    ld->v2 = &Level->Vertexes[ld->v2-OldVertexes];
   }
   delete[] OldVertexes;
   OldVertexes = nullptr;
   unguard;
 }
 
+
+static vuint32 GetTypeHash (const glbsp_seg_t *sg) { return (vuint32)(ptrdiff_t)sg; }
+
+
 //==========================================================================
 //
 //  CopySegs
 //
 //==========================================================================
-
-static void CopySegs(VLevel *Level, vertex_t *GLVertexes)
-{
+static void CopySegs (VLevel *Level, vertex_t *GLVertexes) {
   guard(CopySegs);
-  //  Build ordered list of source segs.
-  glbsp_seg_t **SrcSegs = new glbsp_seg_t*[num_complete_seg];
-  for (int i = 0; i < num_segs; i++)
-  {
+  // build ordered list of source segs
+  glbsp_seg_t **SrcSegs = new glbsp_seg_t *[num_complete_seg];
+  memset((void *)SrcSegs, 0, num_complete_seg*sizeof(glbsp_seg_t *));
+  TMapNC<glbsp_seg_t *, int> glsegptr2idx;
+  for (int i = 0; i < num_segs; ++i) {
     glbsp_seg_t *Seg = LookupSeg(i);
     // ignore degenerate segs
-    if (Seg->degenerate)
-      continue;
+    if (Seg->degenerate) continue;
+    if (Seg->index < 0 || Seg->index >= num_complete_seg) Sys_Error("glBSP: invalid seg index (0)");
     SrcSegs[Seg->index] = Seg;
+    glsegptr2idx.put(Seg, Seg->index);
   }
 
   Level->NumSegs = num_complete_seg;
   Level->Segs = new seg_t[Level->NumSegs];
-  memset((void *)Level->Segs, 0, sizeof(seg_t) * Level->NumSegs);
-  seg_t *li = Level->Segs;
-  for (int i = 0; i < Level->NumSegs; i++, li++)
-  {
+  memset((void *)Level->Segs, 0, sizeof(seg_t)*Level->NumSegs);
+  seg_t *seg = Level->Segs;
+  for (int i = 0; i < Level->NumSegs; ++i, ++seg) {
     glbsp_seg_t *SrcSeg = SrcSegs[i];
-    li->partner = nullptr;
-    li->front_sub = nullptr;
+    if (!SrcSeg) Sys_Error("glBSP: invalid seg index (1)");
+    seg->partner = nullptr;
+    seg->front_sub = nullptr;
 
     // assign partner (we need it for self-referencing deep water)
     if (SrcSeg->partner) {
+      /*
       for (int psi = 0; psi < Level->NumSegs; ++psi) {
         if (SrcSegs[psi] == SrcSeg->partner) {
-          li->partner = &Level->Segs[psi];
+          seg->partner = &Level->Segs[psi];
           break;
         }
       }
-      if (!li->partner) GCon->Logf("GLBSP: invalid partner (ignored)");
+      */
+      auto sidp = glsegptr2idx.find(SrcSeg->partner);
+      if (sidp) {
+        if (*sidp < 0 || *sidp >= Level->NumSegs) Sys_Error("glBSP: invalid partner seg");
+        seg->partner = &Level->Segs[*sidp];
+      }
+      if (!seg->partner) GCon->Logf("GLBSP: invalid partner (ignored)");
     }
 
-    if (SrcSeg->start->index & IS_GL_VERTEX)
-    {
-      li->v1 = &GLVertexes[SrcSeg->start->index & ~IS_GL_VERTEX];
+    if (SrcSeg->start->index&IS_GL_VERTEX) {
+      seg->v1 = &GLVertexes[SrcSeg->start->index&~IS_GL_VERTEX];
+    } else {
+      seg->v1 = &Level->Vertexes[SrcSeg->start->index];
     }
-    else
-    {
-      li->v1 = &Level->Vertexes[SrcSeg->start->index];
-    }
-    if (SrcSeg->end->index & IS_GL_VERTEX)
-    {
-      li->v2 = &GLVertexes[SrcSeg->end->index & ~IS_GL_VERTEX];
-    }
-    else
-    {
-      li->v2 = &Level->Vertexes[SrcSeg->end->index];
+    if (SrcSeg->end->index&IS_GL_VERTEX) {
+      seg->v2 = &GLVertexes[SrcSeg->end->index & ~IS_GL_VERTEX];
+    } else {
+      seg->v2 = &Level->Vertexes[SrcSeg->end->index];
     }
 
-    if (SrcSeg->linedef)
-    {
+    if (SrcSeg->linedef) {
+      if (SrcSeg->side != 0 && SrcSeg->side != 1) Sys_Error("glBSP: invalid seg #%d side (%d)", i, SrcSeg->side);
+      if (SrcSeg->linedef->index < 0 || SrcSeg->linedef->index >= Level->NumLines) Sys_Error("glBSP: invalid seg #%d linedef (%d), max is %d", i, SrcSeg->linedef->index, Level->NumLines-1);
       line_t *ldef = &Level->Lines[SrcSeg->linedef->index];
-      li->linedef = ldef;
-      li->sidedef = &Level->Sides[ldef->sidenum[SrcSeg->side]];
-      li->frontsector = Level->Sides[ldef->sidenum[SrcSeg->side]].Sector;
+      seg->linedef = ldef;
+      if (ldef->sidenum[SrcSeg->side] < 0 || ldef->sidenum[SrcSeg->side] >= Level->NumSides) {
+        if (SrcSeg->side == 1) {
+          if ((ldef->flags&ML_TWOSIDED) != 0) {
+            GCon->Logf("ERROR: linedef #%d is marked as a two-sided, but has no second side!", SrcSeg->linedef->index);
+          } else {
+            GCon->Logf("ERROR: linedef #%d is not a two-sided, but has seg for the second side!", SrcSeg->linedef->index);
+          }
+        }
+        Sys_Error("glBSP: seg #%d: ldef=%d; seg->side=%d; sidenum=%d (max sidenum is %d)\n", i, SrcSeg->linedef->index, SrcSeg->side, ldef->sidenum[SrcSeg->side], Level->NumSides-1);
+      }
+      //fprintf(stderr, "seg #%d: ldef=%d; seg->side=%d; sidenum=%d\n", i, SrcSeg->linedef->index, SrcSeg->side, ldef->sidenum[SrcSeg->side]);
+      seg->sidedef = &Level->Sides[ldef->sidenum[SrcSeg->side]];
+      seg->frontsector = Level->Sides[ldef->sidenum[SrcSeg->side]].Sector;
 
-      if (ldef->flags & ML_TWOSIDED)
-      {
-        li->backsector = Level->Sides[ldef->sidenum[SrcSeg->side ^ 1]].Sector;
+      if (ldef->flags&ML_TWOSIDED) {
+        seg->backsector = Level->Sides[ldef->sidenum[SrcSeg->side^1]].Sector;
       }
 
-      if (SrcSeg->side)
-      {
-        li->offset = Length(*li->v1 - *ldef->v2);
+      if (SrcSeg->side) {
+        seg->offset = Length(*seg->v1 - *ldef->v2);
+      } else {
+        seg->offset = Length(*seg->v1 - *ldef->v1);
       }
-      else
-      {
-        li->offset = Length(*li->v1 - *ldef->v1);
-      }
-      li->length = Length(*li->v2 - *li->v1);
-      li->side = SrcSeg->side;
+      seg->length = Length(*seg->v2 - *seg->v1);
+      seg->side = SrcSeg->side;
     }
 
-    //  Calc seg's plane params
-    CalcSeg(li);
+    // calc seg's plane params
+    CalcSeg(seg);
   }
 
   delete[] SrcSegs;
@@ -447,31 +397,27 @@ static void CopySegs(VLevel *Level, vertex_t *GLVertexes)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  CopySubsectors
 //
 //==========================================================================
-
-static void CopySubsectors(VLevel *Level)
-{
+static void CopySubsectors (VLevel *Level) {
   guard(CopySubsectors);
   Level->NumSubsectors = num_subsecs;
   Level->Subsectors = new subsector_t[Level->NumSubsectors];
-  memset((void *)Level->Subsectors, 0, sizeof(subsector_t) * Level->NumSubsectors);
+  memset((void *)Level->Subsectors, 0, sizeof(subsector_t)*Level->NumSubsectors);
   subsector_t *ss = Level->Subsectors;
-  for (int i = 0; i < Level->NumSubsectors; i++, ss++)
-  {
+  for (int i = 0; i < Level->NumSubsectors; ++i, ++ss) {
     subsec_t *SrcSub = LookupSubsec(i);
     ss->numlines = SrcSub->seg_count;
     ss->firstline = SrcSub->seg_list->index;
 
-    //  Look up sector number for each subsector
+    // look up sector number for each subsector
     seg_t *seg = &Level->Segs[ss->firstline];
-    for (int j = 0; j < ss->numlines; j++)
-    {
-      if (seg[j].linedef)
-      {
+    for (int j = 0; j < ss->numlines; ++j) {
+      if (seg[j].linedef) {
         ss->sector = seg[j].sidedef->Sector;
         ss->seclink = ss->sector->subsectors;
         ss->sector->subsectors = ss;
@@ -479,42 +425,36 @@ static void CopySubsectors(VLevel *Level)
       }
     }
     for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
-    if (!ss->sector)
-    {
-      Host_Error("Subsector %d without sector", i);
-    }
+    if (!ss->sector) Host_Error("Subsector %d without sector", i);
   }
   int setcount = Level->NumSegs;
   for (int f = 0; f < Level->NumSegs; ++f) {
     if (!Level->Segs[f].front_sub) { GCon->Logf("Seg %d: front_sub is not set!", f); --setcount; }
+    if (Level->Segs[f].sidedef &&
+        ((ptrdiff_t)Level->Segs[f].sidedef < (ptrdiff_t)Level->Sides ||
+         (ptrdiff_t)(Level->Segs[f].sidedef-Level->Sides) >= Level->NumSides))
+    {
+      Sys_Error("glBSP: seg %d has invalid sidedef (%d)", f, (int)(ptrdiff_t)(Level->Segs[f].sidedef-Level->Sides));
+    }
   }
   if (setcount != Level->NumSegs) GCon->Logf("WARNING: %d of %d segs has no front_sub!", Level->NumSegs-setcount, Level->NumSegs);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  CopyNode
 //
 //==========================================================================
-
-static void CopyNode(int &NodeIndex, glbsp_node_t *SrcNode, node_t *Nodes)
-{
-  if (SrcNode->r.node)
-  {
-    CopyNode(NodeIndex, SrcNode->r.node, Nodes);
-  }
-
-  if (SrcNode->l.node)
-  {
-    CopyNode(NodeIndex, SrcNode->l.node, Nodes);
-  }
+static void CopyNode (int &NodeIndex, glbsp_node_t *SrcNode, node_t *Nodes) {
+  if (SrcNode->r.node) CopyNode(NodeIndex, SrcNode->r.node, Nodes);
+  if (SrcNode->l.node) CopyNode(NodeIndex, SrcNode->l.node, Nodes);
 
   SrcNode->index = NodeIndex;
 
   node_t *Node = &Nodes[NodeIndex];
-  Node->SetPointDir(TVec(SrcNode->x, SrcNode->y, 0),
-    TVec(SrcNode->dx, SrcNode->dy, 0));
+  Node->SetPointDir(TVec(SrcNode->x, SrcNode->y, 0), TVec(SrcNode->dx, SrcNode->dy, 0));
 
   Node->bbox[0][0] = SrcNode->r.bounds.minx;
   Node->bbox[0][1] = SrcNode->r.bounds.miny;
@@ -530,58 +470,48 @@ static void CopyNode(int &NodeIndex, glbsp_node_t *SrcNode, node_t *Nodes)
   Node->bbox[1][4] = SrcNode->l.bounds.maxy;
   Node->bbox[1][5] = 32768.0;
 
-  if (SrcNode->r.node)
-  {
+  if (SrcNode->r.node) {
     Node->children[0] = SrcNode->r.node->index;
-  }
-  else if (SrcNode->r.subsec)
-  {
+  } else if (SrcNode->r.subsec) {
     Node->children[0] = SrcNode->r.subsec->index | NF_SUBSECTOR;
   }
 
-  if (SrcNode->l.node)
-  {
+  if (SrcNode->l.node) {
     Node->children[1] = SrcNode->l.node->index;
-  }
-  else if (SrcNode->l.subsec)
-  {
+  } else if (SrcNode->l.subsec) {
     Node->children[1] = SrcNode->l.subsec->index | NF_SUBSECTOR;
   }
 
-  NodeIndex++;
+  ++NodeIndex;
 }
+
 
 //==========================================================================
 //
 //  CopyNodes
 //
 //==========================================================================
-
-static void CopyNodes(VLevel *Level, glbsp_node_t *root_node)
-{
+static void CopyNodes (VLevel *Level, glbsp_node_t *root_node) {
   guard(CopyNodes);
-  //  Copy nodes.
   Level->NumNodes = num_nodes;
   Level->Nodes = new node_t[Level->NumNodes];
   memset((void *)Level->Nodes, 0, sizeof(node_t) * Level->NumNodes);
-  if (root_node)
-  {
+  if (root_node) {
     int NodeIndex = 0;
     CopyNode(NodeIndex, root_node, Level->Nodes);
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VLevel::BuildNodes
 //
 //==========================================================================
-
-void VLevel::BuildNodes()
-{
+void VLevel::BuildNodes () {
   guard(VLevel::BuildNodes);
-  //  Set up glBSP build globals.
+  // set up glBSP build globals
   nodebuildinfo_t nb_info = default_buildinfo;
   nodebuildcomms_t nb_comms = default_buildcomms;
   nb_info.quiet = false;
@@ -596,27 +526,21 @@ void VLevel::BuildNodes()
   lev_doing_normal = false;
   lev_doing_hexen = !!(LevelFlags & LF_Extended);
 
-  //  Set up map data from loaded data.
+  // set up map data from loaded data
   SetUpVertices(this);
   SetUpSectors(this);
   SetUpSidedefs(this);
   SetUpLinedefs(this);
   SetUpThings(this);
 
-  //  Other data initialisation.
+  // other data initialisation
   CalculateWallTips();
-  if (lev_doing_hexen)
-  {
-    DetectPolyobjSectors();
-  }
+  if (lev_doing_hexen) DetectPolyobjSectors();
   DetectOverlappingLines();
-  if (cur_info->window_fx)
-  {
-    DetectWindowEffects();
-  }
+  if (cur_info->window_fx) DetectWindowEffects();
   InitBlockmap();
 
-  //  Build nodes.
+  // build nodes
   superblock_t *SegList = CreateSegs();
   glbsp_node_t *root_node;
   subsec_t *root_sub;
@@ -625,20 +549,17 @@ void VLevel::BuildNodes()
   glbsp_ret_e ret = ::BuildNodes(SegList, &root_node, &root_sub, 0, &seg_bbox);
   FreeSuper(SegList);
 
-  if (ret == GLBSP_E_OK)
-  {
+  if (ret == GLBSP_E_OK) {
     ClockwiseBspTree(root_node);
-
-    //  Copy nodes into internal structures.
+    // copy nodes into internal structures
     vertex_t *GLVertexes;
-
     CopyGLVerts(this, GLVertexes);
     CopySegs(this, GLVertexes);
     CopySubsectors(this);
     CopyNodes(this, root_node);
   }
 
-  //  Free any memory used by glBSP.
+  // free any memory used by glBSP
   FreeLevel();
   FreeQuickAllocCuts();
   FreeQuickAllocSupers();
@@ -647,10 +568,7 @@ void VLevel::BuildNodes()
   cur_comms = nullptr;
   cur_funcs = nullptr;
 
-  if (ret != GLBSP_E_OK)
-  {
-    Host_Error("Node build failed");
-  }
+  if (ret != GLBSP_E_OK) Host_Error("Node build failed");
 
   /*
   //  Create dummy VIS data.
@@ -664,6 +582,7 @@ void VLevel::BuildNodes()
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// simple PVS
 #define MAX_PORTALS_ON_LEAF   (512)
 #define ON_EPSILON  (0.1)
 

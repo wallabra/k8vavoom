@@ -981,11 +981,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
   dseg->next = seg->drawsegs;
   seg->drawsegs = dseg;
 
-  if (!seg->linedef)
-  {
-    //  Miniseg
-    return;
-  }
+  if (!seg->linedef) return; // miniseg
 
   side_t *sidedef = seg->sidedef;
   line_t *linedef = seg->linedef;
@@ -1003,6 +999,11 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
     sp = dseg->mid;
 
     VTexture *MTex = GTextureManager(sidedef->MidTexture);
+    // k8: one-sided line should have a midtex
+    if (!MTex) {
+      GCon->Logf("WARNING: Sidedef #%d should have midtex, but it hasn't (%d)", (int)(ptrdiff_t)(sidedef-Level->Sides), sidedef->MidTexture);
+      MTex = GTextureManager[GTextureManager.DefaultTexture];
+    }
     sp->texinfo.saxis = segdir * TextureSScale(MTex);
     sp->texinfo.taxis = TVec(0, 0, -1) * TextureTScale(MTex);
     sp->texinfo.soffs = -DotProduct(*seg->v1, sp->texinfo.saxis) +

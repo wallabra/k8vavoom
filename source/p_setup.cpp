@@ -1441,40 +1441,26 @@ void VLevel::CreateSides()
     {
       Host_Error("Bad side-def index %d", Line->sidenum[0]);
     }
-    NumNewSides++;
+    ++NumNewSides;
 
-    if (Line->sidenum[1] != -1)
-    {
-      if (Line->sidenum[1] < 0 || Line->sidenum[1] >= NumSides)
-      {
-        Host_Error("Bad side-def index %d", Line->sidenum[1]);
-      }
-      // Just a warning
-      if (!(Line->flags & ML_TWOSIDED))
-      {
-        GCon->Logf("Bad WAD: Line %d is two-sided but has no TWO-SIDED "
-          "flag set", i);
+    if (Line->sidenum[1] != -1) {
+      // has second side
+      if (Line->sidenum[1] < 0 || Line->sidenum[1] >= NumSides) Host_Error("Bad sidedef index %d for linedef #%d", Line->sidenum[1], i);
+      // just a warning (and a fix)
+      if (!(Line->flags&ML_TWOSIDED)) {
+        GCon->Logf("WARNING: linedef #%d marked as two-sided but has no TWO-SIDED flag set", i);
         Line->flags |= ML_TWOSIDED; //k8: we need to set this, or clipper will glitch
       }
-      NumNewSides++;
-    }
-    else
-    {
-      if (Line->flags & ML_TWOSIDED)
-      {
-        if (strict_level_errors)
-        {
-          Host_Error("Bad WAD: Line %d is marked as TWO-SIDED but has "
-            "only one side", i);
-        }
-        else
-        {
-          GCon->Logf("Bad WAD: Line %d is marked as TWO-SIDED but has "
-            "only one side", i);
-          Line->flags &= ~ML_TWOSIDED;
-        }
+      ++NumNewSides;
+    } else {
+      // no second side, but marked as two-sided
+      if (Line->flags&ML_TWOSIDED) {
+        if (strict_level_errors) Host_Error("Bad WAD: Line %d is marked as TWO-SIDED but has only one side", i);
+        GCon->Logf("WARNING: linedef #%d is marked as TWO-SIDED but has only one side", i);
+        Line->flags &= ~ML_TWOSIDED;
       }
     }
+    //fprintf(stderr, "linedef #%d: sides=(%d,%d); two-sided=%s\n", i, Line->sidenum[0], Line->sidenum[1], (Line->flags&ML_TWOSIDED ? "tan" : "ona"));
   }
 
   //  Allocate memory for side defs.
