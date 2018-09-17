@@ -231,6 +231,16 @@ native final int SetBodyQueueTrans(int Slot, int Transl);
 native final void AddDecal (TVec org, name dectype, int side, line_t *li);
 
 
+final int calcSecIdx (sector_t *sec) {
+  if (!sec) return -1;
+  foreach (int f; 0..Sectors.length) {
+    if (&Sectors[f] == sec) return f;
+  }
+  print("WUTAFU(1)?!");
+  return -2;
+}
+
+
 defaultproperties
 {
 }

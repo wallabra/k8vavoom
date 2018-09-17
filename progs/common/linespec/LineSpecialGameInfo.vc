@@ -363,14 +363,6 @@ void SlopeLineToPoint(Level InLevel, mthing_t *mthing, bool IsCeiling)
   }
 }
 
-private final int calcSecIdx (Level InLevel, sector_t *sec) {
-  if (!sec) FatalError("WUTAFU?!");
-  foreach (int f; 0..InLevel.Sectors.length) {
-    if (&InLevel.Sectors[f] == sec) return f;
-  }
-  FatalError("WUTAFU(1)?!");
-  return -1;
-}
 
 //===========================================================================
 //

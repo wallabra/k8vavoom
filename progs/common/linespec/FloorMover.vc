@@ -87,6 +87,13 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   TVec      Spot2;
   name      SeqName;
 
+  //FIXME: memleak?
+  if (!InSector) { Type = -669666; print("ERROR: FloorMover::Init: no sector!"); return; }
+  if (!InSector->lines.length) { Type = -669666; print("ERROR: FloorMover::Init: no lines in sector %d!", XLevel.calcSecIdx(InSector)); return; }
+  if (!InSector->lines[0]) { Type = -669666; print("ERROR: FloorMover::Init: no first line in sector %d!", XLevel.calcSecIdx(InSector)); return; }
+  if (!InSector->lines[0]->v1) { Type = -669666; print("ERROR: FloorMover::Init: no v1 in first sector line %d!", XLevel.calcSecIdx(InSector)); return; }
+  if (!InSector->lines[0]->v2) { Type = -669666; print("ERROR: FloorMover::Init: no v2 in first sector line %d!", XLevel.calcSecIdx(InSector)); return; }
+
   Sector = InSector;
   Sector->FloorData = self;
 
@@ -402,6 +409,13 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 void InitStair(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, bool Generic, float InHeight)
 {
+  //FIXME: memleak?
+  if (!InSector) { Type = -669666; print("ERROR: FloorMover::Init: no sector!"); return; }
+  if (!InSector->lines.length) { Type = -669666; print("ERROR: FloorMover::Init: no lines in sector %d!", XLevel.calcSecIdx(InSector)); return; }
+  if (!InSector->lines[0]) { Type = -669666; print("ERROR: FloorMover::Init: no first line in sector %d!", XLevel.calcSecIdx(InSector)); return; }
+  if (!InSector->lines[0]->v1) { Type = -669666; print("ERROR: FloorMover::Init: no v1 in first sector line %d!", XLevel.calcSecIdx(InSector)); return; }
+  if (!InSector->lines[0]->v2) { Type = -669666; print("ERROR: FloorMover::Init: no v2 in first sector line %d!", XLevel.calcSecIdx(InSector)); return; }
+
   Sector = InSector;
   Sector->FloorData = self;
 
@@ -445,6 +459,13 @@ void InitDonut(sector_t *InSector, sector_t *OtherSector, int Arg2)
   float   DestHeight;
   TVec    Spot;
 
+  //FIXME: memleak?
+  if (!InSector) { Type = -669666; print("ERROR: FloorMover::Init: no sector!"); return; }
+  if (!InSector->lines.length) { Type = -669666; print("ERROR: FloorMover::Init: no lines in sector %d!", XLevel.calcSecIdx(InSector)); return; }
+  if (!InSector->lines[0]) { Type = -669666; print("ERROR: FloorMover::Init: no first line in sector %d!", XLevel.calcSecIdx(InSector)); return; }
+  if (!InSector->lines[0]->v1) { Type = -669666; print("ERROR: FloorMover::Init: no v1 in first sector line %d!", XLevel.calcSecIdx(InSector)); return; }
+  if (!InSector->lines[0]->v2) { Type = -669666; print("ERROR: FloorMover::Init: no v2 in first sector line %d!", XLevel.calcSecIdx(InSector)); return; }
+
   Sector = InSector;
   Sector->FloorData = self;
 
@@ -470,6 +491,13 @@ void InitDonut2(sector_t *InSector, sector_t *OtherSector, int Arg3)
 {
   float   DestHeight;
   TVec    Spot;
+
+  //FIXME: memleak?
+  if (!InSector) { Type = -669666; print("ERROR: FloorMover::Init: no sector!"); return; }
+  if (!InSector->lines.length) { Type = -669666; print("ERROR: FloorMover::Init: no lines in sector %d!", XLevel.calcSecIdx(InSector)); return; }
+  if (!InSector->lines[0]) { Type = -669666; print("ERROR: FloorMover::Init: no first line in sector %d!", XLevel.calcSecIdx(InSector)); return; }
+  if (!InSector->lines[0]->v1) { Type = -669666; print("ERROR: FloorMover::Init: no v1 in first sector line %d!", XLevel.calcSecIdx(InSector)); return; }
+  if (!InSector->lines[0]->v2) { Type = -669666; print("ERROR: FloorMover::Init: no v2 in first sector line %d!", XLevel.calcSecIdx(InSector)); return; }
 
   Sector = InSector;
   Sector->FloorData = self;
@@ -517,6 +545,8 @@ bool CrushStop(int InTag)
 
 override void Tick(float deltaTime)
 {
+  if (Type == -669666) return;
+
   //  Handle resetting stairs.
   if (Type == FLOOREV_RaiseBuildStep)
   {
