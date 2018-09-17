@@ -32,16 +32,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-enum
-{
-  CD_STARTTRACK,
-  CD_END1TRACK,
-  CD_END2TRACK,
-  CD_END3TRACK,
-  CD_INTERTRACK,
-  CD_TITLETRACK,
-};
-
 // TYPES -------------------------------------------------------------------
 
 struct FMapSongInfo
@@ -73,8 +63,6 @@ static VClusterDef      DefaultClusterDef;
 static TArray<VClusterDef>  ClusterDefs;
 static TArray<VEpisodeDef>  EpisodeDefs;
 static TArray<VSkillDef>  SkillDefs;
-// Non-level specific song cd track numbers
-static int          cd_NonLevelTracks[6];
 
 // CODE --------------------------------------------------------------------
 
@@ -876,37 +864,37 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-      cd_NonLevelTracks[CD_STARTTRACK] = sc->Number;
+      //cd_NonLevelTracks[CD_STARTTRACK] = sc->Number;
     }
     else if (sc->Check("cd_end1_track"))
     {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-      cd_NonLevelTracks[CD_END1TRACK] = sc->Number;
+      //cd_NonLevelTracks[CD_END1TRACK] = sc->Number;
     }
     else if (sc->Check("cd_end2_track"))
     {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-      cd_NonLevelTracks[CD_END2TRACK] = sc->Number;
+      //cd_NonLevelTracks[CD_END2TRACK] = sc->Number;
     }
     else if (sc->Check("cd_end3_track"))
     {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-      cd_NonLevelTracks[CD_END3TRACK] = sc->Number;
+      //cd_NonLevelTracks[CD_END3TRACK] = sc->Number;
     }
     else if (sc->Check("cd_intermission_track"))
     {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-      cd_NonLevelTracks[CD_INTERTRACK] = sc->Number;
+      //cd_NonLevelTracks[CD_INTERTRACK] = sc->Number;
     }
     else if (sc->Check("cd_title_track"))
     {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-      cd_NonLevelTracks[CD_TITLETRACK] = sc->Number;
+      //cd_NonLevelTracks[CD_TITLETRACK] = sc->Number;
     }
     //  These are stubs for now.
     else if (sc->Check("cdid"))
@@ -2117,72 +2105,6 @@ bool IsMapPresent(VName MapName)
   }
   return false;
   unguard;
-}
-
-//==========================================================================
-//
-// P_GetCDStartTrack
-//
-//==========================================================================
-
-int P_GetCDStartTrack()
-{
-  return cd_NonLevelTracks[CD_STARTTRACK];
-}
-
-//==========================================================================
-//
-// P_GetCDEnd1Track
-//
-//==========================================================================
-
-int P_GetCDEnd1Track()
-{
-  return cd_NonLevelTracks[CD_END1TRACK];
-}
-
-//==========================================================================
-//
-// P_GetCDEnd2Track
-//
-//==========================================================================
-
-int P_GetCDEnd2Track()
-{
-  return cd_NonLevelTracks[CD_END2TRACK];
-}
-
-//==========================================================================
-//
-// P_GetCDEnd3Track
-//
-//==========================================================================
-
-int P_GetCDEnd3Track()
-{
-  return cd_NonLevelTracks[CD_END3TRACK];
-}
-
-//==========================================================================
-//
-// P_GetCDIntermissionTrack
-//
-//==========================================================================
-
-int P_GetCDIntermissionTrack()
-{
-  return cd_NonLevelTracks[CD_INTERTRACK];
-}
-
-//==========================================================================
-//
-// P_GetCDTitleTrack
-//
-//==========================================================================
-
-int P_GetCDTitleTrack()
-{
-  return cd_NonLevelTracks[CD_TITLETRACK];
 }
 
 //==========================================================================
