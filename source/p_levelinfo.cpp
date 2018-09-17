@@ -109,7 +109,6 @@ void VLevelInfo::SetMapInfo(const mapInfo_t &Info)
   OutsideFog = Info.OutsideFog;
 
   SongLump = Info.SongLump;
-  CDTrack = Info.CDTrack;
 
   if (Info.Gravity)
   {

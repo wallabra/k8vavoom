@@ -93,7 +93,6 @@ struct mapInfo_t
   VName   NextMap;    // Map to teleport to upon exit of timed deathmatch
   VName   SecretMap;    // Map to teleport upon secret exit
   VName   SongLump;   // Background music (MUS or MIDI)
-  vint32    CDTrack;    // CD track to play during level
   vint32    Sky1Texture;  // Default sky texture
   vint32    Sky2Texture;  // Alternate sky displayed in Sky2 sectors
   float   Sky1ScrollDelta;// Default sky texture speed
@@ -143,8 +142,6 @@ struct VClusterDef
   VStr    ExitText;
   VName   Flat;
   VName   Music;
-  vint32    CDTrack;
-  vint32    CDId;
 };
 
 enum

@@ -152,8 +152,6 @@ struct im_t {
   name TextFlat;
   name TextPic;
   name TextMusic;
-  int TextCDTrack;
-  int TextCDId;
 
   bool bTextIsLump;
 };
@@ -311,7 +309,6 @@ struct mapInfo_t {
   name NextMap; // map to teleport to upon exit of timed deathmatch
   name SecretMap; // map to teleport upon secret exit
   name SongLump; // background music (MUS or MIDI)
-  int CDTrack; // CD track to play during level
   int Sky1Texture; // default sky texture
   int Sky2Texture; // alternate sky displayed in Sky2 sectors
   float Sky1ScrollDelta; // Default sky texture speed

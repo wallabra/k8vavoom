@@ -226,7 +226,7 @@ class VBasePlayer : public VGameObject
   void DoClientPause(bool);
   void DoClientSkipIntermission();
   void DoClientFinale(VStr);
-  void DoClientChangeMusic(VName, int);
+  void DoClientChangeMusic(VName);
   void DoClientSetServerInfo(VStr, VStr);
   void DoClientHudMessage(const VStr&, VName, int, int, int, const VStr&,
     float, float, int, int, float, float, float);
@@ -482,11 +482,10 @@ class VBasePlayer : public VGameObject
     P_PASS_STR(Type);
     EV_RET_VOID(NAME_ClientFinale);
   }
-  void eventClientChangeMusic(VName Song, int CDTrack)
+  void eventClientChangeMusic(VName Song)
   {
     P_PASS_SELF;
     P_PASS_NAME(Song);
-    P_PASS_INT(CDTrack);
     EV_RET_VOID(NAME_ClientChangeMusic);
   }
   void eventClientSetServerInfo(VStr Key, VStr Value)

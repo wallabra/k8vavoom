@@ -53,7 +53,6 @@ class VLevelInfo : public VThinker
   vuint32     OutsideFog;
 
   VName     SongLump;
-  vuint8      CDTrack;
 
   enum
   {

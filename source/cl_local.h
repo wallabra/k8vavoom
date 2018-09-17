@@ -74,8 +74,6 @@ struct im_t
   VName   TextFlat;
   VName   TextPic;
   VName   TextMusic;
-  vint32    TextCDTrack;
-  vint32    TextCDId;
 
   enum
   {

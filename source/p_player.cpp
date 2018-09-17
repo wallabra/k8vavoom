@@ -586,8 +586,6 @@ void VBasePlayer::DoClientIntermission(VName NextMap)
           im.TextPic = NAME_None;
         }
         im.TextMusic = CDef->Music;
-        im.TextCDTrack = CDef->CDTrack;
-        im.TextCDId = CDef->CDId;
       }
     }
     if (im.Text.Length() == 0 && linfo.Cluster)
@@ -618,8 +616,6 @@ void VBasePlayer::DoClientIntermission(VName NextMap)
           im.TextPic = NAME_None;
         }
         im.TextMusic = CDef->Music;
-        im.TextCDTrack = CDef->CDTrack;
-        im.TextCDId = CDef->CDId;
       }
     }
   }
@@ -695,11 +691,10 @@ void VBasePlayer::DoClientFinale(VStr Type)
 //
 //==========================================================================
 
-void VBasePlayer::DoClientChangeMusic(VName Song, int CDTrack)
+void VBasePlayer::DoClientChangeMusic(VName Song)
 {
   guard(VBasePlayer::DoClientChangeMusic);
   Level->SongLump = Song;
-  Level->CDTrack = CDTrack;
 #ifdef CLIENT
   GAudio->MusicChanged();
 #endif
@@ -957,10 +952,9 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClientFinale)
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientChangeMusic)
 {
-  P_GET_INT(CDTrack);
   P_GET_NAME(Song);
   P_GET_SELF;
-  Self->DoClientChangeMusic(Song, CDTrack);
+  Self->DoClientChangeMusic(Song);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientSetServerInfo)

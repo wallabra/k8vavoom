@@ -3371,8 +3371,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_LocalSetMusic)
       if (Activator && Activator->EntityFlags & VEntity::EF_IsPlayer)
       {
-        Activator->Player->eventClientChangeMusic(
-          GetNameLowerCase(sp[-3]), 0);
+        Activator->Player->eventClientChangeMusic(GetNameLowerCase(sp[-3]));
       }
       sp -= 3;
       ACSVM_BREAK;
@@ -3380,8 +3379,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_LocalSetMusicDirect)
       if (Activator && Activator->EntityFlags & VEntity::EF_IsPlayer)
       {
-        Activator->Player->eventClientChangeMusic(
-          GetNameLowerCase(READ_INT32(ip)), 0);
+        Activator->Player->eventClientChangeMusic(GetNameLowerCase(READ_INT32(ip)));
       }
       ip += 12;
       ACSVM_BREAK;

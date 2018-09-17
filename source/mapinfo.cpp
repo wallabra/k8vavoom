@@ -208,7 +208,6 @@ static void SetMapDefaults(mapInfo_t &Info)
   Info.NextMap = NAME_None;
   Info.SecretMap = NAME_None;
   Info.SongLump = NAME_None;
-  Info.CDTrack = 0;
   //Info.Sky1Texture = GTextureManager.DefaultTexture;
   //Info.Sky2Texture = GTextureManager.DefaultTexture;
   Info.Sky1Texture = loadSkyTexture("sky1"); //GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
@@ -377,8 +376,6 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         C.ExitText = VStr();
         C.Flat = NAME_None;
         C.Music = NAME_None;
-        C.CDTrack = 0;
-        C.CDId = 0;
         if (HexenMode)
         {
           C.Flags |= CLUSTERF_Hub;
@@ -527,7 +524,7 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-      info->CDTrack = sc->Number;
+      //info->CDTrack = sc->Number;
     }
     else if (sc->Check("gravity"))
     {
@@ -1152,7 +1149,6 @@ static void ParseMap(VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
     info->SecretMap = Default.SecretMap;
     info->SongLump = Default.SongLump;
   }
-  info->CDTrack = Default.CDTrack;
   if (!replacement) {
     info->Sky1Texture = Default.Sky1Texture;
     info->Sky2Texture = Default.Sky2Texture;
@@ -1275,8 +1271,6 @@ static void ParseClusterDef(VScriptParser *sc)
   CDef->ExitText = VStr();
   CDef->Flat = NAME_None;
   CDef->Music = NAME_None;
-  CDef->CDTrack = 0;
-  CDef->CDId = 0;
 
   bool newFormat = sc->Check("{");
   if (newFormat) sc->SetCMode(true);
@@ -1367,13 +1361,13 @@ static void ParseClusterDef(VScriptParser *sc)
     {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-      CDef->CDTrack = sc->Number;
+      //CDef->CDTrack = sc->Number;
     }
     else if (sc->Check("cdid"))
     {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-      CDef->CDId = sc->Number;
+      //CDef->CDId = sc->Number;
     }
     else if (sc->Check("name"))
     {

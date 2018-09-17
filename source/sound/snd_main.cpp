@@ -86,7 +86,7 @@ public:
   virtual bool IsSoundPlaying(int, int) override;
 
   //  Music and general sound control
-  virtual void StartSong(VName, int, bool) override;
+  virtual void StartSong(VName, bool) override;
   virtual void PauseSound() override;
   virtual void ResumeSound() override;
   virtual void Start() override;
@@ -128,7 +128,6 @@ private:
 
   //  Map's music lump and CD track
   VName       MapSong;
-  int         MapCDTrack;
   float       MusicVolumeFactor;
 
   //  Stream music player
@@ -227,7 +226,6 @@ VAudioPublic *VAudioPublic::Create()
 VAudio::VAudio()
 : MaxSoundDist(4096)
 , MapSong(NAME_None)
-, MapCDTrack(0)
 , MusicEnabled(true)
 , StreamPlaying(false)
 , StreamMusicPlayer(nullptr)
@@ -833,7 +831,7 @@ void VAudio::UpdateSfx()
 //
 //==========================================================================
 
-void VAudio::StartSong(VName song, int track, bool loop)
+void VAudio::StartSong(VName song, bool loop)
 {
   guard(VAudio::StartSong);
   if (loop)
@@ -877,7 +875,7 @@ void VAudio::ResumeSound()
 
 void VAudio::StartMusic()
 {
-  StartSong(MapSong, MapCDTrack, true);
+  StartSong(MapSong, true);
 }
 
 //==========================================================================
@@ -907,7 +905,6 @@ void VAudio::MusicChanged()
 {
   guard(VAudio::MusicChanged);
   MapSong = GClLevel->LevelInfo->SongLump;
-  MapCDTrack = GClLevel->LevelInfo->CDTrack;
 
   StartMusic();
   unguard;

@@ -171,7 +171,7 @@ public:
   virtual bool IsSoundPlaying(int, int) = 0;
 
   //  Music and general sound control
-  virtual void StartSong(VName, int, bool) = 0;
+  virtual void StartSong(VName, bool) = 0;
   virtual void PauseSound() = 0;
   virtual void ResumeSound() = 0;
   virtual void Start() = 0;

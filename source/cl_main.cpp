@@ -68,7 +68,6 @@ VCvarS      cl_model("model", "", "Player model.", CVAR_Archive | CVAR_UserInfo)
 IMPLEMENT_CLASS(V, ClientGameBase);
 
 static VName        CurrentSongLump;
-static int          CurrentCDTrack;
 
 // CODE --------------------------------------------------------------------
 
@@ -210,11 +209,9 @@ void CL_ReadFromServer()
 
   if (GClLevel && GClLevel->LevelInfo)
   {
-    if (CurrentSongLump != GClLevel->LevelInfo->SongLump ||
-      CurrentCDTrack != GClLevel->LevelInfo->CDTrack)
+    if (CurrentSongLump != GClLevel->LevelInfo->SongLump)
     {
       CurrentSongLump = GClLevel->LevelInfo->SongLump;
-      CurrentCDTrack = GClLevel->LevelInfo->CDTrack;
       GAudio->MusicChanged();
     }
   }

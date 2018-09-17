@@ -59,7 +59,6 @@ int Fade;
 int OutsideFog;
 
 name SongLump;
-ubyte CDTrack;
 
 bool bDoubleSky; // parallax sky: sky2 behind sky1
 bool bLightning; // Use of lightning on the level flashes from sky1 to sky2
@@ -140,7 +139,7 @@ replication {
   reliable if (Role == ROLE_Authority)
     LevelName, Cluster, ParTime, SuckTime, Sky1Texture, Sky2Texture,
     Sky1ScrollDelta, Sky2ScrollDelta, SkyBox, FadeTable, Fade, OutsideFog,
-    SongLump, CDTrack, bDoubleSky, bLightning, bNoIntermission,
+    SongLump, bDoubleSky, bLightning, bNoIntermission,
     bForceNoSkyStretch, bLookupName, TotalKills, TotalItems, TotalSecret,
     CurrentKills, CurrentItems, CurrentSecret, CompletitionTime,
     bNoFreelook;
