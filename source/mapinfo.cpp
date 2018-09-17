@@ -80,7 +80,53 @@ static int          cd_NonLevelTracks[6];
 
 //==========================================================================
 //
-// InitMapInfo
+//  loadSkyTexture
+//
+//==========================================================================
+static int loadSkyTexture (VName name) {
+  if (name == NAME_None) return GTextureManager.DefaultTexture;
+  //int Tex = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+  //info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+  int Tex = GTextureManager.CheckNumForName(name, TEXTYPE_Wall, true, false);
+  if (Tex >= 0) return Tex;
+  Tex = GTextureManager.CheckNumForName(name, TEXTYPE_WallPatch, false, false);
+  if (Tex < 0) {
+    int LumpNum = W_CheckNumForTextureFileName(*name);
+    if (LumpNum >= 0) {
+      Tex = GTextureManager.FindTextureByLumpNum(LumpNum);
+      if (Tex < 0) {
+        VTexture *T = VTexture::CreateTexture(TEXTYPE_WallPatch, LumpNum);
+        if (!T) T = VTexture::CreateTexture(TEXTYPE_Any, LumpNum);
+        if (T) {
+          Tex = GTextureManager.AddTexture(T);
+          T->Name = NAME_None;
+        }
+      }
+    } else {
+      LumpNum = W_CheckNumForName(name, WADNS_Patches);
+      if (LumpNum < 0) LumpNum = W_CheckNumForTextureFileName(*name);
+      if (LumpNum >= 0) {
+        Tex = GTextureManager.AddTexture(VTexture::CreateTexture(TEXTYPE_WallPatch, LumpNum));
+      } else {
+        // DooM:Complete has some patches in "sprites/"
+        LumpNum = W_CheckNumForName(name, WADNS_Sprites);
+        if (LumpNum >= 0) Tex = GTextureManager.AddTexture(VTexture::CreateTexture(TEXTYPE_Any, LumpNum));
+      }
+    }
+  }
+  if (Tex < 0) {
+    GCon->Logf("WARNING: sky '%s' not found; replaced with 'sky1'", *name);
+    return GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
+    //return GTextureManager.DefaultTexture;
+  }
+  GCon->Logf("WARNING: force-loaded sky '%s'", *name);
+  return Tex;
+}
+
+
+//==========================================================================
+//
+//  InitMapInfo
 //
 //==========================================================================
 
@@ -136,11 +182,12 @@ void InitMapInfo()
   //  Set up default map info returned for maps that have not defined in
   // MAPINFO
   DefaultMap.Name = "Unnamed";
-  DefaultMap.Sky1Texture = GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
+  DefaultMap.Sky1Texture = loadSkyTexture("sky1"); //GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
   DefaultMap.Sky2Texture = DefaultMap.Sky1Texture;
   DefaultMap.FadeTable = NAME_colormap;
   DefaultMap.HorizWallShade = -8;
   DefaultMap.VertWallShade = 8;
+  //GCon->Logf("*** DEFAULT MAP: Sky1Texture=%d", DefaultMap.Sky1Texture);
   unguard;
 }
 
@@ -162,8 +209,11 @@ static void SetMapDefaults(mapInfo_t &Info)
   Info.SecretMap = NAME_None;
   Info.SongLump = NAME_None;
   Info.CDTrack = 0;
-  Info.Sky1Texture = GTextureManager.DefaultTexture;
-  Info.Sky2Texture = GTextureManager.DefaultTexture;
+  //Info.Sky1Texture = GTextureManager.DefaultTexture;
+  //Info.Sky2Texture = GTextureManager.DefaultTexture;
+  Info.Sky1Texture = loadSkyTexture("sky1"); //GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
+  Info.Sky2Texture = Info.Sky1Texture;
+  //Info.Sky2Texture = GTextureManager.DefaultTexture;
   Info.Sky1ScrollDelta = 0;
   Info.Sky2ScrollDelta = 0;
   Info.SkyBox = NAME_None;
@@ -298,48 +348,6 @@ static void DoCompatFlag (VScriptParser *sc, mapInfo_t *info, int Flag) {
 //  ParseMapCommon
 //
 //==========================================================================
-
-static int loadSkyTexture (VName name) {
-  if (name == NAME_None) return GTextureManager.DefaultTexture;
-  //int Tex = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
-  //info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
-  int Tex = GTextureManager.CheckNumForName(name, TEXTYPE_Wall, true, false);
-  if (Tex >= 0) return Tex;
-  Tex = GTextureManager.CheckNumForName(name, TEXTYPE_WallPatch, false, false);
-  if (Tex < 0) {
-    int LumpNum = W_CheckNumForTextureFileName(*name);
-    if (LumpNum >= 0) {
-      Tex = GTextureManager.FindTextureByLumpNum(LumpNum);
-      if (Tex < 0) {
-        VTexture *T = VTexture::CreateTexture(TEXTYPE_WallPatch, LumpNum);
-        if (!T) T = VTexture::CreateTexture(TEXTYPE_Any, LumpNum);
-        if (T) {
-          Tex = GTextureManager.AddTexture(T);
-          T->Name = NAME_None;
-        }
-      }
-    } else {
-      LumpNum = W_CheckNumForName(name, WADNS_Patches);
-      if (LumpNum < 0) LumpNum = W_CheckNumForTextureFileName(*name);
-      if (LumpNum >= 0) {
-        Tex = GTextureManager.AddTexture(VTexture::CreateTexture(TEXTYPE_WallPatch, LumpNum));
-      } else {
-        // DooM:Complete has some patches in "sprites/"
-        LumpNum = W_CheckNumForName(name, WADNS_Sprites);
-        if (LumpNum >= 0) Tex = GTextureManager.AddTexture(VTexture::CreateTexture(TEXTYPE_Any, LumpNum));
-      }
-    }
-  }
-  if (Tex < 0) {
-    GCon->Logf("WARNING: sky '%s' not found; replaced with 'sky1'", *name);
-    return GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
-    //return GTextureManager.DefaultTexture;
-  }
-  GCon->Logf("WARNING: force-loaded sky '%s'", *name);
-  return Tex;
-}
-
-
 static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
 {
   guard(ParseMapCommon);
@@ -421,6 +429,7 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         GCon->Logf("MSG: using gz skybox '%s'", *skbname);
       } else {
         sc->SetCMode(true);
+        info->SkyBox = NAME_None;
         info->Sky1Texture = loadSkyTexture(sc->Name8);
         info->Sky1ScrollDelta = 0;
         if (newFormat) {
@@ -448,6 +457,7 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       sc->ExpectName8();
       sc->SetCMode(true);
       //info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+      //info->SkyBox = NAME_None; //k8:required or not???
       info->Sky2Texture = loadSkyTexture(sc->Name8);
       info->Sky2ScrollDelta = 0;
       if (newFormat) {
@@ -1103,56 +1113,53 @@ static void ParseNameOrLookup (VScriptParser *sc, vint32 lookupFlag, VStr *name,
 //
 //==========================================================================
 
-static void ParseMap(VScriptParser *sc, bool &HexenMode, mapInfo_t &Default)
-{
+static void ParseMap(VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
   guard(ParseMap);
   mapInfo_t *info = nullptr;
   VName MapLumpName;
-  if (sc->CheckNumber())
-  {
-    //  Map number, for Hexen compatibility
+  if (sc->CheckNumber()) {
+    // map number, for Hexen compatibility
     HexenMode = true;
-    if (sc->Number < 1 || sc->Number > 99)
-    {
-      sc->Error("Map number out or range");
-    }
+    if (sc->Number < 1 || sc->Number > 99) sc->Error("Map number out or range");
     MapLumpName = va("map%02d", sc->Number);
-  }
-  else
-  {
-    //  Map name
+  } else {
+    // map name
     sc->ExpectName8();
     MapLumpName = sc->Name8;
   }
 
-  //  Check for replaced map info.
-  for (int i = 0; i < MapInfo.Num(); i++)
-  {
-    if (MapLumpName == MapInfo[i].LumpName)
-    {
+  // check for replaced map info
+  bool replacement = false;
+  for (int i = 0; i < MapInfo.Num(); i++) {
+    if (MapLumpName == MapInfo[i].LumpName) {
       info = &MapInfo[i];
+      //GCon->Logf("replaced map '%s' (Sky1Texture=%d; default=%d)", *info->LumpName, info->Sky1Texture, Default.Sky1Texture);
+      replacement = true;
       break;
     }
   }
-  if (!info)
-  {
-    info = &MapInfo.Alloc();
-  }
+  if (!info) info = &MapInfo.Alloc();
 
   // Copy defaults to current map definition
   info->LumpName = MapLumpName;
-  info->LevelNum = Default.LevelNum;
-  info->Cluster = Default.Cluster;
+  if (!replacement) {
+    info->LevelNum = Default.LevelNum;
+    info->Cluster = Default.Cluster;
+  }
   info->WarpTrans = Default.WarpTrans;
-  info->NextMap = Default.NextMap;
-  info->SecretMap = Default.SecretMap;
-  info->SongLump = Default.SongLump;
+  if (!replacement) {
+    info->NextMap = Default.NextMap;
+    info->SecretMap = Default.SecretMap;
+    info->SongLump = Default.SongLump;
+  }
   info->CDTrack = Default.CDTrack;
-  info->Sky1Texture = Default.Sky1Texture;
-  info->Sky2Texture = Default.Sky2Texture;
-  info->Sky1ScrollDelta = Default.Sky1ScrollDelta;
-  info->Sky2ScrollDelta = Default.Sky2ScrollDelta;
-  info->SkyBox = Default.SkyBox;
+  if (!replacement) {
+    info->Sky1Texture = Default.Sky1Texture;
+    info->Sky2Texture = Default.Sky2Texture;
+    info->Sky1ScrollDelta = Default.Sky1ScrollDelta;
+    info->Sky2ScrollDelta = Default.Sky2ScrollDelta;
+    info->SkyBox = Default.SkyBox;
+  }
   info->FadeTable = Default.FadeTable;
   info->Fade = Default.Fade;
   info->OutsideFog = Default.OutsideFog;
@@ -1169,9 +1176,11 @@ static void ParseMap(VScriptParser *sc, bool &HexenMode, mapInfo_t &Default)
   info->SpecialActions = Default.SpecialActions;
   info->RedirectType = Default.RedirectType;
   info->RedirectMap = Default.RedirectMap;
-  info->ExitPic = Default.ExitPic;
-  info->EnterPic = Default.EnterPic;
-  info->InterMusic = Default.InterMusic;
+  if (!replacement) {
+    info->ExitPic = Default.ExitPic;
+    info->EnterPic = Default.EnterPic;
+    info->InterMusic = Default.InterMusic;
+  }
 
   if (HexenMode)
   {
@@ -1202,26 +1211,21 @@ static void ParseMap(VScriptParser *sc, bool &HexenMode, mapInfo_t &Default)
   */
 
   //  Set song lump name from SNDINFO script
-  for (int i = 0; i < MapSongList.Num(); i++)
-  {
-    if (MapSongList[i].MapName == info->LumpName)
-    {
+  for (int i = 0; i < MapSongList.Num(); i++) {
+    if (MapSongList[i].MapName == info->LumpName) {
       info->SongLump = MapSongList[i].SongName;
     }
   }
 
   //  Set default levelnum for this map.
   const char *mn = *MapLumpName;
-  if (mn[0] == 'm' && mn[1] == 'a' && mn[2] == 'p' && mn[5] == 0)
+  if (mn[0] == 'm' && mn[1] == 'a' && mn[2] == 'p' && mn[5] == 0) {
+    int num = atoi(mn+3);
+    if (num >= 1 && num <= 99) info->LevelNum = num;
+  } else if (mn[0] == 'e' && mn[1] >= '0' && mn[1] <= '9' &&
+             mn[2] == 'm' && mn[3] >= '0' && mn[3] <= '9')
   {
-    int num = atoi(mn + 3);
-    if  (num >= 1 && num <= 99)
-      info->LevelNum = num;
-  }
-  else if (mn[0] == 'e' && mn[1] >= '0' && mn[1] <= '9' &&
-    mn[2] == 'm' && mn[3] >= '0' && mn[3] <= '9')
-  {
-    info->LevelNum = (mn[1] - '1') * 10 + (mn[3] - '0');
+    info->LevelNum = (mn[1]-'1')*10+(mn[3]-'0');
   }
 
   ParseMapCommon(sc, info, HexenMode);

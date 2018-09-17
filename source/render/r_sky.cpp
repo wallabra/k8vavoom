@@ -481,15 +481,18 @@ void VSky::Init(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
   VName Name2(NAME_None);
   //  Check if we want to replace old sky with a skybox. We can't do
   // this if level is using double sky or it's scrolling.
+  //GCon->Logf("VSky::Init: t1=%d; t2=%d; double=%s; s1scroll=%f", Sky1Texture, Sky2Texture, (DoubleSky ? "tan" : "ona"), Sky1ScrollDelta);
   if (r_skyboxes && !DoubleSky && !Sky1ScrollDelta)
   {
     Name1 = GTextureManager[Sky1Texture]->Name;
     Name2 = Lightning ? GTextureManager[Sky2Texture]->Name : Name1;
     Num1 = CheckSkyboxNumForName(Name1);
     Num2 = CheckSkyboxNumForName(Name2);
+    //GCon->Logf("VSky::Init: name1='%s'; name2='%s'; num1=%d; num2=%d", *Name1, *Name2, Num1, Num2);
   }
-  if (Num1 != -1 && Num2 != -1)
+  if (Num1 != -1 && Num2 != -1 /*&& Name1 != "-noflat-" && Name2 != "-noflat"*/)
   {
+    GCon->Logf("VSky:Init: creating skybox (%s:%s)", *Name1, *Name2);
     InitSkyBox(Name1, Name2);
   }
   else
