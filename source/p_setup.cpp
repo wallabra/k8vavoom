@@ -43,6 +43,22 @@ static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in De
 static VCvarB dbg_use_old_decal_pp("dbg_use_old_decal_pp", false, "Use old decal processor? (for timing)", 0/*CVAR_Archive*/);
 
 VCvarB loader_cache_rebuilt_data("loader_cache_rebuilt_data", true, "Cache rebuilt nodes, pvs, blockmap, and so on?", CVAR_Archive);
+static VCvarF loader_cache_time_limit("loader_cache_time_limit", "3.0", "Cache data if building took more than this number of seconds.", CVAR_Archive);
+static VCvarI loader_cache_max_age_days("loader_cache_max_age_days", "7", "Remove cached data older than this number of days (<=0: none).", CVAR_Archive);
+
+static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?", 0);
+static VCvarB deepwater_hacks("deepwater_hacks", true, "Apply DeepWater hacks? (not working right yet)", 0);
+static VCvarB build_blockmap("build_blockmap", false, "Build blockmap?", CVAR_Archive);
+static VCvarB build_gwa("build_gwa", false, "Build GWA?", 0/*CVAR_Archive*/);
+static VCvarB show_level_load_times("show_level_load_times", false, "Show loading times?", CVAR_Archive);
+
+// there seems to be a bug in compressed GL nodes reader, hence the flag
+//static VCvarB nodes_allow_compressed_old("nodes_allow_compressed_old", true, "Allow loading v0 compressed GL nodes?", CVAR_Archive);
+static VCvarB nodes_allow_compressed("nodes_allow_compressed", false, "Allow loading v1+ compressed GL nodes?", CVAR_Archive);
+
+static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", false, "Force node rebuilding?", CVAR_Archive);
+
+static VCvarB loader_cache_data("loader_cache_data", false, "Cache built level data?", CVAR_Archive);
 
 
 // MACROS ------------------------------------------------------------------
@@ -106,21 +122,6 @@ enum
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?", 0);
-static VCvarB deepwater_hacks("deepwater_hacks", true, "Apply DeepWater hacks? (not working right yet)", 0);
-static VCvarB build_blockmap("build_blockmap", false, "Build blockmap?", CVAR_Archive);
-static VCvarB build_gwa("build_gwa", false, "Build GWA?", 0/*CVAR_Archive*/);
-static VCvarB show_level_load_times("show_level_load_times", false, "Show loading times?", CVAR_Archive);
-
-// there seems to be a bug in compressed GL nodes reader, hence the flag
-//static VCvarB nodes_allow_compressed_old("nodes_allow_compressed_old", true, "Allow loading v0 compressed GL nodes?", CVAR_Archive);
-static VCvarB nodes_allow_compressed("nodes_allow_compressed", false, "Allow loading v1+ compressed GL nodes?", CVAR_Archive);
-
-static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", false, "Force node rebuilding?", CVAR_Archive);
-
-static VCvarB loader_cache_data("loader_cache_data", false, "Cache built level data?", CVAR_Archive);
-
-
 // CODE --------------------------------------------------------------------
 static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 000.\n";
 static bool cacheCleanupComplete = false;
@@ -176,9 +177,11 @@ static VStr getCacheDir () {
 //  doCacheCleanup
 //
 //==========================================================================
-static void doCacheCleanup (int currtime) {
-  if (cacheCleanupComplete || currtime < 1) return;
+static void doCacheCleanup () {
+  if (cacheCleanupComplete) return;
   cacheCleanupComplete = true;
+  if (loader_cache_max_age_days <= 0) return;
+  int currtime = Sys_CurrFileTime();
   VStr cpath = getCacheDir();
   if (cpath.length() == 0) return;
   TArray<VStr> dellist;
@@ -193,7 +196,7 @@ static void doCacheCleanup (int currtime) {
     if (ftime <= 0) {
       GCon->Logf("cache: deleting invalid file '%s'", *shortname);
       dellist.append(fname);
-    } else if (ftime < currtime && currtime-ftime > 60*60*24*16) {
+    } else if (ftime < currtime && currtime-ftime > 60*60*24*loader_cache_max_age_days) {
       GCon->Logf("cache: deleting old file '%s'", *shortname);
     } else {
       //GCon->Logf("cache: age=%d for '%s'", currtime-ftime, *shortname);
@@ -1040,13 +1043,12 @@ void VLevel::LoadMap (VName AMapName) {
     //GCon->Logf("%s", ""); // shut up, gcc!
   }
 
-  if (loader_cache_data && saveCachedData && sha512valid && TotalTime >= 2) {
+  if (loader_cache_data && saveCachedData && sha512valid && TotalTime > loader_cache_time_limit) {
     VStream *strm = FL_OpenSysFileWrite(cacheFileName);
     SaveCachedData(strm);
     delete strm;
-    int ftime = Sys_FileTime(cacheFileName);
-    if (ftime > 0) doCacheCleanup(ftime);
   }
+  doCacheCleanup();
 
   unguard;
 }
