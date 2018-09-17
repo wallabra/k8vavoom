@@ -179,6 +179,7 @@ class VLevel : public VGameObject {
   // BLOCKMAP
   // created from axis aligned bounding box of the map, a rectangular array of blocks of size ...
   // used to speed up collision detection by spatial subdivision in 2D
+  vint32 BlockMapLumpSize;
   vint32 *BlockMapLump; // offsets in blockmap are from here
   vint32 *BlockMap;   // int for larger maps
   vint32 BlockMapWidth;  // Blockmap size.
@@ -193,6 +194,7 @@ class VLevel : public VGameObject {
   // speeds up enemy AI by skipping detailed LineOf Sight calculation
   // without special effect, this could be used as a PVS lookup as well
   vuint8 *RejectMatrix;
+  vint32 RejectMatrixSize;
 
   // strife conversations
   FRogueConSpeech *GenericSpeeches;
@@ -301,6 +303,9 @@ class VLevel : public VGameObject {
   inline bool IsForClient () const { return !(LevelFlags&LF_ForServer); }
 
   void BuildPVS (); // called from `BuildNodes()`
+
+  void SaveCachedData (VStream *strm);
+  bool LoadCachedData (VStream *strm);
 
 private:
   // map loaders

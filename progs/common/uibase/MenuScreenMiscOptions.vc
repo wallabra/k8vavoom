@@ -46,6 +46,7 @@ override void CreateChoices () {
   CreateOnOffCvar("Fast&bad nodes", 'nodes_fast_and_bad');
   CreateOnOffCvar("Detect some kinds of window fx", 'nodes_detect_window_fx');
   CreateOnOffCvar("Build (rough) PVS", 'loader_build_pvs');
+  CreateOnOffCvar("Cache built data", 'loader_cache_data');
 
 
   CreateChoiceTextLabel("");

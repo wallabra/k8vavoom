@@ -99,6 +99,7 @@ native /*readonly*/ mthing_t[] Things;
 //native readonly mthing_t *Things;
 //native readonly int NumThings;
 
+native readonly private int BlockMapLumpSize;
 native readonly private void *BlockMapLump;
 native readonly private void *BlockMap;
 native readonly private int BlockMapWidth;
@@ -109,6 +110,7 @@ native readonly private void *BlockLinks;
 native readonly private void *PolyBlockMap;
 
 native readonly private void *RejectMatrix;
+native readonly private int RejectMatrixSize;
 
 //  Strife conversations.
 native /*readonly*/ RogueConSpeech[] GenericSpeeches;

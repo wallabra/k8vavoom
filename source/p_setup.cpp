@@ -118,17 +118,487 @@ static VCvarB nodes_allow_compressed("nodes_allow_compressed", false, "Allow loa
 
 static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", false, "Force node rebuilding?", CVAR_Archive);
 
+static VCvarB loader_cache_data("loader_cache_data", false, "Cache built level data?", CVAR_Archive);
+
 
 // CODE --------------------------------------------------------------------
+static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 000.\n";
+
+
+//==========================================================================
+//
+//  VLevel::SaveCachedData
+//
+//==========================================================================
+void VLevel::SaveCachedData (VStream *strm) {
+  if (!strm) return;
+
+  TArray<vuint8> data;
+  VArrayStream *arrstrm = new VArrayStream(data);
+  arrstrm->BeginWrite();
+
+  // flags (nothing for now)
+  vuint32 flags = 0;
+  *arrstrm << flags;
+
+  // nodes
+  *arrstrm << NumNodes;
+  GCon->Logf("cache: writing %d nodes", NumNodes);
+  for (int f = 0; f < NumNodes; ++f) {
+    node_t *n = Nodes+f;
+    *arrstrm << n->bbox[0][0];
+    *arrstrm << n->bbox[0][1];
+    *arrstrm << n->bbox[0][2];
+    *arrstrm << n->bbox[0][3];
+    *arrstrm << n->bbox[0][4];
+    *arrstrm << n->bbox[0][5];
+    *arrstrm << n->bbox[0][6];
+    *arrstrm << n->bbox[1][0];
+    *arrstrm << n->bbox[1][1];
+    *arrstrm << n->bbox[1][2];
+    *arrstrm << n->bbox[1][3];
+    *arrstrm << n->bbox[1][4];
+    *arrstrm << n->bbox[1][5];
+    *arrstrm << n->bbox[1][6];
+    *arrstrm << n->children[0];
+    *arrstrm << n->children[1];
+    // TPlane
+    *arrstrm << n->normal.x << n->normal.y << n->normal.z;
+    *arrstrm << n->dist << n->type << n->signbits;
+  }
+
+  // vertices
+  *arrstrm << NumVertexes;
+  GCon->Logf("cache: writing %d vertexes", NumVertexes);
+  for (int f = 0; f < NumVertexes; ++f) {
+    float x = Vertexes[f].x;
+    float y = Vertexes[f].y;
+    float z = Vertexes[f].z;
+    *arrstrm << x << y << z;
+  }
+
+  // write vertex indicies in linedefs
+  GCon->Logf("cache: writing %d linedef vertices", NumLines);
+  for (int f = 0; f < NumLines; ++f) {
+    line_t &L = Lines[f];
+    vint32 v1 = (vint32)(ptrdiff_t)(L.v1-Vertexes);
+    vint32 v2 = (vint32)(ptrdiff_t)(L.v2-Vertexes);
+    *arrstrm << v1 << v2;
+  }
+
+  // subsectors
+  *arrstrm << NumSubsectors;
+  GCon->Logf("cache: writing %d subsectors", NumSubsectors);
+  for (int f = 0; f < NumSubsectors; ++f) {
+    subsector_t *ss = Subsectors+f;
+    //vint32 snum = -1;
+    //if (ss->sector) snum = (vint32)(ptrdiff_t)(ss->sector-Sectors);
+    //*arrstrm << snum;
+    //vint32 slinknum = -1;
+    //if (ss->seclink) slinknum = (vint32)(ptrdiff_t)(ss->seclink-Subsectors);
+    //*arrstrm << slinknum;
+    *arrstrm << ss->numlines;
+    *arrstrm << ss->firstline;
+  }
+
+  // segs
+  *arrstrm << NumSegs;
+  GCon->Logf("cache: writing %d segs", NumSegs);
+  for (int f = 0; f < NumSegs; ++f) {
+    seg_t *seg = Segs+f;
+    vint32 v1num = -1;
+    if (seg->v1) v1num = (vint32)(ptrdiff_t)(seg->v1-Vertexes);
+    *arrstrm << v1num;
+    vint32 v2num = -1;
+    if (seg->v2) v2num = (vint32)(ptrdiff_t)(seg->v2-Vertexes);
+    *arrstrm << v2num;
+    *arrstrm << seg->offset;
+    *arrstrm << seg->length;
+    vint32 sidedefnum = -1;
+    if (seg->sidedef) sidedefnum = (vint32)(ptrdiff_t)(seg->sidedef-Sides);
+    *arrstrm << sidedefnum;
+    vint32 linedefnum = -1;
+    if (seg->linedef) linedefnum = (vint32)(ptrdiff_t)(seg->linedef-Lines);
+    *arrstrm << linedefnum;
+    //vint32 lsnextnum = -1;
+    //if (seg->lsnext) lsnextnum = (vint32)(ptrdiff_t)(seg->lsnext-Segs);
+    //*arrstrm << lsnextnum;
+    vint32 snum = -1;
+    if (seg->frontsector) snum = (vint32)(ptrdiff_t)(seg->frontsector-Sectors);
+    *arrstrm << snum;
+    snum = -1;
+    if (seg->backsector) snum = (vint32)(ptrdiff_t)(seg->backsector-Sectors);
+    *arrstrm << snum;
+    vint32 partnum = -1;
+    if (seg->partner) partnum = (vint32)(ptrdiff_t)(seg->partner-Segs);
+    *arrstrm << partnum;
+    //vint32 fssnum = -1;
+    //if (seg->front_sub) fssnum = (vint32)(ptrdiff_t)(seg->front_sub-Subsectors);
+    //*arrstrm << fssnum;
+    *arrstrm << seg->side;
+    // TPlane
+    *arrstrm << seg->normal.x << seg->normal.y << seg->normal.z;
+    *arrstrm << seg->dist << seg->type << seg->signbits;
+  }
+
+  // reject
+  *arrstrm << RejectMatrixSize;
+  if (RejectMatrixSize) {
+    GCon->Logf("cache: writing %d bytes of reject table", RejectMatrixSize);
+    arrstrm->Serialize(RejectMatrix, RejectMatrixSize);
+  }
+
+  // blockmap
+  *arrstrm << BlockMapLumpSize;
+  if (BlockMapLumpSize) {
+    GCon->Logf("cache: writing %d cells of blockmap table", BlockMapLumpSize);
+    arrstrm->Serialize(BlockMapLump, BlockMapLumpSize*4);
+  }
+
+  //FIXME: store visdata size somewhere
+  // pvs
+  if (VisData) {
+    int rowbytes = (NumSubsectors+7)>>3;
+    int vissize = rowbytes*NumSubsectors;
+    GCon->Logf("cache: writing %d bytes of pvs table", vissize);
+    *arrstrm << vissize;
+    if (vissize) arrstrm->Serialize(VisData, vissize);
+  } else {
+    int vissize = 0;
+    *arrstrm << vissize;
+  }
+  delete arrstrm;
+
+  // compress data
+  TArray<vuint8> pkdata;
+  arrstrm = new VArrayStream(pkdata);
+  arrstrm->BeginWrite();
+
+  int upksize = data.length();
+  VZipStreamWriter *zipstrm = new VZipStreamWriter(arrstrm, 6);
+  zipstrm->Serialise(data.Ptr(), upksize);
+  zipstrm->Flush();
+  delete zipstrm;
+
+  delete arrstrm;
+
+  // signature
+  strm->Serialize(CACHE_DATA_SIGNATURE, 32);
+  // unpacked data size
+  *strm << upksize;
+  // packed data size
+  int pksize = pkdata.length();
+  *strm << pksize;
+  // unpacked data
+  strm->Serialise(pkdata.Ptr(), pkdata.length());
+  strm->Flush();
+}
+
+
+//==========================================================================
+//
+//  VLevel::LoadCachedData
+//
+//==========================================================================
+bool VLevel::LoadCachedData (VStream *strm) {
+  if (!strm) return false;
+  char sign[32];
+
+  // signature
+  strm->Serialise(sign, 32);
+  if (strm->IsError() || memcmp(sign, CACHE_DATA_SIGNATURE, 32) != 0) return false;
+
+  // unpacked data size
+  int upksize = -1;
+  *strm << upksize;
+  if (upksize < 8 || upksize > 1024*1024*512) return false;
+
+  // packed data size
+  int pksize = -1;
+  *strm << pksize;
+  if (pksize < 8 || pksize > 1024*1024*512) return false;
+
+  // read compressed data
+  TArray<vuint8> pkdata;
+  pkdata.SetNum(pksize);
+  strm->Serialise(pkdata.Ptr(), pksize);
+  if (strm->IsError()) return false;
+
+  // decompress data
+  VArrayStream *arrstrm = new VArrayStream(pkdata);
+  arrstrm->BeginRead();
+
+  TArray<vuint8> data;
+  data.SetNum(upksize);
+
+  VZipStreamReader *zipstrm = new VZipStreamReader(arrstrm);
+  zipstrm->Serialise(data.Ptr(), upksize);
+  delete arrstrm;
+  pkdata.clear();
+
+  if (zipstrm->IsError()) { delete zipstrm; return false; }
+  delete zipstrm;
+
+  GCon->Logf("cache data unpacked...");
+
+  arrstrm = new VArrayStream(data);
+  arrstrm->BeginRead();
+
+  int vissize = -1;
+
+  // flags (nothing for now)
+  vuint32 flags = 0x29a;
+  *arrstrm << flags;
+  if (flags != 0) goto error;
+
+  //TODO: more checks
+
+  // nodes
+  *arrstrm << NumNodes;
+  GCon->Logf("cache: reading %d nodes", NumNodes);
+  if (NumNodes == 0 || NumNodes > 0x1fffffff) { GCon->Logf("invalid cached data (0)"); goto error; }
+  Nodes = new node_t[NumNodes];
+  memset((void *)Nodes, 0, NumNodes*sizeof(node_t));
+  for (int f = 0; f < NumNodes; ++f) {
+    node_t *n = Nodes+f;
+    *arrstrm << n->bbox[0][0];
+    *arrstrm << n->bbox[0][1];
+    *arrstrm << n->bbox[0][2];
+    *arrstrm << n->bbox[0][3];
+    *arrstrm << n->bbox[0][4];
+    *arrstrm << n->bbox[0][5];
+    *arrstrm << n->bbox[0][6];
+    *arrstrm << n->bbox[1][0];
+    *arrstrm << n->bbox[1][1];
+    *arrstrm << n->bbox[1][2];
+    *arrstrm << n->bbox[1][3];
+    *arrstrm << n->bbox[1][4];
+    *arrstrm << n->bbox[1][5];
+    *arrstrm << n->bbox[1][6];
+    *arrstrm << n->children[0];
+    *arrstrm << n->children[1];
+    // TPlane
+    *arrstrm << n->normal.x << n->normal.y << n->normal.z;
+    *arrstrm << n->dist << n->type << n->signbits;
+  }
+
+  delete [] Vertexes;
+  *arrstrm << NumVertexes;
+  GCon->Logf("cache: reading %d vertexes", NumVertexes);
+  Vertexes = new vertex_t[NumVertexes];
+  memset((void *)Vertexes, 0, sizeof(vertex_t)*NumVertexes);
+  for (int f = 0; f < NumVertexes; ++f) {
+    float x, y, z;
+    *arrstrm << x << y << z;
+    Vertexes[f].x = x;
+    Vertexes[f].y = y;
+    Vertexes[f].z = z;
+  }
+
+  // fix up vertex pointers in linedefs
+  GCon->Logf("cache: reading %d linedef vertices", NumLines);
+  for (int f = 0; f < NumLines; ++f) {
+    line_t &L = Lines[f];
+    vint32 v1 = 0, v2 = 0;
+    *arrstrm << v1 << v2;
+    L.v1 = &Vertexes[v1];
+    L.v2 = &Vertexes[v2];
+  }
+
+  // subsectors
+  *arrstrm << NumSubsectors;
+  GCon->Logf("cache: reading %d subsectors", NumSubsectors);
+  delete [] Subsectors;
+  Subsectors = new subsector_t[NumSubsectors];
+  memset((void *)Subsectors, 0, NumSubsectors*sizeof(subsector_t));
+  for (int f = 0; f < NumSubsectors; ++f) {
+    subsector_t *ss = Subsectors+f;
+    //vint32 snum = -1;
+    //*arrstrm << snum;
+    //if (snum >= 0) ss->sector = Sectors+snum;
+    //vint32 slinknum = -1;
+    //*arrstrm << slinknum;
+    //if (slinknum >= 0) ss->seclink = Subsectors+slinknum;
+    *arrstrm << ss->numlines;
+    *arrstrm << ss->firstline;
+  }
+
+  // segs
+  *arrstrm << NumSegs;
+  GCon->Logf("cache: reading %d segs", NumSegs);
+  delete [] Segs;
+  Segs = new seg_t[NumSegs];
+  memset((void *)Segs, 0, NumSegs*sizeof(seg_t));
+  for (int f = 0; f < NumSegs; ++f) {
+    seg_t *seg = Segs+f;
+    vint32 v1num = -1;
+    *arrstrm << v1num;
+    if (v1num >= 0) seg->v1 = Vertexes+v1num;
+    vint32 v2num = -1;
+    *arrstrm << v2num;
+    if (v2num >= 0) seg->v2 = Vertexes+v2num;
+    *arrstrm << seg->offset;
+    *arrstrm << seg->length;
+    vint32 sidedefnum = -1;
+    *arrstrm << sidedefnum;
+    if (sidedefnum >= 0) seg->sidedef = Sides+sidedefnum;
+    vint32 linedefnum = -1;
+    *arrstrm << linedefnum;
+    if (linedefnum >= 0) seg->linedef = Lines+linedefnum;
+    //vint32 lsnextnum = -1;
+    //*arrstrm << lsnextnum;
+    //if (lsnextnum >= 0) seg->lsnext = Segs+lsnextnum;
+    vint32 snum = -1;
+    *arrstrm << snum;
+    if (snum >= 0) seg->frontsector = Sectors+snum;
+    snum = -1;
+    *arrstrm << snum;
+    if (snum >= 0) seg->backsector = Sectors+snum;
+    vint32 partnum = -1;
+    *arrstrm << partnum;
+    if (partnum >= 0) seg->partner = Segs+partnum;
+    //vint32 fssnum = -1;
+    //*arrstrm << fssnum;
+    //if (fssnum >= 0) seg->front_sub = Subsectors+fssnum;
+    *arrstrm << seg->side;
+    // TPlane
+    *arrstrm << seg->normal.x << seg->normal.y << seg->normal.z;
+    *arrstrm << seg->dist << seg->type << seg->signbits;
+  }
+
+  /*
+  {
+    seg_t *li = Segs;
+    for (int f = 0; f < NumSegs; ++f, ++li) {
+      // calc seg's plane params
+      li->length = Length(*li->v2 - *li->v1);
+      CalcSeg(li);
+    }
+  }
+  */
+
+  {
+    for (int f = 0; f < NumSectors; ++f) Sectors[f].subsectors = nullptr;
+    subsector_t *ss = Subsectors;
+    for (int i = 0; i < NumSubsectors; ++i, ++ss) {
+      // look up sector number for each subsector
+      seg_t *seg = &Segs[ss->firstline];
+      for (int j = 0; j < ss->numlines; ++j) {
+        if (seg[j].linedef) {
+          ss->sector = seg[j].sidedef->Sector;
+          ss->seclink = ss->sector->subsectors;
+          ss->sector->subsectors = ss;
+          break;
+        }
+      }
+      for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
+      if (!ss->sector) Host_Error("Subsector %d without sector", i);
+    }
+  }
+
+  // reject
+  *arrstrm << RejectMatrixSize;
+  if (RejectMatrixSize < 0 || RejectMatrixSize > 0x1fffffff) goto error;
+  if (RejectMatrixSize) {
+    GCon->Logf("cache: reading %d bytes of reject table", RejectMatrixSize);
+    RejectMatrix = new vuint8[RejectMatrixSize];
+    arrstrm->Serialize(RejectMatrix, RejectMatrixSize);
+  }
+
+  // blockmap
+  *arrstrm << BlockMapLumpSize;
+  if (BlockMapLumpSize < 0 || BlockMapLumpSize > 0x1fffffff) goto error;
+  if (BlockMapLumpSize) {
+    GCon->Logf("cache: reading %d cells of blockmap table", BlockMapLumpSize);
+    BlockMapLump = new vint32[BlockMapLumpSize];
+    arrstrm->Serialize(BlockMapLump, BlockMapLumpSize*4);
+  }
+
+  *arrstrm << vissize;
+  if (vissize < 0 || vissize > 0x1fffffff) goto error;
+  if (vissize > 0) {
+    GCon->Logf("cache: reading %d bytes of pvs table", vissize);
+    VisData = new vuint8[vissize];
+    arrstrm->Serialize(VisData, vissize);
+  }
+
+  if (arrstrm->IsError()) goto error;
+  delete arrstrm;
+  return true;
+
+error:
+  delete arrstrm;
+
+  NumNodes = 0;
+  delete [] Nodes;
+  Nodes = nullptr;
+
+  RejectMatrixSize = 0;
+  delete [] RejectMatrix;
+  RejectMatrix = nullptr;
+
+  BlockMapLumpSize = 0;
+  delete [] BlockMapLump;
+  BlockMapLump = nullptr;
+
+  delete [] VisData;
+  VisData = nullptr;
+
+  return false;
+}
+
+
+//==========================================================================
+//
+//  hashLump
+//
+//==========================================================================
+static bool hashLump (ed25519_hash_context *sha512ctx, int lumpnum) {
+  if (lumpnum < 0) return false;
+  static char buf[65536];
+  VStream *strm = W_CreateLumpReaderNum(lumpnum);
+  if (!strm) return false;
+  auto left = strm->TotalSize();
+  while (left > 0) {
+    int rd = left;
+    if (rd > (int)sizeof(buf)) rd = (int)sizeof(buf);
+    strm->Serialise(buf, rd);
+    if (strm->IsError()) { delete strm; return false; }
+    ed25519_hash_update(sha512ctx, buf, rd);
+    left -= rd;
+  }
+  delete strm;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  getCacheDir
+//
+//==========================================================================
+static VStr getCacheDir () {
+  VStr res;
+  if (!loader_cache_data) return res;
+#if !defined(_WIN32)
+  const char *HomeDir = getenv("HOME");
+  if (HomeDir && HomeDir[0]) {
+    res = VStr(HomeDir)+"/.vavoom";
+    Sys_CreateDirectory(res);
+    res += "/.mapcache";
+    Sys_CreateDirectory(res);
+  }
+#endif
+  return res;
+}
+
 
 //==========================================================================
 //
 //  VLevel::LoadMap
 //
 //==========================================================================
-
-void VLevel::LoadMap(VName AMapName)
-{
+void VLevel::LoadMap (VName AMapName) {
   guard(VLevel::LoadMap);
   bool AuxiliaryMap = false;
   int lumpnum;
@@ -159,6 +629,7 @@ void VLevel::LoadMap(VName AMapName)
   }
   if (lumpnum < 0) Host_Error("Map %s not found\n", *MapName);
 
+  bool saveCachedData = false;
   int gl_lumpnum = -100;
   int ThingsLump = -1;
   int LinesLump = -1;
@@ -179,94 +650,56 @@ void VLevel::LoadMap(VName AMapName)
   VisData = nullptr;
   NoVis = nullptr;
 
-  //  Check for UDMF map
-  if (W_LumpName(lumpnum + 1) == NAME_textmap)
-  {
+  ed25519_hash_context sha512ctx;
+  bool sha512valid = false;
+  VStr cacheFileName;
+  VStr cacheDir = getCacheDir();
+
+  if (cacheDir.length()) ed25519_hash_init(&sha512ctx);
+
+  // check for UDMF map
+  if (W_LumpName(lumpnum+1) == NAME_textmap) {
     LevelFlags |= LF_TextMap;
     NeedNodesBuild = true;
-    for (int i = 2; true; i++)
-    {
-      VName LName = W_LumpName(lumpnum + i);
-      if (LName == NAME_endmap)
-      {
-        break;
-      }
-      if (LName == NAME_None)
-      {
-        Host_Error("Map %s is not a valid map", *MapName);
-      }
-      if (LName == NAME_behavior)
-      {
-        BehaviorLump = lumpnum + i;
-      }
-      else if (LName == NAME_blockmap)
-      {
-        BlockmapLump = lumpnum + i;
-      }
-      else if (LName == NAME_reject)
-      {
-        RejectLump = lumpnum + i;
-      }
-      else if (LName == NAME_dialogue)
-      {
-        DialogueLump = lumpnum + i;
-      }
-      else if (LName == NAME_znodes)
-      {
-        CompressedGLNodesLump = lumpnum + i;
-        UseComprGLNodes = true;
-        NeedNodesBuild = false;
+    for (int i = 2; true; ++i) {
+      VName LName = W_LumpName(lumpnum+i);
+      if (LName == NAME_endmap) break;
+      if (LName == NAME_None) Host_Error("Map %s is not a valid map", *MapName);
+           if (LName == NAME_behavior) BehaviorLump = lumpnum+i;
+      else if (LName == NAME_blockmap) BlockmapLump = lumpnum+i;
+      else if (LName == NAME_reject) RejectLump = lumpnum+i;
+      else if (LName == NAME_dialogue) DialogueLump = lumpnum+i;
+      else if (LName == NAME_znodes) {
+        if (!loader_cache_rebuilt_data && nodes_allow_compressed) {
+          CompressedGLNodesLump = lumpnum+i;
+          UseComprGLNodes = true;
+          NeedNodesBuild = false;
+        }
       }
     }
-  }
-  else
-  {
-    //  Find all lumps.
-    int LIdx = lumpnum + 1;
+    if (cacheDir.length()) sha512valid = hashLump(&sha512ctx, lumpnum+1);
+  } else {
+    // find all lumps
+    int LIdx = lumpnum+1;
     int SubsectorsLump = -1;
-    if (W_LumpName(LIdx) == NAME_things)
-    {
-      ThingsLump = LIdx++;
-    }
-    if (W_LumpName(LIdx) == NAME_linedefs)
-    {
-      LinesLump = LIdx++;
-    }
-    if (W_LumpName(LIdx) == NAME_sidedefs)
-    {
-      SidesLump = LIdx++;
-    }
-    if (W_LumpName(LIdx) == NAME_vertexes)
-    {
-      VertexesLump = LIdx++;
-    }
-    if (W_LumpName(LIdx) == NAME_segs)
-    {
-      LIdx++;
-    }
-    if (W_LumpName(LIdx) == NAME_ssectors)
-    {
-      SubsectorsLump = LIdx++;
-    }
-    if (W_LumpName(LIdx) == NAME_nodes)
-    {
-      LIdx++;
-    }
-    if (W_LumpName(LIdx) == NAME_sectors)
-    {
-      SectorsLump = LIdx++;
-    }
-    if (W_LumpName(LIdx) == NAME_reject)
-    {
-      RejectLump = LIdx++;
-    }
-    if (W_LumpName(LIdx) == NAME_blockmap)
-    {
-      BlockmapLump = LIdx++;
-    }
-    //  Determine level format.
-    if (W_LumpName(LIdx) == NAME_behavior)
-    {
+    if (W_LumpName(LIdx) == NAME_things) ThingsLump = LIdx++;
+    if (W_LumpName(LIdx) == NAME_linedefs) LinesLump = LIdx++;
+    if (W_LumpName(LIdx) == NAME_sidedefs) SidesLump = LIdx++;
+    if (W_LumpName(LIdx) == NAME_vertexes) VertexesLump = LIdx++;
+    if (W_LumpName(LIdx) == NAME_segs) LIdx++;
+    if (W_LumpName(LIdx) == NAME_ssectors) SubsectorsLump = LIdx++;
+    if (W_LumpName(LIdx) == NAME_nodes) LIdx++;
+    if (W_LumpName(LIdx) == NAME_sectors) SectorsLump = LIdx++;
+    if (W_LumpName(LIdx) == NAME_reject) RejectLump = LIdx++;
+    if (W_LumpName(LIdx) == NAME_blockmap) BlockmapLump = LIdx++;
+
+    if (cacheDir.length()) sha512valid = hashLump(&sha512ctx, LinesLump);
+    if (cacheDir.length()) sha512valid = hashLump(&sha512ctx, SidesLump);
+    if (cacheDir.length()) sha512valid = hashLump(&sha512ctx, VertexesLump);
+    if (cacheDir.length()) sha512valid = hashLump(&sha512ctx, SectorsLump);
+
+    // determine level format
+    if (W_LumpName(LIdx) == NAME_behavior) {
       LevelFlags |= LF_Extended;
       BehaviorLump = LIdx++;
     }
@@ -301,31 +734,61 @@ void VLevel::LoadMap(VName AMapName)
   }
   InitTime += Sys_Time();
 
+  bool cachedDataLoaded = false;
+  if (sha512valid) {
+    ed25519_sha512_hash sha512hash;
+    ed25519_hash_final(&sha512ctx, sha512hash);
+    static const char *hexd = "0123456789abcdef";
+    cacheFileName = VStr("mapcache_");
+    for (int f = 0; f < ed25519_sha512_hash_size; ++f) {
+      cacheFileName += hexd[(sha512hash[f]>>4)&0x0f];
+      cacheFileName += hexd[sha512hash[f]&0x0f];
+    }
+    cacheFileName += ".cache";
+    cacheFileName = cacheDir+"/"+cacheFileName;
+  }
+
+  bool hasCacheFile = false;
+
+  //FIXME: load cache file into temp buffer, and process it later
+  if (!loader_force_nodes_rebuild && sha512valid) {
+    VStream *strm = FL_OpenSysFileRead(cacheFileName);
+    hasCacheFile = !!strm;
+    delete strm;
+  }
+
   double NodeBuildTime = -Sys_Time();
-  if (!loader_force_nodes_rebuild && !(LevelFlags&LF_TextMap) && !UseComprGLNodes) {
-    gl_lumpnum = FindGLNodes(MapLumpName);
-#ifdef CLIENT
-    if (build_gwa) {
-      //  If missing GL nodes or VIS data, then build them.
-      if (gl_lumpnum < lumpnum) {
-        W_BuildGLNodes(lumpnum);
-        gl_lumpnum = FindGLNodes(MapLumpName);
-      } else if (W_LumpName(gl_lumpnum+ML_GL_PVS) != NAME_gl_pvs || W_LumpLength(gl_lumpnum+ML_GL_PVS) == 0) {
-        W_BuildPVS(lumpnum, gl_lumpnum);
-        lumpnum = W_GetNumForName(MapLumpName);
-        gl_lumpnum = FindGLNodes(MapLumpName);
-      }
-    }
-#endif
-    if (gl_lumpnum < lumpnum) {
-      if (build_gwa) {
-        Host_Error("Map %s is missing GL-Nodes\n", *MapName);
-      } else {
-        NeedNodesBuild = true;
-      }
-    }
+
+  if (/*cachedDataLoaded*/hasCacheFile) {
+    UseComprGLNodes = false;
+    CompressedGLNodesLump = -1;
+    NeedNodesBuild = false;
   } else {
-    if ((LevelFlags&LF_TextMap) != 0 || !UseComprGLNodes) NeedNodesBuild = true;
+    if (!loader_force_nodes_rebuild && !(LevelFlags&LF_TextMap) && !UseComprGLNodes) {
+      gl_lumpnum = FindGLNodes(MapLumpName);
+#ifdef CLIENT
+      if (build_gwa) {
+        //  If missing GL nodes or VIS data, then build them.
+        if (gl_lumpnum < lumpnum) {
+          W_BuildGLNodes(lumpnum);
+          gl_lumpnum = FindGLNodes(MapLumpName);
+        } else if (W_LumpName(gl_lumpnum+ML_GL_PVS) != NAME_gl_pvs || W_LumpLength(gl_lumpnum+ML_GL_PVS) == 0) {
+          W_BuildPVS(lumpnum, gl_lumpnum);
+          lumpnum = W_GetNumForName(MapLumpName);
+          gl_lumpnum = FindGLNodes(MapLumpName);
+        }
+      }
+#endif
+      if (gl_lumpnum < lumpnum) {
+        if (build_gwa) {
+          Host_Error("Map %s is missing GL-Nodes\n", *MapName);
+        } else {
+          NeedNodesBuild = true;
+        }
+      }
+    } else {
+      if ((LevelFlags&LF_TextMap) != 0 || !UseComprGLNodes) NeedNodesBuild = true;
+    }
   }
   NodeBuildTime += Sys_Time();
 
@@ -337,7 +800,7 @@ void VLevel::LoadMap(VName AMapName)
   double TranslTime = 0;
   double SidesTime = 0;
   double DecalProcessingTime = 0;
-  //  Begin processing map lumps.
+  // begin processing map lumps
   if (LevelFlags & LF_TextMap) {
     VertexTime = -Sys_Time();
     LoadTextMap(lumpnum+1, MInfo);
@@ -371,8 +834,8 @@ void VLevel::LoadMap(VName AMapName)
       GGameInfo->eventTranslateLevel(this);
     }
     TranslTime += Sys_Time();
-    //  Set up textures after loading lines because for some Boom line
-    // specials there can be special meaning of some texture names.
+    // set up textures after loading lines because for some Boom line
+    // specials there can be special meaning of some texture names
     SidesTime = -Sys_Time();
     LoadSideDefs(SidesLump);
     SidesTime += Sys_Time();
@@ -381,44 +844,57 @@ void VLevel::LoadMap(VName AMapName)
   FinaliseLines();
   Lines2Time += Sys_Time();
 
+  if (hasCacheFile) {
+    VStream *strm = FL_OpenSysFileRead(cacheFileName);
+    cachedDataLoaded = LoadCachedData(strm);
+    delete strm;
+  }
+
   double NodesTime = -Sys_Time();
-  if (NeedNodesBuild) {
-    GCon->Logf("building GL nodes...");
-    BuildNodes();
-  } else if (UseComprGLNodes) {
-    if (!LoadCompressedGLNodes(CompressedGLNodesLump, GLNodesHdr)) {
-      GCon->Logf("rebuilding GL nodes...");
+  // and again; sorry!
+  if (!cachedDataLoaded) {
+    if (NeedNodesBuild) {
+      GCon->Logf("building GL nodes...");
       BuildNodes();
+      saveCachedData = true;
+    } else if (UseComprGLNodes) {
+      if (!LoadCompressedGLNodes(CompressedGLNodesLump, GLNodesHdr)) {
+        GCon->Logf("rebuilding GL nodes...");
+        BuildNodes();
+        saveCachedData = true;
+      }
+    } else {
+      LoadGLSegs(gl_lumpnum+ML_GL_SEGS, NumBaseVerts);
+      LoadSubsectors(gl_lumpnum+ML_GL_SSECT);
+      LoadNodes(gl_lumpnum+ML_GL_NODES);
+      LoadPVS(gl_lumpnum+ML_GL_PVS);
     }
-  } else {
-    LoadGLSegs(gl_lumpnum+ML_GL_SEGS, NumBaseVerts);
-    LoadSubsectors(gl_lumpnum+ML_GL_SSECT);
-    LoadNodes(gl_lumpnum+ML_GL_NODES);
-    LoadPVS(gl_lumpnum+ML_GL_PVS);
   }
   NodesTime += Sys_Time();
 
-  //  Load blockmap
+  // load blockmap
   double BlockMapTime = -Sys_Time();
-  LoadBlockMap(BlockmapLump);
+  /*if (!cachedDataLoaded)*/ LoadBlockMap(BlockmapLump);
   BlockMapTime += Sys_Time();
 
-  //  Load reject table.
+  // load reject table
   double RejectTime = -Sys_Time();
-  LoadReject(RejectLump);
+  if (!cachedDataLoaded) LoadReject(RejectLump);
   RejectTime += Sys_Time();
 
-  //  ACS object code
+  // ACS object code
   double AcsTime = -Sys_Time();
   LoadACScripts(BehaviorLump);
   AcsTime += Sys_Time();
 
   // rebuild PVS if we have none (just in case)
+  // cached data loader took care of this
   double BuildPVSTime = -1;
   if (NoVis == nullptr && VisData == nullptr) {
     BuildPVSTime = -Sys_Time();
     BuildPVS();
     BuildPVSTime += Sys_Time();
+    if (VisData) saveCachedData = true;
   }
 
   double GroupLinesTime = -Sys_Time();
@@ -433,17 +909,11 @@ void VLevel::LoadMap(VName AMapName)
 
   double ConvTime = -Sys_Time();
   //  Load conversations.
-  LoadRogueConScript(GGameInfo->GenericConScript, -1, GenericSpeeches,
-    NumGenericSpeeches);
-  if (DialogueLump >= 0)
-  {
-    LoadRogueConScript(NAME_None, DialogueLump, LevelSpeeches,
-      NumLevelSpeeches);
-  }
-  else
-  {
-    LoadRogueConScript(GGameInfo->eventGetConScriptName(MapName), -1,
-      LevelSpeeches, NumLevelSpeeches);
+  LoadRogueConScript(GGameInfo->GenericConScript, -1, GenericSpeeches, NumGenericSpeeches);
+  if (DialogueLump >= 0) {
+    LoadRogueConScript(NAME_None, DialogueLump, LevelSpeeches, NumLevelSpeeches);
+  } else {
+    LoadRogueConScript(GGameInfo->eventGetConScriptName(MapName), -1, LevelSpeeches, NumLevelSpeeches);
   }
   ConvTime += Sys_Time();
 
@@ -464,7 +934,7 @@ void VLevel::LoadMap(VName AMapName)
 
   double WallShadesTime = -Sys_Time();
   for (int i = 0; i < NumLines; i++) {
-    line_t *Line = Lines + i;
+    line_t *Line = Lines+i;
     if (!Line->normal.x) {
       Sides[Line->sidenum[0]].Light = MInfo.HorizWallShade;
       if (Line->sidenum[1] >= 0) {
@@ -495,8 +965,7 @@ void VLevel::LoadMap(VName AMapName)
   //
   // End of map lump processing
   //
-  if (AuxiliaryMap)
-  {
+  if (AuxiliaryMap) {
     // Close the auxiliary file.
     W_CloseAuxiliary();
   }
@@ -506,8 +975,7 @@ void VLevel::LoadMap(VName AMapName)
   DecalProcessingTime += Sys_Time();
 
   TotalTime += Sys_Time();
-  if (true || show_level_load_times)
-  {
+  if (true || show_level_load_times) {
     GCon->Logf("-------");
     GCon->Logf("Level loadded in %f", TotalTime);
     //GCon->Logf("Initialisation   %f", InitTime);
@@ -535,6 +1003,13 @@ void VLevel::LoadMap(VName AMapName)
     GCon->Logf("Decal processing %f", DecalProcessingTime);
     //GCon->Logf("%s", ""); // shut up, gcc!
   }
+
+  if (loader_cache_data && saveCachedData && sha512valid && TotalTime >= 2) {
+    VStream *strm = FL_OpenSysFileWrite(cacheFileName);
+    SaveCachedData(strm);
+    delete strm;
+  }
+
   unguard;
 }
 
@@ -1474,12 +1949,10 @@ void VLevel::LoadSubsectors(int Lump)
     if (ss->numlines <= 0 || ss->firstline + ss->numlines > NumSegs)
       Host_Error("Bad segs range %d %d", ss->firstline, ss->numlines);
 
-      // look up sector number for each subsector
+    // look up sector number for each subsector
     seg_t *seg = &Segs[ss->firstline];
-    for (int j = 0; j < ss->numlines; j++)
-    {
-      if (seg[j].linedef)
-      {
+    for (int j = 0; j < ss->numlines; ++j) {
+      if (seg[j].linedef) {
         ss->sector = seg[j].sidedef->Sector;
         ss->seclink = ss->sector->subsectors;
         ss->sector->subsectors = ss;
@@ -1487,10 +1960,7 @@ void VLevel::LoadSubsectors(int Lump)
       }
     }
     for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
-    if (!ss->sector)
-    {
-      Host_Error("Subsector %d without sector", i);
-    }
+    if (!ss->sector) Host_Error("Subsector %d without sector", i);
   }
   for (int f = 0; f < NumSegs; ++f) {
     if (!Segs[f].front_sub) GCon->Logf("Seg %d: front_sub is not set!", f);
@@ -1938,6 +2408,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
         break;
       }
     }
+    for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
     if (!ss->sector) Host_Error("Subsector %d without sector", i);
   }
   unguard;
@@ -1967,15 +2438,15 @@ void VLevel::LoadBlockMap(int Lump)
 {
   guard(VLevel::LoadBlockMap);
   VStream *Strm = nullptr;
-  if (Lump >= 0 && !build_blockmap)
-  {
-    Strm = W_CreateLumpReaderNum(Lump);
-  }
+  if (Lump >= 0 && !build_blockmap) Strm = W_CreateLumpReaderNum(Lump);
 
   if (!Strm || Strm->TotalSize() == 0 || Strm->TotalSize() / 2 >= 0x10000)
   {
-    GCon->Logf("Creating BLOCKMAP");
-    CreateBlockMap();
+    // it can be loaded from cache
+    if (!BlockMapLump || BlockMapLumpSize == 0) {
+      GCon->Logf("Creating BLOCKMAP");
+      CreateBlockMap();
+    }
   }
   else
   {
@@ -1987,6 +2458,7 @@ void VLevel::LoadBlockMap(int Lump)
     //  Allocate memory for blockmap.
     int Count = Strm->TotalSize() / 2;
     BlockMapLump = new vint32[Count];
+    BlockMapLumpSize = Count;
 
     //  Read data.
     BlockMapLump[0] = Streamer<vint16>(*Strm);
@@ -2030,32 +2502,19 @@ void VLevel::LoadBlockMap(int Lump)
 void VLevel::CreateBlockMap()
 {
   guard(VLevel::CreateBlockMap);
-  //  Determine bounds of the map.
+  // determine bounds of the map
   float MinX = Vertexes[0].x;
   float MaxX = MinX;
   float MinY = Vertexes[0].y;
   float MaxY = MinY;
-  for (int i = 0; i < NumVertexes; i++)
-  {
-    if (MinX > Vertexes[i].x)
-    {
-      MinX = Vertexes[i].x;
-    }
-    if (MaxX < Vertexes[i].x)
-    {
-      MaxX = Vertexes[i].x;
-    }
-    if (MinY > Vertexes[i].y)
-    {
-      MinY = Vertexes[i].y;
-    }
-    if (MaxY < Vertexes[i].y)
-    {
-      MaxY = Vertexes[i].y;
-    }
+  for (int i = 0; i < NumVertexes; ++i) {
+    if (MinX > Vertexes[i].x) MinX = Vertexes[i].x;
+    if (MaxX < Vertexes[i].x) MaxX = Vertexes[i].x;
+    if (MinY > Vertexes[i].y) MinY = Vertexes[i].y;
+    if (MaxY < Vertexes[i].y) MaxY = Vertexes[i].y;
   }
 
-  //  They should be integers, but just in case round them.
+  // they should be integers, but just in case round them
   MinX = floor(MinX);
   MinY = floor(MinY);
   MaxX = ceil(MaxX);
@@ -2064,109 +2523,86 @@ void VLevel::CreateBlockMap()
   int Width = MapBlock(MaxX - MinX) + 1;
   int Height = MapBlock(MaxY - MinY) + 1;
 
-  //  Add all lines to their corresponding blocks
-  TArray<vuint16>* BlockLines = new TArray<vuint16>[Width * Height];
-  for (int i = 0; i < NumLines; i++)
-  {
-    //  Determine starting and ending blocks.
+  // add all lines to their corresponding blocks
+  TArray<vuint16>* BlockLines = new TArray<vuint16>[Width*Height];
+  for (int i = 0; i < NumLines; ++i) {
+    // determine starting and ending blocks
     line_t &Line = Lines[i];
-    int X1 = MapBlock(Line.v1->x - MinX);
-    int Y1 = MapBlock(Line.v1->y - MinY);
-    int X2 = MapBlock(Line.v2->x - MinX);
-    int Y2 = MapBlock(Line.v2->y - MinY);
+    int X1 = MapBlock(Line.v1->x-MinX);
+    int Y1 = MapBlock(Line.v1->y-MinY);
+    int X2 = MapBlock(Line.v2->x-MinX);
+    int Y2 = MapBlock(Line.v2->y-MinY);
 
-    if (X1 > X2)
-    {
+    if (X1 > X2) {
       int Tmp = X2;
       X2 = X1;
       X1 = Tmp;
     }
-    if (Y1 > Y2)
-    {
+    if (Y1 > Y2) {
       int Tmp = Y2;
       Y2 = Y1;
       Y1 = Tmp;
     }
 
-    if (X1 == X2 && Y1 == Y2)
-    {
-      //  Line is inside a single block.
-      BlockLines[X1 + Y1 * Width].Append(i);
-    }
-    else if (Y1 == Y2)
-    {
-      //  Horisontal line of blocks.
-      for (int x = X1; x <= X2; x++)
-      {
-        BlockLines[x + Y1 * Width].Append(i);
+    if (X1 == X2 && Y1 == Y2) {
+      // line is inside a single block
+      BlockLines[X1+Y1*Width].Append(i);
+    } else if (Y1 == Y2) {
+      // horisontal line of blocks
+      for (int x = X1; x <= X2; x++) {
+        BlockLines[x+Y1*Width].Append(i);
+      }
+    } else if (X1 == X2) {
+      // vertical line of blocks
+      for (int y = Y1; y <= Y2; y++) {
+        BlockLines[X1+y*Width].Append(i);
       }
     }
-    else if (X1 == X2)
-    {
-      //  Vertical line of blocks.
-      for (int y = Y1; y <= Y2; y++)
-      {
-        BlockLines[X1 + y * Width].Append(i);
-      }
-    }
-    else
-    {
-      //  Diagonal line.
-      for (int x = X1; x <= X2; x++)
-      {
-        for (int y = Y1; y <= Y2; y++)
-        {
-          //  Check if line crosses the block
-          if (Line.slopetype == ST_POSITIVE)
-          {
-            int p1 = Line.PointOnSide(TVec(MinX + x * 128,
-              MinY + (y + 1) * 128, 0));
-            int p2 = Line.PointOnSide(TVec(MinX + (x + 1) * 128,
-              MinY + y * 128, 0));
-            if (p1 == p2)
-              continue;
+    else {
+      // diagonal line
+      for (int x = X1; x <= X2; ++x) {
+        for (int y = Y1; y <= Y2; ++y) {
+          // check if line crosses the block
+          if (Line.slopetype == ST_POSITIVE) {
+            int p1 = Line.PointOnSide(TVec(MinX+x*128, MinY+(y+1)*128, 0));
+            int p2 = Line.PointOnSide(TVec(MinX+(x+1)*128, MinY+y*128, 0));
+            if (p1 == p2) continue;
+          } else {
+            int p1 = Line.PointOnSide(TVec(MinX+x*128, MinY+y*128, 0));
+            int p2 = Line.PointOnSide(TVec(MinX+(x+1)*128, MinY+(y+1)*128, 0));
+            if (p1 == p2) continue;
           }
-          else
-          {
-            int p1 = Line.PointOnSide(TVec(MinX + x * 128,
-              MinY + y * 128, 0));
-            int p2 = Line.PointOnSide(TVec(MinX + (x + 1) * 128,
-              MinY + (y + 1) * 128, 0));
-            if (p1 == p2)
-              continue;
-          }
-          BlockLines[x + y * Width].Append(i);
+          BlockLines[x+y*Width].Append(i);
         }
       }
     }
   }
 
-  //  Build blockmap lump.
+  // build blockmap lump
   TArray<vint32> BMap;
-  BMap.SetNum(4 + Width * Height);
+  BMap.SetNum(4+Width*Height);
   BMap[0] = (int)MinX;
   BMap[1] = (int)MinY;
   BMap[2] = Width;
   BMap[3] = Height;
-  for (int i = 0; i < Width * Height; i++)
-  {
-    //  Write offset.
-    BMap[i + 4] = BMap.Num();
-    TArray<vuint16>& Block = BlockLines[i];
-    //  Add dummy start marker.
+  for (int i = 0; i < Width*Height; ++i) {
+    // write offset
+    BMap[i+4] = BMap.Num();
+    TArray<vuint16> &Block = BlockLines[i];
+    // add dummy start marker
     BMap.Append(0);
-    //  Add lines in this block.
-    for (int j = 0; j < Block.Num(); j++)
-    {
+    // add lines in this block
+    for (int j = 0; j < Block.Num(); ++j) {
       BMap.Append(Block[j]);
     }
-    //  Add terminator marker.
+    // add terminator marker
     BMap.Append(-1);
   }
 
-  //  Copy data
+  // copy data
   BlockMapLump = new vint32[BMap.Num()];
-  memcpy(BlockMapLump, BMap.Ptr(), BMap.Num() * sizeof(vint32));
+  BlockMapLumpSize = BMap.Num();
+  memcpy(BlockMapLump, BMap.Ptr(), BMap.Num()*sizeof(vint32));
 
   delete[] BlockLines;
   BlockLines = nullptr;
@@ -2200,8 +2636,9 @@ void VLevel::LoadReject(int Lump)
     else
     {
       //  Read it.
-      RejectMatrix = new vuint8[Strm->TotalSize()];
-      Strm->Serialise(RejectMatrix, Strm->TotalSize());
+      RejectMatrixSize = Strm->TotalSize();
+      RejectMatrix = new vuint8[RejectMatrixSize];
+      Strm->Serialise(RejectMatrix, RejectMatrixSize);
 
       //  Check if it's an all-zeroes lump, in which case it's useless
       // and can be discarded.
@@ -2218,6 +2655,7 @@ void VLevel::LoadReject(int Lump)
       {
         delete[] RejectMatrix;
         RejectMatrix = nullptr;
+        RejectMatrixSize = 0;
       }
     }
   }

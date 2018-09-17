@@ -768,6 +768,7 @@ void VLevel::Destroy()
   BlockLinks = nullptr;
   delete[] RejectMatrix;
   RejectMatrix = nullptr;
+  RejectMatrixSize = 0;
   delete[] Things;
   Things = nullptr;
   delete[] Zones;
