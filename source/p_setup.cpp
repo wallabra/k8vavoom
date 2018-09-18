@@ -448,7 +448,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
   Nodes = new node_t[NumNodes];
   memset((void *)Nodes, 0, NumNodes*sizeof(node_t));
   for (int f = 0; f < NumNodes; ++f) {
-    node_t *n = Nodes+f;
+    node_t *n = &Nodes[f];
     doPlaneIO(arrstrm, n);
     for (int bbi0 = 0; bbi0 < 2; ++bbi0) {
       for (int bbi1 = 0; bbi1 < 6; ++bbi1) {
@@ -488,7 +488,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
   Subsectors = new subsector_t[NumSubsectors];
   memset((void *)Subsectors, 0, NumSubsectors*sizeof(subsector_t));
   for (int f = 0; f < NumSubsectors; ++f) {
-    subsector_t *ss = Subsectors+f;
+    subsector_t *ss = &Subsectors[f];
     vint32 snum = -1;
     *arrstrm << snum;
     ss->sector = (snum >= 0 ? Sectors+snum : nullptr);
@@ -885,10 +885,11 @@ void VLevel::LoadMap (VName AMapName) {
 
   // load blockmap
   double BlockMapTime = -Sys_Time();
-  if (!BlockMapLump) LoadBlockMap(BlockmapLump);
+  if (!BlockMapLump) {
+    LoadBlockMap(BlockmapLump);
+    saveCachedData = true;
+  }
   {
-    //BlockMapLump = new vint32[Count];
-    //BlockMapLumpSize = Count;
     BlockMapOrgX = BlockMapLump[0];
     BlockMapOrgY = BlockMapLump[1];
     BlockMapWidth = BlockMapLump[2];
@@ -901,18 +902,7 @@ void VLevel::LoadMap (VName AMapName) {
     BlockLinks = new VEntity *[count];
     memset(BlockLinks, 0, sizeof(VEntity *)*count);
   }
-
   BlockMapTime += Sys_Time();
-
-  // load reject table
-  double RejectTime = -Sys_Time();
-  if (!RejectMatrix) LoadReject(RejectLump);
-  RejectTime += Sys_Time();
-
-  // ACS object code
-  double AcsTime = -Sys_Time();
-  LoadACScripts(BehaviorLump);
-  AcsTime += Sys_Time();
 
   // rebuild PVS if we have none (just in case)
   // cached data loader took care of this
@@ -923,6 +913,29 @@ void VLevel::LoadMap (VName AMapName) {
     BuildPVSTime += Sys_Time();
     if (VisData) saveCachedData = true;
   }
+
+  // load reject table
+  double RejectTime = -Sys_Time();
+  if (!RejectMatrix) {
+    LoadReject(RejectLump);
+    saveCachedData = true;
+  }
+  RejectTime += Sys_Time();
+
+
+  // update cache
+  if (loader_cache_data && saveCachedData && sha512valid && TotalTime+Sys_Time() > loader_cache_time_limit) {
+    VStream *strm = FL_OpenSysFileWrite(cacheFileName);
+    SaveCachedData(strm);
+    delete strm;
+  }
+  doCacheCleanup();
+
+
+  // ACS object code
+  double AcsTime = -Sys_Time();
+  LoadACScripts(BehaviorLump);
+  AcsTime += Sys_Time();
 
   double GroupLinesTime = -Sys_Time();
   GroupLines();
@@ -980,7 +993,7 @@ void VLevel::LoadMap (VName AMapName) {
   CreateRepBase();
   RepBaseTime += Sys_Time();
 
-  GCon->Logf("Building Lidedef VV list...");
+  //GCon->Logf("Building Lidedef VV list...");
   double LineVVListTime = -Sys_Time();
   if (dbg_use_old_decal_pp) {
     BuildDecalsVVListOld();
@@ -1030,13 +1043,6 @@ void VLevel::LoadMap (VName AMapName) {
     GCon->Logf("Decal processing %f", DecalProcessingTime);
     //GCon->Logf("%s", ""); // shut up, gcc!
   }
-
-  if (loader_cache_data && saveCachedData && sha512valid && TotalTime > loader_cache_time_limit) {
-    VStream *strm = FL_OpenSysFileWrite(cacheFileName);
-    SaveCachedData(strm);
-    delete strm;
-  }
-  doCacheCleanup();
 
   unguard;
 }
