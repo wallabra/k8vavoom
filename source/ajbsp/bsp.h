@@ -177,7 +177,8 @@ void Adler32_Finish(u32_t *crc);
 void InitBlockmap();
 
 // build the blockmap and write the data into the BLOCKMAP lump
-void PutBlockmap (VStream &strm);
+// returns `true` if blockmap was overflowed, and need to be rebuild by VaVoom
+bool PutBlockmap (VStream &strm);
 
 // utility routines...
 void GetBlockmapBounds(int *x, int *y, int *w, int *h);

@@ -777,45 +777,36 @@ void VLevel::BuildNodes () {
 
       VMemoryStream *xms = new VMemoryStream();
       xms->BeginWrite();
-      ajbsp::PutBlockmap(*xms);
 
-      // allocate memory for blockmap
-      int count = xms->TotalSize()/2;
-      xms->Seek(0);
-      xms->BeginRead();
+      // `true` means that blockmap was overflowed; let VaVoom rebuild it
+      if (!ajbsp::PutBlockmap(*xms)) {
+        // allocate memory for blockmap
+        int count = xms->TotalSize()/2;
+        xms->Seek(0);
+        xms->BeginRead();
 
-      BlockMapLump = new vint32[count];
-      BlockMapLumpSize = count;
+        BlockMapLump = new vint32[count];
+        BlockMapLumpSize = count;
 
-      // read data
-      BlockMapLump[0] = Streamer<vint16>(*xms);
-      BlockMapLump[1] = Streamer<vint16>(*xms);
-      BlockMapLump[2] = Streamer<vuint16>(*xms);
-      BlockMapLump[3] = Streamer<vuint16>(*xms);
-      for (int i = 4; i < count; ++i) {
-        vint16 tmp;
-        *xms << tmp;
-        BlockMapLump[i] = (tmp == -1 ? -1 : (vuint16)tmp&0xffff);
+        // read data
+        BlockMapLump[0] = Streamer<vint16>(*xms);
+        BlockMapLump[1] = Streamer<vint16>(*xms);
+        BlockMapLump[2] = Streamer<vuint16>(*xms);
+        BlockMapLump[3] = Streamer<vuint16>(*xms);
+        for (int i = 4; i < count; ++i) {
+          vint16 tmp;
+          *xms << tmp;
+          BlockMapLump[i] = (tmp == -1 ? -1 : (vuint16)tmp&0xffff);
+        }
+      } else {
+        GCon->Logf("AJBSP: blockmap overflowed, will be rebuild by VaVoom");
+        delete [] BlockMapLump;
+        BlockMapLump = nullptr;
+        BlockMapLumpSize = 0;
       }
 
       delete xms;
-
-      // read blockmap origin and size
-      BlockMapOrgX = BlockMapLump[0];
-      BlockMapOrgY = BlockMapLump[1];
-      BlockMapWidth = BlockMapLump[2];
-      BlockMapHeight = BlockMapLump[3];
-      BlockMap = BlockMapLump+4;
-
-      // clear out mobj chains
-      count = BlockMapWidth*BlockMapHeight;
-      delete [] BlockLinks;
-      BlockLinks = new VEntity *[count];
-      memset(BlockLinks, 0, sizeof(VEntity *)*count);
     }
-
-    //ajbsp::PutBlockmap();
-    //ajbsp::PutReject();
   }
 
   // free any memory used by glBSP

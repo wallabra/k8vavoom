@@ -864,6 +864,22 @@ void VLevel::LoadMap (VName AMapName) {
   // load blockmap
   double BlockMapTime = -Sys_Time();
   if (!BlockMapLump) LoadBlockMap(BlockmapLump);
+  {
+    //BlockMapLump = new vint32[Count];
+    //BlockMapLumpSize = Count;
+    BlockMapOrgX = BlockMapLump[0];
+    BlockMapOrgY = BlockMapLump[1];
+    BlockMapWidth = BlockMapLump[2];
+    BlockMapHeight = BlockMapLump[3];
+    BlockMap = BlockMapLump+4;
+
+    // clear out mobj chains
+    int count = BlockMapWidth*BlockMapHeight;
+    delete [] BlockLinks;
+    BlockLinks = new VEntity *[count];
+    memset(BlockLinks, 0, sizeof(VEntity *)*count);
+  }
+
   BlockMapTime += Sys_Time();
 
   // load reject table
@@ -2404,68 +2420,59 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VLevel::LoadBlockMap
 //
 //==========================================================================
-
-void VLevel::LoadBlockMap(int Lump)
-{
+void VLevel::LoadBlockMap (int Lump) {
   guard(VLevel::LoadBlockMap);
   VStream *Strm = nullptr;
+
   if (Lump >= 0 && !build_blockmap) Strm = W_CreateLumpReaderNum(Lump);
 
-  if (!Strm || Strm->TotalSize() == 0 || Strm->TotalSize() / 2 >= 0x10000)
-  {
-    // it can be loaded from cache
-    if (!BlockMapLump || BlockMapLumpSize == 0) {
-      GCon->Logf("Creating BLOCKMAP");
-      CreateBlockMap();
-    }
-  }
-  else
-  {
+  if (!Strm || Strm->TotalSize() == 0 || Strm->TotalSize()/2 >= 0x10000) {
+    GCon->Logf("Creating BLOCKMAP");
+    CreateBlockMap();
+  } else {
     // killough 3/1/98: Expand wad blockmap into larger internal one,
     // by treating all offsets except -1 as unsigned and zero-extending
     // them. This potentially doubles the size of blockmaps allowed,
     // because Doom originally considered the offsets as always signed.
 
-    //  Allocate memory for blockmap.
-    int Count = Strm->TotalSize() / 2;
-    BlockMapLump = new vint32[Count];
-    BlockMapLumpSize = Count;
+    // allocate memory for blockmap
+    int count = Strm->TotalSize()/2;
+    BlockMapLump = new vint32[count];
+    BlockMapLumpSize = count;
 
-    //  Read data.
+    // read data
     BlockMapLump[0] = Streamer<vint16>(*Strm);
     BlockMapLump[1] = Streamer<vint16>(*Strm);
     BlockMapLump[2] = Streamer<vuint16>(*Strm);
     BlockMapLump[3] = Streamer<vuint16>(*Strm);
-    for (int i = 4; i < Count; i++)
-    {
+    for (int i = 4; i < count; i++) {
       vint16 Tmp;
       *Strm << Tmp;
       BlockMapLump[i] = Tmp == -1 ? -1 : (vuint16)Tmp & 0xffff;
     }
   }
 
-  if (Strm)
-  {
-    delete Strm;
-    Strm = nullptr;
-  }
+  if (Strm) delete Strm;
 
-  //  Read blockmap origin and size.
+  // read blockmap origin and size
+  /*
   BlockMapOrgX = BlockMapLump[0];
   BlockMapOrgY = BlockMapLump[1];
   BlockMapWidth = BlockMapLump[2];
   BlockMapHeight = BlockMapLump[3];
   BlockMap = BlockMapLump + 4;
 
-  //  Clear out mobj chains.
+  // clear out mobj chains
   int Count = BlockMapWidth * BlockMapHeight;
   BlockLinks = new VEntity*[Count];
   memset(BlockLinks, 0, sizeof(VEntity*) * Count);
+  */
   unguard;
 }
 

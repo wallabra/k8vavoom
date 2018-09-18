@@ -550,13 +550,13 @@ void InitBlockmap()
 }
 
 
-void PutBlockmap (VStream &strm)
+bool PutBlockmap (VStream &strm)
 {
 	if (! cur_info->do_blockmap || num_linedefs == 0)
 	{
 		// just create an empty blockmap lump
 		//CreateLevelLump("BLOCKMAP")->Finish();
-		return;
+		return true;
 	}
 
 	block_overflowed = false;
@@ -580,6 +580,8 @@ void PutBlockmap (VStream &strm)
 		//CreateLevelLump("BLOCKMAP")->Finish();
 
 		Warning("Blockmap overflowed\n");
+		FreeBlockmap();
+		return true;
 	}
 
 	WriteBlockmap(strm);
@@ -588,6 +590,8 @@ void PutBlockmap (VStream &strm)
 			block_w, block_h, block_compression);
 
 	FreeBlockmap();
+
+  return false;
 }
 
 
