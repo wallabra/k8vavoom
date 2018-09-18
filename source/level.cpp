@@ -214,11 +214,14 @@ static void writeOrCheckInt (VStream &Strm, int value, const char *errmsg, bool 
   }
 }
 
-static void writeOrCheckFloat (VStream &Strm, float value, const char *errmsg) {
+static void writeOrCheckFloat (VStream &Strm, float value, const char *errmsg, bool dofail=true) {
   if (Strm.IsLoading()) {
     float v;
     Strm << v;
-    if (v != value) Host_Error(va("Save loader: invalid value for %s; got %f, but expected %f", errmsg, v, value));
+    if (v != value) {
+      if (dofail) Host_Error(va("Save loader: invalid value for %s; got %f, but expected %f", errmsg, v, value));
+      GCon->Logf("Save loader: invalid value for %s; got %f, but expected %f (should be harmless)", errmsg, v, value);
+    }
   } else {
     Strm << value;
   }
@@ -243,78 +246,89 @@ void VLevel::Serialise(VStream &Strm)
   writeOrCheckInt(Strm, NumSectors, "sector count");
   writeOrCheckInt(Strm, NumSides, "side count");
   writeOrCheckInt(Strm, NumLines, "line count");
-  writeOrCheckInt(Strm, NumSegs, "seg count");
-  writeOrCheckInt(Strm, NumSubsectors, "subsector count");
+  writeOrCheckInt(Strm, NumSegs, "seg count", false);
+  writeOrCheckInt(Strm, NumSubsectors, "subsector count", false);
   writeOrCheckInt(Strm, NumNodes, "node count", false);
   writeOrCheckInt(Strm, NumPolyObjs, "polyobj count");
   writeOrCheckInt(Strm, NumZones, "zone count");
 
-  writeOrCheckFloat(Strm, BlockMapOrgX, "blocmap x origin");
-  writeOrCheckFloat(Strm, BlockMapOrgY, "blocmap y origin");
+  writeOrCheckFloat(Strm, BlockMapOrgX, "blockmap x origin", false);
+  writeOrCheckFloat(Strm, BlockMapOrgY, "blockmap y origin", false);
 
   //
   //  Decals
   //
 
   if (Strm.IsLoading()) decanimlist = nullptr;
-  if (Segs && NumSegs) {
-    vuint32 sgc = (vuint32)NumSegs;
+
+  vuint32 sgc = (vuint32)NumSegs;
+  Strm << sgc; // just to be sure
+
+  if (sgc) {
     vuint32 dctotal = 0;
     if (Strm.IsLoading()) {
       // load decals
-      sgc = 0;
-      Strm << sgc; // just to be sure
-      if (sgc != (vuint32)NumSegs) Host_Error("Level load: invalid number of segs");
-      for (int f = 0; f < NumSegs; ++f) {
+      bool loadDecals = true;
+      if (sgc != (vuint32)NumSegs) {
+        GCon->Logf("Level load: invalid number of segs, skipping decals");
+        loadDecals = false;
+      }
+      for (int f = 0; f < (int)sgc; ++f) {
         vuint32 dcount = 0;
         // remove old decals
-        decal_t *decal = Segs[f].decals;
-        while (decal) {
-          decal_t *c = decal;
-          decal = c->next;
-          delete c->animator;
-          delete c;
+        if (loadDecals) {
+          decal_t *odcl = Segs[f].decals;
+          while (odcl) {
+            decal_t *c = odcl;
+            odcl = c->next;
+            delete c->animator;
+            delete c;
+          }
+          Segs[f].decals = nullptr;
         }
-        Segs[f].decals = nullptr;
         // load decal count for this seg
         Strm << dcount;
-        decal = nullptr; // previous
+        decal_t *decal = nullptr; // previous
         while (dcount-- > 0) {
           decal_t *dc = new decal_t;
           memset((void *)dc, 0, sizeof(decal_t));
-          dc->seg = &Segs[f];
+          if (loadDecals) dc->seg = &Segs[f]; else dc->seg = &Segs[0];
           DecalIO(Strm, dc);
-          if (dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0 || dc->texture < 0) {
+          if (loadDecals) {
+            if (dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0 || dc->texture < 0) {
+              delete dc->animator;
+              delete dc;
+            } else {
+              // fix backsector
+              if (dc->flags&(decal_t::SlideFloor|decal_t::SlideCeil)) {
+                line_t *lin = Segs[f].linedef;
+                if (!lin) Sys_Error("Save loader: invalid seg linedef (0)!");
+                int bsidenum = (dc->flags&decal_t::SideDefOne ? 1 : 0);
+                if (lin->sidenum[bsidenum] < 0) Sys_Error("Save loader: invalid seg linedef (1)!");
+                side_t *sb = &Sides[lin->sidenum[bsidenum]];
+                dc->bsec = sb->Sector;
+                if (!dc->bsec) Sys_Error("Save loader: invalid seg linedef (2)!");
+              }
+              // add to decal list
+              if (decal) decal->next = dc; else Segs[f].decals = dc;
+              if (dc->animator) {
+                if (decanimlist) decanimlist->prevanimated = dc;
+                dc->nextanimated = decanimlist;
+                decanimlist = dc;
+              }
+              decal = dc;
+            }
+          } else {
             delete dc->animator;
             delete dc;
-          } else {
-            // fix backsector
-            if (dc->flags&(decal_t::SlideFloor|decal_t::SlideCeil)) {
-              line_t *lin = Segs[f].linedef;
-              if (!lin) Sys_Error("Save loader: invalid seg linedef (0)!");
-              int bsidenum = (dc->flags&decal_t::SideDefOne ? 1 : 0);
-              if (lin->sidenum[bsidenum] < 0) Sys_Error("Save loader: invalid seg linedef (1)!");
-              side_t *sb = &Sides[lin->sidenum[bsidenum]];
-              dc->bsec = sb->Sector;
-              if (!dc->bsec) Sys_Error("Save loader: invalid seg linedef (2)!");
-            }
-            // add to decal list
-            if (decal) decal->next = dc; else Segs[f].decals = dc;
-            if (dc->animator) {
-              if (decanimlist) decanimlist->prevanimated = dc;
-              dc->nextanimated = decanimlist;
-              decanimlist = dc;
-            }
-            decal = dc;
           }
           ++dctotal;
         }
       }
-      GCon->Logf("%u decals loaded", dctotal);
+      GCon->Logf("%u decals %s", dctotal, (loadDecals ? "loaded" : "skipped"));
     } else {
       // save decals
-      Strm << sgc; // just to be sure
-      for (int f = 0; f < NumSegs; ++f) {
+      for (int f = 0; f < (int)sgc; ++f) {
         // count decals
         vuint32 dcount = 0;
         for (decal_t *decal = Segs[f].decals; decal; decal = decal->next) ++dcount;

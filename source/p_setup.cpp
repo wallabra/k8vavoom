@@ -273,14 +273,24 @@ void VLevel::SaveCachedData (VStream *strm) {
   GCon->Logf("cache: writing %d subsectors", NumSubsectors);
   for (int f = 0; f < NumSubsectors; ++f) {
     subsector_t *ss = Subsectors+f;
-    //vint32 snum = -1;
-    //if (ss->sector) snum = (vint32)(ptrdiff_t)(ss->sector-Sectors);
-    //*arrstrm << snum;
-    //vint32 slinknum = -1;
-    //if (ss->seclink) slinknum = (vint32)(ptrdiff_t)(ss->seclink-Subsectors);
-    //*arrstrm << slinknum;
+    vint32 snum = -1;
+    if (ss->sector) snum = (vint32)(ptrdiff_t)(ss->sector-Sectors);
+    *arrstrm << snum;
+    vint32 slinknum = -1;
+    if (ss->seclink) slinknum = (vint32)(ptrdiff_t)(ss->seclink-Subsectors);
+    *arrstrm << slinknum;
     *arrstrm << ss->numlines;
     *arrstrm << ss->firstline;
+  }
+
+  // sectors
+  *arrstrm << NumSectors;
+  GCon->Logf("cache: writing %d sectors", NumSectors);
+  for (int f = 0; f < NumSectors; ++f) {
+    sector_t *sector = &Sectors[f];
+    vint32 ssnum = -1;
+    if (sector->subsectors) ssnum = (vint32)(ptrdiff_t)(sector->subsectors-Subsectors);
+    *arrstrm << ssnum;
   }
 
   // segs
@@ -303,9 +313,6 @@ void VLevel::SaveCachedData (VStream *strm) {
     vint32 linedefnum = -1;
     if (seg->linedef) linedefnum = (vint32)(ptrdiff_t)(seg->linedef-Lines);
     *arrstrm << linedefnum;
-    //vint32 lsnextnum = -1;
-    //if (seg->lsnext) lsnextnum = (vint32)(ptrdiff_t)(seg->lsnext-Segs);
-    //*arrstrm << lsnextnum;
     vint32 snum = -1;
     if (seg->frontsector) snum = (vint32)(ptrdiff_t)(seg->frontsector-Sectors);
     *arrstrm << snum;
@@ -315,9 +322,9 @@ void VLevel::SaveCachedData (VStream *strm) {
     vint32 partnum = -1;
     if (seg->partner) partnum = (vint32)(ptrdiff_t)(seg->partner-Segs);
     *arrstrm << partnum;
-    //vint32 fssnum = -1;
-    //if (seg->front_sub) fssnum = (vint32)(ptrdiff_t)(seg->front_sub-Subsectors);
-    //*arrstrm << fssnum;
+    vint32 fssnum = -1;
+    if (seg->front_sub) fssnum = (vint32)(ptrdiff_t)(seg->front_sub-Subsectors);
+    *arrstrm << fssnum;
     *arrstrm << seg->side;
   }
 
@@ -425,18 +432,19 @@ bool VLevel::LoadCachedData (VStream *strm) {
   arrstrm->BeginRead();
 
   int vissize = -1;
+  int checkSecNum = -1;
 
   // flags (nothing for now)
   vuint32 flags = 0x29a;
   *arrstrm << flags;
-  if (flags != 0) goto error;
+  if (flags != 0) Host_Error("cache file corrupted (flags)");
 
   //TODO: more checks
 
   // nodes
   *arrstrm << NumNodes;
   GCon->Logf("cache: reading %d nodes", NumNodes);
-  if (NumNodes == 0 || NumNodes > 0x1fffffff) { GCon->Logf("invalid cached data (0)"); goto error; }
+  if (NumNodes == 0 || NumNodes > 0x1fffffff) Host_Error("cache file corrupted (nodes)");
   Nodes = new node_t[NumNodes];
   memset((void *)Nodes, 0, NumNodes*sizeof(node_t));
   for (int f = 0; f < NumNodes; ++f) {
@@ -481,14 +489,25 @@ bool VLevel::LoadCachedData (VStream *strm) {
   memset((void *)Subsectors, 0, NumSubsectors*sizeof(subsector_t));
   for (int f = 0; f < NumSubsectors; ++f) {
     subsector_t *ss = Subsectors+f;
-    //vint32 snum = -1;
-    //*arrstrm << snum;
-    //if (snum >= 0) ss->sector = Sectors+snum;
-    //vint32 slinknum = -1;
-    //*arrstrm << slinknum;
-    //if (slinknum >= 0) ss->seclink = Subsectors+slinknum;
+    vint32 snum = -1;
+    *arrstrm << snum;
+    ss->sector = (snum >= 0 ? Sectors+snum : nullptr);
+    vint32 slinknum = -1;
+    *arrstrm << slinknum;
+    ss->seclink = (slinknum >= 0 ? Subsectors+slinknum : nullptr);
     *arrstrm << ss->numlines;
     *arrstrm << ss->firstline;
+  }
+
+  // sectors
+  GCon->Logf("cache: reading %d sectors", NumSectors);
+  *arrstrm << checkSecNum;
+  if (checkSecNum != NumSectors) Host_Error("cache file corrupted (sectors)");
+  for (int f = 0; f < NumSectors; ++f) {
+    sector_t *sector = &Sectors[f];
+    vint32 ssnum = -1;
+    *arrstrm << ssnum;
+    sector->subsectors = (ssnum >= 0 ? Subsectors+ssnum : nullptr);
   }
 
   // segs
@@ -502,36 +521,36 @@ bool VLevel::LoadCachedData (VStream *strm) {
     doPlaneIO(arrstrm, seg);
     vint32 v1num = -1;
     *arrstrm << v1num;
-    if (v1num >= 0) seg->v1 = Vertexes+v1num;
+    if (v1num < 0) Host_Error("cache file corrupted (seg v1)");
+    seg->v1 = Vertexes+v1num;
     vint32 v2num = -1;
     *arrstrm << v2num;
-    if (v2num >= 0) seg->v2 = Vertexes+v2num;
+    if (v2num < 0) Host_Error("cache file corrupted (seg v2)");
+    seg->v2 = Vertexes+v2num;
     *arrstrm << seg->offset;
     *arrstrm << seg->length;
     vint32 sidedefnum = -1;
     *arrstrm << sidedefnum;
-    if (sidedefnum >= 0) seg->sidedef = Sides+sidedefnum;
+    seg->sidedef = (sidedefnum >= 0 ? Sides+sidedefnum : nullptr);
     vint32 linedefnum = -1;
     *arrstrm << linedefnum;
-    if (linedefnum >= 0) seg->linedef = Lines+linedefnum;
-    //vint32 lsnextnum = -1;
-    //*arrstrm << lsnextnum;
-    //if (lsnextnum >= 0) seg->lsnext = Segs+lsnextnum;
+    seg->linedef = (linedefnum >= 0 ? Lines+linedefnum : nullptr);
     vint32 snum = -1;
     *arrstrm << snum;
-    if (snum >= 0) seg->frontsector = Sectors+snum;
+    seg->frontsector = (snum >= 0 ? Sectors+snum : nullptr);
     snum = -1;
     *arrstrm << snum;
-    if (snum >= 0) seg->backsector = Sectors+snum;
+    seg->backsector = (snum >= 0 ? Sectors+snum : nullptr);
     vint32 partnum = -1;
     *arrstrm << partnum;
-    if (partnum >= 0) seg->partner = Segs+partnum;
-    //vint32 fssnum = -1;
-    //*arrstrm << fssnum;
-    //if (fssnum >= 0) seg->front_sub = Subsectors+fssnum;
+    seg->partner = (partnum >= 0 ? Segs+partnum : nullptr);
+    vint32 fssnum = -1;
+    *arrstrm << fssnum;
+    seg->front_sub = (fssnum >= 0 ? Subsectors+fssnum : nullptr);
     *arrstrm << seg->side;
   }
 
+  /*
   {
     for (int f = 0; f < NumSectors; ++f) Sectors[f].subsectors = nullptr;
     subsector_t *ss = Subsectors;
@@ -550,10 +569,11 @@ bool VLevel::LoadCachedData (VStream *strm) {
       if (!ss->sector) Host_Error("Subsector %d without sector", i);
     }
   }
+  */
 
   // reject
   *arrstrm << RejectMatrixSize;
-  if (RejectMatrixSize < 0 || RejectMatrixSize > 0x1fffffff) goto error;
+  if (RejectMatrixSize < 0 || RejectMatrixSize > 0x1fffffff) Host_Error("cache file corrupted (reject)");
   if (RejectMatrixSize) {
     GCon->Logf("cache: reading %d bytes of reject table", RejectMatrixSize);
     RejectMatrix = new vuint8[RejectMatrixSize];
@@ -562,7 +582,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
 
   // blockmap
   *arrstrm << BlockMapLumpSize;
-  if (BlockMapLumpSize < 0 || BlockMapLumpSize > 0x1fffffff) goto error;
+  if (BlockMapLumpSize < 0 || BlockMapLumpSize > 0x1fffffff) Host_Error("cache file corrupted (blockmap)");
   if (BlockMapLumpSize) {
     GCon->Logf("cache: reading %d cells of blockmap table", BlockMapLumpSize);
     BlockMapLump = new vint32[BlockMapLumpSize];
@@ -571,17 +591,18 @@ bool VLevel::LoadCachedData (VStream *strm) {
 
   // pvs
   *arrstrm << vissize;
-  if (vissize < 0 || vissize > 0x6fffffff) goto error;
+  if (vissize < 0 || vissize > 0x6fffffff) Host_Error("cache file corrupted (pvs)");
   if (vissize > 0) {
     GCon->Logf("cache: reading %d bytes of pvs table", vissize);
     VisData = new vuint8[vissize];
     arrstrm->Serialize(VisData, vissize);
   }
 
-  if (arrstrm->IsError()) goto error;
+  if (arrstrm->IsError()) Host_Error("cache file corrupted (read error)");
   delete arrstrm;
   return true;
 
+/*
 error:
   delete arrstrm;
 
@@ -601,6 +622,7 @@ error:
   VisData = nullptr;
 
   return false;
+*/
 }
 
 
