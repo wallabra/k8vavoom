@@ -743,6 +743,13 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   float maxs = -99999.0;
 
   for (int i = 0; i < surf->count; ++i) {
+    if (!isFiniteF(surf->verts[i].x) || !isFiniteF(surf->verts[i].y) || !isFiniteF(surf->verts[i].z)) {
+      GCon->Logf("ERROR: invalid surface vertex %d (%f,%f,%f); axis=(%f,%f,%f); THIS IS INTERNAL VAVOOM BUG!",
+        i, surf->verts[i].x, surf->verts[i].y, surf->verts[i].z, axis.x, axis.y, axis.z);
+      if (!isFiniteF(surf->verts[i].x)) surf->verts[i].x = 0;
+      if (!isFiniteF(surf->verts[i].y)) surf->verts[i].y = 0;
+      if (!isFiniteF(surf->verts[i].z)) surf->verts[i].z = 0;
+    }
     const float dot = DotProduct(surf->verts[i], axis);
     if (dot < mins) mins = dot;
     if (dot > maxs) maxs = dot;
