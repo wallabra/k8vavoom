@@ -537,7 +537,7 @@ void InitBlockmap()
 	// find limits of linedefs, and store as map limits
 	FindBlockmapLimits(&map_bbox);
 
-	ajbsp_PrintDetail("    Map limits: (%d,%d) to (%d,%d)\n",
+	ajbsp_PrintDetail("Map limits: (%d,%d) to (%d,%d)\n",
 			map_bbox.minx, map_bbox.miny, map_bbox.maxx, map_bbox.maxy);
 
 	block_x = map_bbox.minx - (map_bbox.minx & 0x7);
@@ -584,7 +584,7 @@ void PutBlockmap (VStream &strm)
 
 	WriteBlockmap(strm);
 
-	ajbsp_PrintDetail("    Blockmap size: %dx%d (compression: %d%%)\n",
+	ajbsp_PrintDetail("Blockmap size: %dx%d (compression: %d%%)\n",
 			block_w, block_h, block_compression);
 
 	FreeBlockmap();
@@ -785,7 +785,7 @@ void PutReject(VStream &strm)
 	Reject_WriteLump(strm);
 	Reject_Free();
 
-	ajbsp_PrintDetail("    Reject size: %d\n", rej_total_size);
+	ajbsp_PrintDetail("Reject size: %d\n", rej_total_size);
 }
 
 

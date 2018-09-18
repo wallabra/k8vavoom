@@ -43,7 +43,7 @@ void Failure(const char *fmt, ...)
 	va_end(args);
 
 	//if (opt_verbosity >= 2)
-		ajbsp_PrintVerbose("    FAILURE: %s", message_buf);
+		ajbsp_PrintVerbose("FAILURE: %s", message_buf);
 	/*else
 		ajbsp_PrintVerbose("    %s", message_buf);*/
 }
@@ -58,7 +58,7 @@ void Warning(const char *fmt, ...)
 	va_end(args);
 
 	//if (opt_verbosity >= 2)
-		ajbsp_PrintVerbose("    WARNING: %s", message_buf);
+		ajbsp_PrintVerbose("WARNING: %s", message_buf);
 	/*else
 		ajbsp_PrintVerbose("    %s", message_buf);*/
 
@@ -76,7 +76,7 @@ void MinorIssue(const char *fmt, ...)
 		vsnprintf(message_buf, sizeof(message_buf), fmt, args);
 		va_end(args);
 
-		ajbsp_PrintVerbose("    ISSUE: %s", message_buf);
+		ajbsp_PrintVerbose("ISSUE: %s", message_buf);
 	}
 
 	cur_info->total_minor_issues++;
@@ -569,7 +569,7 @@ void PruneVerticesAtEnd(void)
 	{
 		int unused = num_vertices - new_num;
 
-		ajbsp_PrintDetail("    Pruned %d unused vertices at end\n", unused);
+		ajbsp_PrintDetail("Pruned %d unused vertices at end\n", unused);
 
 		num_vertices = new_num;
 	}
@@ -679,7 +679,7 @@ void DetectOverlappingLines(void)
 
 	if (count > 0)
 	{
-		ajbsp_PrintDetail("    Detected %d overlapped linedefs\n", count);
+		ajbsp_PrintDetail("Detected %d overlapped linedefs\n", count);
 	}
 
 	UtilFree(array);

@@ -122,7 +122,7 @@ enum
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 000.\n";
+static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 001.\n";
 static bool cacheCleanupComplete = false;
 
 
@@ -210,6 +210,17 @@ static void doCacheCleanup () {
 
 //==========================================================================
 //
+//  doPlaneIO
+//
+//==========================================================================
+static void doPlaneIO (VStream *strm, TPlane *n) {
+  *strm << n->normal.x << n->normal.y << n->normal.z;
+  *strm << n->dist << n->type << n->signbits;
+}
+
+
+//==========================================================================
+//
 //  VLevel::SaveCachedData
 //
 //==========================================================================
@@ -229,25 +240,12 @@ void VLevel::SaveCachedData (VStream *strm) {
   GCon->Logf("cache: writing %d nodes", NumNodes);
   for (int f = 0; f < NumNodes; ++f) {
     node_t *n = Nodes+f;
-    *arrstrm << n->bbox[0][0];
-    *arrstrm << n->bbox[0][1];
-    *arrstrm << n->bbox[0][2];
-    *arrstrm << n->bbox[0][3];
-    *arrstrm << n->bbox[0][4];
-    *arrstrm << n->bbox[0][5];
-    *arrstrm << n->bbox[0][6];
-    *arrstrm << n->bbox[1][0];
-    *arrstrm << n->bbox[1][1];
-    *arrstrm << n->bbox[1][2];
-    *arrstrm << n->bbox[1][3];
-    *arrstrm << n->bbox[1][4];
-    *arrstrm << n->bbox[1][5];
-    *arrstrm << n->bbox[1][6];
-    *arrstrm << n->children[0];
-    *arrstrm << n->children[1];
-    // TPlane
-    *arrstrm << n->normal.x << n->normal.y << n->normal.z;
-    *arrstrm << n->dist << n->type << n->signbits;
+    doPlaneIO(arrstrm, n);
+    for (int bbi0 = 0; bbi0 < 2; ++bbi0) {
+      for (int bbi1 = 0; bbi1 < 6; ++bbi1) {
+        *arrstrm << n->bbox[bbi0][bbi1];
+      }
+    }
   }
 
   // vertices
@@ -289,6 +287,7 @@ void VLevel::SaveCachedData (VStream *strm) {
   GCon->Logf("cache: writing %d segs", NumSegs);
   for (int f = 0; f < NumSegs; ++f) {
     seg_t *seg = Segs+f;
+    doPlaneIO(arrstrm, seg);
     vint32 v1num = -1;
     if (seg->v1) v1num = (vint32)(ptrdiff_t)(seg->v1-Vertexes);
     *arrstrm << v1num;
@@ -319,9 +318,6 @@ void VLevel::SaveCachedData (VStream *strm) {
     //if (seg->front_sub) fssnum = (vint32)(ptrdiff_t)(seg->front_sub-Subsectors);
     //*arrstrm << fssnum;
     *arrstrm << seg->side;
-    // TPlane
-    *arrstrm << seg->normal.x << seg->normal.y << seg->normal.z;
-    *arrstrm << seg->dist << seg->type << seg->signbits;
   }
 
   // reject
@@ -444,25 +440,12 @@ bool VLevel::LoadCachedData (VStream *strm) {
   memset((void *)Nodes, 0, NumNodes*sizeof(node_t));
   for (int f = 0; f < NumNodes; ++f) {
     node_t *n = Nodes+f;
-    *arrstrm << n->bbox[0][0];
-    *arrstrm << n->bbox[0][1];
-    *arrstrm << n->bbox[0][2];
-    *arrstrm << n->bbox[0][3];
-    *arrstrm << n->bbox[0][4];
-    *arrstrm << n->bbox[0][5];
-    *arrstrm << n->bbox[0][6];
-    *arrstrm << n->bbox[1][0];
-    *arrstrm << n->bbox[1][1];
-    *arrstrm << n->bbox[1][2];
-    *arrstrm << n->bbox[1][3];
-    *arrstrm << n->bbox[1][4];
-    *arrstrm << n->bbox[1][5];
-    *arrstrm << n->bbox[1][6];
-    *arrstrm << n->children[0];
-    *arrstrm << n->children[1];
-    // TPlane
-    *arrstrm << n->normal.x << n->normal.y << n->normal.z;
-    *arrstrm << n->dist << n->type << n->signbits;
+    doPlaneIO(arrstrm, n);
+    for (int bbi0 = 0; bbi0 < 2; ++bbi0) {
+      for (int bbi1 = 0; bbi1 < 6; ++bbi1) {
+        *arrstrm << n->bbox[bbi0][bbi1];
+      }
+    }
   }
 
   delete [] Vertexes;
@@ -514,6 +497,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
   memset((void *)Segs, 0, NumSegs*sizeof(seg_t));
   for (int f = 0; f < NumSegs; ++f) {
     seg_t *seg = Segs+f;
+    doPlaneIO(arrstrm, seg);
     vint32 v1num = -1;
     *arrstrm << v1num;
     if (v1num >= 0) seg->v1 = Vertexes+v1num;
@@ -544,21 +528,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
     //*arrstrm << fssnum;
     //if (fssnum >= 0) seg->front_sub = Subsectors+fssnum;
     *arrstrm << seg->side;
-    // TPlane
-    *arrstrm << seg->normal.x << seg->normal.y << seg->normal.z;
-    *arrstrm << seg->dist << seg->type << seg->signbits;
   }
-
-  /*
-  {
-    seg_t *li = Segs;
-    for (int f = 0; f < NumSegs; ++f, ++li) {
-      // calc seg's plane params
-      li->length = Length(*li->v2 - *li->v1);
-      CalcSeg(li);
-    }
-  }
-  */
 
   {
     for (int f = 0; f < NumSectors; ++f) Sectors[f].subsectors = nullptr;
@@ -597,8 +567,9 @@ bool VLevel::LoadCachedData (VStream *strm) {
     arrstrm->Serialize(BlockMapLump, BlockMapLumpSize*4);
   }
 
+  // pvs
   *arrstrm << vissize;
-  if (vissize < 0 || vissize > 0x1fffffff) goto error;
+  if (vissize < 0 || vissize > 0x6fffffff) goto error;
   if (vissize > 0) {
     GCon->Logf("cache: reading %d bytes of pvs table", vissize);
     VisData = new vuint8[vissize];

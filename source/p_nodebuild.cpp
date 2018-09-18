@@ -30,16 +30,6 @@
 #include "filesys/fwaddefs.h"
 #include "ajbsp/bsp.h"
 
-#define glbsp_vertex_t  ajbsp::vertex_t
-#define glbsp_sector_t  ajbsp::sector_t
-#define glbsp_subsec_t  ajbsp::subsec_t
-#define glbsp_seg_t  ajbsp::seg_t
-#define glbsp_node_t  ajbsp::node_t
-#define glbsp_sidedef_t  ajbsp::sidedef_t
-#define glbsp_linedef_t  ajbsp::linedef_t
-#define glbsp_thing_t  ajbsp::thing_t
-//extern boolean_g lev_doing_normal;
-//extern boolean_g lev_doing_hexen;
 namespace ajbsp {
   extern bool lev_doing_hexen;
   extern int num_old_vert;
@@ -55,7 +45,7 @@ namespace ajbsp {
   extern int num_subsecs;
   extern int num_nodes;
 
-  static vuint32 GetTypeHash (const seg_t *sg) { return (vuint32)(ptrdiff_t)sg; }
+  //static vuint32 GetTypeHash (const seg_t *sg) { return (vuint32)(ptrdiff_t)sg; }
   //static vuint32 GetTypeHash (const vertex_t *vx) { return (vuint32)(ptrdiff_t)vx; }
 }
 
@@ -194,23 +184,11 @@ void ajbsp_PrintMapName (const char *name) {
 //  SetUpVertices
 //
 //==========================================================================
-static void SetUpVertices (VLevel *Level) {
-  guard(SetUpVertices);
-  ajbsp::num_old_vert = 0;
-  ajbsp::num_new_vert = 0;
-  ajbsp::num_complete_seg = 0;
-  ajbsp::num_real_lines = 0;
-  ajbsp::num_vertices = 0;
-  ajbsp::num_linedefs = 0;
-  ajbsp::num_sidedefs = 0;
-  ajbsp::num_sectors = 0;
-  ajbsp::num_things = 0;
-  ajbsp::num_segs = 0;
-  ajbsp::num_subsecs = 0;
-  ajbsp::num_nodes = 0;
-  vertex_t *pSrc = Level->Vertexes;
+static void UploadVertices (VLevel *Level) {
+  guard(UploadVertices);
+  const vertex_t *pSrc = Level->Vertexes;
   for (int i = 0; i < Level->NumVertexes; ++i, ++pSrc) {
-    glbsp_vertex_t *Vert = ajbsp::NewVertex();
+    ajbsp::vertex_t *Vert = ajbsp::NewVertex();
     Vert->x = pSrc->x;
     Vert->y = pSrc->y;
     Vert->index = i;
@@ -225,11 +203,11 @@ static void SetUpVertices (VLevel *Level) {
 //  SetUpSectors
 //
 //==========================================================================
-static void SetUpSectors (VLevel *Level) {
-  guard(SetUpSectors);
-  sector_t *pSrc = Level->Sectors;
+static void UploadSectors (VLevel *Level) {
+  guard(UploadSectors);
+  const sector_t *pSrc = Level->Sectors;
   for (int i = 0; i < Level->NumSectors; ++i, ++pSrc) {
-    glbsp_sector_t *sector = ajbsp::NewSector();
+    ajbsp::sector_t *sector = ajbsp::NewSector();
     sector->coalesce = (pSrc->tag >= 900 && pSrc->tag < 1000 ? 1 : 0);
     // sector indices never change
     sector->index = i;
@@ -244,11 +222,11 @@ static void SetUpSectors (VLevel *Level) {
 //  SetUpSidedefs
 //
 //==========================================================================
-static void SetUpSidedefs (VLevel *Level) {
-  guard(SetUpSidedefs);
-  side_t *pSrc = Level->Sides;
+static void UploadSidedefs (VLevel *Level) {
+  guard(UploadSidedefs);
+  const side_t *pSrc = Level->Sides;
   for (int i = 0; i < Level->NumSides; ++i, ++pSrc) {
-    glbsp_sidedef_t *side = ajbsp::NewSidedef();
+    ajbsp::sidedef_t *side = ajbsp::NewSidedef();
     side->sector = (!pSrc->Sector ? nullptr : ajbsp::LookupSector((int)(ptrdiff_t)(pSrc->Sector-Level->Sectors)));
     if (side->sector) side->sector->is_used = 1;
     // sidedef indices never change
@@ -263,12 +241,12 @@ static void SetUpSidedefs (VLevel *Level) {
 //  SetUpLinedefs
 //
 //==========================================================================
-static void SetUpLinedefs (VLevel *Level) {
-  guard(SetUpLinedefs);
-  line_t *pSrc = Level->Lines;
+static void UploadLinedefs (VLevel *Level) {
+  guard(UploadLinedefs);
+  const line_t *pSrc = Level->Lines;
   for (int i = 0; i < Level->NumLines; ++i, ++pSrc) {
-    glbsp_linedef_t *line = ajbsp::NewLinedef();
-    if (line == nullptr) Sys_Error("AJBSP: out of memory!");
+    ajbsp::linedef_t *line = ajbsp::NewLinedef();
+    //if (line == nullptr) Sys_Error("AJBSP: out of memory!");
     line->start = ajbsp::LookupVertex((int)(ptrdiff_t)(pSrc->v1-Level->Vertexes));
     line->end = ajbsp::LookupVertex((int)(ptrdiff_t)(pSrc->v2-Level->Vertexes));
     line->start->is_used = 1;
@@ -301,11 +279,11 @@ static void SetUpLinedefs (VLevel *Level) {
 //  SetUpThings
 //
 //==========================================================================
-static void SetUpThings (VLevel *Level) {
-  guard(SetUpThings);
-  mthing_t *pSrc = Level->Things;
+static void UploadThings (VLevel *Level) {
+  guard(UploadThings);
+  const mthing_t *pSrc = Level->Things;
   for (int i = 0; i < Level->NumThings; ++i, ++pSrc) {
-    glbsp_thing_t *Thing = ajbsp::NewThing();
+    ajbsp::thing_t *Thing = ajbsp::NewThing();
     Thing->x = (int)pSrc->x;
     Thing->y = (int)pSrc->y;
     Thing->type = pSrc->type;
@@ -318,9 +296,8 @@ static void SetUpThings (VLevel *Level) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct CopyInfo {
-  TMapNC<glbsp_seg_t *, int> glsegptr2idx;
-  TMapNC<int, int> ajseg2vaseg; // key: ajbsp seg number; value: vavoom seg number
-  TMapNC<int, int> ajvx2vavx; // key: ajbsp vertex index; value: vavoom vertex index
+  TArray<int> ajseg2vaseg; // index: ajbsp seg number; value: vavoom seg number
+  TArray<int> ajvx2vavx; // index: ajbsp vertex index; value: vavoom vertex index
 };
 
 
@@ -331,25 +308,30 @@ struct CopyInfo {
 //==========================================================================
 static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
   guard(CopyGLVerts);
-
   // copy new vertices, build linedef vertex translation table
-  TMapNC<int, int> vxmap; // key: linedef index; value: ajbsp vertex index
   vertex_t *oldvx = Level->Vertexes;
   //fprintf(stderr, "num_vertices=%d; num_old_vert=%d; num_new_vert=%d\n", ajbsp::num_vertices, ajbsp::num_old_vert, ajbsp::num_new_vert);
-  //Level->NumVertexes = ajbsp::num_old_vert+ajbsp::num_new_vert; // same as `ajbsp::num_vertices`
+  if (ajbsp::num_old_vert+ajbsp::num_new_vert != ajbsp::num_vertices) Sys_Error("AJBSP: vertex count desync");
   int maxverts = ajbsp::num_old_vert+ajbsp::num_new_vert; // same as `ajbsp::num_vertices`
+  nfo.ajvx2vavx.SetNum(maxverts);
+  TArray<int> vxmap; // index: old vertex index; value: new vertex index
+  vxmap.SetNum(maxverts);
+  for (int f = 0; f < maxverts; ++f) vxmap[f] = -1;
+
   Level->NumVertexes = 0;
-  Level->Vertexes = new vertex_t[maxverts]; //k8: this overallocates, but i don't care
+  Level->Vertexes = new vertex_t[maxverts]; //k8: this may overallocate, but i don't care
   memset((void *)Level->Vertexes, 0, sizeof(vertex_t)*maxverts);
-  vertex_t *pDst = Level->Vertexes;
   for (int i = 0; i < ajbsp::num_vertices; ++i) {
-    glbsp_vertex_t *vert = ajbsp::LookupVertex(i);
+    nfo.ajvx2vavx[i] = -1;
+    ajbsp::vertex_t *vert = ajbsp::LookupVertex(i);
     if (!vert->is_used) continue;
-    nfo.ajvx2vavx.put(i, Level->NumVertexes);
+    nfo.ajvx2vavx[i] = Level->NumVertexes;
+    vertex_t *pDst = &Level->Vertexes[Level->NumVertexes];
     *pDst = TVec(vert->x, vert->y, 0);
     if (!vert->is_new) {
-      if (vxmap.has(vert->index)) Sys_Error("AJBSP: duplicate old vertex index");
-      vxmap.put(vert->index, Level->NumVertexes);
+      if (vert->index < 0 || vert->index >= maxverts) Sys_Error("AJBSP: invalid old vector index");
+      if (vxmap[vert->index] >= 0) Sys_Error("AJBSP: duplicate old vertex index");
+      vxmap[vert->index] = Level->NumVertexes;
     }
     ++pDst;
     ++Level->NumVertexes;
@@ -361,12 +343,10 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
     line_t *ld = &Level->Lines[i];
     int v1idx = (int)(ptrdiff_t)(ld->v1-oldvx);
     int v2idx = (int)(ptrdiff_t)(ld->v2-oldvx);
-    auto v1mp = vxmap.find(v1idx);
-    auto v2mp = vxmap.find(v2idx);
-    if (!v1mp) Sys_Error("AJBSP: old vertex not found");
-    if (!v2mp) Sys_Error("AJBSP: old vertex not found");
-    ld->v1 = &Level->Vertexes[*v1mp];
-    ld->v2 = &Level->Vertexes[*v2mp];
+    if (v1idx < 0 || v1idx >= maxverts || v2idx < 0 || v2idx >= maxverts) Sys_Error("AJBSP: invalid old vertex index");
+    if (vxmap[v1idx] < 0 || vxmap[v2idx] < 0) Sys_Error("AJBSP: invalid new vertex index");
+    ld->v1 = &Level->Vertexes[vxmap[v1idx]];
+    ld->v2 = &Level->Vertexes[vxmap[v2idx]];
   }
   delete[] oldvx;
   unguard;
@@ -381,35 +361,44 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
 static void CopySegs (VLevel *Level, CopyInfo &nfo) {
   guard(CopySegs);
 
-  // build ordered list of source segs
   Level->NumSegs = 0;
   delete [] Level->Segs;
-  Level->Segs = new seg_t[ajbsp::num_segs]; //k8: this overallocates, but i don't care
+  Level->Segs = new seg_t[ajbsp::num_segs]; //k8: this may overallocate, but i don't care
   memset((void *)Level->Segs, 0, sizeof(seg_t)*ajbsp::num_segs);
 
-  glbsp_seg_t **partners = new glbsp_seg_t *[ajbsp::num_segs];
-  memset((void *)partners, 0, sizeof(glbsp_seg_t *)*ajbsp::num_segs);
+  int *partners = new int[ajbsp::num_segs]; // indicies for `ajbsp::LookupSeg()`
+
+  nfo.ajseg2vaseg.SetNum(ajbsp::num_segs);
 
   for (int i = 0; i < ajbsp::num_segs; ++i) {
-    glbsp_seg_t *srcseg = ajbsp::LookupSeg(i);
+    nfo.ajseg2vaseg[i] = -1;
+
+    ajbsp::seg_t *srcseg = ajbsp::LookupSeg(i);
     // ignore minisegs and degenerate segs
     if (!srcseg->linedef || srcseg->is_degenerate) continue;
     if (srcseg->index != i) Host_Error("AJBSP: seg #%d has invalid index %d", i, srcseg->index);
 
-    seg_t *destseg = Level->Segs+Level->NumSegs;
-    partners[Level->NumSegs] = srcseg->partner;
-    nfo.glsegptr2idx.put(srcseg, Level->NumSegs); // for partner setup
-    nfo.ajseg2vaseg.put(i, Level->NumSegs);
+    seg_t *destseg = &Level->Segs[Level->NumSegs];
+    partners[Level->NumSegs] = -1;
+    if (srcseg->partner) {
+      if (!srcseg->partner->linedef || srcseg->partner->is_degenerate) {
+        GCon->Logf("AJBSP: seg #%d has degenerate partner, ignored", i);
+      } else {
+        partners[Level->NumSegs] = srcseg->partner->index;
+      }
+    }
+    nfo.ajseg2vaseg[i] = Level->NumSegs;
     ++Level->NumSegs;
+
     destseg->partner = nullptr;
     destseg->front_sub = nullptr;
 
-    auto v1mp = nfo.ajvx2vavx.find(srcseg->start->index);
-    auto v2mp = nfo.ajvx2vavx.find(srcseg->end->index);
-    if (!v1mp) Sys_Error("AJBSP: vertex not found");
-    if (!v2mp) Sys_Error("AJBSP: vertex not found");
-    destseg->v1 = &Level->Vertexes[*v1mp];
-    destseg->v2 = &Level->Vertexes[*v2mp];
+    auto v1mp = nfo.ajvx2vavx[srcseg->start->index];
+    auto v2mp = nfo.ajvx2vavx[srcseg->end->index];
+    if (v1mp < 0 || v2mp < 0) Sys_Error("AJBSP: vertex not found for seg #%d", i);
+    if (v1mp == v2mp) Sys_Error("AJBSP: seg #%d has same start and end vertex (%d:%d) (%d:%d)", i, v1mp, srcseg->start->index, v2mp, srcseg->end->index);
+    destseg->v1 = &Level->Vertexes[v1mp];
+    destseg->v2 = &Level->Vertexes[v2mp];
 
     if (srcseg->side != 0 && srcseg->side != 1) Sys_Error("AJBSP: invalid seg #%d side (%d)", i, srcseg->side);
 
@@ -445,20 +434,20 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
     destseg->length = Length(*destseg->v2 - *destseg->v1);
     destseg->side = srcseg->side;
 
+    if (destseg->length < 0.0001) Sys_Error("AJBSP: zero-length seg #%d", i);
+
     // calc seg's plane params
     CalcSeg(destseg);
   }
+  GCon->Logf("AJBSP: copied %d of %d used segs", Level->NumSegs, ajbsp::num_segs);
 
   // setup partners (we need 'em for self-referencing deep water)
   for (int i = 0; i < Level->NumSegs; ++i) {
-    if (!partners[i]) continue; // no partner for this seg
-    seg_t *destseg = Level->Segs+i;
-    auto sidp = nfo.glsegptr2idx.find(partners[i]);
-    if (sidp) {
-      if (*sidp < 0 || *sidp >= Level->NumSegs) Sys_Error("AJBSP: invalid partner seg");
-      destseg->partner = &Level->Segs[*sidp];
-    }
-    if (!destseg->partner) GCon->Logf("GLBSP: invalid partner (ignored)");
+    if (partners[i] == -1) continue; // no partner for this seg
+    seg_t *destseg = &Level->Segs[i];
+    int psidx = nfo.ajseg2vaseg[partners[i]];
+    if (psidx < 0) Host_Error("GLBSP: invalid partner seg index");
+    destseg->partner = &Level->Segs[psidx];
   }
 
   delete[] partners;
@@ -479,18 +468,18 @@ static void CopySubsectors (VLevel *Level, CopyInfo &nfo) {
   memset((void *)Level->Subsectors, 0, sizeof(subsector_t)*Level->NumSubsectors);
   subsector_t *ss = Level->Subsectors;
   for (int i = 0; i < Level->NumSubsectors; ++i, ++ss) {
-    glbsp_subsec_t *SrcSub = ajbsp::LookupSubsec(i);
+    ajbsp::subsec_t *SrcSub = ajbsp::LookupSubsec(i);
     ss->numlines = SrcSub->seg_count;
     int ajidx = SrcSub->seg_list->index;
-    auto flidxp = nfo.ajseg2vaseg.find(ajidx);
-    if (!flidxp) Host_Error("AJBSP: subsector #%d starts with miniseg or degenerate seg", i);
-    ss->firstline = *flidxp;
+    auto flidx = nfo.ajseg2vaseg[ajidx];
+    if (flidx < 0) Host_Error("AJBSP: subsector #%d starts with miniseg or degenerate seg", i);
+    ss->firstline = flidx;
     // setup sector links
     seg_t *seg = &Level->Segs[ss->firstline];
     for (int j = 0; j < ss->numlines; ++j, ++ajidx) {
-      auto ip2 = nfo.ajseg2vaseg.find(ajidx);
-      if (!ip2) Host_Error("AJBSP: subsector #%d contains miniseg or degenerate seg", i);
-      if (*ip2 != ss->firstline+j) Host_Error("AJBSP: subsector #%d contains non-sequential segs", i);
+      auto i2idx = nfo.ajseg2vaseg[ajidx];
+      if (i2idx < 0) Host_Error("AJBSP: subsector #%d contains miniseg or degenerate seg", i);
+      if (i2idx != ss->firstline+j) Host_Error("AJBSP: subsector #%d contains non-sequential segs", i);
       if (seg[j].linedef) {
         ss->sector = seg[j].sidedef->Sector;
         ss->seclink = ss->sector->subsectors;
@@ -524,19 +513,20 @@ static void CopySubsectors (VLevel *Level, CopyInfo &nfo) {
 //  CopyNode
 //
 //==========================================================================
-static void CopyNode (int &NodeIndex, glbsp_node_t *SrcNode, node_t *Nodes) {
+static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
   if (SrcNode->r.node) CopyNode(NodeIndex, SrcNode->r.node, Nodes);
   if (SrcNode->l.node) CopyNode(NodeIndex, SrcNode->l.node, Nodes);
 
-  SrcNode->index = NodeIndex;
+  if (NodeIndex >= ajbsp::num_nodes) Host_Error("AJBSP: invalid total number of nodes (0)");
 
+  SrcNode->index = NodeIndex;
   node_t *Node = &Nodes[NodeIndex];
-  //Node->SetPointDir(TVec(SrcNode->x, SrcNode->y, 0), TVec(SrcNode->dx, SrcNode->dy, 0));
-  if (SrcNode->too_long) {
-    Node->SetPointDir(TVec(SrcNode->x, SrcNode->y, 0), TVec(SrcNode->dx, SrcNode->dy, 0));
-  } else {
-    Node->SetPointDir(TVec(SrcNode->x, SrcNode->y, 0), TVec(SrcNode->dx/2, SrcNode->dy/2, 0));
-  }
+  ++NodeIndex;
+
+  TVec org = TVec(SrcNode->x, SrcNode->y, 0);
+  TVec dir = TVec(SrcNode->dx, SrcNode->dy, 0);
+  if (SrcNode->too_long) { dir.x /= 2; dir.y /= 2; }
+  Node->SetPointDir(org, dir);
 
   Node->bbox[0][0] = SrcNode->r.bounds.minx;
   Node->bbox[0][1] = SrcNode->r.bounds.miny;
@@ -552,19 +542,17 @@ static void CopyNode (int &NodeIndex, glbsp_node_t *SrcNode, node_t *Nodes) {
   Node->bbox[1][4] = SrcNode->l.bounds.maxy;
   Node->bbox[1][5] = 32768.0;
 
-  if (SrcNode->r.node) {
-    Node->children[0] = SrcNode->r.node->index;
-  } else if (SrcNode->r.subsec) {
-    Node->children[0] = SrcNode->r.subsec->index|NF_SUBSECTOR;
+  { // fuck you, shitcc!
+         if (SrcNode->r.node) Node->children[0] = SrcNode->r.node->index;
+    else if (SrcNode->r.subsec) Node->children[0] = SrcNode->r.subsec->index|NF_SUBSECTOR;
+    else Host_Error("AJBSP: bad left children in BSP");
   }
 
-  if (SrcNode->l.node) {
-    Node->children[1] = SrcNode->l.node->index;
-  } else if (SrcNode->l.subsec) {
-    Node->children[1] = SrcNode->l.subsec->index|NF_SUBSECTOR;
+  { // fuck you, shitcc!
+         if (SrcNode->l.node) Node->children[1] = SrcNode->l.node->index;
+    else if (SrcNode->l.subsec) Node->children[1] = SrcNode->l.subsec->index|NF_SUBSECTOR;
+    else Host_Error("AJBSP: bad right children in BSP");
   }
-
-  ++NodeIndex;
 }
 
 
@@ -573,7 +561,7 @@ static void CopyNode (int &NodeIndex, glbsp_node_t *SrcNode, node_t *Nodes) {
 //  CopyNodes
 //
 //==========================================================================
-static void CopyNodes (VLevel *Level, glbsp_node_t *root_node) {
+static void CopyNodes (VLevel *Level, ajbsp::node_t *root_node) {
   guard(CopyNodes);
   Level->NumNodes = ajbsp::num_nodes;
   delete [] Level->Nodes;
@@ -582,6 +570,7 @@ static void CopyNodes (VLevel *Level, glbsp_node_t *root_node) {
   if (root_node) {
     int NodeIndex = 0;
     CopyNode(NodeIndex, root_node, Level->Nodes);
+    if (NodeIndex != ajbsp::num_nodes) Host_Error("AJBSP: invalid total number of nodes (1)");
   }
   unguard;
 }
@@ -606,12 +595,26 @@ void VLevel::BuildNodes () {
   //lev_doing_normal = false;
   ajbsp::lev_doing_hexen = !!(LevelFlags&LF_Extended);
 
+  ajbsp::num_vertices = 0;
+  ajbsp::num_linedefs = 0;
+  ajbsp::num_sidedefs = 0;
+  ajbsp::num_sectors = 0;
+  ajbsp::num_things = 0;
+  ajbsp::num_segs = 0;
+  ajbsp::num_subsecs = 0;
+  ajbsp::num_nodes = 0;
+
+  ajbsp::num_old_vert = 0;
+  ajbsp::num_new_vert = 0;
+  ajbsp::num_complete_seg = 0;
+  ajbsp::num_real_lines = 0;
+
   // set up map data from loaded data
-  SetUpVertices(this);
-  SetUpSectors(this);
-  SetUpSidedefs(this);
-  SetUpLinedefs(this);
-  SetUpThings(this);
+  UploadVertices(this);
+  UploadSectors(this);
+  UploadSidedefs(this);
+  UploadLinedefs(this);
+  UploadThings(this);
 
   // other data initialisation
   // always prune vertices at end of lump, otherwise all the
@@ -630,7 +633,7 @@ void VLevel::BuildNodes () {
 
   // create initial segs
   ajbsp::superblock_t *seg_list = ajbsp::CreateSegs();
-  glbsp_node_t *root_node;
+  ajbsp::node_t *root_node;
   ajbsp::subsec_t *root_sub;
   ajbsp::bbox_t seg_bbox;
   ajbsp::FindLimits(seg_list, &seg_bbox);
