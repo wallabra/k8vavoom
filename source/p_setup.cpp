@@ -58,6 +58,7 @@ static VCvarB nodes_allow_compressed("nodes_allow_compressed", false, "Allow loa
 static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", false, "Force node rebuilding?", CVAR_Archive);
 
 static VCvarB loader_cache_data("loader_cache_data", false, "Cache built level data?", CVAR_Archive);
+static VCvarI loader_cache_compression_level("loader_cache_compression_level", "9", "Cache file compression level [0..9]", CVAR_Archive);
 
 
 // MACROS ------------------------------------------------------------------
@@ -362,7 +363,7 @@ void VLevel::SaveCachedData (VStream *strm) {
   arrstrm->BeginWrite();
 
   int upksize = data.length();
-  VZipStreamWriter *zipstrm = new VZipStreamWriter(arrstrm, 6);
+  VZipStreamWriter *zipstrm = new VZipStreamWriter(arrstrm, (int)loader_cache_compression_level);
   zipstrm->Serialise(data.Ptr(), upksize);
   zipstrm->Flush();
   delete zipstrm;

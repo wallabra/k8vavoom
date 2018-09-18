@@ -38,7 +38,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB r_dbg_save_on_level_exit("r_dbg_save_on_level_exit", false, "Save before exiting a level.\nNote that after loading this save you prolly won't be able to exit again.", CVAR_Archive);
-static VCvarF save_compression_level("save_compression_level", "1", "Save file compression level [0..9]", CVAR_Archive);
+static VCvarI save_compression_level("save_compression_level", "1", "Save file compression level [0..9]", CVAR_Archive);
 
 static VCvarB dbg_save_ignore_wadlist("dbg_save_ignore_wadlist", false, "Ignore list of loaded wads in savegame when hash mated?", 0/*CVAR_Archive*/);
 
