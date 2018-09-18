@@ -28,31 +28,48 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "filesys/fwaddefs.h"
-extern "C" {
-#define vertex_t    glbsp_vertex_t
-#define sector_t    glbsp_sector_t
-#define seg_t     glbsp_seg_t
-#define node_t      glbsp_node_t
-#include "../utils/glbsp/level.h"
-#include "../utils/glbsp/blockmap.h"
-#include "../utils/glbsp/node.h"
-#include "../utils/glbsp/seg.h"
-#include "../utils/glbsp/analyze.h"
-#undef vertex_t
-#undef sector_t
-#undef seg_t
-#undef node_t
-extern boolean_g lev_doing_normal;
-extern boolean_g lev_doing_hexen;
-};
+#include "ajbsp/bsp.h"
 
+#define glbsp_vertex_t  ajbsp::vertex_t
+#define glbsp_sector_t  ajbsp::sector_t
+#define glbsp_subsec_t  ajbsp::subsec_t
+#define glbsp_seg_t  ajbsp::seg_t
+#define glbsp_node_t  ajbsp::node_t
+#define glbsp_sidedef_t  ajbsp::sidedef_t
+#define glbsp_linedef_t  ajbsp::linedef_t
+#define glbsp_thing_t  ajbsp::thing_t
+//extern boolean_g lev_doing_normal;
+//extern boolean_g lev_doing_hexen;
+namespace ajbsp {
+  extern bool lev_doing_hexen;
+  extern int num_old_vert;
+  extern int num_new_vert;
+  extern int num_complete_seg;
+  extern int num_real_lines;
+  extern int num_vertices;
+  extern int num_linedefs;
+  extern int num_sidedefs;
+  extern int num_sectors;
+  extern int num_things;
+  extern int num_segs;
+  extern int num_subsecs;
+  extern int num_nodes;
+
+  static vuint32 GetTypeHash (const seg_t *sg) { return (vuint32)(ptrdiff_t)sg; }
+}
+
+// for pvs
 #include "vector2d.h"
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 static VCvarB loader_build_pvs("loader_build_pvs", false, "Build simple PVS on node rebuilding?", CVAR_Archive);
 static VCvarI loader_pvs_builder_threads("loader_pvs_builder_threads", "3", "Number of threads to use in PVS builder.", CVAR_Archive);
 
-static VCvarB nodes_detect_window_fx("nodes_detect_window_fx", false, "Use \"window fx\" glBSP detector?", CVAR_Archive);
+//static VCvarB nodes_detect_window_fx("nodes_detect_window_fx", false, "Use \"window fx\" glBSP detector?", CVAR_Archive);
 static VCvarB nodes_fast_and_bad("nodes_fast_and_bad", false, "Do faster rebuild, but generate worser BSP tree?", CVAR_Archive);
+
+static char message_buf[1024];
 
 
 // Lump order in a map WAD: each map needs a couple of lumps
@@ -87,62 +104,88 @@ static void stripNL (char *str) {
 
 //==========================================================================
 //
-//  GLBSP_PrintMsg
+//  ajbsp_FatalError
 //
 //==========================================================================
-static void GLBSP_PrintMsg (const char *str, ...) {
-  static char message_buf[1024];
+__attribute__((noreturn)) __attribute__((format(printf,1,2))) void ajbsp_FatalError (const char *fmt, ...) {
   va_list args;
 
-  va_start(args, str);
-  vsnprintf(message_buf, sizeof(message_buf), str, args);
+  va_start(args, fmt);
+  vsnprintf(message_buf, sizeof(message_buf), fmt, args);
   va_end(args);
   stripNL(message_buf);
 
-  GCon->Logf("GB: %s", message_buf);
+  Sys_Error("AJBSP: %s", message_buf);
 }
 
 
 //==========================================================================
 //
-//  GLBSP_FatalError
-//
-//  Terminates the program reporting an error.
+//  ajbsp_PrintMsg
 //
 //==========================================================================
-static void GLBSP_FatalError (const char *str, ...) {
-  static char message_buf[1024];
+__attribute__((format(printf,1,2))) void ajbsp_PrintMsg (const char *fmt, ...) {
   va_list args;
 
-  va_start(args, str);
-  vsnprintf(message_buf, sizeof(message_buf), str, args);
+  va_start(args, fmt);
+  vsnprintf(message_buf, sizeof(message_buf), fmt, args);
   va_end(args);
   stripNL(message_buf);
 
-  Sys_Error("Builing nodes failed: %s\n", message_buf);
+  GCon->Logf("AJBSP: %s", message_buf);
 }
 
 
-static void GLBSP_Ticker () {}
-static boolean_g GLBSP_DisplayOpen (displaytype_e) { return true; }
-static void GLBSP_DisplaySetTitle (const char *) { }
-static void GLBSP_DisplaySetBarText (int, const char *) {}
-static void GLBSP_DisplaySetBarLimit (int, int) {}
-static void GLBSP_DisplaySetBar (int, int) {}
-static void GLBSP_DisplayClose () {}
+//==========================================================================
+//
+//  ajbsp_PrintVerbose
+//
+//==========================================================================
+__attribute__((format(printf,1,2))) void ajbsp_PrintVerbose (const char *fmt, ...) {
+  va_list args;
 
-static const nodebuildfuncs_t build_funcs = {
-  GLBSP_FatalError,
-  GLBSP_PrintMsg,
-  GLBSP_Ticker,
+  va_start(args, fmt);
+  vsnprintf(message_buf, sizeof(message_buf), fmt, args);
+  va_end(args);
+  stripNL(message_buf);
 
-  GLBSP_DisplayOpen,
-  GLBSP_DisplaySetTitle,
-  GLBSP_DisplaySetBar,
-  GLBSP_DisplaySetBarLimit,
-  GLBSP_DisplaySetBarText,
-  GLBSP_DisplayClose
-};
+  GCon->Logf("AJBSP: %s", message_buf);
+}
+
+
+//==========================================================================
+//
+//  ajbsp_PrintDetail
+//
+//==========================================================================
+__attribute__((format(printf,1,2))) void ajbsp_PrintDetail (const char *fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  vsnprintf(message_buf, sizeof(message_buf), fmt, args);
+  va_end(args);
+  stripNL(message_buf);
+
+  GCon->Logf("AJBSP: %s", message_buf);
+}
+
+
+//==========================================================================
+//
+//  ajbsp_DebugPrintf
+//
+//==========================================================================
+__attribute__((format(printf,1,2))) void ajbsp_DebugPrintf (const char *fmt, ...) {
+}
+
+
+//==========================================================================
+//
+//  ajbsp_PrintMapName
+//
+//==========================================================================
+void ajbsp_PrintMapName (const char *name) {
+}
 
 
 //==========================================================================
@@ -152,16 +195,26 @@ static const nodebuildfuncs_t build_funcs = {
 //==========================================================================
 static void SetUpVertices (VLevel *Level) {
   guard(SetUpVertices);
+  ajbsp::num_old_vert = 0;
+  ajbsp::num_new_vert = 0;
+  ajbsp::num_complete_seg = 0;
+  ajbsp::num_real_lines = 0;
+  ajbsp::num_vertices = 0;
+  ajbsp::num_linedefs = 0;
+  ajbsp::num_sidedefs = 0;
+  ajbsp::num_sectors = 0;
+  ajbsp::num_things = 0;
+  ajbsp::num_segs = 0;
+  ajbsp::num_subsecs = 0;
+  ajbsp::num_nodes = 0;
   vertex_t *pSrc = Level->Vertexes;
   for (int i = 0; i < Level->NumVertexes; ++i, ++pSrc) {
-    glbsp_vertex_t *Vert = NewVertex();
+    glbsp_vertex_t *Vert = ajbsp::NewVertex();
     Vert->x = pSrc->x;
     Vert->y = pSrc->y;
     Vert->index = i;
   }
-  num_normal_vert = num_vertices;
-  num_gl_vert = 0;
-  num_complete_seg = 0;
+  ajbsp::num_old_vert = ajbsp::num_vertices;
   unguard;
 }
 
@@ -175,8 +228,8 @@ static void SetUpSectors (VLevel *Level) {
   guard(SetUpSectors);
   sector_t *pSrc = Level->Sectors;
   for (int i = 0; i < Level->NumSectors; ++i, ++pSrc) {
-    glbsp_sector_t *Sector = NewSector();
-    Sector->coalesce = (pSrc->tag >= 900 && pSrc->tag < 1000 ? TRUE : FALSE);
+    glbsp_sector_t *Sector = ajbsp::NewSector();
+    Sector->coalesce = (pSrc->tag >= 900 && pSrc->tag < 1000 ? 1 : 0);
     Sector->index = i;
     Sector->warned_facing = -1;
   }
@@ -193,9 +246,9 @@ static void SetUpSidedefs (VLevel *Level) {
   guard(SetUpSidedefs);
   side_t *pSrc = Level->Sides;
   for (int i = 0; i < Level->NumSides; ++i, ++pSrc) {
-    sidedef_t *Side = NewSidedef();
-    Side->sector = (!pSrc->Sector ? nullptr : LookupSector(pSrc->Sector-Level->Sectors));
-    if (Side->sector) ++Side->sector->ref_count;
+    glbsp_sidedef_t *Side = ajbsp::NewSidedef();
+    Side->sector = (!pSrc->Sector ? nullptr : ajbsp::LookupSector(pSrc->Sector-Level->Sectors));
+    //if (Side->sector) ++Side->sector->ref_count;
     Side->index = i;
   }
   unguard;
@@ -211,24 +264,24 @@ static void SetUpLinedefs (VLevel *Level) {
   guard(SetUpLinedefs);
   line_t *pSrc = Level->Lines;
   for (int i = 0; i < Level->NumLines; ++i, ++pSrc) {
-    linedef_t *Line = NewLinedef();
+    glbsp_linedef_t *Line = ajbsp::NewLinedef();
     if (Line == nullptr) continue;
-    Line->start = LookupVertex(pSrc->v1 - Level->Vertexes);
-    Line->end = LookupVertex(pSrc->v2 - Level->Vertexes);
-    ++Line->start->ref_count;
-    ++Line->end->ref_count;
+    Line->start = ajbsp::LookupVertex(pSrc->v1 - Level->Vertexes);
+    Line->end = ajbsp::LookupVertex(pSrc->v2 - Level->Vertexes);
+    //++Line->start->ref_count;
+    //++Line->end->ref_count;
     Line->zero_len = (fabs(Line->start->x-Line->end->x) < DIST_EPSILON) && (fabs(Line->start->y-Line->end->y) < DIST_EPSILON);
     Line->flags = pSrc->flags;
     Line->type = pSrc->special;
-    Line->two_sided = (Line->flags&LINEFLAG_TWO_SIDED ? TRUE : FALSE);
-    Line->right = (pSrc->sidenum[0] < 0 || pSrc->sidenum[0] > 0x7fffffff ? nullptr : LookupSidedef(pSrc->sidenum[0]));
-    Line->left = (pSrc->sidenum[1] < 0 || pSrc->sidenum[1] > 0x7fffffff ? nullptr : LookupSidedef(pSrc->sidenum[1]));
+    Line->two_sided = (pSrc->flags&ML_TWOSIDED ? 1 : 0);
+    Line->right = (pSrc->sidenum[0] < 0 || pSrc->sidenum[0] > 0x7fffffff ? nullptr : ajbsp::LookupSidedef(pSrc->sidenum[0]));
+    Line->left = (pSrc->sidenum[1] < 0 || pSrc->sidenum[1] > 0x7fffffff ? nullptr : ajbsp::LookupSidedef(pSrc->sidenum[1]));
     if (Line->right != nullptr) {
-      ++Line->right->ref_count;
+      //++Line->right->ref_count;
       Line->right->on_special |= (Line->type > 0 ? 1 : 0);
     }
     if (Line->left != nullptr) {
-      ++Line->left->ref_count;
+      //++Line->left->ref_count;
       Line->left->on_special |= (Line->type > 0 ? 1 : 0);
     }
     Line->self_ref = (Line->left != nullptr && Line->right != nullptr && Line->left->sector == Line->right->sector);
@@ -247,7 +300,7 @@ static void SetUpThings (VLevel *Level) {
   guard(SetUpThings);
   mthing_t *pSrc = Level->Things;
   for (int i = 0; i < Level->NumThings; ++i, ++pSrc) {
-    thing_t *Thing = NewThing();
+    glbsp_thing_t *Thing = ajbsp::NewThing();
     Thing->x = (int)pSrc->x;
     Thing->y = (int)pSrc->y;
     Thing->type = pSrc->type;
@@ -267,15 +320,16 @@ static void CopyGLVerts (VLevel *Level, vertex_t *&GLVertexes) {
   guard(CopyGLVerts);
   int NumBaseVerts = Level->NumVertexes;
   vertex_t *OldVertexes = Level->Vertexes;
-  Level->NumVertexes = NumBaseVerts+num_gl_vert;
+  //Level->NumVertexes = NumBaseVerts+num_gl_vert;
+  Level->NumVertexes = ajbsp::num_old_vert+ajbsp::num_new_vert;
   Level->Vertexes = new vertex_t[Level->NumVertexes];
   GLVertexes = Level->Vertexes+NumBaseVerts;
   memcpy((void *)Level->Vertexes, (void *)OldVertexes, NumBaseVerts*sizeof(vertex_t));
   vertex_t *pDst = GLVertexes;
   int vcount = NumBaseVerts;
-  for (int i = 0; i < num_vertices; ++i) {
-    glbsp_vertex_t *vert = LookupVertex(i);
-    if (!(vert->index&IS_GL_VERTEX)) continue;
+  for (int i = 0; i < ajbsp::num_vertices; ++i) {
+    glbsp_vertex_t *vert = ajbsp::LookupVertex(i);
+    if (!vert->is_new) continue;
     *pDst = TVec(vert->x, vert->y, 0);
     ++pDst;
     ++vcount;
@@ -294,9 +348,6 @@ static void CopyGLVerts (VLevel *Level, vertex_t *&GLVertexes) {
 }
 
 
-static vuint32 GetTypeHash (const glbsp_seg_t *sg) { return (vuint32)(ptrdiff_t)sg; }
-
-
 //==========================================================================
 //
 //  CopySegs
@@ -305,19 +356,19 @@ static vuint32 GetTypeHash (const glbsp_seg_t *sg) { return (vuint32)(ptrdiff_t)
 static void CopySegs (VLevel *Level, vertex_t *GLVertexes) {
   guard(CopySegs);
   // build ordered list of source segs
-  glbsp_seg_t **SrcSegs = new glbsp_seg_t *[num_complete_seg];
-  memset((void *)SrcSegs, 0, num_complete_seg*sizeof(glbsp_seg_t *));
+  glbsp_seg_t **SrcSegs = new glbsp_seg_t *[ajbsp::num_complete_seg];
+  memset((void *)SrcSegs, 0, ajbsp::num_complete_seg*sizeof(glbsp_seg_t *));
   TMapNC<glbsp_seg_t *, int> glsegptr2idx;
-  for (int i = 0; i < num_segs; ++i) {
-    glbsp_seg_t *Seg = LookupSeg(i);
+  for (int i = 0; i < ajbsp::num_segs; ++i) {
+    glbsp_seg_t *Seg = ajbsp::LookupSeg(i);
     // ignore degenerate segs
-    if (Seg->degenerate) continue;
-    if (Seg->index < 0 || Seg->index >= num_complete_seg) Sys_Error("glBSP: invalid seg index (0)");
+    if (Seg->is_degenerate) continue;
+    if (Seg->index < 0 || Seg->index >= ajbsp::num_complete_seg) Sys_Error("glBSP: invalid seg index (0)");
     SrcSegs[Seg->index] = Seg;
     glsegptr2idx.put(Seg, Seg->index);
   }
 
-  Level->NumSegs = num_complete_seg;
+  Level->NumSegs = ajbsp::num_complete_seg;
   Level->Segs = new seg_t[Level->NumSegs];
   memset((void *)Level->Segs, 0, sizeof(seg_t)*Level->NumSegs);
   seg_t *seg = Level->Segs;
@@ -345,13 +396,13 @@ static void CopySegs (VLevel *Level, vertex_t *GLVertexes) {
       if (!seg->partner) GCon->Logf("GLBSP: invalid partner (ignored)");
     }
 
-    if (SrcSeg->start->index&IS_GL_VERTEX) {
-      seg->v1 = &GLVertexes[SrcSeg->start->index&~IS_GL_VERTEX];
+    if (SrcSeg->start->is_new) {
+      seg->v1 = &GLVertexes[SrcSeg->start->index];
     } else {
       seg->v1 = &Level->Vertexes[SrcSeg->start->index];
     }
-    if (SrcSeg->end->index&IS_GL_VERTEX) {
-      seg->v2 = &GLVertexes[SrcSeg->end->index & ~IS_GL_VERTEX];
+    if (SrcSeg->end->is_new) {
+      seg->v2 = &GLVertexes[SrcSeg->end->index];
     } else {
       seg->v2 = &Level->Vertexes[SrcSeg->end->index];
     }
@@ -405,12 +456,12 @@ static void CopySegs (VLevel *Level, vertex_t *GLVertexes) {
 //==========================================================================
 static void CopySubsectors (VLevel *Level) {
   guard(CopySubsectors);
-  Level->NumSubsectors = num_subsecs;
+  Level->NumSubsectors = ajbsp::num_subsecs;
   Level->Subsectors = new subsector_t[Level->NumSubsectors];
   memset((void *)Level->Subsectors, 0, sizeof(subsector_t)*Level->NumSubsectors);
   subsector_t *ss = Level->Subsectors;
   for (int i = 0; i < Level->NumSubsectors; ++i, ++ss) {
-    subsec_t *SrcSub = LookupSubsec(i);
+    glbsp_subsec_t *SrcSub = ajbsp::LookupSubsec(i);
     ss->numlines = SrcSub->seg_count;
     ss->firstline = SrcSub->seg_list->index;
 
@@ -493,7 +544,7 @@ static void CopyNode (int &NodeIndex, glbsp_node_t *SrcNode, node_t *Nodes) {
 //==========================================================================
 static void CopyNodes (VLevel *Level, glbsp_node_t *root_node) {
   guard(CopyNodes);
-  Level->NumNodes = num_nodes;
+  Level->NumNodes = ajbsp::num_nodes;
   Level->Nodes = new node_t[Level->NumNodes];
   memset((void *)Level->Nodes, 0, sizeof(node_t) * Level->NumNodes);
   if (root_node) {
@@ -512,19 +563,16 @@ static void CopyNodes (VLevel *Level, glbsp_node_t *root_node) {
 void VLevel::BuildNodes () {
   guard(VLevel::BuildNodes);
   // set up glBSP build globals
-  nodebuildinfo_t nb_info = default_buildinfo;
-  nodebuildcomms_t nb_comms = default_buildcomms;
-  nb_info.quiet = false;
-  nb_info.gwa_mode = true;
-  nb_info.window_fx = nodes_detect_window_fx;
+  nodebuildinfo_t nb_info;
   nb_info.fast = nodes_fast_and_bad;
+  nb_info.warnings = true; // not currently used, but meh
+  nb_info.do_blockmap = true;
+  nb_info.do_reject = true;
 
-  cur_info  = &nb_info;
-  cur_funcs = &build_funcs;
-  cur_comms = &nb_comms;
+  ajbsp::cur_info = &nb_info;
 
-  lev_doing_normal = false;
-  lev_doing_hexen = !!(LevelFlags & LF_Extended);
+  //lev_doing_normal = false;
+  ajbsp::lev_doing_hexen = !!(LevelFlags&LF_Extended);
 
   // set up map data from loaded data
   SetUpVertices(this);
@@ -534,23 +582,31 @@ void VLevel::BuildNodes () {
   SetUpThings(this);
 
   // other data initialisation
-  CalculateWallTips();
-  if (lev_doing_hexen) DetectPolyobjSectors();
-  DetectOverlappingLines();
-  if (cur_info->window_fx) DetectWindowEffects();
-  InitBlockmap();
+  // always prune vertices at end of lump, otherwise all the
+  // unused vertices from seg splits would keep accumulating.
+  ajbsp::PruneVerticesAtEnd();
 
-  // build nodes
-  superblock_t *SegList = CreateSegs();
+  ajbsp::DetectOverlappingVertices();
+  ajbsp::DetectOverlappingLines();
+
+  ajbsp::CalculateWallTips();
+
+  if (ajbsp::lev_doing_hexen) ajbsp::DetectPolyobjSectors(); // -JL- Find sectors containing polyobjs
+
+  //if (cur_info->window_fx) ajbsp::DetectWindowEffects();
+  ajbsp::InitBlockmap();
+
+  // create initial segs
+  ajbsp::superblock_t *seg_list = ajbsp::CreateSegs();
   glbsp_node_t *root_node;
-  subsec_t *root_sub;
-  bbox_t seg_bbox;
-  FindLimits(SegList, &seg_bbox);
-  glbsp_ret_e ret = ::BuildNodes(SegList, &root_node, &root_sub, 0, &seg_bbox);
-  FreeSuper(SegList);
+  ajbsp::subsec_t *root_sub;
+  ajbsp::bbox_t seg_bbox;
+  ajbsp::FindLimits(seg_list, &seg_bbox);
+  build_result_e ret = ajbsp::BuildNodes(seg_list, &root_node, &root_sub, 0, &seg_bbox);
+  ajbsp::FreeSuper(seg_list);
 
-  if (ret == GLBSP_E_OK) {
-    ClockwiseBspTree(root_node);
+  if (ret == build_result_e::BUILD_OK) {
+    ajbsp::ClockwiseBspTree();
     // copy nodes into internal structures
     vertex_t *GLVertexes;
     CopyGLVerts(this, GLVertexes);
@@ -560,15 +616,13 @@ void VLevel::BuildNodes () {
   }
 
   // free any memory used by glBSP
-  FreeLevel();
-  FreeQuickAllocCuts();
-  FreeQuickAllocSupers();
+  ajbsp::FreeLevel();
+  ajbsp::FreeQuickAllocCuts();
+  ajbsp::FreeQuickAllocSupers();
 
-  cur_info  = nullptr;
-  cur_comms = nullptr;
-  cur_funcs = nullptr;
+  ajbsp::cur_info  = nullptr;
 
-  if (ret != GLBSP_E_OK) Host_Error("Node build failed");
+  if (ret != build_result_e::BUILD_OK) Host_Error("Node build failed");
 
   /*
   //  Create dummy VIS data.

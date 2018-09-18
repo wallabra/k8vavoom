@@ -182,6 +182,20 @@ set(NETSUB_SOURCES
   net/net_udp.cpp
 )
 
+
+#---------------------------------------
+#
+# ajbsp sources
+#
+#---------------------------------------
+set(AJBSP_SOURCES
+  ajbsp/bsp_level.cpp
+  ajbsp/bsp_node.cpp
+  ajbsp/bsp_util.cpp
+  #ajbsp/lib_util.cpp
+)
+
+
 #---------------------------------------
 #
 # file subsystem sources
@@ -241,8 +255,8 @@ set(MAIN_COMMON_SOURCES
   infostr.cpp
   infostr.h
   input.h
-  l_glbsp.cpp
-  l_glvis.cpp
+  #l_glbsp.cpp
+  #l_glvis.cpp
   language.cpp
   language.h
   level.cpp
@@ -318,6 +332,7 @@ set(MAIN_COMMON_SOURCES
   ${UIWIDGETS_SOURCES}
   ${VCCLIB_SOURCES}
   video.h
+  ${AJBSP_SOURCES}
 )
 
 #-- Common OpenGL files --
@@ -416,7 +431,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 #---------------------------------------
 if(ENABLE_CLIENT)
   set(MAIN_SOURCES ${MAIN_COMMON_SOURCES})
-  set(MAIN_LIBS glbsp libglvis timidity core ${VAVOOM_MAIN_DEPS} ${NET_LIBRARIES} ${MAIN_LIBS})
+  #set(MAIN_LIBS glbsp libglvis timidity core ${VAVOOM_MAIN_DEPS} ${NET_LIBRARIES} ${MAIN_LIBS})
+  set(MAIN_LIBS timidity core ${VAVOOM_MAIN_DEPS} ${NET_LIBRARIES} ${MAIN_LIBS})
   set(MAIN_COMPILE_FLAGS "")
 
   if(VORBIS_FOUND)
@@ -504,7 +520,8 @@ if(ENABLE_CLIENT)
   endif (MAIN_COMPILE_FLAGS)
   #message(STATUS "MAIN LINKLIBS: " ${MAIN_LIBS})
   target_link_libraries(vavoom ${MAIN_LIBS})
-  add_dependencies(vavoom core timidity glbsp libglvis ${VAVOOM_MAIN_DEPS})
+  #add_dependencies(vavoom core timidity glbsp libglvis ${VAVOOM_MAIN_DEPS})
+  add_dependencies(vavoom core timidity ${VAVOOM_MAIN_DEPS})
 
   install(TARGETS vavoom DESTINATION ${BINDIR})
 
@@ -558,8 +575,10 @@ if(ENABLE_SERVER)
   endif(ENABLE_WRAPPERS)
   set_target_properties(vavoom-dedicated PROPERTIES COMPILE_FLAGS -DSERVER)
   #FIXME: create separate from MAIN_LIBS link list
-  target_link_libraries(vavoom-dedicated glbsp core ${MAIN_LIBS} ${NET_LIBRARIES})
-  add_dependencies(vavoom-dedicated core glbsp ${VAVOOM_MAIN_DEPS})
+  #target_link_libraries(vavoom-dedicated glbsp core ${MAIN_LIBS} ${NET_LIBRARIES})
+  target_link_libraries(vavoom-dedicated core ${MAIN_LIBS} ${NET_LIBRARIES})
+  #add_dependencies(vavoom-dedicated core glbsp ${VAVOOM_MAIN_DEPS})
+  add_dependencies(vavoom-dedicated core ${VAVOOM_MAIN_DEPS})
 
   install(TARGETS vavoom-dedicated DESTINATION ${BINDIR})
 
