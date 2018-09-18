@@ -1367,7 +1367,7 @@ void VLevel::CreateSides()
     } else {
       // no second side, but marked as two-sided
       if (Line->flags&ML_TWOSIDED) {
-        if (strict_level_errors) Host_Error("Bad WAD: Line %d is marked as TWO-SIDED but has only one side", i);
+        //if (strict_level_errors) Host_Error("Bad WAD: Line %d is marked as TWO-SIDED but has only one side", i);
         GCon->Logf("WARNING: linedef #%d is marked as TWO-SIDED but has only one side", i);
         Line->flags &= ~ML_TWOSIDED;
       }
