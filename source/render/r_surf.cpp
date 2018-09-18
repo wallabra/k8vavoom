@@ -518,6 +518,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface(subsector_t *sub,
   surf->count = sub->numlines;
   seg_t *line = &Level->Segs[sub->firstline];
   bool vlindex = (splane->normal.z < 0);
+  //fprintf(stderr, "surf; first=%d; count=%d; num=%d; max=%d; endidx=%d\n", sub->firstline, sub->numlines, surf->count, Level->NumSegs-1, sub->firstline+sub->numlines-1);
   for (int i = 0; i < surf->count; i++)
   {
     TVec &v = *line[vlindex ? surf->count - i - 1 : i].v1;
