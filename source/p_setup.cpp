@@ -246,6 +246,7 @@ void VLevel::SaveCachedData (VStream *strm) {
         *arrstrm << n->bbox[bbi0][bbi1];
       }
     }
+    for (int cci = 0; cci < 2; ++cci) *arrstrm << n->children[cci];
   }
 
   // vertices
@@ -446,6 +447,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
         *arrstrm << n->bbox[bbi0][bbi1];
       }
     }
+    for (int cci = 0; cci < 2; ++cci) *arrstrm << n->children[cci];
   }
 
   delete [] Vertexes;
