@@ -261,16 +261,16 @@ typedef struct sector_s
 	char is_used;
 
 	// heights
-	int floor_h, ceil_h;
+	//k8:int floor_h, ceil_h;
 
 	// textures
-	char floor_tex[8];
-	char ceil_tex[8];
+	//k8:char floor_tex[8];
+	//k8:char ceil_tex[8];
 
 	// attributes
-	int light;
-	int special;
-	int tag;
+	//int light;
+	//int special;
+	//int tag;
 
 	// used when building REJECT table.  Each set of sectors that are
 	// isolated from other sectors will have a different group number.
@@ -295,12 +295,12 @@ typedef struct sidedef_s
 	sector_t *sector;
 
 	// offset values
-	int x_offset, y_offset;
+	//k8:int x_offset, y_offset;
 
 	// texture names
-	char upper_tex[8];
-	char lower_tex[8];
-	char mid_tex[8];
+	//k8:char upper_tex[8];
+	//k8:char lower_tex[8];
+	//k8:char mid_tex[8];
 
 	// sidedef index.  Always valid after loading & pruning.
 	int index;
@@ -345,10 +345,10 @@ typedef struct linedef_s
 
 	int flags;
 	int type;
-	int tag;
+	//k8:int tag;
 
 	// Hexen support
-	int specials[5];
+	//k8:int specials[5];
 
 	// normally NULL, except when this linedef directly overlaps an earlier
 	// one (a rarely-used trick to create higher mid-masked textures).
@@ -767,6 +767,8 @@ void FreeQuickAllocSupers(void);
 
 void SortSegs();
 void FreeLevel(void);
+
+void CheckLimits();
 
 }  // namespace ajbsp
 

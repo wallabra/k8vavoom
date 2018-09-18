@@ -702,7 +702,7 @@ void VLevel::LoadMap (VName AMapName) {
     for (int i = 2; true; ++i) {
       VName LName = W_LumpName(lumpnum+i);
       if (LName == NAME_endmap) break;
-      if (LName == NAME_None) Host_Error("Map %s is not a valid map", *MapName);
+      if (LName == NAME_None) Host_Error("Map %s is not a valid UDMF map", *MapName);
            if (LName == NAME_behavior) BehaviorLump = lumpnum+i;
       else if (LName == NAME_blockmap) BlockmapLump = lumpnum+i;
       else if (LName == NAME_reject) RejectLump = lumpnum+i;
@@ -890,12 +890,12 @@ void VLevel::LoadMap (VName AMapName) {
 
   // load blockmap
   double BlockMapTime = -Sys_Time();
-  /*if (!cachedDataLoaded)*/ LoadBlockMap(BlockmapLump);
+  if (!BlockMapLump) LoadBlockMap(BlockmapLump);
   BlockMapTime += Sys_Time();
 
   // load reject table
   double RejectTime = -Sys_Time();
-  if (!cachedDataLoaded) LoadReject(RejectLump);
+  if (!RejectMatrix) LoadReject(RejectLump);
   RejectTime += Sys_Time();
 
   // ACS object code
@@ -924,7 +924,7 @@ void VLevel::LoadMap (VName AMapName) {
   FixDeepWaters();
 
   double ConvTime = -Sys_Time();
-  //  Load conversations.
+  // load conversations
   LoadRogueConScript(GGameInfo->GenericConScript, -1, GenericSpeeches, NumGenericSpeeches);
   if (DialogueLump >= 0) {
     LoadRogueConScript(NAME_None, DialogueLump, LevelSpeeches, NumLevelSpeeches);
@@ -933,7 +933,7 @@ void VLevel::LoadMap (VName AMapName) {
   }
   ConvTime += Sys_Time();
 
-  //  Set up polyobjs, slopes, 3D floors and some other static stuff.
+  // set up polyobjs, slopes, 3D floors and some other static stuff
   double SpawnWorldTime = -Sys_Time();
   GGameInfo->eventSpawnWorld(this);
   HashLines();
@@ -944,7 +944,7 @@ void VLevel::LoadMap (VName AMapName) {
   InitPolysTime += Sys_Time();
 
   double MinMaxTime = -Sys_Time();
-  //  We need this for client.
+  // we need this for client
   for (int i = 0; i < NumSectors; i++) CalcSecMinMaxs(&Sectors[i]);
   MinMaxTime += Sys_Time();
 
