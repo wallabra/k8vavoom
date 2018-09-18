@@ -95,14 +95,14 @@ override void CreateChoices()
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Clip Dynamic Lights";
   Enum.SetInitialValue(GetCvar('r_dynamic_clip'));
-  Enum.ValueChanging = &ChangeDynamicClip;
+  Enum.ValueChanging = delegate bool (Object Sender, int newValue) { SetCvar('r_dynamic_clip', newValue); return true; };
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Properly Clip DynLights";
   Enum.SetInitialValue(GetCvar('r_dynamic_clip_more'));
-  Enum.ValueChanging = &ChangeDynamicClip;
+  Enum.ValueChanging = delegate bool (Object Sender, int newValue) { SetCvar('r_dynamic_clip_more', newValue); return true; };
   currentY += Enum.Height;
 
   Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
@@ -275,18 +275,6 @@ bool ChangeExtraSamples(Object Sender, int newValue)
 bool ChangeDynamic(Object Sender, int newValue)
 {
   SetCvar('r_dynamic', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeDynamicClip
-//
-//==========================================================================
-
-bool ChangeDynamicClip(Object Sender, int newValue)
-{
-  SetCvar('r_dynamic_clip', newValue);
   return true;
 }
 
