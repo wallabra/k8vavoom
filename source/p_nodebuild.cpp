@@ -1091,6 +1091,37 @@ void VLevel::BuildPVS () {
 }
 
 
+/*REJECT: rebuild it with PVS
+    auto sub = Level->PointInSubsector(cl->ViewOrg);
+    vuint8 *dyn_facevis = Level->LeafPVS(sub);
+    auto leafnum = Level->PointInSubsector(lorg)-Level->Subsectors;
+    // check potential visibility
+    if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) {
+      //fprintf(stderr, "DYNLIGHT rejected by PVS\n");
+      return nullptr;
+    }
+
+
+  if (XLevel->RejectMatrix)
+  {
+    int       s1;
+    int       pnum;
+    //  Determine subsector entries in REJECT table.
+    //  We must do this because REJECT can have some special effects like
+    // "safe sectors"
+    s1 = Sector - XLevel->Sectors;
+    s2 = Other->Sector - XLevel->Sectors;
+    pnum = s1 * XLevel->NumSectors + s2;
+    // Check in REJECT table.
+    if (XLevel->RejectMatrix[pnum >> 3] & (1 << (pnum & 7)))
+    {
+      // can't possibly be connected
+      return false;
+    }
+  }
+*/
+
+
 //==========================================================================
 //
 //  VLevel::CreatePortals
