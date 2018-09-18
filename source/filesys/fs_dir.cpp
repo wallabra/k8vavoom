@@ -260,26 +260,6 @@ int VFilesDir::IterateNS (int Start, EWadNamespace NS) {
 
 //==========================================================================
 //
-//  VFilesDir::BuildGLNodes
-//
-//==========================================================================
-void VFilesDir::BuildGLNodes (VSearchPath *GlWad) {
-  Sys_Error("BuildGLNodes on directory");
-}
-
-
-//==========================================================================
-//
-//  VFilesDir::BuildPVS
-//
-//==========================================================================
-void VFilesDir::BuildPVS (VSearchPath *BaseWad) {
-  Sys_Error("BuildPVS on directory");
-}
-
-
-//==========================================================================
-//
 //  VFilesDir::RenameSprites
 //
 //==========================================================================

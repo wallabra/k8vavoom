@@ -161,32 +161,6 @@ void W_CloseAuxiliary () {
 }
 
 
-#ifdef CLIENT
-//==========================================================================
-//
-//  W_BuildGLNodes
-//
-//==========================================================================
-void W_BuildGLNodes (int lump) {
-  guard(W_BuildGLNodes);
-  SearchPaths[FILE_INDEX(lump)]->BuildGLNodes(SearchPaths[FILE_INDEX(lump)+1]);
-  unguard;
-}
-
-
-//==========================================================================
-//
-//  W_BuildPVS
-//
-//==========================================================================
-void W_BuildPVS (int lump, int gllump) {
-  guard(W_BuildPVS);
-  SearchPaths[FILE_INDEX(gllump)]->BuildPVS(SearchPaths[FILE_INDEX(lump)]);
-  unguard;
-}
-#endif
-
-
 //==========================================================================
 //
 //  W_CheckNumForName

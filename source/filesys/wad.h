@@ -53,9 +53,6 @@ void W_Shutdown ();
 int W_OpenAuxiliary (const VStr &FileName);
 void W_CloseAuxiliary ();
 
-void W_BuildGLNodes (int lump);
-void W_BuildPVS (int lump, int gllump);
-
 int W_CheckNumForName (VName Name, EWadNamespace NS = WADNS_Global);
 int W_GetNumForName (VName Name, EWadNamespace NS = WADNS_Global);
 int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS = WADNS_Global);

@@ -380,54 +380,6 @@ int VWadFile::IterateNS (int Start, EWadNamespace NS) {
 
 //==========================================================================
 //
-//  VWadFile::BuildGLNodes
-//
-//==========================================================================
-void VWadFile::BuildGLNodes (VSearchPath *GlWad) {
-  guard(VWadFile::BuildGLNodes);
-#ifdef CLIENT
-  VStr gwaname;
-  if (GwaDir.IsNotEmpty()) {
-    FL_CreatePath(GwaDir);
-    gwaname = GwaDir+"/"+Name.ExtractFileName();
-  } else {
-    gwaname = Name;
-  }
-  gwaname = gwaname.StripExtension()+".gwa";
-  // build GL nodes
-  if (!GLBSP_BuildNodes(*Name, *gwaname)) Sys_Error("Node build failed");
-  // build PVS
-  GLVis_BuildPVS(*Name, *gwaname);
-  // add GWA file
-  ((VWadFile *)GlWad)->Open(gwaname, VStr(), false, nullptr);
-#endif
-  unguard;
-}
-
-
-//==========================================================================
-//
-//  VWadFile::BuildPVS
-//
-//==========================================================================
-void VWadFile::BuildPVS (VSearchPath *BaseWad) {
-  guard(VWadFile::BuildPVS);
-#ifdef CLIENT
-  VStr name = ((VWadFile *)BaseWad)->Name;
-  VStr glname = Name;
-  // close old file
-  Close();
-  // build PVS
-  GLVis_BuildPVS(*name, BaseWad != this ? *glname : nullptr);
-  // add GWA file
-  Open(glname, VStr(), false, nullptr);
-#endif
-  unguard;
-}
-
-
-//==========================================================================
-//
 //  VWadFile::CreateLumpReaderNum
 //
 //==========================================================================

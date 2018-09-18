@@ -56,8 +56,6 @@ public:
   virtual VName LumpName (int LumpNum) = 0;
   virtual VStr LumpFileName (int LumpNum) = 0;
   virtual int IterateNS (int Start, EWadNamespace NS) = 0;
-  virtual void BuildGLNodes (VSearchPath *GlWad) = 0;
-  virtual void BuildPVS (VSearchPath *BaseWad) = 0;
   virtual VStream *CreateLumpReaderNum (int LumpNum) = 0;
   virtual void RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLumpRename> &LA) = 0;
   virtual VStr GetPrefix () = 0; // for logging
@@ -92,8 +90,6 @@ public:
   virtual VName LumpName (int) override;
   virtual VStr LumpFileName (int) override;
   virtual int IterateNS (int, EWadNamespace) override;
-  virtual void BuildGLNodes (VSearchPath *) override;
-  virtual void BuildPVS (VSearchPath *) override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual void RenameSprites (const TArray<VSpriteRename>&, const TArray<VLumpRename>&) override;
   virtual VStr GetPrefix () override { return path; }
@@ -131,8 +127,6 @@ public:
   virtual VName LumpName (int) override;
   virtual VStr LumpFileName (int) override;
   virtual int IterateNS (int, EWadNamespace) override;
-  virtual void BuildGLNodes (VSearchPath *) override;
-  virtual void BuildPVS (VSearchPath *) override;
   virtual bool FileExists (const VStr &) override;
   virtual VStream *OpenFileRead (const VStr &) override;
   virtual VStream *CreateLumpReaderNum (int) override;
@@ -177,9 +171,6 @@ public:
   virtual int IterateNS (int, EWadNamespace) override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual void RenameSprites (const TArray<VSpriteRename> &, const TArray<VLumpRename> &) override;
-
-  virtual void BuildGLNodes (VSearchPath *) override;
-  virtual void BuildPVS (VSearchPath *) override;
 
   void ListWadFiles (TArray<VStr> &);
   void ListPk3Files (TArray<VStr> &);

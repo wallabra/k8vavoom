@@ -49,7 +49,6 @@ static VCvarI loader_cache_max_age_days("loader_cache_max_age_days", "7", "Remov
 static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?", 0);
 static VCvarB deepwater_hacks("deepwater_hacks", true, "Apply DeepWater hacks? (not working right yet)", 0);
 static VCvarB build_blockmap("build_blockmap", false, "Build blockmap?", CVAR_Archive);
-static VCvarB build_gwa("build_gwa", false, "Build GWA?", 0/*CVAR_Archive*/);
 static VCvarB show_level_load_times("show_level_load_times", false, "Show loading times?", CVAR_Archive);
 
 // there seems to be a bug in compressed GL nodes reader, hence the flag
@@ -799,25 +798,9 @@ void VLevel::LoadMap (VName AMapName) {
   } else {
     if (!loader_force_nodes_rebuild && !(LevelFlags&LF_TextMap) && !UseComprGLNodes) {
       gl_lumpnum = FindGLNodes(MapLumpName);
-#ifdef CLIENT
-      if (build_gwa) {
-        //  If missing GL nodes or VIS data, then build them.
-        if (gl_lumpnum < lumpnum) {
-          W_BuildGLNodes(lumpnum);
-          gl_lumpnum = FindGLNodes(MapLumpName);
-        } else if (W_LumpName(gl_lumpnum+ML_GL_PVS) != NAME_gl_pvs || W_LumpLength(gl_lumpnum+ML_GL_PVS) == 0) {
-          W_BuildPVS(lumpnum, gl_lumpnum);
-          lumpnum = W_GetNumForName(MapLumpName);
-          gl_lumpnum = FindGLNodes(MapLumpName);
-        }
-      }
-#endif
       if (gl_lumpnum < lumpnum) {
-        if (build_gwa) {
-          Host_Error("Map %s is missing GL-Nodes\n", *MapName);
-        } else {
-          NeedNodesBuild = true;
-        }
+        GCon->Logf("no GL nodes found, VaVoom will use internal node builder");
+        NeedNodesBuild = true;
       }
     } else {
       if ((LevelFlags&LF_TextMap) != 0 || !UseComprGLNodes) NeedNodesBuild = true;
