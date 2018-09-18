@@ -63,6 +63,9 @@ VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.8", "How 
 
 VCvarB r_allow_subtractive_lights("r_allow_subtractive_lights", true, "Are subtractive lights allowed?", /*CVAR_Archive*/0);
 
+extern VCvarF r_lights_radius;
+extern VCvarF r_lights_radius_sight_check;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static TVec smins, smaxs;
@@ -557,14 +560,22 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     }
   }
 
-  if (!isPlr && r_dynamic_clip && Level->VisData) {
-    auto sub = Level->PointInSubsector(cl->ViewOrg);
-    vuint8 *dyn_facevis = Level->LeafPVS(sub);
-    auto leafnum = Level->PointInSubsector(lorg)-Level->Subsectors;
-    // check potential visibility
-    if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) {
-      //fprintf(stderr, "DYNLIGHT rejected by PVS\n");
-      return nullptr;
+  if (!isPlr) {
+    // don't add too far-away lights
+    if (length2DSquared(cl->ViewOrg-lorg) >= r_lights_radius*r_lights_radius) return nullptr;
+    if (r_dynamic_clip && Level->VisData) {
+      subsector_t *sub = lastDLightViewSub;
+      if (!sub || lastDLightView.x != cl->ViewOrg.x || lastDLightView.y != cl->ViewOrg.y || lastDLightView.z != cl->ViewOrg.z) {
+        lastDLightView = cl->ViewOrg;
+        lastDLightViewSub = sub = Level->PointInSubsector(cl->ViewOrg);
+      }
+      vuint8 *dyn_facevis = Level->LeafPVS(sub);
+      auto leafnum = Level->PointInSubsector(lorg)-Level->Subsectors;
+      // check potential visibility
+      if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) {
+        //fprintf(stderr, "DYNLIGHT rejected by PVS\n");
+        return nullptr;
+      }
     }
   }
 

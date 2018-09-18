@@ -387,6 +387,11 @@ protected:
   int             CurrLightsNumber;
   int             CurrShadowsNumber;
 
+  // used in `AllocDlight()` to save one call to `PointInSubsector()`
+  // reset in `RenderPlayerView()`
+  TVec lastDLightView;
+  subsector_t *lastDLightViewSub;
+
   VRenderLevelShared(VLevel *ALevel);
   ~VRenderLevelShared();
 

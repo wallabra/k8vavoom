@@ -248,6 +248,9 @@ VRenderLevelShared::VRenderLevelShared(VLevel *ALevel)
   VisSize = (Level->NumSubsectors + 7) >> 3;
   BspVis = new vuint8[VisSize];
 
+  lastDLightView = TVec(-1e9, -1e9, -1e9);
+  lastDLightViewSub = nullptr;
+
   InitParticles();
   ClearParticles();
 
@@ -1064,6 +1067,9 @@ void VRenderLevelShared::RenderPlayerView()
   {
     return;
   }
+
+  lastDLightView = TVec(-1e9, -1e9, -1e9);
+  lastDLightViewSub = nullptr;
 
   GTextureManager.Time = Level->Time;
 
