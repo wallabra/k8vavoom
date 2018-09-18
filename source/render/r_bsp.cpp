@@ -739,6 +739,7 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
   do {
     if (light_reset_surface_cache) {
       if (--renderattempts <= 0) Sys_Error("Surface cache overflow, cannot repair");
+      GCon->Logf("Surface cache overflow, starting it all again, %d attemts left", renderattempts);
       GentlyFlushAllCaches();
       light_reset_surface_cache = 0;
     }

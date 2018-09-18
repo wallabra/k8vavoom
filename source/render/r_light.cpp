@@ -1115,6 +1115,7 @@ void VRenderLevel::FlushOldCaches () {
     }
   }
   if (!freeblocks) Sys_Error("No more free blocks");
+  GCon->Logf("Surface cache overflow, old caches flushed");
   unguard;
 }
 
