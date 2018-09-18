@@ -1046,7 +1046,7 @@ void CheckLimits()
 			num_segs > 65534 ||
 			num_nodes > 32767)
 		{
-			Warning("Forcing V5 of GL-Nodes due to overflows.\n");
+			//!Warning("Forcing V5 of GL-Nodes due to overflows.\n");
 			lev_force_v5 = true;
 		}
 	}
@@ -1058,7 +1058,7 @@ void CheckLimits()
 			num_segs > 32767 ||
 			num_nodes > 32767)
 		{
-			Warning("Forcing XNOD format nodes due to overflows.\n");
+			//!Warning("Forcing XNOD format nodes due to overflows.\n");
 			lev_force_xnod = true;
 		}
 	}
