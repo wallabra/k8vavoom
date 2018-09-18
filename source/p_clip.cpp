@@ -58,6 +58,7 @@ extern VCvarF r_lights_radius;
 static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?"/*, CVAR_Archive*/);
 static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?"/*, CVAR_Archive*/);
 static VCvarB clip_trans_hack("clip_trans_hack", true, "Do translucent clipping hack?"/*, CVAR_Archive*/);
+static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?"/*, CVAR_Archive*/);
 
 // CODE --------------------------------------------------------------------
 
@@ -1622,7 +1623,7 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
     AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));
   }
 
-  if (Sub->poly) {
+  if (Sub->poly && clip_with_polyobj) {
     seg_t **polySeg = Sub->poly->segs;
 
     for (int polyCount = Sub->poly->numsegs; polyCount--; polySeg++) {
