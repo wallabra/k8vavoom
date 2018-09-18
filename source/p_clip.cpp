@@ -671,8 +671,8 @@ bool VViewClipper::ClipIsBBoxVisible(const float *BBox, bool shadowslight, const
     float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
     float DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-    TVec rView1 = Origin - CurrLightPos;
-    TVec rView2 = Origin - CurrLightPos;
+    TVec rView1 = Origin-v1 - CurrLightPos;
+    TVec rView2 = Origin-v2 - CurrLightPos;
     float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
     float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
@@ -782,8 +782,8 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
       DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
       DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-      TVec rView1 = Origin - CurrLightPos;
-      TVec rView2 = Origin - CurrLightPos;
+      TVec rView1 = Origin-v1 - CurrLightPos;
+      TVec rView2 = Origin-v2 - CurrLightPos;
       float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
       float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
@@ -980,8 +980,8 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
         DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
         DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-        TVec rView1 = Origin - CurrLightPos;
-        TVec rView2 = Origin - CurrLightPos;
+        TVec rView1 = Origin-v1 - CurrLightPos;
+        TVec rView2 = Origin-v2 - CurrLightPos;
         float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
         float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
@@ -1117,8 +1117,8 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
       DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
       DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-      TVec rView1 = Origin - CurrLightPos;
-      TVec rView2 = Origin - CurrLightPos;
+      TVec rView1 = Origin-v1 - CurrLightPos;
+      TVec rView2 = Origin-v2 - CurrLightPos;
       float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
       float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
@@ -1321,8 +1321,8 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
         DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
         DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-        TVec rView1 = Origin - CurrLightPos;
-        TVec rView2 = Origin - CurrLightPos;
+        TVec rView1 = Origin-v1 - CurrLightPos;
+        TVec rView2 = Origin-v2 - CurrLightPos;
         float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
         float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
@@ -1444,8 +1444,8 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
       float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
       float DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-      TVec rView1 = Origin - CurrLightPos;
-      TVec rView2 = Origin - CurrLightPos;
+      TVec rView1 = Origin-v1 - CurrLightPos;
+      TVec rView2 = Origin-v2 - CurrLightPos;
       float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
       float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
@@ -1655,8 +1655,8 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
           float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
           float DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-          TVec rView1 = Origin - CurrLightPos;
-          TVec rView2 = Origin - CurrLightPos;
+          TVec rView1 = Origin-v1 - CurrLightPos;
+          TVec rView2 = Origin-v2 - CurrLightPos;
           float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
           float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
