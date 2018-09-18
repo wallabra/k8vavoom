@@ -123,7 +123,7 @@ enum
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 001.\n";
+static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 002.\n";
 static bool cacheCleanupComplete = false;
 
 
@@ -228,9 +228,10 @@ static void doPlaneIO (VStream *strm, TPlane *n) {
 void VLevel::SaveCachedData (VStream *strm) {
   if (!strm) return;
 
-  TArray<vuint8> data;
-  VArrayStream *arrstrm = new VArrayStream(data);
-  arrstrm->BeginWrite();
+  // signature
+  strm->Serialize(CACHE_DATA_SIGNATURE, 32);
+
+  VZipStreamWriter *arrstrm = new VZipStreamWriter(strm, (int)loader_cache_compression_level);
 
   // flags (nothing for now)
   vuint32 flags = 0;
@@ -355,30 +356,9 @@ void VLevel::SaveCachedData (VStream *strm) {
     int vissize = 0;
     *arrstrm << vissize;
   }
-  delete arrstrm;
-
-  // compress data
-  TArray<vuint8> pkdata;
-  arrstrm = new VArrayStream(pkdata);
-  arrstrm->BeginWrite();
-
-  int upksize = data.length();
-  VZipStreamWriter *zipstrm = new VZipStreamWriter(arrstrm, (int)loader_cache_compression_level);
-  zipstrm->Serialise(data.Ptr(), upksize);
-  zipstrm->Flush();
-  delete zipstrm;
 
   delete arrstrm;
 
-  // signature
-  strm->Serialize(CACHE_DATA_SIGNATURE, 32);
-  // unpacked data size
-  *strm << upksize;
-  // packed data size
-  int pksize = pkdata.length();
-  *strm << pksize;
-  // unpacked data
-  strm->Serialise(pkdata.Ptr(), pkdata.length());
   strm->Flush();
 }
 
@@ -396,41 +376,8 @@ bool VLevel::LoadCachedData (VStream *strm) {
   strm->Serialise(sign, 32);
   if (strm->IsError() || memcmp(sign, CACHE_DATA_SIGNATURE, 32) != 0) return false;
 
-  // unpacked data size
-  int upksize = -1;
-  *strm << upksize;
-  if (upksize < 8 || upksize > 1024*1024*512) return false;
-
-  // packed data size
-  int pksize = -1;
-  *strm << pksize;
-  if (pksize < 8 || pksize > 1024*1024*512) return false;
-
-  // read compressed data
-  TArray<vuint8> pkdata;
-  pkdata.SetNum(pksize);
-  strm->Serialise(pkdata.Ptr(), pksize);
-  if (strm->IsError()) return false;
-
-  // decompress data
-  VArrayStream *arrstrm = new VArrayStream(pkdata);
-  arrstrm->BeginRead();
-
-  TArray<vuint8> data;
-  data.SetNum(upksize);
-
-  VZipStreamReader *zipstrm = new VZipStreamReader(arrstrm);
-  zipstrm->Serialise(data.Ptr(), upksize);
-  delete arrstrm;
-  pkdata.clear();
-
-  if (zipstrm->IsError()) { delete zipstrm; return false; }
-  delete zipstrm;
-
-  GCon->Logf("cache data unpacked...");
-
-  arrstrm = new VArrayStream(data);
-  arrstrm->BeginRead();
+  VZipStreamReader *arrstrm = new VZipStreamReader(true, strm);
+  if (arrstrm->IsError()) { delete arrstrm; return false; }
 
   int vissize = -1;
   int checkSecNum = -1;
@@ -438,14 +385,14 @@ bool VLevel::LoadCachedData (VStream *strm) {
   // flags (nothing for now)
   vuint32 flags = 0x29a;
   *arrstrm << flags;
-  if (flags != 0) Host_Error("cache file corrupted (flags)");
+  if (flags != 0) { delete arrstrm; Host_Error("cache file corrupted (flags)"); }
 
   //TODO: more checks
 
   // nodes
   *arrstrm << NumNodes;
   GCon->Logf("cache: reading %d nodes", NumNodes);
-  if (NumNodes == 0 || NumNodes > 0x1fffffff) Host_Error("cache file corrupted (nodes)");
+  if (NumNodes == 0 || NumNodes > 0x1fffffff) { delete arrstrm; delete strm; Host_Error("cache file corrupted (nodes)"); }
   Nodes = new node_t[NumNodes];
   memset((void *)Nodes, 0, NumNodes*sizeof(node_t));
   for (int f = 0; f < NumNodes; ++f) {
@@ -503,7 +450,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
   // sectors
   GCon->Logf("cache: reading %d sectors", NumSectors);
   *arrstrm << checkSecNum;
-  if (checkSecNum != NumSectors) Host_Error("cache file corrupted (sectors)");
+  if (checkSecNum != NumSectors) { delete arrstrm; delete strm; Host_Error("cache file corrupted (sectors)"); }
   for (int f = 0; f < NumSectors; ++f) {
     sector_t *sector = &Sectors[f];
     vint32 ssnum = -1;
@@ -522,11 +469,11 @@ bool VLevel::LoadCachedData (VStream *strm) {
     doPlaneIO(arrstrm, seg);
     vint32 v1num = -1;
     *arrstrm << v1num;
-    if (v1num < 0) Host_Error("cache file corrupted (seg v1)");
+    if (v1num < 0) { delete arrstrm; delete strm; Host_Error("cache file corrupted (seg v1)"); }
     seg->v1 = Vertexes+v1num;
     vint32 v2num = -1;
     *arrstrm << v2num;
-    if (v2num < 0) Host_Error("cache file corrupted (seg v2)");
+    if (v2num < 0) { delete arrstrm; delete strm; Host_Error("cache file corrupted (seg v2)"); }
     seg->v2 = Vertexes+v2num;
     *arrstrm << seg->offset;
     *arrstrm << seg->length;
@@ -551,30 +498,9 @@ bool VLevel::LoadCachedData (VStream *strm) {
     *arrstrm << seg->side;
   }
 
-  /*
-  {
-    for (int f = 0; f < NumSectors; ++f) Sectors[f].subsectors = nullptr;
-    subsector_t *ss = Subsectors;
-    for (int i = 0; i < NumSubsectors; ++i, ++ss) {
-      // look up sector number for each subsector
-      seg_t *seg = &Segs[ss->firstline];
-      for (int j = 0; j < ss->numlines; ++j) {
-        if (seg[j].linedef) {
-          ss->sector = seg[j].sidedef->Sector;
-          ss->seclink = ss->sector->subsectors;
-          ss->sector->subsectors = ss;
-          break;
-        }
-      }
-      for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
-      if (!ss->sector) Host_Error("Subsector %d without sector", i);
-    }
-  }
-  */
-
   // reject
   *arrstrm << RejectMatrixSize;
-  if (RejectMatrixSize < 0 || RejectMatrixSize > 0x1fffffff) Host_Error("cache file corrupted (reject)");
+  if (RejectMatrixSize < 0 || RejectMatrixSize > 0x1fffffff) { delete arrstrm; delete strm; Host_Error("cache file corrupted (reject)"); }
   if (RejectMatrixSize) {
     GCon->Logf("cache: reading %d bytes of reject table", RejectMatrixSize);
     RejectMatrix = new vuint8[RejectMatrixSize];
@@ -583,7 +509,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
 
   // blockmap
   *arrstrm << BlockMapLumpSize;
-  if (BlockMapLumpSize < 0 || BlockMapLumpSize > 0x1fffffff) Host_Error("cache file corrupted (blockmap)");
+  if (BlockMapLumpSize < 0 || BlockMapLumpSize > 0x1fffffff) { delete arrstrm; delete strm; Host_Error("cache file corrupted (blockmap)"); }
   if (BlockMapLumpSize) {
     GCon->Logf("cache: reading %d cells of blockmap table", BlockMapLumpSize);
     BlockMapLump = new vint32[BlockMapLumpSize];
@@ -592,38 +518,16 @@ bool VLevel::LoadCachedData (VStream *strm) {
 
   // pvs
   *arrstrm << vissize;
-  if (vissize < 0 || vissize > 0x6fffffff) Host_Error("cache file corrupted (pvs)");
+  if (vissize < 0 || vissize > 0x6fffffff) { delete arrstrm; delete strm; Host_Error("cache file corrupted (pvs)"); }
   if (vissize > 0) {
     GCon->Logf("cache: reading %d bytes of pvs table", vissize);
     VisData = new vuint8[vissize];
     arrstrm->Serialize(VisData, vissize);
   }
 
-  if (arrstrm->IsError()) Host_Error("cache file corrupted (read error)");
+  if (arrstrm->IsError()) { delete arrstrm; delete strm; Host_Error("cache file corrupted (read error)"); }
   delete arrstrm;
   return true;
-
-/*
-error:
-  delete arrstrm;
-
-  NumNodes = 0;
-  delete [] Nodes;
-  Nodes = nullptr;
-
-  RejectMatrixSize = 0;
-  delete [] RejectMatrix;
-  RejectMatrix = nullptr;
-
-  BlockMapLumpSize = 0;
-  delete [] BlockMapLump;
-  BlockMapLump = nullptr;
-
-  delete [] VisData;
-  VisData = nullptr;
-
-  return false;
-*/
 }
 
 
@@ -786,6 +690,7 @@ void VLevel::LoadMap (VName AMapName) {
   }
 
   double NodeBuildTime = -Sys_Time();
+  bool glNodesFound = false;
 
   if (/*cachedDataLoaded*/hasCacheFile) {
     UseComprGLNodes = false;
@@ -797,6 +702,8 @@ void VLevel::LoadMap (VName AMapName) {
       if (gl_lumpnum < lumpnum) {
         GCon->Logf("no GL nodes found, VaVoom will use internal node builder");
         NeedNodesBuild = true;
+      } else {
+        glNodesFound = true;
       }
     } else {
       if ((LevelFlags&LF_TextMap) != 0 || !UseComprGLNodes) NeedNodesBuild = true;
@@ -859,6 +766,10 @@ void VLevel::LoadMap (VName AMapName) {
   if (hasCacheFile) {
     VStream *strm = FL_OpenSysFileRead(cacheFileName);
     cachedDataLoaded = LoadCachedData(strm);
+    if (!cachedDataLoaded) {
+      GCon->Logf("cache data is obsolete or in invalid format");
+      if (!glNodesFound) NeedNodesBuild = true;
+    }
     delete strm;
   }
 

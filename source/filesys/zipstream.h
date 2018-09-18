@@ -41,9 +41,14 @@ private:
   z_stream ZStream;
   bool Initialised;
   vuint32 UncompressedSize;
+  int srcStartPos;
+
+private:
+  void initialize ();
 
 public:
-  VZipStreamReader (VStream*, vuint32 = 0xffffffff);
+  VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSize=0xffffffff);
+  VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vuint32 AUncompressedSize=0xffffffff);
   virtual ~VZipStreamReader () override;
   virtual const VStr &GetName () const override;
   virtual void Serialise (void*, int) override;

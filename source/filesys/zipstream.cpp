@@ -35,8 +35,48 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSi
   : SrcStream(ASrcStream)
   , Initialised(false)
   , UncompressedSize(AUncompressedSize)
+  , srcStartPos(0)
 {
   guard(VZipStreamReader::VZipStreamReader);
+  initialize();
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VZipStreamReader::VZipStreamReader
+//
+//==========================================================================
+VZipStreamReader::VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vuint32 AUncompressedSize)
+  : SrcStream(ASrcStream)
+  , Initialised(false)
+  , UncompressedSize(AUncompressedSize)
+  , srcStartPos(0)
+{
+  guard(VZipStreamReader::VZipStreamReader);
+  if (useCurrSrcPos) srcStartPos = SrcStream->Tell();
+  initialize();
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VZipStreamReader::~VZipStreamReader
+//
+//==========================================================================
+VZipStreamReader::~VZipStreamReader () {
+  Close();
+}
+
+
+//==========================================================================
+//
+//  VZipStreamReader::initialize
+//
+//==========================================================================
+void VZipStreamReader::initialize () {
   // initialise zip stream structure
   ZStream.total_out = 0;
   ZStream.zalloc = (alloc_func)0;
@@ -45,8 +85,9 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSi
 
   // read in some initial data
   vint32 BytesToRead = BUFFER_SIZE;
-  if (BytesToRead > SrcStream->TotalSize()) BytesToRead = SrcStream->TotalSize();
-  SrcStream->Seek(0);
+  auto srcleft = SrcStream->TotalSize()-srcStartPos;
+  if (BytesToRead > srcleft) BytesToRead = srcleft;
+  SrcStream->Seek(srcStartPos);
   SrcStream->Serialise(Buffer, BytesToRead);
   if (SrcStream->IsError()) {
     bError = true;
@@ -65,23 +106,12 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSi
 
   Initialised = true;
   bLoading = true;
-  unguard;
 }
 
 
 //==========================================================================
 //
-//  VZipStreamReader::~VZipStreamReader
-//
-//==========================================================================
-VZipStreamReader::~VZipStreamReader () {
-  Close();
-}
-
-
-//==========================================================================
-//
-//  VZipStreamReader::VStr
+//  VZipStreamReader::GetName
 //
 //==========================================================================
 const VStr &VZipStreamReader::GetName () const {
@@ -163,7 +193,7 @@ void VZipStreamReader::Seek (int InPos) {
     inflateEnd(&ZStream);
     memset(&ZStream, 0, sizeof(ZStream));
     verify(inflateInit2(&ZStream, -MAX_WBITS) == Z_OK);
-    SrcStream->Seek(0);
+    SrcStream->Seek(srcStartPos);
   }
 
   // read data into a temporary buffer untill we reach needed position
