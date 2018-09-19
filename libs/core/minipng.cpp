@@ -59,10 +59,10 @@
 
 // zlib includes some CRC32 stuff, so just use that
 
-static inline const uint32_t *GetCRCTable () { return (const uint32_t *)get_crc_table(); }
+//static inline const uint32_t *GetCRCTable () { return (const uint32_t *)get_crc_table(); }
 static inline uint32_t CalcCRC32 (const uint8_t *buf, unsigned int len) { return crc32 (0, buf, len); }
 static inline uint32_t AddCRC32 (uint32_t crc, const uint8_t *buf, unsigned int len) { return crc32 (crc, buf, len); }
-static inline uint32_t CRC1 (uint32_t crc, const uint8_t c, const uint32_t *crcTable) { return crcTable[(crc & 0xff) ^ c] ^ (crc >> 8); }
+//static inline uint32_t CRC1 (uint32_t crc, const uint8_t c, const uint32_t *crcTable) { return crcTable[(crc & 0xff) ^ c] ^ (crc >> 8); }
 
 
 // The maximum size of an IDAT chunk ZDoom will write. This is also the
