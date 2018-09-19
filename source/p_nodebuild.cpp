@@ -1168,7 +1168,7 @@ void VLevel::BuildPVS () {
     }
     NoVis = nullptr;
     if (!ok) {
-      delete VisData;
+      delete [] VisData;
       VisData = nullptr;
     }
   }
