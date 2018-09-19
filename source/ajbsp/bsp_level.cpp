@@ -965,7 +965,7 @@ node_t *LookupNode(int index)
 
 
 
-
+/*
 static inline int VanillaSegDist(const seg_t *seg)
 {
 	double lx = seg->side ? seg->linedef->end->x : seg->linedef->start->x;
@@ -993,6 +993,7 @@ static inline int VanillaSegAngle(const seg_t *seg)
 
 	return (result & 0xFFFF);
 }
+*/
 
 static int SegCompare(const void *p1, const void *p2)
 {
