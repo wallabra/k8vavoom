@@ -923,6 +923,7 @@ static int pvsReportPNum;
 static mythread_mutex pvsPingLock;
 static mythread_cond pvsPingCond;
 static int pvsPBarCur, pvsPBarMax;
+static bool pvsPBarDone;
 
 
 static int getNextPortalNum () {
@@ -935,7 +936,10 @@ static int getNextPortalNum () {
       pvsLastReportTime = tt;
       mythread_mutex_lock(&pvsPingLock);
       pvsPBarCur = res;
-      if (pvsPBarCur > pvsMaxPortals) pvsPBarCur = pvsMaxPortals;
+      if (pvsPBarCur >= pvsMaxPortals) {
+        pvsPBarCur = pvsMaxPortals;
+        pvsPBarDone = true;
+      }
       pvsPBarMax = pvsMaxPortals;
       // signal...
       mythread_cond_signal(&pvsPingCond);
@@ -944,8 +948,9 @@ static int getNextPortalNum () {
     }
   } else {
     // we HAVE to report "completion", or main thread will hang
-    if (res == pvsMaxPortals) {
+    if (res >= pvsMaxPortals) {
       mythread_mutex_lock(&pvsPingLock);
+      pvsPBarDone = true;
       pvsPBarCur = res;
       if (pvsPBarCur > pvsMaxPortals) pvsPBarCur = pvsMaxPortals;
       pvsPBarMax = pvsMaxPortals;
@@ -1051,6 +1056,7 @@ static void pvsStartThreads (const PVSInfo &anfo) {
   pvsNextPortal = 0;
   pvsLastReport = 0;
   pvsMaxPortals = anfo.numportals;
+  pvsPBarDone = false;
   int pvsThreadsToUse = loader_pvs_builder_threads;
   if (pvsThreadsToUse < 1) pvsThreadsToUse = 1; else if (pvsThreadsToUse > PVSThreadMax) pvsThreadsToUse = PVSThreadMax;
 
@@ -1066,6 +1072,9 @@ static void pvsStartThreads (const PVSInfo &anfo) {
   mythread_mutex_init(&pvsPingLock);
   mythread_cond_init(&pvsPingCond);
 
+  // lock it here, so we won't miss any updates
+  mythread_mutex_lock(&pvsPingLock);
+
   int ccount = 0;
   pvsLastReportTime = Sys_Time();
   for (int f = 0; f < pvsThreadsToUse; ++f) {
@@ -1078,11 +1087,10 @@ static void pvsStartThreads (const PVSInfo &anfo) {
   // loop until we'll get at least one complete progress
   bool wasProgress = false;
   lastPBarWdt = -666;
-  mythread_mutex_lock(&pvsPingLock);
   for (;;) {
     mythread_cond_wait(&pvsPingCond, &pvsPingLock);
     // got one!
-    bool done = (pvsPBarCur == pvsPBarMax);
+    bool done = pvsPBarDone;
     if (done && !wasProgress) break; // don't spam with progress messages
     pvsDrawPBar(pvsPBarCur, pvsPBarMax);
     wasProgress = true;
