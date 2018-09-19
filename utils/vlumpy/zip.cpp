@@ -83,8 +83,10 @@ Read zip.h for more info
 #  define DEF_MEM_LEVEL  MAX_MEM_LEVEL
 #endif
 #endif
+/*k8: this will be optimized away by any modern compiler
 const char zip_copyright[] =
 " zip 1.01 Copyright 1998-2004 Gilles Vollant - http://www.winimage.com/zLibDll";
+*/
 
 
 #define SIZEDATA_INDATABLOCK (4096-(4*4))
@@ -696,12 +698,9 @@ extern int ZEXPORT zipOpenNewFileInZip3 (zipFile file,
   }
 
   zi->ci.flag = 0;
-  if ((level==8) || (level==9))
-  zi->ci.flag |= 2;
-  if ((level==2))
-  zi->ci.flag |= 4;
-  if ((level==1))
-  zi->ci.flag |= 6;
+  if (level==8 || level==9) zi->ci.flag |= 2;
+  else if (level==2) zi->ci.flag |= 4;
+  else if (level==1) zi->ci.flag |= 6;
   if (password != NULL)
   zi->ci.flag |= 1;
 
