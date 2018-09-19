@@ -513,8 +513,7 @@ void R_InstallSprite(const char *name, int index)
   }
   // allocate space for the frames present and copy sprtemp to it
   sprites[index].numframes = maxframe;
-  sprites[index].spriteframes = (spriteframe_t*)
-    Z_Malloc(maxframe * sizeof(spriteframe_t));
+  sprites[index].spriteframes = (spriteframe_t*)Z_Malloc(maxframe * sizeof(spriteframe_t));
   memcpy(sprites[index].spriteframes, sprtemp, maxframe * sizeof(spriteframe_t));
   unguard;
 }

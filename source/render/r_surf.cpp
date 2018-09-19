@@ -682,6 +682,7 @@ surface_t *VRenderLevelShared::NewWSurf()
   {
     //  Allocate some more surfs
     vuint8 *tmp = (vuint8*)Z_Malloc(WSURFSIZE * 128 + sizeof(void*));
+    memset(tmp, 0, WSURFSIZE * 128 + sizeof(void*));
     *(void**)tmp = AllocatedWSurfBlocks;
     AllocatedWSurfBlocks = tmp;
     tmp += sizeof(void*);
