@@ -30,7 +30,9 @@
 #include "filesys/fwaddefs.h"
 #include "ajbsp/bsp.h"
 
-#include "drawer.h"
+#ifdef CLIENT
+# include "drawer.h"
+#endif
 
 
 namespace ajbsp {
@@ -1025,6 +1027,7 @@ enum {
 static int lastPBarWdt = -666;
 
 static void pvsDrawPBar (int cur, int max) {
+#ifdef CLIENT
   if (Drawer && Drawer->IsInited()) {
     int wdt = cur*(ScreenWidth-PBarHPad*2)/max;
     if (cur < max && wdt == lastPBarWdt) return;
@@ -1035,7 +1038,9 @@ static void pvsDrawPBar (int cur, int max) {
     Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad, ScreenHeight-PBarVPad, 0xff8f0f00);
     if (wdt > 0) Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, PBarHPad+wdt, ScreenHeight-PBarVPad, 0xffff7f00);
     Drawer->Update();
-  } else {
+  } else
+#endif
+  {
     int prc = cur*100/max;
     GCon->Logf("PVS: %02d%% done (%d of %d)", prc, cur-1, max);
   }
@@ -1049,8 +1054,13 @@ static void pvsStartThreads (const PVSInfo &anfo) {
   int pvsThreadsToUse = loader_pvs_builder_threads;
   if (pvsThreadsToUse < 1) pvsThreadsToUse = 1; else if (pvsThreadsToUse > PVSThreadMax) pvsThreadsToUse = PVSThreadMax;
 
+#ifdef CLIENT
   pvsReportTimeout = (Drawer && Drawer->IsInited() ? 0.05 : 2.5);
   pvsReportPNum = (Drawer && Drawer->IsInited() ? 32 : 512);
+#else
+  pvsReportTimeout = 2.5;
+  pvsReportPNum = 512;
+#endif
 
   mythread_mutex_init(&pvsNPLock);
   mythread_mutex_init(&pvsPingLock);

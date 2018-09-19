@@ -39,6 +39,11 @@
 #include "sv_local.h"
 #endif
 
+#ifdef CLIENT
+# include "drawer.h"
+#endif
+
+
 static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", 0/*CVAR_Archive*/);
 static VCvarB dbg_use_old_decal_pp("dbg_use_old_decal_pp", false, "Use old decal processor? (for timing)", 0/*CVAR_Archive*/);
 
@@ -566,6 +571,17 @@ void VLevel::LoadMap (VName AMapName) {
     }
   }
   if (lumpnum < 0) Host_Error("Map %s not found\n", *MapName);
+
+#ifdef CLIENT
+  if (Drawer && Drawer->IsInited()) {
+    T_SetFont(SmallFont);
+    Drawer->StartUpdate(false); // don't clear
+    T_SetAlign(hcentre, vcentre);
+    // slightly off vcenter
+    T_DrawText(320, 320, "LOADING...", CR_GOLD);
+    Drawer->Update();
+  }
+#endif
 
   bool saveCachedData = false;
   int gl_lumpnum = -100;
