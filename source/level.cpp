@@ -175,14 +175,14 @@ static void writeOrCheckName (VStream &Strm, const VName &value, const char *err
     auto slen = strlen(*value);
     vuint32 v;
     Strm << v;
-    if (v != slen) Host_Error(va("Save loader: invalid string length for %s", errmsg));
+    if (v != slen) Host_Error("Save loader: invalid string length for %s", errmsg);
     if (v > 0) {
       auto buf = new char[v];
       memset(buf, 0, v);
       Strm.Serialise(buf, v);
       int res = memcmp(buf, *value, v);
       delete[] buf;
-      if (res != 0) Host_Error(va("Save loader: invalid string value for %s", errmsg));
+      if (res != 0) Host_Error("Save loader: invalid string value for %s", errmsg);
     }
   } else {
     vuint32 slen = (vuint32)strlen(*value);
@@ -195,7 +195,7 @@ static void writeOrCheckUInt (VStream &Strm, vuint32 value, const char *errmsg) 
   if (Strm.IsLoading()) {
     vuint32 v;
     Strm << v;
-    if (v != value) Host_Error(va("Save loader: invalid value for %s; got %d, but expected %d", errmsg, v, value));
+    if (v != value) Host_Error("Save loader: invalid value for %s; got %d, but expected %d", errmsg, v, value);
   } else {
     Strm << value;
   }
@@ -206,7 +206,7 @@ static void writeOrCheckInt (VStream &Strm, int value, const char *errmsg, bool 
     int v;
     Strm << v;
     if (v != value) {
-      if (dofail) Host_Error(va("Save loader: invalid value for %s; got %d, but expected %d", errmsg, v, value));
+      if (dofail) Host_Error("Save loader: invalid value for %s; got %d, but expected %d", errmsg, v, value);
       GCon->Logf("Save loader: invalid value for %s; got %d, but expected %d (should be harmless)", errmsg, v, value);
     }
   } else {
@@ -219,7 +219,7 @@ static void writeOrCheckFloat (VStream &Strm, float value, const char *errmsg, b
     float v;
     Strm << v;
     if (v != value) {
-      if (dofail) Host_Error(va("Save loader: invalid value for %s; got %f, but expected %f", errmsg, v, value));
+      if (dofail) Host_Error("Save loader: invalid value for %s; got %f, but expected %f", errmsg, v, value);
       GCon->Logf("Save loader: invalid value for %s; got %f, but expected %f (should be harmless)", errmsg, v, value);
     }
   } else {
